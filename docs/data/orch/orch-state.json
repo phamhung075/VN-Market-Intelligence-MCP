@@ -1,17 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-05T23:46:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-05T22:10:16+00:00",
+  "_updated_by": "pm",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "IDLE. Tick 20260605T212039Z complete: FIX-MW-OFFHOURS-DISPATCH SHIPPED 240dc1f1 (agent-father retry after malformed-tool-call abort on attempt 1; router raw-verified diff: main.md offhours dispatch row replaces EXIT, cycle.md prepost-equivalent floor sigma>=2.5/vol>=2.5x, c47 dup guard primary, market/prepost/EOD rows byte-identical). 5 signals drained DB->174 (2 bloat breaches self-resolved 191L<200cap, FPT c025 NO_ESCALATION, tnb c88 pre-ACKed, cowork telemetry healthy adaptive). PEER SESSION ACTIVE: ORCH-DASH-DECISION-DRILLDOWN pipeline (po 4009d10d, architect 477bf0af, pm 1c27aea9, F1 094358dc) — do not touch its task_board rows. PENDING NEXT TICKS: (a) operator owes cowork refresh /cron-cowork-team for aec3a3d8 + market-watcher flow change; (b) verify FIX-MW baseline at first offhours fire 00:00Z/04:00Z (real cycle RETURN, zero dup price_anomaly); (c) after 2026-06-06 09:00Z verify refine slot fired + pending<7 + CTG refined -> close FU-CTG-REFINE-PICKUP.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T21:29:29+00:00",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-05T22:10:16+00:00",
+    "updated_by": "pm"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2162,76 +2161,6 @@
         ],
         "signoff_at": "2026-06-04T20:05:28Z",
         "signoff_note": "Serve layer FIXED LIVE (router raw-verified). Real fix = Go 09e93d76 (macro-indicators :5004 in runtime set). Off-path TS DSI-S1-MACRO = defensive only. OPEN: operator FB-carry symptom half-closed (consumer recomputes from raw rates) + yahooFinance.ts live price gap (S2 Go latent). 3 follow-ups in backlog."
-      },
-      {
-        "id": "ORCH-DASH-DECISION-DRILLDOWN",
-        "label": "Decision Journal drill-down on orchestration dashboard",
-        "status": "active",
-        "opened_at": "2026-06-05",
-        "tasks": [
-          {
-            "task_id": "ARCH-ORCH-DASH-DECISION-DRILLDOWN",
-            "title": "Architect blueprint for decision drilldown sprint",
-            "type": "sprint-task",
-            "owner": "architect",
-            "depends": null,
-            "status": "DONE",
-            "size": "S",
-            "zone": "multi",
-            "closed_at": "2026-06-05T21:30:00Z"
-          },
-          {
-            "task_id": "PM-ORCH-DASH-DECISION-DRILLDOWN",
-            "title": "PM: break F1/F2/F3/QA into atomic subtasks + dispatch",
-            "type": "sprint-task",
-            "owner": "pm",
-            "depends": "ARCH-ORCH-DASH-DECISION-DRILLDOWN",
-            "status": "DONE",
-            "size": "S",
-            "zone": "multi"
-          },
-          {
-            "task_id": "ARCH-ORCH-F1",
-            "title": "F1: decision-journal SKILL.md task-id field + flow injection",
-            "type": "sprint-task",
-            "owner": "agent-father",
-            "depends": "PM-ORCH-DASH-DECISION-DRILLDOWN",
-            "status": "DONE",
-            "size": "S",
-            "zone": "docs/agents/"
-          },
-          {
-            "task_id": "ARCH-ORCH-F2",
-            "title": "F2: journalStore.ts + orchestrationHandler.ts DTO extension",
-            "type": "sprint-task",
-            "owner": "dev-mcp-server",
-            "depends": "ARCH-ORCH-F1",
-            "status": "DONE",
-            "size": "M",
-            "zone": "apps/mcp-server/"
-          },
-          {
-            "task_id": "ARCH-ORCH-F3",
-            "title": "F3: Remix DONE-task accordion with decision trail",
-            "type": "sprint-task",
-            "owner": "dev-frontend",
-            "depends": "ARCH-ORCH-F2",
-            "status": "DONE",
-            "size": "M",
-            "zone": "apps/frontend/",
-            "closed_at": "2026-06-05T21:58:16Z"
-          },
-          {
-            "task_id": "ARCH-ORCH-QA",
-            "title": "QA: live dashboard verify decision drilldown",
-            "type": "sprint-task",
-            "owner": "qa",
-            "depends": "ARCH-ORCH-F3",
-            "status": "DONE",
-            "size": "S",
-            "zone": "qa"
-          }
-        ]
       }
     ],
     "backlog": [
@@ -3521,6 +3450,76 @@
           "b600c3ba"
         ],
         "verify_hook": "LIVE-VERIFIED this tick (117->4). Next system-auditor D4 run should report 0 tombstone divergences."
+      },
+      {
+        "id": "ORCH-DASH-DECISION-DRILLDOWN",
+        "label": "Decision Journal drill-down on orchestration dashboard",
+        "status": "DONE",
+        "opened_at": "2026-06-05",
+        "tasks": [
+          {
+            "task_id": "ARCH-ORCH-DASH-DECISION-DRILLDOWN",
+            "title": "Architect blueprint for decision drilldown sprint",
+            "type": "sprint-task",
+            "owner": "architect",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "multi",
+            "closed_at": "2026-06-05T21:30:00Z"
+          },
+          {
+            "task_id": "PM-ORCH-DASH-DECISION-DRILLDOWN",
+            "title": "PM: break F1/F2/F3/QA into atomic subtasks + dispatch",
+            "type": "sprint-task",
+            "owner": "pm",
+            "depends": "ARCH-ORCH-DASH-DECISION-DRILLDOWN",
+            "status": "DONE",
+            "size": "S",
+            "zone": "multi"
+          },
+          {
+            "task_id": "ARCH-ORCH-F1",
+            "title": "F1: decision-journal SKILL.md task-id field + flow injection",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": "PM-ORCH-DASH-DECISION-DRILLDOWN",
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/"
+          },
+          {
+            "task_id": "ARCH-ORCH-F2",
+            "title": "F2: journalStore.ts + orchestrationHandler.ts DTO extension",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": "ARCH-ORCH-F1",
+            "status": "DONE",
+            "size": "M",
+            "zone": "apps/mcp-server/"
+          },
+          {
+            "task_id": "ARCH-ORCH-F3",
+            "title": "F3: Remix DONE-task accordion with decision trail",
+            "type": "sprint-task",
+            "owner": "dev-frontend",
+            "depends": "ARCH-ORCH-F2",
+            "status": "DONE",
+            "size": "M",
+            "zone": "apps/frontend/",
+            "closed_at": "2026-06-05T21:58:16Z"
+          },
+          {
+            "task_id": "ARCH-ORCH-QA",
+            "title": "QA: live dashboard verify decision drilldown",
+            "type": "sprint-task",
+            "owner": "qa",
+            "depends": "ARCH-ORCH-F3",
+            "status": "DONE",
+            "size": "S",
+            "zone": "qa"
+          }
+        ]
       }
     ],
     "in_progress": []

@@ -146,3 +146,14 @@
 - Mark partially-visual AC as APPROVED vs APPROVED-WITH-CONDITIONS — 7 AC require real browser click/focus/keyboard interaction (AC-QA-9 expand, AC-QA-11 close, AC-QA-12 multi-open, AC-QA-13 non-DONE inert, AC-QA-16 keyboard, AC-QA-6/7/8 visual browser); test suite (f3-decision-accordion, 36 pass) + SSR markup (aria-expanded, role=button, cursor-pointer) prove the logic is wired; marking APPROVED with explicit visual-only caveat is correct gate
 **why-decision:** All server-verifiable AC pass raw: containers healthy, API 200 with correct decisions shape, 59 mcp-server tests + 36 frontend tests green, tsc 0 errors both apps, SSR HTML contains aria-expanded + cursor-pointer + role=button + decision text end-to-end traced from journal file; APPROVED verdict is justified.
 **why-change:** No plan deviation; QA flow § Pipeline checks executed as specified; visual-only items enumerated for operator eyeball rather than silently claimed as verified.
+
+### STEP pm-S2 · pm · 2026-06-06T04:35:00Z
+
+**task-id:** PM-ORCH-DASH-DECISION-DRILLDOWN
+**what-done:** Reconciled git HEAD vs orch-state.json task_board (cron-reentry lesson): all 6 tasks DONE confirmed in task_board; all 4 commits (094358dc F1, da37602f F2, 1b71198a F3, cdc4141a QA) live on main. Performed atomic write to move sprint from active_sprints to done section, marked sprint status DONE, and reset head to idle state (status=idle, active_task_id=null, wip=0). Verified post-write: task_board.done[] now contains ORCH-DASH-DECISION-DRILLDOWN with all 6 tasks still DONE.
+**what-considered:**
+- Verify commits real before closing — cron-reentry lesson mandates git HEAD vs orch-state reconcile; found all 4 feature commits + QA approve on main (not worktree-stale)
+- Atomic write pattern for sprint retirement — used jq filter + atomic mv + sentinel-key verify to avoid clobber; already proven in orch-state-consolidate sprint
+- Follow-ups: FU-ORCH-DASH-VISUAL-VERIFY if router's browser check surfaces regressions; task-id mapping is forward-only (legacy DONE tasks show via sprint_bucket fallback by design, not a bug)
+**why-decision:** All task_board 6/6 DONE + commits real → sprint is complete per DONE criteria. Atomic retirement (active→done) is the PM's closeout responsibility per flow step. Head reset confirms the sprint is closed and main terminal can accept next sprint dispatch without collision.
+**why-change:** No variance from PM flow closeout spec; all steps executed: git reconcile + sprint move + head reset + metadata update + decision journal entry.
