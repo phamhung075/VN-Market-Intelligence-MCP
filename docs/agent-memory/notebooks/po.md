@@ -1,5 +1,19 @@
 # PO Notebook
 
+## c · 2026-06-05T02:11Z — EXECUTE FU-RUNTIME-SET-TRUTH-RECONCILE P3a: bless pdf-extractor into host_runtime_set (doc-only, aab19951)
+
+**Tick.** dev-team cron 02:09Z. 0 signals, 0 reports, head idle, WIP 0. No NEW input — drove the ONE decision-ready deferred item to DONE (de-risked last tick by d83189c8 enrichment), refusing to re-defer indefinitely.
+
+**Router raw-verify (not relayed):** `docker ps` → pdf-extractor Up 33h (healthy), rag-service Up 9h (healthy). pdf-extractor unambiguously deployed+working (BCTC depends on it, capability_manifest.pdf=live, CPU-only 8GB-cap per PEK). LATENT MONITORING GAP: not_deployed services are auditor INFO/grey never CRITICAL → a pdf-extractor crash today would stay SILENT despite BCTC breaking. Fixing the classification makes its downtime correctly CRITICAL.
+
+**Edit (hardened atomic, [[feedback_jq_empty_guard_clobbers_ssot]]):** jq -f in same dir → guards (rc, non-empty -s, sentinel `services` array non-empty, top-key count 7→7 unchanged = zero key loss, assert pdf moved + rag untouched) → mv -f. system-map.json: services += pdf-extractor; not_deployed_by_design -= pdf-extractor; not_deployed_short_keys -= pdf; _last_verified→2026-06-05. capability_manifest left as-is (pdf already live). 101 diff lines = jq reflow; only 4 semantic changes (asserts prove it). python json.load + jq empty both VALID.
+
+**rag-service deliberately UNTOUCHED (P3b):** its deploy-vs-16GB-host-memory tradeoff is an OPEN architect call (FU-RAG-DEPLOY-MEMORY, touches kernel-panic host-safety [[project_host_memory_panic]]). Blessing it pre-empts that. FU-RUNTIME-SET-TRUTH-RECONCILE retitled (P3a DONE / P3b rag remains), size S→XS, scope_remaining=rag, progress logged w/ SHA — status STAYS BACKLOG, depends_on FU-RAG-DEPLOY-MEMORY intact.
+
+**Commit aab19951** (main, explicit-path staging, NO -A/--force; "docs/data ignorés" warning SPURIOUS — both files verified landed via `git show --stat`: system-map.json + orch-state.json). NO rebuild (system-map read live by auditor/dashboard, not compiled). Other backlog (CNYVND-DEAD-FIELD/SBV-EFFECTIVE-DATE/MACRO-SNAPSHOT-WORSTOF) left gated. WIP 0→0.
+
+**LESSON:** a "not-deployed-by-design" runtime-set list is also a MONITORING POLICY — a service silently demoted there suppresses its own outage alerts. When a service graduates to load-bearing+stable (router-verified Up + a real dependent), reconciling it INTO services[] isn't cosmetic config hygiene, it re-arms the auditor's CRITICAL path for it. Split a mixed-confidence reconcile: ship the unambiguous half (pdf), leave the architect-gated half (rag) under its owning task rather than flipping the whole flag.
+
 ## c · 2026-06-04T20:05Z — DSI QA-gate SIGN-OFF: SIGNED-OFF-PARTIAL (serve fixed live, operator FB symptom HALF-closed) + 3 follow-ups triaged
 
 **Verdict (honest, NOT a clean win).** Read QA report TASK_REPORT_DSI-QA.md full + arch brief + BA spec. Router raw-verified LIVE myself via gateway get_macro_snapshot (not relayed): carry.regime=UNKNOWN, carrySpread=null, is_estimate=true, source_tier=4, fetched_at_source=2026-05-28 (NOT now), dataSource=estimate. NO FII_OUTFLOW_RISK from fixture arithmetic. PART A (operator core complaint) + PART B (provenance labels credit/energy/bond/BCTC + conf??0 + roe??null) all live-PASS.
