@@ -1,15 +1,16 @@
 <!-- size-justification: 59L — Step 4.7: shared tick snapshot write. Child of main.md.
      FU-TICK-SNAPSHOT-EMIT-DARK hardening: both gateway calls lifted OUT of bash fence (pure bash cannot call MCP).
-     Agent pre-computes BOOTSTRAP_RESULT + MACRO_RESULT then writes stage files; bash block is pure bash. -->
+     Agent pre-computes BOOTSTRAP_RESULT + MACRO_RESULT then writes stage files; bash block is pure bash.
+     EMIT-DARK-RECURRING 2026-06-05: cycle-snapshot-latest.json promotion moved to telemetry.md Step 6. -->
 
 ## Step 4.7 — Write shared tick snapshot (L-6, 1968c-P01)
 
 <!-- Writes docs/data/cycle-snapshot-<HH:MM>.json before agent spawn.
      Agents read this file instead of calling get_cycle_bootstrap independently.
      File is ephemeral (overwritten each tick). Not git-committed (.gitignore).
+     cycle-snapshot-latest.json is promoted from this file in telemetry.md Step 6 (EMIT-DARK-RECURRING).
      Fallback: if this step fails, agents fall back to direct get_cycle_bootstrap — zero blocker.
-     HARDENED 2026-05-25: All scratch/staging MUST be project-local under docs/data/ — NEVER /tmp or any path outside the repo.
-     Executor receives MCP tool output as text and stages it to project-local files for jq. -->
+     HARDENED 2026-05-25: All scratch/staging MUST be project-local under docs/data/ — NEVER /tmp or any path outside the repo. -->
 
 Only execute if WON_SLOTS is non-empty (skip on silent-exit path).
 
