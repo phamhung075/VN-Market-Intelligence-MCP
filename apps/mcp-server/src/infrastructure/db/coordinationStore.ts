@@ -266,6 +266,57 @@ export interface ListResult {
 }
 
 // ---------------------------------------------------------------------------
+// GC helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Delete expired tombstone rows from the task_locks table.
+ *
+ * Only removes rows whose `expires_at` is older than `(now - graceSeconds)`.
+ * The grace window prevents racing a row that just expired but whose owner
+ * may still be in the middle of a final heartbeat or release call.
+ *
+ * Safe to call frequently (on every task_claim) because:
+ *   - Expired rows are by definition free to reclaim.
+ *   - The grace window (default 300 s) provides ample room for a just-expired
+ *     session to complete its release before we vacuum it.
+ *   - The DELETE is bounded to the expired subset (no full-table scan on large
+ *     active sets) thanks to the `idx_task_locks_expires_at` index.
+ *   - `excludeTaskId` protects the specific row being claimed: the claim path
+ *     itself handles that row via the stale-steal UPDATE (Step 2), so we must
+ *     not GC it before Step 2 runs. Other expired rows are fair game.
+ *
+ * FU-LOCKSTORE-EXPIRED-GC (2026-06-05).
+ *
+ * @param db            Open coordination.db instance.
+ * @param graceSeconds  Seconds past expiry before a row is eligible for GC.
+ *                      Default: 300 (5 min). Must be >= 0.
+ * @param excludeTaskId Optional task_id to skip (used by claimTask to protect
+ *                      the row it is about to steal via the Step-2 UPDATE).
+ * @returns Number of rows deleted.
+ */
+export function gcExpiredLocks(db: Database, graceSeconds = 300, excludeTaskId?: string): number {
+  const grace = Math.max(0, graceSeconds);
+  try {
+    let result;
+    if (excludeTaskId !== undefined) {
+      result = db.prepare(
+        `DELETE FROM task_locks WHERE expires_at < unixepoch('now') - ? AND task_id != ?`
+      ).run(grace, excludeTaskId);
+    } else {
+      result = db.prepare(
+        `DELETE FROM task_locks WHERE expires_at < unixepoch('now') - ?`
+      ).run(grace);
+    }
+    return result.changes;
+  } catch (err) {
+    // Non-fatal — log only; GC failure must not block the claim path.
+    console.warn("[coordinationStore] gcExpiredLocks error (non-fatal)", err);
+    return 0;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Core operations
 // ---------------------------------------------------------------------------
 
@@ -275,10 +326,21 @@ export interface ListResult {
  * Step 1: INSERT OR IGNORE — wins if row is absent.
  * Step 2: UPDATE WHERE expires_at < now — stale-steal if step 1 lost.
  * Step 3: SELECT current holder — return when both steps fail.
+ *
+ * Opportunistic GC (FU-LOCKSTORE-EXPIRED-GC): deletes tombstone rows whose
+ * TTL expired > 300 s ago before attempting the claim. Keeps the table lean
+ * without a separate always-on timer (avoids 16 GB host pressure).
  */
 export function claimTask(input: ClaimInput): ClaimResult {
   const db = getCoordinationDb();
   if (!db) return { claimed: false, error: "db_unavailable" };
+
+  // Opportunistic GC: vacuum tombstone rows that expired > 300 s ago.
+  // Exclude input.task_id so the stale-steal path (Step 2 UPDATE) can still
+  // handle the specifically-claimed row if it is expired — preserving the
+  // stolen:true diagnostic signal and the steal semantics.
+  // Failure is non-fatal (gcExpiredLocks swallows its own errors).
+  gcExpiredLocks(db, 300, input.task_id);
 
   // Max TTL: 8 days (691200s) — covers weekly published markers (digest-sunday, tnb-audit)
   // per ARCH-DECIDE-D: PUBLISHED_MARKER_WEEKLY_TTL_SECONDS = 691200 (8 days).
