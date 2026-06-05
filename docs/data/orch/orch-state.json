@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "FDA-1 DONE (cc4dbcba, raw-verified) — code on main, PENDING off-market mcp-server rebuild (batch: 1881a + FDA-1; market open until 08:00 UTC). Next tick: FDA-2/3 (macro-indicators pair, one Go rebuild) per PO plan; then trigger off-market rebuild via ops when >08:00 UTC.",
+    "next_action": "FDA-1 DONE+LIVE (cc4dbcba deployed 2026-06-05T08:12Z via operator-authorized immediate mcp-server rebuild; raw-verified get_prediction_markets 0.505/0.495 genuine, no fabricated 0.5). Rebuild also deployed 02498635 (carry/yield) + 260655e3 (1881a). NEXT TICK: FDA-2 + FDA-3 (macro-indicators pair — per-field provenance on snapshot vnIndex/oil/gold/usdVnd + /external honest source status) as ONE Go rebuild per PO plan. Then FDA-4..10 (P3) below cut line. Watch FU-PRESSURE-EMIT-DARK (pressure-state dark ~2.25d, fail-safe legacy fallback).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T07:23:00.717627+00:00",
+    "updated_at": "2026-06-05T08:13:29.595132+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T07:23:00.717627+00:00",
+    "_updated_at": "2026-06-05T08:13:29.595132+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2944,27 +2944,6 @@
         "done_note": "SHIPPED+LIVE 2026-06-05. PageHeader SSOT (619093e1) + TopNav SSOT (5f660fb1, fixed / showing stale 5-item vs canonical 8-item nav) + centered full-viewport layout. 327 tests pass, tsc 0. ops rebuilt frontend (image b18f8ee7, healthy); / serves 8-item nav incl BCTC Eval/Inspect/Orchestration verified live."
       },
       {
-        "task_id": "FDA-1",
-        "title": "polymarket fetcher fabricates 50% probability (0.5/0.5) on malformed prices — served as live with no is_estimate",
-        "type": "FIX",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "DONE-PENDING-REBUILD",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server",
-        "files": [
-          "apps/mcp-server/src/infrastructure/fetchers/polymarket.ts"
-        ],
-        "severity": "MED",
-        "note": "polymarket.ts:86 parseOutcomePrices() (LIVE Gamma-primary path) returns {yes:0.5,no:0.5} when outcomePrices is unparseable; polymarket.ts:155/159 extractPrices() (CLOB branch) returns 0.5 / `yes?.price ?? 0.5`. The fabricated coin-flip flows into the PredictionMarket record (yesPrice ~line 347), is persisted by storePolymarketSnapshot with fetched_at, then served by get_prediction_markets (predictionTools.ts:86 reads row.yes_price) and the predictionMarketJob telegram dish as 'Xác suất YES: 50.0%' with NO is_estimate/source_tier. A fabricated 50% is indistinguishable from a genuine 50% market. FIX: return null and skip the market on parse failure, OR carry is_estimate=true+source_tier=4 through the record and surface it in predictionTools/predictionMarketJob output. Never default a probability to 0.5. Verified raw 2026-06-05.",
-        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
-        "depends_on": null,
-        "started_at": "2026-06-05T07:12:51.166809+00:00",
-        "commit": "cc4dbcba",
-        "done_at": "2026-06-05T07:23:00.717627+00:00",
-        "deploy_note": "Code on main (skip-at-source: parseOutcomePrices/extractPrices return null on unparseable, callers continue; 21/21 + suites green, tsc clean, router raw-verified). NOT LIVE — needs OFF-MARKET mcp-server rebuild batch (with 1881a + FDA-2/3 when shipped)."
-      },
-      {
         "task_id": "FDA-2",
         "title": "macro snapshot top-level price fields (vnIndex/oil/gold/usdVnd) fall back to fixtures with no PER-FIELD provenance flag",
         "type": "FIX",
@@ -3137,7 +3116,31 @@
         "depends_on": null
       }
     ],
-    "archive": []
+    "archive": [],
+    "done": [
+      {
+        "task_id": "FDA-1",
+        "title": "polymarket fetcher fabricates 50% probability (0.5/0.5) on malformed prices — served as live with no is_estimate",
+        "type": "FIX",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server",
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/polymarket.ts"
+        ],
+        "severity": "MED",
+        "note": "polymarket.ts:86 parseOutcomePrices() (LIVE Gamma-primary path) returns {yes:0.5,no:0.5} when outcomePrices is unparseable; polymarket.ts:155/159 extractPrices() (CLOB branch) returns 0.5 / `yes?.price ?? 0.5`. The fabricated coin-flip flows into the PredictionMarket record (yesPrice ~line 347), is persisted by storePolymarketSnapshot with fetched_at, then served by get_prediction_markets (predictionTools.ts:86 reads row.yes_price) and the predictionMarketJob telegram dish as 'Xác suất YES: 50.0%' with NO is_estimate/source_tier. A fabricated 50% is indistinguishable from a genuine 50% market. FIX: return null and skip the market on parse failure, OR carry is_estimate=true+source_tier=4 through the record and surface it in predictionTools/predictionMarketJob output. Never default a probability to 0.5. Verified raw 2026-06-05.",
+        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
+        "depends_on": null,
+        "started_at": "2026-06-05T07:12:51.166809+00:00",
+        "commit": "cc4dbcba",
+        "done_at": "2026-06-05T07:23:00.717627+00:00",
+        "deploy_note": "LIVE 2026-06-05T08:12Z — operator-authorized immediate rebuild ('rebuild don't wait'), ops rebuilt mcp-server (image built 08:11:21Z, container Up healthy, 0 die-events, no collateral). Deployed batch: cc4dbcba (FDA-1) + 02498635 (carry/yield /snapshot rewire) + 260655e3 (1881a JSON wrapper). Live-verified raw by router: get_prediction_markets returns yesPrice 0.505/noPrice 0.495 (genuine orderbook, NOT fabricated 0.5/0.5); zero 0.5 literals on served path; malformed-price markets omitted at source.",
+        "deployed_at": "2026-06-05T08:13:29.595132+00:00"
+      }
+    ]
   },
   "signal_queue": {
     "_updated_at": "2026-06-05T03:14:26Z",
