@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md",
+  "priority": "low",
+  "createdAt": "2026-06-05T16:37:44Z",
+  "summary": "EMIT-DARK root cause confirmed H2: Steps 4.7+4.8 are agent-interpreted prose — silently skipped despite structurally correct bash. Fix: anchor pressure-state write to telemetry.md Step 6 (observable mandatory step) + optional pre-dispatch shell script for pure-bash fields. H1 (stale session) and H3 (early-exit) both ruled out by evidence."
+}

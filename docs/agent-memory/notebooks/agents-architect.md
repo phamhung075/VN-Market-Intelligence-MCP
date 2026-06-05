@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-03T20:35:08Z
-
-**Brief:** `docs/architecture-briefs/2026-06-03-cowork-heartbeat-schema.md`
-
-FU-COWORK-HEARTBEAT-SCHEMA: cowork-team main.md LLM runtime drifts from its own Step 6 spec — 37+ on-disk files use flat {classification,reason,tick_nominal,...} with no envelope. autosilent.sh and Step 6 spec are both enveloped {from,to,type,payload,createdAt} — already correct. Canonical = enveloped (drain-signals.md Step 0a-1 fingerprints on from+type+payload+createdAt). Fix = INVARIANT guard block inserted at Step 6 header + flat-unique telemetry fields (classification/reason/leader_lock/dev_head/devq/signal_backlog/note) added inside payload. agent-father to edit main.md only; autosilent.sh untouched.
-
-**Signal dropped:** `docs/signals/cowork-heartbeat-schema-20260603T203508Z.json` → agent-father
-
----
-
 ## 2026-06-03T20:45:01Z
 
 **Brief:** `docs/architecture-briefs/2026-06-03-esc3-data-coverage-guard.md`
@@ -37,3 +27,13 @@ Extracted 6 reusable rapid-analysis skills from Bàn tròn kinh tế 31 transcri
 Decision Journal (sprint footprint) cross-cutting protocol: per-sprint accumulator at `docs/agent-memory/decisions/sprint-<id>.md`; shared `.claude/skills/decision-journal/SKILL.md` (create + inject via cowork-end-cycle); terminal-only rule (reasoning/WHY → journal, terminal → RETURN+caveman). Entry format: 12L STEP block (what-done/what-considered/why-decision/why-change). 600L sprint cap, archive on sprint-close. Clear boundary: journal=WHY-trail, notebook=cross-cycle-memory, handoff=role-payload. 7 files to create/edit for agent-father — no operator greenlight needed.
 
 **Signal dropped:** `docs/signals/agent-decision-journal-20260605T163102Z.json` → agent-father
+
+---
+
+## 2026-06-05T16:37:44Z
+
+**Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md`
+
+EMIT-DARK-RECURRING: H1 (stale session) + H3 (early-exit) both ruled out by post-fix telemetry evidence. H2 CONFIRMED — Steps 4.7+4.8 are agent-interpreted prose with fail-safe semantics; LLM agent narrates and skips, producing zero disk output while proceeding to spawn. Code fix required (not operator action): anchor pressure-state write to telemetry.md Step 6 (observable mandatory artifact) + optional pre-dispatch shell script for pure-bash fields. Priority: low (legacy cadence safe).
+
+**Signal dropped:** `docs/signals/emit-dark-root-cause-20260605T163744Z.json` → agent-father
