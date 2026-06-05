@@ -1,0 +1,24 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md",
+    "task": "EMIT-DARK-TELEMETRY-PATCH — replace bash heredoc with call_tool emit_pressure_state",
+    "priority": "normal",
+    "gate": "BLOCKED until developer deploys emit_pressure_state tool to vn-market MCP server (emit-dark-option-c-20260605T180900Z.json signal). Do NOT apply flow changes before tool is live.",
+    "files_to_edit": [
+      {
+        "path": "docs/agents/cowork-team/flow/telemetry.md",
+        "change": "Replace bash fence lines 9-55 (pressure-state.json.tmp heredoc block) with: call_tool(server=vn-market, tool=emit_pressure_state, arguments={calendar_status, tick_id, fire_time, pressure_mode, last_regime, last_volatility_level}). Retain lines 57-101 (conditional signal-file write) unchanged. See brief §4 for exact call_tool instruction text."
+      },
+      {
+        "path": "docs/agents/cowork-team/flow/main.md",
+        "change": "Update Step 4.8 row description in JUMP-TO table from 'no-op stub — moved to Step 6' to 'no-op stub — Step 6 uses call_tool emit_pressure_state (EMIT-DARK-v2)'."
+      }
+    ],
+    "dod": "pressure-state.json written with fresh emitted_at on next cowork FIRE; pressure_mode flips to adaptive in cowork-team signal"
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-05T18:09:00Z"
+}

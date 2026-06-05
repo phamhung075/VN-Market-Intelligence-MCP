@@ -1,0 +1,15 @@
+{
+  "from": "agents-architect",
+  "to": "developer",
+  "type": "brief_complete",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md",
+    "task": "EMIT-DARK-OPTION-C — build emit_pressure_state MCP tool",
+    "priority": "normal",
+    "summary": "Add emit_pressure_state tool to vn-market MCP server. Accepts calendar_status/tick_id/fire_time/pressure_mode/last_regime/last_volatility_level from dispatcher. Server-side computes signal_backlog (ls+grep+wc), dev_queue_depth (jq orch-state), host_headroom_mb (vm_stat/free). Writes docs/data/pressure-state.json atomically (tmp-rename). Promotes cycle-snapshot-HH:MM.json to cycle-snapshot-latest.json if present. Returns {success, emitted_at, pressure_state_path, cycle_snapshot_promoted}. NEVER throws — catches all errors, returns {success:false, reason}. See brief §4 for full contract.",
+    "gate": "deploy tool BEFORE agent-father patches telemetry.md — sequencing is load-bearing",
+    "dod": "pressure-state.json written with fresh emitted_at on next cowork FIRE after telemetry.md patch; pressure_mode flips from legacy to adaptive in cowork-team signal"
+  },
+  "priority": "normal",
+  "createdAt": "2026-06-05T18:09:00Z"
+}

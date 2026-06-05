@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-03T20:45:01Z
-
-**Brief:** `docs/architecture-briefs/2026-06-03-esc3-data-coverage-guard.md`
-
-ESC-3 false-escalation loop (16 cycles, FPT Q1-2026): bctc-analyst fired Opus deep-dive for OCF/NI divergence every cycle because the 24h guard TTL matches cycle cadence and deep-dive-opus.md releases the guard unconditionally. Root cause is ESC-3 gate has zero quarters-coverage awareness — fires on divergence_ratio>0.40 alone regardless of whether historical data exists. Fix: add `quarters_returned<4` coverage pre-flight to ESC-3 in main.md; insert DATA-COVERAGE-LIMITED handler (guard_key=esc-datacov:..., ttl_seconds=2592000/30d, route ops once); update deep-dive-opus.md ESC-3 step 1 to early-exit + no task_release when coverage-limited. 2-file edit for agent-father.
-
-**Signal dropped:** `docs/signals/esc3-data-coverage-guard-20260603T204501Z.json` → agent-father
-
----
-
 ## 2026-06-04T05:03:42Z
 
 **Brief:** `docs/architecture-briefs/2026-06-04-expert-rapid-analysis-skills.md`
@@ -32,8 +22,18 @@ Decision Journal (sprint footprint) cross-cutting protocol: per-sprint accumulat
 
 ## 2026-06-05T16:37:44Z
 
-**Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md`
+**Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md` (v1)
 
 EMIT-DARK-RECURRING: H1 (stale session) + H3 (early-exit) both ruled out by post-fix telemetry evidence. H2 CONFIRMED — Steps 4.7+4.8 are agent-interpreted prose with fail-safe semantics; LLM agent narrates and skips, producing zero disk output while proceeding to spawn. Code fix required (not operator action): anchor pressure-state write to telemetry.md Step 6 (observable mandatory artifact) + optional pre-dispatch shell script for pure-bash fields. Priority: low (legacy cadence safe).
 
 **Signal dropped:** `docs/signals/emit-dark-root-cause-20260605T163744Z.json` → agent-father
+
+---
+
+## 2026-06-05T18:09:00Z
+
+**Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md` (v2 — DEFINITIVE, supersedes v1 + Option B)
+
+Option B (d6738df3) live-falsified: 18:01:29Z FIRE wrote signal JSON with resolved placeholder values but pressure-state.json still absent. Smoking gun: `"matched_slots": ["bctc-analyst-slot-2"]` in live signal vs literal `[<slot_ids from MATCHES>]` in telemetry.md template — proves LLM never ran bash, only narrated. Corrected root cause: cowork dispatcher is a pure narration engine; bash fences are never executed; LLM writes the signal file via Write-tool using in-context values and skips the pressure-state heredoc because its inputs (signal_backlog/dev_queue_depth/host_headroom_mb) require real shell. Three code fixes all failed same class. Fix: Option C — add emit_pressure_state MCP tool (server-side shell computation + atomic file write); replace bash fence in telemetry.md with call_tool instruction (LLM demonstrably executes call_tool). Option E (retirement) documented as contingency only.
+
+**Signals dropped:** `docs/signals/emit-dark-option-c-20260605T180900Z.json` → developer; `docs/signals/emit-dark-telemetry-patch-20260605T180900Z.json` → agent-father (gated on tool deploy)
