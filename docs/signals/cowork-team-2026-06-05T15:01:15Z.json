@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T15:01:15Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "note": "bctc-analyst-slot-1 daily 0 15 cron; leader claimed fresh (claimed=true); slot token claimed+released; agent a3d73e3a spawned bg; last_fired→15:01:03Z. 15:00Z off-market (VN window 02-08Z) so bctc E2 guard not triggered."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T15:01:15Z"
+}
