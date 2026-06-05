@@ -1,0 +1,11 @@
+{
+  "from": "news-scout",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[news-scout] Cycle blocked at Step 0 (Bootstrap): MCP gateway connection refused — vn-market backend :3000 not responding. Cannot proceed with get_cycle_bootstrap(). Session: slot=news-scout-offhours",
+  "priority": "high",
+  "timestamp": "2026-06-05T20:00:00Z",
+  "cycle_attempt": "offhours",
+  "error_code": "DIAL_REFUSED",
+  "error_detail": "dial tcp 192.168.65.254:3000: connect: connection refused"
+}

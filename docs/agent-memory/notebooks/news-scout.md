@@ -1,6 +1,31 @@
-- **Last updated:** 2026-06-05 16:02 UTC · **Sprint:** current · **Status:** 53 cycles complete (c53 offhours-slot, NEUTRAL-bearish regime, 3 signals fired: HPG urgent_news, VIC+VIX chain_catalyst)
+- **Last updated:** 2026-06-05 20:12 UTC · **Sprint:** current · **Status:** 54 cycles complete (c55 recovery offhours-slot +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c55 · 2026-06-05T20:10:00Z (offhours, slot=news-scout-offhours) — RECOVERED + SHIPPED
+
+**Recovery cycle (THURSDAY LATE 20:10 UTC, MARKET CLOSED) — NEUTRAL-BEARISH REGIME, MACRO GOLD SAFE-HAVEN + VND DEPRECIATION.** 20 articles fetched. **3 signals fired (#5118–#5120): chain_catalyst VIC (VinaCapital bullish real_estate/tech, confidence 92%, critic 0.8), urgent_news VIX (50% earnings cut, securities headwind, confidence 88%, critic 0.8), urgent_news HPG (leadership insider 6.6M sell at bottom, confidence 86%, critic 0.8).**
+
+**Bootstrap + Regime:** `get_cycle_bootstrap()` healthy after MCP restoration @20:06:42Z (277 alerts pending). `get_macro_snapshot()` valid (vnIndex=1838.9, oil NEUTRAL $93.05, gold BULLISH $4349.4 −3.37%, usdvnd BEARISH 26124 >25k, carry NEUTRAL 1.38pp, yield FAIRLY_VALUED 1.83pp spread). **Regime NEUTRAL-BEARISH** (gold safe-haven demand, VND depreciation import pressure, carry/yield balanced). SELF_SIGNALS_CACHE empty (no feedback priors from last 6h).
+
+**Signals Fired (3 total):**
+- #5118 (chain_catalyst to unified-agent): VIC VinaCapital bullish on Vingroup real_estate/tech. Impacts: VIC/VHM/VRE/D2D/NVL/KBC/TCH/FPT/SIS. Confidence 92%. Critic 0.8. Pillars: sector_event bullish.
+- #5119 (urgent_news to alert-commander): VIX 50% earnings decline 2026. Securities sector headwind. Confidence 88%. Critic 0.8. Severity: HIGH.
+- #5120 (urgent_news to alert-commander): HPG leadership insider sell 6.6M shares at bottom price. Confidence 86%. Critic 0.8. Severity: MEDIUM. Potential negative information signal.
+
+**Coverage-state updates:** VIC, VIX, HPG (event-driven). Updated 3 tickers to 2026-06-05T20:10:00Z.
+
+**Macro Context:** NEUTRAL-BEARISH composite. Gold BULLISH $4349.4 (safe-haven signal). VND 26124 >25k (import CPI pressure). Carry NEUTRAL 1.38pp. Yield FAIRLY_VALUED 6.83% > 5% deposit. Oil NEUTRAL $93.05. VN-Index 1838.9.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h window). c55 signals non-overlapping with c54 blocked cycle. All 3 signals POSTED without suppression.
+
+**Feedback Tuning:** FILTER_HINT_chain_catalyst=default. FILTER_HINT_urgent_news=default.
+
+**Session Log:** log_agent_work #1267 opened/closed. 20 items, 14 impacts, 3 signals, NEUTRAL-BEARISH regime. MCP recovery confirmed healthy.
+
+## c54 · 2026-06-05T20:00:00Z (offhours, slot=news-scout-offhours) — BLOCKED (RESOLVED)
+
+**Cycle BLOCKED at Step 0 (Bootstrap).** Attempted `get_cycle_bootstrap()` — MCP gateway connection refused (vn-market backend :3000 not responding). Error: `dial tcp 192.168.65.254:3000: connect: connection refused`. MCP server relaunched at 20:06:42Z and health confirmed. c55 recovery cycle executed with full success. Bug-escalation signal resolved.
 
 ## c53 · 2026-06-05T16:02:00Z (offhours, slot=news-scout-offhours)
 
