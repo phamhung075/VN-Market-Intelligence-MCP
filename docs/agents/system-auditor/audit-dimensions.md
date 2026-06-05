@@ -50,7 +50,7 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 
 | Check | Description | Pass condition |
 |-------|-------------|---------------|
-| D4-R1 | `task_list_held(kind="sprint-task")` MCP call | Tool responds (empty or populated); empty AND `orch-state.json .head.active_task_id` non-null → alert |
+| D4-R1 | `task_list_held(kind="sprint-task", expired=false)` MCP call | Tool responds (empty or populated); empty AND `orch-state.json .head.active_task_id` non-null → alert |
 | D4-R2 | orch-state.json `.head` cross-check | `.head.active_task_id` matches the held lock task_id (or both null) |
 | D4-R3 | `.task_board` owner/status cross-check | For each held lock: task_board entry exists, owner matches `task_locks.owner_agent`, status = `IN_PROGRESS` |
 | D4-R4 | git log concurrent-commit detection | No two commits to `docs/data/orch/orch-state.json` land within a 30-second window |

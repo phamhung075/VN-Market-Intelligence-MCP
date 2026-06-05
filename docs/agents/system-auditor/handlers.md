@@ -2,7 +2,7 @@
 
 # System Auditor — Handler Reference
 
-<!-- size-justification: ~100L — handler reference with one operational section per audit category; tightly coupled trigger/step/emit triples. -->
+<!-- size-justification: ~102L — handler reference with one operational section per audit category; tightly coupled trigger/step/emit triples. +2L: expired:false filter + rationale line in Step R-1 (D4 false-positive fix). -->
 
 ---
 
@@ -24,9 +24,11 @@ Daily 03:00Z cron tick (off-peak; after `bctcReparseJob` at 02:30Z). Runs as par
 result = mcp__claude_ai_gateway__call_tool({
   server: "vn-market",
   tool: "task_list_held",
-  arguments: { kind: "sprint-task" }
+  arguments: { kind: "sprint-task", expired: false }
 })
 ```
+
+> `expired: false` is REQUIRED — task_list_held returns TTL-expired tombstone locks by default; without this filter D4 reads ~100+ dead locks as held and emits dozens of false-positive divergences per run.
 
 If `result` is empty list AND `docs/data/orch/orch-state.json` `.head.active_task_id` is non-null → **emit signal_queue alert** (AC-4):
 ```
