@@ -2,8 +2,13 @@
 package application
 
 import (
+	"errors"
+
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/domain"
 )
+
+// ErrNotImplemented is returned when a use case is not yet wired to real implementation.
+var ErrNotImplemented = errors.New("kinh-dich ReadingUseCase not implemented — wire reading_composer.ComposeReading before use")
 
 // ReadingUseCase orchestrates the reading flow.
 type ReadingUseCase struct {
@@ -18,19 +23,8 @@ func NewReadingUseCase(svc *domain.ReadingService) *ReadingUseCase {
 }
 
 // Execute performs the reading use case.
-// Stub implementation - will be wired to reading_composer module in B-bucket tasks.
+// Returns ErrNotImplemented until wired to reading_composer.ComposeReading().
+// This fail-loud behavior prevents silent fabrication of fake readings.
 func (uc *ReadingUseCase) Execute(req ReadingRequest) (*ReadingResponse, error) {
-	// Stub: return a placeholder response
-	// Real implementation will call reading_composer.ComposeReading()
-	return &ReadingResponse{
-		Stock:          req.StockCode,
-		Hexagram:       1,
-		Name:           "Stub",
-		Trend:          "TRUNG TINH",
-		Signal:         "GIU",
-		Confidence:     0.5,
-		ActionNote:     "Stub implementation",
-		OverallReading: "Stub implementation - pending B-bucket primitive wiring",
-		Timestamp:      "",
-	}, nil
+	return nil, ErrNotImplemented
 }
