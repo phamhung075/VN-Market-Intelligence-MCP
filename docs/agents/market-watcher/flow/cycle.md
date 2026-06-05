@@ -1,4 +1,4 @@
-<!-- size-justification: 177L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update). -->
+<!-- size-justification: 188L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update); offhours threshold floor added (FIX-MW-OFFHOURS-DISPATCH, prepost-equivalent easing floor for 00Z/04Z/weekend fires). -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -39,6 +39,14 @@ if mode=prepost:
   volume_multiplier  = max(volume_multiplier, 2.5x) # suppress illiquid-hour noise
 ```
 Rationale: pre/post-market liquidity is thin; regime thresholds as low as 1.5σ/1.5x would over-fire on unchanged EOD prices. The floor lifts both parameters to the EASING-equivalent level regardless of regime. Off-hours duplicate guard (Step 4, AutoCure 2026-05-14 TNB c47) continues to suppress same-closing-price re-emissions independently.
+
+Offhours floor (apply after regime block, no tool call):
+```
+if mode=offhours:
+  sigma_threshold    = max(sigma_threshold, 2.5)   # prepost-equivalent floor — overnight/weekend prices unchanged
+  volume_multiplier  = max(volume_multiplier, 2.5x) # prepost-equivalent floor — overnight/weekend prices unchanged
+```
+Rationale: off-hours fires (00:00Z, 04:00Z, weekends) scan unchanged EOD prices; same easing-equivalent floor as prepost prevents over-firing on stale data. Step 4 AutoCure c47 duplicate guard remains the primary suppression gate — the threshold floor is a secondary defence so that even sweep-forced tickers require a genuine ≥2.5σ move to emit a new signal.
 
 ## Step 0-sweep — load coverage state + build sweep list
 
