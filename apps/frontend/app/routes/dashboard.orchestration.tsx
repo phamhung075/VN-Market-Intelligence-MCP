@@ -47,6 +47,23 @@ const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000;
 // Domain types — matched to ACTUAL DTO shape from GET /api/orchestration
 // ---------------------------------------------------------------------------
 
+// F3: Decision Journal types — mirrors F2 DTO contract (journalStore.ts StepDto / DecisionsDto)
+interface StepDto {
+  step_id: string;
+  agent_id: string;
+  timestamp: string;
+  task_id: string | null;
+  what_done: string;
+  what_considered: string[];
+  why_decision: string;
+  why_change: string;
+}
+
+interface DecisionsDto {
+  by_task: Record<string, StepDto[]>;
+  sprint_bucket: Record<string, StepDto[]>;
+}
+
 type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE" | string;
 
 interface TaskRow {
@@ -119,6 +136,8 @@ interface OrchState {
   task_board: TaskBoard;
   signal_queue?: SignalQueue;
   sprint_goal?: SprintGoal;
+  /** F3: decision journal entries keyed by task_id or sprint_id — optional for backward-compat */
+  decisions?: DecisionsDto;
 }
 
 // ---------------------------------------------------------------------------
@@ -301,8 +320,17 @@ function HeadPanel({ head }: { head: Head }) {
  *   task_board.counts — { done, in_progress, backlog }
  *
  * Guards: tasks ?? [] so a missing/empty field renders empty state, no throw.
+ * F3: accepts decisions + sprintId and threads them to DoneTaskGroup.
  */
-function TaskBoardPanel({ board }: { board: TaskBoard }) {
+function TaskBoardPanel({
+  board,
+  decisions,
+  sprintId,
+}: {
+  board: TaskBoard;
+  decisions?: DecisionsDto;
+  sprintId?: string;
+}) {
   const tasks = board.tasks ?? [];
   const counts = board.counts ?? { done: 0, in_progress: 0, backlog: 0 };
 
@@ -342,9 +370,10 @@ function TaskBoardPanel({ board }: { board: TaskBoard }) {
         <TaskGroup label="Backlog / TODO" tasks={todo} />
       )}
 
-      {/* Done tasks — collapsible; shows last 10 by default, full list on expand */}
+      {/* Done tasks — collapsible; shows last 10 by default, full list on expand.
+          F3: threads decisions + sprintId for accordion drilldown. */}
       {done.length > 0 && (
-        <DoneTaskGroup tasks={done} />
+        <DoneTaskGroup tasks={done} decisions={decisions} sprintId={sprintId} />
       )}
     </div>
   );
@@ -397,20 +426,151 @@ function TaskGroup({ label, tasks }: { label: string; tasks: TaskRow[] }) {
 }
 
 /**
+ * StepCard — renders a single decision-journal StepDto entry.
+ * F3: AC-F3-9. No dangerouslySetInnerHTML (AC-F3-12).
+ */
+function StepCard({ step }: { step: StepDto }) {
+  return (
+    <div
+      className="border-l-2 border-slate-600 pl-3 pb-1"
+      style={{ overflowWrap: "break-word" }}
+    >
+      {/* Header: step_id · agent_id */}
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <span className="font-mono text-xs font-semibold text-slate-200">
+          {step.step_id}
+        </span>
+        <span className="text-slate-600">·</span>
+        <span className="text-xs text-slate-400">{step.agent_id}</span>
+        <span className="text-slate-600">·</span>
+        <ClientTimestamp iso={step.timestamp} className="text-xs text-slate-500" />
+      </div>
+
+      {/* what_done */}
+      <div className="mb-1 text-xs">
+        <span className="font-medium text-slate-400">What was done: </span>
+        <span className="text-slate-300">{step.what_done}</span>
+      </div>
+
+      {/* what_considered — bullet list */}
+      {step.what_considered.length > 0 && (
+        <div className="mb-1 text-xs">
+          <span className="font-medium text-slate-400">What was considered:</span>
+          <ul className="mt-0.5 space-y-0.5 pl-4">
+            {step.what_considered.map((item, idx) => (
+              <li key={idx} className="flex gap-1.5 text-slate-400">
+                <span className="flex-shrink-0 text-slate-600">•</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* why_decision */}
+      <div className="mb-1 text-xs">
+        <span className="font-medium text-slate-400">Why this decision: </span>
+        <span className="text-slate-300">{step.why_decision}</span>
+      </div>
+
+      {/* why_change */}
+      <div className="text-xs">
+        <span className="font-medium text-slate-400">Why it changed: </span>
+        <span className="text-slate-300">{step.why_change}</span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * DecisionAccordion — renders STEP entries for a DONE task.
+ *
+ * Priority: by_task[taskId] > sprint_bucket[sprintId] > empty-state.
+ * F3: AC-F3-6, AC-F3-7, AC-F3-8. No dangerouslySetInnerHTML (AC-F3-12).
+ */
+function DecisionAccordion({
+  taskId,
+  sprintId,
+  decisions,
+}: {
+  taskId: string;
+  sprintId?: string;
+  decisions?: DecisionsDto;
+}) {
+  const taskSteps = decisions?.by_task[taskId] ?? [];
+  const sprintSteps = (sprintId ? decisions?.sprint_bucket[sprintId] : undefined) ?? [];
+
+  const sortByTime = (steps: StepDto[]) =>
+    [...steps].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+  return (
+    <div
+      className="border-t border-slate-700 bg-slate-900 px-4 py-3"
+      style={{ maxWidth: "90vw", overflowWrap: "break-word" }}
+      data-testid={`decision-accordion-${taskId}`}
+    >
+      {taskSteps.length === 0 && sprintSteps.length === 0 ? (
+        <p className="text-xs text-slate-500 italic">No decisions recorded for this task.</p>
+      ) : taskSteps.length > 0 ? (
+        <div className="space-y-3">
+          {sortByTime(taskSteps).map((step) => (
+            <StepCard key={step.step_id} step={step} />
+          ))}
+        </div>
+      ) : (
+        <div>
+          <p className="mb-2 text-xs font-medium text-slate-500">
+            Sprint-level decisions (no task-id assigned)
+          </p>
+          <div className="space-y-3">
+            {sortByTime(sprintSteps).map((step) => (
+              <StepCard key={step.step_id} step={step} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * DoneTaskGroup — collapsible Done section.
  *
  * Default: collapsed, showing the PREVIEW_COUNT most-recent done tasks (last N).
  * Toggle: "Show all N" / "Show less" expands/collapses the full list inside a
  * max-height scroll container so 100+ rows don't blow out the page.
+ *
+ * F3: each DONE task row is independently clickable; opens a DecisionAccordion
+ * showing its StepDto entries. Multi-open: Set<string> of open task IDs (RULING-5).
  */
 const DONE_PREVIEW_COUNT = 10;
 
-function DoneTaskGroup({ tasks }: { tasks: TaskRow[] }) {
+function DoneTaskGroup({
+  tasks,
+  decisions,
+  sprintId,
+}: {
+  tasks: TaskRow[];
+  decisions?: DecisionsDto;
+  sprintId?: string;
+}) {
   const [expanded, setExpanded] = useState(false);
+  // F3 AC-F3-4: multi-open accordion state — Set of open task IDs
+  const [openTaskIds, setOpenTaskIds] = useState<Set<string>>(new Set());
 
   const previewTasks = tasks.slice(-DONE_PREVIEW_COUNT);
   const visibleTasks = expanded ? tasks : previewTasks;
   const hasMore = tasks.length > DONE_PREVIEW_COUNT;
+
+  // F3 AC-F3-4: toggle a task's accordion open/close independently
+  const toggle = (id: string) =>
+    setOpenTaskIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   return (
     <div>
@@ -436,45 +596,72 @@ function DoneTaskGroup({ tasks }: { tasks: TaskRow[] }) {
           </button>
         )}
       </div>
-      <div
-        className={`overflow-hidden rounded border border-slate-700 ${
-          expanded ? "overflow-y-auto max-h-[32rem]" : ""
-        }`}
-      >
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-slate-700 bg-slate-900">
-              <th className="px-3 py-2 text-left font-medium text-slate-400">ID</th>
-              <th className="px-3 py-2 text-left font-medium text-slate-400">Title</th>
-              <th className="px-3 py-2 text-left font-medium text-slate-400">Owner</th>
-              <th className="px-3 py-2 text-left font-medium text-slate-400">Status</th>
-              <th className="px-3 py-2 text-left font-medium text-slate-400">Zone</th>
-            </tr>
-          </thead>
-          <tbody data-testid="done-task-rows">
-            {visibleTasks.map((task, idx) => (
-              <tr
-                key={task.id}
-                className={`border-b border-slate-700 last:border-0 ${
-                  idx % 2 === 0 ? "bg-slate-800" : "bg-slate-850"
-                }`}
-              >
-                <td className="px-3 py-2 font-mono text-slate-300">{task.id}</td>
-                <td className="px-3 py-2 text-slate-200">
-                  {task.title}
-                  {task.note && (
-                    <p className="mt-0.5 text-slate-500 italic">{task.note}</p>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-slate-400">{task.owner ?? "—"}</td>
-                <td className={`px-3 py-2 font-semibold ${taskStatusClasses(task.status)}`}>
-                  {task.status}
-                </td>
-                <td className="px-3 py-2 text-slate-500">{task.zone ?? "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* F3: table replaced by div-based layout to allow accordion rows between task rows */}
+      <div className="overflow-hidden rounded border border-slate-700">
+        {/* Header row */}
+        <div className="grid grid-cols-[minmax(80px,auto)_1fr_minmax(60px,auto)_minmax(80px,auto)_minmax(60px,auto)_24px] border-b border-slate-700 bg-slate-900 text-xs">
+          <div className="px-3 py-2 font-medium text-slate-400">ID</div>
+          <div className="px-3 py-2 font-medium text-slate-400">Title</div>
+          <div className="px-3 py-2 font-medium text-slate-400">Owner</div>
+          <div className="px-3 py-2 font-medium text-slate-400">Status</div>
+          <div className="px-3 py-2 font-medium text-slate-400">Zone</div>
+          <div className="px-3 py-2" aria-hidden="true" />
+        </div>
+        {/* Task rows — each DONE row is clickable and may expand accordion below it */}
+        <div data-testid="done-task-rows">
+          {visibleTasks.map((task, idx) => {
+            const isOpen = openTaskIds.has(task.id);
+            const rowBase =
+              idx % 2 === 0 ? "bg-slate-800" : "bg-slate-850";
+            return (
+              <div key={task.id}>
+                {/* F3 AC-F3-3, AC-F3-10, AC-F3-11: clickable DONE row */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isOpen}
+                  onClick={() => toggle(task.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggle(task.id);
+                    }
+                  }}
+                  className={`grid grid-cols-[minmax(80px,auto)_1fr_minmax(60px,auto)_minmax(80px,auto)_minmax(60px,auto)_24px] border-b border-slate-700 last:border-0 text-xs cursor-pointer hover:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-blue-500 transition-colors ${rowBase}`}
+                >
+                  <div className="px-3 py-2 font-mono text-slate-300">{task.id}</div>
+                  <div className="px-3 py-2 text-slate-200">
+                    {task.title}
+                    {task.note && (
+                      <p className="mt-0.5 text-slate-500 italic">{task.note}</p>
+                    )}
+                  </div>
+                  <div className="px-3 py-2 text-slate-400">{task.owner ?? "—"}</div>
+                  <div className={`px-3 py-2 font-semibold ${taskStatusClasses(task.status)}`}>
+                    {task.status}
+                  </div>
+                  <div className="px-3 py-2 text-slate-500">{task.zone ?? "—"}</div>
+                  {/* F3 AC-F3-10: chevron indicator — rotated when open */}
+                  <div className="flex items-center justify-center pr-2" aria-hidden="true">
+                    <span
+                      className={`inline-block transition-transform duration-200 text-slate-500 ${isOpen ? "" : "-rotate-180"}`}
+                    >
+                      ▾
+                    </span>
+                  </div>
+                </div>
+                {/* F3 AC-F3-5: accordion panel — conditionally rendered */}
+                {isOpen && (
+                  <DecisionAccordion
+                    taskId={task.id}
+                    sprintId={sprintId}
+                    decisions={decisions}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
       {!expanded && hasMore && (
         <p className="mt-1 text-xs text-slate-600">
@@ -730,7 +917,12 @@ export default function OrchestrationDashboard() {
           <Section title="Head">{<HeadPanel head={state.head} />}</Section>
 
           <Section title="Task Board">
-            <TaskBoardPanel board={state.task_board} />
+            {/* F3 AC-F3-13: thread sprintId + decisions from state into TaskBoardPanel */}
+            <TaskBoardPanel
+              board={state.task_board}
+              decisions={state.decisions}
+              sprintId={state.sprint_goal?.sprint_id}
+            />
           </Section>
 
           <Section title="Signal Queue">
