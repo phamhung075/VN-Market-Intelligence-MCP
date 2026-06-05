@@ -20,6 +20,8 @@ services:
     - ./docs/data/bctc-eval-thresholds.json:/app/docs/data/bctc-eval-thresholds.json:ro
     - ./docs/data/daily-dashboard.json:/app/docs/data/daily-dashboard.json
     - ./docs/data/orch:/app/docs/data/orch
+    - ./docs/data/pressure-state.json:/app/docs/data/pressure-state.json
+    - ./docs/signals:/app/docs/signals
     - /Users/admin/.ssh/id_rsa:/run/secrets/vps_ssh_key:ro
     - bctc-page-images:/data/bctc-page-images
     environment:
