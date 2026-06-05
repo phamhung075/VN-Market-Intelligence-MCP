@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Tick 2026-06-05T10:09Z (off-market): FU-LEADER-LOCK-OWNER-SESSION DONE+LIVE end-to-end. PO raw-disposition re-typed the filed P2 FIX -> SPIKE (its stated mechanism contradicted code; SERVER_SESSION_ID is process-stable) under recurring-bug escalation (4th leader-lock touch). Architect spike PROVED VERDICT A: mcp-server restart (FDA-1 deploy 08:11:38Z) orphaned the 08:00:44Z cowork-leader lock -> new SERVER_SESSION_ID can't heartbeat old row -> false PEER-HELD. Shipped BOTH layers live: mcp-server 1b058f40 (task_force_release_orphan, heartbeat_age>600 gate, dup-spawn-safe; rebuilt 10:30Z, probe-confirmed) + cowork-flow d88045c1 (leader-lock.md Step 0b orphan-recovery). OPERATOR ACTION PENDING: paste the Cowork-refresh prompt so running cowork agents adopt the new Step 0b. Remaining backlog: FU-PRESSURE-EMIT-DARK (P3), FDA-4..10 (P3), FU-LOCKSTORE-EXPIRED-GC (P3, kin — tombstone GC). Next tick: PO pick next ready, or P3 grooming batch.",
+    "next_action": "Tick 2026-06-05T11:09Z (off-market). Bookkeeping: 0 signal files, signal_queue all terminal. GROOMED 33 stranded DONE rows backlog->done (board honest: 57->24). PO triage (raw-verify): closed BCTC-CURRENT-404-INVESTIGATE RESOLVED-BY-SSL-FIX (live list_stored_pdfs showed CTG_2026_Q1.pdf landed 2026-06-01 on the HNX-SSL -k fix date; Q1-2026 PDFs now present 6 tickers -> the 10/10 404 storm WAS the owa.hnx.vn TLS bug, self-healed) commit 00d9f22d; kept BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA/ops (genuine pre-Q4-2025 VPS-cache gap, not dev-code). EXECUTED WIP<=2 FAKE-DATA-AUDIT debt batch in the quiet window: FDA-4 DONE+LIVE (macro /macro-calendar honest-unavailable, hardcoded events killed; 181bdc60; macro-indicators rebuilt 11:24Z; router-raw-verified live) + FDA-8 DONE (kinh-dich Execute fail-loud not-implemented, fabricated stub landmine removed; 5cc96f75; unwired=no rebuild). Deferred FDA-5/6/7/9 (banner+is_estimate+tier4 guarded) + FDA-10 (cosmetic) per PO. Remaining open backlog ~21: BCTC-HIST-VPS-BACKFILL (high,ops/infra), BCTC-* medium DEFERRED, FU-RAG-DEPLOY-MEMORY (ops host-mem decision), P3 tail (FU-PRESSURE-EMIT-DARK, FU-LOCKSTORE-EXPIRED-GC, FU-CNYVND-DEAD-FIELD-REMOVE, FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-AUDITOR-D4-SIGNAL-ID, FU-RUNTIME-SET-TRUTH-RECONCILE, FU-SBV-EFFECTIVE-DATE-COLUMN). Next tick: PO pick next P3 debt batch or idle. Operator Cowork-refresh paste for leader-lock.md (d88045c1) STILL PENDING from 10:09Z tick.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T10:35:31.373260+00:00",
+    "updated_at": "2026-06-05T11:26:02.711809+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T11:11:51.348078+00:00",
+    "_updated_at": "2026-06-05T11:26:02.711809+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2347,23 +2347,6 @@
         "depends_on": null
       },
       {
-        "task_id": "FDA-4",
-        "title": "/macro-calendar returns 2 hardcoded events + frozen fetchedAt with no provenance flag (no live consumer yet)",
-        "type": "FIX",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "size": "S",
-        "zone": "apps/macro-indicators",
-        "files": [
-          "apps/macro-indicators/pkg/interface/http/handlers_calendar.go"
-        ],
-        "severity": "MED",
-        "note": "handlers_calendar.go:25 GET /macro-calendar (mounted live in router.go:42) returns two hardcoded macro-event rows (US Core PCE / VN Industrial Output) with a frozen fetchedAt='2026-05-23T18:52:00Z' and NO is_estimate/source_tier. Header comment self-labels 'Per OQ-10: fixture only' but the RESPONSE does not — a consumer cannot distinguish it from live. Mitigated: zero TS/MCP callers consume /macro-calendar today, but the endpoint is publicly mounted and self-presents as real. FIX: return 501/empty with status:'unavailable' until a real source is wired, OR stamp is_estimate=true+source_tier=4 on the response. Verified raw 2026-06-05.",
-        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
-        "depends_on": null
-      },
-      {
         "task_id": "FDA-5",
         "title": "energyTools serves 4 hardcoded grid figures (40/22/45/85) — guarded by banner but figures sit in unstructured VN text",
         "type": "FIX",
@@ -2411,23 +2394,6 @@
         ],
         "severity": "LOW",
         "note": "macroTools.ts:491 `fetchedAt ?? new Date().toISOString()` — get_macro_snapshot is a thin HTTP proxy to Go macro-indicators:5004; if the Go response omits fetchedAt (older build) it fresh-stamps now, making a stale snapshot look freshly fetched. macroTools.ts:483 `source_tier ?? 2` defaults tier optimistically when upstream omits it. Live Go build supplies both; documented last-resort smells, not active fabrications. FIX: prefer null fetchedAt (fail-loud on missing provenance) over re-stamping now; default source_tier conservatively (unknown/4) rather than 2 when upstream omits it.",
-        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
-        "depends_on": null
-      },
-      {
-        "task_id": "FDA-8",
-        "title": "kinh-dich ReadingUseCase.Execute() returns a fabricated stub reading — unwired today, latent landmine",
-        "type": "CLEAN",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "size": "S",
-        "zone": "apps/kinh-dich-service",
-        "files": [
-          "apps/kinh-dich-service/pkg/application/usecases.go"
-        ],
-        "severity": "LOW",
-        "note": "usecases.go:22 ReadingUseCase.Execute() returns a fully fabricated reading (Hexagram=1, Name='Stub', Confidence=0.5, Signal='GIU', ActionNote='Stub implementation') with no estimate flag. NOT a live serve path today: router.go wires NO route to this use case (every real /reading,/market,/backtest returns HTTP 501). Latent risk: the moment a task wires Execute() to a route it serves a fabricated reading as real. FIX: delete the stub or return an explicit not-implemented error; when wired, route through reading_composer.ComposeReading() (the real deterministic path), never the literal struct.",
         "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
         "depends_on": null
       },
@@ -3246,6 +3212,52 @@
         "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin",
         "disposition": "RESOLVED-BY-SSL-FIX (PO router raw-verify 2026-06-05T11:15Z): the 10/10 current-season Q1-2026 bctcPdfPull 404 storm was the owa.hnx.vn incomplete-TLS-chain bug (curl exit 60 -> http 000/404), fixed by e22427aa (-k on HNX curl) 2026-06-01. LIVE PROOF: list_stored_pdfs most-recent = 2026-06-01 CTG_2026_Q1.pdf (a Q1-2026 PDF landed ON the fix date); Q1-2026 PDFs present for ACB/GAS/EIB/DHG/FPT/CTG; get_bctc_full FPT serves 2026-Q1 refined. Current-season fetch self-healed. Distinct from BCTC-HIST-VPS-BACKFILL (pre-Q4-2025 cache gap, stays DEFERRED-INFRA/ops).",
         "resolved_at": "2026-06-05T11:16:27Z"
+      },
+      {
+        "task_id": "FDA-4",
+        "title": "/macro-calendar returns 2 hardcoded events + frozen fetchedAt with no provenance flag (no live consumer yet)",
+        "type": "FIX",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/macro-indicators",
+        "files": [
+          "apps/macro-indicators/pkg/interface/http/handlers_calendar.go"
+        ],
+        "severity": "MED",
+        "note": "handlers_calendar.go:25 GET /macro-calendar (mounted live in router.go:42) returns two hardcoded macro-event rows (US Core PCE / VN Industrial Output) with a frozen fetchedAt='2026-05-23T18:52:00Z' and NO is_estimate/source_tier. Header comment self-labels 'Per OQ-10: fixture only' but the RESPONSE does not — a consumer cannot distinguish it from live. Mitigated: zero TS/MCP callers consume /macro-calendar today, but the endpoint is publicly mounted and self-presents as real. FIX: return 501/empty with status:'unavailable' until a real source is wired, OR stamp is_estimate=true+source_tier=4 on the response. Verified raw 2026-06-05.",
+        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
+        "depends_on": null,
+        "resolution": "DONE+LIVE 2026-06-05T11:25Z. macro-indicators /macro-calendar stopped serving 2 hardcoded events (US Core PCE / VN Industrial Output) w/ frozen fetchedAt=2026-05-23T18:52Z + no provenance. Now returns honest {events:[],status:unavailable,is_estimate:true,source_tier:4}; fetchedAt OMITTED (no now()-stamp on empty -> avoids DSI fixture-as-live anti-pattern). Live consumer mcp-server get_macro_calendar (carryTools.ts pass-through) envelope shape preserved. commit 181bdc60 (handlers_calendar.go + router_test.go w/ NEGATIVE GUARD asserting the 2 events + frozen ts never reappear). go build + 12 pkgs green. ops rebuilt macro-indicators image 11:24:03Z (--no-deps, only that container recreated; other 6 services untouched, 0 die events). ROUTER RAW-VERIFIED LIVE: my own curl :5004/macro-calendar + MCP get_macro_calendar both honest-unavailable, fabrication negative-guard clean. Highest-harm FAKE-DATA-AUDIT item cleared.",
+        "resolved_by": "dev-team",
+        "resolved_at": "2026-06-05T11:26:02.711809+00:00",
+        "deploy_commits": [
+          "181bdc60"
+        ]
+      },
+      {
+        "task_id": "FDA-8",
+        "title": "kinh-dich ReadingUseCase.Execute() returns a fabricated stub reading — unwired today, latent landmine",
+        "type": "CLEAN",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "DONE",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/kinh-dich-service",
+        "files": [
+          "apps/kinh-dich-service/pkg/application/usecases.go"
+        ],
+        "severity": "LOW",
+        "note": "usecases.go:22 ReadingUseCase.Execute() returns a fully fabricated reading (Hexagram=1, Name='Stub', Confidence=0.5, Signal='GIU', ActionNote='Stub implementation') with no estimate flag. NOT a live serve path today: router.go wires NO route to this use case (every real /reading,/market,/backtest returns HTTP 501). Latent risk: the moment a task wires Execute() to a route it serves a fabricated reading as real. FIX: delete the stub or return an explicit not-implemented error; when wired, route through reading_composer.ComposeReading() (the real deterministic path), never the literal struct.",
+        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
+        "depends_on": null,
+        "resolution": "DONE 2026-06-05T11:20Z (code-fixed, no rebuild — zero live delta). kinh-dich ReadingUseCase.Execute() fabricated stub (Hexagram=1/Name=Stub/Confidence=0.5/Signal=GIU/ActionNote=Stub) replaced w/ fail-loud `return nil, ErrNotImplemented` so any future route-wiring fails LOUD instead of silently serving a fake reading. commit 5cc96f75 (usecases.go ONLY). NOT a live serve path: every kinh-dich route returns 501, Execute() unwired (grep confirmed no live caller outside _deprecated/+tests) -> ZERO live-behavior change -> NO rebuild needed; the deployed image's old stub is unwired/harmless and syncs on the next kinh-dich rebuild for any reason. go build + tests green. Router raw-verified commit (only usecases.go, stub fabrication gone, fail-loud present, no .env). Latent fixture-as-live landmine removed.",
+        "resolved_by": "dev-team",
+        "resolved_at": "2026-06-05T11:26:02.711809+00:00",
+        "deploy_commits": [
+          "5cc96f75"
+        ]
       }
     ],
     "in_progress": []
