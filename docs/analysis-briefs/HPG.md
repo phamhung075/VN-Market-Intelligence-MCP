@@ -12,3 +12,4 @@
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-12 16:00 | Close: 26,900 VND | RSI: N/A | Vol: 19.17M (165% avg) | YoY: N/A
 2026-05-14 16:00 | Close: 27,050 VND | RSI: N/A(16c) | Vol: 1.40M (N/A% avg) | YoY: N/A
+2026-06-05 16:05 | Close: 23.750 VND | Daily: -0.84% | Sentiment: BEARISH (leadership share sale 6.6M shares at multi-year lows; insider sell signal) | Insider: INSIDER_SELL | Brief action: Reduce — insider sell signal contradicts Q1 bullish thesis | Regime: NEUTRAL

@@ -1,0 +1,36 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T16:02:04Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "acquired_stolen",
+    "note": "3 slots matched at 16:00Z; market-watcher in BOTH offhours(0 */4) and eod(0 16 *1-5, Fri) — DEDUPED to one market-watcher spawn under eod context to avoid notebook-overwrite race + duplicate alerts (collision-guard R3 WARNING-only). All 3 slot tokens claimed+released; last_fired written for all 3. Spawned news-scout a2f42c21 + market-watcher a67707aa bg. Leader stolen=true (15:00Z lock TTL expired)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T16:02:04Z"
+}
