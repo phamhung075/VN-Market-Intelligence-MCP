@@ -1,11 +1,12 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-04 | **Sprint:** DATA-SERVE-INTEGRITY
+**Last updated:** 2026-06-05 | **Sprint:** FE-HEADER-SSOT
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
 
+2026-06-05 — FE-HEADER-SSOT DONE commit 619093e1. PageHeader SSOT component; 8 pages migrated (0 raw h1 in routes); dashboard layout w-full centering. 320/320 Vitest GREEN (+7). tsc clean. NEEDS REBUILD: frontend.
 2026-06-04 — DSI-S1-FE-TYPE DONE commit b16d6a89. StockQuote.change→number|null; added changePercent:number|null, staleness/isEstimate/fetchedAt. MacroSnapshot+MacroSignalEntry provenance fields. 303/303 Vitest GREEN (+8 new). tsc exit 0. NEEDS REBUILD: frontend.
 2026-06-02 — FOU-3-FE DONE commit b5e92ee8. 2-axis Service Health (container × capability). 295/295 GREEN (+31). NEEDS REBUILD.
 2026-06-02 — ORCH-DASH-LIVE DONE commit 8c30334a. Live auto-refresh /dashboard/orchestration. tsc clean. NEEDS REBUILD.
@@ -170,6 +171,22 @@ Zone health: 295/295 Vitest GREEN (+31 new), tsc clean | HEALTHY
 - Anti-false-green invariant: `composeRowDisplayState("down", any) === "deployed_down"` — verified by 4 explicit tests.
 - Verify: 295/295 Vitest GREEN. tsc --noEmit exit 0. Commit: b5e92ee8.
 - NEEDS REBUILD: frontend (ops) + api-gateway (ops, FOU-3-GW already done). Both rebuilds required before operator can see live capability badges.
+
+## Cycle FE-HEADER-SSOT — 2026-06-05 (shared PageHeader + centering)
+
+Zone health: 320/320 Vitest GREEN (+7 new), tsc clean, 12 files changed | HEALTHY
+
+- Task: FE-HEADER-SSOT — create PageHeader SSOT component; eliminate per-page raw h1; full-viewport centering.
+- Component created: app/components/PageHeader.tsx — props: title(required), subtitle?(optional), actions?(ReactNode, right-aligned).
+- Routes migrated (8 pages): analysis, vps, services, fetch, db, orchestration, bctc-eval._index, bctc-eval.$reportId, _index.
+- Dashboard layout: `<main>` changed from `p-6` to `min-h-[calc(100vh-3.5rem)] w-full p-6` + inner `mx-auto w-full max-w-screen-xl` centering container.
+- _index.tsx: `main` changed to `flex min-h-[calc(100vh-3.5rem)] w-full flex-col items-center justify-center`.
+- All route containers changed from `max-w-*` constraining wrappers to `w-full` (centering now owned by dashboard.tsx layout).
+- Per-page actions slots: orchestration gets stale+LIVE+timestamp; services gets StatusBadge+deployed-count; bctc-eval-detail gets StatusBadge+PEK badge+RecomputeHeader; others get timestamp only.
+- Test: FE-HEADER-SSOT-page-header.test.tsx — 7 assertions (h1 role, CSS classes, subtitle present/absent, actions present/absent, subtitle+actions together).
+- Key decision: centering via `max-w-screen-xl mx-auto` in layout container — consistent across all pages, avoids per-page max-w inconsistency (analysis was max-w-6xl, vps/services max-w-4xl, db/fetch max-w-5xl — all now unified).
+- Commit: 619093e1.
+- NEEDS REBUILD: frontend (ops to dispatch).
 
 ## Carry-over (next session)
 
