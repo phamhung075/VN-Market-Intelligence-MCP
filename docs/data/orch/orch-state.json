@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Maintenance tick 2026-06-05T23:09Z: drained 2 context-bloat signals (architect.md 213L→72L prune, commit 8b59189d). No new P0-P2. Open P3 backlog for next PO triage: FU-MACRO-SNAPSHOT-TEST-1881A, FU-CNYVND-DEAD-FIELD-REMOVE, FU-SBV-EFFECTIVE-DATE-COLUMN, FU-RUNTIME-SET-TRUTH-RECONCILE.",
+    "next_action": "FU-MACRO-SNAPSHOT-TEST-1881A DONE (260655e3, commit+test-verified, live-pending next mcp-server rebuild). Open P3: FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-CNYVND-DEAD-FIELD-REMOVE (needs SQLite migration — gated cycle), FU-SBV-EFFECTIVE-DATE-COLUMN, FU-RUNTIME-SET-TRUTH-RECONCILE.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T23:13:06Z",
+    "updated_at": "2026-06-05T00:21:18Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T22:51:44Z",
+    "_updated_at": "2026-06-05T00:21:18Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,7 +2622,7 @@
         "title": "ARCHITECT root-cause + formal DATA-SERVE-INTEGRITY invariant (cross-zone structural rule)",
         "type": "SPRINT-L",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "size": "L",
         "priority": "P0",
         "zone": "multi",
@@ -2630,7 +2630,8 @@
         "recurring": true,
         "escalate_architect": true,
         "depends": null,
-        "note": "ARCHITECT LEADS. Recurring-bug policy (>=2 fix cycles DPI-2b->DPI-FU-A->this) => root-cause rethink BEFORE point fixes. Produce brief docs/architecture-briefs/2026-06-04-data-serve-integrity.md formalizing the 6 STRUCTURAL acceptance criteria into ONE fleet-wide invariant + per-zone split. ROUTER-VERIFIED audit (3 Explore agents + router sed/grep) — do NOT re-discover. ANTI-PATTERN: code fails-soft to a hardcoded fixture/zero/last-value, stamps fetched_at=now, drops the staleness/estimate flag => fabricated served as live. INVARIANT: (AC1) no served value may be a hardcoded substitute presented as live — fallback EITHER fail-loud OR carry a source/freshness label propagating fetcher->DB->tool->frontend-type->render; (AC2) every macro/price/financial value exposes per-field source_tier + true-source fetched_at (NOT re-stamped now) + is_estimate/staleness, dataSource=live ONLY when ALL fresh, frontend TS types must NOT drop these fields; (AC3) fedFunds + SBV deposit live (FRED/real SBV) fail-loud on miss, carry/regime => POSITIVE ~+1.4pp not FII_OUTFLOW_RISK; (AC4) fix macroIndicatorSla VN/vietnam key mismatch so guard fires + alerts WORK (detection net — FIRST); (AC5) stock-price propagate Staleness through FetchPriceResponse, Tier3 no re-stamp + mark change unavailable not 0; (AC6) ops REBUILDS each touched container, QA raw-verifies live. Split & hand to BA-DSI, then zone devs."
+        "note": "ARCHITECT LEADS. Recurring-bug policy (>=2 fix cycles DPI-2b->DPI-FU-A->this) => root-cause rethink BEFORE point fixes. Produce brief docs/architecture-briefs/2026-06-04-data-serve-integrity.md formalizing the 6 STRUCTURAL acceptance criteria into ONE fleet-wide invariant + per-zone split. ROUTER-VERIFIED audit (3 Explore agents + router sed/grep) — do NOT re-discover. ANTI-PATTERN: code fails-soft to a hardcoded fixture/zero/last-value, stamps fetched_at=now, drops the staleness/estimate flag => fabricated served as live. INVARIANT: (AC1) no served value may be a hardcoded substitute presented as live — fallback EITHER fail-loud OR carry a source/freshness label propagating fetcher->DB->tool->frontend-type->render; (AC2) every macro/price/financial value exposes per-field source_tier + true-source fetched_at (NOT re-stamped now) + is_estimate/staleness, dataSource=live ONLY when ALL fresh, frontend TS types must NOT drop these fields; (AC3) fedFunds + SBV deposit live (FRED/real SBV) fail-loud on miss, carry/regime => POSITIVE ~+1.4pp not FII_OUTFLOW_RISK; (AC4) fix macroIndicatorSla VN/vietnam key mismatch so guard fires + alerts WORK (detection net — FIRST); (AC5) stock-price propagate Staleness through FetchPriceResponse, Tier3 no re-stamp + mark change unavailable not 0; (AC6) ops REBUILDS each touched container, QA raw-verifies live. Split & hand to BA-DSI, then zone devs.",
+        "disposition": "STALE-CLOSE: duplicate orphan of active_sprints DSI-ARCH (status DONE). Deliverable verified live by PO: docs/architecture-briefs/2026-06-04-data-serve-integrity.md (28KB, §2 DSI-INV-1, §4 6-AC seq, §5 BA-DSI per-zone split, §10 handoff) + docs/handoffs/DSI-ARCH.md. Whole DSI seq shipped (a6b86ed0/fb1439a6/1f8628a0/3d4384e3/02498635) + CARRY-YIELD-SINGLE-SIGNAL-FIXTURE root fix; sprint SIGNED-OFF-PARTIAL. False-open-P0 cleared 2026-06-05T00:13:00Z."
       },
       {
         "task_id": "DSI-S1-SLA",
@@ -2877,9 +2878,22 @@
         "title": "1881a-source-tier.test.ts: 2 pre-existing get_macro_snapshot failures (AC-3 source_tier=2/text-field/fetchedAt + AC-8 source_tier-first-key-in-wrapper). NOT caused by CARRY-YIELD-SINGLE-SIGNAL-FIXTURE (failed identically at parent 02498635^: 5 fail pre, 2 fail post — B-2 fixed the 3 carry/yield ones). get_macro_snapshot wrapper test needs the /snapshot mock or live container; isolate + fix the macroTools.ts get_macro_snapshot wrapper test setup.",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "P3",
         "size": "S",
+        "zone": "apps/mcp-server",
+        "depends_on": null,
+        "done_note": "DONE (commit 260655e3, 2026-06-05). get_macro_snapshot adopted the AC-3 JSON wrapper {source_tier first, text, fetchedAt}; source_tier derived from signals.carry.source_tier (honest passthrough, not hardcoded). Router-verified: 1881a 20/0 (was 18/2), siblings 1423c+1570b 38/0 no-regress, tsc exit 0, test file untouched, commit clean (no .env/no force-add). LIVE-PENDING: mcp-server serves old shape until next rebuild (no dedicated rebuild for a P3 provenance-wrapper at unattended tick). Worst-of-tier refinement → FU-MACRO-SNAPSHOT-TIER-WORSTOF P3."
+      },
+      {
+        "task_id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
+        "title": "get_macro_snapshot wrapper source_tier should be worst-of(carry,yield) not carry-only",
+        "desc": "FU-MACRO-SNAPSHOT-TEST-1881A fix (commit 260655e3) derives the wrapper source_tier from signals.carry.source_tier only (?? 2). DSI-INV-1 worst-of honesty: when yield carries a tier:4 fixture component (earningYield), the envelope-level source_tier under-summarizes staleness as 2 while a tier:4 value sits inside. Full per-field provenance survives in the `text` field, so risk is low, but the summary tier should be max(carry.tier, yield.tier, ...present components) to be strictly honest. Small TS change in macroTools.ts get_macro_snapshot handler.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "XS",
         "zone": "apps/mcp-server",
         "depends_on": null
       }
