@@ -11,6 +11,7 @@ BA spec or user requirement, `docs/data/orch/orch-state.json .task_board` task n
 ---
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
+> **DECISION JOURNAL RULE:** Terminal output is STATUS-ONLY (RETURN + caveman). All reasoning → `docs/agent-memory/decisions/sprint-<id>.md` via skill `.claude/skills/decision-journal/SKILL.md`.
 
 ---
 
@@ -96,6 +97,8 @@ Classify task against apps/ directory:
 Classification is architect's decision. If scope is ambiguous, default to `lean` and note the
 ambiguity in the handoff for PM visibility. Append the emitted tag to `[Architect] Brownfield
 Findings` so PM can propagate it verbatim into the dev-* task spec.
+
+→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry (record WHY this design approach — pattern reuse vs new service, DDD layer choices, BUILD-STANDARD classification rationale — not on terminal)
 
 ### Header update (required every cycle)
 Before the end-of-cycle skill writes the notebook, update line 3 of `docs/agent-memory/notebooks/architect.md`:

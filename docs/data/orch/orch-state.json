@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Tick 2026-06-05T14:09Z (off-market, VN 21:09). NOT idle -- 21 NEW telegram reports drained -> 2 actionable clusters shipped. (1) FU-LOCKSTORE-EXPIRED-GC DONE+LIVE-VERIFIED: coordination.db tombstone GC on task_claim (b600c3ba, dev-mcp-server), rebuilt (ops, image 80de1c86060b, healthy), RAW-VERIFIED task_list_held 117->4 -- killed the system-auditor D4 divergence class (18 alerts ids 3028-3045) at ROOT not symptom. (2) FIX-CTG-3 STEP-A+B DONE, STEP-C extraction IN-FLIGHT: root cause = CTG queue source_url = 524KB cover-letter PDF not 6MB 'hop nhat' B02-TCTD financials (14 cycles empty). STEP-A reset poisoned rows (94fa1e9b, rebuilt) -> enricher re-resolved correct hsx.vn URL -> STEP-B dev-vps-crawls raw-triggered fetch of the correct 6.05MB PDF + pushed (HTTP 200, status=fetching). get_bctc_full(CTG) STILL empty at 14:55Z (bctcReparseJob async not yet cycled). VERIFY-HOOK NEXT TICK: get_bctc_full(CTG) RAW -> real B02-TCTD conf>0.5 before closing FIX-CTG-3 (verify-raw-not-badges; 3 prior CTG fixes, do NOT badge-close). NEW latent defect filed FU-CTG-DISCOVERY-FILENAME-FILTER (P3): VPS HNX discovery resolves good-title article 613699 to a CV_CBTT cover-letter attachment -> re-poison risk; add filename-based filter. ALSO STILL PENDING from tick 13:09Z: cowork emitter live-verify (pressure-state.json + cycle-snapshot-latest.json both ABSENT -- no cowork tick has WON since the 13:32Z fix 545aae11/29d7e944; fix structurally verified in repo + class-sweep clean; cowork last fired 12:03Z, multi-hour off-market gaps are normal cadence; regenerates on next cowork WON tick). Backlog 20 (FU-LOCKSTORE out, FU-CTG-DISCOVERY-FILENAME-FILTER in). Next tick: VERIFY get_bctc_full(CTG) + the 2 emitters, then PO pick next or idle.",
+    "next_action": "Tick 2026-06-05T15:09Z (off-market, dup cron fire treated as no-op continuation). Drained 4 signals. Two RED verify-hooks from 14:09Z both worked this tick: (1) FIX-CTG-3 STEP-C shipped+rebuilt (d29de43d, image adddf6936): TRUE root cause found = push-bctc-pdf extracts from GEO-BLOCKED hsx.vn URL -> null -> stuck fetching, no recovery job. Fix = 3-tier extraction fallback (Tier2 local file:// bypasses geo-block) + recoverStuckFetchingQueue startup migration. Bank B02-TCTD path confirmed wired. get_bctc_full(CTG) still empty (enricher+pull ~45min async) -> VERIFY NEXT TICK. (2) EMIT-DARK: 2 structural fixes FAILED live (multiple post-fix FIRE ticks, emitters still absent) -> recurring-bug-escalation -> agents-architect root-cause (brief 2026-06-05-emit-dark-root-cause.md): H2 CONFIRMED -- Steps 4.7/4.8 are agent-interpreted prose the LLM narrates+skips; H1/H3 ruled out. HONESTLY corrected the 2 false-DONE tasks -> SUPERSEDED-BY new EMIT-DARK-RECURRING (P2 READY, route=agent-father, Option B: move emit into telemetry.md Step 6 mechanically-committed-output so it can't be skipped). LOW harm (fail-safe legacy works, no outage). NOT implemented this tick (agent .md = agent-father lane via agent-md-factory; concurrent agent-father already active on Decision-Journal sprint). Note: a separate agent-father Decision-Journal sprint is committing concurrently on main (f407f512/33817474/f79fc4d8) -- not dev-team's, caused a benign commit-message conflation on the emit-dark brief. Backlog 21 (EMIT-DARK-RECURRING added). Next tick: VERIFY get_bctc_full(CTG) live; if agent-father shipped EMIT-DARK-RECURRING, verify emitters regenerate; else spawn agent-father for it. Then PO pick next or idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T14:50:59.399172+00:00",
+    "updated_at": "2026-06-05T16:41:19.532763+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T14:50:59.399172+00:00",
+    "_updated_at": "2026-06-05T16:41:19.532763+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1782,13 +1782,14 @@
               "FIX-CTG-1"
             ],
             "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows. | [PO RE-ACTIVATE 2026-06-05T14:09Z] 14 cycles (c008-c022) stuck DEFERRED-ASYNC; live tool raw-empty. Root cause KNOWN (wrong queued PDF = cover-letter) => stuck-EXECUTION not unknown-root-cause => NOT architect rethink (feedback_recurring_bug_escalation: rethink is for unknown root cause; here it's known). SPLIT the async stall: STEP-A (dev-mcp-server, sync, completes in-tick) purge the stale owa.hnx.vn cover-letter source_url from bctc_vps_queue for CTG + re-enrich CTG to the FIX-CTG-1-correct hsx.vn 'hop nhat' URL + re-enrich Defect-B-corrupted Q3/Q2-2025 rows; this ENQUEUES the correct URL so the VPS pull cron fetches the right PDF. STEP-B (dev-vps-crawls/ops) confirm the VPS bctc-files pull actually delivers the 6.34MB Q1-2026 'hop nhat' PDF (raw-trigger the fetch leg if cron hasn't drained in 14 cycles — separate discovery/transport/fetch legs per project_bctc_hnx_ssl_outage). STEP-C re-extract. HARD DoD (verify-raw-not-badges): PO opens get_bctc_full(CTG) RAW next tick -> real B02-TCTD bank financials, conf>0.5, NOT 'Chưa có dữ liệu BCTC'. Unit-green/queue-updated NOT sufficient. If STEP-A completes but STEP-B/C still empty after VPS round-trip -> escalate to architect (then it IS an unknown transport/source blocker).",
-            "resolution": "STEP-A+STEP-B DONE 2026-06-05T14:55Z; STEP-C (extraction) IN-FLIGHT async, live-verify NEXT tick. Root cause (known): CTG bctc_vps_queue source_url pointed at the WRONG doc -- a 524KB owa.hnx.vn cover-letter PDF (CV_CBTT_BCTC_Quy_I.2026) instead of the consolidated 'hop nhat' B02-TCTD financials -> extraction correctly yielded 'Chua co du lieu BCTC' for 14 cowork cycles (c008-c022). STEP-A (commit 94fa1e9b, dev-mcp-server): resetCtgWrongSourceUrls() in schema-financial-reports.ts initFinancialReportsTables() -> on startup resets CTG Q1-2026 (CV_CBTT cover-letter) + Q3/Q2-2025 (Defect-B Q1-2026-poisoned) rows to status=pending/source_url=NULL/attempts=0 (idempotent). 11 unit tests green. Rebuilt 14:4xZ (image 80de1c86060b). LIVE-CONFIRMED: enricher (FIX-CTG-1 logic) re-resolved CTG to the CORRECT hsx.vn 'hop nhat' URL post-reset. STEP-B (dev-vps-crawls raw-trigger, separating discovery/transport/fetch): fetched the correct 6,340,703-byte (~6.05MB) hsx.vn 'BCTC hop nhat Quy I.2026' PDF (valid PDF magic, NOT the 524KB cover letter) + pushed to mcp-server /api/push-bctc-pdf -> HTTP 200 {ok:true,queued:CTG-2026-Q1}; DB status=fetching, attempts=1, last_attempt 14:48:47. STEP-C: bctcReparseJob extraction async-pending (get_bctc_full(CTG) STILL 'Chua co du lieu' at 14:55Z -- reparse cron not yet cycled). VERIFY-RAW NOT BADGES: do NOT close FIX-CTG-3 until get_bctc_full(CTG) serves real B02-TCTD bank financials conf>0.5 -- checked NEXT dev-team tick.",
+            "resolution": "STEP-C shipped 2026-06-05T15:50Z (d29de43d, rebuilt image adddf6936); extraction async-pending, verify NEXT tick. TRUE ROOT CAUSE (dev-mcp-server, definitif): POST /api/push-bctc-pdf set bctc_vps_queue.status=fetching then fired async extraction against the hsx.vn source URL which is GEO-BLOCKED from the server network -> extractViaService returned null -> pipeline skipped -> status flipped to done with EMPTY financial_reports; NO scheduled job recovers status=fetching rows (only the daily 02:30 reparse disk-scan). So STEP-B's pushed 6MB PDF landed on disk but never extracted. FIX-1 pushBctcExtraction.ts: 3-tier extraction fallback (Tier1 remote URL; Tier2 NEW extractViaService(file://localpath) bypasses geo-block; Tier3 NEW direct pdf-parse from local buffer). FIX-2 schema-financial-reports.ts recoverStuckFetchingQueue(): startup migration resets fetching-with-no-report rows -> pending so enricher(15m)+pull(30m) re-process via Tier2 local file. Bank B02-TCTD path confirmed wired (CTG in BANKING_TICKERS, isBankForm=true skips gross_profit/asset-decomp checks). 8 tests green. ops rebuilt (recoverStuckFetchingQueue ran at boot, healthy toolCount 161, volumes preserved). get_bctc_full(CTG) STILL empty at 15:55Z (enricher+pull ~45min cycle not yet complete) -- EXPECTED. VERIFY-RAW NEXT TICK: get_bctc_full(CTG) -> real B02-TCTD conf>0.5.",
             "updated_by": "dev-team",
-            "updated_at": "2026-06-05T14:50:59.399172+00:00",
+            "updated_at": "2026-06-05T16:41:19.532763+00:00",
             "deploy_commits": [
-              "94fa1e9b"
+              "94fa1e9b",
+              "d29de43d"
             ],
-            "verify_hook": "NEXT dev-team tick: get_bctc_full(CTG) RAW -> real B02-TCTD bank financials, extraction_confidence>0.5, NOT 'Chua co du lieu BCTC'. If still empty: check bctcReparseJob ran + bctc_vps_queue CTG row status (fetching->extracted)."
+            "verify_hook": "NEXT dev-team tick (~16:09Z, >45min async window): get_bctc_full(CTG) RAW -> real B02-TCTD bank financials conf>0.5, NOT 'Chua co du lieu'. If still empty: check bctc_vps_queue CTG status (pending->fetching->done) + that Tier2 file:// extraction ran on the stored 6MB PDF + enricher re-resolved hsx.vn URL."
           },
           {
             "task_id": "FIX-CTG-2b",
@@ -2439,6 +2440,26 @@
         "desc": "Latent defect surfaced by dev-vps-crawls during FIX-CTG-3 STEP-B (2026-06-05T14:48Z). The HNX discovery path: article ID 613699 has a NON-cover-letter title ('Bao cao tai chinh quy 1/2026') but its ArticlesFileAttach-resolved PDF is the cover letter CV_CBTT_BCTC_Quy_I.2026_VI.pdf. FIX-CTG-2's title-based cover-letter filter correctly skips cover-letter-TITLED articles but MISSES this good-title/bad-attachment case -> CTG keeps getting re-poisoned via the HNX path. Mitigated for now because the enricher (FIX-CTG-1) prefers the hsx.vn 'hop nhat' URL, but the HNX path remains a latent re-poison source. FIX: after ArticlesFileAttach resolution, add filename-based cover-letter detection (resolved PDF filename contains CV_CBTT / cong_van_cbtt -> reject). dev-vps-crawls flags the script is VPS-resident but the architectural fix belongs to the fetch-pipeline design (coordinate dev-mcp-server).",
         "source": "dev-vps-crawls FIX-CTG-3 STEP-B side finding, tick 2026-06-05T14:09Z",
         "created_at": "2026-06-05T14:50:59.399172+00:00"
+      },
+      {
+        "task_id": "EMIT-DARK-RECURRING",
+        "title": "cowork pressure-state + cycle-snapshot emitters permanently dark -- agent-interpreted Steps 4.7/4.8 are narrated-not-executed (2 structural fixes failed); re-architect emit as a mechanically un-skippable step",
+        "type": "FIX",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "READY",
+        "priority": "P2",
+        "size": "S",
+        "route": "agent-father",
+        "zone": "docs/agents/cowork-team/flow/",
+        "brief": "docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md",
+        "supersedes": [
+          "FU-PRESSURE-EMIT-DARK",
+          "FU-TICK-SNAPSHOT-EMIT-DARK"
+        ],
+        "escalation": "recurring-bug (>=2 fixes 545aae11+29d7e944 failed live) -> agents-architect rethink DONE (brief), now agent-father impl",
+        "desc": "ROOT CAUSE (agents-architect H2, raw-verified by dispatcher): Steps 4.7 (tick-snapshot.md -> cycle-snapshot-latest.json) and 4.8 (pressure-emit.md -> pressure-state.json) are agent-interpreted prose flow steps. The LLM cowork dispatcher narrates them and silently proceeds to Step 5 fan-out WITHOUT executing the bash/MCP -- confirmed because post-fix FIRE ticks reached Step 5 (spawned agents) but neither file was written. The 'additive instrumentation -- failure never blocks spawns' label makes the agent treat skipping as licensed. FIX (Option B, agent-father, via agent-md-factory): move the pressure-state (and tick-snapshot) write into telemetry.md Step 6 as a MANDATORY side-effect computed from the telemetry payload already assembled there. Step 6 is mechanically guaranteed to execute because its output (the cowork-team-<ts>.json signal file) is git-committed every tick -- a skip is immediately visible. Optionally Option A belt-and-suspenders: a cowork-pre-dispatch.sh shell script (real shell, not agent-interpreted) computes the pure-bash fields (emitted_at/tick_id/signal_backlog/dev_queue_depth/host_headroom_mb) before the LLM agent runs. LOW priority: fail-safe legacy fixed-cadence works, no outage, ~2.5d dark with zero harm. DoD (verify-raw next dev-team tick after agent-father ships + cowork reload): pressure-state.json regenerates with emitted_at -> PRESSURE_MODE=adaptive; cycle-snapshot-latest.json regenerates fresh.",
+        "source": "agents-architect root-cause tick 2026-06-05T15:09Z (brief + signal emit-dark-root-cause-20260605T163744Z)",
+        "created_at": "2026-06-05T16:41:19.532763+00:00"
       }
     ],
     "archive": [],
@@ -3255,7 +3276,7 @@
         "title": "pressure-state.json emitter dark ~2.25 days (tick_id 2026-06-03T00:00Z, stale at 2026-06-05T06:09Z) — whole cowork fleet fell back to legacy fixed-cron cadence",
         "type": "FIX",
         "sprint": "FLEET-HOST-SAFETY",
-        "status": "DONE",
+        "status": "SUPERSEDED",
         "priority": "P3",
         "size": "S",
         "zone": "cross-service/",
@@ -3272,14 +3293,18 @@
         "deploy_commits": [
           "545aae11"
         ],
-        "verify_hook": "Next dev-team tick: confirm pressure-state.json regenerated w/ emitted_at (conformant 9-key) -> PRESSURE_MODE=adaptive; cowork heartbeat pressure_mode flips legacy->adaptive."
+        "verify_hook": "Next dev-team tick: confirm pressure-state.json regenerated w/ emitted_at (conformant 9-key) -> PRESSURE_MODE=adaptive; cowork heartbeat pressure_mode flips legacy->adaptive.",
+        "superseded_by": "EMIT-DARK-RECURRING",
+        "correction": "SUPERSEDED-BY EMIT-DARK-RECURRING 2026-06-05T15:55Z. CORRECTION (verify-raw-not-badges): this was marked DONE on repo-fix + structural class-sweep, but LIVE-VERIFY FAILED -- multiple cowork FIRE ticks since the 13:32Z fix (14:25/15:01/16:02Z) traversed Steps 4.7/4.8 (they reached Step 5 fan-out) yet BOTH emitter files stayed absent. agents-architect root-cause (brief docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md): H2 CONFIRMED -- the emit steps are agent-INTERPRETED prose the LLM dispatcher NARRATES and silently skips (the 'additive instrumentation, failure never blocks spawns' label licenses skipping); lifting call_tool out of the bash fence was structurally correct but could not cure narration-skip. H1 stale-session + H3 early-exit RULED OUT. The repo commits (545aae11/29d7e944) remain valid (no call_tool trapped) but are NOT sufficient. Real fix tracked in EMIT-DARK-RECURRING.",
+        "corrected_at": "2026-06-05T16:41:19.532763+00:00",
+        "corrected_by": "dev-team"
       },
       {
         "task_id": "FU-TICK-SNAPSHOT-EMIT-DARK",
         "title": "cowork tick-snapshot.md Step 4.7 dark ~2.5d — call_tool embedded in ```bash fence aborts emit (sibling of FU-PRESSURE-EMIT-DARK); cycle-snapshot-latest.json frozen 06-03",
         "type": "FIX",
         "sprint": "FLEET-HOST-SAFETY",
-        "status": "DONE",
+        "status": "SUPERSEDED",
         "priority": "P3",
         "size": "S",
         "zone": "docs/agents/cowork-team/flow/",
@@ -3290,7 +3315,11 @@
           "29d7e944"
         ],
         "source": "dev-team tick 2026-06-05T13:09Z regression-sweep off FU-PRESSURE-EMIT-DARK",
-        "verify_hook": "Next dev-team tick: confirm cycle-snapshot-latest.json regenerated (fresh created_at, real market_context/macro_snapshot not unknown)."
+        "verify_hook": "Next dev-team tick: confirm cycle-snapshot-latest.json regenerated (fresh created_at, real market_context/macro_snapshot not unknown).",
+        "superseded_by": "EMIT-DARK-RECURRING",
+        "correction": "SUPERSEDED-BY EMIT-DARK-RECURRING 2026-06-05T15:55Z. CORRECTION (verify-raw-not-badges): this was marked DONE on repo-fix + structural class-sweep, but LIVE-VERIFY FAILED -- multiple cowork FIRE ticks since the 13:32Z fix (14:25/15:01/16:02Z) traversed Steps 4.7/4.8 (they reached Step 5 fan-out) yet BOTH emitter files stayed absent. agents-architect root-cause (brief docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md): H2 CONFIRMED -- the emit steps are agent-INTERPRETED prose the LLM dispatcher NARRATES and silently skips (the 'additive instrumentation, failure never blocks spawns' label licenses skipping); lifting call_tool out of the bash fence was structurally correct but could not cure narration-skip. H1 stale-session + H3 early-exit RULED OUT. The repo commits (545aae11/29d7e944) remain valid (no call_tool trapped) but are NOT sufficient. Real fix tracked in EMIT-DARK-RECURRING.",
+        "corrected_at": "2026-06-05T16:41:19.532763+00:00",
+        "corrected_by": "dev-team"
       },
       {
         "task_id": "FU-LOCKSTORE-EXPIRED-GC",

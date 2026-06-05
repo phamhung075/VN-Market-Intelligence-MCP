@@ -1,4 +1,4 @@
-<!-- size-justification: 201L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering. -->
+<!-- size-justification: 204L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; decision-journal write-step at verdict routing. -->
 # QA — Main Flow
 
 **Tools:** `docs/agents/tools/package/qa.md`
@@ -13,6 +13,7 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 ---
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
+> **DECISION JOURNAL RULE:** Terminal output is STATUS-ONLY (RETURN + caveman). All reasoning → `docs/agent-memory/decisions/sprint-<id>.md` via skill `.claude/skills/decision-journal/SKILL.md`.
 
 ---
 
@@ -112,6 +113,8 @@ Verdict routing:
 - Issues found AND round < 2 → JUMP TO `changes-requested`
 - Issues found AND round ≥ 2 → JUMP TO `changes-requested` (RETURN block routes to architect)
 - New domain service / MCP tool / cross-service HTTP / DDD refactor → JUMP TO `architect-review`
+
+→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry (record WHY this verdict — which checks failed/passed, why APPROVED vs CHANGES_REQUESTED vs ARCHITECT_REVIEW_NEEDED — not on terminal)
 
 ## Task Report
 

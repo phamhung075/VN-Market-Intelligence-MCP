@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T00:06:46.482Z",
+    "matched_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/bctc-analyst/flow/main.md", "docs/agents/news-scout/flow/main.md", "docs/agents/market-watcher/flow/main.md"],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "skipped_legacy",
+    "last_fired_timestamp": "2026-06-05T00:06:30.936Z",
+    "last_fired_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired_fresh_stolen",
+    "signal_backlog": 8,
+    "note": "00:05Z FIRE: 3 slots. bctc-analyst-slot-4 (24h daily, agentId aa8685f058a4213fb) — NOTE 00:05Z=07:05 VN is inside [02:00,08:00) VN market window; agent E2 guard self-refuses new pass internally, dispatcher does not second-guess. news-scout-offhours (abf06b91431ef16cb) + market-watcher-offhours (aa5dec7e781f5d229) both 4h gatherers. All 3 tokens won, leader fresh-stolen win + heartbeat ok. 0 NEW cowork signal_queue rows. Standing items unactioned: push 0ea2e83f, Cowork re-arm, fix stale pressure-state.json."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T00:06:46.482Z"
+}

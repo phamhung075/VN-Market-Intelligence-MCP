@@ -1,0 +1,48 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T07:16:56Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": "2026-06-05T07:16:12Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:15",
+    "leader_lock": "claimed_fresh_stolen_expired_ttl",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "chef-intraday fired at 07:15Z tick (cron 13 2-8, drift 0). Prior intraday 06:18Z; cross-tick content-novelty gap still open (presence-based convergence re-publishes persistent clusters hourly) + FU-CHEF-MARKER-INFLOW unresolved — both dev-team/system-auditor candidates, flag-only. pressure-state.json stale since 06-03 → legacy-mode every tick, pressure-emit dark."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T07:16:56Z"
+}

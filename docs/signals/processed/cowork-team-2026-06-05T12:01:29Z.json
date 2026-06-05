@@ -1,0 +1,42 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T12:01:29Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "last_fired_timestamp": "2026-06-05T12:01:19Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "note": "0 */4 offhours gatherer pair; leader lock won fresh (stolen=true, prior 08:00Z lock expired); both slot tokens claimed clean (no peer); orphan-recovery branch (d88045c1) not exercised this tick"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T12:01:29Z"
+}
