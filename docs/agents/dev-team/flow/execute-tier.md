@@ -42,7 +42,7 @@ for each (agent, task_id) in tier_batch:
     task_kind:   "sprint-task",
     owner_agent: "dev-team",
     ttl_seconds: 3600,
-    payload:     {site: "S1", spawning: agent}   // structured object, not a shell-built string
+    payload:     JSON.stringify({site: "S1", spawning: agent})   // live schema requires a SERIALIZED JSON STRING (verified 2026-06-05); build object with bound params, stringify last — never shell-concatenate
   })
   if not outer_claim.claimed:
     log "[dev-team] SKIP task:" + task_id + " — held by " + outer_claim.current_holder.owner_agent

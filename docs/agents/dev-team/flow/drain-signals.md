@@ -35,7 +35,7 @@ For each NEW row:
     task_kind:   "dashboard-row",
     owner_agent: "dev-team",
     ttl_seconds: 1800,
-    payload:     claim_payload   // pass as JSON object, not concatenated string
+    payload:     JSON.stringify(claim_payload)   // live schema requires a SERIALIZED JSON STRING ("Expected string, received object" — verified 2026-06-05); build the object with bound params first, stringify last — never shell-concatenate
   })
 
   if not result.claimed:

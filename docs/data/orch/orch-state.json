@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Tick 2026-06-05T18:09Z (off-market, VN 01:09). BIG tick — drove EMIT-DARK to a PROVEN mechanism + closed FIX-CTG-3 verify. EMIT-DARK: Option B (d6738df3) FALSIFIED by live evidence (18:01Z FIRE signal had resolved values where telemetry.md has prose placeholders -> cowork dispatcher NEVER runs fenced bash, only narrates+call_tool). Escalated agents-architect (recurring-bug, 3rd failure) -> Option C MCP tool emit_pressure_state (brief v2 218822f1). Shipped: tool 511a50a0 + router-caught mount defect fix 46442f44 (single-file->dir-mount, atomic-rename lesson) + ops rebuild b08d6411 toolCount 162 + flow-wire bdf4fcc0. ROUTER DIRECTLY LIVE-VERIFIED the tool: gateway call produced HOST pressure-state.json w/ real computed fields (signal_backlog:3, host_headroom_mb:5424) + cycle-snapshot promoted -> FIRST live emit in the saga. Status FIXED-PENDING-LIVE-VERIFY (only the cowork-dispatcher-invokes-call_tool leg awaits next FIRE; tool mechanism proven). OPERATOR MUST /cron-cowork-team refresh (4 cowork flow files changed: telemetry/main/pressure-emit + d6738df3 prior). FIX-CTG-3 stays DONE (plumbing verified). Filed FU-CTG-REFINE-PICKUP P2: CTG row 69fa303f extracted but PUB-1-withheld — refine is now agent-orchestrated (refine_bctc_md fleet cron, NOT auto-cron) + backfill mislinked CTG to the cover-letter PDF. PO to triage. HEAD bdf4fcc0. Backlog ~23. NEXT TICK: (a) next-cowork-FIRE -> pressure-state.json fresh + pressure_mode=adaptive (EMIT-DARK final confirm); (b) get_bctc_full(CTG) if refine ran. Then PO pick next or idle.",
+    "next_action": "Tick 2026-06-05T19:07Z (off-market). REFINE-CRON-ARM COMPLETE (aec3a3d8 agent-father): refine_bctc_md was structurally dark (0 schedule slots, 7 reports stuck) -> 2 daily off-market slots wired (refine-bctc-slot-1 09:00 UTC + slot-2 14:00 UTC, policy bctc-offmarket, cover-letter skip guard in trigger_prompt); 13 stale last_fired strips in schedule JSON assessed BENIGN (values 4-5d old = already due; cron-match + claim-dedup still gate); backlog drains ~3-4d. FIX-CTG-PDF-MISLINK SHIPPED LIVE (77092007): deploy saga — ops first deploy RACED (container recreated 28s BEFORE image build finished -> ran stale 18:33Z image; agent deadlocked on pgrep docker.*build which matches Docker Desktop PERMANENT com.docker.build proc — never use that wait pattern). Router raw-verify caught it (live done-line missing healed= field + image Created 18:33Z < commit 19:50Z); killed stuck agent, ops#2 redeployed a742d5b7ca00 -> verbatim [backfillBctcPdfPaths] HEALED mislink: CTG line, done healed=1, toolCount 162. ROUTER RAW-VERIFIED: get_bctc_pending_refine CTG row 69fa303f now consolidated 62-page PDF (was cover-letter 2p), other 6 rows unchanged. FU-CTG-REFINE-PICKUP: CTG correctly PENDING -> first slot fire 09:00 UTC picks it; close FU after refine lands. Doc self-heal: task_kind enum drift (dev-team invalid -> sprint-task) in main.md S4 x2 + payload-must-be-STRING gotcha in drain-signals.md/execute-tier.md. Auditor T1 x2 clean (7b55ed7d, 1d27449a) — note: T1 false-greened the stale-image deploy as \"completed successfully\"; raw-verify remains router job. EMIT-DARK stays FIXED-PENDING next cowork FIRE (pressure_mode=adaptive in telemetry = final confirm). OPERATOR: /cron-cowork-team refresh still owed (cowork main.md changed in aec3a3d8 too). HEAD after this commit. Backlog ~23 + FU-BACKFILL-REAL-FILENAMES + FU-BACKFILL-MULTIPLE-COVER-LETTERS for PO triage. NEXT TICK: (a) EMIT-DARK final confirm; (b) after 09:00 UTC verify refine slot fired + pending count <7 + CTG refined -> close FU-CTG-REFINE-PICKUP; (c) PO triage 2 backfill FUs.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T18:39:51.340090+00:00",
+    "updated_at": "2026-06-05T20:16:06+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -2472,8 +2472,9 @@
         ],
         "fixed_by": "agents-architect+dev-mcp-server+ops+agent-father via dev-team",
         "fixed_at": "2026-06-05T18:39:51.340090+00:00",
-        "verify_hook": "NEXT cowork FIRE (after operator /cron-cowork-team refresh): docs/data/pressure-state.json fresh emitted_at (<2min of fire) + cowork-team signal pressure_mode=adaptive (NOT legacy). Tool itself already proven live this tick.",
-        "tool_live_verified": true
+        "verify_hook": "REMAINING LEG ONLY: next cowork FIRE telemetry signal shows pressure_mode=adaptive (NOT legacy). Dispatcher-invokes-call_tool leg PROVEN 2026-06-05T19:18:48Z.",
+        "tool_live_verified": true,
+        "verify_progress": "PO 2026-06-05T19:25Z: cowork tick 19:15Z invoked emit_pressure_state LIVE — host docs/data/pressure-state.json emitted_at=2026-06-05T19:18:48Z tick_id=19:15:00Z with REAL computed fields (signal_backlog:0, host_headroom_mb:5362, calendar_status:off_market). This is the first dispatcher-initiated (not router-manual) emit — dispatcher-invokes-call_tool leg PROVEN. Remaining: latest cowork-fire telemetry signal is still 18:01Z pressure_mode=legacy (pre-wire bdf4fcc0); next FIRE must show pressure_mode=adaptive. Note: cycle-snapshot-latest.json promoted content is stale (2026-06-02 tick) because all dated sidecar snapshots predate the dark period — will self-heal on next FIRE snapshot emit; not a tool defect."
       },
       {
         "task_id": "FU-OCR-BOOT-LOOP-SEQUENTIAL",
@@ -2492,14 +2493,20 @@
         "task_id": "FU-CTG-REFINE-PICKUP",
         "type": "REVIEW",
         "sprint": "BCTC-EXTRACT-QUALITY",
-        "status": "BACKLOG",
+        "status": "BATCHED",
         "priority": "P2",
         "size": "M",
         "route": "po",
         "title": "CTG financials extracted (row 69fa303f) but not SERVED — PUB-1 refine_status pending; refine is agent-orchestrated (refine_bctc_md fleet cron) not auto-scheduled; + backfill mislink to cover-letter PDF",
         "desc": "FIX-CTG-3 plumbing is DONE+verified (geo-block + OCR-cache-race + NOT-NULL all fixed; row 69fa303f exists conf 0.5625). But get_bctc_full(CTG) still withholds at PUB-1 (bctcFullTools.ts:604, refine_status must be DONE/PARTIAL). KEY CORRECTION: bctcRefineJob.ts's auto-cron entry point was DELETED — refine is now agent-orchestrated via the refine_bctc_md FLEET CRON using MCP tools get_bctc_pending_refine (WHERE text_status=COMPLETE AND refine_status IN PENDING,PARTIAL) + prepare/finalize_bctc_refine. So CTG will NOT self-refine on a server timer; it needs the refine fleet cron to actually run + pick up 69fa303f. ACTIONS: (1) verify the refine_bctc_md fleet cron is armed+running and 69fa303f qualifies (text_status=COMPLETE); if the cron is dark, ALL auto-extracted reports never refine (systemic). (2) SEPARATE DEFECT: a startup backfillBctcPdfPaths re-linked CTG Q1 2026 -> CTG_2026_Q1.pdf (the 2-page 2422-char COVER LETTER) not the 62-page consolidated PDF (logs 17:24Z) — affects which PDF the inspect viewer + refine read; backfill should prefer the consolidated/larger PDF or skip CV_CBTT cover-letters (relates to FU-CTG-DISCOVERY-FILENAME-FILTER). (3) after refine, PUB-3 (forced-zero balance) may still suppress if OCR balance assets=0 — that's a refine-quality concern for refine_bctc_md. PO to triage refine-cron-liveness (cowork/ops) vs backfill-fix (dev-mcp-server).",
         "source": "dev-team tick 2026-06-05T18:09Z CTG verify-hook deep-dive",
-        "created_at": "2026-06-05T18:39:51.340090+00:00"
+        "created_at": "2026-06-05T18:39:51.340090+00:00",
+        "batched_at": "2026-06-05T19:28:28Z",
+        "batched_as": [
+          "FIX-CTG-PDF-MISLINK",
+          "REFINE-CRON-ARM"
+        ],
+        "po_triage": "PO raw-verified 2026-06-05T19:25Z: get_bctc_full(CTG)=withheld; get_bctc_refined(69fa303f)=0 units; get_bctc_pending_refine shows 69fa303f filename=CTG_2026_Q1.pdf page_count=2 (COVER LETTER — mislink live-confirmed, binding blocker) AND refine_bctc_md has NO slot in cowork-schedule.json (fleet cron structurally dark; 7 reports PENDING/PARTIAL: DGC, DIG, ACB 2026-Q1, VEA, VCB x2, CTG — systemic). Telegram report 3048 resolved duplicate of this root. Batched FIX-CTG-PDF-MISLINK (apps/mcp-server) + REFINE-CRON-ARM (cowork-team flow, route agent-father). Sequencing: mislink fix MUST land before CTG refine pickup or refine consumes the 2-page cover letter."
       }
     ],
     "archive": [],
@@ -3442,6 +3449,28 @@
         "status": "READ",
         "payload_ref": "docs/signals/cowork-team-20260604T031929Z.json",
         "disposition": "READ 2026-06-04T04:15:22Z by dev-team: PO-triaged (NOTHING for dev-zone), folded into backlog FU-CHEF-MARKER-INFLOW (granularity facet); routed agents-architect+agent-father, cowork agent-md lane."
+      },
+      {
+        "id": "cow-20260605T200755",
+        "ts": "2026-06-05T20:07:55Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "infra-anomaly",
+        "summary": "mcp-server clean-exit(0) 20:06:12Z DURING emit_pressure_state call (EMIT-DARK tool); dispatcher relaunched OK",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json"
+      },
+      {
+        "id": "cow-20260605T200756",
+        "ts": "2026-06-05T20:07:56Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow-gap",
+        "summary": "market-watcher-offhours slot fires 4h but main.md has no offhours branch - agent no-ops, spawn wasted",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json"
       }
     ],
     "archive": [

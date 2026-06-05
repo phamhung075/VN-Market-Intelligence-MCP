@@ -240,7 +240,7 @@ call_tool(server="vn-market", tool="task_release", arguments={ task_id: triage_k
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id:     "task:" + batch_id,
-  task_kind:   "dev-team",
+  task_kind:   "sprint-task",   # live enum: cowork-slot|sprint-task|dashboard-row|commit-mutex — "dev-team" is NOT valid (verified 2026-06-05)
   owner_agent: "dev-team",
   ttl_seconds: 3600
 })
@@ -256,7 +256,7 @@ else:
 ```
 result = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id:     "task:" + batch_id,
-  task_kind:   "dev-team",
+  task_kind:   "sprint-task",   # live enum: cowork-slot|sprint-task|dashboard-row|commit-mutex — "dev-team" is NOT valid (verified 2026-06-05)
   owner_agent: "dev-team",
   ttl_seconds: 3600
 })
