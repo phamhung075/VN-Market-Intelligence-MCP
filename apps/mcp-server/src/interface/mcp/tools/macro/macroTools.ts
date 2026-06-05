@@ -458,15 +458,45 @@ export function registerMacroTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify({ error: "macro-indicators service unavailable" }, null, 2),
+                text: JSON.stringify({
+                  source_tier: 2 as const,
+                  error: "macro-indicators service unavailable",
+                }, null, 2),
               },
             ],
           };
         }
 
-        const data: unknown = await response.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = await response.json() as Record<string, any>;
+
+        // DSI-INV-1: derive source_tier honestly from the snapshot's carry signal provenance.
+        // The Go macro-indicators service annotates signals.carry.source_tier per its own data
+        // pipeline (tier=2 when live, tier=4 when estimate/fixture).
+        // We use the carry tier as the primary provenance indicator for the macro snapshot
+        // because carry is the principal signal this tool surfaces; other signals (yield,
+        // investment-clock) are exposed through their own dedicated tools.
+        // Fallback: if the response does not carry a tier annotation (older Go build), default
+        // to 2 (aggregator service tier) rather than fail-loud — the tool is a thin HTTP proxy
+        // and 2 is the correct tier for a live upstream aggregator response.
+        const sourceTier: 1 | 2 | 3 | 4 =
+          (data?.signals?.carry?.source_tier as 1 | 2 | 3 | 4) ?? 2;
+
+        // fetchedAt: use the true source timestamp from the Go service response, not re-stamp now.
+        // If the Go service omits fetchedAt (older build), fall back to new Date().toISOString()
+        // only as a last resort — the test mock provides "2026-06-05T00:00:00Z" at this field.
+        const fetchedAt: string = (data?.fetchedAt as string | undefined)
+          ?? new Date().toISOString();
+
+        // text: human-readable macro intelligence payload (full JSON of the upstream response).
+        const text = JSON.stringify(data, null, 2);
+
         return {
-          content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: sourceTier,
+            text,
+            fetchedAt,
+          }, null, 2) }],
         };
       } catch (err) {
         logger.warn("[get_macro_snapshot] fetch failed", {
@@ -477,7 +507,10 @@ export function registerMacroTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify({ error: "macro-indicators service unavailable" }, null, 2),
+              text: JSON.stringify({
+                source_tier: 2 as const,
+                error: "macro-indicators service unavailable",
+              }, null, 2),
             },
           ],
         };
