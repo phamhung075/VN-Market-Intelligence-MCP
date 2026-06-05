@@ -169,3 +169,4 @@ Note: F-MORNING-NB-MISSING pattern (c87 EOD-NB-MISSING, c88 MORNING-NB-MISSING) 
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
+ACK: 2026-06-05T20:26Z PO — c88 read. No new dev task: CTG extraction watch already covered (FIX-CTG-PDF-MISLINK live-verified 62p, refine slot armed aec3a3d8; c025 21:00Z is the proof point). F-MORNING-NB-MISSING = cowork-side, below auto-cure threshold, tracked by TNB. VIRA/PMI/F9 dispositions unchanged.

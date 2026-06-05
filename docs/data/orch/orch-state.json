@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T18:39:51.340090+00:00",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-05T20:26:03Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2449,7 +2449,7 @@
         "title": "cowork pressure-state + cycle-snapshot emitters permanently dark -- agent-interpreted Steps 4.7/4.8 are narrated-not-executed (2 structural fixes failed); re-architect emit as a mechanically un-skippable step",
         "type": "FIX",
         "sprint": "FLEET-HOST-SAFETY",
-        "status": "FIXED-PENDING-LIVE-VERIFY",
+        "status": "DONE",
         "priority": "P2",
         "size": "S",
         "route": "agent-father",
@@ -2463,7 +2463,7 @@
         "desc": "ROOT CAUSE (agents-architect H2, raw-verified by dispatcher): Steps 4.7 (tick-snapshot.md -> cycle-snapshot-latest.json) and 4.8 (pressure-emit.md -> pressure-state.json) are agent-interpreted prose flow steps. The LLM cowork dispatcher narrates them and silently proceeds to Step 5 fan-out WITHOUT executing the bash/MCP -- confirmed because post-fix FIRE ticks reached Step 5 (spawned agents) but neither file was written. The 'additive instrumentation -- failure never blocks spawns' label makes the agent treat skipping as licensed. FIX (Option B, agent-father, via agent-md-factory): move the pressure-state (and tick-snapshot) write into telemetry.md Step 6 as a MANDATORY side-effect computed from the telemetry payload already assembled there. Step 6 is mechanically guaranteed to execute because its output (the cowork-team-<ts>.json signal file) is git-committed every tick -- a skip is immediately visible. Optionally Option A belt-and-suspenders: a cowork-pre-dispatch.sh shell script (real shell, not agent-interpreted) computes the pure-bash fields (emitted_at/tick_id/signal_backlog/dev_queue_depth/host_headroom_mb) before the LLM agent runs. LOW priority: fail-safe legacy fixed-cadence works, no outage, ~2.5d dark with zero harm. DoD (verify-raw next dev-team tick after agent-father ships + cowork reload): pressure-state.json regenerates with emitted_at -> PRESSURE_MODE=adaptive; cycle-snapshot-latest.json regenerates fresh.",
         "source": "agents-architect root-cause tick 2026-06-05T15:09Z (brief + signal emit-dark-root-cause-20260605T163744Z)",
         "created_at": "2026-06-05T16:41:19.532763+00:00",
-        "resolution": "FIXED-PENDING-LIVE-VERIFY 2026-06-05T18:40Z via Option C (tool mechanism DIRECTLY PROVEN this tick — materially stronger than the 2 prior false-DONEs; only the cowork-dispatcher-invokes-it leg awaits next FIRE). OPTION B FALSIFIED by live evidence: the 18:01Z FIRE telemetry signal contained RESOLVED values (matched_slots:['bctc-analyst-slot-2']) where telemetry.md has PROSE PLACEHOLDERS ([<slot_ids from MATCHES>]) -> proves the cowork dispatcher NEVER executes fenced bash; it narrates the flow + writes the signal via its Write tool + fills placeholders by interpretation. pressure-state needs COMPUTED shell values (ls|wc, jq, vm_stat) the narrator cannot synthesize -> every 'make bash unconditional' fix (545aae11/29d7e944/d6738df3) was doomed. ROOT-CAUSE RETHINK (agents-architect brief v2, commit 218822f1): the dispatcher DOES reliably execute call_tool every tick (is_trading_day/task_claim). FIX = new MCP tool emit_pressure_state that computes signal_backlog/dev_queue_depth/host_headroom_mb SERVER-SIDE + atomically writes pressure-state.json + promotes cycle-snapshot-latest.json; dispatcher just calls it. SHIPPED: (a) tool built 511a50a0 (dev-mcp-server, 18 tests); (b) MOUNT FIX 46442f44 — router caught a defect: tool was single-file-bind-mounted (./docs/data/pressure-state.json) which BREAKS atomic tmp->rename (orch-state lesson 'atomic rename NEEDS a DIRECTORY bind-mount'); fixed to parent dir-mount ./docs/data:/app/docs/data rw w/ :ro children layered; (c) rebuilt+recreated img b08d6411 toolCount 162 (ops, up -d to apply mounts, siblings untouched, market.db preserved). ROUTER LIVE-VERIFIED THE TOOL DIRECTLY (gateway call_tool emit_pressure_state) -> HOST docs/data/pressure-state.json materialized w/ fresh emitted_at + REAL computed fields (signal_backlog:3, host_headroom_mb:5424, dev_queue_depth:0, 9-key schema), cycle-snapshot-latest.json promoted, no tmp residue. FIRST time in the saga pressure-state is produced by the live system. (d) flow wired bdf4fcc0 (agent-father): telemetry.md Step 6.0 = call_tool emit_pressure_state (removed the dead 47L bash heredoc; 120L->90L); main.md JUMP-TO + pressure-emit.md stub updated. NEXT-FIRE VERIFY (the only remaining leg): on next cowork FIRE after operator Cowork-refresh, docs/data/pressure-state.json regenerates w/ fresh emitted_at AND the cowork-team signal pressure_mode flips legacy->adaptive. Do NOT mark DONE until that FIRE confirms the dispatcher actually invokes the call_tool.",
+        "resolution": "FIXED-PENDING-LIVE-VERIFY 2026-06-05T18:40Z via Option C (tool mechanism DIRECTLY PROVEN this tick — materially stronger than the 2 prior false-DONEs; only the cowork-dispatcher-invokes-it leg awaits next FIRE). OPTION B FALSIFIED by live evidence: the 18:01Z FIRE telemetry signal contained RESOLVED values (matched_slots:['bctc-analyst-slot-2']) where telemetry.md has PROSE PLACEHOLDERS ([<slot_ids from MATCHES>]) -> proves the cowork dispatcher NEVER executes fenced bash; it narrates the flow + writes the signal via its Write tool + fills placeholders by interpretation. pressure-state needs COMPUTED shell values (ls|wc, jq, vm_stat) the narrator cannot synthesize -> every 'make bash unconditional' fix (545aae11/29d7e944/d6738df3) was doomed. ROOT-CAUSE RETHINK (agents-architect brief v2, commit 218822f1): the dispatcher DOES reliably execute call_tool every tick (is_trading_day/task_claim). FIX = new MCP tool emit_pressure_state that computes signal_backlog/dev_queue_depth/host_headroom_mb SERVER-SIDE + atomically writes pressure-state.json + promotes cycle-snapshot-latest.json; dispatcher just calls it. SHIPPED: (a) tool built 511a50a0 (dev-mcp-server, 18 tests); (b) MOUNT FIX 46442f44 — router caught a defect: tool was single-file-bind-mounted (./docs/data/pressure-state.json) which BREAKS atomic tmp->rename (orch-state lesson 'atomic rename NEEDS a DIRECTORY bind-mount'); fixed to parent dir-mount ./docs/data:/app/docs/data rw w/ :ro children layered; (c) rebuilt+recreated img b08d6411 toolCount 162 (ops, up -d to apply mounts, siblings untouched, market.db preserved). ROUTER LIVE-VERIFIED THE TOOL DIRECTLY (gateway call_tool emit_pressure_state) -> HOST docs/data/pressure-state.json materialized w/ fresh emitted_at + REAL computed fields (signal_backlog:3, host_headroom_mb:5424, dev_queue_depth:0, 9-key schema), cycle-snapshot-latest.json promoted, no tmp residue. FIRST time in the saga pressure-state is produced by the live system. (d) flow wired bdf4fcc0 (agent-father): telemetry.md Step 6.0 = call_tool emit_pressure_state (removed the dead 47L bash heredoc; 120L->90L); main.md JUMP-TO + pressure-emit.md stub updated. NEXT-FIRE VERIFY (the only remaining leg): on next cowork FIRE after operator Cowork-refresh, docs/data/pressure-state.json regenerates w/ fresh emitted_at AND the cowork-team signal pressure_mode flips legacy->adaptive. Do NOT mark DONE until that FIRE confirms the dispatcher actually invokes the call_tool. || CLOSED 2026-06-05T20:26:03Z (PO tick 20:20Z): LIVE-VERIFIED-3x — all 3 cowork FIRE telemetry payloads tonight (19:47/20:05/20:17Z) carry pressure_mode:adaptive + full Phase-1 fields (due_reasons, cadence_minutes, suppressed_*), incl. retry-after-outage at 20:05Z mcp-server restart window. Dispatcher-invokes-emit_pressure_state leg PROVEN; adaptive cadence fully live (news-scout/market-watcher fired due_reason:cadence 240min).",
         "deploy_commits": [
           "218822f1",
           "511a50a0",
@@ -2474,7 +2474,8 @@
         "fixed_at": "2026-06-05T18:39:51.340090+00:00",
         "verify_hook": "REMAINING LEG ONLY: next cowork FIRE telemetry signal shows pressure_mode=adaptive (NOT legacy). Dispatcher-invokes-call_tool leg PROVEN 2026-06-05T19:18:48Z.",
         "tool_live_verified": true,
-        "verify_progress": "PO 2026-06-05T19:25Z: cowork tick 19:15Z invoked emit_pressure_state LIVE — host docs/data/pressure-state.json emitted_at=2026-06-05T19:18:48Z tick_id=19:15:00Z with REAL computed fields (signal_backlog:0, host_headroom_mb:5362, calendar_status:off_market). This is the first dispatcher-initiated (not router-manual) emit — dispatcher-invokes-call_tool leg PROVEN. Remaining: latest cowork-fire telemetry signal is still 18:01Z pressure_mode=legacy (pre-wire bdf4fcc0); next FIRE must show pressure_mode=adaptive. Note: cycle-snapshot-latest.json promoted content is stale (2026-06-02 tick) because all dated sidecar snapshots predate the dark period — will self-heal on next FIRE snapshot emit; not a tool defect."
+        "verify_progress": "PO 2026-06-05T19:25Z: cowork tick 19:15Z invoked emit_pressure_state LIVE — host docs/data/pressure-state.json emitted_at=2026-06-05T19:18:48Z tick_id=19:15:00Z with REAL computed fields (signal_backlog:0, host_headroom_mb:5362, calendar_status:off_market). This is the first dispatcher-initiated (not router-manual) emit — dispatcher-invokes-call_tool leg PROVEN. Remaining: latest cowork-fire telemetry signal is still 18:01Z pressure_mode=legacy (pre-wire bdf4fcc0); next FIRE must show pressure_mode=adaptive. Note: cycle-snapshot-latest.json promoted content is stale (2026-06-02 tick) because all dated sidecar snapshots predate the dark period — will self-heal on next FIRE snapshot emit; not a tool defect.",
+        "verified_at": "2026-06-05T20:26:03Z"
       },
       {
         "task_id": "FU-OCR-BOOT-LOOP-SEQUENTIAL",
@@ -2507,6 +2508,40 @@
           "REFINE-CRON-ARM"
         ],
         "po_triage": "PO raw-verified 2026-06-05T19:25Z: get_bctc_full(CTG)=withheld; get_bctc_refined(69fa303f)=0 units; get_bctc_pending_refine shows 69fa303f filename=CTG_2026_Q1.pdf page_count=2 (COVER LETTER — mislink live-confirmed, binding blocker) AND refine_bctc_md has NO slot in cowork-schedule.json (fleet cron structurally dark; 7 reports PENDING/PARTIAL: DGC, DIG, ACB 2026-Q1, VEA, VCB x2, CTG — systemic). Telegram report 3048 resolved duplicate of this root. Batched FIX-CTG-PDF-MISLINK (apps/mcp-server) + REFINE-CRON-ARM (cowork-team flow, route agent-father). Sequencing: mislink fix MUST land before CTG refine pickup or refine consumes the 2-page cover letter."
+      },
+      {
+        "task_id": "FU-BACKFILL-REAL-FILENAMES",
+        "title": "BCTC backfill filename heuristic: derive real filename from source metadata instead of pattern-guessing",
+        "type": "FIX",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "kin": [
+          "FU-CTG-DISCOVERY-FILENAME-FILTER",
+          "FU-BACKFILL-MULTIPLE-COVER-LETTERS"
+        ],
+        "desc": "Residual weakness #1 from FIX-CTG-PDF-MISLINK (77092007): backfill heal works but filename matching relies on heuristic patterns rather than the real filename recorded at fetch time. Carry the actual stored filename through bctc_vps_queue/backfill metadata so heal matches deterministically. AC: backfill heal resolves PDFs by recorded filename, zero heuristic-mismatch heals on a re-run over the existing corpus.",
+        "source": "head-narrative carry-over FU from FIX-CTG-PDF-MISLINK, PO triage 2026-06-05T20:26Z",
+        "created_at": "2026-06-05T20:26:03Z"
+      },
+      {
+        "task_id": "FU-BACKFILL-MULTIPLE-COVER-LETTERS",
+        "title": "BCTC backfill: handle multiple cover-letter PDFs per ticker-quarter (skip ALL, not first-match)",
+        "type": "FIX",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "kin": [
+          "FU-CTG-DISCOVERY-FILENAME-FILTER",
+          "FU-BACKFILL-REAL-FILENAMES"
+        ],
+        "desc": "Residual weakness #2 from FIX-CTG-PDF-MISLINK (77092007): cover-letter skip + prefer-consolidated logic handles the single-cover-letter case; when a ticker-quarter has MULTIPLE cover-letter/non-report PDFs the heuristic can still pick a wrong one. Harden selection to exclude every cover-letter candidate and require a consolidated-report positive match (else leave row PENDING loudly). AC: synthetic fixture with 2+ cover letters + 1 consolidated PDF heals to the consolidated PDF; 0 mislinks on corpus re-scan.",
+        "source": "head-narrative carry-over FU from FIX-CTG-PDF-MISLINK, PO triage 2026-06-05T20:26Z",
+        "created_at": "2026-06-05T20:26:03Z"
       }
     ],
     "archive": [],
@@ -3391,7 +3426,7 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-05T19:21:57Z",
+    "_updated_at": "2026-06-05T20:22:57Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -3458,8 +3493,11 @@
         "type": "infra-anomaly",
         "summary": "mcp-server clean-exit(0) 20:06:12Z DURING emit_pressure_state call (EMIT-DARK tool); dispatcher relaunched OK",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json"
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json",
+        "resolution": "FALSE-ALARM root-caused by dev-team router: clean-exit(0) 20:06:12Z was the FIX-CTG-PDF-MISLINK deploy recreate window (ops redeploy, image a742d5b7 verified running 20:15:15Z w/ healed=1 fingerprint + served CTG row 62p). emit_pressure_state NOT at fault — emit retried OK 20:07:55Z + succeeded next tick. No action needed.",
+        "resolved_at": "2026-06-05T20:22:57Z",
+        "resolved_by": "dev-team"
       },
       {
         "id": "cow-20260605T200756",
@@ -3469,8 +3507,9 @@
         "type": "flow-gap",
         "summary": "market-watcher-offhours slot fires 4h but main.md has no offhours branch - agent no-ops, spawn wasted",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json",
+        "read_at": "2026-06-05T20:22:57Z"
       }
     ],
     "archive": [

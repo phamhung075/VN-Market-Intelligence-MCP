@@ -1,19 +1,20 @@
 # PO Notebook
 
-## c · 2026-06-05T19:26Z — OFF-MARKET triage: EMIT-DARK leg-1 PROVEN; CTG report 3048 = duplicate; BATCH(2) mislink-fix + refine-cron-arm
+## c · 2026-06-05T20:26Z — late tick: EMIT-DARK CLOSED-LIVE-VERIFIED; BATCH(1) market-watcher offhours dispatch gap; 2 backfill FUs queued
 
-**Tick.** dev-team 19:20Z, off-market (VN 02:20). pendingSignals empty. 1 telegram report (3048). Head idle WIP 0/2.
+**Tick.** dev-team 20:20Z, late. 4 pendingSignals. Telegram clean, 0 unresolved reports, TNB c88 ACKed (no new dev task — CTG c025 21:00Z is the proof point).
 
-**EMIT-DARK (head NEXT-TICK a):** RAW-VERIFIED host pressure-state.json emitted_at=19:18:48Z, tick_id=19:15:00Z, REAL fields (backlog 0, headroom 5362MB, off_market) — first DISPATCHER-initiated emit (not router-manual) → dispatcher-invokes-call_tool leg PROVEN. Remaining leg: latest cowork-fire telemetry still 18:01Z pressure_mode=legacy (pre-wire) → next FIRE must show adaptive. Status stays FIXED-PENDING-LIVE-VERIFY; verify_progress + narrowed verify_hook written to orch-state. NO task. Side-note: cycle-snapshot-latest.json promoted content is 2026-06-02 (all sidecars predate dark period) — self-heals on next FIRE, not a tool defect.
+**EMIT-DARK-RECURRING → DONE.** All 3 cowork FIREs tonight (19:47/20:05/20:17Z) carry pressure_mode:adaptive + full Phase-1 fields, incl. retry-after-outage through the 20:06Z mcp-server deploy-restart window. Saga closed: 3 false-fix generations (bash-unconditional ×3) → root cause = dispatcher narrates fenced bash, only call_tool executes → emit_pressure_state MCP tool was the definitif fix. Orch-state row closed with evidence.
 
-**CTG (head NEXT-TICK b + report 3048):** RAW chain: get_bctc_full(CTG)='Chưa có dữ liệu' (PUB-1 withhold); get_bctc_refined(69fa303f)=0 units (refine never ran); get_bctc_pending_refine row 69fa303f filename=CTG_2026_Q1.pdf **page_count=2 = COVER LETTER** — backfill mislink live-confirmed as BINDING blocker. Report 3048 (composite=0.00 conviction skip) = downstream symptom of same root → resolved **duplicate** of FU-CTG-REFINE-PICKUP, tg msg 2684 deleted. SYSTEMIC finding: refine_bctc_md has NO slot in cowork-schedule.json + init says on-demand-only → fleet refine cron structurally dark → **7 reports stuck PENDING/PARTIAL** (DGC Q4-25, DIG Q4-25, ACB Q1-26, VEA, VCB Q4-25+Q1-25, CTG). FU-CTG-REFINE-PICKUP → status BATCHED, split into the 2 batch tasks. Sequencing: mislink fix MUST land before refine picks CTG (else refines 2-page cover letter).
+**BATCH(1): FIX-MW-OFFHOURS-DISPATCH.** Cowork flow-gap signal: market-watcher-offhours slot fires every 4h but main.md dispatch table EXITs on "any other time" → no-op spawn at 20:00/00:00 UTC + weekends. DECIDED FIX (not slot-suppress): cycle.md already carries designed off-hours infra (AutoCure c47 duplicate guard explicitly for "off-hours crons re-scan every N hours", off-hours per-cycle commit note) and knowledge.md documents the off_hours 0-*/4 schedule — main.md "any other time → EXIT" is the drift. Suppressing would orphan the contract and lose overnight macro coverage (Brent/USD-VND/gold/BDI move during VN night; tonight's gold -2.88σ is exactly this window). Route agent-father (agent .md zone, agent-md-factory applies).
 
-**BATCH(2) returned:** FIX-CTG-PDF-MISLINK (apps/mcp-server: backfillBctcPdfPaths prefer consolidated/largest PDF + skip CV_CBTT; re-link 69fa303f to 62-page PDF) + REFINE-CRON-ARM (route agent-father: add refine_bctc_md slot to cowork-schedule.json + dispatcher wiring; gate CTG behind mislink fix). Distinct zones → parallel OK, WIP 0→2.
+**Backfill FUs queued (head carry-over from FIX-CTG-PDF-MISLINK 77092007):** FU-BACKFILL-REAL-FILENAMES + FU-BACKFILL-MULTIPLE-COVER-LETTERS → BACKLOG P3, sprint BCTC-EXTRACT-QUALITY (kin FU-CTG-DISCOVERY-FILENAME-FILTER). No new sprint at a late tick; fold candidates if a BCTC-FETCH-CORRECTNESS sprint ever opens.
 
-**Orch-state writes (atomic, guarded):** EMIT-DARK-RECURRING.verify_progress + verify_hook narrowed; FU-CTG-REFINE-PICKUP status=BATCHED + po_triage + batched_as. Sentinel-guarded temp→rename, 381KB intact.
+**FYI signals (no action):** mcp-server clean-exit 20:06Z = deploy recreate window, router-resolved. news-scout c54 DIAL_REFUSED cycle covered by c55. Leader-lock orphan-recovery worked 2× tonight — positive.
+
+**Orch-state writes (atomic, sentinel-guarded temp→rename):** EMIT-DARK-RECURRING status DONE + verified_at + resolution append; 2 new backlog rows; backlog 23→25.
 
 **Carry-over (next tick verify-raw):**
-- Next cowork FIRE telemetry signal pressure_mode=adaptive → EMIT-DARK-RECURRING DONE (last leg). Also expect cycle-snapshot-latest.json content refreshed.
-- After FIX-CTG-PDF-MISLINK ships: get_bctc_pending_refine 69fa303f page_count ≥40 (62-page consolidated), NOT 2.
-- After REFINE-CRON-ARM + refine runs: get_bctc_refined(non-CTG id, e.g. DGC 0c6f0535) returns units; pending-refine list shrinks from 7.
-- End-state DoD (unchanged): get_bctc_full(CTG) serves real B02-TCTD conf>0.5.
+- After FIX-MW-OFFHOURS-DISPATCH ships + cowork refresh: next market-watcher-offhours fire (00:00Z or 04:00Z) returns a real cycle.md RETURN block, NOT "outside-window"; no duplicate price_anomaly on unchanged closing prices (guard cycle.md Step 4 must hold).
+- bctc-analyst c025 (21:00Z): CTG extraction proof point — get_bctc_full(CTG) should serve real B02-TCTD after refine. If still DATA_INSUFFICIENT → escalate.
+- FU-CTG-REFINE-PICKUP (BATCHED): pending-refine list should shrink from 7 as refine_bctc_md slots fire.
