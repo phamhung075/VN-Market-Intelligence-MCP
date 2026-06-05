@@ -679,6 +679,17 @@ export function initFinancialReportsTables(db: Database): void {
   // URLs. Resetting to pending/attempts=0 allows the enricher to retry.
   // Idempotent: no-op after first run (rows already pending). Safe on startup.
   resetQ1UrlNotFound(db);
+
+  // ── FIX-CTG-3 STEP-A: purge cover-letter + wrong-period source_url for CTG ─
+  // CTG queue rows were poisoned by two defects (see arch-brief 2026-06-03):
+  //   - Q1 2026: owa.hnx.vn cover-letter (524 KB) instead of hsx.vn hop nhat.
+  //   - Q3/Q2 2025 (and any other non-Q1 period): wrong-period Q1-2026 URL
+  //     written by Defect B (enricher ignored period_year/period_quarter).
+  // FIX-CTG-1 (ddf37a3b) already corrected the enricher logic. This migration
+  // clears the stale URLs so the enricher (now correct) can re-discover and
+  // write the right URL on next cycle.
+  // Idempotent: WHERE conditions only match rows with the bad URLs.
+  resetCtgWrongSourceUrls(db);
 }
 
 // ---------------------------------------------------------------------------
@@ -901,4 +912,94 @@ export function resetQ1UrlNotFound(db: Database): number {
   }
 
   return changes;
+}
+
+// ---------------------------------------------------------------------------
+// FIX-CTG-3 STEP-A — purge cover-letter + wrong-period source_url for CTG
+// ---------------------------------------------------------------------------
+
+/**
+ * resetCtgWrongSourceUrls — purge poisoned source_url values from CTG queue rows.
+ *
+ * Two classes of wrong URLs (see docs/architecture-briefs/2026-06-03-bctc-ctg-attachment-fetch-spike.md):
+ *
+ *   Class 1 — Cover-letter URL (all periods):
+ *     Any CTG row where source_url contains 'CV_CBTT' is a disclosure cover
+ *     letter (Công Văn Công Bố Thông Tin), NOT a B02-TCTD financial statement.
+ *     Confirmed case: Q1 2026 had owa.hnx.vn/.../CV_CBTT_BCTC_Quy_I.2026_VI.pdf
+ *     (524 KB cover letter → extraction_confidence = 0.06, all values = 0).
+ *
+ *   Class 2 — Wrong-period URL (non-Q1-2026 rows):
+ *     Defect B in bctcQueueEnricherJob (before FIX-CTG-1/ddf37a3b) ignored
+ *     period_year/period_quarter and defaulted to year=2026/quarter=Q4 →
+ *     hsx.vn returned the Q1-2026 PDF for every row. Q3-2025 and Q2-2025
+ *     CTG rows were written with a URL containing 'Quy_I.2026' or 'Quy I.2026'
+ *     or the percent-encoded equivalent '%20I.2026%20'.
+ *     Detection: source_url contains any of those patterns AND
+ *     NOT (period_year = 2026 AND period_quarter = 'Q1').
+ *
+ * Fix applied by this migration:
+ *   - Set source_url = NULL, status = 'pending', attempts = 0 for matched rows.
+ *   - The enricher (FIX-CTG-1 already in prod) will re-run with the correct
+ *     year/quarter and write the proper hsx.vn hop-nhat URL on next cycle.
+ *   - For Q1 2026: the enricher will find the 6.34 MB consolidated statement
+ *     instead of the 524 KB cover letter.
+ *
+ * Idempotent:
+ *   - Class 1 WHERE clause matches only rows still holding 'CV_CBTT' in their URL.
+ *     After reset (source_url = NULL), the condition evaluates to false → no-op.
+ *   - Class 2 WHERE clause matches only wrong-period URLs. After reset, no-op.
+ *
+ * Scope: CTG only. All other tickers are untouched.
+ *
+ * @param db Database instance
+ * @returns Total number of rows reset (0 on repeat calls = idempotent)
+ */
+export function resetCtgWrongSourceUrls(db: Database): number {
+  let total = 0;
+
+  try {
+    // Class 1: any CTG row with a cover-letter URL (contains 'CV_CBTT')
+    const class1 = db.prepare(`
+      UPDATE bctc_vps_queue
+      SET source_url = NULL, status = 'pending', attempts = 0
+      WHERE action_code = 'CTG'
+        AND source_url IS NOT NULL
+        AND (
+          source_url LIKE '%CV_CBTT%'
+          OR source_url LIKE '%CV CBTT%'
+        )
+    `).run();
+    total += class1.changes;
+
+    // Class 2: non-Q1-2026 CTG rows that were corrupted with a Q1-2026 URL
+    // (Defect B: enricher ignored period_year/period_quarter before FIX-CTG-1).
+    // Pattern: URL contains 'I.2026' (Roman numeral I = Q1) or percent-encoded variant.
+    const class2 = db.prepare(`
+      UPDATE bctc_vps_queue
+      SET source_url = NULL, status = 'pending', attempts = 0
+      WHERE action_code = 'CTG'
+        AND source_url IS NOT NULL
+        AND NOT (period_year = 2026 AND period_quarter = 'Q1')
+        AND (
+          source_url LIKE '% I.2026%'
+          OR source_url LIKE '%_I.2026%'
+          OR source_url LIKE '%I.2026%'
+          OR source_url LIKE '%Quy I 2026%'
+          OR source_url LIKE '%I%2026%'
+        )
+    `).run();
+    total += class2.changes;
+
+    if (total > 0) {
+      logger.info(
+        `[FIX-CTG-3 STEP-A] Reset ${total} CTG bctc_vps_queue rows with wrong source_url to pending`,
+        { class1: class1.changes, class2: class2.changes },
+      );
+    }
+  } catch {
+    // bctc_vps_queue may not exist yet on a fresh DB — silently skip
+  }
+
+  return total;
 }
