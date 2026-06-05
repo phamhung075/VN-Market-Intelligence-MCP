@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "FDA-1 DONE+LIVE (cc4dbcba deployed 2026-06-05T08:12Z via operator-authorized immediate mcp-server rebuild; raw-verified get_prediction_markets 0.505/0.495 genuine, no fabricated 0.5). Rebuild also deployed 02498635 (carry/yield) + 260655e3 (1881a). NEXT TICK: FDA-2 + FDA-3 (macro-indicators pair — per-field provenance on snapshot vnIndex/oil/gold/usdVnd + /external honest source status) as ONE Go rebuild per PO plan. Then FDA-4..10 (P3) below cut line. Watch FU-PRESSURE-EMIT-DARK (pressure-state dark ~2.25d, fail-safe legacy fallback).",
+    "next_action": "FDA-2+FDA-3 DONE+LIVE (0712c3a7 deployed 2026-06-05T08:24Z; raw-verified get_macro_snapshot per-field provenance present). FAKE-DATA-AUDIT P2 tier CLEARED (FDA-1/2/3 all live). Remaining: FDA-4..FDA-10 are P3 (below cut line) — FDA-4 macro-calendar fixture, FDA-5 energy grid (banner-guarded), FDA-6 creditFlow (flagged), FDA-7 macroTools proxy re-stamp, FDA-8 kinh-dich stub (501/unwired), FDA-9 rag-service _distance default, FDA-10 shippingIndex stale comment. Also open: FU-PRESSURE-EMIT-DARK (pressure dark, fail-safe legacy). Next tick: PO grooming pass on P3 batch or pick next ready P1/P2.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T08:13:29.595132+00:00",
+    "updated_at": "2026-06-05T08:27:14.041151+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T08:13:29.595132+00:00",
+    "_updated_at": "2026-06-05T08:27:14.041151+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2944,41 +2944,6 @@
         "done_note": "SHIPPED+LIVE 2026-06-05. PageHeader SSOT (619093e1) + TopNav SSOT (5f660fb1, fixed / showing stale 5-item vs canonical 8-item nav) + centered full-viewport layout. 327 tests pass, tsc 0. ops rebuilt frontend (image b18f8ee7, healthy); / serves 8-item nav incl BCTC Eval/Inspect/Orchestration verified live."
       },
       {
-        "task_id": "FDA-2",
-        "title": "macro snapshot top-level price fields (vnIndex/oil/gold/usdVnd) fall back to fixtures with no PER-FIELD provenance flag",
-        "type": "FIX",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/macro-indicators",
-        "files": [
-          "apps/macro-indicators/pkg/application/usecases.go"
-        ],
-        "severity": "MED",
-        "note": "usecases.go:296 resolveVNIndex returns fixtureVNIndex (1280.5) on DB-miss; usecases.go:353 resolveMarketPrices seeds oil/gold/usdVnd to fixtureOilUSD(82.5)/fixtureGoldUSD(2350.0)/fixtureUSDVnd(24500.0). Unlike carry/yield (correctly suppressed to UNKNOWN + carrySpread=null + is_estimate + source_tier=4 per DSI fix), these raw top-level numbers are emitted via /snapshot (get_macro_snapshot MCP tool) and /external (frontend dashboard) with only a COARSE top-level dataSource='estimate' — a consumer reading resp.vnIndex directly does not honor it. FIX: add per-field is_estimate/source_tier to the top-level price fields (mirror the carry DTO pattern) OR null-omit on fixture fallback. Verified raw 2026-06-05. Sibling fixture map also in repositories.go HTTPCommodityFetcher (sandbox default fetcher) — ensure SQLite/live path is the deployed default.",
-        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
-        "depends_on": null
-      },
-      {
-        "task_id": "FDA-3",
-        "title": "/external hardcodes source status 'ok'x3 + summary failed:0 + fresh fetchedAt even on fixture-fallback",
-        "type": "FIX",
-        "sprint": "FAKE-DATA-AUDIT",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/macro-indicators",
-        "files": [
-          "apps/macro-indicators/pkg/interface/http/handlers_external.go",
-          "apps/macro-indicators/pkg/application/usecases.go"
-        ],
-        "severity": "MED",
-        "note": "handlers_external.go:~70 (GET /external, consumed by frontend dashboard via /macro/external in client.ts) hardcodes every source status to 'ok' and summary failed:0 even when the underlying snapshot is fixture-fallback (dataSource='estimate'), and stamps fetchedAt=resp.FetchedAt=time.Now() (usecases.go:174) regardless of liveness — fresh-stamping non-fresh data. Dashboard reads this as 3 healthy live sources fetched just now. FIX: derive each source status + summary.failed from resp.DataSource / per-input liveness (degrade to 'estimate'/'unavailable' on fixture fallback); do not stamp fetchedAt=now when values are fixtures — carry the true source timestamp or mark estimate.",
-        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
-        "depends_on": null
-      },
-      {
         "task_id": "FDA-4",
         "title": "/macro-calendar returns 2 hardcoded events + frozen fetchedAt with no provenance flag (no live consumer yet)",
         "type": "FIX",
@@ -3139,8 +3104,54 @@
         "done_at": "2026-06-05T07:23:00.717627+00:00",
         "deploy_note": "LIVE 2026-06-05T08:12Z — operator-authorized immediate rebuild ('rebuild don't wait'), ops rebuilt mcp-server (image built 08:11:21Z, container Up healthy, 0 die-events, no collateral). Deployed batch: cc4dbcba (FDA-1) + 02498635 (carry/yield /snapshot rewire) + 260655e3 (1881a JSON wrapper). Live-verified raw by router: get_prediction_markets returns yesPrice 0.505/noPrice 0.495 (genuine orderbook, NOT fabricated 0.5/0.5); zero 0.5 literals on served path; malformed-price markets omitted at source.",
         "deployed_at": "2026-06-05T08:13:29.595132+00:00"
+      },
+      {
+        "task_id": "FDA-2",
+        "title": "macro snapshot top-level price fields (vnIndex/oil/gold/usdVnd) fall back to fixtures with no PER-FIELD provenance flag",
+        "type": "FIX",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/macro-indicators",
+        "files": [
+          "apps/macro-indicators/pkg/application/usecases.go"
+        ],
+        "severity": "MED",
+        "note": "usecases.go:296 resolveVNIndex returns fixtureVNIndex (1280.5) on DB-miss; usecases.go:353 resolveMarketPrices seeds oil/gold/usdVnd to fixtureOilUSD(82.5)/fixtureGoldUSD(2350.0)/fixtureUSDVnd(24500.0). Unlike carry/yield (correctly suppressed to UNKNOWN + carrySpread=null + is_estimate + source_tier=4 per DSI fix), these raw top-level numbers are emitted via /snapshot (get_macro_snapshot MCP tool) and /external (frontend dashboard) with only a COARSE top-level dataSource='estimate' — a consumer reading resp.vnIndex directly does not honor it. FIX: add per-field is_estimate/source_tier to the top-level price fields (mirror the carry DTO pattern) OR null-omit on fixture fallback. Verified raw 2026-06-05. Sibling fixture map also in repositories.go HTTPCommodityFetcher (sandbox default fetcher) — ensure SQLite/live path is the deployed default.",
+        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
+        "depends_on": null,
+        "started_at": "2026-06-05T08:15:14.701414+00:00",
+        "done_at": "2026-06-05T08:27:14.041151+00:00",
+        "commit": "0712c3a7",
+        "deployed_at": "2026-06-05T08:27:14.041151+00:00",
+        "deploy_note": "LIVE 2026-06-05T08:24Z — operator immediate macro-indicators rebuild (image 08:24:30Z, healthy, 0 die-events). Router raw-verified get_macro_snapshot: per-field vnIndex_is_estimate/oil_/gold_/usdVnd_ + *_source_tier now present (live: false/tier1; fixture-fallback→true/tier4 proven by 11 RED->GREEN unit tests). /external now derives source status from provenance + no fresh-stamp on all-fixture (anyLive-gated fetchedAt)."
+      },
+      {
+        "task_id": "FDA-3",
+        "title": "/external hardcodes source status 'ok'x3 + summary failed:0 + fresh fetchedAt even on fixture-fallback",
+        "type": "FIX",
+        "sprint": "FAKE-DATA-AUDIT",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/macro-indicators",
+        "files": [
+          "apps/macro-indicators/pkg/interface/http/handlers_external.go",
+          "apps/macro-indicators/pkg/application/usecases.go"
+        ],
+        "severity": "MED",
+        "note": "handlers_external.go:~70 (GET /external, consumed by frontend dashboard via /macro/external in client.ts) hardcodes every source status to 'ok' and summary failed:0 even when the underlying snapshot is fixture-fallback (dataSource='estimate'), and stamps fetchedAt=resp.FetchedAt=time.Now() (usecases.go:174) regardless of liveness — fresh-stamping non-fresh data. Dashboard reads this as 3 healthy live sources fetched just now. FIX: derive each source status + summary.failed from resp.DataSource / per-input liveness (degrade to 'estimate'/'unavailable' on fixture fallback); do not stamp fetchedAt=now when values are fixtures — carry the true source timestamp or mark estimate.",
+        "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
+        "depends_on": null,
+        "started_at": "2026-06-05T08:15:14.701414+00:00",
+        "done_at": "2026-06-05T08:27:14.041151+00:00",
+        "commit": "0712c3a7",
+        "deployed_at": "2026-06-05T08:27:14.041151+00:00",
+        "deploy_note": "LIVE 2026-06-05T08:24Z — operator immediate macro-indicators rebuild (image 08:24:30Z, healthy, 0 die-events). Router raw-verified get_macro_snapshot: per-field vnIndex_is_estimate/oil_/gold_/usdVnd_ + *_source_tier now present (live: false/tier1; fixture-fallback→true/tier4 proven by 11 RED->GREEN unit tests). /external now derives source status from provenance + no fresh-stamp on all-fixture (anyLive-gated fetchedAt)."
       }
-    ]
+    ],
+    "in_progress": []
   },
   "signal_queue": {
     "_updated_at": "2026-06-05T03:14:26Z",
