@@ -29,6 +29,7 @@ import {
   ensureCoordinationTable,
   claimTask,
   releaseTask,
+  releaseOrphanTask,
   _injectCoordinationDb,
   _resetCoordinationDbState,
 } from "../infrastructure/db/coordinationStore";
@@ -52,6 +53,16 @@ function expireLock(db: Database, task_id: string): void {
   db.prepare(
     "UPDATE task_locks SET expires_at = unixepoch('now') - 1 WHERE task_id = ?"
   ).run(task_id);
+}
+
+/**
+ * Age a lock's heartbeat_at by the given number of seconds into the past.
+ * Used to simulate a process that died without releasing its lock.
+ */
+function ageHeartbeat(db: Database, task_id: string, ageSeconds: number): void {
+  db.prepare(
+    "UPDATE task_locks SET heartbeat_at = unixepoch('now') - ? WHERE task_id = ?"
+  ).run(ageSeconds, task_id);
 }
 
 let testDb: Database;
@@ -726,5 +737,197 @@ describe("DV-TTL-CAP: Weekly published-marker TTL cap = 691200s (ARCH-DECIDE-D f
 
     expect(dailyRow?.ttl_seconds).toBe(100800);  // daily: 28h unchanged
     expect(weeklyRow?.ttl_seconds).toBe(WEEKLY_TTL); // weekly: 8 days accepted
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC-SL-6 — Orphan lock (heartbeat_age > threshold) → released:true, re-claimable
+//
+// Simulates the 2026-06-05 incident: mcp-server restarted, new SERVER_SESSION_ID
+// can no longer heartbeat the old lock. The lock was claimed at 08:00:44Z and
+// the last heartbeat was at 08:00:44Z (no renewal). At 08:15Z the new process
+// detects heartbeat_age ~875s > 600s threshold → orphan-steal.
+//
+// GREEN path: releaseOrphanTask returns released:true, prior_owner_session is
+// the old session, heartbeat_age reflects the artificial age. After release,
+// a new session can claim the lock (INSERT OR IGNORE succeeds on absent row).
+// ---------------------------------------------------------------------------
+
+describe("AC-SL-6: Orphan lock with heartbeat_age > threshold → released:true, re-claimable by new session", () => {
+  it("GREEN: stale heartbeat (age > 600s) triggers orphan release, lock re-claimable", () => {
+    // Step 1: Old process claims the cowork-leader lock
+    const claim = claimTask({
+      task_id: "cowork-leader",
+      task_kind: "cowork-slot",
+      owner_session: "pid-1-ts-1780613414482",  // old process session
+      owner_agent: "cowork-dispatcher",
+      ttl_seconds: 1800,
+    });
+    expect(claim.claimed).toBe(true);
+
+    // Step 2: Simulate process restart — no heartbeat for 875 seconds
+    // (replicates the 08:00:44Z claim → 08:15Z check = ~875s gap)
+    ageHeartbeat(testDb, "cowork-leader", 875);
+
+    // Step 3: New process calls releaseOrphanTask with the same owner_agent
+    // (owner_session is irrelevant — only owner_agent is checked)
+    const orphanResult = releaseOrphanTask("cowork-leader", "cowork-dispatcher", 600);
+
+    expect(orphanResult.released).toBe(true);
+    expect(orphanResult.reason).toBe("orphan_released");
+    expect(orphanResult.prior_owner_session).toBe("pid-1-ts-1780613414482");
+    expect(orphanResult.heartbeat_age).toBeGreaterThanOrEqual(875);
+
+    // Step 4: New process can now re-claim (lock row is gone)
+    const reclaim = claimTask({
+      task_id: "cowork-leader",
+      task_kind: "cowork-slot",
+      owner_session: "pid-1-ts-1780647098474",  // new process session after restart
+      owner_agent: "cowork-dispatcher",
+      ttl_seconds: 1800,
+    });
+    expect(reclaim.claimed).toBe(true);
+    // INSERT OR IGNORE path (not stolen — row was deleted, not expired)
+    expect((reclaim as { stolen?: boolean }).stolen).toBeUndefined();
+  });
+
+  it("GREEN: orphan release returns correct prior_owner_session for audit trail", () => {
+    claimTask({
+      task_id: "cowork-leader-audit",
+      task_kind: "cowork-slot",
+      owner_session: "pid-42-ts-9999999",
+      owner_agent: "cowork-dispatcher",
+      ttl_seconds: 1800,
+    });
+
+    ageHeartbeat(testDb, "cowork-leader-audit", 700);
+
+    const result = releaseOrphanTask("cowork-leader-audit", "cowork-dispatcher", 600);
+    expect(result.released).toBe(true);
+    expect(result.prior_owner_session).toBe("pid-42-ts-9999999");
+  });
+
+  it("GREEN: owner_agent mismatch → released:false (cross-agent theft blocked)", () => {
+    claimTask({
+      task_id: "cowork-leader-cross",
+      task_kind: "cowork-slot",
+      owner_session: "pid-1-ts-old",
+      owner_agent: "cowork-dispatcher",
+      ttl_seconds: 1800,
+    });
+
+    ageHeartbeat(testDb, "cowork-leader-cross", 900);
+
+    // Different agent tries to release — must be blocked
+    const result = releaseOrphanTask("cowork-leader-cross", "some-other-agent", 600);
+    expect(result.released).toBe(false);
+    expect(result.reason).toBe("owner_agent_mismatch");
+
+    // Original lock must still exist
+    const row = testDb
+      .prepare("SELECT task_id FROM task_locks WHERE task_id = ?")
+      .get("cowork-leader-cross");
+    expect(row).not.toBeNull();
+  });
+
+  it("GREEN: lock_not_found → released:false, no error", () => {
+    const result = releaseOrphanTask("cowork-leader-nonexistent", "cowork-dispatcher", 600);
+    expect(result.released).toBe(false);
+    expect(result.reason).toBe("lock_not_found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AC-SL-7 — Lock with FRESH heartbeat → released:false (dup-spawn safety preserved)
+//
+// A live concurrent session always heartbeats continuously. The dup-spawn case
+// (2026-06-02 fix) relies on the heartbeat-as-discriminator: if heartbeat_age
+// ≤ threshold, the lock is held by a live process — do NOT steal it.
+//
+// GREEN path: releaseOrphanTask returns released:false with reason "heartbeat_fresh".
+// The DB row must NOT be deleted.
+// ---------------------------------------------------------------------------
+
+describe("AC-SL-7: Lock with fresh heartbeat → released:false (dup-spawn safety preserved)", () => {
+  it("GREEN: fresh heartbeat (age ≤ 600s) blocks orphan-steal — live peer is protected", () => {
+    // Live peer claims the lock and heartbeats regularly
+    const claim = claimTask({
+      task_id: "cowork-leader",
+      task_kind: "cowork-slot",
+      owner_session: "pid-99-ts-live",
+      owner_agent: "cowork-dispatcher",
+      ttl_seconds: 1800,
+    });
+    expect(claim.claimed).toBe(true);
+
+    // Heartbeat is fresh (claimed just now — heartbeat_age ≈ 0s)
+    // We don't age it, so heartbeat_at = unixepoch('now') from the claim INSERT
+
+    const orphanResult = releaseOrphanTask("cowork-leader", "cowork-dispatcher", 600);
+
+    // Must NOT release — live process is heartbeating
+    expect(orphanResult.released).toBe(false);
+    expect(orphanResult.reason).toBe("heartbeat_fresh");
+    expect(orphanResult.heartbeat_age).toBeDefined();
+    expect(orphanResult.heartbeat_age!).toBeLessThanOrEqual(600);
+
+    // Lock must still exist in DB — no row deleted
+    const row = testDb
+      .prepare("SELECT owner_session FROM task_locks WHERE task_id = ?")
+      .get("cowork-leader") as { owner_session: string } | null;
+    expect(row).not.toBeNull();
+    expect(row?.owner_session).toBe("pid-99-ts-live");
+  });
+
+  it("GREEN: heartbeat aged to exactly threshold (=600s) → still NOT released (boundary: ≤ threshold)", () => {
+    claimTask({
+      task_id: "cowork-leader-boundary",
+      task_kind: "cowork-slot",
+      owner_session: "pid-100-ts-boundary",
+      owner_agent: "cowork-dispatcher",
+      ttl_seconds: 1800,
+    });
+
+    // Age to exactly the threshold — must NOT release (boundary is exclusive: > threshold)
+    ageHeartbeat(testDb, "cowork-leader-boundary", 600);
+
+    const result = releaseOrphanTask("cowork-leader-boundary", "cowork-dispatcher", 600);
+    expect(result.released).toBe(false);
+    expect(result.reason).toBe("heartbeat_fresh");
+  });
+
+  it("GREEN: heartbeat aged to threshold+1 → released (boundary: > threshold triggers orphan)", () => {
+    claimTask({
+      task_id: "cowork-leader-threshold-plus1",
+      task_kind: "cowork-slot",
+      owner_session: "pid-101-ts-old",
+      owner_agent: "cowork-dispatcher",
+      ttl_seconds: 1800,
+    });
+
+    // One second past the threshold — now qualifies as orphan
+    ageHeartbeat(testDb, "cowork-leader-threshold-plus1", 601);
+
+    const result = releaseOrphanTask("cowork-leader-threshold-plus1", "cowork-dispatcher", 600);
+    expect(result.released).toBe(true);
+    expect(result.reason).toBe("orphan_released");
+  });
+
+  it("GREEN: minimum threshold enforced at 120s (orphan_threshold_seconds=0 is clamped)", () => {
+    claimTask({
+      task_id: "cowork-leader-min-threshold",
+      task_kind: "cowork-slot",
+      owner_session: "pid-102-ts-recent",
+      owner_agent: "cowork-dispatcher",
+      ttl_seconds: 1800,
+    });
+
+    // Age to 60s — would qualify if threshold=0 were accepted, but min is 120
+    ageHeartbeat(testDb, "cowork-leader-min-threshold", 60);
+
+    // threshold=0 gets clamped to 120 → heartbeat_age=60 ≤ 120 → NOT released
+    const result = releaseOrphanTask("cowork-leader-min-threshold", "cowork-dispatcher", 0);
+    expect(result.released).toBe(false);
+    expect(result.reason).toBe("heartbeat_fresh");
   });
 });

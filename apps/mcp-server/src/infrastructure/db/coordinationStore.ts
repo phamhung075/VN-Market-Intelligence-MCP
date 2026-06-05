@@ -241,6 +241,13 @@ export interface ReleaseResult {
   ok: boolean;
 }
 
+export interface OrphanReleaseResult {
+  released: boolean;
+  reason: string;
+  prior_owner_session?: string;
+  heartbeat_age?: number;
+}
+
 export interface LockRow {
   task_id: string;
   task_kind: string;
@@ -451,6 +458,108 @@ export function listHeldTasks(filter?: {
   } catch (err) {
     console.error("[coordinationStore] listHeldTasks error", err);
     return { locks: [], count: 0 };
+  }
+}
+
+/**
+ * Force-release an orphaned lock whose heartbeat has gone stale.
+ *
+ * Safety gate (preserves the 2026-06-02 dup-spawn discriminator):
+ *   DELETE only when ALL conditions hold:
+ *     1. task_id matches
+ *     2. owner_agent matches (prevents cross-agent orphan-steal)
+ *     3. heartbeat_at < unixepoch('now') - orphanThresholdSeconds
+ *        (stale heartbeat = process died; if a live concurrent session holds
+ *         the lock, it heartbeats continuously and this condition never fires)
+ *
+ * Returns {released:false} WITHOUT modifying the DB when the heartbeat is
+ * fresh (≤ orphanThresholdSeconds old), guaranteeing that a live peer or a
+ * same-agent session that restarted within the threshold window is never
+ * stolen from.
+ *
+ * Default orphanThresholdSeconds = 600 (10 min) — safe margin above the
+ * 5-min heartbeat interval used by cowork-dispatcher.
+ * Minimum enforced = 120s to prevent accidental near-instant theft.
+ */
+export function releaseOrphanTask(
+  task_id: string,
+  owner_agent: string,
+  orphanThresholdSeconds = 600,
+): OrphanReleaseResult {
+  const db = getCoordinationDb();
+  if (!db) return { released: false, reason: "db_unavailable" };
+
+  // Enforce minimum threshold — prevent accidental near-instant orphan-steal.
+  const threshold = Math.max(orphanThresholdSeconds, 120);
+
+  try {
+    // Read the current lock row before attempting deletion.
+    const row = db.prepare(`
+      SELECT owner_session, owner_agent, heartbeat_at,
+             CAST(unixepoch('now') - heartbeat_at AS INTEGER) AS heartbeat_age
+      FROM task_locks
+      WHERE task_id = ?
+    `).get(task_id) as {
+      owner_session: string;
+      owner_agent: string;
+      heartbeat_at: number;
+      heartbeat_age: number;
+    } | null;
+
+    if (!row) {
+      return { released: false, reason: "lock_not_found" };
+    }
+
+    // Guard: wrong owner_agent — never steal another agent's lock.
+    if (row.owner_agent !== owner_agent) {
+      return {
+        released: false,
+        reason: "owner_agent_mismatch",
+        prior_owner_session: row.owner_session,
+        heartbeat_age: row.heartbeat_age,
+      };
+    }
+
+    // Guard: heartbeat is fresh — live process holds the lock; do NOT steal.
+    if (row.heartbeat_age <= threshold) {
+      return {
+        released: false,
+        reason: "heartbeat_fresh",
+        prior_owner_session: row.owner_session,
+        heartbeat_age: row.heartbeat_age,
+      };
+    }
+
+    // Stale heartbeat — perform the conditional DELETE.
+    // The WHERE clause re-checks the stale condition atomically so a concurrent
+    // heartbeat that arrives between our SELECT and DELETE is not lost.
+    const result = db.prepare(`
+      DELETE FROM task_locks
+      WHERE task_id    = ?
+        AND owner_agent = ?
+        AND heartbeat_at < unixepoch('now') - ?
+    `).run(task_id, owner_agent, threshold);
+
+    if (result.changes === 1) {
+      return {
+        released: true,
+        reason: "orphan_released",
+        prior_owner_session: row.owner_session,
+        heartbeat_age: row.heartbeat_age,
+      };
+    }
+
+    // Race: another concurrent call already released or heartbeated between
+    // our SELECT and DELETE — the lock is either gone or refreshed.
+    return {
+      released: false,
+      reason: "lost_race_or_heartbeat_refreshed",
+      prior_owner_session: row.owner_session,
+      heartbeat_age: row.heartbeat_age,
+    };
+  } catch (err) {
+    console.error("[coordinationStore] releaseOrphanTask error", err);
+    return { released: false, reason: "db_error" };
   }
 }
 

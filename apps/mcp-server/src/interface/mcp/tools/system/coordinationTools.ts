@@ -34,6 +34,7 @@ import {
   heartbeatTask,
   releaseTask,
   listHeldTasks,
+  releaseOrphanTask,
   type TaskKind,
 } from "../../../../infrastructure/db/coordinationStore.js";
 
@@ -56,7 +57,7 @@ const SERVER_SESSION_ID: string = (() => {
 // ---------------------------------------------------------------------------
 
 /**
- * Register all 4 coordination tools on the MCP server.
+ * Register all 5 coordination tools on the MCP server.
  *
  * @param server The McpServer instance to register tools on.
  */
@@ -207,6 +208,64 @@ export function registerCoordinationTools(server: McpServer): void {
         ...(owner_agent !== undefined ? { owner_agent } : {}),
         ...(expired !== undefined ? { expired } : {}),
       });
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  // ── task_force_release_orphan ────────────────────────────────────────────
+  server.tool(
+    "task_force_release_orphan",
+    "Force-release a coordination lock whose heartbeat has gone stale (process died without releasing). " +
+      "Intended for the leader-lock orphan-steal recovery path: after a mcp-server restart, " +
+      "the new process cannot heartbeat the old process's lock because SERVER_SESSION_ID changed. " +
+      "Safe to call when heartbeat_at is stale — the call is a no-op when a live session " +
+      "holds the lock (fresh heartbeat ≤ orphan_threshold_seconds old). " +
+      "SAFETY: only releases when owner_agent matches AND heartbeat_at is older than the threshold. " +
+      "A live concurrent session always heartbeats within the threshold window and is never stolen from. " +
+      "After a successful release (released:true), re-claim normally with task_claim.",
+    {
+      task_id: z
+        .string()
+        .min(1)
+        .describe(
+          "The task_id of the lock to release if orphaned. " +
+            "Typically 'cowork-leader' for the leader-lock recovery path.",
+        ),
+      owner_agent: z
+        .string()
+        .min(1)
+        .describe(
+          "Agent name that originally claimed the lock. " +
+            "Only locks with a matching owner_agent are eligible for orphan-release " +
+            "(prevents cross-agent theft).",
+        ),
+      orphan_threshold_seconds: z
+        .number()
+        .int()
+        .min(120)
+        .optional()
+        .describe(
+          "Heartbeat age in seconds above which a lock is considered orphaned. " +
+            "Default: 600 (10 min). Minimum: 120 (enforced server-side). " +
+            "A lock whose heartbeat_at is older than this threshold and whose " +
+            "owner_agent matches will be deleted. " +
+            "Locks with heartbeat_age ≤ threshold are NOT released (live-session safety).",
+        ),
+    },
+    async ({ task_id, owner_agent, orphan_threshold_seconds }) => {
+      const result = releaseOrphanTask(
+        task_id,
+        owner_agent,
+        orphan_threshold_seconds ?? 600,
+      );
+
       return {
         content: [
           {
