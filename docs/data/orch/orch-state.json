@@ -1,16 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-05T04:11:46Z",
+  "_updated_at": "2026-06-05T04:47:45Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "Idle 2026-06-05T04:10Z tick: drained 2 cowork-fire heartbeats, 0 actionable, head idle. NO ship: VN market OPEN (04:10Z in 02:00-08:00Z window) -> no mcp-server rebuild now. Remaining P3 all gated/blocked/batch: TIER-WORSTOF+LOCKSTORE-GC (mcp-server code, BATCH for next OFF-MARKET rebuild >08:00Z together with live-pending 260655e3/1881a), CNYVND (irreversible migration, gated), SBV-EFFECTIVE-DATE (VPS multi-step), RUNTIME-SET-P3b (blocked FU-RAG-DEPLOY-MEMORY architect), AUDITOR-D4-SIGNAL-ID (design fork -> PO). TRIGGER: next tick after 08:00Z UTC = batch mcp-server P3s + ops rebuild.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FE-HEADER-SSOT",
+    "next_agent": "dev-frontend",
+    "next_action": "dev-frontend implementing shared PageHeader + centered full-viewport layout across all dashboard pages",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-05T04:11:46Z",
+    "updated_at": "2026-06-05T04:47:45Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -2929,6 +2929,18 @@
         "size": "S",
         "zone": "docs/agents/system-auditor",
         "depends_on": null
+      },
+      {
+        "task_id": "FE-HEADER-SSOT",
+        "title": "Frontend: per-page title headers diverge across dashboard.* pages (each hand-rolls its own <h1>+wrapper). Extract ONE shared PageHeader component (SSOT/factory: title + optional subtitle + optional right actions slot), replace every page ad-hoc header with it. ALSO: pages must be centered + 100% width/height (consistent full-viewport centered content container in the dashboard layout). Operator-requested.",
+        "type": "FIX",
+        "sprint": "FRONTEND-OPERATOR-UX",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/frontend",
+        "depends_on": null,
+        "owner": "dev-frontend"
       }
     ],
     "archive": []
