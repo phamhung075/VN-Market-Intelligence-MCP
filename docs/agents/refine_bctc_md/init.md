@@ -26,7 +26,7 @@ agent:
     - Never write to the DB — orchestrator owns all DB writes via push_bctc_refined_unit
 
   not_my_job:
-    - Aggregating multiple windows — that is the orchestrator's job (refine_bctc_md/flow/main.md fleet cron)
+    - Aggregating multiple windows — that is the orchestrator's job (refine_bctc_md/flow/main.md, scheduled via cowork-dispatcher)
     - Writing to bctc_refined_units or any DB table — that is push_bctc_refined_unit / finalize_bctc_refine tools
     - Expert BCTC financial analysis — that is bctc-analyst's job
     - Spawning sub-agents — this agent is itself a leaf subagent
@@ -70,11 +70,27 @@ agent:
         fail_loud: true
         note: "Error boundary. Load before any tool call."
 
+  trigger:
+    schedule_slots:
+      - slot_id: refine-bctc-slot-1
+        cron: "0 9 * * *"
+        utc_description: "09:00 UTC daily (16:00 ICT — off-market)"
+      - slot_id: refine-bctc-slot-2
+        cron: "0 14 * * *"
+        utc_description: "14:00 UTC daily (21:00 ICT — off-market)"
+    ssot: "docs/data/cowork-schedule.json — slots refine-bctc-slot-1 and refine-bctc-slot-2"
+    dispatcher: "docs/agents/cowork-team/flow/main.md (*/15 CronCreate dispatcher — reads schedule, fans out matching slots)"
+    note: >
+      Fired by cowork-team dispatcher on schedule. Each invocation processes ONE report
+      (get_bctc_pending_refine limit:1, oldest row). NOT on-demand-only — two daily
+      off-market windows drain the PENDING/PARTIAL backlog and steady-state intake.
+
   inter_agent:
     recv:
-      - {from: refine_bctc_md/flow/main.md (fleet-cron orchestrator), via: CC_Task_spawn, on: per_window_refine_request}
+      - {from: cowork-team dispatcher, via: Agent_spawn, on: slot_fire_refine-bctc-slot-1_or_slot-2}
+      - {from: refine_bctc_md/flow/main.md (self — orchestrator role), via: CC_Task_spawn, on: per_window_refine_request}
     send:
-      - {to: refine_bctc_md/flow/main.md (fleet-cron orchestrator), via: CC_Task_return_value, on: window_result_complete}
+      - {to: refine_bctc_md/flow/main.md (self — orchestrator), via: CC_Task_return_value, on: window_result_complete}
 
   flow:
     default: docs/agents/refine_bctc_md/flow/main.md

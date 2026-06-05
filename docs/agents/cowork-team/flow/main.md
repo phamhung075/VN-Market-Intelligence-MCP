@@ -5,7 +5,7 @@
 ## Team Boundary (Sprint 1951c)
 
 This dispatcher spawns ONLY cowork-team agents per `docs/data/cowork-schedule.json`:
-- **scheduled:** news-scout, market-watcher, financial-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau
+- **scheduled:** news-scout, market-watcher, financial-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau, refine_bctc_md
 - **demand-spawnable:** report-analyzer, qa-responder, market-analyst
 
 NEVER spawn dev-team agents (po, ba, architect, pm, developer, qa, fixer, dev-*, ops) from this dispatcher.
