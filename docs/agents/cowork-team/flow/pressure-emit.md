@@ -5,12 +5,23 @@
 <!-- DWF-DEV-CROSS-3: Single-row rolling SSOT. Atomic write (write .tmp then rename). Instrument-only Phase 0 — no decision path reads this file. Never blocks the tick on failure.
      AC-P0-4-5 atomic write: write to TMPFILE then mv (fs-level rename = atomic).
      AC-P0-4-6 fail-safe: is_trading_day failure → calendar_status="unknown", still emits.
-     AC-P0-4-4 isolation: only this step writes pressure-state.json. grep apps/ .claude/skills/ = 0 hits. -->
+     AC-P0-4-4 isolation: only this step writes pressure-state.json. grep apps/ .claude/skills/ = 0 hits.
+     FU-PRESSURE-EMIT-DARK hardening: gateway call lifted OUT of bash fence (pure bash cannot call MCP).
+     Agent pre-computes CALENDAR_STATUS before entering the bash block; bash receives it as env var. -->
 
 Only execute if WON_SLOTS is non-empty (skip on silent-exit path). **Never blocks spawns on failure.**
 
+**Pre-step (agent-interpreted, before bash):** call the gateway to get calendar status:
+
+```
+CALENDAR_STATUS_RAW = call_tool(server="vn-market", tool="is_trading_day", arguments={})
+CALENDAR_STATUS = CALENDAR_STATUS_RAW.session_status ?? "unknown"
+# On any tool failure or missing field: CALENDAR_STATUS = "unknown" (AC-P0-4-6)
+```
+
 ```bash
 # Step 4.8 — Emit pressure-state.json
+# CALENDAR_STATUS is injected by the agent pre-step above (never "unknown" due to bash failure)
 
 PRESSURE_TMPFILE="docs/data/pressure-state.json.tmp"
 
@@ -30,14 +41,6 @@ TICK_ID=$(date -u +"%Y-%m-%dT%H:")$(printf '%02d' $FLOOR_M_PS)":00Z"
 # `{ grep -v ... || true; }` neutralises grep exit-1 when no non-self files exist,
 # so an empty inbox correctly yields 0 (not 1) under set -e.
 SIGNAL_BACKLOG=$(ls docs/signals/*.json 2>/dev/null | { grep -v '/cowork-team-' || true; } | wc -l | tr -d ' ')
-
-# calendar_status: call is_trading_day tool via gateway (fail-safe)
-CALENDAR_STATUS="unknown"
-IS_TRADING_RESULT=$(call_tool(server="vn-market", tool="is_trading_day", arguments={}))
-if [ $? -eq 0 ] && [ -n "$IS_TRADING_RESULT" ]; then
-  CALENDAR_STATUS=$(echo "$IS_TRADING_RESULT" | jq -r '.session_status // "unknown"' 2>/dev/null || echo "unknown")
-fi
-# On any failure above: CALENDAR_STATUS stays "unknown" — tick is never blocked (AC-P0-4-6)
 
 # last_regime / last_volatility_level: read from latest cycle-snapshot if available
 LAST_REGIME="unknown"
