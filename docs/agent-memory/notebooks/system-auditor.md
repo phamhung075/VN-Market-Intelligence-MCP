@@ -134,56 +134,46 @@ session_date: 2026-06-06
 - Memory stable post-rebuild (26.02%, well under 85% threshold).
 - No new anomalies detected.
 
-## c007 · 2026-06-05T21:11Z
-### Audit Run Tier-1 (21:11–21:12 UTC 2026-06-05)
-- Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 90
+## c011 · 2026-06-05T22:38Z
+### Audit Run Tier-1 (22:38–22:39 UTC 2026-06-05)
+- Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 95+
 - Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
 - Status: HEALTHY
 
 ### Container Status (Intended Runtime Set)
-- mcp-server: Up 56m (healthy), restart_count=1 ✓, memory=27.64% ✓ [stable post-FIX-CTG-PDF-MISLINK rebuild]
-- api-gateway: Up 2d (healthy) ✓
-- frontend: Up 16h (healthy) ✓
-- macro-indicators: Up 10h (healthy) ✓
+- mcp-server: Up 53m (healthy), restart_count=0 ✓, memory=17.04% ✓
+- api-gateway: Up 3d (healthy) ✓
+- frontend: Up 41m (healthy) ✓
+- macro-indicators: Up 11h (healthy) ✓
 - pdf-extractor: Up 2d (healthy) ✓
 - mcp-gateway: Up 9d (healthy) ✓
 
 ### Health Endpoints — All PASS
-- mcp-server :3000 → 200 ✓ (uptime 56m, toolCount:162, sessions:102)
+- mcp-server :3000 → 200 ✓ (uptime 53m, toolCount:162, sessions active)
 - api-gateway :4000 → 200 ✓ (macro:ok, mcp:ok)
 - macro-indicators :5004 → 200 ✓
 - pdf-extractor :5001 → 200 ✓
-- frontend :3001 → 404 (UI-only, INFO-grey, no impact)
+- frontend :3001 → no endpoint (UI-only, INFO-grey, no impact)
+- mcp-gateway → healthy (MCP-mode) ✓
 
-### Cron Health (90 jobs polled)
-- 100% firing, 7-day min success_rate: 97.3% (bctcReparseJob)
-- intelligenceCycleJob: 99.3% (566 runs 7d)
-- bctcQueueEnricherJob: 97.6% (498 runs) — transient ok
-- All others: ≥97.3% or 100%; no gaps detected
+### Cron Health (95+ jobs monitored)
+- ~100% firing, 7-day min success_rate: 97.3% baseline
+- intelligenceCycleJob: 99.1% (565 runs)
+- bctcQueueEnricherJob: 97.4% (498 runs)
+- bctcReparseJob: 97.3% (225 runs)
+- All others: ≥97% or 100%; no gaps detected
 
-### Data Freshness (Live Snapshot)
-- HOSE prices: 42m (market closed 21:11Z Thu, normal) ✓
-- News: 70m ✓
-- Commodities: 42m ✓
-- SBV FX: 42m ✓
-- Polymarket: 42m ✓
-- BCTC: 3.9h (no earnings window, normal) ✓
-- Circuit breakers: all 16 sources [OK], 0 failures
+### Circuit Breaker Status
+- All 16 sources [OK]: cafef, vnexpress, reuters, vneconomy, hose, hnx, ssc, trading_economics, yahooFinance, sbv, polymarket, congbao, sbvCircular, foreignFlow, newsapi, marketwatch
+- 0 open, 0 half-open circuits
 
-### VPS Proxy Status
-- prices: stale (last 08:59Z) — market hours irrelevant (window closed), not an anomaly
-- news: ok (last 21:05Z)
-- sbv: ok (last 20:58Z)
-- bctc: ok (last 14:48Z)
-
-### System Status (MCP Probe)
-- DB: market.db 240.45 MB, WAL 15.58 MB ✓
-- Uptime: 56m 43s (stable post-rebuild)
+### System Status
+- DB: market.db 240.63 MB, WAL 10.70 MB ✓
+- Uptime: 53m stable (post-rebuild)
 - Pending feedback: 39 items
-- Open warnings: 37 high/critical (existing, tracked)
+- Open warnings: 37 high/critical (existing)
 
 ### Notes
-- Tier-1 pass clean. All intended-runtime services UP + healthy. No new anomalies.
-- frontend /health 404 is informational (UI-only). No component impact.
-- mcp-server memory post-rebuild stable (27.64%, well under 85% threshold).
-- VPS prices stale outside market hours (21:11Z Thu = VN market closed) — expected, not flagged.
+- Tier-1 pass clean. All intended-runtime services UP + healthy. mcp-server memory stable (17.04%, well under 85%).
+- Off-hours audit (22:38Z UTC = VN market closed) — price/news staleness expected, not flagged.
+- No new anomalies detected.
