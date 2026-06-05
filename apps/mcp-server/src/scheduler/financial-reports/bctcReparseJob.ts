@@ -560,13 +560,17 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
       const sortKey = `${payload.year}-${payload.quarter.startsWith('Q') ? payload.quarter : `Q${payload.quarter}`}`;
       const fallbackId = `fallback-${payload.ticker}-${sortKey}`;
 
+      // FIX-CTG-3-STEP-D (B): balance_sheet_json / income_stmt_json /
+      // cash_flow_json / ratios_json are NOT NULL in the DDL (bctc-schema.ts).
+      // Supply empty-object literals so the INSERT does not throw.
       db.prepare(`
         INSERT INTO financial_reports (
           id, action_code, company_name, exchange, domain,
           period_year, period_quarter, period_type,
           period_start, period_end, sort_key, parsed_at, extraction_confidence,
-          data_env
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          data_env,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         fallbackId,
         payload.ticker,
@@ -582,6 +586,10 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
         now,
         0, // Low confidence marker
         currentDataEnv(),
+        '{}', // balance_sheet_json — NOT NULL; empty object sentinel for DA_NOP
+        '{}', // income_stmt_json  — NOT NULL; empty object sentinel
+        '{}', // cash_flow_json    — NOT NULL; empty object sentinel
+        '{}', // ratios_json       — NOT NULL; empty object sentinel
       );
     },
   };

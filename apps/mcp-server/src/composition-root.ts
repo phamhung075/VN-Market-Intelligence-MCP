@@ -84,6 +84,22 @@ export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<v
   log.info("[bootstrap] Scheduler started — cron jobs active");
 
   // ── 4b. Background OCR for unprocessed PDFs (G5-DEBT: 4 KEEP callers) ────
+  //
+  // FIX-CTG-3-STEP-D (A): OCR → reparse ordering race.
+  //
+  // Prior behaviour: extractAndStorePdfPages ran for each PDF in parallel and
+  // returned with no follow-up. If the reparse job had already run (Tier 3
+  // cache miss) while OCR was still in flight, the financial_reports row was
+  // never written. The next reparse opportunity was the daily 02:30 UTC cron.
+  //
+  // Fix: after OCR finishes for a PDF, immediately re-trigger the reparse for
+  // that file so it can Tier-3-hit the warm cache synchronously. We re-use the
+  // same reparseSingleWithOcrFallback function (injectable-deps design) wired
+  // to the real production deps — identical to what bctcReparseJob uses.
+  //
+  // Guard: only trigger if OCR produced text (totalChars > 0) AND
+  // financial_reports has no row for this ticker+period yet. This keeps the
+  // hook idempotent: a PDF that was already fully parsed is never re-processed.
   setTimeout(async () => {
     try {
       const { mkdirSync, readdirSync } = await import("node:fs");
@@ -94,10 +110,94 @@ export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<v
       mkdirSync(pdfDir, { recursive: true });
       const pdfs = readdirSync(pdfDir).filter(f => f.endsWith(".pdf"));
       log.info("[bootstrap] checking PDFs for OCR extraction", { count: pdfs.length });
-      await Promise.allSettled(pdfs.map(pdf => extractAndStorePdfPages(join(pdfDir, pdf), pdf)))
-        .then(rs => rs.forEach((r, i) => {
-          if (r.status === "rejected") log.warn("[bootstrap] OCR failed", { pdf: pdfs[i], error: String(r.reason) });
-        }));
+
+      // Process PDFs sequentially so the reparse hook can run in-order without
+      // saturating resources (each OCR job is already CPU-heavy).
+      for (const pdf of pdfs) {
+        try {
+          const result = await extractAndStorePdfPages(join(pdfDir, pdf), pdf);
+
+          // FIX-CTG-3-STEP-D (A): post-OCR reparse hook.
+          // Only fire when OCR produced text (avoids triggering on blank/corrupt PDFs).
+          if (result.totalChars > 0) {
+            try {
+              const { getDb } = await import("./infrastructure/db/schema.js");
+              const {
+                parseYearQuarterFromFilename,
+                tickerFromFilename,
+                reparseSingleWithOcrFallback,
+              } = await import("./scheduler/financial-reports/bctcReparseJob.js");
+              const { extractPdfText } = await import("./infrastructure/fetchers/pdf.js");
+              const { extractViaMicroservice } = await import("./infrastructure/fetchers/pdfExtractorClient.js");
+              const { fetchParseAndStoreBctc } = await import("./application/usecases/fetchParseAndStoreBctc.js");
+              const { getCachedPdfText } = await import("./infrastructure/fetchers/pdfOcrWorker.js");
+              const { readFileSync, existsSync } = await import("node:fs");
+
+              const ticker = tickerFromFilename(pdf);
+              const yq = parseYearQuarterFromFilename(pdf);
+              if (!ticker || !yq) {
+                log.info("[bootstrap] post-OCR reparse: cannot parse ticker/period — skipping", { pdf });
+                continue;
+              }
+
+              // Idempotency guard: skip if financial_reports row already present.
+              const db = getDb();
+              const existing = db.prepare(
+                "SELECT COUNT(*) AS cnt FROM financial_reports WHERE action_code = ? AND period_year = ? AND period_type = ?",
+              ).get(ticker, yq.year, yq.quarter) as { cnt: number } | null;
+              if ((existing?.cnt ?? 0) > 0) {
+                log.info("[bootstrap] post-OCR reparse: financial_reports row exists — skipping", { ticker, period: `${yq.year}-${yq.quarter}` });
+                continue;
+              }
+
+              log.info("[bootstrap] post-OCR reparse: warm cache — triggering reparse", { ticker, period: `${yq.year}-${yq.quarter}`, pdf });
+              const vpsBase = Bun.env.VPS_BCTC_BASE_URL ?? "http://125.212.251.27:8765/bctc-files";
+              const filePath = join(pdfDir, pdf);
+              await reparseSingleWithOcrFallback(
+                { ticker, filename: pdf, filePath },
+                {
+                  extractViaService: async (url: string) => extractViaMicroservice(url, "bctc"),
+                  extractText: async (buf: Buffer) => extractPdfText(buf),
+                  getOcrCache: (filename: string) => getCachedPdfText(filename),
+                  pipeline: async (params) => fetchParseAndStoreBctc(params),
+                  fileExists: (path: string) => existsSync(path),
+                  readFile: (path: string) => readFileSync(path),
+                  insertFallbackRecord: async (fp) => {
+                    // DA_NOP fallback — same implementation as makeProductionDeps in bctcReparseJob.
+                    const { currentDataEnv } = await import("./infrastructure/envCheck.js");
+                    const now = new Date().toISOString();
+                    const sortKey = `${fp.year}-${fp.quarter}`;
+                    db.prepare(`
+                      INSERT OR IGNORE INTO financial_reports (
+                        id, action_code, company_name, exchange, domain,
+                        period_year, period_quarter, period_type,
+                        period_start, period_end, sort_key, parsed_at,
+                        extraction_confidence, data_env,
+                        balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json
+                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `).run(
+                      `fallback-${fp.ticker}-${sortKey}`,
+                      fp.ticker, fp.ticker, "HOSE", "other",
+                      fp.year, fp.quarter, fp.quarter,
+                      `${fp.year}-01-01`, `${fp.year}-12-31`,
+                      sortKey, now, 0, currentDataEnv(),
+                      '{}', '{}', '{}', '{}',
+                    );
+                  },
+                },
+              );
+              log.info("[bootstrap] post-OCR reparse: complete", { ticker, period: `${yq.year}-${yq.quarter}` });
+            } catch (reparseErr) {
+              log.warn("[bootstrap] post-OCR reparse: threw (non-fatal)", {
+                pdf,
+                error: reparseErr instanceof Error ? reparseErr.message : String(reparseErr),
+              });
+            }
+          }
+        } catch (ocrErr) {
+          log.warn("[bootstrap] OCR failed", { pdf, error: String(ocrErr) });
+        }
+      }
     } catch (err) {
       log.warn("[bootstrap] background OCR check failed", { error: err instanceof Error ? err.message : String(err) });
     }
