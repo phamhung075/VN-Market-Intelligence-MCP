@@ -1,7 +1,56 @@
 ---
 agent: system-auditor
-session_date: 2026-06-01
+session_date: 2026-06-05
 ---
+
+## c005 · 2026-06-05T20:10Z
+### Audit Run Tier-1 (20:10–20:11 UTC 2026-06-05)
+- Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 88
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
+
+### Container Status (Intended Runtime Set)
+- mcp-server: Up 3m (healthy), restart_count=0 ✓, memory=7.79% ✓ [ops rebuild FIX-CTG-PDF-MISLINK COMPLETE — brief restart 2026-06-05 ~20:07Z]
+- api-gateway: Up 2d (healthy) ✓
+- frontend: Up 15h (healthy) ✓
+- macro-indicators: Up 9h (healthy) ✓
+- pdf-extractor: Up 2d (healthy) ✓
+- mcp-gateway: Up 9d (healthy) ✓
+
+### Health Endpoints — All PASS
+- mcp-server :3000 → toolCount:162 ok (uptime 236s, 10 sessions)
+- api-gateway :4000 → macro:ok, mcp:ok
+- macro-indicators :5004 → ok
+- pdf-extractor :5001 → ocr_source_ok:true
+- mcp-gateway docker health → healthy
+
+### Cron Health (88 jobs monitored)
+- 100% firing across all jobs past 7d
+- Min success_rate: 97.8% (bctcQueueEnricherJob, bctcReparseJob — transient ok)
+- Max rate: intelligenceCycleJob 99.5%, no gaps
+- Recent fires: all ≤20s ago; cluster coherent
+
+### Data Freshness (Real-Time)
+- HOSE prices: 1.4h (market closed, normal)
+- News (RSS): 9m fresh ✓
+- Commodities: 1.4h ✓
+- SBV FX: 1.4h ✓
+- Polymarket: 41m fresh ✓
+- BCTC: 2.9h (no earnings window anomaly) ✓
+- Pipeline health: all circuits OK (0 failures)
+
+### Circuit Breaker Status
+- All 16 sources: [OK] (cafef, vnexpress, reuters, vneconomy, hose, hnx, ssc, tradingEconomics, yahooFinance, sbv, polymarket, congbao, sbvCircular, foreignFlow, newsapi, marketwatch)
+- 0 open, 0 half-open circuits
+
+### Recent System Errors
+- kinhdich service: not-in-intended-runtime (by design, no ERROR); transient probe timeouts logged (expected — service not deployed per host_memory_panic constraint)
+- No unresolved DB/pipeline errors
+
+### Notes
+- mcp-server rebuild (FIX-CTG-PDF-MISLINK) successfully completed just before this run (~20:07Z). Brief restart in compliance with context expectation. Memory post-rebuild nominal at 7.79%.
+- All intended-runtime services HEALTHY. No anomalies detected.
+- WAL: market.db 6.82 MB (well under 50MB guard).
 
 ## c004 · 2026-06-05T19:56Z
 ### Audit Run Tier-1 (19:56–19:58 UTC 2026-06-05)
