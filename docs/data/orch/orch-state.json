@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Tick 2026-06-05T12:09Z (off-market). Drained 1 HEALTHY cowork-fire heartbeat (12:01Z news-scout+market-watcher off-hours pair, clean leader-lock acquire via natural expiry, errors=[], drift=0). No new actionable signal; signal_queue all terminal. Backlog 21 open = all P3/DEFERRED/BLOCKED; PO disposed the actionable FAKE-DATA-AUDIT batch 1h ago (FDA-4 LIVE + FDA-8 done). Idled (no PO re-spawn) to avoid hourly full-cycle fleet/host churn on low-harm P3 per 16GB host-safety. pressure_mode=legacy reconfirms FU-PRESSURE-EMIT-DARK (P3, still dark). Available next-triage P3: FU-PRESSURE-EMIT-DARK, FU-LOCKSTORE-EXPIRED-GC, FU-CNYVND-DEAD-FIELD-REMOVE(gated), FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-AUDITOR-D4-SIGNAL-ID, FU-RUNTIME-SET-TRUTH-RECONCILE(doc), FU-SBV-EFFECTIVE-DATE-COLUMN, FDA-5/6/7/9/10(guarded/cosmetic). DEFERRED-INFRA/ops: BCTC-HIST-VPS-BACKFILL(high), FU-RAG-DEPLOY-MEMORY. Next tick: PO pick a P3 batch when worth a cycle, or idle. STILL PENDING (operator): Cowork-refresh paste for leader-lock.md d88045c1.",
+    "next_action": "Tick 2026-06-05T13:09Z (off-market). Drove FU-PRESSURE-EMIT-DARK to repo-DONE + found & fixed its sibling FU-TICK-SNAPSHOT-EMIT-DARK (same call_tool-in-```bash-fence abort class). PO verified root cause (corrected my recon: no persistent writer #2; one-off 06-03 corruption from OLD main.md bash-abort). Routed PO->agent-father (maintenance lane, mutex-wrapped). Shipped: pressure-emit.md 545aae11 + tick-snapshot.md 29d7e944 (both lift gateway calls OUT of bash fence -> pure-bash emit cannot abort); both stale on-disk files purged; class-wide sweep = 0 call_tool trapped in any cowork ```bash fence. FAIL-SAFE throughout (legacy cron baseline, no outage). LIVE-VERIFY PENDING next cowork WON tick: pressure-state.json should regen w/ emitted_at (->adaptive mode), cycle-snapshot-latest.json should regen fresh. OPERATOR ACTION: ONE bundled Cowork-refresh paste covers 3 cowork flow files now — leader-lock.md d88045c1 + pressure-emit.md 545aae11 + tick-snapshot.md 29d7e944. Remaining backlog ~20: P3 tail (FU-LOCKSTORE-EXPIRED-GC, FU-CNYVND-DEAD-FIELD-REMOVE gated, FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-AUDITOR-D4-SIGNAL-ID, FU-RUNTIME-SET-TRUTH-RECONCILE doc, FU-SBV-EFFECTIVE-DATE-COLUMN, FDA-5/6/7/9/10) + DEFERRED-INFRA (BCTC-HIST-VPS-BACKFILL, FU-RAG-DEPLOY-MEMORY). Next tick: verify the 2 emitters regenerated, then PO pick next or idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T12:11:18.156557+00:00",
+    "updated_at": "2026-06-05T13:32:02.992410+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T11:26:02.711809+00:00",
+    "_updated_at": "2026-06-05T13:32:02.992410+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2431,23 +2431,6 @@
         "note": "shippingIndex.ts:76 doc-comment claims an SCFI->BDI placeholder, but SHIPPING_SYMBOLS (lines 79-82) contains only ^BDI and ^BFIY — no SCFI placeholder is emitted. NOT a contamination (verified by Slice-A agent). Cleanup only: delete the stale/misleading comment to avoid future confusion. No data fix required.",
         "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
         "depends_on": null
-      },
-      {
-        "task_id": "FU-PRESSURE-EMIT-DARK",
-        "title": "pressure-state.json emitter dark ~2.25 days (tick_id 2026-06-03T00:00Z, stale at 2026-06-05T06:09Z) — whole cowork fleet fell back to legacy fixed-cron cadence",
-        "type": "FIX",
-        "sprint": "FLEET-HOST-SAFETY",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "size": "S",
-        "zone": "cross-service/",
-        "files": [
-          "docs/data/pressure-state.json"
-        ],
-        "severity": "MED",
-        "note": "3 consecutive cowork-team heartbeats (2026-06-05 04:21/05:03/05:18Z) report 'pressure-state STALE ~2d -> legacy-mode fallback, cadence bypassed, cron governs' and 'pressure-emit dark >2d -> system-auditor candidate if not self-healed'. pressure-state.json last tick_id=2026-06-03T00:00:00Z (updated_at 2026-06-03T00:04:30Z). FAIL-SAFE: cowork still fires on legacy fixed cron (no outage), but the adaptive-cadence governor (project_dynamic_workflow_cadence Phase 1, SHIPPED 2026-05-31) is inert — suppression/downgrade logic never runs. Find the emitter that writes pressure-state.json (cadence-policy.json consumer / a cron or the cowork dispatcher) and restore the periodic write, OR if Phase-1 emit was never wired to a live cron, that is the root gap. ROUTE: PO to confirm owner (cowork-plane vs dev cron) — may be agent-father/cowork lane, not apps/ code. Detected by dev-team tick 2026-06-05T06:13Z from drained heartbeats.",
-        "source": "dev-team tick 2026-06-05T06:13Z (drained cowork-team heartbeats)",
-        "depends_on": null
       }
     ],
     "archive": [],
@@ -3258,6 +3241,48 @@
         "deploy_commits": [
           "5cc96f75"
         ]
+      },
+      {
+        "task_id": "FU-PRESSURE-EMIT-DARK",
+        "title": "pressure-state.json emitter dark ~2.25 days (tick_id 2026-06-03T00:00Z, stale at 2026-06-05T06:09Z) — whole cowork fleet fell back to legacy fixed-cron cadence",
+        "type": "FIX",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "DONE",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "files": [
+          "docs/data/pressure-state.json"
+        ],
+        "severity": "MED",
+        "note": "3 consecutive cowork-team heartbeats (2026-06-05 04:21/05:03/05:18Z) report 'pressure-state STALE ~2d -> legacy-mode fallback, cadence bypassed, cron governs' and 'pressure-emit dark >2d -> system-auditor candidate if not self-healed'. pressure-state.json last tick_id=2026-06-03T00:00:00Z (updated_at 2026-06-03T00:04:30Z). FAIL-SAFE: cowork still fires on legacy fixed cron (no outage), but the adaptive-cadence governor (project_dynamic_workflow_cadence Phase 1, SHIPPED 2026-05-31) is inert — suppression/downgrade logic never runs. Find the emitter that writes pressure-state.json (cadence-policy.json consumer / a cron or the cowork dispatcher) and restore the periodic write, OR if Phase-1 emit was never wired to a live cron, that is the root gap. ROUTE: PO to confirm owner (cowork-plane vs dev cron) — may be agent-father/cowork lane, not apps/ code. Detected by dev-team tick 2026-06-05T06:13Z from drained heartbeats.",
+        "source": "dev-team tick 2026-06-05T06:13Z (drained cowork-team heartbeats)",
+        "depends_on": null,
+        "resolution": "DONE 2026-06-05T13:30Z (repo-fixed; live-verify pending next cowork WON tick). FU-PRESSURE-EMIT-DARK root cause (PO-verified, my recon corrected): the cowork adaptive-cadence emitter went dark ~2.5d (pressure-state.json frozen 06-03T00:04:30Z w/ a non-conformant 6-key updated_at schema, no emitted_at -> reader cadence-policy.js isStale=true -> legacy fallback, FAIL-SAFE no outage). No persistent rogue 'writer #2' (agent-father exhaustive grep across flows/scripts/apps/history = none); corruption was a ONE-OFF 06-03 partial write when the OLD 802L main.md's mixed ```bash block aborted on invalid `call_tool(...)` pseudo-bash mid-heredoc. DEFINITIF FIX = lift the is_trading_day gateway call OUT of the ```bash fence into an agent-interpreted pre-step so the emit block is pure bash that cannot abort (commit 545aae11, pressure-emit.md, 88L at-cap; corrupt on-disk file purged). Reader untouched (correct). Routed via PO -> agent-father (maintenance lane, mutex-wrapped). Class-wide sweep confirms 0 call_tool trapped in any cowork ```bash fence post-fix.",
+        "resolved_by": "dev-team",
+        "resolved_at": "2026-06-05T13:32:02.992410+00:00",
+        "deploy_commits": [
+          "545aae11"
+        ],
+        "verify_hook": "Next dev-team tick: confirm pressure-state.json regenerated w/ emitted_at (conformant 9-key) -> PRESSURE_MODE=adaptive; cowork heartbeat pressure_mode flips legacy->adaptive."
+      },
+      {
+        "task_id": "FU-TICK-SNAPSHOT-EMIT-DARK",
+        "title": "cowork tick-snapshot.md Step 4.7 dark ~2.5d — call_tool embedded in ```bash fence aborts emit (sibling of FU-PRESSURE-EMIT-DARK); cycle-snapshot-latest.json frozen 06-03",
+        "type": "FIX",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "DONE",
+        "priority": "P3",
+        "size": "S",
+        "zone": "docs/agents/cowork-team/flow/",
+        "resolution": "DONE 2026-06-05T13:30Z (repo-fixed; live-verify pending next cowork WON tick). SIBLING of FU-PRESSURE-EMIT-DARK, discovered by dispatcher regression-sweep this tick (DSI 'enumerate every sibling path' lesson). tick-snapshot.md Step 4.7 (writes cycle-snapshot-latest.json, which pressure-emit READS for last_regime/last_volatility) had the IDENTICAL bug: 2 call_tool(get_cycle_bootstrap, get_macro_snapshot) embedded in a mixed ```bash fence. CONFIRMED LIVE: cycle-snapshot-latest.json frozen 06-03T00:04:00Z (same minute as pressure-state) -> dark ~2.5d -> explains pressure-emit's last_regime=unknown. FIX = identical lift to an agent-interpreted pre-step, pure-bash assembly preserved (trap/jq --rawfile --slurpfile/.tmp+mv), stale snapshot purged (commit 29d7e944, tick-snapshot.md 59L). Var-name PRE-suffix is cosmetic (pre-step + bash block compute identical stage path strings; minute-rollover edge handled by existing fail-safe). Class fully eradicated.",
+        "resolved_by": "dev-team",
+        "resolved_at": "2026-06-05T13:32:02.992410+00:00",
+        "deploy_commits": [
+          "29d7e944"
+        ],
+        "source": "dev-team tick 2026-06-05T13:09Z regression-sweep off FU-PRESSURE-EMIT-DARK",
+        "verify_hook": "Next dev-team tick: confirm cycle-snapshot-latest.json regenerated (fresh created_at, real market_context/macro_snapshot not unknown)."
       }
     ],
     "in_progress": []
