@@ -1,4 +1,4 @@
-<!-- size-justification: 109L — thin dispatcher; full logic extracted to 10 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-RECURRING 2026-06-05: pressure-state/cycle-snapshot-latest emit moved to telemetry.md Step 6. -->
+<!-- size-justification: 109L — thin dispatcher; full logic extracted to 10 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -34,10 +34,10 @@ Fires every 15 min via `*/15 * * * *` CronCreate. Reads `docs/data/cowork-schedu
 | 4.4–4.5b | Cadence due-check, freshness downgrade, rebind MATCHES | `pressure-cadence.md` |
 | 4.6–4.6b | Per-work-item slot claim tokens, leader heartbeat | `slot-claim.md` |
 | 4.7 | Write shared tick snapshot | `tick-snapshot.md` |
-| 4.8 | Pressure-state emit (no-op stub — moved to Step 6) | `pressure-emit.md` |
+| 4.8 | Pressure-state emit (no-op stub — Step 6 uses call_tool emit_pressure_state, EMIT-DARK-v2 Option C) | `pressure-emit.md` |
 | 5 | Parallel fan-out + published-marker gate contract | `spawn-fanout.md` |
 | 5b | Batch last_fired write | `last-fired.md` |
-| 6 + Error Guard | Write telemetry signal + **mandatory** pressure-state.json + cycle-snapshot-latest.json emit, unhandled error boundary | `telemetry.md` |
+| 6 + Error Guard | Write telemetry signal; Step 6.0 call_tool emit_pressure_state (mandatory, un-skippable); Step 6.1 conditional signal write; unhandled error boundary | `telemetry.md` |
 
 ---
 

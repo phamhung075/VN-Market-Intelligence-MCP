@@ -1,60 +1,31 @@
-<!-- size-justification: 120L — Step 6 + mandatory pressure-state/cycle-snapshot emit (EMIT-DARK-RECURRING Option B) + Error Guard. Child of main.md. -->
+<!-- size-justification: 90L — Step 6 + call_tool emit_pressure_state (EMIT-DARK-v2 Option C) + conditional signal write + Error Guard. Child of main.md. -->
 
-## Step 6 — Write telemetry signal + mandatory state emit
+## Step 6 — Write telemetry signal + emit pressure state
 
 > **INVARIANT:** enveloped schema `{from, to, type, payload, priority, createdAt}`. NEVER flat root-level fields. All observability fields inside `payload:{}`.
 
 **Conditional signals/ write:** SKIP if `silent==true` AND `spawned[]` empty AND `errors[]` empty. WRITE if spawns occurred OR errors exist.
 
+### Step 6.0 — MANDATORY pressure-state emit (EMIT-DARK-v2 Option C)
+
+Execute this call_tool BEFORE the conditional signal-file write. It is un-skippable and independent of the SILENT guard. The tool computes signal_backlog, dev_queue_depth, and host_headroom_mb server-side (shell computations the dispatcher cannot perform) and atomically writes docs/data/pressure-state.json + promotes cycle-snapshot-latest.json. It NEVER throws — on internal error it returns {success: false, reason: "..."} and the dispatcher continues regardless.
+
+```
+call_tool(server="vn-market", tool="emit_pressure_state", arguments={
+  "calendar_status": "<CALENDAR_STATUS from Step 4.3>",
+  "tick_id": "<nominal_tick, e.g. 2026-06-05T18:00:00Z>",
+  "fire_time": "<ISO now>",
+  "pressure_mode": "<adaptive|legacy as computed in Step 4.2>",
+  "last_regime": "<regime_status from cycle-snapshot-latest.json if known, else unknown>",
+  "last_volatility_level": "<volatility_level from cycle-snapshot-latest.json if known, else unknown>"
+})
+```
+
+### Step 6.1 — CONDITIONAL: docs/signals/ write
+
 ```bash
 ISO=${NOW_ISO}
-
-# --- MANDATORY EMIT: pressure-state.json + cycle-snapshot-latest.json ---
-# This block ALWAYS runs (not guarded by SILENT). It is the un-skippable anchor
-# for EMIT-DARK-RECURRING Option B: telemetry is git-committed every tick, so
-# narration-skip here is immediately visible in git history.
-FLOOR_M=$(( ( $(date -u +%M | sed 's/^0*//;s/^$/0/') / 15 ) * 15 ))
-TICK_ID_PS=$(date -u +"%Y-%m-%dT%H:")$(printf '%02d' $FLOOR_M)":00Z"
-EMITTED_AT_PS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-SIG_BACKLOG=$(ls docs/signals/*.json 2>/dev/null | { grep -v '/cowork-team-' || true; } | wc -l | tr -d ' ')
-DEV_Q=$(jq '[.task_board.active_sprints[].tasks[] | select(.status=="IN_PROGRESS" or .status=="TODO")] | length' docs/data/orch/orch-state.json 2>/dev/null || echo 0)
-HOST_MB="null"
-if command -v vm_stat &>/dev/null; then
-  PF=$(vm_stat 2>/dev/null | grep "^Pages free" | awk '{gsub(/\./,""); print $3}')
-  [ -n "$PF" ] && [ "$PF" -gt 0 ] 2>/dev/null && HOST_MB=$(( PF * 4096 / 1024 / 1024 ))
-elif command -v free &>/dev/null; then
-  HOST_MB=$(free -m 2>/dev/null | awk '/^Mem:/{print $7}' || echo null)
-fi
-LAST_REG="unknown"; LAST_VOL="unknown"
-FILE_TICK_NOW=$(date -u +%H:%M)
-SNAP="docs/data/cycle-snapshot-${FILE_TICK_NOW}.json"
-if [ -f "$SNAP" ]; then
-  LAST_REG=$(jq -r '.regime_status // "unknown"' "$SNAP" 2>/dev/null || echo unknown)
-  LAST_VOL=$(jq -r '.volatility_level // "unknown"' "$SNAP" 2>/dev/null || echo unknown)
-  # Promote current tick snapshot → cycle-snapshot-latest.json (atomic)
-  cp "$SNAP" docs/data/cycle-snapshot-latest.json.tmp && mv docs/data/cycle-snapshot-latest.json.tmp docs/data/cycle-snapshot-latest.json
-elif [ -f "docs/data/cycle-snapshot-latest.json" ]; then
-  LAST_REG=$(jq -r '.regime_status // "unknown"' docs/data/cycle-snapshot-latest.json 2>/dev/null || echo unknown)
-  LAST_VOL=$(jq -r '.volatility_level // "unknown"' docs/data/cycle-snapshot-latest.json 2>/dev/null || echo unknown)
-fi
-CAL_ST="${CALENDAR_STATUS:-unknown}"
-PRESSURE_TMP="docs/data/pressure-state.json.tmp"
-cat > "$PRESSURE_TMP" <<PS_EOF
-{
-  "emitted_at": "${EMITTED_AT_PS}",
-  "tick_id": "${TICK_ID_PS}",
-  "signal_backlog": ${SIG_BACKLOG},
-  "last_regime": "${LAST_REG}",
-  "last_volatility_level": "${LAST_VOL}",
-  "calendar_status": "${CAL_ST}",
-  "dev_queue_depth": ${DEV_Q},
-  "host_headroom_mb": ${HOST_MB},
-  "stale_warning": false
-}
-PS_EOF
-mv "$PRESSURE_TMP" "docs/data/pressure-state.json"
-
-# --- CONDITIONAL: docs/signals/ write (skip silent non-actionable ticks) ---
+# Skip silent non-actionable ticks
 if [[ "$SILENT" == "true" ]] && [[ -z "$SPAWNED" ]] && [[ -z "$ERRORS" ]]; then
   exit 0
 fi
