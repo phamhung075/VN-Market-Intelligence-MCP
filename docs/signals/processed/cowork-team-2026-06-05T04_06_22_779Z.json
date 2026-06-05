@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T04:06:22.779Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "legacy-fallback-pressure-stale",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null
+    },
+    "last_fired_timestamp": "2026-06-05T04:06:11.269Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": null,
+    "signal_backlog": null,
+    "note": "04:05 UTC offhours fire (cron 0 */4). news-scout-offhours + market-watcher-offhours spawned; nominal 04:00, last_fired 00:06. market-watcher 04:05Z=11:05 VN is market-hours window so should yield live signals. pressure-state still stale (legacy mode). Standing ops items unactioned: push 0ea2e83f, cowork re-arm, fix pressure-state."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T04:06:22.779Z"
+}

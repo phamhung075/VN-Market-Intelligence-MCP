@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T03:21:07.076Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": ["chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "skipped_legacy",
+    "last_fired_timestamp": "2026-06-05T03:20:55.047Z",
+    "last_fired_slots": ["chef-intraday"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "03:13",
+    "leader_lock": "acquired_fresh_stolen",
+    "signal_backlog": 7,
+    "note": "03:20Z FIRE: chef-intraday (unified-agent, agentId abeaa7685f952c66a) 2nd intraday dish. Per-work-item token dup-spawn guard. KNOWN-GAP FU-CHEF-MARKER-INFLOW (no published marker) unchanged. OBSERVED+RESOLVED: 03:00 sau-d4 flood (75 identical system-auditor rows id=sau-d4-202606050300, to=po, orphan-lock 1960-DAILYDASH-deploy LOW finding) bloated orch-state 8->83; drained by dev-team/PO to 7 rows by 03:20. ROOT-CAUSE for dev/auditor: signal append lacks id-dedup OR auditor loop. Standing items: push 0ea2e83f, Cowork re-arm, fix stale pressure-state.json."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T03:21:07.076Z"
+}
