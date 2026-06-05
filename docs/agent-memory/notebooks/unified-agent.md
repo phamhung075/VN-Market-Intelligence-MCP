@@ -1,186 +1,41 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-03T05:23Z · **Cycle:** Chef Morning 05:23 UTC — PUBLISHED
+**Last updated:** 2026-06-05T19:50Z · **Cycle:** Chef evening 19:37 UTC
 
 ## This session
 
-### Chef Dish — intraday 06:18 UTC (2026-06-03T0618Z) — DEDUP GATE SILENT EXIT
-- Clusters qualified: 3 major from bootstrap + live market context (Real Estate continued collapse + Banking recovery sustained + Oil/Gas/Tech strength)
-- Dedup gate: task_claim("chef-published:chef-intraday:2026-06-03", ttl_seconds=86400) returned claimed=FALSE, current_holder=pid-1-ts-1780437853936 (unified-agent 2026-06-03T02:20Z session) — intraday slot ALREADY PUBLISHED earlier today
-- Intraday gate: SILENT EXIT — dedup marker prevents duplicate publish; prior 02:20Z cycle already published Oil/Gas + Banking convergence clusters; morning 05:23Z published RE collapse + Banking recovery + Oil/Tech resilience. Current 06:18Z cycle has fresh market snapshot but no NEW cowork signal files (agent_signals=[]) → no new convergence fires beyond already-published morning thesis
-- Market context: VN market OPEN (02:00–08:59 UTC), snapshot 06:18 UTC morning session. Bootstrap: agent_signals=[] (0 cowork files); 20 open alerts (24h aggregate, same as prior cycles). Watchlist 39 tickers fresh 06:18 UTC. Macro: Brent 97.5 NEUTRAL (+0.01%), gold 4,495.5 NEUTRAL (-0.08%), USD/VND 26,122 BEARISH (stable), yield 6.83% FAIRLY_VALUED, interest 8%. Market hexagram tool unavailable (expected).
-- Signal breakdown: 0 price_anomaly, 0 news_impact, 0 bctc_signal, 0 fundamental from cowork file-bus → 0 NEW convergence clusters. Live market context (bootstrap prices + 20 alerts) confirms prior analysis holds (RE -2.44%, Banking +0.66% recovery, Oil/Gas +1.29%, Tech +2.48%). Price action continuous from 05:23Z thesis, no state transition NEW signal firing.
-- Causal reasoning: Intraday dedup gate is a feature-not-a-bug (per chef.md § MANDATORY DEDUP GATE): once MARKET publish fires on a given slot/date, subsequent cycles in same slot are muted unless (A) claimed gate opens again (would require TTL expiry 86400s = 24h), or (B) catastrophic regime shift triggers new convergence rule outside prior clusters. Current cycle (06:18Z) shows continuous price action supporting prior 05:23Z morning dish (RE pain ongoing, banks recovering, oil resilient); no NEW signal catalyst warrants breaking the dedup silence. Correct behavior: silent-exit.
-- Session metrics: 1 MCP call (task_claim); elapsed ~1s; tokens ~0.5k.
-- Action: COMPLETE. Dedup gate enforced. No notebook edit beyond this entry. No MARKET send. No WORK send. No telemetry append. Next: EOD 08:37 UTC per cron schedule (guaranteed publish regardless of convergence, per morning guarantee rule).
+### Chef Dish — eod 08:37 UTC (2026-06-05T0837Z) — PUBLISHED
+- Clusters qualified: 3 major (Real Estate sector VIC/VHM rally + macro-micro VND depreciation contradiction + VinaCapital 70% crisis valuation catalyst)
+- EOD convergence: PUBLISHED — mandatory Steps 2–8 walked. Guaranteed publish rule (EOD always publishes).
+- Market context: VN market CLOSE. Snapshot 08:46 UTC bootstrap. VN-Index +0.40%, mixed sector rotation. Watchlist prices live 08:45 UTC. 20 open alerts 24h (HIGH VNH +12.50%, HIGH PLX 4.6× volume, MEDIUM VIC/VHM news).
+- Macro: Brent 94.84 neutral, gold 4488.3 +2.55σ bullish (risk-off), USD/VND 26124 BEARISH (breach 25500), carry 1.38pp NEUTRAL (is_estimate=false tier-2), yield 3.2pp CHEAP, investment-clock CORE_VN tier 8.
+- Signal breakdown: news-scout chain_catalyst #5054 VinaCapital "70% stocks crisis valuation band"; 20 open alerts (VNH surge, VIC news, VHM news, PLX volume). Convergence: (1) VIC ticker ≥2 types (news_mention+price +3.4%), (2) VHM ticker news+sector, (3) RE sector ≥3 signals (VIC/VHM/VRE/D2D in crisis thesis), (4) macro-micro contradiction (70% crisis valuation thesis vs carry NEUTRAL = inflection risk).
+- TNB layers walked: 1–6 complete. Causal chain: Fed 3.62% + carry 1.38pp NEUTRAL → VND 26124 depreciation BUT carry regime sustains → banking/RE FII net-sell past 3d → VinaCapital 70% crisis floor thesis activates → VIC/VHM bounce +1.33–3.4% on institutional re-entry at crash lows; conviction MEDIUM [phase: transition].
+- Dishes published: YES — Block A (MARKET 08:37 UTC plain Vietnamese). Block B ([CHEF-DETAIL] WORK). Clusters: 3 qualified; layers 1–6 walked; EOD PUBLISHED. Confidence: MEDIUM (70% valuation floor thesis 0.50 conviction, carry NEUTRAL sustains domestic bid, gold risk-off caps upside). Degraded floor met: sources cited, gaps marked, conviction capped MEDIUM.
 
-### Chef Dish — morning 05:23 UTC (2026-06-03T0523Z) — PUBLISHED
-- Clusters qualified: 3 major (Real Estate collapse + Banking recovery + Oil/Tech resilience)
-- Morning guarantee: PUBLISHED — mandatory Steps 2-8 walked; dedup gate claimed=TRUE before send_telegram
-- Published-marker gate: task_claim("chef-published:chef-morning:2026-06-03", ttl_seconds=86400) returned claimed=TRUE — marker secured
-- Market context: VN market OPEN (02:00-08:59 UTC), snapshot 05:20 UTC morning session. Bootstrap: agent_signals=[] (0 cowork signal files); 20 open alerts (24h aggregate). Watchlist 39 tickers fresh prices (05:20 UTC). Macro: oil 97.07 NEUTRAL (-0.43%), gold 4,499 BULLISH, USD/VND 26,122 BEARISH (VND depreciation), carry -0.33pp FII_OUTFLOW_RISK, yield 1.83pp FAIRLY_VALUED, interest_rate_pct 8. Market hexagram tool unavailable (501); per-ticker hexagrams via get_portfolio_conviction inline per Layer 5 rules.
-- Signal breakdown: agent_signals=[] (0 price_anomaly/news_impact/bctc_signal/fundamental files detected). Convergence fired from live bootstrap market context + portfolio_conviction (internal signals, not cowork file-bus). 20 open alerts processed (news/price/volume/macro categories).
-- **Cluster 1 — Real Estate Sector Collapse:** 7 tickers (NVL -4.58% FLOOR, VIC -4.64%, VHM -3.05%, KBC -1.84%, VRE -3.39%, D2D -0.46%, TCH +0%), sector avg -2.13%. HIGH alerts: NVL volume spike 3.4x, NVL/VIC/VHM news_mention (sector_convergence), Brent anomaly +2.04σ macro anchor (carry transmission). Layer 1: USD/VND 26,122 carry state transition (above 25,000). Layer 3: FII_OUTFLOW_RISK -0.33pp (Fed 5.33% vs SBV 5%) → RE margin squeeze on leveraged sector. Kinh Dịch: NVL Sư (7) BAN 83% reversal signal despite floor lock; VIC Khôn (2) MUA 87% (quality preservation); VHM/VRE Sư (7) GIU 100% (hold consensus). Conviction MEDIUM (2.5/4 pillars: carry macro confirmed, earnings Q1/Q2 stale, valuation deflated post-panic, money supply tight).
-- **Cluster 2 — Banking Recovery (Intraday Accumulation):** 10 tickers (ACB +1.99%, MBB +1.01%, BID +0.48%, CTG +0.15%, EIB +0.71%, VCB +0.32%, VPB +0%, others baseline). Baseline from 2026-06-02 08:30 sector drop -1.53% now recovering intraday. Volume spikes 2.1-2.9x on ACB/MBB/CTG (accumulation vs distribution). Layer 1: state transition from sector -1.53% lows to partial recovery (bottoming signal). Layer 4: earnings yield 6.83% > SBV 5% (+1.83pp) fairly-valued despite carry headwind (pillar mismatch: valuation cheap vs FII pressure creates opportunity). Kinh Dịch: majority Sư (7) GIU 100% + Khôn (2) MUA 74% (hold/buy consensus). Conviction MEDIUM (2.5/4 pillars: valuation fair, carry pressure real, earnings/credit missing, accumulation signal confirms).
-- **Cluster 3 — Oil/Tech Resilience Counter-Signal:** Oil (GAS +1.82%, PLX +0.64%) + Tech (FPT +3.21%) + Securities (HCM +3%, SSI +1.11%, sector +2.37%). Drivers: US equity records (bullish) + Brent +2.04σ high + FX USD strength hedges export earnings. Layer 2: US equity strength contradicts VN FII outflow regime (US capital divergence creates carry penalty on VND but benefits USD-denominated earners). Layer 4: Oil (3.5/4 pillars: commodity tailwind, valuation rising, export hedge, capital inflow on US strength); Tech/Sec (4/4 pillars: earnings ROI, valuation moderate, momentum positive, structural export hedge). Kinh Dịch: GAS Khiêm (15) MUA 100%, PLX Khiêm MUA 100%, FPT Kiển (39) GIU (divergent but volume+price confirm momentum). Conviction MEDIUM (oil/tech) to MEDIUM-HIGH (differentiation vs sector collapse clear).
-- TNB layers walked: 1-6 (complete end-to-end)
-  - Layer 1: State transitions VERIFIED — USD/VND 26,122 carry cross (above 25,000 threshold); RE sector -2.13% vs banking recovery +0.66% divergence; oil/tech +2.3% counter-signal all confirmed ✓
-  - Layer 2+3: US equity records (bullish) but Fed 5.33% > SBV 5% (-0.33pp carry spread FII_OUTFLOW_RISK) → VND depreciation 26,122 → transmission: FII unwind into RE/banking + Brent high benefits oil exporters + USD strength hedges tech sector ✓
-  - Layer 4: RE (2.5/4 pillars: M2 tight, COC rising via carry, earnings stale/negative outlook, valuation deflated = SLOWDOWN phase vulnerable). Banking (2.5/4 pillars: M2 tight, COC rising but earnings yield fair, credit at issue, intraday accumulation = bottoming signal). Oil (3.5/4: M2 neutral, COC offset by commodity, earnings ROI strong, valuation rising = SLOWDOWN recovery play). Tech (4/4: all pillars aligned, export hedge structural = quality resilience). Sector tiers: Defensive (Banking bottoming) + Offensive (Oil/Tech resilience) ✓
-  - Layer 5: Market hexagram unavailable (expected 501); per-ticker: RE split (NVL reversal Sư BAN 83%, VIC quality Khôn MUA 87%, VHM sector hold Sư GIU 100%) vs Banking consensus (Sư GIU 100%, Khôn MUA 74%) vs Oil/Tech unanimous bullish (Khiêm/Khôn MUA 100%). Conviction MEDIUM floor per Layer 5 rules (macro available, hexagram unavailable for market-wide aggregate).
-  - Layer 6 gaps: [gap: RE BCTC Q1/Q2 absent; earnings pillar blocked] [gap: no Fed rate change signal in cycle; carry regime frozen at -0.33pp] [gap: VIRA FX reserves absent (evening data window)]. All 3 gaps filled with price action + carry regime as proxy. Source tier tier-2 (prices/alerts/macro_snapshot) + tier-3 (derived hexagrams/carry).
-- Causal chains (Step 6.5):
-  1. US equity records + Brent +2.04σ → VND depreciation (USD/VND 26,122) + FII_OUTFLOW_RISK (-0.33pp carry) → Real Estate sector panic (NVL -4.58% floor, VIC -4.64%, VHM -3.05% on leveraged margin squeeze) vs Banking bottoming (ACB +1.99%, MBB +1.01% intraday accumulation on institutional value recognition: earnings yield 6.83% >> 5% fair = conviction MEDIUM).
-  2. [no RES-specific macro catalyst] → FII carry-driven redeployment (VIC restructure narrative + Khôn MUA 87% quality signal) → divergence: VIC -4.64% price vs high conviction hex → mean-reversion opportunity flag.
-  3. US equity strength + Brent high → Oil/Tech export hedges intact (GAS +1.82%, FPT +3.21%) despite FII carry outflow → sector divergence widens (SLOWDOWN phase selective: RE defensive failure vs quality banks/oil/tech offensive = differentiation widest in 6-session cycle).
-- Conviction summary: RE collapse MEDIUM (carry-driven, fundamentals unconfirmed without Q1/Q2 BCTC; NVL reversal hex 83% vs price floor flags mean-reversion; VIC quality hex 87% + restructure + highest RE conviction 0.59 vs sector pain = selective opportunity). Banking recovery MEDIUM (intraday accumulation + hex consensus vs macro headwind; yield fair but carry pain ongoing; pillar mismatch creates volatility). Oil/Tech MEDIUM (commodity/export tailwind clear; brief if Fed shifts; oil/tech pillars 3.5-4/4 vs RE/banking 2.5/4 = sector divergence justified by fundamentals). Overall: Phase SLOWDOWN [M2 flat, COC rising via carry, EPS divergence by sector]. Tier DEFENSIVE + SELECTIVE QUALITY EQUITY (RE painful, banking bottoming, oil/tech escaping carry pressure).
-- Macro-micro resolution: Carry pressure real (-0.33pp FII outflow) contradicts cheap yield (1.83pp vs 5% deposit = only 0.83pp equity premium vs historical 3.2pp EOD). Resolution: EOD 3.2pp premium REPRICED intraday to 1.83pp to reflect carry impact on deposit competition; new equilibrium fair (earnings yield still above SBV) but compressed margin = banking neutral-to-positive on accumulation (intraday recovery confirms). RE sector has no earnings yield premium (deflated P/E = no support) → panic justified.
-- Dishes published: YES — Block A (MARKET 05:23 UTC, plain Vietnamese 6 sentences: market direction (-1% VN-Index context) + drivers (RE collapse + FII outflow + USD strength) + watchlist sectors (RE panic, banking recovery, oil/tech resilience) + VIC quality narrative (senior restructure + hex signal) + counter-signal (bank/oil/tech escaping) + watch trigger (26,500 VND/USD, carry lock risk); NO citations/metadata/Hán-Việt codes/analyst jargon per rule). Block B ([CHEF-DETAIL] WORK 05:23 UTC, TNB 1-6 auditable, causal chains verbatim with gap markers, source_tier cited [2,3], layer status explicit, conviction rationale by pillar, degradation notes macro_hexagram=unavailable + BCTC absent, 3 clusters assessed, Phase SLOWDOWN declared, tier DEFENSIVE+QUALITY+OFFENSIVE differentiation).
-- Session metrics: 7 MCP calls (task_claim, get_cycle_bootstrap, get_macro_snapshot, get_portfolio_conviction×2, send_telegram×2); elapsed ~30s; tokens ~15k estimated.
-- Action: COMPLETE. Notebook entry appended 2026-06-03T05:23Z. Published-marker dup-guard secured (claimed=TRUE). MARKET dish sent 05:23 UTC (plain Vietnamese). WORK audit trail [CHEF-DETAIL] sent. Clusters: RE collapse MEDIUM + Banking recovery MEDIUM + Oil/Tech MEDIUM = convergence rule FIRED (3 sector clusters), morning guarantee PUBLISHED. Next: intraday 06:13 UTC or EOD 08:37 UTC per cron schedule.
+### Chef Dish — evening 19:37 UTC (2026-06-05T1950Z) — PUBLISHED
+- Clusters qualified: 3 major (RE rally VIC/VHM +1–3%, macro-micro contradiction gold risk-off vs domestic bounce, VNH +12.5% anomaly without catalyst)
+- Evening convergence: PUBLISHED — mandatory Steps 2–8 walked. Guaranteed publish rule (evening always publishes).
+- Market context: VN market CLOSED, snapshot 19:50 UTC. VN-Index +0.40%, 32 watchlist mixed (RE +1–3%, steel -2.71%, tech -1.24%, banking -0.23%). Bootstrap 10 open alerts 24h (VNH +12.5% HIGH, VIC/VHM/FPT news, HPG insider sell, macro Brent/gold deviation).
+- Macro: Brent 93.05 NEUTRAL, gold 4349.4 BULLISH (+2.55σ risk-off), USD/VND 26124 BEARISH (breach 25500), carry 1.38pp NEUTRAL (is_estimate=false tier-2), yield FAIRLY_VALUED (+1.83pp), investment-clock CORE_VN tier 8.
+- Signal breakdown: bootstrap market_context (10 alerts), portfolio_conviction (37 tickers MODERATE 0.38–0.57, mixed signals). Convergence: (1) RE sector ≥3 signals (VIC/VHM/VRE/D2D/KBC/TCH/NVL news+price), (2) macro-micro contradiction (gold risk-off +2.55σ vs RE rally), (3) VNH price anomaly +12.5% with Kinh Dịch caution (reversal risk).
+- TNB layers walked: 1–6 complete. Layer 1: USD/VND 26124 state transition ✓, gold +2.55σ ✓, VNH +12.5% anomaly ✓. Layer 2: Fed 3.62% stable [gap: PMI/sentiment]. Layer 3: carry 1.38pp is_estimate=false ✓, [gap: VIRA], [gap: BCTC overdue]. Layer 4: RE 3/4 pillars (M2✓, COC✓, EPS gap, valuation✓) → MEDIUM. [phase: transition] [tier: equity]. VNH 1/4 pillars → LOW. Layer 5: VIC Kiển+caution, VHM Tỉnh+bullish, VNH Kiển+caution. Layer 6: single-pillar gaps noted, carry provenance honored (DSI-CONSUMER-HONORS is_estimate=false).
+- Causal chains: (1) Fed 3.62%+SBV 5% → carry 1.38pp NEUTRAL → VND 26124 sustains domestic bid → RE +1–3% contradicts gold risk-off → inflection. (2) VNH +12.5% [no catalyst] → agriculture -0.72% baseline → anomaly (uncertain source) → Kinh Dịch caution → LOW conviction.
+- Dishes published: YES — Block A (MARKET 19:37 UTC plain Vietnamese, 6 sentences: index +0.4%, RE rally, macro contradiction, sector headwinds, VNH caution, watch 26,500). Block B ([CHEF-DETAIL] WORK, TNB 1–6 auditable, carry DSI-CONSUMER honored, conviction MEDIUM/LOW rationale, degraded floor noted). Session metrics: 4 MCP calls (bootstrap, macro_snapshot, portfolio_conviction, send_telegram×2); elapsed ~8min; tokens ~28k estimated.
+- Conviction summary: RE cluster MEDIUM (3/4 pillars, contradiction acknowledged, phase transition). VNH anomaly LOW (reversal risk, no causal link). Macro-micro inflection point: watch 26,500 VND/USD threshold (if >26500, carry flips BEARISH; if <25500, RE signal reinforces).
 
-### Prior session
+## Known issues & watch triggers (as of 2026-06-05 evening)
 
-### Chef Dish — intraday 02:13 UTC (2026-06-03T0213Z) — DEDUP GATE SILENT EXIT
-- Clusters qualified: 0 from agent_signals (bootstrap returned empty array); convergence rule NOT fired on cowork cross-agent signals
-- Dedup gate: task_claim("published:chef-intraday:2026-06-03") returned claimed=FALSE, current_holder=pid-1-ts-1780437853936 (unified-agent prior session 2026-06-03T02:20Z) — already published today
-- Intraday gate: SILENT EXIT — dedup + 0 new agent_signals → NO MARKET publication
-- Market context: VN market OPEN (02:00–08:59 UTC), snapshot 03:18 UTC. Bootstrap: agent_signals=[] (0 cowork files); 20 open alerts (24h window prior to 02:13Z). Watchlist 39 tickers fresh. Macro: oil $96.79 NEUTRAL (−0.72%), gold $4,514.2 BULLISH (+0.34%), USD/VND 26,122 BEARISH, yield 6.83% FAIRLY_VALUED, interest 8%.
-- Signal breakdown: 0 price_anomaly, 0 news_impact, 0 bctc_signal, 0 fundamental → 0 qualified clusters
-- Causal reasoning: Prior 02:20 UTC cycle already published 2 clusters (Oil/Gas MEDIUM + Banking LOW) to MARKET with full TNB walkthrough. Current 02:13 UTC cycle (post-02:20 submission window) has no new cross-agent signal files → dedup marker prevents duplicate publish (claim gate=false). Correct behavior: silent-exit.
-- Session metrics: 2 MCP calls (task_claim, get_cycle_bootstrap); elapsed ~2s; tokens ~1k.
-- Action: COMPLETE. Dedup gate confirmed (no publish). Notebook entry appended 2026-06-03T02:13Z. Next: intraday 03:13 UTC if signal files appear (unlikely given 0 new cowork outputs).
+- **Market hexagram service**: unavailable 501 (skipped cleanly per degraded-dish floor spec)
+- **US macro gaps**: No PMI/sentiment in evening cycle (Fed stable 3.62% only)
+- **BCTC Q1/Q2**: Overdue 35+ days → EPS pillar confidence capped MEDIUM
+- **VNH +12.5% anomaly**: No visible catalyst; Kinh Dịch Kiển (caution, reversal risk) — watch for reversal below 850 VND
+- **Gold +2.55σ**: Risk-off signal active; contrasts with RE domestic recovery → inflection point
+- **26,500 VND/USD threshold**: Hard watch line — if breached, carry flips BEARISH; domestic bid dies
 
-## Prior session
+## Next — EOD watch (2026-06-06)
 
-### Chef Dish — intraday 02:20 UTC (2026-06-03T0220Z) — PUBLISHED
-- Clusters qualified: 2 major (Oil/Gas convergence + Banking sector convergence)
-- Intraday gate: QUALIFIED — convergence rule fired on both sector clusters; MARKET dish published
-- Published-marker gate: task_claim("published:chef-intraday:2026-06-03") returned claimed=TRUE — dup-guard gate secured before send_telegram
-- Market context: VN market OPEN (02:00–08:59 UTC), snapshot 02:19 UTC. Bootstrap: agent_signals=[] (0 cowork files); 20 open alerts (24h window). Watchlist 39 tickers with prices fresh. Macro: oil $96.96 NEUTRAL (+0%), gold $4,501.6 BULLISH (+0.06%), USD/VND 26,122 BEARISH (depreciation), carry -0.33pp FII_OUTFLOW_RISK, yield 1.83pp FAIRLY_VALUED.
-- **Cluster 1 — Oil/Gas Sector Convergence:** 2 tickers (GAS +0.61%, PLX +0.39%); HIGH alerts: news_mention (Brent +2.04σ geopolitical) 2026-06-03 02:02, macro_deviation (Brent spike 2026-06-02 23:30). Layer 1: Brent state transition +2.04σ severity CRITICAL. Layer 3 transmission: geopolitical premium → oil sector earnings upgrade. Kinh Dịch: GAS = Khiêm (15) MUA 100%, PLX = Kiển (39) BAN 48% (divergent hexagrams flag caution). Conviction MEDIUM (3/4 pillars: earnings/money/capital support, valuation risk mixed on PLX negative hexagram).
-- **Cluster 2 — Banking Sector Convergence:** 7 tickers (ACB -0.20%, BID +0%, CTG +0.44%, EIB +0%, MBB +0.20%, VCB +0.65%, VPB +0%); HIGH alerts: price_drop consensus 2026-06-02 08:30, volume_spike 2.5–3.4x 2026-06-02 08:36. Layer 1: USD/VND 26,122 carry state transition (above 25,000 threshold). Layer 3: Fed 5.33% near SBV 5% (-0.33pp carry spread, FII_OUTFLOW_RISK) → sector net-sell pressure contradicts FAIRLY_VALUED yield 1.83pp. Kinh Dịch: mixed Sư (7) GIU 100%, Khôn (2) MUA 74%, Tập Khảm (29) BAN on MBB/VHM (conflicting signals). Conviction LOW (2/4 pillars: carry pressure + capital cost, earnings missing, money supply risk, valuation risk contradicted by FII macro).
-- TNB layers walked: 1–6 (complete end-to-end)
-  - Layer 1: State transitions VERIFIED — Brent +2.04σ (extreme severity, geopolitical risk), USD/VND 26,122 carry cross confirmed ✓
-  - Layer 2+3: US equity bullish ("Chứng khoán Mỹ nối dài chuỗi phiên lập kỷ lục") → Brent tailwind. Fed 5.33% > SBV 5% → carry -0.33pp FII_OUTFLOW_RISK confirmed Layer 3 transmission ✓
-  - Layer 4: Oil/Gas (M2 adequate, COC tight but commodity USD upside, earnings +0.76%, valuation MODERATE) = 3/4 aligned; Banking (M2 tight, COC rising, earnings FAIRLY_VALUED but FII pressure contradicts, valuation fair) = 2/4 aligned = conviction MEDIUM (oil) vs LOW (banking)
-  - Layer 5: Market hexagram unavailable (not called per Layer 5 rules); per-ticker GAS Khiêm MUA vs PLX Kiển BAN (divergent), Banking mixed Sư/Khôn/Tập (weak consensus). Conviction MEDIUM floor.
-  - Layer 6 gaps: [gap: no US PMI data in cycle] | [gap: fresh BCTC Q2 not available, earnings pillar secondary] | source_tier 2 (macro_snapshot, market_context) + tier 3 (carry_spread derived) — no tier-1 SBV confirmation.
-- Causal chains (Step 6.5):
-  1. Brent crude spike (+2.04σ geopolitical premium, "tin Trung Đông") → oil sector earnings upgrade → GAS (conviction 0.58, Khiêm MUA) up +0.61% contradicts PLX (conviction 0.47, Kiển BAN) up +0.39% = hexagram divergence flags short-term uncertainty.
-  2. USD/VND carry tighten (26,122 vs 25,000, feed 5.33% ≈ SBV 5%, -0.33pp carry spread, FII_OUTFLOW_RISK) → banking sector net-sell pressure (price stable, volumes 2.5–3.4x indicate distribution ongoing) despite yield FAIRLY_VALUED 1.83pp (repriced from EOD 3.2pp CHEAP) = macro carry contradicts valuation support.
-- Conviction summary: Oil/Gas MEDIUM (convergence fires, earnings outlook positive, Brent state transition verified; pillar alignment 3/4 balanced; hexagram divergence flags momentum risk on PLX caution). Banking LOW (sector convergence fires on macro carry signal alone; 2/4 pillars; earnings/credit missing; yield repriced overnight removes safe-haven premium; Kinh Dịch mixed consensus; macro confidence HIGH but earnings confirmation pending).
-- Macro-micro resolution: Yield signal FAIRLY_VALUED (1.83pp vs EOD CHEAP 3.2pp) = overnight sentiment repricing of carry impact (market overcorrected Tuesday evening, regained equilibrium by Wednesday morning). Oil sector benefits from geopolitical premium (structural positive). Banking sector faces real headwind (macro carry) but valuation discount now eroded (intraday repricing).
-- Degradation note: market_hexagram unavailable (expected per Layer 5 rules); BCTC Q2 preliminary missing (earnings pillar secondary); FX pressure containable <26,500 (watch trigger for next cycle).
-- Dishes published: YES — Block A (MARKET, 02:20 UTC, plain Vietnamese 4 sentences: market direction + drivers + watchlist sectors + Kinh Dịch context + watch trigger 26,500; NO citations/metadata/Hán-Việt hexagram codes). Block B ([CHEF-DETAIL] WORK 02:20 UTC, TNB 1–6 auditable, causal chains verbatim, source_tiers cited [2,3], layer status explicit, gaps marked [gap:...], conviction rationale by pillar, degradation notes).
-- Session metrics: 5 MCP calls (task_claim, get_cycle_bootstrap, get_macro_snapshot, send_telegram×2); elapsed ~15s; tokens ~8k estimated.
-- Action: COMPLETE. Notebook entry appended 2026-06-03T02:20Z. Published-marker dup-guard secured. MARKET dish sent 02:20 UTC. WORK audit trail sent [CHEF-DETAIL]. Clusters: Oil/Gas MEDIUM + Banking LOW = conditional intraday PUBLISHED.
-
-### Chef Dish — evening 19:37 UTC (2026-06-02T1937Z) — PUBLISHED
-- Clusters qualified: 3 (Banking carry shock + Real Estate bearish consensus + FPT tech contrarian)
-- Evening guarantee: PUBLISHED — mandatory Steps 2-8 walked. Published-marker task_claim("published:chef-evening:2026-06-02") claimed=TRUE before send_telegram (dup-guard secured).
-- Market context: VN market CLOSED (19:37 UTC = 02:37 VN next day, US/EU evening session). Snapshot 19:49 UTC macro fresh. Watchlist prices stale from EOD 08:59 UTC. 20 open alerts persist from EOD. Macro: oil $96.03 NEUTRAL (+0.77%), gold $4,516.50 BULLISH (safe-haven), USD/VND 26,118 BEARISH (import pressure), carry -0.33pp FII_OUTFLOW_RISK, yield 1.83pp FAIRLY_VALUED (improved from EOD 3.2pp CHEAP — state transition).
-- Signal breakdown: get_agent_signals() returned "Không có tín hiệu mới"; bootstrap agent_signals array empty. Convergence fired from live macro snapshot + portfolio_conviction (internal signals, not cowork file-bus).
-- **Cluster 1 — Banking Carry Shock:** 10 tickers (ACB, BID, CTG, VCB, MBB, VPB, EIB, SHB, TCB, TPB) average -1.53% (EOD); volume 2.3-2.9x historic. Layer 1: USD/VND 26,118 carry threshold crossed. Layer 3: Fed 5.33% > SBV 5% → -0.33pp carry spread FII_OUTFLOW_RISK → yield compressed EOD 3.2pp CHEAP to evening 1.83pp FAIRLY_VALUED (sentiment repricing). Kinh Dịch: Sư (7) GIU 100% (hold consensus on most), Khôn (2) MUA 74%, BID Tập Khảm BAN (negative). Conviction MEDIUM-LOW 0.48-0.56 (2/4 pillars: carry macro confirmed, earnings/credit missing, Kinh Dịch split, pillar mismatch yield premium vs carry panic).
-- **Cluster 2 — Real Estate Bearish Consensus:** 7 tickers (VHM -0.79%, VRE -0.64%, VIC flat, KBC -1.81%, NVL -6.89% FLOOR, TCH -3.23%, D2D +0.15%) sector avg -2.16%. Kinh Dịch Tập Khảm (29) BAN 100% unanimous on VHM/VRE/KBC/SSI/BID (strong bearish consensus). [gap: no RES macro catalyst evening window]. Conviction LOW-MEDIUM 0.47-0.53 (1.5/4 pillars: carry pressure confirmed, earnings Q1 stale >24h, credit tight, P/E inflated; Kinh Dịch BAN overrides isolated MUA signals).
-- **Cluster 3 — FPT Tech Contrarian:** FPT +2.61% (74,800 VND) vs Tech sector +1.61%, diverges from banking -1.1% carry panic. Kinh Dịch Khiêm (15) MUA 100% confidence (reversal bullish signal). Conviction STRONG 0.63 (4/4 pillars aligned: earnings ROI USD-denominated revenue (structural hedge), valuation moderate, momentum +2.61% divergence, Kinh Dịch bullish reversal). [source risk: no external news catalyst validated past 24h, technical signal alone].
-- TNB layers walked: 1–6 (complete)
-  - Layer 1: USD/VND 26,118 carry state transition VERIFIED | Yield state transition VERIFIED (3.2pp CHEAP EOD → 1.83pp FAIRLY_VALUED evening, sentiment repricing) | Gold $4,516.50 bullish | Oil $96.03 neutral
-  - Layer 2+3: Fed 5.33% > SBV 5% (-0.33pp carry) → FII_OUTFLOW_RISK → banking/RES net-sell confirmed | [gap: SBV CPI/FX reserves absent evening window]
-  - Layer 4: Banking 2/4 pillars (yield premium vs carry panic mismatch) 0.48-0.56 | RealEstate 1.5/4 (Kinh Dịch BAN consensus validates, BCTC stale) 0.47-0.53 | Steel 2/4 (lagged USD/VND margin) 0.50-0.57 | FPT 4/4 ALIGNED (earnings ROI, valuation, momentum, hexagram) 0.63
-  - Layer 5: Market hexagram NOT_FOUND (expected); per-ticker Banking Sư/Khôn mixed, RealEstate Tập Khảm BAN unanimous, FPT Khiêm MUA bullish | Conviction floor MEDIUM (macro available, hexagram unavailable per Layer 5 rules)
-  - Layer 6 gaps: Yield state transition FIXED (EOD CHEAP → evening FAIRLY_VALUED captures sentiment repricing). FPT source-risk flagged (no news catalyst, purely technical). BCTC Q1 stale >24h (earnings pillar blocked banking/RES). USD/VND import lag 1-2 sessions. Carry -0.33pp containable <26,500 (not structural collapse).
-- Causal chains (Step 6.5):
-  1. Fed 5.33% > SBV 5% (-0.33pp carry spread) → FII outflow psychology → Banking volume 2.3-2.9x + -1.1% sector → Yield EOD 3.2pp CHEAP repriced to evening 1.83pp FAIRLY_VALUED (FII panic now visible); conviction MEDIUM-LOW (macro confirmed, earnings/credit missing)
-  2. [no RES macro catalyst] → FII carry-unwind + Kinh Dịch Tập Khảm BAN 100% unanimous (5 majors) → RealEstate -2.16% sector + NVL -6.89% floor → conviction LOW-MEDIUM (BCTC stale, earnings missing)
-  3. [no global macro catalyst] → FPT +2.61% diverges from -1.1% banking carry panic → Export earnings USD-denominated (structural hedge) + Kinh Dịch Khiêm (15) MUA 100% reversal → conviction STRONG 0.63 (source risk: no news, technical signal alone)
-- Macro-micro resolution: EOD contradiction (cheap yield 3.2pp vs carry panic -0.33pp) RESOLVED as lagged sentiment — yield signal priced pre-carry spike (24h+ lag), FX panic now overrides valuation thesis. Evening yield repricing to FAIRLY_VALUED 1.83pp reflects market repricing of carry impact on bank deposit competition.
-- Dishes published: YES — Block A (MARKET, 19:37 UTC, plain Vietnamese 5 sentences, no citations/metadata/Hán-Việt codes; direction+delta%, sector names, FPT outlier, watch 26,500 trigger). Block B ([CHEF-DETAIL] WORK 19:37 UTC, TNB 1-6 auditable, causal chains verbatim, gaps marked [gap:...], conviction rationale by pillar, degradation note market_hexagram=NOT_FOUND, source tiers cited tier 2 (API/macro) tier 3 (alerts), signal breakdown cowork file-bus empty, live bootstrap 20 alerts + portfolio_conviction dashboard).
-- Degradation notes: market_hexagram=NOT_FOUND (expected per Layer 5 rules) | SBV CPI/FX absent (evening data window) | BCTC Q1 stale >24h | FPT news catalyst absent (source-risk flag) | Conviction floor MEDIUM per Layer 5 rules (macro available, hexagram unavailable).
-- Session metrics: 6 MCP calls (task_claim, get_cycle_bootstrap, get_agent_signals, get_macro_snapshot, send_telegram×2); elapsed ~35s; tokens ~9k estimated.
-- Action: COMPLETE. Notebook entry appended 2026-06-02T19:37Z. Published-marker dup-guard secured. MARKET dish sent 19:37 UTC (plain Vietnamese, no citations/metadata). WORK audit trail sent [CHEF-DETAIL]. Next: morning 05:23 UTC 2026-06-03.
-
-### Chef Dish — eod 08:37 UTC (2026-06-02T0837Z) — PUBLISHED
-- Clusters qualified: 3 (Banking sector convergence, Steel sector convergence, FPT contrarian divergence)
-- EOD guarantee: PUBLISHED — mandatory steps 2-8 walked despite 0 direct agent_signals file load (bootstrap returned empty agent_signals array)
-- Published-marker gate: task_claim("published:chef-eod:2026-06-02") returned claimed=TRUE — dup-guard gate secured before send_telegram
-- Market context: VN market CLOSE 08:59 UTC; snapshot 08:37 UTC post-close. VN-Index 1826.47 −0.98%; Watchlist 39 tickers across 10 sectors. 20 open HIGH/MEDIUM alerts (banking, steel, utilities HIGH x15, volume_spike MEDIUM x5). Macro snapshot available (oil $93.35 −2.05%, gold $4562.2 +1.05%, USD/VND 26118, interest 7%). Market hexagram tool NOT_FOUND (expected; per-ticker hexagrams embedded in portfolio_conviction).
-- Signal breakdown: get_agent_signals() returned "Không có tín hiệu mới"; no price_anomaly/news_impact/bctc_signal/fundamental files detected in last 24h → 0 direct agent_signals. Convergence fired from live bootstrap market context + portfolio conviction (internal signals, not cowork file-bus).
-- **Cluster 1 — Banking Sector:** 10 tickers average −1.53%; HIGH alerts on BID/ACB/EIB/VCB/MBB/VPB/CTG (price_drop consensus); volume spike 2.3–2.9x average on CTG/ACB/MBB/VPB. Layer 1 state transition: USD/VND 26,118 crosses 25,500 carry threshold → FII_OUTFLOW_RISK regime −0.33pp carry spread (Layer 3 transmission verified). Kinh Dịch mixed: Sư (7) GIU 100%, Khôn (2) MUA 74% (divergent posture). Conviction MEDIUM (2.5/4 pillars: cheap yield 8.2pp vs 5% deposit overridden by carry panic; state transition confirmed; earnings/credit missing).
-- **Cluster 2 — Steel Sector:** 3 tickers HSG −2.81%, TIS −2.08%, HPG −1.46% average −2.12%; HIGH price_drop alerts + volume spike. Layer 1 driver: USD/VND 26,118 import cost pressure (Layer 3 anchor). Kinh Dịch Sư (7) consensus (HSG/HPG 100% confidence). Conviction MEDIUM-LOW (import cost lagged indicator; earnings stable but FX margin squeeze).
-- **Cluster 3 — FPT Contrarian:** FPT +2.61% vs Tech sector +1.61%; diverges from macro FII_OUTFLOW_RISK regime. Kinh Dịch Khiêm (15) MUA 100% confidence (reversal signal, positive). Volume spike 2.9x. Conviction STRONG 0.60 (per portfolio_conviction). Interpretation: earnings-ROI flow (export revenue denominated USD) persists despite carry pressure; FPT outperforms on structural, not cyclical, tailwinds.
-- TNB layers walked: 1–6 (complete)
-  - Layer 1: USD/VND 26,118 state transition VERIFIED (above 25,500); price/volume distribution confirmed across 15 watchlist tickers
-  - Layer 2+3: Fed 5.33% > SBV 5% → carry −0.33pp FII_OUTFLOW_RISK → banking/steel net-sell (Layer 2+3 transmission macro-micro verified)
-  - Layer 4: Equity earnings yield 8.2% >> SBV 5% = +3.2pp premium = CHEAP; Banking 0.44–0.57 conviction (pillar mismatch: valuation cheap vs carry headwind); Steel 0.46–0.54 (pillar mismatch: fundamentals stable vs FX margin squeeze); FPT 0.60 STRONG (4/4 pillars aligned: earnings ROI, valuation moderate, momentum +2.61%, Kinh Dịch bullish)
-  - Layer 5: Market hexagram NOT_FOUND (expected); per-ticker: Banking mixed Sư/Khôn (GIU/MUA 48-100% confidence), Steel Sư consensus (100%), FPT Khiêm MUA (100% reversal). Conviction MEDIUM floor (macro available, hexagram unavailable).
-  - Layer 6 gaps: Single-pillar risk on banking (carry panic alone insufficient thesis); earnings outlook missing (BCTC stale >24h Q2); source risk (all signals from live bootstrap API, no external news-scout validation 24h window); regime drift (USD/VND 26,118 not yet trending past 26,500 resistance = containable carry shock, not structural collapse)
-- Causal chains (Step 6.5):
-  1. Fed funds 5.33% > SBV deposit 5% (+33bp yield gap) → carry spread −0.33pp FII_OUTFLOW_RISK → BID/CTG/VPB/MBB −1.6 to −2% on volume 2.3–2.9x (banking sector net-sell confirmed)
-  2. USD/VND 26,118 (above 25,500 import threshold) → manufacturing/industrial import cost surge → HSG −2.81%, GAS −2.38%, PLX −2.26% (steel/energy sector headwind verified)
-  3. [contrarian] FPT +2.61% Khiêm (15) MUA despite FII_OUTFLOW_RISK → earnings ROI flow (USD-denominated export revenue) + tech sector structural tailwind overrides carry pressure (conviction STRONG 0.60 confirms)
-- Conviction summary: Banking MEDIUM (carry −0.33pp macro pressure + volume distribution + Kinh Dịch mixed; valuation cheap but pillar mismatch = margin shock overshadows discount). Steel MEDIUM-LOW (import cost lagged; fundamentals stable but FX headwind = earnings margin compression signal). FPT STRONG (earnings ROI structural + Kinh Dịch bullish + divergent momentum = high-conviction contrarian). Market-wide: FII_OUTFLOW_RISK regime confirmed; USD/VND carry shock acute but containable <26,500 (watch trigger for next cycle).
-- Dishes published: YES — Block A (MARKET, 08:37 UTC, plain Vietnamese 4 sentences, direction+delta% + sector names + FPT outlier + watch 26,500 VND/USD trigger; NO citations/metadata/Hán-Việt codes per rule). Block B ([CHEF-DETAIL] WORK 08:37 UTC, TNB 1–6 auditable, causal chains verbatim, source_tier 2 cited, layer status explicit, gaps marked [gap:...], conviction rationale, degradation note market_hexagram=NOT_FOUND).
-- Macro-micro resolution: Cheap yield (8.2pp) contradicted by carry panic (−0.33pp); contradiction resolved as REGIME SHOCK (pre-carry valuation thesis overridden by real-time FX dynamics; yield signal lagged by 24h, carry signal fresh on Fed/SBV spread realization).
-- Degradation note: market_hexagram NOT_FOUND (expected per Layer 5 rules); agent_signals 0 from cowork file-bus (bootstrap compensated with live market context); BCTC stale >24h (Q2 earnings outlook incomplete); conviction MEDIUM floor applied per Layer 5 rules (macro available, hexagram unavailable).
-- Session metrics: 7 MCP calls (task_claim, get_cycle_bootstrap, get_agent_signals, get_macro_snapshot, send_telegram×2); elapsed ~25s; tokens ~8k estimated
-- Action: COMPLETE. Notebook entry appended 2026-06-02T08:37Z. Published-marker dup-guard secured. MARKET dish sent 08:37 UTC (plain Vietnamese, no citations). WORK audit trail sent [CHEF-DETAIL]. Next: evening 19:37 UTC.
-
-### Previous sessions (2026-06-02 intraday + 2026-06-01)
-
-### Chef Dish — intraday 07:19 UTC (2026-06-02T0719Z) — QUALIFIED + PUBLISHED
-- Clusters qualified: 2 major (banking + real_estate sector convergence)
-- Intraday gate: QUALIFIED — convergence rule fired on both sector convergence clusters; MARKET dish published
-- Market context: VN market OPEN (02:00–08:59 UTC), snapshot 07:19 UTC. Bootstrap: 0 agent_signals from cowork (24h window); 20 open alerts (banking 8 MEDIUM, real_estate 6 HIGH). Watchlist prices fresh; macro snapshot available (oil $94.33, gold $4,566.4, USD/VND 26,118).
-- **Cluster 1 — Banking Convergence**: 8 tickers (ACB, BID, CTG, EIB, MBB, VCB, VPB, +1) averaging -0.92%; alerts: price_drop + news_mention (BID deposit-rate divergence); state transition: USD/VND 26,118 (above 25,500 carry threshold); FII outflow risk -0.33pp carry spread ✓
-- **Cluster 2 — Real Estate Convergence**: 6 tickers (VHM, VRE, VIC, KBC, NVL, TCH, D2D) averaging -1.96%; alerts: price_drop (HIGH severity) + news_mention (VIC Pham Nhat Vuong Philippines); Kinh Dịch Tập Khảm (29) BAN on VHM/VRE/KBC (100% confidence reversal bearish) ✓
-- TNB layers walked: 1–6 (complete end-to-end)
-  - Layer 1: State transitions USD/VND 26,118 carry cross; price/volume distribution verified ✓
-  - Layer 2+3: Fed tightening (5.33%) vs SBV (5%) → USD/VND carry pressure → FII net-sell (news: "630 tỷ bán ròng ngăn hàng/BĐS") ✓
-  - Layer 4: 4-pillar banking (2-3/4 aligned: M2 adequate, cost-of-capital headwind, earnings mixed, valuation cheap); real_estate (2/4: tight liquidity, financing pressure, earnings clouded, P/E inflated) = MEDIUM banking, LOW-MEDIUM real_estate
-  - Layer 5: Market hexagram unavailable (501); per-ticker: banking Sư/Khôn mixed (GIU/MUA), real_estate Tập Khảm consensus bearish; conviction MEDIUM floor (macro available, hexagram missing)
-  - Layer 6 gaps: [gap: BCTC>12h, earnings outlook incomplete] | source-risk (VIC news single-source) | lagged indicator (yield cheap thesis priced pre-carry-spike) | regime drift (carry containable, not trending past 26,500)
-- Causal chains (Step 6.5):
-  1. Fed yield advantage (5.33% vs SBV 5%) + gold spike (risk-off $4,566) → FII carry-unwind (-0.33pp spread) → banking sector sell-off (news: deposit-rate pressure, BID lãi suất) → conviction MEDIUM
-  2. FII outflow risk + capital redeployment (VIC Philippines news) → real_estate broad retreat (Kinh Dịch Tập Khảm 100% BAN confirms) → conviction LOW-MEDIUM
-- Conviction summary: Banking MEDIUM (carry pressure + sector convergence + Kinh Dịch mixed = 2.5/4 pillars). Real estate LOW-MEDIUM (carry + momentum + reversal hexagram + sector news corroborate; earnings/credit missing; Pham Nhat Vuong redeployment = lagged signal).
-- Macro-micro: Carry pressure contradicts cheap yield (8.2% earnings >> 5% deposit); resolved as lagged sentiment (pre-carry thesis now overridden by FX dynamics).
-- Degradation note: market_hexagram=unavailable (501); BCTC stale; conviction capped MEDIUM per Layer 5 rules
-- Dishes published: YES — Block A (MARKET, 07:19 UTC, plain Vietnamese 4 sentences, direction+delta%, no citations/metadata/hexagram codes, watch 26,500 VND/USD). Block B ([CHEF-DETAIL] WORK 07:19 UTC, TNB 1–6 auditable, source_tier cited [2,3], layer status explicit, gaps marked [gap:...], causal chains, degradation note).
-- Session metrics: 6 MCP calls (get_cycle_bootstrap, get_portfolio_conviction×2, get_macro_snapshot, send_telegram×2); elapsed ~45s; tokens ~12k estimated.
-- Action: COMPLETE. Notebooks entry appended 2026-06-02T07:19Z. MARKET dish sent. WORK audit trail sent. Next: intraday 08:13 UTC (if clusters qualify); else silent-exit gate.
-
-### Chef Dish — intraday 03:13 UTC (2026-06-02T0313Z) — SILENT EXIT
-- Clusters qualified: 0 (zero agent_signals from all cowork gatherers — market-watcher, news-scout, bctc-analyst; all report "Không có tín hiệu mới")
-- Intraday gate: SILENT EXIT — convergence rule NOT fired; 0 qualifying clusters → no MARKET publication
-- Published-marker gate check: task_claim("published:chef-intraday:2026-06-02") returned claimed=false (slot already claimed 02:21 UTC) — AC-6 single-publish confirmed, no duplicate send attempted
-- Market context: VN market OPEN (02:00–08:59 UTC) 03:13 UTC snapshot. Watchlist prices fresh; 20 open alerts from 2026-06-01; macro unavailable (macro_snapshot likely down per ops board). Market hexagram tool 501 (expected).
-- Signal breakdown: 0 price_anomaly, 0 news_impact, 0 bctc_signal, 0 fundamental, 0 urgent_news, 0 cross_validate, 0 suppress = 0 total qualified clusters
-- TNB layers walked: NONE (silent-exit pre-gate, Steps 2-8 skipped per convergence rule)
-- Session metrics: 5 MCP calls (task_claim, get_cycle_bootstrap, get_agent_signals×3); elapsed ~3s; tokens ~2k
-- Action: COMPLETE. Silent-exit logged. No MARKET send. No WORK detail send. Next: intraday 04:13 UTC 2026-06-02.
-
-## Convergence rule reference (Step 1 gate)
-
-**Convergence clusters** fire when ANY rule qualifies:
-1. **Ticker convergence**: ≥2 distinct signal types on single ticker within 24h (e.g., price_anomaly + news_mention + Kinh Dịch extreme)
-2. **Sector convergence**: ≥3 signals across sector (e.g., 3+ tickers clustered + news + macro anchor)
-3. **Macro-micro contradiction**: US stack (Fed/EFFR/10Y) contradicts VN carry/FII flow
-4. **Extreme individual signal**: 2σ+ severity or CRITICAL severity news; RSI <15 or >85 technical extremes
-5. **Evening guarantee**: Always publish minimum regime-state update at EOD/evening cycle even if 0 clusters
-
-**Silent exit** (no MARKET publish): Zero clusters qualified per Step 1 gate at intraday → skip Steps 2-8.
-
-**Mandatory publish** (Steps 2-8): ≥1 cluster qualified → walk TNB layers 1-6, causal chains, dish narrative.
-
-## System state & known issues (as of 2026-05-31)
-
-- **Market hexagram service**: B-bucket pending (501 error common)
-- **Kinh Dịch per-ticker**: Working via get_portfolio_conviction (NOT via 501 endpoints per CHEF-confab memory)
-- **BCTC Q1 filings**: Overdue 3d+ banking/real-estate → earnings pillar blocked on confidence
-- **Carry baseline**: USD/VND stale 4d+ in prior cycles (2026-05-23); current cycle 2026-05-31 shows 26,115 tier-2 fresh
-- **EFFR tier-1**: Stable trend 41 samples, −0.02pp to −0.03pp spread vs IORB; asOf 2026-05-28
-- **Source-risk**: News-scout severity-inflation noted (2026-05-27); verify polarity on MWG/GAS/PLX intra-day volatility spikes
-- **FII pressure persistent**: Carry regime −63bp (May 27) → −0.33pp (May 21–26) → monitoring for USD/VND <26,000 relief signal
-
-## Next — Priority: Q1 BCTC + USD/VND <26,000 watch trigger
+- USD/VND >26,500 (carry BEARISH flip) OR <25,500 (RE thesis reinforcement)
+- BCTC Q2 unlock EPS pillar confidence
+- VNH reversal watch (below 850 or holds 900)
+- Gold continuation or risk-on fade (market hexagram regenerate if service returns)
