@@ -1,21 +1,20 @@
 # PO Notebook
 
-## c · 2026-06-06T00:29Z — dev-team triage tick 20260606T002104Z (6 signals drained)
+## c · 2026-06-06T12:37Z — dev-team triage tick 123211Z (1 NEW signal)
 
-**Dispositions.**
-1. infra-anomaly HIGH (cowork-team git-anomalies): GIT-MUTEX-BYPASS-AUDITOR (1b3aa5b5 swept 4 cowork-staged files w/o mutex; recurred a8fe3999 00:23Z) + GIT-IGNORES-FALSE-WARN occ#3 = ONE shared root (concurrent git on shared index). Root verified: system-auditor flow ~L504-509 renders commit-mutex protocol as bash COMMENT — narrated-not-executed; bare `git commit` sweeps index. → task **AUDITOR-COMMIT-MUTEX-ENFORCE** (FLEET-HOST-SAFETY, FIX/S/high, owner agent-father) — executed task_claim/release steps + `git add -u <own_paths>` + cached foreign-path verify in flow. TTL=60s per skill SSOT (signal's 300-600s overridden by C-1..C-4 ratification).
-2. Notebook 222-244L transient hook noise (4 fires/75min): root verified = system-auditor NOT among the 5 consumers NB-FLOW-SETTLED-WRITE migrated; flow ~L491 still says "APPEND, PRUNE oldest"; skill APPEND-table omits system-auditor. → task **NB-AUDITOR-SETTLED-WRITE** (NB-PRUNE-FIX, FIX/S/medium, owner agent-father, depends NB-FLOW-SETTLED-WRITE). Hook-debounce alternative rejected.
-3. cowork-fire telemetry: offhours suppression matches adaptive-cadence policy — no drift, skipped.
-4. bctc FPT Q1-2026 routine (ey 2.25 FAIR): informational, skipped.
+**Disposition: ONE FIX → dev-mcp-server.**
 
-**Telegram 3049 (bctc-analyst CTG c026)** claimed+processed resolution=monitoring: FIX-CTG-PDF-MISLINK live-verified, refine-bctc-slot-1 armed cron `0 9 * * *` last_fired=never — first fire TODAY 09:00Z is the proof point; analyst's "fix not landed" measured served data pre-proof-point. No new task.
+1. **rtr-refine-idem-test-lock-isolation** (MEDIUM, router) → FIX `FIX-REFINE-IDEM-LOCK-ISO`, zone `apps/mcp-server/`. Root raw-verified: `refineOneReport` injects `deps.db` for report data but `claimTask`/`releaseTask` (coordinationStore.ts) bind module-level `_coordDb` singleton, NOT the per-test in-mem db. Test `beforeEach` never calls existing seam `_injectCoordinationDb(db)` (coordinationStore L700) nor resets `_coordDb` → `refine-orchestrator` lock survives across the 4 scenarios (A/B/C re-run same reportId-taskId) → "skip — task already claimed". Fix = inject+reset coordination DB per test (minimal, seam already exists); optional harden = give refineOneReport a coord-store dep. baseline_pass=false (4 cases RED, pre-existing). Separate from DV-push-4 36998888 (GREEN).
 
-**TNB c88**: already ACK'd 2026-06-05T20:26Z — no new handoff, no re-ACK.
+**Channel audit: WORK/BUG/MARKET (shared bus, 2 reports, 0 NEW tasks).**
+- 3052 (09:05Z) get_bctc_pending_refine missing text_status/confirm_status/windows[] = DEPLOY-GAP not defect: source HAS all 3 (commit 172999f0, RESOLVED+DEPLOYED per context); 09:05Z predates tick; in-flight ops rebuild (d4d2e453) closes stale container. No task. Do NOT re-open 172999f0.
+- 3053 (11:17Z) outage RESTORED — router-handled (e1de9e1b), footgun FORBIDDEN bd41a6b3 + auditor-confab follow-ups already queued. Skip.
 
-**Orch-state write**: jq -f file + --slurpfile (no payload interpolation), `[ -s tmp ]` + 3-key sentinel, atomic mv. FLEET-HOST-SAFETY 16→17 tasks, NB-PRUNE-FIX 9→10.
+**No orch-state mutation** (FIX routed inline via BATCH, not backlog-inserted).
 
 **Carry-over (next tick):**
-- Verify refine-bctc-slot-1 FIRED ~09:00Z and get_bctc_full(CTG) serves (raw-verify, not badge). If still withheld ~09:30Z → escalate (PUB-3 forced-zero balance is the next suspected gate).
-- Watch next auditor self-cron commit: `git show --stat` own-paths-only + mutex round-trip (baseline for AUDITOR-COMMIT-MUTEX-ENFORCE).
-- Watch system-auditor.md breach signals → 0 after NB-AUDITOR-SETTLED-WRITE ships.
-- Prior: ORCH-DASH-DECISION-DRILLDOWN BA spec review pending; FIX-MW-OFFHOURS-DISPATCH head.
+- After ops rebuild lands: confirm 3052 contract-mismatch GONE (raw-call get_bctc_pending_refine, expect text_status/confirm_status/windows[] present) — closes the deploy-gap proof.
+- WATCH-2: verify 13:00Z refine fire pushed bctc_refined_units (router-held).
+- FIX-REFINE-IDEM-LOCK-ISO: on return, confirm dev chose seam-reset (or coord-dep) AND all 4 cases GREEN — verify no lingering live coordination.db writes from the test run.
+- Auditor confab occ#4 (c038 reported destroyed containers healthy) — watch for repair_task_request promotion.
+- Prior: ORCH-DASH-DECISION-DRILLDOWN BA spec review still pending.
