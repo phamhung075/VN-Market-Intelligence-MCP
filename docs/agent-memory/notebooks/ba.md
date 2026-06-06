@@ -1,5 +1,22 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-06 | **Sprint:** ORCH-TASK-CANON
+
+## ORCH-TASK-CANON-BA · 2026-06-06
+
+Spec complete. REQ file: `docs/handoffs/ORCH-TASK-CANON-BA-spec.md`. Zero PO blockers. 4 architect blockers (schema SSOT location / counts.done rule / F3 rollout order / migration runner). NEXT: architect.
+
+Key BA findings (raw-read, not relayed):
+- done[]: 66 rows — 65/66 task_id, 52/66 title, 21/66 owner, 48/66 zone, 2/66 created_at. 27 distinct status strings across all arrays.
+- 1 nested container in done[]: `{id: "ORCH-DASH-DECISION-DRILLDOWN", tasks: [6 items]}` — children already canonical. Must flatten.
+- orchestrationHandler.ts `buildOrchestrationDto`: projects `active_sprints[].tasks[]` only — done[] never served. `OrchTaskBoardDto` has no `done` field. `decisions.by_task` join starved (done tasks not in `tasks[]`).
+- `projectTask()` already coalesces `task_id||id` and `title||resolvedId` — coalesce logic exists, just never called for done[].
+- Frontend L339: exact `t.status === "DONE"` misses 15 variants (DONE-LIVE-VERIFIED etc.).
+- Decision-journal SKILL resolver: `entries[0].id` should be `entries[].sprint_id | select(active)` — always resolves to date-fallback; sprint-named journals invisible.
+- `sprint-2026-06-06.md` lines 1-21: freeform `## STEP —` blocks, not parseable by `RE_STEP_HEADER`. PO entry (lines 22-31) already correct format.
+- BLOCKER-1 schema location: orchStateStore.ts interface vs docs/standards/ — recommend orchStateStore.ts.
+- BLOCKER-4 migration runner: recommend dev-mcp-server runs the jq migration as part of F2 prep.
+
 **Last updated:** 2026-06-05 | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
 
 ## ORCH-DASH-DECISION-DRILLDOWN-BA · 2026-06-05

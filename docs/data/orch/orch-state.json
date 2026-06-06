@@ -2623,7 +2623,7 @@
         "task_id": "BA-ORCH-TASK-CANON",
         "title": "Requirement spec for sprint ORCH-TASK-CANON: canonical task schema + decision visibility on orchestration dashboard",
         "owner": "ba",
-        "status": "TODO",
+        "status": "REVIEW",
         "zone": "multi",
         "created_at": "2026-06-06T18:32:39Z",
         "type": "SPRINT-M",
