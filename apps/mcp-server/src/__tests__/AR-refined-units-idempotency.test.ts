@@ -14,13 +14,18 @@
 
 // RED_BEFORE = true  (push_tool_pathway describe block was written first as RED; same commit makes GREEN)
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
 import { refineOneReport } from "../scheduler/financial-reports/bctcRefineJob.js";
 import { buildGetBctcPendingRefineHandler } from "../interface/mcp/tools/financial-reports/getBctcPendingRefineTool.js";
 import { buildPushBctcRefinedUnitHandler } from "../interface/mcp/tools/financial-reports/pushBctcRefinedUnitTool.js";
 import { buildFinalizeBctcRefineHandler } from "../interface/mcp/tools/financial-reports/finalizeBctcRefineTool.js";
+import {
+  ensureCoordinationTable,
+  _injectCoordinationDb,
+  _resetCoordinationDbState,
+} from "../infrastructure/db/coordinationStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -160,8 +165,23 @@ describe("AR-refined-units-idempotency (AC-FR12-2)", () => {
   let db: Database;
 
   beforeEach(() => {
+    // Reset the coordinationStore singleton so no stale lock from a prior
+    // scenario bleeds into the next one (all scenarios share the same taskId
+    // `bctc-refine-<reportId>` at module level; without this reset the
+    // claimTask INSERT OR IGNORE sees an existing live row and returns
+    // claimed:false → "[bctcRefine] skip — task already claimed").
+    _resetCoordinationDbState();
     db = makeInMemoryDb();
     initFinancialReportsTables(db);
+    // Wire the coordination singleton to the same fresh in-memory DB so that
+    // claimTask / releaseTask never touch the real coordination.db on disk.
+    ensureCoordinationTable(db);
+    _injectCoordinationDb(db);
+  });
+
+  afterEach(() => {
+    _resetCoordinationDbState();
+    try { db.close(); } catch { /* already closed */ }
   });
 
   it("Scenario A: all-DONE ×3 → COUNT stable = TOTAL_WINDOWS each run", async () => {

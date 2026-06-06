@@ -508,7 +508,10 @@ export async function refineOneReport(
     } catch { /* ignore */ }
     throw err;
   } finally {
-    // Always release the task lock
-    releaseTask(taskId, `pid-${process.pid}`);
+    // Always release the task lock — match on owner_agent (stable across restarts)
+    // to correctly undo the claim above which used owner_agent:"refine-orchestrator".
+    // Previously passed pid-${process.pid} here which mismatched the claimed
+    // owner_agent and left the lock as a zombie until TTL expiry.
+    releaseTask(taskId, "refine-orchestrator");
   }
 }
