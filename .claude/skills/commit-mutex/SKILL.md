@@ -1,6 +1,12 @@
 <!-- size-justification: ~120L — complete acquire/critical-section/release protocol; backoff table, fail-closed C-2 path, jitter formula, foreign-restore rule, and give-up BUG-log are all load-bearing steps executed in sequence — cannot split. -->
 # Skill: commit-mutex
 
+> **INV-GATEWAY-1 (enforced 2026-06-07):** This skill is DISPATCHER-ONLY. Dev-*/qa/ba/pm/architect
+> specialist sub-agents MUST NOT invoke this skill — they lack the MCP gateway binding required to
+> call `task_claim`. Specialists commit directly (explicit paths). The dispatcher session (dev-team
+> dispatcher or developer team-lead) invokes this skill after the specialist returns its diff.
+> See: `docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md`
+
 **Trigger:** any flow step that performs `git add` + `git commit`
 **Design brief:** `docs/architecture-briefs/2026-05-24-commit-mutex-on-main/00-design.md`
 **Protocol reference:** `docs/protocols/task-lock-protocol.md` (§ commit-mutex kind)

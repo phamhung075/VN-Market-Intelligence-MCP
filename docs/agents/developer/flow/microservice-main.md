@@ -1,4 +1,4 @@
-<!-- size-justification: 164L — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, task-lock claim, doc-review chain, implementation record template, mandatory decision-journal steps, and RETURN schema; splitting would degrade usability for all 9 consumers -->
+<!-- size-justification: 165L — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, INV-GATEWAY-1 dispatcher-lock comments, doc-review chain, implementation record template, mandatory decision-journal steps, and RETURN schema; splitting would degrade usability for all 9 consumers -->
 # Microservice Developer — Main Flow
 
 **Scope:** Any `apps/<service>/` zone (TypeScript/Bun or Python/FastAPI). All 9 dev-* zone agents share this flow. The `apps/mcp-server/` root uses [`main.md`](./main.md) instead.
@@ -60,19 +60,14 @@ if BUILD-STANDARD: not-applicable or tag absent:
 5. Load knowledge files (fail-loud → `send_telegram(channel="bug")`, STOP)
 6. **Zone restriction** — only touch files in `apps/<service>/`. If changes needed outside zone, STOP and notify PM.
 
-**6b. Claim sprint-task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+**6b. Sprint-task lock — dispatcher holds it**
 ```
-result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "task:" + task_id,
-  task_kind:   "sprint-task",
-  owner_agent: "<agent-id>",
-  ttl_seconds: 3600,
-  payload:     '{"task_title":"' + task_title + '","branch":"' + branch_name + '","zone":"apps/<service>/"}'
-})
-if not result.claimed:
-  → Apply migration check per `.claude/skills/task-lock/SKILL.md` § On claim-fail
+# INV-GATEWAY-1 (enforced 2026-06-07): commit-mutex/task_claim/task_release MCP calls are the
+# dispatcher session's sole responsibility. This specialist agent does NOT call task_claim.
+# The outer dev-team dispatcher holds the sprint-task lock for the duration of this spawn.
+# Inner agents commit directly (explicit paths) and coordinate via file-based .head atomic writes (WF-1).
+# Phase 4 activation: see docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md
 ```
-(`<agent-id>` = calling dev-* agent name, e.g. "dev-mcp-server", "dev-stock-price" — resolved from Step 0b agent-id.)
 
 7. **Before creating any new file** → look up canonical location in `docs/policies/docs-organization.md` table.
 
@@ -102,16 +97,18 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 → journal (MANDATORY — pre-REVIEW gate): skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Pre-code checklist step 1 / task_board claim>"] (if no earlier entry was written yet for this task, write it now — minimum one entry per task before REVIEW; include any failure adaptation or approach change WHY)
 1. `cd apps/<service> && bun test` — service tests pass
 2. `bun tsc --noEmit` — 0 errors
-3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+3. **Commit directly** (INV-GATEWAY-1 — no mutex skill invocation from this specialist)
    `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit` — format per `docs/policies/commit-convention.md`
-   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+   # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+   # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
 
 **After code — Python/FastAPI**
 1. `cd apps/<service> && python -m pytest` — service tests pass
 2. Type check if configured (mypy/pyright)
-3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+3. **Commit directly** (INV-GATEWAY-1 — no mutex skill invocation from this specialist)
    `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit` — format per `docs/policies/commit-convention.md`
-   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+   # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+   # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
 
 **Documentation review** (after code passes, before QA):
 → Run flow: `docs/agents/developer/flow/doc-review.md` with `SERVICE=<service>`
@@ -130,10 +127,10 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 - **Graphify:** updated ✓ | skipped (no docs impacted)
 ```
 
-**Commit notebook** (before QA) — **mutex-guarded** → skill: `.claude/skills/commit-mutex/SKILL.md`:
+**Commit notebook** (before QA — direct, INV-GATEWAY-1):
 ```bash
-# own_paths: [docs/agent-memory/notebooks/developer.md]
-# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+# INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+# responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 git add docs/agent-memory/notebooks/developer.md
 git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
 ```

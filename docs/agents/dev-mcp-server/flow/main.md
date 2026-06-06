@@ -1,4 +1,4 @@
-<!-- size-justification: 120L — zone-specialist flow overlay; G12 DoD Gate (two-gate evidence table, streak rule, tool-suite probe commands), RUN-SOLO/explicit-add/commit-mutex discipline, ESLint fence phase note, scheduler/dashboard circular-dep protocol pointers, and implementation record template are all zone-specific mandatory content with no factoring seam -->
+<!-- size-justification: 122L — zone-specialist flow overlay; G12 DoD Gate (two-gate evidence table, streak rule, tool-suite probe commands), RUN-SOLO/explicit-add/INV-GATEWAY-1 commit discipline, ESLint fence phase note, scheduler/dashboard circular-dep protocol pointers, and implementation record template are all zone-specific mandatory content with no factoring seam -->
 # dev-mcp-server — Main Flow
 
 **Zone:** `apps/mcp-server/`
@@ -47,7 +47,7 @@ This zone is HIGHEST-RISK / RUN-SOLO. Before staging any files:
 1. **Confirm no other scale terminal is active** — SOLO constraint is non-negotiable (charter §Scheduling).
 2. **Explicit-file staging ONLY.** `git add <exact-path>` per file. NEVER `git add -A`, `git add .`, `git add -am`, or any wildcard flag. This zone has a history of 26-file over-staging incidents.
 3. **Pre-commit diff review.** Run `git diff --cached --name-only` and verify ONLY the intended files appear before committing.
-4. **Acquire commit-mutex** → skill: `.claude/skills/commit-mutex/SKILL.md` (kind='sprint-task', key='commit-mutex:main', TTL=60s). Stage → verify → commit → release.
+4. **Commit directly** — INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole responsibility; this specialist commits directly (explicit paths). No commit-mutex skill call from here. Stage (explicit paths only) → verify (`git diff --cached --name-only`) → commit.
 5. **No --force, --no-verify, --no-gpg-sign.** All work on `main`. No branches.
 
 ---
@@ -145,8 +145,10 @@ Reference: `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G4;
 Zone health: <e.g. "barrel index.ts 139L→90L after wave 1, bun test 0 fail, 132 tools intact, scheduler 68 cron.schedule"> | HEALTHY
 ```
 
-**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
+**Commit notebook** (direct — INV-GATEWAY-1):
 ```bash
+# INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+# responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 # Explicit-file staging ONLY — never -A or wildcard
 git add docs/agent-memory/notebooks/dev-mcp-server.md
 git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"

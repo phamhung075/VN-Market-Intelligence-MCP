@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## c286 · 2026-06-07T — WF-3-IMPL: INV-GATEWAY-1 documentation (WORKFLOW-FLUIDITY last task)
+
+- Task: WF-3-IMPL (FIX, S). Implements architect ruling §5+§7 sub-tasks A+B.
+- Sub-task A: fail-loud-protocol.md step 0 annotation updated — "WF-3 resolved 2026-06-07: Option III" + INV-GATEWAY-1 label.
+- Sub-task B: 7 specialist flow files updated — removed commit-mutex/task_claim skill invocations; replaced with direct-commit + INV-GATEWAY-1 comments. Scope: developer/flow/main.md, microservice-main.md, dev-frontend/flow/main.md, dev-mcp-server/flow/main.md, qa/flow/main.md, developer/flow/feature-spike.md. commit-mutex SKILL.md received DISPATCHER-ONLY header note.
+- FU-MCP-GATEWAY-DEV-FRONTEND closed by reference (same root cause — dev-frontend no longer contains mutex skill invocation).
+- WF-3-IMPL status: TODO → REVIEW. .head set idle.
+- Handoff: docs/handoffs/WF-3-IMPL.md
+- Files touched: 9. NEXT: qa.
+
 ## c285 · 2026-06-05T21:56Z — REFINE-CRON-ARM: add refine_bctc_md to cowork schedule
 
 - Task: REFINE-CRON-ARM (UNBLOCK, S). 7 BCTC reports stuck PENDING/PARTIAL — no schedule slot.

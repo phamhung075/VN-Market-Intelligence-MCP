@@ -1,4 +1,4 @@
-<!-- size-justification: 161L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, task-lock claim, doc-update+graphify protocol, implementation record template, mandatory decision-journal steps, and RETURN schema are all tightly coupled sequential steps that must be read in one pass. +12L: WF-1 task_release + atomic .head idle-reset on both STOP paths (AC-WF1-1/2). -->
+<!-- size-justification: 162L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, INV-GATEWAY-1 dispatcher-lock comments, doc-update+graphify protocol, implementation record template, mandatory decision-journal steps, and RETURN schema are all tightly coupled sequential steps that must be read in one pass. +12L: WF-1 task_release + atomic .head idle-reset on both STOP paths (AC-WF1-1/2). +1L: WF-3 INV-GATEWAY-1 comment. -->
 # Developer — Main Flow
 
 **Scope:** `apps/mcp-server/` root only (TypeScript/Bun). Dev-* zone agents use [`microservice-main.md`](./microservice-main.md) for `apps/<service>/` zone work.
@@ -53,17 +53,13 @@ Read handoff using delta-read skill:
    - Branch missing: `git checkout main && git pull origin main && git checkout -b task/NNN-kebab-description`
    - VERIFY: `git branch --show-current` must equal `task/NNN-kebab-description` before touching any file
 
-**2b. Claim sprint-task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+**2b. Sprint-task lock — dispatcher holds it**
 ```
-result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "task:" + task_id,
-  task_kind:   "sprint-task",
-  owner_agent: "developer",
-  ttl_seconds: 3600,
-  payload:     '{"task_title":"' + task_title + '","branch":"' + branch_name + '"}'
-})
-if not result.claimed:
-  → Apply migration check per `.claude/skills/task-lock/SKILL.md` § On claim-fail
+# INV-GATEWAY-1 (enforced 2026-06-07): commit-mutex/task_claim/task_release MCP calls are the
+# dispatcher session's sole responsibility. This specialist agent does NOT call task_claim.
+# The outer dev-team dispatcher holds the sprint-task lock for the duration of this spawn.
+# Inner agents commit directly (explicit paths) and coordinate via file-based .head atomic writes (WF-1).
+# Phase 4 activation: see docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md
 ```
 
 3. Read `docs/handoffs/TASK_NNN.md` first — use `files_to_read/modify/create` directly, skip redundant scanning
@@ -103,11 +99,12 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 1. `bun test src/__tests__/NNN-*.test.ts` — task tests pass
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors
-4. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+4. **Commit directly** (INV-GATEWAY-1 — no mutex skill invocation from this specialist)
    `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m "..."` — format per `docs/policies/commit-convention.md`
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse). Omit all three only for no-sprint commits (§ No-Sprint Rule).
    **NEVER use `git commit -am` or `git commit -a`** — `-a` greedily absorbs staged index content from other sources, violating C2 atomicity (root cause: c47 incident, SHA `8bec73d3`).
-   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → git diff --cached verify → git commit → task_release
+   # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+   # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
 
 **Doc update + graphify** (after code passes, before QA):
 1. Identify related docs touched by this task — check:
@@ -139,10 +136,10 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 
 **Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (section-overwrite — append new c<NNN> section; skill handles prune + blank-state init).
 
-**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
+**Commit notebook** (direct — INV-GATEWAY-1):
 ```bash
-# own_paths: [docs/agent-memory/notebooks/developer.md]
-# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+# INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+# responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 git add docs/agent-memory/notebooks/developer.md
 git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
 ```

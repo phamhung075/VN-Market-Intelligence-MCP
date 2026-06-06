@@ -66,8 +66,9 @@ If ANY tool call or flow step fails after 1 retry:
    If holding a sprint-task lock:
      call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
      // ok=false acceptable (already expired) — best-effort cleanup
-     // dev-* agents lack direct MCP gateway binding in the sub-agent context (F-8, pending WF-3 ruling).
-     // Until WF-3 is resolved: dev-* agents cannot call task_release directly — rely on TTL expiry (3600s max).
+     // dev-* agents lack direct MCP gateway binding in the sub-agent context (F-8).
+     // WF-3 resolved 2026-06-07: Option III codified (see docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md).
+     // INV-GATEWAY-1: task_release is dispatcher session's sole responsibility; dev-* rely on TTL expiry (3600s max) or dispatcher finally-block.
      // The .head idle-reset below IS executable by all agents (jq + atomic rename, no MCP needed).
    Write .head idle atomically (applies to ALL agents regardless of MCP binding):
      tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)

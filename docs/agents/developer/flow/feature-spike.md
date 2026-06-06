@@ -51,11 +51,11 @@
    git checkout main
    git branch -D spike/NNN-<kebab-topic>
    ```
-6. **Commit findings only** (never the spike code) — **mutex-guarded** → skill: `.claude/skills/commit-mutex/SKILL.md`:
-   ```
-   # own_paths: [docs/spikes/SPIKE_NNN-<topic>.md]
-   # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
-   git add docs/spikes/SPIKE_NNN-*.md
+6. **Commit findings only** (never the spike code) — direct commit (INV-GATEWAY-1):
+   ```bash
+   # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+   # responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
+   git add docs/spikes/SPIKE_NNN-<topic>.md
    git commit -m "docs(spike): NNN findings — <topic>"
    ```
 

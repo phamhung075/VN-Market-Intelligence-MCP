@@ -1,4 +1,4 @@
-<!-- size-justification: 196L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, implementation record template, mandatory decision-journal step, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
+<!-- size-justification: 197L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, INV-GATEWAY-1 comments, implementation record template, mandatory decision-journal step, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
 # dev-frontend — Main Flow
 
 **Zone:** `apps/frontend/`
@@ -95,11 +95,12 @@ Loaders call `app/lib/api/` — never call api-gateway `fetch` directly inside a
 **After code**
 1. `cd apps/frontend && npx vitest run` — all tests pass (0 failures)
 2. `cd apps/frontend && npx tsc --noEmit` — 0 errors
-3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+3. **Commit directly** (INV-GATEWAY-1 — no mutex skill invocation from this specialist)
    `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m "..."` — format per `docs/policies/commit-convention.md`
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse).
    **NEVER use `git commit -am` or `git commit -a`**
-   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+   # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+   # responsibility; this specialist commits directly (explicit paths) — no commit-mutex skill call here.
 
 ---
 
@@ -172,10 +173,10 @@ Before calling notebook-write, compose one "Zone health:" line:
 Zone health: <e.g. "test coverage ~65%, Tier 3 api layer complete, Tier 4 routes 2/8 done"> | HEALTHY
 ```
 
-**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
+**Commit notebook** (direct — INV-GATEWAY-1):
 ```bash
-# own_paths: [docs/agent-memory/notebooks/dev-frontend.md]
-# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+# INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+# responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 git add docs/agent-memory/notebooks/dev-frontend.md
 git commit -m "chore(memory/dev-frontend): notebook YYYY-MM-DD"
 ```

@@ -1,4 +1,4 @@
-<!-- size-justification: 216L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). -->
+<!-- size-justification: 220L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). +4L: WF-3 INV-GATEWAY-1 annotations. -->
 # QA — Main Flow
 
 **Tools:** `docs/agents/tools/package/qa.md`
@@ -15,6 +15,9 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 > **WF-1 STOP-RELEASE (AC-WF1-3):** On ANY tool failure BEFORE verdict is reached (pre-approved/changes-requested), run this block first:
 > ```
+> // INV-GATEWAY-1 (2026-06-07): task_release is the dispatcher session's sole responsibility.
+> // This best-effort call may silently fail (no MCP gateway binding in specialist sub-session).
+> // The dispatcher finally-block and TTL expiry (3600s) are the authoritative release paths.
 > call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
 > // ok=false acceptable — best-effort. Note: CHANGES_REQUESTED does NOT release (fixer holds lock — intentional).
 > tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -98,13 +101,13 @@ Status semantics (consistent across all agent consumers):
 If endpoint returns 404 (eval not yet computed) → log `BCTC-EVAL: not yet computed for {report_id}` in handoff, do NOT block (eval substrate may not be deployed yet).
 If endpoint returns 409 → same as 404 treatment.
 
-**Heartbeat sprint-task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
+**Heartbeat sprint-task lock (dispatcher-side)**
 ```
-call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
-if hb.ok == false:
-  // Lock stolen — developer's session terminated before QA ran in this session
-  send_telegram(channel="bug", "[qa] lock stolen on " + task_id + " — re-claiming for QA review")
-  → call_tool(server="vn-market", tool="task_claim", arguments={ task_id: "task:" + task_id, task_kind: "sprint-task", owner_agent: "qa", ttl_seconds: 3600 }) — proceed even if claim fails (QA is non-mutating until merge)
+// INV-GATEWAY-1 (2026-06-07): task_heartbeat/task_claim/task_release MCP calls are the dispatcher
+// session's sole responsibility. QA specialist does NOT call task_heartbeat or task_claim here.
+// The dispatcher holds the outer lock; QA proceeds without a direct lock claim.
+// Lock-stolen detection: if the dispatcher's heartbeat fails, the dispatcher handles re-claim.
+// See docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md (INV-GATEWAY-1).
 ```
 
 ```bash
@@ -152,8 +155,11 @@ Merge commit subject must follow `docs/policies/commit-convention.md` — use `c
 If QA writes a non-merge commit that carries `Task:` trailer, it must also carry `AC:` trailer.
 QA non-merge commits with sprint scope (digit in scope) MUST carry `Task:` trailer.
 
-**Release sprint-task lock** (last step before merge — atomic with TASKS.md status update):
+**Release sprint-task lock** (dispatcher responsibility — see INV-GATEWAY-1):
 ```
+// INV-GATEWAY-1 (2026-06-07): task_release is the dispatcher session's sole responsibility.
+// This best-effort call may silently fail (no MCP gateway binding in specialist sub-session).
+// The dispatcher finally-block and TTL expiry (3600s) are the authoritative release paths.
 call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
 // Proceed with merge regardless of ok value — release is best-effort cleanup
 ```
@@ -202,10 +208,10 @@ PIPELINE: continue
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
+**Commit notebook** (direct — INV-GATEWAY-1):
 ```bash
-# own_paths: [docs/agent-memory/notebooks/qa.md]
-# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+# INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole
+# responsibility; inner specialist agents commit directly (explicit paths), no mutex skill call.
 git add docs/agent-memory/notebooks/qa.md
 git commit -m "chore(memory/qa): notebook YYYY-MM-DD"
 ```
