@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-05T22:10:16+00:00",
   "_updated_by": "pm",
   "head": {
-    "status": "idle",
     "active_task_id": null,
+    "next_action": "WATCH: market-watcher-offhours legit-suppressed (off_market 480min) — baseline verify at ~04:00Z fire (real RETURN + zero dup price_anomaly); refine-bctc-slot-1 first fire 09:00Z (CTG proof point, escalate if get_bctc_full(CTG) still withheld ~09:30Z); FU-CTG-REFINE-PICKUP verify after 09:00Z; operator owes cowork refresh /cron-cowork-team; next auditor self-cron commit must show mutex round-trip (AUDITOR-COMMIT-MUTEX-ENFORCE baseline) + zero auditor context_bloat_breach over next 3 fires (NB-AUDITOR-SETTLED-WRITE baseline)",
     "next_agent": null,
-    "wip": 0,
-    "wip_max": 2,
-    "updated_at": "2026-06-05T23:22:27+00:00",
+    "status": "idle",
+    "updated_at": "2026-06-06T00:39:40+00:00",
     "updated_by": "dev-team",
-    "next_action": "IDLE. Tick 20260605T232040Z complete: drained 1 context_bloat signal (system-auditor notebook 222L transient — SELF-RESOLVED, c012 pruned to 185L within 60s; hook fired between append and prune writes). 0 NEW queue rows, 0 TG reports, no PO input. Auditor prune discipline VERIFIED WORKING (c012 pruned c008, restored newest-first order); prune-skip counter stays 2, FIX-AUDITOR-NB-PRUNE not opened. WATCH: (a) FIX-MW baseline verify at first offhours fire 00:00Z/04:00Z (not yet fired as of 23:20Z; last_fired 20:05Z); (b) after 2026-06-06 09:00Z verify refine slot + CTG refined -> close FU-CTG-REFINE-PICKUP; (c) operator owes cowork refresh /cron-cowork-team for aec3a3d8+240dc1f1; (d) cosmetic: auditor notebook-write does append-then-prune as 2 writes -> transient hook fires; only escalate if it becomes noisy."
+    "wip": 0,
+    "wip_max": 2
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T00:30:20Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-06T00:39:40+00:00",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -823,7 +823,7 @@
             "type": "FIX",
             "owner": "agent-father",
             "depends": [],
-            "status": "BACKLOG",
+            "status": "DONE",
             "size": "S",
             "zone": "cross-service/",
             "priority": "high",
@@ -833,8 +833,10 @@
             ],
             "created_at": "2026-06-06T00:29:37Z",
             "source": "PO triage tick 20260606T002104Z — signal docs/signals/processed/cowork-team-20260606T001015Z-git-anomalies.json (HIGH) + router live confirmation a8fe3999 00:23Z",
-            "note": "EVIDENCE: auditor self-cron commit 1b3aa5b5 landed WITHOUT claiming commit-mutex while cowork-dispatcher HELD commit-mutex:main, sweeping 4 cowork-staged files into a mis-labeled commit; recurred a8fe3999 (00:23Z) while dev-team held the mutex (scope clean that time only due to a per-spawn brief constraint — gap is structural). ROOT CAUSE: docs/agents/system-auditor/flow/main.md notebook-commit block (~L504-509) renders the commit-mutex protocol as a bash COMMENT ('# Protocol: task_claim ...') — narrated-not-executed (same class as EMIT-DARK); bare `git commit` after `git add <own>` commits the WHOLE shared index, including files staged by parallel agents. SHARED ROOT with GIT-IGNORES-FALSE-WARN (occ#3 — spurious French gitignore error exit 1 on TRACKED non-ignored files: cowork-schedule.json, orch-state.json — while a parallel git process runs; check-ignore clean; file stages anyway): concurrent git processes on one shared index. Mutex-wrap removes the parallelism, killing both findings — ONE task per signal author's recommendation. FIX (agent-md-factory governed flow edit, no rebuild): rewrite the notebook-commit step (and align the D-IMPROVE commit step ~L310-318 wording for consistency) as explicit numbered EXECUTED steps per commit-mutex SKILL Quick Reference: (1) call_tool task_claim task_id='commit-mutex:main' task_kind='commit-mutex' owner_agent='system-auditor' ttl_seconds=60 (skill SSOT TTL=60s w/ C-2/C-2b fail-closed — signal suggested 300-600s but skill ratification C-1..C-4 is binding) (2) stage via `git add -u <own_paths>` (tracked-file form — standardizes the known workaround for the gitignore false-warn) (3) `git diff --cached --name-only` foreign-path verify, `git restore --staged` foreign-only (4) commit (5) post-commit cached-empty check (6) task_release on EVERY exit path. Encode pathspec staging + cached-stat self-check in the FLOW (currently only per-spawn-brief enforced). DoD: next auditor self-cron commit shows task_claim->task_release round-trip AND touches ONLY auditor own_paths while another agent has files staged.",
-            "baseline_pass": "router raw-verify: `git show --stat` of the next system-auditor self-cron commit lists ONLY auditor own_paths; coordination db shows commit-mutex:main claimed by system-auditor spanning the commit timestamp; zero foreign-file sweeps over 48h of parallel cowork/dev ticks"
+            "note": "executed commit-mutex protocol in D-IMPROVE + notebook-commit steps; add -u pathspec + foreign-path restore; router raw-verified",
+            "baseline_pass": "router raw-verify: `git show --stat` of the next system-auditor self-cron commit lists ONLY auditor own_paths; coordination db shows commit-mutex:main claimed by system-auditor spanning the commit timestamp; zero foreign-file sweeps over 48h of parallel cowork/dev ticks",
+            "done_at": "2026-06-06T00:39:40+00:00",
+            "done_commit": "d895b6f2"
           }
         ]
       },
@@ -1121,7 +1123,7 @@
             "depends": [
               "NB-FLOW-SETTLED-WRITE"
             ],
-            "status": "BACKLOG",
+            "status": "DONE",
             "size": "S",
             "zone": "cross-service/",
             "priority": "medium",
@@ -1131,8 +1133,10 @@
             ],
             "created_at": "2026-06-06T00:29:37Z",
             "source": "PO triage tick 20260606T002104Z — router-observed pattern (no signal author); head-narrative escalation condition 'only if noisy' MET: hook fired 23:09/23:39/00:09/00:22Z, 4 of 6 signals drained across last 2 ticks were this transient",
-            "note": "ROOT CAUSE: same SSOT-fix-doesnt-reach-derived-copy pattern that NB-FLOW-SETTLED-WRITE fixed for 5 consumers (04b20c87) — the notebook-write SKILL has the AC-3 settled-write invariant (compose final <=200L in memory, ONE Write; NB-WRITE-ATOMIC), but system-auditor was NOT among the migrated consumers: docs/agents/system-auditor/flow/main.md notebook step (~L491) still instructs 'APPEND new section, PRUNE oldest' (two separate writes -> PostToolUse backstop hook observes the intermediate 222-244L over-cap state and emits a high-priority breach signal every time, self-resolving <=200L within ~60s), and .claude/skills/notebook-write/SKILL.md APPEND-class consumer table (~L83) omits system-auditor. FIX (agent-md-factory governed): (1) rewrite flow ~L491 to the AC-3 wording — compose final <=200L body in memory (retention prune + new section) then ONE settled Write; fold the BCTC-EVAL-SNAPSHOT block overwrite (~L245, Tier-3 runs) into the same single settled write when both land in one cycle so the hook fires once seeing <=200L; (2) add system-auditor to the skill's APPEND-class consumer row. ALTERNATIVE REJECTED: debouncing the backstop hook (re-check after 90s) — skill/flow-side single-write is cleaner+cheaper and keeps the hook honest as a hard backstop. DoD: one full tier-2 AND one tier-3 auditor cycle produce ZERO context_bloat_breach signals for system-auditor.md; final file <=200L; no hand-prune needed.",
-            "baseline_pass": "zero context_bloat_breach signal files referencing docs/agent-memory/notebooks/system-auditor.md over the next 3 auditor self-cron fires; wc -l system-auditor.md <=200 after each"
+            "note": "AC-3 settled single-write + BCTC-EVAL-SNAPSHOT folded + skill consumer table row; router raw-verified",
+            "baseline_pass": "zero context_bloat_breach signal files referencing docs/agent-memory/notebooks/system-auditor.md over the next 3 auditor self-cron fires; wc -l system-auditor.md <=200 after each",
+            "done_at": "2026-06-06T00:39:40+00:00",
+            "done_commit": "2febbb7d"
           }
         ]
       },
