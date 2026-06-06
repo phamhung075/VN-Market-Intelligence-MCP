@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-196 · 2026-06-06T22:45Z · FIX-ORCH-DONE-GRID-COLS QA gate — APPROVED
+
+Sprint: WORKFLOW-FLUIDITY (backlog FIX task) | Task: FIX-ORCH-DONE-GRID-COLS | Verdict: APPROVED
+
+363/363 Vitest GREEN, tsc 0 errors, mock-guard PASS, DDD clean, security clean (process.env at L171-172 pre-existing SSR-origin, not in diff). Container a7209d98af4c running = most-recent build (2026-06-06 22:39:28), layer-cache confirms same source. HTTP 200 live. Commit diff: exactly 1 file, no force-adds. DONE_GRID const + DecisionAccordion statusNote prop + Title min-w-0/break-words + note line-clamp-2 + fixed-cell truncate: all correct. Task moved REVIEW→DONE in orch-state.
+
 ## cycle-195 · 2026-06-06T00:00Z · ORCH-DASH-DECISION-DRILLDOWN full sprint QA gate — APPROVED
 
 Sprint: ORCH-DASH-DECISION-DRILLDOWN | Tasks: ARCH-ORCH-F1/F2/F3/QA | Verdict: APPROVED
