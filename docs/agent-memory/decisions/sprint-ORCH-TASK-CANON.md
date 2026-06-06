@@ -26,3 +26,14 @@
 - Per-agent journal files (F-4 addendum): Option 1 chosen (per-agent files) over commit-mutex-wrap (125s serialization latency) and deferred-merge (extra post-tier step)
 **why-decision:** Routing migration to agent-father creates a clean one-way dependency gate: F1B commit = green light for F2 TypeScript rename. Per-agent files eliminate all append contention at zero latency cost; journalStore glob is backward-compatible with legacy single-file names.
 **why-change:** BA addendum (F-4/F-5 from fluidity audit) arrived after BA spec; folded into F4 scope rather than a separate sprint to avoid a third agent-father dispatch and keep the journal-path change atomic with the resolver bug fix.
+
+### STEP pm-S1 · pm · 2026-06-06T21:45:00Z
+**task-id:** PM-ORCH-TASK-CANON-DECOMPOSE
+**what-done:** Decomposed architect blueprint (ORCH-TASK-CANON-ARCH.md) into 5 atomic tasks with handoff files + canonical schema; created TASK_AF-ORCH-F1A-F4.md, TASK_AF-ORCH-F1B.md, TASK_F2-MCP.md, TASK_F3-FE.md, TASK_QA.md (all per PM init.md § handoff_file_mandatory); created docs/standards/task-schema.md (human-readable TypeScript contract); updated orch-state.json .task_board.active_sprints to add ORCH-TASK-CANON sprint with 5 canonical tasks.
+**what-considered:**
+- Dispatch order STRICT sequential (architect confirmed): F1a-F4 → F1B → F2 → F3 → QA (gates: commit-mutex, REBUILD verify, API verify, dashboard verify)
+- Zone isolation: F1a+F4 (docs-only), F1B (data-only), F2 (TypeScript), F3 (frontend), QA (integration) — all disjoint except dependencies
+- Task shape (canonical {id,title,owner,status,zone,created_at}): all 5 tasks conform; F1a+F4 task will enforce schema in all flow files post-commit
+- Blocker rulings embedded in handoff acceptance criteria (D-1 to D-6 from brief); no blocker escalation needed (architect issued rulings)
+**why-decision:** Task-level decomposition required before developer dispatch (PM init.md mandates handoff files + task shape). Atomic 5-task breakdown allows parallel zone-isolation verification (F1a-F4 docs review while F1B jq drafted) and clear dependency gates (F1B commit gates F2 start, F2 REBUILD gates F3 start).
+**why-change:** Canonical task schema NEW (created as part of F1a-F4 scope per D-1 ruling BLOCKER-1); handoff files per architect blueprint § Dispatch Order (TASK_NNN.md format per PM init.md § handoff_file_mandatory).

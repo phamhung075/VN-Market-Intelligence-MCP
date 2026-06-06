@@ -61,6 +61,92 @@
     "_updated_by": "po",
     "active_sprints": [
       {
+        "id": "ORCH-TASK-CANON",
+        "label": "Canonical task schema + decision visibility on orchestration dashboard",
+        "status": "active",
+        "opened_at": "2026-06-06",
+        "priority": "high",
+        "evidence": "Architect blueprint (docs/handoffs/ORCH-TASK-CANON-ARCH.md): 4 blocker rulings issued; multi-zone sprint (docs/agents/ + .claude/skills/ + apps/mcp-server/ + apps/frontend/ + docs/data/orch/); dispatch order STRICT sequential (F1a-F4 → F1B → F2 → F3 → QA).",
+        "tasks": [
+          {
+            "id": "AF-ORCH-F1A-F4",
+            "title": "Flows + SKILL + journal rewrite + task-schema.md",
+            "owner": "agent-father",
+            "status": "TODO",
+            "zone": "docs/agents/ + .claude/skills/",
+            "created_at": "2026-06-06T20:30:00Z",
+            "type": "SPRINT-S",
+            "size": "M",
+            "priority": "high",
+            "depends": [],
+            "note": "Merge F1a (flows emit canonical shape) + F4 (decision-journal SKILL fixes + journal rewrite). F1a-F4 disjoint files, one agent-father task per architect D-2. No TypeScript changes (docs-only). Must commit before F1B migration."
+          },
+          {
+            "id": "AF-ORCH-F1B",
+            "title": "Jq migration to canonical schema",
+            "owner": "agent-father",
+            "status": "TODO",
+            "zone": "docs/data/orch/",
+            "created_at": "2026-06-06T20:45:00Z",
+            "type": "SPRINT-S",
+            "size": "S",
+            "priority": "high",
+            "depends": [
+              "AF-ORCH-F1A-F4"
+            ],
+            "note": "One-shot jq migration: normalize task_id→id, freeform status→enum, flatten nested container, sentinel verify (atomic temp→rename). 66 rows (plus 6 from container) → 71 canonical rows. Commit-mutex required. Gate for F2."
+          },
+          {
+            "id": "F2-MCP",
+            "title": "OrchStateStore types + orchestrationHandler done[] + journalStore glob + REBUILD",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/",
+            "created_at": "2026-06-06T21:00:00Z",
+            "type": "SPRINT-S",
+            "size": "L",
+            "priority": "high",
+            "depends": [
+              "AF-ORCH-F1B"
+            ],
+            "note": "TypeScript: rename OrchStateTaskBoardTask field id (mandatory, canonical). Add OrchStateTaskBoard.done[]. Update buildOrchestrationDto() to project done[]+counts.done. Implement journalStore glob for per-agent journal files. Tests 25+. Container REBUILD. Gate for F3."
+          },
+          {
+            "id": "F3-FE",
+            "title": "Done-group source swap (board.done instead of filter)",
+            "owner": "dev-frontend",
+            "status": "TODO",
+            "zone": "apps/frontend/app/routes/",
+            "created_at": "2026-06-06T21:15:00Z",
+            "type": "SPRINT-S",
+            "size": "S",
+            "priority": "high",
+            "depends": [
+              "F2-MCP"
+            ],
+            "note": "Update TaskBoard interface (add done?). Update TaskBoardPanel component: doneTasks ← board.done ?? [] (not filter). No rendering logic changes. Additive swap. Container REBUILD after F2 live-verified."
+          },
+          {
+            "id": "QA",
+            "title": "Live end-to-end verification",
+            "owner": "qa",
+            "status": "TODO",
+            "zone": "docs/agents/ + apps/mcp-server/ + apps/frontend/",
+            "created_at": "2026-06-06T21:30:00Z",
+            "type": "QA",
+            "size": "S",
+            "priority": "high",
+            "depends": [
+              "AF-ORCH-F1A-F4",
+              "AF-ORCH-F1B",
+              "F2-MCP",
+              "F3-FE"
+            ],
+            "note": "4-phase verification: (1) SSOT validation (canonical schema applied, no freeform status). (2) API serving (done[] projected, counts accurate). (3) Dashboard rendering (done group non-empty, accordion shows decisions). (4) Decision-journal flow (per-agent files readable)."
+          }
+        ]
+      },
+      {
         "id": "BCTC-ANALYTICS-LAYER",
         "label": "BCTC analytics/serving layer defects exposed by BEQ-9 scalar recovery (router raw-verify 2026-06-02) — 4 clusters + publish-integrity gap",
         "status": "active",
