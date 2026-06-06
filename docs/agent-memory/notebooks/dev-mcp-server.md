@@ -58,20 +58,19 @@ Zone health: 13/13 idempotency GREEN, 27/27 lock-store GREEN, tsc clean | HEALTH
 
 ---
 
-## c374 · 2026-06-05T23:46Z (ARCH-ORCH-F2) — COMMITTED da37602f
+## c378 · 2026-06-07T00:00Z (WF-2/WORKFLOW-FLUIDITY) — REVIEW
 
-**Task:** ARCH-ORCH-F2 — journalStore.ts + orchestrationHandler.ts decisions extension (ORCH-DASH-DECISION-DRILLDOWN sprint).
+**Task:** WF-2 — ORCH-HEAD-CAS + signal_queue retry-read-compare (WORKFLOW-FLUIDITY sprint).
 
-**Implemented:**
-- `apps/mcp-server/src/infrastructure/journalStore.ts`: StepDto/DecisionsDto types, parseJournalFile (pure, CRLF-safe, CAP-REACHED guard, task-id routing), buildDecisionsDto, getDecisionsForSprints with module-level mtime cache, _clearCacheForTesting export.
-- Extended `orchestrationHandler.ts`: decisions: DecisionsDto added to OrchestrationDto; buildOrchestrationDto now accepts optional decisionsDir; sprint-ID union from sprint_goal.entries (all statuses) + active_sprints; zero-value on no-files (AC-F2-8).
-- Created `1978-journal-store.test.ts` (26 tests, T1–T6 + real fixture + CRLF).
-- Created `1979-orchestration-decisions.test.ts` (13 tests, T1–T3).
-- Extended `1977-orchestration-endpoint.test.ts` (+1 T1h assertion).
+**Implemented (2 files):**
+- `apps/mcp-server/src/infrastructure/orchStateStore.ts`: Added `statSync` import. Refactored `appendSignalQueueRow` with `CAS_MAX_RETRIES=3` mtime-compare-retry loop (pre-rename mtime check detects concurrent clobber; retry re-reads file and re-applies append; exhaustion logs WARN + HIGH-SEVERITY extra WARN, no throw). Added new exported `writeHeadAtomic()` function with same CAS loop for FU-ORCH-HEAD-CAS closure. Both functions have full injectable seam (statMtimeFn, warnFn) for deterministic unit tests.
+- `.claude/skills/signal-dashboard/SKILL.md`: Added concurrent-writers warning block (3 classes: dev-team/:07, cowork-team/15min, system-auditor/4h) + CAS guard mandate.
 
-**Results:** tsc 0 errors. 59 tests green (1977+1978+1979), 0 fail. Live curl: decisions.by_task[ARCH-ORCH-F1] (agent-father-S1) + sprint_bucket[ORCH-DASH-DECISION-DRILLDOWN] (9 entries) populated from real fixture. Container rebuilt.
+**Tests written:** `apps/mcp-server/src/__tests__/WF2-signal-queue-cas.test.ts` — 12 tests (T1-T12): happy path, single-collision retry, exhausted retries drop+warn, CRITICAL/HIGH extra warn, file-absent no-op, summary cap, sequential two-append regression, writeHeadAtomic happy/collision/exhausted/absent.
 
-Zone health: F2 DONE, decisions field live, ARCH-ORCH-F2 → REVIEW | HEALTHY
+**Results:** 18 pass / 0 fail (12 new + 6 existing orchStateStore). tsc: 0 new errors (5 pre-existing TECH-DEBT-LINTING unchanged). WF-2 → REVIEW. FU-ORCH-HEAD-CAS watch item removed.
+
+Zone health: WF-2 CAS guard in production path, 18 orchStateStore tests GREEN, tsc clean | HEALTHY
 
 ---
 
