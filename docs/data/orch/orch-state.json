@@ -1,14 +1,14 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T00:00:00Z",
-  "_updated_by": "architect",
+  "_updated_at": "2026-06-06T23:40:01Z",
+  "_updated_by": "qa",
   "head": {
     "active_task_id": null,
     "status": "idle",
-    "updated_at": "2026-06-07T00:00:00Z",
-    "updated_by": "dev-mcp-server",
-    "next_agent": "qa",
+    "updated_at": "2026-06-06T23:40:09Z",
+    "updated_by": "qa",
+    "next_agent": null,
     "next_action": "FIX-SLA-EXEMPT-NEWS-SBVFX DONE — 52 tests pass, d71e3f2e committed. NEXT: qa verify N-1..N-8 S-1..S-8 pass; W-1..W-10 green.",
     "wip": 0,
     "wip_max": 2
@@ -56,8 +56,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T00:00:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-06T23:40:01Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4104,21 +4104,20 @@
           }
         ],
         "closed_at": "2026-06-06T22:15:46Z"
-      }
-    ],
-    "in_progress": [
+      },
       {
         "task_id": "FIX-SLA-EXEMPT-NEWS-SBVFX",
         "title": "Extend calendar-aware SLA exemption to news + sbv_fx source classes",
         "type": "FIX",
-        "status": "REVIEW",
+        "status": "DONE",
         "size": "S",
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "commit": "d71e3f2e",
-        "note": "DONE-PENDING-QA 2026-06-07. 31 new tests (FIX-SLA-EXEMPT-NEWS-SBVFX.test.ts N-1..N-8 S-1..S-8) GREEN. W-1..W-10 baseline 21 tests GREEN. tsc pre-existing errors only (unrelated files). news quiet hours: UTC 15:00-23:59 exempt (dynamic threshold); sbv_fx weekend/holiday exempt. Trigger: sau-news-sla-critical-202606062231 (289 min overnight)."
+        "note": "QA APPROVED 2026-06-07. 52/52 tests pass (31 new N-1..N-8 S-1..S-8 + 21 baseline W-1..W-10). All 5 ACs PASS. Merged on main at d71e3f2e."
       }
-    ]
+    ],
+    "in_progress": []
   },
   "signal_queue": {
     "_updated_at": "2026-06-06T23:18:31Z",

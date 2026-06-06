@@ -44,3 +44,42 @@ Pattern mirrors FIX-SLA-WEEKEND-AWARE (9e74cf0a): use dynamic off-hours threshol
 - **Graphify:** skipped (no docs impacted)
 
 Zone health: freshnessSlaChecker.ts extended ~120L; 4 interface files updated imports+logic; bun test 52 pass 0 fail, 164 tools intact, scheduler 72 | HEALTHY
+
+## [QA] Review Record
+
+- **Date:** 2026-06-07
+- **Verdict:** APPROVED
+- **QA Agent:** qa
+
+### AC Results
+
+**AC-1 — Baseline W-1..W-10 green:** PASS. 21/21 FIX-SLA-WEEKEND-AWARE tests pass. No regression.
+
+**AC-2 — New quiet-hours tests both directions:** PASS.
+- (a) No false-CRITICAL overnight: N-1 at SAT 22:31Z — news age=289 min, threshold=482 (452+30), status=ok. N-1b boundary 452 ok. N-1c 500>482 breaches.
+- (b) Breach fires during publish window: N-2 SAT 12:00Z — 60>30 breached. S-2 MON 06:00Z — sbv_fx 60>30 breached.
+- 31/31 new tests GREEN.
+
+**AC-3 — Logic review freshnessSlaChecker.ts:** PASS.
+- News boundary: `isVnNewsPublishHours` returns true for utcHour<15, false at 15:00 exactly (N-4d confirmed). `lastExpectedNewsWindowEnd` returns same-day 14:59Z during quiet hours; previous-day during publish hours (N-5b).
+- SBV: `isVnSbvBusinessDay` delegates to `isVnTradingDay` (same Mon–Fri+holiday gate as market hours — correct). `lastExpectedSbvWindowEnd` uses `isVnTradingDay(windowEnd)` guard, scans back ≤7 days.
+- Threshold math: `minutesSince*WindowEnd + OFF_HOURS_GRACE_MINUTES(30)` mirrors 9e74cf0a price/foreign_flow pattern exactly — no copy-paste drift.
+- Sunday/holiday: sbv_fx on Saturday returns last-Friday 10:00Z as expected (S-5).
+
+**AC-4 — Off-hours flag consistency (DRY):** PASS.
+- All 4 surfaces (freshnessSlaChecker, slaStatusTools, vpsProxyTools, vpsProxyHealthHandler) import helper functions from domain (`isVnNewsPublishHours`, `isVnSbvBusinessDay`, `minutesSinceLastNewsWindowEnd`, `minutesSinceLastSbvWindowEnd`).
+- Local `NEWS_QUIET_HOURS_SERVICES`/`SBV_BUSINESS_DAY_SERVICES` sets in vpsProxyTools and vpsProxyHealthHandler use VPS service name strings ("news", "sbv") — intentionally separate from domain `NEWS_QUIET_HOURS_SOURCES`/`SBV_BUSINESS_DAY_ONLY_SOURCES` which use `SignalType` enum values. Not a divergence — correct mapping of different namespaces.
+- slaStatusTools off-hours label: `prices/ff: Mon-Fri 02:00-08:59 UTC; news: 00:00-14:59 UTC; sbv_fx: VN business days` — accurate.
+
+**AC-5 — Zone containment:** PASS.
+- d71e3f2e: 5 files all in `apps/mcp-server/` (1 domain, 3 interface, 1 test).
+- 80ffce66: `docs/handoffs/FIX-SLA-EXEMPT-NEWS-SBVFX.md`, `docs/data/orch/orch-state.json`.
+- 6a5dde6c: `docs/agent-memory/notebooks/dev-mcp-server.md`.
+- No other zones touched.
+
+### Scans
+- **bun test:** 52 pass / 0 fail
+- **tsc:** 5 pre-existing errors (1980-f2-canon-schema.test.ts, tasksMdJanitorJob.ts) — NOT in task diff; no new errors
+- **DDD:** PASS — domain service zero imports from infrastructure/application
+- **Security:** PASS — no process.env, no hardcoded secrets
+- **mock-guard:** PASS (exit 0)

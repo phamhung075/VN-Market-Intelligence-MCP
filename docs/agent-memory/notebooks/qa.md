@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-202 · 2026-06-07T02:05Z · FIX-SLA-EXEMPT-NEWS-SBVFX QA gate — APPROVED
+
+Sprint: WORKFLOW-FLUIDITY | Task: FIX-SLA-EXEMPT-NEWS-SBVFX | Verdict: APPROVED
+
+52/52 tests GREEN (31 new N-1..N-8 S-1..S-8 + 21 baseline W-1..W-10). Trigger repro N-1: news 289 min at SAT 22:31Z → threshold 452+30=482 → ok (no false-CRITICAL). Both-directions verified: quiet-hours exempts (N-1/S-1), publish-window breaches (N-2/S-2). tsc 5 pre-existing errors (unrelated files) — NOT in diff. DDD PASS: freshnessSlaChecker.ts zero infra imports. Security PASS: no process.env, no secrets. mock-guard exit 0. Zone containment: d71e3f2e touches only apps/mcp-server/ (5 files). Logic review: news boundary exactly UTC 15:00 (utcHour<15); sbv uses isVnTradingDay gate (consistent with price/foreign_flow pattern); threshold math = minutesSince*WindowEnd+30 mirrors 9e74cf0a. DRY: 4 surfaces all import from domain; local service-name sets in vpsProxyTools/vpsProxyHealthHandler use VPS string names vs domain SignalType enum — correct namespace separation, not divergence. Board: REVIEW→DONE. head: idle.
+
 ## cycle-201 · 2026-06-07T01:30Z · WORKFLOW-FLUIDITY WF-2 QA gate — APPROVED
 
 Sprint: WORKFLOW-FLUIDITY | Task: WF-2 | Verdict: APPROVED
