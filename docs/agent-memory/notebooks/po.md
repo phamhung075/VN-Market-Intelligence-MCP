@@ -1,19 +1,17 @@
 # PO Notebook
 
-## c · 2026-06-06T22:24Z — DEV-TEAM TRIAGE tick 221830Z: WF-2/WF-3 dispatch + maintenance batch (weekend)
+## c · 2026-06-06T23:22Z — DEV-TEAM TRIAGE tick 2317Z: WF-3 sign-off + maintenance batch
 
-**Signals:** context_bloat_breach system-auditor.md 208L → RESOLVED-BEFORE-TRIAGE (raw wc -l = 156L, no prune needed); MEMORY.md router index 26,774B > 24.4KB cap → folded into one claude-manager-helper CLEAN run.
+**Signal drained:** sau-news-sla-critical-202606062231 (news 289-min vs 30-min SLA, CRITICAL). NOT an ingest failure — 9e74cf0a calendar-aware exemption covered only price/foreign_flow; news/sbv_fx left on flat SLA while VN publishers are quiet overnight. Durable fix = extend exemption class → FIX-SLA-EXEMPT-NEWS-SBVFX.
 
-**Channel audit:** MARKET/WORK/BUG return same 4 msgs (tool aggregates). (1) c045 4× staleness CRITICAL 14:38Z = pre-dates FIX-SLA-WEEKEND-AWARE deploy 16:20Z (721a457b, live-proven Sat) → resolved-before-triage; sbv_fx measurement row 89cd1d85 exists. (2) BCTC-1345b ×2 CTG conf=0.00 = designed guard, raw-verified: get_bctc_full(CTG) "Chưa có dữ liệu", report 49c11ce2 real 62p PDF + text COMPLETE + refine PENDING; c028 deferred CTG to c030 (dcd41919). WATCH not task. CLEAN otherwise.
+**WF-3 SIGNED OFF (REVIEW→DONE):** Accepted architect Option III ruling (2026-06-07-wf3-dev-gateway-binding-ruling.md, 2d69de7d). INV-GATEWAY-1: task_claim/task_release/commit-mutex = outer dispatcher only; inner dev-*/qa/ba/pm/architect use file-based .head atomic writes. Created WF-3-IMPL (agent-father, sub-tasks A+B); FU-MCP-GATEWAY-DEV-FRONTEND folded in (same root cause). Sub-task C already shipped in WF-2. Sub-task D Phase-4 gated (SPIKE-C44-PARALLEL-PROOF). WORKFLOW-FLUIDITY: WF-1 DONE, WF-2 DONE (live-verified), WF-3 DONE — sprint signoff after WF-3-IMPL lands.
 
-**TNB c89:** ACKed 22:24:30Z, tasks created: none (6 priorities all cowork/market watch).
+**Board hygiene:** removed stale FU-ORCH-HEAD-CAS from .narrative.backlogs (closed by WF-2). jq -f file + sentinel checks + atomic mv (23:22:24Z).
 
-**Board hygiene shipped this tick:** ARCH-ORCH-DASH-DECISION-DRILLDOWN → CANCELLED (superseded, sprint closed e5883e5c); BA-ORCH-TASK-CANON REVIEW → DONE (sprint closed 513188a8); + 2 carry-forward rows FIX-FETCH-VERYSTALE-LABEL (low, apps/frontend/) + TECH-DEBT-LINTING (low, apps/mcp-server/). jq -f file + sentinel + sibling counts (backlog 34, done 79, sprints 22) + atomic mv.
-
-**Disposition: BATCH(3)** — WF-2 FIX dev-mcp-server (head-CAS + signal_queue retry, BA spec DONE, deadlock-risk = top priority); WF-3 SPIKE architect (F-8 gateway binding ruling — FU-MCP-GATEWAY-DEV-FRONTEND folded in as evidence, same class, no separate agent-father run); CLEAN route_to=claude-manager-helper (MEMORY.md compress + verify-only system-auditor.md). WIP_max=2 respected: WF-2+WF-3 fill dev slots, CLEAN is maintenance lane.
+**Disposition: BATCH(5)** — (1) FIX-SLA-EXEMPT-NEWS-SBVFX dev-mcp-server (CRITICAL-signal root fix, top priority); (2) WF-3-IMPL agent-father (closes WORKFLOW-FLUIDITY); (3) FIX-AUDITOR-FLOW-TIER-EARLYEXIT agent-father (AUDIT_TIER ignored + wrong no-commits-24h early-exit, 2 bugs 1 zone); (4) FIX-PROJECT-STATS-GENERATED dev-mcp-server (toolCount 160→162, cronJobCount 69→77; make GENERATED from live source per no-hardcode-stats); (5) CLEAN-DEAD-SOURCE-IDS dev-mcp-server (6 dead ids: news, cafef1, vnexpress1, shared-url, vnbusiness, vietnambiz). Dedupe verified: FIX-FETCH-VERYSTALE-LABEL / TECH-DEBT-LINTING / Bun-OOM not re-created. WIP_max=2: dispatcher sequences.
 
 **Carry-over (next PO cycle):**
-- WF-2/WF-3 land → live-verify head-CAS raw (interleaved-append zero-loss proof) before WORKFLOW-FLUIDITY signoff; release umbrella lock task:WORKFLOW-FLUIDITY only at signoff.
-- CTG WATCH: c030 cowork cycle must refine 49c11ce2; if deferred again or composite=0.00 on 62p text → architect escalation (recurring rule, 20+ cycles).
-- FIX-SLA-WEEKEND-AWARE Sunday proof window (no weekend staleness CRITICAL expected 2026-06-07).
-- Still open: FIX-ORCH-DONE-GRID-COLS live-verify post-rebuild; HEADROOM-COMPRESS-P1 pickup after WORKFLOW-FLUIDITY; playwright-row impl-pending; WF-DEFER-THROUGHPUT + SPIKE-C44-PARALLEL-PROOF deferred rows.
+- WF-3-IMPL lands → WORKFLOW-FLUIDITY sprint signoff + release umbrella lock task:WORKFLOW-FLUIDITY.
+- FIX-SLA-WEEKEND-AWARE Sunday proof window (no weekend price/foreign_flow CRITICAL expected 2026-06-07); news/sbv_fx quiet-hours proof after FIX-SLA-EXEMPT-NEWS-SBVFX.
+- CTG WATCH: c030 cowork cycle must refine 49c11ce2; deferred again or composite=0.00 → architect escalation.
+- Still open: FIX-ORCH-DONE-GRID-COLS live-verify post-rebuild; HEADROOM-COMPRESS-P1 pickup after WORKFLOW-FLUIDITY; playwright-row impl-pending; WF-DEFER-THROUGHPUT + SPIKE-C44-PARALLEL-PROOF deferred.

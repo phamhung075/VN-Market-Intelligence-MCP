@@ -49,7 +49,7 @@
       "ENV-ISOLATION: P2 gate RELEASED, unscheduled",
       "CHEF-ATTN: READY"
     ],
-    "backlogs": "FU-ORCH-HEAD-CAS · FU-SIGNAL-DASHBOARD-CAP · FLEET-HOST-SAFETY (AUD-ND-1-LIVE-PROVEN-RED/DRAIN-INJECTION-SAFE/A-01-EXPECTED-SET/AUDITOR-SLA-CADENCE) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures"
+    "backlogs": "FU-SIGNAL-DASHBOARD-CAP · FLEET-HOST-SAFETY (AUD-ND-1-LIVE-PROVEN-RED/DRAIN-INJECTION-SAFE/A-01-EXPECTED-SET/AUDITOR-SLA-CADENCE) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures"
   },
   "session_handoff_status": {
     "cleared": "2026-05-31T00:33Z — prior parallel-session zone-ownership directive obsolete. Dispatch apps/mcp-server + apps/pdf-extractor normally, WIP<=2 + zone-isolation between concurrent tasks.",
@@ -2255,14 +2255,37 @@
             "title": "dev-team MCP gateway binding ruling (F-8): single-claim simplification vs outer-claim-heartbeat; give dev-* agents a working call_tool path (task_claim/commit-mutex) or codify session-scoped constraint as enforced invariant",
             "owner": "architect",
             "type": "SPIKE",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "docs/protocols/ + .claude/skills/task-lock/",
             "created_at": "2026-06-06T20:09:07Z",
             "priority": "medium",
             "size": "S",
             "sprint": "WORKFLOW-FLUIDITY",
             "depends": [],
-            "note": "REVIEW 2026-06-07: Ruling issued — Option III (outer-claim-heartbeat as enforced invariant, INV-GATEWAY-1). Brief: docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md. WF-2 blockers resolved (orchStateStore.ts L221, Option A mtime retry). Downstream: WF-3-IMPL (agent-father flow edits + dev-mcp-server orchStateStore fix)."
+            "note": "DONE 2026-06-07: PO ACCEPTED Option III ruling (docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md, 2d69de7d). INV-GATEWAY-1 codified: all task_claim/task_release/commit-mutex MCP calls = outer dispatcher session only; inner dev-*/qa/ba/pm/architect coordinate via file-based .head atomic writes (WF-1). Also resolves parked FU-MCP-GATEWAY-DEV-FRONTEND (same root cause) — folded into WF-3-IMPL. Sub-task D (gateway binding in agent defs) stays Phase-4 gated.",
+            "completed_at": "2026-06-06T23:22:24Z"
+          },
+          {
+            "id": "WF-3-IMPL",
+            "title": "Implement WF-3 ruling (INV-GATEWAY-1): remove commit-mutex skill references from dev-*/qa specialist flow docs + add INV-GATEWAY-1 comment; update fail-loud-protocol.md step 0 annotation to point at the 2026-06-07 ruling; document invariant. Folds in FU-MCP-GATEWAY-DEV-FRONTEND (same root cause). Sub-task D (add gateway tool to dev-* agent defs + spawn-context verification) stays Phase-4 gated under SPIKE-C44-PARALLEL-PROOF — OUT of this task.",
+            "owner": "agent-father",
+            "type": "FIX",
+            "status": "TODO",
+            "zone": "docs/agents/",
+            "created_at": "2026-06-06T23:22:24Z",
+            "priority": "medium",
+            "size": "S",
+            "sprint": "WORKFLOW-FLUIDITY",
+            "depends": [],
+            "files": [
+              "docs/protocols/fail-loud-protocol.md",
+              "docs/agents/dev-frontend/flow/main.md",
+              "docs/agents/dev-mcp-server/flow/main.md",
+              "docs/agents/qa/flow/main.md",
+              "docs/agents/developer/flow/main.md",
+              "docs/protocols/dev-star-gateway-binding.md"
+            ],
+            "note": "Source: WF-3 ruling §5+§7 sub-tasks A+B. Sub-task C (orchStateStore mtime retry) already shipped in WF-2. AC: zero commit-mutex/task_claim skill calls remain inside dev-*/qa specialist flows; INV-GATEWAY-1 stated verbatim in fail-loud-protocol.md; FU-MCP-GATEWAY-DEV-FRONTEND closed by reference."
           }
         ]
       }

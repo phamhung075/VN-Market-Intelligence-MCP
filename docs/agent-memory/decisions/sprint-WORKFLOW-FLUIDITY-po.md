@@ -35,3 +35,22 @@
 - Notebook prunes: ONE CLEAN batch item vs none
 **why-decision:** Layer probes proved the news corpus is FRESH (cafef 2026-06-06T17:39Z via mcp-server /mcp/api/news/headlines source=all) — the page is the defect, not the pipeline: dashboard.fetch.tsx queries only reuters/bloomberg, two sources the crawl corpus does not contain; the lone "Bloomberg (1)" 18/5 headline is a URL-substring LIKE '%bloomberg%' false positive on a vietnambiz.vn slug, served by newsHeadlinesHandler.ts (rag_analyses) through api-gateway not-deployed-rerouter. Macro "0.0s / —" = macro-indicators :5004 emits totalLatencyMs:0 and NO per-source latencyMs key — unmeasured, frontend renders honestly. Two zones (apps/frontend + apps/macro-indicators) + page-content redesign scope → SPRINT-S zone:multi (architect splits), not a point-FIX that the redesign would immediately rewrite. Headroom deferred not rejected: integration design is sound, P3 vs active WF-2/WF-3 + new HIGH user sprint; conditions encoded in backlog row so deferral is durable. Notebook CLEAN dropped: both files already under cap — creating a task would be busywork on a stale signal.
 **why-change:** dispatcher suggested ONE CLEAN batch item for the two notebooks; dropped after raw verification showed both already pruned (verify-raw-not-badges applied to signals too).
+
+### STEP po-S4 · po · 2026-06-06T23:22:24Z
+**task-id:** WF-3
+**what-done:** ACCEPTED architect Option III ruling (brief 2026-06-07-wf3-dev-gateway-binding-ruling.md, 2d69de7d) — WF-3 REVIEW→DONE; created WF-3-IMPL (agent-father, sub-tasks A+B, INV-GATEWAY-1 doc) folding in FU-MCP-GATEWAY-DEV-FRONTEND; removed stale FU-ORCH-HEAD-CAS from .narrative.backlogs (closed by WF-2).
+**what-considered:**
+- Accept Option III vs push Option A (gateway binding in all dev-* agent defs) now
+- Keep FU-MCP-GATEWAY-DEV-FRONTEND separate vs fold into WF-3-IMPL
+**why-decision:** Ruling is evidence-grounded (2 sprints of observed runtime behavior + mechanical tools:-frontmatter root cause); Option A needs multi-agent spawn-context verification = Phase-4 pre-condition, not sprint-size; outer-claim pattern already IS the observed working model — codifying beats re-engineering. Same root cause ⇒ one impl task, not two backlog rows.
+**why-change:** no change from dispatcher-proposed plan.
+
+### STEP po-S5 · po · 2026-06-06T23:22:24Z
+**task-id:** TRIAGE-20260606T2317Z
+**what-done:** Triaged 1 drained CRITICAL signal + 4 candidate items into BATCH of 4 new entries (FIX-SLA-EXEMPT-NEWS-SBVFX, FIX-AUDITOR-FLOW-TIER-EARLYEXIT, FIX-PROJECT-STATS-GENERATED, CLEAN-DEAD-SOURCE-IDS) + WF-3-IMPL.
+**what-considered:**
+- News 289-min staleness: ingest investigation vs SLA-exemption extension (commit 9e74cf0a covered only price/foreign_flow)
+- project-stats: hand-edit the 2 numbers vs make file generated from live source
+- Two auditor flow bugs as 2 tasks vs 1 (same flow-doc zone, same owner)
+**why-decision:** git show 9e74cf0a confirms news/sbv_fx kept flat SLAs while publishers are quiet overnight VN — expected behavior misfiring as CRITICAL, so durable fix = extend the existing calendar-aware exemption class (root-cause, not symptom). project-stats generated-from-live per no-hardcode-stats policy — hand-editing recreates drift next week. Auditor bugs share docs/agents/system-auditor zone + one dispatch ⇒ one task. Dedupe verified: FIX-FETCH-VERYSTALE-LABEL/TECH-DEBT-LINTING/Bun-OOM already on board, not re-created.
+**why-change:** no change from dispatcher analysis.
