@@ -5,11 +5,11 @@
   "_updated_by": "po",
   "head": {
     "active_task_id": null,
-    "next_action": "TIER-2-AUDIT c045: 4 VPS-layer data staleness CRITICAL anomalies detected (prices/foreign_flow/bctc/sbv_fx). All routed to .signal_queue NEW. Verify vps-proxy (off-host service not in host_runtime_set) — container health may be down or network link broken. Router NEXT: diagnose VPS reachability + escalate if unrecoverable.",
+    "next_action": "NEXT-TICK: (1) PO triage 2 NEW rows: rtr-bctc-playwright-thread (P2, dev-vps-crawls — curl-based SSC replacement aligns with no-Chromium VPS policy) + rtr-sla-weekend-aware (P3, dev-mcp-server — calendar-aware SLA, kills weekend false-CRITICAL class). (2) WATCH-2 refine Option-C first live proof: slot-2 (240min cadence, last 14:04:30Z) should refire ~18:04Z TODAY else slot-1 2026-06-07 09:00Z — verify bun:sqlite readonly /app/data/market.db: DGC 0c6f0535 +<=7 bctc_refined_units rows, PENDING->PARTIAL (NOT DONE), ACB fea19bae 27 rows INTACT; pre-Cowork-refresh failure = EXPECTED (operator still owes refresh prompt paste). (3) FU-COWORK-OWNER-AGENT-ADOPT NARROWED to P3-cleanup: heartbeat recipe b787cd69 working all ticks since 14:18Z; close after one cowork cycle survives a server restart. (4) Sunday 03:00-05:00Z zone-scans tomorrow -> Monday triage. (5) Monday ~02:15Z price-push resume check DE-RISKED: ops-vps-fetch proved both services healthy-sleeping by design (dow/hour gate), resume is automatic — check is now confirm-only. TICK 152046Z: VPS staleness incident CLOSED — 3 of 4 auditor CRITICALs were false (weekend-gate x2, between-push blip x1; PO live-probe falsified sbv, router raw-confirmed), bctc root-caused pre-existing Playwright pthread exhaustion (restarted, transport proven, 10/10 SKIP = empty queue not fetch failure); socat band-aid retired RESOLVED-SUPERSEDED c081cad4 (plist never installed — router belief corrected; api-gateway unless-stopped = reboot-safe, no FU needed); auditor c047 ACCEPTED 7/7 streak. LESSON: outage-window hypothesis was wrong for ALL 4 legs — SSH-level recon beats correlation; SLA monitor needs market-calendar awareness before its CRITICALs are trustworthy on weekends. Carries: threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); operator owes /cron-cowork-team refresh; auditor route_to/type row-schema nits occ#1; c047 prune-before-cap occ#1 (pruned c044 at 143L vs 200L cap — oldest-first so benign, watch for carry-referenced section loss).",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T14:37:21Z",
-    "updated_by": "system-auditor",
+    "updated_at": "2026-06-06T15:36:20Z",
+    "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
   },
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T14:33:23Z",
+    "_updated_at": "2026-06-06T15:36:20Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,20 @@
     "archive": [],
     "done": [
       {
+        "task_id": "UNBLOCK-VPS-FETCH-RESUME",
+        "status": "DONE",
+        "commit": "45641b7a",
+        "done_at": "2026-06-06T15:36:20Z",
+        "deploy_note": "SSH recon + scoped systemctl restart vn-bctc-fetch on VPS only (no host docker); verdict: 3 of 4 stale flags false (weekend gate x2, between-push blip x1), bctc root-caused to pre-existing Playwright pthread exhaustion -> spun off rtr-bctc-playwright-thread P2 + rtr-sla-weekend-aware P3"
+      },
+      {
+        "task_id": "MOOT-CHECK-VPS-SOCAT-PERSIST",
+        "status": "DONE",
+        "commit": "c081cad4",
+        "done_at": "2026-06-06T15:36:20Z",
+        "deploy_note": "socat band-aid RESOLVED-SUPERSEDED: pgrep empty, plist never installed on host (repo reference copy only — router belief corrected), :4000 docker-owned (api-gateway publish), /api 200 local+public, restart unless-stopped = reboot-safe; FU-APIGW-RESTART-POLICY NOT needed"
+      },
+      {
         "task_id": "REFINE-OPTC-DESIGN",
         "status": "DONE",
         "commit": "1b2f00fd",
@@ -3764,8 +3778,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T14:41:23Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-06-06T15:36:20Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "rtr-refine-finalize-test-fail-202606061045",
@@ -3886,10 +3900,13 @@
         "type": "system-issue",
         "summary": "CRITICAL: price data 37m stale vs 10m SLA — VPS proxy down",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": null,
         "route_to": "po",
-        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue."
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
+        "resolved_at": "2026-06-06T15:36:20Z",
+        "resolved_by": "dev-team",
+        "disposition": "WEEKEND FALSE-POSITIVE (ops-vps-fetch SSH recon, 45641b7a). vn-price-fetch systemd active, PID sleeping state=S; last_push 2026-06-05 08:59:30Z = FRIDAY SESSION CLOSE (clean PUSH 114 items ok:true) — loop is dow<=5 && hour 02-08Z gated, Saturday silent BY DESIGN. Router's outage hypothesis falsified: host 502 window had zero impact. Resumes Monday 2026-06-08 02:00Z (existing Monday ~02:15Z carry covers the resume check). Durable fix = new row rtr-sla-weekend-aware (SLA monitor lacks market-hours awareness — this false-CRITICAL class will recur every weekend until fixed)."
       },
       {
         "id": "sau-2026-06-06T143721Z-B01-flow",
@@ -3899,10 +3916,13 @@
         "type": "system-issue",
         "summary": "CRITICAL: foreign_flow 23.6h stale vs 10m SLA — VPS idle",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": null,
         "route_to": "po",
-        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue."
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
+        "resolved_at": "2026-06-06T15:36:20Z",
+        "resolved_by": "dev-team",
+        "disposition": "WEEKEND FALSE-POSITIVE (ops-vps-fetch SSH recon, 45641b7a). vn-foreign-flow systemd active, PID sleeping; last clean push 08:59:57Z Jun 5 (HTTP 200, upserted:103, 0 validation errors) = Friday close; identical dow/hour off-hours gate to prices. 1462m SLA breach = monitor has no weekend awareness. Resumes Monday 02:00Z. Same durable fix row rtr-sla-weekend-aware."
       },
       {
         "id": "sau-2026-06-06T143721Z-B06-bctc",
@@ -3912,10 +3932,13 @@
         "type": "system-issue",
         "summary": "CRITICAL: bctc 21.3h stale vs 360m SLA — VPS fetch queue stuck",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": null,
         "route_to": "po",
-        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue."
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
+        "resolved_at": "2026-06-06T15:36:20Z",
+        "resolved_by": "dev-team",
+        "disposition": "ROOT-CAUSED, service recovered, residual defect spun off (ops-vps-fetch, 45641b7a). vn-bctc-fetch was cycling all-SKIP since Jun 1 (last real PDF push CTG 2026-06-01T17:16Z; host-recorded last_push Jun 5 14:48Z). Real defect: Chromium pthread_create EAGAIN kills the HOSE-SSC Playwright discovery path on every attempt — PRE-EXISTING (visible Jun 5 07:41Z run), NOT caused by Jun 6 host outage; HNX/UPCOM curl paths work but find no Q1/2026 PDFs for the 10-item queue (ACV BDI D2D DAG DLC GVR HCM HPG HSG HVN). systemctl restart 15:30:33Z; fresh full cycle 15:30-15:31Z completed, 10/10 SKIP = transport proven, queue genuinely empty. last_push unchanged is EXPECTED (nothing to push). Residual = new row rtr-bctc-playwright-thread (P2)."
       },
       {
         "id": "sau-2026-06-06T143721Z-B12-sbv",
@@ -3925,10 +3948,35 @@
         "type": "system-issue",
         "summary": "CRITICAL: sbv_fx 37m stale vs 30m SLA — rate-limit or fetch timeout",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": null,
         "route_to": "po",
-        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue."
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
+        "resolved_at": "2026-06-06T15:36:20Z",
+        "resolved_by": "dev-team",
+        "disposition": "FALSE-FLAG self-resolved, no task. c045 caught sbv in a between-push blip (37m vs 30m SLA); PO live probe 15:23Z + router get_vps_proxy_health both show healthy: last_push 15:28:42Z, 47 pushes/24h, 0 errors. No action taken on VPS (read-only confirmed by ops-vps-fetch)."
+      },
+      {
+        "id": "rtr-bctc-playwright-thread-202606061545",
+        "ts": "2026-06-06T15:36:20Z",
+        "severity": "MEDIUM",
+        "source": "router",
+        "route_to": "po",
+        "type": "system_issue",
+        "status": "NEW",
+        "summary": "VPS vn-bctc-fetch HOSE-SSC discovery path dead: Chromium GPU zygote pthread_create: Resource temporarily unavailable (11) on every Playwright attempt (pre-existing since <=Jun 5). 10-item Q1/2026 queue will SKIP every 6h cycle until fixed or PDFs appear on HNX/UPCOM curl paths. Root-fix options per ops-vps-fetch: (a) raise systemd LimitNPROC for the unit, (b) replace Playwright SSC path with curl-based HTTP scraper (NOTE: VPS policy already says no-Chromium for dev-vps-crawls — option b aligns with policy and is likely the definitif fix). Triage: dispatch dev-vps-crawls (impl) possibly preceded by ops-vps-fetch recon of SSC endpoint recipe. Evidence: ops-vps-fetch notebook c006 (45641b7a).",
+        "payload_ref": null
+      },
+      {
+        "id": "rtr-sla-weekend-aware-202606061545",
+        "ts": "2026-06-06T15:36:20Z",
+        "severity": "LOW",
+        "source": "router",
+        "route_to": "po",
+        "type": "system_issue",
+        "status": "NEW",
+        "summary": "SLA monitor + vps-proxy-health have no market-hours/weekend awareness: prices + foreign_flow are dow/hour-gated (Mon-Fri 02:00-08:59Z) but stale thresholds run 24/7 -> guaranteed false-CRITICAL every weekend (this tick burned a full auditor escalation + PO triage + SSH recon on 2 healthy services; foreign_flow showed 1462m breach while in designed sleep). Fix: exempt market-hours-gated sources from staleness SLA outside their active window (calendar-aware expected-push schedule per source). Also foreign_flow is embedded in price push and not separately tracked by /api/vps-proxy-health — consider explicit tracking. Triage: dev-mcp-server zone (SLA logic lives in mcp-server). P3 but cheap and kills a recurring false-alarm class.",
+        "payload_ref": null
       }
     ],
     "archive": [
