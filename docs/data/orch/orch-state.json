@@ -3637,7 +3637,30 @@
   "signal_queue": {
     "_updated_at": "2026-06-06T08:32:17Z",
     "_updated_by": "dev-team",
-    "rows": [],
+    "rows": [
+      {
+        "id": "cwk-refine-model-pin-202606060905",
+        "ts": "2026-06-06T09:05:30Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "refine_bctc_md agent .md pins nonexistent model claude-haiku-3-5 — first-ever slot fire (refine-bctc-slot-1, 09:00Z) failed at launch with: model may not exist or no access (0 tokens, 0 tool uses). Dispatcher respawned with explicit model=haiku override (maps to claude-haiku-4-5) — retry running. Durable fix for agent-father: update model frontmatter in the refine_bctc_md agent definition to a valid Haiku id (haiku / claude-haiku-4-5-20251001). Until fixed, every cron fire of this slot needs the dispatcher override.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "cwk-refine-schema-mismatch-202606060906",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "severity": "HIGH",
+        "status": "NEW",
+        "created_at": "2026-06-06T09:06:34Z",
+        "summary": "refine-bctc-slot-1 BLOCKED every fire: get_bctc_pending_refine returns only {id, filename, page_count, refine_status} but refine_bctc_md flow contract (docs/agents/refine_bctc_md/flow/main.md L39-87) requires text_status, confirm_status, windows[] for Phase 0 gate + Phase 2 fan-out. First fire 2026-06-06T09:04Z: agent claimed bctc-refine:0c6f0535 (DGC Q4-2025, 46p), hit Phase 0 fail, released claim, escalated BUG channel msg 2690, exited cleanly, zero artifact. Fix options: (1) dev-mcp-server extends get_bctc_pending_refine to full schema, or (2) agent-father refactors flow to fetch fields via separate calls. Related: cwk-refine-model-pin-202606060905 (same slot, frontmatter model pin).",
+        "payload_ref": null
+      }
+    ],
     "archive": [
       {
         "id": "P2-F-DONE",
