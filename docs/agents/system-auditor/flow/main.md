@@ -1,4 +1,4 @@
-<!-- size-justification: 558L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) replaces prose-only BCTC staleness rule with machine-evaluated SLA resolver reading system-map.json sla blocks. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated-only commit-mutex refs to executed protocol steps in D-IMPROVE and notebook-commit. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into the settled single-write. NB-ORDERING-FIX (2026-06-06) makes NEWEST-FIRST section ordering explicit in settled-write steps c/e/f. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
+<!-- size-justification: ~500L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -69,73 +69,10 @@ Read `AUDIT_TIER` (default 3 if not set).
 
 ## Tier-1 — Runtime Ping
 
-**Wall time target: < 120s. Scope: container liveness + health endpoint + restart count + memory.**
+→ **lazy-load:** `docs/agents/system-auditor/flow/tier1-probe.md` (full probe protocol: probe.sh execution, RAW-PROBE fence, A-01..A-32 verdict rules, emit schema).
 
-### Container Status (A-01 through A-11) — SSOT-gated severity
-
-**INTENDED RUNTIME SET (SSOT):** read `project.infrastructure.docker.host_runtime_set.services[]` from system-map.json. Only these services are checked for UP/DOWN severity. Services in `not_deployed_by_design[]` are NOT checked for container liveness — they are skipped with an INFO log entry: `"[A-01] <service_id>: not-deployed-by-design — INFO/grey"`.
-
-For each service in `host_runtime_set.services[]`:
-```bash
-docker ps --filter name=<service-id> --format "{{.Status}}"
-```
-- Contains `Up` → PASS
-- Missing / Exited → FAIL: severity per runtime role:
-  - `mcp-server`: CRITICAL (core data pipeline, all agents depend on it)
-  - `api-gateway`: WARN (socat-bridged to mcp-server; loss = VPS fetch callbacks 502)
-  - `frontend`: INFO (UI only; no data impact)
-  - `macro-indicators`: WARN (used by CHEF/news-scout TNB Layer 2/3)
-  - `mcp-gateway`: WARN (claude.ai cowork agents use this; loss = cowork outage)
-
-For each service in `not_deployed_by_design[]`:
-- **Do NOT run `docker ps`**. Log `"[A-01] <service_id>: not-deployed-by-design — SKIP (INFO/grey)"` and continue.
-- **Do NOT emit any signal, DASHBOARD row, or BUG alert** for not-deployed services.
-- Do NOT raise severity based on the full compose service count.
-
-### Health Endpoints (A-12 through A-20) — SSOT-gated
-
-For each service in `host_runtime_set.services[]` that has an `external_port` (look up port from `project.microservices[]` by id):
-```bash
-curl -sf --max-time 3 http://localhost:<external_port>/health
-```
-- HTTP 200 → PASS; else → FAIL at severity matching the container-status severity table above.
-- Services in `not_deployed_by_design[]` → skip health endpoint check entirely. No curl, no alert.
-
-### Restart Count (A-21)
-```bash
-docker inspect mcp-server --format "{{.RestartCount}}"
-```
-- ≤ 2 → PASS; > 2 → WARN
-
-### Memory Pressure (A-30)
-```bash
-docker stats --no-stream mcp-server --format "{{.MemPerc}}"
-```
-- < 85% → PASS; ≥ 85% → WARN
-
-### MCP System Status
-```
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_system_status", arguments: {}})
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_cron_health", arguments: {}})
-```
-- Any service reported DOWN by MCP → cross-reference with docker ps result
-
-### Emit per failure
-```json
-{
-  "type": "microservice_degraded",
-  "ts": "<UTC ISO-8601>",
-  "service_id": "<id>",
-  "zone": "<zone from system-map>",
-  "zone_owner": "<specialist from zones>",
-  "check_id": "<A-xx>",
-  "detail": "<what failed>",
-  "severity": "CRITICAL|WARN|INFO",
-  "channel": "bug",
-  "dedup_key": "microservice_degraded:<service_id>:<check_id>"
-}
-```
-Routing: severity ≥ WARN AND dedup_key not seen last 7d → `send_telegram(channel="bug")`. Always append row to DASHBOARD.md for WARN/CRITICAL.
+**Evidence-collection mandate (FIX-AUDITOR-EVIDENCE-INTEGRITY):**
+Run `bash docs/agents/system-auditor/probe.sh` ONCE. Paste verbatim stdout into the notebook under `### RAW-PROBE:` fenced block. ALL container/health verdict lines MUST reference this block. Anti-carry: NEVER copy container/health lines from a previous notebook section — they must come from the current-cycle RAW-PROBE block only.
 
 ---
 
@@ -490,6 +427,7 @@ severity ≥ warn → `send_telegram(channel="bug")` AND append row to `docs/dat
 ### RAW-CITE GATE (rtr-confab2-202606060515 — occ#2; c019 invented config value; c026 cited "system-map lists 4001" for mcp-gateway port, value absent, live port 4040)
 Any config/file value cited in a finding or return (port, path, threshold, mapping) MUST be backed by a `grep -n` line captured THIS cycle (file + line number + matched text). No raw line captured → DROP the claim, do NOT report it. NEVER cite `orch-state.json .head.next_action` text as evidence — it is router-authored narrative, not a config value.
 - **Return summary extension (rtr-confab3-202606060720 — occ#3; c030 fabricated file/line cite in return channel):** The gate above applies equally to the final message returned to the router. A file/line pointer (e.g. "flow line 57") may appear in a return summary ONLY if that exact cite was already written verbatim to the notebook THIS cycle. If no such notebook line exists, OMIT the pointer — the substantive claim (e.g. "frontend classified INFO, no data impact") may remain, but without the fabricated reference.
+- **Sandbox-error quarantine (FIX-AUDITOR-EVIDENCE-INTEGRITY — occ#4; c040 conflated `/private/tmp/claude-501 full` with host ENOSPC):** Any bash exit whose stderr/stdout contains text matching `/private/tmp/claude-501|tasks is full|ENOSPC.*claude/` MUST be classified as `TOOL-UNAVAILABLE / NOT-RUN` for that check — log `"[TOOL-UNAVAILABLE] <check_id>: bash sandbox error — skip, NOT an infra signal"` and continue. NEVER escalate a sandbox-internal error as a host infra finding. Infra criticals require probe.sh `--- disk df -h / ---` raw output as evidence.
 
 ### Notebook timestamp guard
 - Before writing `docs/agent-memory/notebooks/system-auditor.md`, ALWAYS get current UTC via:
