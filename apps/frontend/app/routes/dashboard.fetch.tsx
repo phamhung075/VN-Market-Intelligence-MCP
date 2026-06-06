@@ -1,19 +1,18 @@
 /**
  * /dashboard/fetch — Fetch operations dashboard.
- * Shows: last fetched Reuters headlines, Bloomberg headlines, macro snapshot status.
- * Data sources: GET /news/reuters/headlines, /news/bloomberg/headlines, /macro/external.
+ * Shows: per-source freshness (13 VN sources), VPS proxy health, BCTC pipeline,
+ * macro snapshot status. All source names come from the API response.
+ * Sprint: FETCH-OPS-PAGE-TRUTH (F-3)
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import {
-  fetchReutersHeadlines,
-  fetchBloombergHeadlines,
+  fetchFetchStatus,
   fetchMacroExternal,
 } from "~/lib/api/client";
-import type { Headline } from "~/domain/news";
-import type { MacroData } from "~/domain/market";
-import { parseMacroSources } from "~/domain/market";
+import type { MacroData, FetchStatus, FetchSourceStatus, VpsProxyServiceStatus } from "~/domain/market";
+import { parseMacroSources, formatSourceAge, sourceStatusColor } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 
@@ -22,8 +21,7 @@ export const meta: MetaFunction = () => [
 ];
 
 interface LoaderData {
-  reuters: Headline[];
-  bloomberg: Headline[];
+  fetchStatus: FetchStatus | null;
   macro: MacroData | null;
   errors: string[];
   fetchedAt: string;
@@ -32,22 +30,16 @@ interface LoaderData {
 export async function loader({ request: _request }: LoaderFunctionArgs) {
   const errors: string[] = [];
 
-  const [reutersResult, bloombergResult, macroResult] =
+  const [fetchStatusResult, macroResult] =
     await Promise.allSettled([
-      fetchReutersHeadlines(),
-      fetchBloombergHeadlines(),
+      fetchFetchStatus(),
       fetchMacroExternal(),
     ]);
 
-  const reuters =
-    reutersResult.status === "fulfilled"
-      ? reutersResult.value
-      : (errors.push(`Reuters: ${String(reutersResult.reason)}`), []);
-
-  const bloomberg =
-    bloombergResult.status === "fulfilled"
-      ? bloombergResult.value
-      : (errors.push(`Bloomberg: ${String(bloombergResult.reason)}`), []);
+  const fetchStatus =
+    fetchStatusResult.status === "fulfilled"
+      ? fetchStatusResult.value
+      : (errors.push(`Fetch status: ${String(fetchStatusResult.reason)}`), null);
 
   const macro =
     macroResult.status === "fulfilled"
@@ -55,8 +47,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
       : (errors.push(`Macro: ${String(macroResult.reason)}`), null);
 
   return json<LoaderData>({
-    reuters,
-    bloomberg,
+    fetchStatus,
     macro,
     errors,
     fetchedAt: new Date().toISOString(),
@@ -67,11 +58,6 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 // Helpers
 // --------------------------------------------------------------------------
 
-/**
- * Strips raw API paths from error messages to avoid leaking internal routes.
- * "Reuters: ApiError: GET /news/reuters/headlines failed: 404 Not Found"
- * → "Reuters: data temporarily unavailable"
- */
 function toUserFriendlyError(raw: string): string {
   if (raw.includes("ApiError") || raw.includes("404") || raw.includes("failed")) {
     const source = raw.split(":")[0]?.trim() ?? "Source";
@@ -81,54 +67,147 @@ function toUserFriendlyError(raw: string): string {
 }
 
 // --------------------------------------------------------------------------
-// Components
+// Sub-components
 // --------------------------------------------------------------------------
 
-function HeadlineList({
-  headlines,
-  source,
-}: {
-  headlines: Headline[];
-  source: string;
-}) {
-  if (headlines.length === 0) {
+const STATUS_DOT_CLASS: Record<string, string> = {
+  green: "bg-green-400",
+  amber: "bg-amber-400",
+  red: "bg-red-400",
+  grey: "bg-slate-500",
+};
+
+function SourceFreshnessTable({ sources }: { sources: FetchSourceStatus[] }) {
+  if (sources.length === 0) {
     return (
-      <div className="py-3 space-y-1">
-        <p className="text-sm text-slate-500">No headlines available for {source}.</p>
-        <p className="text-xs text-slate-600">
-          Source not deployed on this host — news-fetch microservice is not running
-          (expected state, tracked FU-FE-NEWS-SOURCE).
-        </p>
-      </div>
+      <p className="text-sm text-slate-500">
+        No source data available. The fetch-status endpoint may be unreachable.
+      </p>
     );
   }
+
   return (
-    <ul className="divide-y divide-slate-700">
-      {headlines.slice(0, 10).map((h, idx) => (
-        <li key={idx} className="py-3">
-          <p className="text-sm font-medium text-slate-200">
-            {h.url ? (
-              <a
-                href={h.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-blue-400"
-              >
-                {h.title}
-              </a>
-            ) : (
-              h.title
-            )}
-          </p>
-          {h.publishedAt && (
-            <ClientTimestamp
-              iso={h.publishedAt}
-              className="mt-0.5 block text-xs text-slate-500"
-            />
-          )}
-        </li>
-      ))}
-    </ul>
+    <table className="w-full border-collapse text-xs">
+      <thead>
+        <tr className="border-b border-slate-700">
+          <th className="py-1.5 text-left font-medium text-slate-400">Source</th>
+          <th className="py-1.5 text-left font-medium text-slate-400">Age</th>
+          <th className="py-1.5 text-center font-medium text-slate-400">Status</th>
+          <th className="py-1.5 text-right font-medium text-slate-400">24h articles</th>
+        </tr>
+      </thead>
+      <tbody>
+        {sources.map((src) => {
+          const color = sourceStatusColor(src);
+          const dotClass = STATUS_DOT_CLASS[color] ?? STATUS_DOT_CLASS["grey"];
+          const age = formatSourceAge(src.ageMs);
+          return (
+            <tr key={src.id} className="border-b border-slate-800">
+              <td className="py-1.5 text-slate-300 font-medium">{src.id}</td>
+              <td className="py-1.5 text-slate-400">{age}</td>
+              <td className="py-1.5">
+                <div className="flex items-center justify-center gap-1.5">
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full ${dotClass}`}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className={
+                      color === "green"
+                        ? "text-green-400"
+                        : color === "amber"
+                          ? "text-amber-400"
+                          : color === "red"
+                            ? "text-red-400"
+                            : "text-slate-500"
+                    }
+                  >
+                    {src.status}
+                  </span>
+                </div>
+              </td>
+              <td className="py-1.5 text-right text-slate-400">
+                {src.count24h}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+const VPS_SERVICE_LABELS: Record<string, string> = {
+  news: "News",
+  prices: "Prices",
+  bctc: "BCTC",
+  sbv: "SBV",
+  "foreign-flow": "Foreign Flow",
+};
+
+function VpsProxyPanel({ vpsProxy }: { vpsProxy: FetchStatus["vpsProxy"] | undefined }) {
+  if (!vpsProxy) {
+    return <p className="text-sm text-slate-500">VPS proxy data unavailable.</p>;
+  }
+
+  const entries = Object.entries(vpsProxy) as [string, VpsProxyServiceStatus][];
+
+  return (
+    <table className="w-full border-collapse text-xs">
+      <thead>
+        <tr className="border-b border-slate-700">
+          <th className="py-1.5 text-left font-medium text-slate-400">Service</th>
+          <th className="py-1.5 text-left font-medium text-slate-400">Last Push</th>
+          <th className="py-1.5 text-center font-medium text-slate-400">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {entries.map(([key, svc]) => (
+          <tr key={key} className="border-b border-slate-800">
+            <td className="py-1.5 text-slate-300 font-medium">
+              {VPS_SERVICE_LABELS[key] ?? key}
+            </td>
+            <td className="py-1.5 text-slate-400">
+              {svc.last_push ? (
+                <ClientTimestamp iso={svc.last_push} className="text-slate-400" />
+              ) : (
+                "—"
+              )}
+            </td>
+            <td className="py-1.5 text-center">
+              {svc.stale ? (
+                <span className="text-red-400">stale</span>
+              ) : (
+                <span className="text-green-400">live</span>
+              )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function BctcPipelinePanel({ bctcPipeline }: { bctcPipeline: FetchStatus["bctcPipeline"] | undefined }) {
+  if (!bctcPipeline) {
+    return <p className="text-sm text-slate-500">BCTC pipeline data unavailable.</p>;
+  }
+
+  return (
+    <div className="flex gap-6 text-sm">
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-2xl font-bold text-amber-400">{bctcPipeline.pending}</span>
+        <span className="text-xs text-slate-500">pending</span>
+      </div>
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-2xl font-bold text-green-400">{bctcPipeline.done}</span>
+        <span className="text-xs text-slate-500">done</span>
+      </div>
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-2xl font-bold text-red-400">{bctcPipeline.failed}</span>
+        <span className="text-xs text-slate-500">failed</span>
+      </div>
+    </div>
   );
 }
 
@@ -155,13 +234,14 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
         </div>
       )}
 
-      {/* Summary counts */}
+      {/* Summary counts — totalLatencyMs is intentionally absent (removed in F-2) */}
       {summary && (
         <div className="flex gap-4 text-xs">
           <span className="text-green-400">{summary.ok} ok</span>
           <span className={summary.failed > 0 ? "text-red-400" : "text-slate-500"}>
             {summary.failed} failed
           </span>
+          {/* totalLatencyMs guard: only render if present (F-2 removed it from server) */}
           {summary.totalLatencyMs !== undefined && (
             <span className="text-slate-500">
               {(summary.totalLatencyMs / 1000).toFixed(1)}s total
@@ -177,7 +257,6 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
             <tr className="border-b border-slate-700">
               <th className="py-1 text-left font-medium text-slate-400">Source</th>
               <th className="py-1 text-left font-medium text-slate-400">Status</th>
-              <th className="py-1 text-right font-medium text-slate-400">Latency</th>
             </tr>
           </thead>
           <tbody>
@@ -195,11 +274,6 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
                     </span>
                   )}
                 </td>
-                <td className="py-1.5 text-right text-slate-400">
-                  {row.latencyMs !== undefined
-                    ? `${row.latencyMs}ms`
-                    : "—"}
-                </td>
               </tr>
             ))}
           </tbody>
@@ -212,7 +286,7 @@ function MacroPanel({ macro }: { macro: MacroData | null }) {
 }
 
 export default function FetchDashboard() {
-  const { reuters, bloomberg, macro, errors, fetchedAt } =
+  const { fetchStatus, macro, errors, fetchedAt } =
     useLoaderData<typeof loader>();
 
   return (
@@ -238,37 +312,47 @@ export default function FetchDashboard() {
         </div>
       )}
 
-      {/* Three columns on wide screens */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Reuters */}
+      {/* Top row: Sources freshness + VPS proxy */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Source freshness table */}
         <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
           <h2 className="mb-3 font-semibold text-slate-300">
-            Reuters Headlines{" "}
-            <span aria-hidden="true" className="ml-1 text-xs font-normal text-slate-500">
-              ({reuters.length})
-            </span>
+            Source Freshness
+            {fetchStatus && (
+              <span aria-hidden="true" className="ml-1 text-xs font-normal text-slate-500">
+                ({fetchStatus.sources.length} sources)
+              </span>
+            )}
           </h2>
-          <HeadlineList headlines={reuters} source="Reuters" />
+          <SourceFreshnessTable sources={fetchStatus?.sources ?? []} />
         </div>
 
-        {/* Bloomberg */}
-        <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
-          <h2 className="mb-3 font-semibold text-slate-300">
-            Bloomberg Headlines{" "}
-            <span aria-hidden="true" className="ml-1 text-xs font-normal text-slate-500">
-              ({bloomberg.length})
-            </span>
-          </h2>
-          <HeadlineList headlines={bloomberg} source="Bloomberg" />
-        </div>
+        {/* VPS proxy + BCTC pipeline */}
+        <div className="space-y-4">
+          {/* VPS Proxy */}
+          <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
+            <h2 className="mb-3 font-semibold text-slate-300">
+              Upstream Data Feeds
+            </h2>
+            <VpsProxyPanel vpsProxy={fetchStatus?.vpsProxy} />
+          </div>
 
-        {/* Macro */}
-        <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
-          <h2 className="mb-3 font-semibold text-slate-300">
-            Macro Snapshot
-          </h2>
-          <MacroPanel macro={macro} />
+          {/* BCTC Pipeline */}
+          <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
+            <h2 className="mb-3 font-semibold text-slate-300">
+              PDF Extraction Queue
+            </h2>
+            <BctcPipelinePanel bctcPipeline={fetchStatus?.bctcPipeline} />
+          </div>
         </div>
+      </div>
+
+      {/* Macro snapshot */}
+      <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
+        <h2 className="mb-3 font-semibold text-slate-300">
+          Macro Snapshot
+        </h2>
+        <MacroPanel macro={macro} />
       </div>
     </div>
   );

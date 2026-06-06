@@ -177,6 +177,23 @@ export async function fetchBloombergHeadlines(): Promise<Headline[]> {
 }
 
 // --------------------------------------------------------------------------
+// Fetch status (F-3 — FETCH-OPS-PAGE-TRUTH)
+// --------------------------------------------------------------------------
+
+import type { FetchStatus } from "~/domain/market";
+
+/**
+ * Aggregated fetch operations status.
+ * Endpoint: GET /api/fetch-status
+ * Returns: sources[] freshness, vpsProxy health (5 legs), bctcPipeline counts.
+ * Client call path: /api/* virtual alias on gateway (NoProbe=true, full path preserved)
+ * → mcp-server:3000/api/fetch-status.
+ */
+export async function fetchFetchStatus(): Promise<FetchStatus> {
+  return apiGet<FetchStatus>("/api/fetch-status");
+}
+
+// --------------------------------------------------------------------------
 // Macro data
 // --------------------------------------------------------------------------
 

@@ -334,6 +334,88 @@ export function groupBySector(
 }
 
 // --------------------------------------------------------------------------
+// Fetch status types (F-3 — FETCH-OPS-PAGE-TRUTH sprint)
+// --------------------------------------------------------------------------
+
+/** Per-source freshness entry from GET /api/fetch-status */
+export interface FetchSourceStatus {
+  id: string;           // source slug e.g. "cafef", "vnexpress"
+  lastArticleAt: string; // ISO timestamp (empty string for no-data sources)
+  ageMs: number;         // milliseconds since last article (0 for no-data)
+  count24h: number;      // articles in last 24h
+  status: "fresh" | "stale" | "no-data";
+}
+
+/** Per-VPS-service push log entry */
+export interface VpsProxyServiceStatus {
+  last_push: string;   // ISO timestamp
+  stale: boolean;
+  pushes_24h: number;
+  errors_24h: number;
+}
+
+/** VPS proxy health for all 5 upstream data feeds */
+export interface VpsProxyStatus {
+  news: VpsProxyServiceStatus;
+  bctc: VpsProxyServiceStatus;
+  prices: VpsProxyServiceStatus;
+  sbv: VpsProxyServiceStatus;
+  "foreign-flow": VpsProxyServiceStatus;
+}
+
+/** BCTC PDF extraction pipeline queue counts */
+export interface BctcPipelineStatus {
+  pending: number;
+  done: number;
+  failed: number;
+}
+
+/** Aggregated fetch operations status from GET /api/fetch-status */
+export interface FetchStatus {
+  sources: FetchSourceStatus[];
+  vpsProxy: VpsProxyStatus;
+  bctcPipeline: BctcPipelineStatus;
+}
+
+/**
+ * Format ageMs into a human-readable string.
+ * 0 → "no data" | <60s → "< 1 min ago" | <60min → "N min ago" | else "N h ago"
+ * Pure function — safe for unit tests and loaders.
+ */
+export function formatSourceAge(ageMs: number): string {
+  if (ageMs === 0) return "no data";
+  const seconds = ageMs / 1000;
+  if (seconds < 60) return "< 1 min ago";
+  const minutes = seconds / 60;
+  if (minutes < 60) return `${Math.floor(minutes)} min ago`;
+  const hours = minutes / 60;
+  // Round to 1 decimal if fractional, else integer
+  const rounded = Math.round(hours * 10) / 10;
+  return `${rounded} h ago`;
+}
+
+/**
+ * Derive direction indicator colour from a FetchSourceStatus.
+ * Rules:
+ *   - status "no-data" → "grey"
+ *   - status "fresh" OR ageMs < 2h → "green"
+ *   - ageMs 2–12h → "amber"
+ *   - ageMs > 12h → "red"
+ * Pure function — safe for unit tests and loaders.
+ */
+export function sourceStatusColor(
+  source: FetchSourceStatus,
+): "green" | "amber" | "red" | "grey" {
+  if (source.status === "no-data") return "grey";
+  if (source.status === "fresh") return "green";
+  const TWO_HOURS = 2 * 3600 * 1000;
+  const TWELVE_HOURS = 12 * 3600 * 1000;
+  if (source.ageMs <= TWO_HOURS) return "green";
+  if (source.ageMs <= TWELVE_HOURS) return "amber";
+  return "red";
+}
+
+// --------------------------------------------------------------------------
 // Technical Analysis types
 // --------------------------------------------------------------------------
 
