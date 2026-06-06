@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-06T23:40:01Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-06T23:55:01Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-06T23:46:38Z",
@@ -2210,85 +2210,11 @@
         "id": "WORKFLOW-FLUIDITY",
         "lead": "architect",
         "priority": "high",
-        "status": "active",
+        "status": "done",
         "opened_at": "2026-06-06T20:09:07Z",
-        "tasks": [
-          {
-            "id": "WF-1",
-            "title": "FAIL-LOUD-STOP-RELEASE (F-12+F-2): task_release + atomic .head idle-reset on ALL STOP paths in developer/qa/fixer flows; dev-team Step 0b BLOCKED-task check resets head + routes to triage",
-            "owner": "agent-father",
-            "type": "FIX",
-            "status": "DONE",
-            "zone": "docs/agents/",
-            "created_at": "2026-06-06T20:09:07Z",
-            "priority": "high",
-            "size": "M",
-            "sprint": "WORKFLOW-FLUIDITY",
-            "depends": [],
-            "files": [
-              "docs/agents/developer/flow/main.md",
-              "docs/agents/qa/flow/main.md",
-              "docs/agents/fixer/flow/main.md",
-              "docs/agents/dev-team/flow/main.md",
-              "docs/protocols/fail-loud-protocol.md"
-            ],
-            "note": "DONE 2026-06-06: task_release + atomic .head idle-reset on all STOP paths (developer/qa/fixer/fail-loud-protocol); dev-team Step 0b BLOCKED-task guard. AC-WF1-1..8 all PASS. Dry-run trace: docs/handoffs/WF-1-dry-run-trace.md.",
-            "completed_at": "2026-06-06T21:30:00Z"
-          },
-          {
-            "id": "WF-2",
-            "title": "ORCH-HEAD-CAS + signal_queue retry-read-compare (F-9+F-3): promote FU-ORCH-HEAD-CAS to code; fresh-read-compare-retry (mtime, 3 retries) on signal_queue append; signal-dashboard SKILL documents 3 concurrent writer classes",
-            "owner": "dev-mcp-server",
-            "type": "FIX",
-            "status": "DONE",
-            "zone": "apps/mcp-server/src/ + .claude/skills/signal-dashboard/",
-            "created_at": "2026-06-06T20:09:07Z",
-            "priority": "high",
-            "size": "M",
-            "sprint": "WORKFLOW-FLUIDITY",
-            "depends": [],
-            "note": "DONE 2026-06-07 (QA): Option A mtime-compare-retry CAS implemented in orchStateStore.ts (appendSignalQueueRow + writeHeadAtomic). 12 tests WF2-signal-queue-cas.test.ts — 12 pass 0 fail. tsc: 0 new errors (5 pre-existing TECH-DEBT-LINTING unchanged). signal-dashboard SKILL § WRITE updated with 3-writer-class warning block (FR-WF2-2). FU-ORCH-HEAD-CAS closed. QA APPROVED 2026-06-07 — all 5 AC met, CAS logic verified no false-positive. Container REBUILD required."
-          },
-          {
-            "id": "WF-3",
-            "title": "dev-team MCP gateway binding ruling (F-8): single-claim simplification vs outer-claim-heartbeat; give dev-* agents a working call_tool path (task_claim/commit-mutex) or codify session-scoped constraint as enforced invariant",
-            "owner": "architect",
-            "type": "SPIKE",
-            "status": "DONE",
-            "zone": "docs/protocols/ + .claude/skills/task-lock/",
-            "created_at": "2026-06-06T20:09:07Z",
-            "priority": "medium",
-            "size": "S",
-            "sprint": "WORKFLOW-FLUIDITY",
-            "depends": [],
-            "note": "DONE 2026-06-07: PO ACCEPTED Option III ruling (docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md, 2d69de7d). INV-GATEWAY-1 codified: all task_claim/task_release/commit-mutex MCP calls = outer dispatcher session only; inner dev-*/qa/ba/pm/architect coordinate via file-based .head atomic writes (WF-1). Also resolves parked FU-MCP-GATEWAY-DEV-FRONTEND (same root cause) — folded into WF-3-IMPL. Sub-task D (gateway binding in agent defs) stays Phase-4 gated.",
-            "completed_at": "2026-06-06T23:22:24Z"
-          },
-          {
-            "id": "WF-3-IMPL",
-            "title": "Implement WF-3 ruling (INV-GATEWAY-1): remove commit-mutex skill references from dev-*/qa specialist flow docs + add INV-GATEWAY-1 comment; update fail-loud-protocol.md step 0 annotation to point at the 2026-06-07 ruling; document invariant. Folds in FU-MCP-GATEWAY-DEV-FRONTEND (same root cause). Sub-task D (add gateway tool to dev-* agent defs + spawn-context verification) stays Phase-4 gated under SPIKE-C44-PARALLEL-PROOF — OUT of this task.",
-            "owner": "agent-father",
-            "type": "FIX",
-            "status": "DONE",
-            "zone": "docs/agents/",
-            "created_at": "2026-06-06T23:22:24Z",
-            "closed_at": "2026-06-07T00:00:00Z",
-            "priority": "medium",
-            "size": "S",
-            "sprint": "WORKFLOW-FLUIDITY",
-            "depends": [],
-            "files": [
-              "docs/protocols/fail-loud-protocol.md",
-              "docs/agents/dev-frontend/flow/main.md",
-              "docs/agents/dev-mcp-server/flow/main.md",
-              "docs/agents/qa/flow/main.md",
-              "docs/agents/developer/flow/main.md",
-              "docs/protocols/dev-star-gateway-binding.md"
-            ],
-            "note": "Source: WF-3 ruling §5+§7 sub-tasks A+B. Sub-task C (orchStateStore mtime retry) already shipped in WF-2. AC: zero commit-mutex/task_claim skill calls remain inside dev-*/qa specialist flows; INV-GATEWAY-1 stated verbatim in fail-loud-protocol.md; FU-MCP-GATEWAY-DEV-FRONTEND closed by reference. QA APPROVED 2026-06-07 (commit 970c8e50) — all 7 ACs pass, doc-only task.",
-            "commit": "970c8e50"
-          }
-        ]
+        "tasks": [],
+        "closed_at": "2026-06-06T23:55:01Z",
+        "note": "CLOSED 2026-06-06: all 4 tasks (WF-1/WF-2/WF-3/WF-3-IMPL) DONE + QA APPROVED, moved to .task_board.done[]. Success metrics met: STOP paths release+reset (WF-1 trace), signal_queue CAS 12/12 tests + rebuild live (WF-2), INV-GATEWAY-1 ruled+enforced in docs (WF-3+IMPL). DEFERRED rows WF-DEFER-THROUGHPUT + SPIKE-C44-PARALLEL-PROOF stay in backlog."
       }
     ],
     "backlog": [
@@ -4129,6 +4055,48 @@
         "owner": "dev-mcp-server",
         "commit": "d71e3f2e",
         "note": "QA APPROVED 2026-06-07. 52/52 tests pass (31 new N-1..N-8 S-1..S-8 + 21 baseline W-1..W-10). All 5 ACs PASS. Merged on main at d71e3f2e."
+      },
+      {
+        "id": "WF-1",
+        "title": "FAIL-LOUD-STOP-RELEASE (F-12+F-2): task_release + atomic .head idle-reset on ALL STOP paths in developer/qa/fixer flows; dev-team Step 0b BLOCKED-task guard",
+        "owner": "agent-father",
+        "type": "FIX",
+        "status": "DONE",
+        "size": "M",
+        "sprint": "WORKFLOW-FLUIDITY",
+        "zone": "docs/agents/",
+        "created_at": "2026-06-06T20:09:07Z",
+        "closed_at": "2026-06-06T21:30:00Z",
+        "commit": "915bc4e5",
+        "note": "AC-WF1-1..8 all PASS. Dry-run trace docs/handoffs/WF-1-dry-run-trace.md proves livelock closure: lock hold on STOP 3600s->~0s, futile cron re-spawns 24->0, BLOCKED head cleared immediately. PO signoff 2026-06-06."
+      },
+      {
+        "id": "WF-2",
+        "title": "ORCH-HEAD-CAS + signal_queue retry-read-compare (F-9+F-3): mtime-compare-retry CAS in orchStateStore.ts (appendSignalQueueRow + writeHeadAtomic); signal-dashboard SKILL 3-writer-class doc",
+        "owner": "dev-mcp-server",
+        "type": "FIX",
+        "status": "DONE",
+        "size": "M",
+        "sprint": "WORKFLOW-FLUIDITY",
+        "zone": "apps/mcp-server/src/ + .claude/skills/signal-dashboard/",
+        "created_at": "2026-06-06T20:09:07Z",
+        "closed_at": "2026-06-06T23:08:34Z",
+        "commit": "8a469655",
+        "note": "QA APPROVED 0cbc06ae: 12/12 WF2-signal-queue-cas.test.ts pass, tsc 0 new errors, all 5 AC met. FU-ORCH-HEAD-CAS closed. Close-gate PASS: container rebuilt 23:10:01Z > commit 22:49:31Z, healthy (ops 359d90a9). PO signoff 2026-06-06."
+      },
+      {
+        "id": "WF-3",
+        "title": "dev-team MCP gateway binding ruling SPIKE (F-8): Option III outer-claim invariant — INV-GATEWAY-1 codified",
+        "owner": "architect",
+        "type": "SPIKE",
+        "status": "DONE",
+        "size": "S",
+        "sprint": "WORKFLOW-FLUIDITY",
+        "zone": "docs/protocols/ + .claude/skills/task-lock/",
+        "created_at": "2026-06-06T20:09:07Z",
+        "closed_at": "2026-06-06T23:22:24Z",
+        "commit": "2d69de7d",
+        "note": "PO ACCEPTED Option III ruling (docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md). INV-GATEWAY-1: task_claim/task_release/commit-mutex = outer dispatcher session only; inner agents use file-based .head atomic writes. FU-MCP-GATEWAY-DEV-FRONTEND folded into WF-3-IMPL. Sub-task D Phase-4 gated under SPIKE-C44-PARALLEL-PROOF."
       }
     ],
     "in_progress": []
@@ -5344,7 +5312,7 @@
       },
       {
         "sprint_id": "WORKFLOW-FLUIDITY",
-        "status": "active",
+        "status": "done",
         "vision": "No agent workflow can livelock, silently drop a signal row, or strand a task lock: every STOP path releases its claim and resets the pipeline head, every orch-state concurrent writer survives a :00 cron collision, and dev agents get a ruled path to the lock tools.",
         "scope_in": "(WF-1, Rank 1, F-12+F-2) task_release + atomic .head idle-reset on ALL fail-loud STOP paths in developer/qa/fixer flows + dev-team Step 0b check: active_task_id BLOCKED in task_board -> reset head idle, route to triage, never respawn. (WF-2, Rank 3, F-9+F-3) promote FU-ORCH-HEAD-CAS from narrative watch_items to code; signal_queue append gets fresh-read-compare-retry (mtime check, 3 retries) against last-rename-wins row drop at :00/4h cowork+auditor collision; signal-dashboard SKILL documents the 3 concurrent writer classes (dev-team, cowork-team, auditor). (WF-3, F-8) architect SPIKE ruling on dev-* MCP gateway binding: single-claim simplification vs outer-claim-heartbeat; F-8 also blocks commit-mutex for dev agents (recurred in ORCH-TASK-CANON: F1B ran mutex-less as sole writer).",
         "scope_out": "F-4 journal lost-write — already FIXED in ORCH-TASK-CANON (per-agent journal paths). F-5 cap sentinel — SKILL already telegrams BUG + rolls to -2 continuation file. F-1/F-6/F-7 audited OK. F-10 WIP telemetry + F-11 CRITICAL dual-path emit -> DEFERRED backlog row WF-DEFER-THROUGHPUT. F-13 c44 parallel proof -> DEFERRED backlog row SPIKE-C44-PARALLEL-PROOF. Lifting WIP=2 (deliberate host-safety cap).",

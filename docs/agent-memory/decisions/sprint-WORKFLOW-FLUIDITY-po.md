@@ -54,3 +54,12 @@
 - Two auditor flow bugs as 2 tasks vs 1 (same flow-doc zone, same owner)
 **why-decision:** git show 9e74cf0a confirms news/sbv_fx kept flat SLAs while publishers are quiet overnight VN — expected behavior misfiring as CRITICAL, so durable fix = extend the existing calendar-aware exemption class (root-cause, not symptom). project-stats generated-from-live per no-hardcode-stats policy — hand-editing recreates drift next week. Auditor bugs share docs/agents/system-auditor zone + one dispatch ⇒ one task. Dedupe verified: FIX-FETCH-VERYSTALE-LABEL/TECH-DEBT-LINTING/Bun-OOM already on board, not re-created.
 **why-change:** no change from dispatcher analysis.
+
+### STEP po-S6 · po · 2026-06-06T23:55:01Z
+**task-id:** WORKFLOW-FLUIDITY (sprint closeout)
+**what-done:** Signed off all 4 tasks (WF-1 915bc4e5 trace-proven, WF-2 8a469655 QA 0cbc06ae + rebuild-gate verified container 23:10:01Z > commit 22:49:31Z, WF-3 ruling 2d69de7d, WF-3-IMPL 970c8e50 QA 965fc5f9); moved WF-1/2/3 to done[] (WF-3-IMPL already there, not duplicated), sprint entry + goal entry → done; atomic jq -f write.
+**what-considered:**
+- Remove sprint entry entirely (ORCH-TASK-CANON pattern) vs flip status to done as tombstone
+- Re-verify WF-2 rebuild gate raw vs trust ops notebook claim
+**why-decision:** Dispatcher mandate said flip-to-done; emptied tasks[] into done[] so no duplicate rows — tombstone keeps closure visible without double-counting. Rebuild gate raw-verified (docker inspect Created vs git %cI) per verify-raw-not-badges; mcp-server healthy. DEFERRED rows WF-DEFER-THROUGHPUT + SPIKE-C44-PARALLEL-PROOF untouched in backlog per scope_out.
+**why-change:** umbrella lock task:WORKFLOW-FLUIDITY release skipped — INV-GATEWAY-1: this PO session has no gateway binding; dispatcher session holds the lock and releases + notifies WORK.
