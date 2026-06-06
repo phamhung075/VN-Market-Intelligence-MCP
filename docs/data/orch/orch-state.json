@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T20:09:07Z",
+    "_updated_at": "2026-06-06T20:33:17Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -2723,6 +2723,24 @@
         "created_at": "2026-06-06T20:09:07Z",
         "priority": "low",
         "note": "PO triage 2026-06-06: observability/latency niceties, zero liveness impact; 53-min drain window stands as documented known bound."
+      },
+      {
+        "task_id": "FIX-ORCH-DONE-GRID-COLS",
+        "title": "Orch dashboard DONE-task list: unstable column widths -> skyscraper rows (one-word-per-line Title)",
+        "type": "FIX",
+        "sprint": null,
+        "status": "TODO",
+        "size": "S",
+        "zone": "apps/frontend/",
+        "owner": "dev-frontend",
+        "files": [
+          "apps/frontend/app/routes/dashboard.orchestration.tsx"
+        ],
+        "baseline_pass": "expanded DONE table currently renders e.g. AF-ORCH-F1A-F4 Title cell one word per line, row ~1000px tall; AF-ORCH-F1B renders fine — per-row width drift reproducible on localhost:3001/dashboard/orchestration",
+        "note": "ROOT CAUSE (PO triage 2026-06-06, dashboard.orchestration.tsx L619+L647): F3 div-grid DONE list has (1) each row as its OWN grid container, so column tracks resolve PER ROW from that row content — rows do not align with the header or each other; (2) tracks use minmax(Npx,auto): a long status_note paragraph (L660) expands the Status track to max-content, crushing the 1fr Title track to min width. FIX = stable shared tracks: one track definition with non-content-dependent widths (fixed px / fr / % — no auto max) used identically by header+rows (extract to a const), constrain long status_note/note with break-words + a max width or move long QA-note text into the full-width accordion sub-row; Title column must keep majority width. AC: every row column-aligned with header; Title wraps in a wide cell; long notes wrap, no row renders one-word-per-line; VERIFY LIVE on localhost:3001/dashboard/orchestration with DONE expanded incl. row AF-ORCH-F1A-F4 (rebuild frontend container first — restart relaunches stale image).",
+        "source": "user bug report 2026-06-06 (router-relayed)",
+        "created_at": "2026-06-06T20:33:17Z",
+        "created_by": "po"
       }
     ],
     "archive": [],

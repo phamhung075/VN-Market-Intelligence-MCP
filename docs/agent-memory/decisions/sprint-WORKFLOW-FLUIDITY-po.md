@@ -15,3 +15,12 @@
 - F-10/F-11/F-13 in-sprint vs DEFERRED backlog rows
 **why-decision:** Blast radius: F-12+F-2 burns a cron slot/h for ≤24h per fail-loud STOP (liveness); F-9+F-3 silently drops signal rows at :00 collisions (data loss); F-8 recurred this very sprint (F1B mutex-less). F-10/F-11/F-13 are observability/throughput niceties with zero liveness impact → DEFERRED rows so triage is durable, not prose. depends[] kept empty so one BLOCKED task can't strand the deadlock-fix sprint — sequential mandate already orders dispatch.
 **why-change:** no change from audit's Rank 1/3 proposal; Rank 2 (F-4) dropped — verified already fixed (per-agent journal paths + cap telegram live in SKILL.md).
+
+### STEP po-S2 · po · 2026-06-06T20:33:31Z
+**task-id:** FIX-ORCH-DONE-GRID-COLS
+**what-done:** Triaged user bug report (orch dashboard DONE-list skyscraper rows) to root cause in dashboard.orchestration.tsx, filed FIX backlog entry zone apps/frontend/ owner dev-frontend.
+**what-considered:**
+- Sprint kickoff (BA→architect chain) vs single FIX BATCH entry
+- Fix as "wrap status_note" cosmetic vs structural shared-track fix
+**why-decision:** Single-file S-size FIX with root cause already pinned (per-row independent grid containers + minmax(auto) tracks let long status_note crush 1fr Title) → direct FIX route per priority order, no BA decomposition needed; structural shared-track fix mandated in note so dev-frontend doesn't ship a cosmetic symptom patch.
+**why-change:** no change from plan.
