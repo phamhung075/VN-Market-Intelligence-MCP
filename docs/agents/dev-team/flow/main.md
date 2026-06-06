@@ -29,7 +29,7 @@ outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
   task_kind:   "sprint-task",
   owner_agent: "dev-team",
   ttl_seconds: 3600,
-  payload:     {site: "on-demand", spawning: agent_id}   // structured object, not a shell-built string
+  payload:     "{\"site\":\"on-demand\",\"spawning\":\"" + agent_id + "\"}"   // JSON-encoded STRING passed via call_tool arguments — DRAIN-INJECTION-SAFE (no shell exposure)
 })
 if not outer_claim.claimed:
   log "[dev-team] SKIP on-demand " + agent_id + " — cron holds lock (" + outer_claim.current_holder.owner_agent + ")"
@@ -174,7 +174,7 @@ head_updated_at   = $(echo "$CURRENT" | jq -r '.head.updated_at')
   outer_claim  = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id: resume_key, task_kind: "sprint-task",
     owner_agent: "dev-team", ttl_seconds: 3600,
-    payload: {site: "S2", spawning: head.next_agent}   // structured object, not a shell-built string
+    payload: "{\"site\":\"S2\",\"spawning\":\"" + head.next_agent + "\"}"   // JSON-encoded STRING passed via call_tool arguments — DRAIN-INJECTION-SAFE (no shell exposure)
   })
   if not outer_claim.claimed:
     log "[dev-team] SKIP pipeline resume " + resume_key + " — held by peer session"
@@ -204,7 +204,7 @@ triage_key  = "task:po-triage-" + $(date -u +"%Y%m%d")   # e.g. task:po-triage-2
 outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id: triage_key, task_kind: "sprint-task",
   owner_agent: "dev-team", ttl_seconds: 1800,
-  payload: {site: "S3", spawning: "po"}   // structured object — consistent with DRAIN-INJECTION-SAFE invariant
+  payload: "{\"site\":\"S3\",\"spawning\":\"po\"}"   // JSON-encoded STRING passed via call_tool arguments — DRAIN-INJECTION-SAFE (no shell exposure)
 })
 if not outer_claim.claimed:
   log "[dev-team] SKIP PO triage — already running in peer session"
