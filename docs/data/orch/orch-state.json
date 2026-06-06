@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first-ever fire — next tick ~09:07Z must verify fire + CTG refined; if get_bctc_full(CTG) withheld ~09:30Z escalate citing escalation lock bctc-ctg-attachment-fetch-escalation-c026 (router-verified LIVE-HELD, holder bctc-analyst, expires 06-07T00:06:31Z). Tick 072038Z: first non-idle tick — READ-age-out trap closed (4 untriaged PO rows incl tnb-c87 HIGH would have died in tonight 20:13Z prune); PO triaged all 5 (tnb-c87 SUPERSEDED by c88 PO-ACK'd; cow-200756 FALSE — MW offhours branch exists L14+cycle L45-49; sau-d4 pair = intentional guard locks, dup-row-id occ#1); BATCH shipped: FIX-AUDITOR-RETURN-CITE-GATE 406520fa (RAW-CITE GATE now covers return summaries — confab class triple-gated, occ#3 closed) + FIX-DEVTEAM-PAYLOAD-COMMENT-DRIFT a4476e40 (payload = JSON-encoded string per live schema). Carry: Monday ~02:15Z price-push resume check; threshold-cite-soft occ#1 (c029); peer-auditor dup-row-id occ#1 (promote on occ#2 -> sau dedup-guard task); c023 section-miscount occ#1; T3 false-0-commits untested until 02:00 local; dead payload_ref docs/signals/cowork-team-20260605T200555Z.json occ#1; auditor flow 561L split debt deferred; operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first-ever fire — next tick (~09:20Z) MUST verify fire + CTG refined; if get_bctc_full(CTG) withheld ~09:30Z escalate citing lock bctc-ctg-attachment-fetch-escalation-c026 (LIVE-HELD, holder bctc-analyst, expires 06-07T00:06:31Z). Also verify offhours gatherers fired 12:00Z (first live proof of FIX-COWORK-CADENCE-DRIFT-SNAP 2b67d3a7 — cadence-starve occ#2 closed structurally: snapToCronBoundary floors last_fired to nominal cron boundary, kills cadence==cron-period collision class; spec mirror 998d10a9). Carry: Monday ~02:15Z price-push resume check; T3 false-0-commits untested until 02:00 local; return-cite-letter occ#1 (c032); threshold-cite-soft occ#1 (c029); peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; phantom-gitignore-warning occ#1; dead payload_ref occ#1; auditor flow 561L split debt; operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T07:30:42Z",
+    "updated_at": "2026-06-06T08:32:17Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T07:30:42Z",
+    "_updated_at": "2026-06-06T08:32:17Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,28 @@
     "archive": [],
     "done": [
       {
+        "task_id": "FIX-COWORK-CADENCE-DRIFT-SNAP",
+        "title": "Snap last_fired to nominal cron-tick boundary in cadence due-check (kill drift-vs-cadence collision class)",
+        "type": "FIX",
+        "sprint": null,
+        "status": "DONE",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "files": [
+          "scripts/agents-flow/cowork-match-slots.js",
+          "docs/agents/cowork-team/flow/pressure-cadence.md"
+        ],
+        "severity": "MED",
+        "note": "Root cause occ#2: last_fired stamped at spawn-completion (04:04:30Z) not nominal tick (04:00Z) while cadence 240min == cron period 0 */4 -> any spawn latency skips slot -> effective 8h. Fix: snap lastFiredUnix DOWN to nominal cron-tick boundary before elapsed computation (matcher L176/L183; snap primitive exists L56/L199). Option b (cadence 225) REJECTED = magic-margin symptom. No rebuild: JS read fresh each */15 cron, .md read-at-spawn. JS via developer; flow-doc mirror via agent-father.",
+        "source": "PO triage 20260606T082038Z — signal cwk-cadence-starve-202606060802 (offhours gatherer starvation occ#2)",
+        "depends_on": null,
+        "started_at": "2026-06-06T08:25:56Z",
+        "commit": "2b67d3a7+998d10a9",
+        "done_at": "2026-06-06T08:32:17Z",
+        "deploy_note": "JS matcher fix 2b67d3a7 (snapToCronBoundary, 16/16 tests router-rerun green) + spec mirror 998d10a9; live immediately — script cron-read-fresh each */15, no rebuild; offhours gatherers due 12:00Z not 16:00Z (router-verified diff + own test run)"
+      },
+      {
         "task_id": "FIX-AUDITOR-RETURN-CITE-GATE",
         "title": "auditor RAW-CITE GATE covers return summaries (verbatim-from-notebook only)",
         "type": "FIX",
@@ -3613,41 +3635,9 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T07:30:42Z",
+    "_updated_at": "2026-06-06T08:32:17Z",
     "_updated_by": "dev-team",
-    "rows": [
-      {
-        "id": "bca-20260603T1815Z",
-        "ts": "2026-06-03T18:15:00Z",
-        "from": "bctc-analyst",
-        "to": "dev-team",
-        "type": "esc-deep-dive-request",
-        "summary": "ESC deep-dive: FPT Q1-2026 ESC-3 (OCF/NI divergence) — 16th consecutive cycle. guard_key=esc-deepdive:FPT:Q1-2026:ESC-3 re-claimed (prior 24h TTL expired). OCF=-2,847,813 VND mn vs NI=+2,476,800 VND mn, divergence_ratio=2.15. Prior Opus deep-dive DONE (a38e14ee, conf=0.35 MIXED/partial-artifact). FU-BCTC-TOOL-PARAMS (get_cash_flow quarters param silently ignored) may be the root blocker for multi-quarter accrual decomposition.",
-        "severity": "HIGH",
-        "status": "DONE",
-        "payload_ref": null,
-        "payload": {
-          "trigger_id": "ESC-3",
-          "ticker": "FPT",
-          "quarter": "Q1-2026",
-          "report_id": "FPT-Q1-2026",
-          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-3",
-          "context": {
-            "ocf_total": -2847813.717192,
-            "net_profit_total": 2476800,
-            "divergence_ratio": 2.15,
-            "cycle_count": 16,
-            "prior_opus_deepdive": "DONE (a38e14ee) — flag_for_human_review, conf=0.35, MIXED/partial-artifact",
-            "blocker": "FU-BCTC-TOOL-PARAMS: get_cash_flow ignores quarters param; only Q1/2026 returned (quarters_returned=2 of 8 requested); multi-quarter accrual decomposition impossible",
-            "q4_2025_context": "OCF Q4/2025=+4,108,450 VND mn (ratio=+1.64 healthy) — strong seasonal contrast; Q1 negative OCF may be seasonal working-capital phenomenon"
-          },
-          "all_esc_fired": [
-            "ESC-3"
-          ]
-        },
-        "disposition": "Router live-verified get_cash_flow(FPT,quarters=8): quarters_requested=8 honored, periods[] returned, only 2 quarters of FPT data in corpus. FU-BCTC-TOOL-PARAMS genuinely DONE. Root=data coverage (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA). Loop-stop guard shipped (BCTC-ESC-GUARD design 2a40d47e/impl 061ce406/split 0b00e15d). Next cycle the analyst will self-classify DATA-COVERAGE-LIMITED, claim 30d guard, route ONE signal to ops, stop re-escalating to dev-team."
-      }
-    ],
+    "rows": [],
     "archive": [
       {
         "id": "P2-F-DONE",
@@ -4268,6 +4258,51 @@
         "read_at": "2026-06-05T20:22:57Z",
         "triaged_at": "2026-06-06T07:24:32Z",
         "disposition": "RESOLVED — FALSE/STALE. Claim 'market-watcher main.md has no offhours branch, agent no-ops' is FALSE: main.md L14 routes weekends+offhours→cycle.md mode=offhours, L35 'all times resolve to a sub-flow, no unconditional EXIT'; cycle.md L45-49 explicit if mode=offhours threshold-floor (FIX-MW-OFFHOURS-DISPATCH) + L92 offhours dup-guard. Gap already fixed; agent does NOT no-op. payload_ref docs/signals/cowork-team-20260605T200555Z.json MISSING (dead ref). No dev work."
+      },
+      {
+        "id": "bca-20260603T1815Z",
+        "ts": "2026-06-03T18:15:00Z",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "summary": "ESC deep-dive: FPT Q1-2026 ESC-3 (OCF/NI divergence) — 16th consecutive cycle. guard_key=esc-deepdive:FPT:Q1-2026:ESC-3 re-claimed (prior 24h TTL expired). OCF=-2,847,813 VND mn vs NI=+2,476,800 VND mn, divergence_ratio=2.15. Prior Opus deep-dive DONE (a38e14ee, conf=0.35 MIXED/partial-artifact). FU-BCTC-TOOL-PARAMS (get_cash_flow quarters param silently ignored) may be the root blocker for multi-quarter accrual decomposition.",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": null,
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": "FPT-Q1-2026",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-3",
+          "context": {
+            "ocf_total": -2847813.717192,
+            "net_profit_total": 2476800,
+            "divergence_ratio": 2.15,
+            "cycle_count": 16,
+            "prior_opus_deepdive": "DONE (a38e14ee) — flag_for_human_review, conf=0.35, MIXED/partial-artifact",
+            "blocker": "FU-BCTC-TOOL-PARAMS: get_cash_flow ignores quarters param; only Q1/2026 returned (quarters_returned=2 of 8 requested); multi-quarter accrual decomposition impossible",
+            "q4_2025_context": "OCF Q4/2025=+4,108,450 VND mn (ratio=+1.64 healthy) — strong seasonal contrast; Q1 negative OCF may be seasonal working-capital phenomenon"
+          },
+          "all_esc_fired": [
+            "ESC-3"
+          ]
+        },
+        "disposition": "Router live-verified get_cash_flow(FPT,quarters=8): quarters_requested=8 honored, periods[] returned, only 2 quarters of FPT data in corpus. FU-BCTC-TOOL-PARAMS genuinely DONE. Root=data coverage (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA). Loop-stop guard shipped (BCTC-ESC-GUARD design 2a40d47e/impl 061ce406/split 0b00e15d). Next cycle the analyst will self-classify DATA-COVERAGE-LIMITED, claim 30d guard, route ONE signal to ops, stop re-escalating to dev-team."
+      },
+      {
+        "id": "cwk-cadence-starve-202606060802",
+        "ts": "2026-06-06T08:02:51Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "Offhours gatherer cadence starvation occ#2: news-scout-offhours + market-watcher-offhours cadence-skipped at 08:00Z by 99s (elapsed 14301s < cadence 14400s). Root cause: last_fired stamped at spawn-completion time (04:04:30Z) not nominal tick (04:00:00Z), while cadence_minutes=240 exactly equals cron period 0 */4 — any spawn-latency > fire-drift delta forces skip, and skipped slots re-arm only at next cron match → effective 8h gatherer interval instead of 4h (same mechanism as the prior 8h gap noted in 04:00Z FIRE telemetry). Proposed definitif fixes (dev-team pick): (a) stamp last_fired with nominal tick_id instead of spawn time, or (b) set cadence_minutes to 225 (cron-period minus max drift+spawn latency) for all slots whose cadence equals their cron period. Next gatherer run now 12:00Z.",
+        "severity": "MEDIUM",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "disposition": "BATCH FIX-COWORK-CADENCE-DRIFT-SNAP (option a, structural). occ#2 of cadence/cron-period collision class; recurring -> root-cause fix not margin tweak. Live path = scripts/agents-flow/cowork-match-slots.js L176-189 (elapsed=nowUnix-lastFiredUnix>=cadenceSeconds, exact-equal cadence 240 == cron 0 */4 period -> any spawn-latency forces skip, re-arm only next cron match = effective 8h). Fix: snap lastFiredUnix DOWN to the slot's nominal cron-tick boundary before computing elapsed (kills drift-vs-cadence collision for ALL cadence==cron-period slots, not just 2 gatherers). Mirror same change in spec doc pressure-cadence.md L42-54. NO rebuild (node script read per cron run). Option b (cadence=225) REJECTED: magic-margin symptom, desyncs from policy-table 240 semantics. zone=cross-service (scripts/ + flow doc). baseline_pass=node scripts/agents-flow/cowork-match-slots.js exits 0 + JSON. SHIPPED 2b67d3a7 (JS) + 998d10a9 (spec mirror); gatherers due 12:00Z.",
+        "triaged_at": "2026-06-06T08:24:05Z",
+        "triaged_by": "po"
       }
     ]
   },
