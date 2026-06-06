@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-06-04T17:45Z | **Sprint:** RAPID-DATA-LAYER / FIX-I-A
+**Last updated:** 2026-06-06T17:30Z | **Sprint:** FIX-VPS-SSC-CURL-SCRAPER
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
@@ -27,7 +27,7 @@ Zone: dev-zone (VPS scraper code)
 | article-body | /root/article-body-fetcher.py | plain-requests-open-api | NEW 2026-06-01 — cafef.vn + vneconomy.vn article body fetch. Endpoint: VPS:8765/proxy/article-body?url=. cafef 5000ch 200 OK, vneco 5000ch 200 OK. | 2026-06-01 |
 | vn-foreign-flow | /root/fetch-foreign-flow.sh | plain-requests-open-api | FIXED 2026-05-30 — field drift: fBuyVol→fBVol, fSellVol→fSVolume. FPT fBVol=110629 fSVolume=148534 confirmed. 103 items pushed 200 OK. | 2026-05-30 |
 | hsx-bctc (HNX/UPCOM) | /root/discover-bctc-urls-browser.py | hnx-ajax-post | OPERATIONAL — Q1/2026 BCTC flowing. SHB e2e PASS. | 2026-05-13T09:30Z |
-| hsx-bctc (HOSE/SSC) | /root/discover-bctc-urls-browser.py | ssc-playwright-download | OPERATIONAL — Q1/2026 BCTC flowing. ACB Q1 PASS (1953a pattern fix). | 2026-05-19 |
+| hsx-bctc (HOSE/SSC) | /root/discover-bctc-urls-browser.py | ssc-curl-adf (FIX-VPS-SSC-CURL-SCRAPER) | OPERATIONAL — GAS Q1/2026 confirmed 17.6 MB PDF, 15 rows parsed, no Playwright. | 2026-06-06 |
 
 ---
 
@@ -39,7 +39,7 @@ Zone: dev-zone (VPS scraper code)
 | plain-requests-open-api | docs/vps-crawl-techniques/plain-requests-open-api.md | vps-prices, cafef-index, sbv-rates | 3–8 MB | Lightest path. 3 sources. No bypass needed. |
 | ua-rotation-rss | docs/vps-crawl-techniques/ua-rotation-rss.md | vn-news-rss | 3–8 MB | 5-UA pool, 3 retries, human delay. 14 RSS sources. |
 | hnx-ajax-post | docs/vps-crawl-techniques/hnx-ajax-post.md | hsx-bctc | 5–10 MB | SSL CERT_NONE + pAction=1 required. HNX/UPCOM tickers only. |
-| ssc-playwright-download | docs/vps-crawl-techniques/ssc-playwright-download.md | hsx-bctc (HOSE) | 300–500 MB | Playwright, currently failing TasksMax. Document-only for now. |
+| ssc-curl-adf | docs/vps-crawl-techniques/ssc-playwright-download.md (superseded) | hsx-bctc (HOSE) | 5–15 MB | urllib + CookieJar. 3-step Oracle ADF: loopback GET → ADF page → PPR search → full-form download. No chromium. |
 | tls-fingerprint-spoof | docs/vps-crawl-techniques/tls-fingerprint-spoof.md | (future CF-protected sources) | 5–15 MB | curl_cffi JA4+ impersonation. 2026 standard for TLS bypass. |
 | cloudflare-js-bypass | docs/vps-crawl-techniques/cloudflare-js-bypass.md | (upgrade path cafef.vn) | 5–15 MB | curl_cffi. Upgrade path if CF IUAM activates. |
 | cloudflare-managed-bypass | docs/vps-crawl-techniques/cloudflare-managed-bypass.md | (future) | 5–80 MB | cloudscraper largely ineffective v3+. cf_clearance replay preferred. |
@@ -54,6 +54,7 @@ Zone: dev-zone (VPS scraper code)
 
 | Date | Source | Technique | Outcome |
 |------|--------|-----------|---------|
+| 2026-06-06T17:30Z | hsx-bctc (HOSE/SSC) | ssc-curl-adf | FIX-VPS-SSC-CURL-SCRAPER DONE — replaced _ssc_newsearch_playwright() (chromium/async) with sync discover_from_ssc_curl(). 3-step Oracle ADF HTTP recipe. GAS Q1/2026: 17.6 MB PDF, 15 rows parsed. No playwright/asyncio. Root-fixes pthread_create EAGAIN crash. |
 | 2026-06-04T17:45Z | vietstock-board-details | aspnet-csrf-double-submit | FIX-I-A DONE — 4 new files committed (5bca5280). vn-board-details.service active. /proxy/board-details live HTTP 200. FPT=1988, VCB=2021, VNM=2022. N/A→null confirmed. Blocks FIX-I-B. |
 | 2026-06-01T09:10Z | vn-news-rss + article-body | is_blocked-fix + plain-requests-open-api | VPS-NEWS-CAFEF-VNECO DONE — P1: fixed is_blocked() false-positive. cafef 0→20 items. P2: article-body-fetcher.py + /proxy/article-body. cafef 5000ch OK. |
 | 2026-05-30T11:50Z | vn-foreign-flow | field-drift-fix | FF-DIAG DONE — root cause: API uses fBVol/fSVolume, script defaulted to fBuyVol/fSellVol (nonexistent → jq→0). All pushes had foreignBuyVol=0/foreignSellVol=0, get_foreign_flow returned "never collected" fleet-wide. Fix: correct defaults in fetch-foreign-flow.sh + run-foreign-flow-debug.sh. Also fixed LOG_ROTATE_BYTES fallback bug (unary operator stderr noise). Live proof: FPT fBVol=110629 fSVolume=148534, HPG fBVol=204669 fSVolume=279789, 103 items HTTP 200. Service restarted armed for Mon 02:00 UTC. Commit 0cbce0b4. |
@@ -105,18 +106,6 @@ Commit: 96446b5d. No Docker rebuild required.
 
 ---
 
-## Key Findings — 2026-06-01 (News/FF Fixes)
-
-**VPS-NEWS**: is_blocked() false-positive on "robot" keyword → cafef-market restored 0→20 items. article-body-fetcher.py endpoint deployed.
-**FF-DIAG**: API field drift (fBVol/fSVolume vs fBuyVol/fSellVol) fixed. Foreign flow now live.
-**LOG_ROTATE_BYTES**: Unset var unary operator fixed (set default first, then override).
-
-## Key Findings — 2026-05-19 (1953a BCTC Patterns)
-
-**SSC zero-padded quarters**: matches_quarter_and_year() now handles "quý 01..04" format. ACB Q1/2026 PASS.
-**fetch-bctc.sh jq error**: Added JSON validation before while loop (silent exit fixed).
-**Repo sync**: discover-bctc-urls-browser.py now tracked in vps-scripts/.
-
 ---
 
 ## Cycle Record — 2026-06-04T12:30Z FIX-G-1 DONE
@@ -147,6 +136,30 @@ Data contract for FIX-G-2:
 - Push: POST /api/push-agm-plan (returns 404 until FIX-G-2 deploys — logged non-fatal)
 - On-demand pull: VPS:8765/proxy/agm-plan?ticker=X (live in vps-proxy-server.js)
 - value_ty = value_raw / 1e9 (tỷ đồng); filter PTName not PTID (PTID drifts: FPT uses ptid=5, ptid=8)
+
+---
+
+## Cycle Record — 2026-06-06T17:30Z FIX-VPS-SSC-CURL-SCRAPER DONE
+
+Task: FIX-VPS-SSC-CURL-SCRAPER — replace `_ssc_newsearch_playwright()` with sync `discover_from_ssc_curl()`.
+Outcome: DONE. Root-fixes pthread_create EAGAIN crash (rtr-bctc-playwright-thread-202606061545).
+
+Changes committed to vps-scripts/discover-bctc-urls-browser.py:
+- DELETED: async `_ssc_newsearch_playwright()`, `import asyncio`, playwright import block (~200L removed)
+- ADDED: sync `discover_from_ssc_curl()` — stdlib urllib only, 3-step Oracle ADF handshake
+- ADDED: `_ssc_make_opener()`, `_ssc_get()`, `_ssc_post()`, `_ssc_get_jsessionid()`, `_ssc_parse_rows()`
+- REWIRED: `discover_from_hose_ssc()`, `discover_from_ssc()`, `discover_bctc_pdf()` step-3 (all 3 call sites)
+- No new pip dependencies — stdlib only (urllib, http.cookiejar, ssl, re)
+
+Key debug finding: PPR response cells use `<span>` inside `<td>`. Closing delimiter must be `</td>` (not first `<`).
+Row index extraction via `id="pt9:t1:{N}:c5"` works. Exchange mapping HOSE=1 confirmed.
+
+Live proof (VPS GAS Q1/2026):
+- 15 result rows parsed (DOM idx 15-29), 2 candidates rank=0 (consolidated) + rank=1
+- Best: idx=16 "Công bố thông tin BCTC hợp nhất Quý 1 năm 2026"
+- Download: 17,616,647 bytes, %PDF magic confirmed
+- Cached: /root/bctc-cache/GAS/20260424-GAS-CBTT-BCTC-Hop-nhat-Quy-1-2026.pdf
+- VPS proxy: http://125.212.251.27:8765/bctc-files/GAS/20260424-GAS-CBTT-BCTC-Hop-nhat-Quy-1-2026.pdf
 
 ---
 
