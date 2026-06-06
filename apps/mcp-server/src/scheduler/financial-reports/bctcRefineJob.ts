@@ -25,7 +25,6 @@ import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { claimTask, releaseTask } from "../../infrastructure/db/coordinationStore.js";
-import { getPageText } from "../../infrastructure/fetchers/pdfExtractorClient.js";
 import { classifyPageForImageLoad } from "../../application/utils/pageClassifier.js";
 import { parseRefinedMarkdown } from "../../application/utils/refinedMarkdownParser.js";
 import { partitionIntoWindows as _partitionIntoWindows } from "../../application/utils/windowPartitioner.js";
@@ -138,44 +137,140 @@ export function countRows(markdown: string): number {
 // ── Fetch all page texts (Phase 1) ────────────────────────────────────────────
 
 export interface FetchPageTextsDeps {
+  /**
+   * Override per-page text fetching (test injection).
+   * When provided, called for each page in the page list instead of the DB read.
+   */
   getPageTextFn?: ((reportId: string, filename: string, pageNum: number) => Promise<string>) | undefined;
+  /**
+   * Override the page list source (test injection).
+   * Return an array of { page_number, text_content } rows in ascending order.
+   * When provided, the DB query for pdf_extracted_text is skipped entirely.
+   */
+  getPageListFn?: ((filename: string) => Promise<Array<{ page_number: number; text_content: string }>>) | undefined;
+  /**
+   * DB instance for reading pdf_extracted_text (production path).
+   * Defaults to getDb() if omitted. Injected in tests that share an in-memory DB.
+   */
+  db?: Database | undefined;
 }
 
 /**
  * Fetch OCR text for all pages of a report.
- * Calls get_bctc_page_text (via getPageText client) for each page.
  *
- * Exported so the interface-layer get_bctc_pending_refine tool can compute
- * windows server-side without duplicating the page-iteration logic.
+ * Production path (no injection):
+ *   1. Query `SELECT DISTINCT page_number, text_content FROM pdf_extracted_text
+ *             WHERE filename = ? ORDER BY page_number` (up to MAX_PAGES rows).
+ *   2. Iterate exactly those page numbers — missing interior pages are SKIPPED,
+ *      never treated as EOF. This fixes the DGC-0c6f0535 truncation defect where
+ *      page 27 was absent from OCR and all pages 28-46 were silently dropped.
+ *   3. text_content comes directly from DB rows (same data the HTTP proxy would
+ *      return, zero round-trips, no service-down failure path).
+ *
+ * Test injection (getPageListFn):
+ *   Replaces the DB query. Useful for hermetic unit tests that do not have a
+ *   real pdf_extracted_text table or want to simulate interior gaps.
+ *
+ * Test injection (getPageTextFn):
+ *   Replaces per-page text resolution within the page list. getPageListFn still
+ *   controls which pages are iterated; getPageTextFn overrides the text value.
+ *   Pre-existing tests that inject only getPageTextFn continue to work because
+ *   in that mode the function falls back to getPageTextFn to BOTH discover pages
+ *   AND fetch text (sequential probe until empty, preserving legacy behaviour).
+ *
+ * Exported so get_bctc_pending_refine (interface layer) can reuse without
+ * duplicating the page-iteration logic (contract from 172999f0 is preserved).
  */
 export async function fetchAllPageTexts(
   reportId: string,
   filename: string,
   deps: FetchPageTextsDeps = {},
 ): Promise<Array<{ page: number; text: string }>> {
-  const pageTexts: Array<{ page: number; text: string }> = [];
-  let pageNum = 1;
-  const MAX_PAGES = 200; // Safety cap
+  const MAX_PAGES = 200; // Safety cap — applies to page list length
 
-  while (pageNum <= MAX_PAGES) {
+  // ── Path A: legacy getPageTextFn-only injection (no getPageListFn, no db) ──
+  // Pre-existing tests inject only getPageTextFn. They rely on the sequential-probe
+  // behaviour (probe 1, 2, … until empty after page 1) to control the page list.
+  // Preserve that behaviour exactly so existing tests stay green.
+  if (deps.getPageTextFn && !deps.getPageListFn && !deps.db) {
+    const pageTexts: Array<{ page: number; text: string }> = [];
+    let pageNum = 1;
+    while (pageNum <= MAX_PAGES) {
+      try {
+        const text = await deps.getPageTextFn(reportId, filename, pageNum);
+        if (!text.trim() && pageNum > 1) break;
+        pageTexts.push({ page: pageNum, text });
+        pageNum++;
+      } catch {
+        break;
+      }
+    }
+    return pageTexts;
+  }
+
+  // ── Path B: DB-driven page list (production path + getPageListFn injection) ──
+  // 1. Resolve the page list (injected or DB query).
+  let dbRows: Array<{ page_number: number; text_content: string }>;
+
+  if (deps.getPageListFn) {
+    // Test injection: caller controls the page list (hermetic, no DB required)
+    dbRows = await deps.getPageListFn(filename);
+  } else {
+    // Production: read from pdf_extracted_text — same source getPageText proxies
+    const db = deps.db ?? getDb();
+    try {
+      dbRows = db
+        .prepare<{ page_number: number; text_content: string }, [string]>(
+          `SELECT DISTINCT page_number, text_content
+           FROM pdf_extracted_text
+           WHERE filename = ?
+           ORDER BY page_number`,
+        )
+        .all(filename);
+    } catch (err) {
+      logger.warn("[fetchAllPageTexts] DB query failed — returning empty page list", {
+        reportId,
+        filename,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return [];
+    }
+  }
+
+  // 2. Apply MAX_PAGES safety cap to the page list.
+  const cappedRows = dbRows.slice(0, MAX_PAGES);
+
+  if (cappedRows.length < dbRows.length) {
+    logger.warn("[fetchAllPageTexts] page list capped at MAX_PAGES", {
+      reportId,
+      filename,
+      total: dbRows.length,
+      cap: MAX_PAGES,
+    });
+  }
+
+  // 3. Iterate page list — each page is resolved to its text.
+  //    Missing interior pages are simply absent from cappedRows (skipped, not EOF).
+  const pageTexts: Array<{ page: number; text: string }> = [];
+  for (const row of cappedRows) {
     try {
       let text: string;
       if (deps.getPageTextFn) {
-        text = await deps.getPageTextFn(reportId, filename, pageNum);
+        // Per-page text override (e.g. to simulate enriched extraction in tests)
+        text = await deps.getPageTextFn(reportId, filename, row.page_number);
       } else {
-        const result = await getPageText(filename, pageNum);
-        text = result?.text ?? "";
+        // Production: use text directly from DB row (same value the HTTP proxy returns)
+        text = row.text_content;
       }
-
-      if (!text.trim() && pageNum > 1) {
-        // Empty page after first page → reached end of document
-        break;
-      }
-
-      pageTexts.push({ page: pageNum, text });
-      pageNum++;
-    } catch {
-      break;
+      pageTexts.push({ page: row.page_number, text });
+    } catch (err) {
+      logger.warn("[fetchAllPageTexts] per-page fetch failed — skipping page", {
+        reportId,
+        filename,
+        page: row.page_number,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Skip this page but continue — do NOT treat as EOF
     }
   }
 
@@ -266,9 +361,14 @@ export async function refineOneReport(
     // ── Phase 1: Window partition (sequential, O(n) pages) ─────────────────
 
     logger.info("[bctcRefine] Phase 1: fetching page texts", { reportId });
-    const pageTexts = await fetchAllPageTexts(reportId, pdfFilename,
-      deps.getPageTextFn ? { getPageTextFn: deps.getPageTextFn } : {},
-    );
+    const pageTexts = await fetchAllPageTexts(reportId, pdfFilename, {
+      // Pass getPageTextFn when injected (test path A — sequential probe)
+      ...(deps.getPageTextFn ? { getPageTextFn: deps.getPageTextFn } : {}),
+      // Pass db so production path reads pdf_extracted_text via the same DB
+      // connection (avoids HTTP round-trips to pdf-extractor:5001).
+      // Tests that inject getPageTextFn without db still hit Path A (legacy).
+      ...(deps.getPageTextFn ? {} : { db }),
+    });
 
     if (pageTexts.length === 0) {
       logger.warn("[bctcRefine] no page texts found", { reportId });

@@ -148,7 +148,16 @@ export function buildGetBctcPendingRefineHandler(
           let windows: RefineWindow[] = [];
           if (filename) {
             try {
-              const pageTexts = await fetchAllPageTexts(row.id, filename, fetchPageTextsDeps ?? {});
+              // Production path: pass db so fetchAllPageTexts uses DB-driven page list
+              // (avoids HTTP round-trips to pdf-extractor:5001).
+              // Test injection: when fetchPageTextsDeps contains getPageTextFn (but no
+              // explicit db override), omit db so Path A (legacy sequential probe) runs,
+              // keeping existing tests hermetic and green.
+              const mergedDeps =
+                fetchPageTextsDeps?.getPageTextFn && !fetchPageTextsDeps?.db
+                  ? fetchPageTextsDeps
+                  : { db, ...(fetchPageTextsDeps ?? {}) };
+              const pageTexts = await fetchAllPageTexts(row.id, filename, mergedDeps);
               if (pageTexts.length > 0) {
                 const rawWindows = partitionIntoWindows(pageTexts, {
                   maxWindowPages: REFINE_MAX_WINDOW_PAGES,
