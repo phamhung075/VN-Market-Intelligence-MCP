@@ -74,10 +74,29 @@ Zone health: WF-2 CAS guard in production path, 18 orchStateStore tests GREEN, t
 
 ---
 
+## c379 · 2026-06-07T00:00Z (FIX-SLA-EXEMPT-NEWS-SBVFX) — COMMITTED d71e3f2e
+
+**Task:** FIX-SLA-EXEMPT-NEWS-SBVFX (S) — extend calendar-aware SLA exemption to news + sbv_fx.
+
+**Root cause:** Signal `sau-news-sla-critical-202606062231` fired CRITICAL at 289 min vs 30-min SLA at 22:31Z (05:31 VN overnight). 9e74cf0a covered price/foreign_flow only; news + sbv_fx had flat SLAs.
+
+**Fix (5 files):**
+- `freshnessSlaChecker.ts`: Added `NEWS_QUIET_HOURS_SOURCES`, `SBV_BUSINESS_DAY_ONLY_SOURCES`, `isVnNewsPublishHours()` (UTC 00:00-14:59 = VN 07:00-21:59; 7 days/week), `isVnSbvBusinessDay()` (delegates to isVnTradingDay), `lastExpectedNewsWindowEnd()`, `minutesSinceLastNewsWindowEnd()`, `lastExpectedSbvWindowEnd()`, `minutesSinceLastSbvWindowEnd()`. `getSlaThreshold()` extended: news quiet-hours and sbv_fx non-business-day use dynamic threshold pattern.
+- `slaStatusTools.ts`: offHours flag covers all 3 source classes; label updated.
+- `vpsProxyTools.ts`: `NEWS_QUIET_HOURS_SERVICES`/`SBV_BUSINESS_DAY_SERVICES` sets; `isStale()` calendar-aware; `formatHealth()` summary updated.
+- `vpsProxyHealthHandler.ts`: `computeStale()` extended; `off_hours` field covers news + sbv.
+- `FIX-SLA-EXEMPT-NEWS-SBVFX.test.ts` (NEW): 31 tests N-1..N-8 + S-1..S-8 GREEN.
+
+**Results:** 52 pass / 0 fail (31 new + 21 W-1..W-10 baseline). tools=164, sched=72 (unchanged).
+
+Zone health: news/sbv_fx false-CRITICAL on overnight/weekend eliminated, dynamic threshold in domain, tsc no new errors | HEALTHY
+
+---
+
 ## Working Memory
 
 ### Baselines (c376)
-- tools=164, sched=72 | ops_rebuild_required: true (EMIT-DARK + FIX-CTG-PDF-MISLINK + FIX-SLA-WEEKEND-AWARE all pending rebuild)
+- tools=164, sched=72 | ops_rebuild_required: true (EMIT-DARK + FIX-CTG-PDF-MISLINK + FIX-SLA-WEEKEND-AWARE + FIX-SLA-EXEMPT-NEWS-SBVFX all pending rebuild)
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
