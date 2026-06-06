@@ -157,13 +157,61 @@ func TestGatewayDirectProxyPath(t *testing.T) {
 ## Handoff Acceptance
 
 This task is complete when:
-- [ ] Initial scope measurement completed (alias-only feasibility confirmed)
-- [ ] Route aliases added to mcp-server server.ts (additive only)
-- [ ] Existing routing tests pass
-- [ ] Manual verification: `GET :3000/api/news/headlines?source=cafef` returns 200
-- [ ] Gateway test: `GET :4000/mcp/api/news/headlines?source=cafef` returns data (direct proxy)
-- [ ] Rerouter test (if applicable): existing tests still pass
-- [ ] AC-1 through AC-5 verified
-- [ ] If scope overrun: escalate to PM, document decision, defer if needed
-- [ ] api-gateway container REBUILT (dev-team ops)
-- [ ] mcp-server container REBUILT if modified (dev-team ops)
+- [x] Initial scope measurement completed (alias-only feasibility confirmed)
+- [x] Route aliases added to mcp-server server.ts (additive only)
+- [x] Existing routing tests pass
+- [x] Manual verification: `GET :3000/api/news/headlines?source=cafef` returns 200
+- [x] Gateway test: `GET :4000/mcp/api/news/headlines?source=cafef` returns data (direct proxy)
+- [x] Rerouter test (if applicable): existing tests still pass
+- [x] AC-1 through AC-5 verified
+- [x] If scope overrun: escalate to PM, document decision, defer if needed — N/A (completed in scope)
+- [x] api-gateway container REBUILT (dev-team ops) — AC-4: gateway NOT rebuilt intentionally (alias-only = no gateway change)
+- [x] mcp-server container REBUILT if modified (dev-team ops) — sha256:835858c91f51 verified
+
+---
+
+## [QA] Review Record
+**QA cycle:** 200  
+**Date:** 2026-06-07T00:10Z  
+**Verdict:** APPROVED  
+**Commit:** 11128be6
+
+### Raw-Diff Check (AC-additive-only)
+Diff of `apps/mcp-server/src/interface/mcp/server.ts` in 11128be6: +24 lines added only, zero lines removed. Three insertion blocks at lines 1972, 1994, 2010 — all add new `if (method === "GET" && pathname ===` guards using existing handler references (`handleKinhDichMarket`, `handleKinhDichReading`, `handlePriceHistory`, `handlePriceBatch`, `handleNewsHeadlines`). No /mcp/api/* routes removed. Zero apps/api-gateway files in commit diff.
+
+### AC Verification
+- **AC-1:** `GET :4000/mcp/api/news/headlines?source=cafef` → HTTP 200 (direct proxy path, gateway strips /mcp). PASS.
+- **AC-2:** `GET :4000/news/reuters/headlines` → HTTP 200 (rerouter path intact). PASS.
+- **AC-3:** `go test ./... 10 packages PASS` (including pkg/primitive/not-deployed-rerouter cached). PASS.
+- **AC-4:** Zero apps/api-gateway files in commit 11128be6 diff. Gateway NOT rebuilt (intentional — alias-only, no Go change). PASS.
+- **AC-5:** mcp-server container sha256:835858c91f51 — `docker inspect` running container image == `docker images` latest build (built 5 minutes ago). PASS.
+
+### Live Probes (all 5 alias paths)
+All probed independently via both :3000 (direct) and :4000 (gateway):
+
+| Path | :3000 | :4000 | Note |
+|---|---|---|---|
+| GET /api/news/headlines?source=cafef | 200 | 200 | Fresh articles returned |
+| GET /mcp/api/news/headlines?source=cafef | 200 | 200 | Legacy path still works |
+| GET /api/kinh-dich/market | 200 | 200 | Handler-level response |
+| GET /api/kinh-dich/reading/01 | 404 (handler) | 404 (handler) | Handler "no reading for 01" — routing reached, same behavior as /mcp/api/ path |
+| GET /api/prices/history?code=FPT | 200 | 200 | 23 OHLCV records returned |
+| GET /api/prices/batch?tickers=FPT | 200 | 200 | Batch response |
+
+Note on /api/kinh-dich/reading/01: HTTP 404 is from the handler itself (`{"error":"no_reading","detail":"No Kinh Dich reading for 01..."}`) — identical response on /mcp/api/ path. Routing is correct; no readings exist for dummy ticker "01". Not a routing failure.
+
+### Test Suite
+- F-1 fetch-status tests: **21/21 PASS** (regression: none)
+- 087-server-wiring.test.ts: **10/10 PASS**
+- Go `go test ./... 10 packages PASS` (including 15 rerouter tests via cached)
+- Full bun test suite: Bun runtime C++ crash (known Bun v1.3.13 OOM/crash on full corpus) — pre-existing, not caused by F-4 (zero new test files in diff). F-1 targeted suite clean.
+- `bun tsc --noEmit`: 5 pre-existing errors in 1980-f2-canon-schema.test.ts + tasksMdJanitorJob.ts — confirmed pre-existing from cycle-198. Zero new errors in F-4 diff scope.
+
+### DDD Scan
+`server.ts` is interface layer importing from infrastructure — consistent with existing pattern, same as cycle-198 PASS verdict.
+
+### Security Scan
+mock-guard: **PASS** — no fabricated-data patterns. No process.env, no secrets, no hardcoded credentials in F-4 additions.
+
+### Summary
+F-4 additive alias-only approach executed correctly. All 5 route aliases registered without removing any /mcp/api/* routes. Both proxy paths (direct + rerouter) now functional. All 5 AC verified. F-4 REVIEW→DONE in orch-state.

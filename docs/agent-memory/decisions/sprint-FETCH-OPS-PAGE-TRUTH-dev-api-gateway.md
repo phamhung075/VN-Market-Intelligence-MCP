@@ -52,3 +52,14 @@ Total: ~45 min well within 4h timebox.
 
 - R-6 (duality boundary): alias-only is fully backward-compatible. Rerouter target paths (`/mcp/api/...`) still work because `/mcp/api/` routes remain registered.
 - No Go code touched → no gateway rebuild required → api-gateway container untouched.
+
+---
+
+## [QA] Decision Entry — F-4 Verdict
+**Agent:** qa  
+**Date:** 2026-06-07  
+**Verdict:** APPROVED
+
+what-considered: Raw-diff additive-only confirmed (24 lines added, 0 removed). All 5 alias paths live-probed on :3000 and :4000. F-1 21/21 PASS, Go 10 packages PASS, 087-wiring 10/10 PASS. mock-guard PASS. tsc 5 pre-existing errors (not in F-4 diff). AC-1..AC-5 all met. Container image sha256:835858c91f51 running == latest build.
+
+why-change: No change from plan — only path: all checks green. Alias-only approach correct and safe.
