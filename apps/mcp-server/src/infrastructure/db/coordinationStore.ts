@@ -430,22 +430,49 @@ export function claimTask(input: ClaimInput): ClaimResult {
  * another agent's lock (the WHERE clause rejects it). owner_session is kept in
  * the row for diagnostics; it is updated on each successful heartbeat so the
  * diagnostic field stays current.
+ *
+ * Legacy path (owner_agent absent): match on owner_session instead (deprecated —
+ * calls without owner_agent remain zombies after a server restart; migration path
+ * is to add owner_agent to all callers). owner_session must be provided by the
+ * tool layer when falling back to this path.
  */
-export function heartbeatTask(task_id: string, owner_agent: string): HeartbeatResult {
+export function heartbeatTask(
+  task_id: string,
+  owner_agent?: string,
+  owner_session?: string,
+): HeartbeatResult {
   const db = getCoordinationDb();
   if (!db) return { ok: false, expires_at: 0 };
 
   try {
-    const result = db.prepare(`
-      UPDATE task_locks
-      SET
-        heartbeat_at  = unixepoch('now'),
-        expires_at    = unixepoch('now') + ttl_seconds
-      WHERE
-        task_id     = ?
-        AND owner_agent = ?
-        AND expires_at >= unixepoch('now')
-    `).run(task_id, owner_agent);
+    let result;
+
+    if (owner_agent) {
+      // New path (FIX-CWK-LEADER-LOCK-REBIND): match on stable owner_agent.
+      result = db.prepare(`
+        UPDATE task_locks
+        SET
+          heartbeat_at  = unixepoch('now'),
+          expires_at    = unixepoch('now') + ttl_seconds
+        WHERE
+          task_id     = ?
+          AND owner_agent = ?
+          AND expires_at >= unixepoch('now')
+      `).run(task_id, owner_agent);
+    } else {
+      // Legacy path: match on owner_session. Goes zombie after server restart.
+      // Deprecated — callers should migrate to passing owner_agent.
+      result = db.prepare(`
+        UPDATE task_locks
+        SET
+          heartbeat_at  = unixepoch('now'),
+          expires_at    = unixepoch('now') + ttl_seconds
+        WHERE
+          task_id      = ?
+          AND owner_session = ?
+          AND expires_at >= unixepoch('now')
+      `).run(task_id, owner_session ?? "");
+    }
 
     if (result.changes === 0) {
       return { ok: false, expires_at: 0 };
@@ -476,17 +503,39 @@ export function heartbeatTask(task_id: string, owner_agent: string): HeartbeatRe
  * (different owner_agent) this DELETE affects 0 rows → ok=false, signaling the
  * original agent that its lock is gone. changes()=0 also covers: lock already
  * expired and GC'd, or lock never existed — both acceptable (not an error).
+ *
+ * Legacy path (owner_agent absent): match on owner_session instead (deprecated —
+ * calls without owner_agent remain zombies after a server restart; migration path
+ * is to add owner_agent to all callers). owner_session must be provided by the
+ * tool layer when falling back to this path.
  */
-export function releaseTask(task_id: string, owner_agent: string): ReleaseResult {
+export function releaseTask(
+  task_id: string,
+  owner_agent?: string,
+  owner_session?: string,
+): ReleaseResult {
   const db = getCoordinationDb();
   if (!db) return { ok: false };
 
   try {
-    const result = db.prepare(`
-      DELETE FROM task_locks
-      WHERE task_id    = ?
-        AND owner_agent = ?
-    `).run(task_id, owner_agent);
+    let result;
+
+    if (owner_agent) {
+      // New path (FIX-CWK-LEADER-LOCK-REBIND): match on stable owner_agent.
+      result = db.prepare(`
+        DELETE FROM task_locks
+        WHERE task_id    = ?
+          AND owner_agent = ?
+      `).run(task_id, owner_agent);
+    } else {
+      // Legacy path: match on owner_session. Goes zombie after server restart.
+      // Deprecated — callers should migrate to passing owner_agent.
+      result = db.prepare(`
+        DELETE FROM task_locks
+        WHERE task_id      = ?
+          AND owner_session = ?
+      `).run(task_id, owner_session ?? "");
+    }
 
     return { ok: result.changes === 1 };
   } catch (err) {

@@ -144,12 +144,17 @@ export function registerCoordinationTools(server: McpServer): void {
       owner_agent: z
         .string()
         .min(1)
+        .optional()
         .describe(
-          "Agent name that claimed the lock. Must match the owner_agent from the original task_claim call.",
+          "RECOMMENDED — pass your agent name to survive server restarts. " +
+            "Legacy calls without it match on the claim-time server session and go zombie after a restart " +
+            "(deprecated migration path). Must match the owner_agent from the original task_claim call.",
         ),
     },
     async ({ task_id, owner_agent }) => {
-      const result = heartbeatTask(task_id, owner_agent);
+      // New path: owner_agent provided → stable across server restarts.
+      // Legacy path: absent → fall back to this process's SERVER_SESSION_ID (zombie after restart).
+      const result = heartbeatTask(task_id, owner_agent, SERVER_SESSION_ID);
       return {
         content: [
           {
@@ -177,12 +182,17 @@ export function registerCoordinationTools(server: McpServer): void {
       owner_agent: z
         .string()
         .min(1)
+        .optional()
         .describe(
-          "Agent name that claimed the lock. Must match the owner_agent from the original task_claim call.",
+          "RECOMMENDED — pass your agent name to survive server restarts. " +
+            "Legacy calls without it match on the claim-time server session and go zombie after a restart " +
+            "(deprecated migration path). Must match the owner_agent from the original task_claim call.",
         ),
     },
     async ({ task_id, owner_agent }) => {
-      const result = releaseTask(task_id, owner_agent);
+      // New path: owner_agent provided → stable across server restarts.
+      // Legacy path: absent → fall back to this process's SERVER_SESSION_ID (zombie after restart).
+      const result = releaseTask(task_id, owner_agent, SERVER_SESSION_ID);
       return {
         content: [
           {

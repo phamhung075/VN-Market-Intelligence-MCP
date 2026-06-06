@@ -563,3 +563,101 @@ describe("AC-8: FIX-CWK-LEADER-LOCK-REBIND — survive server restart", () => {
     expect(row!["owner_session"]).toBe("pid-9999-ts-1748100000000");
   });
 });
+
+// ---------------------------------------------------------------------------
+// AC-9: Legacy path (no owner_agent) — backward-compat + zombie documentation
+//
+// Cases:
+//   (5) legacy heartbeat/release WITHOUT owner_agent, same session → ok=true
+//       (old behavior preserved: session-match path still works within same process)
+//   (6) legacy call without owner_agent after session change → ok=false
+//       (zombie path intentionally not silently fixed — documents the deprecated path)
+// ---------------------------------------------------------------------------
+
+describe("AC-9: Legacy path — no owner_agent, session-match fallback", () => {
+  it("(5) legacy heartbeat without owner_agent, same session → ok=true (old behavior preserved)", () => {
+    const taskId = "cowork-slot:legacy-hb:20260606T000000Z";
+    const session = "pid-8888-ts-1748200000000";
+
+    claimTask({
+      task_id: taskId,
+      task_kind: "cowork-slot",
+      owner_session: session,
+      owner_agent: "cowork-team",
+      ttl_seconds: 900,
+    });
+
+    // Call without owner_agent, but pass session as owner_session fallback
+    // (simulates: tool layer receives no owner_agent from caller → passes SERVER_SESSION_ID)
+    const hbResult = heartbeatTask(taskId, undefined, session);
+    expect(hbResult.ok).toBe(true);
+    expect(hbResult.expires_at).toBeGreaterThan(0);
+  });
+
+  it("(5) legacy release without owner_agent, same session → ok=true (old behavior preserved)", () => {
+    const taskId = "cowork-slot:legacy-rel:20260606T000000Z";
+    const session = "pid-8888-ts-1748200000000";
+
+    claimTask({
+      task_id: taskId,
+      task_kind: "cowork-slot",
+      owner_session: session,
+      owner_agent: "cowork-team",
+      ttl_seconds: 900,
+    });
+
+    // Call without owner_agent, same session → should release
+    const relResult = releaseTask(taskId, undefined, session);
+    expect(relResult.ok).toBe(true);
+
+    const row = getRow(testDb, taskId);
+    expect(row).toBeNull(); // lock released
+  });
+
+  it("(6) legacy heartbeat without owner_agent, session changed → ok=false (zombie — intentional)", () => {
+    const taskId = "cowork-slot:legacy-zombie-hb:20260606T000000Z";
+    const oldSession = "pid-1111-ts-1748000000000";
+    const newSession = "pid-2222-ts-1748100000000"; // different process after restart
+
+    claimTask({
+      task_id: taskId,
+      task_kind: "cowork-slot",
+      owner_session: oldSession,
+      owner_agent: "cowork-team",
+      ttl_seconds: 900,
+    });
+
+    // New server session tries to heartbeat without owner_agent → session mismatch → zombie
+    const hbResult = heartbeatTask(taskId, undefined, newSession);
+    expect(hbResult.ok).toBe(false);
+    expect(hbResult.expires_at).toBe(0);
+
+    // Lock still held by old session — lock is now a zombie (no one can renew it without owner_agent)
+    const row = getRow(testDb, taskId);
+    expect(row).not.toBeNull();
+    expect(row!["owner_session"]).toBe(oldSession);
+  });
+
+  it("(6) legacy release without owner_agent, session changed → ok=false (zombie — intentional)", () => {
+    const taskId = "cowork-slot:legacy-zombie-rel:20260606T000000Z";
+    const oldSession = "pid-1111-ts-1748000000000";
+    const newSession = "pid-2222-ts-1748100000000"; // different process after restart
+
+    claimTask({
+      task_id: taskId,
+      task_kind: "cowork-slot",
+      owner_session: oldSession,
+      owner_agent: "cowork-team",
+      ttl_seconds: 900,
+    });
+
+    // New server session tries to release without owner_agent → session mismatch → zombie
+    const relResult = releaseTask(taskId, undefined, newSession);
+    expect(relResult.ok).toBe(false);
+
+    // Lock still exists, not released — must wait for TTL or use task_force_release_orphan
+    const row = getRow(testDb, taskId);
+    expect(row).not.toBeNull();
+    expect(row!["owner_agent"]).toBe("cowork-team");
+  });
+});
