@@ -3,6 +3,32 @@ agent: system-auditor
 session_date: 2026-06-06
 ---
 
+## c031 · 2026-06-06T07:08:15Z
+### Audit Run Tier-1 (07:08 UTC 2026-06-06)
+- Tier: 1 (env) | Services: 6 checked | Crons: 78+ polled
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
+
+### Container Status (Intended Runtime Set — SSOT system-map.json) — All PASS
+- mcp-server: Up 9h, restart_count=0, memory=68.26% ✓
+- api-gateway: Up 3d ✓ | frontend: Up 9h ✓ | macro-indicators: Up 20h ✓
+- pdf-extractor: Up 2d ✓ | mcp-gateway: Up 10d ✓
+
+### Health Endpoints — All PASS
+- mcp-server :3000 /health → 200 (toolCount:162 ok) ✓
+- api-gateway :4000 /health → 200 (mcp:ok, macro:ok) ✓
+- macro-indicators :5004 /health → 200 ✓
+- pdf-extractor :5001 /health → 200 (ocr_source_ok:true) ✓
+
+### Cron Health & Circuit Breaker Status
+- 78+ scheduled jobs: baseline 97–100% success_rate, all recent fires nominal ✓
+- Circuit breaker: all 16 sources [OK] (0 open/half-open) ✓
+- EPIPE errors (30m window): 0 ✓
+
+### Market Status
+- VN market CLOSED (Saturday 07:08 UTC) — weekend idle by design
+- Escalation lock: bctc-ctg-attachment-fetch-escalation-c026 held (router-verified, expires 2026-06-07T00:06:31Z)
+
 ## c030 · 2026-06-06T06:38:15Z
 ### Audit Run Tier-1 (06:38 UTC 2026-06-06)
 - Tier: 1 (env) | Services: 6 checked | Crons: 78+ polled
@@ -63,31 +89,4 @@ Tool reported 5 SLA breaches; applying DAY-CLASS & earnings-window rules:
 
 ### Market Status
 - VN market CLOSED (Saturday 06:31 UTC) — price/flow idle by design until Mon 02:00Z
-- Escalation lock: bctc-ctg-attachment-fetch-escalation-c026 held (router-verified, expires 2026-06-07T00:06:31Z)
-
-## c028 · 2026-06-06T06:08:30Z
-### Audit Run Tier-1 (06:08 UTC 2026-06-06)
-- Tier: 1 (env) | Services: 6 checked | Crons: 80+ polled
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Container Status (Intended Runtime Set — SSOT system-map.json) — All PASS
-- mcp-server: Up 8h, restart_count=0, memory=60.97% ✓
-- api-gateway: Up 3d ✓ | frontend: Up 8h ✓ | macro-indicators: Up 19h ✓
-- pdf-extractor: Up 2d ✓ | mcp-gateway: Up 10d ✓
-
-### Health Endpoints — All PASS
-- mcp-server :3000 /health → 200 (toolCount:162 ok) ✓
-- api-gateway :4000 /health → 200 (mcp:ok, macro:ok) ✓
-- macro-indicators :5004 /health → 200 ✓
-- pdf-extractor :5001 /health → 200 (ocr_source_ok:true) ✓
-- frontend :3001 → 404 (UI-only, no health endpoint) ✓
-
-### Cron Health & Circuit Breaker
-- 80+ scheduled jobs: baseline 100% success_rate, all recent fires nominal ✓
-- Circuit breaker: all 16 sources [OK] (0 open/half-open) ✓
-- EPIPE errors (30m window): 0 ✓
-
-### Market Status
-- VN market CLOSED (Saturday 06:08 UTC) — weekend idle by design
 - Escalation lock: bctc-ctg-attachment-fetch-escalation-c026 held (router-verified, expires 2026-06-07T00:06:31Z)
