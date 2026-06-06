@@ -1,47 +1,39 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-06-05 16:05 UTC | **Sprint:** DATA-SERVE-INTEGRITY (DSI)
+**Last updated:** 2026-06-06 04:04 UTC | **Sprint:** DATA-SERVE-INTEGRITY (DSI)
 
-## Cycle (16:05 UTC, EOD) — 2026-06-05
+## Cycle (04:04 UTC, offhours) — 2026-06-06
 
-**EOD Summary (market closed 08:59 UTC)**
-- VN-Index: 1,838.90 (+0.40%)
-- Stocks monitored: 39 | Anomalies detected: 3 (>1.5σ) | Ledger entries: 4 written
-- Regime: NEUTRAL | Macro: USD strengthening, Brent -1.49%, Gold -2.77%
+**Offhours Scan (market closed, unchanged prices)**
+- Stocks monitored: 39 | Sweep forced: 1 (PLX) | Anomalies: 0
+- Regime: NEUTRAL | Macro: Brent -2.13σ, Gold -2.88σ (safe-haven), USD/VND 26124 (bearish)
 
-**Key Signals**
-1. VNH +12.50% (800→900) — agriculture sector strength, domestic agri-export demand (HIGH CONVICTION)
-2. VIC +3.40% (200→207K) — Vingroup conglomerate resilience, VinaCapital affirmation (MEDIUM)
-3. GOLD -2.77% (4.88σ) — USD strength repricing safe havens (MACRO WARNING)
+**Signals**
+- Emitted: 0 (offhours duplicate guard suppressed VNH +12.50% refire)
+- Suppressed: 1 (VNH — same closing price 900 VND, signal already posted 2026-06-05 08:00)
 
-**Ledger Updates**
-- VNH.md: +12.50% surge, hold-monitor signal
-- VIC.md: +3.40% recovery, Vingroup thesis holds
-- FPT.md: FPT+NVIDIA AI partnership narrative (buy-on-dip setup despite -1.45% daily)
-- HPG.md: Leadership insider sell (6.6M shares) contradicts Q1 bullish (REDUCE signal)
+**Sweep Coverage**
+- PLX rotated in (40h stale, last_covered_market_watcher: 2026-06-04 12:04)
 
-**Price Action Notes**
-- Real estate bifurcation: VIC/VHM +1-3% (premium/conglomerate), NVL -2.17% (value pressure from HCM residential supply)
-- Tech: FPT -1.45% despite bullish NVIDIA catalyst (dip-buy setup)
-- Steel: HPG -0.84% on insider selling; sector -2.71% (BDI stable but no structural support)
-- Banking: ACB/BID/VPB flat-to-down; VCB -0.80% (macro headwind, carry-trade unwind risk)
-
-**Signal File**
-- Written: docs/signals/price_anomaly_20260605T1605.json
-- Status: Ready for chef (unified-agent) consumption at 08:37 UTC next cycle
+**Macro Summary**
+- Investment Clock CORE_VN tier 8 (equities favored)
+- Carry regime NEUTRAL (1.38pp spread)
+- Equity yield FAIRLY_VALUED vs deposits (+1.83pp)
+- Brent, USD/VND neutral-to-bearish for import-heavy sectors
 
 ## Cycle History
 | Date | Time | Mode | Stocks | Signals | Status |
 |---|---|---|---|---|---|
 | 2026-06-05 | 12:01 | prepost | 39 | 0 emitted (1 suppressed) | complete |
 | 2026-06-05 | 16:05 | EOD | 39 | 3 anomalies | complete |
+| 2026-06-06 | 04:04 | offhours | 40 | 0 emitted (1 suppressed) | complete |
 
 ## Metrics
 | Field | Value |
 |---|---|
-| cycles_run_today | 2 |
+| cycles_run_today | 3 |
 | items_monitored | 39 |
-| signals_emitted_eod | 1 file (3 anomalies) |
-| signals_suppressed | 1 (VNH dup guard) |
-| ledger_entries_written | 4 |
-| coverage_state_updated | no |
+| sweep_tickers_forced | 1 (PLX) |
+| signals_emitted_cycle | 0 |
+| signals_suppressed | 1 (VNH dup) |
+| coverage_state_updated | yes |
 | exit_status | complete |
