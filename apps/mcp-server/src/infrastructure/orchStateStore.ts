@@ -46,25 +46,50 @@ export interface OrchStateSignalQueue {
   archive: Array<{ id: string; ts: string; summary: string; status: string }>;
 }
 
+/**
+ * Canonical task row schema for docs/data/orch/orch-state.json.
+ *
+ * Authority: This interface is the machine-readable SSOT for task structure.
+ * Human-readable reference: docs/standards/task-schema.md
+ *
+ * Mandatory fields: id, title, owner, status, zone, created_at
+ * Optional fields: task_id (legacy), status_note, closed_at, sprint, priority, size, type, files, depends, note, commit
+ *
+ * Closed status enum (no freeform variants):
+ *   TODO | IN_PROGRESS | REVIEW | DONE | BLOCKED | CANCELLED | DEFERRED
+ *
+ * Banned fields (never written): desc, label, summary, resolved_id, task_id (as write target)
+ *
+ * Post-F1B migration, all .task_board.done[] and .task_board.active_sprints[].tasks[] rows use
+ * 'id' as the canonical field (not 'task_id'). The projectTask() function coalesces
+ * id || task_id for backward-compat reading.
+ */
 export interface OrchStateTaskBoardTask {
-  /** Canonical key — SSOT uses task_id. */
-  task_id: string;
+  /** Canonical task ID — mandatory post-F1B migration. */
+  id: string;
   /**
-   * Legacy/drift fallback key — some hand-authored sprints used `id` instead of
-   * `task_id`. Canonical is task_id; id is tolerated at the serve layer only.
-   * Do NOT write new data with `id` — write task_id.
+   * Legacy-tolerance only — some pre-F1B hand-authored rows used task_id.
+   * Read-path coalesce: prefer id, fall back to task_id.
+   * NEVER write new data with task_id — write id.
    */
-  id?: string;
+  task_id?: string;
   title: string;
-  type: string;
+  type?: string;
   owner: string;
-  depends: string | null;
-  status: string;
+  depends?: string | string[] | null;
+  status: "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "BLOCKED" | "CANCELLED" | "DEFERRED" | string;
   size?: string | null;
   zone?: string;
   note?: string;
   label?: string;
-  closed_at?: string;
+  // New canonical optional fields (task-schema.md v1.0)
+  status_note?: string;    // freeform status detail (max ~500 chars)
+  created_at?: string;     // ISO 8601 UTC — when task was created
+  closed_at?: string;      // ISO 8601 UTC — when task reached terminal status
+  sprint?: string;         // sprint ID this task belongs to
+  priority?: string;       // high / medium / low
+  files?: string[];        // file paths touched by this task
+  commit?: string;         // git commit hash(es) delivering the task
 }
 
 export interface OrchStateTaskBoardSprint {
@@ -79,6 +104,8 @@ export interface OrchStateTaskBoard {
   _updated_at: string;
   _updated_by: string;
   active_sprints: OrchStateTaskBoardSprint[];
+  /** Completed tasks — moved here from active_sprints after sprint closure. Post-F1B canonical. */
+  done?: OrchStateTaskBoardTask[];
   backlog: Array<{ id: string; summary: string; priority: string }>;
   archive: OrchStateTaskBoardTask[];
 }

@@ -54,16 +54,15 @@ const FIXTURE_STATE: OrchState = {
         opened_at: "2026-06-05",
         tasks: [
           {
-            task_id: "ARCH-ORCH-F1",
+            id: "ARCH-ORCH-F1",
             title: "decision-journal SKILL.md + flow injection",
             type: "sprint-task",
             owner: "agent-father",
-            depends: null,
             status: "DONE",
             zone: "docs/agents/",
           },
           {
-            task_id: "ARCH-ORCH-F2",
+            id: "ARCH-ORCH-F2",
             title: "Journal parse + DTO extension",
             type: "sprint-task",
             owner: "dev-mcp-server",
@@ -72,7 +71,7 @@ const FIXTURE_STATE: OrchState = {
             zone: "apps/mcp-server/",
           },
           {
-            task_id: "ARCH-ORCH-F3",
+            id: "ARCH-ORCH-F3",
             title: "Remix accordion UI",
             type: "sprint-task",
             owner: "dev-frontend",
@@ -292,13 +291,14 @@ describe("T3 — Regression: existing fields preserved exactly", () => {
     }
   });
 
-  it("T3-c: task_board counts unchanged", () => {
+  it("T3-c: task_board counts correct (done sourced from task_board.done[], not active_sprint DONE count)", () => {
     const dir = makeTmpDir("t3c");
     try {
       const dto = buildOrchestrationDto(FIXTURE_STATE, dir);
-      // DONE=1, IN_PROGRESS=1, TODO=1 (→ backlog)
-      expect(dto.task_board.counts.done).toBe(1);
+      // counts.done = task_board.done[].length; fixture has no done[] → 0
+      expect(dto.task_board.counts.done).toBe(0);
       expect(dto.task_board.counts.in_progress).toBe(1);
+      // TODO=1 → backlog; the DONE task in active_sprints is NOT in counts.done
       expect(dto.task_board.counts.backlog).toBe(1);
     } finally {
       teardown(dir);

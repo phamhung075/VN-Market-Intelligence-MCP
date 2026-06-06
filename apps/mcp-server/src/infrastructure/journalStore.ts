@@ -23,7 +23,7 @@
  * near-zero when no agent is writing (typical hit rate ~100%).
  */
 
-import { statSync, readFileSync } from "node:fs";
+import { statSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -274,8 +274,15 @@ function loadSprintFile(filePath: string, sprintId: string): StepDto[] {
 /**
  * Load and aggregate decision journal steps for a set of sprint IDs.
  *
- * Sprint IDs are deduplicated internally (Set). Missing journal files yield
- * empty steps without throwing (ENOENT guard — AC-F2-4).
+ * Sprint IDs are deduplicated internally (Set). For each sprint ID, ALL
+ * matching files are read: both the legacy single-file `sprint-${id}.md`
+ * and per-agent files `sprint-${id}-<agent-id>.md` (F1A pattern).
+ *
+ * Missing journal files or missing directory yield empty steps without
+ * throwing (ENOENT guard — AC-F2-4).
+ *
+ * Glob pattern: readdirSync().filter(name.startsWith(`sprint-${id}`) && name.endsWith(".md"))
+ * Sorted alphabetically so parse order is deterministic.
  *
  * @param sprintIds    - Array of sprint IDs (may contain duplicates)
  * @param decisionsDir - Absolute path to the directory holding sprint-*.md files
@@ -290,10 +297,27 @@ export function getDecisionsForSprints(
 
   const allSteps: StepDto[] = [];
 
+  // List all files in the directory once (reuse across sprint IDs)
+  let dirEntries: string[] = [];
+  try {
+    dirEntries = readdirSync(decisionsDir);
+  } catch {
+    // Directory doesn't exist or no permissions — return empty
+    return buildDecisionsDto([]);
+  }
+
   for (const id of uniqueIds) {
-    const filePath = join(decisionsDir, `sprint-${id}.md`);
-    const steps = loadSprintFile(filePath, id);
-    allSteps.push(...steps);
+    // Glob: match sprint-${id}.md AND sprint-${id}-*.md (per-agent suffix)
+    const prefix = `sprint-${id}`;
+    const matchingFiles = dirEntries
+      .filter((name) => name.startsWith(prefix) && name.endsWith(".md"))
+      .sort(); // deterministic parse order
+
+    for (const fileName of matchingFiles) {
+      const filePath = join(decisionsDir, fileName);
+      const steps = loadSprintFile(filePath, id);
+      allSteps.push(...steps);
+    }
   }
 
   return buildDecisionsDto(allSteps);

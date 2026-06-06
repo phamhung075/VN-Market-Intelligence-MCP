@@ -58,13 +58,23 @@ export interface OrchHeadDto {
   updated_by: string;
 }
 
-/** Safe task row — id, title, status, owner, zone only */
+/** Safe task row — canonical fields from task-schema.md v1.0 */
 export interface OrchTaskDto {
   id: string;
   title: string;
-  status: string;
-  owner: string;
-  zone: string;
+  owner?: string;
+  status?: string;
+  zone?: string;
+  type?: string;
+  size?: string;
+  priority?: string;
+  status_note?: string;      // freeform status detail
+  created_at?: string;       // ISO 8601 — when task was created
+  closed_at?: string;        // ISO 8601 — when task reached terminal status
+  depends?: string[];
+  note?: string;
+  files?: string[];
+  commit?: string;
 }
 
 /** Safe signal row — HC-2: payload_ref ONLY, never raw payload */
@@ -80,9 +90,18 @@ export interface OrchSignalRowDto {
   payload_ref: string | null;
 }
 
+export interface OrchSprintDto {
+  id: string;
+  label?: string;
+  status?: string;
+  tasks: OrchTaskDto[];
+}
+
 export interface OrchTaskBoardDto {
   counts: { done: number; in_progress: number; backlog: number };
   tasks: OrchTaskDto[];
+  /** Completed task list — sourced from task_board.done[] (post-F1B canonical). */
+  done: OrchTaskDto[];
 }
 
 export interface OrchSprintGoalDto {
@@ -141,21 +160,37 @@ function projectHead(raw: Record<string, unknown>): OrchHeadDto {
 }
 
 function projectTask(task: OrchStateTaskBoardTask): OrchTaskDto {
-  // Prefer canonical task_id; fall back to legacy `id` key (schema-drift tolerance).
-  // task_id+id are both typed in OrchStateTaskBoardTask — no magic strings.
-  const resolvedId = str(task.task_id, "") || str(task.id, "");
+  // Post-F1B: prefer canonical `id`; fall back to legacy `task_id` (read-path coalesce).
+  // Both are typed in OrchStateTaskBoardTask — no magic strings.
+  const resolvedId = str(task.id, "") || str(task.task_id, "");
 
   // Title fallback: if title is blank, show the resolved id so the dashboard
   // row is never silently empty — operator can at least identify the task.
   const resolvedTitle = str(task.title, "") || resolvedId;
 
-  return {
-    id:     resolvedId,
-    title:  resolvedTitle,
-    status: str(task.status, ""),
-    owner:  str(task.owner, ""),
-    zone:   str(task.zone, ""),
-  };
+  // Normalize depends — can be string | string[] | null in raw data
+  let depends: string[] | undefined;
+  if (Array.isArray(task.depends)) {
+    depends = task.depends.map((d) => str(d));
+  } else if (typeof task.depends === "string" && task.depends.length > 0) {
+    depends = [task.depends];
+  }
+
+  const dto: OrchTaskDto = { id: resolvedId, title: resolvedTitle };
+  if (task.owner)      dto.owner       = str(task.owner);
+  if (task.status)     dto.status      = str(task.status);
+  if (task.zone)       dto.zone        = str(task.zone);
+  if (task.type)       dto.type        = str(task.type);
+  if (task.size)       dto.size        = str(task.size);
+  if (task.priority)   dto.priority    = str(task.priority);
+  if (task.status_note) dto.status_note = str(task.status_note);
+  if (task.created_at) dto.created_at  = str(task.created_at);
+  if (task.closed_at)  dto.closed_at   = str(task.closed_at);
+  if (depends)         dto.depends     = depends;
+  if (task.note)       dto.note        = str(task.note);
+  if (Array.isArray(task.files)) dto.files = task.files;
+  if (task.commit)     dto.commit      = str(task.commit);
+  return dto;
 }
 
 function projectSignalRow(row: OrchStateSignalRow): OrchSignalRowDto {
@@ -241,6 +276,16 @@ export function buildOrchestrationDto(
     (sprint.tasks ?? []).map(projectTask)
   );
 
+  // Project done[] from task_board.done (post-F1B canonical source)
+  const doneTasks: OrchTaskDto[] = (taskBoard.done ?? []).flatMap((task) => {
+    // Flatten any nested container rows (defense-in-depth)
+    const nested = (task as unknown as Record<string, unknown>)["children"];
+    if (Array.isArray(nested)) {
+      return (nested as OrchStateTaskBoardTask[]).map(projectTask);
+    }
+    return [projectTask(task)];
+  });
+
   // Signal rows — safe projection
   const signalRows: OrchSignalRowDto[] = (state.signal_queue?.rows ?? []).map(projectSignalRow);
 
@@ -281,12 +326,17 @@ export function buildOrchestrationDto(
     decisions = EMPTY_DECISIONS;
   }
 
+  // counts.done: sourced from task_board.done[].length (post-F1B canonical)
+  // counts.inProgress + backlog: still from active_sprint task statuses
+  const doneCount = doneTasks.length;
+
   return {
     last_updated_iso: newestUpdated(state),
     head:             projectHead(state.head as Record<string, unknown>),
     task_board: {
-      counts: { done: counts.done, in_progress: counts.inProgress, backlog: counts.backlog },
+      counts: { done: doneCount, in_progress: counts.inProgress, backlog: counts.backlog },
       tasks,
+      done: doneTasks,
     },
     signal_queue: { rows: signalRows },
     sprint_goal:  projectSprintGoal(state.sprint_goal as Record<string, unknown> | undefined),
