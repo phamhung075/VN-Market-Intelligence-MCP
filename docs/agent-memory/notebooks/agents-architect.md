@@ -10,16 +10,6 @@ Full workflow-fluidity audit of the multi-agent pipeline: 7 dimensions (handoff 
 
 ---
 
-## 2026-06-05T16:31:02Z
-
-**Brief:** `docs/architecture-briefs/2026-06-05-agent-decision-journal.md`
-
-Decision Journal (sprint footprint) cross-cutting protocol: per-sprint accumulator at `docs/agent-memory/decisions/sprint-<id>.md`; shared `.claude/skills/decision-journal/SKILL.md` (create + inject via cowork-end-cycle); terminal-only rule (reasoning/WHY → journal, terminal → RETURN+caveman). Entry format: 12L STEP block (what-done/what-considered/why-decision/why-change). 600L sprint cap, archive on sprint-close. Clear boundary: journal=WHY-trail, notebook=cross-cycle-memory, handoff=role-payload. 7 files to create/edit for agent-father — no operator greenlight needed.
-
-**Signal dropped:** `docs/signals/agent-decision-journal-20260605T163102Z.json` → agent-father
-
----
-
 ## 2026-06-05T16:37:44Z
 
 **Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md` (v1)
@@ -37,3 +27,13 @@ EMIT-DARK-RECURRING: H1 (stale session) + H3 (early-exit) both ruled out by post
 Option B (d6738df3) live-falsified: 18:01:29Z FIRE wrote signal JSON with resolved placeholder values but pressure-state.json still absent. Smoking gun: `"matched_slots": ["bctc-analyst-slot-2"]` in live signal vs literal `[<slot_ids from MATCHES>]` in telemetry.md template — proves LLM never ran bash, only narrated. Corrected root cause: cowork dispatcher is a pure narration engine; bash fences are never executed; LLM writes the signal file via Write-tool using in-context values and skips the pressure-state heredoc because its inputs (signal_backlog/dev_queue_depth/host_headroom_mb) require real shell. Three code fixes all failed same class. Fix: Option C — add emit_pressure_state MCP tool (server-side shell computation + atomic file write); replace bash fence in telemetry.md with call_tool instruction (LLM demonstrably executes call_tool). Option E (retirement) documented as contingency only.
 
 **Signals dropped:** `docs/signals/emit-dark-option-c-20260605T180900Z.json` → developer; `docs/signals/emit-dark-telemetry-patch-20260605T180900Z.json` → agent-father (gated on tool deploy)
+
+---
+
+## 2026-06-06T18:46:34Z
+
+**Brief:** `docs/architecture-briefs/2026-06-06-headroom-context-compression.md`
+
+Headroom context compression integration design: evaluated 4 candidate points; selected gateway-side SmartCrusher middleware inside apps/mcp-server as primary (non-ML, zero new containers, fail-open, TypeScript-native). Rejected CLI wrap (fleet blast radius), MCP server mode (tool surface growth), and ML Kompress model (16GB host memory risk). Defined financial data exemption list (get_bctc_full, get_bctc_refined, FX, price history — passthrough required for numeric integrity). 3-phase rollout: Phase 1 = 3 high-volume non-financial tools (get_cycle_bootstrap, get_market_snapshot, fetch_news_batch) with golden-output validation gate; Phase 2 = full allowed list + CacheAligner; Phase 3 = metrics dashboard. Owner: dev-mcp-server. P3 improvement-proposal signal dropped to po.
+
+**Signal dropped:** `docs/signals/headroom-context-compression-20260606T184634Z.json` → po

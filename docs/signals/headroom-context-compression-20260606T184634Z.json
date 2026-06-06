@@ -1,0 +1,11 @@
+{
+  "id": "arc-20260606T184634Z",
+  "ts": "2026-06-06T18:46:34Z",
+  "from": "agents-architect",
+  "to": "po",
+  "type": "improvement-proposal",
+  "summary": "Headroom SmartCrusher integration in mcp-server tool response layer — 30-95% token reduction on 3 high-volume tools, Phase 1 pilot, P3",
+  "severity": "LOW",
+  "status": "NEW",
+  "payload_ref": "docs/architecture-briefs/2026-06-06-headroom-context-compression.md"
+}
