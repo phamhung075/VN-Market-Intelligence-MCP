@@ -141,10 +141,11 @@ describe("task_claim tool contract", () => {
 
 // ---------------------------------------------------------------------------
 // task_heartbeat — tool contract verification
+// FIX-CWK-LEADER-LOCK-REBIND: heartbeat now takes owner_agent (stable) not owner_session
 // ---------------------------------------------------------------------------
 
 describe("task_heartbeat tool contract", () => {
-  it("returns {ok: true, expires_at: <number>} on successful heartbeat", () => {
+  it("returns {ok: true, expires_at: <number>} on successful heartbeat by owner_agent", () => {
     claimTask({
       task_id: "task:hb-ok",
       task_kind: "sprint-task",
@@ -153,7 +154,8 @@ describe("task_heartbeat tool contract", () => {
       ttl_seconds: 3600,
     });
 
-    const result = heartbeatTask("task:hb-ok", "sess-hb");
+    // Pass owner_agent (stable across restarts) not owner_session
+    const result = heartbeatTask("task:hb-ok", "dev-mcp-server");
 
     // Tool contract: {ok: boolean, expires_at: number}
     expect(result.ok).toBe(true);
@@ -161,7 +163,7 @@ describe("task_heartbeat tool contract", () => {
     expect(result.expires_at).toBeGreaterThan(0);
   });
 
-  it("returns {ok: false, expires_at: 0} when session mismatch", () => {
+  it("returns {ok: false, expires_at: 0} when different owner_agent tries to heartbeat", () => {
     claimTask({
       task_id: "task:hb-stolen",
       task_kind: "sprint-task",
@@ -170,7 +172,8 @@ describe("task_heartbeat tool contract", () => {
       ttl_seconds: 3600,
     });
 
-    const result = heartbeatTask("task:hb-stolen", "sess-different");
+    // Different agent — anti-theft must reject this
+    const result = heartbeatTask("task:hb-stolen", "cowork-team");
     expect(result.ok).toBe(false);
     expect(result.expires_at).toBe(0);
   });
@@ -178,10 +181,11 @@ describe("task_heartbeat tool contract", () => {
 
 // ---------------------------------------------------------------------------
 // task_release — tool contract verification
+// FIX-CWK-LEADER-LOCK-REBIND: release now takes owner_agent (stable) not owner_session
 // ---------------------------------------------------------------------------
 
 describe("task_release tool contract", () => {
-  it("returns {ok: true} when owner releases their lock", () => {
+  it("returns {ok: true} when owner releases their lock by owner_agent", () => {
     claimTask({
       task_id: "task:release-ok",
       task_kind: "sprint-task",
@@ -190,11 +194,12 @@ describe("task_release tool contract", () => {
       ttl_seconds: 3600,
     });
 
-    const result = releaseTask("task:release-ok", "sess-release");
+    // Pass owner_agent (stable across restarts) not owner_session
+    const result = releaseTask("task:release-ok", "dev-mcp-server");
     expect(result).toMatchObject({ ok: true });
   });
 
-  it("returns {ok: false} when wrong session tries to release", () => {
+  it("returns {ok: false} when different owner_agent tries to release (anti-theft)", () => {
     claimTask({
       task_id: "task:release-denied",
       task_kind: "sprint-task",
@@ -203,7 +208,8 @@ describe("task_release tool contract", () => {
       ttl_seconds: 3600,
     });
 
-    const result = releaseTask("task:release-denied", "sess-impostor");
+    // Different agent — anti-theft must reject this
+    const result = releaseTask("task:release-denied", "cowork-team");
     expect(result).toMatchObject({ ok: false });
   });
 });
@@ -275,16 +281,16 @@ describe("Full cycle: claim → heartbeat → release", () => {
     });
     expect(competingClaim.claimed).toBe(false);
 
-    // 3. Heartbeat by owner succeeds
-    const hb = heartbeatTask(taskId, "sess-cycle");
+    // 3. Heartbeat by owner_agent succeeds (FIX: uses owner_agent not owner_session)
+    const hb = heartbeatTask(taskId, "dev-mcp-server");
     expect(hb.ok).toBe(true);
 
-    // 4. Heartbeat by competitor fails
-    const hb2 = heartbeatTask(taskId, "sess-other");
+    // 4. Heartbeat by competitor agent fails (anti-theft preserved)
+    const hb2 = heartbeatTask(taskId, "dev-api-gateway");
     expect(hb2.ok).toBe(false);
 
-    // 5. Release by owner
-    const rel = releaseTask(taskId, "sess-cycle");
+    // 5. Release by owner_agent (FIX: uses owner_agent not owner_session)
+    const rel = releaseTask(taskId, "dev-mcp-server");
     expect(rel.ok).toBe(true);
 
     // 6. Re-claim after release — should succeed

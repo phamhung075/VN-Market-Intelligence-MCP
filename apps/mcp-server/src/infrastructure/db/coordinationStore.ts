@@ -419,10 +419,19 @@ export function claimTask(input: ClaimInput): ClaimResult {
 /**
  * Renew a held lock's TTL (brief §4 heartbeat protocol).
  *
- * The AND owner_session predicate means a stolen lock silently affects 0 rows,
- * which the agent detects as a stolen-lock signal (ok=false).
+ * FIX-CWK-LEADER-LOCK-REBIND (Option A): match on owner_agent + task_id instead
+ * of owner_session + task_id. owner_session is derived from process pid + boot
+ * timestamp and changes on every mcp-server restart, causing pre-restart locks
+ * to become zombies (heartbeat → ok=false). owner_agent is stable across restarts
+ * (it is the agent's logical name, e.g. "cowork-team"), so same-agent callers
+ * can renew their own lock across server restarts without requiring a steal cycle.
+ *
+ * Anti-theft property preserved: a DIFFERENT owner_agent still cannot renew
+ * another agent's lock (the WHERE clause rejects it). owner_session is kept in
+ * the row for diagnostics; it is updated on each successful heartbeat so the
+ * diagnostic field stays current.
  */
-export function heartbeatTask(task_id: string, owner_session: string): HeartbeatResult {
+export function heartbeatTask(task_id: string, owner_agent: string): HeartbeatResult {
   const db = getCoordinationDb();
   if (!db) return { ok: false, expires_at: 0 };
 
@@ -430,12 +439,13 @@ export function heartbeatTask(task_id: string, owner_session: string): Heartbeat
     const result = db.prepare(`
       UPDATE task_locks
       SET
-        heartbeat_at = unixepoch('now'),
-        expires_at   = unixepoch('now') + ttl_seconds
+        heartbeat_at  = unixepoch('now'),
+        expires_at    = unixepoch('now') + ttl_seconds
       WHERE
-        task_id       = ?
-        AND owner_session = ?
-    `).run(task_id, owner_session);
+        task_id     = ?
+        AND owner_agent = ?
+        AND expires_at >= unixepoch('now')
+    `).run(task_id, owner_agent);
 
     if (result.changes === 0) {
       return { ok: false, expires_at: 0 };
@@ -455,19 +465,28 @@ export function heartbeatTask(task_id: string, owner_session: string): Heartbeat
 /**
  * Release a held lock (brief §5 release protocol).
  *
- * The AND owner_session predicate prevents cross-session accidental release.
- * changes()=0 means lock was already stolen or expired — not an error.
+ * FIX-CWK-LEADER-LOCK-REBIND (Option A): match on owner_agent + task_id instead
+ * of owner_session + task_id. owner_session changes on every mcp-server restart
+ * causing pre-restart locks to become zombies (release → ok=false). owner_agent
+ * is stable across restarts so same-agent callers can release their own lock
+ * after a server restart without waiting for TTL expiry.
+ *
+ * Anti-theft property preserved: a DIFFERENT owner_agent cannot release another
+ * agent's lock. Stolen-lock detection: if the lock was stolen by another agent
+ * (different owner_agent) this DELETE affects 0 rows → ok=false, signaling the
+ * original agent that its lock is gone. changes()=0 also covers: lock already
+ * expired and GC'd, or lock never existed — both acceptable (not an error).
  */
-export function releaseTask(task_id: string, owner_session: string): ReleaseResult {
+export function releaseTask(task_id: string, owner_agent: string): ReleaseResult {
   const db = getCoordinationDb();
   if (!db) return { ok: false };
 
   try {
     const result = db.prepare(`
       DELETE FROM task_locks
-      WHERE task_id      = ?
-        AND owner_session = ?
-    `).run(task_id, owner_session);
+      WHERE task_id    = ?
+        AND owner_agent = ?
+    `).run(task_id, owner_agent);
 
     return { ok: result.changes === 1 };
   } catch (err) {

@@ -145,8 +145,8 @@ describe("DV-P2-1: Single-winner leader lock (AC-P2-5-1)", () => {
     });
     expect(claim1.claimed).toBe(true);
 
-    // Simulate leader exit via release
-    releaseTask("cowork-leader", "session-A");
+    // Simulate leader exit via release (FIX-CWK-LEADER-LOCK-REBIND: pass owner_agent not owner_session)
+    releaseTask("cowork-leader", "cowork-dispatcher");
 
     // Standby can now claim
     const claim2 = claimTask({

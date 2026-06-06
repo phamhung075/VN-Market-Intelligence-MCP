@@ -130,19 +130,26 @@ export function registerCoordinationTools(server: McpServer): void {
   // ── task_heartbeat ──────────────────────────────────────────────────────
   server.tool(
     "task_heartbeat",
-    "Renew a held lock to prove the owning session is still alive. " +
+    "Renew a held lock to prove the owning agent is still alive. " +
       "Call every 5 minutes during long-running tasks. " +
       "A missed heartbeat after ttl_seconds allows the next claimer to steal the lock. " +
-      "Returns ok=false if the lock was not found or was stolen by another session (crash recovery). " +
-      "If ok=false mid-task: commit safe partial state, send BUG telegram, EXIT — do not fight the steal.",
+      "Returns ok=false if the lock was not found, already expired, or was stolen by another agent (crash recovery). " +
+      "If ok=false mid-task: commit safe partial state, send BUG telegram, EXIT — do not fight the steal. " +
+      "FIX-CWK-LEADER-LOCK-REBIND: match is now on owner_agent (stable across server restarts) not server session id.",
     {
       task_id: z
         .string()
         .min(1)
         .describe("The task_id of the lock to heartbeat. Must match what was passed to task_claim."),
+      owner_agent: z
+        .string()
+        .min(1)
+        .describe(
+          "Agent name that claimed the lock. Must match the owner_agent from the original task_claim call.",
+        ),
     },
-    async ({ task_id }) => {
-      const result = heartbeatTask(task_id, SERVER_SESSION_ID);
+    async ({ task_id, owner_agent }) => {
+      const result = heartbeatTask(task_id, owner_agent);
       return {
         content: [
           {
@@ -158,17 +165,24 @@ export function registerCoordinationTools(server: McpServer): void {
   server.tool(
     "task_release",
     "Release a coordination lock on task completion. " +
-      "Scoped to the calling session — cannot release another session's lock. " +
+      "Scoped to the calling owner_agent — cannot release another agent's lock. " +
       "Returns ok=false if the lock was not found or already expired/stolen (not an error — " +
-      "TTL expiry is the fallback recovery). Safe to call in finally blocks.",
+      "TTL expiry is the fallback recovery). Safe to call in finally blocks. " +
+      "FIX-CWK-LEADER-LOCK-REBIND: match is now on owner_agent (stable across server restarts) not server session id.",
     {
       task_id: z
         .string()
         .min(1)
         .describe("The task_id of the lock to release. Must match what was passed to task_claim."),
+      owner_agent: z
+        .string()
+        .min(1)
+        .describe(
+          "Agent name that claimed the lock. Must match the owner_agent from the original task_claim call.",
+        ),
     },
-    async ({ task_id }) => {
-      const result = releaseTask(task_id, SERVER_SESSION_ID);
+    async ({ task_id, owner_agent }) => {
+      const result = releaseTask(task_id, owner_agent);
       return {
         content: [
           {

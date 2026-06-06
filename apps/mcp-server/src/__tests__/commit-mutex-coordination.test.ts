@@ -178,8 +178,8 @@ describe("AC-3: release → re-claim cycle works for commit-mutex", () => {
     });
     expect(r1.claimed).toBe(true);
 
-    // A releases
-    const rel = releaseTask("commit-mutex:main", "session-A");
+    // A releases (FIX-CWK-LEADER-LOCK-REBIND: pass owner_agent not owner_session)
+    const rel = releaseTask("commit-mutex:main", "dev-mcp-server");
     expect(rel.ok).toBe(true);
 
     // B claims after release
