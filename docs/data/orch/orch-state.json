@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first fire ENRICHED — bctc-analyst escalation-guard lock bctc-ctg-attachment-fetch-escalation-c026 held (claimed 06-06T00:06Z ttl24h) = attachment-fetch problem already flagged; if get_bctc_full(CTG) withheld ~09:30Z escalate citing this lock. D4 reports 3050/3051 dispositioned (monitoring/wontfix) — both locks raw-verified as by-design esc guards (esc-datacov:FPT ttl 8d cooldown), no board row needed. NEW occ#1 WATCH: peer auditor wrote 2 distinct D4 findings under ONE row id sau-d4-202606060300 (dup-id) — PO route if recurs. Carry: MW-offhours ~04:00Z baseline (real RETURN + zero dup price_anomaly); Monday ~02:15Z price-push resume check (Fri close 08:59Z last push, weekend idle by design); c019 confab occ#1; false-0-commits untested until T3; auditors c018-c022 all clean under guard; operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first fire ENRICHED — bctc-analyst escalation-guard lock bctc-ctg-attachment-fetch-escalation-c026 held (claimed 06-06T00:06Z ttl24h) = attachment-fetch problem already flagged; if get_bctc_full(CTG) withheld ~09:30Z escalate citing this lock. RESOLVED: MW-offhours ~04:00Z baseline VERIFIED (c024 + router raw: 04:04Z cycle complete, 0 emitted, 1 VNH dup suppressed — guard works). Tick 042037Z: cowork-fire 04:04Z double-FIRE FYI archived (8h gatherer gap healthy recovery, 0 errors); board all-terminal (156 rows, 16 terminal variants); peer cowork drained the 2 auditor guard-lock false-positive rows independently — convergent with D4 disposition. Carry: Monday ~02:15Z price-push resume check (Fri close 08:59Z last push, weekend idle by design); c019 confab occ#1; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1 (self-report said 2, file had 3 — corrected in c024 brief); false-0-commits untested until T3 (daily 02:00 local cron); auditors c018-c024 all clean under guard; operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T03:24:19+00:00",
+    "updated_at": "2026-06-06T04:22:15+00:00",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
