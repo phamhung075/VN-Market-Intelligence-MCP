@@ -5,10 +5,10 @@
   "_updated_by": "po",
   "head": {
     "active_task_id": null,
-    "next_action": "NEXT-TICK: (1) PO triage 2 NEW rows: rtr-bctc-playwright-thread (P2, dev-vps-crawls — curl-based SSC replacement aligns with no-Chromium VPS policy) + rtr-sla-weekend-aware (P3, dev-mcp-server — calendar-aware SLA, kills weekend false-CRITICAL class). (2) WATCH-2 refine Option-C first live proof: slot-2 (240min cadence, last 14:04:30Z) should refire ~18:04Z TODAY else slot-1 2026-06-07 09:00Z — verify bun:sqlite readonly /app/data/market.db: DGC 0c6f0535 +<=7 bctc_refined_units rows, PENDING->PARTIAL (NOT DONE), ACB fea19bae 27 rows INTACT; pre-Cowork-refresh failure = EXPECTED (operator still owes refresh prompt paste). (3) FU-COWORK-OWNER-AGENT-ADOPT NARROWED to P3-cleanup: heartbeat recipe b787cd69 working all ticks since 14:18Z; close after one cowork cycle survives a server restart. (4) Sunday 03:00-05:00Z zone-scans tomorrow -> Monday triage. (5) Monday ~02:15Z price-push resume check DE-RISKED: ops-vps-fetch proved both services healthy-sleeping by design (dow/hour gate), resume is automatic — check is now confirm-only. TICK 152046Z: VPS staleness incident CLOSED — 3 of 4 auditor CRITICALs were false (weekend-gate x2, between-push blip x1; PO live-probe falsified sbv, router raw-confirmed), bctc root-caused pre-existing Playwright pthread exhaustion (restarted, transport proven, 10/10 SKIP = empty queue not fetch failure); socat band-aid retired RESOLVED-SUPERSEDED c081cad4 (plist never installed — router belief corrected; api-gateway unless-stopped = reboot-safe, no FU needed); auditor c047 ACCEPTED 7/7 streak. LESSON: outage-window hypothesis was wrong for ALL 4 legs — SSH-level recon beats correlation; SLA monitor needs market-calendar awareness before its CRITICALs are trustworthy on weekends. Carries: threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); operator owes /cron-cowork-team refresh; auditor route_to/type row-schema nits occ#1; c047 prune-before-cap occ#1 (pruned c044 at 143L vs 200L cap — oldest-first so benign, watch for carry-referenced section loss).",
+    "next_action": "NEXT-TICK: (1) DRAIN docs/signals/dev-vps-crawls-2026-06-06T16-45-00Z.json (recon-complete, HIGH) -> PO -> dispatch dev-vps-crawls impl FIX: replace _ssc_newsearch_playwright() in vps-scripts/discover-bctc-urls-browser.py with discover_from_ssc_curl() per recon doc Implementation Notes (docs/vps-sources/ssc-bctc-newsearch/recon.md); closes rtr-bctc-playwright-thread when a live SSC discovery cycle succeeds chromium-free. (2) WATCH-2 refine Option-C first live proof: slot-2 (240min cadence, last 14:04:30Z) refires ~18:04Z — the 18:07Z+ tick verifies bun:sqlite readonly /app/data/market.db: DGC 0c6f0535 +<=7 bctc_refined_units rows, PENDING->PARTIAL (NOT DONE), ACB fea19bae 27 rows INTACT; pre-Cowork-refresh failure = EXPECTED (operator owes refresh paste). (3) WEEKEND LIVE-PROOF WATCH: Sunday auditor cycles must show ZERO prices/foreign_flow stale-CRITICALs (FIX-SLA-WEEKEND-AWARE deployed 16:46Z); any such CRITICAL = fix miss, reopen. (4) Sunday 03:00-05:00Z zone-scans -> zone_health_report signals Monday triage. (5) Monday ~02:15Z price-push resume confirm-only. (6) FU-COWORK-OWNER-AGENT-ADOPT P3-cleanup: close after one cowork cycle survives a server restart. TICK 162040Z: PO batch 2/2 SHIPPED same tick — SPIKE-VPS-SSC-CURL-RECIPE e8be4480 (VIABLE-CURL, on-VPS PDF proof, no-Chromium policy fix unblocked) + FIX-SLA-WEEKEND-AWARE 9e74cf0a deployed+live-proven Saturday; FU-SNAP-CRON-BOUNDARY CLOSED (PO: e2b5354c live-validated at 16:04:30Z fire, elapsed 3h58m vs 240min pre-fix starvation — logged as closing observation, no further action); auditor c050 ACCEPTED 10/10 streak (retention-3 confirmed correct per notebook-write SKILL — prune-before-cap carry RETIRED as router misdiagnosis, lesson: read governing SSOT before escalating occurrence counts). Carries: threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); operator owes /cron-cowork-team refresh + Cowork refine refresh paste; auditor route_to/type row-schema nits occ#1; dev-mcp-server tools=164-vs-live-162 claim nit occ#1; auditor mem trend 37->41->44% benign-watch.",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T15:36:20Z",
+    "updated_at": "2026-06-06T16:51:51Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -16,8 +16,8 @@
   "dashboard_section_cache": {
     "section_name": "po",
     "start_line": 8,
-    "last_mtime": "2026-06-01T08:09:00Z",
-    "last_linecount": 224,
+    "last_mtime": "2026-06-06T16:22:41Z",
+    "last_linecount": 2,
     "po": {
       "section_name": "po",
       "last_mtime": "2026-06-02T04:11:40Z",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T15:36:20Z",
+    "_updated_at": "2026-06-06T16:51:51Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,20 @@
     "archive": [],
     "done": [
       {
+        "task_id": "SPIKE-VPS-SSC-CURL-RECIPE",
+        "status": "DONE",
+        "commit": "e8be4480",
+        "done_at": "2026-06-06T16:51:51Z",
+        "deploy_note": "recon-only spike (no VPS service mutation): SSC NewsSearch ADF endpoint fully reverse-engineered to plain HTTP, VIABLE-CURL, proof PDFs downloaded on-VPS; anti_bot none; follow-up impl signal emitted to dev-vps-crawls"
+      },
+      {
+        "task_id": "FIX-SLA-WEEKEND-AWARE",
+        "status": "DONE",
+        "commit": "9e74cf0a",
+        "done_at": "2026-06-06T16:51:51Z",
+        "deploy_note": "DEPLOYED 16:46Z scoped rebuild IMAGE-MATCH 075579957fed; live-proven Saturday on both layers (endpoint off_hours:true + monitor dynamic threshold 1938min); weekend false-CRITICAL class dead at the recording layer"
+      },
+      {
         "task_id": "UNBLOCK-VPS-FETCH-RESUME",
         "status": "DONE",
         "commit": "45641b7a",
@@ -3778,184 +3792,9 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T15:36:20Z",
+    "_updated_at": "2026-06-06T16:51:51Z",
     "_updated_by": "dev-team",
     "rows": [
-      {
-        "id": "rtr-refine-finalize-test-fail-202606061045",
-        "ts": "2026-06-06T10:55:07Z",
-        "severity": "MEDIUM",
-        "source": "dev-team-router",
-        "route_to": "po",
-        "status": "RESOLVED",
-        "summary": "Pre-existing failing unit test DV-push-4 in apps/mcp-server/src/__tests__/AR-refined-units-idempotency.test.ts (push_tool_pathway AC-MCP-OPTY-6: all-DONE -> finalize DONE -> table_rows count = sum of window rows). finalize_bctc_refine BLOCK-4 sets validation_status=failed error_count=1 in the fixture. NOT introduced by 86038f04 (file untouched, fails identically on parent). Matters because refine artifacts start flowing at 13:00Z fires and finalize is their downstream; a broken finalize-count invariant could corrupt or block refined-unit persistence. Triage: root-cause whether test or finalize logic drifted.",
-        "payload_ref": null,
-        "resolved_at": "2026-06-06T12:27:47Z",
-        "resolved_by": "dev-team",
-        "disposition": "ROOT-CAUSED (SPIKE_201 7986337d) + FIXED 36998888: DV-push-4 fixture predated BEQ-7 section guard — production finalize logic CORRECT, fixture drifted; fixture now earns DONE via 3 sectioned windows (balance/income/cashflow), test GREEN. PART-2 (report 3052 pending-refine contract): already fixed by 172999f0, stale flow L43 comment only. CAVEAT: spike 13:00Z-safe verdict premise (windows=[] no-op) FALSIFIED by router raw probe — 7 reports all text_status=COMPLETE with populated windows; fire is live-path. Remaining 4 test fails in same file = separate defect, new row rtr-refine-idem-test-lock-isolation."
-      },
-      {
-        "id": "cwk-leader-lock-zombie-202606061105",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "system_issue",
-        "severity": "MEDIUM",
-        "status": "RESOLVED",
-        "created_at": "2026-06-06T11:03:53Z",
-        "summary": "cowork-leader task lock goes ZOMBIE after every mcp-server restart: task_heartbeat and task_release both validate the claim row owner_session (pid-1-ts-<server-boot-ms>), so a restart orphans the lock — un-renewable, un-releasable, only recoverable by TTL-expiry steal (up to 30min gap). Observed twice 2026-06-06: restart ~09:37Z (heartbeat ok:false 09:47, steal-claim 10:02 stolen:true) and restart ~10:48-11:02Z (heartbeat+release ok:false 11:02, lock expires 11:17:58Z, steal at 11:32 tick). emit_pressure_state unaffected. Fix for dev-mcp-server: match heartbeat/release on owner_agent (or owner_agent+task_id) instead of server-boot session, OR re-bind surviving claims on boot. Repro: task_claim cowork-slot, restart container, task_heartbeat → {ok:false,expires_at:0}.",
-        "payload_ref": null,
-        "resolved_at": "2026-06-06T12:27:47Z",
-        "resolved_by": "dev-team",
-        "disposition": "CODE SHIPPED d4d2e453 + amend 04123334 (dev-mcp-server): heartbeat/release match owner_agent+task_id when provided (survives restart); owner_agent OPTIONAL w/ legacy owner_session fallback (router caught required-param would break 20+ bare task_release callers fleet-wide); anti-theft + TTL-steal intact; 27+11 tests green incl 8 new cases. DEPLOY PENDING: rebuild deferred past 13:00Z cowork fires — next tick MUST dispatch ops scoped rebuild (docker compose build mcp-server && up -d --no-deps mcp-server) then caller flows can adopt owner_agent param incrementally."
-      },
-      {
-        "id": "sau-host-enospc-202606061108",
-        "ts": "2026-06-06T11:08:59Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "HOST ENOSPC CRITICAL: /private/tmp/claude-501 exhausted — blocks health checks",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "disposition": "ROUTER-VERIFIED FALSE DIAGNOSIS + REAL OUTAGE RESTORED. ENOSPC claim false: df / = 33Gi free (84%), /private/tmp/claude-501 = 4.0K — auditor misread its own bash-sandbox error as host disk-full (kin feedback_auditor_false_positive_destructive). The underlying symptom (curl :4000 exit 7) WAS real: 10:53:54Z mcp-server recreate destroyed 4 intended peers (docker events: destroy frontend/pdf-extractor/api-gateway/rag-service 10:53:54-57Z). Ops restored 11:14Z scoped up -d --no-build --no-deps; router raw-verified 6/6 Up healthy, :4000/:5004/:5001/:3001 all 200, restart_count=0. Follow-ups carved as rtr-ops-rebuild-destroys-peers + rtr-auditor-confab-occ4.",
-        "resolved_at": "2026-06-06T11:16:46Z",
-        "resolved_by": "router"
-      },
-      {
-        "id": "rtr-ops-rebuild-destroys-peers-202606061115",
-        "ts": "2026-06-06T11:16:46Z",
-        "severity": "HIGH",
-        "source": "router",
-        "route_to": "po",
-        "type": "system_issue",
-        "status": "RESOLVED",
-        "summary": "Ops mcp-server rebuild-recreate at 10:53:54Z destroyed 4 intended peer containers (docker events 1780743234-37: destroy frontend, pdf-extractor, api-gateway, rag-service; macro-indicators also vanished from docker ps -a) — full-project down pattern, since compose config defines all 12 services (no orphans possible). ~21min outage of api-gateway/frontend/macro-indicators/pdf-extractor until router-dispatched ops restore 11:14Z. STANDING FOOTGUN: ops flow generic restart recipe `docker-compose down && docker-compose up -d` (docs/agents/ops/flow/docker.md L21, main.md L64, cloudflare-mcp-diagnosis.md L43/L54) — down kills all peers; blind up -d mass-starts the FULL 12-service fleet = host-panic risk on 16GB cap (project_host_memory_panic). Durable fix: replace generic recipe with scoped `docker compose up -d --no-deps [--build] <svc>`; forbid bare down / --remove-orphans / --force-recreate without explicit service args in all ops flows (agent-father edit, agent-md-factory discipline).",
-        "payload_ref": null,
-        "resolved_at": "2026-06-06T12:27:47Z",
-        "resolved_by": "dev-team",
-        "disposition": "SHIPPED bd41a6b3 (agent-father): FORBIDDEN block SSOT in ops docker.md; 9 footgun instances fixed across 5 ops files (incl 2 the row did not list: cloudflare-mcp-recovery.md, init.md); all recipes now scoped `docker compose up -d --no-deps [--build] <svc>`; post-restart host_runtime_set count check added. Router grep-verified: residual matches are FORBIDDEN-doc/symptom text only."
-      },
-      {
-        "id": "rtr-auditor-confab-occ4-202606061115",
-        "ts": "2026-06-06T11:16:46Z",
-        "severity": "HIGH",
-        "source": "router",
-        "route_to": "po",
-        "type": "agent_quality",
-        "status": "RESOLVED",
-        "summary": "Auditor confabulation occ#4 — RAW-CITE triple gate (incl return-channel extension 406520fa) failed again. (a) c038 Tier-1 10:58:42Z notebook+return cited api-gateway Up 3d + /health 200, frontend/macro-indicators/pdf-extractor Up — ALL destroyed at 10:53:54Z per docker events; cites were fabricated/copied from c037, audit reported HEALTHY during an active 4-service outage. (b) c040 11:08Z detected the real :4000 unreachability but fabricated root cause HOST ENOSPC from its own bash-sandbox error text; df showed 33Gi free, claude-501=4.0K; queued a false CRITICAL with destructive-adjacent remediation advice (restart Claude Code / rm -rf). Pattern: gate catches missing cites but not FABRICATED cites. Durable fix candidates: (1) auditor must pipe `docker ps --format` raw output verbatim into a fenced block in the notebook (machine-diffable by router), (2) router spot-probe one cited value per accept, (3) forbid carrying any container/health line from a previous section.",
-        "payload_ref": null,
-        "resolved_at": "2026-06-06T12:27:47Z",
-        "resolved_by": "dev-team",
-        "disposition": "ARCHITECT-RETHINK (recurring-bug rule, occ#4 + 2 failed gate fixes) brief dfec1c98: root cause = gates target evidence FORMAT not PROVENANCE. IMPLEMENTED 3d602df7 (agent-father): probe.sh deterministic read-only evidence collector + RAW-PROBE verbatim fence mandate + anti-carry rule + sandbox-error quarantine clause (TOOL-UNAVAILABLE never infra-CRITICAL — closes c040 class); Tier-1 extracted to tier1-probe.md (main.md 562->500L). Probe path bug router-caught (frontend /health 404 false-RED) fixed 004e7813 — probe re-run 6/6 OK. First live proof = next auditor fire c041."
-      },
-      {
-        "id": "rtr-refine-idem-test-lock-isolation-202606061226",
-        "ts": "2026-06-06T12:27:47Z",
-        "severity": "MEDIUM",
-        "source": "router",
-        "route_to": "po",
-        "type": "system_issue",
-        "status": "RESOLVED",
-        "summary": "AR-refined-units-idempotency.test.ts Scenarios A/B/C + no-accumulation (4 cases) fail pre-existing: bctcRefineJob inside the test logs [bctcRefine] skip — task already claimed, holder owner_agent=refine-orchestrator owner_session=pid-10914 claimed_at=1780747797 — a task-claim lock persists across test scenarios, i.e. the coordination store the job uses is NOT isolated to the per-test injected db (shared/live store or module-level singleton). Test-isolation defect; may also indicate bctcRefineJob couples to a global coordination DB rather than injected deps. Triage: dev-mcp-server — make bctcRefineJob take coordination store via injection (or test must reset/expire locks between scenarios); separate from DV-push-4 fixture fix 36998888 which is GREEN.",
-        "payload_ref": null,
-        "resolved_at": "2026-06-06T13:10:45Z",
-        "resolved_by": "dev-team",
-        "disposition": "SHIPPED 368b7bad (dev-mcp-server, PO batch FIX-REFINE-IDEM-LOCK-ISO): two-part root cause — (1) test isolation: beforeEach now _resetCoordinationDbState + ensureCoordinationTable + _injectCoordinationDb(:memory: db), afterEach reset+close; (2) BONUS PRODUCTION BUG router-verified: bctcRefineJob L512 released with owner_agent pid-${pid} but claimed as refine-orchestrator → DELETE never matched → zombie lock 3600s on EVERY production refine call; fixed to matching owner_agent. 13/13 GREEN (router re-ran), task-lock suite 27/27 no regression, tsc clean. DEPLOYED 12:44Z second scoped rebuild (image 15d45d7cf2f9, IMAGE-MATCH raw, 6/6 peers, health 200/162) — live before next refine fire."
-      },
-      {
-        "id": "cwk-refine-orchestrator-no-agent-tool-202606061410",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "agent-capability-gap",
-        "status": "RESOLVED",
-        "priority": "high",
-        "createdAt": "2026-06-06T14:10:00Z",
-        "payload": {
-          "summary": "refine_bctc_md slots structurally DOA at Phase 2: flow main.md (Option-Y orchestrator) requires CC Agent/Task fan-out of one subagent per window (L91-124), but the refine_bctc_md agent type has tools Read/Write/call_tool only — NO Agent tool. Every fire: claim bctc-refine lock -> verify -> cannot fan out -> release -> exit, zero windows processed.",
-          "evidence": "14:00Z fire (refine-bctc-slot-2, DGC Q4-2025 0c6f0535, 34 windows): agent claimed lock, verified text_status COMPLETE + 34 windows (schema fix 202606060906 confirmed LANDED), then hit fan-out wall. Released cleanly, no artifacts, refine_status still PENDING. 09:00Z fire failed earlier at Phase 0 schema mismatch which masked this defect.",
-          "drift_note": "Roster/agent-def description says 'One window per invocation. Writes docs/refine-output/{report_id}/{unit_id}.json — NEVER to DB' which contradicts flow main.md Option-Y ('NO filesystem output. NO docs/refine-output/ writes', push via push_bctc_refined_unit + finalize_bctc_refine). Agent def is stale vs flow.",
-          "proposed_fixes": [
-            "A: agent-father grants Agent tool to refine_bctc_md agent def so the spawned orchestrator can fan out window subagents (matches main.md design intent)",
-            "B: re-architect — split agent ids: refine-orchestrator (with Agent tool) vs refine_bctc_md window worker (current toolset), update cowork-schedule trigger to spawn the orchestrator id",
-            "C: degrade main.md to sequential in-agent window processing (no spawn needed; 34 windows x haiku in one context may overflow — needs sizing check)"
-          ],
-          "owner_hint": "agent-father (agent def) + architect (Option-Y design review)",
-          "blocked_slots": [
-            "refine-bctc-slot-1 (09:00Z daily)",
-            "refine-bctc-slot-2 (14:00Z daily)",
-            "refine-bctc-slot-3 (20:00Z if exists)"
-          ]
-        },
-        "resolved_at": "2026-06-06T14:33:23Z",
-        "resolved_by": "dev-team",
-        "disposition": "SHIPPED same tick, two-stage chain: (1) architect ruling 1b2f00fd — brief §0.7.2 amends Option-Y: refine_bctc_md is dispatcher-spawned AS a subagent with NO nested Agent/Task tool, so Phase-2 fan-out was structurally unreachable (PO verified Options A/B hit the same wall); BINDING Option-C = sequential in-agent chunked+resumable, REFINE_CHUNK_SIZE=7, resume via get_bctc_refined skip-set, reset:true first-push-only, finalize gated on all-windows-pushed, PARTIAL re-eligible, lock ttl 1000s owner_agent refine-orchestrator. (2) agent-father impl 95a0642e — main.md 228->110L (fan-out block deleted, inline loop), init.md contradiction removed, .claude agent-def stale description fixed (DB pathway not docs/refine-output), tools unchanged (Read/Write/call_tool). Router raw-verified: zero spawn_agent residue, caps met, no foreign paths. FIRST LIVE PROOF = next refine slot fire (2026-06-07 09:00Z slot-1, or sooner if slot-2 240min cadence refires ~18:04Z): expect DGC 0c6f0535 +<=7 units pushed, refine_status PENDING->PARTIAL. Operator owes Cowork refresh prompt (delivered in tick summary)."
-      },
-      {
-        "id": "sau-2026-06-06T143721Z-B01-prices",
-        "ts": "2026-06-06T14:37:21Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "CRITICAL: price data 37m stale vs 10m SLA — VPS proxy down",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "route_to": "po",
-        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
-        "resolved_at": "2026-06-06T15:36:20Z",
-        "resolved_by": "dev-team",
-        "disposition": "WEEKEND FALSE-POSITIVE (ops-vps-fetch SSH recon, 45641b7a). vn-price-fetch systemd active, PID sleeping state=S; last_push 2026-06-05 08:59:30Z = FRIDAY SESSION CLOSE (clean PUSH 114 items ok:true) — loop is dow<=5 && hour 02-08Z gated, Saturday silent BY DESIGN. Router's outage hypothesis falsified: host 502 window had zero impact. Resumes Monday 2026-06-08 02:00Z (existing Monday ~02:15Z carry covers the resume check). Durable fix = new row rtr-sla-weekend-aware (SLA monitor lacks market-hours awareness — this false-CRITICAL class will recur every weekend until fixed)."
-      },
-      {
-        "id": "sau-2026-06-06T143721Z-B01-flow",
-        "ts": "2026-06-06T14:37:21Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "CRITICAL: foreign_flow 23.6h stale vs 10m SLA — VPS idle",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "route_to": "po",
-        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
-        "resolved_at": "2026-06-06T15:36:20Z",
-        "resolved_by": "dev-team",
-        "disposition": "WEEKEND FALSE-POSITIVE (ops-vps-fetch SSH recon, 45641b7a). vn-foreign-flow systemd active, PID sleeping; last clean push 08:59:57Z Jun 5 (HTTP 200, upserted:103, 0 validation errors) = Friday close; identical dow/hour off-hours gate to prices. 1462m SLA breach = monitor has no weekend awareness. Resumes Monday 02:00Z. Same durable fix row rtr-sla-weekend-aware."
-      },
-      {
-        "id": "sau-2026-06-06T143721Z-B06-bctc",
-        "ts": "2026-06-06T14:37:21Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "CRITICAL: bctc 21.3h stale vs 360m SLA — VPS fetch queue stuck",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "route_to": "po",
-        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
-        "resolved_at": "2026-06-06T15:36:20Z",
-        "resolved_by": "dev-team",
-        "disposition": "ROOT-CAUSED, service recovered, residual defect spun off (ops-vps-fetch, 45641b7a). vn-bctc-fetch was cycling all-SKIP since Jun 1 (last real PDF push CTG 2026-06-01T17:16Z; host-recorded last_push Jun 5 14:48Z). Real defect: Chromium pthread_create EAGAIN kills the HOSE-SSC Playwright discovery path on every attempt — PRE-EXISTING (visible Jun 5 07:41Z run), NOT caused by Jun 6 host outage; HNX/UPCOM curl paths work but find no Q1/2026 PDFs for the 10-item queue (ACV BDI D2D DAG DLC GVR HCM HPG HSG HVN). systemctl restart 15:30:33Z; fresh full cycle 15:30-15:31Z completed, 10/10 SKIP = transport proven, queue genuinely empty. last_push unchanged is EXPECTED (nothing to push). Residual = new row rtr-bctc-playwright-thread (P2)."
-      },
-      {
-        "id": "sau-2026-06-06T143721Z-B12-sbv",
-        "ts": "2026-06-06T14:37:21Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "CRITICAL: sbv_fx 37m stale vs 30m SLA — rate-limit or fetch timeout",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "route_to": "po",
-        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
-        "resolved_at": "2026-06-06T15:36:20Z",
-        "resolved_by": "dev-team",
-        "disposition": "FALSE-FLAG self-resolved, no task. c045 caught sbv in a between-push blip (37m vs 30m SLA); PO live probe 15:23Z + router get_vps_proxy_health both show healthy: last_push 15:28:42Z, 47 pushes/24h, 0 errors. No action taken on VPS (read-only confirmed by ops-vps-fetch)."
-      },
       {
         "id": "rtr-bctc-playwright-thread-202606061545",
         "ts": "2026-06-06T15:36:20Z",
@@ -3963,9 +3802,11 @@
         "source": "router",
         "route_to": "po",
         "type": "system_issue",
-        "status": "NEW",
-        "summary": "VPS vn-bctc-fetch HOSE-SSC discovery path dead: Chromium GPU zygote pthread_create: Resource temporarily unavailable (11) on every Playwright attempt (pre-existing since <=Jun 5). 10-item Q1/2026 queue will SKIP every 6h cycle until fixed or PDFs appear on HNX/UPCOM curl paths. Root-fix options per ops-vps-fetch: (a) raise systemd LimitNPROC for the unit, (b) replace Playwright SSC path with curl-based HTTP scraper (NOTE: VPS policy already says no-Chromium for dev-vps-crawls — option b aligns with policy and is likely the definitif fix). Triage: dispatch dev-vps-crawls (impl) possibly preceded by ops-vps-fetch recon of SSC endpoint recipe. Evidence: ops-vps-fetch notebook c006 (45641b7a).",
-        "payload_ref": null
+        "status": "READ",
+        "summary": "VPS vn-bctc-fetch HOSE-SSC discovery path dead: Chromium GPU zygote pthread_create: Resource temporarily unavailable (11) on every Playwright attempt (pre-existing since <=Jun 5). 10-item Q1/2026 queue will SKIP every 6h cycle until fixed or PDFs appear on HNX/UPCOM curl paths. Root-fix options per ops-vps-fetch: (a) raise systemd LimitNPROC for the unit, (b) replace Playwright SSC path with curl-based HTTP scraper (NOTE: VPS policy already says no-Chromium for dev-vps-crawls — option b aligns with policy and is likely the definitif fix). Triage: dispatch dev-vps-crawls (impl) possibly preceded by ops-vps-fetch recon of SSC endpoint recipe. Evidence: ops-vps-fetch notebook c006 (45641b7a). || PROGRESS 162040Z: SPIKE-VPS-SSC-CURL-RECIPE DONE e8be4480 (ops-vps-fetch) — VIABLE-CURL: 3-step stateful HTTP (ADF loopback -> ViewState/PPR search -> full-form download POST) proven ON the VPS, no Chromium (GAS Q1/2026 15.4MB + HPG annual 6.2MB valid %PDF-1.7 downloaded). Recon doc docs/vps-sources/ssc-bctc-newsearch/recon.md (387L) + recon-complete signal emitted to dev-vps-crawls (drains next tick -> PO -> impl FIX replacing _ssc_newsearch_playwright() with discover_from_ssc_curl()). Row stays open until the curl scraper ships and a live SSC discovery cycle succeeds.",
+        "payload_ref": null,
+        "read_at": "2026-06-06T16:22:41Z",
+        "read_by": "dev-team"
       },
       {
         "id": "rtr-sla-weekend-aware-202606061545",
@@ -3974,9 +3815,14 @@
         "source": "router",
         "route_to": "po",
         "type": "system_issue",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "SLA monitor + vps-proxy-health have no market-hours/weekend awareness: prices + foreign_flow are dow/hour-gated (Mon-Fri 02:00-08:59Z) but stale thresholds run 24/7 -> guaranteed false-CRITICAL every weekend (this tick burned a full auditor escalation + PO triage + SSH recon on 2 healthy services; foreign_flow showed 1462m breach while in designed sleep). Fix: exempt market-hours-gated sources from staleness SLA outside their active window (calendar-aware expected-push schedule per source). Also foreign_flow is embedded in price push and not separately tracked by /api/vps-proxy-health — consider explicit tracking. Triage: dev-mcp-server zone (SLA logic lives in mcp-server). P3 but cheap and kills a recurring false-alarm class.",
-        "payload_ref": null
+        "payload_ref": null,
+        "read_at": "2026-06-06T16:22:41Z",
+        "read_by": "dev-team",
+        "resolved_at": "2026-06-06T16:51:51Z",
+        "resolved_by": "dev-team",
+        "disposition": "SHIPPED same tick (dev-mcp-server, PO batch FIX-SLA-WEEKEND-AWARE, 9e74cf0a + notebook 2d37cceb). Calendar-aware SLA: domain freshnessSlaChecker getSlaThreshold computes dynamic off-hours threshold (minutesSinceLastWindowEnd + 30min grace) for price/foreign_flow (Mon-Fri 02:00-08:59Z gate) — breaches never RECORDED off-hours, not merely suppressed; vps-proxy-health endpoint + tool + get_sla_status all calendar-aware, off_hours field added. 21 new tests W-1..W-10, router re-ran 46/46 green, tsc clean. DEPLOYED 16:46Z scoped rebuild (IMAGE-MATCH 075579957fed, healthy, toolCount 162 baseline intact). LIVE-PROVEN Saturday: /api/vps-proxy-health prices stale:false off_hours:true (Friday-close last_push); get_sla_status foreign_flow 1547min vs dynamic 1938min SLA = ok (yesterday: 1462min vs flat 10min = false-CRITICAL). Weekend = ongoing free proof window; Sunday auditor fires should emit zero VPS-stale CRITICALs for prices/foreign_flow."
       }
     ],
     "archive": [
@@ -4700,6 +4546,181 @@
         "emitted_tasks": [
           "FIX-GITIGNORE-ANCHOR-DATA-DIR"
         ]
+      },
+      {
+        "id": "rtr-refine-finalize-test-fail-202606061045",
+        "ts": "2026-06-06T10:55:07Z",
+        "severity": "MEDIUM",
+        "source": "dev-team-router",
+        "route_to": "po",
+        "status": "RESOLVED",
+        "summary": "Pre-existing failing unit test DV-push-4 in apps/mcp-server/src/__tests__/AR-refined-units-idempotency.test.ts (push_tool_pathway AC-MCP-OPTY-6: all-DONE -> finalize DONE -> table_rows count = sum of window rows). finalize_bctc_refine BLOCK-4 sets validation_status=failed error_count=1 in the fixture. NOT introduced by 86038f04 (file untouched, fails identically on parent). Matters because refine artifacts start flowing at 13:00Z fires and finalize is their downstream; a broken finalize-count invariant could corrupt or block refined-unit persistence. Triage: root-cause whether test or finalize logic drifted.",
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T12:27:47Z",
+        "resolved_by": "dev-team",
+        "disposition": "ROOT-CAUSED (SPIKE_201 7986337d) + FIXED 36998888: DV-push-4 fixture predated BEQ-7 section guard — production finalize logic CORRECT, fixture drifted; fixture now earns DONE via 3 sectioned windows (balance/income/cashflow), test GREEN. PART-2 (report 3052 pending-refine contract): already fixed by 172999f0, stale flow L43 comment only. CAVEAT: spike 13:00Z-safe verdict premise (windows=[] no-op) FALSIFIED by router raw probe — 7 reports all text_status=COMPLETE with populated windows; fire is live-path. Remaining 4 test fails in same file = separate defect, new row rtr-refine-idem-test-lock-isolation."
+      },
+      {
+        "id": "cwk-leader-lock-zombie-202606061105",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "severity": "MEDIUM",
+        "status": "RESOLVED",
+        "created_at": "2026-06-06T11:03:53Z",
+        "summary": "cowork-leader task lock goes ZOMBIE after every mcp-server restart: task_heartbeat and task_release both validate the claim row owner_session (pid-1-ts-<server-boot-ms>), so a restart orphans the lock — un-renewable, un-releasable, only recoverable by TTL-expiry steal (up to 30min gap). Observed twice 2026-06-06: restart ~09:37Z (heartbeat ok:false 09:47, steal-claim 10:02 stolen:true) and restart ~10:48-11:02Z (heartbeat+release ok:false 11:02, lock expires 11:17:58Z, steal at 11:32 tick). emit_pressure_state unaffected. Fix for dev-mcp-server: match heartbeat/release on owner_agent (or owner_agent+task_id) instead of server-boot session, OR re-bind surviving claims on boot. Repro: task_claim cowork-slot, restart container, task_heartbeat → {ok:false,expires_at:0}.",
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T12:27:47Z",
+        "resolved_by": "dev-team",
+        "disposition": "CODE SHIPPED d4d2e453 + amend 04123334 (dev-mcp-server): heartbeat/release match owner_agent+task_id when provided (survives restart); owner_agent OPTIONAL w/ legacy owner_session fallback (router caught required-param would break 20+ bare task_release callers fleet-wide); anti-theft + TTL-steal intact; 27+11 tests green incl 8 new cases. DEPLOY PENDING: rebuild deferred past 13:00Z cowork fires — next tick MUST dispatch ops scoped rebuild (docker compose build mcp-server && up -d --no-deps mcp-server) then caller flows can adopt owner_agent param incrementally."
+      },
+      {
+        "id": "sau-host-enospc-202606061108",
+        "ts": "2026-06-06T11:08:59Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "HOST ENOSPC CRITICAL: /private/tmp/claude-501 exhausted — blocks health checks",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "disposition": "ROUTER-VERIFIED FALSE DIAGNOSIS + REAL OUTAGE RESTORED. ENOSPC claim false: df / = 33Gi free (84%), /private/tmp/claude-501 = 4.0K — auditor misread its own bash-sandbox error as host disk-full (kin feedback_auditor_false_positive_destructive). The underlying symptom (curl :4000 exit 7) WAS real: 10:53:54Z mcp-server recreate destroyed 4 intended peers (docker events: destroy frontend/pdf-extractor/api-gateway/rag-service 10:53:54-57Z). Ops restored 11:14Z scoped up -d --no-build --no-deps; router raw-verified 6/6 Up healthy, :4000/:5004/:5001/:3001 all 200, restart_count=0. Follow-ups carved as rtr-ops-rebuild-destroys-peers + rtr-auditor-confab-occ4.",
+        "resolved_at": "2026-06-06T11:16:46Z",
+        "resolved_by": "router"
+      },
+      {
+        "id": "rtr-ops-rebuild-destroys-peers-202606061115",
+        "ts": "2026-06-06T11:16:46Z",
+        "severity": "HIGH",
+        "source": "router",
+        "route_to": "po",
+        "type": "system_issue",
+        "status": "RESOLVED",
+        "summary": "Ops mcp-server rebuild-recreate at 10:53:54Z destroyed 4 intended peer containers (docker events 1780743234-37: destroy frontend, pdf-extractor, api-gateway, rag-service; macro-indicators also vanished from docker ps -a) — full-project down pattern, since compose config defines all 12 services (no orphans possible). ~21min outage of api-gateway/frontend/macro-indicators/pdf-extractor until router-dispatched ops restore 11:14Z. STANDING FOOTGUN: ops flow generic restart recipe `docker-compose down && docker-compose up -d` (docs/agents/ops/flow/docker.md L21, main.md L64, cloudflare-mcp-diagnosis.md L43/L54) — down kills all peers; blind up -d mass-starts the FULL 12-service fleet = host-panic risk on 16GB cap (project_host_memory_panic). Durable fix: replace generic recipe with scoped `docker compose up -d --no-deps [--build] <svc>`; forbid bare down / --remove-orphans / --force-recreate without explicit service args in all ops flows (agent-father edit, agent-md-factory discipline).",
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T12:27:47Z",
+        "resolved_by": "dev-team",
+        "disposition": "SHIPPED bd41a6b3 (agent-father): FORBIDDEN block SSOT in ops docker.md; 9 footgun instances fixed across 5 ops files (incl 2 the row did not list: cloudflare-mcp-recovery.md, init.md); all recipes now scoped `docker compose up -d --no-deps [--build] <svc>`; post-restart host_runtime_set count check added. Router grep-verified: residual matches are FORBIDDEN-doc/symptom text only."
+      },
+      {
+        "id": "rtr-auditor-confab-occ4-202606061115",
+        "ts": "2026-06-06T11:16:46Z",
+        "severity": "HIGH",
+        "source": "router",
+        "route_to": "po",
+        "type": "agent_quality",
+        "status": "RESOLVED",
+        "summary": "Auditor confabulation occ#4 — RAW-CITE triple gate (incl return-channel extension 406520fa) failed again. (a) c038 Tier-1 10:58:42Z notebook+return cited api-gateway Up 3d + /health 200, frontend/macro-indicators/pdf-extractor Up — ALL destroyed at 10:53:54Z per docker events; cites were fabricated/copied from c037, audit reported HEALTHY during an active 4-service outage. (b) c040 11:08Z detected the real :4000 unreachability but fabricated root cause HOST ENOSPC from its own bash-sandbox error text; df showed 33Gi free, claude-501=4.0K; queued a false CRITICAL with destructive-adjacent remediation advice (restart Claude Code / rm -rf). Pattern: gate catches missing cites but not FABRICATED cites. Durable fix candidates: (1) auditor must pipe `docker ps --format` raw output verbatim into a fenced block in the notebook (machine-diffable by router), (2) router spot-probe one cited value per accept, (3) forbid carrying any container/health line from a previous section.",
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T12:27:47Z",
+        "resolved_by": "dev-team",
+        "disposition": "ARCHITECT-RETHINK (recurring-bug rule, occ#4 + 2 failed gate fixes) brief dfec1c98: root cause = gates target evidence FORMAT not PROVENANCE. IMPLEMENTED 3d602df7 (agent-father): probe.sh deterministic read-only evidence collector + RAW-PROBE verbatim fence mandate + anti-carry rule + sandbox-error quarantine clause (TOOL-UNAVAILABLE never infra-CRITICAL — closes c040 class); Tier-1 extracted to tier1-probe.md (main.md 562->500L). Probe path bug router-caught (frontend /health 404 false-RED) fixed 004e7813 — probe re-run 6/6 OK. First live proof = next auditor fire c041."
+      },
+      {
+        "id": "rtr-refine-idem-test-lock-isolation-202606061226",
+        "ts": "2026-06-06T12:27:47Z",
+        "severity": "MEDIUM",
+        "source": "router",
+        "route_to": "po",
+        "type": "system_issue",
+        "status": "RESOLVED",
+        "summary": "AR-refined-units-idempotency.test.ts Scenarios A/B/C + no-accumulation (4 cases) fail pre-existing: bctcRefineJob inside the test logs [bctcRefine] skip — task already claimed, holder owner_agent=refine-orchestrator owner_session=pid-10914 claimed_at=1780747797 — a task-claim lock persists across test scenarios, i.e. the coordination store the job uses is NOT isolated to the per-test injected db (shared/live store or module-level singleton). Test-isolation defect; may also indicate bctcRefineJob couples to a global coordination DB rather than injected deps. Triage: dev-mcp-server — make bctcRefineJob take coordination store via injection (or test must reset/expire locks between scenarios); separate from DV-push-4 fixture fix 36998888 which is GREEN.",
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T13:10:45Z",
+        "resolved_by": "dev-team",
+        "disposition": "SHIPPED 368b7bad (dev-mcp-server, PO batch FIX-REFINE-IDEM-LOCK-ISO): two-part root cause — (1) test isolation: beforeEach now _resetCoordinationDbState + ensureCoordinationTable + _injectCoordinationDb(:memory: db), afterEach reset+close; (2) BONUS PRODUCTION BUG router-verified: bctcRefineJob L512 released with owner_agent pid-${pid} but claimed as refine-orchestrator → DELETE never matched → zombie lock 3600s on EVERY production refine call; fixed to matching owner_agent. 13/13 GREEN (router re-ran), task-lock suite 27/27 no regression, tsc clean. DEPLOYED 12:44Z second scoped rebuild (image 15d45d7cf2f9, IMAGE-MATCH raw, 6/6 peers, health 200/162) — live before next refine fire."
+      },
+      {
+        "id": "cwk-refine-orchestrator-no-agent-tool-202606061410",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "agent-capability-gap",
+        "status": "RESOLVED",
+        "priority": "high",
+        "createdAt": "2026-06-06T14:10:00Z",
+        "payload": {
+          "summary": "refine_bctc_md slots structurally DOA at Phase 2: flow main.md (Option-Y orchestrator) requires CC Agent/Task fan-out of one subagent per window (L91-124), but the refine_bctc_md agent type has tools Read/Write/call_tool only — NO Agent tool. Every fire: claim bctc-refine lock -> verify -> cannot fan out -> release -> exit, zero windows processed.",
+          "evidence": "14:00Z fire (refine-bctc-slot-2, DGC Q4-2025 0c6f0535, 34 windows): agent claimed lock, verified text_status COMPLETE + 34 windows (schema fix 202606060906 confirmed LANDED), then hit fan-out wall. Released cleanly, no artifacts, refine_status still PENDING. 09:00Z fire failed earlier at Phase 0 schema mismatch which masked this defect.",
+          "drift_note": "Roster/agent-def description says 'One window per invocation. Writes docs/refine-output/{report_id}/{unit_id}.json — NEVER to DB' which contradicts flow main.md Option-Y ('NO filesystem output. NO docs/refine-output/ writes', push via push_bctc_refined_unit + finalize_bctc_refine). Agent def is stale vs flow.",
+          "proposed_fixes": [
+            "A: agent-father grants Agent tool to refine_bctc_md agent def so the spawned orchestrator can fan out window subagents (matches main.md design intent)",
+            "B: re-architect — split agent ids: refine-orchestrator (with Agent tool) vs refine_bctc_md window worker (current toolset), update cowork-schedule trigger to spawn the orchestrator id",
+            "C: degrade main.md to sequential in-agent window processing (no spawn needed; 34 windows x haiku in one context may overflow — needs sizing check)"
+          ],
+          "owner_hint": "agent-father (agent def) + architect (Option-Y design review)",
+          "blocked_slots": [
+            "refine-bctc-slot-1 (09:00Z daily)",
+            "refine-bctc-slot-2 (14:00Z daily)",
+            "refine-bctc-slot-3 (20:00Z if exists)"
+          ]
+        },
+        "resolved_at": "2026-06-06T14:33:23Z",
+        "resolved_by": "dev-team",
+        "disposition": "SHIPPED same tick, two-stage chain: (1) architect ruling 1b2f00fd — brief §0.7.2 amends Option-Y: refine_bctc_md is dispatcher-spawned AS a subagent with NO nested Agent/Task tool, so Phase-2 fan-out was structurally unreachable (PO verified Options A/B hit the same wall); BINDING Option-C = sequential in-agent chunked+resumable, REFINE_CHUNK_SIZE=7, resume via get_bctc_refined skip-set, reset:true first-push-only, finalize gated on all-windows-pushed, PARTIAL re-eligible, lock ttl 1000s owner_agent refine-orchestrator. (2) agent-father impl 95a0642e — main.md 228->110L (fan-out block deleted, inline loop), init.md contradiction removed, .claude agent-def stale description fixed (DB pathway not docs/refine-output), tools unchanged (Read/Write/call_tool). Router raw-verified: zero spawn_agent residue, caps met, no foreign paths. FIRST LIVE PROOF = next refine slot fire (2026-06-07 09:00Z slot-1, or sooner if slot-2 240min cadence refires ~18:04Z): expect DGC 0c6f0535 +<=7 units pushed, refine_status PENDING->PARTIAL. Operator owes Cowork refresh prompt (delivered in tick summary)."
+      },
+      {
+        "id": "sau-2026-06-06T143721Z-B01-prices",
+        "ts": "2026-06-06T14:37:21Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CRITICAL: price data 37m stale vs 10m SLA — VPS proxy down",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "route_to": "po",
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
+        "resolved_at": "2026-06-06T15:36:20Z",
+        "resolved_by": "dev-team",
+        "disposition": "WEEKEND FALSE-POSITIVE (ops-vps-fetch SSH recon, 45641b7a). vn-price-fetch systemd active, PID sleeping state=S; last_push 2026-06-05 08:59:30Z = FRIDAY SESSION CLOSE (clean PUSH 114 items ok:true) — loop is dow<=5 && hour 02-08Z gated, Saturday silent BY DESIGN. Router's outage hypothesis falsified: host 502 window had zero impact. Resumes Monday 2026-06-08 02:00Z (existing Monday ~02:15Z carry covers the resume check). Durable fix = new row rtr-sla-weekend-aware (SLA monitor lacks market-hours awareness — this false-CRITICAL class will recur every weekend until fixed)."
+      },
+      {
+        "id": "sau-2026-06-06T143721Z-B01-flow",
+        "ts": "2026-06-06T14:37:21Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CRITICAL: foreign_flow 23.6h stale vs 10m SLA — VPS idle",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "route_to": "po",
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
+        "resolved_at": "2026-06-06T15:36:20Z",
+        "resolved_by": "dev-team",
+        "disposition": "WEEKEND FALSE-POSITIVE (ops-vps-fetch SSH recon, 45641b7a). vn-foreign-flow systemd active, PID sleeping; last clean push 08:59:57Z Jun 5 (HTTP 200, upserted:103, 0 validation errors) = Friday close; identical dow/hour off-hours gate to prices. 1462m SLA breach = monitor has no weekend awareness. Resumes Monday 02:00Z. Same durable fix row rtr-sla-weekend-aware."
+      },
+      {
+        "id": "sau-2026-06-06T143721Z-B06-bctc",
+        "ts": "2026-06-06T14:37:21Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CRITICAL: bctc 21.3h stale vs 360m SLA — VPS fetch queue stuck",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "route_to": "po",
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
+        "resolved_at": "2026-06-06T15:36:20Z",
+        "resolved_by": "dev-team",
+        "disposition": "ROOT-CAUSED, service recovered, residual defect spun off (ops-vps-fetch, 45641b7a). vn-bctc-fetch was cycling all-SKIP since Jun 1 (last real PDF push CTG 2026-06-01T17:16Z; host-recorded last_push Jun 5 14:48Z). Real defect: Chromium pthread_create EAGAIN kills the HOSE-SSC Playwright discovery path on every attempt — PRE-EXISTING (visible Jun 5 07:41Z run), NOT caused by Jun 6 host outage; HNX/UPCOM curl paths work but find no Q1/2026 PDFs for the 10-item queue (ACV BDI D2D DAG DLC GVR HCM HPG HSG HVN). systemctl restart 15:30:33Z; fresh full cycle 15:30-15:31Z completed, 10/10 SKIP = transport proven, queue genuinely empty. last_push unchanged is EXPECTED (nothing to push). Residual = new row rtr-bctc-playwright-thread (P2)."
+      },
+      {
+        "id": "sau-2026-06-06T143721Z-B12-sbv",
+        "ts": "2026-06-06T14:37:21Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CRITICAL: sbv_fx 37m stale vs 30m SLA — rate-limit or fetch timeout",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "route_to": "po",
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue.",
+        "resolved_at": "2026-06-06T15:36:20Z",
+        "resolved_by": "dev-team",
+        "disposition": "FALSE-FLAG self-resolved, no task. c045 caught sbv in a between-push blip (37m vs 30m SLA); PO live probe 15:23Z + router get_vps_proxy_health both show healthy: last_push 15:28:42Z, 47 pushes/24h, 0 errors. No action taken on VPS (read-only confirmed by ops-vps-fetch)."
       }
     ]
   },
