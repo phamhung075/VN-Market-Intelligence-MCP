@@ -5,52 +5,102 @@
   "mode": "routine",
   "beat_miss": null,
   "net_profit_delta_pct": null,
-  "product": "Dịch vụ CNTT, xuất khẩu phần mềm, viễn thông (FPT Telecom), giáo dục (FPT Edu) và AI enterprise",
-  "customer": "Doanh nghiệp CNTT trong nước và quốc tế, thuê bao viễn thông SME, học viên giáo dục kỹ thuật",
-  "ops": "Biên lợi nhuận gộp 34.0%, biên ròng 19.8%; xuất khẩu phần mềm dẫn dắt tăng trưởng; OCF Q1 âm (-2,848ty) do thanh toán theo mùa",
-  "mgmt": "Tăng trưởng EPS ổn định, hợp tác chiến lược NVIDIA AI 2026-06-05; tỷ lệ beat guidance 80%+ (2022-2024)",
-  "cycle_id": "20260606-1500",
-  "generated_at": "2026-06-06T15:15Z",
-  "confidence": 0.81,
+  "product": "IT services, software exports (FPT Software), telecom (FPT Telecom), education (FPT Edu) and retail tech (FPT Retail)",
+  "customer": "Enterprise IT buyers in VN and offshore markets, SME telecom subscribers, university students (FPT Edu), retail electronics consumers",
+  "ops": "Net margin 19.8%, gross margin 34.0%; Q1 OCF negative (-2,848ty) reflecting seasonal working-capital build; CAPEX -589ty; FPT+NVIDIA AI partnership signals pipeline expansion in AI infra",
+  "mgmt": "Consistent ROE delivery 28.3% (sector 10.6%); no insider activity; foreign net +168K shares (outperforming sector); PE at 13.8x (-20% vs sector 17.3x) suggests market under-pricing quality",
+  "cycle": "c028",
+  "cycle_id": "20260606-1800",
+  "timestamp": "2026-06-06T18:11Z",
+  "confidence": 81,
   "valuation": {
     "pe": 13.8,
+    "pe_sector_median": 17.3,
+    "pe_vs_sector_pct": -20,
     "pb": 3.6,
     "roe_pct": 28.3,
-    "sector_pe_median": 17.3,
-    "pe_vs_sector": "DISCOUNT -20%",
-    "ey_pct": 7.25,
-    "ey_spread_pct": 2.25,
-    "verdict": "FAIR",
-    "max_deposit_rate": 5.0
+    "roe_sector_pct": 10.6,
+    "earning_yield_pct": 7.25,
+    "max_deposit_rate_pct": 5.0,
+    "ey_spread_pp": 2.25,
+    "valuation_verdict": "FAIR",
+    "rate_sensitive_headwind": false,
+    "stale_price_flag": true,
+    "stale_price_as_of": "2026-06-05T08:59Z"
   },
   "financials": {
     "net_revenue_ty": 12480,
-    "net_profit_ty": 2477,
+    "gross_profit_ty": 4244.9,
+    "gross_margin_pct": 34.0,
+    "operating_profit_ty": 2747.8,
+    "operating_margin_pct": 22.0,
+    "net_profit_ty": 2476.8,
     "net_margin_pct": 19.8,
-    "total_assets_ty": 68586,
+    "total_assets_ty": 68586.1,
     "equity_ty": 40122,
-    "debt_equity": 0.40,
-    "ocf_ty": -2848,
-    "ocf_ni_ratio": -1.15,
+    "total_liabilities_ty": 28464.1,
+    "cash_ty": 7993.6,
+    "de_ratio": 0.40,
     "balance_imbalance": 0
   },
-  "escgate": {
-    "esc1": "FALSE",
-    "esc2": "PASS (imbalance=0)",
-    "esc3": "DATA-COVERAGE-LIMITED (1/4q, guard esc-datacov:FPT:Q1-2026:ESC-3 held ~8d TTL)",
-    "esc4": "FALSE",
-    "esc5": "SKIP (refined units empty)",
-    "escalation_status": "none"
+  "cashflow": {
+    "ocf_ty": -2847.8,
+    "investing_cf_ty": -2254.9,
+    "financing_cf_ty": 2586.2,
+    "capex_ty": -589.1,
+    "free_cf_ty": -3436.9,
+    "ocf_ni_ratio": -1.15,
+    "esc3_status": "DATA-COVERAGE-LIMITED",
+    "quarters_returned": 2,
+    "coverage_guard_held": true
   },
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
-  "insider": "none",
-  "foreign_flow": "+168K shares net (outperforming sector -5K net)",
-  "chain_findings": 0,
-  "catalysts": ["FPT+NVIDIA AI partnership (LOW alert 2026-06-05) — BCTC CONFIRMS re-rating case"],
-  "legal_risk": "none",
-  "regime": "NEUTRAL",
-  "investment_clock": "CORE_VN score=8 (Overheat phase)",
-  "data_freshness_note": "Prices stale since 2026-06-05 08:59Z (VPS leg dead per dispatcher). BCTC ledger analyzed as-is. flagged per dispatcher heads-up.",
-  "signal_id": 5205
+  "esc_results": {
+    "ESC1_accounting_trick": false,
+    "ESC2_balance_imbalance": 0,
+    "ESC2_pass": true,
+    "ESC3_status": "DATA-COVERAGE-LIMITED",
+    "ESC3_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
+    "ESC4_related_party": false,
+    "ESC5_refined_units": "empty",
+    "escalation_status": "NONE"
+  },
+  "trick_detection": {
+    "trick_summary": null,
+    "trick_confidence": "none",
+    "trick_pass_versions": ["balance-sheet-v1", "pl-v1", "cashflow-v1", "rpt-v1", "footnote-v1", "segment-v1"],
+    "e3_cache_status": "MISS"
+  },
+  "signals_posted": [
+    {"id": 5223, "type": "fundamental_validation", "critic_score": 0.8},
+    {"id": 5224, "type": "fundamental_validation_ctg_blocked", "critic_score": 0.6}
+  ],
+  "chain_catalysts": [
+    {"id": 5215, "title": "FPT+NVIDIA AI breakthrough", "impact": 5, "regime_adj_score": 5.0, "eps_signal": "bullish"},
+    {"id": 5213, "title": "Gold mass liquidation risk-off", "impact": 10, "regime": "TIGHTENING", "note": "macro headwind, not FPT-specific"}
+  ],
+  "market_context": {
+    "regime": "NEUTRAL",
+    "carry_spread_pp": 1.38,
+    "investment_clock": "Overheat",
+    "cpi_pct": 5.46,
+    "gold_signal": "BULLISH",
+    "usdvnd_signal": "BEARISH",
+    "market_ey_pct": 8.20,
+    "market_ey_verdict": "CHEAP",
+    "vn_index": 1838.9
+  },
+  "blocked_tickers": {
+    "CTG": {"reason": "guard_active", "guard_expiry": "2026-06-07T00:09Z", "calendar_status": "DA_NOP_2026-06-06", "pdf_present": true},
+    "ACB": {"reason": "PUB-5", "confidence": 38},
+    "DHG": {"reason": "PUB-5", "confidence": 44},
+    "EIB": {"reason": "PUB-5", "confidence": 31},
+    "BID": {"reason": "no_data"},
+    "GAS": {"reason": "no_extracted_data", "pdf_present": true, "pdf_date": "2026-05-28"}
+  },
+  "legal_risk_note": "CMG/VNECO2 securities violations (non-watchlist). PC1 chairman arrest unresolved. VPB Lạng Sơn audit finding. NVL bond 5,000ty due 2026-09-15 (10.5% GIA HAN).",
+  "deadline_watch": {
+    "q2_2026_deadline": "2026-07-31",
+    "days_to_q2_deadline": 55,
+    "status": "no_deadline_flag"
+  }
 }
