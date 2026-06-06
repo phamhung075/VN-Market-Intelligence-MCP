@@ -5,10 +5,10 @@
   "_updated_by": "po",
   "head": {
     "active_task_id": null,
-    "next_action": "NEXT-TICK: (1) WATCH-2 RE-DATED — router schedule-check falsified the 13:00Z premise: refine-bctc-slot-1 cron is 0 9 * * * DAILY (cowork dispatcher; bctcRefineJob has NO in-container cron, host fleet only). Next fire 2026-06-07 ~09:04Z, triple-unblocked (schema 172999f0 live, model-pin a3fa9098, zombie-release 368b7bad live 12:44Z). Verify after 09:10Z: bctc_refined_units rows in /app/data/market.db (latest currently 2026-06-02, 53 rows; ACB fea19bae=27, expect DGC 0c6f0535 +34 windows) + refine_status transitions; BEQ-7 PARTIAL legitimate. Query pattern: docker exec mcp-server bun -e bun:sqlite readonly (no sqlite3/node in container). (2) cowork-leader lock expires 13:32:58Z then next dispatcher tick TTL-steals fresh on current session — verify no starvation at next cowork fire; cowork dispatcher flows still pass NO owner_agent (legacy path) — queue follow-up FU-COWORK-OWNER-AGENT-ADOPT (agent-father: add owner_agent to heartbeat/release in cowork dispatcher + flows) when convenient. (3) Sunday 03:00-05:00Z zone-scans fire tomorrow — expect zone_health_report signals Monday triage. Tick 123211Z: leader-lock fix DEPLOYED+battle-proven (2 real orphan releases via owner_agent); FIX-REFINE-IDEM-LOCK-ISO shipped 368b7bad + bonus production zombie-release bug fixed+deployed; auditor c041 ACCEPTED (probe.sh first live proof: RAW-PROBE fence machine-diff clean, spot-probe match, anti-carry honored; soft note: df section trimmed not verbatim occ#1). Carries: Monday ~02:15Z price-push resume; threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); refine flow L43 stale comment (fold into next refine touch); operator owes /cron-cowork-team refresh. LESSON: verify a slot's cron in cowork-schedule.json BEFORE setting a timed WATCH (13:00Z was an unverified carry).",
+    "next_action": "NEXT-TICK: (1) WATCH-2 SHARPENED — Option-C shipped 95a0642e makes the next refine fire the FIRST LIVE PROOF: slot-2 (cadence 240min, last fired 14:04:30Z) should refire ~18:04Z TODAY, else slot-1 2026-06-07 09:00Z. Verify after fire: bun:sqlite readonly /app/data/market.db bctc_refined_units — expect DGC 0c6f0535 gains <=7 rows (chunk cap), refine_status PENDING->PARTIAL (NOT DONE — 34 windows need ~5 fires); ALSO verify reset:true did not wipe ACB fea19bae's 27 existing rows (reset is per-report first-push, must not cross reports). If zero rows again: read the fire signal note for the new failure leg. (2) COWORK REFRESH OWED: operator must paste the refresh prompt (in tick 142039Z summary) into Cowork, else desktop runtime serves the STALE orchestrator flow from its context — fires before refresh may still fail at the old fan-out wall; treat a pre-refresh failure as EXPECTED not a new defect. (3) FU-COWORK-OWNER-AGENT-ADOPT still queued-when-convenient (agent-father: owner_agent param in cowork dispatcher heartbeat/release). (4) Sunday 03:00-05:00Z zone-scans tomorrow -> Monday triage. CLOSED THIS TICK: cowork-leader TTL-steal VERIFIED (lock expired 13:32:58Z, 14:04Z fire acquired fresh, no starvation — head item retired); refine fan-out gap resolved via REFINE-OPTC-DESIGN 1b2f00fd + REFINE-OPTC-IMPL 95a0642e. Auditor c044 ACCEPTED (4/4 clean since probe.sh; c043 frontend-prose nit pre-empted, closed occ#1). Carries: Monday ~02:15Z price-push resume; threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); operator owes /cron-cowork-team refresh. NOTE: refine flow L43 stale-comment carry is MOOT — main.md rewritten 95a0642e.",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T13:10:45Z",
+    "updated_at": "2026-06-06T14:33:23Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T13:10:45Z",
+    "_updated_at": "2026-06-06T14:33:23Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,20 @@
     "archive": [],
     "done": [
       {
+        "task_id": "REFINE-OPTC-DESIGN",
+        "status": "DONE",
+        "commit": "1b2f00fd",
+        "done_at": "2026-06-06T14:33:23Z",
+        "deploy_note": "brief amendment, read-at-spawn — no rebuild; chunk=7, ttl 1000s, resume contract explicit"
+      },
+      {
+        "task_id": "REFINE-OPTC-IMPL",
+        "status": "DONE",
+        "commit": "95a0642e",
+        "done_at": "2026-06-06T14:33:23Z",
+        "deploy_note": "agent .md only, read-at-spawn — no rebuild, but COWORK REFRESH required (prompt delivered to operator); DoD live-proof pending next refine fire"
+      },
+      {
         "task_id": "FIX-REFINE-IDEM-LOCK-ISO",
         "status": "DONE",
         "commit": "368b7bad",
@@ -3750,7 +3764,7 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T13:10:45Z",
+    "_updated_at": "2026-06-06T14:33:23Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -3841,7 +3855,7 @@
         "from": "cowork-team",
         "to": "po",
         "type": "agent-capability-gap",
-        "status": "NEW",
+        "status": "RESOLVED",
         "priority": "high",
         "createdAt": "2026-06-06T14:10:00Z",
         "payload": {
@@ -3859,7 +3873,10 @@
             "refine-bctc-slot-2 (14:00Z daily)",
             "refine-bctc-slot-3 (20:00Z if exists)"
           ]
-        }
+        },
+        "resolved_at": "2026-06-06T14:33:23Z",
+        "resolved_by": "dev-team",
+        "disposition": "SHIPPED same tick, two-stage chain: (1) architect ruling 1b2f00fd — brief §0.7.2 amends Option-Y: refine_bctc_md is dispatcher-spawned AS a subagent with NO nested Agent/Task tool, so Phase-2 fan-out was structurally unreachable (PO verified Options A/B hit the same wall); BINDING Option-C = sequential in-agent chunked+resumable, REFINE_CHUNK_SIZE=7, resume via get_bctc_refined skip-set, reset:true first-push-only, finalize gated on all-windows-pushed, PARTIAL re-eligible, lock ttl 1000s owner_agent refine-orchestrator. (2) agent-father impl 95a0642e — main.md 228->110L (fan-out block deleted, inline loop), init.md contradiction removed, .claude agent-def stale description fixed (DB pathway not docs/refine-output), tools unchanged (Read/Write/call_tool). Router raw-verified: zero spawn_agent residue, caps met, no foreign paths. FIRST LIVE PROOF = next refine slot fire (2026-06-07 09:00Z slot-1, or sooner if slot-2 240min cadence refires ~18:04Z): expect DGC 0c6f0535 +<=7 units pushed, refine_status PENDING->PARTIAL. Operator owes Cowork refresh prompt (delivered in tick summary)."
       }
     ],
     "archive": [
