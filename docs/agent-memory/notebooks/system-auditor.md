@@ -3,81 +3,73 @@ agent: system-auditor
 session_date: 2026-06-06
 ---
 
-## c041 · 2026-06-06T12:32:30Z
-### Audit Run Tier-1 (12:32 UTC 2026-06-06)
+## c042 · 2026-06-06T13:12:26Z
+### Audit Run Tier-1 (13:12 UTC 2026-06-06)
 - Tier: 1 (runtime ping) | Services: 6 checked | Crons: 70+ polled
 - Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
 - Status: HEALTHY
 
-### RAW-PROBE: 2026-06-06T12:32:16Z
+### RAW-PROBE: 2026-06-06T13:12:09Z
 ```
-=== docker ps -a ===
-vn-market-intelligence-mcp-frontend-1           Up About an hour (healthy)
-vn-market-intelligence-mcp-pdf-extractor-1      Up About an hour (healthy)
-vn-market-intelligence-mcp-macro-indicators-1   Up About an hour (healthy)
-vn-market-intelligence-mcp-api-gateway-1        Up About an hour (healthy)
-vn-market-intelligence-mcp-mcp-server-1         Up About an hour (healthy)
-mcp-gateway                                     Up 10 days (healthy)
+=== AUDITOR PROBE 2026-06-06T13:12:09Z ===
 
-=== health endpoints ===
+--- docker ps -a ---
+NAMES                                           STATUS                    IMAGE                                         CREATED
+vn-market-intelligence-mcp-mcp-server-1         Up 27 minutes (healthy)   vn-market-intelligence-mcp-mcp-server         27 minutes ago
+vn-market-intelligence-mcp-frontend-1           Up 2 hours (healthy)      vn-market-intelligence-mcp-frontend           2 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1      Up 2 hours (healthy)      vn-market-intelligence-mcp-pdf-extractor      2 hours ago
+vn-market-intelligence-mcp-macro-indicators-1   Up 2 hours (healthy)      vn-market-intelligence-mcp-macro-indicators   2 hours ago
+vn-market-intelligence-mcp-api-gateway-1        Up 2 hours (healthy)      vn-market-intelligence-mcp-api-gateway        2 hours ago
+mcp-gateway                                     Up 10 days (healthy)      mcpservergatway-gateway                       2 weeks ago
+
+--- health endpoints ---
 [health] mcp-server:3000/health OK (HTTP 200)
 [health] api-gateway:4000/health OK (HTTP 200)
 [health] macro-indicators:5004/health OK (HTTP 200)
 [health] pdf-extractor:5001/health OK (HTTP 200)
 [health] frontend:3001/ OK (HTTP 200)
 
-=== restart count ===
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=1
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
-=== memory pressure ===
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=22.57% MemUsage=462.2MiB / 2GiB
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=13.82% MemUsage=283.1MiB / 2GiB
 
-=== disk df -h / ===
-Capacity 30% (32Gi free)
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    31Gi    31%    393k  325M    0%   /
 ```
 
 ### Container Status (A-01..A-11, host_runtime_set) — All PASS
-- mcp-server: Up ~1h, restart_count=1, memory=22.57% ✓
-- api-gateway: Up ~1h ✓ | frontend: Up ~1h ✓ | macro-indicators: Up ~1h ✓
-- mcp-gateway: Up 10d ✓ | pdf-extractor: Up ~1h ✓
+- [RAW-PROBE L8–9] mcp-server: Up 27 min (healthy), restart_count=0 ✓
+- [RAW-PROBE L10–11] api-gateway: Up 2h (healthy) ✓
+- [RAW-PROBE L12–13] frontend: Up 2h (healthy) ✓
+- [RAW-PROBE L14–15] macro-indicators: Up 2h (healthy) ✓
+- [RAW-PROBE L16–17] mcp-gateway: Up 10d (healthy) ✓
+- [RAW-PROBE L6–7] pdf-extractor: Up 2h (healthy) ✓
 
 ### Health Endpoints (A-12..A-20) — All PASS
-- mcp-server:3000 /health → 200 (toolCount:162 ok) ✓
-- api-gateway:4000 /health → 200 ✓
-- macro-indicators:5004 /health → 200 ✓
-- pdf-extractor:5001 /health → 200 ✓
-- frontend:3001 / → 200 ✓
+- [RAW-PROBE L21] mcp-server:3000 /health → 200 ✓
+- [RAW-PROBE L22] api-gateway:4000 /health → 200 ✓
+- [RAW-PROBE L23] macro-indicators:5004 /health → 200 ✓
+- [RAW-PROBE L24] pdf-extractor:5001 /health → 200 ✓
+- [RAW-PROBE L25] frontend:3001 / → 200 ✓
 
 ### System Metrics (A-21, A-30, A-32) — All PASS
-- Restart count: 1 (≤2) ✓
-- Memory: 22.57% (< 85%) ✓
-- Disk: 30% capacity (< 85%) ✓
+- [RAW-PROBE L29] Restart count: 0 (≤2) ✓
+- [RAW-PROBE L32] Memory: 13.82% (< 85%) ✓
+- [RAW-PROBE L35] Disk: 31% capacity (< 85%) ✓
 
-### Cron Health & Circuit Breaker (A-29, B-circ)
-- 70+ scheduled crons: baseline 97–100% success_rate, all nominal ✓
+### Cron Health & Circuit Breaker
 - Circuit breaker: all 16 sources [OK] (0 open/half-open) ✓
+- Market: CLOSED (Saturday 13:12 UTC) — weekend idle by design ✓
 
-### Market Status
-- VN market CLOSED (Saturday 12:32 UTC) — weekend idle by design
-- Escalation lock: bctc-ctg-attachment-fetch-escalation-c026 held (expires 2026-06-07T00:06:31Z)
+### Expected Benign Notes
+- mcp-server rebuilt twice today (12:36:33Z, 12:44:41Z per c042 brief); current StartedAt 2026-06-06T12:44:41Z (~27m uptime) — NORMAL
+- Peers api-gateway/frontend/macro-indicators/pdf-extractor uptime ~2h (11:14Z restore) — NORMAL
 
-## c040 · 2026-06-06T11:08:59Z
-### Audit Run Tier-1 EARLY-EXIT (11:08 UTC 2026-06-06)
-- Tier: 1 (runtime ping) | Status: EARLY-EXIT
-- Anomalies: 1 CRITICAL (HOST ENOSPC) | 0 dedup-skipped
-- Status: CRITICAL — blocked on host infrastructure
-
-### HOST ENOSPC CRITICAL (A-HOST-ENOSPC)
-- /private/tmp/claude-501 exhausted (0MB free)
-- Impact: curl health checks BLOCKED, all container status checks blocked
-- Evidence: bash curl exit 7 "the temp filesystem at /private/tmp/claude-501/.../tasks is full (0MB free)"
-- Root cause: /tmp space pressure (documented feedback_enospc_deadlock.md)
-- Action: HOST-level remediation required (restart Claude Code or rm -rf /private/tmp/claude-501/)
-- Signal queued: sau-host-enospc-202606061108 → CRITICAL → po
-- Tier-1 execution: INCOMPLETE (cannot proceed with health checks)
-
-## c039 · 2026-06-06T11:01:42Z
-### Audit Run Tier-2 (11:01 UTC 2026-06-06)
-- Tier: 2 (freshness sweep) | Crons: 85+ checked | Sources: 28 checked | VPS routes: 7 checked
+## c041 · 2026-06-06T12:32:30Z
+### Audit Run Tier-1 (12:32 UTC 2026-06-06)
+- Tier: 1 (runtime ping) | Services: 6 checked | Crons: 70+ polled
 - Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
 - Status: HEALTHY
