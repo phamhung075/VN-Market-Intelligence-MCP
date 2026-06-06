@@ -58,15 +58,19 @@ Root cause: <diagnosis> | Fix: <recommendation>
 ```
 
 ## Docker
+> Forbidden patterns (bare `down`/`up -d`/`--force-recreate`/`--remove-orphans`) → `docs/agents/ops/flow/docker.md` § FORBIDDEN.
 ```bash
-docker-compose ps
+docker compose ps
 docker logs -f mcp-server --tail 100
-cd $PROJECT_ROOT && docker-compose down && docker-compose up -d && sleep 5
+# Relaunch scoped to ONE service (no code change):
+docker compose up -d --no-deps --no-build <service> && sleep 5
+# Rebuild scoped to ONE service (code changed):
+docker compose build <service> && docker compose up -d --no-deps <service> && sleep 5
 curl http://localhost:3000/health
 ```
 NEVER: `bun --hot` | `bun --watch` | `nodemon` | `pm2` | manual Bun restarts
 
-**MANDATORY post-rebuild 9-service health check** (any rebuild/restart, even single-service) → `docs/agents/ops/flow/docker.md` § Post-Rebuild Health Verification. Rationale: c71 — `--force-recreate macro-indicators` knocked mcp-server gateway port 3000; ~50 min blast radius before detection.
+**MANDATORY post-rebuild health check** (any restart/rebuild, even single-service) → `docs/agents/ops/flow/docker.md` § Post-Rebuild Health Verification. Run `docker compose ps` and verify count matches host_runtime_set (6 services) — a green rebuild says nothing about peers.
 
 ## DB Health
 ```bash
@@ -100,7 +104,7 @@ Diagnostic steps (in order):
    docker inspect pdf-extractor --format "{{.Image}}"
    docker inspect pdf-extractor --format "{{.Config.Image}}"
    ```
-4. If version drift confirmed → REBUILD pdf-extractor (`docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) pdf-extractor && docker compose up -d --no-deps --force-recreate pdf-extractor`), then re-run mandatory 9-service health check → `docs/agents/ops/flow/docker.md` § Post-Rebuild Health Verification.
+4. If version drift confirmed → REBUILD pdf-extractor (`docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) pdf-extractor && docker compose up -d --no-deps pdf-extractor`), then re-run mandatory health check → `docs/agents/ops/flow/docker.md` § Post-Rebuild Health Verification.
 5. Report to WORK channel with `send_telegram(channel="work")` detailing the drift and action taken.
 
 Status semantics for eval: red = hard fail, yellow = soft warning, green = pass. A fleet-wide OCR regression typically shows `3_OCR` stage red across multiple reports — distinguish from isolated single-report red (single-PDF data issue, not a regression).

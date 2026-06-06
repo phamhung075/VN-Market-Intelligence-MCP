@@ -40,7 +40,7 @@ POST https://zenmidi.com/messages       ← 404 Not Found (missing /vn-market)
 1. Check `docker-compose.yml` has `CLOUDFLARE_PATH_PREFIX: /vn-market`
 2. Check `apps/mcp-server/src/interface/mcp/server.ts`: `const pathPrefix = process.env.CLOUDFLARE_PATH_PREFIX || ""; const sessions = new SseSessionManager(createMcpServerInstance, log, pathPrefix);`
 3. Check `apps/mcp-server/src/interface/mcp/transport.ts`: `const endpoint = \`\${this.pathPrefix}/messages\`;`
-4. Restart: `docker-compose down && docker-compose up -d && sleep 5`
+4. Restart: `docker compose up -d --no-deps mcp-server && sleep 5` (forbidden patterns → `docs/agents/ops/flow/docker.md` § FORBIDDEN)
 
 ### Issue 2: Docker Container Unreachable from Cloudflare
 
@@ -51,7 +51,7 @@ POST https://zenmidi.com/messages       ← 404 Not Found (missing /vn-market)
 **Fix:**
 1. Check `docker-compose.yml`: `HOST: 0.0.0.0`
 2. Check `apps/mcp-server/src/interface/mcp/server.ts`: `const host = process.env.HOST || "0.0.0.0"; app.listen(port, host, ...)`
-3. Restart: `docker-compose down && docker-compose up -d && sleep 5`
+3. Restart: `docker compose up -d --no-deps mcp-server && sleep 5`
 
 ### Issue 3: Cloudflare Tunnel Streaming Timeout
 

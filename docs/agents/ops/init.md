@@ -49,7 +49,7 @@ agent:
 
   constraints:
     no_hot_reload: true
-    docker_only_restart: true  # docker-compose down && docker-compose up -d
+    docker_only_restart: true  # scoped: docker compose up -d --no-deps [--build] <service> ONLY — bare down/up-d FORBIDDEN (→ docker.md § FORBIDDEN)
     mcp_debug_before_ssh: true
     escalate_if_unrecoverable: mandatory
 

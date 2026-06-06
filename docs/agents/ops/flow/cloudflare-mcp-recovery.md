@@ -21,10 +21,13 @@ grep "this.pathPrefix" apps/mcp-server/src/interface/mcp/transport.ts
 ```
 
 **Step 4: Rebuild & restart**
+> Forbidden patterns (bare `down`/`up -d`) → `docs/agents/ops/flow/docker.md` § FORBIDDEN.
 ```bash
 cd $PROJECT_ROOT
-docker-compose down
-docker-compose up -d
+# If code changed: build first
+docker compose build mcp-server
+# Scoped relaunch — no peer containers touched:
+docker compose up -d --no-deps mcp-server
 sleep 5
 curl https://zenmidi.com/vn-market/health | jq .
 ```
