@@ -144,8 +144,11 @@ export interface FetchPageTextsDeps {
 /**
  * Fetch OCR text for all pages of a report.
  * Calls get_bctc_page_text (via getPageText client) for each page.
+ *
+ * Exported so the interface-layer get_bctc_pending_refine tool can compute
+ * windows server-side without duplicating the page-iteration logic.
  */
-async function fetchAllPageTexts(
+export async function fetchAllPageTexts(
   reportId: string,
   filename: string,
   deps: FetchPageTextsDeps = {},
