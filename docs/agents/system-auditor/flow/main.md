@@ -1,4 +1,4 @@
-<!-- size-justification: 558L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) replaces prose-only BCTC staleness rule with machine-evaluated SLA resolver reading system-map.json sla blocks. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated-only commit-mutex refs to executed protocol steps in D-IMPROVE and notebook-commit. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into the settled single-write. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
+<!-- size-justification: 558L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) replaces prose-only BCTC staleness rule with machine-evaluated SLA resolver reading system-map.json sla blocks. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated-only commit-mutex refs to executed protocol steps in D-IMPROVE and notebook-commit. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into the settled single-write. NB-ORDERING-FIX (2026-06-06) makes NEWEST-FIRST section ordering explicit in settled-write steps c/e/f. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -500,7 +500,7 @@ severity ≥ warn → `send_telegram(channel="bug")` AND append row to `docs/dat
 Step 1 — Compose in memory (NO file write yet):
 a. Read `docs/agent-memory/notebooks/system-auditor.md` fully into memory.
 b. Identify preamble (before first `## `) and all `^## ` section boundaries.
-c. If ≥3 sections: drop oldest `## ` block (heading + content to next `## `) in memory.
+c. If ≥3 sections: drop the LAST `## ` block (bottom = oldest) in memory (heading + content to next `## ` or EOF). Ordering convention: sections are NEWEST-FIRST; the bottom section is always the oldest.
 d. Build new section (≤60L):
    ```
    ## c<NNN> · <YYYY-MM-DDThh:mmZ>
@@ -510,8 +510,8 @@ d. Build new section (≤60L):
    - Status: HEALTHY | DEGRADED | CRITICAL
    ```
    If Tier-2 cycle and snapshot ≠ nil: append `BCTC-EVAL-SNAPSHOT:` sub-block (compact JSON array, ≤10L) within this new section, counting toward the 60L section cap.
-e. Append new section to end of in-memory body.
-f. Count in-memory lines. If >200L: drop next-oldest `## ` block, recount; repeat until ≤200L or only preamble+1 section remain. If current-cycle section >60L: trim to 60L first.
+e. Insert new section at TOP of in-memory body, immediately after preamble (before the first existing `## ` block). Sections are NEWEST-FIRST: newest entry goes to the top, oldest stays at the bottom.
+f. Count in-memory lines. If >200L: drop the LAST `## ` block (bottom = oldest), recount; repeat until ≤200L or only preamble+1 section remain. If current-cycle section >60L: trim to 60L first.
 g. In-memory body is now the final settled content (≤200L guaranteed).
 
 Step 2 — Single settled write (ONE call, PostToolUse fires exactly once):
