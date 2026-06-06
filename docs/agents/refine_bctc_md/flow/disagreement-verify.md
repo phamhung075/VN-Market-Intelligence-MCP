@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: haiku
   authored_by: claude-opus-4
-  description: Sub-flow D — Re-examine one flagged cell. Orchestrator second-look. Returns JSON as Task return value (Option-Y).
+  description: Sub-flow D — Re-examine one flagged cell. Orchestrator second-look. Returns result JSON inline to main.md (Option-C).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 

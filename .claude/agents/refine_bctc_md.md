@@ -1,7 +1,12 @@
 ---
 name: refine_bctc_md
 color: cyan
-description: BCTC page refine agent. Reads OCR text + page images. Produces trusted markdown per FR-13 refine contract (numbers←OCR, structure←image, flag disagreements). Runtime: Haiku. Authored by Opus (one-time). One window per invocation. Writes docs/refine-output/{report_id}/{unit_id}.json — NEVER to DB.
+description: >
+  BCTC refine leaf worker (Option-C). Reads OCR text + page images. Produces trusted markdown
+  per FR-13 contract (numbers←OCR, structure←image, flag disagreements). Runtime: Haiku.
+  Authored by Opus (one-time). Processes one CHUNK (≤7 windows) per invocation, resumable
+  across fires via get_bctc_refined skip-set. Pushes results via push_bctc_refined_unit +
+  finalize_bctc_refine (DB pathway). NEVER writes docs/refine-output/ files. NEVER nested-spawn.
 tools: Read, Write, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---

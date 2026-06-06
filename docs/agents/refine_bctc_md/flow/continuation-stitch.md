@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: haiku
   authored_by: claude-opus-4
-  description: Sub-flow C — Multi-page continuation table (pages N to N+k, max 3). ONE unified pipe-table. Returns JSON as Task return value (Option-Y).
+  description: Sub-flow C — Multi-page continuation table (pages N to N+k, max 3). ONE unified pipe-table. Returns result JSON inline to main.md (Option-C).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 

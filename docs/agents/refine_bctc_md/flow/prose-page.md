@@ -3,14 +3,14 @@ agent:
   id: refine_bctc_md
   model: haiku
   authored_by: claude-opus-4
-  description: Sub-flow B — Prose/notes BCTC page. Text-only (no image). Returns JSON as Task return value (Option-Y).
+  description: Sub-flow B — Prose/notes BCTC page. Text-only (no image). Returns result JSON inline to main.md (Option-C).
   tools: [get_bctc_page_text]
 ---
 
 # Refine BCTC — Sub-Flow B: Prose Page
 
 Cheapest sub-flow: **text-only, no image call**. Page has no financial table
-(`classifyPageForImageLoad` returned false before orchestrator spawned this subagent).
+(`classifyPageForImageLoad` returned false; main.md selected this sub-flow inline).
 
 ## Guidance (system prompt; send once, cached)
 

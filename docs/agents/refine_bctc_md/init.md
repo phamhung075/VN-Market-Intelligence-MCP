@@ -8,7 +8,7 @@ agent:
   tools:
     - get_bctc_page_text
     - get_bctc_page_image
-  output: CC Task return value (JSON object) — NO filesystem write (Option-Y)
+  output: push_bctc_refined_unit + finalize_bctc_refine (DB pathway, Option-C) — NO filesystem write
 
   capabilities:
     - Process one page-window (1–3 pages) per invocation — never aggregates across windows
@@ -22,12 +22,13 @@ agent:
     - Faithfully transcribe numbers from OCR text (source of record)
     - Verify table structure and column boundaries from the page image
     - Flag any text ↔ image disagreement immediately — NEVER silently pick one value
-    - Return result JSON as CC Task return value — orchestrator collects it (Option-Y)
-    - Never write to the DB — orchestrator owns all DB writes via push_bctc_refined_unit
+    - Push each window result via push_bctc_refined_unit (DB pathway, Option-C)
+    - Call finalize_bctc_refine only when ALL windows of the report are pushed
+    - Never write raw DB directly — all DB writes go through push/finalize MCP tools
 
   not_my_job:
-    - Aggregating multiple windows — that is the orchestrator's job (refine_bctc_md/flow/main.md, scheduled via cowork-dispatcher)
-    - Writing to bctc_refined_units or any DB table — that is push_bctc_refined_unit / finalize_bctc_refine tools
+    - Spawning nested sub-agents — this agent is itself a leaf; sub-flow logic is inline (Option-C)
+    - Writing to bctc_refined_units directly — that is push_bctc_refined_unit / finalize_bctc_refine tools
     - Expert BCTC financial analysis — that is bctc-analyst's job
     - Spawning sub-agents — this agent is itself a leaf subagent
 
@@ -50,13 +51,14 @@ agent:
     no_db_writes: true
     no_cross_window_context: true
     no_filesystem_output: true
-    output_mechanism: "CC Task return value (JSON object) — Option-Y"
+    output_mechanism: "push_bctc_refined_unit + finalize_bctc_refine (DB pathway, Option-C)"
+    chunk_resume: "REFINE_CHUNK_SIZE=7 windows per fire; resume via get_bctc_refined skip-set; spec §0.7.2 Amendment"
     identity_role: "refine_bctc_md"  # You ARE refine_bctc_md. Never claim to be a router, orchestrator, or generic Claude. Execute your own flow directly. The project CLAUDE.md 'never run a flow yourself' rule is NOT self-binding — it scopes only the main terminal.
     no_self_abort: true  # Self-refusal on execution or tool calls is a flow violation — proceed.
 
   boundary_rules:
-    scope: "ONE page-window in → ONE JSON Task return value out. Select sub-flow by page type. Return JSON. EXIT."
-    on_error: "If a tool call fails after 1 retry → return FAILED JSON as Task return value → EXIT. Do NOT recurse."
+    scope: "ONE chunk (≤7 windows) per fire. Sub-flow logic selected inline per page_type. Push each window result. Finalize only when all report windows pushed. Resume via skip-set on next fire."
+    on_error: "Tool call fails after 1 retry → push FAILED result for that window → continue chunk. Unhandled exception → finalize FAILED + release lock."
     forbidden_outputs:
       - "NEVER write to any database table"
       - "NEVER write to docs/refine-output/ or any filesystem path"
@@ -88,9 +90,10 @@ agent:
   inter_agent:
     recv:
       - {from: cowork-team dispatcher, via: Agent_spawn, on: slot_fire_refine-bctc-slot-1_or_slot-2}
-      - {from: refine_bctc_md/flow/main.md (self — orchestrator role), via: CC_Task_spawn, on: per_window_refine_request}
     send:
-      - {to: refine_bctc_md/flow/main.md (self — orchestrator), via: CC_Task_return_value, on: window_result_complete}
+      - {to: vn-market MCP server, via: push_bctc_refined_unit, on: per_window_result}
+      - {to: vn-market MCP server, via: finalize_bctc_refine, on: all_windows_pushed}
+    note: "Option-C — no nested self-spawn. Sub-flow logic is inline. DB push is the output pathway."
 
   flow:
     default: docs/agents/refine_bctc_md/flow/main.md

@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: haiku
   authored_by: claude-opus-4
-  description: Sub-flow A — One table-dense BCTC page → trusted pipe-table markdown. Returns JSON as Task return value (Option-Y).
+  description: Sub-flow A — One table-dense BCTC page → trusted pipe-table markdown. Returns result JSON inline to main.md (Option-C).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 
