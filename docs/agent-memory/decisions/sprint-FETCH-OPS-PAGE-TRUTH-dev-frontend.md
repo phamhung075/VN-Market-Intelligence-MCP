@@ -52,6 +52,17 @@
 
 ---
 
+## Entry 7 — QA gate verdict: APPROVED
+
+**task_id:** F-3
+**agent:** qa
+**date:** 2026-06-07T00:05Z
+**what-considered:** Full pipeline: vitest 380/380 (QA-run), tsc exit 0 (QA-run), DDD clean, security clean (process.env at client.ts:20-21 pre-existing, not in diff), mock-guard exit 0, all 8 AC raw-verified (HTTP 200, 0 Reuters/Bloomberg strings, 13 sources API-driven, SourceFreshnessTable/VpsProxyPanel/BctcPipelinePanel rendered, latency guarded, VPS_SERVICE_LABELS is cosmetic display map not hardcoded source list). Container 8626cacc51c0 rebuilt post-commit (23:54:50 > 23:53:49). Overnight staleness rendered honestly via amber/red dots + "N h ago" — stale vs very-stale differentiation implemented. No blocking issues.
+**why-change:** All checks green. No arch concern (no new domain service, no new MCP tool, no cross-service HTTP changes — frontend-only route rewrite using existing virtual alias pattern).
+**decision:** APPROVED. F-3 REVIEW→DONE.
+
+---
+
 ## Entry 6 — commit-mutex MCP gateway unavailable
 
 **task_id:** F-3

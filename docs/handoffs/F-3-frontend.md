@@ -212,3 +212,47 @@ Container image ID: 8626cacc51c0 == fresh build image (AC-8 PASS)
 Vitest: 380/380 pass
 tsc --noEmit: exit 0
 ```
+
+---
+
+## [QA] Review Record
+
+- **Reviewer:** qa
+- **Date:** 2026-06-07T00:05Z
+- **Commit reviewed:** f02bbc66
+- **Verdict:** APPROVED
+
+### Test Results
+
+- Vitest (QA-run): 380/380 pass — verified independently via `npx vitest run` in apps/frontend
+- tsc --noEmit: exit 0 (QA-run confirmed)
+- 17 new tests in f3-fetch-status.test.ts — meaningful (endpoint call, 5 VPS legs, status enum, error path, helpers formatSourceAge/sourceStatusColor with edge cases 0/sub-minute/minutes/hours)
+
+### DDD Compliance: PASS
+
+No domain→infrastructure or domain→application imports in any modified files. VpsProxyPanel uses `Object.entries(vpsProxy)` from API response (not from a hardcoded import).
+
+### Security: PASS
+
+No hardcoded secrets, no SQL in scope. `process.env` at client.ts:20-21 is pre-existing (not in F-3 diff; SSR-origin guard pattern established in prior cycle).
+
+### Mock-Guard: PASS (exit 0)
+
+### AC Verification (raw, not relayed from dev)
+
+- **AC-1:** HTTP 200, Reuters/Bloomberg count=0 in live response — PASS
+- **AC-2:** 13 sources (cafef, vietstock, nhandan, vnexpress, vneconomy, nld, tuoitre, vietnambiz, vnbusiness, shared-url, vnexpress1, cafef1, news) — driven by API response — PASS
+- **AC-3:** SourceFreshnessTable renders src.id, formatSourceAge(src.ageMs), sourceStatusColor dot, src.count24h — all from API; helpers tested — PASS
+- **AC-4:** VpsProxyPanel renders Object.entries(vpsProxy) — 5 legs confirmed in live response (VPS_SERVICE_LABELS is display-label lookup with `?? key` fallback — not a data source, rows API-driven) — PASS
+- **AC-5:** BctcPipelinePanel renders bctcPipeline.pending/done/failed — PASS
+- **AC-6:** MacroPanel: totalLatencyMs guarded with `!== undefined` conditional (dashboard.fetch.tsx:245) — renders only if present, absent from F-2 server response — PASS
+- **AC-7:** No hardcoded VN source slugs drive row count/identity in TSX — PASS. Note: `VPS_SERVICE_LABELS` maps keys to human labels (cosmetic, API-driven rows via `Object.entries`) — not a violation.
+- **AC-8:** Container image 8626cacc51c0 running == latest docker images entry (built 2026-06-06 23:54:50 CEST, commit f02bbc66 at 23:53:49 CEST — rebuilt post-commit) — PASS
+
+### Design Note (non-blocking, from QA-F1 thread)
+
+All 13 sources read 'stale' overnight (crawl lull). F-3 renders this honestly: count24h column visible, amber/red dot visible, age string shows elapsed time. The `stale` vs `very-stale` (>12h = red) differentiation IS implemented via `sourceStatusColor` (2h boundary = amber, 12h boundary = red). Non-blocking design note logged for PM: consider whether "very stale" label text would add clarity beyond the color cue.
+
+### Issues
+
+None blocking.
