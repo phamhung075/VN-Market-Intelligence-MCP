@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "infra-anomaly",
+  "payload": {
+    "fire_time": "2026-06-06T00:10:15Z",
+    "findings": [
+      {
+        "id": "GIT-IGNORES-FALSE-WARN",
+        "severity": "medium",
+        "occurrences": 3,
+        "summary": "Spurious French git-add error 'Les chemins suivants sont ignorés par un de vos fichiers .gitignore : docs/data' with exit 1, on a TRACKED non-ignored file (docs/data/cowork-schedule.json). git check-ignore -v exits 1 (no rule matches); .gitignore only has docs/data/cycle-snapshot-* patterns. 3rd occurrence (threshold per watch item) — 2026-06-06T00:09Z during c026 artifact commit. Despite exit 1 the file WAS staged. Likely interaction with concurrent git process holding the index (see GIT-MUTEX-BYPASS). Reproduce: git add -- docs/data/cowork-schedule.json while a parallel git process runs.",
+        "evidence": "git add exit 1 + warning, yet git diff --cached showed file staged; check-ignore clean on all 4 paths"
+      },
+      {
+        "id": "GIT-MUTEX-BYPASS-AUDITOR",
+        "severity": "high",
+        "occurrences": 1,
+        "summary": "system-auditor tier-1 self-cron committed (1b3aa5b5, 00:09:19Z 'chore(memory/system-auditor): notebook 2026-06-06 tier-1') WITHOUT claiming commit-mutex while cowork-dispatcher HELD the mutex (claimed=true at ~00:09Z). Its commit swept 4 cowork-staged files from the shared index (cowork-schedule.json, bctc-analyst.md notebook, bctc_signal_FPT, FIRE telemetry) into a mis-labeled commit. Content verified intact in HEAD — no data loss, no history rewrite per feedback_concurrent_commit_race. Fix needed: system-auditor flow must claim commit-mutex (task_kind=commit-mutex) before any git stage+commit, same as dispatcher/dev-team convention.",
+        "evidence": "git show 1b3aa5b5 --stat lists 5 files (1 auditor + 4 cowork); cowork mutex claim returned claimed=true and was held throughout"
+      }
+    ],
+    "classification": "ERROR",
+    "note": "Conflated commit left as-is (no rewrite). c026 artifacts are committed and verified. Requesting PO triage: route GIT-MUTEX-BYPASS-AUDITOR to system-auditor flow owner."
+  },
+  "priority": "high",
+  "createdAt": "2026-06-06T00:10:15Z",
+  "fingerprint": "8b7fc853d2986cc2ec926f097fe63c7caff02a6d468c2b8a38283464c6660af3",
+  "processedAt": "20260606T002308Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}

@@ -29,5 +29,9 @@
   "escalation_status": "NONE",
   "signal_id": 5138,
   "cycle_id": "20260606-0000",
-  "emitted_at": "2026-06-06T00:09Z"
+  "emitted_at": "2026-06-06T00:09Z",
+  "fingerprint": "9db82982d1ef2b1c01a9fad50cd2489d604d5bdf96ebe221be386fc307ff54b0",
+  "processedAt": "20260606T002308Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
 }
