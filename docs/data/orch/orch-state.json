@@ -5,10 +5,10 @@
   "_updated_by": "po",
   "head": {
     "active_task_id": null,
-    "next_action": "NEXT-TICK MUST-DO: (1) dispatch ops SCOPED rebuild mcp-server (docker compose build mcp-server && docker compose up -d --no-deps mcp-server — per new FORBIDDEN policy bd41a6b3) to deploy leader-lock fix d4d2e453+04123334; after rebuild verify docker ps -a count vs host_runtime_set 6 + toolCount 162 + task_heartbeat schema shows optional owner_agent; rebuild will orphan current cowork-leader lock ONE more time (legacy path) — expected, last occurrence. (2) WATCH-2 verify 13:00Z refine-bctc-slot-1 fire: router raw probe 12:26Z showed 7 reports text_status=COMPLETE windows POPULATED (spike no-op claim falsified) — expect refined units pushed via push_bctc_refined_unit (DB pathway, Option-Y no file artifacts); check bctc_refined_units rows + finalize statuses; BEQ-7 may legitimately set PARTIAL. (3) PO triage NEW row rtr-refine-idem-test-lock-isolation (test-isolation defect, 4 cases). Tick 112035Z shipped 8 commits: ops-footgun FORBIDDEN bd41a6b3; leader-lock rebind d4d2e453+04123334 (PENDING-DEPLOY); SPIKE_201 7986337d; DV-push-4 fixture 36998888 GREEN; auditor evidence-integrity brief dfec1c98 + impl 3d602df7 + probe path fix 004e7813. WATCH-1 PROVEN: offhours gatherers fired 12:05Z snapped (2b67d3a7 live-verified). mcp-server RestartCount=1 (11:16:18Z, ops restore op, clean) — benign, c041 should expect it. Carry: Monday ~02:15Z price-push resume; auditor c041 = first probe.sh live proof (spot-probe one cited value); threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md still 500L vs 120L cap (Tier-2/3 split deferred); refine flow L43 stale comment (micro, fold into next refine touch); operator owes /cron-cowork-team refresh",
+    "next_action": "NEXT-TICK: (1) WATCH-2 RE-DATED — router schedule-check falsified the 13:00Z premise: refine-bctc-slot-1 cron is 0 9 * * * DAILY (cowork dispatcher; bctcRefineJob has NO in-container cron, host fleet only). Next fire 2026-06-07 ~09:04Z, triple-unblocked (schema 172999f0 live, model-pin a3fa9098, zombie-release 368b7bad live 12:44Z). Verify after 09:10Z: bctc_refined_units rows in /app/data/market.db (latest currently 2026-06-02, 53 rows; ACB fea19bae=27, expect DGC 0c6f0535 +34 windows) + refine_status transitions; BEQ-7 PARTIAL legitimate. Query pattern: docker exec mcp-server bun -e bun:sqlite readonly (no sqlite3/node in container). (2) cowork-leader lock expires 13:32:58Z then next dispatcher tick TTL-steals fresh on current session — verify no starvation at next cowork fire; cowork dispatcher flows still pass NO owner_agent (legacy path) — queue follow-up FU-COWORK-OWNER-AGENT-ADOPT (agent-father: add owner_agent to heartbeat/release in cowork dispatcher + flows) when convenient. (3) Sunday 03:00-05:00Z zone-scans fire tomorrow — expect zone_health_report signals Monday triage. Tick 123211Z: leader-lock fix DEPLOYED+battle-proven (2 real orphan releases via owner_agent); FIX-REFINE-IDEM-LOCK-ISO shipped 368b7bad + bonus production zombie-release bug fixed+deployed; auditor c041 ACCEPTED (probe.sh first live proof: RAW-PROBE fence machine-diff clean, spot-probe match, anti-carry honored; soft note: df section trimmed not verbatim occ#1). Carries: Monday ~02:15Z price-push resume; threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); refine flow L43 stale comment (fold into next refine touch); operator owes /cron-cowork-team refresh. LESSON: verify a slot's cron in cowork-schedule.json BEFORE setting a timed WATCH (13:00Z was an unverified carry).",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T12:27:47Z",
+    "updated_at": "2026-06-06T13:10:45Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T12:27:47Z",
+    "_updated_at": "2026-06-06T13:10:45Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,13 @@
     "archive": [],
     "done": [
       {
+        "task_id": "FIX-REFINE-IDEM-LOCK-ISO",
+        "status": "DONE",
+        "commit": "368b7bad",
+        "done_at": "2026-06-06T13:10:45Z",
+        "deploy_note": "test fix + production zombie-release fix; DEPLOYED 12:44Z (15d45d7cf2f9); 13/13 + 27/27 router re-run"
+      },
+      {
         "task_id": "FIX-OPS-DOWN-FOOTGUN",
         "status": "DONE",
         "commit": "bd41a6b3",
@@ -2630,10 +2637,10 @@
       },
       {
         "task_id": "FIX-CWK-LEADER-LOCK-REBIND",
-        "status": "DONE-PENDING-DEPLOY",
+        "status": "DONE",
         "commit": "d4d2e453+04123334",
         "done_at": "2026-06-06T12:27:47Z",
-        "deploy_note": "REBUILD REQUIRED next tick (deferred past 13:00Z cowork fires); owner_agent optional w/ legacy fallback — no caller-doc break"
+        "deploy_note": "DEPLOYED 12:36Z scoped rebuild (image 86607bf0, IMAGE-MATCH raw, 6/6 peers, toolCount 162). Schema probe: owner_agent optional accepted. BATTLE-PROVEN same tick: released TWO real orphaned locks (po-triage + FIX-REFINE-IDEM claims) across restarts via owner_agent path after bare release returned ok:false. Cowork/dev flows adopt owner_agent param incrementally (cowork-leader lock still legacy until cowork flows migrate)."
       },
       {
         "task_id": "SPIKE_201",
@@ -3743,7 +3750,7 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T12:27:47Z",
+    "_updated_at": "2026-06-06T13:10:45Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -3822,9 +3829,12 @@
         "source": "router",
         "route_to": "po",
         "type": "system_issue",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "AR-refined-units-idempotency.test.ts Scenarios A/B/C + no-accumulation (4 cases) fail pre-existing: bctcRefineJob inside the test logs [bctcRefine] skip — task already claimed, holder owner_agent=refine-orchestrator owner_session=pid-10914 claimed_at=1780747797 — a task-claim lock persists across test scenarios, i.e. the coordination store the job uses is NOT isolated to the per-test injected db (shared/live store or module-level singleton). Test-isolation defect; may also indicate bctcRefineJob couples to a global coordination DB rather than injected deps. Triage: dev-mcp-server — make bctcRefineJob take coordination store via injection (or test must reset/expire locks between scenarios); separate from DV-push-4 fixture fix 36998888 which is GREEN.",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T13:10:45Z",
+        "resolved_by": "dev-team",
+        "disposition": "SHIPPED 368b7bad (dev-mcp-server, PO batch FIX-REFINE-IDEM-LOCK-ISO): two-part root cause — (1) test isolation: beforeEach now _resetCoordinationDbState + ensureCoordinationTable + _injectCoordinationDb(:memory: db), afterEach reset+close; (2) BONUS PRODUCTION BUG router-verified: bctcRefineJob L512 released with owner_agent pid-${pid} but claimed as refine-orchestrator → DELETE never matched → zombie lock 3600s on EVERY production refine call; fixed to matching owner_agent. 13/13 GREEN (router re-ran), task-lock suite 27/27 no regression, tsc clean. DEPLOYED 12:44Z second scoped rebuild (image 15d45d7cf2f9, IMAGE-MATCH raw, 6/6 peers, health 200/162) — live before next refine fire."
       }
     ],
     "archive": [
