@@ -3,6 +3,32 @@ agent: system-auditor
 session_date: 2026-06-06
 ---
 
+## c022 · 2026-06-06T03:08:04Z
+### Audit Run Tier-1 (03:08 UTC 2026-06-06)
+- Tier: 1 (env) | Services checked: 6 (intended runtime) | Crons polled: 95+
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
+
+### Container Status (Intended Runtime Set) — All PASS
+- mcp-server: Up 5h 23m, restart_count=0 ✓, memory=42.46% ✓
+- api-gateway: Up 3d ✓ | frontend: Up 5h ✓ | macro-indicators: Up 16h ✓
+- pdf-extractor: Up 2d ✓ | mcp-gateway: Up 9d (healthy) ✓
+
+### Health Endpoints — All PASS
+- mcp-server :3000 → 200 ✓ | api-gateway :4000 → 200 ✓ | macro-indicators :5004 → 200 ✓
+- pdf-extractor :5001 → 200 ✓ | mcp-gateway → healthy ✓
+- frontend :3001 → 404 (UI-only, INFO-grey) ✓
+
+### Cron Health (95+ jobs) — All PASS
+- All jobs firing successfully; 7-day baseline: 97–100%
+- intelligenceCycleJob: 99.3% | bctcQueueEnricherJob: 97.4%
+
+### Circuit Breaker Status
+- All 16 sources [OK] (0 open, 0 half-open) ✓
+
+### Notes
+- Clean pass. All 6 services UP + healthy. VN market CLOSED (Saturday 03:08 UTC).
+
 ## c021 · 2026-06-06T02:38Z
 ### Audit Run Tier-1 (02:38–02:39 UTC 2026-06-06)
 - Tier: 1 (env) | Services checked: 6 (intended runtime) | Crons polled: 95+
@@ -76,30 +102,3 @@ Observed: 2 red reports (VNM Q4-2025, FPT Q4-2025) — persistent from 2026-06-0
 - SBV fetch unhealthy but non-critical (macro only, backtested signals stable).
 - Price staleness (18h) is a concern if market opens and VPS still unreachable → escalate to ops-vps-fetch if not resolved by 09:00 UTC.
 - No new improvement proposals emitted (all breaches explained by market-closed + known VPS lag).
-
-## c019 · 2026-06-06T02:08Z
-### Audit Run Tier-1 (02:08–02:09 UTC 2026-06-06)
-- Tier: 1 (env) | Services checked: 6 (intended runtime) | Crons polled: 95+
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Container Status (Intended Runtime Set) — All PASS
-- mcp-server: Up 4h 23m, restart_count=0 ✓, memory=42.29% ✓
-- api-gateway: Up 3d ✓ | frontend: Up 4h ✓ | macro-indicators: Up 15h ✓
-- pdf-extractor: Up 2d ✓ | mcp-gateway: Up 9d (bound :4040, healthy) ✓
-
-### Health Endpoints — All PASS (frontend UI-only 404)
-- mcp-server :3000 → 200 ✓ | api-gateway :4000 → 200 ✓ | macro-indicators :5004 → 200 ✓
-- pdf-extractor :5001 → 200 ✓ | mcp-gateway :4040 → healthy ✓
-- frontend :3001 → 404 (UI-only, INFO-grey) ✓
-
-### Cron Health (95+ jobs) — All PASS
-- ~100% firing; 7-day baseline success_rate: 97%+
-- intelligenceCycleJob: 99.3% (566 runs) | bctcQueueEnricherJob: 97.4% (503 runs)
-
-### Circuit Breaker Status
-- All 16 sources [OK] (0 open, 0 half-open circuits) ✓
-
-### Notes
-- Tier-1 pass clean. All 6 intended-runtime services UP + healthy. No anomalies detected.
-- mcp-gateway confirmed healthy on :4040 (discrepancy in external_port mapping noted but functional).
