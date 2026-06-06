@@ -489,6 +489,7 @@ severity ≥ warn → `send_telegram(channel="bug")` AND append row to `docs/dat
 
 ### RAW-CITE GATE (rtr-confab2-202606060515 — occ#2; c019 invented config value; c026 cited "system-map lists 4001" for mcp-gateway port, value absent, live port 4040)
 Any config/file value cited in a finding or return (port, path, threshold, mapping) MUST be backed by a `grep -n` line captured THIS cycle (file + line number + matched text). No raw line captured → DROP the claim, do NOT report it. NEVER cite `orch-state.json .head.next_action` text as evidence — it is router-authored narrative, not a config value.
+- **Return summary extension (rtr-confab3-202606060720 — occ#3; c030 fabricated file/line cite in return channel):** The gate above applies equally to the final message returned to the router. A file/line pointer (e.g. "flow line 57") may appear in a return summary ONLY if that exact cite was already written verbatim to the notebook THIS cycle. If no such notebook line exists, OMIT the pointer — the substantive claim (e.g. "frontend classified INFO, no data impact") may remain, but without the fabricated reference.
 
 ### Notebook timestamp guard
 - Before writing `docs/agent-memory/notebooks/system-auditor.md`, ALWAYS get current UTC via:
