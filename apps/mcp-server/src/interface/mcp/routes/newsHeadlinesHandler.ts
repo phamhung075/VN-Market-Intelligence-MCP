@@ -39,13 +39,13 @@ interface RagRow {
   created_at: string;
 }
 
-function buildSql(source: Source): string {
+export function buildSql(source: Source): string {
   const cols = `SELECT source_title, source_url, published_at, created_at
   FROM rag_analyses`;
   const tail = `ORDER BY created_at DESC LIMIT ?`;
 
-  if (source === "reuters") return `${cols} WHERE source_url LIKE '%reuters%' ${tail}`;
-  if (source === "bloomberg") return `${cols} WHERE source_url LIKE '%bloomberg%' ${tail}`;
+  if (source === "reuters") return `${cols} WHERE source_url LIKE '%reuters.com%' ${tail}`;
+  if (source === "bloomberg") return `${cols} WHERE source_url LIKE '%bloomberg.com%' ${tail}`;
   if (source === "cafef") return `${cols} WHERE source_url LIKE '%cafef%' ${tail}`;
   if (source === "vnexpress") return `${cols} WHERE source_url LIKE '%vnexpress%' ${tail}`;
   if (source === "vneconomy") return `${cols} WHERE source_url LIKE '%vneconomy%' ${tail}`;
@@ -54,8 +54,8 @@ function buildSql(source: Source): string {
 
 function deriveProvider(url: string | null): string {
   if (!url) return "other";
-  if (url.includes("reuters")) return "reuters";
-  if (url.includes("bloomberg")) return "bloomberg";
+  if (url.includes("reuters.com")) return "reuters";
+  if (url.includes("bloomberg.com")) return "bloomberg";
   if (url.includes("cafef")) return "cafef";
   if (url.includes("vnexpress")) return "vnexpress";
   if (url.includes("vneconomy")) return "vneconomy";

@@ -83,6 +83,7 @@ import { handlePriceHistory } from "./routes/priceHistoryHandler.js";
 import { handlePriceBatch } from "./routes/priceBatchHandler.js";
 import { handleNewsHeadlines } from "./routes/newsHeadlinesHandler.js";
 import { handleVpsProxyHealth } from "./routes/vpsProxyHealthHandler.js";
+import { handleFetchStatus } from "./routes/fetchStatusHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -1945,6 +1946,16 @@ export async function createBunServer(
     // No authentication required — read-only, no sensitive data.
     if (method === "GET" && pathname === "/api/vps-proxy-health") {
       handleVpsProxyHealth(req, res, db);
+      return;
+    }
+
+    // ── F-1: GET /api/fetch-status — aggregated fetch operations status ──────
+    // Aggregates per-source article freshness from rag_analyses, VPS proxy health,
+    // and BCTC queue counts for the dashboard enrich panel.
+    // Route: /api/ prefix (NOT /mcp/api/) — uses "api" virtual alias (NoProbe=true)
+    // so the full path is preserved through the gateway. No auth required (read-only).
+    if (method === "GET" && pathname === "/api/fetch-status") {
+      handleFetchStatus(req, res, db);
       return;
     }
 
