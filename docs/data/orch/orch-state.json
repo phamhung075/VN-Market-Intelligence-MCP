@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T21:00:00Z",
-    "_updated_by": "agent-father",
+    "_updated_at": "2026-06-06T20:09:07Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2207,6 +2207,64 @@
         ],
         "signoff_at": "2026-06-04T20:05:28Z",
         "signoff_note": "Serve layer FIXED LIVE (router raw-verified). Real fix = Go 09e93d76 (macro-indicators :5004 in runtime set). Off-path TS DSI-S1-MACRO = defensive only. OPEN: operator FB-carry symptom half-closed (consumer recomputes from raw rates) + yahooFinance.ts live price gap (S2 Go latent). 3 follow-ups in backlog."
+      },
+      {
+        "id": "WORKFLOW-FLUIDITY",
+        "lead": "architect",
+        "priority": "high",
+        "status": "active",
+        "opened_at": "2026-06-06T20:09:07Z",
+        "tasks": [
+          {
+            "id": "WF-1",
+            "title": "FAIL-LOUD-STOP-RELEASE (F-12+F-2): task_release + atomic .head idle-reset on ALL STOP paths in developer/qa/fixer flows; dev-team Step 0b BLOCKED-task check resets head + routes to triage",
+            "owner": "agent-father",
+            "type": "FIX",
+            "status": "TODO",
+            "zone": "docs/agents/",
+            "created_at": "2026-06-06T20:09:07Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "WORKFLOW-FLUIDITY",
+            "depends": [],
+            "files": [
+              "docs/agents/developer/flow/main.md",
+              "docs/agents/qa/flow/main.md",
+              "docs/agents/fixer/flow/main.md",
+              "docs/agents/dev-team/flow/main.md",
+              "docs/protocols/fail-loud-protocol.md"
+            ],
+            "note": "Closes the up-to-24h head-livelock + 1h lock-hold class per fail-loud STOP. Audit brief Rank 1. fail-loud-protocol.md Error Boundary must gain the release step so future flows inherit it."
+          },
+          {
+            "id": "WF-2",
+            "title": "ORCH-HEAD-CAS + signal_queue retry-read-compare (F-9+F-3): promote FU-ORCH-HEAD-CAS to code; fresh-read-compare-retry (mtime, 3 retries) on signal_queue append; signal-dashboard SKILL documents 3 concurrent writer classes",
+            "owner": "dev-mcp-server",
+            "type": "FIX",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/ + .claude/skills/signal-dashboard/",
+            "created_at": "2026-06-06T20:09:07Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "WORKFLOW-FLUIDITY",
+            "depends": [],
+            "note": "Last-rename-wins silently drops rows when cowork-team (:00/15) and auditor Tier-2 (:00/4h) collide. Audit brief Rank 3. SQLite signal_queue migration is the architect alternative — BA spec must put both options to architect."
+          },
+          {
+            "id": "WF-3",
+            "title": "dev-team MCP gateway binding ruling (F-8): single-claim simplification vs outer-claim-heartbeat; give dev-* agents a working call_tool path (task_claim/commit-mutex) or codify session-scoped constraint as enforced invariant",
+            "owner": "architect",
+            "type": "SPIKE",
+            "status": "TODO",
+            "zone": "docs/protocols/ + .claude/skills/task-lock/",
+            "created_at": "2026-06-06T20:09:07Z",
+            "priority": "medium",
+            "size": "S",
+            "sprint": "WORKFLOW-FLUIDITY",
+            "depends": [],
+            "note": "Timebox 2h. Proven again in ORCH-TASK-CANON: agent-father F1B had to run mutex-less as sole writer. Output: ruling doc + handoff (agent-father for flow edits or dev-mcp-server for binding work)."
+          }
+        ]
       }
     ],
     "backlog": [
@@ -2630,6 +2688,39 @@
         "sprint": "ORCH-TASK-CANON",
         "priority": "high",
         "note": "Decompose .sprint_goal entry ORCH-TASK-CANON (F1 schema contract+migration / F2 serving coalesce / F3 frontend filter / F4 journal format+skill resolver bug / QA live-verify). Router 3-layer diagnosis is requirement-grade input — verify, don't re-discover. DOGFOOD: this task carries canonical {id,title,owner,status,zone,created_at}; task_id mirrored only until F1 migration lands."
+      },
+      {
+        "id": "BA-WORKFLOW-FLUIDITY",
+        "title": "Requirement spec for sprint WORKFLOW-FLUIDITY — decompose ranks 1-3 of docs/architecture-briefs/2026-06-06-workflow-fluidity-audit.md into acceptance criteria per WF-1/WF-2/WF-3",
+        "owner": "ba",
+        "type": "SPRINT-S",
+        "status": "TODO",
+        "zone": "docs/",
+        "created_at": "2026-06-06T20:09:07Z",
+        "priority": "high",
+        "sprint": "WORKFLOW-FLUIDITY"
+      },
+      {
+        "id": "SPIKE-C44-PARALLEL-PROOF",
+        "title": "Verify c44 parallel-isolation proof (F-13): two developer agents in worktrees on disjoint zones, no shared-index race -> lift sequential mandate (Phase 4)",
+        "owner": "developer",
+        "type": "SPIKE",
+        "status": "DEFERRED",
+        "zone": "docs/protocols/",
+        "created_at": "2026-06-06T20:09:07Z",
+        "priority": "low",
+        "note": "PO triage 2026-06-06: WIP=2 host cap makes the parallel lift low-value now; re-queue after WORKFLOW-FLUIDITY closes."
+      },
+      {
+        "id": "WF-DEFER-THROUGHPUT",
+        "title": "F-10 WIP-utilization telemetry (auditor Tier-2 daily WORK metric) + F-11 CRITICAL-signal dual-path emit (file bus + signal_queue)",
+        "owner": "system-auditor",
+        "type": "FIX",
+        "status": "DEFERRED",
+        "zone": "docs/agents/system-auditor/",
+        "created_at": "2026-06-06T20:09:07Z",
+        "priority": "low",
+        "note": "PO triage 2026-06-06: observability/latency niceties, zero liveness impact; 53-min drain window stands as documented known bound."
       }
     ],
     "archive": [],
@@ -4993,6 +5084,20 @@
         "created_by": "po",
         "source": "operator demand 2026-06-06 (decisions invisible on /dashboard/orchestration + canonical task schema) + router raw diagnosis 3-layer (creation/serving/frontend+journal)",
         "note": "WIP_max=2. Order: F1(architect->agent-father) || F4(agent-father, disjoint files) -> F2(dev-mcp-server) -> F3(dev-frontend) -> QA. F2/F3 must tolerate legacy shapes regardless of F1 migration (no-crash invariant). Supersedes-the-residual-of ORCH-DASH-DECISION-DRILLDOWN (drilldown UI shipped; join starved by task-shape drift)."
+      },
+      {
+        "sprint_id": "WORKFLOW-FLUIDITY",
+        "status": "active",
+        "vision": "No agent workflow can livelock, silently drop a signal row, or strand a task lock: every STOP path releases its claim and resets the pipeline head, every orch-state concurrent writer survives a :00 cron collision, and dev agents get a ruled path to the lock tools.",
+        "scope_in": "(WF-1, Rank 1, F-12+F-2) task_release + atomic .head idle-reset on ALL fail-loud STOP paths in developer/qa/fixer flows + dev-team Step 0b check: active_task_id BLOCKED in task_board -> reset head idle, route to triage, never respawn. (WF-2, Rank 3, F-9+F-3) promote FU-ORCH-HEAD-CAS from narrative watch_items to code; signal_queue append gets fresh-read-compare-retry (mtime check, 3 retries) against last-rename-wins row drop at :00/4h cowork+auditor collision; signal-dashboard SKILL documents the 3 concurrent writer classes (dev-team, cowork-team, auditor). (WF-3, F-8) architect SPIKE ruling on dev-* MCP gateway binding: single-claim simplification vs outer-claim-heartbeat; F-8 also blocks commit-mutex for dev agents (recurred in ORCH-TASK-CANON: F1B ran mutex-less as sole writer).",
+        "scope_out": "F-4 journal lost-write — already FIXED in ORCH-TASK-CANON (per-agent journal paths). F-5 cap sentinel — SKILL already telegrams BUG + rolls to -2 continuation file. F-1/F-6/F-7 audited OK. F-10 WIP telemetry + F-11 CRITICAL dual-path emit -> DEFERRED backlog row WF-DEFER-THROUGHPUT. F-13 c44 parallel proof -> DEFERRED backlog row SPIKE-C44-PARALLEL-PROOF. Lifting WIP=2 (deliberate host-safety cap).",
+        "success_metric": "QA raw-proves, not badges: (1) injected fail-loud STOP in a developer dry-run leaves the task immediately claimable (task_claim succeeds) AND .head.status==idle — no 1h lock hold, no 24h head livelock; (2) dev-team Step 0b with a BLOCKED active_task_id routes to triage instead of respawning; (3) two interleaved signal_queue appends from a simulated stale-read both survive — rows +2, zero lost writes; (4) WF-3 ruling merged: working call_tool path for dev agents OR session-scoped constraint written as enforced invariant in task-lock SKILL + protocol.",
+        "lead": "architect",
+        "anti_pattern": "Fixing the STOP path only in developer and not qa/fixer (instance not class). Hard depends-chaining the fixes so one blocked task deadlocks the deadlock-fix sprint. Inline-heredoc jq on orch-state (jq-empty-guard lesson). Treating TTL expiry as the fix — it is the fallback, not the fix.",
+        "created_at": "2026-06-06T20:09:07Z",
+        "created_by": "po",
+        "source": "operator standing request (workflow fluidity, no conflict/deadlock/bottleneck) + agents-architect audit docs/architecture-briefs/2026-06-06-workflow-fluidity-audit.md (13 findings; F-4 fixed inside ORCH-TASK-CANON)",
+        "note": "WIP_max=2, sequential mandate active (F-13 itself). Order: BA spec -> PO review -> WF-1 (agent-father) -> WF-2 (dev-mcp-server) -> WF-3 (architect SPIKE; may swap before WF-2 if dev-mcp-server busy). depends[] kept empty deliberately — ordering is dispatch-time policy, not hard deps, so one BLOCKED task cannot strand the others."
       }
     ]
   }

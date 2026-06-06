@@ -1,15 +1,16 @@
 # PO Notebook
 
-## c · 2026-06-06T18:32Z — SPRINT KICKOFF: ORCH-TASK-CANON (operator demand)
+## c · 2026-06-06T20:09Z — SPRINT KICKOFF: WORKFLOW-FLUIDITY (operator standing request: fluid, no conflict/deadlock/bottleneck)
 
-**Shape accepted (router F1-F4+QA, PO-modified):** F1 schema contract (architect: SSOT {id,title,owner,status,zone,created_at}, CLOSED enum TODO|IN_PROGRESS|REVIEW|DONE|BLOCKED|CANCELLED|DEFERRED + status_note; agent-father edits ALL task-creating flows; one-shot migration of 66 done[] rows + drilldown-container flatten APPROVED) || F4 journal format (agent-father: dev-team triage freeform -> SKILL '### STEP' blocks; +MY FINDING: SKILL resolver reads .entries[0].id but field is sprint_id -> never matches, silent date-fallback; rewrite sprint-2026-06-06.md freeform) -> F2 serving coalesce id//task_id + serve done[] + REBUILD (dev-mcp-server) -> F3 done-filter normalization (dev-frontend) -> QA live-verify.
+**Input:** agents-architect audit brief 2026-06-06-workflow-fluidity-audit.md (13 findings: 3 OK · 3 CONFLICT · 3 DEADLOCK-RISK · 4 BOTTLENECK). F-4 journal lost-write already fixed inside ORCH-TASK-CANON (per-agent paths); F-5 cap sentinel already telegrams+rolls in SKILL — both verified raw, scoped OUT.
 
-**Done this cycle:** .sprint_goal entry ORCH-TASK-CANON appended + BA-ORCH-TASK-CANON in backlog (canonical schema dogfooded, task_id mirrored until F1 migration) — atomic jq -f + sentinel verified. Umbrella lock task:ORCH-TASK-CANON claimed (po, 3600s). Decision entry po-S1 written in PARSEABLE format to sprint-2026-06-06.md (stamped task-id) — doubles as journalStore-format proof.
+**Shape:** WF-1 (agent-father, F-12+F-2 FAIL-LOUD-STOP-RELEASE: task_release + .head idle-reset on ALL developer/qa/fixer STOP paths + dev-team Step 0b BLOCKED check) → WF-2 (dev-mcp-server, F-9+F-3: FU-ORCH-HEAD-CAS promoted from narrative watch_item — NO backlog row existed — + signal_queue fresh-read-compare-retry vs :00 cowork+auditor row drop) → WF-3 (architect SPIKE 2h, F-8 dev-* gateway binding ruling; recurred in ORCH-TASK-CANON F1B mutex-less). BA-WORKFLOW-FLUIDITY in backlog feeds the chain.
 
-**Key decisions:** (1) closed status enum + free-text status_note, NOT 16-string proliferation; (2) migration approved — coalesce-only serving leaves existing done[] join starved (derived-reflow lesson); (3) F2/F3 must legacy-tolerate no-crash regardless of F1; (4) every sprint task dogfoods canonical schema + decision entry.
+**Triage rulings:** F-10 WIP telemetry + F-11 dual-path CRITICAL emit → DEFERRED row WF-DEFER-THROUGHPUT (system-auditor); F-13 c44 parallel proof → DEFERRED row SPIKE-C44-PARALLEL-PROOF. depends[] deliberately empty on WF-1..3 — dispatch-time ordering only, so one BLOCKED task can't strand the deadlock-fix sprint (anti-pattern noted in goal).
+
+**Done this cycle:** sprint_goal entry active + sprint container + 3 backlog rows via jq -f file filter, sentinel + sibling-count verified (goals 15→16, sprints 21→22, backlog 28→31, done 77 intact), atomic mv. Umbrella lock task:WORKFLOW-FLUIDITY claimed (po, 3600s) — gateway reachable. Journal STEP po-S1 at decisions/sprint-WORKFLOW-FLUIDITY-po.md.
 
 **Carry-over (next PO cycle):**
-- BA spec returns -> review-ba-spec.md: check spec covers all 4 layers + migration + skill resolver bug + dogfood constraint; reject if F2-only.
-- ORCH-DASH-DECISION-DRILLDOWN sprint entry still "active" — close/fold its residual into ORCH-TASK-CANON at signoff (drilldown UI shipped; join starvation is THIS sprint).
-- Still open from triage lane: FIX-VPS-SSC-CURL-SCRAPER playwright-row closure (~23:37Z cycle proof); FIX-SLA-WEEKEND-AWARE Sunday proof; WATCH-2 refine slot-2; report 3055 CTG-Q1 OCR watch.
-- Release umbrella lock at sprint signoff, not before.
+- BA spec returns → review-ba-spec.md: spec must cover class-not-instance (all 3 of developer/qa/fixer STOP paths + fail-loud-protocol.md itself), WF-2 both options to architect (retry-loop vs SQLite signal_queue migration), QA negative proofs (injected STOP → immediately claimable + head idle; interleaved appends → zero lost rows). Reject if developer-only.
+- ORCH-TASK-CANON lock release confirm; release task:WORKFLOW-FLUIDITY only at signoff.
+- Still open from triage lane: playwright-row closure ~23:37Z proof; FIX-SLA-WEEKEND-AWARE Sunday proof; WATCH-2 refine slot-2; CTG-Q1 OCR watch; MEMORY.md >24.4KB housekeeping.
