@@ -6,6 +6,7 @@
 
 ## Status
 
+2026-06-06 — F-3 FETCH-OPS-PAGE-TRUTH REVIEW commit f02bbc66. Replaced Reuters/Bloomberg panels with real fetch-status data: 13 VN sources freshness table (ageMs humanized, green/amber/red dots), VPS proxy panel (5 legs), BCTC pipeline (pending/done/failed). New types: FetchSourceStatus, VpsProxyStatus, BctcPipelineStatus, FetchStatus + helpers formatSourceAge/sourceStatusColor. 380/380 Vitest GREEN (+17). tsc 0 errors. Container rebuilt 8626cacc51c0. Live 200 verified.
 2026-06-06 — FIX-ORCH-DONE-GRID-COLS REVIEW commit f802b378. Extracted DONE_GRID const (120px|1fr|110px|90px|130px|24px) shared by header + all data rows; status_note moved to DecisionAccordion banner; Title cell min-w-0 + break-words + line-clamp-2. 363/363 Vitest GREEN. tsc 0 errors. Container rebuilt + live 200.
 2026-06-05 — ARCH-ORCH-F3 REVIEW commit 1b71198a. Decision accordion on /dashboard/orchestration. StepDto+DecisionsDto types; DoneTaskGroup multi-open Set<string>; DecisionAccordion + StepCard inline; sprintId threaded from sprint_goal.sprint_id. 26 new tests. 353/353 GREEN. tsc 0 errors. Container rebuilt.
 2026-06-05 — FE-HEADER-SSOT DONE commit 619093e1. PageHeader SSOT component; 8 pages migrated (0 raw h1 in routes); dashboard layout w-full centering. 320/320 Vitest GREEN (+7). tsc clean. NEEDS REBUILD: frontend.
@@ -31,7 +32,7 @@
 
 ## Zone health
 
-2026-06-06: 363/363 Vitest GREEN, tsc clean, FIX-ORCH-DONE-GRID-COLS shipped (grid alignment + accordion status_note) | HEALTHY
+2026-06-06: 380/380 Vitest GREEN (+17 F-3 tests), tsc clean, F-3 fetch-status page live (13 VN sources, VPS proxy, BCTC pipeline, zero hardcoded names) | HEALTHY
 
 <!-- Pruned 2026-06-05 (cap-compliance 205→192): oldest cycle P1-FE (2026-05-25, formatter extraction, commits 3ef797d0/eeb4d2f8/9b55a086) — superseded by Status summary; full detail in git history. Carried insight: Docker holds port 3001 (TCP LISTEN) even when container stopped → use PORT=3099 env for host-side Playwright runs. -->
 

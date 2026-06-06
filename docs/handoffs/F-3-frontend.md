@@ -166,14 +166,49 @@ Replace the Reuters/Bloomberg two-column layout with:
 ## Handoff Acceptance
 
 This task is complete when:
-- [ ] New types added to domain/market.ts
-- [ ] fetchFetchStatus() function added to client.ts
-- [ ] dashboard.fetch.tsx loader calls fetchFetchStatus()
-- [ ] Reuters/Bloomberg panels removed from component
-- [ ] New source freshness table rendering implemented (age, direction, count)
-- [ ] VPS proxy status panel implemented
-- [ ] BCTC pipeline summary panel implemented
-- [ ] Macro panel latency span conditionally rendered or removed
-- [ ] AC-1 through AC-8 verified on running frontend at :3001
-- [ ] Code inspection: zero hardcoded source names in TSX
-- [ ] frontend container REBUILT (dev-team ops)
+- [x] New types added to domain/market.ts
+- [x] fetchFetchStatus() function added to client.ts
+- [x] dashboard.fetch.tsx loader calls fetchFetchStatus()
+- [x] Reuters/Bloomberg panels removed from component
+- [x] New source freshness table rendering implemented (age, direction, count)
+- [x] VPS proxy status panel implemented
+- [x] BCTC pipeline summary panel implemented
+- [x] Macro panel latency span conditionally rendered or removed
+- [x] AC-1 through AC-8 verified on running frontend at :3001
+- [x] Code inspection: zero hardcoded source names in TSX
+- [x] frontend container REBUILT (dev-team ops)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** frontend
+- **Zone:** apps/frontend/
+- **Build tier:** 3 (API service layer) + 4 (feature route)
+- **Files modified:**
+  - `apps/frontend/app/domain/market.ts:340-417` — Added FetchSourceStatus, VpsProxyServiceStatus, VpsProxyStatus, BctcPipelineStatus, FetchStatus types; pure helpers formatSourceAge() + sourceStatusColor()
+  - `apps/frontend/app/lib/api/client.ts:182-198` — Added fetchFetchStatus() calling GET /api/fetch-status
+  - `apps/frontend/app/routes/dashboard.fetch.tsx:1-280` — Full rewrite: SourceFreshnessTable, VpsProxyPanel, BctcPipelinePanel, MacroPanel (latency column removed), loader rewritten
+  - `apps/frontend/app/__tests__/f3-fetch-status.test.ts` (NEW) — 17 tests
+  - `docs/data/orch/orch-state.json` — F-3 TODO→REVIEW
+- **Tests written:** `apps/frontend/app/__tests__/f3-fetch-status.test.ts` — 17 assertions, GREEN
+- **Git commits:** f02bbc66 feat(frontend/F-3): replace Reuters/Bloomberg panels with real fetch-status data
+- **Type check:** clean (tsc --noEmit exit 0)
+- **Service tests:** 380 pass / 0 fail (was 363, +17 new)
+- **Docs updated:** `docs/handoffs/F-3-frontend.md` — implementation record appended; `docs/agent-memory/decisions/sprint-FETCH-OPS-PAGE-TRUTH-dev-frontend.md` (NEW)
+- **Graphify:** skipped (no domain model doc changes)
+
+### Live verify evidence
+
+```
+GET http://localhost:3001/dashboard/fetch → HTTP 200
+Reuters/Bloomberg strings in response: ZERO (AC-1 PASS)
+Sources shown: 13 (cafef, vietstock, nhandan, vnexpress, vneconomy, nld, tuoitre, vietnambiz, vnbusiness, shared-url, vnexpress1, cafef1, news) — all from DB
+VPS proxy: Prices/News/SBV/BCTC rows with live/stale status (AC-4 PASS)
+BCTC pipeline: pending=370, done=15, failed=0 (AC-5 PASS)
+Macro panel: "3 ok, 0 failed" — no latency span rendered (AC-6 PASS)
+Hardcoded source names in TSX: ZERO (AC-7 PASS)
+Container image ID: 8626cacc51c0 == fresh build image (AC-8 PASS)
+Vitest: 380/380 pass
+tsc --noEmit: exit 0
+```
