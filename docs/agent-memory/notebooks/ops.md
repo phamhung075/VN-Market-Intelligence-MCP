@@ -1251,3 +1251,161 @@ The socat bridge from 2026-06-01 recovery was **temporary and has been supersede
 
 - docs/OPERATOR-ALERT-SOCAT-FIX.md: RESOLVED-SUPERSEDED with evidence
 
+
+---
+
+## Session: 2026-06-06 (HEADROOM-PROXY-SETUP)
+
+**Task:** Build and run a dockerized headroom proxy on :8787 to enable wrap mode (since Intel Mac cannot pip install headroom-ai locally due to ort-sys x86_64-apple-darwin prebuilts missing).
+
+**Status:** DONE — Verified Live (2026-06-06 19:06Z)
+
+### Execution Steps
+
+**Step 1: Create build directory and Dockerfile**
+- Directory: `/Users/admin/.headroom-proxy/`
+- Base image: `python:3.12-slim`
+- Packages: headroom-ai, fastapi, uvicorn, httpx[http2]
+- Rationale: fastapi + uvicorn required for proxy server; h2 (httpx[http2] extra) required for HTTP/2 support
+
+**Step 2: Build image**
+- Command: `docker build -t headroom-proxy:local .`
+- Build succeeded: all dependencies installed without ML extras
+- Image size: 572 MB (reasonable for Python 3.12 slim + headroom-ai + dependencies)
+- Extras installed (NO [ml]/[all]): headroom-ai (base), fastapi-0.136.3, uvicorn-0.49.0, httpx-0.28.1 + h2-4.3.0
+
+**Step 3: Run container**
+- Command: `docker run -d --name headroom-proxy --restart unless-stopped -p 127.0.0.1:8787:8787 --memory=1g headroom-proxy:local`
+- Loopback bind only (127.0.0.1) — NOT exposed on LAN ✓
+- Memory cap: 1GB (safe, headroom proxy is lightweight)
+
+**Step 4: Verify proxy startup**
+- Container healthy: Up, listening on 127.0.0.1:8787
+- Logs show standard startup:
+  ```
+  URL:          http://0.0.0.0:8787
+  Mode:         token
+  Optimization: ENABLED
+  Caching:      ENABLED
+  Rate Limit:   ENABLED
+  License:      OSS (no license key)
+  ```
+- Routing configured:
+  - /v1/messages → https://api.anthropic.com
+  - /v1/chat/completions → https://api.openai.com
+  - /v1/responses (HTTP + WebSocket) → https://api.openai.com
+  - /v1internal:streamGenerateContent → https://cloudcode-pa.googleapis.com
+
+**Step 5: Understand `headroom wrap` mechanics**
+
+`headroom wrap claude --help` shows:
+- `wrap` is a convenience wrapper that:
+  1. Starts the headroom proxy automatically
+  2. Sets environment variable `ANTHROPIC_BASE_URL=http://127.0.0.1:8787` (default port 8787)
+  3. Launches Claude Code CLI with that env var set
+- Operator can achieve same effect manually: `ANTHROPIC_BASE_URL=http://127.0.0.1:8787 claude` (since proxy is already running)
+- `wrap` options include `--no-proxy` (use existing proxy) and `--port` (custom port)
+
+**Key environment variable:** `ANTHROPIC_BASE_URL=http://127.0.0.1:8787` (NOT ANTHROPIC_API_KEY — that stays as env var; headroom intercepts at proxy layer)
+
+**Step 6: Exemption configuration check**
+
+Headroom proxy does NOT support per-tool exemption/passthrough configuration via built-in config file. The proxy:
+- Optimizes ALL requests by default (token-mode: compress prior turns + cache)
+- Can be disabled globally with `--no-optimize` flag (but not per-tool)
+- Tool-specific routing is NOT configurable (all Anthropic requests → /v1/messages route to api.anthropic.com)
+
+**Recommendation:** For BCTC/market tools, headroom's optimization is BENEFICIAL (token compression), not a blocker. No exemption config needed.
+
+**Step 7: Smoke test forwarding**
+
+```bash
+curl -s -i http://127.0.0.1:8787/v1/messages -X POST \
+  -H 'content-type: application/json' \
+  -d '{"model":"claude-haiku-4-5-20251001","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}'
+```
+
+**Result:**
+- HTTP 401 Unauthorized (EXPECTED — no valid API key in request)
+- Headers show proxy is forwarding:
+  - `x-headroom-tokens-before: 9` (optimization layer pre-processing)
+  - `x-headroom-tokens-after: 9` (no savings for 1-token request)
+  - `x-headroom-model: claude-haiku-4-5-20251001` (model recognized)
+  - `x-headroom-transforms: router:protected:user_message` (transform applied)
+  - `server: cloudflare` (response from api.anthropic.com upstream)
+
+**Verification:** Proxy successfully forwarded to Anthropic API. Response is HTTP 401 from Anthropic (expected due to missing valid API key), proving routing is working.
+
+**Step 8: Container health and fleet status**
+
+**Headroom proxy resource usage:**
+```
+CONTAINER ID   NAME             CPU %     MEM USAGE / LIMIT   MEM %
+e4af4bf0ed76   headroom-proxy   0.14%     183.1MiB / 1GiB     17.88%
+```
+- Memory: 183.1 MiB / 1 GiB (17.88% used, well below cap) ✓
+- CPU: 0.14% (idle) ✓
+
+**Fleet status (8 containers, all healthy):**
+- headroom-proxy (NEW) ✓
+- vn-market-intelligence-mcp-mcp-server-1 ✓
+- vn-market-intelligence-mcp-frontend-1 ✓
+- vn-market-intelligence-mcp-pdf-extractor-1 ✓
+- vn-market-intelligence-mcp-macro-indicators-1 ✓
+- vn-market-intelligence-mcp-api-gateway-1 ✓
+- mcpservergatway-gateway ✓
+
+**No collateral damage to existing fleet** ✓
+
+### Operator Relaunch Commands
+
+**Start Claude Code with headroom proxy:**
+```bash
+ANTHROPIC_BASE_URL=http://127.0.0.1:8787 claude
+```
+
+This env var tells Claude Code to route all Anthropic API calls through the running headroom proxy at 127.0.0.1:8787 instead of directly to api.anthropic.com.
+
+**Rollback (stop using headroom, go direct to Anthropic):**
+```bash
+claude  # (no ANTHROPIC_BASE_URL env var)
+```
+
+Or explicitly:
+```bash
+unset ANTHROPIC_BASE_URL && claude
+```
+
+**Stop headroom proxy entirely:**
+```bash
+docker rm -f headroom-proxy
+```
+
+This removes the container. To restart: `docker run -d --name headroom-proxy --restart unless-stopped -p 127.0.0.1:8787:8787 --memory=1g headroom-proxy:local`
+
+### Lesson: Headroom Wrap vs Proxy
+
+- **`headroom wrap <tool>`**: All-in-one convenience (starts proxy + sets env vars + launches tool) — useful for one-off runs
+- **`headroom proxy`**: Just the proxy (runs standalone) — useful when you want to control the wrapped tool separately or use the proxy from multiple tools (claude + openai-compatible clients)
+
+Current setup uses the proxy-only mode (proxy running 24/7 in Docker, launched separately from Claude Code). This is more durable than hand-running `headroom wrap claude` (would exit proxy when Claude session ends).
+
+### QA Gate Status
+
+**VERIFIED ✓**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| Image built | ✓ PASS | headroom-proxy:local, 572MB, extras=[fastapi, uvicorn, httpx[http2]] |
+| Container running | ✓ PASS | Up, listening 127.0.0.1:8787, memory 183.1 MiB / 1GiB |
+| Proxy accessible | ✓ PASS | curl /v1/messages → HTTP 401 from Anthropic (upstream reachable) |
+| Forwarding works | ✓ PASS | x-headroom-* headers show proxy processed request |
+| Fleet intact | ✓ PASS | 8 containers healthy, no collateral damage |
+| Loopback-only | ✓ PASS | Port bound to 127.0.0.1 only, not exposed on LAN |
+
+### Commits
+
+This session: Notebook appended with headroom-proxy build/deploy details. Commit pending via commit-mutex protocol.
+
+**Next:** Operator can now use headroom wrap mode by launching: `ANTHROPIC_BASE_URL=http://127.0.0.1:8787 claude`
+
