@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-06T21:40:00Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-06T20:03:23Z",
+  "_updated_by": "pm",
   "head": {
     "active_task_id": null,
     "next_action": "NEXT-TICK: (1) PLAYWRIGHT-ROW CLOSURE CHECK: vn-bctc-fetch restarted 17:37Z, 6h cadence -> next scheduled cycle ~23:37Z Sat; verify raw get_vps_proxy_health bctc last_push moves off Jun-5-14:48 + new Q1/2026 PDFs for the 10-item backlog (ACV BDI D2D DAG DLC GVR HCM HPG HSG HVN — note ACV/HPG Q1 not yet FILED at SSC, honest SKIPs expected; any GAS-class filed ticker should land). If cycle drains chromium-free -> RESOLVE rtr-bctc-playwright-thread. (2) WATCH-2 refine Option-C first live proof: slot-2 (240min cadence, last 14:04:30Z) refires ~18:04Z — verify docker exec mcp-server bun:sqlite readonly /app/data/market.db: DGC 0c6f0535 +<=7 bctc_refined_units rows PENDING->PARTIAL (NOT DONE), ACB fea19bae 27 rows INTACT; pre-Cowork-refresh failure = EXPECTED (operator owes refresh paste). (3) WEEKEND LIVE-PROOF WATCH: Sunday auditor cycles must show ZERO prices/foreign_flow stale-CRITICALs (c051 pass 1/N green); any such CRITICAL = FIX-SLA-WEEKEND-AWARE miss -> reopen. (4) Sunday 03:00-05:00Z zone-scans -> Monday triage. (5) Monday ~02:15Z price-push resume confirm-only. (6) FU-COWORK-OWNER-AGENT-ADOPT P3-cleanup: close after one cowork cycle survives a server restart. TICK 172047Z: signal drained same-tick to SHIPPED — recon-complete (HIGH) -> PO BATCH 1/1 -> dev-vps-crawls impl FIX-VPS-SSC-CURL-SCRAPER 7ed37441 deployed+live-run-proven (GAS 17.6MB chromium-free); chromium pthread class root-fix now live on VPS, row closure pending scheduled-cycle proof; signal file moved to processed/; auditor c051 ACCEPTED 11/11 (weekend SLA live-proof pass 1 green) + c052 ACCEPTED 12/12 (c7c55d72 raw-verified 1-file/retention-3/145L; 1 WARN sbv_fx 38min-vs-30min — router counter-probe 17:39:47Z showed sbv last_push 17:28:46 = 11min + 47 ok/24h + 0 errors -> between-push blip / SLA-measurement-layer gap, class occ#2 of yesterday's B12-sbv FALSE-FLAG, watch-only, promote at occ#3 as sbv-SLA-threshold-vs-cadence tuning; c052 also reported curl FAIL on api-gateway/macro-indicators/frontend health endpoints citing network isolation while c051 got 200s — probe-env nit occ#1, containers docker-healthy). PO channel-audit note: report 3055 CTG 2026-Q1 confidence=0.00 conviction-skip = designed low-confidence guard working — NOTED, watch if recurring. Carries: threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); operator owes /cron-cowork-team refresh + Cowork refine refresh paste; auditor route_to/type row-schema nits occ#1; dev-mcp-server tools=164-vs-162 claim nit occ#1; auditor mem trend reset benign (16:46Z container recreate, c051 13.96%); transient tmp-ENOSPC blip occ#1; news between-push stale-blip occ#1 (17:39Z probe, 14min vs tight SLA, 88 ok/24h); MEMORY.md index over 24.4KB (housekeeping candidate).",
@@ -60,102 +60,6 @@
     "_updated_at": "2026-06-06T21:00:00Z",
     "_updated_by": "agent-father",
     "active_sprints": [
-      {
-        "id": "ORCH-TASK-CANON",
-        "label": "Canonical task schema + decision visibility on orchestration dashboard",
-        "status": "active",
-        "opened_at": "2026-06-06",
-        "priority": "high",
-        "evidence": "Architect blueprint (docs/handoffs/ORCH-TASK-CANON-ARCH.md): 4 blocker rulings issued; multi-zone sprint (docs/agents/ + .claude/skills/ + apps/mcp-server/ + apps/frontend/ + docs/data/orch/); dispatch order STRICT sequential (F1a-F4 → F1B → F2 → F3 → QA).",
-        "tasks": [
-          {
-            "id": "AF-ORCH-F1A-F4",
-            "title": "Flows + SKILL + journal rewrite + task-schema.md",
-            "owner": "agent-father",
-            "status": "DONE",
-            "zone": "docs/agents/ + .claude/skills/",
-            "created_at": "2026-06-06T20:30:00Z",
-            "type": "SPRINT-S",
-            "size": "M",
-            "priority": "high",
-            "depends": [],
-            "note": "Merge F1a (flows emit canonical shape) + F4 (decision-journal SKILL fixes + journal rewrite). F1a-F4 disjoint files, one agent-father task per architect D-2. No TypeScript changes (docs-only). Must commit before F1B migration.",
-            "status_note": "QA PASS: docs-only flows + SKILL fixes verified; resolver bug fixed, per-agent journal path, canonical task shape in all flows.",
-            "closed_at": "2026-06-06T21:40:00Z"
-          },
-          {
-            "id": "AF-ORCH-F1B",
-            "title": "Jq migration to canonical schema",
-            "owner": "agent-father",
-            "status": "DONE",
-            "zone": "docs/data/orch/",
-            "created_at": "2026-06-06T20:45:00Z",
-            "type": "SPRINT-S",
-            "size": "S",
-            "priority": "high",
-            "depends": [
-              "AF-ORCH-F1A-F4"
-            ],
-            "note": "One-shot jq migration: normalize task_id→id, freeform status→enum, flatten nested container, sentinel verify (atomic temp→rename). 66 rows (plus 6 from container) → 71 canonical rows. Commit-mutex required. Gate for F2.",
-            "status_note": "QA PASS: jq migration 66->71 canonical rows, enum-clean, container flattened, banned fields removed.",
-            "closed_at": "2026-06-06T21:40:00Z"
-          },
-          {
-            "id": "F2-MCP",
-            "title": "OrchStateStore types + orchestrationHandler done[] + journalStore glob + REBUILD",
-            "owner": "dev-mcp-server",
-            "status": "DONE",
-            "zone": "apps/mcp-server/src/",
-            "created_at": "2026-06-06T21:00:00Z",
-            "type": "SPRINT-S",
-            "size": "L",
-            "priority": "high",
-            "depends": [
-              "AF-ORCH-F1B"
-            ],
-            "note": "TypeScript: rename OrchStateTaskBoardTask field id (mandatory, canonical). Add OrchStateTaskBoard.done[]. Update buildOrchestrationDto() to project done[]+counts.done. Implement journalStore glob for per-agent journal files. Tests 25+. Container REBUILD. Gate for F3.",
-            "status_note": "QA PASS: TypeScript interface renamed, done[] serving, journalStore glob — 83/83 sprint tests green, API live.",
-            "closed_at": "2026-06-06T21:40:00Z"
-          },
-          {
-            "id": "F3-FE",
-            "title": "Done-group source swap (board.done instead of filter)",
-            "owner": "dev-frontend",
-            "status": "DONE",
-            "zone": "apps/frontend/app/routes/",
-            "created_at": "2026-06-06T21:15:00Z",
-            "type": "SPRINT-S",
-            "size": "S",
-            "priority": "high",
-            "depends": [
-              "F2-MCP"
-            ],
-            "note": "Update TaskBoard interface (add done?). Update TaskBoardPanel component: doneTasks ← board.done ?? [] (not filter). No rendering logic changes. Additive swap. Container REBUILD after F2 live-verified.",
-            "status_note": "QA PASS: done-group source swap verified, accordion renders, status_note spans present — 41/41 sprint tests green.",
-            "closed_at": "2026-06-06T21:40:00Z"
-          },
-          {
-            "id": "QA",
-            "title": "Live end-to-end verification",
-            "owner": "qa",
-            "status": "DONE",
-            "zone": "docs/agents/ + apps/mcp-server/ + apps/frontend/",
-            "created_at": "2026-06-06T21:30:00Z",
-            "type": "QA",
-            "size": "S",
-            "priority": "high",
-            "depends": [
-              "AF-ORCH-F1A-F4",
-              "AF-ORCH-F1B",
-              "F2-MCP",
-              "F3-FE"
-            ],
-            "note": "4-phase verification: (1) SSOT validation (canonical schema applied, no freeform status). (2) API serving (done[] projected, counts accurate). (3) Dashboard rendering (done group non-empty, accordion shows decisions). (4) Decision-journal flow (per-agent files readable).",
-            "closed_at": "2026-06-06T21:40:00Z",
-            "status_note": "QA PASS: all 4-phase ACs satisfied; sprint-specific tests green; containers fresh; journal files present."
-          }
-        ]
-      },
       {
         "id": "BCTC-ANALYTICS-LAYER",
         "label": "BCTC analytics/serving layer defects exposed by BEQ-9 scalar recovery (router raw-verify 2026-06-02) — 4 clusters + publish-integrity gap",
@@ -2303,34 +2207,6 @@
         ],
         "signoff_at": "2026-06-04T20:05:28Z",
         "signoff_note": "Serve layer FIXED LIVE (router raw-verified). Real fix = Go 09e93d76 (macro-indicators :5004 in runtime set). Off-path TS DSI-S1-MACRO = defensive only. OPEN: operator FB-carry symptom half-closed (consumer recomputes from raw rates) + yahooFinance.ts live price gap (S2 Go latent). 3 follow-ups in backlog."
-      },
-      {
-        "id": "ORCH-TASK-CANON",
-        "status": "active",
-        "opened_at": "2026-06-06T18:32:39Z",
-        "tasks": [
-          {
-            "id": "BA-ORCH-TASK-CANON",
-            "title": "Requirement spec for sprint ORCH-TASK-CANON",
-            "owner": "ba",
-            "status": "REVIEW",
-            "zone": "multi",
-            "created_at": "2026-06-06T18:32:39Z",
-            "type": "SPRINT-M",
-            "sprint": "ORCH-TASK-CANON"
-          },
-          {
-            "id": "ARCH-ORCH-TASK-CANON",
-            "title": "Architect blueprint: blocker rulings + dispatch order for ORCH-TASK-CANON",
-            "owner": "architect",
-            "status": "DONE",
-            "zone": "multi",
-            "created_at": "2026-06-06T19:15:00Z",
-            "type": "SPRINT-M",
-            "sprint": "ORCH-TASK-CANON",
-            "note": "4 blocker rulings issued. F1a+F4 merged. Per-agent journal files (F-4/F-5 addendum). journalStore glob. Handoff: docs/handoffs/ORCH-TASK-CANON-ARCH.md"
-          }
-        ]
       }
     ],
     "backlog": [
@@ -3821,6 +3697,103 @@
         "depends": [
           "ARCH-ORCH-F3"
         ]
+      },
+      {
+        "id": "AF-ORCH-F1A-F4",
+        "title": "Flows + SKILL + journal rewrite + task-schema.md",
+        "owner": "agent-father",
+        "status": "DONE",
+        "zone": "docs/agents/ + .claude/skills/",
+        "created_at": "2026-06-06T20:30:00Z",
+        "type": "SPRINT-S",
+        "size": "M",
+        "priority": "high",
+        "depends": [],
+        "note": "Merge F1a (flows emit canonical shape) + F4 (decision-journal SKILL fixes + journal rewrite). F1a-F4 disjoint files, one agent-father task per architect D-2. No TypeScript changes (docs-only). Must commit before F1B migration.",
+        "status_note": "QA PASS: docs-only flows + SKILL fixes verified; resolver bug fixed, per-agent journal path, canonical task shape in all flows.",
+        "closed_at": "2026-06-06T21:40:00Z"
+      },
+      {
+        "id": "AF-ORCH-F1B",
+        "title": "Jq migration to canonical schema",
+        "owner": "agent-father",
+        "status": "DONE",
+        "zone": "docs/data/orch/",
+        "created_at": "2026-06-06T20:45:00Z",
+        "type": "SPRINT-S",
+        "size": "S",
+        "priority": "high",
+        "depends": [
+          "AF-ORCH-F1A-F4"
+        ],
+        "note": "One-shot jq migration: normalize task_id→id, freeform status→enum, flatten nested container, sentinel verify (atomic temp→rename). 66 rows (plus 6 from container) → 71 canonical rows. Commit-mutex required. Gate for F2.",
+        "status_note": "QA PASS: jq migration 66->71 canonical rows, enum-clean, container flattened, banned fields removed.",
+        "closed_at": "2026-06-06T21:40:00Z"
+      },
+      {
+        "id": "F2-MCP",
+        "title": "OrchStateStore types + orchestrationHandler done[] + journalStore glob + REBUILD",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "zone": "apps/mcp-server/src/",
+        "created_at": "2026-06-06T21:00:00Z",
+        "type": "SPRINT-S",
+        "size": "L",
+        "priority": "high",
+        "depends": [
+          "AF-ORCH-F1B"
+        ],
+        "note": "TypeScript: rename OrchStateTaskBoardTask field id (mandatory, canonical). Add OrchStateTaskBoard.done[]. Update buildOrchestrationDto() to project done[]+counts.done. Implement journalStore glob for per-agent journal files. Tests 25+. Container REBUILD. Gate for F3.",
+        "status_note": "QA PASS: TypeScript interface renamed, done[] serving, journalStore glob — 83/83 sprint tests green, API live.",
+        "closed_at": "2026-06-06T21:40:00Z"
+      },
+      {
+        "id": "F3-FE",
+        "title": "Done-group source swap (board.done instead of filter)",
+        "owner": "dev-frontend",
+        "status": "DONE",
+        "zone": "apps/frontend/app/routes/",
+        "created_at": "2026-06-06T21:15:00Z",
+        "type": "SPRINT-S",
+        "size": "S",
+        "priority": "high",
+        "depends": [
+          "F2-MCP"
+        ],
+        "note": "Update TaskBoard interface (add done?). Update TaskBoardPanel component: doneTasks ← board.done ?? [] (not filter). No rendering logic changes. Additive swap. Container REBUILD after F2 live-verified.",
+        "status_note": "QA PASS: done-group source swap verified, accordion renders, status_note spans present — 41/41 sprint tests green.",
+        "closed_at": "2026-06-06T21:40:00Z"
+      },
+      {
+        "id": "QA-ORCH-TASK-CANON",
+        "title": "Live end-to-end verification",
+        "owner": "qa",
+        "status": "DONE",
+        "zone": "docs/agents/ + apps/mcp-server/ + apps/frontend/",
+        "created_at": "2026-06-06T21:30:00Z",
+        "type": "QA",
+        "size": "S",
+        "priority": "high",
+        "depends": [
+          "AF-ORCH-F1A-F4",
+          "AF-ORCH-F1B",
+          "F2-MCP",
+          "F3-FE"
+        ],
+        "note": "4-phase verification: (1) SSOT validation (canonical schema applied, no freeform status). (2) API serving (done[] projected, counts accurate). (3) Dashboard rendering (done group non-empty, accordion shows decisions). (4) Decision-journal flow (per-agent files readable).",
+        "closed_at": "2026-06-06T21:40:00Z",
+        "status_note": "QA PASS: all 4-phase ACs satisfied; sprint-specific tests green; containers fresh; journal files present."
+      },
+      {
+        "id": "ARCH-ORCH-TASK-CANON",
+        "title": "Architect blueprint: blocker rulings + dispatch order for ORCH-TASK-CANON",
+        "owner": "architect",
+        "status": "DONE",
+        "zone": "multi",
+        "created_at": "2026-06-06T19:15:00Z",
+        "type": "SPRINT-M",
+        "sprint": "ORCH-TASK-CANON",
+        "note": "4 blocker rulings issued. F1a+F4 merged. Per-agent journal files (F-4/F-5 addendum). journalStore glob. Handoff: docs/handoffs/ORCH-TASK-CANON-ARCH.md"
       }
     ],
     "in_progress": []
@@ -5009,7 +4982,7 @@
       },
       {
         "sprint_id": "ORCH-TASK-CANON",
-        "status": "active",
+        "status": "done",
         "vision": "Every task on http://localhost:3001/dashboard/orchestration shows its decision trail, because every task in orch-state is born canonical ({id,title,owner,status,zone,created_at} + closed status enum) and the serve/join/render layers stop dropping non-conforming shapes.",
         "scope_in": "(F1) TASK SCHEMA CONTRACT — architect authors canonical task-object SSOT: mandatory-at-creation {id,title,owner,status,zone,created_at}; optional standard {type,sprint,priority,size,files,depends,note,status_note}; CLOSED status enum TODO|IN_PROGRESS|REVIEW|DONE|BLOCKED|CANCELLED|DEFERRED with free-text status_note for nuance (DONE-LIVE-VERIFIED -> DONE + note). task_id/desc/label BANNED forward. agent-father edits ALL task-creating flows (po triage/kickoff/channel-audit, pm, ba, dev-team dispatcher, ops->pm lane, anomaly-task-bridge) to emit canonical shape. APPROVED: one-shot migration of existing 66 done[] rows (id<-task_id coalesce, title<-desc/label coalesce, status normalization to enum+status_note) + flatten the ORCH-DASH-DECISION-DRILLDOWN nested sprint container into done[] rows. (F2) SERVING — apps/mcp-server orchestrationHandler/DTO coalesces id//task_id + title//desc//label, serves done[] (currently null in DTO vs 66 in SSOT), flattens any residual nested containers, tolerates legacy shapes no-crash; REBUILD container. (F3) FRONTEND — dashboard.orchestration.tsx done-group filter matches normalized enum (not exact-string 'DONE'); decisions dropdown verified live on a real recent done task. (F4) JOURNAL FORMAT — agent-father fixes dev-team triage flow (and any freeform journal writer) to emit decision-journal SKILL '### STEP' parseable blocks with **task-id:**; FIX SKILL resolver bug .sprint_goal.entries[0].id -> .sprint_id (never matches today, silent date-fallback); rewrite sprint-2026-06-06.md freeform entries into parseable format so existing tasks gain decisions. (QA) live-verify whole join.",
         "scope_out": "Editing decisions from the UI (read-only, already shipped). New journal storage backend (stays per-sprint markdown). Changing decisions.by_task join semantics beyond task-id stamping. signal_queue schema. Backfilling decisions for pre-2026-06 ancient tasks (forward + this-sprint-corpus only). Deploying the Go microservice plane.",
