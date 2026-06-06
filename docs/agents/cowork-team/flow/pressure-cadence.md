@@ -5,10 +5,14 @@
 <!-- DWF-PHASE1 FR-P1-3: evaluateCadence per slot; due = elapsed >= cadence.
      EC-3: last_fired=null → always due (first-run semantics).
      _cron_fallback: bctc-offmarket on open/half_day/unknown → cron governs.
+     Snap: last_fired floored to nominal cron-tick boundary before elapsed (2b67d3a7).
      AC-P1-3-1: last_fired=null → always included.
      AC-P1-3-2: elapsed < cadence → not included.
      AC-P1-3-3: elapsed >= cadence → included.
-     AC-P1-3-4: output slots carry due_reason + cadence_minutes fields. -->
+     AC-P1-3-4: last_fired stamped after a nominal tick with cadence==cron-period → still due
+                at next nominal tick, via snap-to-boundary (e.g. "0 */4" 240min: spawn at
+                04:04:30Z snaps to 04:00:00Z; elapsed at 08:00Z = 14400s >= 14400s → due).
+     AC-P1-3-5: output slots carry due_reason + cadence_minutes fields. -->
 
 Only runs if `PRESSURE_MODE = "adaptive"`.
 
@@ -46,11 +50,14 @@ for each slot in CALENDAR_ALLOWED:
     CADENCE_MATCHES.push(slot with { due_reason: "first_run", cadence_minutes: policy_result.interval_minutes })
     continue
 
-  elapsed_seconds = now_unix - last_fired_unix
+  # snapToCronBoundary: floor last_fired to cron-period boundary (UTC epoch-aligned, 2b67d3a7)
+  #   "0 */H * * *" → H*3600s  |  "*/M ..." → M*60s  |  "0 H * * *" → 86400s  |  else → no-op
+  snapped_last_fired = snapToCronBoundary(last_fired_unix, slot.cron)
+  elapsed_seconds = now_unix - snapped_last_fired
   if elapsed_seconds >= cadence_seconds:
     CADENCE_MATCHES.push(slot with { due_reason: "cadence", cadence_minutes: policy_result.interval_minutes })
   else:
-    log "[cowork] cadence skip: " + slot.slot_id + " elapsed=" + Math.floor(elapsed_seconds) + "s cadence=" + cadence_seconds + "s"
+    log "[cowork] cadence skip: " + slot.slot_id + " elapsed=" + Math.floor(elapsed_seconds) + "s cadence=" + cadence_seconds + "s (snapped_last_fired=<ISO>)"
     # no token acquired — no release needed
 ```
 
