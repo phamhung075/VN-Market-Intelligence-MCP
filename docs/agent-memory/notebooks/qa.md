@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-198 · 2026-06-06T23:58Z · FETCH-OPS-PAGE-TRUTH F-1 QA gate — APPROVED
+
+Sprint: FETCH-OPS-PAGE-TRUTH | Task: F-1 | Verdict: APPROVED
+
+21/21 tests GREEN (buildSql domain anchors, deriveSourceSlug, computeFreshnessStatus, handleFetchStatus integration). tsc: 5 pre-existing errors in 1980-f2-canon-schema.test.ts + tasksMdJanitorJob.ts — NOT in F-1 diff, confirmed pre-existing. mock-guard PASS. DDD: interface→infrastructure import consistent with existing vpsProxyHealthHandler pattern — PASS. Security: no process.env, no secrets, parameterized SQL — PASS. Live: bloomberg count=0, reuters count=0 (domain-anchored), fetch-status 13 sources + vpsProxy + bctcPipeline all present. All 13 source IDs verified as real DB rows (no phantoms). Container 589f4e2caf46 running == latest build (rebuilt 23:44 CEST, commit 23:45 CEST). Threshold note: fleet-wide stale at 5am VN = overnight lull — non-blocking design note for F-3/PM. F-1 REVIEW→DONE in orch-state.
+
 ## cycle-197 · 2026-06-06T23:50Z · FETCH-OPS-PAGE-TRUTH F-2 macro-indicators QA gate — APPROVED
 
 Sprint: FETCH-OPS-PAGE-TRUTH | Task: F-2 | Verdict: APPROVED
