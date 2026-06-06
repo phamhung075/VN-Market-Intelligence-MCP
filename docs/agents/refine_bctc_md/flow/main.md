@@ -1,7 +1,7 @@
 ---
 agent:
   id: refine_bctc_md
-  model: claude-haiku-3-5
+  model: haiku
   authored_by: claude-opus-4
   description: >
     Fleet-cron orchestrator (Option-Y). Calls get_bctc_pending_refine → fans out one

@@ -1,7 +1,7 @@
 ---
 agent:
   id: refine_bctc_md
-  model: claude-haiku-3-5
+  model: haiku
   authored_by: claude-opus-4
   version: "2026-05-30"
   description: BCTC page refine agent. Reads OCR text + page images. Produces trusted markdown per FR-13 contract.
