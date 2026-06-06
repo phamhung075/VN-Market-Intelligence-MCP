@@ -1409,3 +1409,73 @@ This session: Notebook appended with headroom-proxy build/deploy details. Commit
 
 **Next:** Operator can now use headroom wrap mode by launching: `ANTHROPIC_BASE_URL=http://127.0.0.1:8787 claude`
 
+
+---
+
+## Session: 2026-06-07 (WORKFLOW-FLUIDITY WF-2 — Rebuild & Verify)
+
+**Task:** Rebuild mcp-server container for WF-2 code change (commit 8a469655: mtime-CAS retry on signal_queue + head writes). QA gate APPROVED (0cbc06ae). Hard constraint: rebuild/recreate ONLY mcp-server service, verify NEW image running, confirm peers intact.
+
+**Commits:**
+- Code change: 8a469655 feat(WORKFLOW-FLUIDITY/wf2): WF-2 mtime-CAS retry on signal_queue+head writes
+- QA approval: 0cbc06ae chore(qa/WORKFLOW-FLUIDITY): WF-2 QA gate APPROVED — REVIEW→DONE
+
+### Execution Steps
+
+**Step 1: Pre-rebuild state**
+- Docker ps: 5 services running (mcp-server, api-gateway, frontend, macro-indicators, pdf-extractor)
+- Running image SHA: `835858c91f5121014dc1a363b98f56bc975e6e97e98005fed49fb9945a0fca3d`
+- Health: mcp-server 200 ok, toolCount 162
+- Database: WAL checkpoint OK, ready
+
+**Step 2: Build new image**
+- Command: `docker compose build mcp-server`
+- Cached layers used (dependencies unchanged, only source code recompiled)
+- Final layer: Step 18 exporting — NEW image SHA: `07ea41ed50cc1af7081c57342c1c8e83db098e7ec46c00088cc7e3a1db4185c2`
+- Build output: "mcp-server Built" ✓
+
+**Step 3: Start rebuilt container (scoped)**
+- Command: `docker compose up -d --no-deps mcp-server && sleep 5`
+- No errors, no peer service restarts triggered
+
+**Step 4: Verify image swap**
+- Container `vn-market-intelligence-mcp-mcp-server-1` now uses: `07ea41ed50cc1af7081c57342c1c8e83db098e7ec46c00088cc7e3a1db4185c2`
+- Confirmed: old image (835858c9...) replaced with new (07ea41ed...) ✓
+
+**Step 5: Health check (mandatory post-rebuild)**
+- `docker compose ps`:
+  - api-gateway: Up 12 hours (healthy) ✓
+  - frontend: Up About an hour (healthy) ✓
+  - macro-indicators: Up About an hour (healthy) ✓
+  - mcp-server: Up 14 seconds (healthy) ✓
+  - pdf-extractor: Up 12 hours (healthy) ✓
+- All peer containers remain Up, no collateral damage ✓
+- Port 3000 bound, health endpoint responds 200 ✓
+- `/health` response: `{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":162,"sessions":0,"uptime":10.83}`
+
+**Step 6: Verify WF-2 code live**
+- Container has file `src/infrastructure/orchStateStore.ts` with:
+  - `export const CAS_MAX_RETRIES = 3;` ✓
+  - Retry loop using `mtime-CAS` with compare-before-write ✓
+  - Same logic applied to both signal_queue rows AND .head atomic writes ✓
+  - Collision detection + exhausted retries → WARN (do NOT throw) ✓
+  - CRITICAL/HIGH severity rows dropped → extra WARN escalation ✓
+
+**Step 7: Database health**
+- WAL checkpoint: "WAL checkpoint (startup replay) complete" ✓
+- Database ready: "[bootstrap] Database ready" ✓
+- Scheduler active: "77 cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details active" ✓
+- VNSTOCK dedup: "UNIQUE(code, date) index validated on vnstock_trading_stats" ✓
+
+**Step 8: Notification**
+- WORK channel: "mcp-server rebuilt for WF-2 CAS fix, image verified, peers intact." ✓
+
+### Summary
+✓ WF-2 code live in production (mtime-CAS retry logic active)
+✓ NEW image running (07ea41ed... vs old 835858c9...)
+✓ All 5 peer services remain healthy, no collateral damage
+✓ Database healthy, scheduler active with 77 cron jobs
+✓ Health endpoint returns 200, tool count 162 (expected baseline)
+✓ No errors, no rollback needed
+
+**Status: DONE**
