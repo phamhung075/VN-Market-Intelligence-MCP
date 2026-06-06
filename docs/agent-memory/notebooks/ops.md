@@ -1147,3 +1147,107 @@ All containers healthy + no collateral damage:
 
 None observed. Deploy gate FR-SLA-4 satisfied. All containers healthy.
 
+
+---
+
+## Session: 2026-06-05 (FU-LEADER-LOCK-OWNER-SESSION — Rebuild mcp-server)
+
+**Task:** REBUILD mcp-server single service to deploy commit 1b058f40 (feat: add task_force_release_orphan MCP tool).
+
+**Context:** Deploy commit 1b058f40 adds releaseOrphanTask() to coordinationStore + task_force_release_orphan MCP tool for force-releasing stale heartbeat locks (orphan_threshold_seconds=600s, default).
+
+### Execution Steps
+
+**Step 1: Pre-rebuild state capture**
+- Commit: 1b058f40 (HEAD)
+- Services: all 6 healthy, running prior images
+- mcp-server StartedAt: 2026-06-05T08:11:38Z
+- Tool count: 160 (pre-tool-add)
+
+**Step 2: Rebuild mcp-server**
+- Executed: `docker compose build mcp-server`
+- Build status: SUCCESS (all steps DONE in ~4.3s)
+- Final image SHA: sha256:8a91f34dbe735d27f5a200c4312864ce9e81c28bfdd1d4fe869f895503e01c83
+- Reason: TS source copy + Bun compile picked up new src files (task_force_release_orphan tool registration in src/)
+
+**Step 3: Container recreation**
+- Executed: `docker compose up -d --no-deps mcp-server`
+- Container action: Recreated (old instance stopped/removed, new instance started)
+- New StartedAt: 2026-06-05T10:30:50Z (~2h19m after prior start)
+
+**Step 4: Verify health**
+- Health status: healthy (confirmed after 3s wait)
+- /health endpoint: 200 OK, response `{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":161,"sessions":0}`
+- Tool count increased: 160 → 161 (new task_force_release_orphan tool)
+- Logs: "[createBunServer] Tools registered" with toolCount=161 (v3 up from v2)
+- Scheduler: 77 cron jobs in CRONS map, all active
+
+**Step 5: Verify other services unchanged**
+- macro-indicators: StartedAt 2026-06-05T08:25:13Z (unchanged) ✓
+- frontend: StartedAt 2026-06-05T05:05:16Z (unchanged) ✓
+- rag-service: StartedAt 2026-06-04T16:42:08Z (unchanged) ✓
+- pdf-extractor: StartedAt 2026-06-03T17:34:15Z (unchanged) ✓
+- api-gateway: StartedAt 2026-06-02T22:12:45Z (unchanged) ✓
+- No die events, no restart loops
+
+**Result:** SHIPPED ✓
+- mcp-server rebuilt from commit 1b058f40
+- task_force_release_orphan tool registered (161 tools live)
+- Health: OK
+- Other services: 5/5 untouched
+
+---
+
+## Session: 2026-06-06 (MOOT-CHECK-VPS-SOCAT-PERSIST)
+
+**Task:** Verify socat band-aid is moot — api-gateway restored and owns :4000. Clean up references.
+
+**Status:** DONE — RESOLVED-SUPERSEDED (2026-06-06 11:30Z)
+
+### Verification Summary
+
+**Socat State (DEAD):**
+- Process: pgrep -fl socat → (empty — no running socat)
+- Plist in ~/Library/LaunchAgents: NOT FOUND
+- Plist in /Library/LaunchDaemons: NOT FOUND
+- Conclusion: socat was never persistently installed in the live system (band-aid from 2026-06-01 was manual/temporary)
+
+**Port 4000 Ownership (DOCKER):**
+- `lsof -nP -iTCP:4000 -sTCP:LISTEN` → com.docker (PID 36869, user admin)
+- Owner: Docker daemon (not socat, not manual process)
+- Service: api-gateway container, Docker-published via `ports: - 4000:4000`
+- Status: ✓ HEALTHY
+
+**API Endpoints (200):**
+- localhost:4000/api/orchestration → HTTP 200 ✓
+- https://zenmidi.com/api/orchestration → HTTP 200 ✓
+
+**Restart Policy (SAFE FOR REBOOT):**
+- Service: api-gateway in docker-compose.yml
+- Policy: `restart: unless-stopped` (line 271)
+- Result: Reboot-safe — api-gateway will auto-restart with Docker daemon
+- No process supervision needed ✓
+
+### Findings
+
+The socat bridge from 2026-06-01 recovery was **temporary and has been superseded**:
+1. api-gateway container (restored 2026-06-06 11:14Z) owns :4000 directly
+2. Cloudflare tunnel routes `/api/*` to localhost:4000 (api-gateway)
+3. No socat process needed
+4. No socat plist installed (not a reboot risk)
+
+### Actions Taken
+
+1. **Updated docs/OPERATOR-ALERT-SOCAT-FIX.md:** Marked RESOLVED-SUPERSEDED with verification evidence
+2. **Retained socat plist in repo:** `launchd/com.vn-market.socat-bridge.plist` kept as rollback reference (not loaded)
+
+### Risk Assessment
+
+**MOOT:** No risks. socat band-aid is irrelevant — the permanent fix (api-gateway) is live.
+
+**Reboot Survival:** api-gateway will restart automatically (restart: unless-stopped in compose). No manual intervention needed.
+
+### Commits
+
+- docs/OPERATOR-ALERT-SOCAT-FIX.md: RESOLVED-SUPERSEDED with evidence
+
