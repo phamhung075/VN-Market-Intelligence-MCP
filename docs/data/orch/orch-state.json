@@ -2265,143 +2265,6 @@
             "note": "Timebox 2h. Proven again in ORCH-TASK-CANON: agent-father F1B had to run mutex-less as sole writer. Output: ruling doc + handoff (agent-father for flow edits or dev-mcp-server for binding work)."
           }
         ]
-      },
-      {
-        "id": "FETCH-OPS-PAGE-TRUTH",
-        "lead": "architect",
-        "priority": "high",
-        "status": "active",
-        "opened_at": "2026-06-06T21:17:36Z",
-        "tasks": [
-          {
-            "id": "ARCH-FETCH-OPS-1",
-            "title": "Technical blueprint: fetch-operations page honest sources + real operational detail",
-            "owner": "architect",
-            "type": "ARCH",
-            "status": "DONE",
-            "zone": "multi",
-            "created_at": "2026-06-06T21:17:36Z",
-            "completed_at": "2026-06-06T21:34:00Z",
-            "priority": "high",
-            "size": "S",
-            "sprint": "FETCH-OPS-PAGE-TRUTH",
-            "depends": [],
-            "files": [
-              "docs/handoffs/FETCH-OPS-PAGE-TRUTH-ARCH.md",
-              "docs/agent-memory/decisions/sprint-FETCH-OPS-PAGE-TRUTH-architect.md"
-            ],
-            "note": "4-zone blueprint: F-1 mcp-server (news filter fix + fetch-status endpoint), F-2 macro-indicators (remove fake latency), F-3 frontend (honest source panels), F-4 api-gateway SPIKE (prefix duality). Handoff and decision journal written."
-          },
-          {
-            "id": "F-1",
-            "title": "mcp-server: news filter fix + fetch-status endpoint",
-            "owner": "dev-mcp-server",
-            "type": "sprint-task",
-            "status": "DONE",
-            "zone": "apps/mcp-server/",
-            "created_at": "2026-06-06T21:35:00Z",
-            "priority": "high",
-            "size": "M",
-            "sprint": "FETCH-OPS-PAGE-TRUTH",
-            "depends": [],
-            "files": [
-              "apps/mcp-server/src/interface/mcp/routes/newsHeadlinesHandler.ts",
-              "apps/mcp-server/src/interface/mcp/server.ts",
-              "apps/mcp-server/src/interface/mcp/routes/fetchStatusHandler.ts"
-            ],
-            "note": "Fix LIKE '%bloomberg%' → LIKE '%bloomberg.com%' and LIKE '%reuters.com%'; add GET /api/fetch-status aggregating sources from rag_analyses, vpsProxy health, and BCTC queue counts. | REVIEW 2026-06-06T23:44Z dev-mcp-server: 21 tests GREEN, container rebuilt (c299f6c3), AC-1..5 live-verified: bloomberg count:0, reuters count:0, /api/fetch-status responds with sources[13]+vpsProxy+bctcPipeline.",
-            "acceptance_criteria": [
-              "GET :3000/mcp/api/news/headlines?source=bloomberg returns count:0",
-              "GET :3000/mcp/api/news/headlines?source=reuters returns only %reuters.com% URLs",
-              "GET :3000/api/fetch-status returns JSON with sources[], vpsProxy{}, bctcPipeline{}",
-              "sources[] contains only sources with actual rag_analyses rows",
-              "Unit test: buildSql domain anchors verified"
-            ]
-          },
-          {
-            "id": "F-2",
-            "title": "macro-indicators: remove fake latency field",
-            "owner": "dev-macro-indicators",
-            "type": "sprint-task",
-            "status": "DONE",
-            "zone": "apps/macro-indicators/",
-            "created_at": "2026-06-06T21:35:00Z",
-            "priority": "high",
-            "size": "XS",
-            "sprint": "FETCH-OPS-PAGE-TRUTH",
-            "depends": [],
-            "files": [
-              "apps/macro-indicators/pkg/interface/http/handlers_external.go"
-            ],
-            "note": "Remove hardcoded totalLatencyMs:0 from summary map at line 161; remove any per-source latencyMs:0. Container REBUILD required.",
-            "acceptance_criteria": [
-              "GET :5004/external response: summary does NOT contain totalLatencyMs",
-              "Per-source entries do NOT contain latencyMs",
-              "Test handlers_snapshot_contract_test.go updated",
-              "REBUILD macro-indicators container"
-            ],
-            "updated_at": "2026-06-06T23:50:00Z"
-          },
-          {
-            "id": "F-3",
-            "title": "frontend: honest source panels + age display",
-            "owner": "dev-frontend",
-            "type": "sprint-task",
-            "status": "DONE",
-            "zone": "apps/frontend/",
-            "created_at": "2026-06-06T21:35:00Z",
-            "priority": "high",
-            "size": "M",
-            "sprint": "FETCH-OPS-PAGE-TRUTH",
-            "depends": [
-              "F-1"
-            ],
-            "files": [
-              "apps/frontend/app/routes/dashboard.fetch.tsx",
-              "apps/frontend/app/lib/api/client.ts",
-              "apps/frontend/app/domain/market.ts"
-            ],
-            "note": "Replace Reuters/Bloomberg hardcoded panels with real source freshness table from GET /api/fetch-status. Show source name, age (N min ago), direction (green/amber/red), 24h count. Include VPS proxy status and BCTC pipeline. Container REBUILD required.",
-            "acceptance_criteria": [
-              "GET :3001/dashboard/fetch 200 — no Reuters/Bloomberg panels",
-              "Source freshness table shows DB-only sources",
-              "Each source shows: name, age string, direction indicator, 24h count",
-              "VPS proxy section shows last push + stale status",
-              "BCTC pipeline section shows pending/done/failed",
-              "Macro panel does NOT render latency span",
-              "No hardcoded source names in TSX",
-              "REBUILD frontend container"
-            ],
-            "started_at": "2026-06-06T23:55:00Z",
-            "completed_at": "2026-06-06T23:56:00Z"
-          },
-          {
-            "id": "F-4",
-            "title": "api-gateway SPIKE: /mcp/* prefix-strip duality",
-            "owner": "dev-api-gateway",
-            "type": "sprint-task",
-            "status": "DONE",
-            "zone": "apps/api-gateway/",
-            "created_at": "2026-06-06T21:35:00Z",
-            "priority": "medium",
-            "size": "SPIKE",
-            "sprint": "FETCH-OPS-PAGE-TRUTH",
-            "depends": [
-              "F-1"
-            ],
-            "files": [
-              "apps/mcp-server/src/interface/mcp/server.ts",
-              "apps/api-gateway/pkg/primitive/not-deployed-rerouter/reroute.go"
-            ],
-            "note": "4h timebox. Resolve /mcp/* vs /api/* duality. Add /api/news/headlines etc aliases in mcp-server, OR update rerouter target paths to drop /mcp prefix. Additive alias approach is safest. Container REBUILD required (mcp-server if modified, api-gateway).",
-            "acceptance_criteria": [
-              "GET :4000/mcp/api/news/headlines?source=cafef returns articles (was 404)",
-              "Not-deployed rerouter path still works",
-              "Rerouter unit tests pass",
-              "REBUILD api-gateway container"
-            ]
-          }
-        ]
       }
     ],
     "backlog": [
@@ -4052,9 +3915,153 @@
         "created_by": "po",
         "done_at": "2026-06-06T22:45:00Z",
         "done_by": "qa"
+      },
+      {
+        "id": "FETCH-OPS-PAGE-TRUTH",
+        "lead": "architect",
+        "priority": "high",
+        "status": "done",
+        "opened_at": "2026-06-06T21:17:36Z",
+        "tasks": [
+          {
+            "id": "ARCH-FETCH-OPS-1",
+            "title": "Technical blueprint: fetch-operations page honest sources + real operational detail",
+            "owner": "architect",
+            "type": "ARCH",
+            "status": "DONE",
+            "zone": "multi",
+            "created_at": "2026-06-06T21:17:36Z",
+            "completed_at": "2026-06-06T21:34:00Z",
+            "priority": "high",
+            "size": "S",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [],
+            "files": [
+              "docs/handoffs/FETCH-OPS-PAGE-TRUTH-ARCH.md",
+              "docs/agent-memory/decisions/sprint-FETCH-OPS-PAGE-TRUTH-architect.md"
+            ],
+            "note": "4-zone blueprint: F-1 mcp-server (news filter fix + fetch-status endpoint), F-2 macro-indicators (remove fake latency), F-3 frontend (honest source panels), F-4 api-gateway SPIKE (prefix duality). Handoff and decision journal written."
+          },
+          {
+            "id": "F-1",
+            "title": "mcp-server: news filter fix + fetch-status endpoint",
+            "owner": "dev-mcp-server",
+            "type": "sprint-task",
+            "status": "DONE",
+            "zone": "apps/mcp-server/",
+            "created_at": "2026-06-06T21:35:00Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [],
+            "files": [
+              "apps/mcp-server/src/interface/mcp/routes/newsHeadlinesHandler.ts",
+              "apps/mcp-server/src/interface/mcp/server.ts",
+              "apps/mcp-server/src/interface/mcp/routes/fetchStatusHandler.ts"
+            ],
+            "note": "Fix LIKE '%bloomberg%' → LIKE '%bloomberg.com%' and LIKE '%reuters.com%'; add GET /api/fetch-status aggregating sources from rag_analyses, vpsProxy health, and BCTC queue counts. | REVIEW 2026-06-06T23:44Z dev-mcp-server: 21 tests GREEN, container rebuilt (c299f6c3), AC-1..5 live-verified: bloomberg count:0, reuters count:0, /api/fetch-status responds with sources[13]+vpsProxy+bctcPipeline.",
+            "acceptance_criteria": [
+              "GET :3000/mcp/api/news/headlines?source=bloomberg returns count:0",
+              "GET :3000/mcp/api/news/headlines?source=reuters returns only %reuters.com% URLs",
+              "GET :3000/api/fetch-status returns JSON with sources[], vpsProxy{}, bctcPipeline{}",
+              "sources[] contains only sources with actual rag_analyses rows",
+              "Unit test: buildSql domain anchors verified"
+            ]
+          },
+          {
+            "id": "F-2",
+            "title": "macro-indicators: remove fake latency field",
+            "owner": "dev-macro-indicators",
+            "type": "sprint-task",
+            "status": "DONE",
+            "zone": "apps/macro-indicators/",
+            "created_at": "2026-06-06T21:35:00Z",
+            "priority": "high",
+            "size": "XS",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [],
+            "files": [
+              "apps/macro-indicators/pkg/interface/http/handlers_external.go"
+            ],
+            "note": "Remove hardcoded totalLatencyMs:0 from summary map at line 161; remove any per-source latencyMs:0. Container REBUILD required.",
+            "acceptance_criteria": [
+              "GET :5004/external response: summary does NOT contain totalLatencyMs",
+              "Per-source entries do NOT contain latencyMs",
+              "Test handlers_snapshot_contract_test.go updated",
+              "REBUILD macro-indicators container"
+            ],
+            "updated_at": "2026-06-06T23:50:00Z"
+          },
+          {
+            "id": "F-3",
+            "title": "frontend: honest source panels + age display",
+            "owner": "dev-frontend",
+            "type": "sprint-task",
+            "status": "DONE",
+            "zone": "apps/frontend/",
+            "created_at": "2026-06-06T21:35:00Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [
+              "F-1"
+            ],
+            "files": [
+              "apps/frontend/app/routes/dashboard.fetch.tsx",
+              "apps/frontend/app/lib/api/client.ts",
+              "apps/frontend/app/domain/market.ts"
+            ],
+            "note": "Replace Reuters/Bloomberg hardcoded panels with real source freshness table from GET /api/fetch-status. Show source name, age (N min ago), direction (green/amber/red), 24h count. Include VPS proxy status and BCTC pipeline. Container REBUILD required.",
+            "acceptance_criteria": [
+              "GET :3001/dashboard/fetch 200 — no Reuters/Bloomberg panels",
+              "Source freshness table shows DB-only sources",
+              "Each source shows: name, age string, direction indicator, 24h count",
+              "VPS proxy section shows last push + stale status",
+              "BCTC pipeline section shows pending/done/failed",
+              "Macro panel does NOT render latency span",
+              "No hardcoded source names in TSX",
+              "REBUILD frontend container"
+            ],
+            "started_at": "2026-06-06T23:55:00Z",
+            "completed_at": "2026-06-06T23:56:00Z"
+          },
+          {
+            "id": "F-4",
+            "title": "api-gateway SPIKE: /mcp/* prefix-strip duality",
+            "owner": "dev-api-gateway",
+            "type": "sprint-task",
+            "status": "DONE",
+            "zone": "apps/api-gateway/",
+            "created_at": "2026-06-06T21:35:00Z",
+            "priority": "medium",
+            "size": "SPIKE",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [
+              "F-1"
+            ],
+            "files": [
+              "apps/mcp-server/src/interface/mcp/server.ts",
+              "apps/api-gateway/pkg/primitive/not-deployed-rerouter/reroute.go"
+            ],
+            "note": "4h timebox. Resolve /mcp/* vs /api/* duality. Add /api/news/headlines etc aliases in mcp-server, OR update rerouter target paths to drop /mcp prefix. Additive alias approach is safest. Container REBUILD required (mcp-server if modified, api-gateway).",
+            "acceptance_criteria": [
+              "GET :4000/mcp/api/news/headlines?source=cafef returns articles (was 404)",
+              "Not-deployed rerouter path still works",
+              "Rerouter unit tests pass",
+              "REBUILD api-gateway container"
+            ]
+          }
+        ],
+        "closed_at": "2026-06-06T22:15:46Z"
       }
     ],
-    "in_progress": []
+    "in_progress": [],
+    "head": {
+      "status": "idle",
+      "next_agent": "po",
+      "wip": 0,
+      "active_task_id": null
+    }
   },
   "signal_queue": {
     "_updated_at": "2026-06-06T18:12:00Z",
