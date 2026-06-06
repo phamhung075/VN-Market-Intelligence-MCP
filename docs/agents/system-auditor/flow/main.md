@@ -487,6 +487,9 @@ severity ≥ warn → `send_telegram(channel="bug")` AND append row to `docs/dat
 
 > Invariant: timestamp = current UTC, never future, never speculative.
 
+### RAW-CITE GATE (rtr-confab2-202606060515 — occ#2; c019 invented config value; c026 cited "system-map lists 4001" for mcp-gateway port, value absent, live port 4040)
+Any config/file value cited in a finding or return (port, path, threshold, mapping) MUST be backed by a `grep -n` line captured THIS cycle (file + line number + matched text). No raw line captured → DROP the claim, do NOT report it. NEVER cite `orch-state.json .head.next_action` text as evidence — it is router-authored narrative, not a config value.
+
 ### Notebook timestamp guard
 - Before writing `docs/agent-memory/notebooks/system-auditor.md`, ALWAYS get current UTC via:
   ```bash

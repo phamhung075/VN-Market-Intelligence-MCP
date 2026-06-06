@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first fire ENRICHED — bctc-analyst escalation-guard lock bctc-ctg-attachment-fetch-escalation-c026 held (claimed 06-06T00:06Z ttl24h) = attachment-fetch problem already flagged; if get_bctc_full(CTG) withheld ~09:30Z escalate citing this lock. RESOLVED: MW-offhours ~04:00Z baseline VERIFIED (c024 + router raw: 04:04Z cycle complete, 0 emitted, 1 VNH dup suppressed — guard works). Tick 042037Z: cowork-fire 04:04Z double-FIRE FYI archived (8h gatherer gap healthy recovery, 0 errors); board all-terminal (156 rows, 16 terminal variants); peer cowork drained the 2 auditor guard-lock false-positive rows independently — convergent with D4 disposition. Carry: Monday ~02:15Z price-push resume check (Fri close 08:59Z last push, weekend idle by design); c019 confab occ#1; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1 (self-report said 2, file had 3 — corrected in c024 brief); false-0-commits untested until T3 (daily 02:00 local cron); auditors c018-c024 all clean under guard; operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first fire — escalation lock bctc-ctg-attachment-fetch-escalation-c026 router-verified LIVE-HELD via claim-probe (holder bctc-analyst, expires 06-07T00:06:31Z); if get_bctc_full(CTG) withheld ~09:30Z escalate citing this lock. Tick 052040Z: auditor confab occ#2 ACTIONED — c026 fabricated 'system-map lists 4001' (raw grep: no port field, live 4040 consistent); RAW-CITE GATE added to system-auditor flow main.md L490-491 by agent-father (any cited config value needs grep -n raw line or claim DROPPED; head.next_action never citable as evidence) — confab class now flow-enforced, watch CLOSED unless occ#3 breaches the gate itself. Queue pruned per 48h spec (cow-RESOLVED + po-chef-intraday archived). Carry: Monday ~02:15Z price-push resume; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; false-0-commits untested until T3 (02:00 local); peer cowork drain-flip semantics noted (READ=seen not triaged, single touch ~05:19Z then quiet); operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T04:22:15+00:00",
+    "updated_at": "2026-06-06T05:26:49+00:00",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -3571,20 +3571,9 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T03:00:00.522Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-06T05:26:49+00:00",
+    "_updated_by": "dev-team",
     "rows": [
-      {
-        "id": "rtr-confab2-202606060515",
-        "ts": "2026-06-06T05:11Z",
-        "from": "router-verify",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "auditor invented-config-value confab occ#2 (c019 occ#1; c026 cited 'system-map lists 4001' for mcp-gateway port — system-map.json has NO port field for mcp-gateway, 4001 nowhere in docs/data/, live port 4040 self-consistent, no mismatch exists). Class: cites a config value absent from the cited file despite RAW ECHO grep -n brief rule. PO triage: durable fix = flow-level enforcement in system-auditor flow (any cited file value MUST be accompanied by grep -n output or the claim is dropped), prompt-brief alone proven insufficient at occ#2.",
-        "severity": "MEDIUM",
-        "status": "NEW",
-        "payload_ref": null
-      },
       {
         "id": "sau-d4-202606060300",
         "ts": "2026-06-06T03:00Z",
@@ -3650,32 +3639,6 @@
           ]
         },
         "disposition": "Router live-verified get_cash_flow(FPT,quarters=8): quarters_requested=8 honored, periods[] returned, only 2 quarters of FPT data in corpus. FU-BCTC-TOOL-PARAMS genuinely DONE. Root=data coverage (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA). Loop-stop guard shipped (BCTC-ESC-GUARD design 2a40d47e/impl 061ce406/split 0b00e15d). Next cycle the analyst will self-classify DATA-COVERAGE-LIMITED, claim 30d guard, route ONE signal to ops, stop re-escalating to dev-team."
-      },
-      {
-        "id": "po-chef-intraday-dedup-granularity-20260604T0320Z",
-        "ts": "2026-06-04T03:20:17Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "flow_defect_report",
-        "summary": "MEDIUM. chef-intraday dedup marker has wrong granularity. Marker task_id is per-DAY (chef-published:chef-intraday:YYYY-MM-DD) but slot cron is 13 2-8 * * 1-5 (fires hourly, 7x/weekday). The FIRST fire claims the marker even on a 0-cluster SILENT no-publish exit (gate claims BEFORE convergence check), so all 6 later intraday fires that day get claimed=false -> dedup-blocked -> silent-exit, even if NEW convergence appears at 04:13+. Net: at most ONE intraday publish/day; legitimate later intraday dishes silently lost. Errs SAFE for AC-6 (under-publishes, never double) so not urgent, but degrades intraday product. Observed live 2026-06-04: 02:13 fire silent(0 clusters)+claimed marker; 03:13 fire dedup-blocked. FIX options for dev: (a) include fire-hour in marker key (chef-published:chef-intraday:YYYY-MM-DDTHH) so each hourly fire dedups only its own concurrent peers; and/or (b) claim marker only AFTER convergence qualifies + immediately before send_telegram, not at gate entry. Per-day marker is correct only for once-daily slots (chef-morning/eod/evening). Affects: cowork dispatcher dedup-gate contract + unified-agent/flow/chef.md.",
-        "severity": "MEDIUM",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-team-20260604T031929Z.json",
-        "disposition": "READ 2026-06-04T04:15:22Z by dev-team: PO-triaged (NOTHING for dev-zone), folded into backlog FU-CHEF-MARKER-INFLOW (granularity facet); routed agents-architect+agent-father, cowork agent-md lane."
-      },
-      {
-        "id": "cow-20260605T200755",
-        "ts": "2026-06-05T20:07:55Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "infra-anomaly",
-        "summary": "mcp-server clean-exit(0) 20:06:12Z DURING emit_pressure_state call (EMIT-DARK tool); dispatcher relaunched OK",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json",
-        "resolution": "FALSE-ALARM root-caused by dev-team router: clean-exit(0) 20:06:12Z was the FIX-CTG-PDF-MISLINK deploy recreate window (ops redeploy, image a742d5b7 verified running 20:15:15Z w/ healed=1 fingerprint + served CTG row 62p). emit_pressure_state NOT at fault — emit retried OK 20:07:55Z + succeeded next tick. No action needed.",
-        "resolved_at": "2026-06-05T20:22:57Z",
-        "resolved_by": "dev-team"
       },
       {
         "id": "cow-20260605T200756",
@@ -4205,6 +4168,43 @@
         "payload_ref": null,
         "read_at": "2026-06-05T03:14:26Z",
         "read_note": "Root cause: system-auditor D4 R-1 (handlers.md:27) calls task_list_held without expired:false → reads ~111 expired tombstones. Definitif fix dispatched to agent-father (add expired:false). Defence-in-depth GC + shared-id hardening logged P3 backlog."
+      },
+      {
+        "id": "rtr-confab2-202606060515",
+        "ts": "2026-06-06T05:11Z",
+        "from": "router-verify",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "auditor invented-config-value confab occ#2 (c019 occ#1; c026 cited 'system-map lists 4001' for mcp-gateway port — system-map.json has NO port field for mcp-gateway, 4001 nowhere in docs/data/, live port 4040 self-consistent, no mismatch exists). Class: cites a config value absent from the cited file despite RAW ECHO grep -n brief rule. PO triage: durable fix = flow-level enforcement in system-auditor flow (any cited file value MUST be accompanied by grep -n output or the claim is dropped), prompt-brief alone proven insufficient at occ#2.",
+        "severity": "MEDIUM",
+        "status": "RESOLVED",
+        "payload_ref": null
+      },
+      {
+        "id": "po-chef-intraday-dedup-granularity-20260604T0320Z",
+        "ts": "2026-06-04T03:20:17Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow_defect_report",
+        "summary": "MEDIUM. chef-intraday dedup marker has wrong granularity. Marker task_id is per-DAY (chef-published:chef-intraday:YYYY-MM-DD) but slot cron is 13 2-8 * * 1-5 (fires hourly, 7x/weekday). The FIRST fire claims the marker even on a 0-cluster SILENT no-publish exit (gate claims BEFORE convergence check), so all 6 later intraday fires that day get claimed=false -> dedup-blocked -> silent-exit, even if NEW convergence appears at 04:13+. Net: at most ONE intraday publish/day; legitimate later intraday dishes silently lost. Errs SAFE for AC-6 (under-publishes, never double) so not urgent, but degrades intraday product. Observed live 2026-06-04: 02:13 fire silent(0 clusters)+claimed marker; 03:13 fire dedup-blocked. FIX options for dev: (a) include fire-hour in marker key (chef-published:chef-intraday:YYYY-MM-DDTHH) so each hourly fire dedups only its own concurrent peers; and/or (b) claim marker only AFTER convergence qualifies + immediately before send_telegram, not at gate entry. Per-day marker is correct only for once-daily slots (chef-morning/eod/evening). Affects: cowork dispatcher dedup-gate contract + unified-agent/flow/chef.md.",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260604T031929Z.json",
+        "disposition": "READ 2026-06-04T04:15:22Z by dev-team: PO-triaged (NOTHING for dev-zone), folded into backlog FU-CHEF-MARKER-INFLOW (granularity facet); routed agents-architect+agent-father, cowork agent-md lane."
+      },
+      {
+        "id": "cow-20260605T200755",
+        "ts": "2026-06-05T20:07:55Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "infra-anomaly",
+        "summary": "mcp-server clean-exit(0) 20:06:12Z DURING emit_pressure_state call (EMIT-DARK tool); dispatcher relaunched OK",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json",
+        "resolution": "FALSE-ALARM root-caused by dev-team router: clean-exit(0) 20:06:12Z was the FIX-CTG-PDF-MISLINK deploy recreate window (ops redeploy, image a742d5b7 verified running 20:15:15Z w/ healed=1 fingerprint + served CTG row 62p). emit_pressure_state NOT at fault — emit retried OK 20:07:55Z + succeeded next tick. No action needed.",
+        "resolved_at": "2026-06-05T20:22:57Z",
+        "resolved_by": "dev-team"
       }
     ]
   },
