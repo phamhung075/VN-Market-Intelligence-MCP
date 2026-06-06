@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH: MW-offhours fire ~04:00Z baseline (real RETURN + zero dup price_anomaly); refine-bctc-slot-1 first fire 09:00Z CTG proof (escalate if get_bctc_full(CTG) withheld ~09:30Z); auditor c018+c019 verified clean under router guard (tier-echo OK 2x, AC-2 retention steady-state proven, mutex round-trips OK) -> tier-drift WATCH cleared-under-guard, false-0-commits still untested (next T3); NEW occ#1 WATCH: c019 confabulated system-map external_port=4001 claim (raw: no 4001 anywhere) -> PO route if confab recurs; dev-* notebook class not on settled-write (dev-mcp-server 06-03 breach occ#1) watch-only; operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first fire ENRICHED — bctc-analyst escalation-guard lock bctc-ctg-attachment-fetch-escalation-c026 held (claimed 06-06T00:06Z ttl24h) = attachment-fetch problem already flagged; if get_bctc_full(CTG) withheld ~09:30Z escalate citing this lock. D4 reports 3050/3051 dispositioned (monitoring/wontfix) — both locks raw-verified as by-design esc guards (esc-datacov:FPT ttl 8d cooldown), no board row needed. NEW occ#1 WATCH: peer auditor wrote 2 distinct D4 findings under ONE row id sau-d4-202606060300 (dup-id) — PO route if recurs. Carry: MW-offhours ~04:00Z baseline (real RETURN + zero dup price_anomaly); Monday ~02:15Z price-push resume check (Fri close 08:59Z last push, weekend idle by design); c019 confab occ#1; false-0-commits untested until T3; auditors c018-c022 all clean under guard; operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T02:21:43+00:00",
+    "updated_at": "2026-06-06T03:24:19+00:00",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -3571,9 +3571,31 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-05T20:22:57Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-06T03:00:00.522Z",
+    "_updated_by": "system-auditor",
     "rows": [
+      {
+        "id": "sau-d4-202606060300",
+        "ts": "2026-06-06T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-d4-202606060300",
+        "ts": "2026-06-06T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock bctc-ctg-attachment-fetch-escalation-c026 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
       {
         "id": "tnb-c87-20260604T2013",
         "ts": "2026-06-04T20:13Z",
