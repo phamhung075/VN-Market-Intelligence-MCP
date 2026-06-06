@@ -2729,7 +2729,7 @@
         "title": "Orch dashboard DONE-task list: unstable column widths -> skyscraper rows (one-word-per-line Title)",
         "type": "FIX",
         "sprint": null,
-        "status": "TODO",
+        "status": "REVIEW",
         "size": "S",
         "zone": "apps/frontend/",
         "owner": "dev-frontend",

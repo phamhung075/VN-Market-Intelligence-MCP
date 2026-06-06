@@ -6,6 +6,7 @@
 
 ## Status
 
+2026-06-06 — FIX-ORCH-DONE-GRID-COLS REVIEW commit f802b378. Extracted DONE_GRID const (120px|1fr|110px|90px|130px|24px) shared by header + all data rows; status_note moved to DecisionAccordion banner; Title cell min-w-0 + break-words + line-clamp-2. 363/363 Vitest GREEN. tsc 0 errors. Container rebuilt + live 200.
 2026-06-05 — ARCH-ORCH-F3 REVIEW commit 1b71198a. Decision accordion on /dashboard/orchestration. StepDto+DecisionsDto types; DoneTaskGroup multi-open Set<string>; DecisionAccordion + StepCard inline; sprintId threaded from sprint_goal.sprint_id. 26 new tests. 353/353 GREEN. tsc 0 errors. Container rebuilt.
 2026-06-05 — FE-HEADER-SSOT DONE commit 619093e1. PageHeader SSOT component; 8 pages migrated (0 raw h1 in routes); dashboard layout w-full centering. 320/320 Vitest GREEN (+7). tsc clean. NEEDS REBUILD: frontend.
 2026-06-04 — DSI-S1-FE-TYPE DONE commit b16d6a89. StockQuote.change→number|null; added changePercent:number|null, staleness/isEstimate/fetchedAt. MacroSnapshot+MacroSignalEntry provenance fields. 303/303 Vitest GREEN (+8 new). tsc exit 0. NEEDS REBUILD: frontend.
@@ -30,7 +31,7 @@
 
 ## Zone health
 
-Phase 2 P2-A/B/C DONE. ESLint fence (G4) installed: eslint.config.mjs + eslint-plugin-boundaries@6.0.2 + TS resolver. Fence-A/B/C proven via deliberate-violation (exit 1, "Fence-A" in output), clean run exits 0. 179/179 Vitest, tsc clean. Stopped at P2-D (QA gate). | HEALTHY
+2026-06-06: 363/363 Vitest GREEN, tsc clean, FIX-ORCH-DONE-GRID-COLS shipped (grid alignment + accordion status_note) | HEALTHY
 
 <!-- Pruned 2026-06-05 (cap-compliance 205→192): oldest cycle P1-FE (2026-05-25, formatter extraction, commits 3ef797d0/eeb4d2f8/9b55a086) — superseded by Status summary; full detail in git history. Carried insight: Docker holds port 3001 (TCP LISTEN) even when container stopped → use PORT=3099 env for host-side Playwright runs. -->
 
