@@ -4,13 +4,14 @@
   "_updated_at": "2026-06-06T23:44:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
-    "in_progress": [
-      "F-2"
-    ],
-    "next_agent": "dev-mcp-server|dev-macro-indicators",
-    "wip_count": 1,
-    "wip_cap": 2,
-    "note": "F-1 REVIEW; F-2 still in_progress. F-3 unblocked after F-1 DONE."
+    "active_task_id": null,
+    "next_action": "Sprint FETCH-OPS-PAGE-TRUTH closed 2026-06-06T22:15:46Z (all 5 tasks DONE, QA-gated, router live-verified). Carry-forwards logged: very-stale label polish (F-3 UX, non-blocking); FU-MCP-GATEWAY-DEV-FRONTEND (commit-mutex gateway unavailable in dev-frontend+qa sessions → agent-father); Bun full-suite C++ OOM pre-existing; 5 pre-existing tsc errors (1980-f2-canon-schema.test.ts + tasksMdJanitorJob.ts) → TECH-DEBT-LINTING. Next tick: PO sprint planning.",
+    "next_agent": "po",
+    "status": "idle",
+    "updated_at": "2026-06-06T22:18:11Z",
+    "updated_by": "pm",
+    "wip": 0,
+    "wip_max": 2
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -4055,13 +4056,7 @@
         "closed_at": "2026-06-06T22:15:46Z"
       }
     ],
-    "in_progress": [],
-    "head": {
-      "status": "idle",
-      "next_agent": "po",
-      "wip": 0,
-      "active_task_id": null
-    }
+    "in_progress": []
   },
   "signal_queue": {
     "_updated_at": "2026-06-06T18:12:00Z",
