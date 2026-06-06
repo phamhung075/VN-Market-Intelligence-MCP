@@ -2241,14 +2241,14 @@
             "title": "ORCH-HEAD-CAS + signal_queue retry-read-compare (F-9+F-3): promote FU-ORCH-HEAD-CAS to code; fresh-read-compare-retry (mtime, 3 retries) on signal_queue append; signal-dashboard SKILL documents 3 concurrent writer classes",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "apps/mcp-server/src/ + .claude/skills/signal-dashboard/",
             "created_at": "2026-06-06T20:09:07Z",
             "priority": "high",
             "size": "M",
             "sprint": "WORKFLOW-FLUIDITY",
             "depends": [],
-            "note": "REVIEW 2026-06-07: Option A mtime-compare-retry CAS implemented in orchStateStore.ts (appendSignalQueueRow + writeHeadAtomic). 12 tests WF2-signal-queue-cas.test.ts — 12 pass 0 fail. tsc: 0 new errors (5 pre-existing TECH-DEBT-LINTING unchanged). signal-dashboard SKILL § WRITE updated with 3-writer-class warning block (FR-WF2-2). FU-ORCH-HEAD-CAS closed."
+            "note": "DONE 2026-06-07 (QA): Option A mtime-compare-retry CAS implemented in orchStateStore.ts (appendSignalQueueRow + writeHeadAtomic). 12 tests WF2-signal-queue-cas.test.ts — 12 pass 0 fail. tsc: 0 new errors (5 pre-existing TECH-DEBT-LINTING unchanged). signal-dashboard SKILL § WRITE updated with 3-writer-class warning block (FR-WF2-2). FU-ORCH-HEAD-CAS closed. QA APPROVED 2026-06-07 — all 5 AC met, CAS logic verified no false-positive. Container REBUILD required."
           },
           {
             "id": "WF-3",

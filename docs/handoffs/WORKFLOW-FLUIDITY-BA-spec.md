@@ -276,3 +276,43 @@ Architect writes `docs/protocols/dev-star-gateway-binding.md` (≤60L) containin
 - AC-WF3-2: .claude/skills/task-lock/SKILL.md updated with session-scoped binding note (FR-WF3-3).
 - AC-WF3-3: If ruling is Option I or II — a WF-3-IMPL task is created in the task_board backlog pointing to agent-father with the specific sites to change.
 - AC-WF3-4: If ruling is Option III — no code or flow changes needed; task-lock-protocol.md gains the invariant text.
+
+---
+
+## [QA] Review Record — WF-2 · 2026-06-07
+
+**Verdict: APPROVED**
+**Commits reviewed:** 8a469655 (impl) + 548534da (memory)
+**Reviewer:** qa
+
+### AC Verification
+
+- **AC-WF2-1 PASS** — write path identified in commit diff: `orchStateStore.ts:appendSignalQueueRow` (line ~253) + `writeHeadAtomic` (new export). File:line confirmed in dev notebook and commit message body.
+- **AC-WF2-2 PASS** — Option A implemented. `WF2-signal-queue-cas.test.ts` (12 tests T1-T12) verified directly: 12 pass / 0 fail. T2 test proves single-collision retry succeeds (row NOT dropped); T3 proves exhausted-retries drops with WARN but no throw. Injectable seams (statMtimeFn, warnFn) enable deterministic simulation without real fs races.
+- **AC-WF2-3 PASS** — `.claude/skills/signal-dashboard/SKILL.md` § WRITE contains 3-writer-class warning block (dev-team/:07, cowork-team/15min, system-auditor/4h). Verified in git show 8a469655 diff.
+- **AC-WF2-4 PASS** — `FU-ORCH-HEAD-CAS` removed from `orch-state.json narrative.watch_items[]`. Git diff confirms removal of that string from the array. Note: string still appears in `narrative.backlogs` field (separate from watch_items) — BA spec scope was watch_items only, AC met.
+- **AC-WF2-5 PASS** — tsc: exactly 5 errors, all pre-existing (3× 1980-f2-canon-schema.test.ts, 2× tasksMdJanitorJob.ts — count unchanged). WF-2 test batch 12/12 pass. Full suite Bun C++ OOM crash is pre-existing runtime issue (same panic URL as prior QA cycles), not a WF-2 regression. Representative batch runs (1977/1978/1979/1980-f2-canon tests): 102 pass / 0 fail.
+
+### CAS Logic Review
+
+Pre-rename mtime-check window analysis:
+- Step 1: `mtimeBefore = statMtimeFn(path)` — captures mtime before read.
+- Step 2: read + mutate in memory (no fs write).
+- Step 3: `mtimeAfterMod = statMtimeFn(path)` — checks mtime BEFORE our rename. If a concurrent writer renamed a new file in steps 1-3 window, this differs → collision detected, retry.
+- Step 4: `writeAtomicFn(path, state)` — our rename.
+
+False-positive risk: NONE. The mtime check happens at step 3, before our own rename (step 4). Our own write cannot trigger a self-false-positive. A stale-mtime edge (mtimeBefore == -1 guards absent file) correctly skipped.
+
+### Zone Containment
+
+Diff touches exactly: `apps/mcp-server/src/infrastructure/orchStateStore.ts`, `apps/mcp-server/src/__tests__/WF2-signal-queue-cas.test.ts`, `.claude/skills/signal-dashboard/SKILL.md`, `docs/data/orch/orch-state.json`. No api-gateway or frontend files. Zone contained.
+
+### DDD / Security
+
+- DDD: `orchStateStore.ts` has no `from.*infrastructure` or `from.*application` domain imports — PASS.
+- Security: no `process.env`, no hardcoded secrets/tokens — PASS.
+- mock-guard: exit 2 (CAUTION) on `orchStateStore.ts:429` — `// TODO, BLOCKED, DEFERRED → backlog` comment. False positive; not fabricated data — non-blocking.
+
+### Notes for PM / Container Rebuild
+
+A container REBUILD (not restart) of `mcp-server` is required for the CAS fix to be live in production. The changes are in `apps/mcp-server/src/infrastructure/orchStateStore.ts` which is compiled into the container. QA does not trigger rebuilds.
