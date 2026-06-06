@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T21:58:16Z",
-    "_updated_by": "dev-frontend",
+    "_updated_at": "2026-06-06T00:30:20Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -816,6 +816,25 @@
             "zone": "apps/mcp-server/",
             "priority": "low",
             "note": "[dev-team 2026-06-03T17:22:37Z] spun off from FU-PEK zone-mismatch finding — mcp-server has a watchdog mirror of the same window but gates price-staleness not PEK extraction; review-before-change, do NOT auto-sync.[dev-team 2026-06-03T17:39:43Z] CLOSED-NO-CHANGE (reviewed by dispatcher, read both watchdog fns). DECISION: do NOT tighten the price-watchdog mirror. Both vpsProxyWatchdogJob.isVnMarketHoursUtc (h>=2&&h<=8) and priceUpdateWatchdogJob (MARKET_HOURS_START=2..END=8) use the window as an OFF-HOURS GUARD: outside window -> 'off-hours' -> SKIP staleness alert. The watchdog is DESIGNED to err wide (built after a 10-day silent price-staleness outage); its >6h staleness threshold already prevents false positives in the post-close hour (15:00-15:59 ICT, last tick ~1h old). Tightening to h<=7 would re-classify a real >6h staleness crossing into 15:00-15:59 ICT as 'off-hours' and SUPPRESS a legitimate outage alert — strictly worse for the watchdog's purpose. The PEK extraction guard correctly tightened (needlessly blocking off-market work is a real cost); the staleness watchdog correctly stays wide. Different semantics confirmed — no auto-sync, as flagged. No code change."
+          },
+          {
+            "task_id": "AUDITOR-COMMIT-MUTEX-ENFORCE",
+            "title": "system-auditor commits bypass commit-mutex + sweep shared index — make flow commit steps EXECUTED protocol, not narrated comment (covers GIT-MUTEX-BYPASS-AUDITOR occ#1 + GIT-IGNORES-FALSE-WARN occ#3)",
+            "type": "FIX",
+            "owner": "agent-father",
+            "depends": [],
+            "status": "BACKLOG",
+            "size": "S",
+            "zone": "cross-service/",
+            "priority": "high",
+            "files": [
+              "docs/agents/system-auditor/flow/main.md",
+              ".claude/skills/commit-mutex/SKILL.md"
+            ],
+            "created_at": "2026-06-06T00:29:37Z",
+            "source": "PO triage tick 20260606T002104Z — signal docs/signals/processed/cowork-team-20260606T001015Z-git-anomalies.json (HIGH) + router live confirmation a8fe3999 00:23Z",
+            "note": "EVIDENCE: auditor self-cron commit 1b3aa5b5 landed WITHOUT claiming commit-mutex while cowork-dispatcher HELD commit-mutex:main, sweeping 4 cowork-staged files into a mis-labeled commit; recurred a8fe3999 (00:23Z) while dev-team held the mutex (scope clean that time only due to a per-spawn brief constraint — gap is structural). ROOT CAUSE: docs/agents/system-auditor/flow/main.md notebook-commit block (~L504-509) renders the commit-mutex protocol as a bash COMMENT ('# Protocol: task_claim ...') — narrated-not-executed (same class as EMIT-DARK); bare `git commit` after `git add <own>` commits the WHOLE shared index, including files staged by parallel agents. SHARED ROOT with GIT-IGNORES-FALSE-WARN (occ#3 — spurious French gitignore error exit 1 on TRACKED non-ignored files: cowork-schedule.json, orch-state.json — while a parallel git process runs; check-ignore clean; file stages anyway): concurrent git processes on one shared index. Mutex-wrap removes the parallelism, killing both findings — ONE task per signal author's recommendation. FIX (agent-md-factory governed flow edit, no rebuild): rewrite the notebook-commit step (and align the D-IMPROVE commit step ~L310-318 wording for consistency) as explicit numbered EXECUTED steps per commit-mutex SKILL Quick Reference: (1) call_tool task_claim task_id='commit-mutex:main' task_kind='commit-mutex' owner_agent='system-auditor' ttl_seconds=60 (skill SSOT TTL=60s w/ C-2/C-2b fail-closed — signal suggested 300-600s but skill ratification C-1..C-4 is binding) (2) stage via `git add -u <own_paths>` (tracked-file form — standardizes the known workaround for the gitignore false-warn) (3) `git diff --cached --name-only` foreign-path verify, `git restore --staged` foreign-only (4) commit (5) post-commit cached-empty check (6) task_release on EVERY exit path. Encode pathspec staging + cached-stat self-check in the FLOW (currently only per-spawn-brief enforced). DoD: next auditor self-cron commit shows task_claim->task_release round-trip AND touches ONLY auditor own_paths while another agent has files staged.",
+            "baseline_pass": "router raw-verify: `git show --stat` of the next system-auditor self-cron commit lists ONLY auditor own_paths; coordination db shows commit-mutex:main claimed by system-auditor spanning the commit timestamp; zero foreign-file sweeps over 48h of parallel cowork/dev ticks"
           }
         ]
       },
@@ -1093,6 +1112,27 @@
             "zone": "docs/agent-memory/notebooks/",
             "priority": "medium",
             "note": "PO triage :07 2026-06-02. APPEND-class cap (<=200L file / <=60L section). No section >60L; total-file breach from accumulated stale cycle sections. Prune oldest COMPLETE cycles per notebook-write SKILL AC-6. VERIFY janitor output (history: false-green cap claims + dirty-tree): wc -l <=200 AND git status clean after.| DONE-LIVE-VERIFIED 2026-06-02T18:55Z commit de6b25fb (claude-manager-helper). news-scout.md 222->53L. Router raw-verify: 1-file scope, tree CLEAN (no janitor false-green/partial-stage), max section 31L (c30) <=60, content intact (c30+c31 kept w/ full 5-item carry-over watch + FII-carry/regime context, not gutted). Notebook read live, no rebuild."
+          },
+          {
+            "task_id": "NB-AUDITOR-SETTLED-WRITE",
+            "title": "system-auditor notebook orphaned on pre-AC-3 append-then-prune — 4 context-bloat backstop fires in 75min (222-244L transients, each spawning a drain-cost signal) — migrate flow to settled single-write + add system-auditor to skill APPEND-class table",
+            "type": "FIX",
+            "owner": "agent-father",
+            "depends": [
+              "NB-FLOW-SETTLED-WRITE"
+            ],
+            "status": "BACKLOG",
+            "size": "S",
+            "zone": "cross-service/",
+            "priority": "medium",
+            "files": [
+              "docs/agents/system-auditor/flow/main.md",
+              ".claude/skills/notebook-write/SKILL.md"
+            ],
+            "created_at": "2026-06-06T00:29:37Z",
+            "source": "PO triage tick 20260606T002104Z — router-observed pattern (no signal author); head-narrative escalation condition 'only if noisy' MET: hook fired 23:09/23:39/00:09/00:22Z, 4 of 6 signals drained across last 2 ticks were this transient",
+            "note": "ROOT CAUSE: same SSOT-fix-doesnt-reach-derived-copy pattern that NB-FLOW-SETTLED-WRITE fixed for 5 consumers (04b20c87) — the notebook-write SKILL has the AC-3 settled-write invariant (compose final <=200L in memory, ONE Write; NB-WRITE-ATOMIC), but system-auditor was NOT among the migrated consumers: docs/agents/system-auditor/flow/main.md notebook step (~L491) still instructs 'APPEND new section, PRUNE oldest' (two separate writes -> PostToolUse backstop hook observes the intermediate 222-244L over-cap state and emits a high-priority breach signal every time, self-resolving <=200L within ~60s), and .claude/skills/notebook-write/SKILL.md APPEND-class consumer table (~L83) omits system-auditor. FIX (agent-md-factory governed): (1) rewrite flow ~L491 to the AC-3 wording — compose final <=200L body in memory (retention prune + new section) then ONE settled Write; fold the BCTC-EVAL-SNAPSHOT block overwrite (~L245, Tier-3 runs) into the same single settled write when both land in one cycle so the hook fires once seeing <=200L; (2) add system-auditor to the skill's APPEND-class consumer row. ALTERNATIVE REJECTED: debouncing the backstop hook (re-check after 90s) — skill/flow-side single-write is cleaner+cheaper and keeps the hook honest as a hard backstop. DoD: one full tier-2 AND one tier-3 auditor cycle produce ZERO context_bloat_breach signals for system-auditor.md; final file <=200L; no hand-prune needed.",
+            "baseline_pass": "zero context_bloat_breach signal files referencing docs/agent-memory/notebooks/system-auditor.md over the next 3 auditor self-cron fires; wc -l system-auditor.md <=200 after each"
           }
         ]
       },

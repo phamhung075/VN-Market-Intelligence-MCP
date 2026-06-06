@@ -1,18 +1,21 @@
 # PO Notebook
 
-## c · 2026-06-05T21:06Z — KICKOFF sprint ORCH-DASH-DECISION-DRILLDOWN (user feature request)
+## c · 2026-06-06T00:29Z — dev-team triage tick 20260606T002104Z (6 signals drained)
 
-**Trigger.** Operator request (2 msgs): make DONE tasks on http://localhost:3001/dashboard/orchestration clickable → dropdown showing that task's Decision Journal detail. Router pre-scouted format/zones/design.
+**Dispositions.**
+1. infra-anomaly HIGH (cowork-team git-anomalies): GIT-MUTEX-BYPASS-AUDITOR (1b3aa5b5 swept 4 cowork-staged files w/o mutex; recurred a8fe3999 00:23Z) + GIT-IGNORES-FALSE-WARN occ#3 = ONE shared root (concurrent git on shared index). Root verified: system-auditor flow ~L504-509 renders commit-mutex protocol as bash COMMENT — narrated-not-executed; bare `git commit` sweeps index. → task **AUDITOR-COMMIT-MUTEX-ENFORCE** (FLEET-HOST-SAFETY, FIX/S/high, owner agent-father) — executed task_claim/release steps + `git add -u <own_paths>` + cached foreign-path verify in flow. TTL=60s per skill SSOT (signal's 300-600s overridden by C-1..C-4 ratification).
+2. Notebook 222-244L transient hook noise (4 fires/75min): root verified = system-auditor NOT among the 5 consumers NB-FLOW-SETTLED-WRITE migrated; flow ~L491 still says "APPEND, PRUNE oldest"; skill APPEND-table omits system-auditor. → task **NB-AUDITOR-SETTLED-WRITE** (NB-PRUNE-FIX, FIX/S/medium, owner agent-father, depends NB-FLOW-SETTLED-WRITE). Hook-debounce alternative rejected.
+3. cowork-fire telemetry: offhours suppression matches adaptive-cadence policy — no drift, skipped.
+4. bctc FPT Q1-2026 routine (ey 2.25 FAIR): informational, skipped.
 
-**Sprint goal written.** ORCH-DASH-DECISION-DRILLDOWN, lead=architect, status=active. Three legs: F1 join-key design, F2 server-side parse of sprint-*.md → structured JSON on GET /api/orchestration, F3 Remix accordion UI on DONE rows. First task BA-ORCH-DASH-DECISION-DRILLDOWN (SPRINT-S, zone:multi) appended to backlog (23→26 incl. 2 prior FUs). Sprint umbrella lock claimed (task:ORCH-DASH-DECISION-DRILLDOWN, claimed:true).
+**Telegram 3049 (bctc-analyst CTG c026)** claimed+processed resolution=monitoring: FIX-CTG-PDF-MISLINK live-verified, refine-bctc-slot-1 armed cron `0 9 * * *` last_fired=never — first fire TODAY 09:00Z is the proof point; analyst's "fix not landed" measured served data pre-proof-point. No new task.
 
-**CENTRAL DESIGN DECISION handed to architect (confirm, not PO-decide).** Journal STEP blocks are tagged `<agent-id>-S<N>` — NO task-id today, so no join key from a decision to a task_board task. Options: (a) add optional task-id to STEP format + re-inject at journal-write step in dev/qa/architect/cowork flows (precise, forward-only, needs agent-father) vs (b) sprint-group-only (coarse, works with existing data). Forwarded router rec = BOTH (optional task-id for forward precision + sprint fallback bucket for legacy back-compat).
+**TNB c88**: already ACK'd 2026-06-05T20:26Z — no new handoff, no re-ACK.
 
-**Scope fenced tight (one feature).** scope_out: UI editing, non-DONE expansion, journal backfill, new storage backend, auth. Anti-patterns flagged in goal: no raw-markdown-to-browser (parse server-side — data-serve-integrity lesson: verify WHICH layer serves /api/orchestration before dispatch, likely apps/mcp-server not the not-deployed Go plane); no DONE-off-a-green-badge; new task-id field delivers ZERO live join until agents re-flow it (derived-needs-reflow lesson) → fallback bucket is mandatory back-compat.
+**Orch-state write**: jq -f file + --slurpfile (no payload interpolation), `[ -s tmp ]` + 3-key sentinel, atomic mv. FLEET-HOST-SAFETY 16→17 tasks, NB-PRUNE-FIX 9→10.
 
-**Orch-state write.** read-full → jq → `[ -s tmp ]` + 3-key sentinel (new sprint_id AND exactly-one BA task AND head still==FIX-MW-OFFHOURS-DISPATCH) → atomic mv. Did NOT touch .head — dev-team's in-flight FIX-MW pointer left intact. Rationale in journal sprint-ORCH-DASH-DECISION-DRILLDOWN.md (po-S1/po-S2).
-
-**Carry-over (next tick / on BA return):**
-- Review BA spec when it returns (→ po/review-ba-spec.md). Verify it names the LIVE serving layer for /api/orchestration and pins the BOTH join-key decision (or architect's confirmed alternative).
-- At QA signoff: raw-verify the LIVE dashboard myself (click a DONE task, confirm dropdown renders STEP fields, confirm empty state on a no-entry task, confirm loader payload is JSON not markdown) — not a green badge. Confirm touched container rebuilt.
-- Prior tick still open: FIX-MW-OFFHOURS-DISPATCH (dev-team, head); CTG refine pickup (FU-CTG-REFINE-PICKUP); bctc-analyst CTG proof point.
+**Carry-over (next tick):**
+- Verify refine-bctc-slot-1 FIRED ~09:00Z and get_bctc_full(CTG) serves (raw-verify, not badge). If still withheld ~09:30Z → escalate (PUB-3 forced-zero balance is the next suspected gate).
+- Watch next auditor self-cron commit: `git show --stat` own-paths-only + mutex round-trip (baseline for AUDITOR-COMMIT-MUTEX-ENFORCE).
+- Watch system-auditor.md breach signals → 0 after NB-AUDITOR-SETTLED-WRITE ships.
+- Prior: ORCH-DASH-DECISION-DRILLDOWN BA spec review pending; FIX-MW-OFFHOURS-DISPATCH head.
