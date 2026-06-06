@@ -197,3 +197,27 @@ Enable CacheAligner on the highest-frequency tools (get_market_snapshot, get_cyc
 | Wire point in mcp-server tool response handler | EDIT (dev-mcp-server identifies exact file) | Wrap after vn-market tool response, before returning to calling agent |
 
 **dev-mcp-server must identify the exact file handling tool response serialization in `apps/mcp-server/src/` before implementation — do not guess the path.**
+
+---
+
+## PO Critique
+
+**Critiqued by:** po · 2026-06-06T21:30Z · signal `headroom-context-compression-20260606T184634Z` · Created by: agents-architect (non-pilot → routing-by-outcome)
+
+**(1) What could break:** Every cowork agent consuming the 3 pilot tools through the gateway — cowork dispatcher (`get_cycle_bootstrap`, 15-min cadence), market-watcher + alert-commander (`get_market_snapshot`), news-scout/unified-agent (`fetch_news_batch`). Critical flaw in the allowed-list: `get_market_snapshot` carries NUMERIC ticker quotes (price, change %, volume) that feed alert-commander stop-loss logic — it belongs on the exemption list by the brief's own criterion ("numeric financial data where lossy transformation would break downstream computation"). The "repeated field structure = high SmartCrusher leverage" framing optimizes for compression ratio over data class. Misclassification here corrupts live alerting, the highest-stakes consumer in the fleet.
+
+**(2) False-green / silent-swallow risk:** YES, two. (a) Fail-open passthrough-on-exception logs to WORK channel only — a chronically erroring compressor degrades to silent no-op while the pilot reports "enabled, no errors"; needs an error-count metric in the gate file, not just channel noise. (b) The 48h "zero financial data errors" gate is observational absence-of-evidence: nothing in the plan would DETECT a subtly mutated numeric field in a compressed payload (exempted tools are bit-exact by construction; allowed tools are exactly where mutation can hide).
+
+**(3) Is the success signal gameable:** YES. `docs/data/headroom-pilot-metrics.json` is authored by the same dev-mcp-server implementing the compressor; "narrative similarity > 0.90" is self-graded with no specified measure; "token reduction ≥ 30%" is trivially achievable by crushing harder — the two gate axes trade off against each other with only one independently checked. Per fence-false-green lesson, the validator must be PROVEN-RED: QA injects a deliberate numeric mutation into a compressed payload and the golden-output gate MUST fail; a validator that never fired red proves nothing.
+
+**(4) Host-load impact:** Acceptable. SmartCrusher/CacheAligner non-ML, no model weights, claimed <50MB inside the existing mcp-server process; no new containers; deploy = `--no-deps mcp-server` rebuild only (complies with no-mass-start, 8GB Docker cap, host-memory-panic constraints). Residual: "pure-Python/TS" is vague — if `headroom-ai` drags a Python runtime into the Bun image, footprint and image size claims are unverified; dev must confirm the dependency shape before install.
+
+**(5) Lane-C-in-disguise check (C-3):** NO on gate-logic (compressor doesn't edit any audit/gate code), NO on loop-own-success-criteria, NO on irreversible action (env-flag rollback, default-off), NO on user-facing comprehensibility (MARKET prose is agent-authored downstream). BUT it sits UPSTREAM of every consumer's inputs including detector agents — borderline, handled via conditions not reclassification. Stays LANE-B.
+
+**VERDICT: APPROVED-LANE-B — DEFERRED (P3).** Rationale: sound integration point (response-side middleware, fail-open, flag-gated, exemption list, phased) and real token pressure (~800k+/day at dispatcher cadence). Deferred because P3-LOW vs current capacity: WORKFLOW-FLUIDITY active (WF-2/WF-3 open) + new user-reported HIGH frontend sprint this tick. Backlog row `HEADROOM-COMPRESS-P1` filed; pick up after WORKFLOW-FLUIDITY signoff.
+
+**Binding conditions (BA must encode as AC):**
+1. Move `get_market_snapshot` from allowed → exemption list for Phase 1. Pilot = `get_cycle_bootstrap` + `fetch_news_batch` only (substitute `get_sector_rotation` if a 3rd is wanted).
+2. Golden-output validator PROVEN-RED by QA (injected numeric mutation must fail the gate) before `HEADROOM_ENABLED=true`.
+3. Gate file must include compression error/passthrough-exception counts; >0 unexplained errors in 48h window = Phase 2 gate fails.
+4. Defined similarity measure for the 0.90 narrative threshold (named algorithm, not judgment call).

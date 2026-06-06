@@ -24,3 +24,11 @@
 **Done this cycle:** filed FIX-ORCH-DONE-GRID-COLS (S, zone apps/frontend/, owner dev-frontend, status TODO) into backlog via jq -f + sentinel-guarded atomic mv (backlog 31→32). Note mandates structural fix (shared non-content-dependent track const for header+rows, break-words / move long notes to accordion sub-row) — NOT a cosmetic wrap patch. AC = live verify on localhost:3001/dashboard/orchestration after frontend container REBUILD. Journal STEP po-S2.
 
 **Carry-over:** when fix lands → live-verify row AF-ORCH-F1A-F4 myself (raw, not badge); confirm rebuild not restart. Backlog hygiene flag: 3 backlog entries have null task_id (WF rows use different key?) — check next triage.
+
+## d · 2026-06-06T21:33Z — DEV-TEAM TRIAGE tick 211736Z: 6 signals + user fetch-ops HIGH
+
+**Signals:** FPT routine skip · context-bloat ×2 RESOLVED-BEFORE-TRIAGE (dev-vps-crawls 189L, system-auditor 161L — raw wc -l, no task) · cowork telemetry skip · headroom proposal APPROVED-LANE-B DEFERRED-P3 (critique in brief, backlog HEADROOM-COMPRESS-P1, key condition: get_market_snapshot → exemption list) · workflow-fluidity brief DUPLICATE (sprint already board-live) skip.
+
+**User report /dashboard/fetch:** layer-verified. News pipeline FRESH (cafef today 17:39Z); page defect = queries only reuters/bloomberg which corpus lacks; "Bloomberg (1)" 18/5 = LIKE '%bloomberg%' URL-slug false positive (vietnambiz) from rag_analyses via newsHeadlinesHandler + gateway not-deployed-rerouter. Macro 0.0s/— = macro-indicators emits totalLatencyMs:0, no per-source latencyMs. → BATCH SPRINT-S FETCH-OPS-PAGE-TRUTH zone:multi.
+
+**Carry-over:** (a) when FETCH-OPS ships → live-verify localhost:3001/dashboard/fetch myself post-REBUILD (frontend + macro-indicators containers); (b) HEADROOM-COMPRESS-P1 pickup after WORKFLOW-FLUIDITY signoff; (c) gateway path duality noted: /mcp/* via gateway proxy STRIPS prefix → 404, only rerouter path reaches /mcp/api/news/headlines — hand to architect inside FETCH-OPS scope; (d) still open: WF BA spec review, playwright-row ~23:37Z proof, FIX-SLA-WEEKEND-AWARE Sunday proof, MEMORY.md >24.4KB.
