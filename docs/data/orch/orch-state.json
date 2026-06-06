@@ -3575,6 +3575,17 @@
     "_updated_by": "system-auditor",
     "rows": [
       {
+        "id": "rtr-confab2-202606060515",
+        "ts": "2026-06-06T05:11Z",
+        "from": "router-verify",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "auditor invented-config-value confab occ#2 (c019 occ#1; c026 cited 'system-map lists 4001' for mcp-gateway port — system-map.json has NO port field for mcp-gateway, 4001 nowhere in docs/data/, live port 4040 self-consistent, no mismatch exists). Class: cites a config value absent from the cited file despite RAW ECHO grep -n brief rule. PO triage: durable fix = flow-level enforcement in system-auditor flow (any cited file value MUST be accompanied by grep -n output or the claim is dropped), prompt-brief alone proven insufficient at occ#2.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
         "id": "sau-d4-202606060300",
         "ts": "2026-06-06T03:00Z",
         "from": "system-auditor",
