@@ -55,7 +55,7 @@ If the architect handoff explicitly names another agent's notebook, read that on
 
 **3. Update `docs/data/orch/orch-state.json` `.task_board`** (atomic write per §2.3: read full → modify `.task_board` section only → write atomically)
 - Deps Done → status: **TODO** | Deps In Progress → type: **backlog**
-- Task JSON shape per orch-state.json schema: `{task_id, title, type, owner, depends, status, size}`
+- Task JSON shape — canonical per `docs/standards/task-schema.md`: `{id, title, owner, status, zone, created_at}` + optional `{type, size, priority, depends, note, files, status_note}`. NEVER use banned fields: `task_id` (write), `desc`, `label`, `summary`, `resolvedId`, `resolved_id`.
 
 **3b. Create handoff file** `docs/handoffs/TASK_NNN.md` — AC listed here will also be written as the `AC:` trailer in the developer's commit (`docs/policies/commit-convention.md`), making git the second copy:
 ```markdown

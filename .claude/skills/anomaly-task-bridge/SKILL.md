@@ -83,6 +83,8 @@ Append to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` per skill § W
 }
 ```
 
+**ATB-4b — backlog[] task shape:** When PO receives the `repair_task_request` signal and creates a `.task_board.backlog[]` entry, it MUST use canonical shape per `docs/standards/task-schema.md`: `{id, title, owner, status: "TODO", zone, created_at}`. The `summary` field is BANNED. See PO triage-signals.md § repair_task_request for the exact template.
+
 **ATB-5 — Mark source rows READ:** For each row from ATB-1 (emitted or skipped), mark `status: "NEW"` → `"READ"` per signal-dashboard SKILL § ACK (atomic write).
 
 **ATB-6 — Commit (mutex-guarded):**

@@ -2,31 +2,35 @@
 name: decision-journal
 description: >
   Sprint footprint writer. Appends STEP block (decision rationale) to
-  docs/agent-memory/decisions/sprint-<id>.md. MANDATORY: one entry per task
-  before REVIEW/DONE, stamped task-id. NEVER narrate reasoning on terminal.
+  docs/agent-memory/decisions/sprint-<id>-<agent-id>.md. MANDATORY: one entry per
+  task before REVIEW/DONE, stamped task-id. NEVER narrate reasoning on terminal.
+required_inputs:
+  - AGENT_ID   # caller must set from agent.id field in agent's init.md
 ---
 
 ## DECISION JOURNAL RULE
 
 Journal = WHY (decision trail). Notebook = WHAT LEARNED. Handoff = WHAT TO DO.
-**MANDATORY:** Reasoning goes to `docs/agent-memory/decisions/sprint-<sprint-id>.md`, NOT terminal. Terminal = STATUS-ONLY (RETURN block + caveman lines).
+**MANDATORY:** Reasoning goes to `docs/agent-memory/decisions/sprint-<sprint-id>-<agent-id>.md`, NOT terminal. Terminal = STATUS-ONLY (RETURN block + caveman lines).
 
 ## § Resolve Sprint ID
 
 ```bash
-SPRINT_ID=$(jq -r '.sprint_goal.entries[0].id // empty' \
-  docs/data/orch/orch-state.json 2>/dev/null)
+# AGENT_ID must be set by the caller from agent.id in init.md (e.g. "agent-father", "po", "dev-mcp-server")
+SPRINT_ID=$(jq -r '.sprint_goal.entries[] | select(.status == "active") | .sprint_id' \
+  docs/data/orch/orch-state.json 2>/dev/null | tail -1)
 [ -z "$SPRINT_ID" ] && SPRINT_ID=$(date -u +"%Y-%m-%d")
-JOURNAL_PATH="docs/agent-memory/decisions/sprint-${SPRINT_ID}.md"
+JOURNAL_PATH="docs/agent-memory/decisions/sprint-${SPRINT_ID}-${AGENT_ID}.md"
 ```
 
 ## § Init File
 
 Write header once (if missing):
 ```markdown
-# Decision Journal — Sprint <sprint-id>
+# Decision Journal — Sprint <sprint-id> · <agent-id>
 
 **Sprint goal:** <description from orch-state or "no goal set">
+**Agent:** <agent-id>
 **Started:** <ISO-timestamp>
 
 ---
@@ -55,16 +59,19 @@ Write header once (if missing):
 
 ```bash
 LINES=$(wc -l < "$JOURNAL_PATH" | tr -d ' ')
-[ "$LINES" -gt 600 ] && echo "### CAP-REACHED · $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$JOURNAL_PATH"
+if [ "$LINES" -gt 600 ]; then
+  echo "### CAP-REACHED · $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$JOURNAL_PATH"
+  send_telegram(channel="bug", message="[decision-journal] sprint-${SPRINT_ID}-${AGENT_ID} CAP-REACHED — mandatory entries silently dropped; archive sprint journal")
+  # Roll to continuation file — new writes go here until this session ends
+  JOURNAL_PATH="docs/agent-memory/decisions/sprint-${SPRINT_ID}-${AGENT_ID}-2.md"
+fi
 ```
-
-Append sentinel, stop. Ops concern only.
 
 ## § Commit Rule
 
 Entries accumulate. Commit once per cycle:
 ```bash
-git add docs/agent-memory/decisions/sprint-<id>.md \
+git add docs/agent-memory/decisions/sprint-<id>-<agent-id>.md \
         docs/agent-memory/notebooks/<agent-id>.md
 git commit -m "chore(memory/<agent-id>): notebook + journal YYYY-MM-DD"
 ```

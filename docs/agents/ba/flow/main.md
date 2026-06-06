@@ -60,8 +60,18 @@ feature priority | VN term translation | data source availability | historical v
 **5.** Create Architect task in `docs/data/orch/orch-state.json` `.task_board.backlog[]` → pointer to spec.
 
 ## Output to `docs/data/orch/orch-state.json .task_board`
+
+Canonical shape per `docs/standards/task-schema.md`:
 ```json
-{"id": "BA-NNN", "summary": "Requirement: [Feature Name] — context: [brief memo with FR list, blockers, edge cases, DDD layers]", "priority": "high"}
+{
+  "id": "BA-NNN",
+  "title": "Requirement: [Feature Name] — [brief memo with FR list, blockers, edge cases, DDD layers]",
+  "owner": "ba",
+  "status": "TODO",
+  "zone": "docs/agents/",
+  "created_at": "<ISO-8601 UTC now>",
+  "priority": "high"
+}
 ```
 **Decision journal** (mandatory — before marking task DONE):
 → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active BA task_id, e.g. BA-NNN>"]

@@ -25,7 +25,17 @@
 }
 ```
 
-**4.** Create BA task entry in `docs/data/orch/orch-state.json` `.task_board.backlog[]`: `{id: "BA-NNN", summary: "Requirement Spec for Vision NNN", priority: "high"}`
+**4.** Create BA task entry in `docs/data/orch/orch-state.json` `.task_board.backlog[]` — canonical shape per `docs/standards/task-schema.md`:
+```json
+{
+  "id": "BA-NNN",
+  "title": "Requirement Spec for Vision NNN",
+  "owner": "ba",
+  "status": "TODO",
+  "zone": "docs/agents/",
+  "created_at": "<ISO-8601 UTC now>"
+}
+```
 
 **4b.** Claim sprint umbrella lock → load skill: `.claude/skills/task-lock/SKILL.md`
 ```
