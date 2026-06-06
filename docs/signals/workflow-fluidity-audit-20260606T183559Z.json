@@ -1,9 +1,0 @@
-{
-  "from": "agents-architect",
-  "to": "agent-father",
-  "type": "architecture_brief",
-  "payload": "docs/architecture-briefs/2026-06-06-workflow-fluidity-audit.md",
-  "priority": "high",
-  "createdAt": "2026-06-06T18:35:59Z",
-  "summary": "Workflow fluidity audit: 3 DEADLOCK-RISK + 3 CONFLICT + 4 BOTTLENECK. Top fixes: (1) fail-loud STOP missing task_release+head-reset — up to 24h pipeline livelock; (2) decision journal shared-file breaks under Phase 4 parallel spawns; (3) concurrent orch-state signal_queue writes lose rows under simultaneous cowork+auditor."
-}

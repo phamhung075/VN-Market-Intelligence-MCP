@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-06-06T18:03:30Z",
-    "matched_slots": ["bctc-analyst-slot-2"],
-    "won_slots": ["bctc-analyst-slot-2"],
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/bctc-analyst/flow/main.md"],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 2,
     "errors": [],
@@ -17,10 +23,16 @@
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
-    "due_reasons": {"bctc-analyst-slot-2": "cadence"},
-    "cadence_minutes": {"bctc-analyst-slot-2": 240},
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": 240
+    },
     "last_fired_timestamp": "2026-06-06T18:03:30Z",
-    "last_fired_slots": ["bctc-analyst-slot-2"],
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -30,5 +42,11 @@
     "tick_snapshot": "skipped-not-applicable"
   },
   "priority": "low",
-  "createdAt": "2026-06-06T18:03:30Z"
+  "createdAt": "2026-06-06T18:03:30Z",
+  "_drain": {
+    "fingerprint": "f5dd01d8323cfd12582043e22a7506e5beed144c6cf5229a01ebb5ecd4143dc7",
+    "processedAt": "20260606T211946Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

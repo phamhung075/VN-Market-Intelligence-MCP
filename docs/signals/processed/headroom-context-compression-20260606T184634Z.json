@@ -7,5 +7,11 @@
   "summary": "Headroom SmartCrusher integration in mcp-server tool response layer — 30-95% token reduction on 3 high-volume tools, Phase 1 pilot, P3",
   "severity": "LOW",
   "status": "NEW",
-  "payload_ref": "docs/architecture-briefs/2026-06-06-headroom-context-compression.md"
+  "payload_ref": "docs/architecture-briefs/2026-06-06-headroom-context-compression.md",
+  "_drain": {
+    "fingerprint": "e337875d80c752cced5e4c145a3b9721f5364ed15379799029547344918f1621",
+    "processedAt": "20260606T211946Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

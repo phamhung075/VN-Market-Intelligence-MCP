@@ -3,18 +3,18 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-06-01T00:38:04Z",
+  "createdAt": "2026-06-06T17:36:04Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/system-auditor.md",
-    "line_count": 222,
+    "file": "docs/agent-memory/notebooks/dev-vps-crawls.md",
+    "line_count": 201,
     "cap": 200,
     "class": "agent-notebook",
-    "overage": 22,
+    "overage": 1,
     "action_required": "prune_or_split"
   },
   "_drain": {
-    "fingerprint": "845513af1508483631cad02a30ce282e545cbec9aeda032594554497db06a9fe",
-    "processedAt": "2026-06-01T01:16:18.539Z",
+    "fingerprint": "1b5a72395ea88c9bdc6419155abe9f264608239c8f94ae8201f9dd32eb04e2eb",
+    "processedAt": "20260606T211946Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

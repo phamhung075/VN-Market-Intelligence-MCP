@@ -3,18 +3,18 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-06-01T00:10:25Z",
+  "createdAt": "2026-06-06T18:09:31Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/bctc-analyst.md",
-    "line_count": 218,
+    "file": "docs/agent-memory/notebooks/system-auditor.md",
+    "line_count": 205,
     "cap": 200,
     "class": "agent-notebook",
-    "overage": 18,
+    "overage": 5,
     "action_required": "prune_or_split"
   },
   "_drain": {
-    "fingerprint": "1830bf4d07de6c7320c4236b0d573056466da2883df8cb52838a22f0c0638c49",
-    "processedAt": "2026-06-01T00:16:43.380Z",
+    "fingerprint": "5fa7fdc645a54e4f3616db27e735e441501377ab92204b304c994103412e93e8",
+    "processedAt": "20260606T211946Z",
     "processedBy": "dev-team",
     "result": "routed-to-po"
   }

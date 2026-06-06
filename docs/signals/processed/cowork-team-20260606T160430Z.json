@@ -4,11 +4,20 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-06-06T16:04:30Z",
-    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
-    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/news-scout/flow/main.md", "docs/agents/market-watcher/flow/main.md"],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 2,
     "errors": [],
@@ -17,10 +26,19 @@
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
-    "due_reasons": {"news-scout-offhours": "cadence", "market-watcher-offhours": "cadence"},
-    "cadence_minutes": {"news-scout-offhours": 240, "market-watcher-offhours": 240},
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
     "last_fired_timestamp": "2026-06-06T16:04:30Z",
-    "last_fired_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +51,9 @@
     "validation": "FU-SNAP-CRON-BOUNDARY"
   },
   "priority": "low",
-  "createdAt": "2026-06-06T16:04:30Z"
+  "createdAt": "2026-06-06T16:04:30Z",
+  "fingerprint": "645a636f1ad1a6e8a6ff79d1a20f2d2aa6d6f27b7dcd18e91f55ff0a7720dd07",
+  "processedAt": "20260606T162147Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
 }
