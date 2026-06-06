@@ -1,5 +1,29 @@
 # PO Notebook
 
+## c · 2026-06-06T17:20Z — dev-team triage tick 172047Z (1 HIGH signal → BATCH 1 FIX, WIP=1)
+
+**Disposition: ONE FIX → dev-vps-crawls. This is the planned implementation leg of last tick's SPIKE — the SPIKE DoD (recon doc capturing the live request recipe) is now SATISFIED, so the FIX is greenlit.**
+
+1. **dev-vps-crawls recon-complete** (HIGH, ops-vps-fetch→dev-vps-crawls) → **FIX** `FIX-VPS-SSC-CURL-SCRAPER`, zone `dev-vps-crawls` (maps to `cross-service/` — VPS host script, not a deployed apps/ service). Root chain raw-verified end-to-end this tick:
+   - **Recon DoD met:** `docs/vps-sources/ssc-bctc-newsearch/recon.md` (387L) has full Implementation Notes (L253-362): complete 4-step Python skeleton `discover_from_ssc_curl()` + 8 key impl details (DOM row offset=15, row-matching via existing `matches_quarter_and_year()`, ViewState reuse, 10h session, exchange map HOSE=1/HNX=0/UPCOM=2, Content-Disposition filename). verdict VIABLE-CURL, anti_bot=none, **proven_on_vps=true** (GAS Q1/2026 15.4MB + HPG annual 6.2MB, both %PDF-1.7 valid, NO Chromium).
+   - **Target raw-confirmed:** `vps-scripts/discover-bctc-urls-browser.py` (872L). Replace `_ssc_newsearch_playwright()` (L576, async/playwright). Helpers recon reuses ALREADY EXIST: `matches_quarter_and_year` (L238), `is_cover_letter_title` (L171). Call sites to rewire: `discover_from_hose_ssc` (L758), `discover_from_ssc` (L779), `discover_bctc_pdf` (L794 step-3). New fn = sync stateful-HTTP `discover_from_ssc_curl()` per recon skeleton; DELETE the playwright path (kills forbidden Chromium dep — policy `no_chromium:true`).
+   - **Policy-mandated, not just root-fix:** `dev-vps-crawls` init.md forbids Chromium/Playwright (VPS RAM). The SSC path's pthread_create EAGAIN crash (in-flight row rtr-bctc-playwright-thread READ) IS the symptom of that violation. This FIX removes the dep = definitif.
+   - baseline_pass=false (the playwright path is currently the only HOSE-SSC discovery and it crashes every 6h cycle — i.e. broken-RED baseline; the FIX makes it green). files: `vps-scripts/discover-bctc-urls-browser.py` (+ recon.md read-only).
+
+**Closes in-flight row** rtr-bctc-playwright-thread-202606061545 (READ) only when a LIVE chromium-free SSC discovery cycle succeeds — Saturday's 6h cycle gives a real proof window today (off-market, free capacity).
+
+**Channel audit (read_telegram_reports new + list_unresolved): 2 NEW reports, 0 NEW tasks.**
+- **3054** (14:38Z, auditor c045 4 VPS CRITICALs) — SAME report I root-caused last tick. 3/4 false (prices+foreign_flow weekend-gate, sbv 37m blip), 1 real = bctc 21.3h (THIS playwright crash — now being FIXED above). FIX-SLA-WEEKEND-AWARE (shipped 9e74cf0a last tick, live-proven Sat) removes the 2 false-CRITICAL class going forward; auditor c045 fired 14:37Z, possibly pre-deploy. NO new task — covered. Watch next auditor pass goes green on prices/foreign_flow.
+- **3055** (16:47Z, BCTC-1345b CTG 2026-Q1 composite=0.00 financial=0.00 conviction skipped, "VNM/VEA OCR-corruption pattern assets<equity") — this is the **BCTC-ANALYTICS-LAYER / OCR-confidence class**, NOT a dev-vps-crawls concern and NOT this tick's lane. Confidence=0 → skip-insert is the DESIGNED low-confidence guard ([[reference_low_confidence_handling]]), behaving correctly (it suppressed a bad signal). Whether CTG Q1 is genuinely OCR-corrupt is a separate refine/extraction investigation. NOT promoting to a FIX this tick (keep batch ≤2, stay in-lane); NOTING for next triage — if CTG-Q1 OCR corruption recurs/persists it earns a BCTC-OCR task. Do NOT conflate with the VPS scraper.
+
+**No orch-state mutation** (FIX routed inline via BATCH; router applies + commits notebook at tick close).
+
+**Carry-over (next tick):**
+- FIX-VPS-SSC-CURL-SCRAPER: on return verify (a) playwright import/async path DELETED from discover-bctc-urls-browser.py (raw-grep `playwright` == 0), (b) new sync `discover_from_ssc_curl()` present + wired into all 3 call sites, (c) LIVE proof — the Saturday 6h VPS bctc cycle ran a SSC discovery chromium-free and queue drained (10-item Q1/2026 backlog ACV/BDI/D2D/DAG/DLC/GVR/HCM/HPG/HSG/HVN). ONLY then close row rtr-bctc-playwright-thread. Verify via raw bctc freshness / new cache PDFs on VPS, NOT a green badge.
+- Report 3054: confirm next auditor Tier-2 pass does NOT re-emit prices/foreign_flow weekend CRITICAL (FIX-SLA-WEEKEND-AWARE live-proof, carried from last tick).
+- Report 3055 (CTG-Q1 OCR confidence=0): if recurs next triage → candidate BCTC-OCR FIX; cross-check against VNM/VEA prior corruption pattern. Not actioned this tick.
+- Prior still open: WATCH-2 refine slot-2 refire ~18:04Z (router-held verification); FIX-SLA-WEEKEND-AWARE Sun proof; FIX-REFINE-IDEM-LOCK-ISO 4-cases-GREEN; ORCH-DASH-DECISION-DRILLDOWN BA spec review.
+
 ## c · 2026-06-06T16:25Z — dev-team triage tick 162040Z (3 signals → BATCH 2, WIP=2)
 
 **Disposition: SPIKE (VPS recon) + FIX (mcp-server SLA), 1 informational skip.** Weekend = free dev capacity; both fit WIP=2.
@@ -33,22 +57,3 @@ Dedup: neither router signal had an actionable backlog entry — they were only 
 **Disposition: ARCHITECT (flow rethink, sign Option C semantics + chunk size + resume contract) → AGENT-FATHER (rewrite flow/main.md + init.md + .claude/agents def). WIP=2.** Next fire refine-bctc-slot-1 tomorrow 09:00Z = first live proof. Do NOT edit agent .md myself; do NOT edit orch-state (router applies).
 
 **Carry-over:** verify tomorrow 09:00Z fire pushes bctc_refined_units rows on a real report (raw get_bctc_refined, NOT badge) — backlog drains. DGC Q4-2025 0c6f0535 (34 windows verified) = canary subject. FIX-REFINE-IDEM-LOCK-ISO (test-only) is SEPARATE & still valid.
-
-## c · 2026-06-06T12:37Z — dev-team triage tick 123211Z (1 NEW signal)
-
-**Disposition: ONE FIX → dev-mcp-server.**
-
-1. **rtr-refine-idem-test-lock-isolation** (MEDIUM, router) → FIX `FIX-REFINE-IDEM-LOCK-ISO`, zone `apps/mcp-server/`. Root raw-verified: `refineOneReport` injects `deps.db` for report data but `claimTask`/`releaseTask` (coordinationStore.ts) bind module-level `_coordDb` singleton, NOT the per-test in-mem db. Test `beforeEach` never calls existing seam `_injectCoordinationDb(db)` (coordinationStore L700) nor resets `_coordDb` → `refine-orchestrator` lock survives across the 4 scenarios (A/B/C re-run same reportId-taskId) → "skip — task already claimed". Fix = inject+reset coordination DB per test (minimal, seam already exists); optional harden = give refineOneReport a coord-store dep. baseline_pass=false (4 cases RED, pre-existing). Separate from DV-push-4 36998888 (GREEN).
-
-**Channel audit: WORK/BUG/MARKET (shared bus, 2 reports, 0 NEW tasks).**
-- 3052 (09:05Z) get_bctc_pending_refine missing text_status/confirm_status/windows[] = DEPLOY-GAP not defect: source HAS all 3 (commit 172999f0, RESOLVED+DEPLOYED per context); 09:05Z predates tick; in-flight ops rebuild (d4d2e453) closes stale container. No task. Do NOT re-open 172999f0.
-- 3053 (11:17Z) outage RESTORED — router-handled (e1de9e1b), footgun FORBIDDEN bd41a6b3 + auditor-confab follow-ups already queued. Skip.
-
-**No orch-state mutation** (FIX routed inline via BATCH, not backlog-inserted).
-
-**Carry-over (next tick):**
-- After ops rebuild lands: confirm 3052 contract-mismatch GONE (raw-call get_bctc_pending_refine, expect text_status/confirm_status/windows[] present) — closes the deploy-gap proof.
-- WATCH-2: verify 13:00Z refine fire pushed bctc_refined_units (router-held).
-- FIX-REFINE-IDEM-LOCK-ISO: on return, confirm dev chose seam-reset (or coord-dep) AND all 4 cases GREEN — verify no lingering live coordination.db writes from the test run.
-- Auditor confab occ#4 (c038 reported destroyed containers healthy) — watch for repair_task_request promotion.
-- Prior: ORCH-DASH-DECISION-DRILLDOWN BA spec review still pending.
