@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH: market-watcher-offhours legit-suppressed (off_market 480min) — baseline verify at ~04:00Z fire (real RETURN + zero dup price_anomaly); refine-bctc-slot-1 first fire 09:00Z (CTG proof point, escalate if get_bctc_full(CTG) still withheld ~09:30Z); FU-CTG-REFINE-PICKUP verify after 09:00Z; operator owes cowork refresh /cron-cowork-team; next auditor self-cron commit must show mutex round-trip (AUDITOR-COMMIT-MUTEX-ENFORCE baseline) + zero auditor context_bloat_breach over next 3 fires (NB-AUDITOR-SETTLED-WRITE baseline)",
+    "next_action": "WATCH: MW-offhours fire ~04:00Z baseline (real RETURN + zero dup price_anomaly; last_fired 2026-06-05T20:05:47Z); refine-bctc-slot-1 first fire 09:00Z CTG proof (escalate if get_bctc_full(CTG) withheld ~09:30Z); auditor c016+c017 commits proved mutex protocol + c017 proved NB ordering fix; c017 deviations occ#1 each (tier-drift T1->T3, false 0-commits-24h early-exit) -> route to PO if either recurs; dev-* notebook class not on settled-write (dev-mcp-server 06-03 breach occ#1) watch-only; operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T00:39:40+00:00",
+    "updated_at": "2026-06-06T01:22:29+00:00",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T00:39:40+00:00",
+    "_updated_at": "2026-06-06T01:22:29+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -789,11 +789,12 @@
             "depends": [
               "NB-WRITE-ATOMIC"
             ],
-            "status": "DONE-PENDING-LIVE-VERIFY",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
             "zone": "cross-service/",
             "priority": "medium",
-            "note": " | DONE-PENDING-LIVE-VERIFY 2026-06-03T09:42Z (commit 04b20c87) agent-father: NB-WRITE-ATOMIC fixed the notebook-write SKILL, but the breach reappeared (unified-agent.md 219L) because the consumer FLOWS were orphaned on the old append-then-trim recipe (the SSOT-fix-doesnt-reach-derived-copy pattern). Migrated 5 consumers to compose-in-memory single-settled-write: chef.md Step 8 (8b compose <=200L in memory / 8c single Write / 8d AC-5 sanity-only / 8e mutex commit), news-scout/stage-log-notify.md Stage 4, bctc-analyst/stage-log-notify.md 5a-5c, agents-architect/handlers.md Brief-Commit Step 2, digest-predict/monday.md P-6. Router-verified: 0 forbidden append-then-trim phrases remain in chef.md Step 8; fb-market-poster (OVERWRITE class -> delegates to skill) + dispatcher-only flows correctly left unchanged. LIVE-VERIFY pending: next chef write must produce a <=200L notebook with ZERO context_bloat_breach signal; the current 219L unified-agent.md self-heals on that write (no 4th hand-prune)."
+            "note": " | DONE-PENDING-LIVE-VERIFY 2026-06-03T09:42Z (commit 04b20c87) agent-father: NB-WRITE-ATOMIC fixed the notebook-write SKILL, but the breach reappeared (unified-agent.md 219L) because the consumer FLOWS were orphaned on the old append-then-trim recipe (the SSOT-fix-doesnt-reach-derived-copy pattern). Migrated 5 consumers to compose-in-memory single-settled-write: chef.md Step 8 (8b compose <=200L in memory / 8c single Write / 8d AC-5 sanity-only / 8e mutex commit), news-scout/stage-log-notify.md Stage 4, bctc-analyst/stage-log-notify.md 5a-5c, agents-architect/handlers.md Brief-Commit Step 2, digest-predict/monday.md P-6. Router-verified: 0 forbidden append-then-trim phrases remain in chef.md Step 8; fb-market-poster (OVERWRITE class -> delegates to skill) + dispatcher-only flows correctly left unchanged. LIVE-VERIFY pending: next chef write must produce a <=200L notebook with ZERO context_bloat_breach signal; the current 219L unified-agent.md self-heals on that write (no 4th hand-prune). | LIVE-VERIFIED 2026-06-06T01:20Z dev-team: 2.5d post-migration, zero bloat breaches among 6 migrated consumers (sole news-scout 06-03T16:08 = in-flight pre-migration session, no recurrence over multi-daily fires); all migrated notebooks 39-74L. dev-mcp-server.md 06-03 breach = non-migrated dev-* class, single occurrence, watch-only",
+            "verified_at": "2026-06-06T01:22:29+00:00"
           },
           {
             "task_id": "FU-PDFX-HEALTHCHECK",
