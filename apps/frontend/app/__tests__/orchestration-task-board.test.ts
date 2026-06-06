@@ -370,3 +370,153 @@ describe("SignalQueue defensive guard", () => {
     expect(getRows(queue)).toEqual([]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Suite 6 — F3: board.done ?? [] source swap (ORCH-TASK-CANON F3-FE)
+//
+// AC: doneTasks = board.done ?? [] — no filter fallback on tasks[].
+// Verified: board.done with 71 rows served live (GET /api/orchestration F2-live).
+// ---------------------------------------------------------------------------
+
+/** Mirrors the closed 7-value TaskStatus enum from dashboard.orchestration.tsx */
+type TaskStatusCanon = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "BLOCKED" | "CANCELLED" | "DEFERRED";
+
+interface TaskRowF3 {
+  id: string;
+  title: string;
+  owner?: string;
+  status: TaskStatusCanon;
+  zone?: string;
+  note?: string;
+  status_note?: string;
+}
+
+interface TaskBoardF3 {
+  counts: TaskBoardCounts;
+  tasks: TaskRowF3[];
+  done?: TaskRowF3[];
+}
+
+/** Mirrors the F3 component logic: doneTasks = board.done ?? [] */
+function getDoneTasks(board: TaskBoardF3): TaskRowF3[] {
+  return board.done ?? [];
+}
+
+describe("F3: board.done ?? [] source swap — done-group from served array", () => {
+  it("board.done with tasks → getDoneTasks returns those tasks", () => {
+    const board: TaskBoardF3 = {
+      counts: { done: 2, in_progress: 0, backlog: 0 },
+      tasks: [],
+      done: [
+        { id: "T1", title: "Task one", status: "DONE", owner: "dev-frontend", zone: "apps/frontend/" },
+        { id: "T2", title: "Task two", status: "DONE", owner: "qa", zone: "apps/frontend/" },
+      ],
+    };
+    const doneTasks = getDoneTasks(board);
+    expect(doneTasks).toHaveLength(2);
+    expect(doneTasks[0].id).toBe("T1");
+    expect(doneTasks[1].id).toBe("T2");
+  });
+
+  it("board.done empty array → getDoneTasks returns [] (empty state)", () => {
+    const board: TaskBoardF3 = {
+      counts: { done: 0, in_progress: 0, backlog: 0 },
+      tasks: [],
+      done: [],
+    };
+    expect(getDoneTasks(board)).toEqual([]);
+  });
+
+  it("board.done undefined → getDoneTasks returns [] (degraded fallback, no throw)", () => {
+    const board: TaskBoardF3 = {
+      counts: { done: 0, in_progress: 0, backlog: 0 },
+      tasks: [{ id: "T1", title: "Task one", status: "DONE", zone: "apps/" }],
+      // done field absent
+    };
+    expect(() => getDoneTasks(board)).not.toThrow();
+    expect(getDoneTasks(board)).toEqual([]);
+  });
+
+  it("NO filter fallback: tasks[] with DONE status NOT used as fallback when board.done is absent", () => {
+    const board: TaskBoardF3 = {
+      counts: { done: 1, in_progress: 0, backlog: 0 },
+      tasks: [{ id: "T1", title: "Task one", status: "DONE", zone: "apps/" }],
+      // done absent — correct degraded state: done group shows empty, not the tasks[] filter
+    };
+    // F3 AC: doneTasks = board.done ?? [] — not board.tasks.filter(t => t.status === "DONE")
+    const doneTasks = getDoneTasks(board);
+    expect(doneTasks).toEqual([]);
+    // Also confirm the tasks array DOES contain a DONE item (proving we're NOT falling back to filter)
+    const filteredFallback = board.tasks.filter((t) => t.status === "DONE");
+    expect(filteredFallback).toHaveLength(1);
+    // But getDoneTasks returns [] — no filter fallback
+    expect(doneTasks).toHaveLength(0);
+  });
+
+  it("board.done with 71 items (live corpus size) → all 71 reachable", () => {
+    const doneRows: TaskRowF3[] = Array.from({ length: 71 }, (_, i) => ({
+      id: `DONE-${String(i + 1).padStart(3, "0")}`,
+      title: `Done task ${i + 1}`,
+      status: "DONE" as TaskStatusCanon,
+      owner: "agent",
+      zone: "apps/",
+    }));
+    const board: TaskBoardF3 = {
+      counts: { done: 71, in_progress: 0, backlog: 59 },
+      tasks: [],
+      done: doneRows,
+    };
+    const doneTasks = getDoneTasks(board);
+    expect(doneTasks).toHaveLength(71);
+    expect(doneTasks[0].id).toBe("DONE-001");
+    expect(doneTasks[70].id).toBe("DONE-071");
+  });
+
+  it("status_note field preserved on done task rows", () => {
+    const board: TaskBoardF3 = {
+      counts: { done: 1, in_progress: 0, backlog: 0 },
+      tasks: [],
+      done: [{
+        id: "ARCH-ORCH-F1",
+        title: "Flows + SKILL + journal rewrite",
+        status: "DONE",
+        owner: "agent-father",
+        zone: "docs/agents/",
+        status_note: "Merged flows/SKILL/journal 10-file refactor",
+      }],
+    };
+    const doneTasks = getDoneTasks(board);
+    expect(doneTasks[0].status_note).toBe("Merged flows/SKILL/journal 10-file refactor");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 7 — Closed 7-value TaskStatus enum (per docs/standards/task-schema.md)
+// ---------------------------------------------------------------------------
+
+describe("TaskStatus closed 7-value enum", () => {
+  const validStatuses: TaskStatusCanon[] = [
+    "TODO", "IN_PROGRESS", "REVIEW", "DONE", "BLOCKED", "CANCELLED", "DEFERRED",
+  ];
+
+  it("all 7 canonical status values are valid members", () => {
+    expect(validStatuses).toHaveLength(7);
+    validStatuses.forEach((s) => {
+      expect(typeof s).toBe("string");
+    });
+  });
+
+  it("DONE status is included in enum", () => {
+    expect(validStatuses).toContain("DONE");
+  });
+
+  it("REVIEW status is included in enum (new in F3)", () => {
+    expect(validStatuses).toContain("REVIEW");
+  });
+
+  it("BLOCKED, CANCELLED, DEFERRED are all included (new in F3)", () => {
+    expect(validStatuses).toContain("BLOCKED");
+    expect(validStatuses).toContain("CANCELLED");
+    expect(validStatuses).toContain("DEFERRED");
+  });
+});

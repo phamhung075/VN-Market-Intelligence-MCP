@@ -64,7 +64,8 @@ interface DecisionsDto {
   sprint_bucket: Record<string, StepDto[]>;
 }
 
-type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE" | string;
+/** Closed 7-value enum per docs/standards/task-schema.md */
+type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "BLOCKED" | "CANCELLED" | "DEFERRED";
 
 interface TaskRow {
   id: string;
@@ -73,6 +74,8 @@ interface TaskRow {
   status: TaskStatus;
   zone?: string;
   note?: string;
+  /** F3: optional free-form context about current state (e.g. "pending rebuild") */
+  status_note?: string;
 }
 
 interface TaskBoardCounts {
@@ -81,10 +84,12 @@ interface TaskBoardCounts {
   backlog: number;
 }
 
-/** Actual DTO shape: flat tasks array + counts object */
+/** Actual DTO shape: flat tasks array + counts object + served done[] (F3) */
 interface TaskBoard {
   counts: TaskBoardCounts;
   tasks: TaskRow[];
+  /** F3: served done array — authoritative source from orch-state .task_board.done */
+  done?: TaskRow[];
 }
 
 interface SignalRow {
@@ -244,6 +249,14 @@ function taskStatusClasses(status: TaskStatus): string {
       return "text-blue-400";
     case "TODO":
       return "text-slate-400";
+    case "REVIEW":
+      return "text-cyan-400";
+    case "BLOCKED":
+      return "text-red-400";
+    case "CANCELLED":
+      return "text-slate-600 line-through";
+    case "DEFERRED":
+      return "text-amber-600";
     default:
       return "text-amber-400";
   }
@@ -335,10 +348,11 @@ function TaskBoardPanel({
   const counts = board.counts ?? { done: 0, in_progress: 0, backlog: 0 };
 
   const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS");
-  const todo = tasks.filter((t) => t.status === "TODO" || t.status === "BACKLOG");
-  const done = tasks.filter((t) => t.status === "DONE");
+  const todo = tasks.filter((t) => t.status === "TODO");
+  // F3: use board.done ?? [] — authoritative served array; no filter fallback
+  const done = board.done ?? [];
 
-  if (tasks.length === 0) {
+  if (tasks.length === 0 && done.length === 0) {
     return <p className="text-sm text-slate-500">No tasks in board.</p>;
   }
 
@@ -414,6 +428,9 @@ function TaskGroup({ label, tasks }: { label: string; tasks: TaskRow[] }) {
                 <td className="px-3 py-2 text-slate-400">{task.owner ?? "—"}</td>
                 <td className={`px-3 py-2 font-semibold ${taskStatusClasses(task.status)}`}>
                   {task.status}
+                  {task.status_note && (
+                    <p className="mt-0.5 text-xs font-normal text-slate-500 italic">{task.status_note}</p>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-slate-500">{task.zone ?? "—"}</td>
               </tr>
@@ -639,6 +656,9 @@ function DoneTaskGroup({
                   <div className="px-3 py-2 text-slate-400">{task.owner ?? "—"}</div>
                   <div className={`px-3 py-2 font-semibold ${taskStatusClasses(task.status)}`}>
                     {task.status}
+                    {task.status_note && (
+                      <p className="mt-0.5 text-xs font-normal text-slate-500 italic">{task.status_note}</p>
+                    )}
                   </div>
                   <div className="px-3 py-2 text-slate-500">{task.zone ?? "—"}</div>
                   {/* F3 AC-F3-10: chevron indicator — rotated when open */}
