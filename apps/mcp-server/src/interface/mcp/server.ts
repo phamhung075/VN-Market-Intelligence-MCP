@@ -1972,6 +1972,16 @@ export async function createBunServer(
       handleKinhDichReading(req, res, db, code);
       return;
     }
+    // F-4 additive aliases: gateway strips /mcp → /api/kinh-dich/* (direct proxy path)
+    if (method === "GET" && pathname === "/api/kinh-dich/market") {
+      handleKinhDichMarket(req, res, db);
+      return;
+    }
+    if (method === "GET" && pathname.startsWith("/api/kinh-dich/reading/")) {
+      const code = decodeURIComponent(pathname.slice("/api/kinh-dich/reading/".length).split("?")[0] ?? "");
+      handleKinhDichReading(req, res, db, code);
+      return;
+    }
 
     // ── FE-REROUTE Phase 1: Price REST endpoints (FE-RR-4/5/6) ────────────
     // GET /mcp/api/prices/history?code=X&days=N — OHLCV history
@@ -1984,10 +1994,24 @@ export async function createBunServer(
       handlePriceBatch(req, res, db);
       return;
     }
+    // F-4 additive aliases: gateway strips /mcp → /api/prices/* (direct proxy path)
+    if (method === "GET" && pathname === "/api/prices/history") {
+      handlePriceHistory(req, res, db);
+      return;
+    }
+    if (method === "GET" && pathname === "/api/prices/batch") {
+      handlePriceBatch(req, res, db);
+      return;
+    }
 
     // ── FE-REROUTE Phase 2: News headlines REST endpoint (FE-RR-13/14) ────
     // GET /mcp/api/news/headlines?source=reuters&limit=15 — articles envelope
     if (method === "GET" && pathname === "/mcp/api/news/headlines") {
+      handleNewsHeadlines(req, res, db);
+      return;
+    }
+    // F-4 additive alias: gateway strips /mcp → /api/news/headlines (direct proxy path)
+    if (method === "GET" && pathname === "/api/news/headlines") {
       handleNewsHeadlines(req, res, db);
       return;
     }

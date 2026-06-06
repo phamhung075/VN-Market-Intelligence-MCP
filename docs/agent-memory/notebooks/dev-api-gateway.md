@@ -4,7 +4,34 @@ Zone: `apps/api-gateway/` | Stack: TS/Bun (active) + Go 1.22 (Phase 1 new siblin
 
 ## Working Memory
 
-**Last task:** P1-AG-G10-fix — G10 AI-fixability bug fix (SplitN=2→3) — 2026-05-24
+**Last task:** F-4 SPIKE — /mcp/* prefix-strip duality — alias-only fix — 2026-06-07
+
+**Status:** F-4 DONE
+
+**What changed:** Added 5 `/api/` prefix aliases in `apps/mcp-server/src/interface/mcp/server.ts` (additive, no removal). Routes `/api/kinh-dich/market`, `/api/kinh-dich/reading/:code`, `/api/prices/history`, `/api/prices/batch`, `/api/news/headlines` now resolve when gateway strips the `/mcp` prefix.
+
+**AC-1:** `GET :4000/mcp/api/news/headlines?source=cafef` → HTTP 200 (was 404). PASS.
+**AC-2:** `GET :4000/news/reuters/headlines` → HTTP 200. PASS.
+**AC-3:** 15 rerouter unit tests PASS. Full `go test ./...` 10 packages PASS.
+**AC-5:** mcp-server container REBUILT (sha256:835858c...). api-gateway container NOT touched (no Go change).
+
+**Decision journal:** docs/agent-memory/decisions/sprint-FETCH-OPS-PAGE-TRUTH-dev-api-gateway.md
+
+---
+
+**Previous last task:** FOU-3-GW REOPENED fix — loadManifest metadata-key parse abort — 2026-06-03 — commit 9dd4c1a2
+
+**Status:** FOU-3-GW DONE-PENDING-REBUILD
+
+**Root cause (definitive):** `systemMapFragment` decoded `capability_manifest` as `map[string]*capabilityManifestEntry`. Production system-map.json has `_note`/`_ground_truth_date` string keys inside the manifest object. `json.Unmarshal` failed "cannot unmarshal string into Go struct" → `loadManifest` returned error → `ProbeAll` returned empty map → `capabilities` nil → omitempty dropped field from /health. Unit tests green because fixtures had no metadata keys.
+
+**Fix:** Changed map value type to `json.RawMessage`; per-key secondary unmarshal; skip non-object values (`raw[0] != '{'`); added startup slog log.
+
+**Integration test (pkg/integration/health_capabilities_integration_test.go):** 3 tests with real loadManifest+CapabilityProber+domain+handler wiring, fixture matching production shape. ALL PASS.
+
+**go test ./... 10 packages ALL PASS. Sandbox G12 13+1 GREEN. go vet 0 errors.**
+
+**Previous last task:** P1-AG-G10-fix — G10 AI-fixability bug fix (SplitN=2→3) — 2026-05-24
 
 **Status:** P1-AG-G10-fix DONE — 1 cycle, commit 492cda60, signal docs/signals/dev-api-gateway-P1-AG-G10-done-2026-05-24T084119Z.json
 
