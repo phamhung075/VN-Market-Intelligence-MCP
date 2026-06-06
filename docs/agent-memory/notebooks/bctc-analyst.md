@@ -1,29 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-06-05 21:09 UTC (c025) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c023 · 2026-06-05T15:05Z
-### Analysis Cycle (15:01–15:05 UTC) — mode: routine
-- Mode: routine (no new ĐÃ NỘP vs c022; CTG DATA_INSUFFICIENT 15th cycle)
-- Stocks analyzed: 1 (FPT conf 81%) — ACB PUB-5 blocked (conf 38% 15th); CTG no BCTC (15th); DHG PUB-5 blocked (conf 44% 15th); EIB PUB-5 blocked (conf 31% 15th)
-- Chain validations: 0 open findings (cycle_id=20260605-1500, minutes_back=30)
-- Regime: NEUTRAL (carry +1.38pp confirmed). Max Deposit Rate: 5.00%.
-- Macro: Brent $93.78 NEUTRAL; Gold $4,376.3 (alert -2.88σ below mean $4,492.75); USD/VND 26124 BEARISH. Market EY 6.83% FAIRLY_VALUED.
-- Investment clock: Overheat (CPI 5.46%). VN-Index: 1838.9 (+7.35 vs c022).
-- FPT: PE 13.8 (sector 17.3 -20%), PB 3.6, ROE 28.3% (sector 10.6%). EY 7.25%, spread +2.25% → FAIR. Net margin 19.8%. Net revenue 12,480ty. Foreign net +168K cp.
-- FPT OCF: -2,847,813 VND mn vs NI +2,476,790. ocf_ni_ratio=-1.15 (Q1 seasonal). ESC-3 DATA-COVERAGE-LIMITED (2/4q). Guard held 30d.
-- FPT ESC-2: imbalance=0 PASS. ESC-1/4/5: FALSE/unavailable. No escalation.
-- Legal: CMG/VNECO2/PC1/VPB — unchanged (non-watchlist). NVL: bond 5,000ty due 2026-09-15 (10.5% GIA HAN).
-- Signals: #5093 FPT fundamental_validation (critic 0.8), #5094 ACB DATA_INSUFFICIENT (critic 0.6)
-- Signal files: bctc_signal_FPT_20260605_routine.json
-- Double-publish guard: claimed=true (slot-1:2026-06-05). Log ID: 1263.
-
-### Carry-over to c024 (next slot, 2026-06-05)
-- CTG: 15th cycle no BCTC. Dev escalation active (bug msg 2661 from c022). Await dev fix.
-- ACB/DHG/EIB: PUB-5 blocked (15th cycle ACB/EIB). BAL-1d-DEV corpus reflow blocker persists.
-- FPT ESC-3: DATA-COVERAGE-LIMITED (2/4q). Coverage guard held 30d.
-- Regime: NEUTRAL confirmed. Carry +1.38pp stable. VN-Index 1838.9.
-- Gold: -2.88σ below mean ($4,376.3 vs $4,492.75) — macro alert HIGH active, monitor.
+**Last updated:** 2026-06-06 00:09 UTC (c026) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c024 · 2026-06-05T18:15Z
 ### Analysis Cycle (18:05–18:15 UTC) — mode: mixed (1 release + routine)
@@ -69,4 +46,29 @@
 - ACB/DHG/EIB: PUB-5 blocked (ongoing). BAL-1d-DEV corpus reflow blocker persists.
 - FPT ESC-3: DATA-COVERAGE-LIMITED guard held (esc-datacov:FPT:Q1-2026:ESC-3, 8d TTL).
 - Gold: HIGH alert active ($4,341, -3.56%). Monitor for macro stabilization.
+- Regime: NEUTRAL confirmed. Carry +1.38pp stable.
+
+## c026 · 2026-06-06T00:09Z
+### Analysis Cycle (00:03–00:09 UTC) — mode: routine
+- E2 guard: PASS (00:03 UTC, outside [02:00,08:00))
+- Mode: routine. Calendar: CTG ĐÃ NỘP 2026-06-05 but extraction still blocked (18th cycle). No new ĐÃ NỘP vs c025.
+- Stocks analyzed: 1 (FPT conf 81%) — ACB PUB-5 blocked (conf 38%); CTG no BCTC (18th); DHG PUB-5 blocked (conf 44%); EIB PUB-5 blocked (conf 31%)
+- Chain validations: 0 open findings (cycle_id=20260606-0000, minutes_back=30)
+- Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%.
+- Macro: Brent $92.87 NEUTRAL; Gold $4,353.9 (still HIGH alert, -3.27% vs mean); USD/VND 26124 BEARISH. Market EY 6.83% FAIRLY_VALUED (+1.83pp spread). Investment clock: CORE_VN score=8. VN-Index: 1838.9.
+- FPT Q1-2026: PE 13.8 (sector 17.3, -20%), PB 3.6, ROE 28.3% (sector 10.6%). EY 7.25%, spread +2.25% → FAIR. Net margin 19.8%. Net revenue 12,480ty. Balance imbalance=0. OCF -2,847.8ty (Q1 seasonal, DATA-COVERAGE-LIMITED guard held). No insider. Foreign net +168K cp outperforming. Kinhdich unavailable (conn error, skip). trick_confidence=none (refined units empty).
+- FPT ESC: ESC-1 FALSE. ESC-2 imbalance=0 PASS. ESC-3 DATA-COVERAGE-LIMITED (guard esc-datacov:FPT:Q1-2026:ESC-3 held, 8d remaining). ESC-4 FALSE. ESC-5 skip. No escalation.
+- CTG: 18th cycle blocked. Old guard (bctc-ctg-attachment-fetch-escalation, from c022) expired ~00:09Z. New guard claimed: bctc-ctg-attachment-fetch-escalation-c026 (TTL 24h). Bug msg 2685 sent to re-alert dev team.
+- Legal: CMG/VNECO2/PC1/VPB unchanged (non-watchlist). NVL: bond 5,000ty due 2026-09-15 (10.5% GIA HAN, ~103d to maturity).
+- Alerts: HPG insider sell 6.6M shares (Lãnh đạo Hòa Phát) at market bottom — HIGH signal cross-check. Gold HIGH macro alert persists. VNH +12.50% price surge (non-BCTC).
+- Signals: #5138 FPT fundamental_validation (critic 0.4), #5139 CTG DATA_INSUFFICIENT (critic 0.4)
+- Signal file: bctc_signal_FPT_20260606_routine.json
+- Double-publish guard: claimed=true (slot-1:2026-06-06). Log ID: 1270.
+
+### Carry-over to c027 (next slot, 2026-06-06 03:00 UTC)
+- CTG: 18th cycle blocked. New guard bctc-ctg-attachment-fetch-escalation-c026 held (TTL 24h). Watch: FU-CTG-REFINE-PICKUP expected dev fix by 09:00Z 2026-06-06 per orch-state. If extraction fix lands, CTG release analysis possible in c027+.
+- ACB/DHG/EIB: PUB-5 blocked (ongoing). BAL-1d-DEV corpus reflow blocker persists.
+- FPT ESC-3: DATA-COVERAGE-LIMITED guard held (esc-datacov:FPT:Q1-2026:ESC-3, ~8d TTL).
+- HPG: insider sell alert (6.6M shares by executive, MEDIUM alert) — monitor for BCTC when filed.
+- Gold: HIGH macro alert persists ($4,353.9, -3.27%). Monitor stabilization.
 - Regime: NEUTRAL confirmed. Carry +1.38pp stable.
