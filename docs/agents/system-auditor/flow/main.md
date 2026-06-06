@@ -1,4 +1,4 @@
-<!-- size-justification: 544L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) replaces prose-only BCTC staleness rule with machine-evaluated SLA resolver reading system-map.json sla blocks. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated-only commit-mutex refs to executed protocol steps in D-IMPROVE and notebook-commit. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
+<!-- size-justification: 558L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) replaces prose-only BCTC staleness rule with machine-evaluated SLA resolver reading system-map.json sla blocks. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated-only commit-mutex refs to executed protocol steps in D-IMPROVE and notebook-commit. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into the settled single-write. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -242,7 +242,7 @@ Status semantics: red = hard fail, yellow = soft warning, green = pass.
 
 Also append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard skill § WRITE for any report showing `overall_status = "red"` or any new `"yellow"` (atomic write).
 
-After sweep, overwrite the `BCTC-EVAL-SNAPSHOT:` block in the notebook with the current list response (compact: `{report_id, ticker, period, overall_status, stage_statuses, computed_at}` per entry). If endpoint returns non-200 → log `[D-BCTC-EVAL] endpoint unavailable — skipping sweep` and continue (non-fatal).
+After sweep, **hold the snapshot in memory** (compact: `{report_id, ticker, period, overall_status, stage_statuses, computed_at}` per entry) — it will be written as the `BCTC-EVAL-SNAPSHOT:` block inside the end-of-cycle settled notebook write (AC-3). Do NOT write the notebook here. If endpoint returns non-200 → log `[D-BCTC-EVAL] endpoint unavailable — skipping sweep`, set snapshot=nil, continue (non-fatal).
 
 ---
 
@@ -495,18 +495,32 @@ severity ≥ warn → `send_telegram(channel="bug")` AND append row to `docs/dat
 - Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
 - NEVER write entries for cycles that have not fired yet
 
-**Notebook write** — **APPEND new section, PRUNE oldest** per skill: `.claude/skills/notebook-write/SKILL.md` (AC-1 through AC-5).
-<!-- NB-BLOAT-FLOW-OVERWRITE fix: replaced ambiguous "full overwrite" with section-append+prune pattern matching all other agents. NEVER prepend. NEVER full-replace. Follow skill AC-1..AC-5 exactly. -->
-- NEVER prepend. NEVER full-replace the file. Append the new section at EOF; prune oldest if ≥3 sections exist.
-- Hard cap: ≤200L total (AC-5 gate — run wc -l after write; prune additional sections if still >200L).
-- Per-section content ≤60L. Use compact summary format — do NOT dump raw check output line-by-line.
+**Notebook write** — AC-3 settled-write (ONE write) per skill: `.claude/skills/notebook-write/SKILL.md` (AC-1 through AC-5).
+
+Step 1 — Compose in memory (NO file write yet):
+a. Read `docs/agent-memory/notebooks/system-auditor.md` fully into memory.
+b. Identify preamble (before first `## `) and all `^## ` section boundaries.
+c. If ≥3 sections: drop oldest `## ` block (heading + content to next `## `) in memory.
+d. Build new section (≤60L):
+   ```
+   ## c<NNN> · <YYYY-MM-DDThh:mmZ>
+   ### Audit Run Tier-N (HH:MM–HH:MM UTC YYYY-MM-DD)
+   - Tier: N | Services: N checked | Sources: N checked | DB checks: N
+   - Anomalies: N new (C critical, W warn, I info) | M dedup-skipped
+   - Status: HEALTHY | DEGRADED | CRITICAL
+   ```
+   If Tier-2 cycle and snapshot ≠ nil: append `BCTC-EVAL-SNAPSHOT:` sub-block (compact JSON array, ≤10L) within this new section, counting toward the 60L section cap.
+e. Append new section to end of in-memory body.
+f. Count in-memory lines. If >200L: drop next-oldest `## ` block, recount; repeat until ≤200L or only preamble+1 section remain. If current-cycle section >60L: trim to 60L first.
+g. In-memory body is now the final settled content (≤200L guaranteed).
+
+Step 2 — Single settled write (ONE call, PostToolUse fires exactly once):
 ```
-## c<NNN> · <YYYY-MM-DDThh:mmZ>
-### Audit Run Tier-N (HH:MM–HH:MM UTC YYYY-MM-DD)
-- Tier: N | Services checked: N | Sources checked: N | DB checks: N
-- Anomalies: N new (C critical, W warn, I info) | M dedup-skipped
-- Status: HEALTHY | DEGRADED | CRITICAL
+Write(path="docs/agent-memory/notebooks/system-auditor.md", content=<settled body from Step 1>)
 ```
+AC-5 gate after write: `wc -l < notebook.md` → if >200: fix Step 1 and re-write once.
+
+<!-- NB-AUDITOR-SETTLED-WRITE: replaced two-write pattern (append then trim) with AC-3 single settled write. BCTC-EVAL-SNAPSHOT folded into this write (was a separate early write in D-BCTC-EVAL — now held in memory until here). PostToolUse hook sees ≤200L exactly once. -->
 Then:
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 own_paths: [`docs/agent-memory/notebooks/system-auditor.md`]
