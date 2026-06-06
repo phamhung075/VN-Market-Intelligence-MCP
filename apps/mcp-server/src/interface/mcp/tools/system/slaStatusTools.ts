@@ -10,7 +10,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb } from "../../../../infrastructure/db/schema.js";
-import { DEFAULT_SLA_CONFIG, type SignalType } from "../../../../domain/services/freshnessSlaChecker.js";
+import {
+  DEFAULT_SLA_CONFIG,
+  isVnMarketHours as domainIsVnMarketHours,
+  getSlaThreshold,
+  MARKET_HOURS_ONLY_SOURCES,
+  type SignalType,
+} from "../../../../domain/services/freshnessSlaChecker.js";
 import type { Database } from "bun:sqlite";
 
 interface SlaStatusRow {
@@ -78,38 +84,12 @@ function querySignalAges(db: Database): Record<string, number> {
 }
 
 /**
- * Get SLA threshold for a signal type (canonical source: freshnessSlaChecker.DEFAULT_SLA_CONFIG)
+ * Get SLA threshold for a signal type — delegates to domain getSlaThreshold.
+ * Domain function is calendar-aware: market-hours-only sources (price, foreign_flow)
+ * use a dynamic off-hours threshold so they never breach on weekends by design.
  */
-function getSlaThresholds(signalType: string, isMarketHours: boolean): number {
-  // Look up config from canonical domain source
-  const config = DEFAULT_SLA_CONFIG.find((c) => c.signalType === (signalType as SignalType));
-  if (!config) {
-    // Fallback for unknown signal types
-    return 60;
-  }
-
-  // Use market-hours or off-hours override if available, otherwise default
-  if (isMarketHours && config.marketHoursThresholdMinutes !== undefined) {
-    return config.marketHoursThresholdMinutes;
-  }
-  if (!isMarketHours && config.offHoursThresholdMinutes !== undefined) {
-    return config.offHoursThresholdMinutes;
-  }
-  return config.defaultThresholdMinutes;
-}
-
-/**
- * Check if current time is VN market hours (09:00-15:00 VN time = 02:00-08:00 UTC)
- */
-function isVnMarketHours(): boolean {
-  const utcHour = new Date().getUTCHours();
-  const utcDay = new Date().getUTCDay();
-
-  // Market hours: 02:00-08:59 UTC (09:00-15:59 VN), Mon-Fri
-  const isWeekday = utcDay >= 1 && utcDay <= 5;
-  const isDuringMarket = utcHour >= 2 && utcHour < 9;
-
-  return isWeekday && isDuringMarket;
+function getSlaThresholds(signalType: string, _isMarketHours: boolean, now: Date = new Date()): number {
+  return getSlaThreshold(signalType as SignalType, DEFAULT_SLA_CONFIG, now);
 }
 
 /**
@@ -155,8 +135,9 @@ function formatSlaTable(records: SlaStatusRow[]): string {
   lines.push("");
   const breachedCount = records.filter((r) => r.status === "breached").length;
   const okCount = records.filter((r) => r.status === "ok").length;
+  const offHoursCount = records.filter((r) => r.status === "off-hours").length;
 
-  lines.push(`Summary: ${okCount} ok, ${breachedCount} breached`);
+  lines.push(`Summary: ${okCount} ok, ${breachedCount} breached, ${offHoursCount} off-hours (by design)`);
 
   if (breachedCount > 0) {
     const breached = records
@@ -164,6 +145,13 @@ function formatSlaTable(records: SlaStatusRow[]): string {
       .map((r) => `${r.signal_type} (${r.age_minutes}/${r.threshold_minutes}min)`)
       .join(", ");
     lines.push(`ALERT: SLA breached on: ${breached}`);
+  }
+  if (offHoursCount > 0) {
+    const offHours = records
+      .filter((r) => r.status === "off-hours")
+      .map((r) => r.signal_type)
+      .join(", ");
+    lines.push(`OFF-HOURS (not an alert): ${offHours} — VPS fetch loop sleeps outside Mon-Fri 02:00-08:59 UTC`);
   }
 
   return lines.join("\n");
@@ -193,7 +181,8 @@ export function registerSlaStatusTools(
       try {
         // Query current signal ages
         const ages = querySignalAges(db);
-        const isMarketHours = isVnMarketHours();
+        const now = new Date();
+        const marketHoursActive = domainIsVnMarketHours(now);
 
         // Build status records
         const records: SlaStatusRow[] = [];
@@ -205,9 +194,12 @@ export function registerSlaStatusTools(
           }
 
           const age = ages[sig] ?? 0;
-          const threshold = getSlaThresholds(sig, isMarketHours);
-          const status = age <= threshold ? "ok" : "breached";
-          const severity = status === "ok" ? null : getSeverity(age, threshold);
+          // Domain getSlaThreshold is calendar-aware: market-hours-only sources get
+          // dynamic off-hours thresholds, preventing false breaches on weekends.
+          const threshold = getSlaThresholds(sig, marketHoursActive, now);
+          const offHours = MARKET_HOURS_ONLY_SOURCES.has(sig as SignalType) && !marketHoursActive;
+          const status = age <= threshold ? "ok" : (offHours ? "off-hours" : "breached");
+          const severity = status === "breached" ? getSeverity(age, threshold) : null;
 
           records.push({
             signal_type: sig,

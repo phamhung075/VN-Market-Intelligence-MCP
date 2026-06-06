@@ -12,9 +12,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getVpsProxyHealth, type VpsServiceHealth } from "../../../../infrastructure/db/vpsPushLogStore.js";
 import { getDb } from "../../../../infrastructure/db/schema.js";
+import { isVnMarketHours, minutesSinceLastWindowEnd } from "../../../../domain/services/freshnessSlaChecker.js";
 import type { Database } from "bun:sqlite";
 
-// Expected push intervals per service (minutes)
+// Expected push intervals per service (minutes) — used during the active fetch window.
+// Prices and foreign_flow are market-hours-only (Mon–Fri 02:00–08:59 UTC).
+// Outside their window the stale check uses time-since-last-window-end logic.
 const EXPECTED_INTERVALS: Record<string, number> = {
   prices: 5,    // every 60s during market hours, allow 5min slack
   news: 10,     // every 5min, allow 10min slack
@@ -22,7 +25,11 @@ const EXPECTED_INTERVALS: Record<string, number> = {
   bctc: 720,    // every 6h, allow 12h slack
 };
 
-function formatHealth(services: VpsServiceHealth[]): string {
+// Services whose data is ONLY pushed during VN market hours.
+// Outside Mon–Fri 02:00–08:59 UTC the VPS loops sleep by design.
+const MARKET_HOURS_ONLY_SERVICES = new Set(["prices", "foreign_flow"]);
+
+function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): string {
   const lines: string[] = [
     "=== VPS PROXY HEALTH ===",
     "",
@@ -32,26 +39,42 @@ function formatHealth(services: VpsServiceHealth[]): string {
 
   for (const s of services) {
     const lastPush = s.lastPushAt ?? "never";
-    const stale = isStale(s);
-    const staleFlag = stale ? "YES" : "no";
+    const stale = isStale(s, now);
+    // Market-hours-only services show "off-hours" instead of "YES" outside window
+    const isOffHours = MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now);
+    const staleFlag = stale
+      ? (isOffHours ? "off-hours" : "YES")
+      : "no";
 
     lines.push(
       `${s.service.padEnd(12)}| ${lastPush.padEnd(20)}| ${String(s.lastItemsCount).padEnd(6)}| ${s.lastStatus.padEnd(8)}| ${String(s.pushes24h).padEnd(11)}| ${String(s.errors24h).padEnd(11)}| ${staleFlag}`,
     );
   }
 
-  // Summary
-  const staleServices = services.filter(isStale);
+  // Summary — off-hours stale services excluded from the "STALE" warning
+  const trueStaleServices = services.filter((s) => {
+    if (!isStale(s, now)) return false;
+    // Market-hours-only services outside active window are expected stale — suppress warning
+    if (MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now)) return false;
+    return true;
+  });
+  const offHoursServices = services.filter(
+    (s) => MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now) && !isStale(s, now) === false
+      && isStale(s, now)
+  );
   const errorServices = services.filter((s) => s.errors24h > 0);
 
   lines.push("");
-  if (staleServices.length > 0) {
-    lines.push(`STALE: ${staleServices.map((s) => s.service).join(", ")} — VPS may be down or unreachable`);
+  if (trueStaleServices.length > 0) {
+    lines.push(`STALE: ${trueStaleServices.map((s) => s.service).join(", ")} — VPS may be down or unreachable`);
+  }
+  if (offHoursServices.length > 0) {
+    lines.push(`OFF-HOURS (by design): ${offHoursServices.map((s) => s.service).join(", ")} — market-hours-only; VPS fetch loop sleeps outside Mon-Fri 02:00-08:59 UTC`);
   }
   if (errorServices.length > 0) {
     lines.push(`ERRORS: ${errorServices.map((s) => `${s.service}(${s.errors24h})`).join(", ")}`);
   }
-  if (staleServices.length === 0 && errorServices.length === 0) {
+  if (trueStaleServices.length === 0 && errorServices.length === 0) {
     lines.push("All VPS proxy services healthy.");
   }
 
@@ -62,10 +85,42 @@ function formatHealth(services: VpsServiceHealth[]): string {
   return lines.join("\n");
 }
 
-function isStale(s: VpsServiceHealth): boolean {
+/**
+ * Determines whether a VPS service's last push is stale.
+ *
+ * For market-hours-only services (prices, foreign_flow):
+ *   - During market hours (Mon–Fri 02:00–08:59 UTC): applies the tight 5-min interval.
+ *   - Outside market hours: data is expected stale by design; not considered stale
+ *     as long as data is no older than (minutesSinceLastWindowEnd + 30 min grace).
+ *     This prevents weekend false-CRITICAL alerts on healthy services.
+ *
+ * @param s VPS service health record
+ * @param now Injectable current time for testing (default: Date.now())
+ */
+function isStale(s: VpsServiceHealth, now: Date = new Date()): boolean {
   if (!s.lastPushAt) return true;
+
+  // SQLite timestamps may lack the trailing 'Z'; append it only if missing.
+  const rawTs = s.lastPushAt.endsWith("Z") ? s.lastPushAt : s.lastPushAt + "Z";
+  const lastPushMs = new Date(rawTs).getTime();
+  if (isNaN(lastPushMs)) return true;
+
+  const ageMs = now.getTime() - lastPushMs;
+
+  if (MARKET_HOURS_ONLY_SERVICES.has(s.service)) {
+    if (isVnMarketHours(now)) {
+      // Tight real-time SLA during active window
+      const expectedMin = EXPECTED_INTERVALS[s.service] ?? 5;
+      return ageMs > expectedMin * 60 * 1000;
+    }
+    // Off-hours: expected stale by design.
+    // Only flag as stale if data is older than last window end + 30 min grace.
+    const sinceWindowEndMin = minutesSinceLastWindowEnd(now);
+    const offHoursThresholdMs = (sinceWindowEndMin + 30) * 60 * 1000;
+    return ageMs > offHoursThresholdMs;
+  }
+
   const expectedMin = EXPECTED_INTERVALS[s.service] ?? 60;
-  const ageMs = Date.now() - new Date(s.lastPushAt + "Z").getTime();
   return ageMs > expectedMin * 60 * 1000;
 }
 

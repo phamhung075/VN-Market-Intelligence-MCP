@@ -140,11 +140,13 @@ describe("VPT-1 — handleVpsProxyHealth (GET /api/vps-proxy-health)", () => {
 
   it("(c) stale push beyond threshold → stale=true", () => {
     const db = getDb();
-    // 'prices' threshold = 5 min; insert a push 30 min ago → STALE
+    // 'news' threshold = 10 min (not a market-hours-only service → always applies).
+    // Insert a push 30 min ago relative to actual system time so the DB 24h window
+    // counts it.  'news' is always checked regardless of calendar.
     const staleAt = new Date(Date.now() - 30 * 60_000).toISOString();
     db.prepare(
       "INSERT INTO vps_push_log (service, items_count, status, pushed_at) VALUES (?, ?, ?, ?)"
-    ).run("prices", 76, "ok", staleAt);
+    ).run("news", 76, "ok", staleAt);
 
     const res = makeRes();
     handleVpsProxyHealth(fakeReq, res as unknown as ServerResponse, db);
@@ -152,10 +154,10 @@ describe("VPT-1 — handleVpsProxyHealth (GET /api/vps-proxy-health)", () => {
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body) as HealthBody;
 
-    const prices = body.services.find((s) => s.name === "prices")!;
-    expect(prices.stale).toBe(true);
-    expect(prices.status).toBe("ok"); // last push was ok, just old
-    expect(prices.pushes_24h).toBe(1);
+    const news = body.services.find((s) => s.name === "news")!;
+    expect(news.stale).toBe(true);
+    expect(news.status).toBe("ok"); // last push was ok, just old
+    expect(news.pushes_24h).toBe(1);
   });
 
   it("(d) error push counted in errors_24h", () => {

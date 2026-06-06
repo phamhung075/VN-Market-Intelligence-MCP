@@ -118,8 +118,9 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
   // AC-3: price SLA breach (>10min)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  it("AC-3: checkDataFreshnessSla detects price age > 10min as breached", async () => {
+  it("AC-3: checkDataFreshnessSla detects price age > 10min as breached (during market hours)", async () => {
     // Given: market_prices table with created_at 15 minutes ago
+    // Clock is set to market hours so the tight 10-min SLA applies
     // When: checkDataFreshnessSla() called
     // Then:
     //   - breaches array includes entry with signalType='price'
@@ -127,7 +128,9 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
     //   - thresholdMinutes = 10
     //   - status = 'breached'
     //   - severity = 'HIGH' (age 15 > threshold 10)
-    //   - severity = 'CRITICAL' if age > threshold × 1.5 (>15min)
+
+    // Use a market-hours timestamp: Monday 2026-04-27T04:00Z (02:00-08:59 UTC window)
+    const marketHoursNow = new Date("2026-04-27T04:00:00.000Z");
 
     const signalAges: Record<SignalType, number> = {
       price: 15,
@@ -139,7 +142,7 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
       broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
     };
 
-    const result = checkDataFreshnessSla(signalAges);
+    const result = checkDataFreshnessSla(signalAges, undefined, [], marketHoursNow);
 
     const priceBreach = result.breaches.find((b) => b.signalType === "price");
     expect(priceBreach).toBeDefined();
@@ -237,6 +240,9 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
     const testDb2 = getDb();
 
     // Test directly with checkDataFreshnessSla (which is what runFreshnessSlaMonitor uses internally)
+    // Use market-hours clock so the tight 10-min SLA applies (price/foreign_flow are
+    // market-hours-only; without this they use the dynamic off-hours threshold).
+    const marketHoursNow = new Date("2026-04-27T04:00:00.000Z");
     const signalAges: Record<SignalType, number> = {
       price: 15,
       bctc: 5,
@@ -247,7 +253,7 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
       broker_sanctions: -1, backtest_runs: -1, signal_quality_audit: -1, prediction_claims: -1,
     };
 
-    const result = checkDataFreshnessSla(signalAges);
+    const result = checkDataFreshnessSla(signalAges, undefined, [], marketHoursNow);
 
     expect(result.breaches.length).toBeGreaterThan(0);
     expect(result.breaches.some((b) => b.signalType === "price")).toBe(true);

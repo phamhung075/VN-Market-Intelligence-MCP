@@ -79,11 +79,11 @@ export interface SignalSlaConfig {
  * Default SLA thresholds (in minutes).
  *
  * Original 5 types (Task 234):
- * - price: 10 min (market-critical)
+ * - price: 10 min during market hours; off-hours uses dynamic window threshold (see getSlaThreshold)
  * - bctc: 120 min (market hours), 360 min (off-hours)
  * - news: 30 min
  * - sbv_fx: 30 min
- * - foreign_flow: 10 min (trading-critical)
+ * - foreign_flow: 10 min during market hours; off-hours uses dynamic window threshold
  *
  * Sprint 1920 additions (Task 1920i):
  * - vnstock_fundamentals: 4320 min = 72h (quarterly data; SLA = 3 days after dispatch)
@@ -98,6 +98,7 @@ export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
   {
     signalType: "price",
     defaultThresholdMinutes: 10,
+    // off-hours: dynamically computed via getSlaThreshold (window-aware)
   },
   {
     signalType: "bctc",
@@ -116,6 +117,7 @@ export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
   {
     signalType: "foreign_flow",
     defaultThresholdMinutes: 10,
+    // off-hours: dynamically computed via getSlaThreshold (window-aware)
   },
   // ── Sprint 1920 additions ─────────────────────────────────────────────────
   {
@@ -206,8 +208,123 @@ export function isVnMarketHours(now: Date = new Date()): boolean {
   return true;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Market-hours-only source logic (FIX-SLA-WEEKEND-AWARE)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Signal source types that are ONLY active during VN market hours.
+ *
+ * The VPS fetch loops for these sources are gated Mon–Fri 02:00–08:59 UTC
+ * (dow<=5 && hour 02-08Z — confirmed by ops-vps-fetch SSH recon 45641b7a).
+ * Outside that window, staleness is BY DESIGN — the SLA clock should measure
+ * against the last expected push slot, not wall-clock now.
+ *
+ * Sources: "price" (prices every ~60s during session),
+ *          "foreign_flow" (embedded in same VPS price push).
+ */
+export const MARKET_HOURS_ONLY_SOURCES: ReadonlySet<SignalType> = new Set([
+  "price",
+  "foreign_flow",
+]);
+
+/**
+ * Grace period added on top of "time since last window end" when computing the
+ * off-hours SLA threshold.  Allows for minor clock skew and the last-push lag
+ * before the cron window actually fires.
+ */
+const OFF_HOURS_GRACE_MINUTES = 30;
+
+/**
+ * Returns the UTC Date of the most recent VN market-session close before `now`.
+ *
+ * The VPS push window ends at 08:59 UTC (= 15:59 VN time).
+ * We scan backwards up to 7 days to find the last trading-day close.
+ *
+ * Edge cases handled:
+ *   - Weekend (Sat/Sun) → last Friday 08:59Z
+ *   - Public holiday → the last working day's 08:59Z
+ *   - During active window (02:00–08:59Z weekday) → previous trading day 08:59Z
+ *     (the current push cycle is OPEN so current data is expected fresh within 10 min)
+ *
+ * @param now Current time (overridable for testing)
+ * @returns Date representing the most recent expected window-end timestamp
+ */
+export function lastExpectedWindowEnd(now: Date = new Date()): Date {
+  // If we are currently IN the market window, the previous window ended
+  // yesterday (or last trading day) — the current window is still live.
+  // If we are OUTSIDE the window, last close is today's 08:59Z if it was a
+  // trading day, otherwise the last trading day's 08:59Z.
+
+  const WINDOW_END_UTC_HOUR = 8;
+  const WINDOW_END_UTC_MIN = 59;
+
+  // Build candidate "today at 08:59Z"
+  const candidate = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    WINDOW_END_UTC_HOUR,
+    WINDOW_END_UTC_MIN,
+    0,
+    0,
+  ));
+
+  // Walk backwards until we find a trading-day window-end that is in the past
+  // (strictly before `now` if in market hours, or <= now if already past close).
+  for (let daysBack = 0; daysBack <= 7; daysBack++) {
+    const windowEnd = new Date(candidate.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    // Must be in the past
+    if (windowEnd >= now) continue;
+    // Must be a trading day
+    if (isVnTradingDay(windowEnd)) {
+      return windowEnd;
+    }
+  }
+
+  // Fallback: should never be reached with up to 7 days scan
+  return new Date(candidate.getTime() - 7 * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Returns minutes elapsed since the last expected VN market window closed.
+ *
+ * Used to compute the off-hours SLA threshold for market-hours-only sources.
+ * Outside the active window the "expected age" of data is at most
+ * (minutesSinceLastWindowEnd + grace), not 10 minutes.
+ *
+ * @param now Current time (overridable for testing)
+ * @returns Non-negative minutes since last window end
+ */
+export function minutesSinceLastWindowEnd(now: Date = new Date()): number {
+  const windowEnd = lastExpectedWindowEnd(now);
+  const ms = now.getTime() - windowEnd.getTime();
+  return Math.max(0, Math.floor(ms / 60000));
+}
+
 /**
  * Gets the active SLA threshold for a signal type based on current time.
+ *
+ * For market-hours-only sources (price, foreign_flow):
+ *   - During market hours (Mon–Fri 02:00–08:59 UTC): returns 10 min (tight real-time SLA)
+ *   - Outside market hours: returns (minutesSinceLastWindowEnd + OFF_HOURS_GRACE_MINUTES)
+ *     This means data that was pushed before the last window close is always "ok",
+ *     and staleness only fires if data is OLDER than the last expected push slot.
+ *     Edge case: Monday 03:00Z with no push since Friday is stale
+ *     (Friday close was ~70h ago → threshold ≈ 4230 min, but age since Friday = ~4200 min,
+ *      so it passes if Friday data arrived; if no data at all → age = 0 sentinel → skipped).
+ *     Wait — re-read: if Friday pushed at 08:59Z and it is now Monday 03:00Z,
+ *     age ≈ (Mon 03:00 − Fri 08:59) = ~66h = 3960 min.
+ *     minutesSinceLastWindowEnd(Mon 03:00Z) → last window = Mon 08:59Z? No — Mon 03:00Z
+ *     is INSIDE the Mon window (02:00-08:59Z) so lastExpectedWindowEnd returns Fri 08:59Z
+ *     → minutesSince ≈ 66h×60 = 3960 min.  threshold = 3960 + 30 = 3990 min.
+ *     But a REAL stale case on Monday mid-session: if no new data has been pushed since
+ *     Friday (age = 3960 min) the threshold is 3990 min → still "ok" — this is WRONG.
+ *
+ *     The correct Monday-stale check: DURING market hours the tight 10-min threshold
+ *     applies. At 03:00Z the window is OPEN so the 10-min tight SLA fires → stale if
+ *     no push within 10 min of session open. Friday data that is 66h old will then
+ *     breach the 10-min market-hours threshold → CRITICAL as expected.
  *
  * @param signalType Signal type
  * @param config Configuration (defaults to DEFAULT_SLA_CONFIG)
@@ -221,6 +338,20 @@ export function getSlaThreshold(
 ): number {
   const cfg = config.find((c) => c.signalType === signalType);
   if (!cfg) return 60; // Fallback if not found
+
+  // Market-hours-only sources (price, foreign_flow):
+  // During the active VPS fetch window → tight 10-min SLA.
+  // Outside the window → data is expected stale; threshold = time-since-last-window-end
+  // plus a small grace so that correctly-pushed end-of-session data stays "ok".
+  if (MARKET_HOURS_ONLY_SOURCES.has(signalType)) {
+    if (isVnMarketHours(now)) {
+      return cfg.defaultThresholdMinutes; // tight real-time SLA (10 min)
+    }
+    // Off-hours: SLA = how long ago the last window ended + grace.
+    // Data pushed at/before window close is always within this threshold.
+    const sinceWindowEnd = minutesSinceLastWindowEnd(now);
+    return sinceWindowEnd + OFF_HOURS_GRACE_MINUTES;
+  }
 
   // BCTC has time-based thresholds
   if (signalType === "bctc") {

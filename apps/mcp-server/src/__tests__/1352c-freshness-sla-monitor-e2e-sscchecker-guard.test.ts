@@ -184,7 +184,11 @@ describe("Task 1352c — Group A: runFreshnessSlaMonitor() end-to-end", () => {
     insertSourceRows(db, minutesAgo(15), "a3");
 
     const { spy, calls } = makeEscalateSpy();
-    const result = await runFreshnessSlaMonitor(db, spy, undefined, new Date(), noopSendWork);
+    // Use market-hours clock so the tight 10-min price SLA applies.
+    // price/foreign_flow are market-hours-only; default new Date() on a weekend would
+    // use the large off-hours threshold and no breach would be detected.
+    const marketHoursNow = new Date("2026-04-27T04:00:00.000Z");
+    const result = await runFreshnessSlaMonitor(db, spy, undefined, marketHoursNow, noopSendWork);
 
     // Breach is still recorded (new audit row), but cooldown suppresses escalation
     expect(result.breaches).toBe(1);
