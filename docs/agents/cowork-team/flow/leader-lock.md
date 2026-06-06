@@ -1,4 +1,4 @@
-<!-- size-justification: 68L — leader-lock claim + own-held/peer-held/orphan-recovery paths. Child of main.md. -->
+<!-- size-justification: 82L — leader-lock claim + own-held/peer-held/orphan-recovery paths. Child of main.md. -->
 
 ## Step 0b — Claim cowork-leader lock (DWF-DEV-CROSS-4 Phase 2 — FR-P2-5)
 
@@ -6,8 +6,9 @@
      WIN (claimed=true)            → proceed immediately.
      OWN-HELD (claimed=false + heartbeat ok=true) → renew + proceed.
        Own-held arises when Step 4.6b extended TTL beyond the next tick (1800s > 900s gap).
-       Heartbeat probe is the discriminator: only the holding OS process can renew it
-       (server-side owner_session = pid-<pid>-ts-<startupTs>; caller cannot spoof it).
+       Heartbeat probe is the discriminator: renewal matches owner_agent (FIX-CWK-LEADER-LOCK-REBIND;
+       survives server restarts). NOTE: same-owner_agent peer could also renew — per-work-item
+       slot tokens (Step 4.6) remain the hard dup-spawn gate.
      ORPHAN-RECOVERY (claimed=false + heartbeat ok=false + heartbeat_age > 600s):
        mcp-server restart mints a new SERVER_SESSION_ID; the old lock row's owner_session
        no longer matches → heartbeat returns ok=false, indistinguishable from a live peer.
@@ -36,10 +37,11 @@ if LEADER_CLAIM.claimed == true:
 
 else:
   # Lock held by someone. Disambiguate: own-held vs peer-held via heartbeat probe.
-  # task_heartbeat is guarded server-side by owner_session = pid-<pid>-ts-<startupTs>;
-  # only the holding OS process gets ok=true — a concurrent peer session gets ok=false.
+  # task_heartbeat matches owner_agent (FIX-CWK-LEADER-LOCK-REBIND — stable across
+  # mcp-server restarts). BARE calls fall back to legacy owner_session → zombie after restart.
   LEADER_HB=$(call_tool(server="vn-market", tool="task_heartbeat", arguments={
-    task_id: "cowork-leader"
+    task_id:     "cowork-leader",
+    owner_agent: "cowork-dispatcher"
   }))
 
   if LEADER_HB.ok == true:

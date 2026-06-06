@@ -79,7 +79,8 @@ Only execute if WON_SLOTS is non-empty (skip on silent-exit path).
 
 ```
 call_tool(server="vn-market", tool="task_heartbeat", arguments={
-  task_id: "cowork-leader"
+  task_id:     "cowork-leader",
+  owner_agent: "cowork-dispatcher"
 })
 ```
 
