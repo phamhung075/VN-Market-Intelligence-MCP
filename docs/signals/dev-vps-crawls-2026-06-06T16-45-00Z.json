@@ -1,0 +1,21 @@
+{
+  "from": "ops-vps-fetch",
+  "to": "dev-vps-crawls",
+  "type": "recon-complete",
+  "payload": {
+    "source_name": "ssc-bctc-newsearch",
+    "recon_doc": "docs/vps-sources/ssc-bctc-newsearch/recon.md",
+    "anti_bot_type": "none",
+    "suggested_technique": null,
+    "trigger": "new_source_needed",
+    "spike_task": "SPIKE-VPS-SSC-CURL-RECIPE",
+    "verdict": "VIABLE-CURL",
+    "follow_up": "Replace _ssc_newsearch_playwright() in vps-scripts/discover-bctc-urls-browser.py with discover_from_ssc_curl() using 3-step stateful HTTP (loopback→ADF page→PPR search→full-form download). See recon doc Implementation Notes section for complete algorithm and key implementation details.",
+    "proven_on_vps": true,
+    "test_tickers": ["GAS", "HPG"],
+    "proof": "GAS Q1/2026 consolidated downloaded: 15,410,637 bytes, %PDF-1.7 valid. HPG annual 2025 downloaded: 6,151,513 bytes, %PDF-1.7 valid.",
+    "no_chromium_required": true
+  },
+  "priority": "high",
+  "createdAt": "2026-06-06T16:45:00Z"
+}
