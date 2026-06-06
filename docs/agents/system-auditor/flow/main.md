@@ -1,4 +1,4 @@
-<!-- size-justification: 532L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) replaces prose-only BCTC staleness rule with machine-evaluated SLA resolver reading system-map.json sla blocks. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
+<!-- size-justification: 544L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) replaces prose-only BCTC staleness rule with machine-evaluated SLA resolver reading system-map.json sla blocks. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated-only commit-mutex refs to executed protocol steps in D-IMPROVE and notebook-commit. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -307,15 +307,22 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
      FAIL-LOUD-SKIP if `target_agent` cannot be determined (no kebab-case agent id maps to the weakness) — log `"[D-IMPROVE] SKIP {id}: target_agent unknown"`, continue.
      FAIL-LOUD-SKIP if `target_files` is empty — log `"[D-IMPROVE] SKIP {id}: target_files empty"`, continue.
 
-  c. Acquire commit-mutex (skill: `.claude/skills/commit-mutex/SKILL.md`).
-     Write `docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md` (path-explicit).
+  c. Write `docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md` (path-explicit).
      Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
      ```json
      {"id": "{id}", "ts": "{ts}", "from": "system-auditor", "to": "po", "type": "improvement_proposal", "summary": "{summary ≤120 chars}", "severity": "INFO", "status": "NEW", "payload_ref": "{proposal-path}"}
      ```
-     Commit: `git add docs/improvement-proposals/{id}.md docs/data/orch/orch-state.json` (explicit paths only — never -A).
-     git commit -m `"chore(improve): D-IMPROVE emit {id}"`.
-     Release commit-mutex regardless of commit outcome.
+     **Commit (mutex-guarded):** → skill: `.claude/skills/commit-mutex/SKILL.md`
+     own_paths: [`docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md`, `docs/data/orch/orch-state.json`]
+     intent: `"chore(improve): D-IMPROVE emit {id}"`
+
+     Executed protocol:
+     1. `call_tool(server="vn-market", tool="task_claim", arguments={task_id:"commit-mutex:main", task_kind:"commit-mutex", owner_agent:"system-auditor", ttl_seconds:60, payload:"{\"paths\":[\"docs/improvement-proposals/IMP-{id}.md\",\"docs/data/orch/orch-state.json\"],\"intent\":\"D-IMPROVE emit {id}\"}"})` — MCP error/db_unavailable → bug-telegram → SKIP commit → EXIT [C-2]; claimed=false, no current_holder → mechanism broken → bug-telegram → SKIP [C-2b]; contended (current_holder present) → backoff 6 retries ~125s → give-up → bug-telegram → SKIP.
+     2. `git add -u docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md docs/data/orch/orch-state.json` (explicit -u form — avoids gitignore false-warn on tracked files).
+     3. `git diff --cached --name-only` → if foreign path present: `git restore --staged <foreign>` (NEVER own paths); if still foreign after restore → release mutex → abort commit → log + bug-telegram.
+     4. `git diff --cached --quiet` → if nothing staged: release mutex → skip commit → log.
+     5. `git commit -m "chore(improve): D-IMPROVE emit {id}"` (NEVER -a/-am, NEVER add -f).
+     6. `call_tool(server="vn-market", tool="task_release", arguments={task_id:"commit-mutex:main"})` — ALWAYS, every exit path (success / skip / error).
 
 **D-IMPROVE-3 — Log outcome:**
 After processing all candidates, log `"[D-IMPROVE] emitted {N} proposals, skipped {M} (duplicates), skipped {K} (bad candidates)"`.
@@ -502,12 +509,17 @@ severity ≥ warn → `send_telegram(channel="bug")` AND append row to `docs/dat
 ```
 Then:
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
-```bash
-# own_paths: [docs/agent-memory/notebooks/system-auditor.md]
-# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
-git add docs/agent-memory/notebooks/system-auditor.md
-git commit -m "chore(memory/system-auditor): notebook YYYY-MM-DD tier-N"
-```
+own_paths: [`docs/agent-memory/notebooks/system-auditor.md`]
+intent: `"chore(memory/system-auditor): notebook YYYY-MM-DD tier-N"`
+
+Executed protocol:
+1. `call_tool(server="vn-market", tool="task_claim", arguments={task_id:"commit-mutex:main", task_kind:"commit-mutex", owner_agent:"system-auditor", ttl_seconds:60, payload:"{\"paths\":[\"docs/agent-memory/notebooks/system-auditor.md\"],\"intent\":\"notebook commit tier-N\"}"})` — MCP error/db_unavailable → bug-telegram → SKIP commit → EXIT [C-2]; claimed=false, no current_holder → mechanism broken → bug-telegram → SKIP [C-2b]; contended → backoff 6 retries ~125s → give-up → bug-telegram → SKIP.
+2. `git add -u docs/agent-memory/notebooks/system-auditor.md` (explicit -u form — avoids gitignore false-warn on tracked files).
+3. `git diff --cached --name-only` → if foreign path: `git restore --staged <foreign>` (NEVER own path); still foreign after restore → release mutex → abort → log.
+4. `git diff --cached --quiet` → if nothing staged: release mutex → skip commit → log.
+5. `git commit -m "chore(memory/system-auditor): notebook YYYY-MM-DD tier-N"` (NEVER -a/-am).
+6. `call_tool(server="vn-market", tool="task_release", arguments={task_id:"commit-mutex:main"})` — ALWAYS, every exit path.
+
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
