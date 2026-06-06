@@ -8,6 +8,7 @@
 **Amended:** 2026-05-30 — User directive: Model-Tier Matrix + analyze-flow re-tiering
 **Amended:** 2026-05-30 — User directive: Refine fan-out orchestration (§0.6, FR-12 update)
 **Amended:** 2026-05-30 — AR-ARCH-INVOKE ruling: subagent invocation mechanism fixed (§0.6 superseded in part; see §0.7)
+**Amended:** 2026-06-06 — REFINE-OPTC-DESIGN ruling: Option Y fan-out superseded by Option C sequential chunked+resumable (§0.7.2 new ruling appended after §0.7.7)
 
 ---
 
@@ -150,7 +151,7 @@ This column is added to the `CREATE TABLE IF NOT EXISTS` DDL in §3.2.1. No ALTE
 
 > **This section supersedes the final sentence of §0.6.2** ("Subagent invocation mechanism: dev-mcp-server chooses between the fleet subprocess pattern (claude CLI subprocess per window) or a Workflow-style parallel map. Both are valid.") **That sentence is incorrect at runtime and is struck.** Both options it listed are non-runnable in the actual deployment context. This section is the binding replacement.
 
-#### 0.7.1 The Blocker — Proven at Runtime
+#### 0.7.1 The Blocker — Proven at Runtime ~~[Option-Y fan-out superseded by §0.7.2 ruling 2026-06-06 — see below]~~
 
 `apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts` currently fans out refine windows by calling `spawn("claude", ["run", "docs/agents/refine_bctc_md/flow/main.md", "--input", payloadJson])`. The mcp-server container is a Bun/TS microservice with NO `claude` CLI binary installed. Every spawn fails ENOENT (exit -2). The orchestrator collects empty results and marks every report `window_status=FAILED`, `row_count=0`.
 
@@ -158,7 +159,7 @@ The two options in the original §0.6.2 sentence are both non-runnable:
 - **claude CLI subprocess** — binary absent in-container; ENOENT confirmed.
 - **Workflow-style parallel map** — this is a Claude Code harness construct; it does not exist in a Bun microservice runtime.
 
-#### 0.7.2 Decision — OPTION Y: Host-Level Fleet Cron (BINDING)
+#### 0.7.2 Decision — OPTION Y: Host-Level Fleet Cron ~~[SUPERSEDED by §0.7.2 ruling 2026-06-06 — Option C replaces; see ruling appended after §0.7.7]~~
 
 **Ruling: Option Y. The refine orchestration moves OUT of the mcp-server container to the host-level fleet (Claude Code cron), using the standard fleet Agent/Task subagent fan-out mechanism. `bctcRefineJob.ts` is reduced to a thin data-service helper (readiness query + push-write only). The `spawn("claude", ...)` call is deleted.**
 
@@ -243,6 +244,98 @@ Replace the row:
 With:
 ```
 | Fan-out mechanism | RULED: Option Y — host-level fleet cron (CC Agent/Task subagent fan-out). spawn("claude",...) deleted from bctcRefineJob.ts. mcp-server is a pure data service; orchestration is a fleet cron + refine_bctc_md agent. See §0.7. |
+```
+
+---
+
+### 0.7.2 AMENDMENT RULING — Option C: Sequential In-Agent Chunked + Resumable (2026-06-06, REFINE-OPTC-DESIGN)
+
+**Status:** BINDING. Supersedes §0.7.1 fan-out rationale and §0.7.2 Option-Y decision above.
+**Author:** architect | **Task:** REFINE-OPTC-20260606
+
+#### Structural Blocker — Option Y is Unreachable in the Cowork Runtime
+
+`refine_bctc_md` is dispatched by the cowork-team fan-out (spawn-fanout.md L72-78) AS a subagent.
+A spawned subagent in the Claude Code cowork runtime has no nested Agent/Task tool available.
+`main.md` Phase 2 (L91-124) calls `spawn_agent(agent_id: "refine_bctc_md", ...)` — this call is
+structurally unreachable; no Task tool is in scope. Option A (nested custom-agent spawn) and
+Option B (Workflow parallel-map) are both unavailable for the same reason.
+`init.md` L32 ("Spawning sub-agents — this agent is itself a leaf subagent") is the authoritative
+statement; main.md L91-124 contradicts it and must be reconciled.
+
+**Decision: Option C — sequential in-agent, chunked + resumable.**
+`refine_bctc_md` is ONE leaf worker with an internal sequential loop over a bounded window
+chunk. The 4 sub-flows (table/prose/continuation/verify) are INLINE logic selected per window,
+not subagent boundaries.
+
+#### C1 — Chunk Size: 7 windows per fire
+
+Rationale: haiku context per window = OCR text (~2-4K tokens) + page image (~1-2K tokens, when
+needed) + markdown output (~1-2K tokens) ≈ 6-8K tokens/window. 7 windows × 8K = ~56K tokens
+active context — well within haiku's 200K limit while leaving headroom for system prompt,
+sub-flow instructions, and tool response buffering. 7 drains the 34-window DGC canary in 5
+fires across ~2.5 days at two slots/day. Env var: `REFINE_CHUNK_SIZE` (default 7, integer).
+
+#### C2 — Resume Contract
+
+**First fire on a fresh report (refine_status = PENDING):**
+1. Call `push_bctc_refined_unit` with `reset: true` on the FIRST window push of this fire.
+   This deletes all prior `bctc_refined_units` rows for the report (idempotent start).
+2. Process windows sequentially, pushing each result via `push_bctc_refined_unit` (reset: false
+   on windows 2..N of the same fire).
+3. Call `finalize_bctc_refine` ONLY when ALL windows have been pushed (last window of the report,
+   not the last window of the chunk). Until then, leave refine_status as PARTIAL.
+
+**Subsequent fires on a PARTIAL report:**
+1. Call `get_bctc_refined` with `{ report_id }` at the start of Phase 0 to enumerate already-
+   pushed unit_ids: `pushed_ids = Set(result.units.map(u => u.unit_id))`.
+2. Skip any window whose `unit_id` is in `pushed_ids`.
+3. Process the next `REFINE_CHUNK_SIZE` un-pushed windows only.
+4. Push each result with `reset: false` (append-mode — prior units preserved).
+5. Call `finalize_bctc_refine` ONLY after the LAST window of the report is pushed.
+
+**Exact tool call to enumerate pushed units:**
+```
+call_tool(server="vn-market", tool="get_bctc_refined", arguments={ report_id: report.id })
+→ { units: [{ unit_id, page_numbers, markdown, flags }] }
+```
+
+#### C3 — PARTIAL Re-Eligibility
+
+A report with `refine_status = PARTIAL` MUST remain claimable. The `get_bctc_pending_refine`
+WHERE clause: `text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL')`.
+`PARTIAL` is NOT a terminal state — it is the mid-drain marker. Only `finalize_bctc_refine`
+advances the report to `DONE`, `FAILED`, or confirms `PARTIAL` as final (if the report has
+irrecoverably failed windows with no remaining un-pushed windows to process).
+
+#### C4 — Identity Collapse Fix
+
+`refine_bctc_md` has ONE identity: leaf worker with an internal sequential chunk loop.
+- `init.md` L32 ("Spawning sub-agents — this agent is itself a leaf subagent"): CORRECT. Keep.
+- `main.md` L91-124 (fan-out spawn block): DELETE the Phase 2 fan-out spawn block. Replace
+  with a `for window in chunk_windows` sequential loop that calls sub-flow logic inline per
+  window type. The 4 sub-flows remain as inline invocation targets (not agent spawns).
+  The orchestrator/leaf contradiction is resolved by removing the spawn block entirely.
+  agent-father owns this edit in the REFINE-OPTC-IMPL task.
+
+#### C5 — Lock Semantics
+
+Lock key: `"bctc-refine:" + report.id` (unchanged).
+Owner: `"refine-orchestrator"` (matches bctcRefineJob.ts 368b7bad — unchanged).
+TTL: `REFINE_CHUNK_SIZE × REFINE_WINDOW_TIMEOUT_S + 120` seconds buffer.
+At defaults: `7 × 120 + 120 = 960s` (~16 minutes). Cap to nearest 100: **1000s**.
+Env var: `REFINE_LOCK_TTL_S` (default 1000). The TTL covers ONE chunk only, not the full
+report. Lock is claimed at Phase 0 start and released at Phase 4c exit (unchanged contract).
+A subsequent fire re-claims the lock for its own chunk.
+
+#### C6 — §8 Decisions Table Amendment
+
+Replace the Option Y fan-out row (§0.7.7) with:
+```
+| Fan-out mechanism | RULED Option C (2026-06-06): sequential in-agent chunked loop.
+                      refine_bctc_md is a leaf worker; no nested spawn. Chunk size 7
+                      (REFINE_CHUNK_SIZE). Resume via get_bctc_refined skip-set.
+                      PARTIAL stays re-eligible. Lock TTL = 1000s per chunk. |
 ```
 
 ---
