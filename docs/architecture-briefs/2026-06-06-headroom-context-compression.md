@@ -4,7 +4,7 @@
 **Author:** agents-architect
 **Status:** PROPOSAL — pending PO sprint triage
 **Owner zone:** dev-mcp-server (primary), dev-api-gateway (secondary, read-only)
-**Signal:** `docs/signals/headroom-context-compression-20260606T184458Z.json` → po
+**Signal:** `docs/signals/headroom-context-compression-20260606T184634Z.json` → po
 
 ---
 
