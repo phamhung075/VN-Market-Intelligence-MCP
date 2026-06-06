@@ -3799,9 +3799,20 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T17:41:49Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-06T18:12:00Z",
+    "_updated_by": "dev-team-router",
     "rows": [
+      {
+        "id": "rtr-sbv-sla-measurement-layer-202606061815",
+        "ts": "2026-06-06T18:12:00Z",
+        "source": "router-counter-probe",
+        "type": "anomaly",
+        "severity": "P3",
+        "route_to": "po",
+        "status": "OPEN",
+        "payload_ref": null,
+        "summary": "sbv_fx SLA false-flag class hit occ#3 — PROMOTED per watch rule. occ#1 B12-sbv (Jun 5, FALSE-FLAG); occ#2 auditor c052 17:38Z claimed 38min WARN while router probe showed VPS push 11min prior; occ#3 auditor c053 18:08Z claimed 68min CRITICAL escalation while router probe showed VPS sbv push 17:58:47 = ~10min prior, 47 ok/24h, 0 errors. Two distinct hypotheses to root-cause: (a) SLA threshold 30min vs sbv push cadence ~30min = recurring marginal breach by construction (threshold-vs-cadence tuning); (b) get_sla_status measures the DATA timestamp not the PUSH timestamp — SBV publishes no new FX rates on weekends, so recorded data age grows while pushes stay healthy = sbv_fx is a weekend-awareness gap NOT covered by FIX-SLA-WEEKEND-AWARE 9e74cf0a (which calendar-gated price/foreign_flow only). Task shape: dev-mcp-server identify which layer get_sla_status reads for sbv_fx, then either extend the calendar-aware getSlaThreshold to sbv_fx (SBV business-day publication calendar) and/or set threshold > push cadence (e.g. 45-60min). Acceptance: weekend auditor cycles emit zero sbv_fx WARN/CRITICAL while VPS sbv pushes stay ok; weekday genuine staleness still detected."
+      },
       {
         "id": "rtr-bctc-playwright-thread-202606061545",
         "ts": "2026-06-06T15:36:20Z",
