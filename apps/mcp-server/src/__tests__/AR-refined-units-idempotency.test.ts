@@ -382,6 +382,33 @@ const MARKDOWN_1_ROW =
   "|---|---|---|---|\n" +
   "| 200 | Đầu tư tài chính ngắn hạn | 2.000 | 1.800 |";
 
+// ── DV-push-4 fixtures: section-header-tagged so BEQ-7 section guard is satisfied ──
+// Each window covers one of the three required statement sections.
+// Row counts: w1=2, w2=1, w3=2 → total=5 (same invariant as base fixtures above).
+
+// w1 fixture: balance_sheet section (2 rows)
+const DV4_MARKDOWN_W1_BALANCE =
+  "BẢNG CÂN ĐỐI KẾ TOÁN\n" +
+  "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n" +
+  "|---|---|---|---|\n" +
+  "| 100 | Tiền và các khoản tương đương tiền | 1.000 | 900 |\n" +
+  "| 110 | Tiền | 500 | 400 |";
+
+// w2 fixture: income_statement section (1 row)
+const DV4_MARKDOWN_W2_INCOME =
+  "BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH\n" +
+  "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n" +
+  "|---|---|---|---|\n" +
+  "| 200 | Doanh thu thuần | 2.000 | 1.800 |";
+
+// w3 fixture: cash_flow section (2 rows)
+const DV4_MARKDOWN_W3_CASHFLOW =
+  "BÁO CÁO LƯU CHUYỂN TIỀN TỆ\n" +
+  "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n" +
+  "|---|---|---|---|\n" +
+  "| 300 | Lưu chuyển tiền từ hoạt động kinh doanh | 3.000 | 2.500 |\n" +
+  "| 310 | Tiền thu từ bán hàng | 1.500 | 1.200 |";
+
 describe("push_tool_pathway (AC-MCP-OPTY-6)", () => {
   let db: Database;
   let reportId: string;
@@ -555,10 +582,13 @@ describe("push_tool_pathway (AC-MCP-OPTY-6)", () => {
   // ── DV-push-4: all-DONE → DONE status + correct row count ─────────────────
 
   it("DV-push-4: all-DONE → finalize DONE → table_rows count = sum of window rows", async () => {
-    // w1: 2 rows, w2: 1 row, w3: 2 rows → total 5 table rows expected
-    await pushHandler({ report_id: reportId, unit_id: "w1", page_numbers: [1], markdown: MARKDOWN_2_ROWS, confidence: 0.95, flags: [], window_status: "DONE" });
-    await pushHandler({ report_id: reportId, unit_id: "w2", page_numbers: [2], markdown: MARKDOWN_1_ROW, confidence: 0.9, flags: [], window_status: "DONE" });
-    await pushHandler({ report_id: reportId, unit_id: "w3", page_numbers: [3], markdown: MARKDOWN_2_ROWS, confidence: 0.88, flags: [], window_status: "DONE" });
+    // w1: 2 rows (balance_sheet), w2: 1 row (income_statement), w3: 2 rows (cash_flow)
+    // → total 5 table rows expected.
+    // Fixtures carry Vietnamese section headers so BEQ-7 section guard finds all 3
+    // statement types and does NOT demote report_status DONE→PARTIAL.
+    await pushHandler({ report_id: reportId, unit_id: "w1", page_numbers: [1], markdown: DV4_MARKDOWN_W1_BALANCE, confidence: 0.95, flags: [], window_status: "DONE" });
+    await pushHandler({ report_id: reportId, unit_id: "w2", page_numbers: [2], markdown: DV4_MARKDOWN_W2_INCOME, confidence: 0.9, flags: [], window_status: "DONE" });
+    await pushHandler({ report_id: reportId, unit_id: "w3", page_numbers: [3], markdown: DV4_MARKDOWN_W3_CASHFLOW, confidence: 0.88, flags: [], window_status: "DONE" });
 
     expect(countDb("bctc_refined_units", "report_id", reportId)).toBe(3);
 
