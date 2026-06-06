@@ -2220,7 +2220,7 @@
             "title": "FAIL-LOUD-STOP-RELEASE (F-12+F-2): task_release + atomic .head idle-reset on ALL STOP paths in developer/qa/fixer flows; dev-team Step 0b BLOCKED-task check resets head + routes to triage",
             "owner": "agent-father",
             "type": "FIX",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "docs/agents/",
             "created_at": "2026-06-06T20:09:07Z",
             "priority": "high",
@@ -2234,7 +2234,8 @@
               "docs/agents/dev-team/flow/main.md",
               "docs/protocols/fail-loud-protocol.md"
             ],
-            "note": "Closes the up-to-24h head-livelock + 1h lock-hold class per fail-loud STOP. Audit brief Rank 1. fail-loud-protocol.md Error Boundary must gain the release step so future flows inherit it."
+            "note": "DONE 2026-06-06: task_release + atomic .head idle-reset on all STOP paths (developer/qa/fixer/fail-loud-protocol); dev-team Step 0b BLOCKED-task guard. AC-WF1-1..8 all PASS. Dry-run trace: docs/handoffs/WF-1-dry-run-trace.md.",
+            "completed_at": "2026-06-06T21:30:00Z"
           },
           {
             "id": "WF-2",

@@ -1,4 +1,4 @@
-<!-- size-justification: 149L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, task-lock claim, doc-update+graphify protocol, implementation record template, mandatory decision-journal steps, and RETURN schema are all tightly coupled sequential steps that must be read in one pass -->
+<!-- size-justification: 161L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, task-lock claim, doc-update+graphify protocol, implementation record template, mandatory decision-journal steps, and RETURN schema are all tightly coupled sequential steps that must be read in one pass. +12L: WF-1 task_release + atomic .head idle-reset on both STOP paths (AC-WF1-1/2). -->
 # Developer — Main Flow
 
 **Scope:** `apps/mcp-server/` root only (TypeScript/Bun). Dev-* zone agents use [`microservice-main.md`](./microservice-main.md) for `apps/<service>/` zone work.
@@ -67,8 +67,20 @@ if not result.claimed:
 ```
 
 3. Read `docs/handoffs/TASK_NNN.md` first — use `files_to_read/modify/create` directly, skip redundant scanning
-4. `depends_on` not Done → STOP, notify PM
-5. Load knowledge files (fail-loud → `send_telegram(channel="bug")`, STOP)
+4. `depends_on` not Done →
+   ```
+   # WF-1 STOP-RELEASE (AC-WF1-1/2) — run BEFORE send_telegram + EXIT
+   call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+   // ok=false acceptable (TTL expired) — best-effort cleanup
+   tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+   jq --arg s "idle" --arg t "$now" --arg u "developer" \
+     '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+     docs/data/orch/orch-state.json > "$tmp"
+   [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
+   send_telegram(channel="bug", "[developer] STOP: depends_on not Done for task:" + task_id + " — head reset idle")
+   ```
+   EXIT (PIPELINE: blocked)
+5. Load knowledge files (fail-loud → run STOP-RELEASE block above first, then `send_telegram(channel="bug")`, STOP)
 6. **Before creating any new file** → look up canonical location in `docs/policies/docs-organization.md` table.
    Quick ref: source→`apps/mcp-server/src/` | tests→`apps/mcp-server/src/__tests__/` | reports→`reports/` | handoffs→`docs/handoffs/` | never at root.
 

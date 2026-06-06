@@ -1,4 +1,4 @@
-<!-- size-justification: 299L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). -->
+<!-- size-justification: 316L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 ## Team Boundary (Sprint 2026-05-31 — expanded)
@@ -164,7 +164,24 @@ head_updated_at   = $(echo "$CURRENT" | jq -r '.head.updated_at')
 
 **v1 legacy (no `head` key):** field names were `status`/`activeTaskId`/`nextAgent`/`updatedAt` directly at root. Self-heal to v3 on next write (first writer detects `_schema` absent or < "v3" and writes v3 envelope).
 
-- `head.status == "in_progress"` AND `head.next_agent` non-null AND `head.updated_at < 24h` → dispatcher-wrap then spawn `head.next_agent`. JUMP TO `execute`.
+- `head.status == "in_progress"` AND `head.next_agent` non-null AND `head.updated_at < 24h` →
+  **WF-1 BLOCKED-task check (AC-WF1-5 — run FIRST, before S2 dispatcher-wrap):**
+  ```bash
+  task_status=$(jq -r --arg tid "$head_active_task" \
+    '.task_board.active_sprints[].tasks[] | select(.id == $tid or .task_id == $tid) | .status' \
+    docs/data/orch/orch-state.json | head -1)
+  if [ "$task_status" = "BLOCKED" ]; then
+    # BLOCKED task — reset head to idle so pipeline-resume never re-spawns it
+    tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+    jq --arg s "idle" --arg t "$now" --arg u "dev-team" \
+      '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+      docs/data/orch/orch-state.json > "$tmp"
+    [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
+    send_telegram(channel="work", "[dev-team] head task " + head_active_task + " is BLOCKED — head reset idle, routing to triage")
+    JUMP TO drain-signals   # PO triage picks up from here
+  fi
+  ```
+  If task is NOT BLOCKED → dispatcher-wrap then spawn `head.next_agent`. JUMP TO `execute`.
   ```
   # S2 dispatcher-wrap:
   bare_task_id = head.active_task_id   # from docs/data/orch/orch-state.json .head block

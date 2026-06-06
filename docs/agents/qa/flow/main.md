@@ -1,4 +1,4 @@
-<!-- size-justification: 205L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. -->
+<!-- size-justification: 216L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering; mandatory decision-journal per-task step at verdict routing. +11L: WF-1 error-boundary STOP-RELEASE block (AC-WF1-3). -->
 # QA — Main Flow
 
 **Tools:** `docs/agents/tools/package/qa.md`
@@ -13,6 +13,17 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 ---
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
+> **WF-1 STOP-RELEASE (AC-WF1-3):** On ANY tool failure BEFORE verdict is reached (pre-approved/changes-requested), run this block first:
+> ```
+> call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+> // ok=false acceptable — best-effort. Note: CHANGES_REQUESTED does NOT release (fixer holds lock — intentional).
+> tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+> jq --arg s "idle" --arg t "$now" --arg u "qa" \
+>   '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+>   docs/data/orch/orch-state.json > "$tmp"
+> [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
+> ```
+> Then continue with the standard error-boundary exit (send_telegram(bug) + drop signal + EXIT).
 > **DECISION JOURNAL RULE:** Terminal output is STATUS-ONLY (RETURN + caveman). All reasoning → `docs/agent-memory/decisions/sprint-<id>.md` via skill `.claude/skills/decision-journal/SKILL.md`.
 
 ---

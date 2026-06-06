@@ -62,6 +62,20 @@ Violation = token waste + contamination of other agents' context.
 
 If ANY tool call or flow step fails after 1 retry:
 ```
+0. STOP-RELEASE (WF-1, AC-WF1-6) — run BEFORE steps 1-4:
+   If holding a sprint-task lock:
+     call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + task_id })
+     // ok=false acceptable (already expired) — best-effort cleanup
+     // dev-* agents lack direct MCP gateway binding in the sub-agent context (F-8, pending WF-3 ruling).
+     // Until WF-3 is resolved: dev-* agents cannot call task_release directly — rely on TTL expiry (3600s max).
+     // The .head idle-reset below IS executable by all agents (jq + atomic rename, no MCP needed).
+   Write .head idle atomically (applies to ALL agents regardless of MCP binding):
+     tmp=$(mktemp); now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+     jq --arg s "idle" --arg t "$now" --arg u "{agent-id}" \
+       '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
+       docs/data/orch/orch-state.json > "$tmp"
+     [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
+   Edge case: if fixer exits early, task stays REVIEW (QA verdict stands) — PM detects stuck-REVIEW and escalates.
 1. send_telegram(channel="bug", message="[{agent-id}] Step N failed: {one-line error}")
 2. Drop signal file → docs/signals/{agent-id}-{ISO-timestamp}.json:
    {
