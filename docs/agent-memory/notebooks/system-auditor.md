@@ -3,6 +3,17 @@ agent: system-auditor
 session_date: 2026-06-06
 ---
 
+## c058 · 2026-06-06T23:12:18Z
+### Audit Run Tier-1 (23:12 UTC 2026-06-06)
+- Tier: 1 (runtime ping) | Services: 6 checked
+- Anomalies: 0 new | Status: HEALTHY
+
+### RAW-PROBE: 2026-06-06T23:12:18Z
+All 6 host_runtime_set services UP (healthy): mcp-server 1min, api-gateway 12h, frontend 1h, macro-indicators 1h, mcp-gateway 10d, pdf-extractor 12h
+Health endpoints: mcp-server:3000 200✓, api-gateway:4000 200✓, macro-indicators:5004 200✓, pdf-extractor:5001 200✓, frontend:3001 200✓
+Memory: 6.17% (< 85%)✓; Disk: 39% (< 85%)✓; Restart: 1 (≤2)✓
+MCP Circuits: 0 open, 0 half-open✓; Unresolved errors: 0✓; Crons: 100+ jobs ≥97.3% success✓
+
 ## c057 · 2026-06-06T22:42:05Z
 ### Audit Run Tier-3 (22:42 UTC 2026-06-06)
 - Tier: 3 (runtime + DB integrity + doc audit) | Services: 6 checked | DB checks: 16 attempted (8 NOT-RUN: sqlite3 sandbox unavailable)
@@ -47,11 +58,3 @@ session_date: 2026-06-06
 - [get_vps_proxy_health] 4 routes healthy, bctc stale (known benign) → **INFO**
 - [get_rate_limit_status] All 11 API hosts ready → **PASS**
 - [BCTC/news/articles checks] TOOL-UNAVAILABLE → **NOT-RUN**
-
-## c055 · 2026-06-06T22:12:14Z
-### Audit Run Tier-1 (22:12 UTC 2026-06-06)
-- Tier: 1 (runtime ping) | Services: 6 checked
-- Anomalies: 0 new | Status: HEALTHY
-
-### RAW-PROBE: 2026-06-06T22:12:04Z
-All containers UP (healthy), health endpoints 200, memory 10.19%, disk 36%, restart 0
