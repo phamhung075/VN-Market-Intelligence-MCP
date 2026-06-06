@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-06T22:45:00Z",
   "_updated_by": "qa",
   "head": {
-    "active_task_id": null,
-    "next_action": "NEXT-TICK: (1) PLAYWRIGHT-ROW CLOSURE CHECK: vn-bctc-fetch restarted 17:37Z, 6h cadence -> next scheduled cycle ~23:37Z Sat; verify raw get_vps_proxy_health bctc last_push moves off Jun-5-14:48 + new Q1/2026 PDFs for the 10-item backlog (ACV BDI D2D DAG DLC GVR HCM HPG HSG HVN — note ACV/HPG Q1 not yet FILED at SSC, honest SKIPs expected; any GAS-class filed ticker should land). If cycle drains chromium-free -> RESOLVE rtr-bctc-playwright-thread. (2) WATCH-2 refine Option-C first live proof: slot-2 (240min cadence, last 14:04:30Z) refires ~18:04Z — verify docker exec mcp-server bun:sqlite readonly /app/data/market.db: DGC 0c6f0535 +<=7 bctc_refined_units rows PENDING->PARTIAL (NOT DONE), ACB fea19bae 27 rows INTACT; pre-Cowork-refresh failure = EXPECTED (operator owes refresh paste). (3) WEEKEND LIVE-PROOF WATCH: Sunday auditor cycles must show ZERO prices/foreign_flow stale-CRITICALs (c051 pass 1/N green); any such CRITICAL = FIX-SLA-WEEKEND-AWARE miss -> reopen. (4) Sunday 03:00-05:00Z zone-scans -> Monday triage. (5) Monday ~02:15Z price-push resume confirm-only. (6) FU-COWORK-OWNER-AGENT-ADOPT P3-cleanup: close after one cowork cycle survives a server restart. TICK 172047Z: signal drained same-tick to SHIPPED — recon-complete (HIGH) -> PO BATCH 1/1 -> dev-vps-crawls impl FIX-VPS-SSC-CURL-SCRAPER 7ed37441 deployed+live-run-proven (GAS 17.6MB chromium-free); chromium pthread class root-fix now live on VPS, row closure pending scheduled-cycle proof; signal file moved to processed/; auditor c051 ACCEPTED 11/11 (weekend SLA live-proof pass 1 green) + c052 ACCEPTED 12/12 (c7c55d72 raw-verified 1-file/retention-3/145L; 1 WARN sbv_fx 38min-vs-30min — router counter-probe 17:39:47Z showed sbv last_push 17:28:46 = 11min + 47 ok/24h + 0 errors -> between-push blip / SLA-measurement-layer gap, class occ#2 of yesterday's B12-sbv FALSE-FLAG, watch-only, promote at occ#3 as sbv-SLA-threshold-vs-cadence tuning; c052 also reported curl FAIL on api-gateway/macro-indicators/frontend health endpoints citing network isolation while c051 got 200s — probe-env nit occ#1, containers docker-healthy). PO channel-audit note: report 3055 CTG 2026-Q1 confidence=0.00 conviction-skip = designed low-confidence guard working — NOTED, watch if recurring. Carries: threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); operator owes /cron-cowork-team refresh + Cowork refine refresh paste; auditor route_to/type row-schema nits occ#1; dev-mcp-server tools=164-vs-162 claim nit occ#1; auditor mem trend reset benign (16:46Z container recreate, c051 13.96%); transient tmp-ENOSPC blip occ#1; news between-push stale-blip occ#1 (17:39Z probe, 14min vs tight SLA, 88 ok/24h); MEMORY.md index over 24.4KB (housekeeping candidate).",
-    "next_agent": null,
-    "status": "idle",
-    "updated_at": "2026-06-06T17:41:49Z",
-    "updated_by": "dev-team",
-    "wip": 0,
-    "wip_max": 2
+    "in_progress": [
+      "F-1",
+      "F-2"
+    ],
+    "next_agent": "dev-mcp-server|dev-macro-indicators",
+    "wip_count": 2,
+    "wip_cap": 2,
+    "note": "Batch 1: F-1 + F-2 parallel (independent zones); F-1 fetches new fetch-status endpoint; F-2 removes fake latency. F-3 depends on F-1 completion."
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2264,6 +2264,140 @@
             "sprint": "WORKFLOW-FLUIDITY",
             "depends": [],
             "note": "Timebox 2h. Proven again in ORCH-TASK-CANON: agent-father F1B had to run mutex-less as sole writer. Output: ruling doc + handoff (agent-father for flow edits or dev-mcp-server for binding work)."
+          }
+        ]
+      },
+      {
+        "id": "FETCH-OPS-PAGE-TRUTH",
+        "lead": "architect",
+        "priority": "high",
+        "status": "active",
+        "opened_at": "2026-06-06T21:17:36Z",
+        "tasks": [
+          {
+            "id": "ARCH-FETCH-OPS-1",
+            "title": "Technical blueprint: fetch-operations page honest sources + real operational detail",
+            "owner": "architect",
+            "type": "ARCH",
+            "status": "DONE",
+            "zone": "multi",
+            "created_at": "2026-06-06T21:17:36Z",
+            "completed_at": "2026-06-06T21:34:00Z",
+            "priority": "high",
+            "size": "S",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [],
+            "files": [
+              "docs/handoffs/FETCH-OPS-PAGE-TRUTH-ARCH.md",
+              "docs/agent-memory/decisions/sprint-FETCH-OPS-PAGE-TRUTH-architect.md"
+            ],
+            "note": "4-zone blueprint: F-1 mcp-server (news filter fix + fetch-status endpoint), F-2 macro-indicators (remove fake latency), F-3 frontend (honest source panels), F-4 api-gateway SPIKE (prefix duality). Handoff and decision journal written."
+          },
+          {
+            "id": "F-1",
+            "title": "mcp-server: news filter fix + fetch-status endpoint",
+            "owner": "dev-mcp-server",
+            "type": "sprint-task",
+            "status": "TODO",
+            "zone": "apps/mcp-server/",
+            "created_at": "2026-06-06T21:35:00Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [],
+            "files": [
+              "apps/mcp-server/src/interface/mcp/routes/newsHeadlinesHandler.ts",
+              "apps/mcp-server/src/interface/mcp/server.ts",
+              "apps/mcp-server/src/interface/mcp/routes/fetchStatusHandler.ts"
+            ],
+            "note": "Fix LIKE '%bloomberg%' → LIKE '%bloomberg.com%' and LIKE '%reuters.com%'; add GET /api/fetch-status aggregating sources from rag_analyses, vpsProxy health, and BCTC queue counts.",
+            "acceptance_criteria": [
+              "GET :3000/mcp/api/news/headlines?source=bloomberg returns count:0",
+              "GET :3000/mcp/api/news/headlines?source=reuters returns only %reuters.com% URLs",
+              "GET :3000/api/fetch-status returns JSON with sources[], vpsProxy{}, bctcPipeline{}",
+              "sources[] contains only sources with actual rag_analyses rows",
+              "Unit test: buildSql domain anchors verified"
+            ]
+          },
+          {
+            "id": "F-2",
+            "title": "macro-indicators: remove fake latency field",
+            "owner": "dev-macro-indicators",
+            "type": "sprint-task",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "created_at": "2026-06-06T21:35:00Z",
+            "priority": "high",
+            "size": "XS",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [],
+            "files": [
+              "apps/macro-indicators/pkg/interface/http/handlers_external.go"
+            ],
+            "note": "Remove hardcoded totalLatencyMs:0 from summary map at line 161; remove any per-source latencyMs:0. Container REBUILD required.",
+            "acceptance_criteria": [
+              "GET :5004/external response: summary does NOT contain totalLatencyMs",
+              "Per-source entries do NOT contain latencyMs",
+              "Test handlers_snapshot_contract_test.go updated",
+              "REBUILD macro-indicators container"
+            ]
+          },
+          {
+            "id": "F-3",
+            "title": "frontend: honest source panels + age display",
+            "owner": "dev-frontend",
+            "type": "sprint-task",
+            "status": "TODO",
+            "zone": "apps/frontend/",
+            "created_at": "2026-06-06T21:35:00Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [
+              "F-1"
+            ],
+            "files": [
+              "apps/frontend/app/routes/dashboard.fetch.tsx",
+              "apps/frontend/app/lib/api/client.ts",
+              "apps/frontend/app/domain/market.ts"
+            ],
+            "note": "Replace Reuters/Bloomberg hardcoded panels with real source freshness table from GET /api/fetch-status. Show source name, age (N min ago), direction (green/amber/red), 24h count. Include VPS proxy status and BCTC pipeline. Container REBUILD required.",
+            "acceptance_criteria": [
+              "GET :3001/dashboard/fetch 200 — no Reuters/Bloomberg panels",
+              "Source freshness table shows DB-only sources",
+              "Each source shows: name, age string, direction indicator, 24h count",
+              "VPS proxy section shows last push + stale status",
+              "BCTC pipeline section shows pending/done/failed",
+              "Macro panel does NOT render latency span",
+              "No hardcoded source names in TSX",
+              "REBUILD frontend container"
+            ]
+          },
+          {
+            "id": "F-4",
+            "title": "api-gateway SPIKE: /mcp/* prefix-strip duality",
+            "owner": "dev-api-gateway",
+            "type": "sprint-task",
+            "status": "TODO",
+            "zone": "apps/api-gateway/",
+            "created_at": "2026-06-06T21:35:00Z",
+            "priority": "medium",
+            "size": "SPIKE",
+            "sprint": "FETCH-OPS-PAGE-TRUTH",
+            "depends": [
+              "F-1"
+            ],
+            "files": [
+              "apps/mcp-server/src/interface/mcp/server.ts",
+              "apps/api-gateway/pkg/primitive/not-deployed-rerouter/reroute.go"
+            ],
+            "note": "4h timebox. Resolve /mcp/* vs /api/* duality. Add /api/news/headlines etc aliases in mcp-server, OR update rerouter target paths to drop /mcp prefix. Additive alias approach is safest. Container REBUILD required (mcp-server if modified, api-gateway).",
+            "acceptance_criteria": [
+              "GET :4000/mcp/api/news/headlines?source=cafef returns articles (was 404)",
+              "Not-deployed rerouter path still works",
+              "Rerouter unit tests pass",
+              "REBUILD api-gateway container"
+            ]
           }
         ]
       }
