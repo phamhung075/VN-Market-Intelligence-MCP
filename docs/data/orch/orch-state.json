@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH-1: 12:00Z gatherer fire — first live proof of FIX-COWORK-CADENCE-DRIFT-SNAP (2b67d3a7): news-scout-offhours + market-watcher-offhours must fire ~12:00Z not 16:00Z. WATCH-2: 13:00Z refine-bctc-slot-1 fire — model pin fixed (a3fa9098, spawns without dispatcher override) + Phase 0 contract served (172999f0 + rebuild 39c8adb0, live-probed); expect Phase 2 fan-out + first artifacts in docs/refine-output/0c6f0535*/ BUT DGC windows truncated p1-26/46 per NEW row rtr-refine-window-truncation-202606060950 (PO triage next tick). Tick 092037Z shipped: FIX-REFINE-MODEL-PIN a3fa9098 + FIX-REFINE-PENDING-SCHEMA 172999f0 (+mcp-server rebuild). CTG: no BCTC data (router-probed), covered by lock bctc-ctg-attachment-fetch-escalation-c026 (holder bctc-analyst, exp 06-07T00:06:31Z). Carry: Monday ~02:15Z price-push resume; T3 false-0-commits untested; phantom-gitignore occ#2 (exit-1 variant — promote on occ#3); cycle-snapshot regime-keys drift occ#1 watch; threshold-cite-soft occ#1; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; dead payload_ref occ#1; auditor flow 561L split debt; REFINE_MAX_WINDOW_PAGES default literal duplicated in 2 files (minor debt); operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH-1: 12:00Z gatherer fire — first live proof of FIX-COWORK-CADENCE-DRIFT-SNAP (2b67d3a7): news-scout-offhours + market-watcher-offhours must fire ~12:00Z not 16:00Z. WATCH-2: 13:00Z refine-bctc-slot-1 fire — model pin fixed (a3fa9098, spawns without dispatcher override) + Phase 0 contract served (172999f0 + rebuild 39c8adb0, live-probed); expect Phase 2 fan-out + first artifacts in docs/refine-output/0c6f0535*/ BUT DGC windows truncated p1-26/46 per NEW row rtr-refine-window-truncation-202606060950 (PO triage next tick). Tick 092037Z shipped: FIX-REFINE-MODEL-PIN a3fa9098 + FIX-REFINE-PENDING-SCHEMA 172999f0 (+mcp-server rebuild). CTG: no BCTC data (router-probed), covered by lock bctc-ctg-attachment-fetch-escalation-c026 (holder bctc-analyst, exp 06-07T00:06:31Z). Carry: Monday ~02:15Z price-push resume; T3 false-0-commits untested; phantom-gitignore PROMOTED occ#3 -> row rtr-phantom-gitignore-202606060955; cycle-snapshot regime-keys drift occ#1 watch; threshold-cite-soft occ#1; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; dead payload_ref occ#1; auditor flow 561L split debt; REFINE_MAX_WINDOW_PAGES default literal duplicated in 2 files (minor debt); operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T09:39:51Z",
+    "updated_at": "2026-06-06T09:40:32Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -3663,7 +3663,7 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T09:39:51Z",
+    "_updated_at": "2026-06-06T09:40:32Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -3674,6 +3674,16 @@
         "route_to": "po",
         "status": "NEW",
         "summary": "fetchAllPageTexts stop-at-first-empty heuristic (bctcRefineJob.ts:170-173) truncates window coverage at any missing/empty OCR page mid-document. Raw-proven: DGC 0c6f0535 has NO pdf_extracted_text row for page 27 (25,26,28,29,30 present, text to p46) -> windows[] covers only p1-26 of 46; refine would silently produce half-document artifacts. Pre-existing cron-helper defect, now also surfaced through get_bctc_pending_refine (shares the helper). Fix direction: iterate over actual DB page rows (SELECT DISTINCT page_number) instead of sequential probe-until-empty.",
+        "payload_ref": null
+      },
+      {
+        "id": "rtr-phantom-gitignore-202606060955",
+        "ts": "2026-06-06T09:40:32Z",
+        "severity": "MEDIUM",
+        "source": "dev-team-router",
+        "route_to": "po",
+        "status": "NEW",
+        "summary": "PROMOTED occ#3: git add docs/data/orch/orch-state.json emits French warning 'Les chemins suivants sont ignores par un de vos fichiers .gitignore: docs/data' on every tick-close stage; occ#2 (tick 082038Z) ALSO returned exit 1 despite staging succeeding (porcelain M verified). Path is NOT ignored (git check-ignore exit 1, file tracked). Risk: warning noise trains operators/agents to ignore git add failures on the orch-state path -> could mask a REAL staging failure; exit-1 variant breaks && chains. Root-cause candidates: .gitignore has a docs/data pattern negated for tracked files, or git version locale quirk. Fix direction: audit .gitignore docs/data rules + make tick-close staging verify porcelain explicitly (already router practice; encode in flow).",
         "payload_ref": null
       }
     ],
