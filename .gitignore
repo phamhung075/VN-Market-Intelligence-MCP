@@ -3,7 +3,7 @@
 .DS_Store
 node_modules
 ~/
-data/
+/data/
 *.db
 *.db-shm
 *.db-wal
@@ -37,9 +37,18 @@ docs/daily/
 docs/outbox/
 
 # PDF single-source consolidation (PDF-SINGLE-SOURCE)
-data/pdfs/*.pdf
-data/pdfs-local/
+/data/pdfs/*.pdf
+/data/pdfs-local/
 
 # E3 idempotency cache — bctc-analyst ephemeral agent-layer metadata (OQ-5)
-# Note: covered by top-level data/ rule above; explicit entry for documentation clarity
-data/bctc-analysis-cache/
+# Note: covered by top-level /data/ rule above; explicit entry for documentation clarity
+/data/bctc-analysis-cache/
+
+# ephemeral runtime/generated files in docs/data/ — not tracked, suppress from status
+# (previously hidden by the unanchored data/ rule; now explicit after anchoring to /data/)
+docs/data/alert-verdicts.json
+docs/data/daily-dashboard.json
+docs/data/md-dependency-graph.html
+docs/data/pressure-state.json
+docs/data/vn-market-tasks.json
+docs/data/BATCH_S_1849_SUMMARY.md
