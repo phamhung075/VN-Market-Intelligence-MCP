@@ -1,5 +1,17 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-06 | **Sprint:** WORKFLOW-FLUIDITY
+
+## WORKFLOW-FLUIDITY-BA · 2026-06-06
+
+Spec complete. REQ file: `docs/handoffs/WORKFLOW-FLUIDITY-BA-spec.md`. 1 PO-resolved option (WF-2 dual options presented per PO note). 3 blockers for architect (BLOCKER-WF2-A: locate TS write path; BLOCKER-WF3-A: option A vs B ruling; BLOCKER-WF3-B: gateway binding mechanical test). NEXT: architect.
+
+Key BA findings (raw-read, not relayed):
+- WF-1: developer/flow/main.md L70+L71 both STOP without task_release or .head idle-reset. qa/flow/main.md APPROVED path already releases (correct). fixer has no explicit release on Error Boundary. dev-team Step 0b 24h guard fires too late — BLOCKED-task check needed. fail-loud-protocol.md § Error Boundary missing step 0 (release + head reset) — adding here closes the fleet-wide class.
+- WF-2: signal-dashboard SKILL WRITE has no mtime-retry — bare temp→rename. Three concurrent writer classes confirmed (dev-team :07, cowork-team */15, auditor 0/*/4) not documented in skill. TS write path location is unconfirmed (BLOCKER-WF2-A). FU-ORCH-HEAD-CAS = same class bug on .head.
+- WF-3: binding gap confirmed from memory (ORCH-TASK-CANON: agent-father F1B mutex-less) + BA gateway calls succeed in THIS session. Two ruling surfaces: (1) is binding inherited by Agent() spawns?; (2) which option (single-claim/heartbeat/invariant) is right after confirming (1).
+- Sequencing: WF-1 and WF-3 parallel NOW; WF-2 blocked on BLOCKER-WF2-A + architect option ruling.
+
 **Last updated:** 2026-06-06 | **Sprint:** ORCH-TASK-CANON
 
 ## ORCH-TASK-CANON-BA · 2026-06-06

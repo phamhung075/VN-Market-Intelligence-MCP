@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-06T20:03:23Z",
-  "_updated_by": "pm",
+  "_updated_at": "2026-06-06T20:12:31Z",
+  "_updated_by": "ba",
   "head": {
     "active_task_id": null,
     "next_action": "NEXT-TICK: (1) PLAYWRIGHT-ROW CLOSURE CHECK: vn-bctc-fetch restarted 17:37Z, 6h cadence -> next scheduled cycle ~23:37Z Sat; verify raw get_vps_proxy_health bctc last_push moves off Jun-5-14:48 + new Q1/2026 PDFs for the 10-item backlog (ACV BDI D2D DAG DLC GVR HCM HPG HSG HVN — note ACV/HPG Q1 not yet FILED at SSC, honest SKIPs expected; any GAS-class filed ticker should land). If cycle drains chromium-free -> RESOLVE rtr-bctc-playwright-thread. (2) WATCH-2 refine Option-C first live proof: slot-2 (240min cadence, last 14:04:30Z) refires ~18:04Z — verify docker exec mcp-server bun:sqlite readonly /app/data/market.db: DGC 0c6f0535 +<=7 bctc_refined_units rows PENDING->PARTIAL (NOT DONE), ACB fea19bae 27 rows INTACT; pre-Cowork-refresh failure = EXPECTED (operator owes refresh paste). (3) WEEKEND LIVE-PROOF WATCH: Sunday auditor cycles must show ZERO prices/foreign_flow stale-CRITICALs (c051 pass 1/N green); any such CRITICAL = FIX-SLA-WEEKEND-AWARE miss -> reopen. (4) Sunday 03:00-05:00Z zone-scans -> Monday triage. (5) Monday ~02:15Z price-push resume confirm-only. (6) FU-COWORK-OWNER-AGENT-ADOPT P3-cleanup: close after one cowork cycle survives a server restart. TICK 172047Z: signal drained same-tick to SHIPPED — recon-complete (HIGH) -> PO BATCH 1/1 -> dev-vps-crawls impl FIX-VPS-SSC-CURL-SCRAPER 7ed37441 deployed+live-run-proven (GAS 17.6MB chromium-free); chromium pthread class root-fix now live on VPS, row closure pending scheduled-cycle proof; signal file moved to processed/; auditor c051 ACCEPTED 11/11 (weekend SLA live-proof pass 1 green) + c052 ACCEPTED 12/12 (c7c55d72 raw-verified 1-file/retention-3/145L; 1 WARN sbv_fx 38min-vs-30min — router counter-probe 17:39:47Z showed sbv last_push 17:28:46 = 11min + 47 ok/24h + 0 errors -> between-push blip / SLA-measurement-layer gap, class occ#2 of yesterday's B12-sbv FALSE-FLAG, watch-only, promote at occ#3 as sbv-SLA-threshold-vs-cadence tuning; c052 also reported curl FAIL on api-gateway/macro-indicators/frontend health endpoints citing network isolation while c051 got 200s — probe-env nit occ#1, containers docker-healthy). PO channel-audit note: report 3055 CTG 2026-Q1 confidence=0.00 conviction-skip = designed low-confidence guard working — NOTED, watch if recurring. Carries: threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md 500L vs 120L cap (Tier-2/3 split deferred); operator owes /cron-cowork-team refresh + Cowork refine refresh paste; auditor route_to/type row-schema nits occ#1; dev-mcp-server tools=164-vs-162 claim nit occ#1; auditor mem trend reset benign (16:46Z container recreate, c051 13.96%); transient tmp-ENOSPC blip occ#1; news between-push stale-blip occ#1 (17:39Z probe, 14min vs tight SLA, 88 ok/24h); MEMORY.md index over 24.4KB (housekeeping candidate).",
@@ -2694,11 +2694,12 @@
         "title": "Requirement spec for sprint WORKFLOW-FLUIDITY — decompose ranks 1-3 of docs/architecture-briefs/2026-06-06-workflow-fluidity-audit.md into acceptance criteria per WF-1/WF-2/WF-3",
         "owner": "ba",
         "type": "SPRINT-S",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "docs/",
         "created_at": "2026-06-06T20:09:07Z",
         "priority": "high",
-        "sprint": "WORKFLOW-FLUIDITY"
+        "sprint": "WORKFLOW-FLUIDITY",
+        "done_at": "2026-06-06T20:12:31Z"
       },
       {
         "id": "SPIKE-C44-PARALLEL-PROOF",
