@@ -2668,27 +2668,31 @@
         "title": "Architect: confirm join-key design + serving layer, design F1/F2/F3 technical implementation for decision-journal drill-down on /dashboard/orchestration",
         "type": "SPRINT-S",
         "sprint": "ORCH-DASH-DECISION-DRILLDOWN",
-        "status": "TODO",
+        "status": "CANCELLED",
         "size": "S",
         "priority": "high",
         "zone": "multi",
         "depends": [
           "BA-ORCH-DASH-DECISION-DRILLDOWN"
         ],
-        "note": "BA spec: docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-BA-spec.md. Confirm: (1) BOTH join-key strategies (optional task-id in STEP format + sprint fallback bucket); (2) serving layer = apps/mcp-server orchestrationHandler.ts; (3) sprint-id discovery scope for F2 journal loader; (4) EC-6 latency risk / per-sprint mtime cache decision; (5) single-open vs multi-open accordion UX. Dispatch: F1 (agent-father) → F2 (dev-mcp-server) → F3 (dev-frontend)."
+        "note": "BA spec: docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-BA-spec.md. Confirm: (1) BOTH join-key strategies (optional task-id in STEP format + sprint fallback bucket); (2) serving layer = apps/mcp-server orchestrationHandler.ts; (3) sprint-id discovery scope for F2 journal loader; (4) EC-6 latency risk / per-sprint mtime cache decision; (5) single-open vs multi-open accordion UX. Dispatch: F1 (agent-father) → F2 (dev-mcp-server) → F3 (dev-frontend).",
+        "closed_at": "2026-06-06T22:24:30Z",
+        "status_note": "PO triage 2026-06-06: superseded — scope shipped via sprint ORCH-DASH-DECISION-DRILLDOWN (F1/F2/F3 implemented, QA 18 AC verified, closeout e5883e5c). Stale residual backlog row."
       },
       {
         "id": "BA-ORCH-TASK-CANON",
         "task_id": "BA-ORCH-TASK-CANON",
         "title": "Requirement spec for sprint ORCH-TASK-CANON: canonical task schema + decision visibility on orchestration dashboard",
         "owner": "ba",
-        "status": "REVIEW",
+        "status": "DONE",
         "zone": "multi",
         "created_at": "2026-06-06T18:32:39Z",
         "type": "SPRINT-M",
         "sprint": "ORCH-TASK-CANON",
         "priority": "high",
-        "note": "Decompose .sprint_goal entry ORCH-TASK-CANON (F1 schema contract+migration / F2 serving coalesce / F3 frontend filter / F4 journal format+skill resolver bug / QA live-verify). Router 3-layer diagnosis is requirement-grade input — verify, don't re-discover. DOGFOOD: this task carries canonical {id,title,owner,status,zone,created_at}; task_id mirrored only until F1 migration lands."
+        "note": "Decompose .sprint_goal entry ORCH-TASK-CANON (F1 schema contract+migration / F2 serving coalesce / F3 frontend filter / F4 journal format+skill resolver bug / QA live-verify). Router 3-layer diagnosis is requirement-grade input — verify, don't re-discover. DOGFOOD: this task carries canonical {id,title,owner,status,zone,created_at}; task_id mirrored only until F1 migration lands.",
+        "closed_at": "2026-06-06T22:24:30Z",
+        "status_note": "PO triage 2026-06-06: spec delivered and consumed — sprint ORCH-TASK-CANON closed (513188a8, 5 tasks DONE + QA). REVIEW residue cleared."
       },
       {
         "id": "BA-WORKFLOW-FLUIDITY",
@@ -2732,6 +2736,30 @@
         "zone": "apps/mcp-server/",
         "created_at": "2026-06-06T21:26:20Z",
         "status_note": "PO critique APPROVED-LANE-B with 4 binding conditions (see brief ## PO Critique): (1) get_market_snapshot moved to exemption list — numeric quotes feed alert-commander; (2) golden-output validator PROVEN-RED by QA before HEADROOM_ENABLED=true; (3) error/passthrough counts in gate file; (4) defined similarity measure. Pick up after WORKFLOW-FLUIDITY signoff. Lead: ba decompose Phase-1 only."
+      },
+      {
+        "id": "FIX-FETCH-VERYSTALE-LABEL",
+        "title": "very-stale label polish on /dashboard/fetch (FETCH-OPS-PAGE-TRUTH carry-forward F-3): staleness pill wording/threshold UX, non-blocking",
+        "owner": "dev-frontend",
+        "type": "FIX",
+        "size": "S",
+        "priority": "low",
+        "status": "TODO",
+        "zone": "apps/frontend/",
+        "created_at": "2026-06-06T22:24:30Z",
+        "note": "Carry-forward from FETCH-OPS-PAGE-TRUTH closeout 2026-06-06T22:15Z. Cosmetic only; AC = live verify localhost:3001/dashboard/fetch post frontend rebuild."
+      },
+      {
+        "id": "TECH-DEBT-LINTING",
+        "title": "Clear 5 pre-existing tsc errors (1980-f2-canon-schema.test.ts + tasksMdJanitorJob.ts) so typecheck baseline is green",
+        "owner": "dev-mcp-server",
+        "type": "FIX",
+        "size": "S",
+        "priority": "low",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-06T22:24:30Z",
+        "note": "Carry-forward from FETCH-OPS-PAGE-TRUTH closeout. Related pre-existing constraint (separate, do not scope in): Bun full-suite C++ OOM crash on large corpus."
       }
     ],
     "archive": [],
