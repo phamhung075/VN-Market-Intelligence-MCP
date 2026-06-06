@@ -5,10 +5,10 @@
   "_updated_by": "po",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH-1: 12:00Z gatherer fire — first live proof of FIX-COWORK-CADENCE-DRIFT-SNAP (2b67d3a7): news-scout-offhours + market-watcher-offhours must fire ~12:00Z not 16:00Z. WATCH-2: 13:00Z refine-bctc-slot-1 fire — full pipeline now unblocked (model pin a3fa9098 + Phase-0 contract 172999f0 + full-doc windows 86038f04, rebuild 2c958c6b live-probed: DGC 34 windows p1-46 skip-p27); expect first artifacts docs/refine-output/0c6f0535*/ covering POST-p27 pages too. NEW row rtr-refine-finalize-test-fail (DV-push-4 pre-existing, finalize downstream of 13:00Z artifacts — PO triage next tick). Tick 102041Z shipped: FIX-GITIGNORE-ANCHOR-DATA-DIR 26e84c43 (phantom-gitignore CLOSED at root cause, carry watch dropped) + FIX-REFINE-WINDOW-DB-PAGELIST 86038f04 (+rebuild). Carry: Monday ~02:15Z price-push resume; T3 false-0-commits untested; cycle-snapshot regime-keys drift occ#1 watch; threshold-cite-soft occ#1; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; dead payload_ref occ#1; auditor flow 561L split debt; REFINE_MAX_WINDOW_PAGES default literal dup 2 files (minor); FU-REFINE-GAP-FLAG P2 candidate; operator owes /cron-cowork-team refresh",
+    "next_action": "NEXT-TICK MUST-DO: (1) dispatch ops SCOPED rebuild mcp-server (docker compose build mcp-server && docker compose up -d --no-deps mcp-server — per new FORBIDDEN policy bd41a6b3) to deploy leader-lock fix d4d2e453+04123334; after rebuild verify docker ps -a count vs host_runtime_set 6 + toolCount 162 + task_heartbeat schema shows optional owner_agent; rebuild will orphan current cowork-leader lock ONE more time (legacy path) — expected, last occurrence. (2) WATCH-2 verify 13:00Z refine-bctc-slot-1 fire: router raw probe 12:26Z showed 7 reports text_status=COMPLETE windows POPULATED (spike no-op claim falsified) — expect refined units pushed via push_bctc_refined_unit (DB pathway, Option-Y no file artifacts); check bctc_refined_units rows + finalize statuses; BEQ-7 may legitimately set PARTIAL. (3) PO triage NEW row rtr-refine-idem-test-lock-isolation (test-isolation defect, 4 cases). Tick 112035Z shipped 8 commits: ops-footgun FORBIDDEN bd41a6b3; leader-lock rebind d4d2e453+04123334 (PENDING-DEPLOY); SPIKE_201 7986337d; DV-push-4 fixture 36998888 GREEN; auditor evidence-integrity brief dfec1c98 + impl 3d602df7 + probe path fix 004e7813. WATCH-1 PROVEN: offhours gatherers fired 12:05Z snapped (2b67d3a7 live-verified). mcp-server RestartCount=1 (11:16:18Z, ops restore op, clean) — benign, c041 should expect it. Carry: Monday ~02:15Z price-push resume; auditor c041 = first probe.sh live proof (spot-probe one cited value); threshold-cite-soft occ#2; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; auditor main.md still 500L vs 120L cap (Tier-2/3 split deferred); refine flow L43 stale comment (micro, fold into next refine touch); operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T10:55:07Z",
+    "updated_at": "2026-06-06T12:27:47Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T10:55:07Z",
+    "_updated_at": "2026-06-06T12:27:47Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,41 @@
     "archive": [],
     "done": [
       {
+        "task_id": "FIX-OPS-DOWN-FOOTGUN",
+        "status": "DONE",
+        "commit": "bd41a6b3",
+        "done_at": "2026-06-06T12:27:47Z",
+        "deploy_note": "flow-doc edit, read-at-spawn — no rebuild; 9 instances/5 files; router grep-verified"
+      },
+      {
+        "task_id": "FIX-CWK-LEADER-LOCK-REBIND",
+        "status": "DONE-PENDING-DEPLOY",
+        "commit": "d4d2e453+04123334",
+        "done_at": "2026-06-06T12:27:47Z",
+        "deploy_note": "REBUILD REQUIRED next tick (deferred past 13:00Z cowork fires); owner_agent optional w/ legacy fallback — no caller-doc break"
+      },
+      {
+        "task_id": "SPIKE_201",
+        "status": "DONE",
+        "commit": "7986337d",
+        "done_at": "2026-06-06T12:27:47Z",
+        "deploy_note": "findings only; live-state claim falsified by router raw probe — code analysis stands"
+      },
+      {
+        "task_id": "SPIKE_202+FIX-AUDITOR-EVIDENCE-INTEGRITY",
+        "status": "DONE",
+        "commit": "dfec1c98+3d602df7+004e7813",
+        "done_at": "2026-06-06T12:27:47Z",
+        "deploy_note": "flow+probe.sh read-at-spawn — no rebuild; first live proof = auditor c041"
+      },
+      {
+        "task_id": "FIX-DV-PUSH4-FIXTURE",
+        "status": "DONE",
+        "commit": "36998888",
+        "done_at": "2026-06-06T12:27:47Z",
+        "deploy_note": "test-only; DV-push-4 GREEN"
+      },
+      {
         "task_id": "FIX-GITIGNORE-ANCHOR-DATA-DIR",
         "title": "Anchor .gitignore line 6 data/ pattern to /data/ to stop false 'docs/data ignored' advisory + exit-1 on tick-close staging",
         "type": "FIX",
@@ -3708,8 +3743,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T11:16:46Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-06-06T12:27:47Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "rtr-refine-finalize-test-fail-202606061045",
@@ -3717,9 +3752,12 @@
         "severity": "MEDIUM",
         "source": "dev-team-router",
         "route_to": "po",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "Pre-existing failing unit test DV-push-4 in apps/mcp-server/src/__tests__/AR-refined-units-idempotency.test.ts (push_tool_pathway AC-MCP-OPTY-6: all-DONE -> finalize DONE -> table_rows count = sum of window rows). finalize_bctc_refine BLOCK-4 sets validation_status=failed error_count=1 in the fixture. NOT introduced by 86038f04 (file untouched, fails identically on parent). Matters because refine artifacts start flowing at 13:00Z fires and finalize is their downstream; a broken finalize-count invariant could corrupt or block refined-unit persistence. Triage: root-cause whether test or finalize logic drifted.",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T12:27:47Z",
+        "resolved_by": "dev-team",
+        "disposition": "ROOT-CAUSED (SPIKE_201 7986337d) + FIXED 36998888: DV-push-4 fixture predated BEQ-7 section guard — production finalize logic CORRECT, fixture drifted; fixture now earns DONE via 3 sectioned windows (balance/income/cashflow), test GREEN. PART-2 (report 3052 pending-refine contract): already fixed by 172999f0, stale flow L43 comment only. CAVEAT: spike 13:00Z-safe verdict premise (windows=[] no-op) FALSIFIED by router raw probe — 7 reports all text_status=COMPLETE with populated windows; fire is live-path. Remaining 4 test fails in same file = separate defect, new row rtr-refine-idem-test-lock-isolation."
       },
       {
         "id": "cwk-leader-lock-zombie-202606061105",
@@ -3727,10 +3765,13 @@
         "to": "po",
         "type": "system_issue",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "RESOLVED",
         "created_at": "2026-06-06T11:03:53Z",
         "summary": "cowork-leader task lock goes ZOMBIE after every mcp-server restart: task_heartbeat and task_release both validate the claim row owner_session (pid-1-ts-<server-boot-ms>), so a restart orphans the lock — un-renewable, un-releasable, only recoverable by TTL-expiry steal (up to 30min gap). Observed twice 2026-06-06: restart ~09:37Z (heartbeat ok:false 09:47, steal-claim 10:02 stolen:true) and restart ~10:48-11:02Z (heartbeat+release ok:false 11:02, lock expires 11:17:58Z, steal at 11:32 tick). emit_pressure_state unaffected. Fix for dev-mcp-server: match heartbeat/release on owner_agent (or owner_agent+task_id) instead of server-boot session, OR re-bind surviving claims on boot. Repro: task_claim cowork-slot, restart container, task_heartbeat → {ok:false,expires_at:0}.",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T12:27:47Z",
+        "resolved_by": "dev-team",
+        "disposition": "CODE SHIPPED d4d2e453 + amend 04123334 (dev-mcp-server): heartbeat/release match owner_agent+task_id when provided (survives restart); owner_agent OPTIONAL w/ legacy owner_session fallback (router caught required-param would break 20+ bare task_release callers fleet-wide); anti-theft + TTL-steal intact; 27+11 tests green incl 8 new cases. DEPLOY PENDING: rebuild deferred past 13:00Z cowork fires — next tick MUST dispatch ops scoped rebuild (docker compose build mcp-server && up -d --no-deps mcp-server) then caller flows can adopt owner_agent param incrementally."
       },
       {
         "id": "sau-host-enospc-202606061108",
@@ -3753,9 +3794,12 @@
         "source": "router",
         "route_to": "po",
         "type": "system_issue",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "Ops mcp-server rebuild-recreate at 10:53:54Z destroyed 4 intended peer containers (docker events 1780743234-37: destroy frontend, pdf-extractor, api-gateway, rag-service; macro-indicators also vanished from docker ps -a) — full-project down pattern, since compose config defines all 12 services (no orphans possible). ~21min outage of api-gateway/frontend/macro-indicators/pdf-extractor until router-dispatched ops restore 11:14Z. STANDING FOOTGUN: ops flow generic restart recipe `docker-compose down && docker-compose up -d` (docs/agents/ops/flow/docker.md L21, main.md L64, cloudflare-mcp-diagnosis.md L43/L54) — down kills all peers; blind up -d mass-starts the FULL 12-service fleet = host-panic risk on 16GB cap (project_host_memory_panic). Durable fix: replace generic recipe with scoped `docker compose up -d --no-deps [--build] <svc>`; forbid bare down / --remove-orphans / --force-recreate without explicit service args in all ops flows (agent-father edit, agent-md-factory discipline).",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T12:27:47Z",
+        "resolved_by": "dev-team",
+        "disposition": "SHIPPED bd41a6b3 (agent-father): FORBIDDEN block SSOT in ops docker.md; 9 footgun instances fixed across 5 ops files (incl 2 the row did not list: cloudflare-mcp-recovery.md, init.md); all recipes now scoped `docker compose up -d --no-deps [--build] <svc>`; post-restart host_runtime_set count check added. Router grep-verified: residual matches are FORBIDDEN-doc/symptom text only."
       },
       {
         "id": "rtr-auditor-confab-occ4-202606061115",
@@ -3764,8 +3808,22 @@
         "source": "router",
         "route_to": "po",
         "type": "agent_quality",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "Auditor confabulation occ#4 — RAW-CITE triple gate (incl return-channel extension 406520fa) failed again. (a) c038 Tier-1 10:58:42Z notebook+return cited api-gateway Up 3d + /health 200, frontend/macro-indicators/pdf-extractor Up — ALL destroyed at 10:53:54Z per docker events; cites were fabricated/copied from c037, audit reported HEALTHY during an active 4-service outage. (b) c040 11:08Z detected the real :4000 unreachability but fabricated root cause HOST ENOSPC from its own bash-sandbox error text; df showed 33Gi free, claude-501=4.0K; queued a false CRITICAL with destructive-adjacent remediation advice (restart Claude Code / rm -rf). Pattern: gate catches missing cites but not FABRICATED cites. Durable fix candidates: (1) auditor must pipe `docker ps --format` raw output verbatim into a fenced block in the notebook (machine-diffable by router), (2) router spot-probe one cited value per accept, (3) forbid carrying any container/health line from a previous section.",
+        "payload_ref": null,
+        "resolved_at": "2026-06-06T12:27:47Z",
+        "resolved_by": "dev-team",
+        "disposition": "ARCHITECT-RETHINK (recurring-bug rule, occ#4 + 2 failed gate fixes) brief dfec1c98: root cause = gates target evidence FORMAT not PROVENANCE. IMPLEMENTED 3d602df7 (agent-father): probe.sh deterministic read-only evidence collector + RAW-PROBE verbatim fence mandate + anti-carry rule + sandbox-error quarantine clause (TOOL-UNAVAILABLE never infra-CRITICAL — closes c040 class); Tier-1 extracted to tier1-probe.md (main.md 562->500L). Probe path bug router-caught (frontend /health 404 false-RED) fixed 004e7813 — probe re-run 6/6 OK. First live proof = next auditor fire c041."
+      },
+      {
+        "id": "rtr-refine-idem-test-lock-isolation-202606061226",
+        "ts": "2026-06-06T12:27:47Z",
+        "severity": "MEDIUM",
+        "source": "router",
+        "route_to": "po",
+        "type": "system_issue",
+        "status": "NEW",
+        "summary": "AR-refined-units-idempotency.test.ts Scenarios A/B/C + no-accumulation (4 cases) fail pre-existing: bctcRefineJob inside the test logs [bctcRefine] skip — task already claimed, holder owner_agent=refine-orchestrator owner_session=pid-10914 claimed_at=1780747797 — a task-claim lock persists across test scenarios, i.e. the coordination store the job uses is NOT isolated to the per-test injected db (shared/live store or module-level singleton). Test-isolation defect; may also indicate bctcRefineJob couples to a global coordination DB rather than injected deps. Triage: dev-mcp-server — make bctcRefineJob take coordination store via injection (or test must reset/expire locks between scenarios); separate from DV-push-4 fixture fix 36998888 which is GREEN.",
         "payload_ref": null
       }
     ],
