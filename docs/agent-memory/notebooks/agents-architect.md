@@ -1,12 +1,12 @@
 # agents-architect — Notebook
 
-## 2026-06-04T05:03:42Z
+## 2026-06-06T18:35:59Z
 
-**Brief:** `docs/architecture-briefs/2026-06-04-expert-rapid-analysis-skills.md`
+**Brief:** `docs/architecture-briefs/2026-06-06-workflow-fluidity-audit.md`
 
-Extracted 6 reusable rapid-analysis skills from Bàn tròn kinh tế 31 transcript (Trung/Thành/Báu): T-1 market-cap-first entry, T-2 balance-sheet-first read, T-3 valuation vs. own 10yr history, T-4 four-factor synthesis (tài chính/định giá/quản trị/mô hình kinh doanh) + 4-scenario matrix, T-5 price-earnings sync type, T-6 ownership structure screen, T-7 management track record, T-8 insider transaction signal, T-9 abnormal turnover ratio, T-10 corporate history pattern, T-11 IR transparency quality, T-12 method self-alignment, T-13 scuttlebutt, T-14 exec compensation ratio. Mapped to 6 skill files (rapid-market-cap-screen, balance-sheet-first-read, four-factor-synthesis, ownership-governance-screen, management-track-record, value-trap-avoidance) and 6 flow-file edits across market-watcher/bctc-analyst/chef/news-scout/tnb-methodology. Reconciled with existing TNB 6-layer: 4 new skills, 2 TNB enhancements; no duplication. Skills are pre-TNB rapid screen gate (Scenario 4 = hard skip before deep analysis).
+Full workflow-fluidity audit of the multi-agent pipeline: 7 dimensions (handoff chain liveness, orch-state contention, decision journal contention, lock liveness, cron overlap, WIP throughput, fail-loud dead-ends). Findings: 3 DEADLOCK-RISK — most critical is fail-loud STOP paths in developer/qa/fixer not releasing sprint-task lock nor resetting pipeline head, causing ≤24h futile pipeline-resume livelock; 3 CONFLICT — decision journal shared-file breaks when Phase 4 parallel spawns activate (fix: per-agent file), concurrent signal_queue writes at :00/4h overlap can silently drop rows (fix: retry-read-compare loop or SQLite row insert); 4 BOTTLENECK — WIP=2 by design, sequential mandate pending c44, signal drain 53-min max window, dual-layer claim model complexity. Top-3 fixes for agent-father: (1) add task_release+head-reset to all STOP paths in developer/qa/fixer; (2) per-agent decision journal files sprint-<id>-<agent-id>.md; (3) promote FU-ORCH-HEAD-CAS to sprint + add signal_queue concurrent-write retry.
 
-**Signal dropped:** `docs/signals/expert-rapid-analysis-skills-20260604T050342Z.json` → agent-father
+**Signal dropped:** `docs/signals/workflow-fluidity-audit-20260606T183559Z.json` → agent-father
 
 ---
 
