@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH: MW-offhours fire ~04:00Z baseline (real RETURN + zero dup price_anomaly; last_fired 2026-06-05T20:05:47Z); refine-bctc-slot-1 first fire 09:00Z CTG proof (escalate if get_bctc_full(CTG) withheld ~09:30Z); auditor c016+c017 commits proved mutex protocol + c017 proved NB ordering fix; c017 deviations occ#1 each (tier-drift T1->T3, false 0-commits-24h early-exit) -> route to PO if either recurs; dev-* notebook class not on settled-write (dev-mcp-server 06-03 breach occ#1) watch-only; operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH: MW-offhours fire ~04:00Z baseline (real RETURN + zero dup price_anomaly); refine-bctc-slot-1 first fire 09:00Z CTG proof (escalate if get_bctc_full(CTG) withheld ~09:30Z); auditor c018+c019 verified clean under router guard (tier-echo OK 2x, AC-2 retention steady-state proven, mutex round-trips OK) -> tier-drift WATCH cleared-under-guard, false-0-commits still untested (next T3); NEW occ#1 WATCH: c019 confabulated system-map external_port=4001 claim (raw: no 4001 anywhere) -> PO route if confab recurs; dev-* notebook class not on settled-write (dev-mcp-server 06-03 breach occ#1) watch-only; operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T01:22:29+00:00",
+    "updated_at": "2026-06-06T02:21:43+00:00",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
