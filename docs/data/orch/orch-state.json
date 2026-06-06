@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first-ever fire — next tick (~09:20Z) MUST verify fire + CTG refined; if get_bctc_full(CTG) withheld ~09:30Z escalate citing lock bctc-ctg-attachment-fetch-escalation-c026 (LIVE-HELD, holder bctc-analyst, expires 06-07T00:06:31Z). Also verify offhours gatherers fired 12:00Z (first live proof of FIX-COWORK-CADENCE-DRIFT-SNAP 2b67d3a7 — cadence-starve occ#2 closed structurally: snapToCronBoundary floors last_fired to nominal cron boundary, kills cadence==cron-period collision class; spec mirror 998d10a9). Carry: Monday ~02:15Z price-push resume check; T3 false-0-commits untested until 02:00 local; return-cite-letter occ#1 (c032); threshold-cite-soft occ#1 (c029); peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; phantom-gitignore-warning occ#1; dead payload_ref occ#1; auditor flow 561L split debt; operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH-1: 12:00Z gatherer fire — first live proof of FIX-COWORK-CADENCE-DRIFT-SNAP (2b67d3a7): news-scout-offhours + market-watcher-offhours must fire ~12:00Z not 16:00Z. WATCH-2: 13:00Z refine-bctc-slot-1 fire — model pin fixed (a3fa9098, spawns without dispatcher override) + Phase 0 contract served (172999f0 + rebuild 39c8adb0, live-probed); expect Phase 2 fan-out + first artifacts in docs/refine-output/0c6f0535*/ BUT DGC windows truncated p1-26/46 per NEW row rtr-refine-window-truncation-202606060950 (PO triage next tick). Tick 092037Z shipped: FIX-REFINE-MODEL-PIN a3fa9098 + FIX-REFINE-PENDING-SCHEMA 172999f0 (+mcp-server rebuild). CTG: no BCTC data (router-probed), covered by lock bctc-ctg-attachment-fetch-escalation-c026 (holder bctc-analyst, exp 06-07T00:06:31Z). Carry: Monday ~02:15Z price-push resume; T3 false-0-commits untested; phantom-gitignore occ#2 (exit-1 variant — promote on occ#3); cycle-snapshot regime-keys drift occ#1 watch; threshold-cite-soft occ#1; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; dead payload_ref occ#1; auditor flow 561L split debt; REFINE_MAX_WINDOW_PAGES default literal duplicated in 2 files (minor debt); operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T08:32:17Z",
+    "updated_at": "2026-06-06T09:39:51Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T08:32:17Z",
+    "_updated_at": "2026-06-06T09:39:51Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,34 @@
     "archive": [],
     "done": [
       {
+        "task_id": "FIX-REFINE-MODEL-PIN",
+        "title": "refine_bctc_md model frontmatter: claude-haiku-3-5 -> haiku",
+        "status": "DONE",
+        "owner": "agent-father",
+        "size": "S",
+        "source_signal": "cwk-refine-model-pin-202606060905",
+        "created_at": "2026-06-06T09:25:11Z",
+        "desc": "Replace nonexistent model pin in live agent def + 6 docs/agents mirrors with valid id haiku. Removes per-fire dispatcher model override. agent-md-factory discipline.",
+        "baseline_pass": "grep -n model on all 7 files shows haiku; zero claude-haiku-3-5 repo-wide",
+        "commit": "a3fa9098",
+        "done_at": "2026-06-06T09:39:51Z",
+        "deploy_note": "agent-def edit, read-at-spawn — no rebuild; live def L6 model: haiku, frontmatter line-1 intact; 7 files, router raw-diff verified; residual claude-haiku-3-5 hits are historical docs only (REQ/brief/handoff/processed-signal), not spawn-path"
+      },
+      {
+        "task_id": "FIX-REFINE-PENDING-SCHEMA",
+        "title": "get_bctc_pending_refine: return full flow contract (text_status, confirm_status, windows[])",
+        "status": "DONE",
+        "owner": "dev-mcp-server",
+        "size": "M",
+        "source_signal": "cwk-refine-schema-mismatch-202606060906",
+        "created_at": "2026-06-06T09:25:11Z",
+        "desc": "Extend tool to flow contract: add text_status+confirm_status to SELECT/output, compute windows[] via fetchAllPageTexts+partitionIntoWindows (reuse bctcRefineJob.ts:266-281 pattern). Update docstring. mcp-server REBUILD after (ops).",
+        "baseline_pass": "Live gateway probe returns full schema with non-empty windows[] for PENDING multi-page report; unit test green; container rebuilt new image ID",
+        "commit": "172999f0",
+        "done_at": "2026-06-06T09:39:51Z",
+        "deploy_note": "mcp-server REBUILT (image 39c8adb0, IMAGE-MATCH verified raw), router live-probed get_bctc_pending_refine via gateway: DGC 0c6f0535 returns text_status/confirm_status/windows[18] — Phase 0 contract served; 5/5 tests re-run by router, tsc clean"
+      },
+      {
         "task_id": "FIX-COWORK-CADENCE-DRIFT-SNAP",
         "title": "Snap last_fired to nominal cron-tick boundary in cadence due-check (kill drift-vs-cadence collision class)",
         "type": "FIX",
@@ -3635,29 +3663,17 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T08:32:17Z",
+    "_updated_at": "2026-06-06T09:39:51Z",
     "_updated_by": "dev-team",
     "rows": [
       {
-        "id": "cwk-refine-model-pin-202606060905",
-        "ts": "2026-06-06T09:05:30Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "refine_bctc_md agent .md pins nonexistent model claude-haiku-3-5 — first-ever slot fire (refine-bctc-slot-1, 09:00Z) failed at launch with: model may not exist or no access (0 tokens, 0 tool uses). Dispatcher respawned with explicit model=haiku override (maps to claude-haiku-4-5) — retry running. Durable fix for agent-father: update model frontmatter in the refine_bctc_md agent definition to a valid Haiku id (haiku / claude-haiku-4-5-20251001). Until fixed, every cron fire of this slot needs the dispatcher override.",
-        "severity": "MEDIUM",
-        "status": "NEW",
-        "payload_ref": null
-      },
-      {
-        "id": "cwk-refine-schema-mismatch-202606060906",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "system_issue",
+        "id": "rtr-refine-window-truncation-202606060950",
+        "ts": "2026-06-06T09:39:51Z",
         "severity": "HIGH",
+        "source": "dev-team-router",
+        "route_to": "po",
         "status": "NEW",
-        "created_at": "2026-06-06T09:06:34Z",
-        "summary": "refine-bctc-slot-1 BLOCKED every fire: get_bctc_pending_refine returns only {id, filename, page_count, refine_status} but refine_bctc_md flow contract (docs/agents/refine_bctc_md/flow/main.md L39-87) requires text_status, confirm_status, windows[] for Phase 0 gate + Phase 2 fan-out. First fire 2026-06-06T09:04Z: agent claimed bctc-refine:0c6f0535 (DGC Q4-2025, 46p), hit Phase 0 fail, released claim, escalated BUG channel msg 2690, exited cleanly, zero artifact. Fix options: (1) dev-mcp-server extends get_bctc_pending_refine to full schema, or (2) agent-father refactors flow to fetch fields via separate calls. Related: cwk-refine-model-pin-202606060905 (same slot, frontmatter model pin).",
+        "summary": "fetchAllPageTexts stop-at-first-empty heuristic (bctcRefineJob.ts:170-173) truncates window coverage at any missing/empty OCR page mid-document. Raw-proven: DGC 0c6f0535 has NO pdf_extracted_text row for page 27 (25,26,28,29,30 present, text to p46) -> windows[] covers only p1-26 of 46; refine would silently produce half-document artifacts. Pre-existing cron-helper defect, now also surfaced through get_bctc_pending_refine (shares the helper). Fix direction: iterate over actual DB page rows (SELECT DISTINCT page_number) instead of sequential probe-until-empty.",
         "payload_ref": null
       }
     ],
@@ -4326,6 +4342,30 @@
         "disposition": "BATCH FIX-COWORK-CADENCE-DRIFT-SNAP (option a, structural). occ#2 of cadence/cron-period collision class; recurring -> root-cause fix not margin tweak. Live path = scripts/agents-flow/cowork-match-slots.js L176-189 (elapsed=nowUnix-lastFiredUnix>=cadenceSeconds, exact-equal cadence 240 == cron 0 */4 period -> any spawn-latency forces skip, re-arm only next cron match = effective 8h). Fix: snap lastFiredUnix DOWN to the slot's nominal cron-tick boundary before computing elapsed (kills drift-vs-cadence collision for ALL cadence==cron-period slots, not just 2 gatherers). Mirror same change in spec doc pressure-cadence.md L42-54. NO rebuild (node script read per cron run). Option b (cadence=225) REJECTED: magic-margin symptom, desyncs from policy-table 240 semantics. zone=cross-service (scripts/ + flow doc). baseline_pass=node scripts/agents-flow/cowork-match-slots.js exits 0 + JSON. SHIPPED 2b67d3a7 (JS) + 998d10a9 (spec mirror); gatherers due 12:00Z.",
         "triaged_at": "2026-06-06T08:24:05Z",
         "triaged_by": "po"
+      },
+      {
+        "id": "cwk-refine-model-pin-202606060905",
+        "ts": "2026-06-06T09:05:30Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "refine_bctc_md agent .md pins nonexistent model claude-haiku-3-5 — first-ever slot fire (refine-bctc-slot-1, 09:00Z) failed at launch with: model may not exist or no access (0 tokens, 0 tool uses). Dispatcher respawned with explicit model=haiku override (maps to claude-haiku-4-5) — retry running. Durable fix for agent-father: update model frontmatter in the refine_bctc_md agent definition to a valid Haiku id (haiku / claude-haiku-4-5-20251001). Until fixed, every cron fire of this slot needs the dispatcher override.",
+        "severity": "MEDIUM",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "disposition": "FIX-REFINE-MODEL-PIN → agent-father. Bad pin claude-haiku-3-5 confirmed at .claude/agents/refine_bctc_md.md:6 (live def CC reads) + 6 docs/agents mirrors. Replace with valid id haiku. agent-md-factory discipline; agent-father ONLY. P2/MEDIUM. SHIPPED a3fa9098 (model: haiku in live def + 6 mirrors)."
+      },
+      {
+        "id": "cwk-refine-schema-mismatch-202606060906",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "created_at": "2026-06-06T09:06:34Z",
+        "summary": "refine-bctc-slot-1 BLOCKED every fire: get_bctc_pending_refine returns only {id, filename, page_count, refine_status} but refine_bctc_md flow contract (docs/agents/refine_bctc_md/flow/main.md L39-87) requires text_status, confirm_status, windows[] for Phase 0 gate + Phase 2 fan-out. First fire 2026-06-06T09:04Z: agent claimed bctc-refine:0c6f0535 (DGC Q4-2025, 46p), hit Phase 0 fail, released claim, escalated BUG channel msg 2690, exited cleanly, zero artifact. Fix options: (1) dev-mcp-server extends get_bctc_pending_refine to full schema, or (2) agent-father refactors flow to fetch fields via separate calls. Related: cwk-refine-model-pin-202606060905 (same slot, frontmatter model pin).",
+        "payload_ref": null,
+        "disposition": "FIX-REFINE-PENDING-SCHEMA → dev-mcp-server (OPTION 1 chosen). Tool getBctcPendingRefineTool.ts already WHERE-filters text_status='COMPLETE' (L83) + confirm_status (L85) → both trivially SELECTable; windows[] is the real gap (never computed in handler). Building blocks exist+importable: fetchAllPageTexts + partitionIntoWindows already used by bctcRefineJob.ts:266-281. Tool = SSOT keeps flow contract stable vs option-2 N-extra-calls coupling. Requires mcp-server REBUILD. P1/HIGH. Sequence after model-pin (same slot). SHIPPED 172999f0 + rebuild 39c8adb0; live gateway probe returns full contract incl windows[]."
       }
     ]
   },
