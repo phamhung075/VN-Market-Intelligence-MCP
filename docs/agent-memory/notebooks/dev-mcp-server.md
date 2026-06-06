@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c375 · 2026-06-06T12:45Z (FIX-REFINE-IDEM-LOCK-ISO) — COMMITTED 368b7bad
+
+**Task:** FIX-REFINE-IDEM-LOCK-ISO (S) — isolate coordination-store lock in AR-refined-units-idempotency tests.
+
+**Root cause:** `claimTask` used `owner_agent:"refine-orchestrator"` but `releaseTask` was called with `pid-${process.pid}` as `owner_agent` (positional mismatch) → DELETE matched 0 rows → lock zombied until TTL → all same-taskId subsequent calls skipped → 4 scenarios RED. Cross-scenario bleed: `_coordDb` singleton never reset between `it` blocks.
+
+**Fix (2 files):**
+- `AR-refined-units-idempotency.test.ts`: added `beforeEach` → `_resetCoordinationDbState()` + `ensureCoordinationTable(db)` + `_injectCoordinationDb(db)` + `afterEach` reset/close; imported 3 seam functions.
+- `bctcRefineJob.ts` L512: `releaseTask(taskId, \`pid-${process.pid}\`)` → `releaseTask(taskId, "refine-orchestrator")` (owner_agent must match the claim).
+
+**Results:** 9→13/13 GREEN; task-lock-coordination-store 27/27 still GREEN; tsc 0 errors; no coordination.db on disk (no leak path).
+
+Note: bctcRefineJob.ts touched (production zombie-release fix); router to decide on container rebuild.
+
+Zone health: 13/13 idempotency GREEN, 27/27 lock-store GREEN, tsc clean | HEALTHY
+
+---
+
 ## c374 · 2026-06-05T23:46Z (ARCH-ORCH-F2) — COMMITTED da37602f
 
 **Task:** ARCH-ORCH-F2 — journalStore.ts + orchestrationHandler.ts decisions extension (ORCH-DASH-DECISION-DRILLDOWN sprint).
