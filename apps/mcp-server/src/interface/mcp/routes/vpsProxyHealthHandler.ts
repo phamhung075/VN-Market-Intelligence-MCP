@@ -37,7 +37,14 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
 import { getVpsProxyHealth } from "../../../infrastructure/db/vpsPushLogStore.js";
-import { isVnMarketHours, minutesSinceLastWindowEnd } from "../../../domain/services/freshnessSlaChecker.js";
+import {
+  isVnMarketHours,
+  isVnNewsPublishHours,
+  isVnSbvBusinessDay,
+  minutesSinceLastWindowEnd,
+  minutesSinceLastNewsWindowEnd,
+  minutesSinceLastSbvWindowEnd,
+} from "../../../domain/services/freshnessSlaChecker.js";
 
 // Expected push intervals per service (minutes) — used during the active fetch window.
 const EXPECTED_INTERVALS: Record<string, number> = {
@@ -50,6 +57,12 @@ const EXPECTED_INTERVALS: Record<string, number> = {
 // Services whose data is ONLY pushed during VN market hours (Mon–Fri 02:00–08:59 UTC).
 const MARKET_HOURS_ONLY_SERVICES = new Set(["prices", "foreign_flow"]);
 
+// VPS service "news": publisher quiet hours overnight VN (UTC 15:00–00:00).
+const NEWS_QUIET_HOURS_SERVICES = new Set(["news"]);
+
+// VPS service "sbv": SBV FX rates published on business days only.
+const SBV_BUSINESS_DAY_SERVICES = new Set(["sbv"]);
+
 /**
  * Determine staleness from last push timestamp, with calendar awareness.
  *
@@ -58,6 +71,14 @@ const MARKET_HOURS_ONLY_SERVICES = new Set(["prices", "foreign_flow"]);
  *   - Outside market hours: not stale as long as data was pushed before/during
  *     the last active window (within minutesSinceLastWindowEnd + 30 min grace).
  *     This prevents weekend false-CRITICAL on services that sleep by design.
+ *
+ * For news (quiet overnight VN 22:00–07:00 = UTC 15:00–00:00):
+ *   - During publish hours (UTC 00:00–14:59): tight 10-min interval.
+ *   - During quiet hours: threshold = time since last publish window + 30 min grace.
+ *
+ * For sbv (business days only):
+ *   - On VN business day: tight 60-min interval.
+ *   - On weekend/holiday: threshold = time since last SBV publish + 30 min grace.
  *
  * NOTE: SQLite pushed_at values are stored as UTC strings without a trailing Z.
  * Using `new Date(lastPushAt)` handles both formats; the Z-append guard is safe
@@ -82,6 +103,24 @@ function computeStale(lastPushAt: string | null, service: string, now: Date = ne
     // Off-hours: only stale if older than last window end + 30 min grace
     const sinceWindowEndMin = minutesSinceLastWindowEnd(now);
     return ageMs > (sinceWindowEndMin + 30) * 60 * 1000;
+  }
+
+  if (NEWS_QUIET_HOURS_SERVICES.has(service)) {
+    if (isVnNewsPublishHours(now)) {
+      const expectedMin = EXPECTED_INTERVALS[service] ?? 10;
+      return ageMs > expectedMin * 60 * 1000;
+    }
+    const sinceNewsMin = minutesSinceLastNewsWindowEnd(now);
+    return ageMs > (sinceNewsMin + 30) * 60 * 1000;
+  }
+
+  if (SBV_BUSINESS_DAY_SERVICES.has(service)) {
+    if (isVnSbvBusinessDay(now)) {
+      const expectedMin = EXPECTED_INTERVALS[service] ?? 60;
+      return ageMs > expectedMin * 60 * 1000;
+    }
+    const sinceSbvMin = minutesSinceLastSbvWindowEnd(now);
+    return ageMs > (sinceSbvMin + 30) * 60 * 1000;
   }
 
   const expectedMin = EXPECTED_INTERVALS[service] ?? 60;
@@ -109,7 +148,10 @@ export function handleVpsProxyHealth(
 
     const services = rawServices.map((s) => {
       const stale = computeStale(s.lastPushAt, s.service, now);
-      const offHours = MARKET_HOURS_ONLY_SERVICES.has(s.service) && !marketHoursActive;
+      const offHours =
+        (MARKET_HOURS_ONLY_SERVICES.has(s.service) && !marketHoursActive) ||
+        (NEWS_QUIET_HOURS_SERVICES.has(s.service) && !isVnNewsPublishHours(now)) ||
+        (SBV_BUSINESS_DAY_SERVICES.has(s.service) && !isVnSbvBusinessDay(now));
       return {
         name: s.service,
         last_push: s.lastPushAt,

@@ -12,7 +12,14 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getVpsProxyHealth, type VpsServiceHealth } from "../../../../infrastructure/db/vpsPushLogStore.js";
 import { getDb } from "../../../../infrastructure/db/schema.js";
-import { isVnMarketHours, minutesSinceLastWindowEnd } from "../../../../domain/services/freshnessSlaChecker.js";
+import {
+  isVnMarketHours,
+  isVnNewsPublishHours,
+  isVnSbvBusinessDay,
+  minutesSinceLastWindowEnd,
+  minutesSinceLastNewsWindowEnd,
+  minutesSinceLastSbvWindowEnd,
+} from "../../../../domain/services/freshnessSlaChecker.js";
 import type { Database } from "bun:sqlite";
 
 // Expected push intervals per service (minutes) — used during the active fetch window.
@@ -29,6 +36,13 @@ const EXPECTED_INTERVALS: Record<string, number> = {
 // Outside Mon–Fri 02:00–08:59 UTC the VPS loops sleep by design.
 const MARKET_HOURS_ONLY_SERVICES = new Set(["prices", "foreign_flow"]);
 
+// VPS service "news": publisher quiet hours overnight VN (UTC 15:00–00:00).
+// Active window: 00:00–14:59 UTC (07:00–21:59 VN time). No market-hours gate.
+const NEWS_QUIET_HOURS_SERVICES = new Set(["news"]);
+
+// VPS service "sbv": SBV FX rates published on business days only.
+const SBV_BUSINESS_DAY_SERVICES = new Set(["sbv"]);
+
 function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): string {
   const lines: string[] = [
     "=== VPS PROXY HEALTH ===",
@@ -40,8 +54,11 @@ function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): str
   for (const s of services) {
     const lastPush = s.lastPushAt ?? "never";
     const stale = isStale(s, now);
-    // Market-hours-only services show "off-hours" instead of "YES" outside window
-    const isOffHours = MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now);
+    // Services with time-gated publishing show "off-hours" instead of "YES" outside window
+    const isOffHours =
+      (MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now)) ||
+      (NEWS_QUIET_HOURS_SERVICES.has(s.service) && !isVnNewsPublishHours(now)) ||
+      (SBV_BUSINESS_DAY_SERVICES.has(s.service) && !isVnSbvBusinessDay(now));
     const staleFlag = stale
       ? (isOffHours ? "off-hours" : "YES")
       : "no";
@@ -52,15 +69,19 @@ function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): str
   }
 
   // Summary — off-hours stale services excluded from the "STALE" warning
+  const isServiceOffHours = (s: VpsServiceHealth) =>
+    (MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now)) ||
+    (NEWS_QUIET_HOURS_SERVICES.has(s.service) && !isVnNewsPublishHours(now)) ||
+    (SBV_BUSINESS_DAY_SERVICES.has(s.service) && !isVnSbvBusinessDay(now));
+
   const trueStaleServices = services.filter((s) => {
     if (!isStale(s, now)) return false;
-    // Market-hours-only services outside active window are expected stale — suppress warning
-    if (MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now)) return false;
+    // Services outside their active window are expected stale — suppress warning
+    if (isServiceOffHours(s)) return false;
     return true;
   });
   const offHoursServices = services.filter(
-    (s) => MARKET_HOURS_ONLY_SERVICES.has(s.service) && !isVnMarketHours(now) && !isStale(s, now) === false
-      && isStale(s, now)
+    (s) => isServiceOffHours(s) && isStale(s, now)
   );
   const errorServices = services.filter((s) => s.errors24h > 0);
 
@@ -69,7 +90,7 @@ function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): str
     lines.push(`STALE: ${trueStaleServices.map((s) => s.service).join(", ")} — VPS may be down or unreachable`);
   }
   if (offHoursServices.length > 0) {
-    lines.push(`OFF-HOURS (by design): ${offHoursServices.map((s) => s.service).join(", ")} — market-hours-only; VPS fetch loop sleeps outside Mon-Fri 02:00-08:59 UTC`);
+    lines.push(`OFF-HOURS (by design): ${offHoursServices.map((s) => s.service).join(", ")} — source sleeps outside its active publishing window`);
   }
   if (errorServices.length > 0) {
     lines.push(`ERRORS: ${errorServices.map((s) => `${s.service}(${s.errors24h})`).join(", ")}`);
@@ -93,6 +114,14 @@ function formatHealth(services: VpsServiceHealth[], now: Date = new Date()): str
  *   - Outside market hours: data is expected stale by design; not considered stale
  *     as long as data is no older than (minutesSinceLastWindowEnd + 30 min grace).
  *     This prevents weekend false-CRITICAL alerts on healthy services.
+ *
+ * For news (quiet hours overnight VN):
+ *   - During publish hours (UTC 00:00–14:59): tight 10-min interval.
+ *   - During quiet hours (UTC 15:00–23:59): threshold = time since last publish window + grace.
+ *
+ * For sbv (business days only):
+ *   - On a VN business day: tight 60-min interval (SBV updates once daily).
+ *   - On weekends/holidays: threshold = time since last SBV publish + grace.
  *
  * @param s VPS service health record
  * @param now Injectable current time for testing (default: Date.now())
@@ -118,6 +147,28 @@ function isStale(s: VpsServiceHealth, now: Date = new Date()): boolean {
     const sinceWindowEndMin = minutesSinceLastWindowEnd(now);
     const offHoursThresholdMs = (sinceWindowEndMin + 30) * 60 * 1000;
     return ageMs > offHoursThresholdMs;
+  }
+
+  if (NEWS_QUIET_HOURS_SERVICES.has(s.service)) {
+    if (isVnNewsPublishHours(now)) {
+      // During publish window: tight interval
+      const expectedMin = EXPECTED_INTERVALS[s.service] ?? 10;
+      return ageMs > expectedMin * 60 * 1000;
+    }
+    // Quiet hours: threshold = time since last publish window end + grace
+    const sinceNewsMin = minutesSinceLastNewsWindowEnd(now);
+    return ageMs > (sinceNewsMin + 30) * 60 * 1000;
+  }
+
+  if (SBV_BUSINESS_DAY_SERVICES.has(s.service)) {
+    if (isVnSbvBusinessDay(now)) {
+      // Business day: tight interval
+      const expectedMin = EXPECTED_INTERVALS[s.service] ?? 60;
+      return ageMs > expectedMin * 60 * 1000;
+    }
+    // Weekend/holiday: threshold = time since last SBV publish + grace
+    const sinceSbvMin = minutesSinceLastSbvWindowEnd(now);
+    return ageMs > (sinceSbvMin + 30) * 60 * 1000;
   }
 
   const expectedMin = EXPECTED_INTERVALS[s.service] ?? 60;

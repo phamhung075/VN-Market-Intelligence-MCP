@@ -13,8 +13,12 @@ import { getDb } from "../../../../infrastructure/db/schema.js";
 import {
   DEFAULT_SLA_CONFIG,
   isVnMarketHours as domainIsVnMarketHours,
+  isVnNewsPublishHours,
+  isVnSbvBusinessDay,
   getSlaThreshold,
   MARKET_HOURS_ONLY_SOURCES,
+  NEWS_QUIET_HOURS_SOURCES,
+  SBV_BUSINESS_DAY_ONLY_SOURCES,
   type SignalType,
 } from "../../../../domain/services/freshnessSlaChecker.js";
 import type { Database } from "bun:sqlite";
@@ -151,7 +155,7 @@ function formatSlaTable(records: SlaStatusRow[]): string {
       .filter((r) => r.status === "off-hours")
       .map((r) => r.signal_type)
       .join(", ");
-    lines.push(`OFF-HOURS (not an alert): ${offHours} — VPS fetch loop sleeps outside Mon-Fri 02:00-08:59 UTC`);
+    lines.push(`OFF-HOURS (not an alert): ${offHours} — source sleeps outside its active publishing window (prices/ff: Mon-Fri 02:00-08:59 UTC; news: 00:00-14:59 UTC; sbv_fx: VN business days)`);
   }
 
   return lines.join("\n");
@@ -197,7 +201,11 @@ export function registerSlaStatusTools(
           // Domain getSlaThreshold is calendar-aware: market-hours-only sources get
           // dynamic off-hours thresholds, preventing false breaches on weekends.
           const threshold = getSlaThresholds(sig, marketHoursActive, now);
-          const offHours = MARKET_HOURS_ONLY_SOURCES.has(sig as SignalType) && !marketHoursActive;
+          const sigType = sig as SignalType;
+          const offHours =
+            (MARKET_HOURS_ONLY_SOURCES.has(sigType) && !marketHoursActive) ||
+            (NEWS_QUIET_HOURS_SOURCES.has(sigType) && !isVnNewsPublishHours(now)) ||
+            (SBV_BUSINESS_DAY_ONLY_SOURCES.has(sigType) && !isVnSbvBusinessDay(now));
           const status = age <= threshold ? "ok" : (offHours ? "off-hours" : "breached");
           const severity = status === "breached" ? getSeverity(age, threshold) : null;
 

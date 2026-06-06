@@ -229,6 +229,33 @@ export const MARKET_HOURS_ONLY_SOURCES: ReadonlySet<SignalType> = new Set([
 ]);
 
 /**
+ * News sources that are only published during VN publisher active hours.
+ *
+ * VN news publishers are quiet overnight (VN 22:00–07:00 = UTC 15:00–00:00).
+ * Active window: Mon–Sun 00:00–15:00 UTC (07:00–22:00 VN time).
+ * The tight 30-min SLA only applies during active hours; outside that window
+ * the SLA clock measures against the last expected publish slot.
+ *
+ * Source: "news" (rag_analyses — scraped from VN news portals via VPS).
+ */
+export const NEWS_QUIET_HOURS_SOURCES: ReadonlySet<SignalType> = new Set([
+  "news",
+]);
+
+/**
+ * SBV FX sources that are only published on VN business days (Mon–Fri).
+ *
+ * SBV publishes daily USD/VND fixing rates on business days only.
+ * On weekends and public holidays no new rates are published — staleness
+ * on those days is BY DESIGN.
+ *
+ * Source: "sbv_fx" (sbv_rates table — fetched from SBV official portal).
+ */
+export const SBV_BUSINESS_DAY_ONLY_SOURCES: ReadonlySet<SignalType> = new Set([
+  "sbv_fx",
+]);
+
+/**
  * Grace period added on top of "time since last window end" when computing the
  * off-hours SLA threshold.  Allows for minor clock skew and the last-push lag
  * before the cron window actually fires.
@@ -302,6 +329,144 @@ export function minutesSinceLastWindowEnd(now: Date = new Date()): number {
   return Math.max(0, Math.floor(ms / 60000));
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// News publisher quiet-hours logic (FIX-SLA-EXEMPT-NEWS-SBVFX)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns true if now falls within VN news publisher active hours.
+ *
+ * VN news portals publish actively during day/evening (07:00–22:00 VN time).
+ * Quiet period: overnight VN 22:00–07:00 = UTC 15:00–00:00 (next day).
+ * Active window (UTC): 00:00–14:59 UTC (= 07:00–21:59 VN).
+ *
+ * Note: news publishing is 7 days a week (unlike market hours which are Mon–Fri).
+ * We do NOT gate on isVnTradingDay here — weekend news is still published.
+ *
+ * @param now Current date/time (UTC)
+ * @returns true during 00:00–14:59 UTC (07:00–21:59 VN time)
+ */
+export function isVnNewsPublishHours(now: Date = new Date()): boolean {
+  const utcHour = now.getUTCHours();
+  // 00:00 UTC (07:00 VN) to 14:59 UTC (21:59 VN) = publish window
+  // 15:00 UTC (22:00 VN) onward = quiet hours
+  return utcHour < 15;
+}
+
+/**
+ * Returns the UTC Date of the most recent VN news publisher window close.
+ *
+ * The news publish window ends at 14:59 UTC (21:59 VN time) every day.
+ * Unlike market sessions, news publishes 7 days/week.
+ *
+ * @param now Current time (overridable for testing)
+ * @returns Date representing the most recent expected news window-end timestamp
+ */
+export function lastExpectedNewsWindowEnd(now: Date = new Date()): Date {
+  const NEWS_WINDOW_END_UTC_HOUR = 14;
+  const NEWS_WINDOW_END_UTC_MIN = 59;
+
+  // Candidate: today at 14:59 UTC
+  const candidate = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    NEWS_WINDOW_END_UTC_HOUR,
+    NEWS_WINDOW_END_UTC_MIN,
+    0,
+    0,
+  ));
+
+  // Scan backwards up to 7 days for a window-end that is strictly in the past
+  for (let daysBack = 0; daysBack <= 7; daysBack++) {
+    const windowEnd = new Date(candidate.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    if (windowEnd < now) {
+      return windowEnd;
+    }
+  }
+
+  // Fallback (should never be reached)
+  return new Date(candidate.getTime() - 7 * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Returns minutes elapsed since the last expected VN news publish window closed.
+ *
+ * @param now Current time (overridable for testing)
+ * @returns Non-negative minutes since last news window end
+ */
+export function minutesSinceLastNewsWindowEnd(now: Date = new Date()): number {
+  const windowEnd = lastExpectedNewsWindowEnd(now);
+  const ms = now.getTime() - windowEnd.getTime();
+  return Math.max(0, Math.floor(ms / 60000));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SBV FX business-day logic (FIX-SLA-EXEMPT-NEWS-SBVFX)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the UTC Date of the most recent VN SBV business-day close.
+ *
+ * SBV publishes FX rates on business days only (Mon–Fri, excluding VN holidays).
+ * The SBV daily fixing is published by end of business day (17:00 VN = 10:00 UTC).
+ * We use end-of-business-day as the expected publish window end.
+ *
+ * @param now Current time (overridable for testing)
+ * @returns Date representing the most recent expected SBV publish slot
+ */
+export function lastExpectedSbvWindowEnd(now: Date = new Date()): Date {
+  const SBV_WINDOW_END_UTC_HOUR = 10; // 17:00 VN = 10:00 UTC
+  const SBV_WINDOW_END_UTC_MIN = 0;
+
+  const candidate = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    SBV_WINDOW_END_UTC_HOUR,
+    SBV_WINDOW_END_UTC_MIN,
+    0,
+    0,
+  ));
+
+  // Walk backwards to find last business-day window-end strictly before now
+  for (let daysBack = 0; daysBack <= 7; daysBack++) {
+    const windowEnd = new Date(candidate.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    if (windowEnd >= now) continue;
+    if (isVnTradingDay(windowEnd)) {
+      return windowEnd;
+    }
+  }
+
+  return new Date(candidate.getTime() - 7 * 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Returns minutes elapsed since the last expected SBV FX rate publish slot.
+ *
+ * @param now Current time (overridable for testing)
+ * @returns Non-negative minutes since last SBV window end
+ */
+export function minutesSinceLastSbvWindowEnd(now: Date = new Date()): number {
+  const windowEnd = lastExpectedSbvWindowEnd(now);
+  const ms = now.getTime() - windowEnd.getTime();
+  return Math.max(0, Math.floor(ms / 60000));
+}
+
+/**
+ * Returns true if now is within SBV business hours (Mon–Fri VN trading day,
+ * before or at the expected daily publish time).
+ *
+ * We consider SBV "active" during any VN trading day (same weekday+holiday gate
+ * as the market, since SBV is closed on the same public holidays).
+ *
+ * @param now Current date/time (UTC)
+ * @returns true if today is a VN trading day
+ */
+export function isVnSbvBusinessDay(now: Date = new Date()): boolean {
+  return isVnTradingDay(now);
+}
+
 /**
  * Gets the active SLA threshold for a signal type based on current time.
  *
@@ -351,6 +516,28 @@ export function getSlaThreshold(
     // Data pushed at/before window close is always within this threshold.
     const sinceWindowEnd = minutesSinceLastWindowEnd(now);
     return sinceWindowEnd + OFF_HOURS_GRACE_MINUTES;
+  }
+
+  // News: quiet overnight (VN 22:00–07:00 = UTC 15:00–00:00).
+  // During active publish hours (UTC 00:00–14:59): tight 30-min SLA.
+  // During quiet hours: threshold = time since last news window end + grace.
+  if (NEWS_QUIET_HOURS_SOURCES.has(signalType)) {
+    if (isVnNewsPublishHours(now)) {
+      return cfg.defaultThresholdMinutes; // tight SLA during publish hours (30 min)
+    }
+    const sinceNewsWindowEnd = minutesSinceLastNewsWindowEnd(now);
+    return sinceNewsWindowEnd + OFF_HOURS_GRACE_MINUTES;
+  }
+
+  // SBV FX: published on VN business days only.
+  // On a trading day: tight 30-min SLA (SBV updates once per day — allow up to 30 min).
+  // On a non-trading day (weekend/holiday): threshold = time since last SBV publish + grace.
+  if (SBV_BUSINESS_DAY_ONLY_SOURCES.has(signalType)) {
+    if (isVnSbvBusinessDay(now)) {
+      return cfg.defaultThresholdMinutes; // tight SLA on business days (30 min)
+    }
+    const sinceSbvWindowEnd = minutesSinceLastSbvWindowEnd(now);
+    return sinceSbvWindowEnd + OFF_HOURS_GRACE_MINUTES;
   }
 
   // BCTC has time-based thresholds
