@@ -1,14 +1,14 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-05T22:10:16+00:00",
-  "_updated_by": "pm",
+  "_updated_at": "2026-06-06T10:25:00Z",
+  "_updated_by": "po",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH-1: 12:00Z gatherer fire — first live proof of FIX-COWORK-CADENCE-DRIFT-SNAP (2b67d3a7): news-scout-offhours + market-watcher-offhours must fire ~12:00Z not 16:00Z. WATCH-2: 13:00Z refine-bctc-slot-1 fire — model pin fixed (a3fa9098, spawns without dispatcher override) + Phase 0 contract served (172999f0 + rebuild 39c8adb0, live-probed); expect Phase 2 fan-out + first artifacts in docs/refine-output/0c6f0535*/ BUT DGC windows truncated p1-26/46 per NEW row rtr-refine-window-truncation-202606060950 (PO triage next tick). Tick 092037Z shipped: FIX-REFINE-MODEL-PIN a3fa9098 + FIX-REFINE-PENDING-SCHEMA 172999f0 (+mcp-server rebuild). CTG: no BCTC data (router-probed), covered by lock bctc-ctg-attachment-fetch-escalation-c026 (holder bctc-analyst, exp 06-07T00:06:31Z). Carry: Monday ~02:15Z price-push resume; T3 false-0-commits untested; phantom-gitignore PROMOTED occ#3 -> row rtr-phantom-gitignore-202606060955; cycle-snapshot regime-keys drift occ#1 watch; threshold-cite-soft occ#1; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; dead payload_ref occ#1; auditor flow 561L split debt; REFINE_MAX_WINDOW_PAGES default literal duplicated in 2 files (minor debt); operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH-1: 12:00Z gatherer fire — first live proof of FIX-COWORK-CADENCE-DRIFT-SNAP (2b67d3a7): news-scout-offhours + market-watcher-offhours must fire ~12:00Z not 16:00Z. WATCH-2: 13:00Z refine-bctc-slot-1 fire — full pipeline now unblocked (model pin a3fa9098 + Phase-0 contract 172999f0 + full-doc windows 86038f04, rebuild 2c958c6b live-probed: DGC 34 windows p1-46 skip-p27); expect first artifacts docs/refine-output/0c6f0535*/ covering POST-p27 pages too. NEW row rtr-refine-finalize-test-fail (DV-push-4 pre-existing, finalize downstream of 13:00Z artifacts — PO triage next tick). Tick 102041Z shipped: FIX-GITIGNORE-ANCHOR-DATA-DIR 26e84c43 (phantom-gitignore CLOSED at root cause, carry watch dropped) + FIX-REFINE-WINDOW-DB-PAGELIST 86038f04 (+rebuild). Carry: Monday ~02:15Z price-push resume; T3 false-0-commits untested; cycle-snapshot regime-keys drift occ#1 watch; threshold-cite-soft occ#1; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; dead payload_ref occ#1; auditor flow 561L split debt; REFINE_MAX_WINDOW_PAGES default literal dup 2 files (minor); FU-REFINE-GAP-FLAG P2 candidate; operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T09:40:32Z",
+    "updated_at": "2026-06-06T10:55:07Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T09:39:51Z",
+    "_updated_at": "2026-06-06T10:55:07Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,51 @@
     "archive": [],
     "done": [
       {
+        "task_id": "FIX-GITIGNORE-ANCHOR-DATA-DIR",
+        "title": "Anchor .gitignore line 6 data/ pattern to /data/ to stop false 'docs/data ignored' advisory + exit-1 on tick-close staging",
+        "type": "FIX",
+        "sprint": "REPO-HYGIENE",
+        "status": "DONE",
+        "size": "XS",
+        "priority": "medium",
+        "zone": "none",
+        "depends": [],
+        "route_to": "developer",
+        "baseline_pass": "git check-ignore -v docs/data/orch/orch-state.json exits 1 (unchanged); git add -n docs/data/orch/orch-state.json exits 0 with NO advisory after fix; root data/ still ignored (git check-ignore -v data/market.db matches)",
+        "files": [
+          ".gitignore"
+        ],
+        "note": "ROOT CAUSE (PO verified, git 2.49.0): .gitignore line 6 is bare unanchored 'data/' -> git matches it at ANY depth, so it matches docs/data/, apps/mcp-server/dashboard/data/, etc. git check-ignore -v docs/data => '.gitignore:6:data/'. This fires the French advisory 'Les chemins suivants sont ignores ... docs/data' and exit 1 on every dir-spanning git add of the orch-state path; tracked files inside are not actually excluded (they predate the ignore) so staging still succeeds, but the exit-1 can break && chains and trains agents to ignore real add failures (3 occurrences). Lines 40-45 confirm line 6's INTENDED target is the ROOT data/ store (data/pdfs/*.pdf, data/pdfs-local/, data/bctc-analysis-cache/). FIX: change line 6 'data/' -> '/data/' (anchored to repo root). VERIFY: (1) root data/ still ignored - git check-ignore -v data/market.db hits the rule; (2) docs/data NO LONGER advisory - git add -n docs/data/orch/orch-state.json exits 0, no warning; (3) git status unchanged for tracked files. No container rebuild (repo config only). Lines 33-35 docs/data/cycle-snapshot-* globs stay - they are the precise volatile-child ignores and are correct.",
+        "owner": "developer",
+        "started_at": "2026-06-06T10:26:11Z",
+        "commit": "26e84c43",
+        "done_at": "2026-06-06T10:55:07Z",
+        "deploy_note": "anchored /data/ + 6 explicit untracked docs/data entries (status surface preserved, router-verified all 6 untracked); git add -n docs/data/orch path now exit 0 NO advisory — phantom-gitignore class CLOSED at root cause"
+      },
+      {
+        "task_id": "FIX-REFINE-WINDOW-DB-PAGELIST",
+        "title": "Fix fetchAllPageTexts probe-until-empty truncation: drive page iteration from DB page rows, not sequential empty-probe",
+        "type": "FIX",
+        "sprint": "BCTC-REFINE-ROBUSTNESS",
+        "status": "DONE",
+        "size": "M",
+        "priority": "high",
+        "zone": "dev-mcp-server",
+        "depends": [],
+        "route_to": "dev-mcp-server",
+        "baseline_pass": "bun test (mcp-server) green pre-change; refine job + get_bctc_pending_refine tests pass",
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcRefineJob.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/pdfExtractorClient.ts"
+        ],
+        "note": "ROOT CAUSE (PO live-verified): fetchAllPageTexts (bctcRefineJob.ts:151-183) probes pages sequentially from 1 and BREAKS at first empty text after p1 (L170-173 'Empty page after first page -> reached end of document'). getPageText resolves via HTTP POST pdf-extractor:5001/extract, NOT direct DB read, so a single missing/empty page (DGC 0c6f0535: only p27 of 46 absent in pdf_extracted_text) is treated as EOF -> windows[] truncated to p1-26, dropping 20 pages incl all post-27 financial tables. Feeds BOTH bctcRefineJob cron AND get_bctc_pending_refine tool (172999f0). FIX: replace probe-until-empty with a DB-driven page list (SELECT DISTINCT page_number FROM pdf_extracted_text WHERE filename = ? ORDER BY page_number) so present pages are windowed and missing pages are SKIPPED, not treated as document end. Keep getPageTextFn dep-injection seam for tests; add a test fixture with an interior gap (e.g. p27 missing of 46) asserting windows cover up to max page. IN-SCOPE follow-up DECISION: emit a gap flag in tool output when DISTINCT(page_number) count != expected page_count (DGC = 45 vs 46) -> route as separate FU-REFINE-GAP-FLAG (P2) NOT this task, to keep this FIX atomic. AFTER MERGE: ops MUST REBUILD mcp-server container (rebuild-after-dev-change) - restart relaunches stale image. Verify live: get_bctc_pending_refine returns DGC windows covering through page 46 (minus the genuinely-missing p27).",
+        "owner": "dev-mcp-server",
+        "started_at": "2026-06-06T10:26:11Z",
+        "commit": "86038f04",
+        "done_at": "2026-06-06T10:55:07Z",
+        "deploy_note": "DB-driven page list (SELECT DISTINCT page_number,text_content), missing pages SKIPPED not EOF; both production call sites forward db (router-verified); 13/13 tests + tsc clean re-run by router; mcp-server REBUILT image 2c958c6b IMAGE-MATCH; live probe: DGC 34 windows, p27 skipped, coverage to p46 FULL DOC"
+      },
+      {
         "task_id": "FIX-REFINE-MODEL-PIN",
         "title": "refine_bctc_md model frontmatter: claude-haiku-3-5 -> haiku",
         "status": "DONE",
@@ -3663,27 +3708,17 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T09:40:32Z",
+    "_updated_at": "2026-06-06T10:55:07Z",
     "_updated_by": "dev-team",
     "rows": [
       {
-        "id": "rtr-refine-window-truncation-202606060950",
-        "ts": "2026-06-06T09:39:51Z",
-        "severity": "HIGH",
-        "source": "dev-team-router",
-        "route_to": "po",
-        "status": "NEW",
-        "summary": "fetchAllPageTexts stop-at-first-empty heuristic (bctcRefineJob.ts:170-173) truncates window coverage at any missing/empty OCR page mid-document. Raw-proven: DGC 0c6f0535 has NO pdf_extracted_text row for page 27 (25,26,28,29,30 present, text to p46) -> windows[] covers only p1-26 of 46; refine would silently produce half-document artifacts. Pre-existing cron-helper defect, now also surfaced through get_bctc_pending_refine (shares the helper). Fix direction: iterate over actual DB page rows (SELECT DISTINCT page_number) instead of sequential probe-until-empty.",
-        "payload_ref": null
-      },
-      {
-        "id": "rtr-phantom-gitignore-202606060955",
-        "ts": "2026-06-06T09:40:32Z",
+        "id": "rtr-refine-finalize-test-fail-202606061045",
+        "ts": "2026-06-06T10:55:07Z",
         "severity": "MEDIUM",
         "source": "dev-team-router",
         "route_to": "po",
         "status": "NEW",
-        "summary": "PROMOTED occ#3: git add docs/data/orch/orch-state.json emits French warning 'Les chemins suivants sont ignores par un de vos fichiers .gitignore: docs/data' on every tick-close stage; occ#2 (tick 082038Z) ALSO returned exit 1 despite staging succeeding (porcelain M verified). Path is NOT ignored (git check-ignore exit 1, file tracked). Risk: warning noise trains operators/agents to ignore git add failures on the orch-state path -> could mask a REAL staging failure; exit-1 variant breaks && chains. Root-cause candidates: .gitignore has a docs/data pattern negated for tracked files, or git version locale quirk. Fix direction: audit .gitignore docs/data rules + make tick-close staging verify porcelain explicitly (already router practice; encode in flow).",
+        "summary": "Pre-existing failing unit test DV-push-4 in apps/mcp-server/src/__tests__/AR-refined-units-idempotency.test.ts (push_tool_pathway AC-MCP-OPTY-6: all-DONE -> finalize DONE -> table_rows count = sum of window rows). finalize_bctc_refine BLOCK-4 sets validation_status=failed error_count=1 in the fixture. NOT introduced by 86038f04 (file untouched, fails identically on parent). Matters because refine artifacts start flowing at 13:00Z fires and finalize is their downstream; a broken finalize-count invariant could corrupt or block refined-unit persistence. Triage: root-cause whether test or finalize logic drifted.",
         "payload_ref": null
       }
     ],
@@ -4376,6 +4411,38 @@
         "summary": "refine-bctc-slot-1 BLOCKED every fire: get_bctc_pending_refine returns only {id, filename, page_count, refine_status} but refine_bctc_md flow contract (docs/agents/refine_bctc_md/flow/main.md L39-87) requires text_status, confirm_status, windows[] for Phase 0 gate + Phase 2 fan-out. First fire 2026-06-06T09:04Z: agent claimed bctc-refine:0c6f0535 (DGC Q4-2025, 46p), hit Phase 0 fail, released claim, escalated BUG channel msg 2690, exited cleanly, zero artifact. Fix options: (1) dev-mcp-server extends get_bctc_pending_refine to full schema, or (2) agent-father refactors flow to fetch fields via separate calls. Related: cwk-refine-model-pin-202606060905 (same slot, frontmatter model pin).",
         "payload_ref": null,
         "disposition": "FIX-REFINE-PENDING-SCHEMA → dev-mcp-server (OPTION 1 chosen). Tool getBctcPendingRefineTool.ts already WHERE-filters text_status='COMPLETE' (L83) + confirm_status (L85) → both trivially SELECTable; windows[] is the real gap (never computed in handler). Building blocks exist+importable: fetchAllPageTexts + partitionIntoWindows already used by bctcRefineJob.ts:266-281. Tool = SSOT keeps flow contract stable vs option-2 N-extra-calls coupling. Requires mcp-server REBUILD. P1/HIGH. Sequence after model-pin (same slot). SHIPPED 172999f0 + rebuild 39c8adb0; live gateway probe returns full contract incl windows[]."
+      },
+      {
+        "id": "rtr-refine-window-truncation-202606060950",
+        "ts": "2026-06-06T09:39:51Z",
+        "severity": "HIGH",
+        "source": "dev-team-router",
+        "route_to": "po",
+        "status": "RESOLVED",
+        "summary": "fetchAllPageTexts stop-at-first-empty heuristic (bctcRefineJob.ts:170-173) truncates window coverage at any missing/empty OCR page mid-document. Raw-proven: DGC 0c6f0535 has NO pdf_extracted_text row for page 27 (25,26,28,29,30 present, text to p46) -> windows[] covers only p1-26 of 46; refine would silently produce half-document artifacts. Pre-existing cron-helper defect, now also surfaced through get_bctc_pending_refine (shares the helper). Fix direction: iterate over actual DB page rows (SELECT DISTINCT page_number) instead of sequential probe-until-empty.",
+        "payload_ref": null,
+        "disposition": "ACCEPT->FIX. LIVE-RE-VERIFIED by PO via get_bctc_pending_refine + container DB probe: DGC 0c6f0535 page_count=46 but windows[] last unit covers page 26 (p1-26/46, 20 pages dropped). Live DB /app/data/market.db: 45 of 46 pages present, ONLY page 27 missing (25,26,28,29,30 present). Root cause confirmed: fetchAllPageTexts probe-until-empty (bctcRefineJob.ts:170-173) treats the empty p27 HTTP-extract result as EOF and breaks, dropping p27-46. getPageText resolves via HTTP POST pdf-extractor:5001/extract (NOT direct DB read). Emitted task FIX-REFINE-WINDOW-DB-PAGELIST (dev-mcp-server). Container REBUILD required after. SHIPPED 86038f04 + rebuild 2c958c6b; live probe DGC windows p1-46 minus absent p27 (34 windows). FU-REFINE-GAP-FLAG remains P2 follow-up candidate.",
+        "triaged_by": "po",
+        "triaged_at": "2026-06-06T10:25:00Z",
+        "emitted_tasks": [
+          "FIX-REFINE-WINDOW-DB-PAGELIST"
+        ]
+      },
+      {
+        "id": "rtr-phantom-gitignore-202606060955",
+        "ts": "2026-06-06T09:40:32Z",
+        "severity": "MEDIUM",
+        "source": "dev-team-router",
+        "route_to": "po",
+        "status": "RESOLVED",
+        "summary": "PROMOTED occ#3: git add docs/data/orch/orch-state.json emits French warning 'Les chemins suivants sont ignores par un de vos fichiers .gitignore: docs/data' on every tick-close stage; occ#2 (tick 082038Z) ALSO returned exit 1 despite staging succeeding (porcelain M verified). Path is NOT ignored (git check-ignore exit 1, file tracked). Risk: warning noise trains operators/agents to ignore git add failures on the orch-state path -> could mask a REAL staging failure; exit-1 variant breaks && chains. Root-cause candidates: .gitignore has a docs/data pattern negated for tracked files, or git version locale quirk. Fix direction: audit .gitignore docs/data rules + make tick-close staging verify porcelain explicitly (already router practice; encode in flow).",
+        "payload_ref": null,
+        "disposition": "ACCEPT->FIX. RE-VERIFIED by PO: root cause is .gitignore line 6 unanchored pattern 'data/' which matches docs/data/ at any depth (git check-ignore -v docs/data => .gitignore:6:data/). git add -n docs/data/orch/orch-state.json reproduces French advisory + exit 1 on git 2.49.0. Tracked files inside are NOT excluded (check-ignore on the file exits 1) but the dir-spanning add fires the advisory. Intended target of line 6 is the ROOT data/ store (cf lines 40-45 data/pdfs, data/bctc-analysis-cache). Fix: anchor line 6 to '/data/'. Safe: 30 tracked files under docs/data and tracked files under apps/mcp-server/dashboard/data already in HEAD, anchoring only stops the false advisory. Emitted task FIX-GITIGNORE-ANCHOR-DATA-DIR (developer, repo config, no zone). SHIPPED 26e84c43 (.gitignore L6 data/ -> /data/ + explicit untracked entries); router-verified advisory gone, exit 0.",
+        "triaged_by": "po",
+        "triaged_at": "2026-06-06T10:25:00Z",
+        "emitted_tasks": [
+          "FIX-GITIGNORE-ANCHOR-DATA-DIR"
+        ]
       }
     ]
   },
