@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c377 · 2026-06-06T23:44Z (F-1/FETCH-OPS-PAGE-TRUTH) — COMMITTED c299f6c3
+
+**Task:** F-1 (M) — news domain anchor fix + GET /api/fetch-status endpoint.
+
+**Fix 1 (newsHeadlinesHandler.ts):** Tightened `buildSql()` LIKE filters from `'%bloomberg%'` / `'%reuters%'` to `'%bloomberg.com%'` / `'%reuters.com%'`. Applied same anchor to `deriveProvider()`. Exported `buildSql` for testability.
+
+**Fix 2 (fetchStatusHandler.ts NEW):** `GET /api/fetch-status` — aggregates per-source article freshness from `rag_analyses` (GROUP BY slug via SQLite substr/instr), VPS proxy health via `getVpsProxyHealth()`, BCTC queue counts from `bctc_vps_queue`. Status: fresh (<2h) / stale (≥2h) / no-data. R-5 guard: `WHERE source_url IS NOT NULL AND source_url LIKE 'http%'`.
+
+**server.ts:** Added import + route dispatch at `/api/fetch-status` (NOT `/mcp/api/`) per D-2 gateway alias design.
+
+**Tests:** 21 tests / 0 fail — `F-1-fetch-ops-page-truth.test.ts` (buildSql anchors, deriveSourceSlug, computeFreshnessStatus, handleFetchStatus AC-3/AC-4 integration).
+
+**Live verify:** bloomberg count:0, reuters count:0, /api/fetch-status → sources[13]+vpsProxy{4}+bctcPipeline{pending:370}. Container rebuilt healthy.
+
+Zone health: F-1 REVIEW, 21 tests GREEN, tsc no new errors | HEALTHY
+
+---
+
 ## c376 · 2026-06-06T17:00Z (FIX-SLA-WEEKEND-AWARE) — COMMITTED
 
 **Task:** FIX-SLA-WEEKEND-AWARE (S) — calendar-aware SLA for market-hours-only sources.
