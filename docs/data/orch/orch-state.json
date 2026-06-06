@@ -3764,8 +3764,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T14:33:23Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-06T14:41:23Z",
+    "_updated_by": "router",
     "rows": [
       {
         "id": "rtr-refine-finalize-test-fail-202606061045",
@@ -3887,7 +3887,9 @@
         "summary": "CRITICAL: price data 37m stale vs 10m SLA — VPS proxy down",
         "severity": "CRITICAL",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "route_to": "po",
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue."
       },
       {
         "id": "sau-2026-06-06T143721Z-B01-flow",
@@ -3898,7 +3900,9 @@
         "summary": "CRITICAL: foreign_flow 23.6h stale vs 10m SLA — VPS idle",
         "severity": "CRITICAL",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "route_to": "po",
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue."
       },
       {
         "id": "sau-2026-06-06T143721Z-B06-bctc",
@@ -3909,7 +3913,9 @@
         "summary": "CRITICAL: bctc 21.3h stale vs 360m SLA — VPS fetch queue stuck",
         "severity": "CRITICAL",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "route_to": "po",
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue."
       },
       {
         "id": "sau-2026-06-06T143721Z-B12-sbv",
@@ -3920,7 +3926,9 @@
         "summary": "CRITICAL: sbv_fx 37m stale vs 30m SLA — rate-limit or fetch timeout",
         "severity": "CRITICAL",
         "status": "NEW",
-        "payload_ref": null
+        "payload_ref": null,
+        "route_to": "po",
+        "router_note": "ROUTER PRE-TRIAGE 14:50Z: host inbound leg EXONERATED — socat band-aid DEAD (pgrep empty) but OBSOLETE: api-gateway (restored 11:14Z) owns :4000, proxies mcp-server /api payload (content-match verified) and public zenmidi.com/api/* returns 200. Root cause is VPS-SIDE: fetch services idle/stuck — prices VPS leg dead since 2026-06-05 08:59Z (missed Friday full session; get_sla_status 37m = fallback tier masking), foreign_flow idle 23.6h, bctc no push since 2026-06-05 14:48Z. Hypothesis: VPS services 502d during socat-death window, never resumed. NEXT: dispatch ops-vps-fetch SSH recon (service status + last push logs + manual re-trigger one leg); VPS-SOCAT-PERSIST task now MOOT-CHECK (api-gateway replaces socat — verify intent then close). Auditor row nits occ#1: route_to was null, type system-issue hyphen vs system_issue."
       }
     ],
     "archive": [
