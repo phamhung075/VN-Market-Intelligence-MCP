@@ -1,8 +1,32 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-05 21:30 UTC | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
+**Last updated:** 2026-06-06 20:15 UTC | **Sprint:** ORCH-TASK-CANON
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-06T20:15Z — ORCH-TASK-CANON blueprint
+
+**Sprint:** ORCH-TASK-CANON — canonical task schema + decision visibility on orchestration dashboard.
+
+**Blocker rulings (all 4 issued):**
+- BLOCKER-1 (schema SSOT): BOTH — TypeScript interface `OrchStateTaskBoardTask` is machine-SSOT (compile-time enforcement) + `docs/standards/task-schema.md` (new, human-readable reference). TypeScript interface gains canonical `id` field (was `task_id`); `task_id` becomes legacy-optional.
+- BLOCKER-2 (counts.done): `(taskBoard.done ?? []).length` authoritative. Active-sprint DONE tasks are transitional, excluded from counts.done.
+- BLOCKER-3 (F3 rollout): `board.done ?? []` primary source, no startsWith fallback. Ships AFTER F1B migration + F2 REBUILD verified live. Empty done group is correct degraded state, not a crash.
+- BLOCKER-4 (migration runner): agent-father runs F1B jq migration (ops-lane, not TypeScript). F1B commit = green light for F2 TypeScript rename.
+
+**Fluidity audit addendum (F-4/F-5) folded into F4:**
+- Per-agent journal path: `sprint-${SPRINT_ID}-${AGENT_ID}.md` — eliminates all parallel-append contention.
+- CAP-REACHED rolls to continuation file + send_telegram(bug) — mandatory rule never silently broken.
+- journalStore.ts glob: `sprint-${id}*.md` reads all per-agent files + legacy single-file (back-compat).
+
+**Dispatch order confirmed:**
+AF-ORCH-F1A-F4 (agent-father, merged F1a+F4) → AF-ORCH-F1B (agent-father, migration) → F2-MCP (dev-mcp-server + REBUILD) → F3-FE (dev-frontend + REBUILD) → QA
+
+**Files produced:**
+- `docs/handoffs/ORCH-TASK-CANON-ARCH.md` — full blueprint
+- `docs/agent-memory/decisions/sprint-ORCH-TASK-CANON.md` — arch-S1 journal entry
+
+**NEXT:** pm → create 5 tasks: AF-ORCH-F1A-F4 (agent-father), AF-ORCH-F1B (agent-father), F2-MCP (dev-mcp-server), F3-FE (dev-frontend), QA-ORCH-TASK-CANON.
 
 ## 2026-06-05T21:30Z — ORCH-DASH-DECISION-DRILLDOWN blueprint
 

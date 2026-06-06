@@ -15,3 +15,14 @@
 - F3 filter: exact `t.status === "DONE"` misses 15 freeform variants (DONE-LIVE-VERIFIED etc.) — all hidden from done group
 **why-decision:** All 4 layers (creation/migration/serving/journal) must ship together; F2-only coalesce without F1 migration delivers zero visibility for 66 existing done rows (derived-column-reflow lesson). Blocked zero PO-level questions — 4 architect-level blockers (schema location, counts rule, F3 rollout, migration runner).
 **why-change:** F4 scope widened vs PO draft to include skill resolver fix (found raw via jq) and sprint-2026-06-06.md freeform rewrite for existing triage decisions.
+
+### STEP arch-S1 · architect · 2026-06-06T20:15:00Z
+**task-id:** ARCH-ORCH-TASK-CANON
+**what-done:** Issued all 4 blocker rulings, folded fluidity-audit F-4/F-5 addendum into F4 scope, merged F1a+F4 into single agent-father task, confirmed dispatch order, wrote full brownfield blueprint to docs/handoffs/ORCH-TASK-CANON-ARCH.md.
+**what-considered:**
+- BLOCKER-1: TypeScript interface as machine-SSOT (enforces shape at compile time) + docs/standards/task-schema.md as human-readable view — both, not either
+- BLOCKER-4 migration runner: agent-father (data-file jq migration = ops-lane, not TypeScript) vs dev-mcp-server (keeps F2 focused on TypeScript only) — agent-father wins; cleaner gate ordering
+- F1a+F4 merge: both are agent-father, disjoint file sets, one context load cheaper than two dispatches
+- Per-agent journal files (F-4 addendum): Option 1 chosen (per-agent files) over commit-mutex-wrap (125s serialization latency) and deferred-merge (extra post-tier step)
+**why-decision:** Routing migration to agent-father creates a clean one-way dependency gate: F1B commit = green light for F2 TypeScript rename. Per-agent files eliminate all append contention at zero latency cost; journalStore glob is backward-compatible with legacy single-file names.
+**why-change:** BA addendum (F-4/F-5 from fluidity audit) arrived after BA spec; folded into F4 scope rather than a separate sprint to avoid a third agent-father dispatch and keep the journal-path change atomic with the resolver bug fix.
