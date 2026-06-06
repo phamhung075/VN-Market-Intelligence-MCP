@@ -5,10 +5,10 @@
   "_updated_by": "pm",
   "head": {
     "active_task_id": null,
-    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first fire — escalation lock bctc-ctg-attachment-fetch-escalation-c026 router-verified LIVE-HELD via claim-probe (holder bctc-analyst, expires 06-07T00:06:31Z); if get_bctc_full(CTG) withheld ~09:30Z escalate citing this lock. Tick 052040Z: auditor confab occ#2 ACTIONED — c026 fabricated 'system-map lists 4001' (raw grep: no port field, live 4040 consistent); RAW-CITE GATE added to system-auditor flow main.md L490-491 by agent-father (any cited config value needs grep -n raw line or claim DROPPED; head.next_action never citable as evidence) — confab class now flow-enforced, watch CLOSED unless occ#3 breaches the gate itself. Queue pruned per 48h spec (cow-RESOLVED + po-chef-intraday archived). Carry: Monday ~02:15Z price-push resume; peer-auditor dup-row-id occ#1; c023 section-miscount occ#1; false-0-commits untested until T3 (02:00 local); peer cowork drain-flip semantics noted (READ=seen not triaged, single touch ~05:19Z then quiet); operator owes /cron-cowork-team refresh",
+    "next_action": "WATCH: CTG 09:00Z refine-bctc-slot-1 first-ever fire — next tick ~09:07Z must verify fire + CTG refined; if get_bctc_full(CTG) withheld ~09:30Z escalate citing escalation lock bctc-ctg-attachment-fetch-escalation-c026 (router-verified LIVE-HELD, holder bctc-analyst, expires 06-07T00:06:31Z). Tick 072038Z: first non-idle tick — READ-age-out trap closed (4 untriaged PO rows incl tnb-c87 HIGH would have died in tonight 20:13Z prune); PO triaged all 5 (tnb-c87 SUPERSEDED by c88 PO-ACK'd; cow-200756 FALSE — MW offhours branch exists L14+cycle L45-49; sau-d4 pair = intentional guard locks, dup-row-id occ#1); BATCH shipped: FIX-AUDITOR-RETURN-CITE-GATE 406520fa (RAW-CITE GATE now covers return summaries — confab class triple-gated, occ#3 closed) + FIX-DEVTEAM-PAYLOAD-COMMENT-DRIFT a4476e40 (payload = JSON-encoded string per live schema). Carry: Monday ~02:15Z price-push resume check; threshold-cite-soft occ#1 (c029); peer-auditor dup-row-id occ#1 (promote on occ#2 -> sau dedup-guard task); c023 section-miscount occ#1; T3 false-0-commits untested until 02:00 local; dead payload_ref docs/signals/cowork-team-20260605T200555Z.json occ#1; auditor flow 561L split debt deferred; operator owes /cron-cowork-team refresh",
     "next_agent": null,
     "status": "idle",
-    "updated_at": "2026-06-06T05:26:49+00:00",
+    "updated_at": "2026-06-06T07:30:42Z",
     "updated_by": "dev-team",
     "wip": 0,
     "wip_max": 2
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T01:22:29+00:00",
+    "_updated_at": "2026-06-06T07:30:42Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2622,6 +2622,48 @@
     "archive": [],
     "done": [
       {
+        "task_id": "FIX-AUDITOR-RETURN-CITE-GATE",
+        "title": "auditor RAW-CITE GATE covers return summaries (verbatim-from-notebook only)",
+        "type": "FIX",
+        "sprint": null,
+        "status": "DONE",
+        "priority": "P2",
+        "size": "S",
+        "zone": "cross-service/",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "severity": "MED",
+        "note": "Confab occ#3: c030 RETURN fabricated a file/line cite ('frontend 404 expected per flow line 57' — L57 is a '---' separator; real rule L86='frontend: INFO (UI only; no data impact)'). Notebook artifact was gate-clean; fabricated cite lived only in the ephemeral return. Extend RAW-CITE GATE at L490-491: return summaries may carry file/line cites ONLY if copied verbatim from a same-cycle notebook raw-cite line; else omit the pointer (substance may stay). ~2-4 line edit. Router already enforces via spawn brief (c031 clean) — this makes it durable when brief is absent.",
+        "source": "PO triage 20260606T072038Z — signal rtr-confab3-202606060645 (auditor confab occ#3)",
+        "depends_on": null,
+        "started_at": "2026-06-06T07:26:44Z",
+        "commit": "406520fa",
+        "done_at": "2026-06-06T07:30:42Z",
+        "deploy_note": "flow-doc edit, read-at-spawn from repo — no rebuild needed; router raw-diff verified (1 insertion L492, single path)"
+      },
+      {
+        "task_id": "FIX-DEVTEAM-PAYLOAD-COMMENT-DRIFT",
+        "title": "dev-team dispatcher-wrap payload comments: object-literal text vs live string schema",
+        "type": "FIX",
+        "sprint": null,
+        "status": "DONE",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "files": [
+          "docs/agents/dev-team/flow/main.md"
+        ],
+        "severity": "LOW",
+        "note": "Live task_claim requires payload as a STRING (rejected object with 'Expected string, received object' this tick); flow comments at L32/L177/L207 read 'structured object, not a shell-built string' next to object literals. Amend the 3 comments to: 'JSON-encoded string passed via call_tool arguments (still no shell exposure — DRAIN-INJECTION-SAFE).' Comment-only, no behavior change.",
+        "source": "PO triage 20260606T072038Z — router observation (live task_claim schema rejection this tick)",
+        "depends_on": null,
+        "started_at": "2026-06-06T07:26:44Z",
+        "commit": "a4476e40",
+        "done_at": "2026-06-06T07:30:42Z",
+        "deploy_note": "comment/example-only edit at L32/L177/L207 — no behavior change; router raw-diff verified (3 lines, single path)"
+      },
+      {
         "task_id": "FDA-1",
         "title": "polymarket fetcher fabricates 50% probability (0.5/0.5) on malformed prices — served as live with no is_estimate",
         "type": "FIX",
@@ -3571,44 +3613,9 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T05:26:49+00:00",
+    "_updated_at": "2026-06-06T07:30:42Z",
     "_updated_by": "dev-team",
     "rows": [
-      {
-        "id": "sau-d4-202606060300",
-        "ts": "2026-06-06T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "sau-d4-202606060300",
-        "ts": "2026-06-06T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "held lock bctc-ctg-attachment-fetch-escalation-c026 has no orch-state task_board row",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "tnb-c87-20260604T2013",
-        "ts": "2026-06-04T20:13Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "audit-handoff",
-        "summary": "c87 NEEDS_ATTENTION STABLE: F8 CLOSED (morning verified); F-CARRY-CORRUPT CRITICAL (fedFundsRate stale, regime wrong); AC-1 live; Brent −3.18σ L1; MCP partial",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
-        "read_at": "2026-06-04T21:19:07Z",
-        "read_note": "F-CARRY-CORRUPT verified FIXED LIVE (carry 3.62/NEUTRAL/+1.38pp, is_estimate:false, tier:1). Structural findings F3/F4/F6/BCTC tracked. To PO for narrative disposition."
-      },
       {
         "id": "bca-20260603T1815Z",
         "ts": "2026-06-03T18:15:00Z",
@@ -3639,18 +3646,6 @@
           ]
         },
         "disposition": "Router live-verified get_cash_flow(FPT,quarters=8): quarters_requested=8 honored, periods[] returned, only 2 quarters of FPT data in corpus. FU-BCTC-TOOL-PARAMS genuinely DONE. Root=data coverage (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA). Loop-stop guard shipped (BCTC-ESC-GUARD design 2a40d47e/impl 061ce406/split 0b00e15d). Next cycle the analyst will self-classify DATA-COVERAGE-LIMITED, claim 30d guard, route ONE signal to ops, stop re-escalating to dev-team."
-      },
-      {
-        "id": "cow-20260605T200756",
-        "ts": "2026-06-05T20:07:56Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "flow-gap",
-        "summary": "market-watcher-offhours slot fires 4h but main.md has no offhours branch - agent no-ops, spawn wasted",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json",
-        "read_at": "2026-06-05T20:22:57Z"
       }
     ],
     "archive": [
@@ -4205,6 +4200,74 @@
         "resolution": "FALSE-ALARM root-caused by dev-team router: clean-exit(0) 20:06:12Z was the FIX-CTG-PDF-MISLINK deploy recreate window (ops redeploy, image a742d5b7 verified running 20:15:15Z w/ healed=1 fingerprint + served CTG row 62p). emit_pressure_state NOT at fault — emit retried OK 20:07:55Z + succeeded next tick. No action needed.",
         "resolved_at": "2026-06-05T20:22:57Z",
         "resolved_by": "dev-team"
+      },
+      {
+        "id": "rtr-confab3-202606060645",
+        "ts": "2026-06-06T06:40:41Z",
+        "from": "router-verify",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "Auditor confab occ#3 (c030, RETURN-channel only): return cited 'frontend 404 expected per flow line 57' — raw verify: flow L57 is a '---' separator; real rule at L86 ('frontend: INFO (UI only; no data impact)') and says INFO-severity, not '404 expected'. Substance TRUE (established c026-c029 convention), notebook artifact fully gate-compliant — fabricated cite lived only in ephemeral return. RAW-CITE GATE (main.md L490-491) covers returns, so this is a gate breach per the pre-declared occ#3 trigger. Proposed fix: extend gate — return summaries may carry file/line cites ONLY if copied verbatim from a notebook raw-cite line captured same cycle; else omit the pointer. Router has already amended spawn brief for c031+.",
+        "severity": "MEDIUM",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_at": "2026-06-06T07:24:32Z",
+        "disposition": "TASK→FIX-AUDITOR-RETURN-CITE-GATE (agent-father). Confab occ#3 substance VERIFIED by router raw-read: auditor flow L57 IS a '---' separator, real rule L86 'frontend: INFO (UI only; no data impact)' — c030 return cite 'frontend 404 expected per flow line 57' fabricated (wrong line + invented text). Brief-level enforcement passed c031 but occ#3 trigger pre-declared → ship durable flow edit. PO: durable > brief. SHIPPED 406520fa (gate extension live in flow)."
+      },
+      {
+        "id": "sau-d4-202606060300",
+        "ts": "2026-06-06T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_at": "2026-06-06T07:24:32Z",
+        "disposition": "RESOLVED (watch). Held locks w/o task_board rows (esc-datacov:FPT ESC-3, bctc-ctg-attachment-c026) = known data-coverage escalation guards (BCTC-ESC-GUARD design), not orphan defects — guard locks intentionally have no task row. occ#1 watch stands; no dev work. NOTE: this id appears TWICE (peer-auditor dup-row-id defect) — occ#1; a 2nd dup-id occurrence warrants a sau dedup-guard task."
+      },
+      {
+        "id": "sau-d4-202606060300",
+        "ts": "2026-06-06T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock bctc-ctg-attachment-fetch-escalation-c026 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_at": "2026-06-06T07:24:32Z",
+        "disposition": "DUP-ROW (occ#2 of same id sau-d4-202606060300, content variant 'bctc-ctg-attachment-c026'). Dispositioned with sibling row. Dup-id defect noted (peer-auditor reuses one id for two distinct findings). Tracked, not promoted (occ#1 of the dup-id pattern)."
+      },
+      {
+        "id": "tnb-c87-20260604T2013",
+        "ts": "2026-06-04T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c87 NEEDS_ATTENTION STABLE: F8 CLOSED (morning verified); F-CARRY-CORRUPT CRITICAL (fedFundsRate stale, regime wrong); AC-1 live; Brent −3.18σ L1; MCP partial",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
+        "read_at": "2026-06-04T21:19:07Z",
+        "read_note": "F-CARRY-CORRUPT verified FIXED LIVE (carry 3.62/NEUTRAL/+1.38pp, is_estimate:false, tier:1). Structural findings F3/F4/F6/BCTC tracked. To PO for narrative disposition.",
+        "triaged_at": "2026-06-06T07:24:32Z",
+        "disposition": "RESOLVED — SUPERSEDED. This is the c87 (2026-06-04) handoff; already PO-ACK'd 2026-06-04T21:21Z + read_note confirms F-CARRY-CORRUPT FIXED LIVE. c88 handoff (tnb-audit-latest.md, 2026-06-05) ALSO PO-ACK'd L172: F-CARRY-CORRUPT CLOSED 2nd confirmation, no new dev task (CTG extraction watch covered by FIX-CTG-PDF-MISLINK, c025 21:00Z proof point). All c87 structural findings F3/F4/F6/F9/BCTC tracked + unchanged in c88. No open action. Narrative disposition: NEEDS_ATTENTION IMPROVING, no FIX."
+      },
+      {
+        "id": "cow-20260605T200756",
+        "ts": "2026-06-05T20:07:56Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow-gap",
+        "summary": "market-watcher-offhours slot fires 4h but main.md has no offhours branch - agent no-ops, spawn wasted",
+        "severity": "MED",
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/cowork-team-20260605T200555Z.json",
+        "read_at": "2026-06-05T20:22:57Z",
+        "triaged_at": "2026-06-06T07:24:32Z",
+        "disposition": "RESOLVED — FALSE/STALE. Claim 'market-watcher main.md has no offhours branch, agent no-ops' is FALSE: main.md L14 routes weekends+offhours→cycle.md mode=offhours, L35 'all times resolve to a sub-flow, no unconditional EXIT'; cycle.md L45-49 explicit if mode=offhours threshold-floor (FIX-MW-OFFHOURS-DISPATCH) + L92 offhours dup-guard. Gap already fixed; agent does NOT no-op. payload_ref docs/signals/cowork-team-20260605T200555Z.json MISSING (dead ref). No dev work."
       }
     ]
   },
