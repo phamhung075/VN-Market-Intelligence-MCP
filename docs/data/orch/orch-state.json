@@ -2269,9 +2269,10 @@
             "title": "Implement WF-3 ruling (INV-GATEWAY-1): remove commit-mutex skill references from dev-*/qa specialist flow docs + add INV-GATEWAY-1 comment; update fail-loud-protocol.md step 0 annotation to point at the 2026-06-07 ruling; document invariant. Folds in FU-MCP-GATEWAY-DEV-FRONTEND (same root cause). Sub-task D (add gateway tool to dev-* agent defs + spawn-context verification) stays Phase-4 gated under SPIKE-C44-PARALLEL-PROOF — OUT of this task.",
             "owner": "agent-father",
             "type": "FIX",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "docs/agents/",
             "created_at": "2026-06-06T23:22:24Z",
+            "closed_at": "2026-06-07T00:00:00Z",
             "priority": "medium",
             "size": "S",
             "sprint": "WORKFLOW-FLUIDITY",
@@ -2284,7 +2285,8 @@
               "docs/agents/developer/flow/main.md",
               "docs/protocols/dev-star-gateway-binding.md"
             ],
-            "note": "Source: WF-3 ruling §5+§7 sub-tasks A+B. Sub-task C (orchStateStore mtime retry) already shipped in WF-2. AC: zero commit-mutex/task_claim skill calls remain inside dev-*/qa specialist flows; INV-GATEWAY-1 stated verbatim in fail-loud-protocol.md; FU-MCP-GATEWAY-DEV-FRONTEND closed by reference."
+            "note": "Source: WF-3 ruling §5+§7 sub-tasks A+B. Sub-task C (orchStateStore mtime retry) already shipped in WF-2. AC: zero commit-mutex/task_claim skill calls remain inside dev-*/qa specialist flows; INV-GATEWAY-1 stated verbatim in fail-loud-protocol.md; FU-MCP-GATEWAY-DEV-FRONTEND closed by reference. QA APPROVED 2026-06-07 (commit 970c8e50) — all 7 ACs pass, doc-only task.",
+            "commit": "970c8e50"
           }
         ]
       }
@@ -2785,6 +2787,19 @@
     ],
     "archive": [],
     "done": [
+      {
+        "id": "WF-3-IMPL",
+        "title": "INV-GATEWAY-1 implemented — remove commit-mutex/task_claim from specialist flows; fail-loud-protocol.md WF-3 ruling annotation; FU-MCP-GATEWAY-DEV-FRONTEND closed by reference",
+        "owner": "agent-father",
+        "type": "FIX",
+        "status": "DONE",
+        "sprint": "WORKFLOW-FLUIDITY",
+        "zone": "docs/agents/",
+        "created_at": "2026-06-06T23:22:24Z",
+        "closed_at": "2026-06-07T00:00:00Z",
+        "note": "QA APPROVED 2026-06-07 — all 7 ACs pass; doc-only task; dev commit 970c8e50 by agent-father.",
+        "commit": "970c8e50"
+      },
       {
         "id": "FIX-VPS-SSC-CURL-SCRAPER",
         "title": "FIX-VPS-SSC-CURL-SCRAPER",
