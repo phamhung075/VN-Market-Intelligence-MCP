@@ -10,6 +10,19 @@ description: SSOT protocol for cowork agent signal communication via docs/data/o
 **Rule:** This section is the SSOT inbox for cowork agents. Dev-team pipeline (`signals.db` + JSON) is separate — do NOT replace it. The signal_queue complements it for cowork-to-cowork visibility.
 **Write protocol:** Every write to orch-state.json MUST use atomic temp-file-then-rename (see `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3`). Read full file → modify only `.signal_queue` section → write atomically. NEVER overwrite sibling sections (`.head`, `.task_board`, `.narrative`).
 
+> **CONCURRENT WRITERS — WF-2 (WORKFLOW-FLUIDITY):** Three classes write `.signal_queue.rows[]` concurrently:
+>   1. **dev-team** (hourly drain at :07)
+>   2. **cowork-team** (every 15 min)
+>   3. **system-auditor Tier-2** (0 every 4h)
+>
+> All three classes collide at :00/4h. TS code MUST call `appendSignalQueueRow()` from
+> `apps/mcp-server/src/infrastructure/orchStateStore.ts` — that function implements the
+> mtime-compare-retry CAS loop (3 retries) which re-reads the file and re-applies the append
+> when a concurrent write is detected before the rename.
+> Shell/flow code MUST record mtime before read, check mtime again before rename, retry up to
+> 3 times if changed. **Never use bare temp→rename without the CAS guard** — last-write-wins
+> silently drops the first writer's rows.
+
 ---
 
 ## Receivers (row `to` field values)
