@@ -17,7 +17,7 @@ const schedPath = path.join(process.cwd(), 'docs/data/cowork-schedule.json');
 const sched = JSON.parse(fs.readFileSync(schedPath, 'utf8'));
 
 // This require must succeed — if the script does not export, we fail loud.
-const { cronMatches, matchSlots } = require(path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js'));
+const { cronMatches, matchSlots, snapToCronBoundary } = require(path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js'));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -152,6 +152,103 @@ console.log('\nTC-8: Sunday 03:00:30Z — DOW-restricted slot (1-5) does NOT fir
   const ctx = ctxFromDate(utcDate('2026-05-17T03:00:30Z')); // Sunday (2026-05-17)
   assert('Sunday DOW=0 is not in 1-5 (DOW check)', ctx.DOW, 0);
   assert('cronMatches("*/30 * * * 1-5") on Sunday is false', cronMatches(CRON_30, ctx), false);
+}
+
+// ---------------------------------------------------------------------------
+// TC-9..TC-14: snapToCronBoundary unit tests (FIX-COWORK-CADENCE-DRIFT-SNAP)
+// ---------------------------------------------------------------------------
+console.log('\nTC-9: snapToCronBoundary — "0 */4 * * *", last_fired 04:04:30Z → snaps to 04:00:00Z');
+{
+  // 2026-06-06T04:04:30Z = 1749182670s  → 4h boundary = floor(1749182670/14400)*14400
+  const lastFiredUnix = new Date('2026-06-06T04:04:30Z').getTime() / 1000; // 1749182670
+  const snapped = snapToCronBoundary(lastFiredUnix, '0 */4 * * *');
+  const expectedSnap = new Date('2026-06-06T04:00:00Z').getTime() / 1000;
+  assert('snapped == 04:00:00Z unix', snapped, expectedSnap);
+}
+
+console.log('\nTC-10: snapToCronBoundary — "0 */4 * * *" last_fired 04:04:30Z, now 08:00:xxZ → elapsedSeconds >= 14400 (slot IS due)');
+{
+  // This is the core regression case.
+  // Before fix: elapsed = 08:00:00 - 04:04:30 = 14370s < 14400s → skipped (BUG).
+  // After fix:  elapsed = 08:00:00 - 04:00:00 = 14400s >= 14400s → due (CORRECT).
+  const lastFiredUnix = new Date('2026-06-06T04:04:30Z').getTime() / 1000;
+  const nowUnix       = new Date('2026-06-06T08:00:05Z').getTime() / 1000; // ~5s into the tick
+  const cadenceSeconds = 240 * 60; // 14400
+  const snappedLastFired = snapToCronBoundary(lastFiredUnix, '0 */4 * * *');
+  const elapsed = nowUnix - snappedLastFired;
+  assert('elapsed >= cadenceSeconds (due)', elapsed >= cadenceSeconds, true);
+}
+
+console.log('\nTC-11: snapToCronBoundary — no over-fire: within-cadence slot still skipped after snap');
+{
+  // last_fired 07:59:00Z, now 08:00:05Z → elapsed after snap = 08:00:05 - 04:00:00 = 14405s → due.
+  // But last_fired 07:00:00Z (real, 1h ago) → snap still = 04:00:00Z, elapsed = 4h+5s → due.
+  // We want: last_fired 04:30:00Z, now 04:35:00Z → snap = 04:00:00Z, elapsed = 35min < 240min → skip.
+  const lastFiredUnix = new Date('2026-06-06T04:30:00Z').getTime() / 1000;
+  const nowUnix       = new Date('2026-06-06T04:35:00Z').getTime() / 1000;
+  const cadenceSeconds = 240 * 60;
+  const snapped = snapToCronBoundary(lastFiredUnix, '0 */4 * * *');
+  const elapsed = nowUnix - snapped;
+  assert('within-cadence slot is still skipped (no over-fire)', elapsed >= cadenceSeconds, false);
+}
+
+console.log('\nTC-12: snapToCronBoundary — "*/15 * * * *" last_fired 08:17:45Z → snaps to 08:15:00Z');
+{
+  const lastFiredUnix = new Date('2026-06-06T08:17:45Z').getTime() / 1000;
+  const snapped = snapToCronBoundary(lastFiredUnix, '*/15 * * * *');
+  const expectedSnap = new Date('2026-06-06T08:15:00Z').getTime() / 1000;
+  assert('*/15 snapped to 08:15:00Z', snapped, expectedSnap);
+}
+
+console.log('\nTC-13: snapToCronBoundary — unrecognised pattern passthrough (no snap)');
+{
+  const lastFiredUnix = new Date('2026-06-06T10:07:00Z').getTime() / 1000;
+  const snapped = snapToCronBoundary(lastFiredUnix, '5 10 * * 1-5'); // fixed minute+hour, no period
+  assert('unrecognised cron snaps to lastFiredUnix unchanged', snapped, lastFiredUnix);
+}
+
+console.log('\nTC-14: matchSlots adaptive — 04:04:30Z last_fired, now 08:00:05Z → slot IS returned as due');
+{
+  // Build a minimal schedule with one offhours-style slot.
+  const minimalSched = {
+    slots: [{
+      slot_id:       'test-offhours',
+      cron:          '0 */4 * * *',
+      agent:         'test-agent',
+      flow_path:     'docs/agents/test/flow/main.md',
+      trigger_prompt:'run test',
+      guaranteed:    false,
+      enabled:       true,
+      policy_id:     'gatherer-standard',
+      last_fired:    '2026-06-06T04:04:30Z',
+    }]
+  };
+  // ctx: 08:00:05Z → actualM=0, H=8, DOM=6, MON=6, DOW=6 (Saturday)
+  // cron "0 */4 * * *" has DOW=*, so Saturday matches.
+  const ctx = { actualM: 0, H: 8, DOM: 6, MON: 6, DOW: 6 };
+  // Minimal pressure-state + policy so adaptive mode engages.
+  const pressureState = {
+    emitted_at: '2026-06-06T07:55:00Z',
+    stale_warning: false,
+    signal_backlog: 0,
+    last_volatility_level: 'low',
+    calendar_status: 'weekend'
+  };
+  // gatherer-standard policy: supply a rule that returns 240min for weekend/*/*
+  const policyObj = {
+    _staleness_threshold_minutes: 20,
+    policies: [{
+      policy_id: 'gatherer-standard',
+      calendar_status: '*',
+      signal_backlog_tier: '*',
+      volatility_tier: '*',
+      interval_minutes: 240,
+      _cron_fallback: false
+    }]
+  };
+  const slots = matchSlots(minimalSched, ctx, { mode: 'adaptive', pressureState, policyObj });
+  assert('slot IS in adaptive results (due via snap)', slots.length > 0, true);
+  assert('due_reason is cadence', slots.length > 0 ? slots[0].due_reason : 'none', 'cadence');
 }
 
 // ---------------------------------------------------------------------------

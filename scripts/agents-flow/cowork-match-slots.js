@@ -38,6 +38,46 @@ function dowMatch(expr, dow) {
   return field(expr, dow) || (dow === 0 && field(expr, 7));
 }
 
+// snapToCronBoundary: given lastFiredUnix (seconds) and a cron expression, return the
+// most recent nominal cron-tick boundary at-or-before lastFiredUnix, measured in seconds
+// since Unix epoch (UTC-aligned). This eliminates spawn-latency drift for slots where
+// cadence_minutes == cron period (e.g. "0 */4 * * *" with cadence 240min).
+//
+// Supported cron patterns (minute and hour fields only; DOM/MON/DOW ignored for snapping):
+//   "0 */H * * *"   → period = H*3600s   (e.g. "0 */4 * * *" → 14400s)
+//   "*/M * * * *"   → period = M*60s     (e.g. "*/15 * * * *" → 900s)
+//   "*/M H * * *"   → period = M*60s     (minute field governs period for <1h slots)
+//   "0 H * * *"     → period = 86400s    (daily; snap to midnight)
+//   anything else   → no snap (returns lastFiredUnix unchanged)
+//
+// exported for testing.
+function snapToCronBoundary(lastFiredUnix, cron) {
+  if (!cron || typeof cron !== 'string') return lastFiredUnix;
+  const parts = cron.trim().split(/\s+/);
+  if (parts.length < 2) return lastFiredUnix;
+  const [mf, hf] = parts; // minute-field, hour-field
+
+  let periodSeconds = null;
+
+  if (mf === '0' && hf && hf.startsWith('*/')) {
+    // "0 */H * * *" — hourly-multiple boundary
+    const h = parseInt(hf.slice(2), 10);
+    if (!isNaN(h) && h > 0) periodSeconds = h * 3600;
+  } else if (mf.startsWith('*/')) {
+    // "*/M ... * * *" — minute-multiple boundary
+    const m = parseInt(mf.slice(2), 10);
+    if (!isNaN(m) && m > 0) periodSeconds = m * 60;
+  } else if (mf === '0' && hf !== '*' && !hf.includes('/') && !hf.includes(',') && !hf.includes('-')) {
+    // "0 H * * *" — fixed hour daily; snap to midnight UTC (86400s boundary)
+    periodSeconds = 86400;
+  }
+
+  if (periodSeconds === null) return lastFiredUnix;
+
+  // Floor to the most recent period boundary on the Unix epoch grid (UTC-aligned)
+  return Math.floor(lastFiredUnix / periodSeconds) * periodSeconds;
+}
+
 // cronMatches: exported for testing. Accepts cron string + optional time context object.
 // When ctx is omitted the function reads the system clock (production path).
 // ctx shape: { actualM, H, DOM, MON, DOW }  (all UTC, DOW 0=Sun..6=Sat)
@@ -180,12 +220,14 @@ function matchSlots(schedule, ctx, options) {
       continue;
     }
 
-    const elapsedSeconds = nowUnix - lastFiredUnix;
+    const snappedLastFired = snapToCronBoundary(lastFiredUnix, sl.cron);
+    const elapsedSeconds = nowUnix - snappedLastFired;
     if (elapsedSeconds >= cadenceSeconds) {
       results.push(Object.assign({}, base, { due_reason: 'cadence', cadence_minutes: evalResult.interval_minutes }));
     } else {
       console.log('[cowork-match-slots] cadence skip:', sl.slot_id,
-        'elapsed=' + Math.floor(elapsedSeconds) + 's cadence=' + cadenceSeconds + 's');
+        'elapsed=' + Math.floor(elapsedSeconds) + 's cadence=' + cadenceSeconds + 's',
+        '(snapped_last_fired=' + new Date(snappedLastFired * 1000).toISOString() + ')');
     }
   }
 
@@ -225,4 +267,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify({ slots: hits, drift_min: driftMin }));
 }
 
-module.exports = { cronMatches, matchSlots, field, dowMatch };
+module.exports = { cronMatches, matchSlots, field, dowMatch, snapToCronBoundary };
