@@ -3835,6 +3835,31 @@
         "resolved_at": "2026-06-06T13:10:45Z",
         "resolved_by": "dev-team",
         "disposition": "SHIPPED 368b7bad (dev-mcp-server, PO batch FIX-REFINE-IDEM-LOCK-ISO): two-part root cause — (1) test isolation: beforeEach now _resetCoordinationDbState + ensureCoordinationTable + _injectCoordinationDb(:memory: db), afterEach reset+close; (2) BONUS PRODUCTION BUG router-verified: bctcRefineJob L512 released with owner_agent pid-${pid} but claimed as refine-orchestrator → DELETE never matched → zombie lock 3600s on EVERY production refine call; fixed to matching owner_agent. 13/13 GREEN (router re-ran), task-lock suite 27/27 no regression, tsc clean. DEPLOYED 12:44Z second scoped rebuild (image 15d45d7cf2f9, IMAGE-MATCH raw, 6/6 peers, health 200/162) — live before next refine fire."
+      },
+      {
+        "id": "cwk-refine-orchestrator-no-agent-tool-202606061410",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "agent-capability-gap",
+        "status": "NEW",
+        "priority": "high",
+        "createdAt": "2026-06-06T14:10:00Z",
+        "payload": {
+          "summary": "refine_bctc_md slots structurally DOA at Phase 2: flow main.md (Option-Y orchestrator) requires CC Agent/Task fan-out of one subagent per window (L91-124), but the refine_bctc_md agent type has tools Read/Write/call_tool only — NO Agent tool. Every fire: claim bctc-refine lock -> verify -> cannot fan out -> release -> exit, zero windows processed.",
+          "evidence": "14:00Z fire (refine-bctc-slot-2, DGC Q4-2025 0c6f0535, 34 windows): agent claimed lock, verified text_status COMPLETE + 34 windows (schema fix 202606060906 confirmed LANDED), then hit fan-out wall. Released cleanly, no artifacts, refine_status still PENDING. 09:00Z fire failed earlier at Phase 0 schema mismatch which masked this defect.",
+          "drift_note": "Roster/agent-def description says 'One window per invocation. Writes docs/refine-output/{report_id}/{unit_id}.json — NEVER to DB' which contradicts flow main.md Option-Y ('NO filesystem output. NO docs/refine-output/ writes', push via push_bctc_refined_unit + finalize_bctc_refine). Agent def is stale vs flow.",
+          "proposed_fixes": [
+            "A: agent-father grants Agent tool to refine_bctc_md agent def so the spawned orchestrator can fan out window subagents (matches main.md design intent)",
+            "B: re-architect — split agent ids: refine-orchestrator (with Agent tool) vs refine_bctc_md window worker (current toolset), update cowork-schedule trigger to spawn the orchestrator id",
+            "C: degrade main.md to sequential in-agent window processing (no spawn needed; 34 windows x haiku in one context may overflow — needs sizing check)"
+          ],
+          "owner_hint": "agent-father (agent def) + architect (Option-Y design review)",
+          "blocked_slots": [
+            "refine-bctc-slot-1 (09:00Z daily)",
+            "refine-bctc-slot-2 (14:00Z daily)",
+            "refine-bctc-slot-3 (20:00Z if exists)"
+          ]
+        }
       }
     ],
     "archive": [
