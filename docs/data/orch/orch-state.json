@@ -3720,6 +3720,17 @@
         "status": "NEW",
         "summary": "Pre-existing failing unit test DV-push-4 in apps/mcp-server/src/__tests__/AR-refined-units-idempotency.test.ts (push_tool_pathway AC-MCP-OPTY-6: all-DONE -> finalize DONE -> table_rows count = sum of window rows). finalize_bctc_refine BLOCK-4 sets validation_status=failed error_count=1 in the fixture. NOT introduced by 86038f04 (file untouched, fails identically on parent). Matters because refine artifacts start flowing at 13:00Z fires and finalize is their downstream; a broken finalize-count invariant could corrupt or block refined-unit persistence. Triage: root-cause whether test or finalize logic drifted.",
         "payload_ref": null
+      },
+      {
+        "id": "cwk-leader-lock-zombie-202606061105",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "system_issue",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "created_at": "2026-06-06T11:03:53Z",
+        "summary": "cowork-leader task lock goes ZOMBIE after every mcp-server restart: task_heartbeat and task_release both validate the claim row owner_session (pid-1-ts-<server-boot-ms>), so a restart orphans the lock — un-renewable, un-releasable, only recoverable by TTL-expiry steal (up to 30min gap). Observed twice 2026-06-06: restart ~09:37Z (heartbeat ok:false 09:47, steal-claim 10:02 stolen:true) and restart ~10:48-11:02Z (heartbeat+release ok:false 11:02, lock expires 11:17:58Z, steal at 11:32 tick). emit_pressure_state unaffected. Fix for dev-mcp-server: match heartbeat/release on owner_agent (or owner_agent+task_id) instead of server-boot session, OR re-bind surviving claims on boot. Repro: task_claim cowork-slot, restart container, task_heartbeat → {ok:false,expires_at:0}.",
+        "payload_ref": null
       }
     ],
     "archive": [
