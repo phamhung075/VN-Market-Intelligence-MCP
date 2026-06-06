@@ -5,11 +5,11 @@
   "_updated_by": "architect",
   "head": {
     "active_task_id": null,
-    "next_action": "Sprint FETCH-OPS-PAGE-TRUTH closed 2026-06-06T22:15:46Z (all 5 tasks DONE, QA-gated, router live-verified). Carry-forwards logged: very-stale label polish (F-3 UX, non-blocking); FU-MCP-GATEWAY-DEV-FRONTEND (commit-mutex gateway unavailable in dev-frontend+qa sessions → agent-father); Bun full-suite C++ OOM pre-existing; 5 pre-existing tsc errors (1980-f2-canon-schema.test.ts + tasksMdJanitorJob.ts) → TECH-DEBT-LINTING. Next tick: PO sprint planning.",
-    "next_agent": "po",
     "status": "idle",
-    "updated_at": "2026-06-06T22:18:11Z",
-    "updated_by": "pm",
+    "updated_at": "2026-06-07T00:00:00Z",
+    "updated_by": "dev-mcp-server",
+    "next_agent": "qa",
+    "next_action": "FIX-SLA-EXEMPT-NEWS-SBVFX DONE — 52 tests pass, d71e3f2e committed. NEXT: qa verify N-1..N-8 S-1..S-8 pass; W-1..W-10 green.",
     "wip": 0,
     "wip_max": 2
   },
@@ -56,8 +56,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T22:00:00Z",
-    "_updated_by": "dev-macro-indicators",
+    "_updated_at": "2026-06-07T00:00:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4106,7 +4106,19 @@
         "closed_at": "2026-06-06T22:15:46Z"
       }
     ],
-    "in_progress": []
+    "in_progress": [
+      {
+        "task_id": "FIX-SLA-EXEMPT-NEWS-SBVFX",
+        "title": "Extend calendar-aware SLA exemption to news + sbv_fx source classes",
+        "type": "FIX",
+        "status": "REVIEW",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "commit": "d71e3f2e",
+        "note": "DONE-PENDING-QA 2026-06-07. 31 new tests (FIX-SLA-EXEMPT-NEWS-SBVFX.test.ts N-1..N-8 S-1..S-8) GREEN. W-1..W-10 baseline 21 tests GREEN. tsc pre-existing errors only (unrelated files). news quiet hours: UTC 15:00-23:59 exempt (dynamic threshold); sbv_fx weekend/holiday exempt. Trigger: sau-news-sla-critical-202606062231 (289 min overnight)."
+      }
+    ]
   },
   "signal_queue": {
     "_updated_at": "2026-06-06T23:18:31Z",
