@@ -4086,8 +4086,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-06T18:12:00Z",
-    "_updated_by": "dev-team-router",
+    "_updated_at": "2026-06-06T23:18:31Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "sau-news-sla-critical-202606062231",
@@ -4097,7 +4097,7 @@
         "type": "data_stale",
         "summary": "[B-04] News SLA breach — 289min vs 30min threshold; ingest lag detected",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "zone_owner": "dev-mcp-server",
         "check_id": "B-04",
         "payload_ref": null
@@ -4125,22 +4125,6 @@
         "payload_ref": null,
         "read_at": "2026-06-06T16:22:41Z",
         "read_by": "dev-team"
-      },
-      {
-        "id": "rtr-sla-weekend-aware-202606061545",
-        "ts": "2026-06-06T15:36:20Z",
-        "severity": "LOW",
-        "source": "router",
-        "route_to": "po",
-        "type": "system_issue",
-        "status": "RESOLVED",
-        "summary": "SLA monitor + vps-proxy-health have no market-hours/weekend awareness: prices + foreign_flow are dow/hour-gated (Mon-Fri 02:00-08:59Z) but stale thresholds run 24/7 -> guaranteed false-CRITICAL every weekend (this tick burned a full auditor escalation + PO triage + SSH recon on 2 healthy services; foreign_flow showed 1462m breach while in designed sleep). Fix: exempt market-hours-gated sources from staleness SLA outside their active window (calendar-aware expected-push schedule per source). Also foreign_flow is embedded in price push and not separately tracked by /api/vps-proxy-health — consider explicit tracking. Triage: dev-mcp-server zone (SLA logic lives in mcp-server). P3 but cheap and kills a recurring false-alarm class.",
-        "payload_ref": null,
-        "read_at": "2026-06-06T16:22:41Z",
-        "read_by": "dev-team",
-        "resolved_at": "2026-06-06T16:51:51Z",
-        "resolved_by": "dev-team",
-        "disposition": "SHIPPED same tick (dev-mcp-server, PO batch FIX-SLA-WEEKEND-AWARE, 9e74cf0a + notebook 2d37cceb). Calendar-aware SLA: domain freshnessSlaChecker getSlaThreshold computes dynamic off-hours threshold (minutesSinceLastWindowEnd + 30min grace) for price/foreign_flow (Mon-Fri 02:00-08:59Z gate) — breaches never RECORDED off-hours, not merely suppressed; vps-proxy-health endpoint + tool + get_sla_status all calendar-aware, off_hours field added. 21 new tests W-1..W-10, router re-ran 46/46 green, tsc clean. DEPLOYED 16:46Z scoped rebuild (IMAGE-MATCH 075579957fed, healthy, toolCount 162 baseline intact). LIVE-PROVEN Saturday: /api/vps-proxy-health prices stale:false off_hours:true (Friday-close last_push); get_sla_status foreign_flow 1547min vs dynamic 1938min SLA = ok (yesterday: 1462min vs flat 10min = false-CRITICAL). Weekend = ongoing free proof window; Sunday auditor fires should emit zero VPS-stale CRITICALs for prices/foreign_flow."
       }
     ],
     "archive": [
@@ -5039,6 +5023,22 @@
         "resolved_at": "2026-06-06T15:36:20Z",
         "resolved_by": "dev-team",
         "disposition": "FALSE-FLAG self-resolved, no task. c045 caught sbv in a between-push blip (37m vs 30m SLA); PO live probe 15:23Z + router get_vps_proxy_health both show healthy: last_push 15:28:42Z, 47 pushes/24h, 0 errors. No action taken on VPS (read-only confirmed by ops-vps-fetch)."
+      },
+      {
+        "id": "rtr-sla-weekend-aware-202606061545",
+        "ts": "2026-06-06T15:36:20Z",
+        "severity": "LOW",
+        "source": "router",
+        "route_to": "po",
+        "type": "system_issue",
+        "status": "RESOLVED",
+        "summary": "SLA monitor + vps-proxy-health have no market-hours/weekend awareness: prices + foreign_flow are dow/hour-gated (Mon-Fri 02:00-08:59Z) but stale thresholds run 24/7 -> guaranteed false-CRITICAL every weekend (this tick burned a full auditor escalation + PO triage + SSH recon on 2 healthy services; foreign_flow showed 1462m breach while in designed sleep). Fix: exempt market-hours-gated sources from staleness SLA outside their active window (calendar-aware expected-push schedule per source). Also foreign_flow is embedded in price push and not separately tracked by /api/vps-proxy-health — consider explicit tracking. Triage: dev-mcp-server zone (SLA logic lives in mcp-server). P3 but cheap and kills a recurring false-alarm class.",
+        "payload_ref": null,
+        "read_at": "2026-06-06T16:22:41Z",
+        "read_by": "dev-team",
+        "resolved_at": "2026-06-06T16:51:51Z",
+        "resolved_by": "dev-team",
+        "disposition": "SHIPPED same tick (dev-mcp-server, PO batch FIX-SLA-WEEKEND-AWARE, 9e74cf0a + notebook 2d37cceb). Calendar-aware SLA: domain freshnessSlaChecker getSlaThreshold computes dynamic off-hours threshold (minutesSinceLastWindowEnd + 30min grace) for price/foreign_flow (Mon-Fri 02:00-08:59Z gate) — breaches never RECORDED off-hours, not merely suppressed; vps-proxy-health endpoint + tool + get_sla_status all calendar-aware, off_hours field added. 21 new tests W-1..W-10, router re-ran 46/46 green, tsc clean. DEPLOYED 16:46Z scoped rebuild (IMAGE-MATCH 075579957fed, healthy, toolCount 162 baseline intact). LIVE-PROVEN Saturday: /api/vps-proxy-health prices stale:false off_hours:true (Friday-close last_push); get_sla_status foreign_flow 1547min vs dynamic 1938min SLA = ok (yesterday: 1462min vs flat 10min = false-CRITICAL). Weekend = ongoing free proof window; Sunday auditor fires should emit zero VPS-stale CRITICALs for prices/foreign_flow."
       }
     ]
   },
