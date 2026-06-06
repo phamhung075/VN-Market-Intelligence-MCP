@@ -3,6 +3,40 @@ agent: system-auditor
 session_date: 2026-06-06
 ---
 
+## c017 · 2026-06-06T01:08Z
+### Audit Run Tier-3 (01:08–01:12 UTC 2026-06-06)
+- Tier: 3 | Services: 6 (intended runtime) | Tooling: 3 checks | DB checks: via MCP tools
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped | 0 improvement proposals
+- Status: HEALTHY
+
+### Container Status (Intended Runtime Set) — All PASS
+- mcp-server: Up 3h 12m, restart_count=0 ✓, memory=33.83% ✓
+- api-gateway: Up 3d ✓ | frontend: Up 3h ✓ | macro-indicators: Up 14h ✓
+- pdf-extractor: Up 2d ✓ | mcp-gateway: Up 9d ✓
+
+### Health Endpoints — All PASS
+- mcp-server :3000 → 200 ✓ (toolCount:162) | api-gateway :4000 → 200 ✓
+- macro-indicators :5004 → 200 ✓ | pdf-extractor :5001 → 200 ✓ | mcp-gateway → healthy ✓
+
+### Tier-3 Deep Checks — All PASS
+**Container Tooling (A-22 to A-24):** pdftoppm ✓, tesseract ✓, vie language ✓
+**EPIPE (A-31):** 1 error last 30m ✓ (threshold ≤2) | **BCTC PDF (B-08):** 18 files ✓
+**System (via get_system_status):** Circuits 16/16 OK ✓, WAL 10.70 MB ✓, Errors 0 ✓
+**Cron Health (95+ jobs):** 97%+ success rate; intelligenceCycleJob 99.1% (567 runs) ✓
+
+### Pipeline & SLA Status
+- VPS prices route: STALE (expected off-market) | VPS news/sbv/bctc: ok ✓
+- SLA: price/bctc/news/foreign_flow BREACHED (expected off-market 02:00–08:59 UTC M-F)
+- 39 tickers TA-ready | 100 alerts (last 7d) logged | no signal errors ✓
+
+### Doc/Memory Audit (Early Exit)
+- git log --since=24h: 0 commits → skipped doc/memory pass per flow AC-1
+
+### Notes
+- Tier-3 pass clean. All 6 runtime services UP + healthy. No DB corruption.
+- Off-market staleness expected & confirmed. EPIPE count well under threshold.
+- No new anomalies, no improvement proposal candidates. Crons 97%+ baseline.
+
 ## c016 · 2026-06-06T00:40Z
 ### Audit Run Tier-1 (00:40–00:42 UTC 2026-06-06)
 - Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 95+
@@ -130,29 +164,3 @@ Note: all sources expected-stale off-market (02:00-08:59 UTC M-F window open onl
 ### Notes
 - Tier-1 pass clean. All intended-runtime services UP + healthy.
 - mcp-server memory stable (20.80%). No new anomalies detected.
-
-## c013 · 2026-06-05T23:38Z
-### Audit Run Tier-1 (23:38–23:40 UTC 2026-06-05)
-- Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 95+
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Container Status (Intended Runtime Set)
-- mcp-server: Up 1h 38m, restart_count=0 ✓, memory=24.80% ✓
-- api-gateway: Up 3d ✓
-- frontend: Up ~1h 38m ✓
-- macro-indicators: Up 12h ✓
-- pdf-extractor: Up 2d ✓
-- mcp-gateway: Up 9d ✓
-
-### Health Endpoints — All PASS
-- mcp-server :3000 → 200 ✓ | api-gateway :4000 → 200 ✓ | macro-indicators :5004 → 200 ✓
-- pdf-extractor :5001 → 200 ✓ | frontend :3001 → no endpoint | mcp-gateway → healthy ✓
-
-### Cron Health (95+ jobs)
-- ~100% firing, 7-day baseline success_rate: 97.3%+
-- intelligenceCycleJob: 99.1% (566 runs) | bctcQueueEnricherJob: 97.4% (500 runs)
-
-### Notes
-- Tier-1 pass clean. All intended-runtime services UP + healthy.
-- mcp-server memory stable (24.80%). VN market closed. No anomalies detected.
