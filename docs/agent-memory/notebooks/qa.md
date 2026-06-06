@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-199 · 2026-06-07T00:05Z · FETCH-OPS-PAGE-TRUTH F-3 QA gate — APPROVED
+
+Sprint: FETCH-OPS-PAGE-TRUTH | Task: F-3 | Verdict: APPROVED
+
+380/380 Vitest GREEN (QA-run). tsc exit 0 (QA-run). mock-guard PASS. DDD clean (no domain→infra/app imports). Security clean (process.env client.ts:20-21 pre-existing, not in F-3 diff). All 8 AC raw-verified: HTTP 200, 0 Reuters/Bloomberg strings live, 13 sources API-driven (SourceFreshnessTable rows from loader not constants), VpsProxyPanel Object.entries(vpsProxy) API-driven (VPS_SERVICE_LABELS is cosmetic display map with ?? key fallback — not a data source), BctcPipelinePanel pending=370/done=15/failed=0, latency span guarded (totalLatencyMs !== undefined), container 8626cacc51c0 built 23:54:50 CEST > commit 23:53:49 CEST (rebuilt). Design note: stale vs very-stale differentiation implemented via sourceStatusColor (amber=2–12h, red=>12h) — rendered honestly. Commit d773393e. F-3 REVIEW→DONE.
+
 ## cycle-198 · 2026-06-06T23:58Z · FETCH-OPS-PAGE-TRUTH F-1 QA gate — APPROVED
 
 Sprint: FETCH-OPS-PAGE-TRUTH | Task: F-1 | Verdict: APPROVED
