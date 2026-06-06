@@ -3,6 +3,44 @@ agent: system-auditor
 session_date: 2026-06-06
 ---
 
+## c056 · 2026-06-06T22:31:05Z
+### Audit Run Tier-2 (22:31 UTC 2026-06-06)
+- Tier: 2 (data freshness) | Sources: 27 checked | DB spot-checks: 3 (3 TOOL-UNAVAILABLE)
+- Anomalies: 1 new CRITICAL (news SLA breach — 289min vs 30min), 1 new HIGH (sbv_fx SLA escalation), dedup-skipped: 1 (sbv_fx, already logged c052→c053 escalation chain)
+- Status: DEGRADED (news SLA CRITICAL, sbv_fx HIGH — both caught during Tier-2 freshness sweep)
+
+### Data Freshness Verdicts (B-01 through B-13)
+- [get_sla_status] **NEWS CRITICAL**: 289 min old vs 30 min SLA → **B-04 CRITICAL NEW ANOMALY**; last push 2026-06-06 22:30:42 but data age measures ingestion timestamp
+- [get_sla_status] **SBV_FX HIGH**: 31 min old vs 30 min SLA (marginal breach, occ#3) → dedup-skip (known watch item, signal_queue rtr-sbv-sla-measurement-layer-202606061815; root-cause: weekend data age growth + threshold-vs-cadence tuning)
+- [get_pipeline_health] Prices 31min (ok), BCTC 185min (ok, within 168h default SLA — June out-of-window), news-vps 89 pushes/24h (healthy flow)
+- [get_cron_health] 100+ jobs polled; all success rates ≥97% (range 99.3%–100%), no gaps detected → **PASS**
+- [get_vps_proxy_health] 4 routes healthy (prices/news/sbv/bctc ok); bctc marked STALE (last_push 2026-06-05 14:48:47) — known benign per constraints (quarterly batch push window) → **INFO**
+- [get_rate_limit_status] All 11 API hosts ready (0 at 100% utilization) → **PASS**
+- [get_macro_snapshot] Live VNINDEX/FX/commodities refreshed 2026-06-06T22:31:30Z, all signals (gold/oil/carry/yield) computed → **PASS**
+- [BCTC queue 72h stale pending] TOOL-UNAVAILABLE (sqlite3 not in container) → **NOT-RUN**
+- [BCTC SSC portal URLs] TOOL-UNAVAILABLE → **NOT-RUN**
+- [News articles last 3h] TOOL-UNAVAILABLE → **NOT-RUN**
+
+### New Anomaly Details
+**[B-04] News SLA Breach — CRITICAL**
+- Source: news-vps
+- Last fetch ts: 2026-06-06T22:30:42Z (from push log)
+- Data age: 289 minutes (reported by get_sla_status)
+- SLA threshold: 30 minutes
+- Elapsed vs expected: 289/30 = 9.6× over SLA
+- Check: data freshness (news article ingestion timestamp lags push acknowledgment)
+- Zone owner: dev-mcp-server
+- Dedup key: data_stale:news-vps:B-04
+- Severity: CRITICAL
+
+### Cron Health Summary (A-29)
+All 100+ tracked jobs firing successfully:
+- intelligenceCycleJob: 99.3% success (569/572)
+- bctcQueueEnricherJob: 97.5% success (511/524)
+- bctcReparseJob: 97.4% success (190/195)
+- All others: 100% (no sub-100% jobs detected)
+- Gaps: None detected (cron cadence well-maintained)
+
 ## c055 · 2026-06-06T22:12:14Z
 ### Audit Run Tier-1 (22:12 UTC 2026-06-06)
 - Tier: 1 (runtime ping) | Services: 6 checked

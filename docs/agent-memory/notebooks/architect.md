@@ -1,8 +1,45 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-06 20:15 UTC | **Sprint:** ORCH-TASK-CANON
+**Last updated:** 2026-06-07 00:31 UTC | **Sprint:** WORKFLOW-FLUIDITY
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-07T00:31Z — WF-3 SPIKE: dev-* MCP gateway binding ruling
+
+**Sprint:** WORKFLOW-FLUIDITY — WF-3 SPIKE (timebox 120 min, findings-only, no code changes).
+
+**Ruling issued (Option III):** Dev-*/qa/ba/pm/architect specialist agents do NOT have `mcp__claude_ai_gateway__call_tool` in their `tools:` frontmatter. This is the root cause. The binding is absent by design omission, not session inheritance. Ruling: codify the session-scoped constraint as an enforced invariant (INV-GATEWAY-1): all task_claim / task_release / commit-mutex MCP calls for dev-* specialists are the SOLE responsibility of the outer dispatcher session.
+
+**New evidence folded in:** FU-MCP-GATEWAY-DEV-FRONTEND — dev-frontend AND qa in FETCH-OPS-PAGE-TRUTH both lacked the binding; dispatcher serialized QA gates manually. Entry 6 in `sprint-FETCH-OPS-PAGE-TRUTH-dev-frontend.md` documents the failure and carry-forward.
+
+**WF-2 blockers resolved:** BLOCKER-WF2-A (TS path = orchStateStore.ts L221 appendSignalQueueRow); BLOCKER-WF3-A (Option A mtime retry chosen over SQLite migration).
+
+**Commit-mutex flow debt flagged:** dev-* specialist flow files that reference commit-mutex skill directly will always hit C-2 FAIL-CLOSED (skip commit + bug telegram). Correct path = dispatcher invokes mutex, not specialist. Correcting these flow references is WF-3-IMPL scope (agent-father).
+
+**Files produced:**
+- `docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md` — ruling + INV-GATEWAY-1 + downstream handoff table
+- `docs/agent-memory/decisions/sprint-WORKFLOW-FLUIDITY-architect.md` — STEP arch-S1 journal entry
+- `docs/data/orch/orch-state.json` — WF-3 task status → REVIEW
+
+**NEXT:** WF-3 is REVIEW. WF-3-IMPL handed to agent-father (flow edits A+B) and dev-mcp-server (orchStateStore.ts fix C). Phase 4 Option A (gateway binding grant) is gated pending c44+c45 verification.
+
+## 2026-06-06T21:34Z — FETCH-OPS-PAGE-TRUTH blueprint
+
+**Sprint:** FETCH-OPS-PAGE-TRUTH — fetch-operations page honest sources + real operational detail.
+
+**Key rulings (4 decisions):**
+- D-1 (source truth): `GET /api/fetch-status` new endpoint on mcp-server queries `rag_analyses` for sources actually in DB — ground truth. Frontend loader calls this; no hardcoded source names in JSX, no system-map.json import in frontend.
+- D-2 (bloomberg filter): domain-anchor `LIKE '%bloomberg.com%'` / `'%reuters.com%'` in `buildSql()` and `deriveProvider()`. 1-line fix. Bloomberg panel will honestly show 0 results (not crawled).
+- D-3 (fake latency): Remove `"totalLatencyMs": 0` and per-source `latencyMs` entirely from `handlers_external.go`. Frontend `!== undefined` guard already in place — span disappears cleanly.
+- D-4 (gateway duality): SPIKE F-4, alias-only approach (add `/api/` routes in mcp-server alongside `/mcp/api/` routes). New `/api/fetch-status` endpoint avoids the duality entirely (uses `/api/` virtual alias).
+
+**Zone split:** F-1 (mcp-server, M) → F-2 (macro-indicators, XS) → [Batch1 parallel] → F-3 (frontend, M) → [Batch2] → F-4 SPIKE (api-gateway + mcp-server, 4h timebox).
+
+**Files produced:**
+- `docs/handoffs/FETCH-OPS-PAGE-TRUTH-ARCH.md` — full blueprint (subtask spec, risk flags, AC)
+- `docs/agent-memory/decisions/sprint-FETCH-OPS-PAGE-TRUTH-architect.md` — 4 arch decision entries
+
+**NEXT:** pm → create 4 subtasks: F-1 (dev-mcp-server), F-2 (dev-macro-indicators), F-3 (dev-frontend depends F-1), F-4 (dev-api-gateway SPIKE deferred-ok), QA; then QA after all done.
 
 ## 2026-06-06T20:15Z — ORCH-TASK-CANON blueprint
 

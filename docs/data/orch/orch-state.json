@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-06T23:44:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-07T00:00:00Z",
+  "_updated_by": "architect",
   "head": {
     "active_task_id": null,
     "next_action": "Sprint FETCH-OPS-PAGE-TRUTH closed 2026-06-06T22:15:46Z (all 5 tasks DONE, QA-gated, router live-verified). Carry-forwards logged: very-stale label polish (F-3 UX, non-blocking); FU-MCP-GATEWAY-DEV-FRONTEND (commit-mutex gateway unavailable in dev-frontend+qa sessions → agent-father); Bun full-suite C++ OOM pre-existing; 5 pre-existing tsc errors (1980-f2-canon-schema.test.ts + tasksMdJanitorJob.ts) → TECH-DEBT-LINTING. Next tick: PO sprint planning.",
@@ -2242,7 +2242,7 @@
             "title": "ORCH-HEAD-CAS + signal_queue retry-read-compare (F-9+F-3): promote FU-ORCH-HEAD-CAS to code; fresh-read-compare-retry (mtime, 3 retries) on signal_queue append; signal-dashboard SKILL documents 3 concurrent writer classes",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "zone": "apps/mcp-server/src/ + .claude/skills/signal-dashboard/",
             "created_at": "2026-06-06T20:09:07Z",
             "priority": "high",
@@ -2256,14 +2256,14 @@
             "title": "dev-team MCP gateway binding ruling (F-8): single-claim simplification vs outer-claim-heartbeat; give dev-* agents a working call_tool path (task_claim/commit-mutex) or codify session-scoped constraint as enforced invariant",
             "owner": "architect",
             "type": "SPIKE",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "docs/protocols/ + .claude/skills/task-lock/",
             "created_at": "2026-06-06T20:09:07Z",
             "priority": "medium",
             "size": "S",
             "sprint": "WORKFLOW-FLUIDITY",
             "depends": [],
-            "note": "Timebox 2h. Proven again in ORCH-TASK-CANON: agent-father F1B had to run mutex-less as sole writer. Output: ruling doc + handoff (agent-father for flow edits or dev-mcp-server for binding work)."
+            "note": "REVIEW 2026-06-07: Ruling issued — Option III (outer-claim-heartbeat as enforced invariant, INV-GATEWAY-1). Brief: docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md. WF-2 blockers resolved (orchStateStore.ts L221, Option A mtime retry). Downstream: WF-3-IMPL (agent-father flow edits + dev-mcp-server orchStateStore fix)."
           }
         ]
       }
@@ -4090,6 +4090,19 @@
     "_updated_at": "2026-06-06T18:12:00Z",
     "_updated_by": "dev-team-router",
     "rows": [
+      {
+        "id": "sau-news-sla-critical-202606062231",
+        "ts": "2026-06-06T22:31:05Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "[B-04] News SLA breach — 289min vs 30min threshold; ingest lag detected",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "B-04",
+        "payload_ref": null
+      },
       {
         "id": "rtr-sbv-sla-measurement-layer-202606061815",
         "ts": "2026-06-06T18:12:00Z",
