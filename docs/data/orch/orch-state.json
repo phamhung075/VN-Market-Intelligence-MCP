@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T17:41:49Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-06T18:32:39Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2617,6 +2617,19 @@
           "BA-ORCH-DASH-DECISION-DRILLDOWN"
         ],
         "note": "BA spec: docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-BA-spec.md. Confirm: (1) BOTH join-key strategies (optional task-id in STEP format + sprint fallback bucket); (2) serving layer = apps/mcp-server orchestrationHandler.ts; (3) sprint-id discovery scope for F2 journal loader; (4) EC-6 latency risk / per-sprint mtime cache decision; (5) single-open vs multi-open accordion UX. Dispatch: F1 (agent-father) → F2 (dev-mcp-server) → F3 (dev-frontend)."
+      },
+      {
+        "id": "BA-ORCH-TASK-CANON",
+        "task_id": "BA-ORCH-TASK-CANON",
+        "title": "Requirement spec for sprint ORCH-TASK-CANON: canonical task schema + decision visibility on orchestration dashboard",
+        "owner": "ba",
+        "status": "TODO",
+        "zone": "multi",
+        "created_at": "2026-06-06T18:32:39Z",
+        "type": "SPRINT-M",
+        "sprint": "ORCH-TASK-CANON",
+        "priority": "high",
+        "note": "Decompose .sprint_goal entry ORCH-TASK-CANON (F1 schema contract+migration / F2 serving coalesce / F3 frontend filter / F4 journal format+skill resolver bug / QA live-verify). Router 3-layer diagnosis is requirement-grade input — verify, don't re-discover. DOGFOOD: this task carries canonical {id,title,owner,status,zone,created_at}; task_id mirrored only until F1 migration lands."
       }
     ],
     "archive": [],
@@ -4743,7 +4756,7 @@
     ]
   },
   "sprint_goal": {
-    "_updated_at": "2026-06-05T21:06:28Z",
+    "_updated_at": "2026-06-06T18:32:39Z",
     "_updated_by": "po",
     "_note": "Structured projection of docs/SPRINT_GOAL.md active sprint entries. Machine-shaped; free-form markdown in source.",
     "entries": [
@@ -4979,6 +4992,20 @@
         "signoff_at": "2026-06-04T20:05:28Z",
         "signoff_by": "po",
         "signoff_note": "PO SIGN-OFF 2026-06-04 (router raw-verified live get_macro_snapshot myself, not relayed). SERVE LAYER: GENUINELY FIXED LIVE. carry.regime=UNKNOWN, carrySpread=null, is_estimate=true, source_tier=4, fetched_at_source=2026-05-28 (NOT now), dataSource=estimate. NO FII_OUTFLOW_RISK from fixture arithmetic. PART B provenance labels (credit/energy/bond/BCTC/conf??0/roe??null) all live-PASS. HONEST SCOPE: (a) live serve path is the Go macro-indicators :5004 service (in host_runtime_set already) — REAL fix was Go commit 09e93d76, NOT the off-path TS macroTools.ts (DSI-S1-MACRO TS = correct defensive code, off live path). (b) DSI-S2-PRICE Go stock-price service is LATENT (container not running); live prices served by mcp-server yahooFinance.ts which STILL has price-0/cnyVndRate=0/no-staleness gap — UNFIXED on live path. (c) ROOT operator symptom (false FB carry story) is only HALF-CLOSED: serve layer suppressed carrySpread BUT still exposes raw fedFundsRate=5.33+vndDepositRate=5, and FB posts 06-02/06-04 + chef.md examples still narrate 5.0-5.33=-0.33 FII outflow from raw recompute. NOT A CLEAN WIN. 3 follow-ups queued: DSI-CONSUMER-HONORS-ISESTIMATE (P1, highest operator value), DSI-S2-PRICE-TS-GAP (P2), RUNTIME-SET-TRUTH-RECONCILE (P3 doc)."
+      },
+      {
+        "sprint_id": "ORCH-TASK-CANON",
+        "status": "active",
+        "vision": "Every task on http://localhost:3001/dashboard/orchestration shows its decision trail, because every task in orch-state is born canonical ({id,title,owner,status,zone,created_at} + closed status enum) and the serve/join/render layers stop dropping non-conforming shapes.",
+        "scope_in": "(F1) TASK SCHEMA CONTRACT — architect authors canonical task-object SSOT: mandatory-at-creation {id,title,owner,status,zone,created_at}; optional standard {type,sprint,priority,size,files,depends,note,status_note}; CLOSED status enum TODO|IN_PROGRESS|REVIEW|DONE|BLOCKED|CANCELLED|DEFERRED with free-text status_note for nuance (DONE-LIVE-VERIFIED -> DONE + note). task_id/desc/label BANNED forward. agent-father edits ALL task-creating flows (po triage/kickoff/channel-audit, pm, ba, dev-team dispatcher, ops->pm lane, anomaly-task-bridge) to emit canonical shape. APPROVED: one-shot migration of existing 66 done[] rows (id<-task_id coalesce, title<-desc/label coalesce, status normalization to enum+status_note) + flatten the ORCH-DASH-DECISION-DRILLDOWN nested sprint container into done[] rows. (F2) SERVING — apps/mcp-server orchestrationHandler/DTO coalesces id//task_id + title//desc//label, serves done[] (currently null in DTO vs 66 in SSOT), flattens any residual nested containers, tolerates legacy shapes no-crash; REBUILD container. (F3) FRONTEND — dashboard.orchestration.tsx done-group filter matches normalized enum (not exact-string 'DONE'); decisions dropdown verified live on a real recent done task. (F4) JOURNAL FORMAT — agent-father fixes dev-team triage flow (and any freeform journal writer) to emit decision-journal SKILL '### STEP' parseable blocks with **task-id:**; FIX SKILL resolver bug .sprint_goal.entries[0].id -> .sprint_id (never matches today, silent date-fallback); rewrite sprint-2026-06-06.md freeform entries into parseable format so existing tasks gain decisions. (QA) live-verify whole join.",
+        "scope_out": "Editing decisions from the UI (read-only, already shipped). New journal storage backend (stays per-sprint markdown). Changing decisions.by_task join semantics beyond task-id stamping. signal_queue schema. Backfilling decisions for pre-2026-06 ancient tasks (forward + this-sprint-corpus only). Deploying the Go microservice plane.",
+        "success_metric": "QA raw-verifies live (not badges): curl /api/orchestration -> .task_board.done non-null and count==SSOT; recent done tasks (ARCH-ORCH-F1, FIX-VPS-SSC-CURL-SCRAPER, FIX-SLA-WEEKEND-AWARE) present WITH joined decisions from decisions.by_task; dashboard done group non-empty incl. normalized ex-DONE-* tasks; SSR markup shows decision detail for >=1 clicked done task; a fresh task created by po/pm/dev-team flow validates against the schema SSOT (zero task_id/desc/label keys); journalStore parses >0 entries from rewritten sprint-2026-06-06.md; mcp-server REBUILT not restarted; every ORCH-TASK-CANON task itself carries canonical schema AND a decision entry (dogfood).",
+        "lead": "architect",
+        "anti_pattern": "Fixing only the serving coalesce (F2) without the creation contract (F1) — leaves 9-shape proliferation alive, symptom not class. Schema SSOT prose that no flow mechanically emits (shadow-pilot-inert lesson: wire it into the flow steps agents execute). jq inline-heredoc filters on orch-state (jq-empty-guard lesson: -f file + [ -s tmp ] + jq -e sentinel). Restarting mcp-server instead of REBUILD. Trusting green badges over curl on :3000/api/orchestration.",
+        "created_at": "2026-06-06T18:32:39Z",
+        "created_by": "po",
+        "source": "operator demand 2026-06-06 (decisions invisible on /dashboard/orchestration + canonical task schema) + router raw diagnosis 3-layer (creation/serving/frontend+journal)",
+        "note": "WIP_max=2. Order: F1(architect->agent-father) || F4(agent-father, disjoint files) -> F2(dev-mcp-server) -> F3(dev-frontend) -> QA. F2/F3 must tolerate legacy shapes regardless of F1 migration (no-crash invariant). Supersedes-the-residual-of ORCH-DASH-DECISION-DRILLDOWN (drilldown UI shipped; join starved by task-shape drift)."
       }
     ]
   }
