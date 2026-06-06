@@ -509,10 +509,13 @@ function DecisionAccordion({
   taskId,
   sprintId,
   decisions,
+  statusNote,
 }: {
   taskId: string;
   sprintId?: string;
   decisions?: DecisionsDto;
+  /** FIX-ORCH-DONE-GRID-COLS: status_note moved here from inline Status cell to prevent row height explosion */
+  statusNote?: string;
 }) {
   const taskSteps = decisions?.by_task[taskId] ?? [];
   const sprintSteps = (sprintId ? decisions?.sprint_bucket[sprintId] : undefined) ?? [];
@@ -528,6 +531,12 @@ function DecisionAccordion({
       style={{ maxWidth: "90vw", overflowWrap: "break-word" }}
       data-testid={`decision-accordion-${taskId}`}
     >
+      {/* status_note banner — shown when present (FIX-ORCH-DONE-GRID-COLS) */}
+      {statusNote && (
+        <p className="mb-2 break-words text-xs text-slate-400 italic border-b border-slate-700 pb-2">
+          {statusNote}
+        </p>
+      )}
       {taskSteps.length === 0 && sprintSteps.length === 0 ? (
         <p className="text-xs text-slate-500 italic">No decisions recorded for this task.</p>
       ) : taskSteps.length > 0 ? (
@@ -561,8 +570,23 @@ function DecisionAccordion({
  *
  * F3: each DONE task row is independently clickable; opens a DecisionAccordion
  * showing its StepDto entries. Multi-open: Set<string> of open task IDs (RULING-5).
+ *
+ * FIX-ORCH-DONE-GRID-COLS: all rows (header + data) share ONE grid-template.
+ * Tracks use fixed px or fractional widths — no auto/max-content that would
+ * let any cell expand and push the 1fr Title track to one-word-per-line.
+ * status_note is suppressed from the inline cell (shown in accordion on expand).
  */
 const DONE_PREVIEW_COUNT = 10;
+
+/**
+ * Shared grid-template-columns for the DONE table header and every data row.
+ * One constant → header and rows always co-align (FIX-ORCH-DONE-GRID-COLS).
+ *
+ * Columns: ID(120px) | Title(1fr) | Owner(110px) | Status(90px) | Zone(130px) | Chevron(24px)
+ * All tracks are non-content-dependent (px or fr) so no single cell can expand
+ * its column and crush the Title 1fr.
+ */
+const DONE_GRID = "grid-cols-[120px_minmax(0,1fr)_110px_90px_130px_24px]";
 
 function DoneTaskGroup({
   tasks,
@@ -616,7 +640,8 @@ function DoneTaskGroup({
       {/* F3: table replaced by div-based layout to allow accordion rows between task rows */}
       <div className="overflow-hidden rounded border border-slate-700">
         {/* Header row */}
-        <div className="grid grid-cols-[minmax(80px,auto)_1fr_minmax(60px,auto)_minmax(80px,auto)_minmax(60px,auto)_24px] border-b border-slate-700 bg-slate-900 text-xs">
+        {/* FIX-ORCH-DONE-GRID-COLS: header uses DONE_GRID constant — same tracks as data rows */}
+        <div className={`grid ${DONE_GRID} border-b border-slate-700 bg-slate-900 text-xs`}>
           <div className="px-3 py-2 font-medium text-slate-400">ID</div>
           <div className="px-3 py-2 font-medium text-slate-400">Title</div>
           <div className="px-3 py-2 font-medium text-slate-400">Owner</div>
@@ -644,23 +669,25 @@ function DoneTaskGroup({
                       toggle(task.id);
                     }
                   }}
-                  className={`grid grid-cols-[minmax(80px,auto)_1fr_minmax(60px,auto)_minmax(80px,auto)_minmax(60px,auto)_24px] border-b border-slate-700 last:border-0 text-xs cursor-pointer hover:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-blue-500 transition-colors ${rowBase}`}
+                  className={`grid ${DONE_GRID} border-b border-slate-700 last:border-0 text-xs cursor-pointer hover:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-blue-500 transition-colors ${rowBase}`}
                 >
-                  <div className="px-3 py-2 font-mono text-slate-300">{task.id}</div>
-                  <div className="px-3 py-2 text-slate-200">
-                    {task.title}
+                  {/* ID: monospace, truncated — no overflow since track is fixed 120px */}
+                  <div className="px-3 py-2 font-mono text-slate-300 truncate">{task.id}</div>
+                  {/* Title: min-w-0 required so minmax(0,1fr) can actually shrink below content width */}
+                  <div className="min-w-0 px-3 py-2 text-slate-200">
+                    <span className="break-words">{task.title}</span>
                     {task.note && (
-                      <p className="mt-0.5 text-slate-500 italic">{task.note}</p>
+                      <p className="mt-0.5 break-words text-slate-500 italic line-clamp-2">{task.note}</p>
                     )}
                   </div>
-                  <div className="px-3 py-2 text-slate-400">{task.owner ?? "—"}</div>
+                  {/* Owner: truncate within fixed 110px track */}
+                  <div className="px-3 py-2 text-slate-400 truncate">{task.owner ?? "—"}</div>
+                  {/* Status: badge only — status_note moved to accordion (FIX-ORCH-DONE-GRID-COLS) */}
                   <div className={`px-3 py-2 font-semibold ${taskStatusClasses(task.status)}`}>
                     {task.status}
-                    {task.status_note && (
-                      <p className="mt-0.5 text-xs font-normal text-slate-500 italic">{task.status_note}</p>
-                    )}
                   </div>
-                  <div className="px-3 py-2 text-slate-500">{task.zone ?? "—"}</div>
+                  {/* Zone: truncate within fixed 130px track */}
+                  <div className="px-3 py-2 text-slate-500 truncate" title={task.zone ?? undefined}>{task.zone ?? "—"}</div>
                   {/* F3 AC-F3-10: chevron indicator — rotated when open */}
                   <div className="flex items-center justify-center pr-2" aria-hidden="true">
                     <span
@@ -676,6 +703,7 @@ function DoneTaskGroup({
                     taskId={task.id}
                     sprintId={sprintId}
                     decisions={decisions}
+                    statusNote={task.status_note}
                   />
                 )}
               </div>
