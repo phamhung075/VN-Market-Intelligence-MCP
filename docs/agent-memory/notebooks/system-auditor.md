@@ -3,6 +3,53 @@ agent: system-auditor
 session_date: 2026-06-06
 ---
 
+## c054 · 2026-06-06T21:42:37Z
+### Audit Run Tier-1 (21:42 UTC 2026-06-06)
+- Tier: 1 (runtime ping) | Services: 6 checked | Crons: 80+ polled
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY (all containers up, health endpoints 200)
+
+### RAW-PROBE: 2026-06-06T21:42:11Z
+```
+=== AUDITOR PROBE 2026-06-06T21:42:11Z ===
+
+--- docker ps -a ---
+NAMES                                           STATUS                       IMAGE                                         CREATED
+vn-market-intelligence-mcp-frontend-1           Up About an hour (healthy)   vn-market-intelligence-mcp-frontend           About an hour ago
+vn-market-intelligence-mcp-mcp-server-1         Up 2 hours (healthy)         vn-market-intelligence-mcp-mcp-server         2 hours ago
+headroom-proxy                                  Up 3 hours                   headroom-proxy:local                          3 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1      Up 10 hours (healthy)        vn-market-intelligence-mcp-pdf-extractor      10 hours ago
+vn-market-intelligence-mcp-macro-indicators-1   Up 10 hours (healthy)        vn-market-intelligence-mcp-macro-indicators   10 hours ago
+vn-market-intelligence-mcp-api-gateway-1        Up 10 hours (healthy)        vn-market-intelligence-mcp-api-gateway        10 hours ago
+mcp-gateway                                     Up 10 days (healthy)         mcpservergatway-gateway                       2 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=15.22% MemUsage=311.8MiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    24Gi    36%    393k  256M    0%   /
+
+=== PROBE DONE ===
+```
+
+### Verdicts (A-01..A-32) — All PASS
+- [RAW-PROBE L4–11] mcp-server/api-gateway/macro-indicators/pdf-extractor/frontend/mcp-gateway: all Up (healthy) ✓
+- Health endpoints [RAW-PROBE L13–17]: all HTTP 200 ✓
+- Memory: 15.22% (< 85%) ✓; Disk: 36% (< 85%) ✓; Restart: 0 (≤2) ✓
+- System: Circuit breakers all [OK], WAL 6.53 MB, 0 recent errors ✓
+- Cron: 80+ jobs, all success rates ≥97%, no gaps detected ✓
+
 ## c053 · 2026-06-06T18:08:57Z
 ### Audit Run Tier-3 (18:08–18:09 UTC 2026-06-06)
 - Tier: 3 (runtime + DB integrity) | Services: 6 checked | DB checks: 7 run (4 NOT-RUN: sqlite3 sandbox unavailable)
@@ -113,49 +160,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - [get_sla_status] SLA BREACH: sbv_fx 38 min stale vs 30 min SLA — WARN
 - [get_pipeline_health] news age: 12 min (ok), bctc age: 51 min (ok), prices age: 38 min (ok)
 - [get_vps_proxy_health] STALE: news (VPS push 2026-06-06 17:25:48), bctc (VPS push 2026-06-05 14:48:47); healthy: sbv (17:28:46), prices (2026-06-05 08:59:30)
-
-## c051 · 2026-06-06T17:08:22Z
-### Audit Run Tier-1 (17:08 UTC 2026-06-06)
-- Tier: 1 (runtime ping) | Services: 6 checked | Crons: 80+ polled
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### RAW-PROBE: 2026-06-06T17:08:28Z
-```
-=== AUDITOR PROBE 2026-06-06T17:08:28Z ===
-
---- docker ps -a ---
-NAMES                                           STATUS                    IMAGE                                         CREATED
-vn-market-intelligence-mcp-mcp-server-1         Up 21 minutes (healthy)   vn-market-intelligence-mcp-mcp-server         22 minutes ago
-vn-market-intelligence-mcp-frontend-1           Up 6 hours (healthy)      vn-market-intelligence-mcp-frontend           6 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1      Up 6 hours (healthy)      vn-market-intelligence-mcp-pdf-extractor      6 hours ago
-vn-market-intelligence-mcp-macro-indicators-1   Up 6 hours (healthy)      vn-market-intelligence-mcp-macro-indicators   6 hours ago
-vn-market-intelligence-mcp-api-gateway-1        Up 6 hours (healthy)      vn-market-intelligence-mcp-api-gateway        6 hours ago
-mcp-gateway                                     Up 10 days (healthy)      mcpservergatway-gateway                       2 weeks ago
-
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
-
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
-
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=13.96% MemUsage=285.9MiB / 2GiB
-
---- disk df -h / ---
-Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    33Gi    29%    393k  345M    0%   /
-
-=== PROBE DONE ===
-```
-
-### Verdicts (A-01..A-32) — All PASS
-- [RAW-PROBE L4–9] mcp-server/api-gateway/frontend/macro-indicators/pdf-extractor/mcp-gateway: all Up (healthy) ✓
-- Health endpoints [RAW-PROBE L11–15]: all HTTP 200 ✓
-- Memory: 13.96% (< 85%) ✓; Disk: 29% (< 85%) ✓; Restart: 0 (≤2) ✓
-- System: Circuit breakers all [OK], WAL 9.55 MB, 0 recent errors ✓
-- Cron: 70+ jobs running, all success rates ≥97%, no gaps detected ✓

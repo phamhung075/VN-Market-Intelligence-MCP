@@ -116,4 +116,20 @@ Zone health: DSI-INV-1 SHIPPED 09e93d76; ops REBUILD required | HEALTHY
 
 **Ops action required:** REBUILD macro-indicators container. QA: verify `get_macro_snapshot` shows per-field provenance on price fields; verify `/external` reports `summary.failed>0` when carry inputs are fixture (current live state with stale EFFR).
 
+---
+
+## 2026-06-06 — FETCH-OPS-PAGE-TRUTH F-2: remove fake latency field
+
+**Task:** F-2 (XS) — DELETE `totalLatencyMs:0` from summary map in `handlers_external.go:161`.
+
+**D-3 applied:** Handler reads SQLite only (no live HTTP); fake-zero latency removed. No per-source `latencyMs` fields existed. Frontend `optional` guard ensures latency span disappears cleanly.
+
+**Changes:**
+- `handlers_external.go:161`: `"summary": map[string]interface{}{"ok": okCount, "failed": failedCount}` (removed `"totalLatencyMs": 0`)
+- `handlers_snapshot_contract_test.go`: `TestExternalBodyContract` now asserts ABSENCE of `totalLatencyMs`; new `TestHandlersExternalLatencyRemoved` (AC-3 explicit).
+
+**Tests:** 11/11 PASS (`pkg/interface/http`). Full suite 13/13 packages PASS. `go vet` clean.
+
+**Status:** F-2 TODO→REVIEW. Pending: ops REBUILD macro-indicators + QA verify `GET :5004/external` has no `totalLatencyMs`.
+
 Zone health: FDA-2+FDA-3 SHIPPED 0712c3a7; ops REBUILD required | HEALTHY

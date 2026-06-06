@@ -265,7 +265,8 @@ func TestExternalBodyContract(t *testing.T) {
 		}
 	}
 
-	// 7. summary must contain ok, failed, totalLatencyMs.
+	// 7. summary must contain ok and failed; totalLatencyMs MUST be absent
+	//    (D-3: handler reads from SQLite only, fake-zero latency removed).
 	if raw, ok := body["summary"]; !ok {
 		t.Error("GET /external: missing 'summary' key")
 	} else {
@@ -273,10 +274,16 @@ func TestExternalBodyContract(t *testing.T) {
 		if err := json.Unmarshal(raw, &summary); err != nil {
 			t.Errorf("GET /external: 'summary' is not a JSON object: %v", err)
 		}
-		for _, k := range []string{"ok", "failed", "totalLatencyMs"} {
+		for _, k := range []string{"ok", "failed"} {
 			if _, present := summary[k]; !present {
 				t.Errorf("GET /external: summary missing key %q", k)
 			}
+		}
+		// AC-3: totalLatencyMs MUST NOT be present — it was a fake-zero field (D-3).
+		// Frontend guards with !== undefined so its absence causes the latency span to
+		// not render, which is the correct and desired behaviour.
+		if _, present := summary["totalLatencyMs"]; present {
+			t.Errorf("GET /external: summary contains forbidden key 'totalLatencyMs' — fake-zero latency must be removed (D-3)")
 		}
 	}
 
@@ -291,6 +298,58 @@ func TestExternalBodyContract(t *testing.T) {
 		for _, k := range []string{"vnIndex", "usdVnd"} {
 			if _, present := indicators[k]; !present {
 				t.Errorf("GET /external: indicators missing key %q", k)
+			}
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// TestHandlersExternalLatencyRemoved — AC-3 explicit assertion (D-3)
+//
+// Asserts that GET /external:
+//   - summary does NOT contain "totalLatencyMs"
+//   - per-source entries do NOT contain "latencyMs"
+//
+// The handler reads from SQLite only (no live HTTP); fake-zero latency was a
+// fabrication. Frontend guards with !== undefined so the span disappears cleanly.
+// ---------------------------------------------------------------------------
+
+func TestHandlersExternalLatencyRemoved(t *testing.T) {
+	srv := httptest.NewServer(newContractRouter())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/external")
+	if err != nil {
+		t.Fatalf("GET /external failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var body map[string]json.RawMessage
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("GET /external: decode body: %v", err)
+	}
+
+	// summary must NOT contain totalLatencyMs.
+	if raw, ok := body["summary"]; ok {
+		var summary map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &summary); err == nil {
+			if _, present := summary["totalLatencyMs"]; present {
+				t.Errorf("AC-3: summary contains 'totalLatencyMs' — fake-zero latency must be absent (D-3)")
+			}
+		}
+	}
+
+	// Per-source entries must NOT contain latencyMs.
+	if raw, ok := body["sources"]; ok {
+		var sources map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &sources); err == nil {
+			for sourceName, srcRaw := range sources {
+				var srcObj map[string]json.RawMessage
+				if err := json.Unmarshal(srcRaw, &srcObj); err == nil {
+					if _, present := srcObj["latencyMs"]; present {
+						t.Errorf("AC-3: sources[%q] contains 'latencyMs' — fake-zero per-source latency must be absent (D-3)", sourceName)
+					}
+				}
 			}
 		}
 	}

@@ -18,7 +18,7 @@
 //  3. RESPONSE SHAPE — MacroData (frontend domain/market.ts):
 //     { fetchedAt, sources, summary, indicators, status }
 //     sources: keyed by data-source name → { status, data }
-//     summary: { ok, failed, totalLatencyMs }
+//     summary: { ok, failed }
 //     indicators: flat key → value map (convenience for dashboard display)
 //     status: "ok" | "unavailable"
 //
@@ -158,7 +158,7 @@ func handleExternal(useCase *application.ComputeMacroUseCase, logger *slog.Logge
 			"status":     "ok",
 			"fetchedAt":  fetchedAtStr,
 			"sources":    sources,
-			"summary":    map[string]interface{}{"ok": okCount, "failed": failedCount, "totalLatencyMs": 0},
+			"summary":    map[string]interface{}{"ok": okCount, "failed": failedCount},
 			"indicators": indicators,
 		}
 
