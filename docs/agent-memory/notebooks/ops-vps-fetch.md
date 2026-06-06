@@ -151,25 +151,45 @@ Status: DONE-VERIFIED
 
 ---
 
-## c001 · 2026-06-01T11:38Z
+## c006 · 2026-06-06T15:32Z · UNBLOCK-VPS-FETCH-RESUME
 
-Trigger: operator-directed safe-recovery fixes (3 scoped items). Market hours active (~04:4xZ Mon).
+Trigger: INCIDENT — router+PO verified: prices/bctc/foreign_flow stale 24h; sbv+news healthy.
 
-**Fix 1 — vn-foreign-flow env: APPLIED+VERIFIED**
-- Added `EnvironmentFile=-/etc/vn-market.env` under `[Service]` in `/etc/systemd/system/vn-foreign-flow.service`.
-- Appended FOREIGN_FLOW_API_URL, WATCHLIST_URL, API_KEY to `/etc/vn-market.env` (VPS_API_KEY was already present).
-- Backups: `/root/vn-foreign-flow.service.bak-1780288599`, `/root/vn-market.env.bak-1780288599`.
-- Post-restart log confirmed: `WATCHLIST_FETCH took 828ms, 111 codes loaded` + `PUSH_RESPONSE: HTTP 200, upserted:102, validationErrors:0`.
+**DIAGNOSIS:**
 
-**Fix 3 — vn-vps-proxy TasksMax: APPLIED+VERIFIED**
-- Changed `TasksMax=16` → `TasksMax=32` in `/etc/systemd/system/vn-vps-proxy.service`.
-- Backup: `/root/vn-vps-proxy.service.bak-1780288653`.
-- Post-restart: `cat /sys/fs/cgroup/.../pids.max` = 32; `/health` = `{"ok":true}` confirmed.
+prices (vn-price-fetch):
+- Service: active PID=3984475, sleeping (S state). Loop alive since 2026-06-02T01:22Z.
+- Last log entry: 2026-06-05T08:59:30Z — PUSH {"ok":true,"updated":114}. Correct.
+- Root cause: NOT a failure. Script enters silent off-hours sleep after 09:00Z UTC (market close). No log output during off-hours by design. Today is Saturday (dow=6), so loop stays dormant until Monday 02:00Z UTC.
+- Host outage 02:00–11:14Z Jun 6 had zero impact: price service is silent on weekends regardless.
+- Action: NONE (no restart needed — service is healthy and sleeping by design).
 
-**Fix 2 — ssc-iboard domain recon: RECON-ONLY (no change)**
-- `iboard-query.ssc.vn` confirmed NXDOMAIN globally (8.8.8.8 + VPS DNS). Dead since 2026-04-27 per proxy code comment.
-- Probed: iboard.ssc.vn, iboard-api.ssc.vn, iboard2.ssc.vn, iboard-query1/2.ssc.vn, portal.ssc.vn, stockmarket.ssc.vn — ALL NXDOMAIN globally.
-- ssc.gov.vn subdomain variants also all NXDOMAIN (ssc.gov.vn itself resolves but no iboard subdomains).
-- ssc.vn redirects to saigonsportsclub.com (unrelated domain), confirming SSC moved off ssc.vn entirely.
-- No working alternate found returning real financial JSON. This is a globally-dead domain, not VPS-DNS-only.
-- Action required: data-source-migration task (SSC iboard → replacement source TBD; HOSE/HNX direct APIs are candidates but need separate recon).
+foreign_flow (vn-foreign-flow):
+- Service: active PID=3986425, sleeping (S state). Same off-hours design as price (shares same loop structure).
+- Last log entry: 2026-06-05T08:59:57Z — PUSH_RESPONSE HTTP 200, upserted:103. Correct.
+- Root cause: Weekend off-hours silence. SLA breach (1462m) is a monitoring false-positive for weekend no-push.
+- Action: NONE (service alive, will resume Mon 02:00Z UTC).
+
+bctc (vn-bctc-fetch):
+- Service: restarted 2026-06-06T15:30:33Z (was active since 2026-06-02T01:23Z before restart).
+- Persistent symptom: Playwright/Chromium Zygote fails `pthread_create: Resource temporarily unavailable (11)` on every HOSE-SSC discovery attempt. All 10 queue items (Q1/2026 tickers) SKIP on every 6h cycle since Jun 5. Last actual PDF push: 2026-06-01T17:16Z (CTG). Host records last_push=2026-06-05T14:48:47Z (separate mechanism, not VPS-script-push).
+- Root cause evidence: `[0606/194928.256632:ERROR:base/threading/platform_thread_posix.cc:162] pthread_create: Resource temporarily unavailable (11)` — Chromium GPU zygote fork fails on thread create; affects only SSC (Playwright) path. HNX/UPCOM (curl POST) paths succeed but find no Q1/2026 PDFs in those sources.
+- Host outage link: NOT the cause. Playwright errors predate Jun 6 outage (visible in Jun 5 07:41Z run). The issue is persistent VPS thread-limit/Chromium incompatibility.
+- Post-restart: Fresh cycle at 15:30–15:31Z UTC — all 10 items SKIP (no new PDFs available), service healthy, now sleeping 6h.
+- Action: Restarted bctc to clear session state. Service cycling correctly.
+
+**PUSH PROOF (15:32Z):**
+- prices: last_push=2026-06-05 08:59:30 (last VN market session, correct for weekend)
+- bctc: last_push=2026-06-05 14:48:47, pushes_24h=0 (queue has no new PDFs, SKIP-only)
+- foreign_flow: not separately tracked in vps-proxy-health (embedded in prices push)
+- news: pushes_24h=88 ✓ | sbv: pushes_24h=47 ✓
+
+**FOLLOW-UPS:**
+- BCTC-PLAYWRIGHT-THREAD: Chromium pthread_create exhaustion blocks SSC discovery path. Fix needed: either raise VPS thread limit or replace Playwright SSC path with curl-based alternative. Track as BCTC-PLAYWRIGHT-THREAD-FIX P2.
+- SLA-WEEKEND-AWARE: SLA monitor marks prices/foreign_flow stale on weekends creating false incidents. Fix: SLA check should skip "stale" verdict Sat/Sun for market-hours-gated services. Track as SLA-WEEKEND-AWARE P3.
+
+---
+
+## c001 · 2026-06-01T11:38Z (PRUNED)
+
+Fixes: vn-foreign-flow EnvironmentFile added (WATCHLIST+FOREIGN_FLOW_API_URL env); vn-vps-proxy TasksMax 16→32; ssc-iboard NXDOMAIN confirmed globally (dead source). All DONE-VERIFIED.
