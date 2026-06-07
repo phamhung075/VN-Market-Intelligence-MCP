@@ -21,3 +21,11 @@
 - only path: architect verdict = KEEP ALL SEPARATE, description-only update; source-file text scanning (same as U3 suite) for tests — simpler/more reliable than runtime server introspection
 **why-decision:** Source-text scan avoids runtime server start-up (McpServer._registeredTools is not a Map); matches U3 test pattern; descriptions are static strings in files.
 **why-change:** no change from plan
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-07T13:00:00Z
+**task-id:** TSU-DEV-U2-PARITY
+**what-done:** Final parity verification — re-ran gen-tool-registry.ts (157), confirmed /health=157, parity test 8/8 pass, project-stats.json toolCount=157, all 5 deregistered tools absent from registry. Status set REVIEW.
+**what-considered:**
+- only path: verification task — run generator + parity test + /health probe + confirm project-stats; all four counts must converge
+**why-decision:** Four independent counts all = 157: generator static-scan, /health runtime, parity test source-extraction, project-stats.json; no delta, no reconciliation needed.
+**why-change:** full bun test suite triggers Bun v1.3.13 WriteFailed crash (RSS 1.09GB, pre-existing); parity test isolated run 8/8 GREEN — task acceptance unaffected.

@@ -1,20 +1,14 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-07 · VERIFY-HPG-REPARSE + SPRINT-HPG-QUEUE-URL-FIX — COMMITTED
+## c392 · 2026-06-07 (TSU-DEV-U2-PARITY: Final Count Verification) — REVIEW
 
-**Task A — VERIFY-HPG-REPARSE-POST-RECOVERY:**
-Container image built 06:26:23Z. FIX-LIAB (29245173) committed 07:51:29Z, FIX-STAGE4 (a058aa2e) committed 08:03:56Z — both P0 fixes are AFTER the image build. Container runs PRE-FIX code.
-bctcReparseJob at 08:46:22Z picked VCB_2025_Q4.pdf + VCB_2025_Q1.pdf (both "file disappeared" — missing from disk). HPG was NOT picked: the reparse job only processes stranded PDFs (no financial_reports row) and HPG Q4-2025 already has a financial_reports row, so the disk scan skips it. HPG eval remains RED (stage-4 exact_dup_count=2), balance_sheet_json.totalLiabilities=1,012,889.94M (prior-period value, unfixed). No 09:00Z bctcReparseJob run — the scheduled slot fired at 08:46Z (container start-relative timing).
+**Task:** TSU-DEV-U2-PARITY — TOOL-SURFACE-UPGRADE sprint (terminal task)
+**Deliverables:** Final parity verification after all U3 deregistrations + U6 description updates committed. Re-ran `gen-tool-registry.ts` (output: 157 tools, 12 groups). Ran parity test 8/8 GREEN (24 assertions). Confirmed /health toolCount=157. project-stats.json toolCount=157 (no change needed). All 5 deregistered tools absent from registry. Four-count convergence: generator=157, /health=157, parity-source-extraction=157, project-stats=157. Delta=0. tsc: clean. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
+**Note:** Full bun test suite triggers Bun v1.3.13 WriteFailed crash (RSS 1.09GB, pre-existing memory pressure) — unrelated to task. Parity test isolated run 8/8 GREEN.
 
-**Task B — SPRINT-HPG-QUEUE-URL-FIX:**
-Root cause: DATA damage, not code. FIX-CTG-1 code fix is already in production. Before that fix, the enricher defaulted year=currentYear/quarter=Q4, stamping Q1-2026 URLs onto Q3-2025 rows for HPG (id=1308140) and PPC (id=1308151). After the code fix, the enricher's "if (item.source_url) skip" guard prevents self-correction — the bad URLs are frozen.
-Live fix executed with bound parameters:
-  HPG id=1308140: source_url Q1-2026 URL → NULL, status='pending', attempts=0 (1 row changed)
-  PPC id=1308151: source_url Q1-2026 URL → NULL, status='pending', attempts=0 (1 row changed)
-Guard test: SPRINT-HPG-QUEUE-URL-FIX.test.ts — 4 tests GREEN, tsc clean.
-Commit: e748af7e
+Zone health: parity 8/0, tsc clean, 157 tools (SSOT, 5 deregistered tools absent confirmed), scheduler 76 cron.schedule | HEALTHY
 
-Zone health: 4/0 guard tests, tsc clean, tools=157, sched=76 — data-only fix, no code changed | HEALTHY
+---
 
 ## c391 · 2026-06-07 (TSU-DEV-U6: TSH Leftover Pair Description Updates) — COMMITTED
 
