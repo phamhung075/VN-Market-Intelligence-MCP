@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T19:20:08Z",
+    "_updated_at": "2026-06-07T20:17:23Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -3066,6 +3066,28 @@
         "priority": "low",
         "created_at": "2026-06-07T19:20:08Z",
         "note": "Debt-reduction per CLAUDE.md (remove garbage/one-off scripts). Left over from PPC Q4-2025 reparse work. Decide: promote to scripts/ with generic ticker arg, or delete (reparseSingleWithOcrFallback already reachable via scheduler). Do NOT commit as-is at apps/mcp-server root."
+      },
+      {
+        "id": "FIX-PDFX-TEST-LOOP-POLLUTION",
+        "title": "pdf-extractor unit suite red: 36 order-dependent failures — deprecated asyncio.get_event_loop test helper conflicts with pytest-asyncio AUTO mode; migrate helper to asyncio.run/loop-per-test",
+        "type": "FIX",
+        "size": "S",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "apps/pdf-extractor/",
+        "created_at": "2026-06-07T20:17:23Z",
+        "status_note": "From signal dev-20260607T193304 (test_infra_debt, MED, zone_owner dev-pdf-extractor). AC: full unit suite green in any test order (pytest -p no:randomly AND default order)."
+      },
+      {
+        "id": "FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN",
+        "title": "3 push clients run sync urllib.request.urlopen on the asyncio event loop (starvation class, same as A-13/alert_adapter): layout_first_push_client.py:121, md_table_push_client.py:102, eval_push_client.py:126 — offload via asyncio.to_thread",
+        "type": "FIX",
+        "size": "S",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "apps/pdf-extractor/",
+        "created_at": "2026-06-07T20:17:23Z",
+        "status_note": "Sibling of FIX-PDFX-ALERT-ADAPTER-BLOCKING (alert_adapter.py only). One task covers all 3 files in apps/pdf-extractor/infrastructure/. AC: no sync urlopen call reachable from async context; mirror test_table_push_client_nonblocking.py pattern."
       }
     ],
     "archive": [],
@@ -6210,7 +6232,7 @@
       },
       {
         "sprint_id": "RAPID-DATA-LAYER",
-        "status": "active",
+        "status": "done",
         "vision": "The 6 shipped rapid-analysis cowork skills (SKILL-1..6, the pre-TNB gate) go live by serving their data inputs — market cap, multi-period BCTC series, charter capital, ownership/insider, AGM revenue plans, long price history — through the mcp-server tool surface, currently 100% BLOCKED.",
         "scope_in": [
           "FIX-B get_market_cap tool + marketCap persistence (unblocks SKILL-1 mandatory size gate FIRST)",
