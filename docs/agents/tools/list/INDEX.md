@@ -1,8 +1,8 @@
 # MCP Tools Documentation Index
 
-Complete reference for all 158 MCP tools organized by category.
+Complete reference for all 161 MCP tools organized by category.
 
-**Last updated:** 2026-06-07 (all 158 tools documented)
+**Last updated:** 2026-06-07 (all 161 tools documented)
 **SSOT:** This file is the canonical tool inventory.
 **Per-tool docs:** Each tool has a `.md` file at `docs/agents/tools/list/<tool_name>.md`
 
@@ -19,7 +19,7 @@ Complete reference for all 158 MCP tools organized by category.
 | Portfolio | 9 | [See below](#portfolio) |
 | Briefings | 11 | [See below](#briefings) |
 | Macro | 22 | [See below](#macro) |
-| Sector | 11 | [See below](#sector) |
+| Sector | 14 | [See below](#sector) |
 | Backtesting | 6 | [See below](#backtesting) |
 | System | 34 | [See below](#system) |
 
@@ -153,7 +153,7 @@ Complete reference for all 158 MCP tools organized by category.
 - **[`record_evidence_fragment`](record_evidence_fragment.md)**
 - **[`run_hexagram_backtest`](run_hexagram_backtest.md)**
 
-## SECTOR (11 tools)
+## SECTOR (14 tools)
 
 - **[`get_bond_maturity_calendar`](get_bond_maturity_calendar.md)**
 - **[`get_broker_credibility`](get_broker_credibility.md)**
