@@ -55,7 +55,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T10:13:10.964971Z",
+    "_updated_at": "2026-06-07T12:40:49.895769Z",
     "_updated_by": "pm",
     "active_sprints": [
       {
@@ -2916,7 +2916,7 @@
         "zone": "apps/mcp-server/",
         "priority": "P2",
         "owner": "dev-mcp-server",
-        "note": "Verify bctcReparseJob 14:00Z picks HPG Q4-2025 with REBUILT code (055a57bea1e1): balance_sheet_json.totalLiabilities = current-period (~4,239,852M, identity delta ~0) + Stage-4 YELLOW not RED. CAVEAT: reparse job only picks stranded PDFs lacking financial_reports row — HPG HAS a row, so manual re-queue likely required: clear/flag HPG Q4-2025 financial_reports row or trigger re-extract path; design the re-queue in the task.\n\nAppended 2026-06-07: Rebuild #2 (02517eea) is live image. 14:00Z cron validation stands; HPG manual re-queue still required (has financial_reports row).",
+        "note": "Re-parse attempt 12:2xZ: old rows deleted (7), reparse ran, but Tier-3 served STALE OCR cache (pre-fix text, magnitude-wrong totalLiabilities=3,004,239,852 raw-VND; sub-totals sum correctly to 4,239,852M) AND on-disk PDF is riêng lẻ (parent-only) not hợp nhất (consolidated). New row 918a7abd validation_status=low_confidence — FIX-LIAB validation still PENDING. Now blocked_by: INVALIDATE-HPG-OCR-CACHE + HPG-DISCOVER-CONSOLIDATED-PDF.",
         "created_at": "2026-06-07T11:00:00Z"
       },
       {
@@ -2944,28 +2944,52 @@
         "created_at": "2026-06-07T10:13:10.964971Z"
       },
       {
-        "id": "B3-SPACE-URLS-PULL-BLOCKED",
-        "title": "Fix: Space-URL pull filter blocks real rows (PPC Q1-2026 + Q3-2025)",
-        "status": "TODO",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "P2",
-        "type": "DEV",
-        "owner": "dev-mcp-server",
-        "note": "hsx.vn space-URLs (PPC Q1-2026 id=292114, Q3-2025 id=1308151) fail pull-job LIKE filter — 2 real rows blocked NOW. Fix encodeURI in fetchMediafileUrls AND/OR widen pull filter; per architect brief B3.",
-        "created_at": "2026-06-07T10:13:10.964971Z"
-      },
-      {
         "id": "REVIEW-PPC-Q4-LOW-CONFIDENCE",
         "title": "Human review: PPC Q4-2025 extraction_confidence=0.25 (normal-low)",
         "status": "TODO",
         "size": "XS",
         "zone": "apps/mcp-server/",
-        "priority": "P3",
+        "priority": "P2",
         "type": "QA",
         "owner": "qa",
-        "note": "PPC Q4-2025 extraction_confidence=0.25 (<0.2 would be flag-low; 0.25 is normal-low). Route through /api/bctc-inspect human-confirm when convenient.",
+        "note": "Report #3066 (resolved monitoring): financial composite 0.10; dispatcher probe: balance sheet effectively unextracted (assets=939B, liabilities=0, equity zeros — scanned PDF ~225 chars/page). Real fix = FEAT-PDF-EXTRACTOR-LOCAL-INPUT then re-extract; human /api/bctc-inspect meanwhile.",
         "created_at": "2026-06-07T10:13:10.964971Z"
+      },
+      {
+        "id": "INVALIDATE-HPG-OCR-CACHE",
+        "title": "Invalidate HPG OCR cache (stale text served post-rebuild)",
+        "type": "DEV",
+        "status": "TODO",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "P2",
+        "owner": "dev-mcp-server",
+        "note": "OCR cache for 20260130-HPG-Bao-cao-tai-chinh-rieng-...Q4.2025.pdf serves stale wrong-magnitude text to Tier-3 — invalidate so future reparse re-extracts fresh.",
+        "created_at": "2026-06-07T10:17:30Z"
+      },
+      {
+        "id": "HPG-DISCOVER-CONSOLIDATED-PDF",
+        "title": "Discover HPG consolidated PDF (Q4-2025)",
+        "type": "DEV",
+        "status": "TODO",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "P2",
+        "owner": "dev-mcp-server",
+        "note": "On-disk HPG Q4-2025 PDF is riêng lẻ; eval needs hợp nhất. Reset/extend HPG Q4-2025 queue discovery to fetch the consolidated PDF (SSC/hsx).",
+        "created_at": "2026-06-07T10:17:30Z"
+      },
+      {
+        "id": "FEAT-PDF-EXTRACTOR-LOCAL-INPUT",
+        "title": "Feature: PDF extractor local-path or multipart input support",
+        "type": "DEV",
+        "status": "TODO",
+        "size": "M",
+        "zone": "apps/dev-pdf-extractor/",
+        "priority": "P2",
+        "owner": "dev-pdf-extractor",
+        "note": "pdf-extractor /extract only accepts HTTP URLs (no file://, no upload) → VPS-sourced + local PDFs can't use the OCR path (Tier-1 fails: PPC 16.7MB scanned 401-then-failed; HPG Tier-1 status=failed). Add local-path or multipart input. Unblocks: PPC Q4 re-extraction w/ OCR (row 6f6e3fc0 is text-layer-only garbage: assets=939B, liabilities=0), HPG fresh OCR, Bun-segfault avoidance (extraction moves out of Bun process).",
+        "created_at": "2026-06-07T10:17:30Z"
       }
     ],
     "archive": [],
@@ -4584,6 +4608,43 @@
         "owner": "dev-mcp-server",
         "note": "12:06Z scoped rebuild: image 055a57bea1e1→02517eea12f9, --no-deps, ALL peers StartedAt unchanged, healthy 3s, integrity ok, toolCount 157. 36706ed5 live before 14:00Z cron.",
         "created_at": "2026-06-07T10:13:10.964971Z"
+      },
+      {
+        "id": "B3-SPACE-URLS-PULL-BLOCKED",
+        "title": "Fix: Space-URL pull filter blocks real rows (PPC Q1-2026 + Q3-2025)",
+        "status": "DONE",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "P2",
+        "type": "DEV",
+        "owner": "dev-mcp-server",
+        "note": "hsx.vn space-URLs (PPC Q1-2026 id=292114, Q3-2025 id=1308151) fail pull-job LIKE filter — 2 real rows blocked NOW. Fix encodeURI in fetchMediafileUrls AND/OR widen pull filter; per architect brief B3.",
+        "created_at": "2026-06-07T10:13:10.964971Z",
+        "status_note": "86874e83: encodeHsxUrl (idempotent) + pull-filter widened (VPS OR hsx.vn; hsx geo-block DISPROVEN by container curl 200). 2 rows repaired in-place (292114, 1308151 — encoded, pending, pullable). 36/0 tests. Live via rebuild #3 (04164be257d5). Pull expected next 30-min cron cycle."
+      },
+      {
+        "id": "REBUILD-MCP-SERVER-3",
+        "title": "Rebuild MCP server (scoped rebuild #3)",
+        "type": "OPS",
+        "status": "DONE",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "owner": "dev-mcp-server",
+        "status_note": "12:3xZ scoped rebuild #3: 02517eea→04164be257d5, --no-deps, peers untouched, healthy 5s, integrity ok (dispatcher-verified). B3 fix live before 14:00Z reparse cron.",
+        "created_at": "2026-06-07T10:17:30Z"
+      },
+      {
+        "id": "BOARD-DUP-IDS-AUDIT",
+        "title": "Board dup-IDs audit and cleanup",
+        "type": "SPIKE",
+        "status": "DONE",
+        "size": "XS",
+        "zone": "docs/data/",
+        "priority": "P0",
+        "owner": "pm",
+        "note": "13567c90: 11 dup ids ALL true-copies (deleted stale copies), 2 misplaced DONE rows relocated, global dup scan 0 (dispatcher re-verified).",
+        "created_at": "2026-06-07T10:17:30Z"
       }
     ],
     "in_progress": []
