@@ -120,18 +120,7 @@ Zone health: SLA weekend false-CRITICAL eliminated, off-hours gate in domain+han
 ---
 
 ## c375 · 2026-06-06T12:45Z (FIX-REFINE-IDEM-LOCK-ISO) — COMMITTED 368b7bad
-
-**Task:** FIX-REFINE-IDEM-LOCK-ISO (S) — isolate coordination-store lock in AR-refined-units-idempotency tests.
-
-**Root cause:** `claimTask` used `owner_agent:"refine-orchestrator"` but `releaseTask` was called with `pid-${process.pid}` as `owner_agent` (positional mismatch) → DELETE matched 0 rows → lock zombied until TTL → all same-taskId subsequent calls skipped → 4 scenarios RED. Cross-scenario bleed: `_coordDb` singleton never reset between `it` blocks.
-
-**Fix (2 files):**
-- `AR-refined-units-idempotency.test.ts`: added `beforeEach` → `_resetCoordinationDbState()` + `ensureCoordinationTable(db)` + `_injectCoordinationDb(db)` + `afterEach` reset/close; imported 3 seam functions.
-- `bctcRefineJob.ts` L512: `releaseTask(taskId, \`pid-${process.pid}\`)` → `releaseTask(taskId, "refine-orchestrator")` (owner_agent must match the claim).
-
-**Results:** 9→13/13 GREEN; task-lock-coordination-store 27/27 still GREEN; tsc 0 errors; no coordination.db on disk (no leak path).
-
-Zone health: 13/13 idempotency GREEN, 27/27 lock-store GREEN, tsc clean | HEALTHY
+releaseTask owner_agent mismatch fix + test isolation via _resetCoordinationDbState. 13/13 GREEN.
 
 ---
 
@@ -185,6 +174,18 @@ Zone health: news/sbv_fx false-CRITICAL on overnight/weekend eliminated, dynamic
 Zone health: gen-project-stats.ts verified 162 tools / 76 crons, atomic write confirmed, no container rebuild needed | HEALTHY
 
 ## Working Memory
+
+## c376 · 2026-06-07T05:56Z (UNBLOCK-CTG-REFINE-DRAIN) — wave-2
+
+**Root cause:** `get_bctc_pending_refine` used `refine_status IN ('PENDING','PARTIAL')` — excluded 'FAILED'. CTG report 49c11ce2 was set to FAILED by in-container `refineOneReport()` hitting the Option-Y no-spawn path (all windows flagged `agent_error:no_spawn_path_option_y`). Fleet cron agent (`refine_bctc_md`) saw empty queue → 19 consecutive starved cycles.
+
+**Fix:** Extended predicate to `refine_status IN ('PENDING','PARTIAL','FAILED')` in `getBctcPendingRefineTool.ts` (SQL query + docstring + tool description). FAILED reports are re-queued for retry; `reset=true` on first `push_bctc_refined_unit` clears prior FAILED units.
+
+**Tests:** 4 new (RD-1 through RD-4) in UNBLOCK-CTG-REFINE-DRAIN.test.ts — all GREEN. 22/22 across refine test files. Pre-existing AR-refine-readiness-gate failures (task-claim leak in worktree) confirmed pre-existing, unrelated to this fix.
+
+Zone health: bun test 22/22 (refine suite) GREEN, tsc clean | HEALTHY
+
+---
 
 ### Baselines (FIX-PROJECT-STATS-GENERATED 2026-06-07)
 - tools=162 (server.tool+registerTool unique names), sched=76 (all cron.schedule in scheduler/**/*.ts)

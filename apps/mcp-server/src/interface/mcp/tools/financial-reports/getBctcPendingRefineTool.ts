@@ -5,9 +5,14 @@
  * DDD layer: interface (read-only fetch from infra; window computation via application utils)
  *
  * Returns financial reports where text_status='COMPLETE' AND refine_status IN
- * ('PENDING', 'PARTIAL') AND confirm_status != 'CONFIRMED'. Used by the host-level
- * fleet cron to determine which reports need refine processing. Read-only — always
- * safe to re-run.
+ * ('PENDING', 'PARTIAL', 'FAILED') AND confirm_status != 'CONFIRMED'. Used by the
+ * host-level fleet cron to determine which reports need refine processing. Read-only
+ * — always safe to re-run.
+ *
+ * FAILED is included so the fleet cron can retry reports that previously failed
+ * (e.g. due to Option-Y no-spawn path before the fleet cron was operational).
+ * The refine_bctc_md flow sets reset=true on the first push, clearing prior FAILED
+ * units before re-processing.
  *
  * Output: Array<{ id, filename, page_count, text_status, confirm_status, refine_status, windows[] }>
  *   - filename:       basename of pdf_path (the PDF filename without path)
@@ -116,7 +121,7 @@ export function buildGetBctcPendingRefineHandler(
           `SELECT id, pdf_path, refine_status, text_status, confirm_status
            FROM financial_reports
            WHERE text_status = 'COMPLETE'
-             AND refine_status IN ('PENDING', 'PARTIAL')
+             AND refine_status IN ('PENDING', 'PARTIAL', 'FAILED')
              AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
            ORDER BY parsed_at ASC
            ${limitClause}`,
@@ -233,8 +238,9 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
   server.tool(
     "get_bctc_pending_refine",
     "Return financial reports pending agentic refine processing, with pre-partitioned windows. " +
-      "Queries financial_reports WHERE text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL') " +
+      "Queries financial_reports WHERE text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL','FAILED') " +
       "AND confirm_status != 'CONFIRMED'. " +
+      "FAILED reports are included so the fleet cron can retry them (e.g. Option-Y legacy failures). " +
       "Output: Array<{ id, filename, page_count, text_status, confirm_status, refine_status, windows[] }> " +
       "ordered by parsed_at ASC. " +
       "filename = basename(pdf_path). page_count = max page from pdf_extracted_text (0 if unknown). " +
