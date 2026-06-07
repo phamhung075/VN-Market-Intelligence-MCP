@@ -4252,9 +4252,10 @@
         "type": "vps_service_unhealthy",
         "summary": "vn-sbv-fetch unhealthy (uptime 44m, crashloop suspect); dispatcher re-probed get_vps_service_health: CONFIRMED",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "DONE",
         "payload_ref": null,
-        "note": "row backfilled by dev-team dispatcher — auditor T2 run 110a7cff sent BUG telegram 2700 but skipped flow-mandated row write; ops dispatched this cycle"
+        "note": "row backfilled by dev-team dispatcher — auditor T2 run 110a7cff sent BUG telegram 2700 but skipped flow-mandated row write; ops dispatched this cycle",
+        "resolution": "ops 20260607T0245Z: root cause 1 FIXED on VPS — /root/fetch-sbv.sh L18 LOG_ROTATE_BYTES undefined (grep-from-lib returned empty, || fallback dead) → hardcoded 10485760; service restarted. RESIDUAL: /api/push-sbv-rates rejects payload 'Invalid usdVndOfficial' → service still exits 1 / unhealthy (dispatcher re-probe confirms, uptime 54m). Follow-up signal sau-sbv-push-endpoint-202606070252 cut to po."
       },
       {
         "id": "sau-bctc-sla-breach-202606070234",
@@ -4279,6 +4280,30 @@
         "status": "NEW",
         "payload_ref": null,
         "note": "backfilled by dispatcher (telegram 2701 sent, row skipped); overlaps FIX-BCTC-IDENTITY-SERVE-GUARD (in flight) — po to dedupe at next triage"
+      },
+      {
+        "id": "sau-sbv-push-endpoint-202606070252",
+        "ts": "2026-06-07T02:52:00Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "task_request",
+        "summary": "POST /api/push-sbv-rates rejects valid usdVndOfficial payload — vn-sbv-fetch stays unhealthy; zone dev-mcp-server (server.ts handler)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "note": "ops incident 20260607: VPS script fixed (field renamed usdVnd→usdVndOfficial per schema) but endpoint validation still rejects — suspect string-vs-number type coercion in JSON parse. Draft title: fix(mcp-server/vps-proxy): push-sbv-rates endpoint rejects valid usdVndOfficial integer payload. Evidence: BUG telegram msg 2702, last log 'ERROR: push failed → Invalid usdVndOfficial (positive number required)'."
+      },
+      {
+        "id": "sau-auditor-c01-weekend-202606070252",
+        "ts": "2026-06-07T02:52:00Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "observation",
+        "summary": "Auditor C-01 threshold (daily_ohlcv >=25 codes last 1d) returns 0 on weekends — false-positive risk; needs weekend-aware window like FIX-SLA-WEEKEND-AWARE",
+        "severity": "LOW",
+        "status": "NEW",
+        "payload_ref": null,
+        "note": "dispatcher live-tested merged host-side C-01 (a95c514a) Sunday 20260607: query mechanism OK read-only, returns 0 (market closed). Pre-existing threshold design, not introduced by FIX-AUDITOR-DB-CHECKS-HOSTSIDE."
       }
     ],
     "archive": [
