@@ -4239,8 +4239,10 @@
         "type": "system-issue",
         "summary": "CTG 2026-Q1 BCTC OCR corrupt: assets=0<equity 244904ty, margin 229157% (VNM/VEA pattern) - needs inspect/re-extract",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "DONE",
+        "payload_ref": null,
+        "resolution": "po triage 20260607T0217Z: TASK CREATED — FIX-BCTC-IDENTITY-SERVE-GUARD (backlog, commit 75da723e); 3rd VNM/VEA/CTG fingerprint => recurring-bug root-cause serve gate",
+        "resolved_at": "2026-06-07T02:23:26Z"
       }
     ],
     "archive": [
