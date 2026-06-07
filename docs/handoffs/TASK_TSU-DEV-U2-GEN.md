@@ -310,3 +310,35 @@ Generator script (scripts/) does not require rebuild (executed standalone).
 - Blocks: TSU-DEV-U2-PARITY (parity test rerun after U3 deregistrations)
 - Depends on: TSU-DEV-U1 (baseline for tool count)
 - Independent of: TSU-DEV-U3, TSU-DEV-U4, TSU-DEV-U5, TSU-DEV-U6
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/src/__tests__/ + scripts/ + docs/data/
+- **Files created:**
+  - `scripts/gen-tool-registry.ts` — 177L, atomic scanner: server.tool() + server.registerTool() → docs/data/tool-registry.json
+  - `apps/mcp-server/src/__tests__/tool-registry-parity.test.ts` — 240L, 8 assertions (T-U2-1 through T-U2-6 + AC-U2-7 x2)
+- **Files modified:**
+  - `docs/data/tool-registry.json` — regenerated (125 → 162 tools, 12 groups, generator output)
+  - `docs/data/project-stats.json` — toolCount synced to 162 via gen-project-stats.ts
+  - `scripts/gen-project-stats.ts` — added REGISTRY_PATH const + readToolCountFromRegistry() (reads registry as SSOT for toolCount, warns if stale)
+- **Tests written:** tool-registry-parity.test.ts — 8 tests, all GREEN
+- **Anti-false-green:** Injection verified — fake tool injected into alerts group causes T-U2-5 + T-U2-6 to FAIL; revert restores GREEN (documented in test file)
+- **Type check:** clean (bun tsc --noEmit exit 0)
+- **bun test:** 8 pass / 0 fail (tool-registry-parity.test.ts); full suite OOM-crash on 16GB Mac = pre-existing environment condition (project_host_memory_panic.md)
+- **Tool count:** 162 tools — matches pre-task baseline (gen-project-stats --dry-run confirms)
+- **Scheduler count:** 76 cron.schedule entries — matches pre-task baseline
+- **Docs updated:** NONE (docs/data/ files are generated output)
+- **Graphify:** skipped (no architecture docs impacted)
+- **Decision journal:** `docs/agent-memory/decisions/sprint-FETCH-OPS-PAGE-TRUTH-architect.md` — N/A (no architecture decision needed; spec fully specified both patterns + expected count)
+
+## G12 Gate Evidence
+
+| Gate | Command | Result |
+|------|---------|--------|
+| Gate 1: bun test | `bun test src/__tests__/tool-registry-parity.test.ts` | 8 pass / 0 fail |
+| Gate 2a: tsc | `bun tsc --noEmit` | exit 0 (clean) |
+| Gate 2c: tool count | `bun scripts/gen-project-stats.ts --dry-run \| grep toolCount` | 162 |
+| Gate 2d: scheduler count | `grep -rc cron.schedule apps/mcp-server/src/scheduler/ \| awk ...` | 76 |
