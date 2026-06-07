@@ -4941,8 +4941,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T22:53:07Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-06-07T23:11:36Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "sau-2026-06-0723-04-13-a20",
@@ -4952,7 +4952,7 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 health endpoint unreachable (unhealthy status) | Router raw-verify 23:08Z: container recreated 21:36Z AFTER fix commits 48a64056/97367124 (18:57/19:11Z) — rebuild hypothesis RULED OUT. App logs show /health 200 OK continuously, but docker healthcheck curl exceeded 10s timeout (exit=-1, 0 bytes) — health probe starves when /extract POST in flight. Asyncio offload fix INCOMPLETE: event loop still blocks during extraction. Suggested: move blocking extract work to process pool or raise healthcheck timeout + add /health fast-path.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "zone_owner": "dev-pdf-extractor",
         "check_id": "A-20",
         "payload_ref": null
@@ -5304,7 +5304,7 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-06-07T22:53:07Z",
         "summary": "macro-indicators Go service serves fedFundsRate=5.33 from hardcoded fixture (source_tier 4) whenever its direct FRED fetch fails (every weekend). Restart verified NOT to fix (probed 22:52 post-restart). mcp-server DB has correct bridged value 3.62 (tracked_indicators, FIX-FRED-YAHOO-WEEKEND-STALE c7a6de6c) but the Go service never consults it. Honest flagging present (is_estimate:true, regime suppressed per DSI-INV-1) so not served-as-fresh; likely self-heals weekdays when FRED publishes. Structural fix: Go fallback chain should try mcp-server bridged value (tier 2/3) before fixture (tier 4). Zone: dev-macro-indicators (apps/macro-indicators).",
         "suggested_task_id": "FIX-MACRO-GO-FIXTURE-FALLBACK"
