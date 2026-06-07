@@ -1,4 +1,4 @@
-<!-- size-justification: ~120L — complete acquire/critical-section/release protocol; backoff table, fail-closed C-2 path, jitter formula, foreign-restore rule, and give-up BUG-log are all load-bearing steps executed in sequence — cannot split. -->
+<!-- size-justification: 201L (81L overage) — complete acquire/critical-section/release protocol with 6 backoff-retry entries, fail-closed C-2/C-2b enum-drift paths, jitter formula, foreign-restore rule, release protocol, and code-paste wiring template. All steps load-bearing and executed in sequence; backoff table entries are data (not prose) and cannot be abbreviated. Split would break protocol documentation contract (single reference point for dispatcher-only rule enforcement). -->
 # Skill: commit-mutex
 
 > **INV-GATEWAY-1 (enforced 2026-06-07):** This skill is DISPATCHER-ONLY. Dev-*/qa/ba/pm/architect
