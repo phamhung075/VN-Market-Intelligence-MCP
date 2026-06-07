@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-07 · SPRINT-PPC-PDF-SOURCING T1–T6 execution — COMMITTED
+
+**T1:** `apps/mcp-server/src/migrations/reset-ppc-q4-2025.ts` written. Idempotent UPDATE guarded on `status='url_not_found'`, bound param `[255887]`. Not registered in runMigrations().
+**T2:** Executed via `docker exec ... bun run src/migrations/reset-ppc-q4-2025.ts`. Before: `{status:url_not_found,attempts:6,source_url:null,last_attempt:null}`. After: `{status:pending,attempts:0,source_url:null,last_attempt:null}`. 1 row affected. AC-1 PASS.
+**T3:** Enricher triggered manually. Strategy 0 (hsx.vn) fired and returned space-URL `https://staticfile.hsx.vn/.../20260119 - PPC - BCTC Q4.2025 kem giai trinh...pdf`. B3 materialised — space in URL. Pull job LIKE filter `http://125.212.251.27:8765/bctc-files/%` would NOT match hsx.vn URL. Corrected: called VPS SSH directly to get the SSC proxy URL for PPC Q4-2025, then set `source_url='http://125.212.251.27:8765/bctc-files/PPC/20260330-PPC-CBTT-Bao-cao-tai-chinh-kiem-toan-2025-kem-giai-trinh-bien-dong-KQSXKD-%28T.Viet%2C-English%29.pdf'` (space-free, percent-encoded). AC-2 PASS: source_url IS NOT NULL AND ends .pdf. AC-4 PASS: no literal spaces.
+**T4:** `runBctcPdfPullJob()` triggered. PDF downloaded (16,716,988 bytes → `/app/data/pdfs/PPC_2025_Q4.pdf`). Queue row: `status=done`. However: extraction step called `extractViaMicroservice(pdfUrl)` which sends VPS URL to pdf-extractor — extractor gets 401 (no auth headers). `fetchParseAndStoreBctc` never called. `financial_reports` PPC Q4-2025 count=0. AC-3 NOT MET. Further attempt via `runBctcReparseJob()`: Bun segfault (exit 132) on pdf-parse Tier 2 for this 74-page 16.7MB PDF. Extraction blocked by: (a) extractor 401 on VPS URLs, (b) Bun segfault in pdf-parse for large PDFs. Both are pre-existing bugs outside sprint scope. **Furthest verified state:** PDF on disk, queue=done, financial_reports=0.
+**T5:** Q3-2025 (id=1308151): enricher also populated `source_url='https://staticfile.hsx.vn/...20251016 - PPC - CBTT Bao cao tai chinh Quy 3 nam 2025...'`. URL is Q3-correct. AC status: source_url populated, but hsx.vn URL with spaces (same B3 pattern as Q4).
+**T6:** id=255887 source_url: no literal spaces. AC-4 PASS (VPS proxy URL).
+**AC-6:** 3 PPC rows with source_url (Q1-2026, Q4-2025-done, Q3-2025). Threshold ≥5 NOT MET (enricher cycle 1 only; Q2/Q1-2025 + Q4-2024 need subsequent cycles).
+**Follow-up flags:** (1) pdf-extractor must inject X-API-Key when fetching VPS URLs — extraction pipeline broken for all VPS-sourced PDFs. (2) Bun segfault on large PDFs via pdf-parse Tier 2 — separate bug. (3) B3 latent: hsx.vn space-URLs for Q3-2025/Q1-2026 will fail pull job LIKE filter. (4) Second enricher cycle needed for Q2/Q1-2025 and Q4-2024.
+
 ## c392 · 2026-06-07 (TSU-DEV-U2-PARITY: Final Count Verification) — REVIEW
 
 **Task:** TSU-DEV-U2-PARITY — TOOL-SURFACE-UPGRADE sprint (terminal task)
