@@ -1479,3 +1479,84 @@ This session: Notebook appended with headroom-proxy build/deploy details. Commit
 ✓ No errors, no rollback needed
 
 **Status: DONE**
+
+## Session: 2026-06-07 (SERVICE-SCOPED REBUILD — FIX-ORCH-KEY-NORMALIZE-TASKID)
+
+**Task:** Rebuild mcp-server for FIX-ORCH-KEY-NORMALIZE-TASKID functional requirement.
+
+**Context:** Compiled code changed in apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts (read-path coalesce `t.id || t.task_id || ""`). Migration removed all `task_id` keys from docs/data/orch/orch-state.json. Running container still reads `t.task_id` and resolves undefined for every board row. Rebuild is functionally required.
+
+**Status:** DONE — Verified Live (2026-06-07 03:33:46Z)
+
+### Execution Steps
+
+**Step 1: Pre-flight baseline**
+- Running containers: 7 services
+  - vn-market-intelligence-mcp-mcp-server-1 (mcp-server) — image 9c196bdd213d
+  - vn-market-intelligence-mcp-frontend-1 (frontend)
+  - vn-market-intelligence-mcp-macro-indicators-1 (macro-indicators)
+  - headroom-proxy (proxy)
+  - vn-market-intelligence-mcp-pdf-extractor-1 (pdf-extractor)
+  - vn-market-intelligence-mcp-api-gateway-1 (api-gateway)
+  - mcp-gateway (gateway)
+- Old mcp-server image ID: 9c196bdd213d ✓
+- All 6 peer containers healthy ✓
+
+**Step 2: Build fresh mcp-server image**
+- Command: `docker compose build mcp-server` (from project root)
+- All layers processed successfully
+- New image built and tagged: 2b96ce085713 ✓
+- Build output: mcp-server Built (no errors) ✓
+
+**Step 3: Start rebuilt service (scoped to mcp-server only)**
+- Command: `docker compose up -d --no-deps mcp-server`
+- Service started
+- Sleep 5 seconds for startup complete ✓
+
+**Step 4: Verify running container uses new image**
+- Running container image ID: sha256:2b96ce0857132039f90ff168f7681a25669b76d7efb78510aa50ed043f0c0274
+- Matches new image 2b96ce085713 ✓
+- Image swap verified: 9c196bdd213d → 2b96ce085713 ✓
+
+**Step 5: Peers-alive post-rebuild check**
+- Pre-rebuild peer count: 6 (frontend, macro-indicators, headroom-proxy, pdf-extractor, api-gateway, mcp-gateway)
+- Post-rebuild peer count: 6 (all same containers still running)
+- Status: All peers healthy ✓
+
+**Step 6: Functional probe**
+- Endpoint: GET http://localhost:3000/api/fetch-status
+- Response: HTTP 200 with valid JSON payload
+- Data sample:
+  - sources: 7 items (vnexpress, vietstock, cafef, nhandan, tuoitre, vneconomy, nld)
+  - vpsProxy: health structure intact (prices, news, sbv, bctc)
+  - bctcPipeline: pending=370, done=15, failed=0
+  - fetchedAt: 2026-06-07T01:34:00.160Z
+- Status: ✓ LIVE and serving data
+
+**Step 7: Announce to WORK channel**
+- Message: "[ops] mcp-server rebuilt for FIX-ORCH-KEY-NORMALIZE-TASKID coalesce fix — new image 2b96ce085713 live, peers intact, functional probe OK"
+- Channel: WORK
+- Status: Message sent ✓
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| Old image | 9c196bdd213d | Pre-rebuild baseline recorded |
+| New image built | ✓ PASS | Image 2b96ce085713 (distinct SHA) |
+| Running match | ✓ PASS | sha256:2b96ce0857... matches 2b96ce085713 |
+| Peers pre-rebuild | 6 | frontend, macro-indicators, headroom-proxy, pdf-extractor, api-gateway, mcp-gateway |
+| Peers post-rebuild | 6 | All same containers still running, no casualties |
+| Functional probe | ✓ PASS | HTTP 200, valid fetch-status JSON with 7 sources + VPS proxy health |
+| WORK announce | ✓ SENT | Telegram message sent to WORK channel |
+
+**Scope Confirmed:** mcp-server only. No other services touched. No peer outages. Service-scoped rebuild completed per FLEET-HOST-SAFETY protocol.
+
+**Production Status:** FIX-ORCH-KEY-NORMALIZE-TASKID coalesce fix now LIVE. tasksMdJanitorJob.ts read-path will resolve `t.id || t.task_id || ""` correctly for all board rows.
+
+**Duration:** ~5 minutes (build + start + verification)
+
+**Incident Notes:** None. Clean rebuild, all gates passed.
+
