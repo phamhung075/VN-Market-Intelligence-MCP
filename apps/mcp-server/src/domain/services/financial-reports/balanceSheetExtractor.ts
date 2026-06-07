@@ -305,25 +305,61 @@ function parseSplitBlockBalanceSheet(lines: string[]): Record<string, number> | 
   // Contains-based: matches "Triệu VND" or bare "VND" (not preceded by / or digits
   // to avoid matching decree fractions like "93/2017/NĐ-CP").
   const UNIT_CONTAINS = /tri[eệ]u\s+VND|(?<![\/\d])VND(?!\d)/i;
+  // FIX-BCTC-LIAB-PRIOR-PERIOD: collect ALL date+unit header positions and their
+  // associated dates, then pick the one with the MOST RECENT date as the separator.
+  //
+  // Root cause: HPG parent-company ("Báo cáo tài chính riêng") OCR places the
+  // PRIOR period date header (31/12/2024 or 01/01/2025) before the CURRENT period
+  // header (31/12/2025) in the liabilities/equity section. The original first-match
+  // strategy picked the prior-period separator, causing ALL liabilities codes to zip
+  // against prior-period values (e.g. totalLiabilities = 1,012,889.94M instead of
+  // correct 4,239,852.22M). Fix: prefer the separator whose parsed date is LATEST.
+  //
+  // Date sort key: YYYY * 10000 + MM * 100 + DD  (numeric, comparable, descending-safe)
+  const DATE_PARSE = /(\d{1,2})\/(\d{1,2})\/(20\d\d)/;
+  function dateSortKey(line: string): number {
+    const m = DATE_PARSE.exec(line);
+    if (!m) return 0;
+    const dd = parseInt(m[1]!, 10);
+    const mm = parseInt(m[2]!, 10);
+    const yyyy = parseInt(m[3]!, 10);
+    return yyyy * 10000 + mm * 100 + dd;
+  }
 
-  let separatorIdx = -1;
+  const candidates: Array<{ idx: number; sortKey: number }> = [];
+
   for (let i = 0; i < lines.length - 5; i++) {
     const line = lines[i]!;
     if (DATE_CONTAINS.test(line)) {
+      const sortKey = dateSortKey(line);
+
       // Check if unit declaration is on the same line (VCB Q4 single-line header)
       if (UNIT_CONTAINS.test(line)) {
-        separatorIdx = i;
-        break;
+        candidates.push({ idx: i, sortKey });
+        continue;
       }
       // Look for unit header within next 5 lines (VNM standalone two-line header)
       for (let j = i + 1; j <= Math.min(i + 5, lines.length - 1); j++) {
         if (UNIT_CONTAINS.test(lines[j]!)) {
-          separatorIdx = j;
+          candidates.push({ idx: j, sortKey });
           break;
         }
       }
-      if (separatorIdx !== -1) break;
     }
+  }
+
+  // Pick the candidate with the HIGHEST sort key (most recent date = current period).
+  // When tied (same date), prefer the FIRST occurrence in text order.
+  let separatorIdx = -1;
+  if (candidates.length > 0) {
+    let best = candidates[0]!;
+    for (let k = 1; k < candidates.length; k++) {
+      const c = candidates[k]!;
+      if (c.sortKey > best.sortKey) {
+        best = c;
+      }
+    }
+    separatorIdx = best.idx;
   }
 
   // Step 1b: Fallback separator for VCB Q1 page-pair format.
@@ -463,8 +499,10 @@ function parseSplitBlockBalanceSheet(lines: string[]): Record<string, number> | 
   for (const line of valueLines) {
     const trimmed = line.trim();
 
-    // Stop at second period separator (1/1/2025 or 31/12/2024)
-    if (/^1\/1\/20\d\d/.test(trimmed) || /^31\/12\/20\d\d/.test(trimmed)) {
+    // Stop at second period separator (e.g. 1/1/2025, 01/01/2025, 31/12/2024).
+    // FIX-BCTC-LIAB-PRIOR-PERIOD: extended to match DD/MM/YYYY with optional leading zeros
+    // (01/01/YYYY was not caught by the original /^1\/1\/20\d\d/ pattern).
+    if (/^0?1\/0?1\/20\d\d/.test(trimmed) || /^31\/12\/20\d\d/.test(trimmed)) {
       hitSecondPeriod = true;
     }
     if (hitSecondPeriod) continue;
