@@ -11,6 +11,7 @@ import json
 import os
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 import aiohttp
@@ -188,6 +189,129 @@ class SQLitePDFDocumentRepository(PDFDocumentRepository):
                 )
             )
         return result
+
+
+# ---------------------------------------------------------------------------
+# LocalPDFStorageRepository
+# ---------------------------------------------------------------------------
+
+# Default size cap: 200 MB (matches existing convention for large BCTC PDFs;
+# HPG PPC Q4-2025 is 16.7 MB, generous ceiling for all realistic BCTC PDFs).
+_LOCAL_PDF_SIZE_CAP_MB_DEFAULT = 200
+
+
+class LocalPDFStorageRepository(PDFStorageRepository):
+    """
+    Concrete implementation: read PDF from local filesystem, store extraction JSON.
+
+    FEAT-PDF-EXTRACTOR-LOCAL-INPUT:
+    Enables the SYNC /extract endpoint to accept a container-local path instead
+    of an HTTP URL. The mcp-server and pdf-extractor containers share a volume
+    at ./data/pdfs:/app/data/pdfs — any already-downloaded PDF is immediately
+    accessible without an extra HTTP round-trip or auth header.
+
+    Security contract (path-traversal prevention):
+        The resolved absolute path MUST start with the resolved pdf_data_dir
+        prefix. Any path that resolves outside the allowed prefix (e.g.
+        ../../../etc/passwd, /tmp/evil.pdf) raises PDFDownloadError immediately.
+        Resolution uses Path.resolve() so symlinks pointing outside are also
+        caught (the resolved target is checked, not just the lexical string).
+
+    Size cap:
+        Files larger than size_cap_mb raise PDFDownloadError before any bytes
+        are read into memory. Default 200 MB matches existing BCTC corpus.
+        Set PDF_LOCAL_SIZE_CAP_MB env var or pass size_cap_mb at construction.
+
+    store_extraction: identical contract to HTTPPDFStorageRepository — writes
+        extraction JSON to storage_dir/{doc_id}.json.
+    """
+
+    def __init__(
+        self,
+        storage_dir: str,
+        pdf_data_dir: str = "/app/data/pdfs",
+        size_cap_mb: Optional[int] = None,
+    ) -> None:
+        self.storage_dir = storage_dir
+        # Resolve once at construction — prevents TOCTOU on prefix check.
+        self._pdf_data_dir = str(Path(pdf_data_dir).resolve())
+        if size_cap_mb is None:
+            size_cap_mb = int(
+                os.getenv("PDF_LOCAL_SIZE_CAP_MB", str(_LOCAL_PDF_SIZE_CAP_MB_DEFAULT))
+            )
+        self._size_cap_bytes = size_cap_mb * 1024 * 1024
+        os.makedirs(storage_dir, exist_ok=True)
+
+    async def fetch_pdf(self, url: str) -> bytes:
+        """
+        Read PDF bytes from a local container path.
+
+        Args:
+            url: Absolute path to the PDF file inside the container.
+                 Despite the parameter name being ``url`` (inherited from the
+                 PDFStorageRepository port), this implementation expects a
+                 filesystem path, not an HTTP URL.
+
+        Raises:
+            PDFDownloadError: path traversal detected, file not found, or
+                              file exceeds size cap.
+        """
+        # --- 1. Resolve path and check prefix (traversal guard) ---
+        try:
+            resolved = Path(url).resolve()
+        except Exception as exc:
+            raise PDFDownloadError(
+                f"local_pdf: cannot resolve path {url!r}: {exc}"
+            ) from exc
+
+        if not str(resolved).startswith(self._pdf_data_dir):
+            raise PDFDownloadError(
+                f"local_pdf: path traversal not allowed — "
+                f"resolved path {str(resolved)!r} is outside allowed prefix "
+                f"{self._pdf_data_dir!r}"
+            )
+
+        # --- 2. File existence check ---
+        if not resolved.is_file():
+            raise PDFDownloadError(
+                f"local_pdf: file not found at {url!r} "
+                f"(resolved: {str(resolved)!r})"
+            )
+
+        # --- 3. Size cap check (before read) ---
+        file_size = resolved.stat().st_size
+        if self._size_cap_bytes >= 0 and file_size > self._size_cap_bytes:
+            cap_mb = self._size_cap_bytes // (1024 * 1024)
+            actual_mb = file_size / (1024 * 1024)
+            raise PDFDownloadError(
+                f"local_pdf: file too large — {actual_mb:.1f} MB exceeds "
+                f"cap of {cap_mb} MB (path: {url!r})"
+            )
+
+        # --- 4. Read and return bytes ---
+        return resolved.read_bytes()
+
+    async def store_extraction(self, doc_id: str, content: ExtractedContent) -> str:
+        """Identical to HTTPPDFStorageRepository.store_extraction."""
+        output_path = os.path.join(self.storage_dir, f"{doc_id}.json")
+        payload = {
+            "document_id": content.document_id,
+            "tables": [
+                {
+                    "table_index": t.table_index,
+                    "headers": t.headers,
+                    "rows": t.rows,
+                    "page_number": t.page_number,
+                }
+                for t in content.tables
+            ],
+            "text_content": content.text_content,
+            "ocr_confidence": content.ocr_confidence,
+            "extraction_time_ms": content.extraction_time_ms,
+        }
+        with open(output_path, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, ensure_ascii=False)
+        return output_path
 
 
 # ---------------------------------------------------------------------------

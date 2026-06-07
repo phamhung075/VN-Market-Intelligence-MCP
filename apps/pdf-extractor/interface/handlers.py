@@ -293,6 +293,7 @@ def register_routes(
     ocr_text_source: Optional[Any] = None,
     ocr_source_ok: bool = True,
     pdf_data_dir: str = "data/pdfs",
+    local_extract_usecase: Optional[ExtractPDFUseCase] = None,
 ) -> None:
     """Attach all routes to the given APIRouter."""
 
@@ -493,13 +494,46 @@ def register_routes(
         """
         POST /extract
 
-        Accepts: {url, source_type, priority?}
-        Returns: ExtractPDFResponse JSON
+        FEAT-PDF-EXTRACTOR-LOCAL-INPUT: accepts either url OR pdf_path.
+
+        url mode (original):
+            Accepts: {url: str, source_type?, priority?}
+            Storage: HTTPPDFStorageRepository (aiohttp GET)
+
+        pdf_path mode (new):
+            Accepts: {pdf_path: str, source_type?, priority?}
+            Storage: LocalPDFStorageRepository (local file read)
+            Constraint: pdf_path must be an absolute path under /app/data/pdfs.
+            The mcp-server and pdf-extractor share volume ./data/pdfs:/app/data/pdfs
+            so any already-downloaded PDF is reachable without an HTTP round-trip.
+
+        Returns: ExtractPDFResponse JSON (identical schema for both modes)
+
+        HTTP 503: returned when pdf_path mode is requested but local_extract_usecase
+            is not wired at composition root (graceful degrade — same pattern as
+            other optional use cases in this service).
         """
         try:
             request_dto = body.to_dto()
-            response = await extract_usecase.execute(request_dto)
+
+            # FEAT-PDF-EXTRACTOR-LOCAL-INPUT: route to local use case when pdf_path set.
+            if request_dto.pdf_path:
+                if local_extract_usecase is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail={
+                            "status": "failed",
+                            "error": "local_extract_usecase not configured — "
+                                     "pdf_path mode unavailable",
+                        },
+                    )
+                response = await local_extract_usecase.execute(request_dto)
+            else:
+                response = await extract_usecase.execute(request_dto)
+
             return response.to_json()
+        except HTTPException:
+            raise
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

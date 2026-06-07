@@ -6,16 +6,25 @@ DTOs are pure data containers with no business logic.
 """
 
 from dataclasses import dataclass, asdict
-from typing import Literal
+from typing import Literal, Optional
 
 
 @dataclass
 class ExtractPDFRequest:
-    """Input contract: POST /extract"""
+    """Input contract: POST /extract
+
+    FEAT-PDF-EXTRACTOR-LOCAL-INPUT:
+    Either ``url`` (HTTP/HTTPS) or ``pdf_path`` (container-local absolute path)
+    must be provided. When ``pdf_path`` is set, the handler selects
+    LocalPDFStorageRepository instead of HTTPPDFStorageRepository.
+    ``url`` is set to an empty-string sentinel when only ``pdf_path`` is given
+    (domain service stores it; storage repo reads ``pdf_path`` instead of ``url``).
+    """
 
     url: str
     source_type: Literal["bctc", "weather", "utility_bill"]
     priority: int = 0
+    pdf_path: Optional[str] = None
 
 
 @dataclass

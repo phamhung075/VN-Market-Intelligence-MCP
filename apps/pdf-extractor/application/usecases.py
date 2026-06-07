@@ -33,13 +33,22 @@ class ExtractPDFUseCase:
         3. Delegate to domain service for the extraction pipeline.
         4. Convert domain result → response DTO.
 
+        FEAT-PDF-EXTRACTOR-LOCAL-INPUT:
+        When request.pdf_path is set (local-file mode), the document's ``url``
+        field is populated with the pdf_path value. This allows the injected
+        LocalPDFStorageRepository to receive the path through the
+        ``storage_repo.fetch_pdf(doc.url)`` call in the domain service, with
+        zero changes to domain/services.py (DDD boundary intact).
+
         On PDFProcessingError: returns a failed response DTO (no re-raise)
         so the HTTP handler can serialize cleanly without an uncaught exception.
         """
         doc_id = str(uuid4())
+        # Local-file mode: store pdf_path as url so storage_repo.fetch_pdf receives it.
+        effective_url = request.pdf_path if request.pdf_path else request.url
         doc = PDFDocument(
             id=doc_id,
-            url=request.url,
+            url=effective_url,
             source_type=request.source_type,
             status="pending",
         )

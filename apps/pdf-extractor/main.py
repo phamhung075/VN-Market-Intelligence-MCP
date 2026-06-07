@@ -20,6 +20,7 @@ from infrastructure.startup import ensure_dirs
 from infrastructure.repositories import (
     SQLitePDFDocumentRepository,
     HTTPPDFStorageRepository,
+    LocalPDFStorageRepository,
 )
 from infrastructure.extraction_engine import PdfplumberExtractionEngine
 from infrastructure.inspection_store import InspectionStore
@@ -118,6 +119,22 @@ def create_app() -> FastAPI:
     # --- Application use case ---
     extract_usecase = ExtractPDFUseCase(extract_service=extract_service)
 
+    # --- FEAT-PDF-EXTRACTOR-LOCAL-INPUT: local-file use case ---
+    # Same doc_repo + engine as HTTP mode; storage reads from shared volume
+    # ./data/pdfs:/app/data/pdfs instead of fetching over HTTP.
+    # PDF_LOCAL_SIZE_CAP_MB env var controls size cap (default 200 MB).
+    _pdf_data_dir = os.getenv("PDF_DIR", "/app/data/pdfs")
+    local_storage_repo = LocalPDFStorageRepository(
+        storage_dir=cfg.storage_dir,
+        pdf_data_dir=_pdf_data_dir,
+    )
+    local_extract_service = ExtractPDFService(
+        doc_repo=doc_repo,
+        storage_repo=local_storage_repo,
+        engine=engine,
+    )
+    local_extract_usecase = ExtractPDFUseCase(extract_service=local_extract_service)
+
     # --- Inspection store (SI-2: PDF viewer surface) ---
     inspection_store = InspectionStore(
         db_path=cfg.db_path,
@@ -215,6 +232,7 @@ def create_app() -> FastAPI:
         pek_push_client=pek_push_client,    # PEK-INTEGRATE: reuses LayoutFirstPushClient
         ocr_text_source=ocr_text_source,    # FU-1: wires /page-text handler
         ocr_source_ok=ocr_source_ok,        # FU-1 RISK-1: startup probe result → /health
+        local_extract_usecase=local_extract_usecase,  # FEAT-PDF-EXTRACTOR-LOCAL-INPUT
     )
     app.include_router(router)
 
