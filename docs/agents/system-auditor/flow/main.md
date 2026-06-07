@@ -1,4 +1,4 @@
-<!-- size-justification: ~500L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
+<!-- size-justification: ~500L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -59,11 +59,21 @@ AUD-ND-1 regression history:
 
 ## Tier Dispatch
 
-Read `AUDIT_TIER` (default 3 if not set).
+**AUDIT_TIER extraction (mandatory — run before any other step):**
+Scan the spawn prompt verbatim for the token `AUDIT_TIER=<value>`. Extract the integer value.
+- Found `AUDIT_TIER=1` → set AUDIT_TIER=1
+- Found `AUDIT_TIER=2` → set AUDIT_TIER=2
+- Found `AUDIT_TIER=3` → set AUDIT_TIER=3
+- Not found or unrecognized value → **default AUDIT_TIER=3** (log: `"[TIER-DISPATCH] AUDIT_TIER not set — defaulting to 3"`)
 
-- **TIER=1** → run §Tier-1 Runtime Ping only → skip all other steps → notebook → RETURN
-- **TIER=2** → run §Tier-2 Freshness Sweep only → skip all other steps → notebook → RETURN
-- **TIER=3** → run §Tier-1 + §Existing Doc/Memory Audit (steps 1–6) + §Tier-3 DB Integrity → notebook → RETURN
+The extracted tier value MUST propagate to:
+1. The tier-dispatch branch below (determines which checks run)
+2. The notebook cycle entry heading (the `Tier-N` label in `### Audit Run Tier-N` MUST match this value, not an assumed value)
+3. The RETURN line (`tier-N` token)
+
+- **TIER=1** → run §Tier-1 Runtime Ping only → skip all other steps → notebook (label: Tier-1) → RETURN
+- **TIER=2** → run §Tier-2 Freshness Sweep only → skip all other steps → notebook (label: Tier-2) → RETURN
+- **TIER=3** → run §Tier-1 + §Existing Doc/Memory Audit (steps 1–6) + §Tier-3 DB Integrity → notebook (label: Tier-3) → RETURN
 
 ---
 
@@ -274,9 +284,13 @@ Append summary to this Tier-2 run's notebook entry.
 
 ### Early Exit Check
 ```bash
-git log --since="24h" --oneline  # 0 commits → skip doc sync pass
+git -C "$PROJECT_ROOT" log origin/main --since="24 hours ago" --oneline 2>/tmp/sau_gitlog_err; GITLOG_EXIT=$?
 ```
-Last audit < 12h AND no new commits → skip steps 1–6 (not the new DB checks below).
+- If `GITLOG_EXIT != 0`: read `/tmp/sau_gitlog_err`; fail-loud — log `"[DOC-AUDIT] git log FAILED (exit $GITLOG_EXIT): $(cat /tmp/sau_gitlog_err)"`, emit WARN signal (type: system_health_report, check_id: DOC-AUDIT-GIT-ERR), send BUG-channel Telegram, **do NOT early-exit** — continue with doc audit as if commits exist (safe-side).
+- If `GITLOG_EXIT == 0` and output is empty: no commits in last 24h → check last-audit timestamp from notebook. Last audit < 12h AND no new commits → skip steps 1–6 (not the new DB checks below).
+- If `GITLOG_EXIT == 0` and output is non-empty: commits exist → run steps 1–6 (no early exit).
+
+NOTE — root cause of false "no commits" (FIX-AUDITOR-FLOW-TIER-EARLYEXIT): the previous form `--since="24h"` is not a valid git date string and git silently returns 0 commits. The correct form is `--since="24 hours ago"`. Additionally, the previous form omitted the branch ref `origin/main` so stale local state could miss new commits. Both are fixed above.
 
 ### 1. Memory integrity — `memory/MEMORY.md`
 - Each entry: file exists, content current, not stale

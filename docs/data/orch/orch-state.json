@@ -5,7 +5,7 @@
   "_updated_by": "po",
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-06T23:46:38Z",
+    "updated_at": "2026-06-07T00:00:00Z",
     "updated_by": "agent-father",
     "active_task_id": null,
     "next_agent": null,
@@ -2709,6 +2709,21 @@
         "zone": "apps/mcp-server/",
         "created_at": "2026-06-06T22:24:30Z",
         "note": "Carry-forward from FETCH-OPS-PAGE-TRUTH closeout. Related pre-existing constraint (separate, do not scope in): Bun full-suite C++ OOM crash on large corpus."
+      },
+      {
+        "id": "FIX-AUDITOR-FLOW-TIER-EARLYEXIT",
+        "title": "Honor AUDIT_TIER natively + fix no-commits-24h false early-exit in system-auditor flow",
+        "type": "FIX",
+        "owner": "agent-father",
+        "status": "REVIEW",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "created_at": "2026-06-07T00:00:00Z",
+        "completed_at": "2026-06-07T00:00:00Z",
+        "note": "DEFECT-1: AUDIT_TIER not read natively from spawn prompt; notebook label mismatch. DEFECT-2: --since=\"24h\" invalid git date → false 0-commits result; no fail-loud on git error. Both fixed in main.md."
       }
     ],
     "archive": [],
