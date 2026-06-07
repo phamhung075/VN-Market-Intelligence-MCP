@@ -1,8 +1,30 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-07 00:31 UTC | **Sprint:** WORKFLOW-FLUIDITY
+**Last updated:** 2026-06-07 08:04 UTC | **Sprint:** TOOL-SURFACE-UPGRADE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-07T08:04Z — TOOL-SURFACE-UPGRADE blueprint
+
+**Sprint:** TOOL-SURFACE-UPGRADE — 6-unit surface audit (telemetry, registry, 12 weak-claims, delta sweep, holding ratio, TSH merges).
+
+**Key rulings (8 decisions):**
+- ARCH-U2-2 RESOLVED: delta 161 vs 162 = `sequential_market_analysis` uses `server.registerTool()` not `server.tool()`. Generator must scan both APIs. Runtime 162 is correct.
+- ARCH-U2-1 RESOLVED: no registrations outside tools/**/*.ts. server.ts uses toolRegistry array only.
+- U1 COUNTER DESIGN: server proxy shim post-registerAllTools wraps _registeredTools handlers to increment in-memory Map. `trackSessionToolUsageJob` reads Map snapshot. `sessionCount` field REMOVED (meaningless post-gateway).
+- U2 GENERATOR: static grep (`server.tool(` + `server.registerTool(`), group by category folder, write tool-registry.json with `_maintained_by` header.
+- U3 VERDICTS: 5 DEREGISTER (read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day); 7 INTEGRATE (mark_alert_outcome, get_market_foreign_flow, diagnose+reset circuit breaker, get_label_accuracy_report, get_public_contracts, list_flagged_bctc_cells, submit_bctc_correction).
+- ARCH-U5-1 RESOLVED: VPS API returns fBVol/fSVolume/fRoom only — no holding_ratio. Serve-null permanent this sprint.
+- U6 ALL KEEP BOTH: get_market_summary/generate_market_summary distinct (read-cache vs force-regen); get_insider_signals/get_insider_transactions distinct (domain classifier vs DB reader); 5 triggers KEEP SEPARATE (schema diverges).
+- ARCH-U4-1 RESOLVED: VnIndex delta from daily_ohlcv; Oil/Gold/UsdVnd prev-session not persisted → direction:"unknown". U4 fix is in Go macro-indicators service zone, not mcp-server.
+
+**Zone split:** dev-mcp-server (U1, U2, U3, U5, U6) + dev-macro-indicators (U4 Go delta fields) — 7 subtasks for PM.
+
+**Files produced:**
+- `docs/handoffs/TOOL-SURFACE-UPGRADE-BA-spec.md` — [Architect] Brownfield Findings appended (all 6 units)
+- `docs/agent-memory/decisions/sprint-TOOL-SURFACE-UPGRADE-architect.md` — 8 STEP journal entries
+
+**NEXT:** pm → create 7 subtasks per PM split table; dispatch dev-mcp-server for TSU-DEV-U1 + TSU-DEV-U2-GEN first (parallel); dev-macro-indicators for TSU-DEV-U4 (independent).
 
 ## 2026-06-07T00:31Z — WF-3 SPIKE: dev-* MCP gateway binding ruling
 

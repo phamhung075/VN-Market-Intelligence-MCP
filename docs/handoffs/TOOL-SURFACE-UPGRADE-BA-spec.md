@@ -270,3 +270,212 @@ Architect must produce:
 4. U4 sweep table: each market-data get_* tool, current delta coverage, required change.
 5. U5 VPS API confirmation + ingest fix design or "serve null" permanent gate.
 6. U6 diffs for get_market_summary/generate_market_summary and get_insider_signals/get_insider_transactions. Trigger consolidation ruling.
+
+---
+
+## [Architect] Brownfield Findings
+
+**Brownfield scan completed:** 2026-06-07T08:03:51Z
+**Zone:** `apps/mcp-server/` (primary) + `apps/macro-indicators/` (U4 Go service) + `vps-scripts/` (U5 ingest)
+**BUILD-STANDARD:** lean (existing service, new features/fixes across multiple subsystems)
+
+---
+
+### Verified Paths
+
+- `apps/mcp-server/src/interface/mcp/tools/registry.ts` — toolRegistry array, 130 registryFns, centralised SSOT for all tool registrations
+- `apps/mcp-server/src/interface/mcp/tools/analysis/sequential-market-analysis.ts:241` — uses `server.registerTool()` (legacy API), NOT `server.tool()` — **root cause of 161 vs 162 delta**
+- `apps/mcp-server/src/interface/mcp/bootstrap/agentBootstrap.ts:303-344` — buildToolNameMap probe handles BOTH `server.tool()` AND `server.registerTool()` — runtime count of 162 is correct
+- `apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts` — aggregates `sessionToolCache` which is always empty post-gateway-cutover
+- `apps/mcp-server/src/infrastructure/cache/sessionToolCache.ts` — populated via `sessionToolCache.set(sessionId, ...)` in server.ts:205 at SSE handshake — never triggered by gateway per-call model
+- `apps/mcp-server/src/interface/mcp/tools/market-data/foreignFlowTools.ts:60-101` — `formatForeignFlowOutput` renders Holding Ratio column + `holdingRatioChange5d` line unconditionally
+- `apps/mcp-server/src/infrastructure/db/vnstockStore.ts:561` — `holdingRatio: row.current_holding_ratio ?? 0` — confirmed ?? 0 fabrication
+- `vps-scripts/fetch-foreign-flow.sh:42-48` — API field audit comment (2026-05-30) documents `bgapidatafeed.vps.com.vn` returns ONLY `fBVol/fSVolume/fRoom` — no holding_ratio field
+- `apps/mcp-server/src/interface/mcp/tools/briefings/summaryTools.ts:49-193` — get_market_summary and generate_market_summary are DISTINCT (read-cache-first vs force-regenerate)
+- `apps/mcp-server/src/interface/mcp/tools/sector/leadershipTools.ts:100-152` — get_insider_signals = domain classifier, takes transactions as input parameter
+- `apps/mcp-server/src/interface/mcp/tools/market-data/insiderTools.ts:79-175` — get_insider_transactions = DB-backed SSC lookup from insiderStore
+- `apps/macro-indicators/pkg/infrastructure/repositories.go:154-197` — FetchVNIndex reads market_prices WHERE code='VNINDEX' (latest only, no prev-session row)
+- `apps/macro-indicators/pkg/infrastructure/repositories.go:260-319` — FetchPrices reads commodity_prices (single row, no history)
+- `apps/mcp-server/src/infrastructure/db/schema-market-data.ts:84-115` — daily_ohlcv has (code, date, close) — prev-session for VnIndex available via ORDER BY date DESC LIMIT 2
+- `scripts/agents-flow/cowork-match-slots.js` — NO is_trading_day call found in current main branch script; BA spec cites worktree version
+- `docs/agents/tools/package/tran-ngoc-bau.md:87` — get_public_contracts listed in package (Layer 4 confirmed)
+- `apps/mcp-server/src/interface/mcp/tools/market-data/foreignFlowTools.ts:270-295` — diagnose/reset circuit breaker pair: internally called via direct function call, not via MCP tool routing
+
+---
+
+### ARCH-BLOCKER RESOLUTIONS
+
+**ARCH-U2-1 RESOLVED:** No tool registrations exist outside `tools/**/*.ts`. `server.ts` does not call `server.tool()` directly — it invokes `registerAllTools(server)` which runs the `toolRegistry` array from `registry.ts`. The only non-standard registration is `server.registerTool()` in `sequential-market-analysis.ts`, which IS under `tools/`. Generator scope = `tools/**/*.ts`, scanning for both `server.tool(` and `server.registerTool(` patterns.
+
+**ARCH-U2-2 RESOLVED:** Source count 161 = count of `server.tool()` calls. Runtime count 162 = 161 + 1 (`sequential_market_analysis` via `server.registerTool()`). Both are correct. Generator must scan BOTH APIs to output totalCount=162. No mystery registration exists outside the tools/ directory.
+
+**ARCH-U3-1 RESOLVED:** `scripts/agents-flow/cowork-match-slots.js` (main branch) does NOT call `is_trading_day`. The BA spec cited a worktree version (`DWF-PHASE1`). In the current main codebase, `is_trading_day` has zero agent/flow/skill calls outside the tools list docs/ and test files. Verdict: DEREGISTER — see U3 verdicts below.
+
+**ARCH-U4-1 RESOLVED:** VnIndex prev-session = `daily_ohlcv ORDER BY date DESC LIMIT 2` (second row = previous trading day close). Oil/gold prev-session = not persisted (commodity_prices has single row per source, no history). UsdVnd prev-session = not persisted (sbv_rates has no history column). Delta can only be served honestly for VnIndex this sprint; Oil/Gold/UsdVnd must emit `direction: "unknown"`, `prev_session_delta: null`.
+
+**ARCH-U5-1 RESOLVED:** VPS API `bgapidatafeed.vps.com.vn/getliststockdata/` does NOT return a holding_ratio field. Confirmed via inline API field audit comment in `vps-scripts/fetch-foreign-flow.sh:42-48` (dated 2026-05-30). The ingest pipeline extracts only `fBVol/fSVolume/fRoom`. Serve-null applies PERMANENTLY for this sprint. `current_holding_ratio` and `max_holding_ratio` columns remain in schema (FR-U5-3 compliant).
+
+**ARCH-U6-1 RESOLVED:** (a) 5 triggers = KEEP SEPARATE (schema diverges: bctc has {queued,...}, news has no tickers param, price returns {service,...}); description updates only. (b) get_market_summary vs generate_market_summary = KEEP BOTH (read-cache-first vs force-regenerate, distinct consumer use cases confirmed in digest-predict flows). (c) get_insider_signals vs get_insider_transactions = KEEP BOTH (domain classifier with caller-provided data vs DB-backed SSC lookup — different layers, different inputs).
+
+---
+
+### U1: Per-Call Counter Design
+
+**Root cause confirmed:** `sessionToolCache` is never populated in the gateway model. Gateway dials SSE per-call; `server.ts:205` sets `sessionToolCache.set(sessionId, ...)` at SSE handshake — that handshake never fires for gateway calls.
+
+**Design — server proxy shim:**
+- New file: `apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts`
+  - Exports singleton `const perCallCounterStore: Map<string, number>` (tool name → invocation count)
+  - Exports `function incrementTool(name: string): void` — fire-and-forget sync write to Map
+  - Exports `function getSnapshot(): Record<string, number>` — shallow copy for job reads
+  - Exports `function resetCounters(): void` — called by job after flush (or at container start)
+  - DDD layer: Infrastructure
+- Hook location: `apps/mcp-server/src/interface/mcp/server.ts` — after `registerAllTools(server)` runs, wrap the registered tool handlers. Pattern: iterate `Object.entries(server._registeredTools)`, replace each `handler` with `(args) => { incrementTool(name); return originalHandler(args); }`.
+  - Alternative (cleaner): in `registry.ts`, wrap each `registryFn` call in a proxy. But `_registeredTools` access is already used in `server.ts:203-219` — same pattern.
+  - Recommended: minimal shim in `server.ts` immediately after `registerAllTools()` (line ~220). One loop, 5 lines.
+- Modified file: `apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts`
+  - Replace `sessionToolCache.snapshot()` logic with `perCallCounterStore.getSnapshot()`
+  - `sessionCount`: rename to `invocationBatches` with value `1` (one batch = one container lifetime since last job run). Or remove field if semantically wrong — **architect decision: REMOVE `sessionCount` field from output schema**. The field is meaningless post-gateway. `uniqueTools` = Object.keys(toolCounts).length, remains valid.
+- QA gate: invoke any tool via gateway wrapper once; wait ≤8h (or force-run the job); assert `tool-usage-stats.json toolCounts[<toolName>] >= 1`.
+- NFR-U1-1 satisfied: `incrementTool()` is synchronous Map write — zero blocking I/O.
+- NFR-U1-2 satisfied: Map is in-memory, resets on container restart.
+
+---
+
+### U2: Registry Generator Design
+
+**Design — static grep generator:**
+- New file: `scripts/gen-tool-registry.ts`
+  - Scans `apps/mcp-server/src/interface/mcp/tools/**/*.ts`
+  - Extracts tool names from BOTH `server.tool("name",` AND `server.registerTool("name",` patterns using regex
+  - Groups by source folder (category = parent directory name of the source file, e.g. `market-data`, `financial-reports`, `system`, `alerts`, `macro`, `briefings`, `sector`, `portfolio`, `backtesting`, `news-analysis`, `kinhdich`, `analysis`)
+  - Writes `docs/data/tool-registry.json` with: `_maintained_by: "generator (do not hand-edit)"`, `lastUpdated`, `totalCount`, `groups[]`
+  - Expected output: totalCount=162 (161 server.tool + 1 server.registerTool)
+- New file: `apps/mcp-server/src/__tests__/tool-registry-parity.test.ts`
+  - Reads `docs/data/tool-registry.json`
+  - Runs same static grep on `tools/**/*.ts`
+  - Asserts: `registry.totalCount == source-extracted count`; `every registry tool name exists in source`
+  - Deliberate-violation proof: insert fake name `"__test_fake_tool__"` into registry; assert test goes RED; revert
+- `gen-project-stats.ts` update: import registry totalCount from `tool-registry.json` (or run the same extractor) to sync `project-stats.json toolCount`
+- NFR-U2-1: `_maintained_by` header in JSON output
+- NFR-U2-2: scope = `apps/mcp-server/` + `scripts/` only
+
+---
+
+### U3: 12 Weak-Claim Tool Verdicts
+
+4-layer check completed (agents/flows/skills/cron). Internal-call check completed. Verdicts:
+
+| Tool | Q1 agent/flow | Q2 internal call | Q3 live data | Q4 overlap | Q5 sprint plan | VERDICT |
+|---|---|---|---|---|---|---|
+| `read_bctc_pdf` | NO (zero across all layers in main) | NO (no tool calls read_bctc_pdf) | NO (only reads static PDFs) | YES (get_bctc_page_text/get_bctc_page_image now cover PDF analysis via OCR/PEK pipeline) | NO | **DEREGISTER** |
+| `mark_alert_outcome` | NO agent claims | NO | YES (SQLite alerts table post-hoc scoring) | DISTINCT from write_alert_verdict (different store: alerts table vs pending_verdicts table; different lifecycle: post-hoc vs at-fire-time) | NO | **INTEGRATE: update description to clarify write_alert_verdict=at-fire-time, mark_alert_outcome=post-hoc scoring. Add to alert-commander or ops package.** |
+| `get_market_foreign_flow` | NO | NO | YES (market-wide aggregate from daily_ohlcv) | DISTINCT from get_foreign_flow (market-wide SUM vs per-ticker; different source table: daily_ohlcv vs vnstock_trading_stats) | NO | **INTEGRATE: wire into market-analyst or ops package. Description already honest (limitation note about watchlist coverage).** |
+| `backfill_bctc_scalars` | NO | NO | NO (admin backfill only) | NO | NO | **DEREGISTER** |
+| `compute_accruals` | NO | NO | NO (domain calculation, no live data store dependency) | NO | NO | **DEREGISTER** |
+| `diagnose_foreign_flow_circuit_breaker` | NO agent claims | YES — `foreignFlowTools.ts:277` calls `diagnose_foreign_flow_circuit_breaker()` as an internal function (same file, not via MCP routing) | YES (circuit breaker state) | SIBLING with reset tool | NO | **INTEGRATE: Q2 internal call is direct function call in same file, not MCP-to-MCP. Tool itself has zero MCP-layer claims. Wire both diagnose+reset into ops or foreign-flow debug package.** |
+| `get_accuracy_context` | NO | NO | NO (reads RAG analysis context, no live stream) | Has siblings get_calibration_report + get_label_accuracy_report | NO | **DEREGISTER — no concrete plan to wire within sprint; calibration_report covers the use case** |
+| `get_label_accuracy_report` | NO agent claims | NO | YES (label accuracy DB) | DISTINCT from get_calibration_report (TSH FR-3 confirmed) | NO | **INTEGRATE: wire into market-analyst accuracy package. Description: label-level breakdown vs calibration curve.** |
+| `get_public_contracts` | PARTIAL — docs/agents/tools/package/tran-ngoc-bau.md:87 lists it (Layer 4: agent package claim) | NO | YES (public investment data) | NO | Q5 conditional yes (tran-ngoc-bau agent exists) | **INTEGRATE: already in tran-ngoc-bau package (Q1 partial YES via agent package). Confirm tran-ngoc-bau flow references it; if yes = ALREADY INTEGRATED (cowork-refactory-expert to update list/ doc). If flow does not reference it, add it.** |
+| `is_trading_day` | NO (cowork-match-slots.js main branch does NOT call is_trading_day; DWF-PHASE1 worktree is not shipped) | NO | YES (trading calendar SSOT) | NO | NO (DWF-PHASE1 not in current sprint scope) | **DEREGISTER from this sprint. Tool was designed for DWF-PHASE1 which is not active. If DWF-PHASE2 is planned, re-register then.** |
+| `list_flagged_bctc_cells` | NO | NO | YES (BCTC DB) | NO overlap; complements submit_bctc_correction | NO | **INTEGRATE: wire into bctc-analyst flow (human-inspect path). Pairs with submit_bctc_correction.** |
+| `submit_bctc_correction` | NO | NO | YES (writes to bctc_corrections table) | NO | NO | **INTEGRATE: wire into bctc-analyst flow (human correction path). Confirmed it is the MCP entry point for the human-confirm pipeline (BCTC-HUMAN-CONFIRM sprint).** |
+
+**NFR-U3-1 applied:** read_bctc_pdf resolved FIRST (DEREGISTER). Stabilises U2 count (count drops by 1 to 161 after this deregistration; generator re-run needed after U3 settles).
+
+**Deregister list (3 tools):** read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day — **5 tools to deregister** (note: get_accuracy_context added).
+
+**Integrate list (7 tools):** mark_alert_outcome (ops/alert package), get_market_foreign_flow (market-analyst), diagnose_foreign_flow_circuit_breaker + reset_foreign_flow_circuit_breaker (ops debug package), get_label_accuracy_report (market-analyst accuracy package), get_public_contracts (confirm tran-ngoc-bau flow), list_flagged_bctc_cells + submit_bctc_correction (bctc-analyst flow).
+
+**Signal to cowork-refactory-expert:** 5 tools removed → their docs/agents/tools/list/ entries must be deleted; 7 tools wired → their packages must be updated. PM to send signal per NFR-COWORK-SIGNAL.
+
+---
+
+### U4: Direction+Delta Sweep — Market-Data get_* Tools
+
+**Prev-session data availability (ARCH-U4-1 confirmed):**
+- VnIndex: `daily_ohlcv` table has (code='VNINDEX', date, close) — prev-session close available via ORDER BY date DESC LIMIT 2
+- Oil (brent_crude_usd): `commodity_prices` single row, no history → `prev_session_delta: null, direction: "unknown"`
+- Gold (gold_usd_per_oz): same → null/unknown
+- UsdVnd: `sbv_rates` single row, no history column → null/unknown
+
+**Sweep verdict table:**
+
+| Tool | Serves level? | Current delta coverage | Required change |
+|---|---|---|---|
+| `get_macro_snapshot` | YES (vnIndex, oilUsd, goldUsd, usdVnd) | None | Add `prev_session_delta` + `direction` for all 4 headline values. VnIndex = daily_ohlcv; Oil/Gold/UsdVnd = null + "unknown". **This change is in macro-indicators Go service response DTO** (the TS tool is a thin HTTP proxy — it passes through the JSON). Go service must query daily_ohlcv for VNINDEX prev-close and add delta fields to SnapshotDTO. |
+| `get_market_snapshot` | YES (prices per ticker) | change_pct already served | NONE — change_pct and change_amt are already in market_prices schema; tool already returns them |
+| `get_sector_comparison` | YES (sector scores/levels) | No delta | Add relative change vs prior period. Source: aggregate from daily_ohlcv sector grouping. **LOW PRIORITY — sector scores are composite indices not raw prices; delta less meaningful than for raw levels. DEFER to future sprint. Document in handoff as known gap.** |
+| `get_technical_indicators` | YES (RSI, MACD) | RSI/MACD are already change-based (momentum) | NONE — RSI and MACD are inherently directional indicators |
+| `get_carry_trade_signal` | NO (signal not a raw level) | Signal is directional by design | NONE |
+| `get_yield_spread_signal` | NO (signal) | Signal is directional by design | NONE |
+| `get_fed_liquidity_spread` | YES (spread value in bps) | No delta | Prev-session spread not persisted. Add `direction` only (computed from current vs threshold, not vs prev). Or serve null delta + "unknown" direction. **DEFER: spread data cadence is weekly not daily; prev-session delta has low value.** |
+
+**Net required changes for U4:** Only `get_macro_snapshot` requires delta+direction. The change is in the **Go macro-indicators service** (apps/macro-indicators/pkg/application/dtos.go SnapshotDTO + usecases.go), not in the TS tool layer (TS tool is a thin proxy). The TS tool response schema extension (new fields appended, additive) requires no TS code change — JSON is passed through as-is.
+
+**DDD layer for U4:** macro-indicators Go service — Infrastructure (daily_ohlcv query for VNINDEX prev-close) + Application (delta computation in usecases.go) + Interface (SnapshotDTO field extension). Zone: `apps/macro-indicators/`.
+
+---
+
+### U5: Foreign Flow Null Holding Ratio Design
+
+**ARCH-U5-1 confirmed:** VPS API does not return holding_ratio. Serve-null applies permanently this sprint.
+
+**Files to modify:**
+1. `apps/mcp-server/src/interface/mcp/tools/market-data/foreignFlowTools.ts`
+   - `formatForeignFlowOutput`: conditionally omit `Holding Ratio` table column header and column data when `row.holdingRatio === 0` (or null-check). Add helper `const hasRealHoldingData = history.some(r => r.holdingRatio > 0)`.
+   - Lines 89-96 (daily history table): omit `| Holding Ratio` column header and `fmtRatio(row.holdingRatio)` cell when `!hasRealHoldingData`.
+   - Lines 78-80 (`holdingRatioChange5d` line): gate on `signal.holdingRatioChange5d !== 0` OR gate on `hasRealHoldingData`.
+   - Tool description string: remove "holding ratio change" from description until data is real.
+2. `apps/mcp-server/src/domain/services/foreignFlowAnalyzer.ts` (NFR-U5-2)
+   - `holdingRatioChange5d` computation: gate with `if (all holdingRatio values === 0) { holdingRatioChange5d = 0; }` — already effectively 0 but add explicit guard + `is_holding_ratio_fabricated: true` flag in ForeignFlowSignal.
+3. `apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts`
+   - `foreign_holding_ratio` field from `current_holding_ratio`: emit `null` if value is 0.
+4. Test: `foreignFlowTools.ts:186` — test path sets `holdingRatio: 0`; after fix, assert holding ratio column is ABSENT from output.
+
+---
+
+### U6: TSH Leftover Merge Verdicts
+
+**get_market_summary vs generate_market_summary:** KEEP BOTH. `get_market_summary` = read-cache-first (if cached summary exists, return it; else generate). `generate_market_summary` = force-regenerate always. Both share `generatePeriodicSummary()` use-case. Consumers differentiated: `digest-predict/daily.md` calls `get_market_summary`; `digest-predict/weekly.md` calls `generate_market_summary`. **Required action: description update only** — clarify caching semantics in both tool descriptions.
+
+**get_insider_signals vs get_insider_transactions:** KEEP BOTH. `get_insider_transactions` = DB-backed, returns raw SSC disclosure rows with streak detection (call without providing data). `get_insider_signals` = domain classifier, requires caller to provide `transactions[]` array as input (test-first design, no DB call). **Required action: description update only** — clarify that get_insider_signals is a classification engine (requires input transactions) while get_insider_transactions is a DB reader.
+
+**5x trigger_*_vps_fetch:** KEEP SEPARATE. Schema divergence precludes clean consolidation:
+- `trigger_bctc_vps_fetch`: has `tickers`, `verbose`, `dry_run` params; returns `{queued, attempted, success, failed, log_tail}`
+- `trigger_price_vps_fetch`: has `tickers`, `verbose`, `dry_run` params; returns `{service, attempted, success, failed, log_tail}`
+- `trigger_news_vps_fetch`: NO `tickers` param (source-based); returns `{service, attempted, success, failed, log_tail}`
+- `trigger_sbv_vps_fetch`, `trigger_foreign_flow_vps_fetch`: separate SSH scripts
+**Required action: description update** on all 5 to clarify the VPS script each invokes and expected return shape.
+
+---
+
+### Risk Flags
+
+**R-1 (U2 count race):** U3 deregistrations (5 tools) + U6 description-only changes (no removal) will change tool count after U3 completes. U2 parity test must be run LAST (after all U3 deregistrations are committed). PM must sequence U2 parity-test commit as final step.
+
+**R-2 (U1 handler wrapping):** `server._registeredTools` is a private field accessed via type cast in `server.ts:203`. This pattern is already used in production — safe to extend for the counter shim. The shim must be applied AFTER `registerAllTools(server)` completes.
+
+**R-3 (U4 Go service change):** `apps/macro-indicators/` is a separate zone (dev-macro-indicators specialist). The U4 delta fix is NOT in dev-mcp-server's zone — PM must split U4 into its own subtask for dev-macro-indicators. The TS tool in mcp-server needs no change (passthrough proxy).
+
+**R-4 (U5 test breakage):** `foreignFlowTools.ts:186` test sets `holdingRatio: 0` explicitly. Post-fix, assertions on holding-ratio output presence will break. dev-mcp-server must update test assertions.
+
+**R-5 (U3 cowork-refactory-expert signal):** 5 deregistrations require their docs/agents/tools/list/ entries removed. This is cowork-refactory-expert's lane. PM must queue a signal to that lane after U3 commit.
+
+---
+
+### PM Task Split Recommendation
+
+| Subtask | Assignee | Zone | Priority | Sequencing |
+|---|---|---|---|---|
+| TSU-DEV-U1 | dev-mcp-server | apps/mcp-server/ | P1 | First (parallel with TSU-DEV-U2-GEN) |
+| TSU-DEV-U2-GEN | dev-mcp-server | apps/mcp-server/ + scripts/ | P1 | First (parallel with TSU-DEV-U1) |
+| TSU-DEV-U3 | dev-mcp-server | apps/mcp-server/ | P2 | After U1+U2-GEN (count must be stable before parity test) |
+| TSU-DEV-U2-PARITY | dev-mcp-server | apps/mcp-server/ | P1 | LAST — after all U3 deregistrations committed |
+| TSU-DEV-U4 | dev-macro-indicators | apps/macro-indicators/ | P2 | Independent; parallel with U3 |
+| TSU-DEV-U5 | dev-mcp-server | apps/mcp-server/ | P2 | Independent; parallel with U3 |
+| TSU-DEV-U6 | dev-mcp-server | apps/mcp-server/ | P3 | After U3 settles |
+
+**Rebuild required:** Each dev-mcp-server commit requires ops REBUILD (build --no-cache + force-recreate). dev-macro-indicators commit requires separate REBUILD of macro-indicators container.
+
+**Scan clean:** true
