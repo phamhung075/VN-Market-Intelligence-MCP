@@ -1,5 +1,20 @@
 <!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c099 · 2026-06-07T22:05:02Z
+### Audit Run Tier-2 COMPLETION (22:05 UTC 2026-06-07)
+- Tier: 2 | MCP checks: A-29 + B-01–B-13 + C-06/C-07 + D-BCTC-EVAL + D-IMPROVE
+- Cron Fire: A-29 PASS (all crons firing within 2× cadence, no gaps detected)
+- Data Freshness: VPS proxy health ALL OK (prices/news/sbv/bctc ✓); SLA 5/5 OK; rate-limits 0 at 100%
+- DB Freshness: C-06 CRITICAL (market_messages 3h = 0, expected >0) | C-07 CRITICAL (agent_signals 24h = 0, expected >0)
+- BCTC Shape: B-09 PASS (0 ssc.gov.vn URLs not skipped) | B-13 PASS (0 stale >72h pending)
+- Pipeline Health: news ✓, prices ✓, backfill ✓, TA ready for 28/33 tickers
+- Anomalies: 2 CRITICAL (C-06, C-07 — db write silence)
+- Status: DEGRADED (critical DB silence detected; no market_messages in 3h, no signals in 24h)
+- Signals: 2 posted (BUG Telegram sent) | Signal Queue: 2 rows written
+- Contract: signals_posted=2 | telegram_sent=2 | signal_queue_rows_written=2 | dashboard_rows=0
+
+<!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
+
 ## c098 · 2026-06-08T05:02:00Z
 ### Audit Run Tier-2 (22:01 UTC 2026-06-07, 05:02 GMT+7 2026-06-08)
 - Tier: 2 | Services: 6 verified (docker) | Sources: pending MCP calls | DB checks: pending

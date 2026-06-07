@@ -5253,6 +5253,28 @@
         "severity": "WARN",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "sau-2026-06-07T22:05:02Z-c06",
+        "ts": "2026-06-07T22:05:02Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages 3h count=0 (check C-06)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-06-07T22:05:03Z-c07",
+        "ts": "2026-06-07T22:05:03Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "agent_signals 24h count=0 (check C-07)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "archive": [
