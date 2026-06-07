@@ -104,6 +104,24 @@ Acceptance criteria met: git failure → loud error + BUG alert, NOT early-exit.
 
 ---
 
+---
+
+## Correction Record — CHANGES_REQUESTED Round (2026-06-07)
+
+**Issue:** Commit c8703aea's fix (using `origin/main` in the git log command) re-introduced the false "no commits in 24h" early-exit on this repo because:
+- This repo enforces a NO-branches policy: all commits land directly on local `main`.
+- `origin/main` lags behind local HEAD (verified: `origin/main` is 6 days stale, local HEAD has 164 commits in last 24h).
+- Querying the stale `origin/main` ref produces 0 commits, triggering the exact bug the task was opened to fix.
+
+**Correction applied (2026-06-07):**
+- Changed git log command from `git -C "$PROJECT_ROOT" log origin/main --since="24 hours ago" --oneline` to `git -C "$PROJECT_ROOT" log --since="24 hours ago" --oneline` (removed `origin/main` ref, query local HEAD).
+- Updated NOTE paragraph to document the NO-branches policy as the reason local HEAD is the correct ref, not `origin/main`.
+- Verified: `git log --since="24 hours ago" --oneline | wc -l` → 164 (correct), `git log origin/main --since="24 hours ago" --oneline | wc -l` → 0 (regression proof).
+
+**Status:** DEFECT 1 (AUDIT_TIER extraction) remains valid. DEFECT 2 fully corrected.
+
+---
+
 ## Board State
 
 | Field | Value |

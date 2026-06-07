@@ -284,13 +284,13 @@ Append summary to this Tier-2 run's notebook entry.
 
 ### Early Exit Check
 ```bash
-git -C "$PROJECT_ROOT" log origin/main --since="24 hours ago" --oneline 2>/tmp/sau_gitlog_err; GITLOG_EXIT=$?
+git -C "$PROJECT_ROOT" log --since="24 hours ago" --oneline 2>/tmp/sau_gitlog_err; GITLOG_EXIT=$?
 ```
 - If `GITLOG_EXIT != 0`: read `/tmp/sau_gitlog_err`; fail-loud — log `"[DOC-AUDIT] git log FAILED (exit $GITLOG_EXIT): $(cat /tmp/sau_gitlog_err)"`, emit WARN signal (type: system_health_report, check_id: DOC-AUDIT-GIT-ERR), send BUG-channel Telegram, **do NOT early-exit** — continue with doc audit as if commits exist (safe-side).
 - If `GITLOG_EXIT == 0` and output is empty: no commits in last 24h → check last-audit timestamp from notebook. Last audit < 12h AND no new commits → skip steps 1–6 (not the new DB checks below).
 - If `GITLOG_EXIT == 0` and output is non-empty: commits exist → run steps 1–6 (no early exit).
 
-NOTE — root cause of false "no commits" (FIX-AUDITOR-FLOW-TIER-EARLYEXIT): the previous form `--since="24h"` is not a valid git date string and git silently returns 0 commits. The correct form is `--since="24 hours ago"`. Additionally, the previous form omitted the branch ref `origin/main` so stale local state could miss new commits. Both are fixed above.
+NOTE — root cause of false "no commits" (FIX-AUDITOR-FLOW-TIER-EARLYEXIT, corrected 2026-06-07): the previous form used `origin/main` as a ref, which lags behind local main due to the repo's NO-branches policy where all commits land directly on local main. Using the stale `origin/main` ref re-triggers the exact false "no commits in 24h" early-exit that this task was opened to kill. The correct form queries local HEAD with `--since="24 hours ago"` (valid git date string, replacing the broken `"24h"`), reflecting the actual current state of the repository.
 
 ### 1. Memory integrity — `memory/MEMORY.md`
 - Each entry: file exists, content current, not stale
