@@ -2673,6 +2673,86 @@
         "zone": "scripts/",
         "created_at": "2026-06-07T00:52:34Z",
         "note": "Verified 20260607: hook fires unconditionally on over-cap governed writes; exemption honored only downstream (claude-manager-helper flow main.md:97 Pass 5b) -> bounded re-fire noise on every edit of a justified over-cap file (live ex: commit-mutex SKILL 201L signal 00:25Z -> annotated fdcd5444). Fix: AFTER breach detected (cold path only), grep first 10 lines for size-justification -> exit 0. Hot-path performance contract intact (jq x1, wc x1 unchanged). Stale-justification re-review still covered by manager-helper periodic pass. NOTE: dispatcher attribution to architecture brief 2026-06-04-data-serve-integrity.md SS7 is WRONG \u2014 that SS7 is Risk Flags, contains no exemption claim; no doc fix needed."
+      },
+      {
+        "title": "balance-sheet extractor writes PRIOR-period totalLiabilities into balance_sheet_json (HPG Q4 2025: wrote 1,012,889.94M = Q4 2024 column instead of 4,239,852.22M current). Makes validation_status='failed' a false positive \u2014 identity delta is exactly 0 with correct value. Fix extractor + re-parse HPG Q4 2025 \u2192 validation passes.",
+        "type": "FIX",
+        "sprint": null,
+        "status": "NEW",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "P0",
+        "owner": null,
+        "id": "FIX-BCTC-LIAB-PRIOR-PERIOD",
+        "files": [
+          "apps/mcp-server/"
+        ],
+        "note": "source/origin: SPIKE_3012 findings a2b38ec1; balance-sheet parser off-by-one column binding",
+        "disposition": "Fix extractor logic + re-parse HPG Q4 2025 to verify validation now passes with correct prior-period totals"
+      },
+      {
+        "title": "stage-4 eval dedup check must be scoped to statement_section; cross-section duplicate (code 421b in both BS and IS) is semantically valid for VN parent-company reports \u2192 reclassify yellow/warning not red gate-failure",
+        "type": "FIX",
+        "sprint": null,
+        "status": "NEW",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "P0",
+        "owner": null,
+        "id": "FIX-BCTC-STAGE4-CROSS-SECTION-DUP",
+        "files": [
+          "apps/mcp-server/"
+        ],
+        "note": "source/origin: SPIKE_3012 findings a2b38ec1; HPG dup of H\u00e0ng t\u1ed3n kho 140/141 OCR sub-item overlap remains a genuine red",
+        "disposition": "Scope dedup check to statement_section; make cross-section dup a warning gate not blocker"
+      },
+      {
+        "title": "PPC has ZERO financial_reports rows. Queue stuck: Q4 2025 exhausted 6 attempts on null URL; Q3 2025 wrongly assigned the Q1 2026 PDF URL; Q2 2025 and earlier have no URLs. Research + inject valid PDF URLs for PPC Q4/Q3/Q2/Q1 2025 + Q4 2024; reset Q4 2025 url_not_found state.",
+        "type": "SPIKE",
+        "sprint": null,
+        "status": "NEW",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "owner": null,
+        "id": "SPRINT-PPC-PDF-SOURCING",
+        "files": [
+          "apps/mcp-server/"
+        ],
+        "note": "source/origin: SPIKE_3012 findings a2b38ec1; PPC queue remediation + VPS PDF sourcing",
+        "disposition": "Identify valid PDF URLs for PPC 2024-2025 via HSX/research; update queue rows with correct URL assignments"
+      },
+      {
+        "title": "HPG Q3 2025 and PPC Q3 2025 queue entries BOTH point to the Q1 2026 PDF \u2014 correct the URL assignments",
+        "type": "FIX",
+        "sprint": null,
+        "status": "NEW",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "owner": null,
+        "id": "SPRINT-HPG-QUEUE-URL-FIX",
+        "files": [
+          "apps/mcp-server/"
+        ],
+        "note": "source/origin: SPIKE_3012 findings a2b38ec1; URL assignment data correction",
+        "disposition": "Correct HPG Q3 2025 and PPC Q3 2025 queue row URL pointers to their actual Q3 2025 PDFs"
+      },
+      {
+        "title": "live market.db (named volume, /app/data) fails PRAGMA integrity_check \u2014 structural (tree 32 page 2533 cell out of order; pages 2533+22008 double-referenced) + index/table mismatches (idx_pet_*, idx_system_logs_*). Reads still serve correctly. Recovery lane = architect+ops+dev-mcp-server, REQUIRES planned downtime window: backup named volume FIRST, then .recover or dump+reload + REINDEX. Repair/REINDEX/vacuum FORBIDDEN until that lane runs.",
+        "type": "FIX",
+        "sprint": null,
+        "status": "NEW",
+        "size": "L",
+        "zone": "apps/mcp-server/",
+        "priority": "HIGH",
+        "owner": null,
+        "id": "RECOVER-LIVEDB-INTEGRITY",
+        "files": [
+          "apps/mcp-server/"
+        ],
+        "note": "signal ref: rtr-livedb-integrity-corruption-20260607T0530Z; leave signal status untouched (po owns triage)",
+        "disposition": "REQUIRES planned downtime window: backup named volume FIRST, then .recover or dump+reload + REINDEX. DO NOT repair/REINDEX/vacuum until architect+ops+dev-mcp-server lane runs."
       }
     ],
     "archive": [],
