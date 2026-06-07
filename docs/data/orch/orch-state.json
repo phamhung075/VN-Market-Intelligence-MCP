@@ -4243,6 +4243,42 @@
         "payload_ref": null,
         "resolution": "po triage 20260607T0217Z: TASK CREATED — FIX-BCTC-IDENTITY-SERVE-GUARD (backlog, commit 75da723e); 3rd VNM/VEA/CTG fingerprint => recurring-bug root-cause serve gate",
         "resolved_at": "2026-06-07T02:23:26Z"
+      },
+      {
+        "id": "sau-vps-sbv-unhealthy-202606070234",
+        "ts": "2026-06-07T02:34:50Z",
+        "from": "system-auditor",
+        "to": "ops",
+        "type": "vps_service_unhealthy",
+        "summary": "vn-sbv-fetch unhealthy (uptime 44m, crashloop suspect); dispatcher re-probed get_vps_service_health: CONFIRMED",
+        "severity": "CRITICAL",
+        "status": "READ",
+        "payload_ref": null,
+        "note": "row backfilled by dev-team dispatcher — auditor T2 run 110a7cff sent BUG telegram 2700 but skipped flow-mandated row write; ops dispatched this cycle"
+      },
+      {
+        "id": "sau-bctc-sla-breach-202606070234",
+        "ts": "2026-06-07T02:34:50Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "fetch_sla_breach",
+        "summary": "BCTC freshness 425m vs SLA 360m (+65m); Sunday — weekend publication lull plausible, mirror of news SLA case",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": null,
+        "note": "backfilled by dispatcher (auditor skipped row write, telegram 2699 sent); severity downgraded CRITICAL->MEDIUM pending weekend-context triage by po"
+      },
+      {
+        "id": "sau-bctc-eval-red-202606070234",
+        "ts": "2026-06-07T02:34:50Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "bctc_eval_red",
+        "summary": "BCTC eval sweep: 4 red (VNM/VEA/HPG/PPC) 10 yellow; VNM/VEA = known OCR fingerprint, serve-guard FIX in flight",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "note": "backfilled by dispatcher (telegram 2701 sent, row skipped); overlaps FIX-BCTC-IDENTITY-SERVE-GUARD (in flight) — po to dedupe at next triage"
       }
     ],
     "archive": [
