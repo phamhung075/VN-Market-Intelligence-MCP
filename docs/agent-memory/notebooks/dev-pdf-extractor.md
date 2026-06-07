@@ -1,5 +1,33 @@
 # dev-pdf-extractor — Notebook
 
+## Working Memory
+
+### 2026-06-07 — FEAT-PDF-EXTRACTOR-LOCAL-INPUT DONE (7aa18020)
+
+**Task:** FEAT-PDF-EXTRACTOR-LOCAL-INPUT | Priority: M/P2 | Status: DONE
+
+**Root cause fixed:** POST /extract only accepted HTTP/HTTPS URLs (HTTPPDFStorageRepository.fetch_pdf did plain aiohttp GET). VPS-hosted PDFs returned 401. Scanned PDFs fell back to Bun pdf-parse → text-layer-only garbage. mcp-server and pdf-extractor already share volume ./data/pdfs:/app/data/pdfs — local-path input mode makes the full OCR pipeline reachable for every already-downloaded PDF.
+
+**Files changed (commit 7aa18020):**
+- `infrastructure/repositories.py` — NEW `LocalPDFStorageRepository`: implements `PDFStorageRepository.fetch_pdf` from disk; path-traversal guard (Path.resolve + prefix check), file-existence check, size cap (`PDF_LOCAL_SIZE_CAP_MB` env, default 200 MB)
+- `interface/serializers.py` — `ExtractPDFRequestSchema`: url now Optional; `model_validator` requires url OR pdf_path; `to_dto` carries pdf_path through
+- `application/dtos.py` — `ExtractPDFRequest`: add `Optional[str] pdf_path` field
+- `application/usecases.py` — `ExtractPDFUseCase.execute`: use `pdf_path` as `effective_url` when set → zero domain-layer changes
+- `interface/handlers.py` — `register_routes`: add `local_extract_usecase` param; `/extract` branches on pdf_path → local use case; HTTP 503 graceful degrade when local mode not wired
+- `main.py` — wire `LocalPDFStorageRepository` + `local_extract_service` + `local_extract_usecase`; inject into `register_routes`
+- `__tests__/unit/test_local_pdf_input.py` — NEW: 21 tests (happy path, traversal, missing file, size cap, schema validation, url regression, handler routing)
+
+**Test results:** 842 passed (baseline 821 + 21 new). 40 pre-existing failures unchanged. Zero regressions.
+
+**Consumer-side request shape (dev-mcp-server follow-up):**
+```json
+POST /extract
+{"pdf_path": "/app/data/pdfs/<filename>.pdf", "source_type": "bctc"}
+```
+pdf_path must be an absolute container path under /app/data/pdfs (shared volume).
+
+**NEXT:** ops rebuild pdf-extractor container. dev-mcp-server: update extractViaMicroservice / triggerPushBctcExtraction to pass pdf_path for locally-stored PDFs (OUT-OF-SCOPE for this task — dev-mcp-server zone).
+
 Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (write)
 
 ## Working Memory
