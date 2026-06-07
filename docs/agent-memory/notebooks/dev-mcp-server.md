@@ -1,5 +1,31 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-07 · FIX-BCTC-MAGNITUDE-NORMALIZE — COMMITTED (86d6cffc)
+
+**Task:** FIX-BCTC-MAGNITUDE-NORMALIZE (P1) — balance-sheet raw-VND magnitude normalization + intra-statement mismatch detection.
+**Root causes fixed:**
+1. Magnitude catch-22: totalAssets=0 prevented magnitude inference from firing; raw VND equity (4.47T đồng) exceeded GUARD_MAX (2T triệu) → equity=0. Fixed: scan ALL BS fields when totalAssets=0; apply /1,000,000 if any exceeds 1e9.
+2. Split-column OCR layout: PPC Q4-2025 uses Vietnamese-text date not numeric date; Step 1c separator added for unit-header-only format (pattern: "Đơn vị: VND" with BS label block preceding it).
+3. Identity path A: forward-read sources-side total (TỔNG CỘNG NGUỒN VỐN code 440) and override totalAssets when disagreement >5%.
+4. Identity path B: derive totalAssets = totalLiabilities + equity.total when divergence >30% (handles OCR misread 440→480 in live PPC text).
+5. detectBsIntraStmtUnitMismatch: new export (financialFiguresValidator.ts) — ratio >100x between totalAssets and totalLiabilities flags confidence=0.1 (HPG Q1-2026 pattern: 5000x mixed units).
+**Evidence confirmed (live PPC OCR text, test-level validation):**
+- totalAssets = 5,246,604.575 triệu (expected 5,246,604.575, delta 0)
+- totalLiabilities = 780,223.778 triệu (delta 0)
+- equity.total = 4,466,380.797 triệu (delta 0)
+- Identity delta = 0 triệu | SUCCESS=YES
+**Files changed (4):**
+- `balanceSheetExtractor.ts`: 4 fixes (magnitude catch-22, path A, path B, Step 1c)
+- `financialFiguresValidator.ts`: new `detectBsIntraStmtUnitMismatch` export
+- `parseBctcReport.ts`: import + wire intra-BS mismatch into confidenceFinancial
+- `FIX-BCTC-MAGNITUDE-NORMALIZE.test.ts` (NEW): 15 tests (PPC raw-VND split-column, DPM idempotency, HPG intra-stmt mismatch, guard boundary)
+**Tests:** 15 new GREEN + 21 regression GREEN (042/1120/FIX-BCTC-LIAB). tsc clean.
+**REBUILD+RERUN flag:** container must be rebuilt post-merge. After rebuild, live DB re-extraction of PPC Q4-2025 from OCR cache should produce identity delta ~0 (Tier-3 path, no pdf-extractor dependency).
+
+Zone health: 15+21/0, tsc clean | HEALTHY
+
+---
+
 ## 2026-06-07 · VERIFY-PPC-E2E-OCR + INVALIDATE-HPG-OCR-CACHE — DATA OPS
 
 **Task A — VERIFY-PPC-E2E-OCR (P1):**
