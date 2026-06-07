@@ -1,21 +1,22 @@
 # PO Notebook
 
-## c · 2026-06-07T21:25:56Z — TRIAGE tick 20260607T2107Z (12 inputs → BATCH 6 new + 1 promote)
+## c · 2026-06-07T22:17:00Z — TRIAGE tick 22:14Z (2 signals → BATCH 2, WIP 2/2)
 
-**Inputs consumed:** 5 queue rows (ci_failure HIGH root-caused; roster drift; 2x pdfx-unhealthy; frontend-3001) + 7 drained files (tnb c90 HIGH x2; bctc 22-filing batch pending; FPT routine; task-lock bloat→claude-manager; 3 telemetry) + reports 3085/3086.
+**Signals:** (1) context-bloat dev-pdf-extractor.md 212L>200 — NO-TASK, self-resolved (file now 198L after a854f5a2 overwrite). (2) router repair_task_request HIGH → created FIX-AUDITOR-SQL-MODIFIERS.
 
-**Verification done (raw, not badges):** docker ps — pdf-extractor UNHEALTHY confirmed, frontend HEALTHY (sau a14 = no-action). Live telegram_reports queried in-container (host data/*.db copies are STALE since May 16 — never trust them). No commit-mutex row held pre-claim.
+**BATCH dispatched:** slot 1 FIX-AUDITOR-SQL-MODIFIERS (S high, agent-father, docs/agents/system-auditor/flow/main.md — short-form SQLite modifiers -3h/-24h/-7d make datetime() NULL → C-06/C-07 false CRITICAL tonight + C-08/C-10/C-16/B-13 silently false-PASS since inception; rewrite to long form + NULL-guard sentinel; agent .md = agent-father maintenance lane, mutex-wrap). Slot 2 FIX-FRED-YAHOO-WEEKEND-STALE (M high, dev-mcp-server — was NEXT-UP, both active slots freed: FIX-CI-LINT-STACK dd79f811 + FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN 94ad0d09 DONE, pdfx HEALTHY 36min).
 
-**6 new backlog tasks:** FIX-CI-LINT-STACK (S, ACTIVE-1: golangci-action v7 bump x6 + delete stale kinh-dich-ts-lint job, one ci.yml), FIX-TA-SANDBOX-DEPGUARD (S, real Fence-C main.go:44), FIX-FRED-YAHOO-WEEKEND-STALE (M HIGH, NEXT-UP: 4 bun-test nulls + tnb F-FED-RATE-REGRESSION converged), FIX-BCTC-LOWCONF-REPARSE-BATCH (S, magnitude fix live — REE/KBC/PPC/CTG/VHM/HCM/NVL/HSG reparse, PPC proof 0.25→0.625), SPIKE-UNIFIED-NB-GAP (120m, session-crash-before-Step-8), CLEAN-COWORK-ROSTER-DRIFT (S, qa).
+**Raw verifications (not badges):** Stale head.next_action CLEARED — mcp-server image Created 20:31:47Z > commits 06c65978 (14:00Z) + a058aa2e (08:03Z); balanceSheetExtractor.ts sha256 MATCH repo@06c65978 vs container (a8768572…) = rebuild PROVEN, no duplicate rebuild dispatched (rebuild-recreate kills peers ~21min). FIX-BCTC-MAGNITUDE-NORMALIZE flipped → DONE (PPC reparse PASS a709681f).
 
-**Promote:** FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN = ACTIVE-2 (UNHEALTHY container; starvation class; unblocks 22-filing batch). FIX-PDFX-TEST-LOOP-POLLUTION stays queued (test debt, not runtime).
+**Reports:** 3087/3088 (C-06/C-07 CRITICAL) claimed+resolved wontfix = false-positive per router retraction 2728 (raw market.db: messages 3h=1, signals 24h=84); 3089 retraction resolved fixed (task created). 3085/3086 left status=new intentionally — map to queued FIX-BCTC-LOWCONF-REPARSE-BATCH + FIX-FRED/SPIKE-UNIFIED-NB-GAP (no dup triage).
 
-**Key discriminations:** FIX-BCTC-1345B-REPORT-BATCH ≠ reparse (it's XS telegram noise batching — stays open separately). bctc 22-filing batch = downstream of pdfx health, no separate task. Gateway MCP tool not exposed in this thread → mutex claimed via docker-exec INSERT into live coordination.db task_locks (same table/semantics as task_claim); reports 3085/3086 left status=new for the executing dev to resolve with outcome.
+**Dedupe checks:** FIX-AUDITOR-SQL-MODIFIERS ≠ FU-AUDITOR-D4-SIGNAL-ID (P3, signal-id defect) ≠ WF-DEFER-THROUGHPUT (deferred, throughput) — same zone, different defects, kept atomic. signal_queue ## po: 0 NEW (aud-sql-mod row already READ by dev-team router).
 
-**TNB c90 ACK appended** to docs/handoffs/tnb-audit-latest.md (F-FED + F-NB-MISSING → tasks; F2 behind pdfx health; F4/F5/F9 structural unchanged).
+**Process notes:** process_telegram_report schema = {id, resolution enum} — no free-text field; rationale lives in journal/orch-state note instead. claim_telegram_report before process works clean via gateway. orch-state write used mtime-CAS + [ -s tmp ] + 3x jq -e validation, no conflict.
 
 **Carry-over (next PO cycle):**
-- tnb c91 Monday-dish Fed-rate check: 5.33% persists → escalate FIX-FRED-YAHOO-WEEKEND-STALE to CRITICAL (c87 fix never held).
-- Verify pdf-extractor returns HEALTHY + 22-filing batch drains after ACTIVE-2 ships; then FIX-BCTC-LOWCONF-REPARSE-BATCH proof (REE composite >0).
-- CTG c029 first-extraction watch (20+ cycles blocked); resolve report 3085 post-reparse.
-- Prior carry still open: LIVEDB raw verify; #3065 news-vps honest resolution; HPG Q4 reparse; FIX-SBV-PUSH-TYPE-COERCE live proof; CTG real figures post-refine; 10 yellow eval rows post-stage-4; U3 doc-refresh lane.
+- Verify FIX-AUDITOR-SQL-MODIFIERS shipped: grep flow doc for short-form modifiers = 0; next Tier-2 run C-06/C-07 PASS with real counts.
+- tnb c91 Monday-dish Fed-rate check (2026-06-09): 5.33% persists → escalate FIX-FRED-YAHOO-WEEKEND-STALE CRITICAL.
+- FIX-BCTC-LOWCONF-REPARSE-BATCH now unblocked (pdfx HEALTHY + magnitude fix live) — next free slot; then resolve report 3085 (REE) post-reparse.
+- CTG c029 first-extraction watch (20+ cycles blocked).
+- Prior carry still open: #3065 news-vps honest resolution; HPG Q4 reparse (HPG-REPARSE-POST-REBUILD TODO); FIX-SBV-PUSH-TYPE-COERCE live proof; CTG real figures post-refine; 10 yellow eval rows post-stage-4; U3 doc-refresh lane; 22-filing batch drain check.

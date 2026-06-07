@@ -15,3 +15,29 @@
 - Activate CI fix (recurring 2 runs, root-caused, one-file S)
 **why-decision:** PDFX is live infra degradation blocking today's data product; CI fix is cheapest recurring-bug kill. FRED weekend path needs tnb c91 Monday-dish observation to disambiguate weekend-vs-weekday — queued NEXT-UP, deterministic test fixes carried in its scope.
 **why-change:** no change from plan; FIX-BCTC-1345B-REPORT-BATCH found to be telegram-noise batching, so REE reparse became NEW task FIX-BCTC-LOWCONF-REPARSE-BATCH instead of a promote.
+
+### STEP po-S2 · po · 2026-06-07T22:17:07Z
+**task-id:** FIX-AUDITOR-SQL-MODIFIERS
+**what-done:** Created + dispatched (BATCH slot 1, high) from router repair_task_request: rewrite short-form SQLite modifiers in system-auditor flow C-04/C-06..C-11/C-16/B-13 to long form + NULL-guard; owner agent-father (agent .md edit, maintenance lane, mutex-wrap).
+**what-considered:**
+- Point-fix only C-06/C-07 (the two that fired) vs all 10 hardcoded check sites
+- NULL-guard in spec vs trust the rewrite alone
+- Owner dev vs agent-father (dispatch table: agent .md = agent-father)
+**why-decision:** All sites share one root cause; zero-expectation checks (C-08/C-10/C-16/B-13) are silently blind since inception — sensor integrity outranks every other queued FIX. NULL-guard makes the failure class structurally impossible to reintroduce.
+**why-change:** no change from router-proposed plan; dedupe-checked vs FU-AUDITOR-D4-SIGNAL-ID + WF-DEFER-THROUGHPUT (different defects, same zone — not merged to keep scope atomic).
+
+### STEP po-S3 · po · 2026-06-07T22:17:07Z
+**task-id:** FIX-FRED-YAHOO-WEEKEND-STALE
+**what-done:** Dispatched (BATCH slot 2) — was NEXT-UP; both active slots freed (FIX-CI-LINT-STACK dd79f811 + FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN 94ad0d09 DONE, pdf-extractor back HEALTHY 36min).
+**what-considered:**
+- FIX-FRED (high, NEXT-UP) vs FIX-BCTC-LOWCONF-REPARSE-BATCH (medium, now unblocked by pdfx health)
+**why-decision:** Priority order — high beats medium; FRED stale 5.33% reaches user-facing chef dishes daily, reparse batch is corpus hygiene. Monday c91 dish remains live verification gate.
+**why-change:** no change.
+
+### STEP po-S4 · po · 2026-06-07T22:17:07Z
+**task-id:** FIX-BCTC-MAGNITUDE-NORMALIZE
+**what-done:** Flipped DONE-CODE-AWAIT-REBUILD -> DONE; cleared stale head.next_action (UNBLOCK-REBUILD hint).
+**what-considered:**
+- Trust commit a709681f "rebuild verified" badge vs raw-verify container content
+**why-decision:** Raw-verified per verify-raw-not-badges: image Created 20:31:47Z > commit 06c65978 (14:00Z) AND balanceSheetExtractor.ts sha256 MATCH repo-vs-container (a8768572...) — container provably ships the fix; PPC reparse PASS. Stale hint would have triggered a wasteful duplicate rebuild (rebuild-recreate destroys peers ~21min).
+**why-change:** signal 1 (dev-pdf-extractor notebook 212L>cap) NO-TASK — already self-resolved, file now 198L (a854f5a2).

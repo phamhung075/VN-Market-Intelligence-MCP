@@ -1,15 +1,15 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T21:40:00Z",
-  "_updated_by": "developer",
+  "_updated_at": "2026-06-07T22:16:43Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-07T20:30:00Z",
-    "updated_by": "dev-mcp-server",
+    "updated_at": "2026-06-07T22:16:43Z",
+    "updated_by": "po",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "UNBLOCK-REBUILD-MCP-SERVER ready — ops rebuild ships 06c65978 + FIX-BCTC-STAGE4 (a058aa2e). Both P0 fixes committed 08:03Z. Container predates both — rebuild ONLY mcp-server."
+    "next_action": "BATCH dispatched 2026-06-07T22:14Z: FIX-AUDITOR-SQL-MODIFIERS (agent-father) + FIX-FRED-YAHOO-WEEKEND-STALE (dev-mcp-server). Stale UNBLOCK-REBUILD hint cleared — container PROVEN to contain 06c65978 (file-hash match) + a058aa2e; rebuild done 20:31Z, reparse PASS."
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2995,13 +2995,13 @@
         "id": "FIX-BCTC-MAGNITUDE-NORMALIZE",
         "title": "Fix mixed-magnitude extractions (normalize units at parse time)",
         "owner": "dev-mcp-server",
-        "status": "DONE-CODE-AWAIT-REBUILD",
+        "status": "DONE",
         "zone": "apps/mcp-server/",
         "type": "backlog",
         "size": "S",
         "priority": "P1",
         "created_at": "2026-06-07T11:17:26Z",
-        "note": "Mixed-magnitude extractions: HPG Q1-2026 assets 400,271,001,803 vs liabilities 76,754,658 (~5000× gap); GVR Q1-2026 decimal artifacts + missing equity; HPG Q4 cache had raw-VND totalLiabilities. Normalize units at parse time + identity-check magnitude consistency. Reports #3067-3069 resolved monitoring against this row + FEAT chain. | SCOPE GREW (PPC E2E evidence): (a) extractorGuards magnitude threshold rejects real raw-VND values (equity 4,466,380,796,968 = legit ~4,466 tỷ); (b) multi-column scrambled OCR layout defeats TỔNG CỘNG TÀI SẢN extraction. OCR text is CORRECT — parser is the sole gap to real balance sheets for raw-VND reports. | PO 2026-06-07T19:20:08Z: board row was stale TODO — code COMMITTED 06c65978 (magnitude catch-22 + identity path A + intra-BS mismatch detection, 15 tests GREEN per dev-mcp-server notebook). NOT in live container yet (only pdf-extractor rebuilt today). Live-DONE gates on UNBLOCK-REBUILD-MCP-SERVER."
+        "note": "Mixed-magnitude extractions: HPG Q1-2026 assets 400,271,001,803 vs liabilities 76,754,658 (~5000× gap); GVR Q1-2026 decimal artifacts + missing equity; HPG Q4 cache had raw-VND totalLiabilities. Normalize units at parse time + identity-check magnitude consistency. Reports #3067-3069 resolved monitoring against this row + FEAT chain. | SCOPE GREW (PPC E2E evidence): (a) extractorGuards magnitude threshold rejects real raw-VND values (equity 4,466,380,796,968 = legit ~4,466 tỷ); (b) multi-column scrambled OCR layout defeats TỔNG CỘNG TÀI SẢN extraction. OCR text is CORRECT — parser is the sole gap to real balance sheets for raw-VND reports. | PO 2026-06-07T19:20:08Z: board row was stale TODO — code COMMITTED 06c65978 (magnitude catch-22 + identity path A + intra-BS mismatch detection, 15 tests GREEN per dev-mcp-server notebook). NOT in live container yet (only pdf-extractor rebuilt today). Live-DONE gates on UNBLOCK-REBUILD-MCP-SERVER. | PO 2026-06-07T22:14Z tick: LIVE-VERIFIED DONE — mcp-server image built 20:31:47Z > commit 06c65978 (14:00:47Z); balanceSheetExtractor.ts file-hash MATCH repo-vs-container (a8768572...); UNBLOCK-REBUILD-MCP-SERVER closed a709681f with PPC Q4-2025 reparse PASS. Downstream corpus reparse tracked by FIX-BCTC-LOWCONF-REPARSE-BATCH (queued)."
       },
       {
         "id": "DOCKER-IMAGE-RETENTION",
@@ -3119,7 +3119,7 @@
           "apps/mcp-server/src/tests/1922j-fred-startup-backfill.test.ts",
           "apps/mcp-server/src/tests/1487-yahoo-finance-extended.test.ts"
         ],
-        "status_note": "NEXT-UP after an active slot frees. AC: bun test green on the 4 assertions + weekend data path serves latest FRED fedFundsRate (3.62), not stale fixture; tnb c91 Monday-dish check is the live verification. CRITICAL escalation if Monday dish still cites 5.33% (means c87 fix never held on weekdays either).",
+        "status_note": "DISPATCHED tick 2026-06-07T22:14Z — BATCH slot 2 (WIP 2). Was NEXT-UP; both active slots free (FIX-CI-LINT-STACK + FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN DONE). tnb c91 Monday-dish 3.62% check remains the live verification gate. | prior: NEXT-UP after an active slot frees. AC: bun test green on the 4 assertions + weekend data path serves latest FRED fedFundsRate (3.62), not stale fixture; tnb c91 Monday-dish check is the live verification. CRITICAL escalation if Monday dish still cites 5.33% (means c87 fix never held on weekdays either).",
         "note": "tnb c90: Saturday evening dish cites Fed 5.33% while c88 weekday dishes cited 3.62% — weekend-specific FRED data path suspected. The 4 failing tests look like the same null/stale-fixture class; treat tests as executable spec while root-causing the weekend branch. Re-opened from F-CARRY-CORRUPT (c87)."
       },
       {
@@ -3158,6 +3158,22 @@
         "size": "S",
         "priority": "low",
         "status_note": "Signal cowork-20260607T202600 MED. system-map.json is SSOT — fix the stale copy, never hardcode roster. AC: no roster-mismatch signal on next cowork tick."
+      },
+      {
+        "id": "FIX-AUDITOR-SQL-MODIFIERS",
+        "title": "system-auditor flow: rewrite invalid short-form SQLite modifiers (-3h/-24h/-26h/-48h/-72h/-7d) to long form ('-3 hours'/'-24 hours'/'-7 days') in C-04, C-06..C-11, C-16, B-13 + add NULL-guard asserting datetime() result non-null before comparing",
+        "owner": "agent-father",
+        "status": "TODO",
+        "zone": "docs/agents/system-auditor/",
+        "type": "FIX",
+        "size": "S",
+        "priority": "high",
+        "created_at": "2026-06-07T22:16:43Z",
+        "files": [
+          "docs/agents/system-auditor/flow/main.md"
+        ],
+        "status_note": "DISPATCHED tick 2026-06-07T22:14Z — BATCH slot 1 (WIP 2). AC: zero short-form datetime modifiers remain in docs/agents/system-auditor/flow/main.md; every datetime() check carries a NULL-guard sentinel line; agent .md edit by agent-father (maintenance lane, mutex-wrap); next Tier-2 run: C-06/C-07 PASS with real counts, C-08/C-10/C-16/B-13 evaluated against non-NULL datetimes.",
+        "note": "[router repair_task_request 2026-06-07T22:09:54Z HIGH, row router-2026-06-07T22:09:54Z-aud-sql-mod] SQLite needs long-form modifiers; short form makes datetime() return NULL so every comparison is NULL -> count=0. Proven tonight: C-06/C-07 fired false CRITICAL (raw market.db: market_messages 3h=1, agent_signals 24h=84; router retraction msg 2728); zero-expectation checks C-08/C-10/C-16/B-13 silently false-PASS since inception. Proof: sqlite3 :memory: \"SELECT datetime(now_kw,-24h_kw) IS NULL\" -> 1. Reports 3087/3088 resolve as false-positive against this task. Sensor-integrity = top priority: a blind auditor poisons every downstream anomaly bridge."
       }
     ],
     "archive": [],
