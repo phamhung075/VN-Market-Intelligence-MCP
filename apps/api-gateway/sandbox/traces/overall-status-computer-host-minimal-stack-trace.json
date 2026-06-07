@@ -1,0 +1,28 @@
+{
+  "scenario": "host-minimal-stack",
+  "scenario_file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/api-gateway/pkg/primitive/overall-status-computer/scenarios/host-minimal-stack.json",
+  "tier": "primitive",
+  "primitive": "overall-status-computer",
+  "status": "PASS",
+  "intentional_failure_fixture": false,
+  "inputs": {
+    "statuses": {
+      "alert": "not_deployed",
+      "kinh-dich": "not_deployed",
+      "macro": "ok",
+      "mcp": "ok",
+      "news": "not_deployed",
+      "pdf": "not_deployed",
+      "rag": "not_deployed",
+      "stock": "not_deployed",
+      "ta": "not_deployed"
+    }
+  },
+  "expected": {
+    "overall": "ok"
+  },
+  "actual": {
+    "overall": "ok"
+  },
+  "run_at": "2026-06-02T22:09:10Z"
+}

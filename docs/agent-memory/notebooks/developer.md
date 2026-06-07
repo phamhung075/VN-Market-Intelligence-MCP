@@ -2,6 +2,22 @@
 
 **Last updated:** 2026-05-31 | **Cycle:** NB-PRUNE-1 | **Sprint:** NB-PRUNE-FIX
 
+## Session 2026-06-02 — SIG-FOLLOWUP-DRYRUN X-1 (sprint SELF-IMPROVE-GATE)
+
+**Task:** X-1 — Prove D-IMPROVE lane-B emit seam end-to-end (synthetic dry-run).
+
+**Finding:** Default emit path (Step 12 `else` branch) had a wiring gap — `appendDashboardRow` called without `orchStatePath` injectable, so all tests injecting `writeProposalFn` skipped this path entirely. The real `writeImprovementProposal` + `appendDashboardRow` code path was never exercised in tests.
+
+**Fix:** Added `orchStatePath?: string` to `SelfImproveOrchestratorDeps`; threaded through `appendDashboardRow` call (+9 lines). Minimal change, no behavior change in production (undefined = real path preserved).
+
+**Test added:** `apps/mcp-server/src/__tests__/X1-dryrun-emit-seam.test.ts` — 3 tests, all NO `writeProposalFn` injected (forces default path):
+1. Main X-1: synthetic DEGRADED → doc written + signal_queue row appended (both sinked to temp)
+2. Cooldown idempotency: second run blocked by cooldown guard
+3. PERSISTENTLY_LOW variant: also emits LANE-B on default path
+
+**Verdict:** PROVEN-WORKING (3/3 pass, 65 prior tests pass, bun tsc clean). Commit: 6a8c87ac.
+**No rebuild needed:** flow/test/script-only change (no mcp-server runtime code changed, only injectable dep threaded).
+
 ## Session c212 — Dev-Team Orchestration (JUMP-TO: drain-signals → PO triage → dispatch)
 
 **Preflight:** NO HEAD.lock. Worktree prune: clean. PASS.

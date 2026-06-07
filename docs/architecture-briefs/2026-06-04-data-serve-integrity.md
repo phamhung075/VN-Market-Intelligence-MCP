@@ -309,6 +309,15 @@ DSI-S3-SECTOR-FIN → sector/fin fixture clusters → null+is_estimate (L, P2)
   ↓
 FU-SBV-DEPOSIT-PROVENANCE-GO → LIVE (container up); tier correction for administered rate
   [DSI-MACRO-INDICATORS-LATENT was WRONG label — container is deployed, fix already shipped]
+  ↓
+CARRY-YIELD-SINGLE-SIGNAL-FIXTURE → P0, S — ADDITIONAL GAP (2026-06-05):
+  DSI-S1-MACRO fixed /snapshot (ComputeMacroUseCase.Execute()), but NOT the two standalone
+  Go handlers GET /carry-trade-signal and GET /yield-spread-signal, which are DI-free closures
+  with own fixture consts (fedFunds=5.33, vndDeposit=4.7, earningYield=8.2, computedAt=2026-05-23).
+  These handlers served contradictory fixture carry (FII_OUTFLOW_RISK) while /snapshot served
+  live NEUTRAL simultaneously. Fix = Option B consolidation: retire the two Go endpoint files
+  entirely; TS MCP tools call POST /snapshot and project signals.carry / signals.yield.
+  Detail: docs/architecture-briefs/2026-06-05-carry-yield-single-signal-fixture.md
 ```
 
 ---

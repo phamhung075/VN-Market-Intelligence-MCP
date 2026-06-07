@@ -17,6 +17,7 @@
 ---
 
 ## [Market Watcher] Price, Volume, Technicals
+2026-06-02 16:00 | Close: 25.100 VND | RSI: N/A | Vol: (spike 2.1x avg) | YoY: N/A
 2026-05-18 16:00 | Close: 23.000 VND | RSI: N/A | Vol: N/A | YoY: N/A | Anomaly: Foreign fund exit signals, -1.29% bearish sector rotation
 2026-05-12 16:00 | Close: 22,700 VND | RSI: N/A | Vol: 10.94M (179% avg) | YoY: N/A
 
@@ -39,3 +40,11 @@ Action: Hold / Watch sector pressure
 
 (Pending Q1 2026 synthesis)
 2026-05-14 16:00 | Close: 22,800 VND | RSI: N/A(16c) | Vol: 1.61M (N/A% avg) | YoY: N/A
+
+---
+
+## EOD 2026-06-04
+
+**[Market Watcher] 16:00 UTC**
+Close: 26.250 VND | Change: +0.96% | RSI: ~58 | Volume: 46.90M (+104% avg) | YoY: +11.70% | Regime: FII_OUTFLOW_RISK
+Insider: no activity | Brief action: Hold

@@ -8,5 +8,6 @@
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-18 16:00 | Close: 45.15 VND | RSI: N/A | Vol: N/A | YoY: N/A | Anomaly: +6.99% energy rotation, Brent >$111
+2026-06-04 16:00 | Close: 41.85 VND | RSI: N/A | Vol: 6.42M | YoY: +10.13% (30d) | Anomaly: +6.90% spike, sector momentum stable
 
 ## [Unified Agent] Quarterly Syntheses
