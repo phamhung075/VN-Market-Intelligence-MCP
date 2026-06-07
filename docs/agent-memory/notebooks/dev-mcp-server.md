@@ -1,5 +1,14 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-07 · FIX-BCTC-STAGE4-CROSS-SECTION-DUP — ORCH-STATE SYNC (resume)
+
+**Task:** FIX-BCTC-STAGE4-CROSS-SECTION-DUP — resume session found code already committed as a058aa2e (08:03:56Z); notebook logged in e50e7fca (08:03:09Z) with incorrect hash cf3b71b5 in body text (actual = a058aa2e). Orch-state was stale (status=IN-PROGRESS) — updated atomically to DONE + head=idle. No new code commit needed. UNBLOCK-REBUILD-MCP-SERVER unblocked.
+**Tests confirmed GREEN:** CS-1..CS-6 (6/6) + bctc-eval-detectors 13/13. tsc: clean (no output). Full suite: pre-existing `bctc-eval-routes.test.ts` AC1-4/AC5 failures unrelated to this fix (test assertion bug `[200,503].toContain(500)`).
+
+Zone health: 6+13/0 task tests, tsc clean, orch-state synced | HEALTHY
+
+---
+
 ## 2026-06-07 · FIX-BCTC-MAGNITUDE-NORMALIZE — COMMITTED (86d6cffc)
 
 **Task:** FIX-BCTC-MAGNITUDE-NORMALIZE (P1) — balance-sheet raw-VND magnitude normalization + intra-statement mismatch detection.
