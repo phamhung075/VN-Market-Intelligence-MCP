@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-208 · 2026-06-07T12:00Z · TSU-DEV-U5 QA gate — APPROVED (code gate)
+
+Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U5 | Verdict: APPROVED (code-approved, live-verify pending sprint-final rebuild)
+
+bun test TSU-DEV-U5-*.test.ts: 10/10 pass (QA-reproduced). tsc --noEmit: exit 0 clean. DDD PASS: foreignFlowAnalyzer.ts (domain/services) zero imports from infrastructure/application. Security PASS: no process.env, no secrets in 3 modified files. mock-guard exit 0. No bare catch. AC-U5-1..U5-7 all verified against committed code. DSI edge-case verified: all-zero heuristic correct — VPS API never returns holding_ratio field, vnstockStore ?? 0 applies to all tickers; genuinely-zero tickers would be false-null (acceptable) not false-real (DSI violation). Reasoning string gate confirmed honest. Commits c21cec46 + 43894aaf on main. orch-state TSU-DEV-U5 REVIEW→DONE.
+
 ## cycle-207 · 2026-06-07T08:50Z · TSU-DEV-U4 QA gate — APPROVED
 
 Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U4 | Verdict: APPROVED | Commit: 9880eadc

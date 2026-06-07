@@ -272,3 +272,26 @@ QA verifies via `get_foreign_flow` + `get_company_profile` calls (raw JSON, not 
 | scheduler count | `grep -rc cron.schedule apps/mcp-server/src/scheduler/` | 76 |
 
 Zone health: bun test 10/0 (U5 suite), 0 regression full suite, tsc clean, 157 tools (SSOT), scheduler 76 cron.schedule | HEALTHY
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-06-07T12:00:00Z
+- **Verdict:** APPROVED (code gate — live-verify pending sprint-final rebuild)
+- **QA tests reproduced:** bun test TSU-DEV-U5-*.test.ts → 10 pass / 0 fail (independent run)
+- **tsc:** exit 0 clean
+- **DDD:** PASS — foreignFlowAnalyzer.ts (domain/services) zero imports from infrastructure/application
+- **Security:** PASS — no process.env, no secrets in modified files
+- **Mock-guard:** exit 0 (PASS)
+- **Error handling:** No bare catch — both handlers typed (err) with instanceof guard
+- **AC-U5-1:** PASS — Holding Ratio column absent when fabricated (foreignFlowTools.ts:108-117)
+- **AC-U5-2:** PASS — Holding ratio change (5d) line absent when fabricated (foreignFlowTools.ts:84-88)
+- **AC-U5-3:** PASS — tool description at foreignFlowTools.ts:138-147 does NOT mention "holding ratio change"
+- **AC-U5-4:** PASS — is_holding_ratio_fabricated=true when all holdingRatio=0 (foreignFlowAnalyzer.ts:108)
+- **AC-U5-5:** PASS — foreign_holding_ratio=null when current_holding_ratio=0 (companyProfileTools.ts:173-178)
+- **AC-U5-6:** PASS — Holding Ratio column present when holdingRatio>0 in history (T-U5-3)
+- **AC-U5-7:** PASS — Net Vol and Foreign Room columns preserved (T-U5-7)
+- **DSI edge-case (genuinely 0 vs fabricated 0):** heuristic `history.every(r => r.holdingRatio === 0)` is correct. VPS API bgapidatafeed never returns the field — ?? 0 applies universally. A genuinely-zero ticker would be false-null (acceptable) not false-real (which would be the DSI violation). Reasoning string honest.
+- **Live-verify:** Deferred to sprint-final rebuild per handoff policy. QA-U5-1/U5-2/U5-3 gates pending.
+- **Board:** TSU-DEV-U5 REVIEW→DONE in orch-state.

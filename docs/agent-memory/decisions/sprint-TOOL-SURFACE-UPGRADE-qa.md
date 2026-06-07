@@ -20,6 +20,26 @@
 **why-decision:** All checks green including independently reproduced anti-false-green injection. No arch concern (pure scripts + test file, no new MCP tool, no cross-service HTTP). APPROVED.
 **why-change:** no change from plan.
 
+### STEP qa-S3 · qa · 2026-06-07T12:00:00Z
+**task-id:** TSU-DEV-U5
+**what-done:** QA gate for foreign flow null holding ratio — DSI compliance gate for fabricated holding_ratio field (VPS API does not return this field; all stored values are ?? 0 fabricated zeros).
+**what-considered:**
+- bun test TSU-DEV-U5-*.test.ts: 10/10 pass (reproduced independently). 16 expect() calls.
+- tsc --noEmit: exit 0 clean (0 errors).
+- DDD scan: foreignFlowAnalyzer.ts (domain/services) has zero imports from infrastructure or application. PASS.
+- Security scan: no process.env in any of the 3 modified files. No secrets/tokens/passwords. PASS.
+- mock-guard.sh exit 0: no fabricated-data patterns in production source.
+- No bare catch: both catch blocks typed (err) with err instanceof Error guard.
+- Tool description at foreignFlowTools.ts:138-147 does NOT mention "holding ratio change" — AC-U5-3 PASS.
+- DSI edge-case analysis (handoff request): heuristic `history.every(r => r.holdingRatio === 0)` is correct. VPS API bgapidatafeed never returns the field — vnstockStore stores ?? 0 for ALL tickers. A genuinely 0% foreign-ownership ticker would also be treated as fabricated (false-null, not false-real). This is the correct conservative DSI posture: displaying 0.00% as real data would be the violation; treating it as unavailable is safe and honest.
+- Reasoning string gate: `!isHoldingRatioFabricated && Math.abs(holdingRatioChange5d) > 0.005` at line 154 correctly suppresses the "foreign ownership up/down X% over 5d" append when fabricated. String is honest.
+- Commits: c21cec46 (implementation) + 43894aaf (memory). Both on main (branch: task/TSU-U5-foreign-flow-null-ratio was merged).
+- AC-U5-1..U5-7: all verified against committed code. T-U5-1..T-U5-8 present in test file.
+- Live-verify deferral: sprint-final rebuild per handoff policy. Mark code-approved.
+- Concurrency: U3 worker may be active — no contention (separate tool zones, no shared files).
+**why-decision:** All code-gate checks green. DSI heuristic is honest and correct for the known architectural constraint (VPS API never provides the field). No arch concern (no new MCP tool, no new domain service, modification is gate logic only). APPROVED (code gate), live-verify pending sprint-final rebuild.
+**why-change:** no change from plan.
+
 ### STEP qa-S2 · qa · 2026-06-07T08:50:00Z
 **task-id:** TSU-DEV-U4
 **what-done:** QA gate for direction+delta sweep — Go test suite + go vet + live endpoint + gateway passthrough + additive-only + DDD + security all verified.

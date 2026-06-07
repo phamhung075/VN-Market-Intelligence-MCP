@@ -2341,14 +2341,14 @@
             "type": "DATA-QUALITY",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "priority": "high",
             "id": "TSU-DEV-U5",
             "claimed_at": "2026-06-07T11:00:00Z",
             "claimed_by": "dev-mcp-server",
-            "note": "REVIEW 2026-06-07T11:30:00Z. DSI: formatForeignFlowOutput gates Holding Ratio column+signal line; is_holding_ratio_fabricated in ForeignFlowSignal; foreign_holding_ratio null when 0. 10 tests GREEN, tsc clean, tools=157, sched=76."
+            "note": "APPROVED (code gate) 2026-06-07T12:00:00Z by qa. 10/10 tests, tsc clean, DDD PASS, security PASS, mock-guard exit 0. DSI heuristic verified honest. Live-verify pending sprint-final rebuild."
           },
           {
             "title": "U6: TSH leftover merges — description updates only (keep all separate per architect verdict)",
