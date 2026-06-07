@@ -1,4 +1,4 @@
-<!-- size-justification: ~620L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. FIX-AUDITOR-DB-LIVENESS (2026-06-07) bun:sqlite readonly exec replacing dead host-side sqlite3 path; dynamic container-name resolution; Tier-2/Tier-3 docker exec name literals fixed. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
+<!-- size-justification: ~627L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. FIX-AUDITOR-DB-LIVENESS (2026-06-07) bun:sqlite readonly exec replacing dead host-side sqlite3 path; dynamic container-name resolution; Tier-2/Tier-3 docker exec name literals fixed. FIX-AUDITOR-SQL-MODIFIERS (2026-06-08) long-form SQLite datetime modifiers + NULL-guard (short-form '-Nh'/'-Nd' returns NULL, caused C-06/C-07 false CRITICAL and C-08/C-10/C-16/B-13 silent false-PASS). Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -146,14 +146,14 @@ MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
 docker exec "$MCP_CTR" bun -e "
 import { Database } from 'bun:sqlite';
 const db = new Database('/app/data/market.db', {readonly: true});
-const r = db.query(\"SELECT count(*) as cnt FROM market_messages WHERE sent_at > datetime('now','-3h')\").get();
+const r = db.query(\"SELECT count(*) as cnt FROM market_messages WHERE sent_at > datetime('now','-3 hours')\").get();
 console.log(r.cnt);
 db.close();
 "
 docker exec "$MCP_CTR" bun -e "
 import { Database } from 'bun:sqlite';
 const db = new Database('/app/data/market.db', {readonly: true});
-const r = db.query(\"SELECT count(*) as cnt FROM agent_signals WHERE created_at > datetime('now','-24h')\").get();
+const r = db.query(\"SELECT count(*) as cnt FROM agent_signals WHERE created_at > datetime('now','-24 hours')\").get();
 console.log(r.cnt);
 db.close();
 "
@@ -179,7 +179,7 @@ MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
 docker exec "$MCP_CTR" bun -e "
 import { Database } from 'bun:sqlite';
 const db = new Database('/app/data/market.db', {readonly: true});
-const r = db.query(\"SELECT count(*) as cnt FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72h')\").get();
+const r = db.query(\"SELECT count(*) as cnt FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72 hours')\").get();
 console.log(r.cnt);
 db.close();
 "
@@ -443,24 +443,31 @@ Use window = `'-3 day'` when DOW is Sat or Sun; use `'-1 day'` on Mon–Fri.
 On Mon–Fri the auditor fires AFTER trading session; on weekend, last data was Friday.
 If the check fires within 2h after market open (before new data lands), accept the previous trading day's count as passing.
 
+**NULL-guard (FIX-AUDITOR-SQL-MODIFIERS — MANDATORY before any datetime-windowed check):**
+Before evaluating a check, verify its modifier parses: `sqlite3 :memory: "SELECT datetime('now','<modifier>') IS NULL"`.
+If result = 1 → the modifier is invalid. Do NOT run the check. Do NOT report count=0 as PASS or CRITICAL.
+Instead: emit WARN signal (type: system_health_report, check_id: `<C-xx>-INVALID-SQL`, detail: "datetime modifier returned NULL"),
+send BUG-channel Telegram, mark check as INVALID-SQL in notebook, and continue to next check.
+Long-form modifiers are REQUIRED: `'-N hours'` / `'-N days'` — NEVER `'-Nh'` or `'-Nd'` (short form returns NULL in SQLite).
+
 | check_id | DB | Query (run via `docker exec "$MCP_CTR" bun -e ...` — see invocation pattern above) | Pass |
 |---|---|---|---|
 | C-01 | market.db | `SELECT count(DISTINCT code) FROM daily_ohlcv WHERE date >= date('now',<WINDOW>)` — use `<WINDOW>` = `'-3 day'` on Sat/Sun, `'-1 day'` Mon–Fri | ≥ 25 |
 | C-02 | market.db | `SELECT count(*) FROM daily_ohlcv WHERE date >= date('now',<WINDOW>)` — same weekend window as C-01 | > 0 |
 | C-03 | market.db | `SELECT count(DISTINCT action_code) FROM financial_reports WHERE period_year=2026 AND period_quarter=1` | ≥ 26 (in Q1 window Apr–May) |
-| C-04 | market.db | `SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7d') AND extraction_confidence < 0.2` | ≤ 5 |
+| C-04 | market.db | `SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7 days') AND extraction_confidence < 0.2` | ≤ 5 |
 | C-05 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE source_url LIKE '%ssc.gov.vn%' AND status != 'skipped'` | 0 |
-| C-06 | market.db | `SELECT count(*) FROM market_messages WHERE sent_at > datetime('now','-3h')` | > 0 |
-| C-07 | market.db | `SELECT count(*) FROM agent_signals WHERE created_at > datetime('now','-24h')` | > 0 |
-| C-08 | market.db | `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24h')` | 0 |
-| C-09 | market.db | `SELECT count(DISTINCT country) FROM macro_indicators WHERE fetched_at > datetime('now','-26h')` | ≥ 8 |
-| C-10 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'failed' AND extracted_at > datetime('now','-24h')` | ≤ 2 |
-| C-11 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'done' AND extracted_at > datetime('now','-48h')` | > 0 (earnings window) |
+| C-06 | market.db | `SELECT count(*) FROM market_messages WHERE sent_at > datetime('now','-3 hours')` | > 0 |
+| C-07 | market.db | `SELECT count(*) FROM agent_signals WHERE created_at > datetime('now','-24 hours')` | > 0 |
+| C-08 | market.db | `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24 hours')` | 0 |
+| C-09 | market.db | `SELECT count(DISTINCT country) FROM macro_indicators WHERE fetched_at > datetime('now','-26 hours')` | ≥ 8 |
+| C-10 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'failed' AND extracted_at > datetime('now','-24 hours')` | ≤ 2 |
+| C-11 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'done' AND extracted_at > datetime('now','-48 hours')` | > 0 (earnings window) |
 | C-12 | all non-empty DBs | `PRAGMA integrity_check` — skip DBs with 0-byte file (alert_engine.db, stock_price.db when empty) | `ok` |
 | C-13 | container /app/data | via bun `statSync('/app/data/market.db-wal')` etc inside `docker exec "$MCP_CTR" bun -e ...` — check each WAL size | < 52428800 bytes (50MB) each |
 | C-14 | market.db | top-3 `code` row share of `daily_ohlcv` using same `<WINDOW>` as C-01: `WITH t AS (SELECT code,count(*) c FROM daily_ohlcv WHERE date>=date('now',<WINDOW>) GROUP BY code ORDER BY c DESC LIMIT 3) SELECT round(100.0*sum(c)/(SELECT count(*) FROM daily_ohlcv WHERE date>=date('now',<WINDOW>)),1) FROM t` — skip (NULL result) if C-01 returns 0 (no data in window) | < 60% |
 | C-15 | market.db | `PRAGMA table_info(financial_reports)` — check action_code, period_year, net_revenue, extraction_confidence present | all 4 present |
-| C-16 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72h')` | 0 |
+| C-16 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72 hours')` | 0 |
 
 Also call:
 ```
