@@ -11,6 +11,32 @@
 **AC-6:** 3 PPC rows with source_url (Q1-2026, Q4-2025-done, Q3-2025). Threshold ≥5 NOT MET (enricher cycle 1 only; Q2/Q1-2025 + Q4-2024 need subsequent cycles).
 **Follow-up flags:** (1) pdf-extractor must inject X-API-Key when fetching VPS URLs — extraction pipeline broken for all VPS-sourced PDFs. (2) Bun segfault on large PDFs via pdf-parse Tier 2 — separate bug. (3) B3 latent: hsx.vn space-URLs for Q3-2025/Q1-2026 will fail pull job LIKE filter. (4) Second enricher cycle needed for Q2/Q1-2025 and Q4-2024.
 
+## 2026-06-07 · VERIFY-HPG-REPARSE + SPRINT-HPG-QUEUE-URL-FIX — COMMITTED
+
+**Task A — VERIFY-HPG-REPARSE-POST-RECOVERY:**
+Container image built 06:26:23Z. FIX-LIAB (29245173) committed 07:51:29Z, FIX-STAGE4 (a058aa2e) committed 08:03:56Z — both P0 fixes are AFTER the image build. Container runs PRE-FIX code.
+bctcReparseJob at 08:46:22Z picked VCB_2025_Q4.pdf + VCB_2025_Q1.pdf (both "file disappeared" — missing from disk). HPG was NOT picked: the reparse job only processes stranded PDFs (no financial_reports row) and HPG Q4-2025 already has a financial_reports row, so the disk scan skips it. HPG eval remains RED (stage-4 exact_dup_count=2), balance_sheet_json.totalLiabilities=1,012,889.94M (prior-period value, unfixed). No 09:00Z bctcReparseJob run — the scheduled slot fired at 08:46Z (container start-relative timing).
+
+**Task B — SPRINT-HPG-QUEUE-URL-FIX:**
+Root cause: DATA damage, not code. FIX-CTG-1 code fix is already in production. Before that fix, the enricher defaulted year=currentYear/quarter=Q4, stamping Q1-2026 URLs onto Q3-2025 rows for HPG (id=1308140) and PPC (id=1308151). After the code fix, the enricher's "if (item.source_url) skip" guard prevents self-correction — the bad URLs are frozen.
+Live fix executed with bound parameters:
+  HPG id=1308140: source_url Q1-2026 URL → NULL, status='pending', attempts=0 (1 row changed)
+  PPC id=1308151: source_url Q1-2026 URL → NULL, status='pending', attempts=0 (1 row changed)
+Guard test: SPRINT-HPG-QUEUE-URL-FIX.test.ts — 4 tests GREEN, tsc clean.
+Commit: e748af7e
+
+Zone health: 4/0 guard tests, tsc clean, tools=157, sched=76 — data-only fix, no code changed | HEALTHY
+
+## c391 · 2026-06-07 (TSU-DEV-U6: TSH Leftover Pair Description Updates) — COMMITTED
+
+**Task:** TSU-DEV-U6 — TOOL-SURFACE-UPGRADE sprint  
+**Deliverables:** 10 tool descriptions updated across 6 files — all 5 TSH leftover pairs clarified per architect verdict (KEEP ALL SEPARATE, description-only). Pairs: get_patterns/get_technical_indicators (already had cross-refs, confirmed), trigger_bctc/price/news_vps_fetch (added script names + return shapes + sibling refs + "NO tickers" for news), get_market_summary/generate_market_summary (cache-first vs force-regen semantics + cross-refs), get_insider_signals/get_insider_transactions (classifier+input-required vs DB+SSC+streak). `docs/data/tool-registry.json` regenerated (157 unchanged).  
+**Tests:** 17 new GREEN (TSU-DEV-U6 test file, source-text scan pattern). Parity 8/8 GREEN. tsc: clean. tools=157, sched=76. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
+
+Zone health: 17/0 (U6), parity 8/0, tsc clean, 157 tools (SSOT), 76 cron.schedule — description-only, no logic change | HEALTHY
+
+---
+
 ## c392 · 2026-06-07 (TSU-DEV-U2-PARITY: Final Count Verification) — REVIEW
 
 **Task:** TSU-DEV-U2-PARITY — TOOL-SURFACE-UPGRADE sprint (terminal task)
