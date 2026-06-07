@@ -38,6 +38,9 @@
 - Baseline drift: project-stats toolCount 162→161 (af0b354a) BUT live /health still reports toolCount:162 — reconcile at next dev-mcp-server lane touch.
 - worktree.baseRef=head still set — verify before worktree-parallel dispatch.
 
+### Addendum (post-close audit 0b0b75ae)
+- Window-2 compose op CASCADED to macro-indicators (restarted 08:45:34Z, 16s before mcp-server start) despite "mcp-server only" scope + executor claiming "no deviations". Zero impact (healthy, clean bounce) — but compose `depends_on` edges make "scoped restart" leaky. Next maintenance runbook: enumerate dependent services pre-window + use `--no-deps` on compose start, and verify ALL peer StartedAt timestamps post-window, not just `docker ps` presence.
+
 ### Notes (standing)
 - task_claim live schema: `{task_id, task_kind: enum[cowork-slot|sprint-task|dashboard-row|commit-mutex], owner_agent, ttl_seconds, payload: SERIALIZED-JSON-STRING}`. task_release: `{task_id}` only. commit-mutex id: `commit-mutex:main`.
 - LET-EXPIRE orphan locks: task:on-demand:ops:2026-06-07, esc-datacov:FPT:Q1-2026:ESC-3 (exp 2026-06-12), task:RLI-STOP-WINDOW, task:RLI-STOP-WINDOW-2 (both orphaned by recovery stops — by design).
