@@ -109,7 +109,9 @@ interface TasksRow {
  */
 export function parseTasksFromOrchState(tasks: OrchStateTaskBoardTask[]): TasksRow[] {
   return tasks.map(t => ({
-    taskId: t.task_id,
+    // Post-F1B read-path coalesce: prefer canonical `id`, fall back to legacy `task_id`.
+    // Write-path emits `id` only; coalesce stays one release per task-schema.md.
+    taskId: t.id || t.task_id || "",
     title: t.title ?? "",
     status: t.status ?? "",
     owner: t.owner ?? "",
@@ -128,7 +130,8 @@ export function parseTasksFromOrchStateJson(orchState: {
   for (const sprint of orchState.task_board?.active_sprints ?? []) {
     for (const task of sprint.tasks ?? []) {
       rows.push({
-        taskId: task.task_id,
+        // Post-F1B read-path coalesce: prefer canonical `id`, fall back to legacy `task_id`.
+        taskId: task.id || task.task_id || "",
         title: task.title ?? "",
         status: task.status ?? "",
         owner: task.owner ?? "",

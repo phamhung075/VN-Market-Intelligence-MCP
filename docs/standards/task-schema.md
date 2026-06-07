@@ -79,6 +79,13 @@ When migrating freeform status strings to the canonical enum:
 
 ---
 
+## Write Rules (mandatory)
+
+- Write `id`, **never** `task_id`. The `task_id` field is legacy read-only; no new code may emit it.
+- `_updated_at` and `created_at` MUST be set via real `date -u +"%Y-%m-%dT%H:%M:%SZ"` output. Never hand-type timestamps.
+
+---
+
 ## Banned Fields
 
 The following fields are NEVER written to a canonical task row:
