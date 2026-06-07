@@ -4835,7 +4835,7 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T20:58:37Z",
+    "_updated_at": "2026-06-07T21:11:50Z",
     "_updated_by": "router",
     "rows": [
       {
@@ -5146,15 +5146,37 @@
       },
       {
         "id": "router-20260607205837-ci",
-        "ts": "2026-06-07T20:58:37Z",
+        "ts": "2026-06-07T21:11:50Z",
         "from": "router",
         "to": "po",
         "type": "ci_failure",
-        "summary": "CI run 27094330836 (714cfde6, 13:45Z) failed. REAL: (1) go-lint depguard Fence-C — apps/technical-analysis/cmd/sandbox/main.go:44 imports pkg/infrastructure (zone dev-technical-analysis); (2) kinh-dich-ts-lint ESLint boundaries fence exit 2 (zone dev-kinh-dich); (3) bun test FRED null x3 — 1423b-fred-fetcher.test.ts:108,201 + 1922j-fred-startup-backfill.test.ts:84 (zone dev-mcp-server) — CONVERGES with tnb c90 F-FED-RATE-REGRESSION stale Fed 5.33%. INFRA NOISE: 6x golangci exit-3 + cache 400 + GH services outage at 13:45Z — recheck on fresh run 27104618906 (a709681f, in progress ~21:10Z) before dispatching Go-lint fixes. Push gap closed: 26 commits pushed 20:57Z.",
+        "summary": "CI fresh run 27104618906 (a709681f) CONFIRMS root causes: (1) 6x golangci exit-3 = .golangci.yml v2 schema vs golangci-lint-action@v6.1.1 installing v1 — ONE fix: bump action to v7+/set version v2.x at ci.yml:70,91,112,137,159,181; (2) kinh-dich-ts-lint = STALE job (ci.yml:186) linting deprecated TS surface, no eslint.config — DELETE job (TS->Go reboot 2026-05-24); (3) go-lint REAL depguard Fence-C apps/technical-analysis/cmd/sandbox/main.go:44 -> dev-technical-analysis; (4) bun test 4x null: FRED 1423b:108,201 + 1922j:84 + Yahoo 1487:238 -> dev-mcp-server (converges tnb c90 stale Fed). NOT GitHub outage — reproducible across 2 runs.",
         "severity": "HIGH",
         "status": "NEW",
         "zone_owner": "po",
         "check_id": null,
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-06-07T21:03:53Z-a14",
+        "ts": "2026-06-07T21:03:53Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "frontend health endpoint unreachable (check A-14)",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-2026-06-07T21:03:53Z-a13",
+        "ts": "2026-06-07T21:03:53Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor health endpoint unreachable (recurring, check A-13)",
+        "severity": "WARN",
+        "status": "NEW",
         "payload_ref": null
       }
     ],
