@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T21:25:56Z",
+    "_updated_at": "2026-06-07T23:16:03Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -2981,15 +2981,20 @@
       },
       {
         "id": "PDFX-SINGLE-WORKER-BLOCKING",
-        "title": "Single-worker CPU blocking on in-process OCR",
+        "title": "Single-worker CPU blocking on in-process OCR — event loop blocks /health during /extract (A-20)",
         "owner": "dev-pdf-extractor",
         "status": "TODO",
         "zone": "apps/pdf-extractor/",
-        "type": "backlog",
+        "type": "FIX",
         "size": "S",
-        "priority": "P2",
+        "priority": "high",
         "created_at": "2026-06-07T11:17:26Z",
-        "note": "In-process OCR pegs CPU 104%, blocks ALL requests (incl. /health → docker health flaps unhealthy under load; traversal probe timed out >4min). Consider worker pool / offload to existing async endpoints / request queue. Characteristic, not regression. | Upgraded: service HANGS (not queues) ALL requests during long OCR — accepts TCP, never responds; 120s aborts on tier-1a/1b. The new pdf_path tier is effectively unavailable whenever a big job runs. Worker queue / separate health thread needed (dev-pdf-extractor)."
+        "note": "In-process OCR pegs CPU 104%, blocks ALL requests (incl. /health → docker health flaps unhealthy under load; traversal probe timed out >4min). Consider worker pool / offload to existing async endpoints / request queue. Characteristic, not regression. | Upgraded: service HANGS (not queues) ALL requests during long OCR — accepts TCP, never responds; 120s aborts on tier-1a/1b. The new pdf_path tier is effectively unavailable whenever a big job runs. Worker queue / separate health thread needed (dev-pdf-extractor). | [A-20 ESCALATION 2026-06-07T23:04Z system-auditor, sev HIGH] Container unhealthy AFTER asyncio-offload commits 48a64056/97367124 (recreated 21:36Z — rebuild ruled out). App serves /health 200 continuously BUT docker healthcheck curl exceeds 10s timeout while /extract POST in flight — event loop still blocks during extraction; offload fix INCOMPLETE. Service functional (extract 200 OK) — degraded health signal only. Fix directions: move blocking extract to process pool (root cause) AND/OR /health fast-path + healthcheck timeout bump (mitigation). AC: A-20 clears — container reports healthy while a long /extract is in flight; /health responds <10s under extraction load; no signal_queue A-20 row 48h. Baseline: pdf-extractor unit suite KNOWN-RED (FIX-PDFX-TEST-LOOP-POLLUTION, 36 order-dependent failures) — compare against that baseline, do not claim regression from pre-existing reds. Zone safe to start now (does not touch apps/mcp-server).",
+        "files": [
+          "apps/pdf-extractor/application/extract_tables_usecase.py",
+          "apps/pdf-extractor/main.py",
+          "docker-compose.yml"
+        ]
       },
       {
         "id": "FIX-BCTC-MAGNITUDE-NORMALIZE",
@@ -3178,6 +3183,22 @@
         "note": "[router repair_task_request 2026-06-07T22:09:54Z HIGH, row router-2026-06-07T22:09:54Z-aud-sql-mod] SQLite needs long-form modifiers; short form makes datetime() return NULL so every comparison is NULL -> count=0. Proven tonight: C-06/C-07 fired false CRITICAL (raw market.db: market_messages 3h=1, agent_signals 24h=84; router retraction msg 2728); zero-expectation checks C-08/C-10/C-16/B-13 silently false-PASS since inception. Proof: sqlite3 :memory: \"SELECT datetime(now_kw,-24h_kw) IS NULL\" -> 1. Reports 3087/3088 resolve as false-positive against this task. Sensor-integrity = top priority: a blind auditor poisons every downstream anomaly bridge.",
         "done_at": "2026-06-08T00:24:40Z",
         "evidence_note": "commit 8b59cdf9: 11 short-form modifiers replaced long-form in main.md (C-04,C-06,C-07,C-08,C-09,C-10,C-11,C-16 table + B-13 inline + Tier-2 bun snippets); NULL-guard block added; AC gate grep -cE returns 0; smoke-proof all 6 long-form modifiers return non-NULL."
+      },
+      {
+        "id": "FIX-MACRO-GO-FIXTURE-FALLBACK",
+        "title": "FIX-MACRO-GO-FIXTURE-FALLBACK (apps/macro-indicators) — Go fallback chain must try mcp-server bridged FRED value (tier 2/3) before hardcoded fixture 5.33 (tier 4)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "TODO",
+        "size": "S",
+        "priority": "medium",
+        "zone": "apps/macro-indicators/",
+        "files": [
+          "apps/macro-indicators/pkg/application/usecases.go",
+          "apps/macro-indicators/pkg/infrastructure/repositories.go"
+        ],
+        "created_at": "2026-06-07T23:16:03Z",
+        "note": "From router signal router-2026-06-07T22:53:07Z-macro-fixture-fallback (sev MEDIUM, repair_task_request). Evidence (router raw-verified): Go service serves fedFundsRate=5.33 fixtureFedFundsRate (source_tier 4) whenever direct FRED fetch fails — every weekend; restart verified NOT to fix. Never consults mcp-server bridged DB value (3.62 live in fred_series_daily). Honest-flagged (is_estimate:true, regime suppressed) so likely weekday self-heal, but structural defect. Fix: fallback chain direct-FRED -> bridged DB value via repositories.go GetFedFundsRate path (tier 2/3) -> fixture (tier 4) last resort; preserve honest provenance (source_tier + is_estimate per actual source). Key sites: usecases.go:55 fixtureFedFundsRate, usecases.go:~430 fallback, repositories.go:549-575 GetFedFundsRate/GetFedFundsSourceDate + effrStaleBound. AC: weekend-simulated test (direct fetch fails, DB row present) serves bridged value tier 2/3 not 5.33; fixture only when BOTH fail; go test ./... green in zone. Zone safe to start now (does not touch apps/mcp-server)."
       }
     ],
     "archive": [],
@@ -4941,8 +4962,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T23:11:36Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-07T23:16:03Z",
+    "_updated_by": "po",
     "rows": [
       {
         "id": "sau-2026-06-0723-04-13-a20",
@@ -4952,10 +4973,11 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 health endpoint unreachable (unhealthy status) | Router raw-verify 23:08Z: container recreated 21:36Z AFTER fix commits 48a64056/97367124 (18:57/19:11Z) — rebuild hypothesis RULED OUT. App logs show /health 200 OK continuously, but docker healthcheck curl exceeded 10s timeout (exit=-1, 0 bytes) — health probe starves when /extract POST in flight. Asyncio offload fix INCOMPLETE: event loop still blocks during extraction. Suggested: move blocking extract work to process pool or raise healthcheck timeout + add /health fast-path.",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "RESOLVED",
         "zone_owner": "dev-pdf-extractor",
         "check_id": "A-20",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolution": "PO triage 2026-06-07: deduped into existing backlog task PDFX-SINGLE-WORKER-BLOCKING — escalated P2->high, A-20 evidence+AC appended, files added. No new task (same root cause)."
       },
       {
         "id": "sau-2026060719035-a13",
@@ -5304,10 +5326,11 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "MEDIUM",
-        "status": "READ",
+        "status": "RESOLVED",
         "ts": "2026-06-07T22:53:07Z",
         "summary": "macro-indicators Go service serves fedFundsRate=5.33 from hardcoded fixture (source_tier 4) whenever its direct FRED fetch fails (every weekend). Restart verified NOT to fix (probed 22:52 post-restart). mcp-server DB has correct bridged value 3.62 (tracked_indicators, FIX-FRED-YAHOO-WEEKEND-STALE c7a6de6c) but the Go service never consults it. Honest flagging present (is_estimate:true, regime suppressed per DSI-INV-1) so not served-as-fresh; likely self-heals weekdays when FRED publishes. Structural fix: Go fallback chain should try mcp-server bridged value (tier 2/3) before fixture (tier 4). Zone: dev-macro-indicators (apps/macro-indicators).",
-        "suggested_task_id": "FIX-MACRO-GO-FIXTURE-FALLBACK"
+        "suggested_task_id": "FIX-MACRO-GO-FIXTURE-FALLBACK",
+        "resolution": "PO triage 2026-06-07: created backlog task FIX-MACRO-GO-FIXTURE-FALLBACK (medium, zone apps/macro-indicators/). No duplicate found (FU-MACRO-SNAPSHOT-TIER-WORSTOF is mcp-server wrapper tier — different defect)."
       }
     ],
     "archive": [
