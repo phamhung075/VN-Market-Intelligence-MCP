@@ -4921,8 +4921,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T21:14:06Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-07T22:09:54Z",
+    "_updated_by": "router",
     "rows": [
       {
         "id": "sau-2026060719035-a13",
@@ -5262,8 +5262,11 @@
         "type": "db_integrity_breach",
         "summary": "market_messages 3h count=0 (check C-06)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolution": "FALSE-POSITIVE — router raw-verified market.db: market_messages 3h count=1 (last sent_at 19:51:38). Auditor SQL used invalid SQLite modifier -3h so datetime() returned NULL and count=0. Telegram 2726 retracted.",
+        "resolved_at": "2026-06-07T22:09:54Z",
+        "resolved_by": "router"
       },
       {
         "id": "sau-2026-06-07T22:05:03Z-c07",
@@ -5273,6 +5276,20 @@
         "type": "db_integrity_breach",
         "summary": "agent_signals 24h count=0 (check C-07)",
         "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolution": "FALSE-POSITIVE — router raw-verified market.db: agent_signals 24h count=84 (last created_at 22:00:00). Same invalid modifier -24h gave NULL and count=0. Telegram 2727 retracted.",
+        "resolved_at": "2026-06-07T22:09:54Z",
+        "resolved_by": "router"
+      },
+      {
+        "id": "router-2026-06-07T22:09:54Z-aud-sql-mod",
+        "ts": "2026-06-07T22:09:54Z",
+        "from": "router",
+        "to": "po",
+        "type": "repair_task_request",
+        "summary": "system-auditor flow main.md hardcodes invalid SQLite modifiers (-3h/-24h/-26h/-48h/-72h/-7d) in checks C-04,C-06..C-11,C-16,B-13: datetime() returns NULL. Checks expecting >0 fire false CRITICAL (C-06/C-07 tonight); checks expecting 0 silently false-PASS (blind since inception). Fix: rewrite to SQLite long-form modifiers (minus-N hours / minus-N days) + NULL-guard (assert datetime modifier result IS NOT NULL before compare). Proof: sqlite3 :memory: shows -24h modifier IS NULL = 1.",
+        "severity": "HIGH",
         "status": "NEW",
         "payload_ref": null
       }
