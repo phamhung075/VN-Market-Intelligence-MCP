@@ -1,5 +1,13 @@
 # Agent Father — Notebook
 
+## c287 · 2026-06-07 — Fix system-auditor Tier-3 DB checks (FIX-AUDITOR-DB-CHECKS-HOSTSIDE)
+
+- Change: Rewrote `### DB Write Integrity Checks (C-01 through C-16)` in `docs/agents/system-auditor/flow/main.md`. All 16 checks now run host-side via `sqlite3 "file:apps/mcp-server/data/<db>.db?mode=ro"` — no docker exec, no write-mode open. Schema corrected: `stock_prices`→`daily_ohlcv(code,date)`, `ticker`→`action_code`, `updated_at`→`parsed_at/sent_at/fetched_at`, `bctc_queue`→`bctc_vps_queue`, `url`→`source_url`, `news_articles`→`market_messages`, `indicator_key`→`country`, `pdf_extractions`→`pdf_documents`, `completed`→`done`, `alerts` confirmed in market.db (not alert_engine.db — 0-byte file). C-12 now skips 0-byte DBs. C-13 uses host `stat` not docker ls. Size-justification updated to reflect host-side rewrite + all main-side content preserved (PLAN-ONLY invariant, SLA resolver, D-BCTC-EVAL, signal_queue L438 mandate, RAW-CITE GATE, settled-write).
+- Files modified: 1 (docs/agents/system-auditor/flow/main.md, 519L→523L after rebase merge)
+- Before/after: 6/16 checks executable → 16/16 checks (all execute without docker exec sqlite3)
+- Rebase note: Prior run (commit 97090bc0) branched from origin/main 691 commits stale — cherry-pick conflicted. Rebase onto current main: preserved all main-side additions (PLAN-ONLY block, tier-early-exit logic, SLA resolver, D-BCTC-EVAL orch-state signal_queue emit, RAW-CITE gate) and applied host-side C-01–C-16 rewrite on top.
+- Commit: see git log (rebased onto main)
+
 ## c286 · 2026-06-07T — WF-3-IMPL: INV-GATEWAY-1 documentation (WORKFLOW-FLUIDITY last task)
 
 - Task: WF-3-IMPL (FIX, S). Implements architect ruling §5+§7 sub-tasks A+B.

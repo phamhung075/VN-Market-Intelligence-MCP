@@ -1,4 +1,4 @@
-<!-- size-justification: ~500L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
+<!-- size-justification: ~523L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -356,26 +356,31 @@ docker exec mcp-server ls /app/data/pdfs/ | wc -l
 - > 0 → PASS; 0 → WARN
 
 ### DB Write Integrity Checks (C-01 through C-16)
-Read DB paths from system-map.json infrastructure.databases. Run each query via `docker exec mcp-server sqlite3 <path> "<query>"`:
+Read DB paths from system-map.json infrastructure.databases (host-side volume: `apps/mcp-server/data/`).
+Run all queries host-side read-only — NEVER open DB in write mode, NEVER stop/start containers:
+```bash
+# Invocation pattern (read-only URI):
+sqlite3 "file:apps/mcp-server/data/<db>.db?mode=ro" "<query>"
+```
 
-| check_id | DB | Query | Pass |
+| check_id | DB | Host-side read-only query | Pass |
 |---|---|---|---|
-| C-01 | stock_price.db | `SELECT count(DISTINCT ticker) FROM stock_prices WHERE created_at > datetime('now','-24h')` | ≥ 25 |
-| C-02 | stock_price.db | `SELECT count(*) FROM stock_prices WHERE created_at > datetime('now','-24h')` | > 0 |
-| C-03 | market.db | `SELECT count(DISTINCT ticker) FROM financial_reports WHERE period LIKE '%Q1%2026%'` | ≥ 26 (in Q1 window Apr–May) |
-| C-04 | market.db | `SELECT count(*) FROM financial_reports WHERE updated_at > datetime('now','-7d') AND confidence < 0.2` | ≤ 5 |
-| C-05 | market.db | `SELECT count(*) FROM bctc_queue WHERE url LIKE '%ssc.gov.vn%' AND status != 'skipped'` | 0 |
-| C-06 | market.db | `SELECT count(*) FROM news_articles WHERE created_at > datetime('now','-3h')` | > 0 |
+| C-01 | market.db | `SELECT count(DISTINCT code) FROM daily_ohlcv WHERE date >= date('now','-1 day')` | ≥ 25 |
+| C-02 | market.db | `SELECT count(*) FROM daily_ohlcv WHERE date >= date('now','-1 day')` | > 0 |
+| C-03 | market.db | `SELECT count(DISTINCT action_code) FROM financial_reports WHERE period_year=2026 AND period_quarter=1` | ≥ 26 (in Q1 window Apr–May) |
+| C-04 | market.db | `SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7d') AND extraction_confidence < 0.2` | ≤ 5 |
+| C-05 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE source_url LIKE '%ssc.gov.vn%' AND status != 'skipped'` | 0 |
+| C-06 | market.db | `SELECT count(*) FROM market_messages WHERE sent_at > datetime('now','-3h')` | > 0 |
 | C-07 | market.db | `SELECT count(*) FROM agent_signals WHERE created_at > datetime('now','-24h')` | > 0 |
-| C-08 | alert_engine.db + market.db | `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.signal_id = s.id WHERE s.id IS NULL AND a.created_at > datetime('now','-24h')` | 0 |
-| C-09 | market.db | `SELECT count(DISTINCT indicator_key) FROM macro_indicators WHERE updated_at > datetime('now','-26h')` | ≥ 8 |
-| C-10 | pdf_extractor.db | `SELECT count(*) FROM pdf_extractions WHERE status = 'failed' AND created_at > datetime('now','-24h')` | ≤ 2 |
-| C-11 | pdf_extractor.db | `SELECT count(*) FROM pdf_extractions WHERE status = 'completed' AND created_at > datetime('now','-48h')` | > 0 (earnings window) |
-| C-12 | all 6 DBs | `PRAGMA integrity_check` | `ok` |
-| C-13 | all 6 DBs | `ls -lh /app/data/*.db-wal` | < 50MB each |
-| C-14 | stock_price.db | top-3 tickers row share < 60% of last-24h rows | top-3 < 60% |
-| C-15 | market.db | `PRAGMA table_info(financial_reports)` — check ticker, period, revenue, confidence columns | all 4 present |
-| C-16 | market.db | `SELECT count(*) FROM bctc_queue WHERE status='pending' AND created_at < datetime('now','-72h')` | 0 |
+| C-08 | market.db | `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.id WHERE s.id IS NULL AND a.triggered_at > datetime('now','-24h')` | 0 |
+| C-09 | market.db | `SELECT count(DISTINCT country) FROM macro_indicators WHERE fetched_at > datetime('now','-26h')` | ≥ 8 |
+| C-10 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'failed' AND extracted_at > datetime('now','-24h')` | ≤ 2 |
+| C-11 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'done' AND extracted_at > datetime('now','-48h')` | > 0 (earnings window) |
+| C-12 | all non-empty DBs | `PRAGMA integrity_check` — skip DBs with 0-byte file (alert_engine.db, stock_price.db when empty) | `ok` |
+| C-13 | host filesystem | `stat -f%z apps/mcp-server/data/*.db-wal 2>/dev/null` (macOS) or `stat -c%s` (Linux) — check each WAL | < 52428800 bytes (50MB) each |
+| C-14 | market.db | top-3 `code` row share of `daily_ohlcv` last-24h: `WITH t AS (SELECT code,count(*) c FROM daily_ohlcv WHERE date>=date('now','-1 day') GROUP BY code ORDER BY c DESC LIMIT 3) SELECT round(100.0*sum(c)/(SELECT count(*) FROM daily_ohlcv WHERE date>=date('now','-1 day')),1) FROM t` | < 60% |
+| C-15 | market.db | `PRAGMA table_info(financial_reports)` — check action_code, period_year, net_revenue, extraction_confidence present | all 4 present |
+| C-16 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72h')` | 0 |
 
 Also call:
 ```
