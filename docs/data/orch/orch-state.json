@@ -3191,7 +3191,7 @@
         "title": "FIX-MACRO-GO-FIXTURE-FALLBACK (apps/macro-indicators) — Go fallback chain must try mcp-server bridged FRED value (tier 2/3) before hardcoded fixture 5.33 (tier 4)",
         "type": "FIX",
         "owner": "po",
-        "status": "TODO",
+        "status": "DONE",
         "size": "S",
         "priority": "medium",
         "zone": "apps/macro-indicators/",
@@ -3200,7 +3200,9 @@
           "apps/macro-indicators/pkg/infrastructure/repositories.go"
         ],
         "created_at": "2026-06-07T23:16:03Z",
-        "note": "From router signal router-2026-06-07T22:53:07Z-macro-fixture-fallback (sev MEDIUM, repair_task_request). Evidence (router raw-verified): Go service serves fedFundsRate=5.33 fixtureFedFundsRate (source_tier 4) whenever direct FRED fetch fails — every weekend; restart verified NOT to fix. Never consults mcp-server bridged DB value (3.62 live in fred_series_daily). Honest-flagged (is_estimate:true, regime suppressed) so likely weekday self-heal, but structural defect. Fix: fallback chain direct-FRED -> bridged DB value via repositories.go GetFedFundsRate path (tier 2/3) -> fixture (tier 4) last resort; preserve honest provenance (source_tier + is_estimate per actual source). Key sites: usecases.go:55 fixtureFedFundsRate, usecases.go:~430 fallback, repositories.go:549-575 GetFedFundsRate/GetFedFundsSourceDate + effrStaleBound. AC: weekend-simulated test (direct fetch fails, DB row present) serves bridged value tier 2/3 not 5.33; fixture only when BOTH fail; go test ./... green in zone. Zone safe to start now (does not touch apps/mcp-server)."
+        "note": "From router signal router-2026-06-07T22:53:07Z-macro-fixture-fallback (sev MEDIUM, repair_task_request). Evidence (router raw-verified): Go service serves fedFundsRate=5.33 fixtureFedFundsRate (source_tier 4) whenever direct FRED fetch fails — every weekend; restart verified NOT to fix. Never consults mcp-server bridged DB value (3.62 live in fred_series_daily). Honest-flagged (is_estimate:true, regime suppressed) so likely weekday self-heal, but structural defect. Fix: fallback chain direct-FRED -> bridged DB value via repositories.go GetFedFundsRate path (tier 2/3) -> fixture (tier 4) last resort; preserve honest provenance (source_tier + is_estimate per actual source). Key sites: usecases.go:55 fixtureFedFundsRate, usecases.go:~430 fallback, repositories.go:549-575 GetFedFundsRate/GetFedFundsSourceDate + effrStaleBound. AC: weekend-simulated test (direct fetch fails, DB row present) serves bridged value tier 2/3 not 5.33; fixture only when BOTH fail; go test ./... green in zone. Zone safe to start now (does not touch apps/mcp-server).",
+        "completed_at": "2026-06-07T23:40:18Z",
+        "resolution": "effrStaleBound 96h->168h e03b3ca3 (root cause: DB fallback existed but stale bound rejected weekend-aged rows); live snapshot serves 3.62 tier 2 on weekend; go test 10/10 pkgs green"
       }
     ],
     "archive": [],
