@@ -1,5 +1,51 @@
 <!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c064 · 2026-06-07T01:42:52Z
+### Audit Run Tier-1 (01:42 UTC 2026-06-07)
+- Tier: 1 (runtime ping) | Services: 6 checked
+- Anomalies: 0 new | Status: HEALTHY
+
+### RAW-PROBE: 2026-06-07T01:42:05Z
+```
+=== AUDITOR PROBE 2026-06-07T01:42:05Z ===
+
+--- docker ps -a ---
+NAMES                                           STATUS                   IMAGE                                         CREATED
+vn-market-intelligence-mcp-mcp-server-1         Up 8 minutes (healthy)   vn-market-intelligence-mcp-mcp-server         8 minutes ago
+vn-market-intelligence-mcp-frontend-1           Up 4 hours (healthy)     vn-market-intelligence-mcp-frontend           4 hours ago
+vn-market-intelligence-mcp-macro-indicators-1   Up 4 hours (healthy)     vn-market-intelligence-mcp-macro-indicators   4 hours ago
+headroom-proxy                                  Up 7 hours               headroom-proxy:local                          7 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1      Up 14 hours (healthy)    vn-market-intelligence-mcp-pdf-extractor      14 hours ago
+vn-market-intelligence-mcp-api-gateway-1        Up 14 hours (healthy)    vn-market-intelligence-mcp-api-gateway        14 hours ago
+mcp-gateway                                     Up 10 days (healthy)     mcpservergatway-gateway                       2 weeks ago
+
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
+
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=9.97% MemUsage=204.2MiB / 2GiB
+
+--- disk df -h / ---
+Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
+/dev/disk1s4s1   233Gi    13Gi    21Gi    40%    393k  217M    0%   /
+
+=== PROBE DONE ===
+```
+
+**Tier-1 verdicts:**
+- [A-01..A-11] Container status: All 6 host_runtime_set services UP (healthy)✓
+- [A-12..A-20] Health endpoints: mcp-server:3000✓, api-gateway:4000✓, macro-indicators:5004✓, pdf-extractor:5001✓, frontend:3001✓
+- [A-21] Restart count: 0 (≤2)✓
+- [A-30] Memory: 9.97% (< 85%)✓
+- [A-32] Disk: 40% (< 85%)✓
+
 ## c063 · 2026-06-07T01:12:24Z
 ### Audit Run Tier-1 (01:12 UTC 2026-06-07)
 - Tier: 1 (runtime ping) | Services: 6 checked
