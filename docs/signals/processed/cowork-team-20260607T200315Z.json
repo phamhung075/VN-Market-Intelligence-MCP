@@ -1,0 +1,53 @@
+{
+  "fire_time": "2026-06-07T20:01:16Z",
+  "nominal_tick": "2026-06-07T20:00:00Z",
+  "classification": "FIRE",
+  "reason": "2 gatherer slots cadence-due (240min elapsed since 2026-06-06T16:04:30Z) — both tokens won, both spawned background",
+  "matched_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "won_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "held_by_other": [],
+  "all_held": false,
+  "spawned": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "silent": false,
+  "drift_min": 0,
+  "errors": [],
+  "pressure_mode": "adaptive",
+  "calendar_status": "off_market",
+  "suppressed_calendar": [],
+  "suppressed_cadence": [],
+  "downgraded": [],
+  "due_reasons": {
+    "news-scout-offhours": "cadence",
+    "market-watcher-offhours": "cadence"
+  },
+  "cadence_minutes": {
+    "news-scout-offhours": 240,
+    "market-watcher-offhours": 240
+  },
+  "last_fired_timestamp": "2026-06-07T20:03:10Z",
+  "last_fired_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "last_fired_write_errors": null,
+  "leader_lock": "own-held (heartbeated, expires 1780864305)",
+  "dev_head": null,
+  "devq": 0,
+  "signal_backlog": 0,
+  "note": "Tick 5. First FIRE via CronCreate lane — no peer token contention (RemoteTrigger lane idle for gatherer slots). Tick snapshot written docs/data/cycle-snapshot-20:02.json; tokens released try/finally; pressure emit ok (snapshot promoted). Signal dev-20260607T193304 (to=po, FIX-PDFX-TEST-LOOP-POLLUTION) left NEW for dev-team :07 drain — deliberate, see tick-4 note.",
+  "_processed": {
+    "fingerprint": "c204e0b814f4d91817fa43305bf4b46f9f7dfe240260544bb08458d7ec08b13d",
+    "processedAt": "20260607T201218Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

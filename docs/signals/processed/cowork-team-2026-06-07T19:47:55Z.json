@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-06-07T19:47:55Z",
-    "matched_slots": ["chef-evening"],
-    "won_slots": ["chef-evening"],
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
     "silent": false,
     "drift_min": 0,
     "errors": [],
@@ -17,10 +23,16 @@
     "suppressed_calendar": [],
     "suppressed_cadence": [],
     "downgraded": [],
-    "due_reasons": { "chef-evening": "cron" },
-    "cadence_minutes": { "chef-evening": null },
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
     "last_fired_timestamp": "2026-06-07T19:47:37Z",
-    "last_fired_slots": ["chef-evening"],
+    "last_fired_slots": [
+      "chef-evening"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -32,5 +44,11 @@
     "note": "chef-evening guaranteed slot fired; tick snapshot cycle-snapshot-19:47.json pre-staged; signal_queue row dev-20260607T193304 left NEW (dev-team-bound)"
   },
   "priority": "low",
-  "createdAt": "2026-06-07T19:47:55Z"
+  "createdAt": "2026-06-07T19:47:55Z",
+  "_processed": {
+    "fingerprint": "000d7dfcff89e34889d0701e159336551b669face572dbee2e58d422f318d4d2",
+    "processedAt": "20260607T201218Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

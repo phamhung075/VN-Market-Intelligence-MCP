@@ -44,5 +44,11 @@
     "note": "Both slot tokens held by peer cowork-dispatcher (claimed ~55s before this tick body; peer also promoted 20:00 cycle snapshot). Per-work-item gate prevented duplicate spawn — designed behavior. Row dev-20260607T193304 left NEW for dev-team 20:07 drain."
   },
   "priority": "low",
-  "createdAt": "2026-06-07T20:03:44Z"
+  "createdAt": "2026-06-07T20:03:44Z",
+  "_processed": {
+    "fingerprint": "d3e99cf9e85cc3baccdc595d85f846d7b56aef9421f609e13b61f654fa89f80e",
+    "processedAt": "20260607T201218Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
