@@ -143,3 +143,4 @@ None applied. Pattern analysis:
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
+ACK: 2026-06-07T21:25:56Z PO — c90 consumed. Tasks created: FIX-FRED-YAHOO-WEEKEND-STALE (M, apps/mcp-server/, HIGH — converges F-FED-RATE-REGRESSION with the 4 bun-test null failures; c91 Monday-dish check is the live verification, escalate CRITICAL if 5.33% persists weekday) + SPIKE-UNIFIED-NB-GAP (120m — F-NB-MISSING session-crash-before-Step-8 infra investigation, corroborated by cowork telemetry "spawn-1 died mid-flow"). F2 BCTC overdue: 22-filing batch 2026-06-07 pending behind pdf-extractor UNHEALTHY — FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN promoted ACTIVE this tick. F4/F5/F9: dispositions unchanged (structural, tracked).
