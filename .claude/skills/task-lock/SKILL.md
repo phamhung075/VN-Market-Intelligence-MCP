@@ -92,6 +92,28 @@ Full design rationale: `docs/architecture-briefs/2026-05-21-task-lock-phase3-dev
 
 ---
 
+## INV-GATEWAY-1 — Lock Ops Require Gateway Access: Dispatcher-Scope Only
+
+**Ruling:** 2026-06-07, WF-3 spike. See `docs/protocols/dev-star-gateway-binding.md`.
+
+`task_claim`, `task_heartbeat`, `task_release`, and `commit-mutex:main` calls all require
+`mcp__claude_ai_gateway__call_tool`. Dev-*/qa/ba/pm/architect **specialist** sub-agents do NOT
+have this tool in their spawned tool surface (package omission, not an inheritance bug).
+
+**Invariant (enforced):**
+- All lock operations for dev-* specialist work are the SOLE responsibility of the outer
+  **dispatcher session** (dev-team flow runner or developer team-lead).
+- Specialist flows MUST NOT call `task_claim`, `task_release`, or invoke `commit-mutex` skill.
+- Specialists write pipeline state via `.head` atomic jq + temp-rename (no MCP needed).
+- The dispatcher-wrap `finally` block releases the sprint-task lock after the spawn returns.
+- Phase 4 parallel worktree sessions MUST add gateway binding to specialist packages before
+  enabling direct lock ops in specialists (gated in WF-3-IMPL).
+
+→ Full ruling and options table: `docs/protocols/dev-star-gateway-binding.md`
+→ commit-mutex scope note: `.claude/skills/commit-mutex/SKILL.md` (INV-GATEWAY-1 header)
+
+---
+
 ## Phase Status (as of 2026-05-20)
 
 - Phase 1 SHIPPED 2026-05-20: coordination.db + 4 MCP tools (task_claim, task_heartbeat, task_release, task_list_held). Commits: 79ac45e9, b3d6ff80.
