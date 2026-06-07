@@ -1,0 +1,48 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-07T20:03:44Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [],
+    "held_by_other": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "all_held": true,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "off_market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "HELD",
+    "reason": "held",
+    "nominal_tick": "20:00",
+    "leader_lock": "renewed_same_owner_agent",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "Both slot tokens held by peer cowork-dispatcher (claimed ~55s before this tick body; peer also promoted 20:00 cycle snapshot). Per-work-item gate prevented duplicate spawn — designed behavior. Row dev-20260607T193304 left NEW for dev-team 20:07 drain."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-07T20:03:44Z"
+}
