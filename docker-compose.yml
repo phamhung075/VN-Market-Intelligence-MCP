@@ -107,7 +107,11 @@ services:
       - -f
       - http://localhost:5001/health
       interval: 30s
-      timeout: 10s
+      # PDFX-SINGLE-WORKER-BLOCKING: bumped from 10s to 30s.
+      # ProcessPoolExecutor root-cause fix isolates OCR CPU to a child process
+      # so /health should respond in <1s even under extraction load. The 30s
+      # window is a safety margin for container startup + first-run model init.
+      timeout: 30s
       retries: 3
       start_period: 15s
     deploy:

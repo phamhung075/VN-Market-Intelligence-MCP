@@ -32,6 +32,14 @@ Ports injected:
                           (fake: FakeOcrPort in tests — returns pre-built pages)
                           (default None → falls back to empty pages, preserves backward-compat
                            with existing unit tests that inject fake assemblers)
+    - ocr_executor        Optional[Executor] — PDFX-SINGLE-WORKER-BLOCKING fix.
+                          When supplied (production: ProcessPoolExecutor(max_workers=1)),
+                          OCR worker functions from infrastructure.ocr_worker are dispatched
+                          via loop.run_in_executor() into a separate OS process.
+                          This isolates Tesseract CPU from the uvicorn event loop process,
+                          allowing /health to respond even when CPU is saturated at 100%+.
+                          Default None → falls back to asyncio.to_thread() (backward-compat
+                          for unit tests that inject fake OcrPort adapters).
 
 Balance-check logic (pure):
     Total Assets (code 270) == Total Liabilities (code 300) + Total Equity (code 400)
@@ -57,7 +65,7 @@ BT-5 Cross-check Gate (reconciliation gate — BEFORE push):
 BCTC balance-sheet codes used for the identity check:
     - "270" → Total Assets (TỔNG CỘNG TÀI SẢN)
     - "300" → Total Liabilities (NỢ PHẢI TRẢ)
-    - "400" → Total Equity (VỐN CHỦ SỞ HỮU)
+    - "400" → Total Equity (VỐN CHỦ SỞ HỨU)
     - "440" → also equity-side subtotal; used as fallback for equity if 400 is absent
 
 FPT golden balance-check (regression anchor from BT-0 spike eval):
@@ -71,6 +79,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from concurrent.futures import Executor
 from typing import Dict, List, Optional
 
 from domain.modules.financial_reports.ports import (
@@ -244,8 +253,10 @@ class ExtractTablesUseCase:
         table_push_client = TablePushClient(mcp_server_url=cfg.mcp_server_url)
         alert_adapter     = TelegramAlertAdapter()
         ocr_adapter       = PdfOcrAdapter()          # BT-3-D
+        ocr_executor      = ProcessPoolExecutor(max_workers=1)  # PDFX-SINGLE-WORKER-BLOCKING
         extract_tables_usecase = ExtractTablesUseCase(
-            table_extractor, table_push_client, alert_adapter, ocr_adapter
+            table_extractor, table_push_client, alert_adapter, ocr_adapter,
+            ocr_executor=ocr_executor,
         )
 
     BT-3-D OCR wiring:
@@ -254,14 +265,22 @@ class ExtractTablesUseCase:
         are used directly. When pages are absent or have no "text", the injected
         ocr_port auto-locates the balance-sheet section and OCRs only those pages.
 
+    PDFX-SINGLE-WORKER-BLOCKING process pool wiring:
+        When ocr_executor is supplied, Path B dispatches work via
+        loop.run_in_executor(ocr_executor, worker_fn, args...) using picklable
+        functions from infrastructure.ocr_worker. The OCR runs in a separate OS
+        process, isolating CPU saturation from the uvicorn event loop process.
+        When ocr_executor is None (unit tests, backward-compat), falls back to
+        asyncio.to_thread() with the injected ocr_port methods.
+
     BT-5 gate:
         After balance-check, before push — runs _run_reconciliation_gate().
         If gate fires: push is SKIPPED, blocked_reason="cross_check_fail" returned,
         WORK alert emitted via injected alert_port.
         If gate passes: push proceeds, blocked_reason=None in result.
 
-    Backward-compat: alert_port and ocr_port default to None.
-    Existing unit tests (BT-3-B, BT-5) use fake assemblers and are unaffected.
+    Backward-compat: alert_port, ocr_port, and ocr_executor default to None.
+    Existing unit tests (BT-3-B, BT-5, TC11) use fake OcrPort and are unaffected.
     """
 
     def __init__(
@@ -270,6 +289,7 @@ class ExtractTablesUseCase:
         table_push_client: TablePushClientPort,
         alert_port: Optional[AlertPort] = None,
         ocr_port: Optional[OcrPort] = None,
+        ocr_executor: Optional[Executor] = None,
     ) -> None:
         """
         Args:
@@ -285,11 +305,19 @@ class ExtractTablesUseCase:
                                Default None → no OCR (backward-compat for
                                unit tests that inject fake assemblers with
                                pre-built row fixtures).
+            ocr_executor:      Optional[Executor] — PDFX-SINGLE-WORKER-BLOCKING.
+                               When provided (production: ProcessPoolExecutor),
+                               OCR work runs in a separate process via
+                               loop.run_in_executor(). Uses picklable worker
+                               functions from infrastructure.ocr_worker.
+                               Default None → asyncio.to_thread() fallback
+                               (unit-test backward-compat).
         """
         self._extractor = table_extractor
         self._push_client = table_push_client
         self._alert_port = alert_port
         self._ocr_port = ocr_port
+        self._ocr_executor = ocr_executor
 
     async def execute(
         self,
@@ -383,29 +411,68 @@ class ExtractTablesUseCase:
             # locate_balance_sheet_pages() uses pdfplumber native text (fast, no OCR).
             # ocr_pages() uses Tesseract vie+eng on the located pages only (sequential).
             #
-            # FIX (HEALTH-BLOCK): both calls are CPU-bound / blocking (pdfplumber I/O
-            # + Tesseract subprocess). Run via asyncio.to_thread() so the event loop
-            # is never blocked and /health always responds during OCR work.
-            # Root cause: direct synchronous call here pinned the event loop thread at
-            # 100% CPU, making every request including /health unresponsive for the
-            # full Tesseract duration (~10-30s per page on CPU).
-            ocr_port = self._ocr_port
-            bs_page_numbers: List[int] = await asyncio.to_thread(
-                ocr_port.locate_balance_sheet_pages, pdf_path
-            )
-            logger.info(
-                "ExtractTablesUseCase: auto-located %d BS pages: %s",
-                len(bs_page_numbers),
-                bs_page_numbers,
-            )
-            pages = await asyncio.to_thread(
-                ocr_port.ocr_pages, pdf_path, bs_page_numbers
-            )
-            logger.info(
-                "ExtractTablesUseCase: OCR complete — %d pages, total chars=%d",
-                len(pages),
-                sum(len(p.get("text", "")) for p in pages),
-            )
+            # PDFX-SINGLE-WORKER-BLOCKING root-cause fix:
+            #   When ocr_executor (ProcessPoolExecutor) is injected, dispatch picklable
+            #   worker functions from infrastructure.ocr_worker into a separate OS
+            #   process. This fully isolates Tesseract CPU from the uvicorn event loop
+            #   process — even at 100%+ CPU, the OS schedules uvicorn independently
+            #   so /health can accept and respond within the healthcheck window.
+            #
+            #   When ocr_executor is None (unit tests / backward-compat), fall back to
+            #   asyncio.to_thread() with the injected ocr_port methods. This preserves
+            #   TC11's thread-isolation assertion (different thread from event loop).
+            if self._ocr_executor is not None:
+                # Process-pool path (production): import worker fns here to avoid
+                # importing infrastructure/ at module load time (DDD boundary).
+                # The import is deferred so application/ never has a top-level
+                # dependency on infrastructure/ — composition root injects executor.
+                import importlib
+                _ocr_worker = importlib.import_module("infrastructure.ocr_worker")
+                _locate_fn = _ocr_worker.locate_balance_sheet_pages_worker
+                _ocr_fn = _ocr_worker.ocr_pages_worker
+
+                loop = asyncio.get_running_loop()
+                bs_page_numbers: List[int] = await loop.run_in_executor(
+                    self._ocr_executor, _locate_fn, pdf_path
+                )
+                logger.info(
+                    "ExtractTablesUseCase [process-pool]: auto-located %d BS pages: %s",
+                    len(bs_page_numbers),
+                    bs_page_numbers,
+                )
+                # functools.partial needed because run_in_executor takes fn + *args
+                import functools
+                pages = await loop.run_in_executor(
+                    self._ocr_executor,
+                    functools.partial(_ocr_fn, pdf_path, bs_page_numbers),
+                )
+                logger.info(
+                    "ExtractTablesUseCase [process-pool]: OCR complete — %d pages, total chars=%d",
+                    len(pages),
+                    sum(len(p.get("text", "")) for p in pages),
+                )
+            else:
+                # Thread-pool fallback (unit tests / no-executor path).
+                # asyncio.to_thread() offloads to the default ThreadPoolExecutor —
+                # OCR runs on a worker thread, not the event loop thread.
+                # TC11 verifies this via threading.get_ident() comparison.
+                ocr_port = self._ocr_port
+                bs_page_numbers = await asyncio.to_thread(
+                    ocr_port.locate_balance_sheet_pages, pdf_path
+                )
+                logger.info(
+                    "ExtractTablesUseCase [thread-pool]: auto-located %d BS pages: %s",
+                    len(bs_page_numbers),
+                    bs_page_numbers,
+                )
+                pages = await asyncio.to_thread(
+                    ocr_port.ocr_pages, pdf_path, bs_page_numbers
+                )
+                logger.info(
+                    "ExtractTablesUseCase [thread-pool]: OCR complete — %d pages, total chars=%d",
+                    len(pages),
+                    sum(len(p.get("text", "")) for p in pages),
+                )
         else:
             # Path C: no OCR port, no pre-supplied text — backward-compat for unit tests.
             # Unit tests inject a FakeTableAssembler that returns pre-built rows regardless

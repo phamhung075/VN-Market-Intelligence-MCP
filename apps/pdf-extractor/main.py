@@ -10,6 +10,7 @@ Port: 5001 (configurable via $PORT env var)
 import logging
 import os
 import sqlite3
+from concurrent.futures import ProcessPoolExecutor
 
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
@@ -147,11 +148,20 @@ def create_app() -> FastAPI:
     table_push_client = TablePushClient(mcp_server_url=cfg.mcp_server_url)
     alert_adapter = TelegramAlertAdapter()  # BT-5: WORK-channel alert (creds from env)
     ocr_adapter = PdfOcrAdapter()           # BT-3-D: auto-locate BS pages + Tesseract OCR
+
+    # PDFX-SINGLE-WORKER-BLOCKING: ProcessPoolExecutor isolates Tesseract CPU into a
+    # separate OS process so the uvicorn event loop process stays schedulable by the OS
+    # even when OCR saturates CPU at 100%+. max_workers=1 matches D6 host-safety (no
+    # parallel Tesseract processes on the 16GB Mac — matches PekEngineAdapter Semaphore(1)).
+    # Shutdown is handled in lifespan (build_lifespan receives the executor reference).
+    ocr_executor = ProcessPoolExecutor(max_workers=1)
+
     extract_tables_usecase = ExtractTablesUseCase(
         table_extractor=table_extractor,
         table_push_client=table_push_client,
-        alert_port=alert_adapter,   # BT-5: injected AlertPort
-        ocr_port=ocr_adapter,       # BT-3-D: injected OcrPort (real Tesseract path)
+        alert_port=alert_adapter,       # BT-5: injected AlertPort
+        ocr_port=ocr_adapter,           # BT-3-D: injected OcrPort (real Tesseract path)
+        ocr_executor=ocr_executor,      # PDFX-SINGLE-WORKER-BLOCKING: process pool
     )
 
     # --- MD-EXTRACT / MD-EXTRACT-2: generic markdown table extraction use case ---
@@ -210,7 +220,7 @@ def create_app() -> FastAPI:
         title="PDF Extractor",
         version="1.0.0",
         description="Extracts structured content from Vietnamese BCTC financial PDFs.",
-        lifespan=build_lifespan(cfg),
+        lifespan=build_lifespan(cfg, ocr_executor=ocr_executor),
     )
 
     app.add_middleware(

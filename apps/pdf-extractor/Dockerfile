@@ -108,7 +108,10 @@ print('--- pek-import-chain: ALL OK ---')"
 
 EXPOSE 5001
 
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=15s \
+# PDFX-SINGLE-WORKER-BLOCKING: bumped timeout from 10s to 30s.
+# ProcessPoolExecutor fix isolates OCR CPU to child process; /health should
+# respond <1s under load. 30s is a conservative safety margin.
+HEALTHCHECK --interval=30s --timeout=30s --retries=3 --start-period=15s \
     CMD curl -f http://localhost:5001/health || exit 1
 
 CMD ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5001"]
