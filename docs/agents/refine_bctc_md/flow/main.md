@@ -27,7 +27,7 @@ UTC Mon–Fri 02:00–08:59 → log `[refine-orchestrator] OFF-HOSE active` → 
 ## Phase 0 — Fetch Report + Resume Skip-Set
 
 1. `call_tool("get_bctc_pending_refine", { limit: 1 })`
-   → `[{ id, filename, page_count, windows, confirm_status, text_status }]`
+   → `[{ id, filename, page_count, windows, confirm_status, text_status, refine_status }]`
    Empty → log `No pending reports` → EXIT.
 
 2. `report = result[0]`
@@ -62,7 +62,9 @@ Sub-flow logic (inline, not spawned — select by `window.page_type`):
 - `verify` → apply `docs/agents/refine_bctc_md/flow/disagreement-verify.md` logic
 
 ```
-is_first = (pushed_ids.size == 0)   // reset:true only on first push of a fresh PENDING report
+is_first = (pushed_ids.size == 0 OR report.refine_status == 'FAILED')
+// reset:true on fresh PENDING start OR FAILED retry — wipes poisoned units before re-processing
+// (FAILED units flagged agent_error:no_spawn_path_option_y are not real refinements; discard is correct)
 
 for window in chunk:
   result = execute_sub_flow_logic(window)   // inline per page_type above

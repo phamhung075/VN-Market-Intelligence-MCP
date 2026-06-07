@@ -57,6 +57,15 @@
 - orch-state DSI-CONSUMER-HONORS-ISESTIMATE → DONE. head updated.
 - Commits: see main commit.
 
+## c290 · 2026-06-07 — FIX-REFINE-FLOW-FAILED-RETRY: Phase 0 is_first guard for FAILED reports
+
+- Task: FIX-REFINE-FLOW-FAILED-RETRY (follow-up Action 3 from UNBLOCK-CTG-REFINE-DRAIN).
+- Root (Layer 2): Phase 2 `is_first = (pushed_ids.size == 0)` — for FAILED report (e.g. CTG 49c11ce2, 56 FAILED units), pushed_ids has 56 IDs → chunk always empty → finalize FAILED again → infinite stall loop.
+- Fix: `is_first = (pushed_ids.size == 0 OR report.refine_status == 'FAILED')`. Also updated Phase 0 step 1 inline schema comment to expose `refine_status` field (confirmed returned by getBctcPendingRefineTool.ts line 70/202).
+- Verified: tool source returns `refine_status`; live DB confirms CTG 49c11ce2 refine_status='FAILED'; Layer 1 fix already in 00bf7648.
+- Line count: 110 → 112. agent-md-factory P-1–P-6 + Q-1–Q-5 applied. No size-justification comment needed (<120L).
+- Files: docs/agents/refine_bctc_md/flow/main.md (only). Scope: worktree branch (not main directly).
+
 ## c283 · 2026-06-03 — NB-FLOW-SETTLED-WRITE: migrate APPEND-class consumers to AC-3 settled-write invariant
 
 - Task: NB-FLOW-SETTLED-WRITE (HIGH, root-cause fix). Closes notebook-bloat class.
