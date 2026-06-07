@@ -38,6 +38,22 @@
 - Baseline drift: project-stats toolCount 162→161 (af0b354a) BUT live /health still reports toolCount:162 — reconcile at next dev-mcp-server lane touch.
 - worktree.baseRef=head still set — verify before worktree-parallel dispatch.
 
+## tick-20260607T0917Z — PPC pipeline UNBLOCKED end-to-end, extract-localpath P0 fix, 2nd rebuild, first-ever PPC extraction row
+
+- **SPRINT-PPC-PDF-SOURCING**: full chain in one tick — ba (93e20f4e, stuck-row mechanics: attempts=6+last_attempt=NULL unreachable by both enricher arms) → architect (8b32f654, corrected B1: VPS script already deployed at /root/discover-bctc-urls-browser.py + live-tested; SSC has 5 PPC PDFs cached) → exec T1-T6 (bb997517 migration): row 255887 unstuck → enricher → VPS proxy URL → 16.7MB PDF pulled. T4 exposed P0 BUG.
+- **FIX-BCTC-EXTRACT-LOCALPATH (P0)** 36706ed5: pull job passed remote VPS URL to extractViaMicroservice → pdf-extractor 401 (no X-API-Key) → extraction dead for ALL VPS-sourced PDFs. Fix: route through triggerPushBctcExtraction 3-tier fallback (Tier 3 = local pdf-parse). 16/0 tests. Validated live post-rebuild: **financial_reports row 6f6e3fc0 (PPC 2025 Q4, conf 0.25) — PPC's FIRST extraction row ever** (dispatcher-verified raw). Residual: Tier-3 pdf-parse in-process; real fix = pdf-extractor file://-or-upload endpoint (dev-pdf-extractor zone).
+- **REBUILD #2** 12:06Z: 055a57bea1e1→02517eea12f9, --no-deps proven again (ALL peers StartedAt unchanged), healthy 3s. Both BCTC fixes + extract-localpath live BEFORE 14:00Z bctcReparseJob.
+- **HPG combo** (477377bd+5be2e0af): 09:00Z reparse never picked HPG (job only takes stranded PDFs; HPG has a row → manual re-queue needed, board row HPG-REPARSE-POST-REBUILD). Queue URL data-damage fixed live (rows 1308140/1308151 bound-param reset, 4 guard tests).
+- **qa.md prune** 599c319b (212→68L, janitor). Drains: 6fae4415 (ba.md self-resolved) + f6a6efec (qa.md → janitor).
+- **pm defects caught by raw-verify (4 today total)**: copy-not-move dups (twice), phantom "signal row not found", compact-JSON SSOT (restored indent=2 @ 7c52402b). Notebook full-overwrite collision: TSU session dropped our HPG entry → restored from git history (68296689/436976b7). Bun segfault exit-132 did NOT reproduce on same PDF (memory-pressure suspect, P3 monitoring row).
+- Commits: f6a6efec→599c319b→477377bd→5be2e0af→93e20f4e→8b32f654→cb1e1640→7c52402b→bb997517→68296689→436976b7→36706ed5→[auditors 46502ef0/1fbd5cf9]→10a2b267→87b1feee→[this].
+
+### Queue watch for next cycle
+- **14:00Z bctcReparseJob**: validate HPG (needs manual re-queue first — HPG-REPARSE-POST-REBUILD row) + watch PPC enricher Arm-1 fill Q2/Q1-2025+Q4-2024 (AC-6 3/5).
+- **BOARD-DUP-IDS-AUDIT (create row)**: 11 pre-existing duplicate ids (FIX-A/D/H, DSI-*, ARCH-ORCH-DASH-DECISION-DRILLDOWN) — investigate generic-id collision vs true copy before dedup; also relocate 2 DONE rows pm left in backlog[] (FIX-BCTC-EXTRACT-LOCALPATH, REBUILD-MCP-SERVER-2) to done[].
+- B3-SPACE-URLS-PULL-BLOCKED (P2) now blocks 2 real PPC rows. BUN-SEGFAULT-LARGE-PDF (P3 monitor). REVIEW-PPC-Q4-LOW-CONFIDENCE (P3 human-confirm).
+- Monday VN open: news-vps re-check (#3065 monitoring).
+
 ### Addendum (post-close audit 0b0b75ae)
 - Window-2 compose op CASCADED to macro-indicators (restarted 08:45:34Z, 16s before mcp-server start) despite "mcp-server only" scope + executor claiming "no deviations". Zero impact (healthy, clean bounce) — but compose `depends_on` edges make "scoped restart" leaky. Next maintenance runbook: enumerate dependent services pre-window + use `--no-deps` on compose start, and verify ALL peer StartedAt timestamps post-window, not just `docker ps` presence.
 
