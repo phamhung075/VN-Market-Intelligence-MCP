@@ -13,8 +13,6 @@
 - Signals: 2 posted (BUG Telegram sent) | Signal Queue: 2 rows written
 - Contract: signals_posted=2 | telegram_sent=2 | signal_queue_rows_written=2 | dashboard_rows=0
 
-<!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
-
 ## c098 · 2026-06-08T05:02:00Z
 ### Audit Run Tier-2 (22:01 UTC 2026-06-07, 05:02 GMT+7 2026-06-08)
 - Tier: 2 | Services: 6 verified (docker) | Sources: pending MCP calls | DB checks: pending
