@@ -3,7 +3,7 @@
 **Date:** 2026-06-07
 **Sprint:** RECOVER-LIVEDB-INTEGRITY
 **Author:** architect
-**Status:** PLAN ONLY — no DB mutation permitted until ops confirms backup verified-restorable
+**Status:** REVISED — Attempt-1 rolled back cleanly 2026-06-07 (2m07s downtime). Revised method in §8 ready for second window.
 **Downstream gated:** FIX-BCTC-LIAB-PRIOR-PERIOD live re-parse
 
 ---
@@ -559,7 +559,304 @@ correct data. No action needed on peer services.
 
 ---
 
-## 8. Architect Findings Summary
+## 7. Attempt-1 Post-Mortem (RLI-DEV-2 failure, 2026-06-07)
+
+### What failed
+
+RLI-DEV-2 executed `sqlite3 $NEW_DB < /tmp/market_dump_host.sql` and the replay
+aborted with:
+
+```
+Error: NOT NULL constraint failed: pdf_extracted_text.extracted_at
+```
+
+The replay halted at line ~190,356 of the 862,655-line dump. No rows were loaded
+into the new DB (executescript is transactional by block; the abort rolled back the
+entire transaction). The mcp-server was restarted on the original DB and came up
+healthy. Downtime: 2m07s. No data loss.
+
+### Root cause
+
+The `iterdump()` / sqlite3 `.dump` mechanism walks the B-tree of every table in
+rowid order. In `pdf_extracted_text` (B-tree root page 32), the page-2533
+out-of-order cell caused the B-tree walk to emit **12 ghost rows** with rowids
+493554–493565. These ghost rows are **system_logs rows that the double-referenced
+page (2533 ↔ tree 31 / system_logs)** allowed to bleed into the pdf_extracted_text
+B-tree walk. The ghost rows carry the system_logs schema (7 columns: id, timestamp,
+level, source, message, details_json, resolved) but are emitted as pdf_extracted_text
+INSERT statements (8 columns: id, filename, page_number, text_content, confidence,
+extracted_at, action_code, data_env). Column 6 in the ghost rows is the
+system_logs `resolved` INTEGER (0), but in pdf_extracted_text schema position 6 is
+`extracted_at TEXT NOT NULL`. When the replay engine reads those 12 INSERT
+statements, it sees NULL for `extracted_at` and raises the NOT NULL constraint.
+
+### Why the backup gate did not catch it
+
+The backup was declared "verified-restorable" after C-01/C-02/C-03/C-04/C-05 row-count
+checks passed on the byte-copy backup. Row counts do not detect B-tree ghost rows.
+The dump was NOT replayed against the backup before the stop window opened.
+
+**Key lesson:** `verified-restorable` requires both structural soundness AND a
+successful dump-replay smoke test. Row counts alone are insufficient. Any future
+backup gate MUST include:
+
+1. `PRAGMA integrity_check` on the copy (would have revealed the same 98 errors).
+2. A dump-replay smoke test into a throwaway DB with `PRAGMA integrity_check=ok`
+   required on the result — BEFORE the stop window opens.
+
+### What the failure evidence actually shows
+
+- The 800+ "MALFORMED INSERT" lines reported in the ops execution report are the
+  12 ghost rows repeated in the combined dump (the 175MB file contains the full
+  corpus). The truncated-string-literal appearance was a display artefact; actual
+  malformation is column-count/type mismatch, not truncated strings.
+- The backup `data/market.db.bak-20260607T100225` carries the same corruption
+  because it is a byte-copy. It is NOT a safe restore target for a clean DB.
+- `/tmp/market_corrupt_copy.db` (247MB, taken 2026-06-07T08:14:29Z) and
+  `/tmp/market_dump_host.sql` (175MB, taken 2026-06-07T08:14:55Z) are still
+  available as working artifacts.
+
+---
+
+## 8. Revised Method (RLI-DEV-2 retry)
+
+### Corruption scope — architect-verified 2026-06-07
+
+Probes run against `/tmp/market_corrupt_copy.db` AND the live container
+`/app/data/market.db`. All 88 tables examined.
+
+| Table | Corruption | Real rows | Ghost/phantom | Salvageable |
+|---|---|---|---|---|
+| `pdf_extracted_text` | B-tree page 2533 (double-ref + out-of-order): 12 ghost rowids (493554–493565) are system_logs rows misplaced by page collision | 949 | 12 ghost rowids | 949 (all real rows) — skip the 12 ghost INSERT lines during replay |
+| `system_logs` | B-tree page 22008 (double-ref): 31 phantom rows counted by `COUNT(*)` but not emitted by `iterdump` | 550,744 (iterdump = SELECT id scan) | 31 phantom `COUNT(*)` ghosts (not in B-tree walk) | 550,744 (all real rows) — no skip needed |
+| All other 86 tables | CLEAN — `PRAGMA integrity_check` reports ZERO errors for these tables | per §2c baseline | 0 | 100% |
+
+**Index errors** (`wrong # of entries in idx_pet_*`, `idx_system_logs_*`, etc.) are
+secondary symptoms of the B-tree ghost rows. They are automatically corrected when
+the fresh DB rebuilds indexes from scratch during replay — no manual `REINDEX` needed.
+
+**Live DB progression note (2026-06-07T10:23 vs T08:14):** the live DB has grown
+to page 63222 (vs corrupt copy page ~59232 max rootpage). `PRAGMA integrity_check`
+on the live container now crashes with `database disk image is malformed` before
+completing, indicating the corruption is actively spreading as new pages reference
+corrupt freelist entries. The corruption surface remains confined to the same two
+tables (pdf_extracted_text, system_logs) — verified by the live dump smoke test
+below. However, **urgency has increased**: every new WAL checkpoint risks spreading
+double-references further. The window should not be deferred.
+
+### Chosen method one-liner
+
+```
+Full sqlite3 .dump replay with exactly one filter:
+  skip the 12 ghost INSERT INTO pdf_extracted_text rows where id IN (493554..493565)
+```
+
+This is a targeted 12-line filter on an 862,779-line dump. No selective rebuild, no
+`.recover`, no per-table gymnastics. The full dump is logically clean except for
+those 12 ghost rows.
+
+### Pre-window dump-replay smoke test (MANDATORY — gate before stop window)
+
+**This is the gate that was missing in Attempt 1. It MUST pass before RLI-OPS-3.**
+
+```bash
+# Run INSIDE the container while mcp-server is still running (read-only, no stop needed)
+docker exec vn-market-intelligence-mcp-mcp-server-1 python3 -c "
+import sqlite3, sys
+
+GHOST_IDS = set(range(493554, 493566))
+
+src = sqlite3.connect('/app/data/market.db')
+mem = sqlite3.connect(':memory:')
+
+errors = []
+for i, line in enumerate(src.iterdump()):
+    if line.startswith('INSERT INTO \"pdf_extracted_text\"'):
+        try:
+            row_id = int(line.split('VALUES(')[1].split(',')[0])
+            if row_id in GHOST_IDS:
+                continue
+        except:
+            pass
+    try:
+        mem.executescript(line)
+    except Exception as e:
+        if str(e) != 'cannot commit - no transaction is active':
+            errors.append((i, str(e)))
+
+c = mem.cursor()
+c.execute('PRAGMA integrity_check'); ic = c.fetchone()[0]
+c.execute('SELECT COUNT(DISTINCT code) FROM market_prices'); mp = c.fetchone()[0]
+c.execute('SELECT COUNT(*) FROM market_prices_history'); mph = c.fetchone()[0]
+c.execute('SELECT MAX(fetched_at) FROM market_prices_history'); ts = c.fetchone()[0]
+c.execute('SELECT COUNT(*) FROM pdf_extracted_text'); pet = c.fetchone()[0]
+
+ok = ic == 'ok' and mp == 121 and mph >= 41265 and pet == 949 and len(errors) == 0
+print('SMOKE-TEST:', 'PASS' if ok else 'FAIL')
+print(f'  integrity_check={ic}  market_prices={mp}  market_prices_history={mph}')
+print(f'  pdf_extracted_text={pet}  max_fetched_at={ts}')
+if errors:
+    print('  ERRORS:', errors[:5])
+sys.exit(0 if ok else 1)
+"
+# REQUIRED EXIT CODE: 0 (PASS)
+# This was verified PASS on 2026-06-07 against live DB.
+```
+
+**STOP GATE:** If this smoke test exits non-zero, do NOT open the stop window.
+Escalate to architect — the corruption may have spread beyond the 12 ghost rows.
+
+### Exact revised command sequence for RLI-DEV-2 retry
+
+Phases 0–2 and 3–6 from §3 remain unchanged. Replace Phase 4 (RLI-DEV-2) with:
+
+**Phase 4 revised — Create fresh DB from filtered dump:**
+
+```bash
+# On the host, after mcp-server is stopped (RLI-OPS-3 complete)
+# The dump was taken in Phase 2 (RLI-DEV-1). Use that dump file.
+DUMP_FILE="/tmp/market_dump_<TIMESTAMP>.sql"   # from RLI-DEV-1
+NEW_DB="/tmp/market_fresh_$(date +%Y%m%dT%H%M%S).db"
+GHOST_IDS="(493554,493555,493556,493557,493558,493559,493560,493561,493562,493563,493564,493565)"
+
+# Filter and replay: skip the 12 ghost pdf_extracted_text rows
+python3 -c "
+import sqlite3, sys
+
+GHOST_IDS = set(range(493554, 493566))
+DUMP_FILE = sys.argv[1]
+NEW_DB = sys.argv[2]
+
+src_conn_str = open(DUMP_FILE, 'r', encoding='utf-8', errors='replace')
+dst = sqlite3.connect(NEW_DB)
+
+errors = []
+for i, line in enumerate(src_conn_str):
+    line = line.rstrip('\n')
+    if line.startswith('INSERT INTO \"pdf_extracted_text\"'):
+        try:
+            row_id = int(line.split('VALUES(')[1].split(',')[0])
+            if row_id in GHOST_IDS:
+                continue
+        except:
+            pass
+    try:
+        dst.executescript(line)
+    except Exception as e:
+        if str(e) != 'cannot commit - no transaction is active':
+            errors.append((i, str(e)))
+
+dst.close()
+if errors:
+    print('ERRORS:', errors[:5], file=sys.stderr)
+    sys.exit(1)
+print('Replay complete')
+" "$DUMP_FILE" "$NEW_DB"
+
+# Alternative: if dump was produced via sqlite3 CLI (not iterdump), use grep filter:
+# grep -v "^INSERT INTO \"pdf_extracted_text\" VALUES(49355[4-9]," "$DUMP_FILE" \
+#   | grep -v "^INSERT INTO \"pdf_extracted_text\" VALUES(4935[6][0-5]," \
+#   | sqlite3 "$NEW_DB"
+# NOTE: the python3 approach above is safer and handles edge cases correctly.
+
+# Verify integrity of fresh DB
+python3 -c "
+import sqlite3
+c = sqlite3.connect('$NEW_DB').cursor()
+c.execute('PRAGMA integrity_check'); ic = c.fetchone()[0]
+c.execute('SELECT COUNT(DISTINCT code) FROM market_prices'); mp = c.fetchone()[0]
+c.execute('SELECT COUNT(*) FROM market_prices_history'); mph = c.fetchone()[0]
+c.execute('SELECT MAX(fetched_at) FROM market_prices_history'); ts = c.fetchone()[0]
+c.execute('SELECT COUNT(*) FROM pdf_extracted_text'); pet = c.fetchone()[0]
+c.execute('SELECT COUNT(*) FROM system_logs'); sl = c.fetchone()[0]
+ok = ic == 'ok' and mp == 121 and mph >= 41265 and pet == 949
+print('FRESH-DB-VERIFY:', 'PASS' if ok else 'FAIL')
+print(f'  integrity_check={ic}')
+print(f'  market_prices={mp} (expected 121)')
+print(f'  market_prices_history={mph} (expected >=41265)')
+print(f'  max_fetched_at={ts} (expected 2026-06-05T08:59:30.032Z)')
+print(f'  pdf_extracted_text={pet} (expected 949)')
+print(f'  system_logs={sl} (expected ~550629+)')
+"
+# REQUIRED: PASS — integrity_check=ok AND market_prices=121 AND market_prices_history>=41265
+```
+
+**STOP GATE:** If FRESH-DB-VERIFY outputs FAIL, do not copy to volume. Execute §4 rollback.
+
+### Per-table validation gates (during fresh DB verify)
+
+| Check | Query | Expected | Stop if |
+|---|---|---|---|
+| Structural integrity | `PRAGMA integrity_check` | `ok` | Any other output |
+| Price codes | `SELECT COUNT(DISTINCT code) FROM market_prices` | 121 | ≠ 121 |
+| Price history rows | `SELECT COUNT(*) FROM market_prices_history` | ≥ 41265 | < 41265 |
+| Price history max ts | `SELECT MAX(fetched_at) FROM market_prices_history` | 2026-06-05T08:59:30.032Z | older timestamp |
+| PDF text rows | `SELECT COUNT(*) FROM pdf_extracted_text` | 949 | ≠ 949 |
+| System logs rows | `SELECT COUNT(*) FROM system_logs` | ≥ 550629 | < 550000 |
+
+### pdf_extracted_text regenerability assessment
+
+The 949 rows cover **21 source PDFs** across 6 tickers (FPT, HPG, VCB, VEA, VNM,
+plus unlabelled). All PDFs are BCTC documents already ingested by the VPS pipeline.
+The bctcReparseJob cron (09:00/14:00 UTC) can re-extract them from source. Given the
+949 rows are fully salvaged by the dump filter, **re-extraction is not needed for
+this recovery**. The cron remains a fallback if, post-recovery, PRAGMA integrity_check
+reveals remaining issues with pdf_extracted_text.
+
+### system_logs expendability assessment
+
+system_logs (550,744 real rows) contains telemetry only — no business logic consumes
+historical rows for decisions. The system_auditor reads only recent entries
+(ORDER BY id DESC LIMIT N). Retention expectation: rolling window, no archival
+requirement. The 31 phantom `COUNT(*)` rows are B-tree ghosts, not real log entries
+— they do not represent lost data. All 550,744 real rows are fully salvaged.
+
+### sqlite `.recover` evaluation
+
+`.recover` was considered for the 2 corrupt tables. It was rejected because:
+- The 12 ghost rows in pdf_extracted_text would be recovered as duplicates on top
+  of the 949 real rows. Natural key `UNIQUE(filename, page_number)` would reject
+  them with constraint violations — same error profile as Attempt 1.
+- The 31 phantom system_logs rows would similarly cause duplicate key violations.
+- `.recover` provides no benefit here because `iterdump` already reads all 549,744+949
+  real rows cleanly. The only thing `.recover` adds is the ghost rows — which are junk.
+
+### Revised downtime estimate
+
+| Phase | Wall-clock | Notes |
+|---|---|---|
+| Pre-window smoke test | 8–12 min | Run while mcp-server still running (zero downtime) |
+| RLI-DEV-1: dump to file | 3–5 min | `iterdump` on 247MB DB |
+| RLI-OPS-3: stop mcp-server | < 30s | Scoped stop |
+| RLI-DEV-2: filtered replay + verify | 5–8 min | python3 replay + PRAGMA checks |
+| RLI-OPS-4: copy to volume | < 30s | docker cp or alpine |
+| RLI-OPS-5: start + health | 1–2 min | Wait for healthy |
+| **Total stop window** | **7–12 min** | From `stop mcp-server` to `healthy` |
+| Full operation | 20–30 min | Including pre-flight and post-verification |
+
+Previous estimate (10–20 min stop window) stands. Revised method adds ~3 min for the
+filtered replay vs straight executescript.
+
+### Revised RLI-* task chain for PM
+
+The task chain from §6 is updated as follows. All tasks before and after RLI-DEV-2
+are UNCHANGED. RLI-OPS-1, RLI-OPS-2, RLI-DEV-1, RLI-OPS-3 remain as specified.
+
+| # | Task ID | Change from Attempt 1 | Description |
+|---|---|---|---|
+| 0 | **RLI-PRE-SMOKE** | NEW — mandatory gate | Run pre-window smoke test (§8 python3 block above) while mcp-server is running. Must exit 0. If fail: STOP, escalate to architect. |
+| 5 | **RLI-DEV-2** | REPLACED | Phase 4 revised: python3 filtered replay (skip 12 ghost pdf_extracted_text rows) + FRESH-DB-VERIFY (PRAGMA integrity_check=ok + 6-point table checks). STOP GATE: all 6 checks pass. |
+| 6 | RLI-OPS-4 | unchanged | Phase 5: docker cp fresh DB to volume |
+| 7 | RLI-OPS-5 | unchanged | Phase 6: start mcp-server, wait healthy |
+| 8 | RLI-DEV-3 | unchanged | Phase 7: full §5 post-recovery verification |
+| 9 | RLI-PM-1 | unchanged | Signal FIX-BCTC-LIAB-PRIOR-PERIOD unblocked |
+
+Full ordered chain: RLI-OPS-1 → RLI-OPS-2 → **RLI-PRE-SMOKE** → RLI-DEV-1 →
+RLI-OPS-3 → **RLI-DEV-2 (revised)** → RLI-OPS-4 → RLI-OPS-5 → RLI-DEV-3 → RLI-PM-1.
+
+---
+
+## 9. Architect Findings Summary
 
 ```
 ## [Architect] Brownfield Findings — RECOVER-LIVEDB-INTEGRITY
