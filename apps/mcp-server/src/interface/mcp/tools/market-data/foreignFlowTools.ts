@@ -64,6 +64,11 @@ export function formatForeignFlowOutput(
 ): string {
   const lines: string[] = [];
 
+  // DSI invariant: never render fabricated holding_ratio values.
+  // VPS API bgapidatafeed.vps.com.vn does NOT return holding_ratio.
+  // Omit the column and signal line entirely when all values are 0.
+  const hasRealHoldingData = !signal.is_holding_ratio_fabricated;
+
   lines.push(`Foreign Flow Analysis — ${code}`);
   lines.push("");
 
@@ -75,9 +80,12 @@ export function formatForeignFlowOutput(
   lines.push(`  Net volume 3d: ${signal.totalNetVolume3d >= 0 ? "+" : ""}${fmtVol(signal.totalNetVolume3d)} shares`);
   lines.push(`  Net volume 5d: ${signal.totalNetVolume5d >= 0 ? "+" : ""}${fmtVol(signal.totalNetVolume5d)} shares`);
 
-  const ratioChange = signal.holdingRatioChange5d;
-  const ratioSign = ratioChange >= 0 ? "+" : "";
-  lines.push(`  Holding ratio change (5d): ${ratioSign}${(ratioChange * 100).toFixed(3)}%`);
+  // Only emit holding ratio change when real data is available
+  if (hasRealHoldingData) {
+    const ratioChange = signal.holdingRatioChange5d;
+    const ratioSign = ratioChange >= 0 ? "+" : "";
+    lines.push(`  Holding ratio change (5d): ${ratioSign}${(ratioChange * 100).toFixed(3)}%`);
+  }
   lines.push("");
 
   // Reasoning
@@ -85,16 +93,27 @@ export function formatForeignFlowOutput(
   lines.push(`  ${signal.reasoning}`);
   lines.push("");
 
-  // Daily history table
+  // Daily history table — conditionally include Holding Ratio column
   lines.push("Daily history");
-  lines.push("  Date        | Net Vol (daily) | Foreign Room  | Holding Ratio");
-  lines.push("  ------------|-----------------|---------------|---------------");
-  for (const row of history) {
-    const date = row.date.slice(0, 10).padEnd(12);
-    const vol = fmtVol(row.foreignVolume).padStart(14);
-    const room = fmtVol(row.foreignRoom).padStart(13);
-    const ratio = fmtRatio(row.holdingRatio).padStart(15);
-    lines.push(`  ${date}|${vol} |${room} |${ratio}`);
+  if (hasRealHoldingData) {
+    lines.push("  Date        | Net Vol (daily) | Foreign Room  | Holding Ratio");
+    lines.push("  ------------|-----------------|---------------|---------------");
+    for (const row of history) {
+      const date = row.date.slice(0, 10).padEnd(12);
+      const vol = fmtVol(row.foreignVolume).padStart(14);
+      const room = fmtVol(row.foreignRoom).padStart(13);
+      const ratio = fmtRatio(row.holdingRatio).padStart(15);
+      lines.push(`  ${date}|${vol} |${room} |${ratio}`);
+    }
+  } else {
+    lines.push("  Date        | Net Vol (daily) | Foreign Room");
+    lines.push("  ------------|-----------------|-------------");
+    for (const row of history) {
+      const date = row.date.slice(0, 10).padEnd(12);
+      const vol = fmtVol(row.foreignVolume).padStart(14);
+      const room = fmtVol(row.foreignRoom).padStart(13);
+      lines.push(`  ${date}|${vol} |${room}`);
+    }
   }
 
   return lines.join("\n");
@@ -118,10 +137,11 @@ export function registerForeignFlowTools(
     "get_foreign_flow",
     "Retrieve and analyze foreign investor flow history for a VN stock. " +
       "Returns direction (net_buy / net_sell / neutral), severity (LOW/MEDIUM/HIGH), " +
-      "consecutive streak days, net volume over 3d and 5d windows, holding ratio change, " +
+      "consecutive streak days, net volume over 3d and 5d windows, " +
       "and a daily history table. " +
       "Severity HIGH = 3+ consecutive days in same direction AND total net volume > 100k shares. " +
       "If foreign flow data has not been collected yet (all volumes are 0), returns a clear no-data message. " +
+      "Note: holding ratio is not available (VPS API does not provide this field) — the column is omitted when data is unavailable. " +
       "Data freshness depends on the VPS push-foreign-flow pipeline (Task 1132/1135). " +
       "Source tier: 2 (aggregator — HOSE/HNX data via Vinahost VPS proxy intermediary). " +
       "source_note field indicates path: 'primary', 'fallback:cache', or 'fallback:none'.",
@@ -266,11 +286,14 @@ export function registerForeignFlowTools(
   );
 
   // Task 1283b: Register circuit breaker diagnostics tools
+  // INTEGRATE (U3 TOOL-SURFACE-UPGRADE): descriptions updated for ops/debug package wiring.
   server.tool(
     "diagnose_foreign_flow_circuit_breaker",
-    "Query the foreign flow circuit breaker state: current status (closed/open/half-open), " +
-      "failure count, last failure timestamp, and reset timeout. " +
-      "Use this to debug when foreign flow data stops ingesting. " +
+    "Ops/debug tool — query the foreign flow circuit breaker state. " +
+      "Returns current status (closed/open/half-open), failure count, success count, " +
+      "last failure timestamp, and reset timeout configuration. " +
+      "Use when foreign flow data stops ingesting (pipeline incident diagnosis). " +
+      "Sibling with reset_foreign_flow_circuit_breaker — both tools pair in the ops/debug package. " +
       "No parameters required.",
     {},
     async () => {
@@ -280,9 +303,10 @@ export function registerForeignFlowTools(
 
   server.tool(
     "reset_foreign_flow_circuit_breaker",
-    "Manually reset the foreign flow circuit breaker to closed state. " +
-      "Only call if OPS has confirmed the underlying issue is fixed (e.g., VPS endpoint responding). " +
-      "Warning: idempotent, but only use after verifying the pipeline is healthy. " +
+    "Ops/debug tool — manually reset the foreign flow circuit breaker to closed state. " +
+      "Only call AFTER OPS has confirmed the underlying issue is fixed (e.g., VPS endpoint " +
+      "responding and pipeline healthy). Idempotent — safe to call multiple times. " +
+      "Sibling with diagnose_foreign_flow_circuit_breaker — both tools pair in the ops/debug package. " +
       "No parameters required.",
     {},
     async () => {

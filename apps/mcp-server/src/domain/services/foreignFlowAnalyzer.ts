@@ -36,6 +36,8 @@ export interface ForeignFlowSignal {
   totalNetVolume3d: number;  // sum of net volume deltas over last 3 days
   totalNetVolume5d: number;  // sum of net volume deltas over last 5 days
   holdingRatioChange5d: number;  // latest holdingRatio minus 5-day-ago holdingRatio
+  /** true when all holding_ratio values are 0 (fabricated per DSI invariant — VPS API does not return this field) */
+  is_holding_ratio_fabricated: boolean;
   severity: FlowSeverity;
   reasoning: string;
 }
@@ -101,9 +103,14 @@ export function analyzeForeignFlow(
 
   // --- Holding ratio change over 5 days ---
   // history[0] = today, history[5] = 5 days ago (if available)
+  // is_holding_ratio_fabricated = true when all holdingRatio values are 0
+  // (VPS API bgapidatafeed.vps.com.vn does NOT return holding_ratio — DSI invariant)
+  const isHoldingRatioFabricated = history.every((r) => r.holdingRatio === 0);
   const latest = history[0]!;
   const oldest5d = history.length >= 6 ? history[5]! : history[history.length - 1]!;
-  const holdingRatioChange5d = latest.holdingRatio - oldest5d.holdingRatio;
+  const holdingRatioChange5d = isHoldingRatioFabricated
+    ? 0
+    : latest.holdingRatio - oldest5d.holdingRatio;
 
   // --- Determine direction ---
   let netFlowDirection: "net_buy" | "net_sell" | "neutral";
@@ -144,7 +151,7 @@ export function analyzeForeignFlow(
     reasoning = `neutral: no clear directional pattern (3d net: ${totalNetVolume3d > 0 ? "+" : ""}${formatVol(totalNetVolume3d)})`;
   }
 
-  if (Math.abs(holdingRatioChange5d) > 0.005) {
+  if (!isHoldingRatioFabricated && Math.abs(holdingRatioChange5d) > 0.005) {
     const pctChange = (holdingRatioChange5d * 100).toFixed(2);
     reasoning += `; foreign ownership ${holdingRatioChange5d > 0 ? "up" : "down"} ${Math.abs(parseFloat(pctChange))}% over 5d`;
   }
@@ -156,6 +163,7 @@ export function analyzeForeignFlow(
     totalNetVolume3d,
     totalNetVolume5d,
     holdingRatioChange5d,
+    is_holding_ratio_fabricated: isHoldingRatioFabricated,
     severity,
     reasoning,
   };

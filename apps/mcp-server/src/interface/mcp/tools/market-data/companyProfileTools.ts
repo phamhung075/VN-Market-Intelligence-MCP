@@ -167,9 +167,13 @@ export function queryCompanyProfile(db: Database, code: string): CompanyProfileR
     ? (shareholderRows[0]!.fetched_at ?? null)
     : null;
 
-  // ── foreign_holding_ratio: null if no row, null if column null ────────────
+  // ── foreign_holding_ratio: null if no row, null if column null or 0 ────────
+  // DSI invariant: emit null when value is 0 (fabricated — VPS API does not return
+  // holding_ratio; ?? 0 fallback in vnstockStore.ts produces fabricated zeros).
   const foreignHoldingRatio: number | null =
-    statsRow != null && statsRow.current_holding_ratio != null
+    statsRow != null &&
+    statsRow.current_holding_ratio != null &&
+    statsRow.current_holding_ratio > 0
       ? statsRow.current_holding_ratio
       : null;
 

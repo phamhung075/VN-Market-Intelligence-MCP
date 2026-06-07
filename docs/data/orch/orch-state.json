@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T08:50:44Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-07T11:30:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "planning",
     "updated_at": "2026-06-07T00:00:00Z",
@@ -2340,13 +2340,14 @@
             "type": "DATA-QUALITY",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "priority": "high",
             "id": "TSU-DEV-U5",
             "claimed_at": "2026-06-07T11:00:00Z",
-            "claimed_by": "dev-mcp-server"
+            "claimed_by": "dev-mcp-server",
+            "note": "REVIEW 2026-06-07T11:30:00Z. DSI: formatForeignFlowOutput gates Holding Ratio column+signal line; is_holding_ratio_fabricated in ForeignFlowSignal; foreign_holding_ratio null when 0. 10 tests GREEN, tsc clean, tools=157, sched=76."
           },
           {
             "title": "U6: TSH leftover merges — description updates only (keep all separate per architect verdict)",

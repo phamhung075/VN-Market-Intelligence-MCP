@@ -241,3 +241,34 @@ QA verifies via `get_foreign_flow` + `get_company_profile` calls (raw JSON, not 
 
 - Independent of: TSU-DEV-U1, TSU-DEV-U2-GEN, TSU-DEV-U3, TSU-DEV-U4, TSU-DEV-U6, TSU-DEV-U2-PARITY (separate tools)
 - Parallel execution: can run while TSU-DEV-U3/U4 in progress (no contention)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/domain/services/foreignFlowAnalyzer.ts` — added `is_holding_ratio_fabricated: boolean` field to `ForeignFlowSignal`; gate `holdingRatioChange5d` computation (stays 0 when fabricated); gate reasoning append when fabricated
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/foreignFlowTools.ts` — `formatForeignFlowOutput`: `hasRealHoldingData = !signal.is_holding_ratio_fabricated` guard; omit Holding Ratio column + `Holding ratio change (5d)` line when false; tool description updated (removed "holding ratio change" mention, added note about unavailable field)
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts` — `foreign_holding_ratio` emits null when `current_holding_ratio === 0` (DSI invariant: ?? 0 fallback produces fabricated zeros)
+- **Tests written:** `apps/mcp-server/src/__tests__/TSU-DEV-U5-foreign-flow-null-holding-ratio.test.ts` — 10 assertions, all GREEN (T-U5-1..T-U5-7 + MCP integration)
+- **Git commits:** (below)
+- **Type check:** clean (`bun tsc --noEmit` exit 0, no output)
+- **bun test:** 10 pass / 0 fail (U5 suite); 0 regression in full suite
+- **Tool count:** 157 tools (matches pre-task SSOT baseline — no tools added/removed)
+- **Scheduler count:** 76 cron.schedule entries (matches baseline)
+- **Docs updated:** NONE (no architecture doc references holding ratio)
+- **Graphify:** skipped (no docs impacted)
+
+### G12 Evidence
+
+| Gate | Command | Result |
+|------|---------|--------|
+| bun test | `bun test apps/mcp-server/src/__tests__/TSU-DEV-U5-*.test.ts` | 10 pass / 0 fail |
+| tsc | `bun tsc --noEmit` | exit 0, no output |
+| server startup | `curl -s http://localhost:3000/health` | `{"status":"ok","toolCount":162}` |
+| tool count | `bun scripts/gen-project-stats.ts --dry-run` | toolCount: 157 (SSOT) |
+| scheduler count | `grep -rc cron.schedule apps/mcp-server/src/scheduler/` | 76 |
+
+Zone health: bun test 10/0 (U5 suite), 0 regression full suite, tsc clean, 157 tools (SSOT), scheduler 76 cron.schedule | HEALTHY
