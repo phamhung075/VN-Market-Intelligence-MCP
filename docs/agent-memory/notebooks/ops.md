@@ -1705,3 +1705,43 @@ curl -X POST http://localhost:3000/api/push-sbv-rates \
 
 **Duration:** ~8 minutes (from build-start to all verifications complete)
 
+
+---
+
+## Session: 2026-06-07 — Docker Desktop VM Network Wedge Recovery
+
+**Incident:** Docker Desktop backend API wedged with 500 errors; virtio_net TX timeout loop; all service ports unresponsive.
+
+**Symptoms:**
+- `docker version` → "request returned 500 Internal Server Error for API route docker.sock/v1.49/"
+- `docker ps` failed
+- `com.docker.backend` stale LISTEN on 127.0.0.1:8787 (headroom-proxy remnant)
+- All service ports (3000, 4000, 5000-5008, 3001) unresponsive
+
+**Root Cause:** Docker Desktop VM kernel deadlock — virtio_net in continuous TX timeout, DHCPv4 failures. VM could not transmit packets. Confirmed via Docker VM console log: `virtio_net virtio0 eth0: TX timeout` loop at ~15s intervals (2026-06-07T18:24-18:25 UTC).
+
+**Recovery Steps:**
+1. Attempted graceful quit via osascript — Docker processes remained hung (kill -9 on com.docker.backend failed due to privileged helper constraints).
+2. Restarted Docker Desktop app (open -a Docker) — triggers full VM reboot.
+3. Waited 20s for daemon stabilization.
+4. Verified `docker version` → SUCCESS.
+5. Verified `docker ps -a` → 7 containers all healthy + running.
+
+**Final State:**
+- Docker daemon: ✓ Healthy
+- Expected deployed services (system-map.json host_runtime_set):
+  - mcp-server ✓ (port 3000, health: ok, toolCount 157)
+  - api-gateway ✓ (port 4000, health: ok)
+  - frontend ✓ (port 3001, health: ok)
+  - macro-indicators ✓ (port 5004, health: ok)
+  - pdf-extractor ✓ (port 5001, health: ok)
+  - mcp-gateway ✓ (port 4040, health: ok)
+- Not-deployed-by-design services: silent (stock-price, ta, kinh-dich, alert, rag, news) — expected
+- Disk usage: 19.93GB images (12GB reclaimable), 67.91MB containers, 3.218GB volumes — healthy
+- Container logs: Startup bootstrap normal (OCR extraction, OHLCV backfill, price source fallback attempts post-recovery)
+- Known transient warnings: kinh-dich service unreachable (not in host_runtime_set), HNX/UPCOM price failures during network outage (expected, self-healing)
+
+**Impact:** ~2 minute downtime (18:23-18:26 UTC). All services recovered without manual intervention post-restart. No data loss, no manual rebuild required.
+
+**Recommendation:** Monitor for recurrence. If VM network hangs repeat, escalate to macOS host-level virtualization diagnostics (virtualization framework, network bridge configuration). Current recovery pattern (Docker app restart) is effective for this class of wedge.
+
