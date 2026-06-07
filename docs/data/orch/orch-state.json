@@ -2256,14 +2256,16 @@
             "type": "FEATURE",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "priority": "high",
             "id": "TSU-DEV-U1",
             "claimed_at": "2026-06-07T09:00:00Z",
             "claimed_by": "dev-mcp-server",
-            "note": "REVIEW 2026-06-07T09:30:00Z. perCallCounterStore.ts + server.ts hook + trackSessionToolUsageJob.ts rewritten. 24 tests GREEN. tsc 0 new errors. tools=162, sched=76."
+            "note": "DONE (code-approved, live-verify pending sprint-final rebuild) 2026-06-07T10:00:00Z. QA: 24/24 pass, tsc 0 errors, proxy no double-count, no silent-swallow in handler path.",
+            "qa_approved_at": "2026-06-07T10:00:00Z",
+            "qa_approved_by": "qa"
           },
           {
             "title": "U2-GEN: Registry generator + parity test — static grep extraction, 162 tools, SSOT lock",

@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-206 · 2026-06-07T10:00Z · TSU-DEV-U1 QA gate — APPROVED (code gate)
+
+Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U1 | Verdict: APPROVED (code-approved, live-verify pending sprint-final rebuild)
+
+bun test (3 suites): 24/24 pass. tsc --noEmit: 0 errors (1 pre-existing in U2-GEN scope, not U1). DDD PASS: perCallCounterStore.ts has no imports (pure Map singleton). Security PASS: no process.env in U1 files (pre-existing at server.ts:284 out of scope). Proxy analysis: increment-before-execute design correct — handler throws propagate naturally; outer installation catch intentional (best-effort, server creation must not block). No double-count risk: per-request McpServer instance gets its own proxy, all share singleton counterStore. AC coverage: AC-U1-1..U1-7 all verified against code. AC-U1-8 (live QA gate) deferred to sprint-final rebuild per handoff instruction. orch-state REVIEW→DONE.
+
 ## cycle-205 · 2026-06-07T08:30Z · TSU-DEV-U2-GEN QA gate — APPROVED
 
 Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U2-GEN | Verdict: APPROVED | Commits: a5b34816 / 2069158c / 5c63741b
