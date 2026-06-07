@@ -154,7 +154,6 @@ Zone health: WF-2 CAS guard in production path, 18 orchStateStore tests GREEN, t
 - `FIX-SLA-EXEMPT-NEWS-SBVFX.test.ts` (NEW): 31 tests N-1..N-8 + S-1..S-8 GREEN.
 
 **Results:** 52 pass / 0 fail (31 new + 21 W-1..W-10 baseline). tools=164, sched=72 (unchanged).
-
 Zone health: news/sbv_fx false-CRITICAL on overnight/weekend eliminated, dynamic threshold in domain, tsc no new errors | HEALTHY
 
 ---
@@ -173,8 +172,6 @@ Zone health: news/sbv_fx false-CRITICAL on overnight/weekend eliminated, dynamic
 
 Zone health: gen-project-stats.ts verified 162 tools / 76 crons, atomic write confirmed, no container rebuild needed | HEALTHY
 
-## Working Memory
-
 ## c376 · 2026-06-07T05:56Z (UNBLOCK-CTG-REFINE-DRAIN) — wave-2
 
 **Root cause:** `get_bctc_pending_refine` used `refine_status IN ('PENDING','PARTIAL')` — excluded 'FAILED'. CTG report 49c11ce2 was set to FAILED by in-container `refineOneReport()` hitting the Option-Y no-spawn path (all windows flagged `agent_error:no_spawn_path_option_y`). Fleet cron agent (`refine_bctc_md`) saw empty queue → 19 consecutive starved cycles.
@@ -184,6 +181,14 @@ Zone health: gen-project-stats.ts verified 162 tools / 76 crons, atomic write co
 **Tests:** 4 new (RD-1 through RD-4) in UNBLOCK-CTG-REFINE-DRAIN.test.ts — all GREEN. 22/22 across refine test files. Pre-existing AR-refine-readiness-gate failures (task-claim leak in worktree) confirmed pre-existing, unrelated to this fix.
 
 Zone health: bun test 22/22 (refine suite) GREEN, tsc clean | HEALTHY
+
+---
+
+## c383 · 2026-06-07 (FIX-BCTC-SLA-WEEKEND) — COMMITTED a4f798cc
+
+**Fix:** `BCTC_TRADING_DAY_ONLY_SOURCES` set + non-trading-day guard in `getSlaThreshold("bctc")`: returns `minutesSinceLastWindowEnd+30` on Sat/Sun (mirrors SBV FX pattern). Root cause: bctc path only checked `isVnMarketHours` → fixed 360-min off-hours threshold → false-alarm MEDIUM on Sat (1400+ min since Fri session). **Also updated MH-11** in 1407b (wrong "24/7 source" assumption corrected). **Tests:** 12 new FIX-BCTC-SLA-WEEKEND.test.ts (B-1..B-10) all GREEN; 1407b 8 pass / 6 fail (all 6 pre-existing). bun test no new failures vs baseline. tsc: 0 new errors in modified files. sched=76 unchanged.
+
+Zone health: bctc weekend false-alarm fixed, 12 new tests GREEN, sched=76 intact | HEALTHY
 
 ---
 
