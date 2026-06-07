@@ -55,6 +55,31 @@ const FRESH_THRESHOLD_MS = 2 * 60 * 60 * 1000;   // 2 hours
 const STALE_THRESHOLD_MS = 12 * 60 * 60 * 1000;  // 12 hours (beyond = very stale, still "stale")
 
 /**
+ * Source slugs that are permanently retired and must be excluded from the
+ * fetch-status serving surface.  These IDs no longer have live fetchers and
+ * would otherwise appear as permanent VERY-STALE noise in the dashboard.
+ *
+ * Historical DB rows for these sources are preserved — only the enumeration
+ * layer (the HAVING clause in querySourceAges) is changed.
+ *
+ * Dead-source rationale (CLEAN-DEAD-SOURCE-IDS):
+ *   news       — bare "news" slug from legacy hostname pattern; no live fetcher.
+ *   cafef1     — retired alternate domain cafef1.vn; replaced by cafef.vn.
+ *   vnexpress1 — retired alternate domain vnexpress1.net.
+ *   shared-url — synthetic slug from stale push-pipeline format bugs; no live producer.
+ *   vnbusiness — vnbusiness.vn RSS; VPS fetcher retired.
+ *   vietnambiz — vietnambiz.vn RSS; VPS fetcher retired.
+ */
+export const DEAD_SOURCE_SLUGS: ReadonlyArray<string> = [
+  "news",
+  "cafef1",
+  "vnexpress1",
+  "shared-url",
+  "vnbusiness",
+  "vietnambiz",
+];
+
+/**
  * Derive a human-readable source slug from a URL.
  * e.g. "https://cafef.vn/..." → "cafef"
  *      "https://www.vnexpress.net/..." → "vnexpress"
@@ -142,11 +167,14 @@ function querySourceAges(db: Database, now: Date): SourceAgeRow[] {
     WHERE source_url IS NOT NULL
       AND source_url LIKE 'http%'
     GROUP BY source_slug
-    HAVING source_slug IS NOT NULL AND source_slug != ''
+    HAVING source_slug IS NOT NULL
+      AND source_slug != ''
+      AND source_slug NOT IN (${DEAD_SOURCE_SLUGS.map(() => "?").join(",")})
     ORDER BY last_article_at DESC
   `;
 
-  return db.prepare(sql).all(cutoff) as SourceAgeRow[];
+  // Parameters: cutoff (for count_24h) + all 6 dead source slug values for NOT IN
+  return db.prepare(sql).all(cutoff, ...DEAD_SOURCE_SLUGS) as SourceAgeRow[];
 }
 
 /**

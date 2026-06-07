@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T00:21:54Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-07T00:00:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T00:00:00Z",
@@ -836,6 +836,17 @@
             "baseline_pass": "router raw-verify: `git show --stat` of the next system-auditor self-cron commit lists ONLY auditor own_paths; coordination db shows commit-mutex:main claimed by system-auditor spanning the commit timestamp; zero foreign-file sweeps over 48h of parallel cowork/dev ticks",
             "done_at": "2026-06-06T00:39:40+00:00",
             "done_commit": "d895b6f2"
+          },
+          {
+            "task_id": "CLEAN-DEAD-SOURCE-IDS",
+            "title": "Remove 6 dead/retired source IDs from fetch-status enumeration (news, cafef1, vnexpress1, shared-url, vnbusiness, vietnambiz)",
+            "type": "CLEAN",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "REVIEW",
+            "size": "S",
+            "zone": "apps/mcp-server",
+            "note": "BATCH-5. DEAD_SOURCE_SLUGS exclusion added to fetchStatusHandler.ts HAVING clause. 8 new tests pass, F-1 21 tests unchanged. tsc errors pre-existing (tasksMdJanitorJob). Historical DB rows preserved."
           }
         ]
       },

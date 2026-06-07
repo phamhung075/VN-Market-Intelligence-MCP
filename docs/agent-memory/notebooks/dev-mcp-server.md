@@ -109,6 +109,22 @@ Zone health: gen-project-stats.ts verified 162 tools / 76 crons, atomic write co
 
 ---
 
+## c380 · 2026-06-07 (CLEAN-DEAD-SOURCE-IDS) — REVIEW
+
+**Task:** CLEAN-DEAD-SOURCE-IDS (S) BATCH-5 — remove 6 dead source IDs from fetch-status.
+
+**Root cause:** fetchStatusHandler.ts derives source slugs dynamically from rag_analyses GROUP BY. Dead sources (news/cafef1/vnexpress1/shared-url/vnbusiness/vietnambiz) have historical rows but no live fetchers, producing permanent VERY-STALE dashboard noise.
+
+**Fix (1 file):** `fetchStatusHandler.ts` — added `DEAD_SOURCE_SLUGS` (exported ReadonlyArray, 6 entries), extended HAVING clause: `AND source_slug NOT IN (?,?,?,?,?,?)` with bound params `[cutoff, ...DEAD_SOURCE_SLUGS]`.
+
+**Tests:** `CLEAN-DEAD-SOURCE-IDS.test.ts` (NEW) — 8 tests, 8 pass / 0 fail. F-1 still 21/0. tsc: no new errors (pre-existing in tasksMdJanitorJob.ts/1980-f2). Historical DB rows preserved.
+
+**Grep justified:** remaining hits for vnbusiness/vietnambiz in pollNews.ts/vnRelevanceFilter.ts are news-pipeline infrastructure (not fetch-status surface). system-map.json: none of 6 IDs appear as data_source entries.
+
+Zone health: DEAD_SOURCE_SLUGS filter LIVE, 8 new tests GREEN, compiled code changed (rebuild required) | HEALTHY
+
+---
+
 ## Working Memory
 
 ### Baselines (FIX-PROJECT-STATS-GENERATED 2026-06-07)
