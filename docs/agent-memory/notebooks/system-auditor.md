@@ -1,5 +1,32 @@
 <!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c100 · 2026-06-07T22:33:50Z
+### Audit Run Tier-1 (22:33 UTC 2026-06-07)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE:
+```
+--- docker ps -a ---
+mcp-server: Up 2h (healthy) ✓ [RAW-PROBE L3]
+api-gateway: Up 4h (healthy) ✓ [RAW-PROBE L6]
+macro-indicators: Up 4h (healthy) ✓ [RAW-PROBE L5]
+pdf-extractor: Up 56m (healthy) ✓ [RAW-PROBE L2]
+frontend: Up 4h (healthy) ✓ [RAW-PROBE L4]
+mcp-gateway: Up 4h (healthy) ✓ [RAW-PROBE L7]
+--- health endpoints ---
+mcp-server:3000/health OK (200) ✓
+api-gateway:4000/health OK (200) ✓
+macro-indicators:5004/health OK (200) ✓
+pdf-extractor:5001/health OK (200) ✓
+frontend:3001/ OK (200) ✓
+--- memory --- mcp-server=49.35% (<85%) ✓
+--- disk --- 29% used (34Gi free) ✓
+--- restart count --- mcp-server RC=1 (≤2) ✓
+```
+- Findings: All 6 host_runtime_set services UP + healthy endpoints; restart count nominal.
+- Signals: 0 emitted
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## c099 · 2026-06-07T22:05:02Z
 ### Audit Run Tier-2 COMPLETION (22:05 UTC 2026-06-07)
 - Tier: 2 | MCP checks: A-29 + B-01–B-13 + C-06/C-07 + D-BCTC-EVAL + D-IMPROVE
