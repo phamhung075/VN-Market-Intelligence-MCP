@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T22:16:43Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-08T00:24:40Z",
+  "_updated_by": "agent-father",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -3163,7 +3163,7 @@
         "id": "FIX-AUDITOR-SQL-MODIFIERS",
         "title": "system-auditor flow: rewrite invalid short-form SQLite modifiers (-3h/-24h/-26h/-48h/-72h/-7d) to long form ('-3 hours'/'-24 hours'/'-7 days') in C-04, C-06..C-11, C-16, B-13 + add NULL-guard asserting datetime() result non-null before comparing",
         "owner": "agent-father",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "docs/agents/system-auditor/",
         "type": "FIX",
         "size": "S",
@@ -3173,7 +3173,9 @@
           "docs/agents/system-auditor/flow/main.md"
         ],
         "status_note": "DISPATCHED tick 2026-06-07T22:14Z — BATCH slot 1 (WIP 2). AC: zero short-form datetime modifiers remain in docs/agents/system-auditor/flow/main.md; every datetime() check carries a NULL-guard sentinel line; agent .md edit by agent-father (maintenance lane, mutex-wrap); next Tier-2 run: C-06/C-07 PASS with real counts, C-08/C-10/C-16/B-13 evaluated against non-NULL datetimes.",
-        "note": "[router repair_task_request 2026-06-07T22:09:54Z HIGH, row router-2026-06-07T22:09:54Z-aud-sql-mod] SQLite needs long-form modifiers; short form makes datetime() return NULL so every comparison is NULL -> count=0. Proven tonight: C-06/C-07 fired false CRITICAL (raw market.db: market_messages 3h=1, agent_signals 24h=84; router retraction msg 2728); zero-expectation checks C-08/C-10/C-16/B-13 silently false-PASS since inception. Proof: sqlite3 :memory: \"SELECT datetime(now_kw,-24h_kw) IS NULL\" -> 1. Reports 3087/3088 resolve as false-positive against this task. Sensor-integrity = top priority: a blind auditor poisons every downstream anomaly bridge."
+        "note": "[router repair_task_request 2026-06-07T22:09:54Z HIGH, row router-2026-06-07T22:09:54Z-aud-sql-mod] SQLite needs long-form modifiers; short form makes datetime() return NULL so every comparison is NULL -> count=0. Proven tonight: C-06/C-07 fired false CRITICAL (raw market.db: market_messages 3h=1, agent_signals 24h=84; router retraction msg 2728); zero-expectation checks C-08/C-10/C-16/B-13 silently false-PASS since inception. Proof: sqlite3 :memory: \"SELECT datetime(now_kw,-24h_kw) IS NULL\" -> 1. Reports 3087/3088 resolve as false-positive against this task. Sensor-integrity = top priority: a blind auditor poisons every downstream anomaly bridge.",
+        "done_at": "2026-06-08T00:24:40Z",
+        "evidence_note": "commit 8b59cdf9: 11 short-form modifiers replaced long-form in main.md (C-04,C-06,C-07,C-08,C-09,C-10,C-11,C-16 table + B-13 inline + Tier-2 bun snippets); NULL-guard block added; AC gate grep -cE returns 0; smoke-proof all 6 long-form modifiers return non-NULL."
       }
     ],
     "archive": [],
