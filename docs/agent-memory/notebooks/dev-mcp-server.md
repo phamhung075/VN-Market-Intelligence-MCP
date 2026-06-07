@@ -1,5 +1,29 @@
 # dev-mcp-server -- Notebook
 
+## c382 · 2026-06-07T04:35Z (FIX-SBV-PUSH-TYPE-COERCE) — COMMITTED
+
+**Task:** FIX-SBV-PUSH-TYPE-COERCE (HIGH — live outage) — /api/push-sbv-rates rejects string-typed numerics.
+
+**Root cause:** `typeof snapshot.usdVndOfficial !== "number"` at server.ts:692 rejected JSON payloads where the VPS script sent numeric values as strings (e.g. `"26135"` vs `26135`). Endpoint returned 400 → vn-sbv-fetch stayed UNHEALTHY.
+
+**Fix:** Extracted inline handler to `routes/pushSbvRatesHandler.ts`. Added `Number()` coercion for `usdVndOfficial` + 6 optional rate fields BEFORE the NaN/≤0 guard. Original auth + empty-body branches unchanged. Server.ts now delegates to `handlePushSbvRates(req, res, db, log)`.
+
+**Tests (8 TC, RED→GREEN):** `FIX-SBV-PUSH-TYPE-COERCE.test.ts`
+- TC-01: string "26135" → 200 (was 400, now fixed)
+- TC-02: all 7 fields as strings → 200 with coerced values
+- TC-03: garbage "abc" → 400 (NaN guard preserved)
+- TC-04: negative "-1" → 400 (≤0 guard preserved)
+- TC-05: zero "0" → 400 (≤0 guard preserved)
+- TC-06: numeric 26135 (original path) → 200 (regression guard)
+- TC-07: empty body → 400 (unchanged branch)
+- TC-08: wrong key → 401 (unchanged branch)
+
+**Gates:** tsc 3 pre-existing TS2379 errors only | 10810 pass / 534 fail (pre-existing, no regression) | tools=162, sched=76
+
+**INV-GATEWAY-1:** commit-mutex/task_claim/task_release not called from this specialist.
+
+---
+
 ## c381 · 2026-06-07T02:39Z (FIX-BCTC-IDENTITY-SERVE-GUARD) — COMMITTED 921be65a
 
 **Task:** Balance-sheet identity guard in get_financial_summary serve path + CTG 2026-Q1 triage. *(entry numbered c347 in stale worktree; renumbered at merge)*
@@ -160,31 +184,7 @@ Zone health: news/sbv_fx false-CRITICAL on overnight/weekend eliminated, dynamic
 
 Zone health: gen-project-stats.ts verified 162 tools / 76 crons, atomic write confirmed, no container rebuild needed | HEALTHY
 
----
-
-## c380 · 2026-06-07 (CLEAN-DEAD-SOURCE-IDS) — REVIEW
-
-**Task:** CLEAN-DEAD-SOURCE-IDS (S) BATCH-5 — remove 6 dead source IDs from fetch-status.
-
-**Root cause:** fetchStatusHandler.ts derives source slugs dynamically from rag_analyses GROUP BY. Dead sources (news/cafef1/vnexpress1/shared-url/vnbusiness/vietnambiz) have historical rows but no live fetchers, producing permanent VERY-STALE dashboard noise.
-
-**Fix (1 file):** `fetchStatusHandler.ts` — added `DEAD_SOURCE_SLUGS` (exported ReadonlyArray, 6 entries), extended HAVING clause: `AND source_slug NOT IN (?,?,?,?,?,?)` with bound params `[cutoff, ...DEAD_SOURCE_SLUGS]`.
-
-**Tests:** `CLEAN-DEAD-SOURCE-IDS.test.ts` (NEW) — 8 tests, 8 pass / 0 fail. F-1 still 21/0. tsc: no new errors (pre-existing in tasksMdJanitorJob.ts/1980-f2). Historical DB rows preserved.
-
-**Grep justified:** remaining hits for vnbusiness/vietnambiz in pollNews.ts/vnRelevanceFilter.ts are news-pipeline infrastructure (not fetch-status surface). system-map.json: none of 6 IDs appear as data_source entries.
-
-Zone health: DEAD_SOURCE_SLUGS filter LIVE, 8 new tests GREEN, compiled code changed (rebuild required) | HEALTHY
-
----
-
 ## Working Memory
-
-### Last Completed: FIX-BCTC-IDENTITY-SERVE-GUARD
-- DONE: committed 921be65a (merged to main as 62ef64fe)
-- Guard: total_assets<=0 OR total_assets<equity_total → confidence=0 + corrupt flag
-- CTG re-extract: FAILED (fleet cron required), deferred to ops
-- FU-CTG-REFINE-PICKUP: SUPERSEDED by guard
 
 ### Baselines (FIX-PROJECT-STATS-GENERATED 2026-06-07)
 - tools=162 (server.tool+registerTool unique names), sched=76 (all cron.schedule in scheduler/**/*.ts)

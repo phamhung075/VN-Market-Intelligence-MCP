@@ -84,6 +84,7 @@ import { handlePriceBatch } from "./routes/priceBatchHandler.js";
 import { handleNewsHeadlines } from "./routes/newsHeadlinesHandler.js";
 import { handleVpsProxyHealth } from "./routes/vpsProxyHealthHandler.js";
 import { handleFetchStatus } from "./routes/fetchStatusHandler.js";
+import { handlePushSbvRates } from "./routes/pushSbvRatesHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -661,68 +662,7 @@ export async function createBunServer(
 
     // ── VPS push: SBV / VCB FX rates ────────────────────────────────────────
     if (method === "POST" && pathname === "/api/push-sbv-rates") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      let body = "";
-      for await (const chunk of req) body += chunk;
-      try {
-        if (!body.trim()) {
-          safeLogVpsPush({ service: "sbv", itemsCount: 0, status: "error", errorMsg: "Empty request body" }, db);
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Empty request body" }));
-          return;
-        }
-        const snapshot: {
-          overnightRatePct?: number;
-          refinancingRatePct?: number;
-          usdVndOfficial: number;
-          discountRatePct?: number;
-          maxDepositRatePct?: number;
-          maxLendingRatePct?: number;
-          interbankOvernightPct?: number;
-          fetchedAt?: string;
-        } = JSON.parse(body);
-
-        if (typeof snapshot.usdVndOfficial !== "number" || snapshot.usdVndOfficial <= 0) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid usdVndOfficial (positive number required)" }));
-          return;
-        }
-
-        const { storeSbvSnapshot } = await import("../../infrastructure/fetchers/sbv.js");
-        const finalSnapshot = {
-          overnightRatePct: snapshot.overnightRatePct ?? 0,
-          refinancingRatePct: snapshot.refinancingRatePct ?? 0,
-          usdVndOfficial: snapshot.usdVndOfficial,
-          discountRatePct: snapshot.discountRatePct ?? 0,
-          maxDepositRatePct: snapshot.maxDepositRatePct ?? 0,
-          maxLendingRatePct: snapshot.maxLendingRatePct ?? 0,
-          interbankOvernightPct: snapshot.interbankOvernightPct ?? 0,
-          fetchedAt: snapshot.fetchedAt ?? new Date().toISOString(),
-        };
-
-        storeSbvSnapshot(finalSnapshot);
-
-        log.info("[push-sbv-rates] stored VCB FX rate from VPS", {
-          usdVnd: finalSnapshot.usdVndOfficial,
-          fetchedAt: finalSnapshot.fetchedAt,
-        });
-        safeLogVpsPush({ service: "sbv", itemsCount: 1, status: "ok" }, db);
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, usdVnd: finalSnapshot.usdVndOfficial }));
-      } catch (err) {
-        log.error("[push-sbv-rates] error", { error: err instanceof Error ? err.message : String(err) });
-        safeLogVpsPush({ service: "sbv", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) }, db);
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Invalid JSON" }));
-      }
+      await handlePushSbvRates(req, res, db, log);
       return;
     }
 
