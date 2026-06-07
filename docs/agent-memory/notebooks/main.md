@@ -54,6 +54,21 @@
 - B3-SPACE-URLS-PULL-BLOCKED (P2) now blocks 2 real PPC rows. BUN-SEGFAULT-LARGE-PDF (P3 monitor). REVIEW-PPC-Q4-LOW-CONFIDENCE (P3 human-confirm).
 - Monday VN open: news-vps re-check (#3065 monitoring).
 
+## tick-20260607T1017Z — B3 hsx URLs fixed+live (rebuild #3), HPG saga re-scoped (stale OCR cache), board deduped to 0, PPC OCR-gap rows filed
+
+- **B3-SPACE-URLS** done E2E: encodeHsxUrl (idempotent) + pull-filter widened; hsx geo-block DISPROVEN by evidence (container curl 200 — original VPS-only filter was an afterthought, not policy). 2 rows repaired in-place. 36/0 tests @ 86874e83. Live via **rebuild #3** (04164be257d5, --no-deps, peers untouched, healthy 5s, integrity ok dispatcher-verified). Pull expected on next 30-min cron.
+- **HPG saga deepened honestly**: re-queue executed (7 old rows deleted, reparse ran) BUT Tier-3 served STALE OCR cache (pre-fix magnitude-wrong text) AND on-disk PDF is riêng lẻ not hợp nhất → FIX-LIAB validation STILL pending, now blocked_by INVALIDATE-HPG-OCR-CACHE + HPG-DISCOVER-CONSOLIDATED-PDF (both filed P2). Lesson: code fixes can't correct cached extraction artifacts — cache invalidation is part of any extractor-fix DoD.
+- **PPC OCR gap root-caused** (#3066 resolved monitoring): row 6f6e3fc0 balance sheet effectively unextracted (assets=939B, liabilities=0 — scanned PDF ~225 chars/page; Tier-3 text-layer only). REVIEW-PPC row P3→P2. **FEAT-PDF-EXTRACTOR-LOCAL-INPUT (M, P2, dev-pdf-extractor) filed — the convergence point**: unblocks PPC OCR re-extract + HPG fresh OCR + moves extraction out of Bun (segfault class).
+- **BOARD-DUP-IDS-AUDIT done** @ 13567c90: all 11 dup ids true-copies (no generic-id collisions), deleted stale copies, 2 DONE rows relocated, global scan 0 (independently re-verified). Board now clean baseline.
+- Audits: T2 eaa19e59 (0 anomalies, weekend rules applied) + T1s 1fbd5cf9/46502ef0 clean. pm batch 90dcdace defect-free (precise-rules prompt template works — keep using it).
+- Commits: 13567c90→86874e83→9251596e→eaa19e59→90dcdace→[this].
+
+### Queue watch for next cycle
+- **Next 30-min pull cron + 14:00Z reparse**: PPC hsx rows (292114, 1308151) should PULL; then reparse. Verify both + AC-6 progress (3/5).
+- HPG chain: INVALIDATE-HPG-OCR-CACHE → HPG-DISCOVER-CONSOLIDATED-PDF → HPG-REPARSE-POST-REBUILD (FIX-LIAB validation).
+- FEAT-PDF-EXTRACTOR-LOCAL-INPUT (dev-pdf-extractor zone — needs its own lane, M).
+- Monday VN open: news-vps gate (#3065 monitoring; T2 saw 61min SLA breach classified weekend-INFO).
+
 ### Addendum (post-close audit 0b0b75ae)
 - Window-2 compose op CASCADED to macro-indicators (restarted 08:45:34Z, 16s before mcp-server start) despite "mcp-server only" scope + executor claiming "no deviations". Zero impact (healthy, clean bounce) — but compose `depends_on` edges make "scoped restart" leaky. Next maintenance runbook: enumerate dependent services pre-window + use `--no-deps` on compose start, and verify ALL peer StartedAt timestamps post-window, not just `docker ps` presence.
 
