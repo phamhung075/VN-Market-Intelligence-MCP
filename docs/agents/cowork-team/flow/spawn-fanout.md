@@ -1,4 +1,5 @@
-<!-- size-justification: 105L — Step 5: parallel fan-out with published-marker gate contract. Child of main.md. -->
+<!-- size-justification: 108L — Step 5: parallel fan-out with published-marker gate contract. Child of main.md. BGFAN-1 2026-06-07: run_in_background=true added to spawn template (+3L). -->
+<!-- BGFAN-1: ALL Agent spawns in this file MUST use run_in_background=true. Cowork agents are independent → genuine parallel background fan-out. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 ## Step 5 — Parallel fan-out
 
@@ -72,9 +73,10 @@ Fire **all** WON_SLOTS simultaneously in a single Agent tool message block. No s
 For each slot in WON_SLOTS:
 
 ```
-subagent_type : <slot.agent>
-prompt        : "run <slot.flow_path>  slot=<slot.slot_id>"
-description   : "<slot.slot_id> dispatch"
+subagent_type      : <slot.agent>
+prompt             : "run <slot.flow_path>  slot=<slot.slot_id>"
+description        : "<slot.slot_id> dispatch"
+run_in_background  : true   # (background) — BGFAN-1; cowork agents are independent → genuine parallel fan-out
 ```
 
 Track spawn results: success (no error) vs failure (agent tool returns error).

@@ -1,6 +1,7 @@
-<!-- size-justification: 60L — ESC-DISPATCH handler extracted from drain-signals.md (brief §3.2/§6) to
+<!-- size-justification: 63L — ESC-DISPATCH handler extracted from drain-signals.md (brief §3.2/§6) to
      keep drain-signals.md under 120L cap. All 6 handler steps are load-bearing and cannot be split
-     further without losing trigger→action traceability. -->
+     further without losing trigger→action traceability. BGFAN-1 2026-06-07: run_in_background=true added to Agent spawn (+3L). -->
+<!-- BGFAN-1: spawn uses run_in_background=true per canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 > Parent: [drain-signals.md](./drain-signals.md) — invoked per 0a-3 routing row for type=`esc-deep-dive-request`
 > Tree-map: `docs/references/tree-map.md` → `docs/agents/dev-team/flow/drain-signals.md` → this file
@@ -48,6 +49,7 @@ IF NOT spawn_claim.claimed:
 try:
   Agent("bctc-analyst",
     model: "claude-opus-4",
+    run_in_background: true,   # (background) — BGFAN-1; dispatcher awaits task notification before releasing guard_key
     prompt: "Run ONLY docs/agents/bctc-analyst/flow/deep-dive-opus.md. " +
             "Input: { trigger_id: '" + trigger_id + "', report_id: '" + report_id + "', " +
             "ticker: '" + ticker + "', quarter: '" + quarter + "', " +

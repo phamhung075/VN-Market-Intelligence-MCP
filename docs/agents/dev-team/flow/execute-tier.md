@@ -1,5 +1,7 @@
 # Dev Team — Step 3: Execution (Tiered, Zone-Routed, Worktree-Parallel)
 
+<!-- BGFAN-1: ALL Agent spawns in this file MUST use run_in_background=true. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Independent tier tasks fan out concurrently (parallel background); commit-mutex serialization unchanged. -->
+
 **Parent flow:** `docs/agents/dev-team/flow/main.md` (Step 3 dispatcher)
 
 Read `pm` return for task list + dependency map. Each task carries `zone:` field (mandatory per PM/architect contract).
@@ -52,9 +54,9 @@ for each (agent, task_id) in tier_batch:
 
 # Step 2 + 3 — Spawn claimed tasks; release in finally (reachable on ALL exit paths):
 try:
-  → Agent(dev-stock-price, taskA) + Agent(dev-alert-engine, taskB)   # devs parallel
-  → Agent(qa, taskA) + Agent(qa, taskB)                               # QA parallel (different branches)
-  → Agent(fixer, taskA) + Agent(fixer, taskB)                         # fixer if needed
+  → Agent(dev-stock-price, taskA, run_in_background=true) + Agent(dev-alert-engine, taskB, run_in_background=true)   # (background) devs parallel — BGFAN-1
+  → Agent(qa, taskA, run_in_background=true) + Agent(qa, taskB, run_in_background=true)                               # (background) QA parallel (different branches)
+  → Agent(fixer, taskA, run_in_background=true) + Agent(fixer, taskB, run_in_background=true)                         # (background) fixer if needed
   # (only tasks in spawned_batch are included)
 finally:
   for each (agent, task_id) in spawned_batch:
@@ -90,5 +92,5 @@ Enter only after ALL tier agents returned.
 3. bash scripts/audits/c2-alert.sh <new-HEAD-sha>  (Control 4 — non-blocking, prints warning)
 4. If Control 1 or Control 3 fired: STOP tier, WORK alert, await human.
    Recovery: bash scripts/audits/recovery-snapshot.sh  (operator-explicit only — Control 5)
-5. All controls pass → spawn pm to update `docs/data/orch/orch-state.json` `.task_board` + unblock next tier
+5. All controls pass → spawn pm (run_in_background=true) (background — BGFAN-1) to update `docs/data/orch/orch-state.json` `.task_board` + unblock next tier
 ```

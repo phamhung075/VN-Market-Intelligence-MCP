@@ -1,5 +1,14 @@
 # Agent Father — Notebook
 
+## c291 · 2026-06-07T09:51Z — BGFAN-1: background fan-out mandate
+
+- Task: BGFAN-1 (operator directive). Encoded run_in_background=true across all dispatcher flows.
+- SSOT chosen: docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate (new section). DRY: 6 files carry inline (background) markers + pointer only.
+- Files modified (8): agent-chaining-protocol.md, dev-team/flow/main.md, drain-esc-dispatch.md, drain-signals.md, execute-tier.md, cowork-team/flow/main.md, spawn-fanout.md, cron-cowork-team/SKILL.md.
+- Gating semantics preserved: background ≠ parallel. Dev-team gated chain (po→…→qa) backgrounds each spawn but awaits notification before next gate. Commit-mutex serialization unchanged.
+- spawn-fanout.md is the real cowork fan-out point (not cowork-team/flow/main.md directly) — also patched.
+- Decision journal: sprint-WORKFLOW-FLUIDITY-agent-father.md STEP agent-father-S1.
+
 ## c289 · 2026-06-07T05:08Z — FIX-AUDITOR-DB-LIVENESS
 
 - Task: FIX-AUDITOR-DB-LIVENESS (HIGH). Signal row: rtr-auditor-db-stale-path-20260607T0512Z.

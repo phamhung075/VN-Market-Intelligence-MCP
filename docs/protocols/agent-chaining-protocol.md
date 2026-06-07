@@ -46,18 +46,46 @@ UNBLOCK  {route_to} ──► done
    - **Stale-state recovery**: if `.head.updated_at` is >24h old AND `.head.status` is `"in_progress"`, main terminal treats the state as crashed and resets to `idle`. Agents must write accurate timestamps.
    - **Cowork agents** (tran-ngoc-bau, unified-agent, alert-commander, news-scout, market-watcher, financial-analyst, report-analyzer, digest-predict, qa-responder) must NOT write `orch-state.json`. Use `docs/signals/` instead to request dev-team action.
 
+## Background Spawn Mandate (BGFAN-1 — operator directive 2026-06-07)
+
+**ALL Agent spawns from dispatcher flows MUST set `run_in_background: true`.**
+
+Dispatcher flows: `docs/agents/dev-team/flow/main.md`, `drain-signals.md`, `drain-esc-dispatch.md`,
+`execute-tier.md`, `docs/agents/cowork-team/flow/main.md`, `spawn-fanout.md`,
+`.claude/skills/cron-cowork-team/SKILL.md`, and any future dispatcher flow.
+
+**Background ≠ parallel.** The distinction:
+- Independent tasks → background-spawn ALL concurrently in one message block (true parallel fan-out).
+- Gated tasks (dev-team po→ba→architect→pm→dev→qa chain) → background-spawn each stage, then WAIT for its
+  task notification before spawning the next gate. The dispatcher serializes on completion, not on the call.
+- Cowork agents are independent of each other → genuinely parallel background fan-out is desired.
+
+**Commit-mutex serialization is preserved.** Parallel background workers still serialize commits via
+`task_claim(task_kind:"commit-mutex")` — background spawn does not relax the concurrent-commit-race protection
+(concurrent workers share ONE git index). Claim the mutex before `git add/commit`; release in finally.
+
+```
+# Correct pattern — every Agent call in a dispatcher flow:
+Agent(<agent-id>, prompt=..., run_in_background=true)
+
+# After spawning gated chain members — wait for notification before next gate:
+# (dispatcher blocks on task notification / TaskOutput, not on the spawn call)
+```
+
+Each spawn instruction in the 6 dispatcher files carries the inline marker `(background)` at the point of use.
+
 ## Parallel Spawn Rule
 
 ```
 Independent tasks (different files, no deps) → spawn ALL in one message:
-  Agent(developer, task A) + Agent(developer, task B)  ← runs concurrently
+  Agent(developer, task A, run_in_background=true) + Agent(developer, task B, run_in_background=true)
 
-Dependent tasks → spawn sequentially:
-  Agent(developer, task A) → read return → Agent(developer, task B)
+Dependent tasks → spawn sequentially (wait for completion notification, then spawn next):
+  Agent(developer, task A, run_in_background=true) → await notification → Agent(developer, task B, run_in_background=true)
 
 Same pipeline stage, no conflict → always parallel:
-  Agent(qa, task A) + Agent(qa, task B)  ← fine
-  Agent(fixer, task A) + Agent(fixer, task B)  ← fine
+  Agent(qa, task A, run_in_background=true) + Agent(qa, task B, run_in_background=true)
+  Agent(fixer, task A, run_in_background=true) + Agent(fixer, task B, run_in_background=true)
 ```
 
 ## Parallel Isolation

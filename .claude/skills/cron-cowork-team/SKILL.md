@@ -44,9 +44,11 @@ Do NOT create a duplicate. This is the idempotency guarantee.
 
 Only execute this step if Step 1 found no existing entry.
 
+<!-- BGFAN-1: The dispatcher that runs on each tick (cowork-team/flow/main.md → spawn-fanout.md) MUST spawn all cowork agents with run_in_background=true. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
+
 ```
 CronCreate(
-  description : "cowork-team master dispatcher — fires every 15 min, fans out to schedule SSOT",
+  description : "cowork-team master dispatcher — fires every 15 min, fans out to schedule SSOT (agents spawned run_in_background=true per BGFAN-1)",
   cron        : "*/15 * * * *",
   prompt      : "run docs/agents/cowork-team/flow/main.md",
   durable     : true

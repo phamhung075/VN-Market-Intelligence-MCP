@@ -1,4 +1,5 @@
-<!-- size-justification: 109L — thin dispatcher; full logic extracted to 10 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). -->
+<!-- size-justification: 111L — thin dispatcher; full logic extracted to 10 child sub-flows. JUMP-TO table routes each step. Step 0a drain inline (7L). NB-COWORK-MAIN-SPLIT refactor 2026-06-03. EMIT-DARK-v2 2026-06-05: telemetry.md Step 6.0 uses call_tool emit_pressure_state (Option C). BGFAN-1 2026-06-07: background spawn mandate; actual spawns in spawn-fanout.md carry run_in_background=true. -->
+<!-- BGFAN-1: ALL Agent spawns from this dispatcher MUST use run_in_background=true. Cowork agents are independent → genuine parallel background fan-out. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -92,9 +93,10 @@ Mark each processed row `NEW → READ` (atomic write). If orch-state.json missin
 
 ---
 
-## Step 5 — Parallel fan-out
+## Step 5 — Parallel fan-out (background)
 
 → Run sub-flow: `docs/agents/cowork-team/flow/spawn-fanout.md`
+<!-- BGFAN-1: spawn-fanout.md MUST set run_in_background=true on every Agent call — see inline markers there -->
 
 ---
 

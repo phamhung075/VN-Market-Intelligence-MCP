@@ -1,5 +1,16 @@
 # Decision Journal — sprint WORKFLOW-FLUIDITY — agent-father
 
+### STEP agent-father-S1 · agent-father · 2026-06-07T09:51Z
+**task-id:** BGFAN-1
+**what-done:** Encoded background fan-out mandate across 6 dispatcher flows + 1 canonical protocol rule.
+**what-considered:**
+- Option A: put canonical rule in dev-team/flow/main.md header (closest to dev dispatcher).
+- Option B: put canonical rule in docs/protocols/agent-chaining-protocol.md (DAG parent for all spawn rules — already owns Parallel Spawn Rule + Parallel Isolation).
+**why-decision:** Option B chosen — agent-chaining-protocol.md is the existing SSOT for all spawn behavior; DRY requires the canonical definition live there, files carry inline (background) markers + pointer only.
+**why-change:** Operator directive BGFAN-1 — all Agent spawns from dispatcher flows must use run_in_background=true to prevent blocking the dispatcher session while waiting for agent completion.
+
+---
+
 ## WF-1 — FAIL-LOUD-STOP-RELEASE
 **task_id:** WF-1
 **agent:** agent-father

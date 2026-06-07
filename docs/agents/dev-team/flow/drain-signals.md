@@ -1,4 +1,7 @@
+<!-- size-justification: 121L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). -->
 # Dev Team — Step 0a: Drain `docs/signals/`
+
+<!-- BGFAN-1: this file delegates spawn to drain-esc-dispatch.md (ESC-DISPATCH) which carries run_in_background=true. No direct Agent() call here. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
 
 **MANDATORY PERSIST GUARD:** Before Step 0a-D, check:
 1. `ls docs/signals/*.json | wc -l` → if count > 50: full drain (§0a-1 + DB INSERT + mv) is REQUIRED this tick.

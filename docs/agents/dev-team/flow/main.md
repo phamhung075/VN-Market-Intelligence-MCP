@@ -1,5 +1,7 @@
-<!-- size-justification: 316L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). -->
+<!-- size-justification: 322L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
+
+<!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
 
 ## Team Boundary (Sprint 2026-05-31 — expanded)
 
@@ -37,7 +39,7 @@ if not outer_claim.claimed:
   # fall through; do NOT spawn
 else:
   try:
-    Agent(agent_id, context...)
+    Agent(agent_id, context..., run_in_background=true)   # (background) — BGFAN-1
   finally:
     call_tool(server="vn-market", tool="task_release", arguments={ task_id: agent_spawn_key })
 ```
@@ -198,7 +200,7 @@ head_updated_at   = $(echo "$CURRENT" | jq -r '.head.updated_at')
     # fall through to Step 1 (do NOT spawn)
   else:
     try:
-      Agent(head.next_agent, context... + head.next_action)
+      Agent(head.next_agent, context... + head.next_action, run_in_background=true)   # (background) — BGFAN-1; await task notification before next gate
     finally:
       call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key })
       # ok=false is acceptable (TTL expired or inner self-claim already released)
@@ -228,7 +230,7 @@ if not outer_claim.claimed:
   JUMP TO end   # do NOT spawn po
 # Claim succeeded — spawn PO:
 ```
-→ Spawn `po` with: `pendingSignals[]`, `read_telegram_reports(status="new")`, `list_unresolved_reports()`, `docs/data/orch/orch-state.json .task_board`, `git log --oneline -30`, `git branch`
+→ Spawn `po` with: `pendingSignals[]`, `read_telegram_reports(status="new")`, `list_unresolved_reports()`, `docs/data/orch/orch-state.json .task_board`, `git log --oneline -30`, `git branch` — `run_in_background=true` (background) — BGFAN-1; await task notification, then release triage_key
 → PO contract: `docs/agents/po/flow/main.md` § Role in dev-team flow
 → Return: `NOTHING` (→ idle EXIT) | `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])`
 ```
@@ -262,7 +264,7 @@ result = call_tool(server="vn-market", tool="task_claim", arguments={
   ttl_seconds: 3600
 })
 if result.claimed:
-  spawn {route_to}
+  spawn {route_to} run_in_background=true   # (background) — BGFAN-1
   call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id })
 else:
   log "[dev-team] SKIP UNBLOCK " + batch_id + " — held by " + result.current_holder.owner_agent
@@ -278,7 +280,7 @@ result = call_tool(server="vn-market", tool="task_claim", arguments={
   ttl_seconds: 3600
 })
 if result.claimed:
-  spawn qa with branch list
+  spawn qa with branch list run_in_background=true   # (background) — BGFAN-1
   call_tool(server="vn-market", tool="task_release", arguments={ task_id: "task:" + batch_id })
 else:
   log "[dev-team] SKIP CLEAN " + batch_id + " — held by " + result.current_holder.owner_agent
