@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-06 16:45 UTC | **Sprint:** SPIKE-VPS-SSC-CURL-RECIPE
+**Last updated:** 2026-06-07 07:35 UTC | **Sprint:** FIX-NEWS-VPS-PROBE
 
 ---
 
@@ -69,6 +69,34 @@ Evidence: `[0606/194928.256632:ERROR] pthread_create: Resource temporarily unava
 Post-restart: fresh cycle confirmed, service cycling correctly.
 
 Follow-ups created: BCTC-PLAYWRIGHT-THREAD P2, SLA-WEEKEND-AWARE P3.
+
+---
+
+## c008 · 2026-06-07T07:35Z · FIX-NEWS-VPS-PROBE
+
+Trigger: FIX-NEWS-VPS-PROBE — service flagged unhealthy (uptime 1h44m at audit), news-vps stale 112min.
+
+**VERDICT: HEALTHY — NO FAULT, NO RESTART REQUIRED**
+
+Service status BEFORE: active (running) since Jun 02 01:23:38+07 — 5 days continuous, no OOM since Apr 29.
+Service status AFTER: unchanged (no restart performed — not needed).
+
+Root cause: NONE (infra). Stale-112min was Saturday RSS low-activity window.
+- Last real push before audit: 2026-06-07T03:36Z (1 item, http=200 resp={ok:true,received:1})
+- Cycles 03:36Z→07:04Z: 7 consecutive heartbeat-only cycles (0 new items, all 243 already seen)
+- Resumed at 07:20Z: PUSH 1 item, cursor advanced from 1780827660 to 1780840920 (2026-06-07T14:02:00Z)
+
+Chromium implicated: NO. fetch-vn-news.sh is pure bash + curl + python3 (date parsing only).
+No pthread_create EAGAIN anywhere in logs. No Playwright dependency.
+
+Push leg verification: /api/push-news http=200 resp={"ok":true,"received":1} at 07:20:34Z.
+
+Report #3065: Resolution=monitoring — main terminal must execute:
+  call_tool(server="vn-market", tool="process_telegram_report",
+    arguments={id:3065, action:"resolve", resolution:"monitoring",
+    note:"ops-vps-fetch probe 2026-06-07: healthy+running 5d, no Chromium, stale=weekend RSS cadence, push resumed 07:20Z ok:true"})
+
+Follow-up flags: NONE (no Chromium implicated, no rewrite signal needed).
 
 ---
 
