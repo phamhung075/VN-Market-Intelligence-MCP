@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## c390 · 2026-06-07 (TSU-DEV-U3: 5 Deregister + 7 Integrate Description Updates) — COMMITTED
+
+**Task:** TSU-DEV-U3 — TOOL-SURFACE-UPGRADE sprint  
+**Deliverables:** 5 tools deregistered (read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day) — server.tool() blocks replaced with no-ops, handlers retained. 7 tool descriptions updated (mark_alert_outcome, get_market_foreign_flow, diagnose+reset circuit breaker, get_label_accuracy_report, get_public_contracts, list_flagged_bctc_cells, submit_bctc_correction). `docs/data/tool-registry.json` + `project-stats.json` regenerated (162→157). cowork-refactory-expert signal row appended to orch-state.json signal_queue.  
+**Tests:** 12 new GREEN (TSU-DEV-U3 test file). tool-registry-parity 8/8 GREEN (T-U2-5 confirmed 157). tsc: clean. tools=157, sched=76. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
+
+Zone health: bun test 12/0 (U3 suite) + 8/0 (parity), tsc clean, 157 tools (162-5 deregistered), scheduler 76 cron.schedule | HEALTHY
+
+---
+
 ## c389 · 2026-06-07 (TSU-DEV-U5: Foreign Flow Null Holding Ratio) — COMMITTED
 
 **Task:** TSU-DEV-U5 — TOOL-SURFACE-UPGRADE sprint  
@@ -31,17 +41,7 @@ Zone health: bun test 8/0 (parity suite), tsc clean, 162 tools intact, scheduler
 
 ---
 
-## c386 · 2026-06-07 (FIX-BCTC-STAGE4-CROSS-SECTION-DUP) — COMMITTED cf3b71b5
-
-**Fix:** Stage-4 `evalStage4TableReconstruct` now groups (label, value_current) duplicates by `statement_section`. Same-section dups → `exact_dup_count` → RED (unchanged). Cross-section dups (different known sections) → `cross_section_dup_count` → YELLOW warning only. Null/missing section conservative → same-section → RED. Adds `statement_section` to `BctcTableRow` interface (optional) and to the `computeBctcEval.ts` SELECT query. HPG 421b false-RED resolved without special-casing ticker/report.
-
-**RED→GREEN:** 6 new tests (CS-1..CS-6) in `FIX-BCTC-STAGE4-CROSS-SECTION-DUP.test.ts`. Regression: `bctc-eval-detectors.test.ts` 13/13 unchanged GREEN. tsc: clean. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
-
-Zone health: bun test 19/0 (6 new CS + 13 existing detector tests), tsc clean, tools=162, sched=76 | HEALTHY
-
----
-
 ### Baselines (FIX-PROJECT-STATS-GENERATED 2026-06-07)
-tools=162, sched=76 | Generator: `bun scripts/gen-project-stats.ts` post tool/cron change
+tools=157 (post-U3), sched=76 | Generator: `bun scripts/gen-project-stats.ts` post tool/cron change
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
