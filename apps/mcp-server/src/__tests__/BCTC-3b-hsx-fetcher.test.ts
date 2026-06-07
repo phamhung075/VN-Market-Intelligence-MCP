@@ -243,9 +243,11 @@ describe("TASK-BCTC-3b — fetchHsxBctcUrls", () => {
     expect(urls).toEqual([]);
   });
 
-  // ── TC-5: filePath with ~ prefix → correctly replaced ────────────────────
+  // ── TC-5: filePath with ~ prefix → correctly replaced AND spaces encoded ──
+  // B3-SPACE-URLS-FIX (2026-06-07): previously expected raw spaces in the URL
+  // (broken behavior). Now expects percent-encoded URL — no literal spaces.
 
-  it("TC-5: filePath tilde prefix → replaced with https://staticfile.hsx.vn", async () => {
+  it("TC-5: filePath tilde prefix → replaced with https://staticfile.hsx.vn AND spaces percent-encoded", async () => {
     installUrlMocks({
       "/l/api/v1/1/securities/stock": {
         status: 200,
@@ -275,8 +277,10 @@ describe("TASK-BCTC-3b — fetchHsxBctcUrls", () => {
     const urls = await fetchHsxBctcUrls("VNM", 2025, 5000);
 
     expect(urls.length).toBe(1);
+    // Spaces must be percent-encoded (B3-SPACE-URLS-FIX)
+    expect(urls[0]).not.toContain(" ");
     expect(urls[0]).toBe(
-      "https://staticfile.hsx.vn/Uploads/UploadDocuments/2440890/20260227 - VNM - BCTC HOP NHAT 2025 - DA KIEM TOAN.pdf",
+      "https://staticfile.hsx.vn/Uploads/UploadDocuments/2440890/20260227%20-%20VNM%20-%20BCTC%20HOP%20NHAT%202025%20-%20DA%20KIEM%20TOAN.pdf",
     );
   });
 

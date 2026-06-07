@@ -53,6 +53,54 @@ import { BROWSER_UA } from "./browserHeaders.js";
 /** Static public API token embedded in hsx.vn SPA JS bundle (REACT_APP_TYPE). */
 const HSX_API_TOKEN = "HJ2HNS3SKICV4FNE";
 
+// ---------------------------------------------------------------------------
+// B3-SPACE-URLS-FIX (2026-06-07)
+// ---------------------------------------------------------------------------
+
+/**
+ * Safely percent-encode a staticfile.hsx.vn URL returned by the mediafiles API.
+ *
+ * hsx.vn filePath values contain literal spaces, parentheses, and other chars
+ * that are invalid in HTTP request-target lines (RFC 3986). This function encodes
+ * only those characters while preserving already-encoded sequences so the
+ * function is idempotent (calling it twice yields the same output).
+ *
+ * Characters encoded:
+ *   ' ' (U+0020)  → %20
+ *   '(' (U+0028)  → %28
+ *   ')' (U+0029)  → %29
+ *
+ * Characters deliberately NOT encoded:
+ *   '/' ':' '?' '=' '#' '&' '@' '!' '$' '\'' '*' '+' ',' ';' '~'
+ *   (they carry semantic meaning in the URL structure)
+ *   '%XX' sequences already in the string (idempotency guard — a pre-encoded
+ *   space %20 is left as-is; only a bare percent that is NOT followed by two
+ *   hex digits is itself encoded to %25).
+ *
+ * @param url  Full https://staticfile.hsx.vn/... URL (post tilde-replace)
+ * @returns    URL safe for use as an HTTP request-target
+ *
+ * @example
+ *   encodeHsxUrl("https://staticfile.hsx.vn/Uploads/20260420 - PPC (TV, English).pdf")
+ *   // → "https://staticfile.hsx.vn/Uploads/20260420%20-%20PPC%20%28TV%2C%20English%29.pdf"
+ *
+ *   // Idempotency:
+ *   encodeHsxUrl(encodeHsxUrl("https://staticfile.hsx.vn/a b.pdf"))
+ *   // → "https://staticfile.hsx.vn/a%20b.pdf"  (same as single call)
+ */
+export function encodeHsxUrl(url: string): string {
+  return (
+    url
+      // Guard: encode bare % that is NOT already part of a %XX sequence
+      .replace(/%(?![0-9A-Fa-f]{2})/g, "%25")
+      // Spaces → %20
+      .replace(/ /g, "%20")
+      // Parentheses (common in Vietnamese filenames) → %28 / %29
+      .replace(/\(/g, "%28")
+      .replace(/\)/g, "%29")
+  );
+}
+
 /** Static file CDN host for hsx.vn PDF downloads. */
 const STATICFILE_BASE = "https://staticfile.hsx.vn";
 
@@ -319,9 +367,12 @@ async function fetchMediafileUrls(
     // Sort: consolidated quarterly PDFs first (FIX-CTG-1)
     candidates.sort((a, b) => rankItem(a) - rankItem(b));
 
-    // Construct download URLs: replace tilde prefix with CDN base
+    // Construct download URLs: replace tilde prefix with CDN base, then
+    // percent-encode characters that are invalid in HTTP request-target lines
+    // (spaces, parentheses). encodeHsxUrl is idempotent — already-encoded
+    // sequences are left untouched (B3-SPACE-URLS-FIX 2026-06-07).
     return candidates.map(item =>
-      (item.filePath as string).replace("~", STATICFILE_BASE),
+      encodeHsxUrl((item.filePath as string).replace("~", STATICFILE_BASE)),
     );
   } catch {
     // Network error, timeout, or parse failure

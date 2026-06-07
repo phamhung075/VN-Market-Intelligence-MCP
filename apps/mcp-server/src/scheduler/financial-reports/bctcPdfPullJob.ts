@@ -50,6 +50,17 @@ import { logger } from "../../infrastructure/logger.js";
 /** VPS bctc-files endpoint base URL — all pull-eligible source_urls start here. */
 export const VPS_BCTC_BASE_URL = "http://125.212.251.27:8765/bctc-files/";
 
+/**
+ * hsx.vn staticfile CDN base URL.
+ *
+ * B3-SPACE-URLS-FIX (2026-06-07): hsx.vn URLs with spaces (raw or
+ * percent-encoded via encodeHsxUrl) were not matched by the VPS LIKE
+ * filter, leaving rows pending forever. Confirmed NOT geo-blocked from
+ * the mcp-server container (HTTP 200, checked 2026-06-07 10:08 UTC).
+ * Pull job fetches hsx.vn URLs directly without X-API-Key (no auth required).
+ */
+export const HSX_STATICFILE_BASE_URL = "https://staticfile.hsx.vn/";
+
 /** Minimum valid PDF size in bytes (existing guard shared with bctcValidator). */
 export const MIN_PDF_BYTES = 10_240;
 
@@ -224,19 +235,24 @@ export async function runBctcPdfPullJob(opts: {
     failed: 0,
   };
 
-  // ── 1. Query pending VPS-URL rows ─────────────────────────────────────────
+  // ── 1. Query pending pull-eligible rows ──────────────────────────────────
+  // B3-SPACE-URLS-FIX (2026-06-07): widened from VPS-only filter to include
+  // staticfile.hsx.vn URLs. hsx.vn is NOT geo-blocked from the mcp-server
+  // container (HTTP 200 confirmed). hsx.vn rows use percent-encoded URLs
+  // (spaces → %20, parens → %28/%29) after the encodeHsxUrl fix in
+  // hsxBctcFetcher.ts. No X-API-Key is sent for hsx.vn requests.
   let rows: QueueRow[];
   try {
     rows = db
-      .query<QueueRow, [string, number]>(
+      .query<QueueRow, [string, string, number]>(
         `SELECT id, action_code, period_year, period_quarter, source_url
          FROM bctc_vps_queue
          WHERE status = 'pending'
-           AND source_url LIKE ?
+           AND (source_url LIKE ? OR source_url LIKE ?)
          ORDER BY created_at ASC
          LIMIT ?`,
       )
-      .all(`${VPS_BCTC_BASE_URL}%`, batchSize);
+      .all(`${VPS_BCTC_BASE_URL}%`, `${HSX_STATICFILE_BASE_URL}%`, batchSize);
   } catch (err) {
     logger.warn("[bctcPdfPull] DB query failed", {
       error: err instanceof Error ? err.message : String(err),
@@ -262,9 +278,13 @@ export async function runBctcPdfPullJob(opts: {
 
     let response: Response;
 
+    // hsx.vn URLs do not require authentication; VPS URLs require X-API-Key.
+    const isHsxUrl = row.source_url.startsWith(HSX_STATICFILE_BASE_URL);
+    const effectiveApiKey = isHsxUrl ? "" : apiKey;
+
     // Fetch
     try {
-      response = await deps.fetchPdf(row.source_url, apiKey);
+      response = await deps.fetchPdf(row.source_url, effectiveApiKey);
     } catch (err) {
       logger.warn("[bctcPdfPull] fetch failed", {
         ticker: row.action_code,
