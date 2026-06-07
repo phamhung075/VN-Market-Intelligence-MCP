@@ -292,6 +292,37 @@ export function registerReportTools(
           };
         }
 
+        // ── Balance-sheet identity guard ──────────────────────────────────────
+        // OCR corruption fingerprint: total_assets <= 0 OR total_assets < equity_total.
+        // A valid balance sheet must satisfy: Total Assets >= Equity (equity is funded
+        // by assets). Serving these values raw produces nonsensical derived ratios
+        // (e.g. net_margin 229,157%, ROE undefined). Suppress and flag as corrupt.
+        // Third occurrence: VNM → VEA → CTG — guard at serve layer, not per-ticker patch.
+        if (row.total_assets <= 0 || row.total_assets < row.equity_total) {
+          const corruptReason = row.total_assets <= 0
+            ? `total_assets=${row.total_assets} (zero or negative — OCR extraction failure)`
+            : `total_assets=${row.total_assets} < equity_total=${row.equity_total} (balance-sheet identity violated)`;
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: [
+                  `=== ${actionCode} — ${row.sort_key} ===`,
+                  ``,
+                  `[CORRUPT DATA — SKIP]`,
+                  `This report has a balance-sheet identity violation and cannot be served.`,
+                  `Reason  : ${corruptReason}`,
+                  `Confidence: 0% (forced — corrupt flag)`,
+                  ``,
+                  `No derived ratios (margin, ROE, ROA, D/E) are shown — they would be meaningless.`,
+                  ``,
+                  `Action: Re-extract via /api/bctc-inspect or re-run the BCTC refine pipeline for ${actionCode} ${row.sort_key}.`,
+                ].join("\n"),
+              },
+            ],
+          };
+        }
+
         const lines: string[] = [
           `=== ${actionCode} — ${row.sort_key} (${row.audit_status}) ===`,
           `Company         : ${row.company_name ?? actionCode}`,
