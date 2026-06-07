@@ -14,9 +14,11 @@ Coverage:
   - TC8: assemble called with correct pages + statement_section arguments
   - TC9: balance_delta sign: delta = assets - (liab + equity)
   - TC10: balance tolerance — exact match (delta=0.0) → balance_pass=True
+  - TC11: OcrPort calls are offloaded via asyncio.to_thread (event loop not blocked by OCR)
 """
 
 import asyncio
+import threading
 from typing import Dict, List, Optional
 
 import pytest
@@ -487,3 +489,85 @@ def test_tc10_exact_match_delta_zero_balance_pass_true():
 
     assert result["balance_pass"] is True
     assert abs(result["balance_delta"]) < 1e-6
+
+
+# ---------------------------------------------------------------------------
+# TC11 — OcrPort calls are offloaded to a thread (event loop not blocked)
+# ---------------------------------------------------------------------------
+
+
+class ThreadTrackingOcrPort:
+    """
+    Fake OcrPort that records the thread ID for each call.
+
+    TC11 verifies that both locate_balance_sheet_pages() and ocr_pages()
+    are called from a worker thread, NOT from the event loop thread.
+    If they run on the event loop thread, asyncio.to_thread() was not used
+    and Tesseract would block /health during real OCR work.
+    """
+
+    def __init__(self):
+        self.event_loop_thread_id: int = threading.get_ident()
+        self.locate_thread_id: Optional[int] = None
+        self.ocr_thread_id: Optional[int] = None
+
+    def locate_balance_sheet_pages(self, pdf_path: str) -> List[int]:
+        self.locate_thread_id = threading.get_ident()
+        return [1, 2]
+
+    def ocr_pages(self, pdf_path: str, page_numbers: List[int]) -> List[Dict]:
+        self.ocr_thread_id = threading.get_ident()
+        return [{"page_number": p, "text": ""} for p in page_numbers]
+
+
+def test_tc11_ocr_port_runs_in_worker_thread_not_event_loop():
+    """
+    TC11: When OcrPort is injected, execute() must call locate_balance_sheet_pages()
+    and ocr_pages() via asyncio.to_thread() — i.e., both run on a worker thread,
+    never on the asyncio event loop thread.
+
+    Regression guard for the /health block bug: if these calls run synchronously
+    on the event loop thread, Tesseract OCR pins the loop and makes /health
+    unresponsive for 10-30+ seconds per page. This test must FAIL if the
+    asyncio.to_thread() wrappers are removed.
+    """
+    ocr_port = ThreadTrackingOcrPort()
+    # Record the event loop thread ID inside the test coroutine (same thread as await)
+    event_loop_thread_id_in_coro: Optional[int] = None
+
+    async def run():
+        nonlocal event_loop_thread_id_in_coro
+        event_loop_thread_id_in_coro = threading.get_ident()
+        # Update the port's baseline to match the actual event loop thread
+        ocr_port.event_loop_thread_id = event_loop_thread_id_in_coro
+
+        assembler = FakeTableAssembler(rows=[])
+        push_client = FakePushClient(rows_stored=0)
+        usecase = ExtractTablesUseCase(
+            table_extractor=assembler,
+            table_push_client=push_client,
+            ocr_port=ocr_port,
+        )
+        await usecase.execute(
+            report_id="tc11-thread-test",
+            pdf_path="/tmp/nonexistent.pdf",
+            statement_section="balance_sheet",
+        )
+
+    asyncio.run(run())
+
+    # Both OcrPort calls must have been dispatched to a worker thread
+    assert ocr_port.locate_thread_id is not None, (
+        "locate_balance_sheet_pages was never called — check Path B routing"
+    )
+    assert ocr_port.ocr_thread_id is not None, (
+        "ocr_pages was never called — check Path B routing"
+    )
+    assert ocr_port.locate_thread_id != event_loop_thread_id_in_coro, (
+        "locate_balance_sheet_pages ran on the event loop thread — "
+        "asyncio.to_thread() was not used; this would block /health during OCR"
+    )
+    assert ocr_port.ocr_thread_id != event_loop_thread_id_in_coro, (
+        "ocr_pages ran on the event loop thread — "
+        "asyncio.to_thread() was not used; this would block /health during OCR"
+    )

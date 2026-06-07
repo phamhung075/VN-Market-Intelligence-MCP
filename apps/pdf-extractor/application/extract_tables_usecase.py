@@ -69,6 +69,7 @@ FPT golden balance-check (regression anchor from BT-0 spike eval):
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Dict, List, Optional
 
@@ -381,13 +382,25 @@ class ExtractTablesUseCase:
             # Path B: auto-locate BS pages + OCR (BT-3-D production path).
             # locate_balance_sheet_pages() uses pdfplumber native text (fast, no OCR).
             # ocr_pages() uses Tesseract vie+eng on the located pages only (sequential).
-            bs_page_numbers = self._ocr_port.locate_balance_sheet_pages(pdf_path)
+            #
+            # FIX (HEALTH-BLOCK): both calls are CPU-bound / blocking (pdfplumber I/O
+            # + Tesseract subprocess). Run via asyncio.to_thread() so the event loop
+            # is never blocked and /health always responds during OCR work.
+            # Root cause: direct synchronous call here pinned the event loop thread at
+            # 100% CPU, making every request including /health unresponsive for the
+            # full Tesseract duration (~10-30s per page on CPU).
+            ocr_port = self._ocr_port
+            bs_page_numbers: List[int] = await asyncio.to_thread(
+                ocr_port.locate_balance_sheet_pages, pdf_path
+            )
             logger.info(
                 "ExtractTablesUseCase: auto-located %d BS pages: %s",
                 len(bs_page_numbers),
                 bs_page_numbers,
             )
-            pages = self._ocr_port.ocr_pages(pdf_path, bs_page_numbers)
+            pages = await asyncio.to_thread(
+                ocr_port.ocr_pages, pdf_path, bs_page_numbers
+            )
             logger.info(
                 "ExtractTablesUseCase: OCR complete — %d pages, total chars=%d",
                 len(pages),
