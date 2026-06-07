@@ -4,11 +4,11 @@
   "_updated_at": "2026-06-07T01:31:43Z",
   "_updated_by": "qa",
   "head": {
-    "status": "idle",
+    "status": "planning",
     "updated_at": "2026-06-07T00:00:00Z",
     "updated_by": "agent-father",
-    "active_task_id": null,
-    "next_agent": null,
+    "active_task_id": "PM-TSU",
+    "next_agent": "dev-mcp-server",
     "wip": 0,
     "wip_max": 2
   },
@@ -2240,6 +2240,102 @@
             "description": "Replace hand-typed toolCount/cronJobCount with generator script (scripts/gen-project-stats.ts). Reconciled: toolCount=162 (server.tool+registerTool unique names in tools/**/*.ts), cronJobCount=76 (cron.schedule calls in scheduler/**/*.ts incl. summaryJobs). Generator: atomic temp→validate→rename. Handoff: docs/handoffs/FIX-PROJECT-STATS-GENERATED.md",
             "handoff": "docs/handoffs/FIX-PROJECT-STATS-GENERATED.md",
             "id": "FIX-PROJECT-STATS-GENERATED"
+          }
+        ]
+      },
+      {
+        "id": "TOOL-SURFACE-UPGRADE",
+        "label": "Make 162-tool vn-market surface auditable and honest — 6 units (U1+U2: telemetry+generator, U3: weak-claim triage, U4+U5+U6: sweep/deregister)",
+        "status": "active",
+        "opened_at": "2026-06-07",
+        "priority": "high",
+        "evidence": "Architect design (docs/handoffs/TOOL-SURFACE-UPGRADE-BA-spec.md) breaks down 162-tool surface into 6 audit units: U1 per-call telemetry (gateway SSE cutover fix), U2 registry generation (hand-edit decay fix), U3 12 weak-claim tools (4-layer audit + verdicts), U4 direction+delta sweep (macro-snapshot), U5 foreign-flow null ratio (DSI compliance), U6 TSH merges (description clarity). Root causes: (1) sessionToolCache never populated post-gateway (fix: perCallCounterStore), (2) tool-registry.json decayed 125 tools (fix: static-grep generator), (3) 12 tools zero-claimed across 4 layers (fix: architect audit + deregister 5 + integrate 7 + signal cowork lane), (4) get_macro_snapshot serves point-in-time only (fix: add delta/direction), (5) foreign_flow shows fake 0% holding_ratio (fix: omit per DSI), (6) TSH merges unexecuted (fix: description updates, no consolidation per verdict).",
+        "tasks": [
+          {
+            "title": "U1: Per-call telemetry counter — incrementTool hook + trackSessionToolUsageJob flush",
+            "type": "FEATURE",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/src/interface/mcp/",
+            "priority": "high",
+            "id": "TSU-DEV-U1"
+          },
+          {
+            "title": "U2-GEN: Registry generator + parity test — static grep extraction, 162 tools, SSOT lock",
+            "type": "INFRASTRUCTURE",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "L",
+            "zone": "apps/mcp-server/src/__tests__/ + scripts/",
+            "priority": "high",
+            "id": "TSU-DEV-U2-GEN"
+          },
+          {
+            "title": "U3: 12 weak-claim tools — deregister 5 (read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day) + integrate 7 with description updates",
+            "type": "MAINTENANCE",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "TSU-DEV-U1",
+              "TSU-DEV-U2-GEN"
+            ],
+            "status": "TODO",
+            "size": "L",
+            "zone": "apps/mcp-server/src/interface/mcp/",
+            "priority": "high",
+            "id": "TSU-DEV-U3"
+          },
+          {
+            "title": "U4: Direction+delta sweep — get_macro_snapshot (VnIndex delta from daily_ohlcv, oil/gold/usd null/unknown)",
+            "type": "ENHANCEMENT",
+            "owner": "dev-macro-indicators",
+            "depends": [],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/macro-indicators/pkg/",
+            "priority": "high",
+            "id": "TSU-DEV-U4"
+          },
+          {
+            "title": "U5: Foreign flow null holding ratio — omit fabricated data (formatForeignFlowOutput gate)",
+            "type": "DATA-QUALITY",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/src/interface/mcp/",
+            "priority": "high",
+            "id": "TSU-DEV-U5"
+          },
+          {
+            "title": "U6: TSH leftover merges — description updates only (keep all separate per architect verdict)",
+            "type": "DOCUMENTATION",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "TSU-DEV-U3"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/",
+            "priority": "low",
+            "id": "TSU-DEV-U6"
+          },
+          {
+            "title": "U2-PARITY: Final count verification — re-run generator + parity test after U3 deregistrations (MUST run LAST)",
+            "type": "TEST",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "TSU-DEV-U3",
+              "TSU-DEV-U6"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "note": "HARD SEQUENCING: U2-PARITY must run LAST, after all U3 deregistrations committed. Settles final tool count at 157 (162 initial − 5 deregistered). Cannot produce stale parity test if U3 count changes.",
+            "id": "TSU-DEV-U2-PARITY"
           }
         ]
       }
