@@ -1,5 +1,26 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-07 · VERIFY-PPC-E2E-OCR + INVALIDATE-HPG-OCR-CACHE — DATA OPS
+
+**Task A — VERIFY-PPC-E2E-OCR (P1):**
+BEFORE: financial_reports id=6f6e3fc0, total_assets=939315863000, total_liabilities=0, equity_total=0, conf=0.25, extraction_method=pdf-parse, validation_status=low_confidence.
+DELETE: `DELETE FROM financial_reports WHERE action_code=? AND period_year=? AND period_type=?` bound ("PPC",2025,"Q4") → 1 row changed. Count after = 0.
+Trigger: `reparseSingleWithOcrFallback` with injected deps forcing OCR cache (Tier 3). pdf-extractor container unhealthy — accepts TCP but hangs on /extract (120s AbortSignal timeout). Tier 2 pdf-parse returns garbage text-layer (16k chars scanned-image metadata, produces same zero values). Tier 3 OCR cache: PPC_2025_Q4.pdf 74 pages conf=0.80 149,597 chars (populated 2026-06-07 10:06-10:15).
+Poll timeline: Trigger 12:26 → Tier 1a 120s timeout → Tier 1b 120s timeout → Bun segfault on LanceDB (not pdf-parse). Background job 12:29:45 via -d exec. Full reparse cycle: Tier 1a null (pdf-extractor hung), Tier 2 empty forced, Tier 3 OCR cache hit. Pipeline 12:36:37.
+AFTER: id=b9b8a473, period=2025-Q4, total_assets=0, total_liabilities=780223778402, equity_total=0, extraction_confidence=0.375, validation_status=failed, extraction_method=pdf-parse, extraction_source_note="OCR-cache-Tier3: pdf_extracted_text PPC_2025_Q4.pdf 74p conf=0.80 (pdf-extractor hung during reparse)".
+**Criteria met:** totalLiabilities>0 (780,223,778,402 real VND confirmed from OCR text) ✓. Confidence 0.375 vs 0.25 ✓. OCR cache tier evidence ✓ (extraction_source_note stamped). Real financial data: liabilities=780tỷ, equity JSON populated (but guard rejected total due to raw VND magnitude). **Criteria NOT met:** total_assets=0 (parser couldn't extract from scrambled column layout); equity_total=0 (guard rejected 4,466,380,796,968 as "impossible" — raw VND vs tỷ confusion); validation_status=failed (identity: assets=0 ≠ liab+equity). **Root cause of remaining gap:** extractorGuards magnitude check treats raw VND values as "impossible"; parser can't find TỔNG CỘNG TÀI SẢN (270) from scrambled OCR table layout. Real balance sheet from OCR text confirmed: assets=5,246,604,575,370, liabilities=780,223,778,402, equity=4,466,380,796,968 (identity holds perfectly).
+**Follow-ups:** (1) extractorGuards threshold too aggressive for raw VND reports (PPC uses VND not triệu). (2) Parser needs table layout normalization for scrambled BCTC Q4 format. (3) pdf-extractor service hung on long OCR job — queue serialization blocks all subsequent requests. (4) Bun segfault on LanceDB insert (not pdf-parse as previously assumed).
+
+**Task B — INVALIDATE-HPG-OCR-CACHE (XS):**
+Cache table: `pdf_extracted_text`, keyed by `filename` column (exact string match). HPG file: `20260130-HPG-Bao-cao-tai-chinh-rieng-Cong-ty-me-va-giai-trinh-Q4.2025.pdf`.
+BEFORE: COUNT=24 rows, avg_conf=0.80, latest=2026-04-29 06:09:06.
+SQL: `DELETE FROM pdf_extracted_text WHERE filename = ?` bound ("20260130-HPG-Bao-cao-tai-chinh-rieng-Cong-ty-me-va-giai-trinh-Q4.2025.pdf") → 24 rows deleted.
+AFTER: COUNT=0. HPG re-parse NOT triggered (per task spec).
+
+Zone health: data-only ops, no code changed | OCR cache invalidated for HPG | PPC new row with real liabilities | HEALTHY
+
+---
+
 ## 2026-06-07 · FIX-EXTRACT-CONSUMER-PDFPATH — COMMITTED
 
 **Task:** FIX-EXTRACT-CONSUMER-PDFPATH (XS-S) — consumer wiring of FEAT-PDF-EXTRACTOR-LOCAL-INPUT (8c12b970)
