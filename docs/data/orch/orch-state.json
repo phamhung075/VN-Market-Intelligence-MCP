@@ -55,7 +55,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T02:49:06Z",
+    "_updated_at": "2026-06-07T06:55:00Z",
     "_updated_by": "pm",
     "active_sprints": [
       {
@@ -2673,6 +2673,55 @@
         "zone": "scripts/",
         "created_at": "2026-06-07T00:52:34Z",
         "note": "Verified 20260607: hook fires unconditionally on over-cap governed writes; exemption honored only downstream (claude-manager-helper flow main.md:97 Pass 5b) -> bounded re-fire noise on every edit of a justified over-cap file (live ex: commit-mutex SKILL 201L signal 00:25Z -> annotated fdcd5444). Fix: AFTER breach detected (cold path only), grep first 10 lines for size-justification -> exit 0. Hot-path performance contract intact (jq x1, wc x1 unchanged). Stale-justification re-review still covered by manager-helper periodic pass. NOTE: dispatcher attribution to architecture brief 2026-06-04-data-serve-integrity.md SS7 is WRONG — that SS7 is Risk Flags, contains no exemption claim; no doc fix needed."
+      },
+      {
+        "id": "UNBLOCK-CTG-REFINE-DRAIN",
+        "title": "Unblock CTG refine-drain queue — resolve downstream service coupling (zone mcp-server, next up)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-06-07T06:54:00Z",
+        "note": "Wave-2 task: resolve CTG refine-drain queue coupling; next up in mcp-server work stream"
+      },
+      {
+        "id": "SPIKE-BCTC-EVAL-HPG-PPC",
+        "title": "SPIKE: BCTC eval insights for HPG + PPC (mode spike)",
+        "type": "SPIKE",
+        "owner": "agents-architect",
+        "status": "TODO",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "mode": "spike",
+        "created_at": "2026-06-07T06:54:00Z",
+        "note": "Wave-2 task: architecture spike on BCTC eval insights for HPG + PPC"
+      },
+      {
+        "id": "FIX-BCTC-SLA-WEEKEND",
+        "title": "Fix BCTC SLA weekend handling (zone mcp-server)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "created_at": "2026-06-07T06:54:00Z",
+        "note": "Wave-2 task: SLA weekend exemption for BCTC sources"
+      },
+      {
+        "id": "CLEAN-ESC-LOCK-FPT",
+        "title": "Clean ESC lock for FPT (XS cross-service)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "created_at": "2026-06-07T06:54:00Z",
+        "note": "Wave-2 task: cleanup ESC lock handling for FPT, cross-service"
       }
     ],
     "archive": [],
@@ -4188,6 +4237,44 @@
         "created_at": "2026-06-07T00:52:34Z",
         "note": "Verified 20260607: docker exec vn-market-intelligence-mcp-mcp-server-1 which sqlite3 = absent; host volume path apps/mcp-server/data/market.db exists. Decision: route checks host-side — edit docs/agents/system-auditor/flow/main.md (lines ~143-359) docker exec ... sqlite3 /app/data/X -> host sqlite3 $PROJECT_ROOT/apps/mcp-server/data/X (read-only queries; map paths via system-map.json infrastructure.databases). REJECTED: add sqlite3 to image (needless rebuild; rebuild-recreate peer-kill risk; binary only used by audits). ROUTE: agent-father (flow-file edit). AC: next Tier-3 cycle runs 16/16 DB checks.",
         "status_note": "merged to main a95c514a after rebase (stale-base conflict recovered): all 16 Tier-3 checks host-side sqlite3 file:...?mode=ro + schema corrections; flow 523L; D-BCTC-EVAL + L438 mandate preserved; dispatcher grep-verified + live-tested C-01 read-only 20260607T0252Z"
+      },
+      {
+        "id": "FIX-SBV-PUSH-TYPE-COERCE",
+        "title": "Coerce string-typed numeric fields in push-sbv-rates (usdVndOfficial + 6 optional rate fields)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "size": "S",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/",
+        "priority": "high",
+        "created_at": "2026-06-07T00:00:00Z",
+        "completed_at": "2026-06-07T06:54:37Z",
+        "commit": "590515e0",
+        "note": "Number()-coerce usdVndOfficial + 6 optional rate fields in new pushSbvRatesHandler.ts. VPS script sends valid numeric values as JSON strings — typeof check was 400-rejecting them. 8/8 regression tests pass. tools=162/sched=76 intact.",
+        "files": [
+          "apps/mcp-server/src/__tests__/FIX-SBV-PUSH-TYPE-COERCE.test.ts",
+          "apps/mcp-server/src/interface/mcp/routes/pushSbvRatesHandler.ts",
+          "apps/mcp-server/src/interface/mcp/server.ts"
+        ]
+      },
+      {
+        "id": "FIX-AUDITOR-FLOW-RESIDUALS",
+        "title": "Weekend-aware C-01/C-02/C-14 + Tier-2 host-side sqlite3 + L438 signal-row mandate + agent-md-factory skill restored",
+        "type": "FIX",
+        "owner": "agent-father",
+        "status": "DONE",
+        "size": "M",
+        "zone": "docs/agents/system-auditor/",
+        "priority": "high",
+        "created_at": "2026-06-07T00:00:00Z",
+        "completed_at": "2026-06-07T06:28:46Z",
+        "commit": "ec828baf",
+        "note": "(a) C-01/C-02/C-14: DOW-based <WINDOW> guard (-3 day Sat/Sun, -1 day Mon-Fri). (b) Tier-2 C-06/C-07/B-09/B-13 + WAL: docker exec → host-side sqlite3 mode=ro. (c) L438: embed signal_queue row directly into emit blocks with ANTI-SKIP fail-loud.",
+        "files": [
+          ".claude/skills/agent-md-factory/SKILL.md",
+          "docs/agent-memory/notebooks/agent-father.md",
+          "docs/agents/system-auditor/flow/main.md"
+        ]
       }
     ],
     "in_progress": []
