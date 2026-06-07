@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## c387 · 2026-06-07 (TSU-DEV-U2-GEN: Registry Generator + Parity Test) — COMMITTED
+
+**Task:** TSU-DEV-U2-GEN — TOOL-SURFACE-UPGRADE sprint  
+**Deliverables:** `scripts/gen-tool-registry.ts` (static grep, 162 tools, 12 groups, atomic write), `apps/mcp-server/src/__tests__/tool-registry-parity.test.ts` (8 tests: T-U2-1..T-U2-6 + AC-U2-7 x2). Registry overwrites `docs/data/tool-registry.json` (125→162 tools). `gen-project-stats.ts` updated with `readToolCountFromRegistry()` — registry is now SSOT for toolCount in project-stats.json.  
+**Anti-false-green:** Fake `__test_fake_tool__` injected → T-U2-5+T-U2-6 RED confirmed → reverted → GREEN.  
+**Tests:** 8/8 GREEN. tsc: clean. tools=162, sched=76. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
+
+Zone health: bun test 8/0 (parity suite), tsc clean, 162 tools intact, scheduler 76 cron.schedule | HEALTHY
+
+---
+
 ## c386 · 2026-06-07 (FIX-BCTC-STAGE4-CROSS-SECTION-DUP) — COMMITTED cf3b71b5
 
 **Fix:** Stage-4 `evalStage4TableReconstruct` now groups (label, value_current) duplicates by `statement_section`. Same-section dups → `exact_dup_count` → RED (unchanged). Cross-section dups (different known sections) → `cross_section_dup_count` → YELLOW warning only. Null/missing section conservative → same-section → RED. Adds `statement_section` to `BctcTableRow` interface (optional) and to the `computeBctcEval.ts` SELECT query. HPG 421b false-RED resolved without special-casing ticker/report.
