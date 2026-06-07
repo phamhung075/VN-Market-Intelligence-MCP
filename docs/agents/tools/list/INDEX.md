@@ -12,6 +12,7 @@ Complete reference for all 157 MCP tools organized by category.
 
 | Category | Count | Docs |
 |----------|-------|------|
+| Analysis | 1 | [See below](#analysis) |
 | Market-data | 16 | [See below](#market-data) |
 | Financial | 21 | [See below](#financial) |
 | News-analysis | 14 | [See below](#news-analysis) |
@@ -64,6 +65,10 @@ Complete reference for all 157 MCP tools organized by category.
 - **[`push_bctc_refined_unit`](push_bctc_refined_unit.md)**
 - **[`run_bctc_batch_sweep`](run_bctc_batch_sweep.md)**
 - **[`submit_bctc_correction`](submit_bctc_correction.md)**
+
+## ANALYSIS (1 tool)
+
+- **[`sequential_market_analysis`](sequential_market_analysis.md)**
 
 ## NEWS-ANALYSIS (14 tools)
 
