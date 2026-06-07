@@ -40,6 +40,20 @@
 **why-decision:** All code-gate checks green. DSI heuristic is honest and correct for the known architectural constraint (VPS API never provides the field). No arch concern (no new MCP tool, no new domain service, modification is gate logic only). APPROVED (code gate), live-verify pending sprint-final rebuild.
 **why-change:** no change from plan.
 
+### STEP qa-S4 · qa · 2026-06-07T12:30:00Z
+**task-id:** TSU-DEV-U3
+**what-done:** QA gate for 12 weak-claim tool verdicts — 5 deregistered (no-op pattern, handlers retained), 7 integrated (description-only updates), registry regenerated 162→157.
+**what-considered:**
+- bun test TSU-DEV-U3-weak-claim-tools.test.ts: 12/12 pass (reproduced). bun test tool-registry-parity.test.ts: 8/8 pass (reproduced). tsc --noEmit: exit 0.
+- 5 deregistered tools: server.tool() blocks replaced with no-op register* fns. grep confirms no server.tool("read_bctc_pdf|backfill_bctc_scalars|compute_accruals|get_accuracy_context|is_trading_day") anywhere in src/. tool-registry.json: all 5 absent, 5 tools in registry.ts array still call no-op stubs (harmless — they call nothing on server). This is intentional retain-handler pattern per architect verdict.
+- 7 integrated tools: all 7 present in tool-registry.json (totalCount=157, computed sum=157). Description updates verified via test assertions (post-hoc/lifecycle/ops-package for mark_alert_outcome; market-wide/per-ticker for get_market_foreign_flow; ops/debug for circuit breakers; label-level for calibration; bctc-analyst/inspect for list_flagged; human-correction for submit_correction).
+- DDD: interface→infrastructure imports are permitted per DDD rules (interface layer calling infra). No domain→infra violations. PASS.
+- Security: no process.env in any of 12 modified files. No secrets/passwords. mock-guard exit 0.
+- AC-U3-13: signal row tsu-u3-tool-deregister-signal-20260607 present in orch-state signal_queue status=NEW.
+- readFileSync correctly removed from reports.ts import (readdirSync+statSync retained — still used by list_stored_pdfs). No orphaned imports.
+**why-decision:** All 12 tests green (independently reproduced), tsc clean, 5-removal confirmed in registry, 7 integrate confirmed present, signal row confirmed. No arch concern. APPROVED (code gate), live-verify deferred to sprint-final rebuild per handoff policy.
+**why-change:** no change from plan.
+
 ### STEP qa-S2 · qa · 2026-06-07T08:50:00Z
 **task-id:** TSU-DEV-U4
 **what-done:** QA gate for direction+delta sweep — Go test suite + go vet + live endpoint + gateway passthrough + additive-only + DDD + security all verified.

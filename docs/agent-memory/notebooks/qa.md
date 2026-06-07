@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-209 · 2026-06-07T13:00Z · TSU-DEV-U3 QA gate — APPROVED (code gate)
+
+Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U3 | Verdict: APPROVED (code-approved, live-verify pending sprint-final rebuild)
+
+bun test TSU-DEV-U3-weak-claim-tools.test.ts: 12/12 pass (QA-reproduced). bun test tool-registry-parity.test.ts: 8/8 pass (QA-reproduced). tsc --noEmit: exit 0 (QA-reproduced). DDD PASS: interface→infra imports permitted; no domain→infra violations in 12 modified files. Security PASS: no process.env, no secrets in all 12 modified files. mock-guard exit 0. Deregister verification: server.tool() absent for all 5 tools in source; no-op stubs remain in registry.ts (harmless, call void _server only). readFileSync correctly removed from reports.ts (readdirSync+statSync retained for list_stored_pdfs). Registry diff: 162→157 (exactly 5 removals verified). 7 integrate tools all present in registry. Signal row tsu-u3-tool-deregister-signal-20260607 confirmed in orch-state signal_queue status=NEW. Commits 50772c2a + 57774c6b on main. orch-state TSU-DEV-U3 REVIEW→DONE.
+
 ## cycle-208 · 2026-06-07T12:00Z · TSU-DEV-U5 QA gate — APPROVED (code gate)
 
 Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U5 | Verdict: APPROVED (code-approved, live-verify pending sprint-final rebuild)
