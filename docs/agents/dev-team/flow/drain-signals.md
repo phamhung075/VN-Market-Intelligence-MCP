@@ -1,4 +1,4 @@
-<!-- size-justification: 121L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). -->
+<!-- size-justification: 124L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). CANON-SCRIPT 2026-06-07: scripts/agents-flow/drain-signals.js pointer (+3L). -->
 # Dev Team — Step 0a: Drain `docs/signals/`
 
 <!-- BGFAN-1: this file delegates spawn to drain-esc-dispatch.md (ESC-DISPATCH) which carries run_in_background=true. No direct Agent() call here. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
@@ -82,6 +82,8 @@ catch (ENOENT | SQLITE_CANTOPEN | locked after 3×200ms):
 
 **0a-1 — Glob and iterate** (`docs/signals/*.json`, sorted by `createdAt` ascending):
 
+**CANONICAL SCRIPT (preferred):** `node scripts/agents-flow/drain-signals.js` executes §0a-1 + §0a-2 in one shot (fingerprint dedup, `_processed` append, mv to `processed/`, DB INSERT, 7-day prune; injection-safe — sqlite3 fed via stdin). Read its stdout report into `pendingSignals[]` routing. The manual spec below remains the SSOT the script MUST match; fall back to it only if node is unavailable. The script does NOT cover §0a-D (queue rows) or the commit — those stay in this flow.
+
 For each file:
 1. Read JSON. Log: `"[dev-team] Signal: {from} → {to} | type={type} | priority={priority}"`
 2. **Fingerprint check:** `sha256(from + type + JSON.stringify(payload) + createdAt)`
@@ -98,7 +100,7 @@ cutoff=$(date -u +%Y%m%dT%H%M%SZ -d '7 days ago' 2>/dev/null || date -u -v-7d +%
 sqlite3 docs/signals/signals.db "DELETE FROM signals_processed WHERE processed_at < '${cutoff}';"
 ```
 Delete `docs/signals/processed/` files with `processedAt` (field value) older than 7 days — field compare, not mtime, correct as-is.
-**TODO (canonical script):** No committed drain helper exists; this spec is the SSOT. Any `scripts/drain-signals.sh` MUST match this spec verbatim.
+**Canonical script:** `scripts/agents-flow/drain-signals.js` (shipped 2026-06-07) implements §0a-1 + §0a-2 and MUST stay in sync with this spec. Edit the spec first, then the script.
 
 **Escape hatches:** Delete `processed/` copy + DB row → re-routes on next cycle. Or bump `createdAt` → new fingerprint.
 
