@@ -1,5 +1,24 @@
 <!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c076 · 2026-06-07T07:11:56Z
+### Audit Run Tier-1 (07:11 UTC 2026-06-07)
+- Tier: 1 | Services: 6 checked
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE:
+```
+--- docker ps -a ---
+mcp-server: Up 45min (healthy) ✓
+api-gateway: Up 20h (healthy) ✓
+frontend: Up 9h (healthy) ✓
+macro-indicators: Up 9h (healthy) ✓
+pdf-extractor: Up 20h (healthy) ✓
+mcp-gateway: Up 11d (healthy) ✓
+--- health endpoints --- all OK (200)
+--- restart count --- mcp-server=0 (≤2) ✓
+--- memory pressure --- mcp-server=13.86% (<85%) ✓
+--- disk --- 37% used (13Gi/233Gi) ✓
+```
+
 ## c075 · 2026-06-07T06:47:01Z
 ### Audit Run Tier-1 (06:47 UTC 2026-06-07)
 - Tier: 1 | Services: 6 checked
@@ -30,10 +49,5 @@ mcp-gateway: Up 11d (healthy) ✓
 
 ## c073 · 2026-06-07T06:15:30Z
 ### Audit Run Tier-1 (06:15 UTC 2026-06-07)
-- Tier: 1 | Services: 6 checked
-- Anomalies: 0 new | Status: HEALTHY
-
-## c072 · 2026-06-07T05:42:17Z
-### Audit Run Tier-1 (05:42 UTC 2026-06-07)
 - Tier: 1 | Services: 6 checked
 - Anomalies: 0 new | Status: HEALTHY
