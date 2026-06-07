@@ -127,7 +127,27 @@ Acceptance criteria met: git failure → loud error + BUG alert, NOT early-exit.
 | Field | Value |
 |---|---|
 | Task | FIX-AUDITOR-FLOW-TIER-EARLYEXIT |
-| Status | REVIEW |
+| Status | DONE |
 | Head | idle |
 | Files touched | docs/agents/system-auditor/flow/main.md, docs/data/orch/orch-state.json |
 | PLAN-ONLY invariant | Unchanged — no destructive ops added |
+
+---
+
+## [QA] Review Record — 2026-06-07
+
+**Reviewer:** qa  
+**Verdict:** APPROVED  
+**Commit:** 7c8a0511 (correction round, final)
+
+### AC Results
+
+| AC | Result | Evidence |
+|---|---|---|
+| AC-1: AUDIT_TIER=1 → Tier-1 only, notebook label Tier-1, RETURN tier-1 token, default=3 logged | PASS | flow/main.md lines 62–76: explicit extraction block scans spawn prompt for `AUDIT_TIER=<value>`; found=1 → TIER=1 dispatch; not-found → default 3 with mandatory log; propagation mandated to dispatch branch + `### Audit Run Tier-N` heading + RETURN `tier-N` token |
+| AC-2: doc-audit uses `"24 hours ago"` (valid), queries local HEAD (not origin/main) | PASS | flow/main.md line 287: `git -C "$PROJECT_ROOT" log --since="24 hours ago" --oneline`; no `origin/main` ref. NOTE at line 293 documents NO-branches policy rationale. Live proof: `git log --since="24h" --oneline \| wc -l` → 0 (broken); `git log --since="24 hours ago" --oneline \| wc -l` → 165 (correct); `git log origin/main --since="24 hours ago" --oneline \| wc -l` → 0 (regression proof) |
+| AC-3: git failure → fail-loud (logged error + WARN signal + BUG-channel Telegram), doc audit CONTINUES | PASS | flow/main.md line 289: `GITLOG_EXIT != 0` branch reads error, emits WARN signal check_id=DOC-AUDIT-GIT-ERR, sends BUG-channel Telegram, explicitly states "do NOT early-exit — continue with doc audit as if commits exist (safe-side)" |
+| AC-4: PLAN-ONLY invariant (AUD-ND-1) untouched | PASS | Lines 4–26 unchanged; no docker stop/kill/rm/restart or container management commands added anywhere in the flow body |
+| AC-5: commit scope clean — c8703aea: auditor flow + orch-state + handoff only; 7c8a0511: auditor flow + handoff only | PASS | `git show --name-only`: c8703aea touches 3 files (docs/agents/system-auditor/flow/main.md, docs/data/orch/orch-state.json, docs/handoffs/FIX-AUDITOR-FLOW-TIER-EARLYEXIT.md); 7c8a0511 touches 2 files (docs/agents/system-auditor/flow/main.md, docs/handoffs/FIX-AUDITOR-FLOW-TIER-EARLYEXIT.md) |
+
+All 5 ACs PASS. No blocking issues found.

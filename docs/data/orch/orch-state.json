@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-06T23:55:01Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-07T00:05:58Z",
+  "_updated_by": "qa",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T00:00:00Z",
@@ -2715,7 +2715,7 @@
         "title": "Honor AUDIT_TIER natively + fix no-commits-24h false early-exit in system-auditor flow",
         "type": "FIX",
         "owner": "agent-father",
-        "status": "REVIEW",
+        "status": "DONE",
         "size": "S",
         "zone": "docs/agents/system-auditor/",
         "files": [
