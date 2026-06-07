@@ -4776,6 +4776,19 @@
     "_updated_by": "dev-team",
     "rows": [
       {
+        "id": "sau-2026060719035-a13",
+        "ts": "2026-06-07T19:03:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-13 health endpoint unreachable — container unhealthy",
+        "severity": "HIGH",
+        "status": "NEW",
+        "zone_owner": "dev-pdf-extractor",
+        "check_id": "A-13",
+        "payload_ref": null
+      },
+      {
         "id": "sau-d4-202606070300",
         "ts": "2026-06-07T03:00Z",
         "from": "system-auditor",
