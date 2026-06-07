@@ -152,3 +152,20 @@ Zone health: FDA-2+FDA-3 SHIPPED 0712c3a7; ops REBUILD required | HEALTHY
 **Tests:** `go test ./...` ALL PASS (12 packages). Sandbox: primitive 18/18 GREEN, module 2/2 GREEN. `go vet ./...` CLEAN.
 
 **Status:** REVIEW — ops REBUILD macro-indicators required. QA: verify `get_macro_snapshot` JSON includes `vnIndexDelta` (number or null) + `vnIndexDirection` + `oilUsdDelta` (null) + `oilUsdDirection` ("unknown") etc.
+
+---
+
+## Session 2026-06-08 — FIX-MACRO-GO-FIXTURE-FALLBACK
+
+**Root cause:** `effrStaleBound=96h` rejected FRED EFFR rows from mid-week (e.g. Tuesday) when queried on Sunday (120h > 96h) → fixture 5.33 served every weekend.
+
+**Fix:** `effrStaleBound` extended from 96h to 168h (7 days) in `repositories.go`. FRED publishes business days only; 168h covers any single-week gap including 4-day holiday weekends. Fallback chain now: DB row within 168h (tier 2) → fixture 5.33 only when table empty (tier 4).
+
+**Files changed:**
+- `pkg/infrastructure/repositories.go` — `effrStaleBound` 96h → 168h + updated comment
+- `pkg/infrastructure/repositories_test.go` — stale bound comment updated (8d not 5d); `TestFetchFedFundsRateFromDB_WeekendSim` added (5-day row passes 168h gate)
+- `pkg/application/usecases_test.go` — `TestWeekendSim_BridgedDBValueServed` (AC-1) + `TestWeekendSim_FixtureOnlyWhenBothFail` (AC-2)
+
+**Live verification:** POST /snapshot → `fedFundsRate=3.62, source_tier=2, is_estimate=false, regime=NEUTRAL`. Commit: e03b3ca3.
+
+**Tests:** `go test ./...` ALL PASS (12 packages). Zero new failures.
