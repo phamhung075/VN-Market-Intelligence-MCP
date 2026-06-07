@@ -2269,7 +2269,7 @@
             "type": "INFRASTRUCTURE",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "L",
             "zone": "apps/mcp-server/src/__tests__/ + scripts/",
             "priority": "high",

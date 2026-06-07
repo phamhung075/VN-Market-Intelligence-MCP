@@ -342,3 +342,27 @@ Generator script (scripts/) does not require rebuild (executed standalone).
 | Gate 2a: tsc | `bun tsc --noEmit` | exit 0 (clean) |
 | Gate 2c: tool count | `bun scripts/gen-project-stats.ts --dry-run \| grep toolCount` | 162 |
 | Gate 2d: scheduler count | `grep -rc cron.schedule apps/mcp-server/src/scheduler/ \| awk ...` | 76 |
+
+## [QA] Review Record
+
+- **Date:** 2026-06-07T08:30:00Z
+- **Verdict:** APPROVED
+- **bun test (QA-run):** 8 pass / 0 fail (independently reproduced, not relayed from developer badge)
+- **tsc (QA-run):** exit 0 — 0 errors
+- **DDD scan:** PASS — scripts/gen-tool-registry.ts + tool-registry-parity.test.ts + gen-project-stats.ts import only node built-ins; zero domain/infrastructure/application imports
+- **Security scan:** PASS — no process.env, no secrets, no passwords, no SQL
+- **Anti-false-green (QA-injected):** PASS — __test_fake_tool__ injected into alerts group → T-U2-5 FAIL (received:163 expected:162) + T-U2-6 FAIL (missing:["__test_fake_tool__"]); revert → 8/8 pass (fence is real, not trivially green)
+- **Generator dry-run (QA-run):** totalCount=162, 12 groups, idempotent output matches committed registry
+- **AC verification:**
+  - AC-U2-1: PASS — gen-tool-registry.ts scans tools/**/*.ts
+  - AC-U2-2: PASS — server.tool() pattern extracted
+  - AC-U2-3: PASS — server.registerTool() pattern extracted (sequential_market_analysis confirmed in T-U2-3)
+  - AC-U2-4: PASS — 12 category groups by parent dir; all expected categories present
+  - AC-U2-5: PASS — totalCount=162 (161 server.tool + 1 server.registerTool)
+  - AC-U2-6: PASS — 8 tests, registry↔source parity verified
+  - AC-U2-7: PASS — _maintained_by guard present; groups[].count sum = totalCount; injection test verified by QA
+  - AC-U2-8: PASS — gen-project-stats.ts reads registry as SSOT via readToolCountFromRegistry()
+  - AC-U2-9: PASS — _maintained_by: "generator (do not hand-edit)" present in output JSON
+- **Sequencing note:** TSU-DEV-U2-PARITY (final parity re-run after U3 deregistrations) remains TODO as designed — this approval covers generator+test code only, not final count sign-off
+- **Report:** reports/TASK_REPORT_TSU-DEV-U2-GEN.md
+- **Task board:** REVIEW → DONE

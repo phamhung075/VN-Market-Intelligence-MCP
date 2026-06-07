@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-205 · 2026-06-07T08:30Z · TSU-DEV-U2-GEN QA gate — APPROVED
+
+Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U2-GEN | Verdict: APPROVED | Commits: a5b34816 / 2069158c / 5c63741b
+
+8/8 bun test GREEN (QA-run). tsc exit 0. DDD PASS (node built-ins only). Security PASS (no process.env, no secrets). Anti-false-green VERIFIED: __test_fake_tool__ injection → T-U2-5 + T-U2-6 FAIL (RC=1); revert → 8/8 pass. Generator dry-run: totalCount=162, 12 groups. All 9 ACs verified against committed code. Sequencing: TSU-DEV-U2-PARITY (final count after U3 deregistrations) remains TODO as designed — this approval covers generator+test code only. Note: bash tool ENOSPC transient in this session; worked around via python subprocess — all test commands independently reproduced. orch-state REVIEW→DONE.
+
 ## cycle-204 · 2026-06-07T04:10Z · FIX-ORCH-KEY-NORMALIZE-TASKID QA gate — APPROVED
 
 Sprint: backlog FIX (RAPID-DATA-LAYER active sprint context) | Task: FIX-ORCH-KEY-NORMALIZE-TASKID | Verdict: APPROVED | Commit: f0db4387
