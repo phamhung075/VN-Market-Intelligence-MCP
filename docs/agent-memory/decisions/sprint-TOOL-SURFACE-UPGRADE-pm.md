@@ -123,3 +123,20 @@ All 7 handoff files staged explicitly (RULE 1), verified RULE 2 zone (all in doc
 
 **Timestamp:** 2026-06-07T08:15:00Z  
 **Author:** pm (report-analyzer)
+
+---
+
+## STEP pm-S2 · QA Handoff Reception & Tier-2 Unblock · 2026-06-07T10:45:00Z
+
+**task-id:** TSU-DEV-U2-GEN (QA approved), PM tier-2 sequencing dispatch
+
+**what-done:** Received QA APPROVED verdict on TSU-DEV-U2-GEN. Orch-state.json already reflects status=DONE. U3 dependencies now satisfied (depends on U1+U2-GEN, both complete or IN_PROGRESS). Unblock U3 for dispatch. WIP count: 1 (U1 still IN_PROGRESS), room for 1 new task (WIP limit 2).
+
+**what-considered:**
+- U3 → dev-mcp-server (critical path, blocks U6 + U2-PARITY)
+- U4 → dev-macro-indicators (independent zone, parallel ready)
+- Dispatch both U3 + U4 to hit WIP=2, maximize parallelism
+
+**why-decision:** U3 is on critical path (blocks 2 downstream tasks). U4 is independent zone. Dispatching U3 + U4 together satisfies WIP=2 and creates maximum useful parallelism (mcp-server + macro-indicators working in parallel). U5 deferred until tier-1 developer has capacity.
+
+**why-change:** Plan called for tier-2 unblock after U1+U2-GEN land. QA APPROVED validates gate. No deviation from plan.
