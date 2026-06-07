@@ -2983,7 +2983,7 @@
         "id": "PDFX-SINGLE-WORKER-BLOCKING",
         "title": "Single-worker CPU blocking on in-process OCR — event loop blocks /health during /extract (A-20)",
         "owner": "dev-pdf-extractor",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "apps/pdf-extractor/",
         "type": "FIX",
         "size": "S",
@@ -2994,7 +2994,9 @@
           "apps/pdf-extractor/application/extract_tables_usecase.py",
           "apps/pdf-extractor/main.py",
           "docker-compose.yml"
-        ]
+        ],
+        "completed_at": "2026-06-07T23:31:21Z",
+        "resolution": "ProcessPoolExecutor isolation 3033e1dc; live /health verified during in-flight OCR; zero new red; image e12f3a8cf8a54"
       },
       {
         "id": "FIX-BCTC-MAGNITUDE-NORMALIZE",
