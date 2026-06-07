@@ -487,9 +487,25 @@ func fetchSBVRateFromDB(
 // ---------------------------------------------------------------------------
 
 // effrStaleBound is the maximum age of a fred_series_daily EFFR row before it
-// is treated as stale and Execute() falls back to fixtureFixtureFedFundsRate.
-// 96h covers FRED business-day lag including a weekend (Fri close → Mon refresh).
-const effrStaleBound = 96 * time.Hour
+// is treated as stale and Execute() falls back to fixtureFedFundsRate.
+//
+// FIX-MACRO-GO-FIXTURE-FALLBACK: extended from 96h to 168h (7 days).
+//
+// Rationale: FRED publishes EFFR on business days only. The previous 96h bound
+// was designed for the canonical Fri-close → Mon-open gap (~72h), but fails when
+// the most recent FRED row is from mid-week (e.g. Tuesday) and the service is
+// queried on a Sunday — a 5-day (120h) gap that falls outside 96h.
+//
+// 168h covers the worst-case FRED publication gap: Monday publication
+// followed by a 4-day holiday weekend → the next business-day row arrives
+// the following Monday (7 calendar days later). Using the bridged DB value
+// (even if 5–6 days old) is always better than serving the hardcoded
+// fixture 5.33 — the rate changes rarely and the DB value reflects the
+// last known FRED publication.
+//
+// Fallback chain: direct FRED fetch (tier 1, handled by mcp-server cron)
+// → this DB path (tier 2, within 168h) → fixture 5.33 (tier 4, NO row at all).
+const effrStaleBound = 168 * time.Hour
 
 // depositYieldStaleBound is the maximum age of sbv_rates.max_deposit_rate_pct
 // and tracked_indicators.market_earning_yield rows before safe-degrade.

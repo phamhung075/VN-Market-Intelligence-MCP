@@ -675,13 +675,13 @@ func TestFetchFedFundsRateFromDB_FreshRow(t *testing.T) {
 }
 
 // TestFetchFedFundsRateFromDB_StaleRow (DPI-2b AC-5 fed stale) verifies that a
-// row older than effrStaleBound (96h) returns 0 (safe-degrade).
+// row older than effrStaleBound (168h) returns 0 (safe-degrade).
 func TestFetchFedFundsRateFromDB_StaleRow(t *testing.T) {
 	db := newInMemoryDB(t)
 	defer db.Close()
 
-	// 5 days ago → > 96h stale bound.
-	staleDate := time.Now().UTC().AddDate(0, 0, -5).Format(time.DateOnly)
+	// 8 days ago → > 168h (7-day) stale bound.
+	staleDate := time.Now().UTC().AddDate(0, 0, -8).Format(time.DateOnly)
 	_, err := db.Exec(`
 		INSERT INTO fred_series_daily (series, date, value)
 		VALUES ('EFFR', ?, 4.0)`,
@@ -695,7 +695,45 @@ func TestFetchFedFundsRateFromDB_StaleRow(t *testing.T) {
 		t.Fatalf("fetchFedFundsRateFromDB returned error: %v", err)
 	}
 	if got != 0 {
-		t.Errorf("DPI-2b AC-5 fed stale: got %.2f, want 0 (stale row must return 0)", got)
+		t.Errorf("DPI-2b AC-5 fed stale: got %.2f, want 0 (row >168h old must return 0)", got)
+	}
+}
+
+// TestFetchFedFundsRateFromDB_WeekendSim (FIX-MACRO-GO-FIXTURE-FALLBACK AC-1)
+// simulates the weekend scenario: direct FRED fetch fails (handled by mcp-server
+// cron), but a DB row from 5 days ago (Tuesday → Sunday = 120h) is present.
+//
+// Before the fix (effrStaleBound=96h): 120h > 96h → returns 0 → fixture 5.33 served.
+// After the fix (effrStaleBound=168h): 120h < 168h → returns DB value 3.62 → tier 2.
+//
+// This is the primary regression gate for FIX-MACRO-GO-FIXTURE-FALLBACK.
+func TestFetchFedFundsRateFromDB_WeekendSim(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	const bridgedEFFR = 3.62 // live value in fred_series_daily as of 2026-06-03
+
+	// Simulate Tuesday row queried on Sunday: 5 days = 120h < 168h (new bound).
+	weekendDate := time.Now().UTC().AddDate(0, 0, -5).Format(time.DateOnly)
+	_, err := db.Exec(`
+		INSERT INTO fred_series_daily (series, date, value)
+		VALUES ('EFFR', ?, ?)`,
+		weekendDate, bridgedEFFR)
+	if err != nil {
+		t.Fatalf("insert weekend-sim EFFR row: %v", err)
+	}
+
+	got, err := fetchFedFundsRateFromDB(context.Background(), db, effrStaleBound)
+	if err != nil {
+		t.Fatalf("fetchFedFundsRateFromDB returned error: %v", err)
+	}
+	// Must return the DB value, NOT 0 (which would cause fixture 5.33 fallback).
+	if got == 0 {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: got 0 — 5-day-old EFFR row rejected as stale "+
+			"(effrStaleBound too tight); want %.2f (bridged DB value must be used on weekend)", bridgedEFFR)
+	}
+	if got != bridgedEFFR {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: got %.2f, want %.2f (bridged EFFR value)", got, bridgedEFFR)
 	}
 }
 

@@ -1060,6 +1060,134 @@ func TestDSIINV1_CarrySourceTierAdministeredRate(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// FIX-MACRO-GO-FIXTURE-FALLBACK: weekend simulation — AC-1 + AC-2
+// ---------------------------------------------------------------------------
+
+// TestWeekendSim_BridgedDBValueServed (FIX-MACRO-GO-FIXTURE-FALLBACK AC-1) proves
+// the end-to-end fallback chain for the weekend scenario:
+//
+//	Direct FRED fetch fails (mcp-server cron paused) → DB row present (3.62 from
+//	Tuesday) → service MUST serve 3.62 with source_tier=2, is_estimate=false,
+//	NOT fixture 5.33.
+//
+// The stubCarryYieldInputs simulates the infrastructure adapter returning the
+// bridged DB value (3.62) — i.e. effrStaleBound was extended so the 5-day-old
+// row passes the freshness gate.
+func TestWeekendSim_BridgedDBValueServed(t *testing.T) {
+	const bridgedEFFR = 3.62
+	const bridgedDeposit = 5.0
+
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		// Both values non-zero → port returned bridged DB rows (not fixture).
+		// This is what the infrastructure adapter returns after effrStaleBound fix.
+		&stubCarryYieldInputs{vndDeposit: bridgedDeposit, fedFunds: bridgedEFFR, earnYield: 6.83},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: Execute() error: %v", err)
+	}
+
+	// Extract carry fields.
+	type carryFields struct {
+		FedFundsRate float64  `json:"fedFundsRate"`
+		CarrySpread  *float64 `json:"carrySpread"`
+		Regime       string   `json:"regime"`
+		IsEstimate   bool     `json:"is_estimate"`
+		SourceTier   int      `json:"source_tier"`
+	}
+	b, _ := json.Marshal(resp.Signals.Carry)
+	var cf carryFields
+	if err := json.Unmarshal(b, &cf); err != nil {
+		t.Fatalf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: unmarshal carry: %v", err)
+	}
+
+	// AC-1: Must NOT serve fixture 5.33.
+	if abs(cf.FedFundsRate-5.33) < 0.001 {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1 FAIL: fedFundsRate=5.33 (fixture) served on weekend — "+
+			"DB bridged value 3.62 must be used when available; fix effrStaleBound in repositories.go")
+	}
+	if abs(cf.FedFundsRate-bridgedEFFR) > 0.001 {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: fedFundsRate=%.4f, want %.2f (bridged DB value)", cf.FedFundsRate, bridgedEFFR)
+	}
+
+	// AC-1: is_estimate must be false (DB row is present).
+	if cf.IsEstimate {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: is_estimate=true — carry must not be suppressed "+
+			"when DB bridged value (3.62) is available; is_estimate must be false")
+	}
+
+	// AC-1: source_tier must be 2 (bridged DB path, not fixture tier 4).
+	if cf.SourceTier == 4 {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: source_tier=4 (fixture) — "+
+			"DB bridged value must have source_tier=2, not 4")
+	}
+	if cf.SourceTier != 2 {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: source_tier=%d, want 2 (bridged DB path)", cf.SourceTier)
+	}
+
+	// AC-1: carrySpread must not be nil (live path, not suppressed).
+	if cf.CarrySpread == nil {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1: carrySpread=nil (suppressed) — "+
+			"must not be nil when bridged DB value is available")
+	}
+
+	t.Logf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-1 PASS: fedFundsRate=%.2f source_tier=%d is_estimate=%v regime=%s",
+		cf.FedFundsRate, cf.SourceTier, cf.IsEstimate, cf.Regime)
+}
+
+// TestWeekendSim_FixtureOnlyWhenBothFail (FIX-MACRO-GO-FIXTURE-FALLBACK AC-2) proves
+// that fixture 5.33 is served ONLY when both direct FRED fetch AND DB lookup fail.
+//
+// Condition: stub returns 0 for fedFunds (simulates DB empty — no EFFR row at all).
+// Expected: is_estimate=true, source_tier=4, regime=UNKNOWN.
+func TestWeekendSim_FixtureOnlyWhenBothFail(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		// fedFunds=0 simulates both direct fetch AND DB lookup returning nothing.
+		&stubCarryYieldInputs{vndDeposit: 5.0, fedFunds: 0, earnYield: 6.83},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-2: Execute() error: %v", err)
+	}
+
+	type carryFields struct {
+		FedFundsRate float64  `json:"fedFundsRate"`
+		IsEstimate   bool     `json:"is_estimate"`
+		SourceTier   int      `json:"source_tier"`
+		Regime       string   `json:"regime"`
+		CarrySpread  *float64 `json:"carrySpread"`
+	}
+	b, _ := json.Marshal(resp.Signals.Carry)
+	var cf carryFields
+	if err := json.Unmarshal(b, &cf); err != nil {
+		t.Fatalf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-2: unmarshal carry: %v", err)
+	}
+
+	// AC-2: when both paths fail (port returns 0), fixture fires → is_estimate=true, tier=4.
+	if !cf.IsEstimate {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-2: is_estimate=false — "+
+			"fixture path must set is_estimate=true when both FRED fetch and DB are absent")
+	}
+	if cf.SourceTier != 4 {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-2: source_tier=%d, want 4 (fixture tier when both fail)", cf.SourceTier)
+	}
+	if cf.Regime != "UNKNOWN" {
+		t.Errorf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-2: regime=%q, want UNKNOWN (carry suppressed on fixture path)", cf.Regime)
+	}
+
+	t.Logf("FIX-MACRO-GO-FIXTURE-FALLBACK AC-2 PASS: fixture path correct — is_estimate=%v source_tier=%d regime=%s",
+		cf.IsEstimate, cf.SourceTier, cf.Regime)
+}
+
 // abs returns the absolute value of a float64.
 // Defined locally (math.Abs exists but this avoids an import for a trivial helper).
 func abs(x float64) float64 {
