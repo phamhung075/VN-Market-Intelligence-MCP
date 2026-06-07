@@ -68,3 +68,16 @@
 - mcp-server: Up 2 minutes (healthy), RestartCount=0. "Up 21 seconds" ops note = normal restart from rebuild — not crash-loop.
 **why-decision:** All gates green. additive-only confirmed. Gateway passthrough confirmed end-to-end. No arch concern (Go-only change, no new MCP tool, no new domain service). APPROVED.
 **why-change:** no change from plan.
+
+### STEP qa-S6 · qa · 2026-06-07T13:30:00Z
+**task-id:** TSU-DEV-U6
+**what-done:** QA gate for description-only updates across 6 files, 10 tools, 5 TSH leftover pairs (commits 3dd0d7bd + ac1043a4 on main).
+**what-considered:**
+- bun test U6: 17/17 pass (QA-reproduced). bun test parity: 8/8 pass. Combined U3+U5+U6+parity: 47/47 pass.
+- tsc --noEmit: exit 0 (QA-reproduced). DDD: PASS (interface→infra permitted; no domain→infra violations). Security: PASS (no process.env, no secrets).
+- mock-guard exit 0. Smart-Skip applied: description-only change, no logic, no mock risk.
+- AC verification: all 7 ACs confirmed against committed source. Factual accuracy spot-checked: news handler has zero ticker params (AC-U6-3 NO tickers); insider_signals handler uses _testData??[] (no DB call, AC-U6-6 accurate); tool-registry.json totalCount=157 unchanged.
+- marketTools.ts + technicalIndicatorTools.ts not in commit diff — pre-existing descriptions confirmed passing via T-U6-1/T-U6-2 (handoff note "already present" verified accurate).
+- Gateway live spot-check: not available in specialist sub-session (INV-GATEWAY-1); ops already verified get_market_summary + trigger_news_vps_fetch; source-code evidence authoritative for remaining pairs.
+**why-decision:** All pipeline checks green. No logic change, no arch concern (description-only, no new tool, no cross-service HTTP). Tool count 157 preserved. APPROVED.
+**why-change:** no change from plan.

@@ -3,6 +3,12 @@
 ## Archive
 Older cycles (189–199 and earlier) moved to [qa-20260606.md](../../archive/notebooks/qa-20260606.md).
 
+## cycle-210 · 2026-06-07T13:30Z · TSU-DEV-U6 QA gate — APPROVED (code gate)
+
+Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U6 | Verdict: APPROVED | Commits: 3dd0d7bd + ac1043a4
+
+bun test U6: 17/17 pass (QA-reproduced). bun test parity: 8/8 pass. Combined U3+U5+U6+parity: 47/47 pass. tsc --noEmit: exit 0 (QA-reproduced). DDD PASS: interface→infra permitted; no domain→infra violations. Security PASS: no process.env, no secrets in 8 modified files. mock-guard exit 0. All 7 ACs verified against committed source. Factual accuracy: news handler zero tickers (AC-U6-3 "NO tickers" accurate); insider_signals handler _testData??[] (no DB call, AC-U6-6 accurate); tool-registry.json totalCount=157 unchanged; marketTools.ts+technicalIndicatorTools.ts pre-existing descriptions confirmed passing (not in commit diff). Smart-Skip applied (description-only, no logic, no mock risk). orch-state TSU-DEV-U6 REVIEW→DONE.
+
 ## cycle-209 · 2026-06-07T13:00Z · TSU-DEV-U3 QA gate — APPROVED (code gate)
 
 Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U3 | Verdict: APPROVED (code-approved, live-verify pending sprint-final rebuild)

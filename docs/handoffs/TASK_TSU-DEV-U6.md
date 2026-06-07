@@ -262,3 +262,39 @@ QA verifies via `list_server_tools("vn-market")` (raw descriptions, not badge).
 | Scheduler count | `grep -rc "cron.schedule" src/scheduler/` | 76 (baseline 76) |
 
 Zone health: 17/0 (U6 suite), tsc clean, 157 tools (SSOT), 76 cron.schedule — description-only changes, no logic touched | HEALTHY
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-07T13:30Z
+**Verdict:** APPROVED
+**QA Agent:** qa (cycle-210)
+
+### Pipeline Results (QA-reproduced)
+
+| Check | Result |
+|-------|--------|
+| bun test U6 | 17 pass / 0 fail |
+| bun test parity | 8 pass / 0 fail |
+| bun test combined (U3+U5+U6+parity) | 47 pass / 0 fail |
+| bun tsc --noEmit | exit 0, clean |
+| DDD scan | PASS (interface→infra permitted; no domain→infra violations) |
+| Security scan | PASS (no process.env, no secrets in 8 modified files) |
+| mock-guard | exit 0 |
+| Tool count (tool-registry.json) | 157 (baseline unchanged) |
+
+### AC Verification
+
+All 7 ACs (AC-U6-1 through AC-U6-7) verified against committed source code. Factual accuracy confirmed:
+- trigger_news_vps_fetch handler: zero tickers params — "NO tickers" description accurate
+- get_insider_signals handler: _testData??[] pattern — no DB call — "pure classifier" description accurate
+- marketTools.ts + technicalIndicatorTools.ts: descriptions pre-existing and correct (not in commit diff, confirmed via T-U6-1/T-U6-2 passing)
+
+### Notes
+
+- Bun full-suite runtime crash (C++ WriteFailed) is a known Bun v1.3.13 bug unrelated to U6 changes
+- Gateway live spot-check: INV-GATEWAY-1 — specialist sub-session has no gateway binding; ops verified get_market_summary + trigger_news_vps_fetch; source-code authoritative for remaining pairs
+- No arch concern: description-only, no new tool, no new domain service, no cross-service HTTP
+
+**Report:** reports/TASK_REPORT_TSU-DEV-U6.md
