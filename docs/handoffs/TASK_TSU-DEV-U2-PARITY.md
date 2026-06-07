@@ -260,3 +260,37 @@ bun test tool-registry-parity.test.ts
 - Gate 2d (scheduler count): 76 cron.schedule entries
 
 Zone health: bun test 0 fail (parity), 157 tools intact (all 5 U3 deregistrations confirmed absent), scheduler 76 cron.schedule, tsc clean | HEALTHY
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-07T14:00Z
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_TSU-DEV-U2-PARITY.md
+
+### Four-Count Verification (QA-reproduced)
+| Source | Count | Status |
+|--------|-------|--------|
+| gen-tool-registry.ts re-run | 157 | PASS |
+| /health runtime endpoint | 157 | PASS |
+| parity test (bun test tool-registry-parity.test.ts) | 157 | PASS — 8/8 tests, 24 assertions |
+| project-stats.json dry-run | 157 | PASS |
+
+Delta = 0. All four probes converge.
+
+### Bun Crash Provenance
+Bun v1.3.13 WriteFailed crash on full suite confirmed **pre-existing** — first documented 2026-05-13 (archive: qa-archive-2026-05-13.md, dev-mcp-server-archive-2026-05-13.md). Crash is OOM at post-completion teardown (RSS 1.6–2.7GB depending on run). Does NOT mask any real failure. Sprint suites isolated: U1(8/8) + U3(12/12) + U5(10/10) + U6(17/17) + parity(8/8) = 55/55 pass.
+
+### Checklist
+- [x] bun test parity: 8/8 pass (QA-reproduced)
+- [x] gen-tool-registry.ts: 157 tools, 12 groups (QA-reproduced)
+- [x] /health toolCount=157 (QA-confirmed live)
+- [x] project-stats dry-run toolCount=157 (QA-reproduced)
+- [x] 5 deregistered tools absent from registry (QA-verified)
+- [x] tsc --noEmit: exit 0 (QA-reproduced)
+- [x] DDD: N/A (JSON data files only)
+- [x] Security: N/A (JSON data files only)
+- [x] mock-guard: Smart-Skip (no production TS source modified)
+- [x] BCTC eval gate: N/A (no BCTC report_id in scope)
+- [x] All 6 ACs verified against committed state

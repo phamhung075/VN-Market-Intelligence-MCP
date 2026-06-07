@@ -69,6 +69,25 @@
 **why-decision:** All gates green. additive-only confirmed. Gateway passthrough confirmed end-to-end. No arch concern (Go-only change, no new MCP tool, no new domain service). APPROVED.
 **why-change:** no change from plan.
 
+### STEP qa-S7 · qa · 2026-06-07T14:00:00Z
+**task-id:** TSU-DEV-U2-PARITY
+**what-done:** QA FINAL gate — four-count parity verification: gen-tool-registry re-run, /health runtime, parity test isolated, project-stats dry-run. All return 157. Bun crash provenance confirmed pre-existing.
+**what-considered:**
+- bun test tool-registry-parity.test.ts: 8/8 pass, 24 expect() calls (QA-reproduced, 157ms).
+- bun scripts/gen-tool-registry.ts: totalCount=157, groups=12 (QA-reproduced, output matches committed registry.json).
+- curl http://localhost:3000/health: status=ok, toolCount=157 (runtime confirmed).
+- bun scripts/gen-project-stats.ts --dry-run: toolCount=157 (QA-reproduced).
+- Four-count delta=0. Registry totalCount=157, _maintained_by header locked. project-stats.json toolCount=157 (3 locations).
+- 5 deregistered tools confirmed absent: read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day — none in registry.json tool lists.
+- tsc --noEmit: exit 0 (QA-reproduced). DDD/security: N/A (JSON data files only, no TS source modified).
+- Smart-Skip: mock-guard N/A (no production TS source modified, only docs/data/ JSON files).
+- Bun crash provenance: archive qa-2026-05-13.md + dev-mcp-server-archive-2026-05-13.md both document "full suite Bun OOM crash is pre-existing (9273+ tests, peak 1.6–2.7GB RSS, Bun 1.3.13)". First documented 2026-05-13, multiple sprints before TOOL-SURFACE-UPGRADE. Crash is post-completion teardown, does NOT mask any test failure in the parity/U1/U3/U5/U6 suites.
+- U1/U3/U5/U6 suites individually re-run: 8+12+10+17=47 pass / 0 fail. No regression.
+- BCTC eval gate: N/A (no BCTC report_id in task scope).
+- Concurrency: U6 confirmed DONE in orch-state. No active contention.
+**why-decision:** All four probes return 157 with delta=0. All 6 ACs met. Bun crash definitively pre-dates sprint. No arch concern (terminal verification task, no new code, no new tool, no cross-service HTTP). APPROVED.
+**why-change:** no change from plan.
+
 ### STEP qa-S6 · qa · 2026-06-07T13:30:00Z
 **task-id:** TSU-DEV-U6
 **what-done:** QA gate for description-only updates across 6 files, 10 tools, 5 TSH leftover pairs (commits 3dd0d7bd + ac1043a4 on main).

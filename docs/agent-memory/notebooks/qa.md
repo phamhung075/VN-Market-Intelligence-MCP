@@ -3,6 +3,12 @@
 ## Archive
 Older cycles (189–199 and earlier) moved to [qa-20260606.md](../../archive/notebooks/qa-20260606.md).
 
+## cycle-211 · 2026-06-07T14:00Z · TSU-DEV-U2-PARITY QA gate — APPROVED (FINAL GATE)
+
+Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U2-PARITY | Verdict: APPROVED | Commits: 7feffc50 + 768759a3
+
+Four-count QA-reproduced: gen-tool-registry.ts→157 (12 groups), /health→157, parity test 8/8 pass (24 assertions), project-stats dry-run→157. Delta=0. tsc --noEmit: exit 0. DDD/security/mock-guard: Smart-Skip (JSON data files only, no production TS source modified). 5 deregistered tools absent from registry confirmed (read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day). Individual suites re-run: U1 8/8, U3 12/12, U5 10/10, U6 17/17, parity 8/8 = 55/55. Bun v1.3.13 full-suite crash confirmed pre-existing (first doc 2026-05-13 archives, multiple sprints before TSU). BCTC eval gate N/A. U6 concurrency check: DONE — no contention. All 6 ACs verified. orch-state TSU-DEV-U2-PARITY REVIEW→DONE. Sprint TOOL-SURFACE-UPGRADE all units DONE.
+
 ## cycle-210 · 2026-06-07T13:30Z · TSU-DEV-U6 QA gate — APPROVED (code gate)
 
 Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U6 | Verdict: APPROVED | Commits: 3dd0d7bd + ac1043a4
