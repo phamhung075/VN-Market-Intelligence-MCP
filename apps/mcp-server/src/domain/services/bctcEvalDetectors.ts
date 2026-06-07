@@ -22,6 +22,15 @@ export interface BctcTableRow {
   value_current: number | null;
   value_prior: number | null;
   row_order: number;
+  /**
+   * statement_section: the section this row belongs to
+   * (e.g. "balance_sheet", "income_statement", "cash_flow").
+   * Used by Stage-4 to distinguish cross-section dups (valid for VN parent-company
+   * reports) from same-section dups (genuine OCR artifacts → RED).
+   * Optional / nullable: rows without section info are treated conservatively
+   * as same-section (fallback → RED if dup).
+   */
+  statement_section?: string | null;
 }
 
 export interface BctcMdTablesRecord {
@@ -113,6 +122,7 @@ export function evalStage4TableReconstruct(
         label_coverage: 0,
         code_coverage: 0,
         exact_dup_count: 0,
+        cross_section_dup_count: 0,
         value_blank_label_count: 0,
         total_rows: 0,
       },
@@ -133,13 +143,61 @@ export function evalStage4TableReconstruct(
   ).length;
   const codeCoverage = codedRows / totalRows;
 
-  // exact_dup_count: duplicates by (label, value_current)
-  const seen = new Map<string, number>();
+  // dup detection: separate same-section dups (RED) from cross-section dups (YELLOW warning).
+  //
+  // Algorithm:
+  //   For each (label, value_current) pair, collect the set of statement_section values
+  //   that contain it. Rows with null/undefined section are grouped under the sentinel
+  //   "__unknown__" — treated conservatively as same-section if there is more than one
+  //   occurrence (can't prove cross-section validity without section info).
+  //
+  //   same-section dup: a (label, value_current) key appears 2+ times in the SAME section
+  //                     (or under "__unknown__" where any 2+ occurrences are conservative RED).
+  //   cross-section dup: a (label, value_current) key appears in 2+ DIFFERENT known sections,
+  //                      with NO same-section repetition within any individual section.
+  //                      Semantically valid for VN parent-company (báo cáo riêng) reports.
+  //
+  // exactDupCount      → same-section dups → hard RED gate (unchanged behaviour).
+  // crossSectionDupCount → cross-section only dups → YELLOW warning (no red gate).
+
+  // Map: labelValKey → Map<section, count>
+  const sectionCountMap = new Map<string, Map<string, number>>();
   for (const r of rows) {
     const key = `${r.label ?? ""}::${r.value_current ?? ""}`;
-    seen.set(key, (seen.get(key) ?? 0) + 1);
+    const section =
+      r.statement_section !== null &&
+      r.statement_section !== undefined &&
+      r.statement_section.trim() !== ""
+        ? r.statement_section.trim()
+        : "__unknown__";
+    if (!sectionCountMap.has(key)) sectionCountMap.set(key, new Map());
+    const sMap = sectionCountMap.get(key)!;
+    sMap.set(section, (sMap.get(section) ?? 0) + 1);
   }
-  const exactDupCount = Array.from(seen.values()).filter((c) => c > 1).length;
+
+  let exactDupCount = 0;        // same-section dups (→ RED)
+  let crossSectionDupCount = 0; // cross-section only dups (→ YELLOW warning)
+
+  for (const sMap of sectionCountMap.values()) {
+    // Check for same-section repetition (count > 1 within any single section bucket)
+    const hasSameSectionDup = Array.from(sMap.values()).some((c) => c > 1);
+    if (hasSameSectionDup) {
+      exactDupCount++;
+      continue;
+    }
+    // No same-section dup. Check if it spans multiple sections → cross-section.
+    const distinctSections = sMap.size;
+    if (distinctSections > 1) {
+      // All distinct sections must be KNOWN (not __unknown__) for cross-section to be valid.
+      // If any occurrence is __unknown__, treat conservatively as same-section.
+      const hasUnknownSection = sMap.has("__unknown__");
+      if (hasUnknownSection) {
+        exactDupCount++;
+      } else {
+        crossSectionDupCount++;
+      }
+    }
+  }
 
   // value_blank_label_count: has a value but label is null/empty
   const valueBlankLabelCount = rows.filter(
@@ -182,7 +240,16 @@ export function evalStage4TableReconstruct(
     });
   }
 
-  const status: EvalStatus = gateFailures.length > 0 ? "red" : "green";
+  // Status:
+  //   RED  → any hard gate failed (label_coverage, code_coverage, exact_dup_count, value_blank_label)
+  //   YELLOW → no hard gate failure but cross-section dups detected (informational warning)
+  //   GREEN  → no hard gate failure and no cross-section dups
+  const status: EvalStatus =
+    gateFailures.length > 0
+      ? "red"
+      : crossSectionDupCount > 0
+        ? "yellow"
+        : "green";
 
   return {
     status,
@@ -190,6 +257,7 @@ export function evalStage4TableReconstruct(
       label_coverage: Math.round(labelCoverage * 1000) / 1000,
       code_coverage: Math.round(codeCoverage * 1000) / 1000,
       exact_dup_count: exactDupCount,
+      cross_section_dup_count: crossSectionDupCount,
       value_blank_label_count: valueBlankLabelCount,
       total_rows: totalRows,
     },

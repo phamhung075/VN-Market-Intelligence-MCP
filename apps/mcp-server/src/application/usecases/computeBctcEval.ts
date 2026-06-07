@@ -47,6 +47,7 @@ interface BctcTableRowDb {
   value_current: number | null;
   value_prior: number | null;
   row_order: number;
+  statement_section: string | null;
 }
 
 interface BctcMdTablesDb {
@@ -89,7 +90,7 @@ export async function computeBctcEval(
   // ── Stage 4: TABLE_RECONSTRUCT ─────────────────────────────────────────────
   const tableRows = db
     .prepare<BctcTableRowDb, [string]>(
-      `SELECT code, label, value_current, value_prior, row_order
+      `SELECT code, label, value_current, value_prior, row_order, statement_section
        FROM bctc_table_rows
        WHERE report_id = ?
        ORDER BY row_order ASC`,
