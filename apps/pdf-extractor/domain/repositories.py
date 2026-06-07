@@ -145,9 +145,10 @@ class AlertPort(Protocol):
     or credentials (those live only in the infrastructure adapter).
     """
 
-    def send_work_alert(self, message: str) -> None:
+    async def send_work_alert(self, message: str) -> None:
         """
-        Send a WORK-channel alert message.
+        Send a WORK-channel alert message (async — implementations must offload
+        any blocking I/O via asyncio.to_thread() to avoid stalling the event loop).
 
         Args:
             message: Plain-text alert message (≤ 4096 chars for Telegram compatibility).

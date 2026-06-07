@@ -29,6 +29,7 @@ Security note:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import urllib.request
@@ -67,12 +68,17 @@ class TelegramAlertAdapter:
             "TELEGRAM_INFO_WORK_CHANNEL_ID"
         )
 
-    def send_work_alert(self, message: str) -> None:
+    async def send_work_alert(self, message: str) -> None:
         """
         Send a WORK-channel alert via Telegram Bot API (sendMessage).
 
         Fire-and-forget: errors are logged and silently swallowed so they
         never disrupt the extraction pipeline caller.
+
+        The blocking urllib.request.urlopen call is offloaded to a worker
+        thread via asyncio.to_thread() — same pattern as TablePushClient
+        (commit f0999cff) — to avoid stalling the asyncio event loop during
+        the BT-5 gate block path.
 
         Args:
             message: Alert text (plain text, ≤ 4096 chars for Telegram compatibility).
@@ -95,28 +101,36 @@ class TelegramAlertAdapter:
             }
         ).encode("utf-8")
 
-        try:
-            req = urllib.request.Request(
-                url,
-                data=payload,
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                status = resp.status
-                if status != 200:
-                    logger.warning(
-                        "TelegramAlertAdapter: Telegram API returned status=%d for WORK alert",
-                        status,
-                    )
-                else:
-                    logger.info(
-                        "TelegramAlertAdapter: WORK alert sent (status=200)"
-                    )
-        except Exception as exc:  # noqa: BLE001
-            # Fire-and-forget: never raise, never disrupt the caller
-            logger.error(
-                "TelegramAlertAdapter: Failed to send WORK alert: %s — message: %s",
-                exc,
-                message,
-            )
+        # FIX (FIX-PDFX-ALERT-ADAPTER-BLOCKING): urllib.request.urlopen() is a
+        # synchronous blocking call (5s timeout). Running it directly in an async
+        # context blocks the event loop for the full duration of the Telegram
+        # round-trip. Wrap in asyncio.to_thread() to offload to a worker thread —
+        # same pattern as TablePushClient.push_table() (commit f0999cff).
+        def _do_request() -> None:
+            try:
+                req = urllib.request.Request(
+                    url,
+                    data=payload,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    status = resp.status
+                    if status != 200:
+                        logger.warning(
+                            "TelegramAlertAdapter: Telegram API returned status=%d for WORK alert",
+                            status,
+                        )
+                    else:
+                        logger.info(
+                            "TelegramAlertAdapter: WORK alert sent (status=200)"
+                        )
+            except Exception as exc:  # noqa: BLE001
+                # Fire-and-forget: never raise, never disrupt the caller
+                logger.error(
+                    "TelegramAlertAdapter: Failed to send WORK alert: %s — message: %s",
+                    exc,
+                    message,
+                )
+
+        await asyncio.to_thread(_do_request)

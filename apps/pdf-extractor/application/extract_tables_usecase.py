@@ -471,7 +471,7 @@ class ExtractTablesUseCase:
 
             if self._alert_port is not None:
                 try:
-                    self._alert_port.send_work_alert(alert_msg)
+                    await self._alert_port.send_work_alert(alert_msg)
                 except Exception as exc:  # noqa: BLE001
                     # Alert failure must NOT disrupt the extraction pipeline result
                     logger.error("AlertPort.send_work_alert failed: %s", exc)

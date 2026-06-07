@@ -97,7 +97,7 @@ class FakeAlertPort:
     def __init__(self) -> None:
         self.alerts: List[str] = []
 
-    def send_work_alert(self, message: str) -> None:
+    async def send_work_alert(self, message: str) -> None:
         self.alerts.append(message)
 
 
