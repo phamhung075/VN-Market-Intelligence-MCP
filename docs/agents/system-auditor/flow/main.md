@@ -1,4 +1,4 @@
-<!-- size-justification: ~565L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
+<!-- size-justification: ~620L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. FIX-AUDITOR-DB-LIVENESS (2026-06-07) bun:sqlite readonly exec replacing dead host-side sqlite3 path; dynamic container-name resolution; Tier-2/Tier-3 docker exec name literals fixed. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -139,22 +139,50 @@ Example evaluation for `bctc-discover` on 2026-05-20 (M=5, D=20):
 **No prose-only BCTC staleness rule exists. This resolver IS the rule.**
 
 ### DB Freshness Spot Checks (C-06, C-07)
-Run host-side read-only (same pattern as Tier-3 C-01–C-16 — never docker exec sqlite3):
+Resolve container name: `MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)` — abort check if empty (container down → CRITICAL via Tier-1 A-xx, do not duplicate here).
+Run via bun:sqlite readonly exec — NEVER host-side sqlite3 (stale orphan at apps/mcp-server/data/):
 ```bash
-sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "SELECT count(*) FROM market_messages WHERE sent_at > datetime('now','-3h')"
-sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "SELECT count(*) FROM agent_signals WHERE created_at > datetime('now','-24h')"
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker exec "$MCP_CTR" bun -e "
+import { Database } from 'bun:sqlite';
+const db = new Database('/app/data/market.db', {readonly: true});
+const r = db.query(\"SELECT count(*) as cnt FROM market_messages WHERE sent_at > datetime('now','-3h')\").get();
+console.log(r.cnt);
+db.close();
+"
+docker exec "$MCP_CTR" bun -e "
+import { Database } from 'bun:sqlite';
+const db = new Database('/app/data/market.db', {readonly: true});
+const r = db.query(\"SELECT count(*) as cnt FROM agent_signals WHERE created_at > datetime('now','-24h')\").get();
+console.log(r.cnt);
+db.close();
+"
 ```
 - C-06 pass: > 0; C-07 pass: > 0
 
 ### BCTC URL Shape (B-09)
 ```bash
-sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "SELECT count(*) FROM bctc_vps_queue WHERE source_url LIKE '%ssc.gov.vn%' AND status != 'skipped'"
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker exec "$MCP_CTR" bun -e "
+import { Database } from 'bun:sqlite';
+const db = new Database('/app/data/market.db', {readonly: true});
+const r = db.query(\"SELECT count(*) as cnt FROM bctc_vps_queue WHERE source_url LIKE '%ssc.gov.vn%' AND status != 'skipped'\").get();
+console.log(r.cnt);
+db.close();
+"
 ```
 - 0 → PASS; > 0 → CRITICAL (B-09)
 
 ### Stale Pending BCTC (B-13)
 ```bash
-sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72h')"
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker exec "$MCP_CTR" bun -e "
+import { Database } from 'bun:sqlite';
+const db = new Database('/app/data/market.db', {readonly: true});
+const r = db.query(\"SELECT count(*) as cnt FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72h')\").get();
+console.log(r.cnt);
+db.close();
+"
 ```
 - 0 → PASS; > 0 → WARN (B-13)
 
@@ -322,10 +350,24 @@ NOTE — root cause of false "no commits" (FIX-AUDITOR-FLOW-TIER-EARLYEXIT, corr
 - `docs/data/orch/orch-state.json` `.sprint_goal.entries[]`: count > 15 → alert po to close/archive old sprint entries
 
 ### 5. DB health (legacy WAL check — now complemented by Tier-3 full checks)
-Run host-side read-only (same pattern as Tier-3 C-12/C-13 — never docker exec sqlite3):
+Resolve container name first (same pattern as Tier-3). Run via bun:sqlite readonly exec — NEVER host-side sqlite3:
 ```bash
-stat -f%z apps/mcp-server/data/*.db-wal 2>/dev/null  # WAL size: < 10MB ok, >50MB flag
-sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "PRAGMA integrity_check;"  # must = "ok"
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+# WAL size: read from live volume via container fs
+docker exec "$MCP_CTR" bun -e "
+import { statSync } from 'fs';
+for (const f of ['/app/data/market.db-wal', '/app/data/pdf_extractor.db-wal']) {
+  try { const s = statSync(f); console.log(f, s.size); } catch { /* no WAL = fine */ }
+}
+"  # each WAL < 52428800 bytes (50MB)
+# Integrity check
+docker exec "$MCP_CTR" bun -e "
+import { Database } from 'bun:sqlite';
+const db = new Database('/app/data/market.db', {readonly: true});
+const row = db.query('PRAGMA integrity_check').get();
+console.log(row.integrity_check);
+db.close();
+"  # must = "ok"
 ```
 
 ### 6. Stats drift — `docs/data/project-stats.json` is GENERATED, never hand-edited
@@ -341,40 +383,53 @@ bun scripts/gen-project-stats.ts
 **Wall time target: < 600s. Scope: container tooling + inter-service + full DB checks C-01 through C-16 + EPIPE.**
 
 ### Container Tooling — mcp-server (A-22 through A-24)
+Resolve container name: `MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)` — if empty: CRITICAL for all A-22–A-28 (container down).
 ```bash
-docker exec mcp-server which pdftoppm
-docker exec mcp-server which tesseract
-docker exec mcp-server tesseract --list-langs 2>&1 | grep vie
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker exec "$MCP_CTR" which pdftoppm
+docker exec "$MCP_CTR" which tesseract
+docker exec "$MCP_CTR" tesseract --list-langs 2>&1 | grep vie
 ```
 - All must succeed (exit 0 / `vie` present) → CRITICAL if any missing
 
 ### Inter-Service Connectivity (A-25 through A-28)
 ```bash
-docker exec mcp-server curl -sf http://stock-price:5000/health
-docker exec mcp-server curl -sf http://technical-analysis:5003/health
-docker exec mcp-server curl -sf http://alert-engine:5006/health
-docker exec mcp-server curl -sf http://pdf-extractor:5001/health
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker exec "$MCP_CTR" curl -sf http://stock-price:5000/health
+docker exec "$MCP_CTR" curl -sf http://technical-analysis:5003/health
+docker exec "$MCP_CTR" curl -sf http://alert-engine:5006/health
+docker exec "$MCP_CTR" curl -sf http://pdf-extractor:5001/health
 ```
 - Each must return HTTP 200
 
 ### EPIPE Crash Check (A-31)
 ```bash
-docker logs --since=30m mcp-server 2>&1 | grep -c "EPIPE\|ECONNRESET"
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker logs --since=30m "$MCP_CTR" 2>&1 | grep -c "EPIPE\|ECONNRESET"
 ```
 - 0 or ≤ 2 → PASS (transient ok); > 2 → WARN
 
 ### BCTC PDF Landing (B-08)
 ```bash
-docker exec mcp-server ls /app/data/pdfs/ | wc -l
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker exec "$MCP_CTR" ls /app/data/pdfs/ | wc -l
 ```
 - > 0 → PASS; 0 → WARN
 
 ### DB Write Integrity Checks (C-01 through C-16)
-Read DB paths from system-map.json infrastructure.databases (host-side volume: `apps/mcp-server/data/`).
-Run all queries host-side read-only — NEVER open DB in write mode, NEVER stop/start containers:
+Read DB paths from system-map.json infrastructure.databases. The LIVE DB lives in named volume `vn-market-intelligence-mcp_market_data` mounted at `/app/data` in the container — NOT at `apps/mcp-server/data/` on the host (that path is a stale orphan test-fixture with 0-row tables).
+Resolve container name once at the top of this section: `MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)`
+Run all queries via bun:sqlite readonly exec — NEVER host-side sqlite3, NEVER open DB in write mode, NEVER stop/start containers:
 ```bash
-# Invocation pattern (read-only URI):
-sqlite3 "file:apps/mcp-server/data/<db>.db?mode=ro" "<query>"
+# Invocation pattern (bun:sqlite readonly, static SQL only — NEVER interpolate dynamic values into shell line):
+MCP_CTR=$(docker ps --format '{{.Names}}' | grep mcp-server | head -1)
+docker exec "$MCP_CTR" bun -e "
+import { Database } from 'bun:sqlite';
+const db = new Database('/app/data/<db>.db', {readonly: true});
+const r = db.query('<static SQL query>').get();
+console.log(r);
+db.close();
+"
 ```
 
 **Weekend/holiday guard for C-01, C-02, C-14 (last-trading-day semantics):**
@@ -388,7 +443,7 @@ Use window = `'-3 day'` when DOW is Sat or Sun; use `'-1 day'` on Mon–Fri.
 On Mon–Fri the auditor fires AFTER trading session; on weekend, last data was Friday.
 If the check fires within 2h after market open (before new data lands), accept the previous trading day's count as passing.
 
-| check_id | DB | Host-side read-only query | Pass |
+| check_id | DB | Query (run via `docker exec "$MCP_CTR" bun -e ...` — see invocation pattern above) | Pass |
 |---|---|---|---|
 | C-01 | market.db | `SELECT count(DISTINCT code) FROM daily_ohlcv WHERE date >= date('now',<WINDOW>)` — use `<WINDOW>` = `'-3 day'` on Sat/Sun, `'-1 day'` Mon–Fri | ≥ 25 |
 | C-02 | market.db | `SELECT count(*) FROM daily_ohlcv WHERE date >= date('now',<WINDOW>)` — same weekend window as C-01 | > 0 |
@@ -402,7 +457,7 @@ If the check fires within 2h after market open (before new data lands), accept t
 | C-10 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'failed' AND extracted_at > datetime('now','-24h')` | ≤ 2 |
 | C-11 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'done' AND extracted_at > datetime('now','-48h')` | > 0 (earnings window) |
 | C-12 | all non-empty DBs | `PRAGMA integrity_check` — skip DBs with 0-byte file (alert_engine.db, stock_price.db when empty) | `ok` |
-| C-13 | host filesystem | `stat -f%z apps/mcp-server/data/*.db-wal 2>/dev/null` (macOS) or `stat -c%s` (Linux) — check each WAL | < 52428800 bytes (50MB) each |
+| C-13 | container /app/data | via bun `statSync('/app/data/market.db-wal')` etc inside `docker exec "$MCP_CTR" bun -e ...` — check each WAL size | < 52428800 bytes (50MB) each |
 | C-14 | market.db | top-3 `code` row share of `daily_ohlcv` using same `<WINDOW>` as C-01: `WITH t AS (SELECT code,count(*) c FROM daily_ohlcv WHERE date>=date('now',<WINDOW>) GROUP BY code ORDER BY c DESC LIMIT 3) SELECT round(100.0*sum(c)/(SELECT count(*) FROM daily_ohlcv WHERE date>=date('now',<WINDOW>)),1) FROM t` — skip (NULL result) if C-01 returns 0 (no data in window) | < 60% |
 | C-15 | market.db | `PRAGMA table_info(financial_reports)` — check action_code, period_year, net_revenue, extraction_confidence present | all 4 present |
 | C-16 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72h')` | 0 |

@@ -1,5 +1,17 @@
 # Agent Father — Notebook
 
+## c289 · 2026-06-07T05:08Z — FIX-AUDITOR-DB-LIVENESS
+
+- Task: FIX-AUDITOR-DB-LIVENESS (HIGH). Signal row: rtr-auditor-db-stale-path-20260607T0512Z.
+- Root: `apps/mcp-server/data/market.db` on host is stale orphan (market_messages=0, daily_ohlcv=0). Live DB in named volume `vn-market-intelligence-mcp_market_data` at `/app/data` inside container. All Tier-2/Tier-3 sqlite3 checks → false-RED.
+- Fix: replaced ALL `sqlite3 "file:apps/mcp-server/data/...?mode=ro"` with `docker exec "$MCP_CTR" bun -e "import {Database} from 'bun:sqlite'; ..."` readonly pattern. Added dynamic container-name resolution step (`docker ps --format '{{.Names}}' | grep mcp-server | head -1`) — never hardcode compose-prefixed name.
+- Fixed docker exec name literals: Tier-3 Container Tooling (A-22–A-24), Inter-Service (A-25–A-28), EPIPE (A-31), BCTC PDF (B-08) — all now use `"$MCP_CTR"` var.
+- Also fixed: Tier-2 C-06/C-07/B-09/B-13 + Step-5 WAL check + integrity check.
+- C-13 table entry updated: host-side `stat` → container `statSync` via bun exec.
+- Files modified: 1 (docs/agents/system-auditor/flow/main.md 565L→620L). agent-md-factory P-1–P-6 + Q-1–Q-5 applied.
+- Live validation: C-01=1599 codes, C-02=3190 rows (max_date=2026-06-05), C-06=0 (off-hours), C-14=0.2%, integrity_check=non-ok (DB corruption found — real signal, not false-RED). WAL=3.1MB via container statSync.
+- Orphan disposition: `apps/mcp-server/data/market.db` is test-fixture artifact — NEVER delete (code-janitor decision); flag as stale orphan in return.
+
 ## c288 · 2026-06-07 — FIX-AUDITOR-FLOW-RESIDUALS (4 sub-items)
 
 - Task: FIX-AUDITOR-FLOW-RESIDUALS. Files modified: 2 (docs/agents/system-auditor/flow/main.md 523→565L; .claude/skills/agent-md-factory/SKILL.md created 90L).
