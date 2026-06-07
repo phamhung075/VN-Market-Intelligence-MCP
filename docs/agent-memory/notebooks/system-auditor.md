@@ -1,5 +1,14 @@
 <!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c066 · 2026-06-07T02:31:45Z
+### Audit Run Tier-2 (02:31 UTC 2026-06-07)
+- Tier: 2 (freshness sweep) | Crons: 71 checked | Sources: 5 checked | VPS: 4 routes checked
+- Anomalies: 3 CRITICAL (BCTC SLA breach 65min, VPS sbv unhealthy, BCTC-EVAL 4 red) | Status: DEGRADED
+- BUG alerts: 3 (B-02 BCTC SLA, B-07 VPS sbv-fetch, D-BCTC-EVAL red count)
+
+BCTC-EVAL-SNAPSHOT:
+[{"ticker":"VNM","period":"Q4-2025","overall_status":"red"},{"ticker":"VEA","period":"Q4-2025","overall_status":"red"},{"ticker":"HPG","period":"Q4-2025","overall_status":"red"},{"ticker":"PPC","period":"Q1-2026","overall_status":"red"},{"count_yellow":10,"count_red":4}]
+
 ## c065 · 2026-06-07T02:12:03Z
 ### Audit Run Tier-1 (02:12 UTC 2026-06-07)
 - Tier: 1 (runtime ping) | Services: 6 checked
