@@ -1,0 +1,18 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-07T01:42:42Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/system-auditor.md",
+    "line_count": 221,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 21,
+    "action_required": "prune_or_split"
+  },
+  "status": "RESOLVED",
+  "resolution": "resolved-before-drain: notebook overwritten to 61L by system-auditor commit 1874245d at 2026-06-07T02:12Z (cap 200)",
+  "resolved_at": "2026-06-07T02:18:19Z"
+}
