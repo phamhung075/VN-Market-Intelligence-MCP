@@ -1,21 +1,22 @@
 # PO Notebook
 
-## c · 2026-06-07T07:44:58Z — USER DEMAND lane-C: MCP tool-surface upgrade audit → TOOL-SURFACE-UPGRADE sprint
+## c · 2026-06-07T09:54:02Z — SPRINT SIGNOFF: TOOL-SURFACE-UPGRADE CLOSED (7/7 DONE)
 
-**Inputs:** live /health toolCount=162 == source-extracted 162 (161 server.tool + 1 registerTool); tool-usage-stats.json sessionCount=0 toolCounts={} (telemetry DEAD); tool-registry.json lastUpdated 2026-05-03 lists 125; 4-layer usage matrix per audit-mcp-tools skill; live probes get_market_snapshot/get_macro_snapshot/get_foreign_flow.
+**Closure:** sprint_goal entry → done; active_sprints entry → DONE (atomic CAS write, attempt=1). Umbrella lock task:TOOL-SURFACE-UPGRADE release ok:false — expected (let-expire lesson: TTL lapsed + rebuild invalidated owner session). WORK telegram summary sent.
 
-**Key findings (prioritized):**
-- P1 U1: usage telemetry 100% blind — sessionToolCache empty since gateway call_tool cutover (per-call dial+drop); trackSessionToolUsageJob aggregates dead cache → fix = per-call counter at invocation layer.
-- P1 U2: registry drift class — 38 live tools missing, ghost get_market_hexagram, counts 125/146/162 (registry/CLAUDE.md/live); TSH-6 hand-reconcile decayed in 6 days → generate registry + parity test, never hand-edit.
-- P2 U3: 12 weak-claim tools (zero agent/flow/skill refs); read_bctc_pdf zero across ALL 4 layers = removal candidate; mark_alert_outcome merge into write_alert_verdict; get_market_foreign_flow vs get_foreign_flow overlap.
-- P2 U4: get_macro_snapshot headline values (vnIndex/oil/gold/usdVnd) snapshot-only, no prev-session delta — violates direction+delta rule; sweep all market get_*.
-- P2 U5: get_foreign_flow holding ratio serves 0.00% every row every day — dead field rendered as real (DSI violation).
-- P3 U6: TSH leftover merges never executed (patterns/TA, trigger_*_vps_fetch x4, summary pair, insider pair).
-- Stale fetch_ssc_reports refs in 3 docs/agents/tools/list files — NOT touched, owned by parallel doc-refresh lanes (cowork-refactory-expert + agent-father); flagged in sprint note.
+**Own live verification (not QA relay):**
+- /health toolCount=157 LIVE == U2-PARITY four-count convergence (162 − 5 U3 deregistrations).
+- U4 get_macro_snapshot: vnIndexDelta +7.35 / direction "up"; oil/gold/usd delta null + "unknown" — honest, per spec.
+- U5 get_foreign_flow ACB: holding-ratio field fully omitted, no fabricated 0.00%.
+- Containers REBUILT not restarted; running image IDs match QA claim exactly (mcp-server 055a57bea1e1, macro-indicators 66c206417f79) — docker-rebuild-race lesson applied.
 
-**Dispatched:** sprint_goal entry TOOL-SURFACE-UPGRADE (active, lead ba, WIP_max=2, order U1+U2→U3→U4/U5→U6) + backlog task BA-TSU-1 (owner ba, SPRINT-M, P1, zone docs/agents/, sprint TOOL-SURFACE-UPGRADE). Umbrella lock task:TOOL-SURFACE-UPGRADE claimed (po, TTL 3600). Journal: sprint-TOOL-SURFACE-UPGRADE-po.md STEP po-S1.
+**Open item filed:** AC-U1-8 telemetry live-proof is time-gated (next 8h cron tick must populate tool-usage-stats.json toolCounts; sessionCount field must stay absent) → signal row po-20260607T095333 to system-auditor (MED, payload_ref U2-PARITY report). Did NOT block signoff on a passive wait.
+
+**Lesson:** time-gated acceptance criteria ≠ work-gated — close the sprint, file a follow-up signal with a concrete pass/fail predicate so it can't silently rot.
+
+**Journal:** sprint-TOOL-SURFACE-UPGRADE-po.md STEP po-S2.
 
 **Carry-over (next PO cycle):**
-- Review BA spec for BA-TSU-1 when ready (review-ba-spec flow); ensure U1/U2 stay framed as class fixes (generation+instrumentation), not another hand-reconcile.
-- Any U3/U6 tool rename/removal MUST be signalled to the doc-refresh lanes before merge (they own docs/agents/tools/*).
+- AC-U1-8: confirm system-auditor resolved signal po-20260607T095333 (toolCounts nonzero after 8h tick); if auditor silent >24h, escalate to FIX task.
+- U3 doc-refresh lanes: verify cowork-refactory-expert consumed tsu-u3-tool-deregister-signal-20260607 (5 removed tool list entries deleted, 7 integrate packages updated).
 - Prior cycle carry-over still open: LIVEDB recovery raw verify (PRAGMA ok + C-01 1599/C-02 3190 baselines); #3065 news-vps honest resolution; HPG Q4 re-parse after recovery; FIX-SBV-PUSH-TYPE-COERCE live proof; rtr-bctc-playwright queue-drain proof; FIX-BCTC-SLA-WEEKEND Sunday proof; CTG real figures post-refine (fleet cron 09:00 UTC); 10 yellow BCTC eval rows post-stage-4.
