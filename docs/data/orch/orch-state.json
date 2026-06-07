@@ -4280,8 +4280,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T03:18:59Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-07T06:33:54Z",
+    "_updated_by": "system-auditor",
     "rows": [
       {
         "id": "sau-d4-202606070300",
@@ -4455,6 +4455,42 @@
         "disposition": "",
         "processed_by": "",
         "processed_at": ""
+      },
+      {
+        "id": "sau-b02-202606070633",
+        "ts": "2026-06-07T06:33:54Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "news-vps stale 112min (check B-02, SLA 30min)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "data_stale:news-vps:B-02"
+      },
+      {
+        "id": "sau-b-vps-unhealthy-202606070633",
+        "ts": "2026-06-07T06:33:54Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "VPS service vn-news-fetch unhealthy (uptime 1h44m, check B-06)",
+        "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "data_stale:news-fetch-vps-service:B-06"
+      },
+      {
+        "id": "sau-bctc-proxy-stale-202606070633",
+        "ts": "2026-06-07T06:33:54Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc VPS proxy stale (last push 2026-06-05 14:48:47, weekend exemption pending verification)",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null,
+        "dedup_key": "data_stale:bctc-vps-proxy:B-03"
       }
     ],
     "archive": [
