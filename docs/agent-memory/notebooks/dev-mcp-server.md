@@ -1,5 +1,22 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-07 · B3-SPACE-URLS-FIX + HPG-REPARSE — COMMITTED (9415b8fb)
+
+**Task A — B3-SPACE-URLS-FIX:**
+Geo-block check: `staticfile.hsx.vn` HTTP 200 from container (10:08 UTC) — NOT blocked; direct fetch is safe; VPS routing NOT needed.
+Root-cause code fixes: (a) `encodeHsxUrl()` added to `hsxBctcFetcher.ts` — spaces→%20, parens→%28/%29, idempotent bare-% guard; applied after tilde-replace in `fetchMediafileUrls`; (b) `bctcPdfPullJob.ts` SQL widened to `(VPS LIKE ... OR hsx LIKE ...)`; `HSX_STATICFILE_BASE_URL` const exported; hsx.vn rows use empty apiKey.
+Data repair (bound params): id=292114 (PPC Q1-2026) + id=1308151 (PPC Q3-2025) — raw-space hsx.vn URLs encoded in-place (1 row changed each). After: no literal spaces, both match new hsx LIKE filter.
+TC-5 in BCTC-3b-hsx-fetcher.test.ts updated — was asserting old broken raw-space URL.
+Tests: 36 GREEN (11 new B3 + 9 updated BCTC-3b + 16 pull-job regressions). tsc: clean. VPS-proxy URLs unaffected (TC-PULL-1 regression PASS).
+
+**Task B — HPG-REPARSE-POST-REBUILD:**
+Pick predicate (bctcReparseJob.ts L633-642): `agent_feedback WHERE agent='data-auditor' AND category='other' AND status='new' AND title LIKE '[AUDIT] stranded_bctc_pdf%'`; disk-scan: skip if `financial_reports` row exists for action_code+period_year+period_type.
+HPG Q4-2025 had existing row (id=d6f1885f, 7 total rows incl. fallbacks). Mechanism: DELETE bound-param `WHERE action_code='HPG' AND period_year=2025 AND period_type='Q4'` (7 rows deleted). Reparse triggered immediately.
+Reparse result: Tier 1 (pdf-extractor service) failed (status=failed, textLength=0); Tier 2 (pdf-parse) 0 chars; Tier 3 OCR cache HIT (36,613 chars, confidence=0.80, pages=24). New row id=918a7abd, validation_status=low_confidence, extraction_confidence=0.4375, total_liabilities=3,004,239,852 (magnitude error — raw VNĐ not triệu).
+**Target values NOT met**: totalLiabilities≠~4,239,852M; Stage-4 grade unverifiable from low-confidence data.
+Root cause: on-disk PDF is "riêng lẻ" (parent company only, not consolidated); OCR cache was extracted with old code with magnitude issue; FIX-LIAB in code cannot correct already-bad OCR cache text without re-OCR from raw PDF. Tier 1 blocked by pre-existing pdf-extractor service issue for this file.
+**Follow-up flags**: (1) HPG needs consolidated PDF re-fetch (hợp nhất version) — the current disk file is riêng lẻ. (2) OCR cache for this file must be invalidated so Tier 3 doesn't serve stale wrong-magnitude text. (3) pdf-extractor service Tier 1 failure root cause unresolved.
+
 ## 2026-06-07 · SPRINT-PPC-PDF-SOURCING T1–T6 execution — COMMITTED
 
 **T1:** `apps/mcp-server/src/migrations/reset-ppc-q4-2025.ts` written. Idempotent UPDATE guarded on `status='url_not_found'`, bound param `[255887]`. Not registered in runMigrations().
