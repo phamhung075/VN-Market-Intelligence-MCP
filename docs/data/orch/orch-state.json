@@ -4204,10 +4204,13 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "READ",
+        "status": "DONE",
         "payload_ref": null,
         "read_by": "dev-team",
-        "read_at": "2026-06-07T03:18:59Z"
+        "read_at": "2026-06-07T03:18:59Z",
+        "disposition": "PROCESSED: TASKED -> CLEAN-ESC-LOCK-FPT (verify owner/TTL then release or add board row)",
+        "processed_by": "po-triage-20260607 (dispatcher flip)",
+        "processed_at": "2026-06-07T04:35:00Z"
       },
       {
         "id": "sau-news-sla-critical-202606062231",
@@ -4280,11 +4283,14 @@
         "type": "fetch_sla_breach",
         "summary": "BCTC freshness 425m vs SLA 360m (+65m); Sunday — weekend publication lull plausible, mirror of news SLA case",
         "severity": "MEDIUM",
-        "status": "READ",
+        "status": "DONE",
         "payload_ref": null,
         "note": "backfilled by dispatcher (auditor skipped row write, telegram 2699 sent); severity downgraded CRITICAL->MEDIUM pending weekend-context triage by po",
         "read_by": "dev-team",
-        "read_at": "2026-06-07T03:18:59Z"
+        "read_at": "2026-06-07T03:18:59Z",
+        "disposition": "PROCESSED: TASKED -> FIX-BCTC-SLA-WEEKEND (mirror d71e3f2e calendar exemption for bctc)",
+        "processed_by": "po-triage-20260607 (dispatcher flip)",
+        "processed_at": "2026-06-07T04:35:00Z"
       },
       {
         "id": "sau-bctc-eval-red-202606070234",
@@ -4294,11 +4300,14 @@
         "type": "bctc_eval_red",
         "summary": "BCTC eval sweep: 4 red (VNM/VEA/HPG/PPC) 10 yellow; VNM/VEA = known OCR fingerprint, serve-guard FIX in flight",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "DONE",
         "payload_ref": null,
         "note": "backfilled by dispatcher (telegram 2701 sent, row skipped); overlaps FIX-BCTC-IDENTITY-SERVE-GUARD (in flight) — po to dedupe at next triage",
         "read_by": "dev-team",
-        "read_at": "2026-06-07T03:18:59Z"
+        "read_at": "2026-06-07T03:18:59Z",
+        "disposition": "PROCESSED: SPLIT — VNM/VEA deduped to merged 62ef64fe serve-guard; HPG/PPC -> SPIKE-BCTC-EVAL-HPG-PPC",
+        "processed_by": "po-triage-20260607 (dispatcher flip)",
+        "processed_at": "2026-06-07T04:35:00Z"
       },
       {
         "id": "sau-sbv-push-endpoint-202606070252",
@@ -4308,11 +4317,14 @@
         "type": "task_request",
         "summary": "POST /api/push-sbv-rates rejects valid usdVndOfficial payload — vn-sbv-fetch stays unhealthy; zone dev-mcp-server (server.ts handler)",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "DONE",
         "payload_ref": null,
         "note": "ops incident 20260607: VPS script fixed (field renamed usdVnd→usdVndOfficial per schema) but endpoint validation still rejects — suspect string-vs-number type coercion in JSON parse. Draft title: fix(mcp-server/vps-proxy): push-sbv-rates endpoint rejects valid usdVndOfficial integer payload. Evidence: BUG telegram msg 2702, last log 'ERROR: push failed → Invalid usdVndOfficial (positive number required)'.",
         "read_by": "dev-team",
-        "read_at": "2026-06-07T03:18:59Z"
+        "read_at": "2026-06-07T03:18:59Z",
+        "disposition": "PROCESSED: TASKED -> FIX-SBV-PUSH-TYPE-COERCE (bug confirmed server.ts:692 typeof rejection)",
+        "processed_by": "po-triage-20260607 (dispatcher flip)",
+        "processed_at": "2026-06-07T04:35:00Z"
       },
       {
         "id": "sau-auditor-c01-weekend-202606070252",
@@ -4322,11 +4334,14 @@
         "type": "observation",
         "summary": "Auditor C-01 threshold (daily_ohlcv >=25 codes last 1d) returns 0 on weekends — false-positive risk; needs weekend-aware window like FIX-SLA-WEEKEND-AWARE",
         "severity": "LOW",
-        "status": "READ",
+        "status": "DONE",
         "payload_ref": null,
         "note": "dispatcher live-tested merged host-side C-01 (a95c514a) Sunday 20260607: query mechanism OK read-only, returns 0 (market closed). Pre-existing threshold design, not introduced by FIX-AUDITOR-DB-CHECKS-HOSTSIDE.",
         "read_by": "dev-team",
-        "read_at": "2026-06-07T03:18:59Z"
+        "read_at": "2026-06-07T03:18:59Z",
+        "disposition": "PROCESSED: FOLDED -> FIX-AUDITOR-FLOW-RESIDUALS item (a) weekend-aware C-01/C-02/C-14",
+        "processed_by": "po-triage-20260607 (dispatcher flip)",
+        "processed_at": "2026-06-07T04:35:00Z"
       }
     ],
     "archive": [
