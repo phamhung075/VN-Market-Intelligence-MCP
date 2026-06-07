@@ -20,6 +20,7 @@ Privacy: internal Docker network only. No external API calls.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import urllib.error
@@ -121,15 +122,21 @@ class EvalPushClient:
             self._push_endpoint,
         )
 
-        # RAISE on HTTP error — fail-loud-first.
-        # NO bare except. NO silent swallow.
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            raw = resp.read().decode("utf-8")
-            result: Dict[str, Any] = json.loads(raw)
-            logger.info(
-                "EvalPushClient.push_stage OK: report_id=%s stage_no=%s ok=%s",
-                report_id,
-                stage_result.get("stage_no"),
-                result.get("ok"),
-            )
-            return result
+        # FIX (HEALTH-BLOCK): urllib.request.urlopen() is a synchronous blocking call
+        # (up to 30s timeout). Running it directly in an async function blocks the
+        # event loop, making /health unresponsive for the full push duration.
+        # Wrap in asyncio.to_thread() to offload to a worker thread.
+        # RAISE on HTTP error — fail-loud-first. NO bare except. NO silent swallow.
+        def _do_request() -> Dict[str, Any]:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                raw = resp.read().decode("utf-8")
+                result: Dict[str, Any] = json.loads(raw)
+                logger.info(
+                    "EvalPushClient.push_stage OK: report_id=%s stage_no=%s ok=%s",
+                    report_id,
+                    stage_result.get("stage_no"),
+                    result.get("ok"),
+                )
+                return result
+
+        return await asyncio.to_thread(_do_request)

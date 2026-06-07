@@ -2,6 +2,18 @@
 
 ## Working Memory
 
+### 2026-06-07 — FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN DONE
+
+**Task:** FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN | Size: S | Status: DONE (rebuild pending)
+
+**Root cause:** 3 push clients called urllib.request.urlopen() directly in async methods, blocking the asyncio event loop (up to 30s) and starving /health. Same class as A-13 incident.
+
+**Fix:** Applied asyncio.to_thread(_do_request) pattern (mirrors table_push_client.py) to layout_first_push_client.py, md_table_push_client.py, eval_push_client.py. Added import asyncio + _do_request closure wrapping urlopen in each.
+
+**Tests added:** TC-PUSH-LF-1, TC-PUSH-MD-1, TC-PUSH-EVAL-1 — all GREEN. Suite: 848 passed (+3 vs baseline).
+
+**NEXT:** ops rebuild pdf-extractor container single-service.
+
 ### 2026-06-07 — HEALTH-BLOCK incident fix (48a64056, f0999cff)
 
 **Incident:** pdf-extractor Up but health=unhealthy. Docker healthcheck `curl -f http://localhost:5001/health` exceeded 10s timeout repeatedly. CPU 100%. Container restarted at 18:48 UTC, wedged immediately, 5 consecutive healthcheck failures. Connection accepted, no bytes returned.
@@ -181,20 +193,6 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
-### 2026-06-03 — FU-LF-ORPHAN-ROWS DIAGNOSIS (cross-zone handoff — no code change)
-
-**Task:** FU-LF-ORPHAN-ROWS | Sprint: BCTC-LAYOUT-FIRST | Status: CROSS-ZONE HANDOFF — no in-zone fix
-
-**Root cause (serving bug):** `operating_profit=0, ebitda=0, cash=0.000001, eps=1, financing_cf≈0` are legacy pdf-parse values from 2026-05-24. `finalize_bctc_refine` ran on 2026-05-31 14:51 (before BEQ-3 commit `c1f3c328` on 2026-06-02 added code-30/110/40 mappings to `aggregateScalars`). At that time these codes returned null → Case 2 skip → legacy values preserved. `bctc_table_rows` (145 rows, `extracted_at=2026-05-31 14:51`) already contains the correct data for ALL missing scalars. Fix = re-call `finalize_bctc_refine(report_id=e8ea3df5-3f32-413d-a3eb-c71634c0438d, report_status=DONE)`.
-
-**OUT-OF-ZONE:** `apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts`. No pdf-extractor code to fix.
-
-**Orphan-rows quarantine (in-zone, not blocking current serve):** 4/14 `bctc_layout_units` quarantined. Units `33f03d3a`/`13249073`/`5b828836` have 100% orphan (column detection found ≤1 gutter → no value columns → all rows `has_val=False`). Unit `d8613f7c` has 8/92 (8.7%) orphans (column col_0=x:0-746 captures mixed OCR text, 8 rows where col_0 is empty but col_2/4 have values). Gate `check_no_orphan_rows` fires on ANY orphan — correct behavior for 100% cases; potentially over-strict for 8.7% case. Layout-first serves `bctc_layout_units`, NOT `bctc_refined_units` — quarantine does NOT affect `financial_reports` derivation (which reads `bctc_refined_units` → `bctc_table_rows`).
-
-**Zone health:** layout-first OCR quality poor for FPT Q1 scrambled PDFs (column detection failing pages 7-9, 1 gutter only). Core pipeline structurally sound. Orphan gate working as designed.
-
----
-
 ### History pointer
 
-Prior entries (PDF-SINGLE-SOURCE, PEK-RENDER-PDFX, PEK-LAYOUT-CFG, PEK-IMPORT-CHAIN, PEK-DEPLOY-FIX, PEK-ORPHAN-RECONCILE, PEK-IMPL, LF-FIX, LF-EXTRACT, MD-EXTRACT-1..9) truncated at 200L per notebook cap. See `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md` for full history.
+Prior entries (FU-LF-ORPHAN-ROWS, PDF-SINGLE-SOURCE, PEK-RENDER-PDFX, PEK-LAYOUT-CFG, PEK-IMPORT-CHAIN, PEK-DEPLOY-FIX, PEK-ORPHAN-RECONCILE, PEK-IMPL, LF-FIX, LF-EXTRACT, MD-EXTRACT-1..9) truncated at 200L per notebook cap. See `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md` for full history.

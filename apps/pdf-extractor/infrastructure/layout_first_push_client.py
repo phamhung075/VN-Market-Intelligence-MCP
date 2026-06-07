@@ -38,6 +38,7 @@ The method is declared async for use-case compatibility.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import urllib.error
@@ -117,31 +118,38 @@ class LayoutFirstPushClient:
             self._push_endpoint,
         )
 
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                raw = resp.read().decode("utf-8")
-                result: Dict = json.loads(raw)
-                logger.info(
-                    "LayoutFirstPushClient.push_layout OK: report_id=%s "
-                    "units_stored=%s pages_stored=%s",
+        # FIX (HEALTH-BLOCK): urllib.request.urlopen() is a synchronous blocking call
+        # (up to 30s timeout). Running it directly in an async function blocks the
+        # event loop, making /health unresponsive for the full push duration.
+        # Wrap in asyncio.to_thread() to offload to a worker thread.
+        def _do_request() -> Dict:
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    raw = resp.read().decode("utf-8")
+                    result: Dict = json.loads(raw)
+                    logger.info(
+                        "LayoutFirstPushClient.push_layout OK: report_id=%s "
+                        "units_stored=%s pages_stored=%s",
+                        report_id,
+                        result.get("units_stored"),
+                        result.get("pages_stored"),
+                    )
+                    return result
+            except urllib.error.HTTPError as exc:
+                body_txt = exc.read().decode("utf-8", errors="replace")
+                logger.error(
+                    "LayoutFirstPushClient.push_layout HTTP %d: report_id=%s body=%s",
+                    exc.code,
                     report_id,
-                    result.get("units_stored"),
-                    result.get("pages_stored"),
+                    body_txt[:200],
                 )
-                return result
-        except urllib.error.HTTPError as exc:
-            body_txt = exc.read().decode("utf-8", errors="replace")
-            logger.error(
-                "LayoutFirstPushClient.push_layout HTTP %d: report_id=%s body=%s",
-                exc.code,
-                report_id,
-                body_txt[:200],
-            )
-            raise
-        except urllib.error.URLError as exc:
-            logger.error(
-                "LayoutFirstPushClient.push_layout network error: report_id=%s reason=%s",
-                report_id,
-                exc.reason,
-            )
-            raise
+                raise
+            except urllib.error.URLError as exc:
+                logger.error(
+                    "LayoutFirstPushClient.push_layout network error: report_id=%s reason=%s",
+                    report_id,
+                    exc.reason,
+                )
+                raise
+
+        return await asyncio.to_thread(_do_request)
