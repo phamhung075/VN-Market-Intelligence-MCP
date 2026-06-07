@@ -1,5 +1,30 @@
-<!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c101 · 2026-06-07T23:04:13Z
+### Audit Run Tier-1 (23:04 UTC 2026-06-07)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 1 dedup-skipped (A-20 within 7-day window) | Status: DEGRADED (known issue)
+- RAW-PROBE:
+```
+--- docker ps -a ---
+mcp-server: Up 22 minutes (healthy) ✓
+api-gateway: Up 4 hours (healthy) ✓
+macro-indicators: Up 12 minutes (healthy) ✓
+pdf-extractor: Up About an hour (unhealthy) ⚠ [recurring A-20]
+frontend: Up 4 hours (healthy) ✓
+mcp-gateway: Up 4 hours (healthy) ✓
+--- health endpoints ---
+mcp-server:3000/health OK (200) ✓
+api-gateway:4000/health OK (200) ✓
+macro-indicators:5004/health OK (200) ✓
+pdf-extractor:5001/health FAIL (CURL_ERR) ⚠ [A-20, dedup 21:03:53Z c096]
+frontend:3001/ OK (200) ✓
+--- memory --- mcp-server=11.36% (<85%) ✓
+--- disk --- 29% used (34Gi free) ✓
+--- restart count --- mcp-server RC=0 (≤2) ✓
+```
+- Findings: pdf-extractor unhealthy + health endpoint unreachable (A-20). Within 7-day dedup window (prev 21:03:53Z c096, ~2h ago). No BUG Telegram sent (dedup rule). Signal row appended to signal_queue per audit protocol.
+- Signals: 0 posted (BUG dedup) | Signal Queue: 1 row written (A-20)
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
 ## c100 · 2026-06-07T22:33:50Z
 ### Audit Run Tier-1 (22:33 UTC 2026-06-07)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
