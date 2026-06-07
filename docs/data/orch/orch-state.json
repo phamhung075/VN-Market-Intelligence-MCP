@@ -4835,8 +4835,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T19:33:04Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-07T20:58:37Z",
+    "_updated_by": "router",
     "rows": [
       {
         "id": "sau-2026060719035-a13",
@@ -5142,6 +5142,19 @@
         "status": "NEW",
         "zone_owner": "dev-pdf-extractor",
         "check_id": "A-13",
+        "payload_ref": null
+      },
+      {
+        "id": "router-20260607205837-ci",
+        "ts": "2026-06-07T20:58:37Z",
+        "from": "router",
+        "to": "po",
+        "type": "ci_failure",
+        "summary": "CI run 27094330836 (714cfde6, 13:45Z) failed. REAL: (1) go-lint depguard Fence-C — apps/technical-analysis/cmd/sandbox/main.go:44 imports pkg/infrastructure (zone dev-technical-analysis); (2) kinh-dich-ts-lint ESLint boundaries fence exit 2 (zone dev-kinh-dich); (3) bun test FRED null x3 — 1423b-fred-fetcher.test.ts:108,201 + 1922j-fred-startup-backfill.test.ts:84 (zone dev-mcp-server) — CONVERGES with tnb c90 F-FED-RATE-REGRESSION stale Fed 5.33%. INFRA NOISE: 6x golangci exit-3 + cache 400 + GH services outage at 13:45Z — recheck on fresh run 27104618906 (a709681f, in progress ~21:10Z) before dispatching Go-lint fixes. Push gap closed: 26 commits pushed 20:57Z.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "zone_owner": "po",
+        "check_id": null,
         "payload_ref": null
       }
     ],
