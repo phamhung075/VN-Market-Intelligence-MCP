@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T00:24:40Z",
-  "_updated_by": "agent-father",
+  "_updated_at": "2026-06-08T00:45:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -3108,7 +3108,7 @@
         "id": "FIX-FRED-YAHOO-WEEKEND-STALE",
         "title": "Converged: 4 bun-test null-assert failures (FRED 1423b:108,201 + 1922j:84, Yahoo 1487:238) + tnb c90 F-FED-RATE-REGRESSION — weekend FRED path serves stale Fed 5.33% (correct 3.62%)",
         "owner": "dev-mcp-server",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "apps/mcp-server/",
         "created_at": "2026-06-07T21:25:56Z",
         "type": "FIX",
@@ -3120,7 +3120,9 @@
           "apps/mcp-server/src/tests/1487-yahoo-finance-extended.test.ts"
         ],
         "status_note": "DISPATCHED tick 2026-06-07T22:14Z — BATCH slot 2 (WIP 2). Was NEXT-UP; both active slots free (FIX-CI-LINT-STACK + FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN DONE). tnb c91 Monday-dish 3.62% check remains the live verification gate. | prior: NEXT-UP after an active slot frees. AC: bun test green on the 4 assertions + weekend data path serves latest FRED fedFundsRate (3.62), not stale fixture; tnb c91 Monday-dish check is the live verification. CRITICAL escalation if Monday dish still cites 5.33% (means c87 fix never held on weekdays either).",
-        "note": "tnb c90: Saturday evening dish cites Fed 5.33% while c88 weekday dishes cited 3.62% — weekend-specific FRED data path suspected. The 4 failing tests look like the same null/stale-fixture class; treat tests as executable spec while root-causing the weekend branch. Re-opened from F-CARRY-CORRUPT (c87)."
+        "note": "tnb c90: Saturday evening dish cites Fed 5.33% while c88 weekday dishes cited 3.62% — weekend-specific FRED data path suspected. The 4 failing tests look like the same null/stale-fixture class; treat tests as executable spec while root-causing the weekend branch. Re-opened from F-CARRY-CORRUPT (c87).",
+        "done_at": "2026-06-08T00:45:00Z",
+        "evidence": "commit=c7a6de6c; tests=17/17 pass (1423b×6,1922j×4,1487×7); tsc clean; scheduler 76 cron.schedule; container img=11e737901726 healthy; tracked_indicators.fed_funds_rate=3.62 (bridged from EFFR daily); macro-indicators cache=stale-5.33 (will self-heal on next TTL/restart)"
       },
       {
         "id": "FIX-BCTC-LOWCONF-REPARSE-BATCH",
