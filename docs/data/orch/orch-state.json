@@ -5128,6 +5128,19 @@
         "created_at": "2026-06-07T20:26:00Z",
         "summary": "tran-ngoc-bau flow requires send_telegram + log_agent_work + task_claim (publish marker, commit mutex) but agent type roster grants NO mcp__claude_ai_gateway__call_tool. Every tnb-audit cycle ends QUALITY:partial; dispatcher must relay publishes manually (done for c90). Fix: add gateway tool to tran-ngoc-bau roster OR strip MCP steps from its flow. Evidence: docs/signals/tnb-2026-06-07T2013Z-c90.json + telemetry cowork-team-20260607T201655Z.json",
         "zone_owner": "agent-father"
+      },
+      {
+        "id": "sau-2026060720364-a13",
+        "ts": "2026-06-07T20:36:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-13 health endpoint unreachable (recurring) — container marked healthy but /health probe fails",
+        "severity": "WARN",
+        "status": "NEW",
+        "zone_owner": "dev-pdf-extractor",
+        "check_id": "A-13",
+        "payload_ref": null
       }
     ],
     "archive": [
