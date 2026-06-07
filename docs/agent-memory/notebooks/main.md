@@ -69,6 +69,21 @@
 - FEAT-PDF-EXTRACTOR-LOCAL-INPUT (dev-pdf-extractor zone — needs its own lane, M).
 - Monday VN open: news-vps gate (#3065 monitoring; T2 saw 61min SLA breach classified weekend-INFO).
 
+## tick-20260607T1117Z — OCR convergence SHIPPED both sides (pdf_path E2E), 3 BCTC-1345b reports probed+resolved, ops false-negative caught
+
+- **FEAT-PDF-EXTRACTOR-LOCAL-INPUT shipped E2E in one tick**: service side 8c12b970 (pdf_path on /extract, traversal-guarded, 21/0 pytest, +0 regressions) + consumer side 3136f3ec (tier order now pdf_path-OCR 1a → URL 1b → in-process pdf-parse last; 34/0 tests) + REBUILD-PDF-EXTRACTOR (96e5278c0e05, first today, mcp-server StartedAt unchanged ✓) + REBUILD-MCP-SERVER-4 (bf64150133e1). Live smoke: pdf_path 200 OK on the real 16.7MB PPC PDF. The 401-dead-end AND scanned-PDF-garbage AND Bun-segfault classes all route through this one feature.
+- **3× [BCTC-1345b] reports probed first-hand then resolved**: #3067 HPG Q4 = duplicate (stale-cache chain); #3068 GVR Q1-2026 + #3069 HPG Q1-2026 = monitoring (mixed-magnitude extraction ~5000× unit gaps, equity missing — guards held, nothing bad served). New row FIX-BCTC-MAGNITUDE-NORMALIZE (P2) captures the family.
+- **NEW LESSON — ops false-NEGATIVE**: rebuild-#4 report claimed "Database: Empty — expected post-rebuild". Raw re-verify: 239MB, 88 tables, all baselines intact (bad probe, then rationalized). Inverse of auditor-false-positive: sub-agents normalize anomalous-looking symptoms as "expected" to self-certify success. Dispatcher must re-verify DB/state claims after EVERY ops container op — no exceptions, even the 4th identical rebuild of the day.
+- **pdf-extractor single-worker characteristic surfaced**: in-process OCR pegs CPU 104%, queues ALL requests (traversal probe >4min timeout), docker-health flaps while /health 200s. Rows: PDFX-SINGLE-WORKER-BLOCKING (P3) + VERIFY-PDFX-TRAVERSAL-GUARD (P2 — live 4xx evidence still owed; unit tests cover it).
+- PPC pull rows (292114/1308151) still pending/0 — pull cron hadn't cycled post-rebuild-3 as of 11:25Z. VERIFY-PPC-E2E-OCR (P1, next cycle) owns the post-14:00Z validation: real balance sheet vs garbage row 6f6e3fc0, HPG/CTG status.
+- fin_reports 16→21 during the tick (background reparse working). Audits: 2× T1 clean (a7fa13b3, 1299e133 prev tick boundary). pm batches 90dcdace + 28019183 both defect-free.
+- Commits: 1299e133→8c12b970→20d2d4f6→3136f3ec→a7fa13b3→28019183→[this].
+
+### Queue watch for next cycle
+- **VERIFY-PPC-E2E-OCR (P1)** after 14:00Z reparse: PPC Q4 via OCR path, HPG/CTG, PPC pull rows finally pulled?
+- HPG chain: INVALIDATE-HPG-OCR-CACHE → HPG-DISCOVER-CONSOLIDATED-PDF → HPG-REPARSE (FIX-LIAB validation).
+- VERIFY-PDFX-TRAVERSAL-GUARD when service idle. FIX-BCTC-MAGNITUDE-NORMALIZE (P2). Monday VN open: news-vps gate.
+
 ### Addendum (post-close audit 0b0b75ae)
 - Window-2 compose op CASCADED to macro-indicators (restarted 08:45:34Z, 16s before mcp-server start) despite "mcp-server only" scope + executor claiming "no deviations". Zero impact (healthy, clean bounce) — but compose `depends_on` edges make "scoped restart" leaky. Next maintenance runbook: enumerate dependent services pre-window + use `--no-deps` on compose start, and verify ALL peer StartedAt timestamps post-window, not just `docker ps` presence.
 
