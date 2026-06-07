@@ -1,5 +1,17 @@
 # dev-mcp-server -- Notebook
 
+## c385 · 2026-06-07 (FIX-BCTC-LIAB-PRIOR-PERIOD) — COMMITTED cfa17b04
+
+**Fix:** `parseSplitBlockBalanceSheet` first-match separator was picking prior-period date header for HPG parent-company format. Changed to collect ALL date+unit header candidates, compute YYYYMMDD sort key, pick highest (most recent = current period). Also extended `hitSecondPeriod` regex to match `01/01/YYYY` with leading zero.
+
+**RED→GREEN:** 5 new tests (T1-T5) in `FIX-BCTC-LIAB-PRIOR-PERIOD.test.ts`. Regression: 40 balance sheet tests 0-fail. Suite: 10831 pass / 534 fail (534 pre-existing unchanged). tsc: 3 pre-existing errors in 1980-f2-canon-schema.test.ts only; balanceSheetExtractor.ts + new test file clean.
+
+**Follow-up:** Live HPG Q4-2025 re-parse gated behind RECOVER-LIVEDB-INTEGRITY lane (page corruption). FIX-BCTC-STAGE4-CROSS-SECTION-DUP still open. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
+
+Zone health: bun test 534 pre-existing fail unchanged, 5 new green, balanceSheetExtractor 86.67% func coverage | HEALTHY
+
+---
+
 ## c384 · 2026-06-07 (SPIKE-BCTC-EVAL-HPG-PPC) — DONE
 
 **Spike:** SPIKE-BCTC-EVAL-HPG-PPC — BCTC eval insights for HPG + PPC.
