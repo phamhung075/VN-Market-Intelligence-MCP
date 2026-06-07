@@ -2347,7 +2347,7 @@
         "sprint_id": "SPRINT-PPC-PDF-SOURCING",
         "goal": "PPC PDF sourcing: reset stuck Q4-2025 via FR-1; trigger enricher to populate URLs for Q4/Q3/Q2/Q1-2025 + Q4-2024 (FR-2 to FR-5); verify pull and extraction (FR-3); scope down B3 URL encoding (low risk for SSC path)",
         "status": "in_progress",
-        "note": "AC-3 MET (first-ever PPC extraction row). AC-6 at 3/5 (Q1-2026+Q4-2025+Q3-2025 have URLs; Q2/Q1-2025+Q4-2024 await further enricher Arm-1 cycles — SSC confirmed cached). Remaining: AC-6 + B3 space-URL rows.",
+        "note": "B3 fix live-validated: queue id=292114 (Q1-2026 hsx.vn URL) PULLED (done, attempts=1). Q3-2025 id=1308151 still pending next cycles. AC-6 progress continues.",
         "tasks": [
           {
             "id": "SPRINT-PPC-PDF-SOURCING-T1",
@@ -2432,14 +2432,6 @@
             "note": "SELECT source_url FROM bctc_vps_queue WHERE id=255887; URL must not contain literal space"
           }
         ]
-      },
-      {
-        "id": "SPRINT-PPC-PDF-SOURCING",
-        "title": "PPC PDF Sourcing Q1-2026",
-        "status": "in_progress",
-        "created_at": "2026-06-07T12:17:28Z",
-        "note": "B3 fix live-validated: queue id=292114 (Q1-2026 hsx.vn URL) PULLED (done, attempts=1). Q3-2025 id=1308151 still pending next cycles. AC-6 progress continues.",
-        "tasks": []
       }
     ],
     "backlog": [
