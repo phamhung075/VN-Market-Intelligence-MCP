@@ -1,5 +1,20 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-07 · PPC-Q4-2025-LIVE-REPARSE — UNBLOCK-REBUILD-MCP-SERVER final verification
+
+**Task:** Live reparse of PPC Q4-2025 row after container rebuild with 06c65978 (FIX-BCTC-MAGNITUDE-NORMALIZE) + a058aa2e. Image 1f495c5d024c confirmed running.
+**BEFORE:** id=426f4757, total_assets=939315863000 (raw VND non-normalized), total_liabilities=0, equity_total=0, extraction_confidence=0.25, confidence_financial=0.1, extraction_method=pdf-parse, parsed_at=2026-06-07T19:04:00.652Z.
+**Method:** One-off script /tmp/reparse-ppc-q4-2025.js in container. Used getCachedPdfText("PPC_2025_Q4.pdf") → 74 pages, confidence=0.80, 149,597 chars. Passed as pdfTextOverride to fetchParseAndStoreBctc (pdfUrl=file:///app/data/pdfs/PPC_2025_Q4.pdf, no network I/O). INSERT OR REPLACE produced new id (row upserted).
+**AFTER:** id=76580780, total_assets=5246604.57537 triệu, total_liabilities=780223.778402 triệu, equity_total=4466380.796968 triệu, extraction_confidence=0.625, confidence_financial=1, extraction_method=pdf-parse, parsed_at=2026-06-07T20:42:17.319Z.
+**Balance check:** assets(5246604.57537) - liab(780223.778402) - equity(4466380.796968) = 0 PASS.
+**Duplicate check:** 1 row only (INSERT OR REPLACE correctly upserted, no duplicate created).
+**LanceDB:** insertAnalysis failed non-fatal (rag-service unreachable) — SQLite row intact.
+**Cleanup:** All /tmp scripts removed from container. trigger-ppc-reparse.ts was already absent from working tree.
+
+Zone health: RUN task only (no src/ changes) | HEALTHY
+
+---
+
 ## 2026-06-07 · FIX-BCTC-STAGE4-CROSS-SECTION-DUP — ORCH-STATE SYNC (resume)
 
 **Task:** FIX-BCTC-STAGE4-CROSS-SECTION-DUP — resume session found code already committed as a058aa2e (08:03:56Z); notebook logged in e50e7fca (08:03:09Z) with incorrect hash cf3b71b5 in body text (actual = a058aa2e). Orch-state was stale (status=IN-PROGRESS) — updated atomically to DONE + head=idle. No new code commit needed. UNBLOCK-REBUILD-MCP-SERVER unblocked.
