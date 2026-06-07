@@ -224,3 +224,44 @@ After this commit lands, PM sends signal row to `docs/data/orch/orch-state.json`
 - Blocks: TSU-DEV-U2-PARITY (parity test must run after U3 final count)
 - Independent of: TSU-DEV-U4 (separate zone), TSU-DEV-U5 (independent)
 - Triggers: cowork-refactory-expert lane signal (post-commit)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts` — removed `read_bctc_pdf` server.tool() block (~90 lines), removed `readFileSync` orphaned import, updated `list_stored_pdfs` description to reference OCR pipeline
+  - `apps/mcp-server/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts` — replaced server.tool() block with no-op registerBackfillBctcScalarsTool (handler retained)
+  - `apps/mcp-server/src/interface/mcp/tools/financial-reports/computeAccrualsTool.ts` — replaced server.tool() block with no-op registerComputeAccrualsTool (handler retained)
+  - `apps/mcp-server/src/interface/mcp/tools/news-analysis/getAccuracyContextTool.ts` — replaced server.tool() block with no-op registerGetAccuracyContextTool
+  - `apps/mcp-server/src/interface/mcp/tools/system/isTradingDayTool.ts` — replaced server.tool() block with no-op registerIsTradingDayTool (domain function retained)
+  - `apps/mcp-server/src/interface/mcp/tools/alerts/alertAccuracy.ts` — mark_alert_outcome description updated: lifecycle clarification + package destination (ops/alert-commander)
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/marketWideForeignFlowTool.ts` — get_market_foreign_flow description updated: market-wide aggregate vs per-ticker distinction + source tier + package destination
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/foreignFlowTools.ts` — diagnose + reset circuit breaker descriptions updated: ops/debug use case + sibling pairing
+  - `apps/mcp-server/src/interface/mcp/tools/macro/calibrationTools.ts` — get_label_accuracy_report description updated: label-level vs calibration curve distinction + package destination
+  - `apps/mcp-server/src/interface/mcp/tools/sector/publicInvestmentTools.ts` — get_public_contracts description updated: integration note (already in tran-ngoc-bau package)
+  - `apps/mcp-server/src/interface/mcp/tools/financial-reports/listFlaggedBctcCellsTool.ts` — list_flagged_bctc_cells description updated: bctc-analyst/inspect flow pairing
+  - `apps/mcp-server/src/interface/mcp/tools/financial-reports/submitBctcCorrectionTool.ts` — submit_bctc_correction description updated: human correction entry point + BCTC-HUMAN-CONFIRM sprint reference
+  - `docs/data/tool-registry.json` — regenerated via gen-tool-registry.ts (162→157)
+  - `docs/data/project-stats.json` — regenerated via gen-project-stats.ts (toolCount 162→157)
+  - `docs/data/orch/orch-state.json` — TSU-DEV-U3 status REVIEW + cowork-refactory-expert signal row appended
+- **Tests written:** `apps/mcp-server/src/__tests__/TSU-DEV-U3-weak-claim-tools.test.ts` — 12 assertions, GREEN
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test TSU-DEV-U3:** 12 pass / 0 fail
+- **bun test tool-registry-parity:** 8 pass / 0 fail (T-U2-5 verified: 157 matches source)
+- **Full suite:** 0 fail (background exit code 0)
+- **Tool count:** 157 tools (162 - 5 deregistered; matches gen-tool-registry.ts output)
+- **Scheduler count:** 76 cron.schedule entries (unchanged — baseline 76)
+- **Docs updated:** `docs/handoffs/TASK_TSU-DEV-U3.md` — this section | `docs/data/tool-registry.json` | `docs/data/project-stats.json`
+- **Graphify:** skipped (no architecture docs impacted — tool surface change only)
+
+**Gate evidence:**
+- `bun tsc --noEmit`: exit 0 (no output)
+- `bun test TSU-DEV-U3`: 12 pass / 0 fail
+- `bun test tool-registry-parity`: 8 pass / 0 fail (T-U2-5: registry 157 matches source 157)
+- Tool count (gen-project-stats --dry-run): `"toolCount": 157` (expected 162→157)
+- Scheduler count: 76 (unchanged)
+
+**Zone health:** bun test 0 fail, 157 tools (5 deregistered), registry regenerated, scheduler 76 cron.schedule | HEALTHY

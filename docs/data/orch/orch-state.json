@@ -2313,13 +2313,14 @@
               "TSU-DEV-U1",
               "TSU-DEV-U2-GEN"
             ],
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "size": "L",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "priority": "high",
             "id": "TSU-DEV-U3",
             "claimed_at": "2026-06-07T09:30:00Z",
-            "claimed_by": "dev-mcp-server"
+            "claimed_by": "dev-mcp-server",
+            "completed_at": "2026-06-07T09:50:00Z"
           },
           {
             "title": "U4: Direction+delta sweep — get_macro_snapshot (VnIndex delta from daily_ohlcv, oil/gold/usd null/unknown)",

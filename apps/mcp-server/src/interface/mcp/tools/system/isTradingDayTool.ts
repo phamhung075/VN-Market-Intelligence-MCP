@@ -19,31 +19,16 @@ import { isVnTradingDay, getTodayVnDate } from "../../../../domain/services/vnTr
 /**
  * Register the `is_trading_day` tool on the MCP server.
  *
- * @param server The McpServer instance to register the tool on.
+ * DEREGISTER: is_trading_day removed (U3 TOOL-SURFACE-UPGRADE).
+ * Designed for DWF-PHASE1 (cowork-match-slots) which is NOT active on main branch.
+ * The worktree version is unshipped. Zero claims across 4 layers on main.
+ * Domain logic (isVnTradingDay) retained for direct use when DWF-PHASE2 is scoped.
+ * Re-register when DWF-PHASE2 enters active sprint scope.
+ *
+ * @param _server The McpServer instance (unused — tool deregistered).
  */
-export function registerIsTradingDayTool(server: McpServer): void {
-  server.tool(
-    "is_trading_day",
-    "Check if a given date is a VN exchange (HOSE/HNX) trading day. " +
-      "Returns open/holiday/half_day/weekend/unknown status using embedded VN calendar (2024–2027). " +
-      "If no date is provided, defaults to today in VN timezone (GMT+7). " +
-      "Read-only — writes nothing to the database.",
-    {
-      date: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
-        .optional()
-        .describe(
-          "Date to check in YYYY-MM-DD format (VN timezone, GMT+7). " +
-            "Defaults to today in VN time if omitted.",
-        ),
-    },
-    async ({ date }) => {
-      const queryDate = date ?? getTodayVnDate();
-      const result = isVnTradingDay(queryDate);
-      return {
-        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-      };
-    },
-  );
+export function registerIsTradingDayTool(_server: McpServer): void {
+  // Tool deregistered: is_trading_day — TOOL-SURFACE-UPGRADE U3
+  // DWF-PHASE1 not in current scope; re-register when DWF-PHASE2 activates.
+  void _server; // explicit unused-param acknowledgement
 }

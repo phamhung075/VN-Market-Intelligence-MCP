@@ -84,10 +84,13 @@ export function registerListFlaggedBctcCellsTool(server: McpServer): void {
 
   server.tool(
     "list_flagged_bctc_cells",
-    "Enumerate all red and yellow flagged BCTC cells for a report. " +
+    "BCTC debug/inspect tool — enumerate all red and yellow flagged cells for a report. " +
+      "Pairs with submit_bctc_correction for the bctc-analyst human-inspect flow " +
+      "(BCTC-HUMAN-CONFIRM sprint). Step 1: call this to see flagged cells. " +
+      "Step 2: call submit_bctc_correction with row_id + new_value to apply corrections. " +
       "Returns OCR value, image value, current value, and correction status per cell. " +
-      "Red flags have ocr_value and image_value populated (discrepancy detected). " +
-      "Yellow flags have ocr_value and image_value null (low confidence). " +
+      "Red flags: ocr_value and image_value populated (OCR vs image discrepancy). " +
+      "Yellow flags: ocr_value and image_value null (low confidence — manual review needed). " +
       "Returns { flags: [] } (not error) when no flags exist (AC-FR8-2). " +
       "Returns reason: 'refine_not_complete' if refine_status not in DONE/PARTIAL. " +
       "Same data as HTTP GET /api/bctc-inspect/flags/{doc_id} — same service, zero duplication.",

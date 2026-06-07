@@ -183,41 +183,12 @@ export function buildComputeAccrualsHandler(
 }
 
 // ── MCP tool registration ─────────────────────────────────────────────────────
+// DEREGISTER: compute_accruals removed (U3 TOOL-SURFACE-UPGRADE) — domain calculation
+// with no live data store dependency and zero claims across 4 layers.
+// Handler retained for direct invocation / future re-registration.
 
-export function registerComputeAccrualsTool(server: McpServer): void {
-  server.tool(
-    "compute_accruals",
-    "Compute Sloan Accruals Ratio time-series for a VN stock ticker. " +
-      "Formula: Accruals_t = (NetIncome_t - OperatingCashFlow_t) / TotalAssets_t. " +
-      "Unit: ratio (dimensionless). " +
-      "Sign semantics: " +
-      "Positive → NI > OCF — earnings elevated relative to cash generation (potential inflation signal); " +
-      "Negative → OCF > NI — conservative earnings, cash-backed. " +
-      "All inputs from financial_reports table (VND millions). " +
-      "Null inputs: row included with accruals_ratio: null and missing: [field_names] array. " +
-      "Zero total_assets: accruals_ratio: null with error: 'zero_total_assets'. " +
-      "Sort: ascending by (period_year, period_quarter) — oldest first (chart-friendly). " +
-      "Returns: { ticker, formula, unit, quarters_requested, quarters_returned, data: AccrualPoint[] }.",
-    {
-      ticker: z
-        .string()
-        .min(1)
-        .max(10)
-        .describe("VN stock ticker (e.g. VCB, FPT). Case-insensitive."),
-      quarters: z
-        .coerce
-        .number()
-        .int()
-        .min(1)
-        .max(20)
-        .optional()
-        .default(8)
-        .describe("Number of most-recent quarters to include (default: 8, max: 20)."),
-    },
-    async ({ ticker, quarters }) => {
-      const db = getDb();
-      const handler = buildComputeAccrualsHandler(db);
-      return handler({ ticker, quarters });
-    },
-  );
+export function registerComputeAccrualsTool(_server: McpServer): void {
+  // Tool deregistered: compute_accruals — TOOL-SURFACE-UPGRADE U3
+  // No sprint plan to wire; domain logic retained via buildComputeAccrualsHandler.
+  void _server; // explicit unused-param acknowledgement
 }

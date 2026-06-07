@@ -73,61 +73,14 @@ function buildCalibrationNudge(
 
 /**
  * Registers get_accuracy_context MCP tool.
- * Returns a calibration text blob used by cowork agents at cycle start.
+ *
+ * DEREGISTER: get_accuracy_context removed (U3 TOOL-SURFACE-UPGRADE).
+ * Reads RAG analysis context only (no live stream). Zero claims across 4 layers.
+ * get_calibration_report covers the use case with Brier-score precision.
+ * Handler logic retained for potential future re-registration.
  */
-export function registerGetAccuracyContextTool(server: McpServer): void {
-  server.tool(
-    "get_accuracy_context",
-    "Get historical signal accuracy stats for a stock to calibrate confidence scores. " +
-    "Returns a calibration nudge text: LOWER confidence by 20% when accuracy < 40%, " +
-    "MAY increase by 10% when > 70%, no adjustment otherwise. " +
-    "Minimum 3 resolved signals required for any rate to appear.",
-    GetAccuracyContextSchema.shape,
-    async (params) => {
-      try {
-        const { stock_code, signal_types } = params;
-        const db = getDb();
-
-        let rows = getAccuracyStats(db, { stockCode: stock_code, days: 30 });
-
-        // Filter to requested signal types if provided
-        if (signal_types && signal_types.length > 0) {
-          rows = rows.filter((r) => signal_types.includes(r.signal_type));
-        }
-
-        const message = buildCalibrationNudge(stock_code, rows, signal_types);
-
-        // Return summary stats + message
-        // When multiple types requested, aggregate across all rows for the top-level fields
-        const totalSamples = rows.reduce((sum, r) => sum + r.sample_count, 0);
-        const qualifiedRows = rows.filter((r) => r.accuracy_rate !== null);
-        const overallRate =
-          qualifiedRows.length > 0
-            ? qualifiedRows.reduce((sum, r) => sum + (r.accuracy_rate ?? 0), 0) /
-              qualifiedRows.length
-            : null;
-
-        const result = {
-          stock_code,
-          signal_types: signal_types ?? null,
-          accuracy_rate: overallRate !== null ? Math.round(overallRate * 100) / 100 : null,
-          sample_count: totalSamples,
-          breakdown: rows.map((r) => ({
-            signal_type: r.signal_type,
-            accuracy_rate: r.accuracy_rate,
-            sample_count: r.sample_count,
-          })),
-          message,
-        };
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        };
-      } catch (err) {
-        return {
-          content: [{ type: "text" as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
-        };
-      }
-    },
-  );
+export function registerGetAccuracyContextTool(_server: McpServer): void {
+  // Tool deregistered: get_accuracy_context — TOOL-SURFACE-UPGRADE U3
+  // Superseded by get_calibration_report for accuracy/calibration queries.
+  void _server; // explicit unused-param acknowledgement
 }

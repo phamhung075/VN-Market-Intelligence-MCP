@@ -1,7 +1,7 @@
 {
   "_maintained_by": "generator (do not hand-edit)",
-  "lastUpdated": "2026-06-07T08:17:50.008Z",
-  "totalCount": 162,
+  "lastUpdated": "2026-06-07T08:49:07.380Z",
+  "totalCount": 157,
   "groups": [
     {
       "name": "alerts",
@@ -61,12 +61,10 @@
     },
     {
       "name": "financial-reports",
-      "count": 22,
+      "count": 19,
       "tools": [
-        "backfill_bctc_scalars",
         "bctc_skip_queue_item",
         "compare_financials",
-        "compute_accruals",
         "finalize_bctc_refine",
         "get_agm_plan",
         "get_bctc_full",
@@ -82,7 +80,6 @@
         "list_flagged_bctc_cells",
         "list_stored_pdfs",
         "push_bctc_refined_unit",
-        "read_bctc_pdf",
         "run_bctc_batch_sweep",
         "submit_bctc_correction"
       ]
@@ -145,11 +142,10 @@
     },
     {
       "name": "news-analysis",
-      "count": 13,
+      "count": 12,
       "tools": [
         "compare_stocks",
         "fetch_and_analyze",
-        "get_accuracy_context",
         "get_agent_signals",
         "get_cascade_metrics",
         "get_cascade_outcomes",
@@ -199,7 +195,7 @@
     },
     {
       "name": "system",
-      "count": 34,
+      "count": 33,
       "tools": [
         "add_to_watchlist",
         "answer_ask_question",
@@ -215,7 +211,6 @@
         "get_vps_proxy_health",
         "get_vps_service_health",
         "get_watchlist",
-        "is_trading_day",
         "log_agent_work",
         "remove_from_watchlist",
         "restart_vps_service",

@@ -97,9 +97,11 @@ export function registerSubmitBctcCorrectionTool(server: McpServer): void {
 
   server.tool(
     "submit_bctc_correction",
-    "Submit a human-confirmed correction for a flagged BCTC cell. " +
-      "Updates bctc_table_rows.value_current and source_confidence = 1.0 atomically. " +
-      "Writes an audit record to bctc_human_corrections. " +
+    "Human correction entry point for the BCTC-HUMAN-CONFIRM pipeline. " +
+      "Pairs with list_flagged_bctc_cells for the bctc-analyst human-inspect flow: " +
+      "use list_flagged_bctc_cells to enumerate flags, then submit corrections here. " +
+      "Atomically updates bctc_table_rows.value_current and sets source_confidence = 1.0. " +
+      "Writes an audit record to bctc_human_corrections (corrections survive cron re-runs). " +
       "Returns 409 (ok: false, error: 'report_confirmed') if report is already CONFIRMED. " +
       "Returns 400 (ok: false, error: 'row_not_found') if row_id does not belong to report_id. " +
       "Idempotent: correcting the same cell multiple times replaces the previous correction. " +

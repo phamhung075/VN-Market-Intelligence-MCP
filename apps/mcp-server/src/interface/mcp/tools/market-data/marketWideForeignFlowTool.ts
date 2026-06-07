@@ -159,14 +159,14 @@ export function registerMarketWideForeignFlowTool(
 ): void {
   server.tool(
     "get_market_foreign_flow",
-    "Retrieve market-wide aggregated foreign investor flow from the VN stock market. " +
-      "Sums foreign_buy_vol, foreign_sell_vol, and foreign_net_vol across all tracked tickers " +
-      "for the latest N trading sessions (default: 1 = latest session only). " +
-      "Optionally returns top-N net-buying and net-selling tickers for the most recent session. " +
-      "COVERAGE NOTE: Only covers tickers populated by the VPS push-foreign-flow pipeline " +
-      "(currently the watchlist set — not the full exchange). " +
-      "Returns ticker_count so callers can evaluate coverage. " +
-      "Source tier: 2 (aggregator — derived from per-ticker daily_ohlcv rows written by the VPS pipeline). " +
+    "Market-wide foreign flow aggregate (SUM across all tracked tickers from daily_ohlcv). " +
+      "Distinct from get_foreign_flow which returns per-ticker foreign flow from vnstock_trading_stats. " +
+      "Source tier: 2 (aggregator — SUM of foreign_buy_vol/sell_vol/net_vol from daily_ohlcv, " +
+      "written by the VPS push-foreign-flow pipeline). " +
+      "COVERAGE NOTE: Only covers tickers in the watchlist set (not full exchange) — " +
+      "ticker_count per session is returned so callers can evaluate coverage. " +
+      "Returns the latest N trading sessions (default 1 = latest only) plus top-N net buyers/sellers. " +
+      "Package destination: market-analyst or ops. " +
       "If no foreign flow data has been ingested yet, returns a clear no-data message.",
     {
       days: z

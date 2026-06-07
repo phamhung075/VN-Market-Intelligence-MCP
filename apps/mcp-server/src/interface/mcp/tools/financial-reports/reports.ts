@@ -18,7 +18,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
@@ -541,7 +541,7 @@ export function registerReportTools(
     "list_stored_pdfs",
     "List all BCTC PDF files downloaded from the SSC portal. " +
       "Shows filename, size, and download date. Use this to see what reports are available " +
-      "before calling read_bctc_pdf to analyze them.",
+      "for AI-assisted analysis via the OCR/PEK pipeline (get_bctc_page_text, get_bctc_page_image).",
     {},
     async () => {
       const pdfDir = resolve(process.cwd(), "data", "pdfs");
@@ -567,7 +567,7 @@ export function registerReportTools(
           lines.push(`  ${f.date}  ${f.sizeMB.padStart(6)} MB  ${f.name}`);
         }
         lines.push("", `Total: ${files.length} files`);
-        lines.push("", "Use read_bctc_pdf with the filename to extract and analyze the report content.");
+        lines.push("", "Use get_bctc_page_text or get_bctc_page_image to extract and analyze the report content via OCR.");
 
         return { content: [{ type: "text" as const, text: lines.join("\n") }] };
       } catch {
@@ -576,97 +576,6 @@ export function registerReportTools(
     },
   );
 
-  // ── read_bctc_pdf — Extract text from a stored PDF for AI analysis ───
-  server.tool(
-    "read_bctc_pdf",
-    "Extract and return the full text content from a downloaded BCTC PDF file. " +
-      "The Claude agent can then analyze the Vietnamese financial statements directly " +
-      "with full AI intelligence — identifying revenue, profit, balance sheet items, " +
-      "cash flow, ratios, and any critical issues. " +
-      "This is more accurate than the automated regex extraction. " +
-      "Use list_stored_pdfs first to see available files.",
-    {
-      filename: z
-        .string()
-        .min(1)
-        .describe("PDF filename from list_stored_pdfs (e.g. 'BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf')"),
-      maxChars: z.coerce
-        .number()
-        .int()
-        .min(1000)
-        .max(100000)
-        .default(50000)
-        .describe("Maximum characters to return (default: 50000). Large PDFs may be truncated."),
-    },
-    async ({ filename, maxChars }) => {
-      const pdfDir = resolve(process.cwd(), "data", "pdfs");
-      const filePath = join(pdfDir, filename);
-
-      try {
-        // Security: ensure file is within data/pdfs/
-        const resolvedPath = resolve(filePath);
-        if (!resolvedPath.startsWith(resolve(pdfDir))) {
-          return { content: [{ type: "text" as const, text: "Error: filename must be within data/pdfs/ directory." }] };
-        }
-
-        // Try cached text first (instant — from background OCR)
-        const { getCachedPdfText } = await import("../../../../infrastructure/fetchers/pdfOcrWorker.js");
-        const cached = getCachedPdfText(filename, maxChars ?? 50000);
-
-        let text: string;
-        let confidence: number;
-
-        if (cached && cached.text.trim().length > 100) {
-          text = cached.text;
-          confidence = cached.confidence;
-        } else {
-          // No cache — try pdf-parse (fast, for text-based PDFs)
-          // Check if the physical file exists before attempting to read it
-          let pdfBuffer: Buffer;
-          try {
-            pdfBuffer = readFileSync(filePath);
-          } catch {
-            return { content: [{ type: "text" as const, text: `Error: ${filename} not found in data/pdfs/. Use list_stored_pdfs to see available files.` }] };
-          }
-
-          if (pdfBuffer.slice(0, 5).toString() !== "%PDF-") {
-            return { content: [{ type: "text" as const, text: `Error: ${filename} is not a valid PDF file.` }] };
-          }
-
-          const pdfParse = (await import("pdf-parse")).default;
-          const data = await pdfParse(pdfBuffer);
-          text = data.text ?? "";
-          confidence = text.trim().length > 200 ? 0.9 : 0.1;
-
-          if (text.trim().length < 200) {
-            // File exists but OCR has not yet processed it — give a clear, actionable message
-            return { content: [{ type: "text" as const, text: `PDF exists but OCR extraction is still in progress. Please retry in 60 seconds.` }] };
-          }
-        }
-
-        const truncated = text.length > (maxChars ?? 50000) ? text.slice(0, maxChars ?? 50000) + "\n\n[... truncated ...]" : text;
-
-        const header = [
-          `=== BCTC PDF: ${filename} ===`,
-          `File: ${filename}`,
-          `Extracted text: ${text.length} chars (showing ${truncated.length})`,
-          `Extraction confidence: ${(confidence * 100).toFixed(0)}%`,
-          "",
-          "Analyze this Vietnamese financial report. Look for:",
-          "- Bảng cân đối kế toán (Balance Sheet): Tổng tài sản, Vốn chủ sở hữu, Nợ",
-          "- Báo cáo KQHĐKD (Income Statement): Doanh thu, Lợi nhuận sau thuế",
-          "- Lưu chuyển tiền tệ (Cash Flow): Tiền từ HĐKD, HĐĐT, HĐTC",
-          "- Key ratios: ROE, ROA, D/E, Current ratio",
-          "- Red flags: negative equity, revenue decline, cash burn",
-          "",
-          "--- BEGIN PDF TEXT ---",
-          "",
-        ].join("\n");
-
-        return { content: [{ type: "text" as const, text: header + truncated }] };
-      } catch (err) {
-        return { content: [{ type: "text" as const, text: `Error reading ${filename}: ${err instanceof Error ? err.message : String(err)}` }] };
-      }
-    },
-  );
 }
+// DEREGISTER: read_bctc_pdf removed (U3 TOOL-SURFACE-UPGRADE) — superseded by
+// get_bctc_page_text + get_bctc_page_image (OCR/PEK pipeline). Zero claims across 4 layers.

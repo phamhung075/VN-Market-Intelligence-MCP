@@ -99,7 +99,11 @@ export async function getPublicContractsHandler(
 export function registerPublicInvestmentTools(server: McpServer): void {
   server.tool(
     "get_public_contracts",
-    "Lấy danh sách kết quả chọn nhà thầu mới nhất từ muasamcong.mpi.gov.vn và ánh xạ sang cổ phiếu liên quan.",
+    "Fetch recent public procurement contract results from muasamcong.mpi.gov.vn and map them to related VN stocks. " +
+      "Returns contract title, value (VND billions), awarding agency, winner, award date, category, and related tickers. " +
+      "Package: tran-ngoc-bau (public investment signals — Layer 4 agent package claim). " +
+      "Integration status: already listed in docs/agents/tools/package/tran-ngoc-bau.md. " +
+      "Lấy danh sách kết quả chọn nhà thầu mới nhất từ muasamcong.mpi.gov.vn và ánh xạ sang cổ phiếu liên quan.",
     {
       category: z
         .enum([

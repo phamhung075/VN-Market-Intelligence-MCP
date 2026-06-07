@@ -441,42 +441,12 @@ export function buildBackfillBctcScalarsHandler(
 }
 
 // ── MCP tool registration ─────────────────────────────────────────────────────
+// DEREGISTER: backfill_bctc_scalars removed (U3 TOOL-SURFACE-UPGRADE) — admin-only
+// backfill tool with zero claims across 4 layers. Handler retained for direct invocation.
 
-export function registerBackfillBctcScalarsTool(server: McpServer): void {
-  const handler = buildBackfillBctcScalarsHandler();
-
-  server.tool(
-    "backfill_bctc_scalars",
-    "BEQ-2 + LF-SERVE-REFLOW: Backfill (or re-derive) scalar columns for BCTC reports that have " +
-      "bctc_table_rows but whose financial_reports scalar columns are missing or stale. " +
-      "Default: targets PENDING reports only (legacy pdf-parse ingest with no prior aggregation). " +
-      "force_reflow=true: also re-derives DONE reports — use after any aggregator mapping change " +
-      "(e.g. BEQ-3 new columns) to sweep stale DONE reports without rebuilding the parse layer. " +
-      "Runs aggregateScalars on existing table_rows and writes the result to financial_reports, " +
-      "then sets refine_status='DONE'. " +
-      "Reports with 0 table_rows are SKIPPED (CTG, DGC, VCB etc.). " +
-      "CONFIRMED reports are NEVER overwritten (regardless of force_reflow). " +
-      "OFF-HOSE: do NOT call during 02:00–08:59 UTC Mon–Fri (live extraction window). " +
-      "Use dry_run=true first to preview what would be written.",
-    {
-      dry_run: z
-        .boolean()
-        .optional()
-        .describe("If true, compute scalars but do NOT write to DB (preview mode)."),
-      report_id: z
-        .string()
-        .optional()
-        .describe("Target a single report ID. If omitted, processes all eligible reports."),
-      force_reflow: z
-        .boolean()
-        .optional()
-        .describe(
-          "If true, also re-derive DONE reports (stale after aggregator mapping changes). " +
-          "CONFIRMED reports always excluded.",
-        ),
-    },
-    async (input) => {
-      return handler(input);
-    },
-  );
+export function registerBackfillBctcScalarsTool(_server: McpServer): void {
+  // Tool deregistered: backfill_bctc_scalars — TOOL-SURFACE-UPGRADE U3
+  // Admin backfill only; zero agent/flow/skill/cron claims.
+  // Use buildBackfillBctcScalarsHandler() directly for one-off admin invocations.
+  void _server; // explicit unused-param acknowledgement
 }

@@ -351,14 +351,14 @@ export function registerCalibrationTools(
 
   server.tool(
     "get_label_accuracy_report",
-    "Reads from market_messages table (SQLite). Human-labelled signal quality — " +
-      "counts operator 'signal' vs 'noise' verdicts per agent. Distinct from " +
-      "get_calibration_report (Brier/machine accuracy) and get_prediction_accuracy " +
-      "(Polymarket signal precision). " +
-      "Returns per-agent signal accuracy computed from human verdict labels on MARKET channel messages. " +
-      "Each row shows how often an agent's messages were labelled 'signal' vs 'noise' by the user. " +
-      "Use this alongside get_calibration_report to understand which agents generate genuine signals. " +
-      "since_days controls the lookback window (default 90 days, matching the calibration engine window).",
+    "Label-level breakdown: per-agent signal quality from human 'signal'/'noise' verdicts on " +
+      "MARKET channel messages (reads market_messages table). " +
+      "Distinct from get_calibration_report (machine Brier score — probability calibration curve, " +
+      "reads calibration_snapshots) and get_prediction_accuracy (Polymarket signal precision). " +
+      "Use alongside get_calibration_report: label report shows which agents produce genuine signals " +
+      "(human judgement); calibration report shows how well their probability estimates are calibrated. " +
+      "Package destination: market-analyst accuracy package. " +
+      "since_days controls the lookback window (default 90 days, matching calibration engine window).",
     {
       since_days: z.coerce
         .number()
