@@ -74,10 +74,12 @@ curl -s http://localhost:3000/health
 kill %1
 
 # Gate 2c: Tool count probe — count must match pre-task baseline (no tool silenced)
-grep -rc "server.tool\|addTool" apps/mcp-server/src/interface/mcp/tools/ | awk -F: '{sum+=$2} END {print sum}'
+# Canonical: counts server.tool() + server.registerTool() unique names, .ts files only (no .bak)
+bun scripts/gen-project-stats.ts --dry-run | grep '"toolCount"'
 
-# Gate 2d: Scheduler count probe — must be 68 (unchanged)
-grep -c "cron.schedule" apps/mcp-server/src/scheduler/startScheduler.ts
+# Gate 2d: Scheduler count probe — total cron.schedule across ALL scheduler/*.ts files
+# (startScheduler.ts + summaryJobs.ts; Gate-2d baseline = 76 as of FIX-PROJECT-STATS-GENERATED)
+grep -rc "cron\.schedule" apps/mcp-server/src/scheduler/ | awk -F: '{sum+=$2} END {print sum}'
 ```
 
 Both gates must exit 0 before the task is DONE.
@@ -133,7 +135,7 @@ Reference: `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G4;
 - **Type check:** clean (bun tsc --noEmit)
 - **bun test:** N pass / 0 fail
 - **Tool count:** [N tools — matches pre-task baseline]
-- **Scheduler count:** [68 cron.schedule entries]
+- **Scheduler count:** [N cron.schedule entries — matches pre-task baseline (baseline 76 as of FIX-PROJECT-STATS-GENERATED)]
 - **Docs updated:** [docs/architecture/microservice/mcp-server/... — what changed] | NONE
 - **Graphify:** updated | skipped (no docs impacted)
 ```
@@ -142,7 +144,7 @@ Reference: `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G4;
 
 **Zone health observation (mandatory — 1 line):**
 ```
-Zone health: <e.g. "barrel index.ts 139L→90L after wave 1, bun test 0 fail, 132 tools intact, scheduler 68 cron.schedule"> | HEALTHY
+Zone health: <e.g. "bun test 0 fail, 162 tools intact, scheduler 76 cron.schedule (gen-project-stats verified)"> | HEALTHY
 ```
 
 **Commit notebook** (direct — INV-GATEWAY-1):
@@ -159,7 +161,7 @@ git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"
 **Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
 ```
 ## RETURN
-DONE: Implementation complete — SERVICE=mcp-server, CHANGED=[...], NEW_PASS=N, tsc clean, tools=132, sched=68
+DONE: Implementation complete — SERVICE=mcp-server, CHANGED=[...], NEW_PASS=N, tsc clean, tools=N, sched=N
 NEXT: qa | run full QA pipeline
 HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue

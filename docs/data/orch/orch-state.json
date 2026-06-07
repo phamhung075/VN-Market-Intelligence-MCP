@@ -55,8 +55,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-06T23:40:01Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-07T00:00:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2215,6 +2215,22 @@
         "tasks": [],
         "closed_at": "2026-06-06T23:55:01Z",
         "note": "CLOSED 2026-06-06: all 4 tasks (WF-1/WF-2/WF-3/WF-3-IMPL) DONE + QA APPROVED, moved to .task_board.done[]. Success metrics met: STOP paths release+reset (WF-1 trace), signal_queue CAS 12/12 tests + rebuild live (WF-2), INV-GATEWAY-1 ruled+enforced in docs (WF-3+IMPL). DEFERRED rows WF-DEFER-THROUGHPUT + SPIKE-C44-PARALLEL-PROOF stay in backlog."
+      },
+      {
+        "sprint_id": "FIX-PROJECT-STATS-GENERATED",
+        "goal": "Generate project-stats.json from source — eliminate hand-typed drift",
+        "tasks": [
+          {
+            "task_id": "FIX-PROJECT-STATS-GENERATED",
+            "title": "Generate project-stats.json from live source — kill hand-typed drift",
+            "status": "REVIEW",
+            "zone": "mcp-server",
+            "agent": "dev-mcp-server",
+            "priority": "HIGH",
+            "description": "Replace hand-typed toolCount/cronJobCount with generator script (scripts/gen-project-stats.ts). Reconciled: toolCount=162 (server.tool+registerTool unique names in tools/**/*.ts), cronJobCount=76 (cron.schedule calls in scheduler/**/*.ts incl. summaryJobs). Generator: atomic temp→validate→rename. Handoff: docs/handoffs/FIX-PROJECT-STATS-GENERATED.md",
+            "handoff": "docs/handoffs/FIX-PROJECT-STATS-GENERATED.md"
+          }
+        ]
       }
     ],
     "backlog": [

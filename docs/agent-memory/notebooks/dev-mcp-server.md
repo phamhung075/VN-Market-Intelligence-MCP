@@ -93,10 +93,27 @@ Zone health: news/sbv_fx false-CRITICAL on overnight/weekend eliminated, dynamic
 
 ---
 
+## c378 · 2026-06-07 (FIX-PROJECT-STATS-GENERATED)
+
+**Task:** Generate project-stats.json from source — kill hand-typed drift.
+
+**Investigation:** toolCount discrepancy: naive grep counted .bak files (+3) and missed registerTool (-1) = wrong. Correct: 162 unique tool names (161 server.tool + 1 registerTool). Live /health confirms 162. cronJobCount: startScheduler.ts=71 + summaryJobs.ts=5 = 76 total. Health never reported cronJobCount; "77" in task spec was stale/alternate data.
+
+**Generator:** `scripts/gen-project-stats.ts` — walks tools/**/*.ts (server.tool + registerTool) and scheduler/**/*.ts (cron.schedule), atomic temp→validate→rename. Fail-loud on zero count or duplicate tool names.
+
+**Docs updated:** dev-mcp-server flow/main.md Gate-2c/2d probes corrected; system-auditor flow stats-drift step #6 updated to invoke generator.
+
+**Orch-state:** FIX-PROJECT-STATS-GENERATED added to task_board with status REVIEW.
+
+Zone health: gen-project-stats.ts verified 162 tools / 76 crons, atomic write confirmed, no container rebuild needed | HEALTHY
+
+---
+
 ## Working Memory
 
-### Baselines (c376)
-- tools=164, sched=72 | ops_rebuild_required: true (EMIT-DARK + FIX-CTG-PDF-MISLINK + FIX-SLA-WEEKEND-AWARE + FIX-SLA-EXEMPT-NEWS-SBVFX all pending rebuild)
+### Baselines (FIX-PROJECT-STATS-GENERATED 2026-06-07)
+- tools=162 (server.tool+registerTool unique names), sched=76 (all cron.schedule in scheduler/**/*.ts)
+- Generator: `bun scripts/gen-project-stats.ts` — must be run after any tool/cron change
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`

@@ -314,7 +314,11 @@ docker exec mcp-server ls -lh /app/data/*.db-wal 2>/dev/null  # WAL < 10MB ok, >
 docker exec mcp-server sqlite3 /app/data/market.db "PRAGMA integrity_check;"  # must = "ok"
 ```
 
-### 6. Stats drift — `docs/data/project-stats.json` → update sprint/tool/scheduler counts
+### 6. Stats drift — `docs/data/project-stats.json` is GENERATED, never hand-edited
+```bash
+bun scripts/gen-project-stats.ts
+```
+`toolCount` and `cronJobCount` are derived from source. To update: run the generator and commit the result. Do NOT hand-edit these fields.
 
 ---
 
