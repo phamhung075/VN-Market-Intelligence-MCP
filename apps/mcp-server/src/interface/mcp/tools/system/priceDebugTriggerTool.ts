@@ -21,12 +21,13 @@ import { handleTriggerPriceDebug } from "../../priceDebugTriggerHandler.js";
 export function registerPriceDebugTriggerTool(server: McpServer): void {
   server.tool(
     "trigger_price_vps_fetch",
-    "Manually triggers a stock price fetch run on the Vinahost VPS for diagnosis. " +
-    "Returns pipeline state: which step would run, source URLs, push endpoint status. " +
-    "Use dry_run=true to inspect without triggering SSH. " +
-    "Use tickers filter to debug a specific stock's price fetch. " +
+    "Trigger VPS stock price fetch job — invokes vps-scripts/fetch-prices.sh on Vinahost VPS via SSH. " +
+    "Parameters: tickers[] (optional ticker filter), verbose, dry_run. " +
+    "Returns: { service, attempted, success, failed: [{ticker, reason}], log_tail }. " +
+    "Distinct from trigger_bctc_vps_fetch (BCTC PDFs, fetch-bctc.sh, returns {queued,...}) and " +
+    "trigger_news_vps_fetch (news RSS, no tickers param, fetch-news.sh). " +
     "Service: vn-price-fetch.service (every 60s). " +
-    "Returns: { service, attempted, success, failed: [{ticker, reason}], log_tail }",
+    "Use dry_run=true to inspect pipeline state without triggering SSH.",
     {
       tickers: z
         .array(z.string().min(1).max(10))

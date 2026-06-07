@@ -225,3 +225,40 @@ QA verifies via `list_server_tools("vn-market")` (raw descriptions, not badge).
 - Depends on: TSU-DEV-U3 (tool count stabilizes before finalizing documentation)
 - Independent of: TSU-DEV-U1, TSU-DEV-U2-GEN, TSU-DEV-U4, TSU-DEV-U5 (documentation-only, no code impact)
 - Precedes: TSU-DEV-U2-PARITY (finalized suite before count verification)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts` — get_patterns description: added explicit RAG/rag_analyses + get_technical_indicators sibling cross-ref (already present, confirmed passing)
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/technicalIndicatorTools.ts` — get_technical_indicators description: added quantitative/port 5003 + get_patterns sibling cross-ref (already present, confirmed passing)
+  - `apps/mcp-server/src/interface/mcp/tools/system/bctcDebugTriggerTool.ts` — trigger_bctc_vps_fetch description: added fetch-bctc.sh, {queued,...} return shape, sibling cross-refs
+  - `apps/mcp-server/src/interface/mcp/tools/system/priceDebugTriggerTool.ts` — trigger_price_vps_fetch description: added fetch-prices.sh, {service,...} return shape, sibling cross-refs
+  - `apps/mcp-server/src/interface/mcp/tools/system/newsDebugTriggerTool.ts` — trigger_news_vps_fetch description: added "NO tickers" explicit note, fetch-news.sh, source-based clarification
+  - `apps/mcp-server/src/interface/mcp/tools/briefings/summaryTools.ts` — get_market_summary: cache-first semantics + generate_market_summary cross-ref; generate_market_summary: force-regenerate/bypass cache semantics + get_market_summary cross-ref
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/insiderTools.ts` — get_insider_transactions: DB-backed SSC lookup description + get_insider_signals cross-ref
+  - `apps/mcp-server/src/interface/mcp/tools/sector/leadershipTools.ts` — get_insider_signals: classifier engine description, input requirement, get_insider_transactions cross-ref
+  - `docs/data/tool-registry.json` — regenerated (descriptions updated, count 157 unchanged)
+- **Tests written:** `apps/mcp-server/src/__tests__/TSU-DEV-U6-tsh-leftover-descriptions.test.ts` — 17 assertions, all GREEN
+- **Git commits:** [pending]
+- **Type check:** clean (bun tsc --noEmit exit 0)
+- **bun test:** 17 pass / 0 fail (U6 suite) + 47 pass / 0 fail (U3+U5+U6+parity combined)
+- **Tool count:** 157 tools — matches pre-task baseline (no tool deregistered)
+- **Scheduler count:** 76 cron.schedule entries — matches pre-task baseline
+- **Docs updated:** NONE (no architecture docs touched — description-only changes)
+- **Graphify:** skipped (no docs impacted)
+
+### G12 DoD Gate Evidence
+
+| Gate | Command | Result |
+|------|---------|--------|
+| bun test (U6) | `bun test src/__tests__/TSU-DEV-U6-tsh-leftover-descriptions.test.ts` | 17 pass / 0 fail |
+| bun test (parity) | `bun test src/__tests__/tool-registry-parity.test.ts` | 8 pass / 0 fail |
+| tsc | `bun tsc --noEmit` | exit 0, clean |
+| Tool count | `bun scripts/gen-project-stats.ts --dry-run` | toolCount=157 (baseline 157) |
+| Scheduler count | `grep -rc "cron.schedule" src/scheduler/` | 76 (baseline 76) |
+
+Zone health: 17/0 (U6 suite), tsc clean, 157 tools (SSOT), 76 cron.schedule — description-only changes, no logic touched | HEALTHY

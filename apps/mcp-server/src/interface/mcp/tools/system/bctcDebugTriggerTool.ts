@@ -26,12 +26,13 @@ export function registerBctcDebugTriggerTool(
 ): void {
   server.tool(
     "trigger_bctc_vps_fetch",
-    "Manually triggers a BCTC PDF fetch run on the Vinahost VPS for diagnosis. " +
-    "Returns the current queue state with verbose diagnostics (which tickers are pending, " +
-    "how many attempts, whether source URLs are cached). " +
-    "Use dry_run=true to inspect without triggering SSH. " +
-    "Use tickers filter to debug a specific stock's BCTC pipeline. " +
-    "Returns: { queued, attempted, success, failed: [{ticker, reason}], log_tail }",
+    "Trigger VPS batch BCTC PDF fetch job — invokes vps-scripts/fetch-bctc.sh on Vinahost VPS via SSH. " +
+    "Parameters: tickers[] (optional ticker filter), verbose, dry_run. " +
+    "Returns: { queued, attempted, success, failed: [{ticker, reason}], log_tail }. " +
+    "Distinct from trigger_price_vps_fetch (price data, fetch-prices.sh) and trigger_news_vps_fetch " +
+    "(news RSS, no tickers param, fetch-news.sh). " +
+    "Use dry_run=true to inspect queue without triggering SSH. " +
+    "Use tickers filter to debug a specific stock's BCTC PDF pipeline.",
     {
       tickers: z
         .array(z.string().min(1).max(10))

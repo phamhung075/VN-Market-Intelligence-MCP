@@ -51,10 +51,12 @@ export function registerSummaryTools(server: McpServer): void {
   // ── 1. get_market_summary ──────────────────────────────────────────────────
   server.tool(
     "get_market_summary",
-    "Retrieve a stored periodic market intelligence summary. " +
-      "Returns the cached summary for the specified period type (daily/weekly/monthly/quarterly/yearly). " +
-      "If no stored summary exists for the period, generates one on demand. " +
-      "Use `generate_market_summary` to force a fresh computation.",
+    "Read-cache-first periodic market intelligence summary — returns existing cached summary if present, " +
+      "falls back to generation only when no cached record exists. " +
+      "Caching semantics: cache-first (reuses generated summary across requests for the same period). " +
+      "Consumer: digest-predict daily flows that value cached consistency over fresh regeneration. " +
+      "Distinct from generate_market_summary which always force-regenerates (bypass cache). " +
+      "Period types: daily/weekly/monthly/quarterly/yearly.",
     {
       period: z
         .enum(PERIOD_TYPES)
@@ -139,8 +141,10 @@ export function registerSummaryTools(server: McpServer): void {
   // ── 2. generate_market_summary ─────────────────────────────────────────────
   server.tool(
     "generate_market_summary",
-    "Force-generate a fresh periodic market intelligence summary and store it. " +
-      "This overwrites any existing cached summary for the specified period. " +
+    "Force-regenerate market summary — always regenerates fresh (bypasses cache). " +
+      "Does not read existing cached summary; always generates new analysis and overwrites the stored record. " +
+      "Consumer: digest-predict weekly flows that require fresh analysis over cached data. " +
+      "Distinct from get_market_summary which is cache-first (returns cached if present). " +
       "Returns the newly generated plain-language summary text.",
     {
       period: z

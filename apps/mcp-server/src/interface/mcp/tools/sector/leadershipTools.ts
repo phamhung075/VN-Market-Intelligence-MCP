@@ -100,7 +100,12 @@ export async function getInsiderSignalsHandler(
 export function registerLeadershipTools(server: McpServer): void {
   server.tool(
     "get_insider_signals",
-    "Phân tích giao dịch nội bộ của lãnh đạo công ty và tạo tín hiệu mua/bán/mass-buy cho cổ phiếu.",
+    "Domain classifier engine — classifies caller-provided insider transactions[] as buy/sell/mass-buy signals. " +
+      "REQUIRES caller to provide transactions[] array as input (pure classifier, no DB call, stateless). " +
+      "Test-first design: pure classification logic with strength/confidence output. " +
+      "Input: transactions[] from get_insider_transactions or external source. " +
+      "Distinct from get_insider_transactions which is a DB-backed SSC lookup that returns raw disclosure rows. " +
+      "Use get_insider_transactions to fetch raw DB rows; pipe output into get_insider_signals to classify signals.",
     {
       code: z.string().describe("Mã cổ phiếu, ví dụ VCB, HPG"),
       outstandingShares: z

@@ -20,11 +20,14 @@ import { handleTriggerNewsDebug } from "../../newsDebugTriggerHandler.js";
 export function registerNewsDebugTriggerTool(server: McpServer): void {
   server.tool(
     "trigger_news_vps_fetch",
-    "Manually triggers a news RSS fetch run on the Vinahost VPS for diagnosis. " +
-    "Returns pipeline state: which sources are configured, RSS URLs, push endpoint status. " +
-    "Use dry_run=true to inspect without triggering SSH. " +
-    "Service: vn-news-fetch.service (every 15min, 10 RSS sources + Playwright for bot-guarded). " +
-    "Returns: { service, attempted, success, failed: [{source, reason}], log_tail }",
+    "Trigger VPS news RSS fetch job — invokes vps-scripts/fetch-news.sh on Vinahost VPS via SSH. " +
+    "NO tickers param — news fetch is source-based (10 RSS sources + Playwright), not per-ticker. " +
+    "Parameters: verbose, dry_run only. " +
+    "Returns: { service, attempted, success, failed: [{source, reason}], log_tail }. " +
+    "Distinct from trigger_price_vps_fetch (ticker-based price data, fetch-prices.sh) and " +
+    "trigger_bctc_vps_fetch (ticker-based BCTC PDFs, fetch-bctc.sh, returns {queued,...}). " +
+    "Service: vn-news-fetch.service (every 15min). " +
+    "Use dry_run=true to inspect sources without triggering SSH.",
     {
       verbose: z
         .boolean()

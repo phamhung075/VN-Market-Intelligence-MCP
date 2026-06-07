@@ -88,10 +88,12 @@ export function registerInsiderTools(
 ): void {
   server.tool(
     "get_insider_transactions",
-    "Return insider transaction history from SSC disclosures. " +
-      "Includes on-the-fly streak detection for accumulation patterns (>= 2 distinct buy days by same insider). " +
-      "If code is omitted, returns all watchlist stocks. " +
-      "Data is populated by insiderCheckJob (daily 08:00 VN time, Task 1145). " +
+    "DB-backed insider transaction lookup — queries SSC disclosure table (insiderStore). " +
+      "Returns raw transaction rows with streak detection (accumulation patterns: >= 2 distinct buy days by same insider). " +
+      "Extended lookback: 90→180d per FIX-H. If code is omitted, returns all watchlist stocks. " +
+      "Data is populated by insiderCheckJob (daily 08:00 VN time). " +
+      "Distinct from get_insider_signals which is a pure domain classifier (no DB, requires caller-provided transactions[] input). " +
+      "Use get_insider_transactions to fetch raw DB rows; pipe output into get_insider_signals to classify signals. " +
       "Source tier: 1 (primary official — SSC portal congbothongtin.ssc.gov.vn is the official State Securities Commission regulatory portal).",
     {
       code: z
