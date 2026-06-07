@@ -387,10 +387,14 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-11: WEEKEND + bctc breach → escalation IS called (24/7 signal)
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-11: weekend (Saturday) + bctc stale 400 min → escalation IS called (24/7 source)", async () => {
+  it("MH-11: weekend (Saturday) + bctc stale 400 min → NOT breached (trading-day-only source, FIX-BCTC-SLA-WEEKEND)", async () => {
     const { spy, calls } = makeEscalateSpy();
 
-    // bctc off-hours threshold = 360 min; 400 > 360 → breach
+    // FIX-BCTC-SLA-WEEKEND: BCTC is a trading-day-only source (filings only on Mon–Fri).
+    // WEEKEND_MARKET_WINDOW = Sat 2026-04-25 04:00Z.
+    // minutesSinceLastWindowEnd = Sat 04:00Z − Fri 08:59Z = 19h 1m = 1141 min.
+    // New threshold = 1141 + 30 = 1171 min. Age 400 < 1171 → NOT breached.
+    // (Old behavior: fixed 360-min off-hours threshold → 400 > 360 was a false-alarm.)
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
@@ -399,10 +403,9 @@ describe("1407b — SLA monitor market-hours gate", () => {
       noopSendWork
     );
 
-    expect(result.breaches).toBe(1);
-    expect(result.escalations).toBe(1);
-    expect(calls.length).toBe(1);
-    expect(calls[0]!.signalType).toBe("bctc");
+    expect(result.breaches).toBe(0);
+    expect(result.escalations).toBe(0);
+    expect(calls.length).toBe(0);
   });
 
   // ───────────────────────────────────────────────────────────────────────────

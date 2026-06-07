@@ -256,6 +256,25 @@ export const SBV_BUSINESS_DAY_ONLY_SOURCES: ReadonlySet<SignalType> = new Set([
 ]);
 
 /**
+ * BCTC (financial reports) sources that are only filed on VN trading days.
+ *
+ * Companies submit BCTC filings via HOSE/HNX exclusively on trading days.
+ * On weekends and public holidays no new BCTC reports are filed — staleness
+ * on those days is BY DESIGN.  The SLA clock must measure against the last
+ * expected trading-day window end (08:59 UTC), not wall-clock now.
+ *
+ * Root cause of FIX-BCTC-SLA-WEEKEND: the prior bctc path only checked
+ * isVnMarketHours (false on weekends) → fell to offHoursThresholdMinutes=360,
+ * triggering false-alarm breaches on Saturday/Sunday when data was correctly
+ * stale since the Friday session.
+ *
+ * Source: "bctc" (financial_reports.parsed_at).
+ */
+export const BCTC_TRADING_DAY_ONLY_SOURCES: ReadonlySet<SignalType> = new Set([
+  "bctc",
+]);
+
+/**
  * Grace period added on top of "time since last window end" when computing the
  * off-hours SLA threshold.  Allows for minor clock skew and the last-push lag
  * before the cron window actually fires.
@@ -540,8 +559,24 @@ export function getSlaThreshold(
     return sinceSbvWindowEnd + OFF_HOURS_GRACE_MINUTES;
   }
 
-  // BCTC has time-based thresholds
+  // BCTC has time-based thresholds with a trading-day exemption.
+  //
+  // FIX-BCTC-SLA-WEEKEND: BCTC filings are only submitted on VN trading days
+  // (Mon–Fri via HOSE/HNX).  On weekends the last filing was from the prior
+  // Friday session — the SLA window must be measured from the last expected
+  // trading-day close (lastExpectedWindowEnd, same as price), not from a
+  // fixed 360-min off-hours threshold.
+  //
+  // Non-trading day (Sat/Sun): threshold = minutesSinceLastWindowEnd + grace
+  //   → prevents false-alarm on Saturday when Friday data is 20+ h old.
+  // Trading day, market hours:  use marketHoursThresholdMinutes (120 min)
+  // Trading day, off-hours:     use offHoursThresholdMinutes     (360 min)
   if (signalType === "bctc") {
+    if (!isVnSbvBusinessDay(now)) {
+      // Non-trading day: expand threshold to cover the expected stale window
+      const sinceWindowEnd = minutesSinceLastWindowEnd(now);
+      return sinceWindowEnd + OFF_HOURS_GRACE_MINUTES;
+    }
     const marketHours = isVnMarketHours(now);
     if (marketHours && cfg.marketHoursThresholdMinutes !== undefined) {
       return cfg.marketHoursThresholdMinutes;
