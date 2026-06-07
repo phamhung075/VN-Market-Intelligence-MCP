@@ -19,6 +19,7 @@ Main terminal = router only. Never implement directly. Always delegate.
 - All agents backgrounded by default
 - Fix root cause definitif not recurrent symtom
 - Detect then reduce debt, dead code, remove garbage, trash data, hardcode
+- Reusable scripts → `scripts/` NEVER `/tmp`; then add pointer in owning flow doc → `docs/policies/dev-standards.md` § Script Persistence
 
 ## MCP Tools — call_tool wrapper ONLY
 The `vn-market` server is intentionally NOT registered in `.mcp.json` (cleaned out) to keep the tool surface small — its 146 tools are NOT loaded directly. The server still exists as a downstream of the `claude.ai gateway`.

@@ -20,6 +20,7 @@ File placement SSOT. Before creating any `.md` file, look it up here.
 | Facebook post drafts `fb-post-*.md` | `docs/social/` | root, `reports/`, `docs/archive/` |
 | Facebook feedback log | `docs/social/fb-feedback.md` | root |
 | Source code `*.ts` | `apps/mcp-server/src/` | root, `docs/` |
+| Reusable scripts `*.sh/*.js/*.ts/*.py` | `scripts/` (agent-flow helpers → `scripts/agents-flow/`) + pointer in owning flow doc | `/tmp`, root, `docs/` |
 | Tests `*.test.ts` | `apps/mcp-server/src/__tests__/` | root, `reports/` |
 | Knowledge/rules | `docs/{policies,protocols,standards,references}/` | root, `docs/` |
 | Agent configs | `.claude/agents/` | root |

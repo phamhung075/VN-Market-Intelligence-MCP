@@ -1,6 +1,21 @@
 # Developer Standards
 
-<!-- size-justification: 123L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. -->
+<!-- size-justification: 138L — unified developer reference: code search tools, test patterns, DDD rules, TypeScript conventions, naming. All read together at sprint start to set context; splitting into tool-guide + test-patterns + naming-rules fragments the unified "how we code" standard. SCRIPT-PERSIST 2026-06-07: Script Persistence section (+13L, user directive). -->
+
+## Script Persistence — scripts/, never /tmp
+
+Any script useful for the work or reusable later MUST be saved to `scripts/` — NEVER left in `/tmp` (user directive 2026-06-07; precedent: `scripts/agents-flow/drain-signals.js`).
+
+| Script kind | Location |
+|---|---|
+| Agent-flow helper (drain, match-slots, cadence…) | `scripts/agents-flow/` |
+| Audit / one-shot verification worth replaying | `scripts/audits/` |
+| Migration | `scripts/migrations/` |
+| Anything else reusable | `scripts/` |
+
+After saving: **update the owning flow/skill doc with a canonical pointer** (`node scripts/...` usage line) so future agents discover it instead of rewriting it. Pattern: `docs/agents/dev-team/flow/drain-signals.md` §0a-1 "CANONICAL SCRIPT".
+
+`/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
 ## Code Search — Preferred Tools
 
