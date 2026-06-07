@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## c389 · 2026-06-07 (TSU-DEV-U5: Foreign Flow Null Holding Ratio) — COMMITTED
+
+**Task:** TSU-DEV-U5 — TOOL-SURFACE-UPGRADE sprint  
+**Deliverables:** `foreignFlowAnalyzer.ts`: added `is_holding_ratio_fabricated: boolean` to `ForeignFlowSignal`; gate holdingRatioChange5d computation + reasoning append when all holdingRatio=0. `foreignFlowTools.ts`: `formatForeignFlowOutput` gates Holding Ratio column + `Holding ratio change (5d)` line via `hasRealHoldingData = !signal.is_holding_ratio_fabricated`; tool description updated (removed "holding ratio change" mention). `companyProfileTools.ts`: `foreign_holding_ratio` emits null when `current_holding_ratio === 0` (DSI invariant).  
+**Tests:** 10 new GREEN (TSU-DEV-U5 test file). tsc: clean. tools=157 (SSOT), sched=76. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
+
+Zone health: bun test 10/0 (U5 suite), 0 regression, tsc clean, 157 tools (SSOT), scheduler 76 cron.schedule | HEALTHY
+
+---
+
 ## c388 · 2026-06-07 (TSU-DEV-U1: Per-Call Telemetry Counter) — COMMITTED
 
 **Task:** TSU-DEV-U1 — TOOL-SURFACE-UPGRADE sprint  
@@ -28,18 +38,6 @@ Zone health: bun test 8/0 (parity suite), tsc clean, 162 tools intact, scheduler
 **RED→GREEN:** 6 new tests (CS-1..CS-6) in `FIX-BCTC-STAGE4-CROSS-SECTION-DUP.test.ts`. Regression: `bctc-eval-detectors.test.ts` 13/13 unchanged GREEN. tsc: clean. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
 
 Zone health: bun test 19/0 (6 new CS + 13 existing detector tests), tsc clean, tools=162, sched=76 | HEALTHY
-
----
-
-## c385 · 2026-06-07 (FIX-BCTC-LIAB-PRIOR-PERIOD) — COMMITTED cfa17b04
-
-**Fix:** `parseSplitBlockBalanceSheet` first-match separator was picking prior-period date header for HPG parent-company format. Changed to collect ALL date+unit header candidates, compute YYYYMMDD sort key, pick highest (most recent = current period). Also extended `hitSecondPeriod` regex to match `01/01/YYYY` with leading zero.
-
-**RED→GREEN:** 5 new tests (T1-T5) in `FIX-BCTC-LIAB-PRIOR-PERIOD.test.ts`. Regression: 40 balance sheet tests 0-fail. Suite: 10831 pass / 534 fail (534 pre-existing unchanged). tsc: 3 pre-existing errors in 1980-f2-canon-schema.test.ts only; balanceSheetExtractor.ts + new test file clean.
-
-**Follow-up:** Live HPG Q4-2025 re-parse gated behind RECOVER-LIVEDB-INTEGRITY lane (page corruption). FIX-BCTC-STAGE4-CROSS-SECTION-DUP still open. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
-
-Zone health: bun test 534 pre-existing fail unchanged, 5 new green, balanceSheetExtractor 86.67% func coverage | HEALTHY
 
 ---
 
