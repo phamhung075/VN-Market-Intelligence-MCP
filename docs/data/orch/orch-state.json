@@ -4221,6 +4221,17 @@
         "payload_ref": null,
         "read_at": "2026-06-06T16:22:41Z",
         "read_by": "dev-team"
+      },
+      {
+        "id": "rtr-ctg-bctc-ocr-corrupt-202606070138",
+        "ts": "2026-06-07T01:38:50Z",
+        "from": "router",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CTG 2026-Q1 BCTC OCR corrupt: assets=0<equity 244904ty, margin 229157% (VNM/VEA pattern) - needs inspect/re-extract",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "archive": [
