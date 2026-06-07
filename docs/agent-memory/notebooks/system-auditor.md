@@ -1,5 +1,13 @@
 <!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c086 · 2026-06-07T11:43:27Z
+### Audit Run Tier-1 (11:43 UTC 2026-06-07)
+- Tier: 1 | Services: 6 checked
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE: all services UP, health endpoints OK (200), restart=0, memory=17.81%, disk=40%
+- Context: pdf-extractor rebuild in progress (expected per dispatcher) — unhealthy state not escalated
+- Signals: 0 emitted
+
 ## c085 · 2026-06-07T11:13:04Z
 ### Audit Run Tier-1 (11:13 UTC 2026-06-07)
 - Tier: 1 | Services: 6 checked
