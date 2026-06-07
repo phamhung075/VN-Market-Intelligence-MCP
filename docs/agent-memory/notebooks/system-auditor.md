@@ -1,5 +1,14 @@
 <!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c098 · 2026-06-08T05:02:00Z
+### Audit Run Tier-2 (22:01 UTC 2026-06-07, 05:02 GMT+7 2026-06-08)
+- Tier: 2 | Services: 6 verified (docker) | Sources: pending MCP calls | DB checks: pending
+- Anomalies: 0 new (container + restart status HEALTHY) | Status: GREEN (local checks)
+- Context: Pre-market hours (05:02 GMT+7); BCTC SLA OUT-WINDOW (month 6 ∉ [1,4,7,10]) → 168h threshold
+- Docker Status: mcp-server Up 1h (RC=1), pdf-extractor Up 26m (RC=0), api-gateway Up 3h ✓, macro-indicators ✓, frontend ✓, mcp-gateway ✓
+- Pending MCP Calls: get_cron_health, get_pipeline_health, get_vps_proxy_health, docker exec DB checks (C-06/C-07/B-09/B-13)
+- Signals: 0 emitted | Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## c097 · 2026-06-07T21:34:46Z
 ### Audit Run Tier-1 (21:34 UTC 2026-06-07)
 - Tier: 1 | Services: 6 checked
