@@ -1,5 +1,24 @@
 # dev-mcp-server -- Notebook
 
+## c384 · 2026-06-07 (SPIKE-BCTC-EVAL-HPG-PPC) — DONE
+
+**Spike:** SPIKE-BCTC-EVAL-HPG-PPC — BCTC eval insights for HPG + PPC.
+
+**Findings summary:**
+- PPC: zero financial_reports rows. Queue stuck — Q4 2025 url_not_found (6 attempts, null URL); Q3 2025 has wrong document URL (Q1 2026 PDF). Requires PDF sourcing sprint.
+- HPG: 1 row (Q4 2025 parent-company standalone). validation_status=failed is FALSE POSITIVE — caused by `balance_sheet_json.totalLiabilities` containing the prior-period value (1,012,889.94M) instead of current-period (4,239,852.22M). Identity holds in raw table_rows and scalar columns. Serve guard (c381) correctly passes HPG (assets 98.67T > equity 94.43T — not corrupt-identity pattern).
+- Stage 4 eval RED: exact_dup_count=2. One dup is genuine (Hàng tồn kho codes 140/141 parent+subitem); one is cross-section valid (code 421b appears on both BS and IS in parent-company standalone reports — gate logic flaw).
+- Stages 1–3: backfill placeholders only (no real OCR/rasterize metrics for HPG Q4 2025).
+- extraction_confidence=0.4375 (low; HPG Q4 2025 parent PDF).
+
+**P0 tasks for po:** FIX-BCTC-LIAB-PRIOR-PERIOD (extractor bug), FIX-BCTC-STAGE4-CROSS-SECTION-DUP (gate logic). P1: PPC PDF sourcing, HPG queue URL audit.
+
+**Findings doc:** `docs/spikes/SPIKE_3012-bctc-eval-hpg-ppc.md`
+
+**INV-GATEWAY-1:** commit-mutex/task_claim/task_release not called from this specialist.
+
+---
+
 ## c382 · 2026-06-07T04:35Z (FIX-SBV-PUSH-TYPE-COERCE) — COMMITTED
 
 **Task:** FIX-SBV-PUSH-TYPE-COERCE (HIGH — live outage) — /api/push-sbv-rates rejects string-typed numerics.
