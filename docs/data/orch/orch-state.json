@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T02:50:00Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-07T00:52:34Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T00:00:00Z",
@@ -55,8 +55,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T00:00:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-07T00:52:34Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2731,11 +2731,11 @@
         "owner": "dev-mcp-server",
         "type": "FIX",
         "size": "S",
-        "priority": "low",
+        "priority": "medium",
         "status": "TODO",
         "zone": "apps/mcp-server/",
         "created_at": "2026-06-06T22:24:30Z",
-        "note": "Carry-forward from FETCH-OPS-PAGE-TRUTH closeout. Related pre-existing constraint (separate, do not scope in): Bun full-suite C++ OOM crash on large corpus."
+        "note": "Carry-forward from FETCH-OPS-PAGE-TRUTH closeout. Related pre-existing constraint (separate, do not scope in): Bun full-suite C++ OOM crash on large corpus. || PO 20260607: promoted low->medium — every QA scan re-litigates the same 5 pre-existing tsc errors (seen again in FIX-SLA-EXEMPT-NEWS-SBVFX + CLEAN-DEAD-SOURCE-IDS QA records); clearing restores a clean tsc baseline and removes recurring QA friction."
       },
       {
         "id": "FIX-AUDITOR-FLOW-TIER-EARLYEXIT",
@@ -2751,6 +2751,42 @@
         "created_at": "2026-06-07T00:00:00Z",
         "completed_at": "2026-06-07T00:00:00Z",
         "note": "DEFECT-1: AUDIT_TIER not read natively from spawn prompt; notebook label mismatch. DEFECT-2: --since=\"24h\" invalid git date → false 0-commits result; no fail-loud on git error. Both fixed in main.md."
+      },
+      {
+        "id": "FIX-ORCH-KEY-NORMALIZE-TASKID",
+        "type": "FIX",
+        "size": "S",
+        "priority": "high",
+        "title": "Normalize task_board row key task_id->id repo-wide (159 active + 28 backlog + 2 done rows) per docs/standards/task-schema.md canon",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "docs/data/",
+        "created_at": "2026-06-07T00:52:34Z",
+        "note": "Measured 20260607: active_sprints 159/159 task_id (NOT 4 as reported), backlog 28 task_id vs 8 id, done 82 id vs 2 task_id. Canon ratified: id (authority OrchStateTaskBoardTask TS interface); task_id = legacy never-write. One-shot migration (atomic temp->rename + signal-dashboard CAS), keep read-path coalesce id//task_id one release; add to task-schema.md: 'write id never task_id; _updated_at/created_at via real date -u, never hand-typed' (folds in dev hand-typed-timestamp nit). AC: post-migration key-count task_id:0 across active_sprints/backlog/done; board-walkers single-key. If drift recurs -> agent-father patches writer flows (mimicry of existing rows is the root cause, no flow literally instructs task_id)."
+      },
+      {
+        "id": "FIX-AUDITOR-DB-CHECKS-HOSTSIDE",
+        "type": "FIX",
+        "size": "S",
+        "priority": "medium",
+        "title": "Tier-3 audit DB checks host-side: sqlite3 absent from mcp-server image, only 6/16 DB integrity checks runnable",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "docs/agents/",
+        "created_at": "2026-06-07T00:52:34Z",
+        "note": "Verified 20260607: docker exec vn-market-intelligence-mcp-mcp-server-1 which sqlite3 = absent; host volume path apps/mcp-server/data/market.db exists. Decision: route checks host-side — edit docs/agents/system-auditor/flow/main.md (lines ~143-359) docker exec ... sqlite3 /app/data/X -> host sqlite3 $PROJECT_ROOT/apps/mcp-server/data/X (read-only queries; map paths via system-map.json infrastructure.databases). REJECTED: add sqlite3 to image (needless rebuild; rebuild-recreate peer-kill risk; binary only used by audits). ROUTE: agent-father (flow-file edit). AC: next Tier-3 cycle runs 16/16 DB checks."
+      },
+      {
+        "id": "FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS",
+        "type": "FIX",
+        "size": "XS",
+        "priority": "low",
+        "title": "context-bloat-backstop.sh: suppress breach signal when file header carries <!-- size-justification: --> (cold-path check)",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "scripts/",
+        "created_at": "2026-06-07T00:52:34Z",
+        "note": "Verified 20260607: hook fires unconditionally on over-cap governed writes; exemption honored only downstream (claude-manager-helper flow main.md:97 Pass 5b) -> bounded re-fire noise on every edit of a justified over-cap file (live ex: commit-mutex SKILL 201L signal 00:25Z -> annotated fdcd5444). Fix: AFTER breach detected (cold path only), grep first 10 lines for size-justification -> exit 0. Hot-path performance contract intact (jq x1, wc x1 unchanged). Stale-justification re-review still covered by manager-helper periodic pass. NOTE: dispatcher attribution to architecture brief 2026-06-04-data-serve-integrity.md SS7 is WRONG — that SS7 is Risk Flags, contains no exemption claim; no doc fix needed."
       }
     ],
     "archive": [],
@@ -4153,9 +4189,9 @@
         "from": "system-auditor",
         "to": "po",
         "type": "data_stale",
-        "summary": "[B-04] News SLA breach — 289min vs 30min threshold; ingest lag detected",
+        "summary": "[B-04] News SLA breach — 289min vs 30min threshold; ingest lag detected || PO 20260607T0052Z: DONE — FIX-SLA-EXEMPT-NEWS-SBVFX d71e3f2e QA-APPROVED, in live image (built 00:45Z); news quiet-hours exemption (UTC 00:00-14:59 publish window) live-verified via get_sla_status. 289min breach = overnight false-positive class, closed.",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "DONE",
         "zone_owner": "dev-mcp-server",
         "check_id": "B-04",
         "payload_ref": null
@@ -4167,9 +4203,9 @@
         "type": "anomaly",
         "severity": "P3",
         "route_to": "po",
-        "status": "OPEN",
+        "status": "DONE",
         "payload_ref": null,
-        "summary": "sbv_fx SLA false-flag class hit occ#3 — PROMOTED per watch rule. occ#1 B12-sbv (Jun 5, FALSE-FLAG); occ#2 auditor c052 17:38Z claimed 38min WARN while router probe showed VPS push 11min prior; occ#3 auditor c053 18:08Z claimed 68min CRITICAL escalation while router probe showed VPS sbv push 17:58:47 = ~10min prior, 47 ok/24h, 0 errors. Two distinct hypotheses to root-cause: (a) SLA threshold 30min vs sbv push cadence ~30min = recurring marginal breach by construction (threshold-vs-cadence tuning); (b) get_sla_status measures the DATA timestamp not the PUSH timestamp — SBV publishes no new FX rates on weekends, so recorded data age grows while pushes stay healthy = sbv_fx is a weekend-awareness gap NOT covered by FIX-SLA-WEEKEND-AWARE 9e74cf0a (which calendar-gated price/foreign_flow only). Task shape: dev-mcp-server identify which layer get_sla_status reads for sbv_fx, then either extend the calendar-aware getSlaThreshold to sbv_fx (SBV business-day publication calendar) and/or set threshold > push cadence (e.g. 45-60min). Acceptance: weekend auditor cycles emit zero sbv_fx WARN/CRITICAL while VPS sbv pushes stay ok; weekday genuine staleness still detected."
+        "summary": "sbv_fx SLA false-flag class hit occ#3 — PROMOTED per watch rule. occ#1 B12-sbv (Jun 5, FALSE-FLAG); occ#2 auditor c052 17:38Z claimed 38min WARN while router probe showed VPS push 11min prior; occ#3 auditor c053 18:08Z claimed 68min CRITICAL escalation while router probe showed VPS sbv push 17:58:47 = ~10min prior, 47 ok/24h, 0 errors. Two distinct hypotheses to root-cause: (a) SLA threshold 30min vs sbv push cadence ~30min = recurring marginal breach by construction (threshold-vs-cadence tuning); (b) get_sla_status measures the DATA timestamp not the PUSH timestamp — SBV publishes no new FX rates on weekends, so recorded data age grows while pushes stay healthy = sbv_fx is a weekend-awareness gap NOT covered by FIX-SLA-WEEKEND-AWARE 9e74cf0a (which calendar-gated price/foreign_flow only). Task shape: dev-mcp-server identify which layer get_sla_status reads for sbv_fx, then either extend the calendar-aware getSlaThreshold to sbv_fx (SBV business-day publication calendar) and/or set threshold > push cadence (e.g. 45-60min). Acceptance: weekend auditor cycles emit zero sbv_fx WARN/CRITICAL while VPS sbv pushes stay ok; weekday genuine staleness still detected. || PO 20260607T0052Z: DONE — hypothesis (b) confirmed+shipped: FIX-SLA-EXEMPT-NEWS-SBVFX d71e3f2e extends calendar exemption to sbv_fx (VN business-day window), QA-APPROVED 31/31 tests, in live image; live get_sla_status 00:52Z shows sbv_fx ok with weekend threshold 2361min (acceptance: zero weekend WARN/CRITICAL while pushes ok — c061/c062 HEALTHY). Weekday genuine-staleness detection retained (test S-2)."
       },
       {
         "id": "rtr-bctc-playwright-thread-202606061545",
@@ -4179,7 +4215,7 @@
         "route_to": "po",
         "type": "system_issue",
         "status": "READ",
-        "summary": "VPS vn-bctc-fetch HOSE-SSC discovery path dead: Chromium GPU zygote pthread_create: Resource temporarily unavailable (11) on every Playwright attempt (pre-existing since <=Jun 5). 10-item Q1/2026 queue will SKIP every 6h cycle until fixed or PDFs appear on HNX/UPCOM curl paths. Root-fix options per ops-vps-fetch: (a) raise systemd LimitNPROC for the unit, (b) replace Playwright SSC path with curl-based HTTP scraper (NOTE: VPS policy already says no-Chromium for dev-vps-crawls — option b aligns with policy and is likely the definitif fix). Triage: dispatch dev-vps-crawls (impl) possibly preceded by ops-vps-fetch recon of SSC endpoint recipe. Evidence: ops-vps-fetch notebook c006 (45641b7a). || PROGRESS 162040Z: SPIKE-VPS-SSC-CURL-RECIPE DONE e8be4480 (ops-vps-fetch) — VIABLE-CURL: 3-step stateful HTTP (ADF loopback -> ViewState/PPR search -> full-form download POST) proven ON the VPS, no Chromium (GAS Q1/2026 15.4MB + HPG annual 6.2MB valid %PDF-1.7 downloaded). Recon doc docs/vps-sources/ssc-bctc-newsearch/recon.md (387L) + recon-complete signal emitted to dev-vps-crawls (drains next tick -> PO -> impl FIX replacing _ssc_newsearch_playwright() with discover_from_ssc_curl()). Row stays open until the curl scraper ships and a live SSC discovery cycle succeeds. || PROGRESS 172047Z: FIX-VPS-SSC-CURL-SCRAPER SHIPPED 7ed37441 (dev-vps-crawls) — _ssc_newsearch_playwright() (~200L, asyncio+chromium) DELETED, sync discover_from_ssc_curl() ADDED (stdlib urllib+CookieJar, 3-step ADF recipe per recon.md), all 3 call sites rewired, matches_quarter_and_year/is_cover_letter_title reused. Router raw-verified: scope exactly 2 files both M, stdlib-only imports, 0 playwright/chromium code refs (9 hits = docstrings), py_compile OK, no secrets. DEPLOYED: SCP to VPS, REMOTE-SYNTAX-OK, grep playwright|asyncio|chromium = 0 on remote, systemctl restart vn-bctc-fetch active since Jun 07 00:37+07, mem peak 14.7MB vs 443.6MB chromium-era. LIVE-RUN: GAS Q1/2026 — 15 PPR rows parsed, rank=0 consolidated selected, 17,616,647B octet-stream PDF saved %PDF-confirmed + proxy URL returned confidence 0.92; HPG Q4/2025 annual-path 8.2MB; ACV honest SKIP (not yet filed). Impl bug caught: PPR cells nest span-in-td, regex end anchor must be </td> not first <. Residuals: win_id regex brittleness (fallback w0), step-3 exchange hardcoded HOSE=1 (HNX/UPCOM covered by their own POST APIs upstream — low impact, optional soc3 empty = all-exchanges). ROW STAYS READ: closure requires the next SCHEDULED 6h vn-bctc-fetch cycle to drain the 10-item Q1/2026 backlog with bctc last_push moving (router probe 17:39Z: last_push still Jun 5 14:48 — discovery ran standalone, push leg = full cycle; service restarted 17:37Z).",
+        "summary": "VPS vn-bctc-fetch HOSE-SSC discovery path dead: Chromium GPU zygote pthread_create: Resource temporarily unavailable (11) on every Playwright attempt (pre-existing since <=Jun 5). 10-item Q1/2026 queue will SKIP every 6h cycle until fixed or PDFs appear on HNX/UPCOM curl paths. Root-fix options per ops-vps-fetch: (a) raise systemd LimitNPROC for the unit, (b) replace Playwright SSC path with curl-based HTTP scraper (NOTE: VPS policy already says no-Chromium for dev-vps-crawls — option b aligns with policy and is likely the definitif fix). Triage: dispatch dev-vps-crawls (impl) possibly preceded by ops-vps-fetch recon of SSC endpoint recipe. Evidence: ops-vps-fetch notebook c006 (45641b7a). || PROGRESS 162040Z: SPIKE-VPS-SSC-CURL-RECIPE DONE e8be4480 (ops-vps-fetch) — VIABLE-CURL: 3-step stateful HTTP (ADF loopback -> ViewState/PPR search -> full-form download POST) proven ON the VPS, no Chromium (GAS Q1/2026 15.4MB + HPG annual 6.2MB valid %PDF-1.7 downloaded). Recon doc docs/vps-sources/ssc-bctc-newsearch/recon.md (387L) + recon-complete signal emitted to dev-vps-crawls (drains next tick -> PO -> impl FIX replacing _ssc_newsearch_playwright() with discover_from_ssc_curl()). Row stays open until the curl scraper ships and a live SSC discovery cycle succeeds. || PROGRESS 172047Z: FIX-VPS-SSC-CURL-SCRAPER SHIPPED 7ed37441 (dev-vps-crawls) — _ssc_newsearch_playwright() (~200L, asyncio+chromium) DELETED, sync discover_from_ssc_curl() ADDED (stdlib urllib+CookieJar, 3-step ADF recipe per recon.md), all 3 call sites rewired, matches_quarter_and_year/is_cover_letter_title reused. Router raw-verified: scope exactly 2 files both M, stdlib-only imports, 0 playwright/chromium code refs (9 hits = docstrings), py_compile OK, no secrets. DEPLOYED: SCP to VPS, REMOTE-SYNTAX-OK, grep playwright|asyncio|chromium = 0 on remote, systemctl restart vn-bctc-fetch active since Jun 07 00:37+07, mem peak 14.7MB vs 443.6MB chromium-era. LIVE-RUN: GAS Q1/2026 — 15 PPR rows parsed, rank=0 consolidated selected, 17,616,647B octet-stream PDF saved %PDF-confirmed + proxy URL returned confidence 0.92; HPG Q4/2025 annual-path 8.2MB; ACV honest SKIP (not yet filed). Impl bug caught: PPR cells nest span-in-td, regex end anchor must be </td> not first <. Residuals: win_id regex brittleness (fallback w0), step-3 exchange hardcoded HOSE=1 (HNX/UPCOM covered by their own POST APIs upstream — low impact, optional soc3 empty = all-exchanges). ROW STAYS READ: closure requires the next SCHEDULED 6h vn-bctc-fetch cycle to drain the 10-item Q1/2026 backlog with bctc last_push moving (router probe 17:39Z: last_push still Jun 5 14:48 — discovery ran standalone, push leg = full cycle; service restarted 17:37Z). || PO 20260607T0052Z: PROGRESS — bctc last_push MOVED: get_sla_status 00:52Z bctc age 325/360min ok (was stuck Jun 5 14:48 per 17:39Z probe) = push leg ran post-restart with curl scraper live. ROW STAYS READ: still awaiting confirmation the 10-item Q1/2026 queue drained (next router probe / Tier-2).",
         "payload_ref": null,
         "read_at": "2026-06-06T16:22:41Z",
         "read_by": "dev-team"

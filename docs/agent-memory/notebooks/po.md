@@ -1,19 +1,20 @@
 # PO Notebook
 
-## c · 2026-06-06T23:55Z — WORKFLOW-FLUIDITY SPRINT CLOSEOUT (signed off)
+## c · 2026-06-07T00:54Z — DAILY TRIAGE 2026-06-07 (dispatcher-held task po-triage-20260607, PLAN/DECIDE only)
 
-**Sprint CLOSED — all 4 tasks DONE + QA APPROVED, verdict per task:**
-- **WF-1** (agent-father, 915bc4e5) APPROVED — AC-WF1-1..8 PASS; dry-run trace `docs/handoffs/WF-1-dry-run-trace.md` proves livelock closure (lock hold on STOP 3600s→~0s, futile re-spawns 24→0, BLOCKED head cleared immediately).
-- **WF-2** (dev-mcp-server, 8a469655; QA 0cbc06ae) APPROVED — 12/12 WF2-signal-queue-cas tests, tsc 0 new errors, FU-ORCH-HEAD-CAS closed. Close-gate raw-verified: container Created 23:10:01Z > commit 22:49:31Z, healthy (ops 359d90a9).
-- **WF-3** (architect SPIKE, ruling 2d69de7d) APPROVED — Option III / INV-GATEWAY-1 accepted at S4 tick; brief `docs/architecture-briefs/2026-06-07-wf3-dev-gateway-binding-ruling.md`.
-- **WF-3-IMPL** (agent-father, 970c8e50; QA 965fc5f9) APPROVED — 7/7 ACs, doc-only; FU-MCP-GATEWAY-DEV-FRONTEND closed by reference.
+**Channel audit:** MARKET/WORK/BUG read (identical 6-msg feed, newest Jun 6 22:35Z) — every item already addressed by shipped fixes (c045 pre-fix staleness / BCTC-1345b designed guard / sbv_fx+news SLA → d71e3f2e / dead source ids → d267e997). TNB c89 already ACKed 22:24Z, no new cycle — no re-ACK.
 
-**Board moves (atomic jq -f, sentinel-validated):** done[] 81→84 (WF-1/2/3 added; WF-3-IMPL was already there — not duplicated). Sprint entry `active_sprints[id=WORKFLOW-FLUIDITY]` → status done, closed_at 23:55:01Z, tasks[] emptied into done[] (tombstone, no double-count). `sprint_goal.entries[WORKFLOW-FLUIDITY].status` active→done. DEFERRED rows WF-DEFER-THROUGHPUT + SPIKE-C44-PARALLEL-PROOF left in backlog per scope_out.
+**Dispositions (orch-state written atomic+CAS, re-read verified):**
+1. **Schema drift → DO-NOW backlog `FIX-ORCH-KEY-NORMALIZE-TASKID` (high).** Dispatcher said 4 rows drifted; measured truth: active 159/159 `task_id`, backlog 28/36, done only 2/84 — undercounted 39x. Canon `id` stands (authority = OrchStateTaskBoardTask TS interface; done[] already migrated). One-shot migration + never-write note + real-`date -u` timestamp rule in task-schema.md (folds hand-typed `_updated_at` nit).
+2. **Bloat-hook vs doc → BACKLOG `FIX-BLOAT-HOOK-JUSTIFY-SUPPRESS` (low).** Hook fires unconditionally (script verified); Pass 5b honors justification downstream (claude-manager-helper main.md:97); loop proven working (commit-mutex 201L signal → fdcd5444). Brief 2026-06-04-data-serve-integrity §7 attribution WRONG — §7 = Risk Flags, contains no exemption claim; no doc fix needed.
+3. **Tier-3 sqlite3 gap → BACKLOG `FIX-AUDITOR-DB-CHECKS-HOSTSIDE` (medium, route agent-father).** sqlite3 absent in container (verified live); host volume path apps/mcp-server/data/market.db exists. Host-side > image change (no rebuild peer-kill risk).
+4. **Signals:** sau-news → DONE (d71e3f2e QA APPROVED, in image built 00:45Z > commit 23:32Z; live get_sla_status shows calendar thresholds). rtr-sbv → DONE (hypothesis (b) shipped; weekend acceptance observed c061/c062 HEALTHY). rtr-bctc-playwright → STAYS READ + progress note (last_push MOVED, bctc 325/360 ok; awaiting 10-item Q1/2026 queue-drain proof).
+5. **Parked:** TECH-DEBT-LINTING promoted low→medium (5 tsc errors re-litigated in every QA scan). FIX-FETCH-VERYSTALE-LABEL stays parked low (cosmetic).
 
-**INV-GATEWAY-1 applied to self:** no task_release/telegram from this session (no gateway binding); dispatcher session holds closeout lock, releases umbrella `task:WORKFLOW-FLUIDITY`, notifies WORK.
+**Watch:** news 43/30min HIGH at 00:52Z Sunday in-window — marginal; if auditor re-flags weekend mornings repeatedly → news weekend-cadence tuning follow-up (distinct from the closed overnight class).
 
 **Carry-over (next PO cycle):**
-- Dispatcher BATCH queue in flight: #3 FIX-AUDITOR-FLOW-TIER-EARLYEXIT, #4 FIX-PROJECT-STATS-GENERATED, #5 CLEAN-DEAD-SOURCE-IDS — do NOT re-triage.
-- FIX-SLA-WEEKEND-AWARE Sunday proof window (2026-06-07); news/sbv_fx quiet-hours proof post FIX-SLA-EXEMPT-NEWS-SBVFX (d71e3f2e DONE 2a6b0284).
+- Dispatch FIX-ORCH-KEY-NORMALIZE-TASKID first (board-walking correctness).
+- Confirm rtr-bctc-playwright queue drain → close row.
 - CTG WATCH: c030 cowork cycle must refine 49c11ce2; deferred again or composite=0.00 → architect escalation.
-- Still open: FIX-ORCH-DONE-GRID-COLS live-verify post-rebuild; HEADROOM-COMPRESS-P1 pickup; playwright-row impl-pending; WF-3 sub-task D Phase-4 gated under SPIKE-C44-PARALLEL-PROOF.
+- Still open: FIX-ORCH-DONE-GRID-COLS live-verify post-rebuild; HEADROOM-COMPRESS-P1 pickup; WF-3 sub-task D Phase-4 gated under SPIKE-C44-PARALLEL-PROOF.
