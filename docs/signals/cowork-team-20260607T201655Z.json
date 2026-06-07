@@ -1,0 +1,43 @@
+{
+  "fire_time": "2026-06-07T20:16:08Z",
+  "nominal_tick": "2026-06-07T20:15:00Z",
+  "classification": "FIRE",
+  "reason": "tnb-audit cron-due (13 20 * * *, guaranteed) — token won, spawned background",
+  "matched_slots": [
+    "tnb-audit"
+  ],
+  "won_slots": [
+    "tnb-audit"
+  ],
+  "held_by_other": [],
+  "all_held": false,
+  "spawned": [
+    "tnb-audit"
+  ],
+  "silent": false,
+  "drift_min": 0,
+  "errors": [
+    "tnb-audit spawn-1 died mid-flow (reads only, 61s, 21 tool-uses) — re-spawned retry-1 at 2026-06-07T20:18:35Z"
+  ],
+  "pressure_mode": "adaptive",
+  "calendar_status": "off_market",
+  "suppressed_calendar": [],
+  "suppressed_cadence": [],
+  "downgraded": [],
+  "due_reasons": {
+    "tnb-audit": "cron"
+  },
+  "cadence_minutes": {
+    "tnb-audit": null
+  },
+  "last_fired_timestamp": "2026-06-07T20:16:55Z",
+  "last_fired_slots": [
+    "tnb-audit"
+  ],
+  "last_fired_write_errors": null,
+  "leader_lock": "own-held (heartbeated, expires 1780865180)",
+  "dev_head": null,
+  "devq": 0,
+  "signal_backlog": 0,
+  "note": "Tick 6. signal_queue now empty — dev-20260607T193304 drained by dev-team (left-NEW strategy validated). Snapshot cycle-snapshot-20:16.json assembled from fresh 20:16 macro fetch (values identical to 20:02). No peer contention on tnb-audit token. RETRY: spawn-1 incomplete (verified: notebook mtime Jun-5, no writes); token reclaimed + re-spawned per R4."
+}

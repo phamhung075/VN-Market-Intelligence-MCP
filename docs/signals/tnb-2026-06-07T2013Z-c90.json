@@ -1,0 +1,12 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-06-07T20:13:00Z",
+  "cycle": "c90",
+  "overall": "NEEDS_ATTENTION",
+  "direction": "DEGRADING",
+  "summary": "c90 Saturday audit: F-FED-RATE-REGRESSION HIGH (5.33 stale in evening dish, was 3.62 weekday), F-NB-MISSING-FRIDAY HIGH (full 2026-06-06 absent from unified-agent notebook, 3rd consecutive cycle). Evening score 3/6. Session-crash root cause suspected."
+}

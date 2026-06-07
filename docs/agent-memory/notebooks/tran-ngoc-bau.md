@@ -1,5 +1,37 @@
 # Tran Ngoc Bau — Working Notebook
 
+## c90 · 2026-06-07T20:13Z
+
+**Status:** NEEDS_ATTENTION | Direction: DEGRADING | Session: manual-spawn (file-evidence, MCP gateway unavailable) | Auto-cures: 0
+
+**Previous handoff ACK:** c89 ACK'd by PO at 2026-06-06T22:24:30Z. All 6 priorities were cowork/market watch items — no new dev tasks created.
+
+**Dashboard inbox:** [dashboard] DASHBOARD.md absent (no file). orch-state.json signal_queue: no tran-ngoc-bau rows present.
+
+**Chef pipeline (2026-06-07, Saturday) — PIPELINE HEALTHY (weekend: 1 guaranteed slot):**
+- Morning: NOT scheduled (Mon–Fri only) — not a miss
+- EOD: NOT scheduled (Mon–Fri only) — not a miss
+- Evening 19:47Z: PUBLISHED — cowork-schedule last_fired=2026-06-07T19:47:37Z; unified-agent nb entry confirmed
+- start_count=1 close_count=1 stuck=0 failed=0 guaranteed_ok=TRUE
+
+**Layer scores c90:**
+- Evening 19:47Z: L1 PASS (USD/VND 26124 + gold +2.55σ), L2 PARTIAL (F-FED-RATE-REGRESSION: 5.33 stale), L3 PARTIAL (carry is_estimate=true tier-4, flagged), L4 PARTIAL (yield only, 1.5/4), L5 PARTIAL (hexagram 501 skip clean), L6 PARTIAL (carry flagged, Fed stale not flagged as provenance risk) → 3/6 | 9-step: 4.5/9
+- Morning/EOD: N/A (weekend)
+- Business context: ABSENT — F9 persistent (16th consecutive cycle)
+
+**Direction DEGRADING:** F-FED-RATE-REGRESSION HIGH new (Fed 5.33 reappears — was 3.62 in c88 weekday dishes, suspect weekend FRED data path); F-NB-MISSING-FRIDAY HIGH (entire 2026-06-06 Friday absent from unified-agent notebook — 3rd consecutive cycle with missing entries, root cause session reliability not flow spec). Layer score down from c88 3.5/6 to 3/6.
+
+**New findings:**
+- F-FED-RATE-REGRESSION=HIGH (new): fedFundsRate 5.33 in Saturday evening dish vs 3.62 in c88 weekday. Weekend FRED cache path divergence suspected. Monitor Monday morning dish.
+- F-NB-MISSING-FRIDAY=HIGH (escalated from MED): Full 2026-06-06 Friday absent from unified-agent notebook. 3rd consecutive cycle, different slots each time. Session reliability issue (crash before Step 8). Escalated to PO — not auto-curable via flow edit.
+- F-FED-RATE-REGRESSION RE-OPENS F-CARRY-CORRUPT concern. Classified as separate finding pending Monday dish confirmation.
+
+**Structural gaps (carry-forward):** F2=MED BCTC overdue (CTG 20th cycle, guard expires c029) | F3=MED PMI sub-components | F4=MED VIRA absent | F9=MED business context (16th) | F5=LOW hexagram 501
+
+**Auto-cures:** None. Session-crash root cause cannot be addressed via chef.md flow edit.
+
+**Actions:** Handoff docs/handoffs/tnb-audit-latest.md written | Signal docs/signals/tnb-2026-06-07T2013Z-c90.json | Notebook committed | WORK report sent
+
 ## c88 · 2026-06-05T20:13Z
 
 **Status:** NEEDS_ATTENTION | Direction: IMPROVING | Session: manual-spawn (file-evidence, MCP gateway unavailable in session) | Auto-cures: 0

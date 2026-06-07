@@ -1,173 +1,145 @@
-# TNB Audit — Cycle 88 — 2026-06-05T20:13Z (slot=tnb-audit, file-evidence + partial)
+# TNB Audit — Cycle 90 — 2026-06-07T20:13Z (slot=tnb-audit, file-evidence + MCP unavailable)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (F-CARRY-CORRUPT CRITICAL CLOSED — carry regime now correct +1.38pp NEUTRAL is_estimate=false; layer scores stable 3.5/6 range; positive: DSI provenance rule confirmed working; new: F-MORNING-NB-MISSING recurring pattern escalated to MED)
+Direction: **DEGRADING** (F-FED-RATE-REGRESSION: stale fedFundsRate 5.33 reappears in Saturday evening dish — was 3.62 in c88 EOD/Evening; carry is_estimate=true on weekend FRED gap; L2/L3 broken again for weekend context; F-NB-MISSING-FRIDAY: entire 2026-06-06 Friday missing from unified-agent notebook — 3rd consecutive cycle with missing NB entries)
 
 ---
 
 ## Previous Handoff ACK
 
-c87 handoff ACK'd by PO at 2026-06-04T21:21:08Z. All findings dispositioned. F-CARRY-CORRUPT marked ALREADY CURED+LIVE-VERIFIED. Log: "Previous handoff ACK'd by PO."
+c89 handoff ACK'd by PO at 2026-06-06T22:24:30Z. All 6 priorities were cowork/market watch items — no new dev tasks created. Log: "Previous handoff ACK'd by PO."
 
 ---
 
 ## Session Mode
 
 MCP gateway not available in this manually-spawned subagent session. Layer-walk audit performed from file-evidence:
-- unified-agent notebook entries written by live-MCP sessions (EOD 08:37Z, Evening 19:37Z, 2026-06-05)
-- cowork-schedule.json: chef-morning last_fired=2026-06-05T05:17:58Z, chef-eod last_fired=2026-06-05T08:45:59Z, chef-evening last_fired=2026-06-05T19:50:12Z
-- news-scout notebook c51–c55 (live-MCP sessions this cycle, confirmed healthy after 20:06Z recovery)
-- bctc-analyst notebook c022–c024 (live-MCP sessions this cycle)
-- fb-market-poster notebook (2026-06-05T13:37Z, confirms EOD published + carry provenance honored)
-- market-watcher notebook (2026-06-05T16:05Z, EOD signals confirmed)
+- unified-agent notebook: 2026-06-07 evening session entry confirmed (19:47Z dish published)
+- cowork-schedule.json: chef-evening last_fired=2026-06-07T19:47:37Z
+- news-scout notebook c59 (2026-06-07T20:03Z): NEUTRAL regime, 3 signals
+- bctc-analyst notebook c026–c028 (2026-06-06): CTG 20th cycle blocked
+- market-watcher notebook (2026-06-07T20:03Z): weekend offhours, 0 signals
 
-Live cross-validation (get_market_snapshot, compare_financials, get_agent_signals) SKIPPED — not possible in this session. Step 0c MCP bootstrap (get_macro_snapshot, get_system_status) SKIPPED.
+Live cross-validation (get_market_snapshot, compare_financials, get_agent_signals) SKIPPED — not possible in this session.
 
 ---
 
-## Chef Pipeline Coverage (Step 0.5) — 2026-06-05 — PIPELINE HEALTHY
+## Chef Pipeline Coverage (Step 0.5) — 2026-06-07 (Saturday)
+
+Weekend schedule: chef-morning (Mon–Fri only), chef-eod (Mon–Fri only), chef-evening (daily).
 
 | Slot | Expected | Status | Evidence |
 |------|----------|--------|---------|
-| Morning 05:17Z | YES | **PUBLISHED** (inferred) | cowork-schedule last_fired=2026-06-05T05:17:58Z ✓; NO notebook entry (F-MORNING-NB-MISSING) |
-| Intraday 07:16Z | OPTIONAL | UNKNOWN | cowork-schedule chef-intraday last_fired=2026-06-05T07:16:12Z — unclear if PUBLISHED or SILENT EXIT |
-| EOD 08:37Z | YES | **PUBLISHED** | unified-agent nb 08:37Z: 3 clusters (RE VIC/VHM + macro-micro contradiction + VinaCapital 70% crisis). cowork-schedule last_fired=2026-06-05T08:45:59Z ✓ |
-| Evening 19:37Z | YES | **PUBLISHED** | unified-agent nb 19:37Z: 3 clusters (RE rally + macro-micro contradiction + VNH anomaly). cowork-schedule last_fired=2026-06-05T19:50:12Z ✓ |
+| Morning 05:15Z | NO (weekend) | N/A — not scheduled | cron: `15 5 * * 1-5` |
+| EOD 08:45Z | NO (weekend) | N/A — not scheduled | cron: `45 8 * * 1-5` |
+| Evening 19:45Z | YES | **PUBLISHED** | cowork-schedule last_fired=2026-06-07T19:47:37Z; unified-agent nb entry confirmed |
 
-`guaranteed_ok=TRUE (3 guaranteed slots all fired) | start_count=3+ | close_count=3(guaranteed) | stuck_count=0 | failed_count=0`
+`guaranteed_ok=TRUE (1 guaranteed Saturday slot fired) | start_count=1 | close_count=1 | stuck_count=0 | failed_count=0`
 
-**Infra event:** news-scout c54 blocked at 20:00Z (vn-market backend :3000 connection refused ~6min). Recovered 20:06:42Z. No chef impact (all 3 guaranteed slots closed before 20:00Z). MED severity for infrastructure record.
-
----
-
-## Primary Audit: 2026-06-05 Published Dishes
-
-### Morning Dish (05:17Z) — Layer Walk
-
-**No notebook entry.** cowork-schedule confirms fire. Layer walk CANNOT BE PERFORMED from file-evidence. Previous cycle patterns suggest similar structure to EOD/Evening.
-
-**Morning score: UNAUDITABLE** | F-MORNING-NB-MISSING: 2nd occurrence (c87: EOD-NB-MISSING, c88: MORNING-NB-MISSING). Pattern escalated to MED.
+Weekend pipeline: HEALTHY.
 
 ---
 
-### EOD Dish (08:37Z) — Layer Walk
+## Primary Audit: 2026-06-07 Evening Dish (19:47Z) — Layer Walk
+
+Degraded-dish floor engaged: prices stale >24h (2026-06-05 08:59Z), carry is_estimate=true (tier-4, FRED weekend gap), market hexagram unavailable (501). Per chef.md Step 1 spec, degraded-dish floor is correct — publish with degradation notes beats no dish.
 
 | Layer | Score | Notes |
 |-------|-------|-------|
-| L1 | PASS | USD/VND 26124 vs 25500 threshold ✓; carry 1.38pp state cited; VinaCapital 70% crisis valuation floor = state transition named. Multiple state transitions. |
-| L2 | PARTIAL | Fed 3.62% stable cited. Carry NEUTRAL is_estimate=false ✓ (DSI fix confirmed). **[gap: PMI sub-components absent]** **[gap: US10Y threshold absent]** **[gap: EFFR-IORB spread absent]** |
-| L3 | PARTIAL | carry 1.38pp NEUTRAL ✓ (is_estimate=false, tier-2); USD/VND 26124 BEARISH (>25500) ✓. **[gap: VIRA absent]** **[gap: BCTC overdue 36+ days]** |
-| L4 | PASS (partial) | RE 3/4 pillars: M2✓ COC✓ EPS gap BCTC valuation✓. VinaCapital thesis 4/4 (M2✓ COC✓ EPS-floor✓ valuation✓). [phase: transition] [tier: equity] ✓ (AC-1 live). Avg 3.5/4. |
-| L5 | PARTIAL | Per-ticker hexagrams from get_portfolio_conviction. Market hexagram 501 dark. VIC/VHM/VNH implied from evening session context. |
-| L6 | PASS | Gap catalogue applied: single-pillar gaps noted; carry provenance DSI-CONSUMER-HONORS is_estimate=false honored ✓; causal chain explicit (Fed→carry→VND→RE bounce). |
-| Business context | ABSENT | F9 — 15th consecutive cycle. No bctc_signal_* product/customer/ops/mgmt cited. |
+| L1 | PASS | USD/VND 26124 vs 25500 BEARISH state transition ✓; gold +2.55σ risk-off state transition ✓. Two state transitions cited. |
+| L2 | PARTIAL | **[F-FED-RATE-REGRESSION]** Fed 5.33% cited — stale fixture resurfacing (c88 dishes correctly cited 3.62%; this is regression or different data path on weekend). PMI sub-components absent. EFFR-IORB spread absent. |
+| L3 | PARTIAL | carry is_estimate=true tier-4 (weekend FRED gap — DSI provenance rule honored correctly by flagging it). USD/VND 26124 BEARISH ✓. VIRA absent. BCTC overdue. |
+| L4 | PARTIAL | yield CHEAP (+3.2pp) valuation support ✓. Investment-clock CORE_VN score=8 ✓. No per-ticker pillar walk (stale prices). [phase: recovery implied via investment-clock]. [tier: equity implied]. Single effective pillar (yield). Avg: 1.5/4. |
+| L5 | PARTIAL | Market hexagram 501 (unavailable, skipped cleanly). No per-ticker hexagrams (off-market stale). Degraded-floor skip acknowledged. |
+| L6 | PARTIAL | Carry gap (is_estimate=true) flagged ✓. Gold/VN contradiction acknowledged ✓. Single-source baseline noted ✓. **[gap: Fed 5.33 stale not flagged as potential source error — dish treats it as fact, not flagging provenance risk]** |
+| Business context | ABSENT | F9 — 16th consecutive cycle. |
 
-**EOD score: 4/6 NEEDS_ATTENTION** (L4 upgraded vs c87: RE thesis now on correct carry regime; L6 PASS carry-provenance honored) | 9-step: 5.5/9
-
----
-
-### Evening Dish (19:37Z) — Layer Walk
-
-| Layer | Score | Notes |
-|-------|-------|-------|
-| L1 | PASS | USD/VND 26124 ✓; gold +2.55σ (risk-off state transition) ✓; VNH +12.5% anomaly (state transition named) ✓. THREE state transitions — best L1 since c86 evening. |
-| L2 | PARTIAL | Fed 3.62% stable ✓. **[gap: PMI sub-components absent]** **[gap: US10Y absent]** |
-| L3 | PARTIAL | carry 1.38pp NEUTRAL is_estimate=false ✓ (DSI fix confirmed). **[gap: VIRA absent]** **[gap: BCTC overdue]** |
-| L4 | PARTIAL | RE 3/4 (M2✓, COC✓, EPS gap BCTC, valuation✓) MEDIUM conviction. VNH 1/4 (caution, no causal link) LOW conviction. [phase: transition] [tier: equity] ✓ (AC-1). |
-| L5 | PARTIAL | VIC Kiển+caution, VHM Tỉnh+bullish, VNH Kiển+caution cited. Market hexagram 501 unavailable (skipped cleanly). |
-| L6 | PARTIAL | Single-pillar gaps noted (VNH). Carry provenance honored ✓. Causal chains explicit. **[gap: forensic citation for VNH low-conviction call — no source tier cited for anomaly]** |
-| Business context | ABSENT | F9 — 15th consecutive cycle. |
-
-**Evening score: 3.5/6 NEEDS_ATTENTION** (stable vs c87 evening 3.5/6; carry direction now correct — RE thesis on valid foundation despite same score) | 9-step: 5/9
+**Evening score: 3/6 NEEDS_ATTENTION** (down from c88 3.5/6; stale Fed rate + is_estimate=true carry + stale prices compound into weakest Saturday dish recorded) | 9-step: 4.5/9
 
 ---
 
-### 9-Step Score Summary (c88)
+## 9-Step Score Summary (c90 Evening)
 
-| Step | EOD | Evening | Verdict |
-|------|-----|---------|---------|
-| A | ✓ | ✓ | Monthly-freq indicators open |
-| B | PARTIAL (USD/VND+carry ✓; PMI/US10Y absent) | PARTIAL (same) | PMI threshold gap persists |
-| C | ✓ | ✓ | Causal chains present |
-| D | ✗ (PMI sub-components absent; EFFR-IORB absent) | ✗ (same) | Structural tool gap |
-| E | PARTIAL (VIRA absent; carry is_estimate=false ✓) | PARTIAL (same) | VIRA scraper gap; carry FIXED |
-| F | 3.5/4 avg | 2/4 avg | BCTC EPS gap caps |
-| G | n/a | n/a | — |
-| H | ✓ [phase:transition][tier:equity] | ✓ | AC-1 working |
-| I | PARTIAL (tier-2 cited; no social-primary) | PARTIAL | Tier citations present |
+| Step | Score | Notes |
+|------|-------|-------|
+| A | ✓ | Gold + USD/VND cited (monthly-frequency indicators) |
+| B | PARTIAL | USD/VND ✓; gold ✓; PMI/US10Y thresholds absent |
+| C | ✓ | Causal chain present (Fed + SBV → carry gap → USD/VND + gold → inflection) |
+| D | ✗ | PMI sub-components absent; EFFR-IORB absent; Fed 5.33 stale |
+| E | PARTIAL | carry is_estimate=true flagged (FRED weekend gap); no WiData; VIRA absent |
+| F | 1/4 | Only yield pillar; no M2/COC/EPS via BCTC (stale weekend context) |
+| G | n/a | No BCTC opinion in dish |
+| H | PARTIAL | Investment-clock phase implied; not explicitly declared [phase:X][tier:Y] verbatim |
+| I | PARTIAL | Tier-4 carry flagged; no social-primary; but Fed 5.33 stale raises source-quality concern |
 
-**Key improvement vs c87:** Steps D and E no longer have the carry-direction error (EFFR no longer citing stale 5.33 → wrong FII_OUTFLOW_RISK). Step E upgraded from FAIL to PARTIAL.
+**9-step: 4.5/9 → NEEDS_ATTENTION** (same structural gaps as c88 + new regression on D due to 5.33 stale)
 
 ---
 
-## Findings (c88)
+## Findings (c90)
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|---------|
-| F-MORNING-NB-MISSING | unified-agent notebook has NO morning dish entry for 2026-06-05 despite cowork-schedule chef-morning last_fired=05:17:58Z. c87 had F-EOD-NB-MISSING (EOD). Pattern: 2 consecutive cycles with different slots missing. Step 8 notebook write not running reliably. | unified-agent / Step 8 | MED (escalated from LOW) | telemetry | cowork-schedule.json last_fired=2026-06-05T05:17:58Z vs unified-agent.md — no morning section exists |
-| F3 | PMI sub-components absent (Step D FAIL) — persistent across c82–c88 | unified-agent | MED | methodology | Structural tool gap. US macro stack (Step D) cannot achieve PASS without PMI sub-components. |
-| F4 | VIRA absent (Step E PARTIAL) — persistent | unified-agent | MED | methodology | VPS scraper pending — structural |
-| F5 | Market hexagram 501 dark — B-bucket not wired | kinh-dich-service | LOW | infrastructure | unified-agent nb: "Market hexagram service: unavailable 501 (skipped cleanly)" |
-| F9 | Business context absent — 15th consecutive cycle. bctc_signal_* product/customer/ops/mgmt never cited in dish | unified-agent / chef | MED | methodology | PO c81 disposition unchanged. No change. |
-| F2 | BCTC Q1/Q2 overdue — EPS pillar blocked for banking/RE/steel. ACB/DHG/EIB conf <50% (PUB-5 blocked); CTG 16th cycle no parseable BCTC. FPT only (conf 81%) | bctc-analyst / data pipeline | MED | data | bctc-analyst c024 (2026-06-05T18:15Z): FPT only, CTG PDF present but unextracted |
-| F-INFRA-BACKEND-OUTAGE | vn-market backend :3000 went down ~20:00Z (news-scout c54 blocked), recovered 20:06:42Z (~6min). No chef impact but audit session MCP unavailable. | mcp-server | LOW | infrastructure | news-scout nb c54: "MCP gateway connection refused (vn-market backend :3000 not responding)" |
+| F-FED-RATE-REGRESSION | Fed rate cited as 5.33% in 2026-06-07 evening dish — this was the stale fedFundsRate fixture corrected in c87/c88 (real rate 3.62%). c88 EOD+Evening both cited 3.62%. c90 evening reverts to 5.33%. Possible root: weekend FRED data path differs from weekday path, or macro-indicators pull from stale cache on Saturday. carry is_estimate=true (tier-4) correctly flagged, but the underlying Fed rate value itself is suspect. | unified-agent / macro-indicators | HIGH | data/methodology | unified-agent nb 2026-06-07: "Fed 5.33% stable" vs c88 "Fed 3.62% stable" — same ticker, different values 2 days apart. |
+| F-NB-MISSING-FRIDAY | Entire 2026-06-06 (Friday) is absent from unified-agent notebook. Notebook has 2026-06-05 entries then jumps directly to 2026-06-07 evening. Friday had chef-morning (05:15Z), chef-intraday, chef-eod (08:45Z), chef-evening (19:45Z) — none have notebook entries. This is the 3rd consecutive cycle with missing notebook entries (c87: EOD, c88: Morning, c90: full Friday). Root cause appears to be session reliability (crash before Step 8) not flow spec. | unified-agent / Step 8 | HIGH (escalated from MED) | telemetry | unified-agent.md: last 2026-06-05 section, then "Session: 2026-06-07 (evening)" — no 2026-06-06 entries. |
+| F3 | PMI sub-components absent (Step D FAIL) — persistent c82–c90 | unified-agent | MED | methodology | Structural tool gap — US macro PMI sub-components unavailable. |
+| F4 | VIRA absent (Step E PARTIAL) — persistent | unified-agent | MED | methodology | VPS scraper pending — structural. |
+| F5 | Market hexagram 501 dark — B-bucket not wired | kinh-dich-service | LOW | infrastructure | "Market hexagram service: unavailable 501 (skipped cleanly)" |
+| F9 | Business context absent — 16th consecutive cycle. bctc_signal_* product/customer/ops/mgmt never cited. | unified-agent / chef | MED | methodology | PO dispositions unchanged. Structural. |
+| F2 | BCTC Q1/Q2 overdue — CTG 20th cycle blocked; ACB/DHG/EIB PUB-5 blocked. FPT only (conf 81%). | bctc-analyst / data pipeline | MED | data | bctc-analyst c028 (2026-06-06T18:13Z): CTG guard deferred to c029. |
 
 ---
 
-## Closed Findings (c88 vs c87)
+## Closed Findings (c90 vs c88)
 
-| Finding | c87 | c88 | Reason |
+| Finding | c88 | c90 | Reason |
 |---------|-----|-----|--------|
-| F-CARRY-CORRUPT (CRITICAL) | OPEN | **CLOSED** | unified-agent EOD/Evening both cite `carry 1.38pp NEUTRAL (is_estimate=false tier-2)`. No stale fedFundsRate=5.33 fixture. DSI-CONSUMER-HONORS-ISESTIMATE provenance rule working. c87 PO already verified at 21:21Z (Go macro-indicators fix + FRED EFFR fix confirmed). c88 notebooks confirm sustained. |
-| F-SCHED-TRACK (LOW) | OPEN | **CLOSED** | cowork-schedule chef-eod now shows last_fired=2026-06-05T08:45:59Z (today, not stale 2026-06-03). Schedule tracking fixed. |
+| F-CARRY-CORRUPT (CRITICAL) | CLOSED | **RE-OPENED as F-FED-RATE-REGRESSION (HIGH)** | Fed 5.33% reappears in Saturday evening. Possible weekend FRED data path difference from weekday. Not identical to c87 (which had stale fixture on all days); this appears weekend-specific. Monitor c91 (Sunday digest or Monday morning) to confirm if weekday path still serves 3.62%. |
+| F-SCHED-TRACK (LOW) | CLOSED | REMAINS CLOSED | cowork-schedule dates all current. |
+| F-INFRA-BACKEND-OUTAGE (LOW) | CLOSED | CLOSED | No new outage events detected this cycle. |
 
 ---
 
-## Positive Signals (c88)
+## Positive Signals (c90)
 
-- **F-CARRY-CORRUPT CLOSED — second confirmation.** Both EOD and Evening dishes correctly cite carry 1.38pp NEUTRAL is_estimate=false tier-2. DSI sprint cure durable across 2 cycles.
-- **RE thesis on correct macro foundation.** VIC/VHM RE rally thesis now correctly uses carry +1.38pp (NEUTRAL = domestic bid sustained) vs prior wrong FII_OUTFLOW_RISK. Thesis quality improved.
-- **AC-1 [phase:transition][tier:equity] declaration confirmed live across both auditable dishes.** Auto-cure from c86 working 3rd consecutive cycle.
-- **VNH +12.5% anomaly correctly LOW conviction.** Chef correctly assigned VNH 1/4 pillars + Kinh Dịch caution + "no causal link" = LOW. Correct methodology under uncertainty.
-- **DSI carry provenance rule holding.** No backslide to stale fixture usage. The is_estimate=false check is consistently cited.
-- **bctc-analyst c024: CTG PDF 6.0MB now downloaded** (ĐÃ NỘP 2026-06-05). If extraction succeeds at c025 21:00Z slot, CTG BCTC finally consumable after 16 cycles blocked.
-- **news-scout quick recovery.** c54 blocked at 20:00Z; c55 fired at 20:10Z with 3 high-quality signals (VIC 92%, VIX 88%, HPG 86%). Recovery latency ~10min.
-- **EOD layer score upgraded to 4/6.** Best EOD score since c86 4/6 Evening.
+- **news-scout c59 NEUTRAL regime correctly applied.** Weekend context correctly recognized — no false TIGHTENING on stale data. Signal quality: 3 signals (Vietcap bullish, NVL dividend, gold sell-off), all above 69% confidence.
+- **Degraded-dish floor correctly engaged.** unified-agent Saturday evening correctly uses degraded-floor: stale prices acknowledged, carry is_estimate=true flagged, hexagram skipped cleanly. Per chef.md spec.
+- **carry is_estimate=true FLAGGED (not silently consumed).** DSI provenance rule is honored on weekend — the issue is the underlying fedFundsRate=5.33 value, not the is_estimate flag behavior.
+- **bctc-analyst c028: CTG guard expires ~2026-06-07T00:09Z.** c029 can attempt extraction. Watch for first CTG BCTC signal in 20+ cycles.
+- **No stuck cycles, no FAILED pipeline events** on Saturday.
+- **Gold sell-off signal (#5310) correctly classified** — risk-off unwinding, bearish on alternative assets, pillar-aware (COC headwind, EPS pressure, M2 headwind).
 
 ---
 
-## Auto-Cures Applied (c88)
+## Auto-Cures Applied (c90)
 
-None applied by TNB this cycle. No 3+ identical consecutive gap triggering auto-cure threshold.
-
-Note: F-MORNING-NB-MISSING pattern (c87 EOD-NB-MISSING, c88 MORNING-NB-MISSING) affects different slots each cycle — not yet 3× same slot. Pattern tracked; if c89 shows another slot missing, trigger Step 6 auto-cure on unified-agent Step 8.
+None applied. Pattern analysis:
+- F-NB-MISSING: 3 cycles, 3 different slots (EOD/Morning/full-Friday). Threshold for same-slot pattern (3× same) not met. Root cause is session reliability (crash before Step 8), not a flow spec gap that chef.md auto-cure can address. **Escalating to PO as architectural concern** — session crash pattern needs ops/infra investigation, not flow edit.
+- F-FED-RATE-REGRESSION: First occurrence in this form (weekend-specific). Cannot auto-cure without understanding weekend vs weekday FRED data path divergence. Flagged HIGH; PO to decide investigation scope.
 
 ---
 
 ## Persisting Blockers
 
-1. **F-MORNING-NB-MISSING (MED, escalated):** Morning dish unauditable. Step 8 notebook write unreliable across slots. 2 consecutive cycles with different slots missing.
-2. **BCTC Q1/Q2 overdue (MED):** EPS pillar blocked. CTG PDF now present — watch c025 for extraction result.
-3. **VIRA scraper pending (MED):** E-gap structural.
-4. **PMI sub-components absent (MED):** D-gap structural.
-5. **F9 business context absent — 15th cycle (MED):** PO c81 disposition unchanged.
-6. **Market hexagram dark (LOW):** B-bucket 501 — per-ticker working.
-7. **MCP backend outage pattern (LOW):** Second known brief outage event (c54 at 20:00Z ~6min). Monitor for recurrence.
+1. **F-FED-RATE-REGRESSION (HIGH, NEW):** Fed 5.33% stale in Saturday dish. Possible weekend FRED cache path different from weekday. Monitor Monday morning chef dish — if it reverts to 3.62%, confirms weekend-specific data path issue. If it stays 5.33%, c87 regression was never fully fixed.
+2. **F-NB-MISSING-FRIDAY (HIGH, escalated):** 3 consecutive cycles with missing entries. Full Friday 2026-06-06 absent from unified-agent notebook. Session reliability (crash before Step 8) suspected. Needs infra investigation — cannot auto-cure via flow edit.
+3. **BCTC Q1/Q2 overdue (MED):** EPS pillar blocked. CTG guard expires — c029 is the proof point.
+4. **VIRA scraper pending (MED):** E-gap structural.
+5. **PMI sub-components absent (MED):** D-gap structural.
+6. **F9 business context absent — 16th cycle (MED):** PO dispositions unchanged.
+7. **Market hexagram dark (LOW):** B-bucket 501 — per-ticker working.
 
 ---
 
-## Next Cycle Priorities (c89 — 2026-06-06T20:13Z)
+## Next Cycle Priorities (c91 — 2026-06-08T20:13Z or earlier)
 
-1. **Verify bctc-analyst c025 (21:00Z): Did CTG BCTC extract successfully?** If YES → first CTG BCTC signal in 16+ cycles. If NO → escalate extraction error to BUG.
-2. **Morning dish notebook entry:** Does unified-agent log a morning entry for 2026-06-06 (05:15Z)? Two consecutive misses → auto-cure Step 8.
-3. **VNH reversal watch:** VNH +12.5% Thursday close. Does it hold 900 Friday or reverse below 850?
-4. **Gold -2.88σ declining pattern:** Three consecutive cycles gold declining (bctc-analyst noted HIGH alert). Does macro regime shift?
-5. **RE thesis stress test:** With carry NEUTRAL, the RE VIC/VHM bounce thesis is valid. But gold safe-haven contradicts. Friday EOD should clarify inflection direction.
-6. **news-scout signal carry-forward:** VIC VinaCapital chain_catalyst repeated c51→c53→c55 (3 cycles, high confidence 86-92%). If VIC holds gains Friday, thesis confirmed; if reverses, false-positive pattern.
+1. **Monday morning chef dish Fed rate check:** Does Monday 2026-06-09 05:15Z morning dish cite 3.62% or 5.33%? If 5.33% → F-FED-RATE-REGRESSION confirmed weekday regression (c87 fix did not hold); escalate CRITICAL. If 3.62% → weekend-specific FRED data path divergence; mid-severity architectural gap.
+2. **CTG c029 extraction result:** Did bctc-analyst c029 extract CTG BCTC? If YES → first CTG BCTC signal in 20+ cycles. If NO → re-escalate extraction error.
+3. **Friday session reliability:** Did 2026-06-08 (Sunday digest) sessions write notebooks? Confirms if session-crash pattern is ongoing.
+4. **NVL dividend ex-date (week 8-12 June):** Watch NVL price action around ex-date — 25% cash payout signal (#5309).
+5. **Gold sell-off (#5310):** Largest fund liquidation signal. If gold drops significantly Monday, COC/M2 regime shifts — RE thesis carry-neutral assumption may need revisiting.
 
 ---
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
-ACK: 2026-06-05T20:26Z PO — c88 read. No new dev task: CTG extraction watch already covered (FIX-CTG-PDF-MISLINK live-verified 62p, refine slot armed aec3a3d8; c025 21:00Z is the proof point). F-MORNING-NB-MISSING = cowork-side, below auto-cure threshold, tracked by TNB. VIRA/PMI/F9 dispositions unchanged.
-ACK: 2026-06-06T22:24:30Z PO — c89 read. Tasks created: none from TNB (all 6 priorities are cowork/market watch items, no high-severity dev findings). Cross-checked this tick: (1) CTG c025 proof point — report 49c11ce2 now holds the real 62p consolidated PDF, text COMPLETE, refine_status still PENDING; bctc-analyst c028 deferred CTG to c030 (dcd41919) — WATCH stands, escalate to architect if c030 defers again or refine yields composite=0.00 on the 62p text. (2) BCTC-1345b confidence=0.00 skips = designed guard while refine pending, not new corruption evidence. (3) c045 weekend staleness CRITICALs pre-date FIX-SLA-WEEKEND-AWARE deploy 16:20Z (721a457b); Sunday proof window open.
