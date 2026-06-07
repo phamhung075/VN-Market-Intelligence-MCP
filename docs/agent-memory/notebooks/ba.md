@@ -1,5 +1,19 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-07 | **Sprint:** TOOL-SURFACE-UPGRADE
+
+## TOOL-SURFACE-UPGRADE-BA · 2026-06-07
+
+Spec complete. REQ file: `docs/handoffs/TOOL-SURFACE-UPGRADE-BA-spec.md`. Zero PO blockers. 6 architect blockers. NEXT: architect.
+
+Key BA findings (raw-read, not relayed):
+- True tool count: /health=162, source-grep=161, project-stats=161. Delta=1 unresolved; U2 generator settles it.
+- system-map.json: 146 tools — 17 missing (new tools since 2026-05-03), 2 ghosts (get_market_hexagram deregistered by TSH, sequential_market_analysis). system-map is cowork lane scope — BA does NOT touch docs/agents/tools/*.
+- tool-usage-stats.json: sessionCount:0/toolCounts:{} since gateway cutover. Root cause = sessionToolCache empty because gateway drops connection per call. U1 fix: per-call counter on server side, independent of session.
+- U3: is_trading_day likely called from cowork-match-slots.js (DWF-PHASE1 FR-P1-4) — architect must check .js files, not just .ts.
+- U5: VPS fetch-foreign-flow.sh fetches fBVol/fSVolume/fRoom but NO holding_ratio field. vnstockStore.ts:561 falls back to `row.current_holding_ratio ?? 0` = always 0. Dead column rendered as real data — DSI violation.
+- U6 new pairs: get_market_summary vs generate_market_summary; get_insider_signals vs get_insider_transactions — both new to U6, not in TSH. Architect diffs both before any merge.
+
 **Last updated:** 2026-06-06 | **Sprint:** WORKFLOW-FLUIDITY
 
 ## WORKFLOW-FLUIDITY-BA · 2026-06-06
@@ -145,42 +159,14 @@ TASKS.md updated: P1-BA ✅ + P1-ARCH 🔄 added. Files left unstaged per commit
 
 ---
 
-**Last updated:** 2026-05-30 | **Sprint:** BCTC-TRUST-RED (TR-BA)
-
-## BCTC-TRUST-RED-BA · 2026-05-30
-
-Sprint BCTC-TRUST-RED spec complete. REQ file: `docs/REQ_BCTC-TRUST-RED.md`. Blocker B-1 (ACB UUID) is a dev-time blocker, not a PO blocker. Zero PO blockers. NEXT: pm (TR-PM).
-
-Key decisions encoded as requirements:
-
-- FR-TR0-1 (purge): One-time in-container SQL only — NOT committed to migration. ACB UUID must be resolved by dev before running. Pattern: `SELECT id FROM financial_reports WHERE action_code='ACB' ORDER BY sort_key DESC LIMIT 1`.
-- FR-TR0-2 (enum): `REJECTED_SANITY` added to `window_status` Zod enum in `pushBctcRefinedUnitTool.ts` + DDL comment in schema. No ALTER TABLE.
-- FR-TR0-3 (ingest gate): validateBctcUnit called in push handler before INSERT. BLOCK → write with `window_status='REJECTED_SANITY'`, return `{ok:false, rejected_reason}`. WARN → write with adjusted_confidence, ok:true.
-- FR-TR0-4 (publish guard): `checkPublishability(db, reportId)` private helper in `bctcFullTools.ts`. Evaluates PUB-1..PUB-4 in sequence. `refine_status` and `id` must be in `ReportRow` SELECT (already present per code read).
-- FR-TR1-1 (DT-1): `bctcSanityValidator.ts` new domain service. Pure function. Cyclic-substring check via doubled ascending/descending cycles. ≥ 2 distinct hits = BLOCK; 1 hit = WARN.
-- FR-TR1-2 (DT-2+DT-3): `bctcMagnitudeValidator.ts` new domain service. DT-2 income check + forced-zero balance check. DT-3 revenue contradiction (≥ 3 distinct values with >20% pairwise divergence). Label-match ambiguity → WARN not BLOCK (RISK-3 mitigation).
-- FR-TR1-3 (finalize wiring): DT-2/DT-3 called after applyCorrections, before transaction. BLOCK → skip INSERT, set refine_status='REJECTED_SANITY'. CONFIRMED guard (Layer 1) takes precedence.
-- FR-TR1-4 (DT-4): logger.warn only. No DB write. No block.
-- TR-2: Routed to BCTC-LAYOUT-FIRST as LF-QA acceptance criteria (EC-1/3/4/5/1b). PM must add.
-
-Zone: `apps/mcp-server/src/` only. Zero diff on: HCM-DISAMBIG-extraction.test.ts, pdf-extractor/*, docs/agents/refine_bctc_md/*.
-
-TASKS.md updated: TR-BA ✅ + TR-PM 🔄 added. Files left unstaged per commit-discipline. NEXT: pm (task breakdown).
-
----
-
 ## Archived sprint specs (condensed)
 
-- **BCTC-HUMAN-CONFIRM-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-HUMAN-CONFIRM.md`. bctc_human_corrections table, 3-layer lock, confirm_status column, source_confidence column, Option B2 re-anchor key. SHIPPED.
-
----
-
-## Archived sprint specs (condensed — older)
-
-- **BCTC-AGENTIC-REFINE-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-AGENTIC-REFINE.md`. 3-zone split (pdf-extractor/mcp-server/agent-father). SHIPPED.
-- **DATA-PIPELINE-INTEGRITY-BA** ✅ 2026-05-30. REQ `docs/REQ_DATA-PIPELINE-INTEGRITY.md`. DPI-1..4 root causes confirmed. DPI-3 assigned dev-mcp-server (not macro-indicators). SHIPPED.
-- **BCTC-TABLE-BOUNDARY-BA** ✅ 2026-05-29. REQ `docs/REQ_BCTC-TABLE-BOUNDARY.md`. 5 FR decisions (schema-page-type, intervening-prose break, title-band break, blank-page gate, output contract). SHIPPED.
-- **VNH-SECTOR-FIX-BA** ✅ 2026-05-29. REQ `docs/REQ_VNH-SECTOR-FIX.md`. VNH domain real_estate→agriculture, DomainType type-tightening. SHIPPED.
+- **BCTC-TRUST-RED-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-TRUST-RED.md`. REJECTED_SANITY enum + ingest gate + publish guard + 4 DT domain validators. SHIPPED.
+- **BCTC-HUMAN-CONFIRM-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-HUMAN-CONFIRM.md`. bctc_human_corrections table, 3-layer lock, confirm_status column, Option B2 re-anchor key. SHIPPED.
+- **BCTC-AGENTIC-REFINE-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-AGENTIC-REFINE.md`. 3-zone split. SHIPPED.
+- **DATA-PIPELINE-INTEGRITY-BA** ✅ 2026-05-30. REQ `docs/REQ_DATA-PIPELINE-INTEGRITY.md`. DPI-1..4 root causes. SHIPPED.
+- **BCTC-TABLE-BOUNDARY-BA** ✅ 2026-05-29. REQ `docs/REQ_BCTC-TABLE-BOUNDARY.md`. 5 FR decisions. SHIPPED.
+- **VNH-SECTOR-FIX-BA** ✅ 2026-05-29. REQ `docs/REQ_VNH-SECTOR-FIX.md`. VNH domain fix. SHIPPED.
 - **Pre-2026-05-29 specs** — archived to `docs/archive/notebooks/ba-2026-05-21.md`.
 
 ## Known patterns / preferences

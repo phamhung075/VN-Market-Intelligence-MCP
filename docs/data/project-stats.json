@@ -31,7 +31,7 @@
   "smoke_window_1912a_planned_end": "2026-05-15T14:00:00Z",
   "smoke_window_1912a_status": "USER-OVERRIDE-CLOSED-EARLY c105 (~22h short, cutover executed cleanly)",
   "smoke_window_1912a_ac6_verdict": "PARITY PASS (Go 9277/9277 = TS 9277/9277)",
-  "toolCount": 161,
+  "toolCount": 158,
   "schedulerFileCount": 64,
   "cronJobCount": 76,
   "_cronJobCountNote": "RECONCILED 2026-05-25 (P0-MCP-EXIT, po) 77→68. Sprint BCTC-EVAL-SUBSTRATE: +1 bctcEvalRecompute → 69. 69 = `grep -c cron.schedule apps/mcp-server/src/scheduler/startScheduler.ts` = the operative dev-mcp-server Gate-2d probe + Phase-1 regression tripwire. cronConfig.ts named CRON keys=74.",
@@ -52,7 +52,7 @@
     "mcpServerHealth": "healthy",
     "mcpEndpoint": "localhost:3000",
     "connectionStatus": "OK",
-    "toolCount": 161,
+    "toolCount": 158,
     "lastSuccessfulCycle": "2026-05-18T07:22:00Z"
   },
   "_generated_by": "bun scripts/gen-project-stats.ts",

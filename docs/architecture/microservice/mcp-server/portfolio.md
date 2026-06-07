@@ -22,7 +22,7 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 | `get_target_allocation` | Current target allocation settings | — | market.db (target_allocations) |
 | `get_performance_attribution` | P&L attribution by sector/factor | days? | performanceAttribution |
 | `get_correlation_matrix` | Ticker correlation matrix | tickers[] | correlationCalculator + market.db |
-| `get_bond_maturity_ladder` | Bond maturity schedule | — | market.db |
+| `get_bond_maturity_calendar` | Bond maturity schedule | — | market.db |
 | `add_to_watchlist` | Add ticker to watchlist | ticker, sector | market.db |
 | `remove_from_watchlist` | Remove ticker from watchlist | ticker | market.db |
 | `get_watchlist` | Current watchlist with metadata | — | market.db |

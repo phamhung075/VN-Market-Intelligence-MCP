@@ -84,8 +84,8 @@ Complete index → `docs/agents/tools/list/INDEX.md`
 | `get_supply_chain_exposure` | Supply chain risk verification |
 | `get_energy_grid_signals` | Energy grid risk verification |
 | `get_pharma_signals` | Pharma sector signals |
-| `get_public_investment_signals` | Public investment signals |
-| `get_credit_flow_signals` | Credit flow verification |
+| `get_public_contracts` | Public investment signals |
+| `get_credit_flow_signal` | Credit flow verification |
 | `get_sector_rotation` | Sector rotation detection |
 | `get_rebalancing_signals` | Portfolio rebalancing signals |
 

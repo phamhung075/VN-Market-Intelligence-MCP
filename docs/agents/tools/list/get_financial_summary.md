@@ -63,7 +63,7 @@ Published       : 2026-01-15
 
 | Condition | Response |
 |-----------|----------|
-| No row found for ticker + filters | "No financial data found for {code}. Run fetch_ssc_reports to load data from the SSC portal." |
+| No row found for ticker + filters | "No financial data found for {code}. Run bctcReparseJob cron or trigger_sbv_vps_fetch to load data." |
 | Database error | "Error retrieving summary for {code}: {message}" |
 
 ## Usage Examples
@@ -80,7 +80,7 @@ Returns Q3 2025 data for VCB
 
 - Called by: Market Analyst (concise KPI check before deeper `get_bctc_full` query)
 - Read-only: queries `financial_reports` table; never writes
-- If data is absent: run `fetch_ssc_reports` or trigger `bctcReparseJob` cron to populate
+- If data is absent: trigger `bctcReparseJob` cron or use `trigger_sbv_vps_fetch` to populate
 - Source tier: 1 (local SQLite — BCTC extraction from SSC/VPS pipeline)
 
 ## Related Tools
@@ -89,7 +89,7 @@ Returns Q3 2025 data for VCB
 |------|-------------|
 | `get_bctc_full` | Broader: full quarterly time-series (income + balance + cash flow); use when trend analysis is needed |
 | `compare_financials` | Cross-stock: YoY/QoQ comparison across 2+ tickers |
-| `fetch_ssc_reports` | Write path: triggers BCTC pipeline to populate `financial_reports` table |
+| `trigger_sbv_vps_fetch` | Write path: triggers BCTC pipeline to populate `financial_reports` table |
 
 ---
 

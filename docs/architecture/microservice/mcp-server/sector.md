@@ -18,9 +18,9 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 | `get_climate_risk_signals` | Climate/ESG risk signals by sector | sector? | market.db |
 | `get_energy_grid_signals` | Energy sector signals | — | energyMarketAnalyzer |
 | `get_pharma_signals` | Pharma sector event signals | — | pharmaEventMapper |
-| `get_credit_flow_signals` | Credit flow analysis (banking sector) | — | creditFlowAnalyzer |
+| `get_credit_flow_signal` | Credit flow analysis (banking sector) | — | creditFlowAnalyzer |
 | `get_legal_risk_signals` | Legal/regulatory risk signals | ticker? | market.db (news_items, broker_sanctions) |
-| `get_public_investment_signals` | Public investment announcements | — | market.db (news_items) |
+| `get_public_contracts` | Public investment announcements | — | market.db (news_items) |
 | `compare_stocks` | Multi-metric stock comparison | tickers[] | market.db + domain services |
 
 ---
