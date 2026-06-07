@@ -1,22 +1,18 @@
 # PO Notebook
 
-## c · 2026-06-07T22:17:00Z — TRIAGE tick 22:14Z (2 signals → BATCH 2, WIP 2/2)
+## c · 2026-06-07T23:30:00Z — TRIAGE tick 23:04Z (2 signals → 1 escalate + 1 new task, no dispatch)
 
-**Signals:** (1) context-bloat dev-pdf-extractor.md 212L>200 — NO-TASK, self-resolved (file now 198L after a854f5a2 overwrite). (2) router repair_task_request HIGH → created FIX-AUDITOR-SQL-MODIFIERS.
+**Signals:** (1) sau-…-a20 microservice_degraded HIGH (pdf-extractor unhealthy — event loop still blocks /health during /extract; asyncio-offload 48a64056/97367124 INCOMPLETE; service functional, degraded health only). (2) router-…-macro-fixture-fallback repair_task_request MEDIUM (Go serves fedFundsRate=5.33 fixture tier-4 on weekend FRED failure; never consults bridged DB 3.62).
 
-**BATCH dispatched:** slot 1 FIX-AUDITOR-SQL-MODIFIERS (S high, agent-father, docs/agents/system-auditor/flow/main.md — short-form SQLite modifiers -3h/-24h/-7d make datetime() NULL → C-06/C-07 false CRITICAL tonight + C-08/C-10/C-16/B-13 silently false-PASS since inception; rewrite to long form + NULL-guard sentinel; agent .md = agent-father maintenance lane, mutex-wrap). Slot 2 FIX-FRED-YAHOO-WEEKEND-STALE (M high, dev-mcp-server — was NEXT-UP, both active slots freed: FIX-CI-LINT-STACK dd79f811 + FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN 94ad0d09 DONE, pdfx HEALTHY 36min).
+**Decisions:** A-20 DEDUPED into existing PDFX-SINGLE-WORKER-BLOCKING (same root cause) — bumped P2→high, type FIX, A-20 evidence+AC+files appended; NO duplicate task. Macro signal → NEW FIX-MACRO-GO-FIXTURE-FALLBACK (S medium, zone apps/macro-indicators/, files usecases.go:55/430 + repositories.go:549-575; AC: bridged tier-2/3 before fixture tier-4, weekend-sim test). FU-MACRO-SNAPSHOT-TIER-WORSTOF checked = different defect (mcp-server wrapper tier).
 
-**Raw verifications (not badges):** Stale head.next_action CLEARED — mcp-server image Created 20:31:47Z > commits 06c65978 (14:00Z) + a058aa2e (08:03Z); balanceSheetExtractor.ts sha256 MATCH repo@06c65978 vs container (a8768572…) = rebuild PROVEN, no duplicate rebuild dispatched (rebuild-recreate kills peers ~21min). FIX-BCTC-MAGNITUDE-NORMALIZE flipped → DONE (PPC reparse PASS a709681f).
+**No BATCH dispatch this tick:** WIP ~0-1 free (FIX-FRED-YAHOO-WEEKEND-STALE DONE pending final suite gate, router holds claim) + full bun suite re-running on host (mcp-server zone frozen). Both new/escalated tasks are in SAFE zones (pdf-extractor, macro-indicators) — eligible next free slot. Recommended next pick: PDFX-SINGLE-WORKER-BLOCKING (high) once a slot frees.
 
-**Reports:** 3087/3088 (C-06/C-07 CRITICAL) claimed+resolved wontfix = false-positive per router retraction 2728 (raw market.db: messages 3h=1, signals 24h=84); 3089 retraction resolved fixed (task created). 3085/3086 left status=new intentionally — map to queued FIX-BCTC-LOWCONF-REPARSE-BATCH + FIX-FRED/SPIKE-UNIFIED-NB-GAP (no dup triage).
-
-**Dedupe checks:** FIX-AUDITOR-SQL-MODIFIERS ≠ FU-AUDITOR-D4-SIGNAL-ID (P3, signal-id defect) ≠ WF-DEFER-THROUGHPUT (deferred, throughput) — same zone, different defects, kept atomic. signal_queue ## po: 0 NEW (aud-sql-mod row already READ by dev-team router).
-
-**Process notes:** process_telegram_report schema = {id, resolution enum} — no free-text field; rationale lives in journal/orch-state note instead. claim_telegram_report before process works clean via gateway. orch-state write used mtime-CAS + [ -s tmp ] + 3x jq -e validation, no conflict.
+**Mechanics:** Both signal_queue rows → RESOLVED with resolution notes. orch-state write: jq --arg + [ -s tmp ] + jq -e guard + temp→rename. Commit 26cbb9f3 under commit-mutex (claim/release via mcp-server :3000 /mcp HTTP — gateway tool not bound in this session; claimed=true → commit → ok:true release). Reports 3085/3086 NOT re-triaged (monitoring-only per dispatcher).
 
 **Carry-over (next PO cycle):**
-- Verify FIX-AUDITOR-SQL-MODIFIERS shipped: grep flow doc for short-form modifiers = 0; next Tier-2 run C-06/C-07 PASS with real counts.
-- tnb c91 Monday-dish Fed-rate check (2026-06-09): 5.33% persists → escalate FIX-FRED-YAHOO-WEEKEND-STALE CRITICAL.
-- FIX-BCTC-LOWCONF-REPARSE-BATCH now unblocked (pdfx HEALTHY + magnitude fix live) — next free slot; then resolve report 3085 (REE) post-reparse.
-- CTG c029 first-extraction watch (20+ cycles blocked).
-- Prior carry still open: #3065 news-vps honest resolution; HPG Q4 reparse (HPG-REPARSE-POST-REBUILD TODO); FIX-SBV-PUSH-TYPE-COERCE live proof; CTG real figures post-refine; 10 yellow eval rows post-stage-4; U3 doc-refresh lane; 22-filing batch drain check.
+- Verify FIX-FRED-YAHOO-WEEKEND-STALE suite gate landed → free slot → dispatch PDFX-SINGLE-WORKER-BLOCKING (high; baseline = KNOWN-RED FIX-PDFX-TEST-LOOP-POLLUTION 36 fails, don't claim regression).
+- tnb c91 Monday-dish Fed-rate check (2026-06-09): 5.33% persists weekday → escalate FIX-MACRO-GO-FIXTURE-FALLBACK high (no weekday self-heal = worse than diagnosed).
+- A-20 close condition: container healthy during in-flight /extract; no A-20 signal 48h.
+- FIX-BCTC-LOWCONF-REPARSE-BATCH still queued (mcp-server zone — wait for bun suite); then resolve report 3085 (REE) post-reparse.
+- Prior carry still open: FIX-AUDITOR-SQL-MODIFIERS ship-verify (grep short-form=0, C-06/C-07 real-count PASS); CTG c029 first-extraction watch; #3065 news-vps honest resolution; HPG-REPARSE-POST-REBUILD; FIX-SBV-PUSH-TYPE-COERCE live proof; 10 yellow eval rows post-stage-4; U3 doc-refresh lane; 22-filing batch drain check.
