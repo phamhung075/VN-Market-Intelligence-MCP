@@ -1,61 +1,66 @@
 /**
- * TASK_1356b — trackSessionToolUsageJob gap tests (8 cases)
+ * TASK_1356b — trackSessionToolUsageJob tests (updated for TSU-DEV-U1)
  *
- * Covers stat field correctness, multi-session aggregation, expiry, and ISO timestamp.
- * Constructor DI: inject SessionToolCache directly — no mock.module() needed.
+ * Updated for per-call counter model (TSU-DEV-U1). The job now reads from
+ * perCallCounterStore instead of sessionToolCache (dead in gateway model).
+ * sessionCount field removed (meaningless post-gateway).
+ *
+ * Tests use resetCounters() + incrementTool() to control store state.
  * No DB access — no Bun.env["DB_PATH"] header required.
  *
- *   TSU-1: empty cache → sessionCount=0, uniqueTools=0, toolCounts={}
- *   TSU-2: single session, single tool → all three stat fields correct
- *   TSU-3: multi-session aggregation → same tool across sessions counted correctly
- *   TSU-4: uniqueTools reflects distinct names, not total appearances
- *   TSU-5: sessionCount matches number of set() calls (all non-expired)
- *   TSU-6: toolCounts for omnipresent tool equals sessionCount
- *   TSU-7: expired sessions (1ms TTL + Bun.sleep(10)) → excluded from snapshot
+ *   TSU-1: empty counter store → uniqueTools=0, toolCounts={}
+ *   TSU-2: single tool incremented once → toolCounts correct, uniqueTools=1
+ *   TSU-3: multiple tools incremented → toolCounts aggregates correctly
+ *   TSU-4: uniqueTools reflects distinct names, not total invocations
+ *   TSU-5: multiple increments same tool → counter accumulates
+ *   TSU-6: toolCounts for heavily-used tool reflects exact invocation count
+ *   TSU-7: resetCounters clears state → next job run sees empty counts
  *   TSU-8: generatedAt is valid ISO 8601 within before/after timestamp bracket
  */
 
-import { describe, it, expect } from "bun:test";
-import { SessionToolCache } from "../infrastructure/cache/sessionToolCache.js";
+import { describe, it, expect, beforeEach } from "bun:test";
+import {
+  incrementTool,
+  resetCounters,
+} from "../infrastructure/telemetry/perCallCounterStore.js";
 import { trackSessionToolUsageJob } from "../scheduler/system/trackSessionToolUsageJob.js";
 
 describe("TASK_1356b — trackSessionToolUsageJob gap tests", () => {
+  beforeEach(() => {
+    resetCounters();
+  });
+
   // ── TSU-1 ─────────────────────────────────────────────────────────────────
 
-  it("TSU-1: empty cache → sessionCount=0, uniqueTools=0, toolCounts={}", async () => {
-    const cache = new SessionToolCache(10, 60_000);
+  it("TSU-1: empty counter store → uniqueTools=0, toolCounts={}", async () => {
+    const stats = await trackSessionToolUsageJob();
 
-    const stats = await trackSessionToolUsageJob(cache);
-
-    expect(stats.sessionCount).toBe(0);
     expect(stats.uniqueTools).toBe(0);
     expect(stats.toolCounts).toEqual({});
   });
 
   // ── TSU-2 ─────────────────────────────────────────────────────────────────
 
-  it("TSU-2: single session, single tool → sessionCount=1, uniqueTools=1, toolCounts correct", async () => {
-    const cache = new SessionToolCache(10, 60_000);
-    cache.set("s1", { skills: [], toolNames: ["get_price"], loadedAt: Date.now() });
+  it("TSU-2: single tool incremented once → uniqueTools=1, toolCounts correct", async () => {
+    incrementTool("get_price");
 
-    const stats = await trackSessionToolUsageJob(cache);
+    const stats = await trackSessionToolUsageJob();
 
-    expect(stats.sessionCount).toBe(1);
     expect(stats.uniqueTools).toBe(1);
     expect(stats.toolCounts).toEqual({ get_price: 1 });
   });
 
   // ── TSU-3 ─────────────────────────────────────────────────────────────────
 
-  it("TSU-3: multi-session aggregation → same tool across sessions counted correctly", async () => {
-    const cache = new SessionToolCache(10, 60_000);
-    cache.set("s1", { skills: [], toolNames: ["fetch_and_analyze", "get_price"], loadedAt: Date.now() });
-    cache.set("s2", { skills: [], toolNames: ["fetch_and_analyze", "send_telegram"], loadedAt: Date.now() });
-    cache.set("s3", { skills: [], toolNames: ["get_price"], loadedAt: Date.now() });
+  it("TSU-3: multiple tools incremented → toolCounts aggregates correctly", async () => {
+    incrementTool("fetch_and_analyze");
+    incrementTool("get_price");
+    incrementTool("fetch_and_analyze");
+    incrementTool("send_telegram");
+    incrementTool("get_price");
 
-    const stats = await trackSessionToolUsageJob(cache);
+    const stats = await trackSessionToolUsageJob();
 
-    expect(stats.sessionCount).toBe(3);
     expect(stats.toolCounts["fetch_and_analyze"]).toBe(2);
     expect(stats.toolCounts["get_price"]).toBe(2);
     expect(stats.toolCounts["send_telegram"]).toBe(1);
@@ -63,66 +68,69 @@ describe("TASK_1356b — trackSessionToolUsageJob gap tests", () => {
 
   // ── TSU-4 ─────────────────────────────────────────────────────────────────
 
-  it("TSU-4: uniqueTools reflects distinct names, not total appearances", async () => {
-    const cache = new SessionToolCache(10, 60_000);
-    cache.set("s1", { skills: [], toolNames: ["A", "B"], loadedAt: Date.now() });
-    cache.set("s2", { skills: [], toolNames: ["B", "C"], loadedAt: Date.now() });
-    cache.set("s3", { skills: [], toolNames: ["A", "C"], loadedAt: Date.now() });
+  it("TSU-4: uniqueTools reflects distinct names, not total invocations", async () => {
+    incrementTool("A");
+    incrementTool("B");
+    incrementTool("A");
+    incrementTool("B");
+    incrementTool("C");
 
-    const stats = await trackSessionToolUsageJob(cache);
+    const stats = await trackSessionToolUsageJob();
 
-    expect(stats.uniqueTools).toBe(3); // A, B, C — not 6 total appearances
-    expect(stats.sessionCount).toBe(3);
+    expect(stats.uniqueTools).toBe(3); // A, B, C — not 5 total invocations
   });
 
   // ── TSU-5 ─────────────────────────────────────────────────────────────────
 
-  it("TSU-5: sessionCount matches number of set() calls (all non-expired)", async () => {
-    const cache = new SessionToolCache(10, 60_000);
+  it("TSU-5: multiple increments same tool → counter accumulates", async () => {
     for (let i = 0; i < 5; i++) {
-      cache.set(`s${i}`, { skills: [], toolNames: [`tool_${i}`], loadedAt: Date.now() });
+      incrementTool("heavy_tool");
     }
 
-    const stats = await trackSessionToolUsageJob(cache);
+    const stats = await trackSessionToolUsageJob();
 
-    expect(stats.sessionCount).toBe(5);
-    expect(stats.uniqueTools).toBe(5);
+    expect(stats.toolCounts["heavy_tool"]).toBe(5);
+    expect(stats.uniqueTools).toBe(1);
   });
 
   // ── TSU-6 ─────────────────────────────────────────────────────────────────
 
-  it("TSU-6: toolCounts for omnipresent tool equals sessionCount", async () => {
-    const cache = new SessionToolCache(10, 60_000);
-    for (let i = 0; i < 5; i++) {
-      cache.set(`s${i}`, { skills: [], toolNames: ["omnipresent_tool", `unique_${i}`], loadedAt: Date.now() });
+  it("TSU-6: toolCounts for heavily-used tool reflects exact invocation count", async () => {
+    for (let i = 0; i < 7; i++) {
+      incrementTool("omnipresent_tool");
+    }
+    for (let i = 0; i < 3; i++) {
+      incrementTool(`unique_${i}`);
     }
 
-    const stats = await trackSessionToolUsageJob(cache);
+    const stats = await trackSessionToolUsageJob();
 
-    expect(stats.toolCounts["omnipresent_tool"]).toBe(5);
-    // 6 distinct tools: omnipresent_tool + unique_0..unique_4
-    expect(stats.uniqueTools).toBe(6);
+    expect(stats.toolCounts["omnipresent_tool"]).toBe(7);
+    // 4 distinct tools: omnipresent_tool + unique_0..unique_2
+    expect(stats.uniqueTools).toBe(4);
   });
 
   // ── TSU-7 ─────────────────────────────────────────────────────────────────
 
-  it("TSU-7: expired sessions (1ms TTL + Bun.sleep(10)) → excluded from snapshot", async () => {
-    const shortCache = new SessionToolCache(10, 1); // 1ms TTL
-    shortCache.set("s1", { skills: [], toolNames: ["stale_tool"], loadedAt: Date.now() });
-    await Bun.sleep(10); // let TTL expire
+  it("TSU-7: resetCounters clears state → next job run sees empty counts", async () => {
+    incrementTool("stale_tool");
 
-    const stats = await trackSessionToolUsageJob(shortCache);
+    // First run captures the tool
+    const first = await trackSessionToolUsageJob();
+    expect(first.toolCounts["stale_tool"]).toBe(1);
 
-    expect(stats.sessionCount).toBe(0);
-    expect(stats.uniqueTools).toBe(0);
-    expect(stats.toolCounts).toEqual({});
+    // After reset, second run sees nothing
+    resetCounters();
+    const second = await trackSessionToolUsageJob();
+    expect(second.uniqueTools).toBe(0);
+    expect(second.toolCounts).toEqual({});
   });
 
   // ── TSU-8 ─────────────────────────────────────────────────────────────────
 
   it("TSU-8: generatedAt is valid ISO 8601 within before/after timestamp bracket", async () => {
     const before = new Date().toISOString();
-    const stats = await trackSessionToolUsageJob(new SessionToolCache(10, 60_000));
+    const stats = await trackSessionToolUsageJob();
     const after = new Date().toISOString();
 
     // Must round-trip through Date without loss (valid ISO 8601)

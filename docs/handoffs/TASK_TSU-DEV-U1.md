@@ -203,6 +203,43 @@ QA verifies via `call_tool(...)` wrapper, raw responses (not badges).
 
 ---
 
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files created:**
+  - `apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts:52` — singleton counter Map; exports incrementTool/getSnapshot/resetCounters/getTool
+  - `apps/mcp-server/src/__tests__/TSU-DEV-U1-per-call-counter.test.ts:115` — 8 unit+integration tests (T-U1-1..T-U1-8)
+  - `docs/agent-memory/decisions/sprint-TOOL-SURFACE-UPGRADE-dev-mcp-server.md` — decision journal
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/server.ts` — added `incrementTool` import + handler proxy loop after registerAllTools() (~18L)
+  - `apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts:65` — full rewrite: reads perCallCounterStore.getSnapshot(); removed sessionCount field; removed SessionToolCache DI
+  - `apps/mcp-server/src/scheduler/startScheduler.ts:729` — updated rowsWritten: stats.uniqueTools (sessionCount removed)
+  - `apps/mcp-server/src/__tests__/1356b-track-session-tool-usage-job-gaps.test.ts:140` — updated 8 tests for counter-based API
+  - `apps/mcp-server/src/__tests__/1299c-session-cache.test.ts` — updated TC-7+TC-8 for new job signature
+  - `docs/architecture/microservice/mcp-server/infrastructure.md` — added Telemetry section (perCallCounterStore + sessionToolCache legacy status)
+  - `docs/data/orch/orch-state.json` — TSU-DEV-U1 status: TODO→REVIEW
+- **Tests written:** `TSU-DEV-U1-per-call-counter.test.ts` — 8 assertions, GREEN
+- **Tests updated:** `1356b-track-session-tool-usage-job-gaps.test.ts` (8), `1299c-session-cache.test.ts` TC-7+TC-8 — all GREEN
+- **Git commits:** see below
+- **Type check:** 0 new errors (1 pre-existing in tool-registry-parity.test.ts — TSU-DEV-U2-GEN scope)
+- **bun test:** 24 pass / 0 fail (targeted: TSU-DEV-U1 + 1356b + 1299c + 1862c)
+- **Tool count:** 162 tools — matches pre-task baseline
+- **Scheduler count:** 76 cron.schedule entries — matches pre-task baseline (baseline 76)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/infrastructure.md` — Telemetry section added
+- **Graphify:** skipped (infrastructure.md update only, no domain model change)
+
+### G12 DoD Gate Evidence
+
+| Gate | Result |
+|------|--------|
+| bun test (targeted 24 tests) | 24 pass / 0 fail |
+| tsc --noEmit | 0 new errors (1 pre-existing in TSU-DEV-U2-GEN file) |
+| Tool count (gen-project-stats --dry-run) | "toolCount": 162 |
+| Scheduler count (grep cron.schedule) | 76 |
+
+---
+
 ## Related Tasks
 
 - Blocks: TSU-DEV-U2-GEN (parity test uses tool count baseline)

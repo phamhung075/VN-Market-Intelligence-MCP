@@ -32,6 +32,7 @@ import { toolRegistry } from "./tools/registry.js";
 import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
 import { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 export { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
+import { incrementTool } from "../../infrastructure/telemetry/perCallCounterStore.js";
 import { safeLogVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { ensurePoisonedQueueCleanup } from "./server-startup.js";
@@ -206,6 +207,25 @@ export async function createBunServer(
       } catch {
         // Cache population is best-effort — never block server creation
       }
+    }
+
+    // TSU-DEV-U1: Wrap registered tool handlers for per-call telemetry.
+    // Gateway dials a new SSE connection per-call (sessionId never fires) —
+    // this proxy is the only reliable invocation counter in that model.
+    // incrementTool is synchronous Map.set() — zero I/O, zero latency impact.
+    try {
+      const registeredToolsMap = (server as unknown as { _registeredTools?: Record<string, { handler: (args: unknown) => unknown }> })._registeredTools;
+      if (registeredToolsMap) {
+        for (const [toolName, toolDef] of Object.entries(registeredToolsMap)) {
+          const originalHandler = toolDef.handler;
+          toolDef.handler = async (args: unknown) => {
+            incrementTool(toolName);
+            return originalHandler(args);
+          };
+        }
+      }
+    } catch {
+      // Proxy installation is best-effort — never block server creation
     }
 
     return server;

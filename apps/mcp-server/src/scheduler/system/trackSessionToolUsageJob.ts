@@ -1,19 +1,23 @@
 /**
- * Track Session Tool Usage — Sprint 1299c
+ * Track Tool Usage — Sprint TOOL-SURFACE-UPGRADE / TSU-DEV-U1
  *
- * Scheduler layer. Reads sessionToolCache snapshot, aggregates per-tool
- * session counts, writes to docs/agent-memory/modules/tool-usage-stats.json.
+ * Scheduler layer. Reads perCallCounterStore snapshot, writes aggregate
+ * stats to docs/agent-memory/modules/tool-usage-stats.json.
  *
- * Runs every 8h (matches cache TTL).
- * Accepts an injected cache for testability (TC-7, TC-8).
- * No blocking I/O on the SSE request path.
+ * Replaces the sessionToolCache-based approach (Sprint 1299c).
+ * Root cause: gateway dials SSE per-call and drops the connection —
+ * sessionId is never populated, so sessionToolCache was always empty.
+ * perCallCounterStore increments on every tool handler entry via the
+ * handler-proxy installed in server.ts after registerAllTools().
+ *
+ * Runs every 8h. No blocking I/O on the tool execution path.
  *
  * @module scheduler/system/trackSessionToolUsageJob
  */
 
 import { writeFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
-import { sessionToolCache, type SessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
+import { getSnapshot as getCounterSnapshot } from "../../infrastructure/telemetry/perCallCounterStore.js";
 import { getProjectRoot } from "../../infrastructure/projectRoot.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -21,11 +25,9 @@ import { getProjectRoot } from "../../infrastructure/projectRoot.js";
 export interface ToolUsageStats {
   /** ISO timestamp when stats were generated. */
   generatedAt: string;
-  /** Number of active (non-expired) sessions in the snapshot. */
-  sessionCount: number;
-  /** Number of distinct tool names seen across all sessions. */
+  /** Number of distinct tool names seen since last reset. */
   uniqueTools: number;
-  /** tool_name → number of sessions that loaded it. */
+  /** tool_name → number of invocations since last reset. */
   toolCounts: Record<string, number>;
 }
 
@@ -39,26 +41,15 @@ const OUTPUT_PATH = join(
 // ── trackSessionToolUsageJob ──────────────────────────────────────────────────
 
 /**
- * Aggregate tool usage from the session cache and write stats to disk.
+ * Aggregate per-call tool usage from the counter store and write stats to disk.
  *
- * @param cache - Cache instance to read from (defaults to production singleton).
  * @returns Computed ToolUsageStats (also written to OUTPUT_PATH).
  */
-export async function trackSessionToolUsageJob(
-  cache: SessionToolCache = sessionToolCache
-): Promise<ToolUsageStats> {
-  const snap = cache.snapshot();
-  const toolCounts: Record<string, number> = {};
-
-  for (const entry of Object.values(snap)) {
-    for (const tool of entry.toolNames) {
-      toolCounts[tool] = (toolCounts[tool] ?? 0) + 1;
-    }
-  }
+export async function trackSessionToolUsageJob(): Promise<ToolUsageStats> {
+  const toolCounts = getCounterSnapshot();
 
   const stats: ToolUsageStats = {
     generatedAt: new Date().toISOString(),
-    sessionCount: Object.keys(snap).length,
     uniqueTools: Object.keys(toolCounts).length,
     toolCounts,
   };

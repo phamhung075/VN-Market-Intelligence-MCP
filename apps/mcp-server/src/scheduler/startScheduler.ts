@@ -718,13 +718,13 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  // Every 8h — Session tool usage tracker — task 1299c
-  // Reads sessionToolCache snapshot, aggregates per-tool session counts,
+  // Every 8h — Per-call tool usage tracker — task TSU-DEV-U1
+  // Reads perCallCounterStore snapshot (replaces sessionToolCache — dead in gateway model),
   // writes to docs/agent-memory/modules/tool-usage-stats.json (observability).
   cron.schedule(CRONS.trackSessionToolUsage, async () => {
     await jobRunRepo.wrapRun('trackSessionToolUsageJob', async () => {
       const stats = await trackSessionToolUsageJob()
-      return { rowsWritten: stats.sessionCount }
+      return { rowsWritten: stats.uniqueTools }
     })
   }, { timezone: 'UTC' })
 

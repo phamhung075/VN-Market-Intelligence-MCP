@@ -88,6 +88,20 @@ broker_sanctions (id INTEGER PK, broker_name, sanction_start, sanction_end, seve
 - **Telegram notifier:** `notifiers/telegram.ts`
 - **RAG vector store:** `rag/vectorstore.ts` (LanceDB)
 
+## Telemetry
+
+### Per-Call Counter Store (TSU-DEV-U1)
+- **Module:** `apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts`
+- **Purpose:** Counts tool invocations in-process; survives across gateway SSE cutover (gateway dials per-call, drops connection — no sessionId)
+- **API:** `incrementTool(name)` / `getSnapshot(): Record<string,number>` / `resetCounters()` / `getTool(name)`
+- **Hook:** Handler proxy installed in `server.ts` after `registerAllTools()` — iterates `server._registeredTools`, wraps each handler with synchronous `Map.set()` increment
+- **Flush job:** `scheduler/system/trackSessionToolUsageJob.ts` runs every 8h, writes `docs/agent-memory/modules/tool-usage-stats.json`
+- **Schema:** `{ generatedAt, uniqueTools, toolCounts }` — `sessionCount` removed (meaningless post-gateway)
+
+### Session Tool Cache (legacy — effectively dead in gateway model)
+- **Module:** `apps/mcp-server/src/infrastructure/cache/sessionToolCache.ts`
+- **Status:** Populated only when SSE sessionId is available; never fires in gateway mode. Retained for non-gateway deployments.
+
 ## Environment Variables
 ```
 PORT, DB_PATH, VINAHOST_IP, VPS_PUSH_API_KEY,

@@ -57,28 +57,31 @@ describe("1299c: SessionToolCache", () => {
   });
 });
 
-describe("1299c: trackSessionToolUsageJob", () => {
+// TC-7 and TC-8 updated for TSU-DEV-U1: job now reads perCallCounterStore
+// (sessionToolCache was dead in gateway model — see TOOL-SURFACE-UPGRADE U1).
+describe("1299c: trackSessionToolUsageJob (updated TSU-DEV-U1)", () => {
 
-  it("TC-7: empty cache → writes {} to tool-usage-stats.json, no crash", async () => {
-    const { SessionToolCache } = await import("../infrastructure/cache/sessionToolCache.js");
+  it("TC-7: empty counter store → writes {} to tool-usage-stats.json, no crash", async () => {
+    const { resetCounters } = await import("../infrastructure/telemetry/perCallCounterStore.js");
     const { trackSessionToolUsageJob } = await import("../scheduler/system/trackSessionToolUsageJob.js");
-    const emptyCache = new SessionToolCache(10, 60_000);
-    // Run job with injected empty cache — must resolve without throwing
-    const stats = await trackSessionToolUsageJob(emptyCache);
-    expect(stats.sessionCount).toBe(0);
+    resetCounters();
+    const stats = await trackSessionToolUsageJob();
+    expect(stats.uniqueTools).toBe(0);
     expect(stats.toolCounts).toEqual({});
   });
 
-  it("TC-8: 3 sessions → stats file has correct per-tool counts", async () => {
-    const { SessionToolCache } = await import("../infrastructure/cache/sessionToolCache.js");
+  it("TC-8: incremented tools → stats file has correct per-tool counts", async () => {
+    const { incrementTool, resetCounters } = await import("../infrastructure/telemetry/perCallCounterStore.js");
     const { trackSessionToolUsageJob } = await import("../scheduler/system/trackSessionToolUsageJob.js");
-    const cache = new SessionToolCache(10, 60_000);
-    cache.set("s1", { skills: ["news_scout"], toolNames: ["fetch_and_analyze", "get_recent_fixes"], loadedAt: Date.now() });
-    cache.set("s2", { skills: ["news_scout"], toolNames: ["fetch_and_analyze", "submit_feedback"], loadedAt: Date.now() });
-    cache.set("s3", { skills: ["dev_team"], toolNames: ["get_recent_fixes", "send_telegram"], loadedAt: Date.now() });
+    resetCounters();
+    incrementTool("fetch_and_analyze");
+    incrementTool("get_recent_fixes");
+    incrementTool("fetch_and_analyze");
+    incrementTool("submit_feedback");
+    incrementTool("get_recent_fixes");
+    incrementTool("send_telegram");
 
-    const stats = await trackSessionToolUsageJob(cache);
-    expect(stats.sessionCount).toBe(3);
+    const stats = await trackSessionToolUsageJob();
     expect(stats.toolCounts["fetch_and_analyze"]).toBe(2);
     expect(stats.toolCounts["get_recent_fixes"]).toBe(2);
     expect(stats.toolCounts["submit_feedback"]).toBe(1);
