@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## c391 · 2026-06-07 (TSU-DEV-U6: TSH Leftover Pair Description Updates) — COMMITTED
+
+**Task:** TSU-DEV-U6 — TOOL-SURFACE-UPGRADE sprint  
+**Deliverables:** 10 tool descriptions updated across 6 files — all 5 TSH leftover pairs clarified per architect verdict (KEEP ALL SEPARATE, description-only). Pairs: get_patterns/get_technical_indicators (already had cross-refs, confirmed), trigger_bctc/price/news_vps_fetch (added script names + return shapes + sibling refs + "NO tickers" for news), get_market_summary/generate_market_summary (cache-first vs force-regen semantics + cross-refs), get_insider_signals/get_insider_transactions (classifier+input-required vs DB+SSC+streak). `docs/data/tool-registry.json` regenerated (157 unchanged).  
+**Tests:** 17 new GREEN (TSU-DEV-U6 test file, source-text scan pattern). Parity 8/8 GREEN. tsc: clean. tools=157, sched=76. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
+
+Zone health: 17/0 (U6), parity 8/0, tsc clean, 157 tools (SSOT), 76 cron.schedule — description-only, no logic change | HEALTHY
+
+---
+
 ## c390 · 2026-06-07 (TSU-DEV-U3: 5 Deregister + 7 Integrate Description Updates) — COMMITTED
 
 **Task:** TSU-DEV-U3 — TOOL-SURFACE-UPGRADE sprint  
@@ -17,27 +27,6 @@ Zone health: bun test 12/0 (U3 suite) + 8/0 (parity), tsc clean, 157 tools (162-
 **Tests:** 10 new GREEN (TSU-DEV-U5 test file). tsc: clean. tools=157 (SSOT), sched=76. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
 
 Zone health: bun test 10/0 (U5 suite), 0 regression, tsc clean, 157 tools (SSOT), scheduler 76 cron.schedule | HEALTHY
-
----
-
-## c388 · 2026-06-07 (TSU-DEV-U1: Per-Call Telemetry Counter) — COMMITTED
-
-**Task:** TSU-DEV-U1 — TOOL-SURFACE-UPGRADE sprint  
-**Deliverables:** New `apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts` (singleton Map, incrementTool/getSnapshot/resetCounters/getTool). Handler proxy hook in `server.ts` after `registerAllTools()` — wraps each `_registeredTools` entry with synchronous counter increment. `trackSessionToolUsageJob.ts` rewritten: reads `perCallCounterStore.getSnapshot()` instead of dead `sessionToolCache` (gateway dials per-call, drops connection — no sessionId). Schema: removed `sessionCount`, kept `uniqueTools` + `toolCounts`. `startScheduler.ts`: `rowsWritten: stats.uniqueTools`. Updated `1356b` + `1299c` test files for new API.  
-**Tests:** 16+8=24 GREEN (TSU-DEV-U1 + 1356b + 1299c). tsc: 1 pre-existing error in tool-registry-parity.test.ts (TSU-DEV-U2-GEN scope, not my file). tools=162, sched=76. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
-
-Zone health: bun test 24/0 (targeted), tsc 0 new errors, 162 tools intact, scheduler 76 cron.schedule | HEALTHY
-
----
-
-## c387 · 2026-06-07 (TSU-DEV-U2-GEN: Registry Generator + Parity Test) — COMMITTED
-
-**Task:** TSU-DEV-U2-GEN — TOOL-SURFACE-UPGRADE sprint  
-**Deliverables:** `scripts/gen-tool-registry.ts` (static grep, 162 tools, 12 groups, atomic write), `apps/mcp-server/src/__tests__/tool-registry-parity.test.ts` (8 tests: T-U2-1..T-U2-6 + AC-U2-7 x2). Registry overwrites `docs/data/tool-registry.json` (125→162 tools). `gen-project-stats.ts` updated with `readToolCountFromRegistry()` — registry is now SSOT for toolCount in project-stats.json.  
-**Anti-false-green:** Fake `__test_fake_tool__` injected → T-U2-5+T-U2-6 RED confirmed → reverted → GREEN.  
-**Tests:** 8/8 GREEN. tsc: clean. tools=162, sched=76. | **INV-GATEWAY-1:** no commit-mutex/task_claim/task_release.
-
-Zone health: bun test 8/0 (parity suite), tsc clean, 162 tools intact, scheduler 76 cron.schedule | HEALTHY
 
 ---
 
