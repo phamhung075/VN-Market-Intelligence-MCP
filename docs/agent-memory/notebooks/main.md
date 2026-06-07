@@ -84,6 +84,24 @@
 - HPG chain: INVALIDATE-HPG-OCR-CACHE → HPG-DISCOVER-CONSOLIDATED-PDF → HPG-REPARSE (FIX-LIAB validation).
 - VERIFY-PDFX-TRAVERSAL-GUARD when service idle. FIX-BCTC-MAGNITUDE-NORMALIZE (P2). Monday VN open: news-vps gate.
 
+## tick-20260607T1217Z — PPC E2E: OCR text CORRECT/parser is sole gap, disk 90% incident pruned, HPG cache invalidated, segfault root-cause corrected
+
+- **VERIFY-PPC-E2E-OCR done (PARTIAL-PASS, full diagnosis)**: re-queue worked; Tier-3 OCR cache (149,597 chars, 74p, conf 0.80) yielded REAL liabilities 780,223,778,402 — and the OCR TEXT carries the complete correct balance sheet (assets 5,246B / liab 780B / equity 4,466B, identity EXACT). Remaining gap is 100% PARSER: extractorGuards rejects real raw-VND equity as "impossible" + scrambled multi-column layout defeats assets extraction → **FIX-BCTC-MAGNITUDE-NORMALIZE promoted P1** with that scope. New row b9b8a473 conf 0.375 validation=failed.
+- **pdf-extractor HANGS (not queues)** during long OCR — accepts TCP, never responds; tier-1a pdf_path effectively unavailable while a big job runs → PDFX-SINGLE-WORKER-BLOCKING P3→P2. Busy-vs-wedged probe (tesseract CPU check) now in auditor briefs; today always busy-not-wedged (2h+ backlog drain, legit).
+- **Segfault root cause CORRECTED**: Bun v1.3.13 addr-0x20 crash is in fetchParseAndStoreBctc step-4 **LanceDB insert**, NOT pdf-parse (repro 12:33:46Z) → row renamed FIX-LANCEDB-INSERT-SEGFAULT (dev-rag-service boundary; relates disk-full-lancedb-bloat memory).
+- **DISK INCIDENT**: 37%→90% in one day — 5 rebuilds left 21GB build cache + 17GB stale layers; sub-agent hit transient ENOSPC mid-task (lane died, retried OK). Safe prune (dangling + builder --keep-storage 2GB) → 81%, 39Gi free, zero container impact. RULE (memory project_disk_full_lancedb_bloat): ≥2 rebuilds/day → builder prune mandatory final step; dispatcher df-checks at preflight on rebuild days. Rows: DOCKER-DISK-PRUNE-20260607 (done) + DOCKER-IMAGE-RETENTION (P3).
+- **B3 live-validated**: PPC Q1-2026 hsx.vn row PULLED (done, attempts=1). Q3-2025 next cycles. HPG OCR cache invalidated (24→0, verified) — HPG chain now waits only on HPG-DISCOVER-CONSOLIDATED-PDF.
+- Reports #3070 MBB + #3071 POW resolved monitoring (backlog-drain family). Row FIX-BCTC-1345B-REPORT-BATCH (P3) for the per-extraction telegram noise.
+- **pm defect pattern named** (4 catches today: copy-not-move ×2, sibling-sprint, stray notebook path): every NEW structural-mutation type defaults to create-sibling instead of edit-in-place on first attempt. Candidate: agent-father revises pm flow with a MUTATION RULES block (move/edit/rename = modify existing object; post-write self-scan). → next cycle po triage.
+- **CWD trap recurrence**: merge gate ran inside a worktree (cherry-pick onto its own branch → empty). Rule: absolute-cd to repo root IMMEDIATELY BEFORE every merge gate.
+- Commits: 1aa75390→e34490a9→63f32cee→d796dbb7→3801e37d→634b4ca4→8d0268b6→[this].
+
+### Queue watch for next cycle
+- **FIX-BCTC-MAGNITUDE-NORMALIZE (P1)** — unlocks real balance sheets for PPC + raw-VND family (MBB/POW/GVR/HPG rows all waiting on it). Dispatch first.
+- pdf-extractor backlog drain: if STILL pegged next tick (>3h), re-probe busy-vs-wedged.
+- HPG-DISCOVER-CONSOLIDATED-PDF (P2). VERIFY-PDFX-TRAVERSAL-GUARD when idle. Monday VN open: news-vps gate.
+- 14:00Z reparse cron fires soon — expect more BCTC-1345b reports until REPORT-BATCH ships; resolve against quality chain.
+
 ### Addendum (post-close audit 0b0b75ae)
 - Window-2 compose op CASCADED to macro-indicators (restarted 08:45:34Z, 16s before mcp-server start) despite "mcp-server only" scope + executor claiming "no deviations". Zero impact (healthy, clean bounce) — but compose `depends_on` edges make "scoped restart" leaky. Next maintenance runbook: enumerate dependent services pre-window + use `--no-deps` on compose start, and verify ALL peer StartedAt timestamps post-window, not just `docker ps` presence.
 
