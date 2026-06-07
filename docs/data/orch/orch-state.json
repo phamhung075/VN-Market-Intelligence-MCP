@@ -2875,146 +2875,6 @@
         "disposition": "Correct HPG Q3 2025 and PPC Q3 2025 queue row URL pointers to their actual Q3 2025 PDFs"
       },
       {
-        "title": "live market.db (named volume, /app/data) fails PRAGMA integrity_check — structural (tree 32 page 2533 cell out of order; pages 2533+22008 double-referenced) + index/table mismatches (idx_pet_*, idx_system_logs_*). Reads still serve correctly. Recovery lane = architect+ops+dev-mcp-server, REQUIRES planned downtime window: backup named volume FIRST, then .recover or dump+reload + REINDEX. Repair/REINDEX/vacuum FORBIDDEN until that lane runs.",
-        "type": "FIX",
-        "sprint": null,
-        "status": "PLANNING-DONE",
-        "size": "L",
-        "zone": "apps/mcp-server/",
-        "priority": "HIGH",
-        "owner": null,
-        "id": "RECOVER-LIVEDB-INTEGRITY",
-        "files": [
-          "apps/mcp-server/"
-        ],
-        "note": "PLANNING DONE (runbook merged 9a7f5c07, docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md); keep umbrella row in_progress (execution phase pending). 9 execution rows RLI-OPS-1 through RLI-PM-1 added below per runbook sequencing.",
-        "disposition": "REQUIRES planned downtime window: backup named volume FIRST, then .recover or dump+reload + REINDEX. DO NOT repair/REINDEX/vacuum until architect+ops+dev-mcp-server lane runs."
-      },
-      {
-        "id": "RLI-OPS-1",
-        "title": "Ops pre-flight: verify containers healthy (docker ps, health checks)",
-        "type": "OPS",
-        "status": "TODO",
-        "zone": "ops",
-        "owner": "ops",
-        "size": "XS",
-        "priority": "HIGH",
-        "depends_on": [],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § OPS-1"
-      },
-      {
-        "id": "RLI-OPS-2",
-        "title": "Ops backup: docker cp market_data volume + 5-point restore-verification (C-01=1599 codes, C-02=3190 rows, C-03=2026-06-05 date, C-04/05 smoke)",
-        "type": "OPS",
-        "status": "TODO",
-        "zone": "ops",
-        "owner": "ops",
-        "size": "M",
-        "priority": "HIGH",
-        "depends_on": [
-          "RLI-OPS-1"
-        ],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § OPS-2"
-      },
-      {
-        "id": "RLI-DEV-1",
-        "title": "Dev: .dump live DB, verify ≥10 CREATE TABLE + ≥3190 INSERT statements",
-        "type": "DEV",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "size": "S",
-        "priority": "HIGH",
-        "depends_on": [
-          "RLI-OPS-2"
-        ],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § DEV-1"
-      },
-      {
-        "id": "RLI-OPS-3",
-        "title": "Ops: scoped docker compose stop mcp-server (NEVER full down)",
-        "type": "OPS",
-        "status": "TODO",
-        "zone": "ops",
-        "owner": "ops",
-        "size": "XS",
-        "priority": "HIGH",
-        "depends_on": [
-          "RLI-DEV-1"
-        ],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § OPS-3"
-      },
-      {
-        "id": "RLI-DEV-2",
-        "title": "Dev: reload fresh.db, PRAGMA integrity_check=ok + run baselines",
-        "type": "DEV",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "size": "M",
-        "priority": "HIGH",
-        "depends_on": [
-          "RLI-OPS-3"
-        ],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § DEV-2"
-      },
-      {
-        "id": "RLI-OPS-4",
-        "title": "Ops: docker cp fresh DB into named volume",
-        "type": "OPS",
-        "status": "TODO",
-        "zone": "ops",
-        "owner": "ops",
-        "size": "S",
-        "priority": "HIGH",
-        "depends_on": [
-          "RLI-DEV-2"
-        ],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § OPS-4"
-      },
-      {
-        "id": "RLI-OPS-5",
-        "title": "Ops: docker compose start mcp-server + verify healthy ≤60s",
-        "type": "OPS",
-        "status": "TODO",
-        "zone": "ops",
-        "owner": "ops",
-        "size": "S",
-        "priority": "HIGH",
-        "depends_on": [
-          "RLI-OPS-4"
-        ],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § OPS-5"
-      },
-      {
-        "id": "RLI-DEV-3",
-        "title": "Dev: full §5 verification incl. pdf_extracted_text + system_logs smoke reads + /health",
-        "type": "DEV",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "size": "M",
-        "priority": "HIGH",
-        "depends_on": [
-          "RLI-OPS-5"
-        ],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § DEV-3"
-      },
-      {
-        "id": "RLI-PM-1",
-        "title": "PM: unblock FIX-BCTC-LIAB live re-parse + update orch-state",
-        "type": "PM",
-        "status": "TODO",
-        "zone": "docs/data/orch/",
-        "owner": "pm",
-        "size": "XS",
-        "priority": "HIGH",
-        "depends_on": [
-          "RLI-DEV-3"
-        ],
-        "note": "Part of RECOVER-LIVEDB-INTEGRITY execution lane. Reference: docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md § PM-1"
-      },
-      {
         "id": "BA-TSU-1",
         "title": "Requirement spec for TOOL-SURFACE-UPGRADE: telemetry-per-call (U1), registry generation+parity (U2), 12 weak-claim tool verdicts (U3), direction+delta sweep (U4), foreign-flow dead holding-ratio field (U5), TSH leftover merges (U6)",
         "owner": "ba",
@@ -4756,6 +4616,19 @@
         "closed_at": "2026-06-07T10:47:00Z",
         "note": "Runbook docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md final state @ 7b088535 (§7 post-mortem + §8 revised method). Signal rtr-livedb-integrity-corruption-20260607T0530Z RESOLVED by this sprint.",
         "commit": "7b088535"
+      },
+      {
+        "id": "RLI-PM-1",
+        "title": "PM: unblock FIX-BCTC-LIAB live re-parse + update orch-state",
+        "type": "PM",
+        "status": "DONE",
+        "zone": "docs/data/orch/",
+        "owner": "pm",
+        "size": "XS",
+        "priority": "HIGH",
+        "closed_at": "2026-06-07T11:20:00Z",
+        "created_at": "2026-06-07T05:30:00Z",
+        "note": "completed via pm closeout 136b3a5d — FIX-BCTC-LIAB unblock note + VERIFY-HPG-REPARSE row created"
       }
     ],
     "in_progress": []
@@ -4972,6 +4845,20 @@
         "status": "DONE",
         "payload_ref": null,
         "dedup_key": "data_stale:bctc-vps-proxy:B-03"
+      },
+      {
+        "id": "tsu-u3-tool-deregister-signal-20260607",
+        "ts": "2026-06-07T09:30:00Z",
+        "from": "dev-mcp-server",
+        "to": "cowork-refactory-expert",
+        "type": "tool-deregister-signal",
+        "sprint": "TOOL-SURFACE-UPGRADE",
+        "summary": "U3 COMPLETE: 5 tools removed (read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day), 7 integrate-pending (descriptions updated, wiring deferred to your lane). docs/agents/tools/list/ entries must be deleted for 5 removed; docs/agents/tools/package/*.md must be updated for 7 integrate.",
+        "removed_tools": ["read_bctc_pdf", "backfill_bctc_scalars", "compute_accruals", "get_accuracy_context", "is_trading_day"],
+        "integrate_pending": ["mark_alert_outcome", "get_market_foreign_flow", "diagnose_foreign_flow_circuit_breaker", "reset_foreign_flow_circuit_breaker", "get_label_accuracy_report", "get_public_contracts", "list_flagged_bctc_cells", "submit_bctc_correction"],
+        "status": "NEW",
+        "severity": "INFO",
+        "payload_ref": null
       }
     ],
     "archive": [
