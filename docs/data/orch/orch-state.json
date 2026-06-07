@@ -4429,6 +4429,19 @@
         "disposition": "PROCESSED: FOLDED -> FIX-AUDITOR-FLOW-RESIDUALS item (a) weekend-aware C-01/C-02/C-14",
         "processed_by": "po-triage-20260607 (dispatcher flip)",
         "processed_at": "2026-06-07T04:35:00Z"
+      },
+      {
+        "id": "rtr-auditor-db-stale-path-20260607T0512Z",
+        "from": "dev-team-dispatcher",
+        "to": "agent-father",
+        "type": "audit_infra_defect",
+        "priority": "high",
+        "status": "READ",
+        "created_at": "2026-06-07T05:12:00Z",
+        "summary": "Auditor host-side DB checks (a95c514a + ec828baf) read apps/mcp-server/data/market.db — a STALE ORPHAN (market_messages empty, ohlcv empty, sbv stuck 2026-05-16). Live DB is in named volume vn-market-intelligence-mcp_market_data -> /app/data. All T2/T3 DB checks would false-RED. Also: flow docker-exec literals use container name mcp-server but real name is vn-market-intelligence-mcp-mcp-server-1, and image has NO sqlite3 binary. Proven access path: docker exec <real-name> bun -e bun:sqlite readonly.",
+        "disposition": "DISPATCHED: FIX-AUDITOR-DB-LIVENESS wave-2 agent-father lane, same cycle 20260607T031736Z",
+        "processed_by": "dev-team-dispatcher",
+        "processed_at": "2026-06-07T05:12:00Z"
       }
     ],
     "archive": [
