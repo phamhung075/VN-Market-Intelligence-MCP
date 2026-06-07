@@ -2345,14 +2345,15 @@
             "depends": [
               "TSU-DEV-U3"
             ],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "priority": "low",
             "id": "TSU-DEV-U6",
             "claimed_by": "dev-mcp-server",
             "claimed_at": "2026-06-07T12:00:00Z",
-            "completed_at": "2026-06-07T12:30:00Z"
+            "completed_at": "2026-06-07T12:30:00Z",
+            "qa_approved_at": "2026-06-07T09:42:25Z"
           },
           {
             "title": "U2-PARITY: Final count verification — re-run generator + parity test after U3 deregistrations (MUST run LAST)",
@@ -2362,12 +2363,15 @@
               "TSU-DEV-U3",
               "TSU-DEV-U6"
             ],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
             "note": "HARD SEQUENCING: U2-PARITY must run LAST, after all U3 deregistrations committed. Settles final tool count at 157 (162 initial − 5 deregistered). Cannot produce stale parity test if U3 count changes.",
-            "id": "TSU-DEV-U2-PARITY"
+            "id": "TSU-DEV-U2-PARITY",
+            "claimed_by": "dev-mcp-server",
+            "claimed_at": "2026-06-07T12:00:00Z",
+            "completed_at": "2026-06-07T12:30:00Z"
           }
         ]
       },

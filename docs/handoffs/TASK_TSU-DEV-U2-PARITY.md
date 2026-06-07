@@ -208,3 +208,55 @@ After U2-PARITY commits successfully:
 - Depends on: TSU-DEV-U3 (deregister 5), TSU-DEV-U6 (finalize descriptions)
 - Blocks: None (terminal task)
 - Triggers: Sprint closure review (po)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:** docs/data/tool-registry.json (re-generated, 157 tools, no diff — already at 157 post-U3/U6), docs/data/project-stats.json (toolCount=157, no change needed — already synced)
+- **Tests written:** apps/mcp-server/src/__tests__/tool-registry-parity.test.ts (pre-existing, 8 tests, 24 assertions — 8 pass / 0 fail GREEN)
+- **Git commits:** (below)
+- **Type check:** clean (bun tsc --noEmit — 0 errors)
+- **bun test (parity):** 8 pass / 0 fail
+- **Tool count:** 157 — matches pre-task baseline
+- **Scheduler count:** 76 cron.schedule entries — matches baseline
+- **Docs updated:** NONE
+- **Graphify:** skipped (no docs impacted)
+
+### Parity Evidence — Four-Count Convergence
+
+| Source | Count | Method |
+|--------|-------|--------|
+| gen-tool-registry.ts (static scan) | 157 | `bun scripts/gen-tool-registry.ts` |
+| /health endpoint (runtime) | 157 | `curl -s http://localhost:3000/health` |
+| parity test source extraction (T-U2-5) | 157 | `bun test tool-registry-parity.test.ts` |
+| project-stats.json toolCount | 157 | `bun scripts/gen-project-stats.ts --dry-run` |
+
+**Delta across all four: 0**
+
+### Deregistered Tools Absent Check
+
+U3 deregistrations confirmed absent from registry:
+- read_bctc_pdf — NOT in registry
+- backfill_bctc_scalars — NOT in registry
+- compute_accruals — NOT in registry
+- get_accuracy_context — NOT in registry
+- is_trading_day — NOT in registry
+
+### Test Suite Output
+
+```
+bun test tool-registry-parity.test.ts
+ 8 pass / 0 fail / 24 expect() calls — 73ms
+```
+
+### Gate 2 Outputs
+
+- Gate 2a (tsc): exit 0, 0 errors
+- Gate 2b (/health): `{"status":"ok","toolCount":157,...}`
+- Gate 2c (gen-project-stats dry-run): `toolCount=157`
+- Gate 2d (scheduler count): 76 cron.schedule entries
+
+Zone health: bun test 0 fail (parity), 157 tools intact (all 5 U3 deregistrations confirmed absent), scheduler 76 cron.schedule, tsc clean | HEALTHY
