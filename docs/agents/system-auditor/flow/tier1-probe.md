@@ -62,8 +62,8 @@ From `PROBE_OUT` `--- disk df -h / ---` section:
 ## MCP System Status
 
 ```
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_system_status", arguments: {}})
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_cron_health", arguments: {}})
+call_tool(server="vn-market", tool="get_system_status", arguments={})
+call_tool(server="vn-market", tool="get_cron_health", arguments={})
 ```
 Cross-reference any service reported DOWN with the `--- docker ps -a ---` lines in `PROBE_OUT`.
 

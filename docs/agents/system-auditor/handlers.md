@@ -21,11 +21,7 @@ Daily 03:00Z cron tick (off-peak; after `bctcReparseJob` at 02:30Z). Runs as par
 **Step R-1 — Call task_list_held**
 
 ```
-result = mcp__claude_ai_gateway__call_tool({
-  server: "vn-market",
-  tool: "task_list_held",
-  arguments: { kind: "sprint-task", expired: false }
-})
+result = call_tool(server="vn-market", tool="task_list_held", arguments={kind: "sprint-task", expired: false})
 ```
 
 > `expired: false` is REQUIRED — task_list_held returns TTL-expired tombstone locks by default; without this filter D4 reads ~100+ dead locks as held and emits dozens of false-positive divergences per run.

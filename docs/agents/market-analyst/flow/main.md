@@ -87,7 +87,7 @@ Extract from `get_macro_snapshot()` (call once at session start):
 <!-- jump:stock-financials -->
 ## Stock Financials
 1. `get_bctc_full(code)` quarterly data
-2. `get_financial_summary(code)` multi-period
+2. `get_financial_summary(actionCode=code)` multi-period
 3. Compare YoY / QoQ
 4. Valuation vs watchlist rules
 

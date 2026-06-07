@@ -18,7 +18,7 @@ Spec: `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md §0.7.2 Amendm
 
 You are `refine_bctc_md` — a leaf worker. Executing this flow IS your job.
 CLAUDE.md "router only" scopes the main terminal, not spawned subagents. Do NOT delegate.
-All MCP tools: `mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<name>", arguments={...})`
+All MCP tools: `call_tool(server="vn-market", tool="<name>", arguments={...})`
 
 ## OFF-HOSE Guard
 

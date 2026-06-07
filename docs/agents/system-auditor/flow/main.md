@@ -92,7 +92,7 @@ Run `bash docs/agents/system-auditor/probe.sh` ONCE. Paste verbatim stdout into 
 
 ### Cron Fire Check (A-29)
 ```
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_cron_health", arguments: {}})
+call_tool(server="vn-market", tool="get_cron_health", arguments={})
 ```
 For each cron in system-map.json microservices[0].crons:
 - Compute expected last-fire from schedule expression
@@ -102,12 +102,12 @@ For each cron in system-map.json microservices[0].crons:
 
 ### Per-Source Fetch Freshness (B-01 through B-07, B-11, B-12)
 ```
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_pipeline_health", arguments: {}})
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_vps_proxy_health", arguments: {}})
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_vps_service_health", arguments: {}})
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_rate_limit_status", arguments: {}})
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_macro_snapshot", arguments: {}})
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_sla_status", arguments: {}})
+call_tool(server="vn-market", tool="get_pipeline_health", arguments={})
+call_tool(server="vn-market", tool="get_vps_proxy_health", arguments={})
+call_tool(server="vn-market", tool="get_vps_service_health", arguments={})
+call_tool(server="vn-market", tool="get_rate_limit_status", arguments={})
+call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
+call_tool(server="vn-market", tool="get_sla_status", arguments={})
 ```
 For each source in system-map.json data_sources:
 - Read `expected_cadence_hours` from system-map.json (never hardcode)
@@ -464,10 +464,9 @@ If the check fires within 2h after market open (before new data lands), accept t
 
 Also call:
 ```
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_alerts", arguments: {limit: 100}})
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_bctc_full", arguments: {}})
+call_tool(server="vn-market", tool="get_alerts", arguments={limit: 100})
 ```
-Cross-reference results with C-08 (orphaned alerts) and C-03/C-04 (BCTC coverage).
+Cross-reference results with C-08 (orphaned alerts). BCTC coverage (C-03/C-04) verified via DB queries above.
 
 ### Emit per failing check (severity ≥ WARN)
 **EMIT SEQUENCE — all three steps are MANDATORY, no step is optional:**
@@ -499,7 +498,7 @@ Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-d
 
 ### Tier-3 Roll-Up Signal
 ```
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "post_agent_signal", arguments: {
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
   type: "system_health_report",
   ts: "<UTC>",
   tier: 3,
@@ -508,7 +507,7 @@ mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "post_agent_signal
   overall: "HEALTHY|DEGRADED|CRITICAL",
   new_anomalies: [...],
   dedup_skipped: N
-}})
+})
 ```
 
 → skill: `.claude/skills/anomaly-task-bridge/SKILL.md`
@@ -516,7 +515,7 @@ mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "post_agent_signal
 
 ### Tier-3 WORK Notification
 ```
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "send_telegram", arguments: {channel: "work", message: "[system-auditor] Tier-3 complete — N anomalies (C critical, W warn, I info)"}})
+call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "[system-auditor] Tier-3 complete — N anomalies (C critical, W warn, I info)"})
 ```
 
 ---

@@ -16,7 +16,7 @@
 
 ## MCP Tools
 
-All called via `mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "<name>", arguments: {...}})`.
+All called via `call_tool(server="vn-market", tool="<name>", arguments={...})`.
 
 | Tool | Tier | Purpose |
 |------|------|---------|
@@ -29,51 +29,49 @@ All called via `mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "<
 | get_macro_snapshot | 2 | Macro indicator freshness check → Dimension B |
 | get_sla_status | 2 | Freshness SLA alignment validation |
 | get_alerts | 3 | Cross-table consistency — alerts vs agent_signals → C-08 |
-| get_bctc_full | 3 | BCTC financial_reports coverage → C-03, C-04 |
 | post_agent_signal | all | Emit typed audit signals: system_health_report, microservice_degraded, data_stale, db_integrity_breach |
 | send_telegram | all | BUG channel alert (severity ≥ WARN, new anomaly, dedup 7d) |
+
+Note: BCTC coverage (C-03, C-04) is verified via direct DB queries in Tier-3 — `get_bctc_full` requires a `code` param and cannot do fleet coverage checks.
 
 ### MCP Call Grammar
 
 ```
 # Emit a typed signal
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "post_agent_signal", arguments: {type: "microservice_degraded", ...}})
+call_tool(server="vn-market", tool="post_agent_signal", arguments={type: "microservice_degraded", ...})
 
 # Send Telegram BUG alert
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "send_telegram", arguments: {channel: "bug", message: "[system-auditor] CRITICAL\nIssue: ... | Impact: ... | Status: investigating"}})
+call_tool(server="vn-market", tool="send_telegram", arguments={channel: "bug", message: "[system-auditor] CRITICAL\nIssue: ... | Impact: ... | Status: investigating"})
 
 # Send Telegram WORK notification (Tier-3 complete only)
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "send_telegram", arguments: {channel: "work", message: "[system-auditor] Tier-3 complete — N anomalies"}})
+call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "[system-auditor] Tier-3 complete — N anomalies"})
 
 # Fetch cron health
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_cron_health", arguments: {}})
+call_tool(server="vn-market", tool="get_cron_health", arguments={})
 
 # Fetch pipeline health per source
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_pipeline_health", arguments: {}})
+call_tool(server="vn-market", tool="get_pipeline_health", arguments={})
 
 # Check VPS proxy routes
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_vps_proxy_health", arguments: {}})
+call_tool(server="vn-market", tool="get_vps_proxy_health", arguments={})
 
 # Check VPS service status
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_vps_service_health", arguments: {}})
+call_tool(server="vn-market", tool="get_vps_service_health", arguments={})
 
 # Check rate limits
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_rate_limit_status", arguments: {}})
+call_tool(server="vn-market", tool="get_rate_limit_status", arguments={})
 
 # Macro indicator freshness
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_macro_snapshot", arguments: {}})
+call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
 
 # SLA alignment
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_sla_status", arguments: {}})
+call_tool(server="vn-market", tool="get_sla_status", arguments={})
 
 # Orphaned alerts cross-check
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_alerts", arguments: {limit: 100}})
-
-# BCTC coverage
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_bctc_full", arguments: {}})
+call_tool(server="vn-market", tool="get_alerts", arguments={limit: 100})
 
 # System status rollup
-mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_system_status", arguments: {}})
+call_tool(server="vn-market", tool="get_system_status", arguments={})
 ```
 
 **Anti-discovery constraint:** NEVER use `list_servers`, `search_tools`, or `list_server_tools` at runtime. All tools above are pre-catalogued and must be called directly.
