@@ -161,3 +161,30 @@ A container rebuild is needed to serve the updated fetch-status behavior.
 ## Zone Health
 
 Zone health: fetchStatusHandler DEAD_SOURCE_SLUGS exclusion LIVE (8/0 tests). Pre-existing tsc errors in tasksMdJanitorJob.ts/1980-f2-canon-schema.test.ts (non-blocking, pre-date this task). | HEALTHY
+
+---
+
+## [QA] Review Record — 2026-06-07T02:50Z
+
+**Verdict: APPROVED**
+
+| AC | Result | Evidence |
+|----|--------|---------|
+| AC1: DEAD_SOURCE_SLUGS exported, 6 entries | PASS | File read fetchStatusHandler.ts L73-80; test DEAD_SOURCE_SLUGS has 6 entries, all 6 slugs present, length===6 |
+| AC2: SQL bound params, no string interpolation of values | PASS | HAVING NOT IN (`${DEAD_SOURCE_SLUGS.map(()=>"?").join(",")}`) generates `?,?,?,?,?,?` — values spread via `.all(cutoff, ...DEAD_SOURCE_SLUGS)` |
+| AC3: Live sources not filtered | PASS | DEAD_SOURCE_SLUGS contains exactly 6 dead IDs; test AC-2 verifies cafef/vnexpress/vneconomy/vietstock still appear |
+| AC4a: CLEAN-DEAD-SOURCE-IDS test — 8 pass / 0 fail | PASS | `bun test src/__tests__/CLEAN-DEAD-SOURCE-IDS.test.ts` → 8 pass / 0 fail / 32 expect() calls |
+| AC4b: F-1 suite — 21 pass / 0 fail | PASS | `bun test src/__tests__/F-1-fetch-ops-page-truth.test.ts` → 21 pass / 0 fail / 52 expect() calls |
+| AC5: tsc — no NEW errors | PASS | 5 errors exactly (3× 1980-f2-canon-schema.test.ts, 2× tasksMdJanitorJob.ts) — all pre-existing, none in diff files |
+| AC6: Commit scope 5 files | PASS | `git show d267e997 --stat` → 5 files: test A, fetchStatusHandler M, dev-mcp-server notebook M, orch-state M, handoff A. orch-state diff touches only new task row + `_updated_at`/`_updated_by` — signal_queue and other sprints untouched |
+| AC7: Historical DB rows preserved | PASS | Only SQL change is HAVING clause (SELECT only). No DELETE/DROP/ALTER/migration in diff |
+
+**mock-guard:** Exit 0 PASS — no fabricated-data patterns in fetchStatusHandler.ts
+
+**DDD:** interface→infrastructure import (`vpsPushLogStore`) pre-existed (not in diff) — same pattern as vpsProxyHealthHandler.ts, consistent with QA cycle-198 precedent.
+
+**Security:** No `process.env`, no hardcoded secrets/tokens/passwords in file or diff. SQL uses `?` bound parameters exclusively.
+
+**NIT (non-blocking):** dev's orch-state `_updated_at` = 2026-06-07T00:00:00Z is earlier than predecessor 00:21:54Z (hand-typed stamp). Non-blocking; QA timestamp (02:50Z) is authoritative now.
+
+**QA commit:** see QA notebook append + commit below.

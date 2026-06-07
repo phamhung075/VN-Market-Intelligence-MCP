@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-203 · 2026-06-07T02:50Z · CLEAN-DEAD-SOURCE-IDS QA gate — APPROVED
+
+Sprint: FLEET-HOST-SAFETY (BATCH-5) | Task: CLEAN-DEAD-SOURCE-IDS | Verdict: APPROVED | Commit: d267e997
+
+8/0 new tests (CLEAN-DEAD-SOURCE-IDS.test.ts) + 21/0 F-1 regression green. tsc: 5 pre-existing errors only (1980-f2-canon-schema.test.ts × 3 + tasksMdJanitorJob.ts × 2), none in diff. mock-guard exit 0. DDD: interface→infra import pre-existed (not in diff), consistent with vpsProxyHealthHandler pattern. Security: no process.env, no secrets, SQL uses `?` bound params only (DEAD_SOURCE_SLUGS spread via .all()). AC1 PASS: DEAD_SOURCE_SLUGS exported, 6 entries. AC2 PASS: NOT IN uses `?` placeholders + .all(cutoff, ...DEAD_SOURCE_SLUGS). AC3 PASS: cafef/vnexpress/vneconomy/vietstock unaffected (test verified). AC4 PASS: 8+21 tests green. AC5 PASS: 5 pre-existing tsc errors unchanged. AC6 PASS: 5-file commit, orch-state diff only touches new task row + _updated fields. AC7 PASS: exclusion is HAVING read-time filter — no DELETE/migration. NIT (non-blocking): dev _updated_at=00:00:00Z earlier than predecessor 00:21:54Z (hand-typed stamp). orch-state REVIEW→DONE.
+
 ## cycle-202 · 2026-06-07T02:05Z · FIX-SLA-EXEMPT-NEWS-SBVFX QA gate — APPROVED
 
 Sprint: WORKFLOW-FLUIDITY | Task: FIX-SLA-EXEMPT-NEWS-SBVFX | Verdict: APPROVED

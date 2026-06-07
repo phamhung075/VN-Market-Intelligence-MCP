@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T00:00:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-07T02:50:00Z",
+  "_updated_by": "qa",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T00:00:00Z",
@@ -843,7 +843,7 @@
             "type": "CLEAN",
             "owner": "dev-mcp-server",
             "depends": null,
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server",
             "note": "BATCH-5. DEAD_SOURCE_SLUGS exclusion added to fetchStatusHandler.ts HAVING clause. 8 new tests pass, F-1 21 tests unchanged. tsc errors pre-existing (tasksMdJanitorJob). Historical DB rows preserved."
