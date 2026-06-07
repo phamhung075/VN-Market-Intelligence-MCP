@@ -133,3 +133,22 @@ Zone health: DSI-INV-1 SHIPPED 09e93d76; ops REBUILD required | HEALTHY
 **Status:** F-2 TODO→REVIEW. Pending: ops REBUILD macro-indicators + QA verify `GET :5004/external` has no `totalLatencyMs`.
 
 Zone health: FDA-2+FDA-3 SHIPPED 0712c3a7; ops REBUILD required | HEALTHY
+
+## Session 2026-06-07 — U4 direction+delta sweep (sprint TOOL-SURFACE-UPGRADE)
+
+**Task:** TSU-DEV-U4 — add `prev_session_delta` + `direction` to all 4 headline values in `get_macro_snapshot`.
+
+**Design:** Extended `MarketIndexPort` with `FetchPrevSessionVnIndex()` (second-most-recent `daily_ohlcv` close, OFFSET 1). Added `computeDelta(current, prev)` pure helper (nil prev → nil/"unknown"; flat threshold 0.1% of current). Oil/gold/usdVnd: single-row tables, no history → always (nil, "unknown"), never fabricated.
+
+**Files changed:**
+- `pkg/domain/ports.go` — `MarketIndexPort.FetchPrevSessionVnIndex` added
+- `pkg/application/dtos.go` — 8 new fields on `MacroSnapshotResponse` (VNIndexDelta/Direction + OilUSDDelta/Direction + GoldUSDDelta/Direction + USDVndDelta/Direction)
+- `pkg/application/usecases.go` — `resolvePrevSessionVnIndex`, `computeDelta`, `Execute()` updated
+- `pkg/application/usecases_test.go` — `stubMarketIndex.FetchPrevSessionVnIndex` + 8 new tests (T-U4-1..7)
+- `pkg/infrastructure/repositories.go` — `FetchPrevSessionVnIndex`, `fetchPrevSessionVnIndexFromDB` added
+- `pkg/infrastructure/repositories_test.go` — `daily_ohlcv` table in `newInMemoryDB` + 4 new tests (T-U4-5)
+- `pkg/interface/http/handlers_snapshot_contract_test.go` — stubs updated for new port method
+
+**Tests:** `go test ./...` ALL PASS (12 packages). Sandbox: primitive 18/18 GREEN, module 2/2 GREEN. `go vet ./...` CLEAN.
+
+**Status:** REVIEW — ops REBUILD macro-indicators required. QA: verify `get_macro_snapshot` JSON includes `vnIndexDelta` (number or null) + `vnIndexDirection` + `oilUsdDelta` (null) + `oilUsdDirection` ("unknown") etc.

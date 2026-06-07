@@ -124,6 +124,10 @@ func (uc *ComputeMacroUseCase) Execute(
 	// FDA-2: track liveness for per-field provenance (VNIndexIsEstimate / VNIndexSourceTier).
 	vnIndex, vnIndexLive := resolveVNIndex(ctx, uc)
 
+	// U4: Resolve prev-session VN-Index for delta + direction computation.
+	// Returns nil when < 2 rows exist (safe-degrade → computeDelta returns nil/"unknown").
+	prevVnIndex := resolvePrevSessionVnIndex(ctx, uc)
+
 	// Resolve commodity prices via port; fall back to fixture defaults on zero/error.
 	// FDA-2: per-field liveness flags for OilIsEstimate/GoldIsEstimate/USDVndIsEstimate.
 	oilPrice, goldPrice, usdVnd, oilLive, goldLive, usdVndLive := resolveMarketPrices(ctx, uc)
@@ -226,6 +230,19 @@ func (uc *ComputeMacroUseCase) Execute(
 		usdVndTier = tierLive
 	}
 
+	// U4: Compute direction+delta for all 4 headline values.
+	// VnIndex: uses prev-session close from daily_ohlcv (nil when < 2 rows → unknown).
+	// Oil/Gold/UsdVnd: no prev-session history persisted → always (nil, "unknown").
+	vnIndexDelta, vnIndexDirection := computeDelta(vnIndex, prevVnIndex)
+	var (
+		oilDelta      *float64 = nil // no history; never fabricate
+		oilDirection           = "unknown"
+		goldDelta     *float64 = nil // no history; never fabricate
+		goldDirection          = "unknown"
+		usdVndDelta   *float64 = nil // no history; never fabricate
+		usdVndDirection        = "unknown"
+	)
+
 	return MacroSnapshotResponse{
 		Status:     "ok",
 		VNIndex:    vnIndex,
@@ -250,6 +267,15 @@ func (uc *ComputeMacroUseCase) Execute(
 		GoldSourceTier:    goldTier,
 		USDVndIsEstimate:  !usdVndLive,
 		USDVndSourceTier:  usdVndTier,
+		// U4: direction+delta (additive fields)
+		VNIndexDelta:    vnIndexDelta,
+		VNIndexDirection: vnIndexDirection,
+		OilUSDDelta:     oilDelta,
+		OilUSDDirection: oilDirection,
+		GoldUSDDelta:    goldDelta,
+		GoldUSDDirection: goldDirection,
+		USDVndDelta:     usdVndDelta,
+		USDVndDirection: usdVndDirection,
 	}, nil
 }
 
@@ -337,6 +363,48 @@ func resolveVNIndex(ctx context.Context, uc *ComputeMacroUseCase) (float64, bool
 		}
 	}
 	return fixtureVNIndex, false
+}
+
+// resolvePrevSessionVnIndex fetches the second-most-recent VN-Index close from
+// MarketIndexPort.FetchPrevSessionVnIndex (daily_ohlcv, OFFSET 1).
+// Returns nil when the port is nil, errors, or returns nil (< 2 rows safe-degrade).
+// U4: used by Execute() to compute VnIndex prev_session_delta + direction.
+func resolvePrevSessionVnIndex(ctx context.Context, uc *ComputeMacroUseCase) *float64 {
+	if uc.marketIndex != nil {
+		prev, err := uc.marketIndex.FetchPrevSessionVnIndex(ctx)
+		if err == nil && prev != nil {
+			return prev
+		}
+	}
+	return nil
+}
+
+// computeDelta computes the signed point delta and direction string for a price field.
+//
+// Direction enum: "up" | "down" | "flat" | "unknown".
+// "flat" is returned when |delta/current| < flatThreshold (0.1% — ARCH-DEFERRED: tunable).
+// "unknown" is returned when prev is nil (no history available).
+//
+// Safe: returns (nil, "unknown") when prev is nil.
+// U4: covers all 4 headline values; oil/gold/usdVnd always pass nil → (nil, "unknown").
+func computeDelta(current float64, prev *float64) (*float64, string) {
+	if prev == nil {
+		return nil, "unknown"
+	}
+	delta := current - *prev
+	// flatThreshold: 0.1% of current price.
+	// Architect-deferred: threshold tunable in a future sprint (ARCH-U4-2 risk).
+	const flatThresholdPct = 0.001
+	var direction string
+	switch {
+	case current > 0 && delta/current > flatThresholdPct:
+		direction = "up"
+	case current > 0 && delta/current < -flatThresholdPct:
+		direction = "down"
+	default:
+		direction = "flat"
+	}
+	return &delta, direction
 }
 
 // ---------------------------------------------------------------------------

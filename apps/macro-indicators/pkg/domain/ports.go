@@ -32,6 +32,12 @@ type MarketIndexPort interface {
 	// FetchVNIndex returns the most recent VN-Index level (e.g. 1880.89).
 	// Returns 0, nil when no data is available (caller falls back to fixture).
 	FetchVNIndex(ctx context.Context) (float64, error)
+
+	// FetchPrevSessionVnIndex returns the second-most-recent close from daily_ohlcv
+	// WHERE code='VNINDEX' ORDER BY date DESC OFFSET 1 LIMIT 1.
+	// Returns nil when fewer than 2 rows exist (first trading day safe-degrade).
+	// U4: used by Execute() to compute VnIndex prev_session_delta + direction.
+	FetchPrevSessionVnIndex(ctx context.Context) (*float64, error)
 }
 
 // CarryYieldInputsPort supplies the live regime INPUTS for the carry-trade and

@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T10:30:00Z",
+  "_updated_at": "2026-06-07T11:00:00Z",
   "_updated_by": "dev-macro-indicators",
   "head": {
     "status": "planning",
@@ -2297,13 +2297,14 @@
             "type": "ENHANCEMENT",
             "owner": "dev-macro-indicators",
             "depends": [],
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/macro-indicators/pkg/",
             "priority": "high",
             "id": "TSU-DEV-U4",
             "claimed_at": "2026-06-07T10:30:00Z",
-            "claimed_by": "dev-macro-indicators"
+            "claimed_by": "dev-macro-indicators",
+            "completed_at": "2026-06-07T11:00:00Z"
           },
           {
             "title": "U5: Foreign flow null holding ratio — omit fabricated data (formatForeignFlowOutput gate)",

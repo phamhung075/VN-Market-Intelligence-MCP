@@ -71,12 +71,18 @@ func (s *stubCarryYieldInputs) GetEarningYield(_ context.Context) (float64, erro
 }
 
 // stubMarketIndex returns a configurable VN-Index value.
+// prevVnIndex is nil when there is no previous session data (safe-degrade).
 type stubMarketIndex struct {
-	vnIndex float64
+	vnIndex     float64
+	prevVnIndex *float64
 }
 
 func (s *stubMarketIndex) FetchVNIndex(_ context.Context) (float64, error) {
 	return s.vnIndex, nil
+}
+
+func (s *stubMarketIndex) FetchPrevSessionVnIndex(_ context.Context) (*float64, error) {
+	return s.prevVnIndex, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -1061,6 +1067,203 @@ func abs(x float64) float64 {
 		return -x
 	}
 	return x
+}
+
+// ---------------------------------------------------------------------------
+// U4: direction+delta tests (T-U4-1 through T-U4-7)
+// ---------------------------------------------------------------------------
+
+// ptr64 is a test helper to get a *float64 from a literal.
+func ptr64(v float64) *float64 { return &v }
+
+// TestComputeDelta_NilPrev (T-U4-1): nil prev → (nil, "unknown").
+func TestComputeDelta_NilPrev(t *testing.T) {
+	delta, dir := computeDelta(1200.0, nil)
+	if delta != nil {
+		t.Errorf("T-U4-1: delta = %v, want nil (nil prev)", delta)
+	}
+	if dir != "unknown" {
+		t.Errorf("T-U4-1: direction = %q, want \"unknown\" (nil prev)", dir)
+	}
+}
+
+// TestComputeDelta_PositiveDelta (T-U4-2): positive delta > 0.1% → (delta, "up").
+func TestComputeDelta_PositiveDelta(t *testing.T) {
+	// current=1200, prev=1180 → delta=+20 → 20/1200=1.67% > 0.1%
+	delta, dir := computeDelta(1200.0, ptr64(1180.0))
+	if delta == nil {
+		t.Fatal("T-U4-2: delta is nil, want non-nil")
+	}
+	if abs(*delta-20.0) > 0.001 {
+		t.Errorf("T-U4-2: delta = %.4f, want 20.0", *delta)
+	}
+	if dir != "up" {
+		t.Errorf("T-U4-2: direction = %q, want \"up\"", dir)
+	}
+}
+
+// TestComputeDelta_NegativeDelta (T-U4-3): negative delta < -0.1% → (delta, "down").
+func TestComputeDelta_NegativeDelta(t *testing.T) {
+	// current=1180, prev=1200 → delta=-20 → -20/1180=-1.69% < -0.1%
+	delta, dir := computeDelta(1180.0, ptr64(1200.0))
+	if delta == nil {
+		t.Fatal("T-U4-3: delta is nil, want non-nil")
+	}
+	if abs(*delta-(-20.0)) > 0.001 {
+		t.Errorf("T-U4-3: delta = %.4f, want -20.0", *delta)
+	}
+	if dir != "down" {
+		t.Errorf("T-U4-3: direction = %q, want \"down\"", dir)
+	}
+}
+
+// TestComputeDelta_FlatDelta (T-U4-4): |delta/current| < 0.1% → (delta, "flat").
+func TestComputeDelta_FlatDelta(t *testing.T) {
+	// current=1200, prev=1200.5 → delta=-0.5 → -0.5/1200=-0.042% → flat
+	delta, dir := computeDelta(1200.0, ptr64(1200.5))
+	if delta == nil {
+		t.Fatal("T-U4-4: delta is nil, want non-nil")
+	}
+	if dir != "flat" {
+		t.Errorf("T-U4-4: direction = %q, want \"flat\" (|delta| < 0.1%%)", dir)
+	}
+}
+
+// TestU4_VnIndexDeltaFromHistory (T-U4-6): Execute() returns VnIndex delta + direction
+// when prev-session close is available from MarketIndexPort.
+func TestU4_VnIndexDeltaFromHistory(t *testing.T) {
+	const current = 1250.0
+	const prev = 1230.0
+	// delta = 20.0, direction = "up" (20/1250=1.6% > 0.1%)
+
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: current, prevVnIndex: ptr64(prev)},
+		nil,
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	if resp.VNIndexDelta == nil {
+		t.Fatalf("T-U4-6: VNIndexDelta = nil, want non-nil (prev-session available)")
+	}
+	if abs(*resp.VNIndexDelta-20.0) > 0.001 {
+		t.Errorf("T-U4-6: VNIndexDelta = %.4f, want 20.0", *resp.VNIndexDelta)
+	}
+	if resp.VNIndexDirection != "up" {
+		t.Errorf("T-U4-6: VNIndexDirection = %q, want \"up\"", resp.VNIndexDirection)
+	}
+}
+
+// TestU4_VnIndexDeltaUnknownWhenNoPrevSession: Execute() returns nil delta + "unknown"
+// direction when no prev-session close is available (first trading day safe-degrade).
+func TestU4_VnIndexDeltaUnknownWhenNoPrevSession(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1200.0, prevVnIndex: nil}, // no prev session
+		nil,
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	if resp.VNIndexDelta != nil {
+		t.Errorf("T-U4-6 safe-degrade: VNIndexDelta = %v, want nil (no prev session)", resp.VNIndexDelta)
+	}
+	if resp.VNIndexDirection != "unknown" {
+		t.Errorf("T-U4-6 safe-degrade: VNIndexDirection = %q, want \"unknown\"", resp.VNIndexDirection)
+	}
+}
+
+// TestU4_OilGoldUsdVndAlwaysNullUnknown (T-U4-7): Oil/Gold/UsdVnd always emit
+// null delta + "unknown" direction (no prev-session history persisted).
+func TestU4_OilGoldUsdVndAlwaysNullUnknown(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    85.0,
+			"GOLD":   2400.0,
+			"USDVND": 25000.0,
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1250.0, prevVnIndex: ptr64(1230.0)},
+		nil,
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	// Oil: always null/unknown
+	if resp.OilUSDDelta != nil {
+		t.Errorf("T-U4-7: OilUSDDelta = %v, want nil (no history)", resp.OilUSDDelta)
+	}
+	if resp.OilUSDDirection != "unknown" {
+		t.Errorf("T-U4-7: OilUSDDirection = %q, want \"unknown\"", resp.OilUSDDirection)
+	}
+
+	// Gold: always null/unknown
+	if resp.GoldUSDDelta != nil {
+		t.Errorf("T-U4-7: GoldUSDDelta = %v, want nil (no history)", resp.GoldUSDDelta)
+	}
+	if resp.GoldUSDDirection != "unknown" {
+		t.Errorf("T-U4-7: GoldUSDDirection = %q, want \"unknown\"", resp.GoldUSDDirection)
+	}
+
+	// UsdVnd: always null/unknown
+	if resp.USDVndDelta != nil {
+		t.Errorf("T-U4-7: USDVndDelta = %v, want nil (no history)", resp.USDVndDelta)
+	}
+	if resp.USDVndDirection != "unknown" {
+		t.Errorf("T-U4-7: USDVndDirection = %q, want \"unknown\"", resp.USDVndDirection)
+	}
+}
+
+// TestU4_NewFieldsInJSONResponse (T-U4-6 JSON): Verify new fields are present in
+// serialized JSON output (additive — no existing field removed).
+func TestU4_NewFieldsInJSONResponse(t *testing.T) {
+	import_json_check := func(resp MacroSnapshotResponse) {
+		b, err := json.Marshal(resp)
+		if err != nil {
+			t.Fatalf("T-U4-JSON: marshal error: %v", err)
+		}
+		jsonStr := string(b)
+		for _, key := range []string{
+			"vnIndexDelta", "vnIndexDirection",
+			"oilUsdDelta", "oilUsdDirection",
+			"goldUsdDelta", "goldUsdDirection",
+			"usdVndDelta", "usdVndDirection",
+		} {
+			if !strings.Contains(jsonStr, `"`+key+`"`) {
+				t.Errorf("T-U4-JSON: key %q missing from JSON output", key)
+			}
+		}
+		// Existing fields must still be present
+		for _, key := range []string{"vnIndex", "oilUsd", "goldUsd", "usdVnd", "status"} {
+			if !strings.Contains(jsonStr, `"`+key+`"`) {
+				t.Errorf("T-U4-JSON: existing key %q missing from JSON output (regression)", key)
+			}
+		}
+	}
+
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1250.0, prevVnIndex: ptr64(1230.0)},
+		nil,
+	)
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	import_json_check(resp)
 }
 
 // ---------------------------------------------------------------------------

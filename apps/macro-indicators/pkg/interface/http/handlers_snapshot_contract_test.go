@@ -56,10 +56,15 @@ func (f *fakeContractSBVRate) GetRate(_ context.Context, _, _ string) (float64, 
 }
 
 // fakeContractMarketIndex returns a fixture VN-Index level.
+// FetchPrevSessionVnIndex returns nil (no prev session in contract tests).
 type fakeContractMarketIndex struct{}
 
 func (f *fakeContractMarketIndex) FetchVNIndex(_ context.Context) (float64, error) {
 	return 1280.5, nil
+}
+
+func (f *fakeContractMarketIndex) FetchPrevSessionVnIndex(_ context.Context) (*float64, error) {
+	return nil, nil
 }
 
 // Ensure fakes satisfy the port interfaces (compile-time guard).
@@ -397,10 +402,15 @@ func (f *fakeEmptyCommodityFetcher) FetchPrices(_ context.Context, _ []string) (
 }
 
 // fakeZeroMarketIndex returns 0 (simulates absent/empty DB rows).
+// FetchPrevSessionVnIndex returns nil (no prev session).
 type fakeZeroMarketIndex struct{}
 
 func (f *fakeZeroMarketIndex) FetchVNIndex(_ context.Context) (float64, error) {
 	return 0, nil
+}
+
+func (f *fakeZeroMarketIndex) FetchPrevSessionVnIndex(_ context.Context) (*float64, error) {
+	return nil, nil
 }
 
 // TestFDA3_ExternalFixturePath_DegradedStatus verifies that GET /external reports

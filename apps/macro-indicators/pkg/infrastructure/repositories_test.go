@@ -122,6 +122,23 @@ func newInMemoryDB(t *testing.T) *sql.DB {
 		t.Fatalf("create tracked_indicators: %v", err)
 	}
 
+	// daily_ohlcv — source for SQLiteMarketIndexRepository.FetchPrevSessionVnIndex (U4).
+	// Minimal columns: code TEXT, date TEXT (YYYY-MM-DD), close REAL.
+	// Populated by the daily OHLCV data pipeline.
+	_, err = db.Exec(`
+		CREATE TABLE daily_ohlcv (
+			code  TEXT NOT NULL,
+			date  TEXT NOT NULL,
+			open  REAL,
+			high  REAL,
+			low   REAL,
+			close REAL,
+			PRIMARY KEY (code, date)
+		)`)
+	if err != nil {
+		t.Fatalf("create daily_ohlcv: %v", err)
+	}
+
 	return db
 }
 
@@ -762,5 +779,96 @@ func TestFetchEarningYieldFromDB_AbsentRow(t *testing.T) {
 	}
 	if got != 0 {
 		t.Errorf("DPI-2b AC-4 earning absent: got %.2f, want 0", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// U4: FetchPrevSessionVnIndex — T-U4-5
+// ---------------------------------------------------------------------------
+
+// TestFetchPrevSessionVnIndex_ReturnSecondMostRecent (T-U4-5):
+// With 3 VNINDEX rows, returns the second-most-recent close (OFFSET 1).
+func TestFetchPrevSessionVnIndex_ReturnSecondMostRecent(t *testing.T) {
+	db := newInMemoryDB(t)
+	ctx := context.Background()
+
+	// Insert 3 rows: most recent last so ORDER BY date DESC gives 2026-06-03, 2026-06-02, 2026-06-01.
+	_, err := db.Exec(`
+		INSERT INTO daily_ohlcv (code, date, close) VALUES
+		('VNINDEX', '2026-06-01', 1210.0),
+		('VNINDEX', '2026-06-02', 1220.5),
+		('VNINDEX', '2026-06-03', 1230.0)`)
+	if err != nil {
+		t.Fatalf("insert daily_ohlcv: %v", err)
+	}
+
+	got, err := fetchPrevSessionVnIndexFromDB(ctx, db)
+	if err != nil {
+		t.Fatalf("fetchPrevSessionVnIndexFromDB error: %v", err)
+	}
+	if got == nil {
+		t.Fatal("T-U4-5: result is nil, want 1220.5 (second-most-recent close)")
+	}
+	if *got != 1220.5 {
+		t.Errorf("T-U4-5: prev close = %.2f, want 1220.5 (second-most-recent row)", *got)
+	}
+}
+
+// TestFetchPrevSessionVnIndex_OnlyOneRow_ReturnsNil (T-U4-5 safe-degrade):
+// With only 1 VNINDEX row, OFFSET 1 returns no row → nil (first-day safe-degrade).
+func TestFetchPrevSessionVnIndex_OnlyOneRow_ReturnsNil(t *testing.T) {
+	db := newInMemoryDB(t)
+	ctx := context.Background()
+
+	_, err := db.Exec(`INSERT INTO daily_ohlcv (code, date, close) VALUES ('VNINDEX', '2026-06-03', 1230.0)`)
+	if err != nil {
+		t.Fatalf("insert daily_ohlcv: %v", err)
+	}
+
+	got, err := fetchPrevSessionVnIndexFromDB(ctx, db)
+	if err != nil {
+		t.Fatalf("fetchPrevSessionVnIndexFromDB error: %v", err)
+	}
+	if got != nil {
+		t.Errorf("T-U4-5 one-row: prev close = %v, want nil (only 1 row — first trading day safe-degrade)", got)
+	}
+}
+
+// TestFetchPrevSessionVnIndex_EmptyTable_ReturnsNil:
+// Empty table → nil (no data safe-degrade).
+func TestFetchPrevSessionVnIndex_EmptyTable_ReturnsNil(t *testing.T) {
+	db := newInMemoryDB(t)
+	ctx := context.Background()
+
+	got, err := fetchPrevSessionVnIndexFromDB(ctx, db)
+	if err != nil {
+		t.Fatalf("fetchPrevSessionVnIndexFromDB error: %v", err)
+	}
+	if got != nil {
+		t.Errorf("T-U4-5 empty: prev close = %v, want nil (empty table)", got)
+	}
+}
+
+// TestFetchPrevSessionVnIndex_OtherCodes_NotIncluded:
+// Rows for non-VNINDEX codes must not affect the result.
+func TestFetchPrevSessionVnIndex_OtherCodes_NotIncluded(t *testing.T) {
+	db := newInMemoryDB(t)
+	ctx := context.Background()
+
+	// Only HOSE and HNX rows — no VNINDEX → nil.
+	_, err := db.Exec(`
+		INSERT INTO daily_ohlcv (code, date, close) VALUES
+		('HOSE', '2026-06-02', 500.0),
+		('HOSE', '2026-06-03', 510.0)`)
+	if err != nil {
+		t.Fatalf("insert daily_ohlcv: %v", err)
+	}
+
+	got, err := fetchPrevSessionVnIndexFromDB(ctx, db)
+	if err != nil {
+		t.Fatalf("fetchPrevSessionVnIndexFromDB error: %v", err)
+	}
+	if got != nil {
+		t.Errorf("T-U4-5 other-codes: prev close = %v, want nil (no VNINDEX rows)", got)
 	}
 }

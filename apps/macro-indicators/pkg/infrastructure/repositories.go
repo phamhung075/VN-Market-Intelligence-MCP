@@ -158,6 +158,8 @@ func NewSQLiteMarketIndexRepository() *SQLiteMarketIndexRepository {
 //  2. macro_indicators.value WHERE indicator_name LIKE '%VN-Index%' (daily, legacy fallback)
 //
 // Returns (0, nil) on missing DB, no rows, or query error (safe degradation).
+//
+// U4: FetchPrevSessionVnIndex() is added below to supply prev-session close for delta computation.
 func (repo *SQLiteMarketIndexRepository) FetchVNIndex(ctx context.Context) (float64, error) {
 	// Open read-only to respect the charter security clause and DB_READONLY=true.
 	db, err := sql.Open("sqlite", fmt.Sprintf("file:%s?mode=ro", repo.dbPath))
@@ -194,6 +196,55 @@ func (repo *SQLiteMarketIndexRepository) FetchVNIndex(ctx context.Context) (floa
 
 	// Both tables empty or unavailable — return 0 for graceful fixture fallback.
 	return 0, nil
+}
+
+// FetchPrevSessionVnIndex returns the second-most-recent close from daily_ohlcv
+// WHERE code='VNINDEX', ORDER BY date DESC, OFFSET 1 LIMIT 1.
+//
+// U4: used by Execute() to compute prev_session_delta + direction for the VN-Index
+// headline value. Oil/gold/usdVnd have no prev-session history (single-row tables)
+// so this method is VN-Index specific.
+//
+// Returns nil when:
+//   - DB file is missing or unreadable
+//   - daily_ohlcv has fewer than 2 VNINDEX rows (first trading day safe-degrade)
+//   - query errors for any reason
+//
+// Never returns an error to the caller — all errors become nil (safe-degrade).
+func (repo *SQLiteMarketIndexRepository) FetchPrevSessionVnIndex(ctx context.Context) (*float64, error) {
+	db, err := sql.Open("sqlite", fmt.Sprintf("file:%s?mode=ro", repo.dbPath))
+	if err != nil {
+		// DB not present or not openable — nil = "no prev session" (safe-degrade).
+		return nil, nil //nolint:nilerr // intentional: caller uses "unknown" direction
+	}
+	defer db.Close()
+
+	return fetchPrevSessionVnIndexFromDB(ctx, db)
+}
+
+// fetchPrevSessionVnIndexFromDB is the pure query logic extracted from
+// FetchPrevSessionVnIndex so tests can inject a *sql.DB directly.
+// Returns nil on missing table, fewer than 2 rows, or any query error.
+func fetchPrevSessionVnIndexFromDB(ctx context.Context, db *sql.DB) (*float64, error) {
+	// daily_ohlcv schema: (code TEXT, date TEXT, close REAL, ...)
+	// ORDER BY date DESC LIMIT 1 OFFSET 1 = second-most-recent row = prev session close.
+	const query = `
+		SELECT close FROM daily_ohlcv
+		WHERE code = 'VNINDEX' AND close IS NOT NULL AND close > 0
+		ORDER BY date DESC
+		LIMIT 1 OFFSET 1`
+
+	var prevClose sql.NullFloat64
+	err := db.QueryRowContext(ctx, query).Scan(&prevClose)
+	if err != nil {
+		// sql.ErrNoRows or table absent — < 2 rows = first trading day safe-degrade.
+		return nil, nil //nolint:nilerr // intentional: caller uses "unknown" direction
+	}
+	if !prevClose.Valid || prevClose.Float64 <= 0 {
+		return nil, nil
+	}
+	v := prevClose.Float64
+	return &v, nil
 }
 
 // ---------------------------------------------------------------------------

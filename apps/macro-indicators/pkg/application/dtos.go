@@ -84,6 +84,12 @@ type YieldSignalDTO struct {
 //
 // FDA-3: FetchedAt is a pointer — nil when all inputs are fixture (prevents
 // fresh-stamping non-fresh data). Non-nil on any live-data path.
+//
+// U4: direction+delta fields added for all 4 headline values (additive — no rename/removal).
+// VnIndex delta is computed from daily_ohlcv prev-session history (when available).
+// Oil/gold/usdVnd: no prev-session history persisted → delta=null, direction="unknown".
+// Direction enum: "up" | "down" | "flat" | "unknown".
+// Flat threshold: |delta/current| < 0.001 (0.1% of current price — tunable, sprint-deferred).
 type MacroSnapshotResponse struct {
 	Status     string       `json:"status"`
 	VNIndex    float64      `json:"vnIndex"`
@@ -108,4 +114,17 @@ type MacroSnapshotResponse struct {
 	GoldSourceTier    int  `json:"gold_source_tier"`
 	USDVndIsEstimate  bool `json:"usdVnd_is_estimate"`
 	USDVndSourceTier  int  `json:"usdVnd_source_tier"`
+
+	// U4: direction+delta fields — additive; no existing field renamed or removed.
+	// VnIndex: delta computed from daily_ohlcv prev-session close (nil when < 2 rows).
+	// Oil/Gold/UsdVnd: no prev-session history → always null delta + "unknown" direction.
+	// Direction enum values: "up" | "down" | "flat" | "unknown".
+	VNIndexDelta     *float64 `json:"vnIndexDelta"`     // null or signed point delta
+	VNIndexDirection string   `json:"vnIndexDirection"` // "up"/"down"/"flat"/"unknown"
+	OilUSDDelta      *float64 `json:"oilUsdDelta"`      // always null (no history)
+	OilUSDDirection  string   `json:"oilUsdDirection"`  // always "unknown"
+	GoldUSDDelta     *float64 `json:"goldUsdDelta"`     // always null (no history)
+	GoldUSDDirection string   `json:"goldUsdDirection"` // always "unknown"
+	USDVndDelta      *float64 `json:"usdVndDelta"`      // always null (no history)
+	USDVndDirection  string   `json:"usdVndDirection"`  // always "unknown"
 }
