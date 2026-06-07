@@ -193,6 +193,10 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
+### 2026-06-08 — PDFX-SINGLE-WORKER-BLOCKING (3033e1dc)
+
+ProcessPoolExecutor(max_workers=1) → OCR in separate OS process → /health 200 OK on all 8 polls during live OCR. asyncio.to_thread() was insufficient (same process, CPU starvation). D6: max_workers=1.
+
 ### History pointer
 
 Prior entries (FU-LF-ORPHAN-ROWS, PDF-SINGLE-SOURCE, PEK-RENDER-PDFX, PEK-LAYOUT-CFG, PEK-IMPORT-CHAIN, PEK-DEPLOY-FIX, PEK-ORPHAN-RECONCILE, PEK-IMPL, LF-FIX, LF-EXTRACT, MD-EXTRACT-1..9) truncated at 200L per notebook cap. See `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md` for full history.

@@ -14,3 +14,13 @@
 - aiohttp replacement (rejected: AC-LFE-8 forbids aiohttp import; breaks constraint)
 **why-decision:** asyncio.to_thread is the established in-repo pattern; mirrors the already-fixed TablePushClient; zero new dependencies; eval_push_client has no try/except wrapper so _do_request wraps the raw with block; all 3 tests TC-PUSH-LF-1/MD-1/EVAL-1 GREEN.
 **why-change:** no change from plan
+
+### STEP dev-pdf-extractor-S1 · dev-pdf-extractor · 2026-06-08T01:27:00Z
+**task-id:** PDFX-SINGLE-WORKER-BLOCKING
+**what-done:** Replaced asyncio.to_thread() with ProcessPoolExecutor(max_workers=1) for OCR path in ExtractTablesUseCase.
+**what-considered:**
+- Option A: multiple uvicorn workers (--workers 2) — quick but doesn't fix root cause
+- Option B: ProcessPoolExecutor — OS-level process isolation, definitive fix
+- Option C: bump healthcheck timeout only — mitigation, no root-cause fix
+**why-decision:** ProcessPoolExecutor puts OCR in a separate OS process; OS schedules uvicorn independently even at 100% CPU saturation. Timeout bump added as safety margin.
+**why-change:** Previous asyncio.to_thread() fix ran OCR in a thread inside the same process — still competed for OS scheduling slot when CPU was saturated.
