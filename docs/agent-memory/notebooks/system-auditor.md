@@ -1,5 +1,32 @@
 <!-- System Auditor Notebook — cycle log (≤200L, NEWEST-FIRST ordering) -->
 
+## c088 · 2026-06-07T12:43:40Z
+### Audit Run Tier-1 (12:43 UTC 2026-06-07)
+- Tier: 1 | Services: 6 checked
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE:
+```
+--- docker ps -a ---
+mcp-server: Up 35min (healthy) ✓
+api-gateway: Up 25h (healthy) ✓
+macro-indicators: Up 4h (healthy) ✓
+pdf-extractor: Up 1h (unhealthy) ℹ
+frontend: Up 15h (healthy) ✓
+mcp-gateway: Up 11d (healthy) ✓
+--- health endpoints ---
+mcp-server:3000/health OK (200) ✓
+api-gateway:4000/health OK (200) ✓
+macro-indicators:5004/health OK (200) ✓
+pdf-extractor:5001/health FAIL (CURL_ERR) ℹ
+frontend:3001/ OK (200) ✓
+--- memory --- mcp-server=26.87% (<85%) ✓
+--- disk --- 27% used (13Gi/38Gi free) ✓
+--- restart count --- mcp-server RestartCount=0 ✓
+```
+- Findings: pdf-extractor unhealthy confirmed expected (PDFX-SINGLE-WORKER-BLOCKING per dispatcher). Tesseract active (pid 2258, 99.6% CPU, processing /tmp/tess_*). Classification: BUSY NOT WEDGED — INFO only.
+- Signals: 0 emitted
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## c087 · 2026-06-07T12:12:28Z
 ### Audit Run Tier-1 (12:12 UTC 2026-06-07)
 - Tier: 1 | Services: 6 checked
