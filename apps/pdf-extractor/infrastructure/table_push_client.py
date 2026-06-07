@@ -17,6 +17,7 @@ Error handling: log + raise (let the use case handle retry/blocking).
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import urllib.error
@@ -105,29 +106,36 @@ class TablePushClient:
             self._push_endpoint,
         )
 
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                raw = resp.read().decode("utf-8")
-                result: Dict = json.loads(raw)
-                logger.info(
-                    "TablePushClient.push_table OK: report_id=%s rows_stored=%s",
+        # FIX (HEALTH-BLOCK): urllib.request.urlopen() is a synchronous blocking call
+        # (up to 30s timeout). Running it directly in an async function blocks the
+        # event loop, making /health unresponsive for the full push duration.
+        # Wrap in asyncio.to_thread() to offload to a worker thread.
+        def _do_request() -> Dict:
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    raw = resp.read().decode("utf-8")
+                    result: Dict = json.loads(raw)
+                    logger.info(
+                        "TablePushClient.push_table OK: report_id=%s rows_stored=%s",
+                        report_id,
+                        result.get("rows_stored"),
+                    )
+                    return result
+            except urllib.error.HTTPError as exc:
+                body_txt = exc.read().decode("utf-8", errors="replace")
+                logger.error(
+                    "TablePushClient.push_table HTTP %d: report_id=%s body=%s",
+                    exc.code,
                     report_id,
-                    result.get("rows_stored"),
+                    body_txt[:200],
                 )
-                return result
-        except urllib.error.HTTPError as exc:
-            body_txt = exc.read().decode("utf-8", errors="replace")
-            logger.error(
-                "TablePushClient.push_table HTTP %d: report_id=%s body=%s",
-                exc.code,
-                report_id,
-                body_txt[:200],
-            )
-            raise
-        except urllib.error.URLError as exc:
-            logger.error(
-                "TablePushClient.push_table network error: report_id=%s reason=%s",
-                report_id,
-                exc.reason,
-            )
-            raise
+                raise
+            except urllib.error.URLError as exc:
+                logger.error(
+                    "TablePushClient.push_table network error: report_id=%s reason=%s",
+                    report_id,
+                    exc.reason,
+                )
+                raise
+
+        return await asyncio.to_thread(_do_request)
