@@ -20,7 +20,7 @@
     "pb": 3.6,
     "roe_pct": 28.3,
     "ey_pct": 7.25,
-    "deposit_rate_pct": 5.0,
+    "deposit_rate_pct": 5,
     "ey_spread_pp": 2.25,
     "valuation_verdict": "FAIR"
   },
@@ -33,7 +33,7 @@
     "total_liabilities_ty": 28464.058,
     "cash_ty": 7993.577,
     "ocf_ty": -2847.813,
-    "de_ratio": 0.40,
+    "de_ratio": 0.4,
     "confidence": 0.81
   },
   "esc_gates": {
@@ -46,7 +46,11 @@
   },
   "trick_summary": null,
   "trick_confidence": "none",
-  "trick_pass_versions": ["balance-sheet-v1", "pl-v1", "cashflow-v1"],
+  "trick_pass_versions": [
+    "balance-sheet-v1",
+    "pl-v1",
+    "cashflow-v1"
+  ],
   "chain_findings": 0,
   "insider_signals": "none",
   "legal_risks": "none",
@@ -58,5 +62,11 @@
     "usdvnd_signal": "BEARISH",
     "investment_clock": "CORE_VN score=8",
     "vn_index": 1838.9
+  },
+  "_processed": {
+    "fingerprint": "ffc44d085e61327dd113eae7798bafa054d76606cfbbca7f103f9f59bf229f2a",
+    "processedAt": "2026-06-07T21:19:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }

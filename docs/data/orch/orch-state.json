@@ -4835,8 +4835,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T21:11:50Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-06-07T21:14:06Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "sau-2026060719035-a13",
@@ -5121,17 +5121,6 @@
         "disposition": "Raw-verified by dispatcher 19:35Z: 36F/703P full run; each fails ONLY in full-suite order (TC9 passes solo). Pre-existing at 473f7cd2~1 (37F/702P) — NOT caused by FIX-PDFX-ALERT-ADAPTER-BLOCKING (net +1 pass, commit 473f7cd2 verified good). Cause class: __tests__ helper asyncio.get_event_loop().run_until_complete (test_extract_tables_usecase.py:142 et al) breaks after pytest-asyncio 1.3.0 Mode.AUTO tests close/replace the loop. Earlier 738/0 baseline predates asyncio-plugin tests. Suggested: FIX-PDFX-TEST-LOOP-POLLUTION (XS-S, zone apps/pdf-extractor/) — migrate loop-based helpers to pytest-asyncio or isolate loop per test."
       },
       {
-        "id": "cowork-20260607T202600",
-        "from": "cowork-dispatcher",
-        "to": "po",
-        "type": "flow_roster_mismatch",
-        "severity": "MED",
-        "status": "NEW",
-        "created_at": "2026-06-07T20:26:00Z",
-        "summary": "tran-ngoc-bau flow requires send_telegram + log_agent_work + task_claim (publish marker, commit mutex) but agent type roster grants NO mcp__claude_ai_gateway__call_tool. Every tnb-audit cycle ends QUALITY:partial; dispatcher must relay publishes manually (done for c90). Fix: add gateway tool to tran-ngoc-bau roster OR strip MCP steps from its flow. Evidence: docs/signals/tnb-2026-06-07T2013Z-c90.json + telemetry cowork-team-20260607T201655Z.json",
-        "zone_owner": "agent-father"
-      },
-      {
         "id": "sau-2026060720364-a13",
         "ts": "2026-06-07T20:36:47Z",
         "from": "system-auditor",
@@ -5139,7 +5128,7 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-13 health endpoint unreachable (recurring) — container marked healthy but /health probe fails",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "zone_owner": "dev-pdf-extractor",
         "check_id": "A-13",
         "payload_ref": null
@@ -5152,7 +5141,7 @@
         "type": "ci_failure",
         "summary": "CI fresh run 27104618906 (a709681f) CONFIRMS root causes: (1) 6x golangci exit-3 = .golangci.yml v2 schema vs golangci-lint-action@v6.1.1 installing v1 — ONE fix: bump action to v7+/set version v2.x at ci.yml:70,91,112,137,159,181; (2) kinh-dich-ts-lint = STALE job (ci.yml:186) linting deprecated TS surface, no eslint.config — DELETE job (TS->Go reboot 2026-05-24); (3) go-lint REAL depguard Fence-C apps/technical-analysis/cmd/sandbox/main.go:44 -> dev-technical-analysis; (4) bun test 4x null: FRED 1423b:108,201 + 1922j:84 + Yahoo 1487:238 -> dev-mcp-server (converges tnb c90 stale Fed). NOT GitHub outage — reproducible across 2 runs.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "zone_owner": "po",
         "check_id": null,
         "payload_ref": null
@@ -5165,7 +5154,7 @@
         "type": "microservice_degraded",
         "summary": "frontend health endpoint unreachable (check A-14)",
         "severity": "INFO",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -5176,7 +5165,7 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor health endpoint unreachable (recurring, check A-13)",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
@@ -6092,6 +6081,17 @@
         "resolved_at": "2026-06-06T16:51:51Z",
         "resolved_by": "dev-team",
         "disposition": "SHIPPED same tick (dev-mcp-server, PO batch FIX-SLA-WEEKEND-AWARE, 9e74cf0a + notebook 2d37cceb). Calendar-aware SLA: domain freshnessSlaChecker getSlaThreshold computes dynamic off-hours threshold (minutesSinceLastWindowEnd + 30min grace) for price/foreign_flow (Mon-Fri 02:00-08:59Z gate) — breaches never RECORDED off-hours, not merely suppressed; vps-proxy-health endpoint + tool + get_sla_status all calendar-aware, off_hours field added. 21 new tests W-1..W-10, router re-ran 46/46 green, tsc clean. DEPLOYED 16:46Z scoped rebuild (IMAGE-MATCH 075579957fed, healthy, toolCount 162 baseline intact). LIVE-PROVEN Saturday: /api/vps-proxy-health prices stale:false off_hours:true (Friday-close last_push); get_sla_status foreign_flow 1547min vs dynamic 1938min SLA = ok (yesterday: 1462min vs flat 10min = false-CRITICAL). Weekend = ongoing free proof window; Sunday auditor fires should emit zero VPS-stale CRITICALs for prices/foreign_flow."
+      },
+      {
+        "id": "cowork-20260607T202600",
+        "from": "cowork-dispatcher",
+        "to": "po",
+        "type": "flow_roster_mismatch",
+        "severity": "MED",
+        "status": "READ",
+        "created_at": "2026-06-07T20:26:00Z",
+        "summary": "tran-ngoc-bau flow requires send_telegram + log_agent_work + task_claim (publish marker, commit mutex) but agent type roster grants NO mcp__claude_ai_gateway__call_tool. Every tnb-audit cycle ends QUALITY:partial; dispatcher must relay publishes manually (done for c90). Fix: add gateway tool to tran-ngoc-bau roster OR strip MCP steps from its flow. Evidence: docs/signals/tnb-2026-06-07T2013Z-c90.json + telemetry cowork-team-20260607T201655Z.json",
+        "zone_owner": "agent-father"
       }
     ]
   },

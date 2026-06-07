@@ -37,5 +37,11 @@
     "note": "tnb-audit token won by peer dispatcher 43s earlier (3rd consecutive tick peer fires first — :00/:15-sharp lane vs jittered CLI lane; locks working as designed, no duplicate spawns)"
   },
   "priority": "low",
-  "createdAt": "2026-06-07T20:17:18Z"
+  "createdAt": "2026-06-07T20:17:18Z",
+  "_processed": {
+    "fingerprint": "c595675152ada5623ad51f93f517753af4ae29b7a0cd3d6425c0c7a7c3061fda",
+    "processedAt": "2026-06-07T21:19:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

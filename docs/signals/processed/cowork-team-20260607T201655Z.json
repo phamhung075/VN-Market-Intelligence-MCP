@@ -39,5 +39,11 @@
   "dev_head": null,
   "devq": 0,
   "signal_backlog": 0,
-  "note": "Tick 6. signal_queue now empty — dev-20260607T193304 drained by dev-team (left-NEW strategy validated). Snapshot cycle-snapshot-20:16.json assembled from fresh 20:16 macro fetch (values identical to 20:02). No peer contention on tnb-audit token. RETRY: spawn-1 incomplete (verified: notebook mtime Jun-5, no writes); token reclaimed + re-spawned per R4."
+  "note": "Tick 6. signal_queue now empty — dev-20260607T193304 drained by dev-team (left-NEW strategy validated). Snapshot cycle-snapshot-20:16.json assembled from fresh 20:16 macro fetch (values identical to 20:02). No peer contention on tnb-audit token. RETRY: spawn-1 incomplete (verified: notebook mtime Jun-5, no writes); token reclaimed + re-spawned per R4.",
+  "_processed": {
+    "fingerprint": "1b7d361a4bb469de41bc98d0d3a06a6f66a848064ddc7b1d625a702fe710c560",
+    "processedAt": "2026-06-07T21:19:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
