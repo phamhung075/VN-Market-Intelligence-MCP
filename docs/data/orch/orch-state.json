@@ -4,11 +4,12 @@
   "_updated_at": "2026-06-07T09:50:06.982Z",
   "_updated_by": "qa",
   "head": {
-    "status": "planning",
-    "updated_at": "2026-06-07T00:00:00Z",
-    "updated_by": "agent-father",
-    "active_task_id": "PM-TSU",
+    "status": "in_progress",
+    "updated_at": "2026-06-07T19:20:08Z",
+    "updated_by": "po",
+    "active_task_id": "FIX-BCTC-STAGE4-CROSS-SECTION-DUP",
     "next_agent": "dev-mcp-server",
+    "next_action": "PM-TSU CLOSED — TOOL-SURFACE-UPGRADE sprint all 7 tasks DONE (U1..U2-PARITY), do NOT respawn PM-TSU. Resume FIX-BCTC-STAGE4-CROSS-SECTION-DUP (board IN-PROGRESS since 12:17Z tick, no commit landed by 19:15Z — verify lane state first, then complete: scope stage-4 eval dedup to statement_section, cross-section dup = yellow/warning not red gate-failure). After it lands -> ops UNBLOCK-REBUILD-MCP-SERVER ships it + 06c65978 live.",
     "wip": 0,
     "wip_max": 2
   },
@@ -55,8 +56,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "20260607T121728Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-07T19:20:08Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2995,13 +2996,13 @@
         "id": "FIX-BCTC-MAGNITUDE-NORMALIZE",
         "title": "Fix mixed-magnitude extractions (normalize units at parse time)",
         "owner": "dev-mcp-server",
-        "status": "TODO",
+        "status": "DONE-CODE-AWAIT-REBUILD",
         "zone": "apps/mcp-server/",
         "type": "backlog",
         "size": "S",
         "priority": "P1",
         "created_at": "2026-06-07T11:17:26Z",
-        "note": "Mixed-magnitude extractions: HPG Q1-2026 assets 400,271,001,803 vs liabilities 76,754,658 (~5000× gap); GVR Q1-2026 decimal artifacts + missing equity; HPG Q4 cache had raw-VND totalLiabilities. Normalize units at parse time + identity-check magnitude consistency. Reports #3067-3069 resolved monitoring against this row + FEAT chain. | SCOPE GREW (PPC E2E evidence): (a) extractorGuards magnitude threshold rejects real raw-VND values (equity 4,466,380,796,968 = legit ~4,466 tỷ); (b) multi-column scrambled OCR layout defeats TỔNG CỘNG TÀI SẢN extraction. OCR text is CORRECT — parser is the sole gap to real balance sheets for raw-VND reports."
+        "note": "Mixed-magnitude extractions: HPG Q1-2026 assets 400,271,001,803 vs liabilities 76,754,658 (~5000× gap); GVR Q1-2026 decimal artifacts + missing equity; HPG Q4 cache had raw-VND totalLiabilities. Normalize units at parse time + identity-check magnitude consistency. Reports #3067-3069 resolved monitoring against this row + FEAT chain. | SCOPE GREW (PPC E2E evidence): (a) extractorGuards magnitude threshold rejects real raw-VND values (equity 4,466,380,796,968 = legit ~4,466 tỷ); (b) multi-column scrambled OCR layout defeats TỔNG CỘNG TÀI SẢN extraction. OCR text is CORRECT — parser is the sole gap to real balance sheets for raw-VND reports. | PO 2026-06-07T19:20:08Z: board row was stale TODO — code COMMITTED 06c65978 (magnitude catch-22 + identity path A + intra-BS mismatch detection, 15 tests GREEN per dev-mcp-server notebook). NOT in live container yet (only pdf-extractor rebuilt today). Live-DONE gates on UNBLOCK-REBUILD-MCP-SERVER."
       },
       {
         "id": "DOCKER-IMAGE-RETENTION",
@@ -3019,13 +3020,52 @@
         "id": "FIX-BCTC-1345B-REPORT-BATCH",
         "title": "Batch telegram analysis reports or suppress duplicates",
         "owner": "dev-mcp-server",
-        "status": "backlog",
+        "status": "TODO",
         "zone": "apps/mcp-server/",
         "created_at": "20260607T121728Z",
         "type": "enhancement",
         "size": "XS",
         "priority": "P3",
-        "note": "analysis-agent fires one telegram per low-confidence extraction; backlog drain produced 6 reports today (#3066-#3071, all resolved monitoring/duplicate against the quality chain). Batch per-cycle or suppress while ticker-period already covered by an open quality row."
+        "note": "analysis-agent fires one telegram per low-confidence extraction; backlog drain produced 6 reports today (#3066-#3071, all resolved monitoring/duplicate against the quality chain). Batch per-cycle or suppress while ticker-period already covered by an open quality row. | PO 2026-06-07T19:20:08Z: PROMOTED backlog->TODO — 11 more duplicate reports today (#3074-#3084, all same low-confidence-guard class, resolved monitoring this tick). Noise recurs every analysis cycle until batching/suppression ships."
+      },
+      {
+        "id": "FIX-PDFX-ALERT-ADAPTER-BLOCKING",
+        "title": "alert_adapter.py send_work_alert(): sync urllib.request.urlopen(5s) on asyncio event loop — same blocking-IO class as today's A-13 incident; offload via asyncio.to_thread",
+        "type": "FIX",
+        "owner": "po",
+        "status": "TODO",
+        "size": "XS",
+        "zone": "apps/pdf-extractor/",
+        "priority": "medium",
+        "created_at": "2026-06-07T19:20:08Z",
+        "note": "Latent follow-up from A-13 root-cause fix (signal sau-2026060719035-a13). Rare path (BT-5 gate block only) but identical event-loop-starvation class fixed in extract_tables_usecase.py + table_push_client.py (48a64056, f0999cff). AC: send_work_alert offloaded (to_thread or async client), unit test, suite green, no sync urllib on loop remains in apps/pdf-extractor (grep proof)."
+      },
+      {
+        "id": "UNBLOCK-REBUILD-MCP-SERVER",
+        "title": "Rebuild+recreate ONLY mcp-server container to ship 06c65978 (FIX-BCTC-MAGNITUDE-NORMALIZE) + FIX-BCTC-STAGE4-CROSS-SECTION-DUP once it lands",
+        "type": "UNBLOCK",
+        "owner": "po",
+        "status": "TODO",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "depends": [
+          "FIX-BCTC-STAGE4-CROSS-SECTION-DUP"
+        ],
+        "created_at": "2026-06-07T19:20:08Z",
+        "note": "Live container predates 06c65978 — PPC/HPG/KBC low-confidence reports today are consistent with the unfixed image. Rebuild ONLY mcp-server (feedback_rebuild_recreate_destroys_peers: never down&&up the stack). Post-rebuild verify image ID matches build + DB write probe (project_mcp_server_write_wedge) + re-run PPC Q4-2025 reparse to confirm magnitude fix live."
+      },
+      {
+        "id": "CLEAN-TRIGGER-PPC-REPARSE",
+        "title": "Stray untracked one-off apps/mcp-server/trigger-ppc-reparse.ts (37L direct-DB reparse trigger) — fold into a proper ops script/recipe or delete",
+        "type": "CLEAN",
+        "owner": "po",
+        "status": "TODO",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "created_at": "2026-06-07T19:20:08Z",
+        "note": "Debt-reduction per CLAUDE.md (remove garbage/one-off scripts). Left over from PPC Q4-2025 reparse work. Decide: promote to scripts/ with generic ticker arg, or delete (reparseSingleWithOcrFallback already reachable via scheduler). Do NOT commit as-is at apps/mcp-server root."
       }
     ],
     "archive": [],
@@ -4772,8 +4812,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T19:12:34Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-07T19:20:08Z",
+    "_updated_by": "po",
     "rows": [
       {
         "id": "sau-2026060719035-a13",
@@ -4783,10 +4823,13 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-13 health endpoint unreachable — container unhealthy",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "DONE",
         "zone_owner": "dev-pdf-extractor",
         "check_id": "A-13",
-        "payload_ref": null
+        "payload_ref": null,
+        "disposition": "RESOLVED while in flight: dev-pdf-extractor root-cause fix same hour. Cause: POST /extract-tables ran blocking OCR + sync urllib push on asyncio event loop -> /health starved. Fix: asyncio.to_thread offload in extract_tables_usecase.py + table_push_client.py; +2 unit tests, suite 738/0; commits 48a64056,f0999cff,97367124. Container rebuilt+recreated (ONLY pdf-extractor, peers untouched). Dispatcher raw-verified: docker ps Up (healthy), curl 127.0.0.1:5001/health 200 ocr_source_ok:true. No incident task needed. Latent same-class follow-up tasked: FIX-PDFX-ALERT-ADAPTER-BLOCKING (alert_adapter.py send_work_alert sync urllib).",
+        "processed_by": "po-triage-20260607T191041Z",
+        "processed_at": "2026-06-07T19:20:08Z"
       },
       {
         "id": "sau-d4-202606070300",
@@ -4836,7 +4879,7 @@
         "route_to": "po",
         "type": "system_issue",
         "status": "READ",
-        "summary": "VPS vn-bctc-fetch HOSE-SSC discovery path dead: Chromium GPU zygote pthread_create: Resource temporarily unavailable (11) on every Playwright attempt (pre-existing since <=Jun 5). 10-item Q1/2026 queue will SKIP every 6h cycle until fixed or PDFs appear on HNX/UPCOM curl paths. Root-fix options per ops-vps-fetch: (a) raise systemd LimitNPROC for the unit, (b) replace Playwright SSC path with curl-based HTTP scraper (NOTE: VPS policy already says no-Chromium for dev-vps-crawls — option b aligns with policy and is likely the definitif fix). Triage: dispatch dev-vps-crawls (impl) possibly preceded by ops-vps-fetch recon of SSC endpoint recipe. Evidence: ops-vps-fetch notebook c006 (45641b7a). || PROGRESS 162040Z: SPIKE-VPS-SSC-CURL-RECIPE DONE e8be4480 (ops-vps-fetch) — VIABLE-CURL: 3-step stateful HTTP (ADF loopback -> ViewState/PPR search -> full-form download POST) proven ON the VPS, no Chromium (GAS Q1/2026 15.4MB + HPG annual 6.2MB valid %PDF-1.7 downloaded). Recon doc docs/vps-sources/ssc-bctc-newsearch/recon.md (387L) + recon-complete signal emitted to dev-vps-crawls (drains next tick -> PO -> impl FIX replacing _ssc_newsearch_playwright() with discover_from_ssc_curl()). Row stays open until the curl scraper ships and a live SSC discovery cycle succeeds. || PROGRESS 172047Z: FIX-VPS-SSC-CURL-SCRAPER SHIPPED 7ed37441 (dev-vps-crawls) — _ssc_newsearch_playwright() (~200L, asyncio+chromium) DELETED, sync discover_from_ssc_curl() ADDED (stdlib urllib+CookieJar, 3-step ADF recipe per recon.md), all 3 call sites rewired, matches_quarter_and_year/is_cover_letter_title reused. Router raw-verified: scope exactly 2 files both M, stdlib-only imports, 0 playwright/chromium code refs (9 hits = docstrings), py_compile OK, no secrets. DEPLOYED: SCP to VPS, REMOTE-SYNTAX-OK, grep playwright|asyncio|chromium = 0 on remote, systemctl restart vn-bctc-fetch active since Jun 07 00:37+07, mem peak 14.7MB vs 443.6MB chromium-era. LIVE-RUN: GAS Q1/2026 — 15 PPR rows parsed, rank=0 consolidated selected, 17,616,647B octet-stream PDF saved %PDF-confirmed + proxy URL returned confidence 0.92; HPG Q4/2025 annual-path 8.2MB; ACV honest SKIP (not yet filed). Impl bug caught: PPR cells nest span-in-td, regex end anchor must be </td> not first <. Residuals: win_id regex brittleness (fallback w0), step-3 exchange hardcoded HOSE=1 (HNX/UPCOM covered by their own POST APIs upstream — low impact, optional soc3 empty = all-exchanges). ROW STAYS READ: closure requires the next SCHEDULED 6h vn-bctc-fetch cycle to drain the 10-item Q1/2026 backlog with bctc last_push moving (router probe 17:39Z: last_push still Jun 5 14:48 — discovery ran standalone, push leg = full cycle; service restarted 17:37Z). || PO 20260607T0052Z: PROGRESS — bctc last_push MOVED: get_sla_status 00:52Z bctc age 325/360min ok (was stuck Jun 5 14:48 per 17:39Z probe) = push leg ran post-restart with curl scraper live. ROW STAYS READ: still awaiting confirmation the 10-item Q1/2026 queue drained (next router probe / Tier-2).",
+        "summary": "VPS vn-bctc-fetch HOSE-SSC discovery path dead: Chromium GPU zygote pthread_create: Resource temporarily unavailable (11) on every Playwright attempt (pre-existing since <=Jun 5). 10-item Q1/2026 queue will SKIP every 6h cycle until fixed or PDFs appear on HNX/UPCOM curl paths. Root-fix options per ops-vps-fetch: (a) raise systemd LimitNPROC for the unit, (b) replace Playwright SSC path with curl-based HTTP scraper (NOTE: VPS policy already says no-Chromium for dev-vps-crawls — option b aligns with policy and is likely the definitif fix). Triage: dispatch dev-vps-crawls (impl) possibly preceded by ops-vps-fetch recon of SSC endpoint recipe. Evidence: ops-vps-fetch notebook c006 (45641b7a). || PROGRESS 162040Z: SPIKE-VPS-SSC-CURL-RECIPE DONE e8be4480 (ops-vps-fetch) — VIABLE-CURL: 3-step stateful HTTP (ADF loopback -> ViewState/PPR search -> full-form download POST) proven ON the VPS, no Chromium (GAS Q1/2026 15.4MB + HPG annual 6.2MB valid %PDF-1.7 downloaded). Recon doc docs/vps-sources/ssc-bctc-newsearch/recon.md (387L) + recon-complete signal emitted to dev-vps-crawls (drains next tick -> PO -> impl FIX replacing _ssc_newsearch_playwright() with discover_from_ssc_curl()). Row stays open until the curl scraper ships and a live SSC discovery cycle succeeds. || PROGRESS 172047Z: FIX-VPS-SSC-CURL-SCRAPER SHIPPED 7ed37441 (dev-vps-crawls) — _ssc_newsearch_playwright() (~200L, asyncio+chromium) DELETED, sync discover_from_ssc_curl() ADDED (stdlib urllib+CookieJar, 3-step ADF recipe per recon.md), all 3 call sites rewired, matches_quarter_and_year/is_cover_letter_title reused. Router raw-verified: scope exactly 2 files both M, stdlib-only imports, 0 playwright/chromium code refs (9 hits = docstrings), py_compile OK, no secrets. DEPLOYED: SCP to VPS, REMOTE-SYNTAX-OK, grep playwright|asyncio|chromium = 0 on remote, systemctl restart vn-bctc-fetch active since Jun 07 00:37+07, mem peak 14.7MB vs 443.6MB chromium-era. LIVE-RUN: GAS Q1/2026 — 15 PPR rows parsed, rank=0 consolidated selected, 17,616,647B octet-stream PDF saved %PDF-confirmed + proxy URL returned confidence 0.92; HPG Q4/2025 annual-path 8.2MB; ACV honest SKIP (not yet filed). Impl bug caught: PPR cells nest span-in-td, regex end anchor must be </td> not first <. Residuals: win_id regex brittleness (fallback w0), step-3 exchange hardcoded HOSE=1 (HNX/UPCOM covered by their own POST APIs upstream — low impact, optional soc3 empty = all-exchanges). ROW STAYS READ: closure requires the next SCHEDULED 6h vn-bctc-fetch cycle to drain the 10-item Q1/2026 backlog with bctc last_push moving (router probe 17:39Z: last_push still Jun 5 14:48 — discovery ran standalone, push leg = full cycle; service restarted 17:37Z). || PO 20260607T0052Z: PROGRESS — bctc last_push MOVED: get_sla_status 00:52Z bctc age 325/360min ok (was stuck Jun 5 14:48 per 17:39Z probe) = push leg ran post-restart with curl scraper live. ROW STAYS READ: still awaiting confirmation the 10-item Q1/2026 queue drained (next router probe / Tier-2). || PO 2026-06-07T19:20:08Z: PROGRESS — get_sla_status bctc age 6min ok (push leg cycling), get_vps_service_health vn-bctc-fetch healthy (curl scraper era, no Chromium). ROW STAYS READ: queue-drain of 10-item Q1/2026 backlog still unconfirmed via available tools; next router probe closes.",
         "payload_ref": null,
         "read_at": "2026-06-06T16:22:41Z",
         "read_by": "dev-team"
@@ -5035,8 +5078,11 @@
         "sprint": "TOOL-SURFACE-UPGRADE",
         "summary": "AC-U1-8 telemetry live-proof: after next 8h cron tick verify tool-usage-stats.json toolCounts populated, no sessionCount field",
         "severity": "MED",
-        "status": "NEW",
-        "payload_ref": "reports/TASK_REPORT_TSU-DEV-U2-PARITY.md"
+        "status": "DONE",
+        "payload_ref": "reports/TASK_REPORT_TSU-DEV-U2-PARITY.md",
+        "disposition": "VERIFIED 2026-06-07T19:20:08Z: tool-usage-stats.json toolCounts populated (4 tools: get_alerts=109, get_market_snapshot=128, get_portfolio_conviction=136, get_macro_snapshot=108), no sessionCount field present. AC-U1-8 telemetry live-proof MET.",
+        "processed_by": "po-triage-20260607T191041Z",
+        "processed_at": "2026-06-07T19:20:08Z"
       }
     ],
     "archive": [
