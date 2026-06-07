@@ -67,8 +67,9 @@ jobs:
       # Run golangci-lint (depguard Fence-A/B/C) against the technical-analysis service.
       # working-directory is equivalent to: cd apps/technical-analysis && golangci-lint run --config .golangci.yml
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6.1.1
+        uses: golangci/golangci-lint-action@v7.0.0
         with:
+          version: v2.0
           working-directory: apps/technical-analysis
           args: --config .golangci.yml
 
@@ -88,8 +89,9 @@ jobs:
       # Run golangci-lint (depguard Fence-A/B/C) against the macro-indicators service.
       # working-directory is equivalent to: cd apps/macro-indicators && golangci-lint run --config .golangci.yml
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6.1.1
+        uses: golangci/golangci-lint-action@v7.0.0
         with:
+          version: v2.0
           working-directory: apps/macro-indicators
           args: --config .golangci.yml
 
@@ -109,8 +111,9 @@ jobs:
       # Run golangci-lint (depguard Fence-A/B/C) against the stock-price service.
       # working-directory is equivalent to: cd apps/stock-price && golangci-lint run --config .golangci.yml
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6.1.1
+        uses: golangci/golangci-lint-action@v7.0.0
         with:
+          version: v2.0
           working-directory: apps/stock-price
           args: --config .golangci.yml
 
@@ -134,8 +137,9 @@ jobs:
       # Run golangci-lint (depguard Fence-A/B/C) against the alert-engine service.
       # working-directory is equivalent to: cd apps/alert-engine && golangci-lint run --config .golangci.yml
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6.1.1
+        uses: golangci/golangci-lint-action@v7.0.0
         with:
+          version: v2.0
           working-directory: apps/alert-engine
           args: --config .golangci.yml
 
@@ -156,8 +160,9 @@ jobs:
       # Fence-A also bans net/http + net/http/httputil in pkg/primitive/ (pure-compute tier).
       # working-directory is equivalent to: cd apps/api-gateway && golangci-lint run --config .golangci.yml
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6.1.1
+        uses: golangci/golangci-lint-action@v7.0.0
         with:
+          version: v2.0
           working-directory: apps/api-gateway
           args: --config .golangci.yml
 
@@ -178,30 +183,11 @@ jobs:
       # Fence-A sister-primitive allowlist: nuclear_hexagram may import hexagram_resolver + hao_encoder (OQ-6).
       # working-directory is equivalent to: cd apps/kinh-dich-service && golangci-lint run --config .golangci.yml
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6.1.1
+        uses: golangci/golangci-lint-action@v7.0.0
         with:
+          version: v2.0
           working-directory: apps/kinh-dich-service
           args: --config .golangci.yml
-
-  kinh-dich-ts-lint:
-    name: kinh-dich-ts-lint
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .tool-versions
-
-      - name: Install dependencies
-        run: cd apps/kinh-dich-service && bun install
-
-      # Run eslint-plugin-boundaries fence check (Fence-A/B/C).
-      # Exit non-zero = architecture violation — PR blocked.
-      - name: Run ESLint boundaries fence
-        run: cd apps/kinh-dich-service && bunx eslint src/ --max-warnings 0
 
   py-lint:
     name: py-lint

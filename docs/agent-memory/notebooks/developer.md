@@ -73,3 +73,11 @@
   Left as TODO in skill. QA should flag if po notebooks exceed 200L in future.
 
 **NEXT:** QA — NB-PRUNE-1 ready for deliberate-violation verification.
+
+## Session 2026-06-07 — FIX-CI-LINT-STACK (cross-service CI fix)
+
+**Task:** Bump golangci-lint-action v6.1.1 -> v7.0.0 at 6 sites; delete kinh-dich-ts-lint job.
+
+**Learning:** golangci-lint-action v7 supports v2 schema only and requires explicit `version: v2.0` input (shown in action README). v6 installed v1 binary which rejected v2 config with exit-3. The stale TS lint job (kinh-dich rebooted TS->Go 2026-05-24) had no eslint.config so would never pass — dead CI debt.
+
+**Pattern:** CI schema version mismatch (linter binary vs config version) always shows as exit-3 with "you are using a configuration file for version X with version Y". Verify action major version tracks linter major version.

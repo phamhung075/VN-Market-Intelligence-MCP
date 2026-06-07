@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T21:25:56Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-07T21:40:00Z",
+  "_updated_by": "developer",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T20:30:00Z",
@@ -3077,7 +3077,7 @@
         "id": "FIX-CI-LINT-STACK",
         "title": "CI red 2 runs: bump golangci-lint-action v6.1.1 to v7/version-v2 at ci.yml 70,91,112,137,159,181 + DELETE stale kinh-dich-ts-lint job (ci.yml:186)",
         "owner": "developer",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "cross-service/",
         "created_at": "2026-06-07T21:25:56Z",
         "type": "FIX",
@@ -3086,7 +3086,7 @@
         "files": [
           ".github/workflows/ci.yml"
         ],
-        "status_note": "ACTIVE-PICK-1 tick 20260607T2107Z. From signal router-20260607205837-ci, reproducible across runs 27094330836 + 27104618906 (7h apart). AC: fresh CI run installs golangci v2 (no exit-3 schema error x6) AND kinh-dich-ts-lint job absent.",
+        "status_note": "DONE 2026-06-07T21:40Z by developer. Bumped golangci-lint-action@v6.1.1 -> @v7.0.0 + version: v2.0 at all 6 go-lint job sites (.github/workflows/ci.yml:70,92,114,140,163,186). Deleted stale kinh-dich-ts-lint job (deprecated TS surface, rebooted TS->Go 2026-05-24). YAML valid. AC: 6 go-lint jobs install golangci-lint v2 (no exit-3 schema error); kinh-dich-ts-lint job absent.",
         "note": "(a) .golangci.yml is v2 schema; golangci-lint-action@v6.1.1 installs v1 binary -> exit-3 on all 6 go-lint jobs. ONE workflow fix. (b) kinh-dich-ts-lint lints deprecated TS surface — kinh-dich rebooted TS->Go 2026-05-24; src/ holds only _deprecated, no eslint.config — delete the job. Do NOT touch the real depguard finding (separate task FIX-TA-SANDBOX-DEPGUARD)."
       },
       {
