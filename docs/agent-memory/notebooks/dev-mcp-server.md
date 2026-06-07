@@ -1,5 +1,40 @@
 # dev-mcp-server -- Notebook
 
+## c381 · 2026-06-07T02:39Z (FIX-BCTC-IDENTITY-SERVE-GUARD) — COMMITTED 921be65a
+
+**Task:** Balance-sheet identity guard in get_financial_summary serve path + CTG 2026-Q1 triage. *(entry numbered c347 in stale worktree; renumbered at merge)*
+
+**Root cause:** 3rd occurrence of OCR-corruption fingerprint served raw (VNM→VEA→CTG).
+CTG 2026-Q1: total_assets=0, equity_total=244,904,306, net_margin_pct=229,157% at 56% confidence.
+Guard added at serve layer in `reports.ts` — not a per-ticker patch.
+
+**Guard logic (reports.ts):**
+- Condition: `total_assets <= 0 OR total_assets < equity_total`
+- Response: `[CORRUPT DATA — SKIP]` + explicit reason + confidence=0 (forced)
+- Derived ratios (margin, ROE, ROA, D/E) suppressed entirely
+- Live CTG confirmed: total_assets=0 < equity_total=244,904,306 → guard fires
+
+**CTG re-extraction attempt:**
+- Triggered `POST /api/refine-bctc/49c11ce2` → FAILED
+- Root cause: `spawnWindowSubagent` requires `deps.spawnSubagent` injected by fleet cron context; on-demand handler does not provide it
+- CTG remains refine_status=FAILED, has_pdf=true, has_ocr=true (56.25% confidence)
+- Re-extraction deferred to fleet cron cycle (ops/bctc-analyst scope)
+
+**FU-CTG-REFINE-PICKUP disposition:** SUPERSEDED. Guard makes CTG serve honest corrupt skip immediately. Full re-extraction is separate fleet-cron concern.
+
+**Tests:** 5 new DV-BCTC-GUARD-* (RED→GREEN) in fix-bctc-identity-serve-guard.test.ts
+- G1 CTG fingerprint (assets=0) → CORRUPT + zero-or-negative reason
+- G2 assets < equity (assets=100, equity=244904000) → CORRUPT + identity-violated reason
+- G3 valid report passes guard unchanged
+- G4 assets=0, equity=0 → zero guard fires
+- G5 assets=equity (no-debt) → passes guard (equality is valid)
+
+**Gates:** tsc EXIT 0 | 10 pass / 0 fail (085+new) | tools=156/sched=70 in stale worktree base (main baseline 162/76 — guard adds no tool/cron)
+
+**INV-GATEWAY-1:** MCP gateway unavailable in worktree session — commit-mutex and telegram skipped.
+
+---
+
 ## c378 · 2026-06-07T01:21Z (FIX-ORCH-KEY-NORMALIZE-TASKID) — REVIEW
 
 **Task:** FIX-ORCH-KEY-NORMALIZE-TASKID (FIX, S, HIGH) — normalize `task_id` -> `id` across all task_board rows.
@@ -144,6 +179,12 @@ Zone health: DEAD_SOURCE_SLUGS filter LIVE, 8 new tests GREEN, compiled code cha
 ---
 
 ## Working Memory
+
+### Last Completed: FIX-BCTC-IDENTITY-SERVE-GUARD
+- DONE: committed 921be65a (merged to main as 62ef64fe)
+- Guard: total_assets<=0 OR total_assets<equity_total → confidence=0 + corrupt flag
+- CTG re-extract: FAILED (fleet cron required), deferred to ops
+- FU-CTG-REFINE-PICKUP: SUPERSEDED by guard
 
 ### Baselines (FIX-PROJECT-STATS-GENERATED 2026-06-07)
 - tools=162 (server.tool+registerTool unique names), sched=76 (all cron.schedule in scheduler/**/*.ts)
