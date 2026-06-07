@@ -1,5 +1,13 @@
 # Agent Father — Notebook
 
+## c288 · 2026-06-07 — FIX-AUDITOR-FLOW-RESIDUALS (4 sub-items)
+
+- Task: FIX-AUDITOR-FLOW-RESIDUALS. Files modified: 2 (docs/agents/system-auditor/flow/main.md 523→565L; .claude/skills/agent-md-factory/SKILL.md created 90L).
+- (d) agent-md-factory skill MISSING from disk — RESTORED. Reconstructed from feedback_agent_md_factory.md + architecture-briefs contract. Pre-edit (P-1–P-6: SSOT, DRY, lazy-load, tree-DAG, frontmatter) + post-edit (Q-1–Q-5: re-grep, broken-ref, size-cap, MEMORY index, caveman) checklists. Path: `.claude/skills/agent-md-factory/SKILL.md`. Resolution: RESTORE (not de-reference) — rule is live across 22+ references in architecture-briefs and handoffs; de-referencing would break all callers.
+- (a) C-01/C-02/C-14 weekend-aware: added DOW-based `<WINDOW>` guard above C-01–C-16 table. `'-3 day'` on Sat/Sun, `'-1 day'` Mon–Fri. C-14 also uses `<WINDOW>` and skips on NULL. Proven semantic: freshnessSlaChecker.ts `lastExpectedWindowEnd()`.
+- (b) Tier-2 docker-exec sqlite3 residuals: C-06/C-07/B-09/B-13 and step-5 WAL check converted to host-side `sqlite3 "file:...?mode=ro"`. Schema also corrected: `news_articles`→`market_messages`, `bctc_queue`→`bctc_vps_queue`, `url`→`source_url`. Now consistent with Tier-3 C-01–C-16 pattern.
+- (c) L438 signal_queue skip root-cause: trailing "Anomaly Reporting" section was read as optional. FIX: embedded signal_queue row write (Step E-3) directly into Tier-2 emit block and Tier-3 emit block. Added ANTI-SKIP: write failure → BUG Telegram, never silent-continue. Added OUTPUT-CONTRACT echo in RETURN block — `[OUTPUT-CONTRACT] signals_posted=N|...` is mandatory; omission = detectable violation.
+
 ## c287 · 2026-06-07 — Fix system-auditor Tier-3 DB checks (FIX-AUDITOR-DB-CHECKS-HOSTSIDE)
 
 - Change: Rewrote `### DB Write Integrity Checks (C-01 through C-16)` in `docs/agents/system-auditor/flow/main.md`. All 16 checks now run host-side via `sqlite3 "file:apps/mcp-server/data/<db>.db?mode=ro"` — no docker exec, no write-mode open. Schema corrected: `stock_prices`→`daily_ohlcv(code,date)`, `ticker`→`action_code`, `updated_at`→`parsed_at/sent_at/fetched_at`, `bctc_queue`→`bctc_vps_queue`, `url`→`source_url`, `news_articles`→`market_messages`, `indicator_key`→`country`, `pdf_extractions`→`pdf_documents`, `completed`→`done`, `alerts` confirmed in market.db (not alert_engine.db — 0-byte file). C-12 now skips 0-byte DBs. C-13 uses host `stat` not docker ls. Size-justification updated to reflect host-side rewrite + all main-side content preserved (PLAN-ONLY invariant, SLA resolver, D-BCTC-EVAL, signal_queue L438 mandate, RAW-CITE GATE, settled-write).

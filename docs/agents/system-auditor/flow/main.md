@@ -1,4 +1,4 @@
-<!-- size-justification: ~523L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
+<!-- size-justification: ~565L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -139,23 +139,29 @@ Example evaluation for `bctc-discover` on 2026-05-20 (M=5, D=20):
 **No prose-only BCTC staleness rule exists. This resolver IS the rule.**
 
 ### DB Freshness Spot Checks (C-06, C-07)
+Run host-side read-only (same pattern as Tier-3 C-01–C-16 — never docker exec sqlite3):
 ```bash
-docker exec mcp-server sqlite3 /app/data/market.db "SELECT count(*) FROM news_articles WHERE created_at > datetime('now','-3h')"
-docker exec mcp-server sqlite3 /app/data/market.db "SELECT count(*) FROM agent_signals WHERE created_at > datetime('now','-24h')"
+sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "SELECT count(*) FROM market_messages WHERE sent_at > datetime('now','-3h')"
+sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "SELECT count(*) FROM agent_signals WHERE created_at > datetime('now','-24h')"
 ```
+- C-06 pass: > 0; C-07 pass: > 0
 
 ### BCTC URL Shape (B-09)
 ```bash
-docker exec mcp-server sqlite3 /app/data/market.db "SELECT count(*) FROM bctc_queue WHERE url LIKE '%ssc.gov.vn%' AND status != 'skipped'"
+sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "SELECT count(*) FROM bctc_vps_queue WHERE source_url LIKE '%ssc.gov.vn%' AND status != 'skipped'"
 ```
 - 0 → PASS; > 0 → CRITICAL (B-09)
 
 ### Stale Pending BCTC (B-13)
 ```bash
-docker exec mcp-server sqlite3 /app/data/market.db "SELECT count(*) FROM bctc_queue WHERE status='pending' AND created_at < datetime('now','-72h')"
+sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72h')"
 ```
+- 0 → PASS; > 0 → WARN (B-13)
 
-### Emit per stale source
+### Emit per stale source (severity ≥ WARN)
+**EMIT SEQUENCE — all three steps are MANDATORY, no step is optional:**
+
+Step E-1: `post_agent_signal` with payload:
 ```json
 {
   "type": "data_stale",
@@ -172,6 +178,13 @@ docker exec mcp-server sqlite3 /app/data/market.db "SELECT count(*) FROM bctc_qu
   "dedup_key": "data_stale:<source_id>:<check_id>"
 }
 ```
+Step E-2: `send_telegram(channel="bug", ...)` (dedup 7d per dedup_key, severity ≥ WARN).
+Step E-3 — SIGNAL ROW (mandatory, same call as E-1, no skip path):
+Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
+```json
+{"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "data_stale", "summary": "{source_id} stale {elapsed_hours}h (check {check_id})", "severity": "{CRITICAL|HIGH|MED}", "status": "NEW", "payload_ref": null}
+```
+**ANTI-SKIP:** if the orch-state write fails (file locked, jq error), log `"[SIGNAL-ROW] FAILED: {error}"` and emit BUG-channel Telegram — do NOT silently continue without the row.
 
 ---
 
@@ -309,9 +322,10 @@ NOTE — root cause of false "no commits" (FIX-AUDITOR-FLOW-TIER-EARLYEXIT, corr
 - `docs/data/orch/orch-state.json` `.sprint_goal.entries[]`: count > 15 → alert po to close/archive old sprint entries
 
 ### 5. DB health (legacy WAL check — now complemented by Tier-3 full checks)
+Run host-side read-only (same pattern as Tier-3 C-12/C-13 — never docker exec sqlite3):
 ```bash
-docker exec mcp-server ls -lh /app/data/*.db-wal 2>/dev/null  # WAL < 10MB ok, >50MB flag
-docker exec mcp-server sqlite3 /app/data/market.db "PRAGMA integrity_check;"  # must = "ok"
+stat -f%z apps/mcp-server/data/*.db-wal 2>/dev/null  # WAL size: < 10MB ok, >50MB flag
+sqlite3 "file:apps/mcp-server/data/market.db?mode=ro" "PRAGMA integrity_check;"  # must = "ok"
 ```
 
 ### 6. Stats drift — `docs/data/project-stats.json` is GENERATED, never hand-edited
@@ -363,10 +377,21 @@ Run all queries host-side read-only — NEVER open DB in write mode, NEVER stop/
 sqlite3 "file:apps/mcp-server/data/<db>.db?mode=ro" "<query>"
 ```
 
+**Weekend/holiday guard for C-01, C-02, C-14 (last-trading-day semantics):**
+Before running C-01/C-02/C-14, determine the last VN trading day:
+```bash
+# Compute day-of-week (0=Sun, 6=Sat) in VN time (UTC+7)
+DOW=$(date -u -d "+7 hours" +%u 2>/dev/null || python3 -c "import datetime; print((datetime.datetime.utcnow()+datetime.timedelta(hours=7)).weekday())")
+# If Sat (6) or Sun (0/7) → use '-3 day' window (covers last Fri); else use '-1 day' window
+```
+Use window = `'-3 day'` when DOW is Sat or Sun; use `'-1 day'` on Mon–Fri.
+On Mon–Fri the auditor fires AFTER trading session; on weekend, last data was Friday.
+If the check fires within 2h after market open (before new data lands), accept the previous trading day's count as passing.
+
 | check_id | DB | Host-side read-only query | Pass |
 |---|---|---|---|
-| C-01 | market.db | `SELECT count(DISTINCT code) FROM daily_ohlcv WHERE date >= date('now','-1 day')` | ≥ 25 |
-| C-02 | market.db | `SELECT count(*) FROM daily_ohlcv WHERE date >= date('now','-1 day')` | > 0 |
+| C-01 | market.db | `SELECT count(DISTINCT code) FROM daily_ohlcv WHERE date >= date('now',<WINDOW>)` — use `<WINDOW>` = `'-3 day'` on Sat/Sun, `'-1 day'` Mon–Fri | ≥ 25 |
+| C-02 | market.db | `SELECT count(*) FROM daily_ohlcv WHERE date >= date('now',<WINDOW>)` — same weekend window as C-01 | > 0 |
 | C-03 | market.db | `SELECT count(DISTINCT action_code) FROM financial_reports WHERE period_year=2026 AND period_quarter=1` | ≥ 26 (in Q1 window Apr–May) |
 | C-04 | market.db | `SELECT count(*) FROM financial_reports WHERE parsed_at > datetime('now','-7d') AND extraction_confidence < 0.2` | ≤ 5 |
 | C-05 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE source_url LIKE '%ssc.gov.vn%' AND status != 'skipped'` | 0 |
@@ -378,7 +403,7 @@ sqlite3 "file:apps/mcp-server/data/<db>.db?mode=ro" "<query>"
 | C-11 | pdf_extractor.db | `SELECT count(*) FROM pdf_documents WHERE status = 'done' AND extracted_at > datetime('now','-48h')` | > 0 (earnings window) |
 | C-12 | all non-empty DBs | `PRAGMA integrity_check` — skip DBs with 0-byte file (alert_engine.db, stock_price.db when empty) | `ok` |
 | C-13 | host filesystem | `stat -f%z apps/mcp-server/data/*.db-wal 2>/dev/null` (macOS) or `stat -c%s` (Linux) — check each WAL | < 52428800 bytes (50MB) each |
-| C-14 | market.db | top-3 `code` row share of `daily_ohlcv` last-24h: `WITH t AS (SELECT code,count(*) c FROM daily_ohlcv WHERE date>=date('now','-1 day') GROUP BY code ORDER BY c DESC LIMIT 3) SELECT round(100.0*sum(c)/(SELECT count(*) FROM daily_ohlcv WHERE date>=date('now','-1 day')),1) FROM t` | < 60% |
+| C-14 | market.db | top-3 `code` row share of `daily_ohlcv` using same `<WINDOW>` as C-01: `WITH t AS (SELECT code,count(*) c FROM daily_ohlcv WHERE date>=date('now',<WINDOW>) GROUP BY code ORDER BY c DESC LIMIT 3) SELECT round(100.0*sum(c)/(SELECT count(*) FROM daily_ohlcv WHERE date>=date('now',<WINDOW>)),1) FROM t` — skip (NULL result) if C-01 returns 0 (no data in window) | < 60% |
 | C-15 | market.db | `PRAGMA table_info(financial_reports)` — check action_code, period_year, net_revenue, extraction_confidence present | all 4 present |
 | C-16 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72h')` | 0 |
 
@@ -389,7 +414,10 @@ mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_bctc_full", a
 ```
 Cross-reference results with C-08 (orphaned alerts) and C-03/C-04 (BCTC coverage).
 
-### Emit per failing check
+### Emit per failing check (severity ≥ WARN)
+**EMIT SEQUENCE — all three steps are MANDATORY, no step is optional:**
+
+Step E-1: `post_agent_signal` with payload:
 ```json
 {
   "type": "db_integrity_breach",
@@ -406,6 +434,13 @@ Cross-reference results with C-08 (orphaned alerts) and C-03/C-04 (BCTC coverage
   "dedup_key": "db_integrity_breach:<table>:<check_id>"
 }
 ```
+Step E-2: `send_telegram(channel="bug", ...)` (dedup 7d per dedup_key).
+Step E-3 — SIGNAL ROW (mandatory, runs immediately after E-1, no skip path):
+Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
+```json
+{"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "db_integrity_breach", "summary": "{table} check {check_id} failed (actual={actual_value})", "severity": "{CRITICAL|HIGH}", "status": "NEW", "payload_ref": null}
+```
+**ANTI-SKIP:** if the orch-state write fails (file locked, jq error), log `"[SIGNAL-ROW] FAILED: {error}"` and emit BUG-channel Telegram — do NOT silently continue without the row.
 
 ### Tier-3 Roll-Up Signal
 ```
@@ -440,12 +475,17 @@ New:
 Severity: info | warn | critical | Date: YYYY-MM-DD
 Location: [service/table/source] | Details: [wrong] | Impact: [why] | Root cause: [guess]
 ```
-severity ≥ warn → `send_telegram(channel="bug")` AND append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
-```json
-{"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "{check_type}", "summary": "{summary ≤120 chars}", "severity": "{CRITICAL|HIGH|MED}", "status": "NEW", "payload_ref": null}
-```
+severity ≥ warn → run **Emit Sequence** (E-1 post_agent_signal + E-2 send_telegram + **E-3 signal_queue row**).
+The signal_queue row write (Step E-3) is embedded in the per-tier emit blocks above — it is NOT a trailing optional step. This section is a reminder, not the definition. The definition is at each emit block.
 
 > Invariant: timestamp = current UTC, never future, never speculative.
+
+### OUTPUT-CONTRACT (echo in RETURN — MANDATORY)
+At the end of every cycle, before writing the RETURN block, the agent MUST verify and echo these counts:
+```
+[OUTPUT-CONTRACT] signals_posted={N} | telegram_sent={N} | signal_queue_rows_written={N} | dashboard_rows={N}
+```
+If `signal_queue_rows_written` = 0 AND `signals_posted` > 0 → this is a contract violation. Log `"[OUTPUT-CONTRACT] VIOLATION: signals emitted but no signal_queue rows written"` and send BUG-channel Telegram before exiting. The RETURN block MUST include the OUTPUT-CONTRACT line verbatim.
 
 ### RAW-CITE GATE (rtr-confab2-202606060515 — occ#2; c019 invented config value; c026 cited "system-map lists 4001" for mcp-gateway port, value absent, live port 4040)
 Any config/file value cited in a finding or return (port, path, threshold, mapping) MUST be backed by a `grep -n` line captured THIS cycle (file + line number + matched text). No raw line captured → DROP the claim, do NOT report it. NEVER cite `orch-state.json .head.next_action` text as evidence — it is router-authored narrative, not a config value.
@@ -520,4 +560,6 @@ DONE: Audit complete tier-N — N anomalies (C critical, W warn, I info) | M ded
 NEXT: po (via DASHBOARD.md) | user (if clean) | ops (if CRITICAL DB or container anomaly)
 PIPELINE: complete
 QUALITY: full | partial (if early exit triggered on doc/memory pass)
+[OUTPUT-CONTRACT] signals_posted=N | telegram_sent=N | signal_queue_rows_written=N | dashboard_rows=N
 ```
+The `[OUTPUT-CONTRACT]` line is MANDATORY. Omitting it = contract violation (dispatcher will backfill and log recurring-bug pattern).
