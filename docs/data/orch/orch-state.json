@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T11:00:00Z",
-  "_updated_by": "dev-macro-indicators",
+  "_updated_at": "2026-06-07T08:50:44Z",
+  "_updated_by": "qa",
   "head": {
     "status": "planning",
     "updated_at": "2026-06-07T00:00:00Z",
@@ -372,6 +372,33 @@
             "priority": "medium",
             "note": "[router raw-row finding during FU-BACKFILL-DE-SYNC live-verify 2026-06-03] code-321 not always vay across periods. | [PO 2026-06-03T17:07:27Z DISPATCHED] Lane-A (apps/mcp-server) batch head. Apply /vay/i label guard to the 321 primary mapping in aggregateScalars (mirror FIX-DE-1 319-fallback logic): prefer the vay-labelled row among 321/319; if 321 present-but-non-vay AND 319-vay present, take 319. DoD: re-finalize/reflow FPT 2025Q4 -> short_term_debt = 19,169 ty (code-319-vay) NOT 1,014 ty (code-321-non-vay); re-confirm FPT 2026Q1 unaffected (321-vay stays 14,491 ty); D/E recomputed on both periods live via get_bctc_full. Unit-green NOT sufficient — router live raw-verify required. ops rebuild + tool-path force_reflow (NOT hand script — FU-BACKFILL-DE-SYNC made backfill debt-aware). Same file family as FIX-DE-1/FU-BACKFILL-DE-SYNC -> recurring-bug-escalation watch (4th touch of debt-mapping): if this guard regresses a prior period, STOP and call architect. Channels clean (no new BUG/WORK, list_unresolved_reports empty).[dev-team 2026-06-03T17:17:49Z] DONE-LIVE-VERIFIED commit bc1d7e55 (8 new tests, 39/39, tsc clean). ops rebuilt mcp-server img 17:15:15Z (/vay/i guard live in-container). force_reflow(FPT 2025Q4 e71f845d) via TOOL path, 0 balance_violations. ROUTER RAW-VERIFIED (DB + get_bctc_full): FPT 2025Q4 short_term_debt now=19,169,697M (code-319-vay 'Vay và nợ thuê tài chính ngắn hạn') NOT 1,014,674M (code-321 'Dự phòng phải trả'=provisions); FPT 2026Q1 unaffected=14,491,358M (321-vay). Headline D/E 0.40x, Validation passed, no regression. Guard prefers /vay/i-labelled row among 321/319 (+339 symmetry). RESIDUAL (cosmetic, already tracked FU-BCTC-RATIO-COL-DEPRECATE): FPT 2025Q4 persisted debt_to_equity col stale 2.7e-13 but serve recomputes-on-read.",
             "id": "FU-DE-321-VAY-GUARD"
+          },
+          {
+            "id": "VERIFY-HPG-REPARSE-POST-RECOVERY",
+            "title": "Verify HPG Q4-2025 bctcReparseJob executed post-recovery (cron 14:00 UTC 2026-06-07)",
+            "owner": "dev-mcp-server",
+            "status": "NEW",
+            "type": "VERIFY",
+            "zone": "apps/mcp-server/",
+            "size": "XS",
+            "priority": "P1",
+            "created_at": "2026-06-07T10:47:00Z",
+            "note": "RLI-PM-1: After RECOVER-LIVEDB-INTEGRITY, HPG Q4-2025 is eligible for re-parse via fleet bctcReparseJob. This task tracks live verification in next cycle that the job queued/ran.",
+            "depends_on": []
+          },
+          {
+            "id": "RLI-FORENSICS-CLEANUP",
+            "title": "After 7-day retention (2026-06-14): delete backup files and temp dumps",
+            "owner": "ops",
+            "status": "NEW",
+            "type": "CLEANUP",
+            "zone": "infrastructure/storage",
+            "size": "S",
+            "priority": "P3",
+            "created_at": "2026-06-07T10:47:00Z",
+            "note": "Schedule for 2026-06-14: delete data/market.db.bak-20260607T100225, data/market.db.bak-20260607T103143-CORRUPT-ORIGINAL, data/market_dump_20260607T103239.sql (~670MB total) + container /tmp dumps. ONLY after confirming live DB still integrity_check=ok at that date.",
+            "depends_on": [],
+            "due_date": "2026-06-14"
           }
         ]
       },
@@ -2299,7 +2326,7 @@
             "type": "ENHANCEMENT",
             "owner": "dev-macro-indicators",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/macro-indicators/pkg/",
             "priority": "high",
@@ -2313,11 +2340,13 @@
             "type": "DATA-QUALITY",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "M",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "priority": "high",
-            "id": "TSU-DEV-U5"
+            "id": "TSU-DEV-U5",
+            "claimed_at": "2026-06-07T11:00:00Z",
+            "claimed_by": "dev-mcp-server"
           },
           {
             "title": "U6: TSH leftover merges — description updates only (keep all separate per architect verdict)",
@@ -2793,7 +2822,7 @@
         "files": [
           "apps/mcp-server/"
         ],
-        "note": "DONE 2026-06-07 — merged to main 29245173 (fix) + 04fa26a7 (notebook). 5 new RED→GREEN tests, 21/21 targeted suite, root cause: parseSplitBlockBalanceSheet took FIRST date header as separator; HPG parent-company OCR emits prior-period header first. NOTE: live HPG Q4-2025 re-parse still BLOCKED on RECOVER-LIVEDB-INTEGRITY execution.",
+        "note": "DONE 2026-06-07 — merged to main 29245173 (fix) + 04fa26a7 (notebook). 5 new RED→GREEN tests, 21/21 targeted suite, root cause: parseSplitBlockBalanceSheet took FIRST date header as separator; HPG parent-company OCR emits prior-period header first. NOTE: live HPG Q4-2025 re-parse UNBLOCKED post-RECOVER-LIVEDB-INTEGRITY; HPG Q4-2025 eligible for fleet bctcReparseJob cron 14:00 UTC 2026-06-07 (next cycle must VERIFY it queued/ran).",
         "disposition": "Fix extractor logic + re-parse HPG Q4 2025 to verify validation now passes with correct prior-period totals"
       },
       {
@@ -4618,6 +4647,114 @@
         "note": "BATCH-DONE 20260607: a2b38ec1, findings docs/spikes/SPIKE_3012-bctc-eval-hpg-ppc.md, spike branch deleted, no code merged. NOTE on this row: owner field said \"agents-architect\" but feature-spike.md is a developer-family flow and zone is apps/mcp-server/ — dispatcher zone-routed to dev-mcp-server; flag the owner-field discrepancy in the row disposition so future SPIKE rows carry the executing dev agent.",
         "closed_at": "2026-06-07T06:55:00Z",
         "commit": "a2b38ec1"
+      },
+      {
+        "id": "RLI-OPS-1",
+        "title": "Backup named volume vn-market-intelligence-mcp_market_data to data/market.db.bak-20260607T100225",
+        "owner": "ops",
+        "status": "DONE",
+        "type": "OPS",
+        "zone": "infrastructure/docker",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:02:25Z",
+        "note": "Ran twice: attempt-1 PASS + window-2 PASS. Backup completed successfully; original volume retained for forensics.",
+        "commit": ""
+      },
+      {
+        "id": "RLI-OPS-2",
+        "title": "Pre-dump STOP-gate: verify runbook baselines match schema",
+        "owner": "ops",
+        "status": "DONE",
+        "type": "OPS",
+        "zone": "infrastructure/docker",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:30:00Z",
+        "note": "Attempt-1 STOP-gate caught stale runbook baselines (stock_prices table never existed → reconciled 64b989e7); window-2 verify PASSED with schema-derived baselines.",
+        "commit": "64b989e7"
+      },
+      {
+        "id": "RLI-DEV-1",
+        "title": "Dump corrupt market.db to SQL (176MB, 87 CREATE TABLE, 862,571 INSERTs)",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "type": "TASK",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:35:00Z",
+        "note": "SQL dump generated from corrupt database for analysis; preserved at data/market_dump_20260607T103239.sql.",
+        "commit": ""
+      },
+      {
+        "id": "RLI-OPS-3",
+        "title": "Stop mcp-server container (downtime window for recovery)",
+        "owner": "ops",
+        "status": "DONE",
+        "type": "OPS",
+        "zone": "infrastructure/docker",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:31:00Z",
+        "note": "Container stopped cleanly; named volume unmounted to prevent accidental writes.",
+        "commit": ""
+      },
+      {
+        "id": "RLI-DEV-2",
+        "title": "Reconstruct clean DB via filtered dump-replay with integrity_check validation",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "type": "TASK",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:43:00Z",
+        "note": "Attempt-1 FAILED (12 ghost rows ids 493554-493565 — system_logs bled into pdf_extracted_text via double-ref page 2533 → NOT NULL violation; rolled back 2m07s); window-2 revised §8 filtered replay PASSED (integrity_check=ok, all baselines exact).",
+        "commit": ""
+      },
+      {
+        "id": "RLI-OPS-4",
+        "title": "Swap clean reconstructed DB into named volume",
+        "owner": "ops",
+        "status": "DONE",
+        "type": "OPS",
+        "zone": "infrastructure/docker",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:31:43Z",
+        "note": "Fresh 227MB DB swapped into volume; corrupt original preserved at data/market.db.bak-20260607T103143-CORRUPT-ORIGINAL.",
+        "commit": ""
+      },
+      {
+        "id": "RLI-OPS-5",
+        "title": "Start mcp-server container and verify health",
+        "owner": "ops",
+        "status": "DONE",
+        "type": "OPS",
+        "zone": "infrastructure/docker",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:31:06Z",
+        "note": "Container started healthy in 6s; docker ps confirms running state.",
+        "commit": ""
+      },
+      {
+        "id": "RLI-DEV-3",
+        "title": "Smoke test: /health, /api/fetch-status, live integrity_check, baselines",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "type": "TASK",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:47:00Z",
+        "note": "Live integrity_check=ok + baselines + smoke reads + /health 200 + /api/fetch-status JSON; independently re-verified by dispatcher.",
+        "commit": ""
+      },
+      {
+        "id": "RECOVER-LIVEDB-INTEGRITY",
+        "title": "RECOVER-LIVEDB-INTEGRITY — Restore corrupted live DB via filtered dump-replay",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "type": "SPRINT",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-07T05:30:00Z",
+        "closed_at": "2026-06-07T10:47:00Z",
+        "note": "Runbook docs/architecture-briefs/2026-06-07-livedb-recovery-runbook.md final state @ 7b088535 (§7 post-mortem + §8 revised method). Signal rtr-livedb-integrity-corruption-20260607T0530Z RESOLVED by this sprint.",
+        "commit": "7b088535"
       }
     ],
     "in_progress": []
@@ -4795,9 +4932,9 @@
         "status": "DONE",
         "created_at": "2026-06-07T05:30:00Z",
         "summary": "LIVE market.db (named volume vn-market-intelligence-mcp_market_data, /app/data) fails PRAGMA integrity_check — dispatcher re-ran first-hand via bun:sqlite readonly 2026-06-07T05:28Z. Structural: Tree 32 page 2533 cell 11 rowid 493565 out of order; pages 2533 + 22008 double-referenced. Index/table mismatches: pdf_extracted_text rows 820-831 missing from idx_pet_action_code/idx_pet_filename/idx_pdf_filename/sqlite_autoindex_pdf_extracted_text_1, NULL extracted_at + NUMERIC action_code rows; system_logs idx_system_logs_* + idx_syslog_source missing ~19 rows. Reads still serve (C-01=1599 codes, C-02=3190 rows, max date 2026-06-05 correct). Found only because FIX-AUDITOR-DB-LIVENESS (1849fe53) replaced the dead host-side check path. Likely cause: force-recreate/memory-panic kills mid-write on macOS Docker named volume. RECOVERY NEEDS PLANNING: backup named volume first, then .recover or dump+reload + REINDEX, requires mcp-server downtime window — architect+ops+dev-mcp-server lane, NOT a quick fix. Risk if unaddressed: corruption can propagate; pdf_extracted_text is BCTC pipeline hot table. || PO 20260607T0723Z: DISPATCHED — RECOVER-LIVEDB-INTEGRITY batched as SPRINT-M recovery lane (architect plan first, ops backup, dev-mcp-server execute). Sunday market-closed = ideal downtime window before Mon VN open. Repair FORBIDDEN until architect runbook exists.",
-        "disposition": "",
-        "processed_by": "",
-        "processed_at": ""
+        "disposition": "RESOLVED 20260607T1047Z: window-2 filtered dump-replay, integrity_check=ok, 0 rows lost",
+        "processed_by": "pm-closeout",
+        "processed_at": "2026-06-07T10:47:00Z"
       },
       {
         "id": "sau-b02-202606070633",

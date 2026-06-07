@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-207 · 2026-06-07T08:50Z · TSU-DEV-U4 QA gate — APPROVED
+
+Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U4 | Verdict: APPROVED | Commit: 9880eadc
+
+go test -count=1 ./...: 12/12 packages PASS. go vet: 0 errors. Live POST :5004/snapshot confirmed: vnIndexDelta=7.35, vnIndexDirection="up", oilUsdDelta=null/unknown, goldUsdDelta=null/unknown, usdVndDelta=null/unknown. Gateway passthrough MCP :3000 confirmed: all 8 new fields in served payload — TS tool is thin proxy (passthrough verified, not just endpoint). Additive-only: dtos.go diff = additions only, no field renames or removals (AC-U4-7 PASS). DDD clean: domain/ports.go imports context+time only. Security clean. T-U4-1..T-U4-7 all present + contract test stubs updated. mcp-server: RestartCount=0, healthy — "Up 21 seconds" ops note was rebuild restart, not crash-loop. orch-state TSU-DEV-U4 REVIEW→DONE.
+
 ## cycle-206 · 2026-06-07T10:00Z · TSU-DEV-U1 QA gate — APPROVED (code gate)
 
 Sprint: TOOL-SURFACE-UPGRADE | Task: TSU-DEV-U1 | Verdict: APPROVED (code-approved, live-verify pending sprint-final rebuild)

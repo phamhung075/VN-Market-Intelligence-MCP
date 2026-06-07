@@ -242,6 +242,49 @@ QA verifies via `get_macro_snapshot` call (raw JSON, not badge).
 
 ---
 
+---
+
+## [QA] Review Record — 2026-06-07T08:50Z
+
+**Verdict: APPROVED**
+
+**Commit reviewed:** 9880eadc
+
+**Go test suite:** 12/12 packages PASS. go vet: 0 errors.
+
+**Live endpoint (POST :5004/snapshot):**
+- `vnIndexDelta`: 7.350000000000136 (number, computed from daily_ohlcv prev-session)
+- `vnIndexDirection`: "up"
+- `oilUsdDelta`: null, `oilUsdDirection`: "unknown"
+- `goldUsdDelta`: null, `goldUsdDirection`: "unknown"
+- `usdVndDelta`: null, `usdVndDirection`: "unknown"
+
+**Gateway passthrough (MCP :3000):** All 8 new fields present in served payload. TS tool is confirmed thin proxy — no field transformation.
+
+**Additive-only (AC-U4-7):** git diff dtos.go = additions only. No existing field renamed or removed. PASS.
+
+**DDD Fence-A:** domain/ports.go imports context+time only. No infrastructure/application imports. PASS.
+
+**Security:** No hardcoded secrets, no process.env in modified Go files. PASS.
+
+**Test coverage:** T-U4-1 (nil prev → unknown), T-U4-2 (up), T-U4-3 (down), T-U4-4 (flat), T-U4-6 (Execute() live prev-session), T-U4-6 safe-degrade (no prev session), T-U4-7 (oil/gold/usdVnd null/unknown) all present and verified.
+
+**Contract test:** Both fakeContractMarketIndex and fakeZeroMarketIndex updated with FetchPrevSessionVnIndex stub. PASS.
+
+**mcp-server health:** Up (healthy), RestartCount=0. "Up 21 seconds" during ops pass = normal rebuild restart, not crash-loop. PASS.
+
+**AC coverage:**
+- AC-U4-1: SnapshotDTO has 8 new fields — PASS
+- AC-U4-2: VnIndex delta from daily_ohlcv OFFSET 1 — PASS (live: 7.35, direction: up)
+- AC-U4-3: Oil delta=null, direction="unknown" — PASS
+- AC-U4-4: Gold delta=null, direction="unknown" — PASS
+- AC-U4-5: UsdVnd delta=null, direction="unknown" — PASS
+- AC-U4-6: Execute() computes deltas+directions — PASS
+- AC-U4-7: Additive only, no field renamed/removed — PASS
+- AC-U4-8: Direction documented as string enum in dtos.go comment — PASS
+
+---
+
 ## Related Tasks
 
 - Independent of: TSU-DEV-U1, TSU-DEV-U2-GEN, TSU-DEV-U3, TSU-DEV-U5, TSU-DEV-U6, TSU-DEV-U2-PARITY (separate zone)
