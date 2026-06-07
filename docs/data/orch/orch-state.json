@@ -4941,8 +4941,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T22:11:33Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-07T22:53:07Z",
+    "_updated_by": "router",
     "rows": [
       {
         "id": "sau-2026060719035-a13",
@@ -5284,6 +5284,17 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": null
+      },
+      {
+        "id": "router-2026-06-07T22:53:07Z-macro-fixture-fallback",
+        "from": "router",
+        "to": "po",
+        "type": "repair_task_request",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "ts": "2026-06-07T22:53:07Z",
+        "summary": "macro-indicators Go service serves fedFundsRate=5.33 from hardcoded fixture (source_tier 4) whenever its direct FRED fetch fails (every weekend). Restart verified NOT to fix (probed 22:52 post-restart). mcp-server DB has correct bridged value 3.62 (tracked_indicators, FIX-FRED-YAHOO-WEEKEND-STALE c7a6de6c) but the Go service never consults it. Honest flagging present (is_estimate:true, regime suppressed per DSI-INV-1) so not served-as-fresh; likely self-heals weekdays when FRED publishes. Structural fix: Go fallback chain should try mcp-server bridged value (tier 2/3) before fixture (tier 4). Zone: dev-macro-indicators (apps/macro-indicators).",
+        "suggested_task_id": "FIX-MACRO-GO-FIXTURE-FALLBACK"
       }
     ],
     "archive": [
