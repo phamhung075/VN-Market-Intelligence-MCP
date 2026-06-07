@@ -4945,6 +4945,19 @@
     "_updated_by": "router",
     "rows": [
       {
+        "id": "sau-2026-06-0723-04-13-a20",
+        "ts": "2026-06-07T23:04:13Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 health endpoint unreachable (unhealthy status) | Router raw-verify 23:08Z: container recreated 21:36Z AFTER fix commits 48a64056/97367124 (18:57/19:11Z) — rebuild hypothesis RULED OUT. App logs show /health 200 OK continuously, but docker healthcheck curl exceeded 10s timeout (exit=-1, 0 bytes) — health probe starves when /extract POST in flight. Asyncio offload fix INCOMPLETE: event loop still blocks during extraction. Suggested: move blocking extract work to process pool or raise healthcheck timeout + add /health fast-path.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "zone_owner": "dev-pdf-extractor",
+        "check_id": "A-20",
+        "payload_ref": null
+      },
+      {
         "id": "sau-2026060719035-a13",
         "ts": "2026-06-07T19:03:35Z",
         "from": "system-auditor",
