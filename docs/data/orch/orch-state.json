@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T20:17:23Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-07T20:45:25Z",
+    "_updated_by": "dev-team-router",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3040,21 +3040,6 @@
         "note": "Latent follow-up from A-13 root-cause fix (signal sau-2026060719035-a13). Rare path (BT-5 gate block only) but identical event-loop-starvation class fixed in extract_tables_usecase.py + table_push_client.py (48a64056, f0999cff). AC: send_work_alert offloaded (to_thread or async client), unit test, suite green, no sync urllib on loop remains in apps/pdf-extractor (grep proof)."
       },
       {
-        "id": "UNBLOCK-REBUILD-MCP-SERVER",
-        "title": "Rebuild+recreate ONLY mcp-server container to ship 06c65978 (FIX-BCTC-MAGNITUDE-NORMALIZE) + FIX-BCTC-STAGE4-CROSS-SECTION-DUP once it lands",
-        "type": "UNBLOCK",
-        "owner": "po",
-        "status": "TODO",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "depends": [
-          "FIX-BCTC-STAGE4-CROSS-SECTION-DUP"
-        ],
-        "created_at": "2026-06-07T19:20:08Z",
-        "note": "Live container predates 06c65978 — PPC/HPG/KBC low-confidence reports today are consistent with the unfixed image. Rebuild ONLY mcp-server (feedback_rebuild_recreate_destroys_peers: never down&&up the stack). Post-rebuild verify image ID matches build + DB write probe (project_mcp_server_write_wedge) + re-run PPC Q4-2025 reparse to confirm magnitude fix live."
-      },
-      {
         "id": "CLEAN-TRIGGER-PPC-REPARSE",
         "title": "Stray untracked one-off apps/mcp-server/trigger-ppc-reparse.ts (37L direct-DB reparse trigger) — fold into a proper ops script/recipe or delete",
         "type": "CLEAN",
@@ -4828,6 +4813,23 @@
         "size": "XS",
         "priority": "P2",
         "status_note": "Disk 37%→90% in one day (5 rebuilds: 21GB build cache + 17GB stale layers; sub-agent hit transient ENOSPC). Safe prune (dangling images + builder --keep-storage 2GB) → 81%, 39Gi free, zero container impact. RULE in memory: ≥2 rebuilds/day → builder prune mandatory final step; dispatcher checks df at preflight on rebuild days."
+      },
+      {
+        "id": "UNBLOCK-REBUILD-MCP-SERVER",
+        "title": "Rebuild+recreate ONLY mcp-server container to ship 06c65978 (FIX-BCTC-MAGNITUDE-NORMALIZE) + FIX-BCTC-STAGE4-CROSS-SECTION-DUP once it lands",
+        "type": "UNBLOCK",
+        "owner": "po",
+        "status": "DONE",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "depends": [
+          "FIX-BCTC-STAGE4-CROSS-SECTION-DUP"
+        ],
+        "created_at": "2026-06-07T19:20:08Z",
+        "note": "Live container predates 06c65978 — PPC/HPG/KBC low-confidence reports today are consistent with the unfixed image. Rebuild ONLY mcp-server (feedback_rebuild_recreate_destroys_peers: never down&&up the stack). Post-rebuild verify image ID matches build + DB write probe (project_mcp_server_write_wedge) + re-run PPC Q4-2025 reparse to confirm magnitude fix live.",
+        "completed_at": "2026-06-07T20:45:25Z",
+        "completion_note": "Rebuilt mcp-server only (image 1f495c5d024c, peers untouched, all Up). Tool-layer DB write probe PASS (task_claim/release probe:rebuild-20260607). PPC Q4-2025 live reparse PASS: assets 5246604.575 / liab 780223.778 / equity 4466380.797 trieu, BS identity delta=0, confidence 0.25->0.625 / 0.1->1.0, no duplicate row. Evidence: notebook commit 8ecb2d96."
       }
     ],
     "in_progress": []
