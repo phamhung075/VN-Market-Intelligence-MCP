@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-07T00:05:58Z",
+  "_updated_at": "2026-06-07T00:21:54Z",
   "_updated_by": "qa",
   "head": {
     "status": "idle",
@@ -2223,7 +2223,7 @@
           {
             "task_id": "FIX-PROJECT-STATS-GENERATED",
             "title": "Generate project-stats.json from live source — kill hand-typed drift",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "mcp-server",
             "agent": "dev-mcp-server",
             "priority": "HIGH",

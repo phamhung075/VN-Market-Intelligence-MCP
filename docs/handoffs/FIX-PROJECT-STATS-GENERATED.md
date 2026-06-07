@@ -108,3 +108,37 @@ The system-auditor flow step §6 ("Stats drift") now calls the generator instead
 4. `docs/data/project-stats.json` `toolCount` agrees with `curl -s http://localhost:3000/health | python3 -c "import sys,json; print(json.load(sys.stdin)['toolCount'])"`.
 5. `docs/data/orch/orch-state.json` has task `FIX-PROJECT-STATS-GENERATED` with status `REVIEW`.
 6. No hand-editable counts remain in project-stats.json without a generator-backed source.
+
+---
+
+## [QA] Review Record
+
+**Verdict:** APPROVED  
+**Date:** 2026-06-07  
+**Reviewer:** qa  
+**Commit under review:** 4d753736
+
+### AC Results
+
+| AC | Result | Evidence |
+|----|--------|----------|
+| 1. Generator idempotent (exit 0, zero diff on 2nd run) | PASS | `bun scripts/gen-project-stats.ts` exits 0 both runs; `git diff docs/data/project-stats.json` = 0 lines after 2nd run |
+| 2. toolCount=162 matches live /health | PASS | `curl -s https://zenmidi.com/vn-market/health` → `toolCount: 162`; source scan produces 162; discrepancy reconciliation (164 naive=.bak+3/registerTool-1, 160 stale) confirmed in handoff |
+| 3. cronJobCount=76 source-derived | PASS | Own grep: startScheduler.ts=71, summaryJobs.ts=5; total=76; matches handoff claim |
+| 4. Fail-loud — no bare except/silent fallback | PASS | All 9 error paths are `throw new Error(...)`. Both try/catch blocks re-throw with descriptive message. Zero-count guard (line 79, 114) and duplicate-name guard (lines 61-65) confirmed |
+| 5. _generated_by marker present; flow docs updated | PASS | `docs/data/project-stats.json` carries `_generated_by: "bun scripts/gen-project-stats.ts"` + `_maintained_by: "generator (do not hand-edit...)"`. dev-mcp-server Gate-2c/2d updated. system-auditor step #6 updated |
+| 6. Commit scope: exactly 7 files, no Tier Dispatch/Early Exit touch | PASS | `git show --name-status 4d753736` shows 7 files only (5M+2A). System-auditor diff adds only 4 lines under `### 6. Stats drift` — Tier Dispatch and Early Exit sections (from c8703aea/7c8a0511) untouched |
+| 7. No apps/mcp-server/src files modified | PASS | Zero `apps/mcp-server/src` entries in commit file list |
+
+### Tests / Scans
+
+- bun test: N/A (generator is a utility script; no new MCP tool or domain code)
+- bun tsc --noEmit: N/A (Bun runtime script, no tsc compilation)
+- DDD scan: N/A (no TypeScript source under apps/)
+- Security scan: N/A (no production source modified)
+- Mock-guard: N/A (no production source modified)
+- BCTC eval: N/A (no BCTC report in scope)
+
+### orch-state update
+
+Task `FIX-PROJECT-STATS-GENERATED` status: REVIEW → DONE (atomic jq temp→validate→rename). `.head` remains idle.

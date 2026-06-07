@@ -157,4 +157,14 @@ Sprint: BCTC-LAYOUT-FIRST Phase 0 | Task: LF-DEPLOY | Verdict: CHANGES_REQUESTED
 
 **PASSING:** AC-LFE-4 (NGUON VON code-300 present in actual unit, data correct), AC-LFE-6/7/8/9/0, all 7 AC-LFO, 0-regression (bctc_table_rows=891 stable, balance_pass FPT Q4=1, get_bctc_full correct).
 
+---
+
+## cycle-190 · 2026-06-07T00:00Z · FIX-PROJECT-STATS-GENERATED — APPROVED
+
+Sprint: FIX-PROJECT-STATS-GENERATED | Task: FIX-PROJECT-STATS-GENERATED | Verdict: APPROVED | Commit: 4d753736
+
+**Tests run:** N/A (utility script — no MCP tool or domain code; no bun test/tsc scope). DDD: N/A. Security: N/A. Mock-guard: N/A.
+
+**All 7 ACs passed.** Generator exits 0, idempotent (zero diff on 2nd run). toolCount=162 confirmed by own grep (161 server.tool + 1 registerTool) and live /health endpoint. cronJobCount=76 confirmed by own grep (startScheduler.ts=71 + summaryJobs.ts=5). Fail-loud: 9 throw paths, no silent swallow. _generated_by marker present. Commit scope exactly 7 files, no src changes. System-auditor edit only touches step #6. orch-state REVIEW→DONE.
+
 **Next:** dev-pdf-extractor | fix build_document_map() Tier 0 for 3 blocks above.
