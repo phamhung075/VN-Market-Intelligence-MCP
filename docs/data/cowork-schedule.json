@@ -94,7 +94,7 @@
       "depends_on": "macroIndicatorRefreshJob:19:13:UTC — 24-min gate; FRED macro data written to DB before this trigger fires",
       "enabled": true,
       "policy_id": null,
-      "last_fired": "2026-06-05T19:50:12Z",
+      "last_fired": "2026-06-07T19:47:37Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",

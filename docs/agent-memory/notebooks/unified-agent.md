@@ -33,9 +33,16 @@
 - **Gold +2.55σ**: Risk-off signal active; contrasts with RE domestic recovery → inflection point
 - **26,500 VND/USD threshold**: Hard watch line — if breached, carry flips BEARISH; domestic bid dies
 
-## Next — EOD watch (2026-06-06)
+## Session: 2026-06-07 (evening)
 
-- USD/VND >26,500 (carry BEARISH flip) OR <25,500 (RE thesis reinforcement)
-- BCTC Q2 unlock EPS pillar confidence
-- VNH reversal watch (below 850 or holds 900)
-- Gold continuation or risk-on fade (market hexagram regenerate if service returns)
+### Chef Dish — evening 19:47 UTC
+
+- Clusters qualified: 1 major (macro-micro contradiction: gold risk-off +2.55σ vs VN-Index +0.4% domestic bounce)
+- Evening convergence: PUBLISHED — mandatory Steps 2–8 walked. Guaranteed publish rule (evening always publishes).
+- Market context: VN market CLOSED (Saturday evening), snapshot 19:47 UTC. VN-Index +0.4%, watchlist prices stale >24h (as of 2026-06-05 08:59). Bootstrap open alerts 2/24h (VHM LOW news_mention, FPT HIGH news_mention).
+- Macro: Brent 93.09 NEUTRAL, gold 4365.3 BULLISH (+2.55σ risk-off), USD/VND 26124 BEARISH (breach 25500), carry unavailable (is_estimate=true tier-4), yield CHEAP (+3.2pp), investment-clock CORE_VN tier 8, market hexagram unavailable (501).
+- Signal breakdown: cycle-snapshot market_context only; carry block FII thesis; no per-ticker hexagram overlay (market_hexagram 501).
+- TNB layers walked: 1–6 complete. Layer 1: USD/VND state transition ✓, gold +2.55σ ✓. Layer 2: Fed 5.33% stable [gap: PMI/sentiment]. Layer 3: [gap: carry is_estimate=true], [gap: VIRA]. Layer 4: yield CHEAP (+3.2pp) → valuation support ✓. Layer 5: [skipped: hexagram unavailable]. Layer 6: is_estimate=true carry gap noted, single-source baseline.
+- Causal chain: Fed 5.33% + SBV 5% → [gap: carry unavailable is_estimate=true] → USD/VND 26124 + gold +2.55σ creates inflection — domestic equity bid persists (+0.4%) but global risk-off threatens reversal.
+- Dishes published: YES — Block A (MARKET 19:47 UTC plain Vietnamese 3 paragraphs: gold risk-off vs VN bounce, USD/VND 26124 implications, watch 26500 threshold). Block B ([CHEF-DETAIL] WORK, TNB 1–6 auditable, carry DSI-CONSUMER honored, conviction MEDIUM degraded-floor rationale). Degraded-dish floor engaged: prices stale, carry unavailable, hexagram absent — but publish-with-degradation-notes rule fires for evening window.
+- Conviction: MEDIUM (all 4 pillars map: yield CHEAP, investment-clock CORE_VN, but carry unavailable + hexagram missing cap upside). Contradiction acknowledged: gold risk-off vs domestic bounce = inflection point. Off-market window = stale prices acceptable per Saturday context.
