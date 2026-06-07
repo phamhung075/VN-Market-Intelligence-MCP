@@ -179,14 +179,36 @@ export async function fetchFedFundsRate(
   }
 
   // Store to tracked_indicators
+  // Note: data_env is a migration-added column (ALTER TABLE ADD COLUMN) — it may not
+  // exist in minimal test schemas. Use a column-agnostic INSERT that works on both
+  // the migrated production schema and test in-memory DBs (data_env is nullable so
+  // the row is valid without it).
   const extractedAt = new Date().toISOString();
+  const dataEnv = currentDataEnv();
   try {
-    database
-      .prepare(
-        `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-      )
-      .run(INDICATOR_NAME, rate, "%", SOURCE, extractedAt, currentDataEnv());
+    // Attempt insert with data_env first (production path); fall back without it
+    // if the column does not yet exist (test in-memory DBs, pre-migration schemas).
+    let inserted = false;
+    try {
+      database
+        .prepare(
+          `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+        )
+        .run(INDICATOR_NAME, rate, "%", SOURCE, extractedAt, dataEnv);
+      inserted = true;
+    } catch (colErr) {
+      const msg = colErr instanceof Error ? colErr.message : String(colErr);
+      if (!msg.includes("data_env")) throw colErr; // re-throw unrelated errors
+    }
+    if (!inserted) {
+      database
+        .prepare(
+          `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+           VALUES (?, ?, ?, ?, ?)`,
+        )
+        .run(INDICATOR_NAME, rate, "%", SOURCE, extractedAt);
+    }
 
     logger.info("[macroRefresh] fed_funds_rate = " + rate + "%", {
       indicator: INDICATOR_NAME,

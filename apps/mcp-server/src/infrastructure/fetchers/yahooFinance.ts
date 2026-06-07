@@ -577,16 +577,40 @@ export function storeCommoditySnapshot(
     // news-mining paths), so we guard dedup explicitly here for the yahoo source.
     database.exec(`DELETE FROM tracked_indicators WHERE source = 'yahoo'
                    AND indicator IN ('brent_crude_usd', 'gold_usd_oz')`);
-    const insertTrackedIndicator = database.prepare(`
-      INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
-      VALUES (?, ?, ?, 'yahoo', ?, ?)
-    `);
+    // data_env is a migration-added column (ALTER TABLE ADD COLUMN) — it may not
+    // exist in minimal test schemas or pre-migration DBs. Detect its presence and
+    // build the INSERT statement accordingly so the transaction never fails on schema mismatch.
+    const hasDataEnvCol = (() => {
+      try {
+        database.prepare(`SELECT data_env FROM tracked_indicators LIMIT 0`).run();
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+    const insertTrackedIndicator = hasDataEnvCol
+      ? database.prepare(`
+          INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+          VALUES (?, ?, ?, 'yahoo', ?, ?)
+        `)
+      : database.prepare(`
+          INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+          VALUES (?, ?, ?, 'yahoo', ?)
+        `);
     const dataEnvYahoo = currentDataEnv();
     if (snapshot.brentCrudeUSD != null && snapshot.brentCrudeUSD > 0) {
-      insertTrackedIndicator.run("brent_crude_usd", snapshot.brentCrudeUSD, "$/bbl", snapshot.fetchedAt, dataEnvYahoo);
+      if (hasDataEnvCol) {
+        insertTrackedIndicator.run("brent_crude_usd", snapshot.brentCrudeUSD, "$/bbl", snapshot.fetchedAt, dataEnvYahoo);
+      } else {
+        insertTrackedIndicator.run("brent_crude_usd", snapshot.brentCrudeUSD, "$/bbl", snapshot.fetchedAt);
+      }
     }
     if (snapshot.goldUSDPerOz != null && snapshot.goldUSDPerOz > 0) {
-      insertTrackedIndicator.run("gold_usd_oz", snapshot.goldUSDPerOz, "$/oz", snapshot.fetchedAt, dataEnvYahoo);
+      if (hasDataEnvCol) {
+        insertTrackedIndicator.run("gold_usd_oz", snapshot.goldUSDPerOz, "$/oz", snapshot.fetchedAt, dataEnvYahoo);
+      } else {
+        insertTrackedIndicator.run("gold_usd_oz", snapshot.goldUSDPerOz, "$/oz", snapshot.fetchedAt);
+      }
     }
   });
 

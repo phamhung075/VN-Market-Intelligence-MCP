@@ -324,11 +324,56 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
     await sendTelegramWork(msg);
 
     // Fetch Fed Funds Rate from FRED (Task 1423b)
+    // Primary path: FRED CSV endpoint (fred.stlouisfed.org/graph/fredgraph.csv)
+    // Fallback path (FIX-FRED-YAHOO-WEEKEND-STALE): when the CSV path fails (e.g.
+    // weekend or Akamai WAF blocking), read the latest EFFR value from fred_series_daily
+    // (populated by the REST API path in fetchFredEffrIorb) and write it to
+    // tracked_indicators so the macro-indicators service always serves a current value.
     const fedRate = await fetchFedFundsRate(undefined, db);
     if (fedRate !== null) {
       logger.info(`[macroRefresh] fed_funds_rate = ${fedRate}%`);
     } else {
-      logger.warn("[macroRefresh] fed_funds_rate fetch returned null — FRED unavailable");
+      logger.warn("[macroRefresh] fed_funds_rate CSV fetch returned null — trying EFFR daily fallback");
+      // Fallback: read latest EFFR from fred_series_daily (REST API path — Akamai-free)
+      try {
+        const effrRow = db
+          .prepare<{ value: number; date: string }, []>(
+            `SELECT value, date FROM fred_series_daily
+             WHERE series = 'EFFR' AND value != '.'
+             ORDER BY date DESC LIMIT 1`,
+          )
+          .get();
+        if (effrRow != null) {
+          const extractedAt = new Date().toISOString();
+          // Use same resilient insert as fredApi.ts (data_env column is migration-added)
+          let inserted = false;
+          try {
+            db.prepare(
+              `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+               VALUES (?, ?, ?, ?, ?, ?)`,
+            ).run("fed_funds_rate", effrRow.value, "%", "fred_series_daily", extractedAt, "live");
+            inserted = true;
+          } catch (colErr) {
+            const msg = colErr instanceof Error ? colErr.message : String(colErr);
+            if (!msg.includes("data_env")) throw colErr;
+          }
+          if (!inserted) {
+            db.prepare(
+              `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+               VALUES (?, ?, ?, ?, ?)`,
+            ).run("fed_funds_rate", effrRow.value, "%", "fred_series_daily", extractedAt);
+          }
+          logger.info(
+            `[macroRefresh] fed_funds_rate EFFR fallback OK — ${effrRow.value}% (date: ${effrRow.date})`,
+          );
+        } else {
+          logger.warn("[macroRefresh] fed_funds_rate EFFR fallback: no rows in fred_series_daily — rate stays stale");
+        }
+      } catch (fallbackErr) {
+        logger.error("[macroRefresh] fed_funds_rate EFFR fallback failed", {
+          error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+        });
+      }
     }
 
     // Fetch EFFR + IORB daily series from FRED (Task 1879a)

@@ -693,6 +693,38 @@ export function startScheduler() {
           log('[startup-backfill] ISM fetch returned null — FRED_API_KEY absent or unavailable')
         }
       }
+
+      // FIX-FRED-YAHOO-WEEKEND-STALE: Bridge gap — if tracked_indicators has no
+      // fed_funds_rate row (e.g. after a cold restart before the daily cron runs),
+      // use the latest EFFR value from fred_series_daily. This ensures the
+      // macro-indicators service never falls back to the hardcoded 5.33 fixture.
+      const fedRow = db.prepare(
+        `SELECT COUNT(*) AS cnt FROM tracked_indicators WHERE indicator = 'fed_funds_rate'`
+      ).get() as { cnt: number } | null
+      if ((fedRow?.cnt ?? 0) === 0) {
+        const effrRow = db.prepare<{ value: number; date: string }, []>(
+          `SELECT value, date FROM fred_series_daily
+           WHERE series = 'EFFR' AND value != '.'
+           ORDER BY date DESC LIMIT 1`
+        ).get()
+        if (effrRow != null) {
+          const extractedAt = new Date().toISOString()
+          try {
+            db.prepare(
+              `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+               VALUES (?, ?, ?, ?, ?, ?)`
+            ).run('fed_funds_rate', effrRow.value, '%', 'fred_series_daily', extractedAt, 'live')
+          } catch {
+            db.prepare(
+              `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+               VALUES (?, ?, ?, ?, ?)`
+            ).run('fed_funds_rate', effrRow.value, '%', 'fred_series_daily', extractedAt)
+          }
+          log(`[startup-backfill] fed_funds_rate bridged from EFFR: ${effrRow.value}% (date: ${effrRow.date})`)
+        } else {
+          log('[startup-backfill] fed_funds_rate: tracked_indicators empty + no EFFR rows — rate stays at fixture fallback')
+        }
+      }
     } catch (err) {
       log(`[startup-backfill] fred_series_daily backfill error: ${err instanceof Error ? err.message : String(err)}`)
     }
