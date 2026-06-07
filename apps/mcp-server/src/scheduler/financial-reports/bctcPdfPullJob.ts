@@ -19,6 +19,20 @@
  *
  * Runs every 30 min (CRON_BCTC_PDF_PULL env var) or right after bctcQueueEnricher.
  *
+ * FIX-BCTC-EXTRACT-LOCALPATH: makeProductionDeps().triggerExtraction now delegates
+ * to triggerPushBctcExtraction (3-tier fallback) instead of calling
+ * extractViaMicroservice(pdfUrl) directly. The raw VPS URL (http://125.212.251.27:8765/...)
+ * cannot be fetched by the pdf-extractor microservice without X-API-Key — it would
+ * receive HTTP 401 → serviceResult=null → pipeline skipped. The PDF is already saved
+ * to a local path (filePath) accessible via the shared volume mount:
+ *   mcp-server:  ./data/pdfs → /app/data/pdfs
+ *   pdf-extractor: ./data/pdfs → /app/data/pdfs  (read-only)
+ * triggerPushBctcExtraction handles the 3-tier fallback correctly:
+ *   Tier 1: pdfUrl  — VPS URL → 401 → null (expected for VPS-sourced PDFs)
+ *   Tier 2: file://${filePath} — local path via shared volume
+ *   Tier 3: direct pdf-parse from local buffer (Bun process — segfault risk for
+ *            large PDFs via pdf-parse; known separate bug exit 132 on PPC 74p/16.7MB)
+ *
  * Layer: interface/scheduler — imports from infrastructure (DB, logger) only.
  *
  * @module scheduler/financial-reports/bctcPdfPullJob
@@ -64,15 +78,17 @@ export interface BctcPdfPullDeps {
   /**
    * Trigger the PDF text extraction pipeline for a successfully saved PDF.
    * Bug 1352a: now awaited before the queue row is marked done.
-   * 1954c: delegates extraction to pdf-extractor service via pdfUrl.
+   * FIX-BCTC-EXTRACT-LOCALPATH: production dep now uses triggerPushBctcExtraction
+   * (3-tier fallback) — filePath is the primary extraction source for VPS PDFs.
    * Errors are caught by the caller and logged; they are never re-thrown.
    */
   triggerExtraction: (params: {
     actionCode: string;
     year: number;
     quarter: string;
+    /** Local path where the PDF was saved — primary extraction source (shared volume). */
     filePath: string;
-    /** VPS source URL — passed to pdfExtractorClient.extractViaMicroservice (1954c). */
+    /** VPS source URL — Tier 1 attempt only; expected to fail (401) for VPS PDFs. */
     pdfUrl: string;
   }) => Promise<void>;
 }
@@ -124,38 +140,37 @@ async function makeProductionDeps(): Promise<BctcPdfPullDeps> {
     },
 
     triggerExtraction: async (params): Promise<void> => {
-      // 1954c (G5b): delegate extraction to pdf-extractor service (port 5001).
-      // Replaces the previous extractAndStorePdfPagesWithRetry + getCachedPdfText
-      // pattern with a single HTTP call to pdfExtractorClient.extractViaMicroservice.
-      const { extractViaMicroservice } = await import(
-        "../../infrastructure/fetchers/pdfExtractorClient.js"
+      // FIX-BCTC-EXTRACT-LOCALPATH: delegate to triggerPushBctcExtraction which
+      // implements 3-tier fallback. Previously this called extractViaMicroservice(pdfUrl)
+      // directly — for VPS-sourced PDFs the pdf-extractor would attempt to GET that URL
+      // without X-API-Key, receive HTTP 401, return null, and skip the pipeline entirely.
+      //
+      // triggerPushBctcExtraction handles:
+      //   Tier 1: extractViaService(pdfUrl)  — VPS URL → 401 → null (expected)
+      //   Tier 2: extractViaService(file://${filePath}) — local disk via shared volume
+      //   Tier 3: extractText(readFile(filePath)) — direct pdf-parse fallback
+      //
+      // Both containers share the /app/data/pdfs volume mount:
+      //   docker-compose.yml mcp-server:  ./data/pdfs:/app/data/pdfs
+      //   docker-compose.yml pdf-extractor: ./data/pdfs:/app/data/pdfs:ro
+      // The PDF saved to filePath is visible to the pdf-extractor at the same path.
+      const { triggerPushBctcExtraction } = await import(
+        "./pushBctcExtraction.js"
       );
-      const { fetchParseAndStoreBctc } = await import(
-        "../../application/usecases/fetchParseAndStoreBctc.js"
-      );
-      const { logger } = await import("../../infrastructure/logger.js");
 
       const quarter = params.quarter.startsWith("Q")
         ? (params.quarter as "Q1" | "Q2" | "Q3" | "Q4")
         : (`Q${params.quarter}` as "Q1" | "Q2" | "Q3" | "Q4");
 
-      // Step 1: call pdf-extractor service (primary extraction path)
-      const serviceResult = await extractViaMicroservice(params.pdfUrl, "bctc");
-      if (!serviceResult || serviceResult.textContent.trim().length < 100) {
-        logger.warn("[bctcPdfPull] service returned null or too-short text — pipeline skipped", {
-          ticker: params.actionCode,
-          pdfUrl: params.pdfUrl,
-          textLength: serviceResult?.textContent.trim().length ?? 0,
-        });
-        return;
-      }
+      // Derive filename from filePath (basename only)
+      const filename = params.filePath.split("/").pop() ?? "";
 
-      // Step 2: call pipeline with pdfTextOverride from service result
-      await fetchParseAndStoreBctc({
+      await triggerPushBctcExtraction({
         actionCode: params.actionCode,
         year: params.year,
         quarter,
-        pdfTextOverride: serviceResult.textContent,
+        filePath: params.filePath,
+        filename,
         pdfUrl: params.pdfUrl,
       });
     },
@@ -331,13 +346,15 @@ export async function runBctcPdfPullJob(opts: {
     // ── 5. Trigger extraction (await — ensures text is stored before done) ────
     // Bug 1352a: was fire-and-forget; MCP tools called immediately after
     // runBctcPdfPullJob saw empty text because OCR had not completed yet.
+    // FIX-BCTC-EXTRACT-LOCALPATH: production triggerExtraction now delegates to
+    // triggerPushBctcExtraction (3-tier fallback via filePath, not raw pdfUrl).
     try {
       await deps.triggerExtraction({
         actionCode: row.action_code,
         year: row.period_year,
         quarter: row.period_quarter,
         filePath,
-        pdfUrl: row.source_url, // 1954c: pass VPS URL to service call
+        pdfUrl: row.source_url, // FIX-BCTC-EXTRACT-LOCALPATH: Tier 1 attempt; filePath is primary
       });
     } catch (err) {
       // Extraction failure is non-fatal — PDF is saved, mark done regardless.
