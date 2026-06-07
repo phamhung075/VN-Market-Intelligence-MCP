@@ -23,13 +23,19 @@ Reads are currently serving correct data. The corruption is structural (B-tree p
 ordering and freelist double-reference) rather than content-level. This distinction
 drives the method choice in §1.
 
-**Baselines for parity verification (C-01, C-02):**
+**Baselines for parity verification — empirically measured 2026-06-07T10:02:25+07:00:**
 
-| Baseline | Value |
-|---|---|
-| C-01 Ticker count | 1599 distinct ticker codes |
-| C-02 Total price rows | 3190 rows |
-| Max data date | 2026-06-05 |
+Principle: restore-verification = per-table equality vs live measured immediately before dump.
+There is no `stock_prices` table. Price data lives in `market_prices` (current snapshot, 121 rows)
+and `market_prices_history` (append-only time-series). The full baseline table is in §2c.
+
+| Baseline | Table | Value |
+|---|---|---|
+| C-01 Current price codes | `market_prices` | 121 distinct codes |
+| C-02 Price history rows | `market_prices_history` | 41,265 rows |
+| C-03 Price history max timestamp | `market_prices_history` | 2026-06-05T08:59:30.032Z |
+| C-04 smoke read | `pdf_extracted_text` | 949 rows (integer, no error) |
+| C-05 smoke read | `system_logs` | 550,681 rows (append-only; drift ≤1% acceptable) |
 
 **Downtime window:** Sunday market-closed period, targeting execution start
 2026-06-07 09:00 UTC+7 (02:00 UTC). VN market opens Monday 2026-06-09 02:30 UTC
@@ -119,33 +125,134 @@ docker cp vn-market-intelligence-mcp-mcp-server-1:/app/data/market.db \
 
 ### 2c. RESTORE-VERIFICATION (backup is not done until this passes)
 
+> NOTE: sqlite3 CLI is not installed in the mcp-server container. Use `python3 -c "import sqlite3 ..."`.
+> For the backup file (host-side), either `python3` on the host or `sqlite3` if installed.
+
+**Empirically derived baseline table (measured live 2026-06-07T10:02:25+07:00, 87 tables).**
+Full table list is recorded below for completeness; C-01/C-02/C-03 are the mandatory gates.
+
 ```bash
-# Verify the backup file is readable and row counts match baselines
 BACKUP_PATH="/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/data/market.db.bak-<TIMESTAMP>"
 
-# C-01: ticker count
-sqlite3 "$BACKUP_PATH" "SELECT COUNT(DISTINCT code) FROM stock_prices;" 
-# EXPECTED: 1599
+# C-01: current price codes (market_prices — snapshot table, NOT stock_prices)
+python3 -c "import sqlite3; c=sqlite3.connect('$BACKUP_PATH').cursor(); c.execute('SELECT COUNT(DISTINCT code) FROM market_prices'); print(c.fetchone()[0])"
+# EXPECTED: 121
 
-# C-02: row count
-sqlite3 "$BACKUP_PATH" "SELECT COUNT(*) FROM stock_prices;"
-# EXPECTED: 3190
+# C-02: price history rows (market_prices_history — append-only time-series)
+python3 -c "import sqlite3; c=sqlite3.connect('$BACKUP_PATH').cursor(); c.execute('SELECT COUNT(*) FROM market_prices_history'); print(c.fetchone()[0])"
+# EXPECTED: 41265 (append-only — live may have grown slightly; accept ≥41265)
 
-# C-03: max data date
-sqlite3 "$BACKUP_PATH" "SELECT MAX(date) FROM stock_prices;"
-# EXPECTED: 2026-06-05
+# C-03: price history max timestamp
+python3 -c "import sqlite3; c=sqlite3.connect('$BACKUP_PATH').cursor(); c.execute('SELECT MAX(fetched_at) FROM market_prices_history'); print(c.fetchone()[0])"
+# EXPECTED: 2026-06-05T08:59:30.032Z
 
 # C-04: smoke read pdf_extracted_text
-sqlite3 "$BACKUP_PATH" "SELECT COUNT(*) FROM pdf_extracted_text LIMIT 1;"
-# EXPECTED: integer ≥ 0 (no error)
+python3 -c "import sqlite3; c=sqlite3.connect('$BACKUP_PATH').cursor(); c.execute('SELECT COUNT(*) FROM pdf_extracted_text'); print(c.fetchone()[0])"
+# EXPECTED: 949 (exact match — not append-only during recovery window)
 
 # C-05: smoke read system_logs
-sqlite3 "$BACKUP_PATH" "SELECT COUNT(*) FROM system_logs LIMIT 1;"
-# EXPECTED: integer ≥ 0 (no error)
+python3 -c "import sqlite3; c=sqlite3.connect('$BACKUP_PATH').cursor(); c.execute('SELECT COUNT(*) FROM system_logs'); print(c.fetchone()[0])"
+# EXPECTED: ≥ 550638 (append-only; backup captured 550638; live adds rows continuously)
 ```
 
-**STOP GATE:** If ANY of C-01 through C-05 fails, do not proceed. Escalate to architect.
-The backup is only declared valid when all 5 checks pass without error.
+**Full per-table baseline (measured 2026-06-07T10:02:25+07:00 — live is authoritative):**
+
+| Table | Live count | Backup count | Drift note |
+|---|---|---|---|
+| agent_feedback | 340 | 340 | - |
+| agent_signals | 1983 | 1983 | - |
+| agent_work_log | 1275 | 1275 | - |
+| agm_actuals | 2084 | 2084 | - |
+| agm_plan | 323 | 323 | - |
+| alert_engine_records | 0 | 0 | - |
+| alert_mutes | 0 | 0 | - |
+| alerts | 903 | 903 | - |
+| ask_queue | 11 | 11 | - |
+| audit_state | 1 | 1 | - |
+| backtest_runs | 9 | 9 | - |
+| bctc_balance_checks | 4 | 4 | - |
+| bctc_eval_results | 84 | 84 | - |
+| bctc_human_corrections | 1 | 1 | - |
+| bctc_layout_units | 185 | 185 | - |
+| bctc_md_tables | 1 | 1 | - |
+| bctc_page_zones | 543 | 543 | - |
+| bctc_refined_units | 53 | 53 | - |
+| bctc_signal_debounce | 6 | 6 | - |
+| bctc_table_rows | 891 | 891 | - |
+| bctc_vps_queue | 413 | 413 | - |
+| bond_maturity | 5 | 5 | - |
+| briefing_log | 49 | 49 | - |
+| broker_sanctions | 0 | 0 | - |
+| calibration_snapshots | 5 | 5 | - |
+| cascade_rule_hits | 8424 | 8424 | - |
+| commodity_prices | 1 | 1 | - |
+| commodity_prices_history | 1142 | 1142 | - |
+| conviction_history | 694 | 694 | - |
+| credit_data | 0 | 0 | - |
+| cron_job_runs | 54696 | 54695 | +1 append-only drift |
+| custom_alert_rules | 0 | 0 | - |
+| daily_ohlcv | 25188 | 25188 | - |
+| evidence_fragments | 0 | 0 | - |
+| evidence_likelihood_ratios | 45 | 45 | - |
+| evidence_scores | 369 | 369 | - |
+| financial_reports | 15 | 15 | - |
+| fred_series_daily | 8279 | 8279 | - |
+| hexagram_transitions | 2617 | 2617 | - |
+| imf_indicators | 3 | 3 | - |
+| improve_check_log | 0 | 0 | - |
+| insider_transactions | 0 | 0 | - |
+| kinhdich_readings | 36175 | 36175 | - |
+| macro_indicators | 1 | 1 | - |
+| market_messages | 672 | 672 | - |
+| market_prices | 121 | 121 | - |
+| market_prices_history | 41265 | 41265 | - |
+| market_summaries | 92 | 92 | - |
+| mention_velocity | 240 | 240 | - |
+| ohlcv_backfill_queue | 273 | 273 | - |
+| pdf_extracted_text | 949 | 949 | - |
+| pharma_events | 0 | 0 | - |
+| portfolio_pnl_snapshots | 42 | 42 | - |
+| portfolio_targets | 0 | 0 | - |
+| positions | 1 | 1 | - |
+| prediction_claims | 7 | 7 | - |
+| prediction_markets | 83 | 83 | - |
+| prediction_signals | 6 | 6 | - |
+| price_alerts | 0 | 0 | - |
+| public_contracts | 0 | 0 | - |
+| rag_analyses | 5479 | 5479 | - |
+| reputation_scores | 194 | 194 | - |
+| sbv_rates | 1 | 1 | - |
+| sbv_rates_history | 1429 | 1429 | - |
+| scheduler_locks | 1 | 1 | - |
+| signal_outcomes | 51 | 51 | - |
+| signal_quality_audit | 6 | 6 | - |
+| signal_rejections | 627 | 627 | - |
+| sla_breach_audit | 5355 | 5355 | - |
+| system_changelog | 212 | 212 | - |
+| system_logs | 550681 | 550638 | +43 append-only drift (normal) |
+| telegram_reports | 39 | 39 | - |
+| tracked_indicators | 1921 | 1921 | - |
+| trade_exposures | 25 | 25 | - |
+| user_requests | 3 | 3 | - |
+| vn_index_cache | 0 | 0 | - |
+| vnstock_balance_sheet | 79 | 79 | - |
+| vnstock_cash_flow | 32 | 32 | - |
+| vnstock_events | 2572 | 2572 | - |
+| vnstock_fetch_log | 503 | 503 | - |
+| vnstock_financials | 79 | 79 | - |
+| vnstock_officers | 493 | 493 | - |
+| vnstock_shareholders | 1593 | 1593 | - |
+| vnstock_trading_stats | 2959 | 2959 | - |
+| vps_push_log | 44001 | 44001 | - |
+| vps_service_health | 53572 | 53567 | +5 append-only drift |
+| watchlist | 39 | 39 | - |
+
+Drift: 3 append-only tables (cron_job_runs, system_logs, vps_service_health) diverged by ≤1%
+between backup snapshot (10:02:25) and live measurement (~same time). All other 84 tables match
+exactly. Backup is VERIFIED-RESTORABLE.
+
+**STOP GATE:** C-01/C-02/C-04 must match exactly; C-03 must be 2026-06-05T08:59:30.032Z; C-05
+must be ≥ 550638. If ANY check errors (table not found, malformed DB), do not proceed.
 
 ---
 
@@ -181,7 +288,7 @@ grep -c "^CREATE TABLE" /tmp/market_dump_<TIMESTAMP>.sql
 # EXPECTED: ≥ 10 tables
 
 grep -c "^INSERT INTO" /tmp/market_dump_<TIMESTAMP>.sql
-# EXPECTED: ≥ 3190 (at minimum the stock_prices rows)
+# EXPECTED: ≥ 41265 (at minimum the market_prices_history rows)
 ```
 
 ### Phase 3 — Stop mcp-server writes (ops)
@@ -211,24 +318,24 @@ NEW_DB="/tmp/market_fresh_$(date +%Y%m%dT%H%M%S).db"
 sqlite3 "$NEW_DB" < "$DUMP_FILE"
 
 # Verify integrity of the new DB immediately
-sqlite3 "$NEW_DB" "PRAGMA integrity_check;"
+python3 -c "import sqlite3; c=sqlite3.connect('$NEW_DB').cursor(); c.execute('PRAGMA integrity_check'); print(c.fetchone()[0])"
 # EXPECTED: ok
 
 # Verify baseline C-01
-sqlite3 "$NEW_DB" "SELECT COUNT(DISTINCT code) FROM stock_prices;"
-# EXPECTED: 1599
+python3 -c "import sqlite3; c=sqlite3.connect('$NEW_DB').cursor(); c.execute('SELECT COUNT(DISTINCT code) FROM market_prices'); print(c.fetchone()[0])"
+# EXPECTED: 121
 
 # Verify baseline C-02
-sqlite3 "$NEW_DB" "SELECT COUNT(*) FROM stock_prices;"
-# EXPECTED: 3190
+python3 -c "import sqlite3; c=sqlite3.connect('$NEW_DB').cursor(); c.execute('SELECT COUNT(*) FROM market_prices_history'); print(c.fetchone()[0])"
+# EXPECTED: ≥ 41265 (equals dump-time live count)
 
 # Verify baseline C-03
-sqlite3 "$NEW_DB" "SELECT MAX(date) FROM stock_prices;"
-# EXPECTED: 2026-06-05
+python3 -c "import sqlite3; c=sqlite3.connect('$NEW_DB').cursor(); c.execute('SELECT MAX(fetched_at) FROM market_prices_history'); print(c.fetchone()[0])"
+# EXPECTED: 2026-06-05T08:59:30.032Z
 ```
 
-**STOP GATE:** If `PRAGMA integrity_check` returns anything other than `ok`, or any
-baseline diverges, do not replace the live DB. Execute §4 (Rollback).
+**STOP GATE:** If `PRAGMA integrity_check` returns anything other than `ok`, or C-01 ≠ 121,
+or C-02 < 41265, or C-03 ≠ expected timestamp — do not replace the live DB. Execute §4 (Rollback).
 
 ### Phase 5 — Replace live DB with fresh DB (ops)
 
@@ -273,7 +380,7 @@ See §5 for full verification checklist.
 ### Trigger conditions for rollback
 
 - Phase 4 `PRAGMA integrity_check` on new DB returns anything other than `ok`
-- Phase 7 baseline checks diverge from C-01/C-02/C-03
+- Phase 7 baseline checks diverge from C-01 (121), C-02 (≥41265), C-03 (2026-06-05T08:59:30.032Z)
 - mcp-server fails to reach `healthy` within 60 seconds after Phase 6 start
 - Any smoke read of `pdf_extracted_text` or `system_logs` errors after restart
 
@@ -304,8 +411,8 @@ docker inspect vn-market-intelligence-mcp-mcp-server-1 \
 
 # Step R-5 — Verify rollback baseline (confirm reads still work on original corrupt DB)
 docker exec vn-market-intelligence-mcp-mcp-server-1 \
-  sqlite3 /app/data/market.db "SELECT COUNT(DISTINCT code) FROM stock_prices;"
-# EXPECTED: 1599
+  python3 -c "import sqlite3; c=sqlite3.connect('/app/data/market.db').cursor(); c.execute('SELECT COUNT(DISTINCT code) FROM market_prices'); print(c.fetchone()[0])"
+# EXPECTED: 121
 ```
 
 After successful rollback, the system is in its original state (reads serving correctly
@@ -329,21 +436,23 @@ docker exec vn-market-intelligence-mcp-mcp-server-1 \
 
 ### 5b. Row-count parity vs baselines
 
+> NOTE: sqlite3 CLI absent from container — use python3 inline.
+
 ```bash
-# C-01: ticker count
+# C-01: current price codes
 docker exec vn-market-intelligence-mcp-mcp-server-1 \
-  sqlite3 /app/data/market.db "SELECT COUNT(DISTINCT code) FROM stock_prices;"
-# REQUIRED: 1599
+  python3 -c "import sqlite3; c=sqlite3.connect('/app/data/market.db').cursor(); c.execute('SELECT COUNT(DISTINCT code) FROM market_prices'); print(c.fetchone()[0])"
+# REQUIRED: 121
 
-# C-02: total price rows
+# C-02: price history rows (append-only; must equal dump-time count or higher)
 docker exec vn-market-intelligence-mcp-mcp-server-1 \
-  sqlite3 /app/data/market.db "SELECT COUNT(*) FROM stock_prices;"
-# REQUIRED: 3190
+  python3 -c "import sqlite3; c=sqlite3.connect('/app/data/market.db').cursor(); c.execute('SELECT COUNT(*) FROM market_prices_history'); print(c.fetchone()[0])"
+# REQUIRED: ≥ 41265
 
-# C-03: max data date
+# C-03: price history max timestamp
 docker exec vn-market-intelligence-mcp-mcp-server-1 \
-  sqlite3 /app/data/market.db "SELECT MAX(date) FROM stock_prices;"
-# REQUIRED: 2026-06-05
+  python3 -c "import sqlite3; c=sqlite3.connect('/app/data/market.db').cursor(); c.execute('SELECT MAX(fetched_at) FROM market_prices_history'); print(c.fetchone()[0])"
+# REQUIRED: 2026-06-05T08:59:30.032Z (or later if new fetches completed after recovery)
 ```
 
 ### 5c. Smoke read — pdf_extracted_text
@@ -395,8 +504,8 @@ writing to a structurally corrupt DB risks propagating corruption to new rows.
 | # | Task ID | Zone | Agent Lane | Description | Dependency | STOP GATE |
 |---|---|---|---|---|---|---|
 | 1 | RLI-OPS-1 | apps/mcp-server/ | ops | Pre-flight: confirm all writer containers healthy; record baseline docker ps output | none | All containers healthy |
-| 2 | RLI-OPS-2 | apps/mcp-server/ | ops | Execute §2 backup procedure: `docker cp` market.db to host timestamped backup | RLI-OPS-1 | All 5 baseline checks pass (C-01=1599, C-02=3190, C-03=2026-06-05, C-04 no error, C-05 no error) |
-| 3 | RLI-DEV-1 | apps/mcp-server/ | dev-mcp-server | Phase 2: `.dump` live DB to SQL; sanity check line counts | RLI-OPS-2 (verified backup) | ≥10 CREATE TABLE lines; ≥3190 INSERT lines in dump |
+| 2 | RLI-OPS-2 | apps/mcp-server/ | ops | Execute §2 backup procedure: `docker cp` market.db to host timestamped backup | RLI-OPS-1 | All 5 baseline checks pass (C-01=121, C-02≥41265, C-03=2026-06-05T08:59:30.032Z, C-04=949, C-05≥550638) |
+| 3 | RLI-DEV-1 | apps/mcp-server/ | dev-mcp-server | Phase 2: `.dump` live DB to SQL; sanity check line counts | RLI-OPS-2 (verified backup) | ≥10 CREATE TABLE lines; ≥41265 INSERT lines in dump |
 | 4 | RLI-OPS-3 | apps/mcp-server/ | ops | Phase 3: `docker compose stop mcp-server` (scoped — NEVER docker compose down) | RLI-DEV-1 | mcp-server absent from `docker ps` running list |
 | 5 | RLI-DEV-2 | apps/mcp-server/ | dev-mcp-server | Phase 4: `sqlite3 $NEW_DB < dump.sql`; verify PRAGMA integrity_check=ok + baselines C-01/02/03 | RLI-OPS-3 | PRAGMA integrity_check=ok; all 3 baselines match |
 | 6 | RLI-OPS-4 | apps/mcp-server/ | ops | Phase 5: `docker cp` fresh DB into volume (or alpine container method) | RLI-DEV-2 | File present in volume: `docker run alpine ls -lh /data/market.db` |
