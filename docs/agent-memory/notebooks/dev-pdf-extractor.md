@@ -2,6 +2,29 @@
 
 ## Working Memory
 
+### 2026-06-07 — HEALTH-BLOCK incident fix (48a64056, f0999cff)
+
+**Incident:** pdf-extractor Up but health=unhealthy. Docker healthcheck `curl -f http://localhost:5001/health` exceeded 10s timeout repeatedly. CPU 100%. Container restarted at 18:48 UTC, wedged immediately, 5 consecutive healthcheck failures. Connection accepted, no bytes returned.
+
+**Root cause (confirmed via ps aux + TCP backlog inspection):** TWO synchronous blocking calls on the asyncio event loop thread inside `POST /extract-tables`:
+1. `ocr_port.locate_balance_sheet_pages()` + `ocr_port.ocr_pages()` (Tesseract via pytesseract.image_to_string → subprocess.run) — pin event loop at 100% CPU for 10-30s per page
+2. `TablePushClient.push_table()` — `urllib.request.urlopen()` in async def, blocking event loop for up to 30s per push
+
+Both calls were directly on the event loop thread; unlike `/extract-md-tables`, `/pek-extract`, and `/extract-layout-first` (which use `background_tasks.add_task()`), `/extract-tables` was a direct `await execute()` with no offloading.
+
+**Fix:**
+- `application/extract_tables_usecase.py`: wrap both OcrPort calls in `asyncio.to_thread()`
+- `infrastructure/table_push_client.py`: wrap `urllib.request.urlopen()` in `asyncio.to_thread()` via `_do_request()` closure
+
+**Tests added:**
+- `__tests__/unit/test_extract_tables_usecase.py::test_tc11_ocr_port_runs_in_worker_thread_not_event_loop` — TC11 RED then GREEN
+- `__tests__/unit/test_table_push_client_nonblocking.py::test_tc_push_1_urlopen_runs_in_worker_thread_not_event_loop` — TC-PUSH-1 RED then GREEN
+- Full suite: 738 passed, 11 skipped
+
+**Verification:** Container health=healthy failing_streak:0; host `curl http://127.0.0.1:5001/health` → 200 {"status":"ok",...}
+
+Zone health: /extract-tables event loop blocking fixed; two asyncio.to_thread guards in place. alert_adapter.py send_work_alert() has 5s urllib call — latent issue, low-frequency path only (BT-5 gate block). | HEALTHY
+
 ### 2026-06-07 — FEAT-PDF-EXTRACTOR-LOCAL-INPUT DONE (7aa18020)
 
 **Task:** FEAT-PDF-EXTRACTOR-LOCAL-INPUT | Priority: M/P2 | Status: DONE
