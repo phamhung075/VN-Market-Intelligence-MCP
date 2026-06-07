@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c378 · 2026-06-07T01:21Z (FIX-ORCH-KEY-NORMALIZE-TASKID) — REVIEW
+
+**Task:** FIX-ORCH-KEY-NORMALIZE-TASKID (FIX, S, HIGH) — normalize `task_id` -> `id` across all task_board rows.
+
+**Migration:** Python3 one-pass script. 189 rows migrated: 159 active_sprints (all `task_id` only), 27 backlog (`task_id` only), 1 backlog (`BA-ORCH-TASK-CANON` had both keys — kept `id`, dropped `task_id`), 2 done (`task_id` only). Row counts unchanged: 159/38/84. AC1 task_id=0. AC4 signal_queue byte-identical (3 rows, 2 DONE + 1 READ).
+
+**Code change (tasksMdJanitorJob.ts):** Read-path coalesce added to `parseTasksFromOrchState` and `parseTasksFromOrchStateJson`: `t.id || t.task_id || ""`. Write-path already emits `id` only.
+
+**Standards (task-schema.md):** Write Rules section added: write `id` never `task_id`; timestamps via real `date -u`.
+
+**Own task row:** Flipped to REVIEW in backlog (key `id` — ate own dogfood).
+
+**Tests:** 6 pass / 0 fail (orchStateStore-atomic-write.test.ts). tsc: 3 pre-existing errors, 0 new.
+
+Zone health: migration REVIEW, tsc 0 new errors, 6 tests GREEN | HEALTHY
+
+---
+
 ## c377 · 2026-06-06T23:44Z (F-1/FETCH-OPS-PAGE-TRUTH) — COMMITTED c299f6c3
 
 **Task:** F-1 (M) — news domain anchor fix + GET /api/fetch-status endpoint.
