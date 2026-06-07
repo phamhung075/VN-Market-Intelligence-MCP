@@ -4812,8 +4812,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T19:20:08Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-07T19:33:04Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "sau-2026060719035-a13",
@@ -5083,6 +5083,19 @@
         "disposition": "VERIFIED 2026-06-07T19:20:08Z: tool-usage-stats.json toolCounts populated (4 tools: get_alerts=109, get_market_snapshot=128, get_portfolio_conviction=136, get_macro_snapshot=108), no sessionCount field present. AC-U1-8 telemetry live-proof MET.",
         "processed_by": "po-triage-20260607T191041Z",
         "processed_at": "2026-06-07T19:20:08Z"
+      },
+      {
+        "id": "dev-20260607T193304",
+        "ts": "2026-06-07T19:33:04Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "test_infra_debt",
+        "summary": "pdf-extractor unit suite red: 36 order-dependent failures — deprecated get_event_loop helper vs pytest-asyncio AUTO",
+        "severity": "MED",
+        "status": "NEW",
+        "zone_owner": "dev-pdf-extractor",
+        "payload_ref": null,
+        "disposition": "Raw-verified by dispatcher 19:35Z: 36F/703P full run; each fails ONLY in full-suite order (TC9 passes solo). Pre-existing at 473f7cd2~1 (37F/702P) — NOT caused by FIX-PDFX-ALERT-ADAPTER-BLOCKING (net +1 pass, commit 473f7cd2 verified good). Cause class: __tests__ helper asyncio.get_event_loop().run_until_complete (test_extract_tables_usecase.py:142 et al) breaks after pytest-asyncio 1.3.0 Mode.AUTO tests close/replace the loop. Earlier 738/0 baseline predates asyncio-plugin tests. Suggested: FIX-PDFX-TEST-LOOP-POLLUTION (XS-S, zone apps/pdf-extractor/) — migrate loop-based helpers to pytest-asyncio or isolate loop per test."
       }
     ],
     "archive": [
