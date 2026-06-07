@@ -198,7 +198,7 @@ describe("T2 — buildOrchestrationDto: task_board.done[] projected", () => {
   });
 
   it("T2-d: done[] is always an array (never null/undefined)", () => {
-    const state = makeState({ done: undefined });
+    const state = makeState({});
     const dto = buildOrchestrationDto(state);
     expect(Array.isArray(dto.task_board.done)).toBe(true);
   });
@@ -233,7 +233,7 @@ describe("T3 — counts.done sourced from done[].length", () => {
   });
 
   it("T3-b: done absent → counts.done = 0", () => {
-    const state = makeState({ done: undefined });
+    const state = makeState({});
     const dto = buildOrchestrationDto(state);
     expect(dto.task_board.counts.done).toBe(0);
   });
@@ -286,7 +286,7 @@ describe("T4 — done[] absent → empty array (graceful)", () => {
   });
 
   it("T4-b: task_board.done = undefined → dto.task_board.done = []", () => {
-    const state = makeState({ done: undefined });
+    const state = makeState({});
     const dto = buildOrchestrationDto(state);
     expect(dto.task_board.done).toEqual([]);
   });
