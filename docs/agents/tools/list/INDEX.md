@@ -1,8 +1,8 @@
 # MCP Tools Documentation Index
 
-Complete reference for all 161 MCP tools organized by category.
+Complete reference for all 157 MCP tools organized by category.
 
-**Last updated:** 2026-06-07 (all 161 tools documented)
+**Last updated:** 2026-06-07 (all 157 tools documented)
 **SSOT:** This file is the canonical tool inventory.
 **Per-tool docs:** Each tool has a `.md` file at `docs/agents/tools/list/<tool_name>.md`
 
@@ -44,11 +44,9 @@ Complete reference for all 161 MCP tools organized by category.
 - **[`reset_foreign_flow_circuit_breaker`](reset_foreign_flow_circuit_breaker.md)**
 - **[`set_price_alert`](set_price_alert.md)**
 
-## FINANCIAL (21 tools)
+## FINANCIAL (19 tools)
 
-- **[`backfill_bctc_scalars`](backfill_bctc_scalars.md)**
 - **[`bctc_skip_queue_item`](bctc_skip_queue_item.md)**
-- **[`compute_accruals`](compute_accruals.md)**
 - **[`finalize_bctc_refine`](finalize_bctc_refine.md)**
 - **[`get_agm_plan`](get_agm_plan.md)**
 - **[`get_bctc_full`](get_bctc_full.md)**
@@ -64,7 +62,6 @@ Complete reference for all 161 MCP tools organized by category.
 - **[`list_flagged_bctc_cells`](list_flagged_bctc_cells.md)**
 - **[`list_stored_pdfs`](list_stored_pdfs.md)**
 - **[`push_bctc_refined_unit`](push_bctc_refined_unit.md)**
-- **[`read_bctc_pdf`](read_bctc_pdf.md)**
 - **[`run_bctc_batch_sweep`](run_bctc_batch_sweep.md)**
 - **[`submit_bctc_correction`](submit_bctc_correction.md)**
 
@@ -73,7 +70,6 @@ Complete reference for all 161 MCP tools organized by category.
 - **[`compare_financials`](compare_financials.md)**
 - **[`compare_stocks`](compare_stocks.md)**
 - **[`fetch_and_analyze`](fetch_and_analyze.md)**
-- **[`get_accuracy_context`](get_accuracy_context.md)**
 - **[`get_agent_signals`](get_agent_signals.md)**
 - **[`get_analysis_history`](get_analysis_history.md)**
 - **[`get_cascade_metrics`](get_cascade_metrics.md)**
@@ -128,7 +124,7 @@ Complete reference for all 161 MCP tools organized by category.
 - **[`review_market_message`](review_market_message.md)**
 - **[`send_telegram`](send_telegram.md)**
 
-## MACRO (22 tools)
+## MACRO (20 tools)
 
 - **[`create_prediction_claim`](create_prediction_claim.md)**
 - **[`explain_hexagram`](explain_hexagram.md)**
@@ -194,7 +190,6 @@ Complete reference for all 161 MCP tools organized by category.
 - **[`get_vps_proxy_health`](get_vps_proxy_health.md)**
 - **[`get_vps_service_health`](get_vps_service_health.md)**
 - **[`get_watchlist`](get_watchlist.md)**
-- **[`is_trading_day`](is_trading_day.md)**
 - **[`log_agent_work`](log_agent_work.md)**
 - **[`log_fix`](log_fix.md)**
 - **[`remove_from_watchlist`](remove_from_watchlist.md)**

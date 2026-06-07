@@ -37,6 +37,8 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | `get_cash_flow` | Full 4-line CF statement + OCF/NI forensic ratio | `ticker: string, period?: "Q1"–"Q4", year?: number` |
 | `get_bctc_ocf` | Focused OCF forensic-gate: operating/investing/financing | `code: string, period_year: number, period_quarter: number` |
 | `list_stored_pdfs` | List available BCTC PDFs for all tickers | — |
+| `list_flagged_bctc_cells` | List BCTC cells flagged for human review | `ticker: string, limit?: number` |
+| `submit_bctc_correction` | Submit human correction for BCTC cell | `ticker: string, cell_id: string, corrected_value: any` |
 | `get_earnings_calendar` | Filing deadlines and status for all watchlist stocks | — |
 
 ### Report Comparison & Analysis

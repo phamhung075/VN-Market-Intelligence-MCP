@@ -1,6 +1,6 @@
 # list_flagged_bctc_cells
 
-**Purpose:** List BCTC cells flagged for human review
+**Purpose:** List BCTC cells flagged for human review (bctc-analyst)
 
 **Parameters:**
 | Name | Type | Description |

@@ -1,6 +1,6 @@
 # get_market_foreign_flow
 
-**Purpose:** Get market-wide foreign investor flow
+**Purpose:** Get market-wide foreign investor flow (market-analyst)
 
 **Parameters:**
 | Name | Type | Description |

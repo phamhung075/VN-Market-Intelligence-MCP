@@ -33,6 +33,8 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | `get_pipeline_health` | BCTC, news, FX, price, foreign flow pipeline status | — |
 | `get_cron_health` | Scheduler job status and execution history | — |
 | `get_rate_limit_status` | API rate limits across all services | — |
+| `diagnose_foreign_flow_circuit_breaker` | Diagnose foreign flow circuit breaker trip reason | `breaker_id?: string` |
+| `reset_foreign_flow_circuit_breaker` | Reset foreign flow circuit breaker after diagnosis | `breaker_id?: string` |
 
 ### VPS Service Management
 | Tool | Purpose | Key Params |

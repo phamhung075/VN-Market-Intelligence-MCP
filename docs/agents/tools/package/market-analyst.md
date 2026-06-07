@@ -63,6 +63,20 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 
 ---
 
+### Foreign Flow Intelligence
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_market_foreign_flow` | Get market-wide foreign investor flow buy/sell | `period?: "1D" \| "1W" \| "1M"` |
+| `diagnose_foreign_flow_circuit_breaker` | Diagnose foreign flow circuit breaker trip reason | `breaker_id?: string` |
+| `reset_foreign_flow_circuit_breaker` | Reset foreign flow circuit breaker | `breaker_id?: string` |
+
+### Accuracy & Calibration
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_label_accuracy_report` | Get accuracy report for signal labels | `label_type?: "alert" \| "signal"` |
+
 ### Macro & Regime Tools
 
 | Tool | Purpose | Key Params |

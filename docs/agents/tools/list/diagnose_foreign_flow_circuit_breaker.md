@@ -1,6 +1,6 @@
 # diagnose_foreign_flow_circuit_breaker
 
-**Purpose:** Diagnose circuit breaker trip reason
+**Purpose:** Diagnose foreign flow circuit breaker trip reason (ops)
 
 **Parameters:**
 | Name | Type | Description |

@@ -1,6 +1,6 @@
 # submit_bctc_correction
 
-**Purpose:** Submit human correction for BCTC cell
+**Purpose:** Submit human correction for BCTC cell (bctc-analyst)
 
 **Parameters:**
 | Name | Type | Description |

@@ -55,8 +55,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T09:50:06.982Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-07T09:53:33Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2260,7 +2260,7 @@
       {
         "id": "TOOL-SURFACE-UPGRADE",
         "label": "Make 162-tool vn-market surface auditable and honest — 6 units (U1+U2: telemetry+generator, U3: weak-claim triage, U4+U5+U6: sweep/deregister)",
-        "status": "active",
+        "status": "DONE",
         "opened_at": "2026-06-07",
         "priority": "high",
         "evidence": "Architect design (docs/handoffs/TOOL-SURFACE-UPGRADE-BA-spec.md) breaks down 162-tool surface into 6 audit units: U1 per-call telemetry (gateway SSE cutover fix), U2 registry generation (hand-edit decay fix), U3 12 weak-claim tools (4-layer audit + verdicts), U4 direction+delta sweep (macro-snapshot), U5 foreign-flow null ratio (DSI compliance), U6 TSH merges (description clarity). Root causes: (1) sessionToolCache never populated post-gateway (fix: perCallCounterStore), (2) tool-registry.json decayed 125 tools (fix: static-grep generator), (3) 12 tools zero-claimed across 4 layers (fix: architect audit + deregister 5 + integrate 7 + signal cowork lane), (4) get_macro_snapshot serves point-in-time only (fix: add delta/direction), (5) foreign_flow shows fake 0% holding_ratio (fix: omit per DSI), (6) TSH merges unexecuted (fix: description updates, no consolidation per verdict).",
@@ -2373,7 +2373,8 @@
             "claimed_at": "2026-06-07T12:00:00Z",
             "completed_at": "2026-06-07T12:30:00Z"
           }
-        ]
+        ],
+        "closed_at": "2026-06-07T09:53:33Z"
       },
       {
         "sprint_id": "SPRINT-PPC-PDF-SOURCING",
@@ -5002,9 +5003,21 @@
           "list_flagged_bctc_cells",
           "submit_bctc_correction"
         ],
-        "status": "NEW",
+        "status": "DONE",
         "severity": "INFO",
         "payload_ref": null
+      },
+      {
+        "id": "po-20260607T095333",
+        "ts": "2026-06-07T09:53:33Z",
+        "from": "po",
+        "to": "system-auditor",
+        "type": "follow-up-check",
+        "sprint": "TOOL-SURFACE-UPGRADE",
+        "summary": "AC-U1-8 telemetry live-proof: after next 8h cron tick verify tool-usage-stats.json toolCounts populated, no sessionCount field",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "reports/TASK_REPORT_TSU-DEV-U2-PARITY.md"
       }
     ],
     "archive": [
@@ -5923,7 +5936,7 @@
     ]
   },
   "sprint_goal": {
-    "_updated_at": "2026-06-06T18:32:39Z",
+    "_updated_at": "2026-06-07T09:53:33Z",
     "_updated_by": "po",
     "_note": "Structured projection of docs/SPRINT_GOAL.md active sprint entries. Machine-shaped; free-form markdown in source.",
     "entries": [
@@ -6190,7 +6203,7 @@
       },
       {
         "sprint_id": "TOOL-SURFACE-UPGRADE",
-        "status": "active",
+        "status": "done",
         "vision": "The 162-tool vn-market surface is auditable and honest: usage telemetry actually records calls (currently 100% blind since gateway cutover), the tool registry is generated not hand-rotted (38 live tools missing, 1 ghost), every weak-claim tool is integrated or removed, and market-data tools obey the direction+delta rule (never snapshot-only).",
         "scope_in": "(U1-P1 TELEMETRY) tool-usage-stats.json writes sessionCount:0/toolCounts:{} forever — sessionToolCache is empty because gateway call_tool dials per-call and drops the connection; trackSessionToolUsageJob aggregates a dead cache. Move counting to the per-call tool-invocation layer (server-side counter persisted across the 8h job), so audits get empirical per-tool call counts. (U2-P1 REGISTRY-PARITY) docs/data/tool-registry.json lastUpdated 2026-05-03: 125 listed vs 162 live; 38 live tools absent (task_claim/task_release/task_heartbeat suite, BCTC refine suite, backtest run mgmt, get_market_cap, get_company_profile, get_bctc_series, smart_compact...); ghost get_market_hexagram still listed though deregistered by TSH; CLAUDE.md says 146. TSH-6 reconciled to 154 on 06-01 and decayed within 6 days — root cause is hand-maintenance: generate registry from source registration (registry.ts grep or startup dump) + parity assertion test (live toolCount == registry count) that fails CI/loud on drift. (U3-P2 WEAK-CLAIMS) 12 tools have ZERO agent/flow/skill claims (only tests or bootstrap keep them): read_bctc_pdf (zero across ALL 4 layers — removal candidate after internal-call check), mark_alert_outcome (merge into write_alert_verdict — TSH#2 diff was written, merge never executed), get_market_foreign_flow (overlaps get_foreign_flow), backfill_bctc_scalars, compute_accruals, diagnose_foreign_flow_circuit_breaker, get_accuracy_context, get_label_accuracy_report, get_public_contracts, is_trading_day, list_flagged_bctc_cells, submit_bctc_correction. Each: integrate (wire into a flow/agent package) or deregister, per audit-mcp-tools 5-question checklist. (U4-P2 DIRECTION+DELTA) get_macro_snapshot headline values (vnIndex/oilUsd/goldUsd/usdVnd) are point-in-time with NO delta vs previous session (signals carry direction labels but levels do not) — violates the never-snapshot-only rule; sweep all market-data get_* tools and add prev-session delta + direction to every served level. (U5-P2 DEGRADED-FIELD) get_foreign_flow serves Holding Ratio 0.00% for every row of every day (dead column rendered as real data) — root-cause the ingest, serve null/omit until real, per data-serve-integrity invariant. (U6-P3 OVERLAP-MERGES) execute the merges TSH only diffed: get_patterns vs get_technical_indicators, trigger_*_vps_fetch x4 consolidation, get_market_summary vs generate_market_summary, get_insider_signals vs get_insider_transactions.",
         "scope_out": "Tool doc/flow .md refreshes (two parallel lanes own docs/agents/tools/* right now — incl. the 3 stale fetch_ssc_reports refs in docs/agents/tools/list/, hand those to that lane, do NOT touch here). RAPID-DATA-LAYER data-gap tools (in-flight sprint). BCTC extraction quality (BCTC-EXTRACT-QUALITY). DSI follow-ups already queued (DSI-CONSUMER-HONORS-ISESTIMATE, DSI-S2-PRICE-TS-GAP). Deploying the Go microservice plane. Removing any tool without the full 4-layer + internal-call verification.",
@@ -6200,7 +6213,7 @@
         "created_at": "2026-06-07T07:44:58Z",
         "created_by": "po",
         "source": "USER DEMAND lane-C 2026-06-07 (analyze MCP tool surface for upgrades + dispatch dev-team); evidence: live /health toolCount=162, source-extracted 162 names, 4-layer usage matrix, live call_tool probes (get_market_snapshot, get_macro_snapshot, get_foreign_flow), tool-usage-stats.json sessionCount=0, tool-registry.json lastUpdated 2026-05-03",
-        "note": "WIP_max=2. Priority order: U1+U2 (P1, independent, both dev-mcp-server) -> U3 (needs U1 telemetry ideally but can proceed on 4-layer matrix) -> U4/U5 (P2) -> U6 (P3). Zone: all apps/mcp-server/ except registry-generation script may touch scripts/ (cross-service ok). Coordinate-with: cowork-refactory-expert + agent-father doc-refresh lanes own docs/agents/tools/* — any tool rename/removal here must be signalled to them, and the 3 stale fetch_ssc_reports refs are THEIR files."
+        "note": "CLOSED 2026-06-07T09:53:33Z SPRINT-SIGNOFF. All 7 tasks DONE (U1 telemetry, U2-GEN generator, U3 deregister 162->157, U4 macro delta LIVE-verified, U5 foreign-flow null gate LIVE-verified, U6 descriptions, U2-PARITY 157 four-count convergence). Containers rebuilt, image IDs verified (mcp-server 055a57bea1e1, macro-indicators 66c206417f79), /health toolCount=157 live. OPEN ITEM: AC-U1-8 telemetry live-proof -> signal to system-auditor."
       }
     ]
   }

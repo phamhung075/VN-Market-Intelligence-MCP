@@ -1,6 +1,6 @@
 # reset_foreign_flow_circuit_breaker
 
-**Purpose:** Reset circuit breaker for foreign flow
+**Purpose:** Reset foreign flow circuit breaker (ops)
 
 **Parameters:**
 | Name | Type | Description |

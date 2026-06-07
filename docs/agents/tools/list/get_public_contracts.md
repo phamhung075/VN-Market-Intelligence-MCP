@@ -1,6 +1,6 @@
 # get_public_contracts
 
-**Purpose:** Get public government contract data
+**Purpose:** Get public government contract data (tran-ngoc-bau)
 
 **Parameters:**
 | Name | Type | Description |

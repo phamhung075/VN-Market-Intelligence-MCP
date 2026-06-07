@@ -1,6 +1,6 @@
 # get_label_accuracy_report
 
-**Purpose:** Get accuracy report for signal labels
+**Purpose:** Get accuracy report for signal labels (market-analyst)
 
 **Parameters:**
 | Name | Type | Description |

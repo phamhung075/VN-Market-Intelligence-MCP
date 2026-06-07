@@ -1,6 +1,6 @@
 # mark_alert_outcome
 
-**Purpose:** Mark alert outcome (superseded, kept for compatibility)
+**Purpose:** Mark alert outcome after firing/suppression (ops/alert-commander)
 
 **Parameters:**
 | Name | Type | Description |
