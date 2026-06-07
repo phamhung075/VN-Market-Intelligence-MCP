@@ -10,9 +10,9 @@
  * Two-part fix:
  *
  * FIX-1: triggerPushBctcExtraction local-file fallback (pushBctcExtraction.ts)
- *   When extractViaService(pdfUrl) fails AND filePath is on disk, retry with
- *   file:// URL so the service reads from local disk (VPS-local, not geo-blocked).
- *   If service still fails, fall through to extractText(readFile(filePath)) directly.
+ *   FEAT-PDF-EXTRACTOR-LOCAL-INPUT update: Tier 1 now uses extractViaServicePdfPath
+ *   (pdf_path body mode — no url key) when filePath is non-empty. When that dep is
+ *   absent or fails, Tier 2 tries remote URL mode. Tier 3 falls through to pdf-parse.
  *
  * FIX-2: recoverStuckFetchingQueue migration (schema-financial-reports.ts)
  *   On startup, reset bctc_vps_queue rows with status='fetching' that have no
@@ -21,8 +21,8 @@
  *   bctcReparseJob disk scan path for any on-disk PDF.
  *
  * AC:
- *   FIX-1-A: pipeline IS called when service fails on remote URL but filePath exists (file:// retry)
- *   FIX-1-B: pipeline IS called when file:// also fails but pdf-parse succeeds (direct fallback)
+ *   FIX-1-A: pipeline IS called when extractViaServicePdfPath (Tier 1) succeeds
+ *   FIX-1-B: pipeline IS called when Tier 1 absent + Tier 2 URL fails → pdf-parse succeeds
  *   FIX-1-C: pipeline NOT called when all tiers fail (no filePath, no text)
  *   FIX-2-A: recoverStuckFetchingQueue resets fetching rows with no financial_reports to pending
  *   FIX-2-B: recoverStuckFetchingQueue leaves fetching rows that DO have a financial_reports row
@@ -50,27 +50,30 @@ import {
 // FIX-1: pushBctcExtraction local-file fallback
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("FIX-1-A: pipeline called via file:// retry when remote service fails", () => {
-  it("calls runPipeline with text from file:// retry when remote pdfUrl returns null", async () => {
+describe("FIX-1-A: pipeline called via extractViaServicePdfPath (Tier 1) when wired", () => {
+  it("calls runPipeline with text from pdf_path Tier 1 when extractViaServicePdfPath is provided", async () => {
+    // FEAT-PDF-EXTRACTOR-LOCAL-INPUT: Tier 1 now uses extractViaServicePdfPath (pdf_path body mode).
     const fileText = "Báo cáo tài chính CTG Q1 2026 bank B02-TCTD " + "X".repeat(200);
 
     const callArgs: Record<string, unknown>[] = [];
-    let serviceCallCount = 0;
+    let pdfPathCallCount = 0;
+    let remoteUrlCallCount = 0;
 
     const deps: PushBctcExtractionDeps = {
-      extractViaService: async (url: string) => {
-        serviceCallCount++;
-        if (url.startsWith("file://")) {
-          // File:// retry succeeds
-          return {
-            documentId: "doc-file",
-            tables: [],
-            textContent: fileText,
-            ocrConfidence: 0.75,
-            status: "success" as const,
-          };
-        }
-        // Remote URL (hsx.vn / geo-blocked) fails
+      // Tier 1: pdf_path mode — succeeds
+      extractViaServicePdfPath: async (_pdfPath: string) => {
+        pdfPathCallCount++;
+        return {
+          documentId: "doc-local",
+          tables: [],
+          textContent: fileText,
+          ocrConfidence: 0.85,
+          status: "success" as const,
+        };
+      },
+      // Tier 2: remote URL mode — should NOT be reached when Tier 1 succeeds
+      extractViaService: async (_url: string) => {
+        remoteUrlCallCount++;
         return null;
       },
       runPipeline: async (params: Record<string, unknown>): Promise<{ id: string } | null> => {
@@ -78,7 +81,6 @@ describe("FIX-1-A: pipeline called via file:// retry when remote service fails",
         return { id: "ctg-q1-2026" };
       },
       extractText: async (_buf: Buffer): Promise<{ text: string; confidence: number }> => {
-        // Should not be reached (file:// retry succeeded)
         return { text: "", confidence: 0 };
       },
       readFile: (_path: string): Buffer => {
@@ -96,17 +98,19 @@ describe("FIX-1-A: pipeline called via file:// retry when remote service fails",
       deps,
     });
 
-    // pipeline must be called with the file:// text
+    // pipeline must be called with the Tier 1 text
     expect(callArgs.length).toBe(1);
     expect(callArgs[0]!.pdfTextOverride).toBe(fileText);
     expect(callArgs[0]!.actionCode).toBe("CTG");
-    // Service called at least twice: once for remote URL, once for file:// retry
-    expect(serviceCallCount).toBeGreaterThanOrEqual(2);
+    // Tier 1 (pdf_path) must have been called once
+    expect(pdfPathCallCount).toBe(1);
+    // Tier 2 (remote URL) must NOT have been called (Tier 1 succeeded)
+    expect(remoteUrlCallCount).toBe(0);
   });
 });
 
-describe("FIX-1-B: pipeline called via direct pdf-parse when both service calls fail", () => {
-  it("falls back to extractText(readFile) when service returns null for both remote and file:// URLs", async () => {
+describe("FIX-1-B: pipeline called via direct pdf-parse when service tiers absent/fail", () => {
+  it("falls back to extractText(readFile) when extractViaServicePdfPath absent and URL service returns null", async () => {
     const bufText = "CTG bank B02-TCTD direct parse " + "Y".repeat(200);
 
     const callArgs: Record<string, unknown>[] = [];
@@ -114,7 +118,8 @@ describe("FIX-1-B: pipeline called via direct pdf-parse when both service calls 
     let extractTextCalled = false;
 
     const deps: PushBctcExtractionDeps = {
-      extractViaService: async (_url: string) => null, // Both tiers fail
+      // No extractViaServicePdfPath (Tier 1 absent) → falls through to Tier 2
+      extractViaService: async (_url: string) => null, // Tier 2 (URL mode) also fails
       runPipeline: async (params: Record<string, unknown>): Promise<{ id: string } | null> => {
         callArgs.push(params);
         return { id: "ctg-direct" };

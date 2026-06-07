@@ -195,8 +195,18 @@ export function parseYearQuarterFromFilename(
 
 export interface ReparseDeps {
   /**
-   * Delegate PDF extraction to the pdf-extractor microservice.
-   * 1954c (Tier 1 — service-first): replaces the old extractText (pdf-parse) as Tier 1.
+   * FEAT-PDF-EXTRACTOR-LOCAL-INPUT: delegate PDF extraction using pdf_path body mode.
+   * Tier 1a — attempted first when filePath is non-empty; sends body
+   *   {pdf_path: filePath, source_type: "bctc"} with NO url key.
+   * The service reads from the shared volume → real OCR, no 401.
+   * Optional — when absent, falls through directly to Tier 1b (URL mode).
+   * Maps to `extractViaMicroservice("", "bctc", pdfPath)` from pdfExtractorClient.
+   */
+  extractViaServicePdfPath?: (pdfPath: string) => Promise<PdfExtractorResult | null>;
+
+  /**
+   * Delegate PDF extraction to the pdf-extractor microservice via URL.
+   * 1954c (Tier 1b — URL mode): replaces the old extractText (pdf-parse) as Tier 1.
    * Returns null when service unavailable or extraction fails.
    * Maps to `extractViaMicroservice` from pdfExtractorClient in production.
    */
@@ -272,32 +282,66 @@ export async function reparseSingleWithOcrFallback(
 
   let rawText: string | null = null;
 
-  // ── Tier 1: pdf-extractor service (1954c — service-first) ─────────────────
-  // Derive the VPS URL from ticker + filename so the service can fetch the PDF.
-  // If the service cannot reach the URL (PDF no longer on VPS) → null → Tier 2.
-  const derivedVpsUrl = `${VPS_BCTC_BASE_URL}/${payload.ticker}/${payload.filename}`;
-  try {
-    const serviceResult = await deps.extractViaService(derivedVpsUrl);
-    if (serviceResult !== null && serviceResult.status === "success" &&
-        serviceResult.textContent.trim().length >= 100) {
-      rawText = serviceResult.textContent;
-      logger.info("[bctc-reparse-job] service extraction succeeded (Tier 1)", {
+  // ── Tier 1a: pdf-extractor service with pdf_path (shared volume) ──────────
+  // FEAT-PDF-EXTRACTOR-LOCAL-INPUT: when the dep is wired and filePath is on disk,
+  // send {pdf_path, source_type} (no url key) so the service reads from the
+  // shared volume. This bypasses HTTP fetch entirely — no 401, real OCR.
+  if (deps.extractViaServicePdfPath && deps.fileExists(payload.filePath)) {
+    try {
+      const serviceResult = await deps.extractViaServicePdfPath(payload.filePath);
+      if (serviceResult !== null && serviceResult.status === "success" &&
+          serviceResult.textContent.trim().length >= 100) {
+        rawText = serviceResult.textContent;
+        logger.info("[bctc-reparse-job] service extraction succeeded (Tier 1a pdf_path)", {
+          filename: payload.filename,
+          filePath: payload.filePath,
+          chars: serviceResult.textContent.length,
+          confidence: serviceResult.ocrConfidence,
+        });
+      } else {
+        logger.info("[bctc-reparse-job] Tier 1a (pdf_path) null/short — trying Tier 1b (URL)", {
+          filename: payload.filename,
+          serviceStatus: serviceResult?.status ?? null,
+          textLength: serviceResult?.textContent.trim().length ?? 0,
+        });
+      }
+    } catch (svcErr) {
+      logger.warn("[bctc-reparse-job] Tier 1a (pdf_path) threw — trying Tier 1b (URL)", {
         filename: payload.filename,
-        chars: serviceResult.textContent.length,
-        confidence: serviceResult.ocrConfidence,
-      });
-    } else {
-      logger.info("[bctc-reparse-job] service Tier 1 null/short — trying pdf-parse Tier 2", {
-        filename: payload.filename,
-        serviceStatus: serviceResult?.status ?? null,
-        textLength: serviceResult?.textContent.trim().length ?? 0,
+        error: svcErr instanceof Error ? svcErr.message : String(svcErr),
       });
     }
-  } catch (svcErr) {
-    logger.warn("[bctc-reparse-job] service Tier 1 threw — trying pdf-parse Tier 2", {
-      filename: payload.filename,
-      error: svcErr instanceof Error ? svcErr.message : String(svcErr),
-    });
+  }
+
+  // ── Tier 1b: pdf-extractor service via derived VPS URL ────────────────────
+  // 1954c (now Tier 1b — URL mode): derive the VPS URL from ticker + filename so
+  // the service can fetch the PDF. If the service cannot reach the URL
+  // (PDF no longer on VPS, 401, geo-blocked) → null → Tier 2.
+  if (rawText === null) {
+    const derivedVpsUrl = `${VPS_BCTC_BASE_URL}/${payload.ticker}/${payload.filename}`;
+    try {
+      const serviceResult = await deps.extractViaService(derivedVpsUrl);
+      if (serviceResult !== null && serviceResult.status === "success" &&
+          serviceResult.textContent.trim().length >= 100) {
+        rawText = serviceResult.textContent;
+        logger.info("[bctc-reparse-job] service extraction succeeded (Tier 1b URL)", {
+          filename: payload.filename,
+          chars: serviceResult.textContent.length,
+          confidence: serviceResult.ocrConfidence,
+        });
+      } else {
+        logger.info("[bctc-reparse-job] service Tier 1b null/short — trying pdf-parse Tier 2", {
+          filename: payload.filename,
+          serviceStatus: serviceResult?.status ?? null,
+          textLength: serviceResult?.textContent.trim().length ?? 0,
+        });
+      }
+    } catch (svcErr) {
+      logger.warn("[bctc-reparse-job] service Tier 1b threw — trying pdf-parse Tier 2", {
+        filename: payload.filename,
+        error: svcErr instanceof Error ? svcErr.message : String(svcErr),
+      });
+    }
   }
 
   // ── Tier 2: pdf-parse (service unavailable) ────────────────────────────────
@@ -539,7 +583,9 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
     "../../infrastructure/fetchers/pdfExtractorClient.js"
   );
   return {
-    // 1954c Tier 1: pdf-extractor service is primary extraction owner
+    // FEAT-PDF-EXTRACTOR-LOCAL-INPUT Tier 1a: pdf_path mode (no url key)
+    extractViaServicePdfPath: async (pdfPath: string) => extractViaMicroservice("", "bctc", pdfPath),
+    // 1954c Tier 1b: pdf-extractor service via URL (demoted from Tier 1)
     extractViaService: async (url: string) => extractViaMicroservice(url, "bctc"),
     // 1954c Tier 2: pdf-parse fallback when service unavailable
     extractText: async (buf: Buffer) => extractPdfText(buf),

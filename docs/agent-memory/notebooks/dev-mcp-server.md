@@ -1,5 +1,24 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-07 · FIX-EXTRACT-CONSUMER-PDFPATH — COMMITTED
+
+**Task:** FIX-EXTRACT-CONSUMER-PDFPATH (XS-S) — consumer wiring of FEAT-PDF-EXTRACTOR-LOCAL-INPUT (8c12b970)
+**Root cause fixed:** mcp-server extraction call sites called POST /extract with `{url, source_type}` even for locally-stored PDFs. pdf-extractor would try to HTTP-GET the VPS URL without X-API-Key → 401 → null → pipeline skipped (or scanned PDFs fell back to Bun pdf-parse text layer).
+**New capability:** POST /extract now accepts `{pdf_path, source_type}` (no url key); service reads from shared volume /app/data/pdfs directly → real OCR pipeline, no 401.
+**Files changed:**
+- `pdfExtractorClient.ts`: `extractViaMicroservice(url, sourceType, pdfPath?)` — new optional `pdfPath` param; when set, body = `{pdf_path, source_type}` (no url key); when absent, falls back to `{url, source_type}` unchanged.
+- `pushBctcExtraction.ts`: `PushBctcExtractionDeps.extractViaServicePdfPath?` new optional dep; tier reordering: Tier 1 = pdf_path (if dep wired + filePath), Tier 2 = remote URL, Tier 3 = pdf-parse. `makeProductionDeps` wires `extractViaServicePdfPath`.
+- `bctcReparseJob.ts`: `ReparseDeps.extractViaServicePdfPath?` new optional dep; `reparseSingleWithOcrFallback` tries Tier 1a (pdf_path) before Tier 1b (URL). `makeProductionDeps` wires the new dep.
+- `FIX-CTG-3-STEP-C.test.ts`: updated FIX-1-A/B to reflect new tier semantics (pdf_path Tier 1, not file:// retry).
+- `FIX-EXTRACT-CONSUMER-PDFPATH.test.ts` (NEW): 8 tests — TC-PDFPATH-1 body shape (pdf_path + no url key), TC-PDFPATH-2 URL mode regression, TC-PDFPATH-3 tier order (3 subtests).
+**Tests:** 34 GREEN (8 new TC-PDFPATH + 8 FIX-CTG + 18 client). 0 fail. Pre-existing 1196 failure unrelated (scanDiskForStrandedPdfs watchlist filter — pre-existed before this task).
+**tsc:** clean (0 errors on changed files; pre-existing TS2307 from missing `@modelcontextprotocol/sdk` in worktree unrelated).
+**Follow-up flags:** (1) bctcReparseJob Tier 1b (URL mode) still uses derivedVpsUrl which 401s — Tier 1a now takes precedence for on-disk PDFs, so 401 fallback hits Tier 2 (pdf-parse), which is correct. (2) `bctcPdfPullJob.triggerExtraction` → `triggerPushBctcExtraction` already wired by FIX-BCTC-EXTRACT-LOCALPATH (unchanged). (3) ops must rebuild pdf-extractor container (FEAT-PDF-EXTRACTOR-LOCAL-INPUT already merged) before Tier 1a produces results.
+
+Zone health: 34/0 (FIX-EXTRACT-CONSUMER-PDFPATH suite), tsc clean, 157 tools (SSOT), 76 cron | HEALTHY
+
+---
+
 ## 2026-06-07 · B3-SPACE-URLS-FIX + HPG-REPARSE — COMMITTED (9415b8fb)
 
 **Task A — B3-SPACE-URLS-FIX:**

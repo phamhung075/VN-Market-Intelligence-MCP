@@ -37,9 +37,19 @@ export interface PushBctcExtractionDeps {
    * 1954c: replaces extractPages + getCache (OCR pattern).
    * Returns null when service unavailable or returns error.
    * Maps to `extractViaMicroservice` from pdfExtractorClient in production.
-   * Called for both the remote pdfUrl (Tier 1) and file:// fallback (Tier 2).
+   * Called for the remote pdfUrl (Tier 2) and file:// fallback (old Tier 2).
    */
   extractViaService: (url: string) => Promise<PdfExtractorResult | null>;
+
+  /**
+   * FEAT-PDF-EXTRACTOR-LOCAL-INPUT: delegate PDF extraction using the shared-volume
+   * pdf_path (POST /extract body: {pdf_path, source_type} — NO url key).
+   * Tier 1 — attempted first when filePath is non-empty.
+   * Returns null when service unavailable or extraction fails.
+   * Maps to `extractViaMicroservice(url="", ..., pdfPath)` from pdfExtractorClient.
+   * Optional — when absent, Tier 1 is skipped and Tier 2 (URL mode) is attempted.
+   */
+  extractViaServicePdfPath?: (pdfPath: string) => Promise<PdfExtractorResult | null>;
 
   /**
    * Run the full BCTC parse+store pipeline.
@@ -103,6 +113,8 @@ async function makeProductionDeps(): Promise<PushBctcExtractionDeps> {
   return {
     // 1954c: service is the extraction owner — replace OCR pattern
     extractViaService: async (url: string) => extractViaMicroservice(url, "bctc"),
+    // FEAT-PDF-EXTRACTOR-LOCAL-INPUT: Tier 1 — pdf_path body mode (no url key)
+    extractViaServicePdfPath: async (pdfPath: string) => extractViaMicroservice("", "bctc", pdfPath),
     runPipeline: async (params) => fetchParseAndStoreBctc(params),
     // FIX-CTG-3-STEP-C Tier 3: direct pdf-parse fallback when service unavailable
     extractText: async (buf: Buffer) => extractPdfText(buf),
@@ -117,13 +129,14 @@ async function makeProductionDeps(): Promise<PushBctcExtractionDeps> {
 /**
  * Extract text from a newly-pushed BCTC PDF and run the parse+store pipeline.
  *
- * FIX-CTG-3-STEP-C three-tier extraction (replaces 1954c single-tier):
+ * FEAT-PDF-EXTRACTOR-LOCAL-INPUT three-tier extraction (updated from FIX-CTG-3-STEP-C):
  *
- *   Tier 1: extractViaService(pdfUrl) — remote URL (hsx.vn / VPS source URL).
- *           May fail when called from within the extraction service on a geo-blocked URL.
- *   Tier 2: extractViaService(file://${filePath}) — reads from local disk.
- *           Called when Tier 1 returns null/short text AND filePath is non-empty.
- *           The service runs locally alongside mcp-server so file:// works.
+ *   Tier 1: extractViaServicePdfPath(filePath) — pdf_path body mode (no url key).
+ *           Service reads from the shared volume directly → real OCR, no 401.
+ *           Called when filePath is non-empty and the dep is wired.
+ *   Tier 2: extractViaService(pdfUrl) — remote URL (hsx.vn / VPS source URL).
+ *           Attempted when Tier 1 is absent or returns null/short text.
+ *           May fail when the extraction service cannot reach a geo-blocked URL.
  *   Tier 3: extractText(readFile(filePath)) — direct pdf-parse fallback.
  *           Called when both service tiers return null/short AND extractText/readFile deps
  *           are provided. Minimum confidence guard: text must be >= 100 chars.
@@ -141,55 +154,59 @@ export async function triggerPushBctcExtraction(
 
   let rawText: string | null = null;
 
-  // ── Tier 1: pdf-extractor service with remote/source URL ──────────────────
-  try {
-    const serviceResult = await deps.extractViaService(pdfUrl);
-    if (serviceResult && serviceResult.textContent.trim().length >= 100) {
-      rawText = serviceResult.textContent;
-      logger.info("[pushBctcExtraction] Tier 1 (remote URL) succeeded", {
-        ticker: actionCode,
-        pdfUrl,
-        chars: serviceResult.textContent.length,
-      });
-    } else {
-      logger.info("[pushBctcExtraction] Tier 1 (remote URL) null/short — trying Tier 2 (file://)", {
-        ticker: actionCode,
-        pdfUrl,
-        textLength: serviceResult?.textContent.trim().length ?? 0,
-      });
-    }
-  } catch (err) {
-    logger.warn("[pushBctcExtraction] Tier 1 threw — trying Tier 2 (file://)", {
-      ticker: actionCode,
-      pdfUrl,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-
-  // ── Tier 2: pdf-extractor service with file:// local path ─────────────────
-  // Only when filePath is non-empty and Tier 1 didn't produce usable text.
-  if (rawText === null && filePath) {
-    const fileUrl = `file://${filePath}`;
+  // ── Tier 1: pdf-extractor service with pdf_path (shared volume) ───────────
+  // FEAT-PDF-EXTRACTOR-LOCAL-INPUT: when filePath is non-empty and the dep is wired,
+  // send {pdf_path, source_type} (no url key) so the service reads from the
+  // shared volume directly. This bypasses HTTP fetch entirely — no 401 from VPS URLs,
+  // real OCR pipeline for scanned PDFs.
+  if (filePath && deps.extractViaServicePdfPath) {
     try {
-      const serviceResult = await deps.extractViaService(fileUrl);
+      const serviceResult = await deps.extractViaServicePdfPath(filePath);
       if (serviceResult && serviceResult.textContent.trim().length >= 100) {
         rawText = serviceResult.textContent;
-        logger.info("[pushBctcExtraction] Tier 2 (file://) succeeded", {
+        logger.info("[pushBctcExtraction] Tier 1 (pdf_path) succeeded", {
           ticker: actionCode,
           filePath,
           chars: serviceResult.textContent.length,
         });
       } else {
-        logger.info("[pushBctcExtraction] Tier 2 (file://) null/short — trying Tier 3 (pdf-parse)", {
+        logger.info("[pushBctcExtraction] Tier 1 (pdf_path) null/short — trying Tier 2 (remote URL)", {
           ticker: actionCode,
           filePath,
           textLength: serviceResult?.textContent.trim().length ?? 0,
         });
       }
     } catch (err) {
-      logger.warn("[pushBctcExtraction] Tier 2 threw — trying Tier 3 (pdf-parse)", {
+      logger.warn("[pushBctcExtraction] Tier 1 (pdf_path) threw — trying Tier 2 (remote URL)", {
         ticker: actionCode,
         filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  // ── Tier 2: pdf-extractor service with remote/source URL ──────────────────
+  if (rawText === null) {
+    try {
+      const serviceResult = await deps.extractViaService(pdfUrl);
+      if (serviceResult && serviceResult.textContent.trim().length >= 100) {
+        rawText = serviceResult.textContent;
+        logger.info("[pushBctcExtraction] Tier 2 (remote URL) succeeded", {
+          ticker: actionCode,
+          pdfUrl,
+          chars: serviceResult.textContent.length,
+        });
+      } else {
+        logger.info("[pushBctcExtraction] Tier 2 (remote URL) null/short — trying Tier 3 (pdf-parse)", {
+          ticker: actionCode,
+          pdfUrl,
+          textLength: serviceResult?.textContent.trim().length ?? 0,
+        });
+      }
+    } catch (err) {
+      logger.warn("[pushBctcExtraction] Tier 2 threw — trying Tier 3 (pdf-parse)", {
+        ticker: actionCode,
+        pdfUrl,
         error: err instanceof Error ? err.message : String(err),
       });
     }
@@ -210,7 +227,7 @@ export async function triggerPushBctcExtraction(
           confidence,
         });
       } else {
-        logger.warn("[pushBctcExtraction] all tiers exhausted — pipeline skipped", {
+        logger.warn("[pushBctcExtraction] all 3 tiers exhausted — pipeline skipped", {
           ticker: actionCode,
           filePath,
           chars: text?.trim().length ?? 0,

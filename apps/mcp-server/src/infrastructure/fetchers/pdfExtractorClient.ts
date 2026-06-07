@@ -38,18 +38,34 @@ export interface PdfExtractorResult {
  * Returns null when the service is unreachable or returns an error,
  * allowing callers to fall back to the in-process extraction pipeline.
  *
- * @param url       - The PDF URL to extract.
+ * FEAT-PDF-EXTRACTOR-LOCAL-INPUT: when pdfPath is provided (absolute container
+ * path under /app/data/pdfs), the body is {"pdf_path": ..., "source_type": ...}
+ * with NO "url" key — the service reads from the shared volume directly,
+ * bypassing any HTTP fetch (no 401 from VPS URLs, real OCR for scanned PDFs).
+ * When pdfPath is omitted or empty, falls back to URL mode {"url": ..., "source_type": ...}.
+ *
+ * @param url        - The PDF URL to extract (used when pdfPath is absent).
  * @param sourceType - Source type hint ('bctc' | 'weather' | 'utility_bill').
+ * @param pdfPath    - Optional absolute container path (e.g. "/app/data/pdfs/VNM_2025_Q4.pdf").
+ *                     When provided, takes precedence over url and the body omits url entirely.
  */
 export async function extractViaMicroservice(
   url: string,
   sourceType: "bctc" | "weather" | "utility_bill" = "bctc",
+  pdfPath?: string,
 ): Promise<PdfExtractorResult | null> {
+  // FEAT-PDF-EXTRACTOR-LOCAL-INPUT: build body based on whether a local path is available.
+  // When pdfPath is set, send {pdf_path, source_type} — no url key in the body.
+  // The server schema accepts either field; pdf_path takes precedence on the server side too.
+  const requestBody = pdfPath && pdfPath.trim()
+    ? JSON.stringify({ pdf_path: pdfPath.trim(), source_type: sourceType })
+    : JSON.stringify({ url, source_type: sourceType });
+
   try {
     const response = await fetch(`${PDF_EXTRACTOR_BASE_URL}/extract`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, source_type: sourceType }),
+      body: requestBody,
       signal: AbortSignal.timeout(120_000), // 2-minute timeout for large PDFs
     });
 
