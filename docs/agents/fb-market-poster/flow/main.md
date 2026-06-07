@@ -71,22 +71,22 @@ Read the following files. Each read is guarded: if file missing or <50 chars →
 # Indices + snapshot
 snapshot = call_tool(server="vn-market", tool="get_market_snapshot", arguments={})
 
-# Market breadth
-breadth = call_tool(server="vn-market", tool="get_market_breadth", arguments={})
+# Market context (includes breadth via market_context)
+market_context = call_tool(server="vn-market", tool="get_market_context", arguments={})
 
 # Foreign flow
 foreign_flow = call_tool(server="vn-market", tool="get_foreign_flow", arguments={})
 
-# Top movers
-top_movers = call_tool(server="vn-market", tool="get_top_movers", arguments={})
+# Ticker intelligence for movers and technical signals
+ticker_intel = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={})
 ```
 
 From results, extract and hold in working memory:
 - All indices present in `snapshot`: VN-Index, VN30, HNX-Index, UPCOM — each with `value`, `point_change`, `pct_change`.
-- Breadth: `advancers`, `decliners`, `unchanged`, `ceiling` (tăng trần), `floor` (giảm sàn).
-- Liquidity: `total_matched_value` (tỷ đồng) and `avg_value_recent` if available.
+- Breadth from `market_context`: `advancers`, `decliners`, `unchanged`, `ceiling` (tăng trần), `floor` (giảm sàn). If unavailable via this tool, breadth details may be omitted (log data unavailability).
+- Liquidity: `total_matched_value` (tỷ đồng) and `avg_value_recent` if available from snapshot or market_context.
 - Foreign flow: `net_value`, `most_bought` tickers (top 3), `most_sold` tickers (top 3).
-- Top movers: winners and losers with ticker, price, `pct_change`, sector.
+- Top movers: winners and losers with ticker, price, `pct_change`, sector (extract from ticker_intel or snapshot if available; if absent, note in QUALITY field).
 
 **Merge rule:** Live tool data is authoritative over notebook data for quantitative fields. If a live tool errors → fall back to notebook value. Log which source was used for each field.
 

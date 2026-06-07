@@ -2,7 +2,7 @@
 
 **Location:** `docs/agents/tools/package/fb-market-poster.md`
 **Load when:** Agent starts, before first MCP call
-**Last Updated:** 2026-05-29 (v2 — live enrichment tools added)
+**Last Updated:** 2026-06-07 (v3 — phantom tools replaced with live equivalents)
 
 ## How to Invoke Tools
 
@@ -44,18 +44,20 @@ Called after notebook reads to fill missing quantitative fields. All read-only. 
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_market_snapshot` | All indices (VN-Index, VN30, HNX-Index, UPCOM) with value, point change, pct change | (none required) |
-| `get_market_breadth` | Advancers / decliners / unchanged / ceiling-hits (tăng trần) / floor-hits (giảm sàn) | (none required) |
+| `get_market_context` | Market breadth data: advancers/decliners/unchanged/ceiling-hits (tăng trần)/floor-hits (giảm sàn) when available | (none required) |
 | `get_foreign_flow` | Net foreign buy/sell value (tỷ đồng), most-bought tickers, most-sold tickers | (none required) |
-| `get_top_movers` | Top gaining and top losing tickers with price + pct_change + sector | (none required) |
+| `get_ticker_intelligence` | Ticker signals including movers (gainers/losers) with price + pct_change + technical signals | (none required) |
 
 **Usage pattern:**
 ```
-snapshot     = call_tool(server="vn-market", tool="get_market_snapshot", arguments={})
-breadth      = call_tool(server="vn-market", tool="get_market_breadth",  arguments={})
-foreign_flow = call_tool(server="vn-market", tool="get_foreign_flow",    arguments={})
-top_movers   = call_tool(server="vn-market", tool="get_top_movers",      arguments={})
+snapshot       = call_tool(server="vn-market", tool="get_market_snapshot",    arguments={})
+market_context = call_tool(server="vn-market", tool="get_market_context",     arguments={})
+foreign_flow   = call_tool(server="vn-market", tool="get_foreign_flow",       arguments={})
+ticker_intel   = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={})
 ```
 All four are **read-only**. Do NOT call any write tool in this block.
+
+**Note (2026-06-07):** `get_market_breadth` and `get_top_movers` were phantom tools (never implemented). Replaced with live-tool equivalents above. If `market_context` or `ticker_intel` do not return breadth/mover data, the flow documents this as a data quality gap.
 
 ### NOT in scope
 | Tool | Why excluded |
