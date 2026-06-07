@@ -98,3 +98,28 @@ YES — `tasksMdJanitorJob.ts` updated (read-path coalesce added). No new tsc er
 - **Scheduler count:** unchanged (no scheduler changes)
 - **Docs updated:** docs/standards/task-schema.md — Write Rules added
 - **Graphify:** skipped (data migration, no architectural docs changed)
+
+---
+
+## [QA] Review Record
+
+**Verdict:** APPROVED  
+**Date:** 2026-06-07T04:10Z  
+**Report:** reports/TASK_REPORT_310.md
+
+| AC | Result | Evidence |
+|---|---|---|
+| AC1: task_id=0 deep-walk | PASS | jq active_sprints/backlog/done → 0/0/0 |
+| AC2: row counts 159/38/84 | PASS | jq length → 159/38/84 unchanged |
+| AC3: parse + envelope keys | PASS | jq -e . OK; 11 top-level keys identical to f0db4387^ |
+| AC4: signal_queue byte-identical | PASS | diff /tmp/sq_before.json /tmp/sq_after.json = empty |
+| AC5: 6 tests pass / tsc 3 errors | PASS | 6/0; tsc 3 errors only in 1980-f2-canon-schema.test.ts; 0 new; 2 tasksMdJanitorJob.ts errors CLEARED |
+| AC6: Write Rules in task-schema.md | PASS | Lines 82-85 confirmed |
+| Special case BA-ORCH-TASK-CANON | PASS | Pre: both id+task_id; Post: only id retained, no data loss |
+| Commit hygiene: 4 files, index-only | PASS | git show --name-only → exactly 4 files, no stray content |
+
+**tsc confirm/refute:** CONFIRMED. Pre-fix baseline = 5 errors (3×1980-f2-canon-schema + 2×tasksMdJanitorJob.ts). Post-fix = 3 errors (3×1980-f2-canon-schema only). The 2 tasksMdJanitorJob.ts errors were real type violations (t.task_id typed string|undefined assigned to taskId:string field); coalesce `t.id || t.task_id || ""` resolves to string and clears them.
+
+**DDD:** interface/scheduler layer importing infrastructure — explicitly annotated as permitted in file header. PASS.  
+**Security:** No process.env, no secrets, no hardcoded tokens in diff. PASS.  
+**BCTC Eval Gate:** N/A — no BCTC report in scope.

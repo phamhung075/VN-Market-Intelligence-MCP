@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-204 · 2026-06-07T04:10Z · FIX-ORCH-KEY-NORMALIZE-TASKID QA gate — APPROVED
+
+Sprint: backlog FIX (RAPID-DATA-LAYER active sprint context) | Task: FIX-ORCH-KEY-NORMALIZE-TASKID | Verdict: APPROVED | Commit: f0db4387
+
+AC1 PASS: jq deep-walk active_sprints/backlog/done = 0/0/0 task_id keys. AC2 PASS: 159/38/84 row counts unchanged (jq length reproduced). AC3 PASS: jq -e . OK; 11 top-level keys identical to f0db4387^ parent. AC4 PASS: signal_queue diff vs parent = BYTE-IDENTICAL. AC5 PASS: 6/0 bun test; tsc 3 errors all in 1980-f2-canon-schema.test.ts; 0 new errors; 2 pre-existing tasksMdJanitorJob.ts errors CLEARED (t.task_id:string|undefined→taskId:string type violation resolved by coalesce ||""). tsc claim CONFIRMED: pre=5 (3×test+2×janitor), post=3 (3×test only). AC6 PASS: Write Rules at task-schema.md:82-85 ("write id never task_id; timestamps via date -u"). Special case BA-ORCH-TASK-CANON PASS: pre both id+task_id; post only id retained, all other fields preserved, no row loss. Commit hygiene PASS: exactly 4 files in f0db4387 (tasksMdJanitorJob.ts, orch-state.json, handoff, task-schema.md). DDD PASS: interface/scheduler→infrastructure annotated permitted. Security: clean. BCTC eval: N/A.
+
 ## cycle-203 · 2026-06-07T02:50Z · CLEAN-DEAD-SOURCE-IDS QA gate — APPROVED
 
 Sprint: FLEET-HOST-SAFETY (BATCH-5) | Task: CLEAN-DEAD-SOURCE-IDS | Verdict: APPROVED | Commit: d267e997
