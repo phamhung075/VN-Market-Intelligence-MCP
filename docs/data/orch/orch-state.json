@@ -2789,6 +2789,15 @@
         "zone": "scripts/",
         "created_at": "2026-06-07T00:52:34Z",
         "note": "Verified 20260607: hook fires unconditionally on over-cap governed writes; exemption honored only downstream (claude-manager-helper flow main.md:97 Pass 5b) -> bounded re-fire noise on every edit of a justified over-cap file (live ex: commit-mutex SKILL 201L signal 00:25Z -> annotated fdcd5444). Fix: AFTER breach detected (cold path only), grep first 10 lines for size-justification -> exit 0. Hot-path performance contract intact (jq x1, wc x1 unchanged). Stale-justification re-review still covered by manager-helper periodic pass. NOTE: dispatcher attribution to architecture brief 2026-06-04-data-serve-integrity.md SS7 is WRONG — that SS7 is Risk Flags, contains no exemption claim; no doc fix needed."
+      },
+      {
+        "id": "FIX-BCTC-IDENTITY-SERVE-GUARD",
+        "title": "BCTC corrupt-serve guard (assets<=0 or assets<equity) + CTG 2026-Q1 re-extract/inspect",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-07T02:21:40Z",
+        "status_note": "AC: (a) BCTC serve path (get_financial_summary + siblings) gains balance-sheet-identity gate: total_assets<=0 OR total_assets<total_equity => confidence=0 + corrupt flag, derived ratios (margin) suppressed — kills VNM/VEA/CTG fingerprint class-wide, verify with injected corrupt fixture; (b) CTG 2026-Q1 repaired via /api/bctc-inspect human-confirm or re-extract from 62p consolidated PDF (report 49c11ce2, text COMPLETE, refine PENDING — overlaps FU-CTG-REFINE-PICKUP BATCHED); (c) get_financial_summary(CTG) serves honest skip or real figures, never assets=0 at 56% confidence; conviction composite-skip behavior unchanged. Priority: HIGH (3rd occurrence same module => root-cause per recurring-bug rule). Source signal: rtr-ctg-bctc-ocr-corrupt-202606070138."
       }
     ],
     "archive": [],
