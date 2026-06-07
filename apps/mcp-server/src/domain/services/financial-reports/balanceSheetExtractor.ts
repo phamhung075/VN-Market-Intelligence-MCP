@@ -381,7 +381,49 @@ function parseSplitBlockBalanceSheet(lines: string[]): Record<string, number> | 
     }
   }
 
-  // Step 2: Require separator at position ≥ 10 (relaxed for page-pair; usual threshold is 20)
+  // Step 1c: FIX-BCTC-MAGNITUDE-NORMALIZE — unit-header-only separator.
+  // PPC Q4-2025 pattern: the BS date is written in Vietnamese text
+  // ("Tại ngày 31 tháng 12 năm 2025") rather than numeric form ("31/12/2025"),
+  // so DATE_CONTAINS never fires. The column header row is the unit declaration
+  // line "Bon vi: VND" (OCR-corrupted "Đơn vị: VND") followed by large monetary
+  // values.
+  //
+  // Guard against income-statement false-positives: the label block (lines 0..i-1)
+  // before the separator MUST contain a balance-sheet anchor label such as
+  // "TỔNG CỘNG TÀI SẢN" or "TÀI SẢN NGẮN HẠN". Income statement sections
+  // also begin with "Don vi: VND" but their label block contains "CHỈ TIÊU" /
+  // "Doanh thu" — never the BS-specific labels below.
+  if (separatorIdx < 10) {
+    const UNIT_ONLY_PAT = /[đdĐD][oơoO]n\s+v[iị]\s*[:.]?\s*(VND|[đd][oồ]ng)|[Bb]on\s+vi\s*[:.]\s*VND/i;
+    const LARGE_VALUE_PAT = /\d{1,3}\.\d{3}\.\d{3}/;
+    const BS_LABEL_PAT = /[Tt][ổo]ng\s+c[ộo]ng\s+t[àa]i\s+s[ảa]n|[Tt][àa]i\s+s[ảa]n\s+ng[ắa]n\s+h[ạa]n|BANG\s+CAN\s+DOI|b[ảa]ng\s+c[âa]n\s+[đd][ốo]i/i;
+    for (let i = 15; i < lines.length - 5; i++) {
+      if (UNIT_ONLY_PAT.test(lines[i]!)) {
+        // Guard 1: the label block before i must contain a BS-specific anchor.
+        // Checks only labels before i to avoid checking the full (potentially
+        // large) slice; slices up to i lines from the start of this page.
+        const labelBlock = lines.slice(0, i);
+        const hasBsLabels = labelBlock.some(l => BS_LABEL_PAT.test(l));
+        if (!hasBsLabels) continue; // income-statement or other section — skip
+
+        // Guard 2: within next 8 lines there must be large monetary values.
+        let confirmed = false;
+        for (let j = i + 1; j <= Math.min(i + 8, lines.length - 1); j++) {
+          if (LARGE_VALUE_PAT.test(lines[j]!)) {
+            confirmed = true;
+            break;
+          }
+        }
+        if (confirmed) {
+          separatorIdx = i;
+          console.warn("[parseSplitBlockBalanceSheet] Step 1c: unit-header-only separator at line", i);
+          break;
+        }
+      }
+    }
+  }
+
+  // Step 2: Require separator at position ��� 10 (relaxed for page-pair; usual threshold is 20)
   if (separatorIdx < 10) return null;
 
   const labelLines = lines.slice(0, separatorIdx);
@@ -767,6 +809,36 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
     totalAssets = computedFromSubtotals;
   }
 
+  // FIX-BCTC-MAGNITUDE-NORMALIZE — totalAssets from identity (path A).
+  // BCTC identity: totalAssets ≡ totalLiabilitiesAndEquity (both sides of the
+  // balance sheet must equal the same total). When the split-block extractor
+  // pairs code 270 with a wrong value (e.g. prior-year value due to interleaved
+  // columns), totalAssets disagrees with totalLiabilitiesAndEquity by >5%.
+  // In that case, override totalAssets with the NGUỒN VỐN total (sources side),
+  // which is more reliably extracted from the inline-format page 10.
+  //
+  // This fires for BOTH:
+  //   - totalAssets === 0 (extraction failed)
+  //   - totalAssets > 0 but disagrees with totalLiabilitiesAndEquity by >5%
+  //     (split-block zip picked prior-year or wrong-row value)
+  //
+  // NOTE: totalLiabilitiesAndEquity is computed later at line ~860; this forward
+  // read using fv is intentional and safe (fv is pure/deterministic).
+  const totalSourcesSideFwd = fv(P_TOTAL_LIABILITIES_AND_EQUITY, "440", 440);
+  if (totalSourcesSideFwd > 0) {
+    const disagreement =
+      totalAssets === 0 ||
+      (Math.abs(totalAssets - totalSourcesSideFwd) / totalSourcesSideFwd > 0.05);
+    if (disagreement) {
+      console.warn(
+        `[balanceSheetExtractor] FIX-BCTC-MAGNITUDE-NORMALIZE (path A): ` +
+        `totalAssets(${totalAssets}) disagrees with sources-side(${totalSourcesSideFwd}); ` +
+        `overriding with identity.`
+      );
+      totalAssets = totalSourcesSideFwd;
+    }
+  }
+
   // --- Current liabilities ---
   // FIX-DE-4: shortTermDebt — use code 321 (current VAS standard: "Vay và nợ thuê tài chính ngắn hạn")
   // as the primary lookup. Fall back to code 319 label-only via P_SHORT_TERM_DEBT_ALT ("Vay ngắn hạn")
@@ -849,6 +921,38 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
     totalLiabilities = totalLiabilitiesAndEquity - equity.total;
   }
 
+  // FIX-BCTC-MAGNITUDE-NORMALIZE — totalAssets from identity (path B).
+  // Derives totalAssets from BCTC identity (totalLiabilities + equity.total) when:
+  //   (a) totalAssets === 0 (extraction completely failed), OR
+  //   (b) totalAssets > 0 but diverges from identity by > 30% (split-block zip
+  //       picked a wrong value, e.g. PPC Q4-2025: split-block code 270 paired
+  //       with prior-year or non-grand-total value).
+  //
+  // PPC Q4-2025 scenario:
+  //   totalLiabilities = 780,223,778,402 VND (inline code 300 on page 10)
+  //   equity.total     = 4,466,380,796,968 VND (inline code 400 on page 10)
+  //   sbMap["270"]     = 2,730,492,704,426 VND (wrong — zip hit prior-year value)
+  //   identityDerived  = 5,246,604,575,370 VND → matches real TỔNG CỘNG TÀI SẢN.
+  //
+  // Guard: both values must be > 0, plausible (neither > 20× the other), and the
+  // identity-derived total must be positive. 30% divergence threshold avoids
+  // false-triggering on small legitimate rounding differences.
+  if (totalLiabilities > 0 && equity.total > 0 && totalLiabilities < equity.total * 20) {
+    const identityDerived = totalLiabilities + equity.total;
+    const shouldOverride =
+      totalAssets === 0 ||
+      (identityDerived > 0 &&
+       Math.abs(totalAssets - identityDerived) / identityDerived > 0.3);
+    if (shouldOverride) {
+      console.warn(
+        `[balanceSheetExtractor] FIX-BCTC-MAGNITUDE-NORMALIZE (path B): ` +
+        `totalAssets(${totalAssets}) diverges from identity(${identityDerived}); ` +
+        `overriding with liab(${totalLiabilities}) + equity(${equity.total}).`
+      );
+      totalAssets = identityDerived;
+    }
+  }
+
   const raw: BalanceSheet = {
     currentAssets,
     nonCurrentAssets,
@@ -862,20 +966,42 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
 
   // Task 287 — FR-1: apply unit multiplier (converts tỷ → triệu when needed)
   // Task 1088a — magnitude inference when unit header missing or bare "đồng".
+  // FIX-BCTC-MAGNITUDE-NORMALIZE — catch-22 fix: when split-block extraction
+  // fails (totalAssets=0 due to scrambled column layout), magnitude inference
+  // was silently skipped because the old check only looked at totalAssets.
+  // PPC Q4-2025 pattern: equity and totalLiabilitiesAndEquity ARE extracted
+  // from inline-format page 10 (label+value on same line), but totalAssets=0
+  // (labels and values are in separate OCR columns on page 9). The guard then
+  // rejected the raw VND equity (4.47e12) as > GUARD_MAX. Fix: scan ALL raw
+  // fields for a large value when totalAssets=0 to determine raw VND correctly.
+  //
   // Sentinels:
   //   -1 = bare "đồng/VND" found without qualifier → infer from magnitude
   //   -2 = no unit declaration found at all → infer from magnitude
   //    1 = EXPLICITLY detected "triệu" → do NOT override with magnitude inference
   //       (large banks legitimately have totalAssets > 1_000_000_000 triệu)
-  // Hotfix VCB: only apply magnitude inference for sentinels, never for explicit
+  // Safety: only apply magnitude inference for sentinels, never for explicit
   // triệu/tỷ detection (multiplier > 0).
   let effectiveMultiplier = multiplier;
   if (multiplier === -1 || multiplier === -2) {
-    // Values are likely in raw VND (đồng). VN listed companies have
-    // totalAssets in triệu from ~100,000 to ~100,000,000. If raw totalAssets
-    // exceeds 1 billion, it's almost certainly in đồng.
+    // Primary probe: totalAssets — most reliable anchor for scale.
+    // Fallback probe: scan ALL monetary fields for the largest absolute value.
+    // If any field > 1 billion, the statement is in raw VND.
     // 1 triệu = 1,000,000 đồng → divide by 1,000,000.
-    if (totalAssets > 1_000_000_000) {
+    const RAW_VND_THRESHOLD = 1_000_000_000;
+    const primaryProbe = totalAssets;
+    const fallbackProbe =
+      primaryProbe === 0
+        ? Math.max(
+            Math.abs(equity.total),
+            Math.abs(totalLiabilitiesAndEquity),
+            Math.abs(totalLiabilities),
+            Math.abs(currentAssets.total),
+            Math.abs(nonCurrentAssets.total),
+          )
+        : 0;
+
+    if (primaryProbe > RAW_VND_THRESHOLD || fallbackProbe > RAW_VND_THRESHOLD) {
       effectiveMultiplier = 0.000001;
       console.warn("[balanceSheetExtractor] Inferred raw VND (đồng) from magnitude; applying ÷1,000,000.");
     } else {

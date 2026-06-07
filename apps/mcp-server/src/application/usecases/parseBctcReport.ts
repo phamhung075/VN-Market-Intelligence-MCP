@@ -26,7 +26,7 @@ import { computeFinancialRatios } from "../../domain/services/financial-reports/
 import { computePeriodDelta } from "../../domain/services/financial-reports/periodDeltaComputer.js";
 import type { FinancialMetrics } from "../../domain/services/financial-reports/periodDeltaComputer.js";
 import { validateFinancialReport } from "../../domain/services/financial-reports/bctcValidator.js";
-import { validateFinancialFigures, detectUnitMismatch } from "../../domain/services/financial-reports/financialFiguresValidator.js";
+import { validateFinancialFigures, detectUnitMismatch, detectBsIntraStmtUnitMismatch } from "../../domain/services/financial-reports/financialFiguresValidator.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 import {
   isBctcSignalDebounced,
@@ -502,10 +502,20 @@ export async function parseBctcReport(
   // on scale (e.g. BS in triệu, IS in raw VND). validateFinancialFigures would
   // then compute an impossible operatingMargin and hard-fail to 0.0, silencing
   // the signal. Return 0.1 (low_confidence) instead so the record is stored.
-  const confidenceFinancial = detectUnitMismatch(
+  //
+  // FIX-BCTC-MAGNITUDE-NORMALIZE — within-BS unit mismatch guard (HPG case).
+  // When totalAssets and totalLiabilities differ by >100x within the same balance
+  // sheet, the two fields are in different units (one raw VND, one triệu). This
+  // produces impossible VAL-07 ratios. Flag low_confidence so the record is
+  // stored but not trusted for conviction signals.
+  const bsIntraStmtMismatch = detectBsIntraStmtUnitMismatch(
+    balanceSheet.totalAssets || null,
+    balanceSheet.totalLiabilities || null,
+  );
+  const confidenceFinancial = (detectUnitMismatch(
     balanceSheet.totalAssets || null,
     incomeStatement.netRevenue || null,
-  )
+  ) || bsIntraStmtMismatch)
     ? 0.1
     : validateFinancialFigures({
         totalAssets: balanceSheet.totalAssets || null,

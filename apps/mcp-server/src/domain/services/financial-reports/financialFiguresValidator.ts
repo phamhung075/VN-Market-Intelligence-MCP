@@ -142,6 +142,33 @@ export function detectUnitMismatch(
 }
 
 /**
+ * Detect a within-balance-sheet unit scale mismatch (FIX-BCTC-MAGNITUDE-NORMALIZE).
+ *
+ * Returns true when totalAssets and totalLiabilities differ by more than 100x,
+ * which is physically impossible for a real company and signals that the OCR
+ * extractor left one field in raw VND while the other was normalised to triệu
+ * (e.g. HPG Q1-2026: assets 400,271,001,803 raw-VND vs liabilities 76,754,658 triệu).
+ *
+ * A 100x threshold is used rather than 1000x because legitimate high-equity
+ * companies can have liabilities well below 10% of assets (e.g. 10x ratio is
+ * real), but a 100x+ difference guarantees a unit-normalisation failure.
+ *
+ * Domain layer — pure function, zero I/O.
+ *
+ * @param totalAssets      - Balance sheet total assets (triệu VND). null/0 = skip.
+ * @param totalLiabilities - Balance sheet total liabilities (triệu VND). null/0 = skip.
+ * @returns true when a within-statement unit mismatch is detected.
+ */
+export function detectBsIntraStmtUnitMismatch(
+  totalAssets: number | null,
+  totalLiabilities: number | null,
+): boolean {
+  if (totalAssets === null || totalLiabilities === null || totalAssets === 0 || totalLiabilities === 0) return false;
+  const ratio = totalAssets > totalLiabilities ? totalAssets / totalLiabilities : totalLiabilities / totalAssets;
+  return ratio > 100;
+}
+
+/**
  * Validate extracted BCTC financial figures against accounting rules.
  *
  * Returns a confidence score in [0.0, 1.0]:
