@@ -1,5 +1,21 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-07 · VERIFY-HPG-REPARSE + SPRINT-HPG-QUEUE-URL-FIX — COMMITTED
+
+**Task A — VERIFY-HPG-REPARSE-POST-RECOVERY:**
+Container image built 06:26:23Z. FIX-LIAB (29245173) committed 07:51:29Z, FIX-STAGE4 (a058aa2e) committed 08:03:56Z — both P0 fixes are AFTER the image build. Container runs PRE-FIX code.
+bctcReparseJob at 08:46:22Z picked VCB_2025_Q4.pdf + VCB_2025_Q1.pdf (both "file disappeared" — missing from disk). HPG was NOT picked: the reparse job only processes stranded PDFs (no financial_reports row) and HPG Q4-2025 already has a financial_reports row, so the disk scan skips it. HPG eval remains RED (stage-4 exact_dup_count=2), balance_sheet_json.totalLiabilities=1,012,889.94M (prior-period value, unfixed). No 09:00Z bctcReparseJob run — the scheduled slot fired at 08:46Z (container start-relative timing).
+
+**Task B — SPRINT-HPG-QUEUE-URL-FIX:**
+Root cause: DATA damage, not code. FIX-CTG-1 code fix is already in production. Before that fix, the enricher defaulted year=currentYear/quarter=Q4, stamping Q1-2026 URLs onto Q3-2025 rows for HPG (id=1308140) and PPC (id=1308151). After the code fix, the enricher's "if (item.source_url) skip" guard prevents self-correction — the bad URLs are frozen.
+Live fix executed with bound parameters:
+  HPG id=1308140: source_url Q1-2026 URL → NULL, status='pending', attempts=0 (1 row changed)
+  PPC id=1308151: source_url Q1-2026 URL → NULL, status='pending', attempts=0 (1 row changed)
+Guard test: SPRINT-HPG-QUEUE-URL-FIX.test.ts — 4 tests GREEN, tsc clean.
+Commit: e748af7e
+
+Zone health: 4/0 guard tests, tsc clean, tools=157, sched=76 — data-only fix, no code changed | HEALTHY
+
 ## c391 · 2026-06-07 (TSU-DEV-U6: TSH Leftover Pair Description Updates) — COMMITTED
 
 **Task:** TSU-DEV-U6 — TOOL-SURFACE-UPGRADE sprint  
