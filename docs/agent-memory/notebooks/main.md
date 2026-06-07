@@ -1,6 +1,19 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-31T06:27Z (:07 tick, manual run — VN Sat ~13:27, market CLOSED weekend)
+**Written:** 2026-06-07T02:58Z (cycle 20260607T021724Z — VN Sun, market CLOSED weekend)
+
+## cycle-20260607T0217Z — 2 tier lanes MERGED, worktree stale-base root-cause fixed, sbv incident routed
+- **MERGED**: FIX-BCTC-IDENTITY-SERVE-GUARD → 62ef64fe+1f3ef62a (serve guard total_assets<=0 OR <equity_total → [CORRUPT DATA — SKIP] conf=0; re-verified on main 10/0 tests, tsc clean, tools=162/sched=76). FIX-AUDITOR-DB-CHECKS-HOSTSIDE → a95c514a via rebase recovery (16 Tier-3 checks host-side sqlite3 mode=ro, flow 523L, D-BCTC-EVAL + L438 preserved).
+- **ROOT-CAUSE FIX**: worktree.baseRef=head in .claude/settings.json (ca800f77) — default "fresh" branched worktrees from origin/main = 691 commits stale → guaranteed merge conflicts. BOTH tier agents hit it; recovered via (a) agent-father rebase-continuation in existing worktree, (b) dispatcher mechanical notebook merge (entry renumbered c381). Memory: feedback_worktree_stale_base.
+- **sbv incident**: ops fixed VPS script bug (LOG_ROTATE_BYTES undefined L18); RESIDUAL /api/push-sbv-rates rejects usdVndOfficial → sau-sbv-push-endpoint-202606070252 (po, HIGH). Service stays unhealthy until fixed.
+- **T2 audit routed**: 3 findings verified; auditor skipped L438 rows AGAIN (3rd deviation) → dispatcher backfilled (754eaaca). T1 re-run post-merge: HEALTHY 0 anomalies (5f145b06).
+- **Board**: pm closeout 0f4f399a — 8 rows → done[] (incl. both tier tasks), FU-CTG-REFINE-PICKUP → SUPERSEDED, conservation 282 verified (active_sprints NESTS tasks: 23 sprints/159 tasks — count nested, not top-level).
+- **Signals queue**: 9 rows — NEW for po: sau-sbv-push-endpoint (HIGH), sau-bctc-sla-breach (MEDIUM weekend), sau-bctc-eval-red (HIGH, overlaps merged guard), sau-auditor-c01-weekend (LOW). Watch: rtr-bctc-playwright-thread READ.
+- **Carry-forward**: CTG re-extract → next fleet bctcReparseJob cron (on-demand handler lacks deps.spawnSubagent). Auditor Tier-2 docker-exec C-06/C-07/B-09/B-13 + L292 WAL still broken (agent-father flagged). agent-md-factory skill missing from disk. Auditor 3rd L438 deviation → po pattern triage. mock-guard CAUTION: 6 known TODO markers.
+- Reports: 4 archived (3 duplicate + 1 fixed, msgs 2699-2702 deleted). Commits this cycle: 75da723e→1718e974→110a7cff→754eaaca→ca800f77→62ef64fe→1f3ef62a→a95c514a→9f57652e→0f4f399a→5f145b06.
+
+---
+
 
 ## tick-0527→0627Z (consecutive IDLE, byte-identical queue) — drain-only, no PO re-spawn (C-6)
 - Stable hourly idle heartbeat. Each tick: ~4 cowork-fire heartbeats drained as noise, queue {#3011,#3012,#3014} byte-identical, 0 NEW dashboard rows, pipeline IDLE, TASKS.md 61≤80, expire_monitoring=0, branches=main, WIP 0/2.
