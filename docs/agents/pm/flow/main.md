@@ -167,4 +167,5 @@ Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue
 - Blocked tasks → return `PIPELINE: blocked | NEXT: architect | [reason]`
 - WIP > 2 → hold, return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`
 - Task → Review → update `.task_board` status → return `NEXT: qa | review Task NNN branch task/NNN-kebab`
-- QA Done → update `.task_board` status DONE → unblock next → return `NEXT: developer | implement Task NNN+1`
+- QA Done → **DJ-GATE-1** (before DONE flip): verify journal entry for task-id exists in `docs/agent-memory/decisions/sprint-<SPRINT_ID>-*.md`; if absent → status stays REVIEW, write `status_note: "journal-missing"`, send_telegram(work, "[DJ-GATE-1] journal absent for <TASK_ID> — held REVIEW"). Full gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
+- QA Done + journal present → update `.task_board` status DONE → unblock next → return `NEXT: developer | implement Task NNN+1`

@@ -1,6 +1,6 @@
 # Agent Chaining Protocol
 
-<!-- size-justification: 165L — architect-managed SSOT: pipeline maps + return templates + parallel spawn rules + cross-team signal directory are read as one unit by every chaining-related agent (PM, architect, dev-team). Excluded from split waves per zone-enforcement-and-split-policy brief § Excluded. -->
+<!-- size-justification: 221L — architect-managed SSOT: pipeline maps + return templates + parallel spawn rules + cross-team signal directory + DJ-GATE-1 journal gate are read as one unit by every chaining-related agent (PM, architect, dev-team). Excluded from split waves per zone-enforcement-and-split-policy brief § Excluded. -->
 
 **title:** Agent Chaining Protocol
 **description:** Main terminal as permanent switch — how agents chain, pipeline maps, return templates, parallel spawn rules, and fixer ceiling.
@@ -45,6 +45,31 @@ UNBLOCK  {route_to} ──► done
    - The write is non-optional. An agent that returns without writing this file breaks post-compact resume for the entire session.
    - **Stale-state recovery**: if `.head.updated_at` is >24h old AND `.head.status` is `"in_progress"`, main terminal treats the state as crashed and resets to `idle`. Agents must write accurate timestamps.
    - **Cowork agents** (tran-ngoc-bau, unified-agent, alert-commander, news-scout, market-watcher, financial-analyst, report-analyzer, digest-predict, qa-responder) must NOT write `orch-state.json`. Use `docs/signals/` instead to request dev-team action.
+
+## Journal-before-DONE Gate (DJ-GATE-1 — operator directive 2026-06-07)
+
+**Every task-board task MUST have a decision-journal entry stamped with its task-id before any agent flips status to REVIEW or DONE.**
+
+Canonical skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry.
+
+**Worker mandate (execute-tier spawn injection):** Every dev-* / ops / zone agent spawned by `execute-tier.md` receives this in its prompt:
+> Before returning, run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: <TASK_ID>] — DONE/REVIEW flip is INVALID without it.
+
+**DONE-flip gate (pm + qa enforcement):**
+```bash
+# Run before flipping any task_board row to DONE (pm step 5, qa approved):
+SPRINT_ID=$(jq -r '.sprint_goal.entries[]|select(.status=="active")|.sprint_id' \
+  docs/data/orch/orch-state.json 2>/dev/null | tail -1)
+PATTERN="docs/agent-memory/decisions/sprint-${SPRINT_ID}-*.md"
+if ! grep -rl "task-id:\*\* ${TASK_ID}" $PATTERN 2>/dev/null | grep -q .; then
+  # journal absent → stay REVIEW, add status_note, alert work channel
+  status_note="journal-missing"   # write to task_board row
+  send_telegram(channel="work", message="[DJ-GATE-1] journal absent for ${TASK_ID} — flipped to REVIEW, not DONE")
+fi
+```
+If absent: status stays REVIEW, `status_note: "journal-missing"` written to task_board row.
+
+**Scope exclusions:** cowork/ambient agents (tran-ngoc-bau, unified-agent, market-watcher, chef, news-scout, digest-predict, qa-responder, alert-commander, financial-analyst, report-analyzer, fb-market-poster, idea-forge, semble-search, all cron-cowork agents) are NOT subject to DJ-GATE-1 — they do not hold task_board rows.
 
 ## Background Spawn Mandate (BGFAN-1 — operator directive 2026-06-07)
 

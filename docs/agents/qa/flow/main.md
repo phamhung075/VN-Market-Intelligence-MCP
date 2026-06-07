@@ -150,6 +150,8 @@ verdict: APPROVED | CHANGES_REQUESTED
 ## Approval
 
 <!-- jump:approved -->
+**DJ-GATE-1** (before DONE flip): verify `docs/agent-memory/decisions/sprint-<SPRINT_ID>-*.md` contains `task-id:** <TASK_ID>`; if absent → status stays REVIEW, `status_note: "journal-missing"`, send_telegram(work, "[DJ-GATE-1] journal absent for <TASK_ID>"). Full gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
+
 **APPROVED**: append `[QA] Review Record` → release sprint-task lock → merge + push + clean → return.
 Merge commit subject must follow `docs/policies/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks. Merge commits are AC-trailer exempt (AC lives on the feat/fix commit).
 If QA writes a non-merge commit that carries `Task:` trailer, it must also carry `AC:` trailer.

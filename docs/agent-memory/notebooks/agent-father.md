@@ -1,5 +1,16 @@
 # Agent Father — Notebook
 
+## c292 · 2026-06-07T21:00Z — DJ-GATE-1: journal-before-DONE gate
+
+- Task: DJ-GATE-1 (sprint WORKFLOW-FLUIDITY). Dashboard shows "No decisions recorded" for DONE tasks.
+- SSOT chosen: docs/protocols/agent-chaining-protocol.md § Journal-before-DONE Gate (DJ-GATE-1). Same pattern as BGFAN-1 at L49.
+- Primary lever: execute-tier.md spawn-prompt injection (covers all dev-* zone agents via dispatcher). Post-batch merge-gate step 5 also gates before pm flip.
+- DONE-flip gate: pm/flow/main.md step 5 (≤4L) + qa/flow/main.md approved section (≤4L) — grep decisions/ for task-id; absent → REVIEW + status_note="journal-missing" + work channel alert.
+- Direct-spawn agents: 1-line pointer added to dev-mcp-server, ops, code-janitor, agent-father flow/main.md.
+- Cowork/ambient agents excluded (no task_board rows per DJ-GATE-1 scope exclusions).
+- Files touched (7): agent-chaining-protocol.md, execute-tier.md, pm/flow/main.md, qa/flow/main.md, dev-mcp-server/flow/main.md, ops/flow/main.md, code-janitor/flow/main.md, agent-father/flow/main.md. Plus journal + notebook.
+- Decision journal: sprint-WORKFLOW-FLUIDITY-agent-father.md STEP agent-father-S2.
+
 ## c291 · 2026-06-07T09:51Z — BGFAN-1: background fan-out mandate
 
 - Task: BGFAN-1 (operator directive). Encoded run_in_background=true across all dispatcher flows.

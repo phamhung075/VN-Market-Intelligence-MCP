@@ -1,5 +1,16 @@
 # Decision Journal — sprint WORKFLOW-FLUIDITY — agent-father
 
+### STEP agent-father-S2 · agent-father · 2026-06-07T21:00Z
+**task-id:** DJ-GATE-1
+**what-done:** Added Journal-before-DONE gate (DJ-GATE-1) as SSOT in agent-chaining-protocol.md; injected spawn-prompt mandate in execute-tier.md; added ≤6L DONE-flip gate in pm + qa flows; added 1-line pointer in 4 direct-spawn zone agent flows (dev-mcp-server, ops, code-janitor, agent-father).
+**what-considered:**
+- Option A: paste full rule into all 34 affected agent files (verbose, DRY violation, maintenance debt).
+- Option B: SSOT in agent-chaining-protocol.md + spawn-prompt injection at dispatcher level + 1-line pointers in direct-spawn agents only.
+**why-decision:** Option B chosen — dispatcher injection (execute-tier.md) covers all 9 dev-* zone agents automatically. SSOT in protocol file = DRY. Only 4 direct-spawn agents need explicit pointers. Cowork/ambient agents excluded per spec (no task_board rows).
+**why-change:** Operator directive DJ-GATE-1 — dashboard shows "No decisions recorded" for DONE tasks; root cause is absent journal gate.
+
+---
+
 ### STEP agent-father-S1 · agent-father · 2026-06-07T09:51Z
 **task-id:** BGFAN-1
 **what-done:** Encoded background fan-out mandate across 6 dispatcher flows + 1 canonical protocol rule.

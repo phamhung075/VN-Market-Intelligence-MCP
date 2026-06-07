@@ -54,6 +54,7 @@ for each (agent, task_id) in tier_batch:
 
 # Step 2 + 3 — Spawn claimed tasks; release in finally (reachable on ALL exit paths):
 try:
+  # DJ-GATE-1: append to EVERY worker spawn-prompt: "Before returning, run skill .claude/skills/decision-journal/SKILL.md § Write Entry [task_id: <TASK_ID>] — DONE/REVIEW flip is INVALID without it." (canonical rule → docs/protocols/agent-chaining-protocol.md § Journal-before-DONE Gate)
   → Agent(dev-stock-price, taskA, run_in_background=true) + Agent(dev-alert-engine, taskB, run_in_background=true)   # (background) devs parallel — BGFAN-1
   → Agent(qa, taskA, run_in_background=true) + Agent(qa, taskB, run_in_background=true)                               # (background) QA parallel (different branches)
   → Agent(fixer, taskA, run_in_background=true) + Agent(fixer, taskB, run_in_background=true)                         # (background) fixer if needed
@@ -92,5 +93,5 @@ Enter only after ALL tier agents returned.
 3. bash scripts/audits/c2-alert.sh <new-HEAD-sha>  (Control 4 — non-blocking, prints warning)
 4. If Control 1 or Control 3 fired: STOP tier, WORK alert, await human.
    Recovery: bash scripts/audits/recovery-snapshot.sh  (operator-explicit only — Control 5)
-5. All controls pass → spawn pm (run_in_background=true) (background — BGFAN-1) to update `docs/data/orch/orch-state.json` `.task_board` + unblock next tier
+5. All controls pass → DJ-GATE-1 pre-flip check: verify journal entry exists for each completed task (canonical gate → `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate) — tasks without journal entry stay REVIEW + status_note="journal-missing"; spawn pm (run_in_background=true) (background — BGFAN-1) to update `docs/data/orch/orch-state.json` `.task_board` + unblock next tier
 ```

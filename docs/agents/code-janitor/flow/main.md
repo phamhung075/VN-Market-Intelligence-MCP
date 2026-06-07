@@ -84,6 +84,8 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 {"scan_date":"2026-04-26","findings":[{"id":"DRY-1","pattern":"...","status":"shipped|proposed"}]}
 ```
 
+**DJ-GATE-1** (before any task DONE/REVIEW flip): run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry — gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
+
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 > Error boundary → skill: `.claude/skills/cowork-error-boundary/SKILL.md`

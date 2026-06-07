@@ -40,3 +40,5 @@ This file MUST NOT do agent-lifecycle work itself — it only dispatches.
 ## Reference
 
 Flow catalog SSOT → `.claude/agents/agent-father.md` § `flow.catalog`. If a sub-flow path moves, update both this dispatcher and the catalog together.
+
+**DJ-GATE-1** (before any task DONE/REVIEW flip): run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry — gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
