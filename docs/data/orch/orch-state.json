@@ -2809,7 +2809,7 @@
       },
       {
         "id": "CI-RED-RECONCILE",
-        "label": "ci.yml RED on every push to main (run 27104618906 / origin HEAD a709681) — RECONCILED to a push gap, NOT a recurrence",
+        "label": "ci.yml RED on every push to main (run 27104618906 / origin HEAD a709681) — RECONCILED to a push gap, NOT a recurrence | [po 20260608 MERGE] absorbed duplicate sprint_id entry (SSOT last-key-wins bug); 2 dev REVIEW statuses recovered (FIX-MCP-TOOL-COUNT-DRIFT, FIX-MCP-CI-NETWORK-GUARD).",
         "status": "active",
         "opened_at": "2026-06-08",
         "priority": "high",
@@ -2849,11 +2849,11 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "Created by po BUN-TEST-CI-GATE triage 2026-06-08T17:19:26Z. GENUINE drift, NOT network. Test counts the LOCAL in-process server._registeredTools (not the gateway 146 surface). DoD: owner verifies real registry count via running the test/inspecting registration; decides intentional-removal (fix assertion) vs accidental-break (restore tool). VERIFICATION GATE: proves out only on GREEN ci.yml after subsequent push."
+            "note": "Created by po BUN-TEST-CI-GATE triage 2026-06-08T17:19:26Z. GENUINE drift, NOT network. Test counts the LOCAL in-process server._registeredTools (not the gateway 146 surface). DoD: owner verifies real registry count via running the test/inspecting registration; decides intentional-removal (fix assertion) vs accidental-break (restore tool). VERIFICATION GATE: proves out only on GREEN ci.yml after subsequent push. | [MERGE-DEDUP po triage 20260608T19xxZ] entry-25 dev REVIEW absorbed (SSOT dup-key fix per feedback_ssot_duplicate_key): 123-integration-mcp.test.ts:867 toBeGreaterThanOrEqual(16) got 15. Root cause: read_bctc_pdf intentionally deregistered in TSU-DEV-U3 (superseded by OCR/PEK pipeline). Floor lowered to 15. Await CI green before DONE. Code done LOCAL; status REVIEW pending ops push + GREEN ci.yml on sha!=8ffb1985 (verification gate)."
           },
           {
             "id": "FIX-MCP-CI-NETWORK-GUARD",
@@ -2861,11 +2861,11 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "Created by po BUN-TEST-CI-GATE triage 2026-06-08T17:19:26Z. Signature = live external source unreachable in CI -> null/0. DEDUP/LINK: this is the CI-blocking subset of FIX-MCP-SUITE-HEALTH-BASELINE (TODO, broader local-baseline). Keep separate; cross-ref. Prefer detect-CI-env + skip/mock over deleting assertions. VERIFICATION GATE: GREEN ci.yml after subsequent push."
+            "note": "Created by po BUN-TEST-CI-GATE triage 2026-06-08T17:19:26Z. Signature = live external source unreachable in CI -> null/0. DEDUP/LINK: this is the CI-blocking subset of FIX-MCP-SUITE-HEALTH-BASELINE (TODO, broader local-baseline). Keep separate; cross-ref. Prefer detect-CI-env + skip/mock over deleting assertions. VERIFICATION GATE: GREEN ci.yml after subsequent push. | [MERGE-DEDUP po triage 20260608T19xxZ] entry-25 dev REVIEW absorbed (SSOT dup-key fix per feedback_ssot_duplicate_key): 1146: hardcoded 2026-03-* dates fell outside 90-day window → relative daysAgo() helper. 1335: rag_analyses test fixture missing data_env+body_text columns → added to setupTestDb(). Await CI green before DONE. Code done LOCAL; status REVIEW pending ops push + GREEN ci.yml on sha!=8ffb1985 (verification gate)."
           },
           {
             "id": "FIX-MACRO-GO-DIRECTIVE",
@@ -2891,30 +2891,6 @@
             "priority": "high",
             "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE from raw log: this is a CONFIG-MIGRATION miss, NOT a go-version issue (its go.mod = go 1.22, fine). The other 5 services already have version:\"2\". Add the field + verify config schema parses under v2. VERIFICATION GATE: GREEN ci.yml after subsequent push.",
             "status_note": "Config migrated to v2 schema. Local: golangci-lint run exits 1 (lint violations) not 3 (config parse error) — config is valid. Exit-1 violation (FIX-TA-SANDBOX-DEPGUARD, fence-c, cmd/sandbox/main.go:44) is pre-existing tracked debt, not this task. VERIFICATION GATE: GREEN ci.yml after subsequent push. DJ-GATE-1: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-technical-analysis.md"
-          }
-        ]
-      },
-      {
-        "sprint_id": "CI-RED-RECONCILE",
-        "goal": "Unblock CI red state on main — fix test assertion drift and test fixture schema mismatch in apps/mcp-server/",
-        "tasks": [
-          {
-            "title": "Fix MCP tool count drift — assertion floor 16→15 (read_bctc_pdf deregistered TSU-DEV-U3)",
-            "status": "REVIEW",
-            "zone": "mcp-server",
-            "agent": "dev-mcp-server",
-            "priority": "CRITICAL",
-            "description": "123-integration-mcp.test.ts:867 toBeGreaterThanOrEqual(16) got 15. Root cause: read_bctc_pdf intentionally deregistered in TSU-DEV-U3 (superseded by OCR/PEK pipeline). Floor lowered to 15. Await CI green before DONE.",
-            "id": "FIX-MCP-TOOL-COUNT-DRIFT"
-          },
-          {
-            "title": "Fix CI test failures: 1146 date-stale + 1335 schema mismatch",
-            "status": "REVIEW",
-            "zone": "mcp-server",
-            "agent": "dev-mcp-server",
-            "priority": "CRITICAL",
-            "description": "1146: hardcoded 2026-03-* dates fell outside 90-day window → relative daysAgo() helper. 1335: rag_analyses test fixture missing data_env+body_text columns → added to setupTestDb(). Await CI green before DONE.",
-            "id": "FIX-MCP-CI-NETWORK-GUARD"
           }
         ]
       }
@@ -3588,16 +3564,16 @@
         "id": "FIX-TA-SANDBOX-DEPGUARD",
         "title": "Real depguard Fence-C violation: apps/technical-analysis/cmd/sandbox/main.go:44 imports pkg/infrastructure — fix import boundary",
         "owner": "dev-technical-analysis",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "zone": "apps/technical-analysis/",
         "created_at": "2026-06-07T21:25:56Z",
         "type": "FIX",
         "size": "S",
-        "priority": "medium",
+        "priority": "high",
         "files": [
           "apps/technical-analysis/cmd/sandbox/main.go"
         ],
-        "status_note": "From CI root-cause router-20260607205837-ci item (c). Fix the violation at the import site (wire via allowed port/composition root) — do NOT loosen depguard rules without architect sign-off. AC: go-lint depguard green on fresh CI run after FIX-CI-LINT-STACK lands."
+        "status_note": "From CI root-cause router-20260607205837-ci item (c). Fix the violation at the import site (wire via allowed port/composition root) — do NOT loosen depguard rules without architect sign-off. AC: go-lint depguard green on fresh CI run after FIX-CI-LINT-STACK lands. | [po triage 20260608T19xxZ] ACTIVATED — now CI-BLOCKING: surfaced after FIX-TA-GOLANGCI-CONFIG-V2 migrated TA config to v2 (removed parse-error mask). go-lint job RED on origin/main 8ffb1985 = this depguard violation. Real tracked debt v1 config hid. VERIFICATION GATE: GREEN ci.yml after subsequent push."
       },
       {
         "id": "FIX-FRED-YAHOO-WEEKEND-STALE",
@@ -6354,10 +6330,11 @@
         "type": "system_health_report",
         "summary": "Cron job vnstockFundamentalsRefresh crashed (0% success, 1 run)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "TRIAGED",
         "zone_owner": "dev-mcp-server",
         "check_id": "CRON-VNSTOCK-CRASH",
-        "payload_ref": null
+        "payload_ref": null,
+        "triage_note": "[po triage 20260608T19xxZ] Single observed crash (1 run, 0% success) of vnstockFundamentalsRefresh, zone dev-mcp-server. JUDGMENT: TRANSIENT — no task this tick. One crash != recurring failure; FIX-MACRO-REFRESH-DEAD (commit b7ce338f, env-var mismatch + silent-swallow) shipped THIS session and may have perturbed the cron worker. WATCH: if a 2nd vnstockFundamentalsRefresh crash appears next auditor tick -> escalate to FIX (recurring), zone dev-mcp-server. Avoid noise-task on a single sample."
       }
     ],
     "archive": [

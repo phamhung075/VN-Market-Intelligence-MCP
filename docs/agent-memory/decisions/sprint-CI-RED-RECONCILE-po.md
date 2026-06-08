@@ -36,6 +36,32 @@ ops landed PUSH-CI-FIX-TO-REMOTE (HEAD 9f063c9a → origin/main; dd79f811 FIX-CI
 - **why-decision:** Atomic, single-zone, owner-clear fixes; no design needed; WIP-safe; no recurring-bug trigger.
 - **why-change:** no change from plan.
 
+### STEP po-S4: Triage tick 20260608T19xxZ — board hygiene merge + status reconcile + DEPGUARD activate (2026-06-08)
+**task_id:** CI-RED-RECONCILE (sprint-level) + triage_key task:po-triage-20260608
+- **what-done:**
+  1. **SSOT dup-key merge.** `.task_board.active_sprints` had TWO entries logically keyed CI-RED-RECONCILE (index 24 `id=CI-RED-RECONCILE`, 6 tasks, rich PO history; index 25 `sprint_id=CI-RED-RECONCILE`, 2 tasks, dev REVIEW notes). Per feedback_ssot_duplicate_key (last-key-wins masks writes), the dev-team's REVIEW status + fix descriptions for FIX-MCP-TOOL-COUNT-DRIFT and FIX-MCP-CI-NETWORK-GUARD were hidden behind entry-24's stale TODO. Merged: absorbed entry-25's 2 task descriptions into entry-24's matching tasks, flipped both TODO→REVIEW, then deleted entry 25. Result: 26→25 sprints, 1 CI-RED-RECONCILE entry, all 6 tasks present.
+  2. **CI status reconcile (verification gate).** RAW-VERIFIED: origin/main HEAD = 8ffb1985; local only 3 commits ahead, all chore(memory)/chore(cowork) — NO code pushed. Therefore the 4 CI fix tasks (FIX-MCP-TOOL-COUNT-DRIFT, FIX-MCP-CI-NETWORK-GUARD, FIX-MACRO-GO-DIRECTIVE, FIX-TA-GOLANGCI-CONFIG-V2) are fixed-LOCAL-but-UNPUSHED → stay REVIEW. NOT prematurely REVIEW: code is genuinely done locally per their decision journals; the gate that's unmet is "GREEN ci.yml on a sha != 8ffb1985", which needs an ops push. NO DONE flip.
+  3. **FIX-TA-SANDBOX-DEPGUARD activated.** go-lint job RED on 8ffb1985 = cmd/sandbox/main.go:44 imports pkg/infrastructure (Fence-C depguard). Task ALREADY existed (backlog, created 2026-06-07T21:25:56Z) — NOT a new task (router context said "no task" but dedup found it). Surfaced now because FIX-TA-GOLANGCI-CONFIG-V2 migrated TA config to v2, removing the v1 parse-error mask. Real tracked debt; our config fix is correct (it revealed the debt). Activated TODO→IN_PROGRESS, priority→high. This is the net-new dev work needed for go-lint green.
+- **what-considered:**
+  - Flip FIX-MCP-*/FIX-MACRO/FIX-TA-GOLANGCI → DONE now: REJECTED (verification gate hard — no green run on a new sha; local green ≠ DONE).
+  - Create a fresh FIX-TA-SANDBOX-DEPGUARD: REJECTED — dedup found existing backlog[49]; activated in place instead.
+- **why-decision:** Dup-key merge recovers masked dev REVIEW status (data-integrity); REVIEW tasks held at the verification gate; the only dispatchable CI-green blocker (depguard) activated under WIP.
+- **why-change:** sprint went 6 tasks (de-duplicated) + 1 backlog task activated; no DONE flips this tick.
+- **recurring-bug check:** TA go-lint module — FIX-TA-GOLANGCI-CONFIG-V2 (config v2) and FIX-TA-SANDBOX-DEPGUARD (import boundary) are DISTINCT defects in the same zone, not a re-fix of one module. The depguard violation is debt the v1 config masked, not a regression introduced by the config fix. Architect escalation does NOT fire.
+
+### STEP po-S5: ci-health-fix-bridge brief → UNBLOCK (agent-father + developer) (2026-06-08)
+**task_id:** CI-HEALTH-FIX-BRIDGE (new)
+- **what-done:** Read brief docs/architecture-briefs/2026-06-08-ci-health-fix-bridge.md (READY-FOR-IMPLEMENTATION). Per triage-signals.md brief_complete routing (targets docs/agents/* flow + a canonical script) → UNBLOCK, route agent-father (4 md/flow edits: ci-health-probe.md SSOT spec, main.md JUMP-TO+Step-0a.5, drain-signals.md ci_red row, triage-signals.md ci_red handler) + developer (scripts/agents-flow/ci-health-probe.js canonical script, gated on the flow SSOT).
+- **why-decision:** This institutionalizes the user's standing Message-4 request (auto-detect CI failures in the dev-team flow). The brief is self-grounding (this very CI-RED-RECONCILE sprint is the motivating incident) and encodes the 4 hard constraints we relied on this session (STALE-RUN GATE proven by the 9f063c9a stale-run trap, 3-layer DEDUP, VERIFICATION GATE = green-on-subsequent-push, SAFE-JSON = no field interpolation). Agent-father md track does not consume dev WIP; developer script = the 2nd dispatch slot.
+- **WIP:** post-tick WIP = FIX-TA-SANDBOX-DEPGUARD (dev) + ci-health-probe.js (dev via agent-father chain) = 2, at cap. bctc-analyst recurring escalation held as pendingObservation (below).
+
+### STEP po-S6: other signals — judged, not actioned (2026-06-08)
+- **bctc-analyst escalation + bctc_signal BATCH_RELEASE (cycle 25+, 6 release tickers CTG/VCB/REE/NVL/D2D/TCH get_bctc_full EMPTY despite stored PDFs; ACB/EIB PUB-5-blocked):** RECURRING (>2 fix cycles → recurring-bug rule). Largely a RE-ESCALATION of known work: get_bctc_full-empty root-caused in BEQ-1 (DONE); CTG fetch in FIX-CTG-1/2/3 (DONE); historical depth in BCTC-HIST-VPS-BACKFILL + BCTC-ENRICHER-OLD-QUARTERS (both DEFERRED-INFRA, VPS-upstream-blocked). NEW nuance worth an architect SPIKE: current-quarter PDFs are NOW physically stored (CTG 6MB/VCB 8.1MB dated 2026-06-05/08) yet serve EMPTY — i.e. the freshly-stored current-Q PDFs are not being picked up by refine/extraction (distinct from the historical-backfill defer). HELD this tick (WIP at cap); recorded as pendingObservation → next-tick architect SPIKE (recurring-bug-escalation, NOT point-patch) to pin why stored-current-Q PDFs don't reach get_bctc_full.
+- **bctc_signal FPT routine:** informational analysis (esc_1..5 all false / DATA-COV-LIM; trick=medium seasonal OCF). Not dev work → skip.
+- **context-bloat × 3 (dev-macro-indicators 172916Z, dev-mcp-server 173510Z+180055Z notebooks):** route per context-bloat-governance — notebook trim to ≤200L (janitor/agent-father op). CHORE/CLEAN, no dev WIP consumed.
+- **cowork-team-20260608T180631Z:** cowork tick → informational, skip.
+- **sau-c118-cron-crash (CRITICAL, vnstockFundamentalsRefresh 0%/1 run, zone dev-mcp-server):** signal_queue row → TRIAGED. JUDGMENT: TRANSIENT, no task. Single observation; FIX-MACRO-REFRESH-DEAD (b7ce338f) shipped this session may have perturbed the worker. WATCH: a 2nd crash next auditor tick → escalate FIX (recurring).
+
 ## VERIFICATION GATE
 Each fix proves out ONLY on a GREEN ci.yml run after a subsequent push. Local green ≠ done. After dev-* lands all 3 fixes locally → ops pushes → read next ci.yml run → only then mark DONE. Local-only fixes do not count.
 
