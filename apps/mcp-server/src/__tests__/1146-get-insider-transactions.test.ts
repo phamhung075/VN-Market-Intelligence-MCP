@@ -262,11 +262,14 @@ describe("Task 1146 — get_insider_transactions tool", () => {
   });
 
   it("streaks computed: >= 2 distinct from_date buy entries creates streak entry", async () => {
+    // Use relative dates to avoid time-drift failures (FIX-MCP-CI-NETWORK-GUARD)
+    const daysAgo = (n: number) =>
+      new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
     seedRow(db, {
       id: "tx-1",
       code: "VNM",
       type: "buy",
-      fromDate: "2026-03-01",
+      fromDate: daysAgo(60),
       executedVolume: 5000,
       position: "Chairman",
     });
@@ -274,7 +277,7 @@ describe("Task 1146 — get_insider_transactions tool", () => {
       id: "tx-2",
       code: "VNM",
       type: "buy",
-      fromDate: "2026-03-05",
+      fromDate: daysAgo(55),
       executedVolume: 6000,
       position: "Chairman",
     });
@@ -338,8 +341,13 @@ describe("Task 1146 — get_insider_transactions tool", () => {
   });
 
   it("results ordered by from_date DESC", async () => {
-    seedRow(db, { id: "tx-early", code: "VNM", fromDate: "2026-03-01" });
-    seedRow(db, { id: "tx-late", code: "VNM", fromDate: "2026-03-20" });
+    // Use relative dates to avoid time-drift failures (FIX-MCP-CI-NETWORK-GUARD)
+    const daysAgo = (n: number) =>
+      new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+    const earlyDate = daysAgo(45);
+    const lateDate = daysAgo(20);
+    seedRow(db, { id: "tx-early", code: "VNM", fromDate: earlyDate });
+    seedRow(db, { id: "tx-late", code: "VNM", fromDate: lateDate });
 
     const client = await buildConnectedPair(db);
     const result = await client.callTool({
@@ -348,8 +356,8 @@ describe("Task 1146 — get_insider_transactions tool", () => {
     }) as McpTextResult;
 
     const parsed = JSON.parse(result.content[0]!.text);
-    expect(parsed.transactions[0].fromDate).toBe("2026-03-20");
-    expect(parsed.transactions[1].fromDate).toBe("2026-03-01");
+    expect(parsed.transactions[0].fromDate).toBe(lateDate);
+    expect(parsed.transactions[1].fromDate).toBe(earlyDate);
   });
 
   it("days clamped to max 90", async () => {
