@@ -33,3 +33,12 @@
 - Parallel with P2 — chosen: only shared touch = thin mcp-server search opt-in flag.
 **why-decision:** lancedb 0.30.2 FTS confirmed (Q3 spike); rag-service zone disjoint from P2 hot zones.
 **why-change:** no change.
+
+### STEP po-S6 · po · 2026-06-08T13:31:32Z
+**task-id:** DFR-P2-DEEPFETCH
+**what-done:** DJ-GATE-1: dedup SSOT — deleted 2 stale backlog copies (backlog[69] DFR-P2, backlog[70] DFR-P3, next_role=architect originals); kept enriched active_sprints[23] copies (next_role=ba, blueprint pointers). Approved both architect briefs; recorded P3-mcp-after-P2-mcp sequencing on tasks.
+**what-considered:**
+- Edit-in-place dual copies — REJECTED: two readers pick different copy → double-dispatch (documented SSOT hazard).
+- Delete stale backlog copies only, keep active as SSOT — CHOSEN: active are authoritative (architect-enriched, next_role=ba).
+**why-decision:** active_sprints[23] copies carry blueprint refs + ba routing; backlog copies are pre-architect originals. One-copy-per-task invariant restored; atomic temp→rename + non-empty/valid-JSON guard against jq-empty-clobber.
+**why-change:** no change from directive — dedup target + keep-set matched router instruction exactly.

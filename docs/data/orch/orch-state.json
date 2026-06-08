@@ -2622,6 +2622,51 @@
             "note": "Brief Q5. Confirms the migration path used by DFR-P1-MCP(a). Output: migration-path verdict. Low risk per single-writer invariant; confirm before execution.",
             "claimed_at": "2026-06-08T09:08:55Z",
             "completed_at": "2026-06-08T00:00:00Z"
+          },
+          {
+            "id": "DFR-P2-DEEPFETCH",
+            "title": "Phase 2 deep-fetch pipeline: 3-zone split (dev-mcp-server: gate+queue+executors, dev-vps-crawls: extend article-body-fetcher.py+allowlist, dev-mainserver-crawls: Playwright fallback endpoint). Blueprint: docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md.",
+            "owner": "ba",
+            "type": "SPRINT-M",
+            "status": "TODO",
+            "zone": "multi: apps/mcp-server/ + vps-scripts/ + apps/news-fetch/",
+            "size": "M",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-P1-MCP",
+              "DFR-QA-1",
+              "DFR-Q1",
+              "DFR-Q2"
+            ],
+            "created_at": "2026-06-08T13:22:00Z",
+            "next_role": "ba",
+            "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md",
+            "note": "ARCH-DFR-P2 DONE (DJ-GATE-1 STEP architect-S6). 3-zone split required: ba decomposes into dev-mcp-server / dev-vps-crawls / dev-mainserver-crawls sub-tasks. Interface contracts in blueprint. Guardrails: caps 10 deep / 5 Playwright per cycle, per-domain daily limit, 4h stale expiry, source_url UNIQUE.",
+            "sequencing": "SEQUENCING (architect-flagged, PM honor): P2 and P3 rag-service work run fully PARALLEL (disjoint zones). Only the mcp-server slices share ragHttpClient.ts at DIFFERENT interface blocks (P2=ragIndex write path, P3=RagSearchRequest read path). Sequence dev-mcp-server P3 slice AFTER dev-mcp-server P2 slice merges, OR commit-mutex-serialize the two ragHttpClient.ts commits (rebase trivially resolves). rag-service P3 work has NO P2 dependency.",
+            "blocks": "DFR-P3-HYBRID:mcp-server-slice-only (shared ragHttpClient.ts)"
+          },
+          {
+            "id": "DFR-P3-HYBRID",
+            "title": "Phase 3 FTS+RRF hybrid search: rag-service adds FTS indexes (title+summary 2-call), hybrid_search() + RRFReranker, lazy build + daily rebuild, POST /search {hybrid: bool}. mcp-server: hybrid?: boolean on RagSearchRequest only. Blueprint: docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md.",
+            "owner": "ba",
+            "type": "SPRINT-M",
+            "status": "TODO",
+            "zone": "apps/rag-service/ + thin apps/mcp-server/ caller",
+            "size": "M",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-P1-RAG",
+              "DFR-QA-1",
+              "DFR-Q3"
+            ],
+            "created_at": "2026-06-08T13:22:00Z",
+            "next_role": "ba",
+            "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md",
+            "note": "ARCH-DFR-P3 DONE (DJ-GATE-1 STEP architect-S7). Zones: dev-rag-service (primary) + dev-mcp-server (one optional field). Collision risk LOW — P2 writes ragIndex/RagIndexRequest, P3 writes ragSearch/RagSearchRequest (different interfaces). PM sequences P3-mcp after P2-mcp or commit-mutex. pollNews stays vector-only; CHEF/bctc-analyst callers pass hybrid=true.",
+            "sequencing": "SEQUENCING (architect-flagged, PM honor): P2 and P3 rag-service work run fully PARALLEL (disjoint zones). Only the mcp-server slices share ragHttpClient.ts at DIFFERENT interface blocks (P2=ragIndex write path, P3=RagSearchRequest read path). Sequence dev-mcp-server P3 slice AFTER dev-mcp-server P2 slice merges, OR commit-mutex-serialize the two ragHttpClient.ts commits (rebase trivially resolves). rag-service P3 work has NO P2 dependency.",
+            "sequence_after": "DFR-P2-DEEPFETCH:mcp-server-slice-only"
           }
         ]
       }
@@ -3579,60 +3624,6 @@
         "status_note": "QA DJ-GATE-1 PASS 2026-06-08T08:51:35Z — 18/18 host + 18/18 in-container probes HTTP 200 <200ms while active tesseract OCR in flight (8 concurrent tesseract PIDs 08:44-08:51Z). asyncio.to_thread fix (commit 8ca79007) verified in container /app/infrastructure/extraction_engine.py lines 46+58. Root cause fixed.",
         "done_at": "2026-06-08T08:51:35Z",
         "done_by": "qa"
-      },
-      {
-        "id": "DFR-P2-DEEPFETCH",
-        "title": "PHASE 2 (GATED): conditional deep-fetch. mcp-server relevance gate in pollNews.ts post-dedup (3-signal OR: ticker/sector-keyword/impact>=7) + deep_fetch_queue + deep_fetch_stats SQLite tables + deepFetchVpsJob.ts + deepFetchMainJob.ts; VPS-first extend article-body-fetcher.py for vnexpress.vn + VPS:8765 article-body endpoint; main-server Playwright fallback for JS/intl. Hard caps (10 deep / 5 Playwright per cycle), per-domain daily cap, 4h stale expiry, source_url UNIQUE.",
-        "type": "SPRINT-M",
-        "owner": "dev-mcp-server",
-        "status": "TODO",
-        "zone": "multi",
-        "size": "M",
-        "priority": "high",
-        "sprint": "DEEPFETCH-RAG-REDESIGN",
-        "depends": [
-          "DFR-Q1",
-          "DFR-Q2",
-          "DFR-QA-1"
-        ],
-        "created_at": "2026-06-08T09:06:20Z",
-        "files": [
-          "apps/mcp-server/src/scheduler/news-analysis/pollNews.ts",
-          "apps/mcp-server/src/domain/services/deepFetchGate.ts",
-          "apps/mcp-server/src/infrastructure/db/schema-news.ts"
-        ],
-        "note": "Brief Pillar A / Option R. GATED: do NOT dispatch until DFR-Q1+Q2 answered (vnexpress viability + VPS RAM/service topology) AND Phase 1 QA green. Owner zone multi (dev-mcp-server + dev-vps-crawls + dev-mainserver-crawls) -> architect must split at dispatch. WIP control: not this kickoff.",
-        "blocked_reason": null,
-        "gate": "UNGATED 2026-06-08: deps DFR-Q1/Q2/QA-1 all DONE (raw-verified). User greenlit Phase 2+3 combined.",
-        "ungated_at": "2026-06-08T13:17:10Z",
-        "ungated_by": "po",
-        "next_role": "architect"
-      },
-      {
-        "id": "DFR-P3-HYBRID",
-        "title": "PHASE 3 (GATED on Q3): BM25+vector hybrid via LanceDB FTS. create_fts_index() on (title,summary); hybrid_search() with RRF merge in LanceDBVectorStore; expose POST /search {hybrid:bool} default false; update chef-synthesis + bctc-analyst callers to pass hybrid:true.",
-        "type": "SPRINT-M",
-        "owner": "dev-rag-service",
-        "status": "TODO",
-        "zone": "apps/rag-service/",
-        "size": "M",
-        "priority": "medium",
-        "sprint": "DEEPFETCH-RAG-REDESIGN",
-        "depends": [
-          "DFR-Q3",
-          "DFR-P1-RAG"
-        ],
-        "created_at": "2026-06-08T09:06:20Z",
-        "files": [
-          "apps/rag-service/infrastructure/repositories.py",
-          "apps/rag-service/application/dtos.py"
-        ],
-        "note": "Brief Pillar B / Option H. HARD GATE: do NOT commit until DFR-Q3 confirms lancedb version supports FTS + hybrid_search() AND architect locks Phase 3 design. Highest-risk component (R: FTS API version-dependent); benefit marginal until Phase 1 metadata filters live. WIP control: not this kickoff.",
-        "blocked_reason": null,
-        "gate": "UNGATED 2026-06-08: deps DFR-Q3/P1-RAG all DONE (raw-verified). User greenlit Phase 2+3 combined.",
-        "ungated_at": "2026-06-08T13:17:10Z",
-        "ungated_by": "po",
-        "next_role": "architect"
       }
     ],
     "archive": [],
