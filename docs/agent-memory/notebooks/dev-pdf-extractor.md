@@ -193,7 +193,7 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 **Operational recovery:** `docker restart` (no rebuild, ProcessPoolExecutor fix already in image from 3033e1dc). Container healthy in first two post-restart probes (exit=0). BCTC batch unblocked.
 
-**BCTC reparse:** VHM/HCM/HSG/KBC = "Chưa có dữ liệu BCTC" before restart. Reparse not run yet — container must stay stable ≥15min first.
+**BCTC reparse:** VHM/HCM/HSG/KBC = "Chưa có dữ liệu BCTC" (no financial_reports rows — initial ingest never completed). Reparse script requires existing rows — not applicable. VPS fetch triggered for Q1-2026. BLOCKED: container becomes unhealthy at first Tesseract OCR probe (01:26-01:37Z window = 11 min healthy then re-fail). Reparse unblocked only after architect raises cpus to ≥2.0.
 
 ### 2026-06-08 — PDFX-SINGLE-WORKER-BLOCKING (3033e1dc)
 ProcessPoolExecutor(max_workers=1) → OCR child process → /health 200 OK during OCR. asyncio.to_thread() insufficient (same process). D6: max_workers=1. History: `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md`.
