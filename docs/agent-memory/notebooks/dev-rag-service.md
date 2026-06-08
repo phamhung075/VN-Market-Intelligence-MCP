@@ -4,6 +4,27 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-06-08 — SPIKE DFR-Q3 + DFR-Q4 (DEEPFETCH-RAG-REDESIGN feasibility)
+
+**Tasks:** DFR-Q4 (gates DFR-P1-RAG migration) · DFR-Q3 (gates DFR-P3-HYBRID)
+**Mode:** Recon only — no production changes, no live table altered.
+
+**DJ-GATE-1 — verified raw version:**
+- Docker image (`vn-market-intelligence-mcp-rag-service:latest`): **lancedb 0.30.2**
+- Host Python 3.13: lancedb 0.25.3 (not authoritative for production)
+- `requirements.txt` lower-bound: `lancedb>=0.6.0`
+
+**DFR-Q4 — add_columns() non-destructive? YES**
+Tested against throwaway LanceDB in ephemeral Docker run. 3-row table with current live schema received all 8 new Phase 1 columns (`ticker`, `sector`, `source_domain`, `depth_tier`, `doc_type`, `published_at`, `confidence`, `impact_score`). Row count before=after=3. Original field values intact. Defaults: `depth_tier='shallow'`, `doc_type='news'`, numerics 0.0, optional strings null. Vectors NOT re-embedded. Risk R4 RESOLVED.
+
+**DFR-Q3 — FTS + hybrid available? YES (with one API constraint)**
+`create_fts_index()`: functional but single-field only in native mode — cannot pass `['title','summary']` as list; must call twice (once per field). `LanceHybridQueryBuilder` functional via `.vector().text()` pattern (not string-in-search). `RRFReranker` available and functional. No upgrade needed — 0.30.2 >> required v0.8+.
+
+**Findings doc:** `docs/spikes/SPIKE_DFR-Q3-Q4-lancedb-feasibility.md`
+**Both tasks:** DONE — orch-state updated.
+
+---
+
 ### 2026-05-27 — DISK RECLAIM + COMPACTION GUARD (maintenance task)
 
 **Trigger:** Host disk 100% full. Investigation identified two separate LanceDB stores.

@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T09:06:20Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-08T11:15:00Z",
+  "_updated_by": "dev-rag-service",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T00:00:00Z",
-    "_updated_by": "ba",
+    "_updated_at": "2026-06-08T11:15:00Z",
+    "_updated_by": "dev-rag-service",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2557,14 +2557,17 @@
             "type": "SPIKE",
             "mode": "spike",
             "timebox": 120,
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/rag-service/",
             "size": "S",
             "priority": "high",
             "sprint": "DEEPFETCH-RAG-REDESIGN",
             "depends": [],
             "created_at": "2026-06-08T09:06:20Z",
-            "note": "Brief Q3. HARD GATE on Phase 3 (DFR-P3-HYBRID stays BLOCKED until this answers yes/no). Output: version + FTS/hybrid availability verdict."
+            "note": "Brief Q3. HARD GATE on Phase 3 (DFR-P3-HYBRID stays BLOCKED until this answers yes/no). Output: version + FTS/hybrid availability verdict.",
+            "completed_at": "2026-06-08T11:15:00Z",
+            "verdict": "FTS+HYBRID AVAILABLE: YES. lancedb 0.30.2. create_fts_index() functional (single-field at a time; two calls for title+summary). hybrid_search via LanceHybridQueryBuilder + .vector().text() pattern + RRFReranker all functional. No upgrade needed. API constraint: no multi-field list to create_fts_index. See docs/spikes/SPIKE_DFR-Q3-Q4-lancedb-feasibility.md",
+            "spike_doc": "docs/spikes/SPIKE_DFR-Q3-Q4-lancedb-feasibility.md"
           },
           {
             "id": "DFR-Q4",
@@ -2573,14 +2576,17 @@
             "type": "SPIKE",
             "mode": "spike",
             "timebox": 120,
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/rag-service/",
             "size": "S",
             "priority": "high",
             "sprint": "DEEPFETCH-RAG-REDESIGN",
             "depends": [],
             "created_at": "2026-06-08T09:06:20Z",
-            "note": "Brief Q4 + Risk R4. Non-blocking for Phase 1 ba-spec BUT MUST answer before DFR-P1-RAG commits the migration to live data. Output: non-destructive verdict from test instance."
+            "note": "Brief Q4 + Risk R4. Non-blocking for Phase 1 ba-spec BUT MUST answer before DFR-P1-RAG commits the migration to live data. Output: non-destructive verdict from test instance.",
+            "completed_at": "2026-06-08T11:15:00Z",
+            "verdict": "NON-DESTRUCTIVE: YES. lancedb 0.30.2 in Docker. add_columns() tested on throwaway table — 3 rows preserved, all original data intact, new cols get safe defaults (depth_tier=shallow, doc_type=news, confidence=0.0, nulls for optional strings). See docs/spikes/SPIKE_DFR-Q3-Q4-lancedb-feasibility.md",
+            "spike_doc": "docs/spikes/SPIKE_DFR-Q3-Q4-lancedb-feasibility.md"
           },
           {
             "id": "DFR-Q5",
