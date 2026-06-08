@@ -1,20 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-06-08 18:00 UTC (c032) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c030 · 2026-06-08T00:00Z
-### Analysis Cycle (00:00 UTC) — mode: BLOCKED
-- E2 guard: PASS (00:00 UTC, outside [02:00,08:00))
-- BLOCKED at Step 0: MCP gateway unavailable — mcp__claude_ai_gateway__call_tool not found (2 attempts).
-- get_cycle_bootstrap unreachable. All analysis steps blocked. No signals emitted.
-- Bug escalation signal dropped: docs/signals/bctc-analyst-20260608T000000Z.json
-- Telegram BUG send: FAILED (same MCP gateway outage).
-
-### Carry-over to c031 (next slot, 2026-06-08 15:00 UTC)
-- MCP gateway must be restored before any cycle can proceed.
-- All c029 carry-over items remain active (22 tickers, CTG pipeline fix, ACB/DHG/EIB PUB-5, NVL/VPB legal).
-- RELEASE mode still warranted for 22 ĐÃ NỘP tickers from 2026-06-07 once gateway restored.
-- FPT ESC-3: DATA-COV-LIM guard held (~5d TTL remaining).
+**Last updated:** 2026-06-08 18:10 UTC (c033) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c031 · 2026-06-08T15:00Z
 ### Analysis Cycle (15:00–15:10 UTC) — mode: mixed
@@ -53,3 +39,25 @@
 - NVL: bond 5,000ty due 2026-09-15 (~99d). VPB: Lạng Sơn legal risk open.
 - FPT ESC-3: DATA-COV-LIM guard held (~3d TTL). trick_confidence=medium carry.
 - BĐS sector: VIC -5.80%, VRE -5.13% — rate-sensitive headwind active. Monitor.
+
+## c033 · 2026-06-08T18:10Z
+### Analysis Cycle (18:07–18:20 UTC) — mode: mixed
+- E2 guard: PASS (18:07 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-2.
+- Double-publish guard: claimed=true (bctc-slot-2:2026-06-08). Log ID: 1290.
+- Mode: mixed. 1 routine (FPT) + 6 release BLOCKED (CTG/VCB/REE/NVL/D2D/TCH).
+- Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%. Market EY 7.05% CHEAP. VN-Index 1790.53 (DOWN -48.37).
+- Macro: Brent $94.44 NEUTRAL; Gold $4,362.4 BULLISH; USD/VND 26127 BEARISH. Investment clock: CORE_VN score=8.
+- FPT Q1-2026 routine: PE 13.8 vs 17.3 (-20%), ROE 28.3%, EY spread +2.25pp FAIR. OCF -2,848ty seasonal. Balance imbalance=0. ESC: 1=F, 2=PASS, 3=DATA-COV-LIM (~3d TTL), 4=F, 5=F. No escalation. trick_confidence=medium. Kinh Dich unavailable (URL error).
+- Release batch (6 tickers): CTG/VCB/REE/NVL/D2D/TCH all get_bctc_full empty (pipeline lag cycle 25+ for CTG). PDFs stored. ACB/EIB PUB-5 blocked (conf 31-38%). RELEASE deferred again.
+- CTG partial: vector store shows LNST 8,960ty, doanh thu 3,910ty (unverified structured path).
+- EIB GOVERNANCE CRITICAL: 3-4 HĐQT resigned 2026-06-08 (count discrepancy 3 vs 4 sources). Signal #5417 posted.
+- Legal: CMG/VNECO2 tax_penalty, PC1 arrest unresolved, VPB Lạng Sơn open.
+- Signals: #5416 FPT (critic 1.0), #5417 EIB governance (critic 0.8), #5418 BATCH-BLOCKED (critic 0.8).
+- Signal files: bctc_signal_FPT_20260608_routine.json, bctc_signal_BATCH_RELEASE_20260608_pending.json.
+
+### Carry-over to c034 (next slot, 2026-06-08 21:00 UTC)
+- CTG cycle 25+: URGENT pipeline fix escalation. dev-team must unblock extraction.
+- VCB/D2D/TCH: NEW filings 2026-06-08, PDFs stored, extraction blocked. RELEASE priority.
+- ACB/EIB PUB-5 blocked. EIB governance event unresolved.
+- NVL: bond 5,000ty due 2026-09-15 (~99d). VPB: Lạng Sơn legal open.
+- FPT ESC-3: DATA-COV-LIM guard held (~3d TTL remaining).
