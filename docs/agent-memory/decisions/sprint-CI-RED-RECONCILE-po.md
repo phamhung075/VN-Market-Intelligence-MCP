@@ -135,3 +135,26 @@ FIX-MCP-TOOL-COUNT-DRIFT + FIX-MCP-CI-NETWORK-GUARD: marked DONE because their s
 **why-change:** Differs from STEP po-RECONCILE which trusted 639 as the baseline. New raw evidence proves 639 was never cleanly produced; the empirical experiment B1 was measuring under a crashing toolchain.
 **push:** NOT performed by PO. Router owns push + CI verification.
 **dispatch:** PO did NOT spawn dev — router (dev-team dispatcher) owns the run_in_background spawn of dev-mcp-server for FIX-CI-COVERAGE-OOM-CRASH.
+
+### STEP po-S9 (DJ-GATE-1): FIX-CI-COVERAGE-OOM-CRASH attempt #1 (c2ab2cea) FAILED — re-scope with VERIFIED bun-1.3.13 mechanism (2026-06-08T21:20Z)
+**task-id:** FIX-CI-COVERAGE-OOM-CRASH (re-scope, 2nd fix attempt)
+**what-done:** Router raw-verified the shipped fix is BROKEN; PO empirically verified the correct override mechanism against the EXACT CI bun version before re-scoping. NO unverified flag this time.
+**raw-failure (CI run 27167284935, HEAD c2ab2cea, job "bun test"):** `bun test --coverage=false` -> `error: The argument '--coverage' does not take a value.` Job conclusion=failure at ARG-PARSE; suite NEVER ran. The prior step (po-S8) specified `--coverage=false` on an UNVERIFIED assumption that bun has a coverage value-flag — FALSE. bun `--coverage` is enable-only boolean.
+**VERIFICATION DONE (the gate the last attempt skipped):** bun 1.3.13 is the pinned CI version (`.tool-versions`) AND is installed locally — exact match. Probed the real binary with a real source+test fixture. **Matrix (coverage-table emitted?):** bunfig `coverage=true`: bare `bun test`=ON, `bun test --coverage`=ON. bunfig `coverage=false`: bare=OFF, `bun test --coverage`=**OFF (flag ignored in 1.3.13!)**. bunfig absent: `--coverage`=ON. Also: `--coverage=false`=hard parse error; `-c ci-bunfig.toml` / `BUN_CONFIG_FILE` do NOT override `[test] coverage` when a local bunfig.toml exists (table still printed) -> Approach-2 separate-CI-bunfig is NOT viable. Failing-test exit code = non-zero under coverage=false (propagation OK).
+**what-considered:**
+- A1 set bunfig `coverage=false`, local devs opt-in via `bun test --coverage` -> CAVEAT FOUND: in 1.3.13 `--coverage` does NOT re-enable when bunfig says false; local opt-in story is partly broken. Still the only mechanism that reliably gives CI a no-coverage run.
+- A2 separate CI bunfig via -c / env -> REJECTED: verified does NOT override the test-section coverage key; would be a 2nd unverified-flag mistake.
+- A3 fix the underlying coverage-table OOM -> deferred unless disabling rejected; harder, off critical path.
+**why-decision:** Route to architect SPIKE FIRST (recurring-bug rule: 2nd failed CI fix on the same ci.yml test step = 2+ commits same module). Architect picks the mechanism + handles the A1 local-coverage tradeoff (e.g. keep coverage local via a separate package.json script `test:cov` that calls `bun test --coverage` with bunfig coverage left absent/false, OR accept CI-bare = no coverage and document the local recipe). PO supplies the VERIFIED matrix so the spike is a 30-min confirmation, not open-ended. Hard gate carried into the spec: re-fix MUST be proven against bun 1.3.13 (`bun --version` + dry-run of exact CI command) BEFORE treated as fixed.
+**verification-gate (unchanged):** CI bun-test job emits clean `Ran N tests ... N fail` summary on subsequent push (no coverage-gen crash, no arg-parse error). MAY stay RED on genuine failures.
+**push:** NOT performed by PO. Router HOLDS the local drain commit until corrected ci.yml lands -> one push, one clean run.
+
+### STEP po-S10: F-SUNDAY-SCHEDULER-FIRE (TNB c91 CRITICAL) REJECTED — false positive, calendar error (2026-06-08T21:20Z)
+**task-id:** (ambient triage — TNB audit-handoff)
+**what-done:** Raw-verified TNB's CRITICAL "weekday-only chef slots fired on Sunday" finding before any dispatch. Rejected as false positive; no dev task created.
+**raw-evidence:** `2026-06-08` is a **MONDAY** (`date -u`: Lun; Sat=06-06 Sun=06-07 Mon=06-08). `new Date(Date.UTC(2026,5,8)).getUTCDay()===1`. Tested the cron-match SSOT `scripts/agents-flow/cowork-match-slots.js`: `cronMatches("13 2-8 * * 1-5", Sunday)===false` and `===false` for Monday-05:13 nominal — `dowMatch()` honors `1-5` correctly. Chef slots firing on a Monday is CORRECT (VN market open). Stale prices were Friday-close because audit ran pre-open Monday, not a scheduler defect.
+**what-considered:**
+- Create CRITICAL dev FIX for dispatcher day-of-week filter (TNB's ask) -> REJECTED: the code is correct, the audit premise (08=Sunday) is wrong. Dispatching here = auditor-false-positive destructive action (memory: auditor_false_positive_destructive).
+- only: reject + route calendar correction to TNB c92.
+**why-decision:** verify-raw-not-badges + no-FIX-on-non-bug. The dish-text "VN market OPEN (Sunday)" is a unified-agent day-LABEL error (LOW), folds into existing SPIKE-UNIFIED-NB-GAP, not a scheduler bug.
+**why-change:** TNB findings normally become tasks (high severity); this one fails the raw-evidence gate, so the standard "high->task" rule is overridden by the false-positive guard.

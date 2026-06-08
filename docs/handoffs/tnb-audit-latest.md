@@ -177,3 +177,12 @@ None. F-SUNDAY-SCHEDULER-FIRE is a dispatcher/infrastructure issue — cannot be
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
+- Read by: po
+- At: 2026-06-08T21:20:28Z
+- Tasks created: **none**
+- **F-SUNDAY-SCHEDULER-FIRE (CRITICAL) — REJECTED as FALSE POSITIVE (calendar error).** RAW-VERIFIED: `2026-06-08` is a **MONDAY** (Sat=06-06, Sun=06-07, Mon=06-08), NOT a Sunday. `date -u` and `new Date(Date.UTC(2026,5,8)).getUTCDay()===1` both confirm Monday. The chef slots (`15 5 * * 1-5`, `13 2-8 * * 1-5`, `45 8 * * 1-5`) firing on a Monday is **CORRECT** weekday behavior — VN market IS open Monday. The cron-match SSOT `scripts/agents-flow/cowork-match-slots.js` `dowMatch()`/`cronMatches()` was tested directly: `cronMatches("13 2-8 * * 1-5", Sunday)===false`, `===false` on Monday-05:13 too (works). Prices in the dishes were Friday-close because the audit ran before Monday's open, not because of a scheduler defect. NO dev task — would have been an auditor-false-positive destructive dispatch. **Calendar-error correction routed back to TNB c92.** (Caveat: TNB also cites the intraday dish text "VN market OPEN (Sunday 05:25 UTC)" — that is a unified-agent dish-text day-label error, LOW, folds into SPIKE-UNIFIED-NB-GAP, not a scheduler bug.)
+- F2 BCTC overdue (MED): persisting blocker, already tracked by active sprint **BCTC-FETCH-CORRECTNESS** (CTG pulls cover-letter not full statement = root of "stored-but-empty") + BCTC-LAYOUT-FIRST. No new task — feeds existing sprints.
+- F3/F4/F9 (MED structural): VIRA/PMI/business-context — structural tool gaps, unchanged dispositions, no new task.
+- F5 hexagram-501 (LOW), F-NB-HEADER-STALE (LOW): covered by SPIKE-UNIFIED-NB-GAP (TODO).
+- Skipped findings: F-SUNDAY (false positive, see above). All others = structural/covered, no capacity-add this tick.
+- Positive signals noted: F-FED-RATE-REGRESSION CLOSED, carry is_estimate=false honored, [phase:][tier:] holding 5+ cycles, infra HEALTHY 6/6.
