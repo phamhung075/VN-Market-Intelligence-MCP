@@ -44,3 +44,16 @@
 - Hexagrams: market unavailable (501); portfolio_conviction Khôn (87%), Sư (100%), mixed reversal signals
 - Degradation: market_hexagram unavailable; conviction MEDIUM (pillar mismatch); carry DSI-CONSUMER honored
 - Published: YES (gate-fired contract; degraded-floor valid minimum)
+
+## Session: 2026-06-08 (evening)
+
+### Chef Dish — evening 19:37 UTC — PUBLISHED
+
+- Clusters qualified: 5 major (Banking sector -2.18% avg, Real estate -1.88% avg, Tech -2.05% avg, Steel -2.46% avg, Macro-micro USD/VND carry pressure vs watchlist)
+- Causal chain: Fed 3.63% maintained → VND carry pressure (USD/VND 26127 > 25500) → FII net-sell banking/RE/tech → Market -2.63% | Banking -2.18% | RE -1.88% | Tech -2.05% | Steel -2.46%
+- Phase: SLOWDOWN | Tier: fixed_income/quality_equity | Conviction: MEDIUM (3/4 pillars support: COC HIGH, EPS mixed-headwind, Valuation CHEAP 7.05% yield, M2 uncertain)
+- TNB layers 1–6 complete. Layer 1: USD/VND crossed 25500 state transition ✓. Layer 2: Fed 3.63% elevated. Layer 3: carry 1.38pp NEUTRAL-weak (is_estimate=false). Layer 4: [phase: slowdown] [tier: fixed_income|quality] — COC rising, EPS mixed. Layer 5: Hexagrams mixed (VIC Khôn 87%, Banking mostly Sư GIU, Tập Khảm BAN on MBB/HVN, no Lão peaks). Layer 6: Multi-source (bootstrap + macro_snapshot + alerts), causality clear, regime drift checked.
+- Signals: 0 explicit signal files, 327 system alerts pending, 20 HIGH alerts price_drop (sector convergence evidence)
+- Conviction: MEDIUM (carry sustains 1.38pp, but earnings pressure from carry pass-through + FII outflow risk = slowdown phase likely)
+- Degradation: macro_state recent (M2 gap noted), carry DSI-CONSUMER honored (is_estimate=false), hexagram_market unavailable (501)
+- Published: YES (guaranteed evening slot, degraded-floor valid)
