@@ -216,3 +216,25 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ### 2026-06-08 — PDFX-SINGLE-WORKER-BLOCKING (3033e1dc)
 ProcessPoolExecutor(max_workers=1) → OCR child process → /health 200 OK during OCR. asyncio.to_thread() insufficient (same process). D6: max_workers=1. History: `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md`.
+
+---
+
+### 2026-06-08T15:47Z — FIX-PDF-EXTRACTOR-UNHEALTHY re-scope: BCTC staleness probe (zone-boundary exit)
+
+**Cycle:** 15:10–15:47Z | Task: FIX-PDF-EXTRACTOR-UNHEALTHY (re-scoped to data-ingest FIX, direct Step 3)
+**Outcome:** ROOT CAUSE NOT IN ZONE → zone_missing_tier3 signal emitted → po for dev-mcp-server re-route
+
+**Queue live (15:40Z):** 328 deferred_infra | 48 done | 27 url_not_found | 26 pending
+**financial_reports latest parsed_at:** 2026-06-08T02:15:48Z (~33 min stale at probe time — NOT 38.5h)
+**pdf-extractor container:** HEALTHY (Up 7h, port 5001 responding)
+**VPS bctc-cache:** 24 PDFs available; service running (sleeping 21600s after 11:48Z run)
+**VPS bctc-fetch last run:** 2026-06-08T11:48Z — 10 items processed, 0 PDFs found (content not yet published)
+
+**Root cause of 26 stuck pending rows (two sub-classes):**
+1. 8 null-url rows (ACV/BDI/DAG/DLC/JSH/SIS/VDC/VNH): PDFs genuinely not published by companies yet.
+2. 18 placeholder-url rows (VNM/VEA/SHB etc.): `backfillBctcQ12026.ts` inserted canonical placeholder URLs (`VNM_2026_Q1.pdf`). VPS cache never stores files with canonical names. `bctcQueueEnricherJob` WHERE clause (`source_url IS NULL OR 'MISSING' OR '/test-%'`) does NOT match these placeholder VPS URLs — so enricher skips them, pull job retries 404s forever (VNM: 435 attempts). Both root files are in `apps/mcp-server/`.
+
+**Why BCTC is not critically stale today:** 5 reports processed today (KDC, NVL×2, CTG, REE via BCTC push + extraction pipeline). The system-auditor "38.5h stale" claim was based on a snapshot taken before today's activity. Actual staleness ~33 min.
+
+**Signal emitted:** `dpe-20260608T154700Z` | type: zone_missing_tier3 | to: po | suggestedZone: dev-mcp-server | files: bctcQueueEnricherJob.ts + backfillBctcQ12026.ts
+**Decision journal:** `docs/agent-memory/decisions/sprint-ORCH-DASH-DECISION-DRILLDOWN-dev-pdf-extractor.md § DJ-GATE-1`

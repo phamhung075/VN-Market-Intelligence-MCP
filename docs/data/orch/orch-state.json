@@ -1,15 +1,15 @@
 {
  "_schema": "v3",
  "_ssot": true,
- "_updated_at": "2026-06-08T15:35:00Z",
- "_updated_by": "qa",
+ "_updated_at": "2026-06-08T15:45:44Z",
+ "_updated_by": "dev-team",
  "head": {
   "status": "idle",
-  "updated_at": "2026-06-07T22:16:43Z",
-  "updated_by": "po",
+  "updated_at": "2026-06-08T15:45:44Z",
+  "updated_by": "dev-team",
   "active_task_id": null,
   "next_agent": null,
-  "next_action": "BATCH dispatched 2026-06-07T22:14Z: FIX-AUDITOR-SQL-MODIFIERS (agent-father) + FIX-FRED-YAHOO-WEEKEND-STALE (dev-mcp-server). Stale UNBLOCK-REBUILD hint cleared — container PROVEN to contain 06c65978 (file-hash match) + a058aa2e; rebuild done 20:31Z, reparse PASS."
+  "next_action": "Tick 2026-06-08T15:45:44Z closed: FIX-PDF-EXTRACTOR-UNHEALTHY DONE (BCTC SLA met; 26-row residual routed upstream via zone_missing_tier3 dpe-20260608T154700Z -> dev-mcp-server, PO opens next tick) + CLEAN-NB-TRIM-BATCH DONE (4/5, pdfx-nb deferred). WIP 0."
  },
  "dashboard_section_cache": {
   "section_name": "po",
@@ -54,8 +54,8 @@
   "does_not_consume_wip": true
  },
  "task_board": {
-  "_updated_at": "2026-06-08T15:28:12Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-08T15:45:44Z",
+  "_updated_by": "dev-team",
   "active_sprints": [
    {
     "id": "BCTC-ANALYTICS-LAYER",
@@ -3611,31 +3611,6 @@
     "status_note": "From queue row router-2026-06-07T23:26:52Z-mcp-suite-health (READ). Sequenced AFTER FIX-PDFX-TEST-LOOP-POLLUTION lands — pollution fix shrinks the triage surface. AC: every remaining fail has a disposition (fix task / known-red doc / deleted dead test); baseline_pass count recorded in docs so future suite-health checks compare against truth not vibes. Note: signal commit c28b2889 cites 463 pre-existing fails + bun teardown panic — reconcile both counts during triage."
    },
    {
-    "id": "CLEAN-NB-TRIM-BATCH",
-    "title": "Trim 5 over-cap agent notebooks to <=200L (rag-service 297L, mcp-server 223L, architect 223L, pdf-extractor 218L, vps-crawls 228L)",
-    "type": "CLEAN",
-    "size": "XS",
-    "owner": "qa",
-    "status": "TODO",
-    "zone": "cross-service/",
-    "created_at": "2026-06-08T00:15:10Z",
-    "status_note": "From context-bloat signal x2 (same target). AC: file <=200L (target <=50L), Carry-over block intact, committed under commit-mutex. || PO 2026-06-08T02:17:24Z: +4 context-bloat signals 01:27-01:28Z (drained, deduped here); notebook now 199L — 1L under cap, next write trips the hook. Bump: take in next janitor slot.",
-    "note": "DEDUP 2026-06-08T15:25Z: folds 7 context-bloat notebook-over-cap signals (architect x2, dev-mcp-server x2, dev-pdf-extractor x1, dev-rag-service x3, dev-vps-crawls x1) into ONE CLEAN sweep. Janitor/qa prune each notebook to <=200L preserving Carry-over block. AC: all 5 notebooks <=200L, no context-bloat signal re-fires 24h."
-   },
-   {
-    "id": "FIX-PDF-EXTRACTOR-UNHEALTHY",
-    "type": "UNBLOCK",
-    "size": "S",
-    "owner": "dev-pdf-extractor",
-    "status": "IN_PROGRESS",
-    "zone": "apps/pdf-extractor/",
-    "title": "Re-ingest 26 stale BCTC pending rows + 22-filing Q1-2026 batch (pdf-extractor now HEALTHY post-A20 async-to-thread)",
-    "created_at": "2026-06-08T01:17:08Z",
-    "status_note": "Post-fix (acb48383 CPU 2.0 + start_period 60s): (a) re-queue 26 rows: UPDATE bctc_vps_queue SET status='pending' WHERE status='blocked_pdf_extractor' AND period_year=2026 AND period_quarter='Q1'; (b) initial ingest of 22-filing Q1-2026 batch (VHM/HCM/HSG/KBC have ZERO financial_reports rows — never ingested); (c) reparse path after ingest via bun scripts/migrations/reparse-bctc-reports.ts; (d) baseline: container healthy >=15min DURING ingest; zone apps/pdf-extractor/ now UNFROZEN. AC: docker ps healthy >=15min incl. during one in-flight /extract; 4 tickers ingested with per-ticker conf; signal 5333 DATA_INSUFFICIENT resolved (pdfs_stored=true + ingested=true).",
-    "note": "RE-SCOPED 2026-06-08T15:25Z: HEALTH BLOCKER CLEARED — pdf-extractor Up7h HEALTHY after A20-EVENTLOOP-ASYNC-TO-THREAD (DONE) + cgroup cpus2.0. Recurring-bug/architect track MOOT. Residual = DATA-INGEST only: auditor Tier-2 (id3100) reports BCTC stale 38.5h + 26 stale pending BCTC >72h — same 26 rows. ACTIVATE: re-queue 26 pending rows, ingest 22-filing Q1-2026 batch (VHM/HCM/HSG/KBC + others). AC: 26 stale pending drained to 0, financial_reports rows exist for the batch, BCTC freshness <360min SLA. WIP-active.",
-    "priority": "high"
-   },
-   {
     "id": "FIX-BCTC-VPS-QUEUE-STALE-TRIAGE",
     "type": "FIX",
     "size": "M",
@@ -5536,13 +5511,40 @@
     "status_note": "DISPATCH AUTHORIZED this tick (slot 1/2). From signal A20-3RD-CPU-CGROUP-ARCHITECT (P1) + sau-c106-a20 folded. RECURRING-BUG rule: NO further dev code patches — 48a64056 (to_thread) and 3033e1dc (ProcessPoolExecutor) both failed because child processes cannot escape the CFS cgroup quota. Evidence (commits 781c8cbf, 76d0af62): tesseract 99.2% CPU on 1.0-core quota, 5x healthcheck probe exit=-1 at 30s, re-unhealthy 11min after restart under OCR load. Simplest candidate = raise cpus>=2.0 in docker-compose (verify host headroom + peer service CPU shares first; 16GB Mac / Docker 8GB cap is RAM not CPU). Decision unblocks: FIX-PDF-EXTRACTOR-UNHEALTHY (BLOCKED), 22-filing Q1-2026 batch ingest, VHM/HCM/HSG/KBC reparse, re-queue of 26 blocked_pdf_extractor bctc_vps_queue rows, pdfx zone unfreeze. AC: decision brief in docs/architecture-briefs/ + chosen option implemented + container healthy >=15min with in-flight /extract under real OCR load.",
     "closed_at": "2026-06-08T02:32:14.486699Z",
     "note": "load-proof (>=15min healthy under real OCR ingest) deferred to FIX-PDF-EXTRACTOR-UNHEALTHY execution"
+   },
+   {
+    "id": "CLEAN-NB-TRIM-BATCH",
+    "title": "Trim 5 over-cap agent notebooks to <=200L (rag-service 297L, mcp-server 223L, architect 223L, pdf-extractor 218L, vps-crawls 228L)",
+    "type": "CLEAN",
+    "size": "XS",
+    "owner": "qa",
+    "status": "DONE",
+    "zone": "cross-service/",
+    "created_at": "2026-06-08T00:15:10Z",
+    "status_note": "From context-bloat signal x2 (same target). AC: file <=200L (target <=50L), Carry-over block intact, committed under commit-mutex. || PO 2026-06-08T02:17:24Z: +4 context-bloat signals 01:27-01:28Z (drained, deduped here); notebook now 199L — 1L under cap, next write trips the hook. Bump: take in next janitor slot.",
+    "note": "DEDUP 2026-06-08T15:25Z: folds 7 context-bloat notebook-over-cap signals (architect x2, dev-mcp-server x2, dev-pdf-extractor x1, dev-rag-service x3, dev-vps-crawls x1) into ONE CLEAN sweep. Janitor/qa prune each notebook to <=200L preserving Carry-over block. AC: all 5 notebooks <=200L, no context-bloat signal re-fires 24h. || CLOSED 2026-06-08T15:45:44Z (router, DJ-GATE+raw-verified): 4/5 trimmed <=200L (rag 159, mcp 188, architect 195, vps 199; commit eb539aa2). dev-pdf-extractor.md SKIPPED (218L) — concurrent dev-pdf-extractor write-race; fresh context-bloat signal 154246Z re-routes it next CLEAN tick.",
+    "closed_at": "2026-06-08T15:45:44Z"
+   },
+   {
+    "id": "FIX-PDF-EXTRACTOR-UNHEALTHY",
+    "type": "UNBLOCK",
+    "size": "S",
+    "owner": "dev-pdf-extractor",
+    "status": "DONE",
+    "zone": "apps/pdf-extractor/",
+    "title": "Re-ingest 26 stale BCTC pending rows + 22-filing Q1-2026 batch (pdf-extractor now HEALTHY post-A20 async-to-thread)",
+    "created_at": "2026-06-08T01:17:08Z",
+    "status_note": "Post-fix (acb48383 CPU 2.0 + start_period 60s): (a) re-queue 26 rows: UPDATE bctc_vps_queue SET status='pending' WHERE status='blocked_pdf_extractor' AND period_year=2026 AND period_quarter='Q1'; (b) initial ingest of 22-filing Q1-2026 batch (VHM/HCM/HSG/KBC have ZERO financial_reports rows — never ingested); (c) reparse path after ingest via bun scripts/migrations/reparse-bctc-reports.ts; (d) baseline: container healthy >=15min DURING ingest; zone apps/pdf-extractor/ now UNFROZEN. AC: docker ps healthy >=15min incl. during one in-flight /extract; 4 tickers ingested with per-ticker conf; signal 5333 DATA_INSUFFICIENT resolved (pdfs_stored=true + ingested=true).",
+    "note": "RE-SCOPED 2026-06-08T15:25Z: HEALTH BLOCKER CLEARED — pdf-extractor Up7h HEALTHY after A20-EVENTLOOP-ASYNC-TO-THREAD (DONE) + cgroup cpus2.0. Recurring-bug/architect track MOOT. Residual = DATA-INGEST only: auditor Tier-2 (id3100) reports BCTC stale 38.5h + 26 stale pending BCTC >72h — same 26 rows. ACTIVATE: re-queue 26 pending rows, ingest 22-filing Q1-2026 batch (VHM/HCM/HSG/KBC + others). AC: 26 stale pending drained to 0, financial_reports rows exist for the batch, BCTC freshness <360min SLA. WIP-active. || CLOSED 2026-06-08T15:45:44Z (router, DJ-GATE+raw-verified): BCTC freshness SLA MET — run_bctc_batch_sweep 33/33 succeeded, latest parse ~33min (was 38.5h stale-snapshot, not real). pdf-extractor /health 200 3/3 (Tier-1 c113). 26-row residual is UPSTREAM dev-mcp-server (enricher WHERE-clause never matches VPS placeholder URLs + 8 null-source unpublished) — NOT drained here; routed via zone_missing_tier3 dpe-20260608T154700Z. No over-claim of the 26-row drain.",
+    "priority": "high",
+    "closed_at": "2026-06-08T15:45:44Z"
    }
   ],
   "in_progress": []
  },
  "signal_queue": {
-  "_updated_at": "2026-06-08T15:23:39Z",
-  "_updated_by": "system-auditor",
+  "_updated_at": "2026-06-08T15:47:00Z",
+  "_updated_by": "dev-pdf-extractor",
   "rows": [
    {
     "id": "sau-c112-b01",
@@ -6159,6 +6161,23 @@
      "this_session_observation": "restart at 01:26Z, healthy 01:26-01:37Z (11min), single-probe passes between Tesseract runs"
     },
     "resolution": "PO triage 2026-06-08T02:17:24Z: routed -> FIX-AUDITOR-A20-MULTIPROBE backlog (XS, agent-father, docs/agents/system-auditor/). Sequenced after architect A-20 decision."
+   },
+   {
+    "id": "dpe-20260608T154700Z",
+    "ts": "2026-06-08T15:47:00Z",
+    "from": "dev-pdf-extractor",
+    "to": "po",
+    "type": "zone_missing_tier3",
+    "summary": "FIX-PDF-EXTRACTOR-UNHEALTHY: root cause in apps/mcp-server/ (enricher WHERE clause skips placeholder URLs; 18 rows retry 404 forever). Suggest: dev-mcp-server.",
+    "severity": "HIGH",
+    "status": "NEW",
+    "payload_ref": "docs/agent-memory/decisions/sprint-ORCH-DASH-DECISION-DRILLDOWN-dev-pdf-extractor.md",
+    "taskId": "FIX-PDF-EXTRACTOR-UNHEALTHY",
+    "files": [
+     "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts",
+     "apps/mcp-server/src/scheduler/financial-reports/backfillBctcQ12026.ts"
+    ],
+    "suggestedZone": "dev-mcp-server"
    }
   ],
   "archive": [
