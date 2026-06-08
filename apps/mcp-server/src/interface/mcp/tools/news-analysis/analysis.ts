@@ -536,11 +536,13 @@ export function registerAnalysisTools(server: McpServer): void {
         // Build options object without undefined keys (exactOptionalPropertyTypes)
         const rawK = Math.min(k * 3, 20);
         // G5b: call rag-service via HTTP; map response to SearchResult shape
+        // DFR-P3-MCP: bctc-analyst issues ticker-exact filing queries → hybrid BM25+vector improves recall
         const ragResponse = await ragSearch({
           query,
           limit: rawK,
           ...(level !== undefined ? { level } : {}),
           ...(actionCode !== undefined ? { action_code: actionCode } : {}),
+          hybrid: true,
         });
         const rawResults: SearchResult[] = ragResponse.results.map(
           (r: RagSearchResultDTO): SearchResult => ({

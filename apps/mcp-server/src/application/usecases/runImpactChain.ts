@@ -240,6 +240,7 @@ async function defaultRagRetriever(
     const response = await ragSearch({
       query,
       ...(options?.k !== undefined ? { limit: options.k } : {}),
+      hybrid: true, // DFR-P3-MCP: chef synthesis queries are ticker-exact — BM25+vector improves recall
     });
     return response.results.map((r) => ({
       id: r.id,

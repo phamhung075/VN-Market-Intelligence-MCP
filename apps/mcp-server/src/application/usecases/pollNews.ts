@@ -456,6 +456,7 @@ async function defaultRagRetriever(
       query,
       decay_half_life_days: decayHalfLifeDays,
       ...(options?.k !== undefined ? { limit: options.k } : {}),
+      // hybrid intentionally omitted — contextual enrichment is semantic, not ticker-exact
     });
     return response.results.map((r) => ({
       id: r.id,

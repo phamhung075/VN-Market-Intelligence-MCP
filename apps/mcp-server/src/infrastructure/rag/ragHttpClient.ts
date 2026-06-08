@@ -30,6 +30,9 @@ export interface RagSearchRequest {
   source_domain?: string;
   depth_tier?: string;
   doc_type?: string;
+  // DFR-P3-MCP: hybrid BM25+vector search flag — default false (vector-only); pass true for
+  // ticker-exact callers (chef synthesis + bctc-analyst). rag-service already accepts this field.
+  hybrid?: boolean;
 }
 
 export interface RagSearchResultDTO {
