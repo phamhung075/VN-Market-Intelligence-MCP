@@ -193,3 +193,11 @@ Zone health: bun tsc --noEmit clean, 0 new failures, tools 157 intact, scheduler
 **Files:** `backfillBctcQ12026.ts` (11L), `FIX-BCTC-ENRICHER-PLACEHOLDER-URL.test.ts` (+7 tests)
 **tsc:** CLEAN | **Tests:** 31 pass / 0 fail (4 enricher test files)
 Zone health: bun tsc --noEmit clean, 31 tests (enricher suite), tools 157, scheduler 78 cron.schedule | HEALTHY
+
+---
+**Cycle:** 2026-06-08 | **Tasks:** FIX-MCP-TOOL-COUNT-DRIFT + FIX-MCP-CI-NETWORK-GUARD (Sprint CI-RED-RECONCILE)
+**Task 1:** 123-integration-mcp.test.ts floor 16→15. Root cause: `read_bctc_pdf` intentionally deregistered in TSU-DEV-U3 (OCR/PEK supersedes). Case (b) — assertion stale, not regression.
+**Task 2:** 1146 dates 2026-03-* fell outside 90-day window → daysAgo() relative helpers. 1335 setupTestDb() rag_analyses missing `data_env`+`body_text` columns → added. Both fail locally (not CI-network specific).
+**Files:** 123-integration-mcp.test.ts, 1146-get-insider-transactions.test.ts, 1335-news-pipeline-rag-insert.test.ts
+**tsc:** CLEAN | **Tests:** 48 pass / 0 fail (three files) | **Status:** REVIEW — await CI green
+Zone health: bun tsc clean, 3 target test files 48 pass / 0 fail, tools 157 intact | HEALTHY

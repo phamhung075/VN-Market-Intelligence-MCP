@@ -2893,6 +2893,30 @@
             "status_note": "Config migrated to v2 schema. Local: golangci-lint run exits 1 (lint violations) not 3 (config parse error) — config is valid. Exit-1 violation (FIX-TA-SANDBOX-DEPGUARD, fence-c, cmd/sandbox/main.go:44) is pre-existing tracked debt, not this task. VERIFICATION GATE: GREEN ci.yml after subsequent push. DJ-GATE-1: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-technical-analysis.md"
           }
         ]
+      },
+      {
+        "sprint_id": "CI-RED-RECONCILE",
+        "goal": "Unblock CI red state on main — fix test assertion drift and test fixture schema mismatch in apps/mcp-server/",
+        "tasks": [
+          {
+            "title": "Fix MCP tool count drift — assertion floor 16→15 (read_bctc_pdf deregistered TSU-DEV-U3)",
+            "status": "REVIEW",
+            "zone": "mcp-server",
+            "agent": "dev-mcp-server",
+            "priority": "CRITICAL",
+            "description": "123-integration-mcp.test.ts:867 toBeGreaterThanOrEqual(16) got 15. Root cause: read_bctc_pdf intentionally deregistered in TSU-DEV-U3 (superseded by OCR/PEK pipeline). Floor lowered to 15. Await CI green before DONE.",
+            "id": "FIX-MCP-TOOL-COUNT-DRIFT"
+          },
+          {
+            "title": "Fix CI test failures: 1146 date-stale + 1335 schema mismatch",
+            "status": "REVIEW",
+            "zone": "mcp-server",
+            "agent": "dev-mcp-server",
+            "priority": "CRITICAL",
+            "description": "1146: hardcoded 2026-03-* dates fell outside 90-day window → relative daysAgo() helper. 1335: rag_analyses test fixture missing data_env+body_text columns → added to setupTestDb(). Await CI green before DONE.",
+            "id": "FIX-MCP-CI-NETWORK-GUARD"
+          }
+        ]
       }
     ],
     "backlog": [
