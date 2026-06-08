@@ -46,3 +46,14 @@
 **why-change:** DFR-P3-MCP final task of DEEPFETCH-RAG-REDESIGN sprint. P2-MCP merged at commit 65228a83 (different interface block — RagIndexRequest). This change touches only RagSearchRequest — no collision.
 **evidence:** tsc --noEmit EXIT:0. RAG test files (4 files): 39 pass / 0 fail. Full bun test: exit 0 ×2 (Bun WriteFailed crash is post-test coverage write on ENOSPC /tmp — pre-existing Bun v1.3.13 bug, not a test failure). Tool count: 172. Scheduler count: 78 (baseline 76 + 2 from P2-MCP). Rebuild needed: targeted mcp-server rebuild (no down&&up).
 **dj-gate-1:** DJ-GATE-1 appended here before flipping DFR-P3-MCP to done-code.
+
+---
+
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-06-08T16:35:00Z
+**task-id:** FIX-BCTC-ENRICHER-PLACEHOLDER-URL
+**what-done:** Fixed root cause of 18 pending rows 404-looping forever; changed `backfillBctcQ12026.ts` to insert `source_url = NULL` (removed placeholder VPS URL insert); added 7 regression tests (TC-1/TC-2/TC-3/TC-4) in `FIX-BCTC-ENRICHER-PLACEHOLDER-URL.test.ts`.
+**what-considered:**
+- Option (a): extend enricher WHERE clause to also match `http://125.212.251.27:8765/bctc-files/...Q1.pdf` pattern (would let existing live rows get enriched, but wires knowledge of VPS URL structure into enricher logic)
+- Option (b): change backfill to insert `source_url = NULL` so enricher's existing WHERE arm captures it — simpler, fixes root cause at insertion point, matches the original design intent documented in the code comment
+**why-decision:** Option (b) is cleaner: the backfill's own comment says "bctcQueueEnricherJob replaces this with the real VPS-discovered URL" — inserting NULL is the contract the enricher was designed for. Option (a) would widen the enricher WHERE clause with VPS-host-specific knowledge that could drift; option (b) is 1-line change with zero enricher logic change. TC-4 documents that live rows with old placeholder URLs still need a one-time migration (out of scope).
+**why-change:** No change from architect brief recommendation (option b preferred by task spec for cleanliness).

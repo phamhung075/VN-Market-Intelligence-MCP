@@ -186,3 +186,10 @@ Zone health: recon only, no code change | HEALTHY
 **Lesson:** Sector lookup uses `cfg.market.referenceStocks` (config SSOT) — no separate domain service needed since the map already exists in config. URL parse E1-guard: always try/catch `new URL(entry.sourceUrl).hostname` since source_url can be null/empty.
 
 Zone health: bun tsc --noEmit clean, 0 new failures, tools 157 intact, scheduler 76 cron.schedule | HEALTHY
+
+---
+**Cycle:** 2026-06-08 | **Task:** FIX-BCTC-ENRICHER-PLACEHOLDER-URL (size S)
+**Fix:** `backfillBctcQ12026.ts` inserted placeholder VPS URL instead of NULL; enricher WHERE clause skipped those rows → pull job 404-looped forever on 18 rows. Fix: insert `source_url=NULL` — enricher's existing NULL arm captures them. Option (b) chosen over option (a) because it fixes root cause at insertion point without widening enricher with VPS-host-specific knowledge. TC-4 documents live rows with old placeholder URLs are NOT auto-fixed — need one-time migration (out of scope per task spec scope guard).
+**Files:** `backfillBctcQ12026.ts` (11L), `FIX-BCTC-ENRICHER-PLACEHOLDER-URL.test.ts` (+7 tests)
+**tsc:** CLEAN | **Tests:** 31 pass / 0 fail (4 enricher test files)
+Zone health: bun tsc --noEmit clean, 31 tests (enricher suite), tools 157, scheduler 78 cron.schedule | HEALTHY
