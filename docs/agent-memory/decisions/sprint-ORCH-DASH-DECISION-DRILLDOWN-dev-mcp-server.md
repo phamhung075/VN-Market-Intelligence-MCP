@@ -6,6 +6,16 @@
 
 ---
 
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-08T02:07:00Z
+**task-id:** FIX-BCTC-VPS-QUEUE-STALE-TRIAGE
+**what-done:** Classified 354 non-done bctc_vps_queue rows into two new explicit statuses (deferred_infra, blocked_pdf_extractor); C-16 check now returns 0.
+**what-considered:**
+- Option A: Delete historical rows (fast, breaks hard-rule "no silent deletion")
+- Option B: Mark them `skipped` (would mix with existing skip semantics)
+- Option C: Two explicit statuses (`deferred_infra` + `blocked_pdf_extractor`) per PO spec
+**why-decision:** Option C preserves full row history, makes intent explicit in the DB, and allows future re-queue via simple SQL without recreating data. The two distinct statuses separate "infra dead" from "gated by fix".
+**why-change:** no change from PO spec; all 4 parts implemented as specified
+
 ### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-06-08T00:30:00Z
 **task-id:** FIX-BCTC-LOWCONF-REPARSE-BATCH
 **what-done:** Ran force-reparse for 9 BCTC ticker-period pairs (reports #3077-#3085 scope). Created generalized migration script scripts/migrations/reparse-bctc-reports.ts. Resolved report 3085 (REE 2026-Q1) with wontfix + root cause.
