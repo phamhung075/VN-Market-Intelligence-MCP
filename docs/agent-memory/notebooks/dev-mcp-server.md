@@ -173,3 +173,16 @@ Zone health: no code change | DB re-queue only | HEALTHY
 **Lesson:** Live DB is container-mounted at /app/data/market.db — host market.db is an empty dev artifact. Always verify schema via bun:sqlite exec inside the running container, not against the host file.
 
 Zone health: recon only, no code change | HEALTHY
+
+## 2026-06-08 · DFR-P1-MCP — done-code
+
+**Task:** DFR-P1-MCP (sprint DEEPFETCH-RAG-REDESIGN)
+**Scope:** FR-6 (body_text ALTER TABLE), FR-4 (decayHalfLifeDays config), FR-5 (ragIndex caller updates), FR-3 mcp-server portion (DTO extensions + decay passthrough)
+**Files changed:** schema-news.ts, mcp.config.json (real: /mcp.config.json via symlink), config.ts, ragHttpClient.ts, pollNews.ts, fetchParseAndStoreBctc.ts
+**Row count:** 5557 before (live container probe); unchanged (migration pending rebuild)
+**tsc:** CLEAN (bun tsc --noEmit)
+**Tests:** 0 new failures; existing pre-existing failures (data_env schema gap in test inline DBs) unchanged
+**Rebuild required:** targeted `docker compose build mcp-server && docker compose up -d mcp-server` — do NOT use down&&up
+**Lesson:** Sector lookup uses `cfg.market.referenceStocks` (config SSOT) — no separate domain service needed since the map already exists in config. URL parse E1-guard: always try/catch `new URL(entry.sourceUrl).hostname` since source_url can be null/empty.
+
+Zone health: bun tsc --noEmit clean, 0 new failures, tools 157 intact, scheduler 76 cron.schedule | HEALTHY
