@@ -169,3 +169,28 @@ Zone health: FDA-2+FDA-3 SHIPPED 0712c3a7; ops REBUILD required | HEALTHY
 **Live verification:** POST /snapshot → `fedFundsRate=3.62, source_tier=2, is_estimate=false, regime=NEUTRAL`. Commit: e03b3ca3.
 
 **Tests:** `go test ./...` ALL PASS (12 packages). Zero new failures.
+
+---
+
+## Session 2026-06-08 — FIX-MACRO-REFRESH-DEAD (CRITICAL)
+
+**Task:** Fix macro_indicators stale 22+ days. macroIndicatorRefreshJob showing SUCCESS at <100ms = silent-swallow class.
+
+**One-pass audit — all swallows found:**
+1. `clients.ts:26` reads `MACRO_SERVICE_URL`, docker-compose sets `MACRO_INDICATORS_URL` → always localhost:5004 (refused). ROOT CAUSE.
+2. `macroIndicatorRefreshJob` outer catch returns void (not re-throw) → wrapRun records 'success' on failure. ROOT CAUSE.
+3-6: Three non-fatal inner catches + recordJobRun table-missing path. Acceptable by design.
+
+**Fixes (mcp-server zone, commit b7ce338f):**
+- `clients.ts:26`: `MACRO_SERVICE_URL` → `MACRO_INDICATORS_URL`
+- `macroIndicatorRefreshJob.ts`: added `throw err;` after Telegram alert in outer catch
+- `FIX-MACRO-REFRESH-DEAD.test.ts`: 5 tests GREEN (env-var wiring + fail-loud contract + happy path)
+
+**Baseline evidence:**
+- Before: `macro_indicators.fetched_at = 2026-05-16` (22+ days stale), job duration 82ms, status=success
+- After: `macro_indicators.fetched_at = 2026-06-08 02:36:41` (fresh), job duration ~17s (real HTTP), getMacroSnapshot returns live data
+- Fail-loud demo: threw=true, alert_sent=true, recorded_status={status:"error"}
+
+**Auditor C-09 compliance:** macro_indicators now refreshed → SLA check will pass. B-12 not applicable (sbv_rates was already fresh).
+
+Zone health: FIX-MACRO-REFRESH-DEAD SHIPPED b7ce338f; container rebuilt; macro freshness restored | HEALTHY
