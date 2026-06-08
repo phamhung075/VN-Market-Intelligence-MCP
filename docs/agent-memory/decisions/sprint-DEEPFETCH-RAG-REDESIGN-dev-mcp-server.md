@@ -57,3 +57,11 @@
 - Option (b): change backfill to insert `source_url = NULL` so enricher's existing WHERE arm captures it — simpler, fixes root cause at insertion point, matches the original design intent documented in the code comment
 **why-decision:** Option (b) is cleaner: the backfill's own comment says "bctcQueueEnricherJob replaces this with the real VPS-discovered URL" — inserting NULL is the contract the enricher was designed for. Option (a) would widen the enricher WHERE clause with VPS-host-specific knowledge that could drift; option (b) is 1-line change with zero enricher logic change. TC-4 documents that live rows with old placeholder URLs still need a one-time migration (out of scope).
 **why-change:** No change from architect brief recommendation (option b preferred by task spec for cleanliness).
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-09T00:00:00Z
+**task-id:** CI-NETWORK-GUARDS-POLLNEWS-REFILE
+**what-done:** Re-applied 4 CI=true network-skip guards from reverted 9454baad to pollNews.ts; pollNews.ts only, zero test file changes.
+**what-considered:**
+- only: re-file BATCH-2 guards verbatim from reverted diff — exact same code, no new logic
+**why-decision:** BATCH-2 was a verified win (46→15 CI errors, 1345a 6/0); BATCH-1 schema DDL injection was the regression (+219). Clean separation re-files the win without the regression.
+**why-change:** Reverted 9454baad bundled both batches; split approved by router's REVERT-then-FIX-FORWARD ruling.
