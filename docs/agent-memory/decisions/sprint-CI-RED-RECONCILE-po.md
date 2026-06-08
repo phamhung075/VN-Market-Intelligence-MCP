@@ -201,3 +201,16 @@ FIX-MCP-TOOL-COUNT-DRIFT + FIX-MCP-CI-NETWORK-GUARD: marked DONE because their s
 ### STEP po-S13: secondary signal — auditor weekday-mislabel -> agent-father (2026-06-08T22:52Z)
 **task-id:** (ambient triage)
 **what-done:** Triaged `docs/signals/recurring-bug-auditor-weekday-mislabel-20260608T223700Z.json` (to:agent-father, recurrence_count:3). Confirmed it is an agent-flow .md fix (compute weekday from `date +%A`, never model-named), NOT a PO/dev task. Routed to agent-father unchanged; PO does not edit agent .md (init.md forbidden_outputs + agent-md-factory rule). recurring-bug (3x) but the owner is agent-father (flow author), not architect-then-dev — it is a flow-authoring fix, not a code root-cause spike. Mirrors the tran-ngoc-bau F-SUNDAY false-CRITICAL class (kin po-S10). Impact cosmetic so far (date-agnostic checks), so MEDIUM not CRITICAL. No dev WIP. Verification gate (next 2 auditor runs print weekday matching `date +%A`) carried to agent-father.
+
+### STEP po-S14 (DJ-GATE-1): out-of-band triage — 2 REVIEW->DONE flips + SPIKE decompose (2026-06-08T23:14Z)
+**task-id:** CI-NETWORK-GUARDS-POLLNEWS-REFILE, CI-TEST-SCHEMA-FIXTURE-SPIKE
+**what-done:** Flipped CI-NETWORK-GUARDS-POLLNEWS-REFILE REVIEW->DONE (router CI-measured run 27172540201 vs revert base a42d0835 = +259 passes, identical fail/error markers, ZERO regression; preserves -31 errors win; commit 64981565). Flipped CI-TEST-SCHEMA-FIXTURE-SPIKE REVIEW->DONE (brief docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md, brief_complete signal raw-verified by router). Decomposed brief into FIX-SCHEMA-DRIFT-P1 (data_env, Phase 1, ~93) + FIX-SCHEMA-DRIFT-P2 (Phase 2+3 IF-NOT-EXISTS + missing cols, ~104, depends P1); parked Phase 4 as FU-SCHEMA-DRIFT-P4 backlog.
+**what-considered:**
+- Fold all of Phase 1-4 into one FIX (rejected: P4 needs per-file isolation verification not a sweep; one big task re-creates the 9454baad one-size failure mode)
+- Open P1+P2 in parallel (rejected: both touch the 64 rag_analyses files -> P2 depends:P1 to serialize and keep WIP<=2, avoid two devs racing same files)
+- Re-open POLLNEWS-REFILE / mark partial (rejected: router raw-verified a clean WIN, +259/0-regression)
+**why-decision:** Brief's two-fixture-contract is the design SSOT and the CURE for the regressing class; per-class targeted P1/P2 is the path to /goal ci/cd pass without repeating the reverted mechanized injection. P4 deferred because P1/P2 may absorb much of its residual once re-measured.
+**why-change:** no change — follows brief §9 scoping + recurring-bug rule (architect SPIKE already delivered, so PM may route P1/P2 straight to dev).
+**DJ-GATE-1:** TWO DONE flips this STEP (POLLNEWS-REFILE + SCHEMA-FIXTURE-SPIKE), both committed in the SAME commit as this journal entry.
+**dispatch order:** P1 first (dep = now-DONE spike only), P2 second (after P1 lands, frees the rag_analyses cohort). Both owner dev-mcp-server, zone apps/mcp-server/, WIP<=2 honored (0 IN_PROGRESS now). No push (router owns).
+**still-open (parked observations, file as dev WIP frees, <=2 WIP):** A-33 vnstockFundamentalsRefresh cron CRASH (sau-c121-a33 CRITICAL); BCTC get_bctc_full empty 6 tickers #3106; pollNews 0-items #3102.

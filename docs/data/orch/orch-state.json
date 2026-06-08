@@ -53,7 +53,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T22:52:00Z",
+    "_updated_at": "2026-06-08T23:14:00Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -3027,23 +3027,25 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "mode": "spike",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "timebox": 120,
             "created_at": "2026-06-08T22:52:00Z",
+            "completed_at": "2026-06-08T23:14Z",
             "question": "What is the definitive fix for CI-test-DB schema drift across ~464 heterogeneous test setups, given that the B2 mechanized init*Tables injection FAILED (+250 fails: ~32 double-create, ~200 no-such-column/table+count-mismatch, ~32 NOT NULL watchlist.exchange/agent_signals.expires_at)? Options to evaluate: (1) single shared canonical test-DB fixture/factory all tests import (drop per-file inline DDL), (2) reconcile inline DDLs to schema-*.ts SSOT per-file with collision detection (CREATE IF NOT EXISTS + column-superset), (3) hybrid: canonical fixture for new tests + targeted reconciliation for the ~96 rag_analyses/data_env class only. MUST specify how to avoid both collision (already-exists) and shadowing (canonical cols the inline-shaped INSERTs cannot satisfy / leave NOT NULL unpopulated).",
-            "note": "RECURRING-BUG (2nd mechanized churn of CI-test-schema area; ties CI-TEST-ISOLATION-SPIKE which architect already delivered, and B2 which just regressed +250 on 9454baad). Per recurring-bug rule: architect SPIKE BEFORE any dev impl. Output: findings doc in docs/architecture-briefs/ + per-class fix directive + falsifiable verification gate. Explicitly: do NOT prescribe another mechanized one-size injection sweep. Architect lane = NO dev WIP. DoD: brief committed + a concrete dev-actionable spec PO can scope into FIX(es) next cycle. Verification gate for the eventual FIX = bun-test FAIL+ERROR DROP vs 702 on subsequent push (router owns push)."
+            "note": "[po S14 DJ-GATE-1 2026-06-08T23:14Z] DONE (REVIEW->DONE). Brief delivered + brief_complete signal (docs/signals/ci-test-schema-fixture-spike-brief-complete-2026-06-08T231015Z.json) raw-verified by router; brief at docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md (committed locally c8153a38). Answer = TWO-FIXTURE-CONTRACT model (Contract A full-canonical initDatabase() for integration/singleton tests; Contract B minimal-explicit IF-NOT-EXISTS inline DDL for unit tests) — NOT a third hybrid, NOT another one-size injection sweep. DoD met: per-failure-class dev-actionable spec + falsifiable verification gate (bun-test FAIL+ERROR DROP, never INCREASE). Decomposed into FIX-SCHEMA-DRIFT-P1 (data_env, Phase 1, ~93) and FIX-SCHEMA-DRIFT-P2 (Phase 2+3 IF-NOT-EXISTS + missing cols, ~104); brief Phase 4 (pure-singleton audit) parked as FU-SCHEMA-DRIFT-P4 backlog, not opened this cycle. | === PRIOR === RECURRING-BUG (2nd mechanized churn of CI-test-schema area; ties CI-TEST-ISOLATION-SPIKE which architect already delivered, and B2 which just regressed +250 on 9454baad). Per recurring-bug rule: architect SPIKE BEFORE any dev impl. Output: findings doc in docs/architecture-briefs/ + per-class fix directive + falsifiable verification gate. Explicitly: do NOT prescribe another mechanized one-size injection sweep. Architect lane = NO dev WIP. DoD: brief committed + a concrete dev-actionable spec PO can scope into FIX(es) next cycle. Verification gate for the eventual FIX = bun-test FAIL+ERROR DROP vs 702 on subsequent push (router owns push)."
           },
           {
+            "win_note": "[po S14 DJ-GATE-1 2026-06-08T23:14Z] REVIEW->DONE. VERIFIED WIN: router CI-measured run 27172540201 vs revert base a42d0835 = +259 MORE passes with identical fail/error markers; CI=true network guards converted ETIMEDOUT hang/error tests into passes, ZERO fail regression. Preserves the -31 errors win (errors 46->15) from the original 9454baad pollNews.ts cohort, now re-filed clean (commit 64981565). Do NOT re-open.",
             "id": "CI-NETWORK-GUARDS-POLLNEWS-REFILE",
             "title": "RE-FILE (clean standalone) the pollNews.ts network-skip guards from reverted 9454baad — detect CI=true and skip/mock the live HOSE/HNX/UPCOM/Yahoo/NewsAPI fetches in pollNews.ts ONLY; do NOT touch test schema DDL or other files.",
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
@@ -3053,12 +3055,49 @@
             "claimed_by": "dev-mcp-server",
             "commit": "64981565",
             "completed_at": "2026-06-08T23:01:29Z"
+          },
+          {
+            "id": "FIX-SCHEMA-DRIFT-P1",
+            "title": "Phase 1 — data_env class CURE (NOT injection): add `data_env TEXT` to the ~64 test files with inline rag_analyses DDL missing it + add a try/catch fallback guard in pollNews.ts::tryInsertEntry (fredApi.ts:189-202 pattern) so production INSERT tolerates data_env absence. Do NOT replace inline DDL with initNewsTables(db) — Contract A/B boundary. Do NOT touch the 40 files that already have data_env.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": ["CI-TEST-SCHEMA-FIXTURE-SPIKE"],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "created_at": "2026-06-08T23:14:00Z",
+            "note": "[po S15 2026-06-08T23:14Z] CURE for the data_env failure class (E2a, ~93 fails) per architect brief docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md Phase 1. Design SSOT = two-fixture-contract model (Contract A=initDatabase() full canonical for singleton/integration tests; Contract B=minimal IF-NOT-EXISTS inline DDL for unit tests). This is NOT a re-attempt of the reverted 9454baad mechanized one-size sweep — it is per-class targeted column add + a production-side defensive guard. po->ba->architect(already done, brief is the design)->pm->dev->qa chain; PM may route straight to dev since architect brief is the spec. DoD: bun-test FAIL+ERROR count DROPS (never increases) vs the post-refile baseline on subsequent push (router owns push); bun tsc --noEmit clean; modified files pass in isolation. Verification gate per brief §8. DISPATCH ORDER: 1st (no dep beyond the now-DONE spike)."
+          },
+          {
+            "id": "FIX-SCHEMA-DRIFT-P2",
+            "title": "Phase 2+3 — harden inline DDLs: (Ph2) s/CREATE TABLE/CREATE TABLE IF NOT EXISTS/ on the ~33 bare-CREATE collision-table files; (Ph3) fill missing columns per class: watchlist.exchange NOT NULL DEFAULT 'HOSE' (~28 files), agent_signals.expires_at (~5), rag_analyses.source_url (~24), daily_ohlcv named-column INSERTs (~9), + minimal inline DDL for no-such-table macro/portfolio tables (~15). Per-class targeted, NOT a wholesale init*Tables injection.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": ["FIX-SCHEMA-DRIFT-P1"],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "created_at": "2026-06-08T23:14:00Z",
+            "note": "[po S15 2026-06-08T23:14Z] CURE for E1 (table already exists, ~32) + E2b/c/d + E3a/b (missing-column / NOT-NULL / no-such-table, ~104) per architect brief Phase 2+3 (§4 FIX-CLASS-E1/E2b/E2c/E2d/E3a/E3b). depends:FIX-SCHEMA-DRIFT-P1 (sequence to keep WIP<=2 and avoid two devs racing the same 64 rag_analyses files). NOT another mechanized one-size injection (that was 9454baad, reverted +219). Design SSOT = two-fixture-contract model; Contract B files must use IF NOT EXISTS + include every column the SUT's INSERT/SELECT touches. DoD: bun-test FAIL+ERROR DROP (never increase) vs baseline on subsequent push; bun tsc --noEmit clean; per-file isolation pass. Brief Phase 4 (pure-singleton audit) deliberately NOT folded here — parked as FU-SCHEMA-DRIFT-P4 backlog. DISPATCH ORDER: 2nd (after P1 lands, frees the rag_analyses cohort)."
           }
         ],
         "_updated_by": "po"
       }
     ],
     "backlog": [
+      {
+        "id": "FU-SCHEMA-DRIFT-P4",
+        "title": "Phase 4 — pure-singleton isolation audit: run each of the ~494 pure-singleton test files in strict isolation (bun test --bail <file>); files that FAIL in isolation need initDatabase() added to beforeAll (they silently rely on cross-file module-cache singleton state). Per-file verification, NOT a mechanical sweep.",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "sprint": "CI-RED-RECONCILE",
+        "note": "[po S15 2026-06-08T23:14Z] Brief Phase 4 (docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md) — explicitly NOT a blocker for P1/P2 and per the brief requires per-file isolation verification not a sweep. Parked here rather than opened active this cycle: P1/P2 are the dominant ~200-fail block toward /goal ci/cd pass; promote P4 once P1/P2 land and the residual fail-count is re-measured (may be largely absorbed by P1/P2). RISK-3 in brief §5."
+      },
       {
         "title": "chef.md self-enforces published-marker before send_telegram, with per-cadence key granularity",
         "type": "FIX",
