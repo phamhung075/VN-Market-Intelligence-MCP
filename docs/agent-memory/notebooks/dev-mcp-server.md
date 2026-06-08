@@ -1,5 +1,42 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-08 · FIX-BCTC-VPS-QUEUE-STALE-TRIAGE — DONE
+
+**Task:** FIX-BCTC-VPS-QUEUE-STALE-TRIAGE  
+**Signal:** sau-c104-c16 + report 3095  
+**Commit:** 157c0f40
+
+**Classification table (all 381 non-done rows):**
+
+| Class | Count | Status Applied | Rationale |
+|---|---|---|---|
+| Historical HIST-VPS-BACKFILL (2023Q4–2025Q4) | 328 | `deferred_infra` | Sources geo-blocked/removed; 0 attempts; null source_url; never drainable |
+| Q1-2026 pdf-extractor gated | 26 | `blocked_pdf_extractor` | VPS fetch triggered, pdf-extractor CPU-cgroup starvation (A-20, 3rd recurrence); OCR load re-triggers; 10 rows have 419-426 attempts, 16 rows have 0 attempts |
+| Q4-2025 url_not_found | 27 | `url_not_found` (unchanged) | Already terminal status; C-16 does not count non-pending rows |
+| Done | 48 | `done` (unchanged) | Successfully parsed |
+
+**Live DB before/after:**
+- Before: 338 stale pending >72h (C-16 FAIL)
+- After: 0 stale actionable pending >72h (C-16 PASS)
+
+**C-16 check:** No SQL change needed — C-16 queries `status='pending'` which now correctly excludes `deferred_infra` and `blocked_pdf_extractor` rows. System-auditor flow note updated with explicit-status rationale.
+
+**Code changes:**
+- `apps/mcp-server/src/interface/mcp/routes/fetchStatusHandler.ts` — `queryBctcCounts()` now returns `deferred_infra` + `blocked_pdf_extractor` counts for dashboard visibility
+- `apps/mcp-server/src/__tests__/FIX-BCTC-VPS-QUEUE-STALE-TRIAGE.test.ts` — 5 tests, all GREEN
+- `docs/agents/system-auditor/flow/main.md` — C-16 table note documents explicit-status exclusion design
+- `scripts/migrations/classify-bctc-vps-queue-stale.ts` — canonical migration script
+
+**Q1-2026 re-queue precondition:** Architect fix for A-20 (CPU-cgroup starvation) must land first. Then reset `blocked_pdf_extractor` WHERE `period_year=2026 AND period_quarter='Q1'` → `pending`.
+
+**Zero rows deleted.** Every row has an explicit status.
+
+**Gate results:** tsc clean / 5 new tests PASS / tools=157 / sched=76
+
+Zone health: bun test 0 fail (BCTC subset 60 pass), 157 tools intact, scheduler 76 cron.schedule (gen-project-stats verified) | HEALTHY
+
+---
+
 ## 2026-06-08 · FIX-BCTC-LOWCONF-REPARSE-BATCH — COMMITTED
 
 **Task:** FIX-BCTC-LOWCONF-REPARSE-BATCH  
