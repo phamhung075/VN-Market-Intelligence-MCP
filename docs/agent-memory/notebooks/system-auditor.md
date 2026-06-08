@@ -1,5 +1,13 @@
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
 
+## c114 · 2026-06-08T16:05:42Z
+### Audit Run Tier-1 (16:05 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 | Status: HEALTHY
+- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=0; memory=23.65%; disk=32%.
+- All services in host_runtime_set operational: mcp-server ~1h, api-gateway 21h, frontend 21h, macro-indicators 16h, mcp-gateway 21h, pdf-extractor 8h uptime.
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## c113 · 2026-06-08T15:35:32Z
 ### Audit Run Tier-1 (15:35 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
@@ -31,37 +39,3 @@
 - RAW-PROBE: 6 services all UP/healthy; health endpoints OK except pdf-extractor A-20 timeout (curl 3s max-time fails); restart=0; memory=12.76%; disk=27%.
 - Findings: pdf-extractor A-20 health timeout recurring (container UP in docker ps, /health probe curl fails). Signal row: sau-c111-a20 (WARN). Dedup active (no BUG).
 - Contract: signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
-
-## c110 · 2026-06-08T07:54:33Z
-### Audit Run Tier-2 (07:54 UTC 2026-06-08)
-- Tier: 2 | Crons: 63 checked | Sources: 28 checked | VPS routes: 4 OK
-- Anomalies: 1 CRITICAL-dedup (B-12 SBV stale) | Status: DEGRADED
-- A-29 crons: 63 nominal, vnstockFundamentalsRefresh crashed (isolated).
-- B-01..B-07 pipeline: prices/BCTC/foreign-flow/news fresh; SBV stale 26.9h (>24h threshold) CRITICAL.
-- B-06/B-07 VPS health: 4 routes OK (prices/news/sbv/bctc). SBV last push 2026-06-07 04:59:57Z.
-- B-09 BCTC URLs: 0 bad SSC URLs (PASS). B-13 stale BCTC: 0 pending >72h (PASS).
-- C-06/C-07 DB freshness: market_messages 2/3h OK, agent_signals 87/24h OK.
-- Signals: 1 emitted (B-12 continuation). BUG Telegram: skipped (dedup active from c107).
-- Signal Queue: 1 row appended (sau-c109-b12-continuation, CRITICAL).
-- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
-
-## c109 · 2026-06-08T07:54:37Z
-### Audit Run Tier-2 (07:54 UTC 2026-06-08)
-- Tier: 2 | Status: HEALTHY
-- No anomalies detected in freshness or cron health. A-29 all crons nominal.
-
-## c108 · 2026-06-08T06:31:33Z
-### Audit Run Tier-1 (06:31 UTC 2026-06-08)
-- Tier: 1 | Status: HEALTHY
-- All services UP/healthy. A-20 pdf-extractor health endpoint OK.
-
-## c107 · 2026-06-08T02:01:54Z
-### Audit Run Tier-2 (02:01 UTC 2026-06-08)
-- Tier: 2 | Crons: 63 checked | Sources: 28 checked | VPS routes: 4 OK
-- Anomalies: 1 CRITICAL (B-12 SBV stale) | Status: DEGRADED
-- A-29 crons: All 63 firing normally, no gaps. intelligenceCycleJob 99.1% success (562 runs).
-- B-01..B-07 pipeline: Prices/BCTC/foreign-flow fresh, news 10min <30min OK, SBV 21h+ stale.
-- B-06/B-07 VPS health: All 4 routes OK, push logs show sbv/news stale vs expected cadence.
-- B-12 SLA CRITICAL: sbv_fx 47min breach (30min threshold). sbvRatesRefreshJob ran 2026-06-08 00:00Z success, but market.db fetch timestamp stale. Clock skew or silent fetch fail suspected.
-- Signals: 1 emitted (CRITICAL sau-c107-b12). BUG Telegram: B-12 sbv-stale (new, no dedup).
-- Contract: signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
