@@ -1,4 +1,12 @@
 
+## c104 · 2026-06-08T00:30:43Z
+### Audit Run Tier-3 (00:30 UTC 2026-06-08)
+- Tier: 3 | Checks: A-22/A-24 (tooling ✓) + C-01..C-16 | Runtime: 360s | Status: CRITICAL
+- Anomalies: 4 (1 CRITICAL, 3 WARN) | Dedup-skipped: 0
+- C-Checks: C-01/C-02 SKIP (no trading data pre-market) | C-03 ✓ (26 codes) | C-04 WARN (8 low-conf >5) | C-05 ✓ | C-06 ✓ (2 msgs/3h) | C-07 ✓ (87 signals/24h) | C-08 WARN (3 orphaned) | C-09 WARN (0 countries/26h) | C-10 ✓ | C-11 ✓ (earnings window) | C-12 ✓ (integrity ok) | C-13 ✓ (WAL 6MB <50MB) | C-14 SKIP (C-01=0) | C-15 ✓ (schema) | C-16 **CRITICAL** (338 stale pending BCTC >72h)
+- Signals: 4 emitted (1 CRITICAL sau-c104-c16, 3 WARN sau-c104-c04/c08/c09)
+- Contract: signals_posted=4 | telegram_sent=4 | signal_queue_rows_written=4 | dashboard_rows=4
+
 ## c103 · 2026-06-08T00:07:55Z
 ### Audit Run Tier-1 (00:07 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
