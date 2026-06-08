@@ -69,6 +69,7 @@ class LanceDBVectorStore(VectorStorePort):
 
     Stores 384-dim vectors in a local LanceDB table named 'rag_entries'.
     Deduplicates results by (title, summary) before returning.
+    Supports hybrid BM25+vector search via LanceDB FTS index + RRFReranker (DFR-P3).
     """
 
     def __init__(self, db_path: str) -> None:
@@ -76,6 +77,10 @@ class LanceDBVectorStore(VectorStorePort):
         self._db = None
         self._table = None
         self._insert_count: int = 0  # inserts since last compaction
+        # DFR-P3: per-process flag for lazy FTS index build.
+        # Set to True after first successful _build_fts_index() call.
+        # Never reset to False in normal operation (index persists in LanceDB).
+        self._fts_index_built: bool = False
 
     async def _get_table(self):
         """Lazy-initialize LanceDB connection and table.
@@ -199,10 +204,10 @@ class LanceDBVectorStore(VectorStorePort):
             # Non-fatal: log and continue — compaction failure must not block indexing.
             logger.warning("LanceDB compaction failed (non-fatal): %s", exc)
 
-    async def search(
+    # ── Private helpers (shared by search() and hybrid_search()) ─────────────
+
+    def _build_filter_clauses(
         self,
-        query_vector: EmbeddingVector,
-        limit: int,
         level_filter: Optional[str] = None,
         action_code_filter: Optional[str] = None,
         ticker_filter: Optional[str] = None,
@@ -210,10 +215,12 @@ class LanceDBVectorStore(VectorStorePort):
         source_domain_filter: Optional[str] = None,
         depth_tier_filter: Optional[str] = None,
         doc_type_filter: Optional[str] = None,
-    ) -> list[SearchResult]:
-        table = await self._get_table()
+    ) -> list[str]:
+        """Build validated + sanitized SQL WHERE clauses from filter kwargs.
 
-        # Build filter clauses (validated + sanitized)
+        Raises ValueError for invalid filter values (propagates to HTTP 400).
+        Returns list of SQL clause strings (joined with AND by caller).
+        """
         clauses: list[str] = []
         if level_filter:
             if not _validate_level(level_filter):
@@ -226,7 +233,9 @@ class LanceDBVectorStore(VectorStorePort):
         # FR-3: Phase 1 pre-filters
         if ticker_filter is not None:
             if not _VALID_TICKER.match(ticker_filter):
-                raise ValueError(f"Invalid ticker filter: {ticker_filter!r} — must match [A-Z0-9]{{1,10}}")
+                raise ValueError(
+                    f"Invalid ticker filter: {ticker_filter!r} — must match [A-Z0-9]{{1,10}}"
+                )
             clauses.append(f"ticker = '{_sanitize(ticker_filter)}'")
         if depth_tier_filter is not None:
             if depth_tier_filter not in _VALID_DEPTH_TIERS:
@@ -246,16 +255,13 @@ class LanceDBVectorStore(VectorStorePort):
         if source_domain_filter is not None:
             # Free-text: sanitize only, no enum check
             clauses.append(f"source_domain = '{_sanitize(source_domain_filter)}'")
+        return clauses
 
-        # Over-fetch for dedup (4x requested, capped at 50)
-        wide_limit = min(50, max(limit * 4, limit))
-        query = table.vector_search(query_vector.values).limit(wide_limit)
-        if clauses:
-            query = query.where(" AND ".join(clauses))
+    def _dedup_and_trim(self, raw_rows: list[dict], limit: int) -> list[SearchResult]:
+        """Dedup rows by (title, summary) and trim to limit.
 
-        raw_rows = await query.to_list()
-
-        # Dedup by (title, summary) — same article re-indexed multiple times
+        Accepts raw LanceDB row dicts (from to_list()). Returns list[SearchResult].
+        """
         seen: set[str] = set()
         results: list[SearchResult] = []
         for row in raw_rows:
@@ -271,6 +277,10 @@ class LanceDBVectorStore(VectorStorePort):
                 except (json.JSONDecodeError, ValueError):
                     tags = []
 
+            # _distance is set on vector/FTS results; _relevance_score on hybrid RRF results
+            distance = float(
+                row.get("_distance") or row.get("_relevance_score") or 0.0
+            )
             results.append(
                 SearchResult(
                     id=row.get("id", ""),
@@ -280,7 +290,7 @@ class LanceDBVectorStore(VectorStorePort):
                     tags=tags,
                     action_code=row.get("action_code", ""),
                     created_at=row.get("created_at", ""),
-                    distance=float(row.get("_distance", 0.0)),
+                    distance=distance,
                     # FR-3: propagate Phase 1 metadata fields from LanceDB row
                     ticker=row.get("ticker") or "",
                     sector=row.get("sector") or "",
@@ -296,6 +306,126 @@ class LanceDBVectorStore(VectorStorePort):
                 break
 
         return results
+
+    # ── DFR-P3: FTS index management ──────────────────────────────────────
+
+    async def _build_fts_index(self) -> None:
+        """Build FTS indexes for 'title' and 'summary' columns separately.
+
+        DFR-P3 AC-P3R-7: Two separate index calls — NOT a multi-field list.
+        In native mode (confirmed spike DFR-Q3), each field needs its own index.
+
+        API compatibility:
+        - lancedb >= 0.28 (incl. 0.30.2 / 0.33.0): create_index(field, config=FTS(), replace=True)
+        - lancedb 0.30.2 also has create_fts_index() convenience method with replace=True.
+        We use create_index(config=FTS()) as the universally available form across
+        0.25.3 (local test) and 0.33.0 (Docker production).
+
+        replace=True on both calls allows idempotent daily scheduled rebuilds
+        without raising if the index already exists.
+        """
+        from lancedb.index import FTS
+        table = await self._get_table()
+        # AC-P3R-7: Two separate calls — title first, then summary.
+        await table.create_index("title", config=FTS(), replace=True)
+        await table.create_index("summary", config=FTS(), replace=True)
+        logger.info("[LanceDBVectorStore] FTS indexes (title + summary) built successfully.")
+
+    # ── Search methods ─────────────────────────────────────────────────────
+
+    async def search(
+        self,
+        query_vector: EmbeddingVector,
+        limit: int,
+        level_filter: Optional[str] = None,
+        action_code_filter: Optional[str] = None,
+        ticker_filter: Optional[str] = None,
+        sector_filter: Optional[str] = None,
+        source_domain_filter: Optional[str] = None,
+        depth_tier_filter: Optional[str] = None,
+        doc_type_filter: Optional[str] = None,
+    ) -> list[SearchResult]:
+        table = await self._get_table()
+
+        clauses = self._build_filter_clauses(
+            level_filter=level_filter,
+            action_code_filter=action_code_filter,
+            ticker_filter=ticker_filter,
+            sector_filter=sector_filter,
+            source_domain_filter=source_domain_filter,
+            depth_tier_filter=depth_tier_filter,
+            doc_type_filter=doc_type_filter,
+        )
+
+        # Over-fetch for dedup (4x requested, capped at 50)
+        wide_limit = min(50, max(limit * 4, limit))
+        query = table.vector_search(query_vector.values).limit(wide_limit)
+        if clauses:
+            query = query.where(" AND ".join(clauses))
+
+        raw_rows = await query.to_list()
+        return self._dedup_and_trim(raw_rows, limit)
+
+    async def hybrid_search(
+        self,
+        query_vector: EmbeddingVector,
+        query_text: str,
+        limit: int,
+        level_filter: Optional[str] = None,
+        action_code_filter: Optional[str] = None,
+        ticker_filter: Optional[str] = None,
+        sector_filter: Optional[str] = None,
+        source_domain_filter: Optional[str] = None,
+        depth_tier_filter: Optional[str] = None,
+        doc_type_filter: Optional[str] = None,
+    ) -> list[SearchResult]:
+        """FTS + vector hybrid search using RRF reranking (DFR-P3).
+
+        DFR-P3 AC-P3R-4: FTS index is built lazily on first call (not at startup).
+        DFR-P3 AC-P3R-8: Uses .vector().text() pattern — NOT tbl.search('text', query_type='hybrid').
+
+        Confirmed in spike DFR-Q3: passing a string directly to tbl.search() with
+        query_type='hybrid' raises an error. Explicit .vector().text() chaining is required.
+        """
+        table = await self._get_table()
+
+        # DFR-P3: Lazy FTS index build on first hybrid request.
+        # Per-process flag (_fts_index_built) prevents repeated builds within a container lifetime.
+        # First hybrid request takes ~30s at 14k rows; subsequent calls are instant.
+        if not self._fts_index_built:
+            await self._build_fts_index()
+            self._fts_index_built = True
+
+        from lancedb.rerankers import RRFReranker  # noqa: PLC0415 — imported lazily (optional dep)
+        reranker = RRFReranker()
+
+        clauses = self._build_filter_clauses(
+            level_filter=level_filter,
+            action_code_filter=action_code_filter,
+            ticker_filter=ticker_filter,
+            sector_filter=sector_filter,
+            source_domain_filter=source_domain_filter,
+            depth_tier_filter=depth_tier_filter,
+            doc_type_filter=doc_type_filter,
+        )
+
+        # DFR-P3 AC-P3R-8: Use tbl.query().nearest_to(vec).nearest_to_text(text) pattern.
+        # This is the version-stable hybrid API (works in lancedb 0.25.3 + 0.33.0+).
+        # DO NOT use tbl.search('text_string', query_type='hybrid') — requires an
+        # embedding function registration which we do not have (we pass raw vectors).
+        q = (
+            table.query()
+            .nearest_to(query_vector.values)
+            .column("vector")
+            .nearest_to_text(query_text)
+            .rerank(reranker)
+            .limit(limit * 4)  # over-fetch for dedup
+        )
+        if clauses:
+            q = q.where(" AND ".join(clauses))
+
+        raw_rows = await q.to_list()
+        return self._dedup_and_trim(raw_rows, limit)
 
     async def count(self) -> int:
         try:

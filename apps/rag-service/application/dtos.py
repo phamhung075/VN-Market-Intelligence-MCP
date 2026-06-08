@@ -25,6 +25,8 @@ class SearchRequest:
     source_domain: Optional[str] = None
     depth_tier: Optional[str] = None
     doc_type: Optional[str] = None
+    # DFR-P3: hybrid BM25+vector search (default False — backward-compatible)
+    hybrid: bool = False
 
 
 @dataclass

@@ -4,6 +4,36 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-06-08 — DFR-P3-RAG DONE-CODE (DEEPFETCH-RAG-REDESIGN Phase 3)
+
+**Task:** DFR-P3-RAG | **Sprint:** DEEPFETCH-RAG-REDESIGN | **Status:** done-code — rebuild + QA pending
+
+**What shipped:**
+- `VectorStorePort.hybrid_search()` abstract method (domain/repositories.py)
+- `SearchRequest.hybrid: bool = False` DTO field (application/dtos.py)
+- `LanceDBVectorStore._build_fts_index()` — 2-call pattern: `create_index('title', config=FTS())` then `create_index('summary', config=FTS())` — NOT a list (AC-P3R-7)
+- `LanceDBVectorStore.hybrid_search()` — `tbl.query().nearest_to(vec).column('vector').nearest_to_text(text).rerank(RRFReranker()).limit(n*4)` — NOT string-in-search (AC-P3R-8)
+- `_fts_index_built: bool` per-process lazy-init flag (False on startup — no startup FTS build)
+- `_build_filter_clauses()` + `_dedup_and_trim()` extracted as shared private helpers (DRY)
+- `SearchUseCase.execute()` branches on `request.hybrid` — hybrid=True calls `hybrid_search()`, False calls `search()`
+- `SearchRequestSchema.hybrid: bool = False` field in serializer
+- `POST /admin/rebuild-fts` route — calls `_build_fts_index()` + resets flag
+- `register_routes()` extended with `vector_store=None` kwarg for rebuild endpoint
+- `FakeVectorStore.hybrid_search()` stub in sandbox (delegates to search() — ZERO LanceDB in sandbox)
+
+**API note:** Production Docker upgraded to lancedb 0.33.0 (was 0.30.2 at spike). `create_fts_index()` is gone — using `create_index(config=FTS())` which works in both 0.25.3 and 0.33.0. Hybrid query uses `tbl.query().nearest_to().nearest_to_text()` (AsyncHybridQuery path), which is the stable API.
+
+**Live verification:**
+- Row count BEFORE: 14,131 | AFTER: 14,138 (normal ingest, code does NOT affect LanceDB)
+- Sandbox primitive: 16/16 PASS | module: 2/2 PASS | env audit: EMPTY
+- Tests: 140 passed (105 baseline preserved + 35 new) | 0 failed
+
+**Rebuild required:** `docker compose build rag-service && docker compose up -d rag-service` (targeted only). After rebuild: POST /admin/rebuild-fts to seed FTS index (~30s), then hybrid=true queries live.
+
+**Decision step:** STEP dev-rag-service-S2 in `docs/agent-memory/decisions/sprint-DEEPFETCH-RAG-REDESIGN-dev-rag-service.md`
+
+---
+
 ### 2026-06-08 — DFR-P1-RAG DONE-CODE (DEEPFETCH-RAG-REDESIGN Phase 1)
 
 **Task:** DFR-P1-RAG | **Sprint:** DEEPFETCH-RAG-REDESIGN

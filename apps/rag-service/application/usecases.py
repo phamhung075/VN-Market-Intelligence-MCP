@@ -51,18 +51,33 @@ class SearchUseCase:
         """
         try:
             query_vector = await self.embedder.embed(request.query)
-            raw_results = await self.vector_store.search(
-                query_vector=query_vector,
-                limit=request.limit * 4,  # over-fetch for dedup + filter
+
+            # DFR-P3: branch on hybrid flag.
+            # hybrid=False (default) → vector-only path (unchanged, zero regression).
+            # hybrid=True → FTS + vector RRF hybrid path via LanceDB RRFReranker.
+            # Temporal decay applies on BOTH paths.
+            filter_kwargs = dict(
                 level_filter=request.level,
                 action_code_filter=request.action_code,
-                # FR-3: Phase 1 pre-filters
                 ticker_filter=request.ticker,
                 sector_filter=request.sector,
                 source_domain_filter=request.source_domain,
                 depth_tier_filter=request.depth_tier,
                 doc_type_filter=request.doc_type,
             )
+            if request.hybrid:
+                raw_results = await self.vector_store.hybrid_search(
+                    query_vector=query_vector,
+                    query_text=request.query,
+                    limit=request.limit * 4,  # over-fetch for dedup + filter
+                    **filter_kwargs,
+                )
+            else:
+                raw_results = await self.vector_store.search(
+                    query_vector=query_vector,
+                    limit=request.limit * 4,  # over-fetch for dedup + filter
+                    **filter_kwargs,
+                )
 
             ranked = self.search_service.rank(
                 results=raw_results,

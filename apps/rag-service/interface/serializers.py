@@ -32,6 +32,8 @@ class SearchRequestSchema(BaseModel):
     source_domain: Optional[str] = Field(None, description="Filter by source domain (e.g. cafef.vn)")
     depth_tier: Optional[str] = Field(None, description="Filter by depth tier (shallow|deep)")
     doc_type: Optional[str] = Field(None, description="Filter by doc type (news|filing|macro|analysis)")
+    # DFR-P3: hybrid BM25+vector search — default False (backward-compatible)
+    hybrid: bool = Field(False, description="Use hybrid FTS+vector RRF search (default false — vector-only)")
 
     def to_dto(self) -> SearchRequest:
         return SearchRequest(
@@ -46,6 +48,7 @@ class SearchRequestSchema(BaseModel):
             source_domain=self.source_domain,
             depth_tier=self.depth_tier,
             doc_type=self.doc_type,
+            hybrid=self.hybrid,
         )
 
 

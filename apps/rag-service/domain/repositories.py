@@ -35,6 +35,23 @@ class VectorStorePort(ABC):
         """Return top-k similar entries sorted by ascending L2 distance."""
 
     @abstractmethod
+    async def hybrid_search(
+        self,
+        query_vector: EmbeddingVector,
+        query_text: str,
+        limit: int,
+        level_filter: Optional[str] = None,
+        action_code_filter: Optional[str] = None,
+        # Phase 1 pre-filter fields (same as search())
+        ticker_filter: Optional[str] = None,
+        sector_filter: Optional[str] = None,
+        source_domain_filter: Optional[str] = None,
+        depth_tier_filter: Optional[str] = None,
+        doc_type_filter: Optional[str] = None,
+    ) -> list[SearchResult]:
+        """Return top-k results via FTS + vector RRF hybrid search."""
+
+    @abstractmethod
     async def count(self) -> int:
         """Return total number of indexed entries."""
 

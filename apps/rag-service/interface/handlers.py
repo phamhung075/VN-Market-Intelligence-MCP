@@ -6,6 +6,7 @@ HTTP concerns (status codes, serialization) are handled here.
 """
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
@@ -23,8 +24,13 @@ def register_routes(
     router: APIRouter,
     search_usecase: SearchUseCase,
     index_usecase: IndexUseCase,
+    vector_store: Any = None,
 ) -> None:
-    """Attach all routes to the given APIRouter."""
+    """Attach all routes to the given APIRouter.
+
+    vector_store: optional VectorStorePort instance needed for /admin/rebuild-fts.
+    If not provided, the rebuild endpoint returns 503.
+    """
 
     @router.get("/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
@@ -37,10 +43,11 @@ def register_routes(
         POST /search
 
         Accepts: {query, limit?, decay_half_life_days?, max_distance?, level?, action_code?,
-                  ticker?, sector?, source_domain?, depth_tier?, doc_type?}
+                  ticker?, sector?, source_domain?, depth_tier?, doc_type?, hybrid?}
         Returns: {results: [SearchResultDTO], total: int}
 
         FR-3: Invalid depth_tier or doc_type → HTTP 400 with descriptive error.
+        DFR-P3: hybrid=true routes to FTS+vector RRF hybrid path; hybrid=false (default) is vector-only.
         """
         try:
             request_dto = body.to_dto()
@@ -77,4 +84,33 @@ def register_routes(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail={"status": "failed", "error": str(exc)},
+            ) from exc
+
+    @router.post("/admin/rebuild-fts")
+    async def rebuild_fts() -> dict:
+        """
+        POST /admin/rebuild-fts
+
+        DFR-P3: Force rebuild both FTS indexes (title + summary).
+        Called by daily cron (mcp-server) at ~02:00 UTC or on-demand.
+        Internal only — port 5002 is not exposed externally.
+
+        Returns: {"status": "ok", "message": "FTS indexes rebuilt"}
+        """
+        if vector_store is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"status": "error", "error": "vector_store not wired into router"},
+            )
+        try:
+            await vector_store._build_fts_index()
+            # Reset the lazy-init flag so the store knows index is fresh.
+            vector_store._fts_index_built = True
+            logger.info("[admin/rebuild-fts] FTS indexes rebuilt successfully.")
+            return {"status": "ok", "message": "FTS indexes rebuilt"}
+        except Exception as exc:
+            logger.exception("FTS rebuild failed")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={"status": "error", "error": str(exc)},
             ) from exc

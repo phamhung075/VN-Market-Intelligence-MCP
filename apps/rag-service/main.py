@@ -51,7 +51,8 @@ def create_app(
     add_cors_middleware(app)
 
     router = APIRouter()
-    register_routes(router, search_usecase, index_usecase)
+    # DFR-P3: pass vector_store so /admin/rebuild-fts can call _build_fts_index()
+    register_routes(router, search_usecase, index_usecase, vector_store=real_vector_store)
     app.include_router(router)
 
     return app

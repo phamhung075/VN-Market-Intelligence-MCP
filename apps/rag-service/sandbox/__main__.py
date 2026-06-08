@@ -300,6 +300,11 @@ def _build_fake_adapters(service: str) -> tuple[Any, Any]:
             limit: int,
             level_filter: Optional[str] = None,
             action_code_filter: Optional[str] = None,
+            ticker_filter: Optional[str] = None,
+            sector_filter: Optional[str] = None,
+            source_domain_filter: Optional[str] = None,
+            depth_tier_filter: Optional[str] = None,
+            doc_type_filter: Optional[str] = None,
         ) -> list[SearchResult]:
             results = []
             for entry, vec in self._entries:
@@ -325,6 +330,32 @@ def _build_fake_adapters(service: str) -> tuple[Any, Any]:
                 )
             results.sort(key=lambda r: r.distance)
             return results[:limit]
+
+        async def hybrid_search(
+            self,
+            query_vector: EmbeddingVector,
+            query_text: str,
+            limit: int,
+            level_filter: Optional[str] = None,
+            action_code_filter: Optional[str] = None,
+            ticker_filter: Optional[str] = None,
+            sector_filter: Optional[str] = None,
+            source_domain_filter: Optional[str] = None,
+            depth_tier_filter: Optional[str] = None,
+            doc_type_filter: Optional[str] = None,
+        ) -> list[SearchResult]:
+            """Sandbox stub: delegates to search() (no real BM25 in sandbox — ZERO LanceDB access)."""
+            return await self.search(
+                query_vector=query_vector,
+                limit=limit,
+                level_filter=level_filter,
+                action_code_filter=action_code_filter,
+                ticker_filter=ticker_filter,
+                sector_filter=sector_filter,
+                source_domain_filter=source_domain_filter,
+                depth_tier_filter=depth_tier_filter,
+                doc_type_filter=doc_type_filter,
+            )
 
         async def count(self) -> int:
             return len(self._entries)
