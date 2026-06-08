@@ -186,3 +186,17 @@ Zone health: recon only, no code change | HEALTHY
 **Lesson:** Sector lookup uses `cfg.market.referenceStocks` (config SSOT) — no separate domain service needed since the map already exists in config. URL parse E1-guard: always try/catch `new URL(entry.sourceUrl).hostname` since source_url can be null/empty.
 
 Zone health: bun tsc --noEmit clean, 0 new failures, tools 157 intact, scheduler 76 cron.schedule | HEALTHY
+
+## 2026-06-08 · DFR-P2-MCP — done-code (DJ-GATE-1)
+
+**Task:** DFR-P2-MCP (sprint DEEPFETCH-RAG-REDESIGN)
+**Scope:** Conditional deep-fetch pipeline — SQLite schema, domain gate, queue store, pollNews gate injection, VPS executor job, Playwright fallback job, scheduler registration, config types, unit tests.
+
+**Files changed:** schema-news.ts, config.ts, pollNews.ts, cronConfig.ts, startScheduler.ts + 5 new files (deepFetchGate.ts, deepFetchQueueStore.ts, deepFetchVpsJob.ts, deepFetchMainJob.ts, dfr-p2-mcp.test.ts)
+
+**tsc:** CLEAN (bun tsc --noEmit 0 errors)
+**Tests:** 28/28 pass (new). Schema + related: 82/82. pollNews 1332: 1/4 — PRE-EXISTING (data_env in test inline DB, stash-verified unrelated to this task)
+**Guardrails verified:** max10/cycle VPS PASS, max5/cycle PW PASS, domain cap PASS, 4h expiry PASS, UNIQUE dedup PASS, no-silent-delete: ragIndex table.add only
+**Rebuild required:** targeted mcp-server rebuild only — do NOT down&&up
+
+Zone health: tsc clean, 28 new tests pass, 0 regressions | HEALTHY

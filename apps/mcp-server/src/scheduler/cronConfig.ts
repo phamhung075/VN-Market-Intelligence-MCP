@@ -183,4 +183,8 @@ export const CRONS = {
    *  Off-market: 21:00 UTC = after AGM plan refresh (20:30 UTC) and VN market close.
    *  Collision check: 21:00 UTC = alertDigest VN slot (14:00 UTC) — no clash UTC-side. */
   boardDetailsRefresh:        Bun.env.CRON_BOARD_DETAILS_REFRESH                    ?? '0 21 * * *',
+  /** deepFetchVpsJob — every 5 min, drain up to maxPerCycle=10 pending deep-fetch queue rows via VPS proxy — DFR-P2-MCP */
+  deepFetchVps:               Bun.env.CRON_DEEP_FETCH_VPS                           ?? '*/5 * * * *',
+  /** deepFetchMainJob — every 5 min, drain up to maxPlaywrightPerCycle=5 vps-failed rows via news-fetch Playwright — DFR-P2-MCP */
+  deepFetchMain:              Bun.env.CRON_DEEP_FETCH_MAIN                          ?? '*/5 * * * *',
 }

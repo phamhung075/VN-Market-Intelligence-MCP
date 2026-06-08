@@ -63,6 +63,8 @@ import { newsHeadlinesRefreshJob } from './news-analysis/index.js'
 import { runReputationComputeJob } from './news/index.js'
 import { runPublicContractsJob } from './market-data/publicContractsJob.js'
 import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
+import { runDeepFetchVpsJob } from './news-analysis/deepFetchVpsJob.js'
+import { runDeepFetchMainJob } from './news-analysis/deepFetchMainJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
 import { runSelfImproveOrchestrator } from './audits/selfImproveOrchestratorJob.js'
@@ -1014,5 +1016,24 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details active`)
+  // Every 5 min — Deep-fetch VPS executor — DFR-P2-MCP
+  // Drains up to deepFetch.maxPerCycle (10) pending queue rows via VPS /proxy/article-body.
+  // Independent of the 15-min intelligence cycle — runs 24/7.
+  cron.schedule(CRONS.deepFetchVps, async () => {
+    await jobRunRepo.wrapRun('deepFetchVpsJob', async () => {
+      const result = await runDeepFetchVpsJob()
+      return { rowsWritten: result.done }
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 5 min — Deep-fetch main-server executor (Playwright fallback) — DFR-P2-MCP
+  // Drains up to deepFetch.maxPlaywrightPerCycle (5) vps-failed rows via news-fetch POST /fetch-article.
+  cron.schedule(CRONS.deepFetchMain, async () => {
+    await jobRunRepo.wrapRun('deepFetchMainJob', async () => {
+      const result = await runDeepFetchMainJob()
+      return { rowsWritten: result.done }
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + deep-fetch-vps + deep-fetch-main active`)
 }

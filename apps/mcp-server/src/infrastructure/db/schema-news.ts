@@ -281,6 +281,42 @@ export function initNewsTables(db: Database): void {
       ON signal_rejections(created_at DESC);
   `);
 
+  // ── DFR-P2-MCP: deep_fetch_queue — work queue for pending article body fetches ─
+  // Idempotent: CREATE TABLE IF NOT EXISTS + try/catch ALTER TABLE pattern.
+  // UNIQUE(source_url) prevents double-queuing the same article URL.
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS deep_fetch_queue (
+        id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        source_url    TEXT    NOT NULL,
+        source_domain TEXT    NOT NULL,
+        rag_id        TEXT    NOT NULL,
+        ticker        TEXT,
+        status        TEXT    NOT NULL DEFAULT 'pending'
+                              CHECK(status IN ('pending','vps-fetching','vps-failed','done','expired')),
+        attempts      INTEGER NOT NULL DEFAULT 0,
+        queued_at     TEXT    NOT NULL DEFAULT (datetime('now')),
+        fetched_at    TEXT,
+        UNIQUE(source_url)
+      );
+      CREATE INDEX IF NOT EXISTS idx_dfq_status_queued ON deep_fetch_queue(status, queued_at);
+      CREATE INDEX IF NOT EXISTS idx_dfq_domain        ON deep_fetch_queue(source_domain);
+    `);
+  } catch { /* already exists */ }
+
+  // ── DFR-P2-MCP: deep_fetch_stats — per-domain daily cap counter ───────────
+  // Idempotent: CREATE TABLE IF NOT EXISTS.
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS deep_fetch_stats (
+        domain       TEXT NOT NULL,
+        date         TEXT NOT NULL,
+        fetch_count  INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (domain, date)
+      );
+    `);
+  } catch { /* already exists */ }
+
   // ── Signal Outcomes (2026-05-17 outcome feedback loop) ────────────────────
   // Captures T+24h and T+48h price verification for every directional signal.
   // Seeded immediately after agent_signals INSERT via seedSignalOutcome().

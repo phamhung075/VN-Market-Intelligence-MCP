@@ -263,6 +263,23 @@ export interface RagConfig {
   maxDistance: number;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DFR-P2-MCP: Deep-fetch pipeline configuration
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DeepFetchConfig {
+  /** Max deep-fetch queue rows processed per VPS executor cycle (default 10) */
+  maxPerCycle: number;
+  /** Max Playwright rows processed per main-server executor cycle (default 5) */
+  maxPlaywrightPerCycle: number;
+  /** Hours after which a queued row is considered stale and expired (default 4) */
+  staleExpiryHours: number;
+  /** Per-domain daily fetch cap map — e.g. {"cafef.vn": 50} */
+  domainDailyCap: Record<string, number>;
+  /** Domains allowed for Playwright executor — loaded from config, never hardcoded */
+  playwrightAllowedDomains?: string[];
+}
+
 export interface McpConfig {
   server: ServerConfig;
   data: DataConfig;
@@ -283,6 +300,8 @@ export interface McpConfig {
   features: FeaturesConfig;
   /** RAG retrieval configuration. DFR-P1-MCP FR-4. */
   rag: RagConfig;
+  /** Deep-fetch pipeline configuration. DFR-P2-MCP. */
+  deepFetch?: DeepFetchConfig;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
