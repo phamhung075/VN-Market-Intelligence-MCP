@@ -1,23 +1,26 @@
 # PO Notebook
 
-## c · 2026-06-08T08:13:00Z — TRIAGE: A-20 4th recurrence POST cgroup-fix → ARCHITECT escalation (no-3rd-patch rule FIRED)
+## c · 2026-06-08T10:42:33Z — DJ-GATE-1: DEEPFETCH-RAG-REDESIGN spec approved + Phase-1 dev authorized
 
-**Trigger:** signal sau-c111-a20 (WARN, system-auditor c111, 08:07Z) — pdf-extractor /health timeout. Router RAW-VERIFIED independently: `curl -m5 localhost:5001/health` ×3 → HTTP 000 (hard timeout each), `docker ps` = "Up 6h (unhealthy)". Confirmed health-lies / event-loop-starvation, NOT transient OCR collision.
+**Trigger:** Directed review gate. BA spec ready (DFR-BA-1 spec_ready) + all 5 feasibility probes DONE/GREEN. Decision STEP po-S2 → docs/handoffs/sprint-DEEPFETCH-RAG-REDESIGN-po.md.
 
-**DECISIVE CONTEXT — fix disproven:** This is the FIRST probe after architect cgroup fix acb48383 (cpus 1.0→2.0 + start_period 60s) shipped in 04:27 rebuild. Fix FAILED. CPU-class patch history all dead: 48a64056, 3033e1dc, acb48383. OCR ALREADY process-offloaded (PDFX-SINGLE-WORKER-BLOCKING DONE) + push-clients async (FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN DONE). So NOT CPU quota, NOT OCR blocking. Recurrence c105(01:03Z)→c106→c111(08:07Z) ~7h. My armed po-S6 rule ("event-loop starvation again → architect, no 3rd patch") fires. DJ-GATE-1 = STEP po-S9.
+**Verify-raw (not badges):**
+- Read full BA spec 352L: 6 FR / 26 AC all live-verifiable, NFR1-6 (non-destructive/backward-compat/baseline-test-preserved/no-re-embed/no-downtime/no-hardcode), 5 edge cases, DDD layer+zone map. Phase-2/3 explicitly OUT. No gap vs brief → no revision.
+- Read SPIKE_DFR-Q3-Q4 doc raw: Q4 add_columns() non-destructive (3 rows before→after, vectors not re-embedded, safe defaults); Q3 FTS+hybrid available lancedb 0.30.2. Prod = Docker 0.30.2.
+- Q1/Q2 recon doc + brief exist on disk; Q5 ALTER safe (single-writer, schema-news.ts:57 pattern).
+- Board deps cross-checked: P1-RAG=[BA-1]; P1-MCP=[BA-1,P1-RAG]; QA-1=[P1-RAG,P1-MCP]; P2=[Q1,Q2,QA-1]; P3=[Q3,P1-RAG].
 
-**Smell found:** `uvicorn.run()` main.py:258 has NO `workers=` (single worker / single event loop); Dockerfile CMD same. Host /health dead while OCR isolated in child = MAIN-process loop starvation (model warm-up / sync I/O / picklable OCR payload deserialization on loop / blocked-resource await in /health).
+**Decisions / board flips:**
+1. DFR-BA-1: spec_ready → **approved** (no revision).
+2. DFR-P1-RAG: TODO → **READY** (next dispatch; both migration gates Q4+Q5 green; runs FIRST).
+3. DFR-P1-MCP / DFR-QA-1: stay TODO (deps unmet).
+4. DFR-P2-DEEPFETCH / DFR-P3-HYBRID: stay **BLOCKED**. Feasibility gates green BUT Phase-1 ordering dep intact (P2 needs QA-1, P3 needs P1-RAG live). Not dispatched. Dep-notes unchanged (Q-answers clear feasibility precondition only, not the ordering dep).
 
-**DISPATCH (WIP 2/2, architect slot was 1/2 w/ ARCH-TSU in REVIEW):**
-1. **A20-EVENTLOOP-STARVATION-ARCHITECT** (UNBLOCK, owner=architect, zone=apps/pdf-extractor/, M) — deep-dive on uvicorn worker model / event-loop offload. FORBIDDEN: any 4th CPU/cgroup/start_period patch. AC: host /health returns 200 within 5s WHILE /extract OCR in flight (failure-under-load).
-2. **A20-WEDGE-CAPTURE-RESTART** (FIX, owner=ops, zone=apps/pdf-extractor/, S) — CAPTURE-THEN-RESTART: py-spy dump + docker stats + IN-CONTAINER /health probe (key discriminator: does it wedge from inside too?) + logs + ps aux INTO docs/troubleshooting/2026-06-08-a20-eventloop-starvation-capture.md, THEN targeted `docker restart vn-market-intelligence-mcp-pdf-extractor-1` (NEVER down&&up — kills peers ~21min). Poll /health up to 90s. Preserves architect evidence; unblocks 26-row queue + Q1 ingest.
-
-signal_queue.rows[sau-c111-a20] → TRIAGED with resolution pointing to both tasks.
+**Router action requested:** dispatch **DFR-P1-RAG → dev-rag-service**. PO does not nested-spawn.
 
 **Carry-over (next PO cycle):**
-- VERIFY A20-WEDGE-CAPTURE-RESTART: capture file has all 5 diagnostics + committed; host /health=200 post-restart. Attach capture path to architect task.
-- AWAIT A20-EVENTLOOP-STARVATION-ARCHITECT brief → review (5-field critique if improvement_proposal-style; else BA→PM→dev-pdf-extractor → ops targeted rebuild). Then unblock FIX-PDF-EXTRACTOR-UNHEALTHY (reparse VHM/HCM/HSG/KBC), 26 blocked rows re-queue, 22-filing Q1 batch, FIX-AUDITOR-A20-MULTIPROBE.
-- DO NOT flip any A20 task DONE until /health=200 holds ≥15min UNDER /extract load (single-probe PASS is the c103 false-green trap — FIX-AUDITOR-A20-MULTIPROBE).
-- FIX-SBV-REFRESH-SILENT-SWALLOW verify (sbvRatesJob.ts re-throw → wrapRun status=error; SBV FX <26h) → then PM flip FIX-MACRO-REFRESH-DEAD DONE. C-09 macro half already RAW-verified live (dataSource=live, fedFundsRate=3.62).
-- Queue when slots free: FIX-PDFX-TEST-LOOP-POLLUTION (deferred 2×) → FIX-MCP-SUITE-HEALTH-BASELINE; CLEAN-NB-TRIM-PDFX (202L over cap); FIX-ALERT-ORPHAN-CORRELATION; HPG/REE reparse post-rebuild.
-- tnb c91 Monday-dish Fed-rate gate (2026-06-09 05:15Z): 5.33% weekday → escalate CRITICAL.
+- NEXT GATE: after DFR-P1-RAG lands live-verified (add_columns migration non-destructive on LIVE rag_entries, old rows still searchable, 16-col schema) → authorize DFR-P1-MCP dispatch → dev-mcp-server. WIP serialized P1-RAG → P1-MCP → QA-1.
+- After DFR-QA-1 green: re-evaluate P2 (Q1/Q2 green, now only QA-1 dep) for unblock; P3 unblocks once P1-RAG live (Q3 green).
+- ops_rebuild_required after DFR-P1-MCP merge.
+- (prior sprint) A20 event-loop starvation: AWAIT A20-EVENTLOOP-STARVATION-ARCHITECT brief; no 4th CPU/cgroup patch; /health=200 must hold ≥15min UNDER /extract load before any A20 DONE.
+- FIX-SBV-REFRESH-SILENT-SWALLOW verify → PM flip FIX-MACRO-REFRESH-DEAD DONE.

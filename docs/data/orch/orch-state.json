@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T11:15:00Z",
-  "_updated_by": "dev-rag-service",
+  "_updated_at": "2026-06-08T10:42:33Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -2445,7 +2445,7 @@
             "title": "Phase 1 requirement spec: additive LanceDB +8 metadata columns + per-doc_type query-time decay + DTO extensions + mcp-server caller updates + rag_analyses.body_text ADD COLUMN. Decompose acceptance criteria; defer Phase 2/3 scope.",
             "owner": "ba",
             "type": "SPRINT-S",
-            "status": "spec_ready",
+            "status": "approved",
             "zone": "docs/agents/",
             "size": "M",
             "priority": "high",
@@ -2455,14 +2455,14 @@
             "files": [
               "docs/architecture-briefs/2026-06-08-deepfetch-rag-redesign.md"
             ],
-            "note": "Scope = brief Phase 1 (B2 schema, B4 decay, B7 index API) + Q5 ALTER TABLE only. Phase 2/3 OUT. Feasibility probes (DFR-Q1..Q5) run in parallel and are NOT blockers for Phase 1 ba-spec — they gate Phase 2/3 commit only. PO greenlit; route ba->architect(if needed)->pm->dev->qa. | spec_ready 2026-06-08T00:00:00Z: docs/handoffs/DEEPFETCH-RAG-REDESIGN-phase1-BA-spec.md"
+            "note": "Scope = brief Phase 1 (B2 schema, B4 decay, B7 index API) + Q5 ALTER TABLE only. Phase 2/3 OUT. Feasibility probes (DFR-Q1..Q5) run in parallel and are NOT blockers for Phase 1 ba-spec — they gate Phase 2/3 commit only. PO greenlit; route ba->architect(if needed)->pm->dev->qa. | spec_ready 2026-06-08T00:00:00Z: docs/handoffs/DEEPFETCH-RAG-REDESIGN-phase1-BA-spec.md | [PO DJ-GATE-1 2026-06-08T10:42:33Z] APPROVED — raw-verified 352L/6FR/26AC; covers brief Phase-1 (B2/B4/B7/Q5) exactly; Phase-2/3 OUT confirmed; NFR1-6 + 5 edge cases present. No revision. Decision STEP po-S2 in docs/handoffs/sprint-DEEPFETCH-RAG-REDESIGN-po.md."
           },
           {
             "id": "DFR-P1-RAG",
             "title": "rag-service Phase 1: add_columns() migration for +8 metadata cols on rag_entries (ticker,sector,source_domain,depth_tier,doc_type,published_at,confidence,impact_score); extend IndexRequest + SearchRequest DTOs with optional new fields (backward-compatible defaults); extend LanceDBVectorStore.search() to filter on ticker/sector/source_domain/depth_tier/doc_type.",
             "owner": "dev-rag-service",
             "type": "SPRINT-S",
-            "status": "TODO",
+            "status": "READY",
             "zone": "apps/rag-service/",
             "size": "M",
             "priority": "high",
@@ -2475,7 +2475,7 @@
               "apps/rag-service/infrastructure/repositories.py",
               "apps/rag-service/application/dtos.py"
             ],
-            "note": "Brief B2/B7. Additive only — existing 384-dim vectors NOT re-embedded; existing rows get NULL new cols and stay searchable by vector. add_columns() non-destructiveness MUST be confirmed by DFR-Q4 before committing migration to live data (recompute-on-read-beats-backfill). No FTS in Phase 1 (that is Phase 3)."
+            "note": "Brief B2/B7. Additive only — existing 384-dim vectors NOT re-embedded; existing rows get NULL new cols and stay searchable by vector. add_columns() non-destructiveness MUST be confirmed by DFR-Q4 before committing migration to live data (recompute-on-read-beats-backfill). No FTS in Phase 1 (that is Phase 3). | [PO DJ-GATE-1 2026-06-08T10:42:33Z] READY-TO-DISPATCH (next active task). Both migration gates GREEN: DFR-Q4 add_columns() non-destructive + DFR-Q5 ALTER TABLE safe. Runs FIRST — DFR-P1-MCP depends on rag-service accepting new DTO fields. WIP: P1-RAG -> P1-MCP -> QA-1 serialized. Router dispatch -> dev-rag-service."
           },
           {
             "id": "DFR-P1-MCP",
