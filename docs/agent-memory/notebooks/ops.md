@@ -1901,3 +1901,36 @@ All 5 services running. mcp-server recreated (10s ago), peers preserved (no coll
 
 **Risk:** None. Targeted rebuild deployed without peer impact. Both fixes enable fail-loud job status recording (critical for auditor credibility).
 
+
+---
+
+## Session: 2026-06-08 (A20-WEDGE-CAPTURE-RESTART — Task A20)
+
+**Task:** CAPTURE pdf-extractor event-loop starvation diagnostics, THEN targeted docker restart (mitigation only, not fix).
+
+**Live State:** pdf-extractor flapping — /health intermittent 000 (6s timeout) vs 200. Docker healthcheck unhealthy. 26-row blocked queue waiting for restart.
+
+**Capture Results:**
+
+**CRITICAL DISCRIMINATOR FOUND:**
+- Host /health probes: 19x timeout (000, 6s), 1x success (200, 0.85s) over 40s window. Success rate 5%.
+- **In-container /health probe: ALSO timeout (000, 6.04s).** This is THE key fact.
+
+**Root Cause:** NOT a host-port-mapping issue; THE UVICORN EVENT LOOP IS STALLED on synchronous tesseract OCR.
+
+**Evidence:**
+1. Docker logs show 200 responses to health (from docker daemon), but localhost curl times out → event loop responsiveness varies
+2. `ps aux`: tesseract consuming 180% CPU, uvicorn PID 1 sleeping (0.8% CPU) → blocking on child process
+3. Docker stats: 203% CPU (2+ cores), 357MB memory → synchronous CPU-bound work
+4. /proc/1/status: State S (sleeping), not R (running) → blocked on syscall (waitpid on tesseract)
+
+**Diagnosis:** Single-worker uvicorn + synchronous CPU-bound OCR = classic event-loop bottleneck. When /extract job runs, /health cannot be served.
+
+**Restart Outcome:** Will clear queue and restart. Wedge will recur under load unless architect fixes worker model (async OCR or dedicated worker pools).
+
+**Decision Journal (DJ-GATE-1):**
+- CAPTURE goal met: discriminator proves event-loop stall (in-container timeout = app fault, not proxy)
+- EVIDENCE PRESERVED: docs/troubleshooting/2026-06-08-a20-eventloop-starvation-capture.md committed
+- RESTART: Safe to proceed; no risk of destroying peer services (docker restart only)
+- GATE OPEN: Proceed to STEP 2 (restart pdf-extractor)
+
