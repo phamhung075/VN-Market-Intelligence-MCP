@@ -1962,3 +1962,22 @@ All 5 services running. mcp-server recreated (10s ago), peers preserved (no coll
 2. System-auditor: harden healthcheck to multi-probe or exec-based (FIX-AUDITOR-A20-MULTIPROBE)
 3. Ops: Monitor pdf-extractor /health for recurrence during Q1-2026 ingest load
 
+
+**DJ-GATE-1 DECISION LOG:**
+
+Decision: PROCEED with restart after evidence capture.
+
+Rationale:
+1. Discriminator proof solid: in-container timeout = event-loop fault, not network
+2. Evidence preserved: troubleshooting doc committed, no data loss
+3. Restart scope minimal: docker restart only, zero peer risk (verified mcp-server healthy)
+4. Queue unblocked: 26-row Q1-2026 ingest can proceed
+5. Monitoring plan ready: ops will probe during ingest; auditor will harden multi-probe gate
+
+Risk Assessment:
+- Wedge recurrence likely under load (root cause not fixed)
+- Multi-probe gate NOT yet deployed (FIX-AUDITOR-A20-MULTIPROBE pending)
+- Architect deep-dive (A20-EVENTLOOP-STARVATION-ARCHITECT) will drive fix priority
+
+GATE RESULT: PASS (restart justified, evidence protected, constraints honored)
+
