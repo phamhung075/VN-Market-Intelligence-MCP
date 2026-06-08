@@ -1,5 +1,14 @@
-[NB] Total lines:       ~105
+[NB] Total lines:       ~110
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
+
+## c123 · 2026-06-08T20:35:29Z
+### Audit Run Tier-1 (20:35 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=33.68%; disk=40%.
+- A-20 pdf-extractor multi-probe: not re-probed this cycle (A-22–A-28 reserved for Tier-3).
+- Cron health: vnstockFundamentalsRefresh still crashed (0% success, last_run 2026-06-08T01:00Z) — dedup-skip BUG (already emitted c121/c120 within 7d).
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
 ## c122 · 2026-06-08T20:02:45Z
 ### Audit Run Tier-1 (20:02 UTC 2026-06-08)
