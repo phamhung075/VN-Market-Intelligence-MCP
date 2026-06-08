@@ -846,8 +846,9 @@ describe("Cross-chain structural checks", () => {
     expect(toolNames).toContain("remove_from_watchlist");
     expect(toolNames).toContain("get_watchlist");
     expect(toolNames).toContain("update_thresholds");
-    // Report tools (2 — fetch_ssc_reports removed in task 230)
+    // Report tools (3 — fetch_ssc_reports removed in task 230; read_bctc_pdf deregistered in TSU-DEV-U3)
     expect(toolNames).not.toContain("fetch_ssc_reports"); // removed in task 230
+    expect(toolNames).not.toContain("read_bctc_pdf"); // deregistered in TSU-DEV-U3 (superseded by OCR/PEK pipeline)
     expect(toolNames).toContain("get_financial_summary");
     expect(toolNames).toContain("compare_financials");
     // Alert tools (3 — run_daily_briefing removed in task 230)
@@ -863,8 +864,8 @@ describe("Cross-chain structural checks", () => {
     expect(toolNames).toContain("get_market_snapshot");
     expect(toolNames).toContain("get_patterns");
 
-    // At least 16 core tools + new tools added in later sprints
-    expect(toolNames.length).toBeGreaterThanOrEqual(16);
+    // At least 15 core tools (read_bctc_pdf deregistered in TSU-DEV-U3; new tools added in later sprints)
+    expect(toolNames.length).toBeGreaterThanOrEqual(15);
   });
 
   it("mark_alert_read marks all unread alerts as read in a single call", async () => {
