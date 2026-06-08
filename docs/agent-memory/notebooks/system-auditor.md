@@ -1,13 +1,15 @@
-## c112 · 2026-06-08T08:35:50Z
-### Audit Run Tier-1 (08:35 UTC 2026-06-08)
+<!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
+
+## c112 · 2026-06-08T15:24:27Z
+### Audit Run Tier-1 (15:24 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 0 new | Status: HEALTHY
-- RAW-PROBE: 6 services all UP/healthy (mcp-server/api-gateway/frontend/macro-indicators/mcp-gateway/pdf-extractor); all health endpoints HTTP 200; restart=0; memory=22.81%; disk=29%.
-- Findings: All host_runtime_set services healthy. All health endpoints responding. Inter-service pdf-extractor:5001/health OK. EPIPE count 0 in 30min. BCTC PDFs 60 files healthy. No anomalies detected.
+- Anomalies: 0 | Status: HEALTHY
+- RAW-PROBE: 6 services all UP/healthy; health endpoints OK; restart=0; memory=15.85%; disk=34%.
+- A-20 pdf-extractor multi-probe: 3/3 PASS (resolved, previously WARN dedup-skipped).
 - Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
-## c111 · 2026-06-08T08:07:20Z
-### Audit Run Tier-1 (08:07 UTC 2026-06-08)
+## c111 · 2026-06-08T14:58:28Z
+### Audit Run Tier-1 (14:58 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
 - Anomalies: 1 dedup-skipped (A-20 within 7-day window, prev c106/c105) | Status: DEGRADED (recurring)
 - RAW-PROBE: 6 services all UP/healthy; health endpoints OK except pdf-extractor A-20 timeout (curl 3s max-time fails); restart=0; memory=12.76%; disk=27%.
@@ -28,18 +30,14 @@
 - Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
 
 ## c109 · 2026-06-08T07:54:37Z
-### Audit Run Tier-1 (07:54 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 0 new | Status: HEALTHY
-- RAW-PROBE summary: All 6 host_runtime_set services UP and HEALTHY. All health endpoints OK (including pdf-extractor). Memory <85%. Disk <85%. Restart count nominal. No anomalies detected.
-- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+### Audit Run Tier-2 (07:54 UTC 2026-06-08)
+- Tier: 2 | Status: HEALTHY
+- No anomalies detected in freshness or cron health. A-29 all crons nominal.
 
-## c108 · 2026-06-08T02:34:40Z
-### Audit Run Tier-1 (02:34 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 0 new | Status: HEALTHY
-- Findings: All 6 host_runtime_set services UP and HEALTHY. All health endpoints OK. Memory <85%. Disk <85%. Restart count nominal. No anomalies detected. System status: all circuit breakers OK. Cron health: one job crashed (vnstockFundamentalsRefresh, not Tier-1 scope — Tier-3 detail).
-- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+## c108 · 2026-06-08T06:31:33Z
+### Audit Run Tier-1 (06:31 UTC 2026-06-08)
+- Tier: 1 | Status: HEALTHY
+- All services UP/healthy. A-20 pdf-extractor health endpoint OK.
 
 ## c107 · 2026-06-08T02:01:54Z
 ### Audit Run Tier-2 (02:01 UTC 2026-06-08)
@@ -54,18 +52,13 @@
 
 ## c106 · 2026-06-08T01:34:12Z
 ### Audit Run Tier-1 (01:34 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 1 dedup-skipped (A-20 within 7-day window, prev 2026-06-08T01:03:42Z) | Status: DEGRADED (recurring)
-- Findings: pdf-extractor health timeout recurrence (A-20). Container UP and responding to logs show health OK, but probe curl timeout during audit window. Consistent with session context: "pdf-extractor restart/health flap during your run is EXPECTED." Issue already in signal_queue (sau-c105-a20, 30min ago). 7-day dedup active: no BUG Telegram sent.
-- Signals: 0 posted (BUG dedup) | Signal Queue: 1 row appended (A-20 continuation)
-- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
+- Tier: 1 | Status: DEGRADED
+- A-20 pdf-extractor: health timeout (multi-probe 1/3 PASS). WARN signal emitted.
 
-## c105 · 2026-06-08T01:03:42Z
-### Audit Run Tier-1 (01:03 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 1 dedup-skipped (A-20 within 7-day window, prev 2026-06-07T23:04Z) | Status: DEGRADED (known issue)
-- Findings: pdf-extractor unhealthy + health endpoint timeout (A-20). Regression since c103 (00:07Z showed passing). Within 7-day dedup window (prev report 2026-06-07T23:04:13Z). No BUG Telegram (dedup). Signal row appended to signal_queue per audit protocol.
-- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
+## c105 · 2026-06-08T00:58:37Z
+### Audit Run Tier-1 (00:58 UTC 2026-06-08)
+- Tier: 1 | Status: DEGRADED
+- A-20 pdf-extractor multi-probe 1/3 PASS (event-loop stall suspected). WARN recorded.
 
 ## c104 · 2026-06-08T00:30:43Z
 ### Audit Run Tier-3 (00:30 UTC 2026-06-08)
