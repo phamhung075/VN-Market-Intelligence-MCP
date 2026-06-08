@@ -56,6 +56,12 @@ class SearchUseCase:
                 limit=request.limit * 4,  # over-fetch for dedup + filter
                 level_filter=request.level,
                 action_code_filter=request.action_code,
+                # FR-3: Phase 1 pre-filters
+                ticker_filter=request.ticker,
+                sector_filter=request.sector,
+                source_domain_filter=request.source_domain,
+                depth_tier_filter=request.depth_tier,
+                doc_type_filter=request.doc_type,
             )
 
             ranked = self.search_service.rank(
@@ -78,12 +84,25 @@ class SearchUseCase:
                     created_at=r.created_at,
                     distance=r.distance,
                     recency_score=r.recency_score,
+                    # FR-3: Phase 1 metadata propagated to HTTP response
+                    ticker=r.ticker,
+                    sector=r.sector,
+                    source_domain=r.source_domain,
+                    depth_tier=r.depth_tier,
+                    doc_type=r.doc_type,
+                    published_at=r.published_at,
+                    confidence=r.confidence,
+                    impact_score=r.impact_score,
                 )
                 for r in ranked
             ]
 
             return SearchResponse(results=dtos, total=len(dtos))
 
+        except ValueError:
+            # FR-3: Let validation errors (invalid depth_tier, doc_type, ticker) propagate
+            # as ValueError so the interface layer can return HTTP 400.
+            raise
         except Exception as exc:
             raise SearchError(f"Search failed: {exc}") from exc
 
@@ -144,6 +163,15 @@ class IndexUseCase:
                 tags=request.tags,
                 created_at=datetime.now(tz=timezone.utc),
                 action_code=request.action_code,
+                # FR-2: Phase 1 metadata fields
+                ticker=request.ticker,
+                sector=request.sector,
+                source_domain=request.source_domain,
+                depth_tier=request.depth_tier,
+                doc_type=request.doc_type,
+                published_at=request.published_at,
+                confidence=request.confidence,
+                impact_score=request.impact_score,
             )
 
             await self.vector_store.insert(entry, vector)

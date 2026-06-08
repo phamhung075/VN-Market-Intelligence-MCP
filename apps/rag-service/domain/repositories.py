@@ -25,6 +25,12 @@ class VectorStorePort(ABC):
         limit: int,
         level_filter: Optional[str] = None,
         action_code_filter: Optional[str] = None,
+        # FR-3: Phase 1 pre-filter fields
+        ticker_filter: Optional[str] = None,
+        sector_filter: Optional[str] = None,
+        source_domain_filter: Optional[str] = None,
+        depth_tier_filter: Optional[str] = None,
+        doc_type_filter: Optional[str] = None,
     ) -> list[SearchResult]:
         """Return top-k similar entries sorted by ascending L2 distance."""
 

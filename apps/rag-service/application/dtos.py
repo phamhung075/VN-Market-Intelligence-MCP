@@ -19,6 +19,12 @@ class SearchRequest:
     max_distance: float = 0.8
     level: Optional[str] = None
     action_code: Optional[str] = None
+    # FR-3: Phase 1 pre-filter fields — all optional, backward-compatible
+    ticker: Optional[str] = None
+    sector: Optional[str] = None
+    source_domain: Optional[str] = None
+    depth_tier: Optional[str] = None
+    doc_type: Optional[str] = None
 
 
 @dataclass
@@ -34,6 +40,15 @@ class SearchResultDTO:
     created_at: str
     distance: float
     recency_score: float
+    # FR-3: Phase 1 metadata echoed back from LanceDB row
+    ticker: str = ""
+    sector: str = ""
+    source_domain: str = ""
+    depth_tier: str = "shallow"
+    doc_type: str = "news"
+    published_at: str = ""
+    confidence: float = 0.0
+    impact_score: float = 0.0
 
     def to_json(self) -> dict:
         return asdict(self)
@@ -64,6 +79,15 @@ class IndexRequest:
     title: str = ""
     summary: str = ""
     action_code: Optional[str] = None
+    # FR-2: Phase 1 metadata fields — all optional, backward-compatible defaults
+    ticker: str = ""
+    sector: str = ""
+    source_domain: str = ""
+    depth_tier: str = "shallow"
+    doc_type: str = "news"
+    published_at: str = ""
+    confidence: float = 0.0
+    impact_score: float = 0.0
 
 
 @dataclass

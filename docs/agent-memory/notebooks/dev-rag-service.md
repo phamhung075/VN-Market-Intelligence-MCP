@@ -4,6 +4,29 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-06-08 — DFR-P1-RAG DONE-CODE (DEEPFETCH-RAG-REDESIGN Phase 1)
+
+**Task:** DFR-P1-RAG | **Sprint:** DEEPFETCH-RAG-REDESIGN
+**Status:** done-code — awaiting container rebuild (ops) + QA sign-off (DFR-QA-1)
+
+**What shipped:**
+- FR-1: `_get_table()` now runs idempotent add_columns() migration (+8 columns). Fresh tables get 16-col seed schema. E4 graceful degrade if add_columns() absent.
+- FR-2: `IndexRequest` extended with 8 optional fields (ticker, sector, source_domain, depth_tier, doc_type, published_at, confidence, impact_score). `AnalysisEntry` domain model updated. `insert()` passes all 8 fields.
+- FR-3: `SearchRequest` extended with 5 optional filter fields. `LanceDBVectorStore.search()` pre-filters via WHERE clauses. Invalid depth_tier/doc_type/ticker → ValueError → HTTP 400.
+
+**Live verification:**
+- Row count BEFORE migration: 14,028
+- Row count AFTER migration: 14,028 (zero data loss)
+- Columns: 16 confirmed
+- Sandbox primitive: 16/16 PASS | module: 2/2 PASS | env audit: EMPTY
+- Tests: 104 passed (85 baseline preserved + 19 new)
+
+**Rebuild required:** `docker compose build rag-service && docker compose up -d rag-service` (targeted only — no down&&up).
+
+**Decision step:** `docs/agent-memory/decisions/sprint-DEEPFETCH-RAG-REDESIGN-dev-rag-service.md`
+
+---
+
 ### 2026-06-08 — SPIKE DFR-Q3 + DFR-Q4 (DEEPFETCH-RAG-REDESIGN feasibility)
 
 **Tasks:** DFR-Q4 (gates DFR-P1-RAG migration) · DFR-Q3 (gates DFR-P3-HYBRID)

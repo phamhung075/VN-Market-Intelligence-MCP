@@ -21,6 +21,23 @@ logger = logging.getLogger(__name__)
 TABLE_NAME = "rag_entries"
 _VALID_LEVELS = {"global", "country", "domain", "action"}
 _VALID_ACTION_CODE = re.compile(r"^[A-Z0-9]{1,10}$")
+_VALID_TICKER = re.compile(r"^[A-Z0-9]{1,10}$")
+_VALID_DEPTH_TIERS = {"shallow", "deep"}
+_VALID_DOC_TYPES = {"news", "filing", "macro", "analysis"}
+
+# FR-1: Phase 1 migration — 8 new metadata columns added via add_columns()
+# SQL expressions evaluated against existing rows to supply default values.
+# Idempotent: guarded by try/except in _get_table() (column-already-exists is a no-op).
+_PHASE1_ADD_COLUMNS = {
+    "ticker":        "CAST(NULL AS STRING)",
+    "sector":        "CAST(NULL AS STRING)",
+    "source_domain": "CAST(NULL AS STRING)",
+    "depth_tier":    "'shallow'",
+    "doc_type":      "'news'",
+    "published_at":  "CAST(NULL AS STRING)",
+    "confidence":    "CAST(0.0 AS DOUBLE)",
+    "impact_score":  "CAST(0.0 AS DOUBLE)",
+}
 
 # ── Compaction constants ──────────────────────────────────────────────────────
 # Run optimize() every N inserts to prevent write-amplification bloat.
@@ -61,7 +78,14 @@ class LanceDBVectorStore(VectorStorePort):
         self._insert_count: int = 0  # inserts since last compaction
 
     async def _get_table(self):
-        """Lazy-initialize LanceDB connection and table."""
+        """Lazy-initialize LanceDB connection and table.
+
+        FR-1: On an existing table, runs idempotent add_columns() migration to add
+        the 8 Phase 1 metadata columns.  If add_columns() is not available (pre-0.8
+        lancedb), logs a loud warning and continues with the existing schema.
+        On a fresh table, the seed schema already includes all 16 columns so no
+        migration step is required.
+        """
         import lancedb
 
         if self._table is not None:
@@ -73,9 +97,31 @@ class LanceDBVectorStore(VectorStorePort):
         names = await self._db.table_names()
         if TABLE_NAME in names:
             self._table = await self._db.open_table(TABLE_NAME)
+            # FR-1: Idempotent migration — add 8 new metadata columns if not present.
+            # Each column-already-exists error is silently swallowed (idempotent).
+            # If add_columns() is absent entirely (old lancedb), degrade gracefully.
+            if not hasattr(self._table, "add_columns"):
+                logger.warning(
+                    "[LanceDBVectorStore] add_columns() not supported in this lancedb "
+                    "version — Phase 1 migration SKIPPED; upgrade lancedb to >= 0.8"
+                )
+            else:
+                for col_name, sql_expr in _PHASE1_ADD_COLUMNS.items():
+                    try:
+                        await self._table.add_columns({col_name: sql_expr})
+                    except Exception as exc:
+                        # Column already exists → expected on idempotent re-run.
+                        # Any other error is also swallowed: migration is additive only;
+                        # service must not crash on startup if migration partially applied.
+                        logger.debug(
+                            "[LanceDBVectorStore] add_columns(%s) skipped: %s",
+                            col_name,
+                            exc,
+                        )
             return self._table
 
-        # Create table with a seed row to establish schema
+        # FR-1: Create fresh table with full 16-column seed schema so new deployments
+        # never need to run add_columns() at all.
         seed = {
             "id": "__init__",
             "level": "",
@@ -85,6 +131,15 @@ class LanceDBVectorStore(VectorStorePort):
             "tags": "[]",
             "action_code": "",
             "created_at": datetime.now(tz=timezone.utc).isoformat(),
+            # Phase 1 metadata columns
+            "ticker": "",
+            "sector": "",
+            "source_domain": "",
+            "depth_tier": "shallow",
+            "doc_type": "news",
+            "published_at": "",
+            "confidence": 0.0,
+            "impact_score": 0.0,
         }
         self._table = await self._db.create_table(TABLE_NAME, [seed])
         await self._table.delete("id = '__init__'")
@@ -101,6 +156,15 @@ class LanceDBVectorStore(VectorStorePort):
             "tags": json.dumps(entry.tags),
             "action_code": entry.action_code or "",
             "created_at": entry.created_at.isoformat(),
+            # FR-2: Phase 1 metadata fields (all have safe defaults via AnalysisEntry)
+            "ticker": entry.ticker,
+            "sector": entry.sector,
+            "source_domain": entry.source_domain,
+            "depth_tier": entry.depth_tier,
+            "doc_type": entry.doc_type,
+            "published_at": entry.published_at,
+            "confidence": entry.confidence,
+            "impact_score": entry.impact_score,
         }
         await table.add([row])
         self._insert_count += 1
@@ -141,6 +205,11 @@ class LanceDBVectorStore(VectorStorePort):
         limit: int,
         level_filter: Optional[str] = None,
         action_code_filter: Optional[str] = None,
+        ticker_filter: Optional[str] = None,
+        sector_filter: Optional[str] = None,
+        source_domain_filter: Optional[str] = None,
+        depth_tier_filter: Optional[str] = None,
+        doc_type_filter: Optional[str] = None,
     ) -> list[SearchResult]:
         table = await self._get_table()
 
@@ -154,6 +223,29 @@ class LanceDBVectorStore(VectorStorePort):
             if not _validate_action_code(action_code_filter):
                 raise ValueError(f"Invalid action_code filter: {action_code_filter!r}")
             clauses.append(f"action_code = '{_sanitize(action_code_filter)}'")
+        # FR-3: Phase 1 pre-filters
+        if ticker_filter is not None:
+            if not _VALID_TICKER.match(ticker_filter):
+                raise ValueError(f"Invalid ticker filter: {ticker_filter!r} — must match [A-Z0-9]{{1,10}}")
+            clauses.append(f"ticker = '{_sanitize(ticker_filter)}'")
+        if depth_tier_filter is not None:
+            if depth_tier_filter not in _VALID_DEPTH_TIERS:
+                raise ValueError(
+                    f"Invalid depth_tier filter: {depth_tier_filter!r} — must be one of {sorted(_VALID_DEPTH_TIERS)}"
+                )
+            clauses.append(f"depth_tier = '{_sanitize(depth_tier_filter)}'")
+        if doc_type_filter is not None:
+            if doc_type_filter not in _VALID_DOC_TYPES:
+                raise ValueError(
+                    f"Invalid doc_type filter: {doc_type_filter!r} — must be one of {sorted(_VALID_DOC_TYPES)}"
+                )
+            clauses.append(f"doc_type = '{_sanitize(doc_type_filter)}'")
+        if sector_filter is not None:
+            # Free-text: sanitize only, no enum check
+            clauses.append(f"sector = '{_sanitize(sector_filter)}'")
+        if source_domain_filter is not None:
+            # Free-text: sanitize only, no enum check
+            clauses.append(f"source_domain = '{_sanitize(source_domain_filter)}'")
 
         # Over-fetch for dedup (4x requested, capped at 50)
         wide_limit = min(50, max(limit * 4, limit))
@@ -189,6 +281,15 @@ class LanceDBVectorStore(VectorStorePort):
                     action_code=row.get("action_code", ""),
                     created_at=row.get("created_at", ""),
                     distance=float(row.get("_distance", 0.0)),
+                    # FR-3: propagate Phase 1 metadata fields from LanceDB row
+                    ticker=row.get("ticker") or "",
+                    sector=row.get("sector") or "",
+                    source_domain=row.get("source_domain") or "",
+                    depth_tier=row.get("depth_tier") or "shallow",
+                    doc_type=row.get("doc_type") or "news",
+                    published_at=row.get("published_at") or "",
+                    confidence=float(row.get("confidence") or 0.0),
+                    impact_score=float(row.get("impact_score") or 0.0),
                 )
             )
             if len(results) >= limit:

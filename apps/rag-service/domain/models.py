@@ -43,6 +43,15 @@ class AnalysisEntry:
     tags: list[str]
     created_at: datetime
     action_code: Optional[str] = None
+    # FR-1/FR-2: Phase 1 metadata fields — all optional, backward-compatible defaults
+    ticker: str = ""
+    sector: str = ""
+    source_domain: str = ""
+    depth_tier: str = "shallow"
+    doc_type: str = "news"
+    published_at: str = ""
+    confidence: float = 0.0
+    impact_score: float = 0.0
 
     def is_valid_level(self) -> bool:
         return self.level in ("global", "country", "domain", "action")
@@ -66,3 +75,12 @@ class SearchResult:
     created_at: str     # ISO timestamp string
     distance: float     # L2 distance from LanceDB
     recency_score: float = 0.0  # temporal-decay-adjusted score (higher = better)
+    # FR-3: Phase 1 metadata fields echoed back from LanceDB row
+    ticker: str = ""
+    sector: str = ""
+    source_domain: str = ""
+    depth_tier: str = "shallow"
+    doc_type: str = "news"
+    published_at: str = ""
+    confidence: float = 0.0
+    impact_score: float = 0.0

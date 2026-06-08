@@ -36,13 +36,23 @@ def register_routes(
         """
         POST /search
 
-        Accepts: {query, limit?, decay_half_life_days?, max_distance?, level?, action_code?}
+        Accepts: {query, limit?, decay_half_life_days?, max_distance?, level?, action_code?,
+                  ticker?, sector?, source_domain?, depth_tier?, doc_type?}
         Returns: {results: [SearchResultDTO], total: int}
+
+        FR-3: Invalid depth_tier or doc_type → HTTP 400 with descriptive error.
         """
         try:
             request_dto = body.to_dto()
             response = await search_usecase.execute(request_dto)
             return response.to_json()
+        except ValueError as exc:
+            # FR-3: Validation errors from filter parameters (invalid depth_tier, doc_type, ticker)
+            logger.warning("Search validation error: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"status": "invalid_request", "error": str(exc)},
+            ) from exc
         except Exception as exc:
             logger.exception("Search failed")
             raise HTTPException(

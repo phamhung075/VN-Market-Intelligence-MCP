@@ -2462,7 +2462,7 @@
             "title": "rag-service Phase 1: add_columns() migration for +8 metadata cols on rag_entries (ticker,sector,source_domain,depth_tier,doc_type,published_at,confidence,impact_score); extend IndexRequest + SearchRequest DTOs with optional new fields (backward-compatible defaults); extend LanceDBVectorStore.search() to filter on ticker/sector/source_domain/depth_tier/doc_type.",
             "owner": "dev-rag-service",
             "type": "SPRINT-S",
-            "status": "READY",
+            "status": "done-code",
             "zone": "apps/rag-service/",
             "size": "M",
             "priority": "high",
@@ -2471,11 +2471,18 @@
               "DFR-BA-1"
             ],
             "created_at": "2026-06-08T09:06:20Z",
+            "done_at": "2026-06-08T11:10:00Z",
             "files": [
               "apps/rag-service/infrastructure/repositories.py",
-              "apps/rag-service/application/dtos.py"
+              "apps/rag-service/application/dtos.py",
+              "apps/rag-service/domain/models.py",
+              "apps/rag-service/domain/repositories.py",
+              "apps/rag-service/application/usecases.py",
+              "apps/rag-service/interface/handlers.py",
+              "apps/rag-service/interface/serializers.py",
+              "apps/rag-service/__tests__/unit/test_fr1_fr2_fr3_metadata.py"
             ],
-            "note": "Brief B2/B7. Additive only — existing 384-dim vectors NOT re-embedded; existing rows get NULL new cols and stay searchable by vector. add_columns() non-destructiveness MUST be confirmed by DFR-Q4 before committing migration to live data (recompute-on-read-beats-backfill). No FTS in Phase 1 (that is Phase 3). | [PO DJ-GATE-1 2026-06-08T10:42:33Z] READY-TO-DISPATCH (next active task). Both migration gates GREEN: DFR-Q4 add_columns() non-destructive + DFR-Q5 ALTER TABLE safe. Runs FIRST — DFR-P1-MCP depends on rag-service accepting new DTO fields. WIP: P1-RAG -> P1-MCP -> QA-1 serialized. Router dispatch -> dev-rag-service."
+            "note": "Brief B2/B7. Additive only — existing 384-dim vectors NOT re-embedded; existing rows get NULL new cols and stay searchable by vector. add_columns() non-destructiveness MUST be confirmed by DFR-Q4 before committing migration to live data (recompute-on-read-beats-backfill). No FTS in Phase 1 (that is Phase 3). | [PO DJ-GATE-1 2026-06-08T10:42:33Z] READY-TO-DISPATCH (next active task). Both migration gates GREEN: DFR-Q4 add_columns() non-destructive + DFR-Q5 ALTER TABLE safe. Runs FIRST — DFR-P1-MCP depends on rag-service accepting new DTO fields. WIP: P1-RAG -> P1-MCP -> QA-1 serialized. Router dispatch -> dev-rag-service. | [dev-rag-service DJ-GATE-1 2026-06-08T11:10:00Z] done-code: FR-1+FR-2+FR-3 implemented; 104 tests pass (85 baseline + 19 new); live migration verified: 14028 rows before=after, 16-col schema; sandbox primitive 16/16 PASS, module 2/2 PASS; env audit EMPTY. REBUILD REQUIRED: docker compose build rag-service && docker compose up -d rag-service (targeted only). DFR-QA-1 gate: do NOT flip before QA sign-off."
           },
           {
             "id": "DFR-P1-MCP",

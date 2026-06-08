@@ -26,6 +26,12 @@ class SearchRequestSchema(BaseModel):
     )
     level: Optional[str] = Field(None, description="Filter by level (global/country/domain/action)")
     action_code: Optional[str] = Field(None, description="Filter by stock ticker (e.g. VCB)")
+    # FR-3: Phase 1 pre-filter fields — all optional, backward-compatible
+    ticker: Optional[str] = Field(None, description="Filter by ticker (e.g. VCB), must match [A-Z0-9]{1,10}")
+    sector: Optional[str] = Field(None, description="Filter by sector (e.g. Banking)")
+    source_domain: Optional[str] = Field(None, description="Filter by source domain (e.g. cafef.vn)")
+    depth_tier: Optional[str] = Field(None, description="Filter by depth tier (shallow|deep)")
+    doc_type: Optional[str] = Field(None, description="Filter by doc type (news|filing|macro|analysis)")
 
     def to_dto(self) -> SearchRequest:
         return SearchRequest(
@@ -35,6 +41,11 @@ class SearchRequestSchema(BaseModel):
             max_distance=self.max_distance,
             level=self.level,
             action_code=self.action_code,
+            ticker=self.ticker,
+            sector=self.sector,
+            source_domain=self.source_domain,
+            depth_tier=self.depth_tier,
+            doc_type=self.doc_type,
         )
 
 
@@ -48,6 +59,15 @@ class IndexRequestSchema(BaseModel):
     title: str = Field("", description="Short title / headline")
     summary: str = Field("", description="Paragraph summary")
     action_code: Optional[str] = Field(None, description="Stock ticker if action-level")
+    # FR-2: Phase 1 metadata fields — all optional, backward-compatible defaults
+    ticker: str = Field("", description="Stock ticker (e.g. VCB)")
+    sector: str = Field("", description="Sector (e.g. Banking)")
+    source_domain: str = Field("", description="Source domain (e.g. cafef.vn)")
+    depth_tier: str = Field("shallow", description="Content depth (shallow|deep)")
+    doc_type: str = Field("news", description="Document type (news|filing|macro|analysis)")
+    published_at: str = Field("", description="Original publish timestamp (ISO)")
+    confidence: float = Field(0.0, ge=0.0, le=1.0, description="Confidence score 0.0–1.0")
+    impact_score: float = Field(0.0, ge=0.0, le=10.0, description="Impact score 0–10")
 
     def to_dto(self) -> IndexRequest:
         return IndexRequest(
@@ -58,6 +78,14 @@ class IndexRequestSchema(BaseModel):
             title=self.title,
             summary=self.summary,
             action_code=self.action_code,
+            ticker=self.ticker,
+            sector=self.sector,
+            source_domain=self.source_domain,
+            depth_tier=self.depth_tier,
+            doc_type=self.doc_type,
+            published_at=self.published_at,
+            confidence=self.confidence,
+            impact_score=self.impact_score,
         )
 
 
