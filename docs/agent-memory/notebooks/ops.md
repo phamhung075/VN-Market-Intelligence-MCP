@@ -1934,3 +1934,31 @@ All 5 services running. mcp-server recreated (10s ago), peers preserved (no coll
 - RESTART: Safe to proceed; no risk of destroying peer services (docker restart only)
 - GATE OPEN: Proceed to STEP 2 (restart pdf-extractor)
 
+
+**Step 2: RESTART (docker restart only, targeted)**
+
+- Executed: `docker restart vn-market-intelligence-mcp-pdf-extractor-1`
+- Time to healthy: 18 seconds
+- Peers unaffected: mcp-server and other services running normally
+
+**Step 3: POST-RESTART VERIFICATION**
+
+- Host /health probes (10 samples): 10x 200 OK, response times 1.96–2.48ms
+- Success rate: 100% (vs 5% pre-restart)
+- In-container /health probe: 200 OK, 1.48ms (vs 6.04s timeout pre-restart)
+- Docker healthcheck: healthy (vs unhealthy pre-restart)
+- Queue status: 26-row blocked queue ready for ingest (Q1-2026 data can proceed)
+
+**Critical Outcome:** Wedge cleared transiently; /health stable post-restart. The restart has successfully unblocked the queue.
+
+**CONSTRAINTS HONORED:**
+- A20-WEDGE-CAPTURE-RESTART NOT marked DONE (restart is mitigation, not fix)
+- A-20 remains OPEN pending architect's structural fix (uvicorn worker model)
+- Evidence preserved in docs/troubleshooting/2026-06-08-a20-eventloop-starvation-capture.md
+- FIX-AUDITOR-A20-MULTIPROBE multi-probe gate required to catch false-green before next load spike
+
+**Next Actions:**
+1. Architect: deep-dive on uvicorn worker config (A20-EVENTLOOP-STARVATION-ARCHITECT)
+2. System-auditor: harden healthcheck to multi-probe or exec-based (FIX-AUDITOR-A20-MULTIPROBE)
+3. Ops: Monitor pdf-extractor /health for recurrence during Q1-2026 ingest load
+
