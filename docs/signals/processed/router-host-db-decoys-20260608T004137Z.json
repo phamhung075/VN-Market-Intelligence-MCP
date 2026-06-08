@@ -1,0 +1,19 @@
+{
+  "signal_type": "repair_task_request",
+  "from": "router",
+  "to": "po",
+  "severity": "LOW",
+  "created_at": "2026-06-08T00:41:37Z",
+  "summary": "Duplicate/decoy SQLite DB copies on host misled Tier-3 verification tonight (router read apps/mcp-server/data/market.db: 105 pending vs live 338; root market.db is 0 bytes). Live DB plane = docker named volume vn-market-intelligence-mcp_market_data mounted at /app/data — host copies are stale orphans.",
+  "suggested_task": {
+    "id": "CLEAN-HOST-DB-DECOYS",
+    "kind": "cleanup",
+    "note": "inventory ./market.db ./data/*.db apps/mcp-server/data/*.db; confirm nothing reads them (grep compose mounts + code paths); quarantine or delete; document live-DB location in dev-standards or system-map"
+  },
+  "_processed": {
+    "fingerprint": "dc9772809f7f24e19624796c79ac216715543d60a6d394337be597eb3573ed72",
+    "processedAt": "2026-06-08T01:10:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

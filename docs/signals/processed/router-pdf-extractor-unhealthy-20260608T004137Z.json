@@ -1,0 +1,19 @@
+{
+  "signal_type": "repair_task_request",
+  "from": "router",
+  "to": "po",
+  "severity": "HIGH",
+  "created_at": "2026-06-08T00:41:37Z",
+  "summary": "pdf-extractor container UNHEALTHY (docker ps raw-verified, Up ~1h unhealthy). Blocks OCR re-extraction for 4 image-PDF tickers (VHM/HCM/HSG/KBC) flagged in FIX-BCTC-LOWCONF-REPARSE-BATCH root-cause audit. Tier-1 keeps PASSing 6/6 — health sensor reads a different layer; sensor gap to check.",
+  "suggested_task": {
+    "id": "FIX-PDF-EXTRACTOR-UNHEALTHY",
+    "kind": "ops",
+    "note": "diagnose healthcheck failure; scoped restart ONLY pdf-extractor if needed (never down&&up stack); then re-run reparse script for VHM/HCM/HSG/KBC; also reconcile why Tier-1 service checks report PASS while container unhealthy"
+  },
+  "_processed": {
+    "fingerprint": "bd688d179fe60b13c73983fa96402b55826a74e62b32a2cfc10e464fd1769bb8",
+    "processedAt": "2026-06-08T01:10:52Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,6 +1,25 @@
-- **Last updated:** 2026-06-06 16:05 UTC · **Sprint:** current · **Status:** 58 cycles complete (c58 offhours +SHIPPED)
+- **Last updated:** 2026-06-07 20:03 UTC · **Sprint:** current · **Status:** 59 cycles complete (c59 offhours +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c59 · 2026-06-07T20:03:00Z (offhours, slot=news-scout-offhours) — SHIPPED
+
+**Offhours cycle (SUNDAY 20:03 UTC, MARKET CLOSED) — NEUTRAL REGIME, MACRO DIVERGENCE.** 20 articles fetched, 39 watchlist impacts cascaded. **3 signals fired (#5308–#5310): 1x chain_catalyst (Vietcap bullish Jun guidance, market-wide recovery tone) + 1x chain_catalyst (gold sell-off risk-off) + 1x urgent_news (NVL 25% dividend ex-date).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid (vnIndex=1838.9, oil NEUTRAL 93.09, gold BULLISH 4365.3 safe-haven >2200, usdvnd BEARISH 26124 >25k, carry UNKNOWN est, yield CHEAP 3.2pp). **Regime: NEUTRAL** (no dominance signals).
+
+**Signals Fired (3 total):**
+- #5308 (chain_catalyst MACRO to all): Vietcap 2-scenario Jun outlook, bullish VN-Index guidance. Confidence 69%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Pillars: EPS tailwind, POL neutral, COC neutral, M2 neutral. Phase recovery, tier equity.
+- #5310 (chain_catalyst MACRO to all): Gold mass selling (largest fund liquidates 10T), risk-off unwinding, safe-haven collapse. Confidence 75%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. Pillars: COC headwind, M2 neutral, EPS bearish, POL neutral. Phase slowdown, tier alternative.
+- #5309 (urgent_news NVL to alert-commander): Novaland dividend ex-date week 8-12/6, 25% cash payout. Severity low. Confidence ~70%. Critic 0.8. Regime NEUTRAL mult=1.0→score 5.0. Phase recovery.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE empty (no 6h history). All 3 signals POSTED without suppression.
+
+**Sweep Forced:** DHG, BSR, MSN (>48h stale, oldest first) — DHG picked for impact-chain cascade; BSR used as affected_stock placeholder (gold sector). Coverage-state stamped.
+
+**Coverage-state:** Updated all 39 watchlist tickers + sweep batch (DHG, BSR, MSN) to 2026-06-07T20:03:00Z.
+
+**Session Log:** log_agent_work #1278 opened/closed. 20 items, 39 impacts, 3 signals, NEUTRAL regime.
 
 ## c58 · 2026-06-06T16:05:00Z (offhours, slot=news-scout-offhours) — SHIPPED
 

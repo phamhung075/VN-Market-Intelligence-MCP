@@ -5008,7 +5008,7 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-08T00:11:14Z",
+    "_updated_at": "2026-06-08T01:11:48Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -5445,6 +5445,20 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "IMP-20260607-price-confirmation-degraded",
+        "ts": "2026-06-07T07:48:11.861Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "improvement_proposal",
+        "summary": "price_confirmation accuracy degraded",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": "docs/improvement-proposals/IMP-20260607-price-confirmation-degraded.md",
+        "rescued_at": "2026-06-08T01:11:48Z",
+        "rescued_by": "router-dispatcher",
+        "rescue_note": "recovered from phantom .claude/worktrees/docs/ orch-state (agent wrote docs-relative path from wrong CWD 2026-06-07T09:48 local); deduped from ~N retry copies"
       }
     ],
     "archive": [
