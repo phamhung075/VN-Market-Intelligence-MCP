@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T15:45:44Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-08T17:19:26Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T15:45:44Z",
@@ -2821,11 +2821,11 @@
             "type": "FIX",
             "owner": "ops",
             "depends": [],
-            "status": "NEW",
+            "status": "DONE",
             "size": "XS",
             "zone": "cross-service/",
             "priority": "high",
-            "note": "OOB CI triage 2026-06-08T16:58:42Z. ROOT: CI red because the Go-lint v1/v2 + ts-lint fixes at dd79f811 are committed locally but origin/main is 139 commits behind (HEAD a709681). DoD: `git push origin main` succeeds; a NEW ci.yml run is triggered on the pushed HEAD. Verify push: git rev-list --count origin/main..HEAD == 0 after push. Then read `gh run list --workflow ci.yml -L 1` for the fresh run id and report its status. Verification gate per router: green ci.yml on a subsequent push, NOT local-only. Minor uncommitted notebook churn (ba.md/pm.md/tool-usage-stats.json) is unrelated — do not block on it."
+            "note": "OOB CI triage 2026-06-08T16:58:42Z. ROOT: CI red because the Go-lint v1/v2 + ts-lint fixes at dd79f811 are committed locally but origin/main is 139 commits behind (HEAD a709681). DoD: `git push origin main` succeeds; a NEW ci.yml run is triggered on the pushed HEAD. Verify push: git rev-list --count origin/main..HEAD == 0 after push. Then read `gh run list --workflow ci.yml -L 1` for the fresh run id and report its status. Verification gate per router: green ci.yml on a subsequent push, NOT local-only. Minor uncommitted notebook churn (ba.md/pm.md/tool-usage-stats.json) is unrelated — do not block on it. | DONE 2026-06-08T17:01Z: pushed a709681f..9f063c9a; fresh run 27153704278 triggered."
           },
           {
             "id": "BUN-TEST-CI-GATE",
@@ -2835,13 +2835,61 @@
             "depends": [
               "PUSH-CI-FIX-TO-REMOTE"
             ],
-            "status": "BLOCKED",
+            "status": "DONE",
             "size": "XS",
             "zone": "multi",
             "mode": "spike",
             "timebox": 30,
             "priority": "high",
-            "note": "Conditional. bun test fail (router cause #3) was on 139-commit-stale code; do NOT scope a dev FIX blind. After push, if fresh run bun test is GREEN -> close NOOP (stale-run artifact). If still RED -> pull `gh run view <fresh-id> --log-failed` filtered past intentional error-path fixtures (geo-blocked/simulated-INSERT), isolate the real assertion, then PO scopes an atomic FIX zone-routed to the owning service (e.g. kinh-dich -> dev-kinh-dich, mcp-server -> dev-mcp-server). 2026-06-08T16:58:42Z"
+            "note": "Conditional. bun test fail (router cause #3) was on 139-commit-stale code; do NOT scope a dev FIX blind. After push, if fresh run bun test is GREEN -> close NOOP (stale-run artifact). If still RED -> pull `gh run view <fresh-id> --log-failed` filtered past intentional error-path fixtures (geo-blocked/simulated-INSERT), isolate the real assertion, then PO scopes an atomic FIX zone-routed to the owning service (e.g. kinh-dich -> dev-kinh-dich, mcp-server -> dev-mcp-server). 2026-06-08T16:58:42Z | RESOLVED 2026-06-08T17:17Z (po): fresh run RED on FRESH code. Classified into 2 disjoint root causes -> spawned FIX-MCP-TOOL-COUNT-DRIFT (real registry drift, line 867) + FIX-MCP-CI-NETWORK-GUARD (external-source null/0 = CI network flakiness). Spike complete; not NOOP."
+          },
+          {
+            "id": "FIX-MCP-TOOL-COUNT-DRIFT",
+            "title": "123-integration-mcp.test.ts:867 `toolNames.length >= 16` -> Received 15 on fresh code: a non-enumerated registered tool was dropped (14 named toContain assertions all PASS). Verify actual _registeredTools count locally; if a tool was intentionally removed -> update assertion+comment to true count; if registration accidentally broke -> restore it.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "Created by po BUN-TEST-CI-GATE triage 2026-06-08T17:19:26Z. GENUINE drift, NOT network. Test counts the LOCAL in-process server._registeredTools (not the gateway 146 surface). DoD: owner verifies real registry count via running the test/inspecting registration; decides intentional-removal (fix assertion) vs accidental-break (restore tool). VERIFICATION GATE: proves out only on GREEN ci.yml after subsequent push."
+          },
+          {
+            "id": "FIX-MCP-CI-NETWORK-GUARD",
+            "title": "bun-test external-source failures (CI env flakiness, NOT regressions): 025-yahoo-finance(8), 1487-yahoo-finance-extended(3), 028-sbv-rates(10+), 1146-insider-transactions(2 Expected>0 Received 0), 1335-news-pipeline-rag-insert(2) -> live sources blocked/rate-limited in CI sandbox return null/0. Network-guard / skip-in-CI / mock these so ci.yml bun-test goes green.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "Created by po BUN-TEST-CI-GATE triage 2026-06-08T17:19:26Z. Signature = live external source unreachable in CI -> null/0. DEDUP/LINK: this is the CI-blocking subset of FIX-MCP-SUITE-HEALTH-BASELINE (TODO, broader local-baseline). Keep separate; cross-ref. Prefer detect-CI-env + skip/mock over deleting assertions. VERIFICATION GATE: GREEN ci.yml after subsequent push."
+          },
+          {
+            "id": "FIX-MACRO-GO-DIRECTIVE",
+            "title": "Macro Indicators Go Lint exit 3: golangci-lint v2.0.2 (built go1.24) rejects apps/macro-indicators/go.mod `go 1.25.0` (targeted > builder). macro-indicators is the ONLY service over-declaring; other 5 = `go 1.22`. Align go.mod `go 1.25.0` -> `go 1.22` (repo standard).",
+            "type": "FIX",
+            "owner": "dev-macro-indicators",
+            "depends": [],
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/macro-indicators/",
+            "priority": "high",
+            "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE confirmed from raw log (run 27153704278): `the Go language version (go1.24) used to build golangci-lint is lower than the targeted Go version (1.25.0)`. NOT a ci.yml regression (per-service go-version-file; 4/6 pass). Zone fix to repo standard. Verify deps still resolve after lowering directive. VERIFICATION GATE: GREEN ci.yml after subsequent push."
+          },
+          {
+            "id": "FIX-TA-GOLANGCI-CONFIG-V2",
+            "title": "go-lint (technical-analysis) exit 3: `unsupported version of the configuration: \"\"`. apps/technical-analysis/.golangci.yml is the ONLY of 6 MISSING `version: \"2\"` (golangci-lint v2.0.2 requires it). Leftover v1->v2 migration miss from FIX-CI-LINT-STACK. Add `version: \"2\"`.",
+            "type": "FIX",
+            "owner": "dev-technical-analysis",
+            "depends": [],
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/technical-analysis/",
+            "priority": "high",
+            "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE from raw log: this is a CONFIG-MIGRATION miss, NOT a go-version issue (its go.mod = go 1.22, fine). The other 5 services already have version:\"2\". Add the field + verify config schema parses under v2. VERIFICATION GATE: GREEN ci.yml after subsequent push."
           }
         ]
       }

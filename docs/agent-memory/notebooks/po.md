@@ -1,20 +1,23 @@
 # PO Notebook
 
-## c · 2026-06-08T16:58Z — OOB triage: ci.yml RED is a PUSH GAP, not a recurrence
+## c · 2026-06-08T17:17Z — CI-RED-RECONCILE: gate resolved, 2 residuals scoped on FRESH code
 
-**Trigger:** User-surfaced OOB (not a cron tick). ci.yml RED on every push to main, run 27104618906 on origin HEAD a709681. Router pulled raw 3 root causes (Go-lint v1/v2, ts-lint ESLint v9, bun test fail) + flagged FIX-CI-LINT-STACK (dd79f811) recurrence.
+**Trigger:** ops landed PUSH-CI-FIX-TO-REMOTE (HEAD 9f063c9a → origin; dd79f811 verified pushed). Fresh run 27153704278 validates fresh code. Original lint fix proved out: 5 Go lints + py-lint PASS, kinh-dich-ts-lint job deleted. PO resolves BUN-TEST-CI-GATE + triages 2 residuals.
 
-**Git-ancestry verdict (the whole triage):**
-- Failing run HEAD **a709681f** (2026-06-07 22:45) **== origin/main**. `git merge-base --is-ancestor a709681 dd79f811` = **YES** → the run PREDATES the fix.
-- Fix **dd79f811** (FIX-CI-LINT-STACK, 23:33) is in local HEAD, **UNPUSHED**. Local main is **139 commits ahead** of origin/main.
-- Local ci.yml already has 6× `golangci-lint-action@v7.0.0` + `version: v2.0` (cause #1 fixed) AND **zero** eslint/kinh-dich-ts-lint job (cause #2 fixed — job deleted, kinh-dich rebooted TS→Go).
-- **NOT a recurrence.** FIX-CI-LINT-STACK is correct + complete; it just never reached the remote. The only defect = unpushed.
+**Decisions (board mutated atomic temp→rename; sprint active_sprints[24]):**
+- **PUSH-CI-FIX-TO-REMOTE → DONE.** **BUN-TEST-CI-GATE → DONE** (spike complete; NOT noop — RED on fresh code).
+- Split bun-test RED by root cause (read raw failed log, not blanket fix):
+  - **FIX-MCP-TOOL-COUNT-DRIFT** (dev-mcp-server, XS, apps/mcp-server/) — 123-integration-mcp:867 `>=16`→Received 15. All 14 named toContain PASS → a non-enumerated registered tool dropped. GENUINE drift, not network. Test counts LOCAL `_registeredTools`, not gateway-146. Owner verifies real count → fix assertion (intentional removal) OR restore tool (accidental break).
+  - **FIX-MCP-CI-NETWORK-GUARD** (dev-mcp-server, S, apps/mcp-server/) — yahoo(8)+yahoo-ext(3)+sbv(10+)+insider(2)+news-rag(2) = live sources null/0 in CI sandbox = ENV flakiness. Guard/skip-in-CI/mock. LINK: CI-subset of FIX-MCP-SUITE-HEALTH-BASELINE (keep separate, cross-ref).
+- GO-VERSION residual — diagnosed BEFORE assigning; raw log shows TWO DISTINCT causes (ops journal wrongly merged them):
+  - **FIX-MACRO-GO-DIRECTIVE** (dev-macro-indicators, XS) — go.mod `go 1.25.0` (sole over-declarer; others go 1.22) > golangci v2 builder go1.24. Align to `go 1.22`.
+  - **FIX-TA-GOLANGCI-CONFIG-V2** (dev-technical-analysis, XS) — `.golangci.yml` MISSING `version:"2"` (only 1 of 6); golangci v2.0.2 rejects v1 config. CONFIG-migration leftover from FIX-CI-LINT-STACK, NOT go-version. Add `version:"2"`.
 
-**Decisions (board mutated, atomic temp→rename; sprint CI-RED-RECONCILE):**
-- **PUSH-CI-FIX-TO-REMOTE** (ops, XS, cross-service/) — `git push origin main`, observe fresh ci.yml run. Verification gate = green run on a subsequent push, NOT local.
-- **BUN-TEST-CI-GATE** (po, BLOCKED on push, SPIKE 30m) — cause #3 observed on 139-stale code; do NOT scope a dev FIX blind. After push: green → close NOOP; still red → isolate real assertion (past intentional error-path fixtures), then zone-route an atomic FIX.
+**Dedup/WIP/escalation:** in_progress=0 → all 3 dispatchable fixes fit cap. Recurring-bug rule does NOT fire (first fresh-code run; TA config is a leftover of the lint fix, not a re-occurrence). No architect.
 
-**Carry-over:**
-- Once pushed: read fresh run, resolve BUN-TEST-CI-GATE. Many unpushed fixes (FIX-MACRO-REFRESH-DEAD, FIX-BCTC-*) may already flip bun test green.
-- Systemic: 139-commit unpushed backlog means CI has been validating ~stale code for a while — operator/ops should consider a push cadence so CI tracks local HEAD.
-- Minor uncommitted notebook churn (ba.md/pm.md/tool-usage-stats.json) unrelated to CI.
+**Verification gate:** every fix proves out ONLY on GREEN ci.yml after a subsequent push. Local green ≠ DONE. After dev-* land → ops pushes → read next run → then DONE.
+
+## Carry-over
+- All 3 FIX tasks are parallel-safe (distinct zones). Main terminal: spawn dev-mcp-server (2 tasks, same zone — sequence), dev-macro-indicators, dev-technical-analysis. After all land → ops push → PO reads next ci.yml run for sign-off.
+- 123-integration drift: owner must verify LOCAL registry count, not trust the gateway 146 surface.
+- Journal: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-po.md (steps po-S1..S3).
