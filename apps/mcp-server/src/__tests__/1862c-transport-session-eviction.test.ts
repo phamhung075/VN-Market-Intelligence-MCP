@@ -11,15 +11,20 @@
  * timers fire fast; await a short delay to let the heartbeat tick.
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, mock, afterAll, beforeEach } from "bun:test";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { EventEmitter } from "node:events";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Module mock — SSEServerTransport
+// Module mock — SSEServerTransport + McpServer
 //
-// mock.module() is called once at top level. The mock class always sets
-// sessionId = "test-session-001" and provides a no-op handlePostMessage.
+// mock.module() is called at module scope so the mock is in place before
+// transport.js is imported (Bun resolves top-level await imports at module
+// evaluation time, which precedes beforeAll). The afterAll restore() tears
+// down the process-level cache patch after this file's tests complete,
+// preventing cascade leakage to subsequent test files. Without restore(),
+// every subsequent file inherits a McpServer with no .tool() method,
+// causing ~269 cascade failures (brief #2 hypothesis being tested).
 // ─────────────────────────────────────────────────────────────────────────────
 
 mock.module("@modelcontextprotocol/sdk/server/sse.js", () => ({
@@ -35,6 +40,10 @@ mock.module("@modelcontextprotocol/sdk/server/mcp.js", () => ({
     connect = mock(async () => {});
   },
 }));
+
+afterAll(() => {
+  mock.restore();
+});
 
 // Import SUT AFTER mock.module() so Bun resolves the mocked versions
 const { SseSessionManager } = await import("../interface/mcp/transport.js");

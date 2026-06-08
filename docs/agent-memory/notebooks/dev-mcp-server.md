@@ -1,5 +1,14 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-08 · B1-MOCK-MODULE-EXPERIMENT — NULL RESULT, HYGIENE FIX SHIPPED
+
+**Task:** B1-MOCK-MODULE-EXPERIMENT | Sprint: CI-RED-RECONCILE | Epic: CI-BUN-TEST-MULTI-CLASS-FIX
+**Fix applied:** Added `afterAll(() => { mock.restore(); })` to `1862c-transport-session-eviction.test.ts`. Both `mock.module()` calls stay at module scope (required for top-level `await import` of transport.js to resolve the mock).
+**Experiment verdict:** NULL — delta = 0 (443 fail before, 443 fail after). Brief #1 no-cascade framing holds locally. macOS Bun v1.3.13 does not exhibit the process-level module cache contamination that brief #2 diagnosed from CI.
+**Lesson:** Bun mock.module contamination may be CI-Linux-specific or environment-dependent. The `afterAll(mock.restore())` is still correct hygiene per 1303h-extractor-guards pattern. Brief #2's ~269 cascade claim must be verified on the CI runner directly before accepting as the dominant root cause.
+**DWF canary:** Verified still RED (unchanged), as required.
+**Bunfig note:** coverage=false during measurement (OOM crash masks summary at tail-20/30); restored to coverage=true post-measurement.
+
 ## 2026-06-08 · FIX-SBV-REFRESH-SILENT-SWALLOW — DONE
 
 **Task:** FIX-SBV-REFRESH-SILENT-SWALLOW

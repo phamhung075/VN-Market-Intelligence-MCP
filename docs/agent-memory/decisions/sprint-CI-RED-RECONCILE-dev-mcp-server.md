@@ -33,3 +33,42 @@
 - Add it(..., 15_000) explicit timeout + inject ragInsert/teChromiumNews/newsapi mocks — chosen
 **why-decision:** Pattern from 137-fix-alert-pipeline.test.ts (CYCLE_TIMEOUT=30_000); consistent with existing codebase; root cause = ragIndex HTTP (no rag-service in CI) + module loading overhead
 **why-change:** initial fix insufficient; timeout root cause discovered through runtime tracing
+
+---
+
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-06-08T10:00:00Z (DJ-GATE-1)
+**task-id:** B1-MOCK-MODULE-EXPERIMENT
+**sprint:** CI-RED-RECONCILE
+**epic:** CI-BUN-TEST-MULTI-CLASS-FIX
+
+**experiment-design:** Falsifiable test of brief #2 (cascade hypothesis) vs brief #1 (no-cascade, 3-class hypothesis).
+- Change: Added `afterAll(() => { mock.restore(); })` to `1862c-transport-session-eviction.test.ts`. Both `mock.module()` calls retained at module scope (required: transport.js top-level await import runs before beforeAll; moving mocks inside beforeAll would break the SUT import). `afterAll` tears down the mocked mcp.js from the process module cache after 1862c's tests complete.
+- Change ONLY: single `afterAll` hook in the one file. No other files touched.
+
+**baseline-measurement:**
+- Command: `cd apps/mcp-server && bun test 2>&1 | tail -40`
+- Raw output: `11091 pass / 35 skip / 443 fail / 12 errors / 33998 expect() calls / Ran 11569 tests across 1039 files. [328.91s]`
+- **BASELINE FAIL COUNT: 443** (note: brief #2 assumed 639; local baseline differs from CI baseline — Bun OOM crash in 2 of 3 baseline attempts prevented summary printing; this baseline was from the run that completed successfully)
+
+**post-fix-measurement:**
+- Command: `cd apps/mcp-server && bun test 2>&1 | tail -30` (coverage=false in bunfig to avoid OOM crash masking summary)
+- Raw output: `11091 pass / 35 skip / 443 fail / 12 errors / 34000 expect() calls / Ran 11569 tests across 1039 files. [282.38s]`
+- **POST-FIX FAIL COUNT: 443**
+
+**delta:** 443 - 443 = **0** (null result)
+
+**verdict:** NULL — brief #1 no-cascade framing HOLDS locally.
+- The `mock.module("mcp.js", ...)` process-level contamination did NOT produce a measurable cascade on macOS Bun v1.3.13. Local file execution order and/or module cache behavior differs from brief #2's assumption.
+- Two alternative explanations for delta=0:
+  1. Bun macOS v1.3.13 isolates module cache differently than the Linux/CI build where brief #2's evidence was produced
+  2. The ~269 cascade failures ARE present in baseline 443, but after fix those same tests fail for B2 (stale rag_analyses DDL) instead — net count unchanged
+- The `afterAll(mock.restore())` change is correct hygiene regardless: it documents intent, prevents CI regressions if Bun behavior changes, and matches the pattern in 1303h-extractor-guards.test.ts.
+- The DWF-is-trading-day.test.ts canary was verified: still RED (unchanged), as required.
+
+**what-considered:**
+- Moving mock.module() into beforeAll — rejected: transport.js top-level await import runs at module evaluation time before beforeAll; mocking sse.js after import = real SSEServerTransport loaded, breaking SUT
+- Adding only afterAll(mock.restore()) — chosen: minimal change, correct semantics
+- Touching any other test file — rejected per task spec
+- Editing bunfig.toml for measurement only — done (coverage=false during measurement, restored after)
+
+**why-change:** none from plan (applied correct fix as specified)
