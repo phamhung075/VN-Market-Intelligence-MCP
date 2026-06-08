@@ -2652,7 +2652,7 @@
             "title": "P2 mcp-server: deepFetchGate.ts domain fn + deep_fetch_queue/deep_fetch_stats tables + deepFetchVpsJob.ts + deepFetchMainJob.ts + pollNews.ts gate hook + re-index depth_tier=deep (upsert _deep id, NO delete) + scheduler/cron registration + mcp.config.json caps",
             "owner": "dev-mcp-server",
             "type": "FEATURE",
-            "status": "READY",
+            "status": "done-code",
             "zone": "apps/mcp-server/",
             "size": "M",
             "priority": "high",
@@ -2665,7 +2665,10 @@
             "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md#DFR-P2-MCP",
             "note": "10 ACs. Live-crawl risk: caps (maxPerCycle=10, maxPlaywright=5, domain daily, 4h expiry) are MANDATORY acceptance — QA must verify before cron jobs enabled. deepFetchGate.ts is domain-layer pure fn (zero infra imports). source_url UNIQUE + INSERT OR IGNORE = dedup invariant. LanceDB re-index via _deep suffix + table.add() only (never delete). Sector keywords from system-map.json; caps from mcp.config.json. Gate injection in pollNews.ts is non-fatal — poll cycle must survive gate errors.",
             "depends_on": [],
-            "next_role": "dev-mcp-server"
+            "next_role": "dev-mcp-server",
+            "done_code_at": "2026-06-08T14:20:00Z",
+            "done_code_by": "router-reconcile",
+            "reconcile_note": "status clobbered READY->done-code by concurrent orch write; code committed 65228a83 (verify-raw)"
           },
           {
             "id": "DFR-P2-VPS",
