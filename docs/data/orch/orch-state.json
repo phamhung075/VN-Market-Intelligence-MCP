@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T00:40:50Z",
-    "_updated_by": "router-dispatcher",
+    "_updated_at": "2026-06-08T01:17:08Z",
+    "_updated_by": "po-triage-20260608T0110Z",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3245,6 +3245,72 @@
         "zone": "docs/agent-memory/",
         "created_at": "2026-06-08T00:15:10Z",
         "status_note": "From context-bloat signal x2 (same target). AC: file <=200L (target <=50L), Carry-over block intact, committed under commit-mutex."
+      },
+      {
+        "id": "FIX-PDF-EXTRACTOR-UNHEALTHY",
+        "type": "UNBLOCK",
+        "size": "S",
+        "owner": "dev-team",
+        "status": "TODO",
+        "zone": "apps/pdf-extractor/",
+        "title": "pdf-extractor Up-but-unhealthy (3rd A-20-class recurrence, post-ProcessPoolExecutor 3033e1dc): diagnose healthcheck with evidence; scoped restart ONLY pdf-extractor if needed; then reparse VHM,HCM,HSG,KBC; reconcile Tier-1 sensor gap",
+        "created_at": "2026-06-08T01:17:08Z",
+        "status_note": "DISPATCH AUTHORIZED this tick (slot 1/2). Dedup: router-pdf-extractor-unhealthy + sau-c105-a20. Ops lane — NEVER down&&up stack (rebuild-recreate-destroys-peers). Diagnose FIRST: docker inspect Health log, in-container curl /health, verify running image contains 3033e1dc. RECURRING-BUG RULE: if root cause = event-loop starvation again, STOP and route to architect — no 3rd patch without design review. After healthy: bun scripts/migrations/reparse-bctc-reports.ts --tickers VHM,HCM,HSG,KBC; verify conf delta in live DB (docker volume, NOT host decoys). AC: docker ps healthy >=15min incl. during one in-flight /extract; 4 tickers reparsed with per-ticker before/after conf; Tier-1 vs docker-health sensor gap explained (c105 partial fix noted). Unblocks: 22-filing Q1-2026 batch ingest (signal 5333 DATA_INSUFFICIENT, pdfs_stored=true ingested=false)."
+      },
+      {
+        "id": "FIX-BCTC-VPS-QUEUE-STALE-TRIAGE",
+        "type": "FIX",
+        "size": "M",
+        "owner": "dev-team",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "title": "C-16 CRITICAL: bctc_vps_queue 338 stale pending >72h (expect 0) — classify rows (historical-seed non-drainable vs Q1-2026 pipeline-blocked vs stuck), add explicit deferred status excluded from C-16, drain drainables",
+        "created_at": "2026-06-08T01:17:08Z",
+        "status_note": "DISPATCH AUTHORIZED this tick (slot 2/2). From sau-c104-c16 + report 3095. Live DB = docker volume vn-market-intelligence-mcp_market_data at /app/data — NEVER read host decoy DBs. Hypothesis: bulk = seeded historical pre-Q4-2025 rows that CANNOT drain (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA: VPS lacks historical PDF cache) — sensor screams CRITICAL on a known-deferred condition. Fix root cause definitively: (a) per-row classification with counts; (b) non-drainable rows get explicit status (e.g. deferred_infra) + C-16 check counts only actionable; (c) Q1-2026 rows re-queued after FIX-PDF-EXTRACTOR-UNHEALTHY; (d) genuinely stuck rows fixed. AC: next system-auditor C-16 run PASS (0 actionable stale) with classification table committed; no silent row deletion."
+      },
+      {
+        "id": "FIX-MACRO-REFRESH-DEAD",
+        "type": "FIX",
+        "size": "S",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "apps/macro-indicators/",
+        "title": "C-09: macro-indicators data stale 718h (~30d), refresh job dead while container healthy — find why scheduled fetch (SBV FX/EFFR feeds) stopped, restore cadence 26h",
+        "created_at": "2026-06-08T01:17:08Z",
+        "status_note": "HIGH — next free WIP slot. From sau-c104-c09 + report 3098. Distinct from serve-layer fixes (FIX-FRED-YAHOO-WEEKEND-STALE DONE, FIX-MACRO-GO-FIXTURE-FALLBACK DONE): this is the FETCH/refresh cron dead ~30d. AC: fresh fetch lands; C-09 PASS; staleness alarm would fire if job dies again (no silent-swallow)."
+      },
+      {
+        "id": "FIX-ALERT-ORPHAN-CORRELATION",
+        "type": "FIX",
+        "size": "S",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "title": "C-08: 3 orphaned alerts in 24h (no corresponding agent_signal) — audit alert dedup/correlation write path",
+        "created_at": "2026-06-08T01:17:08Z",
+        "status_note": "MEDIUM. From sau-c104-c08 + report 3097. AC: orphan source identified; correlation write fixed or orphans justified+documented; C-08 PASS."
+      },
+      {
+        "id": "FIX-REE-BS-SECTION-REGEX",
+        "type": "FIX",
+        "size": "S",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "title": "REE conf 0.05: balance-sheet section-total codes 100/200/300/400 absent from extracted text — extend BS section regex/discovery, reparse REE 2026-Q1",
+        "created_at": "2026-06-08T01:17:08Z",
+        "status_note": "MEDIUM. Residual root cause from 892aa89a audit (FIX-BCTC-LOWCONF-REPARSE-BATCH). AC: REE 2026-Q1 conf rises materially after fix+reparse; no regression on existing green corpus (run scripts/migrations/reparse-bctc-reports.ts --tickers REE)."
+      },
+      {
+        "id": "CLEAN-HOST-DB-DECOYS",
+        "type": "CLEAN",
+        "size": "XS",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "cross-service/",
+        "title": "Quarantine/delete stale host DB copies (apps/mcp-server/data/*.db, ./data/*.db, root market.db 0B) after grep-verifying no compose mount/code path reads them; document live-DB location (docker volume) in dev-standards + system-map",
+        "created_at": "2026-06-08T01:17:08Z",
+        "status_note": "LOW. From router-host-db-decoys (misled Tier-3 verification: host 105 vs live 338 pending). AC: decoys gone or .quarantine/; live-DB pointer documented in docs/policies/dev-standards.md + docs/data/system-map.json."
       }
     ],
     "archive": [],
@@ -5008,8 +5074,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-08T01:11:48Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-08T01:17:08Z",
+    "_updated_by": "po-triage-20260608T0110Z",
     "rows": [
       {
         "id": "sau-2026-06-0723-04-13-a20",
@@ -5399,8 +5465,11 @@
         "type": "db_integrity_breach",
         "summary": "bctc_vps_queue check C-16 failed (338 stale pending >72h, expect 0)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "processed_by": "po-triage-20260608T0110Z",
+        "processed_at": "2026-06-08T01:17:08Z",
+        "disposition": "TASKED -> FIX-BCTC-VPS-QUEUE-STALE-TRIAGE (dispatch authorized this tick, WIP slot 2). Live DB = docker volume vn-market-intelligence-mcp_market_data at /app/data — host copies are decoys (router raw-verified 338 live vs 105 host)."
       },
       {
         "id": "sau-c104-c04",
@@ -5410,8 +5479,11 @@
         "type": "db_integrity_breach",
         "summary": "financial_reports check C-04 WARN (8 low-confidence <0.2 in 7d, expect ≤5)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "DONE",
+        "payload_ref": null,
+        "processed_by": "po-triage-20260608T0110Z",
+        "processed_at": "2026-06-08T01:17:08Z",
+        "disposition": "FOLDED into existing knowledge — root causes documented per-ticker in 892aa89a audit (zero conf delta after reparse): VHM/HCM/HSG/KBC = image PDFs needing OCR -> reparse step inside FIX-PDF-EXTRACTOR-UNHEALTHY; REE = section-total regex gap -> backlog FIX-REE-BS-SECTION-REGEX; NVL = parent-only filing, CTG = bank-format B02-TCTD (known limits). No new task for c04 itself."
       },
       {
         "id": "sau-c104-c08",
@@ -5421,8 +5493,11 @@
         "type": "db_integrity_breach",
         "summary": "alerts check C-08 WARN (3 orphaned, no corresponding signal, in 24h)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "processed_by": "po-triage-20260608T0110Z",
+        "processed_at": "2026-06-08T01:17:08Z",
+        "disposition": "TASKED -> backlog FIX-ALERT-ORPHAN-CORRELATION (TODO, not dispatched — WIP cap 2 consumed by pdf-extractor + vps-queue)."
       },
       {
         "id": "sau-c104-c09",
@@ -5432,8 +5507,11 @@
         "type": "data_stale",
         "summary": "macro-indicators data stale 718h (expect 26h cadence, check C-09)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "processed_by": "po-triage-20260608T0110Z",
+        "processed_at": "2026-06-08T01:17:08Z",
+        "disposition": "TASKED -> backlog FIX-MACRO-REFRESH-DEAD (TODO high, next free WIP slot). Distinct from FIX-FRED-YAHOO-WEEKEND-STALE (DONE — serve-layer); c09 = fetch/refresh job dead ~30d while container healthy."
       },
       {
         "id": "sau-c105-a20",
@@ -5443,8 +5521,11 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 health endpoint timeout (recurring, dedup within 7d)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "DONE",
+        "payload_ref": null,
+        "processed_by": "po-triage-20260608T0110Z",
+        "processed_at": "2026-06-08T01:17:08Z",
+        "disposition": "DUPLICATE of router-pdf-extractor-unhealthy-20260608T004137Z (same root issue) -> merged into FIX-PDF-EXTRACTOR-UNHEALTHY (dispatch authorized this tick). 3rd health recurrence after 48a64056 (to_thread) + 3033e1dc (ProcessPoolExecutor) — recurring-bug rule armed: if root cause is again event-loop starvation, architect review mandatory before any further patch."
       },
       {
         "id": "IMP-20260607-price-confirmation-degraded",
@@ -5454,11 +5535,14 @@
         "type": "improvement_proposal",
         "summary": "price_confirmation accuracy degraded",
         "severity": "INFO",
-        "status": "NEW",
+        "status": "CLOSED",
         "payload_ref": "docs/improvement-proposals/IMP-20260607-price-confirmation-degraded.md",
         "rescued_at": "2026-06-08T01:11:48Z",
         "rescued_by": "router-dispatcher",
-        "rescue_note": "recovered from phantom .claude/worktrees/docs/ orch-state (agent wrote docs-relative path from wrong CWD 2026-06-07T09:48 local); deduped from ~N retry copies"
+        "rescue_note": "recovered from phantom .claude/worktrees/docs/ orch-state (agent wrote docs-relative path from wrong CWD 2026-06-07T09:48 local); deduped from ~N retry copies",
+        "processed_by": "po-triage-20260608T0110Z",
+        "processed_at": "2026-06-08T01:17:08Z",
+        "disposition": "UNREPRODUCIBLE — payload_ref docs/improvement-proposals/IMP-20260607-price-confirmation-degraded.md was never written (phantom worktree CWD bug, .claude/worktrees/docs/ no longer exists). Auto-reject per critique-incomplete rule (proposal doc absent). market-watcher logs show price_confirmation deferrals were expected off-hours/weekend guard behavior, not accuracy degradation. Reopen only if auditor re-emits with a real payload doc."
       }
     ],
     "archive": [

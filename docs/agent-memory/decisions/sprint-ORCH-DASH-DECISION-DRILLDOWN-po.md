@@ -51,3 +51,13 @@
 - 2nd dispatch slot: FIX-BCTC-LOWCONF-REPARSE-BATCH vs PDFX work — bctc reparse wins on product value (REE #3085 + 22-filing release blocked behind it; magnitude-normalize 06c65978 LIVE; mcp-server zone unfrozen, FIX-FRED-YAHOO-WEEKEND-STALE DONE)
 **why-decision:** Reliability-first: market-watcher FALSE-GREEN is a trust defect (router had to revert poisoned coverage-state); gate is small, mirrors proven bctc-analyst pattern, routes agent-father (docs/agents/ zone).
 **why-change:** no change from priority order (recurring-bug/FIX before CLEAN/SPRINT).
+
+### STEP po-S6 · po · 2026-06-08T01:18:47Z
+**task-id:** FIX-PDF-EXTRACTOR-UNHEALTHY
+**what-done:** Triage tick 01:10Z drain — deduped router signal + sau-c105-a20 into FIX-PDF-EXTRACTOR-UNHEALTHY (slot 1) + FIX-BCTC-VPS-QUEUE-STALE-TRIAGE from c16 CRITICAL (slot 2); 4 backlog adds (macro-refresh, alert-orphan, REE regex, host-db-decoys); c04 folded into 892aa89a knowledge; IMP phantom closed unreproducible; 10 Telegram reports drained.
+**what-considered:**
+- Dispatch FIX-PDFX-TEST-LOOP-POLLUTION (previous pick) — rejected: pdf-extractor PROD container unhealthy NOW (raw docker ps) blocks 22-filing Q1 batch + 4-ticker OCR reparse; prod health > test suite hygiene
+- c16 as auto-downstream of pdf-extractor (one task) — rejected: 338 rows are >72h stale, predate tonight; hypothesis = BCTC-HIST-VPS-BACKFILL seeded historical rows tripping sensor — distinct mcp-server-zone fix (classification + C-16 actionable-only), parallelizable
+- c09 macro-stale for slot 2 — rejected: HIGH < CRITICAL; backlogged next-free-slot
+**why-decision:** Severity + unblock leverage: pdf-extractor unhealthy is 3rd A-20-class recurrence gating the largest product backlog (22 filings); c16 is the only CRITICAL. Recurring-bug rule armed in task note (event-loop starvation again → architect, no 3rd patch).
+**why-change:** FIX-PDFX-TEST-LOOP-POLLUTION deferred one tick — prod outage outranks planned pick.

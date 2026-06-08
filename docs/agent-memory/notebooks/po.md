@@ -18,3 +18,20 @@
 - CTG: cycle-22 pipeline lag; first-extraction watch continues (tnb question 2).
 - bctc-analyst notebook future-timestamp hygiene: if repeats next cycle → agent-father one-line fix to flow timestamp invariant.
 - Prior carry: A-20 close condition (healthy during in-flight /extract, no signal 48h); HPG-REPARSE-POST-REBUILD; #3065 news-vps honest resolution; 10 yellow eval rows post-stage-4; U3 doc-refresh lane.
+
+## c · 2026-06-08T01:18:47Z — TRIAGE tick 01:10Z drain (4 signals + 6 queue rows + 10 reports → BATCH 2 dispatched, 4 backlogged)
+
+**Inputs:** TNB c90 already ACKed 21:25Z (no new handoff). Board WIP 0/2. pdf-extractor raw-verified `Up 2 hours (unhealthy)` via docker ps — signal is live, not stale.
+
+**Triage:** (1) router pdf-extractor-unhealthy HIGH + sau-c105-a20 → DEDUPED into ONE task FIX-PDF-EXTRACTOR-UNHEALTHY (UNBLOCK, S, apps/pdf-extractor/, ops lane, dispatch slot 1). 3rd A-20-class recurrence after 48a64056 (to_thread) + 3033e1dc (ProcessPoolExecutor) → recurring-bug rule ARMED in status_note: event-loop-starvation again = architect review, no 3rd patch. Unblocks 22-filing Q1-2026 batch (signal 5333: pdfs_stored=true ingested=false) + VHM/HCM/HSG/KBC OCR reparse. (2) sau-c104-c16 CRITICAL 338 stale bctc_vps_queue → FIX-BCTC-VPS-QUEUE-STALE-TRIAGE (FIX, M, apps/mcp-server/, dispatch slot 2); hypothesis: bulk = BCTC-HIST-VPS-BACKFILL seeded historical rows (known DEFERRED-INFRA) tripping sensor — classify, explicit deferred status, C-16 counts actionable only. (3) sau-c104-c04 8 low-conf → DONE folded into 892aa89a knowledge (no new task); REE residual → backlog FIX-REE-BS-SECTION-REGEX. (4) sau-c104-c09 macro stale 718h → backlog FIX-MACRO-REFRESH-DEAD (HIGH, fetch-job dead ~30d ≠ serve-layer fixes already DONE). (5) sau-c104-c08 3 orphaned alerts → backlog FIX-ALERT-ORPHAN-CORRELATION. (6) IMP-price-confirmation-degraded → CLOSED unreproducible: payload .md never written (phantom worktree); market-watcher logs show expected off-hours deferral. (7) router host-db-decoys LOW → backlog CLEAN-HOST-DB-DECOYS. (8) bctc_signal FPT routine conf 0.81 → product signal, no dev work, skip.
+
+**Telegram (10 processed, channel drained):** 3086 monitoring (Fed Monday gate lives in tnb c91); 3090 fixed (b309889e); 3091/3092/3093/3094/3096 duplicate (892aa89a per-ticker root-cause table); 3095 monitoring (→ vps-queue task); 3097/3098 monitoring (→ backlog tasks).
+
+**Mechanics:** orch-state atomic guarded write 01:17:08Z (33 rows, 0 NEW left; backlog 65). Gateway tool absent → SID curl fallback, bound params only. Queued picks FIX-PDFX-TEST-LOOP-POLLUTION deferred — pdf-extractor PROD health outranks its test suite.
+
+**Carry-over (next PO cycle):**
+- Verify FIX-PDF-EXTRACTOR-UNHEALTHY: healthy ≥15min incl. in-flight /extract + 4-ticker reparse conf table + sensor-gap explanation; if event-loop starvation again → architect.
+- Verify FIX-BCTC-VPS-QUEUE-STALE-TRIAGE: classification table, C-16 PASS, no silent deletions; then 22-filing batch drain check (CTG cycle-22 watch).
+- Next free slots: FIX-MACRO-REFRESH-DEAD (HIGH) then FIX-PDFX-TEST-LOOP-POLLUTION → FIX-MCP-SUITE-HEALTH-BASELINE chain; FIX-REE-BS-SECTION-REGEX after pdfx healthy.
+- tnb c91 Monday-dish Fed-rate gate (2026-06-09 05:15Z): 5.33% weekday → CRITICAL escalate; 3086 closed as monitoring, gate tracked HERE.
+- Prior carry: SPIKE-UNIFIED-NB-GAP queued; CLEAN-NB-TRIM-PDFX; CLEAN-COWORK-ROSTER-DRIFT; FIX-TA-SANDBOX-DEPGUARD; HPG-REPARSE-POST-REBUILD; 10 yellow eval rows; U3 doc-refresh lane.
