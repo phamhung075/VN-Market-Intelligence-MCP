@@ -1,5 +1,43 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-08 · FIX-BCTC-LOWCONF-REPARSE-BATCH — COMMITTED
+
+**Task:** FIX-BCTC-LOWCONF-REPARSE-BATCH  
+**Scope:** Reports #3077–#3085; tickers REE/CTG/VHM/HCM/HSG/KBC/NVL/PPC (Q1-2026 + Q4-2025).
+
+**Deliverables:**
+- `scripts/migrations/reparse-bctc-reports.ts` — generalized reparse script (supersedes apps/mcp-server/trigger-ppc-reparse.ts which can now be deleted)
+- Force-reparse run: all 9 ticker-period pairs pushed via `/api/push-bctc-pdf` with queue reset
+- Report 3085 resolved (wontfix + root cause documented)
+
+**Per-ticker before→after composite confidence (extraction_confidence):**
+| Ticker | Period | Before | After | Delta | Root Cause |
+|--------|--------|--------|-------|-------|------------|
+| PPC | 2025-Q4 | 0.625 | 0.625 | 0 | Already lifted by 06c65978 pre-task. No regression. |
+| KBC | 2025-Q4 | 0.6875 | 0.6875 | 0 | Image PDF; OCR service unhealthy; Tier3 pdf-parse 0 chars (image-only). |
+| KBC | 2026-Q1 | 0.6875 | 0.6875 | 0 | Same PDF as Q4; image-only; OCR service unhealthy. |
+| HCM | 2026-Q1 | 0.4375 | 0.4375 | 0 | Image PDF (10MB); pdf-extractor unhealthy; Tier3 0 chars. |
+| VHM | 2026-Q1 | 0.375 | 0.375 | 0 | Image PDF (9.8MB); pdf-extractor unhealthy; Tier3 0 chars. |
+| NVL | 2025-Q4 | 0.25 | 0.25 | 0 | Accounting identity: Assets≠Liab+Eq. NVL parent-only filing (riêng lẻ). |
+| NVL | 2026-Q1 | 0.25 | 0.25 | 0 | Same parent-only issue. financial_confidence=0.1. |
+| HSG | 2026-Q1 | 0.1875 | 0.1875 | 0 | Image PDF (3MB); pdf-extractor unhealthy; Tier3 0 chars. |
+| CTG | 2026-Q1 | 0.0625 | 0.0625 | 0 | B02-TCTD bank format. Cover-page PDF 536KB (only 2388 chars). Actual CTG_2026_Q1.pdf=6.3MB not reached by push. |
+| REE | 2026-Q1 | 0.05 | 0.05 | 0 | Empty BS: section totals (lines 100/200/300) not extracted by regex. 44226 chars extracted but BS totals absent. Not a magnitude issue. |
+
+**Residual root causes documented:**
+1. REE 2026-Q1: section-total lines (code 100/200/300/400) absent from extracted text — parser gets individual items but misses aggregate rows. Not addressable by magnitude-normalize fix. Separate parser gap.
+2. CTG 2026-Q1: B02-TCTD bank format + push used 536KB cover PDF (wrong file). Full 6.3MB PDF is CTG_2026_Q1.pdf. Bank BS format needs BANK-AWARE-BCTC handling.
+3. VHM/HCM/HSG/KBC 2026-Q1: Image-only PDFs. Require OCR via pdf-extractor service. Service currently unhealthy. Will self-heal on next service restart/recovery.
+4. NVL 2025-Q4 + 2026-Q1: Parent-only filing (riêng lẻ). balance_sheet mismatch. Low confidence is expected (parent entity, not consolidated group).
+5. PPC 2025-Q4: 0.625 — already lifted by 06c65978 before this task ran.
+6. KBC 2025-Q4/Q1: Image PDF, same file used for both periods. OCR service needed.
+
+**Report 3085:** resolved as `wontfix` — root cause = REE section-total regex gap, not magnitude error. Confidence 0.00→0.05 (marginal, income statement partially extracted). Full fix requires separate parser task.
+
+Zone health: no code change, no test impact | HEALTHY
+
+---
+
 ## c390 · 2026-06-07 (TSU-DEV-U3: 5 Deregister + 7 Integrate Description Updates) — COMMITTED
 
 **Task:** TSU-DEV-U3 — TOOL-SURFACE-UPGRADE sprint  

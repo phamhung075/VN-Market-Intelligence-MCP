@@ -160,6 +160,25 @@ git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"
 
 **DJ-GATE-1** (mandatory before REVIEW flip): run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: <TASK_ID>] — gate rule: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
 
+## Low-Confidence Reparse Runbook
+
+When `extraction_confidence < 0.5` for a batch of tickers after a parser fix ships:
+
+```bash
+# CANONICAL SCRIPT: scripts/migrations/reparse-bctc-reports.ts
+# Force-reparse specific tickers (latest period):
+bun scripts/migrations/reparse-bctc-reports.ts --tickers REE,CTG,PPC
+
+# With period filter:
+bun scripts/migrations/reparse-bctc-reports.ts --tickers REE --year 2026 --quarter Q1
+
+# Dry-run:
+bun scripts/migrations/reparse-bctc-reports.ts --tickers REE,CTG --dry-run
+```
+
+Pre-conditions: container must be running; `VPS_PUSH_API_KEY` env in container; local PDFs in `data/pdfs/`.
+Mechanism: reset `bctc_vps_queue` row to `pending` → POST local PDF bytes to `/api/push-bctc-pdf` → pipeline runs in container. Precedent: FIX-BCTC-LOWCONF-REPARSE-BATCH (2026-06-08).
+
 **Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
 ```
 ## RETURN
