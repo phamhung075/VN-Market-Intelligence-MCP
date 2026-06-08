@@ -1,4 +1,14 @@
+[NB] Total lines:       89
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
+
+## c120 · 2026-06-08T18:36:27Z
+### Audit Run Tier-1 (18:36 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 1 new CRITICAL | Status: DEGRADED
+- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=22.37%; disk=39%.
+- A-20 pdf-extractor multi-probe: 3/3 PASS (in-container health probes all HTTP 200).
+- A-33 CRON-CRASH: vnstockFundamentalsRefresh crashed (0% success, 1 run) — CRITICAL, signal row emitted, BUG Telegram sent.
+- Contract: signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=0
 
 ## c119 · 2026-06-08T18:35:01Z
 ### Audit Run Tier-2 (18:35 UTC 2026-06-08)
