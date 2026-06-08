@@ -1,5 +1,13 @@
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
 
+## c113 · 2026-06-08T15:35:32Z
+### Audit Run Tier-1 (15:35 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 | Status: HEALTHY
+- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=0; memory=21.21%; disk=32%.
+- A-20 pdf-extractor multi-probe: 3/3 PASS (in-container health probes all HTTP 200).
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## c112 · 2026-06-08T15:23:39Z
 ### Audit Run Tier-2 (15:23–15:35 UTC 2026-06-08)
 - Tier: 2 | Sources: 27 checked | VPS routes: 4 checked | DB spot checks: 3
@@ -15,14 +23,6 @@
 - Dedup: sau-c109-b12 (SBV check, 7d window active) — BUG Telegram skipped, DASHBOARD row appended
 - Signals posted: 3 | Telegram sent: 2 | Signal_queue rows: 3 | Dashboard rows: 3
 - Contract: [OUTPUT-CONTRACT] signals_posted=3 | telegram_sent=2 | signal_queue_rows_written=3 | dashboard_rows=3
-
-## c112 · 2026-06-08T15:24:27Z
-### Audit Run Tier-1 (15:24 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 0 | Status: HEALTHY
-- RAW-PROBE: 6 services all UP/healthy; health endpoints OK; restart=0; memory=15.85%; disk=34%.
-- A-20 pdf-extractor multi-probe: 3/3 PASS (resolved, previously WARN dedup-skipped).
-- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
 ## c111 · 2026-06-08T14:58:28Z
 ### Audit Run Tier-1 (14:58 UTC 2026-06-08)
@@ -65,8 +65,3 @@
 - B-12 SLA CRITICAL: sbv_fx 47min breach (30min threshold). sbvRatesRefreshJob ran 2026-06-08 00:00Z success, but market.db fetch timestamp stale. Clock skew or silent fetch fail suspected.
 - Signals: 1 emitted (CRITICAL sau-c107-b12). BUG Telegram: B-12 sbv-stale (new, no dedup).
 - Contract: signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
-
-## c106 · 2026-06-08T01:34:12Z
-### Audit Run Tier-1 (01:34 UTC 2026-06-08)
-- Tier: 1 | Status: DEGRADED
-- A-20 pdf-extractor: health timeout (multi-probe 1/3 PASS). WARN signal emitted.
