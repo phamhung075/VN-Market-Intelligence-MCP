@@ -1,5 +1,16 @@
-[NB] Total lines:       ~145
+[NB] Total lines:       ~165
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
+
+## c278 · 2026-06-08T22:31:10Z
+### Audit Run Tier-2 (22:31 UTC 2026-06-08)
+- Tier: 2 | Sources: 28 checked | VPS routes: 4 checked | DB spot checks: 4
+- Anomalies: 0 new | 1 dedup-skipped (B-13, from c112 15:23)
+- Status: HEALTHY
+- A-29 Cron fire gaps: all nominal (intelligenceCycleJob 98.9%, bctcPdfPullJob 97.9%, all last_run recent)
+- B-01–B-07, B-11–B-12: all sources fresh within SLA (price 1min, bctc 335min <360, news 191min <482, sbv_fx 1min, foreign_flow 451min <842)
+- C-06 market_messages (3h): 1 ✓ | C-07 agent_signals (24h): 117 ✓ | B-09 BCTC URLs: 0 bad ✓ | B-13 stale BCTC: 26 >72h (dedup-skip, c112 active)
+- VPS proxy: prices/news OK; sbv last push 2026-06-07T04:59Z (41.5h, stale), bctc 2026-06-08T00:30Z (22h, borderline)
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
 ## c277 · 2026-06-08T22:06:44Z
 ### Audit Run Tier-1 (22:06 UTC 2026-06-08 → 2026-06-09 07:06 VN)
