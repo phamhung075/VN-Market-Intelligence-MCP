@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T00:15:10Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-08T00:23:58Z",
+    "_updated_by": "router-dispatcher",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3135,14 +3135,15 @@
         "id": "FIX-BCTC-LOWCONF-REPARSE-BATCH",
         "title": "Reparse low-confidence BCTC corpus now magnitude-normalize (06c65978) is LIVE: REE 2026-Q1 + KBC/PPC 2025-Q4 + CTG/VHM/HCM/KBC/NVL/HSG 2026-Q1",
         "owner": "dev-mcp-server",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "zone": "apps/mcp-server/",
         "created_at": "2026-06-07T21:25:56Z",
         "type": "FIX",
         "size": "S",
         "priority": "medium",
         "status_note": "Proof point exists: PPC Q4-2025 reparse post-rebuild lifted confidence 0.25->0.625. Batch covers reports #3077-#3085 (REE composite 0.00 is report 3085, status=new). AC: per-ticker composite rises materially OR residual root-cause documented; resolve report 3085 with outcome.",
-        "note": "Reuse trigger-ppc-reparse.ts pattern (untracked file, see CLEAN-TRIGGER-PPC-REPARSE). Distinct from FIX-BCTC-1345B-REPORT-BATCH (XS telegram noise batching) which stays open."
+        "note": "Reuse trigger-ppc-reparse.ts pattern (untracked file, see CLEAN-TRIGGER-PPC-REPARSE). Distinct from FIX-BCTC-1345B-REPORT-BATCH (XS telegram noise batching) which stays open.",
+        "started_at": "2026-06-08T00:18:04Z"
       },
       {
         "id": "SPIKE-UNIFIED-NB-GAP",
@@ -3209,12 +3210,15 @@
         "title": "Add Step-0 gateway-availability fail-loud gate to market-watcher + news-scout flows (mirror bctc-analyst pattern): probe one cheap call; on tool-absent -> bug signal file + BLOCKED notebook entry + EXIT; NEVER refresh coverage-state/notebook as shipped",
         "type": "FIX",
         "size": "S",
-        "owner": "po",
-        "status": "TODO",
+        "owner": "agent-father",
+        "status": "DONE",
         "zone": "docs/agents/",
         "route_to": "agent-father",
         "created_at": "2026-06-08T00:15:10Z",
-        "status_note": "From router repair_task_request 2026-06-08T00:06Z: 00:00 FANOUT degraded 3/3, market-watcher shipped FALSE-GREEN (router reverted coverage-state VNM/FPT/VCB + voided notebook cycle). Session-level MCP reconnect = USER action, out of scope. AC: with gateway tool absent, both flows produce BLOCKED signal + zero coverage-state/notebook mutation; with gateway present, normal cycle unchanged. Files: docs/agents/market-watcher/flow/main.md, docs/agents/news-scout/flow/main.md."
+        "status_note": "From router repair_task_request 2026-06-08T00:06Z: 00:00 FANOUT degraded 3/3, market-watcher shipped FALSE-GREEN (router reverted coverage-state VNM/FPT/VCB + voided notebook cycle). Session-level MCP reconnect = USER action, out of scope. AC: with gateway tool absent, both flows produce BLOCKED signal + zero coverage-state/notebook mutation; with gateway present, normal cycle unchanged. Files: docs/agents/market-watcher/flow/main.md, docs/agents/news-scout/flow/main.md.",
+        "started_at": "2026-06-08T00:18:04Z",
+        "completed_at": "2026-06-08T00:23:58Z",
+        "resolution": "commit b309889e — canonical gateway-availability-gate skill (101L) + Step 0-GW pointer in market-watcher/cycle.md and news-scout/cycle.md; DJ STEP agent-father-S2; verified raw by router"
       },
       {
         "id": "FIX-MCP-SUITE-HEALTH-BASELINE",
