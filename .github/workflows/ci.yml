@@ -41,10 +41,12 @@ jobs:
         run: bun install --frozen-lockfile
 
       # Run the full test suite. CI exits non-zero if any test fails.
-      # --coverage=false: skips coverage-table generation that OOM-crashes on CI (FIX-CI-COVERAGE-OOM-CRASH).
-      # bunfig.toml keeps coverage=true for local dev; this flag overrides for the gating run only.
+      # Coverage is suppressed via bunfig.toml [test] coverage=false (FIX-CI-COVERAGE-OFF-MECHANISM).
+      # bun 1.3.13 does not accept --coverage=false (parse error); bunfig setting is the only
+      # verified mechanism to suppress the OOM-crashing coverage table on CI runners.
+      # Local dev coverage: bun run test:cov (see scripts/test-coverage.sh).
       - name: Run tests
-        run: bun test --coverage=false
+        run: bun test
 
       # Write pass/fail summary to the GitHub Actions step summary.
       - name: Report test summary

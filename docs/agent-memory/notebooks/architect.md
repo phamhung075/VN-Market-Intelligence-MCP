@@ -1,8 +1,23 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-08 13:22 UTC | **Sprint:** DEEPFETCH-RAG-REDESIGN
+**Last updated:** 2026-06-08 21:35 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-08T21:35Z — SPIKE-CI-COVERAGE-OFF-MECHANISM: recurring-bug, CI coverage suppression
+
+**Task:** SPIKE-CI-COVERAGE-OFF-MECHANISM (SPIKE, S, zone: apps/mcp-server/ + .github/)
+
+**Key findings (dry-run evidence on bun 1.3.13):**
+- Root cause of 2 prior fix failures: both shipped unverified CLI flags. bun 1.3.13 `--coverage` is boolean-only (no `=value`). `--coverage=false` = parse error. `--coverage` silently ignored when bunfig `coverage=false`.
+- A2 (separate CI bunfig) dead: `-c <other>` and `BUN_CONFIG_FILE=<other>` do NOT override `[test] coverage` while default `bunfig.toml` is present in CWD.
+- A1 verified: `coverage=false` in bunfig.toml + bare `bun test` → no coverage table, clean exit.
+- Local-dev recovery: `scripts/test-coverage.sh` (trap-based bunfig rename+restore) + `bun test --coverage` → coverage table produced correctly.
+
+**Decision: A1.** All 4 files changed and in working tree. Dev-mcp-server to verify + commit.
+
+**Brief:** `docs/architecture-briefs/2026-06-08-ci-coverage-off-mechanism.md`
+**DJ-GATE-1:** `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` STEP arch-S2
 
 ## 2026-06-08T20:30Z — CI-TEST-ISOLATION-SPIKE: bun-test 639-failure root-cause diagnosis
 

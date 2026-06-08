@@ -9,6 +9,7 @@
     "dev": "bun --watch src/index.ts",
     "check": "bun tsc --noEmit",
     "test": "bun test",
+    "test:cov": "../../scripts/test-coverage.sh",
     "test:all": "../../scripts/test-all.sh",
     "sync-news-fetch-dashboard": "bash sync-news-fetch-dashboard.sh",
     "lint:ci": "eslint src/ --max-warnings 0"
