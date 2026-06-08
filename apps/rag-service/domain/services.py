@@ -77,6 +77,14 @@ def apply_temporal_decay(
             created_at=r.created_at,
             distance=r.distance,
             recency_score=recency,
+            ticker=r.ticker,
+            sector=r.sector,
+            source_domain=r.source_domain,
+            depth_tier=r.depth_tier,
+            doc_type=r.doc_type,
+            published_at=r.published_at,
+            confidence=r.confidence,
+            impact_score=r.impact_score,
         ))
 
     return sorted(ranked, key=lambda x: x.recency_score, reverse=True)

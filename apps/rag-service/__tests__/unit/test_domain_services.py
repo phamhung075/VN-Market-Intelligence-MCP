@@ -163,6 +163,38 @@ class TestApplyTemporalDecay:
         assert r.tags == ["vn", "banking"]
         assert r.action_code == "VCB"
 
+    def test_phase1_metadata_fields_preserved(self):
+        """Regression: ensure apply_temporal_decay preserves all 8 Phase 1 metadata fields."""
+        original = make_result(
+            id="phase1-test",
+            distance=0.5,
+            created_at=days_ago(2),
+        )
+        # Set all 8 Phase 1 metadata fields
+        original.ticker = "VCB"
+        original.sector = "Banking"
+        original.source_domain = "hochiminh-stock-exchange"
+        original.depth_tier = "deep"
+        original.doc_type = "filing"
+        original.published_at = "2026-06-01T10:00:00Z"
+        original.confidence = 0.85
+        original.impact_score = 0.92
+
+        ranked = apply_temporal_decay([original])
+        r = ranked[0]
+
+        # Assert all Phase 1 metadata survives
+        assert r.ticker == "VCB"
+        assert r.sector == "Banking"
+        assert r.source_domain == "hochiminh-stock-exchange"
+        assert r.depth_tier == "deep"
+        assert r.doc_type == "filing"
+        assert r.published_at == "2026-06-01T10:00:00Z"
+        assert r.confidence == 0.85
+        assert r.impact_score == 0.92
+        # Also verify recency_score is computed
+        assert r.recency_score > 0.0
+
     def test_single_result_returns_list_of_one(self):
         single = make_result(distance=0.3, created_at=hours_ago(5))
         result = apply_temporal_decay([single])
