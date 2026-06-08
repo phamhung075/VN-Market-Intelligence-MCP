@@ -64,6 +64,16 @@ Zone health: bun tsc clean, 3 target test files 48 pass / 0 fail, tools 157 inta
 
 Zone health: CI-yaml only change, no code under test modified, no tools/scheduler impact | HEALTHY
 
+---
+**Cycle:** 2026-06-09 | **Task:** FIX-SCHEMA-DRIFT-P1 (Sprint CI-RED-RECONCILE, size M)
+**Scope:** Phase 1 — data_env column addition to 63 inline rag_analyses DDLs + production fallback guard in pollNews.ts::tryInsertEntry
+**Files changed:** 63 test files in apps/mcp-server/src/__tests__/ (data_env TEXT added to inline rag_analyses CREATE TABLE blocks) + pollNews.ts (try/catch fallback guard for data_env column absence, fredApi.ts pattern)
+**DDL fix count:** 71 total rag_analyses blocks patched across 63 files (some files have multiple DDL blocks)
+**tsc:** CLEAN (bun tsc --noEmit)
+**Sanity test:** 102-job-news-poll.test.ts — no data_env column errors; inserted:1 confirmed working
+**No Phase 2/3 work:** IF NOT EXISTS hardening, watchlist.exchange, agent_signals.expires_at, source_url, daily_ohlcv, macro tables NOT touched
+Zone health: bun tsc --noEmit clean, tools/scheduler unchanged (test-only fix + one production defensive guard) | HEALTHY
+
 ## 2026-06-09 · CI-NETWORK-GUARDS-POLLNEWS-REFILE — REVIEW
 
 **Task:** CI-NETWORK-GUARDS-POLLNEWS-REFILE | Sprint: CI-RED-RECONCILE | Commit: 64981565

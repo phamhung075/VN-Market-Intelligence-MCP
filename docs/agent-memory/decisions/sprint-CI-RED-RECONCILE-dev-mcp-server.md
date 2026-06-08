@@ -84,3 +84,14 @@
 - Add `--coverage=false` to the gating `bun test` only — chosen: one-character override at CI invocation point; local bunfig.toml unchanged; surgical minimal change
 **why-decision:** Coverage-table generation consumes unbounded memory at summary-print time; CI runner OOMs AFTER all tests complete, so the crash is a post-run artifact, not a test failure. Suppressing it at CI invocation preserves the test result signal while eliminating the OOM crash that has silenced CI failure counts for 200 runs.
 **why-change:** no change from PO-authored spec; change is exactly as specified
+
+---
+
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-09T00:00:00Z (DJ-GATE-1)
+**task-id:** FIX-SCHEMA-DRIFT-P1
+**what-done:** Added `data_env TEXT` to 63 inline rag_analyses DDLs in test files; added try/catch fallback guard in pollNews.ts::tryInsertEntry for data_env absence (fredApi.ts pattern).
+**what-considered:**
+- Inject `initNewsTables(db)` into each test setup — rejected: brief §0 / §2b explicitly forbid; causes E1/E3 collisions in Contract B files; exact mechanism of the reverted 9454baad batch
+- Add data_env column to each inline DDL (Contract B cure) + production fallback guard — chosen: brief §3 Phase 1 spec; additive-only, no collision risk
+**why-decision:** Two-fixture contract: Contract B tests own their inline DDL; adding one missing column is correct per §2a. Fallback guard in pollNews.ts decouples production INSERT from test DDL exhaustively (fredApi.ts precedent already in codebase).
+**why-change:** 63 files modified (brief estimates 64; FIX-1282-1285-schema-migrations.test.ts excluded — uses initDatabase(), no inline DDL despite filename match). No Phase 2/3 work performed.

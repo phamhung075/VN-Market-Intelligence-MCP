@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T23:14:00Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-09T00:00:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3061,20 +3061,24 @@
             "title": "Phase 1 — data_env class CURE (NOT injection): add `data_env TEXT` to the ~64 test files with inline rag_analyses DDL missing it + add a try/catch fallback guard in pollNews.ts::tryInsertEntry (fredApi.ts:189-202 pattern) so production INSERT tolerates data_env absence. Do NOT replace inline DDL with initNewsTables(db) — Contract A/B boundary. Do NOT touch the 40 files that already have data_env.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "depends": ["CI-TEST-SCHEMA-FIXTURE-SPIKE"],
-            "status": "TODO",
+            "depends": [
+              "CI-TEST-SCHEMA-FIXTURE-SPIKE"
+            ],
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T23:14:00Z",
-            "note": "[po S15 2026-06-08T23:14Z] CURE for the data_env failure class (E2a, ~93 fails) per architect brief docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md Phase 1. Design SSOT = two-fixture-contract model (Contract A=initDatabase() full canonical for singleton/integration tests; Contract B=minimal IF-NOT-EXISTS inline DDL for unit tests). This is NOT a re-attempt of the reverted 9454baad mechanized one-size sweep — it is per-class targeted column add + a production-side defensive guard. po->ba->architect(already done, brief is the design)->pm->dev->qa chain; PM may route straight to dev since architect brief is the spec. DoD: bun-test FAIL+ERROR count DROPS (never increases) vs the post-refile baseline on subsequent push (router owns push); bun tsc --noEmit clean; modified files pass in isolation. Verification gate per brief §8. DISPATCH ORDER: 1st (no dep beyond the now-DONE spike)."
+            "note": "[po S15 2026-06-08T23:14Z] CURE for the data_env failure class (E2a, ~93 fails) per architect brief docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md Phase 1. Design SSOT = two-fixture-contract model (Contract A=initDatabase() full canonical for singleton/integration tests; Contract B=minimal IF-NOT-EXISTS inline DDL for unit tests). This is NOT a re-attempt of the reverted 9454baad mechanized one-size sweep — it is per-class targeted column add + a production-side defensive guard. po->ba->architect(already done, brief is the design)->pm->dev->qa chain; PM may route straight to dev since architect brief is the spec. DoD: bun-test FAIL+ERROR count DROPS (never increases) vs the post-refile baseline on subsequent push (router owns push); bun tsc --noEmit clean; modified files pass in isolation. Verification gate per brief §8. DISPATCH ORDER: 1st (no dep beyond the now-DONE spike). | [dev-mcp-server 2026-06-09] Phase 1 DONE: 63 test files data_env added (71 blocks), pollNews.ts fallback guard added, tsc clean, DJ-GATE-1 STEP S6 committed."
           },
           {
             "id": "FIX-SCHEMA-DRIFT-P2",
             "title": "Phase 2+3 — harden inline DDLs: (Ph2) s/CREATE TABLE/CREATE TABLE IF NOT EXISTS/ on the ~33 bare-CREATE collision-table files; (Ph3) fill missing columns per class: watchlist.exchange NOT NULL DEFAULT 'HOSE' (~28 files), agent_signals.expires_at (~5), rag_analyses.source_url (~24), daily_ohlcv named-column INSERTs (~9), + minimal inline DDL for no-such-table macro/portfolio tables (~15). Per-class targeted, NOT a wholesale init*Tables injection.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "depends": ["FIX-SCHEMA-DRIFT-P1"],
+            "depends": [
+              "FIX-SCHEMA-DRIFT-P1"
+            ],
             "status": "TODO",
             "size": "M",
             "zone": "apps/mcp-server/",
