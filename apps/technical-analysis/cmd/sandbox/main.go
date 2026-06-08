@@ -41,7 +41,7 @@ import (
 	"github.com/vn-market-intelligence/technical-analysis/pkg/primitive/rsi"
 
 	"github.com/vn-market-intelligence/technical-analysis/pkg/application"
-	"github.com/vn-market-intelligence/technical-analysis/pkg/infrastructure"
+	"github.com/vn-market-intelligence/technical-analysis/pkg/domain"
 	httpinterface "github.com/vn-market-intelligence/technical-analysis/pkg/interface/http"
 	"github.com/vn-market-intelligence/technical-analysis/pkg/module"
 )
@@ -365,8 +365,44 @@ type serviceInputBody struct {
 	Symbol        string    `json:"symbol"`
 }
 
+// sandboxCalculator is a composition-root-local adapter that satisfies the
+// application.TACalculator port without importing pkg/infrastructure.
+// It delegates to pkg/module.Compute and maps the result to domain types,
+// mirroring infrastructure.TACalculator but living at the allowed layer.
+type sandboxCalculator struct{}
+
+func (s *sandboxCalculator) Calculate(closes []float64, period int) (*domain.TechnicalIndicators, error) {
+	params := module.ComputeParams{
+		RSIPeriod: period,
+		MAPeriod:  period,
+	}
+	res, err := module.Compute(closes, params)
+	if err != nil {
+		return nil, err
+	}
+	var crossSignals []domain.CrossSignal
+	for _, e := range res.CrossSignals {
+		crossSignals = append(crossSignals, domain.CrossSignal{
+			Index:     e.Index,
+			Direction: e.Direction,
+		})
+	}
+	return &domain.TechnicalIndicators{
+		RSI:             res.RSI,
+		MACDLine:        res.MACDLine,
+		SignalLine:      res.SignalLine,
+		Histogram:       res.Histogram,
+		BollingerUpper:  res.BBUpper,
+		BollingerMiddle: res.BBMiddle,
+		BollingerLower:  res.BBLower,
+		SMA:             res.SMA,
+		EMA:             res.EMA,
+		CrossSignals:    crossSignals,
+	}, nil
+}
+
 func newTestServer() (*httptest.Server, func()) {
-	calc := infrastructure.NewTACalculator()
+	calc := &sandboxCalculator{}
 	useCase := application.NewComputeTAUseCase(calc)
 	router := httpinterface.NewRouter(useCase, slog.Default())
 	srv := httptest.NewServer(router)

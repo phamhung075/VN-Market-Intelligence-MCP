@@ -33,3 +33,43 @@ The exit 1 violation (`cmd/sandbox/main.go:44` Fence-C infra import) is a pre-ex
 ### Status
 
 REVIEW / await-push. Local lint pass (config valid) confirmed. DONE gate = GREEN ci.yml after subsequent push per VERIFICATION GATE.
+
+---
+
+## STEP: FIX-TA-SANDBOX-DEPGUARD
+
+**Date:** 2026-06-08
+**Agent:** dev-technical-analysis
+**Task:** FIX-TA-SANDBOX-DEPGUARD
+**Sprint:** CI-RED-RECONCILE
+
+### Root cause
+
+`cmd/sandbox/main.go` imported `pkg/infrastructure` (line 44) to obtain `infrastructure.NewTACalculator()` for use in `newTestServer()`. Fence-C in `.golangci.yml` denies `pkg/infrastructure` imports from all files except `cmd/server/main.go` (the composition root). The v1 golangci config was masking this; the v2 migration (FIX-TA-GOLANGCI-CONFIG-V2) surfaced it as a hard lint violation.
+
+### Decision
+
+Option considered but rejected: move `cmd/sandbox` to an allowed location (e.g. `cmd/server/main.go`-level). Rejected — sandbox is a separate binary with different wiring concerns; it should not contaminate the production composition root.
+
+Option applied: add a `sandboxCalculator` local adapter inside `cmd/sandbox/main.go` that satisfies `application.TACalculator` by delegating to `module.Compute` directly. This is architecturally correct: the sandbox composition root constructs its own test adapter at its own layer, identical in behavior to `infrastructure.TACalculator` but without crossing the fence. The sandbox already imports `pkg/module` and `pkg/domain`, so no new transitive dependencies are introduced.
+
+### Changes applied
+
+File: `apps/technical-analysis/cmd/sandbox/main.go`
+
+1. Removed import: `"github.com/vn-market-intelligence/technical-analysis/pkg/infrastructure"`.
+2. Added import: `"github.com/vn-market-intelligence/technical-analysis/pkg/domain"`.
+3. Added `sandboxCalculator` struct + `Calculate` method (mirrors `infrastructure.TACalculator`, delegates to `module.Compute`, maps `dc.CrossEvent` → `domain.CrossSignal`).
+4. `newTestServer()`: replaced `infrastructure.NewTACalculator()` with `&sandboxCalculator{}`.
+
+### Local verification
+
+- `golangci-lint run ./...` → exit 0, 0 issues.
+- `go build ./cmd/...` → exit 0.
+- `go test ./...` → all packages pass.
+- `go run ./cmd/sandbox -tier=service -scenario=health-ok.json` → GREEN.
+- `go run ./cmd/sandbox -tier=service -scenario=indicators-happy-path.json` → GREEN.
+
+### Status
+
+DONE-CODE-LOCAL-GREEN / REVIEW. Push + CI green run owned by router (per VERIFICATION GATE).
