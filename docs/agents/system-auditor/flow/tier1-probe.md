@@ -1,4 +1,4 @@
-<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). -->
+<!-- lazy-loaded by main.md §Tier-1. cap: 120L (flow-file). size-justification: ~130L — FIX-AUDITOR-A20-MULTIPROBE 2026-06-08 adds A-20 multi-probe discriminator section (~28L); exceeds 120L cap by design; extraction to separate file would add lazy-load overhead on every T1 cycle where pdf-extractor is in host_runtime_set (i.e. always). -->
 # Tier-1 — Runtime Ping (detail)
 
 **Wall time target: < 120s. Scope: container liveness + health endpoint + restart count + memory + disk.**
@@ -41,6 +41,56 @@ From `PROBE_OUT` `--- health endpoints ---` section:
 - `[health] <svc>:<port> OK` → PASS
 - `[health] <svc>:<port> FAIL` → FAIL at severity matching container-status table above
 - Services in `not_deployed_by_design[]` → skip entirely
+
+## A-20 — pdf-extractor Multi-Probe Discriminator (FIX-AUDITOR-A20-MULTIPROBE)
+
+**Override rule:** the A-20 verdict from the general Health Endpoints section above MUST be overridden by this block. A single `[health] pdf-extractor:5001/health OK` line in `PROBE_OUT` is NOT sufficient to pass A-20 — a transient 200 between Tesseract runs masked real event-loop stalls (c103 false-green saga).
+
+**Tier placement:** T1 — adds ~15s to wall time, stays within 120s budget.
+
+**Protocol:**
+1. Run 3 in-container exec probes with 5s spacing:
+   ```bash
+   PDF_CTR=$(docker ps --format '{{.Names}}' | grep 'pdf-extractor' | head -1)
+   if [ -z "$PDF_CTR" ]; then
+     echo "[A-20] SKIP in-container probes — pdf-extractor container not found (A-11 already CRITICAL)"
+   else
+     for i in 1 2 3; do
+       result=$(docker exec "$PDF_CTR" curl -s -o /dev/null -w "%{http_code}" -m 5 http://localhost:5001/health 2>/dev/null || echo "000")
+       echo "[A-20-PROBE-${i}] in-container HTTP ${result}"
+       [ "$i" -lt 3 ] && sleep 5
+     done
+   fi
+   ```
+
+2. **Majority-vote verdict:**
+   - Count probes that returned HTTP 200 (`pass_count`).
+   - `pass_count ≥ 2` (majority) → A-20 PASS — override general health section result.
+   - `pass_count ≤ 1` (majority fail) → A-20 FAIL — emit signal regardless of what the host-side `PROBE_OUT` shows.
+
+3. **HTTP 000 significance:** in-container HTTP 000 means the event loop is wedged (uvicorn not accepting connections from within the network namespace). This was THE discriminating signal in the A-20 saga — host-side proxies/ports can return 200 while the container event loop is stalled. `000` counts as a fail probe.
+
+4. **Emit on A-20 FAIL:**
+   ```json
+   {
+     "type": "microservice_degraded",
+     "service_id": "pdf-extractor",
+     "check_id": "A-20",
+     "detail": "pdf-extractor multi-probe failed: {pass_count}/3 probes passed — event-loop stall suspected",
+     "severity": "WARN",
+     "dedup_key": "microservice_degraded:pdf-extractor:A-20"
+   }
+   ```
+   Signal row in orch-state.json `.signal_queue.rows[]`:
+   ```json
+   {"id": "sau-{ts}", "from": "system-auditor", "to": "po", "type": "microservice_degraded",
+    "summary": "pdf-extractor A-20 multi-probe {pass_count}/3 — event-loop stall suspected",
+    "severity": "HIGH", "status": "NEW"}
+   ```
+
+5. **Log all three probe results** verbatim in the notebook `### RAW-PROBE:` block for evidence trail.
+
+---
 
 ## Restart Count (A-21)
 

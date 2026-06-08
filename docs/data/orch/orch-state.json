@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T08:51:35Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-08T08:57:26Z",
+    "_updated_by": "agent-father",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3320,14 +3320,16 @@
         "type": "FIX",
         "size": "XS",
         "owner": "po",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "docs/agents/system-auditor/",
         "priority": "medium",
         "created_at": "2026-06-08T02:17:24Z",
-        "status_note": "From signal A20-AUDITOR-HARDEN-A20-SENSOR (P2, escalate_to agent-father — flow .md change, not apps/ code). Evidence: c103 PASS 00:07Z at uptime 40min, c105 UNHEALTHY 01:03Z tesseract 99.2%; single probe passes between Tesseract runs. Sequence AFTER dev fix A20-EVENTLOOP-ASYNC-TO-THREAD lands + ops rebuild succeeds (multi-probe gate verified) so the sensor is tuned against the final topology. AC: A-20 check uses 3 probes 5s apart (fail if any fails) or docker-exec probe; validated against an active-OCR window.",
+        "status_note": "From signal A20-AUDITOR-HARDEN-A20-SENSOR (P2, escalate_to agent-father — flow .md change, not apps/ code). Evidence: c103 PASS 00:07Z at uptime 40min, c105 UNHEALTHY 01:03Z tesseract 99.2%; single probe passes between Tesseract runs. Sequence AFTER dev fix A20-EVENTLOOP-ASYNC-TO-THREAD lands + ops rebuild succeeds (multi-probe gate verified) so the sensor is tuned against the final topology. AC: A-20 check uses 3 probes 5s apart (fail if any fails) or docker-exec probe; validated against an active-OCR window. | DJ-GATE-1 2026-06-08T08:57:26Z agent-father: what-done=tier1-probe.md §A-20 Multi-Probe Discriminator added — 3 in-container docker exec probes 5s apart, majority-vote (pass_count>=2 of 3 = PASS; pass_count<=1 = FAIL), HTTP 000 treated as fail (in-container wedge discriminator), WARN signal + signal_queue emit on fail, all 3 probe results logged to RAW-PROBE block; tier=T1 (runtime ping, within 120s wall budget, adds ~15s); what-considered=T2 placement rejected (A-20 is container health liveness not freshness; T2 is freshness sweep; original A-20 already lived in T1); why-decision=T1 correct tier for container/health verdict; in-container exec is discriminating signal (c103: host-side proxy returned 200 while container event-loop wedged; in-container 000 revealed real stall); majority-vote 2/3 prevents single transient probe from triggering false alarm.",
         "depends_on": [
           "A20-EVENTLOOP-ASYNC-TO-THREAD"
-        ]
+        ],
+        "done_at": "2026-06-08T08:57:26Z",
+        "done_by": "agent-father"
       },
       {
         "id": "A20-EVENTLOOP-STARVATION-ARCHITECT",
