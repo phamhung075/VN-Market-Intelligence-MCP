@@ -350,3 +350,49 @@ The rag-service is a single-writer service. There is no concurrent startup scena
 | AC-FR6-4 | mcp-server | INSERT with body_text value succeeds | Yes |
 | AC-FR6-5 | mcp-server | Double-restart no error (idempotent) | Yes |
 | AC-FR6-6 | mcp-server | Migration runs on startup with no downtime | Yes — online ALTER |
+
+---
+
+## [QA] Review Record — DFR-P1-MCP
+
+**Date:** 2026-06-08T14:28Z
+**QA cycle:** cycle-216
+**Task:** DFR-P1-MCP
+**Verdict:** APPROVED
+**Container:** mcp-server rebuilt image 13:55Z, /health 200 toolCount 157
+
+### AC Results (MCP-layer only — DFR-P1-RAG already DONE from cycle-215)
+
+| AC | Result | Live Evidence |
+|----|--------|---------------|
+| AC-FR6-1 | PASS | PRAGMA table_info(rag_analyses) via bun eval in container: body_text TEXT at cid=21 |
+| AC-FR6-2 | PASS | rag_analyses COUNT=5560 pre-QA and post-cleanup (unchanged) |
+| AC-FR6-3 | PASS | SELECT COUNT(*) WHERE body_text IS NOT NULL = 0 |
+| AC-FR6-4 | PASS | INSERT with body_text='some body text'; SELECT confirmed stored value |
+| AC-FR6-5 | PASS | ALTER TABLE ... ADD COLUMN body_text again → catches 'duplicate column name: body_text' silently |
+| AC-FR4-1 | PASS | mcp.config.json rag.decayHalfLifeDays={news:2,macro:7,filing:30,analysis:14} — 4 keys, positive integers |
+| AC-FR4-2 | PASS | pollNews.ts line 454: `cfg.rag?.decayHalfLifeDays?.news ?? 2` — config-read, not hardcoded |
+| AC-FR5-2 | PASS | Live POST /index doc_type=news/depth_tier=shallow/source_domain=cafef.vn/ticker=VCB → POST /search returns exact metadata |
+| AC-FR5-3 | PASS | Live POST /index doc_type=filing/ticker=HPG/source_domain=bctc.ssi.com.vn → POST /search returns exact metadata |
+| AC-FR3-5 | PASS | bun tsc --noEmit EXIT:0 on host and in container |
+
+### Test Suite
+
+- bun test targeted suites: 1840a-rag-wiring 3/0 PASS; BCTC(6 files)+SBV = 58/0 PASS
+- 1332-pollnews-source-display-name: 3 failures — **PRE-EXISTING**, confirmed: file not in commit 4b8f1845 diff (0 lines changed); root cause is cron_job_runs table absent from test's hand-rolled in-memory schema (Task 1398 gap); unrelated to DFR-P1-MCP
+- Bun v1.3.13 WriteFailed crash at full-suite coverage write: **PRE-EXISTING**, documented since 2026-05-13 across cycles 206–211
+
+### DDD / Security
+
+- DDD: schema-news.ts (infra), ragHttpClient.ts (infra), config.ts (infra), pollNews.ts (application), fetchParseAndStoreBctc.ts (application), mcp.config.json — no domain→infra violations
+- Security: Bun.env only (no process.env), no hardcoded decay values (read from config), no secrets
+
+### Cleanup
+
+- qa-test-dfr-mcp-001 deleted from rag_analyses → 5560 rows restored
+- qa-dfr-mcp-news-live-001 + qa-dfr-mcp-filing-live-001 deleted from LanceDB via t.delete()
+- LanceDB post-cleanup: 14127 rows (grown from 14028 via live polling during QA session — expected)
+
+### Phase 1 Status
+
+DFR-P1-RAG: DONE (cycle-215) | DFR-P1-MCP: DONE (cycle-216) | **Phase 1 COMPLETE**

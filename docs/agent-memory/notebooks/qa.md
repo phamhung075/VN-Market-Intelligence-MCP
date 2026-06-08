@@ -79,6 +79,12 @@ Sprint: FIX-PROJECT-STATS-GENERATED | Task: FIX-PROJECT-STATS-GENERATED | Verdic
 
 **Next:** dev-pdf-extractor | fix build_document_map() Tier 0 for 3 blocks above.
 
+## cycle-216 · 2026-06-08T14:28Z · DFR-P1-MCP DEEPFETCH-RAG-REDESIGN Phase 1 MCP gate — APPROVED
+
+Sprint: DEEPFETCH-RAG-REDESIGN | Task: DFR-P1-MCP | Verdict: APPROVED | Commit: 4b8f1845 (6 files, mcp-server)
+
+Container rebuilt image 13:55Z, /health 200 toolCount 157. All MCP-layer ACs verified live (raw). FR6: body_text TEXT at cid=21 (PRAGMA via bun eval), 5560 rows intact, NULL existing, INSERT ok, idempotent (duplicate column name caught). FR4: mcp.config.json decayHalfLifeDays {news:2,macro:7,filing:30,analysis:14} — 4 keys, pollNews.ts line 454 reads cfg.rag.decayHalfLifeDays.news (not hardcoded). FR5: live /index+/search roundtrip — news rows doc_type=news/shallow/cafef.vn/VCB PASS; filing rows doc_type=filing/HPG/bctc.ssi.com.vn PASS. FR3-mcp: tsc --noEmit EXIT:0 host+container. Tests: 1840a 3/0 PASS, BCTC+SBV 58/0 PASS. 1332 failure pre-existing (file not in 4b8f1845 diff; cron_job_runs schema gap). Bun v1.3.13 crash pre-existing. Cleanup: rag_analyses 5560 restored, LanceDB 14127 (QA rows deleted). DFR-P1-MCP → DONE. Phase 1 COMPLETE.
+
 ## cycle-215 · 2026-06-08T11:30Z · DFR-QA-1 DEEPFETCH-RAG-REDESIGN Phase 1 RAG gate — APPROVED (re-verify round 2)
 
 Sprint: DEEPFETCH-RAG-REDESIGN | Task: DFR-QA-1 | Verdict: APPROVED | Fix commit: 92aa2700
