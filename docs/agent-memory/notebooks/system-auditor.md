@@ -1,5 +1,14 @@
-[NB] Total lines:       ~165
+[NB] Total lines:       ~168
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
+
+## c279 · 2026-06-08T22:35:56Z
+### Audit Run Tier-1 (22:35 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (mcp-server, api-gateway, frontend, macro-indicators, pdf-extractor, api-gateway)
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE: all 6 services UP/healthy (docker ps); health endpoints: mcp-server 3000→200, api-gateway 4000→200, macro-indicators 5004→200, pdf-extractor 5001→200, frontend 3001→200, mcp-gateway INFO-skip (not in host_runtime_set).
+- Restart count: mcp-server=2 (PASS, ≤threshold); memory=50.24% (PASS, <85%); disk=38% used/233GB (PASS).
+- A-33 vnstockFundamentalsRefresh: crashed at 2026-06-08T01:00Z (0% success, 1 run) — dedup-skip BUG (c121/c120 window active, emitted 2026-06-08T19:05).
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
 ## c278 · 2026-06-08T22:31:10Z
 ### Audit Run Tier-2 (22:31 UTC 2026-06-08)
@@ -59,15 +68,6 @@
 - Cron health: vnstockFundamentalsRefresh still crashed (recurring from c120/c121, triaged as transient 2026-06-08T19:xx, no new action this cycle).
 - Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
-## c122 · 2026-06-08T20:06:33Z
-### Audit Run Tier-1 (20:06 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 0 new | Status: HEALTHY
-- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=31.53%; disk=40%.
-- A-20 pdf-extractor multi-probe: 3/3 PASS (all in-container health probes HTTP 200).
-- vnstockFundamentalsRefresh crash persists (from c121 01:00 UTC) — dedup-skip BUG (recurrence, already emitted in c121).
-- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
-
 ## c121 · 2026-06-08T19:05:17Z
 ### Audit Run Tier-1 (19:05 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
@@ -75,33 +75,3 @@
 - RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=27.46%; disk=38%.
 - A-33 CRON-CRASH: vnstockFundamentalsRefresh crashed at 2026-06-08T01:00:00Z (0% success, 1 run) — CRITICAL, signal row emitted, BUG Telegram sent.
 - Contract: signals_posted=0 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=0
-
-## c120 · 2026-06-08T18:36:27Z
-### Audit Run Tier-1 (18:36 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 1 new CRITICAL | Status: DEGRADED
-- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=22.37%; disk=39%.
-- A-20 pdf-extractor multi-probe: 3/3 PASS (in-container health probes all HTTP 200).
-- A-33 CRON-CRASH: vnstockFundamentalsRefresh crashed (0% success, 1 run) — CRITICAL, signal row emitted, BUG Telegram sent.
-- Contract: signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=0
-
-## c119 · 2026-06-08T18:35:01Z
-### Audit Run Tier-2 (18:35 UTC 2026-06-08)
-- Tier: 2 | Sources: 27 checked | VPS routes: 4 checked | DB spot checks: 2
-- Anomalies: 2 recurring (1 CRITICAL, 1 WARN) | 2 dedup-skipped for BUG
-- Status: DEGRADED
-- A-29 Cron fire gaps: all nominal (intelligenceCycleJob success 99.1%, bctcPdfPullJob 97.9%, all last_run recent)
-- B-12 SBV_FX stale 65min (>30min SLA, CRITICAL) — vn-sbv-fetch unhealthy (1h7m uptime); dedup-skip BUG (sau-c109-b12 from c112)
-- B-13 stale pending BCTC: 26 rows >72h (WARN); dedup-skip BUG (from c112 15:23)
-- B-01 BCTC: last fetch 2026-06-06T01:55Z, 41h elapsed (<168h out-of-window, PASS)
-- C-06/C-07 DB freshness: market_messages 2/3h, agent_signals 115/24h (both PASS)
-- B-09 BCTC URL shape: 0 bad SSC URLs (PASS) | VPS proxy: sbv/bctc stale (push log: sbv 2026-06-07T04:59Z, bctc 2026-06-08T00:30Z)
-
-## c118 · 2026-06-08T18:07:47Z
-### Audit Run Tier-1 (18:07 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 1 new CRITICAL | Status: DEGRADED
-- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=12.18%; disk=37%.
-- A-20 pdf-extractor multi-probe: 3/3 PASS (in-container health probes all HTTP 200).
-- CRON-VNSTOCK-CRASH: vnstockFundamentalsRefresh crashed (0% success, 1 run) — CRITICAL, signal row emitted, BUG Telegram sent.
-- Contract: signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=0
