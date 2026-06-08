@@ -90,6 +90,25 @@ ranked.append(SearchResult(
 - DFR-QA-1: CHANGES_REQUESTED
 - DFR-P1-MCP: remains TODO (unblocked structurally but fixer should fix RAG first)
 
+## [Fixer] Fix Record
+
+**Date:** 2026-06-08
+
+**Issues fixed:**
+- `apps/rag-service/domain/services.py` lines 70-81: Added 8 Phase 1 metadata fields (ticker, sector, source_domain, depth_tier, doc_type, published_at, confidence, impact_score) to SearchResult constructor in apply_temporal_decay()
+
+**Tests added:**
+- `apps/rag-service/__tests__/unit/test_domain_services.py`: `TestApplyTemporalDecay::test_phase1_metadata_fields_preserved` — asserts all 8 Phase 1 fields survive apply_temporal_decay processing
+
+**Verification:**
+- Full suite: 105/105 tests PASS (104 original + 1 new regression test)
+- tsc clean ✓
+- No regressions ✓
+
+**Commit:** 92aa2700 — `fix(rag-service): restore Phase 1 metadata fields in apply_temporal_decay`
+
+---
+
 ## Next
 
-NEXT: fixer | fix `apply_temporal_decay()` at `apps/rag-service/domain/services.py` lines 70-81 + add test; then re-run DFR-QA-1
+NEXT: ops | rebuild rag-service container; then qa re-runs DFR-QA-1

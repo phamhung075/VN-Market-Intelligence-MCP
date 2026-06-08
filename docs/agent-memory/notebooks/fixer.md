@@ -154,3 +154,32 @@
 **Scope:** ≤1 file edited by fixer (index.html); go/que-reference.js pre-existing from dev implementation ✓
 **Commit:** Fixer cannot acquire commit-mutex (enum gap); work stays in-tree for main terminal to commit at EXIT
 **Status:** NEXT → qa for re-verification (should pass all blocking + spec-completion)
+
+## Session 2026-06-08 (Sprint DEEPFETCH-RAG-REDESIGN, DFR-QA-1, Round 1)
+
+**Task:** DFR-P1-RAG — rag-service Phase 1 implementation (QA CHANGES_REQUESTED)
+
+**Blocking Issue Fixed:**
+
+**B-1 — apply_temporal_decay() drops Phase 1 metadata fields (lines 70-81)**
+- **Issue:** Function reconstructed SearchResult objects to set recency_score but omitted 8 Phase 1 metadata fields (ticker, sector, source_domain, depth_tier, doc_type, published_at, confidence, impact_score). All API responses returned default values instead of actual data.
+- **Fix applied:**
+  - File: `apps/rag-service/domain/services.py`
+  - Lines 70-81: Added all 8 Phase 1 fields to SearchResult(...) constructor: ticker=r.ticker, sector=r.sector, source_domain=r.source_domain, depth_tier=r.depth_tier, doc_type=r.doc_type, published_at=r.published_at, confidence=r.confidence, impact_score=r.impact_score
+- **Verification:** Data stored correctly in LanceDB; fix ensures serialization path preserves fields in API response
+
+**Regression Test Added:**
+
+- File: `apps/rag-service/__tests__/unit/test_domain_services.py`
+- Test: `TestApplyTemporalDecay::test_phase1_metadata_fields_preserved` (lines 166-203)
+- Coverage: Sets all 8 Phase 1 fields on input SearchResult, runs apply_temporal_decay(), asserts all 8 survive with correct values. Also verifies recency_score is computed.
+
+**Test Suite Status:**
+- Total: 105/105 PASS (104 original + 1 new regression test)
+- No regressions ✓
+- tsc clean ✓
+
+**Scope:** 2 files edited (services.py, test_domain_services.py) ✓
+**Commit:** 92aa2700 — `fix(rag-service): restore Phase 1 metadata fields in apply_temporal_decay`
+**Handoff:** Appended [Fixer] Fix Record to `docs/handoffs/sprint-DEEPFETCH-RAG-REDESIGN-qa.md`
+**Status:** NEXT → ops for rag-service container rebuild; then qa re-runs DFR-QA-1
