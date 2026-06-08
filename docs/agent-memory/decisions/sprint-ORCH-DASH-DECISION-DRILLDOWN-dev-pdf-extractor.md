@@ -24,3 +24,13 @@
 - Option C: bump healthcheck timeout only — mitigation, no root-cause fix
 **why-decision:** ProcessPoolExecutor puts OCR in a separate OS process; OS schedules uvicorn independently even at 100% CPU saturation. Timeout bump added as safety margin.
 **why-change:** Previous asyncio.to_thread() fix ran OCR in a thread inside the same process — still competed for OS scheduling slot when CPU was saturated.
+### STEP dev-pdf-extractor-S1 · dev-pdf-extractor · 2026-06-08T01:25:00Z
+**task-id:** FIX-PDF-EXTRACTOR-UNHEALTHY
+**what-done:** Diagnosed 3rd A-20 recurrence; confirmed ProcessPoolExecutor fix present but bypassed by 1-core cgroup limit; executed scoped restart; dropped architect escalation signal; blocked on code fix per RECURRING-BUG rule.
+**what-considered:**
+- Write patch 3: raise cpus in docker-compose (fast but RECURRING-BUG rule forbids; architect must own this)
+- Restart blind without diagnosis (forbidden by task spec)
+- Rebuild container (unnecessary — code has fix; issue is resource limits not code)
+- Only: RECURRING-BUG rule fires at 3rd recurrence → no code fix, escalate only
+**why-decision:** RECURRING-BUG rule: same A-20 class 3 times → architect design review mandatory. Root cause (1-CPU cgroup starves uvicorn when Tesseract child saturates quota) requires architectural decision (cpus raise vs sidecar vs healthcheck gate), not another patch.
+**why-change:** Container restart is operational recovery (unblocks BCTC batch). No code change made.

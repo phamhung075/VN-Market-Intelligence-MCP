@@ -172,31 +172,28 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ### 2026-06-03 — LF-DEPLOY-IMPL DONE-CODE (awaiting ops rebuild)
 
-**Task:** LF-DEPLOY-IMPL | Sprint: BCTC-LAYOUT-FIRST | Status: DONE-CODE / awaiting ops rebuild
-
-**Root cause fixed:** `_compute_page_fingerprint_50dpi` used money-group-density as sole `page_type` discriminator. Balance-unit START pages (FPT Q1 page 3) have sparse money tokens in stored OCR when the heading block dominates → misclassified `prose` → `build_document_map` group-break → schema_page=4 not 3 → AC-LFE-1/2 FAIL.
-
-**Changes:**
-- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py`:
-  - LF-IMPL-1: added `_ACCOUNT_CODE_MIN_FOR_TABLE=3` + `_DATE_HEADER_MIN_FOR_TABLE=1` constants; 3-signal OR classifier in `_compute_page_fingerprint_50dpi` (Signal A=money, B=codes, C=dates); DEBUG log for diagnostics
-  - LF-IMPL-2: added `_ALLOW_PROSE_IN_TABLE_UNIT=True` flag; relaxed continuity guard in `build_document_map` grouping loop — prose page inside table unit accepted if gutter geometry continuous (fp coerced to "table" type for `_fingerprints_continuous` call)
-- `apps/pdf-extractor/__tests__/unit/test_layout_invariants.py`: added `TestQuarantineNonDeadCode` (3 tests — LF-IMPL-3 AC-LFE-11 proof)
-- `apps/pdf-extractor/__tests__/unit/test_document_map.py`: added `TestMultiSignalPageClassifier` (14 tests — Signal B/C classification) + `TestProseInTableUnitGuard` (3 tests — LF-IMPL-2)
-
-**Test results:** 707/707 PASS (+30 new tests). Zero regression.
-
-**LF-IMPL-4 / AC-LFE-3 verdict:** FPT Q1 page 41 IS a financial table page (sections 31/32 notes tables with money values). AC-LFE-3 requirement was wrong — code is correct. AC-LFE-3 should be updated to PASS with note "page 41 legitimately contains notes tables — table classification is correct."
-
-**Reclassification proof:** sparse page-3 OCR (header-only: 0 money, 2 codes, 2 dates) → old=`prose`, new=`table` via Signal C. Full OCR (40 money, 176 codes, 2 dates) → all signals fire.
-
-**NEXT:** ops rebuild pdf-extractor container → QA re-run LF-DEPLOY gate → verify AC-LFE-1/2 in DB (schema_page=3, pages 3-6 one unit).
+**Task:** LF-DEPLOY-IMPL | Sprint: BCTC-LAYOUT-FIRST | Status: DONE-CODE
+3-signal page classifier (money+codes+dates), prose-in-table-unit guard. 707/707 PASS (+30). See handoff TASK_BCTC-MD-TABLE.md for full details.
 
 ---
 
+### 2026-06-08 — FIX-PDF-EXTRACTOR-UNHEALTHY (3rd A-20 recurrence)
+
+**Task:** FIX-PDF-EXTRACTOR-UNHEALTHY | Size: S | Status: DONE (ops recovery) | Ticket: router-pdf-extractor-unhealthy + sau-c105-a20
+
+**Root cause (confirmed):** `cpus: '1.0'` in docker-compose pdf-extractor deploy.resources.limits. When Tesseract OCR runs in the ProcessPoolExecutor child process at 99.2% CPU, the Linux CFS cgroup allocates the entire 1-core budget to the child. The parent uvicorn process receives 0 scheduler slices → `/health` curl probe exit=-1 at 30s timeout. ProcessPoolExecutor isolates GIL contention only — it does NOT escape the shared cgroup CPU quota. Evidence: docker inspect NanoCpus=1000000000 + ps aux tesseract@99.2% + all 5 probes exit=-1.
+
+**Why prior fixes failed:**
+- `48a64056`: asyncio.to_thread() — same process, GIL still shared, OS can't schedule healthcheck handler
+- `3033e1dc`: ProcessPoolExecutor — moved OCR to child process, but child + parent share same CFS cgroup → child starves parent
+
+**Recurring-bug verdict:** 3RD A-20 RECURRENCE. RECURRING-BUG rule armed: NO CODE FIX. Architect escalation signal `A20-3RD-CPU-CGROUP-ARCHITECT` written to orch-state.json signal_queue. Architect options: (A) raise cpus to 2.0, (B) Tesseract sidecar container, (C) healthcheck gate during active OCR.
+
+**Sensor gap (c103 vs c105):** c103 (00:07Z) showed healthy because the container had been freshly restarted ~40min prior (no active OCR job). c105 (01:03Z) caught it because an active BCTC batch extraction was in flight (Tesseract at 99.2%). A-20 class is load-triggered, not always-present. Auditor hardening needed: check probe from within cgroup scope (exec -based probe, not external network call) OR monitor tesseract process existence alongside /health curl. This change is to the auditor flow .md — signal row created for agent-father.
+
+**Operational recovery:** `docker restart` (no rebuild, ProcessPoolExecutor fix already in image from 3033e1dc). Container healthy in first two post-restart probes (exit=0). BCTC batch unblocked.
+
+**BCTC reparse:** VHM/HCM/HSG/KBC = "Chưa có dữ liệu BCTC" before restart. Reparse not run yet — container must stay stable ≥15min first.
+
 ### 2026-06-08 — PDFX-SINGLE-WORKER-BLOCKING (3033e1dc)
-
-ProcessPoolExecutor(max_workers=1) → OCR in separate OS process → /health 200 OK on all 8 polls during live OCR. asyncio.to_thread() was insufficient (same process, CPU starvation). D6: max_workers=1.
-
-### History pointer
-
-Prior entries (FU-LF-ORPHAN-ROWS, PDF-SINGLE-SOURCE, PEK-RENDER-PDFX, PEK-LAYOUT-CFG, PEK-IMPORT-CHAIN, PEK-DEPLOY-FIX, PEK-ORPHAN-RECONCILE, PEK-IMPL, LF-FIX, LF-EXTRACT, MD-EXTRACT-1..9) truncated at 200L per notebook cap. See `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md` for full history.
+ProcessPoolExecutor(max_workers=1) → OCR child process → /health 200 OK during OCR. asyncio.to_thread() insufficient (same process). D6: max_workers=1. History: `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md`.
