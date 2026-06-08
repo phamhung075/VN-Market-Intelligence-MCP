@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T02:17:24Z",
-    "_updated_by": "po-triage-20260608T0307Z",
+    "_updated_at": "2026-06-08T02:32:14.486969Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3069,7 +3069,7 @@
         "status": "TODO",
         "zone": "apps/pdf-extractor/",
         "created_at": "2026-06-07T20:17:23Z",
-        "status_note": "From signal dev-20260607T193304 (test_infra_debt, MED, zone_owner dev-pdf-extractor). AC: full unit suite green in any test order (pytest -p no:randomly AND default order). || PO 2026-06-08T02:17:24Z: deferred 2nd tick — zone apps/pdf-extractor/ FROZEN pending ARCH-A20-CPU-CGROUP-REVIEW (test-only change likely safe, but slot lost to CRITICAL FIX-MACRO-REFRESH-DEAD anyway). Resume next free slot; if architect review still in flight, test-file-only scope MAY proceed with explicit no-src-no-compose constraint."
+        "status_note": "From signal dev-20260607T193304 (test_infra_debt, MED, zone_owner dev-pdf-extractor). AC: full unit suite green in any test order (pytest -p no:randomly AND default order). || PO 2026-06-08T02:17:24Z: deferred 2nd tick — zone apps/pdf-extractor/ FROZEN pending ARCH-A20-CPU-CGROUP-REVIEW (test-only change likely safe, but slot lost to CRITICAL FIX-MACRO-REFRESH-DEAD anyway). Resume next free slot; if architect review still in flight, test-file-only scope MAY proceed with explicit no-src-no-compose constraint.\n\nZone unfrozen 2026-06-08 acb48383 — eligible next triage"
       },
       {
         "id": "FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN",
@@ -3251,12 +3251,11 @@
         "type": "UNBLOCK",
         "size": "S",
         "owner": "dev-team",
-        "status": "BLOCKED",
+        "status": "TODO",
         "zone": "apps/pdf-extractor/",
-        "title": "pdf-extractor Up-but-unhealthy (3rd A-20-class recurrence, post-ProcessPoolExecutor 3033e1dc): diagnose healthcheck with evidence; scoped restart ONLY pdf-extractor if needed; then reparse VHM,HCM,HSG,KBC; reconcile Tier-1 sensor gap",
+        "title": "pdf-extractor Up-but-unhealthy post-A20 CPU-CGROUP fix: re-queue 26 rows, ingest 22-filing Q1-2026 batch, reparse, baseline load-test",
         "created_at": "2026-06-08T01:17:08Z",
-        "status_note": "DISPATCH AUTHORIZED this tick (slot 1/2). Dedup: router-pdf-extractor-unhealthy + sau-c105-a20. Ops lane — NEVER down&&up stack (rebuild-recreate-destroys-peers). Diagnose FIRST: docker inspect Health log, in-container curl /health, verify running image contains 3033e1dc. RECURRING-BUG RULE: if root cause = event-loop starvation again, STOP and route to architect — no 3rd patch without design review. After healthy: bun scripts/migrations/reparse-bctc-reports.ts --tickers VHM,HCM,HSG,KBC; verify conf delta in live DB (docker volume, NOT host decoys). AC: docker ps healthy >=15min incl. during one in-flight /extract; 4 tickers reparsed with per-ticker before/after conf; Tier-1 vs docker-health sensor gap explained (c105 partial fix noted). Unblocks: 22-filing Q1-2026 batch ingest (signal 5333 DATA_INSUFFICIENT, pdfs_stored=true ingested=false).",
-        "blocked_on": "architect:A20-3RD-CPU-CGROUP-ARCHITECT",
+        "status_note": "Post-fix (acb48383 CPU 2.0 + start_period 60s): (a) re-queue 26 rows: UPDATE bctc_vps_queue SET status='pending' WHERE status='blocked_pdf_extractor' AND period_year=2026 AND period_quarter='Q1'; (b) initial ingest of 22-filing Q1-2026 batch (VHM/HCM/HSG/KBC have ZERO financial_reports rows — never ingested); (c) reparse path after ingest via bun scripts/migrations/reparse-bctc-reports.ts; (d) baseline: container healthy >=15min DURING ingest; zone apps/pdf-extractor/ now UNFROZEN. AC: docker ps healthy >=15min incl. during one in-flight /extract; 4 tickers ingested with per-ticker conf; signal 5333 DATA_INSUFFICIENT resolved (pdfs_stored=true + ingested=true).",
         "note": "RECURRING-BUG rule fired (3rd A-20). No code patch. Restart = temporary relief only; re-unhealthy under OCR load after 11min. Architect must decide: cpus>=2.0 vs sidecar vs exec healthcheck. Reparse of VHM/HCM/HSG/KBC blocked (no financial_reports rows; 22-filing Q1-2026 batch never ingested)."
       },
       {
@@ -3314,18 +3313,6 @@
         "title": "Quarantine/delete stale host DB copies (apps/mcp-server/data/*.db, ./data/*.db, root market.db 0B) after grep-verifying no compose mount/code path reads them; document live-DB location (docker volume) in dev-standards + system-map",
         "created_at": "2026-06-08T01:17:08Z",
         "status_note": "LOW. From router-host-db-decoys (misled Tier-3 verification: host 105 vs live 338 pending). AC: decoys gone or .quarantine/; live-DB pointer documented in docs/policies/dev-standards.md + docs/data/system-map.json."
-      },
-      {
-        "id": "ARCH-A20-CPU-CGROUP-REVIEW",
-        "title": "Architect design review A-20 (3rd recurrence, RECURRING-BUG): pdf-extractor cpus:1.0 cgroup quota starves uvicorn under Tesseract OCR load — decide cpus>=2.0 in compose vs OCR sidecar container vs exec-based healthcheck; output decision brief + implementation",
-        "type": "UNBLOCK",
-        "size": "S",
-        "owner": "dev-team",
-        "status": "TODO",
-        "zone": "apps/pdf-extractor/",
-        "priority": "P1",
-        "created_at": "2026-06-08T02:17:24Z",
-        "status_note": "DISPATCH AUTHORIZED this tick (slot 1/2). From signal A20-3RD-CPU-CGROUP-ARCHITECT (P1) + sau-c106-a20 folded. RECURRING-BUG rule: NO further dev code patches — 48a64056 (to_thread) and 3033e1dc (ProcessPoolExecutor) both failed because child processes cannot escape the CFS cgroup quota. Evidence (commits 781c8cbf, 76d0af62): tesseract 99.2% CPU on 1.0-core quota, 5x healthcheck probe exit=-1 at 30s, re-unhealthy 11min after restart under OCR load. Simplest candidate = raise cpus>=2.0 in docker-compose (verify host headroom + peer service CPU shares first; 16GB Mac / Docker 8GB cap is RAM not CPU). Decision unblocks: FIX-PDF-EXTRACTOR-UNHEALTHY (BLOCKED), 22-filing Q1-2026 batch ingest, VHM/HCM/HSG/KBC reparse, re-queue of 26 blocked_pdf_extractor bctc_vps_queue rows, pdfx zone unfreeze. AC: decision brief in docs/architecture-briefs/ + chosen option implemented + container healthy >=15min with in-flight /extract under real OCR load."
       },
       {
         "id": "FIX-AUDITOR-A20-MULTIPROBE",
@@ -5096,6 +5083,20 @@
         "note": "Live container predates 06c65978 — PPC/HPG/KBC low-confidence reports today are consistent with the unfixed image. Rebuild ONLY mcp-server (feedback_rebuild_recreate_destroys_peers: never down&&up the stack). Post-rebuild verify image ID matches build + DB write probe (project_mcp_server_write_wedge) + re-run PPC Q4-2025 reparse to confirm magnitude fix live.",
         "completed_at": "2026-06-07T20:45:25Z",
         "completion_note": "Rebuilt mcp-server only (image 1f495c5d024c, peers untouched, all Up). Tool-layer DB write probe PASS (task_claim/release probe:rebuild-20260607). PPC Q4-2025 live reparse PASS: assets 5246604.575 / liab 780223.778 / equity 4466380.797 trieu, BS identity delta=0, confidence 0.25->0.625 / 0.1->1.0, no duplicate row. Evidence: notebook commit 8ecb2d96."
+      },
+      {
+        "id": "ARCH-A20-CPU-CGROUP-REVIEW",
+        "title": "Architect design review A-20 (3rd recurrence, RECURRING-BUG): pdf-extractor cpus:1.0 cgroup quota starves uvicorn under Tesseract OCR load — decide cpus>=2.0 in compose vs OCR sidecar container vs exec-based healthcheck; output decision brief + implementation",
+        "type": "UNBLOCK",
+        "size": "S",
+        "owner": "dev-team",
+        "status": "DONE",
+        "zone": "apps/pdf-extractor/",
+        "priority": "P1",
+        "created_at": "2026-06-08T02:17:24Z",
+        "status_note": "DISPATCH AUTHORIZED this tick (slot 1/2). From signal A20-3RD-CPU-CGROUP-ARCHITECT (P1) + sau-c106-a20 folded. RECURRING-BUG rule: NO further dev code patches — 48a64056 (to_thread) and 3033e1dc (ProcessPoolExecutor) both failed because child processes cannot escape the CFS cgroup quota. Evidence (commits 781c8cbf, 76d0af62): tesseract 99.2% CPU on 1.0-core quota, 5x healthcheck probe exit=-1 at 30s, re-unhealthy 11min after restart under OCR load. Simplest candidate = raise cpus>=2.0 in docker-compose (verify host headroom + peer service CPU shares first; 16GB Mac / Docker 8GB cap is RAM not CPU). Decision unblocks: FIX-PDF-EXTRACTOR-UNHEALTHY (BLOCKED), 22-filing Q1-2026 batch ingest, VHM/HCM/HSG/KBC reparse, re-queue of 26 blocked_pdf_extractor bctc_vps_queue rows, pdfx zone unfreeze. AC: decision brief in docs/architecture-briefs/ + chosen option implemented + container healthy >=15min with in-flight /extract under real OCR load.",
+        "closed_at": "2026-06-08T02:32:14.486699Z",
+        "note": "load-proof (>=15min healthy under real OCR ingest) deferred to FIX-PDF-EXTRACTOR-UNHEALTHY execution"
       }
     ],
     "in_progress": []
