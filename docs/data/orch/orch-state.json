@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T20:01:33Z",
+  "_updated_at": "2026-06-08T22:52:00Z",
   "_updated_by": "po",
   "head": {
     "status": "idle",
@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T22:10:00Z",
+    "_updated_at": "2026-06-08T22:52:00Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -2971,12 +2971,12 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "DISPATCHED",
+            "status": "REVERTED-RECURRING",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T21:00:00Z",
-            "note": "[po RE-VALIDATE + WIDEN 2026-06-08T21:52Z DJ-GATE-1 STEP po-S11] Re-validated against the REAL CI signature breakdown (run 27168638852, suite now measurable): rag_analyses/data_env=93 hits CONFIRMS the core class, but the SAME root (hand-rolled inline DDL drifting from schema-*.ts, missing guarded ADD COLUMN) produces MORE: `daily_ohlcv has no column named data_env` (5), `no such column: statement_section` (3), `no such table: cron_job_runs/signal_quality_audit` (3), `no such column: notified_telegram` (1). SCOPE WIDENED: not just rag_analyses — sweep ALL inline test-setup DDLs to use the SSOT init helpers (initNewsTables + the analogous schema-*.ts initializers for daily_ohlcv / cron_job_runs / signal_quality_audit / statement_section). DoD: replace hand-rolled CREATE TABLE / partial DDL in test setup with the SSOT init helper calls so guarded ADD COLUMNs (data_env etc.) run; verify the affected ~100+ inserts succeed. Prefer SSOT helper over patching inline DDLs by hand. Do NOT touch DWF canary. Independent of B1 (different file set), safe parallel under WIP<=2. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push. | === PRIOR === Brief #2 B2 (~96). Aligns with brief #1 CI-specific env-mutation note (data_env) -> the two briefs AGREE here. Fix: import initNewsTables from schema-news.ts and call it instead of hand-rolled DDL in each test setup; verify the guarded ADD COLUMN data_env runs so inserts that write data_env unconditionally succeed. Prefer the SSOT init helper over patching 63 inline DDLs by hand. Do NOT touch DWF canary. Independent of B1 (different file set) so safe to run parallel under WIP<=2. Verification gate = bun-test fail count DROP on subsequent push."
+            "note": "[po S12 DJ-GATE-1 2026-06-08T22:52Z] VERIFICATION GATE FAILED on 9454baad — this mechanized injection of init*Tables into 464 test setup fns added +250 fails (CI run 27171666087: 921 fail+error vs 702 baseline = +219 WORSE; router raw-verified from gh run --log). Signatures: ~32 double-create \"table X already exists\", ~200 schema-divergence \"no such column/table\"/count-mismatch, ~32 NOT NULL (watchlist.exchange, agent_signals.expires_at). ROOT: one-canonical-schema injection collides with heterogeneous per-file inline DDLs. RULING: REVERT 9454baad (router owns git revert+push). This is the 2nd mechanized churn of the CI-test-schema area (ties CI-TEST-ISOLATION-SPIKE) -> recurring-bug rule: NO third mechanized sweep. SUPERSEDED BY CI-TEST-SCHEMA-FIXTURE-SPIKE (architect must design shared canonical test-DB fixture / inline-DDL reconciliation before any dev re-attempt). Do NOT re-dispatch this task as-is. | === PRIOR === [po RE-VALIDATE + WIDEN 2026-06-08T21:52Z DJ-GATE-1 STEP po-S11] Re-validated against the REAL CI signature breakdown (run 27168638852, suite now measurable): rag_analyses/data_env=93 hits CONFIRMS the core class, but the SAME root (hand-rolled inline DDL drifting from schema-*.ts, missing guarded ADD COLUMN) produces MORE: `daily_ohlcv has no column named data_env` (5), `no such column: statement_section` (3), `no such table: cron_job_runs/signal_quality_audit` (3), `no such column: notified_telegram` (1). SCOPE WIDENED: not just rag_analyses — sweep ALL inline test-setup DDLs to use the SSOT init helpers (initNewsTables + the analogous schema-*.ts initializers for daily_ohlcv / cron_job_runs / signal_quality_audit / statement_section). DoD: replace hand-rolled CREATE TABLE / partial DDL in test setup with the SSOT init helper calls so guarded ADD COLUMNs (data_env etc.) run; verify the affected ~100+ inserts succeed. Prefer SSOT helper over patching inline DDLs by hand. Do NOT touch DWF canary. Independent of B1 (different file set), safe parallel under WIP<=2. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push. | === PRIOR === Brief #2 B2 (~96). Aligns with brief #1 CI-specific env-mutation note (data_env) -> the two briefs AGREE here. Fix: import initNewsTables from schema-news.ts and call it instead of hand-rolled DDL in each test setup; verify the guarded ADD COLUMN data_env runs so inserts that write data_env unconditionally succeed. Prefer the SSOT init helper over patching 63 inline DDLs by hand. Do NOT touch DWF canary. Independent of B1 (different file set) so safe to run parallel under WIP<=2. Verification gate = bun-test fail count DROP on subsequent push."
           },
           {
             "id": "CI-NETWORK-SKIP-GUARDS",
@@ -2984,12 +2984,12 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "DISPATCHED",
+            "status": "PARTIAL-WIN-REFILE",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T21:00:00Z",
-            "note": "[po UN-GATE + RE-VALIDATE 2026-06-08T21:52Z DJ-GATE-1 STEP po-S11] B1 dependency REMOVED (moot): suite is now measurable and only 17 mock.module hits appear in CI run 27168638852 — the ~269 mock-poison cascade hypothesis is empirically dead, so there is no cohort to 'isolate B1 from' first. Re-validated network class against REAL CI log: AbortError/fetch-failed/ETIMEDOUT/getaddrinfo/5000ms = 175 hits (HOSE/HNX/UPCOM Yahoo SBV NewsAPI) PLUS fs-isolation ENOENT mkdir data/__test-1335__ (test-sandbox dir not created in CI). This is the SINGLE LARGEST fix lever toward 0 fail -> priority raised medium->high, DISPATCHED parallel with B2 under WIP<=2 (disjoint file sets). DoD: detect-CI-env + skip/mock for live-source tests; create the per-test fs sandbox dir (fixes __test-1335__ ENOENT); do NOT delete assertions; do NOT touch DWF canary. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push. | === PRIOR === Brief #1 Class C (~100-150, 5000ms network). Extends prior FIX-MCP-CI-NETWORK-GUARD (DONE, partial) to the remaining live-source cohort. Prefer detect-CI + skip/mock over deleting assertions."
+            "note": "[po S12 DJ-GATE-1 2026-06-08T22:52Z] PARTIAL WIN inside 9454baad: the pollNews.ts network-skip guards drove errors 46->15 (-31), independently verified 102+1288=14 pass/0 fail under CI=true, isolated to pollNews.ts (router raw-verified). But 9454baad as a whole is +219 WORSE (BATCH-1 schema injection regressed it) -> commit is being REVERTED. To NOT lose the -31 win, the pollNews.ts guards are RE-FILED clean as CI-NETWORK-GUARDS-POLLNEWS-REFILE (depends: revert lands first). This task is closed as superseded by that re-file. | === PRIOR === [po UN-GATE + RE-VALIDATE 2026-06-08T21:52Z DJ-GATE-1 STEP po-S11] B1 dependency REMOVED (moot): suite is now measurable and only 17 mock.module hits appear in CI run 27168638852 — the ~269 mock-poison cascade hypothesis is empirically dead, so there is no cohort to 'isolate B1 from' first. Re-validated network class against REAL CI log: AbortError/fetch-failed/ETIMEDOUT/getaddrinfo/5000ms = 175 hits (HOSE/HNX/UPCOM Yahoo SBV NewsAPI) PLUS fs-isolation ENOENT mkdir data/__test-1335__ (test-sandbox dir not created in CI). This is the SINGLE LARGEST fix lever toward 0 fail -> priority raised medium->high, DISPATCHED parallel with B2 under WIP<=2 (disjoint file sets). DoD: detect-CI-env + skip/mock for live-source tests; create the per-test fs sandbox dir (fixes __test-1335__ ENOENT); do NOT delete assertions; do NOT touch DWF canary. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push. | === PRIOR === Brief #1 Class C (~100-150, 5000ms network). Extends prior FIX-MCP-CI-NETWORK-GUARD (DONE, partial) to the remaining live-source cohort. Prefer detect-CI + skip/mock over deleting assertions."
           },
           {
             "id": "OBSOLETE-REMOVE-24",
@@ -3021,6 +3021,35 @@
             "priority": "low",
             "created_at": "2026-06-08T21:00:00Z",
             "note": "Brief #1 Class B (~300-400, 1ms living-spec). BLOCKED until B1 settles how many of these are actually mock-poison artifacts (brief #2) vs genuine TDD-RED spec gaps (brief #1). After B1 delta is measured, the residual 1ms cohort gets PO per-test prioritization: implement-feature vs update-stale-spec vs obsolete-remove. Largest + lowest-confidence bucket = triage last. PROTECT DWF canary."
+          },
+          {
+            "id": "CI-TEST-SCHEMA-FIXTURE-SPIKE",
+            "title": "SPIKE: design a shared canonical test-DB fixture / inline-DDL reconciliation strategy for the ~464 heterogeneous test setups — root-cause why one-size init*Tables injection collides (double-create) or shadows (schema-divergence/NOT NULL) and specify the definitive non-mechanized fix.",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "TODO",
+            "size": "M",
+            "mode": "spike",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "timebox": 120,
+            "created_at": "2026-06-08T22:52:00Z",
+            "question": "What is the definitive fix for CI-test-DB schema drift across ~464 heterogeneous test setups, given that the B2 mechanized init*Tables injection FAILED (+250 fails: ~32 double-create, ~200 no-such-column/table+count-mismatch, ~32 NOT NULL watchlist.exchange/agent_signals.expires_at)? Options to evaluate: (1) single shared canonical test-DB fixture/factory all tests import (drop per-file inline DDL), (2) reconcile inline DDLs to schema-*.ts SSOT per-file with collision detection (CREATE IF NOT EXISTS + column-superset), (3) hybrid: canonical fixture for new tests + targeted reconciliation for the ~96 rag_analyses/data_env class only. MUST specify how to avoid both collision (already-exists) and shadowing (canonical cols the inline-shaped INSERTs cannot satisfy / leave NOT NULL unpopulated).",
+            "note": "RECURRING-BUG (2nd mechanized churn of CI-test-schema area; ties CI-TEST-ISOLATION-SPIKE which architect already delivered, and B2 which just regressed +250 on 9454baad). Per recurring-bug rule: architect SPIKE BEFORE any dev impl. Output: findings doc in docs/architecture-briefs/ + per-class fix directive + falsifiable verification gate. Explicitly: do NOT prescribe another mechanized one-size injection sweep. Architect lane = NO dev WIP. DoD: brief committed + a concrete dev-actionable spec PO can scope into FIX(es) next cycle. Verification gate for the eventual FIX = bun-test FAIL+ERROR DROP vs 702 on subsequent push (router owns push)."
+          },
+          {
+            "id": "CI-NETWORK-GUARDS-POLLNEWS-REFILE",
+            "title": "RE-FILE (clean standalone) the pollNews.ts network-skip guards from reverted 9454baad — detect CI=true and skip/mock the live HOSE/HNX/UPCOM/Yahoo/NewsAPI fetches in pollNews.ts ONLY; do NOT touch test schema DDL or other files.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "created_at": "2026-06-08T22:52:00Z",
+            "note": "PRESERVES the verified -31 errors win from 9454baad (BATCH-2). Router raw-verified pre-push: pollNews.ts network guards under CI=true gave 102+1288=14 pass/0 fail, errors 46->15. 9454baad is being REVERTED (BATCH-1 schema injection regressed +250) so this clean re-file is how the win survives. SCOPE = pollNews.ts ONLY; do NOT include ANY init*Tables / test-DDL changes (that is the regressing class -> goes through CI-TEST-SCHEMA-FIXTURE-SPIKE). SEQUENCING: router must land the 9454baad revert FIRST; this re-file then applies onto the restored 702 base (else it lands on a poisoned baseline). Do NOT touch DWF canary. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push (router owns push). Expect errors 46->~15 with NO fail regression."
           }
         ],
         "_updated_by": "po"
