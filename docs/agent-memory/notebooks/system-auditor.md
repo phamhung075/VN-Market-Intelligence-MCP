@@ -1,3 +1,10 @@
+## c112 · 2026-06-08T08:35:50Z
+### Audit Run Tier-1 (08:35 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE: 6 services all UP/healthy (mcp-server/api-gateway/frontend/macro-indicators/mcp-gateway/pdf-extractor); all health endpoints HTTP 200; restart=0; memory=22.81%; disk=29%.
+- Findings: All host_runtime_set services healthy. All health endpoints responding. Inter-service pdf-extractor:5001/health OK. EPIPE count 0 in 30min. BCTC PDFs 60 files healthy. No anomalies detected.
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
 ## c111 · 2026-06-08T08:07:20Z
 ### Audit Run Tier-1 (08:07 UTC 2026-06-08)
