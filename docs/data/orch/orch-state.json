@@ -6345,6 +6345,19 @@
         ],
         "suggestedZone": "dev-mcp-server",
         "triage_note": "zone_missing_tier3 → FIX-BCTC-ENRICHER-PLACEHOLDER-URL zone:apps/mcp-server/"
+      },
+      {
+        "id": "sau-c118-cron-crash",
+        "ts": "2026-06-08T18:07:47Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_health_report",
+        "summary": "Cron job vnstockFundamentalsRefresh crashed (0% success, 1 run)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "CRON-VNSTOCK-CRASH",
+        "payload_ref": null
       }
     ],
     "archive": [
