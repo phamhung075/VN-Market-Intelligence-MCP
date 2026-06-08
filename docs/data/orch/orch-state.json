@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T17:19:26Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-08T17:45:00Z",
+  "_updated_by": "dev-technical-analysis",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T15:45:44Z",
@@ -2885,11 +2885,12 @@
             "type": "FIX",
             "owner": "dev-technical-analysis",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "XS",
             "zone": "apps/technical-analysis/",
             "priority": "high",
-            "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE from raw log: this is a CONFIG-MIGRATION miss, NOT a go-version issue (its go.mod = go 1.22, fine). The other 5 services already have version:\"2\". Add the field + verify config schema parses under v2. VERIFICATION GATE: GREEN ci.yml after subsequent push."
+            "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE from raw log: this is a CONFIG-MIGRATION miss, NOT a go-version issue (its go.mod = go 1.22, fine). The other 5 services already have version:\"2\". Add the field + verify config schema parses under v2. VERIFICATION GATE: GREEN ci.yml after subsequent push.",
+            "status_note": "Config migrated to v2 schema. Local: golangci-lint run exits 1 (lint violations) not 3 (config parse error) — config is valid. Exit-1 violation (FIX-TA-SANDBOX-DEPGUARD, fence-c, cmd/sandbox/main.go:44) is pre-existing tracked debt, not this task. VERIFICATION GATE: GREEN ci.yml after subsequent push. DJ-GATE-1: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-technical-analysis.md"
           }
         ]
       }
