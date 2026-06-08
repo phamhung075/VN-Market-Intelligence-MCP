@@ -5434,6 +5434,17 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sau-c105-a20",
+        "ts": "2026-06-08T01:03:42Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "pdf-extractor A-20 health endpoint timeout (recurring, dedup within 7d)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "archive": [
