@@ -1,0 +1,60 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-08T12:06:03Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": "2026-06-08T12:06:03Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "acquired_fresh",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 2,
+    "note": "Off-hours gatherer tick: news-scout + market-watcher (cron 0 */4, cadence 240min, due since 12:00 — prior fire 08:06). Distinct agents, no collision. Both spawned background (BGFAN-1), tokens released ok:true. Market post-close RISK_OFF: VN-Index 1790.53 -2.63%, volatility=high. Tick snapshot cycle-snapshot-12:06.json written. emit_pressure_state ok. cycle_snapshot_promoted=false (non-blocking). Preceded by 8 consecutive silent ticks 09:21-11:51."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-08T12:06:31Z",
+  "_processed": {
+    "fingerprint": "91d48af085b01818c07e01d47ca665acd7a9df7e53ce7847f6f7c5a518b39b9e",
+    "processedAt": "2026-06-08T15:23:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
