@@ -48,3 +48,9 @@ Action: Hold / Watch sector pressure
 **[Market Watcher] 16:00 UTC**
 Close: 26.250 VND | Change: +0.96% | RSI: ~58 | Volume: 46.90M (+104% avg) | YoY: +11.70% | Regime: FII_OUTFLOW_RISK
 Insider: no activity | Brief action: Hold
+
+## EOD 2026-06-08
+
+**[Market Watcher] 16:00 UTC**
+Close: 25.250 VND | Change: -3.44% | RSI: 38.7 | Volume: 27.68M (+115% avg) | YoY: -8.92% | Regime: NEUTRAL
+Insider: no activity | Brief action: Hold | Anomaly: Sector-wide banking decline (11 stocks avg -2.18%)

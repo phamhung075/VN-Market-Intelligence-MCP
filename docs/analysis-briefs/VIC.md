@@ -16,6 +16,7 @@
 2026-06-03 16:00 | Close: 197.600 VND | RSI: N/A | Vol: 511,030 (3.0x avg) | YoY: -42.7% | Action: Watch — volume spike + sector crisis
 2026-06-04 16:00 | Close: 200.200 VND | RSI: N/A | Vol: typical | YoY: N/A | Sentiment: Real estate recovery attempt, +1.32% stabilization
 2026-06-05 16:05 | Close: 207,000 VND | Daily: +3.40% | Volume: 358.1K | Sentiment: Bullish (Vingroup conglomerate strength; VinaCapital value affirmation) | Action: Hold — watch for macro catalysts | Anomaly: >1.5σ surge
+2026-06-08 16:00 | Close: 195,000 VND | RSI: 35.2 | Vol: 3.27M (92% avg) | YoY: -15.23% | Action: Watch — sector weakness deepens
 
 ### 2026-05-01 · EOD
 **2026-05-01 16:00** | Close: 214,000 VND (-5.10% daily) | RSI: N/A | Volume: avg vol | Sentiment: Bearish

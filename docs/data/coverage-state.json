@@ -2,7 +2,7 @@
   "_schema": "v1",
   "_ssot": true,
   "_updated_by": "news-scout",
-  "_updated_at": "2026-06-08T12:07:00Z",
+  "_updated_at": "2026-06-08T16:09:00Z",
   "_eod_completed": "2026-06-04T16:08:37Z",
   "tickers": {
     "VNM": {
@@ -14,11 +14,11 @@
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "VCB": {
-      "last_covered_news_scout": "2026-06-08T08:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "ACB": {
-      "last_covered_news_scout": "2026-06-08T08:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "HPG": {
@@ -26,7 +26,7 @@
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "BID": {
-      "last_covered_news_scout": "2026-06-08T08:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "SHB": {
@@ -34,15 +34,15 @@
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "EIB": {
-      "last_covered_news_scout": "2026-06-08T12:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "VHM": {
-      "last_covered_news_scout": "2026-06-08T12:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "VIC": {
-      "last_covered_news_scout": "2026-06-08T12:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "KBC": {
@@ -74,7 +74,7 @@
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "VRE": {
-      "last_covered_news_scout": "2026-06-08T12:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "D2D": {
@@ -166,11 +166,11 @@
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "CTG": {
-      "last_covered_news_scout": "2026-06-08T08:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "VPB": {
-      "last_covered_news_scout": "2026-06-08T08:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "DHG": {
@@ -190,7 +190,7 @@
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "MBB": {
-      "last_covered_news_scout": "2026-06-08T08:07:00Z",
+      "last_covered_news_scout": "2026-06-08T16:09:00Z",
       "last_covered_market_watcher": "2026-06-08T08:09:00Z"
     },
     "HSG": {
