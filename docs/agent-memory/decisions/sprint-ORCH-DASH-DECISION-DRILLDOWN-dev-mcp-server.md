@@ -6,6 +6,16 @@
 
 ---
 
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-08T09:00:00Z
+**task-id:** RE-QUEUE-BCTC-BLOCKED-PDFX-26
+**what-done:** Re-queued 26 `blocked_pdf_extractor` rows → `pending`; before: blocked_pdf_extractor=26, pending=0; after: blocked_pdf_extractor=0, pending=26; raw SELECT via API confirmed; pdf-extractor /health=200 pre-checked (A-20 fix commit 62fcc240, qa-PASSED).
+**what-considered:**
+- Abort if /health != 200 (hard rule — do not re-queue into dead extractor)
+- DELETE rows (forbidden — no-silent-deletion hard rule)
+- Set to any status other than `pending` (wrong — the cron drains `pending`; any other value leaves rows stuck)
+**why-decision:** `pending` is the live drain enum (schema DEFAULT, confirmed from bctc_vps_queue DDL); bound-param prepared statement used (no shell interpolation); status-only change preserves full row history; normal bctc cron will drain pending queue without manual trigger.
+**why-change:** no change from spec; UPDATE changes=26 matches classification table from S3
+
 ### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-06-08T08:00:00Z
 **task-id:** FIX-SBV-REFRESH-SILENT-SWALLOW
 **what-done:** Added `throw err` after WORK-channel alert in `runSbvRatesRefreshJob` catch block so `wrapRun/recordJobRun` records `status='error'` on fetch failure; updated TC-3/TC-4 in sbvRatesJob.test.ts to assert re-throw; wrote FIX-SBV-REFRESH-SILENT-SWALLOW.test.ts (6 tests incl. AC-1 DB integration).

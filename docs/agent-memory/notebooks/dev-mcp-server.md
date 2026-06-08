@@ -132,3 +132,23 @@ Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
 **Monday gate (tnb c91):** macroIndicatorRefreshJob runs 19:13 UTC Sunday (= Monday morning VN time). EFFR fallback will fire (CSV Akamai-blocked on weekends), write 3.62 to tracked_indicators, macro-indicators will serve 3.62 on next /snapshot call after cache expiry.
 
 Zone health: 17/0 target tests, tsc clean, 157 tools (SSOT), 76 cron.schedule | HEALTHY
+
+---
+
+## 2026-06-08 · RE-QUEUE-BCTC-BLOCKED-PDFX-26 — DONE
+
+**Task:** RE-QUEUE-BCTC-BLOCKED-PDFX-26 (A-20 unblock — precondition satisfied)
+**Precondition check:** A-20 CPU-cgroup fix shipped (commit 62fcc240, qa-PASSED); pdf-extractor /health=200 confirmed live before any write.
+
+**Before:** blocked_pdf_extractor=26, pending=0
+**After:** blocked_pdf_extractor=0, pending=26
+**rows_changed=26** (bound-param prepared statement; no shell interpolation; status-only update, zero rows deleted)
+
+**Verification:** API `/api/fetch-status` raw read: `{"pending":26,"done":48,"failed":0,"deferred_infra":328,"blocked_pdf_extractor":0}` — matches exactly.
+
+**Enum used:** `pending` (schema DEFAULT; confirmed from bctc_vps_queue DDL `status TEXT NOT NULL DEFAULT 'pending'`; cron drains `pending` rows)
+**No drain trigger fired** — normal bctc cron will drain pending queue.
+
+**Lesson:** The notebook entry from FIX-BCTC-VPS-QUEUE-STALE-TRIAGE correctly identified the re-queue precondition and enum. Re-queue is a pure DB status flip, not a code change. No TDD cycle needed (no code path changed); no doc changes needed (schema unchanged); G12 gates N/A (no code committed).
+
+Zone health: no code change | DB re-queue only | HEALTHY
