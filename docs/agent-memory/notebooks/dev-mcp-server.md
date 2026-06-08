@@ -212,3 +212,16 @@ Zone health: bun tsc --noEmit clean, 31 tests (enricher suite), tools 157, sched
 **Lesson:** Bun bunfig.toml `[test] timeout` is NOT honoured in Bun 1.3.13 — only per-test `it(label, fn, ms)` third-arg works. Always inject ragInsert+teChromiumNews mocks in pollNews integration tests to avoid HTTP latency in CI.
 **tsc:** CLEAN | **Tests:** 48 pass / 0 fail (three files) | **Status:** REVIEW — await CI green
 Zone health: bun tsc clean, 3 target test files 48 pass / 0 fail, tools 157 intact | HEALTHY
+
+---
+
+## 2026-06-08 · FIX-CI-COVERAGE-OOM-CRASH — DONE
+
+**Task:** FIX-CI-COVERAGE-OOM-CRASH | Sprint: CI-RED-RECONCILE | Epic: CI-BUN-TEST-MULTI-CLASS-FIX
+**Change:** `.github/workflows/ci.yml` Run-tests step: `bun test` → `bun test --coverage=false` (one line + inline comment).
+**Rationale:** `bunfig.toml [test] coverage=true` causes coverage-table generation to OOM-crash on the CI runner AFTER all tests complete. CI exit=1 from crash, not from test failures — this is why CI has had no clean fail count for 200 runs. `--coverage=false` at invocation skips the crash and lets `bun test` emit a real pass/fail summary + correct exit code. `bunfig.toml` untouched (local dev keeps coverage).
+**Validation:** `python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/ci.yml'))"` — YAML valid. Exact line: `run: bun test --coverage=false`.
+**No local test run** (correct per task spec — this changes CI invocation, not code under test; running locally would OOM under coverage).
+**Files staged:** `.github/workflows/ci.yml` + `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` + `docs/agent-memory/notebooks/dev-mcp-server.md` — foreign dirty files NOT staged.
+
+Zone health: CI-yaml only change, no code under test modified, no tools/scheduler impact | HEALTHY

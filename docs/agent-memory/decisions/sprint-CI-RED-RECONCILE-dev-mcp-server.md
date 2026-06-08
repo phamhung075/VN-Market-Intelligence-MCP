@@ -72,3 +72,15 @@
 - Editing bunfig.toml for measurement only — done (coverage=false during measurement, restored after)
 
 **why-change:** none from plan (applied correct fix as specified)
+
+---
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-08T00:00:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-COVERAGE-OOM-CRASH
+**what-done:** Added `--coverage=false` to `bun test` invocation in `.github/workflows/ci.yml` Run-tests step (line 45); added inline comment documenting rationale.
+**what-considered:**
+- Remove `coverage = true` from `apps/mcp-server/bunfig.toml` — rejected: destroys local-dev coverage workflow; the flag was added for a reason and local runs don't OOM
+- Run `bun test --coverage` in a separate non-gating step — rejected: over-engineering; OOM only reliably repro on CI runner; separate step still risks crashing the job
+- Add `--coverage=false` to the gating `bun test` only — chosen: one-character override at CI invocation point; local bunfig.toml unchanged; surgical minimal change
+**why-decision:** Coverage-table generation consumes unbounded memory at summary-print time; CI runner OOMs AFTER all tests complete, so the crash is a post-run artifact, not a test failure. Suppressing it at CI invocation preserves the test result signal while eliminating the OOM crash that has silenced CI failure counts for 200 runs.
+**why-change:** no change from PO-authored spec; change is exactly as specified
