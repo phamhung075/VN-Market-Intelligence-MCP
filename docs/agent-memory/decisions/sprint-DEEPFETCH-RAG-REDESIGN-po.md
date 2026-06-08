@@ -77,3 +77,29 @@
 - defer as structural/known (FU-SBV-* backlog exists; macro carry tier-2 fresh)
 **why-decision:** vn-sbv-fetch is a VPS cron (not a container in docker ps); 53min SLA blip non-critical; macro served fresh → no MARKET-output risk this tick.
 **why-change:** no change.
+
+### STEP po-S11 · po · 2026-06-08T16:20:41Z
+**task-id:** FIX-BCTC-ENRICHER-PLACEHOLDER-URL
+**what-done:** Folded 3 signals (sau-c112-b01 BCTC stale 38.5h CRITICAL + sau-c112-b13 26-row residual + dpe-20260608T154700Z zone_missing_tier3) into ONE root-cause FIX zone:apps/mcp-server/ — enricher WHERE-clause skips placeholder VPS URLs + backfillBctcQ12026 inserts placeholders → pull job 404-loops forever, no fresh content.
+**what-considered:**
+- 3 separate tasks (rejected — single root cause per dpe decision doc)
+- close B-01 as transient (rejected — raw: last BCTC fetch 2026-06-06T01:55Z, 38.5h, real stall)
+**why-decision:** dpe decision doc (sprint-ORCH-DASH-DECISION-DRILLDOWN-dev-pdf-extractor.md) already root-caused: enricher WHERE `source_url IS NULL/MISSING/test-%` misses 18 placeholder rows; backfill design inserts placeholders not NULL. Both in apps/mcp-server/. 8 null-source rows = unpublished content (no code fix, scoped out).
+**why-change:** recurring-bug (BCTC >2 cycles) but architect already root-caused via dpe spike → direct FIX, no new architect spike.
+
+### STEP po-S12 · po · 2026-06-08T16:20:41Z
+**task-id:** FIX-PRICE-ANOMALY-JSON-PLUS
+**what-done:** Opened FIX (route_to agent-father) for market-watcher eod.md emitting JSON-invalid leading-+ numbers — drain JSON.parse FAILS, whole EOD price_anomaly_v1 payload (10 tickers RISK_OFF) silently dropped.
+**what-considered:**
+- code FIX in apps/<service>/ (rejected — producer is agent flow doc not TS cron)
+- jq-tolerant (rejected — jq accepts + but node JSON.parse rejects; drain uses JSON.parse)
+**why-decision:** Root: docs/agents/market-watcher/flow/eod.md template `"daily_change_pct": {daily_change}` has no emit-raw-number rule; agent substitutes display form +2.21. Fixing agent .md = agent-father (agent-md-factory rule). Verified node JSON.parse FAIL at line 115/144 (VCB yoy +2.17, NVL daily +2.21). Do NOT delete stuck file (no-silent-deletion) — re-emit after fix.
+**why-change:** no change.
+
+### STEP po-S13 · po · 2026-06-08T16:20:41Z
+**what-done:** Backlog (PLAN-ONLY) the cowork-schedule double-fire: market-watcher-offhours (0 */4 * * *) AND market-watcher-eod (0 16 * * 1-5) both match 16:00 weekday tick (same last_fired 16:06:05Z) → architect cadence-dedup brief → agent-father (SSOT _maintained_by agent-father via architect brief only). Also closed sau-c112-b12 SBV finding (continuation of S10 — VPS cron blip, macro fresh, FIX-MACRO-REFRESH-DEAD shipped b7ce338f; B-12 not-applicable per dev-macro-indicators notebook).
+**what-considered:**
+- one-line direct schedule edit (rejected — _maintained_by forbids direct edit)
+- dispatch now (rejected — low pri PLAN-ONLY, WIP budget=2 spent on the two real defects)
+**why-decision:** slot-lock catches the race (no incident); cadence-dedup is design work for architect, not urgent. Backlog it.
+**why-change:** no change.
