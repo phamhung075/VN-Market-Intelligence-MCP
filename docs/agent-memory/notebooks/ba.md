@@ -1,5 +1,21 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-08 | **Sprint:** DEEPFETCH-RAG-REDESIGN
+
+## DEEPFETCH-RAG-REDESIGN-BA · 2026-06-08
+
+Spec complete. Task: DFR-BA-1. REQ file: `docs/handoffs/DEEPFETCH-RAG-REDESIGN-phase1-BA-spec.md`. Zero PO blockers. One dev pre-condition (Q4: verify add_columns() in deployed lancedb version). NEXT: architect.
+
+Key BA findings (raw-read, not relayed):
+- LanceDB `rag_entries` confirmed: 8 existing columns, no ticker/sector/source/depth/doc_type/confidence. FR-1 adds 8 cols via add_columns() guarded idempotent try/except.
+- `application/dtos.py` `IndexRequest` and `SearchRequest` confirmed: no new fields today. FR-2/FR-3 are additive with defaults — all existing callers compile unchanged.
+- `LanceDBVectorStore.search()` filter pattern confirmed: already sanitizes with _validate_level/_validate_action_code + SQL WHERE clause. FR-3 extends the same pattern for 5 new filter dims.
+- `mcp.config.json` `rag.decayHalfLifeDays` is absent today (only global `halfLifeDays: 7`). FR-4 adds the 4-key map. Config read-only; no TS hardcode.
+- `pollNews.ts` ragIndex call at L604: passes 6 fields. FR-5 adds 8 more from existing computed context (source_url, confidence, impact_score, detected tickers).
+- `fetchParseAndStoreBctc.ts` ragIndex call at L465: passes 6 fields. FR-5 adds `doc_type:"filing"` + ticker/sector.
+- `schema-news.ts` ALTER TABLE pattern at L57 (data_env) confirmed: try/catch idempotent. FR-6 reuses identical pattern for body_text.
+- Phase 2/3 firmly out of scope: DFR-P2-DEEPFETCH (deep-fetch pipeline) and DFR-P3-HYBRID (BM25/FTS) gated pending Q1-Q4 feasibility answers.
+
 **Last updated:** 2026-06-07 | **Sprint:** TOOL-SURFACE-UPGRADE
 
 ## TOOL-SURFACE-UPGRADE-BA · 2026-06-07

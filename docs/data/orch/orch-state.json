@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T09:06:20Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-08T00:00:00Z",
+    "_updated_by": "ba",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2445,7 +2445,7 @@
             "title": "Phase 1 requirement spec: additive LanceDB +8 metadata columns + per-doc_type query-time decay + DTO extensions + mcp-server caller updates + rag_analyses.body_text ADD COLUMN. Decompose acceptance criteria; defer Phase 2/3 scope.",
             "owner": "ba",
             "type": "SPRINT-S",
-            "status": "TODO",
+            "status": "spec_ready",
             "zone": "docs/agents/",
             "size": "M",
             "priority": "high",
@@ -2455,7 +2455,7 @@
             "files": [
               "docs/architecture-briefs/2026-06-08-deepfetch-rag-redesign.md"
             ],
-            "note": "Scope = brief Phase 1 (B2 schema, B4 decay, B7 index API) + Q5 ALTER TABLE only. Phase 2/3 OUT. Feasibility probes (DFR-Q1..Q5) run in parallel and are NOT blockers for Phase 1 ba-spec — they gate Phase 2/3 commit only. PO greenlit; route ba->architect(if needed)->pm->dev->qa."
+            "note": "Scope = brief Phase 1 (B2 schema, B4 decay, B7 index API) + Q5 ALTER TABLE only. Phase 2/3 OUT. Feasibility probes (DFR-Q1..Q5) run in parallel and are NOT blockers for Phase 1 ba-spec — they gate Phase 2/3 commit only. PO greenlit; route ba->architect(if needed)->pm->dev->qa. | spec_ready 2026-06-08T00:00:00Z: docs/handoffs/DEEPFETCH-RAG-REDESIGN-phase1-BA-spec.md"
           },
           {
             "id": "DFR-P1-RAG",
@@ -2523,14 +2523,15 @@
             "type": "SPIKE",
             "mode": "spike",
             "timebox": 120,
-            "status": "TODO",
+            "status": "IN-PROGRESS",
             "zone": "docs/vps-crawl-techniques/",
             "size": "S",
             "priority": "high",
             "sprint": "DEEPFETCH-RAG-REDESIGN",
             "depends": [],
             "created_at": "2026-06-08T09:06:20Z",
-            "note": "Brief Q1. Non-blocking for Phase 1; GATES Phase 2 deep-fetch commit. Output: findings (viability + anti-bot verdict + page-size). Do NOT implement — recon only this kickoff."
+            "note": "Brief Q1. Non-blocking for Phase 1; GATES Phase 2 deep-fetch commit. Output: findings (viability + anti-bot verdict + page-size). Do NOT implement — recon only this kickoff.",
+            "claimed_at": "2026-06-08T09:08:59Z"
           },
           {
             "id": "DFR-Q2",
@@ -2539,14 +2540,15 @@
             "type": "SPIKE",
             "mode": "spike",
             "timebox": 120,
-            "status": "TODO",
+            "status": "IN-PROGRESS",
             "zone": "docs/vps-crawl-techniques/",
             "size": "S",
             "priority": "high",
             "sprint": "DEEPFETCH-RAG-REDESIGN",
             "depends": [],
             "created_at": "2026-06-08T09:06:20Z",
-            "note": "Brief Q2. Non-blocking for Phase 1; GATES Phase 2. Output: service-topology recommendation + RAM headroom number."
+            "note": "Brief Q2. Non-blocking for Phase 1; GATES Phase 2. Output: service-topology recommendation + RAM headroom number.",
+            "claimed_at": "2026-06-08T09:08:59Z"
           },
           {
             "id": "DFR-Q3",
@@ -2587,14 +2589,15 @@
             "type": "SPIKE",
             "mode": "spike",
             "timebox": 120,
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "zone": "apps/mcp-server/",
             "size": "S",
             "priority": "high",
             "sprint": "DEEPFETCH-RAG-REDESIGN",
             "depends": [],
             "created_at": "2026-06-08T09:06:20Z",
-            "note": "Brief Q5. Confirms the migration path used by DFR-P1-MCP(a). Output: migration-path verdict. Low risk per single-writer invariant; confirm before execution."
+            "note": "Brief Q5. Confirms the migration path used by DFR-P1-MCP(a). Output: migration-path verdict. Low risk per single-writer invariant; confirm before execution.",
+            "claimed_at": "2026-06-08T09:08:55Z"
           }
         ]
       }
