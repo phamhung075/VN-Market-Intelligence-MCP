@@ -1,5 +1,21 @@
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
 
+## c112 · 2026-06-08T15:23:39Z
+### Audit Run Tier-2 (15:23–15:35 UTC 2026-06-08)
+- Tier: 2 | Sources: 27 checked | VPS routes: 4 checked | DB spot checks: 3
+- Anomalies: 3 new (2 CRITICAL, 1 WARN) | 1 dedup-skipped
+- Status: DEGRADED
+- Cron: vnstockFundamentalsRefresh crashed (0% success, isolated); 100+ other crons nominal
+- B-01 BCTC stale 38.5h (>360min SLA, CRITICAL) — last fetch 2026-06-06T01:55Z
+- B-12 SBV_FX stale 53min (>30min SLA, CRITICAL) — vn-sbv-fetch unhealthy (49m uptime)
+- B-13 stale pending BCTC: 26 rows >72h (WARN); non-actionable deferred_infra/blocked_pdf_extractor excluded
+- C-06/C-07 DB freshness: market_messages 1/3h OK, agent_signals 113/24h OK
+- B-09 BCTC URL shape: 0 bad SSC URLs (PASS)
+- VPS proxy: sbv/bctc marked stale in push log; vn-sbv-fetch unhealthy
+- Dedup: sau-c109-b12 (SBV check, 7d window active) — BUG Telegram skipped, DASHBOARD row appended
+- Signals posted: 3 | Telegram sent: 2 | Signal_queue rows: 3 | Dashboard rows: 3
+- Contract: [OUTPUT-CONTRACT] signals_posted=3 | telegram_sent=2 | signal_queue_rows_written=3 | dashboard_rows=3
+
 ## c112 · 2026-06-08T15:24:27Z
 ### Audit Run Tier-1 (15:24 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
@@ -54,15 +70,3 @@
 ### Audit Run Tier-1 (01:34 UTC 2026-06-08)
 - Tier: 1 | Status: DEGRADED
 - A-20 pdf-extractor: health timeout (multi-probe 1/3 PASS). WARN signal emitted.
-
-## c105 · 2026-06-08T00:58:37Z
-### Audit Run Tier-1 (00:58 UTC 2026-06-08)
-- Tier: 1 | Status: DEGRADED
-- A-20 pdf-extractor multi-probe 1/3 PASS (event-loop stall suspected). WARN recorded.
-
-## c104 · 2026-06-08T00:30:43Z
-### Audit Run Tier-3 (00:30 UTC 2026-06-08)
-- Tier: 3 | Checks: A-22/A-24 (tooling ✓) + C-01..C-16 | Runtime: 360s | Status: CRITICAL
-- Anomalies: 4 (1 CRITICAL, 3 WARN) | Dedup-skipped: 0
-- C-Checks: C-01/C-02 SKIP (no trading data pre-market) | C-03 ✓ (26 codes) | C-04 WARN (8 low-conf >5) | C-05 ✓ | C-06 ✓ (2 msgs/3h) | C-07 ✓ (87 signals/24h) | C-08 WARN (3 orphaned) | C-09 WARN (0 countries/26h) | C-10 ✓ | C-11 ✓ (earnings window) | C-12 ✓ (integrity ok) | C-13 ✓ (WAL 6MB <50MB) | C-14 SKIP (C-01=0) | C-15 ✓ (schema) | C-16 CRITICAL (338 stale pending BCTC >72h)
-- Contract: signals_posted=4 | telegram_sent=4 | signal_queue_rows_written=4 | dashboard_rows=4
