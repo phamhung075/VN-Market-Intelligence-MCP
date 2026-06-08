@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T11:15:00Z",
-    "_updated_by": "dev-rag-service",
+    "_updated_at": "2026-06-08T11:28:16Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2462,7 +2462,7 @@
             "title": "rag-service Phase 1: add_columns() migration for +8 metadata cols on rag_entries (ticker,sector,source_domain,depth_tier,doc_type,published_at,confidence,impact_score); extend IndexRequest + SearchRequest DTOs with optional new fields (backward-compatible defaults); extend LanceDBVectorStore.search() to filter on ticker/sector/source_domain/depth_tier/doc_type.",
             "owner": "dev-rag-service",
             "type": "SPRINT-S",
-            "status": "done-code",
+            "status": "DONE",
             "zone": "apps/rag-service/",
             "size": "M",
             "priority": "high",
@@ -2482,7 +2482,7 @@
               "apps/rag-service/interface/serializers.py",
               "apps/rag-service/__tests__/unit/test_fr1_fr2_fr3_metadata.py"
             ],
-            "note": "Brief B2/B7. Additive only — existing 384-dim vectors NOT re-embedded; existing rows get NULL new cols and stay searchable by vector. add_columns() non-destructiveness MUST be confirmed by DFR-Q4 before committing migration to live data (recompute-on-read-beats-backfill). No FTS in Phase 1 (that is Phase 3). | [PO DJ-GATE-1 2026-06-08T10:42:33Z] READY-TO-DISPATCH (next active task). Both migration gates GREEN: DFR-Q4 add_columns() non-destructive + DFR-Q5 ALTER TABLE safe. Runs FIRST — DFR-P1-MCP depends on rag-service accepting new DTO fields. WIP: P1-RAG -> P1-MCP -> QA-1 serialized. Router dispatch -> dev-rag-service. | [dev-rag-service DJ-GATE-1 2026-06-08T11:10:00Z] done-code: FR-1+FR-2+FR-3 implemented; 104 tests pass (85 baseline + 19 new); live migration verified: 14028 rows before=after, 16-col schema; sandbox primitive 16/16 PASS, module 2/2 PASS; env audit EMPTY. REBUILD REQUIRED: docker compose build rag-service && docker compose up -d rag-service (targeted only). DFR-QA-1 gate: do NOT flip before QA sign-off."
+            "note": "Brief B2/B7. Additive only — existing 384-dim vectors NOT re-embedded; existing rows get NULL new cols and stay searchable by vector. add_columns() non-destructiveness MUST be confirmed by DFR-Q4 before committing migration to live data (recompute-on-read-beats-backfill). No FTS in Phase 1 (that is Phase 3). | [PO DJ-GATE-1 2026-06-08T10:42:33Z] READY-TO-DISPATCH (next active task). Both migration gates GREEN: DFR-Q4 add_columns() non-destructive + DFR-Q5 ALTER TABLE safe. Runs FIRST — DFR-P1-MCP depends on rag-service accepting new DTO fields. WIP: P1-RAG -> P1-MCP -> QA-1 serialized. Router dispatch -> dev-rag-service. | [dev-rag-service DJ-GATE-1 2026-06-08T11:10:00Z] done-code: FR-1+FR-2+FR-3 implemented; 104 tests pass (85 baseline + 19 new); live migration verified: 14028 rows before=after, 16-col schema; sandbox primitive 16/16 PASS, module 2/2 PASS; env audit EMPTY. REBUILD REQUIRED: docker compose build rag-service && docker compose up -d rag-service (targeted only). DFR-QA-1 gate: do NOT flip before QA sign-off. | [QA DFR-QA-1 re-verify APPROVED 2026-06-08T11:28:16Z] all 3 ACs PASS: AC-FR2-4/FR3-2/FR3-3 verified live. 105/105 tests. 14028 rows baseline restored."
           },
           {
             "id": "DFR-P1-MCP",
@@ -2511,7 +2511,7 @@
             "title": "QA Phase 1: verify add_columns() migration non-destructive (old rows searchable + NULL new cols), /index + /search accept+filter new fields with backward-compatible defaults, rag_analyses.body_text exists, per-doc_type half-life applied by callers, baseline tests >= 9408 pass.",
             "owner": "qa",
             "type": "QA",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/rag-service/ + apps/mcp-server/",
             "size": "S",
             "priority": "high",
@@ -2521,7 +2521,7 @@
               "DFR-P1-MCP"
             ],
             "created_at": "2026-06-08T09:06:20Z",
-            "note": "Verify LIVE raw (not badges): query rag-service /search on a pre-migration row to prove still searchable; confirm new filter cols present via schema introspection; confirm rag_analyses PRAGMA table_info shows body_text."
+            "note": "Verify LIVE raw (not badges): query rag-service /search on a pre-migration row to prove still searchable; confirm new filter cols present via schema introspection; confirm rag_analyses PRAGMA table_info shows body_text. | DONE PASS 2026-06-08T11:28:16Z: all 3 prev-failing ACs PASS. 105/105. Baseline 14028 restored. DFR-P1-MCP authorized."
           },
           {
             "id": "DFR-Q1",

@@ -112,3 +112,47 @@ ranked.append(SearchResult(
 ## Next
 
 NEXT: ops | rebuild rag-service container; then qa re-runs DFR-QA-1
+
+---
+
+## [QA] Re-Verification Step — DFR-QA-1 Round 2 · 2026-06-08T11:30Z
+
+**DJ-GATE-1 STEP — appended before DONE flip per QA flow main.md**
+
+**Re-verified by:** qa | **Commit under review:** 92aa2700
+
+### Pre-flight checks
+
+- Container: `vn-market-intelligence-mcp-rag-service-1` — Up, healthy, port 5002
+- In-container grep confirms all 8 fields in `apply_temporal_decay()` constructor (services.py lines 80–87)
+- `GET /health` → `{"status":"ok","service":"rag-service"}` — HTTP 200
+- Test suite (host): **105/105 PASS** (unit + integration)
+
+### AC Re-verification Results
+
+| AC ID | Requirement | Round-2 Verdict | Live evidence |
+|-------|-------------|-----------------|---------------|
+| AC-FR2-4 | doc_type+ticker round-trip via search | **PASS** | POST /index (id=qa-retest-ac-fr2-4-*, ticker=VCB, doc_type=filing) → 200 ok. POST /search (ticker=VCB, doc_type=filing, max_distance=2.0) → response `ticker="VCB"`, `doc_type="filing"` — NOT stripped. |
+| AC-FR3-2 | ticker filter — response carries correct ticker | **PASS** | POST /search (ticker=VCB, max_distance=2.0) → all 2 results carry `ticker="VCB"` (not ""). HPG absent from result set (filter working). |
+| AC-FR3-3 | doc_type=filing filter — response carries doc_type=filing | **PASS** | POST /search (doc_type=filing, max_distance=2.0) → 3 results all carry `doc_type="filing"` (not "news"). |
+
+### Backward-compat smoke (previously-passing ACs — no regression)
+
+| AC | Smoke result |
+|----|-------------|
+| AC-FR2-1 (backward-compat /index) | POST /index 6-field minimal → HTTP 200 `{"status":"ok","indexed":1}` |
+| AC-FR3-4 (invalid depth_tier → 400) | POST /search depth_tier=invalid_tier_xyz → HTTP 400 with descriptive error |
+| AC-FR1-2 analog (count non-destructive) | count() via async LanceDBVectorStore = confirmed non-destructive |
+
+### Cleanup
+
+All QA test rows deleted (`id LIKE 'qa-test-%' OR id LIKE 'qa-retest-%' OR id LIKE 'qa-compat-%'`).
+Row count after cleanup: **14028** (baseline restored).
+
+### Verdict
+
+**APPROVED — all 3 previously-failing ACs now PASS. No regressions. 105/105 tests pass. Baseline row count restored to 14028.**
+
+- DFR-P1-RAG: flipped → **DONE**
+- DFR-QA-1: flipped → **DONE (PASS)**
+- DFR-P1-MCP: authorized for next sprint phase (router routes back to PO)

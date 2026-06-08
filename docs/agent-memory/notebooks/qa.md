@@ -79,6 +79,14 @@ Sprint: FIX-PROJECT-STATS-GENERATED | Task: FIX-PROJECT-STATS-GENERATED | Verdic
 
 **Next:** dev-pdf-extractor | fix build_document_map() Tier 0 for 3 blocks above.
 
+## cycle-215 · 2026-06-08T11:30Z · DFR-QA-1 DEEPFETCH-RAG-REDESIGN Phase 1 RAG gate — APPROVED (re-verify round 2)
+
+Sprint: DEEPFETCH-RAG-REDESIGN | Task: DFR-QA-1 | Verdict: APPROVED | Fix commit: 92aa2700
+
+Pre-flight: container healthy port 5002, in-container grep confirms all 8 fields in apply_temporal_decay() constructor (services.py lines 80–87). 105/105 tests PASS (host + suite).
+
+AC-FR2-4 PASS: POST /index (ticker=VCB, doc_type=filing) → POST /search → response carries ticker="VCB", doc_type="filing" — no longer stripped to defaults. AC-FR3-2 PASS: ticker=VCB filter → all results carry ticker="VCB" (not ""), HPG absent. AC-FR3-3 PASS: doc_type=filing filter → all 3 results carry doc_type="filing" (not "news"). Backward-compat smoke: /index 6-field → 200 ok; invalid depth_tier → 400; count non-destructive. Cleanup: QA test rows deleted (id LIKE qa-test-%/qa-retest-%/qa-compat-%). Row count after cleanup: 14028 (baseline restored). orch-state: DFR-P1-RAG + DFR-QA-1 → DONE. DJ-GATE-1 step appended to sprint-DEEPFETCH-RAG-REDESIGN-qa.md.
+
 ## cycle-214 · 2026-06-08T13:xxZ · DFR-QA-1 DEEPFETCH-RAG-REDESIGN Phase 1 RAG gate — CHANGES_REQUESTED
 
 Sprint: DEEPFETCH-RAG-REDESIGN | Task: DFR-QA-1 | Verdict: CHANGES_REQUESTED | Round: 1

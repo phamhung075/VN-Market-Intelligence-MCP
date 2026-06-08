@@ -49,3 +49,13 @@ Three ACs that directly require metadata round-trip (AC-FR2-4, AC-FR3-2, AC-FR3-
 ### Fix required (for fixer, not QA to implement)
 
 `apps/rag-service/domain/services.py` `apply_temporal_decay()` lines 70–81: add the 8 Phase 1 fields to the `SearchResult(...)` constructor call. Also add a test in `test_domain_services.py` that sets Phase 1 fields on the input SearchResult and asserts they survive `apply_temporal_decay()`.
+
+---
+
+### STEP qa-S2 · qa · 2026-06-08T11:30Z
+**task-id:** DFR-QA-1
+**what-done:** Re-verified 3 previously-failing ACs (AC-FR2-4, AC-FR3-2, AC-FR3-3) against live container post commit 92aa2700; confirmed PASS on all 3; cleaned up QA test rows; flipped DFR-P1-RAG + DFR-QA-1 to DONE.
+**what-considered:**
+- only path: commit 92aa2700 ships exactly the minimal fix described in CHANGES_REQUESTED (8 fields in SearchResult constructor + regression test). In-container grep confirmed. 105/105 tests pass. All 3 ACs produce correct live payloads.
+**why-decision:** All 3 blocking ACs now PASS with real POST /index + POST /search calls against the live container. No regression on previously-passing ACs. Baseline row count 14028 restored after cleanup.
+**why-change:** no change from plan — fix shipped as specified, re-verify passes.
