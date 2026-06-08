@@ -79,6 +79,16 @@ Sprint: FIX-PROJECT-STATS-GENERATED | Task: FIX-PROJECT-STATS-GENERATED | Verdic
 
 **Next:** dev-pdf-extractor | fix build_document_map() Tier 0 for 3 blocks above.
 
+## cycle-214 · 2026-06-08T13:xxZ · DFR-QA-1 DEEPFETCH-RAG-REDESIGN Phase 1 RAG gate — CHANGES_REQUESTED
+
+Sprint: DEEPFETCH-RAG-REDESIGN | Task: DFR-QA-1 | Verdict: CHANGES_REQUESTED | Round: 1
+
+Scope: DFR-P1-RAG (rag-service) only — DFR-P1-MCP OUT OF SCOPE (not built). Live container port 5002, image rebuilt 13:06:53Z, commit 76a02b0d + b94e5342.
+
+PASS: AC-FR1-1 (16 cols raw-verified), AC-FR1-2 (14028 rows, zero data loss), AC-FR1-3 (backward compat no new params), AC-FR1-5 (idempotent restart, no add_columns errors), AC-FR2-1 (6-field legacy index HTTP 200), AC-FR2-2 (14-field index: LanceDB raw shows ticker=VCB, doc_type=filing, confidence=0.85 correctly stored), AC-FR3-1 (no new params same result set), AC-FR3-4 (invalid depth_tier → HTTP 400), NFR test count 104/104 PASS.
+
+FAIL: AC-FR2-4, AC-FR3-2, AC-FR3-3 — single root cause: `apply_temporal_decay()` in `apps/rag-service/domain/services.py` lines 70-81 reconstructs SearchResult objects WITHOUT the 8 Phase 1 metadata fields. All metadata resets to defaults on every search response. Test gap: `test_original_fields_preserved` checks only legacy fields — bug invisible to suite. Fix: pass ticker/sector/source_domain/depth_tier/doc_type/published_at/confidence/impact_score in the new SearchResult constructor + add regression test. DJ-GATE-1 written to sprint-DEEPFETCH-RAG-REDESIGN-qa.md.
+
 ## cycle-213 · 2026-06-08T08:51Z · A20-EVENTLOOP-ASYNC-TO-THREAD multi-probe acceptance gate — PASS
 
 Sprint: ORCH-DASH-DECISION-DRILLDOWN | Task: A20-EVENTLOOP-ASYNC-TO-THREAD | Verdict: PASS
