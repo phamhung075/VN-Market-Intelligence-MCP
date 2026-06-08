@@ -370,11 +370,13 @@ services:
     - 5008:5008
     volumes:
     - market_data:/app/data:ro
+    - ./mcp.config.json:/app/mcp.config.json:ro
     environment:
     - PORT=5008
     - DB_PATH=/app/data/market.db
     - DB_READONLY=true
     - APP_ENV=production
+    - MCP_CONFIG_PATH=/app/mcp.config.json
     restart: unless-stopped
     healthcheck:
       test:

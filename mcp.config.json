@@ -320,5 +320,23 @@
     "marketwatch": {
       "enabled": true
     }
+  },
+
+  "deepFetch": {
+    "maxPerCycle": 10,
+    "maxPlaywrightPerCycle": 5,
+    "staleExpiryHours": 4,
+    "domainDailyCap": {
+      "cafef.vn": 50,
+      "vneconomy.vn": 30,
+      "vnexpress.net": 40
+    },
+    "playwrightAllowedDomains": [
+      "vietstock.vn",
+      "vietnambiz.vn",
+      "vnbusiness.vn",
+      "reuters.com",
+      "bloomberg.com"
+    ]
   }
 }

@@ -1,8 +1,31 @@
 # dev-mainserver-crawls — Notebook
 
-**Last updated:** 2026-05-17T19:10Z | **Sprint:** news-bugs (c81)
+**Last updated:** 2026-06-08T15:50Z | **Sprint:** DEEPFETCH-RAG-REDESIGN (DFR-P2-MAIN)
 
 > Archive: docs/archive/notebooks/dev-mainserver-crawls-2026-05-21.md (pre-trim history)
+
+---
+
+## This session (cycle 10 — DFR-P2-MAIN 2026-06-08T15:50Z)
+
+Task: DFR-P2-MAIN — POST /fetch-article Playwright fallback executor for deep-fetch pipeline.
+
+**Implemented:**
+- `apps/news-fetch/src/routes/fetchArticle.ts` — new route handler. POST /fetch-article → Contract B ({status, url, body_text, published_at}). SSRF guard via Set lookup (www. stripped). 30s PAGE_TIMEOUT_MS. page.close() + browser.close() in finally to prevent context leak. body_text capped at 8000 chars. Extracts article/body via DOM priority chain. published_at from meta[property="article:published_time"] fallback chain. ~175L.
+- `apps/news-fetch/src/routes/fetchArticleConfig.ts` — SSRF allowlist config loader. Reads deepFetch.playwrightAllowedDomains from mcp.config.json. Resolution chain: MCP_CONFIG_PATH env → __dirname walk-up → cwd fallback. Cached after first load. Fail-loud logging if config missing/empty. ~120L.
+- `apps/news-fetch/src/interface/handlers.ts` — added `import { handleFetchArticle }` + `app.post('/fetch-article', handleFetchArticle)` + route doc comment.
+- `mcp.config.json` — added `deepFetch` block: maxPerCycle/maxPlaywrightPerCycle/staleExpiryHours/domainDailyCap/playwrightAllowedDomains.
+- `docker-compose.yml` — added `./mcp.config.json:/app/mcp.config.json:ro` mount + `MCP_CONFIG_PATH=/app/mcp.config.json` env to news-fetch service.
+- Built + deployed: `docker compose build news-fetch && docker compose up -d news-fetch` — container up+healthy 0.0.0.0:5008.
+
+**Live AC verification:**
+- AC-P2N-1: POST /fetch-article {"url":"https://vietnambiz.vn/"} → 200 {status:"ok",body_text:"VIF 2026..."[8000chars]}
+- AC-P2N-2: POST /fetch-article {"url":"https://evil.com/steal-secrets"} → 400 {reason:"domain not allowed: evil.com"}
+- AC-P2N-3: POST /reuters/headlines → {source:reuters,articles:[3],error:null} — no regression
+- AC-P2N-4: docker exec confirms MCP_CONFIG_PATH mounted, playwrightAllowedDomains=5 domains live
+- tsc --noEmit: EXIT 0. bun test: 233 pass, 0 fail (26 files, no new tests needed — handler wiring tested via existing route tests).
+
+**DJ-GATE-1:** sprint-DEEPFETCH-RAG-REDESIGN-dev-mainserver-crawls.md STEP dev-mainserver-crawls-S1 written.
 
 ---
 

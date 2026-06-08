@@ -7,6 +7,7 @@
  *   GET  /reuters/headlines         → convenience GET alias
  *   POST /bloomberg/headlines       → Bloomberg news ingest (via NewsIngestPort)
  *   GET  /bloomberg/headlines       → convenience GET alias
+ *   POST /fetch-article             → Playwright fallback article-body extractor (DFR-P2-MAIN)
  *
  * DDD: interface layer — imports from module/ (NewsIngestPort) and domain/ only.
  * Fallback orchestration logic is in news_ingest module, not here.
@@ -21,6 +22,7 @@ import type { ReutersNewsPort, BloombergNewsPort } from '../domain/repositories.
 import type { NewsIngestPort } from '../module/news_ingest/ports.js';
 import { composeNewsIngest } from '../module/news_ingest/index.js';
 import { NewsSource } from '../domain/models.js';
+import { handleFetchArticle } from '../routes/fetchArticle.js';
 
 // ---------------------------------------------------------------------------
 // Router factory — primary signature: two NewsIngestPort
@@ -155,6 +157,14 @@ export function createRouter(
       );
     }
   });
+
+  // ── POST /fetch-article (DFR-P2-MAIN — Playwright fallback executor) ──────
+  //
+  // Contract B: called by deepFetchMainJob.ts for queue rows status='vps-failed'.
+  // SSRF guard: allowlist loaded from mcp.config.json deepFetch.playwrightAllowedDomains.
+  // Returns: { status, url, body_text, published_at }
+
+  app.post('/fetch-article', handleFetchArticle);
 
   return app;
 }
