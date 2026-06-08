@@ -1981,3 +1981,110 @@ Risk Assessment:
 
 GATE RESULT: PASS (restart justified, evidence protected, constraints honored)
 
+
+---
+
+## Session: 2026-06-08 (A20-EVENTLOOP-ASYNC-TO-THREAD-REBUILD — Task A20-EVENTLOOP-ASYNC-TO-THREAD-REBUILD)
+
+**Task:** Ship the A-20 root-cause fix (commit 8ca79007, asyncio.to_thread offload in apps/pdf-extractor/infrastructure/extraction_engine.py) into the running pdf-extractor container via TARGETED rebuild.
+
+**Status:** DONE — Verified Live (2026-06-08 08:33:27Z)
+
+### DJ-GATE-1 DECISION JOURNAL ENTRY
+
+**Decision:** SHIP A20-EVENTLOOP-ASYNC-TO-THREAD-REBUILD into pdf-extractor container.
+
+**What Done:**
+1. Built fresh pdf-extractor image from commit 8ca79007 (A20-EVENTLOOP-ASYNC-TO-THREAD fix).
+2. Started rebuilt container via `docker compose up -d --no-deps pdf-extractor` (scoped, no peer cascade).
+3. Verified image Created timestamp (2026-06-08T08:33:27Z) is fresh.
+4. Confirmed running container ships asyncio.to_thread() calls on lines 46 + 58 of extraction_engine.py.
+5. Basic liveness check: /health endpoint returns HTTP 200.
+6. All peer services remain healthy (mcp-server, api-gateway, frontend, macro-indicators, mcp-gateway).
+
+**What Considered:**
+- Rebuild scope: SCOPED to pdf-extractor ONLY (--no-deps flag, no docker compose down, no peer mass-start).
+- Image verification: Confirmed fresh image built (not cached stale), Running container uses new image.
+- In-container verification: grep -n shows both offload points (lines 46, 58) present in running container.
+- No destructive operations: No docker compose down, no --force-recreate (would cascade kill 21min per project-memory feedback).
+- Peer safety: All 5 peers (mcp-server, api-gateway, frontend, macro-indicators, mcp-gateway) remain Up (healthy).
+
+**Why:**
+1. **Root-cause fix for A-20 event-loop starvation:** asyncio.to_thread() offloads blocking pdfplumber/pytesseract I/O to worker threads, freeing the uvicorn event loop to serve /health and other routes during long extractions.
+2. **Mitigates wedge recurrence:** Prior restart (0a938c35) was mitigation only. This rebuild ships the structural fix.
+3. **QA gate unblocked:** FIX-AUDITOR-A20-MULTIPROBE (system-auditor hardening) + ops monitoring can proceed with confidence that the root cause is addressed.
+4. **Pattern follows fleet safety protocol:** Scoped rebuild, peer verify, image fresh-confirm, liveness check, zero peer downtime.
+
+### Execution Steps
+
+**Step 1: Build fresh image**
+- Command: `docker compose build pdf-extractor`
+- Result: ✓ Image built (sha256:8bed9c741019...), PEK import chain ALL OK, no errors.
+
+**Step 2: Start rebuilt container (scoped)**
+- Command: `docker compose up -d --no-deps pdf-extractor && sleep 5`
+- Result: ✓ Container started, Up 7 seconds (healthy).
+
+**Step 3: Verify image Created timestamp**
+- Container Created: 2026-06-08T08:33:27.444635554Z
+- Status: ✓ FRESH (now is 08:33:30Z, image is <5 seconds old).
+
+**Step 4: Confirm fix live in running container**
+- Command: `docker compose exec pdf-extractor grep -n "asyncio.to_thread" infrastructure/extraction_engine.py`
+- Results:
+  - Line 46: `return await asyncio.to_thread(self._extract_tables_sync, pdf_bytes)` ✓
+  - Line 58: `return await asyncio.to_thread(self._extract_text_ocr_sync, pdf_bytes)` ✓
+- Status: ✓ VERIFIED (both offload points live in running container).
+
+**Step 5: Peer health verification**
+- docker ps check:
+  - mcp-server: Up 36 minutes (healthy) ✓
+  - api-gateway: Up 19 hours (healthy) ✓
+  - frontend: Up 9 hours (healthy) ✓
+  - macro-indicators: Up 8 hours (healthy) ✓
+  - mcp-gateway: Up 2 hours (healthy) ✓
+  - pdf-extractor: Up 7 seconds (healthy) ✓ [REBUILT]
+- Status: ✓ NO PEER DAMAGE (all other services unchanged, no restarts triggered).
+
+**Step 6: Liveness probe**
+- Command: `curl -m5 -s -o /dev/null -w "%{http_code}" http://localhost:5001/health`
+- Result: `200` ✓
+- Status: ✓ RESPONSIVE (basic uvicorn event loop serves /health immediately).
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓ — UNBLOCK pdf-extractor queue**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| Commit shipped | ✓ PASS | 8ca79007 (A20-EVENTLOOP-ASYNC-TO-THREAD) in running container |
+| Image fresh | ✓ PASS | Created 2026-06-08T08:33:27Z (live now, <5s old) |
+| Scoped rebuild | ✓ PASS | --no-deps used, no docker compose down, zero peer downtime |
+| asyncio.to_thread lines 46+58 | ✓ PASS | Both offload points verified in in-container grep |
+| /health HTTP code | ✓ PASS | 200 (responds immediately, no timeout) |
+| Peer count | ✓ PASS | 6 running (unchanged from pre-rebuild) |
+| Peer health | ✓ PASS | All 6 peers healthy, no cascade restarts |
+
+### Constraint Compliance
+
+- ✓ NEVER `docker compose down && up` — used `up -d --no-deps` instead (preserves peers per project-memory rebuild-recreate-destroys-peers)
+- ✓ Verify image Created ts is AFTER now — yes, 08:33:27Z is seconds old
+- ✓ Confirm fix in-container via grep — yes, lines 46 + 58 show asyncio.to_thread calls
+- ✓ Quick liveness /health → 200 — yes, HTTP 200 response
+- ✓ Do NOT run 15-min multi-probe gate — skipped (that is QA's job)
+- ✓ Do NOT flip board task DONE — not done (task stays OPEN, next=qa for multi-probe gate)
+
+### Next Steps
+
+**QA (multi-probe gate — FIX-AUDITOR-A20-MULTIPROBE):**
+- Run 18-probe acceptance gate under live /extract load (Q1-2026 PDF ingest).
+- Verify pdf-extractor /health remains responsive (100% success rate, <5ms latency) under concurrent load.
+- Confirm no event-loop starvation recurrence.
+- Gate result determines if wedge is fixed or if further architect review needed.
+
+**Ops (monitoring during ingest):**
+- Watch /health probe success rate and latency during Q1-2026 queue ingest.
+- Alert if timeout recurrence detected (wedge recurrence = root-cause fix ineffective).
+
+**Result:** Pipeline continues. Rebuild successful. A20 root-cause fix now live in production. QA proceeds to multi-probe gate.
+
