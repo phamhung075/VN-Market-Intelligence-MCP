@@ -37,3 +37,13 @@ Headroom context compression integration design: evaluated 4 candidate points; s
 CI-health → fix-task bridge design: institutionalizes automated CI failure detection into the dev-team cron loop as Step 0a.5 (ci-health-probe sub-flow + canonical script). Probe reads GitHub Actions latest CI run for origin/main HEAD via gh CLI; on non-success terminal conclusion emits a deduped `ci_red` signal into the signal_queue routed to PO, which creates a FIX task via the existing repair_task_request pathway. Key constraints encoded: STALE-RUN GATE (headSha == origin/main HEAD after git fetch), three-layer dedup (probe DB fingerprint + drain fingerprint + PO task-board open-entry check), VERIFICATION GATE (task DONE only after ci_green on a subsequent push), SAFE-JSON throughout (execFileSync array args + jq --arg bound params), non-fatal on gh absence or API error. 5 files to create/edit; developer owns canonical script. Sprint CI-RED-RECONCILE (go-lint/technical-analysis, HEAD 8ffb1985) used as live grounding case.
 
 **Signal dropped:** `docs/signals/ci-health-fix-bridge-20260608T180755Z.json` → agent-father
+
+---
+
+## 2026-06-08T20:00:00Z
+
+**Brief:** `docs/architecture-briefs/2026-06-08-ci-test-isolation-spike.md`
+
+CI-TEST-ISOLATION-SPIKE: 3-bucket triage of 639 bun failures. B1 (DOMINANT) — `1862c-transport-session-eviction.test.ts` poisons process-level module cache via `mock.module()` at module scope with no restore; all test files after 1862c in run order inherit MockMcpServer without `.tool()` → ~269 cascade failures. Fix: wrap mock in `beforeAll`/`afterAll` + `mock.restore()`. B2 — 63 inline test DDLs missing `data_env` column (canonical DDL in schema-news.ts adds it via guarded ALTER; inline copies don't replicate) → ~96 SQLiteError + pollNews timeout failures. Fix: replace inline DDLs with `initNewsTables(db)` call. B3 — BANK-AWARE-1 missing `statement_section` → 3 failures. Bucket A (24 obsolete): 089-tool-macro (15 tests, HTTP rewire 98df0f43 removed injection points), 1414 FILE 1 (7+ tests, HTTP rewire 6fc7b6b3 deleted template literals), 1503 AC3 (1 test, DPI-4 upsert strategy 32d201e8), 1190 schedulerFileCount (1 test, hardcoded 44 vs actual 64). Bucket C (~39 real regressions): TR-RED-5b (finalize_bctc_refine, e74dd0e1), macro freshness (239a/239c), orch-state wip fields (1837a), notebook .bak + developer.md (1839b), diacritics (1472), cron-registry missing entry. DWF canary intentionally RED — DO NOT TOUCH. Fix plan: B first (2 systemic fixes), then A (removal dev task), then C (regression fixes per zone).
+
+**Signal dropped:** `docs/signals/ci-test-isolation-spike-20260608T200000Z.json` → pm
