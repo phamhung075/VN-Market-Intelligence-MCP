@@ -38,9 +38,6 @@ import {
 import { runBaseRateComputation } from "../scheduler/macro/baseRateComputationJob.js";
 import { runPredictionResolution } from "../scheduler/macro/predictionResolutionJob.js";
 import { runCalibrationReport } from "../scheduler/macro/calibrationReportJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   runWeeklyAuditWithDb,
   runBctcReparseWithDb,
@@ -83,9 +80,6 @@ let db: Database;
 
 beforeEach(() => {
   db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   createCronTable(db);
 });
 

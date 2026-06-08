@@ -22,9 +22,6 @@ import {
   type TelegramOverridesFF,
 } from "../scheduler/market-data/foreignFlowAlertJob.js";
 import { CRONS } from "../scheduler/jobs.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB setup
@@ -115,9 +112,6 @@ function makeDb(): Database {
     )
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

@@ -31,9 +31,6 @@ import {
 } from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
 import { buildFinalizeBctcRefineHandler } from "../interface/mcp/tools/financial-reports/finalizeBctcRefineTool.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -60,9 +57,6 @@ function openFullDb(): Database {
     confidence REAL,
     causal_chain TEXT
   )`);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -166,9 +160,6 @@ function makeMinimalDb(): Database {
     causal_chain TEXT
   )`);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

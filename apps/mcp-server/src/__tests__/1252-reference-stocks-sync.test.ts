@@ -3,9 +3,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import * as fs from "fs";
 import * as path from "path";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Load mcp.config.json
 const configPath = path.resolve(import.meta.dir, "../../mcp.config.json");

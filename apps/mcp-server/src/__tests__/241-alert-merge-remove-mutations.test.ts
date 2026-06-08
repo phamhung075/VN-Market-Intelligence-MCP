@@ -25,9 +25,6 @@ import { registerAlertTools } from "../interface/mcp/tools/alerts/alerts.js";
 import { registerPriceAlertTools } from "../interface/mcp/tools/market-data/priceAlertTools.js";
 import { registerCustomAlertTools } from "../interface/mcp/tools/alerts/customAlertTools.js";
 import { registerTargetAllocationTools } from "../interface/mcp/tools/portfolio/targetAllocationTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Use in-memory DB so tests don't touch on-disk data
@@ -84,9 +81,6 @@ function makeInMemoryDb(): Database {
       notes TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

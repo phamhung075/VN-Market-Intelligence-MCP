@@ -23,9 +23,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Issue 1: bctcOverdueCheck signals_json must be Signal objects not strings
@@ -33,9 +30,6 @@ import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function buildBctcDb(): Database {
   const db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   db.exec(`
     CREATE TABLE watchlist (
       code     TEXT PRIMARY KEY,
@@ -65,9 +59,6 @@ function buildBctcDb(): Database {
       validated_at          TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -194,9 +185,6 @@ describe("Issue 2 — price_surge deterministic dedup ID (Task 1050)", () => {
     );
 
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`
       CREATE TABLE alerts (
         id                    TEXT PRIMARY KEY,

@@ -7,9 +7,6 @@ import {
   formatFranceSummaryVI,
 } from "../scheduler/briefings/franceSummaryJob.js";
 import type { BctcDeadlineRow } from "../application/usecases/assembleBriefing.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB setup (reuses 1516 pattern + adds financial_reports)
@@ -83,9 +80,6 @@ function setupTestDb(): Database {
       parsed_at TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

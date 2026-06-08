@@ -21,9 +21,6 @@ import { refineOneReport } from "../scheduler/financial-reports/bctcRefineJob.js
 import { buildGetBctcPendingRefineHandler } from "../interface/mcp/tools/financial-reports/getBctcPendingRefineTool.js";
 import { buildPushBctcRefinedUnitHandler } from "../interface/mcp/tools/financial-reports/pushBctcRefinedUnitTool.js";
 import { buildFinalizeBctcRefineHandler } from "../interface/mcp/tools/financial-reports/finalizeBctcRefineTool.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   ensureCoordinationTable,
   _injectCoordinationDb,
@@ -443,9 +440,6 @@ describe("push_tool_pathway (AC-MCP-OPTY-6)", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     initFinancialReportsTables(db);
     reportId = "FPT-PUSH-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
 

@@ -15,9 +15,6 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Database } from "bun:sqlite";
 import { registerBctcFullTools } from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -375,9 +372,6 @@ function makeDb(): Database {
     UNIQUE(code, year_report, quarter, source)
   )`);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

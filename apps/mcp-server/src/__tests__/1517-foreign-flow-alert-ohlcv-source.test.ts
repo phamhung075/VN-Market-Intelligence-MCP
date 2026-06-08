@@ -11,9 +11,6 @@
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runForeignFlowAlertJob } from "../scheduler/market-data/foreignFlowAlertJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const noop = async (_: string) => true;
 
@@ -106,9 +103,6 @@ function setupTestDb(): Database {
     ["VNM", "2026-04-18", 150_000],
   );
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

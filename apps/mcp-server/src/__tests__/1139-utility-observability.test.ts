@@ -4,9 +4,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test"
 import { readFileSync } from "fs"
 import { join } from "path"
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const JOBS_PATH = join(import.meta.dir, "../../src/scheduler/startScheduler.ts")
 const src = readFileSync(JOBS_PATH, "utf8")

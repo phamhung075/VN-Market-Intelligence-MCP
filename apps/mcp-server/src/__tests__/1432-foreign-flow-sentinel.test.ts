@@ -116,9 +116,6 @@ function buildTestDb(): Database {
       closed_at  TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -183,9 +180,6 @@ describe("AC-3: valid foreign_volume 500000 included", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { assembleBriefing } from "../application/usecases/assembleBriefing.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const NOOP_OPTS = {
   pollNewsFn: async () => {},

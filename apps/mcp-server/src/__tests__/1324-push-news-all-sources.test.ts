@@ -13,9 +13,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { SourceFetchers } from "../application/usecases/pollNews.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test DB setup
@@ -81,9 +78,6 @@ function setupTestDb(): Database {
       user_note             TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

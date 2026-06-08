@@ -23,9 +23,6 @@ import {
   DISK_COOLDOWN_MS,
 } from "../scheduler/diskUsageAlertJob.js";
 import type { DiskUsageAlertState } from "../scheduler/diskUsageAlertJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

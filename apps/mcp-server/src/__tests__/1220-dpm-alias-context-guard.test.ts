@@ -2,9 +2,6 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { detectStocksInText } from "../domain/services/stockAliases.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1220 — DPM alias context guard for person-name false positives", () => {
   // ─── TRUE POSITIVES: DPM should be detected with fertilizer context ──────

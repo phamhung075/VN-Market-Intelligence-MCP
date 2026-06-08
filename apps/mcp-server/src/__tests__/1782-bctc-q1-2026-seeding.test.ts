@@ -29,9 +29,6 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runBctcQueueEnricherJob } from "../scheduler/financial-reports/bctcQueueEnricherJob.js";
 import type { HttpFetchFn } from "../domain/services/bctcDiscovery.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -64,9 +61,6 @@ function makeMinimalDb(): Database {
       UNIQUE(action_code, period_year, period_quarter)
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

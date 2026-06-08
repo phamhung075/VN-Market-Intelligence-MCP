@@ -19,9 +19,6 @@ import { Database } from "bun:sqlite";
 import { formatMoversSection } from "../scheduler/briefings/eveningSummaryJob.js";
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import type { TaSignal } from "../application/usecases/assembleBriefing.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AC-1: formatMoversSection renders Vol when volume is provided
@@ -237,9 +234,6 @@ function setupIntegrationDb(): Database {
       affected_actions_json TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

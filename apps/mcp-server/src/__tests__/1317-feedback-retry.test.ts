@@ -10,9 +10,6 @@ import { describe, it, expect } from "bun:test";
 // We test retryOnTransient directly by importing it from feedbackTools.
 // After the fix, feedbackTools.ts must export this helper for testability.
 import { retryOnTransient } from "../interface/mcp/tools/system/feedbackTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Bug 1317 — retryOnTransient helper", () => {
 

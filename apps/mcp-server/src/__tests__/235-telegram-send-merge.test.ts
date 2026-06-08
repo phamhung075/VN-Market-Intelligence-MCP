@@ -16,9 +16,6 @@ import { describe, it, expect, beforeAll, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerTelegramTools } from "../interface/mcp/tools/briefings/telegramTools.js";
 import { registerAlertDigestTools } from "../interface/mcp/tools/alerts/alertDigestTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Setup

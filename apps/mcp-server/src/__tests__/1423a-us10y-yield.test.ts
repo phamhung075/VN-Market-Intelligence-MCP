@@ -15,9 +15,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { Database } from "bun:sqlite";
 import { describe, it, expect } from "bun:test";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   fetchYahooFinancePrices,
   storeCommoditySnapshot,
@@ -103,9 +100,6 @@ function makeTestDb(): Database {
       extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

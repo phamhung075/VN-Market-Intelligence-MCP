@@ -19,9 +19,6 @@ import { isVnTradingWindow } from "../domain/services/tradingWindow.js";
 import { runForeignFlowFetcherJob, runForeignFlowFetcherJobCron } from "../scheduler/market-data/foreignFlowFetcherJob.js";
 import { breakers } from "../infrastructure/circuitBreakerRegistry.js";
 import { reset_foreign_flow_circuit_breaker } from "../interface/mcp/tools/market-data/foreignFlowTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX 1 — Market-hours gate

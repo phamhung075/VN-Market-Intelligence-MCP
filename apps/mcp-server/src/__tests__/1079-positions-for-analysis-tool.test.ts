@@ -14,9 +14,6 @@ import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerPositionTools } from "../interface/mcp/tools/portfolio/positionTools.js";
 import { upsertPosition } from "../infrastructure/db/positionStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -56,9 +53,6 @@ function makeDb(): Database {
       UNIQUE(code, date)
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

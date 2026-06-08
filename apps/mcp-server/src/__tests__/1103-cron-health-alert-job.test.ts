@@ -14,9 +14,6 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runCronHealthAlert } from "../scheduler/alerts/cronHealthAlertJob.js";
 import { CRONS } from "../scheduler/jobs.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB fixture
@@ -66,9 +63,6 @@ function insertRun(
 
 beforeEach(() => {
   db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   createSchema(db);
 });
 

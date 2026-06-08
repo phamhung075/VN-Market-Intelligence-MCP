@@ -89,9 +89,6 @@ mock.module("../infrastructure/db/predictionStore.js", () => {
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import { runPredictionMarketPoll } from "../scheduler/macro/predictionMarketJob.js";
 import * as loggerModule from "../infrastructure/logger.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal in-memory DB setup with prediction_markets + prediction_signals tables
@@ -185,9 +182,6 @@ function setupTestDb(): Database {
       ON prediction_signals(detected_at DESC);
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

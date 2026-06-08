@@ -44,9 +44,6 @@ import { getCreditFlowSignalHandler } from "../interface/mcp/tools/sector/credit
 // ── bctcFullTools for C4 buildComparisonSection ──────────────────────────────
 import { registerBctcFullTools, type ReportRow } from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // C5: extractionConfidence ?? 0 — missing confidence must NOT grant max-confidence
@@ -266,9 +263,6 @@ function makeTestDb(): Database {
     action_code TEXT,
     receivables_bn REAL
   )`);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

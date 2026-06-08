@@ -28,9 +28,6 @@
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   checkPublishability,
   buildSummarySection,
@@ -134,9 +131,6 @@ function makeDb(): Database {
     causal_chain TEXT
   )`);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

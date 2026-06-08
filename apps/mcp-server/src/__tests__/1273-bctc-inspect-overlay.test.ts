@@ -25,9 +25,6 @@ import { Database as BunDatabase } from "bun:sqlite";
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
 import { handleBctcInspectZones } from "../interface/mcp/routes/bctcInspectHandler.js";
 import { handlePushBctcLayout } from "../interface/mcp/routes/pushBctcLayoutHandler.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── MZH-2 production DB guard ──────────────────────────────────────────────────
 const PRODUCTION_DB_PATTERNS = [/market\.db/, /\/app\/data\//, /apps\/mcp-server\/data\//];
@@ -47,9 +44,6 @@ assertNotProductionDb(Bun.env["DB_PATH"] ?? "");
 function openTestDb(): Database {
   const db = new BunDatabase(":memory:");
   initFinancialReportsTables(db);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

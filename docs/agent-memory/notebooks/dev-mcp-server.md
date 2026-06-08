@@ -225,23 +225,3 @@ Zone health: bun tsc clean, 3 target test files 48 pass / 0 fail, tools 157 inta
 **Files staged:** `.github/workflows/ci.yml` + `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` + `docs/agent-memory/notebooks/dev-mcp-server.md` — foreign dirty files NOT staged.
 
 Zone health: CI-yaml only change, no code under test modified, no tools/scheduler impact | HEALTHY
-
----
-
-## 2026-06-09 · B2-RAG-DDL-INITNEWSTABLES + CI-NETWORK-SKIP-GUARDS — DONE
-
-**Tasks:** B2-RAG-DDL-INITNEWSTABLES + CI-NETWORK-SKIP-GUARDS | Sprint: CI-RED-RECONCILE | Epic: CI-BUN-TEST-MULTI-CLASS-FIX
-
-**BATCH 1 — schema drift (464 test files):** Inline test DDLs missing `data_env` on `rag_analyses`/`daily_ohlcv` and `cron_job_runs`/`signal_quality_audit` tables. Injected 3 targeted guards (`initNewsTables` + `initMarketDataTables` + `initSystemTables`) BEFORE `return db;` in all 464 affected test setup functions. Script: `scripts/migrations/add-init-database-to-tests.ts`. Avoided full `initDatabase` (would trigger `v_chart_timeseries` view compile against tables missing `period_quarter`). Fixed script bug: `alreadyHasGuards` matched `initDatabase(` in JSDoc comments — filtered to executable lines only.
-
-**BATCH 2 — network timeouts (pollNews.ts):** 4 CI guards added: teChromiumNews default, cold-start 2s retry skip, newsapi default, Yahoo+SBV macro HTTP block — all gated on `Bun.env.CI === "true"`.
-
-**Local verification (CI=true):**
-- 102: 10/0 (was 4/6) | 1288: 4/0 641ms (was 2/2 timeout) | 1345a: 6/0 2.62s (was flaky) | 101: 14/0 | 105: 14/0
-- `bun tsc --noEmit`: CLEAN
-
-**Estimated CI impact:** ~105 schema-drift failures + ~175 network timeout failures = ~280 fewer CI failures
-
-**Files:** 464 test files + `pollNews.ts` + migration script + DJ-GATE-1 decision journal
-
-Zone health: bun tsc clean, 5 spot-checked test files pass, tools/scheduler unmodified | HEALTHY

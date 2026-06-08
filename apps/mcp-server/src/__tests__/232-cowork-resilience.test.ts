@@ -11,9 +11,6 @@ import { resilientFetcher } from "../domain/services/resilientFetcher.js";
 import { newsSourceRouter } from "../infrastructure/fetchers/newsSourceRouter.js";
 import { priceSourceRouter } from "../infrastructure/fetchers/priceSourceRouter.js";
 import { bctcSourceRouter } from "../infrastructure/fetchers/bctcSourceRouter.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 /**
  * AC-1: Resilient Fetcher Engine — Retries + Fallbacks

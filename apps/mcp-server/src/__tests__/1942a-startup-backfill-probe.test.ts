@@ -25,17 +25,11 @@
 import { describe, it, expect, mock, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runVnstockStartupProbe } from "../scheduler/financial-reports/vnstockStartupProbe.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── DDL helper — mirrors schema-financial-reports.ts subset ──────────────────
 
 function buildDb(opts?: { withFetchLog?: boolean }): Database {
   const db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   if (opts?.withFetchLog !== false) {
     db.exec(`
       CREATE TABLE IF NOT EXISTS vnstock_fetch_log (
@@ -47,9 +41,6 @@ function buildDb(opts?: { withFetchLog?: boolean }): Database {
       )
     `);
   }
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -219,9 +210,6 @@ describe("TASK 1942a — vnstock startup backfill probe", () => {
   it("T6: missing vnstock_fetch_log table — catches error and fires job", async () => {
     // Empty in-memory DB — no tables at all
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
 
     let jobCalled = false;
     const runJob = mock(async () => {

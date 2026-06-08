@@ -23,9 +23,6 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { upsertForeignFlow, runVnstockMigrations } from "../infrastructure/db/vnstockStore.js";
 import type { ForeignFlowUpsertItem } from "../domain/models/shared-types.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // In-memory schema bootstrap
@@ -82,9 +79,6 @@ function createTestDb(withUniqueConstraint = true): Database {
     `);
   }
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

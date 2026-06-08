@@ -2,9 +2,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { classifyDeviation } from "../domain/services/macroThresholds";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("classifyDeviation — direction-aware Vietnamese labels", () => {
   // TC-1: above-mean elevated → label contains "cao hơn TB"

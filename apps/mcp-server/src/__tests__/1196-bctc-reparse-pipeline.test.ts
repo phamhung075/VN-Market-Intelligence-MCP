@@ -12,9 +12,6 @@ import { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sub-fix A: Domain — banking income-statement pattern
@@ -168,9 +165,6 @@ describe("Sub-fix B: storeReport — zero-confidence guard", () => {
         validation_notes TEXT
       )
     `);
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     return db;
   }
 
@@ -264,9 +258,6 @@ describe("Sub-fix C: scanDiskForStrandedPdfs — disk-scan fallback", () => {
         period_type TEXT NOT NULL
       )
     `);
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     return db;
   }
 
@@ -392,9 +383,6 @@ describe("Sub-fix C: runBctcReparseJob — observability logs", () => {
         period_type TEXT NOT NULL
       )
     `);
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     return db;
   }
 

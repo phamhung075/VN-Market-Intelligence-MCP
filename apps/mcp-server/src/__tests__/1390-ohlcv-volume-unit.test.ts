@@ -11,9 +11,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runOhlcvDailyAggregator } from "../scheduler/market-data/ohlcvDailyAggregatorJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const NOW_MS = Date.parse("2026-04-17T09:00:00.000Z");
 const VN_DATE = "2026-04-17";
@@ -36,9 +33,6 @@ function makeDb(): Database {
       PRIMARY KEY (code, date)
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

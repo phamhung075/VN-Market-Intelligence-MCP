@@ -3,9 +3,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { detectStocksInText, getAliasesForCode } from "../domain/services/stockAliases.js";
 import { SECTOR_RULES } from "../domain/services/cascadeEngine.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1214 — VNM Hormuz cascade (Middle East dairy export disruption)", () => {
   it("VNM aliases include 'xuất khẩu sữa' (normalized form)", () => {

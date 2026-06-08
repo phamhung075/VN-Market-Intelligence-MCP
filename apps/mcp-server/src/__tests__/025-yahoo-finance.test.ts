@@ -16,9 +16,6 @@
 
 import { Database } from "bun:sqlite";
 import { describe, it, expect } from "bun:test";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   fetchYahooFinancePrices,
   storeCommoditySnapshot,
@@ -223,9 +220,6 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   it("YF-09: storeCommoditySnapshot upserts (INSERT OR REPLACE) into commodity_prices", () => {
     // Use a fully local in-memory DB — bypasses the singleton to ensure isolation
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`
       CREATE TABLE commodity_prices (
         source TEXT PRIMARY KEY,
@@ -319,9 +313,6 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   it("YF-10: storeCommoditySnapshot appends each call to commodity_prices_history", () => {
     // Use a fully local in-memory DB — bypasses the singleton to ensure isolation
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`
       CREATE TABLE commodity_prices (
         source TEXT PRIMARY KEY,
@@ -416,9 +407,6 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   // ── YF-12a: storeCommoditySnapshot mirrors Brent + Gold into tracked_indicators (task 1087 / report #1070)
   it("YF-12a: storeCommoditySnapshot mirrors brent + gold into tracked_indicators", () => {
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`
       CREATE TABLE commodity_prices (
         source TEXT PRIMARY KEY, brent_crude_usd REAL NOT NULL DEFAULT 0,
@@ -523,9 +511,6 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   // day-over-day (meaningful) rather than tick-over-tick (flat during off-hours).
   it("YF-14: storeCommoditySnapshot uses previous-day close for delta — off-market repeated price must NOT zero out a real move", () => {
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`
       CREATE TABLE commodity_prices (
         source TEXT PRIMARY KEY,
@@ -644,9 +629,6 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   // when current price is real and only a valid prior row exists from yesterday.
   it("YF-15: storeCommoditySnapshot skips zero-valued history rows as prior-close candidates", () => {
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`
       CREATE TABLE commodity_prices (
         source TEXT PRIMARY KEY,

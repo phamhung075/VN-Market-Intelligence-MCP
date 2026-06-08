@@ -28,9 +28,6 @@ import {
   updateCronJobRunEnd,
 } from "../infrastructure/db/cronJobRunStore.js";
 import { runCronHealthAlert } from "../scheduler/alerts/cronHealthAlertJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB factory — creates only the cron_job_runs table needed for
@@ -56,9 +53,6 @@ function makeCronDb(): Database {
       ON cron_job_runs(job_name, started_at DESC);
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

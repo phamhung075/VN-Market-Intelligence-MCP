@@ -53,9 +53,6 @@ mock.module("../infrastructure/db/schema.js", () => ({
 // A stub `insertMarketMessage: () => 1` breaks test 1265 which calls the real
 // batchReviewMarketMessages on a returned integer ID instead of a UUID string.
 import { insertMarketMessage as _realInsertMarketMessage } from "../infrastructure/db/marketMessageStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 mock.module("../infrastructure/db/marketMessageStore.js", () => ({
   insertMarketMessage: _realInsertMarketMessage,
 }));

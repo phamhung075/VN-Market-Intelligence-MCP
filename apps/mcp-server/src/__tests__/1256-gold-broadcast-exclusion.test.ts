@@ -18,9 +18,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Minimal seed entry factory
 function makeSeed(overrides: Partial<{

@@ -27,9 +27,6 @@ afterAll(() => {
 });
 
 import type { Alert } from "../domain/services/alertGenerator";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const mockHighAlert: Alert = {
   id: "test-alert-1255",

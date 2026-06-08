@@ -27,9 +27,6 @@ import {
 import { runPredictionResolution } from "../scheduler/macro/predictionResolutionJob.js";
 import { registerEvidenceTools } from "../interface/mcp/tools/macro/evidenceTools.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB helpers
@@ -41,9 +38,6 @@ import { initSystemTables } from "../infrastructure/db/schema-system.js";
  */
 function makeDb(): Database {
   const db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
 
   // prediction_claims table — matches production DDL including Sprint 065 column
   db.exec(`
@@ -86,9 +80,6 @@ function makeDb(): Database {
       ON daily_ohlcv(code, date DESC)
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -419,9 +410,6 @@ describe("Task 1154 — AC-6: resolution skips legacy null/null claims", () => {
 describe("Task 1154 — AC-7: schema migration idempotent", () => {
   it("try/catch ALTER TABLE guard swallows duplicate-column error on second exec", () => {
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
 
     // First: create the base table without creation_price (simulates pre-Sprint-065 DB)
     db.exec(`

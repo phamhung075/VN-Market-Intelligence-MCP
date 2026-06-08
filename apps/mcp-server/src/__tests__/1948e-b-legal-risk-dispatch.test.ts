@@ -20,9 +20,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { detectLegalRisk } from "../domain/services/legalRiskDetector.js";
 import { postSignal } from "../infrastructure/db/agentSignalStore.js";
 import { registerLegalRiskTools } from "../interface/mcp/tools/sector/legalRiskTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -72,9 +69,6 @@ function makeTestDb(): Database {
       user_note TEXT
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

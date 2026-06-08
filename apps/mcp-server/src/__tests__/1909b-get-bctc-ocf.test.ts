@@ -15,9 +15,6 @@ import { describe, it, expect } from "bun:test";
 import Database from "bun:sqlite";
 
 import { buildGetBctcOcfHandler } from "../interface/mcp/tools/financial-reports/getBctcOcfTool.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── DB helper ─────────────────────────────────────────────────────────────────
 
@@ -36,9 +33,6 @@ function makeTestDb(): InstanceType<typeof Database> {
       extraction_method TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

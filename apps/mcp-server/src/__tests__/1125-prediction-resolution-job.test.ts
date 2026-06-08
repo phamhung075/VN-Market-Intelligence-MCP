@@ -22,9 +22,6 @@ import {
 } from "../scheduler/macro/predictionResolutionJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 import { computeBrierScore } from "../domain/services/baseRateComputer.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema helpers
@@ -130,9 +127,6 @@ describe("Task 1125 — predictionResolutionJob", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     createSchema(db);
   });
 

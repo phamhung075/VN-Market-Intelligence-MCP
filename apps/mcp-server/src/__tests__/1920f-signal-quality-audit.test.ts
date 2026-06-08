@@ -22,9 +22,6 @@ import {
   insertSignalQualityAudit,
 } from "../infrastructure/db/signalQualityAuditStore.js";
 import { runMonthlySignalQualityJob } from "../scheduler/audits/monthlySignalQualityJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Real module captures for teardown ────────────────────────────────────────
 import {
@@ -92,9 +89,6 @@ function makeDb(): Database {
     )
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

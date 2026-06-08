@@ -29,9 +29,6 @@ import { describe, it, expect, mock, afterAll } from "bun:test";
 import { getDb as _realGetDb } from "../infrastructure/db/schema.js";
 import { sendTelegramBug as _realSendTelegramBug } from "../infrastructure/notifiers/telegram.js";
 import { logger as _realLogger } from "../infrastructure/logger.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Freeze references before any mock.module() can mutate live bindings
 const _frozenGetDb = _realGetDb;

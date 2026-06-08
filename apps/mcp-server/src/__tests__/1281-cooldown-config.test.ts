@@ -30,9 +30,6 @@ import { loadMcpConfig } from "../infrastructure/config.js";
  */
 
 import type { SignalType } from "../domain/services/signalDetector.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function makeAlert(code: string, signalType: SignalType): Alert {
   const now = new Date().toISOString();

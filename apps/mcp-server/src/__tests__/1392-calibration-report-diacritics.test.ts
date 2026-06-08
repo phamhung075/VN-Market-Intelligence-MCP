@@ -22,9 +22,6 @@ import {
   type TelegramOverrides,
 } from "../scheduler/macro/calibrationReportJob.js";
 import { insertCalibrationSnapshot } from "../infrastructure/db/calibrationSnapshotStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB factory (minimal schema required by runCalibrationReport)
@@ -100,9 +97,6 @@ function makeDb(): Database {
   db.run(`CREATE INDEX IF NOT EXISTS idx_mm_verdict    ON market_messages(verdict)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_mm_ticker     ON market_messages(ticker)`);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

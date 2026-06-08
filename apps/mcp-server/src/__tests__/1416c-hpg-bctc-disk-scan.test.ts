@@ -21,9 +21,6 @@ import { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test 1: WATCHLIST_SEED contains HPG
@@ -86,9 +83,6 @@ describe("Task 1416c — scanDiskForStrandedPdfs HPG filename resolution", () =>
         "steel",
       );
     }
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     return db;
   }
 

@@ -1,18 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import Database from "bun:sqlite";
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("SPRINT-1330: Earnings Calendar DA_NOP Fallback for Low-Confidence BCTC PDFs", () => {
   let db: Database;
 
   beforeAll(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     initFinancialReportsTables(db);
   });
 

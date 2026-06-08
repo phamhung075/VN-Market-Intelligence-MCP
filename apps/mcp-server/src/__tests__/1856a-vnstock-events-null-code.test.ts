@@ -11,9 +11,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import type { VnstockEvent } from "../infrastructure/fetchers/vnstockBridge.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // AC-1: Array.isArray guard — non-array input must not throw

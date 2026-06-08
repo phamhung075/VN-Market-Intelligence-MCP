@@ -13,9 +13,6 @@
 
 import { describe, test, expect, beforeEach } from "bun:test";
 import Database from "bun:sqlite";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── Inline DDL (no external helper) ─────────────────────────────────────────
 function setupDb(db: Database): void {
@@ -41,9 +38,6 @@ describe("1508 cascade-metrics-winrate", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     setupDb(db);
   });
 

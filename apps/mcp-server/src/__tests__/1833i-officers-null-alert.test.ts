@@ -11,9 +11,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import type { VnstockOfficer } from "../infrastructure/fetchers/vnstockBridge.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // AC-2.5: null-code guard — pure logic tests (DB-free, parallel-safe)

@@ -15,9 +15,6 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/sector/supplyChainTools.js";
 import type { SupplyChainEvent } from "../domain/services/supplyChainEventDetector.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Source file paths ─────────────────────────────────────────────────────────
 

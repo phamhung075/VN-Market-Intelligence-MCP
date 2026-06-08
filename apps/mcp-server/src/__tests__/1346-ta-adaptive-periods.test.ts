@@ -13,9 +13,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { defaultComputeTa } from "../application/usecases/assembleBriefing.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -41,9 +38,6 @@ function buildDb(): Database {
       fetched_at TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

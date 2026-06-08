@@ -19,9 +19,6 @@ import { Database } from "bun:sqlite";
 import { formatTaIndicatorReport } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 import { runTaAlertScan } from "../scheduler/market-data/taAlertScanJob.js";
 import type { ComputeTAResponse } from "../infrastructure/microservices/clients.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -46,9 +43,6 @@ function buildTestDb(): Database {
       user_note TEXT
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

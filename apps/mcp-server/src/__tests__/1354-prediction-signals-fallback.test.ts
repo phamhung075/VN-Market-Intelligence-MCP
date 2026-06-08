@@ -31,9 +31,6 @@ import { join } from "node:path";
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import type { BriefingPredictionSignal } from "../infrastructure/db/predictionStore.js";
 import * as loggerModule from "../infrastructure/logger.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal in-memory DB — same schema as 1318 test
@@ -124,9 +121,6 @@ function setupTestDb(): Database {
     );
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

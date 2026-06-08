@@ -16,9 +16,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runBctcQueueEnricherJob } from "../scheduler/financial-reports/bctcQueueEnricherJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Minimal in-memory DB fixture with the bctc_vps_queue table schema
@@ -38,9 +35,6 @@ function makeDb(): Database {
       created_at     TEXT    NOT NULL DEFAULT (datetime('now'))
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

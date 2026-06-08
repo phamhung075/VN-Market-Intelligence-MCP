@@ -15,9 +15,6 @@ import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
 import { SqliteWatchlistRepository } from "../infrastructure/db/repositories/SqliteWatchlistRepository.js";
 import { SqliteMarketPriceRepository } from "../infrastructure/db/repositories/SqliteMarketPriceRepository.js";
 import { Database } from "bun:sqlite";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 /** Build production-like deps backed by the current test in-memory DB. */
 function makeDeps(fetchPrices?: (codes: string[]) => Promise<MarketPrice[]>) {

@@ -8,9 +8,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { normaliseFilename } from "../application/usecases/fetchParseAndStoreBctc.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // normaliseFilename tests
@@ -97,9 +94,6 @@ describe("Task 1002 — pdf_extracted_text.action_code column", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`
       CREATE TABLE pdf_extracted_text (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,

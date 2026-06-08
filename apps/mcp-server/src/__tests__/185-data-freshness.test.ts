@@ -33,9 +33,6 @@ import {
   registerDataFreshnessTools,
 } from "../interface/mcp/tools/market-data/dataFreshnessTools.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Unit tests — classifyFreshness()
@@ -118,9 +115,6 @@ describe("Task 185 — getDataFreshness() output format", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
 
     // Create only the tables that exist in the real schema
     db.exec(`
@@ -260,9 +254,6 @@ describe("Task 185 — registerDataFreshnessTools()", () => {
     // real table shape (only the columns needed by the query) and verify the
     // BCTC row shows a concrete status, not the null-data sentinel.
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`
       CREATE TABLE financial_reports (
         id TEXT PRIMARY KEY,

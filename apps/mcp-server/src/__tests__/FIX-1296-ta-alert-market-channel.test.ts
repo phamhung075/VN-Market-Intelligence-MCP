@@ -13,9 +13,6 @@ import { Database } from "bun:sqlite";
 
 // Import the module under test AFTER setting up DB env (done in setup.ts)
 import { runTaAlertNotifier } from "../scheduler/market-data/taAlertNotifierJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -33,9 +30,6 @@ function makeDb(): Database {
       triggered_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

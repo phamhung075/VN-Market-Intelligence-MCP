@@ -22,9 +22,6 @@ import {
   type FedLiquiditySpreadResult,
 } from "../domain/services/macro/computeFedLiquiditySpread.js";
 import { fetchEffrIorbSamples } from "../infrastructure/db/fredQueries.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Schema (Zod)
@@ -56,9 +53,6 @@ function makeTestDb(): Database {
     );
     CREATE INDEX IF NOT EXISTS idx_fred_series_date ON fred_series_daily(series, date);
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

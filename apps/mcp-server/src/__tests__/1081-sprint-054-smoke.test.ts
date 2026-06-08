@@ -41,9 +41,6 @@ import { appendKinhDich } from "../infrastructure/_deprecated/kinhDichWrapper.js
 import { handleTelegramCommand, type TelegramUpdate } from "../infrastructure/notifiers/telegramCommands.js";
 import { registerAskQueueTools } from "../interface/mcp/tools/system/askQueueTools.js";
 import { registerPositionTools } from "../interface/mcp/tools/portfolio/positionTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared DB factory: creates all tables needed across the full sprint surface
@@ -148,9 +145,6 @@ function makeFullDb(): Database {
     );
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -490,9 +484,6 @@ describe("Task 1081 — Sprint 054 Smoke Test", () => {
     try {
       // Empty db (no kinhdich_readings table at all in brokenDb)
       const brokenDb = new Database(":memory:");
-      initNewsTables(brokenDb);
-      initMarketDataTables(brokenDb);
-      initSystemTables(brokenDb);
       await appendKinhDich("FPT", "base", brokenDb);
     } catch {
       threw = true;

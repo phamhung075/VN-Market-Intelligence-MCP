@@ -31,9 +31,6 @@ import { z } from "zod";
 // Create the schema in a real DB file path and override DB_PATH env var.
 
 import { computeIsmRegimeSignal } from "../domain/services/macro/ismRegimeSignal.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Helper: build a fake tool handler that captures the handler fn
@@ -75,9 +72,6 @@ function makeTestDb(): Database {
       UNIQUE(series, date) ON CONFLICT IGNORE
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

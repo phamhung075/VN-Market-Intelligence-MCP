@@ -2,9 +2,6 @@
 // Task 1349e — Job cycle timings + ops metrics
 // Note: DB_PATH is set to :memory: by apps/mcp-server/src/__tests__/setup.ts preload (Bun.env)
 import { describe, it, expect, beforeEach } from "bun:test";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   recordJobMetrics,
   getJobMetrics,

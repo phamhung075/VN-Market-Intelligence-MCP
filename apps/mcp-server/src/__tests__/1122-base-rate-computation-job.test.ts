@@ -20,9 +20,6 @@ import {
 } from "../domain/services/baseRateComputer.js";
 import { runBaseRateComputation } from "../scheduler/macro/baseRateComputationJob.js";
 import { CRONS } from "../scheduler/jobs.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema helper
@@ -128,9 +125,6 @@ describe("Task 1122 — Base Rate Computation", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     createTestSchema(db);
   });
 
@@ -278,9 +272,6 @@ describe("Task 1122 — Base Rate Computation", () => {
       // Prices all 100 → 0 hits → 0.0
       const allSamePrices = new Array(15).fill(100);
       const db2 = new Database(":memory:");
-      initNewsTables(db2);
-      initMarketDataTables(db2);
-      initSystemTables(db2);
       createTestSchema(db2);
 
       const dates2 = Array.from({ length: 15 }, (_, i) => {

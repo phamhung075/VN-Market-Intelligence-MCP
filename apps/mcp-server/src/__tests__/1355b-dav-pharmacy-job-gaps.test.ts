@@ -32,9 +32,6 @@ import { fetchDavPharmacy as _realFetchDavPharmacy } from "../infrastructure/fet
 import { getDb as _realGetDb, initDatabase as _realInitDatabase } from "../infrastructure/db/schema.js";
 import { insertPharmaEvent as _realInsertPharmaEvent } from "../infrastructure/db/pharmaStore.js";
 import { logger as _realLogger } from "../infrastructure/logger.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Freeze before any mock.module() can mutate the live bindings
 const _frozenFetch = _realFetchDavPharmacy;
@@ -114,9 +111,6 @@ function makeDb(): Database {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

@@ -26,9 +26,6 @@ import { Database } from "bun:sqlite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { bctcEvalPageHandler } from "../interface/mcp/routes/bctcEvalPageHandler.js";
 import { upsertEvalRow } from "../infrastructure/db/bctcEvalStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -118,9 +115,6 @@ function makeTestDb(): Database {
     )
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

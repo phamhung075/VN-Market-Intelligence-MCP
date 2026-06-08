@@ -14,9 +14,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const BASE_ENTRY: AnalysisEntry = {
   id: "test-1264",

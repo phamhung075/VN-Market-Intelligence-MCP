@@ -8,9 +8,6 @@ import {
 import type { CycleDeps } from "../scheduler/news-analysis/intelligenceCycleJob.js";
 import type { Alert } from "../domain/services/alertGenerator.js";
 import type { SignalType } from "../domain/services/signalDetector.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 /**
  * Task 1285 — macro_deviation alerts bypass step E cooldown.

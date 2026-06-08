@@ -17,9 +17,6 @@ import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
 import { Database } from "bun:sqlite";
 import { SqliteWatchlistRepository } from "../infrastructure/db/repositories/SqliteWatchlistRepository.js";
 import { SqliteMarketPriceRepository } from "../infrastructure/db/repositories/SqliteMarketPriceRepository.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function setupTestDb(): Database {
   (Bun.env as Record<string, string>)["DB_PATH"] = ":memory:";

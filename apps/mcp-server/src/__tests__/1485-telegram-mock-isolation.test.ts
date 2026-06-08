@@ -12,9 +12,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { mock } from "bun:test";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Load real telegram module via cache-bust (bypasses any prior mock.module stub)
 const _realMod1485 = await import(

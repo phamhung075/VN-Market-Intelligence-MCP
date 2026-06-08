@@ -8,9 +8,6 @@ import { storePublicContracts } from "../infrastructure/db/publicContractsStore.
 import { runPublicContractsJob } from "../scheduler/market-data/publicContractsJob.js";
 import { getMuasamcongUrl } from "../infrastructure/fetchers/muasamcong.js";
 import type { PublicContract } from "../infrastructure/fetchers/muasamcong.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -31,9 +28,6 @@ function makeTestDb(): Database {
       fetched_at  TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

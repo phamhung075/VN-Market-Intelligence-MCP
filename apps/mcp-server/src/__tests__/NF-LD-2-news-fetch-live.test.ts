@@ -18,9 +18,6 @@ import { describe, test, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { handleNewsFetchLive } from "../interface/mcp/routes/newsFetchLiveHandler.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -55,9 +52,6 @@ function setupTestDb(): Database {
       ON rag_analyses(source_url)
       WHERE source_url IS NOT NULL AND source_url != '';
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

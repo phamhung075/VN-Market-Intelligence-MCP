@@ -14,9 +14,6 @@ import { Database } from "bun:sqlite";
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { handleFetchStatus } from "../interface/mcp/routes/fetchStatusHandler.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -57,9 +54,6 @@ function makeDb(): Database {
       duration_ms INTEGER DEFAULT 0
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

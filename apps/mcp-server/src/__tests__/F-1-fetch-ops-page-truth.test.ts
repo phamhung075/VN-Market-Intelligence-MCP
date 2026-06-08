@@ -18,9 +18,6 @@ import {
   computeFreshnessStatus,
 } from "../interface/mcp/routes/fetchStatusHandler.js";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal schema setup (rag_analyses + bctc_vps_queue)
@@ -60,9 +57,6 @@ function setupDb(): Database {
       circuit_breaker_state TEXT
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

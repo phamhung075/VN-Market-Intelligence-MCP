@@ -30,9 +30,6 @@
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { backfillBctcTables } from "../application/usecases/bctcBatchTableBackfillJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -47,9 +44,6 @@ function makeDb(
   }[],
 ): Database {
   const db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   db.prepare(`
     CREATE TABLE financial_reports (
       id TEXT PRIMARY KEY,
@@ -67,9 +61,6 @@ function makeDb(
   for (const r of rows) {
     insertFr.run(r.id, r.action_code, r.period_year, r.period_quarter, r.pdf_path);
   }
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -300,9 +291,6 @@ describe("bctcBatchTableBackfillJob", () => {
 
   it("TC8: invalid UUID row → error status, fetch never called", async () => {
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.prepare(`
       CREATE TABLE financial_reports (
         id TEXT PRIMARY KEY,

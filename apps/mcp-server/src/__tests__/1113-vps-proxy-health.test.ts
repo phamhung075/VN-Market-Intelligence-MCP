@@ -10,9 +10,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, test, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { logVpsPush, getVpsProxyHealth, purgeOldVpsPushLogs } from "../../src/infrastructure/db/vpsPushLogStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function createTestDb(): Database {
   const db = new Database(":memory:");
@@ -49,9 +46,6 @@ function createTestDb(): Database {
     }
   }
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

@@ -23,9 +23,6 @@ import {
 } from "../infrastructure/notifiers/telegramCommands.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import type { PeriodicSummary } from "../application/usecases/generatePeriodicSummary.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -112,9 +109,6 @@ function makeDb(): Database {
     );
   `);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -493,9 +487,6 @@ describe("Task 214 — error safety", () => {
   it("returns CommandResult (not null) even if DB table is missing", async () => {
     // Drop the watchlist table to simulate a broken DB state
     const brokenDb = new Database(":memory:");
-    initNewsTables(brokenDb);
-    initMarketDataTables(brokenDb);
-    initSystemTables(brokenDb);
     brokenDb.exec("PRAGMA journal_mode = WAL");
     // No tables created — all queries will fail
 

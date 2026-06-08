@@ -16,9 +16,6 @@ import { describe, it, expect, afterEach } from "bun:test";
 import { CircuitBreaker } from "../infrastructure/circuitBreaker.js";
 import { breakers } from "../infrastructure/circuitBreakerRegistry.js";
 import { scheduleForeignFlowCbReset } from "../scheduler/jobs.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -21,9 +21,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { VnstockTradingStats } from "../domain/models/vnstockTypes.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -64,9 +61,6 @@ function createTestDb(): Database {
       UNIQUE(code, data_type)
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -222,9 +216,6 @@ describe("FIX-B-1 — market_cap_bn schema migration + persist", () => {
   it("migration adds market_cap_bn to legacy DB that lacks the column", () => {
     // Create a DB without market_cap_bn to simulate a legacy production DB
     const legacyDb = new Database(":memory:");
-    initNewsTables(legacyDb);
-    initMarketDataTables(legacyDb);
-    initSystemTables(legacyDb);
     legacyDb.exec(`
       CREATE TABLE vnstock_trading_stats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

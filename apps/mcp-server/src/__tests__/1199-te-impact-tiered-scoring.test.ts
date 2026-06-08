@@ -2,9 +2,6 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { scoreMacroIndicator, MacroIndicatorTier } from "../domain/services/macroIndicatorScorer.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1199 — Trading Economics tiered impact scoring", () => {
   // ── Tier 1: VN-direct indicators → 8-10 ───────────────────────────────────

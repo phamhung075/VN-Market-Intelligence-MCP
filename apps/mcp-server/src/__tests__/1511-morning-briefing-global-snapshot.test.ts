@@ -13,9 +13,6 @@
 
 import { describe, test, expect, beforeEach } from "bun:test";
 import Database from "bun:sqlite";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── Minimal DDL (all tables assembleBriefing queries) ───────────────────────
 function setupDb(db: Database): void {
@@ -59,9 +56,6 @@ describe("1511 briefing-global-snapshot", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     setupDb(db);
   });
 

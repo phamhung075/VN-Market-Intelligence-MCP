@@ -10,9 +10,6 @@
 import { describe, it, expect, mock } from "bun:test";
 import { walCheckpointAlert } from "../scheduler/walCheckpointAlert.js";
 import { checkWalFileSize } from "../infrastructure/db/checkpoint.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // A) walCheckpointAlert — two-tier threshold tests

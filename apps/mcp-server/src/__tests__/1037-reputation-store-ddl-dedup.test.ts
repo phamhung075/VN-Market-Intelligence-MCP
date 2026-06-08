@@ -13,9 +13,6 @@ import { describe, it, expect } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import * as reputationStore from "../infrastructure/db/reputationStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1037 — reputation_scores DDL dedup", () => {
   it("reputationStore.ts no longer exports initReputationTable", () => {

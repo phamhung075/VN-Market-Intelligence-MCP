@@ -15,9 +15,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { classifyDeviation } from "../domain/services/macroThresholds";
 import { formatBriefingMessage } from "../scheduler/briefings/morningBriefingJob";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── AC-1: alreadySentToday query contract ─────────────────────────────────────
 // The SQL at intelligenceCycleJob.ts:630 must NOT include "AND notified_telegram = 1".

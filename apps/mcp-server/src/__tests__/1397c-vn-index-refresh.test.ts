@@ -22,9 +22,6 @@
 
 import { describe, it, expect, mock, beforeEach } from "bun:test";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mutable delegate state

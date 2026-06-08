@@ -33,9 +33,6 @@ import {
   type EscalationCallback,
 } from "../scheduler/system/freshnessSlaMonitorJob.js";
 import type { SignalType } from "../domain/services/freshnessSlaChecker.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 /** No-op WORK channel sender — avoids real Telegram calls in tests. */
 const noopSendWork = async (_msg: string): Promise<void> => { /* no-op */ };
@@ -85,9 +82,6 @@ function makeDb(): Database {
       UNIQUE(signal_type, breached_at)
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

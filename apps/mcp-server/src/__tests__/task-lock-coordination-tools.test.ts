@@ -16,9 +16,6 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   ensureCoordinationTable,
   claimTask,
@@ -38,9 +35,6 @@ let testDb: Database;
 beforeEach(() => {
   _resetCoordinationDbState();
   testDb = new Database(":memory:");
-  initNewsTables(testDb);
-  initMarketDataTables(testDb);
-  initSystemTables(testDb);
   testDb.exec("PRAGMA journal_mode = WAL");
   ensureCoordinationTable(testDb);
   _injectCoordinationDb(testDb);

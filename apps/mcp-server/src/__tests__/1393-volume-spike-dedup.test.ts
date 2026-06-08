@@ -21,9 +21,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { shouldSkipAlreadyNotifiedAlert } from "../infrastructure/db/alertStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── Minimal in-memory DB fixture ───────────────────────────────────────────
 
@@ -46,9 +43,6 @@ function buildDb(): Database {
       notified_telegram INTEGER NOT NULL DEFAULT 0
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

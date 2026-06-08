@@ -16,9 +16,6 @@ import {
 
 // migrateUnknownStockCodes is not yet exported — RED test for Bug 1313 Fix 2.
 import { migrateUnknownStockCodes } from "../infrastructure/db/agentSignalStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Minimal schema helper ────────────────────────────────────────────────────
 
@@ -41,9 +38,6 @@ function createTestDb(): Database {
       chain_depth   INTEGER NOT NULL DEFAULT 0
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

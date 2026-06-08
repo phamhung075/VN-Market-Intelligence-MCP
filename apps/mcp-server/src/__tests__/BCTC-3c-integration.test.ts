@@ -21,9 +21,6 @@
 Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -10,9 +10,6 @@ import { Database } from "bun:sqlite";
 // (will fail until kinhDichWrapper.ts is created)
 // DEPRECATED-TEST: testing the deprecated wrapper — import path updated post-G5a move
 import { appendKinhDich } from "../infrastructure/_deprecated/kinhDichWrapper.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers: build an in-memory SQLite DB with kinhdich_readings seed data
@@ -67,9 +64,6 @@ function buildTestDb(rows?: Array<{
     }
   }
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -162,9 +156,6 @@ describe("Task 1077 — appendKinhDich", () => {
   it("AC-E6-3: does not propagate exceptions, returns fallback on error", async () => {
     // Pass a broken db (no tables at all) to force a query error
     const brokenDb = new Database(":memory:");
-    initNewsTables(brokenDb);
-    initMarketDataTables(brokenDb);
-    initSystemTables(brokenDb);
     // No tables created — any query will throw "no such table"
 
     const base = "base output for error test";

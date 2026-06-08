@@ -13,9 +13,6 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 import { runOhlcvStalenessCheck } from "../scheduler/market-data/ohlcvStalenessCheckJob.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helpers
@@ -40,9 +37,6 @@ function makeDb(): Database {
       volume REAL
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

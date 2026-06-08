@@ -15,9 +15,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import type { Alert } from "../domain/services/alertGenerator.js";
 import type { SscDocument } from "../infrastructure/fetchers/ssc.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared no-op stubs (prevent real SQLite / HTTP)

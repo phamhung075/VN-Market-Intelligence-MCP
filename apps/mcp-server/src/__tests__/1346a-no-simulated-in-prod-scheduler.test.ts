@@ -29,9 +29,6 @@ import { join } from "node:path";
 // could be intercepted by mock.module from test 1318 in the same Bun process.
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import * as loggerModule from "../infrastructure/logger.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal in-memory DB (mirrors 1318 setup)
@@ -115,9 +112,6 @@ function setupTestDb(): Database {
       detected_at     TEXT NOT NULL
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

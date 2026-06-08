@@ -9,9 +9,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { Database } from "bun:sqlite";
 import { describe, it, expect, beforeEach } from "bun:test";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   synthesizeChain,
   type ChainLink,
@@ -53,9 +50,6 @@ function makeRawDb(): Database {
     CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id);
     CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref);
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

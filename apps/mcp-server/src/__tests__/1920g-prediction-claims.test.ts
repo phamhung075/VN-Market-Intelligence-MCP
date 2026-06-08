@@ -12,18 +12,12 @@ import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import { mapChainAction, isoDatePlusDays } from "../scheduler/news-analysis/intelligenceCycleJob.js";
 import { runChainSynthesis } from "../scheduler/news-analysis/intelligenceCycleJob.js";
 import type { PredictionClaimInput } from "../infrastructure/db/predictionClaimStore.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: build a minimal in-memory DB with prediction_claims table
 // ─────────────────────────────────────────────────────────────────────────────
 function makeMemDb(): Database {
   const db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   db.exec(`
     CREATE TABLE IF NOT EXISTS prediction_claims (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,9 +37,6 @@ function makeMemDb(): Database {
       UNIQUE(stock, claim_text, resolution_date)
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -108,9 +99,6 @@ describe("Task 1920g — runChainSynthesis prediction claim wiring", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     // Full agent_signals schema — matches production columns for postSignal + getChainFindings
     db.exec(`
       CREATE TABLE IF NOT EXISTS agent_signals (

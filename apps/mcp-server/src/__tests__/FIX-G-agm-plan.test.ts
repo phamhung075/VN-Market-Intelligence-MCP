@@ -27,9 +27,6 @@ import {
 import { queryAgmPlan } from "../interface/mcp/tools/financial-reports/agmPlanTools.js";
 import { runAgmPlanJob } from "../scheduler/financial-reports/agmPlanJob.js";
 import { fetchAgmPlan } from "../infrastructure/fetchers/agmPlanFetcher.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -37,13 +34,7 @@ import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function freshDb(): Database {
   const db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   initAgmPlanTables(db);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -56,9 +47,6 @@ const NOW = "2026-06-04T10:00:00.000Z";
 describe("FIX-G — initAgmPlanTables", () => {
   it("is idempotent — calling twice does not throw", () => {
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     expect(() => initAgmPlanTables(db)).not.toThrow();
     expect(() => initAgmPlanTables(db)).not.toThrow();
     db.close();

@@ -14,9 +14,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   insertEvidenceFragment,
   getEvidenceFragments,
@@ -66,9 +63,6 @@ function createEvidenceSchema(db: Database): void {
 function makeDb(): Database {
   const db = new Database(":memory:");
   createEvidenceSchema(db);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

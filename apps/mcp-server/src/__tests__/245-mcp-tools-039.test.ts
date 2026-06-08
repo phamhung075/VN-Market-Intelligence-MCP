@@ -9,9 +9,6 @@ import { Database } from "bun:sqlite";
 import { registerLegalRiskTools } from "../interface/mcp/tools/sector/legalRiskTools.js";
 import { registerPolicyTools } from "../interface/mcp/tools/macro/policyTools.js";
 import { registerBondMaturityTools } from "../interface/mcp/tools/sector/bondMaturityTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test helpers
@@ -50,9 +47,6 @@ function makeTestDb(): Database {
       embedding_id TEXT
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

@@ -15,9 +15,6 @@ import {
 } from "../domain/services/correlationCalculator.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerCorrelationTools } from "../interface/mcp/tools/sector/correlationTools.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

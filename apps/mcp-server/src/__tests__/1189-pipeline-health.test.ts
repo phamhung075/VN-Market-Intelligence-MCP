@@ -10,9 +10,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { getPipelineHealth } from "../application/usecases/getPipelineHealth.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Fixed clock ────────────────────────────────────────────────────────────────
 // 2026-04-13 10:00:00 ICT  =  2026-04-13 03:00:00 UTC
@@ -25,9 +22,6 @@ const NOW_MS = Date.parse("2026-04-13T03:00:00.000Z");
 // ── Minimal schema builder ────────────────────────────────────────────────────
 function buildDb(): Database {
   const db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   db.exec(`
     CREATE TABLE rag_analyses (
       id         TEXT PRIMARY KEY,
@@ -43,9 +37,6 @@ function buildDb(): Database {
       pushed_at TEXT NOT NULL
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -106,9 +97,6 @@ describe("getPipelineHealth", () => {
 
   it("returns vpsPushLast24h=null when vps_push_log table does not exist", async () => {
     const db = new Database(":memory:");
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     db.exec(`CREATE TABLE rag_analyses (
       id TEXT PRIMARY KEY, created_at TEXT NOT NULL, source_url TEXT
     )`);

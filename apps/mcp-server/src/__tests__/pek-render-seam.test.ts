@@ -25,9 +25,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { Database as BunDatabase } from "bun:sqlite";
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   handleBctcInspectOcr,
   handleBctcInspectTable,
@@ -57,9 +54,6 @@ const NULL_PATH_REPORT_ID = "66666666-7777-8888-9999-aaaaaaaaaaaa";
 function openTestDb(): Database {
   const db = new BunDatabase(":memory:");
   initFinancialReportsTables(db);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

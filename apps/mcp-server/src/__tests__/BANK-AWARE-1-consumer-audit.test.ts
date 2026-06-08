@@ -44,9 +44,6 @@ import {
 } from "../application/usecases/computeBctcEval.js";
 import type { MagnitudeRow } from "../domain/services/financial-reports/bctcMagnitudeValidator.js";
 import type { BctcEvalThresholds } from "../domain/services/bctcEvalDetectors.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── ACB-pattern constants (from FU-TRUST-REFRESH verified values) ─────────────
 // ACB Q1-2025: domain="banking", all balance rows in statement_section='general'
@@ -141,9 +138,6 @@ function makeFullToolsDb(): Database {
     UNIQUE(report_id, unit_id)
   )`);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -198,9 +192,6 @@ function makeEvalDb(): Database {
     balance_pass INTEGER NOT NULL DEFAULT 0
   )`);
 
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

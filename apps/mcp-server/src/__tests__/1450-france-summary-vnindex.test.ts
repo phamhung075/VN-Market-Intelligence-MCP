@@ -17,9 +17,6 @@ import {
 } from "../scheduler/briefings/franceSummaryJob.js";
 import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js";
 import type { VnIndexSnapshot } from "../application/usecases/assembleEveningSummary.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── minimal in-memory DB ──────────────────────────────────────────────────────
 
@@ -54,9 +51,6 @@ function setupTestDb(): Database {
       PRIMARY KEY (code, date)
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

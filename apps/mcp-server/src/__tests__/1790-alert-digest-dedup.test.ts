@@ -34,16 +34,10 @@ function makeCronDb(withSuccessRow: boolean): Database {
       VALUES ('alertDigestJob', datetime('now'), 'success')
     `);
   }
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
 import type { AlertDigest } from "../application/usecases/assembleAlertDigest.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function makeDigestFn(counter: { calls: number }): () => Promise<AlertDigest> {
   return () => {

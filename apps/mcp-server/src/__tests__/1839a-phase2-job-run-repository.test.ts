@@ -11,9 +11,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { SqliteJobRunRepository } from "../infrastructure/db/repositories/SqliteJobRunRepository.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Minimal schema for cron_job_runs — mirrors the DDL in schema.ts
 const CREATE_CRON_JOB_RUNS = `
@@ -31,13 +28,7 @@ const CREATE_CRON_JOB_RUNS = `
 
 function makeDb(): Database {
   const db = new Database(":memory:");
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   db.exec(CREATE_CRON_JOB_RUNS);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
@@ -48,18 +39,12 @@ function makeDb(): Database {
 describe("Task 1839a — SqliteJobRunRepository: missing table", () => {
   it("getLastRuns() returns empty array when table does not exist", () => {
     const db = new Database(":memory:"); // no schema
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     const repo = new SqliteJobRunRepository(db);
     expect(repo.getLastRuns("someJob", 5)).toEqual([]);
   });
 
   it("recordRun() does not throw when table is missing", () => {
     const db = new Database(":memory:"); // no schema
-    initNewsTables(db);
-    initMarketDataTables(db);
-    initSystemTables(db);
     const repo = new SqliteJobRunRepository(db);
     expect(() =>
       repo.recordRun({

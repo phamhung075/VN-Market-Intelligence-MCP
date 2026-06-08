@@ -10,9 +10,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── helpers to set up an isolated in-memory DB ──────────────────────────────
 
@@ -32,9 +29,6 @@ function buildInMemoryDb(): Database {
     CREATE INDEX idx_daily_ohlcv_code_date
       ON daily_ohlcv(code, date DESC);
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

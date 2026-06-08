@@ -28,9 +28,6 @@ import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   parsePdfFilenameTokens,
   backfillBctcPdfPaths,
@@ -101,9 +98,6 @@ function setupTestDb(): Database {
       quarantined        INTEGER NOT NULL DEFAULT 0
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

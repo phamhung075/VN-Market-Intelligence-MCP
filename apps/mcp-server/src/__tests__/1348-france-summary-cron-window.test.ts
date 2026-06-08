@@ -12,9 +12,6 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runFranceSummary } from "../scheduler/briefings/franceSummaryJob.js";
 import { CRONS } from "../scheduler/jobs.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helpers (reused verbatim from 1344-france-summary-stale-alerts.test.ts)
@@ -87,9 +84,6 @@ function makeDb(): Database {
       sent_at      TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

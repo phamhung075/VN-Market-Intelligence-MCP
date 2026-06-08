@@ -13,9 +13,6 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   extractCategoryFromText,
   isDuplicateReport,
@@ -45,9 +42,6 @@ function makeDb(): Database {
     CREATE INDEX IF NOT EXISTS idx_telegram_reports_status  ON telegram_reports(status);
     CREATE INDEX IF NOT EXISTS idx_telegram_reports_created ON telegram_reports(created_at);
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 

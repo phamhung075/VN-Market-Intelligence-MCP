@@ -2,9 +2,6 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, test, expect } from "bun:test";
 import { classifySentiment } from "../domain/services/sentimentClassifier.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1197 — covered-range dedup in classifySentiment()", () => {
   test("AC-1: bullish headline 'lãi suất giảm mạnh, kinh tế phục hồi' → NOT bearish (should be neutral or bullish)", () => {

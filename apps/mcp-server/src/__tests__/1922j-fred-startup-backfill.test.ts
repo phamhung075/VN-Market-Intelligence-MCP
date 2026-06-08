@@ -13,9 +13,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { fetchFredEffrIorb } from "../infrastructure/fetchers/fredEffrIorb.js";
-import { initNewsTables } from "../infrastructure/db/schema-news.js";
-import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
-import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── DDL (mirror of schema-macro.ts subset) ────────────────────────────────────
 
@@ -31,9 +28,6 @@ function buildDb(): Database {
       UNIQUE (series, date)
     );
   `);
-  initNewsTables(db);
-  initMarketDataTables(db);
-  initSystemTables(db);
   return db;
 }
 
