@@ -6,7 +6,7 @@
     {
       "code": "VIC",
       "price": 195000,
-      "daily_change_pct": -5.80,
+      "daily_change_pct": -5.8,
       "yoy_change_pct": -15.23,
       "volume": 3271900,
       "vs_avg_pct": 91.8,
@@ -81,7 +81,7 @@
     {
       "code": "EIB",
       "price": 20700,
-      "daily_change_pct": -1.90,
+      "daily_change_pct": -1.9,
       "yoy_change_pct": -9.36,
       "volume": 8234100,
       "vs_avg_pct": 78.9,
@@ -96,7 +96,7 @@
     {
       "code": "FPT",
       "price": 72900,
-      "daily_change_pct": -2.80,
+      "daily_change_pct": -2.8,
       "yoy_change_pct": -5.18,
       "volume": 1087650,
       "vs_avg_pct": 98.3,
@@ -153,5 +153,11 @@
       "anomaly": true,
       "anomaly_reason": "Real estate counter-trend; only sector stock up"
     }
-  ]
+  ],
+  "_processed": {
+    "fingerprint": "5165e41db2a93b3103adf82f19478e538c04b7380b93d7857e1fe1060666f910",
+    "processedAt": "2026-06-08T17:16:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }
