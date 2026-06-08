@@ -238,6 +238,12 @@
       "halfLifeDays": 7,
       "maxBoost": 0.3
     },
+    "decayHalfLifeDays": {
+      "news":     2,
+      "macro":    7,
+      "filing":   30,
+      "analysis": 14
+    },
     "maxDistance": 0.9
   },
 

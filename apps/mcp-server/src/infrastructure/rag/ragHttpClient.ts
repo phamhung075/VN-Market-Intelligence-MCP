@@ -5,9 +5,14 @@
  * Used when RAG_SERVICE_URL env var is set.
  *
  * Endpoints:
- *   POST /search  {query, limit, decay_half_life_days, max_distance, level?, action_code?}
- *   POST /index   {id, content, tags, level?, title?, summary?, action_code?}
+ *   POST /search  {query, limit, decay_half_life_days, max_distance, level?, action_code?,
+ *                  ticker?, sector?, source_domain?, depth_tier?, doc_type?}
+ *   POST /index   {id, content, tags, level?, title?, summary?, action_code?,
+ *                  ticker?, sector?, source_domain?, depth_tier?, doc_type?,
+ *                  published_at?, confidence?, impact_score?}
  *   GET  /health  → {status: "ok", service: "rag-service"}
+ *
+ * DFR-P1-MCP FR-3: all new fields are optional — existing callers compile unchanged.
  */
 
 const RAG_SERVICE_URL = Bun.env.RAG_SERVICE_URL ?? "http://localhost:5002";
@@ -19,6 +24,12 @@ export interface RagSearchRequest {
   max_distance?: number;
   level?: string;
   action_code?: string;
+  // DFR-P1-MCP FR-3: new optional filter fields (SearchRequest extension)
+  ticker?: string;
+  sector?: string;
+  source_domain?: string;
+  depth_tier?: string;
+  doc_type?: string;
 }
 
 export interface RagSearchResultDTO {
@@ -31,6 +42,15 @@ export interface RagSearchResultDTO {
   created_at: string;
   distance: number;
   recency_score: number;
+  // DFR-P1-MCP FR-3: new optional metadata fields echoed back from rag-service
+  ticker?: string;
+  sector?: string;
+  source_domain?: string;
+  depth_tier?: string;
+  doc_type?: string;
+  published_at?: string;
+  confidence?: number;
+  impact_score?: number;
 }
 
 export interface RagSearchResponse {
@@ -46,6 +66,15 @@ export interface RagIndexRequest {
   title?: string;
   summary?: string;
   action_code?: string;
+  // DFR-P1-MCP FR-3: new optional metadata fields (IndexRequest extension)
+  ticker?: string;
+  sector?: string;
+  source_domain?: string;
+  depth_tier?: string;
+  doc_type?: string;
+  published_at?: string;
+  confidence?: number;
+  impact_score?: number;
 }
 
 export interface RagIndexResponse {
@@ -63,6 +92,9 @@ export interface RagHealthResponse {
  * Input shape for inserting a new analysis entry into the RAG service.
  * Previously defined in retriever.ts; moved here as ragHttpClient is the
  * canonical HTTP boundary for the rag-service (G5b, P2-F).
+ *
+ * DFR-P1-MCP FR-5: extended with optional metadata fields. All new fields
+ * are optional so existing callers compile without changes (NFR-2).
  */
 export interface AnalysisInput {
   /** Unique identifier for this entry */
@@ -77,6 +109,23 @@ export interface AnalysisInput {
   tags: string[];
   /** Stock ticker if this is an action-level entry (e.g. "VCB") */
   actionCode?: string;
+  // DFR-P1-MCP FR-5: new optional metadata fields
+  /** Document type: "news" | "filing" | "macro" | "analysis" */
+  doc_type?: string;
+  /** Depth tier: "shallow" | "deep" */
+  depth_tier?: string;
+  /** Source domain derived from article URL hostname (e.g. "cafef.vn") */
+  source_domain?: string;
+  /** ISO timestamp of original article publication */
+  published_at?: string;
+  /** Confidence score 0.0–1.0 */
+  confidence?: number;
+  /** Impact score 0–10 */
+  impact_score?: number;
+  /** Primary ticker extracted from article (e.g. "VCB") */
+  ticker?: string;
+  /** Sector for the ticker (e.g. "Banking") */
+  sector?: string;
 }
 
 /**

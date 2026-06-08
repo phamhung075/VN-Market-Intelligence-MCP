@@ -429,6 +429,23 @@ export async function fetchParseAndStoreBctc(
   const inserter = insertAnalysisFn ?? (await getDefaultInsertAnalysis());
 
   try {
+    // DFR-P1-MCP FR-5: derive sector from ticker via mcp.config.json market.referenceStocks
+    let sector = "";
+    try {
+      const { loadMcpConfig } = await import("../../infrastructure/config.js");
+      const cfg = loadMcpConfig();
+      const refStocks = (cfg.market as unknown as Record<string, unknown>)?.referenceStocks as
+        Record<string, string[]> | undefined;
+      if (refStocks) {
+        for (const [sectorName, tickers] of Object.entries(refStocks)) {
+          if (Array.isArray(tickers) && tickers.includes(actionCode.toUpperCase())) {
+            sector = sectorName;
+            break;
+          }
+        }
+      }
+    } catch { /* sector lookup best-effort */ }
+
     const analysisEntry: AnalysisInput = {
       id: randomUUID(),
       level: "action",
@@ -436,6 +453,15 @@ export async function fetchParseAndStoreBctc(
       summary: buildAnalysisSummary(report),
       tags: ["bctc", "financial_report", actionCode.toLowerCase(), quarter.toLowerCase()],
       actionCode,
+      // DFR-P1-MCP FR-5: new metadata fields for BCTC filing
+      doc_type: "filing",
+      depth_tier: "shallow",
+      ticker: actionCode.toUpperCase(),
+      sector,
+      source_domain: "bctc.ssi.com.vn",
+      published_at: doc.publishedAt ?? "",
+      confidence: report.source.extractionConfidence ?? 0,
+      impact_score: 0,
     };
 
     await inserter(analysisEntry);
@@ -458,6 +484,7 @@ export async function fetchParseAndStoreBctc(
  * Lazily build the real insertAnalysis function.
  * G5b (P2-F): delegates to ragIndex (rag-service HTTP /index at port 5002).
  * Deferred to avoid network calls when the caller provides a mock.
+ * DFR-P1-MCP FR-5: passes all new metadata fields from AnalysisInput.
  */
 async function getDefaultInsertAnalysis(): Promise<InsertAnalysisFn> {
   const { ragIndex } = await import("../../infrastructure/rag/ragHttpClient.js");
@@ -469,7 +496,16 @@ async function getDefaultInsertAnalysis(): Promise<InsertAnalysisFn> {
       level: entry.level,
       title: entry.title,
       summary: entry.summary,
-      ...(entry.actionCode !== undefined ? { action_code: entry.actionCode } : {}),
+      ...(entry.actionCode    !== undefined ? { action_code:    entry.actionCode }    : {}),
+      // DFR-P1-MCP FR-5: new metadata passthrough
+      ...(entry.doc_type      !== undefined ? { doc_type:      entry.doc_type }      : {}),
+      ...(entry.depth_tier    !== undefined ? { depth_tier:    entry.depth_tier }    : {}),
+      ...(entry.source_domain !== undefined ? { source_domain: entry.source_domain } : {}),
+      ...(entry.published_at  !== undefined ? { published_at:  entry.published_at }  : {}),
+      ...(entry.confidence    !== undefined ? { confidence:    entry.confidence }    : {}),
+      ...(entry.impact_score  !== undefined ? { impact_score:  entry.impact_score }  : {}),
+      ...(entry.ticker        !== undefined ? { ticker:        entry.ticker }        : {}),
+      ...(entry.sector        !== undefined ? { sector:        entry.sector }        : {}),
     });
   };
 }

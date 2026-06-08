@@ -239,6 +239,30 @@ export interface AlertQualityConfig {
   macroCooldownMinutes: number;
 }
 
+/**
+ * DFR-P1-MCP / FR-4: Per-doc_type temporal-decay half-life map.
+ * Values are in days and are read at runtime from mcp.config.json.
+ * Keys: "news" | "macro" | "filing" | "analysis"
+ */
+export interface RagDecayHalfLifeDaysConfig {
+  news: number;
+  macro: number;
+  filing: number;
+  analysis: number;
+}
+
+/** RAG retrieval configuration (rag block in mcp.config.json). */
+export interface RagConfig {
+  temporalDecay: {
+    enabled: boolean;
+    halfLifeDays: number;
+    maxBoost: number;
+  };
+  /** Per-doc_type temporal-decay half-life in days. DFR-P1-MCP FR-4. */
+  decayHalfLifeDays: RagDecayHalfLifeDaysConfig;
+  maxDistance: number;
+}
+
 export interface McpConfig {
   server: ServerConfig;
   data: DataConfig;
@@ -257,6 +281,8 @@ export interface McpConfig {
   alertQuality: AlertQualityConfig;
   /** Feature flags for toggling infrastructure behaviour. Sprint 056. */
   features: FeaturesConfig;
+  /** RAG retrieval configuration. DFR-P1-MCP FR-4. */
+  rag: RagConfig;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -621,6 +647,27 @@ export function loadMcpConfig(): McpConfig {
         disableSscPolling: boolVal(ft, "disableSscPolling", true),
         enableLocalBctcFetch,
       } satisfies FeaturesConfig;
+    })(),
+    // DFR-P1-MCP / FR-4: RAG per-doc_type decay config.
+    // Falls back to safe defaults when the block is absent (forward-compat).
+    rag: (() => {
+      const r = (get(f, "rag") ?? {}) as Record<string, unknown>;
+      const td = (r["temporalDecay"] ?? {}) as Record<string, unknown>;
+      const dhl = (r["decayHalfLifeDays"] ?? {}) as Record<string, unknown>;
+      return {
+        temporalDecay: {
+          enabled: boolVal(td, "enabled", true),
+          halfLifeDays: numVal(td, "halfLifeDays", 7),
+          maxBoost: numVal(td, "maxBoost", 0.3),
+        },
+        decayHalfLifeDays: {
+          news:     numVal(dhl, "news",     2),
+          macro:    numVal(dhl, "macro",    7),
+          filing:   numVal(dhl, "filing",   30),
+          analysis: numVal(dhl, "analysis", 14),
+        },
+        maxDistance: numVal(r, "maxDistance", 0.9),
+      } satisfies RagConfig;
     })(),
   };
 }

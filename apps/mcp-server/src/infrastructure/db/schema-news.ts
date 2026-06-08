@@ -56,6 +56,13 @@ export function initNewsTables(db: Database): void {
   // Existing rows get NULL. New rows stamped by pollNews / analysis write paths.
   try { db.exec("ALTER TABLE rag_analyses ADD COLUMN data_env TEXT"); } catch { /* already exists */ }
 
+  // ── DFR-P1-MCP / FR-6: body_text column on rag_analyses ──────────────────
+  // Phase 2 deep-fetch executors will populate this column. Phase 1 adds the
+  // column additively (nullable, NULL for all existing rows) so the ALTER TABLE
+  // path is exercised and verified before Phase 2 write paths are implemented.
+  // Idempotent: guarded ALTER TABLE (try/catch on column-exists error).
+  try { db.exec("ALTER TABLE rag_analyses ADD COLUMN body_text TEXT"); } catch { /* already exists */ }
+
   // ── Agent Signal Bus (Task 242) ────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS agent_signals (

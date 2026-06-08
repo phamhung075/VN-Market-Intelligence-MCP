@@ -446,10 +446,15 @@ async function defaultRagRetriever(
   options?: { k?: number },
 ): Promise<SearchResult[]> {
   // G5b (P2-F): route through ragHttpClient → rag-service HTTP (port 5002)
+  // DFR-P1-MCP FR-4: pass decay_half_life_days for "news" doc_type from config
   try {
     const { ragSearch } = await import("../../infrastructure/rag/ragHttpClient.js");
+    const { loadMcpConfig } = await import("../../infrastructure/config.js");
+    const cfg = loadMcpConfig();
+    const decayHalfLifeDays = cfg.rag?.decayHalfLifeDays?.news ?? 2;
     const response = await ragSearch({
       query,
+      decay_half_life_days: decayHalfLifeDays,
       ...(options?.k !== undefined ? { limit: options.k } : {}),
     });
     return response.results.map((r) => ({
@@ -600,6 +605,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   const db = options.db ?? getDb();
   const retriever: RagRetriever = options.ragRetriever ?? defaultRagRetriever;
   // Task 1840a / G5b (P2-F): resolve RAG insert function — default routes via ragHttpClient
+  // DFR-P1-MCP FR-5: pass new metadata fields (doc_type, depth_tier, source_domain, etc.)
   const ragInsertFn: InsertAnalysisFn = options.ragInsert ?? (async (entry) => {
     const { ragIndex } = await import("../../infrastructure/rag/ragHttpClient.js");
     await ragIndex({
@@ -610,6 +616,15 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
       title: entry.title,
       summary: entry.summary,
       ...(entry.actionCode !== undefined ? { action_code: entry.actionCode } : {}),
+      // DFR-P1-MCP FR-5: new metadata passthrough
+      ...(entry.doc_type       !== undefined ? { doc_type:       entry.doc_type }       : {}),
+      ...(entry.depth_tier     !== undefined ? { depth_tier:     entry.depth_tier }     : {}),
+      ...(entry.source_domain  !== undefined ? { source_domain:  entry.source_domain }  : {}),
+      ...(entry.published_at   !== undefined ? { published_at:   entry.published_at }   : {}),
+      ...(entry.confidence     !== undefined ? { confidence:     entry.confidence }     : {}),
+      ...(entry.impact_score   !== undefined ? { impact_score:   entry.impact_score }   : {}),
+      ...(entry.ticker         !== undefined ? { ticker:         entry.ticker }         : {}),
+      ...(entry.sector         !== undefined ? { sector:         entry.sector }         : {}),
     });
   });
 
@@ -937,15 +952,44 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
       // Task 1840a: embed newly inserted article into LanceDB (non-fatal).
       // Awaited so the embed completes within the same async call as the SQLite
       // insert — mirrors the pattern in fetchParseAndStoreBctc.ts (step 4).
+      // DFR-P1-MCP FR-5: pass new metadata fields (doc_type, depth_tier, source_domain, etc.)
       try {
         const { randomUUID } = await import("node:crypto");
         const level = entry.affectedActions.length > 0 ? "action" : "domain";
-        const actionCode = entry.affectedActions[0]?.toLowerCase();
+        // First affected action is the primary ticker (uppercase); use for actionCode
+        const primaryTickerUpper = entry.affectedActions[0]?.toUpperCase();
+        const actionCode = primaryTickerUpper?.toLowerCase();
         const tags = [
           "news",
           (item.source ?? "unknown").toLowerCase(),
           ...entry.affectedActions.map((c) => c.toLowerCase()),
         ];
+        // Derive source_domain from article URL — E1: guard parse failure
+        let source_domain = "";
+        try {
+          if (entry.sourceUrl) {
+            source_domain = new URL(entry.sourceUrl).hostname;
+          }
+        } catch { /* malformed URL — use empty string */ }
+        // Derive sector from ticker via mcp.config.json market.referenceStocks
+        // DFR-P1-MCP FR-5: lookupSectorForTicker — inline pure lookup
+        let sector = "";
+        if (primaryTickerUpper) {
+          try {
+            const { loadMcpConfig } = await import("../../infrastructure/config.js");
+            const cfg = loadMcpConfig();
+            const refStocks = (cfg.market as unknown as Record<string, unknown>)?.referenceStocks as
+              Record<string, string[]> | undefined;
+            if (refStocks) {
+              for (const [sectorName, tickers] of Object.entries(refStocks)) {
+                if (Array.isArray(tickers) && tickers.includes(primaryTickerUpper)) {
+                  sector = sectorName;
+                  break;
+                }
+              }
+            }
+          } catch { /* sector lookup best-effort */ }
+        }
         await ragInsertFn({
           id: randomUUID(),
           level,
@@ -953,6 +997,15 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
           summary: entry.summary,
           tags,
           ...(actionCode !== undefined && { actionCode }),
+          // DFR-P1-MCP FR-5: new metadata fields
+          doc_type: "news",
+          depth_tier: "shallow",
+          source_domain,
+          published_at: entry.publishedAt ?? "",
+          confidence: entry.confidence ?? 0,
+          impact_score: entry.impactScore ?? 0,
+          ticker: primaryTickerUpper ?? "",
+          sector,
         });
       } catch (err) {
         logger.warn("[pollNews] ragInsert failed (non-fatal)", {
