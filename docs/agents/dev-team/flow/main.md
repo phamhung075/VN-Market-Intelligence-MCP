@@ -1,4 +1,4 @@
-<!-- size-justification: 324L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). -->
+<!-- size-justification: 336L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
@@ -65,6 +65,7 @@ JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
 |---|---|---|
 | Cold start / cron tick | `preflight` | inline below |
 | HEAD.lock cleared / preflight pass | `drain-signals` | `drain-signals.md` (includes Step 0a-D: DASHBOARD.md cross-team drain) |
+| CI probe (after drain-signals) | `ci-health-probe` | `ci-health-probe.md` |
 | Pipeline resume (`in_progress`) | `pipeline-resume` | inline below |
 | FIX / direct task | `execute` | `execute-tier.md` |
 | Post-execution verification only | `post-cycle` | `post-cycle.md` |
@@ -147,6 +148,16 @@ else:
 Output: `pendingSignals[]` for Step 1, or empty.
 
 If empty AND `docs/data/orch/orch-state.json` `.task_board` empty AND no Telegram reports → JUMP TO `session-gate`.
+
+---
+
+<!-- jump:ci-health-probe -->
+## Step 0a.5 — CI Health Probe
+
+→ Run sub-flow: `docs/agents/dev-team/flow/ci-health-probe.md`
+
+Non-fatal: probe errors log and fall through. On RED HEAD: emits `ci_red` signal to `docs/signals/` (routed to PO in Step 1).
+`pendingSignals[]` is unchanged if CI is GREEN or probe skips — no signal appended.
 
 ---
 

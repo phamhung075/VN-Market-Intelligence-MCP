@@ -1,4 +1,4 @@
-<!-- size-justification: 124L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). CANON-SCRIPT 2026-06-07: scripts/agents-flow/drain-signals.js pointer (+3L). -->
+<!-- size-justification: 126L — signal drain SSOT (mandatory-persist guard, 0a-D cross-team inbox drain, 0a-0..3 fingerprint+route logic, routing table). All sections are load-bearing; no safe extraction without losing trigger→action traceability. BGFAN-1 2026-06-07: header comment added (+2L). CANON-SCRIPT 2026-06-07: scripts/agents-flow/drain-signals.js pointer (+3L). CI-HEALTH-FIX-BRIDGE 2026-06-08: ci_red routing row added (+2L). -->
 # Dev Team — Step 0a: Drain `docs/signals/`
 
 <!-- BGFAN-1: this file delegates spawn to drain-esc-dispatch.md (ESC-DISPATCH) which carries run_in_background=true. No direct Agent() call here. Canonical rule → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate -->
@@ -113,6 +113,7 @@ Delete `docs/signals/processed/` files with `processedAt` (field value) older th
 | `zone_missing_tier3` | `dev-team` | PO Step 0-SIG | payload = `{taskId, files, suggestedZone}` — PO opens zone-fix task next cycle |
 | `improvement_proposal_lane_b` | `po` | PO Step 0-SIG | payload = proposal doc path. PO triage-signals.md creates the SPRINT-S/M batch entry and routes through the standard po→ba→architect→pm→dev-*→qa chain. Scope field in proposal doc determines SPRINT-S vs SPRINT-M. `SELF_IMPROVE_AUTO_DISPATCH` is per-dispatch-path, default `false` per path until QA records GATE-PROOF-1..5 for that path (Phase 2 / SIG-IMPL-GATE — not implemented here). |
 | `repair_task_request` | `system-auditor` | PO Step 0-SIG | anomaly→task bridge; PO triage-signals.md is authoritative handler (creates {check_id}-FIX BACKLOG) |
+| `ci_red` | `ci-health-probe` | PO Step 0-SIG | CI workflow RED on origin/main HEAD; payload = {check_id, failing_jobs, head_sha}; PO creates deduped FIX task (VERIFICATION GATE: ci_green_on_subsequent_push) |
 | `esc-deep-dive-request` | `bctc-analyst` | ESC-DISPATCH | dev-team dispatches model=opus bctc-analyst deep-dive; guard released after spawn |
 | any other | any | PO Step 0-SIG | PO decides; unknown types logged + WORK notified |
 
