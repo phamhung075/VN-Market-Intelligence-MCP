@@ -1,5 +1,19 @@
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
 
+## c119 · 2026-06-08T18:35:01Z
+### Audit Run Tier-2 (18:35 UTC 2026-06-08)
+- Tier: 2 | Sources: 27 checked | VPS routes: 4 checked | DB spot checks: 2
+- Anomalies: 2 recurring (1 CRITICAL, 1 WARN) | 2 dedup-skipped for BUG
+- Status: DEGRADED
+- A-29 Cron fire gaps: all nominal (intelligenceCycleJob success 99.1%, bctcPdfPullJob 97.9%, all last_run recent)
+- B-12 SBV_FX stale 65min (>30min SLA, CRITICAL) — vn-sbv-fetch unhealthy (1h7m uptime); dedup-skip BUG (sau-c109-b12 from c112)
+- B-13 stale pending BCTC: 26 rows >72h (WARN); dedup-skip BUG (from c112 15:23)
+- B-01 BCTC: last fetch 2026-06-06T01:55Z, 41h elapsed (<168h out-of-window, PASS)
+- C-06/C-07 DB freshness: market_messages 2/3h, agent_signals 115/24h (both PASS)
+- B-09 BCTC URL shape: 0 bad SSC URLs (PASS) | VPS proxy: sbv/bctc stale (push log: sbv 2026-06-07T04:59Z, bctc 2026-06-08T00:30Z)
+- Signals posted: 0 | Telegram sent: 0 | Signal_queue rows: 2 (NEW) | Dashboard rows: 2
+- Contract: [OUTPUT-CONTRACT] signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=2 | dashboard_rows=2
+
 ## c118 · 2026-06-08T18:07:47Z
 ### Audit Run Tier-1 (18:07 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)

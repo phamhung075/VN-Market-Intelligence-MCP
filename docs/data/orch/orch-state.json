@@ -6335,6 +6335,45 @@
         "check_id": "CRON-VNSTOCK-CRASH",
         "payload_ref": null,
         "triage_note": "[po triage 20260608T19xxZ] Single observed crash (1 run, 0% success) of vnstockFundamentalsRefresh, zone dev-mcp-server. JUDGMENT: TRANSIENT — no task this tick. One crash != recurring failure; FIX-MACRO-REFRESH-DEAD (commit b7ce338f, env-var mismatch + silent-swallow) shipped THIS session and may have perturbed the cron worker. WATCH: if a 2nd vnstockFundamentalsRefresh crash appears next auditor tick -> escalate to FIX (recurring), zone dev-mcp-server. Avoid noise-task on a single sample."
+      },
+      {
+        "id": "sau-2026-06-08T18:36:27Z-a33",
+        "ts": "2026-06-08T18:36:27Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_health_report",
+        "summary": "vnstockFundamentalsRefresh cron crashed (0% success rate) - check A-33",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "A-33",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c119-b12",
+        "ts": "2026-06-08T18:35:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "SBV_FX stale 65min (>30min SLA) - check B-12 (recurring)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "zone_owner": "dev-macro-indicators",
+        "check_id": "B-12",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c119-b13",
+        "ts": "2026-06-08T18:35:01Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "26 stale pending BCTC >72h (check B-13, recurring)",
+        "severity": "WARN",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "B-13",
+        "payload_ref": null
       }
     ],
     "archive": [
