@@ -10,6 +10,15 @@
 - Cron health: vnstockFundamentalsRefresh still crashed (recurring from c120/c121, triaged as transient 2026-06-08T19:xx, no new action this cycle).
 - Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
+## c122 · 2026-06-08T20:06:33Z
+### Audit Run Tier-1 (20:06 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=31.53%; disk=40%.
+- A-20 pdf-extractor multi-probe: 3/3 PASS (all in-container health probes HTTP 200).
+- vnstockFundamentalsRefresh crash persists (from c121 01:00 UTC) — dedup-skip BUG (recurrence, already emitted in c121).
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## c121 · 2026-06-08T19:05:17Z
 ### Audit Run Tier-1 (19:05 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
