@@ -1,4 +1,17 @@
 
+## c107 · 2026-06-08T02:01:54Z
+### Audit Run Tier-2 (02:01 UTC 2026-06-08)
+- Tier: 2 | Crons: 63 checked | Sources: 28 checked | VPS routes: 4 OK
+- Anomalies: 1 CRITICAL (B-12 SBV stale) | Status: DEGRADED
+- A-29 crons: All 63 firing normally, no gaps. intelligenceCycleJob 99.1% success (562 runs).
+- B-01..B-07 pipeline: Prices/BCTC/foreign-flow fresh, news 10min <30min OK, SBV 21h+ stale.
+- B-06/B-07 VPS health: All 4 routes OK, push logs show sbv/news stale vs expected cadence.
+- B-12 SLA **CRITICAL**: sbv_fx 47min breach (30min threshold). sbvRatesRefreshJob ran 2026-06-08 00:00Z success, but market.db fetch timestamp stale. Clock skew or silent fetch fail suspected.
+- B-09 BCTC URLs: 0 bad SSC URLs ✓. B-13 stale BCTC: 0 pending >72h ✓ (IMPROVEMENT from c104=338).
+- C-06/C-07 DB: market_messages 4/3h ✓, agent_signals 89/24h ✓.
+- Signals: 1 emitted (CRITICAL sau-c107-b12). BUG Telegram: B-12 sbv-stale (new, no dedup).
+- Contract: signals_posted=1 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=1
+
 ## c106 · 2026-06-08T01:34:12Z
 ### Audit Run Tier-1 (01:34 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
@@ -95,3 +108,4 @@ frontend:3001/ OK (200) ✓
 - Findings: All 6 host_runtime_set services UP + healthy endpoints. All restart counts nominal. No anomalies.
 - Signals: 0 emitted
 - Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
