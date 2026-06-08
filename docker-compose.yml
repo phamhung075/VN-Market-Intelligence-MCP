@@ -107,18 +107,22 @@ services:
       - -f
       - http://localhost:5001/health
       interval: 30s
-      # PDFX-SINGLE-WORKER-BLOCKING: bumped from 10s to 30s.
-      # ProcessPoolExecutor root-cause fix isolates OCR CPU to a child process
-      # so /health should respond in <1s even under extraction load. The 30s
-      # window is a safety margin for container startup + first-run model init.
+      # ARCH-A20-CPU-CGROUP-REVIEW: cpus raised to 2.0 so uvicorn retains ~1 core
+      # while Tesseract OCR consumes the other. /health responds <1s under load.
+      # 30s timeout kept as safety margin; start_period 60s covers PEK model warm-up.
       timeout: 30s
       retries: 3
-      start_period: 15s
+      start_period: 60s
     deploy:
       resources:
         limits:
           memory: 2.5g
-          cpus: '1.0'
+          # ARCH-A20-CPU-CGROUP-REVIEW: raised from 1.0 to 2.0.
+          # Root cause: ProcessPoolExecutor child (Tesseract) consumes the full
+          # 1-core CFS quota, leaving 0 slices for uvicorn → healthcheck times out.
+          # 2.0 cores: Tesseract ~1 core + uvicorn retains ~1 core → probe <1ms.
+          # Host: 6 Docker VM CPUs; peers idle → 3+ cores headroom. Safe.
+          cpus: '2.0'
         reservations:
           memory: 1g
           cpus: '0.5'

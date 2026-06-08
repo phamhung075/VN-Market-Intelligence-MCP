@@ -1,8 +1,30 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-07 08:04 UTC | **Sprint:** TOOL-SURFACE-UPGRADE
+**Last updated:** 2026-06-08 02:26 UTC | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-08T02:26Z — ARCH-A20-CPU-CGROUP-REVIEW: pdf-extractor cpus 1.0→2.0
+
+**Task:** ARCH-A20-CPU-CGROUP-REVIEW (UNBLOCK, S, P1, zone: apps/pdf-extractor/)
+
+**Root cause confirmed (evidence-first):** pdf-extractor pinned at 99% CPU (NanoCpus=1000000000). CFS cgroup exhaustion: Tesseract OCR child (ProcessPoolExecutor) consumes the full 1-core budget → uvicorn gets 0 scheduler slices → healthcheck curl times out at 30s. 3rd recurrence (48a64056, 3033e1dc both failed for same reason).
+
+**Decision: Option A — cpus:1.0→2.0.** Host has 6 Docker VM CPUs; peers idle at ~0% CPU; mcp-server at 205% CPU on its 2.0 limit works fine (same pattern). Total limits rise to 11.25 but CFS limits are burst ceilings. Secondary: start_period 15s→60s (PEK model warm-up).
+
+**Options rejected:**
+- Option B (OCR sidecar): new container + IPC + no capacity gain; over-engineered for 1-line fix.
+- Option C (exec healthcheck): exec probes are throttled identically inside the same cgroup — zero effect on the root cause.
+
+**Files changed:**
+- `docker-compose.yml` — cpus:'2.0' + start_period:60s for pdf-extractor
+- `docs/architecture-briefs/2026-06-08-pdf-extractor-cpu-cgroup-fix.md` — decision brief
+- `docs/data/orch/orch-state.json` — A20-3RD-CPU-CGROUP-ARCHITECT signal → RESOLVED
+- `docs/agent-memory/decisions/sprint-ORCH-DASH-DECISION-DRILLDOWN-architect.md` — STEP architect-S1
+
+**BUILD-STANDARD:** not-applicable (infra config maintenance only — no new primitives)
+
+**Unblocks (router sequences):** FIX-PDF-EXTRACTOR-UNHEALTHY, Q1-2026 ingest, VHM/HCM/HSG/KBC reparse, 26 blocked_pdf_extractor queue rows re-queue, pdfx zone unfreeze.
 
 ## 2026-06-07T08:04Z — TOOL-SURFACE-UPGRADE blueprint
 

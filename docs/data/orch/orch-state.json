@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T00:45:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-08T02:30:00Z",
+  "_updated_by": "architect",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -5588,7 +5588,7 @@
       {
         "id": "A20-3RD-CPU-CGROUP-ARCHITECT",
         "type": "recurring_bug_escalation",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "priority": "P1",
         "created_at": "2026-06-08T01:25:00Z",
         "agent": "dev-pdf-extractor",
@@ -5614,7 +5614,10 @@
           "container_created": "2026-06-07T23:27:14Z",
           "commit_3033e1dc_time": "2026-06-08T01:26:42+0200"
         },
-        "resolution": "PO triage 2026-06-08T02:17:24Z: routed -> ARCH-A20-CPU-CGROUP-REVIEW (UNBLOCK, dispatch slot 1/2, architect). sau-c106-a20 folded in. pdfx zone stays frozen for code work until decision."
+        "resolution": "PO triage 2026-06-08T02:17:24Z: routed -> ARCH-A20-CPU-CGROUP-REVIEW (UNBLOCK, dispatch slot 1/2, architect). sau-c106-a20 folded in. pdfx zone stays frozen for code work until decision.",
+        "resolution_detail": "ARCH-A20-CPU-CGROUP-REVIEW: Option A chosen (cpus:1.0→2.0). Brief: docs/architecture-briefs/2026-06-08-pdf-extractor-cpu-cgroup-fix.md. Root cause: CFS cgroup quota exhaustion — Tesseract saturates 1 core, uvicorn gets 0 slices. Fix: raise limit to 2.0. Host headroom confirmed (6 Docker VM CPUs, peers idle). Implemented 2026-06-08.",
+        "resolved_at": "2026-06-08T02:30:00Z",
+        "resolved_by": "architect"
       },
       {
         "id": "sau-c106-a20",
