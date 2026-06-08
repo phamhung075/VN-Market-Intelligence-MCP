@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T00:23:58Z",
+    "_updated_at": "2026-06-08T00:40:50Z",
     "_updated_by": "router-dispatcher",
     "active_sprints": [
       {
@@ -3051,12 +3051,14 @@
         "title": "Stray untracked one-off apps/mcp-server/trigger-ppc-reparse.ts (37L direct-DB reparse trigger) — fold into a proper ops script/recipe or delete",
         "type": "CLEAN",
         "owner": "po",
-        "status": "TODO",
+        "status": "DONE",
         "size": "XS",
         "zone": "apps/mcp-server/",
         "priority": "low",
         "created_at": "2026-06-07T19:20:08Z",
-        "note": "Debt-reduction per CLAUDE.md (remove garbage/one-off scripts). Left over from PPC Q4-2025 reparse work. Decide: promote to scripts/ with generic ticker arg, or delete (reparseSingleWithOcrFallback already reachable via scheduler). Do NOT commit as-is at apps/mcp-server root."
+        "note": "Debt-reduction per CLAUDE.md (remove garbage/one-off scripts). Left over from PPC Q4-2025 reparse work. Decide: promote to scripts/ with generic ticker arg, or delete (reparseSingleWithOcrFallback already reachable via scheduler). Do NOT commit as-is at apps/mcp-server root.",
+        "completed_at": "2026-06-08T00:40:50Z",
+        "resolution": "auto-closed by FIX-BCTC-LOWCONF-REPARSE-BATCH: apps/mcp-server/trigger-ppc-reparse.ts absent from disk (router-verified), fully superseded by scripts/migrations/reparse-bctc-reports.ts"
       },
       {
         "id": "FIX-PDFX-TEST-LOOP-POLLUTION",
@@ -3135,7 +3137,7 @@
         "id": "FIX-BCTC-LOWCONF-REPARSE-BATCH",
         "title": "Reparse low-confidence BCTC corpus now magnitude-normalize (06c65978) is LIVE: REE 2026-Q1 + KBC/PPC 2025-Q4 + CTG/VHM/HCM/KBC/NVL/HSG 2026-Q1",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "DONE",
         "zone": "apps/mcp-server/",
         "created_at": "2026-06-07T21:25:56Z",
         "type": "FIX",
@@ -3143,7 +3145,9 @@
         "priority": "medium",
         "status_note": "Proof point exists: PPC Q4-2025 reparse post-rebuild lifted confidence 0.25->0.625. Batch covers reports #3077-#3085 (REE composite 0.00 is report 3085, status=new). AC: per-ticker composite rises materially OR residual root-cause documented; resolve report 3085 with outcome.",
         "note": "Reuse trigger-ppc-reparse.ts pattern (untracked file, see CLEAN-TRIGGER-PPC-REPARSE). Distinct from FIX-BCTC-1345B-REPORT-BATCH (XS telegram noise batching) which stays open.",
-        "started_at": "2026-06-08T00:18:04Z"
+        "started_at": "2026-06-08T00:18:04Z",
+        "completed_at": "2026-06-08T00:40:50Z",
+        "resolution": "commit 892aa89a — canonical scripts/migrations/reparse-bctc-reports.ts (385L) + flow-doc pointer; 10 reports reparsed, all deltas 0: root causes documented per ticker (image-PDFs blocked on unhealthy pdf-extractor: VHM/HCM/HSG/KBC; NVL parent-only structural; CTG B02-TCTD + push filename collision -> BANK-AWARE-BCTC; REE BS section-total regex gap -> new task candidate). Report 3085 wontfix verified live. DJ STEP dev-mcp-server-S2."
       },
       {
         "id": "SPIKE-UNIFIED-NB-GAP",
@@ -5386,6 +5390,50 @@
         "summary": "Full apps/mcp-server bun suite (11518 tests/1034 files, 970s) has 463 PRE-EXISTING fails + 14 errors + Bun v1.3.13 teardown panic (C++ exception AFTER summary print). Verified NOT caused by FIX-FRED-YAHOO-WEEKEND-STALE (full-revert bisect on 089-tool-macro: identical 15 fails). Failure clusters: cron_job_runs table missing in :memory: schema (pollNews tests), 089-tool-macro get_macro_snapshot sections missing (15/17 isolated), 240-bctc-full (17), 1846-backtest-lifecycle (16). The previous ~848-pass gate baseline is STALE. Need: (a) recorded full-suite baseline artifact, (b) fix :memory: schema drift (setup.ts migrations), (c) triage 089 isolated red, (d) optionally report teardown panic to bun.report. Log: /tmp/bun-suite-rerun.log (run 2026-06-07T23:07Z).\n",
         "read_at": "2026-06-08T00:11:14Z",
         "read_by": "dev-team"
+      },
+      {
+        "id": "sau-c104-c16",
+        "ts": "2026-06-08T00:30:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "bctc_vps_queue check C-16 failed (338 stale pending >72h, expect 0)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c104-c04",
+        "ts": "2026-06-08T00:30:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports check C-04 WARN (8 low-confidence <0.2 in 7d, expect ≤5)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c104-c08",
+        "ts": "2026-06-08T00:30:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "alerts check C-08 WARN (3 orphaned, no corresponding signal, in 24h)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c104-c09",
+        "ts": "2026-06-08T00:30:43Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "macro-indicators data stale 718h (expect 26h cadence, check C-09)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "archive": [
