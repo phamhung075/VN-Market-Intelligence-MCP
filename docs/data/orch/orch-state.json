@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T08:27:05.757163Z",
-  "_updated_by": "pm",
+  "_updated_at": "2026-06-08T08:51:35Z",
+  "_updated_by": "qa",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T08:02:40.373Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-08T08:51:35Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3353,7 +3353,7 @@
         "title": "Mitigation: CAPTURE starvation diagnostics THEN targeted docker restart pdf-extractor — unblock 26-row queue + Q1-2026 ingest without destroying architect evidence.",
         "type": "FIX",
         "sprint": "ORCH-DASH-DECISION-DRILLDOWN",
-        "status": "DONE-MITIGATION",
+        "status": "DONE",
         "owner": "ops",
         "zone": "apps/pdf-extractor/",
         "size": "S",
@@ -3362,7 +3362,9 @@
         "files": [
           "docker-compose.yml"
         ],
-        "status_note": "Ops mitigation DONE 2026-06-08 (capture + restart). Capture file: docs/troubleshooting/2026-06-08-headroom-proxy-wedge.md (committed). /health returns 200 post-restart. Kept OPEN (not terminal DONE) — this is mitigation, not structural fix. Structural fix = A20-EVENTLOOP-ASYNC-TO-THREAD dev implementation. Unblock: 26 blocked_pdf_extractor rows to be re-queued AFTER structural fix verified on multi-probe gate."
+        "status_note": "Mitigation DONE (ops restart 08:33Z). Now superseded by root-cause fix A20-EVENTLOOP-ASYNC-TO-THREAD DONE. QA gate 2026-06-08T08:51:35Z.",
+        "done_at": "2026-06-08T08:51:35Z",
+        "done_by": "qa"
       },
       {
         "id": "A20-EVENTLOOP-ASYNC-TO-THREAD",
@@ -3370,7 +3372,7 @@
         "type": "FIX",
         "size": "S",
         "owner": "dev-pdf-extractor",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "apps/pdf-extractor/",
         "priority": "P1",
         "created_at": "2026-06-08T08:35:00Z",
@@ -3379,7 +3381,9 @@
           "apps/pdf-extractor/infrastructure/extraction_engine.py",
           "apps/pdf-extractor/__tests__/unit/test_extraction_engine_nonblocking.py"
         ],
-        "status_note": "Architect brief: docs/architecture-briefs/2026-06-08-pdf-extractor-eventloop-starvation.md; Handoff: docs/handoffs/A20-EVENTLOOP-ASYNC-TO-THREAD.md. Root cause: extract_tables() + extract_text_ocr() are async def with NO await, blocking single uvicorn event loop on pdfplumber/pytesseract. Fix: sync helpers + asyncio.to_thread() wrappers (reuse pattern in 6 files). AC: pytest green (TC-EE-1/2), /health 200 while /extract in flight, multi-probe sustained >=15min, NO workers= change, NO max_workers change."
+        "status_note": "QA DJ-GATE-1 PASS 2026-06-08T08:51:35Z — 18/18 host + 18/18 in-container probes HTTP 200 <200ms while active tesseract OCR in flight (8 concurrent tesseract PIDs 08:44-08:51Z). asyncio.to_thread fix (commit 8ca79007) verified in container /app/infrastructure/extraction_engine.py lines 46+58. Root cause fixed.",
+        "done_at": "2026-06-08T08:51:35Z",
+        "done_by": "qa"
       }
     ],
     "archive": [],

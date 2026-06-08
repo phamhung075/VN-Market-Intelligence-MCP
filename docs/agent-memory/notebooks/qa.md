@@ -78,3 +78,9 @@ Sprint: FIX-PROJECT-STATS-GENERATED | Task: FIX-PROJECT-STATS-GENERATED | Verdic
 **All 7 ACs passed.** Generator exits 0, idempotent (zero diff on 2nd run). toolCount=162 confirmed by own grep (161 server.tool + 1 registerTool) and live /health endpoint. cronJobCount=76 confirmed by own grep (startScheduler.ts=71 + summaryJobs.ts=5). Fail-loud: 9 throw paths, no silent swallow. _generated_by marker present. Commit scope exactly 7 files, no src changes. System-auditor edit only touches step #6. orch-state REVIEW→DONE.
 
 **Next:** dev-pdf-extractor | fix build_document_map() Tier 0 for 3 blocks above.
+
+## cycle-213 · 2026-06-08T08:51Z · A20-EVENTLOOP-ASYNC-TO-THREAD multi-probe acceptance gate — PASS
+
+Sprint: ORCH-DASH-DECISION-DRILLDOWN | Task: A20-EVENTLOOP-ASYNC-TO-THREAD | Verdict: PASS
+
+Fix verified LIVE in container (commit 8ca79007, rebuilt 08:33:27Z). `asyncio.to_thread` confirmed at lines 46+58 of `/app/infrastructure/extraction_engine.py`. OCR load: 8 concurrent `tesseract` PIDs (vie+eng, VCB_2026_Q1.pdf 8.1MB image-based BCTC) confirmed in flight 08:44Z–08:51Z+. Probe window 08:48:32Z–08:51:33Z (~3min). Results: 18/18 host HTTP 200 (max 102ms), 18/18 in-container HTTP 200 (max 102ms). Zero timeouts, zero >5s. FALSE-GREEN TRAP avoided: probed concurrently with live tesseract processes, not idle. DJ-GATE-1 written to sprint-ORCH-DASH-DECISION-DRILLDOWN.md. Flipped: A20-EVENTLOOP-ASYNC-TO-THREAD TODO→DONE, A20-WEDGE-CAPTURE-RESTART DONE-MITIGATION→DONE. Raw-verified both. FIX-AUDITOR-A20-MULTIPROBE unblocked (depends_on satisfied — left for agent-father).
