@@ -1,5 +1,16 @@
 # Agent Father — Notebook
 
+## c293 · 2026-06-08T00:00Z — FIX-COWORK-GATEWAY-GATE
+
+- Task: FIX-COWORK-GATEWAY-GATE (HIGH, S). Incident: FANOUT-2026-06-08 — market-watcher false-greened (fabricated shipped cycle + coverage-state stamps), news-scout half-failed (prose plan vs BLOCKED exit) when CLI gateway dropped.
+- SSOT decision: DRY — gate text is identical for both agents → ONE canonical skill at `.claude/skills/gateway-availability-gate/SKILL.md`. Flow files carry pointer only.
+- Gate mirrors bctc-analyst pattern: probe get_system_status → on transport-dead: (a) signal file docs/signals/{agent}-{ts}.json, (b) BLOCKED notebook entry, (c) EXIT. Explicit prohibitions embedded: NEVER stamp coverage-state, NEVER mark cycle complete, NEVER recycle prior data.
+- market-watcher: gate inserted as Step 0-GW in cycle.md (before Step 0 bootstrap). 188L→191L. Size-justification updated.
+- news-scout: gate inserted as Step 0-GW in cycle.md (before dispatch table). +5L. No size-justification needed (<120L).
+- market-watcher/main.md Step 3 existing smoke probe: NOT removed — it covers the dispatcher path (different scope). Step 0-GW covers the per-cycle path. Both coexist without overlap.
+- Decision journal: sprint-ORCH-DASH-DECISION-DRILLDOWN-agent-father.md STEP agent-father-S2.
+- Files: 3 new/modified (.claude/skills/gateway-availability-gate/SKILL.md, market-watcher/flow/cycle.md, news-scout/flow/cycle.md) + decisions + this notebook.
+
 ## c292 · 2026-06-07T21:00Z — DJ-GATE-1: journal-before-DONE gate
 
 - Task: DJ-GATE-1 (sprint WORKFLOW-FLUIDITY). Dashboard shows "No decisions recorded" for DONE tasks.

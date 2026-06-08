@@ -1,4 +1,4 @@
-<!-- size-justification: 188L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update); offhours threshold floor added (FIX-MW-OFFHOURS-DISPATCH, prepost-equivalent easing floor for 00Z/04Z/weekend fires). -->
+<!-- size-justification: 191L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update); offhours threshold floor added (FIX-MW-OFFHOURS-DISPATCH, prepost-equivalent easing floor for 00Z/04Z/weekend fires); Step 0-GW gateway-availability gate added (FIX-COWORK-GATEWAY-GATE). -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -16,6 +16,9 @@ Bootstrap (market context 24h, agent signals) | watchlist prices
 > Channel rule: MARKET = EOD summary (eod.md, 16:00 UTC) ONLY. Cycle status → WORK. Errors → BUG. Never route "N stocks monitored / 0 anomalies" to MARKET.
 
 ---
+
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md`
+Replace `<agent-id>` with `market-watcher`. Run BEFORE bootstrap. On gateway dead: write signal file + BLOCKED notebook + EXIT. See skill for full protocol and explicit prohibitions.
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
 

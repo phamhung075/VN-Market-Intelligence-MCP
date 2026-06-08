@@ -12,6 +12,11 @@ Bootstrap (market context 24h, system status, agent signals)
 
 ---
 
+**Step 0-GW — Gateway availability gate** → skill: `.claude/skills/gateway-availability-gate/SKILL.md`
+Replace `<agent-id>` with `news-scout`. Run BEFORE bootstrap. On gateway dead: write signal file + BLOCKED notebook entry + EXIT. See skill for full protocol and explicit prohibitions.
+
+---
+
 ## Dispatch
 
 | Stage | Steps | Sub-flow |
