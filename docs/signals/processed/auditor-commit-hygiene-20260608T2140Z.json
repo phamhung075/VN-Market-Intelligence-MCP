@@ -1,0 +1,14 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "medium",
+  "createdAt": "2026-06-08T21:40:00Z",
+  "payload": {
+    "check_id": "AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
+    "module": "docs/agents/system-auditor/flow",
+    "summary": "system-auditor commit step used a non-explicit git add and swept in-flight architect working-tree edits (.github/workflows/ci.yml, apps/mcp-server/bunfig.toml, apps/mcp-server/package.json, scripts/test-coverage.sh, architect decision-journal + notebook) into commit f05795c3 alongside its own notebook. Commit message claimed 'notebook tier-1 audit' but content was 7 files. Content was benign this time (architect edits were correct and headed for commit anyway) and nothing was clobbered (signal_queue intact), but this is a latent concurrent-commit-race / wrong-attribution bug that could mis-commit or clobber under different timing.",
+    "evidence": "git show --stat f05795c3 = 7 files; only system-auditor.md is auditor-owned. Memory: feedback_concurrent_commit_race, feedback_janitor_false_green_verify.",
+    "suggested_fix": "system-auditor flow commit step MUST use explicit pathspec (git commit -m <msg> -- docs/agent-memory/notebooks/system-auditor.md docs/data/orch/orch-state.json) and a commit-mutex claim to serialize against concurrent dev-team agents. Never git add -A / git add . / git commit -am."
+  }
+}
