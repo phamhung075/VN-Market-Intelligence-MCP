@@ -1,4 +1,35 @@
 
+## c105 · 2026-06-08T01:03:42Z
+### Audit Run Tier-1 (01:03 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 1 dedup-skipped (A-20 within 7-day window, prev 2026-06-07T23:04Z) | Status: DEGRADED (known issue)
+- RAW-PROBE:
+```
+--- docker ps -a ---
+mcp-server: Up 2h (healthy) ✓
+api-gateway: Up 6h (healthy) ✓
+macro-indicators: Up ~1h (healthy) ✓
+pdf-extractor: Up 2h (unhealthy) ⚠ [recurring A-20]
+frontend: Up 6h (healthy) ✓
+mcp-gateway: Up 6h (healthy) ✓
+--- health endpoints ---
+mcp-server:3000/health OK (200) ✓
+api-gateway:4000/health OK (200) ✓
+macro-indicators:5004/health OK (200) ✓
+pdf-extractor:5001/health FAIL (timeout) ⚠ [A-20]
+frontend:3001/ OK (200) ✓
+mcp-gateway:4040/health OK (200) ✓
+--- memory ---
+mcp-server: 49.58% (<85%) ✓
+--- disk ---
+28% used (36Gi free) ✓
+--- restart count ---
+mcp-server RC=0 (≤2) ✓
+```
+- Findings: pdf-extractor unhealthy + health endpoint timeout (A-20). Regression since c103 (00:07Z showed passing). Within 7-day dedup window (prev report 2026-06-07T23:04:13Z). No BUG Telegram (dedup). Signal row appended to signal_queue per audit protocol.
+- Signals: 0 posted (BUG dedup) | Signal Queue: 1 row written (sau-c105-a20)
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
+
 ## c104 · 2026-06-08T00:30:43Z
 ### Audit Run Tier-3 (00:30 UTC 2026-06-08)
 - Tier: 3 | Checks: A-22/A-24 (tooling ✓) + C-01..C-16 | Runtime: 360s | Status: CRITICAL
@@ -167,30 +198,3 @@ frontend:3001/ OK (200) ✓
 - Tier: 1 | Services: 6 checked
 - Anomalies: 2 (1 new INFO, 1 recurring WARN) | Status: DEGRADED
 - RAW-PROBE:
-```
---- docker ps -a ---
-mcp-server: Up 22min (healthy) ✓
-api-gateway: Up 2h (healthy) ✓
-macro-indicators: Up 2h (healthy) ✓
-pdf-extractor: Up 2h (unhealthy) ⚠ [NEW: status changed]
-frontend: Up 2h (healthy) ✓
-mcp-gateway: Up 2h (healthy) ✓
---- health endpoints ---
-mcp-server:3000/health OK (200) ✓
-api-gateway:4000/health OK (200) ✓
-macro-indicators:5004/health OK (200) ✓
-pdf-extractor:5001/health FAIL (CURL_ERR) ⚠ [A-13]
-frontend:3001/ FAIL (CURL_ERR) ⚠ [A-14]
---- memory --- mcp-server=28.03% (<85%) ✓
---- disk --- 28% used (35Gi free) ✓
---- restart count --- mcp-server RestartCount=1 (≤2) ✓
-```
-- Findings: A-14 NEW — frontend health unreachable (CURL_ERR, INFO severity). A-13 RECURRING — pdf-extractor health unreachable + docker unhealthy (WARN, dedup-hit 19:03:35Z). All other services healthy.
-- Signals: 2 emitted (A-14 INFO, A-13 WARN)
-- Contract: signals_posted=2 | telegram_sent=0 | signal_queue_rows_written=2 | dashboard_rows=0
-
-## c095 · 2026-06-07T20:36:47Z
-### Audit Run Tier-1 (20:34–20:36 UTC 2026-06-07)
-- Tier: 1 | Services: 6 checked
-- Anomalies: 1 recurring (W warn) | Status: DEGRADED
-- Findings: A-13 RECURRING — pdf-extractor /health endpoint unreachable; dedup hit.
