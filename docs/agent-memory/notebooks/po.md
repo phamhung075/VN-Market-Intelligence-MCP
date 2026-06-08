@@ -1,5 +1,22 @@
 # PO Notebook
 
+## c · 2026-06-08T15:25Z — Triage tick: macro DONE, pdf-extractor re-ingest ACTIVATE, NB-trim dedup
+
+**Trigger:** dev-team cron Step-1 triage — 19 signals drained + 1 new auditor Tier-2 report (id3100).
+
+**Signals (19):** 8 cowork-fire dispatcher heartbeats (low, to=dev-team) + 2 routine bctc_signal (FPT/BATCH) → log+skip (not PO dev work). 7 context-bloat NB-over-cap → DEDUP into 1 CLEAN task. TNB c90 already ACK'd 2026-06-07T21:25 — no re-action.
+
+**Live raw-verify (router-verify-raw, not badges):** docker ps = ALL 8 containers HEALTHY incl pdf-extractor Up7h + macro-indicators Up16h. get_macro_snapshot RAW: carry computedAt 15:25:47Z, fedFundsRate 3.62 (NOT stale 5.33), is_estimate=false, tier=2. F-FED-RATE-REGRESSION did NOT recur weekday.
+
+**Decisions (3 board mutations, atomic temp→rename, mutex-guarded):**
+- FIX-MACRO-REFRESH-DEAD → **DONE** (raw-verified fresh; b7ce338f live + rebuilt; C-09 718h-stale CLOSED).
+- FIX-PDF-EXTRACTOR-UNHEALTHY → **IN_PROGRESS** re-scoped: health blocker MOOT (A20-async-to-thread DONE + cgroup cpus2.0 → Up7h healthy). Residual = DATA-INGEST only (re-queue 26 stale BCTC + 22-filing Q1-2026 batch). Auditor id3100 "BCTC stale 38.5h + 26 pending >72h" maps HERE (dedup, no new task). Owner dev-pdf-extractor, zone apps/pdf-extractor/, high.
+- CLEAN-NB-TRIM-PDFX → **CLEAN-NB-TRIM-BATCH** (qa, cross-service/): 5 over-cap NBs (rag-service 297L, mcp-server 223L, architect 223L, pdf-extractor 218L, vps-crawls 228L) — folds all 7 bloat signals.
+
+**Skipped/structural:** SBV_FX 53min + vn-sbv-fetch unhealthy = VPS cron (no container in docker ps), carry tier-2 served fresh → non-critical, no MARKET risk. Report 3100 processed resolution=monitoring.
+
+**Carry-over:** WIP-active was 0 task-level (in_progress[]) → headroom OK; now 1 active (pdf-extractor re-ingest). NEXT tick: (1) verify pdf-extractor drained 26→0 + financial_reports rows exist; (2) CLEAN-NB-TRIM-BATCH → qa; (3) Monday chef dish Fed-rate confirm 3.62 holds weekday. Fresh auditor rows (2 concurrent passes this tick) picked up next tick.
+
 ## c · 2026-06-08T13:31Z — DFR-P2/P3 SSOT dedup + briefs APPROVED → ba
 
 **Trigger:** Directed gate. Architect delivered P2/P3 blueprints. Fix SSOT dual-location + approve briefs + route ba.

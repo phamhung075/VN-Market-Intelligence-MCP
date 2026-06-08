@@ -42,3 +42,38 @@
 - Delete stale backlog copies only, keep active as SSOT — CHOSEN: active are authoritative (architect-enriched, next_role=ba).
 **why-decision:** active_sprints[23] copies carry blueprint refs + ba routing; backlog copies are pre-architect originals. One-copy-per-task invariant restored; atomic temp→rename + non-empty/valid-JSON guard against jq-empty-clobber.
 **why-change:** no change from directive — dedup target + keep-set matched router instruction exactly.
+
+### STEP po-S7 · po · 2026-06-08T15:25:01Z
+**task-id:** FIX-MACRO-REFRESH-DEAD
+**what-done:** Triage tick — live-verified macro fresh (carry computedAt 15:25Z, fedFundsRate 3.62, is_estimate=false, container Up16h healthy) → flip DONE-CODE-AWAIT-REBUILD→DONE.
+**what-considered:**
+- trust auditor freshness clear (no fresh auditor row this tick)
+- raw-verify get_macro_snapshot myself (router-verify-raw rule)
+**why-decision:** Raw snapshot proves refresh job ALIVE + rebuild shipped (b7ce338f live); auditor Tier-2 report did NOT flag macro stale → close.
+**why-change:** no change from plan (carry-context predicted this flip pending auditor clear; I substituted live raw-verify).
+
+### STEP po-S8 · po · 2026-06-08T15:25:01Z
+**task-id:** FIX-PDF-EXTRACTOR-UNHEALTHY
+**what-done:** Re-scoped from health-recurring-bug to data-ingest FIX + ACTIVATE — pdf-extractor now Up7h HEALTHY (A20-ASYNC-TO-THREAD DONE + cgroup cpus2.0); residual = re-queue 26 stale BCTC rows + ingest 22-filing Q1-2026 batch.
+**what-considered:**
+- create NEW task for auditor's "26 stale pending BCTC >72h"
+- map auditor finding onto existing FIX-PDF-EXTRACTOR-UNHEALTHY (same 26 rows) and activate
+**why-decision:** Existing task note already says "re-queue 26 rows, ingest 22-filing batch" — identical scope; dedup beats duplicate. Health blocker cleared → unblock+route to dev-pdf-extractor.
+**why-change:** Health portion now MOOT (was recurring-bug→architect); only the data-ingest residual remains.
+
+### STEP po-S9 · po · 2026-06-08T15:25:01Z
+**task-id:** CLEAN-NB-TRIM-PDFX
+**what-done:** Dedup 7 context-bloat notebook signals into ONE CLEAN task — re-scope CLEAN-NB-TRIM-PDFX to CLEAN-NB-TRIM-BATCH covering 5 over-cap notebooks (rag-service 297L, mcp-server 223L, architect 223L, pdf-extractor 218L, vps-crawls 228L).
+**what-considered:**
+- 7 separate trim tasks (rejected — carry-context says dedup)
+- one batched CLEAN task to qa/janitor
+**why-decision:** All 7 signals are the same recurring notebook-over-cap class; one CLEAN sweep is the canonical fix. Route to qa (CLEAN owner per flow).
+**why-change:** no change from plan (carry-context mandated single CLEAN-NB-TRIM).
+
+### STEP po-S10 · po · 2026-06-08T15:25:01Z
+**what-done:** Logged-and-skipped 8 cowork-fire dispatcher heartbeats (type=cowork-fire, low pri, to=dev-team) + 2 routine bctc_signal (FPT routine, BATCH pending) — none are PO dev work; TNB c90 handoff already ACK'd 2026-06-07T21:25; SBV_FX 53min/vn-sbv-fetch findings = known structural (no persistent container; carry tier-2 fresh) → no task.
+**what-considered:**
+- create task for SBV_FX stale + vn-sbv-fetch unhealthy
+- defer as structural/known (FU-SBV-* backlog exists; macro carry tier-2 fresh)
+**why-decision:** vn-sbv-fetch is a VPS cron (not a container in docker ps); 53min SLA blip non-critical; macro served fresh → no MARKET-output risk this tick.
+**why-change:** no change.
