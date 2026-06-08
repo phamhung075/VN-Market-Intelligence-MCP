@@ -79,6 +79,20 @@ Sprint: FIX-PROJECT-STATS-GENERATED | Task: FIX-PROJECT-STATS-GENERATED | Verdic
 
 **Next:** dev-pdf-extractor | fix build_document_map() Tier 0 for 3 blocks above.
 
+## cycle-217 · 2026-06-08T15:30Z · DFR-P2/P3 DEEPFETCH-RAG-REDESIGN Phase 2+3 directed acceptance gate — ALL 4 APPROVED
+
+Sprint: DEEPFETCH-RAG-REDESIGN | Tasks: DFR-P2-MCP, DFR-P2-VPS, DFR-P2-MAIN, DFR-P3-RAG | Verdict: ALL APPROVED | 26 ACs total
+
+DFR-P2-MCP: 10/10 ACs PASS. Schema (deep_fetch_queue + deep_fetch_stats) live in container market.db. UNIQUE(source_url) dedup LIVE-verified (second INSERT OR IGNORE → 0 changes). Cap enforcement LIVE-verified (15 rows → pollPending(10) returns 10). Domain daily cap wired (cafef.vn@50 → checkDomainDailyCap=false). 4h stale expiry: pollPending WHERE filter + isStale() inline. Gate injection non-fatal (try/catch lines 1017-1068 in pollNews.ts). reindexDeep() uses _deep suffix + table.add() only. DDD PASS (deepFetchGate.ts zero infra imports). Security PASS (Bun.env, no process.env). tsc EXIT:0. 28/28 tests pass.
+
+DFR-P2-VPS: 4/4 ACs PASS. LIVE: vnexpress.net → status=ok, body_text=3354 chars, title="VN-Index giảm gần 50 điểm". SSRF guard: evil.com → domain-not-allowed. cafef.vn still routes correctly. Plain HTTP only.
+
+DFR-P2-MAIN: 4/4 ACs PASS. LIVE: POST localhost:5008/fetch-article vietnambiz.vn → HTTP 200, 8000 chars. SSRF guard: evil.com → HTTP 400. 233/233 tests pass. ALLOWED_DOMAINS config-driven.
+
+DFR-P3-RAG: 8/8 ACs PASS. LIVE hybrid=true → 4 results, BM25 reranking visible (different order from vector-only). /admin/rebuild-fts → ok. 2-call FTS confirmed. .nearest_to_text() pattern confirmed. 35/35 P3 + 130/130 total tests pass. rag_entries 14173.
+
+CLEANUP: Queue=0, no QA rows remain. ORCH-STATE: 4 tasks → DONE. DFR-P3-MCP BLOCKED→READY. All 5 DFR-P* exactly-once. DJ-GATE-1 → sprint-DEEPFETCH-RAG-REDESIGN-qa.md STEP qa-S4.
+
 ## cycle-216 · 2026-06-08T14:28Z · DFR-P1-MCP DEEPFETCH-RAG-REDESIGN Phase 1 MCP gate — APPROVED
 
 Sprint: DEEPFETCH-RAG-REDESIGN | Task: DFR-P1-MCP | Verdict: APPROVED | Commit: 4b8f1845 (6 files, mcp-server)

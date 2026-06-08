@@ -2652,7 +2652,7 @@
             "title": "P2 mcp-server: deepFetchGate.ts domain fn + deep_fetch_queue/deep_fetch_stats tables + deepFetchVpsJob.ts + deepFetchMainJob.ts + pollNews.ts gate hook + re-index depth_tier=deep (upsert _deep id, NO delete) + scheduler/cron registration + mcp.config.json caps",
             "owner": "dev-mcp-server",
             "type": "FEATURE",
-            "status": "done-code",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "size": "M",
             "priority": "high",
@@ -2668,14 +2668,17 @@
             "next_role": "dev-mcp-server",
             "done_code_at": "2026-06-08T14:20:00Z",
             "done_code_by": "router-reconcile",
-            "reconcile_note": "status clobbered READY->done-code by concurrent orch write; code committed 65228a83 (verify-raw)"
+            "reconcile_note": "status clobbered READY->done-code by concurrent orch write; code committed 65228a83 (verify-raw)",
+            "done_at": "2026-06-08T15:30:00Z",
+            "done_by": "qa",
+            "qa_note": "QA APPROVED 2026-06-08T15:30Z: 10/10 ACs pass. See sprint-DEEPFETCH-RAG-REDESIGN-qa.md STEP qa-S4."
           },
           {
             "id": "DFR-P2-VPS",
             "title": "P2 vps-crawls: extend article-body-fetcher.py (extract_vnexpress + ALLOWED_DOMAINS) + vps-proxy-server.js ARTICLE_BODY_ALLOWED_DOMAINS + restart vn-vps-proxy.service. Plain HTTP only.",
             "owner": "dev-vps-crawls",
             "type": "FEATURE",
-            "status": "done-code",
+            "status": "DONE",
             "zone": "vps-scripts/",
             "size": "S",
             "priority": "high",
@@ -2691,14 +2694,16 @@
             "next_role": "dev-vps-crawls",
             "claimed_at": "2026-06-08T13:40:00Z",
             "claimed_by": "dev-vps-crawls",
-            "done_at": "2026-06-08T13:52:32Z"
+            "done_at": "2026-06-08T15:30:00Z",
+            "done_by": "qa",
+            "qa_note": "QA APPROVED 2026-06-08T15:30Z: 4/4 ACs pass. See sprint-DEEPFETCH-RAG-REDESIGN-qa.md STEP qa-S4."
           },
           {
             "id": "DFR-P2-MAIN",
             "title": "P2 mainserver-crawls: POST /fetch-article Playwright route in apps/news-fetch/ + SSRF allowlist from mcp.config.json + 30s timeout. Main-server only.",
             "owner": "dev-mainserver-crawls",
             "type": "FEATURE",
-            "status": "done-code",
+            "status": "DONE",
             "zone": "apps/news-fetch/",
             "size": "S",
             "priority": "high",
@@ -2711,7 +2716,10 @@
             "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md#DFR-P2-MAIN",
             "note": "4 ACs. New route on existing news-fetch microservice (port 5008). SSRF allowlist from mcp.config.json deepFetch.playwrightAllowedDomains — never hardcoded. 30s Playwright timeout. Existing Reuters/Bloomberg fetch must not regress. | [dev-mainserver-crawls DJ-GATE-1 2026-06-08T15:50Z] done-code: POST /fetch-article route implemented + SSRF guard config-driven + 30s timeout + page.close() leak-free. 4 ACs PASS live: vietnambiz.vn 8000chars ok, evil.com 400 SSRF-blocked, reuters/headlines no regression, MCP_CONFIG_PATH config-driven confirmed. 233/233 tests pass. REBUILD done (news-fetch container up+healthy 0.0.0.0:5008). NEXT: QA validation.",
             "depends_on": [],
-            "next_role": "dev-mainserver-crawls"
+            "next_role": "dev-mainserver-crawls",
+            "done_at": "2026-06-08T15:30:00Z",
+            "done_by": "qa",
+            "qa_note": "QA APPROVED 2026-06-08T15:30Z: 4/4 ACs pass. See sprint-DEEPFETCH-RAG-REDESIGN-qa.md STEP qa-S4."
           },
           {
             "id": "DFR-P3-HYBRID",
@@ -2741,7 +2749,7 @@
             "title": "P3 rag-service: hybrid_search() on VectorStorePort + LanceDBVectorStore impl (2-call create_fts_index title+summary, RRFReranker), SearchRequest.hybrid flag, POST /admin/rebuild-fts route, lazy-build + daily-rebuild",
             "owner": "dev-rag-service",
             "type": "FEATURE",
-            "status": "done-code",
+            "status": "DONE",
             "zone": "apps/rag-service/",
             "size": "M",
             "priority": "high",
@@ -2757,14 +2765,16 @@
             "next_role": "dev-rag-service",
             "claimed_at": "2026-06-08T14:30:00Z",
             "claimed_by": "dev-rag-service",
-            "done_at": "2026-06-08T14:45:00Z"
+            "done_at": "2026-06-08T15:30:00Z",
+            "done_by": "qa",
+            "qa_note": "QA APPROVED 2026-06-08T15:30Z: 8/8 ACs pass. Hybrid live + /admin/rebuild-fts live + 130/130 tests. See sprint-DEEPFETCH-RAG-REDESIGN-qa.md STEP qa-S4."
           },
           {
             "id": "DFR-P3-MCP",
             "title": "P3 mcp-server: THIN — add hybrid?:boolean to RagSearchRequest in ragHttpClient.ts; chef + bctc-analyst callers pass hybrid:true; pollNews stays vector-only",
             "owner": "dev-mcp-server",
             "type": "FEATURE",
-            "status": "BLOCKED",
+            "status": "READY",
             "zone": "apps/mcp-server/",
             "size": "XS",
             "priority": "high",
@@ -2781,7 +2791,10 @@
               "DFR-P2-MCP"
             ],
             "next_role": "dev-mcp-server",
-            "status_note": "Awaits DFR-P2-MCP merge. Both edit apps/mcp-server/src/infrastructure/rag/ragHttpClient.ts (P2=RagIndexRequest, P3=RagSearchRequest). Concurrent dispatch would violate commit-mutex policy. P3-MCP rebases onto P2-MCP's commit."
+            "status_note": "Awaits DFR-P2-MCP merge. Both edit apps/mcp-server/src/infrastructure/rag/ragHttpClient.ts (P2=RagIndexRequest, P3=RagSearchRequest). Concurrent dispatch would violate commit-mutex policy. P3-MCP rebases onto P2-MCP's commit.",
+            "unblocked_at": "2026-06-08T15:30:00Z",
+            "unblocked_by": "qa",
+            "unblock_note": "DFR-P2-MCP DONE (QA APPROVED). DFR-P3-MCP dependency satisfied. Ready for dev-mcp-server."
           }
         ]
       }
