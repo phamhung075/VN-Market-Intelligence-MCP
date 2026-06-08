@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T23:01:29Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-08T23:40:17Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -3064,12 +3064,12 @@
             "depends": [
               "CI-TEST-SCHEMA-FIXTURE-SPIKE"
             ],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T23:14:00Z",
-            "note": "[po S15 2026-06-08T23:14Z] CURE for the data_env failure class (E2a, ~93 fails) per architect brief docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md Phase 1. Design SSOT = two-fixture-contract model (Contract A=initDatabase() full canonical for singleton/integration tests; Contract B=minimal IF-NOT-EXISTS inline DDL for unit tests). This is NOT a re-attempt of the reverted 9454baad mechanized one-size sweep — it is per-class targeted column add + a production-side defensive guard. po->ba->architect(already done, brief is the design)->pm->dev->qa chain; PM may route straight to dev since architect brief is the spec. DoD: bun-test FAIL+ERROR count DROPS (never increases) vs the post-refile baseline on subsequent push (router owns push); bun tsc --noEmit clean; modified files pass in isolation. Verification gate per brief §8. DISPATCH ORDER: 1st (no dep beyond the now-DONE spike). | [dev-mcp-server 2026-06-09] Phase 1 DONE: 63 test files data_env added (71 blocks), pollNews.ts fallback guard added, tsc clean, DJ-GATE-1 STEP S6 committed."
+            "note": "[po S15 DJ-GATE-1 2026-06-08T23:40Z] DONE (REVIEW->DONE) on UNMASKING diagnosis. CI run 27173640256 (892f3bc2) literal gate FAILED (fail+error 1117->1156, +39) BUT the marker method is provably BLIND to the data_env class ('no such column: data_env'=0 in BOTH 54e20c8e baseline AND 892f3bc2 — a bun setup/file-load error that emits no (fail) marker). Shape = unmasking not regression: pass +30 AND fail +39, total markers +69, ZERO existing-pass regressions; ~69 tests that died early on the data_env INSERT now run further (30 pass, 39 hit the NEXT schema layer = P2 scope: agent_signals 37/sbv_rates_history 19/positions 19/commodity_prices* 51/daily_ohlcv 5/imf_indicators 3 + cols foreign_net_vol 12/statement_section 3). Reverted-B2 (9454baad) classes did NOT return (double-create=0, NOT NULL=0). PO RAW-VERIFIED: code diff zone-confined apps/mcp-server/ (non-code files = docs/memory only); pollNews.ts application/usecases try/catch data_env fallback guard present (mirrors fredApi.ts); 74 data_env additions across 63 .test.ts files, NO destructive DROP/DELETE/removed-CREATE (old CREATE lines replaced by data_env-augmented IF-NOT-EXISTS); pre-push tsc OK. Genuine win. NEXT GATE should read bun GITHUB_STEP_SUMMARY (run web) for a 702-comparable absolute — the API-log marker method is structurally blind to setup-error classes. | === PRIOR REVIEW note preserved in git history (commit before this flip). ==="
           },
           {
             "id": "FIX-SCHEMA-DRIFT-P2",
@@ -3084,7 +3084,7 @@
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T23:14:00Z",
-            "note": "[po S15 2026-06-08T23:14Z] CURE for E1 (table already exists, ~32) + E2b/c/d + E3a/b (missing-column / NOT-NULL / no-such-table, ~104) per architect brief Phase 2+3 (§4 FIX-CLASS-E1/E2b/E2c/E2d/E3a/E3b). depends:FIX-SCHEMA-DRIFT-P1 (sequence to keep WIP<=2 and avoid two devs racing the same 64 rag_analyses files). NOT another mechanized one-size injection (that was 9454baad, reverted +219). Design SSOT = two-fixture-contract model; Contract B files must use IF NOT EXISTS + include every column the SUT's INSERT/SELECT touches. DoD: bun-test FAIL+ERROR DROP (never increase) vs baseline on subsequent push; bun tsc --noEmit clean; per-file isolation pass. Brief Phase 4 (pure-singleton audit) deliberately NOT folded here — parked as FU-SCHEMA-DRIFT-P4 backlog. DISPATCH ORDER: 2nd (after P1 lands, frees the rag_analyses cohort)."
+            "note": "[po S15 2026-06-08T23:14Z] CURE for E1 (table already exists, ~32) + E2b/c/d + E3a/b (missing-column / NOT-NULL / no-such-table, ~104) per architect brief Phase 2+3 (§4 FIX-CLASS-E1/E2b/E2c/E2d/E3a/E3b). depends:FIX-SCHEMA-DRIFT-P1 (sequence to keep WIP<=2 and avoid two devs racing the same 64 rag_analyses files). NOT another mechanized one-size injection (that was 9454baad, reverted +219). Design SSOT = two-fixture-contract model; Contract B files must use IF NOT EXISTS + include every column the SUT's INSERT/SELECT touches. DoD: bun-test FAIL+ERROR DROP (never increase) vs baseline on subsequent push; bun tsc --noEmit clean; per-file isolation pass. Brief Phase 4 (pure-singleton audit) deliberately NOT folded here — parked as FU-SCHEMA-DRIFT-P4 backlog. DISPATCH ORDER: 2nd (after P1 lands, frees the rag_analyses cohort). | [po S15 2026-06-08T23:40Z] DISPATCH-READY: depends:[FIX-SCHEMA-DRIFT-P1] now SATISFIED (P1=DONE this cycle). P2 scope == now-dominant VISIBLE fail class unmasked by P1 (agent_signals/sbv_rates_history/positions/commodity_prices*/daily_ohlcv/imf_indicators tables + foreign_net_vol/statement_section cols). Net fail+error should DROP once P2 lands. WIP<=2 honored (P1 closed -> P2 sole active FIX). Status stays TODO (dispatch trigger); router/PM may route to dev-mcp-server now. Gate: read bun GITHUB_STEP_SUMMARY for 702-comparable absolute."
           }
         ],
         "_updated_by": "po"

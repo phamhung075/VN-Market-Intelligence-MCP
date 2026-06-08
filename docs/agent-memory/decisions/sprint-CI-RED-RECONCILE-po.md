@@ -214,3 +214,16 @@ FIX-MCP-TOOL-COUNT-DRIFT + FIX-MCP-CI-NETWORK-GUARD: marked DONE because their s
 **DJ-GATE-1:** TWO DONE flips this STEP (POLLNEWS-REFILE + SCHEMA-FIXTURE-SPIKE), both committed in the SAME commit as this journal entry.
 **dispatch order:** P1 first (dep = now-DONE spike only), P2 second (after P1 lands, frees the rag_analyses cohort). Both owner dev-mcp-server, zone apps/mcp-server/, WIP<=2 honored (0 IN_PROGRESS now). No push (router owns).
 **still-open (parked observations, file as dev WIP frees, <=2 WIP):** A-33 vnstockFundamentalsRefresh cron CRASH (sau-c121-a33 CRITICAL); BCTC get_bctc_full empty 6 tickers #3106; pollNews 0-items #3102.
+
+### STEP po-S15 (DJ-GATE-1): rule FIX-SCHEMA-DRIFT-P1 REVIEW->DONE + release P2 (2026-06-08T23:40Z)
+**task_id:** FIX-SCHEMA-DRIFT-P1, FIX-SCHEMA-DRIFT-P2
+- **what-done:** Adjudicated CI-P1-GATE-892f3bc2 (signal docs/signals/ci-p1-gate-result-892f3bc2-20260608T233759Z.json). Flipped FIX-SCHEMA-DRIFT-P1 REVIEW->DONE. Marked FIX-SCHEMA-DRIFT-P2 dispatch-ready (dep on P1 now satisfied; status stays TODO = dispatch trigger).
+- **what-considered:**
+  - Path A — keep REVIEW / rework P1 because literal gate FAILED (fail+error 1117->1156, +39): REJECTED. The marker method is provably BLIND to the data_env class ('no such column: data_env'=0 in BOTH baseline 54e20c8e AND after 892f3bc2 — a bun setup/file-load error that emits no (fail) marker). The metric cannot score what P1 fixed.
+  - Path B (CHOSEN) — DONE on the unmasking diagnosis: pass +30 AND fail +39 (total markers +69) with ZERO existing-pass regressions => ~69 tests that died early on the data_env INSERT now run further (30 pass, 39 hit the NEXT schema layer = exactly P2 scope). Reverted-B2 (9454baad) classes did NOT return.
+  - Path C — block P2 / wait for a clean P1 gate first: REJECTED. P2 scope IS the now-dominant visible fail class; sequencing P2 next is the only path that drops net fail+error.
+- **why-decision:** PO RAW-VERIFIED every load-bearing claim (did not relay router badges): code diff zone-confined apps/mcp-server/ (non-code = docs/memory only); pollNews.ts application/usecases try/catch data_env fallback guard present (mirrors fredApi.ts); 74 data_env additions across 63 .test.ts files, NO destructive DROP/DELETE/removed-CREATE (old CREATE replaced by data_env-augmented IF-NOT-EXISTS); pre-push tsc OK. The literal gate is the wrong instrument here, not the wrong verdict — a blind metric cannot veto a raw-verified zero-regression win.
+- **why-change:** no change from router recommendation, but adopted only AFTER independent raw re-verification (router-verify-raw-not-badges).
+- **DJ-GATE-1:** ONE DONE flip this STEP (FIX-SCHEMA-DRIFT-P1), committed in the SAME commit as this journal entry.
+- **next-gate note:** Future schema-drift gates must read bun GITHUB_STEP_SUMMARY (run web/step-summary) for a 702-comparable ABSOLUTE — the API-log tab-filtered marker method is structurally blind to setup-error classes (data_env, the 46-vs-7 bun-errors gap).
+- **parked observations (file as dev WIP frees, WIP<=2):** A-33 vnstockFundamentalsRefresh cron CRASH (sau-c121-a33 CRITICAL); BCTC get_bctc_full empty 6 tickers #3106; pollNews 0-items #3102; carried from po-S14 still open.
