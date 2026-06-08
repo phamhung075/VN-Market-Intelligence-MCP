@@ -6,6 +6,29 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-06-08 — FIX-TA-GOLANGCI-CONFIG-V2 — migrate .golangci.yml to v2 schema
+
+**Task:** FIX-TA-GOLANGCI-CONFIG-V2 (Sprint CI-RED-RECONCILE)
+
+**Status:** REVIEW — commit d73c7a40. VERIFICATION GATE: GREEN ci.yml after subsequent push.
+
+**Root cause:** `apps/technical-analysis/.golangci.yml` was the only one of 6 service configs still using the v1 schema after the FIX-CI-LINT-STACK migration bumped golangci-lint-action to v7 (golangci-lint v2.0.2). golangci-lint v2 rejects any config without top-level `version: "2"` with exit 3 — config parse crash, not lint violations.
+
+**v1 → v2 changes applied:**
+1. Added `version: "2"` top-level.
+2. `run.go: "1.22"` removed (v2 dropped this key); replaced with `run.timeout: 120s`.
+3. `linters.disable-all: true` → `linters.default: none`.
+4. Top-level `linters-settings:` → `linters.settings:` nested under `linters:`.
+5. Removed `Main:` allow-list depguard rule (v2 sibling pattern; deny-list fences preserved intact).
+
+**Local verify:** `golangci-lint run` exits 1 (lint running, real violation surfaced), NOT 3 (config crash). The exit-1 violation (`cmd/sandbox/main.go:44` Fence-C) is pre-existing debt tracked as FIX-TA-SANDBOX-DEPGUARD.
+
+**DJ-GATE-1:** `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-technical-analysis.md`
+
+**Files changed:** `apps/technical-analysis/.golangci.yml`
+
+---
+
 ### 2026-05-24 — dash-check.mjs — AI-readable dashboard health report
 
 **Task:** Create `dashboard/dash-check.mjs` — machine-parseable health script for AI/CI.
