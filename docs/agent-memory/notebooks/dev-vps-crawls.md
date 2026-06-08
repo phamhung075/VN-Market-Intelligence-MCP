@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-06-06T17:30Z | **Sprint:** FIX-VPS-SSC-CURL-SCRAPER
+**Last updated:** 2026-06-08T13:52Z | **Sprint:** DEEPFETCH-RAG-REDESIGN DFR-P2-VPS
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
@@ -170,6 +170,35 @@ Outcome: DONE. Recon doc: docs/architecture-briefs/2026-06-08-dfr-q1-q2-recon.md
 
 Q1 verdict: VIABLE. vnexpress.net returns 200 from VPS with plain requests (bare python-requests UA works). No Cloudflare challenge, no captcha gate. Article body in static HTML via `article.fck_detail` selector. Peak RAM: 1.94 MB/call. Page size: 50–260 KB raw. No anti-bot work needed.
 Q2 verdict: EXTEND. /proxy/article-body endpoint already live in vps-proxy-server.js (VPS:8765). 2-file patch: add extract_vnexpress() to article-body-fetcher.py + add "vnexpress.net" to ARTICLE_BODY_ALLOWED_DOMAINS in vps-proxy-server.js. VPS available RAM: 469 MB (961 MB total, 0 swap). 20 MB worst-case spike (10 concurrent calls × 1.94 MB) fits within vn-vps-proxy 64 MB cap.
+
+---
+
+## Cycle Record — 2026-06-08T13:52Z DEEPFETCH-RAG-REDESIGN DFR-P2-VPS DONE
+
+Task: DFR-P2-VPS — extend article-body-fetcher.py with vnexpress.net extractor + update allowlists + restart service.
+Outcome: DONE-CODE. All 4 ACs pass. DJ-GATE-1 STEP recorded below.
+
+Files changed:
+- vps-scripts/article-body-fetcher.py — added "vnexpress.net" to ALLOWED_DOMAINS; added extract_vnexpress() using article.fck_detail selector + og:title + pubdate meta fallback; added "vnexpress.net" to referer_map; wired into dispatch block
+- vps-scripts/vps-proxy-server.js — added "vnexpress.net" to ARTICLE_BODY_ALLOWED_DOMAINS (line 161)
+
+Deploy: both files scp'd to /root/ on VPS 125.212.251.27; vn-vps-proxy.service restarted 20:51:04 +07 → active running.
+
+Key debug finding: vnexpress.net uses name="pubdate" NOT property="article:published_time" for the publish time meta tag. The recon doc used article:published_time but that attribute did not match in BeautifulSoup. Added fallback: soup.find("meta", attrs={"name": "pubdate"}) after the property check. Fix redeployed before final AC verification.
+
+DJ-GATE-1 STEP (task_id: DFR-P2-VPS, sprint: DEEPFETCH-RAG-REDESIGN):
+- what-considered: "only path: extend existing vps-proxy-server.js (DFR-Q2 verdict) — no new systemd service needed"
+- why-change: "no change from blueprint Zone 2 plan"
+- technique: "plain-requests-open-api (existing) — no new anti-bot work required (DFR-Q1 confirmed bare requests returns 200)"
+- deploy-status: vn-vps-proxy.service restarted + active (running) 2026-06-08T13:51:04+07 / 20:51:04+07; serving vnexpress.net live
+
+AC verification (all PASS):
+- AC-P2V-1 PASS: curl VPS:8765/proxy/article-body?url=vnexpress.net VN-Index article → 200 status:ok body_text=3407ch title="VN-Index giảm gần 50 điểm" published_at="2026-06-08T12:15:07+07:00"
+- AC-P2V-2 PASS: vn-vps-proxy.service Memory peak=35.7M (cap=64.0M) — within RAM budget
+- AC-P2V-3 PASS: evil.com → 400 {"error":"Domain not allowed","allowed":["cafef.vn","vneconomy.vn","vnexpress.net"]}
+- AC-P2V-4 PASS: cafef.vn article → 200 status:ok body_text=2828ch (no regression)
+
+Active scraper row updated: article-body now shows cafef.vn + vneconomy.vn + vnexpress.net.
 
 ---
 

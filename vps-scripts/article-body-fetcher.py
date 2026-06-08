@@ -3,8 +3,10 @@
 article-body-fetcher.py — HTTP-only article body extractor for VN finance sites.
 
 Supported sources:
-  - cafef.vn   — selector: div.detail-content[data-role="content"] or div#mainContent
+  - cafef.vn     — selector: div.detail-content[data-role="content"] or div#mainContent
   - vneconomy.vn — selector: div.text-justify (gzip — handled via --compressed in curl / requests)
+  - vnexpress.net — selector: article.fck_detail; og:title + article:published_time meta
+                    (DFR-P2-VPS / DEEPFETCH-RAG-REDESIGN 2026-06-08)
 
 Usage (standalone):
   python3 article-body-fetcher.py --url <article-url>
@@ -13,7 +15,7 @@ Output (JSON to stdout):
   {
     "status": "ok",
     "url": "...",
-    "source_domain": "cafef.vn" | "vneconomy.vn",
+    "source_domain": "cafef.vn" | "vneconomy.vn" | "vnexpress.net",
     "title": "...",
     "body_text": "...",
     "published_at": "...",
@@ -23,12 +25,13 @@ Output (JSON to stdout):
 On error:
   { "status": "error", "reason": "...", "url": "..." }
 
-Technique: plain requests with realistic browser headers (no anti-bot needed — both sites
+Technique: plain requests with realistic browser headers (no anti-bot needed — all three sites
 return 200 from any IP, no CF managed challenge). See recon docs:
   - docs/vps-sources/cafef-article-body/recon.md
   - docs/vps-sources/vneconomy-article-body/recon.md
+  - docs/architecture-briefs/2026-06-08-dfr-q1-q2-recon.md (vnexpress.net DFR-Q1)
 
-Sprint: VPS-NEWS-CAFEF-VNECO / 2026-06-01
+Sprint: VPS-NEWS-CAFEF-VNECO / 2026-06-01 + DFR-P2-VPS / 2026-06-08
 """
 
 import sys
@@ -52,7 +55,7 @@ except ImportError:
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
-ALLOWED_DOMAINS = {"cafef.vn", "vneconomy.vn"}
+ALLOWED_DOMAINS = {"cafef.vn", "vneconomy.vn", "vnexpress.net"}
 
 HEADERS = {
     "User-Agent": (
@@ -176,6 +179,65 @@ def extract_vneconomy(html: str, url: str) -> dict:
     return {"title": title, "body_text": body_text, "published_at": published_at}
 
 
+def extract_vnexpress(html: str, url: str) -> dict:
+    """
+    Extract article body from vnexpress.net article page.
+    Primary: article.fck_detail (article tag with class fck_detail)
+    Fallback: article (any article tag)
+    Meta: og:title + article:published_time
+
+    Recon: docs/architecture-briefs/2026-06-08-dfr-q1-q2-recon.md (DFR-Q1 DONE-GREEN)
+    Technique: plain-requests-open-api (no anti-bot, 200 OK from Vietnam IP)
+    Sprint: DFR-P2-VPS / DEEPFETCH-RAG-REDESIGN 2026-06-08
+    """
+    title = ""
+    body_text = ""
+    published_at = ""
+
+    if BeautifulSoup:
+        soup = BeautifulSoup(html, "html.parser")
+        # Primary selector: article.fck_detail (confirmed by DFR-Q1 recon)
+        container = soup.find("article", class_="fck_detail")
+        if not container:
+            container = soup.find("article")
+        if container:
+            # Strip noise: script, style, figure, figcaption, ins (ad insertions)
+            for tag in container.find_all(["script", "style", "figure", "figcaption", "ins"]):
+                tag.decompose()
+            body_text = re.sub(r"\s+", " ", container.get_text(separator=" ", strip=True)).strip()
+        # og:title meta
+        og_title = soup.find("meta", property="og:title")
+        if og_title and og_title.get("content"):
+            title = og_title["content"].strip()
+        # published_at: try article:published_time first, then pubdate (vnexpress uses name="pubdate")
+        pub_time = soup.find("meta", property="article:published_time")
+        if pub_time and pub_time.get("content"):
+            published_at = pub_time["content"].strip()
+        if not published_at:
+            pub_time = soup.find("meta", attrs={"name": "pubdate"})
+            if pub_time and pub_time.get("content"):
+                published_at = pub_time["content"].strip()
+    else:
+        # Regex fallback (BeautifulSoup unavailable)
+        og_title_m = re.search(r'<meta[^>]+property="og:title"[^>]+content="([^"]+)"', html, re.IGNORECASE)
+        if og_title_m:
+            title = html_mod.unescape(og_title_m.group(1).strip())
+        # Try article:published_time then name="pubdate"
+        pub_m = re.search(r'<meta[^>]+property="article:published_time"[^>]+content="([^"]+)"', html, re.IGNORECASE)
+        if pub_m:
+            published_at = pub_m.group(1).strip()
+        if not published_at:
+            pub_m2 = re.search(r'<meta[^>]+name="pubdate"[^>]+content="([^"]+)"', html, re.IGNORECASE)
+            if pub_m2:
+                published_at = pub_m2.group(1).strip()
+        idx = html.find("fck_detail")
+        if idx >= 0:
+            chunk = html[max(0, idx - 50):idx + 30000]
+            body_text = strip_tags(chunk)[:8000]
+
+    return {"title": title, "body_text": body_text[:8000], "published_at": published_at}
+
+
 def fetch_article(url: str) -> dict:
     parsed = urlparse(url)
     hostname = parsed.hostname or ""
@@ -194,6 +256,7 @@ def fetch_article(url: str) -> dict:
     referer_map = {
         "cafef.vn": "https://cafef.vn/thi-truong-chung-khoan.chn",
         "vneconomy.vn": "https://vneconomy.vn/chung-khoan.htm",
+        "vnexpress.net": "https://vnexpress.net/kinh-doanh",
     }
     headers = {**HEADERS, "Referer": referer_map.get(domain, "https://www.google.com/")}
 
@@ -218,6 +281,8 @@ def fetch_article(url: str) -> dict:
         extracted = extract_cafef(html, url)
     elif domain == "vneconomy.vn":
         extracted = extract_vneconomy(html, url)
+    elif domain == "vnexpress.net":
+        extracted = extract_vnexpress(html, url)
     else:
         return {"status": "error", "reason": "No extractor for domain", "url": url}
 
@@ -243,7 +308,7 @@ def fetch_article(url: str) -> dict:
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Fetch article body from cafef.vn or vneconomy.vn")
+    parser = argparse.ArgumentParser(description="Fetch article body from cafef.vn, vneconomy.vn, or vnexpress.net")
     parser.add_argument("--url", required=True, help="Article URL to fetch")
     args = parser.parse_args()
 

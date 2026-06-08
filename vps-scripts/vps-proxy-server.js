@@ -57,11 +57,12 @@
  *
  *   GET /proxy/article-body?url=<article-url>
  *     → shells out to /root/article-body-fetcher.py --url <url>
- *     → allowed domains: cafef.vn, vneconomy.vn
+ *     → allowed domains: cafef.vn, vneconomy.vn, vnexpress.net
  *     → returns JSON: { status, url, source_domain, title, body_text, published_at, fetched_at }
- *     → HTTP-only (no Chromium) — both sites return 200 from Vietnam IP with browser headers
+ *     → HTTP-only (no Chromium) — all sites return 200 from Vietnam IP with browser headers
  *     → Auth: X-API-Key required
  *     → Added: VPS-NEWS-CAFEF-VNECO (P2 article body feature)
+ *     → Extended: DFR-P2-VPS / DEEPFETCH-RAG-REDESIGN 2026-06-08 (added vnexpress.net)
  *
  *   GET /bctc-files/:code/:filename
  *     → serves /root/bctc-cache/<code>/<filename> as application/pdf
@@ -158,7 +159,7 @@ const ARTICLE_BODY_SCRIPT = process.env.ARTICLE_BODY_SCRIPT || "/root/article-bo
 const ARTICLE_BODY_PATH = "/proxy/article-body";
 
 /** Domains allowed for article-body fetching (whitelist — prevents open proxy). */
-const ARTICLE_BODY_ALLOWED_DOMAINS = new Set(["cafef.vn", "vneconomy.vn"]);
+const ARTICLE_BODY_ALLOWED_DOMAINS = new Set(["cafef.vn", "vneconomy.vn", "vnexpress.net"]);
 
 /**
  * Path to the Vietstock AGM plan scraper Python script.
@@ -896,7 +897,7 @@ server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
   log("INFO", `AGM plan:         GET /proxy/agm-plan?ticker=FPT | ?batch=FPT,VIC,ACB (runs vietstock-agm-plan.py)`);
   log("INFO", `Board details:    GET /proxy/board-details?ticker=FPT | ?batch=FPT,VCB,VNM (runs vietstock-board-details.py)`);
-  log("INFO", `Article body:     GET /proxy/article-body?url=<https://cafef.vn/...> (runs article-body-fetcher.py)`);
+  log("INFO", `Article body:     GET /proxy/article-body?url=<https://cafef.vn/...|https://vnexpress.net/...> (runs article-body-fetcher.py)`);
   log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker[?year=YYYY&quarter=Q] (runs discover-bctc-urls-browser.py)`);
   log("INFO", `SSC insider:      GET /proxy/ssc-insider (proxies congbothongtin.ssc.gov.vn insider table)`);
   log("INFO", `Muasamcong:       GET /proxy/muasamcong[?path=<path>] (proxies muasamcong.mpi.gov.vn)`);
