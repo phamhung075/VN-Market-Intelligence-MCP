@@ -3,7 +3,7 @@
  *
  * One-shot Q1-2026 BCTC queue backfill.
  *
- * Inserts a placeholder bctc_vps_queue row for every watchlist ticker
+ * Inserts a bctc_vps_queue row (source_url=NULL) for every watchlist ticker
  * at year=2026 quarter=Q1, status=pending, attempts=0.
  *
  * INSERT OR IGNORE: safe to run multiple times — idempotent.
@@ -40,26 +40,30 @@ function readWatchlistTickers(): string[] {
 /**
  * Insert OR IGNORE one bctc_vps_queue row per ticker for Q1-2026.
  *
+ * source_url is intentionally inserted as NULL so that bctcQueueEnricherJob's
+ * WHERE clause (source_url IS NULL OR ...) picks it up on the next run and
+ * populates the real discovered PDF URL.
+ *
+ * FIX-BCTC-ENRICHER-PLACEHOLDER-URL: a previous version inserted a
+ * placeholder VPS URL (`http://125.212.251.27:8765/bctc-files/<TICKER>/...`)
+ * that the enricher's WHERE clause did NOT match, causing the pull job to
+ * 404-loop forever on those rows.
+ *
  * @returns number of rows inserted (0 if all already present)
  */
 export function backfillBctcQ12026(db = getDb()): number {
   const tickers = readWatchlistTickers();
 
-  // Placeholder URL — bctcQueueEnricherJob replaces this with the real VPS-discovered URL
-  const PLACEHOLDER_URL_BASE =
-    Bun.env.VPS_BCTC_BASE_URL ?? "http://125.212.251.27:8765/bctc-files";
-
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO bctc_vps_queue
       (action_code, period_year, period_quarter, source_url, status, attempts, created_at)
     VALUES
-      (?, ?, ?, ?, ?, ?, datetime('now'))
+      (?, ?, ?, NULL, ?, ?, datetime('now'))
   `);
 
   let inserted = 0;
   for (const ticker of tickers) {
-    const placeholderUrl = `${PLACEHOLDER_URL_BASE}/${ticker}/${ticker}_2026_Q1.pdf`;
-    const result = stmt.run(ticker, 2026, "Q1", placeholderUrl, "pending", 0) as { changes: number };
+    const result = stmt.run(ticker, 2026, "Q1", "pending", 0) as { changes: number };
     inserted += result.changes;
   }
 
