@@ -92,3 +92,12 @@ FIX-MCP-TOOL-COUNT-DRIFT + FIX-MCP-CI-NETWORK-GUARD: marked DONE because their s
 - macro go.mod: apps/macro-indicators/go.mod (`go 1.25.0`, outlier)
 - TA config: apps/technical-analysis/.golangci.yml (missing `version: "2"`)
 - drift assertion: apps/mcp-server/src/__tests__/123-integration-mcp.test.ts:867
+
+### STEP po-GATE-1: DJ-GATE-1 verification-gate reconcile — FIX-TA-SANDBOX-DEPGUARD DONE (2026-06-08)
+**task_id:** FIX-TA-SANDBOX-DEPGUARD | **gate:** ci_green_on_subsequent_push **=> MET**
+
+- **Status flip:** DONE-CODE-LOCAL-GREEN-PENDING-PUSH -> **DONE**.
+- **Gate evidence (raw, router-confirmed):** router pushed origin/main `8ffb1985 -> f2986485`. `git merge-base --is-ancestor c2faac2d origin/main` = YES (fix commit c2faac2d now PUSHED, ancestor of origin/main). Fresh `ci.yml` **run_id 27159569677** on **sha f2986485** COMPLETED. Per-job raw: **go-lint = success** (the previously-RED go-lint job — the sole owner of the go-lint failure — is now GREEN). All 6 other Go lints + py-lint = success.
+- **Why gate is satisfied:** verification_gate required "GREEN on a SUBSEQUENT push on a NEW sha." f2986485 != 8ffb1985 (new sha, subsequent push) and go-lint=success on that sha. Local green was insufficient (po-S7); this is the live origin proof. Evidence commit = **c2faac2d** (local sandboxCalculator adapter removes pkg/infrastructure import from cmd/sandbox; golangci-lint exit 0).
+- **bun test residual — NO new task, NO change (anti-duplicate):** overall ci.yml run 27159569677 conclusion = failure SOLELY because `bun test` = failure. This is the DISJOINT systemic class already scoped as **CI-TEST-ISOLATION-SPIKE** (TODO, owner agents-architect, created in f2986485 / po-S7). Confirmed FULLY covered: that SPIKE owns the network/timer/fs/DB-integration isolation cohort (Task 278/1487/1335 + HOSE/HNX/UPCOM AbortError timeouts). Residual remains correctly owned by that SPIKE; the now-live **ci-health-probe** (CI-HEALTH-FIX-BRIDGE, DONE) will re-detect ci.yml RED on the next dev-team tick (Step 0a.5) and route it. Creating a 2nd bun-test task here would be a duplicate -> REFUSED.
+- **Push:** NOT performed by po. Router owns the verification-gate push (already done: f2986485). This STEP is a local board-reconcile + commit only.

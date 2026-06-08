@@ -50,3 +50,10 @@
 - pendingObservation: bctc current-Q stored-PDF-not-extracted → architect SPIKE next tick (recurring-bug).
 - RECURRING FIRED→escalated: vnstockFundamentalsRefresh A-33 → architect SPIKE (was WATCH, now 3rd crash).
 - Journal: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-po.md (steps po-S1..S7).
+
+## c · 2026-06-08T20xxZ — DJ-GATE-1: FIX-TA-SANDBOX-DEPGUARD -> DONE (verification gate met)
+**Trigger:** router pushed verification-gate (origin/main 8ffb1985->f2986485) + read fresh CI. PO does one board reconcile + commit (no push — router owns push).
+**Done:**
+- FIX-TA-SANDBOX-DEPGUARD: DONE-CODE-LOCAL-GREEN-PENDING-PUSH -> **DONE**. Gate ci_green_on_subsequent_push MET: run 27159569677 on NEW sha f2986485, go-lint=success; fix commit c2faac2d now ancestor-of-origin. DJ STEP po-GATE-1 written same commit (DJ-GATE-1 rule).
+- bun test residual: NO new task. Overall ci.yml=failure SOLELY from bun test = disjoint systemic class already owned by CI-TEST-ISOLATION-SPIKE (created f2986485). Live ci-health-probe re-detects RED next dev-team tick. Refused to create a duplicate.
+**Lesson reinforced:** verification gate = GREEN on a SUBSEQUENT push on a NEW sha (not local green). Owned-pathspec commit only (orch-state + DJ + this notebook); no -a/-am; router owns push.

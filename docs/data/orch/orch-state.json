@@ -3592,7 +3592,7 @@
         "id": "FIX-TA-SANDBOX-DEPGUARD",
         "title": "Real depguard Fence-C violation: apps/technical-analysis/cmd/sandbox/main.go:44 imports pkg/infrastructure — fix import boundary",
         "owner": "dev-technical-analysis",
-        "status": "DONE-CODE-LOCAL-GREEN-PENDING-PUSH",
+        "status": "DONE",
         "zone": "apps/technical-analysis/",
         "created_at": "2026-06-07T21:25:56Z",
         "type": "FIX",
@@ -3601,7 +3601,7 @@
         "files": [
           "apps/technical-analysis/cmd/sandbox/main.go"
         ],
-        "status_note": "From CI root-cause router-20260607205837-ci item (c). Fix the violation at the import site (wire via allowed port/composition root) — do NOT loosen depguard rules without architect sign-off. AC: go-lint depguard green on fresh CI run after FIX-CI-LINT-STACK lands. | [po triage 20260608T19xxZ] ACTIVATED — now CI-BLOCKING: surfaced after FIX-TA-GOLANGCI-CONFIG-V2 migrated TA config to v2 (removed parse-error mask). go-lint job RED on origin/main 8ffb1985 = this depguard violation. Real tracked debt v1 config hid. VERIFICATION GATE: GREEN ci.yml after subsequent push. | [po triage-S7 20260608T19xxZ] Router raw-verified DONE-LOCAL: commit c2faac2d (ancestor-of-HEAD, UNPUSHED) adds local sandboxCalculator adapter removing pkg/infrastructure import from cmd/sandbox; golangci-lint exit 0 / 0 issues; DJ STEP present (sprint-CI-RED-RECONCILE-dev-technical-analysis.md). UNPUSHED -> this is why go-lint stays RED on origin/main 8ffb1985. Final DONE on push + GREEN ci.yml (router owns push; verification_gate=ci_green_on_subsequent_push). DJ-GATE-1: STEP po-S7."
+        "status_note": "From CI root-cause router-20260607205837-ci item (c). Fix the violation at the import site (wire via allowed port/composition root) — do NOT loosen depguard rules without architect sign-off. AC: go-lint depguard green on fresh CI run after FIX-CI-LINT-STACK lands. | [po triage 20260608T19xxZ] ACTIVATED — now CI-BLOCKING: surfaced after FIX-TA-GOLANGCI-CONFIG-V2 migrated TA config to v2 (removed parse-error mask). go-lint job RED on origin/main 8ffb1985 = this depguard violation. Real tracked debt v1 config hid. VERIFICATION GATE: GREEN ci.yml after subsequent push. | [po triage-S7 20260608T19xxZ] Router raw-verified DONE-LOCAL: commit c2faac2d (ancestor-of-HEAD, UNPUSHED) adds local sandboxCalculator adapter removing pkg/infrastructure import from cmd/sandbox; golangci-lint exit 0 / 0 issues; DJ STEP present (sprint-CI-RED-RECONCILE-dev-technical-analysis.md). UNPUSHED -> this is why go-lint stays RED on origin/main 8ffb1985. Final DONE on push + GREEN ci.yml (router owns push; verification_gate=ci_green_on_subsequent_push). DJ-GATE-1: STEP po-S7. | [po DJ-GATE-1 reconcile 20260608T20xxZ] -> DONE. VERIFICATION GATE MET (ci_green_on_subsequent_push): router pushed origin/main 8ffb1985->f2986485; c2faac2d now ancestor-of-origin (PUSHED). Fresh ci.yml run 27159569677 on sha f2986485 COMPLETED: go-lint=SUCCESS (was the sole go-lint RED; now GREEN on a SUBSEQUENT push on a NEW sha). Overall ci.yml=failure SOLELY due to bun test (disjoint systemic residual owned by CI-TEST-ISOLATION-SPIKE, NOT this task). go-lint scope fully green -> DONE. DJ-GATE-1: STEP po-GATE-1."
       },
       {
         "id": "FIX-FRED-YAHOO-WEEKEND-STALE",
