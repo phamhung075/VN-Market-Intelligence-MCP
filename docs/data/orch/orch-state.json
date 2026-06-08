@@ -1,15 +1,14 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T22:52:00Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-08T23:01:29Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-08T15:45:44Z",
-    "updated_by": "dev-team",
+    "updated_at": "2026-06-08T23:01:29Z",
+    "updated_by": "dev-mcp-server",
     "active_task_id": null,
-    "next_agent": null,
-    "next_action": "Tick 2026-06-08T15:45:44Z closed: FIX-PDF-EXTRACTOR-UNHEALTHY DONE (BCTC SLA met; 26-row residual routed upstream via zone_missing_tier3 dpe-20260608T154700Z -> dev-mcp-server, PO opens next tick) + CLEAN-NB-TRIM-BATCH DONE (4/5, pdfx-nb deferred). WIP 0."
+    "next_agent": null
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -3028,7 +3027,7 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": [],
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "M",
             "mode": "spike",
             "zone": "apps/mcp-server/",
@@ -3044,12 +3043,16 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T22:52:00Z",
-            "note": "PRESERVES the verified -31 errors win from 9454baad (BATCH-2). Router raw-verified pre-push: pollNews.ts network guards under CI=true gave 102+1288=14 pass/0 fail, errors 46->15. 9454baad is being REVERTED (BATCH-1 schema injection regressed +250) so this clean re-file is how the win survives. SCOPE = pollNews.ts ONLY; do NOT include ANY init*Tables / test-DDL changes (that is the regressing class -> goes through CI-TEST-SCHEMA-FIXTURE-SPIKE). SEQUENCING: router must land the 9454baad revert FIRST; this re-file then applies onto the restored 702 base (else it lands on a poisoned baseline). Do NOT touch DWF canary. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push (router owns push). Expect errors 46->~15 with NO fail regression."
+            "note": "PRESERVES the verified -31 errors win from 9454baad (BATCH-2). Router raw-verified pre-push: pollNews.ts network guards under CI=true gave 102+1288=14 pass/0 fail, errors 46->15. 9454baad is being REVERTED (BATCH-1 schema injection regressed +250) so this clean re-file is how the win survives. SCOPE = pollNews.ts ONLY; do NOT include ANY init*Tables / test-DDL changes (that is the regressing class -> goes through CI-TEST-SCHEMA-FIXTURE-SPIKE). SEQUENCING: router must land the 9454baad revert FIRST; this re-file then applies onto the restored 702 base (else it lands on a poisoned baseline). Do NOT touch DWF canary. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push (router owns push). Expect errors 46->~15 with NO fail regression.",
+            "claimed_at": "2026-06-08T22:59:08Z",
+            "claimed_by": "dev-mcp-server",
+            "commit": "64981565",
+            "completed_at": "2026-06-08T23:01:29Z"
           }
         ],
         "_updated_by": "po"
