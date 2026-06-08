@@ -163,6 +163,16 @@ Live proof (VPS GAS Q1/2026):
 
 ---
 
+## Cycle Record — 2026-06-08T16:30Z DEEPFETCH-RAG-REDESIGN DFR-Q1/Q2 DONE
+
+Tasks: DFR-Q1 (vnexpress.vn feasibility) + DFR-Q2 (service topology + RAM headroom)
+Outcome: DONE. Recon doc: docs/architecture-briefs/2026-06-08-dfr-q1-q2-recon.md
+
+Q1 verdict: VIABLE. vnexpress.net returns 200 from VPS with plain requests (bare python-requests UA works). No Cloudflare challenge, no captcha gate. Article body in static HTML via `article.fck_detail` selector. Peak RAM: 1.94 MB/call. Page size: 50–260 KB raw. No anti-bot work needed.
+Q2 verdict: EXTEND. /proxy/article-body endpoint already live in vps-proxy-server.js (VPS:8765). 2-file patch: add extract_vnexpress() to article-body-fetcher.py + add "vnexpress.net" to ARTICLE_BODY_ALLOWED_DOMAINS in vps-proxy-server.js. VPS available RAM: 469 MB (961 MB total, 0 swap). 20 MB worst-case spike (10 concurrent calls × 1.94 MB) fits within vn-vps-proxy 64 MB cap.
+
+---
+
 ## Key Findings — 2026-06-04T12:15Z RAPID-DATA-LAYER FIX-G Vietstock AGM Plan
 
 ### Scraper: vietstock-agm-plan.py — OPERATIONAL
