@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T08:51:35Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-08T09:06:20Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T08:57:26Z",
-    "_updated_by": "agent-father",
+    "_updated_at": "2026-06-08T09:06:20Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2431,6 +2431,172 @@
             "note": "SELECT source_url FROM bctc_vps_queue WHERE id=255887; URL must not contain literal space"
           }
         ]
+      },
+      {
+        "id": "DEEPFETCH-RAG-REDESIGN",
+        "label": "Deep-Fetch + RAG Redesign (brief 2026-06-08). PHASE 1 additive RAG metadata + per-doc_type decay (no re-embed) + 5 feasibility probes. Phase 2/3 gated in backlog.",
+        "status": "active",
+        "opened_at": "2026-06-08",
+        "priority": "high",
+        "evidence": "docs/architecture-briefs/2026-06-08-deepfetch-rag-redesign.md — DESIGN COMPLETE, user-greenlit directed kickoff. Phasing constraint: Phase 1 first (lowest risk, no re-embed), feasibility batch in parallel, Phase 2/3 gated.",
+        "tasks": [
+          {
+            "id": "DFR-BA-1",
+            "title": "Phase 1 requirement spec: additive LanceDB +8 metadata columns + per-doc_type query-time decay + DTO extensions + mcp-server caller updates + rag_analyses.body_text ADD COLUMN. Decompose acceptance criteria; defer Phase 2/3 scope.",
+            "owner": "ba",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "docs/agents/",
+            "size": "M",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [],
+            "created_at": "2026-06-08T09:06:20Z",
+            "files": [
+              "docs/architecture-briefs/2026-06-08-deepfetch-rag-redesign.md"
+            ],
+            "note": "Scope = brief Phase 1 (B2 schema, B4 decay, B7 index API) + Q5 ALTER TABLE only. Phase 2/3 OUT. Feasibility probes (DFR-Q1..Q5) run in parallel and are NOT blockers for Phase 1 ba-spec — they gate Phase 2/3 commit only. PO greenlit; route ba->architect(if needed)->pm->dev->qa."
+          },
+          {
+            "id": "DFR-P1-RAG",
+            "title": "rag-service Phase 1: add_columns() migration for +8 metadata cols on rag_entries (ticker,sector,source_domain,depth_tier,doc_type,published_at,confidence,impact_score); extend IndexRequest + SearchRequest DTOs with optional new fields (backward-compatible defaults); extend LanceDBVectorStore.search() to filter on ticker/sector/source_domain/depth_tier/doc_type.",
+            "owner": "dev-rag-service",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "apps/rag-service/",
+            "size": "M",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-BA-1"
+            ],
+            "created_at": "2026-06-08T09:06:20Z",
+            "files": [
+              "apps/rag-service/infrastructure/repositories.py",
+              "apps/rag-service/application/dtos.py"
+            ],
+            "note": "Brief B2/B7. Additive only — existing 384-dim vectors NOT re-embedded; existing rows get NULL new cols and stay searchable by vector. add_columns() non-destructiveness MUST be confirmed by DFR-Q4 before committing migration to live data (recompute-on-read-beats-backfill). No FTS in Phase 1 (that is Phase 3)."
+          },
+          {
+            "id": "DFR-P1-MCP",
+            "title": "mcp-server Phase 1: (a) live ALTER TABLE rag_analyses ADD COLUMN body_text TEXT (nullable); (b) update ragIndex() in pollNews.ts + fetchParseAndStoreBctc.ts to pass ticker,sector,source_domain,doc_type,published_at,confidence,impact_score; (c) add rag.decayHalfLifeDays per-doc_type map to mcp.config.json + update ragSearch() callers to pass appropriate decay_half_life_days (news 1-3d, macro 7d, filing 30d, analysis 14d).",
+            "owner": "dev-mcp-server",
+            "type": "SPRINT-S",
+            "status": "TODO",
+            "zone": "apps/mcp-server/",
+            "size": "M",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-BA-1",
+              "DFR-P1-RAG"
+            ],
+            "created_at": "2026-06-08T09:06:20Z",
+            "files": [
+              "apps/mcp-server/src/scheduler/news-analysis/pollNews.ts",
+              "apps/mcp-server/src/interface/mcp/tools/financial-reports/fetchParseAndStoreBctc.ts",
+              "apps/mcp-server/mcp.config.json"
+            ],
+            "note": "Brief B4/B7 + Q5. (b)/(c) depend on DFR-P1-RAG accepting new fields. (a) ALTER TABLE is the live execution of the DFR-Q5 probe — single-writer invariant (mcp-server sole writer of market.db) makes it low-risk; confirm path via DFR-Q5 first. ops_rebuild_required=true after merge. No hardcoded sectors/tickers — derive from docs/data/system-map.json."
+          },
+          {
+            "id": "DFR-QA-1",
+            "title": "QA Phase 1: verify add_columns() migration non-destructive (old rows searchable + NULL new cols), /index + /search accept+filter new fields with backward-compatible defaults, rag_analyses.body_text exists, per-doc_type half-life applied by callers, baseline tests >= 9408 pass.",
+            "owner": "qa",
+            "type": "QA",
+            "status": "TODO",
+            "zone": "apps/rag-service/ + apps/mcp-server/",
+            "size": "S",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-P1-RAG",
+              "DFR-P1-MCP"
+            ],
+            "created_at": "2026-06-08T09:06:20Z",
+            "note": "Verify LIVE raw (not badges): query rag-service /search on a pre-migration row to prove still searchable; confirm new filter cols present via schema introspection; confirm rag_analyses PRAGMA table_info shows body_text."
+          },
+          {
+            "id": "DFR-Q1",
+            "title": "FEASIBILITY (parallel): vnexpress.vn article body via plain requests (same as cafef.vn)? Anti-bot work needed to extend article-body-fetcher.py? Typical page size for RAM-per-call estimate?",
+            "owner": "dev-vps-crawls",
+            "type": "SPIKE",
+            "mode": "spike",
+            "timebox": 120,
+            "status": "TODO",
+            "zone": "docs/vps-crawl-techniques/",
+            "size": "S",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [],
+            "created_at": "2026-06-08T09:06:20Z",
+            "note": "Brief Q1. Non-blocking for Phase 1; GATES Phase 2 deep-fetch commit. Output: findings (viability + anti-bot verdict + page-size). Do NOT implement — recon only this kickoff."
+          },
+          {
+            "id": "DFR-Q2",
+            "title": "FEASIBILITY (parallel): extend existing vn-news-fetch.service for article-body endpoint OR new vn-deep-fetch.service for isolation? Current VPS free RAM headroom (free -m)?",
+            "owner": "dev-vps-crawls",
+            "type": "SPIKE",
+            "mode": "spike",
+            "timebox": 120,
+            "status": "TODO",
+            "zone": "docs/vps-crawl-techniques/",
+            "size": "S",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [],
+            "created_at": "2026-06-08T09:06:20Z",
+            "note": "Brief Q2. Non-blocking for Phase 1; GATES Phase 2. Output: service-topology recommendation + RAM headroom number."
+          },
+          {
+            "id": "DFR-Q3",
+            "title": "FEASIBILITY (parallel): exact lancedb version in apps/rag-service/requirements.txt? Does it support create_fts_index() and hybrid_search() (v0.8+)? Report before Phase 3 design locked.",
+            "owner": "dev-rag-service",
+            "type": "SPIKE",
+            "mode": "spike",
+            "timebox": 120,
+            "status": "TODO",
+            "zone": "apps/rag-service/",
+            "size": "S",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [],
+            "created_at": "2026-06-08T09:06:20Z",
+            "note": "Brief Q3. HARD GATE on Phase 3 (DFR-P3-HYBRID stays BLOCKED until this answers yes/no). Output: version + FTS/hybrid availability verdict."
+          },
+          {
+            "id": "DFR-Q4",
+            "title": "FEASIBILITY (parallel): does add_columns() in deployed lancedb version work non-destructively on an existing table with data? Verify against a test LanceDB instance.",
+            "owner": "dev-rag-service",
+            "type": "SPIKE",
+            "mode": "spike",
+            "timebox": 120,
+            "status": "TODO",
+            "zone": "apps/rag-service/",
+            "size": "S",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [],
+            "created_at": "2026-06-08T09:06:20Z",
+            "note": "Brief Q4 + Risk R4. Non-blocking for Phase 1 ba-spec BUT MUST answer before DFR-P1-RAG commits the migration to live data. Output: non-destructive verdict from test instance."
+          },
+          {
+            "id": "DFR-Q5",
+            "title": "FEASIBILITY (parallel): live ALTER TABLE rag_analyses ADD COLUMN body_text TEXT without data loss / service interruption? Confirm path (mcp-server sole writer of market.db).",
+            "owner": "dev-mcp-server",
+            "type": "SPIKE",
+            "mode": "spike",
+            "timebox": 120,
+            "status": "TODO",
+            "zone": "apps/mcp-server/",
+            "size": "S",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [],
+            "created_at": "2026-06-08T09:06:20Z",
+            "note": "Brief Q5. Confirms the migration path used by DFR-P1-MCP(a). Output: migration-path verdict. Low risk per single-writer invariant; confirm before execution."
+          }
+        ]
       }
     ],
     "backlog": [
@@ -3386,6 +3552,50 @@
         "status_note": "QA DJ-GATE-1 PASS 2026-06-08T08:51:35Z — 18/18 host + 18/18 in-container probes HTTP 200 <200ms while active tesseract OCR in flight (8 concurrent tesseract PIDs 08:44-08:51Z). asyncio.to_thread fix (commit 8ca79007) verified in container /app/infrastructure/extraction_engine.py lines 46+58. Root cause fixed.",
         "done_at": "2026-06-08T08:51:35Z",
         "done_by": "qa"
+      },
+      {
+        "id": "DFR-P2-DEEPFETCH",
+        "title": "PHASE 2 (GATED): conditional deep-fetch. mcp-server relevance gate in pollNews.ts post-dedup (3-signal OR: ticker/sector-keyword/impact>=7) + deep_fetch_queue + deep_fetch_stats SQLite tables + deepFetchVpsJob.ts + deepFetchMainJob.ts; VPS-first extend article-body-fetcher.py for vnexpress.vn + VPS:8765 article-body endpoint; main-server Playwright fallback for JS/intl. Hard caps (10 deep / 5 Playwright per cycle), per-domain daily cap, 4h stale expiry, source_url UNIQUE.",
+        "type": "SPRINT-M",
+        "owner": "dev-mcp-server",
+        "status": "BLOCKED",
+        "zone": "multi",
+        "size": "M",
+        "priority": "high",
+        "sprint": "DEEPFETCH-RAG-REDESIGN",
+        "depends": [
+          "DFR-Q1",
+          "DFR-Q2",
+          "DFR-QA-1"
+        ],
+        "created_at": "2026-06-08T09:06:20Z",
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/pollNews.ts",
+          "apps/mcp-server/src/domain/services/deepFetchGate.ts",
+          "apps/mcp-server/src/infrastructure/db/schema-news.ts"
+        ],
+        "note": "Brief Pillar A / Option R. GATED: do NOT dispatch until DFR-Q1+Q2 answered (vnexpress viability + VPS RAM/service topology) AND Phase 1 QA green. Owner zone multi (dev-mcp-server + dev-vps-crawls + dev-mainserver-crawls) -> architect must split at dispatch. WIP control: not this kickoff."
+      },
+      {
+        "id": "DFR-P3-HYBRID",
+        "title": "PHASE 3 (GATED on Q3): BM25+vector hybrid via LanceDB FTS. create_fts_index() on (title,summary); hybrid_search() with RRF merge in LanceDBVectorStore; expose POST /search {hybrid:bool} default false; update chef-synthesis + bctc-analyst callers to pass hybrid:true.",
+        "type": "SPRINT-M",
+        "owner": "dev-rag-service",
+        "status": "BLOCKED",
+        "zone": "apps/rag-service/",
+        "size": "M",
+        "priority": "medium",
+        "sprint": "DEEPFETCH-RAG-REDESIGN",
+        "depends": [
+          "DFR-Q3",
+          "DFR-P1-RAG"
+        ],
+        "created_at": "2026-06-08T09:06:20Z",
+        "files": [
+          "apps/rag-service/infrastructure/repositories.py",
+          "apps/rag-service/application/dtos.py"
+        ],
+        "note": "Brief Pillar B / Option H. HARD GATE: do NOT commit until DFR-Q3 confirms lancedb version supports FTS + hybrid_search() AND architect locks Phase 3 design. Highest-risk component (R: FTS API version-dependent); benefit marginal until Phase 1 metadata filters live. WIP control: not this kickoff."
       }
     ],
     "archive": [],
@@ -6699,7 +6909,7 @@
     ]
   },
   "sprint_goal": {
-    "_updated_at": "2026-06-07T09:53:33Z",
+    "_updated_at": "2026-06-08T09:06:20Z",
     "_updated_by": "po",
     "_note": "Structured projection of docs/SPRINT_GOAL.md active sprint entries. Machine-shaped; free-form markdown in source.",
     "entries": [
@@ -6977,6 +7187,17 @@
         "created_by": "po",
         "source": "USER DEMAND lane-C 2026-06-07 (analyze MCP tool surface for upgrades + dispatch dev-team); evidence: live /health toolCount=162, source-extracted 162 names, 4-layer usage matrix, live call_tool probes (get_market_snapshot, get_macro_snapshot, get_foreign_flow), tool-usage-stats.json sessionCount=0, tool-registry.json lastUpdated 2026-05-03",
         "note": "CLOSED 2026-06-07T09:53:33Z SPRINT-SIGNOFF. All 7 tasks DONE (U1 telemetry, U2-GEN generator, U3 deregister 162->157, U4 macro delta LIVE-verified, U5 foreign-flow null gate LIVE-verified, U6 descriptions, U2-PARITY 157 four-count convergence). Containers rebuilt, image IDs verified (mcp-server 055a57bea1e1, macro-indicators 66c206417f79), /health toolCount=157 live. OPEN ITEM: AC-U1-8 telemetry live-proof -> signal to system-auditor."
+      },
+      {
+        "sprint_id": "DEEPFETCH-RAG-REDESIGN",
+        "status": "active",
+        "vision": "Every cowork analysis consumer retrieves higher-signal RAG context because article-relevant docs carry domain metadata (ticker/sector/source/depth/doc_type) and decay at a rate matched to their content type — shipped additively with zero re-embed and zero downtime.",
+        "scope_in": "PHASE 1 ONLY this kickoff: additive LanceDB +8 metadata columns via add_columns() (ticker,sector,source_domain,depth_tier,doc_type,published_at,confidence,impact_score); per-doc_type temporal-decay half-life passed at QUERY time (news 1-3d, macro 7d, filing 30d, analysis 14d); IndexRequest/SearchRequest DTO extension; mcp-server ragIndex/ragSearch callers pass new fields; live ALTER TABLE rag_analyses ADD COLUMN body_text (Q5). PLUS parallel feasibility batch Q1-Q5.",
+        "scope_out": "Phase 2 (conditional deep-fetch pipeline: relevance gate + two-executor queue + VPS article-body endpoint) and Phase 3 (BM25+vector hybrid FTS) — both GATED in backlog on feasibility answers. No re-embedding. No new microservice. No branches.",
+        "success_metric": "Phase 1: add_columns() migration live-verified non-destructive (existing rows searchable, NULL new cols); rag-service /index + /search accept and filter on new fields (backward-compatible defaults); rag_analyses.body_text column exists; mcp-server callers pass per-doc_type half-life; baseline tests >= 9408 pass. Feasibility: all 5 Q answered with evidence before any Phase 2/3 commit.",
+        "created_at": "2026-06-08T09:06:20Z",
+        "source_brief": "docs/architecture-briefs/2026-06-08-deepfetch-rag-redesign.md",
+        "phasing": "Phase 1 + feasibility probes dispatched; Phase 2/3 gated in backlog"
       }
     ]
   }
