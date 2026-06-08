@@ -1,5 +1,14 @@
-[NB] Total lines:       ~135
+[NB] Total lines:       ~145
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
+
+## c277 · 2026-06-08T22:06:44Z
+### Audit Run Tier-1 (22:06 UTC 2026-06-08 → 2026-06-09 07:06 VN)
+- Tier: 1 | Services: 6 checked (mcp-server, api-gateway, frontend, macro-indicators, mcp-gateway, pdf-extractor)
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE: all 6 services UP/healthy (docker ps); health endpoints: mcp-server 3000→200, api-gateway 4000→200, macro-indicators 5004→200, pdf-extractor 5001→200, frontend 3001→200, mcp-gateway (not in host_runtime_set, INFO skip).
+- Restart count: mcp-server=2 (PASS, ≤threshold); memory=49.78% (PASS, <85%); disk=5.6% used/233GB (PASS).
+- A-20 pdf-extractor multi-probe: 3/3 PASS (in-container health HTTP 200 all probes).
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
 
 ## c276 · 2026-06-08T21:35:38Z
 ### Audit Run Tier-1 (21:35 UTC 2026-06-08)
