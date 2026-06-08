@@ -26,7 +26,9 @@
  *     bctcPipeline: {
  *       pending: number,
  *       done: number,
- *       failed: number
+ *       failed: number,
+ *       deferred_infra: number,        // historical HIST-VPS-BACKFILL rows; sources gone/geo-dead
+ *       blocked_pdf_extractor: number  // gated on A-20 architect fix (CPU-cgroup starvation)
  *     },
  *     fetchedAt: string   // ISO timestamp when this response was assembled
  *   }
@@ -117,6 +119,10 @@ interface BctcQueueCounts {
   pending: number;
   done: number;
   failed: number;
+  /** Historical HIST-VPS-BACKFILL rows; sources gone/geo-dead; non-actionable by design. */
+  deferred_infra: number;
+  /** Q1-2026 rows gated on A-20 architect fix (pdf-extractor CPU-cgroup starvation). */
+  blocked_pdf_extractor: number;
 }
 
 /**
@@ -179,22 +185,37 @@ function querySourceAges(db: Database, now: Date): SourceAgeRow[] {
 
 /**
  * Query BCTC VPS queue counts by status.
+ *
+ * Includes explicit non-actionable statuses introduced by FIX-BCTC-VPS-QUEUE-STALE-TRIAGE:
+ *   deferred_infra        — historical HIST-VPS-BACKFILL rows; sources geo-dead; not retryable.
+ *   blocked_pdf_extractor — Q1-2026 rows gated on A-20 architect fix; re-queue after arch fix.
+ * C-16 auditor check counts only `pending` rows >72h; non-actionable rows excluded by their status.
  */
 function queryBctcCounts(db: Database): BctcQueueCounts {
   const row = db
     .prepare(
       `SELECT
-         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending,
-         SUM(CASE WHEN status = 'done'    THEN 1 ELSE 0 END) AS done,
-         SUM(CASE WHEN status = 'failed'  THEN 1 ELSE 0 END) AS failed
+         SUM(CASE WHEN status = 'pending'               THEN 1 ELSE 0 END) AS pending,
+         SUM(CASE WHEN status = 'done'                  THEN 1 ELSE 0 END) AS done,
+         SUM(CASE WHEN status = 'failed'                THEN 1 ELSE 0 END) AS failed,
+         SUM(CASE WHEN status = 'deferred_infra'        THEN 1 ELSE 0 END) AS deferred_infra,
+         SUM(CASE WHEN status = 'blocked_pdf_extractor' THEN 1 ELSE 0 END) AS blocked_pdf_extractor
        FROM bctc_vps_queue`,
     )
-    .get() as { pending: number | null; done: number | null; failed: number | null } | null;
+    .get() as {
+      pending: number | null;
+      done: number | null;
+      failed: number | null;
+      deferred_infra: number | null;
+      blocked_pdf_extractor: number | null;
+    } | null;
 
   return {
     pending: row?.pending ?? 0,
     done: row?.done ?? 0,
     failed: row?.failed ?? 0,
+    deferred_infra: row?.deferred_infra ?? 0,
+    blocked_pdf_extractor: row?.blocked_pdf_extractor ?? 0,
   };
 }
 

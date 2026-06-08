@@ -1,4 +1,4 @@
-<!-- size-justification: ~627L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. FIX-AUDITOR-DB-LIVENESS (2026-06-07) bun:sqlite readonly exec replacing dead host-side sqlite3 path; dynamic container-name resolution; Tier-2/Tier-3 docker exec name literals fixed. FIX-AUDITOR-SQL-MODIFIERS (2026-06-08) long-form SQLite datetime modifiers + NULL-guard (short-form '-Nh'/'-Nd' returns NULL, caused C-06/C-07 false CRITICAL and C-08/C-10/C-16/B-13 silent false-PASS). Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
+<!-- size-justification: ~627L — three-tier dispatcher; Tier-1 detail extracted to tier1-probe.md (FIX-AUDITOR-EVIDENCE-INTEGRITY 2026-06-06). A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) adds SLA resolver. AUDITOR-COMMIT-MUTEX-ENFORCE (2026-06-06) converts narrated commit-mutex to executed protocol. NB-AUDITOR-SETTLED-WRITE (2026-06-06) folds BCTC-EVAL-SNAPSHOT into settled-write. NB-ORDERING-FIX (2026-06-06) NEWEST-FIRST ordering. FIX-AUDITOR-FLOW-TIER-EARLYEXIT (2026-06-07) AUDIT_TIER native read + git-log --since fix. FIX-AUDITOR-DB-CHECKS-HOSTSIDE (2026-06-07) C-01–C-16 host-side read-only sqlite3 + schema corrections. FIX-AUDITOR-FLOW-RESIDUALS (2026-06-07) weekend-aware C-01/C-02/C-14 + Tier-2 docker-exec residuals host-side + L438 signal-row embedded in emit steps + OUTPUT-CONTRACT mandate. FIX-AUDITOR-DB-LIVENESS (2026-06-07) bun:sqlite readonly exec replacing dead host-side sqlite3 path; dynamic container-name resolution; Tier-2/Tier-3 docker exec name literals fixed. FIX-AUDITOR-SQL-MODIFIERS (2026-06-08) long-form SQLite datetime modifiers + NULL-guard (short-form '-Nh'/'-Nd' returns NULL, caused C-06/C-07 false CRITICAL and C-08/C-10/C-16/B-13 silent false-PASS). FIX-BCTC-VPS-QUEUE-STALE-TRIAGE (2026-06-08) C-16/B-13 exclude deferred_infra + blocked_pdf_extractor statuses; only actionable pending rows counted. Full split to <120L requires Tier-2/Tier-3 extraction sprint — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -185,6 +185,7 @@ db.close();
 "
 ```
 - 0 → PASS; > 0 → WARN (B-13)
+- NOTE: `deferred_infra` (historical HIST-VPS-BACKFILL, sources gone) and `blocked_pdf_extractor` (Q1-2026 gated on A-20 architect fix) are explicitly excluded — these are non-actionable by design.
 
 ### Emit per stale source (severity ≥ WARN)
 **EMIT SEQUENCE — all three steps are MANDATORY, no step is optional:**
@@ -467,7 +468,7 @@ Long-form modifiers are REQUIRED: `'-N hours'` / `'-N days'` — NEVER `'-Nh'` o
 | C-13 | container /app/data | via bun `statSync('/app/data/market.db-wal')` etc inside `docker exec "$MCP_CTR" bun -e ...` — check each WAL size | < 52428800 bytes (50MB) each |
 | C-14 | market.db | top-3 `code` row share of `daily_ohlcv` using same `<WINDOW>` as C-01: `WITH t AS (SELECT code,count(*) c FROM daily_ohlcv WHERE date>=date('now',<WINDOW>) GROUP BY code ORDER BY c DESC LIMIT 3) SELECT round(100.0*sum(c)/(SELECT count(*) FROM daily_ohlcv WHERE date>=date('now',<WINDOW>)),1) FROM t` — skip (NULL result) if C-01 returns 0 (no data in window) | < 60% |
 | C-15 | market.db | `PRAGMA table_info(financial_reports)` — check action_code, period_year, net_revenue, extraction_confidence present | all 4 present |
-| C-16 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72 hours')` | 0 |
+| C-16 | market.db | `SELECT count(*) FROM bctc_vps_queue WHERE status='pending' AND created_at < datetime('now','-72 hours')` | 0 — non-actionable rows use explicit statuses `deferred_infra` / `blocked_pdf_extractor` and are excluded by design (FIX-BCTC-VPS-QUEUE-STALE-TRIAGE) |
 
 Also call:
 ```
