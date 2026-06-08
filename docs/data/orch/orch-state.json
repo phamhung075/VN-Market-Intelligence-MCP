@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-07T23:16:03Z",
+    "_updated_at": "2026-06-08T00:15:10Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -3203,6 +3203,40 @@
         "note": "From router signal router-2026-06-07T22:53:07Z-macro-fixture-fallback (sev MEDIUM, repair_task_request). Evidence (router raw-verified): Go service serves fedFundsRate=5.33 fixtureFedFundsRate (source_tier 4) whenever direct FRED fetch fails — every weekend; restart verified NOT to fix. Never consults mcp-server bridged DB value (3.62 live in fred_series_daily). Honest-flagged (is_estimate:true, regime suppressed) so likely weekday self-heal, but structural defect. Fix: fallback chain direct-FRED -> bridged DB value via repositories.go GetFedFundsRate path (tier 2/3) -> fixture (tier 4) last resort; preserve honest provenance (source_tier + is_estimate per actual source). Key sites: usecases.go:55 fixtureFedFundsRate, usecases.go:~430 fallback, repositories.go:549-575 GetFedFundsRate/GetFedFundsSourceDate + effrStaleBound. AC: weekend-simulated test (direct fetch fails, DB row present) serves bridged value tier 2/3 not 5.33; fixture only when BOTH fail; go test ./... green in zone. Zone safe to start now (does not touch apps/mcp-server).",
         "completed_at": "2026-06-07T23:40:18Z",
         "resolution": "effrStaleBound 96h->168h e03b3ca3 (root cause: DB fallback existed but stale bound rejected weekend-aged rows); live snapshot serves 3.62 tier 2 on weekend; go test 10/10 pkgs green"
+      },
+      {
+        "id": "FIX-COWORK-GATEWAY-GATE",
+        "title": "Add Step-0 gateway-availability fail-loud gate to market-watcher + news-scout flows (mirror bctc-analyst pattern): probe one cheap call; on tool-absent -> bug signal file + BLOCKED notebook entry + EXIT; NEVER refresh coverage-state/notebook as shipped",
+        "type": "FIX",
+        "size": "S",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "docs/agents/",
+        "route_to": "agent-father",
+        "created_at": "2026-06-08T00:15:10Z",
+        "status_note": "From router repair_task_request 2026-06-08T00:06Z: 00:00 FANOUT degraded 3/3, market-watcher shipped FALSE-GREEN (router reverted coverage-state VNM/FPT/VCB + voided notebook cycle). Session-level MCP reconnect = USER action, out of scope. AC: with gateway tool absent, both flows produce BLOCKED signal + zero coverage-state/notebook mutation; with gateway present, normal cycle unchanged. Files: docs/agents/market-watcher/flow/main.md, docs/agents/news-scout/flow/main.md."
+      },
+      {
+        "id": "FIX-MCP-SUITE-HEALTH-BASELINE",
+        "title": "Triage standing bun-test baseline in apps/mcp-server (40 fail / 848 pass): classify (a) order-dependent pdf-extractor loop-pollution overlap (FIX-PDFX-TEST-LOOP-POLLUTION) vs (b) real regressions; define + document green baseline",
+        "type": "FIX",
+        "size": "M",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "created_at": "2026-06-08T00:15:10Z",
+        "status_note": "From queue row router-2026-06-07T23:26:52Z-mcp-suite-health (READ). Sequenced AFTER FIX-PDFX-TEST-LOOP-POLLUTION lands — pollution fix shrinks the triage surface. AC: every remaining fail has a disposition (fix task / known-red doc / deleted dead test); baseline_pass count recorded in docs so future suite-health checks compare against truth not vibes. Note: signal commit c28b2889 cites 463 pre-existing fails + bun teardown panic — reconcile both counts during triage."
+      },
+      {
+        "id": "CLEAN-NB-TRIM-PDFX",
+        "title": "docs/agent-memory/notebooks/dev-pdf-extractor.md at 202L exceeds 200L cap — janitor-lane trim to notebook-write skill discipline (OVERWRITE, target <=50L, Carry-over preserved)",
+        "type": "CLEAN",
+        "size": "XS",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "docs/agent-memory/",
+        "created_at": "2026-06-08T00:15:10Z",
+        "status_note": "From context-bloat signal x2 (same target). AC: file <=200L (target <=50L), Carry-over block intact, committed under commit-mutex."
       }
     ],
     "archive": [],

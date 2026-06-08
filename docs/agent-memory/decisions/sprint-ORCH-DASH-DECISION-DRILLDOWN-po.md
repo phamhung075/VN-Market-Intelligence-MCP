@@ -41,3 +41,13 @@
 - Trust commit a709681f "rebuild verified" badge vs raw-verify container content
 **why-decision:** Raw-verified per verify-raw-not-badges: image Created 20:31:47Z > commit 06c65978 (14:00Z) AND balanceSheetExtractor.ts sha256 MATCH repo-vs-container (a8768572...) — container provably ships the fix; PPC reparse PASS. Stale hint would have triggered a wasteful duplicate rebuild (rebuild-recreate destroys peers ~21min).
 **why-change:** signal 1 (dev-pdf-extractor notebook 212L>cap) NO-TASK — already self-resolved, file now 198L (a854f5a2).
+
+### STEP po-S5 · po · 2026-06-08T00:15:49Z
+**task-id:** FIX-COWORK-GATEWAY-GATE
+**what-done:** Triage tick 00:12Z drain — 6 signals → 3 new board tasks (FIX-COWORK-GATEWAY-GATE, FIX-MCP-SUITE-HEALTH-BASELINE, CLEAN-NB-TRIM-PDFX); authorized 2 dispatches.
+**what-considered:**
+- Open task for missed bctc c030 cycle — rejected: peer re-fire 00:07:45Z completed it (notebook c031: gateway restored, dup guard claimed, #5332/#5333 published)
+- Dispatch FIX-MCP-SUITE-HEALTH-BASELINE now — rejected: sequenced after FIX-PDFX-TEST-LOOP-POLLUTION shrinks 36/40 of triage surface
+- 2nd dispatch slot: FIX-BCTC-LOWCONF-REPARSE-BATCH vs PDFX work — bctc reparse wins on product value (REE #3085 + 22-filing release blocked behind it; magnitude-normalize 06c65978 LIVE; mcp-server zone unfrozen, FIX-FRED-YAHOO-WEEKEND-STALE DONE)
+**why-decision:** Reliability-first: market-watcher FALSE-GREEN is a trust defect (router had to revert poisoned coverage-state); gate is small, mirrors proven bctc-analyst pattern, routes agent-father (docs/agents/ zone).
+**why-change:** no change from priority order (recurring-bug/FIX before CLEAN/SPRINT).
