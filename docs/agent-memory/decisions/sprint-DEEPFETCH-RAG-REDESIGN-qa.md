@@ -169,3 +169,31 @@ Three ACs that directly require metadata round-trip (AC-FR2-4, AC-FR3-2, AC-FR3-
 
 **why-decision:** All 18+8=26 in-scope ACs pass. Mandatory guardrails (caps, dedup, SSRF, expiry) all LIVE-verified. DDD/security/tsc all PASS. All test suites GREEN. APPROVED on all 4 tasks.
 **why-change:** No change from plan — all implementation matches blueprints exactly.
+
+---
+
+### STEP qa-S5 · qa · 2026-06-08T15:35Z — DFR-P3-MCP directed final acceptance gate
+**task-id:** DFR-P3-MCP
+**sprint:** DEEPFETCH-RAG-REDESIGN
+**scope:** commit 4af297b2 (5 files, mcp-server hybrid opt-in). mcp-server /health 200 toolCount 157 confirmed live.
+**verdict:** APPROVED
+
+**what-considered:** All 5 ACs verified raw (source code grep + tsc + live HTTP smoke):
+
+| AC | Result | Evidence |
+|----|--------|----------|
+| AC-P3M-1 | PASS | `bun tsc --noEmit` EXIT:0 in apps/mcp-server after `hybrid?: boolean` added to RagSearchRequest (ragHttpClient.ts line 35). |
+| AC-P3M-2 | PASS | runImpactChain.ts line 243: `hybrid: true` with comment "chef synthesis queries are ticker-exact — BM25+vector improves recall". runPredictionImpactChain.ts line 225: same pattern. Both chef synthesis defaultRagRetriever callers confirmed. |
+| AC-P3M-3 | PASS | analysis.ts lines 539-545: `hybrid: true` passed in bctc-analyst search_similar_context ragSearch call, comment "ticker-exact filing queries". |
+| AC-P3M-4 | PASS | pollNews.ts line 459: `// hybrid intentionally omitted — contextual enrichment is semantic, not ticker-exact`. No `hybrid: true` in defaultRagRetriever ragSearch call. Vector-only path preserved. |
+| AC-P3M-5 | PASS | pollNews behavior confirmed unchanged (no hybrid field). Wiring verified: ragSearch() uses JSON.stringify(request) → passes hybrid field through when present. |
+
+**Live E2E smoke:** POST http://localhost:5002/search `{"query":"VCB earnings growth Q1 2025","hybrid":true,"limit":3}` → HTTP 200, 3 results (BCTC VCB Q1/2025 ranked #1). No 500. Contract match confirmed. rag-service /health status=ok. mcp-server /health toolCount=157 status=ok.
+
+**Test results:** dfr-p2-mcp.test.ts + 1840a-rag-wiring.test.ts + ddd-1b-rag-http-client.test.ts + p2-f-rag-http-rewire.test.ts = 47/47 PASS. Full suite bun test EXIT:0 (bun v1.3.13 WriteFailed crash pre-existing, non-blocking). 3 pre-existing 1332 failures (cron_job_runs missing from hand-rolled test schema — same failures as documented in qa-S3, cycle-216, cycle-211; NOT in 4af297b2 diff).
+
+**DDD:** ragHttpClient.ts = infrastructure. No domain→infra violations. DDD PASS.
+**Security:** No process.env, no hardcoded secrets in 5 modified files. Security PASS.
+
+**why-decision:** All 5 ACs pass. tsc clean. Live rag-service receives hybrid=true and returns HTTP 200. pollNews stays vector-only (no regression). 3 pre-existing test failures are identical to qa-S3 evidence (cron_job_runs schema gap, root cause in test harness not in DFR-P3-MCP diff). APPROVED.
+**why-change:** no change from plan — thin change (one field + N opt-ins) implemented exactly per blueprint §9 and §10.

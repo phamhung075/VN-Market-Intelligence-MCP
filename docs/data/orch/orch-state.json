@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T16:40:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-08T15:35:00Z",
+  "_updated_by": "qa",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -2435,7 +2435,7 @@
       {
         "id": "DEEPFETCH-RAG-REDESIGN",
         "label": "Deep-Fetch + RAG Redesign (brief 2026-06-08). PHASE 1 additive RAG metadata + per-doc_type decay (no re-embed) + 5 feasibility probes. Phase 2/3 gated in backlog.",
-        "status": "active",
+        "status": "completed",
         "opened_at": "2026-06-08",
         "priority": "high",
         "evidence": "docs/architecture-briefs/2026-06-08-deepfetch-rag-redesign.md — DESIGN COMPLETE, user-greenlit directed kickoff. Phasing constraint: Phase 1 first (lowest risk, no re-embed), feasibility batch in parallel, Phase 2/3 gated.",
@@ -2628,7 +2628,7 @@
             "title": "Phase 2 deep-fetch pipeline: 3-zone split (dev-mcp-server: gate+queue+executors, dev-vps-crawls: extend article-body-fetcher.py+allowlist, dev-mainserver-crawls: Playwright fallback endpoint). Blueprint: docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md.",
             "owner": "ba",
             "type": "SPRINT-M",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "multi: apps/mcp-server/ + vps-scripts/ + apps/news-fetch/",
             "size": "M",
             "priority": "high",
@@ -2643,9 +2643,10 @@
             "next_role": "pm",
             "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md",
             "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md",
-            "note": "ARCH-DFR-P2 DONE (DJ-GATE-1 STEP architect-S6). BA spec DONE 2026-06-08T13:22:00Z — decomposed into 3 atomic sub-tasks: DFR-P2-MCP (dev-mcp-server, 10 ACs) + DFR-P2-VPS (dev-vps-crawls, 4 ACs) + DFR-P2-MAIN (dev-mainserver-crawls, 4 ACs). All 3 can build in parallel against interface contracts; integration verify needs all 3 live. Caps (10 VPS/cycle, 5 Playwright/cycle, per-domain daily, 4h expiry) are mandatory acceptance — not optional. Live-crawl risk R-P2-7 flagged. PM: add sub-tasks to board per BA spec.",
+            "note": "Parent container task — all child tasks DONE. Closed by QA sprint-complete gate.",
             "sequencing": "SEQUENCING (architect-flagged, PM honor): P2 and P3 rag-service work run fully PARALLEL (disjoint zones). Only the mcp-server slices share ragHttpClient.ts at DIFFERENT interface blocks (P2=ragIndex write path, P3=RagSearchRequest read path). Sequence dev-mcp-server P3 slice AFTER dev-mcp-server P2 slice merges, OR commit-mutex-serialize the two ragHttpClient.ts commits (rebase trivially resolves). rag-service P3 work has NO P2 dependency.",
-            "blocks": "DFR-P3-HYBRID:mcp-server-slice-only (shared ragHttpClient.ts)"
+            "blocks": "DFR-P3-HYBRID:mcp-server-slice-only (shared ragHttpClient.ts)",
+            "done_at": "2026-06-08T15:35:00Z"
           },
           {
             "id": "DFR-P2-MCP",
@@ -2726,7 +2727,7 @@
             "title": "Phase 3 FTS+RRF hybrid search: rag-service adds FTS indexes (title+summary 2-call), hybrid_search() + RRFReranker, lazy build + daily rebuild, POST /search {hybrid: bool}. mcp-server: hybrid?: boolean on RagSearchRequest only. Blueprint: docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md.",
             "owner": "ba",
             "type": "SPRINT-M",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/rag-service/ + thin apps/mcp-server/ caller",
             "size": "M",
             "priority": "high",
@@ -2740,9 +2741,10 @@
             "next_role": "pm",
             "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md",
             "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md",
-            "note": "ARCH-DFR-P3 DONE (DJ-GATE-1 STEP architect-S7). BA spec DONE 2026-06-08T13:22:00Z — decomposed into 2 atomic sub-tasks: DFR-P3-RAG (dev-rag-service, 8 ACs, start immediately) + DFR-P3-MCP (dev-mcp-server, 5 ACs, MUST sequence after DFR-P2-MCP). Collision risk LOW — P2 writes ragIndex/RagIndexRequest, P3 writes ragSearch/RagSearchRequest (different interfaces). PM sequences P3-mcp after P2-mcp or commit-mutex. pollNews stays vector-only; CHEF/bctc-analyst callers pass hybrid=true. PM: add sub-tasks to board per BA spec.",
+            "note": "Parent container task — all child tasks DONE. Closed by QA sprint-complete gate.",
             "sequencing": "SEQUENCING (architect-flagged, PM honor): P2 and P3 rag-service work run fully PARALLEL (disjoint zones). Only the mcp-server slices share ragHttpClient.ts at DIFFERENT interface blocks (P2=ragIndex write path, P3=RagSearchRequest read path). Sequence dev-mcp-server P3 slice AFTER dev-mcp-server P2 slice merges, OR commit-mutex-serialize the two ragHttpClient.ts commits (rebase trivially resolves). rag-service P3 work has NO P2 dependency.",
-            "sequence_after": "DFR-P2-DEEPFETCH:mcp-server-slice-only"
+            "sequence_after": "DFR-P2-DEEPFETCH:mcp-server-slice-only",
+            "done_at": "2026-06-08T15:35:00Z"
           },
           {
             "id": "DFR-P3-RAG",
@@ -2774,7 +2776,7 @@
             "title": "P3 mcp-server: THIN — add hybrid?:boolean to RagSearchRequest in ragHttpClient.ts; chef + bctc-analyst callers pass hybrid:true; pollNews stays vector-only",
             "owner": "dev-mcp-server",
             "type": "FEATURE",
-            "status": "done-code",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "size": "XS",
             "priority": "high",
@@ -2796,9 +2798,14 @@
             "unblocked_by": "qa",
             "unblock_note": "DFR-P2-MCP DONE (QA APPROVED). DFR-P3-MCP dependency satisfied. Ready for dev-mcp-server.",
             "claimed_by": "dev-mcp-server",
-            "claimed_at": "2026-06-08T16:30:00Z"
+            "claimed_at": "2026-06-08T16:30:00Z",
+            "done_at": "2026-06-08T15:35:00Z",
+            "qa_approved_by": "qa",
+            "qa_approved_at": "2026-06-08T15:35:00Z"
           }
-        ]
+        ],
+        "completed_at": "2026-06-08T15:35:00Z",
+        "completed_by": "qa"
       }
     ],
     "backlog": [

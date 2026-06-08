@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-218 · 2026-06-08T15:35Z · DFR-P3-MCP directed final acceptance gate — APPROVED + SPRINT COMPLETE
+
+Sprint: DEEPFETCH-RAG-REDESIGN | Task: DFR-P3-MCP | Verdict: APPROVED | Commit: 4af297b2 (5 files)
+
+5/5 ACs PASS. tsc --noEmit EXIT:0 host. DDD PASS (ragHttpClient.ts = infrastructure, zero domain→infra violations). Security PASS (no process.env, no secrets). AC-P3M-1: `hybrid?: boolean` at ragHttpClient.ts line 35. AC-P3M-2: runImpactChain.ts line 243 + runPredictionImpactChain.ts line 225 both pass `hybrid: true`. AC-P3M-3: analysis.ts lines 540-545 bctc-analyst `hybrid: true`. AC-P3M-4: pollNews.ts line 459 comment confirms hybrid intentionally omitted (vector-only). AC-P3M-5: pollNews ragSearch call unchanged (no hybrid field). Live E2E smoke: POST localhost:5002/search hybrid:true → HTTP 200, 3 results, no 500. wiring: JSON.stringify(request) passes hybrid through ragHttpClient.ts → rag-service. 47/47 targeted tests PASS. 3 pre-existing 1332 failures (cron_job_runs schema gap) confirmed same as qa-S3 — not in 4af297b2 diff. bun test full suite EXIT:0 (WriteFailed crash pre-existing Bun v1.3.13). DJ-GATE-1: sprint-DEEPFETCH-RAG-REDESIGN-qa.md STEP qa-S5 written. DFR-P3-MCP done-code→DONE. Sprint DEEPFETCH-RAG-REDESIGN: active→completed (all 16 tasks DONE/approved, 5 DFR-P* exactly-once verified).
+
 ## Archive
 Older cycles (189–199 and earlier) moved to [qa-20260606.md](../../archive/notebooks/qa-20260606.md).
 
