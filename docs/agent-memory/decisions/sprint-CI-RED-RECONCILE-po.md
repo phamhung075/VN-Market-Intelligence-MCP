@@ -117,3 +117,21 @@ FIX-MCP-TOOL-COUNT-DRIFT + FIX-MCP-CI-NETWORK-GUARD: marked DONE because their s
 - **WIP<=2 dispatch (BGFAN-1, dispatcher mutex):** B1-MOCK-MODULE-EXPERIMENT + B2-RAG-DDL-INITNEWSTABLES (independent file sets, safe parallel). Both background dev-mcp-server.
 - **Other drained signals triaged:** ci-test-isolation-spike (this brief, handled); context-bloat architect.md (215L > 200 soft cap — architect's OWN notebook, self-resolve via NB-PRUNE on next architect cycle, not PO-owned, no task); cowork-team tick (informational, no-op); sau-c121-a33 vnstock crash NEW -> FOLD into existing FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (backlog, no dup).
 - **Push:** NOT performed by PO. Router owns push + CI verification (gate = bun-test FAIL COUNT must DROP on subsequent push, full-green not yet reachable).
+
+---
+
+### STEP po-S8 (DJ-GATE-1): coverage-OOM root cause INVALIDATES the 639 phantom -> insert prereq FIX-CI-COVERAGE-OOM-CRASH (2026-06-08T22:10Z)
+**task-id:** FIX-CI-COVERAGE-OOM-CRASH (new); B1-MOCK-MODULE-EXPERIMENT (re-scoped); CI-BUN-TEST-MULTI-CLASS-FIX (epic note)
+**what-done:** Router raw-verified a corrected root cause that invalidates the shared premise of BOTH architect briefs. Authored the epic's slot-0 prerequisite + re-scoped B1 + annotated the epic.
+**corrected-root-cause (raw, verify-raw-not-badges satisfied):** `apps/mcp-server/bunfig.toml` has `[test] coverage=true`; `.github/workflows/ci.yml` line 45 gating step runs bare `bun test` (inherits coverage=true). Raw CI run 27166197809 / job 80193895992 (HEAD 8fd9bde1): bun-test step's LAST log lines are the COVERAGE TABLE truncated mid-line at `taOhlcvBackfillJob.` then immediately `##[error]exit 1`. NO `Ran N tests / N pass / N fail` summary anywhere -> the process CRASHES (OOM / C++ panic) DURING coverage-table generation, BEFORE emitting any summary. Corroborated: B1 agent saw two coverage-ON runs crash (`panic: A C++ exception occurred` at OOM) before summary; only coverage-OFF produced a clean count = **443 fail**.
+**what-considered:**
+- Trust the 639 and scope downstream fixes against it -> REJECTED: 639 is a PHANTOM; the crashing run never emitted it cleanly. Every fix scoped to it is unmeasurable.
+- Disable coverage globally in bunfig.toml -> REJECTED: would lose local-dev coverage + any separate non-gating coverage job. Over-broad.
+- Surgical: change ci.yml line 45 ONLY to `bun test --coverage=false`, keep bunfig coverage=true -> CHOSEN.
+**why-decision:** This is the PREREQUISITE that makes EVERY subsequent count trustworthy. Without a gating run that runs-to-completion and prints a clean `N fail` + a real exit code (test failures, not a crash), no failure count — and no per-batch delta — is measurable. It is the first measurable baseline in 200 RED runs.
+**verification-gate:** after this lands (router owns push), the CI bun-test job MUST emit a clean `Ran N tests ... N fail` summary on the subsequent push and exit on real test failures, NOT a coverage-gen crash. Job MAY stay RED on genuine failures — EXPECTED, PASSES the gate. Gate = "clean summary emitted / no coverage-gen crash", NOT "0 fail".
+**B1 re-scope:** DISPATCHED -> BLOCKED on FIX-CI-COVERAGE-OOM-CRASH. Its measured delta=0 is INCONCLUSIVE (suite never completed under coverage), NOT a refutation of the cascade hypothesis. mock.restore() wrapper already shipped in 8fd9bde1 (KEEP as hygiene). Re-run with `--coverage=false` AFTER prereq lands, delta measured vs REAL baseline 443, not phantom 639.
+**downstream:** B2 / CI-NETWORK-SKIP-GUARDS / OBSOLETE-REMOVE-24 / CLASS-B-PERTEST-TRIAGE all re-baseline against the real CI count once visible — recorded in the epic note.
+**why-change:** Differs from STEP po-RECONCILE which trusted 639 as the baseline. New raw evidence proves 639 was never cleanly produced; the empirical experiment B1 was measuring under a crashing toolchain.
+**push:** NOT performed by PO. Router owns push + CI verification.
+**dispatch:** PO did NOT spawn dev — router (dev-team dispatcher) owns the run_in_background spawn of dev-mcp-server for FIX-CI-COVERAGE-OOM-CRASH.
