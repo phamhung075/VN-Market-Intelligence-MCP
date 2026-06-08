@@ -4,11 +4,17 @@
   "type": "cowork-fire",
   "payload": {
     "fire_time": "2026-06-08T18:06:04Z",
-    "matched_slots": ["bctc-analyst-slot-2"],
-    "won_slots": ["bctc-analyst-slot-2"],
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
     "held_by_other": [],
     "all_held": false,
-    "spawned": ["docs/agents/bctc-analyst/flow/main.md"],
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
     "silent": false,
     "drift_min": 6,
     "errors": [],
@@ -18,10 +24,16 @@
     "suppressed_cadence": [],
     "downgraded": [],
     "collision_warn": [],
-    "due_reasons": { "bctc-analyst-slot-2": "cadence" },
-    "cadence_minutes": { "bctc-analyst-slot-2": 240 },
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": 240
+    },
     "last_fired_timestamp": "2026-06-08T18:06:04Z",
-    "last_fired_slots": ["bctc-analyst-slot-2"],
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
     "last_fired_write_errors": null,
     "classification": "FIRE",
     "reason": "spawned",
@@ -33,5 +45,11 @@
     "note": "Off-market 18:00 tick: bctc-analyst-slot-2 (cron 0 18, policy bctc-offmarket cadence 240min, prior fire 2026-06-06T18:03) cadence-due. Single slot, no collision (Step 4b moot). E2 guard: 18:06 outside [02:00,08:00) VN-market window — pass start valid. Mode (routine vs earnings-release) selected by agent via get_earnings_calendar gate. Spawned background (BGFAN-1, agentId a159e84154516b15d), token released ok:true. Market post-close RISK_OFF: VN-Index 1790.53 -2.63%, volatility=high. cycle-snapshot-18:06.json created fresh (absent prior). emit_pressure_state ok 18:06:32Z. cycle_snapshot_promoted=false (non-blocking). Preceded by silent ticks 16:21-17:51 (offhours gatherer batch fired 16:06, next 20:00)."
   },
   "priority": "low",
-  "createdAt": "2026-06-08T18:06:31Z"
+  "createdAt": "2026-06-08T18:06:31Z",
+  "_processed": {
+    "fingerprint": "9db732b89367a3994f5f67b35a75bb32af3b8ba14182a01801a37a1ddf3b831c",
+    "processedAt": "2026-06-08T18:16:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

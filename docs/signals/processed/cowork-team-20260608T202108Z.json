@@ -1,0 +1,37 @@
+{
+  "signal_type": "cowork-team-tick",
+  "classification": "FIRE",
+  "tick_id": "20:21",
+  "fire_time": "2026-06-08T20:21:08Z",
+  "emitted_at": "2026-06-08T20:21:39Z",
+  "drift_min": 6,
+  "matched_slots": [
+    "tnb-audit"
+  ],
+  "won_slots": [
+    "tnb-audit"
+  ],
+  "collision_warn": [],
+  "leader_lock": "own_held_renewed",
+  "leader_lock_note": "claimed=false → task_heartbeat ok=true (OWN-HELD): 19:51/20:06 leader claim ttl 1800s spans into 20:21 tick. Renewed to 1780951885 (~20:51). Per leader-lock.md self-held path — slot token remains hard dup-spawn gate.",
+  "spawned": [
+    "docs/agents/tran-ngoc-bau/flow/main.md"
+  ],
+  "agent_ids": [
+    "acfad208ebd107eff"
+  ],
+  "calendar_status": "closed",
+  "macro": {
+    "vnIndex": 1790.53,
+    "changePct": -2.63,
+    "regime": "RISK_OFF",
+    "volatility_level": "high"
+  },
+  "note": "tnb-audit guaranteed daily (cron 13 20 UTC), last fired 2026-06-07T20:16:55Z. Strategy Supervisor audits chef-evening dish (ran 19:51) for TNB 6-layer completeness. Single slot, collision guard moot. Slot token won/released, snapshot fresh, emit ok 20:21:39Z.",
+  "_processed": {
+    "fingerprint": "3b4a66fd5c235bda97064989a01c9f15c33aa08f6ff85eb565fc8e070251cf25",
+    "processedAt": "2026-06-08T21:17:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

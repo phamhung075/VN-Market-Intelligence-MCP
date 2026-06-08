@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-08T17:35:10Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-mcp-server.md",
+    "line_count": 203,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 3,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "8f3181f328697680e7e3fc3c7e73824b7187bb73bf0b225ae97a75d1bc995190",
+    "processedAt": "2026-06-08T18:16:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

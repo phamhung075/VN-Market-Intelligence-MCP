@@ -12,5 +12,11 @@
     "3. Edit docs/agents/dev-team/flow/main.md — add JUMP-TO entry + Step 0a.5 call (spec = brief §3.1)",
     "4. Edit docs/agents/dev-team/flow/drain-signals.md — add ci_red row to routing table (spec = brief §3.5)",
     "5. Edit docs/agents/po/flow/triage-signals.md — add ci_red handler row (spec = brief §3.6)"
-  ]
+  ],
+  "_processed": {
+    "fingerprint": "40abbca4a01620d607afd8bd32facbff93682ca5fa353484f4ff3efcd4343bba",
+    "processedAt": "2026-06-08T18:16:28Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

@@ -3,7 +3,14 @@
   "mode": "release",
   "status": "PENDING_EXTRACTION",
   "quarter": "Q1-2026",
-  "tickers": ["CTG", "VCB", "REE", "NVL", "D2D", "TCH"],
+  "tickers": [
+    "CTG",
+    "VCB",
+    "REE",
+    "NVL",
+    "D2D",
+    "TCH"
+  ],
   "detail": "PDFs stored. get_bctc_full empty for all 6 tickers. Extraction pipeline lag: CTG=cycle 26+, VCB=2, REE=2, D2D=2, TCH=2, NVL=2.",
   "partial_vector_store": {
     "CTG": {
@@ -18,5 +25,11 @@
   "signal_id": 5434,
   "cycle": "20260608-2100",
   "slot": "bctc-analyst-slot-3",
-  "emitted_at": "2026-06-08T21:10:00Z"
+  "emitted_at": "2026-06-08T21:10:00Z",
+  "_processed": {
+    "fingerprint": "b8afbe9217f8fec7d039fdc45bf59918802cf0ded7b54df96756f37fd5edf94a",
+    "processedAt": "2026-06-08T21:17:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

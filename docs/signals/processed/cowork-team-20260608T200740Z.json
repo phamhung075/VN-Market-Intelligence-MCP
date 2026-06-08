@@ -1,0 +1,41 @@
+{
+  "signal_type": "cowork-team-tick",
+  "classification": "FIRE",
+  "tick_id": "20:06",
+  "fire_time": "2026-06-08T20:06:06Z",
+  "emitted_at": "2026-06-08T20:07:40Z",
+  "drift_min": 6,
+  "matched_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "won_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "collision_warn": [],
+  "leader_lock": "own_held_renewed",
+  "leader_lock_note": "claimed=false → task_heartbeat ok=true (OWN-HELD): 19:51 FIRE claim ttl 1800s spans into 20:06 tick (900s gap). Renewed to 1780951031. Per leader-lock.md self-held path — slot tokens remain hard dup-spawn gate.",
+  "spawned": [
+    "docs/agents/news-scout/flow/main.md",
+    "docs/agents/market-watcher/flow/main.md"
+  ],
+  "agent_ids": [
+    "a3756b30dcf9b1e42",
+    "afff42460b2207583"
+  ],
+  "calendar_status": "closed",
+  "macro": {
+    "vnIndex": 1790.53,
+    "changePct": -2.63,
+    "regime": "RISK_OFF",
+    "volatility_level": "high"
+  },
+  "note": "Off-hours 4h gatherer batch (cron 0 */4, cadence 240min, last 16:06). 2 distinct agents, collision guard moot. Both slot tokens won/released, snapshot fresh, emit ok 20:07:40Z.",
+  "_processed": {
+    "fingerprint": "ace7fe73d9d765a67215964ceac27c4824f0b05a8e73787ed91774c605ec2fee",
+    "processedAt": "2026-06-08T21:17:35Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
