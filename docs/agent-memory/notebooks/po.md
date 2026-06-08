@@ -28,8 +28,25 @@
 
 **WIP post-tick = 2 (DEPGUARD + ci-health-probe.js) — at cap.**
 
+## c · 2026-06-08T19xxZ — Triage-S7: 3 NEW signals + CI reconcile (verify-raw-over-router-badge)
+
+**JOB2 CI reconcile — router handed 4 flips; executed 2 verbatim, CORRECTED 2 against raw git.**
+- **FIX-TA-SANDBOX-DEPGUARD → DONE-CODE-LOCAL-GREEN-PENDING-PUSH** (verbatim). c2faac2d real+ancestor-of-HEAD, UNPUSHED → why go-lint red on 8ffb1985; final DONE on push (router owns).
+- **CI-HEALTH-FIX-BRIDGE → DONE** (verbatim; task absent from board → added as done). 973a52c0 (flow SSOT) + e7b53e20 (script 251L) real, QA-verified.
+- **FIX-MCP-TOOL-COUNT-DRIFT → DONE (CORRECTED, NOT TODO).** Router premise FALSE: it checked `apps/mcp-server/test/` (nonexistent); real path `src/__tests__/`. RAW: 964f6e2e PUSHED (ancestor of origin 8ffb1985), floor 16→15. Run 27157108271: `(pass) all registered tools present`. Reopening = destroy verified-pushed work (feedback_auditor_false_positive_destructive) → REFUSED.
+- **FIX-MCP-CI-NETWORK-GUARD → DONE (CORRECTED).** f18a9de9+0874a27f PUSHED; 1146 all `(pass)`. Same wrong-path false premise.
+- **CI-TEST-ISOLATION-SPIKE → TODO (architect, NEW).** The router's HONEST residual re-scoped: bun-test IS still red on 8ffb1985 but from a DISJOINT systemic class (Task 278 timer, 1487 external-null, 1335 ENOENT mkdir, HOSE/HNX/UPCOM AbortError) — not the 2 closed tasks. Systemic test-isolation → architect SPIKE, not point-patch.
+
+**JOB1 signals (3 NEW → 0 NEW):**
+- a33 A-33 vnstock crash CRITICAL → **NEW FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (architect, TODO).** Recurring-bug FIRES (3x/24h c118/c119/c120; prior WATCH met). Signal→READ.
+- c119-b12 B-12 SBV_FX stale 65min + VPS vn-sbv-fetch UNHEALTHY → **NEW FIX-SBV-FX-VPS-FETCHER-UNHEALTHY (dev-macro-indicators, TODO, WIP-held).** MCP-side fixes all DONE; NEW dimension = VPS fetcher infra down, not foldable. Signal→READ.
+- c119-b13 B-13 26 BCTC >72h WARN → **FOLDED, no task.** Same blocked_pdf_extractor rows from 157c0f40 (FIX-BCTC-VPS-QUEUE-STALE-TRIAGE DONE). Signal→RESOLVED. NOTE: A-20 fixes now DONE → 26 rows re-queueable via BCTC pull cron (prior sprint's own follow-up).
+
+**WIP ≤2: architect SPIKEs (A-33 + CI-ISOLATION) don't consume dev WIP; SBV-FX dev FIX queued TODO, not over-dispatched.**
+
 ## Carry-over
-- CI sign-off blocked on ops push: after DEPGUARD + the 4 REVIEW fixes are all local-green, ops pushes → read next ci.yml run on new sha → THEN flip DONE. Local green ≠ DONE.
-- pendingObservation: bctc current-Q stored-PDF-not-extracted → architect SPIKE next tick (recurring-bug, not point-patch).
-- WATCH: vnstockFundamentalsRefresh — 2nd crash next auditor tick → FIX (recurring), zone dev-mcp-server.
-- Journal: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-po.md (steps po-S1..S6).
+- CI sign-off blocked on ops push: FIX-TA-SANDBOX-DEPGUARD (unpushed go-lint) + CI-TEST-ISOLATION-SPIKE (systemic bun-test) own the remaining ci.yml red on 8ffb1985 — NOT the 2 DONE FIX-MCP-* tasks (their assertions already pass on origin). Router owns push + fresh ci.yml verify.
+- pendingObservation: 26 BCTC blocked_pdf_extractor rows re-queueable now A-20 DONE → BCTC pull cron.
+- pendingObservation: bctc current-Q stored-PDF-not-extracted → architect SPIKE next tick (recurring-bug).
+- RECURRING FIRED→escalated: vnstockFundamentalsRefresh A-33 → architect SPIKE (was WATCH, now 3rd crash).
+- Journal: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-po.md (steps po-S1..S7).
