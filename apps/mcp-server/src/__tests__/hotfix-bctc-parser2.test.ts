@@ -30,6 +30,9 @@ import { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Bug 1: scanDiskForStrandedPdfs — ticker code case mismatch
@@ -42,6 +45,9 @@ describe("Bug 1: scanDiskForStrandedPdfs — lowercase watchlist code matches up
     );
 
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE watchlist (code TEXT);
       CREATE TABLE financial_reports (
@@ -72,6 +78,9 @@ describe("Bug 1: scanDiskForStrandedPdfs — lowercase watchlist code matches up
     );
 
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE watchlist (code TEXT);
       CREATE TABLE financial_reports (
@@ -99,6 +108,9 @@ describe("Bug 1: scanDiskForStrandedPdfs — lowercase watchlist code matches up
     );
 
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE watchlist (code TEXT);
       CREATE TABLE financial_reports (

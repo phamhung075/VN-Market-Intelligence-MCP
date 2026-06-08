@@ -14,6 +14,9 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runFranceSummary } from "../scheduler/briefings/franceSummaryJob.js";
 import type { FranceSummaryOptions } from "../scheduler/briefings/franceSummaryJob.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── minimal DB schema ─────────────────────────────────────────────────────────
 
@@ -64,6 +67,9 @@ function setupTestDb(): Database {
       closed_at TEXT
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

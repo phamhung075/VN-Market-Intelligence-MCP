@@ -39,6 +39,9 @@ import * as telegramReportToolsNs from "../interface/mcp/tools/briefings/telegra
 
 import type { ToolCandle as DailyCandle } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 import type { DomainType } from "../../bctc-schema.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -58,6 +61,9 @@ function makeMemDbWithMessages(): Database {
     reviewed_at TEXT,
     content TEXT
   )`);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

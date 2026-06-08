@@ -13,6 +13,9 @@ import { Database } from "bun:sqlite";
 import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefings/eveningSummaryJob.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -77,6 +80,9 @@ function makeTestDb(): Database {
       sent_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

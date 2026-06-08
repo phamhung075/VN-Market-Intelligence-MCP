@@ -9,6 +9,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { checkPriceAlerts } from "../domain/services/priceAlertChecker.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Domain service tests — checkPriceAlerts()
@@ -167,6 +170,9 @@ describe("Task 206 — price_alerts SQLite schema", () => {
     // Use in-memory DB for isolation
     const { Database } = require("bun:sqlite");
     db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE IF NOT EXISTS price_alerts (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,

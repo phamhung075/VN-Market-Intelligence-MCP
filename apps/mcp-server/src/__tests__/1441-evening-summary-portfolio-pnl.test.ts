@@ -77,6 +77,9 @@ function setupTestDb(): Database {
     );
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -90,6 +93,9 @@ import {
 import type { AssembleEveningSummaryOptions } from "../application/usecases/assembleEveningSummary.js";
 import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefings/eveningSummaryJob.js";
 import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixtures

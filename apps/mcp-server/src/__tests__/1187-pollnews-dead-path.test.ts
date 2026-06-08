@@ -14,6 +14,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const PROJECT_ROOT = path.resolve(__dirname, "../..");
 
@@ -42,6 +45,9 @@ describe("Task 1187 — pollNewsJob dead code path", () => {
     const { Database } = await import("bun:sqlite");
 
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec("PRAGMA journal_mode = WAL");
     db.exec(`
       CREATE TABLE IF NOT EXISTS watchlist (

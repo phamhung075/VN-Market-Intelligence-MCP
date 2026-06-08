@@ -26,6 +26,9 @@ import {
 
 // Schema migration helper
 import { ensureCustomAlertRulesTable } from "../infrastructure/db/schema.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -33,8 +36,14 @@ import { ensureCustomAlertRulesTable } from "../infrastructure/db/schema.js";
 
 function makeDb(): Database {
   const db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec("PRAGMA journal_mode = WAL");
   ensureCustomAlertRulesTable(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -270,6 +279,9 @@ describe("Task 219 — customAlertRuleStore", () => {
 describe("Task 219 — ensureCustomAlertRulesTable", () => {
   it("creates the table idempotently", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     // Call twice — must not throw
     ensureCustomAlertRulesTable(db);
     ensureCustomAlertRulesTable(db);

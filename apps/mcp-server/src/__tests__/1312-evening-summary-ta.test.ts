@@ -31,6 +31,9 @@ import {
   resetEveningSummaryGuard,
 } from "../scheduler/briefings/eveningSummaryJob.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal in-memory DB setup
@@ -89,6 +92,9 @@ function setupTestDb(): Database {
     );
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

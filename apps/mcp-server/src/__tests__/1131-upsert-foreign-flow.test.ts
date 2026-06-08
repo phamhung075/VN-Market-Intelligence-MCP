@@ -8,6 +8,9 @@ import { Database } from "bun:sqlite";
 // Import paths use .js extension for ESM compatibility.
 import { upsertForeignFlow } from "../infrastructure/db/vnstockStore.js";
 import type { ForeignFlowUpsertItem } from "../domain/models/shared-types.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // In-memory schema bootstrap
@@ -36,6 +39,9 @@ function createTestDb(): Database {
     )
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -361,6 +367,9 @@ describe("Task 1131 — upsertForeignFlow", () => {
   it("falls back to ON CONFLICT(code) when the date column is absent", () => {
     // Create a legacy-schema DB (no date column, UNIQUE on code)
     const legacyDb = new Database(":memory:");
+    initNewsTables(legacyDb);
+    initMarketDataTables(legacyDb);
+    initSystemTables(legacyDb);
     legacyDb.exec(`
       CREATE TABLE vnstock_trading_stats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

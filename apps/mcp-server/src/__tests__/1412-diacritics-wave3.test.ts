@@ -37,6 +37,9 @@ import { computeReading } from "../domain/services/kinhDich/kinhDichReading.js";
 
 // ── FILE 7: nguHanhClassifier.ts ─────────────────────────────────────────────
 import { classifyNguHanh } from "../domain/services/kinhDich/nguHanhClassifier.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── FILE 8: decisionNoteSynthesizer.ts ────────────────────────────────────────
 import {

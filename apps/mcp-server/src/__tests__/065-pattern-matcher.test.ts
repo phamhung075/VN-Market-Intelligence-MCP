@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
 import { getPatternSummary } from "../application/usecases/getPatternSummary.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Minimal schema ─────────────────────────────────────────────────────────────
 
@@ -77,6 +80,9 @@ let db: Database;
 
 beforeAll(() => {
   db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec("PRAGMA journal_mode = WAL");
   db.exec(RAG_DDL);
 

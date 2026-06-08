@@ -42,6 +42,9 @@ import {
   type EveningSummary,
 } from "../application/usecases/assembleEveningSummary.js";
 import { pollNews } from "../application/usecases/pollNews.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   storeMacroIndicators,
   type MacroIndicators,
@@ -221,6 +224,9 @@ function setupTestDb(): Database {
     );
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

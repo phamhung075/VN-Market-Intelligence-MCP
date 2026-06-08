@@ -12,6 +12,9 @@ import { describe, it, expect, beforeAll } from "bun:test"
 import { Database } from "bun:sqlite"
 import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefings/eveningSummaryJob.js"
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js"
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixture builders
@@ -44,6 +47,9 @@ let testDb: Database
 
 beforeAll(() => {
   testDb = new Database(":memory:")
+  initNewsTables(testDb);
+  initMarketDataTables(testDb);
+  initSystemTables(testDb);
   testDb.exec(`CREATE TABLE IF NOT EXISTS market_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     from_agent TEXT NOT NULL,

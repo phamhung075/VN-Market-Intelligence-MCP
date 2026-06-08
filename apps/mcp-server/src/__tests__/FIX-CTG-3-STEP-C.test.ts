@@ -32,6 +32,9 @@
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 import {
   triggerPushBctcExtraction,
@@ -207,6 +210,9 @@ function makeTestDb(): Database {
       period_type TEXT NOT NULL
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

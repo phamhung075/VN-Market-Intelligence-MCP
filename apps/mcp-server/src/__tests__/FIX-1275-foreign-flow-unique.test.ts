@@ -27,6 +27,9 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { upsertForeignFlow } from "../infrastructure/db/vnstockStore.js";
 import type { ForeignFlowUpsertItem } from "../domain/models/shared-types.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -54,6 +57,9 @@ function makeModernDb(): Database {
       UNIQUE(code, date)
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -70,6 +76,9 @@ function makeLegacyDb(): Database {
       fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

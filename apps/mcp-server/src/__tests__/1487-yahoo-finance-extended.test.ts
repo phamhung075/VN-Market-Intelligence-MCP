@@ -27,6 +27,9 @@ import {
 } from "../infrastructure/fetchers/yahooFinance.js";
 import { buildCausalChain, type MacroContext } from "../domain/services/cascadeEngine.js";
 import { runImpactChain } from "../application/usecases/runImpactChain.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Shared helpers (identical pattern to 025 test)
@@ -111,6 +114,9 @@ function makeTestDb(): Database {
       extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

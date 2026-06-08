@@ -27,6 +27,9 @@ import { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -34,6 +37,9 @@ import { tmpdir } from "node:os";
 
 function makeDb(codes: string[] = []): Database {
   const db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec(`
     CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY,
@@ -56,6 +62,9 @@ function makeDb(codes: string[] = []): Database {
       "test",
     );
   }
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -246,6 +255,9 @@ describe("1915 — scanDiskForStrandedPdfs: populated watchlist filename fallbac
 
     // Watchlist has HPG and VCB — VNM is NOT in the watchlist
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE IF NOT EXISTS watchlist (
         code TEXT PRIMARY KEY,

@@ -65,7 +65,13 @@ import {
 
 function openTestDb(): Database {
   const db = new BunDatabase(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   initFinancialReportsTables(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -141,6 +147,9 @@ describe("DV-HC-9 — source_confidence migration idempotency", () => {
 
   it("second migration call is idempotent — no error, column present once", () => {
     const db = new BunDatabase(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     initFinancialReportsTables(db);
     // Call migration a second time — must not throw
     expect(() => initFinancialReportsTables(db)).not.toThrow();
@@ -192,6 +201,9 @@ describe("MT-1 — confirm_status / final_confirmed_at / confirmed_by migration"
 
   it("idempotent ×2 — confirm_status columns present once after second migration", () => {
     const db = new BunDatabase(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     initFinancialReportsTables(db);
     expect(() => initFinancialReportsTables(db)).not.toThrow();
     interface ColInfo { name: string }
@@ -258,6 +270,9 @@ describe("MT-2 — bctc_human_corrections table created", () => {
 
   it("idempotent ×2 — table not duplicated after second migration", () => {
     const db = new BunDatabase(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     initFinancialReportsTables(db);
     expect(() => initFinancialReportsTables(db)).not.toThrow();
     interface TableInfo { name: string }
@@ -1542,6 +1557,9 @@ import {
   registerSubmitBctcCorrectionTool,
 } from "../interface/mcp/tools/financial-reports/submitBctcCorrectionTool.js";
 import { toolRegistry } from "../interface/mcp/tools/registry.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── DV-HC-10b: submit_bctc_correction MCP tool delegates to same service ─────
 

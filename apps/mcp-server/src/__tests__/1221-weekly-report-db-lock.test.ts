@@ -11,6 +11,9 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   acquireSchedulerLock,
   releaseSchedulerLock,
@@ -24,7 +27,13 @@ import {
 
 function makeTestDb(): Database {
   const db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   ensureSchedulerLocksTable(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -37,6 +46,9 @@ describe("Task 1221 — Scheduler DB lock", () => {
 
   it("creates scheduler_locks table if not present", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     ensureSchedulerLocksTable(db);
     const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='scheduler_locks'").get();
     expect(row).not.toBeNull();
@@ -44,6 +56,9 @@ describe("Task 1221 — Scheduler DB lock", () => {
 
   it("is idempotent — can be called multiple times without error", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     expect(() => {
       ensureSchedulerLocksTable(db);
       ensureSchedulerLocksTable(db);

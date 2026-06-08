@@ -14,6 +14,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { registerForeignFlowTools } from "../interface/mcp/tools/market-data/foreignFlowTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function setupTestDb(): Database {
   const db = new Database(":memory:");
@@ -57,6 +60,9 @@ function setupTestDb(): Database {
     ["VNM", "2026-04-18", 150_000],
   );
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

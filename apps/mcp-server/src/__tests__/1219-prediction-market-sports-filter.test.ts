@@ -2,6 +2,9 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { mapPredictionToVn, isSportsOrEntertainmentMarket } from "../domain/services/predictionCascadeMapper.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1219 — Prediction market: exclude sports/entertainment", () => {
   // ── isSportsOrEntertainmentMarket filter function ────────────────────────

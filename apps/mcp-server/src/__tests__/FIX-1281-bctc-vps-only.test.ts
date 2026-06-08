@@ -11,6 +11,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import path from "path";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -142,6 +145,9 @@ describe("FIX-1281 — BCTC VPS-only guard", () => {
   it("AC-6: bctcQueueEnricherJob leaves NULL source_url items as pending after discovery attempt", async () => {
     const { Database } = await import("bun:sqlite");
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE bctc_vps_queue (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

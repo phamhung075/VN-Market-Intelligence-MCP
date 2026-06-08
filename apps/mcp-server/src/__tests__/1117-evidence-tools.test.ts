@@ -12,6 +12,9 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerEvidenceTools } from "../interface/mcp/tools/macro/evidenceTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema + server fixtures
@@ -63,6 +66,9 @@ describe("Task 1117 — record_evidence_fragment MCP tool", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     createEvidenceSchema(db);
     server = makeServer(db);
   });

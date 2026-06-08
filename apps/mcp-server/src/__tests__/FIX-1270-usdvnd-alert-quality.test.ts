@@ -14,6 +14,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { classifyDeviation } from "../domain/services/macroThresholds";
 import { shouldSuppressAlert } from "../domain/services/alertCooldown";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── AC-1: 2.8 VND deviation must NOT fire (below 50 VND minimum) ─────────────
 describe("FIX-1270 AC-1 — 2.8 VND deviation blocked by 50 VND guard", () => {

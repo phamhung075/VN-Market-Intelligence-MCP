@@ -21,6 +21,9 @@ mock.module("../infrastructure/rag/retriever.js", () => ({
 import { writeAlertVerdict } from "../interface/mcp/tools/alerts/alertVerdictTools.js";
 import { registerMacroTools } from "../interface/mcp/tools/macro/macroTools.js";
 import type { AlertVerdict } from "../infrastructure/fileStore/alertVerdictStore.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

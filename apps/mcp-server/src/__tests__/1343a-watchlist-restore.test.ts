@@ -19,6 +19,9 @@
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   seedWatchlist,
   backfillBctcQ4,
@@ -32,6 +35,9 @@ import {
 
 function createTestDb(): Database {
   const db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS watchlist (
@@ -71,6 +77,9 @@ function createTestDb(): Database {
     )
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -266,6 +275,9 @@ describe("Task stale-tickers — validateSeedTickers startup check", () => {
   beforeEach(() => {
     // Minimal schema: watchlist + market_prices
     db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE watchlist (
         code TEXT PRIMARY KEY,

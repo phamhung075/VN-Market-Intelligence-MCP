@@ -5,6 +5,9 @@ import { Database } from "bun:sqlite";
 import { computeConfidenceBoost } from "../domain/services/confidenceBoost.js";
 import { getPriceAnomalySignals } from "../infrastructure/db/agentSignalStore.js";
 import { PriceAnomalyFindingDataSchema } from "../domain/signals/signalTypes.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── In-memory DB helper ──────────────────────────────────────────────────────
 
@@ -35,6 +38,9 @@ function makeDb(): Database {
       agent_signals_majority TEXT
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

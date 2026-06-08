@@ -37,6 +37,9 @@ import {
 } from "../interface/mcp/tools/market-data/foreignFlowTools.js";
 import { CircuitOpenError } from "../infrastructure/circuitBreaker.js";
 import type { ForeignFlowUpsertItem } from "../domain/models/shared-types.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // In-memory DB helper (modern schema with UNIQUE(code, date))
@@ -63,6 +66,9 @@ function makeDb(): Database {
       UNIQUE(code, date)
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

@@ -31,6 +31,9 @@ import {
   upsertForeignFlow,
 } from "../infrastructure/db/vnstockStore.js";
 import type { ForeignFlowUpsertItem } from "../domain/models/shared-types.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Helpers — build legacy schema directly on the in-memory DB

@@ -13,6 +13,9 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runEvidenceAccumulator } from "../scheduler/news-analysis/evidenceAccumulatorJob.js";
 import { CRONS } from "../scheduler/jobs.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema helper
@@ -81,6 +84,9 @@ describe("Task 1118 — evidenceAccumulatorJob", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     createEvidenceSchema(db);
   });
 

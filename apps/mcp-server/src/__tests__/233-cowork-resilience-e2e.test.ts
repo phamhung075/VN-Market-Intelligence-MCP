@@ -27,6 +27,9 @@ import type {
 import { validateSignalPrice } from "../domain/services/signalValidator.js";
 import type { ResilientFetcherResult } from "../domain/services/resilientFetcher.js";
 import { getDb } from "../infrastructure/db/index.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("SPRINT-233: Cowork Resilience E2E Validation", () => {
   let db: any;

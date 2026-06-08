@@ -26,6 +26,9 @@ import { Database } from "bun:sqlite";
 
 // ── Real import ────────────────────────────────────────────────────────────────
 import { runBctcOverdueCheck } from "../scheduler/financial-reports/bctcOverdueCheckJob.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Schema helper — mirrors DDL from test 316 ─────────────────────────────────
 
@@ -57,6 +60,9 @@ function buildDb(): Database {
       notified_telegram     INTEGER NOT NULL DEFAULT 0
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

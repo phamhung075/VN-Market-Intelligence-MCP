@@ -23,6 +23,9 @@ import { generateAlerts } from "../domain/services/alertGenerator.js";
 import type { Signal } from "../domain/services/signalDetector.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAlertMuteTools } from "../interface/mcp/tools/alerts/alertMuteTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -41,6 +44,9 @@ function makeDb(): Database {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_alert_mutes_until ON alert_mutes(muted_until)`);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

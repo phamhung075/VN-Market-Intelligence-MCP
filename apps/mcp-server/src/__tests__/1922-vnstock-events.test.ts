@@ -26,6 +26,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { VnstockEvent } from "../domain/models/shared-types.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // In-memory DDL for vnstock_events (mirrors schema.ts canonical definition)
@@ -52,6 +55,9 @@ function makeEventsDb(): Database {
       PRIMARY KEY (code, data_type)
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

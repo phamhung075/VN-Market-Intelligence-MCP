@@ -19,6 +19,9 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { Database } from "bun:sqlite";
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
 import { handleBctcInspectOcr } from "../interface/mcp/routes/bctcInspectHandler.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── production DB guard ───────────────────────────────────────────────────────
 Bun.env["DB_PATH"] = ":memory:";
@@ -31,6 +34,9 @@ const NO_PEK_REPORT_ID = "11112222-3333-4444-5555-666677778888";
 function openDb(): Database {
   const db = new Database(":memory:");
   initFinancialReportsTables(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

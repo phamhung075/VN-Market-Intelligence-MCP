@@ -26,6 +26,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runWeeklyAudit } from "../scheduler/news-analysis/dataAuditJob.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const AUDIT_TIMEOUT_MS = 60_000;
 
@@ -145,6 +148,9 @@ function makeDb(): Database {
     );
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

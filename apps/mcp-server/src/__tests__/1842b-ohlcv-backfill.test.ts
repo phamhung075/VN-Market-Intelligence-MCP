@@ -17,6 +17,9 @@ import { SqliteBacktestPriceRepository } from "../infrastructure/db/backtestPric
 import { SqliteBacktestSignalRepository } from "../infrastructure/db/backtestSignalRepo.js";
 import { SqliteBacktestResultRepository } from "../infrastructure/db/backtestResultRepo.js";
 import type { BacktestRunRecord } from "../domain/repositories/IBacktestResultRepository.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Helpers — create minimal in-memory DB schemas for each test group
@@ -37,6 +40,9 @@ function makeOhlcvDb(): Database {
       PRIMARY KEY (code, date)
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -59,6 +65,9 @@ function makeKinhDichDb(): Database {
       source           TEXT DEFAULT 'manual'
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -82,6 +91,9 @@ function makeBacktestRunsDb(): Database {
     CREATE INDEX IF NOT EXISTS idx_backtest_runs_strategy ON backtest_runs(strategy);
     CREATE INDEX IF NOT EXISTS idx_backtest_runs_run_at ON backtest_runs(run_at DESC);
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

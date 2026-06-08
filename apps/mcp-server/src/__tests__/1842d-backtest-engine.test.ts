@@ -28,6 +28,9 @@ import { runBacktest, resetMutex } from "../application/usecases/runBacktest.js"
 // MCP tool
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerBacktestTools } from "../interface/mcp/tools/backtesting/index.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -105,6 +108,9 @@ function makeDb(): Database {
     );
   `);
   initBacktestingTables(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

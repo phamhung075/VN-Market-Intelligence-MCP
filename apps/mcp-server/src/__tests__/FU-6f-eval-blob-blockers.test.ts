@@ -116,6 +116,9 @@ import type { BctcEvalThresholds } from "../domain/services/bctcEvalDetectors.js
 function openTestDb(): Database {
   const db = new Database(":memory:");
   initFinancialReportsTables(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -581,6 +584,9 @@ describe("DV-FU6F-B2-2 — [GREEN guard] Corporate finalize: income_stmt_json.gr
 // Strategy: import the whole module, call the tool with a seeded DB.
 
 import { registerBctcFullTools } from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // We use the exported `checkPublishabilityForTest` if available, otherwise fall back to
 // testing via the tool registration pattern. Since checkPublishability is internal,

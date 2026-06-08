@@ -14,6 +14,9 @@ import { Database } from "bun:sqlite";
 
 import { runBctcOverdueCheck } from "../scheduler/financial-reports/bctcOverdueCheckJob.js";
 import { readUnnotifiedAlerts } from "../infrastructure/db/alertStore.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function buildDb(): Database {
   const db = new Database(":memory:");
@@ -43,6 +46,9 @@ function buildDb(): Database {
       notified_telegram     INTEGER NOT NULL DEFAULT 0
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

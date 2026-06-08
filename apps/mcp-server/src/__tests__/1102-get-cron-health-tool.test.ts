@@ -15,6 +15,9 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerCronHealthTools } from "../interface/mcp/tools/alerts/cronHealthTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   insertCronJobRunStart,
   updateCronJobRunEnd,
@@ -37,6 +40,9 @@ function makeDb(): Database {
       duration_ms  INTEGER
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

@@ -17,6 +17,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { runImfIndicatorPollerJob } from "../scheduler/market-data/imfIndicatorPollerJob.js";
 import type { ImfIndicator, ImfClassificationInput, ImfClassificationOutput } from "../domain/models/imfIndicators.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 

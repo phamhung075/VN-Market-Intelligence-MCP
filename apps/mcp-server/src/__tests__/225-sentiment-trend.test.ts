@@ -17,6 +17,9 @@ import {
   type SentimentTrend,
 } from "../domain/services/sentimentTrend.js";
 import { registerSentimentTrendTools } from "../interface/mcp/tools/news-analysis/sentimentTrendTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -279,6 +282,9 @@ describe("Task 225 — registerSentimentTrendTools (MCP integration)", () => {
 
   it("returns no-data message when rag_analyses is empty", async () => {
     const testDb = new Database(":memory:");
+    initNewsTables(testDb);
+    initMarketDataTables(testDb);
+    initSystemTables(testDb);
     testDb.exec(`
       CREATE TABLE IF NOT EXISTS rag_analyses (
         id TEXT PRIMARY KEY,
@@ -300,6 +306,9 @@ describe("Task 225 — registerSentimentTrendTools (MCP integration)", () => {
 
   it("returns formatted trend table when data exists", async () => {
     const testDb = new Database(":memory:");
+    initNewsTables(testDb);
+    initMarketDataTables(testDb);
+    initSystemTables(testDb);
     testDb.exec(`
       CREATE TABLE IF NOT EXISTS rag_analyses (
         id TEXT PRIMARY KEY,
@@ -335,6 +344,9 @@ describe("Task 225 — registerSentimentTrendTools (MCP integration)", () => {
 
   it("handles unknown stock gracefully (no crash)", async () => {
     const testDb = new Database(":memory:");
+    initNewsTables(testDb);
+    initMarketDataTables(testDb);
+    initSystemTables(testDb);
     testDb.exec(`
       CREATE TABLE IF NOT EXISTS rag_analyses (
         id TEXT PRIMARY KEY,

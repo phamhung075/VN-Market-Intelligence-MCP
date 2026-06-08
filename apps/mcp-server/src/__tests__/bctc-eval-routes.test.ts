@@ -32,6 +32,9 @@ import {
   upsertEvalRow,
 } from "../infrastructure/db/bctcEvalStore.js";
 import type { Stage4Thresholds, Stage5Thresholds, Stage6Thresholds } from "../domain/services/bctcEvalDetectors.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -147,6 +150,9 @@ function makeTestDb(): Database {
       balance_pass INTEGER NOT NULL DEFAULT 0
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

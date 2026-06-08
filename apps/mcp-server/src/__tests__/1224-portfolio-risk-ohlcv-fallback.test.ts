@@ -20,6 +20,9 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { currentPriceQuery } from "../infrastructure/db/priceQueries.js";
 import { computePortfolioRisk, type PositionSnapshot, type DailyPriceRow } from "../domain/services/portfolioRiskCalculator.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function makeDb(): Database {
   const db = new Database(":memory:");
@@ -55,6 +58,9 @@ function makeDb(): Database {
       notes      TEXT
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

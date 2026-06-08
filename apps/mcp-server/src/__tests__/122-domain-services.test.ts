@@ -33,6 +33,9 @@ import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
 import { normalizeNews } from "../domain/services/newsNormalizer.js";
 import type { RssItem } from "../domain/models/shared-types.js";
 import type { DomainType } from "../../bctc-schema.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared test helpers

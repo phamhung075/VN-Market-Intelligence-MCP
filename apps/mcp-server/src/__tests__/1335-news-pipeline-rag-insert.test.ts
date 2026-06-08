@@ -18,6 +18,9 @@ import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 import { pollNews } from "../application/usecases/pollNews.js";
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import type { RssItem } from "../infrastructure/fetchers/rss.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -115,6 +118,9 @@ function setupTestDb(): Database {
       ON rag_analyses (source_url)
       WHERE source_url IS NOT NULL AND source_url != '';
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

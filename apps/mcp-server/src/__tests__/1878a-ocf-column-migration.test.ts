@@ -25,6 +25,9 @@
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ---------------------------------------------------------------------------
 // Load target functions
@@ -51,6 +54,9 @@ function buildDb(): Database {
   // initFinancialReportsTables runs SQLITE_DDL (full financial_reports DDL)
   // + all vnstock tables + migration block.
   initFinancialReportsTables(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

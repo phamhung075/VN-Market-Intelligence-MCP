@@ -4,6 +4,9 @@
 import { describe, it, expect, spyOn } from "bun:test";
 import type { Database } from "bun:sqlite";
 import type { CheckpointDeps } from "../infrastructure/db/checkpoint.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 

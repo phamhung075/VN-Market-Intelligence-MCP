@@ -22,6 +22,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   checkDataFreshnessSla,
   classifySeverity,
@@ -44,6 +47,9 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
 
     // Create test tables with stale data
     // Price data 12 minutes old (exceeds 10min threshold but < 15min → HIGH breach)

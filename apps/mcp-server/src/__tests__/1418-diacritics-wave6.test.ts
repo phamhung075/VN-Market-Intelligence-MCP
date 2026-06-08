@@ -18,6 +18,9 @@ import Database from "bun:sqlite";
 // ── Group A imports ────────────────────────────────────────────────────────────
 
 import { exportPortfolioSnapshot } from "../application/usecases/exportPortfolioSnapshot.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Source-scan helpers ────────────────────────────────────────────────────────
 
@@ -31,12 +34,18 @@ const APP   = join(import.meta.dir, "../application/usecases");
 describe("1418 wave6 — Group A: direct-call (exportPortfolioSnapshot)", () => {
   it("error sentinel contains Vietnamese diacritics", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const result = await exportPortfolioSnapshot({ db, exportDir: "/root/no-perm-xyz" });
     expect(result.error).toContain("(không thể ghi file):");
   });
 
   it("old broken sentinel absent", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const result = await exportPortfolioSnapshot({ db, exportDir: "/root/no-perm-xyz" });
     expect(result.error).not.toContain("khong the ghi file");
   });

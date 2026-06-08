@@ -9,6 +9,9 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import Database from "bun:sqlite";
 import { buildWatchlistSection } from "../domain/services/marketContextBuilder.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function createTestDb(): Database {
   const db = new Database(":memory:");
@@ -32,6 +35,9 @@ function createTestDb(): Database {
       updated_at TEXT
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

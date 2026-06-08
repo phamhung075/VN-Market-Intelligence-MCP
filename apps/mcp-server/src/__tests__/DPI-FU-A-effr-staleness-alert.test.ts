@@ -22,6 +22,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { checkAndAlertEffrStaleness, EFFR_STALE_BOUND_MS } from "../scheduler/macro/macroIndicatorRefreshJob.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── DDL ────────────────────────────────────────────────────────────────────────
 
@@ -37,6 +40,9 @@ function buildDb(): Database {
       UNIQUE (series, date)
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

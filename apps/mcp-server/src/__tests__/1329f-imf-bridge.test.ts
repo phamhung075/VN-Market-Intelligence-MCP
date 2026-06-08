@@ -7,9 +7,15 @@
 import { describe, it, expect } from "bun:test";
 import Database from "bun:sqlite";
 import { getImfMacroScoreForConviction } from "../application/services/imfConvictionBridge.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function makeDb(): Database {
   const db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec(`
     CREATE TABLE imf_indicators (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,6 +32,9 @@ function makeDb(): Database {
       UNIQUE(code) ON CONFLICT REPLACE
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -80,6 +89,9 @@ describe("Task 1329f — getImfMacroScoreForConviction()", () => {
 
   it("DB error returns 0 (fail-silent)", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.close();
     expect(getImfMacroScoreForConviction(db)).toBe(0);
   });

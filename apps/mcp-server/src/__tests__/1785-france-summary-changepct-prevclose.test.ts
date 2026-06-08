@@ -12,6 +12,9 @@ import { describe, it, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
 import { runFranceSummary, formatFranceSummaryVI } from "../scheduler/briefings/franceSummaryJob.js"
 import type { FranceSummaryOptions } from "../scheduler/briefings/franceSummaryJob.js"
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helper — minimal schema for franceSummaryJob
@@ -19,6 +22,9 @@ import type { FranceSummaryOptions } from "../scheduler/briefings/franceSummaryJ
 
 function makeDb(): Database {
   const db = new Database(":memory:")
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec(`
     CREATE TABLE IF NOT EXISTS market_prices (
       code TEXT PRIMARY KEY, price REAL, change_amt REAL,

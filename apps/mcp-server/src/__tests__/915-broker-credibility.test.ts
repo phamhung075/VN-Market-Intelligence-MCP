@@ -26,6 +26,9 @@ import {
   listActiveBrokerSanctions,
 } from "../infrastructure/db/brokerSanctionStore.js";
 import { registerBrokerCredibilityTools } from "../interface/mcp/tools/sector/brokerCredibilityTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Task 1038: broker_sanctions DDL lives in schema.ts:initDatabase() for
 // production. Tests using :memory: databases create the table inline here to
@@ -170,6 +173,9 @@ describe("brokerSanctionStore (infrastructure)", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     createBrokerSanctionsSchema(db);
   });
 
@@ -244,6 +250,9 @@ describe("brokerSanctionStore (infrastructure)", () => {
 describe("registerBrokerCredibilityTools (interface)", () => {
   it("registers without throwing", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     createBrokerSanctionsSchema(db);
     const server = new McpServer(
       { name: "test-915", version: "0.0.0" },

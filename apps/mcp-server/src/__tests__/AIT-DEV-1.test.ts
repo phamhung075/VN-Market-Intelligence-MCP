@@ -29,6 +29,9 @@ import { resolve } from "node:path";
 Bun.env["DB_PATH"] = ":memory:";
 
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   handleBctcInspectPageImage,
   handleBctcInspectPageWindow,
@@ -39,6 +42,9 @@ import {
 function openTestDb(): Database {
   const db = new Database(":memory:");
   initFinancialReportsTables(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

@@ -23,6 +23,9 @@ import { tmpdir } from "node:os";
 import { buildOrchestrationDto } from "../interface/mcp/routes/orchestrationHandler.js";
 import { _clearCacheForTesting } from "../infrastructure/journalStore.js";
 import type { OrchState } from "../infrastructure/orchStateStore.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixtures

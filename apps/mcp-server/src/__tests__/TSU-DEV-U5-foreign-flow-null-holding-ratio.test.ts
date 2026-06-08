@@ -29,6 +29,9 @@ import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   formatForeignFlowOutput,
   registerForeignFlowTools,
@@ -118,6 +121,9 @@ function createCompanyProfileDb(): Database {
       UNIQUE(code, date)
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -146,6 +152,9 @@ function buildDailyOhlcvDb(code: string, days: number, netVolPerDay: number): Da
       `INSERT OR IGNORE INTO daily_ohlcv (code, date, foreign_net_vol) VALUES (?, ?, ?)`,
     ).run(code, dateStr, netVolPerDay);
   }
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

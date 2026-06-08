@@ -9,6 +9,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Issue 1 — hour_bucket idempotent migration
@@ -22,6 +25,9 @@ describe("Issue 1 — tracked_indicators hour_bucket idempotent migration", () =
     // With the migration guard the ALTER is swallowed and the function completes.
     const { initMacroTables } = await import("../infrastructure/db/schema-macro.js");
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
 
     // Create the table WITHOUT hour_bucket (old schema)
     db.exec(`
@@ -49,6 +55,9 @@ describe("Issue 1 — tracked_indicators hour_bucket idempotent migration", () =
   it("runs initMacroTables on a fresh DB (no pre-existing tracked_indicators table) without throwing", async () => {
     const { initMacroTables } = await import("../infrastructure/db/schema-macro.js");
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     expect(() => initMacroTables(db)).not.toThrow();
     db.close();
   });
@@ -56,6 +65,9 @@ describe("Issue 1 — tracked_indicators hour_bucket idempotent migration", () =
   it("runs initMacroTables twice on the same DB (fully idempotent) without throwing", async () => {
     const { initMacroTables } = await import("../infrastructure/db/schema-macro.js");
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     initMacroTables(db);
     // Second call must be safe (CREATE IF NOT EXISTS + catch on ALTER)
     expect(() => initMacroTables(db)).not.toThrow();
@@ -65,6 +77,9 @@ describe("Issue 1 — tracked_indicators hour_bucket idempotent migration", () =
   it("trigger trg_tracked_ind_hour_bucket populates hour_bucket on insert", async () => {
     const { initMacroTables } = await import("../infrastructure/db/schema-macro.js");
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     initMacroTables(db);
 
     db.exec(`

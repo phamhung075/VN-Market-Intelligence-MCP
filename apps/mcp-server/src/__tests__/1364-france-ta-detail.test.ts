@@ -19,6 +19,9 @@ import {
   runFranceSummary,
 } from "../scheduler/briefings/franceSummaryJob.js"
 import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js"
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TaSignalRow — forward declaration of the type that task 1365 will export.
@@ -50,6 +53,9 @@ interface FranceSummaryResult1365 extends Omit<FranceSummaryResult, "taCount"> {
 
 function makeDb(): Database {
   const db = new Database(":memory:")
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec(`
     CREATE TABLE IF NOT EXISTS market_prices (
       code        TEXT PRIMARY KEY,

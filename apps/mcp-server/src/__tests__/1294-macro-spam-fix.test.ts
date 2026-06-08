@@ -7,6 +7,9 @@ import {
 } from "../scheduler/news-analysis/intelligenceCycleJob.js";
 import type { CycleDeps } from "../scheduler/news-analysis/intelligenceCycleJob.js";
 import type { Alert } from "../domain/services/alertGenerator.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 /**
  * Task 1294 — macro_deviation spam: 3 near-identical alerts in 1.5h.

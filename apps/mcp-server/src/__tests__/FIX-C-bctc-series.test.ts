@@ -27,6 +27,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { registerBctcSeriesTools, buildSeriesData } from "../interface/mcp/tools/financial-reports/bctcSeriesTools.js";
 import { registerBctcFullTools } from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helpers
@@ -111,6 +114,9 @@ function makeDb(): Database {
     receivables_bn REAL,
     fetched_at TEXT NOT NULL DEFAULT ''
   )`);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

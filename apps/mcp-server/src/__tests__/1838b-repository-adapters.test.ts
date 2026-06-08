@@ -12,6 +12,9 @@ import { SqliteMarketPriceRepository } from "../infrastructure/db/repositories/S
 import { SqliteKinhDichScoreRepository } from "../infrastructure/db/repositories/SqliteKinhDichScoreRepository.js";
 import { SqliteHexagramRepository } from "../infrastructure/db/repositories/SqliteHexagramRepository.js";
 import { SqliteVnstockRepository } from "../infrastructure/db/repositories/SqliteVnstockRepository.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ──────────────────────��─────────────────────────────��────────────────────────
 // SqliteWatchlistRepository
@@ -20,12 +23,18 @@ import { SqliteVnstockRepository } from "../infrastructure/db/repositories/Sqlit
 describe("Task 1838b — SqliteWatchlistRepository", () => {
   it("getAll() returns empty array on missing table", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteWatchlistRepository(db);
     expect(repo.getAll()).toEqual([]);
   });
 
   it("getAll() returns seeded rows when table exists", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE watchlist (
         code TEXT PRIMARY KEY,
@@ -46,6 +55,9 @@ describe("Task 1838b — SqliteWatchlistRepository", () => {
 
   it("getAllCodesForVps() returns empty arrays on missing table", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteWatchlistRepository(db);
     const result = repo.getAllCodesForVps();
     expect(result.watchlist).toEqual([]);
@@ -54,6 +66,9 @@ describe("Task 1838b — SqliteWatchlistRepository", () => {
 
   it("getAllCodesForVps() returns watchlist codes when table has rows", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE watchlist (
         code TEXT PRIMARY KEY,
@@ -77,6 +92,9 @@ describe("Task 1838b — SqliteWatchlistRepository", () => {
 describe("Task 1838b — SqliteMarketPriceRepository", () => {
   it("getAvgVolume() returns 0 on missing table", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteMarketPriceRepository(db);
     const today = new Date().toISOString().substring(0, 10);
     expect(repo.getAvgVolume("VCB", today, 20, 5)).toBe(0);
@@ -84,6 +102,9 @@ describe("Task 1838b — SqliteMarketPriceRepository", () => {
 
   it("getAvgVolume() returns 0 when fewer than minHistoryRows exist", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE market_prices_history (
         code TEXT NOT NULL,
@@ -106,6 +127,9 @@ describe("Task 1838b — SqliteMarketPriceRepository", () => {
 
   it("getAvgVolume() returns nonzero average when sufficient history exists", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE market_prices_history (
         code TEXT NOT NULL,
@@ -128,6 +152,9 @@ describe("Task 1838b — SqliteMarketPriceRepository", () => {
 
   it("upsertConvictionHistory() is safe on missing table", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteMarketPriceRepository(db);
     // Should not throw
     expect(() =>
@@ -143,6 +170,9 @@ describe("Task 1838b — SqliteMarketPriceRepository", () => {
 
   it("getRecentNewsTitles() returns empty array on missing table", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteMarketPriceRepository(db);
     expect(repo.getRecentNewsTitles("VCB", 4, 10)).toEqual([]);
   });
@@ -155,12 +185,18 @@ describe("Task 1838b — SqliteMarketPriceRepository", () => {
 describe("Task 1838b — SqliteKinhDichScoreRepository", () => {
   it("getLatestChangePct() returns null on missing table", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteKinhDichScoreRepository(db);
     expect(repo.getLatestChangePct("VCB")).toBeNull();
   });
 
   it("getLatestChangePct() returns correct value when row exists", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE market_prices (
         code TEXT PRIMARY KEY,
@@ -181,12 +217,18 @@ describe("Task 1838b — SqliteKinhDichScoreRepository", () => {
 
   it("getWatchlistDomain() returns null on missing table", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteKinhDichScoreRepository(db);
     expect(repo.getWatchlistDomain("VCB")).toBeNull();
   });
 
   it("getWatchlistDomain() returns domain when row exists", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE watchlist (
         code TEXT PRIMARY KEY,
@@ -203,6 +245,9 @@ describe("Task 1838b — SqliteKinhDichScoreRepository", () => {
 
   it("getMarketPricesForCodes() returns empty array for empty input", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteKinhDichScoreRepository(db);
     expect(repo.getMarketPricesForCodes([])).toEqual([]);
   });
@@ -215,6 +260,9 @@ describe("Task 1838b — SqliteKinhDichScoreRepository", () => {
 describe("Task 1838b — SqliteHexagramRepository", () => {
   function makeHexDb(): Database {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`
       CREATE TABLE kinhdich_readings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -242,6 +290,9 @@ describe("Task 1838b — SqliteHexagramRepository", () => {
         PRIMARY KEY (from_hexagram, to_hexagram, stock_code)
       );
     `);
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     return db;
   }
 
@@ -308,6 +359,9 @@ describe("Task 1838b — SqliteHexagramRepository", () => {
 describe("Task 1838b — SqliteVnstockRepository", () => {
   it("getLatestFinancials() returns null safely when vnstockStore not available", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteVnstockRepository(db);
     // May throw internally but should return null (caught in try/catch)
     expect(() => repo.getLatestFinancials("VCB")).not.toThrow();
@@ -315,6 +369,9 @@ describe("Task 1838b — SqliteVnstockRepository", () => {
 
   it("getOfficers() returns empty array safely", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     const repo = new SqliteVnstockRepository(db);
     const result = repo.getOfficers("VCB");
     expect(Array.isArray(result)).toBe(true);

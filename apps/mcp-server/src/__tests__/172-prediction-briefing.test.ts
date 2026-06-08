@@ -19,6 +19,9 @@ import { Database } from "bun:sqlite";
 import { getRecentPredictionSignals } from "../infrastructure/db/predictionStore.js";
 import { assembleBriefing } from "../application/usecases/assembleBriefing.js";
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test DB helpers
@@ -153,6 +156,9 @@ function setupTestDb(): Database {
     );
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -281,6 +287,9 @@ describe("Task 172 — getRecentPredictionSignals", () => {
 
   it("handles missing prediction_signals table gracefully (returns [])", () => {
     const emptyDb = new Database(":memory:");
+    initNewsTables(emptyDb);
+    initMarketDataTables(emptyDb);
+    initSystemTables(emptyDb);
     emptyDb.exec("CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY)");
     // No prediction_signals table
 
@@ -391,6 +400,9 @@ describe("Task 172 — assembleBriefing prediction signals section", () => {
 
   it("gracefully handles missing prediction_signals table", async () => {
     const dbNoPrediction = new Database(":memory:");
+    initNewsTables(dbNoPrediction);
+    initMarketDataTables(dbNoPrediction);
+    initSystemTables(dbNoPrediction);
     dbNoPrediction.exec("PRAGMA foreign_keys = OFF");
     dbNoPrediction.exec(`
       CREATE TABLE IF NOT EXISTS watchlist (
@@ -483,6 +495,9 @@ describe("Task 172 — assembleEveningSummary prediction signals section", () =>
 
   it("gracefully handles missing prediction_signals table in evening summary", async () => {
     const dbNoPrediction = new Database(":memory:");
+    initNewsTables(dbNoPrediction);
+    initMarketDataTables(dbNoPrediction);
+    initSystemTables(dbNoPrediction);
     dbNoPrediction.exec("PRAGMA foreign_keys = OFF");
     dbNoPrediction.exec(`
       CREATE TABLE IF NOT EXISTS watchlist (

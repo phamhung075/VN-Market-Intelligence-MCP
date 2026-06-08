@@ -25,6 +25,9 @@ import {
   VnstockRateLimiter,
 } from "../infrastructure/fetchers/vnstockBridge.js";
 import { SYNC_DELAY_MS } from "../application/usecases/syncVnstockData.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1862a — rate limiter constants", () => {
   it("1. GLOBAL_RATE_LIMIT_RPM is 80 (increased from 50 to handle 30 tickers × 6 endpoints)", () => {

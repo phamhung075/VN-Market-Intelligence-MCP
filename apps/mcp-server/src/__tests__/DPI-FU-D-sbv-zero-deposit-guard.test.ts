@@ -23,6 +23,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   storeSbvSnapshot,
   type SbvMacroSnapshot,
@@ -69,6 +72,9 @@ function setupTestDb(): Database {
     CREATE INDEX IF NOT EXISTS idx_sbv_history_source_time
       ON sbv_rates_history(source, fetched_at DESC);
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

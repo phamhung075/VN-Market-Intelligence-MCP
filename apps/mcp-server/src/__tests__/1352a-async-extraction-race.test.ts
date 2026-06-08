@@ -32,6 +32,9 @@ import {
 } from "../scheduler/financial-reports/bctcReparseJob.js";
 import type { ReparseDeps } from "../scheduler/financial-reports/bctcReparseJob.js";
 import Database from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -52,6 +55,9 @@ function makeInMemoryDb(): InstanceType<typeof Database> {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

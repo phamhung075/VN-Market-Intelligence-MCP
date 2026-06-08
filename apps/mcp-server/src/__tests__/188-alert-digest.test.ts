@@ -47,6 +47,9 @@ function setupTestDb(): Database {
     CREATE INDEX IF NOT EXISTS idx_alerts_severity  ON alerts(severity);
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -103,6 +106,9 @@ import {
   type AlertDigest,
 } from "../application/usecases/assembleAlertDigest.js";
 import { CRONS } from "../scheduler/jobs.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
@@ -281,6 +287,9 @@ describe("Task 188 — Daily Alert Digest", () => {
 
     // Set up a DB with cron_job_runs containing a success row for alertDigestJob today
     const dedupDb = new Database(":memory:");
+    initNewsTables(dedupDb);
+    initMarketDataTables(dedupDb);
+    initSystemTables(dedupDb);
     dedupDb.exec(`
       CREATE TABLE IF NOT EXISTS cron_job_runs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -323,6 +332,9 @@ describe("Task 188 — Daily Alert Digest", () => {
 
     // Empty cron_job_runs — no prior run today
     const freshDb = new Database(":memory:");
+    initNewsTables(freshDb);
+    initMarketDataTables(freshDb);
+    initSystemTables(freshDb);
     freshDb.exec(`
       CREATE TABLE IF NOT EXISTS cron_job_runs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

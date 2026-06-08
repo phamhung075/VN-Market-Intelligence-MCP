@@ -8,6 +8,9 @@ import {
 } from "../scheduler/briefings/franceSummaryJob.js";
 import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js";
 import type { ForeignFlowMover } from "../application/usecases/assembleEveningSummary.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB setup
@@ -73,6 +76,9 @@ function setupTestDb(): Database {
       fetched_at TEXT NOT NULL
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

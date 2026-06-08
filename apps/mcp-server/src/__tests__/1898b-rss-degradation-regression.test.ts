@@ -23,6 +23,9 @@ mock.module("../infrastructure/rag/retriever.js", () => ({
 
 import { pollNews, _resetAllDarkAlert } from "../application/usecases/pollNews.js";
 import { globalSourceTracker, _resetGlobalSourceTracker } from "../interface/mcp/tools/news-analysis/sourceHealthTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB setup
@@ -57,6 +60,9 @@ function setupTestDb(): Database {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_rag_source_url
       ON rag_analyses (source_url) WHERE source_url IS NOT NULL AND source_url != '';
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

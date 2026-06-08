@@ -24,6 +24,9 @@ import {
   type TaAlertNotifierResult,
 } from "../scheduler/market-data/taAlertNotifierJob.js";
 import { CRONS } from "../scheduler/jobs.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB setup — full alerts DDL including notified_telegram column
@@ -68,6 +71,9 @@ function makeDb(): Database {
     )
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

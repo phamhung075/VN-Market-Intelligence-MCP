@@ -19,6 +19,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { SourceHealthTracker } from "../domain/services/sourceHealthTracker.js";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Minimal DB helper for pollNews tests ──────────────────────────────────────
 function buildTestDb(): Database {
@@ -79,6 +82,9 @@ function buildTestDb(): Database {
       PRIMARY KEY (name, fetched_at)
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

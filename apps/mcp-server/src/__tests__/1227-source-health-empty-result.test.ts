@@ -5,6 +5,9 @@ import { SourceHealthTracker } from "../domain/services/sourceHealthTracker.js";
 // ── Helper: build minimal DB with all tables pollNews needs ──────────────────
 
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function buildPollNewsTestDb(): Database {
   const db = new Database(":memory:");
@@ -70,6 +73,9 @@ function buildPollNewsTestDb(): Database {
     );
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

@@ -18,6 +18,9 @@ import {
   runWeeklyPortfolioReport,
 } from "../scheduler/portfolio/weeklyPortfolioReportJob.js";
 import type { PortfolioRow, WeekSummary } from "../scheduler/portfolio/weeklyPortfolioReportJob.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixtures
@@ -47,6 +50,9 @@ let testDb: Database;
 
 beforeAll(() => {
   testDb = new Database(":memory:");
+  initNewsTables(testDb);
+  initMarketDataTables(testDb);
+  initSystemTables(testDb);
   testDb.exec(`
     CREATE TABLE IF NOT EXISTS positions (
       code TEXT NOT NULL,

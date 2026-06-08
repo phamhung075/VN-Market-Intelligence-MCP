@@ -27,6 +27,9 @@ import {
   type ReputationComputeOptions,
 } from "../scheduler/news/reputationComputeJob.js";
 import { getReputation } from "../infrastructure/db/reputationStore.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── DDL helper ────────────────────────────────────────────────────────────────
 
@@ -78,6 +81,9 @@ function buildDb(): Database {
       PRIMARY KEY (code, date)
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

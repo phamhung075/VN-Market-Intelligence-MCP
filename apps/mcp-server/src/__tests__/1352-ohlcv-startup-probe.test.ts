@@ -15,6 +15,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runOhlcvStartupProbe } from "../scheduler/market-data/ohlcvStartupProbe.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // No-op backfill stub — prevents real VNDirect network calls in unit tests
 const noopBackfill = async (_db: unknown) => ({ fetched: 0, skipped: 0, errors: [] });
@@ -42,6 +45,9 @@ function makeDb(): Database {
       volume    REAL
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

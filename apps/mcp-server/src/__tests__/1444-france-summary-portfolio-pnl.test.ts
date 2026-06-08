@@ -66,6 +66,9 @@ function setupTestDb(): Database {
     );
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -79,6 +82,9 @@ import {
 } from "../scheduler/briefings/franceSummaryJob.js";
 import type { FranceSummaryOptions } from "../scheduler/briefings/franceSummaryJob.js";
 import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixtures

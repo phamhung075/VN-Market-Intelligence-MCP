@@ -8,6 +8,9 @@
 import { describe, it, expect } from "bun:test";
 import { runImpactChain } from "../application/usecases/runImpactChain.js";
 import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   analyzeTradeImpact,
   detectCountries,
@@ -93,6 +96,9 @@ describe("1303i — cascade gap: BCTC overdue → runImpactChain", () => {
 
     const { Database } = await import("bun:sqlite");
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.run(`CREATE TABLE watchlist (
       code TEXT PRIMARY KEY,
       domain TEXT DEFAULT 'general'

@@ -21,6 +21,9 @@ import { toolRegistry } from "../interface/mcp/tools/registry.js";
 
 // AC-4: server exposes updated toolCount
 import { createBunServer, type BunServerInstance } from "../interface/mcp/server.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 const TEST_PORT = 13180;
 let serverInstance: BunServerInstance;

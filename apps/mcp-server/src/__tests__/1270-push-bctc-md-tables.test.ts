@@ -16,6 +16,9 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { handlePushBctcMdTables } from "../interface/mcp/routes/pushBctcMdTablesHandler.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +37,9 @@ function makeTestDb(): Database {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bmt_report ON bctc_md_tables(report_id)`);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

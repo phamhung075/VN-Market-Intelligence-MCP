@@ -13,6 +13,9 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   insertChangelog,
   getRecentChangelogs,
@@ -49,8 +52,14 @@ function ensureChangelogTable(db: Database): void {
 
 function makeDb(): Database {
   const db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec("PRAGMA journal_mode = WAL");
   ensureChangelogTable(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -61,12 +70,18 @@ function makeDb(): Database {
 describe("Task 233 — ensureChangelogTable (DDL)", () => {
   it("creates the system_changelog table without error", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     expect(() => ensureChangelogTable(db)).not.toThrow();
     db.close();
   });
 
   it("is idempotent — safe to call multiple times", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     expect(() => {
       ensureChangelogTable(db);
       ensureChangelogTable(db);
@@ -77,6 +92,9 @@ describe("Task 233 — ensureChangelogTable (DDL)", () => {
 
   it("creates idx_changelog_fixed_at index", () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     ensureChangelogTable(db);
     const idx = db
       .query<{ name: string }, []>(

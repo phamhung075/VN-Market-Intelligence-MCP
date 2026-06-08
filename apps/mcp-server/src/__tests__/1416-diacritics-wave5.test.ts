@@ -26,6 +26,9 @@ import { formatSourceHealthTable } from "../interface/mcp/tools/news-analysis/so
 import { formatSearchResults } from "../domain/services/stockSearch.js";
 
 import { formatTaIndicatorReport } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Source-scan helpers ────────────────────────────────────────────────────────
 

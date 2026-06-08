@@ -1,6 +1,9 @@
 import { describe, it, expect } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1400 — DB isolation: Bun.env namespace", () => {
   it("Bun.env[DB_PATH] is :memory: during test run", () => {

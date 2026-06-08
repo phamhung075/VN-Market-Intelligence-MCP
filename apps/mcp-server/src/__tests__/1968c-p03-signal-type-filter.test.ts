@@ -14,6 +14,9 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { getSignals } from "../infrastructure/db/agentSignalStore.js";
 import { z } from "zod";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── DB helpers ───────────────────────────────────────────────────────────────
 
@@ -34,6 +37,9 @@ function makeDb(): Database {
     CREATE INDEX IF NOT EXISTS idx_agent_signals_to ON agent_signals(to_agent, status);
     CREATE INDEX IF NOT EXISTS idx_agent_signals_expires ON agent_signals(expires_at);
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

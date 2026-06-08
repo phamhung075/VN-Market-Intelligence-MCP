@@ -46,6 +46,9 @@ function makeAlertsDb(): Database {
       resolution_notes      TEXT
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -140,6 +143,9 @@ describe("Task 1005 — markAlertsSuperseded", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { formatAlertRow } from "../interface/mcp/tools/alerts/alerts.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1005 — formatAlertRow SUPERSEDED marker", () => {
   const baseRow = {

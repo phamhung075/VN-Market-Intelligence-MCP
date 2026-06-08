@@ -19,6 +19,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Project root: two levels up from src/__tests__/
 const PROJECT_ROOT = join(import.meta.dir, "../../");

@@ -24,12 +24,18 @@ import { checkSectionCompleteness } from "../domain/services/financial-reports/b
 import { buildBackfillBctcScalarsHandler } from "../interface/mcp/tools/financial-reports/backfillBctcScalarsTool.js";
 import { buildFinalizeBctcRefineHandler } from "../interface/mcp/tools/financial-reports/finalizeBctcRefineTool.js";
 import type { AggregatorRow } from "../domain/services/financial-reports/bctcSectionCompleteness.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function openTestDb(): Database {
   const db = new Database(":memory:");
   initFinancialReportsTables(db);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

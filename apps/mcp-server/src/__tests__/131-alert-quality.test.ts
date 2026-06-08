@@ -25,6 +25,9 @@ import {
 } from "../domain/services/alertGrouper.js";
 import { generateAlerts } from "../domain/services/alertGenerator.js";
 import type { Signal } from "../domain/services/signalDetector.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

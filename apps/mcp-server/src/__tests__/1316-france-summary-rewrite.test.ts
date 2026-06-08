@@ -4,6 +4,9 @@ Bun.env["DB_PATH"] = ":memory:"
 import { describe, it, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
 import { runFranceSummary, type FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js"
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test DB helpers
@@ -11,6 +14,9 @@ import { runFranceSummary, type FranceSummaryResult } from "../scheduler/briefin
 
 function makeDb(): Database {
   const db = new Database(":memory:")
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec(`
     CREATE TABLE IF NOT EXISTS market_prices (
       code        TEXT PRIMARY KEY,

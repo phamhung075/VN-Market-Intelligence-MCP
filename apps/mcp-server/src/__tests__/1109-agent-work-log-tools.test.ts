@@ -16,6 +16,9 @@ import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAgentWorkLogTools } from "../interface/mcp/tools/system/agentWorkLogTools.js";
 import { logAgentWorkStart } from "../infrastructure/db/agentWorkLogStore.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── In-memory DB helper ───────────────────────────────────────────────────
 
@@ -35,6 +38,9 @@ function makeDb(): Database {
         CHECK(status IN ('running','completed','error'))
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

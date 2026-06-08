@@ -180,6 +180,9 @@ describe("Task 187 — classifyFilingStatus", () => {
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerEarningsCalendarTools } from "../interface/mcp/tools/financial-reports/earningsCalendarTools.js";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 /** Call a registered MCP tool by name using the SDK's internal registry. */
 async function callTool(
@@ -202,6 +205,9 @@ async function callTool(
 describe("Task 187 — get_earnings_calendar MCP tool", () => {
   it("returns 'Danh sách theo dõi trống' for empty watchlist", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
       company_name TEXT, notes TEXT, added_at TEXT NOT NULL,
@@ -231,6 +237,9 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
 
   it("shows UOC_TINH for a stock with no filing and deadline far away", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
       company_name TEXT, notes TEXT, added_at TEXT NOT NULL,
@@ -263,6 +272,9 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
 
   it("shows QUÁ HẠN for a stock past its deadline with no filing", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
       company_name TEXT, notes TEXT, added_at TEXT NOT NULL,
@@ -295,6 +307,9 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
 
   it("shows SẮP ĐẾN for a stock with deadline within 14 days", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
       company_name TEXT, notes TEXT, added_at TEXT NOT NULL,
@@ -327,6 +342,9 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
 
   it("shows ĐÃ NỘP with date for a stock that has filed", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
       company_name TEXT, notes TEXT, added_at TEXT NOT NULL,
@@ -368,6 +386,9 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
 
   it("handles multiple stocks with mixed statuses", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
       company_name TEXT, notes TEXT, added_at TEXT NOT NULL,

@@ -2,6 +2,9 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { detectStocksInText, getAliasesForCode } from "../domain/services/stockAliases.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1211 — BSR stock aliases", () => {
   it("detects BSR from 'công ty lọc hóa dầu Bình Sơn'", () => {

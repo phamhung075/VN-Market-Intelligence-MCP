@@ -4,6 +4,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runFranceSummary } from "../scheduler/briefings/franceSummaryJob.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helpers
@@ -11,6 +14,9 @@ import { runFranceSummary } from "../scheduler/briefings/franceSummaryJob.js";
 
 function makeDb(): Database {
   const db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   db.exec(`
     CREATE TABLE IF NOT EXISTS market_prices (
       code        TEXT PRIMARY KEY,
@@ -77,6 +83,9 @@ function makeDb(): Database {
       sent_at      TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
@@ -198,6 +207,9 @@ describe("Task 1344 — france-summary stale alerts + dedup", () => {
   // ─────────────────────────────────────────────────────────────────────────
   it("AC-5: market_messages table absent → fail-open, digest still sends", async () => {
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     // Only create market_prices, alerts, and the history/watchlist tables — NOT market_messages
     db.exec(`
       CREATE TABLE market_prices (

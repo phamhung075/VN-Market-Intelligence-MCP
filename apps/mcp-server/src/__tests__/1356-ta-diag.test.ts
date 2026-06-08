@@ -29,6 +29,9 @@ import { join } from "node:path";
 
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import type { TaSignal } from "../application/usecases/assembleBriefing.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal in-memory DB — mirrors 1354 test + daily_ohlcv table (TECH-121)
@@ -115,6 +118,9 @@ function setupTestDb(): Database {
     );
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

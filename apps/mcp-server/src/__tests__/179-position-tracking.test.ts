@@ -13,6 +13,9 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   upsertPosition,
   listOpenPositions,
@@ -28,6 +31,9 @@ let db: Database;
 
 beforeEach(() => {
   db = new Database(":memory:");
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   // Create positions table
   db.exec(`
     CREATE TABLE IF NOT EXISTS positions (

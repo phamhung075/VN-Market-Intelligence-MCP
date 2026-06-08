@@ -13,6 +13,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
 import { buildForeignFlowStatusResponse } from "../interface/mcp/foreignFlowStatusHandler.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─── In-memory DB helpers ────────────────────────────────────────────────────
 
@@ -38,6 +41,9 @@ function makeDb(): Database {
       PRIMARY KEY (code, date)
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

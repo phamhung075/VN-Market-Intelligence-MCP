@@ -14,6 +14,9 @@ const referenceStocks = config.market.referenceStocks;
 // Load SECTOR_PEERS via the domain service
 // We import the compiled source directly for the test
 import { getSectorPeers } from "../domain/services/sectorPeers.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // Build a map: ticker -> sectors[] from referenceStocks
 function buildRefStocksIndex(ref: Record<string, string[]>): Map<string, string[]> {

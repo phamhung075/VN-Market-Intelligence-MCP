@@ -11,6 +11,9 @@ import { Database } from "bun:sqlite";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 describe("Task 1331a — Single-Writer Guard", () => {
   it("TEST-1 (structural): two writers to same file cause SQLITE_BUSY", () => {
@@ -82,6 +85,9 @@ describe("Task 1331a — Single-Writer Guard", () => {
 
     // On :memory: DB (used in all tests) there is no lock contention
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
     db.exec("PRAGMA journal_mode = WAL");
     const result = assertSingleWriter(db);
     expect(result).toHaveProperty("contested");

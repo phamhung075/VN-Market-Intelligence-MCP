@@ -1,6 +1,9 @@
 // apps/mcp-server/src/__tests__/1329b-imf-conviction-dimension.test.ts
 // Note: DB_PATH is set to :memory: by apps/mcp-server/src/__tests__/setup.ts preload (Bun.env)
 import { describe, it, expect } from "bun:test";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 import {
   computeConviction,
   scoreImfMacro,

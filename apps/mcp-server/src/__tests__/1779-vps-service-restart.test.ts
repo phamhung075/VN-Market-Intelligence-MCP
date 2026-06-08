@@ -24,6 +24,9 @@ import { registerVpsServiceRestartTool } from "../interface/mcp/tools/system/vps
 // ---------------------------------------------------------------------------
 
 import type { SshExecResult } from "../infrastructure/vps/sshExec.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 function fakeSshSpawn(stdout: string, stderr: string, exitCode: number): () => ReturnType<typeof Bun.spawn> {
   return () => ({

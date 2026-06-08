@@ -21,6 +21,9 @@ import { postSignal } from "../infrastructure/db/agentSignalStore.js";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
 import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,6 +43,9 @@ function makeDb(): Database {
       expires_at  TEXT NOT NULL
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

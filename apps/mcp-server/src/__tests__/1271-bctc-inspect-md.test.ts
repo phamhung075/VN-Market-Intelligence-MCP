@@ -19,6 +19,9 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { handleBctcInspectMd } from "../interface/mcp/routes/bctcInspectMdHandler.js";
 // AC-I-3: importing from the existing handler proves it's still present/unchanged
 import { handleBctcInspectTable } from "../interface/mcp/routes/bctcInspectHandler.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -35,6 +38,9 @@ function makeTestDb(): Database {
       extracted_at     TEXT    NOT NULL DEFAULT (datetime('now'))
     )
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

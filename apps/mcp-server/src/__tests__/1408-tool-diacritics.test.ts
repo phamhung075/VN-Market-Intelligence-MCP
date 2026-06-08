@@ -6,6 +6,9 @@ import { formatTaIndicatorReport } from "../interface/mcp/tools/market-data/tech
 import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/sector/supplyChainTools.js";
 import type { ToolCandle as DailyCandle } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 import type { SupplyChainSignal } from "../domain/services/supplyChainAnalyzer.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // RSI N/A branch (technicalIndicatorTools.ts:164 "cần tối thiểu 15 nến") is architecturally
 // unreachable from tests: guard at line 130 requires >= 35 candles, which always satisfies

@@ -20,6 +20,9 @@ import { Database } from "bun:sqlite";
 import { runAskQueueCheck } from "../scheduler/system/askQueueCheckJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 import { insertAskQuestion } from "../infrastructure/db/askQueueStore.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -55,6 +58,9 @@ function makeTestDb(): Database {
     )
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

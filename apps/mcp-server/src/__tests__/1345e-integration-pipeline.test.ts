@@ -14,6 +14,9 @@
  */
 
 import { describe, it, expect } from "bun:test";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test 1: Test count no regressions
@@ -95,6 +98,9 @@ describe("Sprint 1345 Integration — Test 3: Polymarket staleness guard (1345c)
     // The live DB check is documented below as a manual checklist item.
     const Database = (await import("bun:sqlite")).default;
     const db = new Database(":memory:");
+    initNewsTables(db);
+    initMarketDataTables(db);
+    initSystemTables(db);
 
     db.run(`
       CREATE TABLE IF NOT EXISTS prediction_markets (

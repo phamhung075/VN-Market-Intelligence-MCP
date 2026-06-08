@@ -24,6 +24,9 @@ import { registerReportTools } from "../interface/mcp/tools/financial-reports/re
 import { registerSearchStocksTools } from "../interface/mcp/tools/news-analysis/searchTools.js";
 import { registerAlertCheckTools } from "../interface/mcp/tools/alerts/alertCheckTools.js";
 import { registerExportTools } from "../interface/mcp/tools/portfolio/exportTools.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Setup: a single McpServer with all affected tool groups registered

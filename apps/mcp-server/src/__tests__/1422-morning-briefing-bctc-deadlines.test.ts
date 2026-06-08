@@ -12,6 +12,9 @@ import { Database } from "bun:sqlite";
 import { assembleBriefing } from "../application/usecases/assembleBriefing.js";
 import { formatBriefingMessage } from "../scheduler/briefings/morningBriefingJob.js";
 import type { DailyBriefing } from "../application/usecases/assembleBriefing.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -123,6 +126,9 @@ function buildTestDb(): Database {
       closed_at  TEXT
     );
   `);
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 

@@ -20,6 +20,9 @@ import {
 } from "../infrastructure/db/seedWatchlist.js";
 import { recordMention } from "../infrastructure/db/mentionVelocityStore.js";
 import { getCrisisEarlyWarning } from "../application/usecases/getCrisisEarlyWarning.js";
+import { initNewsTables } from "../infrastructure/db/schema-news.js";
+import { initMarketDataTables } from "../infrastructure/db/schema-market-data.js";
+import { initSystemTables } from "../infrastructure/db/schema-system.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB helpers — minimal schema for watchlist + mention_velocity
@@ -65,6 +68,9 @@ function createTestDb(): Database {
     )
   `);
 
+  initNewsTables(db);
+  initMarketDataTables(db);
+  initSystemTables(db);
   return db;
 }
 
