@@ -1,25 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-06-08 15:00 UTC (c031) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c029 · 2026-06-07T21:15Z
-### Analysis Cycle (21:04–21:15 UTC) — mode: mixed
-- E2 guard: PASS (21:04 UTC, outside [02:00,08:00))
-- Mode: mixed. Calendar: 22 new ĐÃ NỘP filings on 2026-06-07 (VCB, CTG, MBB, VPB, HPG, VHM, VIC, MWG, REE, SSI, VCI, HCM, POW, HSG, NKG, HVN, GVR, D2D, KBC, DPM, NVL, VRE). CTG guard expired.
-- Stocks analyzed: 1 (FPT conf 81%) — 22 release tickers DATA_INSUFFICIENT (extraction pipeline lag, PDFs stored not ingested)
-- Chain validations: 3 findings (2 generic catalysts bullish/bearish, 1 NVL urgent_news #5309)
-- Regime: NEUTRAL (carry UNKNOWN via DSI-INV-1). Max Deposit Rate: 5.00%. Investment clock: CORE_VN score=8.
-- Macro: Brent $93.09 NEUTRAL; Gold $4,365.3 BULLISH; USD/VND 26124 BEARISH. Market EY 8.20% CHEAP (+3.20pp). VN-Index: 1838.9 (+7.35 delta up).
-- FPT Q1-2026: PE 13.8 (sector 17.3, -20%), PB 3.6, ROE 28.3%. EY 7.25%, spread +2.25pp → FAIR. Net margin 19.8%. Balance imbalance=0. OCF -2,848ty (Q1 seasonal, DATA-COV-LIM guard held ~6d). trick_confidence=none. Kinhdich unavailable.
-- Signals: #5315 FPT (critic 1.0), #5316 VCB (0.8), #5317 CTG (0.8), #5318 HPG (0.8), #5319 VHM (0.8), #5320 NVL (0.8), #5321 VPB (0.8). Log ID: 1280.
-- Signal files: bctc_signal_FPT_20260607_routine.json, bctc_signal_BATCH_20260607_pending.json
-- Double-publish guard: claimed=true (bctc-slot-3:2026-06-07).
-
-### Carry-over to c030 (next slot, 2026-06-08 00:00 UTC)
-- 22 tickers blocked: VCB/CTG/MBB/VPB/HPG/VHM/VIC/MWG/REE/SSI/VCI/HCM/POW/HSG/NKG/HVN/GVR/D2D/KBC/DPM/NVL/VRE. RELEASE analysis warranted once data available.
-- CTG: 21st cycle. Guard expired. Extraction pipeline fix still not landed. c030 should claim fresh guard if still blocked.
-- NVL: urgent_news chain catalyst #5309 active + bond 5,000ty due 2026-09-15. VPB: Lạng Sơn legal risk open.
-- FPT ESC-3: DATA-COV-LIM guard held (~6d TTL).
+**Last updated:** 2026-06-08 18:00 UTC (c032) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c030 · 2026-06-08T00:00Z
 ### Analysis Cycle (00:00 UTC) — mode: BLOCKED
@@ -42,17 +23,33 @@
 - Mode: mixed. 1 routine (FPT) + 22 release blocked (pipeline lag cycle 2; CTG cycle 22).
 - Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%. Investment clock: CORE_VN (score=8, Overheat CPI 5.46%).
 - Macro: Brent $95.44 NEUTRAL (+5.4σ EXTREME alert); Gold $4,365.9 BULLISH (+5.27σ EXTREME alert); USD/VND 26124 BEARISH. Market EY 8.20% CHEAP. VN-Index 1838.9 (STALE 2026-06-05).
-- FPT Q1-2026: PE 13.8 (sector 17.3, -20%), PB 3.6, ROE 28.3%. EY spread +2.25pp → FAIR. Net margin 19.8%. OCF -2,848ty (ratio -1.15, Q1 seasonal). E1 passes: cashflow-v1 flagged ocf-ni-divergence (medium/high, seasonal note). Balance-sheet/pl/rpt/footnote/segment: pass_clean=true (row data unavailable, ocr_unavailable). trick_confidence=medium.
-- ESC: 1=F, 2=PASS(0.0001%), 3=DATA-COV-LIM (guard ~4d TTL), 4=F, 5=F (no refined units). No escalation.
+- FPT Q1-2026: PE 13.8 (sector 17.3, -20%), PB 3.6, ROE 28.3%. EY spread +2.25pp → FAIR. Net margin 19.8%. OCF -2,848ty (ratio -1.15, Q1 seasonal). trick_confidence=medium.
+- ESC: 1=F, 2=PASS(0.0001%), 3=DATA-COV-LIM (guard ~4d TTL), 4=F, 5=F. No escalation.
 - Legal: CMG/VNECO2 (tax_penalty), PC1 (chairman arrest unresolved), VPB (Lạng Sơn audit). NVL bond 5,000ty due 2026-09-15.
-- Chain validations: 0 open findings (cycle_id=20260608-0000, minutes_back=60).
-- Signals: #5332 FPT fundamental_validation (critic 0.8), #5333 BATCH-22 DATA_INSUFFICIENT (critic 0.6). Log ID: 1281.
-- Signal files: bctc_signal_FPT_20260608_routine.json, bctc_signal_BATCH_20260608_pending.json
+- Signals: #5332 FPT (0.8), #5333 BATCH-22 (0.6). Log ID: 1281.
 
 ### Carry-over to c032 (next slot, 2026-06-08 18:00 UTC)
-- 22 release tickers (VCB/CTG/MBB/VPB/HPG/VHM/VIC/MWG/REE/SSI/VCI/HCM/POW/HSG/NKG/HVN/GVR/D2D/KBC/DPM/NVL/VRE): PDFs stored (sizes confirmed), pipeline not ingested. CTG at cycle 22. RELEASE priority once pipeline fixed.
-- ACB/DHG/EIB: PUB-5 blocked (ongoing).
-- NVL: urgent_news chain + bond 5,000ty due 2026-09-15 (~99d). Monitor.
-- VPB: Lạng Sơn legal risk open. PC1: chairman arrest unresolved.
-- FPT ESC-3: DATA-COV-LIM guard held (~4d TTL). trick_confidence upgraded medium (OCF divergence flagged this cycle for first time explicitly).
-- Macro EXTREME alerts: Brent +5.4σ, Gold +5.27σ — risk-off headwind. Monitor for equity impact.
+- 22 release tickers blocked: extraction pipeline lag. CTG at cycle 22. RELEASE priority.
+- ACB/DHG/EIB: PUB-5 blocked. NVL: bond 5,000ty due 2026-09-15. VPB: Lạng Sơn legal.
+- FPT ESC-3: DATA-COV-LIM guard held (~4d TTL).
+
+## c032 · 2026-06-08T18:00Z
+### Analysis Cycle (18:00–18:15 UTC) — mode: mixed
+- E2 guard: PASS (18:00 UTC, outside [02:00,08:00))
+- Double-publish guard: claimed=true (bctc-slot-1:2026-06-08). Log ID: 1286.
+- Mode: mixed. 1 routine (FPT) + 3 NEW release tickers (CTG filed 2026-06-08, NVL filed 2026-06-08, REE filed 2026-06-08).
+- Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%. Market EY 7.05% CHEAP (+2.05pp). VN-Index 1790.53 (DOWN -48.37 — broad sell-off).
+- Macro: Brent $94.36 NEUTRAL; Gold $4,346.5 BULLISH (safe-haven risk-off); USD/VND 26127 BEARISH. Investment clock: CORE_VN score=8.
+- Market context: broad sector sell-off 2026-06-08. Banking -2.18% avg (ACB -3.44%, VPB -3.21%); Steel -2.46%; BĐS VIC -5.80%, VRE -5.13%, VHM -3.49%; Tech FPT -2.80%. EIB: 3-4 HĐQT members resigned (news_mention alerts 11:32+15:00).
+- FPT Q1-2026 routine: PE 13.8 (sector 17.3, -20%), PB 3.6, ROE 28.3%. EY spread +2.25pp → FAIR. Net margin 19.8%. Balance imbalance=0. OCF -2,848ty seasonal. trick_confidence=medium (cashflow-v1 flagged). ESC: all F/DATA-COV-LIM. No escalation.
+- CTG/NVL/REE: PDFs stored (CTG 6.0MB, NVL 1.9MB, REE 3.3MB Q1-2026) but get_bctc_full empty. CTG cycle 23, NVL cycle 2, REE cycle 1. DATA_INSUFFICIENT. RELEASE deferred.
+- Legal: CMG/VNECO2 tax_penalty ongoing. PC1 chairman arrest unresolved. VPB Lạng Sơn audit open. EIB governance event (3 HĐQT resignations today).
+- Signals: #5400 FPT fundamental_validation (critic 0.8), #5401 BATCH-CTG-NVL-REE (critic 1.0). Log ID: 1286.
+- Signal files: bctc_signal_FPT_20260608_routine.json, bctc_signal_BATCH_20260608_pending.json
+
+### Carry-over to c033 (next slot, 2026-06-08 21:00 UTC)
+- CTG/NVL/REE: RELEASE priority. CTG cycle 24 if still blocked — pipeline fix escalation needed.
+- EIB: HĐQT 3 member resignations today — governance risk. ACB/DHG/EIB PUB-5 still blocked.
+- NVL: bond 5,000ty due 2026-09-15 (~99d). VPB: Lạng Sơn legal risk open.
+- FPT ESC-3: DATA-COV-LIM guard held (~3d TTL). trick_confidence=medium carry.
+- BĐS sector: VIC -5.80%, VRE -5.13% — rate-sensitive headwind active. Monitor.
