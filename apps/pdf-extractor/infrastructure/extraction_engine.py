@@ -8,6 +8,7 @@ Implements PDFExtractionEngine port using:
 Infrastructure layer: knows about pdfplumber/tesseract, never imported by domain/.
 """
 
+import asyncio
 import io
 from typing import Optional
 
@@ -19,16 +20,52 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
     """
     Concrete extraction engine: pdfplumber (native) + pytesseract (OCR fallback).
 
-    Table extraction runs synchronously inside pdfplumber context manager.
-    OCR runs page-by-page, falling back when native text is sparse (< 50 chars).
+    Both public async methods offload synchronous pdfplumber/pytesseract work to a
+    worker thread via asyncio.to_thread(), so the uvicorn event loop stays free to
+    serve /health (and other routes) while a long extraction is in progress.
+
+    Pattern mirrors table_push_client.py, alert_adapter.py, layout_first_push_client.py,
+    md_table_push_client.py, eval_push_client.py, repositories.py — all use the same
+    asyncio.to_thread() offload for blocking I/O.
     """
+
+    # ------------------------------------------------------------------
+    # Public async interface (thin wrappers — event-loop-safe)
+    # ------------------------------------------------------------------
 
     async def extract_tables(self, pdf_bytes: bytes) -> list[ExtractedTable]:
         """
         Extract all tables from a PDF buffer.
 
+        Offloads synchronous pdfplumber work to a worker thread so the event loop
+        is not blocked during multi-page table extraction.
+
         Returns an empty list if pdfplumber is unavailable or the PDF has no tables.
         Never raises — callers rely on empty list to detect absence of tables.
+        """
+        return await asyncio.to_thread(self._extract_tables_sync, pdf_bytes)
+
+    async def extract_text_ocr(self, pdf_bytes: bytes) -> tuple[str, float]:
+        """
+        Extract text from PDF, using OCR as fallback for scanned pages.
+
+        Offloads synchronous pdfplumber + pytesseract work to a worker thread so the
+        event loop is not blocked during OCR processing.
+
+        Returns:
+            (combined_text, confidence) where confidence in [0.0, 1.0]
+        """
+        return await asyncio.to_thread(self._extract_text_ocr_sync, pdf_bytes)
+
+    # ------------------------------------------------------------------
+    # Private sync helpers (run on worker thread via asyncio.to_thread)
+    # ------------------------------------------------------------------
+
+    def _extract_tables_sync(self, pdf_bytes: bytes) -> list[ExtractedTable]:
+        """
+        Synchronous body of extract_tables — runs on a worker thread.
+
+        Each call creates its own BytesIO + pdfplumber handle; thread-safe.
         """
         try:
             import pdfplumber  # type: ignore[import]
@@ -68,17 +105,16 @@ class PdfplumberExtractionEngine(PDFExtractionEngine):
 
         return tables
 
-    async def extract_text_ocr(self, pdf_bytes: bytes) -> tuple[str, float]:
+    def _extract_text_ocr_sync(self, pdf_bytes: bytes) -> tuple[str, float]:
         """
-        Extract text from PDF, using OCR as fallback for scanned pages.
+        Synchronous body of extract_text_ocr — runs on a worker thread.
 
         Strategy:
         1. Try native text extraction via pdfplumber (fast, high confidence).
         2. If a page has < 50 chars of native text, run Tesseract OCR on that page.
         3. Aggregate all page texts, track minimum confidence.
 
-        Returns:
-            (combined_text, confidence) where confidence in [0.0, 1.0]
+        Each call creates its own BytesIO + pdfplumber handle; thread-safe.
         """
         try:
             import pdfplumber  # type: ignore[import]

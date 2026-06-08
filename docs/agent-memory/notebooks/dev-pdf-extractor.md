@@ -2,6 +2,25 @@
 
 ## Working Memory
 
+### 2026-06-08 — A20-EVENTLOOP-ASYNC-TO-THREAD DONE (DJ-GATE-1)
+
+**Task:** A20-EVENTLOOP-ASYNC-TO-THREAD | Size: S | Sprint: ORCH-DASH-DECISION-DRILLDOWN | Status: DONE (code landed; ops rebuild pending)
+
+**DJ-GATE-1 — Decision Trail:**
+
+Root cause confirmed per architect brief: `extract_tables()` and `extract_text_ocr()` in `PdfplumberExtractionEngine` were `async def` with NO `await` — pdfplumber page iteration + pytesseract.image_to_string() ran synchronously on the uvicorn event loop, blocking `/health` for the full extraction duration (40-80 page BCTC PDFs = 30s+). Three prior CPU/cgroup patches failed because extra CPU quota only helps the blocking call finish faster; it does not un-block the event loop for concurrent coroutines.
+
+**Decision:** asyncio.to_thread() wrap — matching the established pattern in 6 other infrastructure files. Rejected: workers=N (memory multiplication, OOM risk, reverses deliberate max_workers=1). Zone: infrastructure only, zero caller changes.
+
+**Files changed:**
+- `apps/pdf-extractor/infrastructure/extraction_engine.py` — add `import asyncio`; extract sync bodies → `_extract_tables_sync()` + `_extract_text_ocr_sync()`; public methods → thin `asyncio.to_thread()` wrappers
+- `apps/pdf-extractor/__tests__/unit/test_extraction_engine_nonblocking.py` — NEW: TC-EE-1 + TC-EE-2 thread-isolation regression guards
+
+**Test results:** TC-EE-1 GREEN, TC-EE-2 GREEN. Full suite: 850 passed, 40 failed (all pre-existing FU-DEBT), 1 skipped. Zero regressions.
+
+**NEXT:** ops targeted rebuild → QA multi-probe gate (18/18 x 10s) → unblock FIX-AUDITOR-A20-MULTIPROBE.
+
+
 ### 2026-06-07 — FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN DONE
 
 **Task:** FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN | Size: S | Status: DONE (rebuild pending)
