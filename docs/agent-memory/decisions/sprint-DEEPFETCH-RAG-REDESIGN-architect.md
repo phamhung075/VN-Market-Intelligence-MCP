@@ -6,6 +6,32 @@
 
 ---
 
+## STEP architect-S6 · architect · 2026-06-08T13:21:52Z — DJ-GATE-1: DFR-P2 3-zone split design
+
+**task-id:** ARCH-DFR-P2
+**what-done:** Produced DFR-P2-DEEPFETCH technical blueprint with 3-zone split, interface contracts, SQLite schema, state machine, and guardrails. Written to docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md.
+**what-considered:**
+- Zone split 2 vs 3: could fold VPS + mainserver into a single "crawls" sub-task. Split is correct because VPS and mainserver-crawls have different execution environments (plain HTTP vs Playwright), different service files, and no shared code.
+- Re-index: DELETE+INSERT vs _deep suffix upsert. _deep suffix chosen — NO silent delete invariant is a hard rule (lesson feedback_janitor_false_green_verify). Two rows coexist; `depth_tier` pre-filter lets consumers prefer deep content.
+- FTS index timing for P3: startup vs on-write vs lazy. Lazy chosen — startup blocks health probe; on-write too expensive at corpus scale.
+**why-decision:** Option R (VPS-first + mainserver fallback) confirmed by Q1/Q2 recon. 3-way zone split enables parallel dev with zero file collision — each zone owns disjoint files. Lazy FTS init + daily scheduled rebuild balances zero-startup-cost against acceptable 24h stale window.
+**why-change:** No change from brief Option R. DJ-GATE-1 adds precision: _deep id suffix, `ARTICLE_BODY_ALLOWED_DOMAINS` line reference, lazy FTS timing locked.
+
+---
+
+## STEP architect-S7 · architect · 2026-06-08T13:21:52Z — DJ-GATE-1: DFR-P3 FTS/RRF design + collision avoidance
+
+**task-id:** ARCH-DFR-P3
+**what-done:** Produced DFR-P3-HYBRID technical blueprint with 2-call FTS pattern, lazy build timing, hybrid_search() implementation, and mcp-server collision-avoidance ruling. Written to docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md.
+**what-considered:**
+- FTS index timing: 3 options (startup / on-write / lazy). Lazy + daily scheduled rebuild is the correct choice: startup blocks health probe; on-write rebuilds entire index for each insert (O(corpus) not O(delta)).
+- Collision: P2 and P3 both touch ragHttpClient.ts. Confirmed disjoint: P2 writes ragIndex/RagIndexRequest, P3 writes ragSearch/RagSearchRequest. Serialize commits via commit-mutex if concurrent dispatch; otherwise PM sequences P3 mcp slice after P2 mcp slice.
+- Temporal decay: hybrid results also apply recency decay — no separate decay path needed.
+**why-decision:** pollNews defaultRagRetriever deliberately does NOT opt in to hybrid (semantic enrichment is suited to vector similarity, not ticker-exact BM25). Only CHEF and bctc-analyst callers use hybrid=true — those are the ticker-exact use cases where BM25 adds recall.
+**why-change:** No change from brief Option H. Lock added: `.vector().text()` pattern (not string-in-search) per spike constraint. Replace=True on create_fts_index for idempotent refresh.
+
+---
+
 ## STEP architect-S1 — Pillar A: Deep-Fetch Gate Placement
 
 **task_id:** ARCH-DEEPFETCH-RAG-REDESIGN

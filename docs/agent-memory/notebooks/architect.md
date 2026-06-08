@@ -1,8 +1,47 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-08 08:20 UTC | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
+**Last updated:** 2026-06-08 13:22 UTC | **Sprint:** DEEPFETCH-RAG-REDESIGN
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-08T13:22Z — ARCH-DFR-P2 + ARCH-DFR-P3: directed design, Phase 2 + Phase 3
+
+**Tasks:** ARCH-DFR-P2 (deep-fetch pipeline, 3-zone split) + ARCH-DFR-P3 (FTS+RRF hybrid search)
+
+**Key findings (brownfield — Phase 1 verified LIVE):** `rag_analyses.body_text` column live (schema-news.ts:64). LanceDB rag_entries has 16 cols including depth_tier/doc_type. pollNews.ts already passes all 8 metadata fields to ragIndex. article-body-fetcher.py LIVE on VPS with cafef.vn + vneconomy.vn support. /proxy/article-body endpoint LIVE at VPS:8765. vps-proxy-server.js ARTICLE_BODY_ALLOWED_DOMAINS at line 160.
+
+**DFR-P2 design decisions:**
+- Gate: 3-signal OR (ticker match / sector keyword / impact>=7+non-neutral) — post-dedup in tryInsertEntry()→true block. Pure domain function `deepFetchGate.ts`.
+- Queue: deep_fetch_queue (source_url UNIQUE, status enum 5 states) + deep_fetch_stats (per-domain daily cap). Both in schema-news.ts.
+- Executors: deepFetchVpsJob.ts (VPS via /proxy/article-body, max 10/cycle) + deepFetchMainJob.ts (news-fetch Playwright, max 5/cycle, vps-failed only).
+- Re-index: `_deep` id suffix — two rows coexist, NO delete. `depth_tier="deep"` filter selects richer content.
+- Zone split: 3 disjoint zones (mcp-server / vps-crawls / mainserver-crawls). File collision impossible.
+
+**DFR-P3 design decisions:**
+- FTS index: 2-call pattern (`create_fts_index('title', replace=True)` then `('summary', replace=True)`). Lazy init on first hybrid request + daily /admin/rebuild-fts.
+- Hybrid query: `.vector().text()` pattern (NOT string-in-search). RRFReranker from lancedb.rerankers.
+- mcp-server slice: ONE field only (`hybrid?: boolean` on RagSearchRequest). Collision with P2: LOW (ragIndex vs ragSearch, separate interfaces). PM sequences P3-mcp after P2-mcp or serializes via commit-mutex.
+- Opt-in policy: pollNews defaultRagRetriever uses vector-only. CHEF/bctc-analyst callers use hybrid=true.
+
+**Briefs written:** docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md + docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md
+**DJ-GATE-1:** Steps architect-S6 + architect-S7 in sprint-DEEPFETCH-RAG-REDESIGN-architect.md.
+**NEXT:** po → ba (decompose P2 3-way + P3) → pm (atomic tasks) → dev-{mcp-server,vps-crawls,mainserver-crawls,rag-service} → qa.
+
+## 2026-06-08T10:45Z — ARCH-DEEPFETCH-RAG-REDESIGN: deep-fetch pipeline + RAG schema redesign
+
+**Task:** ARCH-DEEPFETCH-RAG-REDESIGN (DESIGN, L, brownfield+brief, zones: vps-scripts + rag-service + mcp-server)
+
+**Key brownfield finding:** `article-body-fetcher.py` EXISTS on VPS but is NOT wired — it is a standalone script with no systemd service, no VPS router endpoint, no integration with `fetch-vn-news.sh`. The infrastructure for body fetching is partially present but not activated. LanceDB `rag_entries` table has 8 columns — missing ticker/sector/source_domain/depth_tier/doc_type/published_at/confidence/impact_score. Single global decay half-life (7 days) is wrong for filings (should be 30d) and too slow for news (should be 1-3d). RAG search has no BM25 path — ticker queries like "VCB" rely entirely on embedding similarity which is weak for short tokens.
+
+**DJ-GATE-1 decision:** Option R (VPS-first + main-server fallback deep-fetch, relevance-gated) for Pillar A. Additive metadata schema + per-doc_type decay + Phase 2 BM25 hybrid for Pillar B. BM25 deferred pending LanceDB FTS feasibility probe (Q3).
+
+**Build standard:** lean (both pillars — existing zones, no new microservice).
+
+**Brief:** `docs/architecture-briefs/2026-06-08-deepfetch-rag-redesign.md`
+
+**Open feasibility questions:** Q1-Q2 to dev-vps-crawls; Q3-Q4 to dev-rag-service; Q5 to dev-mcp-server (all non-blocking).
+
+**NEXT:** po → ba → pm → dev-{vps-crawls, rag-service, mcp-server} → qa. Phase 1 (metadata schema) is LOW risk and can proceed in parallel with Phase 2 feasibility probes.
 
 ## 2026-06-08T08:20Z — A20-EVENTLOOP-STARVATION-ARCHITECT: event-loop blocking in PdfplumberExtractionEngine
 
