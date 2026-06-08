@@ -2640,11 +2640,72 @@
               "DFR-Q2"
             ],
             "created_at": "2026-06-08T13:22:00Z",
-            "next_role": "ba",
+            "next_role": "pm",
             "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md",
-            "note": "ARCH-DFR-P2 DONE (DJ-GATE-1 STEP architect-S6). 3-zone split required: ba decomposes into dev-mcp-server / dev-vps-crawls / dev-mainserver-crawls sub-tasks. Interface contracts in blueprint. Guardrails: caps 10 deep / 5 Playwright per cycle, per-domain daily limit, 4h stale expiry, source_url UNIQUE.",
+            "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md",
+            "note": "ARCH-DFR-P2 DONE (DJ-GATE-1 STEP architect-S6). BA spec DONE 2026-06-08T13:22:00Z — decomposed into 3 atomic sub-tasks: DFR-P2-MCP (dev-mcp-server, 10 ACs) + DFR-P2-VPS (dev-vps-crawls, 4 ACs) + DFR-P2-MAIN (dev-mainserver-crawls, 4 ACs). All 3 can build in parallel against interface contracts; integration verify needs all 3 live. Caps (10 VPS/cycle, 5 Playwright/cycle, per-domain daily, 4h expiry) are mandatory acceptance — not optional. Live-crawl risk R-P2-7 flagged. PM: add sub-tasks to board per BA spec.",
             "sequencing": "SEQUENCING (architect-flagged, PM honor): P2 and P3 rag-service work run fully PARALLEL (disjoint zones). Only the mcp-server slices share ragHttpClient.ts at DIFFERENT interface blocks (P2=ragIndex write path, P3=RagSearchRequest read path). Sequence dev-mcp-server P3 slice AFTER dev-mcp-server P2 slice merges, OR commit-mutex-serialize the two ragHttpClient.ts commits (rebase trivially resolves). rag-service P3 work has NO P2 dependency.",
             "blocks": "DFR-P3-HYBRID:mcp-server-slice-only (shared ragHttpClient.ts)"
+          },
+          {
+            "id": "DFR-P2-MCP",
+            "title": "P2 mcp-server: deepFetchGate.ts domain fn + deep_fetch_queue/deep_fetch_stats tables + deepFetchVpsJob.ts + deepFetchMainJob.ts + pollNews.ts gate hook + re-index depth_tier=deep (upsert _deep id, NO delete) + scheduler/cron registration + mcp.config.json caps",
+            "owner": "dev-mcp-server",
+            "type": "FEATURE",
+            "status": "READY",
+            "zone": "apps/mcp-server/",
+            "size": "M",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-P2-DEEPFETCH"
+            ],
+            "created_at": "2026-06-08T13:22:00Z",
+            "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md",
+            "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md#DFR-P2-MCP",
+            "note": "10 ACs. Live-crawl risk: caps (maxPerCycle=10, maxPlaywright=5, domain daily, 4h expiry) are MANDATORY acceptance — QA must verify before cron jobs enabled. deepFetchGate.ts is domain-layer pure fn (zero infra imports). source_url UNIQUE + INSERT OR IGNORE = dedup invariant. LanceDB re-index via _deep suffix + table.add() only (never delete). Sector keywords from system-map.json; caps from mcp.config.json. Gate injection in pollNews.ts is non-fatal — poll cycle must survive gate errors.",
+            "depends_on": [],
+            "next_role": "dev-mcp-server"
+          },
+          {
+            "id": "DFR-P2-VPS",
+            "title": "P2 vps-crawls: extend article-body-fetcher.py (extract_vnexpress + ALLOWED_DOMAINS) + vps-proxy-server.js ARTICLE_BODY_ALLOWED_DOMAINS + restart vn-vps-proxy.service. Plain HTTP only.",
+            "owner": "dev-vps-crawls",
+            "type": "FEATURE",
+            "status": "READY",
+            "zone": "vps-scripts/",
+            "size": "S",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-P2-DEEPFETCH"
+            ],
+            "created_at": "2026-06-08T13:22:00Z",
+            "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md",
+            "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md#DFR-P2-VPS",
+            "note": "4 ACs. No new systemd service (DFR-Q2 verdict). Plain HTTP only — NO Chromium on VPS. No new Python packages. SSRF guard (ALLOWED_DOMAINS) must remain intact for non-supported domains. Verify via curl test on live VPS after restart.",
+            "depends_on": [],
+            "next_role": "dev-vps-crawls"
+          },
+          {
+            "id": "DFR-P2-MAIN",
+            "title": "P2 mainserver-crawls: POST /fetch-article Playwright route in apps/news-fetch/ + SSRF allowlist from mcp.config.json + 30s timeout. Main-server only.",
+            "owner": "dev-mainserver-crawls",
+            "type": "FEATURE",
+            "status": "READY",
+            "zone": "apps/news-fetch/",
+            "size": "S",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-P2-DEEPFETCH"
+            ],
+            "created_at": "2026-06-08T13:22:00Z",
+            "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p2-deepfetch-blueprint.md",
+            "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md#DFR-P2-MAIN",
+            "note": "4 ACs. New route on existing news-fetch microservice (port 5008). SSRF allowlist from mcp.config.json deepFetch.playwrightAllowedDomains — never hardcoded. 30s Playwright timeout. Existing Reuters/Bloomberg fetch must not regress.",
+            "depends_on": [],
+            "next_role": "dev-mainserver-crawls"
           },
           {
             "id": "DFR-P3-HYBRID",
@@ -2662,11 +2723,56 @@
               "DFR-Q3"
             ],
             "created_at": "2026-06-08T13:22:00Z",
-            "next_role": "ba",
+            "next_role": "pm",
             "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md",
-            "note": "ARCH-DFR-P3 DONE (DJ-GATE-1 STEP architect-S7). Zones: dev-rag-service (primary) + dev-mcp-server (one optional field). Collision risk LOW — P2 writes ragIndex/RagIndexRequest, P3 writes ragSearch/RagSearchRequest (different interfaces). PM sequences P3-mcp after P2-mcp or commit-mutex. pollNews stays vector-only; CHEF/bctc-analyst callers pass hybrid=true.",
+            "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md",
+            "note": "ARCH-DFR-P3 DONE (DJ-GATE-1 STEP architect-S7). BA spec DONE 2026-06-08T13:22:00Z — decomposed into 2 atomic sub-tasks: DFR-P3-RAG (dev-rag-service, 8 ACs, start immediately) + DFR-P3-MCP (dev-mcp-server, 5 ACs, MUST sequence after DFR-P2-MCP). Collision risk LOW — P2 writes ragIndex/RagIndexRequest, P3 writes ragSearch/RagSearchRequest (different interfaces). PM sequences P3-mcp after P2-mcp or commit-mutex. pollNews stays vector-only; CHEF/bctc-analyst callers pass hybrid=true. PM: add sub-tasks to board per BA spec.",
             "sequencing": "SEQUENCING (architect-flagged, PM honor): P2 and P3 rag-service work run fully PARALLEL (disjoint zones). Only the mcp-server slices share ragHttpClient.ts at DIFFERENT interface blocks (P2=ragIndex write path, P3=RagSearchRequest read path). Sequence dev-mcp-server P3 slice AFTER dev-mcp-server P2 slice merges, OR commit-mutex-serialize the two ragHttpClient.ts commits (rebase trivially resolves). rag-service P3 work has NO P2 dependency.",
             "sequence_after": "DFR-P2-DEEPFETCH:mcp-server-slice-only"
+          },
+          {
+            "id": "DFR-P3-RAG",
+            "title": "P3 rag-service: hybrid_search() on VectorStorePort + LanceDBVectorStore impl (2-call create_fts_index title+summary, RRFReranker), SearchRequest.hybrid flag, POST /admin/rebuild-fts route, lazy-build + daily-rebuild",
+            "owner": "dev-rag-service",
+            "type": "FEATURE",
+            "status": "READY",
+            "zone": "apps/rag-service/",
+            "size": "M",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-P3-HYBRID"
+            ],
+            "created_at": "2026-06-08T13:22:00Z",
+            "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md",
+            "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md#DFR-P3-RAG",
+            "note": "8 ACs. Fully independent of all P2 work — start immediately. FTS 2-call pattern is mandatory (create_fts_index('title') then create_fts_index('summary') — NOT a list; confirmed DFR-Q3 spike). Hybrid must use .vector().text() chain — NOT tbl.search('text', query_type='hybrid'). Lazy build on first hybrid request (not startup). Default hybrid=False ensures backward compat. Temporal decay applies on both vector and hybrid paths.",
+            "depends_on": [],
+            "next_role": "dev-rag-service"
+          },
+          {
+            "id": "DFR-P3-MCP",
+            "title": "P3 mcp-server: THIN — add hybrid?:boolean to RagSearchRequest in ragHttpClient.ts; chef + bctc-analyst callers pass hybrid:true; pollNews stays vector-only",
+            "owner": "dev-mcp-server",
+            "type": "FEATURE",
+            "status": "BLOCKED",
+            "zone": "apps/mcp-server/",
+            "size": "XS",
+            "priority": "high",
+            "sprint": "DEEPFETCH-RAG-REDESIGN",
+            "depends": [
+              "DFR-P2-MCP",
+              "DFR-P3-HYBRID"
+            ],
+            "created_at": "2026-06-08T13:22:00Z",
+            "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md",
+            "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md#DFR-P3-MCP",
+            "note": "5 ACs. SEQUENCING MANDATORY: dispatch AFTER DFR-P2-MCP is merged (both touch ragHttpClient.ts — P2=ragIndex write path, P3=RagSearchRequest read path; commit-mutex if concurrent). pollNews defaultRagRetriever must NOT pass hybrid:true. Chef + bctc-analyst callers pass hybrid:true. tsc --noEmit must pass.",
+            "depends_on": [
+              "DFR-P2-MCP"
+            ],
+            "next_role": "dev-mcp-server",
+            "status_note": "Awaits DFR-P2-MCP merge. Both edit apps/mcp-server/src/infrastructure/rag/ragHttpClient.ts (P2=RagIndexRequest, P3=RagSearchRequest). Concurrent dispatch would violate commit-mutex policy. P3-MCP rebases onto P2-MCP's commit."
           }
         ]
       }
