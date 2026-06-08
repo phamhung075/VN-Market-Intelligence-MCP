@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-06T18:35:59Z
-
-**Brief:** `docs/architecture-briefs/2026-06-06-workflow-fluidity-audit.md`
-
-Full workflow-fluidity audit of the multi-agent pipeline: 7 dimensions (handoff chain liveness, orch-state contention, decision journal contention, lock liveness, cron overlap, WIP throughput, fail-loud dead-ends). Findings: 3 DEADLOCK-RISK — most critical is fail-loud STOP paths in developer/qa/fixer not releasing sprint-task lock nor resetting pipeline head, causing ≤24h futile pipeline-resume livelock; 3 CONFLICT — decision journal shared-file breaks when Phase 4 parallel spawns activate (fix: per-agent file), concurrent signal_queue writes at :00/4h overlap can silently drop rows (fix: retry-read-compare loop or SQLite row insert); 4 BOTTLENECK — WIP=2 by design, sequential mandate pending c44, signal drain 53-min max window, dual-layer claim model complexity. Top-3 fixes for agent-father: (1) add task_release+head-reset to all STOP paths in developer/qa/fixer; (2) per-agent decision journal files sprint-<id>-<agent-id>.md; (3) promote FU-ORCH-HEAD-CAS to sprint + add signal_queue concurrent-write retry.
-
-**Signal dropped:** `docs/signals/workflow-fluidity-audit-20260606T183559Z.json` → agent-father
-
----
-
 ## 2026-06-05T16:37:44Z
 
 **Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md` (v1)
@@ -37,3 +27,13 @@ Option B (d6738df3) live-falsified: 18:01:29Z FIRE wrote signal JSON with resolv
 Headroom context compression integration design: evaluated 4 candidate points; selected gateway-side SmartCrusher middleware inside apps/mcp-server as primary (non-ML, zero new containers, fail-open, TypeScript-native). Rejected CLI wrap (fleet blast radius), MCP server mode (tool surface growth), and ML Kompress model (16GB host memory risk). Defined financial data exemption list (get_bctc_full, get_bctc_refined, FX, price history — passthrough required for numeric integrity). 3-phase rollout: Phase 1 = 3 high-volume non-financial tools (get_cycle_bootstrap, get_market_snapshot, fetch_news_batch) with golden-output validation gate; Phase 2 = full allowed list + CacheAligner; Phase 3 = metrics dashboard. Owner: dev-mcp-server. P3 improvement-proposal signal dropped to po.
 
 **Signal dropped:** `docs/signals/headroom-context-compression-20260606T184634Z.json` → po
+
+---
+
+## 2026-06-08T18:07:55Z
+
+**Brief:** `docs/architecture-briefs/2026-06-08-ci-health-fix-bridge.md`
+
+CI-health → fix-task bridge design: institutionalizes automated CI failure detection into the dev-team cron loop as Step 0a.5 (ci-health-probe sub-flow + canonical script). Probe reads GitHub Actions latest CI run for origin/main HEAD via gh CLI; on non-success terminal conclusion emits a deduped `ci_red` signal into the signal_queue routed to PO, which creates a FIX task via the existing repair_task_request pathway. Key constraints encoded: STALE-RUN GATE (headSha == origin/main HEAD after git fetch), three-layer dedup (probe DB fingerprint + drain fingerprint + PO task-board open-entry check), VERIFICATION GATE (task DONE only after ci_green on a subsequent push), SAFE-JSON throughout (execFileSync array args + jq --arg bound params), non-fatal on gh absence or API error. 5 files to create/edit; developer owns canonical script. Sprint CI-RED-RECONCILE (go-lint/technical-analysis, HEAD 8ffb1985) used as live grounding case.
+
+**Signal dropped:** `docs/signals/ci-health-fix-bridge-20260608T180755Z.json` → agent-father
