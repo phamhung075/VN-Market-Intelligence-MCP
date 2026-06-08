@@ -145,6 +145,11 @@ export async function runSbvRatesRefreshJob(
     const errorMsg = err instanceof Error ? err.message : String(err);
     logger.error(`[${JOB_NAME}] fetch/store error: ${errorMsg}`);
     await sendWorkFn(`[${JOB_NAME}] error — ${errorMsg}`);
-    return { success: false, rowsWritten: 0, error: errorMsg };
+    // FIX-SBV-REFRESH-SILENT-SWALLOW: re-throw so wrapRun/recordJobRun records
+    // status='error' instead of 'success'. Without this re-throw, the catch block
+    // swallowed the failure and returned {success:false} — wrapRun saw a resolved
+    // promise and recorded status='success' (green-while-stale, SBV FX 21h stale).
+    // Mirrors the FIX-MACRO-REFRESH-DEAD pattern (commit b7ce338f).
+    throw err;
   }
 }

@@ -6,6 +6,15 @@
 
 ---
 
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-06-08T08:00:00Z
+**task-id:** FIX-SBV-REFRESH-SILENT-SWALLOW
+**what-done:** Added `throw err` after WORK-channel alert in `runSbvRatesRefreshJob` catch block so `wrapRun/recordJobRun` records `status='error'` on fetch failure; updated TC-3/TC-4 in sbvRatesJob.test.ts to assert re-throw; wrote FIX-SBV-REFRESH-SILENT-SWALLOW.test.ts (6 tests incl. AC-1 DB integration).
+**what-considered:**
+- Option A: Return a sentinel value from the catch block that wrapRun interprets as error (requires wrapRun API change — out of scope)
+- Option B: Re-throw after alert, mirroring commit b7ce338f macro pattern (minimal, zero API change)
+**why-decision:** Option B is the exact same pattern shipped for FIX-MACRO-REFRESH-DEAD — lowest risk, zero interface change, wrapRun/recordJobRun already handles throws correctly (line 230-233 of cronJobRunStore.ts).
+**why-change:** no change from task spec; AC-1 DB integration test (SBV-SS-05) verified live row = status='error'
+
 ### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-08T02:07:00Z
 **task-id:** FIX-BCTC-VPS-QUEUE-STALE-TRIAGE
 **what-done:** Classified 354 non-done bctc_vps_queue rows into two new explicit statuses (deferred_infra, blocked_pdf_extractor); C-16 check now returns 0.

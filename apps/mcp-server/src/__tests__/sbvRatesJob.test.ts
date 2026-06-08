@@ -89,36 +89,36 @@ describe("sbvRatesJob — runSbvRatesRefreshJob", () => {
     expect(result.error).toBeUndefined();
   });
 
-  // TC-3: fetchFn throws → WORK alert sent with job name + error detail
-  it("TC-3: when fetchFn throws, sends WORK alert containing job name and error", async () => {
+  // TC-3: fetchFn throws → job re-throws (fail-loud) + WORK alert sent before throw
+  // FIX-SBV-REFRESH-SILENT-SWALLOW: job now re-throws so wrapRun records status='error'
+  it("TC-3: when fetchFn throws, job re-throws (fail-loud) and sends WORK alert", async () => {
     const workMessages: string[] = [];
 
-    const result = await runSbvRatesRefreshJob(makeOpts({
-      fetchFn: async () => { throw new Error("VCB portal timeout"); },
-      sendWorkFn: async (msg: string) => { workMessages.push(msg); },
-    }));
+    await expect(
+      runSbvRatesRefreshJob(makeOpts({
+        fetchFn: async () => { throw new Error("VCB portal timeout"); },
+        sendWorkFn: async (msg: string) => { workMessages.push(msg); },
+      })),
+    ).rejects.toThrow("VCB portal timeout");
 
-    expect(result.success).toBe(false);
-    expect(result.rowsWritten).toBe(0);
-    expect(result.error).toBe("VCB portal timeout");
     expect(workMessages.length).toBe(1);
     expect(workMessages[0]).toContain("sbvRatesRefresh");
     expect(workMessages[0]).toContain("VCB portal timeout");
   });
 
-  // TC-4: storeFn throws → WORK alert sent with job name + error detail
-  it("TC-4: when storeFn throws, sends WORK alert and returns success=false", async () => {
+  // TC-4: storeFn throws → job re-throws (fail-loud) + WORK alert sent before throw
+  // FIX-SBV-REFRESH-SILENT-SWALLOW: job now re-throws so wrapRun records status='error'
+  it("TC-4: when storeFn throws, job re-throws (fail-loud) and sends WORK alert", async () => {
     const workMessages: string[] = [];
 
-    const result = await runSbvRatesRefreshJob(makeOpts({
-      fetchFn: async () => MOCK_SNAPSHOT,
-      storeFn: () => { throw new Error("SQLite write locked"); },
-      sendWorkFn: async (msg: string) => { workMessages.push(msg); },
-    }));
+    await expect(
+      runSbvRatesRefreshJob(makeOpts({
+        fetchFn: async () => MOCK_SNAPSHOT,
+        storeFn: () => { throw new Error("SQLite write locked"); },
+        sendWorkFn: async (msg: string) => { workMessages.push(msg); },
+      })),
+    ).rejects.toThrow("SQLite write locked");
 
-    expect(result.success).toBe(false);
-    expect(result.rowsWritten).toBe(0);
-    expect(result.error).toBe("SQLite write locked");
     expect(workMessages.length).toBe(1);
     expect(workMessages[0]).toContain("sbvRatesRefresh");
     expect(workMessages[0]).toContain("SQLite write locked");

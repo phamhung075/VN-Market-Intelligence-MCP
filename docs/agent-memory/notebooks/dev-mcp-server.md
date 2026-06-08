@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-08 · FIX-SBV-REFRESH-SILENT-SWALLOW — DONE
+
+**Task:** FIX-SBV-REFRESH-SILENT-SWALLOW
+**Signal:** sau-c107-b12 (SBV FX 21h stale, green-while-stale)
+**Root cause:** `runSbvRatesRefreshJob` catch block returned `{success:false}` instead of re-throwing → `wrapRun/recordJobRun` saw resolved promise → `status='success'` written even on total fetch failure.
+**Fix:** `throw err` after WORK alert in catch block — mirrors FIX-MACRO-REFRESH-DEAD (b7ce338f).
+**Tests added:** FIX-SBV-REFRESH-SILENT-SWALLOW.test.ts (6 pass, incl. AC-1 DB integration via recordJobRun); sbvRatesJob.test.ts TC-3/TC-4 updated (assert re-throw, not return value).
+**Type check:** clean.
+
+**Lesson:** The `recordJobRun` error path (cronJobRunStore.ts:230-233) only activates on THROW. Any bare catch-and-return pattern produces green-while-stale. Audit pattern: search for `catch` blocks in scheduler jobs that `return` without `throw`.
+
 ## 2026-06-08 · FIX-BCTC-VPS-QUEUE-STALE-TRIAGE — DONE
 
 **Task:** FIX-BCTC-VPS-QUEUE-STALE-TRIAGE  
