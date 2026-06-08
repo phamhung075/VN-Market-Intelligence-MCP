@@ -418,6 +418,11 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
     await sendTelegramWork(
       `Macro refresh FAILED [${durationMs}ms] — ${errorMsg}`,
     );
+    // FIX-MACRO-REFRESH-DEAD: re-throw so recordJobRun records status='error'
+    // instead of 'success'. Without this re-throw, the job swallowed the failure
+    // and wrapRun recorded SUCCESS even when getMacroSnapshot() threw, producing
+    // the green-while-stale condition (auditor C-09: macro stale 718h).
+    throw err;
   } finally {
     recordJobMetrics("macroRefresh", Date.now() - startTime, jobErrorCount, jobSuccessCount);
   }

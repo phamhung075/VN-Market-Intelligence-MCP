@@ -23,7 +23,7 @@ const BASE_URLS = {
   pdfExtractor: Bun.env.PDF_EXTRACTOR_URL ?? 'http://localhost:5001',
   rag: Bun.env.RAG_SERVICE_URL ?? 'http://localhost:5002',
   ta: Bun.env.TA_SERVICE_URL ?? 'http://localhost:5003',
-  macro: Bun.env.MACRO_SERVICE_URL ?? 'http://localhost:5004',
+  macro: Bun.env.MACRO_INDICATORS_URL ?? 'http://localhost:5004',
   kinhDich: Bun.env.KINH_DICH_URL ?? 'http://localhost:5005',
   alertEngine: Bun.env.ALERT_ENGINE_URL ?? 'http://localhost:5006',
 };
