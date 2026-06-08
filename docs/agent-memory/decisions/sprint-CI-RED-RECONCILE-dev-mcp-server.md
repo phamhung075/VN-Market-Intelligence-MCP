@@ -24,3 +24,12 @@
 - CI network guard (skip-in-CI) for 025/028/1487 — not needed; these pass locally with mocks and failure pattern is different from what PO diagnosed
 **why-decision:** Root-cause analysis shows 1146 is time-drift not network; 1335 is fixture/schema mismatch not network; both fail identically in CI and locally confirming non-network root cause
 **why-change:** scope narrowed from network-guard to test-fixture/date fixes; result is same (CI green)
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-08T18:00:00Z
+**task-id:** FIX-MCP-CI-NETWORK-GUARD
+**what-done:** 1335 followup — discovered pollNews ragInsert HTTP + dynamic imports take 2-5s; Bun 5s default not overridden by bunfig.toml timeout=30000 in Bun 1.3.13
+**what-considered:**
+- Fix bunfig.toml — rejected: timeout=30000 NOT applied by Bun 1.3.13 (5000ms default persists)
+- Add it(..., 15_000) explicit timeout + inject ragInsert/teChromiumNews/newsapi mocks — chosen
+**why-decision:** Pattern from 137-fix-alert-pipeline.test.ts (CYCLE_TIMEOUT=30_000); consistent with existing codebase; root cause = ragIndex HTTP (no rag-service in CI) + module loading overhead
+**why-change:** initial fix insufficient; timeout root cause discovered through runtime tracing

@@ -197,7 +197,9 @@ Zone health: bun tsc --noEmit clean, 31 tests (enricher suite), tools 157, sched
 ---
 **Cycle:** 2026-06-08 | **Tasks:** FIX-MCP-TOOL-COUNT-DRIFT + FIX-MCP-CI-NETWORK-GUARD (Sprint CI-RED-RECONCILE)
 **Task 1:** 123-integration-mcp.test.ts floor 16→15. Root cause: `read_bctc_pdf` intentionally deregistered in TSU-DEV-U3 (OCR/PEK supersedes). Case (b) — assertion stale, not regression.
-**Task 2:** 1146 dates 2026-03-* fell outside 90-day window → daysAgo() relative helpers. 1335 setupTestDb() rag_analyses missing `data_env`+`body_text` columns → added. Both fail locally (not CI-network specific).
+**Task 2 initial:** 1146 dates 2026-03-* fell outside 90-day window → daysAgo() relative helpers. 1335 setupTestDb() rag_analyses missing `data_env`+`body_text` columns → added.
+**Task 2 followup (S3):** 1335 combined-run still timed out at 5000ms. Root cause layered: (1) bunfig.toml `timeout=30000` NOT applied by Bun 1.3.13 (5000ms default persists); (2) `ragInsertFn` defaults to `ragIndex()` HTTP call to localhost:5002/index — 1-2s per item when rag-service absent; (3) `teChromiumNews` cold-start 2s retry sleep. Fix: inject `ragInsert: async () => {}` + `teChromiumNews/newsapi: async () => []` into all pollNews calls; add `}, 15_000)` third-argument timeout to TC-1/TC-2/TC-3 (pattern from 137-fix-alert-pipeline.test.ts).
 **Files:** 123-integration-mcp.test.ts, 1146-get-insider-transactions.test.ts, 1335-news-pipeline-rag-insert.test.ts
+**Lesson:** Bun bunfig.toml `[test] timeout` is NOT honoured in Bun 1.3.13 — only per-test `it(label, fn, ms)` third-arg works. Always inject ragInsert+teChromiumNews mocks in pollNews integration tests to avoid HTTP latency in CI.
 **tsc:** CLEAN | **Tests:** 48 pass / 0 fail (three files) | **Status:** REVIEW — await CI green
 Zone health: bun tsc clean, 3 target test files 48 pass / 0 fail, tools 157 intact | HEALTHY
