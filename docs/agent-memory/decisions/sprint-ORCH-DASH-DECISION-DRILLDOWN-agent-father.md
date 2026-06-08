@@ -19,6 +19,17 @@
 
 ---
 
+### STEP agent-father-S3 · agent-father · 2026-06-08T05:30:00Z
+**task-id:** FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK
+**what-done:** Added DJ-GATE-1 inline blocks (≤6L each) to S4 UNBLOCK and S4 CLEAN dispatch paths in `docs/agents/dev-team/flow/main.md` — gate verifies/writes journal entry before the router self-flips the task to DONE.
+**what-considered:**
+- Backfill leaked tasks (UNBLOCK-REBUILD-MCP-SERVER, CLEAN-TRIGGER-PPC-REPARSE): rejected — no decision data exists; forward-fix only per task constraint.
+- Extract gate to a shared block: rejected — gate is already canonical in agent-chaining-protocol.md; inline mirror (6L) matches pm/qa flow gate style without DRY violation since it's a reference+execution step not a verbatim copy.
+**why-decision:** Router self-flip bypasses the worker DJ-GATE-1 injection; only path to close the leak is an explicit gate step in the two dispatch blocks immediately before the board-flip occurs.
+**why-change:** no change from task spec — direct fix as specified
+
+---
+
 ### STEP agent-father-S1 · agent-father · 2026-06-08T00:25:00Z
 **task-id:** FIX-AUDITOR-SQL-MODIFIERS
 **what-done:** Replaced 11 short-form SQLite datetime modifiers ('-Nh'/'-Nd') with long-form ('-N hours'/'-N days') in docs/agents/system-auditor/flow/main.md; added NULL-guard block before C-check table; updated size-justification comment.
