@@ -54,6 +54,7 @@ Write fails → `send_telegram(channel="bug")` immediately, still proceed to B.
 ```
 
 Rules:
+- **JSON NUMERIC FIELDS — NO LEADING `+` SIGN (MANDATORY):** All numeric fields (`price`, `daily_change_pct`, `yoy_change_pct`, `volume`, `vs_avg_pct`, `rsi`) MUST be written as raw JSON numbers. Positive values have NO sign prefix (e.g. `2.17`, `2.21`, `1234.5`). A leading `-` for negatives is valid. A leading `+` is **invalid JSON** and will cause `JSON.parse` to reject the entire file. Strip any `+` prefix before writing. This rule supersedes any display-format convention from upstream tool output.
 - `brief_action` max 10 words; regime_flag from current macro regime
 - `insider_activity` = `get_insider_signals(code="{TICKER}")` or "no activity"
 - Skip weekends + market holidays
