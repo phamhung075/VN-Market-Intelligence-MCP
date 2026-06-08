@@ -193,31 +193,3 @@ AF-ORCH-F1A-F4 (agent-father, merged F1a+F4) → AF-ORCH-F1B (agent-father, migr
 
 **Risk to flag for PM:** R-2 (mtime cache test bleed — journalStore.ts must export `_clearCacheForTesting()`); R-1 (buildOrchestrationDto impure after F2 — inject decisionsDir path parameter for testability).
 
-## 2026-06-04T22:35Z — CARRY-YIELD-SINGLE-SIGNAL-FIXTURE (DSI-INV-1 gap on single-signal path)
-
-**Finding:** DSI sprint /snapshot fix was necessary-not-sufficient. GET /carry-trade-signal and GET /yield-spread-signal had DI-free Go handler closures with own fixture consts (fedFunds=5.33, deposit=4.7, earningYield=8.2) — served FII_OUTFLOW_RISK/−0.63 while /snapshot served live NEUTRAL/+1.38. Zero source_tier/is_estimate in responses.
-
-**Decision:** Option B (consolidate) — delete handlers_carry.go + handlers_yield.go + 2 router entries; TS MCP tools call POST /snapshot and project signals.carry/signals.yield sub-objects. Kills fixture-handler class definitively. Less code, less surface, single DSI-INV-1 logic path.
-
-**Per-zone spec:**
-- B-1: apps/macro-indicators/ — delete 2 files, edit router.go (remove 2 routes), rewrite 2 router tests (delete fixture-asserting, add retirement guard + anti-fixture regression guard).
-- B-2: apps/mcp-server/ — edit carryTools.ts + dinhGiaTools.ts: GET→POST /snapshot + sub-object projection; adds source_tier/is_estimate/fetched_at_source to tool output.
-
-**Brief:** `docs/architecture-briefs/2026-06-05-carry-yield-single-signal-fixture.md`
-**DSI brief annotation:** §9 sequence summary updated with CARRY-YIELD-SINGLE-SIGNAL-FIXTURE entry.
-**NEXT:** pm → create 2 sub-tasks (B-1 dev-macro-indicators, B-2 dev-mcp-server, sequential).
-
-## 2026-06-05T00:00Z — FU-MACRO-INDICATORS-MISSCOPE + FU-SBV-DEPOSIT-PROVENANCE-GO
-
-**Items:** Two WIP batched corrections to DSI-ARCH brief + handoff.
-
-**Item 1 — FU-MACRO-INDICATORS-MISSCOPE (DONE):**
-Deploy-scope error corrected in both docs. `docker ps` confirms macro-indicators:5004 Up+healthy. "LATENT LANDMINE / not in deploy set" annotations struck through and annotated RESOLVED. DSI-INV-1 producer fix (resolveFedFundsRate/resolveVNDDepositRate → (value,isLive); buildCarryDTO suppression) reclassified from "latent backlog" to "live fix, already shipped." R-4 annotated RESOLVED HOT. No silent rewrites — original text preserved with strikethrough + dated correction notes.
-
-**Item 2 — FU-SBV-DEPOSIT-PROVENANCE-GO (RULING ISSUED):**
-Tier ruling for SBV administered max deposit rate: `tier:2 / is_estimate:false` — IF `sbv_rates` row carries a real SBV decree `effective_date` (not a DB insert timestamp). `tier:4 / is_estimate:true` if no effective_date column/value exists (bare constant). EFFR unaffected (tier:1 correct). `buildCarryDTO` must use min(tier:1, tier:2) = tier:2 for the overall carry DTO `SourceTier` when vndDeposit resolves live but is only tier:2. Full spec in brief §2 addendum. Go code change = dev-macro-indicators's job.
-
-**Files changed:** `docs/architecture-briefs/2026-06-04-data-serve-integrity.md`, `docs/handoffs/DSI-ARCH.md`.
-**Next:** dev-macro-indicators implements Go code change per §2 addendum spec.
-
-

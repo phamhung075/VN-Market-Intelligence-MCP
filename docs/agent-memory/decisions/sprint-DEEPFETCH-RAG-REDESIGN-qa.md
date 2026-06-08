@@ -197,3 +197,23 @@ Three ACs that directly require metadata round-trip (AC-FR2-4, AC-FR3-2, AC-FR3-
 
 **why-decision:** All 5 ACs pass. tsc clean. Live rag-service receives hybrid=true and returns HTTP 200. pollNews stays vector-only (no regression). 3 pre-existing test failures are identical to qa-S3 evidence (cron_job_runs schema gap, root cause in test harness not in DFR-P3-MCP diff). APPROVED.
 **why-change:** no change from plan — thin change (one field + N opt-ins) implemented exactly per blueprint §9 and §10.
+
+---
+
+### STEP qa-S6 · qa · 2026-06-08T — DJ-GATE-1 — CLEAN-NB-TRIM-BATCH
+**task-id:** CLEAN-NB-TRIM-BATCH
+**route:** CLEAN (notebook trim sweep)
+**scope:** 5 notebooks reported over 200L cap; dev-pdf-extractor SKIPPED (concurrent write race)
+
+**what-considered:**
+- only path: trim oldest (physical bottom) entries from each over-cap notebook to bring ≤200L; preserve newest entries verbatim per NEWEST-FIRST rule.
+- SKIP rationale for dev-pdf-extractor: dev-pdf-extractor agent confirmed running concurrently this tick; write race would corrupt notebook.
+
+**results:**
+- docs/agent-memory/notebooks/dev-rag-service.md: 297L → 159L (dropped ARCHIVED sections + P2-B/C/D/E/G7/J sections from bottom)
+- docs/agent-memory/notebooks/dev-mcp-server.md: 223L → 188L (dropped DFR-P2-MCP + DFR-P3-MCP sections from bottom)
+- docs/agent-memory/notebooks/architect.md: 223L → 195L (dropped CARRY-YIELD + FU-MACRO-INDICATORS sections from bottom)
+- docs/agent-memory/notebooks/dev-vps-crawls.md: 228L → 199L (dropped Key-Findings-AGM-Plan section + trailing content from bottom)
+- docs/agent-memory/notebooks/dev-pdf-extractor.md: SKIPPED — concurrent write race
+
+**why-decision:** All 4 trimmed notebooks confirmed ≤200L via wc -l post-trim. Oldest entries (physically at bottom of each file) removed. No recent content altered.

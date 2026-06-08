@@ -186,38 +186,3 @@ Zone health: recon only, no code change | HEALTHY
 **Lesson:** Sector lookup uses `cfg.market.referenceStocks` (config SSOT) — no separate domain service needed since the map already exists in config. URL parse E1-guard: always try/catch `new URL(entry.sourceUrl).hostname` since source_url can be null/empty.
 
 Zone health: bun tsc --noEmit clean, 0 new failures, tools 157 intact, scheduler 76 cron.schedule | HEALTHY
-
-## 2026-06-08 · DFR-P2-MCP — done-code (DJ-GATE-1)
-
-**Task:** DFR-P2-MCP (sprint DEEPFETCH-RAG-REDESIGN)
-**Scope:** Conditional deep-fetch pipeline — SQLite schema, domain gate, queue store, pollNews gate injection, VPS executor job, Playwright fallback job, scheduler registration, config types, unit tests.
-
-**Files changed:** schema-news.ts, config.ts, pollNews.ts, cronConfig.ts, startScheduler.ts + 5 new files (deepFetchGate.ts, deepFetchQueueStore.ts, deepFetchVpsJob.ts, deepFetchMainJob.ts, dfr-p2-mcp.test.ts)
-
-**tsc:** CLEAN (bun tsc --noEmit 0 errors)
-**Tests:** 28/28 pass (new). Schema + related: 82/82. pollNews 1332: 1/4 — PRE-EXISTING (data_env in test inline DB, stash-verified unrelated to this task)
-**Guardrails verified:** max10/cycle VPS PASS, max5/cycle PW PASS, domain cap PASS, 4h expiry PASS, UNIQUE dedup PASS, no-silent-delete: ragIndex table.add only
-**Rebuild required:** targeted mcp-server rebuild only — do NOT down&&up
-
-Zone health: tsc clean, 28 new tests pass, 0 regressions | HEALTHY
-
----
-
-## 2026-06-08 · DFR-P3-MCP — done-code (DJ-GATE-1)
-
-**Task:** DFR-P3-MCP (sprint DEEPFETCH-RAG-REDESIGN, XS)
-**Scope:** Thin hybrid flag opt-in — `hybrid?: boolean` to `RagSearchRequest`; chef synthesis + bctc-analyst callers pass `hybrid: true`; pollNews stays vector-only.
-
-**Files changed:**
-- `apps/mcp-server/src/infrastructure/rag/ragHttpClient.ts` — `RagSearchRequest` + `hybrid?: boolean` field
-- `apps/mcp-server/src/application/usecases/runImpactChain.ts` — defaultRagRetriever adds `hybrid: true`
-- `apps/mcp-server/src/application/usecases/runPredictionImpactChain.ts` — defaultRagRetriever adds `hybrid: true`
-- `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts` — `search_similar_context` adds `hybrid: true`
-- `apps/mcp-server/src/application/usecases/pollNews.ts` — comment only (no hybrid field — vector-only confirmed)
-
-**tsc:** CLEAN (exit 0)
-**Tests:** Full suite exit 0 ×3 (RAG-specific 39/39 pass / 0 fail). Known pre-existing 3 data_env/cron_job_runs failures unrelated — confirmed no new failures.
-**Tool count:** 172 (unchanged). **Scheduler count:** 78 (baseline 76 + 2 from P2-MCP).
-**Rebuild required:** targeted mcp-server rebuild only — do NOT down&&up
-
-Zone health: bun test 0 fail, tsc clean, 172 tools intact, scheduler 78 cron.schedule | HEALTHY
