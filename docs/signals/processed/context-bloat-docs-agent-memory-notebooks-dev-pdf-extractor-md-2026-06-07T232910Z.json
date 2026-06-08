@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-07T23:29:10Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-pdf-extractor.md",
+    "line_count": 202,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 2,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "bff037a1a0ceced7f0b8068de483bdbf045f9e63f6eee5240ded47b8a7e36203",
+    "processedAt": "2026-06-08T00:10:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

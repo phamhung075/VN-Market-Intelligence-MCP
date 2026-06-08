@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-08T00:04:35Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": null
+    },
+    "last_fired_timestamp": "2026-06-08T00:07:45Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 1,
+    "note": "Parallel-run peer fired slot at 00:01:03Z (RemoteTrigger path); token expired, CronCreate dispatcher re-won and spawned. bctc-analyst E3 idempotency cache + published-marker gate are the dup defenses. AC-6 watch item."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-08T00:07:55Z",
+  "_processed": {
+    "fingerprint": "a377547b924ce3b9880ae7d20b04415687611e0e81f87c025712b5e328d07a29",
+    "processedAt": "2026-06-08T00:10:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

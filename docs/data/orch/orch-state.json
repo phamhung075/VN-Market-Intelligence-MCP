@@ -4966,8 +4966,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-07T23:26:52Z",
-    "_updated_by": "router",
+    "_updated_at": "2026-06-08T00:11:14Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "sau-2026-06-0723-04-13-a20",
@@ -5342,10 +5342,12 @@
         "to": "po",
         "type": "repair_task_request",
         "severity": "medium",
-        "status": "NEW",
+        "status": "READ",
         "ts": "2026-06-07T23:26:52Z",
         "suggested_task_id": "FIX-MCP-SUITE-HEALTH-BASELINE",
-        "summary": "Full apps/mcp-server bun suite (11518 tests/1034 files, 970s) has 463 PRE-EXISTING fails + 14 errors + Bun v1.3.13 teardown panic (C++ exception AFTER summary print). Verified NOT caused by FIX-FRED-YAHOO-WEEKEND-STALE (full-revert bisect on 089-tool-macro: identical 15 fails). Failure clusters: cron_job_runs table missing in :memory: schema (pollNews tests), 089-tool-macro get_macro_snapshot sections missing (15/17 isolated), 240-bctc-full (17), 1846-backtest-lifecycle (16). The previous ~848-pass gate baseline is STALE. Need: (a) recorded full-suite baseline artifact, (b) fix :memory: schema drift (setup.ts migrations), (c) triage 089 isolated red, (d) optionally report teardown panic to bun.report. Log: /tmp/bun-suite-rerun.log (run 2026-06-07T23:07Z).\n"
+        "summary": "Full apps/mcp-server bun suite (11518 tests/1034 files, 970s) has 463 PRE-EXISTING fails + 14 errors + Bun v1.3.13 teardown panic (C++ exception AFTER summary print). Verified NOT caused by FIX-FRED-YAHOO-WEEKEND-STALE (full-revert bisect on 089-tool-macro: identical 15 fails). Failure clusters: cron_job_runs table missing in :memory: schema (pollNews tests), 089-tool-macro get_macro_snapshot sections missing (15/17 isolated), 240-bctc-full (17), 1846-backtest-lifecycle (16). The previous ~848-pass gate baseline is STALE. Need: (a) recorded full-suite baseline artifact, (b) fix :memory: schema drift (setup.ts migrations), (c) triage 089 isolated red, (d) optionally report teardown panic to bun.report. Log: /tmp/bun-suite-rerun.log (run 2026-06-07T23:07Z).\n",
+        "read_at": "2026-06-08T00:11:14Z",
+        "read_by": "dev-team"
       }
     ],
     "archive": [

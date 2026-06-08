@@ -1,0 +1,14 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] Step 0 failed: MCP gateway unavailable — mcp__claude_ai_gateway__call_tool not found (slot=bctc-analyst-slot-4, cycle=c030, 2026-06-08T00:00Z). get_cycle_bootstrap unreachable. All downstream analysis blocked.",
+  "priority": "high",
+  "createdAt": "2026-06-08T00:00:00Z",
+  "_processed": {
+    "fingerprint": "3357ed57215c274e353a9c2f840338cb931d8a051b0b54239ff81d399450d441",
+    "processedAt": "2026-06-08T00:10:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
