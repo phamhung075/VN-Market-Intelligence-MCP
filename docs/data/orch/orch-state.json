@@ -5735,9 +5735,22 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-08T19:05:00Z",
+    "_updated_at": "2026-06-08T19:05:17Z",
     "_updated_by": "po",
     "rows": [
+      {
+        "id": "sau-c121-a33",
+        "ts": "2026-06-08T19:05:17Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "vnstockFundamentalsRefresh crashed (0% success, 1 run) - check A-33",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "A-33",
+        "payload_ref": null
+      },
       {
         "id": "sau-c112-b01",
         "ts": "2026-06-08T15:23:39Z",
