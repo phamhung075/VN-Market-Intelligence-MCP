@@ -1,6 +1,14 @@
 [NB] Total lines:       89
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
 
+## c121 · 2026-06-08T19:05:17Z
+### Audit Run Tier-1 (19:05 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 1 new CRITICAL | Status: DEGRADED
+- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=27.46%; disk=38%.
+- A-33 CRON-CRASH: vnstockFundamentalsRefresh crashed at 2026-06-08T01:00:00Z (0% success, 1 run) — CRITICAL, signal row emitted, BUG Telegram sent.
+- Contract: signals_posted=0 | telegram_sent=1 | signal_queue_rows_written=1 | dashboard_rows=0
+
 ## c120 · 2026-06-08T18:36:27Z
 ### Audit Run Tier-1 (18:36 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
