@@ -537,41 +537,80 @@ function tryInsertEntry(
     return false;
   }
 
-  const stmt = db.prepare(`
-    INSERT OR IGNORE INTO rag_analyses
-      (id, created_at, level, source_url, source_title, source_type,
-       published_at, sentiment, impact_score, impact_direction, confidence,
-       time_horizon, summary, reasoning, affected_countries, affected_domains,
-       affected_actions, parent_ids, tags, embedding_text, data_env)
-    VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
-  `);
-
-  const result = stmt.run(
-    entry.id,
-    entry.createdAt,
-    entry.level,
-    entry.sourceUrl || null,          // NULL for empty URLs (partial index exemption)
-    entry.sourceTitle,
-    entry.sourceType,
-    entry.publishedAt,
-    entry.sentiment,
-    entry.impactScore,
-    entry.impactDirection,
-    entry.confidence,
-    entry.timeHorizon,
-    entry.summary,
-    entry.reasoning,
-    JSON.stringify(entry.affectedCountries),
-    JSON.stringify(entry.affectedDomains),
-    JSON.stringify(entry.affectedActions),
-    JSON.stringify(entry.parentIds),
-    JSON.stringify(entry.tags),
-    currentDataEnv(),
-  );
+  // Attempt insert with data_env first (production path); fall back without it
+  // if the column does not yet exist (test in-memory DBs, pre-migration schemas).
+  // Pattern mirrors fredApi.ts:188-211.
+  let result: import("bun:sqlite").Changes | undefined;
+  try {
+    const stmt = db.prepare(`
+      INSERT OR IGNORE INTO rag_analyses
+        (id, created_at, level, source_url, source_title, source_type,
+         published_at, sentiment, impact_score, impact_direction, confidence,
+         time_horizon, summary, reasoning, affected_countries, affected_domains,
+         affected_actions, parent_ids, tags, embedding_text, data_env)
+      VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
+    `);
+    result = stmt.run(
+      entry.id,
+      entry.createdAt,
+      entry.level,
+      entry.sourceUrl || null,          // NULL for empty URLs (partial index exemption)
+      entry.sourceTitle,
+      entry.sourceType,
+      entry.publishedAt,
+      entry.sentiment,
+      entry.impactScore,
+      entry.impactDirection,
+      entry.confidence,
+      entry.timeHorizon,
+      entry.summary,
+      entry.reasoning,
+      JSON.stringify(entry.affectedCountries),
+      JSON.stringify(entry.affectedDomains),
+      JSON.stringify(entry.affectedActions),
+      JSON.stringify(entry.parentIds),
+      JSON.stringify(entry.tags),
+      currentDataEnv(),
+    );
+  } catch (colErr: unknown) {
+    const msg = colErr instanceof Error ? colErr.message : String(colErr);
+    if (!msg.includes("data_env")) throw colErr; // re-throw unrelated errors
+    // Fallback: insert without data_env for pre-migration schemas
+    const stmt = db.prepare(`
+      INSERT OR IGNORE INTO rag_analyses
+        (id, created_at, level, source_url, source_title, source_type,
+         published_at, sentiment, impact_score, impact_direction, confidence,
+         time_horizon, summary, reasoning, affected_countries, affected_domains,
+         affected_actions, parent_ids, tags, embedding_text)
+      VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+    `);
+    result = stmt.run(
+      entry.id,
+      entry.createdAt,
+      entry.level,
+      entry.sourceUrl || null,
+      entry.sourceTitle,
+      entry.sourceType,
+      entry.publishedAt,
+      entry.sentiment,
+      entry.impactScore,
+      entry.impactDirection,
+      entry.confidence,
+      entry.timeHorizon,
+      entry.summary,
+      entry.reasoning,
+      JSON.stringify(entry.affectedCountries),
+      JSON.stringify(entry.affectedDomains),
+      JSON.stringify(entry.affectedActions),
+      JSON.stringify(entry.parentIds),
+      JSON.stringify(entry.tags),
+    );
+  }
 
   // bun:sqlite RunResult.changes is 1 when a row was inserted, 0 when ignored
-  return result.changes > 0;
+  return (result?.changes ?? 0) > 0;
 }
 
 /**

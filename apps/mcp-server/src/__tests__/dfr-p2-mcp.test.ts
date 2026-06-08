@@ -44,8 +44,9 @@ function makeDb(): Database {
       confidence REAL,
       impact_score REAL,
       sentiment TEXT,
-      body_text TEXT
-    )
+      body_text TEXT,
+      data_env TEXT
+)
   `);
   initNewsTables(db);
   return db;

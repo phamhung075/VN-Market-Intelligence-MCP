@@ -117,8 +117,9 @@ function makeDb(): Database {
     embedding_vector TEXT NOT NULL DEFAULT '',
     sentiment TEXT,
     confidence REAL,
-    causal_chain TEXT
-  )`);
+    causal_chain TEXT,
+    data_env TEXT
+)`);
 
   return db;
 }

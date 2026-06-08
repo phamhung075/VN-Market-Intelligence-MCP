@@ -32,8 +32,9 @@ const RAG_DDL = `
     affected_actions   TEXT,
     parent_ids         TEXT,
     tags               TEXT,
-    embedding_text     TEXT
-  );
+    embedding_text     TEXT,
+    data_env TEXT
+);
 `;
 
 // ── Seed helpers ──────────────────────────────────────────────────────────────

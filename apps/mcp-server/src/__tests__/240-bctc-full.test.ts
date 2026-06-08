@@ -350,8 +350,9 @@ function makeDb(): Database {
     embedding_vector TEXT NOT NULL DEFAULT '',
     sentiment TEXT,
     confidence REAL,
-    causal_chain TEXT
-  )`);
+    causal_chain TEXT,
+    data_env TEXT
+)`);
 
   // FIX-D: vnstock_balance_sheet needed for receivables query
   db.run(`CREATE TABLE IF NOT EXISTS vnstock_balance_sheet (

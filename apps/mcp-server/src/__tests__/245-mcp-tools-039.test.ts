@@ -44,8 +44,9 @@ function makeTestDb(): Database {
       affected_domains TEXT,
       causal_chain TEXT,
       reasoning TEXT,
-      embedding_id TEXT
-    )
+      embedding_id TEXT,
+      data_env TEXT
+)
   `);
   return db;
 }

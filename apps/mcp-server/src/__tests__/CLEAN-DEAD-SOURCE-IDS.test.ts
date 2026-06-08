@@ -45,8 +45,9 @@ function setupDb(): Database {
       source_url   TEXT,
       source_title TEXT,
       published_at TEXT,
-      created_at   TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+      created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      data_env TEXT
+);
     CREATE TABLE IF NOT EXISTS bctc_vps_queue (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code TEXT NOT NULL,

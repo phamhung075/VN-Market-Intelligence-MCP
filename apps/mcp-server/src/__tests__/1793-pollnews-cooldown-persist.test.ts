@@ -121,8 +121,9 @@ describe("Task 1793 — pollNews 24h cooldown persists across restart simulation
       impact_score REAL, impact_direction TEXT, confidence REAL,
       time_horizon TEXT, summary TEXT, reasoning TEXT,
       affected_countries TEXT, affected_domains TEXT, affected_actions TEXT,
-      parent_ids TEXT, tags TEXT, embedding_text TEXT
-    )`);
+      parent_ids TEXT, tags TEXT, embedding_text TEXT,
+      data_env TEXT
+)`);
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, domain TEXT, exchange TEXT
     )`);
@@ -155,8 +156,9 @@ describe("Task 1793 — pollNews 24h cooldown persists across restart simulation
       impact_score REAL, impact_direction TEXT, confidence REAL,
       time_horizon TEXT, summary TEXT, reasoning TEXT,
       affected_countries TEXT, affected_domains TEXT, affected_actions TEXT,
-      parent_ids TEXT, tags TEXT, embedding_text TEXT
-    )`);
+      parent_ids TEXT, tags TEXT, embedding_text TEXT,
+      data_env TEXT
+)`);
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY, domain TEXT, exchange TEXT)`);
     // Create cron_job_runs with WRONG columns — no started_at, no status
     db.exec(`CREATE TABLE IF NOT EXISTS cron_job_runs (job_name TEXT PRIMARY KEY, bogus INTEGER)`);

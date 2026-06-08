@@ -57,8 +57,9 @@ describe("Task 1187 — pollNewsJob dead code path", () => {
         sentiment TEXT, impact_score REAL, impact_direction TEXT, confidence REAL,
         time_horizon TEXT, summary TEXT, reasoning TEXT, affected_countries TEXT,
         affected_domains TEXT, affected_actions TEXT, parent_ids TEXT, tags TEXT,
-        embedding_text TEXT
-      );
+        embedding_text TEXT,
+        data_env TEXT
+);
       CREATE UNIQUE INDEX IF NOT EXISTS idx_rag_source_url
         ON rag_analyses(source_url) WHERE source_url IS NOT NULL AND source_url != '';
       CREATE TABLE IF NOT EXISTS alerts (

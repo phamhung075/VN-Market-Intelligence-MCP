@@ -128,8 +128,9 @@ describe("Task 185 — getDataFreshness() output format", () => {
         impact_score REAL,
         impact_direction TEXT,
         confidence REAL,
-        summary TEXT
-      );
+        summary TEXT,
+        data_env TEXT
+);
       CREATE TABLE IF NOT EXISTS market_prices (
         code TEXT PRIMARY KEY,
         price REAL,

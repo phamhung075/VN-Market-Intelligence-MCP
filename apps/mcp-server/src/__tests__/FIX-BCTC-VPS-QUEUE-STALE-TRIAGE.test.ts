@@ -36,8 +36,9 @@ function makeDb(): Database {
     CREATE TABLE rag_analyses (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       source_url TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      data_env TEXT
+);
     CREATE TABLE vps_service_health (
       service        TEXT NOT NULL,
       last_push_at   TEXT,

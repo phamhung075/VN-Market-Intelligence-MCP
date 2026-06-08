@@ -58,8 +58,9 @@ function buildTestDb(): Database {
       affected_actions TEXT DEFAULT '[]',
       parent_ids TEXT DEFAULT '[]',
       tags TEXT DEFAULT '[]',
-      embedding_text TEXT
-    );
+      embedding_text TEXT,
+      data_env TEXT
+);
     CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
       action_code TEXT NOT NULL,

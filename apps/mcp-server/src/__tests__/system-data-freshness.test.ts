@@ -69,8 +69,9 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
       );
 
       CREATE TABLE rag_analyses (
-        created_at TEXT
-      );
+        created_at TEXT,
+        data_env TEXT
+);
 
       CREATE TABLE sbv_rates (
         fetched_at TEXT

@@ -55,8 +55,9 @@ function buildDb(withMentionVelocity = true): Database {
       affected_actions TEXT,
       parent_ids TEXT,
       tags TEXT,
-      embedding_text TEXT
-    );
+      embedding_text TEXT,
+      data_env TEXT
+);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_rag_source_url
       ON rag_analyses(source_url)
       WHERE source_url IS NOT NULL AND source_url != '';

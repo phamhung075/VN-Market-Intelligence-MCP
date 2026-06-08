@@ -69,8 +69,9 @@ function setupTestDb(): Database {
       created_at   TEXT NOT NULL,
       level        TEXT NOT NULL DEFAULT 'country',
       summary      TEXT,
-      source_title TEXT
-    );
+      source_title TEXT,
+      data_env TEXT
+);
 
     CREATE TABLE IF NOT EXISTS financial_reports (
       id         TEXT PRIMARY KEY,

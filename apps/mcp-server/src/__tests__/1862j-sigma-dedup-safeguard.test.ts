@@ -67,8 +67,9 @@ function makeDb(): Database {
       source_title TEXT,
       sentiment TEXT,
       impact_score REAL,
-      impact_direction TEXT
-    );
+      impact_direction TEXT,
+      data_env TEXT
+);
 
     CREATE TABLE IF NOT EXISTS financial_reports (
       id TEXT PRIMARY KEY,

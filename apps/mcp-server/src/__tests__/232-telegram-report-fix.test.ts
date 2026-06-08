@@ -65,8 +65,9 @@ function makeDb(): Database {
       level TEXT NOT NULL,
       source_title TEXT,
       sentiment TEXT,
-      impact_score REAL
-    )
+      impact_score REAL,
+      data_env TEXT
+)
   `);
 
   // agent_feedback table (required by /report and /fix handlers)

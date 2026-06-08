@@ -47,8 +47,9 @@ function setupTestDb(): Database {
       source_url TEXT, source_title TEXT, source_type TEXT, published_at TEXT,
       sentiment TEXT, impact_score REAL, impact_direction TEXT, confidence REAL,
       time_horizon TEXT, summary TEXT, reasoning TEXT, affected_countries TEXT,
-      affected_domains TEXT, affected_actions TEXT, parent_ids TEXT, tags TEXT, embedding_text TEXT
-    );
+      affected_domains TEXT, affected_actions TEXT, parent_ids TEXT, tags TEXT, embedding_text TEXT,
+      data_env TEXT
+);
     CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY, triggered_at TEXT NOT NULL, severity TEXT NOT NULL,
       signals_json TEXT, affected_actions_json TEXT, analysis_ids_json TEXT,

@@ -43,8 +43,9 @@ function makeDb(): Database {
       level TEXT,
       sentiment TEXT,
       impact_score REAL,
-      created_at TEXT
-    );
+      created_at TEXT,
+      data_env TEXT
+);
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL DEFAULT '',

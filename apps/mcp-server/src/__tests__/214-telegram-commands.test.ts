@@ -105,8 +105,9 @@ function makeDb(): Database {
       affected_actions   TEXT,
       parent_ids         TEXT,
       tags               TEXT,
-      embedding_text     TEXT
-    );
+      embedding_text     TEXT,
+      data_env TEXT
+);
   `);
 
   return db;

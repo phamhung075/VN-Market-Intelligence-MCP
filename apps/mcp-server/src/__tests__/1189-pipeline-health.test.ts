@@ -26,8 +26,9 @@ function buildDb(): Database {
     CREATE TABLE rag_analyses (
       id         TEXT PRIMARY KEY,
       created_at TEXT NOT NULL,
-      source_url TEXT
-    );
+      source_url TEXT,
+      data_env TEXT
+);
     CREATE INDEX idx_rag_created ON rag_analyses(created_at);
 
     CREATE TABLE vps_push_log (
@@ -98,8 +99,9 @@ describe("getPipelineHealth", () => {
   it("returns vpsPushLast24h=null when vps_push_log table does not exist", async () => {
     const db = new Database(":memory:");
     db.exec(`CREATE TABLE rag_analyses (
-      id TEXT PRIMARY KEY, created_at TEXT NOT NULL, source_url TEXT
-    )`);
+      id TEXT PRIMARY KEY, created_at TEXT NOT NULL, source_url TEXT,
+      data_env TEXT
+)`);
     // deliberately omit vps_push_log
 
     const r = await getPipelineHealth({ db, nowMs: NOW_MS, reportsDir: "/nonexistent" });

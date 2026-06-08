@@ -58,8 +58,9 @@ function buildMinimalDb(options: {
     CREATE TABLE IF NOT EXISTS rag_analyses (
       id TEXT PRIMARY KEY,
       created_at TEXT NOT NULL,
-      level TEXT NOT NULL DEFAULT 'global'
-    );
+      level TEXT NOT NULL DEFAULT 'global',
+      data_env TEXT
+);
     CREATE TABLE IF NOT EXISTS financial_reports (
       id TEXT PRIMARY KEY,
       stock_code TEXT,

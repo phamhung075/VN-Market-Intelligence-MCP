@@ -71,8 +71,9 @@ function setupTestDb(): Database {
       source_type        TEXT,
       published_at       TEXT,
       sentiment          TEXT,
-      impact_score       REAL
-    );
+      impact_score       REAL,
+      data_env TEXT
+);
 
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,

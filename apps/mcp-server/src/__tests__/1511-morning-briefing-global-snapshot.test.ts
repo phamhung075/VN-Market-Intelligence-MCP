@@ -27,8 +27,9 @@ function setupDb(db: Database): void {
     );
     CREATE TABLE IF NOT EXISTS rag_analyses (
       source_title TEXT, level TEXT NOT NULL DEFAULT 'country',
-      sentiment TEXT, impact_score REAL, created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+      sentiment TEXT, impact_score REAL, created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      data_env TEXT
+);
     CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY, triggered_at TEXT NOT NULL, severity TEXT NOT NULL,
       message TEXT, affected_actions_json TEXT, resolved_at TEXT

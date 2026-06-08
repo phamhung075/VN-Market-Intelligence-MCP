@@ -48,8 +48,9 @@ function buildMcbDb(): Database {
       sentiment TEXT,
       impact_score REAL,
       impact_direction TEXT,
-      summary TEXT
-    );
+      summary TEXT,
+      data_env TEXT
+);
   `);
   return db;
 }

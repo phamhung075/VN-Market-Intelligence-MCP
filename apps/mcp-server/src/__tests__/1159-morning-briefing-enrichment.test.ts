@@ -88,8 +88,9 @@ function setupTestDb(): Database {
       affected_actions   TEXT,
       parent_ids         TEXT,
       tags               TEXT,
-      embedding_text     TEXT
-    );
+      embedding_text     TEXT,
+      data_env TEXT
+);
 
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,

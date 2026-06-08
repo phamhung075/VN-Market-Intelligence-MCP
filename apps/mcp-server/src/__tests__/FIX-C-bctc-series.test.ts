@@ -101,8 +101,9 @@ function makeDb(): Database {
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(8)))),
     affected_actions TEXT,
     sentiment TEXT,
-    created_at TEXT NOT NULL DEFAULT ''
-  )`);
+    created_at TEXT NOT NULL DEFAULT '',
+    data_env TEXT
+)`);
   db.run(`CREATE TABLE IF NOT EXISTS vnstock_balance_sheet (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(8)))),
     code TEXT NOT NULL,

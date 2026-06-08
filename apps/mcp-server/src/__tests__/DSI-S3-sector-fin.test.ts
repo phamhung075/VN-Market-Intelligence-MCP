@@ -257,8 +257,9 @@ function makeTestDb(): Database {
     embedding_vector TEXT NOT NULL DEFAULT '',
     sentiment TEXT,
     confidence REAL,
-    causal_chain TEXT
-  )`);
+    causal_chain TEXT,
+    data_env TEXT
+)`);
   db.exec(`CREATE TABLE IF NOT EXISTS vnstock_balance_sheet (
     action_code TEXT,
     receivables_bn REAL
