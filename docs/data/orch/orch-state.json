@@ -3325,6 +3325,41 @@
         "priority": "medium",
         "created_at": "2026-06-08T02:17:24Z",
         "status_note": "From signal A20-AUDITOR-HARDEN-A20-SENSOR (P2, escalate_to agent-father — flow .md change, not apps/ code). Evidence: c103 PASS 00:07Z at uptime 40min, c105 UNHEALTHY 01:03Z tesseract 99.2%; single probe passes between Tesseract runs. Sequence AFTER ARCH-A20-CPU-CGROUP-REVIEW lands so the probe is tuned against the final topology. AC: A-20 check uses 3 probes 5s apart (fail if any fails) or docker-exec probe; validated against an active-OCR window."
+      },
+      {
+        "id": "A20-EVENTLOOP-STARVATION-ARCHITECT",
+        "title": "A-20 4th recurrence (POST cgroup-fix acb48383): pdf-extractor /health host-HTTP wedge persists — architect deep-dive on uvicorn worker model / event-loop starvation. NOT another CPU/cgroup patch.",
+        "type": "UNBLOCK",
+        "sprint": "ORCH-DASH-DECISION-DRILLDOWN",
+        "status": "TODO",
+        "owner": "architect",
+        "zone": "apps/pdf-extractor/",
+        "size": "M",
+        "route_to": "architect",
+        "created_at": "2026-06-08T08:14:30Z",
+        "files": [
+          "apps/pdf-extractor/main.py",
+          "apps/pdf-extractor/Dockerfile",
+          "apps/pdf-extractor/application/extract_tables_usecase.py",
+          "docker-compose.yml"
+        ],
+        "status_note": "RECURRING-BUG / no-3rd-patch rule FIRED. CPU-class patches all failed: 48a64056, 3033e1dc, acb48383 (cpus 1.0->2.0 + start_period 60s, shipped 04:27 — FAILED, host /health HTTP 000 x3 at 08:11Z while container Up-6h-unhealthy). OCR ALREADY process-offloaded (PDFX-SINGLE-WORKER-BLOCKING DONE) + push-clients async (FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN DONE) — so this is NOT CPU quota, NOT OCR blocking. SCOPE: uvicorn.run() main.py:258 has NO workers= (single worker / single event loop); Dockerfile CMD also single-worker. Investigate event-loop starvation in MAIN process: model warm-up, sync I/O on loop, large picklable OCR payload deserialization back on loop, or /health handler awaiting a blocked resource. Candidate designs: workers>1 (verify 8GB host cap), dedicated lightweight liveness path off the OCR loop, or OCR-to-sidecar. FORBIDDEN: any 4th CPU/cgroup/start_period patch. AC: host /health returns 200 within 5s WHILE an /extract OCR job is in flight (failure-under-load is the real test; see FIX-AUDITOR-A20-MULTIPROBE). Recurrence c105(01:03Z)->c106->c111(08:07Z) ~7h. Architect slot 1/2 (ARCH-TSU REVIEW). Output: architecture brief -> dev-pdf-extractor implements -> ops targeted rebuild (NEVER down&&up). Starvation snapshot captured by A20-WEDGE-CAPTURE-RESTART before mitigation."
+      },
+      {
+        "id": "A20-WEDGE-CAPTURE-RESTART",
+        "title": "Mitigation: CAPTURE starvation diagnostics THEN targeted docker restart pdf-extractor — unblock 26-row queue + Q1-2026 ingest without destroying architect evidence.",
+        "type": "FIX",
+        "sprint": "ORCH-DASH-DECISION-DRILLDOWN",
+        "status": "TODO",
+        "owner": "ops",
+        "zone": "apps/pdf-extractor/",
+        "size": "S",
+        "route_to": "ops",
+        "created_at": "2026-06-08T08:14:30Z",
+        "files": [
+          "docker-compose.yml"
+        ],
+        "status_note": "CAPTURE-THEN-RESTART (evidence preservation MANDATORY before clearing wedge). BEFORE restart, capture into docs/troubleshooting/2026-06-08-a20-eventloop-starvation-capture.md: (1) docker stats --no-stream (CPU/MEM); (2) IN-CONTAINER probe docker exec <ctr> curl -sS -m5 to localhost:5001/health printing http_code + time_total — does it wedge from INSIDE too? key starvation discriminator; (3) thread/stack dump py-spy dump --pid 1 (fallback ps -eLf or /proc/1/task/*/stack if py-spy absent); (4) docker logs --tail 100; (5) docker exec ps aux (OCR child state). THEN docker restart vn-market-intelligence-mcp-pdf-extractor-1 (TARGETED single container — NEVER docker compose down&&up, kills peers ~21min per feedback_rebuild_recreate_destroys_peers). Poll host /health up to 90s (start_period 60s for PEK warm-up) before declaring recovered. Attach capture file path to A20-EVENTLOOP-STARVATION-ARCHITECT. AC: host /health returns 200 AND capture file committed with all 5 diagnostics. Slot 2/2."
       }
     ],
     "archive": [],
@@ -5102,8 +5137,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-08T02:17:24Z",
-    "_updated_by": "po-triage-20260608T0307Z",
+    "_updated_at": "2026-06-08T08:15:31Z",
+    "_updated_by": "po-triage-20260608T0813Z",
     "rows": [
       {
         "id": "sau-c111-a20",
@@ -5113,10 +5148,11 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 health timeout (recurring, dedup active c106/c105) — container UP, /health probe curl 3s max-time fails",
         "severity": "WARN",
-        "status": "NEW",
+        "status": "TRIAGED",
         "zone_owner": "dev-pdf-extractor",
         "check_id": "A-20",
-        "payload_ref": null
+        "payload_ref": null,
+        "resolution": "A-20 4th recurrence POST cgroup-fix acb48383 (cpus 1.0->2.0, shipped 04:27 — FAILED). Router raw-verified: host curl -m5 localhost:5001/health x3 = HTTP 000, container Up-6h-unhealthy. no-3rd-patch rule FIRED. Routed: (1) A20-EVENTLOOP-STARVATION-ARCHITECT (UNBLOCK, architect — uvicorn worker model / event-loop starvation deep-dive, NO 4th CPU patch); (2) A20-WEDGE-CAPTURE-RESTART (FIX, ops — capture py-spy+docker-stats+in-container-probe THEN targeted restart). Clears when host /health returns 200 under /extract load (failure-under-load AC)."
       },
       {
         "id": "sau-c109-b12-continuation",

@@ -79,3 +79,13 @@
 - Slot 2 = FIX-MACRO-REFRESH-DEAD (fresh CRITICAL, silent-swallow success report, feed dead ~30d)
 **why-decision:** CRITICAL data-integrity outranks MED test hygiene; pdfx zone frozen under RECURRING-BUG rule anyway — concurrent churn in a zone under architect review invites conflicts for a one-tick saving.
 **why-change:** Pollution fix deferred a 2nd consecutive tick — acceptable: it gates only FIX-MCP-SUITE-HEALTH-BASELINE (no prod impact).
+
+### STEP po-S9 · po · 2026-06-08T08:13:00Z · DJ-GATE-1
+**task-id:** A20-EVENTLOOP-STARVATION-ARCHITECT
+**what-done:** Post-architect-fix recurrence triage. Router raw-verified live wedge: `curl -m5 localhost:5001/health` ×3 → HTTP 000 (hard timeout), container "Up 6h (unhealthy)". This is FIRST probe after cgroup fix acb48383 (cpus 1.0→2.0 + start_period 60s, shipped 04:27) — fix FAILED. A-20 now: c105(01:03)→c106→c111(08:07) over ~7h. 3rd CPU-class patch dead (48a64056, 3033e1dc, acb48383 all failed); OCR already process-offloaded (PDFX-SINGLE-WORKER-BLOCKING DONE) and push-clients async (FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN DONE). "no 3rd patch → architect" rule FIRES.
+**what-considered:**
+- 4th CPU/cgroup patch — REJECTED: 3 CPU patches failed; recurring-bug rule forbids; not the class (CPU was raised, wedge persists → not a quota problem).
+- Architect event-loop/worker-model deep-dive — CHOSEN: uvicorn.run() has NO workers= (single worker, single event loop); CMD also single-worker. Health-lies + host-HTTP-dead while OCR isolated = main-process event-loop starvation (model warm-up / sync I/O / large picklable OCR payload deserialization on the loop), NOT cgroup.
+- Mitigation: restart-now (clear wedge, unblock 26-row queue + Q1 ingest) vs preserve-evidence (architect needs starvation snapshot).
+**why-decision:** Route fresh architect deep-dive (UNBLOCK, slot 1/2) scoped to worker model / event-loop offload — explicitly FORBID another CPU/cgroup patch. Mitigation = CAPTURE-THEN-RESTART (ops, slot 2/2): grab docker stats + in-container `curl localhost:5001/health` + py-spy dump / `ps -eLf` thread list BEFORE `docker restart pdf-extractor` (targeted, NEVER down&&up). Capture preserves the starvation evidence the architect needs; restart unblocks the largest product backlog without waiting on design.
+**why-change:** Escalation path differs from S8 plan (S8 routed the cgroup patch). That patch is now disproven, so per the armed po-S6 rule we escalate to architecture rather than patch a 4th time.
