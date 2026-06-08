@@ -3027,7 +3027,7 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": [],
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "size": "M",
             "mode": "spike",
             "zone": "apps/mcp-server/",

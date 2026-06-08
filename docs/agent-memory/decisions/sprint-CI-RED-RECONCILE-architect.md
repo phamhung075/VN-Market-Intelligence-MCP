@@ -48,3 +48,18 @@
 - `scripts/test-coverage.sh` (NEW)
 
 **signals-out:** impl spec returned directly to router for dev-mcp-server dispatch (tight loop per PO directive)
+
+---
+
+### STEP arch-S3 (DJ-GATE-1) · architect · 2026-06-08T23:02Z
+
+**task-id:** CI-TEST-SCHEMA-FIXTURE-SPIKE
+**what-done:** Full brownfield inventory of 1033 test files, mapping 3 failure classes (E1/E2/E3) from CI run 27171666087. Designed two-fixture-contract model + 4-phase rollout plan. Produced dev-actionable spec per failure class with exact enumeration commands.
+**what-considered:**
+- Option 1: Targeted injection (reverted 9454baad approach) — REJECTED. 176 files with inline DDL are self-contained by design; any injection that adds canonical tables collides (E1) or creates NOT NULL violations (E3) in tests not designed for full schema.
+- Option 2: Full `initDatabase()` injection everywhere — REJECTED. Same E1/E3 risk plus view compile risk (v_chart_timeseries references period_quarter; tests with narrow financial_reports DDL would break on VIEW creation).
+- Option 3 (CHOSEN): Two-contract model — Contract A (full canonical via initDatabase) for integration tests; Contract B (explicit inline DDL, IF NOT EXISTS, complete columns) for unit tests. Per-failure-class additive column fixes. No injection sweep.
+**why-decision:** The 9454baad failure pattern proves injection is structurally incompatible with heterogeneous inline DDL. The only safe path is: (a) fix inline DDLs to be complete (add missing columns) and idempotent (IF NOT EXISTS), and (b) add production-side fallback guards for migration-added columns (data_env pattern). This avoids touching the 494 pure-singleton files and the 300 isolated-inline-only files that currently pass.
+**why-change:** Prior brief (CI-TEST-ISOLATION-SPIKE) identified B2 (data_env) as the primary schema class. This spike reveals 5 sub-classes from the mechanized injection regression, requiring a more granular per-class fix plan and an explicit two-contract architectural boundary.
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md`
