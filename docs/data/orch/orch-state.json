@@ -2489,7 +2489,7 @@
             "title": "mcp-server Phase 1: (a) live ALTER TABLE rag_analyses ADD COLUMN body_text TEXT (nullable); (b) update ragIndex() in pollNews.ts + fetchParseAndStoreBctc.ts to pass ticker,sector,source_domain,doc_type,published_at,confidence,impact_score; (c) add rag.decayHalfLifeDays per-doc_type map to mcp.config.json + update ragSearch() callers to pass appropriate decay_half_life_days (news 1-3d, macro 7d, filing 30d, analysis 14d).",
             "owner": "dev-mcp-server",
             "type": "SPRINT-S",
-            "status": "TODO",
+            "status": "READY",
             "zone": "apps/mcp-server/",
             "size": "M",
             "priority": "high",
@@ -2504,7 +2504,7 @@
               "apps/mcp-server/src/interface/mcp/tools/financial-reports/fetchParseAndStoreBctc.ts",
               "apps/mcp-server/mcp.config.json"
             ],
-            "note": "Brief B4/B7 + Q5. (b)/(c) depend on DFR-P1-RAG accepting new fields. (a) ALTER TABLE is the live execution of the DFR-Q5 probe — single-writer invariant (mcp-server sole writer of market.db) makes it low-risk; confirm path via DFR-Q5 first. ops_rebuild_required=true after merge. No hardcoded sectors/tickers — derive from docs/data/system-map.json."
+            "note": "Brief B4/B7 + Q5. (b)/(c) depend on DFR-P1-RAG accepting new fields. (a) ALTER TABLE is the live execution of the DFR-Q5 probe — single-writer invariant (mcp-server sole writer of market.db) makes it low-risk; confirm path via DFR-Q5 first. ops_rebuild_required=true after merge. No hardcoded sectors/tickers — derive from docs/data/system-map.json. | [PO DJ-GATE-1 2026-06-08T11:31:41Z] AUTHORIZED — flipped TODO->READY. Both deps satisfied: DFR-BA-1 approved + DFR-P1-RAG DONE (raw-verified live: rag_entries 16-col schema, 8 new metadata cols present, 14028 rows non-destructive, container rebuilt 13:22:07 healthy post QA-fix 92aa2700; DFR-QA-1 APPROVED commit 0c76aa37). Scope = FR-6 (ALTER TABLE rag_analyses ADD COLUMN body_text, Q5-confirmed safe in schema-news.ts:57 try/catch) + FR-4 (rag.decayHalfLifeDays config in mcp.config.json news:2/macro:7/filing:30/analysis:14, NOT hardcoded) + FR-5 (ragIndex callers pollNews.ts + fetchParseAndStoreBctc.ts pass new metadata) + FR-3 mcp part (SearchRequest passes decay_half_life_days + filter params). WIP: only dispatch this gate. Router dispatch -> dev-mcp-server. DFR-P2-DEEPFETCH / DFR-P3-HYBRID STAY BLOCKED (separate later gates, not opened)."
           },
           {
             "id": "DFR-QA-1",

@@ -1,26 +1,23 @@
 # PO Notebook
 
-## c · 2026-06-08T10:42:33Z — DJ-GATE-1: DEEPFETCH-RAG-REDESIGN spec approved + Phase-1 dev authorized
+## c · 2026-06-08T11:31:41Z — DJ-GATE-1: DEEPFETCH-RAG-REDESIGN MCP-layer authorized
 
-**Trigger:** Directed review gate. BA spec ready (DFR-BA-1 spec_ready) + all 5 feasibility probes DONE/GREEN. Decision STEP po-S2 → docs/handoffs/sprint-DEEPFETCH-RAG-REDESIGN-po.md.
+**Trigger:** Directed gate. RAG layer reported DONE. Verify-raw DFR-P1-RAG, then flip DFR-P1-MCP TODO → READY. P2/P3 stay gated. Decision STEP po-S3 → docs/handoffs/sprint-DEEPFETCH-RAG-REDESIGN-po.md.
 
-**Verify-raw (not badges):**
-- Read full BA spec 352L: 6 FR / 26 AC all live-verifiable, NFR1-6 (non-destructive/backward-compat/baseline-test-preserved/no-re-embed/no-downtime/no-hardcode), 5 edge cases, DDD layer+zone map. Phase-2/3 explicitly OUT. No gap vs brief → no revision.
-- Read SPIKE_DFR-Q3-Q4 doc raw: Q4 add_columns() non-destructive (3 rows before→after, vectors not re-embedded, safe defaults); Q3 FTS+hybrid available lancedb 0.30.2. Prod = Docker 0.30.2.
-- Q1/Q2 recon doc + brief exist on disk; Q5 ALTER safe (single-writer, schema-news.ts:57 pattern).
-- Board deps cross-checked: P1-RAG=[BA-1]; P1-MCP=[BA-1,P1-RAG]; QA-1=[P1-RAG,P1-MCP]; P2=[Q1,Q2,QA-1]; P3=[Q3,P1-RAG].
+**Verify-raw (LIVE container, not badges):**
+- `docker ps`: rag-service-1 healthy, rebuilt 13:22:07 — POST QA-fix commit 92aa2700 (13:19:47). Live, not claimed.
+- `docker exec` lancedb introspect (/app/data/lancedb · rag_entries): 16 cols, all 8 new metadata cols present (0 missing), 14028 rows = QA baseline exact → non-destructive on LIVE volume.
+- Git: 76a02b0d (FR-1/2/3) + 92aa2700 (QA fix, 105 tests). DFR-QA-1 0c76aa37 = round-2 APPROVED, 3 ACs PASS live.
+- orch-state: DFR-P1-RAG=DONE, DFR-QA-1=DONE → DFR-P1-MCP deps [BA-1, P1-RAG] satisfied.
 
 **Decisions / board flips:**
-1. DFR-BA-1: spec_ready → **approved** (no revision).
-2. DFR-P1-RAG: TODO → **READY** (next dispatch; both migration gates Q4+Q5 green; runs FIRST).
-3. DFR-P1-MCP / DFR-QA-1: stay TODO (deps unmet).
-4. DFR-P2-DEEPFETCH / DFR-P3-HYBRID: stay **BLOCKED**. Feasibility gates green BUT Phase-1 ordering dep intact (P2 needs QA-1, P3 needs P1-RAG live). Not dispatched. Dep-notes unchanged (Q-answers clear feasibility precondition only, not the ordering dep).
+1. DFR-P1-MCP: TODO → **READY** (next active). Scope: FR-6 ALTER body_text + FR-4 decayHalfLifeDays config (no hardcode) + FR-5 ragIndex callers pollNews/fetchParseAndStoreBctc metadata + FR-3 mcp SearchRequest filter+decay params. ops_rebuild_required after merge.
+2. DFR-P2-DEEPFETCH / DFR-P3-HYBRID: stay **BLOCKED** (verified untouched). Separate later gates, NOT opened. WIP: only this dispatch this gate.
 
-**Router action requested:** dispatch **DFR-P1-RAG → dev-rag-service**. PO does not nested-spawn.
+**Router action requested:** dispatch **DFR-P1-MCP → dev-mcp-server** (zone apps/mcp-server/). PO does not nested-spawn.
 
 **Carry-over (next PO cycle):**
-- NEXT GATE: after DFR-P1-RAG lands live-verified (add_columns migration non-destructive on LIVE rag_entries, old rows still searchable, 16-col schema) → authorize DFR-P1-MCP dispatch → dev-mcp-server. WIP serialized P1-RAG → P1-MCP → QA-1.
-- After DFR-QA-1 green: re-evaluate P2 (Q1/Q2 green, now only QA-1 dep) for unblock; P3 unblocks once P1-RAG live (Q3 green).
-- ops_rebuild_required after DFR-P1-MCP merge.
-- (prior sprint) A20 event-loop starvation: AWAIT A20-EVENTLOOP-STARVATION-ARCHITECT brief; no 4th CPU/cgroup patch; /health=200 must hold ≥15min UNDER /extract load before any A20 DONE.
-- FIX-SBV-REFRESH-SILENT-SWALLOW verify → PM flip FIX-MACRO-REFRESH-DEAD DONE.
+- NEXT GATE: after DFR-P1-MCP lands + ops rebuilds mcp-server → DFR-QA-1 final verify (live: rag_analyses PRAGMA shows body_text; mcp passes filter+decay to rag-service; callers stamp metadata).
+- Only after DFR-QA-1 green: explicit future gate to re-eval P2 unblock (then only QA-1 dep) + P3 (P1-RAG live, Q3 green). Do NOT auto-open.
+- (prior) A20 event-loop starvation: AWAIT architect brief; /health=200 ≥15min UNDER /extract load before A20 DONE.
+- FIX-MACRO-REFRESH-DEAD: dev fix landed (b7ce338f) — verify live macro refresh, then PM flip DONE.
