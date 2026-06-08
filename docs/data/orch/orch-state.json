@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T14:45:00Z",
-  "_updated_by": "dev-rag-service",
+  "_updated_at": "2026-06-08T16:40:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-07T22:16:43Z",
@@ -2774,7 +2774,7 @@
             "title": "P3 mcp-server: THIN — add hybrid?:boolean to RagSearchRequest in ragHttpClient.ts; chef + bctc-analyst callers pass hybrid:true; pollNews stays vector-only",
             "owner": "dev-mcp-server",
             "type": "FEATURE",
-            "status": "READY",
+            "status": "done-code",
             "zone": "apps/mcp-server/",
             "size": "XS",
             "priority": "high",
@@ -2786,7 +2786,7 @@
             "created_at": "2026-06-08T13:22:00Z",
             "blueprint": "docs/architecture-briefs/2026-06-08-dfr-p3-hybrid-search-blueprint.md",
             "ba_spec": "docs/handoffs/DEEPFETCH-RAG-REDESIGN-p2p3-BA-spec.md#DFR-P3-MCP",
-            "note": "5 ACs. SEQUENCING MANDATORY: dispatch AFTER DFR-P2-MCP is merged (both touch ragHttpClient.ts — P2=ragIndex write path, P3=RagSearchRequest read path; commit-mutex if concurrent). pollNews defaultRagRetriever must NOT pass hybrid:true. Chef + bctc-analyst callers pass hybrid:true. tsc --noEmit must pass.",
+            "note": "5 ACs. SEQUENCING MANDATORY: dispatch AFTER DFR-P2-MCP is merged (both touch ragHttpClient.ts — P2=ragIndex write path, P3=RagSearchRequest read path; commit-mutex if concurrent). pollNews defaultRagRetriever must NOT pass hybrid:true. Chef + bctc-analyst callers pass hybrid:true. tsc --noEmit must pass. | DFR-P3-MCP done-code 2026-06-08T16:40:00Z: hybrid?: boolean added to RagSearchRequest; runImpactChain+runPredictionImpactChain (chef synthesis) + analysis.ts search_similar_context (bctc-analyst) pass hybrid:true; pollNews stays vector-only. tsc clean, bun test exit 0. Rebuild needed.",
             "depends_on": [
               "DFR-P2-MCP"
             ],
@@ -2794,7 +2794,9 @@
             "status_note": "Awaits DFR-P2-MCP merge. Both edit apps/mcp-server/src/infrastructure/rag/ragHttpClient.ts (P2=RagIndexRequest, P3=RagSearchRequest). Concurrent dispatch would violate commit-mutex policy. P3-MCP rebases onto P2-MCP's commit.",
             "unblocked_at": "2026-06-08T15:30:00Z",
             "unblocked_by": "qa",
-            "unblock_note": "DFR-P2-MCP DONE (QA APPROVED). DFR-P3-MCP dependency satisfied. Ready for dev-mcp-server."
+            "unblock_note": "DFR-P2-MCP DONE (QA APPROVED). DFR-P3-MCP dependency satisfied. Ready for dev-mcp-server.",
+            "claimed_by": "dev-mcp-server",
+            "claimed_at": "2026-06-08T16:30:00Z"
           }
         ]
       }

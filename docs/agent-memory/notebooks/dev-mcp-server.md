@@ -200,3 +200,24 @@ Zone health: bun tsc --noEmit clean, 0 new failures, tools 157 intact, scheduler
 **Rebuild required:** targeted mcp-server rebuild only — do NOT down&&up
 
 Zone health: tsc clean, 28 new tests pass, 0 regressions | HEALTHY
+
+---
+
+## 2026-06-08 · DFR-P3-MCP — done-code (DJ-GATE-1)
+
+**Task:** DFR-P3-MCP (sprint DEEPFETCH-RAG-REDESIGN, XS)
+**Scope:** Thin hybrid flag opt-in — `hybrid?: boolean` to `RagSearchRequest`; chef synthesis + bctc-analyst callers pass `hybrid: true`; pollNews stays vector-only.
+
+**Files changed:**
+- `apps/mcp-server/src/infrastructure/rag/ragHttpClient.ts` — `RagSearchRequest` + `hybrid?: boolean` field
+- `apps/mcp-server/src/application/usecases/runImpactChain.ts` — defaultRagRetriever adds `hybrid: true`
+- `apps/mcp-server/src/application/usecases/runPredictionImpactChain.ts` — defaultRagRetriever adds `hybrid: true`
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts` — `search_similar_context` adds `hybrid: true`
+- `apps/mcp-server/src/application/usecases/pollNews.ts` — comment only (no hybrid field — vector-only confirmed)
+
+**tsc:** CLEAN (exit 0)
+**Tests:** Full suite exit 0 ×3 (RAG-specific 39/39 pass / 0 fail). Known pre-existing 3 data_env/cron_job_runs failures unrelated — confirmed no new failures.
+**Tool count:** 172 (unchanged). **Scheduler count:** 78 (baseline 76 + 2 from P2-MCP).
+**Rebuild required:** targeted mcp-server rebuild only — do NOT down&&up
+
+Zone health: bun test 0 fail, tsc clean, 172 tools intact, scheduler 78 cron.schedule | HEALTHY

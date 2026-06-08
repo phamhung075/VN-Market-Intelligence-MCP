@@ -32,3 +32,17 @@
 **why-change:** rag-service now accepts 8 metadata fields (DFR-P1-RAG DONE). mcp-server must pass them to deliver Phase 1 value (filter precision for CHEF/cascadeEngine consumers).
 **evidence:** tsc --noEmit CLEAN. Live row count before: 5557. Existing test failures (data_env schema gap in test DBs) all pre-exist; 0 new failures introduced. Rebuild required: targeted mcp-server only (never down&&up).
 **dj-gate-1:** DJ-GATE-1 appendend here before flipping DFR-P1-MCP to done-code.
+
+---
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-08T16:35:00Z
+**task-id:** DFR-P3-MCP
+**what-done:** Added `hybrid?: boolean` optional field to `RagSearchRequest` interface in `ragHttpClient.ts`. Passed `hybrid: true` in three caller sites: `runImpactChain.ts` defaultRagRetriever (Chef synthesis causal cascade), `runPredictionImpactChain.ts` defaultRagRetriever (Chef synthesis prediction chain), `analysis.ts` `search_similar_context` tool (bctc-analyst ticker-exact filing queries). Confirmed `pollNews.ts` defaultRagRetriever has NO `hybrid: true` — added spec comment "hybrid intentionally omitted — contextual enrichment is semantic, not ticker-exact".
+**what-considered:**
+- Whether `search_similar_context` should opt in: yes — bctc-analyst uses it with `actionCode` for ticker-exact filing queries; BM25 recall is beneficial. The tool passes `actionCode` when provided which is ticker-specific.
+- Whether `runImpactChain` / `runPredictionImpactChain` defaultRagRetriever is "Chef synthesis": yes — these are the causal cascade engine retrievers called by `run_impact_chain` and prediction chain tools; Chef agents are the primary callers.
+- pollNews stays vector-only: confirmed per spec. The defaultRagRetriever there is semantic context enrichment, not ticker-exact.
+**why-decision:** Thin XS change — one interface field + caller opt-in only. rag-service already accepts `hybrid` (DFR-P3-RAG DONE). No new files, no structural changes, DDD layers untouched.
+**why-change:** DFR-P3-MCP final task of DEEPFETCH-RAG-REDESIGN sprint. P2-MCP merged at commit 65228a83 (different interface block — RagIndexRequest). This change touches only RagSearchRequest — no collision.
+**evidence:** tsc --noEmit EXIT:0. RAG test files (4 files): 39 pass / 0 fail. Full bun test: exit 0 ×2 (Bun WriteFailed crash is post-test coverage write on ENOSPC /tmp — pre-existing Bun v1.3.13 bug, not a test failure). Tool count: 172. Scheduler count: 78 (baseline 76 + 2 from P2-MCP). Rebuild needed: targeted mcp-server rebuild (no down&&up).
+**dj-gate-1:** DJ-GATE-1 appended here before flipping DFR-P3-MCP to done-code.
