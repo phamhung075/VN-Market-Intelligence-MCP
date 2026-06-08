@@ -1,4 +1,76 @@
 
+## c109 · 2026-06-08T07:54:37Z
+### Audit Run Tier-1 (07:54 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-08T07:54:08Z ===
+
+--- docker ps -a ---
+vn-market-intelligence-mcp-mcp-server-1: Up 5 hours (healthy) ✓
+vn-market-intelligence-mcp-pdf-extractor-1: Up 5 hours (healthy) ✓
+vn-market-intelligence-mcp-macro-indicators-1: Up 8 hours (healthy) ✓
+vn-market-intelligence-mcp-frontend-1: Up 13 hours (healthy) ✓
+vn-market-intelligence-mcp-api-gateway-1: Up 13 hours (healthy) ✓
+mcp-gateway: Up 13 hours (healthy) ✓
+
+--- health endpoints ---
+mcp-server:3000/health OK (HTTP 200) ✓
+api-gateway:4000/health OK (HTTP 200) ✓
+macro-indicators:5004/health OK (HTTP 200) ✓
+pdf-extractor:5001/health OK (HTTP 200) ✓
+frontend:3001/ OK (HTTP 200) ✓
+
+--- restart count ---
+mcp-server RestartCount=0 (≤2) ✓
+
+--- memory pressure ---
+mcp-server MemPerc=47.01% (<85%) ✓
+
+--- disk df -h / ---
+Capacity 28% (<85%) ✓
+```
+- Findings: All 6 host_runtime_set services UP and HEALTHY. All health endpoints OK. Memory <85%. Disk <85%. Restart count nominal. No anomalies detected. All circuit breakers OK. 63 crons firing normally; 1 job crashed (vnstockFundamentalsRefresh, not Tier-1 scope). 10 unresolved errors (vnstock rate-limiting + fallback known-issues, not container failures).
+- Signals: 0 emitted
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
+## c108 · 2026-06-08T02:34:40Z
+### Audit Run Tier-1 (02:34 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 new | Status: HEALTHY
+- RAW-PROBE:
+```
+=== AUDITOR PROBE 2026-06-08T02:34:28Z ===
+
+--- docker ps -a ---
+mcp-server: Up 27 minutes (healthy) ✓
+api-gateway: Up 8 hours (healthy) ✓
+frontend: Up 8 hours (healthy) ✓
+macro-indicators: Up 3 hours (healthy) ✓
+mcp-gateway: Up 8 hours (healthy) ✓
+pdf-extractor: Up 6 minutes (healthy) ✓
+
+--- health endpoints ---
+mcp-server:3000/health OK (HTTP 200) ✓
+api-gateway:4000/health OK (HTTP 200) ✓
+macro-indicators:5004/health OK (HTTP 200) ✓
+pdf-extractor:5001/health OK (HTTP 200) ✓
+frontend:3001/ OK (HTTP 200) ✓
+
+--- restart count ---
+mcp-server RestartCount=0 (≤2) ✓
+
+--- memory pressure ---
+mcp-server MemPerc=23.50% (<85%) ✓
+
+--- disk df -h / ---
+Capacity 27% (<85%) ✓
+```
+- Findings: All 6 host_runtime_set services UP and HEALTHY. All health endpoints OK. Memory <85%. Disk <85%. Restart count nominal. No anomalies detected. System status: all circuit breakers OK, 10 unresolved system errors (kinhdich/fallback known-issues, not container failures). Cron health: one job crashed (vnstockFundamentalsRefresh, not Tier-1 scope — Tier-3 detail).
+- Signals: 0 emitted
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## c107 · 2026-06-08T02:01:54Z
 ### Audit Run Tier-2 (02:01 UTC 2026-06-08)
 - Tier: 2 | Crons: 63 checked | Sources: 28 checked | VPS routes: 4 OK
@@ -108,4 +180,3 @@ frontend:3001/ OK (200) ✓
 - Findings: All 6 host_runtime_set services UP + healthy endpoints. All restart counts nominal. No anomalies.
 - Signals: 0 emitted
 - Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
-
