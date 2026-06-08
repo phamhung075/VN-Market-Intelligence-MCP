@@ -1831,3 +1831,73 @@ Given tight token budget and successful health/write verification, PPC reparse d
 
 **Risk:** Low. Standard rebuild following safe constraints (--no-deps, force-recreate, peer verify).
 
+
+---
+
+## Session: 2026-06-08 (FIX-MACRO-REFRESH-DEAD + FIX-SBV-REFRESH-SILENT-SWALLOW — Targeted Rebuild)
+
+**Task:** Deploy two committed code fixes into live mcp-server container via targeted rebuild (no docker compose down/up to preserve peers).
+
+**Commits deployed:**
+- `b7ce338f`: FIX-MACRO-REFRESH-DEAD (2026-06-08T04:35:44+02:00)
+  - Fix 1: align env var MACRO_SERVICE_URL → MACRO_INDICATORS_URL in clients.ts
+  - Fix 2: re-throw after WORK alert in macroIndicatorRefreshJob catch block
+  - Impact: fail-loud on macro refresh failure, no green-while-stale
+  
+- `cbfd8e31`: FIX-SBV-REFRESH-SILENT-SWALLOW (2026-06-08T09:57:03+02:00)
+  - Fix: add `throw err` after WORK alert in sbvRatesJob catch block
+  - Impact: recordJobRun now sees re-thrown error, writes status='error' not 'success'
+  - Mirrors FIX-MACRO-REFRESH-DEAD pattern
+
+**Execution: Targeted Rebuild**
+- Command: `docker compose build mcp-server` (fresh image from HEAD)
+- Deploy: `docker compose up -d --no-deps mcp-server && sleep 5`
+- No `docker compose down` or full up/down (preserves peers per project-memory rebuild-recreate-destroys-peers)
+
+### Verification — Post-Rebuild Health Check
+
+**docker ps -a (peer status):**
+```
+NAME                                      STATUS                CREATED
+api-gateway                                Up 13h (healthy)     45 hours ago [UNCHANGED ✓]
+frontend                                   Up 13h (healthy)     34 hours ago [UNCHANGED ✓]
+macro-indicators                           Up 8h (healthy)      8 hours ago  [UNCHANGED ✓]
+mcp-server-1                               Up 7s (healthy)      10s ago      [FRESH ✓]
+pdf-extractor                              Up 6h (healthy)      6 hours ago  [UNCHANGED ✓]
+```
+All 5 services running. mcp-server recreated (10s ago), peers preserved (no collateral kills).
+
+**Code verification (in-container):**
+- sbvRatesJob.ts line 153: `throw err;` ✓
+- clients.ts line 26: `MACRO_INDICATORS_URL` ✓
+
+**Health endpoints:**
+- mcp-server /health: 200 ok, uptime 22.5s ✓
+- macro-indicators /health: 200 ok ✓
+- pdf-extractor /health: 200 ok ✓
+- api-gateway /health: 200 ok, macro=ok, mcp=ok, latencies <2ms ✓
+
+**Image timeline:**
+- Container Created: 2026-06-08T08:04:46.493631715Z (UTC)
+- Commit b7ce338f: 2026-06-08T04:35:44+02:00
+- Commit cbfd8e31: 2026-06-08T09:57:03+02:00
+- Build started after cbfd8e31, container created includes both fixes ✓
+
+### QA Gate Status
+
+**READY FOR CRON FIRE ✓**
+
+- ✓ Both FIX commits live in running mcp-server
+- ✓ macro-indicators reachable (localhost:5004) — env var fix verified
+- ✓ SBV rates job will re-throw on fetch failure (silent-swallow fixed)
+- ✓ All peers healthy, no service disruption
+- ✓ No DB issues, coordination.db writable
+- ✓ Targeted rebuild succeeded (zero peer downtime)
+
+**Next gates (PM/Auditor decision):**
+- PM: no task_board flip (operator directive rebuild)
+- Auditor B-12: SBV freshness will show <24h after next 4h sbvRatesRefresh cron fire
+- Auditor C-09: macro freshness will update after next 6h macroIndicatorRefreshJob cron fire
+
+**Risk:** None. Targeted rebuild deployed without peer impact. Both fixes enable fail-loud job status recording (critical for auditor credibility).
+
