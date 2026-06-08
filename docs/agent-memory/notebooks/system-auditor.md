@@ -1,4 +1,17 @@
 
+## c110 · 2026-06-08T07:54:33Z
+### Audit Run Tier-2 (07:54 UTC 2026-06-08)
+- Tier: 2 | Crons: 63 checked | Sources: 28 checked | VPS routes: 4 OK
+- Anomalies: 1 CRITICAL-dedup (B-12 SBV stale) | Status: DEGRADED
+- A-29 crons: 63 nominal, vnstockFundamentalsRefresh crashed (isolated).
+- B-01..B-07 pipeline: prices/BCTC/foreign-flow/news fresh; SBV stale 26.9h (>24h threshold) CRITICAL.
+- B-06/B-07 VPS health: 4 routes OK (prices/news/sbv/bctc). SBV last push 2026-06-07 04:59:57Z.
+- B-09 BCTC URLs: 0 bad SSC URLs (PASS). B-13 stale BCTC: 0 pending >72h (PASS).
+- C-06/C-07 DB freshness: market_messages 2/3h OK, agent_signals 87/24h OK.
+- Signals: 1 emitted (B-12 continuation). BUG Telegram: skipped (dedup active from c107).
+- Signal Queue: 1 row appended (sau-c109-b12-continuation, CRITICAL).
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
+
 ## c109 · 2026-06-08T07:54:37Z
 ### Audit Run Tier-1 (07:54 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
