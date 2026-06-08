@@ -1,5 +1,17 @@
 # PO Notebook
 
+## c · 2026-06-08T21xxZ — TWO-BRIEF empirical reconcile → CI-BUN-TEST-MULTI-CLASS-FIX
+
+**Trigger:** router DOUBLE-spawned architect on same problem (bun-test 639 CI fails) → 2 conflicting briefs, both committed. Reconcile EMPIRICALLY, not by authority.
+- Brief #1 (a697392e): 3 independent classes, NO cascade; ZERO green in 200 CI runs = accumulated DEBT.
+- Brief #2 (f13a97bf): 2 systemic roots ~560/639 — B1 mock.module process-poison (~269, order-dep cascade) + B2 inline rag_analyses DDL missing data_env (~96). Canary DWF AC-P0-3-6 = intentional RED, NEVER touch.
+- CONFLICT = cascade (#2) vs no-cascade (#1). RESOLVED via FIRST task = falsifiable mock.restore() experiment measuring FAIL-count delta. ~-269 → #2 wins; small → #1 holds.
+**Board:** superseded CI-TEST-ISOLATION-SPIKE→DONE (architect lane, 0 dev WIP). +EPIC CI-BUN-TEST-MULTI-CLASS-FIX + 5 ordered batches. **DISPATCHED slot1 B1-MOCK-MODULE-EXPERIMENT + slot2 B2-RAG-DDL-INITNEWSTABLES** (independent file sets, bg dev-mcp-server, WIP≤2).
+**User directive 'remove obsolete failing tests'** → OBSOLETE-REMOVE-24 (brief #2 Bucket A 24 tests ONLY, evidence-gated, protect canary).
+**REALISTIC GOAL (surface to user):** CI never green in 200 runs = accumulated debt → target is per-batch bun-test FAIL-count REDUCTION, NOT instant full-green.
+**Signals:** sau-c121-a33 vnstock crash → FOLD into FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (no dup). context-bloat architect.md 215L = architect's OWN NB, self-resolve. cowork tick = informational.
+Push = router's (gate: bun-test FAIL count DROP on subsequent push). DJ: STEP po-RECONCILE.
+
 ## c · 2026-06-08T17:17Z — CI-RED-RECONCILE: gate resolved, 2 residuals scoped on FRESH code
 
 **Trigger:** ops landed PUSH-CI-FIX-TO-REMOTE (HEAD 9f063c9a → origin; dd79f811 verified pushed). Fresh run 27153704278 validates fresh code. Original lint fix proved out: 5 Go lints + py-lint PASS, kinh-dich-ts-lint job deleted. PO resolves BUN-TEST-CI-GATE + triages 2 residuals.
