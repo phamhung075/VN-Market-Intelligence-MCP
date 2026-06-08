@@ -4,6 +4,26 @@
 
 [3 most recent cycles retained below. Archive in git history.]
 
+## 2026-06-08T20:30Z — CI-TEST-ISOLATION-SPIKE: bun-test 639-failure root-cause diagnosis
+
+**Task:** CI-TEST-ISOLATION-SPIKE (SPIKE, M, HIGH, zone: apps/mcp-server/)
+
+**Key findings (evidence-first):**
+- CI has NEVER been green in 200-run history (703 fails on 2026-05-11, trending to 639 now) — accumulated debt, not regression.
+- THREE independent failure classes, NOT one systemic cascade:
+  - Class A (~80–150 fails): Injectable seam removed from `macroTools.ts` `get_macro_snapshot` — tool refactored to HTTP proxy for Go macro-indicators service, but tests still pass `_testSbvClient`/`_testCommodityClient` which are now ignored. Also: `sbv.ts` module-level constants baked at import time (may bake as 0 in full CI suite via env mutation from co-running test).
+  - Class B (~300–400 fails): Real code not yet implemented — 1ms assertion failures across unrelated domains (diacritics, source_tier, cron schedule hardcode, debounce mock wiring). TDD RED tests as living spec.
+  - Class C (~100–150 fails): Network isolation — 5000ms timeouts, CI has no external API access (HOSE/HNX/UPCOM/Yahoo/NewsAPI).
+- Local `bun test` (full suite) crashes (Bun v1.3.13 OOM/C++ exception at RSS 1.69GB). Per-file isolation works fine.
+
+**Decision:** Rename task to CI-BUN-TEST-MULTI-CLASS-FIX. Three sequential fix batches: Fix 1+2 (Class A — injectable seam + sbv constant), Fix 3 (Class C — CI skip guards), Fix 4 (Class B — per-test triage). All in dev-mcp-server zone.
+
+**Brief:** `docs/architecture-briefs/2026-06-08-ci-bun-test-mass-failure.md`
+
+**DJ-GATE-1:** `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (appended STEP arch-S1).
+
+**NEXT:** PO dispatches po→ba→pm→dev-mcp-server→qa. Three batches are independently deployable. PO triage needed for Class B (retire vs implement per test).
+
 ## 2026-06-08T13:22Z — ARCH-DFR-P2 + ARCH-DFR-P3: directed design, Phase 2 + Phase 3
 
 **Tasks:** ARCH-DFR-P2 (deep-fetch pipeline, 3-zone split) + ARCH-DFR-P3 (FTS+RRF hybrid search)
