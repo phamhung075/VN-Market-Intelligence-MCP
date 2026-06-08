@@ -1,5 +1,13 @@
 <!-- System Auditor Notebook — Tier-1/2/3 audit cycle log. NEWEST-FIRST ordering. Max 200L total. -->
 
+## c117 · 2026-06-08T17:35:25Z
+### Audit Run Tier-1 (17:35 UTC 2026-06-08)
+- Tier: 1 | Services: 6 checked (all host_runtime_set)
+- Anomalies: 0 | Status: HEALTHY
+- RAW-PROBE: 6 services all UP/healthy; health endpoints OK (mcp-server 3000, api-gateway 4000, macro-indicators 5004, pdf-extractor 5001, frontend 3001); restart=2; memory=11.96%; disk=36%.
+- A-20 pdf-extractor multi-probe: 3/3 PASS (in-container health probes all HTTP 200).
+- Contract: signals_posted=0 | telegram_sent=0 | signal_queue_rows_written=0 | dashboard_rows=0
+
 ## c116 · 2026-06-08T17:05:05Z
 ### Audit Run Tier-1 (17:05 UTC 2026-06-08)
 - Tier: 1 | Services: 6 checked (all host_runtime_set)
@@ -47,11 +55,3 @@
 - Dedup: sau-c109-b12 (SBV check, 7d window active) — BUG Telegram skipped, DASHBOARD row appended
 - Signals posted: 3 | Telegram sent: 2 | Signal_queue rows: 3 | Dashboard rows: 3
 - Contract: [OUTPUT-CONTRACT] signals_posted=3 | telegram_sent=2 | signal_queue_rows_written=3 | dashboard_rows=3
-
-## c111 · 2026-06-08T14:58:28Z
-### Audit Run Tier-1 (14:58 UTC 2026-06-08)
-- Tier: 1 | Services: 6 checked (all host_runtime_set)
-- Anomalies: 1 dedup-skipped (A-20 within 7-day window, prev c106/c105) | Status: DEGRADED (recurring)
-- RAW-PROBE: 6 services all UP/healthy; health endpoints OK except pdf-extractor A-20 timeout (curl 3s max-time fails); restart=0; memory=12.76%; disk=27%.
-- Findings: pdf-extractor A-20 health timeout recurring (container UP in docker ps, /health probe curl fails). Signal row: sau-c111-a20 (WARN). Dedup active (no BUG).
-- Contract: signals_posted=1 | telegram_sent=0 | signal_queue_rows_written=1 | dashboard_rows=0
