@@ -152,3 +152,24 @@ Zone health: 17/0 target tests, tsc clean, 157 tools (SSOT), 76 cron.schedule | 
 **Lesson:** The notebook entry from FIX-BCTC-VPS-QUEUE-STALE-TRIAGE correctly identified the re-queue precondition and enum. Re-queue is a pure DB status flip, not a code change. No TDD cycle needed (no code path changed); no doc changes needed (schema unchanged); G12 gates N/A (no code committed).
 
 Zone health: no code change | DB re-queue only | HEALTHY
+
+## 2026-06-08 · DFR-Q5 — DONE (recon spike)
+
+**Task:** DFR-Q5 — DEEPFETCH-RAG-REDESIGN feasibility: ALTER TABLE rag_analyses ADD COLUMN body_text
+**Sprint:** DEEPFETCH-RAG-REDESIGN
+
+**Findings (live verify, read-only):**
+- Table exists: YES — 5,543 rows in production market.db (/app/data/market.db inside container)
+- Current columns (21 total): id, created_at, level, source_url, source_title, source_type, published_at, sentiment, impact_score, impact_direction, confidence, time_horizon, summary, reasoning, affected_countries, affected_domains, affected_actions, parent_ids, tags, embedding_text, data_env
+- body_text present: NO — column is absent
+- ADD COLUMN safe: YES — SQLite ADD COLUMN appends a nullable column non-destructively; existing rows get NULL, existing indexes/data untouched
+- Migration pattern: `try { db.exec("ALTER TABLE rag_analyses ADD COLUMN body_text TEXT"); } catch { }` — idempotent try/catch pattern already used for data_env column (schema-news.ts:57) and at least 12 other columns across the schema files
+- Where it runs: startup migration runner — `initNewsTables()` in schema-news.ts, called from `initDatabase()` in schema.ts (line 155), invoked at startup via composition-root.ts:25 (`await initDatabase()`)
+- Single-writer invariant: CONFIRMED — market.db write path is exclusively mcp-server; no other service writes it
+- Service interruption risk: NONE — SQLite ALTER TABLE ADD COLUMN is non-blocking, takes microseconds, no table lock beyond the statement
+
+**Verdict:** DFR-P1-MCP(a) migration approach is CONFIRMED SAFE. Place one idempotent try/catch ALTER in initNewsTables() below the existing data_env migration line.
+
+**Lesson:** Live DB is container-mounted at /app/data/market.db — host market.db is an empty dev artifact. Always verify schema via bun:sqlite exec inside the running container, not against the host file.
+
+Zone health: recon only, no code change | HEALTHY
