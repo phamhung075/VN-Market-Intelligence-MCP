@@ -2873,11 +2873,11 @@
             "type": "FIX",
             "owner": "dev-macro-indicators",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "XS",
             "zone": "apps/macro-indicators/",
             "priority": "high",
-            "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE confirmed from raw log (run 27153704278): `the Go language version (go1.24) used to build golangci-lint is lower than the targeted Go version (1.25.0)`. NOT a ci.yml regression (per-service go-version-file; 4/6 pass). Zone fix to repo standard. Verify deps still resolve after lowering directive. VERIFICATION GATE: GREEN ci.yml after subsequent push."
+            "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE confirmed from raw log (run 27153704278): `the Go language version (go1.24) used to build golangci-lint is lower than the targeted Go version (1.25.0)`. NOT a ci.yml regression (per-service go-version-file; 4/6 pass). Zone fix to repo standard. Verify deps still resolve after lowering directive. VERIFICATION GATE: GREEN ci.yml after subsequent push. | REVIEW 2026-06-08: go 1.25.0 -> go 1.22 + toolchain go1.22.0 + downpinned libc v1.72.3->v1.49.3 and sys v0.42.0->v0.19.0 (over-eager MVS artifacts from prior go1.26.2 tidy). go test ./... 12/12 PASS, go vet CLEAN, golangci-lint 0 issues. Decision log: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-macro-indicators.md. Await ops push -> GREEN ci.yml."
           },
           {
             "id": "FIX-TA-GOLANGCI-CONFIG-V2",

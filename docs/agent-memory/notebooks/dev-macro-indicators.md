@@ -194,3 +194,31 @@ Zone health: FDA-2+FDA-3 SHIPPED 0712c3a7; ops REBUILD required | HEALTHY
 **Auditor C-09 compliance:** macro_indicators now refreshed → SLA check will pass. B-12 not applicable (sbv_rates was already fresh).
 
 Zone health: FIX-MACRO-REFRESH-DEAD SHIPPED b7ce338f; container rebuilt; macro freshness restored | HEALTHY
+
+---
+
+## Session 2026-06-08 — FIX-MACRO-GO-DIRECTIVE (sprint CI-RED-RECONCILE)
+
+**Task:** Align `apps/macro-indicators/go.mod` `go` directive from `1.25.0` to `1.22` (repo standard). CI golangci-lint v2.0.2 (built go1.24) exits 3 on any module targeting go > builder.
+
+**Finding — dep over-pin:** Prior `go mod tidy` with local go1.26.2 wrote two indirect deps that themselves require go 1.25.0: `golang.org/x/sys v0.42.0` and `modernc.org/libc v1.72.3`. `modernc.org/sqlite@v1.29.9` (direct dep) requires only `libc v1.49.3` (go 1.20). Both high pins were over-eager MVS artifacts from the newer local toolchain — NOT actual minimum requirements. Downpinning is safe.
+
+**Changes:** `apps/macro-indicators/go.mod`
+- `go 1.25.0` → `go 1.22`
+- Added `toolchain go1.22.0` (prevents future tidy re-bumps; matches api-gateway + stock-price pattern)
+- `modernc.org/libc v1.72.3` → `v1.49.3`
+- `golang.org/x/sys v0.42.0` → `v0.19.0`
+- `modernc.org/gc/v3 v3.1.2` → `v3.0.0-20240107210532-573471604cb6`
+- `modernc.org/mathutil v1.7.1` → `v1.6.0`, `modernc.org/memory v1.11.0` → `v1.8.0`, `modernc.org/strutil v1.2.1` → `v1.2.0`
+
+**go.sum:** No edits needed — existing file already had checksums for all lower versions.
+
+**Verification:** `go build ./...` CLEAN | `go vet ./...` CLEAN | `go test ./...` 12/12 PASS | `golangci-lint run` 0 issues.
+
+**DJ-GATE-1:** Written to `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-macro-indicators.md` before REVIEW flip.
+
+**Board:** FIX-MACRO-GO-DIRECTIVE → REVIEW (docs/data/orch/orch-state.json).
+
+**Status:** REVIEW / await-push. DONE gate = GREEN ci.yml after subsequent push. Ops pushes; PO signs off on next ci.yml run.
+
+Zone health: FIX-MACRO-GO-DIRECTIVE impl REVIEW; go.mod go 1.22 + toolchain go1.22.0; local all-green; awaiting CI verification | HEALTHY
