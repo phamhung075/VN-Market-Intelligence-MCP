@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-08T01:17:08Z",
-    "_updated_by": "po-triage-20260608T0110Z",
+    "_updated_at": "2026-06-08T02:17:24Z",
+    "_updated_by": "po-triage-20260608T0307Z",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3069,7 +3069,7 @@
         "status": "TODO",
         "zone": "apps/pdf-extractor/",
         "created_at": "2026-06-07T20:17:23Z",
-        "status_note": "From signal dev-20260607T193304 (test_infra_debt, MED, zone_owner dev-pdf-extractor). AC: full unit suite green in any test order (pytest -p no:randomly AND default order)."
+        "status_note": "From signal dev-20260607T193304 (test_infra_debt, MED, zone_owner dev-pdf-extractor). AC: full unit suite green in any test order (pytest -p no:randomly AND default order). || PO 2026-06-08T02:17:24Z: deferred 2nd tick — zone apps/pdf-extractor/ FROZEN pending ARCH-A20-CPU-CGROUP-REVIEW (test-only change likely safe, but slot lost to CRITICAL FIX-MACRO-REFRESH-DEAD anyway). Resume next free slot; if architect review still in flight, test-file-only scope MAY proceed with explicit no-src-no-compose constraint."
       },
       {
         "id": "FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN",
@@ -3244,7 +3244,7 @@
         "status": "TODO",
         "zone": "docs/agent-memory/",
         "created_at": "2026-06-08T00:15:10Z",
-        "status_note": "From context-bloat signal x2 (same target). AC: file <=200L (target <=50L), Carry-over block intact, committed under commit-mutex."
+        "status_note": "From context-bloat signal x2 (same target). AC: file <=200L (target <=50L), Carry-over block intact, committed under commit-mutex. || PO 2026-06-08T02:17:24Z: +4 context-bloat signals 01:27-01:28Z (drained, deduped here); notebook now 199L — 1L under cap, next write trips the hook. Bump: take in next janitor slot."
       },
       {
         "id": "FIX-PDF-EXTRACTOR-UNHEALTHY",
@@ -3264,11 +3264,11 @@
         "type": "FIX",
         "size": "M",
         "owner": "dev-team",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "apps/mcp-server/",
         "title": "C-16 CRITICAL: bctc_vps_queue 338 stale pending >72h (expect 0) — classify rows (historical-seed non-drainable vs Q1-2026 pipeline-blocked vs stuck), add explicit deferred status excluded from C-16, drain drainables",
         "created_at": "2026-06-08T01:17:08Z",
-        "status_note": "DISPATCH AUTHORIZED this tick (slot 2/2). From sau-c104-c16 + report 3095. Live DB = docker volume vn-market-intelligence-mcp_market_data at /app/data — NEVER read host decoy DBs. Hypothesis: bulk = seeded historical pre-Q4-2025 rows that CANNOT drain (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA: VPS lacks historical PDF cache) — sensor screams CRITICAL on a known-deferred condition. Fix root cause definitively: (a) per-row classification with counts; (b) non-drainable rows get explicit status (e.g. deferred_infra) + C-16 check counts only actionable; (c) Q1-2026 rows re-queued after FIX-PDF-EXTRACTOR-UNHEALTHY; (d) genuinely stuck rows fixed. AC: next system-auditor C-16 run PASS (0 actionable stale) with classification table committed; no silent row deletion."
+        "status_note": "DISPATCH AUTHORIZED this tick (slot 2/2). From sau-c104-c16 + report 3095. Live DB = docker volume vn-market-intelligence-mcp_market_data at /app/data — NEVER read host decoy DBs. Hypothesis: bulk = seeded historical pre-Q4-2025 rows that CANNOT drain (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA: VPS lacks historical PDF cache) — sensor screams CRITICAL on a known-deferred condition. Fix root cause definitively: (a) per-row classification with counts; (b) non-drainable rows get explicit status (e.g. deferred_infra) + C-16 check counts only actionable; (c) Q1-2026 rows re-queued after FIX-PDF-EXTRACTOR-UNHEALTHY; (d) genuinely stuck rows fixed. AC: next system-auditor C-16 run PASS (0 actionable stale) with classification table committed; no silent row deletion. || PO DONE 2026-06-08T02:17:24Z: router raw-verified live DB — deferred_infra=328 / done=48 / url_not_found=27 / blocked_pdf_extractor=26, stale-pending=0, zero deletions; C-16 PASS independently confirmed by auditor c107 (B-13=0). Commits 157c0f40+f4fde285+d7bf3d9c; scoped rebuild verified peers untouched. QA pass WAIVED: gates green (tsc 0, bun 60/0, tools=157, sched=76) + router raw-verify + independent auditor = 3 verifications. Residual: re-queue 26 blocked_pdf_extractor rows after ARCH-A20-CPU-CGROUP-REVIEW lands."
       },
       {
         "id": "FIX-MACRO-REFRESH-DEAD",
@@ -3279,7 +3279,8 @@
         "zone": "apps/macro-indicators/",
         "title": "C-09: macro-indicators data stale 718h (~30d), refresh job dead while container healthy — find why scheduled fetch (SBV FX/EFFR feeds) stopped, restore cadence 26h",
         "created_at": "2026-06-08T01:17:08Z",
-        "status_note": "HIGH — next free WIP slot. From sau-c104-c09 + report 3098. Distinct from serve-layer fixes (FIX-FRED-YAHOO-WEEKEND-STALE DONE, FIX-MACRO-GO-FIXTURE-FALLBACK DONE): this is the FETCH/refresh cron dead ~30d. AC: fresh fetch lands; C-09 PASS; staleness alarm would fire if job dies again (no silent-swallow)."
+        "status_note": "HIGH — next free WIP slot. From sau-c104-c09 + report 3098. Distinct from serve-layer fixes (FIX-FRED-YAHOO-WEEKEND-STALE DONE, FIX-MACRO-GO-FIXTURE-FALLBACK DONE): this is the FETCH/refresh cron dead ~30d. AC: fresh fetch lands; C-09 PASS; staleness alarm would fire if job dies again (no silent-swallow). || PO 2026-06-08T02:17:24Z: ESCALATED HIGH->CRITICAL — sau-c107-b12 + report 3099 (resolved duplicate) folded in. SBV FX stale 21h+; sbvRatesRefreshJob reports SUCCESS at 00:00Z but market.db fetch timestamp stale = silent fetch failure (silent-swallow class — do ONE-PASS fail-loud audit of the whole fetch chain per feedback_silent_swallow_serial_bugs, not first-error-only). DISPATCH AUTHORIZED this tick (slot 2/2). AC extended: B-12 AND C-09 pass; job failure surfaces loudly (non-success status / BUG alert), no green-while-stale.",
+        "priority": "critical"
       },
       {
         "id": "FIX-ALERT-ORPHAN-CORRELATION",
@@ -3313,6 +3314,30 @@
         "title": "Quarantine/delete stale host DB copies (apps/mcp-server/data/*.db, ./data/*.db, root market.db 0B) after grep-verifying no compose mount/code path reads them; document live-DB location (docker volume) in dev-standards + system-map",
         "created_at": "2026-06-08T01:17:08Z",
         "status_note": "LOW. From router-host-db-decoys (misled Tier-3 verification: host 105 vs live 338 pending). AC: decoys gone or .quarantine/; live-DB pointer documented in docs/policies/dev-standards.md + docs/data/system-map.json."
+      },
+      {
+        "id": "ARCH-A20-CPU-CGROUP-REVIEW",
+        "title": "Architect design review A-20 (3rd recurrence, RECURRING-BUG): pdf-extractor cpus:1.0 cgroup quota starves uvicorn under Tesseract OCR load — decide cpus>=2.0 in compose vs OCR sidecar container vs exec-based healthcheck; output decision brief + implementation",
+        "type": "UNBLOCK",
+        "size": "S",
+        "owner": "dev-team",
+        "status": "TODO",
+        "zone": "apps/pdf-extractor/",
+        "priority": "P1",
+        "created_at": "2026-06-08T02:17:24Z",
+        "status_note": "DISPATCH AUTHORIZED this tick (slot 1/2). From signal A20-3RD-CPU-CGROUP-ARCHITECT (P1) + sau-c106-a20 folded. RECURRING-BUG rule: NO further dev code patches — 48a64056 (to_thread) and 3033e1dc (ProcessPoolExecutor) both failed because child processes cannot escape the CFS cgroup quota. Evidence (commits 781c8cbf, 76d0af62): tesseract 99.2% CPU on 1.0-core quota, 5x healthcheck probe exit=-1 at 30s, re-unhealthy 11min after restart under OCR load. Simplest candidate = raise cpus>=2.0 in docker-compose (verify host headroom + peer service CPU shares first; 16GB Mac / Docker 8GB cap is RAM not CPU). Decision unblocks: FIX-PDF-EXTRACTOR-UNHEALTHY (BLOCKED), 22-filing Q1-2026 batch ingest, VHM/HCM/HSG/KBC reparse, re-queue of 26 blocked_pdf_extractor bctc_vps_queue rows, pdfx zone unfreeze. AC: decision brief in docs/architecture-briefs/ + chosen option implemented + container healthy >=15min with in-flight /extract under real OCR load."
+      },
+      {
+        "id": "FIX-AUDITOR-A20-MULTIPROBE",
+        "title": "Auditor A-20 sensor single-probe gap: c103 PASS minutes before failure-under-load — harden to multi-probe (3x5s) or exec-based probe; route agent-father (system-auditor flow .md)",
+        "type": "FIX",
+        "size": "XS",
+        "owner": "po",
+        "status": "TODO",
+        "zone": "docs/agents/system-auditor/",
+        "priority": "medium",
+        "created_at": "2026-06-08T02:17:24Z",
+        "status_note": "From signal A20-AUDITOR-HARDEN-A20-SENSOR (P2, escalate_to agent-father — flow .md change, not apps/ code). Evidence: c103 PASS 00:07Z at uptime 40min, c105 UNHEALTHY 01:03Z tesseract 99.2%; single probe passes between Tesseract runs. Sequence AFTER ARCH-A20-CPU-CGROUP-REVIEW lands so the probe is tuned against the final topology. AC: A-20 check uses 3 probes 5s apart (fail if any fails) or docker-exec probe; validated against an active-OCR window."
       }
     ],
     "archive": [],
@@ -5076,8 +5101,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-08T01:17:08Z",
-    "_updated_by": "po-triage-20260608T0110Z",
+    "_updated_at": "2026-06-08T02:17:24Z",
+    "_updated_by": "po-triage-20260608T0307Z",
     "rows": [
       {
         "id": "sau-c107-b12",
@@ -5087,10 +5112,11 @@
         "type": "data_stale",
         "summary": "SBV FX rates stale 21h+ — sbvRatesRefreshJob 00:00Z success but market.db timestamp stale (check B-12)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "TRIAGED",
         "payload_ref": null,
         "zone_owner": "dev-macro-indicators",
-        "check_id": "B-12"
+        "check_id": "B-12",
+        "resolution": "PO triage 2026-06-08T02:17:24Z: folded into FIX-MACRO-REFRESH-DEAD (priority HIGH->CRITICAL, dispatch slot 2/2). Same SBV feed, fetch-layer dead + silent-swallow success report. Telegram report 3099 resolved duplicate."
       },
       {
         "id": "sau-2026-06-0723-04-13-a20",
@@ -5562,7 +5588,7 @@
       {
         "id": "A20-3RD-CPU-CGROUP-ARCHITECT",
         "type": "recurring_bug_escalation",
-        "status": "OPEN",
+        "status": "TRIAGED",
         "priority": "P1",
         "created_at": "2026-06-08T01:25:00Z",
         "agent": "dev-pdf-extractor",
@@ -5587,7 +5613,8 @@
           ],
           "container_created": "2026-06-07T23:27:14Z",
           "commit_3033e1dc_time": "2026-06-08T01:26:42+0200"
-        }
+        },
+        "resolution": "PO triage 2026-06-08T02:17:24Z: routed -> ARCH-A20-CPU-CGROUP-REVIEW (UNBLOCK, dispatch slot 1/2, architect). sau-c106-a20 folded in. pdfx zone stays frozen for code work until decision."
       },
       {
         "id": "sau-c106-a20",
@@ -5597,13 +5624,14 @@
         "type": "microservice_degraded",
         "summary": "pdf-extractor A-20 health endpoint timeout (recurring, 7d dedup active)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "resolution": "PO triage 2026-06-08T02:17:24Z: folded into A20-3RD-CPU-CGROUP-ARCHITECT -> ARCH-A20-CPU-CGROUP-REVIEW. Same root cause (cpu cgroup quota), 7d dedup marker — no new task."
       },
       {
         "id": "A20-AUDITOR-HARDEN-A20-SENSOR",
         "type": "improvement_proposal",
-        "status": "OPEN",
+        "status": "TRIAGED",
         "priority": "P2",
         "created_at": "2026-06-08T01:37:00Z",
         "agent": "dev-pdf-extractor",
@@ -5619,7 +5647,8 @@
           "c105_result": "UNHEALTHY",
           "c105_tesseract_cpu_pct": 99.2,
           "this_session_observation": "restart at 01:26Z, healthy 01:26-01:37Z (11min), single-probe passes between Tesseract runs"
-        }
+        },
+        "resolution": "PO triage 2026-06-08T02:17:24Z: routed -> FIX-AUDITOR-A20-MULTIPROBE backlog (XS, agent-father, docs/agents/system-auditor/). Sequenced after architect A-20 decision."
       }
     ],
     "archive": [

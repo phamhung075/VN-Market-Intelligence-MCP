@@ -35,3 +35,18 @@
 - Next free slots: FIX-MACRO-REFRESH-DEAD (HIGH) then FIX-PDFX-TEST-LOOP-POLLUTION → FIX-MCP-SUITE-HEALTH-BASELINE chain; FIX-REE-BS-SECTION-REGEX after pdfx healthy.
 - tnb c91 Monday-dish Fed-rate gate (2026-06-09 05:15Z): 5.33% weekday → CRITICAL escalate; 3086 closed as monitoring, gate tracked HERE.
 - Prior carry: SPIKE-UNIFIED-NB-GAP queued; CLEAN-NB-TRIM-PDFX; CLEAN-COWORK-ROSTER-DRIFT; FIX-TA-SANDBOX-DEPGUARD; HPG-REPARSE-POST-REBUILD; 10 yellow eval rows; U3 doc-refresh lane.
+
+## c · 2026-06-08T02:17:24Z — TRIAGE tick 03:07Z RETRY (4 signals + 1 report → BATCH 2 dispatched: architect A-20 review + macro CRITICAL)
+
+**Context:** First spawn died on API transport (no writes lost). TNB c90 already ACKed — no new handoff. WIP 0/2. Gateway tool absent → SID curl fallback throughout.
+
+**Dispositions:** (1) A20-3RD-CPU-CGROUP-ARCHITECT (P1 OPEN) → NEW ARCH-A20-CPU-CGROUP-REVIEW (UNBLOCK, S, apps/pdf-extractor/, slot 1/2). RECURRING-BUG held: dev confirmed cpus:1.0 CFS quota is root cause (Tesseract 99.2% starves uvicorn; ProcessPoolExecutor cannot escape cgroup — 48a64056+3033e1dc both dead ends). Architect decides cpus>=2.0 vs sidecar vs exec healthcheck; unblocks FIX-PDF-EXTRACTOR-UNHEALTHY + 22-filing Q1 batch + 4-ticker reparse + 26 blocked_pdf_extractor queue rows. sau-c106-a20 folded. (2) FIX-BCTC-VPS-QUEUE-STALE-TRIAGE → DONE: router raw-verified live DB (328/48/27/26, stale=0, zero deletions) + auditor c107 B-13=0 + green gates = QA waived (journal S7). (3) sau-c107-b12 CRITICAL SBV-FX-stale-21h → folded into FIX-MACRO-REFRESH-DEAD, HIGH→CRITICAL, slot 2/2; silent-swallow class — task AC now requires fail-loud on job failure. Report 3099 resolved duplicate, channel drained. (4) A20-AUDITOR-HARDEN-A20-SENSOR → NEW FIX-AUDITOR-A20-MULTIPROBE backlog (XS, agent-father, after architect decision). (5) 4× context-bloat dev-pdf-extractor.md → deduped into CLEAN-NB-TRIM-PDFX; notebook 199L = 1L under cap, next janitor slot.
+
+**Queue calls:** FIX-PDFX-TEST-LOOP-POLLUTION deferred 2nd tick (zone frozen + CRITICAL outranked it; gates only FIX-MCP-SUITE-HEALTH-BASELINE). Signal queue now 0 NEW/OPEN.
+
+**Carry-over (next PO cycle):**
+- Verify ARCH-A20-CPU-CGROUP-REVIEW: brief in docs/architecture-briefs/ + healthy >=15min with in-flight /extract under OCR load; then unfreeze pdfx zone, unblock FIX-PDF-EXTRACTOR-UNHEALTHY (reparse VHM/HCM/HSG/KBC), re-queue 26 blocked_pdf_extractor rows, 22-filing batch ingest, FIX-AUDITOR-A20-MULTIPROBE.
+- Verify FIX-MACRO-REFRESH-DEAD: fresh SBV fetch + B-12 AND C-09 PASS + loud-failure path proven (no green-while-stale).
+- Next free slots: FIX-PDFX-TEST-LOOP-POLLUTION → FIX-MCP-SUITE-HEALTH-BASELINE chain; FIX-ALERT-ORPHAN-CORRELATION; CLEAN-NB-TRIM-PDFX (urgent janitor — 199L); FIX-REE-BS-SECTION-REGEX after pdfx healthy.
+- tnb c91 Monday-dish Fed-rate gate (2026-06-09 05:15Z): 5.33% weekday → CRITICAL escalate.
+- Prior carry: SPIKE-UNIFIED-NB-GAP; CLEAN-COWORK-ROSTER-DRIFT; FIX-TA-SANDBOX-DEPGUARD; HPG-REPARSE-POST-REBUILD; CTG cycle-22 first-extraction watch; 10 yellow eval rows; U3 doc-refresh lane.

@@ -61,3 +61,21 @@
 - c09 macro-stale for slot 2 — rejected: HIGH < CRITICAL; backlogged next-free-slot
 **why-decision:** Severity + unblock leverage: pdf-extractor unhealthy is 3rd A-20-class recurrence gating the largest product backlog (22 filings); c16 is the only CRITICAL. Recurring-bug rule armed in task note (event-loop starvation again → architect, no 3rd patch).
 **why-change:** FIX-PDFX-TEST-LOOP-POLLUTION deferred one tick — prod outage outranks planned pick.
+
+### STEP po-S7 · po · 2026-06-08T02:17:24Z
+**task-id:** FIX-BCTC-VPS-QUEUE-STALE-TRIAGE
+**what-done:** Flipped TODO→DONE; QA pass waived; residual (26 blocked_pdf_extractor rows) chained to architect A-20 decision.
+**what-considered:**
+- Queue a QA pass (agent RETURN said "NEXT: qa")
+- Accept on existing evidence — gates green (tsc 0, bun 60/0, tools=157, sched=76) + router raw-verify of live DB (deferred_infra=328/done=48/url_not_found=27/blocked_pdfx=26, stale=0, zero deletions) + independent auditor c107 B-13=0
+**why-decision:** Three independent verifications incl. raw DB values (router-verify-raw-not-badges) beat a 4th redundant QA cycle; classification fix is data-status-only, no serve-path code.
+**why-change:** no change from plan.
+
+### STEP po-S8 · po · 2026-06-08T02:17:24Z
+**task-id:** ARCH-A20-CPU-CGROUP-REVIEW
+**what-done:** Triage tick 03:07Z RETRY — routed A20-3RD-CPU-CGROUP-ARCHITECT → ARCH-A20-CPU-CGROUP-REVIEW (UNBLOCK, slot 1/2, architect); folded sau-c106-a20; escalated FIX-MACRO-REFRESH-DEAD HIGH→CRITICAL (sau-c107-b12 + report 3099 duplicate, slot 2/2); queued FIX-AUDITOR-A20-MULTIPROBE (agent-father); deduped 4 context-bloat signals into CLEAN-NB-TRIM-PDFX; deferred FIX-PDFX-TEST-LOOP-POLLUTION 2nd tick.
+**what-considered:**
+- Slot 2 = FIX-PDFX-TEST-LOOP-POLLUTION (deferred-once pick, test-only so maybe exempt from zone freeze)
+- Slot 2 = FIX-MACRO-REFRESH-DEAD (fresh CRITICAL, silent-swallow success report, feed dead ~30d)
+**why-decision:** CRITICAL data-integrity outranks MED test hygiene; pdfx zone frozen under RECURRING-BUG rule anyway — concurrent churn in a zone under architect review invites conflicts for a one-tick saving.
+**why-change:** Pollution fix deferred a 2nd consecutive tick — acceptable: it gates only FIX-MCP-SUITE-HEALTH-BASELINE (no prod impact).
