@@ -6,6 +6,16 @@
 
 ---
 
+### STEP architect-S2 · architect · 2026-06-08T08:20:00Z
+**task-id:** A20-EVENTLOOP-STARVATION-ARCHITECT
+**what-done:** Diagnosed event-loop starvation root cause in PdfplumberExtractionEngine; issued fix design (asyncio.to_thread wrappers); authored architecture brief 2026-06-08-pdf-extractor-eventloop-starvation.md
+**what-considered:**
+- Option A: uvicorn workers>1 (ruled out: multiplies RSS footprint 600MB/worker; reverses max_workers=1 host-safety decision; blunt instrument)
+- Option B: wrap PdfplumberExtractionEngine sync pdfplumber+pytesseract calls in asyncio.to_thread() (chosen: minimal, targeted, consistent with codebase pattern, no memory impact)
+- Option C: gunicorn+uvicorn workers (ruled out: same multi-process RSS problem as Option A)
+**why-decision:** extract_tables() and extract_text_ocr() in extraction_engine.py are async-def but block the event loop synchronously (pdfplumber page iteration + pytesseract.image_to_string() — NO await). /health cannot interleave until extraction completes. asyncio.to_thread() is already the established offload pattern in 6+ other infrastructure files; DDD-clean (no caller changes needed).
+**why-change:** prior patches addressed wrong layer (cgroup/cpu). This is event-loop blocking, not CPU quota exhaustion. Root cause is in infrastructure/extraction_engine.py, not docker-compose.yml.
+
 ### STEP architect-S1 · architect · 2026-06-08T02:30:00Z
 **task-id:** ARCH-A20-CPU-CGROUP-REVIEW
 **what-done:** Raised pdf-extractor cpus limit from 1.0 to 2.0 in docker-compose.yml; bumped healthcheck start_period from 15s to 60s; authored architecture brief 2026-06-08-pdf-extractor-cpu-cgroup-fix.md

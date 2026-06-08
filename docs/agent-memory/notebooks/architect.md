@@ -1,8 +1,32 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-08 02:26 UTC | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
+**Last updated:** 2026-06-08 08:20 UTC | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-08T08:20Z — A20-EVENTLOOP-STARVATION-ARCHITECT: event-loop blocking in PdfplumberExtractionEngine
+
+**Task:** A20-EVENTLOOP-STARVATION-ARCHITECT (UNBLOCK, M, P1, 4th recurrence, zone: apps/pdf-extractor/)
+
+**Root cause (evidence-first):** `PdfplumberExtractionEngine.extract_tables()` and `extract_text_ocr()` in `infrastructure/extraction_engine.py` are declared `async def` but contain NO `await`. They run pdfplumber page iteration and `pytesseract.image_to_string()` synchronously on the uvicorn event loop. During a POST /extract call, the event loop is fully blocked — `/health` (which needs the event loop to return immediately) cannot be served until extraction completes. cpus:2.0 makes the block run faster, but does NOT allow /health to interleave. This is why the 4th recurrence survived the cgroup fix.
+
+**Decision: Option B — asyncio.to_thread() wrappers.** Extract sync logic to `_extract_tables_sync()` + `_extract_text_ocr_sync()` helpers; make the async methods thin `asyncio.to_thread()` wrappers. Consistent with 6+ other infrastructure files. No caller changes, no memory impact, no workers change.
+
+**Options rejected:**
+- Option A (uvicorn workers>1): multiplies RSS 600MB/worker; reverses max_workers=1 host-safety decision.
+- Option C (gunicorn+uvicorn): same multi-process RSS problem.
+
+**Files to change:**
+- `apps/pdf-extractor/infrastructure/extraction_engine.py` — asyncio.to_thread() wrappers
+- `apps/pdf-extractor/__tests__/unit/test_extraction_engine_nonblocking.py` — NEW TC-EE-1/2
+
+**Brief:** `docs/architecture-briefs/2026-06-08-pdf-extractor-eventloop-starvation.md`
+
+**AC:** host /health returns 200 within 5s WHILE /extract OCR job in flight, >=15min persistent (multi-probe, not single-probe pass).
+
+**BUILD-STANDARD:** not-applicable (bug fix, no new primitives)
+
+**NEXT:** dev-pdf-extractor implements → ops targeted rebuild (NEVER down&&up) → FIX-AUDITOR-A20-MULTIPROBE
 
 ## 2026-06-08T02:26Z — ARCH-A20-CPU-CGROUP-REVIEW: pdf-extractor cpus 1.0→2.0
 
@@ -157,42 +181,4 @@ Tier ruling for SBV administered max deposit rate: `tier:2 / is_estimate:false` 
 **Files changed:** `docs/architecture-briefs/2026-06-04-data-serve-integrity.md`, `docs/handoffs/DSI-ARCH.md`.
 **Next:** dev-macro-indicators implements Go code change per §2 addendum spec.
 
-## 2026-06-04T19:30Z — DSI-ARCH: DATA-SERVE-INTEGRITY brief + per-zone split
-
-**Brief:** `docs/architecture-briefs/2026-06-04-data-serve-integrity.md`
-**Handoff:** `docs/handoffs/DSI-ARCH.md`
-
-**Fleet invariant defined (DSI-INV-1):** No served macro/price/financial value may be a hardcoded substitute presented as live. Fallback = FAIL-LOUD OR carry-forward with per-field source_tier + true fetched_at (never re-stamped) + is_estimate that propagates fetcher → DB → tool output → TS type → render.
-
-**Regression root-cause confirmed:**
-- `macroIndicatorSla.ts:35,73` queries `country='VN'` — dead since commit 7a0adfdc (1923a, 2026-05-17) which moved active writer to `'vietnam'`.
-- `freshnessSlaChecker` always returns false (no row found) → SLA alert never fires.
-- Domain fetcher (`macroIndicatorFetcher.ts`) writing `'VN'` is dead code (production path returns `success:false`).
-- push-gso HTTP endpoint (server.ts:1435,1520) defaults to `'VN'` — may write rows if VPS omits country.
-- `usecases.go` allLive flag covers only oil/gold/usdVnd, NOT carry/yield — fixture fed/deposit invisible in dataSource.
-
-**Per-zone split:**
-- dev-mcp-server: S1-SLA (XS, first), S1-FE-TYPE (S), S2-PRICE client side (S), S3-SECTOR-FIN (L, P2)
-- dev-stock-price: S2-PRICE service side (M) — Staleness field missing from FetchPriceResponse DTO
-- dev-macro-indicators: LATENT LANDMINE (not deployed, backlog only)
-
-**Sequence:** DSI-S1-SLA first (restores detection net) → DSI-S1-MACRO + DSI-S1-FE-TYPE → DSI-S2-PRICE → DSI-S3-SECTOR-FIN.
-
-**Next agent:** BA-DSI. orch-state.head.next_agent = 'ba'.
-
-## 2026-06-04T10:30Z — FIX-I officer-appointment-year / CEO tenure design
-
-**Handoff:** `docs/handoffs/TASK_FIX-I.md`
-
-**Multi-zone split (relay to pm):**
-- Zone A: `vps-scripts/` → dev-vps-crawls — Python scraper + shell loop + systemd, mirrors FIX-G agm-plan pattern exactly; serves via VPS:8765/proxy/board-details.
-- Zone B: `apps/mcp-server/` → dev-mcp-server — extend `vnstock_officers` with `appointment_year INTEGER` nullable column (ALTER TABLE migration); new `boardDetailsFetcher.ts` + `boardDetailsStore.ts` + `boardDetailsJob.ts` (all mirror agmPlan counterparts); extend `companyProfileTools.ts` to surface `appointment_year` + `ceo_tenure_years` on every `OfficerEntry`.
-
-**Key design decisions:**
-- EXTEND `vnstock_officers` (not new table): avoids name-mismatch JOIN orphans; single-table read in get_company_profile preserved; UPDATE-only in store (not INSERT OR REPLACE) to preserve VCI-sourced own_percent/quantity columns.
-- Only current-term (page=1) appointment year stored — no historical term pagination.
-- `appointment_year=null` for N/A entries; `ceo_tenure_years=null` propagated honestly (no fabrication).
-- BUILD-STANDARD: lean (existing service, new feature).
-
-**Sprint close gate:** FIX-I is the last open core item of RAPID-DATA-LAYER. Ship + router raw-verify `get_company_profile("FPT").officers[0].appointment_year=1988` → sprint closes.
 
