@@ -147,15 +147,19 @@ describe("TC-1: pollNews with vietstock items inserts rows into rag_analyses", (
     const item2 = makeVpsItem({ url: "https://vietstock.vn/article-2", title: "HPG hồi phục sau áp lực bán" });
     const item3 = makeVpsItem({ url: "https://vietstock.vn/article-3", title: "VCB công bố kết quả kinh doanh quý 1" });
 
+    // All network sources + RAG HTTP mocked to avoid CI sandbox latency
     await pollNews({
       db,
+      ragInsert: async () => {},
       fetchers: {
-        vietstock:        async () => [item1, item2, item3],
-        cafef:            async () => [],
-        vnexpress:        async () => [],
-        vneconomy:        async () => [],
-        reuters:          async () => [],
-        tradingeconomics: async () => [],
+        vietstock:         async () => [item1, item2, item3],
+        cafef:             async () => [],
+        vnexpress:         async () => [],
+        vneconomy:         async () => [],
+        reuters:           async () => [],
+        tradingeconomics:  async () => [],
+        teChromiumNews:    async () => [],
+        newsapi:           async () => [],
       },
       watchlist: [],
     });
@@ -168,7 +172,8 @@ describe("TC-1: pollNews with vietstock items inserts rows into rag_analyses", (
       "SELECT COUNT(*) as n FROM rag_analyses WHERE created_at >= ?",
     ).get(midnight) as { n: number }).n;
     expect(recent).toBe(3);
-  });
+  // pollNews involves dynamic module loading; 15s guards Bun's 5s default
+  }, 15_000);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -194,15 +199,19 @@ describe("TC-2: assembleEveningSummary returns topStories and newsCount = 3 afte
     const item2 = makeVpsItem({ url: "https://vietstock.vn/tc2-article-2", title: "HPG hồi phục sau áp lực bán" });
     const item3 = makeVpsItem({ url: "https://vietstock.vn/tc2-article-3", title: "VCB công bố kết quả kinh doanh quý 1" });
 
+    // All network sources + RAG HTTP mocked to avoid CI sandbox latency
     await pollNews({
       db,
+      ragInsert: async () => {},
       fetchers: {
-        vietstock:        async () => [item1, item2, item3],
-        cafef:            async () => [],
-        vnexpress:        async () => [],
-        vneconomy:        async () => [],
-        reuters:          async () => [],
-        tradingeconomics: async () => [],
+        vietstock:         async () => [item1, item2, item3],
+        cafef:             async () => [],
+        vnexpress:         async () => [],
+        vneconomy:         async () => [],
+        reuters:           async () => [],
+        tradingeconomics:  async () => [],
+        teChromiumNews:    async () => [],
+        newsapi:           async () => [],
       },
       watchlist: [],
     });
@@ -214,7 +223,8 @@ describe("TC-2: assembleEveningSummary returns topStories and newsCount = 3 afte
 
     expect(summary.newsCount).toBe(3);
     expect(summary.topStories.length).toBe(3);
-  });
+  // pollNews + assembleEveningSummary involve dynamic module loading; 15s guards Bun's 5s default
+  }, 15_000);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -244,14 +254,22 @@ describe("TC-3: pushing the same URL twice inserts exactly 1 row (INSERT OR IGNO
       tradingeconomics: async () => [] as RssItem[],
     };
 
+    // All network sources + RAG HTTP mocked to avoid CI sandbox latency
+    const noopFetchersWithAll = {
+      ...noopFetchers,
+      teChromiumNews: async () => [] as RssItem[],
+      newsapi: async () => [] as RssItem[],
+    };
     await pollNews({
       db,
-      fetchers: { vietstock: async () => [duplicateItem], ...noopFetchers },
+      ragInsert: async () => {},
+      fetchers: { vietstock: async () => [duplicateItem], ...noopFetchersWithAll },
       watchlist: [],
     });
     await pollNews({
       db,
-      fetchers: { vietstock: async () => [duplicateItem], ...noopFetchers },
+      ragInsert: async () => {},
+      fetchers: { vietstock: async () => [duplicateItem], ...noopFetchersWithAll },
       watchlist: [],
     });
 
@@ -259,7 +277,8 @@ describe("TC-3: pushing the same URL twice inserts exactly 1 row (INSERT OR IGNO
       "SELECT COUNT(*) as n FROM rag_analyses WHERE source_url = ?",
     ).get("https://vietstock.vn/dup-article") as { n: number }).n;
     expect(count).toBe(1);
-  });
+  // TC-3 calls pollNews twice; 15s guards Bun's 5s default
+  }, 15_000);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
