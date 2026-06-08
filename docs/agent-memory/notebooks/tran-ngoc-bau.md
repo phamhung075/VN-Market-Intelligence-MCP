@@ -1,5 +1,39 @@
 # Tran Ngoc Bau — Working Notebook
 
+## c91 · 2026-06-08T20:21Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Session: manual-spawn (file-evidence, MCP gateway unavailable) | Auto-cures: 0
+
+**Previous handoff ACK:** c90 ACK'd by PO at 2026-06-07T21:25:56Z. Tasks created: FIX-FRED-YAHOO-WEEKEND-STALE (HIGH, apps/mcp-server) + SPIKE-UNIFIED-NB-GAP (120m). F2 BCTC: FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN promoted ACTIVE.
+
+**Dashboard inbox:** [dashboard] orch-state.json signal_queue: no tran-ngoc-bau rows present. Inbox empty.
+
+**Chef pipeline (2026-06-08, Sunday) — PIPELINE ANOMALY: weekday-only slots fired on Sunday:**
+- chef-morning (cron `15 5 * * 1-5`): last_fired=2026-06-08T05:24:41Z — SHOULD NOT FIRE Sunday. Intraday dish published claiming "VN market OPEN" on closed Sunday. **F-SUNDAY-SCHEDULER-FIRE CRITICAL NEW.**
+- chef-intraday (cron `13 2-8 * * 1-5`): last_fired=2026-06-08T05:24:41Z (same timestamp as morning — cowork dispatcher batch) — SHOULD NOT FIRE Sunday.
+- chef-eod (cron `45 8 * * 1-5`): last_fired=2026-06-08T08:51:03Z — SHOULD NOT FIRE Sunday. EOD dish published with stale Sunday prices.
+- chef-evening (cron `45 19 * * *`): last_fired=2026-06-08T19:51:06Z — CORRECT (daily). Evening dish published normally.
+- start_count=3(or 4 intraday+morning counted separately) close_count=3 guaranteed_ok=FALSE (scheduler violation, not pipeline failure per se — dishes published but on wrong day)
+
+**Layer scores c91:**
+- Intraday/Morning 05:25Z: L1 PASS (4 state transitions: OPEC, USD/VND, Brent +5.4σ, gold +5.27σ), L2 PARTIAL (Fed 3.62 ✓, PMI sub-components absent, EFFR-IORB absent), L3 PARTIAL (carry 1.38pp is_estimate=false ✓, VIRA absent), L4 PARTIAL (3/4 pillars present, GAS PE not cited, [phase: transition][tier: equity] declared), L5 PARTIAL (hexagram 501, per-ticker conviction present), L6 PASS (DSI honored, extremes flagged, hexagram-skip clean) → 3/6 | 9-step 5.5/9 | CRITICAL CONTEXT: VN market CLOSED on Sunday — "VN market OPEN" claim is factually wrong.
+- EOD 08:37Z: L1 PASS (USD/VND + gold transitions), L2 PARTIAL (PMI sub-components absent, EFFR-IORB absent), L3 PARTIAL (carry is_estimate=false ✓, VIRA absent), L4 PARTIAL-HIGH ([phase: slowdown][tier: fixed_income] declared, 3/4 pillars: COC+EPS+Valuation, M2 neutral noted), L5 PARTIAL (hexagram 501, Khôn 87%+Sư 100% present), L6 PASS (DSI honored, signal IDs cited) → 3.5/6 BEST | 9-step 6/9 | CONTEXT: Sunday EOD dish with stale VN-Index 1790.53 (closed market).
+- Evening 19:37Z: L1 PASS (USD/VND 25500 state transition ✓), L2 PARTIAL (Fed 3.63% ✓, PMI sub-components absent), L3 PARTIAL (carry 1.38pp is_estimate=false ✓, VIRA absent, M2 gap noted), L4 PARTIAL-HIGH ([phase: slowdown][tier: fixed_income|quality] declared, 3/4 pillars: COC+EPS+Valuation), L5 PARTIAL (hexagram 501, per-ticker VIC/Banking/MBB hexagrams cited, "no Lão peaks" noted ✓), L6 PASS (multi-source cited, causality clear, regime drift checked) → 3.5/6 | 9-step 6/9
+- Business context: ABSENT — F9 persistent (17th consecutive cycle)
+
+**Direction STABLE:** F-FED-RATE-REGRESSION CLOSED (all 3 dishes cite 3.62-3.63% — correct; c90 regression was Saturday FRED path, weekday path normal). F-NB-MISSING partially persists (notebook header "Last updated: 05:25Z" but EOD+Evening entries exist below — header not updated = partial Step 8 failure, 4th cycle). New CRITICAL: F-SUNDAY-SCHEDULER-FIRE. Layer scores stable at 3.5/6 (same as c88-c90 pattern).
+
+**New findings:**
+- F-SUNDAY-SCHEDULER-FIRE=CRITICAL (new): chef-morning + chef-eod + chef-intraday (all `* * 1-5`) fired on Sunday 2026-06-08. Intraday dish claimed "VN market OPEN" on a Sunday (HOSE/HNX closed). EOD dish published stale prices as if market-day data. The cowork dispatcher is not enforcing day-of-week constraints — batch-fired all enabled slots regardless of cron `1-5` restriction. Root cause: cowork dispatcher fires on a schedule of its own (*/15) and may not be respecting individual slot cron day-of-week filters.
+- F-FED-RATE-REGRESSION=CLOSED: All c91 dishes cite Fed 3.62-3.63% (correct). c90 was Saturday-specific FRED path issue. Monday-equivalent (Sunday evening) now clean. FIX-FRED-YAHOO-WEEKEND-STALE sprint active — this finding is no longer acute.
+- F-NB-HEADER-STALE=LOW (carry-forward, 4th cycle): unified-agent notebook header "Last updated: 2026-06-08T05:25Z" despite EOD+Evening entries below. Step 8 partial failure (content written, header not updated). SPIKE-UNIFIED-NB-GAP sprint active — root cause investigation underway.
+
+**Structural gaps (carry-forward):** F2=MED BCTC overdue (CTG cycle 25+, pipeline blocked; VCB/D2D/TCH new filings also blocked) | F3=MED PMI sub-components | F4=MED VIRA absent | F9=MED business context (17th) | F5=LOW hexagram 501
+
+**Auto-cures:** None. F-SUNDAY-SCHEDULER-FIRE is a dispatcher/infrastructure issue, not addressable via chef.md flow edit. Escalating to PO as CRITICAL.
+
+**Actions:** Handoff docs/handoffs/tnb-audit-latest.md written | Signal docs/signals/tnb-2026-06-08T2021Z-c91.json | Notebook committed | WORK report pending (MCP unavailable — report inline)
+
 ## c90 · 2026-06-07T20:13Z
 
 **Status:** NEEDS_ATTENTION | Direction: DEGRADING | Session: manual-spawn (file-evidence, MCP gateway unavailable) | Auto-cures: 0
