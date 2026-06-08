@@ -1,0 +1,18 @@
+{
+  "signal_type": "cowork-team-tick",
+  "classification": "FIRE",
+  "tick_id": "21:06",
+  "fire_time": "2026-06-08T21:06:03Z",
+  "emitted_at": "2026-06-08T21:06:34Z",
+  "drift_min": 6,
+  "matched_slots": ["bctc-analyst-slot-3"],
+  "won_slots": ["bctc-analyst-slot-3"],
+  "collision_warn": [],
+  "leader_lock": "acquired_fresh",
+  "leader_lock_note": "claimed=true stolen=true — 20:21 leader (ttl 1800s, renewed ~20:51) expired untouched across silent ticks 20:36/20:51; reclaimed fresh at 21:06. Slot token remains hard dup-spawn gate.",
+  "spawned": ["docs/agents/bctc-analyst/flow/main.md"],
+  "agent_ids": ["ab87bfff5b54aa8a1"],
+  "calendar_status": "closed",
+  "macro": {"vnIndex": 1790.53, "changePct": -2.63, "regime": "RISK_OFF", "volatility_level": "high"},
+  "note": "bctc-analyst-slot-3 cron 0 21 UTC, policy bctc-offmarket cadence 240min, last fired 2026-06-07T21:03:30Z. Off-market financial analysis pass (routine/earnings-release per calendar gate). E2 guard: 21:06 outside [02:00,08:00) VN window — valid. Single slot, collision moot. Token won/released, snapshot fresh, emit ok 21:06:34Z. Carry: CTG cycle 25+ DATA_INSUFFICIENT, EIB governance #5417."
+}

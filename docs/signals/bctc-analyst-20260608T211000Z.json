@@ -1,0 +1,8 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] BCTC extraction pipeline blocked: CTG/VCB/REE/NVL/D2D/TCH PDFs stored but get_bctc_full returns empty. CTG at cycle 26+. 6 release tickers cannot produce Q1-2026 analysis. Root cause: PDF extraction pipeline not processing these files. URGENT fix needed.",
+  "priority": "high",
+  "createdAt": "2026-06-08T21:10:00Z"
+}

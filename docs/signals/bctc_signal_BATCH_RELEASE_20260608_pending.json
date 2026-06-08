@@ -1,29 +1,22 @@
 {
-  "ticker": "BATCH",
   "signal_type": "bctc_signal",
-  "quarter": "Q1-2026",
   "mode": "release",
-  "status": "BLOCKED",
-  "blocked_reason": "extraction_pipeline_lag_cycle_25plus",
-  "beat_miss": null,
-  "net_profit_delta_pct": null,
-  "release_tickers": ["CTG", "VCB", "REE", "NVL", "D2D", "TCH"],
-  "pub5_blocked": ["ACB", "EIB"],
-  "pdf_stored": {
-    "CTG": "CTG_2026_Q1.pdf (6.0MB, 2026-06-05/08)",
-    "VCB": "VCB_2026_Q1.pdf (8.1MB, 2026-06-07)",
-    "REE": "REE_2026_Q1.pdf (3.3MB, 2026-06-07)",
-    "NVL": "NVL_2026_Q1.pdf (1.9MB, 2026-06-08)",
-    "D2D": "D2D_2026_Q1.pdf (11.6MB, 2026-06-07)",
-    "TCH": "TCH_2026_Q1.pdf (15.1MB, 2026-06-07)"
+  "status": "PENDING_EXTRACTION",
+  "quarter": "Q1-2026",
+  "tickers": ["CTG", "VCB", "REE", "NVL", "D2D", "TCH"],
+  "detail": "PDFs stored. get_bctc_full empty for all 6 tickers. Extraction pipeline lag: CTG=cycle 26+, VCB=2, REE=2, D2D=2, TCH=2, NVL=2.",
+  "partial_vector_store": {
+    "CTG": {
+      "lnst_trieuVND": 8960041,
+      "doanh_thu_trieuVND": 3910,
+      "source": "vector_store",
+      "verified": false
+    }
   },
-  "partial_vector_data": {
-    "CTG": "LNST 8,960ty, doanh thu 3,910ty (từ vector store — chưa xác minh structured BCTC pathway)"
-  },
-  "signal_id": 5418,
-  "cycle_id": "20260608-1800",
-  "cycle_slot": "bctc-analyst-slot-2",
-  "escalation_required": true,
-  "escalation_note": "Pipeline fix cần thiết gấp. CTG đã ở cycle 25+. Dispatch tới dev-team.",
-  "ts": "2026-06-08T18:10:00Z"
+  "pipeline_fix_required": true,
+  "escalation": "CTG 26+ cycles blocked — URGENT dev-team fix needed",
+  "signal_id": 5434,
+  "cycle": "20260608-2100",
+  "slot": "bctc-analyst-slot-3",
+  "emitted_at": "2026-06-08T21:10:00Z"
 }
