@@ -6966,6 +6966,17 @@
         "severity": "CRITICAL",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "sau-2026-06-09T05:06:15Z",
+        "ts": "2026-06-09T05:06:15Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "microservice_degraded",
+        "summary": "mcp-server A-30 memory pressure 97.75% (OOM risk, capped 2GB)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "archive": [
