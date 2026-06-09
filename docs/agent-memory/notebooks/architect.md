@@ -1,8 +1,25 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09T10:00Z | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 10:31 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T11:00Z — SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY: addendum — brownfield DI audit + nondeterminism fold
+
+**Task:** SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY — Addendum
+
+**Brownfield DI audit confirmed (sha 3663bd12):**
+- `analysis.ts` handler calls `runImpactChain({ newsText, watchlist })` with NO injections. `_testCommodityFetcher`/`_testSbvFetcher`/`_testRagRetriever` absent from Zod schema. **Production change REQUIRED**: add 3 `z.any().optional()` params + pass through. Risk-4 flagged: use `z.function().optional()` to avoid TS type errors vs `RunCascadeInput` typed function signatures.
+- `retriever.js` mock in 123 confirmed dead (G5b complete; zero production import chain). Remove it = zero-risk (Risk-2 RESOLVED).
+- grep confirms 083 and 123 are the ONLY files installing `mock.module()` for sbv.js/yahooFinance.js. No other contaminator.
+- All 4 `fetch_and_analyze` tests in 083 are network-agnostic (typeof string asserts + allSettled+outer-catch). Risk-1 downgraded to LOW.
+
+**Nondeterminism finding folded:**
+- Empirical: same test content produces 135 vs 138 fail across two CI runs (±3 band). Gate threshold: must land CLEARLY below 132.
+- Projected post-fix: ~113 (22 victims cleared) → 19-count headroom above 132 noise floor. Robust.
+- Per-victim verification: assert named tests (028/1487/025/1423a) flip fail→pass in CI log, not just global delta.
+
+**Brief updated:** `docs/architecture-briefs/2026-06-09-spike-ci-c5-contam-safe-restrategy.md` (Sections 5, 6-Addendum, 7, 8 rewritten)
 
 ## 2026-06-09T10:00Z — SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY: contamination-safe respec for sbv/yahoo/ragHttpClient null-in-CI
 

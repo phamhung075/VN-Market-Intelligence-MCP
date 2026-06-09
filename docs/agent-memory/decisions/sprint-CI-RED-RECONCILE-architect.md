@@ -224,6 +224,33 @@ Expected impact: 85-95% reduction (629 → <50 native fail+error).
 
 ---
 
+### STEP arch-S11 (DJ-GATE-1) · architect · 2026-06-09T12:00Z
+
+**task-id:** FIX-CI-1423E-PREEXISTING-CLUSTER
+**sprint:** CI-RED-RECONCILE
+**what-done:** Triage of 22-failure 1423e cluster. Ran both test files locally. Traced git history
+of `carryTools.ts` and `1423e.test.ts`. Confirmed `1423e-macro-calendar.test.ts` (23/23 pass) is
+the canonical domain-service test. Classified `1423e.test.ts` (9 fail / 13 total) as TEST-OBSOLETE.
+Produced brief at `docs/architecture-briefs/2026-06-09-ci-1423e-preexisting-cluster.md`.
+**what-considered:**
+- TEST-STALE/REWRITE: considered whether the HTTP-proxy interface layer could be tested with fetch
+  mocking. REJECTED: `_testReferenceDate` seam is gone from prod schema forever; any new MCP-layer
+  test would need full fetch mock (different test strategy); existing domain tests already cover all
+  calendar logic — an HTTP-proxy test adds nothing and requires a live or mocked microservice.
+- PROD-BROKEN / FIX: considered whether `get_macro_calendar` is broken. REJECTED: tool correctly
+  proxies HTTP, returns honest unavailable error in CI (no service running). Prod behavior is correct.
+- TEST-OBSOLETE / REMOVE: CHOSEN. `_testReferenceDate` never existed in post-rewire carryTools.ts.
+  Tests assert on domain-level MacroCalendarResult shape but tool returns HTTP-proxied JSON. Test
+  was written for 2026-04-29 architecture; that architecture was superseded 2026-05-23.
+**why-decision:** The test file's entire strategy (seed via `_testReferenceDate` → assert domain-
+level MacroCalendarResult) depends on the tool calling the domain function directly. That call was
+removed in commit `98df0f43` (P2-B1 rewire). No fallback exists. REMOVE is the only action aligned
+with the /goal clause "obsolete tests must be REMOVED."
+**why-change:** No change from /goal directive; escalation condition (2+ CI commits in module) met
+but does not change the REMOVE verdict — escalation note added to brief for po backlog.
+
+---
+
 ### STEP arch-S9 (DJ-GATE-1) · architect · 2026-06-09T06:30Z
 
 **task-id:** SPIKE-CI-C1-MACRO-INJECT-SEAM
