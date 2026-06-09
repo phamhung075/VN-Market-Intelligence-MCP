@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T12:30Z",
-  "_updated_by": "architect-c1134-triage",
+  "_updated_at": "2026-06-09T12:30:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T12:30Z",
-    "_updated_by": "architect-c1134-triage",
+    "_updated_at": "2026-06-09T12:30:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3687,7 +3687,7 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
