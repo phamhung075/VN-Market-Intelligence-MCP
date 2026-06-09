@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T17:27:54Z",
-    "_updated_by": "po-S54",
+    "_updated_at": "2026-06-09T18:04:35Z",
+    "_updated_by": "po-S55",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4072,7 +4072,7 @@
             "id": "BATCH0-CI-C-DV-DELIBERATE-VIOLATION-CLEANUP",
             "type": "BUG-FIX",
             "owner": "architect-first-then-dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -4092,13 +4092,15 @@
             "obsolete_test_discipline": "/goal REMOVE-obsolete clause: every REMOVAL names the protecting sibling above so no coverage gap.",
             "spec_brief": "docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md",
             "created_at": "2026-06-09T17:27:54Z",
-            "created_by": "po-S54"
+            "created_by": "po-S54",
+            "closed_by": "po-S55",
+            "actual_result": "GATE PASSED (ci-batch0-gate-result-e1ee78b9-20260609T1758Z; task_under_test alias BATCH0-CI-DELIBERATE-VIOLATION-RECONCILE): 6 victim anchors 0-fail in CI run 27225351774. Mixed class: 1331a TEST-2 REMOVED-OBSOLETE (alert-engine Go-only, sibling TEST-1 retained), DWF-is-trading-day AC-P0-3-6 it->it.failing (genuine deliberate-violation, 12 boundary siblings green), DWF-coordination-phase2 DV-P2-4 config-drift rewrite to split SSOT slot-claim.md/leader-lock.md. Clean -3 (native_fail 45->42, pass 11716->11717, tests 11803->11801 = 2 removed obsolete it()s); errors 0; obsolete-only removals with named protecting siblings."
           },
           {
             "id": "BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE",
             "type": "BUG-FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -4121,7 +4123,9 @@
             },
             "spec_brief": "docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md",
             "created_at": "2026-06-09T17:27:54Z",
-            "created_by": "po-S54"
+            "created_by": "po-S54",
+            "closed_by": "po-S55",
+            "actual_result": "GATE PASSED (ci-batch1-gate-result-54b09df2-20260609T1747Z): 3 transport-hang victims (MSG-1-market-foreign-flow, RAPID-A-get-company-profile-tool, RAPID-H-insider-lookback) rewritten to direct _registeredTools invocation (no MCP InMemoryTransport); all 0-fail in CI run 27224701657; clean additive -10 (native_fail 55->45, pass 11706->11716, fail-delta==pass-delta); zero it() removed, tsc clean."
           },
           {
             "id": "BATCH2-CI-C-ML-MOCK-STUB-LEAK-GUARD",
@@ -4252,29 +4256,29 @@
         ],
         "_updated_by": "po-S52",
         "ci_absolute": {
-          "native_fail": 55,
+          "native_fail": 42,
           "native_errors": 0,
-          "fail_plus_error": 55,
-          "tests": 11803,
-          "pass": 11706,
+          "fail_plus_error": 42,
+          "tests": 11801,
+          "pass": 11717,
           "skip": 42,
-          "sha": "63d53931",
-          "run_id": "27222329410",
-          "bun_job_id": "80380149470",
-          "supersedes": "57 (b106a1ec)",
-          "updated_at": "2026-06-09T17:27:54Z",
-          "updated_by": "po-S54"
+          "sha": "e1ee78b9",
+          "run_id": "27225351774",
+          "bun_job_id": "80390917327",
+          "supersedes": "55 (63d53931)",
+          "updated_at": "2026-06-09T18:04:35Z",
+          "updated_by": "po-S55"
         },
         "long_tail_triage_policy": {
           "goal": "ci/di all passe on GitHub, test update (remove if obsolete) — /goal refined 2026-06-09T07:5xZ",
           "classify_each_residual_bucket": "REWRITE (prod still exists, test stale -> rewrite test to match) vs REMOVE (prod gone/superseded, test obsolete -> DELETE the test, do NOT patch)",
           "remove_examples": "removed test seams, deleted reuters.js, pre-98df0f43 macro section-header format, stale cron schedules",
           "applies_to": "C5+ and all remaining ~135 long-tail rounds; re-profile residual by ROOT-CAUSE pattern (unmocked-HTTP / SSOT-drift / assertion-logic) NOT by file, with the REMOVE-if-obsolete lens",
-          "absolute": "55 (sha 63d53931, run 27222329410, job 80380149470)",
-          "updated_by": "po-S54",
-          "updated_at": "2026-06-09T17:27:54Z",
+          "absolute": "42 (sha e1ee78b9, run 27225351774, job 80390917327)",
+          "updated_by": "po-S55",
+          "updated_at": "2026-06-09T18:04:35Z",
           "under_scope_lesson": "Architect cluster counts are CATEGORY-WIDE SUPERSETS (e.g. C1 '42' netted -12). Dev fixes ONLY the explicitly NAMED files; residual same-pattern files OUT of named scope -> long-tail re-profile, NOT a charge-back to closed task ids. The ONE exception so far: C4 single-file-family count landed EXACTLY (-25) because it was not a category superset.",
-          "band": "~55 +/-3 (floor ~52)"
+          "band": "~42 +/-3 (floor ~39)"
         },
         "dispatch_order": {
           "policy": "biggest-deterministic-win-first; DV removals unblock the count, transport-hang + mock-leak are structural/zero-prod-risk, market-hours/config/assertion later",
