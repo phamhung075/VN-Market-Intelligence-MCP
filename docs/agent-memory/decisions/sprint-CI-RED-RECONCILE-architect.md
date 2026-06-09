@@ -742,3 +742,99 @@ per-class batch dispatch — more efficient.
 - `scripts/ci-isolation-probe.sh` (NEW — reusable isolation probe)
 - `docs/policies/dev-standards.md` (pointer added)
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
+
+---
+
+### STEP arch-S22 (DJ-GATE-1) · architect · 2026-06-09T18:30Z (TUESDAY)
+
+**task-id:** BATCH0-CI-C-DV-DELIBERATE-VIOLATION-CLEANUP
+**sprint:** CI-RED-RECONCILE
+**mode:** TRIAGE CONFIRM (read-only + decision journal + dev spec; no apps/ edits)
+**dispatch_seq:** 0
+**projected_delta:** -4 (55 → 51)
+
+---
+
+#### Per-file triage table
+
+| File | Claim | Live evidence | Verdict | Protecting sibling | Dev edit spec |
+|---|---|---|---|---|---|
+| `1331a-single-writer-guard.test.ts` TEST-2 | Cross-zone require() to nonexistent alert-engine path | `require("../../../alert-engine/src/infrastructure/config")` resolves to `apps/alert-engine/src/infrastructure/config`. `apps/alert-engine/` is a Go service (go.mod, cmd/, pkg/ only) — NO `src/` directory, NO TypeScript infrastructure layer. Bun confirms: `ResolveMessage: Cannot find module '../../../alert-engine/src/infrastructure/config'`. TEST-1 passes (3/4 pass in isolation). | CONFIRMED — REMOVE TEST-2 | TEST-1 ("TEST-1 (structural): two writers to same file cause SQLITE_BUSY") — in-zone, uses bun:sqlite directly, retains the single-writer-lock detectable-BUSY guarantee fully within mcp-server zone | Remove exactly 1 it() block: lines 47–59 in the file. Exact block: `it("TEST-2 (RED): alert-engine ServiceConfig must have ownDbPath !== market.db", () => { ... })` from `it(` at line 47 through the closing `});` at line 59. No other it() touched. |
+| `DWF-is-trading-day.test.ts` (DWF-DEV-MCP-1) AC-P0-3-6 | Deliberate-violation control — test intentionally asserts wrong value to prove calendar is not a stub | File lines 95–106: comment block explicitly states "This test MUST go RED", "INTENTIONALLY WRONG", "If this test PASSES, the calendar is a stub". Assertion: `expect(result.is_trading_day).toBe(true)` on 2025-01-27 (known Tết holiday). `isVnTradingDay("2025-01-27")` returns `{ is_trading_day: false, ... }` — confirmed by live run (1 fail, 12 pass). This IS a genuine DV with explicit DV marker in source. | CONFIRMED — GENUINE DV. Verdict: CONVERT to Bun `.test.failing()` / `.fails()` wrapper (turns red-as-expected into green-passes). Do NOT remove — the DV intent (proving the calendar is not a stub) has long-term value as an executable specification. | The 12 passing tests in the same file (AC-P0-3-1 through Edge cases + getTodayVnDate) collectively retain full trading-day boundary coverage. Specifically AC-P0-3-1 (holiday=false), AC-P0-3-3 (weekend=false), and the corrected AC-P0-3-2 (Monday=true) retain the three-boundary guarantee. | Wrap the single failing it() block: change `it("AC-P0-3-6 DV: asserting holiday 2025-01-27 returns is_trading_day=true — MUST FAIL (proves calendar is not a stub)", () => { ... })` at line 99 to `it.failing("AC-P0-3-6 DV: asserting holiday 2025-01-27 returns is_trading_day=true — MUST FAIL (proves calendar is not a stub)", () => { ... })`. Exact change: replace `it(` at line 99 column 3 with `it.failing(`. No other lines touched. Bun 1.3.13 supports `it.failing()` (documented in bun:test). |
+| `DWF-coordination-phase2.test.ts` DV-P2-4 | Stale DV assertion | PARTIAL CONTRADICTION WITH BRIEF — see detailed finding below. 3 tests fail in isolation (30 pass / 3 fail confirmed by live run). The failing tests: (1) "GREEN: flow file contains explicit ttl_seconds: 180 on per-work-item claims" line 291 — `expect(content).toContain("ttl_seconds: 180")` fails; (2) "RED (deliberate-violation): flow file missing ttl_seconds:180" line 300 — also fails on the same final `expect(content).toContain("ttl_seconds: 180")` at line 315; (3) "Step 0b: leader lock claim must have ttl_seconds: 1800" line 355 — `expect(content).toContain("ttl_seconds: 1800")` fails. Root cause: NB-COWORK-MAIN-SPLIT refactor (2026-06-03) extracted per-work-item claim logic from `main.md` into `slot-claim.md` (ttl_seconds: 180 confirmed present at line 41) and leader-lock logic into `leader-lock.md` (ttl_seconds: 1800 confirmed present at line 27). The `FLOW_FILE` constant in the test still points to `main.md` which is now a thin dispatcher (111L) with zero inline ttl_seconds values. | SEE CONTRADICTION NOTE BELOW | GREEN protecting siblings: tests 1 and 3 in DV-P2-4 (after path correction) retain the R1/AC-P2-5-3 flow-contract coverage; the 30 passing tests in the file retain all coordination-phase2 behavior guarantees | SEE DEV EDIT SPEC BELOW |
+
+---
+
+#### CONTRADICTION FOUND — DV-P2-4
+
+The arch brief (Section 3, C-DV) states: "One is a deliberate-violation that fails because the prod file DOES contain ttl_seconds:180 (i.e., prod is correct and the DV is stale)."
+
+**Live evidence contradicts this framing.** The failing mechanism for ALL THREE tests is identical: `main.md` does not contain `ttl_seconds: 180` or `ttl_seconds: 1800`. The DV test (test 2) fails for the SAME reason as the two "green" tests — not because "prod IS correct and the DV is stale" in the sense of a positive assertion. All three fail because the FLOW_FILE path is stale (points to `main.md` post-split, not to the sub-flow files).
+
+**Classification correction:**
+- Test 2 (the DV) is NOT "obsolete because prod file contains the value." It is CONFIG-DRIFT (wrong file path after NB-COWORK-MAIN-SPLIT).
+- Tests 1 and 3 are NOT "genuine GREEN tests that fail because values are absent from the flow." The values ARE present in the flow — in `slot-claim.md` and `leader-lock.md`.
+- All 3 are CONFIG-DRIFT with the same root cause: `FLOW_FILE` points to the wrong file after the main.md split.
+
+**Revised verdict for DV-P2-4:**
+- REMOVE test 2 (the DV `it("RED (deliberate-violation): flow file missing ttl_seconds:180...")`) — its assertion logic (`expect(content).toContain("ttl_seconds: 180")`) duplicates test 1's final assert, and the DV framing (proving the literal is PRESENT by asserting absence would fail) is vestigial once the FLOW_FILE is corrected. The DV adds no safety once test 1 is correct.
+- REWRITE tests 1 and 3 — do NOT remove. Correct the `FLOW_FILE` constant (or add a second constant for `leader-lock.md`) so they point to the sub-flow files that actually contain the asserted values. These retain the R1/AC-P2-5-3 flow-contract coverage and will go GREEN after path correction.
+
+**Projected delta impact:** The brief claims -4 from 3 DV files. With this correction:
+- 1331a TEST-2: -1 (remove)
+- DWF-is-trading-day AC-P0-3-6: .fails() wrapper → 0 fail (passes-as-expected)
+- DWF-coordination-phase2 DV-P2-4: REMOVE test 2 (-1), REWRITE tests 1+3 to correct path (-2 more when path fixed)
+- Total: still -4 fails cleared, but mechanism differs for DV-P2-4 (REWRITE tests 1+3 to correct sub-flow paths; only REMOVE test 2)
+
+---
+
+#### Dev edit spec — DWF-coordination-phase2.test.ts (DV-P2-4)
+
+**Files touched (1):** `apps/mcp-server/src/__tests__/DWF-coordination-phase2.test.ts`
+
+**Edit 1 — REMOVE the DV it() block (test 2 in DV-P2-4):**
+Remove the it() block at lines 300–316:
+```
+  it("RED (deliberate-violation): flow file missing ttl_seconds:180 on per-work-item claims would fail this test", () => {
+    const content = readFileSync(FLOW_FILE, "utf-8");
+    ...
+    expect(content).toContain("ttl_seconds: 180"); // RED if removed
+  });
+```
+Exact removal: lines 300–316 inclusive (the entire `it("RED (deliberate-violation)..."` block through its closing `});`).
+
+**Edit 2 — REWRITE test 1 (GREEN: ttl_seconds:180) to read slot-claim.md:**
+Change `const FLOW_FILE = resolve(import.meta.dir, "../../../../docs/agents/cowork-team/flow/main.md")` at line 287 to split into two constants:
+```typescript
+const FLOW_FILE = resolve(import.meta.dir, "../../../../docs/agents/cowork-team/flow/main.md");
+const SLOT_CLAIM_FILE = resolve(import.meta.dir, "../../../../docs/agents/cowork-team/flow/slot-claim.md");
+const LEADER_LOCK_FILE = resolve(import.meta.dir, "../../../../docs/agents/cowork-team/flow/leader-lock.md");
+```
+Then update test 1 ("GREEN: flow file contains explicit ttl_seconds: 180") to use `readFileSync(SLOT_CLAIM_FILE)` instead of `readFileSync(FLOW_FILE)`.
+
+**Edit 3 — REWRITE test 3 ("Step 0b: leader lock claim must have ttl_seconds: 1800") to read leader-lock.md:**
+Update the test at lines 355–368 to use `readFileSync(LEADER_LOCK_FILE)` instead of `readFileSync(FLOW_FILE)`.
+
+**Edit 4 — No change to remaining tests in DV-P2-4:** "R1 additional", "R3 additional" tests use conditional `step46Match` with early `if` guard — they will silently skip (no assertion fired) when `main.md` has no Step 4.6 section. These are acceptable no-ops but should be noted as candidates for follow-up C-CD cleanup.
+
+**Protecting siblings retained:**
+- Test 1 (after path fix to slot-claim.md): retains R1 enforcement that per-work-item claims use explicit ttl_seconds:180
+- Test 3 (after path fix to leader-lock.md): retains AC-P2-5-3 enforcement that leader lock uses explicit ttl_seconds:1800
+- All 30 other passing tests in DWF-coordination-phase2.test.ts: coordination-phase2 DB behavior fully covered
+
+---
+
+**what-done:** Live-read 3 target files. Confirmed claims by empirical test runs. Found 1 partial contradiction in brief framing for DV-P2-4 (not a blocking contradiction — verdict direction unchanged, but root cause and dev edit differ from brief). Produced exact dev edit spec per file with line anchors.
+
+**what-considered:**
+- (a) DV-P2-4 test 2 as "DV that fails because prod DOES have ttl_seconds:180": CONTRADICTED. Live run shows all 3 DV-P2-4 failures are CONFIG-DRIFT (wrong file path). The DV assertion and both green assertions fail identically on absent literal in main.md.
+- (b) DV-P2-4 tests 1+3 as tests to REMOVE: REJECTED. These document live R1/AC-P2-5-3 contracts that are correctly enforced in prod. They should be REWRITTEN (path fix) not removed.
+- (c) DWF-is-trading-day AC-P0-3-6 as REMOVE vs .fails(): CHOSE .fails(). The DV intent (proves calendar is not a stub) is valuable as an executable specification. .fails() turns it green-as-expected with zero coverage loss vs removal.
+- (d) 1331a TEST-2 as REMOVE: CONFIRMED. Go service has no TypeScript infrastructure layer; path can never resolve. TEST-3 and TEST-4 are RED but NOT in scope for this batch (brief cure_recipe names TEST-2 only; TEST-3/TEST-4 are separate C-DV instances not listed in BATCH0).
+
+**why-decision:** Brief claim CONFIRMED for (a) 1331a TEST-2 and (b) DWF-is-trading-day DV. Partial contradiction for DV-P2-4 — root cause is CONFIG-DRIFT not "stale DV assertion" as framed; revised verdict is remove DV test only, rewrite the 2 green tests with correct sub-flow file paths.
+
+**note on TEST-3 / TEST-4 in 1331a:** TEST-3 (STOCK_PRICE_DB_PATH undefined) and TEST-4 (`../infrastructure/db/writerGuard.js` — which DOES exist at HEAD) are NOT in the cure_recipe for BATCH0. TEST-4 actually resolves now (`writerGuard.ts` confirmed present). TEST-3 is an env-var assertion. These are SEPARATE C-DV instances — out of scope for this triage. Dev must NOT touch them.
+
+**artefacts:**
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry, arch-S22)

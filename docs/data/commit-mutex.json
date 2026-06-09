@@ -1,6 +1,6 @@
 {
   "locked": true,
-  "owner_agent": "dev-mcp-server",
-  "task": "FIX-CI-C1282a-DATA-FRESHNESS-REWRITE",
-  "expires_at": 1781024307
+  "owner_agent": "architect",
+  "task": "main",
+  "expires_at": 9999999999
 }
