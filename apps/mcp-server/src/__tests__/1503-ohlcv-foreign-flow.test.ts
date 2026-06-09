@@ -200,8 +200,8 @@ describe("Task 1503 AC2 — writeForeignFlowToOhlcv updates OHLCV row", () => {
 // AC3: writeForeignFlowToOhlcv returns 0 when no matching OHLCV row
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1503 AC3 — writeForeignFlowToOhlcv no stub rows", () => {
-  it("returns 0 changes when no matching OHLCV row exists (update-only)", async () => {
+describe("Task 1503 AC3 — writeForeignFlowToOhlcv UPSERT inserts stub row (DPI-4)", () => {
+  it("returns 1 change when no matching OHLCV row exists (DPI-4 UPSERT inserts stub row)", async () => {
     const db = buildBaseDb();
     addForeignFlowCols(db);
 
@@ -222,15 +222,19 @@ describe("Task 1503 AC3 — writeForeignFlowToOhlcv no stub rows", () => {
       db,
     );
 
-    expect(result.changes).toBe(0);
+    // DPI-4 UPSERT: when no OHLCV row exists, a stub row is INSERTed (changes=1).
+    // This is the prod behavior after task 1503 DPI-4 — update-only semantics
+    // were replaced by UPSERT to avoid silently dropping foreign flow data.
+    expect(result.changes).toBe(1);
 
-    // Confirm no stub row was inserted
-    const count = db
-      .prepare<{ cnt: number }, []>(
-        `SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code = 'HPG'`,
+    // Confirm stub row was inserted with correct foreign flow values
+    const row = db
+      .prepare<{ cnt: number; foreign_buy_vol: number }, []>(
+        `SELECT COUNT(*) AS cnt, MAX(foreign_buy_vol) AS foreign_buy_vol FROM daily_ohlcv WHERE code = 'HPG'`,
       )
       .get();
-    expect(count!.cnt).toBe(0);
+    expect(row!.cnt).toBe(1);
+    expect(row!.foreign_buy_vol).toBe(500);
 
     db.close();
   });

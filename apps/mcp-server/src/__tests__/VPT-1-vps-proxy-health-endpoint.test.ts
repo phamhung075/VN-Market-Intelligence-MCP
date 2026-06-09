@@ -140,16 +140,18 @@ describe("VPT-1 — handleVpsProxyHealth (GET /api/vps-proxy-health)", () => {
 
   it("(c) stale push beyond threshold → stale=true", () => {
     const db = getDb();
-    // 'news' threshold = 10 min (not a market-hours-only service → always applies).
-    // Insert a push 30 min ago relative to actual system time so the DB 24h window
-    // counts it.  'news' is always checked regardless of calendar.
-    const staleAt = new Date(Date.now() - 30 * 60_000).toISOString();
+    // 'news' threshold = 10 min during isVnNewsPublishHours (UTC 00:00–14:59).
+    // Inject 'now' at a fixed UTC hour=06:00 so isVnNewsPublishHours returns true
+    // unconditionally (avoids calendar-dependent quiet-hours grace window).
+    const now = new Date("2026-06-09T06:00:00Z");  // UTC 06:00 → publish window
+    // Push 30 min before 'now' (well beyond 10-min threshold → must be stale).
+    const staleAt = new Date(now.getTime() - 30 * 60_000).toISOString();
     db.prepare(
       "INSERT INTO vps_push_log (service, items_count, status, pushed_at) VALUES (?, ?, ?, ?)"
     ).run("news", 76, "ok", staleAt);
 
     const res = makeRes();
-    handleVpsProxyHealth(fakeReq, res as unknown as ServerResponse, db);
+    handleVpsProxyHealth(fakeReq, res as unknown as ServerResponse, db, now);
 
     expect(res.statusCode).toBe(200);
     const body = JSON.parse(res.body) as HealthBody;

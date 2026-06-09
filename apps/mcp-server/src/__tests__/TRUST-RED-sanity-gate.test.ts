@@ -557,13 +557,23 @@ describe("TRUST-RED sanity gates (anti-false-green, RED-before-GREEN protocol)",
     const reportId = "tr-red-5b-rpt";
     seedReport(db, reportId, "VCB");
 
-    // Realistic bank: net_revenue = 100,000 (tỷ), gross_profit = 30,000 (30% margin)
+    // Realistic bank: net_revenue = 100,000 (tỷ), gross_profit = 30,000 (30% margin).
+    // BEQ-7 section completeness guard requires all 3 sections (BS + IS + CF) for DONE.
+    // Section headers must match SECTION_HEADERS patterns in refinedMarkdownParser.ts exactly.
     const cleanMarkdown = [
-      "BẢNG KẾT QUẢ HOẠT ĐỘNG KINH DOANH",
+      "BẢNG CÂN ĐỐI KẾ TOÁN",
+      "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |",
+      "|---|---|---|---|",
+      "| 110 | Tiền và tương đương tiền | 50,000 | 45,000 |",
+      "BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH",
       "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |",
       "|---|---|---|---|",
       "| 10 | Doanh thu thuần | 100,000 | 90,000 |",
       "| 20 | Lợi nhuận gộp | 30,000 | 27,000 |",
+      "BÁO CÁO LƯU CHUYỂN TIỀN TỆ",
+      "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |",
+      "|---|---|---|---|",
+      "| 01 | Lưu chuyển tiền từ hoạt động kinh doanh | 20,000 | 18,000 |",
     ].join("\n");
 
     // Seed directly as DONE (simulate clean push gate)

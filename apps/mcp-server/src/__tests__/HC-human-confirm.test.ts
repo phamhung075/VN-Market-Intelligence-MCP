@@ -891,17 +891,33 @@ describe("DV-HC-8 — CORE INVARIANT: corrected value + source_confidence=1.0 su
     const map = getCorrectionsMap(db, REPORT_UUID);
     expect(map.size).toBe(1);
 
-    // Seed bctc_refined_units with BOTH the corrected row AND an uncorrected row.
-    // Use 2-column format (label | value) so the parser unambiguously maps them.
-    // The corrected row has a yellow flag (source_confidence=0.4 from parser,
-    // but after applyCorrections post-pass it becomes 1.0 with value 2500).
+    // Seed bctc_refined_units with rows spanning all 3 sections (BS + IS + CF)
+    // so BEQ-7 section-completeness guard sees all sections and allows DONE.
+    //
+    // IMPORTANT: The corrected and uncorrected rows must use no section header
+    // (section defaults to "general") so their anchor keys match the bctc_table_rows
+    // rows seeded above (statement_section="general", page_number=4).
+    // Additional rows with explicit IS and CF headers satisfy BEQ-7 without
+    // affecting the anchor-key lookup for the corrected row.
     const markdown = [
       "| Chỉ tiêu | Giá trị |",
       "|---|---|",
       // corrected row — parser gives value 1000 (wrong), applyCorrections gives 2500 + confidence=1.0
+      // statement_section="general" (no section header above) matches seedTableRow override
       "| Tiền và tương đương tiền | 1.000 [độ tin cậy thấp] |",
       // uncorrected row — parser gives yellow flag, source_confidence=0.4
-      "| Doanh thu thuần | 5.000 [độ tin cậy thấp] |",
+      // IMPORTANT: must NOT match DT-3 revenue regex /doanh thu thu[aầâ]n/i — use non-revenue label
+      "| Phải trả người bán | 5.000 [độ tin cậy thấp] |",
+      // Explicit section headers to satisfy BEQ-7 completeness guard
+      "BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH",
+      "| Chỉ tiêu | Giá trị |",
+      "|---|---|",
+      // IMPORTANT: must NOT match DT-3 revenue regex — use non-revenue IS label
+      "| Lợi nhuận gộp | 1.000 |",
+      "BÁO CÁO LƯU CHUYỂN TIỀN TỆ",
+      "| Chỉ tiêu | Giá trị |",
+      "|---|---|",
+      "| Lưu chuyển tiền từ hoạt động kinh doanh | 1.000 |",
     ].join("\n");
     seedRefinedUnit(db, REPORT_UUID, "unit-1", markdown, [4]);
 
@@ -954,11 +970,12 @@ describe("DV-HC-8 — CORE INVARIANT: corrected value + source_confidence=1.0 su
     expect(countCorrRec?.cnt).toBe(1);
 
     // 2. Uncorrected row: value_current=5000, source_confidence=0.4 (yellow flag from parser)
+    // Label is "Phải trả người bán" — non-revenue to avoid triggering DT-3 CROSS_STMT_REVENUE_CONTRADICTION.
     // ANTI-FALSE-GREEN: COUNT assertion — must be exactly 1 uncorrected row
-    const uncorrectedRowCount = allRows.filter((r) => r.label === "Doanh thu thuần").length;
+    const uncorrectedRowCount = allRows.filter((r) => r.label === "Phải trả người bán").length;
     expect(uncorrectedRowCount).toBe(1);
 
-    const uncorrectedRow = allRows.find((r) => r.label === "Doanh thu thuần");
+    const uncorrectedRow = allRows.find((r) => r.label === "Phải trả người bán");
     expect(uncorrectedRow).toBeDefined();
     expect(uncorrectedRow?.value_current).toBe(5000);
     expect(uncorrectedRow?.source_confidence).toBe(0.4);  // yellow flag from parser

@@ -28,11 +28,11 @@ function minutesAgoIso(minutes: number): string {
 
 describe("Bug 1 — data/pdfs/ directory is created on startup", () => {
   it("index.ts startup path mkdirSync covers pdfDir", async () => {
-    // We verify the source of index.ts explicitly calls mkdirSync with the pdfDir
-    // before readdirSync — guaranteeing the directory exists on a fresh volume.
+    // Fix was implemented in composition-root.ts (L110), not index.ts.
+    // Read composition-root.ts where bootstrapMcpServer creates the pdf dir.
     const fs = await import("fs");
     const src = fs.readFileSync(
-      new URL("../index.ts", import.meta.url).pathname,
+      new URL("../composition-root.ts", import.meta.url).pathname,
       "utf8",
     );
 
@@ -48,8 +48,9 @@ describe("Bug 1 — data/pdfs/ directory is created on startup", () => {
 
   it("index.ts uses mkdirSync with { recursive: true } for pdfDir", async () => {
     const fs = await import("fs");
+    // Fix is in composition-root.ts (bootstrapMcpServer), not index.ts.
     const src = fs.readFileSync(
-      new URL("../index.ts", import.meta.url).pathname,
+      new URL("../composition-root.ts", import.meta.url).pathname,
       "utf8",
     );
 

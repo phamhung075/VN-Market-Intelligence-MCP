@@ -27,6 +27,13 @@ const _realLogger1466 = {
     debug: () => {},
     error: () => {},
   },
+  // createLogger stub — syncVnstockData.js transitively imports createLogger from logger.js
+  createLogger: (..._args: unknown[]) => ({
+    warn: (msg: string) => { warnMessages.push(msg); },
+    info: () => {},
+    debug: () => {},
+    error: () => {},
+  }),
 };
 mock.module("../infrastructure/logger.js", () => _realLogger1466);
 

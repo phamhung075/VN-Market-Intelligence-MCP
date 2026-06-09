@@ -75,8 +75,8 @@ describe('newsHeadlinesRefreshJob — E2E', () => {
             : (input as Request).url;
         fetchCalls.push(url);
 
-        if (url.includes('/news/bloomberg/headlines')) return okResponse(makeFetchResult('bloomberg'));
-        if (url.includes('/news/reuters/headlines')) return okResponse(makeFetchResult('reuters'));
+        if (url.includes('/bloomberg/headlines')) return okResponse(makeFetchResult('bloomberg'));
+        if (url.includes('/reuters/headlines')) return okResponse(makeFetchResult('reuters'));
         if (url.includes('/api/push-news')) return okResponse({ ok: true, inserted: 1 });
 
         return new Response('not found', { status: 404 });
@@ -86,14 +86,14 @@ describe('newsHeadlinesRefreshJob — E2E', () => {
     await newsHeadlinesRefreshJob();
 
     // AC 1: bloomberg endpoint called
-    expect(fetchCalls.some((u) => u.includes('/news/bloomberg/headlines'))).toBe(true);
+    expect(fetchCalls.some((u) => u.includes('/bloomberg/headlines'))).toBe(true);
     // AC 2: reuters endpoint called
-    expect(fetchCalls.some((u) => u.includes('/news/reuters/headlines'))).toBe(true);
+    expect(fetchCalls.some((u) => u.includes('/reuters/headlines'))).toBe(true);
     // AC 3: push-news called at least once (both sources have articles)
     expect(fetchCalls.some((u) => u.includes('/api/push-news'))).toBe(true);
     // AC 4: bloomberg dispatched before reuters
-    const bloombergIdx = fetchCalls.findIndex((u) => u.includes('/news/bloomberg/headlines'));
-    const reutersIdx = fetchCalls.findIndex((u) => u.includes('/news/reuters/headlines'));
+    const bloombergIdx = fetchCalls.findIndex((u) => u.includes('/bloomberg/headlines'));
+    const reutersIdx = fetchCalls.findIndex((u) => u.includes('/reuters/headlines'));
     expect(bloombergIdx).toBeLessThan(reutersIdx);
   });
 
@@ -111,10 +111,10 @@ describe('newsHeadlinesRefreshJob — E2E', () => {
             : (input as Request).url;
         fetchCalls.push(url);
 
-        if (url.includes('/news/bloomberg/headlines')) {
+        if (url.includes('/bloomberg/headlines')) {
           return okResponse(makeFetchResult('bloomberg', 'perimeterx-challenge'));
         }
-        if (url.includes('/news/reuters/headlines')) return okResponse(makeFetchResult('reuters'));
+        if (url.includes('/reuters/headlines')) return okResponse(makeFetchResult('reuters'));
         if (url.includes('/api/push-news')) return okResponse({ ok: true, inserted: 1 });
 
         return new Response('not found', { status: 404 });
@@ -124,7 +124,7 @@ describe('newsHeadlinesRefreshJob — E2E', () => {
     await newsHeadlinesRefreshJob();
 
     // Reuters still fetched despite Bloomberg error
-    expect(fetchCalls.some((u) => u.includes('/news/reuters/headlines'))).toBe(true);
+    expect(fetchCalls.some((u) => u.includes('/reuters/headlines'))).toBe(true);
     // Bloomberg error → no push for bloomberg; Reuters ok → push called once
     const pushCalls = fetchCalls.filter((u) => u.includes('/api/push-news'));
     expect(pushCalls.length).toBeGreaterThanOrEqual(1);

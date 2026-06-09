@@ -318,7 +318,7 @@ describe("Sub-fix C: scanDiskForStrandedPdfs — disk-scan fallback", () => {
     expect(stranded).toEqual([]);
   });
 
-  it("ignores PDFs that do not match any watchlist ticker", async () => {
+  it("includes PDFs not in watchlist via tickerFromFilename() fallback (task 1915-fix-part2)", async () => {
     const { scanDiskForStrandedPdfs } = await import(
       "../scheduler/financial-reports/bctcReparseJob.js"
     );
@@ -326,11 +326,14 @@ describe("Sub-fix C: scanDiskForStrandedPdfs — disk-scan fallback", () => {
     const db = makeTestDb();
     db.prepare("INSERT INTO watchlist (code, exchange) VALUES (?, ?)").run("VNM", "HOSE");
 
-    // Write a PDF for a ticker not in watchlist
+    // Write a PDF for a ticker not in watchlist.
+    // After task 1915-fix-part2: prod falls back to tickerFromFilename() for
+    // non-watchlist PDFs — so HPG is now INCLUDED as stranded (not ignored).
     writeFileSync(join(pdfDir, "BCTC HPG 31.12.2025.pdf"), "fake pdf content");
 
     const stranded = await scanDiskForStrandedPdfs(db, pdfDir);
-    expect(stranded.length).toBe(0);
+    expect(stranded.length).toBe(1);
+    expect(stranded[0]!.ticker).toBe("HPG");
   });
 
   it("ignores files with unrecognizable year/quarter in filename", async () => {

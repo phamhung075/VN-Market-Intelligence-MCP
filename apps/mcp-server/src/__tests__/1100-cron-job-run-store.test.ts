@@ -315,17 +315,26 @@ describe("Task 1100 — getCronJobHealthSummary (aggregations)", () => {
   });
 
   it("last_run is the most recent started_at timestamp", () => {
+    // Use datetime('now', '-Nd') relative inserts so they always fall within
+    // the rolling window regardless of when the test runs.
     db.exec(`
       INSERT INTO cron_job_runs (job_name, started_at, status, duration_ms)
       VALUES
-        ('sscFetchJob', '2026-04-01 10:00:00', 'success', 500),
-        ('sscFetchJob', '2026-04-05 10:00:00', 'success', 600),
-        ('sscFetchJob', '2026-04-03 10:00:00', 'success', 700)
+        ('sscFetchJob', datetime('now', '-5 days'), 'success', 500),
+        ('sscFetchJob', datetime('now', '-1 day'),  'success', 600),
+        ('sscFetchJob', datetime('now', '-3 days'), 'success', 700)
     `);
 
     const summary = getCronJobHealthSummary(db, 30);
     expect(summary.length).toBe(1);
-    expect(summary[0]!.last_run).toBe("2026-04-05 10:00:00");
+    // last_run must be the most recent started_at (1 day ago, not 5 days ago)
+    const lastRun = summary[0]!.last_run;
+    expect(typeof lastRun).toBe("string");
+    // The most recent row (-1 day) must have a larger timestamp than the oldest (-5 days)
+    const allRuns = db
+      .prepare("SELECT started_at FROM cron_job_runs ORDER BY started_at DESC")
+      .all() as Array<{ started_at: string }>;
+    expect(lastRun).toBe(allRuns[0]!.started_at);
   });
 
   it("last_error is set when last run was an error", () => {

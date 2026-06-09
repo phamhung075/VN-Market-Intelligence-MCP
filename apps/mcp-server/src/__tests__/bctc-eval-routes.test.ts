@@ -73,6 +73,7 @@ function makeTestDb(): Database {
       net_revenue REAL,
       gross_profit REAL,
       net_profit REAL,
+      total_assets REAL,
       parsed_at TEXT NOT NULL DEFAULT (datetime('now')),
       domain TEXT
     )
