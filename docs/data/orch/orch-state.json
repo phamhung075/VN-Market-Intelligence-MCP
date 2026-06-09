@@ -3370,13 +3370,15 @@
           {
             "id": "FIX-CI-C5-UNMOCKED-HTTP-FETCHES",
             "type": "FIX",
-            "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "owner": "architect",
+            "status": "REWORK",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
             "sprint": "CI-RED-RECONCILE",
-            "depends": [],
+            "depends": [
+              "SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY"
+            ],
             "labels": [
               "ci-red-reconcile",
               "unmocked-http",
@@ -3386,19 +3388,24 @@
             "root_cause": "unmocked-HTTP",
             "classification": "REWRITE (prod fetcher exists, test makes a real network call -> mock/guard the fetch, do NOT delete the test)",
             "title": "C5 UNMOCKED-HTTP fetches (root-cause cluster, NOT single file): tests that hit live HTTP and assert not.toBeNull -> null when the network is absent in CI. Confirmed seeds from C4 CI annotations (first-10 only): 028-sbv-rates (3 fails, null), 1487-yahoo-finance-extended (3 fails, null). Likely same-pattern backlog members: 1416 source-scan, 1134/MSG-1 foreign_flow, 235 send_telegram, ragHealthCheck, newsHeadlines E2E. Fix pattern = mock the fetcher (mock.module / dependency seam) OR add a network-skip guard so the test runs deterministically offline. ALL REWRITE (the prod fetcher still exists). DEV MUST profile the full job 80278819016 log to enumerate every unmocked-HTTP file before fixing (annotations gave only first-10).",
-            "gate": "Cheapest high-confidence cluster (single mechanical pattern). DEV profiles the FULL `gh run view --job=80278819016 --log` to enumerate ALL unmocked-HTTP fails (the 028 + 1487 seeds are first-10 only, treat as partial). Apply network-mock/skip-guard per file. REWRITE only — these prod fetchers exist; do NOT delete (contrast REMOVE bucket C8). Then native fail+error must DROP vs the NEW 135 absolute (sha 3663bd12, run 27193376550, job 80278819016). Test-only round (no prod src) — may bundle with other test-only fixes per router. UNDER-SCOPE NOTE: architect cluster counts are category supersets; size this by the dev's full-log enumeration, not the 6 seed fails.",
+            "gate": "FALSIFIED: the static-stub/delegating-mock contamination cure REGRESSED CI 135->145 (+10) at sha 22470e44 (run 27196358844, job 80288899677). Targeted victims got WORSE (Task1423=30,028=22,025=20,1487=8) + collateral (rag=24,Task1124=24). Root cause of backfire: ddd-1b-rag-http-client.test.ts file-top mock.module() re-registration RE-SPREAD the Bun ESM-cache contamination. REVERTED by router (275dd7c8, restores 135/sha 3663bd12). RE-DISPATCH to ARCHITECT (SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY) — re-examine WHY sbv/yahoo victims still return null, propose contamination-safe strategy with NO new file-top mock.module() (that vector demonstrably leaks). Gate baseline unchanged = 135 absolute (sha 3663bd12).",
             "baseline_pass": "135 native fail+error absolute (135 fail + 0 err / Ran 11816, sha 3663bd12, run 27193376550, bun job 80278819016 — SUPERSEDES 160/a43dff49)",
             "created_at": "2026-06-09T08:33:20Z",
             "created_by": "po-S28",
-            "note": "[po-S28 DJ-GATE-1 2026-06-09T08:33:20Z] Grouped by ROOT-CAUSE (unmocked-HTTP) NOT by file per the under-scope lesson. The cheapest dispatchable next cluster: one mechanical fix (mock/guard the fetch) repeated across N files, all REWRITE. Dev MUST enumerate the full long tail from the job log — annotations gave first-10 only. NOT in_progress (WIP<=2).",
+            "note": "[po-S28 DJ-GATE-1 2026-06-09T08:33:20Z] Grouped by ROOT-CAUSE (unmocked-HTTP) NOT by file per the under-scope lesson. The cheapest dispatchable next cluster: one mechanical fix (mock/guard the fetch) repeated across N files, all REWRITE. Dev MUST enumerate the full long tail from the job log — annotations gave first-10 only. NOT in_progress (WIP<=2). | [po-S29 DJ-GATE-1 2026-06-09T09:35:00Z] REVIEW->REWORK: dev fix 22470e44 REGRESSED CI +10 (135->145); router reverted 275dd7c8 restoring 135. delegating-mock theory empirically FALSIFIED. Owner -> architect (re-spec via SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY) before any new dev fix. KEEP ci_absolute=135.",
             "reviewed_at": "2026-06-09T09:15:00Z",
-            "reviewed_by": "dev-mcp-server"
+            "reviewed_by": "dev-mcp-server",
+            "reworked_at": "2026-06-09T09:35:00Z",
+            "reworked_by": "po-S29",
+            "blocked_by": [
+              "SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY"
+            ]
           },
           {
             "id": "FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "BACKLOG",
+            "status": "TODO",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
@@ -3415,10 +3422,12 @@
             "classification": "REWRITE (the watchlist SSOT exists; fix the stale hand-typed sector value at source, then the test passes — VNH-misclassification pattern: grep repo for the stale value, do NOT delete the test)",
             "title": "C6-SSOT watchlist sector drift (1 confirmed seed, likely more): 1031-expanded-watchlist-catalog asserts sector 'chemicals' but gets 'other' = a hand-typed sector value drifted from the watchlist SSOT (VNH-misclassification pattern). FIX = grep the repo for the stale hand-typed sector string and align it to the SSOT classification (docs/data/stock-classification.json / system-map watchlist), then the test passes. Likely siblings if other catalog assertions exist.",
             "gate": "Apply the VNH-misclassification recipe (memory project_vnh_sector_misclassification): a SSOT fix does NOT reach hand-typed copies — GREP the whole repo for the stale sector value, align every copy to the SSOT. REWRITE (SSOT/source fix), NOT REMOVE. Then native fail+error must DROP vs the 135 absolute. Cheap single-fix — but distinct root cause from C5 so kept as its own stub. Dev confirms exact stale-value location before fixing.",
-            "baseline_pass": "135 native fail+error absolute (sha 3663bd12, run 27193376550, bun job 80278819016)",
+            "baseline_pass": "135 native fail+error absolute (135 fail + 0 err / Ran 11816, sha 3663bd12, run 27193376550, bun job 80278819016)",
             "created_at": "2026-06-09T08:33:20Z",
             "created_by": "po-S28",
-            "note": "[po-S28 DJ-GATE-1] BACKLOG STUB. SSOT-drift root cause (distinct from C5 unmocked-HTTP). Cheapest single fix but held BACKLOG to keep ONE dispatchable cluster (C5) at a time (WIP discipline). VNH-misclassification pattern — grep for stale hand-typed sector, fix at SSOT. NOT in_progress."
+            "note": "[po-S28 DJ-GATE-1] BACKLOG STUB. SSOT-drift root cause (distinct from C5 unmocked-HTTP). Cheapest single fix but held BACKLOG to keep ONE dispatchable cluster (C5) at a time (WIP discipline). VNH-misclassification pattern — grep for stale hand-typed sector, fix at SSOT. NOT in_progress. | [po-S29 2026-06-09T09:35:00Z] BACKLOG->TODO dispatched to dev-mcp-server vs 135 baseline (sha 3663bd12). INDEPENDENT of C5 (which is in REWORK -> architect). SSOT-drift fix: grep stale hand-typed sector string, align to docs/data/stock-classification.json SSOT. native fail+error MUST drop below 135 on gate.",
+            "dispatched_at": "2026-06-09T09:35:00Z",
+            "dispatched_by": "po-S29"
           },
           {
             "id": "FIX-CI-C7-ASSERTION-LOGIC",
@@ -3471,6 +3480,31 @@
             "created_at": "2026-06-09T08:33:20Z",
             "created_by": "po-S28",
             "note": "[po-S28 DJ-GATE-1] BACKLOG STUB. This is the /goal REMOVE-if-obsolete bucket made explicit: tests asserting against deleted/superseded prod must be DELETED (with evidence), not patched. Architect triage required to avoid deleting a still-live assertion. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-*) stays PARKED, distinct from this. NOT in_progress."
+          },
+          {
+            "id": "SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY",
+            "type": "SPIKE",
+            "owner": "architect",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "mode": "spike",
+            "timebox": 120,
+            "depends": [],
+            "labels": [
+              "ci-red-reconcile",
+              "unmocked-http",
+              "contamination-safe",
+              "architect-respec"
+            ],
+            "question": "WHY do the C5 unmocked-HTTP victims (028-sbv-rates, 1487-yahoo-finance-extended, ragHttpClient) still return null in CI, AND what is a contamination-safe deterministic-offline strategy that adds NO new file-top mock.module()? The delegating-mock + ddd-1b file-top mock.module() re-registration cure (commit 22470e44) is EMPIRICALLY FALSIFIED — it REGRESSED CI 135->145 (+10) by RE-SPREADING the exact Bun ESM-cache process-scoped contamination it meant to cure (reverted 275dd7c8). HARD CONSTRAINT: propose a strategy that does NOT introduce any new file-top/module-scope mock.module() (that vector demonstrably leaks across the run order). Acceptable vectors to evaluate: per-test beforeEach/afterEach mock+restore inside describe scope, dependency-injection seam at the fetcher call-site, or a network-skip guard (skipIf no-network) — whichever keeps the prod fetcher intact (REWRITE not REMOVE) and is ESM-cache-safe. Output: a brief with the chosen contamination-safe pattern + per-victim-file application, gated to drop native fail+error BELOW 135 (sha 3663bd12).",
+            "title": "C5 re-spec (FALSIFIED cure): re-examine sbv/yahoo/ragHttpClient null-in-CI + propose contamination-safe offline strategy with NO new file-top mock.module()",
+            "baseline_pass": "135 native fail+error absolute (sha 3663bd12, run 27193376550, bun job 80278819016)",
+            "created_at": "2026-06-09T09:35:00Z",
+            "created_by": "po-S29",
+            "note": "[po-S29 2026-06-09T09:35:00Z] Created because FIX-CI-C5-UNMOCKED-HTTP-FETCHES dev fix 22470e44 BACKFIRED (+10, victims WORSE, ddd-1b file-top mock.module() re-spread contamination); router reverted 275dd7c8. Recurring-bug lens: 2nd failed attempt on the C5 mock-contamination vector -> architect-first (recurring-bug-escalation). NO new file-top mock.module() allowed. Architect lane consumes NO dev WIP. C5 FIX task -> REWORK, blocked_by this SPIKE."
           }
         ],
         "_updated_by": "po-S28",
