@@ -10,7 +10,7 @@ Bun.env["DB_PATH"] = ":memory:";
  * GREEN phase: both tests pass after applying the isolation guard pattern.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, afterAll } from "bun:test";
 import { mock } from "bun:test";
 
 // Load real telegram module via cache-bust (bypasses any prior mock.module stub)
@@ -80,4 +80,24 @@ describe("Task 1485 — mock.module isolation regression", () => {
     expect(typeof result).toBe("boolean");
     expect(result).toBe(true);
   });
+});
+
+// C5-CURE: restore the real telegram module after this file's tests complete.
+// _realMod1485 was loaded via cache-bust at file top (before any stub was registered)
+// so it holds genuine implementations. Without this restore, the `notifyTelegramAlert:
+// async () => ({ ok: true })` stub installed inside the two it() bodies above leaks
+// into the process-global ESM registry and poisons all files that run after position 89
+// in the full CI suite (confirmed victims: 1328e pos 941, 235 pos 775, 047 frozen captures
+// pos 315 — arch-S15 evidence, CI run 27209642428 job 80334814093).
+afterAll(() => {
+  mock.module("../infrastructure/notifiers/telegram.js", () => ({
+    sendTelegramWork: _realMod1485.sendTelegramWork,
+    sendTelegramMarket: _realMod1485.sendTelegramMarket,
+    sendTelegramBug: _realMod1485.sendTelegramBug,
+    sendTelegram: _realMod1485.sendTelegram,
+    notifyTelegramAlert: _realMod1485.notifyTelegramAlert,
+    notifyTelegramDocument: _realMod1485.notifyTelegramDocument,
+    formatConvictionBlock: _realMod1485.formatConvictionBlock,
+    deleteTelegramBug: _realMod1485.deleteTelegramBug,
+  }));
 });

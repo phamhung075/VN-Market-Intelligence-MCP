@@ -426,3 +426,35 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 **files-changed:**
 - `apps/mcp-server/src/__tests__/047-bctc-orchestrator.test.ts`
 - META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
+
+---
+
+### STEP dev-mcp-server-S18 · dev-mcp-server · 2026-06-09T14:01:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C1485-TELEGRAM-MOCK-RESTORE
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** Added `afterAll` restore to `1485-telegram-mock-isolation.test.ts`. This file installs `notifyTelegramAlert: async () => ({ ok: true })` (and sibling stubs) inside two `it()` bodies with NO afterAll restore. The stub leaks into the process-global ESM registry, poisoning all 800+ subsequent test files — confirmed victims: 1328e (pos 941, 10 fails `Expected: false, Received: { ok: true }`), 235 (pos 775, 3 fails), and 047's frozen captures (pos 315, captured stub as "real").
+
+**fix (3 changes in 1485):**
+1. Added `afterAll` to the existing `bun:test` import (line 13): `import { describe, it, expect, afterAll } from "bun:test";`
+2. Added file-bottom `afterAll` block AFTER the describe block — restores real module using `_realMod1485` (cache-busted real module already captured at file top via `?isolate=1485` query) for all 8 telegram exports: `sendTelegramWork`, `sendTelegramMarket`, `sendTelegramBug`, `sendTelegram`, `notifyTelegramAlert`, `notifyTelegramDocument`, `formatConvictionBlock`, `deleteTelegramBug`.
+3. C5-CURE ABSOLUTE honored: ZERO new file-top/module-scope `mock.module()`. The two existing `mock.module()` calls INSIDE the `it()` bodies are UNCHANGED — they are the test's intentional proof-of-contamination setup.
+
+**what-considered:**
+- Adding new file-top mock.module() to pre-seed real module — REJECTED: C5-CURE ABSOLUTE constraint (no new module-scope mock.module()).
+- Modifying or removing the it()-scoped mock.module() calls — REJECTED: they are intentional contamination proofs; changing them breaks the test's purpose.
+- Using `_realMod1485` vs a standard re-import — `_realMod1485` is already the cache-busted real module loaded before any stub; it is the correct and available capture for the restore. Standard import would resolve to the current (stubbed) registry state.
+- Export list: verified against telegram.ts exports (grep `^export`): `sendTelegramMarket` L265, `sendTelegramWork` L294, `sendTelegramBug` L314, `deleteTelegramBug` L360, `formatConvictionBlock` L522, `notifyTelegramAlert` L549, `notifyTelegramDocument` L602, `sendTelegram` L613. All 8 match arch-S15 list exactly.
+
+**why-decision:** arch-S15 brief (2026-06-09-ci-c1328e-retriage-arch-s15.md) proves 1485 is the SECOND CONTAMINATOR: its stub at pos 89 runs before 047 (pos 315), 235 (pos 775), and 1328e (pos 941), with no restore. `_realMod1485` was specifically designed for this purpose (cache-busted at file top) — the afterAll merely leverages what was already there. The fix is minimal (16 lines added), test-only, zero prod code touched.
+
+**result:**
+- 1485 solo: 2 pass / 0 fail
+- 1485 + 1328e joint: 14 pass / 0 fail (previously 1328e had 10+ fails after 1485 in same process)
+- 1485 + 235 joint: 12 pass / 0 fail (previously 235 had 3 fails after 1485 in same process)
+- tsc --noEmit: CLEAN (0 errors, no output)
+**status-flip:** TODO → REVIEW (router owns push + CI gate; expected CI delta: 1328e -10, 235 -3 = -13 floor from 68 absolute)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1485-telegram-mock-isolation.test.ts`
+- META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
