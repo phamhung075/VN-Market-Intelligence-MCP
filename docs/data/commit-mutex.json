@@ -1,11 +1,6 @@
 {
-  "locked": true,
-  "owner_agent": "architect",
-  "task": "commit-mutex",
-  "task_id": "main",
-  "task_kind": "commit-mutex",
-  "owner_session": "architect-c1134-triage",
-  "payload": "{\"task_id\": \"FIX-CI-C1134-RESIDUAL-TRIAGE\", \"sprint\": \"CI-RED-RECONCILE\"}",
-  "ttl_seconds": 120,
-  "expires_at": 1781006575
+  "locked": false,
+  "owner_agent": null,
+  "task": null,
+  "expires_at": 0
 }
