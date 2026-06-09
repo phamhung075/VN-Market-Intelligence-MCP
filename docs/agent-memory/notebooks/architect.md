@@ -1,8 +1,43 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 11:25 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 12:30 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T12:30Z — FIX-CI-C1134-RESIDUAL-TRIAGE: get_foreign_flow tool, 12 CI fails
+
+**Task:** FIX-CI-C1134-RESIDUAL-TRIAGE (TRIAGE, S, zone: apps/mcp-server/src/__tests__/)
+
+**Method:** Full read of test file (1134), prod handler (foreignFlowTools.ts), domain service
+(foreignFlowAnalyzer.ts), git log both files, CI signals (c1-already-shipped, c1124-gate), prior
+briefs (C1124 + 1423e patterns), sibling test (1518). Checked for HTTP-proxy rewire, deleted seam,
+assertion-vs-envelope mismatch.
+
+**Verdict: REWRITE (stale test infrastructure — 1124-transport-hang signature)**
+
+**Root cause:**
+- Prod is correct. foreignFlowTools.ts: pure SQLite, db? injection live, _testFallback seam live. No
+  HTTP proxy. git log: 4 commits, none is an HTTP-proxy migration.
+- 1134 test uses InMemoryTransport + Client.callTool() with NO afterEach cleanup. 6 it() × 2 native
+  CI failures (test timeout + cleanup stall) = 12.
+- 1423e-deleted-seam does NOT apply: both _testFallback and db? seams are present in prod.
+- REMOVE does not apply: test exercises unique MCP integration path (injection, zero-detection guard,
+  insufficient-data guard, Zod validation, JSON envelope) not covered by any sibling.
+- Assertions are semantically compatible with the JSON envelope (strings appear in JSON.stringify
+  output). The transport hang is the sole failure mechanism.
+
+**Fix spec:**
+- ONE file: 1134-get-foreign-flow-tool.test.ts
+- Replace McpServer+InMemoryTransport+Client with McpServer+_registeredTools direct handler invocation
+- Pattern: same as 1117/1124 (sibling, CI-green); `registerForeignFlowTools(server, db)` already accepts injected db
+- Module-level _testDb + _testServer, set in beforeEach (sync — no initDatabase() needed; schema inline)
+- callTool(): `_testServer._registeredTools[name].handler(args)`
+- Remove: Client import, InMemoryTransport import, buildConnectedPair() function
+- AC-4 (days=35): Zod validation may throw instead of returning isError=true on direct handler path; dev to verify and adapt assertion
+- NO new mock.module() — pure SQLite, zero mocking needed
+
+**CI victim prefix:** `Task 1134` (12 → 0 projected)
+**Brief:** docs/architecture-briefs/2026-06-09-ci-c1134-foreign-flow-triage.md
 
 ## 2026-06-09T11:25Z — FIX-CI-C1124-RESIDUAL-TRIAGE: evidence tools Phase B+C, 24 CI fails
 

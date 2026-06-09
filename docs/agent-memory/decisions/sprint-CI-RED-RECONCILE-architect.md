@@ -251,6 +251,44 @@ but does not change the REMOVE verdict — escalation note added to brief for po
 
 ---
 
+### STEP arch-S12 (DJ-GATE-1) · architect · 2026-06-09T12:30Z
+
+**task-id:** FIX-CI-C1134-RESIDUAL-TRIAGE
+**sprint:** CI-RED-RECONCILE
+**what-done:** Prod-vs-test triage of the 12-fail Task 1134 cluster (get_foreign_flow MCP tool,
+`1134-get-foreign-flow-tool.test.ts`). Read prod handler (foreignFlowTools.ts), domain service
+(foreignFlowAnalyzer.ts), git log for both files, CI signals, prior briefs (C1124 + 1423e patterns),
+sibling tests (1518, MSG-1). Produced verdict brief at
+`docs/architecture-briefs/2026-06-09-ci-c1134-foreign-flow-triage.md`.
+
+**verdict:** REWRITE (1124-transport-hang signature)
+
+**what-considered:**
+- **(a) 1423e-deleted-seam (REMOVE-obsolete):** Checked whether prod tool was rewired to HTTP proxy
+  and `_testFallback`/`db?` injection seam deleted. REJECTED: foreignFlowTools.ts has never been
+  rewired to HTTP. git log shows 4 commits; none is an HTTP-proxy migration. `_testFallback:
+  z.string().optional()` and `db?` injection arg are both present and live. No seam was deleted.
+- **(b) FIX (prod broken):** Checked whether prod logic/contract is wrong. REJECTED: handler
+  correctly implements zero-detection guard, insufficient-data guard, Zod validation, JSON envelope,
+  and `daily_ohlcv` query on injected-db path. Assertions in test are semantically compatible with
+  prod output (JSON envelope contains the expected strings). No prod defect.
+- **(c) REWRITE (1124-transport-hang — CHOSEN):** InMemoryTransport + Client.callTool() stalls in
+  CI (Bun 1.3.13 / Ubuntu-latest single-process sequential). 1134 test has NO `afterEach` to close
+  client (worse than 1124 which at least had C3 fix). 6 `it()` × 2 native failures = 12. Fix =
+  `_registeredTools` direct handler invocation (same cure proven in C1124, now CI-green at 0 fails).
+
+**why-decision:** The 1124 cure (InMemoryTransport → `_registeredTools`) was proven CI-green by
+sha 802a4d1b (ci_absolute dropped 91 → 79, Task 1124 = 24 → 0). The 1134 test uses the identical
+stalling pattern with the same prod tool that already accepts a `db?` injection arg. No new seam
+is needed — the handler is already DI-ready. The `_registeredTools` template requires zero
+`mock.module()` calls (pure SQLite import chain). C5-cure ABSOLUTE: no new file-top mock.module().
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-c1134-foreign-flow-triage.md`
+- `docs/data/orch/orch-state.json` (FIX-CI-C1134-RESIDUAL-TRIAGE TODO → REVIEW)
+
+---
+
 ### STEP arch-S9 (DJ-GATE-1) · architect · 2026-06-09T06:30Z
 
 **task-id:** SPIKE-CI-C1-MACRO-INJECT-SEAM
