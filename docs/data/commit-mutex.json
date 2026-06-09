@@ -1,6 +1,6 @@
 {
   "locked": true,
   "owner_agent": "dev-mcp-server",
-  "task": "main",
-  "expires_at": 1781013881000
+  "task": "FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE",
+  "expires_at": 1781015943.65811
 }

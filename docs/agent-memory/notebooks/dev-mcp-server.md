@@ -1,5 +1,21 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE — REVIEW
+
+**Task:** FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE | Sprint: CI-RED-RECONCILE | Size: S | DJ: dev-mcp-server-S19
+**Scope:** TEST-FILE-ONLY — 1 file: `apps/mcp-server/src/__tests__/1792-conviction-debounce.test.ts`
+- Added `afterAll` to the `bun:test` import line.
+- Added cache-busted `_realMod1792` import BEFORE L28 mock.module (`?isolate=1792`).
+- Added file-bottom `afterAll` block restoring real telegram module via `_realMod1792` (8 exports: sendTelegramWork/Market/Bug, sendTelegram, notifyTelegramAlert/Document, formatConvictionBlock, deleteTelegramBug).
+- C5-CURE: ZERO new file-top mock.module(). L28 existing stub + afterEach(closeDb) UNCHANGED.
+
+**Root cause (arch-S16):** 1792 (pos 103) installs file-top stubs with NO restore → re-poisons registry AFTER 1485's afterAll cure (pos 89) fires. sendTelegramBug stub returns boolean true (not message_id number) → Task 235 (pos 775) captures poisoned stubs.
+**Result:** 1792 solo: 3/2 (pre-existing 2 fails UNCHANGED). 1792+235 joint (2-file local, NOT authoritative): 13 pass / 2 fail (10 Task 235 pass). tsc CLEAN.
+**Expected CI delta:** Task 235: 3→0 or 6→0 fails (arch-S16 gate).
+**Status:** REVIEW — router owns push + CI gate.
+
+---
+
 ## 2026-06-09 · FIX-CI-C1485-TELEGRAM-MOCK-RESTORE — REVIEW
 
 **Task:** FIX-CI-C1485-TELEGRAM-MOCK-RESTORE | Sprint: CI-RED-RECONCILE | Size: S

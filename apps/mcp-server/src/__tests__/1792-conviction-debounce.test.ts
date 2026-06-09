@@ -16,12 +16,17 @@ Bun.env["DB_PATH"] = ":memory:";
  *   5. `recordBctcSignalSent` persists the debounce row (DB-backed, survives restart)
  */
 
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach, afterAll } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Telegram mock — captures all bug channel messages
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Load real telegram module via cache-bust (bypasses any prior mock.module stub from earlier files)
+const _realMod1792 = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1792"
+);
 
 const bugMessages: string[] = [];
 
@@ -203,4 +208,21 @@ describe("Task 1792 — Conviction signal debounce (DB-backed, per-ticker+quarte
     expect(row!.action_code).toBe(ticker);
     expect(row!.period_key).toBe(period);
   });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// C5-cure: restore real telegram module after all 1792 tests complete so
+// downstream files in the same Bun process see the genuine implementations.
+// ─────────────────────────────────────────────────────────────────────────────
+afterAll(() => {
+  mock.module("../infrastructure/notifiers/telegram.js", () => ({
+    sendTelegramWork: _realMod1792.sendTelegramWork,
+    sendTelegramMarket: _realMod1792.sendTelegramMarket,
+    sendTelegramBug: _realMod1792.sendTelegramBug,
+    sendTelegram: _realMod1792.sendTelegram,
+    notifyTelegramAlert: _realMod1792.notifyTelegramAlert,
+    notifyTelegramDocument: _realMod1792.notifyTelegramDocument,
+    formatConvictionBlock: _realMod1792.formatConvictionBlock,
+    deleteTelegramBug: _realMod1792.deleteTelegramBug,
+  }));
 });

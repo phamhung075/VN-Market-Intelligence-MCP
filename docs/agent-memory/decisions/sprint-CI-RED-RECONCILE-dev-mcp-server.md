@@ -429,6 +429,37 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 
 ---
 
+### STEP dev-mcp-server-S19 · dev-mcp-server · 2026-06-09T14:40:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** Applied arch-S16 C5-cure to `1792-conviction-debounce.test.ts`. File had a file-top `mock.module()` at L28 (no afterAll) leaking `sendTelegramBug/Market/Work/Telegram` stubs into the Bun process-global ESM registry for all downstream files (CI pos 103). THIRD contaminator: the 1485 afterAll cure (S18, pos 89) fires BEFORE 1792 loads (pos 103), so 1792 re-poisons the registry despite 1485's cure.
+
+**fix (2 changes in 1792):**
+1. Added `afterAll` to the existing `bun:test` import: `import { describe, it, expect, mock, beforeEach, afterEach, afterAll } from "bun:test";`
+2. Added cache-busted real module import BEFORE the L28 mock.module: `const _realMod1792 = await import(Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1792");`
+3. Added file-bottom afterAll block AFTER the describe block — restores real module using `_realMod1792` for all 8 telegram exports: `sendTelegramWork`, `sendTelegramMarket`, `sendTelegramBug`, `sendTelegram`, `notifyTelegramAlert`, `notifyTelegramDocument`, `formatConvictionBlock`, `deleteTelegramBug`.
+4. C5-CURE ABSOLUTE honored: ZERO new file-top/module-scope `mock.module()`. The existing L28 mock.module() stub stays UNCHANGED (load-bearing for 1792 bugMessages assertions). `afterEach(closeDb)` stays UNCHANGED.
+
+**what-considered:**
+- Adding new file-top mock.module() for the real module — REJECTED: C5-CURE ABSOLUTE constraint (no new module-scope mock.module()).
+- Restoring only the 4 stubs present in L28 — REJECTED: brief requires all 8 exports restored; partial restore leaves notifyTelegramAlert/Document/formatConvictionBlock/deleteTelegramBug as undefined in downstream files.
+- Using standard re-import instead of cache-busted `?isolate=1792` — REJECTED: without cache-bust, Bun may resolve to already-mocked registry state from earlier files (e.g. FIX-1290 at pos 197 if CI order changes); `?isolate=1792` guarantees a fresh real module load.
+
+**why-decision:** arch-S16 brief (2026-06-09-ci-c235-telegram-send-merge-triage.md) proves 1792 is the THIRD CONTAMINATOR: file-top mock.module at pos 103 re-poisons the registry AFTER 1485's afterAll (pos 89) restores it. `_realMod1792` cache-busted import captures genuine functions before any stub is active for that specifier. The afterAll leverages this capture to restore the registry state for all files at pos > 103.
+
+**result:**
+- 1792 solo: 3 pass / 2 fail (pre-existing failures UNCHANGED — afterAll is teardown only, does not affect 1792's own assertions)
+- 1792+235 ordered joint (2-file local, NOT authoritative; router gates on real CI): 13 pass / 2 fail (the 2 fails are pre-existing 1792 failures; all 10 Task 235 tests pass)
+- tsc --noEmit: CLEAN (0 errors, no output)
+**status-flip:** TODO → REVIEW (router owns push + CI gate; expected CI delta: Task 235 3→0 or 6→0 fails per arch-S16 gate spec)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1792-conviction-debounce.test.ts`
+- META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`, `docs/agent-memory/notebooks/dev-mcp-server.md`
+
+---
+
 ### STEP dev-mcp-server-S18 · dev-mcp-server · 2026-06-09T14:01:00Z (DJ-GATE-1)
 **task-id:** FIX-CI-C1485-TELEGRAM-MOCK-RESTORE
 **sprint:** CI-RED-RECONCILE
