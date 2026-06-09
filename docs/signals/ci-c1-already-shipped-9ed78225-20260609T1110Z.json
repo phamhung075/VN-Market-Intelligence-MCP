@@ -1,0 +1,25 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T11:10:00Z",
+  "dedup_key": "ci_c1_already_shipped:9ed78225",
+  "payload": {
+    "check_id": "CI-C1-ALREADY-SHIPPED-9ed78225",
+    "task_under_test": "FIX-CI-C1-MACRO-INJECT-SEAM-TESTS",
+    "verdict": "NO-OP / ALREADY-SATISFIED. The C1 macro-seam test rewrite was ALREADY shipped as commit 1d83a5ff and is an ancestor of the 91-run sha 9ed78225. All six C1 victim prefixes are 0 fails in CI right now (089=0, 1423d=0, 1423f=0, 1426c=0, 1570c=0, 1903a=0, raw-tallied against bun_job 80302822813). The re-dispatched dev-mcp-server agent correctly detected the fix was already committed and added ZERO new commits (idempotent). Route FIX-CI-C1-MACRO-INJECT-SEAM-TESTS TODO -> DONE as ALREADY-SHIPPED. DO NOT REBASELINE — C1 is already counted inside the standing 91 absolute; this was a duplicate task object, not new improvement.",
+    "premise_correction": "po-S33 (commit 6dd28fa0) opened FIX-CI-C1-MACRO-INJECT-SEAM-TESTS claiming '~71/91 dominant lever'. That premise was STALE. The actual C1 fix landed much earlier: commit 1d83a5ff (Tue 2026-06-09 08:38), and po-S25 (commit 39cf167d) already rebaselined 241 -> 193 citing 'CI-C3-C1-GATE-1d83a5ff -48'. The SPIKE-CI-C1-MACRO-INJECT-SEAM brief was re-run against an already-fixed codebase. No prod or test change is required for C1.",
+    "evidence": {
+      "commit": "1d83a5ff",
+      "ancestor_of_91_run_sha": "9ed78225 (git merge-base --is-ancestor 1d83a5ff 9ed78225 = true)",
+      "victim_prefix_fail_tally_in_91_run": { "Task 089": 0, "Task 1423d": 0, "Task 1423f": 0, "Task 1426c": 0, "Task 1570c": 0, "Task 1903a": 0 },
+      "dead_seam_grep": "ALL hits are JSDoc/`//` comments documenting the 98df0f43 seam removal (089 L13, 1423d L12, 1423f L9, 1570c L13-14/L258). ZERO live dead-seam code. tsc clean.",
+      "local_bun": "5 files 58 pass / 0 fail (dev re-confirmed)."
+    },
+    "ci_absolute_unchanged": { "native_fail": 91, "native_errors": 0, "sha": "9ed78225", "run_id": "27200448050", "bun_job_id": "80302822813", "note": "Standing band 91 +/-3 (floor ~88). No change — C1 was never a fresh lever." },
+    "true_residual_distribution": "Raw fail-prefix tally of the 91-run (the REAL remaining clusters, NOT C1): Task 1124 = 24 fails (NEW DOMINANT LEVER, unidentified), Task 1134 = 12 (NEW), 1407b = 12 (already in C7 scope), Task 1328e = 10 (already in C7 scope), Task 1129 = 10 (NEW), Task 235 = 6, Task 1173 = 6, Task 1839b = 4, Task 1792 = 4 (C7), Task 1282a = 4, long tail of 2s (1879a/1793/1503/1416b/1352a/1336/1331a/1309/1100/1837a/1343e...).",
+    "po_action_requested": "BATCHED single board write under commit-mutex (no concurrent writer — WIP=0, no mutex held): (1) FIX-CI-C1-MACRO-INJECT-SEAM-TESTS TODO -> DONE (ALREADY-SHIPPED by 1d83a5ff) with DJ-GATE-1 (decision-journal STEP in sprint-CI-RED-RECONCILE-po.md, stamped task-id, SAME commit) citing the six-victim 0-fail tally. (2) DO NOT rebaseline (keep ci_absolute = 91). (3) Open the NEW dominant cluster for Task 1124 (24 fails) as architect-first prod-vs-test triage (per /goal REMOVE-if-obsolete clause: confirm whether prod changed/deleted before any fix), plus stub Task 1134 (12) and Task 1129 (10) as NEW clusters. C7 (1407b/1328e/1792/1352a) and C8 already tracked. Verify single-status-key invariant + unique task-id count after the write.",
+    "next": "After PO board write + router verify: continue /goal loop toward native fail+error = 0. Remaining 91 native fail. Next real lever = Task 1124 (24) via architect-first triage. Also still router-owned toward 'ci ALL passe': FIX-TA-GOLANGCI-CONFIG-V2 (go-lint job still exits 1 on pre-existing FIX-TA-SANDBOX-DEPGUARD violation — keep open until green) + FIX-MACRO-GO-DIRECTIVE (go.mod 1.25->1.22). Cluster-6 schema-drift stays PARKED."
+  }
+}
