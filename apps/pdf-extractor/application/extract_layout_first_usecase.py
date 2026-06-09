@@ -422,6 +422,7 @@ class ExtractLayoutFirstUseCase:
                         zones_by_page=zones_by_page,
                         pdf_path=pdf_path,
                         tmp_dir=tmp_dir,
+                        ocr_pages=ocr_pages,
                     )
                     unit_ocr_results.append(ocr_result)
                 except Exception as exc:

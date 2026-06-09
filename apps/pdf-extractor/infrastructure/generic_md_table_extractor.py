@@ -3640,6 +3640,7 @@ def ocr_unit(
     zones_by_page: Dict[int, Dict],
     pdf_path: str,
     tmp_dir: str,
+    ocr_pages: Optional[List[Dict]] = None,
 ) -> Dict:
     """
     Tier 2: OCR each page of a logical unit into the known column grid, then
@@ -3656,13 +3657,19 @@ def ocr_unit(
         - Stitch: concatenate pages in reading order (page ASC, row_band_idx ASC).
 
     For prose units:
-        - Concatenate OCR text across page breaks as plain paragraph text.
+        - Concatenate stored OCR text (from ocr_pages) across page breaks as
+          plain paragraph text. No new Tesseract pass (AC-LFE-6 compliance).
+        - ocr_pages: per-page stored OCR text fetched at Step 0 in the use case.
+          Each dict: {"page_number": int, "text": str} (dual-key fallback applied).
+        - If ocr_pages is None or all pages have empty text, returns
+          stitched_markdown="" with _prose_no_text=True for observability.
 
     Args:
         unit:          Logical unit dict from DocumentMap.units.
         zones_by_page: Dict[page_number → PageZones] from Tier 1.
         pdf_path:      Absolute path to PDF.
         tmp_dir:       Temporary directory for intermediate PNGs.
+        ocr_pages:     Optional list of stored per-page OCR dicts (prose path only).
 
     Returns:
         UnitOcrResult dict:
@@ -3673,6 +3680,7 @@ def ocr_unit(
             "row_count":       42,
             "page_row_spans":  [{"page": 3, "row_start": 0, "row_end": 14}, ...],
             "rows_for_gate":   [{"code": str, "label": str, "values": [...], "page": N}, ...],
+            "_prose_no_text":  True   # (prose units only, when all pages blank)
         }
     """
     try:
@@ -3691,22 +3699,44 @@ def ocr_unit(
     # ------------------------------------------------------------------
     # Prose units: concatenate stored OCR text (no new Tesseract pass)
     # Tier 2 for prose = no table structure, just text concatenation.
+    #
+    # RISK-1 mitigation: dual-key fallback on "text" / "text_content"
+    # matches the existing pattern in _eval_push_stage3 (L881-882).
     # ------------------------------------------------------------------
     if unit_page_type != "table":
         prose_lines: List[str] = []
+
+        # Build a lookup from page_number → text from the stored OCR list
+        ocr_page_map: Dict[int, str] = {}
+        if ocr_pages:
+            for page_rec in ocr_pages:
+                page_num_key = page_rec.get("page_number") or page_rec.get("page_no")
+                if page_num_key is None:
+                    continue
+                # Dual-key fallback: "text" is canonical; "text_content" is legacy alias
+                page_text: str = page_rec.get("text") or page_rec.get("text_content") or ""
+                ocr_page_map[int(page_num_key)] = page_text
+
         for page_num in sorted(pages_in_unit):
-            page_zones = zones_by_page.get(page_num, {})
-            # For prose, we don't need to do any OCR — stored text suffices
-            # (the use case already has stored text; we emit an empty result
-            # so Tier 3 doesn't quarantine prose units on balance-identity).
-        return {
+            page_text = ocr_page_map.get(page_num, "").strip()
+            if page_text:
+                prose_lines.append(page_text)
+
+        all_blank = len(prose_lines) == 0
+        stitched = "\n".join(prose_lines)
+        non_empty_line_count = sum(1 for line in stitched.splitlines() if line.strip())
+
+        result: Dict = {
             "unit_id": unit_id,
             "page_numbers": pages_in_unit,
-            "stitched_markdown": "\n".join(prose_lines),
-            "row_count": 0,
+            "stitched_markdown": stitched,
+            "row_count": non_empty_line_count,
             "page_row_spans": [],
             "rows_for_gate": [],
         }
+        if all_blank:
+            result["_prose_no_text"] = True
+        return result
 
     # ------------------------------------------------------------------
     # Table units: OCR into the column grid, then stitch
