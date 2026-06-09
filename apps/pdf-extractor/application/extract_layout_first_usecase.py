@@ -82,8 +82,10 @@ from domain.modules.financial_reports.ports import (
     LayoutFirstPushClientPort,
     OcrPagesFetchClientPort,
 )
+from domain.primitives.bctc_code_whitelist.primitive import check_code_whitelist
 from domain.primitives.layout_invariants.primitive import (
     check_balance_identity,
+    check_bs_accounting_identities,
     check_codes_monotonic,
     check_no_orphan_rows,
 )
@@ -459,20 +461,36 @@ class ExtractLayoutFirstUseCase:
 
         # ------------------------------------------------------------------
         # Step 4 (Tier 3): Per-unit invariant gate
-        # Three invariants: balance identity / codes monotonic / no orphan rows.
-        # Failing units: quarantined=1 (stored, not dropped).
+        # Five gates total (run in order, 0 token cost, pure domain functions):
+        #
+        #   Gate A — B01-DN accounting identities (check_bs_accounting_identities)
+        #            Verifies: 280==440, 300+400==440, 100==Σ1xx, 200==Σ2xx
+        #   Gate B — Code whitelist (check_code_whitelist)
+        #            Every Mã số must be in the B01-DN/HN fixed code set.
+        #   Gate 1 — Balance identity (check_balance_identity — AC-0, geometric)
+        #   Gate 2 — Codes monotonic (check_codes_monotonic)
+        #   Gate 3 — No orphan rows (check_no_orphan_rows)
+        #
+        # Gates A+B: failures → emit needs_vision_verify marker (escalation-only).
+        #   The extractor does NOT call vision itself. The flow reads the marker
+        #   and renders only the flagged page(s) with pdftoppm → LLM-reads-PNG.
+        # Gates 1-3: failures → quarantined=1 (stored, not dropped).
         # ------------------------------------------------------------------
         units_output: List[Dict] = []
+        vision_verify_markers: List[Dict] = []
         quarantine_breakdown = {
             "balance_identity_fail": 0,
             "codes_not_monotonic": 0,
             "orphan_rows": 0,
+            "bs_identity_fail": 0,
+            "code_whitelist_fail": 0,
         }
 
         for ocr_result in unit_ocr_results:
             unit_id = ocr_result.get("unit_id", str(uuid.uuid4()))
             rows_for_gate: List[Dict] = ocr_result.get("rows_for_gate", [])
             page_row_spans: List[Dict] = ocr_result.get("page_row_spans", [])
+            unit_page_numbers: List[int] = ocr_result.get("page_numbers", [])
 
             # Check if OCR itself errored
             if ocr_result.get("_ocr_error"):
@@ -486,7 +504,58 @@ class ExtractLayoutFirstUseCase:
                 })
                 continue
 
-            # Run three invariants (pure domain functions — no I/O)
+            # ----------------------------------------------------------
+            # Gate A: B01-DN accounting-identity checksum (0 tokens, pure)
+            # ----------------------------------------------------------
+            bs_id_pass, bs_id_reason, bs_id_violations = check_bs_accounting_identities(
+                rows_for_gate
+            )
+            gate_a_failed = not bs_id_pass and "skipped" not in bs_id_reason
+
+            # ----------------------------------------------------------
+            # Gate B: Code-whitelist check (0 tokens, pure)
+            # ----------------------------------------------------------
+            wl_pass, wl_reason, wl_flagged_codes = check_code_whitelist(
+                rows_for_gate, template="B01_DN"
+            )
+            gate_b_failed = not wl_pass and "skipped" not in wl_reason
+
+            # Emit vision-verify marker when either gate fails
+            if gate_a_failed or gate_b_failed:
+                if gate_a_failed:
+                    quarantine_breakdown["bs_identity_fail"] += 1
+                if gate_b_failed:
+                    quarantine_breakdown["code_whitelist_fail"] += 1
+
+                if gate_a_failed and gate_b_failed:
+                    gate_label = "both"
+                    failing_reason = f"{bs_id_reason}; {wl_reason}"
+                elif gate_a_failed:
+                    gate_label = "checksum"
+                    failing_reason = bs_id_reason
+                else:
+                    gate_label = "code_whitelist"
+                    failing_reason = wl_reason
+
+                vision_verify_markers.append({
+                    "unit_id": unit_id,
+                    "page_numbers": unit_page_numbers,
+                    "failing_reason": failing_reason,
+                    "flagged_codes": wl_flagged_codes,
+                    "gate": gate_label,
+                })
+                logger.warning(
+                    "ExtractLayoutFirstUseCase: unit_id=%s needs_vision_verify=True "
+                    "gate=%s page_numbers=%s flagged_codes=%s",
+                    unit_id,
+                    gate_label,
+                    unit_page_numbers,
+                    wl_flagged_codes[:5] if wl_flagged_codes else [],
+                )
+
+            # ----------------------------------------------------------
+            # Gates 1-3: AC-0 invariants → quarantine decision
+            # ----------------------------------------------------------
             quarantine_reasons: List[str] = []
 
             bal_pass, bal_reason = check_balance_identity(rows_for_gate)
@@ -514,17 +583,24 @@ class ExtractLayoutFirstUseCase:
                 "quarantined": is_quarantined,
                 "quarantine_reason": quarantine_reason_str,
                 "page_row_spans": page_row_spans,
+                # Carry the gate results for downstream inspection
+                "needs_vision_verify": gate_a_failed or gate_b_failed,
             })
 
         units_total = len(units_output)
         units_quarantined = sum(1 for u in units_output if u["quarantined"])
         units_passing = units_total - units_quarantined
 
+        needs_vision_verify_total = sum(
+            1 for u in units_output if u.get("needs_vision_verify")
+        )
+
         pass_rate_report = {
             "units_total": units_total,
             "units_passing": units_passing,
             "units_quarantined": units_quarantined,
             "quarantine_breakdown": quarantine_breakdown,
+            "needs_vision_verify_count": needs_vision_verify_total,
         }
 
         logger.info(
@@ -584,6 +660,8 @@ class ExtractLayoutFirstUseCase:
             "units_passing": units_passing,
             "units_quarantined": units_quarantined,
             "pushed": pushed,
+            "needs_vision_verify": needs_vision_verify_total > 0,
+            "vision_verify_markers": vision_verify_markers,
         }
 
     # ------------------------------------------------------------------

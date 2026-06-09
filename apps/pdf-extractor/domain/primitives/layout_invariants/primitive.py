@@ -1,18 +1,21 @@
 """
-domain/primitives/layout_invariants/primitive.py — LF-EXTRACT
+domain/primitives/layout_invariants/primitive.py — LF-EXTRACT + GATE-VISION
 
-Three machine-checkable per-unit invariant checkers for the Tier 3 invariant gate.
+Four machine-checkable per-unit invariant checkers.
+Three original AC-0 generic checkers (Tier 3 invariant gate) + one B01-DN-specific
+accounting-identity checker (gate-first, vision-on-failure-only pattern).
 
 Pure functions: zero I/O, zero Tesseract, zero DB.
 Domain layer: no imports from infrastructure/, application/, interface/.
 
-AC-0 compliance: ZERO BCTC semantic strings in any decision path.
-    - Balance identity uses CODE POSITION geometry (max-code row = total sentinel),
-      NOT hardcoded sentinel code values like 270/300/400.
-    - Codes-monotonic uses numeric ordering only, no label matching.
-    - Orphan-rows checks structural completeness (label + value presence), no label keywords.
+AC-0 compliance note:
+    The three original functions below are AC-0 (generic, no BCTC semantic strings).
+    The fourth function, check_bs_accounting_identities(), is B01-DN-SPECIFIC by design
+    — it checks the canonical VAS Circular 200/2014 identities (280==440, 300+400==280,
+    100==Σchildren, 200==Σchildren). It is labeled as template-specific in its docstring.
+    AC-0 is intentionally NOT applied to it; it is gated by the template discriminator.
 
-Three invariants (all must pass for a unit to be non-quarantined):
+Three AC-0 invariants (all must pass for a unit to be non-quarantined):
 
     check_balance_identity(rows) -> (pass: bool, reason: str)
         For balance-sheet-shaped units: sum-of-component-rows == total-row.
@@ -35,6 +38,17 @@ Three invariants (all must pass for a unit to be non-quarantined):
         the UNIT is structurally acceptable (≈ 2-3 rows on a 46-page doc unit).
         FU-ORPHAN-TOLERANCE.
 
+B01-DN-specific checksum gate (gate-first, vision-on-failure-only):
+
+    check_bs_accounting_identities(rows) -> (pass: bool, reason: str, violations: list[str])
+        Verifies the four VAS Circular 200/2014 balance-sheet accounting identities:
+            I1: total_assets (280 or 270) == total_equity_and_liabilities (440)
+            I2: total_equity_and_liabilities (440) == liabilities (300) + equity (400)
+            I3: current_assets (100) == Σ of direct 1xx children
+            I4: non_current_assets (200) == Σ of direct 2xx children
+        On failure: emits violations list so the caller can emit needs_vision_verify
+        with the failing identity name and the codes involved.
+
 Input row schema (dict per row):
     {
         "code":    str | None,     # BCTC line code, e.g. "100", "270" — or None
@@ -43,8 +57,8 @@ Input row schema (dict per row):
         "page":    int,            # page number this row came from
     }
 
-All three functions return (bool, str). The bool is True = PASS, False = FAIL.
-The str is "" on pass, or a diagnostic reason string on fail.
+check_balance_identity / check_codes_monotonic / check_no_orphan_rows return (bool, str).
+check_bs_accounting_identities returns (bool, str, list[str]).
 """
 
 from __future__ import annotations
@@ -402,3 +416,163 @@ def check_no_orphan_rows(
         f"exceeds_tolerance={orphan_ratio_tolerance:.3f} "
         f"(orphan={orphan_count}, junk={junk_count})",
     )
+
+
+# ===========================================================================
+# check_bs_accounting_identities — GATE-VISION (B01-DN-specific checksum gate)
+# ===========================================================================
+
+def check_bs_accounting_identities(
+    rows: List[Dict],
+) -> Tuple[bool, str, List[str]]:
+    """
+    Verify VAS Circular 200/2014 B01-DN balance-sheet accounting identities.
+
+    Four identities checked (template: B01-DN / B01-HN):
+
+        I1  total_assets (code 280 or 270 when 280 absent) == total_equity_liab (440)
+        I2  total_equity_liab (440) == liabilities (300) + equity (400)
+        I3  current_assets (100) == Σ direct 1xx children (110, 120, 130, 140, 150)
+        I4  non_current_assets (200) == Σ direct 2xx children (210, 220, 230, 240, 250, 260)
+
+    Rationale: Tesseract is 100% digit-exact on financial values (proven on FPT Q1-2026).
+    If an identity fails it means either a code was OCR-corrupted (gate-b failure) or
+    a value was misread (rare). Combined with code-whitelist gate, the identity check
+    confirms correctness without any vision token cost.
+
+    Tolerance: abs(lhs - rhs) / max(abs(lhs), 1.0) <= 0.01  (1% tolerance)
+    Rationale: rounding and scale detection can introduce sub-1% differences.
+
+    Skip conditions (returns pass + skip reason, no violation):
+        - Fewer than 3 distinct 3-digit codes (not enough structure to identify sections)
+        - Code 440 absent (cannot determine sentinel → skip I1/I2)
+        - Codes 100 AND 200 both absent (cannot check I3/I4)
+
+    Args:
+        rows:  List of row dicts. Each row: {"code": str|None, "values": list[str|None], "page": int}.
+
+    Returns:
+        (pass: bool, reason: str, violations: list[str])
+
+        pass=True  → all applicable identities hold (or all skipped).
+        pass=False → at least one identity fails.
+
+        violations: list of strings, one per failing identity, e.g.:
+            ["I1: total_assets(280)=58102970 != total_equity_liab(440)=58000000 delta=102970"]
+        Empty list on pass.
+    """
+    # ------------------------------------------------------------------ helpers
+    def _get_value(code_target: str) -> Optional[float]:
+        """Return the numeric value of the first row matching code_target, or None."""
+        for row in rows:
+            norm = _parse_code_int(row.get("code"))
+            if norm is not None and str(norm) == code_target.strip():
+                val = _extract_numeric_value(
+                    row["values"][0] if row.get("values") else None
+                )
+                if val is not None:
+                    return val
+        return None
+
+    def _sum_children(parent_prefix_int: int, child_10s: List[int]) -> Optional[float]:
+        """
+        Sum values of rows whose code integer == parent_prefix_int + child suffix.
+        child_10s: list of expected child subtotals (e.g. [110, 120, 130, 140, 150]).
+        Returns None if no children found with parseable values.
+        """
+        total: float = 0.0
+        found_any = False
+        for row in rows:
+            norm = _parse_code_int(row.get("code"))
+            if norm is None:
+                continue
+            if norm in child_10s:
+                val = _extract_numeric_value(
+                    row["values"][0] if row.get("values") else None
+                )
+                if val is not None:
+                    total += val
+                    found_any = True
+        return total if found_any else None
+
+    def _identity_ok(lhs: Optional[float], rhs: Optional[float], tol: float = 0.01) -> bool:
+        if lhs is None or rhs is None:
+            return True  # Cannot check → skip (benign)
+        denom = max(abs(lhs), 1.0)
+        return abs(lhs - rhs) / denom <= tol
+
+    # ------------------------------------------------------------------ gather distinct codes
+    distinct_3digit = set()
+    for row in rows:
+        code_int = _parse_code_int(row.get("code"))
+        if code_int is not None and 100 <= code_int <= 999:
+            distinct_3digit.add(code_int)
+
+    if len(distinct_3digit) < 3:
+        return True, "bs_identity_skipped=true: fewer_than_3_codes", []
+
+    # ------------------------------------------------------------------ I1 + I2
+    total_assets = _get_value("280") or _get_value("270")
+    total_equity_liab = _get_value("440")
+    liabilities = _get_value("300")
+    equity = _get_value("400")
+
+    violations: List[str] = []
+
+    if total_assets is not None and total_equity_liab is not None:
+        if not _identity_ok(total_assets, total_equity_liab):
+            delta = abs(total_assets - total_equity_liab)
+            ta_code = "280" if _get_value("280") is not None else "270"
+            violations.append(
+                f"I1: total_assets({ta_code})={total_assets:.0f} "
+                f"!= total_equity_liab(440)={total_equity_liab:.0f} "
+                f"delta={delta:.0f}"
+            )
+
+    if total_equity_liab is not None and liabilities is not None and equity is not None:
+        rhs = liabilities + equity
+        if not _identity_ok(total_equity_liab, rhs):
+            delta = abs(total_equity_liab - rhs)
+            violations.append(
+                f"I2: total_equity_liab(440)={total_equity_liab:.0f} "
+                f"!= liabilities(300)+equity(400)={liabilities:.0f}+{equity:.0f}={rhs:.0f} "
+                f"delta={delta:.0f}"
+            )
+
+    # ------------------------------------------------------------------ I3: current assets children
+    current_assets = _get_value("100")
+    if current_assets is not None:
+        children_sum = _sum_children(100, [110, 120, 130, 140, 150])
+        if children_sum is not None and not _identity_ok(current_assets, children_sum):
+            delta = abs(current_assets - children_sum)
+            violations.append(
+                f"I3: current_assets(100)={current_assets:.0f} "
+                f"!= Σ(110,120,130,140,150)={children_sum:.0f} "
+                f"delta={delta:.0f}"
+            )
+
+    # ------------------------------------------------------------------ I4: non-current assets children
+    noncurrent_assets = _get_value("200")
+    if noncurrent_assets is not None:
+        children_sum = _sum_children(200, [210, 220, 230, 240, 250, 260])
+        if children_sum is not None and not _identity_ok(noncurrent_assets, children_sum):
+            delta = abs(noncurrent_assets - children_sum)
+            violations.append(
+                f"I4: noncurrent_assets(200)={noncurrent_assets:.0f} "
+                f"!= Σ(210,220,230,240,250,260)={children_sum:.0f} "
+                f"delta={delta:.0f}"
+            )
+
+    if not violations:
+        checks_run = sum([
+            total_assets is not None and total_equity_liab is not None,
+            total_equity_liab is not None and liabilities is not None and equity is not None,
+            current_assets is not None,
+            noncurrent_assets is not None,
+        ])
+        if checks_run == 0:
+            return True, "bs_identity_skipped=true: key_codes_absent", []
+        return True, "", []
+
+    reason = f"bs_identity_fail: {len(violations)} violation(s): " + "; ".join(violations)
+    return False, reason, violations
