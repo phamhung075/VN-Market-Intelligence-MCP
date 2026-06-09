@@ -3825,6 +3825,27 @@
             "closed_at": "2026-06-09T14:20:00Z",
             "closed_by": "po-S44",
             "note_235_not_cured": "PREDICTED co-victim Task 235 DID NOT FLIP on full CI (stays 6 fail -> 6 fail). The dev 2-file local joint-pass (1485+235) was a FALSE POSITIVE (same mode that disproved arch-S14). 235 is NOT cured by this task; carried as a SEPARATE open lever needing its own full-CI architect-first triage. NOT a regression (6 before, 6 now). This DONE does NOT claim 235 cured."
+          },
+          {
+            "id": "FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [],
+            "root_cause": "arch-S16 CONTAMINATION verdict: THIRD contaminator = apps/mcp-server/src/__tests__/1792-conviction-debounce.test.ts (CI pos 103). Its file-top mock.module() L28 leaks sendTelegramMarket/sendTelegramBug/sendTelegramWork/sendTelegram stubs into the process-global ESM registry with NO afterAll restore. sendTelegramBug stub returns boolean true (not a message_id). No file in the 672-file gap to pos 775 restores, so Task 235 (235-telegram-send-merge.test.ts, pos 775) captures the stub on await import. Router raw-verified brief commit 4a3a03bb + confirmed leak in raw 1792 file (file-top mock.module L28, NO afterAll, sendTelegramBug stub L31).",
+            "scope": "Apply arch-S16 C5-cure to 1792-conviction-debounce.test.ts ONLY (zone apps/mcp-server/src/__tests__/). Step1: capture cache-busted _realMod1792 at file top BEFORE the L28 mock.module (Bun.resolveSync(...telegram.js)+\"?isolate=1792\"). Step2: add afterAll to the bun:test import + file-bottom afterAll that re-installs all 8 real telegram symbols (sendTelegramWork/Market/Bug + sendTelegram + notifyTelegramAlert + notifyTelegramDocument + formatConvictionBlock + deleteTelegramBug). UNCHANGED: existing L28 it()-body mock.module stub (load-bearing for 1792 bugMessages assertions); afterEach(closeDb). NO new file-top mock.module. NO prod change. NO change to 235 test. Full spec in brief.",
+            "spec_brief": "docs/architecture-briefs/2026-06-09-ci-c235-telegram-send-merge-triage.md",
+            "gate": "PRIMARY: flip Task 235 (235-telegram-send-merge.test.ts) -> 0 fail on full CI run, measured by per-victim exact-prefix fail count. AUTHORITATIVE jitter-robust signal = the named Task 235 exact-prefix tally on the real CI run after the fix.",
+            "fail_count_discrepancy": "arch-S16 expected-delta says Task 235: 3 fail -> 0; router jitter-robust gate tally shows Task 235 = 6 fail. BOTH numbers recorded. Do NOT assert which is right — the post-fix CI gate per-victim exact-prefix Task 235 count decides.",
+            "bonus_watch_no_claim": "arch-S16 notes 1792 afterAll may also let downstream 1352a (pos 212) / 047 (pos 315) frozen-real captures pick up genuine functions, possibly helping Task 1352a (currently 2). WATCH, DO NOT CLAIM — gate must prove.",
+            "baseline_pass": 11698,
+            "created_at": "2026-06-09T14:31:53Z",
+            "created_by": "po-S45",
+            "note": "ci_absolute STAYS 63 (no rebaseline at task-open). Accepts arch-S16 verdict. Successor open-lever to FIX-CI-C1485-TELEGRAM-MOCK-RESTORE (DONE, cured 1328e only; Task 235 co-cure did NOT materialize at po-S44 -> this task owns the 235 cure)."
           }
         ],
         "_updated_by": "po-S28",
