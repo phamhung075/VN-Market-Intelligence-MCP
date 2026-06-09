@@ -1,8 +1,26 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 05:45 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 03:12 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T03:12Z — FU-SCHEMA-DRIFT-P7: recurring-bug spike, premise correction + 7 destroyers identified
+
+**Task:** FU-SCHEMA-DRIFT-P7 (SPIKE, 120m, zone: apps/mcp-server/, 5th touch CI-test-schema surface)
+
+**Key finding — premise correction:** P7 task said "canonical initDatabase() NEVER CREATES these tables." EMPIRICALLY FALSE. Full audit of all 9 schema slices: all 16 residual tables (agent_signals, sbv_rates_history, positions, commodity_prices*, imf_indicators, evidence_scores, cron_job_runs, daily_ohlcv, vnstock_trading_stats, signal_quality_audit, insider_transactions, deep_fetch_queue, watchlist, vps_service_health) ARE present in canonical initDatabase() via their respective slices. Adding DDL would be no-op.
+
+**True root cause:** 7 test files call closeDb() without ever calling initDatabase() — identified via Python analysis stripping block comments (grep missed block-comment false positives). Files at run positions [53], [77], [236], [574], [638], [751], [814] destroy the shared singleton permanently. After position [814] (283-portfolio-conviction-batch), 180 pure-singleton files across positions [815]–[1032] get empty :memory: DB → production modules with internal getDb() calls hit "no such table". P6 fixed positions [508] (1527) only — destroyers at [574]/[638]/[751]/[814] were never addressed.
+
+**Why P6 had zero improvement:** After 1527 reinit at [508], destroyers at [574] (182-portfolio-risk) → [638] (1869b) → [751] (231-signal-validator) → [814] (283-conviction-batch) killed the singleton again. Pure-singleton files after [814] still got empty DB.
+
+**Correct fix:** Add `afterAll(async () => { closeDb(); await initDatabase(); })` to ALL 7 close-no-init files. NO production code changes. Test files only.
+
+**Expected drop:** 85-95% of 629 failures. Estimated native fail+error < 50.
+
+**Brief:** `docs/architecture-briefs/2026-06-09-fu-schema-drift-p7-spike.md`
+
+**Files (dev task):** 103-job-market-scan.test.ts, 1076-market-scan-noise-retirement.test.ts, 1291-foreign-flow-duplicate-dedup-migration.test.ts, 182-portfolio-risk.test.ts, 1869b-watchlist-threshold-wiring.test.ts, 231-signal-validator-integration.test.ts, 283-portfolio-conviction-batch.test.ts — each gets `afterAll(async () => { closeDb(); await initDatabase(); })`.
 
 ## 2026-06-09T05:45Z — FU-SCHEMA-DRIFT-P6: recurring-bug spike, slice DDL audit + P5 regression diagnosis
 

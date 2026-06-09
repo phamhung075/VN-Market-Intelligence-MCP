@@ -147,3 +147,33 @@ of P5 `created_at ×3` regression. Chose direction (b). Produced 3-file dev-read
 **why-decision:** Option (b) zero production-code risk; uses canonical `initDatabase()` (full schema, idempotent); the 3 files are the only afterAll-closeDb killers; self-heal footgun avoids re-introducing P5 DELETE side-effect on every test.
 
 **why-change:** P5 hypothesis (drift in slice DDL) DISPROVED empirically. Root cause is Contract boundary violation + self-heal side-effects, not DDL column omission.
+
+---
+
+### STEP arch-S6 (DJ-GATE-1) · architect · 2026-06-09T03:12Z
+
+**task-id:** FU-SCHEMA-DRIFT-P7
+**sprint:** CI-RED-RECONCILE
+**mode:** spike (120m timebox), 5th touch CI-test-schema surface
+
+**what-done:** Full brownfield audit revealing P7 premise is INCORRECT. Python-based analysis
+(comment-stripping) of all 1033 test files mapped: (a) all 16 residual tables confirmed PRESENT
+in canonical initDatabase() — no DDL missing; (b) 293 partial-setup files with inline DDL but
+no initDatabase() call; (c) exactly 7 files with closeDb() but no initDatabase() calls;
+(d) run-order mapping proving 7 files at positions [53]/[77]/[236]/[574]/[638]/[751]/[814]
+destroy singleton progressively; (e) 180 pure-singleton files at [815]–[1032] all get empty
+:memory: DB after destroyer [814].
+
+**what-considered:**
+- **P7 task directive (add DDL to canonical initDatabase()):** Full brownfield audit shows all 16 residual tables ARE already in canonical initDatabase() slices. DDL additions would be no-ops. This direction cannot reduce failures. REJECTED.
+- **P5 approach (self-heal in getDb()):** Empirically disproved (+6 worse). Side-effect footgun confirmed. REJECTED.
+- **P6 approach (afterAll reinit in 3 killer files):** Partially correct direction but incomplete — fixed [508] (1527) but missed destroyers at [574], [638], [751], [814]. Zero improvement because downstream destroyers survived.
+- **CORRECT DIRECTION: 7 close-no-init files need afterAll(closeDb+initDatabase):** Identified via Python analysis: grep-c missed block-comment false positives (102-job-news-poll had initDatabase only in a JSDoc comment, not actual call). 7 files confirmed as only files calling closeDb() with zero actual initDatabase() calls. Adding afterAll reinit to all 7 eliminates all singleton-destruction events after run [814].
+
+**why-decision:** Only direction that addresses the ACTUAL mechanism (singleton destruction by
+7 specific files). Zero production code changes. Uses full canonical initDatabase() (all slices,
+IF NOT EXISTS = safe). Extends the P6 direction (which was correct in kind but incomplete in scope).
+
+**why-change:** P7 premise (tables missing from initDatabase) DISPROVED by full slice audit.
+Root cause is singleton destruction by 7 close-no-init files, not schema incompleteness.
+Expected impact: 85-95% reduction (629 → <50 native fail+error).
