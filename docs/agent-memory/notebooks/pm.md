@@ -165,3 +165,44 @@
 ## c299 · 2026-06-07 (lesson, relocated by dispatcher from stray docs/agents/pm/notebook.md)
 
 **Umbrella sprint note-append = EDIT existing sprint in place, never create sibling.** Batch d796dbb7 created a duplicate SPRINT-PPC-PDF-SOURCING (empty tasks + new note) leaving the original (6 tasks) with a stale note. Fix 634b4ca4 merged note + deleted duplicate. Validate post-edit: exactly 1 entry, task count preserved, note present. Same family as move-not-copy and rename-not-recreate: every structural mutation EDITS the existing object.
+
+## Session 2026-06-10 — BCTC-PROSE-EXTRACT Sprint Task Breakdown
+
+**Context:** Architect SPIKE complete. Recurring-bug-escalation resolved (5 blockers + module-family root-cause analysis delivered). PM task: decompose design into two atomic tasks, enforce serial patch ordering (BLOCKER-3), set WIP=2.
+
+**Input:**
+- BA spec: BPE-BA-1 (PENDING)
+- Architect spike: BLOCKER-1/2/3/4/5 all resolved
+- Design brief: docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md § [Architect] Brownfield Findings
+
+**Output:**
+- TASK_BPE-DEV-1: producer fix (apps/pdf-extractor, 4h, dev-pdf-extractor)
+- TASK_BPE-DEV-2: consumer/serving (apps/mcp-server, 3h, dev-mcp-server)
+- orch-state.json updated: 2 tasks added, sprint status=active
+- WIP=2 (both slots allocated to BPE-DEV-1 + BPE-DEV-2)
+
+**Key Decisions:**
+1. Serial patch order (BLOCKER-3): Commit active table work FIRST (dtos.py, layout_invariants, bctc_code_whitelist), then apply prose fix on top. Enforced via TASK_BPE-DEV-1 handoff AC-4.
+2. Zone split: BPE-DEV-1 = producer/extraction layer, BPE-DEV-2 = consumer/serving layer. Can run parallel (serving code has no dep on producer code, only on data state).
+3. FR-3 (46-vs-35 gap): Resolved-no-action. Root cause is separate defect (pdfOcrWorker char-count skip), not the prose-drop. Architect ruled no code change needed.
+4. Test strategy: New unit test (test_generic_extractor_prose.py) for prose branch, new integration test (PROSE-UNIT-SERVE.test.ts) for round-trip serving.
+
+**Next:**
+- dev-pdf-extractor claims & starts BPE-DEV-1 (producer fix)
+- dev-mcp-server can start BPE-DEV-2 code in parallel, but integration tests depend on BPE-DEV-1 data
+- Both must finish before QA gates (TC-1, TC-2, TC-3, TC-5 coverage required)
+
+**Risk tracking:**
+- RISK-5 (test fixture breakage on ocr_unit mock): Handled via grep-audit before commit (BPE-DEV-1 AC-4)
+- RISK-4 (bctcInspectHandler query semantics): Handled via `page_type IN ('table', 'prose')` filter (BPE-DEV-2 AC-1)
+- RISK-6 (AI context-window overflow): Handled via 4000-char cap + `prose_truncated` flag (BPE-DEV-2 AC-3)
+
+**Metrics:**
+- Sprint opened: 2026-06-09
+- Architect spike: DONE
+- Dev tasks ready: 2/2
+- Estimated total dev time: ~7h (4h + 3h)
+- WIP slots: 2/2 allocated
+
+**Blockers cleared:** BLOCKER-1 (Option A confirmed), BLOCKER-2 (separate root), BLOCKER-3 (serial order enforced), BLOCKER-4 (extend existing tools), BLOCKER-5 (recurring-bug structural root documented).
+

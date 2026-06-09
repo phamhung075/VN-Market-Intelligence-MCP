@@ -5,10 +5,10 @@
   "_updated_by": "po",
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-09T21:42:04Z",
-    "updated_by": "po",
-    "active_task_id": "BPE-BA-1",
-    "next_agent": "ba"
+    "updated_at": "2026-06-09T21:50:17Z",
+    "updated_by": "ba",
+    "active_task_id": "BPE-ARCH-1",
+    "next_agent": "architect"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T21:42:04Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-10T00:00:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4396,7 +4396,7 @@
       {
         "id": "BCTC-PROSE-EXTRACT",
         "label": "BCTC extractor silently DROPS prose / non-table pages — Thuyet minh (notes-to-FS) text never reaches OCR/text output nor AI-analysis layer. User-reported on FPT Q1 2026 inspector p12/46.",
-        "status": "BA-PENDING",
+        "status": "active",
         "opened_at": "2026-06-09T21:42:04Z",
         "priority": "high",
         "zone": "apps/pdf-extractor/",
@@ -4414,11 +4414,53 @@
             "zone": "apps/pdf-extractor/",
             "title": "BA spec: prose/non-table page extraction for BCTC (full content coverage). Decompose user bug into requirements: (1) page-type branch table-vs-prose, (2) prose-text unit emission to push plus storage plus serving, (3) 46-vs-35 OCR coverage-gap root-cause (same vs separate), (4) AI-analysis-layer consumes prose. Output docs/REQ_*.md. Flag recurring-bug-escalation -> architect root-cause SPIKE before dev. Coordinate with active uncommitted table-extraction work in zone (do not clobber).",
             "created_at": "2026-06-09T21:42:04Z"
+          },
+          {
+            "id": "BPE-DEV-1",
+            "task_id": "BPE-DEV-1",
+            "kind": "sprint-task",
+            "owner": "dev-pdf-extractor",
+            "status": "READY",
+            "zone": "apps/pdf-extractor/",
+            "title": "Fix ocr_unit() prose branch to extract + emit prose text (extend signature with ocr_pages param, populate prose_lines from stored OCR text, handle empty-text edge cases)",
+            "type": "FIX",
+            "size": "M",
+            "depends_on": [],
+            "blockers": "BLOCKER-3 ordering: commit active table work (dtos.py, layout_invariants, bctc_code_whitelist) FIRST, then apply prose fix on top",
+            "created_at": "2026-06-09T22:00:00Z",
+            "handoff": "docs/handoffs/TASK_BPE-DEV-1.md"
+          },
+          {
+            "id": "BPE-DEV-2",
+            "task_id": "BPE-DEV-2",
+            "kind": "sprint-task",
+            "owner": "dev-mcp-server",
+            "status": "READY",
+            "zone": "apps/mcp-server/",
+            "title": "Extend bctcInspectHandler to serve prose units (change page_type filter to include prose, update gap semantics) + add prose_sections to bctcFullTools (4k cap, context-window safe)",
+            "type": "FEATURE",
+            "size": "M",
+            "depends_on": [
+              "BPE-DEV-1"
+            ],
+            "created_at": "2026-06-09T22:00:00Z",
+            "handoff": "docs/handoffs/TASK_BPE-DEV-2.md"
           }
         ]
       }
     ],
     "backlog": [
+      {
+        "id": "BPE-ARCH-1",
+        "title": "BCTC-PROSE-EXTRACT architect SPIKE + design brief — 5 blockers: ocr_unit injection path (BLOCKER-1), OCR gap root cause (BLOCKER-2), patch order for active uncommitted work (BLOCKER-3), AI tool arch (BLOCKER-4), structural root-cause for module family (BLOCKER-5). Spec: docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md",
+        "owner": "architect",
+        "status": "TODO",
+        "zone": "apps/pdf-extractor/",
+        "created_at": "2026-06-09T21:50:17Z",
+        "sprint": "BCTC-PROSE-EXTRACT",
+        "priority": "high",
+        "note": "recurring-bug-escalation=true — SPIKE is NFR-4 mandatory pre-condition for dev"
+      },
       {
         "id": "VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE",
         "type": "FIX",
@@ -7464,6 +7506,17 @@
         "gate": "mcp-server memory back below WARN threshold after targeted single-service recreate; peer containers untouched (docker ps -a confirms all peers still up, same uptime class); root-cause note recorded (leak vs working-set vs spike). NEVER down&&up.",
         "resolved_at": "2026-06-09T07:20:00Z",
         "resolved_by": "ops"
+      },
+      {
+        "id": "BPE-BA-1",
+        "title": "BCTC-PROSE-EXTRACT BA spec — FR/NFR decomposition, DDD layer map, 5 architect blockers. Spec: docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md",
+        "owner": "ba",
+        "status": "DONE",
+        "zone": "apps/pdf-extractor/",
+        "created_at": "2026-06-09T21:50:17Z",
+        "closed_at": "2026-06-09T21:50:17Z",
+        "sprint": "BCTC-PROSE-EXTRACT",
+        "priority": "high"
       }
     ],
     "in_progress": [

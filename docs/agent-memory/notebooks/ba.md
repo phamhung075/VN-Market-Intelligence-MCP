@@ -1,5 +1,21 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-09 | **Sprint:** BCTC-PROSE-EXTRACT
+
+## BCTC-PROSE-EXTRACT-BA · 2026-06-09
+
+Spec complete. Task: BPE-BA-1. REQ file: `docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md`. Zero PO blockers. 5 architect blockers. Recurring-bug-escalation=true — architect SPIKE mandatory before dev. NEXT: architect.
+
+Key BA findings (raw-read, not relayed):
+- Root defect: `ocr_unit()` in `generic_md_table_extractor.py` prose branch declares `prose_lines: List[str] = []` then loops pages without ever appending. Returns `stitched_markdown: ""` always for prose units. Comment says "stored text suffices" but stored text is never read. Single-line bug.
+- Second layer: `bctcInspectHandler.ts` OCR serve query filters `page_type = 'table'` only — prose units are never returned as PEK hits, always fall to `pek_coverage_gap: true` path, which hits `pdf_extracted_text` legacy table with 46-vs-35 gap.
+- `pdf_extracted_text` gap (46 vs 35 pages): root cause unknown. Architect SPIKE must audit write path. Key candidates: `ocr_text_source.py`, `ocr_adapter.py`, `ocr_worker.py`.
+- Active uncommitted table-extraction work touches `extract_layout_first_usecase.py` (same file as prose fix). Patch order ruling required from architect (BLOCKER-3).
+- BLOCKER-1: `ocr_unit()` must receive stored OCR pages. Option A (pass as parameter, default None) recommended over Option B (inject port into function).
+- FR-4 AI tool: prose text may reach 15-30KB for thuyết minh sections. Context-window pagination strategy required in architect design.
+- NFR-3: prose units must return `rows_for_gate: []` — all 5 invariant gates have empty-input early exits (verified in source).
+- `_ALLOW_PROSE_IN_TABLE_UNIT = True` flag: prose-in-table pages flow through table path, not affected by FR-1.
+
 **Last updated:** 2026-06-08 | **Sprint:** DEEPFETCH-RAG-REDESIGN
 
 ## DEEPFETCH-RAG-REDESIGN-BA · 2026-06-08
@@ -149,29 +165,6 @@ Key source findings (BA raw-read, not relayed):
 - FR-4 (`get_patterns` vs `get_technical_indicators`): `get_patterns` queries `rag_analyses` (RAG memory, event/keyword match). `get_technical_indicators` calls Go TA microservice (port 5003) for RSI/MACD/MA/BB. Completely distinct.
 - FR-5 (5 trigger tools): all thin SSH-trigger debug tools with same param shape but different VPS scripts. Return schemas slightly diverge (bctc returns `queued`, price returns `service`). Architect-discretion optional.
 - FR-6: `project-stats.json` both `toolCount` fields = 146 (stale). Live = 154. Runs last.
-
----
-
-**Last updated:** 2026-05-31 | **Sprint:** DWF-PHASE1 (P1-BA)
-
-## DWF-PHASE1-BA · 2026-05-31
-
-Sprint DWF-PHASE1 spec complete. REQ file: `docs/REQ_DYN-WF-PHASE1.md`. Three PO-level open questions (OQ-P1-1..3). Four architect blockers (BLOCKER-1..4). NEXT: architect (P1-ARCH).
-
-Key decisions encoded:
-- FR-P1-1: Cadence policy table in `docs/data/cadence-policy.json`. Pure deterministic look-up `(policy_id, calendar_status, signal_backlog_tier, volatility_tier) → interval_minutes`. First-match-wins, `*` wildcard. No LLM classifier (CLAUDE.md §3 hard constraint). Null result = suppress (non-guaranteed only).
-- FR-P1-2: `policy_id` + `last_fired` fields additive to cowork-schedule.json slots. Absent/null = legacy cron fallback (backward-compatible). `guaranteed=true` slots use cron floor regardless of policy.
-- FR-P1-3: `cowork-match-slots.js` gains `--mode=adaptive` path. Legacy cron for null-policy slots, due-based for policy slots. `last_fired=null` → always due (first-run). Output schema unchanged except two new observability fields.
-- FR-P1-4: Calendar suppression — single `is_trading_day` call per tick (not per slot). Holiday/weekend suppresses all non-guaranteed slots. Tool failure → unknown → no suppression (conservative). CRITICAL: suppression must happen BEFORE per-work-item claim OR suppression path must call task_release. This is BLOCKER-1 for architect.
-- FR-P1-5: Three-condition freshness downgrade for gatherers: last_regime=unknown AND signal_backlog=0 AND holiday/weekend. Advisory, non-guaranteed only.
-- FR-P1-6: Pressure-state staleness gate (30 min / stale_warning) → legacy cron fallback. Degradation is never worse than today.
-- FR-P1-7: `last_fired` write after successful spawn only (not on failure). Atomic write pattern. BLOCKER-3: must be single batched patch for all WON_SLOTS (not per-slot parallel — lost-update risk).
-
-Phase-2 regression surface explicitly encoded in NFR-P1-1: leader lock + suffix-free token + published-marker belt must not be touched. Every new insertion point is additive between "leader won" and "fan-out."
-
-Zone: cross-service only (`cowork-match-slots.js`, `cowork-team/flow/main.md`, `docs/data/cowork-schedule.json`, `docs/data/cadence-policy.json`). Zero diff on `apps/mcp-server/`.
-
-TASKS.md updated: P1-BA ✅ + P1-ARCH 🔄 added. Files left unstaged per commit-discipline. NEXT: architect (P1-ARCH).
 
 ---
 

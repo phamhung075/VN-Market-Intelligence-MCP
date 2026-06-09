@@ -1,8 +1,23 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 19:55 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 21:57 UTC | **Sprint:** BCTC-PROSE-EXTRACT
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T21:57Z — arch-S26: BCTC-PROSE-EXTRACT SPIKE (BPE-ARCH-1)
+
+**Task:** BPE-ARCH-1 (SPIKE, multi-zone: apps/pdf-extractor/ + apps/mcp-server/)
+
+**Method:** Source-read all confirmed-defect paths. Audited `ocr_unit()` prose branch (L3695-3709 — loop never appends), `extract_layout_first_usecase.py` ocr_unit call site (L420 — ocr_pages not passed), `bctcInspectHandler.ts` seam query (L514-519 — `page_type = 'table'` filter excludes prose), `pdfOcrWorker.ts` INSERT path (L252 80-page cap + L270-278 10-char skip guard). Also read active uncommitted diff to assess BLOCKER-3 conflict risk.
+
+**Key findings:**
+- BLOCKER-1: Option A (additive ocr_pages param) confirmed safe — dual-key fallback pattern `page_rec.get("text") or page_rec.get("text_content")` already in use at eval_push_stage3 L881.
+- BLOCKER-2: 46-vs-35 gap is SEPARATE defect — pdfOcrWorker 10-char skip guard, not a page-type filter. 11 pages returned <10 chars. FR-1/FR-2 fix bypasses the legacy fallback entirely. No code change to pdfOcrWorker needed this sprint.
+- BLOCKER-3: Zero line-level conflict between prose fix (ocr_unit L3695-3709 + call site L420) and table changes (Step 4 gate loop L504+). Serial patch order: table commit first, prose on top.
+- BLOCKER-4: No new tool — getBctcPageTextTool auto-serves prose after FR-2c (delegates to handleBctcInspectOcr which will return prose text). FR-4b via prose_sections array in bctcFullTools with 4000-char cap per unit.
+- BLOCKER-5: Root cause of 7-sprint silent drop — no non-empty assertion on prose stitched_markdown; invariant gates skip empty units (masking empty result as success); PROSE-DEV-1 fallback comment normalized the behavior across sprint boundaries.
+
+**Brief:** docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md (§ [Architect] Brownfield Findings appended)
 
 ## 2026-06-09T19:55Z — arch-S25: BATCH5 C-AL per-file triage (20 files / 26 fails)
 
