@@ -407,3 +407,55 @@ path). AC-7/AC-7b pass explicit string values (no transformation). Zero AC adapt
 
 **artefacts:**
 - `docs/architecture-briefs/2026-06-09-ci-c1129-calibration-triage.md`
+
+---
+
+### STEP arch-S15 (DJ-GATE-1) · architect · 2026-06-09T13:55Z
+
+**task-id:** FIX-CI-C1328E-RETRIAGE (gate-fail 7f1f48b3)
+**sprint:** CI-RED-RECONCILE
+**mode:** prod-vs-test re-triage (full-CI evidence; prior C5-cure disproven for 1328e)
+
+**what-done:** Re-triaged Task 1328e after arch-S14 C5-cure (047 afterAll + extended stub, commit
+e57494d3) failed to flip 1328e on full-CI ordering (10 fail → 10 fail, job 80334814093). Read CI
+log for job 80334814093, confirmed failure mode CHANGED from SyntaxError to `Expected: false,
+Received: { ok: true }`. Identified `{ ok: true }` as exclusive fingerprint of `1485-telegram-
+mock-isolation.test.ts` stub. Traced capture-poisoning: 1485 (pos 89, no afterAll restore) runs
+before 047 (pos 315); 047's top-level import captures 1485 stub as `_realNotifyTelegramAlert`;
+047's afterAll reinstalls the stub as "restored" real; contamination persists to pos 941 (1328e).
+Confirmed 235-telegram-send-merge (pos 775) also fails as corroborating victim. Ran local multi-
+file probes confirming Bun 1.3.13 re-sorts specified files internally — CI log is the authoritative
+ordered evidence. Confirmed prod telegram.ts L549-595 unchanged — C7/REWRITE/REMOVE do not apply.
+Produced brief at `docs/architecture-briefs/2026-06-09-ci-c1328e-retriage-arch-s15.md`.
+
+**verdict:** SECOND-CONTAMINATOR — `1485-telegram-mock-isolation.test.ts`
+
+**root cause mechanism:**
+1. 1485 (pos 89): installs `notifyTelegramAlert: async () => ({ ok: true })` in it() bodies.
+   NO afterAll restore → stub persists in ESM registry.
+2. 047 (pos 315): top-level static import captures 1485 stub as `_realNotifyTelegramAlert`.
+   `_frozenNotifyTelegramAlert = async () => ({ ok: true })` (wrong).
+3. 047 afterAll: "restores" with `_frozenNotifyTelegramAlert` = 1485 stub. Registry stays wrong.
+4. All files after pos 315 (including 1328e at pos 941) get stub not real function.
+
+**fix spec:**
+- File: `apps/mcp-server/src/__tests__/1485-telegram-mock-isolation.test.ts`
+- Change: Add `afterAll` to bun:test import + file-bottom afterAll restore using `_realMod1485`
+  (the cache-busted real module already available at file top).
+- C5-ABSOLUTE: existing `mock.module()` inside it() blocks are NOT changed.
+- NO change to 1328e, NO change to 047.
+
+**collateral expected:**
+- 1328e: 10→0 fail
+- 235 (pos 775, same root cause): 3→0 fail
+- 1352a: 2→1 fail (1485-sourced contam cured; A-1 independent remains)
+
+**what-considered:**
+- **(a) SECOND-CONTAMINATOR (CHOSEN):** 1485 fingerprint `{ ok: true }` confirmed in CI log;
+  capture-poisoning chain via 047 proven; CI file order verified.
+- **(b) C7 genuine assertion-logic:** prod L549-595 intact, real function returns boolean not
+  `{ ok: true }`, all 5 assertions correct. REJECTED.
+- **(c) 1356a as contaminator:** local 1356a+1328e = 20 pass/0 fail. REJECTED.
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-c1328e-retriage-arch-s15.md`

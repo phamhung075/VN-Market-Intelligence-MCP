@@ -364,3 +364,24 @@ All 3 need `DEFAULT (datetime('now'))` added. These were the exact cause of P5's
 
 **NEXT:** dev-pdf-extractor implements → targeted rebuild (NEVER down&&up) → FIX-AUDITOR-A20-MULTIPROBE
 
+## 2026-06-09T13:55Z — arch-S15: 1328e re-triage (gate-fail 7f1f48b3)
+
+**Trigger:** arch-S14 C5-cure (047 afterAll + stub extension, commit e57494d3) failed CI gate.
+1328e: 10 fail → 10 fail on full-CI ordering (job 80334814093). Side-benefit: 1352a -2.
+
+**Root cause:** `1485-telegram-mock-isolation.test.ts` (pos 89 in CI). 1485 installs
+`notifyTelegramAlert: async () => ({ ok: true })` inside it() blocks with NO afterAll restore.
+047 (pos 315) captures this stub as `_realNotifyTelegramAlert`. 047's afterAll reinstalls
+the stub as "restored" real — contamination persists to 1328e (pos 941).
+
+**Verdict: SECOND-CONTAMINATOR — 1485**. Confirmed by CI log: failure mode changed from
+SyntaxError to `Expected: false, Received: { ok: true }` (exclusive 1485 fingerprint).
+235-telegram-send-merge (pos 775) also fails = corroboration. Prod telegram.ts L549-595
+unchanged — C7/REWRITE/REMOVE definitively excluded.
+
+**Fix:** `1485`: add `afterAll` import + file-bottom restore using `_realMod1485`.
+**No change to 1328e or 047.**
+
+**Expected delta:** 1328e -10, 235 -3, 1352a -1 = ~-14 net.
+**Brief:** `docs/architecture-briefs/2026-06-09-ci-c1328e-retriage-arch-s15.md`
+
