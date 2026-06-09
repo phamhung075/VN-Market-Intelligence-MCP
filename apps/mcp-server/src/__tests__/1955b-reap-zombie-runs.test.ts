@@ -27,7 +27,7 @@ function makeDb(): Database {
 function makeOldDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE cron_job_runs (
+    CREATE TABLE IF NOT EXISTS cron_job_runs (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       job_name     TEXT NOT NULL,
       started_at   TEXT NOT NULL,

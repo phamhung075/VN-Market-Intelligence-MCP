@@ -27,7 +27,7 @@ describe("Task 1838b — SqliteWatchlistRepository", () => {
   it("getAll() returns seeded rows when table exists", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE watchlist (
+      CREATE TABLE IF NOT EXISTS watchlist (
         code TEXT PRIMARY KEY,
         domain TEXT NOT NULL DEFAULT 'other',
         exchange TEXT NOT NULL DEFAULT 'HOSE',
@@ -55,7 +55,7 @@ describe("Task 1838b — SqliteWatchlistRepository", () => {
   it("getAllCodesForVps() returns watchlist codes when table has rows", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE watchlist (
+      CREATE TABLE IF NOT EXISTS watchlist (
         code TEXT PRIMARY KEY,
         domain TEXT NOT NULL DEFAULT 'other',
         exchange TEXT NOT NULL DEFAULT 'HOSE',
@@ -85,7 +85,7 @@ describe("Task 1838b — SqliteMarketPriceRepository", () => {
   it("getAvgVolume() returns 0 when fewer than minHistoryRows exist", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE market_prices_history (
+      CREATE TABLE IF NOT EXISTS market_prices_history (
         code TEXT NOT NULL,
         price REAL NOT NULL,
         volume REAL NOT NULL,
@@ -107,7 +107,7 @@ describe("Task 1838b — SqliteMarketPriceRepository", () => {
   it("getAvgVolume() returns nonzero average when sufficient history exists", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE market_prices_history (
+      CREATE TABLE IF NOT EXISTS market_prices_history (
         code TEXT NOT NULL,
         price REAL NOT NULL,
         volume REAL NOT NULL,
@@ -162,7 +162,7 @@ describe("Task 1838b — SqliteKinhDichScoreRepository", () => {
   it("getLatestChangePct() returns correct value when row exists", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         code TEXT PRIMARY KEY,
         price REAL,
         change_amt REAL,
@@ -188,7 +188,7 @@ describe("Task 1838b — SqliteKinhDichScoreRepository", () => {
   it("getWatchlistDomain() returns domain when row exists", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE watchlist (
+      CREATE TABLE IF NOT EXISTS watchlist (
         code TEXT PRIMARY KEY,
         domain TEXT NOT NULL DEFAULT 'other',
         exchange TEXT NOT NULL DEFAULT 'HOSE',
@@ -216,7 +216,7 @@ describe("Task 1838b — SqliteHexagramRepository", () => {
   function makeHexDb(): Database {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE kinhdich_readings (
+      CREATE TABLE IF NOT EXISTS kinhdich_readings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         stock_code TEXT NOT NULL,
         hexagram_number INTEGER NOT NULL,
@@ -231,7 +231,7 @@ describe("Task 1838b — SqliteHexagramRepository", () => {
         source TEXT DEFAULT 'manual',
         timestamp TEXT NOT NULL DEFAULT (datetime('now'))
       );
-      CREATE TABLE hexagram_transitions (
+      CREATE TABLE IF NOT EXISTS hexagram_transitions (
         from_hexagram INTEGER NOT NULL,
         to_hexagram INTEGER NOT NULL,
         stock_code TEXT NOT NULL,

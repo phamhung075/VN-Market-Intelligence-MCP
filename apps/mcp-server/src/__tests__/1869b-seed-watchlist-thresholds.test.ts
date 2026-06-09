@@ -29,7 +29,7 @@ import {
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE watchlist (
+    CREATE TABLE IF NOT EXISTS watchlist (
       code              TEXT PRIMARY KEY,
       exchange          TEXT NOT NULL DEFAULT 'HOSE',
       domain            TEXT NOT NULL DEFAULT 'other',

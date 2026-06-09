@@ -25,7 +25,7 @@ import { createBunServer } from "../interface/mcp/server.js";
 function createLegacyDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE vnstock_trading_stats (
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL,
       date TEXT NOT NULL DEFAULT '1970-01-01',
@@ -49,7 +49,7 @@ function createLegacyDb(): Database {
 function createModernDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE vnstock_trading_stats (
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL,
       date TEXT NOT NULL DEFAULT '1970-01-01',

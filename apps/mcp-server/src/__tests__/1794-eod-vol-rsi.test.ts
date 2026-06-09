@@ -226,7 +226,8 @@ function setupIntegrationDb(): Database {
       sentiment    TEXT,
       impact_score REAL,
       data_env TEXT
-);
+,
+    source_url TEXT UNIQUE);
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL,

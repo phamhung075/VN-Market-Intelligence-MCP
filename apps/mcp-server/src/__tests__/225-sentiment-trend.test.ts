@@ -287,7 +287,8 @@ describe("Task 225 — registerSentimentTrendTools (MCP integration)", () => {
         sentiment TEXT,
         affected_actions TEXT,
         data_env TEXT
-)
+,
+    source_url TEXT UNIQUE)
     `);
     const server = new McpServer(
       { name: "test", version: "0.0.1" },
@@ -309,7 +310,8 @@ describe("Task 225 — registerSentimentTrendTools (MCP integration)", () => {
         sentiment TEXT,
         affected_actions TEXT,
         data_env TEXT
-)
+,
+    source_url TEXT UNIQUE)
     `);
     const today = new Date().toISOString().slice(0, 10);
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
@@ -345,7 +347,8 @@ describe("Task 225 — registerSentimentTrendTools (MCP integration)", () => {
         sentiment TEXT,
         affected_actions TEXT,
         data_env TEXT
-)
+,
+    source_url TEXT UNIQUE)
     `);
     const server = new McpServer(
       { name: "test", version: "0.0.1" },

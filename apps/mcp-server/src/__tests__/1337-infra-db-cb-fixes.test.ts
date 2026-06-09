@@ -25,7 +25,7 @@ describe("Issue 1 — tracked_indicators hour_bucket idempotent migration", () =
 
     // Create the table WITHOUT hour_bucket (old schema)
     db.exec(`
-      CREATE TABLE tracked_indicators (
+      CREATE TABLE IF NOT EXISTS tracked_indicators (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         indicator    TEXT NOT NULL,
         value        REAL NOT NULL,

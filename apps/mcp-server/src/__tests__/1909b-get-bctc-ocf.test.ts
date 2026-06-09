@@ -21,7 +21,7 @@ import { buildGetBctcOcfHandler } from "../interface/mcp/tools/financial-reports
 function makeTestDb(): InstanceType<typeof Database> {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE financial_reports (
+    CREATE TABLE IF NOT EXISTS financial_reports (
       id                INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code       TEXT    NOT NULL,
       period_year       INTEGER NOT NULL,

@@ -62,8 +62,11 @@ function setupTestDb(): Database {
       low    REAL,
       close  REAL,
       volume REAL,
-      PRIMARY KEY (code, date)
-    );
+      foreign_buy_vol  REAL,
+    foreign_sell_vol REAL,
+    foreign_net_vol  REAL,
+    put_through_vol  REAL,
+      PRIMARY KEY (code, date));
   `);
 
   return db;

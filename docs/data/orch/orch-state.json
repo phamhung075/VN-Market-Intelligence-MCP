@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-08T23:40:17Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-09T00:05:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -3079,12 +3079,13 @@
             "depends": [
               "FIX-SCHEMA-DRIFT-P1"
             ],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T23:14:00Z",
-            "note": "[po S15 2026-06-08T23:14Z] CURE for E1 (table already exists, ~32) + E2b/c/d + E3a/b (missing-column / NOT-NULL / no-such-table, ~104) per architect brief Phase 2+3 (§4 FIX-CLASS-E1/E2b/E2c/E2d/E3a/E3b). depends:FIX-SCHEMA-DRIFT-P1 (sequence to keep WIP<=2 and avoid two devs racing the same 64 rag_analyses files). NOT another mechanized one-size injection (that was 9454baad, reverted +219). Design SSOT = two-fixture-contract model; Contract B files must use IF NOT EXISTS + include every column the SUT's INSERT/SELECT touches. DoD: bun-test FAIL+ERROR DROP (never increase) vs baseline on subsequent push; bun tsc --noEmit clean; per-file isolation pass. Brief Phase 4 (pure-singleton audit) deliberately NOT folded here — parked as FU-SCHEMA-DRIFT-P4 backlog. DISPATCH ORDER: 2nd (after P1 lands, frees the rag_analyses cohort). | [po S15 2026-06-08T23:40Z] DISPATCH-READY: depends:[FIX-SCHEMA-DRIFT-P1] now SATISFIED (P1=DONE this cycle). P2 scope == now-dominant VISIBLE fail class unmasked by P1 (agent_signals/sbv_rates_history/positions/commodity_prices*/daily_ohlcv/imf_indicators tables + foreign_net_vol/statement_section cols). Net fail+error should DROP once P2 lands. WIP<=2 honored (P1 closed -> P2 sole active FIX). Status stays TODO (dispatch trigger); router/PM may route to dev-mcp-server now. Gate: read bun GITHUB_STEP_SUMMARY for 702-comparable absolute."
+            "note": "[po S15 2026-06-08T23:14Z] CURE for E1 (table already exists, ~32) + E2b/c/d + E3a/b (missing-column / NOT-NULL / no-such-table, ~104) per architect brief Phase 2+3 (§4 FIX-CLASS-E1/E2b/E2c/E2d/E3a/E3b). depends:FIX-SCHEMA-DRIFT-P1 (sequence to keep WIP<=2 and avoid two devs racing the same 64 rag_analyses files). NOT another mechanized one-size injection (that was 9454baad, reverted +219). Design SSOT = two-fixture-contract model; Contract B files must use IF NOT EXISTS + include every column the SUT's INSERT/SELECT touches. DoD: bun-test FAIL+ERROR DROP (never increase) vs baseline on subsequent push; bun tsc --noEmit clean; per-file isolation pass. Brief Phase 4 (pure-singleton audit) deliberately NOT folded here — parked as FU-SCHEMA-DRIFT-P4 backlog. DISPATCH ORDER: 2nd (after P1 lands, frees the rag_analyses cohort). | [po S15 2026-06-08T23:40Z] DISPATCH-READY: depends:[FIX-SCHEMA-DRIFT-P1] now SATISFIED (P1=DONE this cycle). P2 scope == now-dominant VISIBLE fail class unmasked by P1 (agent_signals/sbv_rates_history/positions/commodity_prices*/daily_ohlcv/imf_indicators tables + foreign_net_vol/statement_section cols). Net fail+error should DROP once P2 lands. WIP<=2 honored (P1 closed -> P2 sole active FIX). Status stays TODO (dispatch trigger); router/PM may route to dev-mcp-server now. Gate: read bun GITHUB_STEP_SUMMARY for 702-comparable absolute. | [DJ-GATE-1 dev-mcp-server 2026-06-09T00:05Z] DECISION: P2 impl complete. Phase 2 (E1): 69 files — bare CREATE TABLE → IF NOT EXISTS for watchlist/rag_analyses/market_prices/vps_push_log/market_prices_history/daily_ohlcv/positions/alerts/financial_reports/agent_feedback/bctc_vps_queue/cron_job_runs/vnstock_trading_stats/sbv_rates/market_messages/evidence_fragments/evidence_scores/prediction_claims/insider_transactions/imf_indicators/kinhdich_readings/hexagram_transitions/commodity_prices/commodity_prices_history/tracked_indicators. Phase 3 E3a: 34 files — watchlist.exchange NOT NULL DEFAULT HOSE. Phase 3 E3b: 2 files — agent_signals.expires_at NOT NULL DEFAULT. Phase 3 E2b: 23 files — rag_analyses.source_url UNIQUE. Phase 3 foreign_net_vol: 10 files — daily_ohlcv foreign flow cols (before PRIMARY KEY). Phase 3 statement_section: 1 file — BANK-AWARE-1 bctc_table_rows. Phase 3 positional INSERT fix: 2 files — hotfix-bctc-parser2 + 1390 watchlist INSERT (code) VALUES. tsc clean. Isolation sample: 7 files 0 fail. Commit SHA(s): pending router push. Did NOT push — router owns push+CI verification. Contract invariants: 0 double-create, 0 NOT NULL without default regressions maintained.",
+            "closed_at": "2026-06-09T00:05:00Z"
           }
         ],
         "_updated_by": "po"

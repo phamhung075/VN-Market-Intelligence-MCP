@@ -67,7 +67,8 @@ function makeDb(): Database {
       sentiment TEXT,
       impact_score REAL,
       data_env TEXT
-)
+,
+    source_url TEXT UNIQUE)
   `);
 
   // agent_feedback table (required by /report and /fix handlers)

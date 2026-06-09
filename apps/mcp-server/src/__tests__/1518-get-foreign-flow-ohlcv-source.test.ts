@@ -19,7 +19,7 @@ function setupTestDb(): Database {
   const db = new Database(":memory:");
 
   db.run(`
-    CREATE TABLE daily_ohlcv (
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code          TEXT NOT NULL,
       date          TEXT NOT NULL,
       open          REAL,

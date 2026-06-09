@@ -70,7 +70,8 @@ function makeDb(): Database {
     CREATE TABLE IF NOT EXISTS watchlist (
       code   TEXT PRIMARY KEY,
       domain TEXT NOT NULL DEFAULT 'unknown'
-    )
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE')
   `)
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
@@ -82,8 +83,11 @@ function makeDb(): Database {
       close      REAL NOT NULL,
       volume     REAL NOT NULL DEFAULT 0,
       updated_at TEXT NOT NULL,
-      PRIMARY KEY (code, date)
-    )
+      foreign_buy_vol  REAL,
+    foreign_sell_vol REAL,
+    foreign_net_vol  REAL,
+    put_through_vol  REAL,
+      PRIMARY KEY (code, date))
   `)
   return db
 }

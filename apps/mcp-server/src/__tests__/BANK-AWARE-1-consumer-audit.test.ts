@@ -165,7 +165,8 @@ function makeEvalDb(): Database {
     value_current REAL,
     value_prior REAL,
     row_order INTEGER NOT NULL DEFAULT 0
-  )`);
+  ,
+    statement_section TEXT NOT NULL DEFAULT 'general')`);
 
   db.run(`CREATE TABLE IF NOT EXISTS bctc_md_tables (
     report_id TEXT NOT NULL,

@@ -13,7 +13,7 @@ import { upsertForeignFlow } from "../infrastructure/db/vnstockStore.js";
 function makeDb(): InstanceType<typeof Database> {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE vnstock_trading_stats (
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL,
       date TEXT NOT NULL DEFAULT '1970-01-01',

@@ -36,17 +36,17 @@ import { Database } from "bun:sqlite";
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE watchlist (
+    CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY,
       exchange TEXT
     );
-    CREATE TABLE financial_reports (
+    CREATE TABLE IF NOT EXISTS financial_reports (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code  TEXT NOT NULL,
       period_year  INTEGER NOT NULL,
       period_type  TEXT NOT NULL
     );
-    CREATE TABLE bctc_vps_queue (
+    CREATE TABLE IF NOT EXISTS bctc_vps_queue (
       id             INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code    TEXT    NOT NULL,
       period_year    INTEGER NOT NULL,

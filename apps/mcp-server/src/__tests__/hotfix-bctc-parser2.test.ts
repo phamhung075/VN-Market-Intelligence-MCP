@@ -43,13 +43,14 @@ describe("Bug 1: scanDiskForStrandedPdfs — lowercase watchlist code matches up
 
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE watchlist (code TEXT);
-      CREATE TABLE financial_reports (
+      CREATE TABLE IF NOT EXISTS watchlist (code TEXT,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
+      CREATE TABLE IF NOT EXISTS financial_reports (
         action_code TEXT, period_year INTEGER, period_type TEXT
       );
     `);
     // Watchlist code stored lowercase — this is the bug trigger
-    db.prepare("INSERT INTO watchlist VALUES (?)").run("dig");
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("dig");
 
     const pdfDir = join(tmpdir(), `bctc-bug1-${Date.now()}`);
     mkdirSync(pdfDir, { recursive: true });
@@ -73,12 +74,13 @@ describe("Bug 1: scanDiskForStrandedPdfs — lowercase watchlist code matches up
 
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE watchlist (code TEXT);
-      CREATE TABLE financial_reports (
+      CREATE TABLE IF NOT EXISTS watchlist (code TEXT,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
+      CREATE TABLE IF NOT EXISTS financial_reports (
         action_code TEXT, period_year INTEGER, period_type TEXT
       );
     `);
-    db.prepare("INSERT INTO watchlist VALUES (?)").run("Shb");
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("Shb");
 
     const pdfDir = join(tmpdir(), `bctc-bug1b-${Date.now()}`);
     mkdirSync(pdfDir, { recursive: true });
@@ -100,12 +102,13 @@ describe("Bug 1: scanDiskForStrandedPdfs — lowercase watchlist code matches up
 
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE watchlist (code TEXT);
-      CREATE TABLE financial_reports (
+      CREATE TABLE IF NOT EXISTS watchlist (code TEXT,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
+      CREATE TABLE IF NOT EXISTS financial_reports (
         action_code TEXT, period_year INTEGER, period_type TEXT
       );
     `);
-    db.prepare("INSERT INTO watchlist VALUES (?)").run("dig");
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("dig");
     db.prepare("INSERT INTO financial_reports VALUES (?,?,?)").run("DIG", 2025, "Q4");
 
     const pdfDir = join(tmpdir(), `bctc-bug1c-${Date.now()}`);

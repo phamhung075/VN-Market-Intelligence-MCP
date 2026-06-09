@@ -32,7 +32,7 @@ interface McpTextResult {
 function createTestDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE insider_transactions (
+    CREATE TABLE IF NOT EXISTS insider_transactions (
       id                  TEXT PRIMARY KEY,
       code                TEXT NOT NULL,
       insider_name        TEXT NOT NULL,
@@ -49,7 +49,8 @@ function createTestDb(): Database {
       ON insider_transactions(code, from_date DESC);
     CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT NOT NULL
-    );
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
   `);
   return db;
 }

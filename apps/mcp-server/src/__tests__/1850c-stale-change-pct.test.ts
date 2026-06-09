@@ -13,7 +13,7 @@ import { buildWatchlistSection } from "../domain/services/marketContextBuilder.j
 function createTestDb(): Database {
   const db = new Database(":memory:");
   db.run(`
-    CREATE TABLE watchlist (
+    CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY,
       exchange TEXT NOT NULL DEFAULT 'HOSE',
       domain TEXT NOT NULL DEFAULT 'test',
@@ -24,7 +24,7 @@ function createTestDb(): Database {
     )
   `);
   db.run(`
-    CREATE TABLE market_prices (
+    CREATE TABLE IF NOT EXISTS market_prices (
       code TEXT PRIMARY KEY,
       price REAL,
       change_pct REAL,

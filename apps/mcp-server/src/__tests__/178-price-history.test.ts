@@ -16,7 +16,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 function buildInMemoryDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE daily_ohlcv (
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code    TEXT NOT NULL,
       date    TEXT NOT NULL,
       open    REAL NOT NULL DEFAULT 0,

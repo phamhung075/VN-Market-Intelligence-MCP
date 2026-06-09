@@ -21,7 +21,7 @@ import { runTaAlertNotifier } from "../scheduler/market-data/taAlertNotifierJob.
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.run(`
-    CREATE TABLE alerts (
+    CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
       message TEXT,
       signals_json TEXT,

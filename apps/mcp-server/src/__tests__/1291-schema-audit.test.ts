@@ -188,7 +188,7 @@ describe("Task 1291 — Regression: test 1050 storeAlerts inline DDL", () => {
     const db = new Database(":memory:");
     // This is the FIXED inline DDL (sent_by column present)
     db.exec(`
-      CREATE TABLE alerts (
+      CREATE TABLE IF NOT EXISTS alerts (
         id                    TEXT PRIMARY KEY,
         triggered_at          TEXT NOT NULL,
         severity              TEXT NOT NULL,

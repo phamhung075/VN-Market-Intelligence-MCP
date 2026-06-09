@@ -39,18 +39,18 @@ function buildVpsDb(): Database {
       uptime_seconds      INTEGER,
       error_message       TEXT
     );
-    CREATE TABLE market_prices (
+    CREATE TABLE IF NOT EXISTS market_prices (
       code TEXT, price REAL, change_amt REAL, change_pct REAL,
       volume INTEGER, updated_at TEXT, exchange TEXT
     );
-    CREATE TABLE market_messages (
+    CREATE TABLE IF NOT EXISTS market_messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       from_agent TEXT, message_type TEXT, ticker TEXT, content TEXT, sent_at TEXT
     );
-    CREATE TABLE daily_ohlcv (
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code TEXT, date TEXT, close REAL, updated_at TEXT, foreign_buy_vol INTEGER
     );
-    CREATE TABLE sbv_rates (
+    CREATE TABLE IF NOT EXISTS sbv_rates (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       source TEXT, fetched_at TEXT
     );

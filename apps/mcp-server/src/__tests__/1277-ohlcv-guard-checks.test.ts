@@ -55,12 +55,13 @@ const TICK_3 = "2026-04-17T08:30:00.000Z"; // latest (close)
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE watchlist (
+    CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY
-    );
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
   `);
   db.exec(`
-    CREATE TABLE market_prices_history (
+    CREATE TABLE IF NOT EXISTS market_prices_history (
       code       TEXT,
       price      REAL,
       volume     REAL,
@@ -70,7 +71,7 @@ function makeDb(): Database {
     );
   `);
   db.exec(`
-    CREATE TABLE daily_ohlcv (
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code       TEXT,
       date       TEXT,
       open       REAL,

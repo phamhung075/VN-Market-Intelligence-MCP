@@ -352,7 +352,8 @@ function makeDb(): Database {
     confidence REAL,
     causal_chain TEXT,
     data_env TEXT
-)`);
+,
+    source_url TEXT UNIQUE)`);
 
   // FIX-D: vnstock_balance_sheet needed for receivables query
   db.run(`CREATE TABLE IF NOT EXISTS vnstock_balance_sheet (

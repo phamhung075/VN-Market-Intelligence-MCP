@@ -71,7 +71,8 @@ function setupTestDb(): Database {
       summary      TEXT,
       source_title TEXT,
       data_env TEXT
-);
+,
+    source_url TEXT UNIQUE);
 
     CREATE TABLE IF NOT EXISTS financial_reports (
       id         TEXT PRIMARY KEY,

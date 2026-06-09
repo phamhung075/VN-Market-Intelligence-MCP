@@ -18,7 +18,7 @@ function setupTestDb(): Database {
   const db = new Database(":memory:");
 
   db.run(`
-    CREATE TABLE watchlist (
+    CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY,
       company_name TEXT,
       exchange TEXT NOT NULL DEFAULT 'HOSE',
@@ -33,7 +33,7 @@ function setupTestDb(): Database {
   `);
 
   db.run(`
-    CREATE TABLE alerts (
+    CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
       triggered_at TEXT NOT NULL,
       severity TEXT NOT NULL,
@@ -48,7 +48,7 @@ function setupTestDb(): Database {
   `);
 
   db.run(`
-    CREATE TABLE evidence_fragments (
+    CREATE TABLE IF NOT EXISTS evidence_fragments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       stock TEXT NOT NULL,
       evidence_type TEXT NOT NULL,
@@ -63,7 +63,7 @@ function setupTestDb(): Database {
   `);
 
   db.run(`
-    CREATE TABLE daily_ohlcv (
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code          TEXT NOT NULL,
       date          TEXT NOT NULL,
       open          REAL,

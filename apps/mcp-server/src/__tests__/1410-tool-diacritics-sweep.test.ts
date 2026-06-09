@@ -51,7 +51,7 @@ function makeMemDb(): Database {
 /** In-memory DB with market_messages table (empty rows → triggers no-data path). */
 function makeMemDbWithMessages(): Database {
   const db = new Database(":memory:");
-  db.exec(`CREATE TABLE market_messages (
+  db.exec(`CREATE TABLE IF NOT EXISTS market_messages (
     id INTEGER PRIMARY KEY,
     from_agent TEXT,
     verdict TEXT,

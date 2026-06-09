@@ -14,7 +14,7 @@ describe("1311a: market_messages verdict column migration", () => {
     db = new Database(":memory:");
     // Simulate pre-migration DB: create table WITHOUT verdict columns
     db.exec(`
-      CREATE TABLE market_messages (
+      CREATE TABLE IF NOT EXISTS market_messages (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         from_agent   TEXT    NOT NULL,
         message_type TEXT    NOT NULL,

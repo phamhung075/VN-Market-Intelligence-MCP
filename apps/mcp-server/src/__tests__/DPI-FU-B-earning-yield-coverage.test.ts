@@ -36,7 +36,8 @@ function buildDb(): Database {
   db.exec(`
     CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY
-    );
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
     CREATE TABLE IF NOT EXISTS vnstock_financials (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       code         TEXT NOT NULL,

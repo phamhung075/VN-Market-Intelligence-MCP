@@ -29,14 +29,16 @@ function setupDb(db: Database): void {
       source_title TEXT, level TEXT NOT NULL DEFAULT 'country',
       sentiment TEXT, impact_score REAL, created_at TEXT NOT NULL DEFAULT (datetime('now')),
       data_env TEXT
-);
+,
+    source_url TEXT UNIQUE);
     CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY, triggered_at TEXT NOT NULL, severity TEXT NOT NULL,
       message TEXT, affected_actions_json TEXT, resolved_at TEXT
     );
     CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, domain TEXT NOT NULL DEFAULT 'other'
-    );
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
     CREATE TABLE IF NOT EXISTS financial_reports (
       id TEXT PRIMARY KEY, action_code TEXT NOT NULL, period_type TEXT,
       period_year INTEGER, parsed_at TEXT NOT NULL DEFAULT (datetime('now'))

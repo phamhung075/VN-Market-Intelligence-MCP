@@ -170,7 +170,7 @@ describe("DSI-S3 C4 — ?? null for netMarginPct/roe/debtToEquity", () => {
 
 function makeTestDb(): Database {
   const db = new Database(":memory:");
-  db.exec(`CREATE TABLE financial_reports (
+  db.exec(`CREATE TABLE IF NOT EXISTS financial_reports (
     id TEXT PRIMARY KEY,
     action_code TEXT NOT NULL,
     company_name TEXT,
@@ -259,7 +259,8 @@ function makeTestDb(): Database {
     confidence REAL,
     causal_chain TEXT,
     data_env TEXT
-)`);
+,
+    source_url TEXT UNIQUE)`);
   db.exec(`CREATE TABLE IF NOT EXISTS vnstock_balance_sheet (
     action_code TEXT,
     receivables_bn REAL

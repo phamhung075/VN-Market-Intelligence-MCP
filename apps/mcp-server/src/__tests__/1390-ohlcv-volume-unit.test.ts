@@ -22,12 +22,13 @@ const TICK_3 = "2026-04-17T08:00:00.000Z";
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE watchlist (code TEXT PRIMARY KEY);
-    CREATE TABLE market_prices_history (
+    CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
+    CREATE TABLE IF NOT EXISTS market_prices_history (
       code TEXT, price REAL, volume REAL, exchange TEXT, fetched_at TEXT,
       PRIMARY KEY (code, fetched_at)
     );
-    CREATE TABLE daily_ohlcv (
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code TEXT, date TEXT, open REAL, high REAL, low REAL, close REAL,
       volume REAL, updated_at TEXT,
       PRIMARY KEY (code, date)
@@ -39,7 +40,7 @@ function makeDb(): Database {
 describe("Task 1390 — OHLCV volume = MAX(volume), not COUNT(*) of ticks", () => {
   it("AC-1: volume stored is MAX(volume) from ticks, not tick count", async () => {
     const db = makeDb();
-    db.prepare("INSERT INTO watchlist VALUES (?)").run("VIC");
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("VIC");
 
     // Simulate 3 intraday snapshots with cumulative HOSE volume (in shares)
     // Each snapshot's volume grows as market hours progress
@@ -72,7 +73,7 @@ describe("Task 1390 — OHLCV volume = MAX(volume), not COUNT(*) of ticks", () =
 
   it("AC-2: VHM — MAX(volume) across many ticks returns correct end-of-day total", async () => {
     const db = makeDb();
-    db.prepare("INSERT INTO watchlist VALUES (?)").run("VHM");
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("VHM");
 
     // 5 ticks — only the last has the full cumulative volume
     const ticks = [
@@ -106,7 +107,7 @@ describe("Task 1390 — OHLCV volume = MAX(volume), not COUNT(*) of ticks", () =
 
   it("AC-3: single tick — volume equals that tick volume, not 1", async () => {
     const db = makeDb();
-    db.prepare("INSERT INTO watchlist VALUES (?)").run("FPT");
+    db.prepare("INSERT INTO watchlist (code) VALUES (?)").run("FPT");
     db.prepare(
       "INSERT INTO market_prices_history (code, price, volume, exchange, fetched_at) VALUES (?, ?, ?, ?, ?)"
     ).run("FPT", 120000, 2_000_000, "HOSE", TICK_1);

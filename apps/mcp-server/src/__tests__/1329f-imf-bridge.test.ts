@@ -11,7 +11,7 @@ import { getImfMacroScoreForConviction } from "../application/services/imfConvic
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE imf_indicators (
+    CREATE TABLE IF NOT EXISTS imf_indicators (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL,
       name TEXT NOT NULL,

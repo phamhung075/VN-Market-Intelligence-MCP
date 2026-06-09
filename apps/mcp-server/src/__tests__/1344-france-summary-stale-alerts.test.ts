@@ -40,7 +40,8 @@ function makeDb(): Database {
     CREATE TABLE IF NOT EXISTS watchlist (
       code   TEXT PRIMARY KEY,
       domain TEXT NOT NULL DEFAULT 'unknown'
-    )
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE')
   `);
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
@@ -221,7 +222,8 @@ describe("Task 1344 — france-summary stale alerts + dedup", () => {
       )
     `);
     db.exec(`
-      CREATE TABLE watchlist (code TEXT PRIMARY KEY, domain TEXT NOT NULL DEFAULT 'unknown')
+      CREATE TABLE watchlist (code TEXT PRIMARY KEY, domain TEXT NOT NULL DEFAULT 'unknown',
+    exchange TEXT NOT NULL DEFAULT 'HOSE')
     `);
     db.exec(`
       CREATE TABLE daily_ohlcv (

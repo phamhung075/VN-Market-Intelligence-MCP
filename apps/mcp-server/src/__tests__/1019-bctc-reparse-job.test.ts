@@ -22,7 +22,7 @@ import {
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE agent_feedback (
+    CREATE TABLE IF NOT EXISTS agent_feedback (
       id                INTEGER PRIMARY KEY AUTOINCREMENT,
       agent             TEXT NOT NULL,
       category          TEXT NOT NULL,

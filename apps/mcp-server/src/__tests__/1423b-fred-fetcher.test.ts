@@ -26,7 +26,7 @@ import {
 function makeTestDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE tracked_indicators (
+    CREATE TABLE IF NOT EXISTS tracked_indicators (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       indicator    TEXT NOT NULL,
       value        REAL NOT NULL,

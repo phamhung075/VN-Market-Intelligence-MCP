@@ -23,7 +23,7 @@ import { Database } from "bun:sqlite";
 
 function makeDb(tickers: string[] = ["VCB", "HPG", "MWG"]): Database {
   const db = new Database(":memory:");
-  db.run("CREATE TABLE watchlist (code TEXT)");
+  db.run("CREATE TABLE IF NOT EXISTS watchlist (code TEXT, exchange TEXT NOT NULL DEFAULT 'HOSE')");
   for (const t of tickers) {
     db.run("INSERT INTO watchlist (code) VALUES (?)", [t]);
   }

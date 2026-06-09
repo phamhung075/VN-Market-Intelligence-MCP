@@ -24,7 +24,8 @@ import type { ComputeTAResponse } from "../infrastructure/microservices/clients.
 
 function buildTestDb(): Database {
   const db = new Database(":memory:");
-  db.run(`CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY)`);
+  db.run(`CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY,
+    exchange TEXT NOT NULL DEFAULT 'HOSE')`);
   db.run(`
     CREATE TABLE IF NOT EXISTS market_prices_history (
       code TEXT, price REAL, fetched_at TEXT

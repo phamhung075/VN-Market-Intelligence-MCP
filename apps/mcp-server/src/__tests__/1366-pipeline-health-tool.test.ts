@@ -17,7 +17,8 @@ import {
 
 function makeDb(): Database {
   const db = new Database(":memory:");
-  db.exec(`CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY)`);
+  db.exec(`CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY,
+    exchange TEXT NOT NULL DEFAULT 'HOSE')`);
   db.exec(`CREATE TABLE IF NOT EXISTS daily_ohlcv (
     code TEXT NOT NULL, date TEXT NOT NULL, open REAL, high REAL,
     low REAL, close REAL NOT NULL, volume REAL, updated_at TEXT,

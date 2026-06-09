@@ -36,7 +36,8 @@ function makeDb(): Database {
     );
     CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY
-    );
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
   `);
   return db;
 }

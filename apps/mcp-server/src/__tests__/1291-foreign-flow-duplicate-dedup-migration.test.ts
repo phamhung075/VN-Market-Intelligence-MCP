@@ -51,7 +51,7 @@ function setupLegacyDbWithDuplicates(): void {
 
   // Recreate the table as it looked BEFORE the UNIQUE constraint was added
   db.exec(`
-    CREATE TABLE vnstock_trading_stats (
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL,
       foreign_room INTEGER,
@@ -98,7 +98,7 @@ function setupModernDb(): void {
   db.exec(`DROP TABLE IF EXISTS vnstock_trading_stats`);
 
   db.exec(`
-    CREATE TABLE vnstock_trading_stats (
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL,
       date TEXT NOT NULL DEFAULT '1970-01-01',

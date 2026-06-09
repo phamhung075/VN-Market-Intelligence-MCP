@@ -49,7 +49,8 @@ function buildBaseDb(): Database {
       impact_score REAL,
       created_at   TEXT,
       data_env TEXT
-);
+,
+    source_url TEXT UNIQUE);
     CREATE TABLE IF NOT EXISTS alerts (
       id                    INTEGER PRIMARY KEY AUTOINCREMENT,
       severity              TEXT,

@@ -30,14 +30,14 @@ import {
 function buildDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE market_prices_history (
+    CREATE TABLE IF NOT EXISTS market_prices_history (
       code       TEXT    NOT NULL,
       price      REAL    NOT NULL,
       volume     INTEGER NOT NULL,
       fetched_at TEXT    NOT NULL
     );
 
-    CREATE TABLE evidence_scores (
+    CREATE TABLE IF NOT EXISTS evidence_scores (
       id             INTEGER PRIMARY KEY AUTOINCREMENT,
       stock          TEXT    NOT NULL,
       score_date     TEXT    NOT NULL,
@@ -48,7 +48,7 @@ function buildDb(): Database {
       computed_at    TEXT    NOT NULL
     );
 
-    CREATE TABLE insider_transactions (
+    CREATE TABLE IF NOT EXISTS insider_transactions (
       id                INTEGER PRIMARY KEY AUTOINCREMENT,
       code              TEXT    NOT NULL,
       insider_name      TEXT    NOT NULL,
@@ -62,7 +62,7 @@ function buildDb(): Database {
       fetched_at        TEXT    NOT NULL
     );
 
-    CREATE TABLE vnstock_trading_stats (
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       code                   TEXT    NOT NULL,
       foreign_volume         INTEGER NOT NULL,
       foreign_room           INTEGER NOT NULL,
@@ -70,7 +70,7 @@ function buildDb(): Database {
       fetched_at             TEXT    NOT NULL
     );
 
-    CREATE TABLE financial_reports (
+    CREATE TABLE IF NOT EXISTS financial_reports (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code     TEXT    NOT NULL,
       sort_key        TEXT    NOT NULL,
@@ -79,7 +79,7 @@ function buildDb(): Database {
       ai_analysis     TEXT
     );
 
-    CREATE TABLE prediction_claims (
+    CREATE TABLE IF NOT EXISTS prediction_claims (
       id                 INTEGER PRIMARY KEY AUTOINCREMENT,
       stock              TEXT    NOT NULL,
       agent_id           TEXT    NOT NULL,

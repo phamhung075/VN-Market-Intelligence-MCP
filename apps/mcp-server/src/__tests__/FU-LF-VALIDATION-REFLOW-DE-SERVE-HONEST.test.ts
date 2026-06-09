@@ -57,7 +57,8 @@ function openFullDb(): Database {
     confidence REAL,
     causal_chain TEXT,
     data_env TEXT
-)`);
+,
+    source_url TEXT UNIQUE)`);
   return db;
 }
 
@@ -160,7 +161,8 @@ function makeMinimalDb(): Database {
     confidence REAL,
     causal_chain TEXT,
     data_env TEXT
-)`);
+,
+    source_url TEXT UNIQUE)`);
 
   return db;
 }

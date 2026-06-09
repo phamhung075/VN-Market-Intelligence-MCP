@@ -24,7 +24,7 @@ import { runBctcQueueEnricherJob } from "../scheduler/financial-reports/bctcQueu
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE bctc_vps_queue (
+    CREATE TABLE IF NOT EXISTS bctc_vps_queue (
       id             INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code    TEXT    NOT NULL,
       period_year    INTEGER NOT NULL,

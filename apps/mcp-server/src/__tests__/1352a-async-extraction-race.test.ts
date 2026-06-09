@@ -40,7 +40,7 @@ import Database from "bun:sqlite";
 function makeInMemoryDb(): InstanceType<typeof Database> {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE bctc_vps_queue (
+    CREATE TABLE IF NOT EXISTS bctc_vps_queue (
       id INTEGER PRIMARY KEY,
       action_code TEXT NOT NULL,
       period_year INTEGER NOT NULL,

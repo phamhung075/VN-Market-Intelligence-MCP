@@ -23,7 +23,7 @@ const NOW_MS = Date.parse("2026-04-13T03:00:00.000Z");
 function buildDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE rag_analyses (
+    CREATE TABLE IF NOT EXISTS rag_analyses (
       id         TEXT PRIMARY KEY,
       created_at TEXT NOT NULL,
       source_url TEXT,
@@ -31,7 +31,7 @@ function buildDb(): Database {
 );
     CREATE INDEX idx_rag_created ON rag_analyses(created_at);
 
-    CREATE TABLE vps_push_log (
+    CREATE TABLE IF NOT EXISTS vps_push_log (
       id        INTEGER PRIMARY KEY AUTOINCREMENT,
       service   TEXT NOT NULL,
       status    TEXT NOT NULL DEFAULT 'ok',
@@ -98,7 +98,7 @@ describe("getPipelineHealth", () => {
 
   it("returns vpsPushLast24h=null when vps_push_log table does not exist", async () => {
     const db = new Database(":memory:");
-    db.exec(`CREATE TABLE rag_analyses (
+    db.exec(`CREATE TABLE IF NOT EXISTS rag_analyses (
       id TEXT PRIMARY KEY, created_at TEXT NOT NULL, source_url TEXT,
       data_env TEXT
 )`);

@@ -22,7 +22,7 @@ import { upsertPosition } from "../infrastructure/db/positionStore.js";
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.run(`
-    CREATE TABLE positions (
+    CREATE TABLE IF NOT EXISTS positions (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       code       TEXT    NOT NULL UNIQUE,
       shares     INTEGER NOT NULL,
@@ -33,7 +33,7 @@ function makeDb(): Database {
     )
   `);
   db.run(`
-    CREATE TABLE market_prices (
+    CREATE TABLE IF NOT EXISTS market_prices (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       code       TEXT    NOT NULL UNIQUE,
       price      REAL    NOT NULL,
@@ -41,7 +41,7 @@ function makeDb(): Database {
     )
   `);
   db.run(`
-    CREATE TABLE daily_ohlcv (
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
       id    INTEGER PRIMARY KEY AUTOINCREMENT,
       code  TEXT NOT NULL,
       date  TEXT NOT NULL,

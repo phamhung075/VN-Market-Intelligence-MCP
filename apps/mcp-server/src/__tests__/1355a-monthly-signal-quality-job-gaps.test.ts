@@ -80,7 +80,8 @@ function makeDb(): Database {
     CREATE TABLE IF NOT EXISTS agent_signals (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )
+    ,
+    expires_at TEXT NOT NULL DEFAULT (datetime('now', '+1 hour')))
   `);
   return db;
 }

@@ -221,7 +221,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     // Use a fully local in-memory DB — bypasses the singleton to ensure isolation
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE commodity_prices (
+      CREATE TABLE IF NOT EXISTS commodity_prices (
         source TEXT PRIMARY KEY,
         brent_crude_usd REAL NOT NULL DEFAULT 0,
         gold_usd_per_oz REAL NOT NULL DEFAULT 0,
@@ -238,7 +238,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
-      CREATE TABLE commodity_prices_history (
+      CREATE TABLE IF NOT EXISTS commodity_prices_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         source TEXT NOT NULL,
         brent_crude_usd REAL NOT NULL DEFAULT 0,
@@ -257,7 +257,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         fetched_at TEXT NOT NULL
       );
       -- Sprint 052 (backlog 921): storeCommoditySnapshot now mirrors brent/gold into market_prices
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         code        TEXT PRIMARY KEY,
         price       REAL,
         change_amt  REAL,
@@ -266,7 +266,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         updated_at  TEXT
       );
       -- Task 1087: mirror into tracked_indicators for σ-threshold + Kinh Dich
-      CREATE TABLE tracked_indicators (
+      CREATE TABLE IF NOT EXISTS tracked_indicators (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         indicator    TEXT NOT NULL,
         value        REAL NOT NULL,
@@ -314,7 +314,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     // Use a fully local in-memory DB — bypasses the singleton to ensure isolation
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE commodity_prices (
+      CREATE TABLE IF NOT EXISTS commodity_prices (
         source TEXT PRIMARY KEY,
         brent_crude_usd REAL NOT NULL DEFAULT 0,
         gold_usd_per_oz REAL NOT NULL DEFAULT 0,
@@ -331,7 +331,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
-      CREATE TABLE commodity_prices_history (
+      CREATE TABLE IF NOT EXISTS commodity_prices_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         source TEXT NOT NULL,
         brent_crude_usd REAL NOT NULL DEFAULT 0,
@@ -350,7 +350,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         fetched_at TEXT NOT NULL
       );
       -- Sprint 052 (backlog 921): storeCommoditySnapshot now mirrors brent/gold into market_prices
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         code        TEXT PRIMARY KEY,
         price       REAL,
         change_amt  REAL,
@@ -359,7 +359,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         updated_at  TEXT
       );
       -- Task 1087: mirror into tracked_indicators
-      CREATE TABLE tracked_indicators (
+      CREATE TABLE IF NOT EXISTS tracked_indicators (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         indicator    TEXT NOT NULL,
         value        REAL NOT NULL,
@@ -408,7 +408,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   it("YF-12a: storeCommoditySnapshot mirrors brent + gold into tracked_indicators", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE commodity_prices (
+      CREATE TABLE IF NOT EXISTS commodity_prices (
         source TEXT PRIMARY KEY, brent_crude_usd REAL NOT NULL DEFAULT 0,
         gold_usd_per_oz REAL NOT NULL DEFAULT 0, usd_vnd_rate REAL NOT NULL DEFAULT 0,
         vix REAL NOT NULL DEFAULT 0, sp500 REAL NOT NULL DEFAULT 0,
@@ -418,7 +418,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         jpy_vnd_rate REAL NOT NULL DEFAULT 0, us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
-      CREATE TABLE commodity_prices_history (
+      CREATE TABLE IF NOT EXISTS commodity_prices_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
         brent_crude_usd REAL NOT NULL DEFAULT 0, gold_usd_per_oz REAL NOT NULL DEFAULT 0,
         usd_vnd_rate REAL NOT NULL DEFAULT 0,
@@ -429,10 +429,10 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         jpy_vnd_rate REAL NOT NULL DEFAULT 0, us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         code TEXT PRIMARY KEY, price REAL, change_amt REAL, change_pct REAL, volume REAL, updated_at TEXT
       );
-      CREATE TABLE tracked_indicators (
+      CREATE TABLE IF NOT EXISTS tracked_indicators (
         id INTEGER PRIMARY KEY AUTOINCREMENT, indicator TEXT NOT NULL,
         value REAL NOT NULL, unit TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT '',
         extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -512,7 +512,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   it("YF-14: storeCommoditySnapshot uses previous-day close for delta — off-market repeated price must NOT zero out a real move", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE commodity_prices (
+      CREATE TABLE IF NOT EXISTS commodity_prices (
         source TEXT PRIMARY KEY,
         brent_crude_usd REAL NOT NULL DEFAULT 0,
         gold_usd_per_oz REAL NOT NULL DEFAULT 0,
@@ -529,7 +529,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
-      CREATE TABLE commodity_prices_history (
+      CREATE TABLE IF NOT EXISTS commodity_prices_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         source TEXT NOT NULL,
         brent_crude_usd REAL NOT NULL DEFAULT 0,
@@ -547,7 +547,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         code TEXT PRIMARY KEY,
         price REAL,
         change_amt REAL,
@@ -555,7 +555,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         volume REAL,
         updated_at TEXT
       );
-      CREATE TABLE tracked_indicators (
+      CREATE TABLE IF NOT EXISTS tracked_indicators (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         indicator TEXT NOT NULL,
         value REAL NOT NULL,
@@ -630,7 +630,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   it("YF-15: storeCommoditySnapshot skips zero-valued history rows as prior-close candidates", () => {
     const db = new Database(":memory:");
     db.exec(`
-      CREATE TABLE commodity_prices (
+      CREATE TABLE IF NOT EXISTS commodity_prices (
         source TEXT PRIMARY KEY,
         brent_crude_usd REAL NOT NULL DEFAULT 0,
         gold_usd_per_oz REAL NOT NULL DEFAULT 0,
@@ -647,7 +647,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
-      CREATE TABLE commodity_prices_history (
+      CREATE TABLE IF NOT EXISTS commodity_prices_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         source TEXT NOT NULL,
         brent_crude_usd REAL NOT NULL DEFAULT 0,
@@ -665,7 +665,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         code TEXT PRIMARY KEY,
         price REAL,
         change_amt REAL,
@@ -673,7 +673,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         volume REAL,
         updated_at TEXT
       );
-      CREATE TABLE tracked_indicators (
+      CREATE TABLE IF NOT EXISTS tracked_indicators (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         indicator TEXT NOT NULL,
         value REAL NOT NULL,

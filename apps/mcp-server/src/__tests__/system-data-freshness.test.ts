@@ -52,7 +52,7 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
 
     db.exec(
       `
-      CREATE TABLE vps_push_log (
+      CREATE TABLE IF NOT EXISTS vps_push_log (
         service TEXT,
         status TEXT,
         pushed_at TEXT
@@ -60,20 +60,21 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
       INSERT INTO vps_push_log (service, status, pushed_at)
       VALUES ('prices', 'ok', '${staleTime12min.toISOString()}');
 
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         updated_at TEXT
       );
 
-      CREATE TABLE financial_reports (
+      CREATE TABLE IF NOT EXISTS financial_reports (
         parsed_at TEXT
       );
 
-      CREATE TABLE rag_analyses (
+      CREATE TABLE IF NOT EXISTS rag_analyses (
         created_at TEXT,
         data_env TEXT
-);
+,
+    source_url TEXT UNIQUE);
 
-      CREATE TABLE sbv_rates (
+      CREATE TABLE IF NOT EXISTS sbv_rates (
         fetched_at TEXT
       );
 

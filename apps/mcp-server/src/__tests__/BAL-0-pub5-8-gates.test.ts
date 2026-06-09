@@ -130,7 +130,8 @@ function makeDb(): Database {
     confidence REAL,
     causal_chain TEXT,
     data_env TEXT
-)`);
+,
+    source_url TEXT UNIQUE)`);
 
   return db;
 }

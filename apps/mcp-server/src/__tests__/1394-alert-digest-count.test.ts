@@ -25,7 +25,7 @@ import { assembleAlertDigest } from "../application/usecases/assembleAlertDigest
 function buildDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE alerts (
+    CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL,
       severity              TEXT NOT NULL,

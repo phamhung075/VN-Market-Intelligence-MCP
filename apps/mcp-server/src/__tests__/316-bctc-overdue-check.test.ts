@@ -18,19 +18,19 @@ import { readUnnotifiedAlerts } from "../infrastructure/db/alertStore.js";
 function buildDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE watchlist (
+    CREATE TABLE IF NOT EXISTS watchlist (
       code     TEXT PRIMARY KEY,
       exchange TEXT NOT NULL DEFAULT 'HOSE',
       domain   TEXT NOT NULL DEFAULT 'general'
     );
-    CREATE TABLE financial_reports (
+    CREATE TABLE IF NOT EXISTS financial_reports (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code     TEXT NOT NULL,
       period_year     INTEGER NOT NULL,
       period_quarter  INTEGER,
       published_at    TEXT
     );
-    CREATE TABLE alerts (
+    CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL,
       severity              TEXT NOT NULL,

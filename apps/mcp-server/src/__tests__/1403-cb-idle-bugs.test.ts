@@ -50,7 +50,7 @@ function buildBrokenVnstatsDb(): Database {
   const db = new Database(":memory:");
   // Replicate the live broken DDL: UNIQUE(code) in DDL body
   db.exec(`
-    CREATE TABLE vnstock_trading_stats (
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       code         TEXT NOT NULL,
       foreign_room INTEGER,
@@ -73,7 +73,7 @@ function buildBrokenVnstatsDb(): Database {
 function buildFixedVnstatsDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE vnstock_trading_stats (
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
       code         TEXT NOT NULL,
       foreign_room INTEGER,

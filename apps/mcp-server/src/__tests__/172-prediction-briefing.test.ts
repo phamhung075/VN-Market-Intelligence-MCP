@@ -282,7 +282,7 @@ describe("Task 172 — getRecentPredictionSignals", () => {
 
   it("handles missing prediction_signals table gracefully (returns [])", () => {
     const emptyDb = new Database(":memory:");
-    emptyDb.exec("CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY)");
+    emptyDb.exec("CREATE TABLE IF NOT EXISTS watchlist (code TEXT PRIMARY KEY, exchange TEXT NOT NULL DEFAULT 'HOSE')");
     // No prediction_signals table
 
     const results = getRecentPredictionSignals(emptyDb, 24);

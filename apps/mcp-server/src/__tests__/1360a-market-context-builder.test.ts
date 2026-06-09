@@ -16,7 +16,7 @@ import {
 function buildMcbDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE watchlist (
+    CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY,
       exchange TEXT NOT NULL DEFAULT 'HOSE',
       domain TEXT NOT NULL DEFAULT 'banking',
@@ -25,13 +25,13 @@ function buildMcbDb(): Database {
       alert_rise_pct REAL NOT NULL DEFAULT 5.0,
       alert_impact_min REAL NOT NULL DEFAULT 0.5
     );
-    CREATE TABLE market_prices (
+    CREATE TABLE IF NOT EXISTS market_prices (
       code TEXT PRIMARY KEY,
       price REAL,
       change_pct REAL,
       updated_at TEXT
     );
-    CREATE TABLE alerts (
+    CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
       triggered_at TEXT NOT NULL,
       severity TEXT NOT NULL DEFAULT 'medium',
@@ -40,7 +40,7 @@ function buildMcbDb(): Database {
       message TEXT,
       read INTEGER NOT NULL DEFAULT 0
     );
-    CREATE TABLE rag_analyses (
+    CREATE TABLE IF NOT EXISTS rag_analyses (
       id TEXT PRIMARY KEY,
       created_at TEXT NOT NULL,
       level TEXT NOT NULL DEFAULT 'market',
@@ -50,7 +50,8 @@ function buildMcbDb(): Database {
       impact_direction TEXT,
       summary TEXT,
       data_env TEXT
-);
+,
+    source_url TEXT UNIQUE);
   `);
   return db;
 }

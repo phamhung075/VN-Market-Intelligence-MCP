@@ -19,23 +19,24 @@ import { Database } from "bun:sqlite";
 function buildDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE market_prices (
+    CREATE TABLE IF NOT EXISTS market_prices (
       code        TEXT PRIMARY KEY,
       price       REAL,
       change_pct  REAL,
       updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
-    CREATE TABLE daily_ohlcv (
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code  TEXT NOT NULL,
       date  TEXT NOT NULL,
       close REAL NOT NULL,
       PRIMARY KEY (code, date)
     );
-    CREATE TABLE watchlist (
+    CREATE TABLE IF NOT EXISTS watchlist (
       code   TEXT PRIMARY KEY,
       domain TEXT NOT NULL DEFAULT 'general'
-    );
-    CREATE TABLE positions (
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE');
+    CREATE TABLE IF NOT EXISTS positions (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       code       TEXT NOT NULL,
       shares     REAL NOT NULL,

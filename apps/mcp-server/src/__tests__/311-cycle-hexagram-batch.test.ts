@@ -159,7 +159,7 @@ describe("Task 303 — hexagramStore: source column + extended getLatestReading"
 
     // Create the table WITHOUT source column (simulates old production DB)
     db.exec(`
-      CREATE TABLE kinhdich_readings (
+      CREATE TABLE IF NOT EXISTS kinhdich_readings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         stock_code TEXT NOT NULL,
         timestamp TEXT NOT NULL DEFAULT (datetime('now')),

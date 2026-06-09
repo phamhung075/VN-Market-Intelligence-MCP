@@ -22,7 +22,7 @@ import { handleFetchStatus } from "../interface/mcp/routes/fetchStatusHandler.js
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE bctc_vps_queue (
+    CREATE TABLE IF NOT EXISTS bctc_vps_queue (
       id               INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code      TEXT NOT NULL,
       period_year      INTEGER NOT NULL,
@@ -33,7 +33,7 @@ function makeDb(): Database {
       last_attempt     TEXT,
       created_at       TEXT NOT NULL DEFAULT (datetime('now'))
     );
-    CREATE TABLE rag_analyses (
+    CREATE TABLE IF NOT EXISTS rag_analyses (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       source_url TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -45,7 +45,7 @@ function makeDb(): Database {
       pushes_24h     INTEGER DEFAULT 0,
       errors_24h     INTEGER DEFAULT 0
     );
-    CREATE TABLE vps_push_log (
+    CREATE TABLE IF NOT EXISTS vps_push_log (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       service     TEXT NOT NULL,
       pushed_at   TEXT NOT NULL,

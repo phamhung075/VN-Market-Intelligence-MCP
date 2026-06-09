@@ -280,7 +280,7 @@ describe("Task stale-tickers — validateSeedTickers startup check", () => {
       )
     `);
     db.exec(`
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         code TEXT PRIMARY KEY,
         price REAL,
         change_pct REAL,

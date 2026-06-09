@@ -93,20 +93,21 @@ describe("1303i — cascade gap: BCTC overdue → runImpactChain", () => {
 
     const { Database } = await import("bun:sqlite");
     const db = new Database(":memory:");
-    db.run(`CREATE TABLE watchlist (
+    db.run(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY,
       domain TEXT DEFAULT 'general'
-    )`);
-    db.run(`INSERT INTO watchlist VALUES ('VNM','consumer')`);
-    db.run(`INSERT INTO watchlist VALUES ('FPT','tech')`);
-    db.run(`CREATE TABLE financial_reports (
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE')`);
+    db.run(`INSERT INTO watchlist (code, domain) VALUES ('VNM','consumer')`);
+    db.run(`INSERT INTO watchlist (code, domain) VALUES ('FPT','tech')`);
+    db.run(`CREATE TABLE IF NOT EXISTS financial_reports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       action_code TEXT,
       period_year INTEGER,
       period_quarter INTEGER,
       published_at TEXT
     )`);
-    db.run(`CREATE TABLE alerts (
+    db.run(`CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
       triggered_at TEXT,
       severity TEXT,

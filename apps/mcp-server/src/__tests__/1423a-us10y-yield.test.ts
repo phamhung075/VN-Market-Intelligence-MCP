@@ -55,7 +55,7 @@ function symbolAwareClient(responses: Record<string, string | Error>): HttpClien
 function makeTestDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE commodity_prices (
+    CREATE TABLE IF NOT EXISTS commodity_prices (
       source            TEXT PRIMARY KEY,
       brent_crude_usd   REAL NOT NULL DEFAULT 0,
       gold_usd_per_oz   REAL NOT NULL DEFAULT 0,
@@ -72,7 +72,7 @@ function makeTestDb(): Database {
       us10y_yield       REAL NOT NULL DEFAULT 0,
       fetched_at        TEXT NOT NULL
     );
-    CREATE TABLE commodity_prices_history (
+    CREATE TABLE IF NOT EXISTS commodity_prices_history (
       id                INTEGER PRIMARY KEY AUTOINCREMENT,
       source            TEXT NOT NULL,
       brent_crude_usd   REAL NOT NULL DEFAULT 0,
@@ -90,10 +90,10 @@ function makeTestDb(): Database {
       us10y_yield       REAL NOT NULL DEFAULT 0,
       fetched_at        TEXT NOT NULL
     );
-    CREATE TABLE market_prices (
+    CREATE TABLE IF NOT EXISTS market_prices (
       code TEXT PRIMARY KEY, price REAL, change_amt REAL, change_pct REAL, volume REAL, updated_at TEXT
     );
-    CREATE TABLE tracked_indicators (
+    CREATE TABLE IF NOT EXISTS tracked_indicators (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       indicator TEXT NOT NULL, value REAL NOT NULL,
       unit TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT '',

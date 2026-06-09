@@ -31,7 +31,7 @@ function buildMinimalDb(options: {
 
   if (options.withVpsPushLog) {
     db.exec(`
-      CREATE TABLE vps_push_log (
+      CREATE TABLE IF NOT EXISTS vps_push_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         service TEXT NOT NULL,
         status TEXT NOT NULL,
@@ -42,7 +42,7 @@ function buildMinimalDb(options: {
 
   if (options.withMarketPrices) {
     db.exec(`
-      CREATE TABLE market_prices (
+      CREATE TABLE IF NOT EXISTS market_prices (
         code TEXT PRIMARY KEY,
         price REAL,
         change_amt REAL,
@@ -60,7 +60,8 @@ function buildMinimalDb(options: {
       created_at TEXT NOT NULL,
       level TEXT NOT NULL DEFAULT 'global',
       data_env TEXT
-);
+,
+    source_url TEXT UNIQUE);
     CREATE TABLE IF NOT EXISTS financial_reports (
       id TEXT PRIMARY KEY,
       stock_code TEXT,

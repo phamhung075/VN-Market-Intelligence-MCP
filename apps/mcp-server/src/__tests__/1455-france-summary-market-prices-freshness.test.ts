@@ -53,8 +53,11 @@ function setupTestDb(): Database {
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code TEXT NOT NULL, date TEXT NOT NULL,
       open REAL, high REAL, low REAL, close REAL, volume REAL,
-      PRIMARY KEY (code, date)
-    );
+      foreign_buy_vol  REAL,
+    foreign_sell_vol REAL,
+    foreign_net_vol  REAL,
+    put_through_vol  REAL,
+      PRIMARY KEY (code, date));
     CREATE TABLE IF NOT EXISTS positions (
       id        INTEGER PRIMARY KEY AUTOINCREMENT,
       code      TEXT NOT NULL,

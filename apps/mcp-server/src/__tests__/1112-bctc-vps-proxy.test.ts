@@ -18,7 +18,8 @@ function createTestDb(): Database {
   db.exec(`
     CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY
-    )
+    ,
+    exchange TEXT NOT NULL DEFAULT 'HOSE')
   `);
   db.exec(`
     CREATE TABLE IF NOT EXISTS financial_reports (

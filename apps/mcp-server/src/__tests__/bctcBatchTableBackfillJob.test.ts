@@ -45,7 +45,7 @@ function makeDb(
 ): Database {
   const db = new Database(":memory:");
   db.prepare(`
-    CREATE TABLE financial_reports (
+    CREATE TABLE IF NOT EXISTS financial_reports (
       id TEXT PRIMARY KEY,
       action_code TEXT NOT NULL,
       period_year INTEGER,
@@ -292,7 +292,7 @@ describe("bctcBatchTableBackfillJob", () => {
   it("TC8: invalid UUID row → error status, fetch never called", async () => {
     const db = new Database(":memory:");
     db.prepare(`
-      CREATE TABLE financial_reports (
+      CREATE TABLE IF NOT EXISTS financial_reports (
         id TEXT PRIMARY KEY,
         action_code TEXT NOT NULL,
         period_year INTEGER,
