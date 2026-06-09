@@ -3371,7 +3371,7 @@
             "id": "FIX-CI-C5-UNMOCKED-HTTP-FETCHES",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3397,13 +3397,18 @@
             "reworked_by": "po-S29",
             "blocked_by": [],
             "dispatched_at": "2026-06-09T09:50:33Z",
-            "dispatched_by": "po-S30"
+            "dispatched_by": "po-S30",
+            "resolution": "DONE",
+            "done_by": "po-S31",
+            "done_at": "2026-06-09T10:20:00Z",
+            "dj_gate_1": "sprint-CI-RED-RECONCILE-po.md#po-S31",
+            "gate_result": "CI-C5-GATE-fff91143 PASSED — native 135->102 (-33, beyond +/-3 band) AND all 4 named victims flipped fail->pass individually (Task028 9->0, Task025 7->0, Task1423a 6->0, Task1487 3->0); fix=DI-seam (removed file-top mock.module() from 083+123, added _test* injection seam to analysis.ts), commit fff91143 pushed"
           },
           {
             "id": "FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
@@ -3430,7 +3435,11 @@
             "started_by": "dev-mcp-server",
             "completed_at": "2026-06-09T09:45:00Z",
             "completed_by": "dev-mcp-server",
-            "dj_gate_1": "sprint-CI-RED-RECONCILE-dev-mcp-server.md#S12"
+            "dj_gate_1": "sprint-CI-RED-RECONCILE-po.md#po-S31",
+            "resolution": "DONE",
+            "done_by": "po-S31",
+            "done_at": "2026-06-09T10:20:00Z",
+            "gate_result": "CI-C6-GATE-37bb2e7d PASSED — named 1031 SECTOR_PEERS DGC assertion flipped fail->pass (domain other->chemicals) across baseline job 80278819016 vs C6 job 80294081419; stale-test REWRITE to match prod SSOT; commit 37bb2e7d pushed"
           },
           {
             "id": "FIX-CI-C7-ASSERTION-LOGIC",
@@ -3512,32 +3521,50 @@
             "done_by": "po-S30",
             "result": "Brief: docs/architecture-briefs/2026-06-09-spike-ci-c5-contam-safe-restrategy.md. Root cause: 083/123 file-top mock.module() contaminates Bun ESM cache process-wide; victim tests (028/025/1423a/1487) use correct DI pattern already. Chosen fix: remove file-top stubs from 083/123, use existing RunCascadeInput.commodityFetcher?/sbvFetcher?/ragRetriever? seams. ddd-1b: no change needed. Projected drop: 135->~113.",
             "resolution": "DONE"
+          },
+          {
+            "id": "FIX-CI-1423E-PREEXISTING-CLUSTER",
+            "type": "FIX",
+            "owner": "architect",
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "medium",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [],
+            "blocked_by": [],
+            "root_cause": "UNKNOWN — architect-first prod-vs-test triage required",
+            "title": "Task 1423e — 22 pre-existing CI fails (byte-stable, NOT a C5 victim) — architect-first prod-vs-test triage",
+            "note": "Surfaced during C5 gate disambiguation (signal docs/signals/ci-c5-gate-result-fff91143-20260609T1015Z.json). A naive grep -F 'Task 1423' over-matched 22 fails — those are ALL Task 1423e, a SEPARATE pre-existing cluster present in BOTH the 135 baseline (job 80278819016) AND the 102 C5 run (job 80297590558), byte-stable, zero C5 impact (the real C5 victim was Task 1423a 6->0, distinct prefix). Root cause UNKNOWN — do NOT guess. ARCHITECT-FIRST triage per /goal REMOVE-obsolete clause + assertion-logic escalation rule: confirm prod-vs-test BEFORE any dev fix — (a) prod correct + test stale -> REWRITE, or (b) prod broken -> FIX, or (c) test obsolete -> REMOVE. Gate later vs the NEW 102 band (~102 +/-3, floor ~99), NOT the retired 135 band.",
+            "baseline_pass": "102 native fail+error absolute (102 fail + 0 err / Ran 11816, sha fff91143, run 27198910454, bun job 80297590558) — NEW band ~102 +/-3, floor ~99",
+            "created_at": "2026-06-09T10:20:00Z",
+            "created_by": "po-S31"
           }
         ],
         "_updated_by": "po-S28",
         "ci_absolute": {
-          "native_fail": 135,
+          "native_fail": 102,
           "native_errors": 0,
-          "fail_plus_error": 135,
+          "fail_plus_error": 102,
           "tests": 11816,
-          "pass": 11639,
+          "pass": 11672,
           "skip": 42,
-          "sha": "3663bd12",
-          "run_id": "27193376550",
-          "bun_job_id": "80278819016",
-          "supersedes": "160 (sha a43dff49, run 27191715572, job 80273289808) — SUPERSEDED",
-          "delta_vs_prior": "-25 (-16%) — C4 Kinh Dich diacritics, FIRST prod-touching round; clean (no under-scope; architect projected ~25, netted exactly 25); tests 11817->11816 (1 obsolete test REMOVED, 1416 get_market_hexagram)",
-          "updated_at": "2026-06-09T08:33:20Z",
-          "updated_by": "po-S28"
+          "sha": "fff91143",
+          "run_id": "27198910454",
+          "bun_job_id": "80297590558",
+          "supersedes": "135 (sha 3663bd12, run 27193376550, job 80278819016)",
+          "delta_vs_prior": "-33 (135->102) — C5 DI-seam fix; far beyond +/-3 jitter band, unambiguous; all 4 named victims flipped individually (Task028 9->0, Task025 7->0, Task1423a 6->0, Task1487 3->0); zero regression; tests unchanged 11816 (no add/remove). New band ~102 +/-3 (floor ~99).",
+          "updated_at": "2026-06-09T10:20:00Z",
+          "updated_by": "po-S31"
         },
         "long_tail_triage_policy": {
           "goal": "ci/di all passe on GitHub, test update (remove if obsolete) — /goal refined 2026-06-09T07:5xZ",
           "classify_each_residual_bucket": "REWRITE (prod still exists, test stale -> rewrite test to match) vs REMOVE (prod gone/superseded, test obsolete -> DELETE the test, do NOT patch)",
           "remove_examples": "removed test seams, deleted reuters.js, pre-98df0f43 macro section-header format, stale cron schedules",
           "applies_to": "C5+ and all remaining ~135 long-tail rounds; re-profile residual by ROOT-CAUSE pattern (unmocked-HTTP / SSOT-drift / assertion-logic) NOT by file, with the REMOVE-if-obsolete lens",
-          "absolute": "135 (sha 3663bd12, run 27193376550, job 80278819016 — SUPERSEDES 160/a43dff49)",
-          "updated_by": "po-S28",
-          "updated_at": "2026-06-09T08:33:20Z",
+          "absolute": "102 (sha fff91143, run 27198910454, job 80297590558 — SUPERSEDES 135/3663bd12)",
+          "updated_by": "po-S31",
+          "updated_at": "2026-06-09T10:20:00Z",
           "under_scope_lesson": "Architect cluster counts are CATEGORY-WIDE SUPERSETS (e.g. C1 '42' netted -12). Dev fixes ONLY the explicitly NAMED files; residual same-pattern files OUT of named scope -> long-tail re-profile, NOT a charge-back to closed task ids. The ONE exception so far: C4 single-file-family count landed EXACTLY (-25) because it was not a category superset."
         }
       }
