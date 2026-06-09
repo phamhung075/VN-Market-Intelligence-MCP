@@ -1,0 +1,33 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-06-08T22:52:00Z",
+  "dedup_key": "ci_verification_gate_failed:9454baad",
+  "payload": {
+    "check_id": "CI-VERIFY-GATE-FAILED-9454baad",
+    "head_sha": "9454baade37249fce06e5c14e81d79af07f18df2",
+    "run_id": "27171666087",
+    "verification_gate": "FAILED — fail+error count must DROP vs 702 baseline; it ROSE to 921 (+219)",
+    "baseline": { "run_id": "27168638852", "sha": "f05795c3", "pass": 10742, "fail": 656, "errors": 46, "fail_plus_error": 702, "tests": 11427 },
+    "after_batch": { "run_id": "27171666087", "sha": "9454baad", "pass": 10591, "fail": 906, "errors": 15, "fail_plus_error": 921, "tests": 11533 },
+    "delta": { "pass": -151, "fail": "+250", "errors": -31, "fail_plus_error": "+219 WORSE", "tests": "+106" },
+    "what_helped": "BATCH-2 network-skip guards in pollNews.ts (CI=true) — errors 46 -> 15 (-31). This part is a genuine win and was independently verified (102+1288 = 14 pass / 0 fail under CI=true).",
+    "what_regressed": "BATCH-1 — mechanized injection of initNewsTables/initMarketDataTables/initSystemTables into 464 test setup functions. Added ~+250 fails.",
+    "regression_signatures": {
+      "double_create_~32": "table watchlist/rag_analyses/market_prices/vps_push_log/market_prices_history already exists — injected init CREATEs tables the test inline DDL already created",
+      "schema_divergence_~200": "no such column: level(90) source_url(63) ticker(41) sentiment(19) status(16) to_agent(13) fetched_at(6) ...; no such table: sbv_rates_history(18) commodity_prices_history(18) positions(16) commodity_prices(5) imf_indicators(3); daily_ohlcv column-count mismatch(9)",
+      "not_null_~32": "NOT NULL constraint failed: watchlist.exchange(27), agent_signals.expires_at(5) — injected canonical schema has NOT NULL cols the test INSERTs do not populate"
+    },
+    "root_cause": "The 464-file injection assumed all test setups share one canonical schema. They do not — many test files define their OWN inline DDL with divergent shapes. The injected canonical init either collides (already exists) or pre-creates a canonical table whose columns the test's inline-DDL-shaped queries then cannot find.",
+    "recurrence": "2nd mechanized churn of the CI-test-schema area. Ties to architect notebook CI-TEST-ISOLATION-SPIKE. Per recurring-bug rule (2+ same module -> architect SPIKE before dev impl).",
+    "router_recommendation": [
+      "1. REVERT 9454baad to restore the known-good 702 baseline (main is currently +219 worse).",
+      "2. RE-FILE the BATCH-2 network guards (pollNews.ts only, isolated, verified win) as a clean standalone FIX — do NOT lose the -31 errors.",
+      "3. Route the schema-drift problem to ARCHITECT (recurring-bug): the fix is a shared canonical test-DB fixture / reconcile inline DDLs, NOT another mechanized one-size injection sweep.",
+      "decision_owner": "PO decides revert-all vs keep-and-fix-forward vs partial — router does not implement."
+    ],
+    "raw_verified_by": "dev-team-router: baseline + after numbers both pulled raw from gh run --log; signatures bucketed from new-run log; zone-confinement + canary(AC-P0-3-6) integrity confirmed pre-push (canary edit was inert createTestDb DB-setup injection only)."
+  }
+}

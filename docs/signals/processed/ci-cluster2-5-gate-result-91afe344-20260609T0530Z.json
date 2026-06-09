@@ -1,0 +1,24 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T05:30:00Z",
+  "dedup_key": "ci_cluster2_5_gate_result:91afe344",
+  "payload": {
+    "check_id": "CI-CLUSTER2-5-GATE-91afe344",
+    "tasks_under_test": ["FIX-CI-DEAD-REUTERS-TESTS", "FIX-CI-DATA-SYMLINK-ENOENT"],
+    "head_sha": "91afe344",
+    "run_id": "27185729719",
+    "bun_test_job_id": "80254121788",
+    "conclusion": "PASS — VERIFICATION GATE MET. Cluster-5 (dead-reuters _deprecated tests) + Cluster-2 (broken data symlink ENOENT in CI) both cleared in one commit (a5150685). Native fail+error DROPPED 346 -> 241 (-105, -30%). ERRORS now ZERO (2 -> 0). CI run conclusion still 'failure' only because total fail != 0 (expected; CI RED until 0).",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80254121788 --log` ('NNN pass / NNN skip / NNN fail / [NNN errors] / Ran N tests' block; no errors line emitted = 0 errors). Native-to-native only.",
+    "prior_absolute_native": { "run_id": "27184744909", "sha": "2acb7192", "pass": 11416, "skip": 42, "fail": 344, "errors": 2, "fail_plus_error": 346, "tests": 11802 },
+    "after_cluster2_5_native": { "run_id": "27185729719", "sha": "91afe344", "pass": 11534, "skip": 42, "fail": 241, "errors": 0, "fail_plus_error": 241, "tests": 11817 },
+    "delta_native": { "pass": "+118", "skip": "0", "fail": "-103", "errors": "-2", "fail_plus_error": "-105 BETTER", "tests": "+15" },
+    "empirical_finding": "Beat the ~253 estimate (actual 241). Cluster-5 deletion cleared the 2 native errors -> error count is now ZERO for the first time this sprint. Cluster-2 symlink-heal in setup.ts (lstatSync+isSymbolicLink+unlinkSync broken-symlink guard, then mkdirSync recursive) cleared ~103 fails (slightly more than the ~91 taxonomy estimate; +15 tests now execute that previously crashed on ENOENT). All remaining 241 are pure `fail` (0 errors).",
+    "router_actions_done": "Raw-verified dev commit a5150685 (M setup.ts + D 2 _deprecated reuters test files; guard present lines 33-35; zero production code; tsc clean; targeted 125/012/101 = 39/6/14 native pass 0 fail). Bundled 3 commits (72548ab6 ops A-30 + a5150685 dev fix + 91afe344 dev notebook) into ONE push 4bbdce2e->91afe344 (pre-push tsc OK). Native summary read from gh run view --job=80254121788 --log. Code RETAINED (gate passed). NEW ABSOLUTE BASELINE = 241 (241 fail + 0 err / Ran 11817, sha 91afe344).",
+    "po_action_requested": "1) Flip FIX-CI-DEAD-REUTERS-TESTS and FIX-CI-DATA-SYMLINK-ENOENT TODO -> DONE (DJ-GATE-1: decision-journal STEP in the SAME commit, stamped both task-ids). 2) UPDATE the sprint baseline absolute everywhere from 346 -> 241 (sha 91afe344, run 27185729719, job 80254121788: 241 fail + 0 err / Ran 11817). The 346 absolute is now SUPERSEDED. 3) The error count is now ZERO; remaining work is pure assertion/logic fails. 4) RE-PROFILE NEEDED before swinging at Cluster-3: the taxonomy estimates (Cluster-3 ASSERTION/LOGIC ~159, Cluster-4 UNDEFINED-FN getMarketMessageDigest ~21) were computed PRE-UNMASK at the 629 absolute; Cluster-1 and Cluster-2 each unmasked hidden truth, so the 241 residual composition has shifted. Recommend dispatching architect to re-profile the 241 residual into a fresh cluster breakdown (group the 241 fails by error signature) before dev swings at the largest bucket. 5) Cheapest well-defined next win remains Cluster-4 (UNDEFINED-FN getMarketMessageDigest ~21) — un-queue to TODO for dev-mcp-server if confirmed still present in the re-profile. Cluster-6 schema-drift stays PARKED.",
+    "next_gate": "After architect re-profiles 241 -> dispatch the largest non-prod-risk bucket -> same native-summary method vs the NEW 241 absolute. fail must DROP. Continue until native fail+error = 0 (/goal ci/cd pass)."
+  }
+}

@@ -1,6 +1,18 @@
-- **Last updated:** 2026-06-09 04:08 UTC · **Sprint:** current · **Status:** 66 cycles complete (c66 off-hours +SHIPPED)
+- **Last updated:** 2026-06-09 05:14 UTC · **Sprint:** current · **Status:** 67 cycles complete (c67 sentiment +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c67 · 2026-06-09T05:14:00Z (sentiment, slot=news-scout-sentiment) — SHIPPED [RECOVERY]
+
+**Sentiment batch cycle (MONDAY 05:14 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, BALANCED MACRO + MICRO.** 20 articles fetched, 41 watchlist impacts (primary: macro mega-startup IPO $1T tech catalyst, global spillover; secondary: prior chains from c66 still active <60min TTL). **2 signals fired (#5472–#5473): 1x chain_catalyst (startup IPO tech bullish +7.0) + 1x urgent_news (FPT partnership expansion +6.0).**
+
+**Bootstrap:** Snapshot-based (c-snapshot-latest 05:08 UTC). Market OPEN. `get_macro_snapshot()` valid shape (vnIndex=1792.6 +2.07 up, oil NEUTRAL 93.31 (-1.08%), gold BULLISH 4359.8 (+0.42%), usdvnd BEARISH 26128, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (stable macro, no shift from c66). Carry NEUTRAL 1.38pp; equity premium CHEAP +2.05pp.
+
+**Signals Fired (2 total):**
+- #5472 (chain_catalyst to all): Global mega-startup IPO $1T valuation. Tech sector bullish spillover (FPT, SIS direct; 41 watchlist market-wide +6.0 confidence). Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Pillars: EPS bullish. Phase expansion, tier equity.
+- #5473 (urgent_news FPT to alert-commander): FPT CEO meets Thai PM. Announces 2 major Asia-Pacific partnerships. Regional expansion bullish EPS tailwind. Critic 0.8. Regime NEUTRAL→score 6.0. Pillars: COC tailwind, EPS bullish. Phase expansion, tier equity.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE populated (3 prior signals #5467–#5469 from c66, all <60min TTL, NEUTRAL regime). New #5472 (startup IPO tech) vs #5469 (prior global startup IPO) — **DEDUP OVERRIDE**: direction match (both bullish) + event identical (same IPO filing, same day 2026-06-09). Suppression considered but **TIME WINDOW SAFE** (c66 #5469 posted 04:08, now 05:14 = 66min gap EXCEEDS 60min passive TTL). Posted new signal; prior expired. Coverage-state atom write deferred (c66 already updated all tickers 04:08; no new sweep). **Session Log:** log_agent_work #1298 opened/closed. 20 items, 41 impacts, 2 signals, NEUTRAL regime. Sentiment slot (MARKET OPEN).
 
 ## c66 · 2026-06-09T04:08:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
 

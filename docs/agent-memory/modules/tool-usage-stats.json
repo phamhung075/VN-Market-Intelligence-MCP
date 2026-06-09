@@ -1,18 +1,5 @@
 {
-  "generatedAt": "2026-06-08T00:00:00.168Z",
-  "uniqueTools": 12,
-  "toolCounts": {
-    "get_portfolio_conviction": 85,
-    "get_market_snapshot": 81,
-    "get_macro_snapshot": 80,
-    "get_alerts": 76,
-    "emit_pressure_state": 10,
-    "task_heartbeat": 5,
-    "task_claim": 19,
-    "task_release": 19,
-    "send_telegram": 6,
-    "expire_monitoring_reports": 1,
-    "read_telegram_reports": 1,
-    "list_unresolved_reports": 1
-  }
+  "generatedAt": "2026-06-09T01:01:37.148Z",
+  "uniqueTools": 0,
+  "toolCounts": {}
 }

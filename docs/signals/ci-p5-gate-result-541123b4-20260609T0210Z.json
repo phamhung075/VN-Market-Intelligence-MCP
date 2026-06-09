@@ -1,0 +1,25 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-06-09T02:10:00Z",
+  "dedup_key": "ci_p5_gate_result:541123b4",
+  "payload": {
+    "check_id": "CI-P5-GATE-541123b4",
+    "task_under_test": "FIX-SCHEMA-DRIFT-P5-SELFHEAL",
+    "head_sha": "541123b4",
+    "run_id": "27179307203",
+    "conclusion": "failure — VERIFICATION GATE FAILED (regression). Code commit REVERTED by router (d1aa19c5).",
+    "verification_gate": "fail+error must DROP below the 629 absolute (after-P4 e442cf11). It ROSE to 635 (+6). GATE FAILED.",
+    "measurement_method": "bun NATIVE summary tally from `gh run view 27179307203 --log` ('NNN pass / NNN skip / NNN fail / NNN errors / Ran N tests' block). Native-to-native only.",
+    "after_p4_native":  { "run_id": "27177364641", "sha": "e442cf11", "pass": 10886, "skip": 36, "fail": 615, "errors": 14, "fail_plus_error": 629, "tests": 11537 },
+    "after_p5_native":  { "run_id": "27179307203", "sha": "541123b4", "pass": 10880, "skip": 36, "fail": 621, "errors": 14, "fail_plus_error": 635, "tests": 11537 },
+    "delta_native": { "pass": "-6", "skip": "0", "fail": "+6", "errors": "0", "fail_plus_error": "+6 WORSE", "tests": "0" },
+    "empirical_finding": "The self-heal getDb() approach is PARTIALLY CORRECT but NET-NEGATIVE. Residual no-such-table OCCURRENCE buckets (marker-scale ~2x) show 4 table classes were HEALED to zero vs the 629 baseline: sbv_rates_history 19->0, commodity_prices_history 19->0, imf_indicators 3->0, vps_service_health 1->0 (also daily_ohlcv 5->4). BUT a NEW column-drift class appeared: 'no such column: created_at' x3 (was 0). Net native +6 worse.",
+    "root_cause_of_regression": "At least one standalone init slice (initMarketDataTables/initAlertsTables/initMacroTables/initPortfolioTables/initNewsTables/initBriefingsTables/initSystemTables/initBacktestingTables/initAgmPlanTables) carries a CREATE TABLE IF NOT EXISTS DDL that is SCHEMA-DRIFTED from what the canonical initDatabase() (or the consuming test/production code) expects — specifically a table created WITHOUT a created_at column. On a fresh :memory: db (after a Contract-A afterAll(closeDb()) nullifies _db), the drifted slice wins the create race; because it uses IF NOT EXISTS, the fuller/canonical DDL that would add created_at later becomes a no-op -> 'no such column: created_at'. The architect's RISK assessment (only flagged initFinancialReportsTables / period_quarter) MISSED that the standalone slices themselves are drifted from canonical.",
+    "router_actions_done": "Native summary read from gh run view 27179307203 --log (10880 pass / 36 skip / 621 fail / 14 errors / Ran 11537). Residual buckets diffed vs 629. schema.ts REVERTED byte-identical to pre-P5 parent (541123b4~1) in commit d1aa19c5 (explicit pathspec, tsc CLEAN, DJ-GATE-1 inline). Pushed 541123b4->d1aa19c5 (auditor notebook 3e7dc356 rode along, docs-only). Re-confirm CI run 27179567534 in_progress — expected back at 629 (schema.ts now identical to e442cf11; only docs changed since). Board flip (P5-SELFHEAL REVIEW) + dev notebook from 541123b4 RETAINED (not reverted).",
+    "po_action_requested": "1) Flip signal_queue/board task FIX-SCHEMA-DRIFT-P5-SELFHEAL status REVIEW->REWORK (gate failed, reverted). 2) Re-route P5 design back to ARCHITECT for a follow-up SPIKE (recurring-bug, 4th touch of CI-test-schema surface): the self-heal direction is right (heals 4 classes) but the standalone init-slice DDL must first be RECONCILED with canonical (audit each slice's CREATE TABLE for created_at and other column drift vs the canonical initDatabase path), OR adopt run-order test isolation instead of self-heal. NOT another per-file inline-DDL patch; NOT a mechanized one-size init injection (9454baad, reverted for +219). 3) FU-SCHEMA-DRIFT-P5 (the original architect spike) remains DONE — only its fix HYPOTHESIS was disproven empirically; the new spike is a distinct follow-up.",
+    "next_gate": "After architect re-spike + dev re-impl: same native-summary method vs the 629 absolute. fail+error must DROP."
+  }
+}

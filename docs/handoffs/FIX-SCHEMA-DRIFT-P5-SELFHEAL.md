@@ -95,6 +95,25 @@ DJ-GATE-1: architect spike FU-SCHEMA-DRIFT-P5 DONE ✓
 
 ---
 
+## [Developer] Implementation Record
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:** `apps/mcp-server/src/infrastructure/db/schema.ts` — added 22 lines in `getDb()`, fresh-db branch after PRAGMA setup
+- **Tests written:** None — fix verified via existing 002-db-schema.test.ts (24/0) and 182-portfolio-risk.test.ts (10/0)
+- **Git commits:** `541123b4` fix(infrastructure/db): Self-healing getDb() for full-suite singleton pollution
+- **Type check:** clean (bun tsc --noEmit — no output)
+- **bun test (isolation):** 002-db-schema 24 pass / 0 fail; 182-portfolio-risk 10 pass / 0 fail
+- **089-tool-macro:** 2 pass / 15 fail — pre-existing live-data assertion failures (not table-missing; no "no such table" errors observed)
+- **Tool count:** unchanged (no tool barrel changes)
+- **Scheduler count:** unchanged (no scheduler changes)
+- **Docs updated:** docs/handoffs/FIX-SCHEMA-DRIFT-P5-SELFHEAL.md (this record) | docs/agent-memory/notebooks/dev-mcp-server.md | docs/data/orch/orch-state.json (status TODO→REVIEW)
+- **DJ-GATE-1:** inline in commit message — architect spike FU-SCHEMA-DRIFT-P5 DONE; fix bounded to 1 file 1 function
+- **Graphify:** skipped (no architecture doc impacted)
+
+**Zone health:** bun tsc --noEmit clean, schema regression 24/24 pass, 1 source file changed | HEALTHY
+
+---
+
 *Handoff created by: pm*
 *Spike: FU-SCHEMA-DRIFT-P5 (architect, DONE)*
-*Task: FIX-SCHEMA-DRIFT-P5-SELFHEAL (dev-mcp-server, TODO)*
+*Task: FIX-SCHEMA-DRIFT-P5-SELFHEAL (dev-mcp-server, REVIEW)*

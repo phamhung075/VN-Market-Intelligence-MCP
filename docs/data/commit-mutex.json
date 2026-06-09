@@ -1,6 +1,6 @@
 {
-  "locked": true,
+  "locked": false,
   "owner_agent": "dev-mcp-server",
-  "task": "FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS+FIX-CI-C3-RESIDUAL-DB-DESTROYERS",
-  "expires_at": 1780991312
+  "task": null,
+  "expires_at": 0
 }

@@ -1,0 +1,31 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T07:15:00Z",
+  "dedup_key": "ci_c2_gate_result:7bea53d0",
+  "payload": {
+    "check_id": "CI-C2-GATE-7bea53d0",
+    "task_under_test": "FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE",
+    "head_sha": "7bea53d0",
+    "run_id": "27189745293",
+    "bun_test_job_id": "80266839417",
+    "conclusion": "PASS — VERIFICATION GATE MET. Native fail DROPPED 193 -> 172 (-21, exactly the projected ~21), errors stay 0. Clean architect-diagnosed test-only win, NO under-scope, NO whack-a-mole. CI run conclusion still 'failure' (172 != 0; expected, CI RED until 0).",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80266839417 --log` ('11603 pass / 42 skip / 172 fail / Ran 11817 across 1037 files'; no errors line = 0 errors). Native-to-native only.",
+    "prior_absolute_native": { "run_id": "27188621595", "sha": "1d83a5ff", "pass": 11582, "skip": 42, "fail": 193, "errors": 0, "fail_plus_error": 193, "tests": 11817 },
+    "after_c2_native": { "run_id": "27189745293", "sha": "7bea53d0", "pass": 11603, "skip": 42, "fail": 172, "errors": 0, "fail_plus_error": 172, "tests": 11817 },
+    "delta_native": { "pass": "+21", "skip": "0", "fail": "-21", "errors": "0", "fail_plus_error": "-21 BETTER", "tests": "0" },
+    "empirical_finding": "Net -21, EXACTLY the projection. C2 was correctly scoped: the require()->ESM import fix in the single Task-1168 file (1168-market-message-digest.test.ts, 31 local pass) cleared exactly its bucket with no spillover and no masked truth. Contrast C3+C1 which under-scoped because their clusters were category supersets; C2's ~21 was a single-file count, so it landed precisely. NO regression: total tests 11817 unchanged.",
+    "router_actions_done": "Raw-verified dev commit 7bea53d0 TEST-ONLY (1 test file 1168-market-message-digest.test.ts + dev DJ + dev notebook + orch board; git show --name-only shows ZERO non-test src paths). tsc clean pre-push. Pushed 39cf167d->7bea53d0 = ONE CI run 27189745293. Native summary read from job 80266839417. Code RETAINED (gate met). NEW ABSOLUTE BASELINE = 172 (172 fail + 0 err / Ran 11817, sha 7bea53d0).",
+    "po_action_requested": "1) Flip FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE REVIEW -> DONE (DJ-GATE-1: decision-journal STEP same commit, stamp the id + the 193->172 / -21 result + gate evidence run 27189745293 job 80266839417). 2) Rebaseline the sprint ci_absolute everywhere 193 -> 172 (sha 7bea53d0). 193 is SUPERSEDED. 3) The next two biggest residual buckets are ALREADY open as BACKLOG stubs needing architect file-scope confirmation BEFORE dev: FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS (~37) and FIX-CI-C3-RESIDUAL-DB-DESTROYERS (~23). Router will dispatch the architect file-scope confirmation next; PO does NOT need to open new tasks this round — just confirm these two stubs + SPIKE-CI-C4-KINH-DICH-DIACRITICS are present and dispatch-ready (they were created in po-S25). 4) Cluster-6 schema-drift stays PARKED.",
+    "residual_172_rough_profile": {
+      "note": "From the 193 profile minus the now-cleared C2 ~21; approximate, sums ~172. Confirm via fresh architect re-profile if buckets shift.",
+      "C1_residual_macro_seam_FETCHER_tests": "~37 (Task 028 SBV fetcher, 025 Yahoo commodity fetcher, 1423e macro-calendar, 239a, 1423a, 1487) — SAME inject-seam pattern, test-only, NEW files beyond the 5-file C1 plan. BACKLOG, needs architect file-scope confirm.",
+      "C3_residual_db_singleton_destroyers": "~23 (Task 1124 evidence tools, 1129 calibration, 1295d E2E signal flow) — MORE destroyer files beyond 1945b. BACKLOG, needs architect file-scope confirm.",
+      "C4_kinh_dich_diacritics": "~14 (Task 285, 1414) — needs prod-vs-test diacritics ruling (SPIKE) before dev.",
+      "misc": "~98 long tail: 1416 source-scan (~9), 1407b SLA monitor (~6), 1134/MSG-1 foreign_flow (~11), 1328e conviction routing (~5), 235 send_telegram (~3), ragHealthCheck (~3), VCB BCTC parser (~3), FIX-H insider 180d (~3), ttl_seconds:180 cowork assertion (~3), newsHeadlines E2E (~2), 1839b notebook (~2), plus tail."
+    },
+    "next_gate": "Router dispatches architect to confirm exact file-scope for the two residual stubs (C1-fetcher ~37, C3-destroyers ~23) + the C4 micro-SPIKE prod-vs-test ruling. Then dev fixes the largest confirmed bucket; same native-summary method vs the NEW 172 absolute. fail must DROP. Continue until native fail+error = 0 (/goal ci/cd pass)."
+  }
+}

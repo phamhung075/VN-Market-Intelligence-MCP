@@ -1,0 +1,8 @@
+{
+  "from": "architect",
+  "to": "po",
+  "type": "brief_complete",
+  "payload": "CI-TEST-SCHEMA-FIXTURE-SPIKE design complete. Brief: docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md. Three failure classes (E1/E2/E3) inventoried. Two-contract fixture model designed. 4-phase rollout. Recommend PM decompose into FIX-SCHEMA-DRIFT-P1/P2/P4 tasks for dev-infrastructure.",
+  "priority": "high",
+  "createdAt": "2026-06-08T23:10:15Z"
+}
