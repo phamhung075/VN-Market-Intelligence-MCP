@@ -1,8 +1,48 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 12:30 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 13:15 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T13:15Z — FIX-CI-C7-ASSERTION-LOGIC: Task 1328e conviction routing, 10 CI fails
+
+**Task:** FIX-CI-C7-ASSERTION-LOGIC (TRIAGE, S, zone: apps/mcp-server/src/__tests__/)
+
+**Method:** Full read of test file (1328e), prod telegram.ts (549 — notifyTelegramAlert, severity
+gate, conviction-block, splitMessage/4096 threshold, fetchFn injection chain), git log telegram.ts
+(staleness check), 047-bctc-orchestrator.test.ts (contaminator read). Empirical two-file bun test
+run confirming exact SyntaxError. Run-order scan of all 287 files between positions [24] and [306].
+1792 isolation run confirming independent failure. 1352a isolation + 047+1352a two-file run.
+
+**Verdict: TEST-HARNESS/MOCK CONTAMINATION (c)**
+
+**Root cause:**
+- `047-bctc-orchestrator.test.ts` (position [24]) installs `mock.module("telegram.js", ...)` stub
+  exporting only {sendTelegramWork, sendTelegramMarket, sendTelegramBug, sendTelegram}. Missing:
+  `notifyTelegramAlert`, `formatConvictionBlock`, `notifyTelegramDocument`.
+- 047's afterAll does NOT restore the telegram module. Stub persists process-globally.
+- 1328e (position [306]) static import of `{ notifyTelegramAlert }` → `SyntaxError: Export named
+  'notifyTelegramAlert' not found`. All 5 it() that call notifyTelegramAlert fail at ~1ms.
+- Prod behavior is 100% correct: severity gate (high/critical only), conviction block on options.conviction,
+  multi-chunk split at 4096 chars — all assertions AGREE with prod. Test is NOT stale.
+
+**Fix spec:**
+- ONE file: `047-bctc-orchestrator.test.ts`
+- Add frozen-real import pattern at file top (before mock.module): capture and freeze real
+  notifyTelegramAlert, notifyTelegramDocument, formatConvictionBlock, deleteTelegramBug.
+- Extend 047's stub to include all missing exports (notifyTelegramAlert → stub, formatConvictionBlock → real).
+- Add restore mock.module() call inside the existing afterAll (or new afterAll block at file bottom).
+- Pattern: established 1352a teardown-describe precedent.
+- NO changes to 1328e itself (assertions correct, DI pattern correct).
+- C5-CURE ABSOLUTE: no new file-top mock.module() added.
+
+**Scope extension:**
+- 1352a: 1 of 2 CI fails (SyntaxError: `notifyTelegramDocument` not found) ALSO cured by same 047 fix.
+  1 of 2 CI fails (A-1: `Expected: 1, Received: 2`) is independent — separate triage needed.
+- 1792: INDEPENDENT. Fails in isolation (bugMessages stays empty). Different root cause, separate triage.
+
+**CI victim prefix:** `Task 1328e` (10 → 0 projected) + `Task 1352a` (2 → 1 projected)
+**Brief:** docs/architecture-briefs/2026-06-09-ci-c1328e-conviction-routing-triage.md
 
 ## 2026-06-09T12:30Z — FIX-CI-C1134-RESIDUAL-TRIAGE: get_foreign_flow tool, 12 CI fails
 
