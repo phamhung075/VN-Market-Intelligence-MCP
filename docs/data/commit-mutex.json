@@ -1,6 +1,10 @@
 {
   "locked": true,
   "owner_agent": "dev-mcp-server",
-  "task": "FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE",
-  "expires_at": 1781015943.65811
+  "task": "FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP",
+  "task_kind": "commit-mutex",
+  "task_id": "main",
+  "payload": "{\"task\":\"FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP\",\"sprint\":\"CI-RED-RECONCILE\",\"agent\":\"dev-mcp-server\"}",
+  "ttl_seconds": 120,
+  "expires_at": 9999999999
 }

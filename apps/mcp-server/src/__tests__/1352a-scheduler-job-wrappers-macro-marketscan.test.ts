@@ -32,7 +32,15 @@ import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 // Real-module captures — imported BEFORE any mock.module() call so they hold
 // the genuine implementations. Used in teardown to repair the module registry
 // for worker-sibling test files. Pattern: FIX-1290-briefing-no-stale.test.ts.
+// C5-CURE: cache-busted real-module ref used in afterAll to guarantee genuine
+// implementations regardless of CI file-ordering / upstream contamination.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Cache-busted real module (bypasses any prior stub in the process-global registry)
+const _realMod1352a = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1352a"
+);
+
 import {
   sendTelegramWork as _realSendTelegramWork,
   sendTelegramMarket as _realSendTelegramMarket,
@@ -489,12 +497,18 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
 // ─────────────────────────────────────────────────────────────────────────────
 describe("Task 1352a — teardown: restore module registry for worker-siblings", () => {
   afterAll(() => {
+    // C5-CURE: use cache-busted _realMod1352a to guarantee genuine implementations.
+    // Frozen static imports (_frozenReal*) may capture a stub if 1352a loads after
+    // an unrestored upstream contaminator. _realMod1352a bypasses the registry.
     mock.module("../infrastructure/notifiers/telegram.js", () => ({
-      sendTelegramWork: _frozenRealSendTelegramWork,
-      sendTelegramMarket: _frozenRealSendTelegramMarket,
-      sendTelegramBug: _frozenRealSendTelegramBug,
-      notifyTelegramAlert: _frozenRealNotifyTelegramAlert,
-      notifyTelegramDocument: _frozenRealNotifyTelegramDocument,
+      sendTelegramWork:       _realMod1352a.sendTelegramWork,
+      sendTelegramMarket:     _realMod1352a.sendTelegramMarket,
+      sendTelegramBug:        _realMod1352a.sendTelegramBug,
+      sendTelegram:           _realMod1352a.sendTelegram,
+      notifyTelegramAlert:    _realMod1352a.notifyTelegramAlert,
+      notifyTelegramDocument: _realMod1352a.notifyTelegramDocument,
+      formatConvictionBlock:  _realMod1352a.formatConvictionBlock,
+      deleteTelegramBug:      _realMod1352a.deleteTelegramBug,
     }));
     mock.module("../infrastructure/microservices/clients.js", () => ({
       getMacroSnapshot: _frozenRealGetMacroSnapshot,

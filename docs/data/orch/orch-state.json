@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T15:01:03Z",
-  "_updated_by": "po-S47",
+  "_updated_at": "2026-06-09T15:15:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -3858,7 +3858,7 @@
             "id": "FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -7844,6 +7844,19 @@
         "check_id": null,
         "payload_ref": "docs/signals/cowork-team-20260609T085739Z.json",
         "triage_note": ""
+      },
+      {
+        "id": "cwk-bctc-extract-empty-24tickers-20260609",
+        "ts": "2026-06-09T15:13:01Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "pipeline_bug",
+        "summary": "BCTC structured-extraction layer (get_bctc_full) returns EMPTY for all 24 release-filed tickers despite PDFs stored (3.0-16.4MB). CTG at 28+ consecutive extraction failures; VCB/REE/NVL/D2D/TCH 3+ cycles; 18 others cycle 1. Distinct from prior OCR-corrupt issue (rtr-ctg-bctc-ocr-corrupt DONE) — this is structured-parse-returns-empty, root cause unowned. Blocks all release-mode beat/miss + ledger writes; bctc-analyst c036 forced routine-only (FPT). Recurrence stuck in cowork-internal loop (no dev-team root-cause owner).",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null,
+        "zone_owner": "dev-pdf-extractor",
+        "triage_note": "Root-cause the structured-extraction empty-return (PDF stored but get_bctc_full empty). Recurring 28+ cycles for CTG. Surfaced by cowork bctc-analyst c036 2026-06-09T15:15Z."
       }
     ],
     "archive": [

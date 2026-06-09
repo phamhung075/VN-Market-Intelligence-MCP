@@ -460,6 +460,64 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 
 ---
 
+### STEP dev-mcp-server-S20 · dev-mcp-server · 2026-06-09T15:15:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** Applied C5-cure (cache-bust + afterAll restore) to ALL telegram mock.module contaminator files in apps/mcp-server/src/__tests__/ that lacked a genuine cache-busted registry restore. Grep-authoritative set enumerated via `grep -rln "mock\.module(.*notifiers/telegram\.js"` (8 files found).
+
+**PRIMARY CURES (file-top/module-scope stub, NO afterAll — arch-S17 confirmed):**
+
+1. `FIX-1290-briefing-no-stale.test.ts` — leaking symbol: `sendTelegramMarket` (capture-array stub). Changes: (a) added `afterAll` to bun:test import; (b) added `_realMod1290` cache-busted import BEFORE the existing mock.module at L21; (c) added file-bottom afterAll restoring all 8 telegram exports. Existing stub at L21 UNCHANGED. 5 pass / 0 fail locally.
+
+2. `1424a-bctc-unit-scale-mismatch.test.ts` — leaking symbols: `sendTelegramWork/Market/Bug/Telegram` (noop stubs). Changes: (a) added `afterAll` to bun:test import; (b) added `_realMod1424a` cache-busted import BEFORE the existing mock.module; (c) added file-bottom afterAll restoring all 8 exports. Existing stub UNCHANGED. 6 pass / 0 fail locally.
+
+3. `1345b-bctc-financial-validation.test.ts` — leaking symbols: `sendTelegramWork/Market/Bug/Telegram` (noop + capture stubs). Changes: (a) added `afterAll` to bun:test import; (b) added `_realMod1345b` cache-busted import BEFORE the existing mock.module; (c) added file-bottom afterAll restoring all 8 exports. Existing stub UNCHANGED. 10 pass / 0 fail locally.
+
+**AUDIT CONVERSIONS (had afterAll but used frozen static-import captures — secondary propagator risk):**
+
+4. `047-bctc-orchestrator.test.ts` — had afterAll (from S17) using frozen captures. Frozen static imports may capture stubs if 047 loads after an unrestored contaminator. Converted: added `_realMod047` cache-busted import before the existing mock.module; updated afterAll to use `_realMod047` for all 8 exports instead of `_frozen*` vars. Frozen vars retained (unused, harmless). 9 pass / 0 fail locally.
+
+5. `1352a-scheduler-job-wrappers-macro-marketscan.test.ts` — had afterAll in teardown-describe using frozen captures (only 5 of 8 symbols). Converted: added `_realMod1352a` cache-busted import; updated afterAll to use `_realMod1352a` for all 8 exports. 7 pass / 1 fail (pre-existing A-1 failure, unrelated to this fix — confirmed in S10 journal).
+
+6. `1356a-pattern-watch-job-gaps.test.ts` — had afterAll restoring ONLY `sendTelegramBug` via frozen capture (partial restore left other exports undefined). Converted: added `_realMod1356a` cache-busted import; updated afterAll to restore full 8-export surface. 8 pass / 0 fail locally.
+
+**ALREADY CURED — NOT TOUCHED:**
+- `1485-telegram-mock-isolation.test.ts` (cured arch-S15, S18)
+- `1792-conviction-debounce.test.ts` (cured arch-S16, S19)
+
+**what-considered:**
+- Fixing only PRIMARY 3 and leaving AUDIT set — REJECTED: SWEEP task requires draining the entire class; frozen-capture restores may still propagate stubs if CI file ordering changes. One sweep is cleaner than per-victim follow-ups.
+- Converting 047/1352a/1356a to full cache-busted approach while keeping existing frozen capture mechanics — CHOSEN: additive change, no assertions affected, zero prod risk.
+
+**why-decision:** C5-CURE ABSOLUTE rules respected throughout: (1) NO new file-top/module-scope mock.module; (2) restore mock.module ONLY inside afterAll; (3) existing load-bearing stubs UNCHANGED; (4) existing beforeEach/afterEach resetters UNCHANGED. Cache-bust `?isolate=<TAG>` guarantees fresh real module load bypassing any prior stub in the process-global ESM registry.
+
+**result:**
+- FIX-1290: 5 pass / 0 fail
+- 1424a: 6 pass / 0 fail
+- 1345b: 10 pass / 0 fail
+- 047: 9 pass / 0 fail
+- 1352a: 7 pass / 1 fail (pre-existing A-1, unrelated)
+- 1356a: 8 pass / 0 fail
+- bun tsc --noEmit: CLEAN (exit 0, no output)
+- orch-state: FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP TODO → REVIEW
+- ci_absolute: 62 (unchanged — do not touch)
+- single-status-key invariant: OK (1 key for the flipped task)
+**status-flip:** TODO → REVIEW (router owns push + CI gate; expected CI delta: Task 235 residual 4 log-lines → 0)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/FIX-1290-briefing-no-stale.test.ts` (PRIMARY CURE — sendTelegramMarket leak)
+- `apps/mcp-server/src/__tests__/1424a-bctc-unit-scale-mismatch.test.ts` (PRIMARY CURE — noop stubs leak)
+- `apps/mcp-server/src/__tests__/1345b-bctc-financial-validation.test.ts` (PRIMARY CURE — noop+capture stubs leak)
+- `apps/mcp-server/src/__tests__/047-bctc-orchestrator.test.ts` (AUDIT — frozen-capture → cache-bust conversion)
+- `apps/mcp-server/src/__tests__/1352a-scheduler-job-wrappers-macro-marketscan.test.ts` (AUDIT — frozen-capture → cache-bust conversion, full surface)
+- `apps/mcp-server/src/__tests__/1356a-pattern-watch-job-gaps.test.ts` (AUDIT — partial restore → full cache-bust conversion)
+- `docs/data/orch/orch-state.json` (task status flip TODO → REVIEW)
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
+- `docs/data/commit-mutex.json` (mutex acquire/release)
+
+---
+
 ### STEP dev-mcp-server-S18 · dev-mcp-server · 2026-06-09T14:01:00Z (DJ-GATE-1)
 **task-id:** FIX-CI-C1485-TELEGRAM-MOCK-RESTORE
 **sprint:** CI-RED-RECONCILE

@@ -17,7 +17,15 @@ import type { FiscalPeriod } from "../../bctc-schema.js";
 // Real-module captures — imported BEFORE mock.module() so they hold the genuine
 // implementations. Used in afterAll teardown to restore the module registry for
 // worker-sibling test files (1328e, 1352a). Pattern: 1352a teardown-describe.
+// C5-CURE: cache-busted real-module ref ensures the afterAll restore always
+// installs genuine implementations regardless of CI file-ordering / contamination.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Cache-busted real module (bypasses any prior stub in the process-global registry)
+const _realMod047 = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=047"
+);
+
 import {
   notifyTelegramAlert as _realNotifyTelegramAlert,
   notifyTelegramDocument as _realNotifyTelegramDocument,
@@ -174,15 +182,18 @@ afterAll(() => {
   // Restore real telegram module so 1328e-conviction-display.test.ts and other
   // sibling files see the real exported functions (not the stub noops above).
   // C5-cure ABSOLUTE: this restore goes in afterAll (teardown scope), NOT file-top.
+  // Uses cache-busted _realMod047 to guarantee genuine implementations regardless
+  // of CI file-ordering contamination (frozen static imports may capture a stub if
+  // 047 loads after a prior unrestored contaminator).
   mock.module("../infrastructure/notifiers/telegram.js", () => ({
-    sendTelegramWork: _frozenSendTelegramWork,
-    sendTelegramMarket: _frozenSendTelegramMarket,
-    sendTelegramBug: _frozenSendTelegramBug,
-    sendTelegram: _frozenSendTelegram,
-    notifyTelegramAlert: _frozenNotifyTelegramAlert,
-    notifyTelegramDocument: _frozenNotifyTelegramDocument,
-    formatConvictionBlock: _frozenFormatConvictionBlock,
-    deleteTelegramBug: _frozenDeleteTelegramBug,
+    sendTelegramWork:       _realMod047.sendTelegramWork,
+    sendTelegramMarket:     _realMod047.sendTelegramMarket,
+    sendTelegramBug:        _realMod047.sendTelegramBug,
+    sendTelegram:           _realMod047.sendTelegram,
+    notifyTelegramAlert:    _realMod047.notifyTelegramAlert,
+    notifyTelegramDocument: _realMod047.notifyTelegramDocument,
+    formatConvictionBlock:  _realMod047.formatConvictionBlock,
+    deleteTelegramBug:      _realMod047.deleteTelegramBug,
   }));
 });
 

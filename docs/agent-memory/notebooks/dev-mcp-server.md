@@ -104,3 +104,10 @@ Cluster 5: deleted 2 deprecated reuters test files (Cannot find module errors). 
 C1 (4 files, ~42 fails): 239 country VN→vietnam; 239-market getText JSON.parse; 239c schedule regex; 1352a getMacroExternal + FRED fetch mock + A-3 .rejects.
 C3 (4 files, ~20 fails): 1295d FK + PRAGMA; 1124/1129/1173 afterEach client close.
 88/0 + 42/0. tsc CLEAN. Both REVIEW.
+
+## 2026-06-09 FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP
+
+C5-cure (cache-bust + afterAll restore) applied to ALL 6 telegram mock.module contaminator files in __tests__/.
+PRIMARY (no afterAll): FIX-1290 (sendTelegramMarket), 1424a (noop stubs), 1345b (noop+capture stubs).
+AUDIT (frozen-capture → cache-bust): 047, 1352a (full surface), 1356a (partial→full surface).
+5/0 + 6/0 + 10/0 + 9/0 + 7/1(pre-exist) + 8/0. tsc CLEAN. Task REVIEW.

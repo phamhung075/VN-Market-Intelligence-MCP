@@ -9,7 +9,7 @@
 
 Bun.env["DB_PATH"] = ":memory:";
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, afterAll, mock } from "bun:test";
 import { resetMorningBriefingGuard, runMorningBriefing } from "../scheduler/briefings/morningBriefingJob.js";
 import type { DailyBriefing } from "../application/usecases/assembleBriefing.js";
 
@@ -17,6 +17,13 @@ import type { DailyBriefing } from "../application/usecases/assembleBriefing.js"
 
 const marketMessages: string[] = [];
 const workMessages: string[] = [];
+
+// C5-CURE: Load real telegram module via cache-bust BEFORE the stub is registered.
+// This bypasses any prior mock.module entry in the process-global ESM registry.
+// The afterAll at file bottom uses this reference to restore the real module.
+const _realMod1290 = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1290"
+);
 
 mock.module("../infrastructure/notifiers/telegram.js", () => ({
   sendTelegramMarket: async (text: string) => {
@@ -170,4 +177,22 @@ describe("FIX-1290 — AC-3: success path regression — briefing still sent to 
     expect(marketMessages.length).toBeGreaterThanOrEqual(1);
     expect(marketMessages[0]).toContain("BẢN TIN SÁNG 2026-04-25");
   });
+});
+
+// C5-CURE: restore real telegram module after this file's tests complete.
+// _realMod1290 was loaded via cache-bust at file top (before the stub above),
+// so it holds genuine implementations. Without this restore, the sendTelegramMarket
+// capture-array stub registered above leaks into the process-global ESM registry
+// and poisons ALL downstream CI files (arch-S17 confirmed fourth contaminator).
+afterAll(() => {
+  mock.module("../infrastructure/notifiers/telegram.js", () => ({
+    sendTelegramWork:       _realMod1290.sendTelegramWork,
+    sendTelegramMarket:     _realMod1290.sendTelegramMarket,
+    sendTelegramBug:        _realMod1290.sendTelegramBug,
+    sendTelegram:           _realMod1290.sendTelegram,
+    notifyTelegramAlert:    _realMod1290.notifyTelegramAlert,
+    notifyTelegramDocument: _realMod1290.notifyTelegramDocument,
+    formatConvictionBlock:  _realMod1290.formatConvictionBlock,
+    deleteTelegramBug:      _realMod1290.deleteTelegramBug,
+  }));
 });

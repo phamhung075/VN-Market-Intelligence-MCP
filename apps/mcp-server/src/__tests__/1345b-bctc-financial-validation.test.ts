@@ -13,7 +13,7 @@ Bun.env["DB_PATH"] = ":memory:";
  * Related report IDs: [1116, 1117]
  */
 
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach, afterAll } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +22,13 @@ import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 
 const telegramBugMessages: string[] = [];
 
-// Telegram mock stays — it's safe (no module registry contamination)
+// C5-CURE: Load real telegram module via cache-bust BEFORE the stub is registered.
+// afterAll at file bottom uses this reference to restore the real module.
+const _realMod1345b = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1345b"
+);
+
+// Telegram mock — captures bug channel messages for assertion
 mock.module("../infrastructure/notifiers/telegram.js", () => ({
   sendTelegramWork: (msg: string) => {
     return Promise.resolve(true);
@@ -353,4 +359,22 @@ describe("Task 1349d — BCTC edge case: missing / null fields", () => {
     // Should not throw. Should return low confidence for critically incomplete data.
     expect(confidence).toBeLessThanOrEqual(0.3);
   });
+});
+
+// C5-CURE: restore real telegram module after this file's tests complete.
+// _realMod1345b was loaded via cache-bust at file top (before the stub above),
+// so it holds genuine implementations. Without this restore, the sendTelegramBug
+// capture-array stub and the noop stubs registered above leak into the
+// process-global ESM registry and poison all downstream CI files (LATENT contaminator).
+afterAll(() => {
+  mock.module("../infrastructure/notifiers/telegram.js", () => ({
+    sendTelegramWork:       _realMod1345b.sendTelegramWork,
+    sendTelegramMarket:     _realMod1345b.sendTelegramMarket,
+    sendTelegramBug:        _realMod1345b.sendTelegramBug,
+    sendTelegram:           _realMod1345b.sendTelegram,
+    notifyTelegramAlert:    _realMod1345b.notifyTelegramAlert,
+    notifyTelegramDocument: _realMod1345b.notifyTelegramDocument,
+    formatConvictionBlock:  _realMod1345b.formatConvictionBlock,
+    deleteTelegramBug:      _realMod1345b.deleteTelegramBug,
+  }));
 });

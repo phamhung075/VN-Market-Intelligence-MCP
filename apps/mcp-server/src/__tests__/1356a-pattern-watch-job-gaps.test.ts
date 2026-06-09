@@ -25,7 +25,15 @@ import { describe, it, expect, mock, afterAll } from "bun:test";
 // ─────────────────────────────────────────────────────────────────────────────
 // Real-module captures — imported BEFORE any mock.module() call so they hold
 // genuine implementations. Used in teardown to repair the module registry.
+// C5-CURE: cache-busted real-module ref used in afterAll to restore the FULL
+// telegram export surface (all 8 exports), not just sendTelegramBug.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Cache-busted real module (bypasses any prior stub in the process-global registry)
+const _realMod1356a = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1356a"
+);
+
 import { getDb as _realGetDb } from "../infrastructure/db/schema.js";
 import { sendTelegramBug as _realSendTelegramBug } from "../infrastructure/notifiers/telegram.js";
 import { logger as _realLogger } from "../infrastructure/logger.js";
@@ -342,8 +350,18 @@ afterAll(() => {
   mock.module("../infrastructure/db/schema.js", () => ({
     getDb: _frozenGetDb,
   }));
+  // C5-CURE: restore FULL telegram export surface via cache-busted real module.
+  // Prior restore only had sendTelegramBug — other exports became undefined in
+  // the registry, leaving downstream files without sendTelegramWork/Market etc.
   mock.module("../infrastructure/notifiers/telegram.js", () => ({
-    sendTelegramBug: _frozenSendTelegramBug,
+    sendTelegramWork:       _realMod1356a.sendTelegramWork,
+    sendTelegramMarket:     _realMod1356a.sendTelegramMarket,
+    sendTelegramBug:        _realMod1356a.sendTelegramBug,
+    sendTelegram:           _realMod1356a.sendTelegram,
+    notifyTelegramAlert:    _realMod1356a.notifyTelegramAlert,
+    notifyTelegramDocument: _realMod1356a.notifyTelegramDocument,
+    formatConvictionBlock:  _realMod1356a.formatConvictionBlock,
+    deleteTelegramBug:      _realMod1356a.deleteTelegramBug,
   }));
   mock.module("../infrastructure/logger.js", () => ({
     logger: _realLogger,

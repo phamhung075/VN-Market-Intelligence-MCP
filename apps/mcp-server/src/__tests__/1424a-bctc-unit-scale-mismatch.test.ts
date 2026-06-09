@@ -14,12 +14,18 @@ Bun.env["DB_PATH"] = ":memory:";
  * TC-06  Non-bank with operatingProfit=0 — no proxy applied
  */
 
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach, afterAll } from "bun:test";
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mocks
 // ─────────────────────────────────────────────────────────────────────────────
+
+// C5-CURE: Load real telegram module via cache-bust BEFORE the stub is registered.
+// afterAll at file bottom uses this reference to restore the real module.
+const _realMod1424a = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1424a"
+);
 
 mock.module("../infrastructure/notifiers/telegram.js", () => ({
   sendTelegramWork: () => Promise.resolve(true),
@@ -294,4 +300,22 @@ describe("Task 1424a — banking operatingProfit proxy", () => {
       expect(row!.confidence_financial).toBeGreaterThanOrEqual(0.0);
     }
   });
+});
+
+// C5-CURE: restore real telegram module after this file's tests complete.
+// _realMod1424a was loaded via cache-bust at file top (before the stub above),
+// so it holds genuine implementations. Without this restore, the noop stubs
+// registered above leak into the process-global ESM registry and poison all
+// downstream CI files in the same Bun worker process (LATENT contaminator).
+afterAll(() => {
+  mock.module("../infrastructure/notifiers/telegram.js", () => ({
+    sendTelegramWork:       _realMod1424a.sendTelegramWork,
+    sendTelegramMarket:     _realMod1424a.sendTelegramMarket,
+    sendTelegramBug:        _realMod1424a.sendTelegramBug,
+    sendTelegram:           _realMod1424a.sendTelegram,
+    notifyTelegramAlert:    _realMod1424a.notifyTelegramAlert,
+    notifyTelegramDocument: _realMod1424a.notifyTelegramDocument,
+    formatConvictionBlock:  _realMod1424a.formatConvictionBlock,
+    deleteTelegramBug:      _realMod1424a.deleteTelegramBug,
+  }));
 });
