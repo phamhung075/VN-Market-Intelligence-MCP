@@ -17,7 +17,7 @@ run_one_file() {
   local slug
   slug=$(echo "$f" | tr '/' '-' | tr '.' '-')
   local out_file="$RESULT_DIR/${slug}.json"
-  local unique_db="/tmp/test_stock_price_$$.db"
+  local unique_db="/tmp/test_$$_stock_price.db"
 
   # Run bun test for this single file, capture output
   local raw

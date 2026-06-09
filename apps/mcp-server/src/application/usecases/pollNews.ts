@@ -741,9 +741,14 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   const sleep = options.sleepMs ?? _realSleep;
 
   const TE_CHROMIUM_KEY = "teChromiumNews";
-  // CI-NETWORK-SKIP-GUARDS: skip cold-start retry in CI — the no-op fetcher
-  // returns [] immediately; retrying with a 2s sleep causes >5000ms timeout.
-  if (resolvedFetchers[TE_CHROMIUM_KEY] !== undefined && Bun.env.CI !== "true") {
+  // CI-NETWORK-SKIP-GUARDS: skip cold-start retry in CI ONLY when using the real
+  // Chromium fetcher (no caller-injected override) — the no-op CI fetcher returns []
+  // immediately; retrying with a 2s sleep would cause >5000ms timeout.
+  // When caller injects options.fetchers?.teChromiumNews (e.g. test stubs), the retry
+  // wrapper MUST always run so AC-1/AC-2/AC-4 contract tests are hermetic in CI.
+  const teIsInjectedByTest = options.fetchers?.teChromiumNews !== undefined;
+  if (resolvedFetchers[TE_CHROMIUM_KEY] !== undefined &&
+      (teIsInjectedByTest || Bun.env.CI !== "true")) {
     const originalFetcher = resolvedFetchers[TE_CHROMIUM_KEY]!;
     resolvedFetchers[TE_CHROMIUM_KEY] = async (): Promise<RssItem[]> => {
       const firstResult = await originalFetcher();
