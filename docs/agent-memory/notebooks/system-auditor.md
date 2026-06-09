@@ -1,8 +1,41 @@
-# System Auditor Notebook
 
-Cycle log: Latest first. Pruned to ≤200L (section count limited). Each cycle appended at TOP; oldest dropped when ≥3 sections.
 
----
+## c288 · 2026-06-09T03:37:23Z
+### Audit Run Tier-1 (03:35–03:37 UTC 2026-06-09 → Tuesday early morning)
+- Tier: 1 | Services: 6 checked | Health endpoints: 5 probed | Disk/memory: checked
+- Anomalies: 1 new (A-30 WARN memory pressure; C-CRITICAL orch-state.json clobbered)
+- Status: DEGRADED
+- A-01..A-19 container UP: mcp-server (10h), api-gateway (33h), macro-indicators (28h), pdf-extractor (19h), frontend (33h), mcp-gateway (33h) ✓
+- A-20 pdf-extractor multi-probe: 3/3 passed ✓
+- A-21 restart count: 2 ≤ 2 ✓
+- A-30 memory: MemPerc=90.24% ≥ 85% ✗ WARN — mcp-server OOM risk, capped at 2GB
+- A-32 disk: 39% < 85% ✓
+- CRITICAL FINDING: docs/data/orch/orch-state.json clobbered to 1 byte (jq-empty-guard bug) — FILE RESTORED FROM git 7643dbd8, signal row re-added
+
+### RAW-PROBE:
+\`\`\`
+=== AUDITOR PROBE 2026-06-09T03:35:23Z ===
+--- docker ps -a ---
+NAMES                                           STATUS                  
+vn-market-intelligence-mcp-mcp-server-1         Up 10 hours (healthy)   
+vn-market-intelligence-mcp-api-gateway-1        Up 33 hours (healthy)   
+vn-market-intelligence-mcp-macro-indicators-1   Up 28 hours (healthy)   
+vn-market-intelligence-mcp-pdf-extractor-1      Up 19 hours (healthy)   
+vn-market-intelligence-mcp-frontend-1           Up 33 hours (healthy)   
+mcp-gateway                                     Up 33 hours (healthy)   
+--- health endpoints ---
+[health] mcp-server:3000/health OK (HTTP 200)
+[health] api-gateway:4000/health OK (HTTP 200)
+[health] macro-indicators:5004/health OK (HTTP 200)
+[health] pdf-extractor:5001/health OK (HTTP 200)
+[health] frontend:3001/ OK (HTTP 200)
+--- restart count ---
+Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=2
+--- memory pressure ---
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=90.24% MemUsage=1.805GiB / 2GiB
+--- disk df -h / ---
+/dev/disk1s4s1   233Gi    13Gi    22Gi    39%
+\`\`\`
 
 ## c287 · 2026-06-09T03:05:01Z
 ### Audit Run Tier-1 (03:05 UTC 2026-06-09 → Tuesday early morning)
