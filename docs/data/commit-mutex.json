@@ -1,6 +1,6 @@
 {
-  "locked": true,
-  "owner_agent": "dev-mcp-server",
-  "task": "BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS",
-  "expires_at": "2026-06-09T19:20:00Z"
+  "locked": false,
+  "owner_agent": null,
+  "task": null,
+  "expires_at": null
 }
