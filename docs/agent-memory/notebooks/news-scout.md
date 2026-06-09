@@ -1,6 +1,25 @@
-- **Last updated:** 2026-06-09 00:09 UTC · **Sprint:** current · **Status:** 65 cycles complete (c65 off-hours +SHIPPED)
+- **Last updated:** 2026-06-09 04:08 UTC · **Sprint:** current · **Status:** 66 cycles complete (c66 off-hours +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c66 · 2026-06-09T04:08:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (MONDAY 04:08 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, MACRO DIVERGENCE (BEARISH INDEX + BULLISH TECH).** 20 articles fetched, 41 watchlist impacts (primary: VN-Index breach 1800 support, foreign net-sell 700B VND, banking sector cascade -2.18%, 7 primary stocks; secondary: gold liquidation -0.32-0.76%, safe-haven unwinding risk-off; tertiary: global mega-startup IPO $1T valuation, tech sector bullish spillover). **5 signals fired (#5467–#5471): 3x chain_catalyst (VN-Index breach bearish +9.0, gold liquidation bearish +8.0, tech IPO bullish +8.0) + 2x urgent_news (GAS liquidity pressure +7.0, EIB governance risk +7.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN (trading hours). `get_macro_snapshot()` valid shape (vnIndex=1793.86 +3.33 from 1790.53, oil NEUTRAL 93.43 (-0.95%), gold BULLISH 4364 (+0.52%), usdvnd BEARISH 26128 >25k, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (mixed divergence: VN-Index recovers +3.33 intra-session but remains below 1800 tactical support; gold continues bullish safe-haven bias; oil consolidating; carry neutral, yield cheap). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +2.05pp.
+
+**Signals Fired (5 total):**
+- #5467 (chain_catalyst to all): VN-Index plunges 50 points to 1790-1800, foreign net-sell 700B VND risk-off. Banking cascade -2.18% (11 stocks: BID, ACB, VPB, EIB, MBB, CTG, VCB core). Confidence 77%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. hot_money_risk=true. Pillars: M2 neutral, COC headwind, EPS neutral, POL neutral. Phase slowdown, tier equity.
+- #5468 (chain_catalyst to all): Gold liquidation -0.32-0.76% daily (4.341-4.359 USD/oz). Safe-haven unwinding, commodity-CPI spillover risk. Confidence 79%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Affected: VNH, BDI, DLC, POW, PPC, REE, VCI, SSI, HCM. Pillars: M2 bearish, COC neutral, EPS neutral, POL neutral. Phase slowdown, tier alternative. hot_money_risk=true.
+- #5469 (chain_catalyst to all): Global mega-startup IPO $1T valuation. Technology sector bullish spillover. Confidence 87%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Direct: FPT, SIS (tech). Pillars: M2 neutral, COC neutral, EPS bullish, POL neutral. Phase expansion, tier equity.
+- #5470 (urgent_news GAS to alert-commander): Banking liquidity tight, rates sticky. Oil-gas sector (GAS, PLX) pressured. Geopolitical de-escalation (Hormuz reopens), supply recovery likely. Confidence 75%. Critic 0.8. Severity high. Pillars: M2 neutral, COC headwind, EPS neutral, POL neutral. Phase slowdown, tier equity.
+- #5471 (urgent_news EIB to alert-commander): Ba thành viên HĐQT Eximbank từ nhiệm (governance risk EIB). Confidence 75%. Critic 0.8. Severity medium. Pillars: M2 neutral, COC headwind, EPS neutral, POL bearish. Phase slowdown, tier equity.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h prior entries absent). All 5 signals POSTED (no prior theme overlap in 180-min window). Direction divergence OK: #5467–#5468 bearish (index/gold), #5469 bullish (tech) — separate events, permitted.
+
+**Coverage-state:** Updated all 41 watchlist tickers to 2026-06-09T04:08:00Z (all recent post-c65 update 00:09 UTC; no sweep forced, max staleness <4h). Atomic write: tmp→rename verified.
+
+**Session Log:** log_agent_work #1297 opened/closed. 20 items, 41 impacts, 5 signals, NEUTRAL regime. Off-hours slot (MARKET OPEN).
 
 ## c65 · 2026-06-09T00:09:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
 
@@ -23,55 +42,8 @@
 
 **Off-hours cycle (SUNDAY 20:09 UTC, MARKET CLOSED) — NEUTRAL REGIME, MACRO RISK-OFF + MICRO STRUCTURAL.** 20 articles fetched, 41 watchlist impacts (primary: VN-Index drops 1790.53 -50pts, foreign sell 700B VND, banking sector -2.18% avg; secondary: gold -0.32% liquidation, VIC capital restructuring bullish rebalance). **3 signals fired (#5425–#5427): 2x chain_catalyst (VN-Index breach bearish +8.0, gold liquidation bearish +7.0) + 1x urgent_news (VIC restructuring bullish +7.0).**
 
-**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1790.53 -48.37 down, oil NEUTRAL 94.3 (+1.30%), gold BULLISH 4351.4 (-0.32%), usdvnd BEARISH 26127 >25k, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (mixed bearish-bullish: VN-Index breach + FII outflow risk-off, but gold safe-haven bid + VIC structural bullish offset). Carry NEUTRAL 1.38pp; equity yield advantage CHEAP +2.05pp overbanking deposits.
-
-**Signals Fired (3 total):**
-- #5425 (chain_catalyst to all): VN-Index breaches 1800 support, foreign investors net-sell 700B VND. Banking cascade -2.18% (7 primary affected: BID, EIB, MBB, ACB, CTG, VPB, VCB; 41 market-wide). Confidence 71%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. Pillars: M2 neutral, COC headwind, EPS neutral, POL neutral. Phase slowdown, tier equity. hot_money_risk=true.
-- #5426 (chain_catalyst to all): Gold liquidation −0.32% daily ($4351.40/oz), ~6M VND/lượng sell-off. Commodity risk-off spillover (VNM, VEA alternative-sector safe-haven). Confidence 97%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Pillars: M2 bearish, COC neutral, EPS neutral, POL neutral. Phase slowdown, tier alternative. hot_money_risk=true.
-- #5427 (urgent_news VIC to alert-commander): Vingroup capital restructuring: Chairman PNV transfer to GSM + VinEnergo strengthens VIC control consolidation. Structural bullish EPS tailwind, long-term strategic capital deploy. Confidence 84%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Pillars: M2 neutral, COC neutral, EPS tailwind, POL neutral. Phase expansion, tier equity.
-
-**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h clean window, no prior same-event signals). All 3 signals POSTED without suppression (no prior theme overlap in 180-min window).
-
-**Sweep Forced:** SHB, HUT, DIG (>48h stale: SHB 2026-06-05T12:02Z, HUT 2026-06-05T12:02Z, DIG 2026-06-05T12:02Z, all >72h; oldest first) — covered via market-wide VN-Index cascade, not dedicated news hits.
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). **Regime: NEUTRAL** (mixed bearish-bullish: VN-Index breach + FII outflow risk-off, but gold safe-haven bid + VIC structural bullish offset). Carry NEUTRAL 1.38pp; equity yield advantage CHEAP +2.05pp overbanking deposits.
 
 **Coverage-state:** Updated all 41 watchlist tickers + 3 sweep batch (SHB, HUT, DIG) to 2026-06-08T20:09:00Z. Atomic write: tmp→rename pattern verified.
 
 **Session Log:** log_agent_work #1292 opened/closed. 20 items, 41 impacts, 3 signals, NEUTRAL regime, NEUTRAL carry. Off-hours slot.
-
-## c63 · 2026-06-08T16:09:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
-
-**Off-hours cycle (SUNDAY 16:09 UTC, MARKET CLOSED) — NEUTRAL REGIME, MACRO SELL-OFF + CONFIDENCE REBALANCE.** 20 articles fetched, 44 watchlist impacts (major: VN-Index breaches 1800 support, foreign investors net sell 700B VND, banking sector -2.18% avg; VIC governance bullish structural signal). **3 signals fired (#5408–#5410): 1x chain_catalyst (VN-Index macro crash bearish +9.0) + 2x urgent_news (EIB governance risk +7.0, VIC restructuring bullish +8.0).**
-
-**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1790.53 -48.37 down, oil NEUTRAL 94.53 (+1.55%), gold BULLISH 4357.1 safe-haven (-0.19%), usdvnd BEARISH 26127 >25k, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (mixed signals; gold bullish safe-haven, oil stable, VND depreciation pressure, equity yield advantage strong 2.05pp).
-
-**Signals Fired (3 total):**
-- #5408 (chain_catalyst to all): VN-Index breaches 1800 support, foreign sell 700B VND risk-off. Banking cascade -2.18% (11 stocks). Confidence 85%. Critic 0.8. Regime NEUTRAL mult=1.0→score 9.0. Affected: BID, ACB, VCB, CTG, EIB, MBB, VPB, VIC, VHM, VRE. Pillars: M2 neutral, COC headwind, EPS neutral, POL neutral. Phase slowdown, tier equity. hot_money_risk=true.
-- #5409 (urgent_news EIB to alert-commander): Ba thành viên HĐQT Eximbank từ nhiệm — governance risk. Confidence 79%. Critic 1.0. Regime NEUTRAL mult=1.0→score 7.0. Pillars: M2 neutral, COC headwind, EPS neutral, POL headwind. Phase slowdown, tier equity.
-- #5410 (urgent_news VIC to alert-commander): Vingroup capital transfer from Chairman to GSM/VinEnergo — structural strength. Confidence 85%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. Pillars: M2 neutral, COC neutral, EPS tailwind, POL neutral. Phase slowdown, tier equity.
-
-**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h clean window). All 3 signals POSTED without suppression (no prior theme overlap in 180-min window).
-
-**Sweep Forced:** SHB, HUT, DIG (>48h stale, oldest first, covered via market-wide index cascade, not dedicated hits).
-
-**Coverage-state:** Updated 10 event-driven watchlist tickers (BID, ACB, VCB, CTG, EIB, MBB, VPB, VIC, VHM, VRE) + all 41 market-affected tickers to 2026-06-08T16:09:00Z. Atomic write: tmp→rename verified.
-
-**Session Log:** log_agent_work #1289 opened/closed. 20 items, 44 impacts, 3 signals, NEUTRAL regime. Off-hours slot.
-
-## c62 · 2026-06-08T12:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
-
-**Off-hours cycle (SUNDAY 12:07 UTC, MARKET CLOSED early end-of-day) — NEUTRAL REGIME, MIXED RISK SENTIMENT.** 20 articles fetched, 15 watchlist impacts (gold selloff risk-off, HVN/Vingroup bullish earnings/capital, EIB governance warning). **3 signals fired (#5383–#5385): 2x chain_catalyst (gold liquidation -0.76% bearish +9.0, HVN dividend record+Vingroup bullish +8.0) + 1x urgent_news (EIB board resignations governance risk).**
-
-**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1790.53 -48.37 down, oil NEUTRAL 94.15 (+1.14%), gold BULLISH 4348.4 -0.39%, usdvnd BEARISH 26127 >25k, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (mixed signals; gold bullish safe-haven, oil stable, VND depreciation pressure, equity yield advantage strong).
-
-**Signals Fired (3 total):**
-- #5383 (chain_catalyst to all): Gold liquidation −0.76% (-6M VND/lượng), FII selling 700B VND risk-off capital flight. Confidence 75%. Critic 0.8. Regime NEUTRAL mult=1.0→score 9.0. Affected: VCI, SSI, HCM, VDC (securities cascade). Pillars: M2 bearish, COC neutral, EPS neutral, POL neutral. Phase slowdown, tier alternative. hot_money_risk=true.
-- #5384 (chain_catalyst to all): HVN dividend record high 4600 VND/cp + Vingroup capital restructuring bullish signal. Confidence 86%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. Affected: HVN, VIC, VRE, VHM, ACV (aviation+realty). Pillars: M2 neutral, COC neutral, EPS bullish, POL neutral. Phase expansion, tier equity.
-- #5385 (urgent_news EIB to alert-commander): Bốn thành viên HĐQT Eximbank từ nhiệm — governance risk EIB. Severity low. Confidence ~65%. Critic 0.8. Regime NEUTRAL mult=1.0→score 6.0. Pillars: M2 neutral, COC neutral, EPS neutral, POL bearish. Phase slowdown, tier equity.
-
-**Dedup Gate:** SELF_SIGNALS_CACHE empty (4h after c61, >6h window clean). All 3 signals POSTED without suppression (no conflicting theme overlap with prior cycle).
-
-**Sweep Logic:** All 41 watchlist tickers current (last updated c61 @ 08:07 UTC, within 48h freshness window). No sweep forced. Coverage maintained.
-
-**Coverage-state:** Updated all 15 event-driven watchlist tickers (VCI, SSI, HCM, VDC, HVN, VIC, VRE, VHM, ACV, EIB) to 2026-06-08T12:07:00Z. Atomic write: tmp→rename pattern verified.
-
-**Session Log:** log_agent_work #1285 opened/closed. 20 items, 15 impacts, 3 signals, NEUTRAL regime. Off-hours slot confirmed.
