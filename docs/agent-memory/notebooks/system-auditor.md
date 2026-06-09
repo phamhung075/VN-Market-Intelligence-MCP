@@ -1,45 +1,21 @@
----
-agent: system-auditor
-last_run_tier: 1
-last_run_date: 2026-06-09T01:35:57Z
+# System Auditor Notebook
+
+Cycle log: Latest first. Pruned to ≤200L (section count limited). Each cycle appended at TOP; oldest dropped when ≥3 sections.
+
 ---
 
-## c284 · 2026-06-09T01:35:57Z
-### Audit Run Tier-1 (01:35 UTC 2026-06-09, Tuesday)
-- Tier: 1 | Services: 6 checked | Health endpoints: 5 tested
-- Anomalies: 0 new | Dedup: 0 skipped
+## c284 · 2026-06-09T02:07:52Z
+### Audit Run Tier-1 (02:07 UTC 2026-06-09 → Tuesday morning)
+- Tier: 1 | Services: 6 checked | Health endpoints: 5 probed
+- Anomalies: 0 new (all PASS) | Dedup: 0 skipped
 - Status: HEALTHY
-- A-01..A-18 runtime: All 6 host_runtime_set services UP (mcp-server, api-gateway, frontend, macro-indicators, pdf-extractor, mcp-gateway)
-- A-04..A-18 health: mcp-server ✓, api-gateway ✓, macro-indicators ✓, pdf-extractor ✓, frontend ✓
-- A-21 restart count: mcp-server RestartCount=2 (≤2 PASS)
-- A-30 memory: mcp-server MemPerc=67.83% (<85% PASS)
-- A-32 disk: /dev/disk1s4s1 36% used (healthy PASS)
+- A-01..A-19 container UP: mcp-server (9h), api-gateway (31h), macro-indicators (27h), mcp-gateway (31h), pdf-extractor (18h), frontend (31h) ✓
+- A-20 pdf-extractor multi-probe: 3/3 passed ✓
+- A-21 restart count: 2 ≤ 2 ✓
+- A-30 memory: 74.62% < 85% ✓
+- A-32 disk: 38% < 85% ✓
 
-### RAW-PROBE:
-```
-=== AUDITOR PROBE 2026-06-09T01:35:32Z ===
---- docker ps -a ---
-vn-market-intelligence-mcp-mcp-server-1         Up 8 hours (healthy)
-vn-market-intelligence-mcp-rag-service-1        Up 11 hours (healthy)
-vn-market-intelligence-mcp-news-fetch-1         Up 12 hours (healthy)
-vn-market-intelligence-mcp-pdf-extractor-1      Up 17 hours (healthy)
-vn-market-intelligence-mcp-macro-indicators-1   Up 26 hours (healthy)
-vn-market-intelligence-mcp-frontend-1           Up 31 hours (healthy)
-vn-market-intelligence-mcp-api-gateway-1        Up 31 hours (healthy)
-mcp-gateway                                     Up 31 hours (healthy)
---- health endpoints ---
-[health] mcp-server:3000/health OK (HTTP 200)
-[health] api-gateway:4000/health OK (HTTP 200)
-[health] macro-indicators:5004/health OK (HTTP 200)
-[health] pdf-extractor:5001/health OK (HTTP 200)
-[health] frontend:3001/ OK (HTTP 200)
---- restart count ---
-Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=2
---- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=67.83% MemUsage=1.357GiB / 2GiB
---- disk df -h / ---
-/dev/disk1s4s1   233Gi    13Gi    24Gi    36%
-```
+---
 
 ## c283 · 2026-06-09T00:33:17Z
 ### Audit Run Tier-3 (00:30 UTC 2026-06-09 → 2026-06-09 07:30 VN, Tuesday)
@@ -55,3 +31,10 @@ Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=67.83% MemUsage=1.357G
 - C-06 market_messages 3h: 0 (expects >0) — WARN
 - C-08 orphaned alerts: 41 (expects 0) — WARN
 - C-09 macro_indicators: 1 (expects ≥3) — CRITICAL
+
+---
+
+## c282 · 2026-06-08T20:48:09Z
+### Audit Run Tier-2 (20:45 UTC 2026-06-08)
+- Tier: 2 | Cron fire: all OK | Sources: 27 checked
+- Anomalies: 3 stale sources (B-01/B-02/B-11 WARN) | Status: DEGRADED
