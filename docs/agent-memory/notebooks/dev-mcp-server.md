@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-CI-C1124-EVIDENCE-TESTS-REWRITE — REVIEW
+
+**Task:** FIX-CI-C1124-EVIDENCE-TESTS-REWRITE | Sprint: CI-RED-RECONCILE | Size: M
+**Scope:** TEST-INFRA-ONLY — 1 file: `apps/mcp-server/src/__tests__/1124-evidence-tools-phase-bc.test.ts`
+- Replaced InMemoryTransport+Client harness with `_registeredTools` direct handler invocation (proven CI-green pattern from 1117/089/1881a).
+- Used `(server as unknown as { _registeredTools: RegisteredTools })` cast to avoid TS2339 intersection error.
+- All 12 `it()` assertions and 3 seed helpers unchanged — call mechanism only.
+
+**Result:** 12 pass / 0 fail (933ms local). tsc CLEAN. No mock.module(). Zero prod code touched.
+**CI victim prefix:** `Task 1124` (24 → 0 native fails expected vs 91 band).
+**Status:** REVIEW — router owns push + CI gate.
+
+---
+
 ## 2026-06-09 · FIX-CI-C5-UNMOCKED-HTTP-FETCHES — RE-DISPATCH REVIEW (DI-seam pattern)
 
 **Task:** FIX-CI-C5-UNMOCKED-HTTP-FETCHES | Sprint: CI-RED-RECONCILE | Size: M | Baseline: 135 (sha 3663bd12)

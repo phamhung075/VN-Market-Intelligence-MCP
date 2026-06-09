@@ -279,3 +279,38 @@ Fix (3 files):
 - `apps/mcp-server/src/__tests__/123-integration-mcp.test.ts`
 - `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts`
 - META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/agent-memory/notebooks/dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
+
+---
+
+### STEP dev-mcp-server-S14 · dev-mcp-server · 2026-06-09T11:42:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C1124-EVIDENCE-TESTS-REWRITE
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** Rewrote `1124-evidence-tools-phase-bc.test.ts` to replace InMemoryTransport+Client harness with direct `_registeredTools` handler invocation (proven CI-green pattern from sibling 1117). Full REWRITE per architect brief `2026-06-09-ci-c1124-evidence-tools-triage.md` (accepted by PO po-S35).
+
+**changes:**
+- REMOVED: `import { Client }` and `import { InMemoryTransport }` — no longer needed
+- REMOVED: module-level `_currentClient` tracker and outer `afterEach` client close
+- REMOVED: `makeTestSetup()` async function (entire InMemoryTransport+Client wiring)
+- ADDED: `RegisteredTools` type alias (via `as unknown as` cast — avoids tsc intersection error with private McpServer field)
+- ADDED: module-level `_testDb: Database` and `_testServer: McpServer`
+- ADDED: `beforeEach(async)` calling `initDatabase()` + `registerEvidenceTools(_testServer, _testDb)`
+- ADDED: `afterEach()` calling `closeDb()`
+- ADDED: `callTool(toolName, args)` helper using `(_testServer as unknown as { _registeredTools })._registeredTools[name].handler(args)`
+- UNCHANGED: all 12 `it()` assertions — only the call mechanism changed (no client arg, no destructuring)
+- UNCHANGED: all 3 seed helpers (`seedEvidenceScore`, `seedEvidenceFragment`, `seedLikelihoodRatio`)
+
+**what-considered:**
+- Using intersection type `McpServer & { _registeredTools: ... }` — REJECTED: tsc errors with TS2339 (property exists as private in McpServer, intersection reduces to `never`). Pattern from 1117 uses `(server as unknown as {...})._registeredTools` instead.
+- Adding any `mock.module()` — REJECTED: C5-cure hard constraint; evidence import chain is pure SQLite, zero need.
+- Touching production code — REJECTED: prod confirmed correct per architect brief. Test-infra-only rewrite.
+
+**why-decision:** InMemoryTransport+Client round-trip hangs on Bun 1.3.13/Ubuntu CI (12 × 2 = 24 native fails: test timeout + afterEach stall). `_registeredTools` direct invocation is synchronous call path with no message loop — CI-safe, already proven in 1117/089/1881a.
+
+**result:** 12 pass / 0 fail (local single-file run, 933ms). tsc --noEmit CLEAN (exit 0). No mock.module() in file. Zero production code touched.
+**ci-victim-prefix:** `Task 1124` (expect 24 → 0 native fails vs 91 band)
+**status-flip:** TODO → REVIEW (router owns push + CI gate)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1124-evidence-tools-phase-bc.test.ts`
+- META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`

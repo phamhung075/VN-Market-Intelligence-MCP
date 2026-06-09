@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T10:05:00Z",
+  "_updated_at": "2026-06-09T11:42:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
@@ -3652,7 +3652,7 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3663,7 +3663,9 @@
             "gate": "Task 1124 native fail count 24 -> 0 in CI (gate vs standing 91 band +/-3). NO new mock.module(). tsc --noEmit clean.",
             "created_at": "2026-06-09T11:32:46Z",
             "created_by": "po-S35",
-            "note": "[po-S35 DJ-GATE-1 2026-06-09T11:32:46Z] Architect REWRITE verdict accepted (FIX-CI-C1124-RESIDUAL-TRIAGE -> DONE). Prod get_evidence_summary/create_prediction_claim correct: all 4 evidence tables (evidence_scores/evidence_fragments/evidence_likelihood_ratios/prediction_claims) created by initSystemTables in initDatabase (schema-system.ts lines 138/156/172/187); no prod seam deleted. Root cause: InMemoryTransport.createLinkedPair()+Client.callTool() message loop stalls on CI Linux runner (Bun 1.3.13/Ubuntu) -> every it() times out at 5000ms; 12 it() x 2 (test timeout + afterEach stalled-client close) = 24 native fails. Fix = bypass transport entirely, call server._registeredTools[name].handler(args) directly (preferred 1881a pattern: beforeEach initDatabase + module-level _testDb/_testServer; afterEach closeDb). Remove Client + InMemoryTransport imports + _currentClient. Seed helpers unchanged. HARD: NO new mock.module() (C5-cure ABSOLUTE — import chain is pure SQLite, zero mock needed). Acceptance: Task 1124 24->0 native fails in CI, tsc clean. Dev COMMITS with explicit pathspec; ROUTER pushes + gates vs 91 band. Dev scope: ONE FILE ONLY."
+            "note": "[po-S35 DJ-GATE-1 2026-06-09T11:32:46Z] Architect REWRITE verdict accepted (FIX-CI-C1124-RESIDUAL-TRIAGE -> DONE). Prod get_evidence_summary/create_prediction_claim correct: all 4 evidence tables (evidence_scores/evidence_fragments/evidence_likelihood_ratios/prediction_claims) created by initSystemTables in initDatabase (schema-system.ts lines 138/156/172/187); no prod seam deleted. Root cause: InMemoryTransport.createLinkedPair()+Client.callTool() message loop stalls on CI Linux runner (Bun 1.3.13/Ubuntu) -> every it() times out at 5000ms; 12 it() x 2 (test timeout + afterEach stalled-client close) = 24 native fails. Fix = bypass transport entirely, call server._registeredTools[name].handler(args) directly (preferred 1881a pattern: beforeEach initDatabase + module-level _testDb/_testServer; afterEach closeDb). Remove Client + InMemoryTransport imports + _currentClient. Seed helpers unchanged. HARD: NO new mock.module() (C5-cure ABSOLUTE — import chain is pure SQLite, zero mock needed). Acceptance: Task 1124 24->0 native fails in CI, tsc clean. Dev COMMITS with explicit pathspec; ROUTER pushes + gates vs 91 band. Dev scope: ONE FILE ONLY.",
+            "reviewed_at": "2026-06-09T11:42:00Z",
+            "reviewed_by": "dev-mcp-server"
           }
         ],
         "_updated_by": "po-S28",

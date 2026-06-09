@@ -1,6 +1,10 @@
 {
-  "locked": false,
-  "owner_agent": null,
-  "task": null,
-  "expires_at": 0
+  "locked": true,
+  "owner_agent": "dev-mcp-server",
+  "task": "FIX-CI-C1124-EVIDENCE-TESTS-REWRITE",
+  "task_kind": "commit-mutex",
+  "task_id": "main",
+  "ttl_seconds": 120,
+  "payload": "{\"task_id\":\"FIX-CI-C1124-EVIDENCE-TESTS-REWRITE\",\"owner_agent\":\"dev-mcp-server\",\"sprint\":\"CI-RED-RECONCILE\"}",
+  "expires_at": 1749470520
 }
