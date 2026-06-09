@@ -1,6 +1,6 @@
 {
-  "locked": true,
-  "owner_agent": "dev-mcp-server",
-  "task": "FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT",
-  "expires_at": 1780998253
+  "locked": false,
+  "owner_agent": null,
+  "task": null,
+  "expires_at": 0
 }
