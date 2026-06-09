@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T04:44:01Z",
+  "_updated_at": "2026-06-09T05:13:37Z",
   "_updated_by": "po",
   "head": {
     "status": "idle",
@@ -53,7 +53,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T04:14:34Z",
+    "_updated_at": "2026-06-09T05:13:37Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -3091,7 +3091,7 @@
             "id": "FIX-CI-MCP-SDK-MOCK-CONTAM",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "labels": [
@@ -3104,13 +3104,17 @@
             "gate": "native fail+error must DROP well below 629 in CI (target ~274 if the full 355 clears); ZERO production-code change (test file only); per-file isolation pass for 1862c; bun tsc --noEmit clean.",
             "created_at": "2026-06-09T04:44:01Z",
             "created_by": "po",
-            "note": "[po S22 DJ-GATE-1 2026-06-09T04:44Z] FIRST isolated attack FIX of CI-RED-RECONCILE post-taxonomy. Cluster1 SOLO-FIRST (router preferred): one test file, ZERO prod-code risk, cleanly CI-measurable in isolation so its ~355-drop is attributable BEFORE touching CI-workflow/symlink infra (Cluster2) or deleting dead tests (Cluster5). Root cause raw-verified: 1862c L38-42 MockMcpServer has only connect(), no .tool()/.registerTool(); afterAll mock.restore() does NOT unload Bun ESM cache -> 69+ later files get TypeError: server.tool is not a function. DISPATCH-READY: route to dev-mcp-server. WIP<=2 honored (sole active FIX in this sprint lane). Cluster2 (ENOENT symlink, ~91) + Cluster5 (dead reuters tests, 2 err) QUEUED behind this (status QUEUED). DoD: read bun GITHUB_STEP_SUMMARY native fail+error absolute vs 629; native-to-native measurement only (marker method over-counts ~2x)."
+            "note": "[po S22 DJ-GATE-1 2026-06-09T04:44Z] FIRST isolated attack FIX of CI-RED-RECONCILE post-taxonomy. Cluster1 SOLO-FIRST (router preferred): one test file, ZERO prod-code risk, cleanly CI-measurable in isolation so its ~355-drop is attributable BEFORE touching CI-workflow/symlink infra (Cluster2) or deleting dead tests (Cluster5). Root cause raw-verified: 1862c L38-42 MockMcpServer has only connect(), no .tool()/.registerTool(); afterAll mock.restore() does NOT unload Bun ESM cache -> 69+ later files get TypeError: server.tool is not a function. DISPATCH-READY: route to dev-mcp-server. WIP<=2 honored (sole active FIX in this sprint lane). Cluster2 (ENOENT symlink, ~91) + Cluster5 (dead reuters tests, 2 err) QUEUED behind this (status QUEUED). DoD: read bun GITHUB_STEP_SUMMARY native fail+error absolute vs 629; native-to-native measurement only (marker method over-counts ~2x). || [po S23 DJ-GATE-1 2026-06-09T05:08Z] GATE PASSED -283 (629->346). FIX-CI-MCP-SDK-MOCK-CONTAM DONE. Cluster1 largest single net win of the sprint (vs P5-P8 schema-drift breakeven-or-worse). 346 is the new gate floor for downstream FIX-CI-*. Router owns push (already pushed 5fa2822d).",
+            "closed_at": "2026-06-09T05:08:00Z",
+            "done_at": "2026-06-09T05:08:00Z",
+            "done_by": "po",
+            "actual_result": "PASS -283 (-45%): native fail+error 629 -> 346 at sha 2acb7192 (run 27184744909, bun job 80251172255: 11416 pass / 42 skip / 344 fail / 2 errors / Ran 11802). Code 5fa2822d retained + pushed by router. Option-A diagnosis EMPIRICALLY CONFIRMED (full no-op stub set on MockMcpServer cleared the ESM-cache cascade; fail -271, errors -12; count +265 as previously-crashed tests now execute)."
           },
           {
             "id": "FIX-CI-DATA-SYMLINK-ENOENT",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "QUEUED",
+            "status": "TODO",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "depends": [
@@ -3122,17 +3126,17 @@
               "no-prod-code"
             ],
             "title": "Cluster 2 (taxonomy #2, ~91): apps/mcp-server/data is a git 120000 symlink to ../../data (git-ignored /data/, absent in CI); setup.ts mkdirSync swallows the ENOENT. Fix: add mkdir -p apps/mcp-server/data/... step in .github/workflows/ci.yml before bun test, OR replace the symlink with a real dir, OR make setup.ts catch re-throw non-EEXIST. ~7 test files (incl 125-test-e2e-briefing.test.ts).",
-            "baseline_pass": "629 native fail+error absolute (post-Cluster1 actual)",
-            "gate": "native fail+error must DROP further vs post-Cluster1 absolute; CI-workflow/infra change only (no prod logic).",
+            "baseline_pass": "346 native fail+error absolute (344 fail + 2 err / Ran 11802, sha 2acb7192, run 27184744909, bun job 80251172255 — SUPERSEDES the 629/e442cf11 absolute)",
+            "gate": "native fail+error must DROP further vs the 346 absolute (sha 2acb7192, run 27184744909, job 80251172255); CI-workflow/infra change only (no prod logic).",
             "created_at": "2026-06-09T04:44:01Z",
             "created_by": "po",
-            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM so the Cluster1 355-drop is cleanly attributable in CI before mixing CI-workflow/symlink infra. LOW-cost non-prod. Flip TODO when Cluster1 lands + measured."
+            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM so the Cluster1 355-drop is cleanly attributable in CI before mixing CI-workflow/symlink infra. LOW-cost non-prod. Flip TODO when Cluster1 lands + measured. || [po S23 2026-06-09T05:08Z] UN-QUEUED QUEUED->TODO (Cluster1 DONE). Re-baselined 629->346. Cluster 2 (~91 native, missing apps/mcp-server/data symlink + ENOENT swallow in setup.ts). Dispatch-ready, owner dev-mcp-server."
           },
           {
             "id": "FIX-CI-DEAD-REUTERS-TESTS",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "QUEUED",
+            "status": "TODO",
             "zone": "apps/mcp-server/",
             "priority": "medium",
             "depends": [
@@ -3144,11 +3148,11 @@
               "no-prod-code"
             ],
             "title": "Cluster 5 (taxonomy #5, 2 native errors): two apps/mcp-server _deprecated/ test files import the deleted ../infrastructure/fetchers/reuters.js (Cannot find module at eval time). Fix: delete the two _deprecated/ test files (deprecated by name).",
-            "baseline_pass": "629 native fail+error absolute (post-Cluster1 actual)",
-            "gate": "2 native errors -> 0; dead-test deletion only (no prod code).",
+            "baseline_pass": "346 native fail+error absolute (344 fail + 2 err / Ran 11802, sha 2acb7192, run 27184744909, bun job 80251172255 — SUPERSEDES the 629/e442cf11 absolute)",
+            "gate": "2 native errors -> 0 vs the 346 absolute (sha 2acb7192, run 27184744909, job 80251172255); dead-test deletion only (no prod code).",
             "created_at": "2026-06-09T04:44:01Z",
             "created_by": "po",
-            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM. LOW-cost: delete 2 dead _deprecated/ reuters test files. Together Cluster2+5 ~93 more after Cluster1. Cluster3/4 NOT opened yet (gated on 1+2+5 clearing first per taxonomy ranked attack order)."
+            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM. LOW-cost: delete 2 dead _deprecated/ reuters test files. Together Cluster2+5 ~93 more after Cluster1. Cluster3/4 NOT opened yet (gated on 1+2+5 clearing first per taxonomy ranked attack order). || [po S23 2026-06-09T05:08Z] UN-QUEUED QUEUED->TODO (Cluster1 DONE). Re-baselined 629->346. Cluster 5 = the ENTIRE remaining error count (2 err) — cheapest possible next win; delete 2 _deprecated test files importing deleted reuters.js. Owner dev-mcp-server."
           }
         ],
         "_updated_by": "po"
@@ -4272,6 +4276,30 @@
         "created_by": "po",
         "closed_at": "2026-06-09T04:44:01Z",
         "note": "[po S22 DJ-GATE-1 2026-06-09T04:44Z] SPIKE TODO->DONE. Gate=taxonomy delivered+router-verified: docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md (cluster->root-cause->native-count, ranked attack order, NO code change) MET. BREAKTHROUGH: 629 is NOT schema-drift-dominated (that cluster ~4 fails, EXHAUSTED P4-P8); real #1 = MCP-SDK mock contamination ~355/56% from ONE test file (1862c-transport-session-eviction.test.ts mock.module(@modelcontextprotocol/sdk/server/mcp.js) MockMcpServer lacks .tool()/.registerTool(); Bun ESM cache leaks to 69+ files; mock.restore() insufficient). Router raw-verified the central claim (file own comment L26-27 documents the cascade; L38-44 do the mock); po raw-verified L38-42 (MockMcpServer={connect} only) himself. Cluster1 opened as first isolated attack FIX (FIX-CI-MCP-SDK-MOCK-CONTAM)."
+      },
+      {
+        "id": "FIX-MCP-MEMORY-OOM-INVESTIGATE",
+        "type": "FIX",
+        "owner": "ops",
+        "zone": "infra",
+        "route_to": "ops",
+        "status": "TODO",
+        "priority": "high",
+        "size": "S",
+        "created_at": "2026-06-09T05:13:37Z",
+        "created_by": "po",
+        "sprint": "CI-RED-RECONCILE",
+        "labels": [
+          "a-30",
+          "mcp-server",
+          "memory-oom",
+          "infra",
+          "near-oom"
+        ],
+        "title": "Investigate + remediate mcp-server memory near-OOM (A-30): 69.98% (04:35) -> 97.75% (05:06), 1.955GiB/2GiB cap, +28%/30min. Likely caused the host crash that aborted the prior PO run.",
+        "context": "system-auditor A-30 escalation (commit aaef7d9a, pushed). mcp-server container memory climbed 69.98%@04:35Z -> 97.75%@05:06Z (1.955GiB of 2GiB hard cap), +28% in 30min, near-OOM. Signal rows: sau-20260609T033542Z (90.24% WARN) + sau-2026-06-09T05:06:15Z (97.75% HIGH).",
+        "deliverable": "Root-cause the memory growth (leak vs legitimate working set vs CI-suite-driven spike) AND remediate. REMEDIATION CONSTRAINT (rebuild-recreate-destroys-peers rule): NEVER docker compose down && up — that kills peer containers ~21min. Use TARGETED force-recreate of the SINGLE mcp-server service only (docker compose up -d --force-recreate --no-deps mcp-server) to reclaim memory, then verify the cap holds and capture before/after RSS. If a code-side leak is implicated, raise a follow-up dev FIX (do not patch code as ops).",
+        "gate": "mcp-server memory back below WARN threshold after targeted single-service recreate; peer containers untouched (docker ps -a confirms all peers still up, same uptime class); root-cause note recorded (leak vs working-set vs spike). NEVER down&&up."
       }
     ],
     "archive": [],
@@ -6949,12 +6977,14 @@
         "id": "sau-20260609T033542Z",
         "ts": "2026-06-09T03:35:42Z",
         "from": "system-auditor",
-        "to": "po",
+        "to": "ops",
         "type": "system-issue",
         "summary": "mcp-server memory pressure 90.24% (A-30) — approaching OOM limit",
         "severity": "WARN",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "zone_owner": "infra",
+        "triage_note": "A-30 mcp-server memory near-OOM -> NEW repair_task FIX-MCP-MEMORY-OOM-INVESTIGATE (backlog, owner ops, zone infra, priority high). Both A-30 rows (WARN 90.24% + HIGH 97.75%) fold into the one task (dedup, no new signal row). Remediation = TARGETED single-service force-recreate ONLY (NEVER down&&up — rebuild-recreate-destroys-peers)."
       },
       {
         "id": "sau-20260609T033800Z",
@@ -6971,12 +7001,14 @@
         "id": "sau-2026-06-09T05:06:15Z",
         "ts": "2026-06-09T05:06:15Z",
         "from": "system-auditor",
-        "to": "po",
+        "to": "ops",
         "type": "microservice_degraded",
         "summary": "mcp-server A-30 memory pressure 97.75% (OOM risk, capped 2GB)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "zone_owner": "infra",
+        "triage_note": "A-30 mcp-server memory near-OOM -> NEW repair_task FIX-MCP-MEMORY-OOM-INVESTIGATE (backlog, owner ops, zone infra, priority high). Both A-30 rows (WARN 90.24% + HIGH 97.75%) fold into the one task (dedup, no new signal row). Remediation = TARGETED single-service force-recreate ONLY (NEVER down&&up — rebuild-recreate-destroys-peers)."
       }
     ],
     "archive": [
