@@ -109,20 +109,6 @@ export function getDb(): Database {
   _db.exec("PRAGMA wal_autocheckpoint=4000");
   _db.exec("PRAGMA busy_timeout=5000");
   _dbStat = statSync(dbPath, { throwIfNoEntry: false });
-
-  // FU-SCHEMA-DRIFT-P8: self-heal on fresh singleton (reconciled P5)
-  // Fires only on _db=null branch. All slice inits are idempotent (IF NOT EXISTS).
-  // initFinancialReportsTables excluded (RISK-2: view compile ordering).
-  initMarketDataTables(_db);
-  initAlertsTables(_db);
-  initMacroTables(_db);
-  initPortfolioTables(_db);
-  initNewsTables(_db);
-  initBriefingsTables(_db);
-  initSystemTables(_db);
-  initBacktestingTables(_db);
-  initAgmPlanTables(_db);
-
   return _db;
 }
 
