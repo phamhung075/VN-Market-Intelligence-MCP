@@ -1,45 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-09 · FIX-SCHEMA-DRIFT-P6-IMPL — REVIEW
-
-**Task:** FIX-SCHEMA-DRIFT-P6-IMPL | Sprint: CI-RED-RECONCILE
-**Scope:** 3 Contract-A singleton-killer test files (084, 089, 1527). Zero production code changes.
-**Fix:** `afterAll(() => closeDb())` → `afterAll(async () => { closeDb(); await initDatabase(); })` in each. `initDatabase` already imported in all 3 files — no new imports needed.
-**Verification:** tsc clean (exit 0). Per-file: 084 15/0, 1527 78/0. 089 15 failures confirmed pre-existing via git stash baseline check (format mismatch, unrelated to schema fix). No regression introduced.
-**Key learning:** git stash + baseline rerun is the correct protocol to confirm whether per-file isolation failures are pre-existing vs introduced — use it whenever a changed file has unrelated test failures.
-
-## 2026-06-09 · CI-NETWORK-GUARDS-POLLNEWS-REFILE — REVIEW
-
-**Task:** CI-NETWORK-GUARDS-POLLNEWS-REFILE | Sprint: CI-RED-RECONCILE | Commit: 64981565
-**Scope:** `apps/mcp-server/src/application/usecases/pollNews.ts` ONLY — 4 CI=true guards re-filed from reverted 9454baad BATCH-2.
-**Guards applied:**
-1. teChromiumNews default fetcher: `async () => []` when `Bun.env.CI === "true"` (avoid 2s Chromium cold-start timeout)
-2. Cold-start 2s retry: `&& Bun.env.CI !== "true"` guard (same)
-3. newsapi fallback default: `async () => []` when `Bun.env.CI === "true"` (avoid ETIMEDOUT)
-4. Yahoo Finance + SBV macro block: `if (Bun.env.CI !== "true") try {` (avoid ETIMEDOUT)
-**Dry-run (CI=true, 3 files):** 1345a 6/0, 102 4p/6f (pre-existing data_env schema drift, owned by CI-TEST-SCHEMA-FIXTURE-SPIKE), 1288 2p/2f (same). No ETIMEDOUT. Total 2.53s.
-**tsc:** CLEAN. Zero test file changes. DJ-GATE-1: sprint-DEEPFETCH-RAG-REDESIGN-dev-mcp-server.md S5.
-
-Zone health: bun tsc --noEmit clean, network guards active, tools 157 intact, scheduler 76 cron.schedule | HEALTHY
-
-## 2026-06-09 · FU-SCHEMA-DRIFT-P4 — REVIEW
-
-**Task:** FU-SCHEMA-DRIFT-P4 — pure-singleton test-DB isolation audit | Sprint: CI-RED-RECONCILE
-**Scope:** Audit all pure-singleton test files for schema-drift failures in isolation. Baseline: CI run 27175100853 = 634 fail+error.
-
-**Method:** Classified 1036 test files → 4 modes. Ran 600+ files with `bun test --bail <single-file>`. Checked rc and stderr for "no such table" / "byteOffset" errors.
-
-**Finding:** Only ONE file fails in isolation — `1972-vndirect-ohlcv-null-coercion.test.ts`. Root cause: inline `daily_ohlcv` DDL missing `data_env TEXT` + foreign flow columns. Production `runOhlcvBackfill` prepares `INSERT ... data_env ...` → `byteOffset: -1` on prepare().
-
-**Fix (Contract B):** Added `foreign_buy_vol REAL`, `foreign_sell_vol REAL`, `foreign_net_vol REAL`, `put_through_vol REAL`, `data_env TEXT` to inline `CREATE TABLE daily_ohlcv` in 1972 test. Isolation: 5/5 pass.
-
-**Key insight:** 44 pure-singleton files reference target table names in comments / variable-names / test-data strings — NOT in SQL queries. Files that DO call production functions (e.g. `readLatestForeignFlowTimestamp`) have try/catch returning null gracefully. No initDatabase() sweep needed.
-
-**tsc:** CLEAN. Files changed: 1 (test file) + orch-state.json + this notebook.
-
-Zone health: bun tsc --noEmit clean | HEALTHY
-
----
 ## 2026-06-09 · sau-c283-c09 — DONE (auditor probe bug, no code change)
 
 **Signal:** sau-c283-c09 CRITICAL db_integrity_breach — macro_indicators country coverage = 1 (expected ≥8)
@@ -80,3 +40,20 @@ Zone health: doc-only fix, bun tsc --noEmit clean (pre-verified) | HEALTHY
 **Status:** REVIEW — router owns push + CI verification gate (target: fail+errors < 629)
 
 Zone health: bun tsc --noEmit clean, schema regression 24/24 pass, 1 file changed | HEALTHY
+
+## 2026-06-09 · FIX-NEWS-VPS-HEALTH-SQL — DONE
+
+**Task:** FIX-NEWS-VPS-HEALTH-SQL | Root: ops-vps-fetch recon a59d50f7 / commit 1c0e9d7a
+**Scope:** 1 prod line changed + 1 regression test added.
+**Root cause:** `vn-news-fetch` `latestTimestampSql` outer `MAX(latest_at)` was lexicographic.
+  `vps_push_log.pushed_at` = space-format ("YYYY-MM-DD HH:MM:SS"); `rag_analyses.created_at` = ISO-Z.
+  ASCII 'T'(84) > ' '(32) → rag_analyses always won regardless of true wall-clock order.
+  During heartbeat-only windows (no new articles) health check aged off stale rag row → FALSE-UNHEALTHY.
+**Fix:** outer aggregate changed from `SELECT MAX(latest_at)` to
+  `SELECT datetime(MAX(unixepoch(latest_at)), 'unixepoch')` — normalises both formats to epoch before MAX.
+**Tests:** 234-vps-health-sla.test.ts 13/0 (+1 regression); 1892a-health-vps-news.test.ts 3/0 (unchanged).
+  Regression case: vps_push_log space-format LATER + rag_analyses ISO-Z EARLIER → `healthy`.
+**tsc:** CLEAN (exit 0, no output).
+**CI-impact:** no previously-passing test weakened; 1 new test added that would fail on un-fixed code.
+
+Zone health: bun tsc clean, 234 13/0, 1892a 3/0, 1 SQL line fixed | HEALTHY

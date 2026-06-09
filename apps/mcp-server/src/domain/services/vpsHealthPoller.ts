@@ -124,8 +124,20 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
     //
     // Result: healthy = either a recent push OR a recent rag insert,
     //         unhealthy = both sources stale beyond 30-min SLA.
+    // FIX-NEWS-VPS-HEALTH-SQL: outer MAX must use unixepoch() to normalise both
+    // timestamp formats before comparing.
+    //
+    // Root cause: vps_push_log.pushed_at uses "YYYY-MM-DD HH:MM:SS" (space, no TZ)
+    // while rag_analyses.created_at uses ISO 8601 "YYYY-MM-DDTHH:MM:SS.mmmZ" ('T'+'Z').
+    // SQLite MAX() is lexicographic: ASCII 'T'(84) > ' '(32), so rag_analyses always
+    // wins regardless of true wall-clock order.  During heartbeat-only windows (no new
+    // articles → no rag_analyses rows) the health check would age off a stale rag
+    // timestamp and ignore fresher vps_push_log heartbeats → FALSE-UNHEALTHY.
+    //
+    // Fix: unixepoch() normalises both formats to epoch before MAX(); datetime()
+    // converts the winner back to a parseable string.  Inner UNION ALL unchanged.
     latestTimestampSql: `
-      SELECT MAX(latest_at) AS latest_at FROM (
+      SELECT datetime(MAX(unixepoch(latest_at)), 'unixepoch') AS latest_at FROM (
         SELECT MAX(pushed_at) AS latest_at
           FROM vps_push_log
          WHERE service = 'news' AND status = 'ok'

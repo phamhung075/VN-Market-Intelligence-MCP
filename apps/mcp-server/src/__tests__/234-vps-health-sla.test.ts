@@ -22,6 +22,8 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test"
 import {
   pollVpsServiceHealth,
   DEFAULT_VPS_SERVICES,
+  DEFAULT_FRESHNESS_CONFIGS,
+  checkServiceFreshness,
   type HealthPollResult,
   type FetchFn,
 } from "../domain/services/vpsHealthPoller.js";
@@ -494,5 +496,73 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
     expect(result.breaches.some((b) => b.signalType === "news")).toBe(false);
     expect(result.breaches.some((b) => b.signalType === "sbv_fx")).toBe(false);
     expect(result.breaches.some((b) => b.signalType === "foreign_flow")).toBe(false);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // FIX-NEWS-VPS-HEALTH-SQL regression: space-format vs ISO-Z ordering
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  it("FIX-NEWS-VPS-HEALTH-SQL: vps_push_log space-format LATER than rag_analyses ISO-Z → healthy", async () => {
+    // Regression guard for FIX-NEWS-VPS-HEALTH-SQL.
+    //
+    // Bug: outer MAX(latest_at) was lexicographic — ASCII 'T'(84) > ' '(32) so
+    // rag_analyses ISO-Z timestamps always beat vps_push_log space-format timestamps
+    // regardless of true wall-clock order.  During heartbeat-only windows (no new
+    // articles = no rag_analyses rows) the health check aged off a stale rag row
+    // and returned FALSE-UNHEALTHY even though vps_push_log showed a recent push.
+    //
+    // Fix: outer MAX(unixepoch(latest_at)) normalises before comparing.
+    //
+    // Seed:
+    //   vps_push_log.pushed_at  = "2026-06-09 03:05:00"  (space, LATER,  ~5 min ago)
+    //   rag_analyses.created_at = "2026-06-09T01:28:43.297Z" (ISO-Z, EARLIER, ~1h 37min ago)
+    //
+    // nowIso = "2026-06-09T03:10:00.000Z" (5 min after vps_push_log row)
+    // maxAgeMs for vn-news-fetch = 30 * 60_000 = 30 min → age ~5 min → HEALTHY
+    //
+    // Before fix (lexicographic): MAX picked "2026-06-09T01:28:43.297Z" → age ~1h 37min → UNHEALTHY
+    // After fix (unixepoch):      MAX picks  "2026-06-09 03:05:00"      → age ~5 min  → HEALTHY
+
+    // Use fresh in-memory DB to isolate this test
+    Bun.env.DB_PATH = ":memory:";
+    closeDb();
+    await initDatabase();
+    const db = getDb();
+
+    // Seed vps_push_log with LATER space-format timestamp (5 min before nowIso)
+    db.prepare(
+      "INSERT INTO vps_push_log (service, items_count, status, pushed_at) VALUES (?, ?, ?, ?)"
+    ).run("news", 10, "ok", "2026-06-09 03:05:00");
+
+    // Seed rag_analyses with EARLIER ISO-Z timestamp (1h 41min before nowIso)
+    db.prepare(
+      `INSERT INTO rag_analyses
+         (id, created_at, level, source_url, source_title, source_type,
+          published_at, sentiment, impact_score, impact_direction, confidence,
+          time_horizon, summary, reasoning, affected_countries, affected_domains,
+          affected_actions, parent_ids, tags, embedding_text)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      "test-regression-id",
+      "2026-06-09T01:28:43.297Z",  // EARLIER — would win under old lexicographic MAX
+      "market", null, null, null, null, null, null, null, null,
+      null, null, null, null, null, null, null, null, null
+    );
+
+    const newsFetchConfig = DEFAULT_FRESHNESS_CONFIGS.find(
+      (c) => c.serviceName === "vn-news-fetch"
+    )!;
+
+    // nowIso = 5 min after the vps_push_log row → age ~5min < 30min SLA → healthy
+    const nowIso = "2026-06-09T03:10:00.000Z";
+    const result = checkServiceFreshness(db, newsFetchConfig, nowIso);
+
+    // After fix: unixepoch normalisation picks vps_push_log 03:05:00 → age ~5 min → HEALTHY
+    expect(result.healthStatus).toBe("healthy");
+
+    // Confirm the winner is the vps_push_log value (datetime output, no T or Z)
+    expect(result.lastSuccessfulRun).toBeDefined();
+    // unixepoch of "2026-06-09 03:05:00" = 1749438300 → datetime(...,'unixepoch') = "2026-06-09 03:05:00"
+    expect(result.lastSuccessfulRun).toBe("2026-06-09 03:05:00");
   });
 });
