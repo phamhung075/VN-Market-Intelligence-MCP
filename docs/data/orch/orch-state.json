@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T18:45:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-09T19:45:00Z",
+    "_updated_by": "po-S56",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4131,7 +4131,7 @@
             "id": "BATCH2-CI-C-ML-MOCK-STUB-LEAK-GUARD",
             "type": "BUG-FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -4155,13 +4155,16 @@
             "spec_brief": "docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md",
             "created_at": "2026-06-09T17:27:54Z",
             "created_by": "po-S54",
-            "dj_gate_1": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md#dev-mcp-server-S25"
+            "dj_gate_1": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md#dev-mcp-server-S25",
+            "done_by": "po-S56",
+            "done_at": "2026-06-09T19:45:00Z",
+            "actual_result": "DONE (router gate-PASS, signal ci-batch2-gate-result-92e2c1ea-20260609T1830Z.json): 12 mock.module() contaminator files got afterAll-restore guards + permanent meta-test mock-module-afterall-guard.test.ts. Clean additive mover 42->40, pass +3, +1 green meta-guard test, errors 0, NO regression. Structural fix + meta-guard = permanent value."
           },
           {
             "id": "BATCH3-CI-C-MH-MARKET-HOURS-GATE-NOW-SEAM",
             "type": "BUG-FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
@@ -4182,13 +4185,16 @@
             },
             "spec_brief": "docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md",
             "created_at": "2026-06-09T17:27:54Z",
-            "created_by": "po-S54"
+            "created_by": "po-S54",
+            "done_by": "po-S56",
+            "done_at": "2026-06-09T19:45:00Z",
+            "actual_result": "DONE (router gate-PASS, signal ci-batch3-gate-result-5c86974d-20260609T1842Z.json): all 6 target 1407b market-hours-gate fails CURED (0 fail markers). Run absolute rose 40->55 = CONTAMINATION VARIANCE (1407b frozen-clock reshuffled file-exec order; isolation-probe 1146-get-insider 17p/0f alone), NOT a BATCH3 regression."
           },
           {
             "id": "BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS",
             "type": "BUG-FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -4214,13 +4220,16 @@
             "spec_brief": "docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md",
             "created_at": "2026-06-09T17:27:54Z",
             "created_by": "po-S54",
-            "note": "[dev-mcp-server S23 DJ-GATE-1 2026-06-09T18:45Z] 8 CONFIG-DRIFT fails reconciled: 7 REWRITE-STALE + 1 FIX-PROD (mcp.config.json dead scheduler section removed). All 7 test files pass 0 fail isolation-probe. tsc clean. DJ: sprint-CI-RED-RECONCILE-dev-mcp-server.md STEP dev-mcp-server-S23."
+            "note": "[dev-mcp-server S23 DJ-GATE-1 2026-06-09T18:45Z] 8 CONFIG-DRIFT fails reconciled: 7 REWRITE-STALE + 1 FIX-PROD (mcp.config.json dead scheduler section removed). All 7 test files pass 0 fail isolation-probe. tsc clean. DJ: sprint-CI-RED-RECONCILE-dev-mcp-server.md STEP dev-mcp-server-S23.",
+            "done_by": "po-S56",
+            "done_at": "2026-06-09T19:45:00Z",
+            "actual_result": "DONE (router gate-PASS, signal ci-batch4-gate-result-c34ddfc4-20260609T1855Z.json): all 8 config-drift victims (1343e/1349a/1837a/230-AC-4c/1336-named-volume/schedulerFileCount/cowork-schedule-policy_id/chef-intraday) at ZERO fail markers (BATCH4_VICTIMS_ALL_CURED). native_fail 55->26, pass +29 additive, errors 0, sum invariant 11734+42+26=11802."
           },
           {
             "id": "BATCH5-CI-C-AL-ASSERTION-LOGIC-TRIAGE",
             "type": "SPIKE",
             "owner": "architect-first-then-dev-mcp-server",
-            "status": "TODO",
+            "status": "ACTIVE",
             "size": "L",
             "zone": "apps/mcp-server/",
             "priority": "high",
@@ -4253,34 +4262,85 @@
             },
             "spec_brief": "docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md",
             "created_at": "2026-06-09T17:27:54Z",
-            "created_by": "po-S54"
+            "created_by": "po-S54",
+            "activated_by": "po-S56",
+            "activated_at": "2026-06-09T19:45:00Z",
+            "remaining_surface": "20 test files / 26 genuine fails — the ONLY remaining work between current deterministic state and /goal green",
+            "arch_triage": "architect arch-S25 triage IN FLIGHT (buckets: FIX-PROD | REWRITE-STALE | REMOVE-OBSOLETE); Wave-3 dev to follow",
+            "reclassified_in": "Task 1328e conviction-routing reverted BATCH2->BATCH5 (confirmed still red post-BATCH2/3/4; assertion-logic item, not a mock-stub-leak contaminator) per signal ci-batch4-gate-result-c34ddfc4 1328e_confirms_batch5"
+          },
+          {
+            "id": "IMPL-CI-PER-FILE-ISOLATION",
+            "type": "IMPL",
+            "owner": "dev-mcp-server + ops",
+            "status": "DONE",
+            "validation": "VALIDATED",
+            "size": "L",
+            "zone": "cross-service/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [],
+            "title": "Per-file process isolation CI gate (Option A) — the user-demanded 'rethink architecture for testing ci di'. Each test file runs in its own bun OS process; zero shared ESM/mock/DB state; fail count = genuine fails, order-independent.",
+            "components": [
+              "5938e3a3 (architect Phase-2 isolation design)",
+              "3174de0c (ops: .github/workflows/ci.yml wired to runner)",
+              "507be33f (dev: scripts/ci-per-file-isolation.sh + setup.ts STOCK_PRICE_DB_PATH env passthrough + dev-standards pointer)",
+              "d14d2f92 (dev: aggregator anchored-extractor fix)",
+              "a76a1c3e (dev: failed-file roster to stdout)"
+            ],
+            "determinism_proof": "Two DIFFERENT SHAs produced IDENTICAL native output: d14d2f92 (run 27230529533) = 11679 pass / 42 skip / 26 fail; 3ad97a18 (run 27230921229) = 11679 pass / 42 skip / 26 fail. errors=0. The count that previously jittered 26<->55 by file-exec order is now STABLE BY CONSTRUCTION.",
+            "created_by": "po-S56",
+            "created_at": "2026-06-09T19:45:00Z",
+            "done_by": "po-S56",
+            "done_at": "2026-06-09T19:45:00Z",
+            "actual_result": "DELIVERED + PROVEN DETERMINISTIC. All 5 components on origin/main. HEAD=3ad97a18. The deterministic gate is now the stable floor; the remaining 26 are genuine BATCH5 fails."
+          },
+          {
+            "id": "RETIRE-CI-GATE-APPARATUS",
+            "type": "CLEAN",
+            "owner": "ops",
+            "status": "BLOCKED",
+            "blockedBy": "genuine-fail-count must reach 0 (i.e. BATCH5-CI-C-AL-ASSERTION-LOGIC-TRIAGE complete)",
+            "size": "S",
+            "zone": "cross-service/",
+            "priority": "medium",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [
+              "BATCH5-CI-C-AL-ASSERTION-LOGIC-TRIAGE"
+            ],
+            "title": "Retire the old contamination-era CI gate bookkeeping (non-deterministic-absolute tracking, contamination-variance notes, isolation-probe scaffolding). Do NOT retire until the per-file deterministic gate reads 0 genuine fails.",
+            "created_by": "po-S56",
+            "created_at": "2026-06-09T19:45:00Z",
+            "note": "Held BLOCKED on purpose — the contamination-era apparatus stays in place as the audit trail until BATCH5 lands the deterministic gate at 0."
           }
         ],
         "_updated_by": "po-S52",
         "ci_absolute": {
-          "native_fail": 42,
+          "native_fail": 26,
           "native_errors": 0,
-          "fail_plus_error": 42,
-          "tests": 11801,
-          "pass": 11717,
+          "fail_plus_error": 26,
+          "tests": 11747,
+          "pass": 11679,
           "skip": 42,
-          "sha": "e1ee78b9",
-          "run_id": "27225351774",
-          "bun_job_id": "80390917327",
-          "supersedes": "55 (63d53931)",
-          "updated_at": "2026-06-09T18:04:35Z",
-          "updated_by": "po-S55"
+          "sha": "3ad97a18",
+          "run_id": "27230921229",
+          "bun_job_id": "80410540618",
+          "supersedes": "42 (e1ee78b9)",
+          "updated_at": "2026-06-09T19:45:00Z",
+          "updated_by": "po-S56",
+          "deterministic": true,
+          "two_sha_proof": "DETERMINISTIC by construction (per-file process isolation) — confirmed identical across two SHAs: d14d2f92 (run 27230529533) = 11679 pass / 42 skip / 26 fail AND 3ad97a18 (run 27230921229) = 11679 pass / 42 skip / 26 fail. This is the stable gate floor; remaining 26 = genuine BATCH5 C-AL residual across 20 files. Replaces the old non-deterministic 26..55-by-ordering note."
         },
         "long_tail_triage_policy": {
           "goal": "ci/di all passe on GitHub, test update (remove if obsolete) — /goal refined 2026-06-09T07:5xZ",
           "classify_each_residual_bucket": "REWRITE (prod still exists, test stale -> rewrite test to match) vs REMOVE (prod gone/superseded, test obsolete -> DELETE the test, do NOT patch)",
           "remove_examples": "removed test seams, deleted reuters.js, pre-98df0f43 macro section-header format, stale cron schedules",
           "applies_to": "C5+ and all remaining ~135 long-tail rounds; re-profile residual by ROOT-CAUSE pattern (unmocked-HTTP / SSOT-drift / assertion-logic) NOT by file, with the REMOVE-if-obsolete lens",
-          "absolute": "42 (sha e1ee78b9, run 27225351774, job 80390917327)",
+          "absolute": "26 (sha 3ad97a18, run 27230921229, job 80410540618) — DETERMINISTIC per-file process isolation, two-SHA confirmed",
           "updated_by": "po-S55",
           "updated_at": "2026-06-09T18:04:35Z",
           "under_scope_lesson": "Architect cluster counts are CATEGORY-WIDE SUPERSETS (e.g. C1 '42' netted -12). Dev fixes ONLY the explicitly NAMED files; residual same-pattern files OUT of named scope -> long-tail re-profile, NOT a charge-back to closed task ids. The ONE exception so far: C4 single-file-family count landed EXACTLY (-25) because it was not a category superset.",
-          "band": "~42 +/-3 (floor ~39)"
+          "band": "26 (deterministic floor; = genuine BATCH5 C-AL residual, no jitter)"
         },
         "dispatch_order": {
           "policy": "biggest-deterministic-win-first; DV removals unblock the count, transport-hang + mock-leak are structural/zero-prod-risk, market-hours/config/assertion later",
@@ -4296,7 +4356,9 @@
           "spec_brief": "docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md",
           "set_by": "po-S54",
           "set_at": "2026-06-09T17:27:54Z"
-        }
+        },
+        "updated_at": "2026-06-09T19:45:00Z",
+        "updated_by": "po-S56"
       }
     ],
     "backlog": [
@@ -7361,24 +7423,6 @@
         "created_at": "2026-06-09T00:00:00Z",
         "note": "[dev-mcp-server DJ-GATE-1 2026-06-09] IMPL: rag_analyses/agent_feedback/signal_quality_audit created_at DEFAULT added; getDb() P5 self-heal re-applied (9 slices excl. initFinancialReportsTables); setup.ts await initDatabase() preload added. tsc clean. Router owns CI gate. | po-S21: CI-P8-GATE-6295cb32 FAILED (native fail+error 631 vs 629, +2 WORSE; created_at x3 regression PERSISTS — DDL-DEFAULT hypothesis disproven). Router reverted apps/ to 629 baseline (880ffca6, byte-identical 2a6044b1). REVIEW->REWORK: fix off main, hypothesis empirically disproven (4th consecutive P5/P6/P7/P8). Schema-drift cluster PARKED best-effort-exhausted per PO path-B decision; 629 documented as schema-drift FLOOR. No 7th touch opened. Superseded by FU-CI-PROFILE-629 (full-corpus failure taxonomy).",
         "updated_at": "2026-06-09T04:14:34Z"
-      },
-      {
-        "id": "FIX-CI-C1-MACRO-INJECT-SEAM-TESTS",
-        "title": "Rewrite 5 macro test files: migrate _testCommodityClient/_testSbvClient/_testDinhGiaInputs injection seams to globalThis.fetch mock + update assertions from section-header strings to JSON field checks against { source_tier, text, fetchedAt } envelope (C1 MACRO_INJECT_SEAM, 71 native fails)",
-        "type": "BUG",
-        "owner": "dev-mcp-server",
-        "status": "DONE",
-        "size": "M",
-        "zone": "apps/mcp-server/src/__tests__/",
-        "priority": "high",
-        "sprint": "CI-RED-RECONCILE",
-        "created_at": "2026-06-09T06:36:00Z",
-        "updated_at": "2026-06-09T06:56:35Z",
-        "note": "[dev-mcp-server DJ-GATE-1 2026-06-09T06:36:00Z] IMPL: 5 test files rewritten (089-tool-macro, 1423d-thien-thoi-snapshot, 1423f-deposit-rate-display, 1570c-dinh-gia-snapshot, 1903a-dispatch-regression). globalThis.fetch mock replacing dead _testCommodityClient/_testSbvClient/_testDinhGiaInputs seams. Assertions updated from section-header strings to JSON field checks on { source_tier, text: JSON, fetchedAt } envelope. 58 pass / 0 fail across 5 files. tsc clean. ZERO prod code touched. Router owns CI gate vs 241 absolute. status=REVIEW.",
-        "closed_at": "2026-06-09T06:56:35Z",
-        "done_at": "2026-06-09T06:56:35Z",
-        "done_by": "po",
-        "actual_result": "PASS-AS-SCOPED (CI-C3-C1-GATE-1d83a5ff, bundled with C3 in push f95c79be->1d83a5ff = one CI run 27188621595, bun job 80263220946): native fail 241 -> 193 (-48, -20%), errors stay 0. C1's 5 named files (089-tool-macro, 1423d-thien-thoi-snapshot, 1423f-deposit-rate-display, 1570c-dinh-gia-snapshot, 1903a-dispatch-regression) are now CLEAN in CI. Test-file-only, zero prod code (router raw-verified C1 commit 1d83a5ff = only 5 __tests__ macro files + notebook + orch; ZERO src/interface|infrastructure|domain). DONE-AS-SCOPED: residual macro-FETCHER tests (Task 028/025/1423e/239a/1423a/1487, ~37) are NEW files beyond the 5-file plan -> tracked in FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS, NOT a re-open of this task. 193 SUPERSEDES the 241 absolute."
       }
     ]
   },
