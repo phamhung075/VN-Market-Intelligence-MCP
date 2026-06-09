@@ -301,3 +301,54 @@ is needed — the handler is already DI-ready. The `_registeredTools` template r
 **why-change:** No prior SPIKE had investigated C1 at this depth. 629-era taxonomy noted seam removal but deferred investigation. Recurring-bug policy triggered correct escalation — the seam migration pattern was never enforced.
 **artefacts:**
 - `docs/architecture-briefs/2026-06-09-spike-ci-c1-macro-inject-seam.md`
+
+---
+
+### STEP arch-S13 (DJ-GATE-1) · architect · 2026-06-09T00:00Z
+
+**task-id:** FIX-CI-C1129-RESIDUAL-TRIAGE
+**sprint:** CI-RED-RECONCILE
+**mode:** prod-vs-test triage (verdict only; no fix written; no board flip)
+
+**what-done:** Full prod-vs-test triage of the 10-fail C1129 cluster (get_calibration_report MCP
+tool, `1129-calibration-tools.test.ts`). Read prod handler (`calibrationTools.ts:276`), git log
+for the file, store layer (`calibrationSnapshotStore.ts`), schema DDL (`schema-system.ts:213`),
+victim test file, and proven sibling template (`1134-get-foreign-flow-tool.test.ts`).
+Produced verdict brief at `docs/architecture-briefs/2026-06-09-ci-c1129-calibration-triage.md`.
+
+**verdict:** REWRITE (1124-transport-hang signature)
+
+**what-considered:**
+- **(a) 1124-transport-hang (REWRITE — CHOSEN):** 5 it() × ~5003ms = uniform 5000ms timeout
+  fingerprint. Test uses `InMemoryTransport.createLinkedPair() + Client.callTool()` which stalls
+  on Bun 1.3.13/Ubuntu CI. afterEach `client?.close()` also stalls → ×2 native failures = 10.
+  Cure = `_registeredTools` direct-handler invocation (proven CI-green: 1117, 1124, 1134).
+- **(b) 1423e-deleted-seam (REMOVE-obsolete):** REJECTED. `registerCalibrationTools` at line 276
+  has `db?: Database` injection arg — LIVE and NEVER removed. No HTTP proxy migration in git log
+  for this file. `98df0f43` macro-rewire did NOT touch calibrationTools.ts. No deleted seam exists.
+- **(c) genuine prod bug:** REJECTED. Handler logic is correct for all 5 AC paths. Pure SQLite,
+  no HTTP dependency. Uniform 5003ms timeout disproves instant-fail / prod-error signature.
+
+**why-decision:** The db-injection DI seam is live (`calibrationTools.ts:276–280`). Prod is pure
+SQLite (no fetch, no HTTP proxy, no port reference). The 5003ms uniform timeout is the
+canonical transport-hang fingerprint. The `_registeredTools` template from 1134 (commit 8916675a)
+applies directly with zero new `mock.module()`. No Zod-bypass adaptation is needed for any of the
+5 ACs (`date: z.string().optional()` with no `.default()` — undefined maps identically on both
+direct and protocol paths).
+
+**why-change:** None from the 1124/1134 triage precedent; this cluster is a straight repeat of
+the identical root cause with the same cure path already proven CI-green.
+
+**zod-bypass-risk:** NONE. All 5 ACs use `date` as `z.string().optional()` (no coerce, no
+default). AC-5/AC-extra/AC-6 omit `date` (receives `undefined` on direct path = same as protocol
+path). AC-7/AC-7b pass explicit string values (no transformation). Zero AC adaptation needed.
+
+**preconditions-verified:**
+- `registerCalibrationTools(server, db?: Database)` at line 276 — db-injection arg PRESENT
+- Prod is pure SQLite — NO HTTP proxy — CONFIRMED (no fetch/port/proxy in file)
+- `insertCalibrationSnapshot(db, input)` exported from calibrationSnapshotStore.ts:156 — CONFIRMED
+- No `mock.module()` in victim test — CONFIRMED
+- `calibration_snapshots` DDL in schema-system.ts:213 (IF NOT EXISTS, 12 cols) — CONFIRMED
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-c1129-calibration-triage.md`
