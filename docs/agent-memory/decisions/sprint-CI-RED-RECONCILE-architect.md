@@ -623,3 +623,83 @@ No downstream collateral expected (AC-1, AC-2, AC-5 untouched and green).
 **artefacts:**
 - `docs/architecture-briefs/2026-06-09-ci-c1839b-notebook-protocol-triage.md`
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
+
+---
+
+### STEP arch-S20 (DJ-GATE-1) · architect · 2026-06-09T17:00Z (TUESDAY)
+
+**task-id:** TRIAGE-CI-C1282a-DATA-FRESHNESS-PROD-VS-TEST
+**sprint:** CI-RED-RECONCILE
+**mode:** prod-vs-test triage (verdict only; no fix written; no board flip)
+
+**what-done:** Full prod-vs-test triage of the 2-unique-fail Task 1282a cluster
+(`system-data-freshness.test.ts`, TC-1 + TC-2). Ran single-file local repro confirming
+exact same failures (6 pass / 2 fail, ~1ms genuine assertion). Read full test file and
+prod implementation (`dataFreshnessTools.ts` + `freshnessSlaChecker.ts`). Traced
+`getSlaThreshold` dynamic logic for `MARKET_HOURS_ONLY_SOURCES`. Computed actual threshold
+at run-time (2026-06-09T16:42Z): 493 min vs test-data age of 12 min. Produced brief at
+`docs/architecture-briefs/2026-06-09-ci-c1282a-data-freshness-triage.md`.
+
+**verdict:** REWRITE-STALE (both TC-1 and TC-2)
+
+**unique failing tests (2):**
+1. TC-1: `detects HIGH breach on stale price data (age > threshold)` — 28ms genuine assertion.
+   `expect(result.hasBreach).toBe(true)` fails; received `false`.
+   Root cause: test assumes static 10-min threshold; prod uses dynamic off-hours threshold
+   (minutesSinceLastWindowEnd + 30 ≈ 493 min at run time). 12 min < 493 min → no breach.
+2. TC-2: `detects CRITICAL breach when age > 1.5× threshold` — 3ms genuine assertion.
+   `expect(result.hasBreach).toBe(true)` fails; received `false`.
+   Root cause: identical to TC-1 (same DB setup, same dynamic threshold).
+   The CRITICAL assertion is inside a conditional `if (criticalBreach)` block — only
+   the `hasBreach` assertion fires.
+
+**raw-fail fingerprint:** 1–28ms genuine assertion (no SyntaxError, no ~5000ms timeout).
+Neither contamination nor transport-hang. Both are genuine-assertion-no-timeout.
+
+**what-considered:**
+- **(a) CONTAMINATION (SyntaxError / wrong-value from leaked mock.module):** REJECTED.
+  Zero `mock.module()` in this test file. Failures at ~1ms with direct property assertion.
+  No telegram or other stub chain touches `detectDataFreshnessBreach` import path.
+- **(b) TRANSPORT-HANG (~5000ms):** REJECTED. Both failures at 1–28ms. No MCP
+  InMemoryTransport or Client.callTool() in this test file. Pure domain+interface call.
+- **(c) FIX-PROD (prod broken):** REJECTED. The `MARKET_HOURS_ONLY_SOURCES` dynamic
+  threshold is intentional design (FIX-SLA-WEEKEND-AWARE sprint). Price data that is
+  12 minutes old at 16:42 UTC is not stale — the VPS push loop only runs during
+  02:00–08:59 UTC. Prod is correct.
+- **(d) REMOVE-OBSOLETE:** REJECTED. The underlying intent of TC-1/TC-2 (HIGH/CRITICAL
+  breach detection for `price` signal) remains valid. The `detectDataFreshnessBreach`
+  function exists in prod. No superseding sibling covers this exact path. Removal would
+  drop coverage.
+- **(e) REWRITE-STALE (CHOSEN):** Both tests were written during the Task 1282a RED phase
+  assuming a static 10-min price threshold. Comments in TC-1 and TC-2 explicitly state
+  "price threshold is 10 minutes" — this was true at write time, before
+  `MARKET_HOURS_ONLY_SOURCES` dynamic logic was introduced. The fix requires:
+  (1) adding an optional `now?: Date` param to `detectDataFreshnessBreach` for
+  test-time determinism; (2) passing a frozen market-hours timestamp
+  (`2026-06-09T04:00:00Z`) in TC-1 through TC-4 calls.
+
+**why-decision:** Dynamic off-hours threshold is the correct domain contract and is
+independently verified by the freshnessSlaChecker.ts unit tests. The test comment
+"price threshold is 10 minutes" is a direct fossil of pre-MARKET_HOURS_ONLY_SOURCES
+assumptions. Adding `now?` injection is the minimal additive fix with zero behavior
+change for production callers (they omit the param and get `new Date()` as before).
+
+**fix spec (2 files):**
+- `apps/mcp-server/src/interface/mcp/tools/system/dataFreshnessTools.ts` line 79:
+  add `now?: Date` to signature; line 87: replace `const now = new Date()` with
+  `const now_: Date = now ?? new Date()`.
+- `apps/mcp-server/src/__tests__/system-data-freshness.test.ts` TC-1/TC-2:
+  add `frozenNow = new Date("2026-06-09T04:00:00Z")`; pass as third arg to
+  `detectDataFreshnessBreach(db, undefined, frozenNow)`.
+
+**projected delta:** 57 → 55 (−2). No collateral expected.
+
+**coverage-retention:** TC-1/TC-2 intent fully retained post-rewrite. TC-3 through TC-8
+untouched (already passing). No protecting sibling needed (REWRITE, not REMOVE).
+
+**recommended-next-task:** FIX-CI-C1282a-DATA-FRESHNESS-REWRITE, type=BUG-FIX/MAINTENANCE,
+owner=dev-mcp-server, 2 files, timebox ~20m.
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-c1282a-data-freshness-triage.md`
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
