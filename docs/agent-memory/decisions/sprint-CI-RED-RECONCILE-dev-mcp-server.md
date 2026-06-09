@@ -121,3 +121,18 @@
 - Recovering P5 self-heal from git: `git show 541123b4:apps/mcp-server/src/infrastructure/db/schema.ts` confirmed the exact block; extracted and re-applied verbatim
 **why-decision:** DDL reconciliation eliminates the P5 +6 regression root cause (NOT NULL without DEFAULT for 3 tables). Self-heal in getDb() heals files that reach _db=null after any closeDb(). Preload await initDatabase() handles files that run before any closeDb() and covers initFinancialReportsTables safely via full init path.
 **why-change:** import path corrected from `../../` to `../` after tsc typecheck failed — first attempt used path from brief §5 verbatim; correct path derived from existing test file pattern.
+
+---
+
+### STEP dev-mcp-server-S9 · dev-mcp-server · 2026-06-09T06:37:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES
+**sprint:** CI-RED-RECONCILE
+**what-done:** Fixed mock.module contamination in `1945b-accuracy-digest-handler.test.ts`. Three changes: (1) replaced `...realSignalOutcomeStore` spread in mock factory with explicit stable snapshot references (`_realSeedSignalOutcome`, `_realResolveSignalOutcomes`, `_realGetAccuracyStats`) to avoid circular live-binding after `mock.module()` fires. (2) Changed default `_digestImpl` to call `_realGetSystemAccuracyDigestStats` (stable snapshot const) instead of `realSignalOutcomeStore.getSystemAccuracyDigestStats` (live namespace binding that becomes circular after mock fires). (3) Added `_digestImpl` restore to `afterAll` so downstream test files (1941c, signal-outcome-store, accuracy-context-tool) receive real `getSystemAccuracyDigestStats` results via the mock delegate, not the ZERO_STRUCT left by the last `beforeEach` reset.
+**what-considered:**
+- P7-pattern: add `afterAll(closeDb + initDatabase)` to destroyer files — DISPROVEN per ci-p7-gate-result signal: the reinit handle never survives to the consuming file. Not applicable here.
+- Actual root cause investigation: the taxonomy brief said "DB singleton pollution" but empirical testing showed 1945b's `mock.module()` + `beforeEach` ZERO_STRUCT reset was the true destroyer. No DB singleton pollution involved (all victim tests use `new Database(":memory:")` or `beforeEach(initDatabase)`).
+- Fix option: move `mock.module()` inside `beforeEach` / `beforeAll` — rejected: 1945b's SUT uses `await import(server.js)` at top-level AFTER `mock.module()`; moving into `beforeEach` would break the import sequence and force a full server teardown/restart per test.
+- Fix option: snapshot all exports + afterAll restore — chosen: minimal delta, test-file-only, no server restart overhead, proven by 74/0 local pass.
+**why-decision:** Bun runs 1945b before 1941c (empirically confirmed — Bun's file execution order differs from lexicographic sort when top-level `await` is present). 1945b's `beforeEach` correctly resets `_digestImpl` for 1945b's own tests but leaves it as ZERO_STRUCT for downstream files. afterAll restore is the correct idiom: Bun guarantees afterAll fires after all tests in the file, before moving to the next file's tests.
+**why-change:** Taxonomy brief labeled this "DB singleton pollution (P7-pattern)"; actual diagnosis is mock.module live-binding contamination. The P7-pattern fix (afterAll closeDb+initDatabase) was added as a secondary safeguard but is not the primary fix. The primary fix is the afterAll `_digestImpl` restore.
+**result:** 74 pass / 0 fail across 7 targeted files (1945b + 1941c + signal-outcome-store + accuracy-context-tool + 1124-evidence-tools-phase-bc + 1129-calibration-tools + 1173-calibration-label-integration). tsc clean. One file changed: `apps/mcp-server/src/__tests__/1945b-accuracy-digest-handler.test.ts`. Zero production code. Status = REVIEW (router owns push + CI gate).

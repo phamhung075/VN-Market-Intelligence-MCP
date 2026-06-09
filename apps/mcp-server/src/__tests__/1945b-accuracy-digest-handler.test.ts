@@ -28,6 +28,17 @@
 Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, mock, beforeEach, beforeAll, afterAll } from "bun:test";
+// Real implementations captured before mock.module() replaces the module in the
+// Bun ESM cache.  The static import is hoisted (module-linking phase) so realStore
+// holds the genuine function references at module-evaluation time.
+// We then snapshot each function into a local const so that if Bun mutates the
+// namespace object when mock.module() fires the local references remain stable.
+import * as realSignalOutcomeStore from "../infrastructure/db/signalOutcomeStore.js";
+// Snapshot real implementations before mock.module() mutates the namespace.
+const _realSeedSignalOutcome = realSignalOutcomeStore.seedSignalOutcome;
+const _realResolveSignalOutcomes = realSignalOutcomeStore.resolveSignalOutcomes;
+const _realGetAccuracyStats = realSignalOutcomeStore.getAccuracyStats;
+const _realGetSystemAccuracyDigestStats = realSignalOutcomeStore.getSystemAccuracyDigestStats;
 import type { SystemAccuracyDigestStats } from "../infrastructure/db/signalOutcomeStore.js";
 import type { Database } from "bun:sqlite";
 
@@ -60,18 +71,21 @@ const NORMAL_STRUCT: SystemAccuracyDigestStats = {
 // Captures the last `days` value passed to the delegate for assertion.
 let _lastDaysCalled: number | undefined = undefined;
 
-// Default delegate: returns zero struct (safe, no DB access).
-let _digestImpl: DigestFn = (_db, days = 30) => {
+// Default delegate: call the REAL implementation via the stable snapshot (not via
+// the namespace live-binding which points back to the mock after mock.module fires).
+let _digestImpl: DigestFn = (db, days = 30) => {
   _lastDaysCalled = days;
-  return ZERO_STRUCT;
+  return _realGetSystemAccuracyDigestStats(db, days);
 };
 
 // ── mock.module MUST precede dynamic import of server ──────────────────────
+// Use stable snapshot references (captured before mock.module fires) rather than
+// spreading the live namespace object. This prevents circular live-binding issues
+// where the spread would resolve to the mock's own replacements after firing.
 mock.module("../infrastructure/db/signalOutcomeStore.js", () => ({
-  // Pass-through stubs for functions not under test
-  seedSignalOutcome: () => {},
-  resolveSignalOutcomes: async () => ({ resolved: 0, errors: 0 }),
-  getAccuracyStats: () => null,
+  seedSignalOutcome: _realSeedSignalOutcome,
+  resolveSignalOutcomes: _realResolveSignalOutcomes,
+  getAccuracyStats: _realGetAccuracyStats,
   // SUT: mutable delegate controls per-test behaviour
   getSystemAccuracyDigestStats: (db: Database, days = 30) => _digestImpl(db, days),
 }));
@@ -98,6 +112,16 @@ beforeAll(async () => {
 afterAll(async () => {
   await server.close();
   closeDb();
+  // Restore the singleton so downstream test files that call getDb() without
+  // their own initDatabase() find an initialized :memory: DB (DB-SINGLETON-RESTORE).
+  await initDatabase();
+  // Restore _digestImpl to the real function so downstream test files that import
+  // getSystemAccuracyDigestStats (which resolves to this mock's delegate) receive
+  // real DB results instead of the ZERO_STRUCT left by the last beforeEach.
+  _digestImpl = (db, days = 30) => {
+    _lastDaysCalled = days;
+    return _realGetSystemAccuracyDigestStats(db, days);
+  };
 });
 
 beforeEach(() => {

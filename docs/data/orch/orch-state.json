@@ -3205,9 +3205,34 @@
             "sprint": "CI-RED-RECONCILE",
             "created_at": "2026-06-09T06:30Z",
             "note": "Verdict: (A)+partial(B). 98df0f43 (2026-05-23) INTENTIONALLY removed _testSbvClient/_testCommodityClient/_testDinhGiaInputs seams as part of P2-B1 HTTP rewire. Go service emits JSON, not [Commodity Prices] text sections. ~40 tests need fetch-mock injection rewrite; ~31 need assertion update. Production signals correct; format changed to JSON wrapper. Brief: docs/architecture-briefs/2026-06-09-spike-ci-c1-macro-inject-seam.md"
+          },
+          {
+            "id": "FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "REVIEW",
+            "size": "XS",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [
+              "RE-PROFILE-CI-241-RESIDUAL"
+            ],
+            "labels": [
+              "ci-red-reconcile",
+              "mock-contamination",
+              "no-prod-code",
+              "test-isolation"
+            ],
+            "title": "C3 DB_SINGLETON_SIGNAL_OUTCOMES (43 native fails, attack rank 1): fix mock.module contamination from 1945b-accuracy-digest-handler spreading ZERO_STRUCT to 1941c, signal-outcome-store, accuracy-context-tool via Bun ESM live bindings. TEST-FILE-ONLY.",
+            "baseline_pass": "241 native fail+error absolute (241 fail + 0 err / Ran 11817, sha 91afe344, run 27185729719, bun job 80254121788)",
+            "gate": "native fail+error must DROP vs 241 absolute; test-file-only (zero prod code). Targeted local pass: 1945b + 1941c + signal-outcome-store + accuracy-context-tool + 1124 + 1129 + 1173 = 74 pass / 0 fail.",
+            "created_at": "2026-06-09T06:37:00Z",
+            "created_by": "dev-mcp-server",
+            "note": "[dev-mcp-server DJ-GATE-1 2026-06-09T06:37:00Z] REVIEW. Root cause: 1945b-accuracy-digest-handler.test.ts uses mock.module('../infrastructure/db/signalOutcomeStore.js') at module-level. The mock's getSystemAccuracyDigestStats delegates to mutable _digestImpl; beforeEach in 1945b resets _digestImpl to ZERO_STRUCT before each of its tests. Bun runs all 1945b tests BEFORE 1941c (despite 1941c < 1945b in sort order — Bun uses a different ordering). After 1945b's last test (TC-6), _digestImpl=ZERO_STRUCT persists. When 1941c's TC2/TC3 call runAccuracyDigest, getSystemAccuracyDigestStats (mock delegate) returns ZERO_STRUCT -> totalResolved=0 && neutralOnlyRows=0 -> early exit -> capturedText=''. Fix: (1) change mock factory to use stable _real* snapshots (not spread live namespace). (2) change default _digestImpl to call _realGetSystemAccuracyDigestStats (stable snapshot, not circular live binding). (3) afterAll resets _digestImpl to the real-calling version after 1945b's own tests complete, so downstream files get real results. (4) afterAll restores DB singleton (closeDb + initDatabase). One file changed: 1945b-accuracy-digest-handler.test.ts. Zero production code. tsc clean. Local targeted: 74 pass / 0 fail across 7 files. NOT pushed — router owns push + CI gate."
           }
         ],
-        "_updated_by": "po"
+        "_updated_by": "dev-mcp-server"
       }
     ],
     "backlog": [

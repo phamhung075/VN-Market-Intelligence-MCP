@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES — REVIEW
+
+**Task:** FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES | Zone: apps/mcp-server/src/__tests__/ | Size: XS
+**Scope:** TEST-FILE-ONLY — 1 file changed: `apps/mcp-server/src/__tests__/1945b-accuracy-digest-handler.test.ts`
+**Root cause:** NOT DB singleton pollution (taxonomy was misleading label). True cause: `mock.module('../infrastructure/db/signalOutcomeStore.js')` in 1945b fires at Bun module-eval time. Bun runs 1945b BEFORE 1941c (empirically; top-level `await import()` affects Bun's file ordering). 1945b's `beforeEach` resets `_digestImpl` to ZERO_STRUCT before each test. After TC-6, `_digestImpl=ZERO_STRUCT` persists. 1941c's runAccuracyDigest receives ZERO_STRUCT → `totalResolved=0 && neutralOnlyRows=0` → early exit → capturedText="" → TC2/TC3 fail. Also: default `_digestImpl` used live namespace binding `realSignalOutcomeStore.getSystemAccuracyDigestStats` which becomes circular after mock fires.
+**Fix (3 changes in 1945b):**
+1. Mock factory: replaced `...realSignalOutcomeStore` spread with explicit stable snapshot refs (`_realSeedSignalOutcome`, `_realResolveSignalOutcomes`, `_realGetAccuracyStats`) + delegate wrapper for `getSystemAccuracyDigestStats`.
+2. Default `_digestImpl`: changed to call `_realGetSystemAccuracyDigestStats(db, days)` (stable snapshot, not circular live binding).
+3. `afterAll`: added `_digestImpl` restore to real-calling version + `closeDb() + initDatabase()` for DB singleton restore.
+**Verification:**
+- 74 pass / 0 fail across 7 targeted files (1945b + 1941c + signal-outcome-store + accuracy-context-tool + 1124 + 1129 + 1173)
+- `bun tsc --noEmit` (via apps/mcp-server/node_modules/.bin/tsc): CLEAN
+Zone health: test-only fix, tsc clean, no production code touched | HEALTHY
+
 ## 2026-06-09 · FIX-CI-MCP-SDK-MOCK-CONTAM — DONE
 
 **Task:** FIX-CI-MCP-SDK-MOCK-CONTAM | Zone: apps/mcp-server/ | Size: XS
