@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T00:00:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-09T04:14:34Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T03:50:20Z",
-    "_updated_by": "architect-P8",
+    "_updated_at": "2026-06-09T04:14:34Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4186,6 +4186,27 @@
         "created_at": "2026-06-09T02:55:37Z",
         "status_note": "AC: vn-news-fetch stays healthy with VPS uptime >6h across 3 consecutive Tier-2 auditor cycles AND news SLA (get_sla_status) stays ok (no B-11 CRITICAL 48h). RAW-VERIFIED 2026-06-09 via get_sla_status (news 84/30min breached) + get_vps_service_health (vn-news-fetch unhealthy, uptime 1h21m). Recurring: 2nd occ in 48h (prior 2026-06-07T06:33 same self-restart ~1h44m; FIX-NEWS-VPS-PROBE was a probe not a definitive fix). Hypothesis: VPS systemd crash-restart loop (pthread/NPROC exhaustion class seen on vn-bctc-fetch Chromium, OR fetch-job exception). ops-vps-fetch recon journalctl -u vn-news-fetch for the crash signature, then dev fix. Priority high.",
         "note": "[po-S19] Opened from sau-20260609T023050 (B-11) after raw-verify + recurrence detection. Sibling pattern to FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (cron/service crash-restart). Architect lane note: if recon shows recurring infra-exhaustion shared with bctc/Chromium, consider folding into a single VPS-service-stability spike."
+      },
+      {
+        "id": "FU-CI-PROFILE-629",
+        "type": "SPIKE",
+        "status": "TODO",
+        "owner": "architect",
+        "title": "ARCHITECT SPIKE: PROFILE the full 629 native CI bun-test failures — categorize ALL failure clusters by root-cause + native fail/error count, rank by (cluster-size x cheapness), deliver a failure-taxonomy doc to drive the next CI-RED-RECONCILE attack",
+        "mode": "spike",
+        "question": "What are ALL the root-cause clusters behind the 629 native bun-test fail+error (after-P4 baseline e442cf11/2a6044b1), each with its native fail/error count, and which cluster is the largest-and-cheapest to attack first toward /goal ci/cd 0-fail?",
+        "zone": "apps/mcp-server/",
+        "timebox": 120,
+        "deliverable": "docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md — cluster -> root-cause -> native-count table, ranked attack order; NO code change (gate = taxonomy delivered).",
+        "priority": "high",
+        "labels": [
+          "ci-red-reconcile",
+          "diagnostic-first",
+          "no-code"
+        ],
+        "context": "Schema-drift cluster PARKED best-effort-exhausted (P5/P6/P7/P8 all disproven; self-heal nets ~breakeven; 629 is the schema-drift floor). Even a perfect schema-drift fix removes only ~tens of 629 — iterating ONE cluster cannot reach 0-fail. Profile FIRST, attack by ROI. Run ONLY targeted test files, NEVER the full ~11.5k suite blind. Source: docs/signals/ci-p8-gate-result-6295cb32-20260609T0410Z.json payload.po_action_requested path (B).",
+        "created_at": "2026-06-09T04:14:34Z",
+        "created_by": "po"
       }
     ],
     "archive": [],
@@ -6057,13 +6078,14 @@
         "title": "Impl: DDL DEFAULT reconciliation (3 tables) + P5 self-heal re-apply in getDb() + preload initDatabase() in setup.ts — FU-SCHEMA-DRIFT-P8 direction (a) per architect brief 2026-06-09-fu-schema-drift-p8-spike.md",
         "type": "BUG",
         "owner": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "REWORK",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "critical",
         "sprint": "CI-RED-RECONCILE",
         "created_at": "2026-06-09T00:00:00Z",
-        "note": "[dev-mcp-server DJ-GATE-1 2026-06-09] IMPL: rag_analyses/agent_feedback/signal_quality_audit created_at DEFAULT added; getDb() P5 self-heal re-applied (9 slices excl. initFinancialReportsTables); setup.ts await initDatabase() preload added. tsc clean. Router owns CI gate."
+        "note": "[dev-mcp-server DJ-GATE-1 2026-06-09] IMPL: rag_analyses/agent_feedback/signal_quality_audit created_at DEFAULT added; getDb() P5 self-heal re-applied (9 slices excl. initFinancialReportsTables); setup.ts await initDatabase() preload added. tsc clean. Router owns CI gate. | po-S21: CI-P8-GATE-6295cb32 FAILED (native fail+error 631 vs 629, +2 WORSE; created_at x3 regression PERSISTS — DDL-DEFAULT hypothesis disproven). Router reverted apps/ to 629 baseline (880ffca6, byte-identical 2a6044b1). REVIEW->REWORK: fix off main, hypothesis empirically disproven (4th consecutive P5/P6/P7/P8). Schema-drift cluster PARKED best-effort-exhausted per PO path-B decision; 629 documented as schema-drift FLOOR. No 7th touch opened. Superseded by FU-CI-PROFILE-629 (full-corpus failure taxonomy).",
+        "updated_at": "2026-06-09T04:14:34Z"
       }
     ]
   },
