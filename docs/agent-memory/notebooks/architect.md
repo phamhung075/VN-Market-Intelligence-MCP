@@ -1,8 +1,35 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 10:31 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 11:25 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T11:25Z — FIX-CI-C1124-RESIDUAL-TRIAGE: evidence tools Phase B+C, 24 CI fails
+
+**Task:** FIX-CI-C1124-RESIDUAL-TRIAGE (TRIAGE, S, zone: apps/mcp-server/src/__tests__/)
+
+**Method:** Full read of test file (1124), prod handler (evidenceTools.ts), all 3 infra stores (evidenceFragmentStore, predictionClaimStore, likelihoodRatioStore), schema-system.ts DDL section, schema.ts initDatabase, bunfig.toml, CI signals (c1-already-shipped, c5-gate, 1423e-gate), git log 1124 test file, sibling test 1117.
+
+**Verdict: REWRITE (stale test infrastructure — InMemoryTransport+Client → _registeredTools direct call)**
+
+**Root cause:**
+- Prod is correct. All 4 tables (evidence_scores, evidence_fragments, evidence_likelihood_ratios, prediction_claims) ARE created by initSystemTables() in schema-system.ts lines 138/156/172/187. Schema fixture is complete.
+- evidenceTools.ts: pure SQLite, no HTTP, no fetch. All handlers synchronous at the DB layer. DB arg injected correctly via `registerEvidenceTools(server, db)`.
+- The 24 CI fails = 12 it() × 2 native failures each (test timeout + afterEach stall). In CI (Bun 1.3.13 / Ubuntu-latest), InMemoryTransport + Client.callTool() hangs. The `afterEach client?.close()` fix (a43dff49, C3) addresses inter-test transport leak but cannot prevent the intra-test callTool() hang.
+- Local (macOS): 12/0 pass. CI: 24/0 fail at ~5000ms each (Bun default timeout fires when bunfig timeout=30000 is not enforced on Linux runner).
+
+**Fix spec:**
+- ONE file: 1124-evidence-tools-phase-bc.test.ts
+- Replace McpServer+InMemoryTransport+Client with McpServer+_registeredTools direct handler invocation
+- Pattern: same as 1117-evidence-tools.test.ts (sibling, already CI-green)
+- beforeEach: async initDatabase() + registerEvidenceTools(server, db)
+- afterEach: closeDb()
+- callTool(): `server._registeredTools[name].handler(args)`
+- Remove: Client import, InMemoryTransport import, module-level _currentClient, afterEach client.close()
+- NO new mock.module() — evidence tools chain is pure SQLite, zero mocking needed
+
+**CI victim prefix:** `Task 1124` (24 → 0 projected)
+**Brief:** docs/architecture-briefs/2026-06-09-ci-c1124-evidence-tools-triage.md
 
 ## 2026-06-09T11:00Z — SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY: addendum — brownfield DI audit + nondeterminism fold
 
