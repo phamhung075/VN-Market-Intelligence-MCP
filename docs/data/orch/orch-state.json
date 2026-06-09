@@ -6020,7 +6020,7 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-09T03:35:42Z",
+    "_updated_at": "2026-06-09T03:38:00Z",
     "_updated_by": "system-auditor",
     "rows": [
       {
@@ -6818,6 +6818,17 @@
         "type": "system-issue",
         "summary": "mcp-server memory pressure 90.24% (A-30) \u2014 approaching OOM limit",
         "severity": "WARN",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-20260609T033800Z",
+        "ts": "2026-06-09T03:38:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "CRITICAL: orch-state.json clobbered to 1 byte \u2014 jq empty-guard bug (SSOT restore needed)",
+        "severity": "CRITICAL",
         "status": "NEW",
         "payload_ref": null
       }
