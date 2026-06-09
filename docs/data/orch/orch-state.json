@@ -3489,12 +3489,12 @@
             "carve_outs": [
               {
                 "seed": "1328e-conviction-routing",
-                "status": "TRIAGE-DONE",
                 "reclassified": "C7 assertion-logic -> C5 MOCK-CONTAM (arch-S14 verdict, brief fa223773)",
                 "verdict": "TEST-HARNESS / MOCK CONTAMINATION (classification c). Prod CORRECT — NO prod fix, NO test REMOVE. The 5 failing it() in 1328e-conviction-display.test.ts (10 native fails = 5 it x 2) are VICTIMS of mock.module() contamination leaking from sibling 047-bctc-orchestrator.test.ts.",
                 "routed_to": "FIX-CI-C1328E-047-CONTAM-STUB",
                 "carved_by": "po-S41",
-                "carved_at": "2026-06-09T13:20:00Z"
+                "carved_at": "2026-06-09T13:20:00Z",
+                "triage_state": "TRIAGE-DONE"
               }
             ]
           },
