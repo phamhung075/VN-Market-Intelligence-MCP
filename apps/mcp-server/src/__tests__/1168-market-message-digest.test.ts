@@ -98,26 +98,21 @@ type HandleBatchReviewMarketMessagesFn = (args: {
 }) => Promise<{ content: Array<{ type: string; text: string }> }>;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dynamic imports — will resolve at runtime once tasks 1169/1170 are done.
-// Until then, the destructured functions are `undefined` and every test fails.
+// ESM imports — tasks 1169/1170 are done; functions are live exports.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const storeModule = require("../infrastructure/db/marketMessageStore.js") as {
-  insertMarketMessage: InsertMarketMessageFn;
-  getMarketMessageDigest: GetMarketMessageDigestFn;
-  batchReviewMarketMessages: BatchReviewMarketMessagesFn;
-};
-const { insertMarketMessage: _insertMarketMessage, getMarketMessageDigest, batchReviewMarketMessages } = storeModule;
+import {
+  insertMarketMessage as _insertMarketMessage,
+  getMarketMessageDigest,
+  batchReviewMarketMessages,
+} from "../infrastructure/db/marketMessageStore.js";
 // insertMarketMessage used via seedRow helper; aliased to avoid unused-var lint
 void _insertMarketMessage;
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const toolsModule = require("../interface/mcp/tools/briefings/marketMessageTools.js") as {
-  handleGetMarketMessageDigest: HandleGetMarketMessageDigestFn;
-  handleBatchReviewMarketMessages: HandleBatchReviewMarketMessagesFn;
-};
-const { handleGetMarketMessageDigest, handleBatchReviewMarketMessages } = toolsModule;
+import {
+  handleGetMarketMessageDigest,
+  handleBatchReviewMarketMessages,
+} from "../interface/mcp/tools/briefings/marketMessageTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lifecycle

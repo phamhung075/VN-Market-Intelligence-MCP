@@ -87,6 +87,20 @@
 
 ---
 
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-09T07:05:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE
+**what-done:** Replaced 2 `require()` CJS-interop blocks in `1168-market-message-digest.test.ts` with proper ESM `import { ... } from '...'` statements for `getMarketMessageDigest`, `batchReviewMarketMessages` (from marketMessageStore.js) and `handleGetMarketMessageDigest`, `handleBatchReviewMarketMessages` (from marketMessageTools.js). Also removed now-dead type stubs (they were only needed because require() returned undefined). Production code not touched.
+**what-considered:**
+- Use `await import()` dynamic ESM — rejected: top-level static import is correct for named exports in ESM context; dynamic import adds unnecessary async complexity
+- Patch require() return type — rejected: the root cause is Bun ESM not resolving named exports via require(); wrapping in a type cast doesn't fix runtime undefined
+- Static ESM import — chosen: direct fix to root cause; matches every other test file in the suite
+**why-decision:** Bun ESM environment cannot reliably resolve named exports via CJS `require()` interop; the architect diagnosis confirmed both functions ARE implemented (lines 239/349 in marketMessageStore.ts); the only broken layer was the test-side import mechanism.
+**why-change:** no change from architect-diagnosed plan
+**evidence:** 31 pass / 0 fail (targeted); bun tsc --noEmit CLEAN
+**task-status-flip:** TODO → REVIEW (PO owns DONE flip after CI gate confirms drop)
+
+---
+
 ### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-09T00:00:00Z (DJ-GATE-1)
 **task-id:** FIX-SCHEMA-DRIFT-P1
 **what-done:** Added `data_env TEXT` to 63 inline rag_analyses DDLs in test files; added try/catch fallback guard in pollNews.ts::tryInsertEntry for data_env absence (fredApi.ts pattern).

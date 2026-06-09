@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE — REVIEW
+
+**Task:** FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE | Zone: apps/mcp-server/src/__tests__/ | Size: XS | Priority: high
+**Scope:** TEST-FILE-ONLY — 1 file changed: `apps/mcp-server/src/__tests__/1168-market-message-digest.test.ts`
+**Root cause:** Task 1168 test used CJS `require()` interop to import `getMarketMessageDigest`, `batchReviewMarketMessages`, `handleGetMarketMessageDigest`, `handleBatchReviewMarketMessages`. Under Bun ESM, named exports via `require()` return `undefined` → tests fail at call time with ~21 failures.
+**Fix:** Replaced 2 `require()` blocks (lines 105-120) with proper ESM `import { ... } from '...'` statements. No production code touched.
+**Verification:** 31 pass / 0 fail (targeted run: `bun test src/__tests__/1168-market-message-digest.test.ts`). `bun tsc --noEmit`: CLEAN.
+**DJ-GATE-1:** task FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE flipped TODO→REVIEW. PO owns final DONE flip after CI gate.
+**Status:** REVIEW — router owns CI gate vs 193 absolute.
+
 ## 2026-06-09 · FIX-CI-C1-MACRO-INJECT-SEAM-TESTS — REVIEW
 
 **Task:** FIX-CI-C1-MACRO-INJECT-SEAM-TESTS | Zone: apps/mcp-server/src/__tests__/ | Size: M | Priority: high

@@ -3239,7 +3239,7 @@
             "id": "FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
