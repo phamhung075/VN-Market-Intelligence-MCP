@@ -4,14 +4,18 @@
  * Tests for:
  *   - formatDinhGia() output shape across all label paths (CHEAP / FAIRLY_VALUED / EXPENSIVE)
  *   - Unavailable path (earningYield or depositRate is 0)
- *   - Section order in get_macro_snapshot: [Dinh Gia] after [Thien Thoi], before [Commodity Prices]
- *   - _testDinhGiaInputs injection param in tool handler
+ *   - get_macro_snapshot tool integration via globalThis.fetch mock
  *
- * Strategy:
+ * Strategy (C1 FIX-CI-C1-MACRO-INJECT-SEAM-TESTS):
  *   - DB_PATH set to :memory: before any import.
- *   - formatDinhGia() is tested as a pure unit (no server needed).
- *   - Tool integration tests use _testDinhGiaInputs injection and pre-resolved
- *     commodity/SBV fixtures to keep HTTP out of these tests.
+ *   - formatDinhGia() is tested as a pure unit (no server needed) — UNCHANGED.
+ *   - Tool integration tests (DG-I-*) use globalThis.fetch mock returning a
+ *     MacroSnapshotResponse. The old _testDinhGiaInputs / _testCommodityClient /
+ *     _testSbvClient injection seams no longer exist after P2-B1 HTTP rewire
+ *     (commit 98df0f43). The Go service does NOT emit [Dinh Gia] text sections;
+ *     integration tests now assert JSON field checks on signals.yield instead.
+ *   - Pure unit tests (DG-01..DG-09) and DB schema drift guards (DG-I-08, DG-I-09)
+ *     are UNCHANGED.
  */
 
 // Set DB_PATH before any import that triggers getDb()
@@ -40,7 +44,7 @@ import {
 async function callTool(
   server: McpServer,
   toolName: string,
-  args: Record<string, unknown>,
+  args: Record<string, unknown> = {},
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   const tools = (server as unknown as {
     _registeredTools: Record<string, {
@@ -64,6 +68,21 @@ function firstText(result: { content: Array<{ type: string; text: string }> }): 
   return item.text;
 }
 
+/** Parse the outer { source_tier, text, fetchedAt } envelope. */
+function parseEnvelope(result: { content: Array<{ type: string; text: string }> }): {
+  source_tier: number;
+  text: string;
+  fetchedAt: string;
+} {
+  return JSON.parse(firstText(result)) as { source_tier: number; text: string; fetchedAt: string };
+}
+
+/** Parse the inner MacroSnapshotResponse from the envelope's text field. */
+function parseInner(result: { content: Array<{ type: string; text: string }> }): Record<string, unknown> {
+  const env = parseEnvelope(result);
+  return JSON.parse(env.text) as Record<string, unknown>;
+}
+
 function makeServer(): McpServer {
   const server = new McpServer(
     { name: "test-server", version: "1.0.0" },
@@ -74,23 +93,8 @@ function makeServer(): McpServer {
 }
 
 // ---------------------------------------------------------------------------
-// Fixtures
+// Fixtures (used by pure unit tests)
 // ---------------------------------------------------------------------------
-
-const COMMODITY_FIXTURE = {
-  brentCrudeUSD: 84.37,
-  goldUSDPerOz: 1950.50,
-  usdVndRate: 25450.0,
-  fetchedAt: new Date().toISOString(),
-};
-
-const SBV_FIXTURE = {
-  overnightRatePct: 5.0,
-  refinancingRatePct: 4.5,
-  maxDepositRatePct: 5.0,
-  usdVndOfficial: 25452.0,
-  fetchedAt: new Date().toISOString(),
-};
 
 const DINH_GIA_CHEAP: DinhGiaInputs = {
   earningYield: 8.0,
@@ -120,19 +124,67 @@ const DINH_GIA_EXPENSIVE: DinhGiaInputs = {
 };
 
 // ---------------------------------------------------------------------------
-// Lifecycle
+// Lifecycle — fetch mock for integration tests
 // ---------------------------------------------------------------------------
+
+let restoreFetch: (() => void) | undefined;
 
 beforeAll(async () => {
   await initDatabase();
+
+  const originalFetch = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/snapshot")) {
+      const snapshot = {
+        status: "ok",
+        fetchedAt: "2026-06-09T00:00:00Z",
+        vnIndex: 1282.5,
+        oilUsd: 84.37,
+        goldUsd: 1950.5,
+        usdVnd: 25450.0,
+        dataSource: "live",
+        signals: {
+          carry: {
+            regime: "NEUTRAL",
+            carrySpread: 1.38,
+            vndDepositRate: 5.0,
+            fedFundsRate: 3.62,
+            is_estimate: false,
+            source_tier: 2,
+          },
+          yield: {
+            label: "CHEAP",
+            spread: 3.0,
+            earningYield: 8.0,
+            depositRate: 5.0,
+            is_estimate: false,
+            source_tier: 2,
+          },
+          oil: { impact: "NEUTRAL", priceUSD: 84.37 },
+          gold: { direction: "BULLISH", priceUSD: 1950.5 },
+          usdvnd: { direction: "STABLE", rateVND: 25450.0 },
+          "investment-clock": { phase: "RECOVERY" },
+        },
+      };
+      return new Response(JSON.stringify(snapshot), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return originalFetch(input, _init);
+  };
+  restoreFetch = () => { globalThis.fetch = originalFetch; };
 });
 
 afterAll(() => {
+  restoreFetch?.();
   closeDb();
 });
 
 // ---------------------------------------------------------------------------
-// Unit tests: formatDinhGia()
+// Unit tests: formatDinhGia() — UNCHANGED
 // ---------------------------------------------------------------------------
 
 describe("Task 1426c — formatDinhGia() unit", () => {
@@ -202,110 +254,82 @@ describe("Task 1426c — formatDinhGia() unit", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Integration tests: get_macro_snapshot with _testDinhGiaInputs injection
+// Integration tests: get_macro_snapshot via fetch mock
+// (replaces old _testDinhGiaInputs / _testCommodityClient / _testSbvClient injection)
 // ---------------------------------------------------------------------------
 
 describe("Task 1426c — get_macro_snapshot Dinh Gia integration", () => {
 
-  it("DG-I-01: CHEAP inputs — snapshot text contains [Dinh Gia] section with CHEAP", async () => {
+  it("DG-I-01: response is valid envelope; inner signals.yield.label is CHEAP", async () => {
     const server = makeServer();
-    const result = await callTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-      _testDinhGiaInputs: DINH_GIA_CHEAP,
-    });
+    const result = await callTool(server, "get_macro_snapshot");
 
-    const text = firstText(result);
-    expect(text).toContain("[Dinh Gia — Asset Valuation]");
-    expect(text).toContain("CHEAP");
-    expect(text).toContain("+3.00%");
+    const inner = parseInner(result);
+    const signals = inner.signals as Record<string, unknown>;
+    const yieldSig = signals.yield as Record<string, unknown>;
+    expect(yieldSig.label).toBe("CHEAP");
+    expect(typeof yieldSig.spread).toBe("number");
+    expect((yieldSig.spread as number)).toBeGreaterThan(0);
   });
 
-  it("DG-I-02: FAIRLY_VALUED inputs — snapshot contains FAIRLY_VALUED", async () => {
+  it("DG-I-02: inner signals.yield contains earningYield and depositRate fields", async () => {
     const server = makeServer();
-    const result = await callTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-      _testDinhGiaInputs: DINH_GIA_FAIRLY_VALUED,
-    });
+    const result = await callTool(server, "get_macro_snapshot");
 
-    const text = firstText(result);
-    expect(text).toContain("[Dinh Gia — Asset Valuation]");
-    expect(text).toContain("FAIRLY_VALUED");
+    const inner = parseInner(result);
+    const signals = inner.signals as Record<string, unknown>;
+    const yieldSig = signals.yield as Record<string, unknown>;
+    expect(typeof yieldSig.earningYield).toBe("number");
+    expect(typeof yieldSig.depositRate).toBe("number");
   });
 
-  it("DG-I-03: EXPENSIVE inputs — snapshot contains EXPENSIVE", async () => {
+  it("DG-I-03: source_tier is present and valid in envelope", async () => {
     const server = makeServer();
-    const result = await callTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-      _testDinhGiaInputs: DINH_GIA_EXPENSIVE,
-    });
+    const result = await callTool(server, "get_macro_snapshot");
 
-    const text = firstText(result);
-    expect(text).toContain("[Dinh Gia — Asset Valuation]");
-    expect(text).toContain("EXPENSIVE");
+    const env = parseEnvelope(result);
+    expect(env.source_tier).toBeGreaterThanOrEqual(1);
+    expect(env.source_tier).toBeLessThanOrEqual(4);
   });
 
-  it("DG-I-04: null injection — Dinh Gia section absent (DB failure path)", async () => {
+  it("DG-I-04: inner text does not contain old section headers (Go service JSON, not TS formatter)", async () => {
     const server = makeServer();
-    const result = await callTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-      _testDinhGiaInputs: null,
-    });
+    const result = await callTool(server, "get_macro_snapshot");
 
-    const text = firstText(result);
-    expect(text).not.toContain("[Dinh Gia — Asset Valuation]");
-    // Other sections still present
-    expect(text).toContain("[Commodity Prices]");
-    expect(text).toContain("[SBV Central Bank Rates]");
+    // The Go service returns JSON, not formatted text sections
+    // The [Dinh Gia — Asset Valuation] header only comes from formatDinhGia() pure helper
+    // The tool output is now JSON, not human-readable text
+    const env = parseEnvelope(result);
+    // outer text is the JSON envelope — no text-section headers
+    expect(env.text).not.toContain("=== Macro Snapshot ===");
   });
 
-  it("DG-I-05: no injection (undefined) — snapshot runs without crash, other sections intact", async () => {
+  it("DG-I-05: tool runs without crash and returns single content item", async () => {
     const server = makeServer();
-    const result = await callTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-      // _testDinhGiaInputs omitted — DB read path (will find no rows in :memory:)
-    });
+    const result = await callTool(server, "get_macro_snapshot");
 
-    const text = firstText(result);
-    expect(text).toContain("=== Macro Snapshot ===");
-    expect(text).toContain("[Commodity Prices]");
-    expect(text).toContain("[SBV Central Bank Rates]");
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0]?.type).toBe("text");
   });
 
-  it("DG-I-06: section order — [Dinh Gia] appears after [Thien Thoi] and before [Commodity Prices]", async () => {
+  it("DG-I-06: inner text contains both oilUsd and goldUsd fields (JSON structure)", async () => {
     const server = makeServer();
-    const result = await callTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-      _testDinhGiaInputs: DINH_GIA_CHEAP,
-    });
+    const result = await callTool(server, "get_macro_snapshot");
 
-    const text = firstText(result);
-
-    const idxCommodity = text.indexOf("[Commodity Prices]");
-    const idxDinhGia = text.indexOf("[Dinh Gia — Asset Valuation]");
-
-    // [Dinh Gia] must appear before [Commodity Prices]
-    expect(idxDinhGia).toBeGreaterThan(-1);
-    expect(idxDinhGia).toBeLessThan(idxCommodity);
+    const inner = parseInner(result);
+    expect(typeof inner.oilUsd).toBe("number");
+    expect(typeof inner.goldUsd).toBe("number");
   });
 
-  it("DG-I-07: zero earningYield in inputs — section shows unavailable", async () => {
+  it("DG-I-07: signals.yield.label is a non-empty string", async () => {
     const server = makeServer();
-    const result = await callTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-      _testDinhGiaInputs: { ...DINH_GIA_CHEAP, earningYield: 0 },
-    });
+    const result = await callTool(server, "get_macro_snapshot");
 
-    const text = firstText(result);
-    expect(text).toContain("[Dinh Gia — Asset Valuation]");
-    expect(text).toContain("unavailable");
-    expect(text).not.toContain("CHEAP");
+    const inner = parseInner(result);
+    const signals = inner.signals as Record<string, unknown>;
+    const yieldSig = signals.yield as Record<string, unknown>;
+    expect(typeof yieldSig.label).toBe("string");
+    expect((yieldSig.label as string).length).toBeGreaterThan(0);
   });
 
   it("DG-I-08: DB schema drift guard — tracked_indicators queries use extracted_at (not fetched_at)", async () => {

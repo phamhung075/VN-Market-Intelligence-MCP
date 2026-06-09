@@ -1,5 +1,25 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-CI-C1-MACRO-INJECT-SEAM-TESTS — REVIEW
+
+**Task:** FIX-CI-C1-MACRO-INJECT-SEAM-TESTS | Zone: apps/mcp-server/src/__tests__/ | Size: M | Priority: high
+**Scope:** TEST-FILE-ONLY — 5 files rewritten (zero production code touched):
+- `apps/mcp-server/src/__tests__/089-tool-macro.test.ts`
+- `apps/mcp-server/src/__tests__/1423d-thien-thoi-snapshot.test.ts` (integration section TT-07..TT-10 rewritten; TT-01..TT-06 pure unit tests UNCHANGED)
+- `apps/mcp-server/src/__tests__/1423f-deposit-rate-display.test.ts`
+- `apps/mcp-server/src/__tests__/1570c-dinh-gia-snapshot.test.ts` (integration DG-I-01..07 rewritten; DG-01..09 pure unit + DG-I-08/09 DB drift guards UNCHANGED)
+- `apps/mcp-server/src/__tests__/1903a-dispatch-regression.test.ts` (Suite B GMS-REG-02..04 rewritten; Suite A WAV-REG-01..07 UNCHANGED)
+**Root cause (settled by architect SPIKE-CI-C1-MACRO-INJECT-SEAM):** P2-B1 HTTP rewire (commit 98df0f43, 2026-05-23) removed `_testCommodityClient`/`_testSbvClient`/`_testDinhGiaInputs` injection seams. `registerMacroTools()` is now a thin HTTP proxy to Go macro-indicators:5004. Tool output shape changed from human-readable text sections to `{ source_tier, text: JSON.stringify(MacroSnapshotResponse), fetchedAt }`.
+**Fix pattern (from 1881a template, lines 92-135):**
+1. Added `globalThis.fetch` mock in `beforeAll` intercepting `url.includes("/snapshot")` → returns controlled `MacroSnapshotResponse` JSON.
+2. Updated all assertions from `toContain("[Commodity Prices]")` / `toContain("[Macro Signal Summary]")` etc. to JSON field checks: `parseInner(result).signals.carry.regime`, `parseInner(result).oilUsd`, etc.
+3. Pure unit tests (`formatThienThoi()`, `formatDinhGia()`) and DB schema drift guards left UNTOUCHED.
+**Verification:**
+- 58 pass / 0 fail across 5 target files (local targeted run)
+- `bun tsc --noEmit`: CLEAN (0 errors)
+- 1881a template: 20 pass / 0 fail (still green, not broken)
+**Expected CI impact:** ~71 C1 MACRO_INJECT_SEAM failures cleared. Router owns CI gate vs 241 absolute. Status=REVIEW.
+
 ## 2026-06-09 · FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES — REVIEW
 
 **Task:** FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES | Zone: apps/mcp-server/src/__tests__/ | Size: XS

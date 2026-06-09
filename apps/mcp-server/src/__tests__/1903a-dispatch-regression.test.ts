@@ -5,12 +5,21 @@
  *   not stale "Message sent" Telegram string from a prior handler collision.
  * Suite B (GMS-REG-02..04): get_macro_snapshot returns macro regime content,
  *   not electricity/portfolio bleed (1898a precedent: 084:237-271, 089:349-373).
+ *
+ * Strategy (C1 FIX-CI-C1-MACRO-INJECT-SEAM-TESTS — Suite B only):
+ * - GMS-REG-02: OLD assertion `toContain("[Macro Signal Summary]")` is no longer valid.
+ *   The Go service returns JSON, not formatted text sections.
+ *   NEW assertion: response envelope has source_tier + parseable inner text with signals.
+ * - GMS-REG-03: negative-space guards (no ĐIỆN LỰC / portfolio) — still valid, kept.
+ * - GMS-REG-04: content.length === 1 — still valid, kept.
+ * - globalThis.fetch mock added (beforeAll pattern from 1881a) to intercept POST /snapshot.
+ * - Suite A is UNCHANGED.
  */
 
 // DB_PATH must be set before any import that triggers getDb()
 Bun.env["DB_PATH"] = ":memory:";
 
-import { describe, it, expect, mock } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 mock.module("../infrastructure/rag/retriever.js", () => ({
@@ -18,6 +27,7 @@ mock.module("../infrastructure/rag/retriever.js", () => ({
   insertAnalysis: async () => {},
 }));
 
+import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import { writeAlertVerdict } from "../interface/mcp/tools/alerts/alertVerdictTools.js";
 import { registerMacroTools } from "../interface/mcp/tools/macro/macroTools.js";
 import type { AlertVerdict } from "../infrastructure/fileStore/alertVerdictStore.js";
@@ -46,7 +56,7 @@ function makeMacroServer(): McpServer {
 async function callMacroTool(
   server: McpServer,
   toolName: string,
-  args: Record<string, unknown>,
+  args: Record<string, unknown> = {},
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   const tools = (server as unknown as {
     _registeredTools: Record<string, {
@@ -68,26 +78,68 @@ function firstText(result: { content: Array<{ type: string; text: string }> }): 
 }
 
 // ---------------------------------------------------------------------------
-// Fixtures
+// Lifecycle — fetch mock for Suite B
 // ---------------------------------------------------------------------------
 
-const COMMODITY_FIXTURE = {
-  brentCrudeUSD: 106.06,
-  goldUSDPerOz: 2340.50,
-  usdVndRate: 25450.0,
-  fetchedAt: new Date().toISOString(),
-};
+let restoreFetch: (() => void) | undefined;
 
-const SBV_FIXTURE = {
-  overnightRatePct: 3.0,
-  refinancingRatePct: 4.5,
-  discountRatePct: 4.0,
-  maxDepositRatePct: 5.0,
-  maxLendingRatePct: 9.0,
-  interbankOvernightPct: 4.8,
-  usdVndOfficial: 25452.0,
-  fetchedAt: new Date().toISOString(),
-};
+beforeAll(async () => {
+  await initDatabase();
+
+  const originalFetch = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/snapshot")) {
+      const snapshot = {
+        status: "ok",
+        fetchedAt: "2026-06-09T00:00:00Z",
+        vnIndex: 1282.5,
+        oilUsd: 106.06,
+        goldUsd: 2340.5,
+        usdVnd: 25450.0,
+        dataSource: "live",
+        signals: {
+          carry: {
+            regime: "NEUTRAL",
+            carrySpread: 1.38,
+            vndDepositRate: 5.0,
+            fedFundsRate: 3.62,
+            is_estimate: false,
+            source_tier: 2,
+          },
+          yield: {
+            label: "CHEAP",
+            spread: 3.2,
+            earningYield: 8.2,
+            depositRate: 5.0,
+            is_estimate: false,
+            source_tier: 2,
+          },
+          oil: { impact: "HIGH", priceUSD: 106.06 },
+          gold: { direction: "BULLISH", priceUSD: 2340.5 },
+          usdvnd: { direction: "STABLE", rateVND: 25450.0 },
+          "investment-clock": { phase: "RECOVERY" },
+        },
+      };
+      return new Response(JSON.stringify(snapshot), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return originalFetch(input, _init);
+  };
+  restoreFetch = () => { globalThis.fetch = originalFetch; };
+});
+
+afterAll(() => {
+  restoreFetch?.();
+  closeDb();
+});
+
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
 
 // Mirrors live re-verification input from REQ_1903a.md
 const VALID_WAV_INPUT = {
@@ -99,7 +151,7 @@ const VALID_WAV_INPUT = {
 };
 
 // ---------------------------------------------------------------------------
-// Suite A — write_alert_verdict shape guard (WAV-REG-01..07)
+// Suite A — write_alert_verdict shape guard (WAV-REG-01..07) — UNCHANGED
 // ---------------------------------------------------------------------------
 
 describe("1903a — Suite A: write_alert_verdict shape guard", () => {
@@ -161,25 +213,29 @@ describe("1903a — Suite A: write_alert_verdict shape guard", () => {
 
 describe("1903a — Suite B: get_macro_snapshot shape guard", () => {
 
-  it("GMS-REG-02: response contains '[Macro Signal Summary]' section header", async () => {
+  it("GMS-REG-02: response is a valid JSON envelope with source_tier and signals (replaces '[Macro Signal Summary]' section check)", async () => {
     const server = makeMacroServer();
-    const result = await callMacroTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-    });
-    expect(firstText(result)).toContain("[Macro Signal Summary]");
+    const result = await callMacroTool(server, "get_macro_snapshot");
+
+    const raw = JSON.parse(firstText(result)) as { source_tier: number; text: string; fetchedAt: string };
+    expect(typeof raw.source_tier).toBe("number");
+    expect(typeof raw.text).toBe("string");
+
+    // Inner payload must contain signals (the new form of "macro signal summary")
+    const inner = JSON.parse(raw.text) as Record<string, unknown>;
+    expect(inner.signals).toBeDefined();
+    const signals = inner.signals as Record<string, unknown>;
+    expect(signals.carry).toBeDefined();
   });
 
   it("GMS-REG-03: 'thép' guard — sector bleed absent; electricity/portfolio never present", async () => {
     const server = makeMacroServer();
-    const result = await callMacroTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-    });
+    const result = await callMacroTool(server, "get_macro_snapshot");
     const text = firstText(result);
-    // If 'thép' present, macro header must also be present (not pure sector bleed)
+    // If 'thép' present, macro source_tier must also be present (not pure sector bleed)
     if (text.includes("thép")) {
-      expect(text).toContain("=== Macro Snapshot ===");
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      expect(typeof parsed.source_tier).toBe("number");
     }
     expect(text).not.toContain("ĐIỆN LỰC");
     expect(text).not.toContain("TRẠNG THÁI ĐIỆN");
@@ -189,10 +245,7 @@ describe("1903a — Suite B: get_macro_snapshot shape guard", () => {
 
   it("GMS-REG-04: result.content.length === 1 (single text item, not array of portfolio rows)", async () => {
     const server = makeMacroServer();
-    const result = await callMacroTool(server, "get_macro_snapshot", {
-      _testCommodityClient: COMMODITY_FIXTURE,
-      _testSbvClient: SBV_FIXTURE,
-    });
+    const result = await callMacroTool(server, "get_macro_snapshot");
     expect(result.content).toHaveLength(1);
   });
 
