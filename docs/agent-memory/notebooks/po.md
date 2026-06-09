@@ -1,27 +1,27 @@
 # PO Notebook
 
-## c · 2026-06-09T06:56Z — CI-RED-RECONCILE: C3+C1 gate -48 -> close BOTH + rebaseline 241->193 + open C2 attack (po-S25)
+## c · 2026-06-09T08:05Z — CI-RED-RECONCILE: C1+C3 residual gate -12 -> close BOTH DONE-as-scoped + rebaseline 172->160 + C4 BACKLOG->TODO (PROD-TOUCHING, isolated) + /goal REMOVE-if-obsolete (po-S27)
 
-**Trigger:** CI-C3-C1-GATE-1d83a5ff (signal docs/signals/ci-c3-c1-gate-result-1d83a5ff-20260609T0645Z.json). Router pre-measured + raw-verified the native bun summary, retained both test-only fixes, bundled push f95c79be->1d83a5ff = ONE CI run 27188621595 / bun job 80263220946. PO owns board; router owns push+gate. DJ-GATE-1.
+**Trigger:** CI-C1C3-RESIDUAL-GATE-a43dff49 (signal -> docs/signals/processed/ci-c1c3-residual-gate-result-a43dff49-20260609T0755Z.json; architect brief docs/architecture-briefs/2026-06-09-ci-172-residual-filescope.md). Router pre-measured + raw-verified native bun summary, raw-verified a43dff49 TEST/META-ONLY (8 .test.ts + 4 meta, ZERO prod src), bundled push e920dc6d->a43dff49 = ONE CI run 27191715572 / bun job 80273289808. PO owns board; router owns push+gate. DJ-GATE-1.
 
-**Gate (router-verified, accepted — native-to-native ONLY):** prior 241 (run 27185729719, sha 91afe344, 0 err) -> NEW **193** (11582 pass / 42 skip / 193 fail / **0 err** / Ran 11817, sha 1d83a5ff, run 27188621595, job 80263220946). NET **-48 (-20%)**, no regression. CI conclusion stays `failure` (193!=0, expected RED-until-0); verification gate MET. **241 SUPERSEDED by 193.** Raw `(fail)` grep ~387 = 2x dupe; native summary is the only authoritative absolute.
+**Gate (router-verified, native-to-native ONLY):** prior 172 (run 27189745293, sha 7bea53d0, 0 err) -> NEW **160** (11615 pass / 42 skip / 160 fail / **0 err** / Ran 11817, sha a43dff49, run 27191715572, job 80273289808). NET **-12**, no regression. CI conclusion stays `failure` (160!=0, RED-until-0); verification gate MET. **172 SUPERSEDED by 160.**
 
-**KEY CALL — DONE-AS-SCOPED, not re-open:** net -48 << projected -114 because the architect's C1(71)/C3(43) were SUPERSET cluster counts. The dev tasks were scoped to the NAMED files (C1=089/1423d/1423f/1570c/1903a; C3=1945b) and those ARE now CI-clean. Residual belongs to MORE files sharing the pattern but OUTSIDE the original 5-file/1-file scope -> NEW tasks, NOT a charge-back to closed ids.
+**KEY CALL — DONE-AS-SCOPED again (same as po-S25):** projected ~62, actual -12. 5 of 9 C1 files (028/025/1423a/1487/1833l) were ALREADY GREEN (transient, pre-absorbed by upstream Cluster-1 mock-contam fix). 4 real C1 fixed (VN-vs-vietnam key, getText JSON-envelope .split, stale cron, unmocked FRED). C3: 4 destroyers fixed (FK-safe delete + InMemoryTransport afterEach close). Residual same-pattern OUT-of-named-scope -> long-tail re-profile, NOT a charge-back to closed ids.
 
-**Board edits (1 atomic jq pass `scripts/po-s25-c3-c1-gate.jq`, commit-mutex held):**
-- FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES (active_sprints[24].tasks): REVIEW->DONE (+closed/done/done_by/actual_result). Single status key.
-- FIX-CI-C1-MACRO-INJECT-SEAM-TESTS (task_board.in_progress): REVIEW->DONE (+closed/done/done_by/actual_result). Single status key.
-- +FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE (TODO, dev-mcp-server, high, ~21): require()->ESM import for getMarketMessageDigest+batchReviewMarketMessages (impl in marketMessageStore.ts:239/349); TEST-ONLY; cleanest next win. Carries 193 baseline. DISPATCH-READY.
-- +FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS (BACKLOG, ~37) + +FIX-CI-C3-RESIDUAL-DB-DESTROYERS (BACKLOG, ~23): BOTH marked needs-architect-filescope-before-dev (avoid blind seam sweep = 9454baad +219 revert anti-pattern).
-- +SPIKE-CI-C4-KINH-DICH-DIACRITICS (BACKLOG spike, architect, ~14): prod-vs-test diacritics ruling first — only residual touching PROD strings; NOT routed to dev blind.
-- +VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE (top-level backlog, cowork-team): non-CI, LIVE prod risk (raw JSON to MARKET since 98df0f43); independent of /goal ci/cd pass.
-- Sprint-level: active_sprints[24].ci_absolute=193 stamped (+._updated_by=po-S25). Cluster-6 schema-drift stays PARKED.
+**NEW this round — C4 is FIRST prod-touching:** architect ruling (a) delivered (prod-emits-diacritics) -> SPIKE-CI-C4 BACKLOG->TODO, owner architect->dev-mcp-server, type SPIKE->FIX, prod_touching+isolated_push=true. MUST be its OWN commit + OWN CI run + careful verify (test-only-vs-prod separation). Path A = QUE_DATA local formatting, no Go service.
 
-**SSOT discipline:** CI sprint .tasks 25->29 (+4); top-level backlog 80->81 (+1); single status key (=1) on every flipped/created row (paths(scalars) check, no dup-key bug). Temp validated [ -s ] && jq -e . && size>600000 (734255) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po) held. _schema=v3 _ssot=true preserved. NOT pushed.
+**GOAL refinement recorded:** /goal 'ci/di all passe on GitHub, test update (remove if obsolete)'. Obsolete tests (deleted seams / reuters.js / pre-98df0f43 macro headers / stale cron) must be DELETED not patched. Folded into new sprint-level long_tail_triage_policy object (classify each bucket REWRITE vs REMOVE) + C4 gate/note.
 
-**LESSON:** When CI deltas undershoot the projection, the honest move is to accept SUPERSET-cluster diagnosis and track the under-scope FORWARD as new tasks — never charge new files back to a closed task id (breaks DoD audit) and never re-open a task whose named files are clean. Queue exactly one dispatchable ROI win; gate under-scoped + prod-string residuals behind architect confirmation.
+**Board edits (1 atomic jq pass `scripts/po-s27-c1c3-residual-gate.jq`, commit-mutex held):**
+- FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS + FIX-CI-C3-RESIDUAL-DB-DESTROYERS (active_sprints[24].tasks): REVIEW->DONE (+resolution DONE-as-scoped +closed/done/done_by/actual_result). Single status key each.
+- SPIKE-CI-C4-KINH-DICH-DIACRITICS: BACKLOG->TODO (+owner dev-mcp-server +type FIX +prod_touching +isolated_push +baseline 160 +gate +note). Single status key.
+- ci_absolute 172->160 (172 SUPERSEDED); +long_tail_triage_policy (REWRITE-vs-REMOVE); ._updated_by=po-S27. Cluster-6 schema-drift PARKED.
+
+**SSOT discipline:** sprint .tasks 29 unchanged (in-place flips, NO add/remove). Single status key (=1) on all 3 rows (paths(scalars) check). signal_queue.rows preserved EXACTLY 57. Temp validated [ -s ] && jq -e . && size>600000 (739761) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po) held + released. _schema=v3 _ssot=true. WIP in_progress=1 (<=2). NOT pushed.
+
+**LESSON:** SUPERSET-cluster under-scope recurs — accept DONE-as-scoped + track forward, never re-open. First prod-touching round demands ISOLATED push so a prod regression can't hide behind a test-only delta. /goal now classifies residuals REWRITE vs REMOVE — delete obsolete tests, don't patch them green.
 
 ## Carry-over
-- ROUTER OWNS: push (po.md + journal + orch-state.json + archived signal, commit SHA in return, ahead of origin) + dispatch FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE to dev-mcp-server NOW (TODO, cleanest next win). BEFORE either residual: route to ARCHITECT for short file-scope confirm. Route SPIKE-CI-C4 to ARCHITECT (prod-vs-test diacritics, 60m) — NOT dev blind.
-- Next CI gate (router): native fail+error must DROP vs the NEW **193** absolute (sha 1d83a5ff). Native-to-native only (marker over-counts ~2x). Continue ROI-ranked until 0 (/goal ci/cd pass).
-- VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE = independent of CI goal (live prod MARKET-channel risk). Cluster-6 schema-drift PARKED (no 7th touch).
+- ROUTER OWNS: push (po.md + journal + orch-state.json + scripts/po-s27 helper + archived signal move, commit SHA in return, ahead of origin) + dispatch SPIKE-CI-C4-KINH-DICH-DIACRITICS to dev-mcp-server as an ISOLATED round (own commit + own CI run, careful verify; Path A QUE_DATA, REMOVE-if-obsolete lens).
+- Next CI gate (router): native fail+error must DROP vs the NEW **160** absolute (sha a43dff49). Native-to-native only (marker over-counts ~2x). After C4, re-profile residual ~160 with the REWRITE-vs-REMOVE lens. Continue until 0 (/goal ci/di all passe).
+- Cluster-6 schema-drift PARKED (no further touch).

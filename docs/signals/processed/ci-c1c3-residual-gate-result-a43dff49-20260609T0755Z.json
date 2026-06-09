@@ -1,0 +1,26 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T07:55:00Z",
+  "dedup_key": "ci_c1c3_residual_gate_result:a43dff49",
+  "payload": {
+    "check_id": "CI-C1C3-RESIDUAL-GATE-a43dff49",
+    "tasks_under_test": ["FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS", "FIX-CI-C3-RESIDUAL-DB-DESTROYERS"],
+    "head_sha": "a43dff49",
+    "run_id": "27191715572",
+    "bun_test_job_id": "80273289808",
+    "conclusion": "PASS — VERIFICATION GATE MET. C1-residual (macro fetcher tests) + C3-residual (DB destroyers / InMemoryTransport hook-timeout + FK-delete) cleared as-scoped. Native fail+error DROPPED 172 -> 160 (-12). Code commit RETAINED (a43dff49). CI run conclusion is still 'failure' only because total != 0 (intentional RED until 0; expected).",
+    "verification_gate": "native fail+error must DROP below the 172 absolute (after-C2 7bea53d0). It dropped to 160. GATE MET (-12).",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80273289808 --log` (pass/skip/fail block; errors line OMITTED = 0). Native-to-native only.",
+    "after_c2_native": { "run_id": "27189745293", "sha": "7bea53d0", "pass": 11603, "skip": 42, "fail": 172, "errors": 0, "fail_plus_error": 172, "tests": 11817 },
+    "after_c1c3_residual_native": { "run_id": "27191715572", "sha": "a43dff49", "pass": 11615, "skip": 42, "fail": 160, "errors": 0, "fail_plus_error": 160, "tests": 11817 },
+    "delta_native": { "pass": "+12", "skip": "0", "fail": "-12", "errors": "0", "fail_plus_error": "-12 BETTER", "tests": "0" },
+    "empirical_finding": "Under-scope confirmed again. Architect projected 42 (C1) + 20 (C3) -> 0 (~62 net). Actual net -12. Dev fixed 8 test files (4 C1 + 4 C3), zero production src (git show --name-only a43dff49: 8 .test.ts + 4 meta). Of the 9 C1-scoped files, 5 (028, 025, 1423a, 1487, 1833l) were ALREADY GREEN locally — the CI failures had been order-dependent/transient (cleared by the Cluster-1 mock-contam fix upstream) and were no longer real failures by this round. The 4 genuinely-broken C1 files: country key 'VN' vs 'vietnam' in SLA service; getText() JSON-envelope .split with no newlines (the 98df0f43 macro HTTP-proxy seam); stale cron assertion '0 6 * * *'; unmocked getMacroExternal causing real FRED HTTP 5s timeouts + A-3 .resolves vs re-throwing job. C3: 4 files fixed (FK constraint signal_outcomes->agent_signals blocked DELETE -> FK-safe delete; InMemoryTransport never closed -> beforeEach connect() stall on next test -> afterEach close). The -12 (not -62) reflects that the C1 '42' tally was a category-wide SUPERSET; most of it had already been absorbed by the Cluster-1 upstream fix.",
+    "router_actions_done": "Raw-verified a43dff49 TEST/META-ONLY (8 .test.ts: 239/239-market-context/239c/1352a + 1124/1129/1173/1295d; 4 meta: dev DJ S10, dev notebook, orch-state, commit-mutex). ZERO production src (git show --name-only guard clean). _schema=v3 valid (735564 bytes). WIP in_progress=0. Both residuals REVIEW single-status-key. DJ dev-mcp-server-S10 present in commit. Mutex acquired+released. Pushed e920dc6d..a43dff49 (pre-push tsc OK). Native summary read from job 80273289808. Code RETAINED (gate passed). NEW ABSOLUTE BASELINE = 160 (160 fail + 0 err / Ran 11817, sha a43dff49).",
+    "po_action_requested": "1) Flip board FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS + FIX-CI-C3-RESIDUAL-DB-DESTROYERS REVIEW -> DONE-as-scoped (single-key, DJ-GATE-1: decision-journal STEP po-S27 in SAME commit, stamped both task-ids). Note both were scoped supersets; named files all fixed/already-green; residual same-pattern files out of named scope -> capture under the long-tail re-profile, NOT reopen. 2) UPDATE sprint baseline 172 -> 160 (sha a43dff49, run 27191715572, job 80273289808: 160 fail + 0 err / Ran 11817). The 172 absolute is SUPERSEDED. 3) Confirm next round = C4 (PROD-TOUCHING, isolated push) per architect ruling (a) in docs/architecture-briefs/2026-06-09-ci-172-residual-filescope.md: SPIKE-CI-C4-KINH-DICH-DIACRITICS — update PROD strings to UTF-8 Vietnamese diacritics (kinhDichTools.ts, leadershipTools.ts, formatAccuracyReport), 1414/1416 TDD-RED specs are source of truth, ~25 -> 0. MUST be isolated (separate push, careful verify) because it touches production code.",
+    "goal_refinement_note": "User refined /goal 2026-06-09T07:5x: 'ci/di all passe on GitHub, test update (remove if obsolete)'. NEW EXPLICIT CLAUSE: obsolete tests should be REMOVED, not just patched. Apply to all remaining rounds: when a test asserts against deleted/superseded production behavior (e.g. removed test seams, deleted reuters.js, pre-98df0f43 macro section-header format, stale cron schedules), DELETE the obsolete test rather than rewrite it to pass. PO: fold this into long-tail triage — classify each residual bucket as REWRITE (prod still exists, test stale) vs REMOVE (prod gone, test obsolete).",
+    "next_gate": "After C4 (dev, isolated PROD push): same native-summary method vs the NEW 160 absolute. fail must DROP. Then re-profile the residual ~160 long tail against the taxonomy with the new REMOVE-if-obsolete lens. Continue until native fail+error = 0 (/goal ci/di all passe). Cluster-6 schema-drift stays PARKED."
+  }
+}
