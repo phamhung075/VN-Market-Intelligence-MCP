@@ -1,6 +1,6 @@
 {
-  "locked": false,
-  "owner_agent": null,
-  "task": null,
-  "expires_at": 0
+  "locked": true,
+  "owner_agent": "po-S39",
+  "task": "main",
+  "expires_at": 1781008913
 }
