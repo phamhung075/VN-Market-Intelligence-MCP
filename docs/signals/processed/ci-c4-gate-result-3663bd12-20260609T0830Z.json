@@ -1,0 +1,26 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T08:30:00Z",
+  "dedup_key": "ci_c4_gate_result:3663bd12",
+  "payload": {
+    "check_id": "CI-C4-GATE-3663bd12",
+    "task_under_test": "SPIKE-CI-C4-KINH-DICH-DIACRITICS",
+    "head_sha": "3663bd12",
+    "code_commit_sha": "f7af6f08",
+    "run_id": "27193376550",
+    "bun_test_job_id": "80278819016",
+    "conclusion": "PASS — VERIFICATION GATE MET. Cluster-4 (Kinh Dich diacritics / explain_hexagram sections) cleared. Native fail+error DROPPED 160 -> 135 (-25, -16%). errors stayed 0. This was the FIRST prod-touching round of the sprint (isolated push, own CI run). Code commits RETAINED (f7af6f08 + mutex-release 3663bd12). CI run conclusion still 'failure' (total != 0; expected RED until 0 fail).",
+    "verification_gate": "native fail+error must DROP vs the 160 absolute (sha a43dff49, run 27191715572, job 80273289808). It dropped to 135. GATE MET (-25).",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80278819016 --log` (' NNN pass / NNN skip / NNN fail' leading-space block; errors line OMITTED => 0). Native-to-native only.",
+    "prev_absolute_160": { "run_id": "27191715572", "sha": "a43dff49", "bun_job_id": "80273289808", "pass": 11615, "skip": 42, "fail": 160, "errors": 0, "fail_plus_error": 160, "tests": 11817 },
+    "after_c4_native": { "run_id": "27193376550", "sha": "3663bd12", "bun_job_id": "80278819016", "pass": 11639, "skip": 42, "fail": 135, "errors": 0, "fail_plus_error": 135, "tests": 11816 },
+    "delta_native": { "pass": "+24", "skip": "0", "fail": "-25", "errors": "0", "fail_plus_error": "-25 BETTER", "tests": "-1" },
+    "empirical_finding": "Architect ruling (a) CONFIRMED: PROD was emitting ASCII fallback; the 1414/1416/285/1472/1410 spec family was source-of-truth. FIX = change PRODUCTION to UTF-8 Vietnamese diacritics + add explain_hexagram sections (Hào từ / Tượng truyện / 6 hào) via QUE_DATA local library (Path A, ZERO Go service change, no new HTTP). Result was a CLEAN -25 with NO under-scope shrinkage (unlike C1/C3 residuals) — architect projected ~25 and it netted exactly 25. tests count -1 because one obsolete test was REMOVED (1416 'Lỗi khi tính quẻ thị trường' assertion — get_market_hexagram handler was deleted TSH-1 2026-05-31, string no longer in prod). REWRITE-vs-REMOVE lens applied per /goal: 1416 = REMOVE (prod gone), 1410 = REWRITE (formatAccuracyReport returns object, test cast to .text), 1414/285/1472 = REWRITE (prod stale, fixed prod not test).",
+    "router_actions_done": "Raw-verified dev f7af6f08 scope CONTAINED to C4 file-scope: 2 prod src (kinhDichTools.ts Path A local QUE_DATA + diacritics; leadershipTools.ts 1-line VN tool description), 2 test (1416 REMOVE, 1410 REWRITE), 4 meta (dev DJ, dev notebook, commit-mutex, orch-state). Prod diff = 56 ins / 30 del, matches architect ruling (a) exactly. tsc clean (pre-push hook OK). Local 258/0 across 5 C4 files. Board hygiene verified: orch _schema=v3 + _ssot=true, C4 task=REVIEW single-status-key, WIP=0, mutex released. Pushed ISOLATED d26b8afc..3663bd12 (own CI run; pre-push tsc OK; no origin drift). Native summary read from job 80278819016. Code RETAINED (gate passed). NEW ABSOLUTE BASELINE = 135 (135 fail + 0 err / Ran 11816, sha 3663bd12).",
+    "po_action_requested": "1) Flip board/signal_queue SPIKE-CI-C4-KINH-DICH-DIACRITICS REVIEW -> DONE (DJ-GATE-1: decision-journal STEP po-S28 in the SAME commit, stamped task-id). 2) UPDATE the sprint baseline absolute (.ci_absolute) from 160 -> 135 (sha 3663bd12, run 27193376550, job 80278819016: 135 fail + 0 err / Ran 11816, pass 11639, skip 42). The 160 absolute is now SUPERSEDED. 3) Commit ONLY owned paths with explicit pathspec from repo ROOT.",
+    "next_gate": "Re-profile the residual 135 long tail against the taxonomy WITH the REMOVE-if-obsolete lens (classify each bucket REWRITE vs REMOVE). Long-tail intel captured from CI annotations (first-10 only, not full tally): 028-sbv-rates (3, null/unmocked-HTTP), 1487-yahoo-finance-extended (3, null/unmocked-HTTP), 1792-conviction-debounce (2, count 1-vs-0 logic), 1031-expanded-watchlist-catalog (1, sector 'other' vs 'chemicals' = SSOT watchlist drift / VNH-misclassification pattern), 1352a-scheduler L248 (1, C1 under-scope residual same file different assertion). Cluster-6 schema-drift stays PARKED (do not re-open). Continue /goal 'ci/di all passe' loop until native fail+error = 0."
+  }
+}
