@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T03:50:20Z",
-  "_updated_by": "architect-P8",
+  "_updated_at": "2026-06-09T00:00:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -6051,7 +6051,21 @@
         "note": "[po-S20] DONE — verified + pushed (b3d3022c, RETAINED through P7 revert; apps/ proven byte-identical to b3d3022c via empty git diff --cached). vpsHealthPoller unixepoch normalise: healed its own lexicographic-MAX(timestamp) ordering bug (text-MAX picked wrong row -> false UNHEALTHY) + added +1 PASSING regression test (test file 234: 12->13 pass), ZERO regression. LEGIT separate fix discovered alongside P7 (distinct from FIX-NEWS-VPS-CRASH-LOOP = vn-news-fetch crash-restart loop). Source fix in CI/main; LIVE false-UNHEALTHY benefit needs mcp-server CONTAINER REBUILD (live polling runs old image) -> DISPATCH OPS (rebuild-after-dev-change). Router owns push (already pushed)."
       }
     ],
-    "in_progress": []
+    "in_progress": [
+      {
+        "id": "FU-SCHEMA-DRIFT-P8-IMPL",
+        "title": "Impl: DDL DEFAULT reconciliation (3 tables) + P5 self-heal re-apply in getDb() + preload initDatabase() in setup.ts — FU-SCHEMA-DRIFT-P8 direction (a) per architect brief 2026-06-09-fu-schema-drift-p8-spike.md",
+        "type": "BUG",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "critical",
+        "sprint": "CI-RED-RECONCILE",
+        "created_at": "2026-06-09T00:00:00Z",
+        "note": "[dev-mcp-server DJ-GATE-1 2026-06-09] IMPL: rag_analyses/agent_feedback/signal_quality_audit created_at DEFAULT added; getDb() P5 self-heal re-applied (9 slices excl. initFinancialReportsTables); setup.ts await initDatabase() preload added. tsc clean. Router owns CI gate."
+      }
+    ]
   },
   "signal_queue": {
     "_updated_at": "2026-06-09T03:38:00Z",

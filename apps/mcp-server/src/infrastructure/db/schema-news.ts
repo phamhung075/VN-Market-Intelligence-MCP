@@ -19,7 +19,7 @@ export function initNewsTables(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS rag_analyses (
       id                 TEXT PRIMARY KEY,
-      created_at         TEXT NOT NULL,
+      created_at         TEXT NOT NULL DEFAULT (datetime('now')),
       level              TEXT NOT NULL,
       source_url         TEXT,
       source_title       TEXT,

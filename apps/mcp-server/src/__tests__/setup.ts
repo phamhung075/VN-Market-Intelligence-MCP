@@ -39,3 +39,6 @@ for (const subdir of [
 
 Bun.env["DB_PATH"] = ":memory:";
 Bun.env["STOCK_PRICE_DB_PATH"] = "/tmp/test_stock_price.db";
+
+import { initDatabase } from "../infrastructure/db/schema.js";
+await initDatabase();

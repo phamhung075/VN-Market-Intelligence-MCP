@@ -106,7 +106,7 @@ export function initSystemTables(db: Database): void {
       detail            TEXT NOT NULL DEFAULT '',
       priority          TEXT NOT NULL DEFAULT 'medium',
       status            TEXT NOT NULL DEFAULT 'new',
-      created_at        TEXT NOT NULL,
+      created_at        TEXT NOT NULL DEFAULT (datetime('now')),
       reparse_attempts  INTEGER NOT NULL DEFAULT 0
     )
   `);
@@ -427,7 +427,7 @@ export function initSystemTables(db: Database): void {
       vps_breaker_state  TEXT,
       coverage_gap       TEXT,
       staleness_warning  BOOLEAN,
-      created_at         TEXT NOT NULL,
+      created_at         TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(signal_id)
     )
   `);

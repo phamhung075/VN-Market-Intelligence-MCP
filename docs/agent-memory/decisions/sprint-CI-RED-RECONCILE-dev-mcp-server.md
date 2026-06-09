@@ -104,3 +104,20 @@
 - Option (b) reinit in afterAll of 3 killers — chosen: test-only, additive, preserves canonical schema for subsequent files; uses full initDatabase() not partial slice list
 **why-decision:** Architect brief confirmed direction (b) is bounded to 3 test files; initDatabase() is idempotent on fresh :memory: DB; 089 pre-existing failures confirmed by git stash baseline check (unrelated to this fix).
 **why-change:** 182-portfolio-risk.test.ts left unchanged per brief §4a revised scope — afterEach self-contained, not a killer for subsequent files.
+
+---
+
+### STEP dev-mcp-server-S8 · dev-mcp-server · 2026-06-09T00:00:00Z (DJ-GATE-1)
+**task-id:** FU-SCHEMA-DRIFT-P8-IMPL
+**sprint:** CI-RED-RECONCILE
+**what-done:** Implemented architect brief 2026-06-09-fu-schema-drift-p8-spike.md direction (a) in 5 files:
+1. `schema-news.ts` line 22 — `rag_analyses.created_at TEXT NOT NULL` → `TEXT NOT NULL DEFAULT (datetime('now'))`
+2. `schema-system.ts` line 109 — `agent_feedback.created_at TEXT NOT NULL` → `TEXT NOT NULL DEFAULT (datetime('now'))`
+3. `schema-system.ts` line 430 — `signal_quality_audit.created_at TEXT NOT NULL` → `TEXT NOT NULL DEFAULT (datetime('now'))`
+4. `schema.ts` getDb() — re-applied P5 self-heal block (9 slices: initMarketDataTables, initAlertsTables, initMacroTables, initPortfolioTables, initNewsTables, initBriefingsTables, initSystemTables, initBacktestingTables, initAgmPlanTables); initFinancialReportsTables excluded (RISK-2)
+5. `setup.ts` — added `import { initDatabase } from "../infrastructure/db/schema.js"` + `await initDatabase()` at bottom of preload
+**what-considered:**
+- Import path `../../infrastructure/db/schema.js` — rejected: resolves to wrong directory; setup.ts is in src/__tests__/, correct path is `../infrastructure/db/schema.js` (confirmed by matching 10+ existing test-file imports)
+- Recovering P5 self-heal from git: `git show 541123b4:apps/mcp-server/src/infrastructure/db/schema.ts` confirmed the exact block; extracted and re-applied verbatim
+**why-decision:** DDL reconciliation eliminates the P5 +6 regression root cause (NOT NULL without DEFAULT for 3 tables). Self-heal in getDb() heals files that reach _db=null after any closeDb(). Preload await initDatabase() handles files that run before any closeDb() and covers initFinancialReportsTables safely via full init path.
+**why-change:** import path corrected from `../../` to `../` after tsc typecheck failed — first attempt used path from brief §5 verbatim; correct path derived from existing test file pattern.
