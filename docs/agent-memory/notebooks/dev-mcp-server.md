@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · BATCH5-CI-012-LANCEDB-HERMETIC — DONE (DJ-GATE-1)
+
+**Task:** BATCH5-CI-012-LANCEDB-HERMETIC | Sprint: CI-RED-RECONCILE | Size: XS | DJ: dev-mcp-server-S26
+**Scope:** `src/__tests__/012-lancedb-store.test.ts` — CI hermetic guard (itStore pattern).
+**Root cause:** Bun v1.3.13 native teardown C++ exception (bun.report/1.3.13/mt1bf2e2ce...) when LanceDB native module unloads at process exit. All 6 tests pass; crash is in Bun cleanup path, not user code. Per-file isolation runner sees non-zero exit → file counted as FAILED. Identical fingerprint to 011-rag-embeddings (ONNX teardown), fixed in e59a4547 via `itModel` guard.
+**Fix:** Added `const itStore = Bun.env.CI === "true" ? it.skip : it` near top of describe scope. Replaced all 6 `it(` with `itStore(`. All 6 tests are LanceDB-native (no pure-logic subset to keep running under CI).
+**Verify:** CI=true → 0 pass / 6 skip / 0 fail, exit 0. tsc clean. Only file touched: 012-lancedb-store.test.ts + this notebook.
+
+---
+
 ## 2026-06-09 · BATCH5-CI-RESIDUAL-INFRA — DONE
 
 **Task:** BATCH5-CI-RESIDUAL-INFRA | Sprint: CI-RED-RECONCILE | Size: M | DJ: dev-mcp-server-S25
