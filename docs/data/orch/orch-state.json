@@ -4140,7 +4140,7 @@
         "title": "ARCHITECT SPIKE: reconcile 9 standalone init-slice DDLs vs canonical initDatabase() (column drift incl created_at)",
         "type": "SPIKE",
         "owner": "architect",
-        "status": "TODO",
+        "status": "REVIEW",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -6747,6 +6747,28 @@
         "status": "NEW",
         "zone_owner": "dev-mcp-server",
         "check_id": "C-04",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-20260609T023050",
+        "ts": "2026-06-09T02:30:50Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "news-vps stale 1.03h (check B-11)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-20260609T023051",
+        "ts": "2026-06-09T02:30:51Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "bctc-discover stale 9.5h (check B-02)",
+        "severity": "CRITICAL",
+        "status": "NEW",
         "payload_ref": null
       }
     ],

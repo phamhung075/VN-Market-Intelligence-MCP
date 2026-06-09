@@ -125,3 +125,25 @@ is excluded from the self-heal due to RISK-2 (view compilation risk) and is NOT 
 **pm-decompose recommendation:** Single task `FIX-SCHEMA-DRIFT-P5-SELFHEAL`, zone=apps/mcp-server/,
 timebox=30m, owner=dev-mcp-server, exactly 1 file (`schema.ts`), verification gate: native
 `bun test` fail+errors < 629 (native-to-native comparison only; marker method over-counts ~2×).
+
+---
+
+### STEP arch-S5 (DJ-GATE-1) · architect · 2026-06-09T05:45Z
+
+**task-id:** FU-SCHEMA-DRIFT-P6
+**sprint:** CI-RED-RECONCILE
+**mode:** spike (120m timebox)
+
+**what-done:** Full audit of all 9 standalone slice DDLs for `created_at` column drift.
+Built complete column-presence table (64 tables across 9 slices). Identified root cause
+of P5 `created_at ×3` regression. Chose direction (b). Produced 3-file dev-ready plan.
+
+**what-considered:**
+- **Hypothesis (task spec):** ≥1 slice DDL omits `created_at` on table consuming code queries → IF NOT EXISTS no-op trap → column missing → error. DISPROVED: all tables queried for `created_at` have it defined in their slice DDL. No column-level drift found.
+- **Actual P5 regression cause:** Self-heal creates tables with `TEXT NOT NULL` (no DEFAULT) on `agent_feedback`, `signal_quality_audit`, `rag_analyses`. Contract-B tests that previously created these tables with looser inline DDL (WITH default or omitting the column) hit NOT NULL on INSERT when self-heal's stricter DDL wins the create race on fresh `:memory:` DB.
+- **Option (a) self-heal-with-RECONCILED-DDL:** Add DEFAULT to 3 slice tables + keep self-heal. REJECTED: production footgun (repeated side effects from `initMarketDataTables` DELETE on `market_prices` firing on every `afterEach closeDb`); still doesn't fix 182-portfolio-risk's Contract-B violation pattern.
+- **Option (b) Contract-A killers reinit CHOSEN:** Modify 3 `afterAll(() => closeDb())` in 084-tool-market, 089-tool-macro, 1527-schema-slices to `afterAll(async () => { closeDb(); await initDatabase(); })`. Test-files only. Uses full `initDatabase()` (not partial 9-slice self-heal), so includes `initFinancialReportsTables` — no RISK-2 exclusion needed.
+
+**why-decision:** Option (b) zero production-code risk; uses canonical `initDatabase()` (full schema, idempotent); the 3 files are the only afterAll-closeDb killers; self-heal footgun avoids re-introducing P5 DELETE side-effect on every test.
+
+**why-change:** P5 hypothesis (drift in slice DDL) DISPROVED empirically. Root cause is Contract boundary violation + self-heal side-effects, not DDL column omission.

@@ -1,8 +1,24 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 04:00 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 05:45 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T05:45Z — FU-SCHEMA-DRIFT-P6: recurring-bug spike, slice DDL audit + P5 regression diagnosis
+
+**Task:** FU-SCHEMA-DRIFT-P6 (SPIKE, 120m, zone: apps/mcp-server/)
+
+**Key finding:** P6 task hypothesis DISPROVED. All 9 standalone slice DDLs are column-correct for `created_at`. No slice omits `created_at` on any table where consuming production code queries it. The P5 `created_at ×3` regression was from a different mechanism: self-heal created tables with `TEXT NOT NULL` (no DEFAULT) on `agent_feedback`, `signal_quality_audit`, `rag_analyses`; Contract-B tests that previously inlined looser DDL hit NOT NULL violations.
+
+**Drift table completed:** 64 tables across 9 slices. Tables with `created_at` in slice but NO DEFAULT: `rag_analyses`, `agent_feedback`, `signal_quality_audit`, `broker_sanctions`. `telegram_reports.created_at` is INTEGER (epoch) not TEXT — pre-existing semantic drift.
+
+**Direction chosen:** (b) — 3 Contract-A singleton-killer files modify `afterAll(() => closeDb())` to `afterAll(async () => { closeDb(); await initDatabase(); })`. Uses full canonical `initDatabase()` (not partial 9-slice). Zero production code changes. 3 files only.
+
+**Brief:** `docs/architecture-briefs/2026-06-09-fu-schema-drift-p6-spike.md`
+
+**Files (dev task):** 084-tool-market.test.ts, 089-tool-macro.test.ts, 1527-schema-slices.test.ts — 1 change each (afterAll async reinit). `182-portfolio-risk.test.ts` unchanged.
+
+**Gate:** native bun test fail+error < 629.
 
 ## 2026-06-09T04:00Z — FU-SCHEMA-DRIFT-P5: recurring-bug spike, full-suite singleton pollution
 
