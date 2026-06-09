@@ -1,0 +1,8 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] RELEASE BATCH BLOCKED c035: CTG (cycle 27+), VCB/REE/NVL/D2D/TCH (cycle 2). get_bctc_full returns empty for all 6 tickers despite PDFs stored. Extraction pipeline unblocked required. Prior escalations: c032, c033, c034.",
+  "priority": "high",
+  "createdAt": "2026-06-09T00:08:00Z"
+}

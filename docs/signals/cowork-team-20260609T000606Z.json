@@ -1,0 +1,18 @@
+{
+  "signal_type": "cowork-team-tick",
+  "classification": "FIRE",
+  "tick_id": "00:06",
+  "fire_time": "2026-06-09T00:06:06Z",
+  "emitted_at": "2026-06-09T00:07:06Z",
+  "drift_min": 6,
+  "matched_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+  "won_slots": ["bctc-analyst-slot-4", "news-scout-offhours", "market-watcher-offhours"],
+  "collision_warn": [],
+  "leader_lock": "acquired_fresh",
+  "leader_lock_note": "claimed=true fresh — 21:06 leader (ttl 1800s) expired ~21:36 untouched across silent ticks 21:21..23:36 (silent ticks never touch leader lock). Clean fresh acquisition at 00:06. Slot tokens remain hard dup-spawn gate.",
+  "spawned": ["docs/agents/bctc-analyst/flow/main.md", "docs/agents/news-scout/flow/main.md", "docs/agents/market-watcher/flow/main.md"],
+  "agent_ids": ["a3a695e47306b4fcd", "a6abf2a175f586843", "a67a761ea506f3867"],
+  "calendar_status": "closed",
+  "macro": {"vnIndex": 1790.53, "changePct": -2.63, "regime": "RISK_OFF", "volatility_level": "high"},
+  "note": "Off-market 00:00 UTC batch. bctc-analyst-slot-4 (cron 0 0, bctc-offmarket, last 08-06 00:07) financial pass — E2 guard: 00:06 outside [02:00,08:00) VN window, valid. news-scout-offhours + market-watcher-offhours (cron 0 */4, gatherer-standard, last 08-06 20:06) 4h gatherer batch. 3 distinct agents, collision moot. All 3 slot tokens won/released ok, snapshot fresh, emit ok 00:07:06Z. Carry: CTG cycle 26+ DATA_INSUFFICIENT + release-batch BLOCKED (#5434), EIB governance #5417."
+}

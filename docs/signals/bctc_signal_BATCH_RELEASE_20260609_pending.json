@@ -1,0 +1,24 @@
+{
+  "ticker": "BATCH-CTG-VCB-REE-NVL-D2D-TCH",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "release",
+  "status": "BLOCKED",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "cycle": "c035",
+  "cycle_time_utc": "2026-06-09T00:08Z",
+  "slot": "bctc-analyst-slot-4",
+  "tickers": {
+    "CTG": {"cycles_blocked": "27+", "pdf_stored": true, "pdf_size_mb": 6.0, "pdf_date": "2026-06-08"},
+    "VCB": {"cycles_blocked": 2, "pdf_stored": true, "pdf_size_mb": 8.1, "pdf_date": "2026-06-07"},
+    "REE": {"cycles_blocked": 2, "pdf_stored": true, "pdf_size_mb": 3.3, "pdf_date": "2026-06-07"},
+    "NVL": {"cycles_blocked": 2, "pdf_stored": true, "pdf_size_mb": 1.9, "pdf_date": "2026-06-08"},
+    "D2D": {"cycles_blocked": 2, "pdf_stored": true, "pdf_size_mb": 11.6, "pdf_date": "2026-06-07"},
+    "TCH": {"cycles_blocked": 2, "pdf_stored": true, "pdf_size_mb": 15.1, "pdf_date": "2026-06-07"}
+  },
+  "extraction_status": "get_bctc_full returns empty for all 6 tickers",
+  "action_required": "dev-team unblock extraction pipeline",
+  "signal_id_bus": 5455,
+  "critic_score": 0.6
+}

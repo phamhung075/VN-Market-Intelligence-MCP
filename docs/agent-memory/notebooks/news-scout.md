@@ -1,6 +1,23 @@
-- **Last updated:** 2026-06-08 20:09 UTC · **Sprint:** current · **Status:** 64 cycles complete (c64 off-hours +SHIPPED)
+- **Last updated:** 2026-06-09 00:09 UTC · **Sprint:** current · **Status:** 65 cycles complete (c65 off-hours +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c65 · 2026-06-09T00:09:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (MONDAY 00:09 UTC, MARKET CLOSED) — NEUTRAL REGIME, BEARISH MACRO + BULLISH STRUCTURAL.** 20 articles fetched, 45 watchlist impacts (primary: VN-Index drops to 1790.53 (-48.37, ~-2.6%), foreign net-sell 700B VND, banking sector -2.18% cascade 11 stocks; secondary: gold liquidation -6M VND/lượng risk-off; tertiary: VIC capital restructuring bullish EPS tailwind). **3 signals fired (#5451–#5453): 2x chain_catalyst (foreign outflow macro +8.0, gold liquidation +7.0) + 1x urgent_news (VIC restructuring bullish +8.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1790.53, oil NEUTRAL 94.33 (+1.33%), gold BULLISH 4341.60 (-0.54%), usdvnd BEARISH 26127 >25k, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (mixed: macro bearish VN-Index breach + FII exit, but gold + VIC bullish offset). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +2.05pp.
+
+**Signals Fired (3 total):**
+- #5452 (chain_catalyst to all): Foreign investors net-sell 700B VND, VN-Index breaches 1800 support. Banking cascade (BID, EIB, MBB, ACB, CTG, VPB, VCB) + realty + securities (41 affected). Confidence 82%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. hot_money_risk=true. Pillars: COC headwind, EPS bearish. Phase slowdown, tier equity.
+- #5453 (chain_catalyst to all): Gold liquidation −0.32% (-6M VND/lượng). Safe-haven unwinding, risk-off signal. Confidence 75%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Affected: REE (alt-commodity). Pillars: M2 bearish, COC headwind. Phase slowdown, tier alternative.
+- #5451 (urgent_news VIC to alert-commander): Vingroup Chairman PNV transfers capital to GSM + VinEnergo, strengthens VIC consolidation. Structural bullish EPS catalyst. Confidence 84%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. Pillars: EPS bullish. Phase expansion, tier equity.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h clean). All 3 signals POSTED (no prior theme overlap in 180-min window). Macro + micro structural divergence allowed (direction override: #5452 bearish + #5451 bullish both posted).
+
+**Coverage-state:** Updated all 41 watchlist tickers to 2026-06-09T00:09:00Z (no stale tickers; all recently covered 2026-06-08T20:09Z). Atomic write: tmp→rename verified.
+
+**Session Log:** log_agent_work #1296 opened/closed. 20 items, 45 impacts, 3 signals, NEUTRAL regime. Off-hours slot.
 
 ## c64 · 2026-06-08T20:09:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
 
@@ -58,24 +75,3 @@
 **Coverage-state:** Updated all 15 event-driven watchlist tickers (VCI, SSI, HCM, VDC, HVN, VIC, VRE, VHM, ACV, EIB) to 2026-06-08T12:07:00Z. Atomic write: tmp→rename pattern verified.
 
 **Session Log:** log_agent_work #1285 opened/closed. 20 items, 15 impacts, 3 signals, NEUTRAL regime. Off-hours slot confirmed.
-
-## c61 · 2026-06-08T08:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
-
-**Off-hours cycle (SUNDAY 08:07 UTC, MARKET OPEN EARLY) — NEUTRAL REGIME, MIXED SENTIMENT REBOUND.** 20 articles fetched, 15 watchlist impacts (Vietcap bullish outlook 41 tickers, FTSE FII inflow banking/securities, OPEC+ oil +4 stable, gold selloff VNM/VEA). **5 signals fired (#5355–#5361): 3x chain_catalyst (Vietcap Jun scenarios +7.0, FTSE upgrade +7.0, OPEC+ production +5.0, gold decline +3.0) + 1x urgent_news (HVN dividend record 4600vnd/cp +8.0).**
-
-**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN EARLY (02:00–08:59 UTC). `get_macro_snapshot()` valid shape (vnIndex=1790.53 -48.37 down, oil NEUTRAL 97.09 (+4.30%), gold BULLISH 4332.3 -0.76%, usdvnd BEARISH 26127 >25k, carry NEUTRAL 1.38pp, yield CHEAP 3.2pp). **Regime: NEUTRAL** (mixed signals; oil stable commodity support, gold bullish safe-haven, USDVND depreciation headwind, equity yield advantage persistent).
-
-**Signals Fired (5 total):**
-- #5355 (chain_catalyst to all): Vietcap 2-scenario Jun outlook, bullish growth/value rotation. Confidence 69%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. 41 watchlist affected. Pillars: EPS bullish, M2/COC/POL neutral. Phase expansion, tier equity.
-- #5356 (urgent_news HVN to alert-commander): Aviation dividend record high 4600vnd/share payout, strong earnings signal. Confidence 80%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. Pillars: EPS bullish, M2/COC/POL neutral. Phase expansion.
-- #5357 (chain_catalyst to all): FTSE index upgrade — Vietnam equity attracting international institutional capital flows. Confidence 75%. Critic 0.8. hot_money_risk=true. Regime NEUTRAL mult=1.0→score 7.0. Affected: VCB, BID, ACB, CTG, EIB (banking). Pillars: COC tailwind, POL bullish, M2/EPS neutral. Phase expansion, tier equity.
-- #5358 (chain_catalyst to all): OPEC+ production +4 months—stable commodity prices, oil sector support. Confidence 70%. Critic 0.8. Regime NEUTRAL mult=1.0→score 5.0. Affected: GAS, PLX (oil_gas). Pillars: M2/COC/EPS/POL neutral. Phase expansion, tier alternative.
-- #5361 (chain_catalyst to all): Gold selloff −0.76% liquidation pressure, risk-off hedge fund unwinding. Confidence 75%. Critic 0.8. hot_money_risk=true. Regime NEUTRAL mult=1.0→score 3.0. Affected: VNM, VEA (other sector safe-haven). Pillars: M2 bearish, COC neutral, EPS neutral, POL neutral. Phase slowdown, tier alternative.
-
-**Dedup Gate:** SELF_SIGNALS_CACHE empty (clean 6h window, no prior signals). All 5 signals POSTED without suppression.
-
-**Sweep Forced:** PDR, MSN, FRT (>96h stale, oldest first) — no dedicated news hits but inherited market-wide Vietcap cascade (confidence 70%). Coverage-state stamped for future cycles.
-
-**Coverage-state:** Updated all 38 event-driven watchlist tickers + sweep batch (PDR, MSN, FRT) to 2026-06-08T08:07:00Z. Atomic write: tmp→rename pattern verified.
-
-**Session Log:** log_agent_work #1284 opened/closed. 20 items, 15 impacts, 5 signals, NEUTRAL regime. Off-hours slot confirmed.
