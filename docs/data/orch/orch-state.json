@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T14:40:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-09T15:01:03Z",
+  "_updated_by": "po-S47",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T14:40:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-09T15:01:03Z",
+    "_updated_by": "po-S47",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3853,6 +3853,43 @@
             "terminal_reason": "GATE PARTIAL net-positive, KEEP commit 09dce373 (pushed, HEAD=origin=0494660d). Scoped to the 1792-contaminator removal ONLY: the file-bottom afterAll registry-restore in 1792-conviction-debounce.test.ts removed the sendTelegramBug boolean-stub leak and cured 2 of Task 235s 6 fails -> named per-victim exact-prefix flip Task 235 6 fail -> 4 fail (jitter-robust, run 27214052876, bun_job 80350659632). Absolute 63 -> 62, pass 11698 -> 11699. The 1792 afterAll teardown FULLY achieved what a teardown fix can (removed the 1792 boolean-stub leak from the process-global ESM registry); 235s RESIDUAL 4 is a DIFFERENT/ADDITIONAL root cause, NOT a defect in this fix. Identical scoping to FIX-CI-C1485 (scoped to the 1328e cure only).",
             "residual_carried": "Task 235 RESIDUAL 4 carried as a SEPARATE open lever pending architect re-triage (in flight now). The predicted FULL 235 cure (6 -> 0) DID NOT materialize on full CI; 235 retains 4 from a different/additional contaminator or genuine assertion-logic. PO opens the correctly-typed fix (REWRITE/REMOVE/Nth-contaminator) ONLY AFTER the architect RETURNs a verdict — NOT opened here.",
             "bonus_watch_result": "Task 1352a unchanged 2 -> 2 (frozen-real-capture bonus did NOT materialize; independent residual). Task 1792 own residual unchanged 4 -> 4 (teardown-only fix does not touch its own pass/fail). Neither claimed."
+          },
+          {
+            "id": "FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [],
+            "spec_brief": "docs/architecture-briefs/2026-06-09-ci-c235-residual-triage.md (arch-S17, commit 5cd0174f)",
+            "root_cause": "Telegram mock.module contamination CLASS — repo-wide. Multiple apps/mcp-server/src/__tests__/ files install a file-top/module-scope mock.module(\"../infrastructure/notifiers/telegram.js\", ...) stub with NO cache-busted afterAll registry-restore. In Bun's sequential full-CI ordering, each such file leaks its stub into the process-global ESM registry, poisoning EVERY downstream file that imports telegram.js (directly or via await import). FOUR contaminators confirmed in this family this sprint: 1485 (CURED, leaked notifyTelegramAlert), 1792 (CURED, leaked sendTelegramBug), FIX-1290 (PENDING, leaks sendTelegramMarket — arch-S17 confirmed fourth contaminator, the surviving source of Task 235's residual 4), 047 (SECONDARY propagator — has afterAll but re-installs a frozen STUB capture, not the cache-busted real module). One-at-a-time costs one full ~90-min CI run per contaminator discovered; the class is grep-enumerable and the cure is teardown-only with zero prod risk.",
+            "scope": "SWEEP — drain the entire telegram mock.module contamination class in ONE pass. dev greps apps/mcp-server/src/__tests__/ for ALL files calling mock.module(\"...notifiers/telegram.js\"...) at file-top/module scope; for EACH that lacks a genuine cache-busted afterAll registry-restore, apply the proven C5-cure pattern: (1) add afterAll to the bun:test import; (2) add a cache-busted real-module ref captured at FILE TOP, BEFORE the stub runs (const _realMod<N> = await import(Bun.resolveSync(\"../infrastructure/notifiers/telegram.js\", import.meta.dir) + \"?isolate=<N>\")); (3) add a file-bottom afterAll that re-installs ALL real telegram exports (sendTelegram, sendTelegramMarket, sendTelegramWork, sendTelegramBug, notifyTelegramAlert, notifyTelegramDocument, formatConvictionBlock, deleteTelegramBug) from _realMod<N>. The existing load-bearing module-scope/it()-body stub stays UNCHANGED; beforeEach/afterEach resetters UNCHANGED; NO new file-top/module-scope mock.module (the ONLY new mock.module is inside afterAll). NO prod change. NO victim-test edits. C5-cure template + proven 1485/1792 implementations are the reference. C5-CURE ABSOLUTE constraints per arch-S17 brief §C5-Cure Specification.",
+            "file_list": {
+              "primary_cure_NO_afterAll_filetop_stub": [
+                "apps/mcp-server/src/__tests__/FIX-1290-briefing-no-stale.test.ts (L21 file-top mock.module, NO afterAll — arch-S17 CONFIRMED fourth contaminator, leaks sendTelegramMarket; surviving source of Task 235 residual 4)",
+                "apps/mcp-server/src/__tests__/1424a-bctc-unit-scale-mismatch.test.ts (L24 file-top mock.module, NO afterAll — LATENT contaminator surfaced by PO grep)",
+                "apps/mcp-server/src/__tests__/1345b-bctc-financial-validation.test.ts (L26 file-top mock.module, NO afterAll — LATENT contaminator surfaced by PO grep)"
+              ],
+              "audit_has_afterAll_verify_restores_REAL_not_frozen_stub": [
+                "apps/mcp-server/src/__tests__/047-bctc-orchestrator.test.ts (arch-S17: has afterAll but captures/re-installs a frozen STUB, not cache-busted real — SECONDARY propagator; convert to cache-busted real restore)",
+                "apps/mcp-server/src/__tests__/1352a-scheduler-job-wrappers-macro-marketscan.test.ts (arch-S17: afterAll restores frozen-stub capture — verify + convert to cache-busted real)",
+                "apps/mcp-server/src/__tests__/1356a-pattern-watch-job-gaps.test.ts (has afterAll — verify it is a cache-busted real restore; convert if frozen-stub)"
+              ],
+              "already_cured_do_not_touch": [
+                "apps/mcp-server/src/__tests__/1485-telegram-mock-isolation.test.ts (CURED arch-S15 5e7c9b5c)",
+                "apps/mcp-server/src/__tests__/1792-conviction-debounce.test.ts (CURED arch-S16 09dce373)"
+              ],
+              "enumeration_command": "grep -rl 'mock\\.module(.*notifiers/telegram\\.js' apps/mcp-server/src/__tests__/  (then per-file verify cache-busted afterAll restore present; absence or frozen-stub-only = needs cure)"
+            },
+            "primary_gate_proof": "Task 235 per-victim exact-prefix (fail) tally MUST flip from 4 log-lines -> 0 on full CI (2 unique tests x 2 log occurrences -> 0). This proves FIX-1290's sendTelegramMarket leak is cured. SECONDARY: watch for additional latent victims flipping (1424a/1345b downstream consumers, and any 047/1352a frozen-stub-restore conversions). Measured by full-CI per-victim exact-prefix tally on the real CI run — NOT a 2-file local repro, NOT the jitter-prone absolute. Evidence bar: three consecutive false-positive local repros this sprint (arch-S14/S15/S16) => 2-file joint-pass is NOT sufficient proof.",
+            "subsumes": "This SWEEP SUBSUMES the single-file FIX-CI-C235-FIX1290-CONTAM-STUB cure that was the one-at-a-time alternative. FIX-1290's C5-cure is the first item in the primary_cure list above.",
+            "baseline_pass": 11699,
+            "fail_count_discrepancy": "Task 235 residual at gate 09dce373 = 4 log-lines = 2 unique failing tests x 2 occurrences (runtime + summary dump). arch-S17 expects 4 -> 0 once FIX-1290's sendTelegramMarket leak is cured.",
+            "created_at": "2026-06-09T15:01:03Z",
+            "created_by": "po-S47"
           }
         ],
         "_updated_by": "po-S28",
