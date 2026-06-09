@@ -825,7 +825,10 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   // NOTE: totalLiabilitiesAndEquity is computed later at line ~860; this forward
   // read using fv is intentional and safe (fv is pure/deterministic).
   const totalSourcesSideFwd = fv(P_TOTAL_LIABILITIES_AND_EQUITY, "440", 440);
-  if (totalSourcesSideFwd > 0) {
+  // FIX-BCTC-MAGNITUDE-NORMALIZE path A: skip when sbMap is active.
+  // Split-block extraction already provides reliable code-keyed values;
+  // the override would corrupt correctly-extracted split-block data.
+  if (sbMap === null && totalSourcesSideFwd > 0) {
     const disagreement =
       totalAssets === 0 ||
       (Math.abs(totalAssets - totalSourcesSideFwd) / totalSourcesSideFwd > 0.05);
@@ -937,7 +940,10 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   // Guard: both values must be > 0, plausible (neither > 20× the other), and the
   // identity-derived total must be positive. 30% divergence threshold avoids
   // false-triggering on small legitimate rounding differences.
-  if (totalLiabilities > 0 && equity.total > 0 && totalLiabilities < equity.total * 20) {
+  // FIX-BCTC-MAGNITUDE-NORMALIZE path B: skip when sbMap is active.
+  // Split-block extraction already provides reliable code-keyed values;
+  // the identity override would corrupt correctly-extracted split-block data.
+  if (sbMap === null && totalLiabilities > 0 && equity.total > 0 && totalLiabilities < equity.total * 20) {
     const identityDerived = totalLiabilities + equity.total;
     const shouldOverride =
       totalAssets === 0 ||
@@ -983,7 +989,10 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   // Safety: only apply magnitude inference for sentinels, never for explicit
   // triệu/tỷ detection (multiplier > 0).
   let effectiveMultiplier = multiplier;
-  if (multiplier === -1 || multiplier === -2) {
+  // FIX-BCTC-MAGNITUDE-NORMALIZE magnitude inference: skip when sbMap is active.
+  // Split-block extraction provides raw values in the unit already declared by
+  // the document; applying ÷1,000,000 on top would corrupt the result.
+  if (sbMap === null && (multiplier === -1 || multiplier === -2)) {
     // Primary probe: totalAssets — most reliable anchor for scale.
     // Fallback probe: scan ALL monetary fields for the largest absolute value.
     // If any field > 1 billion, the statement is in raw VND.
@@ -1008,6 +1017,11 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
       // Sentinel but small numbers — treat as triệu already
       effectiveMultiplier = 1;
     }
+  } else if (sbMap !== null && (multiplier === -1 || multiplier === -2)) {
+    // Split-block mode: treat values as-is (no magnitude conversion).
+    // Split-block extracts values directly from the labeled page pair;
+    // unit declaration is typically absent but values are already in triệu.
+    effectiveMultiplier = 1;
   }
 
   return guardBalanceSheet(applyMultiplier(raw, effectiveMultiplier));

@@ -74,20 +74,29 @@ const HPG_PERIOD: FiscalPeriod = {
   sortKey: "2025-Q4",
 };
 
-/** Minimal corrupt BCTC text that forces composite_confidence <= 0.3 (assets < equity). */
+/**
+ * Minimal corrupt BCTC text that forces composite_confidence <= 0.3.
+ * Corruption: operatingProfit (50000) >> netRevenue (5000) → operatingMarginRatio=10.0
+ * which exceeds the 5.0 hard-fail threshold in validateFinancialFigures → returns 0.0.
+ * Using income-statement corruption avoids FIX-BCTC-MAGNITUDE-NORMALIZE BS paths
+ * (which only operate on balance-sheet extraction and would "repair" BS inconsistencies
+ * by deriving totalAssets from the identity, making the BS appear valid).
+ * The balance sheet is internally consistent (2000 = 800 + 1200) so no BS correction
+ * fires, and the IS corruption is the sole source of low confidence.
+ */
 const CORRUPT_BCTC_TEXT = `
 BẢNG CÂN ĐỐI KẾ TOÁN
 Tài sản ngắn hạn                               500
-Tài sản dài hạn                                457
-TỔNG CỘNG TÀI SẢN                             957
-Nợ phải trả                                  6000
-Vốn chủ sở hữu                             18829
-TỔNG CỘNG NGUỒN VỐN                        24829
+Tài sản dài hạn                               1500
+TỔNG CỘNG TÀI SẢN                            2000
+Nợ phải trả                                   800
+Vốn chủ sở hữu                               1200
+TỔNG CỘNG NGUỒN VỐN                          2000
 BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH
 Doanh thu thuần                              5000
 Giá vốn hàng bán                             3000
 Lợi nhuận gộp                               2000
-Lợi nhuận thuần từ hoạt động kinh doanh      600
+Lợi nhuận thuần từ hoạt động kinh doanh    50000
 Lợi nhuận trước thuế                          620
 Thuế TNDN hiện hành                           124
 Lợi nhuận sau thuế                            496
@@ -111,12 +120,16 @@ describe("Task 1792 — Conviction signal debounce (DB-backed, per-ticker+quarte
       "../application/usecases/parseBctcReport.js"
     );
 
+    // Inject telegram fn directly — bypasses module-mock resolution issues.
+    const telegramFn = async (msg: string) => { bugMessages.push(msg); return true; };
+
     // Fire 10 times for VCB 2025-Q4 in rapid succession
     for (let i = 0; i < 10; i++) {
       await parseBctcReport({
         rawText: CORRUPT_BCTC_TEXT,
         actionCode: "VCB_1792_A",
         period: VCB_PERIOD,
+        _telegramBugFn: telegramFn,
       });
     }
 
@@ -130,11 +143,15 @@ describe("Task 1792 — Conviction signal debounce (DB-backed, per-ticker+quarte
       "../application/usecases/parseBctcReport.js"
     );
 
+    // Inject telegram fn directly — bypasses module-mock resolution issues.
+    const telegramFn = async (msg: string) => { bugMessages.push(msg); return true; };
+
     // Fire VCB first — fills VCB debounce slot
     await parseBctcReport({
       rawText: CORRUPT_BCTC_TEXT,
       actionCode: "VCB_1792_B",
       period: VCB_PERIOD,
+      _telegramBugFn: telegramFn,
     });
 
     // HPG is a different ticker — should send its own message
@@ -142,6 +159,7 @@ describe("Task 1792 — Conviction signal debounce (DB-backed, per-ticker+quarte
       rawText: CORRUPT_BCTC_TEXT,
       actionCode: "HPG_1792_B",
       period: HPG_PERIOD,
+      _telegramBugFn: telegramFn,
     });
 
     expect(bugMessages.filter((m) => m.includes("VCB_1792_B")).length).toBe(1);

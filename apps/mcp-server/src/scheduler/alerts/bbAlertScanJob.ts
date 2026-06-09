@@ -121,7 +121,7 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
   // 1. Load watchlist
   let watchlist: WatchlistRow[];
   try {
-    watchlist = database.query<WatchlistRow, []>("SELECT code FROM watchlist").all();
+    watchlist = database.query<WatchlistRow, []>("SELECT code FROM watchlist ORDER BY code").all();
   } catch (err) {
     logger.warn("[bbAlertScan] failed to read watchlist", {
       error: err instanceof Error ? err.message : String(err),

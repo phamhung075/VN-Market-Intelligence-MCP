@@ -303,11 +303,12 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
       "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('HPG', 50000, datetime('now'))"
     );
 
-    // Per-ticker BB: use call-order to control which bb20 is returned
+    // Per-ticker BB: mapped by alphabetical iteration order (runBbAlertScan uses ORDER BY code).
+    // Alphabetical: HPG → TCB → VCB.
     const bbByCallOrder = [
-      { upper: 86500, mid: 84000, lower: 82000 },  // VCB — 88000 > 86500 → fires
-      { upper: 87000, mid: 85000, lower: 83000 },  // TCB — 90000 > 87000 → fires
-      { upper: 55000, mid: 50000, lower: 45000 },  // HPG — 50000 inside → no alert
+      { upper: 55000, mid: 50000, lower: 45000 },  // HPG (alpha 0) — 50000 inside → no alert
+      { upper: 87000, mid: 85000, lower: 83000 },  // TCB (alpha 1) — 90000 > 87000 → fires
+      { upper: 86500, mid: 84000, lower: 82000 },  // VCB (alpha 2) — 88000 > 86500 → fires
     ];
     let callIndex = 0;
     const perTickerComputeFn = async (code: string): Promise<ComputeTAResponse> => {

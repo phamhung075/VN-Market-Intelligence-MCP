@@ -91,6 +91,12 @@ export interface ParseBctcReportParams {
    * Also used for average-based ratios (ROE, ROA, etc.).
    */
   previousReport?: FinancialReport;
+  /**
+   * Injectable Telegram bug notifier — for testability (Task 1792).
+   * When provided, overrides the default dynamic import of sendTelegramBug.
+   * In production callers, omit to use the real Telegram notifier.
+   */
+  _telegramBugFn?: (msg: string) => Promise<boolean>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -195,13 +201,14 @@ function toMetrics(report: FinancialReport): FinancialMetrics {
  *   0.0   → skip insert entirely (all-zero extraction, no signal value)
  *   (0,0.2) → insert with validation_status='low_confidence', send WORK alert
  */
-function storeReport(
+async function storeReport(
   report: FinancialReport,
   validationStatus: string,
   validationNotes: string | null,
   extractionConfidence: number,
   confidenceFinancial?: number,
-): void {
+  telegramBugFn?: (msg: string) => Promise<boolean>,
+): Promise<void> {
   // 1196: Guard — all-zero extraction produces no usable data; skip insert entirely.
   if (extractionConfidence === 0) {
     const msg =
@@ -250,9 +257,14 @@ function storeReport(
     const db = getDb();
     if (!isBctcSignalDebounced(db, report.actionCode, periodKey, BCTC_SIGNAL_DEBOUNCE_HOURS)) {
       recordBctcSignalSent(db, report.actionCode, periodKey);
-      void import("../../infrastructure/notifiers/telegram.js").then(({ sendTelegramBug }) => {
-        sendTelegramBug(financialMsg).catch(() => {});
-      });
+      // Task 1792 fix: await the send so test assertions run AFTER Telegram call.
+      // Use injected telegramBugFn when provided (testability); otherwise dynamic import.
+      if (telegramBugFn) {
+        await telegramBugFn(financialMsg).catch(() => {});
+      } else {
+        const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
+        await sendTelegramBug(financialMsg).catch(() => {});
+      }
     }
     // NOTE: we still INSERT the record (for audit trail) but with low_confidence status.
     // Conviction signals are NOT generated — enforced by callers checking validation_status.
@@ -399,7 +411,7 @@ function storeReport(
 export async function parseBctcReport(
   params: ParseBctcReportParams,
 ): Promise<FinancialReport> {
-  const { rawText, actionCode, period, shares, price, previousReport } = params;
+  const { rawText, actionCode, period, shares, price, previousReport, _telegramBugFn } = params;
 
   // ── Step 1: Extract the three financial statements ────────────────────────
   const balanceSheet = extractBalanceSheet(rawText);
@@ -614,7 +626,7 @@ export async function parseBctcReport(
   const db = getDb();
 
   try {
-    storeReport(report, validationStatus, validationNotes, extractionConfidence, confidenceFinancial);
+    await storeReport(report, validationStatus, validationNotes, extractionConfidence, confidenceFinancial, _telegramBugFn);
   } catch (err) {
     throw new Error(
       `storeReport failed: ${err instanceof Error ? err.message : String(err)}`,
