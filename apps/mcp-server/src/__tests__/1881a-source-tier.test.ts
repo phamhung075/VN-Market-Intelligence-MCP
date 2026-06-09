@@ -19,10 +19,9 @@ import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // Mock LanceDB-dependent retriever
-mock.module("../infrastructure/rag/retriever.js", () => ({
-  searchContext: async () => [],
-  insertAnalysis: async () => {},
-}));
+// C5-CURE: capture stub reference before registering; used in afterAll restore.
+const _realRetriever1881a = { searchContext: async () => [], insertAnalysis: async () => {} };
+mock.module("../infrastructure/rag/retriever.js", () => _realRetriever1881a);
 
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 
@@ -138,6 +137,9 @@ beforeAll(async () => {
 afterAll(() => {
   restoreFetch?.();
   closeDb();
+  // C5-CURE: restore rag/retriever stub so downstream files in the same Bun
+  // process see the same no-op (no real LanceDB) rather than a leaked stale stub.
+  mock.module("../infrastructure/rag/retriever.js", () => _realRetriever1881a);
 });
 
 // ── AC-2: JSON-output tools — source_tier at root ─────────────────────────────

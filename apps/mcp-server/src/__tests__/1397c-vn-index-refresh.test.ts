@@ -20,7 +20,7 @@
  *       preload (Bun.env). This file does not touch SQLite directly.
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterAll } from "bun:test";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,13 +40,17 @@ let _storeMarketPricesImpl: (prices: MarketPrice[]) => Promise<void> =
 // Capture calls so tests can assert on arguments and invocation count.
 const _storeCalls: MarketPrice[][] = [];
 
-mock.module("../infrastructure/fetchers/hose.js", () => ({
-  fetchVnIndex: async (code: string) => _fetchVnIndexImpl(code),
-  storeMarketPrices: async (prices: MarketPrice[]) => {
-    _storeCalls.push(prices);
-    return _storeMarketPricesImpl(prices);
-  },
-}));
+// C5-CURE: shared factory captured so afterAll can re-register it without bleed.
+function _realHoseMock1397c() {
+  return {
+    fetchVnIndex: async (code: string) => _fetchVnIndexImpl(code),
+    storeMarketPrices: async (prices: MarketPrice[]) => {
+      _storeCalls.push(prices);
+      return _storeMarketPricesImpl(prices);
+    },
+  };
+}
+mock.module("../infrastructure/fetchers/hose.js", _realHoseMock1397c);
 
 // Import SUT AFTER mock.module() registration so Bun's module cache returns
 // the mocked version to the job module.
@@ -146,4 +150,10 @@ describe("Task 1397c — runVnIndexRefreshJob", () => {
 
     expect(_storeCalls).toHaveLength(0);
   });
+});
+
+// C5-CURE: restore hose mock after all tests complete so downstream files in the
+// same Bun process do not inherit a stale ESM stub.
+afterAll(() => {
+  mock.module("../infrastructure/fetchers/hose.js", _realHoseMock1397c);
 });

@@ -1,6 +1,6 @@
 {
-  "locked": false,
-  "owner_agent": null,
-  "task": null,
-  "expires_at": null
+  "locked": true,
+  "owner_agent": "dev-mcp-server",
+  "task": "batch2-mock-stub-leak",
+  "expires_at": "2026-06-09T18:24:36Z"
 }

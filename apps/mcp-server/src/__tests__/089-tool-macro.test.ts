@@ -22,10 +22,10 @@ import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // Mock LanceDB-dependent retriever so it never initialises a real vector store
-mock.module("../infrastructure/rag/retriever.js", () => ({
-  searchContext: async () => [],
-  insertAnalysis: async () => {},
-}));
+// C5-CURE: capture stub reference before registering; used in afterAll restore so
+// the stub does not bleed into sibling files in the same Bun ESM worker.
+const _realRetriever089 = { searchContext: async () => [], insertAnalysis: async () => {} };
+mock.module("../infrastructure/rag/retriever.js", () => _realRetriever089);
 
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import { registerMacroTools } from "../interface/mcp/tools/macro/macroTools.js";
@@ -159,6 +159,9 @@ beforeAll(async () => {
 afterAll(() => {
   restoreFetch?.();
   closeDb();
+  // C5-CURE: restore the rag/retriever stub so downstream files in the same Bun
+  // process see the same no-op (no real LanceDB) rather than a leaked stale stub.
+  mock.module("../infrastructure/rag/retriever.js", () => _realRetriever089);
 });
 
 // ---------------------------------------------------------------------------

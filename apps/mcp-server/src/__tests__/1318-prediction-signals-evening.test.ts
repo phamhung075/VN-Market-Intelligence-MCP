@@ -14,7 +14,7 @@
  * Layer: tests — uses in-memory SQLite; no real HTTP, no Telegram sends.
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, afterAll, mock, spyOn } from "bun:test";
 import { Database } from "bun:sqlite";
 import { mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -22,8 +22,11 @@ import { join } from "node:path";
 // ── AC-3: mock predictionStore so getRecentPredictionSignals can be forced to throw ──
 // A shared flag controls whether the mock throws or uses the real SQLite implementation.
 // IMPORTANT: mock.module is hoisted by Bun before any imports.
+// C5-CURE: _realPredictionStore1318 holds the stub module factory (capturing the
+// _forceSignalThrow closure) so afterAll can re-register it without bleed.
 let _forceSignalThrow = false;
-mock.module("../infrastructure/db/predictionStore.js", () => {
+// Shared factory — declared first so it can be referenced by both mock.module and afterAll.
+function _realPredictionStore1318() {
   return {
     getRecentPredictionSignals: (db: Database, hoursBack: number = 24) => {
       if (_forceSignalThrow) {
@@ -84,7 +87,8 @@ mock.module("../infrastructure/db/predictionStore.js", () => {
       }
     },
   };
-});
+}
+mock.module("../infrastructure/db/predictionStore.js", _realPredictionStore1318);
 
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import { runPredictionMarketPoll } from "../scheduler/macro/predictionMarketJob.js";
@@ -549,4 +553,10 @@ describe("AC-4: runPredictionMarketPoll — fallback to cached snapshot when fet
 
     db.close();
   });
+});
+
+// C5-CURE: restore predictionStore mock after all tests complete so downstream
+// files in the same Bun process do not inherit a stale ESM stub.
+afterAll(() => {
+  mock.module("../infrastructure/db/predictionStore.js", _realPredictionStore1318);
 });

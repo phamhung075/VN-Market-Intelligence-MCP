@@ -4131,7 +4131,7 @@
             "id": "BATCH2-CI-C-ML-MOCK-STUB-LEAK-GUARD",
             "type": "BUG-FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -4154,7 +4154,8 @@
             },
             "spec_brief": "docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md",
             "created_at": "2026-06-09T17:27:54Z",
-            "created_by": "po-S54"
+            "created_by": "po-S54",
+            "dj_gate_1": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md#dev-mcp-server-S25"
           },
           {
             "id": "BATCH3-CI-C-MH-MARKET-HOURS-GATE-NOW-SEAM",

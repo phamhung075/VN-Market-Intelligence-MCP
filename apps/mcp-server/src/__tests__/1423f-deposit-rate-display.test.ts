@@ -17,10 +17,9 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-mock.module("../infrastructure/rag/retriever.js", () => ({
-  searchContext: async () => [],
-  insertAnalysis: async () => {},
-}));
+// C5-CURE: capture stub reference before registering; used in afterAll restore.
+const _realRetriever1423f = { searchContext: async () => [], insertAnalysis: async () => {} };
+mock.module("../infrastructure/rag/retriever.js", () => _realRetriever1423f);
 
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import { registerMacroTools } from "../interface/mcp/tools/macro/macroTools.js";
@@ -142,6 +141,9 @@ beforeAll(async () => {
 afterAll(() => {
   restoreFetch?.();
   closeDb();
+  // C5-CURE: restore rag/retriever stub so downstream files in the same Bun
+  // process see the same no-op (no real LanceDB) rather than a leaked stale stub.
+  mock.module("../infrastructure/rag/retriever.js", () => _realRetriever1423f);
 });
 
 // ---------------------------------------------------------------------------

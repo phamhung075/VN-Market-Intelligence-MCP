@@ -34,7 +34,9 @@ import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 // exceed the 5s Bun test timeout. Mock fetch to simulate circuit-breaker open
 // so AC-4 / AC-5 tests exercise the DB fallback path, as was the original intent.
 const originalFetch = globalThis.fetch;
-mock.module("node:fetch", () => ({})); // no-op — Bun uses globalThis.fetch
+// C5-CURE: capture stub reference before registering; used in afterAll restore.
+const _realNodeFetch1298 = {}; // no-op — Bun uses globalThis.fetch, not node:fetch
+mock.module("node:fetch", () => _realNodeFetch1298);
 function mockFetchReject(): void {
   const stub = async (): Promise<never> => { throw new Error("fetch mocked — offline for test"); };
   globalThis.fetch = Object.assign(stub, { preconnect: () => {} }) as unknown as typeof fetch;
@@ -69,6 +71,8 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
+  // C5-CURE: restore node:fetch stub so downstream files don't inherit a stale entry.
+  mock.module("node:fetch", () => _realNodeFetch1298);
 });
 
 // ── AC-4: Application Fetcher ─────────────────────────────────────────────────

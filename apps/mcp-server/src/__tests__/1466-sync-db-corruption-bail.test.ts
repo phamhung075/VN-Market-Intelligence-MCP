@@ -10,7 +10,7 @@
  * mock logger to capture warn calls, verify warn count + stockCallCount.
  */
 
-import { describe, it, expect, mock } from "bun:test";
+import { describe, it, expect, mock, afterAll } from "bun:test";
 
 // ── Shared state ─────────────────────────────────────────────────────────────
 const warnMessages: string[] = [];
@@ -18,18 +18,19 @@ let staleCalls = 0;
 let staleThrowAt = new Map<number, string>(); // call index → error message
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
-mock.module("../infrastructure/logger.js", () => ({
+// C5-CURE: capture stub references before registering; used in afterAll restore
+// so stubs do not bleed into sibling files in the same Bun ESM worker.
+const _realLogger1466 = {
   logger: {
-    warn: (msg: string) => {
-      warnMessages.push(msg);
-    },
+    warn: (msg: string) => { warnMessages.push(msg); },
     info: () => {},
     debug: () => {},
     error: () => {},
   },
-}));
+};
+mock.module("../infrastructure/logger.js", () => _realLogger1466);
 
-mock.module("../infrastructure/db/vnstockStore.js", () => ({
+const _realVnstockStore1466 = {
   isStale: (_code: string, _dataType: string) => {
     const idx = staleCalls++;
     if (staleThrowAt.has(idx)) {
@@ -45,9 +46,10 @@ mock.module("../infrastructure/db/vnstockStore.js", () => ({
   storeBalanceSheet: () => {},
   storeCashFlow: () => {},
   markFetched: () => {},
-}));
+};
+mock.module("../infrastructure/db/vnstockStore.js", () => _realVnstockStore1466);
 
-mock.module("../infrastructure/fetchers/vnstockBridge.js", () => ({
+const _realVnstockBridge1466 = {
   fetchVnstockFinancials: async () => ({}),
   fetchVnstockTradingStats: async () => ({}),
   fetchVnstockOfficers: async () => ([]),
@@ -55,7 +57,8 @@ mock.module("../infrastructure/fetchers/vnstockBridge.js", () => ({
   fetchVnstockEvents: async () => ([]),
   fetchVnstockBalanceSheet: async () => ({}),
   fetchVnstockCashFlow: async () => ({}),
-}));
+};
+mock.module("../infrastructure/fetchers/vnstockBridge.js", () => _realVnstockBridge1466);
 
 const { syncVnstockData } = await import(
   "../application/usecases/syncVnstockData.js"
@@ -127,4 +130,12 @@ describe("Task 1466: syncVnstockData bail on DB corruption", () => {
     // isStale never called for SSI (index 21+) or MWG (index 28+)
     expect(staleCalls).toBeLessThan(4 * DATA_TYPES_PER_STOCK);
   });
+});
+
+// C5-CURE: restore stubs after all tests complete so downstream files in the
+// same Bun process do not inherit stale ESM entries.
+afterAll(() => {
+  mock.module("../infrastructure/logger.js", () => _realLogger1466);
+  mock.module("../infrastructure/db/vnstockStore.js", () => _realVnstockStore1466);
+  mock.module("../infrastructure/fetchers/vnstockBridge.js", () => _realVnstockBridge1466);
 });

@@ -11,15 +11,14 @@
 // DB_PATH set to :memory: before any import that triggers getDb()
 Bun.env["DB_PATH"] = ":memory:";
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
 import { mock } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { RssItem } from "../infrastructure/fetchers/rss.js";
 
-mock.module("../infrastructure/rag/retriever.js", () => ({
-  searchContext: async () => [],
-  insertAnalysis: async () => {},
-}));
+// C5-CURE: capture stub reference before registering; used in afterAll restore.
+const _realRetriever1898b = { searchContext: async () => [], insertAnalysis: async () => {} };
+mock.module("../infrastructure/rag/retriever.js", () => _realRetriever1898b);
 
 import { pollNews, _resetAllDarkAlert } from "../application/usecases/pollNews.js";
 import { globalSourceTracker, _resetGlobalSourceTracker } from "../interface/mcp/tools/news-analysis/sourceHealthTools.js";
@@ -174,4 +173,10 @@ describe("1898b — Suite B: empty-source and partial-recovery guards", () => {
     });
     expect(rowCount(db)).toBe(1);
   });
+});
+
+// C5-CURE: restore rag/retriever stub after all tests complete so downstream
+// files in the same Bun process see the same no-op rather than a stale stub.
+afterAll(() => {
+  mock.module("../infrastructure/rag/retriever.js", () => _realRetriever1898b);
 });
