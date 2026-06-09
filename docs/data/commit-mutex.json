@@ -1,6 +1,6 @@
 {
-  "locked": true,
-  "owner_agent": "po",
-  "task": "po-s57-batch5-green-board-write",
-  "expires_at": "2026-06-09T21:31:22Z"
+  "locked": false,
+  "owner_agent": null,
+  "task": null,
+  "expires_at": null
 }
