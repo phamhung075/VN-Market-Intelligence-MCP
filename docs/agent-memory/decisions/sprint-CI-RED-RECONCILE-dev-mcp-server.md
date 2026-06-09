@@ -625,3 +625,46 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 - `apps/mcp-server/src/__tests__/1839b-notebook-protocol.test.ts`
 - `docs/agent-memory/notebooks/market-watcher.md.bak` (removed)
 - META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
+
+---
+
+### STEP dev-mcp-server-S22 · dev-mcp-server · 2026-06-09T17:30:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C1282a-DATA-FRESHNESS-REWRITE
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** REWRITE-STALE fix — injected `now?: Date` seam into `detectDataFreshnessBreach` and froze all 4 TC call-sites to in-market clock. Two-file change; prod logic untouched.
+
+**prod change (additive-only, fully backward-compatible):**
+- `apps/mcp-server/src/interface/mcp/tools/system/dataFreshnessTools.ts`:
+  - Added optional 3rd param `now?: Date` to `detectDataFreshnessBreach` signature (L81 — was 2-param, now 3-param).
+  - Replaced `const now = new Date()` (L87) with `const now_: Date = now ?? new Date()`.
+  - Updated 2 internal references: L130 `now.getTime()` → `now_.getTime()`; L136 `checkDataFreshnessSla(..., now)` → `checkDataFreshnessSla(..., now_)`.
+  - All existing callers pass nothing — default path (`now_=new Date()`) is identical to pre-change behaviour.
+
+**test change (clock freeze — REWRITE not REMOVE):**
+- `apps/mcp-server/src/__tests__/system-data-freshness.test.ts`:
+  - Added module-level `const frozenNow = new Date("2026-06-09T04:00:00Z")` before the describe block.
+  - 2026-06-09T04:00:00Z is 11:00 VN time — isVnMarketHours=true → price threshold stays static 10-min SLA.
+  - beforeEach `const now = new Date()` replaced with `const now = frozenNow` so DB fixture is 12 min old *relative to frozenNow*.
+  - TC-1: `detectDataFreshnessBreach(db)` → `detectDataFreshnessBreach(db, undefined, frozenNow)`. At frozenNow: 12min > 10min → hasBreach=true, priceBreach.severity=HIGH. PASSES.
+  - TC-2: same freeze. 12min < 15min (10×1.5) → criticalBreach conditional safely skips. PASSES.
+  - TC-3: same freeze. Structure check passes regardless of hasBreach value. PASSES.
+  - TC-4: same freeze. Recovery check passes regardless of recoveries length. PASSES.
+  - Stale "15 minutes old" / "10 minutes" comment fossils updated to reflect frozen-clock + 12-min fixture reality.
+  - ZERO it() blocks removed. Coverage retained (8 TCs intact).
+
+**what-considered:**
+- Remove the stale TC-1/TC-2 instead of rewriting — REJECTED per architect adjudication (REWRITE-STALE verdict, arch-S20 de0e9589); coverage must be retained.
+- Mock `isVnMarketHours` to always return true — REJECTED: would couple test to internal logic and require mocking; clock-freeze is the clean seam.
+- Use `beforeEach`-scoped var instead of module const for frozenNow — CONSIDERED; module const chosen because all 4 TCs + beforeEach reference it and it is a true constant (no per-test variation needed).
+
+**why-decision:** Root cause confirmed by architect arch-S20 (verdict de0e9589): TC-1/TC-2 fossilized a static 10-min assumption but prod uses dynamic MARKET_HOURS_ONLY_SOURCES logic — off-hours the threshold expands. Clock freeze to 2026-06-09T04:00:00Z (in-market) collapses the dynamic-vs-static ambiguity: at that time price threshold = 10min and 12-min-old fixture is definitively HIGH breach. Seam injection is additive-only and backward-compatible.
+
+**result:** 8 pass / 0 fail (single-file: `bun test src/__tests__/system-data-freshness.test.ts`, 366ms). tsc --noEmit CLEAN (exit 0). ZERO it() removed. ZERO prod logic changed. orch-state: FIX-CI-C1282a-DATA-FRESHNESS-REWRITE TODO → REVIEW. ci_absolute untouched (57).
+
+**files-changed:**
+- `apps/mcp-server/src/interface/mcp/tools/system/dataFreshnessTools.ts` (now-injection seam — prod, additive only)
+- `apps/mcp-server/src/__tests__/system-data-freshness.test.ts` (frozenNow + 4 call-site freeze — test only)
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
+- `docs/data/orch/orch-state.json` (task TODO → REVIEW)
+- `docs/data/commit-mutex.json` (mutex acquire/release)

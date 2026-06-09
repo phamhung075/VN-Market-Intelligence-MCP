@@ -39,6 +39,12 @@ import {
 // Test Suite 1: detectDataFreshnessBreach()
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Frozen clock — 2026-06-09T04:00:00Z is inside VN market hours (isVnMarketHours=true).
+// At this frozen time the price threshold is the static 10-minute SLA (not the
+// expanded off-hours window), so the 12-min-old fixture is correctly a HIGH breach.
+// All TC-1..TC-4 calls pass frozenNow as the 3rd arg for deterministic, clock-independent results.
+const frozenNow = new Date("2026-06-09T04:00:00Z");
+
 describe("Task 1282a — detectDataFreshnessBreach()", () => {
   let db: Database;
 
@@ -46,8 +52,8 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
     db = new Database(":memory:");
 
     // Create test tables with stale data
-    // Price data 12 minutes old (exceeds 10min threshold but < 15min → HIGH breach)
-    const now = new Date();
+    // Price data 12 minutes old relative to frozenNow (exceeds 10min threshold but < 15min → HIGH breach)
+    const now = frozenNow;
     const staleTime12min = new Date(now.getTime() - 12 * 60 * 1000);
 
     db.exec(
@@ -90,9 +96,9 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
   });
 
   it("TC-1: detects HIGH breach on stale price data (age > threshold)", async () => {
-    // Price threshold is 10 minutes (DEFAULT_SLA_CONFIG)
-    // Simulate: price data is 15 minutes old (exceeds 10min threshold)
-    const result = await detectDataFreshnessBreach(db);
+    // Price threshold is 10 minutes (DEFAULT_SLA_CONFIG) — clock frozen to in-market time (frozenNow)
+    // Fixture: price data is 12 minutes old relative to frozenNow (exceeds 10min threshold, < 15min → HIGH)
+    const result = await detectDataFreshnessBreach(db, undefined, frozenNow);
 
     expect(result).toHaveProperty("hasBreach");
     expect(result).toHaveProperty("breaches");
@@ -112,9 +118,9 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
   });
 
   it("TC-2: detects CRITICAL breach when age > 1.5× threshold", async () => {
-    // Price threshold is 10 minutes
-    // CRITICAL when age > 15 minutes (10 × 1.5)
-    const result = await detectDataFreshnessBreach(db);
+    // Price threshold is 10 minutes (clock frozen to in-market time via frozenNow)
+    // CRITICAL when age > 15 minutes (10 × 1.5); fixture at 12min is HIGH (not CRITICAL) — safe skip
+    const result = await detectDataFreshnessBreach(db, undefined, frozenNow);
 
     expect(result.hasBreach).toBe(true);
 
@@ -131,9 +137,9 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
   });
 
   it("TC-3: returns empty breaches array when all signals are fresh", async () => {
-    // Mock scenario: all signals within SLA
+    // Mock scenario: all signals within SLA — clock frozen to in-market time (frozenNow)
     // This test expects the function to handle the "all ok" case gracefully
-    const result = await detectDataFreshnessBreach(db);
+    const result = await detectDataFreshnessBreach(db, undefined, frozenNow);
 
     expect(result).toHaveProperty("hasBreach");
     expect(result).toHaveProperty("breaches");
@@ -146,9 +152,9 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
   });
 
   it("TC-4: tracks recovery when previously breached signal returns to fresh", async () => {
-    // Scenario: price was breached (open), now it's ok
+    // Scenario: price was breached (open), now it's ok — clock frozen to in-market time (frozenNow)
     // The function should track this in the recoveries array
-    const result = await detectDataFreshnessBreach(db);
+    const result = await detectDataFreshnessBreach(db, undefined, frozenNow);
 
     expect(result).toHaveProperty("recoveries");
 

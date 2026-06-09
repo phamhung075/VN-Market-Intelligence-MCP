@@ -79,12 +79,13 @@ const SIGNAL_QUERIES: Record<SignalType, { query: string; fallbackQuery?: string
 export async function detectDataFreshnessBreach(
   db: Database,
   config?: SignalSlaConfig[],
+  now?: Date,
 ): Promise<{
   hasBreach: boolean;
   breaches: SlaCheckResult[];
   recoveries: SlaCheckResult[];
 }> {
-  const now = new Date();
+  const now_: Date = now ?? new Date();
   const signalAges: Record<SignalType, number> = {
     price: 0,
     bctc: 0,
@@ -127,13 +128,13 @@ export async function detectDataFreshnessBreach(
     if (ts !== null) {
       const tsMs = new Date(ts).getTime();
       if (!isNaN(tsMs)) {
-        signalAges[signalType] = (now.getTime() - tsMs) / 60000; // Convert to minutes
+        signalAges[signalType] = (now_.getTime() - tsMs) / 60000; // Convert to minutes
       }
     }
   }
 
   // Check SLA breaches using domain service
-  const output = checkDataFreshnessSla(signalAges, config, [], now);
+  const output = checkDataFreshnessSla(signalAges, config, [], now_);
 
   return {
     hasBreach: output.breaches.length > 0,

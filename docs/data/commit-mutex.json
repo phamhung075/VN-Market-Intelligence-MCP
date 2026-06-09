@@ -1,6 +1,6 @@
 {
   "locked": true,
-  "owner_agent": "dev-team-router",
-  "task": "commit-c1839b-gate-signal",
-  "expires_at": 1781022944
+  "owner_agent": "dev-mcp-server",
+  "task": "FIX-CI-C1282a-DATA-FRESHNESS-REWRITE",
+  "expires_at": 1781024307
 }
