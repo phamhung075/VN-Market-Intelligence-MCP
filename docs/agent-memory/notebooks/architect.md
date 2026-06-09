@@ -1,8 +1,34 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09T08:30Z | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09T10:00Z | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T10:00Z — SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY: contamination-safe respec for sbv/yahoo/ragHttpClient null-in-CI
+
+**Task:** SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY (SPIKE, 120m, zone: apps/mcp-server/src/__tests__/)
+
+**Method:** Full read of 028/025/1423a/1487/ddd-1b victim test files, sbv.ts + yahooFinance.ts + ragHttpClient.ts production modules, 083 + 123 contaminator test files, runImpactChain.ts application seam, analysis.ts interface seam. Cross-referenced C5 gate signal (22470e44 regression +10) and 3663bd12 baseline.
+
+**Root mechanism confirmed:**
+- 083 and 123 install file-top `mock.module()` stubs for `sbv.js` and `yahooFinance.js` (and 083 also for `ragHttpClient.js`).
+- Bun 1.3.13 ESM cache is process-scoped; these stubs persist for all subsequent files in run order.
+- Victim files (028/025/1423a/1487) correctly inject mock httpClient into `fetchSbvRates(client)` / `fetchYahooFinancePrices(client)`, but the function they receive IS the stub (`async () => null`) not the real function — so the mock client arg is irrelevant and null is always returned.
+- `ddd-1b` uses correct per-test `globalThis.fetch` save-and-restore pattern — no change needed there.
+- C5 failed cure: adding more `mock.module()` in ddd-1b (the re-registration) re-spread contamination to new files (+24 rag, +24 Task1124).
+
+**Pattern chosen:** (b) DI injection at call-site. BOTH production functions already have optional `httpClient?` seams. Both victim tests already USE those seams correctly. The fix is to remove the file-top `mock.module()` from 083 and 123, and replace with injection via `RunCascadeInput.commodityFetcher?` / `sbvFetcher?` / `ragRetriever?` seams (already exist in runImpactChain.ts) where 083/123 need null-return behavior.
+
+**Per-file plan:**
+- `083-tool-analysis.test.ts`: Remove 3 file-top mock.module() calls (lines 15-26). Pass `_testCommodityFetcher/sbvFetcher/ragRetriever` through callTool args where needed.
+- `123-integration-mcp.test.ts`: Remove 2 file-top mock.module() calls (lines 35-40). Pass `_testCommodityFetcher/sbvFetcher` for run_impact_chain test (RT2 third test) via callTool args.
+- `ddd-1b-rag-http-client.test.ts`: NO CHANGE — already correct.
+- `028/025/1423a/1487`: NO CHANGE — already correct DI pattern; they pass once 083/123 stop contaminating ESM cache.
+- `analysis.ts` (production): Conditional seam addition for `_testCommodityFetcher`/`_testSbvFetcher`/`_testRagRetriever` args if not already present in the `run_impact_chain` handler (same `_test*` injection pattern as `_testHoseClient` in `get_market_snapshot`).
+
+**Projected drop:** 135 → ~113 native fail+error (22 victims cleared: 028=9, 025=7, 1423a=3, 1487=3)
+
+**Brief:** `docs/architecture-briefs/2026-06-09-spike-ci-c5-contam-safe-restrategy.md`
 
 ## 2026-06-09T08:30Z — CI-172-RESIDUAL-FILESCOPE: file-scope confirmation for C1/C3/C4
 

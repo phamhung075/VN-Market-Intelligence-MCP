@@ -207,6 +207,23 @@ Expected impact: 85-95% reduction (629 → <50 native fail+error).
 
 ---
 
+### STEP arch-S10 (DJ-GATE-1) · architect · 2026-06-09T10:00Z
+
+**task-id:** SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY
+**sprint:** CI-RED-RECONCILE
+**what-done:** Full read of victim test files (028/025/1423a/1487/ddd-1b), production modules (sbv.ts, yahooFinance.ts, ragHttpClient.ts), contaminator files (083/123), and call-chain (runImpactChain.ts, analysis.ts). Confirmed exact mechanism for null-in-CI. Evaluated three candidate patterns. Produced per-file application plan. Projected fail drop.
+**what-considered:**
+- **(a) per-test beforeEach/afterEach mock+restore:** REJECTED. Bun 1.3.13 `mock.restore()` does not reliably restore fully-synthetic stubs. Any test abort between beforeEach and afterEach leaks contamination. Empirically already failed in C5 attempt. Fragile.
+- **(b) DI seam at call-site (httpClient param):** CHOSEN. Both `fetchSbvRates` and `fetchYahooFinancePrices` ALREADY have optional `httpClient?` injection. Victim tests (028/025/1423a/1487) already use this seam correctly. The problem is ONLY that 083/123 file-top mock.module() replaces the entire function in ESM cache — making the injected mock irrelevant. Fix = remove file-top stubs from 083/123, use existing DI seams in `runImpactChain` for their specific needs.
+- **(c) skipIf no-network:** REJECTED. Tests are NOT network tests; they inject mock clients and pass in local isolation. Skipping = hiding a confirmed contamination bug. Wrong resolution.
+**why-decision:** The DI seam is the cleanest and most deterministic approach because: (1) the production code already has the seam, (2) the victim tests already USE the seam correctly, (3) the only broken component is the ESM cache replacement installed by 083/123 which is both unnecessary (since DI seams exist) and demonstrably leaking (empirically falsified in 22470e44). Removing file-top mock.module() from 083/123 is the minimal change. `ddd-1b` is already correct (per-test globalThis.fetch save-and-restore) and needs no change.
+**why-change:** C5 dev attempted to cure contamination by adding MORE mock.module() (the re-registration in ddd-1b). This reproduced the disease at a new call site. The correct insight is that mock.module() is the contamination vector itself — not the cure. The cure is DI injection at call-site, which already exists in the production functions.
+**projected-drop:** 135 → ~113 native fail+error (22 victim fails cleared: 028=9, 025=7, 1423a=3, 1487=3)
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-spike-ci-c5-contam-safe-restrategy.md`
+
+---
+
 ### STEP arch-S9 (DJ-GATE-1) · architect · 2026-06-09T06:30Z
 
 **task-id:** SPIKE-CI-C1-MACRO-INJECT-SEAM
