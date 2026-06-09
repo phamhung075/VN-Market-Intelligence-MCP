@@ -3114,7 +3114,7 @@
             "id": "FIX-CI-DATA-SYMLINK-ENOENT",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "depends": [
@@ -3130,13 +3130,17 @@
             "gate": "native fail+error must DROP further vs the 346 absolute (sha 2acb7192, run 27184744909, job 80251172255); CI-workflow/infra change only (no prod logic).",
             "created_at": "2026-06-09T04:44:01Z",
             "created_by": "po",
-            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM so the Cluster1 355-drop is cleanly attributable in CI before mixing CI-workflow/symlink infra. LOW-cost non-prod. Flip TODO when Cluster1 lands + measured. || [po S23 2026-06-09T05:08Z] UN-QUEUED QUEUED->TODO (Cluster1 DONE). Re-baselined 629->346. Cluster 2 (~91 native, missing apps/mcp-server/data symlink + ENOENT swallow in setup.ts). Dispatch-ready, owner dev-mcp-server."
+            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM so the Cluster1 355-drop is cleanly attributable in CI before mixing CI-workflow/symlink infra. LOW-cost non-prod. Flip TODO when Cluster1 lands + measured. || [po S23 2026-06-09T05:08Z] UN-QUEUED QUEUED->TODO (Cluster1 DONE). Re-baselined 629->346. Cluster 2 (~91 native, missing apps/mcp-server/data symlink + ENOENT swallow in setup.ts). Dispatch-ready, owner dev-mcp-server.",
+            "closed_at": "2026-06-09T05:37:58Z",
+            "done_at": "2026-06-09T05:37:58Z",
+            "done_by": "po",
+            "actual_result": "PASS (bundled with Cluster-5 in one dev commit a5150685): joint native fail+error 346 -> 241 (-105, -30%) at sha 91afe344 (run 27185729719, bun job 80254121788: 11534 pass / 42 skip / 241 fail / 0 errors / Ran 11817). Cluster-2 symlink-heal in setup.ts (lstatSync+isSymbolicLink+unlinkSync broken-symlink guard, then mkdirSync recursive) cleared ~103 fails (beat the ~91 taxonomy estimate; +15 tests now execute that previously crashed on ENOENT). Code retained + pushed by router (4bbdce2e->91afe344). 241 SUPERSEDES 346."
           },
           {
             "id": "FIX-CI-DEAD-REUTERS-TESTS",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "priority": "medium",
             "depends": [
@@ -3152,7 +3156,37 @@
             "gate": "2 native errors -> 0 vs the 346 absolute (sha 2acb7192, run 27184744909, job 80251172255); dead-test deletion only (no prod code).",
             "created_at": "2026-06-09T04:44:01Z",
             "created_by": "po",
-            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM. LOW-cost: delete 2 dead _deprecated/ reuters test files. Together Cluster2+5 ~93 more after Cluster1. Cluster3/4 NOT opened yet (gated on 1+2+5 clearing first per taxonomy ranked attack order). || [po S23 2026-06-09T05:08Z] UN-QUEUED QUEUED->TODO (Cluster1 DONE). Re-baselined 629->346. Cluster 5 = the ENTIRE remaining error count (2 err) — cheapest possible next win; delete 2 _deprecated test files importing deleted reuters.js. Owner dev-mcp-server."
+            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM. LOW-cost: delete 2 dead _deprecated/ reuters test files. Together Cluster2+5 ~93 more after Cluster1. Cluster3/4 NOT opened yet (gated on 1+2+5 clearing first per taxonomy ranked attack order). || [po S23 2026-06-09T05:08Z] UN-QUEUED QUEUED->TODO (Cluster1 DONE). Re-baselined 629->346. Cluster 5 = the ENTIRE remaining error count (2 err) — cheapest possible next win; delete 2 _deprecated test files importing deleted reuters.js. Owner dev-mcp-server.",
+            "closed_at": "2026-06-09T05:37:58Z",
+            "done_at": "2026-06-09T05:37:58Z",
+            "done_by": "po",
+            "actual_result": "PASS (bundled with Cluster-2 in dev commit a5150685): the 2 native errors -> 0 (ERRORS now ZERO for the first time this sprint). Deletion of the two _deprecated/ reuters test files (importing deleted ../infrastructure/fetchers/reuters.js) cleared the 2 eval-time errors. Joint with Cluster-2: native fail+error 346 -> 241 at sha 91afe344 (run 27185729719, job 80254121788). All remaining 241 are pure fail (0 errors)."
+          },
+          {
+            "id": "RE-PROFILE-CI-241-RESIDUAL",
+            "type": "SPIKE",
+            "owner": "architect",
+            "status": "TODO",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "mode": "spike",
+            "timebox": 120,
+            "depends": [
+              "FIX-CI-DATA-SYMLINK-ENOENT",
+              "FIX-CI-DEAD-REUTERS-TESTS"
+            ],
+            "labels": [
+              "ci-red-reconcile",
+              "re-profile",
+              "taxonomy",
+              "no-prod-code"
+            ],
+            "title": "RE-PROFILE the 241 native residual fails into a FRESH cluster breakdown that SUPERSEDES the 629-era taxonomy. Cluster-1 (mock-contam) and Cluster-2 (symlink-ENOENT) each UNMASKED hidden truth, so the old per-cluster estimates (Cluster-3 ASSERTION/LOGIC ~159, Cluster-4 UNDEFINED-FN getMarketMessageDigest ~21) are STALE. Group the 241 fails (from `gh run view --job=80254121788 --log`, sha 91afe344) by error signature; rank buckets by (size x low-prod-risk). Cluster-6 schema-drift stays PARKED — do NOT reopen.",
+            "baseline_pass": "241 native fail+error absolute (241 fail + 0 err / Ran 11817, sha 91afe344, run 27185729719, bun job 80254121788 — SUPERSEDES the 346/2acb7192 and the 629/e442cf11 absolutes; ERRORS now ZERO)",
+            "gate": "deliverable: a fresh-cluster-breakdown brief in docs/architecture-briefs/ that groups all 241 native fails by error signature and ranks buckets by (size x low-prod-risk); NO code change; gate = taxonomy delivered. Drives the next ROI-ranked attack FIX (native fail+error must DROP vs the 241 absolute).",
+            "created_at": "2026-06-09T05:37:58Z",
+            "created_by": "po",
+            "note": "[po S24 DJ-GATE-1 2026-06-09T05:37:58Z] Opened on CI-CLUSTER2-5-GATE-91afe344 PASS (346->241, errors->0). Re-profile is mandatory BEFORE swinging at the next bucket: the 241 residual composition has SHIFTED vs the 629-era taxonomy — two clusters unmasked previously-crashed tests, so Cluster-3/4 estimates are computed against a now-superseded absolute. Deliverable supersedes docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-P5..P8 / P8-IMPL) stays PARKED per po-S21 PATH-B — do NOT reopen. owner architect (no-code root-cause taxonomy = SPIKE pattern). zone apps/mcp-server/ (where the bun-test corpus lives). WIP<=2: architect lane consumes no dev WIP."
           }
         ],
         "_updated_by": "po"
