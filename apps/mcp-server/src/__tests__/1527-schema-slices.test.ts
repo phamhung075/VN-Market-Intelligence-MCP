@@ -41,9 +41,8 @@ describe("Task 1527 — Schema slice decomposition", () => {
     await initDatabase();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     closeDb();
-    await initDatabase();
   });
 
   // ── 1. Slice files: import check ──────────────────────────────────────────

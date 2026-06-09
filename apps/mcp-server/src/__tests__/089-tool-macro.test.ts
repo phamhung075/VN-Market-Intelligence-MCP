@@ -124,9 +124,8 @@ beforeAll(async () => {
   await initDatabase();
 });
 
-afterAll(async () => {
+afterAll(() => {
   closeDb();
-  await initDatabase();
 });
 
 // ---------------------------------------------------------------------------
