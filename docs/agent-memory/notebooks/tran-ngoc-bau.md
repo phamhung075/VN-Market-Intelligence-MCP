@@ -1,5 +1,43 @@
 # Tran Ngoc Bau — Working Notebook
 
+## c92 · 2026-06-09T20:20Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Session: manual-spawn (file-evidence, MCP gateway unavailable — F-OOM-MCP-SERVER likely root cause) | Auto-cures: 0
+
+**Previous handoff ACK:** c91 ACK'd by PO at 2026-06-08T21:20:28Z. F-SUNDAY-SCHEDULER-FIRE CLOSED as FALSE POSITIVE (c91 calendar error — 2026-06-08 was Monday). F2 BCTC tracked. F3/F4/F9 structural.
+
+**Dashboard inbox:** [dashboard] DASHBOARD.md absent (no file). Inbox empty.
+
+**Chef pipeline (2026-06-09, Monday) — PIPELINE HEALTHY:**
+- chef-morning (05:15 UTC Mon-Fri): last_fired=2026-06-09T05:22:31Z — CORRECT. No notebook entry → F-MORNING-NB-MISSING (3rd+ cycle).
+- chef-intraday (02-08 UTC Mon-Fri): last_fired=2026-06-09T07:22:18Z — SILENT-EXIT (0 clusters) — CORRECT.
+- chef-eod (08:45 UTC Mon-Fri): last_fired=2026-06-09T08:57:31Z — PUBLISHED (4 clusters). CORRECT.
+- chef-evening (19:45 UTC daily): last_fired=2026-06-09T19:55:34Z — PUBLISHED (3 clusters). CORRECT.
+- start_count=4 close_count=4 stuck=0 failed=0 guaranteed_ok=TRUE pipeline_degraded=FALSE
+
+**c91 Calendar-Error Correction:** F-SUNDAY-SCHEDULER-FIRE was TNB calendar error (2026-06-08 = Monday). Confirmed closed. No systemic scheduler bug.
+
+**Layer scores c92:**
+- Morning 05:22Z: UNAUDITABLE (no notebook entry — F-MORNING-NB-MISSING)
+- Intraday 06:22Z: SILENT-EXIT — no audit required
+- EOD 08:37Z: L1 PASS (USD/VND 26128 + Brent -3.51% state transitions), L2 PARTIAL (PMI sub absent, EFFR-IORB absent), L3 PARTIAL (carry 1.38pp is_estimate=false ✓, VIRA absent), L4 PARTIAL-HIGH ([phase:expansion→slowdown][tier:equity/fixed_income] ✓, 3/4 pillars: M2+COC+EPS, POL absent), L5 PARTIAL (hexagram 501, per-ticker FPT Khiêm ✓), L6 PASS (DSI honored, causal chains present, source cross-validated) → **3.5/6** | 9-step: 6/9 GOOD
+- Evening 19:45Z: L1 PASS, L2 PARTIAL, L3 PARTIAL, L4 PARTIAL-HIGH ([phase:slowdown][tier:fixed_income|quality] ✓, 2.5/4 pillars), L5 PARTIAL (ACB Tỉnh 43%, GAS/PLX Khôn ✓, Lão check absent), L6 PASS → **3.5/6** | 9-step: 6/9 GOOD
+- Business context: ABSENT — F9 persistent (18th consecutive cycle)
+
+**New findings c92:**
+- F-OOM-MCP-SERVER=HIGH (NEW): mcp-server 97.75% (1.955GiB/2GiB cap) at 05:06Z. RestartCount=2 (at cap limit). Root cause of stale gateway sessions in recent TNB audit cycles. PO to create dev task: raise memory cap or fix leak.
+- F-MORNING-NB-MISSING (MED, 3rd+ cycle): morning 05:22Z slot fired but no notebook entry. Pattern: c87 EOD missing, c88 Morning missing, c92 Morning missing. SPIKE-UNIFIED-NB-GAP investigating.
+- F-SUNDAY-SCHEDULER-FIRE=CLOSED (c91 false positive corrected per PO ACK + today's Monday-09 schedule confirming same pattern).
+- F-NB-HEADER-STALE=RESOLVED this cycle: unified-agent header now 19:45Z correct.
+
+**Structural gaps (carry-forward):** F2=MED BCTC overdue (CTG cycle 29+, 29 tickers blocked) | F3=MED PMI sub-components | F4=MED VIRA absent | F9=MED business context (18th) | F5=LOW hexagram 501
+
+**Auto-cures:** None. All gaps: structural tool (F3/F4) or infra (F2/F-OOM) or Step 8 different-slot pattern (F-MORNING-NB-MISSING).
+
+**Agent methodology scores:** news-scout 7/9 GOOD | market-watcher scope-limited GOOD | bctc-analyst 8/9 GOOD (FPT F-score+OCF gate ✓) | unified-agent 5/9 NEEDS_ATTENTION (D+E persistent gaps)
+
+**Actions:** Handoff docs/handoffs/tnb-audit-latest.md written | Signal docs/signals/tnb-2026-06-09T2020Z-c92.json | Notebook committed | WORK report pending (MCP unavailable — report inline in final message)
+
 ## c91 · 2026-06-08T20:21Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Session: manual-spawn (file-evidence, MCP gateway unavailable) | Auto-cures: 0
