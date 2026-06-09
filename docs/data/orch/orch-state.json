@@ -3755,7 +3755,7 @@
             "id": "FIX-CI-C1328E-047-CONTAM-STUB",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",

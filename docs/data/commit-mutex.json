@@ -1,6 +1,9 @@
 {
-  "locked": false,
-  "owner_agent": null,
-  "task": null,
-  "expires_at": 0
+  "locked": true,
+  "owner_agent": "dev-mcp-server",
+  "task": "FIX-CI-C1328E-047-CONTAM-STUB",
+  "task_kind": "commit-mutex",
+  "task_id": "main",
+  "ttl_seconds": 120,
+  "expires_at": 1749478920
 }

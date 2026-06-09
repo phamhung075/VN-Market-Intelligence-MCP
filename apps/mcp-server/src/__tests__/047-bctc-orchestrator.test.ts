@@ -13,12 +13,44 @@ import { parseBctcReport } from "../application/usecases/parseBctcReport.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import type { FiscalPeriod } from "../../bctc-schema.js";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Real-module captures — imported BEFORE mock.module() so they hold the genuine
+// implementations. Used in afterAll teardown to restore the module registry for
+// worker-sibling test files (1328e, 1352a). Pattern: 1352a teardown-describe.
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  notifyTelegramAlert as _realNotifyTelegramAlert,
+  notifyTelegramDocument as _realNotifyTelegramDocument,
+  formatConvictionBlock as _realFormatConvictionBlock,
+  deleteTelegramBug as _realDeleteTelegramBug,
+  sendTelegramWork as _realSendTelegramWork,
+  sendTelegramMarket as _realSendTelegramMarket,
+  sendTelegramBug as _realSendTelegramBug,
+  sendTelegram as _realSendTelegram,
+} from "../infrastructure/notifiers/telegram.js";
+
+// Freeze before mock.module() overwrites live bindings.
+const _frozenNotifyTelegramAlert = _realNotifyTelegramAlert;
+const _frozenNotifyTelegramDocument = _realNotifyTelegramDocument;
+const _frozenFormatConvictionBlock = _realFormatConvictionBlock;
+const _frozenDeleteTelegramBug = _realDeleteTelegramBug;
+const _frozenSendTelegramWork = _realSendTelegramWork;
+const _frozenSendTelegramMarket = _realSendTelegramMarket;
+const _frozenSendTelegramBug = _realSendTelegramBug;
+const _frozenSendTelegram = _realSendTelegram;
+
 // Prevent test fixtures (e.g. actionCode="EMPTY") from firing real Telegram messages.
+// Extended with the 4 missing exports so sibling files (1328e, 1352a) can load
+// without SyntaxError: "Export named 'notifyTelegramAlert' not found".
 mock.module("../infrastructure/notifiers/telegram.js", () => ({
   sendTelegramWork: () => Promise.resolve(true),
   sendTelegramMarket: () => Promise.resolve(true),
   sendTelegramBug: () => Promise.resolve(true),
   sendTelegram: () => Promise.resolve(true),
+  notifyTelegramAlert: () => Promise.resolve(true),
+  notifyTelegramDocument: () => Promise.resolve(true),
+  formatConvictionBlock: _frozenFormatConvictionBlock,
+  deleteTelegramBug: () => Promise.resolve(false),
 }));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,6 +171,19 @@ beforeAll(async () => {
 afterAll(() => {
   closeDb();
   delete Bun.env["DB_PATH"];
+  // Restore real telegram module so 1328e-conviction-display.test.ts and other
+  // sibling files see the real exported functions (not the stub noops above).
+  // C5-cure ABSOLUTE: this restore goes in afterAll (teardown scope), NOT file-top.
+  mock.module("../infrastructure/notifiers/telegram.js", () => ({
+    sendTelegramWork: _frozenSendTelegramWork,
+    sendTelegramMarket: _frozenSendTelegramMarket,
+    sendTelegramBug: _frozenSendTelegramBug,
+    sendTelegram: _frozenSendTelegram,
+    notifyTelegramAlert: _frozenNotifyTelegramAlert,
+    notifyTelegramDocument: _frozenNotifyTelegramDocument,
+    formatConvictionBlock: _frozenFormatConvictionBlock,
+    deleteTelegramBug: _frozenDeleteTelegramBug,
+  }));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -399,3 +399,30 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 **files-changed:**
 - `apps/mcp-server/src/__tests__/1129-calibration-tools.test.ts`
 - META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
+
+### STEP dev-mcp-server-S17 · dev-mcp-server · 2026-06-09T13:25:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C1328E-047-CONTAM-STUB
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** Extended `047-bctc-orchestrator.test.ts` (the CONTAMINATOR) per 1352a teardown-describe precedent. Three-step C5-cure:
+(1) Added frozen-real import captures for `notifyTelegramAlert`, `notifyTelegramDocument`, `formatConvictionBlock`, `deleteTelegramBug` (plus existing 4: `sendTelegramWork/Market/Bug/Telegram`) BEFORE the existing `mock.module()` call, with immediate const-freeze snapshot (`_frozen*` pattern) so live bindings are preserved before mock.module() overwrites them.
+(2) Extended 047's EXISTING `mock.module()` stub to export those 4 missing names: `notifyTelegramAlert: () => Promise.resolve(true)` (noop), `notifyTelegramDocument: () => Promise.resolve(true)` (noop), `formatConvictionBlock: _frozenFormatConvictionBlock` (real fn), `deleteTelegramBug: () => Promise.resolve(false)` (noop). Eliminates `SyntaxError: Export named 'notifyTelegramAlert' not found` for all sibling files.
+(3) Added restore `mock.module(...)` inside 047's EXISTING `afterAll` (after `closeDb()` / `delete Bun.env["DB_PATH"]`) that re-registers all 8 real frozen functions — so 1328e-conviction-display.test.ts and other siblings run after 047 see the real module exports.
+
+**changes:**
+- `apps/mcp-server/src/__tests__/047-bctc-orchestrator.test.ts`: +29 lines (import block + frozen consts + extended stub factory + afterAll restore). Zero prod files touched. Zero changes to 1328e.
+
+**what-considered:**
+- Modifying 1328e to remove its `notifyTelegramAlert` import — REJECTED: 1328e assertions are correct and prod-aligned; C5-cure mandates fixing CONTAMINATOR not VICTIM.
+- Adding `notifyTelegramAlert` to stub only (no teardown restore) — REJECTED: partial fix; sibling files loaded AFTER 047 would still see the stub noop instead of the real function, breaking DI-injection in 1328e's `makeCaptureFetch` tests.
+- New module-scope `mock.module()` in 1328e or any other file — REJECTED: C5-CURE ABSOLUTE constraint.
+
+**why-decision:** Arch-S14 brief (fa223773) confirms: 047's stub is missing 4 exports; Bun 1.3.13 ESM registry is process-global; stub persists for all files at positions [25]-onwards in the full suite. The 1352a teardown-describe pattern (import-before-mock + frozen-const + afterAll-restore) is the established cure. Zero prod risk (stub noops only affect test isolation; real fn preserved via frozen const for restore).
+
+**result:** 047 = 9 pass / 0 fail. 1328e (solo) = 12 pass / 0 fail. Two-file joint run (047 + 1328e) = 21 pass / 0 fail. tsc --noEmit CLEAN (exit 0). Zero new file-top mock.module(). Zero changes to 1328e or prod.
+**ci-victim-prefix:** `Task 1328e` (expect 10 → 0 native fails vs 68 band). Partial: `Task 1352a` (2 → 1, the notifyTelegramDocument SyntaxError cured; A-1 Expected:1/Received:2 independent, out of scope).
+**status-flip:** TODO → REVIEW (router owns push + CI gate)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/047-bctc-orchestrator.test.ts`
+- META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
