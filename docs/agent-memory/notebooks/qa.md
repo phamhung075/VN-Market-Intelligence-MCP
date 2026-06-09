@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-219 · 2026-06-10 · BPE-DEV-1 BCTC-PROSE-EXTRACT prose producer gate — APPROVED
+
+Sprint: BCTC-PROSE-EXTRACT | Task: BPE-DEV-1 | Verdict: APPROVED | Commits: 1588a591 + 6e518935
+
+QA re-ran: 16/16 prose tests GREEN (test_generic_extractor_prose.py). 45/45 table prerequisite tests GREEN. Full suite: 911 pass / 40 fail — 40 pre-existing (pytest-asyncio event-loop isolation; all fail individually pass in isolation + as group; none in diff). BLOCKER-3 serial order: 1588a591 (table work) → 6e518935 (prose fix) — git log confirmed. DDD PASS: domain/primitives (bctc_code_whitelist, layout_invariants) import stdlib only. Security PASS. Fence test: ocr_unit() with non-empty ocr_pages returns non-empty stitched_markdown; assertion genuine (would fail if prose_lines never appended). AC-1..AC-5 all verified against committed source. RISK-5 audit: zero assert_called_with on ocr_unit. DJ-GATE-1: sprint-BCTC-PROSE-EXTRACT-qa.md § qa-S1. orch-state BPE-DEV-1 REVIEW→DONE.
+
 ## cycle-218 · 2026-06-08T15:35Z · DFR-P3-MCP directed final acceptance gate — APPROVED + SPRINT COMPLETE
 
 Sprint: DEEPFETCH-RAG-REDESIGN | Task: DFR-P3-MCP | Verdict: APPROVED | Commit: 4af297b2 (5 files)

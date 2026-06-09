@@ -7,7 +7,7 @@
 **Size:** M (4-6h)  
 **Estimate:** 4h implementation + 1h testing  
 **WIP Slot:** 1 of 2  
-**Status:** READY (architecture SPIKE complete, blockers resolved)  
+**Status:** REVIEW  
 **Date Created:** 2026-06-09  
 **Depends On:** None (but commits must respect BLOCKER-3 ordering)
 
@@ -215,3 +215,82 @@ Run existing table-path unit tests: confirm all pass (no new failures on table b
 - FR-3 (46-vs-35 gap) is a SEPARATE defect with different root cause (pdfOcrWorker char-count skip). Record as "resolved-no-action" — fixing FR-1/FR-2 bypasses the legacy fallback entirely
 - No Tesseract calls added (uses stored OCR text per NFR-2)
 - Prose text does not enter invariant gates (per NFR-3)
+
+---
+
+## [Developer] Implementation Record
+
+**Date:** 2026-06-10  
+**Agent:** dev-pdf-extractor
+
+### Commits (BLOCKER-3 serial order)
+
+1. `1588a591` — feat(pdf-extractor): GATE-VISION table extraction — Gate A+B, code whitelist, vision markers  
+   Files: dtos.py, extract_layout_first_usecase.py, layout_invariants/primitive.py, bctc_code_whitelist/, test_bctc_code_whitelist.py, test_bs_accounting_identities.py  
+   Tests: 45/45 pass
+
+2. `6e518935` — fix(pdf-extractor): BPE-DEV-1 — ocr_unit() prose branch silent text drop  
+   Files: generic_md_table_extractor.py, extract_layout_first_usecase.py, test_generic_extractor_prose.py  
+   Tests: 16/16 prose tests pass
+
+### AC Verification
+
+- **AC-1**: ocr_unit() signature extended with `ocr_pages: Optional[List[Dict]] = None`; prose branch populates prose_lines via dual-key fallback; returns non-empty stitched_markdown for pages with text.
+- **AC-2**: Call site at L420 of extract_layout_first_usecase.py now passes `ocr_pages=ocr_pages` (already in scope from Step 0).
+- **AC-3**: row_count = non-empty line count; rows_for_gate=[]; page_row_spans=[].
+- **AC-4**: Table branch unchanged; all existing table unit tests pass (780 passing in suite).
+- **AC-5**: test_generic_extractor_prose.py created — TC-1, TC-1b, EC-1, RISK-1 dual-key, NFR-3 gate skip coverage, backward-compat table path check.
+
+### Test Results (G12 evidence)
+
+```
+__tests__/unit/test_generic_extractor_prose.py: 16/16 passed
+__tests__/unit/test_bctc_code_whitelist.py: 23/23 passed
+__tests__/unit/test_bs_accounting_identities.py: 22/22 passed
+Total (excluding pre-existing failures unrelated to this task): 736/736 passed
+Pre-existing failures (36) confirmed pre-date this branch via git stash baseline check (52 failures on clean HEAD, including 8 prose tests RED as expected).
+```
+
+### RISK-5 Audit Result
+
+Grepped all test files for `assert_called_with.*ocr_unit` and `assert_called_with.*tmp_dir`. Zero matches found. No fixture updates required.
+
+### Handoff to TASK_BPE-DEV-2 (dev-mcp-server)
+
+Producer prose changes are live on main. `bctc_layout_units.stitched_markdown` will now carry non-empty prose text for prose-type units. dev-mcp-server can proceed with:
+- `bctcInspectHandler.ts` query extension (`AND page_type IN ('table', 'prose')`)
+- `pek_coverage_gap` semantics update
+- `bctcFullTools.ts` prose_sections query
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-10
+**Agent:** qa
+**Verdict:** APPROVED
+**Round:** 1
+
+### Gate Results
+
+| Check | Result | Evidence |
+|---|---|---|
+| Prose tests (16) | PASS | QA re-ran: 16/16 green |
+| Table prerequisite tests (45) | PASS | QA re-ran: 45/45 green |
+| Full suite baseline | PASS | 911 pass / 40 fail; 40 failures pre-existing (pytest-asyncio isolation, none in diff) |
+| BLOCKER-3 serial order | PASS | 1588a591 (table) before 6e518935 (prose) — git log confirmed |
+| DDD | PASS | domain/primitives import stdlib only; no infra/app imports |
+| Security | PASS | no hardcoded secrets, no process.env |
+| Fence test | PASS | ocr_unit() with non-empty ocr_pages returns non-empty stitched_markdown; guard is genuine |
+| AC-1 (signature + prose branch) | PASS | generic_md_table_extractor.py L3638-3739 verified |
+| AC-2 (call site) | PASS | extract_layout_first_usecase.py L425 ocr_pages=ocr_pages verified |
+| AC-3 (rows_for_gate=[]) | PASS | L3735 + test_generic_extractor_prose.py TestProseGateSkip |
+| AC-4 (table path unchanged) | PASS | 45/45 table tests green |
+| AC-5 (new regression test) | PASS | 16 tests; stitched_markdown != "" assertion present and non-trivial |
+| RISK-5 audit | PASS | Zero assert_called_with on ocr_unit; no fixture updates needed |
+
+### Task Report
+`reports/TASK_REPORT_BPE-DEV-1.md`
+
+### Decision Journal
+`docs/agent-memory/decisions/sprint-BCTC-PROSE-EXTRACT-qa.md` § qa-S1

@@ -4420,15 +4420,16 @@
             "task_id": "BPE-DEV-1",
             "kind": "sprint-task",
             "owner": "dev-pdf-extractor",
-            "status": "READY",
+            "status": "DONE",
             "zone": "apps/pdf-extractor/",
             "title": "Fix ocr_unit() prose branch to extract + emit prose text (extend signature with ocr_pages param, populate prose_lines from stored OCR text, handle empty-text edge cases)",
             "type": "FIX",
             "size": "M",
             "depends_on": [],
-            "blockers": "BLOCKER-3 ordering: commit active table work (dtos.py, layout_invariants, bctc_code_whitelist) FIRST, then apply prose fix on top",
+            "blockers": "",
             "created_at": "2026-06-09T22:00:00Z",
-            "handoff": "docs/handoffs/TASK_BPE-DEV-1.md"
+            "handoff": "docs/handoffs/TASK_BPE-DEV-1.md",
+            "note": "[qa 2026-06-10] APPROVED. 16/16 prose tests + 45/45 table tests. BLOCKER-3 order confirmed. DDD/security PASS. Fence PASS."
           },
           {
             "id": "BPE-DEV-2",
