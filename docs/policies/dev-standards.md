@@ -11,8 +11,7 @@ Any script useful for the work or reusable later MUST be saved to `scripts/` —
 | Agent-flow helper (drain, match-slots, cadence…) | `scripts/agents-flow/` |
 | Audit / one-shot verification worth replaying | `scripts/audits/` |
 | Migration | `scripts/migrations/` |
-| CI-RED gate watcher (poll run → bun NATIVE summary + exact-prefix victim tally) | `scripts/ci-native-gate-watch.sh <run_id\|--sha> [exact-task-prefix…]` |
-| CI isolation probe (per-file CONTAMINATION vs GENUINE bucket triage) | `scripts/ci-isolation-probe.sh [file-pattern…] [--output=file.json]` — owning brief: `docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md § 5` |
+| CI per-file isolation runner (deterministic, canonical gate) | `scripts/ci-per-file-isolation.sh [P]` — owning brief: `docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md § P2-4` |
 | CI per-file isolation runner (Option A — deterministic, order-independent gate) | `scripts/ci-per-file-isolation.sh [P]` — owning brief: `docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md § P2-4` |
 | Anything else reusable | `scripts/` |
 

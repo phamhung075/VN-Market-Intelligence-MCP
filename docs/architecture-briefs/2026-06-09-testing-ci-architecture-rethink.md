@@ -204,16 +204,14 @@ plan regardless of architecture choice.
 
 ### 2c. Option C — Retire the gating apparatus once determinism is restored
 
-**Current apparatus:** `scripts/ci-native-gate-watch.sh`, per-victim exact-prefix tally,
-jitter band, absolute baseline tracking. This exists ONLY because `bun test` is non-deterministic
-in the single-process mode.
+**Legacy apparatus (retired 2026-06-09):** Previously used `scripts/ci-native-gate-watch.sh` for per-victim exact-prefix tally and jitter band tracking when `bun test` was non-deterministic in single-process mode.
 
 **Retirement condition:** If process-isolation (sharding or per-file) is introduced AND the
 mock.module-restore discipline guard is in place AND the GENUINE failures are fixed to 0, then:
 - The jitter band becomes meaningless (deterministic = 0 fail every run)
 - The per-victim tally becomes unnecessary (no false-positive rate to compensate for)
 - The absolute baseline tracking degenerates to "0 is the only acceptable baseline"
-- The gate script can be retired in favor of a simple `bun test && exit 0 || exit 1`
+- With deterministic per-file isolation (BATCH0-5 complete), the gate script is retired in favor of simple `bun test && exit 0 || exit 1`
 
 **Retirement is conditional** — it cannot happen until both sharding AND genuine-fix work is done.
 
@@ -242,11 +240,10 @@ mock.module-restore discipline guard is in place AND the GENUINE failures are fi
 5. **Gate apparatus retirement (C)** follows automatically once 0-fail is stable.
 
 **Implementation order:**
-- Phase 1 (NOW): Write `scripts/ci-isolation-probe.sh` + mock.module-restore meta-test skeleton
-  + this brief (DOCS-ONLY spike, no test changes)
+- Phase 1 (NOW/DONE 2026-06-09): mock.module-restore meta-test skeleton + this brief (DOCS-ONLY spike, no test changes)
 - Phase 2 (dev-mcp-server): Fix GENUINE classes in dispatch order (Section 3)
 - Phase 3 (ops/dev): Add 8-shard matrix to ci.yml once fail=0
-- Phase 4 (housekeeping): Retire gating apparatus, archive ci-native-gate-watch.sh
+- Phase 4 (housekeeping/DONE 2026-06-09): Gate apparatus retired (ci-isolation-probe.sh and ci-native-gate-watch.sh removed)
 
 ---
 
@@ -388,31 +385,17 @@ regression guard for all future C-ML fixes.
 
 ---
 
-## 5. ISOLATION PROBE SCRIPT
+## 5. ISOLATION PROBE (RETIRED 2026-06-09)
 
-The reusable probe script is at `scripts/ci-isolation-probe.sh`. It:
-1. Accepts a whitespace-separated list of test NAMES (or "all" to probe all files in the fail list)
-2. Maps test names to files via grep
-3. Runs each file alone: `cd apps/mcp-server && bun test src/__tests__/<file>`
-4. Captures pass/fail per file, buckets into CONTAMINATION vs GENUINE
-5. Outputs a machine-readable JSON result to stdout
+The reusable isolation probe was used to triage 56 failing test files during the CI-RED-RECONCILE campaign.
+Result: 13% contamination (4 files, ~20 tests eliminated by per-file isolation) / 87% genuine (26 files, 35 test failures requiring fixes).
 
-Usage (see script header for full CLI reference):
-```bash
-./scripts/ci-isolation-probe.sh                     # probes all 56 known-fail files
-./scripts/ci-isolation-probe.sh MSG-1 RAPID-A       # probes named files only
-./scripts/ci-isolation-probe.sh --output=probe.json # write JSON result to file
-```
-
-**HOST-SAFETY:** Script explicitly bans full-suite invocation (`bun test` without a file arg).
-Only single-file `bun test src/__tests__/<file>` calls are issued.
-
----
+The script has been retired (2026-06-09) as the deterministic per-file gate is now canonical and stable (0 fail @ sha 44c94fd3).
 
 ## 6. Scope of this SPIKE commit
 
 - `docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md` (this file)
-- `scripts/ci-isolation-probe.sh` (new reusable script)
+
 - `docs/policies/dev-standards.md` (pointer added under Script Persistence section)
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (DJ-GATE-1 arch-S21)
 
@@ -542,7 +525,7 @@ isolation, the runner script emits a synthetic summary line in the same format b
 ```
 This synthetic line is written to `$GITHUB_STEP_SUMMARY` and also to a JSON file consumed by
 any gate script. The `/goal Stop hook` reads the native summary — the runner script must
-produce an identical format. The `ci-native-gate-watch.sh` baseline becomes the runner's
+produce an identical format. The deterministic per-file gate is the canonical baseline — the
 aggregated Z (fail count), which is now ORDER-INDEPENDENT and deterministic.
 
 **Failure attribution:** Each per-file invocation writes `$RESULT_DIR/<file-slug>.json` with
@@ -665,7 +648,7 @@ and update `.github/workflows/ci.yml` to use it. This eliminates contamination v
 the gate counter while BATCH0–5 genuine fixes proceed in parallel. The two workstreams are
 independent and non-conflicting.
 
-**Stage 2 (after BATCH0–5 bring genuine absolute to ~0):** Retire `scripts/ci-native-gate-watch.sh`
+**Stage 2 (DONE 2026-06-09):** Gate apparatus and scaffolding scripts retired (genuine absolute = 0 @ sha 44c94fd3)
 and the jitter-band apparatus. The per-file isolation runner's aggregated fail count IS the gate:
 0 = green, >0 = red, deterministic across any number of consecutive runs on the same SHA.
 
@@ -868,8 +851,8 @@ independently on `main` (per NO-BRANCHES policy).
 | `.github/workflows/ci.yml` modification | ops | CI workflow change |
 | `apps/mcp-server/src/__tests__/setup.ts` `STOCK_PRICE_DB_PATH` env-passthrough | dev-mcp-server | Test infrastructure, 2-line change |
 | `docs/policies/dev-standards.md` pointer | dev-mcp-server | Docs, 1 line |
-| `scripts/ci-native-gate-watch.sh` retirement (Stage 2) | ops | Cleanup, after gate stable |
+| Gate apparatus retirement (Stage 2, scripts removed) | ops | DONE — `ci-isolation-probe.sh` and `ci-native-gate-watch.sh` removed 2026-06-09 |
 
 **PM task decomposition recommendation:** Two tasks:
 - `IMPL-CI-PER-FILE-ISOLATION` (dev-mcp-server + ops, timebox 60min): script + workflow YAML + setup.ts patch
-- `RETIRE-CI-GATE-APPARATUS` (ops, timebox 30min, BLOCKED until genuine=0): retire ci-native-gate-watch.sh
+- `RETIRE-CI-GATE-APPARATUS` (ops, DONE 2026-06-09): Gate apparatus scripts removed

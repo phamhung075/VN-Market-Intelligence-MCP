@@ -46,3 +46,31 @@ CI.yml was failing RED for 140+ commits due to a push gap: the FIX-CI-LINT-STACK
 - Commit pushed: `9f063c9a` (chore: OOB triage CI-RED-RECONCILE)
 - Run URL: https://github.com/phamhung075/VN-Market-Intelligence-MCP/actions/runs/27153704278
 - Previous origin/main: `a709681f`
+
+## DJ-GATE-1: RETIRE-CI-GATE-APPARATUS completion log
+
+**Task:** RETIRE-CI-GATE-APPARATUS (ops, READY -> DONE, 2026-06-09T23:55Z)
+
+**5 Atomic Steps Executed:**
+
+1. **STEP-1 (RETIRE):** `git rm scripts/ci-isolation-probe.sh` — contamination-era isolation-probe scaffolding removed. ✓
+2. **STEP-2 (RETIRE):** `git rm scripts/ci-native-gate-watch.sh` — non-deterministic-absolute gate-watch tracker removed. ✓
+3. **STEP-3 (RETIRE):** Stripped contamination-variance / ordering-jitter language from docs:
+   - `docs/policies/dev-standards.md` — removed obsolete script rows from Script Persistence table; kept `ci-per-file-isolation.sh` (canonical gate). ✓
+   - `docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md` — updated Phase 1/4 descriptions, replaced legacy apparatus section with retirement note, removed probe script usage examples. ✓
+4. **STEP-4 (KEEP):** `scripts/ci-per-file-isolation.sh` retained (live canonical deterministic runner). Per-sprint gate jq scripts (po-s*.jq) retained (audit trail). ✓
+5. **STEP-5 (VERIFY):** 
+   - Gate canonical: `scripts/ci-per-file-isolation.sh` exists and is referenced in `.github/workflows/ci.yml` ✓
+   - Dangling refs: No CI workflow references to removed scripts found ✓
+   - Decision notebooks (sprint-CI-RED-RECONCILE-*.md) kept unchanged as historical record (not operational docs) ✓
+
+**Precondition Status:** Genuine fail=0 @ sha 44c94fd3 (BATCH5 DONE, run 27236671718, all 8 jobs green). ✓
+
+**Verification:** Per-file deterministic gate is now the canonical CI absolute (11696 pass / 53 skip / 0 fail). Non-deterministic apparatus and contamination-era scaffolding retired. The CI gate is stable and deterministic.
+
+**Commit Pathspec:** 
+- `git rm scripts/ci-isolation-probe.sh scripts/ci-native-gate-watch.sh`
+- `git add docs/policies/dev-standards.md docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md`
+- `git add docs/data/orch/orch-state.json` (task_board status READY->DONE)
+
+**Status:** DONE — all artifacts clean, no dangling refs, gate green.
