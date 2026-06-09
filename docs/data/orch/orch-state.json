@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T01:19:29Z",
-  "_updated_by": "po-S17",
+  "_updated_at": "2026-06-09T02:16:00Z",
+  "_updated_by": "po-S18",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T02:21:57Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-09T02:16:00Z",
+    "_updated_by": "po-S18",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4123,7 +4123,7 @@
         "title": "Self-healing getDb(): fix 629 residual failures from full-suite singleton pollution",
         "type": "TASK",
         "owner": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "REWORK",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -4133,7 +4133,26 @@
         ],
         "sprint": "CI-RED-RECONCILE",
         "created_at": "2026-06-09T02:21:57Z",
-        "note": "[pm] decomposed from FU-SCHEMA-DRIFT-P5 spike; phase-4-revised getDb() self-heal; 1 file scope | [dev-mcp-server DJ-GATE-1 2026-06-09T02:00Z] TODO->REVIEW. Self-healing getDb() implemented: 9 synchronous initXxxTables() calls in fresh-db branch (excludes initFinancialReportsTables RISK-2). tsc: CLEAN. 002-db-schema.test.ts 24/24 pass. 182-portfolio-risk 10/10 pass. 089-tool-macro pre-existing failures (no new regressions). Commit pending. Router owns push+CI."
+        "note": "[pm] decomposed from FU-SCHEMA-DRIFT-P5 spike; phase-4-revised getDb() self-heal; 1 file scope | [dev-mcp-server DJ-GATE-1 2026-06-09T02:00Z] TODO->REVIEW. Self-healing getDb() implemented: 9 synchronous initXxxTables() calls in fresh-db branch (excludes initFinancialReportsTables RISK-2). tsc: CLEAN. 002-db-schema.test.ts 24/24 pass. 182-portfolio-risk 10/10 pass. 089-tool-macro pre-existing failures (no new regressions). Commit pending. Router owns push+CI. | [po-S18 DJ-GATE-1 2026-06-09T02:16Z] REVIEW->REWORK: CI-P5-GATE-541123b4 verification gate FAILED — native fail+error rose 629->635 (+6) at sha 541123b4; router REVERTED schema.ts in d1aa19c5 (byte-identical to pre-P5, tsc clean, pushed). Empirically self-heal is PARTIALLY correct (HEALED 4 classes: sbv_rates_history/commodity_prices_history/imf_indicators/vps_service_health) but INTRODUCED 'no such column: created_at' x3 — at least one standalone init slice's CREATE TABLE IF NOT EXISTS is column-drifted (missing created_at) from canonical initDatabase(); when it wins the fresh-:memory: race, IF NOT EXISTS blocks canonical repair. Re-design routed to FU-SCHEMA-DRIFT-P6 architect SPIKE (reconcile 9 slice DDLs vs canonical). NOT another per-file inline-DDL patch; NOT a mechanized one-size injection (9454baad reverted +219)."
+      },
+      {
+        "id": "FU-SCHEMA-DRIFT-P6",
+        "title": "ARCHITECT SPIKE: reconcile 9 standalone init-slice DDLs vs canonical initDatabase() (column drift incl created_at)",
+        "type": "SPIKE",
+        "owner": "architect",
+        "status": "TODO",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "timebox": 120,
+        "mode": "spike",
+        "depends": [
+          "FIX-SCHEMA-DRIFT-P5-SELFHEAL"
+        ],
+        "sprint": "CI-RED-RECONCILE",
+        "created_at": "2026-06-09T02:16:00Z",
+        "question": "The P5 self-heal getDb() (9 synchronous initXxxTables() in the fresh-db branch) is partially correct — it HEALED 4 no-such-table classes (sbv_rates_history, commodity_prices_history, imf_indicators, vps_service_health) but INTRODUCED a NEW column-drift class 'no such column: created_at' x3, net +6 worse (629->635, gate FAILED, reverted in d1aa19c5). Root cause: >=1 standalone init slice's CREATE TABLE IF NOT EXISTS DDL is schema-drifted from canonical (missing created_at and possibly other columns); once that slice wins the fresh-:memory: create race, IF NOT EXISTS blocks the canonical DDL from repairing the table. AUDIT each of the 9 slices (initMarketDataTables/initAlertsTables/initMacroTables/initPortfolioTables/initNewsTables/initBriefingsTables/initSystemTables/initBacktestingTables/initAgmPlanTables) — per CREATE TABLE, diff every column vs canonical initDatabase() (created_at first, then all others). DECIDE: self-heal-with-RECONCILED-DDL (make every slice DDL byte-equivalent to canonical so IF-NOT-EXISTS no longer drifts) vs run-order test isolation (drop self-heal, isolate the Contract-A afterAll(closeDb()) ordering). NOT another per-file inline-DDL patch; NOT a mechanized one-size init injection (9454baad reverted +219).",
+        "note": "[po-S18] recurring-bug, 4th touch of CI-test-schema surface (P2 Contract-B, P4 per-file isolation, FU-P5 SPIKE singleton-fixture, now P5-SELFHEAL slice-DDL drift). Distinct follow-up to FU-SCHEMA-DRIFT-P5 (DONE — its fix HYPOTHESIS was disproven empirically). Architect lane = NO dev WIP; WIP<=2 honored (0 IN_PROGRESS). DoD: per-slice column-drift table vs canonical + decision (reconciled-DDL vs test-isolation) + brief. Next dev gate after re-impl: native fail+error must DROP vs 629."
       }
     ],
     "archive": [],
@@ -5968,8 +5987,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-09T01:19:29Z",
-    "_updated_by": "po-S17",
+    "_updated_at": "2026-06-09T02:16:00Z",
+    "_updated_by": "po-S18",
     "rows": [
       {
         "id": "sau-c121-a33",
@@ -6683,13 +6702,13 @@
         "type": "db_integrity_breach",
         "summary": "macro_indicators C-09: only 1 country in 26h window (expects >=8)",
         "severity": "CRITICAL",
-        "status": "TRIAGED",
+        "status": "RESOLVED",
         "zone_owner": "dev-mcp-server",
         "check_id": "C-09",
         "payload_ref": null,
         "processed_by": "po-triage-20260609T0118Z",
         "processed_at": "2026-06-09T01:19:29Z",
-        "disposition": "ROUTED -> dev-mcp-server (zone_owner) to verify macro_indicators multi-country coverage. NOT a self-clear of FIX-MACRO-REFRESH-DEAD (b7ce338f DONE 2026-06-08T15:25Z, US/FRED refresh + env-var). PO live-verified serve layer holds (get_macro_snapshot 2026-06-09T01:17Z: carry/yield computedAt fresh, fedFundsRate=3.62 is_estimate=false). c283-c09 is a DISTINCT dimension — db_integrity_breach on country COVERAGE (1 country vs >=8 in 26h), measured ~9h AFTER the fix; prior fix did not target multi-country population. Real candidate regression -> dev verify, do not auto-close."
+        "disposition": "RESOLVED 2026-06-09T02:16Z (po-S18): auditor false-positive, ALREADY FIXED in commit 5d323430 (FIX-C09-SCHEMA-MISMATCH). C-09 probe was rewritten count(DISTINCT indicator_key)->count(DISTINCT country) by a95c514a WITHOUT updating the >=8 threshold; macro_indicators is UNIQUE(country) (only 1 'vietnam' row ever) so >=8 became permanently impossible. Probe re-rewritten to count(DISTINCT non-null indicator columns), threshold >=8->>=3; live DB confirmed 3 non-null indicators (cpi/gdp_growth/interest_rate). Not a real coverage regression; no dev task. Supersedes prior TRIAGED route-to-dev (po-S17)."
       },
       {
         "id": "sau-c283-c08",
