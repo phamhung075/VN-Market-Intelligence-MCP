@@ -3166,7 +3166,7 @@
             "id": "RE-PROFILE-CI-241-RESIDUAL",
             "type": "SPIKE",
             "owner": "architect",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "mode": "spike",
@@ -3186,14 +3186,18 @@
             "gate": "deliverable: a fresh-cluster-breakdown brief in docs/architecture-briefs/ that groups all 241 native fails by error signature and ranks buckets by (size x low-prod-risk); NO code change; gate = taxonomy delivered. Drives the next ROI-ranked attack FIX (native fail+error must DROP vs the 241 absolute).",
             "created_at": "2026-06-09T05:37:58Z",
             "created_by": "po",
-            "note": "[po S24 DJ-GATE-1 2026-06-09T05:37:58Z] Opened on CI-CLUSTER2-5-GATE-91afe344 PASS (346->241, errors->0). Re-profile is mandatory BEFORE swinging at the next bucket: the 241 residual composition has SHIFTED vs the 629-era taxonomy — two clusters unmasked previously-crashed tests, so Cluster-3/4 estimates are computed against a now-superseded absolute. Deliverable supersedes docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-P5..P8 / P8-IMPL) stays PARKED per po-S21 PATH-B — do NOT reopen. owner architect (no-code root-cause taxonomy = SPIKE pattern). zone apps/mcp-server/ (where the bun-test corpus lives). WIP<=2: architect lane consumes no dev WIP. | brief: docs/architecture-briefs/2026-06-09-ci-241-residual-taxonomy.md"
+            "note": "[po S24 DJ-GATE-1 2026-06-09T05:37:58Z] Opened on CI-CLUSTER2-5-GATE-91afe344 PASS (346->241, errors->0). Re-profile is mandatory BEFORE swinging at the next bucket: the 241 residual composition has SHIFTED vs the 629-era taxonomy — two clusters unmasked previously-crashed tests, so Cluster-3/4 estimates are computed against a now-superseded absolute. Deliverable supersedes docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-P5..P8 / P8-IMPL) stays PARKED per po-S21 PATH-B — do NOT reopen. owner architect (no-code root-cause taxonomy = SPIKE pattern). zone apps/mcp-server/ (where the bun-test corpus lives). WIP<=2: architect lane consumes no dev WIP. | brief: docs/architecture-briefs/2026-06-09-ci-241-residual-taxonomy.md | [po-S33 SUPERSEDED] The stale 241/91afe344 absolute is retired — re-profiling already advanced via the C1 spike + 1423e gate to the live 91 floor (sha 9ed78225, run 27200448050). The 241 taxonomy is no longer the basis for attack ranking; C1 (71/91) is now adjudicated and dispatched as FIX-CI-C1-MACRO-INJECT-SEAM-TESTS. Closed as SUPERSEDED, not re-run.",
+            "done_by": "po-S33",
+            "resolution": "SUPERSEDED",
+            "done_at": "2026-06-09T10:57:16Z",
+            "dj_gate_1": "sprint-CI-RED-RECONCILE-po.md#po-S33"
           },
           {
             "id": "SPIKE-CI-C1-MACRO-INJECT-SEAM",
             "title": "SPIKE: C1 MACRO_INJECT_SEAM (71 fails) — determine if seam removal in macroTools.ts was intentional (test rewrite) or accidental regression (prod fix required). Largest CI-241-residual cluster. Second CI event in macroTools.ts — recurring-bug-escalation required architect SPIKE before dev touch.",
             "type": "SPIKE",
             "owner": "architect",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "priority": "high",
@@ -3204,7 +3208,11 @@
             ],
             "sprint": "CI-RED-RECONCILE",
             "created_at": "2026-06-09T06:30Z",
-            "note": "Verdict: (A)+partial(B). 98df0f43 (2026-05-23) INTENTIONALLY removed _testSbvClient/_testCommodityClient/_testDinhGiaInputs seams as part of P2-B1 HTTP rewire. Go service emits JSON, not [Commodity Prices] text sections. ~40 tests need fetch-mock injection rewrite; ~31 need assertion update. Production signals correct; format changed to JSON wrapper. Brief: docs/architecture-briefs/2026-06-09-spike-ci-c1-macro-inject-seam.md"
+            "note": "Verdict: (A)+partial(B). 98df0f43 (2026-05-23) INTENTIONALLY removed _testSbvClient/_testCommodityClient/_testDinhGiaInputs seams as part of P2-B1 HTTP rewire. Go service emits JSON, not [Commodity Prices] text sections. ~40 tests need fetch-mock injection rewrite; ~31 need assertion update. Production signals correct; format changed to JSON wrapper. Brief: docs/architecture-briefs/2026-06-09-spike-ci-c1-macro-inject-seam.md",
+            "done_by": "po-S33",
+            "resolution": "DONE",
+            "done_at": "2026-06-09T10:57:16Z",
+            "dj_gate_1": "sprint-CI-RED-RECONCILE-po.md#po-S33"
           },
           {
             "id": "FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES",
@@ -3544,6 +3552,23 @@
             "done_at": "2026-06-09T10:45:00Z",
             "gate_result": "CI-1423E-GATE-9ed78225 PASSED — named Task 1423 cluster 22 fail -> 0 fail (jitter-robust per-victim flip), tests -13 (exactly the removed 1423e.test.ts), zero coverage lost (protected sibling 1423e-macro-calendar.test.ts stays 23/0)",
             "dj_gate_1": "sprint-CI-RED-RECONCILE-po.md#po-S32"
+          },
+          {
+            "id": "FIX-CI-C1-MACRO-INJECT-SEAM-TESTS",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [],
+            "baseline_pass": "91 native fail+error absolute (sha 9ed78225, run 27200448050, job 80302822813) — C1 is ~71 of the 91; gate = native fail+error must DROP below 91 (band +/-3, aim ~20-40 residual) AND each of the 5 named test files must flip its macro tests fail->pass individually in the CI log",
+            "created_at": "2026-06-09T10:57:16Z",
+            "created_by": "po-S33",
+            "dispatched_by": "po-S33",
+            "title": "C1 MACRO-INJECT-SEAM test rewrite (~71 fails, dominant lever). Architect VERDICT (A)+partial(B) CONFIRMED (brief docs/architecture-briefs/2026-06-09-spike-ci-c1-macro-inject-seam.md): 98df0f43 (2026-05-23, P2-B1 HTTP rewire) INTENTIONALLY removed the _testCommodityClient/_testSbvClient/_testDinhGiaInputs injection seams; the get_macro_snapshot tool is now a thin HTTP proxy to the Go macro-indicators service (port 5004) emitting {source_tier,text:JSON,fetchedAt} with NO human-readable section headers. Production is CORRECT — no prod change required for CI. Fix = test-only rewrite across 5 files.",
+            "note": "ARCHITECT-CONFIRMED APPROACH (mandatory): (1) ~40 tests use dead _test* injection params -> rewrite to mock globalThis.fetch in beforeAll/beforeEach returning a MacroSnapshotResponse-shaped JSON, restore in afterAll (EXACT template = 1881a-source-tier.test.ts lines 92-135, already PASSING). (2) ~31 tests assert section headers ([Commodity Prices]/[SBV Central Bank Rates]/=== Macro Snapshot ===/[Macro Signal Summary]/[Dinh Gia]) the TS tool no longer emits -> rewrite assertions to the {source_tier,text:JSON,fetchedAt} wrapper + inner JSON field checks (oilUsd>0, signals.carry.regime, signals.yield.label). 5 FILES (test-only zone): 089-tool-macro.test.ts; 1423d-thien-thoi-snapshot.test.ts (integration TT-07..TT-10 ONLY — DO NOT touch pure formatThienThoi units TT-01..TT-06); 1423f-deposit-rate-display.test.ts (all 3); 1570c-dinh-gia-snapshot.test.ts (integration ONLY — DO NOT touch formatDinhGia units); 1903a-dispatch-regression.test.ts (Suite B GMS-REG-02..04 ONLY — keep GMS-REG-03 negative-space + GMS-REG-04 length guards). DO-NOT-MODIFY: 1881a-source-tier.test.ts (reference, 20/0). NO PROD CODE CHANGE. HARD C5-CURE CONSTRAINT (ABSOLUTE): NO new file-top/module-scope mock.module() anywhere — DI via scoped globalThis.fetch override + restore ONLY (re-spreading ESM-cache contamination is forbidden). Sub-task C (Go human-readable formatter) is DEFERRED — NOT part of this CI fix. Recurring-bug guard (architect): after fix, grep -r '_testCommodityClient|_testSbvClient|_testDinhGia' src/__tests__/ MUST return zero. Commit with explicit pathspec; ROUTER pushes + gates."
           }
         ],
         "_updated_by": "po-S28",
