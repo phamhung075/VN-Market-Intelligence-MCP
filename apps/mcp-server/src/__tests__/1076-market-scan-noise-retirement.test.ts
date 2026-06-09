@@ -17,11 +17,11 @@ Bun.env["DB_PATH"] = ":memory:";
  *    alerts table are preserved for audit."
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterAll } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Database } from "bun:sqlite";
-import { getDb, closeDb } from "../infrastructure/db/schema.js";
+import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
 import { scanMarket } from "../application/usecases/scanMarket.js";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
 import { SqliteWatchlistRepository } from "../infrastructure/db/repositories/SqliteWatchlistRepository.js";
@@ -317,4 +317,9 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
     expect(src).not.toMatch(/sendTelegram/);
     expect(src).not.toMatch(/TELEGRAM/);
   });
+});
+
+afterAll(async () => {
+  closeDb();
+  await initDatabase();
 });

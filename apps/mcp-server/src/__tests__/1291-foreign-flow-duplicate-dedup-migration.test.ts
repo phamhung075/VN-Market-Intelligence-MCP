@@ -24,8 +24,8 @@
  * TC-5: upsertForeignFlow for same code on different dates → two rows exist.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { closeDb, getDb } from "../infrastructure/db/schema.js";
+import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
+import { closeDb, getDb, initDatabase } from "../infrastructure/db/schema.js";
 import {
   runVnstockMigrations,
   upsertForeignFlow,
@@ -270,4 +270,9 @@ describe("FIX-1291 — dedup-before-index in runVnstockMigrations()", () => {
     expect(r1?.foreign_volume).toBe(100);
     expect(r2?.foreign_volume).toBe(110);
   });
+});
+
+afterAll(async () => {
+  closeDb();
+  await initDatabase();
 });

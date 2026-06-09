@@ -57,3 +57,31 @@ Zone health: bun tsc --noEmit clean, schema regression 24/24 pass, 1 file change
 **CI-impact:** no previously-passing test weakened; 1 new test added that would fail on un-fixed code.
 
 Zone health: bun tsc clean, 234 13/0, 1892a 3/0, 1 SQL line fixed | HEALTHY
+
+## 2026-06-09 · FU-SCHEMA-DRIFT-P7-IMPL — DONE
+
+**Task:** FU-SCHEMA-DRIFT-P7-IMPL | Sprint: CI-RED-RECONCILE | Zone: apps/mcp-server/src/__tests__/
+**Architect brief:** docs/architecture-briefs/2026-06-09-fu-schema-drift-p7-spike.md
+**Root cause (pre-confirmed):** 7 "close-no-init destroyer" test files call closeDb() without subsequent initDatabase(). After the last destroyer at run position [814] (283-portfolio-conviction-batch), ~180 pure-singleton test files run against empty :memory: singleton → "no such table" failures.
+**Fix pattern:** Added `afterAll(async () => { closeDb(); await initDatabase(); })` at top-level file scope to each of the 7 destroyers. Existing afterEach(closeDb) hooks preserved unchanged.
+**Import changes (6 of 7 needed initDatabase added):**
+- 103: `afterAll` added to bun:test import; `initDatabase` added to schema import
+- 1076: same
+- 1291: same
+- 182: same
+- 1869b: same
+- 231: same (uses `test` not `it`, `beforeAll`+`beforeEach` pattern — afterAll added)
+- 283: same (4 describe blocks each with afterEach(closeDb) — single file-scope afterAll added)
+**Per-file isolation results (all PASS):**
+- 103: 10 pass / 0 fail
+- 1076: 8 pass / 0 fail
+- 1291: 5 pass / 0 fail
+- 182: 10 pass / 0 fail
+- 1869b: 10 pass / 0 fail
+- 231: 8 pass / 0 fail
+- 283: 11 pass / 0 fail
+**tsc:** CLEAN (bun tsc --noEmit, no output)
+**Not touched:** 084-tool-market.test.ts, 089-tool-macro.test.ts, 1527-schema-slices.test.ts, all production code
+**Expected CI impact:** 85-95% reduction in native fail+error (629 → <50 estimate per P7 brief)
+
+Zone health: bun tsc --noEmit clean, 7 destroyer files patched, 62 tests pass in isolation | HEALTHY

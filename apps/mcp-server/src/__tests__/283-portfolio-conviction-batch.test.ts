@@ -12,9 +12,9 @@ Bun.env["DB_PATH"] = ":memory:";
  * group data, not the full MCP tool (which requires live price fetchers).
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
-import { closeDb, getDb } from "../infrastructure/db/schema.js";
+import { closeDb, getDb, initDatabase } from "../infrastructure/db/schema.js";
 import { sqlInClause } from "../infrastructure/db/sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -479,4 +479,9 @@ describe("Task 283 — Inline hexagram formatting (no appendKinhDich dependency)
     expect(block).toContain("N/A");
     expect(block).not.toContain("Độ tin cậy:");
   });
+});
+
+afterAll(async () => {
+  closeDb();
+  await initDatabase();
 });

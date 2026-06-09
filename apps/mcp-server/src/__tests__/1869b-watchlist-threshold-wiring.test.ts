@@ -11,14 +11,14 @@ Bun.env["DB_PATH"] = ":memory:";
  *   5. Standard stock (alert_drop_pct=-7): -7.5% DOES trigger
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   detectSignals,
   type MarketSnapshot,
   type SignalContext,
 } from "../domain/services/signalDetector.js";
-import { getDb, closeDb } from "../infrastructure/db/schema.js";
+import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
 import { scanMarket } from "../application/usecases/scanMarket.js";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
 import { SqliteWatchlistRepository } from "../infrastructure/db/repositories/SqliteWatchlistRepository.js";
@@ -328,4 +328,9 @@ describe("Task 1869b — scanMarket: per-stock threshold wiring", () => {
     // Schema default -7 → -7.5% triggers
     expect(result.signals).toBeGreaterThanOrEqual(1);
   });
+});
+
+afterAll(async () => {
+  closeDb();
+  await initDatabase();
 });
