@@ -11,6 +11,7 @@ Any script useful for the work or reusable later MUST be saved to `scripts/` —
 | Agent-flow helper (drain, match-slots, cadence…) | `scripts/agents-flow/` |
 | Audit / one-shot verification worth replaying | `scripts/audits/` |
 | Migration | `scripts/migrations/` |
+| CI-RED gate watcher (poll run → bun NATIVE summary + exact-prefix victim tally) | `scripts/ci-native-gate-watch.sh <run_id\|--sha> [exact-task-prefix…]` |
 | Anything else reusable | `scripts/` |
 
 After saving: **update the owning flow/skill doc with a canonical pointer** (`node scripts/...` usage line) so future agents discover it instead of rewriting it. Pattern: `docs/agents/dev-team/flow/drain-signals.md` §0a-1 "CANONICAL SCRIPT".
