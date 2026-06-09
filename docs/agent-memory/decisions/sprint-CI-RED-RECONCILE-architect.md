@@ -177,3 +177,16 @@ IF NOT EXISTS = safe). Extends the P6 direction (which was correct in kind but i
 **why-change:** P7 premise (tables missing from initDatabase) DISPROVED by full slice audit.
 Root cause is singleton destruction by 7 close-no-init files, not schema incompleteness.
 Expected impact: 85-95% reduction (629 → <50 native fail+error).
+
+---
+
+### STEP arch-S7 (DJ-GATE-1) · architect · 2026-06-09T03:50Z
+
+**task-id:** FU-SCHEMA-DRIFT-P8
+**what-done:** Chose direction (a): reconcile 3 NO-DEFAULT created_at DDL entries + re-apply P5 self-heal in getDb() + add preload await initDatabase() to setup.ts. Produced per-table DDL map with owning modules verified. Wrote brief to docs/architecture-briefs/2026-06-09-fu-schema-drift-p8-spike.md.
+**what-considered:**
+- Direction (b) global preload: bunfig.toml preload runs once; cannot auto-reinit after every closeDb() without ESM monkey-patching (fragile). Any auto-reinit hook in preload = mechanically identical to P5 (self-heal in getDb()). Direction (b) is not viable as a distinct mechanism.
+- Direction (a) reconcile+reapply-P5: P5 mechanism proven to heal 4 classes empirically. The +6 regression was ONLY from 3 tables with `TEXT NOT NULL` without DEFAULT (rag_analyses, agent_feedback, signal_quality_audit). Reconciling those 3 eliminates the regression. Re-applying P5 preserves the 4-class heal.
+- Adding preload await initDatabase() in setup.ts: covers files before any closeDb() call; self-heal covers files after closeDb() on _db=null path. Together they cover all consuming-file patterns.
+**why-decision:** Direction (b) is not viable as a distinct global mechanism. Direction (a) is the only approach with a proven heal track record (P5 healed 4 classes) and a bounded, verifiable DDL fix. DDL drift pinpointed to exactly 3 lines across 2 slice files.
+**why-change:** P7 disproved per-file lever. P8 pivot to production-layer self-heal (direction a) with DDL prerequisites satisfied.

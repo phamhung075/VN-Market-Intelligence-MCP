@@ -1,8 +1,30 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 03:12 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 03:50 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T03:50Z — FU-SCHEMA-DRIFT-P8: recurring-bug spike, direction (a) — DDL reconcile + P5 self-heal
+
+**Task:** FU-SCHEMA-DRIFT-P8 (SPIKE, 120m, zone: apps/mcp-server/, 6th touch CI-test-schema)
+
+**Direction chosen:** (a) — Reconcile 3 drifted `created_at` DDL entries + re-apply P5 self-heal in `getDb()` + add preload `await initDatabase()` to `setup.ts`.
+
+**DDL drift pinpointed (3 tables, 2 files):**
+- `rag_analyses.created_at`: `TEXT NOT NULL` (no DEFAULT) — schema-news.ts line 22
+- `agent_feedback.created_at`: `TEXT NOT NULL` (no DEFAULT) — schema-system.ts line 109
+- `signal_quality_audit.created_at`: `TEXT NOT NULL` (no DEFAULT) — schema-system.ts line 430
+All 3 need `DEFAULT (datetime('now'))` added. These were the exact cause of P5's +6 regression.
+
+**Why NOT direction (b):** Global preload `await initDatabase()` runs ONCE. Cannot auto-reinit after every closeDb() without ESM monkey-patching. Any auto-reinit hook = mechanically identical to P5 (getDb() self-heal). Not a distinct mechanism.
+
+**Per-table owning map:** agent_signals→schema-news.ts initNewsTables; sbv_rates_history+commodity_prices+commodity_prices_history+imf_indicators→schema-macro.ts initMacroTables; positions→schema-portfolio.ts initPortfolioTables; daily_ohlcv→schema-market-data.ts initMarketDataTables. All tables already in canonical initDatabase(). No DDL additions needed — only DEFAULT reconciliation on 3 drift tables.
+
+**Dev task files:** schema-news.ts (rag_analyses), schema-system.ts (agent_feedback + signal_quality_audit), schema.ts (getDb() self-heal re-apply), setup.ts (await initDatabase() preload init).
+
+**Brief:** `docs/architecture-briefs/2026-06-09-fu-schema-drift-p8-spike.md`
+
+**Gate:** native fail+error must DROP below 629 AND agent_signals/sbv_rates_history/positions/commodity_prices* buckets shrink toward zero.
 
 ## 2026-06-09T03:12Z — FU-SCHEMA-DRIFT-P7: recurring-bug spike, premise correction + 7 destroyers identified
 
