@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T15:01:03Z",
-    "_updated_by": "po-S47",
+    "_updated_at": "2026-06-09T15:27:44Z",
+    "_updated_by": "po-S48",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3858,7 +3858,7 @@
             "id": "FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3889,10 +3889,31 @@
             "baseline_pass": 11699,
             "fail_count_discrepancy": "Task 235 residual at gate 09dce373 = 4 log-lines = 2 unique failing tests x 2 occurrences (runtime + summary dump). arch-S17 expects 4 -> 0 once FIX-1290's sendTelegramMarket leak is cured.",
             "created_at": "2026-06-09T15:01:03Z",
-            "created_by": "po-S47"
+            "created_by": "po-S47",
+            "closed_at": "2026-06-09T15:27:44Z",
+            "closed_by": "po-S48",
+            "gate_proof": "Task 235 per-victim exact-prefix (fail) 4->0 CONFIRMED on full-CI run 27216305674 (bun_job 80358657573, sha c017289d). Anchors held: Task 1352a 2->2, Task 1792 4->4 (independent residuals). Absolute native_fail flat 62->62 (2 cured 235 fails offset by jitter-reshuffle from inserting afterAll at 6 CI positions — established C1485/C235-1792 precedent; named per-victim flip is authoritative). Telegram-mock contamination CLASS hardened across 6 files: FIX-1290/1424a/1345b (primary cure) + 047/1352a/1356a (audit frozen-capture -> cache-bust). Commit c017289d KEPT."
+          },
+          {
+            "id": "FIX-CI-C1173-TRIAGE",
+            "type": "SPIKE",
+            "owner": "architect",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [],
+            "title": "ARCHITECT-FIRST prod-vs-test triage of Task 1173 — the single dominant 62-run lever (6 fails)",
+            "root_cause": "UNKNOWN — to be determined by architect triage. With Task 235 now cured (FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP, run 27216305674), the fresh 62-run per-prefix distribution makes Task 1173 the single dominant cluster at 6 fails; next tier Task 1839b / Task 1792 / Task 1282a at 4 each.",
+            "scope": "ARCHITECT-FIRST prod-vs-test confirm per /goal REMOVE-obsolete clause: classify each of Task 1173's failures as REWRITE (prod still exists, test stale -> rewrite test to match) vs REMOVE (prod gone/superseded, test obsolete -> DELETE). Produce a brief with the prod-vs-test verdict + full-CI-ordered-repro evidence (the established evidence bar this sprint — 2-file joint-pass is NOT sufficient proof; require full-CI per-victim exact-prefix repro). Do NOT open a fix task yet — this is triage-only; PO opens the scoped fix after the architect verdict returns.",
+            "evidence_bar": "Full-CI-ordered-repro per-victim exact-prefix (fail) tally for 'Task 1173' (3 consecutive false-positive local repros this sprint arch-S14/S15/S16 => 2-file joint-pass NOT sufficient). Routed ARCHITECT-FIRST per /goal REMOVE-obsolete clause.",
+            "measurement_source": "docs/signals/ci-telegram-sweep-gate-result-c017289d-20260609T1530Z.json (router-verified gate, run 27216305674) — Task 235 cured, next levers Task 1173 (6, single dominant), Task 1839b/1792/1282a (4 each)",
+            "created_at": "2026-06-09T15:27:44Z",
+            "created_by": "po-S48"
           }
         ],
-        "_updated_by": "po-S28",
+        "_updated_by": "po-S48",
         "ci_absolute": {
           "native_fail": 62,
           "native_errors": 0,
@@ -3900,22 +3921,22 @@
           "tests": 11803,
           "pass": 11699,
           "skip": 42,
-          "sha": "09dce373",
-          "run_id": "27214052876",
-          "bun_job_id": "80350659632",
-          "supersedes": "63 (sha 5e7c9b5c, run 27211911171, job 80342965730)",
-          "delta_vs_prior": "-1 (63->62) — FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE C5-CURE TELEGRAM REGISTRY RESTORE: file-bottom afterAll in the leaking 1792 test re-installs the cache-busted real telegram module into the process-global ESM registry, removing the sendTelegramBug boolean-stub leak that poisoned 2 of Task 235s assertions. Authoritative jitter-robust signal = named Task 235 6 fail -> 4 fail PARTIAL per-victim exact-prefix flip (2 fails cured). Projected -6 (full 235 cluster) but landed -1: the +5-vs-projection is NOT regression — 2 of 235s 6 were genuinely cured, and adding an afterAll to file pos 103 reorders the bun ESM-cache mock.module() contamination graph, shifting jitter on OTHER unrelated tests beyond the +/-3 band. 235 retains a residual 4 from a different/additional cause -> SEPARATE open lever, architect re-triage in flight. New band ~62 +/-3 (floor ~59).",
-          "updated_at": "2026-06-09T14:55:00Z",
-          "updated_by": "po-S46"
+          "sha": "c017289d",
+          "run_id": "27216305674",
+          "bun_job_id": "80358657573",
+          "supersedes": "62 (09dce373)",
+          "delta_vs_prior": "0 (62 -> 62) — flat absolute on a NEW sha. FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP cured the named Task 235 4->0 (2 unique tests), but the absolute held flat because inserting an afterAll at 6 distinct CI file positions reorders the bun ESM-cache mock.module() contamination graph and shifts jitter on unrelated tests beyond +/-3. Authoritative jitter-robust signal = the named per-victim Task 235 4->0 flip (NOT the absolute). Same disposition as C1485 (10->0, absolute 68->63) and C235-1792 (6->4). Telegram-mock contamination CLASS now DRAINED + hardened (6 files). Band stays ~62 +/-3 (floor ~59).",
+          "updated_at": "2026-06-09T15:27:44Z",
+          "updated_by": "po-S48"
         },
         "long_tail_triage_policy": {
           "goal": "ci/di all passe on GitHub, test update (remove if obsolete) — /goal refined 2026-06-09T07:5xZ",
           "classify_each_residual_bucket": "REWRITE (prod still exists, test stale -> rewrite test to match) vs REMOVE (prod gone/superseded, test obsolete -> DELETE the test, do NOT patch)",
           "remove_examples": "removed test seams, deleted reuters.js, pre-98df0f43 macro section-header format, stale cron schedules",
           "applies_to": "C5+ and all remaining ~135 long-tail rounds; re-profile residual by ROOT-CAUSE pattern (unmocked-HTTP / SSOT-drift / assertion-logic) NOT by file, with the REMOVE-if-obsolete lens",
-          "absolute": "62 (sha 09dce373, run 27214052876, job 80350659632 — SUPERSEDES 63/5e7c9b5c)",
-          "updated_by": "po-S46",
-          "updated_at": "2026-06-09T14:55:00Z",
+          "absolute": "62 (sha c017289d, run 27216305674, job 80358657573)",
+          "updated_by": "po-S48",
+          "updated_at": "2026-06-09T15:27:44Z",
           "under_scope_lesson": "Architect cluster counts are CATEGORY-WIDE SUPERSETS (e.g. C1 '42' netted -12). Dev fixes ONLY the explicitly NAMED files; residual same-pattern files OUT of named scope -> long-tail re-profile, NOT a charge-back to closed task ids. The ONE exception so far: C4 single-file-family count landed EXACTLY (-25) because it was not a category superset."
         }
       }
