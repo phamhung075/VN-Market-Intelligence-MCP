@@ -1,0 +1,29 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "normal",
+  "createdAt": "2026-06-09T10:10:00Z",
+  "dedup_key": "ci_c6_gate_result:37bb2e7d",
+  "payload": {
+    "check_id": "CI-C6-GATE-37bb2e7d",
+    "task_under_test": "FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT",
+    "verdict": "GATE PASSED — jitter-robust per-victim flip CONFIRMED. Route REVIEW -> DONE.",
+    "measurement_method": "Jitter-robust named-assertion flip across two CI runs (NOT the absolute, which sits inside the 135 +/-3 band and cannot resolve a single-assertion delta). Compared the exact 1031 SECTOR_PEERS DGC assertion in the baseline job log vs the C6 job log.",
+    "named_assertion_flip": {
+      "assertion": "Task 1031 — Expanded watchlist catalog sync (30 tickers) > SECTOR_PEERS coverage (getStockProfile) > DGC resolves to domain=... exchange=\"HOSE\" in SECTOR_PEERS",
+      "baseline": { "sha": "3663bd12", "run_id": "27193376550", "bun_job_id": "80278819016", "result": "(fail) DGC resolves to domain=\"other\"", "ts": "2026-06-09T08:25:56Z" },
+      "c6_run": { "sha": "37bb2e7d", "run_id": "27197882499", "bun_job_id": "80294081419", "result": "(pass) DGC resolves to domain=\"chemicals\"", "ts": "2026-06-09T09:47:37Z" },
+      "flip": "fail -> pass CONFIRMED"
+    },
+    "pattern": "STALE-TEST REWRITE (per /goal clause): production SSOT classifies DGC (Duc Giang Chemicals) as domain=chemicals; the 1031 SECTOR_PEERS assertion was stale asserting domain=other. Fix REWROTE the assertion (other->chemicals) to match live prod SSOT — prod behavior unchanged, no obsolete test removed (prod still exists, test merely stale).",
+    "native_absolute_context": {
+      "baseline": { "native_fail": 135, "note": "band ~135 +/-3, real floor ~132" },
+      "c6_run": { "native_fail": 137, "pass": 11637, "skip": 42, "tests": 11816 },
+      "interpretation": "137 vs 135 = +2, WITHIN the +/-3 jitter band. A single deterministic -1 data fix is unresolvable at the absolute level and is EXPECTED to be masked by run-to-run ESM-cache contamination nondeterminism. The named-assertion flip is the authoritative signal; the absolute is non-contradictory noise."
+    },
+    "router_actions_done": "C6 fix commit 37bb2e7d (dev S-?, DGC domain other->chemicals in 1031-expanded-watchlist-catalog.test.ts) already pushed and live in CI. Raw-verified the named DGC assertion flips fail->pass across baseline (job 80278819016) and C6 (job 80294081419) job logs. ci_absolute NOT moved (135 stands; C6 is a -1 inside the band, not a rebaseline event).",
+    "po_action_requested": "Flip FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT REVIEW -> DONE with DJ (decision-journal STEP, stamped task-id, same commit) citing the named-assertion fail->pass flip. KEEP ci_absolute at 135. This flip can be BATCHED into the next PO cycle that adjudicates the C5 re-fix gate, to avoid a concurrent orch-state write while the C5 dev agent is mid-flight.",
+    "batch_hint": "Defer-and-batch: bundle this C6 REVIEW->DONE with the upcoming C5 gate adjudication in one PO board write."
+  }
+}
