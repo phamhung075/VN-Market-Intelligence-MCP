@@ -11,20 +11,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 
-// Mock external HTTP fetchers used by runImpactChain (avoid network I/O + timeouts)
-mock.module("../infrastructure/fetchers/yahooFinance.js", () => ({
-  fetchYahooFinancePrices: async () => null,
-}));
-mock.module("../infrastructure/fetchers/sbv.js", () => ({
-  fetchSbvRates: async () => null,
-}));
-// G5b (P2-F): mock ragHttpClient.js (HTTP boundary) instead of retriever.js (deprecated)
-mock.module("../infrastructure/rag/ragHttpClient.js", () => ({
-  ragSearch: async () => ({ results: [], total: 0 }),
-  ragIndex: async () => ({ status: "ok", indexed: 1, entry_id: "mock" }),
-  ragHealthCheck: async () => true,
-}));
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAnalysisTools } from "../interface/mcp/tools/news-analysis/analysis.js";
 import { closeDb } from "../infrastructure/db/schema.js";
@@ -78,10 +64,7 @@ const RATE_NEWS_ITEM = {
 
 // ─── Mock fetchers ───────────────────────────────────────────────────────────
 
-// We mock at the module level so tools/analysis.ts sees mocked versions.
-// The fetcher modules are imported directly by analysis.ts, so we mock
-// the infrastructure modules.
-
+// Spy mocks for per-test tracking (not module-scope stubs — see DI seam pattern).
 const mockFetchCafeF = mock(async () => [OIL_NEWS_ITEM]);
 const mockFetchVnExpress = mock(async () => [RATE_NEWS_ITEM]);
 const mockFetchReuters = mock(async () => []);
@@ -141,7 +124,7 @@ describe("Task 083 — Analysis MCP Tools", () => {
       // Even if this hits the network, result type is always { content: [{type, text}] }
       const result = await handler({ sources: ["cafef"], limit: 3 }) as { content: Array<{ type: string; text: string }> };
       expect(result.content[0]!.type).toBe("text");
-    });
+    }, 30000);
   });
 
   // ── run_impact_chain ───────────────────────────────────────────────────────
@@ -160,6 +143,9 @@ describe("Task 083 — Analysis MCP Tools", () => {
       const result = await handler({
         newsText: "Giá dầu tăng mạnh do OPEC cắt giảm sản lượng khai thác toàn cầu",
         includeWatchlist: false,
+        _testCommodityFetcher: async () => null,
+        _testSbvFetcher: async () => null,
+        _testRagRetriever: async () => [],
       }) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0]!.type).toBe("text");
@@ -175,6 +161,9 @@ describe("Task 083 — Analysis MCP Tools", () => {
       const result = await handler({
         newsText: "Oil price rise as OPEC cuts production — crude oil up sharply",
         includeWatchlist: false,
+        _testCommodityFetcher: async () => null,
+        _testSbvFetcher: async () => null,
+        _testRagRetriever: async () => [],
       }) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0]!.type).toBe("text");
@@ -199,6 +188,9 @@ describe("Task 083 — Analysis MCP Tools", () => {
       const result = await handler({
         newsText: "Oil price rise as OPEC cuts production — crude oil up sharply",
         includeWatchlist: true,
+        _testCommodityFetcher: async () => null,
+        _testSbvFetcher: async () => null,
+        _testRagRetriever: async () => [],
       }) as { content: Array<{ type: string; text: string }> };
 
       expect(result.content[0]!.type).toBe("text");
@@ -213,7 +205,13 @@ describe("Task 083 — Analysis MCP Tools", () => {
       const handler = getHandler(server, "run_impact_chain");
 
       // newsText is required by the schema but handler must not throw
-      const result = await handler({ newsText: "", includeWatchlist: false }) as { content: Array<{ type: string; text: string }> };
+      const result = await handler({
+        newsText: "",
+        includeWatchlist: false,
+        _testCommodityFetcher: async () => null,
+        _testSbvFetcher: async () => null,
+        _testRagRetriever: async () => [],
+      }) as { content: Array<{ type: string; text: string }> };
       expect(result.content[0]!.type).toBe("text");
     });
   });

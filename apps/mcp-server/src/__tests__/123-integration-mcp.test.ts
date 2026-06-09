@@ -13,8 +13,8 @@
  *   RT5 — Market snapshot (mocked HTTP → get_market_snapshot → verify VN-Index)
  *
  * SQLite: REAL (:memory: singleton, not mocked)
- * LanceDB: MOCKED (mock.module before any import)
- * HTTP: MOCKED via injected _testHoseClient parameter
+ * LanceDB: not used directly — rag-service accessed via HTTP (ragHttpClient.js)
+ * HTTP: MOCKED via injected _testHoseClient / _testCommodityFetcher / _testSbvFetcher / _testRagRetriever parameters
  *
  * @module __tests__/123-integration-mcp
  */
@@ -22,22 +22,8 @@
 // Must set DB_PATH before any import that triggers getDb()
 Bun.env["DB_PATH"] = ":memory:";
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, mock } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-
-// Mock LanceDB-dependent modules before they are imported by tool files
-mock.module("../infrastructure/rag/retriever.js", () => ({
-  searchContext: async () => [],
-  insertAnalysis: async () => {},
-}));
-
-// Mock external HTTP fetchers to avoid network I/O in integration tests
-mock.module("../infrastructure/fetchers/yahooFinance.js", () => ({
-  fetchYahooFinancePrices: async () => null,
-}));
-mock.module("../infrastructure/fetchers/sbv.js", () => ({
-  fetchSbvRates: async () => null,
-}));
 
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import {
@@ -536,10 +522,13 @@ describe("RT2 — News → Cascade → Alert roundtrip", () => {
       domain: "banking",
     });
 
-    // run_impact_chain with banking-related text
+    // run_impact_chain with banking-related text — inject fetcher mocks via DI seam
     const result = await callTool(server, "run_impact_chain", {
       newsText: "Vietnam central bank cuts interest rates to stimulate banking sector lending",
       includeWatchlist: true,
+      _testCommodityFetcher: async () => null,
+      _testSbvFetcher: async () => null,
+      _testRagRetriever: async () => [],
     });
     const text = getText(result);
     // The cascade engine returns a chain — just verify it responded without error

@@ -383,8 +383,25 @@ export function registerAnalysisTools(server: McpServer): void {
         .boolean()
         .default(true)
         .describe("Whether to include watchlist stocks in the impact chain (default: true)"),
+      // Test-only injection parameters (ignored in production — same _test* pattern as _testHoseClient)
+      _testCommodityFetcher: z.any().optional(),
+      _testSbvFetcher: z.any().optional(),
+      _testRagRetriever: z.any().optional(),
     },
-    async ({ newsText, includeWatchlist: includeWatchlistRaw }) => {
+    async (args) => {
+      const {
+        newsText,
+        includeWatchlist: includeWatchlistRaw,
+        _testCommodityFetcher,
+        _testSbvFetcher,
+        _testRagRetriever,
+      } = args as {
+        newsText: string;
+        includeWatchlist?: boolean;
+        _testCommodityFetcher?: () => Promise<import("../../../../application/usecases/runImpactChain.js").CommoditySnapshot | null>;
+        _testSbvFetcher?: () => Promise<import("../../../../application/usecases/runImpactChain.js").SbvMacroSnapshot | null>;
+        _testRagRetriever?: import("../../../../application/usecases/runImpactChain.js").RagRetriever;
+      };
       const includeWatchlist = includeWatchlistRaw ?? true;
 
       try {
@@ -407,7 +424,13 @@ export function registerAnalysisTools(server: McpServer): void {
         }
 
         // ── Step 2: Run cascade ───────────────────────────────────────────────
-        const chain = await runImpactChain({ newsText, watchlist });
+        const chain = await runImpactChain({
+          newsText,
+          watchlist,
+          ...(_testCommodityFetcher !== undefined ? { commodityFetcher: _testCommodityFetcher } : {}),
+          ...(_testSbvFetcher !== undefined ? { sbvFetcher: _testSbvFetcher } : {}),
+          ...(_testRagRetriever !== undefined ? { ragRetriever: _testRagRetriever } : {}),
+        });
 
         // ── Step 3: Format output ─────────────────────────────────────────────
         const lines: string[] = [

@@ -1,6 +1,23 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-09 · FIX-CI-C5-UNMOCKED-HTTP-FETCHES — REVIEW
+## 2026-06-09 · FIX-CI-C5-UNMOCKED-HTTP-FETCHES — RE-DISPATCH REVIEW (DI-seam pattern)
+
+**Task:** FIX-CI-C5-UNMOCKED-HTTP-FETCHES | Sprint: CI-RED-RECONCILE | Size: M | Baseline: 135 (sha 3663bd12)
+**Scope:** 3 files changed (2 test + 1 production seam):
+- `083-tool-analysis.test.ts` — REMOVED all 3 file-top mock.module() (yahooFinance/sbv/ragHttpClient). Added _testCommodityFetcher/_testSbvFetcher/_testRagRetriever to run_impact_chain handler calls. Fixed timeout on network-hitting test.
+- `123-integration-mcp.test.ts` — REMOVED all 3 file-top mock.module() (retriever/yahooFinance/sbv). Added DI args to RT2 run_impact_chain callTool.
+- `analysis.ts` — PRODUCTION SEAM: added z.any().optional() _test* params to run_impact_chain Zod schema; passes to runImpactChain() when present.
+- ddd-1b + 028/025/1423a/1487: NO CHANGE (correct per spec).
+
+**Root cause (confirmed by architect brief):** 083/123 file-top mock.module() poisoned Bun process-scoped ESM cache for all downstream files. Victim tests (028/025/1423a/1487) already had correct DI pattern but received null-returning stub bodies. Fix removes contamination source.
+
+**Verification:** 083: 16/0, 123: 27/1-skip/0. tsc: CLEAN. No mock.module() in either file.
+**Projected drop:** 135 → ~113 (22 victims cleared). Router owns push + CI gate.
+**Status:** REVIEW
+
+---
+
+## 2026-06-09 · FIX-CI-C5-UNMOCKED-HTTP-FETCHES — REVIEW (REVERTED — prior bad attempt)
 
 **Task:** FIX-CI-C5-UNMOCKED-HTTP-FETCHES | Sprint: CI-RED-RECONCILE | Size: M | Baseline: 135 native fail+error
 **Scope:** TEST-FILE-ONLY — 3 files changed (zero production code):

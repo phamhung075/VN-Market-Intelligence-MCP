@@ -243,3 +243,39 @@ Fix (3 files):
 **files-changed:**
 - `apps/mcp-server/src/__tests__/1031-expanded-watchlist-catalog.test.ts`
 - META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`
+
+---
+
+### STEP dev-mcp-server-S13 · dev-mcp-server · 2026-06-09T10:00:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C5-UNMOCKED-HTTP-FETCHES (RE-DISPATCH)
+**sprint:** CI-RED-RECONCILE
+**what-done:** Re-implemented C5 fix using architect DI-seam pattern (b) per brief 2026-06-09-spike-ci-c5-contam-safe-restrategy.md. Prior attempt (S11, sha 22470e44) used delegating-mock + ddd-1b re-registration which REGRESSED CI 135→145 (+10). This re-dispatch is the correct contamination-safe approach.
+
+**Changes (4 files):**
+1. `apps/mcp-server/src/__tests__/083-tool-analysis.test.ts` — REMOVED lines 14-26 (comment + 3 `mock.module()` calls for yahooFinance.js, sbv.js, ragHttpClient.js). Added `_testCommodityFetcher: async () => null`, `_testSbvFetcher: async () => null`, `_testRagRetriever: async () => []` to all 4 `run_impact_chain` handler calls. Added 30000ms timeout to "respects the limit parameter" test (was hitting real RSS with 5s bun default). Updated stale comment.
+2. `apps/mcp-server/src/__tests__/123-integration-mcp.test.ts` — REMOVED lines 29-40 (dead retriever.js mock + yahooFinance.js mock + sbv.js mock). Removed `mock` from bun:test import (no longer used). Added `_testCommodityFetcher`, `_testSbvFetcher`, `_testRagRetriever` DI args to `run_impact_chain` callTool in RT2. Updated file-header comment.
+3. `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts` — PRODUCTION SEAM: added 3 optional `z.any().optional()` Zod params (`_testCommodityFetcher`, `_testSbvFetcher`, `_testRagRetriever`) to `run_impact_chain` handler schema. Changed `async ({ newsText, includeWatchlist })` to `async (args)` destructuring pattern (same as `_testHoseClient` in marketTools.ts). Pass injected fetchers to `runImpactChain(...)` via spread when present; default path (no `_test*` args) unchanged.
+4. `ddd-1b-rag-http-client.test.ts` — NO CHANGE (already correct; confirmed no mock.module() at sha 3663bd12).
+
+**Verification (local):**
+- `083-tool-analysis.test.ts`: 16 pass / 0 fail
+- `123-integration-mcp.test.ts`: 27 pass / 1 skip / 0 fail
+- `bun tsc --noEmit`: CLEAN
+
+**what-considered:**
+- Delegating-mock pattern (S11 approach) — EMPIRICALLY FALSIFIED (sha 22470e44 +10 regression). Rejected per hard constraint.
+- ddd-1b file-top mock.module() re-registration (S11 approach) — EMPIRICALLY FALSIFIED (re-spread contamination). Rejected per hard constraint.
+- Per-test beforeEach/afterEach mock+restore — REJECTED per brief §2: empirically mock.restore() does not undo fully-synthetic stubs in Bun 1.3.13.
+- DI seam (chosen): removes the contamination source entirely; ESM cache holds real modules for all downstream files; order-independent; matches existing `_testHoseClient` pattern.
+
+**why-decision:** The contamination vector is file-top `mock.module()` — removing it is the only deterministic fix. The `runImpactChain` DI seam already exists (commodityFetcher/sbvFetcher/ragRetriever on RunCascadeInput); only the MCP handler Zod schema needed a seam addition (Risk-4 from brief, resolved via z.any().optional() + explicit cast at destructuring site). ddd-1b is untouched because its globalThis.fetch pattern is correct and it only failed due to upstream contamination.
+
+**projected-drop:** 135 → ~113 (028=9 + 025=7 + 1423a=3 + 1487=3 = 22 victims cleared). Headroom ~19 above ±3 jitter floor.
+
+**status-flip:** TODO → REVIEW (router owns push + CI gate).
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/083-tool-analysis.test.ts`
+- `apps/mcp-server/src/__tests__/123-integration-mcp.test.ts`
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts`
+- META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/agent-memory/notebooks/dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
