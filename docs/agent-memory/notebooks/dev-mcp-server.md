@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-CI-MCP-SDK-MOCK-CONTAM — DONE
+
+**Task:** FIX-CI-MCP-SDK-MOCK-CONTAM | Zone: apps/mcp-server/ | Size: XS
+**Scope:** TEST-FILE-ONLY — 1 file changed: `apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts`
+**Root cause:** `mock.module("@modelcontextprotocol/sdk/server/mcp.js", ...)` at lines 38-42 created a `MockMcpServer` with only `.connect`. Bun's `mock.restore()` in `afterAll` does NOT undo `mock.module()` ESM replacements (it only rolls back `mock()` spies). The incomplete mock leaked to 69+ files loaded after 1862c, causing ~355 native failures with "server.tool is not a function".
+**Fix (Option A):** Added `.tool()`, `.registerTool()`, `_registeredTools`, `.server`, `.close()`, `.isConnected()` to `MockMcpServer`. Both `.tool()` and `.registerTool()` capture the last arg as handler and store it in `_registeredTools[name]`, so downstream `callTool()` helpers can still invoke handlers. The mock is now harmless even when leaked.
+**Verification:**
+- 1862c own suite: 5 pass / 0 fail
+- 1862c + 187-earnings-calendar (McpServer + `_registeredTools`): 26 pass / 0 fail
+- 1862c + 188-alert-digest + 206-price-alerts: 52 pass / 0 fail
+- 1862c + 1872b-alert-commander-skill-manifest: 7 pass / 0 fail
+- `bun tsc --noEmit`: clean (0 errors)
+Zone health: test-only fix, bun tsc clean, no production code touched | HEALTHY
+
 ## 2026-06-09 · sau-c283-c09 — DONE (auditor probe bug, no code change)
 
 **Signal:** sau-c283-c09 CRITICAL db_integrity_breach — macro_indicators country coverage = 1 (expected ≥8)
