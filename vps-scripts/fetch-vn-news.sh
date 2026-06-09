@@ -369,6 +369,23 @@ epochs = [to_epoch(item.get('publishedAt','')) for item in items]
 print(max(epochs) if epochs else 0)
 " 2>/dev/null || echo 0)
 
+  # ── Future-date guard (FIX-NEWS-VPS-CRASH-LOOP) ──────────────────────────
+  # Some RSS sources publish articles with pubDate in VN local time (+07:00)
+  # but without the timezone offset — parsers treat them as UTC, making the
+  # timestamp appear 7 hours in the future. A single such article used to
+  # advance the cursor by up to 10h, causing all genuinely new articles to be
+  # filtered as "already seen" for the next 3-10 hours (news blackout).
+  #
+  # Fix: cap NEW_CURSOR at NOW + 1800s (30 min into the future max).
+  # This is generous enough for legitimate publish-ahead scheduling while
+  # blocking the systematic +7h TZ-confusion offset.
+  NOW_EPOCH=$(date -u +%s)
+  MAX_ALLOWED_CURSOR=$(( NOW_EPOCH + 1800 ))
+  if [[ "$NEW_CURSOR" =~ ^[0-9]+$ ]] && [ "$NEW_CURSOR" -gt "$MAX_ALLOWED_CURSOR" ]; then
+    echo "$(TS) [NEWS  ] WARN  cursor capped: new_max=$NEW_CURSOR exceeds now+30min=$MAX_ALLOWED_CURSOR (future-dated pubDate) — capping to $MAX_ALLOWED_CURSOR" >> "$LOG"
+    NEW_CURSOR="$MAX_ALLOWED_CURSOR"
+  fi
+
   # Only advance if new cursor is strictly greater than the old one
   # (guards against a batch of epoch-0 items resetting progress).
   if [[ "$NEW_CURSOR" =~ ^[0-9]+$ ]] && [ "$NEW_CURSOR" -gt "$CURSOR_EPOCH" ]; then

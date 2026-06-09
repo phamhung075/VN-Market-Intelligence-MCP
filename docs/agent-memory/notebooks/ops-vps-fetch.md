@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-07 07:35 UTC | **Sprint:** FIX-NEWS-VPS-PROBE
+**Last updated:** 2026-06-09 03:30 UTC | **Sprint:** FIX-NEWS-VPS-CRASH-LOOP
 
 ---
 
@@ -18,7 +18,7 @@ Zone: ops-zone (VPS / infra)
 |--------|-----------|--------|---------|
 | vps-prices | 2026-05-13 | healthy (upstream) / MCP push broken | none |
 | cafef-index | 2026-05-13 | healthy | none |
-| vn-news-rss | 2026-05-13 | healthy (upstream) / MCP push 404 | none |
+| vn-news-rss | 2026-06-09 | healthy (upstream+push). Two bugs: Bug A=false-UNHEALTHY (dev-zone fix needed in vpsHealthPoller.ts); Bug B=cursor jump (VPS fix applied 2026-06-09) | none |
 | sbv-rates | 2026-05-13 | healthy | none (Akamai present, not blocking) |
 | hsx-bctc | 2026-05-13 09:17 | FIXED (HNX params corrected) / HSX SPA unchanged | none |
 | hsx-bctc (api.hsx.vn) | 2026-05-15 04:45 | BLOCKER — /n/ JSON REST endpoints unreachable from VPS. Envoy route-level block, not geo-IP. | Envoy route table |
@@ -37,6 +37,7 @@ Zone: ops-zone (VPS / infra)
 | 2026-06-01 08:51 | cafef + vneconomy | VPS-NEWS-CAFEF-VNECO | Direct paths healthy. is_blocked() false-positive fixed. |
 | 2026-06-04 08:10 | vietstock-agm-plan | RECON-AGM-1 | FETCHABLE. POST + CSRF warmup. No CF. Signal dropped. |
 | 2026-06-06 16:45 | ssc-bctc-newsearch | SPIKE-VPS-SSC-CURL-RECIPE | VIABLE-CURL. Full 3-step recipe proven. Signal dropped. |
+| 2026-06-09 03:30 | vn-news-rss | FIX-NEWS-VPS-CRASH-LOOP | Bug A: false-UNHEALTHY from timestamp format mismatch (T vs space) in vpsHealthPoller.ts MAX() — dev-zone fix required. Bug B: cursor jump from future-dated pubDate — VPS cap applied. |
 
 ---
 
@@ -69,6 +70,40 @@ Evidence: `[0606/194928.256632:ERROR] pthread_create: Resource temporarily unava
 Post-restart: fresh cycle confirmed, service cycling correctly.
 
 Follow-ups created: BCTC-PLAYWRIGHT-THREAD P2, SLA-WEEKEND-AWARE P3.
+
+---
+
+## c009 · 2026-06-09T03:30Z · FIX-NEWS-VPS-CRASH-LOOP
+
+Trigger: CRITICAL recurring — vn-news-fetch UNHEALTHY 2nd time in 48h (~84min stale at ~02:30Z Jun 09).
+
+**TWO BUGS FOUND. ONE FIXED ON VPS. ONE REQUIRES DEV-ZONE CHANGE.**
+
+**Bug A (dev-zone, CRITICAL): Timestamp format mismatch in vpsHealthPoller.ts**
+- `vps_push_log.pushed_at` stores `2026-06-09 01:44:42` (space-separated, no TZ suffix)
+- `rag_analyses.created_at` stores `2026-06-09T01:28:43.297Z` (ISO 8601 with T+Z)
+- SQLite MAX() compares strings lexicographically: `T` (ASCII 84) > ` ` (ASCII 32)
+- Result: health query always picks `rag_analyses` timestamp as MAX, ignoring more-recent heartbeat pushes in `vps_push_log`
+- Effect: false-UNHEALTHY fires every morning when VPS sends heartbeats (no new rag_analyses rows) after the last rag_analyses entry ages > 30min
+- Evidence: at 02:05Z, `vps_service_health` showed last_successful_run=01:28:43 (rag_analyses) despite push_log entries at 01:44:42 and 02:00:49
+- Fix: change SQL MAX(latest_at) to MAX(unixepoch(latest_at)) + datetime(...,'unixepoch') for correct epoch comparison
+- File: `apps/mcp-server/src/domain/services/vpsHealthPoller.ts` latestTimestampSql for vn-news-fetch (~lines 127-136)
+
+**Bug B (VPS, MODERATE): Cursor jump from future-dated pubDate — FIXED**
+- Some RSS sources (vietstock-macro, vneconomy) set pubDate in local VN time (+07:00) WITHOUT the TZ offset — parsers read them as UTC, jumping cursor 7h ahead
+- Effect: 3-10h news blackout, 1-3x per day, 23 confirmed jumps Jun 01-09
+- Fix applied on VPS at 03:30Z: cursor cap at NOW+1800s in `/root/fetch-vn-news.sh` (lines 372-381)
+- Backup: `/root/fetch-vn-news.sh.bak-20260609`
+- Local repo fix: `vps-scripts/fetch-vn-news.sh` same edit
+- Syntax OK, service still active
+
+**VPS service status:** active (running) since Jun 02 01:23:38 +07 (1 week, NO crash)
+The "~1h21m uptime" in the task brief = `uptimeSeconds` field (staleness in seconds) NOT systemd uptime.
+systemctl confirm: `ActiveEnterTimestamp=Tue 2026-06-02 01:23:38 +07` (7 days continuous)
+
+Recon doc: docs/vps-sources/vn-news-rss/recon.md (updated with Bug A + Bug B analysis)
+
+Next: router must dispatch dev-zone fix for Bug A → dev agent to fix vpsHealthPoller.ts SQL query.
 
 ---
 

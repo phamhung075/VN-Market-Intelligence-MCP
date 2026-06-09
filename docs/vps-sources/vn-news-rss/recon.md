@@ -71,6 +71,71 @@ All sources use standard RSS 2.0:
     </item>
 ```
 
+## Incident — FIX-NEWS-VPS-CRASH-LOOP (2026-06-09)
+
+### Crash signature
+
+**False-UNHEALTHY + real news blackout.** Not a service crash.
+
+Two independent bugs both contributed to the recurring "vn-news-fetch UNHEALTHY" reports:
+
+**Bug A — Timestamp format mismatch in `vpsHealthPoller.ts` (dev-zone fix required)**
+
+`DEFAULT_FRESHNESS_CONFIGS` for `vn-news-fetch` uses this SQL to compute freshness:
+```sql
+SELECT MAX(latest_at) AS latest_at FROM (
+  SELECT MAX(pushed_at) AS latest_at FROM vps_push_log WHERE service='news' AND status='ok'
+  UNION ALL
+  SELECT MAX(created_at) AS latest_at FROM rag_analyses
+)
+```
+`vps_push_log.pushed_at` format: `2026-06-09 01:44:42` (space-separated, no TZ suffix)
+`rag_analyses.created_at` format: `2026-06-09T01:28:43.297Z` (ISO 8601 with `T` and `Z`)
+
+SQLite MAX() does lexicographic string comparison. ASCII `T` (84) > ASCII ` ` (32), so `2026-06-09T01:28:43.297Z` always sorts AFTER `2026-06-09 01:44:42` regardless of which is chronologically later.
+
+**Effect:** The health query always returns the most-recent `rag_analyses` timestamp, ignoring more-recent heartbeat pushes in `vps_push_log`. When the VPS sends heartbeat sentinels (no new articles = no `rag_analyses` rows created), the health check ages from the last `rag_analyses` entry, not from the last push. This causes false-UNHEALTHY after 30 minutes of no new articles — which happens every early morning (03:00–09:00 VN).
+
+**Evidence:** At 2026-06-09T02:05Z, vps_service_health showed `last_successful_run=2026-06-09T01:28:43.297Z` (rag_analyses). But vps_push_log had entries at 01:44:42 and 02:00:49 (heartbeats). The broken MAX returned 01:28:43 (rag_analyses, 2177s stale = UNHEALTHY), not 02:00:49 (push_log, 264s stale = HEALTHY).
+
+**Fix (dev-zone — apps/mcp-server/src/domain/services/vpsHealthPoller.ts):**
+Replace string MAX with epoch-based comparison:
+```sql
+SELECT datetime(MAX(unixepoch(latest_at)), 'unixepoch') AS latest_at FROM (
+  SELECT MAX(pushed_at) AS latest_at FROM vps_push_log WHERE service='news' AND status='ok'
+  UNION ALL
+  SELECT MAX(created_at) AS latest_at FROM rag_analyses
+)
+```
+Verified correct in SQLite: `MAX(unixepoch())` picks vps_push_log 03:05:09 over rag_analyses 01:28:43.
+
+---
+
+**Bug B — Cursor jump from future-dated pubDate (VPS-side fix APPLIED)**
+
+Some RSS sources (confirmed: vietstock-macro, vneconomy) publish articles with `pubDate` in VN local time (+07:00) but without the `+0700` TZ offset. Example: `pubDate: Mon, 08 Jun 2026 09:09:00` — a Python parser reads this as `09:09:00 UTC` (actually `02:09:00 UTC`). The cursor advances to `09:09 UTC`, skipping all articles published between `02:09 UTC` and `09:09 UTC` (7 hours of news).
+
+**Effect:** Recurring cursor jumps of 3-10 hours, 1-3 times per day. Causes genuine news gaps of 2-6 hours. The service runs but pushes 0 real items (only heartbeats). When combined with Bug A, the health check sees the stale `rag_analyses` epoch and flips to UNHEALTHY.
+
+**Cursor jump frequency (Jun 01-09):** 23 confirmed jumps >3h. Worst: +494,536h jump on Jun 01 from a malformed epoch timestamp.
+
+**VPS fix APPLIED 2026-06-09T03:30Z:** Added future-date guard in `/root/fetch-vn-news.sh` (lines 372-381):
+```bash
+NOW_EPOCH=$(date -u +%s)
+MAX_ALLOWED_CURSOR=$(( NOW_EPOCH + 1800 ))
+if [[ "$NEW_CURSOR" =~ ^[0-9]+$ ]] && [ "$NEW_CURSOR" -gt "$MAX_ALLOWED_CURSOR" ]; then
+  echo "$(TS) [NEWS  ] WARN  cursor capped..." >> "$LOG"
+  NEW_CURSOR="$MAX_ALLOWED_CURSOR"
+fi
+```
+Cap: cursor cannot advance more than 30 min into the future. This blocks the +7h TZ confusion while allowing legitimate publish-ahead scheduling.
+
+Backup: `/root/fetch-vn-news.sh.bak-20260609`
+
+**AC:** service HEALTHY >6h with no cursor jumps >30min, no false-UNHEALTHY.
+
+---
+
 ## Notes
 
 - **MCP push endpoint was returning 404** as of 2026-05-13: `PUSH 245 items → /api/push-news http=404`.
