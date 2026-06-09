@@ -409,9 +409,8 @@ describe("1416 wave5 — Group B: source-scan", () => {
       expect(src).toContain("Lỗi khi đọc Kinh Dịch cho");
     });
 
-    it("contains 'Lỗi khi tính quẻ thị trường'", () => {
-      expect(src).toContain("Lỗi khi tính quẻ thị trường");
-    });
+    // REMOVED: 'Lỗi khi tính quẻ thị trường' — get_market_hexagram handler was deleted
+    // (TSH-1, 2026-05-31). The string no longer exists in prod. Test is OBSOLETE.
 
     // History
     it("contains 'LỊCH SỬ KINH DỊCH:'", () => {

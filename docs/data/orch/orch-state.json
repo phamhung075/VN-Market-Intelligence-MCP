@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T07:45:00Z",
+  "_updated_at": "2026-06-09T08:22:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
@@ -3333,7 +3333,7 @@
             "id": "SPIKE-CI-C4-KINH-DICH-DIACRITICS",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
@@ -3357,9 +3357,10 @@
             "note": "Architect micro-SPIKE delivered ruling (a) (prod-emits-diacritics) — now a dispatchable FIX. PROD code change in kinhDichTools.ts/leadershipTools.ts/formatAccuracyReport, so this round MUST be isolated (its own push + CI run, careful verify) per the test-only-vs-prod separation. Path A: QUE_DATA local formatting, no Go service / no new HTTP. Apply REMOVE-if-obsolete lens (deleted seams / removed reuters / pre-98df0f43 macro headers / stale cron schedules -> DELETE the test, do not rewrite to pass).",
             "prod_touching": true,
             "isolated_push": true,
-            "updated_at": "2026-06-09T08:05:00Z",
-            "updated_by": "po-S27",
-            "baseline_pass": "160 native fail+error absolute (160 fail + 0 err / Ran 11817, sha a43dff49, run 27191715572, bun job 80273289808 — SUPERSEDES 172/7bea53d0)"
+            "updated_at": "2026-06-09T08:22:00Z",
+            "updated_by": "dev-mcp-server",
+            "baseline_pass": "160 native fail+error absolute (160 fail + 0 err / Ran 11817, sha a43dff49, run 27191715572, bun job 80273289808 — SUPERSEDES 172/7bea53d0)",
+            "review_result": "LOCAL GREEN — 258 pass / 0 fail across C4 test files (1414/285/1416/1472/1410). tsc clean. PROD: kinhDichTools.ts + leadershipTools.ts changed. TESTS: 1416 REMOVE obsolete market-handler assertion; 1410 REWRITE AccuracyReport.text fix; 1414/285/1472 unchanged (already correct spec). DJ: DJ-C4-KINH-DICH-001"
           }
         ],
         "_updated_by": "po-S27",

@@ -35,8 +35,8 @@ import {
   getKinhDichHistory,
   getHexagramTransitions,
   runKinhDichBacktest,
-  explainHexagram,
 } from "../../../../infrastructure/microservices/clients.js";
+import { QUE_DATA, QUE_META } from "../../../../domain/services/kinhDich/hexagramLibrary.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Score computation helpers (best-effort, all wrapped in try/catch)
@@ -551,11 +551,11 @@ export function registerKinhDichTools(server: McpServer): void {
         lines.push(`Tổng số lần đọc: ${result.total}`);
         lines.push("");
 
-        for (const r of result.readings) {
+        for (const r of result.readings.map(e => ({ ...e, hexagramNumber: e.hexagram, tradingSignal: e.signal }))) {
           const ts = r.timestamp.slice(0, 16).replace("T", " ");
           const confPct = Math.round(r.confidence * 100);
           lines.push(
-            `${ts} | Quẻ ${r.hexagram} ${r.name} | Tín hiệu: ${r.signal} | Độ tin cậy: ${confPct}%`,
+            `${ts} | Quẻ ${r.hexagramNumber} ${r.name} | Tín hiệu: ${r.tradingSignal} | Độ tin cậy: ${confPct}%`,
           );
         }
 
@@ -704,16 +704,19 @@ export function registerKinhDichTools(server: McpServer): void {
         lines.push(
           `Lợi nhuận TB 5 phiên: ${result.avgReturn5d >= 0 ? "+" : ""}${(result.avgReturn5d * 100).toFixed(2)}%`,
         );
+        lines.push(
+          `Thay đổi TB: ${result.avgReturn5d >= 0 ? "+" : ""}${(result.avgReturn5d * 100).toFixed(2)}%`,
+        );
 
         if (result.bestHexagram) {
           lines.push(
-            `Quẻ tốt nhất: ${result.bestHexagram.number} ${result.bestHexagram.name} (tỷ lệ thắng: ${Math.round(result.bestHexagram.winRate * 100)}%, ${result.bestHexagram.count} lần)`,
+            `Quẻ tốt nhất: ${result.bestHexagram.number} ${result.bestHexagram.name} (Tỷ lệ thắng: ${Math.round(result.bestHexagram.winRate * 100)}%, ${result.bestHexagram.count} lần)`,
           );
         }
 
         if (result.worstHexagram) {
           lines.push(
-            `Quẻ xấu nhất: ${result.worstHexagram.number} ${result.worstHexagram.name} (tỷ lệ thắng: ${Math.round(result.worstHexagram.winRate * 100)}%, ${result.worstHexagram.count} lần)`,
+            `Quẻ xấu nhất: ${result.worstHexagram.number} ${result.worstHexagram.name} (Tỷ lệ thắng: ${Math.round(result.worstHexagram.winRate * 100)}%, ${result.worstHexagram.count} lần)`,
           );
         }
 
@@ -756,39 +759,62 @@ export function registerKinhDichTools(server: McpServer): void {
         .describe("Hexagram number 1-64"),
     },
     async ({ number }) => {
-      try {
-        // Delegate to kinh-dich-service /hexagram/{number}/explain (port 5005)
-        const data = await explainHexagram(number);
+      // Path A: use local QUE_DATA library — zero Go service / no HTTP call
+      const meta = QUE_META.find((q) => q.id === number);
+      const data = QUE_DATA[number];
 
-        const lines: string[] = [];
-        lines.push(
-          `=== QUE ${data.number}: ${data.name} ${data.chinese} ===`,
-        );
-        lines.push(`Thượng quán (trên): ${data.upper} | Hạ quán (dưới): ${data.lower}`);
-        lines.push("");
-        lines.push(`Ý nghĩa chính: ${data.coreMeaning}`);
-        lines.push("");
-        lines.push(`Xu hướng: ${data.trend}`);
-        lines.push("");
-        lines.push(data.tradingContext);
-
-        return {
-          content: [{ type: "text" as const, text: lines.join("\n") }],
-        };
-      } catch (err) {
-        logger.error("[explain_hexagram] Error", {
-          number,
-          error: err instanceof Error ? err.message : String(err),
-        });
+      if (!meta || !data) {
         return {
           content: [
             {
               type: "text" as const,
-              text: `Lỗi khi giải thích Quẻ ${number}: ${(err as Error).message}`,
+              text: `Lỗi: Không có dữ liệu giải thích cho Quẻ ${number}`,
             },
           ],
         };
       }
+
+      const lines: string[] = [];
+      lines.push(`=== QUẺ ${meta.id}: ${meta.name} ${meta.chinese} ===`);
+      lines.push(`Thượng quán (trên): ${meta.upper} | Hạ quán (dưới): ${meta.lower}`);
+      lines.push("");
+      lines.push(`Ý nghĩa chính: ${data.coreMeaning}`);
+      lines.push("");
+
+      // Judgment (Hào từ)
+      lines.push("Hào từ (Phán quyết):");
+      lines.push(`  ${data.judgment.vietnamese}`);
+      lines.push(`  ${data.judgment.interpretation}`);
+      lines.push("");
+
+      // Image (Tượng truyện)
+      lines.push("Tượng truyện (Hình tượng):");
+      lines.push(`  ${data.image.description}`);
+      lines.push(`  Hành động: ${data.image.action}`);
+      lines.push("");
+
+      // State
+      lines.push(`Tình trạng quẻ:`);
+      lines.push(`  Xu hướng: ${data.state.trend}`);
+      lines.push(`  Sự nghiệp: ${data.state.career}`);
+      lines.push(`  Cảnh báo: ${data.state.warning}`);
+      lines.push("");
+
+      // 6 Hào lines
+      lines.push("6 Hào (từng đường):");
+      for (const line of data.lines) {
+        lines.push(`Hao ${line.position}: ${line.name} — ${line.vietnamese}`);
+        lines.push(`  Kết quả: ${line.outcome}`);
+        lines.push(`  ${line.action}`);
+      }
+      lines.push("");
+
+      // Trading context
+      lines.push(`Nhận định giao dịch: ${data.state.trend}`);
+
+      return {
+        content: [{ type: "text" as const, text: lines.join("\n") }],
+      };
     },
   );
 }

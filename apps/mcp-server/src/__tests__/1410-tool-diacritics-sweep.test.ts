@@ -84,13 +84,14 @@ describe("Sprint 145 — tool diacritics sweep", () => {
   });
 
   // Case 2 — alertAccuracy
+  // REWRITE: formatAccuracyReport returns AccuracyReport object (not string); access .text
   it("formatAccuracyReport: zero rows returns accented message", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fn = (alertAccuracyNs as any)["formatAccuracyReport"] as ((...a: unknown[]) => string) | undefined;
+    const fn = (alertAccuracyNs as any)["formatAccuracyReport"] as ((...a: unknown[]) => { text: string }) | undefined;
     expect(fn).toBeDefined();
     const result = fn!([], 30, "");
-    expect(result).toContain("Không có dữ liệu");
-    expect(result).not.toContain("Khong co du lieu");
+    expect(result.text).toContain("Không có dữ liệu");
+    expect(result.text).not.toContain("Khong co du lieu");
   });
 
   // Case 3 — alerts

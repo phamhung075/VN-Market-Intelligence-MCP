@@ -100,7 +100,7 @@ export async function getInsiderSignalsHandler(
 export function registerLeadershipTools(server: McpServer): void {
   server.tool(
     "get_insider_signals",
-    "Domain classifier engine — classifies caller-provided insider transactions[] as buy/sell/mass-buy signals. " +
+    "Phân tích giao dịch nội bộ — phân loại các giao dịch insider thành tín hiệu mua/bán/mua ồ ạt. " +
       "REQUIRES caller to provide transactions[] array as input (pure classifier, no DB call, stateless). " +
       "Test-first design: pure classification logic with strength/confidence output. " +
       "Input: transactions[] from get_insider_transactions or external source. " +

@@ -1,6 +1,6 @@
 {
-  "locked": false,
+  "locked": true,
   "owner_agent": "dev-mcp-server",
-  "task": null,
-  "expires_at": 0
+  "task": "SPIKE-CI-C4-KINH-DICH-DIACRITICS",
+  "expires_at": 1780993266
 }

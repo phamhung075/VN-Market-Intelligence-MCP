@@ -185,3 +185,14 @@ Zone health: bun tsc clean, Cluster5 errors eliminated, Cluster2 symlink healed 
 
 **Local results:** C1 = 88 pass / 0 fail; C3 = 42 pass / 0 fail; tsc clean
 **Status:** Both tasks REVIEW — router gates in CI
+
+## 2026-06-09 SPIKE-CI-C4-KINH-DICH-DIACRITICS (CI-RED-RECONCILE)
+
+**C4 root causes fixed (2 PROD files, 2 TEST files):**
+- `kinhDichTools.ts`: (a) `explain_hexagram` rewired to local QUE_DATA (Path A — no Go service change): emits judgment/image/state/6-hào/trading-context sections; guard for missing entry; (b) `get_hexagram_history`: aliased loop variable to `hexagramNumber`/`tradingSignal` via `.map()`; (c) backtest: added `Thay đổi TB:` line + capitalised `Tỷ lệ thắng:`
+- `leadershipTools.ts`: tool description prefix updated to `Phân tích giao dịch nội bộ`
+- `1416-diacritics-wave5.test.ts`: REMOVE — `"Lỗi khi tính quẻ thị trường"` test deleted; `get_market_hexagram` handler was removed (TSH-1), string is dead code
+- `1410-tool-diacritics-sweep.test.ts`: REWRITE — `formatAccuracyReport` returns `AccuracyReport` object; fixed `.text` accessor
+
+**Local results:** 1414=22/0, 285=27/0, 1416=162/0, 1472=20/0, 1410=27/0; combined 258 pass / 0 fail; tsc clean
+**Status:** REVIEW — router isolates push + CI gate
