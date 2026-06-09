@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-CI-C1282a-DATA-FRESHNESS-REWRITE — REVIEW
+
+**Task:** FIX-CI-C1282a-DATA-FRESHNESS-REWRITE | Sprint: CI-RED-RECONCILE | Size: S | DJ: dev-mcp-server-S22
+**Scope:** 2 files — prod seam (additive-only) + test freeze (REWRITE-STALE, not REMOVE)
+- `dataFreshnessTools.ts`: added `now?: Date` 3rd param; `const now_: Date = now ?? new Date()`; 2 internal refs `now` → `now_`.
+- `system-data-freshness.test.ts`: module const `frozenNow = new Date("2026-06-09T04:00:00Z")`; beforeEach `const now = frozenNow`; TC-1..TC-4 all receive `(db, undefined, frozenNow)`. Stale "15 minutes" / "10 minutes" comment fossils updated.
+**Root cause:** TC-1/TC-2 fossilized static 10-min assumption; prod uses MARKET_HOURS_ONLY_SOURCES dynamic threshold — off-hours expands threshold, so 12-min fixture = hasBreach=false off-hours. Freeze to in-market (04:00Z = 11:00 VN) collapses ambiguity.
+**Result:** 8 pass / 0 fail (366ms). tsc CLEAN. ZERO it() removed. ZERO prod logic changed. orch TODO→REVIEW. ci_absolute untouched (57).
+
+---
+
 ## 2026-06-09 · FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE — REVIEW
 
 **Task:** FIX-CI-C235-1792-TELEGRAM-MOCK-RESTORE | Sprint: CI-RED-RECONCILE | Size: S | DJ: dev-mcp-server-S19
