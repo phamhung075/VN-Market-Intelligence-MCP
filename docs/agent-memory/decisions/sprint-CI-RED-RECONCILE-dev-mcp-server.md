@@ -858,3 +858,42 @@ No contradictions found.
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
 - `docs/data/orch/orch-state.json` (BATCH2 TODO → REVIEW)
 - `docs/data/commit-mutex.json` (mutex acquire/release)
+
+---
+
+### STEP dev-mcp-server-S22 · dev-mcp-server · 2026-06-09T18:34:00Z (DJ-GATE-1)
+**task-id:** BATCH3-CI-C-MH-MARKET-HOURS-GATE-NOW-SEAM
+**sprint:** CI-RED-RECONCILE
+**class:** C-MH (MARKET-HOURS-GATE)
+
+**what-done:** Fixed 6 flaky CI fails in `1407b-sla-market-hours-gate.test.ts` by using deterministic frozen-clock stale ages for MH-1/2/9/10/12/13. No prod code changed — the `now?:Date` seam on `getSlaThreshold` (3rd optional param) pre-existed from arch-S20 / Task 1282a; reused as-is per task spec ("if pre-existed, REUSE").
+
+**root-cause:** Tests MH-1/2/9/10/12/13 asserted `result.breaches === 1` with a 15-min stale age for `price`/`foreign_flow` at off-hours/weekend/holiday frozen timestamps. The `getSlaThreshold()` dynamic off-hours path computes `minutesSinceLastWindowEnd(now) + 30`, which for the given frozen `now` values yields thresholds of 3841/1171/2611 min. 15 min is well within those thresholds → NOT a breach → `result.breaches === 0` → assertion fails. The dynamic threshold is CORRECT production behaviour; the test fixture (age=15) was stale.
+
+**prod-file-seam:** `apps/mcp-server/src/domain/services/freshnessSlaChecker.ts` — `getSlaThreshold(signalType, config?, now?: Date)` — seam pre-existed (3rd optional param, introduced arch-S20). NO change to prod file.
+
+**frozen-clock anchors used:**
+- OFF_HOURS_DATE  = `2026-04-27T00:30:00.000Z` → threshold = 3841 min → age = 4000 min (OFF_HOURS_STALE_PRICE_AGE)
+- WEEKEND_MARKET_WINDOW = `2026-04-25T04:00:00.000Z` → threshold = 1171 min → age = 1300 min (WEEKEND_STALE_PRICE_AGE)
+- LABOUR_DAY_2026 = `2026-05-01T04:00:00.000Z` → threshold = 2611 min → age = 2700 min (HOLIDAY_STALE_PRICE_AGE)
+
+All three anchors are fixed constants in the test file → deterministic regardless of when CI runs.
+
+**what-considered:**
+- Freeze the `now` passed to `getSlaThreshold` to an in-market timestamp while using off-hours `now` for escalation gate — REJECTED: would require a 2nd `now` parameter on `runFreshnessSlaMonitor` (non-additive invasive change); conflating two clocks adds complexity without gain.
+- Increase stale ages to exceed each frozen off-hours dynamic threshold — CHOSEN: minimal delta (6 stale-age values changed, 3 new named constants added), fully deterministic because the frozen `now` dates are fixed constants, and the test semantics remain intact (breach IS recorded, escalation NOT called).
+- Change test to use in-market `now` for all breach cases — REJECTED: makes escalation fire → contradicts "escalation NOT called" assertion in MH-1/2/9/10/12/13.
+
+**why-decision:** The production dynamic off-hours threshold is correct. The test fixture (age=15 min off-hours) was written before the dynamic threshold was implemented. Updating the stale ages to genuinely exceed the off-hours threshold is the minimal, fully-backward-compatible fix.
+
+**result:**
+- isolation-probe: 14 pass / 0 fail (was 8 pass / 6 fail)
+- net it()-delta: 0 (14 it() before and after; zero removed, zero added)
+- tsc --noEmit: CLEAN (exit 0, no output)
+- status-flip: BATCH3-CI-C-MH-MARKET-HOURS-GATE-NOW-SEAM TODO → REVIEW
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1407b-sla-market-hours-gate.test.ts` (frozen-clock stale ages + named constants)
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
+- `docs/data/orch/orch-state.json` (BATCH3 TODO → REVIEW)
+- `docs/data/commit-mutex.json` (mutex acquire/release)

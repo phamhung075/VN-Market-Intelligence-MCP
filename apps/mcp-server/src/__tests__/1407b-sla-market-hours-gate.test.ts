@@ -57,6 +57,32 @@ const LABOUR_DAY_2026 = new Date("2026-05-01T04:00:00.000Z");
 const FIRST_DAY_AFTER_HOLIDAY = new Date("2026-05-04T04:00:00.000Z");
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Off-hours stale-age anchors (clock-frozen, deterministic)
+//
+// getSlaThreshold() in freshnessSlaChecker.ts already has a now?: Date seam
+// (3rd optional param, added in arch-S20 / Task 1282a).  For MARKET_HOURS_ONLY_SOURCES
+// (price, foreign_flow) the off-hours dynamic threshold is:
+//   minutesSinceLastWindowEnd(now) + 30
+// These ages are chosen to EXCEED the respective frozen-clock thresholds so the
+// breach IS recorded regardless of when CI runs, while the escalation is correctly
+// suppressed because isVnMarketHours(frozen-now) = false.
+//
+// Threshold derivation (all values deterministic for the frozen dates above):
+//   OFF_HOURS_DATE  (Mon 00:30Z): lastWindowEnd = Fri 2026-04-24 08:59Z
+//                                 minutesSince  = 3811 min  → threshold = 3841 min
+//                                 OFF_HOURS_STALE_PRICE_AGE = 4000  (> 3841)
+//   WEEKEND_MARKET_WINDOW (Sat 04:00Z): lastWindowEnd = Fri 2026-04-24 08:59Z
+//                                 minutesSince  = 1141 min  → threshold = 1171 min
+//                                 WEEKEND_STALE_PRICE_AGE  = 1300  (> 1171)
+//   LABOUR_DAY_2026 (Fri 04:00Z): lastWindowEnd = Wed 2026-04-29 08:59Z
+//                                 minutesSince  = 2581 min  → threshold = 2611 min
+//                                 HOLIDAY_STALE_PRICE_AGE  = 2700  (> 2611)
+// ─────────────────────────────────────────────────────────────────────────────
+const OFF_HOURS_STALE_PRICE_AGE = 4000;   // min — exceeds OFF_HOURS_DATE threshold (3841)
+const WEEKEND_STALE_PRICE_AGE   = 1300;   // min — exceeds WEEKEND_MARKET_WINDOW threshold (1171)
+const HOLIDAY_STALE_PRICE_AGE   = 2700;   // min — exceeds LABOUR_DAY_2026 threshold (2611)
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Schema helper — mirrors sla_breach_audit DDL from schema-system.ts exactly
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -155,13 +181,17 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-1: Off-hours + price breach → escalation suppressed, breach recorded
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-1: off-hours + price stale 15 min → escalation NOT called, breach IS recorded", async () => {
+  it("MH-1: off-hours + price stale → escalation NOT called, breach IS recorded", async () => {
     const { spy, calls } = makeEscalateSpy();
 
+    // OFF_HOURS_STALE_PRICE_AGE (4000 min) exceeds the frozen off-hours dynamic threshold
+    // (minutesSinceLastWindowEnd(OFF_HOURS_DATE) + 30 = 3841 min) so the breach IS recorded.
+    // Escalation is suppressed because isVnMarketHours(OFF_HOURS_DATE) = false.
+    // Clock frozen to OFF_HOURS_DATE — deterministic regardless of when CI runs.
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
-      staleAges("price", 15),
+      staleAges("price", OFF_HOURS_STALE_PRICE_AGE),
       OFF_HOURS_DATE,
       noopSendWork
     );
@@ -177,13 +207,15 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-2: Off-hours + foreign_flow breach → escalation suppressed, breach recorded
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-2: off-hours + foreign_flow stale 15 min → escalation NOT called, breach IS recorded", async () => {
+  it("MH-2: off-hours + foreign_flow stale → escalation NOT called, breach IS recorded", async () => {
     const { spy, calls } = makeEscalateSpy();
 
+    // Same frozen-clock rationale as MH-1: OFF_HOURS_STALE_PRICE_AGE exceeds the
+    // dynamic off-hours threshold for OFF_HOURS_DATE; breach recorded, escalation suppressed.
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
-      staleAges("foreign_flow", 15),
+      staleAges("foreign_flow", OFF_HOURS_STALE_PRICE_AGE),
       OFF_HOURS_DATE,
       noopSendWork
     );
@@ -345,13 +377,17 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-9: WEEKEND + price breach → escalation NOT called
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-9: weekend (Saturday) + price stale 15 min → escalation NOT called", async () => {
+  it("MH-9: weekend (Saturday) + price stale → escalation NOT called", async () => {
     const { spy, calls } = makeEscalateSpy();
 
+    // WEEKEND_STALE_PRICE_AGE (1300 min) exceeds the frozen weekend dynamic threshold
+    // (minutesSinceLastWindowEnd(WEEKEND_MARKET_WINDOW) + 30 = 1171 min) → breach recorded.
+    // Escalation suppressed because isVnMarketHours(WEEKEND_MARKET_WINDOW) = false (weekend).
+    // Clock frozen to WEEKEND_MARKET_WINDOW — deterministic regardless of when CI runs.
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
-      staleAges("price", 15),
+      staleAges("price", WEEKEND_STALE_PRICE_AGE),
       WEEKEND_MARKET_WINDOW,
       noopSendWork
     );
@@ -366,13 +402,15 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-10: WEEKEND + foreign_flow breach → escalation NOT called
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-10: weekend (Saturday) + foreign_flow stale 15 min → escalation NOT called", async () => {
+  it("MH-10: weekend (Saturday) + foreign_flow stale → escalation NOT called", async () => {
     const { spy, calls } = makeEscalateSpy();
 
+    // Same frozen-clock rationale as MH-9: WEEKEND_STALE_PRICE_AGE exceeds weekend
+    // dynamic threshold for WEEKEND_MARKET_WINDOW; breach recorded, escalation suppressed.
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
-      staleAges("foreign_flow", 15),
+      staleAges("foreign_flow", WEEKEND_STALE_PRICE_AGE),
       WEEKEND_MARKET_WINDOW,
       noopSendWork
     );
@@ -412,13 +450,17 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-12: LABOUR_DAY + price breach → escalation NOT called
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-12: Labour Day 2026-05-01 + price stale 15 min → escalation NOT called", async () => {
+  it("MH-12: Labour Day 2026-05-01 + price stale → escalation NOT called", async () => {
     const { spy, calls } = makeEscalateSpy();
 
+    // HOLIDAY_STALE_PRICE_AGE (2700 min) exceeds the frozen Labour Day dynamic threshold
+    // (minutesSinceLastWindowEnd(LABOUR_DAY_2026) + 30 = 2611 min) → breach recorded.
+    // Escalation suppressed because isVnMarketHours(LABOUR_DAY_2026) = false (public holiday).
+    // Clock frozen to LABOUR_DAY_2026 — deterministic regardless of when CI runs.
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
-      staleAges("price", 15),
+      staleAges("price", HOLIDAY_STALE_PRICE_AGE),
       LABOUR_DAY_2026,
       noopSendWork
     );
@@ -433,13 +475,15 @@ describe("1407b — SLA monitor market-hours gate", () => {
   // MH-13: LABOUR_DAY + foreign_flow breach → escalation NOT called
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("MH-13: Labour Day 2026-05-01 + foreign_flow stale 15 min → escalation NOT called", async () => {
+  it("MH-13: Labour Day 2026-05-01 + foreign_flow stale → escalation NOT called", async () => {
     const { spy, calls } = makeEscalateSpy();
 
+    // Same frozen-clock rationale as MH-12: HOLIDAY_STALE_PRICE_AGE exceeds Labour Day
+    // dynamic threshold for LABOUR_DAY_2026; breach recorded, escalation suppressed.
     const result = await runFreshnessSlaMonitor(
       db,
       spy,
-      staleAges("foreign_flow", 15),
+      staleAges("foreign_flow", HOLIDAY_STALE_PRICE_AGE),
       LABOUR_DAY_2026,
       noopSendWork
     );
