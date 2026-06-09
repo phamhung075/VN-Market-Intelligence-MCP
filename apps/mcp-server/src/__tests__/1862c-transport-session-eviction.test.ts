@@ -37,7 +37,43 @@ mock.module("@modelcontextprotocol/sdk/server/sse.js", () => ({
 
 mock.module("@modelcontextprotocol/sdk/server/mcp.js", () => ({
   McpServer: class MockMcpServer {
+    // Option A: make the leaked mock harmless by exposing all methods that
+    // downstream test files invoke on McpServer instances.
+    //
+    // mock.restore() does NOT undo mock.module() ESM replacements in Bun
+    // (restore() only rolls back mock() spies). This mock therefore leaks
+    // into every test file loaded after 1862c in the same worker process.
+    // Adding full no-op stubs ensures downstream files that call
+    // server.tool() / server.registerTool() never throw "is not a function",
+    // and _registeredTools is populated so callTool() helpers can invoke
+    // handlers correctly.
+
+    _registeredTools: Record<string, { handler: (...args: unknown[]) => unknown }> = {};
+
+    // Underlying Server stub (accessed via server.server in some tool files)
+    server = {
+      setRequestHandler: mock((..._args: unknown[]) => {}),
+    };
+
     connect = mock(async () => {});
+    close = mock(async () => {});
+    isConnected = mock(() => false);
+
+    // server.tool(name, [description], [schema], handler) — last arg is handler
+    tool = mock((...args: unknown[]) => {
+      const name = args[0] as string;
+      const handler = args[args.length - 1] as (...a: unknown[]) => unknown;
+      this._registeredTools[name] = { handler };
+      return { enabled: true, enable: () => {}, disable: () => {}, remove: () => {} };
+    });
+
+    // server.registerTool(name, config, handler)
+    registerTool = mock((...args: unknown[]) => {
+      const name = args[0] as string;
+      const handler = args[args.length - 1] as (...a: unknown[]) => unknown;
+      this._registeredTools[name] = { handler };
+      return { enabled: true, enable: () => {}, disable: () => {}, remove: () => {} };
+    });
   },
 }));
 
