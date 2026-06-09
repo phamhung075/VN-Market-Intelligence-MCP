@@ -16,3 +16,17 @@
 - BLOCKER-5: Root cause of 7+ sprint silent drop — no non-empty assertion on prose stitched_markdown, gate skip masking empty result, PROSE-DEV-1 fallback normalizing the bad behavior across sprints.
 **why-decision:** Option A minimal-change additive param; separate-defect determination is code-read confirmed (char-count guard not page-type filter); extend-not-duplicate consistent with brownfield-first constraint; root-cause traced to test gap + fallback normalization.
 **why-change:** no change from plan
+
+---
+
+### STEP architect-S2 · architect · 2026-06-10T00:00Z
+**task-id:** BPE-SPIKE-1
+**what-done:** OVERRULED BLOCKER-2; settled total_pages semantics; confirmed skip-guard root cause for pages 11-22; confirmed GAP-2 self-heals on re-flow post-OPS-1; resolved page off-by-N as NO misalignment; wrote brief docs/architecture-briefs/2026-06-09-bctc-prose-ocr-coverage-rootcause.md.
+**what-considered:**
+- BLOCKER-2: prior "benign/separate" relied on unverified assumption that 11 absent pages are blank. User screenshot of page 12 + pages-11-22 spread contradicts it. OVERRULED.
+- COUNT vs MAX: PEK path — MAX makes JSON truthful; navBound already from pdf.js (46), so no UI change. Non-PEK path — MAX + OFFSET fix required together (point-lookup).
+- Skip guard: < 10 is wrong for Vietnamese text-heavy pages at 200 DPI; user screenshot proves visible text. Threshold raise to < 3 + DPI escalation retry.
+- Completeness guard locks 35-row dataset — delete + re-OCR is the only escape path; code fix must precede ops re-run.
+- Page off-by-N: pdf.js drives navBound; renderOcr called with exact PDF page number; no OFFSET confusion in PEK path; confirmed page 12 = DB page 12.
+**why-decision:** New evidence (pages-11-22 absent, user screenshot, GAP-3 re-verification) overrides prior speculative "benign" assumption. All four findings self-consistent.
+**why-change:** BLOCKER-2 reversed — new evidence was not available at prior ruling.

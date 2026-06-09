@@ -1,8 +1,24 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 21:57 UTC | **Sprint:** BCTC-PROSE-EXTRACT
+**Last updated:** 2026-06-10 00:00 UTC | **Sprint:** BCTC-PROSE-EXTRACT
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-10T00:00Z — arch-S27: BPE-SPIKE-1 OCR coverage root-cause SPIKE
+
+**Task:** BPE-SPIKE-1 (SPIKE, zone: apps/mcp-server/)
+
+**Method:** Re-read all GAP loci raw. Verified bctcInspectHandler.ts L537-539, L584-585, L627-630, L650-659 (COUNT vs MAX, OFFSET vs point-lookup). Verified pdfOcrWorker.ts L200-213 (completeness guard), L254-286 (iteration + skip guard). Read bctc-inspector.html L1052-1053, L1232, L1368, L1432, L1437 (navBound = pdfNumPages from pdf.js, not total_pages). Read BA-spec BLOCKER-2 text (L304) and TASK_BPE-DEV-2 L134.
+
+**Key findings:**
+- BLOCKER-2 OVERRULED: user screenshot of page 12 + 11-page absence spread contradicts "benign blank pages" assumption.
+- total_pages: COUNT→MAX correct for PEK path (JSON truthfulness, no UI nav change since navBound=pdfNumPages=46 from pdf.js). Non-PEK path needs MAX + OFFSET→point-lookup together.
+- Skip guard: < 10 chars wrongly drops visible-text pages at 200 DPI. Raise to < 3 + add DPI escalation retry.
+- Completeness guard (L209-213) freezes 35-row dataset. Delete + code-fix + re-OCR sequence required.
+- GAP-2 self-heals on re-flow AFTER BPE-OPS-1 completes. No code change for re-flow.
+- Page off-by-N: NONE. pdf.js drives navBound; `renderOcr` called with exact PDF page number; page 12 = DB page 12.
+
+**Brief:** docs/architecture-briefs/2026-06-09-bctc-prose-ocr-coverage-rootcause.md
 
 ## 2026-06-09T21:57Z — arch-S26: BCTC-PROSE-EXTRACT SPIKE (BPE-ARCH-1)
 
