@@ -3715,7 +3715,7 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3733,33 +3733,38 @@
             "created_by": "po-S39",
             "note": "[po-S39 DJ-GATE-1] Architect REWRITE verdict accepted (FIX-CI-C1129-RESIDUAL-TRIAGE -> DONE; brief docs/architecture-briefs/2026-06-09-ci-c1129-calibration-triage.md, commit bc5c560a, arch-S13). REWRITE (prod correct, test stale) — NOT remove. Prod: apps/mcp-server/src/interface/mcp/tools/macro/calibrationTools.ts:276 registerCalibrationTools(server, db?) — pure SQLite, db-injection arg live, NOT HTTP-rewired; deleted-seam + prod-bug signatures both RULED OUT. Victim: 1129-calibration-tools.test.ts — 5 it() x ~5003ms transport stall x 2 (test timeout + afterEach stalled client) = 10 fails. CURE: replace InMemoryTransport+Client.callTool() harness with direct (_testServer as unknown as RegisteredToolsServer)._registeredTools[\"get_calibration_report\"].handler(args); module-level _testServer + _testDb; beforeEach builds in-memory DB + seeds + registerCalibrationTools(_testServer, _testDb); afterEach cleanup; read result.content[0]?.text. buildInMemoryDb() must inline the calibration_snapshots DDL (12 cols, IF NOT EXISTS) from schema-system.ts:213 — NO initDatabase() call (Contract-B pattern). ZOD-BYPASS: NONE required — all 5 ACs port verbatim (date is z.string().optional(), no .default/.coerce). C5-cure: zero new mock.module(); proven sibling template = 1134-get-foreign-flow-tool.test.ts (CI-green, commit 8916675a). Dev scope: ONE FILE ONLY. Dev COMMITS with explicit pathspec; ROUTER pushes + gates vs the 73 band.",
             "review_by": "dev-mcp-server-S16",
-            "review_at": "2026-06-09T13:15:00Z"
+            "review_at": "2026-06-09T13:15:00Z",
+            "done_by": "po-S40",
+            "resolution": "REWRITE-GATED — Task 1129 cluster 10->0 named flip confirmed CI run 27207225757 (gate CI-C1129-GATE-7040cfb6); ZERO Zod-bypass adaptation required (date z.string().optional(), no .default — all 5 ACs ported verbatim)",
+            "done_at": "2026-06-09T12:59:05Z",
+            "gate_result": "CI-C1129-GATE-7040cfb6",
+            "dj_gate_1": "#po-S40"
           }
         ],
         "_updated_by": "po-S28",
         "ci_absolute": {
-          "native_fail": 73,
+          "native_fail": 68,
           "native_errors": 0,
-          "fail_plus_error": 73,
+          "fail_plus_error": 68,
           "tests": 11803,
-          "pass": 11688,
+          "pass": 11693,
           "skip": 42,
-          "sha": "8916675a",
-          "run_id": "27205559638",
-          "bun_job_id": "80320331863",
-          "supersedes": "79 (sha 802a4d1b, run 27203749620, job 80314056985)",
-          "delta_vs_prior": "-6 (79->73) — FIX-CI-C1134-FOREIGN-FLOW-TEST-REWRITE TEST-INFRA REWRITE (InMemoryTransport+Client.callTool() -> _registeredTools[\"get_foreign_flow\"].handler() direct invocation, 1124-transport-hang signature, 1117/1124 proven). Authoritative jitter-robust signal = named Task 1134 cluster 12 fail->0 fail (unambiguous, per-victim exact-prefix tally). Projected ~67 (79-12) but landed 73: the +6-vs-projection is NOT regression — rewriting the harness (removing InMemoryTransport/Client imports) reorders the bun ESM-cache mock.module() contamination graph, shifting jitter on OTHER unrelated tests beyond the +/-3 band (absolute only stable when the import/test SET is unchanged); the named per-victim flip is the authoritative gate. AC-4/AC-6 adapted: direct-handler bypasses the SDK Zod validation wrapper (protocol-layer) — AC-4 asserts no-crash+valid envelope; AC-6 passes days:10 explicitly. New band ~73 +/-3 (floor ~70).",
-          "updated_at": "2026-06-09T12:28:34Z",
-          "updated_by": "po-S38"
+          "sha": "7040cfb6",
+          "run_id": "27207225757",
+          "bun_job_id": "80326149577",
+          "supersedes": "73 (sha 8916675a, run 27205559638, job 80320331863)",
+          "delta_vs_prior": "-5 (73->68) — FIX-CI-C1129-CALIBRATION-TEST-REWRITE TEST-INFRA REWRITE (InMemoryTransport+Client.callTool() -> _registeredTools[\"get_calibration_report\"].handler() direct invocation, 1124-transport-hang signature, green siblings 1117/1124/1134 proven). Authoritative jitter-robust signal = named Task 1129 cluster 10 fail->0 fail (unambiguous, per-victim exact-prefix tally). Projected ~63 (73-10) but landed 68: the +5-vs-projection is NOT regression — rewriting the harness (removing InMemoryTransport/Client imports) reorders the bun ESM-cache mock.module() contamination graph, shifting jitter on OTHER unrelated tests beyond the +/-3 band (the absolute is only stable when the import/test SET is unchanged); the named per-victim flip is the authoritative gate. NOTE: C1129 needed ZERO Zod-bypass adaptation — date param is z.string().optional() with no .default/.coerce, so direct-handler behavior == protocol behavior; all 5 ACs ported VERBATIM (unlike C1134 which needed AC-4/AC-6 adaptation). New band ~68 +/-3 (floor ~65).",
+          "updated_at": "2026-06-09T12:59:05Z",
+          "updated_by": "po-S40"
         },
         "long_tail_triage_policy": {
           "goal": "ci/di all passe on GitHub, test update (remove if obsolete) — /goal refined 2026-06-09T07:5xZ",
           "classify_each_residual_bucket": "REWRITE (prod still exists, test stale -> rewrite test to match) vs REMOVE (prod gone/superseded, test obsolete -> DELETE the test, do NOT patch)",
           "remove_examples": "removed test seams, deleted reuters.js, pre-98df0f43 macro section-header format, stale cron schedules",
           "applies_to": "C5+ and all remaining ~135 long-tail rounds; re-profile residual by ROOT-CAUSE pattern (unmocked-HTTP / SSOT-drift / assertion-logic) NOT by file, with the REMOVE-if-obsolete lens",
-          "absolute": "73 (sha 8916675a, run 27205559638, job 80320331863 — SUPERSEDES 79/802a4d1b)",
-          "updated_by": "po-S38",
-          "updated_at": "2026-06-09T12:28:34Z",
+          "absolute": "68 (sha 7040cfb6, run 27207225757, job 80326149577 — SUPERSEDES 73/8916675a)",
+          "updated_by": "po-S40",
+          "updated_at": "2026-06-09T12:59:05Z",
           "under_scope_lesson": "Architect cluster counts are CATEGORY-WIDE SUPERSETS (e.g. C1 '42' netted -12). Dev fixes ONLY the explicitly NAMED files; residual same-pattern files OUT of named scope -> long-tail re-profile, NOT a charge-back to closed task ids. The ONE exception so far: C4 single-file-family count landed EXACTLY (-25) because it was not a category superset."
         }
       }
