@@ -1,6 +1,6 @@
 {
-  "locked": true,
-  "owner_agent": "po-S40",
-  "task": "po-S40 C1129 DONE + rebaseline ci_absolute 73->68",
+  "locked": false,
+  "owner_agent": null,
+  "task": null,
   "expires_at": 0
 }
