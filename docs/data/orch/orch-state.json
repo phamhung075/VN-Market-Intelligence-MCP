@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T00:05:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-09T01:19:29Z",
+  "_updated_by": "po-S17",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T00:00:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-09T01:19:29Z",
+    "_updated_by": "po-S17",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3093,11 +3093,29 @@
     ],
     "backlog": [
       {
+        "id": "FU-SCHEMA-DRIFT-P5",
+        "title": "Phase 5 SPIKE (recurring-bug, 3rd touch CI-test-schema) — design canonical-fixture / run-order-isolation fix for the residual no-such-table classes that fail ONLY under full-suite cross-file singleton pollution (agent_signals / sbv_rates_history / positions / commodity_prices / commodity_prices_history / imf_indicators). These are unreachable by any per-file Contract-B inline-DDL fix (per-file isolation passes) — they hit the shared singleton initDatabase() which never creates these tables. ARCHITECT must produce a design (Contract-A canonical initDatabase() creates them, OR deterministic run-order isolation) BEFORE any dev impl.",
+        "type": "SPIKE",
+        "owner": "architect",
+        "status": "TODO",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "mode": "spike",
+        "timebox": 120,
+        "depends": [
+          "FU-SCHEMA-DRIFT-P4"
+        ],
+        "sprint": "CI-RED-RECONCILE",
+        "created_at": "2026-06-09T01:19:29Z",
+        "note": "[po S17 DJ-GATE-1 2026-06-09T01:19:29Z] OPENED from CI-P4-GATE-e442cf11 adjudication. recurring-bug-escalation: 3rd touch of CI-test-schema surface (P2 Contract-B, P4 per-file isolation, now residual) -> ARCHITECT SPIKE before dev impl. DO NOT dispatch another per-file fix and DO NOT mechanize an init-injection sweep — 9454baad did exactly that, cost +219, was REVERTED. Brief: docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md (Phase 5 / Contract-A). DoD: a design doc that, when implemented, drops native fail+error vs the 629 absolute (native-to-native ONLY; marker method over-counts ~2x) with NO regression. WIP<=2 honored: P4 closing frees the schema-drift active slot. owner architect, zone apps/mcp-server/, timebox 120m, status TODO = dispatch trigger."
+      },
+      {
         "id": "FU-SCHEMA-DRIFT-P4",
         "title": "Phase 4 — pure-singleton isolation audit: run each of the ~494 pure-singleton test files in strict isolation (bun test --bail <file>); files that FAIL in isolation need initDatabase() added to beforeAll (they silently rely on cross-file module-cache singleton state). Per-file verification, NOT a mechanical sweep.",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "DONE",
         "size": "M",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -3106,7 +3124,7 @@
         ],
         "sprint": "CI-RED-RECONCILE",
         "created_at": "2026-06-09T00:16:13Z",
-        "note": "[po S15 2026-06-08T23:14Z] Brief Phase 4 (docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md) — explicitly NOT a blocker for P1/P2 and per the brief requires per-file isolation verification not a sweep. Parked here rather than opened active this cycle: P1/P2 are the dominant ~200-fail block toward /goal ci/cd pass; promote P4 once P1/P2 land and the residual fail-count is re-measured (may be largely absorbed by P1/P2). RISK-3 in brief §5. | [po S16 DJ-GATE-1 2026-06-09T00:16Z] PROMOTED BACKLOG->TODO (active FIX, dispatch trigger). Trigger satisfied: P2 DONE this cycle; residual RE-MEASURED to native fail+error 634 and the no-such-table macro/portfolio classes PERSIST (not absorbed by P1/P2) — they hit the SHARED SINGLETON initDatabase() path, NOT Contract-B inline-DDL files P2 could patch = exactly Phase 4 (§3 + RISK-3). WIP<=2 honored (P1 DONE + P2 DONE => P4 sole active schema-drift FIX). SCOPE: audit pure-singleton tests that reference these tables not created in their path; fix per two-fixture-contract — Contract A canonical initDatabase() creates the table for the test, OR isolate to Contract B with minimal inline DDL. Residual classes: agent_signals / sbv_rates_history / positions / commodity_prices / commodity_prices_history / imf_indicators / daily_ohlcv. DoD: native fail+error DROP vs the 634 absolute (native-to-native ONLY — marker method over-counts ~2x); bun tsc --noEmit clean; per-file isolation pass; no regression (double-create / NOT NULL / data_env stay 0). owner dev-mcp-server, zone apps/mcp-server/, size M. status TODO = dispatch trigger; router/PM may route to dev-mcp-server now. No push (router owns). | [DJ-GATE-1 dev-mcp-server 2026-06-09T02:00Z] TODO->REVIEW. DECISION: Phase 4 pure-singleton isolation audit complete. Exhaustive audit of all 1036 test files classified into 4 modes (pure-singleton / isolated-inline / singleton+initDatabase / hybrid). Ran 600+ test files in isolation. FINDING: only ONE file actually failed in isolation due to schema drift — 1972-vndirect-ohlcv-null-coercion.test.ts. Root cause: inline daily_ohlcv DDL missing data_env TEXT + foreign flow columns; production runOhlcvBackfill prepares INSERT ... data_env ... which threw byteOffset:-1 on prepare(). Fix: Contract B — added foreign_buy_vol REAL, foreign_sell_vol REAL, foreign_net_vol REAL, put_through_vol REAL, data_env TEXT to the inline CREATE TABLE. Isolation result: 5/5 pass. All other 44 pure-singleton files that reference target table names either reference them in comments/variable-names/test-strings (no SQL) or have try/catch defensive handling in production code — they pass in isolation with rc=0. No sweep of initDatabase() calls needed. tsc: CLEAN. Single file changed: apps/mcp-server/src/__tests__/1972-vndirect-ohlcv-null-coercion.test.ts. Status REVIEW (not DONE — router owns push + CI gate verification)."
+        "note": "[po S15 2026-06-08T23:14Z] Brief Phase 4 (docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md) — explicitly NOT a blocker for P1/P2 and per the brief requires per-file isolation verification not a sweep. Parked here rather than opened active this cycle: P1/P2 are the dominant ~200-fail block toward /goal ci/cd pass; promote P4 once P1/P2 land and the residual fail-count is re-measured (may be largely absorbed by P1/P2). RISK-3 in brief §5. | [po S16 DJ-GATE-1 2026-06-09T00:16Z] PROMOTED BACKLOG->TODO (active FIX, dispatch trigger). Trigger satisfied: P2 DONE this cycle; residual RE-MEASURED to native fail+error 634 and the no-such-table macro/portfolio classes PERSIST (not absorbed by P1/P2) — they hit the SHARED SINGLETON initDatabase() path, NOT Contract-B inline-DDL files P2 could patch = exactly Phase 4 (§3 + RISK-3). WIP<=2 honored (P1 DONE + P2 DONE => P4 sole active schema-drift FIX). SCOPE: audit pure-singleton tests that reference these tables not created in their path; fix per two-fixture-contract — Contract A canonical initDatabase() creates the table for the test, OR isolate to Contract B with minimal inline DDL. Residual classes: agent_signals / sbv_rates_history / positions / commodity_prices / commodity_prices_history / imf_indicators / daily_ohlcv. DoD: native fail+error DROP vs the 634 absolute (native-to-native ONLY — marker method over-counts ~2x); bun tsc --noEmit clean; per-file isolation pass; no regression (double-create / NOT NULL / data_env stay 0). owner dev-mcp-server, zone apps/mcp-server/, size M. status TODO = dispatch trigger; router/PM may route to dev-mcp-server now. No push (router owns). | [DJ-GATE-1 dev-mcp-server 2026-06-09T02:00Z] TODO->REVIEW. DECISION: Phase 4 pure-singleton isolation audit complete. Exhaustive audit of all 1036 test files classified into 4 modes (pure-singleton / isolated-inline / singleton+initDatabase / hybrid). Ran 600+ test files in isolation. FINDING: only ONE file actually failed in isolation due to schema drift — 1972-vndirect-ohlcv-null-coercion.test.ts. Root cause: inline daily_ohlcv DDL missing data_env TEXT + foreign flow columns; production runOhlcvBackfill prepares INSERT ... data_env ... which threw byteOffset:-1 on prepare(). Fix: Contract B — added foreign_buy_vol REAL, foreign_sell_vol REAL, foreign_net_vol REAL, put_through_vol REAL, data_env TEXT to the inline CREATE TABLE. Isolation result: 5/5 pass. All other 44 pure-singleton files that reference target table names either reference them in comments/variable-names/test-strings (no SQL) or have try/catch defensive handling in production code — they pass in isolation with rc=0. No sweep of initDatabase() calls needed. tsc: CLEAN. Single file changed: apps/mcp-server/src/__tests__/1972-vndirect-ohlcv-null-coercion.test.ts. Status REVIEW (not DONE — router owns push + CI gate verification). | [DJ-GATE-1 po S17 2026-06-09T01:19:29Z] REVIEW->DONE. CI-P4-GATE-e442cf11 native gate PASSED: pass 10881->10886, fail+error 634->629 (-5), errors flat 14, tests flat 11537; -5 = the 5 daily_ohlcv tests in 1972-vndirect-ohlcv-null-coercion.test.ts flipped to pass by Contract-B inline-DDL fix. Regression-free win, raw-verified by router (gh run view 27177364641). CI workflow stays red (residual full-suite singleton pollution) but red badge does not veto raw-verified net-improvement. Residual -> FU-SCHEMA-DRIFT-P5 (ARCHITECT SPIKE). Router owns push + next gate."
       },
       {
         "title": "chef.md self-enforces published-marker before send_telegram, with per-cadence key granularity",
@@ -5933,8 +5951,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-08T19:05:17Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-09T01:19:29Z",
+    "_updated_by": "po-S17",
     "rows": [
       {
         "id": "sau-c121-a33",
@@ -6648,10 +6666,13 @@
         "type": "db_integrity_breach",
         "summary": "macro_indicators C-09: only 1 country in 26h window (expects >=8)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "TRIAGED",
         "zone_owner": "dev-mcp-server",
         "check_id": "C-09",
-        "payload_ref": null
+        "payload_ref": null,
+        "processed_by": "po-triage-20260609T0118Z",
+        "processed_at": "2026-06-09T01:19:29Z",
+        "disposition": "ROUTED -> dev-mcp-server (zone_owner) to verify macro_indicators multi-country coverage. NOT a self-clear of FIX-MACRO-REFRESH-DEAD (b7ce338f DONE 2026-06-08T15:25Z, US/FRED refresh + env-var). PO live-verified serve layer holds (get_macro_snapshot 2026-06-09T01:17Z: carry/yield computedAt fresh, fedFundsRate=3.62 is_estimate=false). c283-c09 is a DISTINCT dimension — db_integrity_breach on country COVERAGE (1 country vs >=8 in 26h), measured ~9h AFTER the fix; prior fix did not target multi-country population. Real candidate regression -> dev verify, do not auto-close."
       },
       {
         "id": "sau-c283-c08",
