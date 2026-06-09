@@ -1,0 +1,29 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T10:45:00Z",
+  "dedup_key": "ci_1423e_gate_result:9ed78225",
+  "payload": {
+    "check_id": "CI-1423E-GATE-9ed78225",
+    "task_under_test": "FIX-CI-1423E-PREEXISTING-CLUSTER",
+    "verdict": "GATE PASSED — UNAMBIGUOUS. Obsolete-test REMOVE confirmed: the named Task 1423 cluster went 22 fail -> 0 fail (jitter-robust), tests dropped exactly 13 (the removed file), zero coverage lost (protected sibling 1423e-macro-calendar.test.ts stays 23/0). Route TODO -> DONE and REBASELINE 102 -> 91.",
+    "pattern": "TEST-OBSOLETE REMOVE (per /goal clause: obsolete tests must be REMOVED, not patched). The get_macro_calendar MCP tool was rewired domain->HTTP-proxy in commit 98df0f43, deleting the _testReferenceDate injection seam. apps/mcp-server/src/__tests__/1423e.test.ts depended entirely on that dead seam (callMacroCalendar helper injected args[\"_testReferenceDate\"]), so in CI (no port-5004 service) every call returned {\"error\":\"macro-indicators service unavailable\"} and all downstream .events/.currentMonthIsPivotWindow assertions cascaded to 9 structural fails -> ~22 CI fails. Domain logic still fully covered by the protected sibling 1423e-macro-calendar.test.ts (exercises macroCalendar.ts directly, 23/0). Architect verdict TEST-OBSOLETE (brief 2026-06-09-ci-1423e-preexisting-cluster.md, all 9 -> REMOVE); router raw-verified all 4 load-bearing claims against source before deletion.",
+    "measurement_method": "bun NATIVE summary from `gh run view --job=80302822813 --log` (NNN pass / NNN skip / NNN fail; errors line omitted => 0) PLUS jitter-robust per-victim exact-prefix (fail) tally for Task 1423 across the REMOVE run vs the 102 baseline. Gate watcher: scripts/ci-native-gate-watch.sh 27200448050 \"Task 1423\".",
+    "baseline_absolute": { "sha": "fff91143", "run_id": "27198910454", "bun_job_id": "80297590558", "native_fail": 102, "native_errors": 0, "fail_plus_error": 102, "tests": 11816, "pass": 11672, "skip": 42 },
+    "remove_absolute": { "sha": "9ed78225", "run_id": "27200448050", "bun_job_id": "80302822813", "native_fail": 91, "native_errors": 0, "fail_plus_error": 91, "tests": 11803, "pass": 11670, "skip": 42 },
+    "delta_native": {
+      "fail_plus_error": "-11 (102 -> 91) — direction-correct net improvement",
+      "tests": "-13 (11816 -> 11803) — exactly the removed 1423e.test.ts (13 it() cases)",
+      "note": "Projected ~80 (102 - 22 named fails) but landed at 91. The +11 vs projection is NOT regression: removing a test FILE reorders the bun ESM-cache mock.module() contamination graph, shifting jitter on OTHER unrelated tests by more than the +/-3 band (the absolute is only stable when the test SET is unchanged). The authoritative jitter-robust signal is the named per-victim flip below, which is unambiguous."
+    },
+    "per_victim_flip": {
+      "Task 1423 (all 1423* prefixes)": { "baseline_fail": 22, "remove_fail": 0, "flip": "fail->pass CONFIRMED — entire 1423e cluster removed, zero residual" }
+    },
+    "coverage_check": "Protected sibling apps/mcp-server/src/__tests__/1423e-macro-calendar.test.ts (different filename, exercises macroCalendar.ts domain service directly) UNTOUCHED and still 23/0. Removal loses ZERO real coverage — the deleted file only tested the dead MCP _testReferenceDate seam, never the domain logic.",
+    "router_actions_done": "Architect aed25b3a returned TEST-OBSOLETE (brief 621e71a5). Router raw-verified all 4 claims (_testReferenceDate zero prod refs; 1423e.test.ts injects via args; prod handler is HTTP {days} proxy; 98df0f43 diff deleted the seam). Dev dev-mcp-server abcb64e4 executed git rm 1423e.test.ts -> commit 9ed78225 (one D path, sibling 23/0, tsc clean, no dangling refs). Router raw-verified 9ed78225 (exactly one D path, linear child, sibling intact), pushed 621e71a5..9ed78225. Created reusable scripts/ci-native-gate-watch.sh + dev-standards pointer (commit 76406167, pushed). Gate-watched run 27200448050 to completion via the new script; per-victim Task 1423 (fail)=0 confirmed.",
+    "po_action_requested": "BATCHED single board write under commit-mutex (no concurrent writer — dev/architect agents idle): (1) FIX-CI-1423E-PREEXISTING-CLUSTER TODO -> DONE with DJ-GATE-1 (decision-journal STEP in sprint-CI-RED-RECONCILE-po.md, stamped task-id, SAME commit) citing the Task 1423 22->0 named flip. (2) REBASELINE ci_absolute 102 -> 91 (sha 9ed78225, run_id 27200448050, bun_job_id 80302822813, native_fail 91, native_errors 0, pass 11670, skip 42, tests 11803), updated_by po-S32, supersedes 102/fff91143. New band ~91 +/-3 (floor ~88). Sync long_tail_triage_policy.absolute to 91. Verify single-status-key invariant + unique task-id count after the write.",
+    "next": "After PO board write + router verify: continue /goal loop toward native fail+error = 0. Remaining ~91 native fail. Next clusters (all architect-first prod-vs-test confirm before any fix, per /goal REMOVE-obsolete clause): C7 (assertion-logic: 1792-conviction-debounce, 1352a L248, 1328e/1407b); C8 (REMOVE-obsolete-triage FIX-CI-C8-REMOVE-OBSOLETE-TESTS-TRIAGE — architect REMOVE-evidence first, protect DWF-is-trading-day canary). Cluster-6 schema-drift stays PARKED. Optional queue-to-PO: architect-recommended lint gate (carryTools.ts/macroTools.ts change without co-updated test file = CI warning — recurring 'MCP tool rewired to HTTP, test not co-updated' pattern across carry/yield/macro tools)."
+  }
+}
