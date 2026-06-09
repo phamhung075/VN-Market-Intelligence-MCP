@@ -554,3 +554,72 @@ each cured). No downstream collateral expected.
 
 **artefacts:**
 - `docs/architecture-briefs/2026-06-09-ci-c235-residual-triage.md`
+
+---
+
+### STEP arch-S19 (DJ-GATE-1) · architect · 2026-06-09T17:00Z (TUESDAY)
+
+**task-id:** FIX-CI-C1839b-TRIAGE
+**sprint:** CI-RED-RECONCILE
+**mode:** prod-vs-test triage (verdict only; no fix written; no board flip)
+
+**what-done:** Full prod-vs-test triage of the 4-marker (2 unique test) Task 1839b cluster
+(`1839b-notebook-protocol.test.ts`, AC-3 + AC-4). Pulled raw CI failure lines from job
+80365846275 (`gh run view --job=80365846275 --log | grep "Task 1839b"`). Ran single-file
+local repro confirming exact same failures. Read full test file (53 lines). Read current
+state of `docs/agent-memory/notebooks/` directory. Read current `developer.md` (54 lines,
+5198 bytes). Traced git history to introduction commit `6acf45d7` (2026-05-03) to confirm
+original GREEN state. Traced `422c0ff9` as the commit introducing `market-watcher.md.bak`.
+Confirmed NB-PRUNE-1 as the cycle that replaced scaffold sections in developer.md with
+real session entries. Produced brief at
+`docs/architecture-briefs/2026-06-09-ci-c1839b-notebook-protocol-triage.md`.
+
+**verdict:** REWRITE-STALE (both failing tests)
+
+**unique failing tests (2):**
+1. AC-3: `notebook files are .md format (gitkeep excluded)` — 1ms genuine assertion
+   failure. `expect("market-watcher.md.bak").toMatch(/\.md$/)` fails. Root cause:
+   `.bak` file committed in `422c0ff9` after test introduction; test excludes only
+   `.gitkeep`, not `.bak` artifacts.
+2. AC-4: `developer.md notebook has required sections` — 1ms genuine assertion failure.
+   `expect(content).toContain("Last session summary")` and `toContain("Known patterns")`
+   both fail. Root cause: notebook-write/prune cycle (NB-PRUNE-1 + session appends)
+   replaced scaffold placeholder sections with real session entries (`## Session ...`
+   format). Test was anchored to initial scaffold structure no longer present.
+
+**raw-fail fingerprint:** 1ms assertion failure (no SyntaxError, no ~5000ms timeout).
+Neither contamination nor transport-hang. Both are genuine-assertion-no-timeout.
+
+**what-considered:**
+- **(a) CONTAMINATION (SyntaxError / wrong-value from leaked mock.module):** REJECTED.
+  Zero `mock.module()` in this test file. Failures at 1ms with direct string/regex
+  assertion. No telegram or other stub chain touches `fs.readdirSync` or `fs.readFileSync`.
+- **(b) TRANSPORT-HANG (~5000ms):** REJECTED. Both failures at 1ms. No MCP
+  InMemoryTransport or Client.callTool() in this test file.
+- **(c) REWRITE-STALE (CHOSEN):** Both tests assert file-system state that was true
+  at introduction but has legitimately evolved. Prod notebooks directory and developer.md
+  are correct; test assumptions are stale.
+- **(d) REMOVE-OBSOLETE:** REJECTED. The underlying intent of AC-3 (notebooks are .md
+  files) and AC-4 (developer.md is a substantive notebook) remains valid. Tests should
+  be updated, not removed.
+- **(e) FIX-PROD:** REJECTED. No production defect. The `.bak` file is a legitimate
+  artifact; developer.md has real content (5198 bytes, 6 real sessions).
+
+**why-decision:** No contamination pattern. No transport-hang pattern. Timestamps from
+`6acf45d7` commit confirm both ACs were green on introduction; subsequent commits
+(`422c0ff9` for .bak, NB-PRUNE-1+sessions for developer.md) are the divergence sources.
+The fix is narrowly scoped: extend AC-3 filter to exclude `.bak`; update AC-4 to assert
+invariants that survive the session-log format (presence of `## ` heading + non-trivial
+content length).
+
+**fix spec (1 file, 2 it() blocks):**
+- AC-3: extend filter to `f !== ".gitkeep" && !f.endsWith(".bak")`
+- AC-4: replace `toContain("Last session summary")` + `toContain("Known patterns")`
+  with `toMatch(/^## /m)` + `content.length > 200`
+
+**projected delta:** Task 1839b: 4 log-markers (2 unique tests × 2 occurrences each) → 0.
+No downstream collateral expected (AC-1, AC-2, AC-5 untouched and green).
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-c1839b-notebook-protocol-triage.md`
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
