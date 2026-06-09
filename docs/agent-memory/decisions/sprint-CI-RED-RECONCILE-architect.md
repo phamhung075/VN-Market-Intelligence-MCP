@@ -703,3 +703,42 @@ owner=dev-mcp-server, 2 files, timebox ~20m.
 **artefacts:**
 - `docs/architecture-briefs/2026-06-09-ci-c1282a-data-freshness-triage.md`
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
+
+---
+
+### STEP arch-S21 (DJ-GATE-1) · architect · 2026-06-09T18:00Z (TUESDAY)
+
+**task-id:** SPIKE-TESTING-CI-ARCHITECTURE-RETHINK
+**sprint:** CI-RED-RECONCILE
+**mode:** spike (180m timebox), deep analysis + architectural rethink
+
+**what-done:** Ran isolation probe on all 30+ failing test files (single-file bun test per file).
+Bucketed into CONTAMINATION (passes alone) vs GENUINE (fails alone). Analyzed CI test architecture
+options A/B/C. Chose recommended architecture. Produced batch remediation plan by failure class.
+Wrote probe script scripts/ci-isolation-probe.sh. Updated dev-standards.md with pointer.
+
+**what-considered:**
+- Isolation-probe reveals: 4 CONTAMINATION files (13%), 26 GENUINE files (87%). Probe disproves
+  the assumption that contamination dominates — GENUINE assertions against changed prod/config
+  are the primary driver of the 55 remaining fails.
+- Option A (sharding): 36% ceiling (only fixes contamination bucket). Does not address 87% GENUINE.
+- Option B (mock.module-restore guard): zero cost, prevents regression, mechanical enforcement
+  via meta-test. Recommended as Phase 1.
+- Option C (retire gating apparatus): conditional on 0-fail — defer to Phase 4.
+- CHOSEN: Option B first + class-based genuine-fix batches + Option A as follow-on optimization.
+
+**why-decision:** The 55 CI fails are predominantly (87%) genuine test-vs-prod divergence, not
+architectural contamination. Sharding optimizes the wrong problem first. The fastest path to
+CI GREEN is: (1) remove/convert 4 DV tests; (2) rewrite 3 transport-hang files; (3) fix 3 mock-
+stub-leak contaminators; (4) add now-seam for market-hours-gate; (5) update 6 config-drift
+assertions; (6) triage 14 assertion-logic files. Projected trajectory: 55 → 0 across 6 batches.
+
+**why-change:** Prior loop (per-cluster triage) optimized 21% of failing tests (Task NNNN naming).
+Full isolation probe reveals 79% untracked. Architecture rethink replaces per-cluster with
+per-class batch dispatch — more efficient.
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md`
+- `scripts/ci-isolation-probe.sh` (NEW — reusable isolation probe)
+- `docs/policies/dev-standards.md` (pointer added)
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
