@@ -897,3 +897,52 @@ All three anchors are fixed constants in the test file → deterministic regardl
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
 - `docs/data/orch/orch-state.json` (BATCH3 TODO → REVIEW)
 - `docs/data/commit-mutex.json` (mutex acquire/release)
+
+---
+
+### STEP dev-mcp-server-S23 · dev-mcp-server · 2026-06-09T18:45:00Z (DJ-GATE-1)
+**task-id:** BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS
+**sprint:** CI-RED-RECONCILE
+**class:** C-CD CONFIG-DRIFT (dispatch_seq 4)
+
+**8 CI native fails reconciled (verbatim describe > test anchor → verdict → current legitimate value):**
+
+| # | Describe > test anchor | Verdict | Current value / rationale |
+|---|---|---|---|
+| 1 | `1343e — BCTC Pipeline Integration > should populate bctc_vps_queue for all watchlist tickers missing Q4/2025` | REWRITE-STALE | seedWatchlist seeds **34** tickers (sprint-054 removed 5 inactive; sprint-1869 Task-1876a-A6 added 7 high-vol; Task-1946a added PLX). Test had `toBe(26)`. |
+| 2 | `1349a: Dead scheduler config removal > should not have scheduler section in mcp.config.json` | FIX-PROD | Removed dead `scheduler: { newsHeadlinesRefresh: {...} }` section from `mcp.config.json`. Cron schedule is SSOT in `cronConfig.ts` / `jobs.ts`, not in mcp.config.json. The section was dead config not read by any production code path. |
+| 3 | `1837a — orch-state.json schema (v3) > AC-1: file exists and head has all required v3 fields` | REWRITE-STALE | Live `orch-state.json` head has **5 fields** (`status`, `active_task_id`, `next_agent`, `updated_at`, `updated_by`). Fields `next_action`, `wip`, `wip_max` are absent from the live SSOT. Removed them from `requiredFields[]`. |
+| 4 | `Bootstrap Performance + Signal Quality (230) > AC-4c: All 7 Cowork agent .md files include Step 0-b decision tree block` | REWRITE-STALE | Test checked `.claude/agents/{developer,ops,qa}.md` (thin 9-line stubs — no step-0-b content). REWRITE to check the 4 `docs/agents/` files that actually carry `## Step 0-b: Handle Bootstrap Errors`: `docs/agents/developer/init.md`, `docs/agents/qa/init.md`, `docs/agents/dev-mcp-server/knowledge.md`, `docs/agents/ops/handlers.md`. No agent .md edited (out of scope per task constraints). |
+| 5 | `Task 1336 — Named volume for SQLite data directory > uses market_data named volume in service definitions` | REWRITE-STALE | `docker-compose.yml` now has **9** `market_data:/app/data` refs (one new service added after Task 1336 shipped). Test had `toBe(8)`. |
+| 6 | `cron-registry.json integrity > schedulerFileCount === 43` | REWRITE-STALE | `docs/data/cron-registry.json` `.schedulerFileCount` = **64** (grown from 43→44→64 as new scheduler files added). Test body was asserting `toBe(44)` (already stale), describe title still said "=== 43". Both updated to 64. |
+| 7 | `cowork-schedule.json schema — P1-DEV-4 ACs > All 14 enabled slots have policy_id field` | REWRITE-STALE | `docs/data/cowork-schedule.json` has **16** enabled slots (2 new: `refine-bctc-slot-1`, `refine-bctc-slot-2` added after P1-DEV-4). Test had `toBe(14)`. |
+| 8 | `T-12: EC-6 audit — No open+chef-intraday rule has null interval_minutes > chef-intraday open+low → 120 (market-hours chef fires at reduced rate under low volatility)` | REWRITE-STALE | `docs/data/cadence-policy.json` `chef-intraday open+low` rule = **60** (changed from 120; both open+high and open+low now run at 60 min). Test expected 120. |
+
+**flagged sub-findings (agent .md factory — separate task):** NONE. All `.claude/agents/*.md` files checked are thin stubs (correct by design). The `docs/agents/*/init.md` files that carry Step 0-b are confirmed to have the section. No genuine doc regression found.
+
+**isolation-probe results:** All 7 test files pass 0 fail in isolation after fixes. mcp.config.json scheduler removal confirmed by 1349f 11/0.
+
+**net it()-delta:** 0 (no it() added or removed; only expected-value literals and test descriptions updated).
+
+**tsc result:** `bun tsc --noEmit` exits 0, no output.
+
+**what-considered:**
+- For 1343e: checking if 34 is a genuine regression (prod should seed 30) — REJECTED: seedWatchlist.ts comment + WATCHLIST_SEED array confirms 34 is intentional (7 high-vol tickers + PLX added by name in sprint notes). REWRITE is correct.
+- For 1349a: verifying scheduler section is dead vs live — CONFIRMED dead: cronConfig.ts owns `newsHeadlinesRefresh` schedule via `CRONS` map + env var; mcp.config.json `.scheduler` not read by any prod file. FIX-PROD (remove dead config).
+- For 1837a: adding the missing `next_action/wip/wip_max` fields to live orch-state.json — REJECTED: adding fields to orch-state.json is PO/orch territory; the test spec (REWRITE) is the correct cure; head schema is valid without these optional fields.
+- For 230 AC-4c: editing any agent .md file inline — REJECTED: agent-md-factory skill is required; no agent .md regression found, REWRITE-STALE confirmed.
+
+**why-decision:** CONFIG-DRIFT class default = REWRITE-STALE per task spec. All 8 items confirm prod is correct and tests asserted stale values. One FIX-PROD (1349a dead config removal) consistent with the /goal rule ("prod is RIGHT" means dead config that contradicts the test intent should be removed, not the test rewritten).
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1343e-bctc-pipeline-integration.test.ts`
+- `apps/mcp-server/src/__tests__/1349f-integration-observability.test.ts` (no change — test was already correct; only prod mcp.config.json fixed)
+- `apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts`
+- `apps/mcp-server/src/__tests__/230-bootstrap-verify.test.ts`
+- `apps/mcp-server/src/__tests__/1336-named-volume-config.test.ts`
+- `apps/mcp-server/src/__tests__/1190-pipeline-watchdog.test.ts`
+- `apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts`
+- `mcp.config.json` (removed dead scheduler section — FIX-PROD for 1349a)
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
+- `docs/data/orch/orch-state.json` (BATCH4 TODO → REVIEW)
+- `docs/data/commit-mutex.json` (mutex acquire/release)

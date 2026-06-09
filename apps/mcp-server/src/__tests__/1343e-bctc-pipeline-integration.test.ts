@@ -59,19 +59,20 @@ describe("1343e — BCTC Pipeline Integration", () => {
     seedWatchlist(db);
 
     // Verify watchlist populated
-    // NOTE: seedWatchlist seeds 26 tickers (5 inactive tickers removed in sprint-054 cleanup:
-    // VDC, BDI, DLC, JSH, SIS — all delisted/inactive). Test updated from 30 → 26.
+    // NOTE: seedWatchlist seeds 34 tickers (sprint-054 cleanup removed 5 inactive: VDC, BDI, DLC,
+    // JSH, SIS; sprint-1869 Task-1876a-A6 added 7 high-vol tickers: NVL, DPM, REE, VNH, KBC, MWG,
+    // TCH; Task-1946a added PLX). Test updated from 26 → 34.
     const wlCount = db
       .prepare("SELECT COUNT(*) AS cnt FROM watchlist")
       .get() as { cnt: number };
-    expect(wlCount.cnt).toBe(26);
+    expect(wlCount.cnt).toBe(34);
 
-    // Run backfill — all 30 tickers missing Q4 reports → should enqueue all
+    // Run backfill — all 34 tickers missing Q4 reports → should enqueue all
     backfillBctcQ4(db);
 
     // Verify every watchlist ticker has a Q4 2025 queue entry (pending or pre-existing)
     // Note: initDatabase also pre-populates some Q4 entries for known tickers.
-    // We assert that ALL 30 seed tickers have a queue entry, regardless of source.
+    // We assert that ALL 34 seed tickers have a queue entry, regardless of source.
     const missingFromQueue = db
       .prepare(
         `SELECT w.code FROM watchlist w
@@ -189,8 +190,9 @@ describe("1343e — BCTC Pipeline Integration", () => {
 
   // ── Test 5: Watchlist count 30+ post-restore ──────────────────────────────
 
-  it("should maintain watchlist of 26 tickers after seedWatchlist", () => {
-    // seedWatchlist has 26 entries (5 inactive tickers removed: VDC, BDI, DLC, JSH, SIS).
+  it("should maintain watchlist of 34 tickers after seedWatchlist", () => {
+    // seedWatchlist has 34 entries (sprint-054 removed 5 inactive; sprint-1869 added 7 high-vol;
+    // Task-1946a added PLX). toBeGreaterThanOrEqual anchors the floor.
     seedWatchlist(db);
 
     const count = db

@@ -304,14 +304,6 @@
     }
   },
 
-  "scheduler": {
-    "newsHeadlinesRefresh": {
-      "cadence": "*/30 * * * *",
-      "enabled": true,
-      "description": "Fetch international headlines from Bloomberg + Reuters via news-fetch service"
-    }
-  },
-
   "newsSources": {
     "newsapi": {
       "apiKey": "",

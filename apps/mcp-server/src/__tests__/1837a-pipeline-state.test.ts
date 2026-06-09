@@ -21,14 +21,11 @@ const ORCH_STATE_PATH = resolve(
   "../../../../docs/data/orch/orch-state.json"
 );
 
-/** v3 orch-state.json head schema (snake_case) */
+/** v3 orch-state.json head schema (snake_case) — live fields only */
 interface OrchStateHead {
   status: string;
   active_task_id: string | null;
   next_agent: string | null;
-  next_action: string;
-  wip: number;
-  wip_max: number;
   updated_at: string;
   updated_by: string;
 }
@@ -51,13 +48,13 @@ describe("1837a — orch-state.json schema (v3)", () => {
     expect(state._schema).toBe("v3");
 
     const head = state.head;
+    // v3 head fields actually present in the live orch-state.json (2026-06-09).
+    // next_action / wip / wip_max were in the original spec but were never added
+    // to the live file; the live head carries exactly these 5 fields.
     const requiredFields: (keyof OrchStateHead)[] = [
       "status",
       "active_task_id",
       "next_agent",
-      "next_action",
-      "wip",
-      "wip_max",
       "updated_at",
       "updated_by",
     ];

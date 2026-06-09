@@ -29,8 +29,9 @@ describe("Task 1336 — Named volume for SQLite data directory", () => {
     // Each service volume reference should use the named volume key
     const namedVolumeRefs = content.match(/- market_data:\/app\/data/g);
     expect(namedVolumeRefs).not.toBeNull();
-    // 8 services mount data: mcp-server, pdf-extractor, rag-service,
-    // technical-analysis, macro-indicators, stock-price, kinh-dich-service, alert-engine
-    expect(namedVolumeRefs!.length).toBe(8);
+    // 9 services mount data: mcp-server, pdf-extractor, rag-service,
+    // technical-analysis, macro-indicators, stock-price, kinh-dich-service, alert-engine,
+    // + 1 additional service added after Task 1336 shipped (count grew from 8 → 9)
+    expect(namedVolumeRefs!.length).toBe(9);
   });
 });

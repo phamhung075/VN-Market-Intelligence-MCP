@@ -476,9 +476,11 @@ describe("T-12: EC-6 audit — No open+chef-intraday rule has null interval_minu
     expect(result._cron_fallback).toBe(false);
   });
 
-  test("chef-intraday open+low → 120 (market-hours chef fires at reduced rate under low volatility)", () => {
+  test("chef-intraday open+low → 60 (market-hours chef fires at reduced rate under low volatility)", () => {
+    // REWRITE 2026-06-09 (BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS): cadence-policy.json legitimately
+    // changed this rule from 120 → 60 (both open+high and open+low now run at 60 min).
     const result = evaluateCadence("chef-intraday", "open", "*", "low", policyObj);
-    expect(result.interval_minutes).toBe(120);
+    expect(result.interval_minutes).toBe(60);
     expect(result._cron_fallback).toBe(false);
   });
 });
@@ -662,15 +664,17 @@ describe("cowork-schedule.json schema — P1-DEV-4 ACs", () => {
     schedule = JSON.parse(fs.readFileSync(schedPath, "utf8"));
   });
 
-  test("All 14 enabled slots have policy_id field", () => {
+  test("All 16 enabled slots have policy_id field", () => {
+    // REWRITE 2026-06-09 (BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS): slot count grew from 14 → 16.
+    // Two new slots were added (refine-bctc-slot-1, refine-bctc-slot-2) after P1-DEV-4 shipped.
     const enabled = schedule.slots.filter((s: any) => s.enabled);
-    expect(enabled.length).toBe(14);
+    expect(enabled.length).toBe(16);
     for (const slot of enabled) {
       expect(slot).toHaveProperty("policy_id");
     }
   });
 
-  test("All 14 enabled slots have last_fired field", () => {
+  test("All 16 enabled slots have last_fired field", () => {
     const enabled = schedule.slots.filter((s: any) => s.enabled);
     for (const slot of enabled) {
       expect(slot).toHaveProperty("last_fired");

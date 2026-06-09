@@ -278,8 +278,10 @@ describe("cron-registry.json integrity", () => {
   const registryPath = join(process.cwd(), "docs/data/cron-registry.json");
   const json = JSON.parse(readFileSync(registryPath, "utf8"));
 
-  it("schedulerFileCount === 43", () => {
-    expect(json.schedulerFileCount).toBe(44);
+  it("schedulerFileCount === 64", () => {
+    // REWRITE 2026-06-09 (BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS): count grew from 43 → 44 → 64
+    // as new scheduler files were added to apps/mcp-server/src/scheduler/.
+    expect(json.schedulerFileCount).toBe(64);
   });
 
   it("jobs array contains entry with name 'pipelineWatchdog'", () => {
