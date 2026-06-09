@@ -358,3 +358,44 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 **files-changed:**
 - `apps/mcp-server/src/__tests__/1134-get-foreign-flow-tool.test.ts`
 - META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
+
+---
+
+### STEP dev-mcp-server-S16 · dev-mcp-server · 2026-06-09T13:15:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C1129-CALIBRATION-TEST-REWRITE
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** Rewrote `1129-calibration-tools.test.ts` to replace InMemoryTransport+Client harness with direct `_registeredTools` handler invocation (proven CI-green pattern from sibling 1134-get-foreign-flow-tool.test.ts, commit 8916675a). Full REWRITE per architect brief `docs/architecture-briefs/2026-06-09-ci-c1129-calibration-triage.md`. Prod `calibrationTools.ts` NOT touched.
+
+**changes:**
+- REMOVED: `import { Client } from "@modelcontextprotocol/sdk/client/index.js"` — not needed
+- REMOVED: `import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js"` — not needed
+- REMOVED: `import { initDatabase, closeDb } from "../infrastructure/db/schema.js"` — not needed (Contract-B: inline DDL only)
+- REMOVED: `makeTestSetup()` async function (entire InMemoryTransport+Client wiring, Bun.env DB_PATH override, closeDb/initDatabase calls)
+- REMOVED: per-describe `db: Database` + `client: Client` vars; `beforeEach(makeTestSetup)` + `afterEach(client?.close())`
+- ADDED: `McpTextResult` interface + `RegisteredToolsServer` type alias (standalone, not intersection — avoids tsc TS2339 private field error; `as unknown as RegisteredToolsServer` cast at call site)
+- ADDED: module-level `_testDb: Database` and `_testServer: McpServer`
+- ADDED: `buildInMemoryDb()` — inlines calibration_snapshots DDL (12 columns, IF NOT EXISTS) from schema-system.ts:213; NO initDatabase() call (Contract-B)
+- ADDED: `beforeEach()` setting `_testDb = buildInMemoryDb()` + creating server + `registerCalibrationTools(_testServer, _testDb)`
+- ADDED: `afterEach()` calling `_testDb.close()`
+- ADDED: `callTool(toolName, args)` helper using `(_testServer as unknown as RegisteredToolsServer)._registeredTools[name].handler(args)`
+- UNCHANGED: `makeSnapshot()` fixture helper — ported verbatim from existing test
+- UNCHANGED: all 5 it() assertions — only call mechanism changed (callTool() replaces client.callTool(); result.content.map() replaces cast+map)
+
+**ZOD-BYPASS:** None required — `date` is `z.string().optional()` with no `.default()` / `.coerce`. All 5 ACs pass `{}` (date=undefined) or explicit string, identical on both protocol and direct-handler paths. No adaptation needed.
+
+**what-considered:**
+- Using intersection type `McpServer & { _registeredTools: ... }` — REJECTED: tsc TS2339 (_registeredTools is private in McpServer; intersection reduces to `never`). Standalone type + `as unknown as` cast is the correct pattern (same as 1117/1124/1134).
+- Calling `initDatabase()` in buildInMemoryDb — REJECTED: Contract-B in-memory pattern; initDatabase() initialises the singleton DB path, not a fresh :memory: instance; inline DDL is correct.
+- Adding any `mock.module()` — REJECTED: C5-cure hard constraint; calibrationTools import chain is pure SQLite (calibrationSnapshotStore + marketMessageStore + schema::getDb), zero LanceDB/retriever.
+- Touching production code — REJECTED: prod confirmed correct per architect brief (pure SQLite, db-injection arg live, NOT HTTP-rewired).
+
+**why-decision:** InMemoryTransport+Client round-trip hangs on Bun 1.3.13/Ubuntu CI (5 × 2 = 10 native fails: test timeout + afterEach stall). `_registeredTools` direct invocation removes the message loop entirely — CI-safe, order-independent. Proven by 1117/1124/1134 siblings already green in CI.
+
+**result:** 5 pass / 0 fail (local single-file run, 288ms). tsc --noEmit CLEAN (exit 0). No Client/InMemoryTransport imports in file. No mock.module() in file. Zero production code touched.
+**ci-victim-prefix:** `Task 1129` (expect 10 → 0 native fails vs 73 band)
+**status-flip:** TODO → REVIEW (router owns push + CI gate)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1129-calibration-tools.test.ts`
+- META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`

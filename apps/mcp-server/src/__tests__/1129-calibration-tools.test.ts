@@ -9,14 +9,18 @@
  * - AC-7: date="2026-04-06" with two snapshots present → returns 2026-04-06 snapshot data
  * - AC-extra: Snapshot with total_resolved=0 → returns "no resolved predictions" message,
  *             not the full formatted report
+ * - AC-7b: date= with no matching snapshot → returns no-data message
+ *
+ * Harness: _registeredTools direct-handler invocation (CI-safe; no InMemoryTransport).
+ * Proven CI-green template from sibling 1134-get-foreign-flow-tool.test.ts (commit 8916675a).
+ * REWRITE rationale: InMemoryTransport+Client.callTool() stalls on Bun 1.3.13/Ubuntu CI
+ * (1124-transport-hang signature); 5 it() x 2 native fails = 10 CI failures cured by
+ * removing the transport layer entirely.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
+import { Database } from "bun:sqlite";
 import { registerCalibrationTools } from "../interface/mcp/tools/macro/calibrationTools.js";
 import {
   insertCalibrationSnapshot,
@@ -24,25 +28,57 @@ import {
 } from "../infrastructure/db/calibrationSnapshotStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Test server type — exposes _registeredTools for direct handler invocation
+// NOTE: Cannot use intersection type (McpServer & { _registeredTools: ... })
+// because _registeredTools is private in McpServer; tsc reduces intersection
+// to never. Use (server as unknown as RegisteredToolsServer) at call site.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function makeTestSetup(): Promise<{ db: Database; client: Client }> {
-  Bun.env["DB_PATH"] = ":memory:";
-  closeDb();
-  await initDatabase();
-  const { getDb } = await import("../infrastructure/db/schema.js");
-  const db = getDb();
+interface McpTextResult {
+  isError?: boolean;
+  content: Array<{ type: string; text: string }>;
+}
 
-  const server = new McpServer({ name: "test", version: "1.0" });
-  registerCalibrationTools(server, db);
+type RegisteredToolsServer = {
+  _registeredTools: Record<string, {
+    handler: (args: Record<string, unknown>) => Promise<McpTextResult>;
+  }>;
+};
 
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  await server.connect(serverTransport);
-  const client = new Client({ name: "test-client", version: "1.0" });
-  await client.connect(clientTransport);
+// ---------------------------------------------------------------------------
+// Module-level fixtures (set in beforeEach, torn down in afterEach)
+// ---------------------------------------------------------------------------
 
-  return { db, client };
+let _testDb: Database;
+let _testServer: McpServer;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function buildInMemoryDb(): Database {
+  const db = new Database(":memory:");
+
+  // Inline calibration_snapshots DDL — 12 columns per schema-system.ts:213
+  // Contract-B in-memory pattern: NO initDatabase() call
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS calibration_snapshots (
+      id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+      snapshot_date          TEXT NOT NULL,
+      total_resolved         INTEGER NOT NULL,
+      avg_brier_score        REAL,
+      avg_brier_by_agent     TEXT NOT NULL,
+      avg_brier_by_stock     TEXT NOT NULL,
+      avg_brier_by_direction TEXT NOT NULL,
+      calibration_curve      TEXT NOT NULL,
+      trend_delta            REAL,
+      top_predictions        TEXT NOT NULL,
+      worst_predictions      TEXT NOT NULL,
+      computed_at            TEXT NOT NULL
+    )
+  `);
+
+  return db;
 }
 
 function makeSnapshot(
@@ -89,33 +125,41 @@ function makeSnapshot(
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Test suite
-// ─────────────────────────────────────────────────────────────────────────────
+/** Call a registered tool directly via _registeredTools */
+async function callTool(
+  toolName: string,
+  args: Record<string, unknown>,
+): Promise<McpTextResult> {
+  const tool = (_testServer as unknown as RegisteredToolsServer)._registeredTools[toolName];
+  if (!tool) throw new Error(`Tool not registered: ${toolName}`);
+  return await tool.handler(args);
+}
+
+// ---------------------------------------------------------------------------
+// Setup / Teardown
+// ---------------------------------------------------------------------------
+
+beforeEach(() => {
+  _testDb = buildInMemoryDb();
+  _testServer = new McpServer({ name: "test", version: "0.0.1" });
+  registerCalibrationTools(_testServer, _testDb);
+});
+
+afterEach(() => {
+  _testDb.close();
+});
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe("Task 1129 — get_calibration_report tool", () => {
-  let db: Database;
-  let client: Client;
-
-  beforeEach(async () => {
-    ({ db, client } = await makeTestSetup());
-  });
-
-  // Close InMemoryTransport after each test to prevent CI stall on next
-  // test's beforeEach connect() call (architect brief C3 fix).
-  afterEach(async () => {
-    await client?.close();
-  });
-
   // ── AC-5 ──────────────────────────────────────────────────────────────────
   it("AC-5: empty table → returns no-data message, no throw", async () => {
-    const result = await client.callTool({
-      name: "get_calibration_report",
-      arguments: {},
-    });
+    const result = await callTool("get_calibration_report", {});
 
     expect(result.isError).toBeFalsy();
-    const text = (result.content as Array<{ type: string; text: string }>)
+    const text = result.content
       .map((c) => c.text)
       .join("\n");
 
@@ -125,19 +169,16 @@ describe("Task 1129 — get_calibration_report tool", () => {
 
   // ── AC-extra: total_resolved=0 ────────────────────────────────────────────
   it("AC-extra: snapshot with total_resolved=0 → returns no-resolved message (not full report)", async () => {
-    insertCalibrationSnapshot(db, makeSnapshot({
+    insertCalibrationSnapshot(_testDb, makeSnapshot({
       total_resolved: 0,
       avg_brier_score: null,
       snapshot_date: "2026-04-06",
     }));
 
-    const result = await client.callTool({
-      name: "get_calibration_report",
-      arguments: {},
-    });
+    const result = await callTool("get_calibration_report", {});
 
     expect(result.isError).toBeFalsy();
-    const text = (result.content as Array<{ type: string; text: string }>)
+    const text = result.content
       .map((c) => c.text)
       .join("\n");
 
@@ -150,15 +191,12 @@ describe("Task 1129 — get_calibration_report tool", () => {
 
   // ── AC-6 ──────────────────────────────────────────────────────────────────
   it("AC-6: full snapshot → output contains all required sections", async () => {
-    insertCalibrationSnapshot(db, makeSnapshot());
+    insertCalibrationSnapshot(_testDb, makeSnapshot());
 
-    const result = await client.callTool({
-      name: "get_calibration_report",
-      arguments: {},
-    });
+    const result = await callTool("get_calibration_report", {});
 
     expect(result.isError).toBeFalsy();
-    const text = (result.content as Array<{ type: string; text: string }>)
+    const text = result.content
       .map((c) => c.text)
       .join("\n");
 
@@ -193,21 +231,18 @@ describe("Task 1129 — get_calibration_report tool", () => {
   it("AC-7: date= param returns the matching snapshot", async () => {
     // Insert two snapshots with different dates
     insertCalibrationSnapshot(
-      db,
+      _testDb,
       makeSnapshot({ snapshot_date: "2026-04-06", avg_brier_score: 0.142 }),
     );
     insertCalibrationSnapshot(
-      db,
+      _testDb,
       makeSnapshot({ snapshot_date: "2026-03-30", avg_brier_score: 0.160 }),
     );
 
-    const result = await client.callTool({
-      name: "get_calibration_report",
-      arguments: { date: "2026-04-06" },
-    });
+    const result = await callTool("get_calibration_report", { date: "2026-04-06" });
 
     expect(result.isError).toBeFalsy();
-    const text = (result.content as Array<{ type: string; text: string }>)
+    const text = result.content
       .map((c) => c.text)
       .join("\n");
 
@@ -219,15 +254,12 @@ describe("Task 1129 — get_calibration_report tool", () => {
 
   // ── AC-7b: unknown date ───────────────────────────────────────────────────
   it("AC-7b: date= with no matching snapshot → returns no-data message", async () => {
-    insertCalibrationSnapshot(db, makeSnapshot({ snapshot_date: "2026-04-06" }));
+    insertCalibrationSnapshot(_testDb, makeSnapshot({ snapshot_date: "2026-04-06" }));
 
-    const result = await client.callTool({
-      name: "get_calibration_report",
-      arguments: { date: "2026-01-01" },
-    });
+    const result = await callTool("get_calibration_report", { date: "2026-01-01" });
 
     expect(result.isError).toBeFalsy();
-    const text = (result.content as Array<{ type: string; text: string }>)
+    const text = result.content
       .map((c) => c.text)
       .join("\n");
 

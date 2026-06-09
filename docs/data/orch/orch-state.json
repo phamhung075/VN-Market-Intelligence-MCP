@@ -3715,7 +3715,7 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3731,7 +3731,9 @@
             "gate": "Task 1129 native fail count 10 -> 0 in CI (gate vs standing 73 band; ci_absolute tracks bun only). NO new mock.module() (C5-cure ABSOLUTE). tsc --noEmit clean.",
             "created_at": "2026-06-09T12:39:26Z",
             "created_by": "po-S39",
-            "note": "[po-S39 DJ-GATE-1] Architect REWRITE verdict accepted (FIX-CI-C1129-RESIDUAL-TRIAGE -> DONE; brief docs/architecture-briefs/2026-06-09-ci-c1129-calibration-triage.md, commit bc5c560a, arch-S13). REWRITE (prod correct, test stale) — NOT remove. Prod: apps/mcp-server/src/interface/mcp/tools/macro/calibrationTools.ts:276 registerCalibrationTools(server, db?) — pure SQLite, db-injection arg live, NOT HTTP-rewired; deleted-seam + prod-bug signatures both RULED OUT. Victim: 1129-calibration-tools.test.ts — 5 it() x ~5003ms transport stall x 2 (test timeout + afterEach stalled client) = 10 fails. CURE: replace InMemoryTransport+Client.callTool() harness with direct (_testServer as unknown as RegisteredToolsServer)._registeredTools[\"get_calibration_report\"].handler(args); module-level _testServer + _testDb; beforeEach builds in-memory DB + seeds + registerCalibrationTools(_testServer, _testDb); afterEach cleanup; read result.content[0]?.text. buildInMemoryDb() must inline the calibration_snapshots DDL (12 cols, IF NOT EXISTS) from schema-system.ts:213 — NO initDatabase() call (Contract-B pattern). ZOD-BYPASS: NONE required — all 5 ACs port verbatim (date is z.string().optional(), no .default/.coerce). C5-cure: zero new mock.module(); proven sibling template = 1134-get-foreign-flow-tool.test.ts (CI-green, commit 8916675a). Dev scope: ONE FILE ONLY. Dev COMMITS with explicit pathspec; ROUTER pushes + gates vs the 73 band."
+            "note": "[po-S39 DJ-GATE-1] Architect REWRITE verdict accepted (FIX-CI-C1129-RESIDUAL-TRIAGE -> DONE; brief docs/architecture-briefs/2026-06-09-ci-c1129-calibration-triage.md, commit bc5c560a, arch-S13). REWRITE (prod correct, test stale) — NOT remove. Prod: apps/mcp-server/src/interface/mcp/tools/macro/calibrationTools.ts:276 registerCalibrationTools(server, db?) — pure SQLite, db-injection arg live, NOT HTTP-rewired; deleted-seam + prod-bug signatures both RULED OUT. Victim: 1129-calibration-tools.test.ts — 5 it() x ~5003ms transport stall x 2 (test timeout + afterEach stalled client) = 10 fails. CURE: replace InMemoryTransport+Client.callTool() harness with direct (_testServer as unknown as RegisteredToolsServer)._registeredTools[\"get_calibration_report\"].handler(args); module-level _testServer + _testDb; beforeEach builds in-memory DB + seeds + registerCalibrationTools(_testServer, _testDb); afterEach cleanup; read result.content[0]?.text. buildInMemoryDb() must inline the calibration_snapshots DDL (12 cols, IF NOT EXISTS) from schema-system.ts:213 — NO initDatabase() call (Contract-B pattern). ZOD-BYPASS: NONE required — all 5 ACs port verbatim (date is z.string().optional(), no .default/.coerce). C5-cure: zero new mock.module(); proven sibling template = 1134-get-foreign-flow-tool.test.ts (CI-green, commit 8916675a). Dev scope: ONE FILE ONLY. Dev COMMITS with explicit pathspec; ROUTER pushes + gates vs the 73 band.",
+            "review_by": "dev-mcp-server-S16",
+            "review_at": "2026-06-09T13:15:00Z"
           }
         ],
         "_updated_by": "po-S28",
