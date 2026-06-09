@@ -1,6 +1,6 @@
 {
-  "locked": true,
-  "owner_agent": "dev-mcp-server",
-  "task": "{\"task_kind\": \"commit-mutex\", \"task_id\": \"main\", \"owner_agent\": \"dev-mcp-server\", \"ttl_seconds\": 120}",
-  "expires_at": 1781007239
+  "locked": false,
+  "owner_agent": null,
+  "task": null,
+  "expires_at": 0
 }
