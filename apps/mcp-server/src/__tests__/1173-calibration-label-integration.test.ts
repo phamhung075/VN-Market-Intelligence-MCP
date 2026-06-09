@@ -22,9 +22,6 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import {
   insertMarketMessage,
@@ -32,7 +29,7 @@ import {
   getLabelAccuracyReport,
   type LabelAccuracyRow as LabelAccuracyRowImported,
 } from "../infrastructure/db/marketMessageStore.js";
-import { registerCalibrationTools } from "../interface/mcp/tools/macro/calibrationTools.js";
+import { handleGetLabelAccuracyReport } from "../interface/mcp/tools/macro/calibrationTools.js";
 import {
   runCalibrationReport,
   type TelegramOverrides,
@@ -160,33 +157,6 @@ function seedReviewedMessage(
      VALUES (?, ?, ?, ?, ?)`,
     [opts.from_agent, "alert", "test content", opts.verdict, opts.reviewed_at],
   );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper — set up McpServer + Client with injected in-memory DB for tool tests
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function makeMcpSetup(): Promise<{ db: Database; client: Client }> {
-  closeDb();
-  await initDatabase();
-  const db = getDb();
-
-  const server = new McpServer({ name: "test-1173", version: "1.0" });
-  registerCalibrationTools(server, db);
-
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  await server.connect(serverTransport);
-  const client = new Client({ name: "test-client-1173", version: "1.0" });
-  await client.connect(clientTransport);
-
-  return { db, client };
-}
-
-/** Extract text content from an MCP tool call result */
-function extractText(result: Awaited<ReturnType<Client["callTool"]>>): string {
-  return (result.content as Array<{ type: string; text: string }>)
-    .map((c) => c.text)
-    .join("\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -374,21 +344,17 @@ describe("Task 1173 — AC-3: getLabelAccuracyReport returns [] when no reviewed
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 1173 — AC-4: get_label_accuracy_report MCP tool returns formatted table", () => {
-  let db: Database;
-  let client: Client;
-
   beforeEach(async () => {
-    ({ db, client } = await makeMcpSetup());
+    closeDb();
+    await initDatabase();
   });
 
-  afterEach(async () => {
-    // Close InMemoryTransport to prevent CI stall on next test's connect()
-    // (architect brief C3 fix).
-    await client?.close();
+  afterEach(() => {
     closeDb();
   });
 
   it("tool output contains header with since_days value", async () => {
+    const db = getDb();
     // Seed two agents with reviewed messages
     // alert-commander: 42 reviewed, 31 signal, 11 noise
     // Insert rows with exact reviewed_at dates via direct SQL (parameterized)
@@ -427,13 +393,8 @@ describe("Task 1173 — AC-4: get_label_accuracy_report MCP tool returns formatt
       );
     }
 
-    const result = await client.callTool({
-      name: "get_label_accuracy_report",
-      arguments: { since_days: 90 },
-    });
-
-    expect(result.isError).toBeFalsy();
-    const text = extractText(result);
+    const result = await handleGetLabelAccuracyReport(getDb(), 90);
+    const text = result.content.map((c) => c.text).join("\n");
 
     // Header must contain the since_days value
     expect(text).toContain("Label Accuracy Report");
@@ -458,39 +419,26 @@ describe("Task 1173 — AC-4: get_label_accuracy_report MCP tool returns formatt
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 1173 — AC-5: get_label_accuracy_report MCP tool empty state", () => {
-  let client: Client;
-
   beforeEach(async () => {
-    ({ client } = await makeMcpSetup());
+    closeDb();
+    await initDatabase();
   });
 
-  afterEach(async () => {
-    // Close InMemoryTransport to prevent CI stall (architect brief C3 fix).
-    await client?.close();
+  afterEach(() => {
     closeDb();
   });
 
   it("returns Vietnamese empty-state message when no reviewed rows", async () => {
-    const result = await client.callTool({
-      name: "get_label_accuracy_report",
-      arguments: { since_days: 90 },
-    });
-
-    expect(result.isError).toBeFalsy();
-    const text = extractText(result);
+    const result = await handleGetLabelAccuracyReport(getDb(), 90);
+    const text = result.content.map((c) => c.text).join("\n");
 
     expect(text).toContain("Không có tin nhắn đã review trong 90 ngày qua");
     expect(text).toContain("Hãy sử dụng batch_review_market_messages để đánh giá tin nhắn");
   });
 
   it("empty-state message reflects the actual since_days value passed", async () => {
-    const result = await client.callTool({
-      name: "get_label_accuracy_report",
-      arguments: { since_days: 30 },
-    });
-
-    expect(result.isError).toBeFalsy();
-    const text = extractText(result);
+    const result = await handleGetLabelAccuracyReport(getDb(), 30);
+    const text = result.content.map((c) => c.text).join("\n");
 
     expect(text).toContain("30 ngày qua");
   });

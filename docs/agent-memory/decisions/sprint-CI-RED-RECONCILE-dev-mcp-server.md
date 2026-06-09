@@ -518,6 +518,54 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 
 ---
 
+### STEP dev-mcp-server-S21 · dev-mcp-server · 2026-06-09T15:45:30Z (DJ-GATE-1)
+**task-id:** FIX-CI-C1173-REWRITE-TRANSPORT
+**sprint:** CI-RED-RECONCILE
+**decision:** dev-mcp-server-S21
+
+**what-done:** Rewrote AC-4 and AC-5 describe blocks of `1173-calibration-label-integration.test.ts` to replace InMemoryTransport+Client harness with direct `handleGetLabelAccuracyReport()` call (arch-S18 spec). 18 pass / 0 fail locally. tsc clean. ZERO new mock.module().
+
+**describe-blocks-rewritten:**
+- `Task 1173 — AC-4: get_label_accuracy_report MCP tool returns formatted table` (1 test — was timing out at ~5005ms)
+- `Task 1173 — AC-5: get_label_accuracy_report MCP tool empty state` (2 tests — were timing out at ~5000ms / ~5003ms)
+
+**other-blocks-unchanged:**
+- AC-1, AC-2, AC-3, AC-6, AC-7, AC-8, AC-9 — byte-identical; all still CI-green at <53ms
+
+**changes:**
+- REMOVED imports: `Client` from `@modelcontextprotocol/sdk/client/index.js`, `InMemoryTransport` from `@modelcontextprotocol/sdk/inMemory.js`, `McpServer` from `@modelcontextprotocol/sdk/server/mcp.js`, `registerCalibrationTools` from calibrationTools.js
+- REMOVED: `makeMcpSetup()` function (InMemoryTransport+Client wiring), `extractText()` helper
+- REMOVED: `let client: Client` declarations in AC-4 and AC-5
+- REMOVED: `beforeEach` calling `makeMcpSetup()` in AC-4 and AC-5
+- REMOVED: `afterEach(async () => { await client?.close(); closeDb(); })` in AC-4 and AC-5
+- ADDED: `import { handleGetLabelAccuracyReport } from "../interface/mcp/tools/macro/calibrationTools.js"`
+- ADDED: `beforeEach(async () => { closeDb(); await initDatabase(); })` in AC-4 and AC-5
+- ADDED: `afterEach(() => { closeDb(); })` in AC-4 and AC-5
+- REPLACED: `client.callTool({name:"get_label_accuracy_report", arguments:{since_days:N}})` → `await handleGetLabelAccuracyReport(getDb(), N)`
+- REPLACED: `extractText(result)` → `result.content.map((c) => c.text).join("\n")`
+- UNCHANGED: all assertion strings (`Label Accuracy Report`, `90 ngày gần nhất`, `73.8%`, `64.3%`, `2 agents`, `56 tin đã review`, `Không có tin nhắn đã review trong 90 ngày qua`, `30 ngày qua`)
+
+**what-considered:**
+- Using `_registeredTools` pattern (1129 template) — considered; for 1173 AC-4/AC-5 the even simpler exported function direct call is correct because AC-4/AC-5 test output format not wire protocol. Chosen: direct `handleGetLabelAccuracyReport()` call.
+- Adding any new `mock.module()` — REJECTED: C5-CURE ABSOLUTE; pure SQLite import chain; zero need.
+- Touching calibrationTools.ts production code — REJECTED: prod confirmed correct (arch-S18).
+- Zod bypass risk — NOT A RISK: all AC-4/AC-5 calls pass explicit integer values (90, 30); `handleGetLabelAccuracyReport(db, since_days?)` applies no Zod coercion on direct path.
+- Removing `result.isError` check — handled: the exported fn returns `{ content: [{type, text}] }` with no `isError` field; replaced with text content assertion (same semantic intent).
+
+**why-decision:** InMemoryTransport+Client round-trip hangs on Bun 1.3.13/Ubuntu CI at ~5000ms (the canonical hook-timeout fingerprint). Direct `handleGetLabelAccuracyReport()` call is synchronous SQLite path — zero transport latency, CI-safe, order-independent. Proven pattern from siblings 1124/1129/1134 already CI-green.
+
+**result:** 18 pass / 0 fail (single-file: `bun test src/__tests__/1173-calibration-label-integration.test.ts`, 784ms). tsc --noEmit CLEAN. No mock.module() in file. Zero production code touched.
+**ci-victim-prefix:** `Task 1173` (expect 6 → 0 native fails: 3 unique tests × 2 CI log-occurrences)
+**status-flip:** TODO → REVIEW (router owns push + CI gate)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1173-calibration-label-integration.test.ts`
+- `docs/data/orch/orch-state.json` (FIX-CI-C1173-REWRITE-TRANSPORT TODO → REVIEW)
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
+- `docs/data/commit-mutex.json` (mutex acquire/release)
+
+---
+
 ### STEP dev-mcp-server-S18 · dev-mcp-server · 2026-06-09T14:01:00Z (DJ-GATE-1)
 **task-id:** FIX-CI-C1485-TELEGRAM-MOCK-RESTORE
 **sprint:** CI-RED-RECONCILE

@@ -3921,7 +3921,7 @@
             "id": "FIX-CI-C1173-REWRITE-TRANSPORT",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3939,7 +3939,10 @@
             "spec_brief": "docs/architecture-briefs/2026-06-09-ci-c1173-triage.md",
             "baseline_pass": "62 (native_fail, sha c017289d, run 27216305674, job 80358657573)",
             "created_at": "2026-06-09T15:37:20Z",
-            "created_by": "po-S49"
+            "created_by": "po-S49",
+            "closed_at": "2026-06-09T15:45:30Z",
+            "closed_by": "dev-mcp-server-S21",
+            "resolution": "REWRITE-DELIVERED — AC-4 + AC-5 describe blocks rewritten; InMemoryTransport harness removed; direct handleGetLabelAccuracyReport() call path; 18 pass / 0 fail local; tsc clean; ZERO new mock.module()"
           }
         ],
         "_updated_by": "po-S48",
