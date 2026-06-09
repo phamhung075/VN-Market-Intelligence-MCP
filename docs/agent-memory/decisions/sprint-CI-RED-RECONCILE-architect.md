@@ -304,6 +304,61 @@ is needed — the handler is already DI-ready. The `_registeredTools` template r
 
 ---
 
+### STEP arch-S14 (DJ-GATE-1) · architect · 2026-06-09T13:15Z
+
+**task-id:** FIX-CI-C7-ASSERTION-LOGIC
+**sprint:** CI-RED-RECONCILE
+**mode:** prod-vs-test triage (verdict only; no fix written; no board flip)
+
+**what-done:** Full prod-vs-test triage of the dominant 10-fail Task 1328e cluster
+(`1328e-conviction-display.test.ts`, describe "notifyTelegramAlert conviction routing").
+Read prod `notifyTelegramAlert` implementation (telegram.ts:549), severity gate (lines 553–555),
+conviction-block emission (lines 564–569), multi-chunk split (splitMessage() line 141,
+TELEGRAM_MAX_LENGTH=4096 line 135), fetchFn injection chain (lines 186, 587–590).
+Read test file: all 12 it() blocks, DI injection pattern (makeCaptureFetch → options.fetchFn).
+Read contaminator: 047-bctc-orchestrator.test.ts mock.module() (line 17) stub exports.
+Ran empirical two-file test to confirm exact SyntaxError. Checked run-order positions [24] vs
+[306]. Scanned all 287 files between positions [24]–[306] for telegram mock.module restore calls.
+Checked git log for telegram.ts staleness. Confirmed 1792 fails in isolation (independent root
+cause). Confirmed 1352a contamination fail (1 of 2 cured by same fix).
+
+**verdict:** TEST-HARNESS/MOCK CONTAMINATION (classification c)
+
+**what-considered:**
+- **(a) PROD CORRECT, TEST STALE:** REJECTED. git log shows no change to severity gate or
+  conviction-block format since `ba865ca8`. All 5 failing assertions match current prod behavior.
+  1328e passes 12/12 in isolation. Not stale.
+- **(b) PROD BROKEN:** REJECTED. Prod severity gate (`high`/`critical` only → coreSend,
+  `medium`/`low` → return false) is correct and unchanged. Conviction block emission on
+  `options.conviction` truthy is correct. fetchFn plumbing is correct. No prod defect.
+- **(c) TEST-HARNESS/MOCK CONTAMINATION — CHOSEN:** `047-bctc-orchestrator.test.ts` (position
+  [24]) installs a `mock.module("../infrastructure/notifiers/telegram.js", ...)` stub that omits
+  `notifyTelegramAlert` and `formatConvictionBlock`. No restore in 047's `afterAll`. Bun 1.3.13
+  ESM registry is process-global. When `1328e` (position [306]) loads, its static import of
+  `{ notifyTelegramAlert }` produces `SyntaxError: Export named 'notifyTelegramAlert' not found`.
+  Empirically confirmed: two-file run produces exact SyntaxError. Isolated run: 12/0 pass.
+
+**why-decision:** The ~1ms failure latency (vs ~5003ms transport-hang) is a module-load-time
+SyntaxError — fires before any test assertion. No transport stall. No assertion mismatch.
+The contamination pattern is the same mechanism documented in `1485-telegram-mock-isolation.test.ts`
+("mock.module() is process-global in Bun"). The cure is bounded to 1 file (047) with zero
+changes to 1328e. C5-CURE ABSOLUTE: no new file-top mock.module() in 1328e. Fix = add missing
+exports to 047's stub + add teardown afterAll that restores real implementations via frozen-real
+pattern (established precedent: 1352a teardown describe).
+
+**1792 scope:** EXCLUDED. Fails in isolation (independent root cause — bugMessages stays empty;
+bctc_signal_debounce DB setup issue). Needs separate triage.
+
+**1352a scope:** PARTIAL. 1 of 2 CI fails cured by 047 fix (SyntaxError: `notifyTelegramDocument`
+not found). 1 of 2 CI fails is independent (A-1: `Expected: 1, Received: 2`). Separate triage
+needed for A-1.
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-c1328e-conviction-routing-triage.md`
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
+
+---
+
 ### STEP arch-S13 (DJ-GATE-1) · architect · 2026-06-09T00:00Z
 
 **task-id:** FIX-CI-C1129-RESIDUAL-TRIAGE
