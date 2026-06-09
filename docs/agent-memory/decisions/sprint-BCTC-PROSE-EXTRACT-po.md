@@ -24,3 +24,12 @@
 - Direct dev patch (COUNT->MAX) — REJECTED: recurring-bug escalation (root moved upstream twice: prose-stitch->serving-filter->OCR-coverage); mandates architect SPIKE first.
 **why-decision:** Raw-verified: GAP-1 (handler L538/L585 COUNT(*) vs MAX page_number) confirmed in code; pdfOcrWorker L254 iterates 1..min(46,80) so OCR worker is NOT range-truncated — GAP-3 (pages 11-22 absent) is genuine OCR-skip/image/misalign, CONTRADICTING architect BLOCKER-2 "benign/irrelevant" ruling. Architect MUST revisit before any patch.
 **why-change:** Plan extended past original BA chain — re-diagnosis pushed root upstream into apps/mcp-server zone (was apps/pdf-extractor); route shifts to dev-mcp-server + ops OCR re-run.
+
+### STEP po-S3 · po · 2026-06-09T23:16:37Z
+**task-id:** BPE-SPIKE-1
+**what-done:** Reviewed architect SPIKE brief; marked BPE-SPIKE-1 DONE; unblocked BPE-DEV-3 -> READY (now covers BOTH GAP-1 handler total_pages + GAP-3-code pdfOcrWorker skip-guard/DPI in one mcp-server zone); kept OPS-1->DEV-4->QA-1 BLOCKED in hard sequence; head.next_agent=dev-mcp-server.
+**what-considered:**
+- Split GAP-1 and GAP-3-code into two dev tasks — REJECTED: both same zone (apps/mcp-server/), both must deploy+rebuild together before OPS-1 re-OCR; one task = one rebuild, avoids double-deploy churn.
+- Accept brief's BLOCKER-2 OVERRULE as-is — ACCEPTED: user page-12 screenshot (dense VN prose) is raw evidence; prior "benign blank pages" was speculative; SPIKE re-verified loop is NOT range-truncated so pages 11-22 are genuine OCR-skip.
+**why-decision:** Brief raw-verified: GAP-1 = interface-layer SQL correction (COUNT->MAX + OFFSET->point-lookup, no domain touch); GAP-3-code = infra-layer skip-guard <10-><3 + DPI escalation. CRITICAL ordering: completeness guard L200-213 freezes 35-row set, so OPS-1 delete+re-OCR MUST follow DEV-3 deploy+rebuild — encoded as depends_on chain DEV-3->OPS-1->DEV-4->QA-1.
+**why-change:** No change from architect's prescribed split — PO folded GAP-1+GAP-3-code into single DEV-3 per shared-zone/single-rebuild rationale.
