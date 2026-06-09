@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T19:45:00Z",
-    "_updated_by": "po-S56",
+    "_updated_at": "2026-06-09T21:25:09Z",
+    "_updated_by": "po-S57",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2809,7 +2809,7 @@
       {
         "id": "CI-RED-RECONCILE",
         "label": "ci.yml RED on every push to main (run 27104618906 / origin HEAD a709681) — RECONCILED to a push gap, NOT a recurrence | [po 20260608 MERGE] absorbed duplicate sprint_id entry (SSOT last-key-wins bug); 2 dev REVIEW statuses recovered (FIX-MCP-TOOL-COUNT-DRIFT, FIX-MCP-CI-NETWORK-GUARD).",
-        "status": "active",
+        "status": "DONE",
         "opened_at": "2026-06-08",
         "priority": "high",
         "evidence": "User-surfaced OOB. CI run 27104618906 ran against origin/main HEAD a709681f (2026-06-07 22:45). Router-raw 3 root causes: (1) 7x Go-lint v1/v2 schema mismatch, (2) kinh-dich-ts-lint ESLint v9 flat-config, (3) bun test fail (assertion not isolated). PO git-ancestry verdict: causes #1+#2 ALREADY FIXED at commit dd79f811 (2026-06-07 23:33, FIX-CI-LINT-STACK): local ci.yml has 6x golangci-lint-action@v7.0.0 + version:v2.0 and ZERO eslint/ts-lint job. `git merge-base --is-ancestor a709681 dd79f811` = YES -> failing run PREDATES the fix. Local HEAD is 139 commits ahead of origin/main; the fix is committed but UNPUSHED. NOT a recurrence (FIX-CI-LINT-STACK never reached remote) — a push gap. Cause #3 (bun test) was observed on 139-commit-stale code; today unpushed range includes test-affecting fixes (FIX-MACRO-REFRESH-DEAD, FIX-BCTC-*, FIX-PRICE-ANOMALY-JSON-PLUS) -> cannot honestly triage as a defect against stale code. Gate: push, read fresh ci.yml run, isolate real assertion only if still red.",
@@ -2936,13 +2936,16 @@
             "type": "EPIC",
             "owner": "po",
             "depends": [],
-            "status": "ACTIVE",
+            "status": "DONE",
             "size": "L",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T21:00:00Z",
             "baseline_real": "702 (656 fail + 46 errors) — CI run 27168638852 HEAD f05795c3; phantom 639 + local 443 DISCARDED",
-            "note": "[po RE-BASELINE 2026-06-08T21:52Z DJ-GATE-1 STEP po-S11] PREREQUISITE FIX-CI-COVERAGE-OOM-CRASH = DONE; CI run 27168638852 emitted the FIRST clean summary in 200+ runs: 10742 pass / 29 skip / 656 fail / 46 errors / Ran 11427 across 1039 files. REAL baseline = 702 (656+46). Phantom 639 (both briefs) + local 443 DISCARDED. Goal (driven by /goal ci/cd pass) = 0 fail. RAW-SIGNATURE RE-VALIDATION of buckets (gh run view 27168638852 --log grep): (B2 DDL-sync, WIDENED) rag_analyses/data_env=93 + daily_ohlcv/data_env=5 + statement_section=3 + missing-table(cron_job_runs/signal_quality_audit/notified_telegram)=4 -> dispatch as SSOT-init-helper sweep across ALL inline DDLs. (NETWORK, DOMINANT) AbortError/fetch-failed/ETIMEDOUT/getaddrinfo/5000ms=175 + fs ENOENT mkdir data/__test-1335__ -> CI-NETWORK-SKIP-GUARDS is the single largest lever; B1 dependency MOOT, un-gated. (B1 mock cascade) only 17 mock.module hits -> the ~269 cascade hypothesis is EMPIRICALLY WEAK now suite is measurable; mock.restore() wrapper already shipped 8fd9bde1 (KEEP); B1 re-run de-prioritized to cheap-confirm. DISPATCHED THIS TICK under WIP<=2: B2-RAG-DDL-INITNEWSTABLES (widened) + CI-NETWORK-SKIP-GUARDS (un-gated). SEQUENCED AFTER: OBSOLETE-REMOVE-24 (evidence-gated), CLASS-B-PERTEST-TRIAGE. PROTECT canary DWF-is-trading-day AC-P0-3-6 (intentional RED, NEVER touch/remove). Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push. | === PRIOR === Reconciles brief #1 (a697392e, 3-class no-cascade) + brief #2 (f13a97bf, 2 systemic roots ~560/639). ORDERED batches: (1) B1-MOCK-MODULE-EXPERIMENT empirical-first [DISPATCHED] -> (2) B2-RAG-DDL-INITNEWSTABLES [DISPATCHED] -> (3) CI-NETWORK-SKIP-GUARDS -> (4) OBSOLETE-REMOVE-24 (user directive, evidence-gated) -> (5) CLASS-B-PERTEST-TRIAGE. All zone dev-mcp-server except obsolete-removal touches dev-interface/dev-infrastructure edit sites per brief #2. PROTECT canary DWF-is-trading-day AC-P0-3-6 (intentional RED, NEVER touch/remove). Realistic DoD = monotonic per-push bun-test FAIL count reduction surfaced to user. | [po DJ-GATE-1 20260608T2210Z CORRECTED-ROOT] Router raw-verified (CI run 27166197809/job 80193895992, HEAD 8fd9bde1): the CI gating step runs bare `bun test` which inherits bunfig [test] coverage=true; the process CRASHES (OOM/C++ panic) DURING coverage-table generation BEFORE emitting any `Ran N tests / N pass / N fail` summary — last log line is the truncated coverage table at taOhlcvBackfillJob. then ##[error]exit 1. THEREFORE the \"639 fail\" cited in BOTH briefs (a697392e + f13a97bf) is a PHANTOM — the crashing run never produced it cleanly; B1 measured delta=0 is INCONCLUSIVE (suite never completes under coverage on this toolchain). Only the coverage=OFF local run produced a clean count = 443 fail. PREREQUISITE INSERTED: FIX-CI-COVERAGE-OOM-CRASH must land first so the gating run completes + emits a clean summary; ALL downstream batches (B1 re-run, B2, network-guards, obsolete-removal, Class-B) re-baseline against the REAL CI count, never the phantom 639."
+            "note": "[po RE-BASELINE 2026-06-08T21:52Z DJ-GATE-1 STEP po-S11] PREREQUISITE FIX-CI-COVERAGE-OOM-CRASH = DONE; CI run 27168638852 emitted the FIRST clean summary in 200+ runs: 10742 pass / 29 skip / 656 fail / 46 errors / Ran 11427 across 1039 files. REAL baseline = 702 (656+46). Phantom 639 (both briefs) + local 443 DISCARDED. Goal (driven by /goal ci/cd pass) = 0 fail. RAW-SIGNATURE RE-VALIDATION of buckets (gh run view 27168638852 --log grep): (B2 DDL-sync, WIDENED) rag_analyses/data_env=93 + daily_ohlcv/data_env=5 + statement_section=3 + missing-table(cron_job_runs/signal_quality_audit/notified_telegram)=4 -> dispatch as SSOT-init-helper sweep across ALL inline DDLs. (NETWORK, DOMINANT) AbortError/fetch-failed/ETIMEDOUT/getaddrinfo/5000ms=175 + fs ENOENT mkdir data/__test-1335__ -> CI-NETWORK-SKIP-GUARDS is the single largest lever; B1 dependency MOOT, un-gated. (B1 mock cascade) only 17 mock.module hits -> the ~269 cascade hypothesis is EMPIRICALLY WEAK now suite is measurable; mock.restore() wrapper already shipped 8fd9bde1 (KEEP); B1 re-run de-prioritized to cheap-confirm. DISPATCHED THIS TICK under WIP<=2: B2-RAG-DDL-INITNEWSTABLES (widened) + CI-NETWORK-SKIP-GUARDS (un-gated). SEQUENCED AFTER: OBSOLETE-REMOVE-24 (evidence-gated), CLASS-B-PERTEST-TRIAGE. PROTECT canary DWF-is-trading-day AC-P0-3-6 (intentional RED, NEVER touch/remove). Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push. | === PRIOR === Reconciles brief #1 (a697392e, 3-class no-cascade) + brief #2 (f13a97bf, 2 systemic roots ~560/639). ORDERED batches: (1) B1-MOCK-MODULE-EXPERIMENT empirical-first [DISPATCHED] -> (2) B2-RAG-DDL-INITNEWSTABLES [DISPATCHED] -> (3) CI-NETWORK-SKIP-GUARDS -> (4) OBSOLETE-REMOVE-24 (user directive, evidence-gated) -> (5) CLASS-B-PERTEST-TRIAGE. All zone dev-mcp-server except obsolete-removal touches dev-interface/dev-infrastructure edit sites per brief #2. PROTECT canary DWF-is-trading-day AC-P0-3-6 (intentional RED, NEVER touch/remove). Realistic DoD = monotonic per-push bun-test FAIL count reduction surfaced to user. | [po DJ-GATE-1 20260608T2210Z CORRECTED-ROOT] Router raw-verified (CI run 27166197809/job 80193895992, HEAD 8fd9bde1): the CI gating step runs bare `bun test` which inherits bunfig [test] coverage=true; the process CRASHES (OOM/C++ panic) DURING coverage-table generation BEFORE emitting any `Ran N tests / N pass / N fail` summary — last log line is the truncated coverage table at taOhlcvBackfillJob. then ##[error]exit 1. THEREFORE the \"639 fail\" cited in BOTH briefs (a697392e + f13a97bf) is a PHANTOM — the crashing run never produced it cleanly; B1 measured delta=0 is INCONCLUSIVE (suite never completes under coverage on this toolchain). Only the coverage=OFF local run produced a clean count = 443 fail. PREREQUISITE INSERTED: FIX-CI-COVERAGE-OOM-CRASH must land first so the gating run completes + emits a clean summary; ALL downstream batches (B1 re-run, B2, network-guards, obsolete-removal, Class-B) re-baseline against the REAL CI count, never the phantom 639.",
+            "closed_by": "po-S57",
+            "closed_at": "2026-06-09T21:25:09Z",
+            "actual_result": "EPIC parent CLOSED. All child batch tasks terminal (BATCH0-5 DONE, IMPL-CI-PER-FILE-ISOLATION DONE). Deterministic per-file isolation gate reads native fail+error=0 at origin HEAD 44c94fd3. The /goal Stop-hook condition (native fail+error=0 on origin/main) is MET and auto-cleared. baseline_real 702 -> 0."
           },
           {
             "id": "FIX-CI-COVERAGE-OOM-CRASH",
@@ -2967,14 +2970,16 @@
             "depends": [
               "FIX-CI-COVERAGE-OOM-CRASH"
             ],
-            "status": "BLOCKED",
+            "status": "DONE-SUPERSEDED",
             "size": "S",
             "mode": "experiment",
             "timebox": 40,
             "zone": "apps/mcp-server/",
             "priority": "critical",
             "created_at": "2026-06-08T21:00:00Z",
-            "note": "RESOLVES the brief conflict EMPIRICALLY (not by authority). Brief #2 claims bun mock.module is process-scoped + never auto-restored, poisoning every test file dispatched AFTER 1862c in the same run (~269 fails, order-dependent). Brief #1 claims NO cascade (3 independent classes). HYPOTHESIS (falsifiable, highest-leverage): the single mock.restore() wrapper drops a large cohort (~269). DoD: (a) ONLY edit 1862c (no other test touched), (b) capture baseline full-suite FAIL count, (c) capture post-fix FAIL count, (d) report delta. IF delta ~= -269 (large cohort) -> brief #2 cascade framing WINS, this becomes batch-1 fix (keep the wrapper). IF delta small -> brief #1 3-class framing holds, revert is optional. Do NOT touch DWF-is-trading-day canary. Verification gate = bun-test fail count DROP on subsequent push (router owns push). | [po DJ-GATE-1 20260608T2210Z RE-SCOPE] BLOCKED on FIX-CI-COVERAGE-OOM-CRASH. The delta=0 measured earlier is INCONCLUSIVE, not a refutation: under bunfig coverage=true the full suite CRASHES (OOM/C++ panic) during coverage-table generation before printing any summary, so neither the 639 baseline nor any post-fix count was ever cleanly emitted. The mock.restore() wrapper (hygiene) already shipped in commit 8fd9bde1 — KEEP it. RE-RUN this experiment with coverage OFF (`bun test --coverage=false`) AFTER the CI prereq lands, measuring delta vs the REAL coverage-off baseline (443), not the phantom 639. DoD revised: report clean post-fix FAIL count and delta vs 443."
+            "note": "RESOLVES the brief conflict EMPIRICALLY (not by authority). Brief #2 claims bun mock.module is process-scoped + never auto-restored, poisoning every test file dispatched AFTER 1862c in the same run (~269 fails, order-dependent). Brief #1 claims NO cascade (3 independent classes). HYPOTHESIS (falsifiable, highest-leverage): the single mock.restore() wrapper drops a large cohort (~269). DoD: (a) ONLY edit 1862c (no other test touched), (b) capture baseline full-suite FAIL count, (c) capture post-fix FAIL count, (d) report delta. IF delta ~= -269 (large cohort) -> brief #2 cascade framing WINS, this becomes batch-1 fix (keep the wrapper). IF delta small -> brief #1 3-class framing holds, revert is optional. Do NOT touch DWF-is-trading-day canary. Verification gate = bun-test fail count DROP on subsequent push (router owns push). | [po DJ-GATE-1 20260608T2210Z RE-SCOPE] BLOCKED on FIX-CI-COVERAGE-OOM-CRASH. The delta=0 measured earlier is INCONCLUSIVE, not a refutation: under bunfig coverage=true the full suite CRASHES (OOM/C++ panic) during coverage-table generation before printing any summary, so neither the 639 baseline nor any post-fix count was ever cleanly emitted. The mock.restore() wrapper (hygiene) already shipped in commit 8fd9bde1 — KEEP it. RE-RUN this experiment with coverage OFF (`bun test --coverage=false`) AFTER the CI prereq lands, measuring delta vs the REAL coverage-off baseline (443), not the phantom 639. DoD revised: report clean post-fix FAIL count and delta vs 443.",
+            "closed_by": "po-S57",
+            "supersede_note": "Empirical mock.module question answered by BATCH2 afterAll-restore meta-guard (mock-module-afterall-guard.test.ts); gate reached 0. No standalone experiment needed."
           },
           {
             "id": "B2-RAG-DDL-INITNEWSTABLES",
@@ -2995,12 +3000,14 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "PARTIAL-WIN-REFILE",
+            "status": "DONE-SUPERSEDED",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "created_at": "2026-06-08T21:00:00Z",
-            "note": "[po S12 DJ-GATE-1 2026-06-08T22:52Z] PARTIAL WIN inside 9454baad: the pollNews.ts network-skip guards drove errors 46->15 (-31), independently verified 102+1288=14 pass/0 fail under CI=true, isolated to pollNews.ts (router raw-verified). But 9454baad as a whole is +219 WORSE (BATCH-1 schema injection regressed it) -> commit is being REVERTED. To NOT lose the -31 win, the pollNews.ts guards are RE-FILED clean as CI-NETWORK-GUARDS-POLLNEWS-REFILE (depends: revert lands first). This task is closed as superseded by that re-file. | === PRIOR === [po UN-GATE + RE-VALIDATE 2026-06-08T21:52Z DJ-GATE-1 STEP po-S11] B1 dependency REMOVED (moot): suite is now measurable and only 17 mock.module hits appear in CI run 27168638852 — the ~269 mock-poison cascade hypothesis is empirically dead, so there is no cohort to 'isolate B1 from' first. Re-validated network class against REAL CI log: AbortError/fetch-failed/ETIMEDOUT/getaddrinfo/5000ms = 175 hits (HOSE/HNX/UPCOM Yahoo SBV NewsAPI) PLUS fs-isolation ENOENT mkdir data/__test-1335__ (test-sandbox dir not created in CI). This is the SINGLE LARGEST fix lever toward 0 fail -> priority raised medium->high, DISPATCHED parallel with B2 under WIP<=2 (disjoint file sets). DoD: detect-CI-env + skip/mock for live-source tests; create the per-test fs sandbox dir (fixes __test-1335__ ENOENT); do NOT delete assertions; do NOT touch DWF canary. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push. | === PRIOR === Brief #1 Class C (~100-150, 5000ms network). Extends prior FIX-MCP-CI-NETWORK-GUARD (DONE, partial) to the remaining live-source cohort. Prefer detect-CI + skip/mock over deleting assertions."
+            "note": "[po S12 DJ-GATE-1 2026-06-08T22:52Z] PARTIAL WIN inside 9454baad: the pollNews.ts network-skip guards drove errors 46->15 (-31), independently verified 102+1288=14 pass/0 fail under CI=true, isolated to pollNews.ts (router raw-verified). But 9454baad as a whole is +219 WORSE (BATCH-1 schema injection regressed it) -> commit is being REVERTED. To NOT lose the -31 win, the pollNews.ts guards are RE-FILED clean as CI-NETWORK-GUARDS-POLLNEWS-REFILE (depends: revert lands first). This task is closed as superseded by that re-file. | === PRIOR === [po UN-GATE + RE-VALIDATE 2026-06-08T21:52Z DJ-GATE-1 STEP po-S11] B1 dependency REMOVED (moot): suite is now measurable and only 17 mock.module hits appear in CI run 27168638852 — the ~269 mock-poison cascade hypothesis is empirically dead, so there is no cohort to 'isolate B1 from' first. Re-validated network class against REAL CI log: AbortError/fetch-failed/ETIMEDOUT/getaddrinfo/5000ms = 175 hits (HOSE/HNX/UPCOM Yahoo SBV NewsAPI) PLUS fs-isolation ENOENT mkdir data/__test-1335__ (test-sandbox dir not created in CI). This is the SINGLE LARGEST fix lever toward 0 fail -> priority raised medium->high, DISPATCHED parallel with B2 under WIP<=2 (disjoint file sets). DoD: detect-CI-env + skip/mock for live-source tests; create the per-test fs sandbox dir (fixes __test-1335__ ENOENT); do NOT delete assertions; do NOT touch DWF canary. Verification gate = bun-test FAIL+ERROR count DROP vs 702 on subsequent push. | === PRIOR === Brief #1 Class C (~100-150, 5000ms network). Extends prior FIX-MCP-CI-NETWORK-GUARD (DONE, partial) to the remaining live-source cohort. Prefer detect-CI + skip/mock over deleting assertions.",
+            "closed_by": "po-S57",
+            "supersede_note": "Network-skip guard work landed via BATCH-class fixes + per-file isolation (e59a4547 pollNews.ts test-stub bypass + 011-rag CI-skip); gate GREEN."
           },
           {
             "id": "OBSOLETE-REMOVE-24",
@@ -3010,12 +3017,14 @@
             "depends": [
               "B1-MOCK-MODULE-EXPERIMENT"
             ],
-            "status": "TODO",
+            "status": "DONE-SUPERSEDED",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "medium",
             "created_at": "2026-06-08T21:00:00Z",
-            "note": "User: 'remove all obsolete failing tests'. SCOPE = ONLY brief #2 Bucket A 24 tests (docs/architecture-briefs/2026-06-08-ci-test-isolation-spike.md lines 152-249, exact file:test-name list with per-entry evidence). Examples: 089-tool-macro.test.ts DELETE entire file (all 15 obsolete, HTTP-delegate rewire 98df0f43); 1414-diacritics-wave4.test.ts remove FILE-1 describe block ONLY (preserve FILE 2-5); 1503-ohlcv-foreign-flow AC3 describe; 1190-pipeline-watchdog schedulerFileCount. Some edit sites are interface/infrastructure zone — PO may split per-zone at impl time. HARD RULES: (1) every removal needs explicit feature-gone evidence (commit hash in git msg), (2) NEVER delete full file unless ALL tests obsolete, (3) PROTECT DWF-is-trading-day AC-P0-3-6 canary (intentional anti-stub RED — do NOT remove/fix). Verification gate = bun-test fail count DROP."
+            "note": "User: 'remove all obsolete failing tests'. SCOPE = ONLY brief #2 Bucket A 24 tests (docs/architecture-briefs/2026-06-08-ci-test-isolation-spike.md lines 152-249, exact file:test-name list with per-entry evidence). Examples: 089-tool-macro.test.ts DELETE entire file (all 15 obsolete, HTTP-delegate rewire 98df0f43); 1414-diacritics-wave4.test.ts remove FILE-1 describe block ONLY (preserve FILE 2-5); 1503-ohlcv-foreign-flow AC3 describe; 1190-pipeline-watchdog schedulerFileCount. Some edit sites are interface/infrastructure zone — PO may split per-zone at impl time. HARD RULES: (1) every removal needs explicit feature-gone evidence (commit hash in git msg), (2) NEVER delete full file unless ALL tests obsolete, (3) PROTECT DWF-is-trading-day AC-P0-3-6 canary (intentional anti-stub RED — do NOT remove/fix). Verification gate = bun-test fail count DROP.",
+            "closed_by": "po-S57",
+            "supersede_note": "Obsolete-test removals executed inside BATCH0/BATCH5 with per-removal evidence-commit citation; gate GREEN."
           },
           {
             "id": "CLASS-B-PERTEST-TRIAGE",
@@ -3026,12 +3035,14 @@
               "B1-MOCK-MODULE-EXPERIMENT",
               "B2-RAG-DDL-INITNEWSTABLES"
             ],
-            "status": "BLOCKED",
+            "status": "DONE-SUPERSEDED",
             "size": "L",
             "zone": "apps/mcp-server/",
             "priority": "low",
             "created_at": "2026-06-08T21:00:00Z",
-            "note": "Brief #1 Class B (~300-400, 1ms living-spec). BLOCKED until B1 settles how many of these are actually mock-poison artifacts (brief #2) vs genuine TDD-RED spec gaps (brief #1). After B1 delta is measured, the residual 1ms cohort gets PO per-test prioritization: implement-feature vs update-stale-spec vs obsolete-remove. Largest + lowest-confidence bucket = triage last. PROTECT DWF canary."
+            "note": "Brief #1 Class B (~300-400, 1ms living-spec). BLOCKED until B1 settles how many of these are actually mock-poison artifacts (brief #2) vs genuine TDD-RED spec gaps (brief #1). After B1 delta is measured, the residual 1ms cohort gets PO per-test prioritization: implement-feature vs update-stale-spec vs obsolete-remove. Largest + lowest-confidence bucket = triage last. PROTECT DWF canary.",
+            "closed_by": "po-S57",
+            "supersede_note": "Class-B living-spec triage subsumed by BATCH5 C-AL per-file FIX-PROD|REWRITE-STALE|REMOVE-OBSOLETE triage; gate GREEN."
           },
           {
             "id": "CI-TEST-SCHEMA-FIXTURE-SPIKE",
@@ -3465,7 +3476,7 @@
             "id": "FIX-CI-C7-ASSERTION-LOGIC",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "BACKLOG",
+            "status": "DONE-SUPERSEDED",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "medium",
@@ -3496,13 +3507,15 @@
                 "carved_at": "2026-06-09T13:20:00Z",
                 "triage_state": "TRIAGE-DONE"
               }
-            ]
+            ],
+            "closed_by": "po-S57",
+            "supersede_note": "C7 assertion-logic backlog absorbed by BATCH5-CI-C-AL (the C7 successor class); all seeds resolved to GREEN."
           },
           {
             "id": "FIX-CI-C8-REMOVE-OBSOLETE-TESTS-TRIAGE",
             "type": "FIX",
             "owner": "architect",
-            "status": "BACKLOG",
+            "status": "DONE-SUPERSEDED",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "medium",
@@ -3522,7 +3535,9 @@
             "baseline_pass": "135 native fail+error absolute (sha 3663bd12, run 27193376550, bun job 80278819016)",
             "created_at": "2026-06-09T08:33:20Z",
             "created_by": "po-S28",
-            "note": "[po-S28 DJ-GATE-1] BACKLOG STUB. This is the /goal REMOVE-if-obsolete bucket made explicit: tests asserting against deleted/superseded prod must be DELETED (with evidence), not patched. Architect triage required to avoid deleting a still-live assertion. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-*) stays PARKED, distinct from this. NOT in_progress."
+            "note": "[po-S28 DJ-GATE-1] BACKLOG STUB. This is the /goal REMOVE-if-obsolete bucket made explicit: tests asserting against deleted/superseded prod must be DELETED (with evidence), not patched. Architect triage required to avoid deleting a still-live assertion. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-*) stays PARKED, distinct from this. NOT in_progress.",
+            "closed_by": "po-S57",
+            "supersede_note": "C8 REMOVE-if-obsolete triage folded into BATCH0/BATCH5 REMOVE-OBSOLETE buckets (each removal named a protecting sibling); gate GREEN."
           },
           {
             "id": "SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY",
@@ -4229,7 +4244,7 @@
             "id": "BATCH5-CI-C-AL-ASSERTION-LOGIC-TRIAGE",
             "type": "SPIKE",
             "owner": "architect-first-then-dev-mcp-server",
-            "status": "ACTIVE",
+            "status": "DONE",
             "size": "L",
             "zone": "apps/mcp-server/",
             "priority": "high",
@@ -4267,7 +4282,10 @@
             "activated_at": "2026-06-09T19:45:00Z",
             "remaining_surface": "20 test files / 26 genuine fails — the ONLY remaining work between current deterministic state and /goal green",
             "arch_triage": "architect arch-S25 triage IN FLIGHT (buckets: FIX-PROD | REWRITE-STALE | REMOVE-OBSOLETE); Wave-3 dev to follow",
-            "reclassified_in": "Task 1328e conviction-routing reverted BATCH2->BATCH5 (confirmed still red post-BATCH2/3/4; assertion-logic item, not a mock-stub-leak contaminator) per signal ci-batch4-gate-result-c34ddfc4 1328e_confirms_batch5"
+            "reclassified_in": "Task 1328e conviction-routing reverted BATCH2->BATCH5 (confirmed still red post-BATCH2/3/4; assertion-logic item, not a mock-stub-leak contaminator) per signal ci-batch4-gate-result-c34ddfc4 1328e_confirms_batch5",
+            "closed_by": "po-S57",
+            "closed_at": "2026-06-09T21:25:09Z",
+            "actual_result": "CI run 27236671718 head 44c94fd3 conclusion=success, ALL 8 jobs green. Per-file isolation native summary 11696 pass / 53 skip / 0 fail / ZERO FAILEDFILE lines. Gate progression this campaign 31 -> 1 -> 0. Landed: ec7b3929 (architect BATCH5-BS-REGRESSION prescription RAW_VND_THRESHOLD=1e12 + corroboration-gated path B-SB), 4b3c35b8 (dev balanceSheetExtractor.ts; 6 fixtures 65 pass/0 fail), e59a4547 (infra: ci-per-file-isolation.sh L20 db-path fix 1331a + pollNews.ts test-stub bypass 1821a + 011-rag itModel CI-skip), 44c94fd3 (dev 012-lancedb itStore CI-hermetic guard; Bun-1.3.13 native-teardown crash class; CI=true single-file 0 pass/6 skip/0 fail exit 0)."
           },
           {
             "id": "IMPL-CI-PER-FILE-ISOLATION",
@@ -4299,8 +4317,8 @@
             "id": "RETIRE-CI-GATE-APPARATUS",
             "type": "CLEAN",
             "owner": "ops",
-            "status": "BLOCKED",
-            "blockedBy": "genuine-fail-count must reach 0 (i.e. BATCH5-CI-C-AL-ASSERTION-LOGIC-TRIAGE complete)",
+            "status": "READY",
+            "blockedBy": null,
             "size": "S",
             "zone": "cross-service/",
             "priority": "medium",
@@ -4311,36 +4329,45 @@
             "title": "Retire the old contamination-era CI gate bookkeeping (non-deterministic-absolute tracking, contamination-variance notes, isolation-probe scaffolding). Do NOT retire until the per-file deterministic gate reads 0 genuine fails.",
             "created_by": "po-S56",
             "created_at": "2026-06-09T19:45:00Z",
-            "note": "Held BLOCKED on purpose — the contamination-era apparatus stays in place as the audit trail until BATCH5 lands the deterministic gate at 0."
+            "note": "Held BLOCKED on purpose — the contamination-era apparatus stays in place as the audit trail until BATCH5 lands the deterministic gate at 0.",
+            "unblocked_by": "po-S57",
+            "unblocked_at": "2026-06-09T21:25:09Z",
+            "activation_note": "Genuine fail=0 reached (BATCH5 DONE, gate GREEN @ 44c94fd3). Precondition cleared. Dispatchable to ops. PO does not execute ops file-removal directly (role boundary) — atomic steps defined below.",
+            "atomic_steps": [
+              "STEP-1 (RETIRE): git rm scripts/ci-isolation-probe.sh — contamination-era isolation-probe scaffolding; superseded by the deterministic per-file runner. KEEP scripts/ci-per-file-isolation.sh (this IS the canonical gate now).",
+              "STEP-2 (RETIRE): git rm scripts/ci-native-gate-watch.sh — non-deterministic-absolute (jitter 26..55-by-ordering) gate-watch tracker; obsolete now the absolute is deterministic.",
+              "STEP-3 (RETIRE): remove contamination-variance / ordering-jitter language from docs (any 'non-deterministic 26..55 by ordering' / contamination-variance notes) — replace pointer with the deterministic per-file gate. orch-state ci_absolute already rebaselined to GREEN by po-S57; ensure no doc still cites the jitter band as live.",
+              "STEP-4 (KEEP, audit trail): retain the per-sprint gate jq scripts (scripts/po-s*-gate.jq) and scripts/ci-per-file-isolation.sh — these are the historical decision record + the live deterministic runner; do NOT delete.",
+              "STEP-5 (VERIFY): after removals, run scripts/ci-per-file-isolation.sh head still green (0 fail) + grep repo for dangling references to the two removed scripts -> 0 hits, then commit via commit-mutex with explicit pathspec."
+            ]
           }
         ],
         "_updated_by": "po-S52",
         "ci_absolute": {
-          "native_fail": 26,
+          "native_fail": 0,
           "native_errors": 0,
-          "fail_plus_error": 26,
-          "tests": 11747,
-          "pass": 11679,
-          "skip": 42,
-          "sha": "3ad97a18",
-          "run_id": "27230921229",
-          "bun_job_id": "80410540618",
-          "supersedes": "42 (e1ee78b9)",
-          "updated_at": "2026-06-09T19:45:00Z",
-          "updated_by": "po-S56",
+          "fail_plus_error": 0,
+          "tests": 11749,
+          "pass": 11696,
+          "skip": 53,
+          "sha": "44c94fd3",
+          "run_id": "27236671718",
+          "supersedes": "26 (3ad97a18)",
+          "updated_at": "2026-06-09T21:25:09Z",
+          "updated_by": "po-S57",
           "deterministic": true,
-          "two_sha_proof": "DETERMINISTIC by construction (per-file process isolation) — confirmed identical across two SHAs: d14d2f92 (run 27230529533) = 11679 pass / 42 skip / 26 fail AND 3ad97a18 (run 27230921229) = 11679 pass / 42 skip / 26 fail. This is the stable gate floor; remaining 26 = genuine BATCH5 C-AL residual across 20 files. Replaces the old non-deterministic 26..55-by-ordering note."
+          "canonical": "CANONICAL CI ABSOLUTE = 11696 pass / 53 skip / 0 fail (per-file process-isolation aggregate). NOT the legacy 26/55 non-deterministic numbers. This is the GREEN floor — native fail+error=0, ALL 8 jobs green, conclusion=success. ci.yml run 27236671718 head 44c94fd3 (origin/main). The /goal Stop-hook condition (native fail+error=0) is MET. Gate progression this campaign 31 -> 1 -> 0."
         },
         "long_tail_triage_policy": {
           "goal": "ci/di all passe on GitHub, test update (remove if obsolete) — /goal refined 2026-06-09T07:5xZ",
           "classify_each_residual_bucket": "REWRITE (prod still exists, test stale -> rewrite test to match) vs REMOVE (prod gone/superseded, test obsolete -> DELETE the test, do NOT patch)",
           "remove_examples": "removed test seams, deleted reuters.js, pre-98df0f43 macro section-header format, stale cron schedules",
           "applies_to": "C5+ and all remaining ~135 long-tail rounds; re-profile residual by ROOT-CAUSE pattern (unmocked-HTTP / SSOT-drift / assertion-logic) NOT by file, with the REMOVE-if-obsolete lens",
-          "absolute": "26 (sha 3ad97a18, run 27230921229, job 80410540618) — DETERMINISTIC per-file process isolation, two-SHA confirmed",
+          "absolute": "0 (sha 44c94fd3, run 27236671718) — GREEN, deterministic per-file isolation; campaign complete",
           "updated_by": "po-S55",
           "updated_at": "2026-06-09T18:04:35Z",
           "under_scope_lesson": "Architect cluster counts are CATEGORY-WIDE SUPERSETS (e.g. C1 '42' netted -12). Dev fixes ONLY the explicitly NAMED files; residual same-pattern files OUT of named scope -> long-tail re-profile, NOT a charge-back to closed task ids. The ONE exception so far: C4 single-file-family count landed EXACTLY (-25) because it was not a category superset.",
-          "band": "26 (deterministic floor; = genuine BATCH5 C-AL residual, no jitter)"
+          "band": "0 (GREEN floor; native fail+error=0, all 8 jobs success)"
         },
         "dispatch_order": {
           "policy": "biggest-deterministic-win-first; DV removals unblock the count, transport-hang + mock-leak are structural/zero-prod-risk, market-hours/config/assertion later",
@@ -4358,7 +4385,10 @@
           "set_at": "2026-06-09T17:27:54Z"
         },
         "updated_at": "2026-06-09T19:45:00Z",
-        "updated_by": "po-S56"
+        "updated_by": "po-S56",
+        "closed_at": "2026-06-09T21:25:09Z",
+        "closed_by": "po-S57",
+        "closure_note": "CI-RED-RECONCILE COMPLETE. native fail=0 @ 44c94fd3 (run 27236671718), all 8 jobs green. Deterministic per-file isolation gate is the canonical CI absolute (11696/53/0). /goal Stop-hook auto-cleared. RETIRE-CI-GATE-APPARATUS handed to ops (READY) as the only follow-on."
       }
     ],
     "backlog": [
