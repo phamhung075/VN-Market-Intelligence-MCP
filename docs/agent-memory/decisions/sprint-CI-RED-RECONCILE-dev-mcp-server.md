@@ -227,3 +227,19 @@ Fix (3 files):
 - `apps/mcp-server/src/__tests__/083-tool-analysis.test.ts`
 - `apps/mcp-server/src/__tests__/ddd-1b-rag-http-client.test.ts`
 - META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`
+
+---
+
+### STEP dev-mcp-server-S12 · dev-mcp-server · 2026-06-09T09:42:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT
+**sprint:** CI-RED-RECONCILE
+**what-done:** Fixed SSOT-drift in 1031-expanded-watchlist-catalog.test.ts — DGC domain changed from stale `"other"` to correct `"chemicals"` to match sectorPeers.ts SSOT; updated misleading comment from `// Chemicals / other` to `// Chemicals`.
+**what-considered:**
+- Fix sectorPeers.ts to move DGC to "other" — REJECTED: sectorPeers.ts authoritative (comment "Duc Giang Chemicals — yellow phosphorus, petrochemicals"; stock-classification.json + system-map.json both confirm sector = "Chemicals / Phosphate")
+- Fix test assertion to match SSOT `"chemicals"` — CHOSEN: one-line test fix aligns stale hand-typed assertion to SSOT; prod classification is definitively chemicals
+**why-decision:** Three corroborating sources (sectorPeers.ts, stock-classification.json, system-map.json) all confirm DGC = chemicals; test was sole stale copy using "other" (from ambiguous comment "Chemicals / other")
+**why-change:** no change from plan
+**result:** 62 pass / 0 fail (targeted 1031); tsc clean. C6 status = REVIEW.
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1031-expanded-watchlist-catalog.test.ts`
+- META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`

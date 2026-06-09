@@ -54,8 +54,8 @@ const WATCHLIST: { code: string; domain: DomainType; exchange: string }[] = [
   { code: "VIX", domain: "securities",  exchange: "HOSE" },
   { code: "VND", domain: "securities",  exchange: "HOSE" },
   { code: "VCI", domain: "securities",  exchange: "HOSE" },
-  // Chemicals / other
-  { code: "DGC", domain: "other",       exchange: "HOSE" },
+  // Chemicals
+  { code: "DGC", domain: "chemicals",   exchange: "HOSE" },
   // Aviation
   { code: "VJC", domain: "aviation",    exchange: "HOSE" },
   // Utilities / power
