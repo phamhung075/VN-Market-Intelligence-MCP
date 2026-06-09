@@ -166,3 +166,22 @@ Zone health: bun tsc --noEmit clean, 7 destroyer files patched, 62 tests pass in
 - 101-job-morning-briefing: 14 pass / 0 fail (data/briefings path)
 
 Zone health: bun tsc clean, Cluster5 errors eliminated, Cluster2 symlink healed | HEALTHY
+
+---
+
+## 2026-06-09 FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS + FIX-CI-C3-RESIDUAL-DB-DESTROYERS
+
+**Baseline:** 172 native fail, 0 errors (sha 7bea53d0, run 27189745293)
+
+**C1 root causes fixed (4 files, ~42 fails):**
+- `239-macro-indicator-refresh`: country key `"VN"` in test INSERTs vs `"vietnam"` in SLA service MACRO_COUNTRY_KEY
+- `239-market-context`: `getText()` returned raw JSON envelope; `.split("\\n")` got no real newlines; fixed to JSON.parse inner `.text`
+- `239c-macro-refresh-integration`: schedule assertion `"0 6 * * *"` stale (Sprint 1949-T7 moved to `"13 19 * * *"`); updated to regex match
+- `1352a-scheduler-job-wrappers-macro-marketscan`: (1) `getMacroExternal` not mocked → localhost:5004 error; (2) FRED fetchers calling real `api.stlouisfed.org` with retries → 5s timeout; (3) A-3 expected `.resolves` but job re-throws (FIX-MACRO-REFRESH-DEAD). Fixed: added `getMacroExternal` to mock, added `globalThis.fetch` mock with today-date FRED responses, changed A-3 to `.rejects.toThrow`
+
+**C3 root causes fixed (4 files, ~20 fails):**
+- `1295d-integration-builders-to-synthesis`: `DELETE FROM agent_signals` FK-blocked by `signal_outcomes`; fixed with `PRAGMA foreign_keys=OFF` + delete child first
+- `1124/1129/1173`: InMemoryTransport never closed → CI stall on next `beforeEach` connect(); added `afterEach(async () => { await client?.close(); })`
+
+**Local results:** C1 = 88 pass / 0 fail; C3 = 42 pass / 0 fail; tsc clean
+**Status:** Both tasks REVIEW — router gates in CI

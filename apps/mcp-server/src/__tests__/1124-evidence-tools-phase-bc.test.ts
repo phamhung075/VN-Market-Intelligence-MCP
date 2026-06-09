@@ -11,7 +11,7 @@
  * - create_prediction_claim: "Duplicate claim skipped" on re-insert
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -22,6 +22,16 @@ import { registerEvidenceTools } from "../interface/mcp/tools/macro/evidenceTool
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Module-level client reference for afterEach teardown.
+// InMemoryTransport instances left open across tests stall the next
+// test's beforeEach connect() call in CI (architect brief C3 fix).
+let _currentClient: Client | undefined;
+
+afterEach(async () => {
+  await _currentClient?.close();
+  _currentClient = undefined;
+});
 
 async function makeTestSetup(): Promise<{ db: Database; client: Client }> {
   Bun.env["DB_PATH"] = ":memory:";
@@ -37,6 +47,9 @@ async function makeTestSetup(): Promise<{ db: Database; client: Client }> {
   await server.connect(serverTransport);
   const client = new Client({ name: "test-client", version: "1.0" });
   await client.connect(clientTransport);
+
+  // Register for afterEach teardown.
+  _currentClient = client;
 
   return { db, client };
 }

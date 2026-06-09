@@ -262,7 +262,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
     db.prepare(`
       INSERT INTO macro_indicators (country, cpi, gdp_growth, interest_rate, fetched_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run("VN", 105.2, 6.5, 4.25, oneHourAgo);
+    `).run("vietnam", 105.2, 6.5, 4.25, oneHourAgo);
 
     const { freshnessSlaChecker } = await import(
       "../domain/services/macroIndicatorSla.js"
@@ -287,7 +287,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
     db.prepare(`
       INSERT INTO macro_indicators (country, cpi, gdp_growth, interest_rate, fetched_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run("VN", 105.2, 6.5, 4.25, fortyEightHoursAgo);
+    `).run("vietnam", 105.2, 6.5, 4.25, fortyEightHoursAgo);
 
     const alertsSent: Array<{ channel: string; message: string }> = [];
     const mockSendTelegram = mock(
@@ -724,7 +724,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
     db.prepare(`
       INSERT INTO macro_indicators (country, cpi, gdp_growth, interest_rate, fetched_at)
       VALUES (?, ?, ?, ?, ?)
-    `).run("VN", 105.2, 6.5, 4.25, thirtyixHoursAgo);
+    `).run("vietnam", 105.2, 6.5, 4.25, thirtyixHoursAgo);
 
     const alertsSent: Array<{ tag: string; message: string }> = [];
     const mockSendTelegram = mock(

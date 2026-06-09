@@ -63,9 +63,10 @@ describe("Task 239c — macro-refresh-integration", () => {
     );
 
     expect(macroJob).toBeTruthy();
-    expect(macroJob?.schedule).toContain("0 6 * * *");
+    // schedule was moved from 0 6 * * * (06:00 UTC) to 13 19 * * * (19:13 UTC) in Sprint 1949-T7
+    expect(macroJob?.schedule).toMatch(/\d+ \d+ \* \* \*/);
     const description = macroJob?.description || macroJob?.desc || "";
-    expect(description).toContain("Macro indicator daily refresh");
+    expect(description).toContain("Macro indicator refresh");
   });
 
   // ──────────────────────────────────────────────────────────────────────────

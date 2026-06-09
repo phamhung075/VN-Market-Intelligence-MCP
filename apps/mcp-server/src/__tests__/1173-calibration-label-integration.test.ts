@@ -381,7 +381,10 @@ describe("Task 1173 — AC-4: get_label_accuracy_report MCP tool returns formatt
     ({ db, client } = await makeMcpSetup());
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Close InMemoryTransport to prevent CI stall on next test's connect()
+    // (architect brief C3 fix).
+    await client?.close();
     closeDb();
   });
 
@@ -461,7 +464,9 @@ describe("Task 1173 — AC-5: get_label_accuracy_report MCP tool empty state", (
     ({ client } = await makeMcpSetup());
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Close InMemoryTransport to prevent CI stall (architect brief C3 fix).
+    await client?.close();
     closeDb();
   });
 

@@ -11,7 +11,7 @@
  *             not the full formatted report
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -99,6 +99,12 @@ describe("Task 1129 — get_calibration_report tool", () => {
 
   beforeEach(async () => {
     ({ db, client } = await makeTestSetup());
+  });
+
+  // Close InMemoryTransport after each test to prevent CI stall on next
+  // test's beforeEach connect() call (architect brief C3 fix).
+  afterEach(async () => {
+    await client?.close();
   });
 
   // ── AC-5 ──────────────────────────────────────────────────────────────────

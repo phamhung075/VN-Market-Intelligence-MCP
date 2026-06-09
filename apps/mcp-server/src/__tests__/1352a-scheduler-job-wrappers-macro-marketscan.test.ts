@@ -94,6 +94,8 @@ let _freshnessSlaCheckerImpl: () => Promise<boolean> = async () => true;
 
 mock.module("../infrastructure/microservices/clients.js", () => ({
   getMacroSnapshot: async () => _getMacroSnapshotImpl(),
+  // getMacroExternal also mocked to prevent real HTTP calls to localhost:5004
+  getMacroExternal: async () => null,
 }));
 mock.module("../infrastructure/notifiers/telegram.js", () => ({
   sendTelegramWork: async (msg: string) => {
@@ -146,6 +148,10 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
     closeDb();
   });
 
+  // globalThis.fetch mock — intercepts FRED / external HTTP calls so tests
+  // complete instantly without real network I/O. Restored in afterEach.
+  let _originalFetch: typeof globalThis.fetch;
+
   // Reset mutable mock factories to safe defaults before each test.
   // No mock.module() calls inside tests — all behaviour is controlled via the
   // top-level mutable variables set up at file evaluation time.
@@ -154,6 +160,45 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
     recordMetricsCalls = [];
     detectStartupCalls = 0;
     detectStartupShouldReject = false;
+
+    // Mock globalThis.fetch to prevent real HTTP calls to FRED / VCB / Yahoo.
+    // fredApi / fredEffrIorb / fredIsmSubcomponents all call fetch() directly.
+    _originalFetch = globalThis.fetch;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      // FRED CSV endpoint (fred.stlouisfed.org/graph/fredgraph.csv)
+      // Use today's date so checkAndAlertEffrStaleness does NOT fire an extra WORK alert.
+      if (url.includes("fredgraph.csv") || url.includes("fred.stlouisfed.org")) {
+        const today = new Date().toISOString().slice(0, 10);
+        const csvBody = `DATE,DFF\n${today},5.33\n`;
+        return new Response(csvBody, { status: 200, headers: { "Content-Type": "text/csv" } });
+      }
+      // FRED REST API (api.stlouisfed.org/fred/series/observations)
+      if (url.includes("api.stlouisfed.org")) {
+        const today = new Date().toISOString().slice(0, 10);
+        const jsonBody = JSON.stringify({ observations: [{ date: today, value: "5.33" }] });
+        return new Response(jsonBody, { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      // VCB XML (vietcombank)
+      if (url.includes("vietcombank.com.vn") || url.includes("portal.vietcombank")) {
+        const xml = `<?xml version="1.0" encoding="utf-8"?><ExrateList DateTime="6/5/2026"><Exrate CurrencyCode="USD" Buy="25900" Transfer="25950" Sell="26200"/></ExrateList>`;
+        return new Response(xml, { status: 200, headers: { "Content-Type": "text/xml" } });
+      }
+      // Yahoo Finance
+      if (url.includes("finance.yahoo.com")) {
+        const chart = { chart: { result: [{ meta: { regularMarketPrice: 82.5 }, timestamp: [1748908800], indicators: { quote: [{ close: [82.5] }] } }], error: null } };
+        return new Response(JSON.stringify(chart), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      // Macro snapshot / microservice endpoints (localhost:5004)
+      if (url.includes("/snapshot") || url.includes("/macro") || url.includes("localhost:5004")) {
+        const snap = { status: "ok", fetchedAt: new Date().toISOString(), brentCrudeUSD: 82.5, goldUSDPerOz: 2300, cpi: 3.5, gdp: 6.8 };
+        return new Response(JSON.stringify(snap), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      // Fallback: reject to make unhandled URL failures visible
+      throw new Error(`[1352a fetch mock] No mock configured for URL: ${url}`);
+    };
+
     // Reset mutable factory vars to default (success path)
     _getMacroSnapshotImpl = async () => ({
       vnIndex: 1250,
@@ -180,6 +225,10 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
   });
 
   afterEach(() => {
+    // Restore globalThis.fetch after each test.
+    if (_originalFetch !== undefined) {
+      globalThis.fetch = _originalFetch;
+    }
     // Reset mutable factory vars to real implementations after each test.
     _getMacroSnapshotImpl = _frozenRealGetMacroSnapshot;
     _sendTelegramWorkCapture = null;
@@ -233,8 +282,9 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
       "../scheduler/macro/macroIndicatorRefreshJob.js"
     );
 
-    // Must not throw
-    await expect(macroIndicatorRefreshJob()).resolves.toBeUndefined();
+    // Job re-throws after recording metrics (FIX-MACRO-REFRESH-DEAD: re-throw
+    // so recordJobRun records status='error' instead of silent 'success').
+    await expect(macroIndicatorRefreshJob()).rejects.toThrow("microservice down");
 
     // WORK message contains failure text and error message
     expect(sendWorkCalls.length).toBe(1);

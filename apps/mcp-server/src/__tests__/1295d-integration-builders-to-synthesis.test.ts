@@ -66,9 +66,14 @@ describe("1295d: E2E Signal Flow (Builder → MCP → DB → Synthesis)", () => 
     await initDatabase();
     db = getDb();
 
-    // Clean test tables
+    // Clean test tables — FK-safe: disable constraints, delete child tables first,
+    // then parent, then re-enable (architect brief C3 fix: FOREIGN KEY constraint on
+    // signal_outcomes → agent_signals FK blocked bare DELETE).
+    db.exec("PRAGMA foreign_keys=OFF");
+    db.exec("DELETE FROM signal_outcomes");
     db.exec("DELETE FROM agent_signals");
     db.exec("DELETE FROM signal_rejections");
+    db.exec("PRAGMA foreign_keys=ON");
   });
 
   afterEach(() => {

@@ -35,10 +35,18 @@ async function callTool(
   }>;
 }
 
-/** Extract the text from the first content item (throws if missing). */
+/** Extract the text from the first content item (throws if missing).
+ * If the item is a JSON envelope with a "text" field (MacroSnapshotResponse shape),
+ * returns the inner text so callers can split on real newlines. */
 function getText(result: { content: Array<{ type: string; text: string }> }): string {
   const first = result.content[0];
   if (!first) throw new Error("Tool returned empty content array");
+  try {
+    const parsed = JSON.parse(first.text) as { text?: string };
+    if (typeof parsed.text === "string") return parsed.text;
+  } catch {
+    // not JSON — return raw
+  }
   return first.text;
 }
 

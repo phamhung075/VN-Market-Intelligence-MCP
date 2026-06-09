@@ -1,6 +1,6 @@
 {
-  "locked": false,
-  "owner_agent": "architect",
-  "task": "SPIKE-CI-C1-MACRO-INJECT-SEAM",
-  "expires_at": 1780985211.327654
+  "locked": true,
+  "owner_agent": "dev-mcp-server",
+  "task": "FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS+FIX-CI-C3-RESIDUAL-DB-DESTROYERS",
+  "expires_at": 1780991312
 }
