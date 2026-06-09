@@ -533,9 +533,10 @@ export function handleBctcInspectOcr(
           const response: OcrPageResponse = {
             doc_id: docId,
             filename,
-            // total_pages: use pdf_extracted_text count for page nav, or 0 if no filename
+            // BPE-DEV-3 GAP-1: use MAX(page_number) so total_pages reflects the full PDF range
+            // (not COUNT(*) which underreports when pages were OCR-skipped due to low char output)
             total_pages: filename
-              ? (db.prepare(`SELECT COUNT(*) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
+              ? (db.prepare(`SELECT MAX(page_number) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
               : 0,
             page,
             text_content: pekUnitRow.stitched_markdown,
@@ -576,13 +577,23 @@ export function handleBctcInspectOcr(
           .get(filename, page) as { text_content: string; confidence: number } | null;
         proseFallbackText = rawRow?.text_content ?? "";
         proseFallbackConfidence = rawRow?.confidence ?? 0;
+        // RISK-OCR-2 (BPE-DEV-3): suppress truly junk rows inserted by DPI-escalation path.
+        // A row with confidence < 0.1 means the OCR output was stray chars (1-2 chars from
+        // image noise) that passed the >= 3 skip-guard but carry no real prose content.
+        // Suppressing these prevents junk text from appearing in the inspector UI.
+        if (proseFallbackConfidence < 0.1) {
+          proseFallbackText = "";
+          proseFallbackConfidence = 0;
+        }
       }
 
       const response: OcrPageResponse = {
         doc_id: docId,
         filename,
+        // BPE-DEV-3 GAP-1: use MAX(page_number) not COUNT(*) — COUNT underreports when
+        // pages are OCR-skipped (e.g. FPT: COUNT=35, MAX=46).
         total_pages: filename
-          ? (db.prepare(`SELECT COUNT(*) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
+          ? (db.prepare(`SELECT MAX(page_number) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
           : 0,
         page,
         text_content: proseFallbackText,
@@ -621,13 +632,15 @@ export function handleBctcInspectOcr(
       return;
     }
 
-    // Count total pages for this filename
+    // BPE-DEV-3 GAP-1: use MAX(page_number) not COUNT(*) so total_pages is accurate
+    // even when pages are non-contiguous (OCR-skipped pages create gaps).
+    // E.g. FPT Q1-2026: COUNT=35, MAX=46 — COUNT was wrongly capping iteration range.
     const countRow = db
       .prepare(
-        `SELECT COUNT(*) as cnt FROM pdf_extracted_text WHERE filename = ?`,
+        `SELECT MAX(page_number) as cnt FROM pdf_extracted_text WHERE filename = ?`,
       )
-      .get(filename) as { cnt: number };
-    const totalPages = countRow.cnt;
+      .get(filename) as { cnt: number | null };
+    const totalPages = countRow.cnt ?? 0;
 
     if (totalPages === 0) {
       const response: OcrPageResponse = {
@@ -646,17 +659,18 @@ export function handleBctcInspectOcr(
       return;
     }
 
-    // Fetch the requested page (1-indexed → 0-indexed OFFSET)
-    const offset = page - 1;
+    // BPE-DEV-3 GAP-1: point-lookup by page_number (not OFFSET-based pagination).
+    // OFFSET is incorrect when rows are non-contiguous: OFFSET 11 would return page 23
+    // not page 12 for FPT (which has pages 1-10, 16, 23-46 in order).
+    // Direct WHERE page_number = ? returns empty for genuinely absent pages (correct).
     const pageRow = db
       .prepare(
         `SELECT page_number, text_content, confidence
          FROM pdf_extracted_text
          WHERE filename = ?
-         ORDER BY page_number ASC
-         LIMIT 1 OFFSET ?`,
+           AND page_number = ?`,
       )
-      .get(filename, offset) as OcrPageRow | null;
+      .get(filename, page) as OcrPageRow | null;
 
     const response: OcrPageResponse = {
       doc_id: docId,

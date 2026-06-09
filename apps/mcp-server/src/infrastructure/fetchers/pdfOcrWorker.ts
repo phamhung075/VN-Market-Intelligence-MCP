@@ -25,6 +25,12 @@
  *   - Per-page error logging with [ocr] page N failed: <reason>
  *   - Low-char page logging with [ocr] page N low-char: N chars
  *   - ocrStats returned from extractAndStorePdfPages: pagesProcessed, pagesSkipped, pagesLowChar, avgConfidence
+ *
+ * BPE-DEV-3 GAP-3 fixes applied:
+ *   - Skip threshold raised from < 10 to < 3 chars (was wrongly dropping FPT pages 11-22)
+ *   - DPI escalation: low-output pages (< 50 chars) are retried at DPI 300 before skip decision
+ *   - Per-skip logger.warn with page, char count, and reason (observability)
+ *   - Empty (0-char) pages still skipped as genuine blank/timeout (RISK-OCR-2: truly blank)
  */
 
 import { execFile, execSync, spawn } from "node:child_process";
@@ -172,13 +178,14 @@ async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Prom
  * Async — never blocks the event loop.
  *
  * Task 292 / FR-3 fixes:
- *   - Pages < 10 chars are silently skipped (no row inserted)
+ *   - Pages < 10 chars are silently skipped (no row inserted) [UPDATED: < 3 by BPE-DEV-3]
  *   - Completeness threshold is Math.max(expectedPages * 0.5, 3)
  *   - No duplicate insert in catch block
  *
  * Task 1290 / FR-1: Added optional dpi parameter for high-DPI retry on low-confidence extracts.
  * Task 1352c: Returns ocrStats with pagesProcessed, pagesSkipped, pagesLowChar, avgConfidence.
  *             Per-page errors logged with [ocr] page N failed. Low-char pages logged with [ocr] page N low-char.
+ * BPE-DEV-3 GAP-3: skip threshold < 3 (was < 10); DPI escalation to 300 for low-output pages.
  */
 export type OcrStats = {
   pagesProcessed: number;
@@ -266,23 +273,58 @@ export async function extractAndStorePdfPages(
       pagesSkipped++;
     } else if (pageText.length === 0) {
       // Empty result from OCR (blank page or timeout) — count as skipped
-      pagesSkipped++;
-    } else if (pageText.length < 10) {
-      // Task 1352c: low-char page logging (< 10 chars, not worth inserting)
-      logger.warn("[ocr] page " + String(page) + " low-char: " + String(pageText.length) + " chars, confidence: 0", {
+      // BPE-DEV-3 GAP-3: empty (length=0) is genuine blank/timeout — skip always
+      logger.warn("[ocr] page " + String(page) + " empty: 0 chars, skipped (blank/timeout)", {
         filename,
         page,
-        chars: pageText.length,
-        confidence: 0,
+        chars: 0,
+        reason: "empty",
       });
-      pagesLowChar++;
+      pagesSkipped++;
     } else {
-      // Task 292 / FR-3: only insert rows for pages with >= 10 chars
-      const confidence = pageText.length > 50 ? 0.8 : 0.5;
-      insert.run(filename, page, pageText, confidence, ac, dataEnv);
-      extractedPages++;
-      totalChars += pageText.length;
-      pageConfidences.push(confidence);
+      // BPE-DEV-3 GAP-3: DPI escalation for low-output pages.
+      // If first pass returns < 50 chars, re-render at DPI 300 before deciding to skip.
+      // Task 292 FR-2 raised DPI from 150→200 for tables. For Vietnamese prose pages,
+      // DPI 300 can recover text that 200 DPI misses (user screenshot page 12 defect).
+      // This retry only fires once per page; the result replaces the initial low-output.
+      let finalText = pageText;
+      if (pageText.length < 50 && dpi < 300) {
+        try {
+          const escalatedText = await ocrOnePage(tmpPdf, page, 300);
+          if (escalatedText.length > pageText.length) {
+            logger.warn("[ocr] page " + String(page) + " DPI-escalated: " + String(pageText.length) + "->" + String(escalatedText.length) + " chars (200->300 DPI)", {
+              filename,
+              page,
+              charsBefore: pageText.length,
+              charsAfter: escalatedText.length,
+              reason: "dpi-escalation",
+            });
+            finalText = escalatedText;
+          }
+        } catch {
+          // Escalation failed — use original result
+        }
+      }
+
+      // BPE-DEV-3 GAP-3: skip threshold raised from < 10 to < 3.
+      // Prior threshold wrongly dropped pages 11-22 of FPT (3-9 chars = real prose at DPI 200).
+      // < 3 = single stray chars from image noise (genuine junk). 3+ chars = real text attempt.
+      if (finalText.length < 3) {
+        logger.warn("[ocr] page " + String(page) + " low-char: " + String(finalText.length) + " chars, skipped (below min-threshold=3)", {
+          filename,
+          page,
+          chars: finalText.length,
+          reason: "low-char",
+        });
+        pagesLowChar++;
+      } else {
+        // Task 292 / FR-3 updated: only insert rows for pages with >= 3 chars (was >= 10)
+        const confidence = finalText.length > 50 ? 0.8 : 0.5;
+        insert.run(filename, page, finalText, confidence, ac, dataEnv);
+        extractedPages++;
+        totalChars += finalText.length;
+        pageConfidences.push(confidence);
+      }
     }
 
     if (page % 10 === 0) {
