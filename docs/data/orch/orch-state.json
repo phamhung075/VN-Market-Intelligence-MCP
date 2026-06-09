@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-10T00:00:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-09T23:06:19Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4410,10 +4410,11 @@
             "task_id": "BPE-BA-1",
             "kind": "ba-spec",
             "owner": "ba",
-            "status": "PENDING",
+            "status": "SUPERSEDED",
             "zone": "apps/pdf-extractor/",
             "title": "BA spec: prose/non-table page extraction for BCTC (full content coverage). Decompose user bug into requirements: (1) page-type branch table-vs-prose, (2) prose-text unit emission to push plus storage plus serving, (3) 46-vs-35 OCR coverage-gap root-cause (same vs separate), (4) AI-analysis-layer consumes prose. Output docs/REQ_*.md. Flag recurring-bug-escalation -> architect root-cause SPIKE before dev. Coordinate with active uncommitted table-extraction work in zone (do not clobber).",
-            "created_at": "2026-06-09T21:42:04Z"
+            "created_at": "2026-06-09T21:42:04Z",
+            "note": "FR-3 (46-vs-35 gap) investigation FOLDED into BPE-SPIKE-1 architect root-cause (was deferred resolved-no-action; now THE root cause). FR-1/FR-2 already shipped via BPE-DEV-1/2."
           },
           {
             "id": "BPE-DEV-1",
@@ -4447,8 +4448,97 @@
             "created_at": "2026-06-09T22:00:00Z",
             "handoff": "docs/handoffs/TASK_BPE-DEV-2.md",
             "note": "[dev-mcp-server 2026-06-10] IMPL DONE. commit 5cea706a. 12 new tests GREEN. tsc clean. tools=157. REBUILD REQUIRED before live."
+          },
+          {
+            "id": "BPE-SPIKE-1",
+            "task_id": "BPE-SPIKE-1",
+            "kind": "spike",
+            "type": "SPIKE",
+            "mode": "spike",
+            "owner": "agents-architect",
+            "status": "PENDING",
+            "size": "S",
+            "timebox": 120,
+            "zone": "apps/mcp-server/",
+            "depends_on": [],
+            "created_at": "2026-06-09T23:06:19Z",
+            "title": "ROOT-CAUSE SPIKE: revisit BLOCKER-2 ('46-vs-35 benign') ruling — settle (1) total_pages semantics COUNT vs MAX, (2) WHY FPT pages 11-22 absent from pdf_extracted_text (never-OCR'd / OCR'd-but-<10char-skipped / image-only / page-number-misalignment), (3) whether inspector UI 'page 12' != DB page 12 off-by-N caused by the COUNT bug, (4) does a fresh /extract-layout-first re-flow self-heal the stale empty prose unit (GAP-2 page 16). Output findings doc + per-gap owner split.",
+            "question": "Pages 11-15 and 17-22 of FPT Q1-2026 have NO pdf_extracted_text rows despite visible rendered prose; page 12 = user defect. pdfOcrWorker iterates 1..min(totalPages,80) so range is NOT truncated. WHY absent? Is it the <10-char skip guard wrongly dropping text pages (DPI/PSM too low), genuinely image-only pages needing a different OCR pass, or page-number misalignment? Separately: handler total_pages uses COUNT(*) (=35) not MAX(page_number) (=46) — does this cause (a) fetch-range truncation pulling only 1..35 into bctc_layout_units AND (b) UI pagination off-by-N so UI-page-12 != DB-page-12 (notes text sits on DB-page-16)? Confirm GAP-2 (page-16 empty stitched_markdown from stale 2026-06-03 layout run) self-heals on re-flow after GAP-1+GAP-3 fixed.",
+            "note": "MANDATORY architect-first per feedback_recurring_bug_escalation (root moved upstream twice). MUST revisit and OVERRULE-OR-CONFIRM prior BLOCKER-2 ('separate/benign/no-action') in docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md L304 & TASK_BPE-DEV-2.md L134 — re-diagnosis CONTRADICTS it. Verified loci for architect: handler total_pages apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts L537-539 + L584-585 (COUNT->MAX); skip guard apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts L267-278 (empty + <10char skip). KEEP 2 shipped commits. Output: docs/architecture-briefs/2026-06-09-bctc-prose-ocr-coverage-rootcause.md + per-gap owner split (PO scopes BPE-DEV-3/OPS-1/DEV-4 from it)."
+          },
+          {
+            "id": "BPE-DEV-3",
+            "task_id": "BPE-DEV-3",
+            "kind": "sprint-task",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "BLOCKED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "depends_on": [
+              "BPE-SPIKE-1"
+            ],
+            "created_at": "2026-06-09T23:06:19Z",
+            "title": "GAP-1 fix: bctcInspectHandler total_pages COUNT(*) -> MAX(page_number) at L537-539 + L584-585 (FROM pdf_extracted_text WHERE filename=?). Verify fetch-range/OcrTextFetchClient consumes corrected total_pages so pages 36-46 are fetched into bctc_layout_units. Confirm/fix any UI pagination off-by-N if architect finds one. Add regression test.",
+            "blockers": "BPE-SPIKE-1 (architect must confirm semantics + whether off-by-N exists before patch)",
+            "note": "Well-specified code bug raw-verified by PO; KEEP shipped commits, additive only. Unblocks after SPIKE-1 confirms."
+          },
+          {
+            "id": "BPE-OPS-1",
+            "task_id": "BPE-OPS-1",
+            "kind": "ops-task",
+            "type": "OPS",
+            "owner": "ops",
+            "status": "BLOCKED",
+            "size": "M",
+            "zone": "apps/mcp-server/ (OCR pipeline/data)",
+            "depends_on": [
+              "BPE-SPIKE-1",
+              "BPE-DEV-3"
+            ],
+            "created_at": "2026-06-09T23:06:19Z",
+            "title": "OCR re-run for FPT Q1-2026 missing pages: re-run bctcReparseJob/pdfOcrWorker OCR for pages 11-15, 17-22 (currently absent) AND 36-46 (only fetchable after BPE-DEV-3 fixes total_pages range). Apply architect-prescribed remedy from SPIKE-1 (e.g. higher DPI / different PSM / image-page OCR pass) if guard was wrongly dropping text pages. Verify pdf_extracted_text gains rows for those pages, then trigger re-flow into bctc_layout_units.",
+            "blockers": "BPE-SPIKE-1 (remedy choice) + BPE-DEV-3 (fetch range)",
+            "note": "GAP-3 = THE root cause. Re-run must be on real FPT corpus, raw-verified post-run (SELECT page_number FROM pdf_extracted_text WHERE filename LIKE FPT% must cover 11-46)."
+          },
+          {
+            "id": "BPE-DEV-4",
+            "task_id": "BPE-DEV-4",
+            "kind": "sprint-task",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "BLOCKED",
+            "size": "S",
+            "zone": "apps/mcp-server/ + pdf-extractor /extract-layout-first re-flow",
+            "depends_on": [
+              "BPE-OPS-1"
+            ],
+            "created_at": "2026-06-09T23:06:19Z",
+            "title": "Re-flow: run fresh /extract-layout-first for FPT Q1-2026 so prose units rebuild from now-present OCR text (GAP-2 self-heal — page 16 empty stitched_markdown from stale 2026-06-03 run). Verify bctc_layout_units prose units carry non-empty stitched_markdown for pages 11-22, 36-46. Rebuild mcp-server container if any code from BPE-DEV-3 changed.",
+            "blockers": "BPE-OPS-1 (OCR text must exist before re-flow can stitch it)",
+            "note": "Architect (SPIKE-1 q4) to confirm re-flow alone self-heals GAP-2 vs needs targeted backfill."
+          },
+          {
+            "id": "BPE-QA-1",
+            "task_id": "BPE-QA-1",
+            "kind": "qa-task",
+            "type": "QA",
+            "owner": "qa",
+            "status": "BLOCKED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "depends_on": [
+              "BPE-DEV-4"
+            ],
+            "created_at": "2026-06-09T23:06:19Z",
+            "title": "END-TO-END live verify on FPT Q1-2026: inspector serves real content for ORIGINALLY-FAILING page 12 (prose text, NOT 'No OCR text'), page 16 (notes header B 09-DN/HN), and notes section pages ~23-46. total_pages reports 46. NO page with visible rendered text serves empty/pek_coverage_gap. prose_sections present in get_bctc_full AI tool. Confirm against raw live (bctc-inspect smoke + SQL), not badges.",
+            "blockers": "BPE-DEV-4",
+            "note": "DoD arbiter for Stop-hook goal. Router must verify raw per feedback_router_verify_raw_not_badges before sign-off. Sprint NOT done until page 12 + notes serve real content end-to-end."
           }
-        ]
+        ],
+        "_retriage_at": "2026-06-09T23:06:19Z",
+        "_retriage_by": "po",
+        "retriage_note": "RE-FLOW re-diagnosis 2026-06-09: 2 shipped commits (32e9571a producer prose-stitch QA-GREEN, 338ec4c8 serving QA-GREEN, mcp-server live image eb2f3da5becd) are correct-but-INSUFFICIENT — KEEP, build on top. Stop-hook goal STILL ACTIVE (FPT Q1 page 12 serves 'No OCR text'). Root moved upstream TWICE (prose-stitch->serving-filter->OCR-coverage). Architect BLOCKER-2 ruling ('46-vs-35 gap benign/irrelevant, no action') now CONTRADICTED by raw evidence — pages 11-15+17-22 have NO pdf_extracted_text rows yet page 12 has VISIBLE rendered prose. PO raw-verified: GAP-1 handler L538/L585 total_pages=COUNT(*) (=35) must be MAX(page_number) (=46); pdfOcrWorker L254 iterates 1..min(46,80) so OCR worker is NOT range-truncated -> GAP-3 absence is genuine OCR-skip/image-page/misalignment, NOT benign. Recurring-bug escalation -> mandatory architect SPIKE before any patch."
       }
     ],
     "backlog": [
@@ -7536,7 +7626,14 @@
         "note": "[dev-mcp-server DJ-GATE-1 2026-06-09] IMPL: rag_analyses/agent_feedback/signal_quality_audit created_at DEFAULT added; getDb() P5 self-heal re-applied (9 slices excl. initFinancialReportsTables); setup.ts await initDatabase() preload added. tsc clean. Router owns CI gate. | po-S21: CI-P8-GATE-6295cb32 FAILED (native fail+error 631 vs 629, +2 WORSE; created_at x3 regression PERSISTS — DDL-DEFAULT hypothesis disproven). Router reverted apps/ to 629 baseline (880ffca6, byte-identical 2a6044b1). REVIEW->REWORK: fix off main, hypothesis empirically disproven (4th consecutive P5/P6/P7/P8). Schema-drift cluster PARKED best-effort-exhausted per PO path-B decision; 629 documented as schema-drift FLOOR. No 7th touch opened. Superseded by FU-CI-PROFILE-629 (full-corpus failure taxonomy).",
         "updated_at": "2026-06-09T04:14:34Z"
       }
-    ]
+    ],
+    "head": {
+      "next": "agents-architect",
+      "task": "BPE-SPIKE-1",
+      "sprint": "BCTC-PROSE-EXTRACT",
+      "set_at": "2026-06-09T23:06:19Z",
+      "set_by": "po"
+    }
   },
   "signal_queue": {
     "_updated_at": "2026-06-09T03:38:00Z",
@@ -9348,5 +9445,5 @@
       }
     ]
   },
-  "sprint_goal": "BCTC-PROSE-EXTRACT (opened 2026-06-09, high, zone apps/pdf-extractor/). GOAL: BCTC extractor must extract ALL page content — table pages -> table rows (existing), prose/non-table pages (Thuyet minh notes-to-FS) -> PROSE TEXT, never dropped. Every page yields content; no silent-empty page when rendering shows text. Close the 46-vs-35 OCR coverage gap. DoD: full prose extraction reaches OCR/text output plus AI-analysis layer; root-cause fix not symptom patch; recurring-bug-escalation -> architect root-cause SPIKE (7+ prior commits on producer module family). Drive ba->architect->pm->dev-pdf-extractor->qa to DONE, coordinate with active uncommitted table-extraction work (bctc_code_whitelist/layout_invariants/dtos) — do not clobber. Next: BPE-BA-1 (ba)."
+  "sprint_goal": "BCTC-PROSE-EXTRACT (opened 2026-06-09, high, zone apps/mcp-server/ + OCR pipeline). GOAL: FPT Q1-2026 every page with visible rendered text serves its content via inspector (table pages->rows, prose pages->prose text); NO page shows 'No OCR text'/empty pek_coverage_gap. 2 shipped commits KEPT (producer prose-stitch + serving). RE-DIAGNOSIS: root is OCR coverage gap (pages 11-22, 36-46 absent) + total_pages COUNT-vs-MAX bug, NOT just prose-stitch. Architect BLOCKER-2 'benign' ruling OVERRULED pending SPIKE. recurring-bug escalation -> architect root-cause SPIKE FIRST. Chain: architect SPIKE -> dev-mcp-server GAP-1 fix -> ops OCR re-run (11-22,36-46) -> dev re-flow -> qa end-to-end on page 12/16/notes. DoD: page 12 + notes section serve real content live, verified raw not badges; drive to DONE not a slice. Next: BPE-SPIKE-1 (agents-architect)."
 }
