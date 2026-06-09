@@ -957,6 +957,28 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
       );
       totalAssets = identityDerived;
     }
+  } else if (
+    // BATCH5-BS-REGRESSION path B-SB: split-block code-270 zip can bind a prior-period /
+    // sub-item value (PPC). Override is safe ONLY when two INDEPENDENT grand-total estimates
+    // corroborate: sources-side(440) ≈ identity(liab+equity) within 2%, and totalAssets(270)
+    // diverges from that consensus by >5%. Keeps 1416b-VNM untouched (440=30M ≠ identity=130M
+    // → no consensus → no override).
+    sbMap !== null &&
+    totalSourcesSideFwd > 0 &&
+    totalLiabilities > 0 && equity.total > 0 && totalLiabilities < equity.total * 20
+  ) {
+    const identityDerived = totalLiabilities + equity.total;
+    const consensus = identityDerived > 0 &&
+      Math.abs(totalSourcesSideFwd - identityDerived) / totalSourcesSideFwd <= 0.02;
+    const totalAssetsDiverges = totalAssets === 0 ||
+      Math.abs(totalAssets - identityDerived) / identityDerived > 0.05;
+    if (consensus && totalAssetsDiverges) {
+      console.warn(
+        `[balanceSheetExtractor] BATCH5-BS-REGRESSION (path B-SB): split-block totalAssets(${totalAssets}) ` +
+        `diverges from corroborated grand total (sources-side ${totalSourcesSideFwd} ≈ identity ${identityDerived}); overriding.`
+      );
+      totalAssets = identityDerived;
+    }
   }
 
   const raw: BalanceSheet = {
@@ -989,15 +1011,17 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   // Safety: only apply magnitude inference for sentinels, never for explicit
   // triệu/tỷ detection (multiplier > 0).
   let effectiveMultiplier = multiplier;
-  // FIX-BCTC-MAGNITUDE-NORMALIZE magnitude inference: skip when sbMap is active.
-  // Split-block extraction provides raw values in the unit already declared by
-  // the document; applying ÷1,000,000 on top would corrupt the result.
-  if (sbMap === null && (multiplier === -1 || multiplier === -2)) {
+  // BATCH5-BS-REGRESSION Change 1: REMOVE the Phase B sbMap===null gate and the
+  // else-branch. Run magnitude inference for ALL sentinels (split-block and inline).
+  // RAISE threshold to 1e12: VCB Q1 bank split-block maxField ~2.1e9 stays un-normalized;
+  // true raw-VND statements (PPC, 1120, LIAB-PRIOR, 1908c) have maxField ≥5.5e12.
+  if (multiplier === -1 || multiplier === -2) {
     // Primary probe: totalAssets — most reliable anchor for scale.
     // Fallback probe: scan ALL monetary fields for the largest absolute value.
-    // If any field > 1 billion, the statement is in raw VND.
     // 1 triệu = 1,000,000 đồng → divide by 1,000,000.
-    const RAW_VND_THRESHOLD = 1_000_000_000;
+    const RAW_VND_THRESHOLD = 1_000_000_000_000; // was 1_000_000_000 — bank split-block totals
+                                                 // (~2e9) must stay un-normalized; true raw-VND
+                                                 // statements are ≥5.5e12.
     const primaryProbe = totalAssets;
     const fallbackProbe =
       primaryProbe === 0
@@ -1014,14 +1038,8 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
       effectiveMultiplier = 0.000001;
       console.warn("[balanceSheetExtractor] Inferred raw VND (đồng) from magnitude; applying ÷1,000,000.");
     } else {
-      // Sentinel but small numbers — treat as triệu already
       effectiveMultiplier = 1;
     }
-  } else if (sbMap !== null && (multiplier === -1 || multiplier === -2)) {
-    // Split-block mode: treat values as-is (no magnitude conversion).
-    // Split-block extracts values directly from the labeled page pair;
-    // unit declaration is typically absent but values are already in triệu.
-    effectiveMultiplier = 1;
   }
 
   return guardBalanceSheet(applyMultiplier(raw, effectiveMultiplier));
