@@ -1,8 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 15:30 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 14:56 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T14:56Z — arch-S17: Task 235 residual triage (4 fail log-lines, run 27214052876)
+
+**Task:** FIX-CI-C235-RESIDUAL-TRIAGE (TRIAGE, S, zone: apps/mcp-server/src/__tests__/)
+
+**Method:** Pulled raw CI log job 80350659632 (gh run view). Extracted ##[group] file-order timestamps. Read FIX-1290, 1352a, 047, 235, 1792 source files. Cross-referenced stub fingerprint with failure lines.
+
+**Verdict: FOURTH CONTAMINATOR — FIX-1290-briefing-no-stale.test.ts**
+
+**Root cause:**
+- The 4 fail log-lines = 2 unique failing tests × 2 occurrences (runtime at 14:43:58 + bun final summary at 14:45:05). NOT 4 independent test failures.
+- `channel='bug'` test now PASSES (1792 afterAll cure worked for sendTelegramBug).
+- `FIX-1290-briefing-no-stale.test.ts` (runs at 14:42:17) has file-top `mock.module` L21 that stubs `sendTelegramMarket: async (text) => { marketMessages.push(text); return true; }` with NO afterAll restore.
+- After 1792's afterAll restores real module, FIX-1290 immediately re-poisons sendTelegramMarket.
+- 1352a (14:42:18) and 047 (14:42:29) both capture FIX-1290's stub as their "frozen real" and re-install it in their own afterAll teardowns. Contamination persists to 235 (14:43:58).
+- Stub fingerprint: ignores fetchFn → capturedUrls stays 0 (line 102); ignores TELEGRAM_BOT_TOKEN → returns true when false expected (line 150). Exclusively FIX-1290's stub.
+- Prod sendTelegramMarket verified correct (L265, fetchFn injection, false on no-token). REWRITE/REMOVE excluded.
+
+**C5-cure spec:**
+- ONE file: `FIX-1290-briefing-no-stale.test.ts`
+- Add `afterAll` to import line; add cache-busted `_realMod1290` import before L21 mock.module; add file-bottom afterAll restoring all telegram exports from `_realMod1290`
+- Existing mock.module stub at L21 UNCHANGED (load-bearing for AC-1/AC-2/AC-3)
+- Cache-bust `?isolate=1290`
+
+**Systemic flag:** 4 telegram mock.module contaminators confirmed in this family (1485, 1792, FIX-1290, 047-as-secondary). Repo-wide sweep `FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP` recommended to PO.
+
+**CI victim:** Task 235 (fail count 4 → 0 expected), plus potential downstream benefit for 1352a/047 frozen-real captures.
+**Brief:** docs/architecture-briefs/2026-06-09-ci-c235-residual-triage.md
 
 ## 2026-06-09T13:15Z — FIX-CI-C7-ASSERTION-LOGIC: Task 1328e conviction routing, 10 CI fails
 

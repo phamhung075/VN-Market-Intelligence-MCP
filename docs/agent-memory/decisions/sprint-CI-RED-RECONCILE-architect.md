@@ -459,3 +459,31 @@ Produced brief at `docs/architecture-briefs/2026-06-09-ci-c1328e-retriage-arch-s
 
 **artefacts:**
 - `docs/architecture-briefs/2026-06-09-ci-c1328e-retriage-arch-s15.md`
+
+---
+
+### STEP arch-S17 (DJ-GATE-1) · architect · 2026-06-09T14:56Z
+
+**task-id:** FIX-CI-C235-RESIDUAL-TRIAGE
+**what-done:** Re-triage Task 235 residual (4 fail log-lines after 1792 afterAll cure, run 27214052876 / job 80350659632 / sha 09dce373). Pulled raw CI log for job 80350659632 via `gh run view --job=80350659632 --log`. Extracted full `##[group]` file-order timestamps. Read FIX-1290, 1352a, 047, 235, 1792 source files. Verified stub fingerprint.
+
+**findings:**
+- The 4 fail log-lines for Task 235 = 2 unique failing tests × 2 log occurrences each (runtime + bun final summary dump). Not 4 independent test failures.
+- Surviving 2 failing tests: `channel='market' sends to MARKET channel and returns success` (line 102: capturedUrls.length Expected 1, Received 0) and `channel='market' with no token returns failure gracefully` (line 150: Expected false, Received true).
+- `channel='bug' sends to BUG channel` is NOW PASSING (1792 afterAll cure worked for sendTelegramBug).
+- Stub fingerprint on `sendTelegramMarket`: ignores fetchFn (capturedUrls stays 0) and ignores TELEGRAM_BOT_TOKEN (returns true not false). Exactly matches FIX-1290's stub.
+- CI file order confirmed: FIX-1290 (14:42:17) runs AFTER 1792's afterAll restore, BEFORE 235 (14:43:58). FIX-1290 re-poisons `sendTelegramMarket` with no afterAll restore. 1352a+047 then freeze FIX-1290's stub as their "frozen real" and re-install it in their own afterAll teardowns.
+- Prod telegram.ts sendTelegramMarket (L265) verified correct. REWRITE/REMOVE/FIX-PROD all excluded.
+
+**verdict:** (a) FOURTH CONTAMINATOR — `FIX-1290-briefing-no-stale.test.ts`, file-top mock.module L21, stub `sendTelegramMarket: async (text) => { marketMessages.push(text); return true; }`, NO afterAll restore.
+
+**what-considered:**
+- (a) FOURTH-CONTAMINATOR (CHOSEN): CI file order + stub fingerprint match exactly. 1792 afterAll cure removed sendTelegramBug leak (channel='bug' now passes) while sendTelegramMarket still poisoned by FIX-1290. Full-CI file-order evidence (##[group] timestamps) is authoritative.
+- (b) REWRITE: excluded. Prod sendTelegramMarket behavior (fetchFn injection, false on no-token) exactly matches test assertions.
+- (c) REMOVE: excluded. Test is valid; no superseding coverage.
+**why-decision:** Only FIX-1290 runs between 1792's afterAll (which now restores real module) and 235, stubs sendTelegramMarket, and has no afterAll restore. The stub fingerprint (ignores fetchFn, returns true regardless of token) is the exclusive signature of FIX-1290 lines 21-30.
+
+**systemic note:** Four telegram mock.module contaminators confirmed (1485, 1792, FIX-1290, plus 047 as secondary propagator). Repo-wide afterAll-restore sweep queued to PO as `FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP` — more efficient than one-victim-at-a-time.
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-c235-residual-triage.md`
