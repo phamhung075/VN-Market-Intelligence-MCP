@@ -87,3 +87,20 @@ Zone health: bun tsc --noEmit clean, tools/scheduler unchanged (test-only fix + 
 **tsc:** CLEAN. Zero test file changes. DJ-GATE-1: sprint-DEEPFETCH-RAG-REDESIGN-dev-mcp-server.md S5.
 
 Zone health: bun tsc --noEmit clean, network guards active, tools 157 intact, scheduler 76 cron.schedule | HEALTHY
+
+## 2026-06-09 · FU-SCHEMA-DRIFT-P4 — REVIEW
+
+**Task:** FU-SCHEMA-DRIFT-P4 — pure-singleton test-DB isolation audit | Sprint: CI-RED-RECONCILE
+**Scope:** Audit all pure-singleton test files for schema-drift failures in isolation. Baseline: CI run 27175100853 = 634 fail+error.
+
+**Method:** Classified 1036 test files → 4 modes. Ran 600+ files with `bun test --bail <single-file>`. Checked rc and stderr for "no such table" / "byteOffset" errors.
+
+**Finding:** Only ONE file fails in isolation — `1972-vndirect-ohlcv-null-coercion.test.ts`. Root cause: inline `daily_ohlcv` DDL missing `data_env TEXT` + foreign flow columns. Production `runOhlcvBackfill` prepares `INSERT ... data_env ...` → `byteOffset: -1` on prepare().
+
+**Fix (Contract B):** Added `foreign_buy_vol REAL`, `foreign_sell_vol REAL`, `foreign_net_vol REAL`, `put_through_vol REAL`, `data_env TEXT` to inline `CREATE TABLE daily_ohlcv` in 1972 test. Isolation: 5/5 pass.
+
+**Key insight:** 44 pure-singleton files reference target table names in comments / variable-names / test-data strings — NOT in SQL queries. Files that DO call production functions (e.g. `readLatestForeignFlowTimestamp`) have try/catch returning null gracefully. No initDatabase() sweep needed.
+
+**tsc:** CLEAN. Files changed: 1 (test file) + orch-state.json + this notebook.
+
+Zone health: bun tsc --noEmit clean | HEALTHY

@@ -24,14 +24,19 @@ function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
-      code       TEXT NOT NULL,
-      date       TEXT NOT NULL,
-      open       REAL NOT NULL DEFAULT 0,
-      high       REAL NOT NULL DEFAULT 0,
-      low        REAL NOT NULL DEFAULT 0,
-      close      REAL NOT NULL,
-      volume     REAL NOT NULL DEFAULT 0,
-      updated_at TEXT NOT NULL DEFAULT '',
+      code             TEXT NOT NULL,
+      date             TEXT NOT NULL,
+      open             REAL NOT NULL DEFAULT 0,
+      high             REAL NOT NULL DEFAULT 0,
+      low              REAL NOT NULL DEFAULT 0,
+      close            REAL NOT NULL,
+      volume           REAL NOT NULL DEFAULT 0,
+      updated_at       TEXT NOT NULL DEFAULT '',
+      foreign_buy_vol  REAL,
+      foreign_sell_vol REAL,
+      foreign_net_vol  REAL,
+      put_through_vol  REAL,
+      data_env         TEXT,
       PRIMARY KEY (code, date)
     );
     CREATE TABLE IF NOT EXISTS watchlist (
