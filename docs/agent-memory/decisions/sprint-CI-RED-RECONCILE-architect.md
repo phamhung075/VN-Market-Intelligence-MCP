@@ -63,3 +63,65 @@
 **why-change:** Prior brief (CI-TEST-ISOLATION-SPIKE) identified B2 (data_env) as the primary schema class. This spike reveals 5 sub-classes from the mechanized injection regression, requiring a more granular per-class fix plan and an explicit two-contract architectural boundary.
 **artefacts:**
 - `docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md`
+
+---
+
+### STEP arch-S4 (DJ-GATE-1) · architect · 2026-06-09T04:00Z
+
+**task-id:** FU-SCHEMA-DRIFT-P5
+**sprint:** CI-RED-RECONCILE
+**mode:** spike (120m timebox)
+
+**what-done:** Diagnosed full-suite singleton pollution mechanism for residual 629 CI failures
+(agent_signals 37, sbv_rates_history 19, positions 19, commodity_prices_history 19,
+commodity_prices 16, imf_indicators 3). Corrected the wrong Phase 4 isolation-audit premise.
+Chose fix architecture option (b) — self-healing `getDb()`. Updated brief with Phase 4 REVISED
+addendum. Produced bounded single-file PM decompose recommendation.
+
+**what-considered:**
+
+- **Premise correction trigger:** FU-SCHEMA-DRIFT-P4 empirically ran 44+ pure-singleton files
+  in per-file isolation. ALL 44 pass in isolation (rc=0). Only `1972-vndirect-ohlcv-null-coercion.test.ts`
+  (daily_ohlcv) failed in isolation — P4 already fixed it. Therefore Phase 4's original
+  prescription ("run in isolation; add initDatabase() to those that fail") would find NOTHING
+  to fix for the residual 629 classes. Phase 4 premise is wrong.
+
+- **Pollution mechanism identified:**
+  1. `bun test 1.3.13` = single-process sequential (no `--parallel`; confirmed via `bunfig.toml`,
+     `ci.yml`, `bun test --help` output).
+  2. Module-level `_db: Database | null = null` in `schema.ts` shared across ALL 1033 files.
+  3. "Singleton killer" pattern: Contract-A files with `closeDb()` in `afterAll` nullify `_db`.
+     Named files: `084-tool-market.test.ts`, `089-tool-macro.test.ts`,
+     `1527-schema-slices.test.ts`, `182-portfolio-risk.test.ts`.
+  4. Production modules call `getDb()` directly (non-injectable): `macroStatsStore.ts::getCommodityStats()`
+     (line 36), `macroStatsStore.ts::getSbvStats()` (line 118), `positionTools.ts` lines 218/260/299.
+  5. These modules have `try { getDb(); db.query(...) } catch { logger.warn(...); return []; }` guards.
+     The "no such table" error is caught silently; test assertion sees `[]` instead of populated data.
+  6. In per-file isolation: test was written for empty-state behavior → passes.
+     In full suite: test was written assuming prior-in-suite `initDatabase()` had populated the singleton → fails.
+
+- **Fix options evaluated:**
+  - (a) Global `beforeEach` reset in `setup.ts`: `initDatabase()` is async; 11k calls; migration overhead. REJECTED.
+  - (b) Self-healing `getDb()`: synchronous slice inits on fresh `:memory:` branch. CHOSEN.
+  - (c) `--parallel` run-order isolation: full process model change; unknown blast radius; OOM risk. REJECTED.
+  - (d) Migrate ~45 affected pure-singleton files to Contract A: async `initDatabase()` in `beforeEach`
+    incompatibility + 9454baad mechanized-sweep lesson (cost +219, reverted). REJECTED.
+
+**why-decision:**
+Option (b) is the only approach with zero blast radius and bounded scope. Individual
+`initXxxTables(db)` functions are all synchronous — `getDb()` stays synchronous. Contract-B
+tests never call `getDb()` so they are unaffected. Contract-A tests double-init (idempotent
+`CREATE TABLE IF NOT EXISTS`) — harmless. Production server behavior unchanged (server still
+calls `initDatabase()` at boot; self-heal is an additive no-op on top). `initFinancialReportsTables()`
+is excluded from the self-heal due to RISK-2 (view compilation risk) and is NOT in the
+629-failure classes. Bounded file set: **exactly 1 file** (`schema.ts`, 1 function, `getDb()`).
+
+**why-change:** None from spike brief direction; finding was the wrong premise in Phase 4.
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-test-schema-fixture-spike.md` (addendum: Phase 4 REVISED section)
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
+
+**pm-decompose recommendation:** Single task `FIX-SCHEMA-DRIFT-P5-SELFHEAL`, zone=apps/mcp-server/,
+timebox=30m, owner=dev-mcp-server, exactly 1 file (`schema.ts`), verification gate: native
+`bun test` fail+errors < 629 (native-to-native comparison only; marker method over-counts ~2×).

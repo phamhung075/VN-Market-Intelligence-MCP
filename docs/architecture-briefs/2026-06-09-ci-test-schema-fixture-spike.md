@@ -607,3 +607,260 @@ changes. All are safe to run in parallel with other CI-RED-RECONCILE tasks.
 *Brief authored by: agents-architect*
 *Task: CI-TEST-SCHEMA-FIXTURE-SPIKE*
 *Handoff: PO (brief_complete signal) → PM for task decomposition*
+
+---
+
+## ADDENDUM — Phase 4 REVISED (full-suite singleton pollution)
+*Added: 2026-06-09 — Task FU-SCHEMA-DRIFT-P5 — arch-S4 DJ-GATE-1*
+
+### Empirical correction to Phase 4 original premise
+
+Phase 4 above prescribed: "run pure-singleton files in isolation; files that fail in
+isolation need `initDatabase()` added."
+
+**That premise is wrong for the residual 629-failure classes.** Task FU-SCHEMA-DRIFT-P4
+(dev-mcp-server, DONE) ran the 44+ pure-singleton files referencing the failing tables
+(agent_signals, sbv_rates_history, positions, commodity_prices_history, commodity_prices,
+imf_indicators) in per-file isolation. FINDING: all 44 files pass in isolation (`rc=0`).
+Only ONE file — `1972-vndirect-ohlcv-null-coercion.test.ts` (daily_ohlcv table) — failed
+in isolation; P4 fixed it with Contract-B inline DDL (net −5: 634→629), regression-free.
+
+The residual 629 failures are NOT caused by files that fail in isolation. They are caused
+by **cross-file singleton pollution under full-suite execution**.
+
+---
+
+### Diagnosed pollution mechanism
+
+#### Process model (confirmed)
+
+`bun test 1.3.13` (the version pinned in `.tool-versions`) runs ALL test files in a **single
+process** unless `--parallel` is explicitly passed. `bunfig.toml` contains no `--parallel`
+setting. `.github/workflows/ci.yml` runs bare `bun test`. Therefore:
+
+- The module-level singleton `let _db: Database | null = null` in
+  `apps/mcp-server/src/infrastructure/db/schema.ts` is **shared across all 1033 test files**
+  in the same bun test process.
+- The `setup.ts` preload (`preload = ["./src/__tests__/setup.ts"]`) runs **once per process**,
+  not once per file. It sets `Bun.env["DB_PATH"] = ":memory:"` but does NOT call
+  `initDatabase()`.
+
+#### The "singleton killer" pattern
+
+Contract-A files call `closeDb()` in their `afterAll` hook (correct teardown per the
+two-fixture contract model). This sets `_db = null` in `schema.ts`. Confirmed examples:
+
+- `084-tool-market.test.ts` — `closeDb()` in `afterAll`
+- `089-tool-macro.test.ts` — `closeDb()` in `afterAll`
+- `1527-schema-slices.test.ts` — `closeDb()` in both `beforeAll` and `afterAll`
+- `182-portfolio-risk.test.ts` — `closeDb()` in `afterEach`
+
+These files run correctly in isolation. In the full-suite run they execute first (or earlier
+in the Bun sequential order), and their `afterAll` leaves `_db = null`.
+
+#### The non-injectable getDb() fallback
+
+Several production modules call `getDb()` DIRECTLY without accepting a `db` argument:
+
+**`macroStatsStore.ts`:**
+```typescript
+export function getCommodityStats(...): MacroStats[] {
+  try {
+    const db = getDb();  // NON-INJECTABLE — no db parameter
+    const rows = db.query(`SELECT ... FROM commodity_prices_history ...`).all(lookback);
+    ...
+  } catch (err) {
+    logger.warn("[macroStats] failed to compute commodity stats", { error: ... });
+    return [];  // Silent degradation — test sees empty result, not exception
+  }
+}
+
+export function getSbvStats(...): MacroStats[] {
+  try {
+    const db = getDb();  // NON-INJECTABLE
+    const rows = db.query(`SELECT ... FROM sbv_rates_history ...`).all(lookback);
+    ...
+  } catch (err) { logger.warn("[macroStats] getSbvStats failed", { error: ... }); return []; }
+}
+```
+
+**`positionTools.ts` (lines 218, 260, 299):**
+```typescript
+async ({ actionCode, shares, avgPrice, notes }) => {
+  await initDatabase();  // Repairs singleton IF called (async, Contract-A semantics)
+  const db = getDb();    // Uses singleton — ignores injected _testDb
+  upsertPosition(db, { ... });
+}
+```
+Note: only line 351 (`get_user_positions_for_analysis`) correctly uses `_testDb ?? getDb()`.
+
+#### How the failure manifests in the full suite
+
+1. Contract-A file X runs, calls `closeDb()` in `afterAll` → `_db = null`
+2. Bun loads file Y (pure-singleton, no initDatabase call)
+3. File Y imports a module that calls `getDb()` → fresh empty `:memory:` db created (no
+   tables created, only PRAGMA configuration applied)
+4. The production function (`getCommodityStats`, `getSbvStats`, a position mutation tool)
+   queries a table that does not exist on this fresh empty db
+5. The query throws `"no such table: X"`, caught by the `try/catch` guard → function returns
+   `[]` and emits a `logger.warn(...)` → **no exception propagates to the test**
+6. The test ASSERTION fails: test expects populated data, receives `[]`
+
+In per-file isolation: same degradation path (empty singleton → catch → `[]`), but the
+test assertion is met by `[]` (no state was ever established), so the test passes.
+
+In the full suite: the test was written when earlier-in-suite `initDatabase()` calls had
+already populated the singleton. The isolation test passes because neither state was seeded.
+The full-suite test fails because the assertion assumed a seeded state that was wiped by a
+prior file's `afterAll(closeDb())`.
+
+#### Why logger.warn appears in CI logs
+
+The CI log lines `"no such table: sbv_rates_history"`, `"no such table: positions"`, etc.
+are NOT uncaught SQLite exceptions. They are `logger.warn(...)` lines from inside the
+`catch` blocks of `getCommodityStats()`, `getSbvStats()`, and similar. This is why the
+failures appear as ASSERTION errors in the test report (count ≠ expected), not as
+`SqliteError` propagation errors.
+
+---
+
+### Fix architecture decision: Option (b) — Self-healing getDb()
+
+**The four options considered:**
+
+**(a) Global beforeEach reset in setup.ts** — Call `closeDb(); await initDatabase()` in a
+global `beforeEach`. REJECTED. Makes `initDatabase()` async; `beforeEach` at the preload
+level would add ~1-5ms overhead per test × 11k tests ≈ potential significant slowdown.
+Also, `initDatabase()` calls `migrateForeignFlowColumns()` which checks migration state —
+running this 11k times risks ordering bugs. Blast radius: all 11k tests.
+
+**(c) Run-order isolation via `--parallel`** — Force Bun to run each file in a worker
+process. REJECTED. `--parallel` is explicit opt-in and would change the entire test process
+model; would require verifying that ALL 1033 test files work correctly in per-worker context
+(unknown blast radius). Bun 1.3.13 `--parallel` worker spawning also known to have its
+own issues (OOM risk on large suites per CI-OOM history). Not a targeted fix.
+
+**(d) Migrate affected pure-singleton files to Contract A** — Add `beforeEach(() => {
+closeDb(); return initDatabase(); })` to each of the ~45 affected pure-singleton files.
+REJECTED. Mechanized sweep pattern (9454baad lesson). `initDatabase()` is async (cannot
+be returned from `beforeEach` in all bun:test modes), and the view compile risk (RISK-2)
+applies when these files' production modules also create `financial_reports` with narrow DDL.
+Blast radius: ~45 files, each needing individual verification.
+
+**(b) CHOSEN — Self-healing getDb() with synchronous slice inits**
+
+Modify `getDb()` in `apps/mcp-server/src/infrastructure/db/schema.ts`: when creating a
+new `:memory:` db (the `_db = new Database(dbPath)` branch), synchronously call the
+individual init slice functions for the tables that are polluted.
+
+**Key structural facts that make this safe:**
+
+1. All individual `initXxxTables(db)` functions are **synchronous** (unlike `initDatabase()`
+   which is async due to `migrateForeignFlowColumns()`). `getDb()` can remain synchronous.
+2. All `initXxxTables()` use `CREATE TABLE IF NOT EXISTS` — calling them again when
+   `initDatabase()` has already been called (Contract-A files) is idempotent and harmless.
+3. Contract-B tests that use `new Database(":memory:")` directly **never call `getDb()`** —
+   they are completely unaffected. Zero blast radius to Contract-B.
+4. The `DB_PATH` is `:memory:` in test context (set by `setup.ts`). For file-path DBs in
+   production, tables already exist on disk — the `CREATE TABLE IF NOT EXISTS` calls are
+   still idempotent and harmless (they are DDL no-ops against an existing table).
+
+**Exact change specification (for dev-mcp-server):**
+
+File: `apps/mcp-server/src/infrastructure/db/schema.ts`
+Function: `getDb()`
+Change: In the `_db = null` branch (when `_db` is null and a new db must be created),
+after the `PRAGMA` setup and before returning, call:
+
+```typescript
+// Auto-init tables on fresh :memory: db — prevents cross-file singleton pollution
+// in single-process bun test runs after a prior file's afterAll(closeDb())
+initMarketDataTables(_db);
+initAlertsTables(_db);
+initMacroTables(_db);
+initPortfolioTables(_db);
+initNewsTables(_db);
+initBriefingsTables(_db);
+initSystemTables(_db);
+initBacktestingTables(_db);
+initAgmPlanTables(_db);
+// NOTE: initFinancialReportsTables() is intentionally NOT called here due to RISK-2
+// (view compilation references period_quarter — risky when called outside full initDatabase())
+// NOTE: migrateForeignFlowColumns() is NOT called here — it is async and migration-state-aware
+// It will still be called by initDatabase() for tests that use Contract A.
+```
+
+**Why exclude `initFinancialReportsTables()`:** RISK-2 documents that the views
+`v_chart_timeseries` and `v_yoy_comparison` reference `period_quarter` from
+`financial_reports`. If called without the full canonical DDL context, view creation may
+fail. The financial_reports table is NOT in the residual 629-failure classes (0 occurrences
+among the 6 listed failing table groups). Exclude it from the self-heal; it remains handled
+exclusively by `initDatabase()`.
+
+**Bounded file set:** EXACTLY ONE FILE — `apps/mcp-server/src/infrastructure/db/schema.ts`
+
+**Blast-radius assessment:**
+- Contract-A tests: idempotent DDL calls (no-ops) → unaffected
+- Contract-B tests: never call `getDb()` → unaffected
+- Production server startup: `initDatabase()` still called at server boot, so server
+  behavior is unchanged. The self-heal calls are additive no-ops on top of what
+  `initDatabase()` would do.
+- `002-db-schema.test.ts` (the schema regression test): uses `initDatabase()` explicitly;
+  self-heal calls will have already run `CREATE TABLE IF NOT EXISTS` before `initDatabase()`
+  calls the same slice functions — idempotent, no-op.
+
+---
+
+### Verification gate
+
+The verification metric is: **native `bun test` summary `fail + errors` MUST DROP vs 629
+absolute** (native-to-native comparison; the marker-based method over-counts ~2×).
+
+Baseline: `fail=615 + errors=14 = 629` (sha e442cf11, CI run 27177364641).
+Target: `fail + errors < 629` after this single-file change.
+
+Conservative expectation: ~95 of the 629 failures are attributable to the non-injectable
+`getDb()` fallback pattern for the 6 table classes. The exact count depends on bun test file
+ordering in CI, which is deterministic but filesystem-dependent.
+
+**Local verification command:**
+```bash
+cd apps/mcp-server && bun test 2>&1 | tail -5
+# Must show: X pass / Y fail / Z errors where Y+Z < 629
+```
+
+---
+
+### PM decompose recommendation
+
+**Single FIX task for dev-mcp-server:**
+
+```
+Task: FIX-SCHEMA-DRIFT-P5-SELFHEAL
+Zone: apps/mcp-server/
+Owner: dev-mcp-server
+Timebox: 30m
+Scope: EXACTLY one file — apps/mcp-server/src/infrastructure/db/schema.ts
+Change: getDb() self-heal — add synchronous initXxxTables() calls in the fresh-db branch
+Tables targeted: all slices EXCEPT initFinancialReportsTables() (RISK-2)
+Verification gate: native bun test fail+errors < 629 (native-to-native comparison)
+Regression guard: bun tsc --noEmit must remain clean; 002-db-schema.test.ts must pass
+```
+
+This is NOT a mechanized sweep. It is a single-function modification in a single file,
+bounded to the singleton infrastructure layer. The dev agent should run `002-db-schema.test.ts`
+and the full suite before and after to confirm the count drop.
+
+**Update to § 9 task table (replaces the FIX-SCHEMA-DRIFT-P4 row):**
+
+| Task ID | Phase | Size | Owner | Expected Delta |
+|---|---|---|---|---|
+| `FIX-SCHEMA-DRIFT-P1` | Phase 1 — data_env (DONE per FIX-SCHEMA-DRIFT-P1) | DONE | — | −93 delivered |
+| `FIX-SCHEMA-DRIFT-P2` | Phase 2 + 3 — IF NOT EXISTS + missing columns | L | dev-infrastructure | ~104 failures → 0 |
+| `FIX-SCHEMA-DRIFT-P5-SELFHEAL` | Phase 4 REVISED — getDb() self-heal (1 file) | S | dev-mcp-server | ~95 failures → 0 |
+
+---
+
+*Addendum authored by: agents-architect*
+*Task: FU-SCHEMA-DRIFT-P5*
+*Spike finding: Phase 4 isolation-audit premise was wrong; real failure is full-suite singleton pollution*
