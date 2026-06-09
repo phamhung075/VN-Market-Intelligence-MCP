@@ -3370,15 +3370,13 @@
           {
             "id": "FIX-CI-C5-UNMOCKED-HTTP-FETCHES",
             "type": "FIX",
-            "owner": "architect",
-            "status": "REWORK",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
             "sprint": "CI-RED-RECONCILE",
-            "depends": [
-              "SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY"
-            ],
+            "depends": [],
             "labels": [
               "ci-red-reconcile",
               "unmocked-http",
@@ -3392,14 +3390,14 @@
             "baseline_pass": "135 native fail+error absolute (135 fail + 0 err / Ran 11816, sha 3663bd12, run 27193376550, bun job 80278819016 — SUPERSEDES 160/a43dff49)",
             "created_at": "2026-06-09T08:33:20Z",
             "created_by": "po-S28",
-            "note": "[po-S28 DJ-GATE-1 2026-06-09T08:33:20Z] Grouped by ROOT-CAUSE (unmocked-HTTP) NOT by file per the under-scope lesson. The cheapest dispatchable next cluster: one mechanical fix (mock/guard the fetch) repeated across N files, all REWRITE. Dev MUST enumerate the full long tail from the job log — annotations gave first-10 only. NOT in_progress (WIP<=2). | [po-S29 DJ-GATE-1 2026-06-09T09:35:00Z] REVIEW->REWORK: dev fix 22470e44 REGRESSED CI +10 (135->145); router reverted 275dd7c8 restoring 135. delegating-mock theory empirically FALSIFIED. Owner -> architect (re-spec via SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY) before any new dev fix. KEEP ci_absolute=135.",
+            "note": "[po-S30 RE-DISPATCH 2026-06-09T09:50:33Z] SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY now DONE -> C5 unblocked, owner architect->dev-mcp-server, blocked_by/depends cleared. SPEC (architect DI-seam pattern (b), brief: docs/architecture-briefs/2026-06-09-spike-ci-c5-contam-safe-restrategy.md): ROOT CAUSE = 083-tool-analysis.test.ts (lines 15-26) + 123-integration-mcp.test.ts (lines 35-40) install file-top mock.module() stubs for sbv.js/yahooFinance.js (+ a DEAD retriever.js mock in 123) that poison Bun process-scoped ESM cache for ALL downstream files; victims 028/025/1423a/1487 already use the CORRECT DI seam (httpClient param) and fail ONLY from upstream poisoning. FIX: (1) REMOVE the file-top mock.module() calls from 083 (lines 15-26) and 123 (lines 35-40, incl the dead retriever.js stub); (2) pass _testCommodityFetcher/_testSbvFetcher/_testRagRetriever via callTool args for the run_impact_chain tests in 083/123; (3) ddd-1b AND all 4 victim files (028/025/1423a/1487) get NO CHANGE; (4) ONE conditional PROD seam in apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts run_impact_chain handler — add _testCommodityFetcher/_testSbvFetcher/_testRagRetriever optional Zod args (same _test* pattern as _testHoseClient in get_market_snapshot; zero prod-path behavior change) IF not already present. HARD CONSTRAINT: NO new file-top/module-scope mock.module() ANYWHERE (that vector demonstrably leaks across run order — falsified at 22470e44, +10 regression). VERIFICATION GATE: native fail+error must DROP below the standing 135 absolute (sha 3663bd12; band ~135 +/-3, real floor ~132 — aim ~113 with 22 victims cleared) AND each named victim test (028/025/1423a/1487) must flip fail->pass INDIVIDUALLY in the CI log (per-victim verification, not global absolute alone). baseline_pass stays 135 (band +/-3). Router owns push + the CI gate. | PRIOR: [po-S28 DJ-GATE-1 2026-06-09T08:33:20Z] Grouped by ROOT-CAUSE (unmocked-HTTP) NOT by file per the under-scope lesson. The cheapest dispatchable next cluster: one mechanical fix (mock/guard the fetch) repeated across N files, all REWRITE. Dev MUST enumerate the full long tail from the job log — annotations gave first-10 only. NOT in_progress (WIP<=2). | [po-S29 DJ-GATE-1 2026-06-09T09:35:00Z] REVIEW->REWORK: dev fix 22470e44 REGRESSED CI +10 (135->145); router reverted 275dd7c8 restoring 135. delegating-mock theory empirically FALSIFIED. Owner -> architect (re-spec via SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY) before any new dev fix. KEEP ci_absolute=135.",
             "reviewed_at": "2026-06-09T09:15:00Z",
             "reviewed_by": "dev-mcp-server",
             "reworked_at": "2026-06-09T09:35:00Z",
             "reworked_by": "po-S29",
-            "blocked_by": [
-              "SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY"
-            ]
+            "blocked_by": [],
+            "dispatched_at": "2026-06-09T09:50:33Z",
+            "dispatched_by": "po-S30"
           },
           {
             "id": "FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT",
@@ -3490,7 +3488,7 @@
             "id": "SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY",
             "type": "SPIKE",
             "owner": "architect",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3511,8 +3509,9 @@
             "created_by": "po-S29",
             "note": "[po-S29 2026-06-09T09:35:00Z] Created because FIX-CI-C5-UNMOCKED-HTTP-FETCHES dev fix 22470e44 BACKFIRED (+10, victims WORSE, ddd-1b file-top mock.module() re-spread contamination); router reverted 275dd7c8. Recurring-bug lens: 2nd failed attempt on the C5 mock-contamination vector -> architect-first (recurring-bug-escalation). NO new file-top mock.module() allowed. Architect lane consumes NO dev WIP. C5 FIX task -> REWORK, blocked_by this SPIKE.",
             "done_at": "2026-06-09T10:00:00Z",
-            "done_by": "architect",
-            "result": "Brief: docs/architecture-briefs/2026-06-09-spike-ci-c5-contam-safe-restrategy.md. Root cause: 083/123 file-top mock.module() contaminates Bun ESM cache process-wide; victim tests (028/025/1423a/1487) use correct DI pattern already. Chosen fix: remove file-top stubs from 083/123, use existing RunCascadeInput.commodityFetcher?/sbvFetcher?/ragRetriever? seams. ddd-1b: no change needed. Projected drop: 135->~113."
+            "done_by": "po-S30",
+            "result": "Brief: docs/architecture-briefs/2026-06-09-spike-ci-c5-contam-safe-restrategy.md. Root cause: 083/123 file-top mock.module() contaminates Bun ESM cache process-wide; victim tests (028/025/1423a/1487) use correct DI pattern already. Chosen fix: remove file-top stubs from 083/123, use existing RunCascadeInput.commodityFetcher?/sbvFetcher?/ragRetriever? seams. ddd-1b: no change needed. Projected drop: 135->~113.",
+            "resolution": "DONE"
           }
         ],
         "_updated_by": "po-S28",

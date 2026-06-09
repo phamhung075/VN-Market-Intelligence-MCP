@@ -1,27 +1,24 @@
 # PO Notebook
 
-## c · 2026-06-09T08:05Z — CI-RED-RECONCILE: C1+C3 residual gate -12 -> close BOTH DONE-as-scoped + rebaseline 172->160 + C4 BACKLOG->TODO (PROD-TOUCHING, isolated) + /goal REMOVE-if-obsolete (po-S27)
+## c · 2026-06-09T09:50Z (TUESDAY) — CI-RED-RECONCILE: SPIKE-C5 REVIEW->DONE (architect brief landed) + C5 REWORK->TODO re-dispatch to dev (DI-seam spec) + C6 LEFT REVIEW + KEEP 135 (po-S30)
 
-**Trigger:** CI-C1C3-RESIDUAL-GATE-a43dff49 (signal -> docs/signals/processed/ci-c1c3-residual-gate-result-a43dff49-20260609T0755Z.json; architect brief docs/architecture-briefs/2026-06-09-ci-172-residual-filescope.md). Router pre-measured + raw-verified native bun summary, raw-verified a43dff49 TEST/META-ONLY (8 .test.ts + 4 meta, ZERO prod src), bundled push e920dc6d->a43dff49 = ONE CI run 27191715572 / bun job 80273289808. PO owns board; router owns push+gate. DJ-GATE-1.
+**Trigger:** Architect SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY brief committed+pushed (docs/architecture-briefs/2026-06-09-spike-ci-c5-contam-safe-restrategy.md). Ruling = DI-seam pattern (b). PO closes the SPIKE, re-dispatches the now-unblocked C5 fix to dev, leaves C6 to the router's gate. DJ-GATE-1.
 
-**Gate (router-verified, native-to-native ONLY):** prior 172 (run 27189745293, sha 7bea53d0, 0 err) -> NEW **160** (11615 pass / 42 skip / 160 fail / **0 err** / Ran 11817, sha a43dff49, run 27191715572, job 80273289808). NET **-12**, no regression. CI conclusion stays `failure` (160!=0, RED-until-0); verification gate MET. **172 SUPERSEDED by 160.**
+**Architect ruling (folded into C5 task note for dev):** ROOT CAUSE = 083-tool-analysis.test.ts (lines 15-26) + 123-integration-mcp.test.ts (lines 35-40) install file-top mock.module() stubs for sbv.js/yahooFinance.js (+ DEAD retriever.js mock in 123) that poison Bun process-scoped ESM cache for ALL downstream files. Victims 028/025/1423a/1487 already use the CORRECT DI seam (httpClient param) and fail ONLY from upstream poisoning. FIX = REMOVE those file-top mock.module() calls from 083+123; pass _testCommodityFetcher/_testSbvFetcher/_testRagRetriever via callTool args for the run_impact_chain tests; ddd-1b + all 4 victim files get NO CHANGE; ONE conditional prod seam in analysis.ts run_impact_chain handler (3 optional _test* Zod args, _testHoseClient pattern) IF absent. HARD: NO new file-top/module-scope mock.module() anywhere.
 
-**KEY CALL — DONE-AS-SCOPED again (same as po-S25):** projected ~62, actual -12. 5 of 9 C1 files (028/025/1423a/1487/1833l) were ALREADY GREEN (transient, pre-absorbed by upstream Cluster-1 mock-contam fix). 4 real C1 fixed (VN-vs-vietnam key, getText JSON-envelope .split, stale cron, unmocked FRED). C3: 4 destroyers fixed (FK-safe delete + InMemoryTransport afterEach close). Residual same-pattern OUT-of-named-scope -> long-tail re-profile, NOT a charge-back to closed ids.
+**KEY CALL — band ±3, per-victim flip required:** the suite has ~±3 run-to-run nondeterminism (contamination is order-sensitive), so 135 is a band ~135±3 (real floor ~132). Projected post-fix ~113 (22 victims cleared) = 19 below the noise floor. Gate = native fail+error DROP below 135 AND each named victim (028/025/1423a/1487) flips fail->pass INDIVIDUALLY in the CI log — both checks, not the global absolute alone.
 
-**NEW this round — C4 is FIRST prod-touching:** architect ruling (a) delivered (prod-emits-diacritics) -> SPIKE-CI-C4 BACKLOG->TODO, owner architect->dev-mcp-server, type SPIKE->FIX, prod_touching+isolated_push=true. MUST be its OWN commit + OWN CI run + careful verify (test-only-vs-prod separation). Path A = QUE_DATA local formatting, no Go service.
+**Board edits (1 atomic jq pass `scripts/po-s30-c5-redispatch.jq`, commit-mutex held):**
+- SPIKE-CI-C5-CONTAM-SAFE-RESTRATEGY: REVIEW->DONE (+done_by po-S30 +resolution DONE).
+- FIX-CI-C5-UNMOCKED-HTTP-FETCHES: REWORK->TODO, owner architect->dev-mcp-server, blocked_by/depends cleared (SPIKE now DONE), note rewritten with DI-seam spec + brief path + no-mock.module() constraint + per-victim CI-log flip gate; baseline_pass UNCHANGED=135.
+- FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT: UNTOUCHED = REVIEW (router gating its own CI run; separate PO action closes it).
+- ci_absolute UNCHANGED = 135 / sha 3663bd12 / updated_by po-S28 (NO rebaseline).
 
-**GOAL refinement recorded:** /goal 'ci/di all passe on GitHub, test update (remove if obsolete)'. Obsolete tests (deleted seams / reuters.js / pre-98df0f43 macro headers / stale cron) must be DELETED not patched. Folded into new sprint-level long_tail_triage_policy object (classify each bucket REWRITE vs REMOVE) + C4 gate/note.
+**SSOT discipline:** sprint .tasks 34 unchanged (2 in-place flips, NO add/remove). Single status key (=1) on all rows (paths(scalars) check max=min=1). Temp validated [ -s ] && jq -e . && size>600000 (759436) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po ttl 120s) held + released. _schema=v3 _ssot=true. WIP in_progress=0 (<=2). NOT pushed.
 
-**Board edits (1 atomic jq pass `scripts/po-s27-c1c3-residual-gate.jq`, commit-mutex held):**
-- FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS + FIX-CI-C3-RESIDUAL-DB-DESTROYERS (active_sprints[24].tasks): REVIEW->DONE (+resolution DONE-as-scoped +closed/done/done_by/actual_result). Single status key each.
-- SPIKE-CI-C4-KINH-DICH-DIACRITICS: BACKLOG->TODO (+owner dev-mcp-server +type FIX +prod_touching +isolated_push +baseline 160 +gate +note). Single status key.
-- ci_absolute 172->160 (172 SUPERSEDED); +long_tail_triage_policy (REWRITE-vs-REMOVE); ._updated_by=po-S27. Cluster-6 schema-drift PARKED.
-
-**SSOT discipline:** sprint .tasks 29 unchanged (in-place flips, NO add/remove). Single status key (=1) on all 3 rows (paths(scalars) check). signal_queue.rows preserved EXACTLY 57. Temp validated [ -s ] && jq -e . && size>600000 (739761) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po) held + released. _schema=v3 _ssot=true. WIP in_progress=1 (<=2). NOT pushed.
-
-**LESSON:** SUPERSET-cluster under-scope recurs — accept DONE-as-scoped + track forward, never re-open. First prod-touching round demands ISOLATED push so a prod regression can't hide behind a test-only delta. /goal now classifies residuals REWRITE vs REMOVE — delete obsolete tests, don't patch them green.
+**LESSON:** When the architect re-spec lands, the recurring-bug-escalation (architect-first after 2nd failed vector) is SATISFIED — re-route the now-mechanical fix back to dev. The banned vector (file-top mock.module()) goes into the task note as a HARD constraint so dev cannot re-introduce it. Gate must verify per-victim flips, not just the global count, because the ±3 jitter can mask/credit a single file.
 
 ## Carry-over
-- ROUTER OWNS: push (po.md + journal + orch-state.json + scripts/po-s27 helper + archived signal move, commit SHA in return, ahead of origin) + dispatch SPIKE-CI-C4-KINH-DICH-DIACRITICS to dev-mcp-server as an ISOLATED round (own commit + own CI run, careful verify; Path A QUE_DATA, REMOVE-if-obsolete lens).
-- Next CI gate (router): native fail+error must DROP vs the NEW **160** absolute (sha a43dff49). Native-to-native only (marker over-counts ~2x). After C4, re-profile residual ~160 with the REWRITE-vs-REMOVE lens. Continue until 0 (/goal ci/di all passe).
-- Cluster-6 schema-drift PARKED (no further touch).
+- ROUTER OWNS: push (po.md + journal sprint-CI-RED-RECONCILE-po.md + orch-state.json + scripts/po-s30 helper, commit SHA in return) + dispatch FIX-CI-C5-UNMOCKED-HTTP-FETCHES (TODO, dev-mcp-server) per the DI-seam ruling.
+- C5 dev work: REMOVE file-top mock.module() from 083 (15-26) + 123 (35-40, incl dead retriever.js); pass _test* fetchers via callTool args; add 3 optional _test* Zod args to analysis.ts run_impact_chain handler IF absent; ddd-1b + 028/025/1423a/1487 NO CHANGE; NO new mock.module().
+- Next CI gate (router): native fail+error must DROP below the standing **135** absolute (sha 3663bd12; band ±3, aim ~113) AND each victim 028/025/1423a/1487 flips fail->pass individually. C6 closes via the router's separate gate. Continue until 0 (/goal ci/di all passe, remove if obsolete). Cluster-6 schema-drift PARKED.
