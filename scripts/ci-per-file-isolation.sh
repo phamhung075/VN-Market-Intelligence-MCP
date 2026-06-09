@@ -27,14 +27,19 @@ run_one_file() {
     local rc=$?
   fi
 
-  # Parse bun native summary line: "  N pass / N skip / N fail"
+  # Parse bun native summary line: "  N pass" / "  N skip" / "  N fail"
+  # Anchor to leading-whitespace summary lines only; tail -1 collapses to one value;
+  # strip non-digits + default 0 so printf never receives a multi-line or empty value.
   local pass skip fail
   pass=$(grep -E "^[[:space:]]*[0-9]+ pass" "/tmp/ci-iso-out-$$.txt" | \
-         grep -oE "[0-9]+ pass" | grep -oE "^[0-9]+" || echo 0)
-  skip=$(grep -E "skip" "/tmp/ci-iso-out-$$.txt" | \
-         grep -oE "[0-9]+ skip" | grep -oE "^[0-9]+" || echo 0)
-  fail=$(grep -E "fail" "/tmp/ci-iso-out-$$.txt" | \
+         grep -oE "[0-9]+ pass" | grep -oE "^[0-9]+" | tail -1 || echo 0)
+  pass=${pass//[^0-9]/}; pass=${pass:-0}
+  skip=$(grep -E "^[[:space:]]*[0-9]+ skip" "/tmp/ci-iso-out-$$.txt" | \
+         grep -oE "[0-9]+ skip" | grep -oE "^[0-9]+" | tail -1 || echo 0)
+  skip=${skip//[^0-9]/}; skip=${skip:-0}
+  fail=$(grep -E "^[[:space:]]*[0-9]+ fail" "/tmp/ci-iso-out-$$.txt" | \
          grep -oE "[0-9]+ fail" | grep -oE "^[0-9]+" | tail -1 || echo 0)
+  fail=${fail//[^0-9]/}; fail=${fail:-0}
 
   # Write per-file JSON result
   printf '{"file":"%s","pass":%s,"skip":%s,"fail":%s,"rc":%s}\n' \
@@ -56,6 +61,13 @@ find "$TESTDIR" -name "*.test.ts" | \
 # Aggregate results
 TOTAL_PASS=0; TOTAL_SKIP=0; TOTAL_FAIL=0; FAILED_FILES=()
 for f in "$RESULT_DIR"/*.json; do
+  # Belt-and-suspenders: guard against any malformed per-file JSON (extractor fix is primary cure)
+  if ! jq -e . "$f" >/dev/null 2>&1; then
+    echo "WARN: malformed result $f, counting as 1 fail" >&2
+    TOTAL_FAIL=$((TOTAL_FAIL + 1))
+    FAILED_FILES+=("$f")
+    continue
+  fi
   p=$(jq -r '.pass' "$f"); s=$(jq -r '.skip' "$f"); fl=$(jq -r '.fail' "$f")
   TOTAL_PASS=$((TOTAL_PASS + p))
   TOTAL_SKIP=$((TOTAL_SKIP + s))
