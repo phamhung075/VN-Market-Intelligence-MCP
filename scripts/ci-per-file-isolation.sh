@@ -79,6 +79,11 @@ done
 
 SUMMARY="  ${TOTAL_PASS} pass / ${TOTAL_SKIP} skip / ${TOTAL_FAIL} fail"
 echo "$SUMMARY"
+if [ "${#FAILED_FILES[@]}" -gt 0 ]; then
+  echo "=== FAILED FILES (${#FAILED_FILES[@]}) ==="
+  printf 'FAILEDFILE: %s\n' "${FAILED_FILES[@]}" | sort -u
+  echo "=== END FAILED FILES ==="
+fi
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   echo "## Test Results (per-file isolation)" >> "$GITHUB_STEP_SUMMARY"
   echo "$SUMMARY" >> "$GITHUB_STEP_SUMMARY"
