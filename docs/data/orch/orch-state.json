@@ -53,7 +53,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T05:51:54Z",
+    "_updated_at": "2026-06-09T06:30Z",
     "_updated_by": "architect",
     "active_sprints": [
       {
@@ -3187,6 +3187,24 @@
             "created_at": "2026-06-09T05:37:58Z",
             "created_by": "po",
             "note": "[po S24 DJ-GATE-1 2026-06-09T05:37:58Z] Opened on CI-CLUSTER2-5-GATE-91afe344 PASS (346->241, errors->0). Re-profile is mandatory BEFORE swinging at the next bucket: the 241 residual composition has SHIFTED vs the 629-era taxonomy — two clusters unmasked previously-crashed tests, so Cluster-3/4 estimates are computed against a now-superseded absolute. Deliverable supersedes docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-P5..P8 / P8-IMPL) stays PARKED per po-S21 PATH-B — do NOT reopen. owner architect (no-code root-cause taxonomy = SPIKE pattern). zone apps/mcp-server/ (where the bun-test corpus lives). WIP<=2: architect lane consumes no dev WIP. | brief: docs/architecture-briefs/2026-06-09-ci-241-residual-taxonomy.md"
+          },
+          {
+            "id": "SPIKE-CI-C1-MACRO-INJECT-SEAM",
+            "title": "SPIKE: C1 MACRO_INJECT_SEAM (71 fails) — determine if seam removal in macroTools.ts was intentional (test rewrite) or accidental regression (prod fix required). Largest CI-241-residual cluster. Second CI event in macroTools.ts — recurring-bug-escalation required architect SPIKE before dev touch.",
+            "type": "SPIKE",
+            "owner": "architect",
+            "status": "REVIEW",
+            "size": "M",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
+            "priority": "high",
+            "mode": "spike",
+            "timebox": 90,
+            "depends": [
+              "RE-PROFILE-CI-241-RESIDUAL"
+            ],
+            "sprint": "CI-RED-RECONCILE",
+            "created_at": "2026-06-09T06:30Z",
+            "note": "Verdict: (A)+partial(B). 98df0f43 (2026-05-23) INTENTIONALLY removed _testSbvClient/_testCommodityClient/_testDinhGiaInputs seams as part of P2-B1 HTTP rewire. Go service emits JSON, not [Commodity Prices] text sections. ~40 tests need fetch-mock injection rewrite; ~31 need assertion update. Production signals correct; format changed to JSON wrapper. Brief: docs/architecture-briefs/2026-06-09-spike-ci-c1-macro-inject-seam.md"
           }
         ],
         "_updated_by": "po"

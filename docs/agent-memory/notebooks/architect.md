@@ -1,8 +1,27 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09T05:50Z | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09T06:30Z | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T06:30Z — SPIKE-CI-C1-MACRO-INJECT-SEAM: C1 macro seam audit + verdict
+
+**Task:** SPIKE-CI-C1-MACRO-INJECT-SEAM (SPIKE, 90m, zone: apps/mcp-server/src/interface/mcp/tools/macro/)
+
+**Method:** git log --follow macroTools.ts → key commit 98df0f43 (2026-05-23 P2-B1). git show 98df0f43 diff to find seam removal context. Read current macroTools.ts (521L), Go dtos.go (MacroSnapshotResponse shape), all 5 affected test files (089, 1423d, 1423f, 1570c, 1903a), plus passing reference 1881a.
+
+**Verdict: (A) INTENTIONAL + partial (B) FORMAT CHANGE**
+- P2-B1 (98df0f43, 2026-05-23) removed `_testSbvClient`/`_testCommodityClient`/`_testDinhGiaInputs` as a deliberate architecture change: macroTools.ts rewired from TS-only fetcher to HTTP proxy calling Go macro-indicators at `/snapshot`.
+- Go service returns structured JSON (`MacroSnapshotResponse`), NOT text sections. No `[Commodity Prices]`, no `=== Macro Snapshot ===`. Production format is `{ source_tier, text: JSON.stringify(goResponse), fetchedAt }`.
+- 71 tests across 5 files fail because they (a) pass dead injection params now silently ignored, and (b) assert section headers that no longer exist in any layer.
+- `formatThienThoi()` and `formatDinhGia()` remain exported as pure helpers; their unit tests (TT-01..TT-06, formatDinhGia units) still pass. Only integration tests using callTool() fail.
+- 1881a-source-tier.test.ts already demonstrates the correct new injection pattern (globalThis.fetch mock) and PASSES.
+
+**Count partition (~71):** ~40 need fetch-mock injection rewrite; ~31 need assertion update to match `{ source_tier, text: JSON, fetchedAt }` shape.
+
+**Production severity: MEDIUM.** Signals are live and correct from Go service. Format change (text → JSON) is intentional. Cowork agents parsing `get_macro_snapshot` output may receive raw JSON dump instead of formatted sections.
+
+**Brief:** `docs/architecture-briefs/2026-06-09-spike-ci-c1-macro-inject-seam.md`
 
 ## 2026-06-09T05:50Z — RE-PROFILE-CI-241-RESIDUAL: 241-residual fresh taxonomy
 

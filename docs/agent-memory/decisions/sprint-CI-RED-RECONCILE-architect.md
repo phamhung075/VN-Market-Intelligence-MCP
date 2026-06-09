@@ -204,3 +204,18 @@ Expected impact: 85-95% reduction (629 → <50 native fail+error).
 - C1 recurring-bug guard triggered: macroTools.ts seam removal is second major CI event in this module.
 **why-decision:** Cluster by error signature + production-risk not by file proximity. Singleton pollution (C3) ranks above Kinh Dich diacritics (C4) on absolute count; C4 ranks first on pure score because prod-risk=LOW. First attack = C3 (43 tests, test-only isolation fix).
 **why-change:** 629-era estimate of ~159 C3 ASSERTION/LOGIC is now split across C1/C3/C4/C7/C8/C9 because Clusters 1+2 unmasked previously-crash-hidden tests.
+
+---
+
+### STEP arch-S9 (DJ-GATE-1) · architect · 2026-06-09T06:30Z
+
+**task-id:** SPIKE-CI-C1-MACRO-INJECT-SEAM
+**what-done:** Audited macroTools.ts git history (git log --follow + git show 98df0f43), read current production registerMacroTools(), read all 5 affected test files, inspected Go MacroSnapshotResponse DTO. Determined verdict (A+B partition), assessed production severity, produced ordered fix plan with injection strategy reference.
+**what-considered:**
+- (A) Intentional seam removal — tests need new injection strategy matching HTTP proxy: CHOSEN for ~40 tests
+- (B) Accidental regression of section headers — sections were NOT moved to Go service: CHOSEN for ~31 tests (format change is intentional, Go emits JSON not text sections; tests must be updated)
+- (C) Mixed — VERIFIED: all 71 are covered by A+B; no split needed beyond sub-task classification
+**why-decision:** Commit 98df0f43 (2026-05-23) is unambiguously intentional — commit message explicitly states "4 macro tools → port 5004", removes domain imports, replaces with HTTP proxy. The section headers (`[Commodity Prices]` etc.) were NEVER added to the Go service; the production format is now `{source_tier, text: JSON, fetchedAt}`. All 71 failures are ultimately caused by tests written against the OLD TS-only implementation that no longer exists. 1881a test already demonstrates the correct new injection pattern (globalThis.fetch mock) and passes.
+**why-change:** No prior SPIKE had investigated C1 at this depth. 629-era taxonomy noted seam removal but deferred investigation. Recurring-bug policy triggered correct escalation — the seam migration pattern was never enforced.
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-spike-ci-c1-macro-inject-seam.md`
