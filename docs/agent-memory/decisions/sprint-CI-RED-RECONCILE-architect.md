@@ -462,6 +462,73 @@ Produced brief at `docs/architecture-briefs/2026-06-09-ci-c1328e-retriage-arch-s
 
 ---
 
+### STEP arch-S18 (DJ-GATE-1) · architect · 2026-06-09T16:10Z
+
+**task-id:** FIX-CI-C1173-TRIAGE
+**sprint:** CI-RED-RECONCILE
+**mode:** prod-vs-test triage (verdict only; no fix written; no board flip)
+
+**what-done:** Full prod-vs-test triage of the 6-fail Task 1173 cluster
+(`1173-calibration-label-integration.test.ts`, AC-4 + AC-5 describe blocks).
+Pulled raw CI log for job 80358657573 (run 27216305674, sha c017289d) via
+`gh run view --job=80358657573 --log`. Extracted all `Task 1173` lines.
+Deduplicated 6 log-occurrences → 3 unique failing tests (runtime + summary dump =
+2 occurrences each). Read full test file (681 lines). Read prod `calibrationTools.ts`
+(377 lines) to verify `handleGetLabelAccuracyReport` export and `get_label_accuracy_report`
+tool registration. Verified CI file order: 1129 (immediately preceding, all pass via
+`_registeredTools`) → 1173 (3 fail). Confirmed contamination definitively excluded.
+Produced brief at `docs/architecture-briefs/2026-06-09-ci-c1173-triage.md`.
+
+**verdict:** GENUINE — REWRITE (transport-hang, NOT contamination)
+
+**unique failing tests (3):**
+1. AC-4: `tool output contains header with since_days value` — 5005ms timeout
+2. AC-5: `returns Vietnamese empty-state message when no reviewed rows` — 5000ms timeout
+3. AC-5: `empty-state message reflects the actual since_days value passed` — 5003ms timeout
+All carry `^ a beforeEach/afterEach hook timed out for this test.` fingerprint.
+
+**what-considered:**
+- **(a) CONTAMINATION:** REJECTED. Zero `mock.module()` in 1173. Failures are 5000ms
+  transport-hangs not instant SyntaxErrors. No telegram stub chain touches this file.
+  Files immediately preceding 1173 in CI (1392, 1117, 1129) install no stub for
+  any module imported by AC-4/AC-5. Contamination definitively excluded.
+- **(b) PROD BROKEN / FIX PROD:** REJECTED. `handleGetLabelAccuracyReport` (line 235)
+  is correctly exported. `get_label_accuracy_report` tool (lines 352–375) correctly
+  delegates to it. All AC-4/AC-5 assertion strings match prod format exactly. No
+  prod defect.
+- **(c) TEST OBSOLETE / REMOVE:** REJECTED. `handleGetLabelAccuracyReport` and the
+  tool registration are live in prod. No sibling test covers this specific
+  MCP-layer path. Removal would drop the only coverage of AC-4 and AC-5 output format.
+- **(d) REWRITE (transport-hang — CHOSEN):** InMemoryTransport + `Client.callTool()`
+  stalls on Bun 1.3.13 / Ubuntu-latest. `afterEach(client?.close())` itself stalls
+  because the transport is hung. Pattern confirmed identical to 1124 (24 fails → 0,
+  802a4d1b), 1129 (all pass in this very run via `_registeredTools`), 1134 (0 fails,
+  8916675a). Fix = call `handleGetLabelAccuracyReport(getDb(), since_days)` directly
+  in AC-4 and AC-5 describe blocks. Function is already exported from calibrationTools.ts.
+  Zod-bypass risk: none (explicit integer args; no coercion difference).
+
+**why-decision:** The `handleGetLabelAccuracyReport` function is directly exported
+from `calibrationTools.ts` (line 235), providing a seam cleaner than `_registeredTools`
+for the AC-4/AC-5 output-format assertions. The transport-hang is the SOLE failure
+mechanism (8 of 11 tests in the same file pass at 46–53ms using non-transport paths).
+The `_registeredTools` template from 1129 is proven CI-green in the same CI run that
+shows 1173's failures. REWRITE scope: AC-4 and AC-5 describe blocks only (1 file,
+0 production changes, 0 new mock.module() calls).
+
+**full-CI ordered evidence:** CI job 80358657573 ##[group] timestamps show
+1129 at 15:18:37 (all pass) → 1173 at 15:18:44 (8 pass, 3 fail). No contaminator
+in the files between them. 2-file local repro NOT used (false-positive risk per
+arch-S14/S15/S16 precedent).
+
+**projected delta:** Task 1173: 6 fail-log-lines → 0 (3 unique tests × 2 occurrences
+each cured). No downstream collateral expected.
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-ci-c1173-triage.md`
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry)
+
+---
+
 ### STEP arch-S17 (DJ-GATE-1) · architect · 2026-06-09T14:56Z
 
 **task-id:** FIX-CI-C235-RESIDUAL-TRIAGE

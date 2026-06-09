@@ -1,8 +1,43 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 14:56 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 16:10 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T16:10Z — arch-S18: Task 1173 triage (6 fail log-lines, run 27216305674)
+
+**Task:** FIX-CI-C1173-TRIAGE (SPIKE, S, zone: apps/mcp-server/src/__tests__/)
+
+**Method:** Pulled raw CI log for job 80358657573 (gh run view). Extracted all Task 1173 lines.
+Deduplicated 6 log-occurrences → 3 unique failing tests. Read test file (681L). Read prod
+calibrationTools.ts (377L) to verify handleGetLabelAccuracyReport export. Verified CI file
+order: 1129 (immediately preceding, all pass via _registeredTools) → 1173 (3 fail).
+
+**Verdict: GENUINE — REWRITE (transport-hang)**
+
+**Root cause:**
+- 6 fail log-lines = 3 unique tests × 2 occurrences (runtime + bun summary). NOT 6 independent failures.
+- Failing tests: AC-4 (1 test) and AC-5 (2 tests). All use makeMcpSetup() → InMemoryTransport.createLinkedPair() + Client.callTool(). ~5000ms timeout.
+- Fingerprint: `^ a beforeEach/afterEach hook timed out for this test.` — canonical transport-hang.
+- afterEach calls `await client?.close()` which itself stalls when the transport is hung.
+- 8 of 11 tests in same file PASS at 46–53ms (AC-1/AC-2/AC-3/AC-6/AC-7/AC-8/AC-9 — none use InMemoryTransport).
+
+**Contamination definitively excluded:**
+- Zero mock.module() in 1173. No ESM stub in file.
+- Failures are 5000ms hangs not instant SyntaxErrors (contamination signature).
+- Preceding files (1392, 1117, 1129) install no telegram or calibration stub.
+
+**Prod verification:** handleGetLabelAccuracyReport (calibrationTools.ts L235) exported and correct. Tool registration (L352–375) correct. All AC-4/AC-5 assertion strings match prod format exactly.
+
+**Fix spec (REWRITE — 1 file, AC-4 + AC-5 describe blocks only):**
+- Remove: makeMcpSetup(), Client import, InMemoryTransport import, McpServer import (if unused), registerCalibrationTools import (if unused), extractText() helper, client variable, makeMcpSetup() beforeEach, client.close() afterEach
+- Add: import handleGetLabelAccuracyReport from calibrationTools.js; beforeEach(closeDb+initDatabase); afterEach(closeDb); replace client.callTool() with handleGetLabelAccuracyReport(getDb(), since_days); replace extractText() with content[].text.join()
+- Template: 1129-calibration-tools.test.ts (proven CI-green in same run); for 1173 AC-4/AC-5 even simpler — direct exported function, no _registeredTools needed
+- Zod bypass: none (explicit integer args)
+- C5-cure absolute: no new mock.module()
+
+**CI victim:** Task 1173 (6 fail-log-lines → 0). No downstream collateral.
+**Brief:** docs/architecture-briefs/2026-06-09-ci-c1173-triage.md
 
 ## 2026-06-09T14:56Z — arch-S17: Task 235 residual triage (4 fail log-lines, run 27214052876)
 
