@@ -10,9 +10,9 @@
 
 Bun.env["DB_PATH"] = ":memory:";
 
-import { describe, test, expect, beforeAll, beforeEach, afterAll } from "bun:test";
+import { describe, test, expect, beforeAll, beforeEach } from "bun:test";
 import { scanMarket } from "../application/usecases/scanMarket.js";
-import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
+import { getDb, closeDb } from "../infrastructure/db/schema.js";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
 import { Database } from "bun:sqlite";
 import { SqliteWatchlistRepository } from "../infrastructure/db/repositories/SqliteWatchlistRepository.js";
@@ -356,9 +356,4 @@ describe("Task 231: Signal Validator Integration", () => {
       }
     }
   });
-});
-
-afterAll(async () => {
-  closeDb();
-  await initDatabase();
 });

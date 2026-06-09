@@ -7,8 +7,8 @@ Bun.env["DB_PATH"] = ":memory:";
  * wrapper (concurrency guard + cron registration).
  */
 
-import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
-import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { getDb, closeDb } from "../infrastructure/db/schema.js";
 import { scanMarket } from "../application/usecases/scanMarket.js";
 import type { MarketScanResult } from "../application/usecases/scanMarket.js";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
@@ -179,11 +179,6 @@ beforeEach(() => {
 afterEach(() => {
   // Ensure DB is cleanly closed after the suite
   // (Bun calls afterEach after each test, so this will run after each test too)
-});
-
-afterAll(async () => {
-  closeDb();
-  await initDatabase();
 });
 
 // ---------------------------------------------------------------------------

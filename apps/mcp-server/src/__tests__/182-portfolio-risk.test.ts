@@ -8,9 +8,9 @@ Bun.env["DB_PATH"] = ":memory:";
  *   2. registerPortfolioRiskTool (interface) — MCP tool integration
  */
 
-import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { closeDb, getDb, initDatabase } from "../infrastructure/db/schema.js";
+import { closeDb, getDb } from "../infrastructure/db/schema.js";
 import {
   computePortfolioRisk,
   type PositionSnapshot,
@@ -238,9 +238,4 @@ describe("Task 182 — computePortfolioRisk", () => {
       expect(result.maxDrawdownStart <= result.maxDrawdownEnd).toBe(true);
     }
   });
-});
-
-afterAll(async () => {
-  closeDb();
-  await initDatabase();
 });

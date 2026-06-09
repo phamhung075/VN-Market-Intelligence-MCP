@@ -61,3 +61,50 @@ contradictory.
 ### Commit
 
 Committed `scripts/agents-flow/ci-health-probe.js` with explicit pathspec.
+
+---
+
+## STEP: FU-SCHEMA-DRIFT-P7 gate — afterAll-reinit DISPROVEN, code REVERTED (2026-06-09 ~03:30Z, dev-team-router)
+
+**Gate:** native fail+error must DROP below the 629 absolute (after-P4 e442cf11).
+**Result:** ROSE to 630 (+1) — GATE FAILED.
+
+- Bundle pushed b9e305ae→3572444a (one CI run 27181821035, job "bun test").
+- Native summary (`gh run view --log`): **10886 pass / 36 skip / 616 fail / 14 errors / Ran 11538 tests** → fail+error = **630**.
+- after-P4 baseline (e442cf11, run 27177364641): 10886 / 36 / 615 / 14 / 11537 = **629**.
+- Bug A (b3d3022c) added +1 passing regression test (234) → tests 11537→11538. Net P7 contribution = -1 pass / +1 fail / **zero heal**.
+
+**Residual buckets BYTE-FOR-BYTE IDENTICAL to 629 baseline** (CI log occurrence-bucket):
+agent_signals 37, sbv_rates_history 19, positions 19, commodity_prices_history 19,
+commodity_prices 16, daily_ohlcv 5, imf_indicators 3, no-such-column foreign_net_vol 3,
+deep_fetch_queue 2, cron_job_runs 2, watchlist/vps_service_health/vnstock_trading_stats/
+signal_quality_audit/insider_transactions/evidence_scores 1 each. **ZERO classes healed.**
+
+**Empirical conclusion — afterAll-reinit lever is DEAD regardless of target file:**
+- P6 (084/089/1527, non-destroyers): +1, zero heal.
+- P7 (the actual 7 close-no-init destroyers: 103/1076/1291/182/1869b/231/283): +1, zero heal.
+- Root cause confirmed (from P6 gate analysis): `afterAll(closeDb(); await initDatabase())` re-creates
+  tables in file X's teardown, but the NEXT file's beforeEach/beforeAll `closeDb()` re-empties the
+  `:memory:` singleton before the polluted pure-singleton file runs. The reinit'd handle never survives
+  to the consuming file. Architect P7 spike was structurally sound (correctly identified the 7
+  destroyers) but its FIX HYPOTHESIS (afterAll reinit) is disproven — same pattern as P5/P6.
+
+**Router actions done:**
+- 7 P7 test files reverted to b3d3022c (`git checkout b3d3022c -- <7 files>`); apps/ proven byte-identical
+  to b3d3022c (Bug A baseline) via empty `git diff --cached b3d3022c -- apps/`.
+- Bug A (b3d3022c, vpsHealthPoller unixepoch normalise + 234 regression) RETAINED — legit, +1 passing test, healed its own ordering bug, did not regress.
+- P7 dev notebook + architect spike brief (2ec3a582) RETAINED (docs).
+- tsc CLEAN pre-commit.
+
+**Exhausted levers (5 touches):** P4 per-file inline-DDL (-5, KEPT) · P5 production getDb() self-heal
+(+6, created_at slice-drift, reverted) · P6 afterAll on non-destroyers (+1, reverted) · P7 afterAll on
+real destroyers (+1, reverted) · 9454baad mechanized one-size init (+219, reverted).
+
+**ONLY remaining untried direction (route to ARCHITECT, 6th touch / recurring-bug):**
+Either (a) RECONCILE the drifted standalone init slices (the created_at-omitting CREATE TABLE that caused
+P5's +6 column drift) so canonical init is internally consistent, THEN re-apply P5 self-heal in getDb()
+(self-heal proven to heal 4 classes — sbv_rates_history/commodity_prices_history/imf_indicators/vps_service_health
+— once the slice drift is removed it should heal the rest without the column-error regression); OR
+(b) a bun global preload/setup that guarantees the singleton is re-initialised on first getDb() AFTER any
+destroyer empties it (global, not per-file afterAll — the per-file lever is dead). Architect must verify
+each missing table's authoritative DDL from its owning production module before adding.
