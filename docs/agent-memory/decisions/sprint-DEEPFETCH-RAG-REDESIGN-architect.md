@@ -97,3 +97,15 @@
 **decision:** Per-doc_type half-life, passed as `decay_half_life_days` query parameter by each consumer. Configurable in `mcp.config.json` under `rag.decayHalfLifeDays`. No schema change needed — the DTO already accepts this parameter.
 
 **why-change:** A BCTC quarterly filing published 25 days ago is still highly relevant for bctc-analyst; a 25-day-old news snippet is noise. The current uniform 7-day half-life makes filing retrieval degrade too fast and news retrieval degrade too slowly. Per-source decay would require a source→half-life lookup table of unbounded size; per-doc_type is the right abstraction level for this domain.
+
+---
+
+### STEP architect-S25 · architect · 2026-06-09T19:55Z
+**task-id:** arch-S25 BATCH5-CAL-TRIAGE
+**what-done:** Triaged all 20 files in deterministic BATCH5 roster (26 CI fail markers) under per-file isolation; classified into 4 FIX-PROD / 15 REWRITE-STALE / 0 REMOVE-OBSOLETE; confirmed 1328e GREEN; wrote triage brief to docs/handoffs/BATCH5-CAL-TRIAGE-arch-S25.md.
+**what-considered:**
+- Two-SHA determinism proof (d14d2f92 + 3ad97a18 → identical 11679/42/26): gate confirmed before any triage work.
+- 1821a passes in isolation (0 fail) — roster artifact from old suite; declared GREEN, no Wave 3 action.
+- 1331a passes locally (STOCK_PRICE_DB_PATH empty string = defined) but fails CI (undefined); REWRITE-STALE.
+**why-decision:** Per-file isolation makes each fail genuine and actionable. Bucket split (4 FIX-PROD / 15 REWRITE-STALE) allows Wave 3 to prioritize prod correctness bugs first then clean up stale test fixtures.
+**why-change:** No change from plan. REMOVE-OBSOLETE = 0 because all failing tests assert behaviors that either still exist (wrong) or need updated fixtures; no orphaned tests targeting deleted prod code found.

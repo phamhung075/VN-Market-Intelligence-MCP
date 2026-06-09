@@ -1,8 +1,26 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 17:05 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 19:55 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T19:55Z — arch-S25: BATCH5 C-AL per-file triage (20 files / 26 fails)
+
+**Task:** BATCH5-CAL-TRIAGE (SPIKE, DOCS-ONLY, zone: apps/mcp-server/src/__tests__/)
+
+**Method:** Per-file isolation probe — ran each of the 20 files individually with `bun test src/__tests__/<file>`. Read prod code for each failing assertion. Classified into FIX-PROD / REWRITE-STALE / REMOVE-OBSOLETE buckets.
+
+**Determinism gate confirmed:** Two-SHA proof (d14d2f92 run 27230529533 and 3ad97a18 run 27230921229) both produced identical 11679 pass / 42 skip / 26 fail. Fail count is DETERMINISTIC.
+
+**Key findings:**
+- `1821a-pollnews-cold-start-retry.test.ts` PASSES in isolation (0 fail) — roster artifact from old contamination era; GREEN under per-file isolation, no action needed.
+- `1331a` fails only in CI (STOCK_PRICE_DB_PATH undefined); passes locally (empty string is defined).
+- FIX-PROD root causes: `bbAlertScanJob` inside-band fires erroneously; `balanceSheetExtractor` FIX-BCTC-MAGNITUDE-NORMALIZE double-divides VCB Q1 page-pair and VNM split-block; `parseBctcReport` uses `void import().then()` fire-and-forget making telegram send unobservable.
+- REWRITE-STALE bulk: BEQ-7 section guard (finalize) added after HC-human-confirm and TRUST-RED tests written; newsHeadlinesRefreshJob E2E URL prefix mismatch `/news/`; bctc-eval-routes missing `domain` column in test DDL; FIX-PDF-VOLUME-SBV-TABLE reads wrong file (index.ts vs composition-root.ts).
+- 1328e conviction-routing: ABSENT from deterministic 26-fail roster — contamination fix was effective, test is GREEN under per-file isolation.
+
+**Bucket tally:** 4 FIX-PROD · 15 REWRITE-STALE · 0 REMOVE-OBSOLETE · 1 GREEN-in-isolation
+**Brief:** docs/handoffs/BATCH5-CAL-TRIAGE-arch-S25.md
 
 ## 2026-06-09T16:10Z — arch-S18: Task 1173 triage (6 fail log-lines, run 27216305674)
 
