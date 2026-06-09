@@ -1,6 +1,6 @@
 {
   "locked": true,
-  "owner_agent": "dev-mcp-server",
-  "task": "FIX-CI-C1839b-REWRITE-STALE-ASSERTS",
-  "expires_at": 1781022234
+  "owner_agent": "dev-team-router",
+  "task": "commit-c1839b-gate-signal",
+  "expires_at": 1781022944
 }
