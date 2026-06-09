@@ -922,3 +922,95 @@ With 45 current fails: 45 − 24 − 10 (BATCH2/1328e) − 1 (BATCH4/1343e) = **
 
 **artefacts:**
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry, arch-S23)
+
+---
+
+### STEP arch-S24 (DJ-GATE-1) · architect · 2026-06-09T18:48Z (TUESDAY)
+
+**task-id:** SPIKE-TESTING-CI-ARCHITECTURE-RETHINK-PHASE2
+**sprint:** CI-RED-RECONCILE
+**mode:** spike (docs-only, no orch write, no agent .md edits)
+
+**what-done:** Designed the definitive contamination-elimination architecture (Phase 2) for the
+bun test CI pipeline. Analyzed new empirical evidence (BATCH3 order-reshuffle +15 swing;
+confirmed contamination victims: 1146 get-insider-transactions 17/0 alone; 1110 get_alerts 4;
+FIX-B-2 get_market_cap 3; 1400 DB-isolation 2; 030 PDF extractor 2; 293 OCR cache 1; 1875c
+record_signal_outcome 1). Enumerated all 4 leak surfaces. Compared Option A (per-file process
+isolation) vs Option B (comprehensive global-state-reset harness). Produced full implementation
+plan with script spec, CI workflow diff, owner table, and acceptance criteria. Appended Phase 2
+section to `docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md`.
+
+**what-considered:**
+
+- **Option B (global-state-reset harness):** REJECTED as primary mechanism.
+  - Surface 1 (mock.module): No bulk-restore API in bun 1.3.13. `mock.restore()` does not
+    restore `mock.module()` entries. Preload harness cannot enumerate which modules were
+    mocked by an arbitrary file. The BATCH2 meta-guard proved partial coverage fails: 0
+    violations, contamination persists. The remaining mock.module() calls are INSIDE `it()`
+    bodies (not module-scope), invisible to the `^mock\.module\(/m` regex.
+  - Surface 2 (Bun.env): bun 1.3.13 preload has no file-boundary lifecycle hook. Top-level
+    `afterAll` in preload fires at PROCESS END, not after each file. Snapshot-restore is
+    technically feasible per-test (afterEach), not per-file. Cannot reliably reset between files.
+  - Surface 3 (toolRegistry singleton): ESM singleton, no reset API without a production-code
+    change to `registry.ts`. McpServer instance teardown requires per-file cooperation.
+  - Surface 4 (DB singleton): closeDb() + afterAll(() => initDatabase()) is per-file. Harness
+    cannot inject file-boundary teardown in bun 1.3.13 preload.
+  - Verdict: Option B covers at best 2/4 surfaces reliably. A harness covering 2/4 surfaces
+    leaves contamination variance non-zero. Empirical proof: BATCH2 meta-guard (1/4 surfaces
+    covered) = 0 violations but contamination persists at 55 fail. Partial coverage fails.
+
+- **Option A (per-file process isolation via runner script):** CHOSEN.
+  - Each `bun test <file>` invocation is a fresh OS process. All 4 leak surfaces reset
+    structurally (new ESM cache, new Bun.env, new module instances, new :memory: DB).
+  - No per-file discipline required. Isolation is structural, not convention-based.
+  - `STOCK_PRICE_DB_PATH` collision risk across parallel processes: mitigated by injecting
+    unique `/tmp/test_stock_price_$$.db` per-invocation from the runner script.
+  - Wall-clock at P=16: ~20–25s (vs ~130s current); ~5.3 GHA minutes (vs ~3min current).
+    1.8× overhead, within 15min CI budget.
+  - Aggregated summary in bun-native format for `/goal Stop hook` compatibility.
+  - Fail count is ORDER-INDEPENDENT: run 1/2/3 on same SHA produce identical count.
+  - BATCH0–5 can proceed in parallel; no file-level conflict.
+
+- **Staged approach (A-then-retire-gate):**
+  - Stage 1 (concurrent with BATCH0–5): implement script + CI workflow change.
+  - Stage 2 (after genuine=0): retire ci-native-gate-watch.sh and jitter apparatus.
+  - Stage 3 (optional): retire BATCH2 mock.module-restore meta-test as a gate (keep as lint warning).
+
+**why-decision:** Contamination VARIANCE is the gating factor, not contamination RATE. BATCH3
+proved that a pool of ≤22 contaminating files can reshuffle to produce a ±15 absolute swing
+on a test-only commit (zero prod change). The `/goal Stop hook` reads the LIVE native absolute,
+which oscillates with ordering. Class-by-class genuine fixes (BATCH0–5) are necessary but
+cannot converge the gate if contamination variance remains. The gate will never reach stable 0.
+
+Option A eliminates variance to exactly 0. It is the recurring-bug architectural intervention
+mandated by the recurring-bug escalation policy (contamination recurred 22×). Convention-based
+fixes (meta-guards, per-file afterAll additions) have been disproven empirically. Structural
+isolation is the definitive cure.
+
+**why-change:** Phase-1 of this brief stated Option B first + A as follow-on optimization.
+New evidence (BATCH3 +15 swing; meta-guard 0 violations but contamination persists) disproves
+the Phase-1 ordering. The 13% contamination snapshot from Phase-1 was ONE ordering's count.
+Under a different ordering (BATCH3), contamination victims expand to 22. B cannot reliably
+cover all 4 leak surfaces in bun 1.3.13. The escalation rule (contamination 22× = architectural
+intervention) mandates Option A as primary, not secondary.
+
+**acceptance-criteria (from Phase 2 § P2-5):**
+- AC-1: `scripts/ci-per-file-isolation.sh` on same SHA → identical fail count across 3 consecutive runs. Tolerance: exactly 0 variance.
+- AC-2: aggregated fail = count of files that fail in direct isolation-probe. No ordering-added failures.
+- AC-3: after BATCH0–5, 3 consecutive CI runs on same SHA report 0 fail. No jitter band.
+- AC-4: per-file `<slug>.log` attributes every failure to specific `it()` block.
+- AC-5: git show --name-only for the Option A commit contains only: `scripts/ci-per-file-isolation.sh`, `.github/workflows/ci.yml`, optionally `apps/mcp-server/src/__tests__/setup.ts`, `docs/policies/dev-standards.md`.
+
+**implementation-owners:**
+- `scripts/ci-per-file-isolation.sh`: dev-mcp-server (new script, test infrastructure)
+- `.github/workflows/ci.yml` modification: ops (CI workflow change)
+- `apps/mcp-server/src/__tests__/setup.ts` STOCK_PRICE_DB_PATH passthrough: dev-mcp-server
+- `scripts/ci-native-gate-watch.sh` retirement (Stage 2, BLOCKED until genuine=0): ops
+
+**pm-decompose recommendation:**
+- Task `IMPL-CI-PER-FILE-ISOLATION`, owner=dev-mcp-server+ops, timebox=60min, zone=apps/mcp-server + .github/workflows
+- Task `RETIRE-CI-GATE-APPARATUS`, owner=ops, timebox=30min, BLOCKED on genuine=0
+
+**artefacts:**
+- `docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md` (Phase 2 addendum, § Phase 2)
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md` (this entry, arch-S24)

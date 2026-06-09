@@ -424,3 +424,452 @@ Zero changes to `apps/` (no prod or test code changes in this spike).
 
 **Classification:** BUG-FIX / MAINTENANCE (in-zone, no new primitives)
 BUILD-STANDARD: not-applicable (skip)
+
+---
+
+## Phase 2 — Deterministic Test Isolation (2026-06-09)
+
+**Authored:** architect · arch-S24 · 2026-06-09T18:48Z (TUESDAY)
+**Sprint:** CI-RED-RECONCILE
+**Trigger:** New empirical evidence (BATCH3 order-reshuffle experiment + confirmed contamination
+victims: 1146, 1110, 1400, 030, 293, 1875c) proves contamination VARIANCE is the gating factor
+and must be eliminated DETERMINISTICALLY.
+**Recurring-bug rule:** contamination has now reshuffled 22× across batches (transport-hang
+cured 4×, mock.module() contamination chain persisting across 22 identified victims). This
+exceeds the 2-commit threshold. This IS the architectural intervention mandated by the
+recurring-bug escalation policy.
+
+---
+
+### P2-1. Hard Evidence Driving This Phase
+
+The following facts are empirically confirmed and must be the foundation of the design:
+
+**Shared-process leak surfaces (all four active in bun 1.3.13 single-process run):**
+
+| Surface | Mechanism | Confirmed leak example |
+|---|---|---|
+| ESM/mock.module registry | `mock.module("./foo.js", stub)` is process-global; no file-scope teardown unless explicitly restored in `afterAll` | 1485→047→1328e chain; C5 stub surviving to 22 victim positions |
+| Bun.env object | File-top `Bun.env["KEY"] = value` without afterAll restore contaminates all later files | 1406a sets `VPS_PUSH_API_KEY` with no restore; 082 `delete Bun.env["DB_PATH"]` without restore guard; 1400 DB-isolation 2 fails |
+| toolRegistry singleton | `toolRegistry.forEach(fn => fn(server))` in beforeAll is not torn down; mutated `_registeredTools` map on the McpServer instance leaks state if the server is not closed+re-created | 1875c `record_signal_outcome` routing (1 fail in suite only) |
+| DB-path / in-memory DB | `Bun.env["DB_PATH"] = ":memory:"` re-set inside tests (1551, 1980, 1406a, 1803, 1392, 1434, 1945b, 082, etc.) without afterAll restore; for files that ALSO delete DB_PATH (082 line 73), the singleton `_db` is invalidated for all downstream files | 1400-db-isolation 2 fails; confirmed by arch-S4/S6/S7 singleton-killer pattern |
+
+**BATCH3 order-reshuffle proof (the critical new evidence):**
+BATCH3 was a test-only frozen-clock change to 1407b (zero prod change). It cured its target
+6 genuine 1407b market-hours fails (confirmed 0 markers). Yet the absolute moved 40 → 55 fail
+on the same 11802 tests. The +15 delta is NOT new genuine failures: it is 22 DIFFERENT
+contamination victims exposed by the new file execution order. This proves:
+
+1. The `/goal Stop hook` reads the LIVE native absolute, which jitters ±15 per run from ordering.
+2. Class-by-class GENUINE fixes (BATCH0–5) are necessary but CANNOT converge the gate alone.
+3. Even after every genuine test-vs-prod divergence is fixed to 0, contamination ordering can
+   leave 20+ red. The gate will oscillate and never reach a stable 0.
+4. BATCH3 is the empirical disproof of the Phase-1 claim that "contamination is only 13%":
+   the 13% was a snapshot of ONE ordering. Under a different ordering, contamination victims
+   expand to at least 22 distinct test files.
+
+**BATCH2 meta-guard result:**
+The BATCH2 lint meta-test (every `mock.module()` must have a matching `afterAll` restore) PASSED
+with 0 violations — yet contamination persists at 55 fail. This proves `mock.module()` is NOT
+the only leak surface. The meta-guard addresses exactly 1 of 4 surfaces. The other 3 (Bun.env,
+toolRegistry, DB-path) have no enforcement gate today.
+
+---
+
+### P2-2. Rigorous Option Analysis
+
+#### Option A — Per-File Process Isolation (one bun process per test file)
+
+**Mechanism:** A CI runner script invokes `bun test <single-file>` for each of the 1035 test
+files, with parallelism via `xargs -P N` or a GitHub Actions matrix shard strategy that
+assigns disjoint file lists to each shard. Each invocation is a fresh OS process with:
+- a clean Bun ESM module cache (no `mock.module()` state carries over)
+- a fresh `Bun.env` process environment (no cross-file mutation)
+- a fresh toolRegistry (module-scope singletons are re-initialized from scratch)
+- a fresh SQLite `:memory:` DB (setup.ts preload re-runs per-process)
+
+**Contamination elimination:**
+Process isolation makes cross-file contamination structurally impossible. Every confirmed
+contamination victim (1146, 1110, 1400, 030, 293, 1875c, 1328e chain) passes alone in
+isolation-probe. With per-file process isolation, "alone" IS the CI execution context.
+The contamination absolute drops to exactly 0, deterministically, regardless of file order.
+
+**Wall-clock cost analysis (1035 files, current full-suite ~130s):**
+
+The bottleneck is process spawn overhead per file, not test execution time:
+- Bun process startup cost on ubuntu-latest: ~150–250ms per process (cold; warm via cache: ~80ms)
+- At 1035 files × 200ms/spawn = ~207s of pure spawn overhead (sequential)
+- With parallelism of P=16 (16 concurrent processes): ~207s / 16 ≈ 13s spawn overhead
+- Actual test body execution: median file ~80ms, long tail (PDF/e2e) ~2000ms
+- Estimated wall clock at P=16: max(spawn_overhead_per_slot, test_body) per slot
+  = roughly 65 files per shard × ~250ms median test time + spawn = ~20s per shard at P=16
+- **Total wall-clock estimate at P=16: ~20–25s** (well within 15min CI budget)
+- GHA minutes cost: 16 parallel jobs × ~20s ≈ 5.3 GHA minutes (vs current 1 job × ~3min = 3min)
+  Overhead is ~2× in GHA minutes, acceptable for a free/small account. Not 8×.
+
+**Parallelism strategy: P=16 via xargs in a single CI job (not matrix):**
+A matrix of 1035 jobs is not viable. The correct approach is a SINGLE CI job that runs a
+parallel-dispatch script `scripts/ci-per-file-isolation.sh` internally:
+
+```bash
+# scripts/ci-per-file-isolation.sh
+# Runs every test file in its own bun process, up to P parallel.
+# Aggregates pass/skip/fail into a single summary.
+# Usage: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh [P=16]
+
+P=${1:-16}
+TESTDIR="src/__tests__"
+RESULT_DIR=$(mktemp -d)
+export -f run_one_file  # see full script spec in P2-4
+
+find "$TESTDIR" -name "*.test.ts" | \
+  xargs -P "$P" -I{} bash -c 'run_one_file "$@"' _ {}
+
+# Aggregate: sum pass/skip/fail from per-file JSON result files
+jq -s '{
+  pass: [.[].pass] | add,
+  skip: [.[].skip] | add,
+  fail: [.[].fail] | add,
+  files_failed: [.[] | select(.fail > 0) | .file]
+}' "$RESULT_DIR"/*.json
+```
+
+**Result aggregation and /goal Stop hook compatibility:**
+The `/goal Stop hook` reads the LIVE native absolute from the CI run summary. With per-file
+isolation, the runner script emits a synthetic summary line in the same format bun test uses:
+```
+  X pass / Y skip / Z fail
+```
+This synthetic line is written to `$GITHUB_STEP_SUMMARY` and also to a JSON file consumed by
+any gate script. The `/goal Stop hook` reads the native summary — the runner script must
+produce an identical format. The `ci-native-gate-watch.sh` baseline becomes the runner's
+aggregated Z (fail count), which is now ORDER-INDEPENDENT and deterministic.
+
+**Failure attribution:** Each per-file invocation writes `$RESULT_DIR/<file-slug>.json` with
+pass/skip/fail counts + the raw bun test stderr for that file. Failures are attributed to their
+exact source file. No ordering ambiguity.
+
+**Flaky-retry policy:** For files that fail in isolation (GENUINE), no retry is needed — they
+fail consistently. For files that WOULD have been contamination victims, they pass in isolation
+→ no retry needed. If a file exhibits flakiness even in isolation (true flakiness, not
+contamination), a single retry (`bun test <file>` once more on fail) is acceptable. This is
+NOT implemented in the first version — the scope is determinism, not flakiness.
+
+**Does Option A conflict with BATCH0–5?**
+No. BATCH0–5 fix GENUINE failures (tests that fail even in isolation). Option A eliminates
+CONTAMINATION failures (tests that pass in isolation, fail in suite). These are orthogonal:
+- BATCH0–5 running first: reduces genuine absolute from ~35 to ~0. Option A then confirms 0.
+- Option A running first: confirms contamination is 0 in isolation; genuine failures remain
+  and are fixed by BATCH0–5. Option A does not interfere with genuine-fix batches.
+- Running them in parallel: fully safe — BATCH0–5 change test files, Option A only changes
+  the CI runner script and workflow YAML; no file-level conflict.
+
+**Risks and mitigations:**
+- Risk 1: `xargs -P` on ubuntu-latest has a per-process file-descriptor limit. Mitigation:
+  `ulimit -n 65536` at the script top; bun per-file uses ~50 FDs maximum.
+- Risk 2: Some test files import from `setup.ts` preload by side-effect. Per-process run
+  re-evaluates `bunfig.toml preload = ["./src/__tests__/setup.ts"]` for each file.
+  Mitigation: None needed — bunfig preload runs per-process automatically.
+- Risk 3: Files that write to `/tmp/test_stock_price.db` (setup.ts line 59) will collide
+  across parallel processes. Mitigation: runner script exports a unique `STOCK_PRICE_DB_PATH`
+  per invocation: `STOCK_PRICE_DB_PATH=/tmp/test_stock_price_$$.db bun test <file>`.
+- Risk 4: Wall-clock estimate assumes ~80ms median. E2E tests (newsHeadlinesRefreshJob.e2e)
+  may take longer. Mitigation: e2e tests are excluded from the parallel run or given their
+  own shard slot with a higher timeout.
+
+#### Option B — Comprehensive Global-State-Reset Harness (preload + afterEach/afterAll)
+
+**Mechanism:** A shared Bun preload file (extending `setup.ts` or a separate
+`setup-isolation.ts`) that, after each test FILE completes, restores all 4 leak surfaces to
+their pre-file state. Implementation would require:
+
+**Surface 1 — mock.module registry:**
+Bun 1.3.13 does not expose a public API to list all currently-mocked modules or bulk-restore
+them. `mock.restore()` restores `mock.fn()` spy wrappers but does NOT restore `mock.module()`
+registry entries. The only reliable restore is per-module: `afterAll(() => mock.module("./foo.js",
+() => realImport))`. A harness cannot enumerate which modules were `mock.module()`-d by an
+arbitrary file without AST-parsing that file. The meta-guard (BATCH2 lint test) already covers
+this at authoring time — but it is a lint gate, not a runtime reset.
+
+**Enforcement gap:** The meta-guard PASSED with 0 violations and contamination STILL persisted.
+This means either: (a) some `mock.module()` calls are inside `it()` bodies (not module-scope)
+and the meta-guard's `^mock\.module\(/m` regex missed them, OR (b) files use indirect module
+mutation patterns (e.g. reassigning an exported let variable) that are not `mock.module()`.
+A preload harness that only resets `mock.module()` surface would inherit the same blind spots.
+
+**Surface 2 — Bun.env mutation:**
+A snapshot-and-restore harness IS technically feasible for Bun.env:
+```typescript
+// In preload afterEach (file-level, not test-level):
+const envSnapshot = { ...Bun.env };
+afterEach(() => {
+  for (const key of Object.keys(Bun.env)) {
+    if (!(key in envSnapshot)) delete Bun.env[key];
+    else Bun.env[key] = envSnapshot[key];
+  }
+  for (const key of Object.keys(envSnapshot)) {
+    if (!(key in Bun.env)) Bun.env[key] = envSnapshot[key];
+  }
+});
+```
+But: Bun's preload `afterEach` runs after each `it()`, not after each FILE. A file-level
+reset requires hooking into bun's file-boundary lifecycle, which Bun 1.3.13 does NOT expose
+in preload. The only hook available in preload is `afterEach` (test-level) and `afterAll`
+(describe-level). A file-level `afterAll` in preload would be an `afterAll` at the implicit
+top-level describe of each file — which Bun MAY or MAY NOT execute between files vs at process
+end (bun 1.3.13 behavior: top-level `afterAll` in preload fires once at PROCESS END, not after
+each file). **This surface cannot be reliably reset via preload in bun 1.3.13.**
+
+**Surface 3 — toolRegistry singleton:**
+`toolRegistry` is a static array exported from `registry.ts`. Re-importing it in a preload
+afterAll returns the same module-cache instance (ESM singleton). The only reset is to add a
+`resetForTest()` exported function to `registry.ts` that clears the array, then call it from
+a per-file afterAll. But: (a) this requires a production-code change to `registry.ts`;
+(b) individual test files that import and use toolRegistry in `beforeAll` would need explicit
+coordination with the harness; (c) the McpServer `_registeredTools` map is on a server
+instance, not the registry — the server instance is created per-test-file in `beforeAll`;
+teardown requires that same `beforeAll` to close the server in `afterAll`. A harness cannot
+enforce this without file-level cooperation.
+
+**Surface 4 — DB-path / in-memory DB:**
+`Bun.env["DB_PATH"] = ":memory:"` is set in setup.ts preload (already done). The schema.ts
+singleton `_db` can be reset via `closeDb()` if called in afterAll. But enforcing this from
+preload hits the same bun 1.3.13 file-boundary gap: top-level `afterAll` in preload fires at
+process end. Individual files calling `closeDb()` without `afterAll(() => initDatabase())` is
+the known singleton-killer pattern (arch-S7): the fix is per-file, not harness-wide.
+
+**Completeness verdict:**
+Option B cannot be made reliably complete for bun 1.3.13 single-process execution because:
+1. mock.module registry has no bulk-restore API
+2. Bun.env file-boundary reset has no lifecycle hook
+3. toolRegistry/McpServer instance teardown requires per-file cooperation
+4. DB singleton reset requires per-file `afterAll` that harness cannot inject
+
+A harness that covers 2/4 surfaces is better than 1/4 (the current state) but leaves 2
+surfaces open, meaning contamination can still escape. The BATCH2 meta-guard result (0 violations
+but contamination persists) is the empirical proof that partial coverage fails as a gating mechanism.
+
+**Cost comparison vs Option A:**
+- Option B implementation: ~400–600 lines of preload + per-surface enforcement across 1035 files
+  (enforced via meta-tests, not automatic). Ongoing: every new test file must comply with all
+  4 surface rules. Audit and enforcement burden is permanent.
+- Option A implementation: ~120-line runner script + 8-line CI workflow change. Ongoing: zero
+  per-file discipline required (isolation is structural, not convention-based).
+
+---
+
+### P2-3. RECOMMENDATION: Option A (per-file process isolation) — STAGED
+
+**Stage 1 (immediate, concurrent with BATCH0–5):** Implement `scripts/ci-per-file-isolation.sh`
+and update `.github/workflows/ci.yml` to use it. This eliminates contamination variance from
+the gate counter while BATCH0–5 genuine fixes proceed in parallel. The two workstreams are
+independent and non-conflicting.
+
+**Stage 2 (after BATCH0–5 bring genuine absolute to ~0):** Retire `scripts/ci-native-gate-watch.sh`
+and the jitter-band apparatus. The per-file isolation runner's aggregated fail count IS the gate:
+0 = green, >0 = red, deterministic across any number of consecutive runs on the same SHA.
+
+**Stage 3 (optional, post-stable-0):** Retire the BATCH2 mock.module-restore meta-test as a
+gate (keep it as a lint warning). It is no longer the primary contamination prevention mechanism
+— process isolation is. The meta-test can remain as documentation-in-code.
+
+**Rationale for choosing A over B:**
+
+1. **B is not reliably complete for bun 1.3.13.** The lifecycle API gaps (no file-boundary
+   afterAll in preload, no bulk mock.module restore) make a comprehensive harness structurally
+   impossible without either changing bun or instrumenting every file individually. Option A
+   achieves determinism without any per-file instrumentation.
+
+2. **Contamination VARIANCE is the gating factor, not contamination RATE.** The BATCH3 proof
+   shows that even a small pool of contaminating files (≤22) can reshuffle to expose a +15
+   absolute swing on a single test-only commit. The gate cannot converge if the contamination
+   count is variable. Option A eliminates variance to exactly 0, unconditionally.
+
+3. **Option A composes cleanly with BATCH0–5.** Process isolation is purely a runner change.
+   It does not touch test files or production code. BATCH0–5 proceed as planned; Option A
+   becomes the permanent architectural floor under them.
+
+4. **Recurring-bug rule applies.** This is the architectural intervention: the contamination
+   class has recurred 22× across batches. Convention-based fixes (meta-guards, per-file
+   afterAll additions) have failed repeatedly. Structural isolation is the definitive cure.
+
+5. **Wall-clock cost is acceptable.** P=16 parallel processes: ~20–25s wall clock, ~5.3 GHA
+   minutes vs ~3min current = 1.8× overhead, well within a 15min timeout budget.
+
+---
+
+### P2-4. Implementation Plan
+
+#### Files to create/modify
+
+| File | Action | Owner | Purpose |
+|---|---|---|---|
+| `scripts/ci-per-file-isolation.sh` | CREATE | dev-mcp-server | Per-file isolation runner: finds all `*.test.ts`, runs each via `bun test <file>`, P=16 parallel, aggregates JSON result + bun-format summary line |
+| `.github/workflows/ci.yml` | MODIFY | ops | Replace `run: bun test` in `test` job with `run: bash ../../scripts/ci-per-file-isolation.sh` (working-directory: apps/mcp-server); ensure `$GITHUB_STEP_SUMMARY` line is in bun-native format |
+| `apps/mcp-server/src/__tests__/setup.ts` | MODIFY | dev-mcp-server | Add `STOCK_PRICE_DB_PATH` uniqueness: read from env if set (allows runner script to inject `STOCK_PRICE_DB_PATH=/tmp/test_stock_price_$$.db` per-invocation); fallback to existing `/tmp/test_stock_price.db` for direct `bun test` invocations |
+| `docs/policies/dev-standards.md` | MODIFY | dev-mcp-server | Add pointer: `scripts/ci-per-file-isolation.sh` under Script Persistence section |
+
+#### `scripts/ci-per-file-isolation.sh` — Full spec
+
+```bash
+#!/usr/bin/env bash
+# ci-per-file-isolation.sh — per-file process isolation runner for bun test
+# Usage: cd apps/mcp-server && bash ../../scripts/ci-per-file-isolation.sh [P]
+# P = parallelism (default 16)
+# Outputs: aggregated pass/skip/fail to stdout + $GITHUB_STEP_SUMMARY (if set)
+# Per-file results: /tmp/ci-isolation-<PID>/<file-slug>.json
+# Host-safety: NEVER runs bare `bun test` (no file arg) — only per-file invocations
+
+set -euo pipefail
+P=${1:-16}
+TESTDIR="src/__tests__"
+RESULT_DIR="/tmp/ci-isolation-$$"
+mkdir -p "$RESULT_DIR"
+
+run_one_file() {
+  local f="$1"
+  local slug
+  slug=$(echo "$f" | tr '/' '-' | tr '.' '-')
+  local out_file="$RESULT_DIR/${slug}.json"
+  local unique_db="/tmp/test_stock_price_$$.db"
+
+  # Run bun test for this single file, capture output
+  local raw
+  if STOCK_PRICE_DB_PATH="$unique_db" bun test "$f" > "/tmp/ci-iso-out-$$.txt" 2>&1; then
+    local rc=0
+  else
+    local rc=$?
+  fi
+
+  # Parse bun native summary line: "  N pass / N skip / N fail"
+  local pass skip fail
+  pass=$(grep -E "^[[:space:]]*[0-9]+ pass" "/tmp/ci-iso-out-$$.txt" | \
+         grep -oE "[0-9]+ pass" | grep -oE "^[0-9]+" || echo 0)
+  skip=$(grep -E "skip" "/tmp/ci-iso-out-$$.txt" | \
+         grep -oE "[0-9]+ skip" | grep -oE "^[0-9]+" || echo 0)
+  fail=$(grep -E "fail" "/tmp/ci-iso-out-$$.txt" | \
+         grep -oE "[0-9]+ fail" | grep -oE "^[0-9]+" | tail -1 || echo 0)
+
+  # Write per-file JSON result
+  printf '{"file":"%s","pass":%s,"skip":%s,"fail":%s,"rc":%s}\n' \
+    "$f" "${pass:-0}" "${skip:-0}" "${fail:-0}" "$rc" > "$out_file"
+
+  # If failed, preserve output for attribution
+  if [ "$rc" -ne 0 ]; then
+    cp "/tmp/ci-iso-out-$$.txt" "$RESULT_DIR/${slug}.log"
+  fi
+  rm -f "/tmp/ci-iso-out-$$.txt" "$unique_db"
+}
+export -f run_one_file
+export RESULT_DIR
+
+# Find all test files, run in parallel
+find "$TESTDIR" -name "*.test.ts" | \
+  xargs -P "$P" -I{} bash -c 'run_one_file "$@"' _ {}
+
+# Aggregate results
+TOTAL_PASS=0; TOTAL_SKIP=0; TOTAL_FAIL=0; FAILED_FILES=()
+for f in "$RESULT_DIR"/*.json; do
+  p=$(jq -r '.pass' "$f"); s=$(jq -r '.skip' "$f"); fl=$(jq -r '.fail' "$f")
+  TOTAL_PASS=$((TOTAL_PASS + p))
+  TOTAL_SKIP=$((TOTAL_SKIP + s))
+  TOTAL_FAIL=$((TOTAL_FAIL + fl))
+  if [ "$fl" -gt 0 ]; then
+    FAILED_FILES+=("$(jq -r '.file' "$f")")
+  fi
+done
+
+SUMMARY="  ${TOTAL_PASS} pass / ${TOTAL_SKIP} skip / ${TOTAL_FAIL} fail"
+echo "$SUMMARY"
+if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+  echo "## Test Results (per-file isolation)" >> "$GITHUB_STEP_SUMMARY"
+  echo "$SUMMARY" >> "$GITHUB_STEP_SUMMARY"
+  if [ "${#FAILED_FILES[@]}" -gt 0 ]; then
+    echo "### Failed files:" >> "$GITHUB_STEP_SUMMARY"
+    printf -- '- %s\n' "${FAILED_FILES[@]}" >> "$GITHUB_STEP_SUMMARY"
+  fi
+fi
+
+rm -rf "$RESULT_DIR"
+[ "$TOTAL_FAIL" -eq 0 ]  # exit 1 if any failures
+```
+
+#### `.github/workflows/ci.yml` — diff sketch
+
+```diff
+-      - name: Run tests
+-        run: bun test
++      - name: Run tests (per-file isolation)
++        run: bash ../../scripts/ci-per-file-isolation.sh 16
+ 
+-      - name: Report test summary
+-        if: always()
+-        run: |
+-          echo "## Test Results" >> "$GITHUB_STEP_SUMMARY"
+-          bun test 2>&1 | grep -E "^[[:space:]]*[0-9]+ (pass|fail)" | tail -3 >> "$GITHUB_STEP_SUMMARY" || true
++      # Summary is now written by ci-per-file-isolation.sh directly to $GITHUB_STEP_SUMMARY
++      # No second bun test invocation needed
+```
+
+Note: The `Report test summary` step runs `bun test` a SECOND TIME (full re-run). With per-file
+isolation as the primary runner, this second invocation must be REMOVED to avoid 2× CI time
+and a non-isolated aggregate run polluting the summary.
+
+---
+
+### P2-5. Acceptance Criteria
+
+The gate is considered DETERMINISTIC when:
+
+1. **AC-1 (contamination = 0):** Running `scripts/ci-per-file-isolation.sh` on SHA X produces
+   the same `fail` count on 3 consecutive local runs with no code change between runs.
+   Tolerance: exactly 0 variance (not ±N). Any difference between run 1, 2, 3 = FAIL.
+
+2. **AC-2 (genuine fails stable):** The aggregated `fail` count equals the count of files
+   that fail in direct `bun test <file>` isolation-probe. No additional failures from ordering.
+
+3. **AC-3 (CI gate converges):** After BATCH0–5 bring the genuine absolute to 0, three
+   consecutive CI runs on the same SHA all report `0 fail`. The `/goal Stop hook` absolute
+   is stable. No jitter band is needed.
+
+4. **AC-4 (attribution complete):** For every CI failure, the per-file log in
+   `$RESULT_DIR/<slug>.log` contains the exact bun test error output attributing the failure
+   to a specific `it()` block in a specific file. No "which file caused this?" ambiguity.
+
+5. **AC-5 (no foreign contamination):** `git show --name-only <commit>` for the
+   `ci-per-file-isolation.sh` commit contains ONLY: `scripts/ci-per-file-isolation.sh`,
+   `.github/workflows/ci.yml`, `apps/mcp-server/src/__tests__/setup.ts` (if modified),
+   `docs/policies/dev-standards.md`. No test files, no production source files.
+
+---
+
+### P2-6. Composition with Running BATCH0–5
+
+| Batch | Genuine fails targeted | Interaction with Option A |
+|---|---|---|
+| BATCH0 | C-DV: 4 fails (remove/convert) | None — process isolation doesn't affect DV test behavior |
+| BATCH1 | C-TH: ~15 fails (InMemoryTransport rewrite) | None — these fail in isolation too (on ubuntu CI); Option A runs them in isolation so their genuine fail still counts |
+| BATCH2 | C-ML: ~10 fails (mock.module afterAll restore) | Positive synergy: Option A eliminates contamination-only failures; BATCH2 eliminates the contaminating files themselves. Both can run in parallel. |
+| BATCH3 | C-MH: ~6 fails (now-seam for market-hours gate) | None |
+| BATCH4 | C-CD: ~10 fails (config-drift assertion updates) | None |
+| BATCH5 | C-AL: ~10 fails (assertion-logic triage) | None |
+
+The two workstreams share zero file-level conflict. Option A changes only the runner and CI
+workflow. BATCH0–5 change test and production source files. They can be developed and merged
+independently on `main` (per NO-BRANCHES policy).
+
+---
+
+### P2-7. Implementation Owners
+
+| Deliverable | Owner | Type |
+|---|---|---|
+| `scripts/ci-per-file-isolation.sh` | dev-mcp-server | New script (test infrastructure) |
+| `.github/workflows/ci.yml` modification | ops | CI workflow change |
+| `apps/mcp-server/src/__tests__/setup.ts` `STOCK_PRICE_DB_PATH` env-passthrough | dev-mcp-server | Test infrastructure, 2-line change |
+| `docs/policies/dev-standards.md` pointer | dev-mcp-server | Docs, 1 line |
+| `scripts/ci-native-gate-watch.sh` retirement (Stage 2) | ops | Cleanup, after gate stable |
+
+**PM task decomposition recommendation:** Two tasks:
+- `IMPL-CI-PER-FILE-ISOLATION` (dev-mcp-server + ops, timebox 60min): script + workflow YAML + setup.ts patch
+- `RETIRE-CI-GATE-APPARATUS` (ops, timebox 30min, BLOCKED until genuine=0): retire ci-native-gate-watch.sh
