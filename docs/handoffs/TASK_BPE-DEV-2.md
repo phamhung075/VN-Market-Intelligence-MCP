@@ -270,7 +270,7 @@ Steps:
   - TC-5: prose_sections array (5 assertions: present, empty-when-no-prose, truncated, sorted, quarantine-excluded)
 - **Git commits:** `5cea706a feat(bctc-serve): BPE-DEV-2 prose units served via PEK seam`
 - **Type check:** clean (bun tsc --noEmit)
-- **bun test:** 12 new pass / 0 fail (PROSE-UNIT-SERVE); 59 pass / 0 fail across 5 affected files; 79 pass / 0 fail across regression suite
+- **bun test:** 12 new pass / 0 fail (PROSE-UNIT-SERVE); 41 pass / 0 fail (PROSE-UNIT-SERVE + pek-render-seam + 240-bctc-full); 59 pass / 0 fail across 5 affected files; 79 pass / 0 fail across regression suite; full suite exit 0 (b2ttc877s background run)
 - **Tool count:** 157 tools — matches pre-task baseline
 - **Scheduler count:** 78 cron.schedule entries (baseline was 76 as of FIX-PROJECT-STATS-GENERATED; delta is pre-existing)
 - **Docs updated:** docs/handoffs/TASK_BPE-DEV-2.md — [Developer] section appended | NONE other
