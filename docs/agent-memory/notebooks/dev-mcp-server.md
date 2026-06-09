@@ -249,3 +249,18 @@ Zone health: bun tsc clean, Cluster5 errors eliminated, Cluster2 symlink healed 
 
 **Local results:** 1414=22/0, 285=27/0, 1416=162/0, 1472=20/0, 1410=27/0; combined 258 pass / 0 fail; tsc clean
 **Status:** REVIEW — router isolates push + CI gate
+
+## 2026-06-09 FIX-CI-C1328E-047-CONTAM-STUB (CI-RED-RECONCILE)
+
+**Task:** FIX-CI-C1328E-047-CONTAM-STUB | Sprint: CI-RED-RECONCILE | Size: S | arch-S14
+
+**Root cause:** `047-bctc-orchestrator.test.ts` (position [24] in full suite) installs a `mock.module()` stub for telegram.js that exports ONLY 4 functions, missing `notifyTelegramAlert`, `notifyTelegramDocument`, `formatConvictionBlock`, `deleteTelegramBug`. Stub never restored in `afterAll`. 1328e (position [306]) static-imports `notifyTelegramAlert` → `SyntaxError` → 5 it() × 2 = 10 native CI fails. Prod is CORRECT. 1328e assertions are CORRECT.
+
+**Fix (3-step C5-cure — CONTAMINATOR only, 1352a precedent):**
+- Added frozen-real import captures for 8 telegram exports BEFORE existing `mock.module()`, with immediate `_frozen*` const snapshot
+- Extended existing stub factory with 4 missing exports (`notifyTelegramAlert`/`notifyTelegramDocument`/`deleteTelegramBug` = noops; `formatConvictionBlock` = real fn)
+- Added restore `mock.module(... frozenReals)` inside existing `afterAll` teardown
+
+**Local results:** 047 = 9/0; 1328e solo = 12/0; joint run (047+1328e) = 21/0; tsc clean
+**Zone health:** bun test 21 pass 0 fail (two-file target), tsc clean | HEALTHY
+**Status:** REVIEW — router owns push + CI gate
