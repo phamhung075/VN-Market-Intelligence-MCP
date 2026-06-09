@@ -11,55 +11,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 
-// C5-FIX: re-register ragHttpClient.js with genuine inline implementations.
-// 083-tool-analysis.test.ts (which runs earlier in the bun suite) installs a static
-// stub mock for this module (ragSearch→[], ragIndex→ok, ragHealthCheck→true).
-// Bun's ESM module cache retains that stub for all downstream files. We override it
-// here with real fetch-based implementations so the globalThis.fetch patches in each
-// test actually fire and our assertions hold.
-// The RAG_SERVICE_URL constant must match ragHttpClient.ts (Bun.env.RAG_SERVICE_URL ?? "http://localhost:5002").
-const _RAG_URL = (typeof Bun !== "undefined" ? Bun.env.RAG_SERVICE_URL : undefined) ?? "http://localhost:5002";
-mock.module("../infrastructure/rag/ragHttpClient.js", () => ({
-  ragSearch: async (request: { query: string; limit?: number; [key: string]: unknown }) => {
-    const response = await fetch(`${_RAG_URL}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      throw new Error(`[ragHttpClient] search failed: ${response.status} ${text}`);
-    }
-    return response.json();
-  },
-  ragIndex: async (request: { id: string; content: string; tags: string[]; [key: string]: unknown }) => {
-    const response = await fetch(`${_RAG_URL}/index`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      throw new Error(`[ragHttpClient] index failed: ${response.status} ${text}`);
-    }
-    return response.json();
-  },
-  ragHealthCheck: async () => {
-    try {
-      const response = await fetch(`${_RAG_URL}/health`, {
-        signal: AbortSignal.timeout(3000),
-      });
-      if (!response.ok) return false;
-      const body = await response.json() as { status: string };
-      return body.status === "ok";
-    } catch {
-      return false;
-    }
-  },
-}));
-
 // ── Helpers ───────────────────────────────────────────────────────────────
 
 function makeFetchMock(status: number, body: unknown): typeof fetch {
