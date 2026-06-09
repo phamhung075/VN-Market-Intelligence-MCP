@@ -9,18 +9,51 @@
  * AC-3: Empty data → no-data message (not an error)
  * AC-4: days param returns multiple sessions
  * AC-5: Partial data (some tickers have NULL foreign_net_vol) — NULLs excluded
+ *
+ * Harness: _registeredTools direct-handler invocation (CI-safe; no InMemoryTransport).
+ * REWRITE rationale: InMemoryTransport+Client.callTool() stalls on Bun 1.3.13/Ubuntu CI
+ * (TRANSPORT-HANG fingerprint ~5000ms); direct handler invocation removes the message
+ * loop entirely — CI-safe, order-independent.
+ * Template: 1134-get-foreign-flow-tool.test.ts (proven CI-green 4×).
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { Database } from "bun:sqlite";
 import {
   registerMarketWideForeignFlowTool,
   queryMarketWideForeignFlow,
   queryTopFlowTickers,
 } from "../interface/mcp/tools/market-data/marketWideForeignFlowTool.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MCP callTool returns unknown — use this helper to extract content safely
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface McpTextResult {
+  isError?: boolean;
+  content: Array<{ type: string; text: string }>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test server type — exposes _registeredTools for direct handler invocation
+// NOTE: Cannot use intersection type (McpServer & { _registeredTools: ... })
+// because _registeredTools is private in McpServer; tsc reduces intersection
+// to never. Use (server as unknown as RegisteredToolsServer) at call site.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type RegisteredToolsServer = {
+  _registeredTools: Record<string, {
+    handler: (args: Record<string, unknown>) => Promise<McpTextResult>;
+  }>;
+};
+
+// ---------------------------------------------------------------------------
+// Module-level fixtures (set in beforeEach, torn down in afterEach)
+// ---------------------------------------------------------------------------
+
+let _testDb: Database;
+let _testServer: McpServer;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -63,43 +96,42 @@ function insert(
   ).run(code, date, buyVol, sellVol, netVol);
 }
 
+/** Call the get_market_foreign_flow tool directly via _registeredTools */
 async function callTool(
-  db: Database,
   args: Record<string, unknown>,
 ): Promise<string> {
-  const server = new McpServer({ name: "test", version: "0.0.0" });
-  registerMarketWideForeignFlowTool(server, db);
-
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const client = new Client({ name: "test-client", version: "0.0.0" });
-  await server.connect(serverTransport);
-  await client.connect(clientTransport);
-
-  const result = await client.callTool({ name: "get_market_foreign_flow", arguments: args });
-  await client.close();
-
-  const content = result.content as Array<{ type: string; text: string }>;
-  return content[0]?.text ?? "";
+  const tool = (_testServer as unknown as RegisteredToolsServer)._registeredTools["get_market_foreign_flow"];
+  if (!tool) throw new Error("Tool not registered: get_market_foreign_flow");
+  const result = await tool.handler(args);
+  return result.content[0]?.text ?? "";
 }
+
+// ---------------------------------------------------------------------------
+// Setup / Teardown
+// ---------------------------------------------------------------------------
+
+beforeEach(() => {
+  _testDb = buildDb();
+  _testServer = new McpServer({ name: "test", version: "0.0.0" });
+  registerMarketWideForeignFlowTool(_testServer, _testDb);
+});
+
+afterEach(() => {
+  _testDb.close();
+});
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 describe("MSG-1 — get_market_foreign_flow tool", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = buildDb();
-  });
-
   // ── AC-1: Happy path ─────────────────────────────────────────────────────
   it("AC-1: aggregates buy/sell/net across tickers for latest session", async () => {
-    insert(db, "VCB", "2026-06-01", 500_000, 200_000, 300_000);
-    insert(db, "ACB", "2026-06-01", 300_000, 400_000, -100_000);
-    insert(db, "TCB", "2026-06-01", 100_000, 50_000, 50_000);
+    insert(_testDb, "VCB", "2026-06-01", 500_000, 200_000, 300_000);
+    insert(_testDb, "ACB", "2026-06-01", 300_000, 400_000, -100_000);
+    insert(_testDb, "TCB", "2026-06-01", 100_000, 50_000, 50_000);
 
-    const text = await callTool(db, { days: 1 });
+    const text = await callTool({ days: 1 });
     const parsed = JSON.parse(text);
 
     expect(parsed.source_tier).toBe(2);
@@ -113,11 +145,11 @@ describe("MSG-1 — get_market_foreign_flow tool", () => {
 
   // ── AC-2: top_n returns ranked tickers ───────────────────────────────────
   it("AC-2: top_n returns correct net-buyer and net-seller rankings", async () => {
-    insert(db, "VCB", "2026-06-01", 500_000, 100_000, 400_000);
-    insert(db, "ACB", "2026-06-01", 100_000, 600_000, -500_000);
-    insert(db, "FPT", "2026-06-01", 200_000, 50_000, 150_000);
+    insert(_testDb, "VCB", "2026-06-01", 500_000, 100_000, 400_000);
+    insert(_testDb, "ACB", "2026-06-01", 100_000, 600_000, -500_000);
+    insert(_testDb, "FPT", "2026-06-01", 200_000, 50_000, 150_000);
 
-    const text = await callTool(db, { days: 1, top_n: 3 });
+    const text = await callTool({ days: 1, top_n: 3 });
     const parsed = JSON.parse(text);
 
     // Top buyer should be VCB (+400k)
@@ -131,11 +163,11 @@ describe("MSG-1 — get_market_foreign_flow tool", () => {
   // ── AC-3: Empty data → no-data message ───────────────────────────────────
   it("AC-3: returns no-data message when daily_ohlcv has no foreign flow data", async () => {
     // Only OHLCV rows with NULL foreign_net_vol
-    db.prepare(
+    _testDb.prepare(
       `INSERT INTO daily_ohlcv (code, date, close) VALUES (?, ?, ?)`,
     ).run("VNM", "2026-06-01", 100000);
 
-    const text = await callTool(db, {});
+    const text = await callTool({});
     const parsed = JSON.parse(text);
 
     expect(parsed.source_tier).toBe(2);
@@ -146,11 +178,11 @@ describe("MSG-1 — get_market_foreign_flow tool", () => {
 
   // ── AC-4: days param returns multiple sessions ────────────────────────────
   it("AC-4: days=3 returns aggregates for 3 trading dates", async () => {
-    insert(db, "VCB", "2026-05-30", 100_000, 50_000, 50_000);
-    insert(db, "VCB", "2026-05-31", 200_000, 80_000, 120_000);
-    insert(db, "VCB", "2026-06-01", 300_000, 100_000, 200_000);
+    insert(_testDb, "VCB", "2026-05-30", 100_000, 50_000, 50_000);
+    insert(_testDb, "VCB", "2026-05-31", 200_000, 80_000, 120_000);
+    insert(_testDb, "VCB", "2026-06-01", 300_000, 100_000, 200_000);
 
-    const text = await callTool(db, { days: 3 });
+    const text = await callTool({ days: 3 });
     const parsed = JSON.parse(text);
 
     expect(parsed.sessions_returned).toBe(3);
@@ -161,13 +193,13 @@ describe("MSG-1 — get_market_foreign_flow tool", () => {
 
   // ── AC-5: NULL foreign_net_vol rows excluded from aggregate ───────────────
   it("AC-5: rows with NULL foreign_net_vol are excluded from aggregation", async () => {
-    insert(db, "VCB", "2026-06-01", 500_000, 200_000, 300_000);
+    insert(_testDb, "VCB", "2026-06-01", 500_000, 200_000, 300_000);
     // Row without foreign flow data (NULL)
-    db.prepare(
+    _testDb.prepare(
       `INSERT INTO daily_ohlcv (code, date, close) VALUES (?, ?, ?)`,
     ).run("VNM", "2026-06-01", 50000);
 
-    const text = await callTool(db, { days: 1 });
+    const text = await callTool({ days: 1 });
     const parsed = JSON.parse(text);
 
     // Only 1 ticker should be counted (VNM excluded due to NULL foreign_net_vol)
@@ -177,10 +209,10 @@ describe("MSG-1 — get_market_foreign_flow tool", () => {
   // ── Unit tests for query helpers ──────────────────────────────────────────
 
   it("queryMarketWideForeignFlow returns correct aggregates", () => {
-    insert(db, "VCB", "2026-06-01", 500_000, 200_000, 300_000);
-    insert(db, "ACB", "2026-06-01", 300_000, 400_000, -100_000);
+    insert(_testDb, "VCB", "2026-06-01", 500_000, 200_000, 300_000);
+    insert(_testDb, "ACB", "2026-06-01", 300_000, 400_000, -100_000);
 
-    const rows = queryMarketWideForeignFlow(db, 1);
+    const rows = queryMarketWideForeignFlow(_testDb, 1);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.date).toBe("2026-06-01");
     expect(rows[0]!.total_buy).toBe(800_000);
@@ -190,11 +222,11 @@ describe("MSG-1 — get_market_foreign_flow tool", () => {
   });
 
   it("queryTopFlowTickers returns top buyers and sellers correctly", () => {
-    insert(db, "VCB", "2026-06-01", 500_000, 100_000, 400_000);
-    insert(db, "ACB", "2026-06-01", 100_000, 600_000, -500_000);
-    insert(db, "FPT", "2026-06-01", 200_000, 50_000, 150_000);
+    insert(_testDb, "VCB", "2026-06-01", 500_000, 100_000, 400_000);
+    insert(_testDb, "ACB", "2026-06-01", 100_000, 600_000, -500_000);
+    insert(_testDb, "FPT", "2026-06-01", 200_000, 50_000, 150_000);
 
-    const { topBuyers, topSellers } = queryTopFlowTickers(db, "2026-06-01", 2);
+    const { topBuyers, topSellers } = queryTopFlowTickers(_testDb, "2026-06-01", 2);
 
     expect(topBuyers[0]!.code).toBe("VCB");
     expect(topBuyers[0]!.foreign_net_vol).toBe(400_000);
@@ -203,7 +235,7 @@ describe("MSG-1 — get_market_foreign_flow tool", () => {
   });
 
   it("queryMarketWideForeignFlow returns empty array when no data", () => {
-    const rows = queryMarketWideForeignFlow(db, 5);
+    const rows = queryMarketWideForeignFlow(_testDb, 5);
     expect(rows).toHaveLength(0);
   });
 });

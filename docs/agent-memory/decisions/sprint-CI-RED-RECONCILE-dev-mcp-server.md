@@ -668,3 +668,70 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
 - `docs/data/orch/orch-state.json` (task TODO → REVIEW)
 - `docs/data/commit-mutex.json` (mutex acquire/release)
+
+---
+
+### STEP dev-mcp-server-S23 · dev-mcp-server · 2026-06-09T18:30:00Z (DJ-GATE-1)
+**task-id:** BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** Rewrote all 3 TRANSPORT-HANG (C-TH) test files to replace InMemoryTransport+Client.callTool() harness with direct `_registeredTools` handler invocation. Template: `1134-get-foreign-flow-tool.test.ts` (proven CI-green 4×). ZERO it() blocks removed. ZERO prod code touched.
+
+**per-file changes:**
+
+1. `MSG-1-market-foreign-flow.test.ts` (8 tests):
+   - REMOVED: `import { InMemoryTransport }`, `import { Client }` — not needed
+   - REMOVED: per-test inline `new McpServer + registerMarketWideForeignFlowTool + InMemoryTransport.createLinkedPair() + client.connect() + client.callTool() + client.close()` pattern in `callTool()` helper
+   - ADDED: `RegisteredToolsServer` type alias (standalone, not intersection — avoids tsc TS2339 private field error)
+   - ADDED: module-level `_testDb: Database` and `_testServer: McpServer`
+   - ADDED: `beforeEach()` building in-memory DB + creating server + `registerMarketWideForeignFlowTool(_testServer, _testDb)`
+   - ADDED: `afterEach()` calling `_testDb.close()`
+   - ADDED: `callTool(args)` helper using `_registeredTools["get_market_foreign_flow"].handler(args)`
+   - UNCHANGED: 5 MCP tool tests (AC-1..AC-5) — same assertions, same data seeds
+   - UNCHANGED: 3 unit tests (`queryMarketWideForeignFlow`, `queryTopFlowTickers`) — now receive `_testDb` instead of a local `db` variable
+   - Local pass: **8 pass / 0 fail** (421ms)
+
+2. `RAPID-A-get-company-profile-tool.test.ts` (8 tests):
+   - REMOVED: `import { InMemoryTransport }`, `import { Client }` — not needed
+   - REMOVED: `buildConnectedPair()` async function (entire InMemoryTransport+Client wiring)
+   - ADDED: `RegisteredToolsServer` type alias (standalone)
+   - ADDED: `callToolDirect(server, args)` helper using `_registeredTools["get_company_profile"].handler(args)`
+   - Tests 1–6 (`queryCompanyProfile` unit tests): UNCHANGED — already called the pure query function directly, no transport involved
+   - Tests 7–8 (MCP tool tests): replaced `client = await buildConnectedPair(db)` + `client.callTool(...)` with `server = new McpServer + registerCompanyProfileTools(server, () => db)` + `callToolDirect(server, args)`
+   - Local pass: **8 pass / 0 fail** (204ms)
+
+3. `RAPID-H-insider-lookback.test.ts` (4 tests):
+   - REMOVED: `import { InMemoryTransport }`, `import { Client }` — not needed
+   - REMOVED: `buildConnectedPair()` async function (entire InMemoryTransport+Client wiring)
+   - ADDED: `RegisteredToolsServer` type alias (standalone)
+   - ADDED: module-level `_testDb: Database` and `_testServer: McpServer`
+   - ADDED: `beforeEach()` creating in-memory DB + server + `registerInsiderTools(_testServer, () => _testDb)`
+   - ADDED: `afterEach()` calling `_testDb.close()`
+   - ADDED: `callTool(args)` helper using `_registeredTools["get_insider_transactions"].handler(args)`
+   - Test 3 (pure math cap formula): UNCHANGED — no transport involved
+   - Tests 1, 2, 4 (MCP tool tests): replaced `client = await buildConnectedPair(db)` + `client.callTool(...)` with `callTool(args)` direct handler call
+   - Local pass: **4 pass / 0 fail** (201ms)
+
+**what-considered:**
+- Using intersection type `McpServer & { _registeredTools: ... }` — REJECTED: tsc TS2339 (_registeredTools is private in McpServer; intersection reduces to `never`). Standalone type + `as unknown as` cast is the correct pattern (same as 1117/1124/1134/1129).
+- Adding any `mock.module()` — REJECTED: C5-CURE ABSOLUTE constraint; all 3 tool import chains are pure SQLite, zero HTTP, zero mock needed.
+- Touching production code — REJECTED: all 3 prod files are confirmed correct (registerMarketWideForeignFlowTool, registerCompanyProfileTools, registerInsiderTools accept db injection). Test-infra-only rewrite.
+- Removing any it() block — REJECTED: task spec RETAIN COVERAGE; all 8+8+4=20 it() blocks retained.
+
+**why-decision:** InMemoryTransport+Client round-trip hangs on Bun 1.3.13/Ubuntu CI (~5000ms hook-timeout fingerprint per arch brief §C-TH class). All three files pass alone locally (CONTAMINATION verdict confirmed). Direct `_registeredTools` handler invocation removes the message loop entirely — CI-safe, order-independent. Pattern proven 4× in siblings 1117/1124/1129/1134.
+
+**result:**
+- MSG-1: **8 pass / 0 fail** (421ms, single-file bun test)
+- RAPID-A: **8 pass / 0 fail** (204ms, single-file bun test)
+- RAPID-H: **4 pass / 0 fail** (201ms, single-file bun test)
+- `bun tsc --noEmit`: **CLEAN** (exit 0, no output)
+- ci_absolute: untouched (55)
+- projected_delta: -15 (55 → 36)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/MSG-1-market-foreign-flow.test.ts`
+- `apps/mcp-server/src/__tests__/RAPID-A-get-company-profile-tool.test.ts`
+- `apps/mcp-server/src/__tests__/RAPID-H-insider-lookback.test.ts`
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
+- `docs/agent-memory/notebooks/dev-mcp-server.md` (notebook entry)
+- `docs/data/orch/orch-state.json` (BATCH1 TODO → REVIEW)

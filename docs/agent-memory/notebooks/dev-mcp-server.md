@@ -1,5 +1,17 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE — REVIEW
+
+**Task:** BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE | Sprint: CI-RED-RECONCILE | Size: M | DJ: dev-mcp-server-S23
+**Scope:** 3 test files rewritten — InMemoryTransport+Client replaced with `_registeredTools` direct handler invocation.
+- `MSG-1-market-foreign-flow.test.ts`: 8 pass / 0 fail (421ms). `registerMarketWideForeignFlowTool(server, db)` + module-level `_testDb`/`_testServer` + `beforeEach`/`afterEach`. 3 unit tests unchanged (query helpers called directly).
+- `RAPID-A-get-company-profile-tool.test.ts`: 8 pass / 0 fail (204ms). `registerCompanyProfileTools(server, () => db)` + `callToolDirect(server, args)`. Tests 1–6 (unit) unchanged. Tests 7–8 (MCP) rewired via `_registeredTools`.
+- `RAPID-H-insider-lookback.test.ts`: 4 pass / 0 fail (201ms). `registerInsiderTools(server, () => _testDb)` + module-level fixtures. Test 3 (math cap) unchanged. Tests 1,2,4 rewired via `_registeredTools`.
+**Root cause:** InMemoryTransport+Client ~5000ms timeout on Bun 1.3.13/Ubuntu CI (TRANSPORT-HANG class). Files pass alone locally — CONTAMINATION verdict confirmed by spike brief.
+**Result:** 20 total tests (8+8+4), all pass alone. tsc CLEAN. ZERO it() removed. ZERO prod code touched. projected_delta -15 (55→36). Status: REVIEW.
+
+---
+
 ## 2026-06-09 · FIX-CI-C1282a-DATA-FRESHNESS-REWRITE — REVIEW
 
 **Task:** FIX-CI-C1282a-DATA-FRESHNESS-REWRITE | Sprint: CI-RED-RECONCILE | Size: S | DJ: dev-mcp-server-S22

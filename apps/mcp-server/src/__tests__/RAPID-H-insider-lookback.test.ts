@@ -13,15 +13,19 @@
  * Post-fix (cap 180): all 3 tests pass.
  *
  * DoD: G1–G6 LEAN (fence/sandbox/replay/red-green/tsc/honest-artifact)
+ *
+ * Harness: _registeredTools direct-handler invocation (CI-safe; no InMemoryTransport).
+ * REWRITE rationale: InMemoryTransport+Client.callTool() stalls on Bun 1.3.13/Ubuntu CI
+ * (TRANSPORT-HANG fingerprint ~5000ms); direct handler invocation removes the message
+ * loop entirely — CI-safe, order-independent.
+ * Template: 1134-get-foreign-flow-tool.test.ts (proven CI-green 4×).
  */
 
 Bun.env["DB_PATH"] = ":memory:";
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { insertInsiderTransaction } from "../infrastructure/db/insiderStore.js";
 import { registerInsiderTools } from "../interface/mcp/tools/market-data/insiderTools.js";
 
@@ -46,6 +50,26 @@ interface InsiderToolOutput {
   totalCount: number;
   lookbackDays: number;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test server type — exposes _registeredTools for direct handler invocation
+// NOTE: Cannot use intersection type (McpServer & { _registeredTools: ... })
+// because _registeredTools is private in McpServer; tsc reduces intersection
+// to never. Use (server as unknown as RegisteredToolsServer) at call site.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type RegisteredToolsServer = {
+  _registeredTools: Record<string, {
+    handler: (args: Record<string, unknown>) => Promise<McpTextResult>;
+  }>;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Module-level fixtures (set in beforeEach, torn down in afterEach)
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _testDb: Database;
+let _testServer: McpServer;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -104,40 +128,41 @@ function seedRow(
   });
 }
 
-async function buildConnectedPair(db: Database): Promise<Client> {
-  const server = new McpServer({ name: "test", version: "0.0.1" });
-  registerInsiderTools(server, () => db);
-
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  await server.connect(serverTransport);
-
-  const client = new Client({ name: "test-client", version: "0.0.1" });
-  await client.connect(clientTransport);
-  return client;
+/** Call the get_insider_transactions tool directly via _registeredTools */
+async function callTool(
+  args: Record<string, unknown>,
+): Promise<McpTextResult> {
+  const tool = (_testServer as unknown as RegisteredToolsServer)._registeredTools["get_insider_transactions"];
+  if (!tool) throw new Error("Tool not registered: get_insider_transactions");
+  return await tool.handler(args);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Setup / Teardown
+// ─────────────────────────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  _testDb = createTestDb();
+  _testServer = new McpServer({ name: "test", version: "0.0.1" });
+  registerInsiderTools(_testServer, () => _testDb);
+});
+
+afterEach(() => {
+  _testDb.close();
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FIX-H — insider lookback extended to 180d", () => {
-  let db: Database;
-
-  beforeEach(() => {
-    db = createTestDb();
-  });
-
   // ── Test 1: days=91 accepted (was capped to 90 pre-fix) ───────────────────
   it("days=91 is accepted — lookbackDays returns 91, not 90", async () => {
     // Seed a transaction 91 days ago so we can verify it is included
     const date91 = daysAgo(91);
-    seedRow(db, "tx-91d", "FPT", date91, "buy");
+    seedRow(_testDb, "tx-91d", "FPT", date91, "buy");
 
-    const client = await buildConnectedPair(db);
-    const result = await client.callTool({
-      name: "get_insider_transactions",
-      arguments: { code: "FPT", days: 91 },
-    }) as McpTextResult;
+    const result = await callTool({ code: "FPT", days: 91 });
 
     const parsed = JSON.parse(result.content[0]!.text) as InsiderToolOutput;
 
@@ -154,13 +179,9 @@ describe("FIX-H — insider lookback extended to 180d", () => {
   // ── Test 2: days=180 accepted and window used ─────────────────────────────
   it("days=180 is accepted — lookbackDays returns 180", async () => {
     const date150 = daysAgo(150);
-    seedRow(db, "tx-150d", "FPT", date150, "buy");
+    seedRow(_testDb, "tx-150d", "FPT", date150, "buy");
 
-    const client = await buildConnectedPair(db);
-    const result = await client.callTool({
-      name: "get_insider_transactions",
-      arguments: { code: "FPT", days: 180 },
-    }) as McpTextResult;
+    const result = await callTool({ code: "FPT", days: 180 });
 
     const parsed = JSON.parse(result.content[0]!.text) as InsiderToolOutput;
 
@@ -192,19 +213,10 @@ describe("FIX-H — insider lookback extended to 180d", () => {
 
   // ── Replay test: call tool twice on same data → same result ───────────────
   it("replay: calling with days=180 twice returns identical lookbackDays", async () => {
-    seedRow(db, "tx-r1", "VNM", daysAgo(60), "buy");
+    seedRow(_testDb, "tx-r1", "VNM", daysAgo(60), "buy");
 
-    const client = await buildConnectedPair(db);
-
-    const r1 = await client.callTool({
-      name: "get_insider_transactions",
-      arguments: { code: "VNM", days: 180 },
-    }) as McpTextResult;
-
-    const r2 = await client.callTool({
-      name: "get_insider_transactions",
-      arguments: { code: "VNM", days: 180 },
-    }) as McpTextResult;
+    const r1 = await callTool({ code: "VNM", days: 180 });
+    const r2 = await callTool({ code: "VNM", days: 180 });
 
     const p1 = JSON.parse(r1.content[0]!.text) as InsiderToolOutput;
     const p2 = JSON.parse(r2.content[0]!.text) as InsiderToolOutput;

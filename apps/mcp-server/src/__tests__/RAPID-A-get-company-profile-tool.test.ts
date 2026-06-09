@@ -15,6 +15,12 @@
  * Replay: test 7 explicitly calls tool twice and asserts same JSON.
  *
  * DoD: G1–G6 LEAN (fence/sandbox/replay/red-green/tsc/honest-artifact)
+ *
+ * Harness: _registeredTools direct-handler invocation for MCP tool tests (CI-safe; no InMemoryTransport).
+ * REWRITE rationale: InMemoryTransport+Client.callTool() stalls on Bun 1.3.13/Ubuntu CI
+ * (TRANSPORT-HANG fingerprint ~5000ms); direct handler invocation removes the message
+ * loop entirely — CI-safe, order-independent.
+ * Template: 1134-get-foreign-flow-tool.test.ts (proven CI-green 4×).
  */
 
 Bun.env["DB_PATH"] = ":memory:";
@@ -22,8 +28,6 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
   queryCompanyProfile,
   registerCompanyProfileTools,
@@ -38,6 +42,19 @@ interface McpTextResult {
   isError?: boolean;
   content: Array<{ type: string; text: string }>;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test server type — exposes _registeredTools for direct handler invocation
+// NOTE: Cannot use intersection type (McpServer & { _registeredTools: ... })
+// because _registeredTools is private in McpServer; tsc reduces intersection
+// to never. Use (server as unknown as RegisteredToolsServer) at call site.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type RegisteredToolsServer = {
+  _registeredTools: Record<string, {
+    handler: (args: Record<string, unknown>) => Promise<McpTextResult>;
+  }>;
+};
 
 /**
  * Create an in-memory DB with the minimal tables needed for company profile queries.
@@ -119,16 +136,14 @@ function seedTradingStats(
   ).run(code, date, currentHoldingRatio, fetchedAt);
 }
 
-async function buildConnectedPair(db: Database): Promise<Client> {
-  const server = new McpServer({ name: "test", version: "0.0.1" });
-  registerCompanyProfileTools(server, () => db);
-
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  await server.connect(serverTransport);
-
-  const client = new Client({ name: "test-client", version: "0.0.1" });
-  await client.connect(clientTransport);
-  return client;
+/** Call the get_company_profile tool directly via _registeredTools */
+async function callToolDirect(
+  server: McpServer,
+  args: Record<string, unknown>,
+): Promise<McpTextResult> {
+  const tool = (server as unknown as RegisteredToolsServer)._registeredTools["get_company_profile"];
+  if (!tool) throw new Error("Tool not registered: get_company_profile");
+  return await tool.handler(args);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -227,7 +242,7 @@ describe("FIX-A — queryCompanyProfile (unit)", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// get_company_profile MCP tool tests (via InMemory transport)
+// get_company_profile MCP tool tests (via _registeredTools direct invocation)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("FIX-A — get_company_profile MCP tool", () => {
@@ -243,17 +258,11 @@ describe("FIX-A — get_company_profile MCP tool", () => {
     seedOfficer(db, "VNM", "Nguyen Thi Ha", "CEO", 0.02, 1_000_000);
     seedTradingStats(db, "VNM", 25.3);
 
-    const client = await buildConnectedPair(db);
+    const server = new McpServer({ name: "test", version: "0.0.1" });
+    registerCompanyProfileTools(server, () => db);
 
-    const r1 = await client.callTool({
-      name: "get_company_profile",
-      arguments: { code: "VNM" },
-    }) as McpTextResult;
-
-    const r2 = await client.callTool({
-      name: "get_company_profile",
-      arguments: { code: "VNM" },
-    }) as McpTextResult;
+    const r1 = await callToolDirect(server, { code: "VNM" });
+    const r2 = await callToolDirect(server, { code: "VNM" });
 
     expect(r1.content[0]!.text).toBe(r2.content[0]!.text);
   });
@@ -262,11 +271,10 @@ describe("FIX-A — get_company_profile MCP tool", () => {
   it("tool uppercases lowercase code input", async () => {
     seedShareholder(db, "FPT", "FPT Holdings", 200_000_000, 35.0);
 
-    const client = await buildConnectedPair(db);
-    const result = await client.callTool({
-      name: "get_company_profile",
-      arguments: { code: "fpt" },
-    }) as McpTextResult;
+    const server = new McpServer({ name: "test", version: "0.0.1" });
+    registerCompanyProfileTools(server, () => db);
+
+    const result = await callToolDirect(server, { code: "fpt" });
 
     expect(result.isError).not.toBe(true);
     const parsed = JSON.parse(result.content[0]!.text) as CompanyProfileResult;

@@ -1,6 +1,6 @@
 {
   "locked": true,
-  "owner_agent": "architect",
-  "task": "main",
-  "expires_at": 9999999999
+  "owner_agent": "dev-mcp-server",
+  "task": "BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE",
+  "expires_at": 1781026934
 }
