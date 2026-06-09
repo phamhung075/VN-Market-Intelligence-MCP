@@ -99,3 +99,26 @@ Zone health: bun tsc clean, 234 13/0, 1892a 3/0, 1 SQL line fixed | HEALTHY
 **Expected CI impact:** 85-95% reduction in native fail+error (629 → <50 estimate per P7 brief)
 
 Zone health: bun tsc --noEmit clean, 7 destroyer files patched, 62 tests pass in isolation | HEALTHY
+
+## 2026-06-09 · FIX-CI-DEAD-REUTERS-TESTS + FIX-CI-DATA-SYMLINK-ENOENT — DONE
+
+**Tasks:** FIX-CI-DEAD-REUTERS-TESTS (Cluster 5) + FIX-CI-DATA-SYMLINK-ENOENT (Cluster 2) | Single commit
+**Commit:** a51506857c08ec89c422bb7847d6e7c04efb4a0a
+
+**Cluster 5 (2 native errors → 0):**
+- Deleted `apps/mcp-server/src/_deprecated/fetchers/023-rss-reuters.test.ts` and `1828c-rss-consecutive-error.test.ts`
+- Both import `../infrastructure/fetchers/reuters.js` (deleted from production); bun throws `Cannot find module` at eval time → 2 native errors
+- Files marked `@ts-nocheck` + "Retained for rollback reference only" — dead by design
+
+**Cluster 2 (~91 native fails → ~0):**
+- Root cause: `apps/mcp-server/data` is git mode 120000 symlink → `../../data` (git-ignored `/data/`). In CI the symlink target is absent. `setup.ts` `mkdirSync` loop silently catches the resulting ENOENT; subdirectories are never created; tests writing to `data/briefings/`, `data/reports/`, `data/lancedb/` etc. get ENOENT at test time.
+- Fix: added `lstatSync` + `isSymbolicLink` guard in `setup.ts` preload BEFORE the mkdirSync loop. If DATA_ROOT is a symlink and `existsSync` returns false (broken), `unlinkSync` removes the dangling symlink entry. `mkdirSync` then creates a real directory. No CI workflow change needed.
+- Local dev: `existsSync` returns true (target exists) → guard does not fire → symlink preserved
+
+**Verification:**
+- `bun tsc --noEmit`: clean (0 errors)
+- 125-test-e2e-briefing: 39 pass / 0 fail (primary Cluster 2 victim)
+- 012-lancedb-store: 6 pass / 0 fail (data/lancedb path)
+- 101-job-morning-briefing: 14 pass / 0 fail (data/briefings path)
+
+Zone health: bun tsc clean, Cluster5 errors eliminated, Cluster2 symlink healed | HEALTHY
