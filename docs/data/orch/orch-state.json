@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T04:14:34Z",
+  "_updated_at": "2026-06-09T04:44:01Z",
   "_updated_by": "po",
   "head": {
     "status": "idle",
@@ -3086,6 +3086,69 @@
             "created_at": "2026-06-08T23:14:00Z",
             "note": "[po S15 2026-06-08T23:14Z] CURE for E1 (table already exists, ~32) + E2b/c/d + E3a/b (missing-column / NOT-NULL / no-such-table, ~104) per architect brief Phase 2+3 (§4 FIX-CLASS-E1/E2b/E2c/E2d/E3a/E3b). depends:FIX-SCHEMA-DRIFT-P1 (sequence to keep WIP<=2 and avoid two devs racing the same 64 rag_analyses files). NOT another mechanized one-size injection (that was 9454baad, reverted +219). Design SSOT = two-fixture-contract model; Contract B files must use IF NOT EXISTS + include every column the SUT's INSERT/SELECT touches. DoD: bun-test FAIL+ERROR DROP (never increase) vs baseline on subsequent push; bun tsc --noEmit clean; per-file isolation pass. Brief Phase 4 (pure-singleton audit) deliberately NOT folded here — parked as FU-SCHEMA-DRIFT-P4 backlog. DISPATCH ORDER: 2nd (after P1 lands, frees the rag_analyses cohort). | [po S15 2026-06-08T23:40Z] DISPATCH-READY: depends:[FIX-SCHEMA-DRIFT-P1] now SATISFIED (P1=DONE this cycle). P2 scope == now-dominant VISIBLE fail class unmasked by P1 (agent_signals/sbv_rates_history/positions/commodity_prices*/daily_ohlcv/imf_indicators tables + foreign_net_vol/statement_section cols). Net fail+error should DROP once P2 lands. WIP<=2 honored (P1 closed -> P2 sole active FIX). Status stays TODO (dispatch trigger); router/PM may route to dev-mcp-server now. Gate: read bun GITHUB_STEP_SUMMARY for 702-comparable absolute. | [DJ-GATE-1 dev-mcp-server 2026-06-09T00:05Z] DECISION: P2 impl complete. Phase 2 (E1): 69 files — bare CREATE TABLE → IF NOT EXISTS for watchlist/rag_analyses/market_prices/vps_push_log/market_prices_history/daily_ohlcv/positions/alerts/financial_reports/agent_feedback/bctc_vps_queue/cron_job_runs/vnstock_trading_stats/sbv_rates/market_messages/evidence_fragments/evidence_scores/prediction_claims/insider_transactions/imf_indicators/kinhdich_readings/hexagram_transitions/commodity_prices/commodity_prices_history/tracked_indicators. Phase 3 E3a: 34 files — watchlist.exchange NOT NULL DEFAULT HOSE. Phase 3 E3b: 2 files — agent_signals.expires_at NOT NULL DEFAULT. Phase 3 E2b: 23 files — rag_analyses.source_url UNIQUE. Phase 3 foreign_net_vol: 10 files — daily_ohlcv foreign flow cols (before PRIMARY KEY). Phase 3 statement_section: 1 file — BANK-AWARE-1 bctc_table_rows. Phase 3 positional INSERT fix: 2 files — hotfix-bctc-parser2 + 1390 watchlist INSERT (code) VALUES. tsc clean. Isolation sample: 7 files 0 fail. Commit SHA(s): pending router push. Did NOT push — router owns push+CI verification. Contract invariants: 0 double-create, 0 NOT NULL without default regressions maintained. | [po S16 DJ-GATE-1 2026-06-09T00:16Z] REVIEW->DONE. VERIFICATION GATE PASSED: po RAW-VERIFIED native summaries himself (not router badges) — after-P2 run 27175100853 = 10881 pass / 620 fail / 14 errors / Ran 11537 tests; baseline 27168638852 = 10742 pass / 656 fail / 46 errors / Ran 11427 tests => fail+error 702->634 (-68 DROP), pass +139, errors -32, +110 tests now execute (P1 unmasking + P2 coverage). Regression classes double-create=0 / NOT NULL=0 / data_env=0 (no regression introduced). Code e3501171 = 117 files zone-confined apps/mcp-server/src/__tests__ + 1 orch-state board flip, single status key, DJ-GATE-1 inline. CI workflow conclusion stays red (residual fails) but gate is native fail+error DROP — PASSED. Residual no-such-table singleton classes -> promoted to FU-SCHEMA-DRIFT-P4 (now active TODO). No push (router owns). measurement: native-to-native ONLY going forward; marker method over-counts ~2x (1164 vs native 620).",
             "closed_at": "2026-06-09T00:16:13Z"
+          },
+          {
+            "id": "FIX-CI-MCP-SDK-MOCK-CONTAM",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "labels": [
+              "ci-red-reconcile",
+              "mock-contamination",
+              "no-prod-code"
+            ],
+            "title": "Cluster 1 (taxonomy #1, ~355/56% of 629): rewrite the mock.module(@modelcontextprotocol/sdk/server/mcp.js) in apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts so MockMcpServer exposes .tool() and .registerTool() as no-ops (OR scope the mock to the SSE transport layer only and STOP mocking the McpServer class) so the 69+ downstream files inherit a McpServer with working .tool()/.registerTool().",
+            "baseline_pass": "629 native fail+error absolute (615 fail + 14 err / Ran 11537 on clean main, run e442cf11)",
+            "gate": "native fail+error must DROP well below 629 in CI (target ~274 if the full 355 clears); ZERO production-code change (test file only); per-file isolation pass for 1862c; bun tsc --noEmit clean.",
+            "created_at": "2026-06-09T04:44:01Z",
+            "created_by": "po",
+            "note": "[po S22 DJ-GATE-1 2026-06-09T04:44Z] FIRST isolated attack FIX of CI-RED-RECONCILE post-taxonomy. Cluster1 SOLO-FIRST (router preferred): one test file, ZERO prod-code risk, cleanly CI-measurable in isolation so its ~355-drop is attributable BEFORE touching CI-workflow/symlink infra (Cluster2) or deleting dead tests (Cluster5). Root cause raw-verified: 1862c L38-42 MockMcpServer has only connect(), no .tool()/.registerTool(); afterAll mock.restore() does NOT unload Bun ESM cache -> 69+ later files get TypeError: server.tool is not a function. DISPATCH-READY: route to dev-mcp-server. WIP<=2 honored (sole active FIX in this sprint lane). Cluster2 (ENOENT symlink, ~91) + Cluster5 (dead reuters tests, 2 err) QUEUED behind this (status QUEUED). DoD: read bun GITHUB_STEP_SUMMARY native fail+error absolute vs 629; native-to-native measurement only (marker method over-counts ~2x)."
+          },
+          {
+            "id": "FIX-CI-DATA-SYMLINK-ENOENT",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "QUEUED",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "depends": [
+              "FIX-CI-MCP-SDK-MOCK-CONTAM"
+            ],
+            "labels": [
+              "ci-red-reconcile",
+              "ci-workflow",
+              "no-prod-code"
+            ],
+            "title": "Cluster 2 (taxonomy #2, ~91): apps/mcp-server/data is a git 120000 symlink to ../../data (git-ignored /data/, absent in CI); setup.ts mkdirSync swallows the ENOENT. Fix: add mkdir -p apps/mcp-server/data/... step in .github/workflows/ci.yml before bun test, OR replace the symlink with a real dir, OR make setup.ts catch re-throw non-EEXIST. ~7 test files (incl 125-test-e2e-briefing.test.ts).",
+            "baseline_pass": "629 native fail+error absolute (post-Cluster1 actual)",
+            "gate": "native fail+error must DROP further vs post-Cluster1 absolute; CI-workflow/infra change only (no prod logic).",
+            "created_at": "2026-06-09T04:44:01Z",
+            "created_by": "po",
+            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM so the Cluster1 355-drop is cleanly attributable in CI before mixing CI-workflow/symlink infra. LOW-cost non-prod. Flip TODO when Cluster1 lands + measured."
+          },
+          {
+            "id": "FIX-CI-DEAD-REUTERS-TESTS",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "QUEUED",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "depends": [
+              "FIX-CI-MCP-SDK-MOCK-CONTAM"
+            ],
+            "labels": [
+              "ci-red-reconcile",
+              "dead-code",
+              "no-prod-code"
+            ],
+            "title": "Cluster 5 (taxonomy #5, 2 native errors): two apps/mcp-server _deprecated/ test files import the deleted ../infrastructure/fetchers/reuters.js (Cannot find module at eval time). Fix: delete the two _deprecated/ test files (deprecated by name).",
+            "baseline_pass": "629 native fail+error absolute (post-Cluster1 actual)",
+            "gate": "2 native errors -> 0; dead-test deletion only (no prod code).",
+            "created_at": "2026-06-09T04:44:01Z",
+            "created_by": "po",
+            "note": "[po S22 2026-06-09T04:44Z] QUEUED follow-on (NOT active). Gated behind FIX-CI-MCP-SDK-MOCK-CONTAM. LOW-cost: delete 2 dead _deprecated/ reuters test files. Together Cluster2+5 ~93 more after Cluster1. Cluster3/4 NOT opened yet (gated on 1+2+5 clearing first per taxonomy ranked attack order)."
           }
         ],
         "_updated_by": "po"
@@ -4190,7 +4253,7 @@
       {
         "id": "FU-CI-PROFILE-629",
         "type": "SPIKE",
-        "status": "TODO",
+        "status": "DONE",
         "owner": "architect",
         "title": "ARCHITECT SPIKE: PROFILE the full 629 native CI bun-test failures — categorize ALL failure clusters by root-cause + native fail/error count, rank by (cluster-size x cheapness), deliver a failure-taxonomy doc to drive the next CI-RED-RECONCILE attack",
         "mode": "spike",
@@ -4206,7 +4269,9 @@
         ],
         "context": "Schema-drift cluster PARKED best-effort-exhausted (P5/P6/P7/P8 all disproven; self-heal nets ~breakeven; 629 is the schema-drift floor). Even a perfect schema-drift fix removes only ~tens of 629 — iterating ONE cluster cannot reach 0-fail. Profile FIRST, attack by ROI. Run ONLY targeted test files, NEVER the full ~11.5k suite blind. Source: docs/signals/ci-p8-gate-result-6295cb32-20260609T0410Z.json payload.po_action_requested path (B).",
         "created_at": "2026-06-09T04:14:34Z",
-        "created_by": "po"
+        "created_by": "po",
+        "closed_at": "2026-06-09T04:44:01Z",
+        "note": "[po S22 DJ-GATE-1 2026-06-09T04:44Z] SPIKE TODO->DONE. Gate=taxonomy delivered+router-verified: docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md (cluster->root-cause->native-count, ranked attack order, NO code change) MET. BREAKTHROUGH: 629 is NOT schema-drift-dominated (that cluster ~4 fails, EXHAUSTED P4-P8); real #1 = MCP-SDK mock contamination ~355/56% from ONE test file (1862c-transport-session-eviction.test.ts mock.module(@modelcontextprotocol/sdk/server/mcp.js) MockMcpServer lacks .tool()/.registerTool(); Bun ESM cache leaks to 69+ files; mock.restore() insufficient). Router raw-verified the central claim (file own comment L26-27 documents the cascade; L38-44 do the mock); po raw-verified L38-42 (MockMcpServer={connect} only) himself. Cluster1 opened as first isolated attack FIX (FIX-CI-MCP-SDK-MOCK-CONTAM)."
       }
     ],
     "archive": [],

@@ -1,24 +1,26 @@
 # PO Notebook
 
-## c · 2026-06-09T04:14Z — CI-RED-RECONCILE: P8 gate FAILED -> PARK schema-drift (PATH B) + open FU-CI-PROFILE-629 (po-S21)
+## c · 2026-06-09T04:44Z — CI-RED-RECONCILE: 629 taxonomy DELIVERED -> close SPIKE + open Cluster-1 attack FIX (po-S22)
 
-**Trigger:** OOB ci_red `docs/signals/ci-p8-gate-result-6295cb32-20260609T0410Z.json` (router CI-measured P8 native fail+error 631 vs 629 = +2 WORSE, P5 pattern reproduced; router already REVERTED apps/ to 629 baseline 880ffca6 byte-identical 2a6044b1, tsc clean, pushed). PO owns board; router owns push+gate. DJ-GATE-1.
+**Trigger:** PRIORITY TRIAGE — FU-CI-PROFILE-629 architect SPIKE delivered (docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md, 7682B) + router raw-verified the central Cluster-1 claim. PO owns board; router owns push+gate+verify. DJ-GATE-1.
 
-**DECISION = PATH B (autonomous strategic pivot).** PARK schema-drift cluster best-effort-exhausted; 629 = schema-drift FLOOR. PIVOT sprint to full-corpus failure taxonomy, attack by ROI.
-- WHY: schema-drift's BEST outcome removes only ~tens of 629 (the 4-5 table-MISSING classes self-heal repeatably heals) and even that nets ~breakeven (created_at x3 column-existence collision claws it back). 6 touches, 4 consecutive disproven fix-hypotheses (P5/P6/P7/P8) on ONE ROI-capped cluster that CANNOT reach /goal 0-fail by itself. Continuing = sunk-cost. A full-corpus taxonomy is the real unblock.
-- created_at root cause (recorded for later): NOT a missing-DEFAULT — it's a column-EXISTENCE drift. A column-less competing CREATE TABLE wins the IF NOT EXISTS race on the fresh :memory: singleton. Missing DEFAULT would throw NOT NULL on INSERT, not 'no such column' on query. Revisit ONLY if taxonomy later shows schema-drift is largest/cheapest (it is demonstrably not).
+**BREAKTHROUGH (router-verified, acted on — not re-verified):** 629 is NOT schema-drift-dominated (~4 fails, PARKED P4-P8 — the 6 schema spikes chased the wrong cluster). Real #1 = MCP-SDK mock contamination ~355/56% from ONE file: apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts mock.module(@modelcontextprotocol/sdk/server/mcp.js) MockMcpServer lacks .tool()/.registerTool(); Bun ESM cache leaks to 69+ files; mock.restore() insufficient. I raw-read L38-42 myself = MockMcpServer={connect} only (verify-raw-not-badges).
+
+**ATTACK-SCOPE = Cluster 1 SOLO-FIRST** (not 1+2+5 bundle). Rationale: isolate the single test-file fix so its ~355-drop is cleanly attributable in CI BEFORE mixing CI-workflow/symlink infra — measurement integrity + zero prod-code risk + WIP<=2.
 
 **Board edits (1 atomic jq pass, commit-mutex held):**
-- FU-SCHEMA-DRIFT-P8-IMPL (in_progress): REVIEW->REWORK (gate failed, reverted; effectively shelved, superseded by FU-CI-PROFILE-629 — note recorded). Single status key.
-- FU-SCHEMA-DRIFT-P8 architect spike: KEPT DONE (direction sound, only created_at hypothesis disproven — spike-sound/fix-wrong, po-S18/19/20 precedent).
-- +FU-CI-PROFILE-629 (architect SPIKE, TODO, timebox 120m, zone apps/mcp-server/): profile ALL 629 native fails -> cluster/root-cause/native-count, ranked attack order. Deliverable docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md. NO code change (gate = taxonomy delivered).
-- Owner = architect (no dispatch row for test-corpus profiling; no-code root-cause taxonomy = SPIKE/design pattern; deliverable is a brief doc).
+- FU-CI-PROFILE-629 (backlog[78]): TODO->DONE (+closed_at +closing note). Gate=taxonomy delivered MET. Single status key (=1).
+- +FIX-CI-MCP-SDK-MOCK-CONTAM (sprint .tasks, TODO, dev-mcp-server, apps/mcp-server/, high): rewrite 1862c mock so MockMcpServer exposes .tool()/.registerTool() no-ops OR scope mock to SSE transport only. baseline_pass=629 native fail+error absolute; gate=DROP well below 629 (target ~274). ZERO prod code. DISPATCH-READY.
+- +FIX-CI-DATA-SYMLINK-ENOENT (Cluster 2, ~91, QUEUED, depends Cluster1): CI mkdir -p / replace symlink. NOT active.
+- +FIX-CI-DEAD-REUTERS-TESTS (Cluster 5, 2 err, QUEUED, depends Cluster1): delete 2 _deprecated reuters tests. NOT active.
+- Cluster 3/4 NOT opened (gated on 1+2+5 clearing). Schema-drift (Cluster 6) NOT re-opened (PARKED).
 
-**SSOT discipline:** backlog 78->79 (+1 exactly), in_progress unchanged, done 122 unchanged, signal_queue.rows EXACTLY 56 preserved (no whole-object rewrite). Temp validated [ -s ] && jq -e . && size>600000 (701293) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po ttl 120s) claimed+released around write to serialize vs cowork */15 dispatcher. Commit 09b0b43d (2 owned paths, explicit pathspec, NOT pushed — router owns).
+**SSOT discipline:** backlog len 79 unchanged (in-place flip); sprint .tasks 19->22 (+3 exactly); signal_queue.rows EXACTLY 56 preserved (no whole-object rewrite). Temp validated [ -s ] && jq -e . && size>600000 (707093) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po ttl 120s) held around write to serialize vs cowork */15. Commit SHA below (3 owned paths, explicit pathspec, NOT pushed — router owns).
 
-**LESSON:** After N consecutive disproven fix-hypotheses on a cluster whose best-case ROI is capped well below the goal, STOP escalating to the next touch — PARK it as best-effort-exhausted and profile the whole corpus to attack by ROI. Iterating the lowest-ROI surface is sunk-cost even when each spike is individually sound. Open the diagnostic/taxonomy spike, NOT the next dev impl (WIP gate + don't churn).
+**LESSON:** When a long-running RED-reconcile pivots from diagnosis to attack, open ONLY the single largest+cheapest+isolated cluster first (solo, not bundled) so its CI delta is attributable; queue the rest behind it with depends. Don't bundle a test-file fix with CI-workflow/.github + dead-code deletion — conflated deltas lose per-cluster attribution.
 
 ## Carry-over
-- ROUTER OWNS: push (this notebook + journal + orch-state commit 09b0b43d, 3 ahead of origin) + dispatch FU-CI-PROFILE-629 to ARCHITECT (SPIKE 120m, full-corpus 629 taxonomy) BEFORE any attack dev task. Do NOT open the next attack task until taxonomy delivered (gated). WIP<=2 honored (architect lane, 0 IN_PROGRESS).
-- Schema-drift PARKED: no 7th touch. created_at column-existence diagnosis archived in po-S21 journal if ever needed.
-- Still-open from prior cycles (router routing): FIX-NEWS-VPS-CRASH-LOOP (ops-vps-fetch), FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (covers bctc-discover), Bug A FIX-NEWS-VPS-HEALTH-SQL needs mcp-server container REBUILD (ops) for live false-UNHEALTHY benefit.
+- ROUTER OWNS: push (this notebook + journal + orch-state, commit SHA in return, ahead of origin) + dispatch FIX-CI-MCP-SDK-MOCK-CONTAM to dev-mcp-server NOW (Cluster 1 solo). Hold Cluster 2 + 5 QUEUED until Cluster 1 lands+measured then flip TODO. Do NOT open Cluster 3/4 yet. WIP<=2 honored.
+- Next CI gate (router): native fail+error must DROP well below 629 (target ~274 if full 355 clears). Native-to-native measurement only (marker method over-counts ~2x).
+- Schema-drift PARKED: no 7th touch. created_at column-existence diagnosis archived in po-S21 journal.
+- Still-open (router routing): FIX-NEWS-VPS-CRASH-LOOP (ops-vps-fetch), FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (bctc-discover), Bug A FIX-NEWS-VPS-HEALTH-SQL needs mcp-server REBUILD (ops).
