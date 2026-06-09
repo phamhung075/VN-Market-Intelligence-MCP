@@ -1,6 +1,61 @@
-- **Last updated:** 2026-06-09 05:14 UTC · **Sprint:** current · **Status:** 67 cycles complete (c67 sentiment +SHIPPED)
+- **Last updated:** 2026-06-09 20:07 UTC · **Sprint:** current · **Status:** 71 cycles complete (c71 off-hours +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c71 · 2026-06-09T20:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (MONDAY 20:07 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, MIXED BULLISH/BEARISH SIGNALS.** 20 articles fetched, 8 watchlist impacts (primary: VietinBank Capital enters Petrosetco capital inflow CTG +8/10 bullish; secondary: EVN massive deposits utilities liquidity POW +8/10 bullish; tertiary: Real estate sector selloff NVL -4.33%, VRE -1.69%, VIC -0.92% fear signal +7/10 bearish; quaternary: macro commodity spillover gold/oil volatility +7/10 bearish). **4 signals fired (#5551–#5554): 2x urgent_news (CTG capital +8.0, POW utilities +8.0) + 2x chain_catalyst (NVL real estate sector -7.0, macro commodity volatility -7.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1793.05 +2.52, oil NEUTRAL 91.47 (-3.03%), gold BULLISH 4283.9 (-1.33%), usdvnd BEARISH 26128, carry NEUTRAL 1.38pp, yield CHEAP +3.2pp). **Regime: NEUTRAL** (stable baseline, commodity pressure intra-session). Carry NEUTRAL 1.38pp; equity yield CHEAP +3.2pp.
+
+**Signals Fired (4 total):** #5551 (urgent_news CTG capital inflow), #5552 (urgent_news POW utilities liquidity), #5553 (chain_catalyst NVL real estate selloff), #5554 (chain_catalyst macro commodity volatility). Dedup: SELF_SIGNALS_CACHE empty (6h window clean from c70). All 4 NEW. Coverage-state: all tickers recently updated c70 (16:11 UTC, ~4h ago). No sweep forced. Session log #1308.
+
+## c70 · 2026-06-09T16:10:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (MONDAY 16:10 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, MACRO VOLATILITY SIGNALS.** 20 articles fetched, 6 watchlist impacts (primary: VietinBank Capital enters Petrosetco capital inflow CTG +8/10; secondary: EVN deposit recovery bullish POW +8/10; tertiary: Real estate sector selloff NVL -4.33%, VRE -1.69% fear signal +7/10; quaternary: macro gold/oil spillover banking/oil_gas sectors +7/10). **4 signals fired (#5535–#5538): 2x urgent_news (CTG capital +8.0, POW utilities +8.0) + 2x urgent_news+chain_catalyst (NVL real estate -4.33% +7.0, macro volatility bearish +7.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1793.05 +2.52, oil NEUTRAL 90.81 (-3.73%), gold BULLISH 4316.4 (-0.58%), usdvnd BEARISH 26128, carry NEUTRAL 1.38pp, yield CHEAP 3.2pp). **Regime: NEUTRAL** (stable baseline, commodity pressure intra-session). Carry NEUTRAL; equity yield CHEAP +3.2pp.
+
+**Signals Fired (4 total):** #5535 (urgent_news CTG), #5536 (urgent_news POW), #5537 (chain_catalyst macro volatility), #5538 (urgent_news NVL). Dedup: SELF_SIGNALS_CACHE empty. All 4 NEW. Coverage-state: tickers analyzed last 04:08 UTC (>12h ago, <48h stale threshold). No sweep forced. Session log #1306.
+
+## c69 · 2026-06-09T12:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (MONDAY 12:07 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, MIXED MACRO.** 20 articles fetched, 10 watchlist impacts (primary: VietinBank Capital enters Petrosetco, banking capital flow signal CTG +8/10; secondary: global mega-startup IPO $1T valuation risk-on tech spillover FPT/FPT/SIS/VCI/SSI/HCM/VDC +9/10; tertiary: VinFast USD 1B funding utilities/tech VIC/FPT +8/10). **3 signals fired (#5511–#5513): 1x urgent_news (CTG capital inflow +8.0) + 2x chain_catalyst (global startup IPO tech rally +9.0, VinFast funding bullish +8.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1793.05 +2.52, oil NEUTRAL 92.5 (-1.94%), gold BULLISH 4360.5 (+0.44%), usdvnd BEARISH 26128, carry NEUTRAL 1.38pp, yield CHEAP 3.2pp). **Regime: NEUTRAL** (stable macro, no directional shift). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +3.2pp.
+
+**Self-Signal Feedback:** SELF_SIGNALS_CACHE: 0 recent entries (6h window clean from c68). No feedback hints applied. Default thresholds maintained.
+
+**Signals Fired (3 total):**
+- #5511 (urgent_news CTG to alert-commander): VietinBank Capital → major shareholder Petrosetco. Capital inflow + confidence banking sector. Confidence 86%. Critic 0.8. Regime NEUTRAL→score 8.0. Pillars: M2 bullish, COC neutral, EPS neutral, POL neutral. Phase expansion, tier equity.
+- #5512 (chain_catalyst to all): Global startup IPO $1T valuation. Tech sector risk-on bullish. VCI, SSI, HCM, VDC, FPT affected. Confidence 85%. Critic 0.8. Regime NEUTRAL→score 9.0. Pillars: M2 bullish, COC neutral, EPS bullish, POL neutral. Phase expansion, tier equity.
+- #5513 (chain_catalyst to all): VinFast raises USD 1B. Domestic tech group capital strength. VIC, FPT affected. Confidence 85%. Critic 0.8. Regime NEUTRAL→score 8.0. Pillars: M2 bullish, COC neutral, EPS bullish, POL neutral. Phase expansion, tier equity.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: 0 prior signals <180min. All 3 NEW signals POSTED (no suppression). Coverage-state sweep check: all tickers recently updated c68 (08:07); no stale >48h detected.
+
+**Coverage-state:** All 41 watchlist tickers already covered c68 08:07 UTC. No sweep batch forced. Atomic write deferred (no material delta from c68).
+
+**Session Log:** log_agent_work #1301 opened/closed. 20 items, 3 impacts, 3 signals, NEUTRAL regime. Off-hours slot (MARKET CLOSED).
+
+## c68 · 2026-06-09T08:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (MONDAY 08:07 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, BULLISH MICRO + STABLE MACRO.** 20 articles fetched, 41+ watchlist impacts (primary: VinFast $1B+ IPO breakthrough, EV sector momentum; secondary: global mega-startup IPO $1T valuation, tech sector spillover FPT/SIS; tertiary: FPT partnerships, VIC taxi expansion). **4 signals fired (#5491–#5494): 2x chain_catalyst (VinFast IPO bullish +9.0, startup IPO tech bullish +9.0) + 2x urgent_news (FPT partnership expansion +7.0, VIC taxi app #1 rating +6.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN. `get_macro_snapshot()` valid shape (vnIndex=1793.05 +2.52 up, oil NEUTRAL 93.01 (-1.40%), gold BULLISH 4350.2 (+0.20%), usdvnd BEARISH 26128, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (stable macro, slight bullish tilt from commodity equilibrium + equity yield premium). Carry NEUTRAL 1.38pp; equity yield CHEAP +2.05pp.
+
+**Self-Signal Feedback:** SELF_SIGNALS_CACHE: 0 recent entries (6h window clean from c67 sentiment batch). No feedback hints applied. Default thresholds maintained.
+
+**Signals Fired (4 total):**
+- #5491 (chain_catalyst to all): VinFast raises ~$1B, signals bullish tech/EV sector momentum. FPT, SIS direct impact. Confidence 78%. Critic 0.8. Regime NEUTRAL mult=1.0→score 9.0. Pillars: M2 positive, COC positive, EPS bullish, POL supportive. Phase expansion, tier equity.
+- #5492 (chain_catalyst to all): Global mega-startup IPO $1T valuation, positive VC sentiment spillover. Tech sector bullish. FPT, SIS affected. Confidence 78%. Critic 0.8. Regime NEUTRAL→score 9.0. Pillars: M2 positive, COC positive, EPS bullish, POL neutral. Phase expansion, tier equity.
+- #5493 (urgent_news FPT to alert-commander): FPT CEO meets Thai PM, secures 2 major Asia-Pacific partnerships. Regional expansion bullish EPS tailwind. Confidence 75%. Critic 0.8. Severity medium. Pillars: COC positive, EPS bullish. Phase expansion, tier equity.
+- #5494 (urgent_news VIC to alert-commander): VIC-backed taxi app ranks #1 India app store in 3 days. Strong international expansion signal. Confidence 70%. Critic 0.8. Severity low. Pillars: M2 positive, COC positive, EPS bullish. Phase expansion, tier equity.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: 0 prior signals <180min. All 4 NEW signals POSTED (no suppression). VinFast + global startup are distinct events (different drivers, different tickers affected). Coverage-state sweep check: all tickers recently updated c67 (05:14); no stale >48h detected.
+
+**Coverage-state:** All 41 watchlist tickers already covered c67 05:14 UTC (4 articles analysis <4h window). No sweep batch forced. Atomic write deferred (no material delta from c67).
+
+**Session Log:** log_agent_work #1300 opened/closed. 20 items, 4 impacts, 4 signals, NEUTRAL regime. Off-hours slot (MARKET OPEN).
 
 ## c67 · 2026-06-09T05:14:00Z (sentiment, slot=news-scout-sentiment) — SHIPPED [RECOVERY]
 
@@ -32,30 +87,3 @@
 **Coverage-state:** Updated all 41 watchlist tickers to 2026-06-09T04:08:00Z (all recent post-c65 update 00:09 UTC; no sweep forced, max staleness <4h). Atomic write: tmp→rename verified.
 
 **Session Log:** log_agent_work #1297 opened/closed. 20 items, 41 impacts, 5 signals, NEUTRAL regime. Off-hours slot (MARKET OPEN).
-
-## c65 · 2026-06-09T00:09:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
-
-**Off-hours cycle (MONDAY 00:09 UTC, MARKET CLOSED) — NEUTRAL REGIME, BEARISH MACRO + BULLISH STRUCTURAL.** 20 articles fetched, 45 watchlist impacts (primary: VN-Index drops to 1790.53 (-48.37, ~-2.6%), foreign net-sell 700B VND, banking sector -2.18% cascade 11 stocks; secondary: gold liquidation -6M VND/lượng risk-off; tertiary: VIC capital restructuring bullish EPS tailwind). **3 signals fired (#5451–#5453): 2x chain_catalyst (foreign outflow macro +8.0, gold liquidation +7.0) + 1x urgent_news (VIC restructuring bullish +8.0).**
-
-**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1790.53, oil NEUTRAL 94.33 (+1.33%), gold BULLISH 4341.60 (-0.54%), usdvnd BEARISH 26127 >25k, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (mixed: macro bearish VN-Index breach + FII exit, but gold + VIC bullish offset). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +2.05pp.
-
-**Signals Fired (3 total):**
-- #5452 (chain_catalyst to all): Foreign investors net-sell 700B VND, VN-Index breaches 1800 support. Banking cascade (BID, EIB, MBB, ACB, CTG, VPB, VCB) + realty + securities (41 affected). Confidence 82%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. hot_money_risk=true. Pillars: COC headwind, EPS bearish. Phase slowdown, tier equity.
-- #5453 (chain_catalyst to all): Gold liquidation −0.32% (-6M VND/lượng). Safe-haven unwinding, risk-off signal. Confidence 75%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Affected: REE (alt-commodity). Pillars: M2 bearish, COC headwind. Phase slowdown, tier alternative.
-- #5451 (urgent_news VIC to alert-commander): Vingroup Chairman PNV transfers capital to GSM + VinEnergo, strengthens VIC consolidation. Structural bullish EPS catalyst. Confidence 84%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. Pillars: EPS bullish. Phase expansion, tier equity.
-
-**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h clean). All 3 signals POSTED (no prior theme overlap in 180-min window). Macro + micro structural divergence allowed (direction override: #5452 bearish + #5451 bullish both posted).
-
-**Coverage-state:** Updated all 41 watchlist tickers to 2026-06-09T00:09:00Z (no stale tickers; all recently covered 2026-06-08T20:09Z). Atomic write: tmp→rename verified.
-
-**Session Log:** log_agent_work #1296 opened/closed. 20 items, 45 impacts, 3 signals, NEUTRAL regime. Off-hours slot.
-
-## c64 · 2026-06-08T20:09:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
-
-**Off-hours cycle (SUNDAY 20:09 UTC, MARKET CLOSED) — NEUTRAL REGIME, MACRO RISK-OFF + MICRO STRUCTURAL.** 20 articles fetched, 41 watchlist impacts (primary: VN-Index drops 1790.53 -50pts, foreign sell 700B VND, banking sector -2.18% avg; secondary: gold -0.32% liquidation, VIC capital restructuring bullish rebalance). **3 signals fired (#5425–#5427): 2x chain_catalyst (VN-Index breach bearish +8.0, gold liquidation bearish +7.0) + 1x urgent_news (VIC restructuring bullish +7.0).**
-
-**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). **Regime: NEUTRAL** (mixed bearish-bullish: VN-Index breach + FII outflow risk-off, but gold safe-haven bid + VIC structural bullish offset). Carry NEUTRAL 1.38pp; equity yield advantage CHEAP +2.05pp overbanking deposits.
-
-**Coverage-state:** Updated all 41 watchlist tickers + 3 sweep batch (SHB, HUT, DIG) to 2026-06-08T20:09:00Z. Atomic write: tmp→rename pattern verified.
-
-**Session Log:** log_agent_work #1292 opened/closed. 20 items, 41 impacts, 3 signals, NEUTRAL regime, NEUTRAL carry. Off-hours slot.
