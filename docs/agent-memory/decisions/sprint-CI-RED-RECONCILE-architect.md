@@ -190,3 +190,17 @@ Expected impact: 85-95% reduction (629 → <50 native fail+error).
 - Adding preload await initDatabase() in setup.ts: covers files before any closeDb() call; self-heal covers files after closeDb() on _db=null path. Together they cover all consuming-file patterns.
 **why-decision:** Direction (b) is not viable as a distinct global mechanism. Direction (a) is the only approach with a proven heal track record (P5 healed 4 classes) and a bounded, verifiable DDL fix. DDL drift pinpointed to exactly 3 lines across 2 slice files.
 **why-change:** P7 disproved per-file lever. P8 pivot to production-layer self-heal (direction a) with DDL prerequisites satisfied.
+
+---
+
+### STEP arch-S8 · architect · 2026-06-09T05:46Z
+
+**task-id:** RE-PROFILE-CI-241-RESIDUAL
+**what-done:** Pulled bun job 80254121788 log (job sha 91afe344), extracted 241 unique fails (1 spurious CI log fragment excluded), grouped into 9 fresh clusters superseding 629-era taxonomy. Wrote brief to docs/architecture-briefs/2026-06-09-ci-241-residual-taxonomy.md.
+**what-considered:**
+- Direct mapping from test-description patterns + error messages (TypeError/expect) to root cause per cluster.
+- C2: functions ARE implemented; root cause is require() CJS/ESM interop in test (not missing impl).
+- C3: "Received: undefined" on DB row = singleton pollution for signal_outcomes (not logic bug).
+- C1 recurring-bug guard triggered: macroTools.ts seam removal is second major CI event in this module.
+**why-decision:** Cluster by error signature + production-risk not by file proximity. Singleton pollution (C3) ranks above Kinh Dich diacritics (C4) on absolute count; C4 ranks first on pure score because prod-risk=LOW. First attack = C3 (43 tests, test-only isolation fix).
+**why-change:** 629-era estimate of ~159 C3 ASSERTION/LOGIC is now split across C1/C3/C4/C7/C8/C9 because Clusters 1+2 unmasked previously-crash-hidden tests.

@@ -1,8 +1,30 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09T07:00Z | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09T05:50Z | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T05:50Z — RE-PROFILE-CI-241-RESIDUAL: 241-residual fresh taxonomy
+
+**Task:** RE-PROFILE-CI-241-RESIDUAL (SPIKE, 120m, NO CODE CHANGE, zone: apps/mcp-server/)
+
+**Method:** CI log pull (gh run view --job=80254121788), Python dedup on test-description strings, error-message inspection for root-cause per cluster.
+
+**9 fresh clusters (241 native fails, 0 errors):**
+
+1. **C1 MACRO_INJECT_SEAM (71):** `macroTools.ts` removed `_testSbvClient`/`_testCommodityClient`/`_testDinhGiaInputs` seams; 071 tests still pass obsolete params → sections missing from output. Prod-risk HIGH. **RECURRING-BUG FLAG: second major CI event in macroTools.ts — needs dedicated SPIKE before dev touch.**
+2. **C2 UNDEFINED_GETMARKETMESSAGEDIGEST (21):** Functions implemented in `marketMessageStore.ts`; test uses `require()` CJS/ESM interop → named exports resolve as undefined in Bun. Prod-risk LOW.
+3. **C3 DB_SINGLETON_SIGNAL_OUTCOMES (43):** `signal_outcomes`/`evidence_scores`/`prediction_claims` tables wiped by singleton pollution from an earlier `closeDb()` without reinit. Pattern = P7-type destroyer. Prod-risk MEDIUM.
+4. **C4 KINH_DICH_DIACRITICS (24):** `kinhDichTools.ts` lines 734/1008/1032/1033/1035/1038 use ASCII not UTF-8; `explain_hexagram` missing sections. Prod-risk LOW.
+5. **C5 FILE_FIXTURE_ASSERTIONS (12):** Config/fixture evolved without updating test expectations (scheduler count, cowork-schedule schema, orch-state v3, docker-compose, `ttl_seconds: 180`). Prod-risk LOW.
+6. **C6 FOREIGN_FLOW (12):** `daily_ohlcv` foreign-flow columns missing in test DB after singleton pollution OR tool logic drift. Prod-risk MEDIUM.
+7. **C7 RAG_HTTP_CLIENT (12):** `globalThis.fetch` mock no longer intercepts ragHttpClient call path; response shape changed. Prod-risk LOW-MEDIUM.
+8. **C8 CONVICTION_ALERTS (8):** `conviction_debounce` table lost to singleton; `bbAlertScanJob` count drift; `notifyTelegramAlert` severity gate changed. Prod-risk MEDIUM.
+9. **C9 MISC_ASSERTION_TIMEOUT (38):** Mix of network-timeout tests without CI guard, assertion drifts, E2E behavior changes. Prod-risk MIXED.
+
+**Attack order:** C3 → C4 → C2 → C9 → C5 → C1(after dedicated SPIKE) → C6 → C7 → C8
+
+**Brief:** `docs/architecture-briefs/2026-06-09-ci-241-residual-taxonomy.md`
 
 ## 2026-06-09T07:00Z — FU-CI-PROFILE-629: full-suite failure taxonomy spike
 

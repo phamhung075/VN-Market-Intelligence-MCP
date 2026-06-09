@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T07:20:00Z",
-    "_updated_by": "ops",
+    "_updated_at": "2026-06-09T05:51:54Z",
+    "_updated_by": "architect",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3166,7 +3166,7 @@
             "id": "RE-PROFILE-CI-241-RESIDUAL",
             "type": "SPIKE",
             "owner": "architect",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "mode": "spike",
@@ -3186,7 +3186,7 @@
             "gate": "deliverable: a fresh-cluster-breakdown brief in docs/architecture-briefs/ that groups all 241 native fails by error signature and ranks buckets by (size x low-prod-risk); NO code change; gate = taxonomy delivered. Drives the next ROI-ranked attack FIX (native fail+error must DROP vs the 241 absolute).",
             "created_at": "2026-06-09T05:37:58Z",
             "created_by": "po",
-            "note": "[po S24 DJ-GATE-1 2026-06-09T05:37:58Z] Opened on CI-CLUSTER2-5-GATE-91afe344 PASS (346->241, errors->0). Re-profile is mandatory BEFORE swinging at the next bucket: the 241 residual composition has SHIFTED vs the 629-era taxonomy — two clusters unmasked previously-crashed tests, so Cluster-3/4 estimates are computed against a now-superseded absolute. Deliverable supersedes docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-P5..P8 / P8-IMPL) stays PARKED per po-S21 PATH-B — do NOT reopen. owner architect (no-code root-cause taxonomy = SPIKE pattern). zone apps/mcp-server/ (where the bun-test corpus lives). WIP<=2: architect lane consumes no dev WIP."
+            "note": "[po S24 DJ-GATE-1 2026-06-09T05:37:58Z] Opened on CI-CLUSTER2-5-GATE-91afe344 PASS (346->241, errors->0). Re-profile is mandatory BEFORE swinging at the next bucket: the 241 residual composition has SHIFTED vs the 629-era taxonomy — two clusters unmasked previously-crashed tests, so Cluster-3/4 estimates are computed against a now-superseded absolute. Deliverable supersedes docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md. Cluster-6 schema-drift (FU-SCHEMA-DRIFT-P5..P8 / P8-IMPL) stays PARKED per po-S21 PATH-B — do NOT reopen. owner architect (no-code root-cause taxonomy = SPIKE pattern). zone apps/mcp-server/ (where the bun-test corpus lives). WIP<=2: architect lane consumes no dev WIP. | brief: docs/architecture-briefs/2026-06-09-ci-241-residual-taxonomy.md"
           }
         ],
         "_updated_by": "po"
