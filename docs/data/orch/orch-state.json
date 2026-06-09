@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T15:37:20Z",
-    "_updated_by": "po-S49",
+    "_updated_at": "2026-06-09T16:00:00Z",
+    "_updated_by": "po-S50",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -3921,7 +3921,7 @@
             "id": "FIX-CI-C1173-REWRITE-TRANSPORT",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3941,32 +3941,55 @@
             "created_at": "2026-06-09T15:37:20Z",
             "created_by": "po-S49",
             "closed_at": "2026-06-09T15:45:30Z",
-            "closed_by": "dev-mcp-server-S21",
-            "resolution": "REWRITE-DELIVERED — AC-4 + AC-5 describe blocks rewritten; InMemoryTransport harness removed; direct handleGetLabelAccuracyReport() call path; 18 pass / 0 fail local; tsc clean; ZERO new mock.module()"
+            "closed_by": "po-S50",
+            "resolution": "REWRITE-DELIVERED — AC-4 + AC-5 describe blocks rewritten; InMemoryTransport harness removed; direct handleGetLabelAccuracyReport() call path; 18 pass / 0 fail local; tsc clean; ZERO new mock.module()",
+            "gate_verified_at": "2026-06-09T16:00:00Z",
+            "terminal_reason": "GATE PASSED UNAMBIGUOUS — Task 1173 per-victim exact-prefix (fail) 6 -> 0 (3 unique tests, double-logged) on run 27218281159 / bun_job 80365846275 / sha 326cf35a. arch-S18 MCP-InMemoryTransport hook-timeout verdict PROVEN: rewriting AC-4/AC-5 to call exported prod handleGetLabelAccuracyReport(getDb(), since_days) directly (dropped makeMcpSetup InMemoryTransport+Client harness that stalled the ~5000ms afterEach client.close()) eliminated the stall. No prod change (calibrationTools.ts untouched).",
+            "gate_proof": "Task 1173 6 -> 0 (jitter-robust full-CI per-victim exact-prefix tally) AND clean absolute -3 (native_fail 62 -> 59, pass 11699 -> 11702, errors 0). UNLIKE the telegram-stub SWEEP (jitter-masked flat 62) this transport-harness removal landed the -3 exactly on the 3 unique 1173 tests. Run 27218281159 / job 80365846275 / sha 326cf35a.",
+            "bonus_watch_result": "Task 235 stays 0 (no regression from prior SWEEP cure). Anchor Task 1352a 2 -> 2 (unchanged independent genuine-logic residual, separate triage)."
+          },
+          {
+            "id": "FIX-CI-C1839b-TRIAGE",
+            "type": "SPIKE",
+            "owner": "architect",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "depends": [],
+            "title": "ARCHITECT-FIRST prod-vs-test triage of Task 1839b — one of three co-dominant 59-run levers (2 unique fails / 4 log-markers)",
+            "root_cause": "UNKNOWN — to be determined by architect triage. With Task 1173 + Task 235 now cured, PO's fresh self-tally of the 59-run (run 27218281159, job 80365846275, sha 326cf35a) shows three co-dominant clusters TIED at the top: Task 1839b / Task 1792 / Task 1282a (4 fail-markers each = 2 unique tests each, double-logged). 1839b selected as the cleanest fresh dominant to triage first (1792 carries known own-residual entanglement noted by router; 1282a not yet characterized).",
+            "scope": "ARCHITECT-FIRST prod-vs-test confirm per /goal REMOVE-obsolete clause: classify each of Task 1839b's failures as REWRITE (prod still exists, test stale -> rewrite test to match prod) vs REMOVE (prod gone/superseded, test obsolete -> DELETE) vs CONTAMINATION (mock.module ESM-cache leak from a sibling). Produce a brief with the prod-vs-test verdict + full-CI-ordered-repro evidence. Do NOT open a fix task yet — triage-only; PO opens the scoped fix after the architect verdict returns.",
+            "evidence_bar": "Full-CI-ordered-repro per-victim exact-prefix (fail) tally for 'Task 1839b' on run 27218281159 (sha 326cf35a) baseline 2 unique (4 markers). 2-file joint-pass is NOT sufficient proof (3 false-positive local repros earlier this sprint arch-S14/S15/S16). Routed ARCHITECT-FIRST per /goal REMOVE-obsolete clause.",
+            "measurement_source": "docs/signals/ci-c1173-gate-result-326cf35a-20260609T1600Z.json (router-verified gate, run 27218281159) + PO po-S50 self re-tally of gh run 27218281159 job 80365846275 native log: top-3 co-dominant Task 1839b/1792/1282a at 4 markers each; Task 1173=0 (cured), Task 235=0 (cured).",
+            "baseline_pass": "59 (native_fail, sha 326cf35a, run 27218281159, job 80365846275)",
+            "created_at": "2026-06-09T16:00:00Z",
+            "created_by": "po-S50"
           }
         ],
         "_updated_by": "po-S48",
         "ci_absolute": {
-          "native_fail": 62,
+          "native_fail": 59,
           "native_errors": 0,
-          "fail_plus_error": 62,
+          "fail_plus_error": 59,
           "tests": 11803,
-          "pass": 11699,
+          "pass": 11702,
           "skip": 42,
-          "sha": "c017289d",
-          "run_id": "27216305674",
-          "bun_job_id": "80358657573",
-          "supersedes": "62 (09dce373)",
-          "delta_vs_prior": "0 (62 -> 62) — flat absolute on a NEW sha. FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP cured the named Task 235 4->0 (2 unique tests), but the absolute held flat because inserting an afterAll at 6 distinct CI file positions reorders the bun ESM-cache mock.module() contamination graph and shifts jitter on unrelated tests beyond +/-3. Authoritative jitter-robust signal = the named per-victim Task 235 4->0 flip (NOT the absolute). Same disposition as C1485 (10->0, absolute 68->63) and C235-1792 (6->4). Telegram-mock contamination CLASS now DRAINED + hardened (6 files). Band stays ~62 +/-3 (floor ~59).",
-          "updated_at": "2026-06-09T15:27:44Z",
-          "updated_by": "po-S48"
+          "sha": "326cf35a",
+          "run_id": "27218281159",
+          "bun_job_id": "80365846275",
+          "supersedes": "62 (c017289d)",
+          "delta_vs_prior": "-3 (62 -> 59) — CLEAN absolute improvement matching the 3 unique Task 1173 tests. FIX-CI-C1173-REWRITE-TRANSPORT removed the InMemoryTransport stalling harness (not a mock.module reorder), so unlike the telegram SWEEP jitter-mask the -3 landed exactly on the cured tests. Both the named per-victim Task 1173 6->0 flip AND the absolute agree. New band ~59 +/-3 (floor ~56).",
+          "updated_at": "2026-06-09T16:00:00Z",
+          "updated_by": "po-S50"
         },
         "long_tail_triage_policy": {
           "goal": "ci/di all passe on GitHub, test update (remove if obsolete) — /goal refined 2026-06-09T07:5xZ",
           "classify_each_residual_bucket": "REWRITE (prod still exists, test stale -> rewrite test to match) vs REMOVE (prod gone/superseded, test obsolete -> DELETE the test, do NOT patch)",
           "remove_examples": "removed test seams, deleted reuters.js, pre-98df0f43 macro section-header format, stale cron schedules",
           "applies_to": "C5+ and all remaining ~135 long-tail rounds; re-profile residual by ROOT-CAUSE pattern (unmocked-HTTP / SSOT-drift / assertion-logic) NOT by file, with the REMOVE-if-obsolete lens",
-          "absolute": "62 (sha c017289d, run 27216305674, job 80358657573)",
+          "absolute": "59 (sha 326cf35a, run 27218281159, job 80365846275)",
           "updated_by": "po-S48",
           "updated_at": "2026-06-09T15:27:44Z",
           "under_scope_lesson": "Architect cluster counts are CATEGORY-WIDE SUPERSETS (e.g. C1 '42' netted -12). Dev fixes ONLY the explicitly NAMED files; residual same-pattern files OUT of named scope -> long-tail re-profile, NOT a charge-back to closed task ids. The ONE exception so far: C4 single-file-family count landed EXACTLY (-25) because it was not a category superset."
