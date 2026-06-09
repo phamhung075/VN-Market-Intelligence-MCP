@@ -6639,6 +6639,58 @@
         "zone_owner": "dev-mcp-server",
         "check_id": "B-13",
         "payload_ref": null
+      },
+      {
+        "id": "sau-c283-c09",
+        "ts": "2026-06-09T00:30:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "macro_indicators C-09: only 1 country in 26h window (expects >=8)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "C-09",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c283-c08",
+        "ts": "2026-06-09T00:30:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "alerts C-08: 41 orphaned alerts without linked agent_signals (expects 0)",
+        "severity": "WARN",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "C-08",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c283-c06",
+        "ts": "2026-06-09T00:30:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages C-06: 0 messages in 3h window (expects >0)",
+        "severity": "WARN",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "C-06",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c283-c04",
+        "ts": "2026-06-09T00:30:40Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "financial_reports C-04: 7 low-confidence extractions in 7d (threshold 5)",
+        "severity": "WARN",
+        "status": "NEW",
+        "zone_owner": "dev-mcp-server",
+        "check_id": "C-04",
+        "payload_ref": null
       }
     ],
     "archive": [
