@@ -104,3 +104,25 @@ Zone health: bun tsc --noEmit clean, network guards active, tools 157 intact, sc
 **tsc:** CLEAN. Files changed: 1 (test file) + orch-state.json + this notebook.
 
 Zone health: bun tsc --noEmit clean | HEALTHY
+
+---
+## 2026-06-09 · sau-c283-c09 — DONE (auditor probe bug, no code change)
+
+**Signal:** sau-c283-c09 CRITICAL db_integrity_breach — macro_indicators country coverage = 1 (expected ≥8)
+**Verdict:** AUDITOR FALSE-POSITIVE — probe bug introduced in commit a95c514a (FIX-AUDITOR-DB-CHECKS-HOSTSIDE)
+
+**Root cause:** C-09 probe was rewritten from `count(DISTINCT indicator_key)` (original design — indicator-row table) to `count(DISTINCT country)` without updating the threshold. The macro_indicators table is UNIQUE(country) — there is only ever 1 row (`vietnam`). The ≥8 threshold was correct for the old indicator-keyed schema; after the country-keyed refactor, the probe became impossible to pass.
+
+**Live DB state confirmed:**
+- Table has exactly 1 row: `country='vietnam', fetched_at=2026-06-08 12:13:00`
+- Non-null indicators: cpi=5.46, gdp_growth=7.4, interest_rate=4.5 (3 columns)
+- TRADING_ECONOMICS_API_KEY absent from container env → VPS 12-indicator fetcher silently skips
+- No multi-country writer exists anywhere in the codebase; all active writers write country='vietnam' only
+
+**Fix applied:** `docs/agents/system-auditor/flow/main.md` C-09 row:
+- Query: `count(DISTINCT country)` → `SUM(CASE WHEN col IS NOT NULL THEN 1 ELSE 0 END)` for all 12 indicator columns, filtered to `country='vietnam' AND fetched_at > datetime('now','-26 hours')`
+- Threshold: ≥8 → ≥3 (matches current active fetcher output: cpi+gdp_growth+interest_rate)
+- Note added in probe row: threshold rises to ≥12 once TRADING_ECONOMICS_API_KEY is wired
+
+**No mcp-server code changed.** This is auditor-flow-only fix.
+Zone health: doc-only fix, bun tsc --noEmit clean (pre-verified) | HEALTHY

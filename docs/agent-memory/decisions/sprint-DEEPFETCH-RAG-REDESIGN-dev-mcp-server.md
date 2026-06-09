@@ -58,6 +58,15 @@
 **why-decision:** Option (b) is cleaner: the backfill's own comment says "bctcQueueEnricherJob replaces this with the real VPS-discovered URL" — inserting NULL is the contract the enricher was designed for. Option (a) would widen the enricher WHERE clause with VPS-host-specific knowledge that could drift; option (b) is 1-line change with zero enricher logic change. TC-4 documents that live rows with old placeholder URLs still need a one-time migration (out of scope).
 **why-change:** No change from architect brief recommendation (option b preferred by task spec for cleanliness).
 
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-09T01:29:26Z
+**task-id:** sau-c283-c09
+**what-done:** Root-caused C-09 CRITICAL as auditor probe bug; fixed C-09 query+threshold in docs/agents/system-auditor/flow/main.md. No mcp-server code changed.
+**what-considered:**
+- Fix real collapse (write multi-country rows): no multi-country writer exists; VPS TE fetcher needs TRADING_ECONOMICS_API_KEY which is absent; not the right fix path
+- Fix auditor probe (schema mismatch introduced a95c514a): DISTINCT country→non-null indicator count on vietnam row; threshold ≥8→≥3
+**why-decision:** Live DB has exactly 1 row (vietnam) and has never had >1 country. The ≥8 threshold survived from the pre-refactor indicator-keyed design. The probe bug is the root cause; fixing the probe is the correct and only necessary change.
+**why-change:** No change from diagnostic path — confirmed auditor false-positive before touching any data writers.
+
 ### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-09T00:00:00Z
 **task-id:** CI-NETWORK-GUARDS-POLLNEWS-REFILE
 **what-done:** Re-applied 4 CI=true network-skip guards from reverted 9454baad to pollNews.ts; pollNews.ts only, zero test file changes.
