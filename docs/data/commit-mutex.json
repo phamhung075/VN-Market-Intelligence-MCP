@@ -1,6 +1,6 @@
 {
-  "locked": true,
-  "owner_agent": "dev-mcp-server",
-  "task": "batch3-market-hours-now-seam",
-  "expires_at": "2026-06-09T18:37:21Z"
+  "locked": false,
+  "owner_agent": null,
+  "task": null,
+  "expires_at": null
 }
