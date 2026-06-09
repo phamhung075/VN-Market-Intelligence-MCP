@@ -1,5 +1,27 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-CI-C5-UNMOCKED-HTTP-FETCHES — REVIEW
+
+**Task:** FIX-CI-C5-UNMOCKED-HTTP-FETCHES | Sprint: CI-RED-RECONCILE | Size: M | Baseline: 135 native fail+error
+**Scope:** TEST-FILE-ONLY — 3 files changed (zero production code):
+- `apps/mcp-server/src/__tests__/123-integration-mcp.test.ts` — delegating mocks for sbv.js + yahooFinance.js
+- `apps/mcp-server/src/__tests__/083-tool-analysis.test.ts` — delegating mocks for sbv.js + yahooFinance.js; ragHttpClient static stubs reverted (correct)
+- `apps/mcp-server/src/__tests__/ddd-1b-rag-http-client.test.ts` — added mock.module() re-registration with genuine inline implementations
+
+**Root cause:** Not "unmocked HTTP" as task description stated. True cause: Bun ESM module cache contamination. `mock.module()` stubs installed by 123 and 083 persist in cache for the entire bun test run. Downstream files with correct mock clients (028/025/1487/1423a) statically import the same fetcher modules and get the null stubs. ddd-1b patches globalThis.fetch but gets 083's ragHttpClient stub from cache — fetch patch never fires.
+
+**Fix pattern:** Delegating mock for sbv/yahoo (pass-through to real when httpClient injected). ddd-1b self-register with real inline ragHttpClient implementations overriding 083's stub.
+
+**Out-of-scope siblings confirmed:**
+- newsHeadlinesRefreshJob.e2e.test.ts: C7 URL mismatch bug (test expects `/news/bloomberg/headlines`; job calls `/bloomberg/headlines`)
+- 1134-get-foreign-flow-tool.test.ts: passes (C3 cluster1 fixed)
+- 1416/235: pass already
+
+**Verification:** Full sequence 123→083→028→025→1487→1423a→ddd-1b: 93 pass / 0 fail / 1 skip. Each file isolated: all pass. `bun tsc --noEmit`: CLEAN.
+**Status:** REVIEW — router owns CI gate vs 135 absolute.
+
+Zone health: test-only fix, tsc clean, 3 test files changed | HEALTHY
+
 ## 2026-06-09 · FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE — REVIEW
 
 **Task:** FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE | Zone: apps/mcp-server/src/__tests__/ | Size: XS | Priority: high

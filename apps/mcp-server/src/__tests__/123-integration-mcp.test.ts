@@ -25,18 +25,30 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeAll, afterAll, beforeEach, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+// C5-FIX: capture real implementations via static imports (hoisted before mock.module fires).
+// This file runs early in the suite; at this point the module cache holds genuine functions.
+// The delegating mocks below return null when called with no httpClient (runImpactChain path)
+// but forward to the real function when an httpClient IS provided (direct-fetcher unit tests
+// such as 028-sbv-rates and 025-yahoo-finance must not receive null from these mocks).
+import { fetchSbvRates as _realFetchSbvRates } from "../infrastructure/fetchers/sbv.js";
+import { fetchYahooFinancePrices as _realFetchYahooFinancePrices } from "../infrastructure/fetchers/yahooFinance.js";
+
 // Mock LanceDB-dependent modules before they are imported by tool files
 mock.module("../infrastructure/rag/retriever.js", () => ({
   searchContext: async () => [],
   insertAnalysis: async () => {},
 }));
 
-// Mock external HTTP fetchers to avoid network I/O in integration tests
+// Mock external HTTP fetchers to avoid network I/O in integration tests.
+// Delegating pattern (C5-FIX): pass-through to real implementation when an httpClient is
+// provided so downstream tests that inject mock clients are not contaminated.
 mock.module("../infrastructure/fetchers/yahooFinance.js", () => ({
-  fetchYahooFinancePrices: async () => null,
+  fetchYahooFinancePrices: async (httpClient?: Parameters<typeof _realFetchYahooFinancePrices>[0]) =>
+    httpClient !== undefined ? _realFetchYahooFinancePrices(httpClient) : null,
 }));
 mock.module("../infrastructure/fetchers/sbv.js", () => ({
-  fetchSbvRates: async () => null,
+  fetchSbvRates: async (httpClient?: Parameters<typeof _realFetchSbvRates>[0]) =>
+    httpClient !== undefined ? _realFetchSbvRates(httpClient) : null,
 }));
 
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";

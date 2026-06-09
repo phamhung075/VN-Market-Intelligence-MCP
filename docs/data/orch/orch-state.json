@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T08:22:00Z",
+  "_updated_at": "2026-06-09T09:15:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
@@ -3371,7 +3371,7 @@
             "id": "FIX-CI-C5-UNMOCKED-HTTP-FETCHES",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3390,7 +3390,9 @@
             "baseline_pass": "135 native fail+error absolute (135 fail + 0 err / Ran 11816, sha 3663bd12, run 27193376550, bun job 80278819016 — SUPERSEDES 160/a43dff49)",
             "created_at": "2026-06-09T08:33:20Z",
             "created_by": "po-S28",
-            "note": "[po-S28 DJ-GATE-1 2026-06-09T08:33:20Z] Grouped by ROOT-CAUSE (unmocked-HTTP) NOT by file per the under-scope lesson. The cheapest dispatchable next cluster: one mechanical fix (mock/guard the fetch) repeated across N files, all REWRITE. Dev MUST enumerate the full long tail from the job log — annotations gave first-10 only. NOT in_progress (WIP<=2)."
+            "note": "[po-S28 DJ-GATE-1 2026-06-09T08:33:20Z] Grouped by ROOT-CAUSE (unmocked-HTTP) NOT by file per the under-scope lesson. The cheapest dispatchable next cluster: one mechanical fix (mock/guard the fetch) repeated across N files, all REWRITE. Dev MUST enumerate the full long tail from the job log — annotations gave first-10 only. NOT in_progress (WIP<=2).",
+            "reviewed_at": "2026-06-09T09:15:00Z",
+            "reviewed_by": "dev-mcp-server"
           },
           {
             "id": "FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT",
@@ -7409,6 +7411,20 @@
         "payload_ref": null,
         "zone_owner": "infra",
         "triage_note": "A-30 mcp-server memory near-OOM -> NEW repair_task FIX-MCP-MEMORY-OOM-INVESTIGATE (backlog, owner ops, zone infra, priority high). Both A-30 rows (WARN 90.24% + HIGH 97.75%) fold into the one task (dedup, no new signal row). Remediation = TARGETED single-service force-recreate ONLY (NEVER down&&up — rebuild-recreate-destroys-peers)."
+      },
+      {
+        "id": "cwk-chef-eod-marker-bug-20260609T0857Z",
+        "ts": "2026-06-09T08:57:39Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow_bug",
+        "summary": "chef.md EOD publish bypassed marker gate: (1) published-marker task_claim MALFORMED (undefined task_id + ttl<60) -> errored -> marker never set; (2) WORK Block B 5086 chars exceeds 4000-char send_telegram cap, needed manual retry. MARKET+WORK DID publish (raw-verified from transcript); dispatcher set marker defensively. Needs chef.md fix: correct published-marker claim args + pre-chunk/trim Block B to <=4000.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "zone_owner": null,
+        "check_id": null,
+        "payload_ref": "docs/signals/cowork-team-20260609T085739Z.json",
+        "triage_note": ""
       }
     ],
     "archive": [

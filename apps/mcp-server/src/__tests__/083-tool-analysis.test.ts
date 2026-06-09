@@ -11,14 +11,28 @@
 
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 
-// Mock external HTTP fetchers used by runImpactChain (avoid network I/O + timeouts)
+// C5-FIX: capture current implementations (may be delegating mocks from 123 if it ran first,
+// or real implementations if this file runs first). Delegating mocks return null when no
+// httpClient is provided (runImpactChain default path) but forward to real when a client
+// IS provided (direct-fetcher unit tests like 028/025/1487/1423a).
+import { fetchSbvRates as _currentFetchSbvRates } from "../infrastructure/fetchers/sbv.js";
+import { fetchYahooFinancePrices as _currentFetchYahooFinancePrices } from "../infrastructure/fetchers/yahooFinance.js";
+
+// Mock external HTTP fetchers used by runImpactChain (avoid network I/O + timeouts).
+// Delegating pattern: pass-through to captured implementation when httpClient is injected.
 mock.module("../infrastructure/fetchers/yahooFinance.js", () => ({
-  fetchYahooFinancePrices: async () => null,
+  fetchYahooFinancePrices: async (httpClient?: Parameters<typeof _currentFetchYahooFinancePrices>[0]) =>
+    httpClient !== undefined ? _currentFetchYahooFinancePrices(httpClient) : null,
 }));
 mock.module("../infrastructure/fetchers/sbv.js", () => ({
-  fetchSbvRates: async () => null,
+  fetchSbvRates: async (httpClient?: Parameters<typeof _currentFetchSbvRates>[0]) =>
+    httpClient !== undefined ? _currentFetchSbvRates(httpClient) : null,
 }));
-// G5b (P2-F): mock ragHttpClient.js (HTTP boundary) instead of retriever.js (deprecated)
+// G5b (P2-F): mock ragHttpClient.js (HTTP boundary) instead of retriever.js (deprecated).
+// Static stubs keep 083's own tool tests deterministic (no network I/O).
+// ddd-1b-rag-http-client.test.ts re-registers this module with genuine inline
+// implementations at the top of its file (mock.module override), so it receives
+// real fetch-based functions that respond to its globalThis.fetch patches.
 mock.module("../infrastructure/rag/ragHttpClient.js", () => ({
   ragSearch: async () => ({ results: [], total: 0 }),
   ragIndex: async () => ({ status: "ok", indexed: 1, entry_id: "mock" }),
