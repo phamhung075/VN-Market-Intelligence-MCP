@@ -109,6 +109,28 @@ export function getDb(): Database {
   _db.exec("PRAGMA wal_autocheckpoint=4000");
   _db.exec("PRAGMA busy_timeout=5000");
   _dbStat = statSync(dbPath, { throwIfNoEntry: false });
+
+  // DJ-GATE-1: FIX-SCHEMA-DRIFT-P5-SELFHEAL — self-heal on fresh singleton
+  // Prevents cross-file singleton pollution in single-process bun test runs.
+  // When a Contract-A file's afterAll(closeDb()) nullifies _db, the next
+  // getDb() call here creates a fresh empty :memory: db. Without this block,
+  // production modules (macroStatsStore, positionTools) that call getDb()
+  // directly find no tables, catch "no such table", and return [] — causing
+  // downstream test assertion failures only visible in full-suite runs.
+  // All initXxxTables() are synchronous and use CREATE TABLE IF NOT EXISTS —
+  // idempotent no-ops on production file DBs and Contract-A re-init.
+  // initFinancialReportsTables() intentionally excluded (RISK-2: view compile
+  // references period_quarter; safe only inside full initDatabase() context).
+  initMarketDataTables(_db);
+  initAlertsTables(_db);
+  initMacroTables(_db);
+  initPortfolioTables(_db);
+  initNewsTables(_db);
+  initBriefingsTables(_db);
+  initSystemTables(_db);
+  initBacktestingTables(_db);
+  initAgmPlanTables(_db);
+
   return _db;
 }
 
