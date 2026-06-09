@@ -595,3 +595,33 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 **files-changed:**
 - `apps/mcp-server/src/__tests__/1485-telegram-mock-isolation.test.ts`
 - META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`
+
+---
+
+### STEP dev-mcp-server-S20 · dev-mcp-server · 2026-06-09T16:30:00Z (DJ-GATE-1)
+**task-id:** FIX-CI-C1839b-REWRITE-STALE-ASSERTS
+**sprint:** CI-RED-RECONCILE
+
+**what-done:** Rewrote 2 stale assertions in `1839b-notebook-protocol.test.ts` + removed `docs/agent-memory/notebooks/market-watcher.md.bak` (163KB trash). Both changes in one commit.
+
+**AC-3 fix:** Changed filter from `f !== ".gitkeep"` to `f !== ".gitkeep" && !f.endsWith(".bak")`. Renamed `it()` label to `"...(gitkeep and .bak excluded)"`. The `.bak` file (`market-watcher.md.bak`, committed `422c0ff9`) was passing the gitkeep-only filter then failing `/\.md$/`, causing the 1ms genuine assertion failure. Hardening the filter retains the format-enforcement intent while tolerating backup naming convention.
+
+**AC-4 fix:** Replaced `toContain("Last session summary")` and `toContain("Known patterns")` with `toMatch(/^## /m)` (at least one real section heading) and `content.length > 200` (substantive, not scaffold). Both stale checks were scaffold-era placeholders replaced by real `## Session YYYY-MM-DD` entries (NB-PRUNE-1). Kept `toContain("Last updated:")` (passes). Content variable name in file: `content`.
+
+**trash removal:** `git rm docs/agent-memory/notebooks/market-watcher.md.bak` — 163KB May-20 backup debris per CLAUDE.md "remove garbage, trash data" policy.
+
+**what-considered:**
+- Remove the two stale it() blocks entirely — REJECTED: REWRITE-STALE verdict from architect brief; coverage must be RETAINED by updated assertions not removed
+- Remove only the .bak file without hardening the filter — REJECTED: task spec requires both; future .bak would re-break AC-3 without the filter harden
+- Harden filter only without removing .bak — REJECTED: leaves 163KB trash in repo; both changes required per task spec
+
+**why-decision:** Architect brief (2026-06-09-ci-c1839b-notebook-protocol-triage.md) confirmed REWRITE-STALE verdict for both tests. Prod notebooks dir and developer.md are correct/substantive — only test assertions were stale. Filter harden + trash removal together make the test robust to future backup files.
+
+**result:** 5 pass / 0 fail (all ACs including AC-3, AC-4); tsc --noEmit CLEAN. Zero production code touched.
+**ci-victim-prefix:** `Task 1839b` (expect 4 log-markers / 2 unique tests → 0; projected absolute 59 → 57)
+**status-flip:** TODO → REVIEW (router owns push + CI gate)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1839b-notebook-protocol.test.ts`
+- `docs/agent-memory/notebooks/market-watcher.md.bak` (removed)
+- META: `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md`, `docs/data/orch/orch-state.json`, `docs/data/commit-mutex.json`

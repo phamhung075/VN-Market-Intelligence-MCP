@@ -1,10 +1,6 @@
 {
   "locked": true,
-  "owner_agent": "architect",
-  "task": "FIX-CI-C1839b-TRIAGE",
-  "task_kind": "commit-mutex",
-  "task_id": "main",
-  "ttl_seconds": 120,
-  "payload": "{\"sprint\":\"CI-RED-RECONCILE\",\"step\":\"arch-S19\",\"brief\":\"docs/architecture-briefs/2026-06-09-ci-c1839b-notebook-protocol-triage.md\"}",
-  "expires_at": 1749492780
+  "owner_agent": "dev-mcp-server",
+  "task": "FIX-CI-C1839b-REWRITE-STALE-ASSERTS",
+  "expires_at": 1781022234
 }
