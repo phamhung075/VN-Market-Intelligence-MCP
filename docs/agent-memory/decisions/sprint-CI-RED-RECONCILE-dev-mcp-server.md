@@ -735,3 +735,61 @@ Zod `.default(10)` is applied by the MCP SDK schema-parsing layer during protoco
 - `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
 - `docs/agent-memory/notebooks/dev-mcp-server.md` (notebook entry)
 - `docs/data/orch/orch-state.json` (BATCH1 TODO → REVIEW)
+
+---
+
+### STEP dev-mcp-server-S24 · dev-mcp-server · 2026-06-09T18:45Z (DJ-GATE-1)
+**task-id:** BATCH0-CI-C-DV-DELIBERATE-VIOLATION-CLEANUP
+**sprint:** CI-RED-RECONCILE
+**dispatch_seq:** 0
+**projected_delta:** -4 (55 → 51)
+
+**what-done:** Applied arch-S22 per-file verdicts to 3 test files. Zero production code touched. Zero BATCH1/BATCH2+ files touched.
+
+**File A — `1331a-single-writer-guard.test.ts` — REMOVE TEST-2:**
+Removed the entire `it("TEST-2 (RED): alert-engine ServiceConfig must have ownDbPath !== market.db", ...)` block (was lines 47–59). Root cause: `require("../../../alert-engine/src/infrastructure/config")` resolves to `apps/alert-engine/src/infrastructure/config`; apps/alert-engine is a Go-only service (go.mod, cmd/, pkg/) with no TypeScript src/ directory. Bun throws `Cannot find module` — permanent red against deleted/nonexistent prod path.
+**Protecting sibling retained:** TEST-1 ("TEST-1 (structural): two writers to same file cause SQLITE_BUSY") — in-zone, uses bun:sqlite directly, confirms the single-writer-lock detectable-BUSY guarantee. Confirmed passing (3 pass / 0 fail).
+**Out-of-scope note:** TEST-3 and TEST-4 NOT touched — these are separate C-DV instances not listed in BATCH0 cure_recipe per arch-S22 §note.
+
+**File B — `DWF-is-trading-day.test.ts` — CONVERT AC-P0-3-6 to it.failing():**
+Changed `it("AC-P0-3-6 DV: asserting holiday 2025-01-27 returns is_trading_day=true — MUST FAIL (proves calendar is not a stub)", ...)` to `it.failing(...)` — 1-token edit at line 99. Prod correctly returns is_trading_day=false for Tết 2025-01-27; the test intentionally asserts true. it.failing() makes the intentional red GREEN-when-it-fails without deleting the proof.
+**Protecting siblings retained:** The 12 passing tests (AC-P0-3-1 through Edge cases + getTodayVnDate) retain full trading-day boundary coverage. Confirmed: 13 pass / 0 fail (was 12 pass / 1 fail).
+
+**File C — `DWF-coordination-phase2.test.ts` — DV-P2-4 CONFIG-DRIFT REWRITE:**
+Applied arch-S22 REVISED DV-P2-4 spec (contradiction finding: CONFIG-DRIFT not stale DV). Three changes:
+1. Added `SLOT_CLAIM_FILE` and `LEADER_LOCK_FILE` path constants beside `FLOW_FILE` in the DV-P2-4 describe block — pointing to `docs/agents/cowork-team/flow/slot-claim.md` and `docs/agents/cowork-team/flow/leader-lock.md` respectively (NB-COWORK-MAIN-SPLIT 2026-06-03 split targets).
+2. REMOVED the `it("RED (deliberate-violation): flow file missing ttl_seconds:180...")` block — vestigial DV after path correction; duplicated test 1's final assert; its DV framing was obsolete.
+3. REWROTE test 1 to readFileSync(SLOT_CLAIM_FILE) — literal `ttl_seconds: 180` confirmed at line 41 of slot-claim.md. Test description updated to name the split file.
+4. REWROTE test "Step 0b: leader lock claim must have ttl_seconds: 1800" to readFileSync(LEADER_LOCK_FILE) — literal `ttl_seconds: 1800` confirmed at line 27 of leader-lock.md.
+5. Remaining `R1 additional` / `R3 additional` tests left UNTOUCHED (conditional step46Match guard no-ops on main.md without failing — C-CD batch scope, not BATCH0).
+**Protecting siblings retained:** test 1 (after path fix → SLOT_CLAIM_FILE), test 3 (after path fix → LEADER_LOCK_FILE), all 30 other passing tests in the file. Confirmed: 32 pass / 0 fail (was 30 pass / 3 fail).
+
+**Live-verification of split file paths performed before editing:**
+- `slot-claim.md` line 41: `ttl_seconds: 180` CONFIRMED
+- `leader-lock.md` line 27: `ttl_seconds: 1800` CONFIRMED
+No contradictions found.
+
+**what-considered:**
+- (a) 1331a TEST-2 as REMOVE: CONFIRMED — Go service has no TypeScript infrastructure layer; path can never resolve.
+- (b) DWF-is-trading-day AC-P0-3-6 as it.failing(): CONFIRMED — Bun 1.3.13 supports it.failing(); DV intent preserved as executable specification.
+- (c) DV-P2-4 as clean REMOVE of all 3 tests: REJECTED per arch-S22 contradiction finding; tests 1+3 are CONFIG-DRIFT not stale DV; REWRITE to correct sub-flow paths retained coverage.
+- (d) Touching TEST-3/TEST-4 in 1331a: REJECTED — not in BATCH0 cure_recipe scope per arch-S22 explicit note.
+
+**why-decision:** Exact implementation of arch-S22 revised per-file verdicts. All verdicts confirmed against live file content before editing. No new contradictions found.
+
+**result:**
+- 1331a: 3 pass / 0 fail (TEST-1 protecting sibling intact; TEST-2 removed)
+- DWF-is-trading-day: 13 pass / 0 fail (12→13 — AC-P0-3-6 now passes as it.failing())
+- DWF-coordination-phase2: 32 pass / 0 fail (30→32 — 3 fixed fail + 0 new fail; DV block removed)
+- bun tsc --noEmit: CLEAN (exit 0, no output)
+- orch-state: BATCH0-CI-C-DV-DELIBERATE-VIOLATION-CLEANUP TODO → REVIEW
+- ci_absolute: 55 (unchanged — rebaseline is PO's job after CI gate)
+
+**files-changed:**
+- `apps/mcp-server/src/__tests__/1331a-single-writer-guard.test.ts`
+- `apps/mcp-server/src/__tests__/DWF-is-trading-day.test.ts`
+- `apps/mcp-server/src/__tests__/DWF-coordination-phase2.test.ts`
+- `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md` (this entry)
+- `docs/agent-memory/notebooks/dev-mcp-server.md` (notebook entry)
+- `docs/data/orch/orch-state.json` (BATCH0 TODO → REVIEW)
+- `docs/data/commit-mutex.json` (mutex acquire/release)

@@ -128,6 +128,13 @@ C1 (4 files, ~42 fails): 239 country VN→vietnam; 239-market getText JSON.parse
 C3 (4 files, ~20 fails): 1295d FK + PRAGMA; 1124/1129/1173 afterEach client close.
 88/0 + 42/0. tsc CLEAN. Both REVIEW.
 
+## 2026-06-09 BATCH0-CI-C-DV-DELIBERATE-VIOLATION-CLEANUP — REVIEW
+
+**BATCH0** (-4 native fails: 55→51). Three DV test fixes, test-only, no prod code.
+A) 1331a TEST-2 REMOVED — require() to Go-only alert-engine src/ (no TS layer, path unresolvable). TEST-1 (SQLITE_BUSY structural) intact: 3/0.
+B) DWF-is-trading-day AC-P0-3-6 → it.failing() — Tết DV control preserved as executable spec. 13/0 (was 12/1).
+C) DWF-coordination-phase2 DV-P2-4 CONFIG-DRIFT rewrite: added SLOT_CLAIM_FILE + LEADER_LOCK_FILE constants; DV block REMOVED; test 1 reads slot-claim.md (ttl_seconds:180 confirmed); test 3 reads leader-lock.md (ttl_seconds:1800 confirmed). 32/0 (was 30/3). tsc CLEAN.
+
 ## 2026-06-09 FIX-CI-TELEGRAM-STUB-AFTERALL-SWEEP
 
 C5-cure (cache-bust + afterAll restore) applied to ALL 6 telegram mock.module contaminator files in __tests__/.

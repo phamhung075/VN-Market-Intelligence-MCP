@@ -96,7 +96,7 @@ describe("DWF-DEV-MCP-1 — is_trading_day (vnTradingCalendar)", () => {
   // This test MUST go RED. It asserts the wrong value (is_trading_day: true for a
   // known holiday). If this test PASSES, the holiday data is a stub (always-true).
   // The test is intentionally wrong to prove the calendar is real.
-  it("AC-P0-3-6 DV: asserting holiday 2025-01-27 returns is_trading_day=true — MUST FAIL (proves calendar is not a stub)", () => {
+  it.failing("AC-P0-3-6 DV: asserting holiday 2025-01-27 returns is_trading_day=true — MUST FAIL (proves calendar is not a stub)", () => {
     const result = isVnTradingDay("2025-01-27");
     // This assertion is INTENTIONALLY WRONG:
     // A real calendar returns is_trading_day: false for this holiday.

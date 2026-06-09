@@ -287,32 +287,23 @@ describe("DV-P2-4: Explicit ttl_seconds:180 present in cowork-team flow (R1 code
     import.meta.dir,
     "../../../../docs/agents/cowork-team/flow/main.md"
   );
+  const SLOT_CLAIM_FILE = resolve(
+    import.meta.dir,
+    "../../../../docs/agents/cowork-team/flow/slot-claim.md"
+  );
+  const LEADER_LOCK_FILE = resolve(
+    import.meta.dir,
+    "../../../../docs/agents/cowork-team/flow/leader-lock.md"
+  );
 
-  it("GREEN: flow file contains explicit ttl_seconds: 180 on per-work-item claims", () => {
-    const content = readFileSync(FLOW_FILE, "utf-8");
+  it("GREEN: slot-claim flow file contains explicit ttl_seconds: 180 on per-work-item claims", () => {
+    // NB-COWORK-MAIN-SPLIT (2026-06-03): ttl_seconds:180 moved from main.md to slot-claim.md
+    const content = readFileSync(SLOT_CLAIM_FILE, "utf-8");
 
     // Every per-work-item task_claim (cowork-slot:<slot_id>) must have ttl_seconds: 180
     // Pattern: look for task_claim blocks with cowork-slot: key and ttl_seconds: 180
     const hasExplicitTtl = content.includes("ttl_seconds: 180");
     expect(hasExplicitTtl).toBe(true);
-  });
-
-  it("RED (deliberate-violation): flow file missing ttl_seconds:180 on per-work-item claims would fail this test", () => {
-    const content = readFileSync(FLOW_FILE, "utf-8");
-
-    // Verify the per-work-item claim section specifically contains ttl_seconds: 180
-    // (not just any ttl_seconds value). Extract Step 4.6 section and check.
-    const step46Match = content.match(/##\s*Step 4\.6[\s\S]*?(?=##\s*Step)/);
-    if (step46Match) {
-      const step46 = step46Match[0];
-      // R1 blocking: the per-work-item claim must have explicit 180
-      expect(step46).toContain("ttl_seconds: 180");
-      // R1 blocking: must NOT rely on default (no ttl_seconds argument at all)
-      // If ttl_seconds: 180 is present, then it's explicit — RED would be the absence
-    }
-    // If we can find the claim in Step 4.6, it must have ttl_seconds: 180
-    // This test going RED means the literal was removed → R1 violation
-    expect(content).toContain("ttl_seconds: 180"); // RED if removed
   });
 
   it("R1 additional: per-work-item claims must NOT use ttl_seconds: 3600 (default starvation check)", () => {
@@ -353,7 +344,8 @@ describe("DV-P2-4: Explicit ttl_seconds:180 present in cowork-team flow (R1 code
   });
 
   it("Step 0b: leader lock claim must have ttl_seconds: 1800 (AC-P2-5-3)", () => {
-    const content = readFileSync(FLOW_FILE, "utf-8");
+    // NB-COWORK-MAIN-SPLIT (2026-06-03): leader-lock logic moved from main.md to leader-lock.md
+    const content = readFileSync(LEADER_LOCK_FILE, "utf-8");
 
     // Leader lock TTL must be explicit 1800 (2 × 15-min heartbeat)
     expect(content).toContain("ttl_seconds: 1800");

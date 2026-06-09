@@ -44,20 +44,6 @@ describe("Task 1331a — Single-Writer Guard", () => {
     expect(caught).toBe(true); // proves BUSY is detectable
   });
 
-  it("TEST-2 (RED): alert-engine ServiceConfig must have ownDbPath !== market.db", () => {
-    // RED: 'ownDbPath' does not exist on ServiceConfig before task 1331b
-    // Dynamically require to avoid TS compile errors in test run
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const configModule = require("../../../alert-engine/src/infrastructure/config");
-    const config = configModule.loadConfig();
-
-    // FAILS before fix: config.ownDbPath is undefined
-    expect(config).toHaveProperty("ownDbPath");
-    expect(config.ownDbPath).toBeDefined();
-    expect(config.ownDbPath).not.toContain("market.db");
-    expect(config.ownDbPath).toContain("alert_engine");
-  });
-
   it("TEST-3 (RED): STOCK_PRICE_DB_PATH env must differ from DB_PATH", () => {
     // RED: STOCK_PRICE_DB_PATH is not defined before task 1331b
     // After fix: stock-price index.ts exports OWN_DB_PATH constant driven by this env var

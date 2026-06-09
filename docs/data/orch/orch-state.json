@@ -4072,7 +4072,7 @@
             "id": "BATCH0-CI-C-DV-DELIBERATE-VIOLATION-CLEANUP",
             "type": "BUG-FIX",
             "owner": "architect-first-then-dev-mcp-server",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",

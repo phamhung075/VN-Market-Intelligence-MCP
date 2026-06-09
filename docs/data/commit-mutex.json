@@ -1,6 +1,7 @@
 {
   "locked": true,
   "owner_agent": "dev-mcp-server",
-  "task": "BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE",
-  "expires_at": 1781026934
+  "task": "BATCH0-CI-C-DV-DELIBERATE-VIOLATION-CLEANUP",
+  "expires_at": 1749502920,
+  "ttl_seconds": 120
 }
