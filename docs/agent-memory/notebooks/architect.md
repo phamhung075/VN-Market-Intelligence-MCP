@@ -1,6 +1,6 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 13:15 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09 15:30 UTC | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
 
@@ -384,4 +384,40 @@ unchanged — C7/REWRITE/REMOVE definitively excluded.
 
 **Expected delta:** 1328e -10, 235 -3, 1352a -1 = ~-14 net.
 **Brief:** `docs/architecture-briefs/2026-06-09-ci-c1328e-retriage-arch-s15.md`
+
+## 2026-06-09T15:30Z — arch-S16: 235-telegram-send-merge triage (post-1485-cure still-RED)
+
+**Trigger:** 1485 afterAll C5-cure (sha 5e7c9b5c) CURED 1328e (-10) but 235 stayed 6→6 (ci_absolute).
+CI run 27211911171 / job 80342965730. 3 native fails in this run (6 cumulative = two prior runs).
+
+**Evidence gathered:** Full CI log for job 80342965730. Raw failure lines extracted:
+- L102: `capturedUrls.length` Expected: 1, Received: 0 (mockFetch never called — stub ignores fetchFn)
+- L133: `msgId` Expected: 999, Received: `true` (sendTelegramBug returns boolean not number)
+- L150: `result` Expected: false, Received: `true` (stub ignores missing token)
+
+**Root cause: THIRD CONTAMINATOR — 1792-conviction-debounce.test.ts (pos 103)**
+
+Contamination chain:
+- 1485 afterAll (pos 89) restores real module.
+- 1792 (pos 103) fires file-top `mock.module("telegram.js")` L28 — stubs sendTelegramBug as
+  `(msg) => Promise.resolve(true)` — NO afterAll restore. Re-poisons registry.
+- FIX-1290 (pos 197) also file-top stubs market+work only — reinforces.
+- 1352a (pos 212) captures poisoned stubs as "frozen real" — afterAll reinstalls them.
+- 047 (pos 315) also captures post-1792-poison values.
+- 235 (pos 775) receives 1792 stub: sendTelegramBug returns `true`, not message_id; fetchFn ignored.
+
+**Prod telegram.ts verified:** L265 sendTelegramMarket, L314 sendTelegramBug — both correct.
+Failure mode 100% stub behavior. GENUINE-LOGIC / REWRITE / REMOVE / FIX-PROD all excluded.
+
+**C5-cure spec:**
+- File: `1792-conviction-debounce.test.ts`
+- Add cache-busted real import at file top (before L28 mock.module): `?isolate=1792`
+- Add afterAll restore installing `_realMod1792.*` for all telegram exports
+- Add `afterAll` to import line (currently only beforeEach/afterEach)
+- Existing mock.module L28 stub and afterEach UNCHANGED (load-bearing for it() body assertions)
+
+**Expected delta:** 235 -3. Downstream: 1352a/047 frozen-real captures will now get genuine
+functions → any tail contamination from their afterAll re-installs also eliminated.
+
+**Brief:** `docs/architecture-briefs/2026-06-09-ci-c235-telegram-send-merge-triage.md`
 
