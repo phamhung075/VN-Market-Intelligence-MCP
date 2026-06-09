@@ -1,0 +1,19 @@
+{
+  "signal_type": "cowork-team-tick",
+  "classification": "FIRE",
+  "tick_id": "02:21",
+  "fire_time": "2026-06-09T02:21:05Z",
+  "emitted_at": "2026-06-09T02:22:35Z",
+  "drift_min": 6,
+  "matched_slots": ["chef-intraday"],
+  "won_slots": ["chef-intraday"],
+  "collision_warn": [],
+  "leader_lock": "acquired_fresh",
+  "leader_lock_note": "claimed=true fresh — 00:06 leader (ttl 1800s) expired ~00:36 untouched across silent ticks 00:21..02:06. Clean fresh acquisition at 02:21 (first FIRE of the 9/6 market session).",
+  "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+  "agent_ids": ["a3e51610d74b9c046"],
+  "calendar_status": "open",
+  "macro": {"vnIndex": 1790.53, "changePct": -2.63, "regime": "RISK_OFF", "volatility_level": "high"},
+  "drain_note": "3 NEW signal_queue rows (sau-c283-c08/c06/c04) all addressed to po — left NEW for dev-team drain (not consumed by cowork dispatcher).",
+  "note": "First FIRE of 9/6 session. chef-intraday (unified-agent, cron 13 2-8 * * 1-5, cadence 60min, last fired 08-06 05:24 overdue). CHEF TNB 6-layer intraday synthesis over news-scout c65 (#5451/#5452/#5453) + bctc-analyst c035 (FPT FAIR, batch BLOCKED) + market-watcher (0 anomalies). Slot token won/released ok, snapshot fresh, emit ok 02:22:35Z. Carry: CTG cycle 27+ CRITICAL, EIB #5417."
+}
