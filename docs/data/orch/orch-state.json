@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T02:16:00Z",
-  "_updated_by": "po-S18",
+  "_updated_at": "2026-06-09T02:55:37Z",
+  "_updated_by": "po-S19",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-08T23:01:29Z",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-09T02:16:00Z",
-    "_updated_by": "po-S18",
+    "_updated_at": "2026-06-09T02:55:37Z",
+    "_updated_by": "po-S19",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4133,14 +4133,14 @@
         ],
         "sprint": "CI-RED-RECONCILE",
         "created_at": "2026-06-09T02:21:57Z",
-        "note": "[pm] decomposed from FU-SCHEMA-DRIFT-P5 spike; phase-4-revised getDb() self-heal; 1 file scope | [dev-mcp-server DJ-GATE-1 2026-06-09T02:00Z] TODO->REVIEW. Self-healing getDb() implemented: 9 synchronous initXxxTables() calls in fresh-db branch (excludes initFinancialReportsTables RISK-2). tsc: CLEAN. 002-db-schema.test.ts 24/24 pass. 182-portfolio-risk 10/10 pass. 089-tool-macro pre-existing failures (no new regressions). Commit pending. Router owns push+CI. | [po-S18 DJ-GATE-1 2026-06-09T02:16Z] REVIEW->REWORK: CI-P5-GATE-541123b4 verification gate FAILED — native fail+error rose 629->635 (+6) at sha 541123b4; router REVERTED schema.ts in d1aa19c5 (byte-identical to pre-P5, tsc clean, pushed). Empirically self-heal is PARTIALLY correct (HEALED 4 classes: sbv_rates_history/commodity_prices_history/imf_indicators/vps_service_health) but INTRODUCED 'no such column: created_at' x3 — at least one standalone init slice's CREATE TABLE IF NOT EXISTS is column-drifted (missing created_at) from canonical initDatabase(); when it wins the fresh-:memory: race, IF NOT EXISTS blocks canonical repair. Re-design routed to FU-SCHEMA-DRIFT-P6 architect SPIKE (reconcile 9 slice DDLs vs canonical). NOT another per-file inline-DDL patch; NOT a mechanized one-size injection (9454baad reverted +219)."
+        "note": "[pm] decomposed from FU-SCHEMA-DRIFT-P5 spike; phase-4-revised getDb() self-heal; 1 file scope | [dev-mcp-server DJ-GATE-1 2026-06-09T02:00Z] TODO->REVIEW. Self-healing getDb() implemented: 9 synchronous initXxxTables() calls in fresh-db branch (excludes initFinancialReportsTables RISK-2). tsc: CLEAN. 002-db-schema.test.ts 24/24 pass. 182-portfolio-risk 10/10 pass. 089-tool-macro pre-existing failures (no new regressions). Commit pending. Router owns push+CI. | [po-S18 DJ-GATE-1 2026-06-09T02:16Z] REVIEW->REWORK: CI-P5-GATE-541123b4 verification gate FAILED — native fail+error rose 629->635 (+6) at sha 541123b4; router REVERTED schema.ts in d1aa19c5 (byte-identical to pre-P5, tsc clean, pushed). Empirically self-heal is PARTIALLY correct (HEALED 4 classes: sbv_rates_history/commodity_prices_history/imf_indicators/vps_service_health) but INTRODUCED 'no such column: created_at' x3 — at least one standalone init slice's CREATE TABLE IF NOT EXISTS is column-drifted (missing created_at) from canonical initDatabase(); when it wins the fresh-:memory: race, IF NOT EXISTS blocks canonical repair. Re-design routed to FU-SCHEMA-DRIFT-P6 architect SPIKE (reconcile 9 slice DDLs vs canonical). NOT another per-file inline-DDL patch; NOT a mechanized one-size injection (9454baad reverted +219). | [po-S19 2026-06-09T02:55:37Z] P6 impl carrier note: router did the P6 direction-(b) impl directly (no separate board IMPL task was opened; 507e3cee -> reverted b9e305ae). Stays REWORK — superseded by FU-SCHEMA-DRIFT-P7 add-missing-tables-to-canonical spike. This P5-SELFHEAL row remains the historical self-heal carrier; do NOT re-dispatch it (direction abandoned)."
       },
       {
         "id": "FU-SCHEMA-DRIFT-P6",
         "title": "ARCHITECT SPIKE: reconcile 9 standalone init-slice DDLs vs canonical initDatabase() (column drift incl created_at)",
         "type": "SPIKE",
         "owner": "architect",
-        "status": "REVIEW",
+        "status": "DONE",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -4152,7 +4152,40 @@
         "sprint": "CI-RED-RECONCILE",
         "created_at": "2026-06-09T02:16:00Z",
         "question": "The P5 self-heal getDb() (9 synchronous initXxxTables() in the fresh-db branch) is partially correct — it HEALED 4 no-such-table classes (sbv_rates_history, commodity_prices_history, imf_indicators, vps_service_health) but INTRODUCED a NEW column-drift class 'no such column: created_at' x3, net +6 worse (629->635, gate FAILED, reverted in d1aa19c5). Root cause: >=1 standalone init slice's CREATE TABLE IF NOT EXISTS DDL is schema-drifted from canonical (missing created_at and possibly other columns); once that slice wins the fresh-:memory: create race, IF NOT EXISTS blocks the canonical DDL from repairing the table. AUDIT each of the 9 slices (initMarketDataTables/initAlertsTables/initMacroTables/initPortfolioTables/initNewsTables/initBriefingsTables/initSystemTables/initBacktestingTables/initAgmPlanTables) — per CREATE TABLE, diff every column vs canonical initDatabase() (created_at first, then all others). DECIDE: self-heal-with-RECONCILED-DDL (make every slice DDL byte-equivalent to canonical so IF-NOT-EXISTS no longer drifts) vs run-order test isolation (drop self-heal, isolate the Contract-A afterAll(closeDb()) ordering). NOT another per-file inline-DDL patch; NOT a mechanized one-size init injection (9454baad reverted +219).",
-        "note": "[po-S18] recurring-bug, 4th touch of CI-test-schema surface (P2 Contract-B, P4 per-file isolation, FU-P5 SPIKE singleton-fixture, now P5-SELFHEAL slice-DDL drift). Distinct follow-up to FU-SCHEMA-DRIFT-P5 (DONE — its fix HYPOTHESIS was disproven empirically). Architect lane = NO dev WIP; WIP<=2 honored (0 IN_PROGRESS). DoD: per-slice column-drift table vs canonical + decision (reconciled-DDL vs test-isolation) + brief. Next dev gate after re-impl: native fail+error must DROP vs 629."
+        "note": "[po-S18] recurring-bug, 4th touch of CI-test-schema surface (P2 Contract-B, P4 per-file isolation, FU-P5 SPIKE singleton-fixture, now P5-SELFHEAL slice-DDL drift). Distinct follow-up to FU-SCHEMA-DRIFT-P5 (DONE — its fix HYPOTHESIS was disproven empirically). Architect lane = NO dev WIP; WIP<=2 honored (0 IN_PROGRESS). DoD: per-slice column-drift table vs canonical + decision (reconciled-DDL vs test-isolation) + brief. Next dev gate after re-impl: native fail+error must DROP vs 629. | [po-S19 DJ-GATE-1 2026-06-09T02:55:37Z] REVIEW->DONE. SPIKE itself SOUND (diagnosis correct: bun single-process closeDb() afterAll in Contract-A files nullifies _db singleton; production getDb() fallback hits fresh empty :memory:). Only the CHOSEN direction (b) afterAll-reinit was disproven EMPIRICALLY by CI-P6-GATE-507e3cee (native fail+error 629->630 = +1 WORSE, ZERO residual classes healed, buckets byte-identical to after-P4). Same pattern as P5 (spike sound, fix-hypothesis wrong). Router REVERTED the 3 test files (084/089/1527) in b9e305ae; apps/ byte-identical to e442cf11 (629 baseline, git-proven empty diff). P6 impl lock RELEASED. Direction (b) reinit re-runs the SAME canonical initDatabase() that NEVER CREATES the dominant residual tables -> cannot heal what the schema omits. Next direction routed to FU-SCHEMA-DRIFT-P7."
+      },
+      {
+        "id": "FU-SCHEMA-DRIFT-P7",
+        "title": "ARCHITECT SPIKE: ADD missing CREATE TABLE IF NOT EXISTS for dominant residual tables INTO canonical initDatabase()/slices",
+        "type": "SPIKE",
+        "owner": "architect",
+        "status": "TODO",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "timebox": 120,
+        "mode": "spike",
+        "depends": [
+          "FU-SCHEMA-DRIFT-P6"
+        ],
+        "sprint": "CI-RED-RECONCILE",
+        "created_at": "2026-06-09T02:55:37Z",
+        "question": "5th touch of the CI-test-schema surface (recurring-bug). ALL prior levers exhausted: self-heal in production getDb() (P5, +6 + introduced created_at column-drift), run-order afterAll-reinit (P6, +1/ZERO heal — reinit re-runs the same incomplete canonical schema), per-file inline-DDL patch (P4, only reaches per-file-isolation failures not cross-file singleton pollution), mechanized one-size init injection (9454baad, +219 reverted). The residual no-such-table buckets are byte-identical across P4/P5/P6: agent_signals 37, sbv_rates_history 19, positions 19, commodity_prices_history 19, commodity_prices 16, daily_ohlcv 5, imf_indicators 3, + tail (deep_fetch_queue, cron_job_runs, watchlist, vps_service_health, vnstock_trading_stats, signal_quality_audit, insider_transactions, evidence_scores). ROOT CAUSE: the canonical initDatabase()/its init slices NEVER CREATE these dominant tables, so the shared :memory: singleton lacks them and every production getDb() fallback that touches them throws no-such-table. The ONLY untried lever targeting root cause: ADD the missing CREATE TABLE IF NOT EXISTS statements for each residual table INTO canonical initDatabase()/its slices so the shared singleton actually contains them (additive, IF NOT EXISTS, low production risk — exactly the Contract-A canonical-initDatabase recommendation the P4 gate signal already flagged). HARD CONSTRAINT: architect MUST source each missing table authoritative DDL from its OWNING production module (the module that runs its own initXxxTables / CREATE in prod), NOT invent columns — invented/drifted DDL is exactly what sank P5 (created_at drift). DoD: per-residual-table mapping {table -> owning module + authoritative DDL source} + decision (which DDLs go into which canonical slice, column-exact) + brief. Next dev gate after re-impl: native fail+error must DROP vs the 629 absolute AND the agent_signals/sbv_rates_history/positions/commodity_prices* residual buckets must shrink toward zero.",
+        "note": "[po-S19] recurring-bug, 5th touch of CI-test-schema surface (P2 Contract-B, P4 per-file isolation, FU-P5 SPIKE singleton-fixture, FU-P6 SPIKE afterAll-reinit, now P7 add-missing-canonical-tables). Distinct follow-up to FU-SCHEMA-DRIFT-P6 (DONE — direction (b) disproven empirically). Architect lane = NO dev WIP; WIP<=2 honored (0 IN_PROGRESS). DoD: per-table owning-module DDL map + which-slice decision + brief. Next dev gate: native fail+error DROP vs 629 + residual buckets shrink."
+      },
+      {
+        "id": "FIX-NEWS-VPS-CRASH-LOOP",
+        "title": "vn-news-fetch unhealthy crash-restart loop (~1h uptime) RECURRING — root-cause def fix (B-11; 2nd occ 48h after FIX-NEWS-VPS-PROBE)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "TODO",
+        "size": "M",
+        "zone": "cross-service/",
+        "priority": "high",
+        "sprint": "CI-RED-RECONCILE",
+        "created_at": "2026-06-09T02:55:37Z",
+        "status_note": "AC: vn-news-fetch stays healthy with VPS uptime >6h across 3 consecutive Tier-2 auditor cycles AND news SLA (get_sla_status) stays ok (no B-11 CRITICAL 48h). RAW-VERIFIED 2026-06-09 via get_sla_status (news 84/30min breached) + get_vps_service_health (vn-news-fetch unhealthy, uptime 1h21m). Recurring: 2nd occ in 48h (prior 2026-06-07T06:33 same self-restart ~1h44m; FIX-NEWS-VPS-PROBE was a probe not a definitive fix). Hypothesis: VPS systemd crash-restart loop (pthread/NPROC exhaustion class seen on vn-bctc-fetch Chromium, OR fetch-job exception). ops-vps-fetch recon journalctl -u vn-news-fetch for the crash signature, then dev fix. Priority high.",
+        "note": "[po-S19] Opened from sau-20260609T023050 (B-11) after raw-verify + recurrence detection. Sibling pattern to FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (cron/service crash-restart). Architect lane note: if recon shows recurring infra-exhaustion shared with bctc/Chromium, consider folding into a single VPS-service-stability spike."
       }
     ],
     "archive": [],
@@ -5987,8 +6020,8 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-09T02:16:00Z",
-    "_updated_by": "po-S18",
+    "_updated_at": "2026-06-09T02:55:37Z",
+    "_updated_by": "po-S19",
     "rows": [
       {
         "id": "sau-c121-a33",
@@ -6757,8 +6790,11 @@
         "type": "system-issue",
         "summary": "news-vps stale 1.03h (check B-11)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "zone_owner": "ops-vps-fetch",
+        "check_id": "B-11",
+        "triage_note": "[po-S19 2026-06-09T02:55:37Z] RAW-VERIFIED REAL via get_sla_status (news age 84min vs 30min SLA = breached CRITICAL) + get_vps_service_health (vn-news-fetch UNHEALTHY, VPS uptime 1h21m). RECURRING: 2nd occ in 48h (prior sau-b02/sau-b-vps-unhealthy 2026-06-07T06:33 = vn-news-fetch unhealthy uptime 1h44m -> FIX-NEWS-VPS-PROBE DONE but did NOT make it stick). ~1h uptime each time = crash-restart loop (mirror of vnstockFundamentals crash). Recurring-bug rule fired -> opened FIX-NEWS-VPS-CRASH-LOOP backlog task (ops-vps-fetch)."
       },
       {
         "id": "sau-20260609T023051",
@@ -6768,8 +6804,11 @@
         "type": "system-issue",
         "summary": "bctc-discover stale 9.5h (check B-02)",
         "severity": "CRITICAL",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "TRIAGED",
+        "payload_ref": null,
+        "zone_owner": "dev-mcp-server",
+        "check_id": "B-02",
+        "triage_note": "[po-S19 2026-06-09T02:55:37Z] RAW-VERIFIED REAL via get_sla_status (bctc age 598min vs 120min SLA = breached CRITICAL, matches auditor ~9.5h). vn-bctc-fetch service shows healthy/3m-ago but data is 598min stale = fetch up but not discovering/writing rows -> consistent with vnstockFundamentalsRefresh cron CRASH. FOLD into FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (TODO, owner agents-architect, zone apps/mcp-server, CRITICAL — same A-33/c118/c119/c120 root cause). No new task, dedup."
       }
     ],
     "archive": [
