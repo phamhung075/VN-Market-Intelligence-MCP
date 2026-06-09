@@ -136,8 +136,9 @@ beforeAll(async () => {
   registerMarketTools(server);
 });
 
-afterAll(() => {
+afterAll(async () => {
   closeDb();
+  await initDatabase();
 });
 
 // ── Suite ─────────────────────────────────────────────────────────────────────

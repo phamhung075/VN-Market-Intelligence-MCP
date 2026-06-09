@@ -1,5 +1,13 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · FIX-SCHEMA-DRIFT-P6-IMPL — REVIEW
+
+**Task:** FIX-SCHEMA-DRIFT-P6-IMPL | Sprint: CI-RED-RECONCILE
+**Scope:** 3 Contract-A singleton-killer test files (084, 089, 1527). Zero production code changes.
+**Fix:** `afterAll(() => closeDb())` → `afterAll(async () => { closeDb(); await initDatabase(); })` in each. `initDatabase` already imported in all 3 files — no new imports needed.
+**Verification:** tsc clean (exit 0). Per-file: 084 15/0, 1527 78/0. 089 15 failures confirmed pre-existing via git stash baseline check (format mismatch, unrelated to schema fix). No regression introduced.
+**Key learning:** git stash + baseline rerun is the correct protocol to confirm whether per-file isolation failures are pre-existing vs introduced — use it whenever a changed file has unrelated test failures.
+
 ## 2026-06-09 · CI-NETWORK-GUARDS-POLLNEWS-REFILE — REVIEW
 
 **Task:** CI-NETWORK-GUARDS-POLLNEWS-REFILE | Sprint: CI-RED-RECONCILE | Commit: 64981565

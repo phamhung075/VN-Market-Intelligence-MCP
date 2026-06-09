@@ -95,3 +95,12 @@
 - Add data_env column to each inline DDL (Contract B cure) + production fallback guard — chosen: brief §3 Phase 1 spec; additive-only, no collision risk
 **why-decision:** Two-fixture contract: Contract B tests own their inline DDL; adding one missing column is correct per §2a. Fallback guard in pollNews.ts decouples production INSERT from test DDL exhaustively (fredApi.ts precedent already in codebase).
 **why-change:** 63 files modified (brief estimates 64; FIX-1282-1285-schema-migrations.test.ts excluded — uses initDatabase(), no inline DDL despite filename match). No Phase 2/3 work performed.
+
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-06-09T02:37:00Z (DJ-GATE-1)
+**task-id:** FIX-SCHEMA-DRIFT-P6-IMPL
+**what-done:** Changed `afterAll(() => { closeDb(); })` to `afterAll(async () => { closeDb(); await initDatabase(); })` in 3 Contract-A singleton-killer test files (084, 089, 1527); no production code changed.
+**what-considered:**
+- Option (a) self-heal in getDb() with reconciled DDL — rejected: brief §2 proves footgun (side effects on every afterEach closeDb in 182; repeated DELETE on market_prices)
+- Option (b) reinit in afterAll of 3 killers — chosen: test-only, additive, preserves canonical schema for subsequent files; uses full initDatabase() not partial slice list
+**why-decision:** Architect brief confirmed direction (b) is bounded to 3 test files; initDatabase() is idempotent on fresh :memory: DB; 089 pre-existing failures confirmed by git stash baseline check (unrelated to this fix).
+**why-change:** 182-portfolio-risk.test.ts left unchanged per brief §4a revised scope — afterEach self-contained, not a killer for subsequent files.
