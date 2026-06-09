@@ -136,6 +136,21 @@ interface BalanceSheetVnstockRow {
   receivables_bn: number | null;
 }
 
+// BPE-DEV-2 (AC-3): bctc_layout_units prose row shape
+interface ProseLayoutUnitRow {
+  unit_id: string;
+  page_numbers_json: string;
+  stitched_markdown: string;
+}
+
+// BPE-DEV-2 (AC-3): prose section shape (RISK-6: 4000-char cap per unit)
+export interface ProseSectionEntry {
+  unit_id: string;
+  page_numbers: number[];
+  text_content: string;   // First 4000 chars of stitched_markdown
+  prose_truncated: boolean; // true when stitched_markdown exceeded 4000 chars
+}
+
 // FIX-D: structured_data output type (exported for test consumers)
 export interface BctcStructuredData {
   pe: number | null;
@@ -157,6 +172,8 @@ export interface BctcStructuredData {
   charter_capital: number | null;
   investment_property: number | null;
   reward_fund: number | null;
+  // BPE-DEV-2 (AC-3): prose sections from bctc_layout_units (RISK-6: 4000-char cap each)
+  prose_sections: ProseSectionEntry[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1139,6 +1156,52 @@ export function registerBctcFullTools(
           receivables = null;
         }
 
+        // ── BPE-DEV-2 (AC-3): Query prose sections from bctc_layout_units ────
+        // Returns prose_sections:[] when no prose units found (never null, never fabricated).
+        // RISK-6: cap each unit at 4000 chars; set prose_truncated:true when truncated.
+        // Sort by first page number ascending (accounting policies appear before detailed notes).
+        const PROSE_TEXT_CAP = 4000;
+        let proseSections: ProseSectionEntry[] = [];
+        try {
+          const proseRows = db
+            .prepare<ProseLayoutUnitRow, [string]>(`
+              SELECT unit_id, page_numbers_json, stitched_markdown
+              FROM bctc_layout_units
+              WHERE report_id = ?
+                AND page_type = 'prose'
+                AND quarantined = 0
+                AND stitched_markdown IS NOT NULL
+                AND stitched_markdown != ''
+              ORDER BY json_extract(page_numbers_json, '$[0]') ASC
+            `)
+            .all(latestRow.id);
+
+          proseSections = proseRows.map((row) => {
+            let pageNumbers: number[] = [];
+            try {
+              pageNumbers = JSON.parse(row.page_numbers_json) as number[];
+            } catch {
+              pageNumbers = [];
+            }
+            const truncated = row.stitched_markdown.length > PROSE_TEXT_CAP;
+            return {
+              unit_id: row.unit_id,
+              page_numbers: pageNumbers,
+              text_content: truncated
+                ? row.stitched_markdown.slice(0, PROSE_TEXT_CAP)
+                : row.stitched_markdown,
+              prose_truncated: truncated,
+            };
+          });
+        } catch (err) {
+          // bctc_layout_units may not exist in legacy test DBs — safe-degrade to []
+          logger.warn("[bctcFullTools] prose_sections query failed", {
+            report_id: latestRow.id,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          proseSections = [];
+        }
+
         const structuredData: BctcStructuredData = {
           // Market valuation ratios (persisted, not recomputed — sourced from market data)
           pe: latestRow.pe ?? null,
@@ -1166,6 +1229,8 @@ export function registerBctcFullTools(
           charter_capital: latestRow.charter_capital ?? null,
           investment_property: latestRow.investment_property ?? null,
           reward_fund: latestRow.reward_fund ?? null,
+          // BPE-DEV-2 (AC-3): prose sections from bctc_layout_units (4000-char cap per unit)
+          prose_sections: proseSections,
         };
 
         // FIX-D: emit two content items:

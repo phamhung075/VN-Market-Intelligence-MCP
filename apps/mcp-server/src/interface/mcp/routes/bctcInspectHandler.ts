@@ -508,12 +508,15 @@ export function handleBctcInspectOcr(
       // Find the unit whose page_numbers_json covers the requested page.
       // Use json_each to safely match (LIKE '%7%' would match page 17/27).
       // R-CRIT-1 in brief: json_each available in SQLite 3.38+ (Bun bundles 3.43+).
+      // BPE-DEV-2 (AC-1): extend page_type filter to include 'prose' units.
+      // RISK-4 ruling: use IN ('table','prose') rather than removing the filter entirely
+      // so that 'blank' units are still excluded (blank pages fall through to fallback).
       const pekUnitRow = db
         .prepare<BctcLayoutUnitRow, [string, number]>(`
           SELECT unit_id, schema_page, page_numbers_json, stitched_markdown, quarantined
           FROM bctc_layout_units
           WHERE report_id = ?
-            AND page_type = 'table'
+            AND page_type IN ('table', 'prose')
             AND EXISTS (
               SELECT 1 FROM json_each(page_numbers_json) WHERE value = ?
             )
@@ -522,33 +525,43 @@ export function handleBctcInspectOcr(
         .get(docId, page) as BctcLayoutUnitRow | null;
 
       if (pekUnitRow) {
-        // Page covered by a PEK unit — return stitched_markdown
-        const response: OcrPageResponse = {
-          doc_id: docId,
-          filename,
-          // total_pages: use pdf_extracted_text count for page nav, or 0 if no filename
-          total_pages: filename
-            ? (db.prepare(`SELECT COUNT(*) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
-            : 0,
-          page,
-          text_content: pekUnitRow.stitched_markdown,
-          confidence: 1.0,
-          has_more: false, // nav driven by PDF pane; PEK unit may span multiple pages
-          has_pek: true,
-          unit_id: pekUnitRow.unit_id,
-          page_numbers_json: pekUnitRow.page_numbers_json,
-          quarantined: pekUnitRow.quarantined === 1,
-          figures,
-        };
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(response));
-        return;
+        // BPE-DEV-2 (AC-2): prose units with empty stitched_markdown (EC-1) fall through
+        // to the coverage-gap path so the PROSE-DEV-1 pdf_extracted_text fallback still runs.
+        // A prose unit with non-empty stitched_markdown is served directly (pek_coverage_gap:false).
+        if (pekUnitRow.stitched_markdown !== "") {
+          // Page covered by a PEK unit with text — return stitched_markdown
+          const response: OcrPageResponse = {
+            doc_id: docId,
+            filename,
+            // total_pages: use pdf_extracted_text count for page nav, or 0 if no filename
+            total_pages: filename
+              ? (db.prepare(`SELECT COUNT(*) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
+              : 0,
+            page,
+            text_content: pekUnitRow.stitched_markdown,
+            confidence: 1.0,
+            has_more: false, // nav driven by PDF pane; PEK unit may span multiple pages
+            has_pek: true,
+            unit_id: pekUnitRow.unit_id,
+            page_numbers_json: pekUnitRow.page_numbers_json,
+            quarantined: pekUnitRow.quarantined === 1,
+            figures,
+          };
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify(response));
+          return;
+        }
+        // prose unit found but stitched_markdown is empty (EC-1: _prose_no_text producer flag) —
+        // fall through to the coverage-gap path below for pdf_extracted_text fallback.
       }
 
-      // PEK units exist for the report but no unit covers this page as a 'table' unit.
-      // Prose pages have a PEK unit with page_type='prose' but stitched_markdown=''.
-      // PROSE-DEV-1 fix: fall back to pdf_extracted_text raw OCR for the page content.
-      // pek_coverage_gap:true stays — it signals "no PEK-refined table content here".
+      // BPE-DEV-2 (AC-2): pek_coverage_gap semantics updated.
+      // New semantics: pek_coverage_gap:true = "PEK ran but this page has no content of
+      // either type (table or prose with text)". This covers:
+      //   - No unit covers this page at all
+      //   - A prose unit exists but stitched_markdown is empty (EC-1)
+      //   - Page covered by a blank unit (excluded by page_type IN filter above)
+      // Fall back to pdf_extracted_text raw OCR for any remaining content.
       let proseFallbackText = "";
       let proseFallbackConfidence = 0;
       if (filename) {
