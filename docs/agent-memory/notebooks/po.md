@@ -1,26 +1,27 @@
 # PO Notebook
 
-## c · 2026-06-09T04:44Z — CI-RED-RECONCILE: 629 taxonomy DELIVERED -> close SPIKE + open Cluster-1 attack FIX (po-S22)
+## c · 2026-06-09T06:56Z — CI-RED-RECONCILE: C3+C1 gate -48 -> close BOTH + rebaseline 241->193 + open C2 attack (po-S25)
 
-**Trigger:** PRIORITY TRIAGE — FU-CI-PROFILE-629 architect SPIKE delivered (docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md, 7682B) + router raw-verified the central Cluster-1 claim. PO owns board; router owns push+gate+verify. DJ-GATE-1.
+**Trigger:** CI-C3-C1-GATE-1d83a5ff (signal docs/signals/ci-c3-c1-gate-result-1d83a5ff-20260609T0645Z.json). Router pre-measured + raw-verified the native bun summary, retained both test-only fixes, bundled push f95c79be->1d83a5ff = ONE CI run 27188621595 / bun job 80263220946. PO owns board; router owns push+gate. DJ-GATE-1.
 
-**BREAKTHROUGH (router-verified, acted on — not re-verified):** 629 is NOT schema-drift-dominated (~4 fails, PARKED P4-P8 — the 6 schema spikes chased the wrong cluster). Real #1 = MCP-SDK mock contamination ~355/56% from ONE file: apps/mcp-server/src/__tests__/1862c-transport-session-eviction.test.ts mock.module(@modelcontextprotocol/sdk/server/mcp.js) MockMcpServer lacks .tool()/.registerTool(); Bun ESM cache leaks to 69+ files; mock.restore() insufficient. I raw-read L38-42 myself = MockMcpServer={connect} only (verify-raw-not-badges).
+**Gate (router-verified, accepted — native-to-native ONLY):** prior 241 (run 27185729719, sha 91afe344, 0 err) -> NEW **193** (11582 pass / 42 skip / 193 fail / **0 err** / Ran 11817, sha 1d83a5ff, run 27188621595, job 80263220946). NET **-48 (-20%)**, no regression. CI conclusion stays `failure` (193!=0, expected RED-until-0); verification gate MET. **241 SUPERSEDED by 193.** Raw `(fail)` grep ~387 = 2x dupe; native summary is the only authoritative absolute.
 
-**ATTACK-SCOPE = Cluster 1 SOLO-FIRST** (not 1+2+5 bundle). Rationale: isolate the single test-file fix so its ~355-drop is cleanly attributable in CI BEFORE mixing CI-workflow/symlink infra — measurement integrity + zero prod-code risk + WIP<=2.
+**KEY CALL — DONE-AS-SCOPED, not re-open:** net -48 << projected -114 because the architect's C1(71)/C3(43) were SUPERSET cluster counts. The dev tasks were scoped to the NAMED files (C1=089/1423d/1423f/1570c/1903a; C3=1945b) and those ARE now CI-clean. Residual belongs to MORE files sharing the pattern but OUTSIDE the original 5-file/1-file scope -> NEW tasks, NOT a charge-back to closed ids.
 
-**Board edits (1 atomic jq pass, commit-mutex held):**
-- FU-CI-PROFILE-629 (backlog[78]): TODO->DONE (+closed_at +closing note). Gate=taxonomy delivered MET. Single status key (=1).
-- +FIX-CI-MCP-SDK-MOCK-CONTAM (sprint .tasks, TODO, dev-mcp-server, apps/mcp-server/, high): rewrite 1862c mock so MockMcpServer exposes .tool()/.registerTool() no-ops OR scope mock to SSE transport only. baseline_pass=629 native fail+error absolute; gate=DROP well below 629 (target ~274). ZERO prod code. DISPATCH-READY.
-- +FIX-CI-DATA-SYMLINK-ENOENT (Cluster 2, ~91, QUEUED, depends Cluster1): CI mkdir -p / replace symlink. NOT active.
-- +FIX-CI-DEAD-REUTERS-TESTS (Cluster 5, 2 err, QUEUED, depends Cluster1): delete 2 _deprecated reuters tests. NOT active.
-- Cluster 3/4 NOT opened (gated on 1+2+5 clearing). Schema-drift (Cluster 6) NOT re-opened (PARKED).
+**Board edits (1 atomic jq pass `scripts/po-s25-c3-c1-gate.jq`, commit-mutex held):**
+- FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES (active_sprints[24].tasks): REVIEW->DONE (+closed/done/done_by/actual_result). Single status key.
+- FIX-CI-C1-MACRO-INJECT-SEAM-TESTS (task_board.in_progress): REVIEW->DONE (+closed/done/done_by/actual_result). Single status key.
+- +FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE (TODO, dev-mcp-server, high, ~21): require()->ESM import for getMarketMessageDigest+batchReviewMarketMessages (impl in marketMessageStore.ts:239/349); TEST-ONLY; cleanest next win. Carries 193 baseline. DISPATCH-READY.
+- +FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS (BACKLOG, ~37) + +FIX-CI-C3-RESIDUAL-DB-DESTROYERS (BACKLOG, ~23): BOTH marked needs-architect-filescope-before-dev (avoid blind seam sweep = 9454baad +219 revert anti-pattern).
+- +SPIKE-CI-C4-KINH-DICH-DIACRITICS (BACKLOG spike, architect, ~14): prod-vs-test diacritics ruling first — only residual touching PROD strings; NOT routed to dev blind.
+- +VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE (top-level backlog, cowork-team): non-CI, LIVE prod risk (raw JSON to MARKET since 98df0f43); independent of /goal ci/cd pass.
+- Sprint-level: active_sprints[24].ci_absolute=193 stamped (+._updated_by=po-S25). Cluster-6 schema-drift stays PARKED.
 
-**SSOT discipline:** backlog len 79 unchanged (in-place flip); sprint .tasks 19->22 (+3 exactly); signal_queue.rows EXACTLY 56 preserved (no whole-object rewrite). Temp validated [ -s ] && jq -e . && size>600000 (707093) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po ttl 120s) held around write to serialize vs cowork */15. Commit SHA below (3 owned paths, explicit pathspec, NOT pushed — router owns).
+**SSOT discipline:** CI sprint .tasks 25->29 (+4); top-level backlog 80->81 (+1); single status key (=1) on every flipped/created row (paths(scalars) check, no dup-key bug). Temp validated [ -s ] && jq -e . && size>600000 (734255) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po) held. _schema=v3 _ssot=true preserved. NOT pushed.
 
-**LESSON:** When a long-running RED-reconcile pivots from diagnosis to attack, open ONLY the single largest+cheapest+isolated cluster first (solo, not bundled) so its CI delta is attributable; queue the rest behind it with depends. Don't bundle a test-file fix with CI-workflow/.github + dead-code deletion — conflated deltas lose per-cluster attribution.
+**LESSON:** When CI deltas undershoot the projection, the honest move is to accept SUPERSET-cluster diagnosis and track the under-scope FORWARD as new tasks — never charge new files back to a closed task id (breaks DoD audit) and never re-open a task whose named files are clean. Queue exactly one dispatchable ROI win; gate under-scoped + prod-string residuals behind architect confirmation.
 
 ## Carry-over
-- ROUTER OWNS: push (this notebook + journal + orch-state, commit SHA in return, ahead of origin) + dispatch FIX-CI-MCP-SDK-MOCK-CONTAM to dev-mcp-server NOW (Cluster 1 solo). Hold Cluster 2 + 5 QUEUED until Cluster 1 lands+measured then flip TODO. Do NOT open Cluster 3/4 yet. WIP<=2 honored.
-- Next CI gate (router): native fail+error must DROP well below 629 (target ~274 if full 355 clears). Native-to-native measurement only (marker method over-counts ~2x).
-- Schema-drift PARKED: no 7th touch. created_at column-existence diagnosis archived in po-S21 journal.
-- Still-open (router routing): FIX-NEWS-VPS-CRASH-LOOP (ops-vps-fetch), FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (bctc-discover), Bug A FIX-NEWS-VPS-HEALTH-SQL needs mcp-server REBUILD (ops).
+- ROUTER OWNS: push (po.md + journal + orch-state.json + archived signal, commit SHA in return, ahead of origin) + dispatch FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE to dev-mcp-server NOW (TODO, cleanest next win). BEFORE either residual: route to ARCHITECT for short file-scope confirm. Route SPIKE-CI-C4 to ARCHITECT (prod-vs-test diacritics, 60m) — NOT dev blind.
+- Next CI gate (router): native fail+error must DROP vs the NEW **193** absolute (sha 1d83a5ff). Native-to-native only (marker over-counts ~2x). Continue ROI-ranked until 0 (/goal ci/cd pass).
+- VERIFY-COWORK-MACRO-SNAPSHOT-ENVELOPE = independent of CI goal (live prod MARKET-channel risk). Cluster-6 schema-drift PARKED (no 7th touch).

@@ -1,0 +1,33 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T06:45:00Z",
+  "dedup_key": "ci_c3_c1_gate_result:1d83a5ff",
+  "payload": {
+    "check_id": "CI-C3-C1-GATE-1d83a5ff",
+    "tasks_under_test": ["FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES", "FIX-CI-C1-MACRO-INJECT-SEAM-TESTS"],
+    "head_sha": "1d83a5ff",
+    "run_id": "27188621595",
+    "bun_test_job_id": "80263220946",
+    "conclusion": "PASS (partial) — VERIFICATION GATE MET: native fail DROPPED 241 -> 193 (-48, -20%), errors stay 0. CI run conclusion still 'failure' (193 != 0; expected, CI RED until 0). Both fixes are test-only and already pushed in bundle 1d83a5ff (C3=82947da3, C1=1d83a5ff on top).",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80263220946 --log` ('11582 pass / 42 skip / 193 fail / Ran 11817 across 1037 files'; no errors line = 0 errors). Native-to-native only. NOTE: raw `(fail)` grep returns 387 ~= 2x — bun prints each fail twice; native summary 193 is the ONLY authoritative absolute.",
+    "prior_absolute_native": { "run_id": "27185729719", "sha": "91afe344", "pass": 11534, "skip": 42, "fail": 241, "errors": 0, "fail_plus_error": 241, "tests": 11817 },
+    "after_c3_c1_native": { "run_id": "27188621595", "sha": "1d83a5ff", "pass": 11582, "skip": 42, "fail": 193, "errors": 0, "fail_plus_error": 193, "tests": 11817 },
+    "delta_native": { "pass": "+48", "skip": "0", "fail": "-48", "errors": "0", "fail_plus_error": "-48 BETTER", "tests": "0" },
+    "empirical_finding": "Net -48, not the projected -114. ROOT CAUSE = the architect's C1(71)/C3(43) cluster sizes were SUPERSET counts: the dev tasks were scoped to the named files (C1=5 macro tool/format files: 089,1423d,1423f,1570c,1903a; C3=1945b destroyer) and those files ARE now clean (dev local green; their exact fail signatures are gone from the CI log). BUT the same two root-cause PATTERNS extend to MORE files that were NOT in the task scope: (1) macro-inject-seam ALSO breaks FETCHER-level tests still failing — Task 028 SBV Macro Fetcher (~10), Task 025 Yahoo Commodity Fetcher (~7), Task 1423e get_macro_calendar (~11), Task 239a/1423a/1487 (~9); (2) DB-singleton pollution has OTHER destroyers still wiping tables — Task 1124 evidence tools Phase B+C (~12), Task 1129 get_calibration_report (~5), 1295d E2E Signal Flow (~6). Counts are halved-from-2x-occurrence, approximate. NO regression: total tests 11817 unchanged, fail only decreased.",
+    "residual_193_rough_profile": {
+      "note": "Halved from 2x occurrence counts in `gh run view --job=80263220946 --log`; approximate, sums ~193.",
+      "C2_getMarketMessageDigest_require_esm": "~21 (Task 1168 getMarketMessageDigest + batchReviewMarketMessages) — CLEAN test-only require()->import fix, architect-diagnosed, NO whack-a-mole. Best next win.",
+      "C1_residual_macro_seam_FETCHER_tests": "~37 (Task 028 SBV fetcher, Task 025 Yahoo commodity fetcher, 1423e macro-calendar, 239a, 1423a, 1487) — SAME seam pattern, test-only, but NEW files beyond the 5-file plan.",
+      "C3_residual_db_singleton_destroyers": "~23 (Task 1124 evidence tools, 1129 calibration, 1295d E2E signal flow) — MORE destroyer files beyond 1945b.",
+      "C4_kinh_dich_diacritics": "~14 (Task 285, 1414 kinhDichTools.ts ASCII fallback) — PROD strings; needs a prod-vs-test decision before dev.",
+      "misc": "~98 spread: 1416 source-scan (~9), 1407b SLA monitor (~6), 1134/MSG-1 foreign_flow (~11), 1328e conviction routing (~5), 235 send_telegram (~3), ragHealthCheck (~3), VCB BCTC parser (~3), FIX-H insider 180d (~3), ttl_seconds:180 cowork assertion (~3), newsHeadlines E2E (~2), 1839b notebook (~2), plus long tail."
+    },
+    "router_actions_done": "Raw-verified BOTH commits test-only (C3 82947da3 = only 1945b test + docs; C1 1d83a5ff = only 5 __tests__ macro files + notebook + orch; git show --name-only shows ZERO src/interface|infrastructure|domain paths). tsc clean pre-push. Bundled C3+C1 into ONE push f95c79be->1d83a5ff = ONE CI run 27188621595. Native summary read from job 80263220946. Code RETAINED (gate met). NEW ABSOLUTE BASELINE = 193 (193 fail + 0 err / Ran 11817, sha 1d83a5ff).",
+    "po_action_requested": "1) Flip FIX-CI-C3-DB-SINGLETON-SIGNAL-OUTCOMES and FIX-CI-C1-MACRO-INJECT-SEAM-TESTS TODO/REVIEW -> DONE (DJ-GATE-1: decision-journal STEP same commit, stamp BOTH ids + the 241->193 / -48 result). These two are DONE-as-scoped (their named files are clean); the residual belongs to NEW tasks below, NOT to re-opening these. 2) Rebaseline the sprint absolute everywhere 241 -> 193 (sha 1d83a5ff, run 27188621595, job 80263220946). 241 is SUPERSEDED. 3) Open the next attack task: FIX-CI-C2-GETMARKETMESSAGEDIGEST-REQUIRE (owner=dev-mcp-server, zone=apps/mcp-server/src/__tests__/, high, ~21 fails) — Task 1168 tests use require() CJS interop that returns named exports undefined in Bun; rewrite to ESM import (getMarketMessageDigest + batchReviewMarketMessages ARE implemented in marketMessageStore.ts lines 239/349). TEST-ONLY. This is the cleanest next win (no whack-a-mole). 4) Open TWO backlog stubs for the under-scoped residuals, each needing a SHORT architect file-scope confirmation before dev: FIX-CI-C1-RESIDUAL-MACRO-FETCHER-TESTS (~37: Task 028/025/1423e/239a/1423a/1487) and FIX-CI-C3-RESIDUAL-DB-DESTROYERS (~23: Task 1124/1129/1295d). 5) Note C4 KINH-DICH (~14) needs a prod-vs-test decision (does the live tool SHOULD emit Vietnamese diacritics 'Quẻ' or is ASCII acceptable?) — queue an architect micro-SPIKE, do not route to dev blind. 6) Cluster-6 schema-drift stays PARKED.",
+    "separate_non_ci_flag_for_po": "Architect C1 SPIKE found a LIVE PRODUCTION behavior change (NOT a CI item): get_macro_snapshot has returned a {source_tier, text: JSON-string, fetchedAt} envelope instead of human-readable sections since commit 98df0f43 (2026-05-23, ~17 days). Cowork/chef agents that parse the inner `text` as formatted prose may be rendering raw JSON to the MARKET channel. Recommend PO open a SEPARATE backlog task to verify the cowork-team flow parses the inner JSON correctly; this is independent of /goal ci/cd pass.",
+    "next_gate": "After C2 fix (dev) -> same native-summary method vs the NEW 193 absolute. fail must DROP. Continue down the ranked residual until native fail+error = 0 (/goal ci/cd pass)."
+  }
+}
