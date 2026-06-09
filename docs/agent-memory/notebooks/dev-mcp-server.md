@@ -1,15 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-09 · BATCH5-CI-012-LANCEDB-HERMETIC — DONE (DJ-GATE-1)
-
-**Task:** BATCH5-CI-012-LANCEDB-HERMETIC | Sprint: CI-RED-RECONCILE | Size: XS | DJ: dev-mcp-server-S26
-**Scope:** `src/__tests__/012-lancedb-store.test.ts` — CI hermetic guard (itStore pattern).
-**Root cause:** Bun v1.3.13 native teardown C++ exception (bun.report/1.3.13/mt1bf2e2ce...) when LanceDB native module unloads at process exit. All 6 tests pass; crash is in Bun cleanup path, not user code. Per-file isolation runner sees non-zero exit → file counted as FAILED. Identical fingerprint to 011-rag-embeddings (ONNX teardown), fixed in e59a4547 via `itModel` guard.
-**Fix:** Added `const itStore = Bun.env.CI === "true" ? it.skip : it` near top of describe scope. Replaced all 6 `it(` with `itStore(`. All 6 tests are LanceDB-native (no pure-logic subset to keep running under CI).
-**Verify:** CI=true → 0 pass / 6 skip / 0 fail, exit 0. tsc clean. Only file touched: 012-lancedb-store.test.ts + this notebook.
-
----
-
 ## 2026-06-09 · BATCH5-CI-RESIDUAL-INFRA — DONE
 
 **Task:** BATCH5-CI-RESIDUAL-INFRA | Sprint: CI-RED-RECONCILE | Size: M | DJ: dev-mcp-server-S25
@@ -40,3 +30,13 @@
 **Task:** BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE | Sprint: CI-RED-RECONCILE | Size: M | DJ: dev-mcp-server-S23
 **Root cause:** InMemoryTransport+Client ~5000ms timeout on Bun 1.3.13/Ubuntu CI. 3 test files: MSG-1-market-foreign-flow, RAPID-A-get-company-profile-tool, RAPID-H-insider-lookback. Rewired to `_registeredTools` direct handler. 20 total tests all pass. tsc CLEAN. projected_delta -15.
 **Status:** REVIEW — router owns push + CI gate.
+
+---
+
+## 2026-06-10 · BPE-DEV-2 — REVIEW
+
+**Task:** BPE-DEV-2 | Sprint: BCTC-PROSE-EXTRACT | Size: M | DJ: dev-mcp-server-S27
+**Scope:** Serving layer — bctcInspectHandler + bctcFullTools prose extension.
+**Fix:** bctcInspectHandler L511-591: page_type filter changed from `= 'table'` to `IN ('table', 'prose')`. EC-1 guard: empty prose stitched_markdown falls through to pdf_extracted_text fallback (pek_coverage_gap:true). New semantics: gap=true means "no content of either type." bctcFullTools: added ProseSectionEntry interface + prose_sections[] to BctcStructuredData; new query on bctc_layout_units (quarantine=0, stitched_markdown != '', sorted by page asc); 4000-char cap per unit with prose_truncated flag (RISK-6).
+**Tests:** 12 new (PROSE-UNIT-SERVE.test.ts) + 59 pass on 5 affected files. tsc CLEAN. tools=157. sched=78.
+**Commit:** 5cea706a. REBUILD REQUIRED before live.

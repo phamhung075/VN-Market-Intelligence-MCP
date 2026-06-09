@@ -252,3 +252,27 @@ Steps:
 - Schema migration NOT needed (existing `stitched_markdown TEXT` column supports prose text size)
 - `getBctcPageTextTool` auto-supported (no code change required)
 - Prose sections are served with context-window safety in mind (4000-char cap for AI tools)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` — L511-591: extend page_type filter to IN('table','prose'); update gap-detection logic for EC-1 (empty prose unit falls through to fallback)
+  - `apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts` — L134-174: add `ProseSectionEntry` interface + `prose_sections` field to `BctcStructuredData`; L135-151: `ProseLayoutUnitRow` type; L1115-1157: prose_sections query (4000-char cap, quarantine filter, ascending page sort)
+- **Tests written:** `apps/mcp-server/src/__tests__/PROSE-UNIT-SERVE.test.ts` — 12 assertions, GREEN
+  - TC-2: prose unit with text → has_pek:true, pek_coverage_gap absent, text_content non-empty
+  - TC-2b: empty prose unit → pek_coverage_gap:true, fallback activated
+  - TC-3: table unit path regression (2 assertions)
+  - EC-5: blank unit excluded from PEK seam
+  - TC-5: prose_sections array (5 assertions: present, empty-when-no-prose, truncated, sorted, quarantine-excluded)
+- **Git commits:** `5cea706a feat(bctc-serve): BPE-DEV-2 prose units served via PEK seam`
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 12 new pass / 0 fail (PROSE-UNIT-SERVE); 59 pass / 0 fail across 5 affected files; 79 pass / 0 fail across regression suite
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 78 cron.schedule entries (baseline was 76 as of FIX-PROJECT-STATS-GENERATED; delta is pre-existing)
+- **Docs updated:** docs/handoffs/TASK_BPE-DEV-2.md — [Developer] section appended | NONE other
+- **Graphify:** skipped (no new architecture docs)
+- **REBUILD REQUIRED:** Yes — the serving fix in bctcInspectHandler (page_type filter change) and the prose_sections addition in bctcFullTools will not be live until the mcp-server container is rebuilt and restarted. Router must dispatch ops to REBUILD after this commit lands.
