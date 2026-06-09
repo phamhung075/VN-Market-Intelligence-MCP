@@ -2872,11 +2872,17 @@
             "type": "FIX",
             "owner": "dev-macro-indicators",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "XS",
             "zone": "apps/macro-indicators/",
             "priority": "high",
-            "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE confirmed from raw log (run 27153704278): `the Go language version (go1.24) used to build golangci-lint is lower than the targeted Go version (1.25.0)`. NOT a ci.yml regression (per-service go-version-file; 4/6 pass). Zone fix to repo standard. Verify deps still resolve after lowering directive. VERIFICATION GATE: GREEN ci.yml after subsequent push. | REVIEW 2026-06-08: go 1.25.0 -> go 1.22 + toolchain go1.22.0 + downpinned libc v1.72.3->v1.49.3 and sys v0.42.0->v0.19.0 (over-eager MVS artifacts from prior go1.26.2 tidy). go test ./... 12/12 PASS, go vet CLEAN, golangci-lint 0 issues. Decision log: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-macro-indicators.md. Await ops push -> GREEN ci.yml."
+            "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE confirmed from raw log (run 27153704278): `the Go language version (go1.24) used to build golangci-lint is lower than the targeted Go version (1.25.0)`. NOT a ci.yml regression (per-service go-version-file; 4/6 pass). Zone fix to repo standard. Verify deps still resolve after lowering directive. VERIFICATION GATE: GREEN ci.yml after subsequent push. | REVIEW 2026-06-08: go 1.25.0 -> go 1.22 + toolchain go1.22.0 + downpinned libc v1.72.3->v1.49.3 and sys v0.42.0->v0.19.0 (over-eager MVS artifacts from prior go1.26.2 tidy). go test ./... 12/12 PASS, go vet CLEAN, golangci-lint 0 issues. Decision log: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-macro-indicators.md. Await ops push -> GREEN ci.yml.",
+            "done_by": "po-S35",
+            "done_at": "2026-06-09T11:32:46Z",
+            "closed_at": "2026-06-09T11:32:46Z",
+            "resolution": "CI-VERIFIED-GREEN — Macro Indicators Go Lint job = success across 3 CI runs (946d72a/e5e6585/7640616; runs 27201263379/27201056956/27200579594). go.mod go 1.25.0->1.22 landed. Per router signal CI-GO-PY-LINT-ALL-GREEN (39ee3464).",
+            "gate_result": "CI-GO-PY-LINT-ALL-GREEN-39ee3464",
+            "dj_gate_1": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-po.md#po-S35"
           },
           {
             "id": "FIX-TA-GOLANGCI-CONFIG-V2",
@@ -2884,12 +2890,18 @@
             "type": "FIX",
             "owner": "dev-technical-analysis",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "XS",
             "zone": "apps/technical-analysis/",
             "priority": "high",
             "note": "Created by po GO-VERSION diagnosis 2026-06-08T17:19:26Z. ROOT CAUSE from raw log: this is a CONFIG-MIGRATION miss, NOT a go-version issue (its go.mod = go 1.22, fine). The other 5 services already have version:\"2\". Add the field + verify config schema parses under v2. VERIFICATION GATE: GREEN ci.yml after subsequent push.",
-            "status_note": "Config migrated to v2 schema. Local: golangci-lint run exits 1 (lint violations) not 3 (config parse error) — config is valid. Exit-1 violation (FIX-TA-SANDBOX-DEPGUARD, fence-c, cmd/sandbox/main.go:44) is pre-existing tracked debt, not this task. VERIFICATION GATE: GREEN ci.yml after subsequent push. DJ-GATE-1: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-technical-analysis.md"
+            "status_note": "Config migrated to v2 schema. Local: golangci-lint run exits 1 (lint violations) not 3 (config parse error) — config is valid. Exit-1 violation (FIX-TA-SANDBOX-DEPGUARD, fence-c, cmd/sandbox/main.go:44) is pre-existing tracked debt, not this task. VERIFICATION GATE: GREEN ci.yml after subsequent push. DJ-GATE-1: docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-technical-analysis.md",
+            "done_by": "po-S35",
+            "done_at": "2026-06-09T11:32:46Z",
+            "closed_at": "2026-06-09T11:32:46Z",
+            "resolution": "CI-VERIFIED-GREEN — go-lint (technical-analysis) job = success across 3 CI runs (946d72a/e5e6585/7640616). version:\"2\" config landed; prior FIX-TA-SANDBOX-DEPGUARD blocker no longer on board and job no longer exits 1. Per router signal CI-GO-PY-LINT-ALL-GREEN (39ee3464).",
+            "gate_result": "CI-GO-PY-LINT-ALL-GREEN-39ee3464",
+            "dj_gate_1": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-po.md#po-S35"
           },
           {
             "id": "CI-TEST-ISOLATION-SPIKE",
@@ -3580,7 +3592,7 @@
             "title": "Task 1124 residual cluster (24 fails) — NEW DOMINANT LEVER, architect-first prod-vs-test triage",
             "type": "FIX",
             "owner": "architect",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/src/__tests__/",
             "priority": "high",
@@ -3593,7 +3605,12 @@
             "reviewed_at": "2026-06-09T11:25:00Z",
             "reviewed_by": "architect",
             "brief": "docs/architecture-briefs/2026-06-09-ci-c1124-evidence-tools-triage.md",
-            "note": "DOMINANT residual lever in the 91-run (Task 1124 = 24 fails, raw-tallied; supersedes the STALE ~71/91 C1 premise of po-S33). Architect-first prod-vs-test triage REQUIRED per /goal REMOVE-if-obsolete: confirm whether prod changed/was deleted BEFORE any fix — REWRITE if prod-correct+test-stale / FIX if prod-broken / REMOVE if test-obsolete. C5-cure ABSOLUTE: no new file-top/module-scope mock.module(). Gate later vs the standing 91 band (+/-3). [architect 2026-06-09T11:25Z] TRIAGE DONE: REWRITE verdict. Prod correct, schema fixture complete (all 4 tables in initSystemTables). 24 fails = 12 it() × 2 (test timeout + afterEach stall) from InMemoryTransport+Client.callTool() hanging on CI Linux runner. Fix: replace InMemoryTransport+Client with _registeredTools direct invocation (1117 pattern). NO mock.module(). Dev scope: ONE file only."
+            "note": "DOMINANT residual lever in the 91-run (Task 1124 = 24 fails, raw-tallied; supersedes the STALE ~71/91 C1 premise of po-S33). Architect-first prod-vs-test triage REQUIRED per /goal REMOVE-if-obsolete: confirm whether prod changed/was deleted BEFORE any fix — REWRITE if prod-correct+test-stale / FIX if prod-broken / REMOVE if test-obsolete. C5-cure ABSOLUTE: no new file-top/module-scope mock.module(). Gate later vs the standing 91 band (+/-3). [architect 2026-06-09T11:25Z] TRIAGE DONE: REWRITE verdict. Prod correct, schema fixture complete (all 4 tables in initSystemTables). 24 fails = 12 it() × 2 (test timeout + afterEach stall) from InMemoryTransport+Client.callTool() hanging on CI Linux runner. Fix: replace InMemoryTransport+Client with _registeredTools direct invocation (1117 pattern). NO mock.module(). Dev scope: ONE file only.",
+            "done_by": "po-S35",
+            "done_at": "2026-06-09T11:32:46Z",
+            "closed_at": "2026-06-09T11:32:46Z",
+            "resolution": "REWRITE verdict accepted (architect, commit f0900f74) — prod get_evidence_summary/create_prediction_claim CORRECT (all 4 evidence tables in initSystemTables, no seam deleted); test-only fix. Dispatched FIX-CI-C1124-EVIDENCE-TESTS-REWRITE to dev-mcp-server.",
+            "dj_gate_1": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-po.md#po-S35"
           },
           {
             "id": "FIX-CI-C1134-RESIDUAL-TRIAGE",
@@ -3628,6 +3645,25 @@
             "created_at": "2026-06-09T11:09:40Z",
             "created_by": "po-S34",
             "note": "NEW residual cluster (Task 1129 = 10 fails in the 91-run). Stub — architect-first prod-vs-test triage before any fix. Sequence after 1124. C5-cure ABSOLUTE. (1407b/1328e/1792/1352a already in C7 scope; C8 already tracked — NOT duplicated.)"
+          },
+          {
+            "id": "FIX-CI-C1124-EVIDENCE-TESTS-REWRITE",
+            "title": "Rewrite 1124-evidence-tools-phase-bc.test.ts: replace InMemoryTransport+Client.callTool() (hangs on Bun 1.3.13/Ubuntu CI -> 12 it() x 2 = 24 native 5000ms timeouts) with _registeredTools[name].handler direct invocation (proven CI-green by sibling 1117-evidence-tools.test.ts, same prod module). Prod is CORRECT — test-only fix.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/src/__tests__/",
+            "priority": "high",
+            "sprint": "CI-RED-RECONCILE",
+            "baseline_pass": "91",
+            "brief": "docs/architecture-briefs/2026-06-09-ci-c1124-evidence-tools-triage.md",
+            "scope": "ONLY apps/mcp-server/src/__tests__/1124-evidence-tools-phase-bc.test.ts",
+            "gate": "Task 1124 native fail count 24 -> 0 in CI (gate vs standing 91 band +/-3). NO new mock.module(). tsc --noEmit clean.",
+            "created_at": "2026-06-09T11:32:46Z",
+            "created_by": "po-S35",
+            "note": "[po-S35 DJ-GATE-1 2026-06-09T11:32:46Z] Architect REWRITE verdict accepted (FIX-CI-C1124-RESIDUAL-TRIAGE -> DONE). Prod get_evidence_summary/create_prediction_claim correct: all 4 evidence tables (evidence_scores/evidence_fragments/evidence_likelihood_ratios/prediction_claims) created by initSystemTables in initDatabase (schema-system.ts lines 138/156/172/187); no prod seam deleted. Root cause: InMemoryTransport.createLinkedPair()+Client.callTool() message loop stalls on CI Linux runner (Bun 1.3.13/Ubuntu) -> every it() times out at 5000ms; 12 it() x 2 (test timeout + afterEach stalled-client close) = 24 native fails. Fix = bypass transport entirely, call server._registeredTools[name].handler(args) directly (preferred 1881a pattern: beforeEach initDatabase + module-level _testDb/_testServer; afterEach closeDb). Remove Client + InMemoryTransport imports + _currentClient. Seed helpers unchanged. HARD: NO new mock.module() (C5-cure ABSOLUTE — import chain is pure SQLite, zero mock needed). Acceptance: Task 1124 24->0 native fails in CI, tsc clean. Dev COMMITS with explicit pathspec; ROUTER pushes + gates vs 91 band. Dev scope: ONE FILE ONLY."
           }
         ],
         "_updated_by": "po-S28",
