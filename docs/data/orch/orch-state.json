@@ -4436,7 +4436,7 @@
             "task_id": "BPE-DEV-2",
             "kind": "sprint-task",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "title": "Extend bctcInspectHandler to serve prose units (change page_type filter to include prose, update gap semantics) + add prose_sections to bctcFullTools (4k cap, context-window safe)",
             "type": "FEATURE",

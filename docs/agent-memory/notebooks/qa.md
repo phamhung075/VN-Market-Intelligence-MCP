@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-220 · 2026-06-10 · BPE-DEV-2 BCTC-PROSE-EXTRACT prose consumer/serving gate — APPROVED
+
+Sprint: BCTC-PROSE-EXTRACT | Task: BPE-DEV-2 | Verdict: APPROVED | Commit: 5cea706a
+
+QA re-ran: 12/12 PROSE-UNIT-SERVE tests GREEN (live). 29/29 (240-bctc-full + pek-render-seam) GREEN. 54/54 across 4 critical files GREEN. tsc clean. Fence test: TC-2 assertion genuine — would fail if filter reverted to 'table'. AC-1: IN('table','prose') L519 confirmed. AC-2: empty-prose fallthrough correct — gap=true only when no content. AC-3: prose_sections query L1163-1202 with 4000-char cap, quarantine filter, ASC sort confirmed. BLOCKER-4: no new tool registration (diff verified). DDD PASS. Security PASS. mock-guard EXIT 0. Full bun test OOM crash pre-existing (Bun 1.3.13). REBUILD REQUIRED before end-to-end round-trip against real producer data. DJ-GATE-1: sprint-BCTC-PROSE-EXTRACT-qa.md § qa-S2. orch-state BPE-DEV-2 REVIEW→DONE.
+
 ## cycle-219 · 2026-06-10 · BPE-DEV-1 BCTC-PROSE-EXTRACT prose producer gate — APPROVED
 
 Sprint: BCTC-PROSE-EXTRACT | Task: BPE-DEV-1 | Verdict: APPROVED | Commits: 1588a591 + 6e518935

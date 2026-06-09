@@ -22,3 +22,26 @@
 - BCTC eval gate: not applicable (no report_id in scope for this unit-test-only task).
 
 **why-change:** only path — all checks green. No arch concern (no new domain/MCP tool/cross-service). No round-2 fixer escalation needed.
+
+## Entry qa-S2 · 2026-06-10 · task-id: BPE-DEV-2
+
+**verdict:** APPROVED
+
+**what-considered:**
+- PROSE-UNIT-SERVE.test.ts: 12/12 pass (live re-run by QA — not relayed). 40 expect() calls.
+- 240-bctc-full.test.ts + pek-render-seam.test.ts: 29/29 pass (live re-run). No regression.
+- 251-mcp-tools.test.ts: included in 54/54 aggregate pass across 4 critical files.
+- tsc --noEmit: EXIT 0 (empty output = clean). Verified live.
+- Fence test (GATE-2): TC-2 inserts page_type='prose' unit; asserts pek_coverage_gap absent. If filter reverted to 'table', pekUnitRow=null → fallback path emits pek_coverage_gap:true → toBeUndefined() fails. Guard GENUINE.
+- AC-1: bctcInspectHandler.ts L519 `page_type IN ('table', 'prose')` — verified in source.
+- AC-2: empty stitched_markdown falls through (L531 check); non-empty served directly; gap path at L592 sets pek_coverage_gap:true. Semantics correct.
+- AC-3: bctcFullTools.ts L1163-1202 prose_sections query; PROSE_TEXT_CAP=4000; quarantine filter; ascending sort. All 5 TC-5 assertions cover: present, empty-when-no-prose, truncated, sorted, quarantine-excluded.
+- BLOCKER-4: no new tool registration in commit diff (grep on diff adds confirmed). Extended existing tools only.
+- DDD: new lines in diff import nothing new from infrastructure/application.
+- Security: no process.env, no secrets, no hardcoded tokens in diff.
+- mock-guard: EXIT 0 PASS on both production files.
+- Full suite (bun test): Bun 1.3.13 C++ OOM crash on full suite run — same pre-existing crash pattern as prior QA cycles (see qa-S cycle-218 note). Critical affected suites all PASS individually. Full suite exit 0 not capturable due to Bun crash; accepted per prior pattern.
+- BCTC eval gate: no report_id in task scope (serving code only, no corpus touch). N/A.
+- REBUILD REQUIRED note acknowledged — end-to-end TC-2/TC-2b/TC-5 round-trip against real producer data can only be confirmed post-container rebuild.
+
+**why-change:** only path — all checks green. No arch concern (extended existing tools, no new MCP tool).

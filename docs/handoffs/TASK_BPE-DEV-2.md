@@ -276,3 +276,35 @@ Steps:
 - **Docs updated:** docs/handoffs/TASK_BPE-DEV-2.md — [Developer] section appended | NONE other
 - **Graphify:** skipped (no new architecture docs)
 - **REBUILD REQUIRED:** Yes — the serving fix in bctcInspectHandler (page_type filter change) and the prose_sections addition in bctcFullTools will not be live until the mcp-server container is rebuilt and restarted. Router must dispatch ops to REBUILD after this commit lands.
+
+---
+
+## [QA] Review Record — BPE-DEV-2
+
+**Date:** 2026-06-10
+**Verdict:** APPROVED — GREEN
+**QA Agent:** qa (cycle-220)
+
+### Gate Results
+
+| Gate | Result | Evidence |
+|---|---|---|
+| PROSE-UNIT-SERVE tests (12) | PASS 12/12 | Live re-run by QA, 40 expect() calls |
+| 240-bctc-full + pek-render-seam (29) | PASS 29/29 | Live re-run by QA |
+| 251-mcp-tools + 4-file aggregate | PASS 54/54 | Live re-run by QA |
+| tsc --noEmit | PASS (exit 0) | No output = clean |
+| FENCE-FALSE-GREEN TC-2 | GENUINE | TC-2 inserts prose unit; pek_coverage_gap absent asserted; reverted filter would emit pek_coverage_gap:true — toBeUndefined() fails |
+| AC-1 page_type filter | PASS | L519 `IN ('table', 'prose')` verified in source |
+| AC-2 empty-prose fallthrough | PASS | L531 empty check; gap path L592 sets pek_coverage_gap:true |
+| AC-3 prose_sections query | PASS | L1163-1202; 4000-char cap; quarantine filter; sort ASC confirmed |
+| BLOCKER-4 no new tool | PASS | Diff adds zero new server.tool() registrations |
+| DDD scan | PASS | No new infrastructure/application imports in diff |
+| Security scan | PASS | No process.env, secrets, hardcoded tokens in diff |
+| mock-guard | PASS (exit 0) | Both production files scanned |
+
+### Notes
+
+- Full `bun test` suite Bun 1.3.13 C++ OOM crash pattern (pre-existing, same as cycle-218/219). Critical affected suites verified individually — all PASS.
+- REBUILD REQUIRED before end-to-end TC-2/TC-2b/TC-5 can be confirmed against real producer data. Round-trip verification is post-rebuild ops responsibility.
+- BCTC eval gate: N/A (serving code only, no corpus report_id in scope).
+- Decision journal: sprint-BCTC-PROSE-EXTRACT-qa.md § qa-S2.
