@@ -1,8 +1,27 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09 03:50 UTC | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09T07:00Z | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T07:00Z — FU-CI-PROFILE-629: full-suite failure taxonomy spike
+
+**Task:** FU-CI-PROFILE-629 (SPIKE, 120m, NO CODE CHANGE, zone: apps/mcp-server/)
+
+**Method:** CI log profiling only (gh run view job 80229060413, /tmp/ci-629-full.txt, 64,683 lines). Native summary tally = authoritative. 3 local spot-runs only (089-tool-macro, 234-system-status-merge, 028-sbv-rates).
+
+**6 clusters identified (629 native fails + errors):**
+
+1. **MCP-SDK mock contamination (~355 total):** `1862c-transport-session-eviction.test.ts` at CI position #316 replaces entire `@modelcontextprotocol/sdk/server/mcp.js` with a MockMcpServer lacking `.tool()`/`.registerTool()`. Bun ESM cache propagates to all 69+ subsequent files. Single-file LOW-cost fix. RANK 1.
+2. **ENOENT broken symlink (~91):** `apps/mcp-server/data` = git mode 120000 symlink → `../../data` (git-ignored, absent in CI). setup.ts swallows ENOENT silently. Fix: CI `mkdir -p` step or replace symlink. LOW cost. RANK 2.
+3. **ASSERTION/LOGIC (~159):** sbv mock contamination sub-class (add `mock.restore()` to 123-integration-mcp + 083-tool-analysis) + parser/format drifts + RED-phase stragglers. HIGH cost for full triage. RANK 4/6.
+4. **UNDEFINED-FN (~21):** `getMarketMessageDigest` not implemented; 1168-market-message-digest.test.ts. MEDIUM cost. RANK 5.
+5. **DEAD-MODULE (2 errors):** `_deprecated/` test files import deleted reuters.js. LOW cost (delete files). RANK 3.
+6. **Schema-drift (~4, PARKED):** P4–P8 exhausted. Do not re-open.
+
+**Attack order after this spike:** Cluster 1 → 2 → 5 → 3-sbv-subclass → 4 → 3-remainder. Clusters 1+2+5 = 448 failures, all LOW-cost, eliminates 71% before any ASSERTION/LOGIC triage.
+
+**Brief:** `docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md`
 
 ## 2026-06-09T03:50Z — FU-SCHEMA-DRIFT-P8: recurring-bug spike, direction (a) — DDL reconcile + P5 self-heal
 
