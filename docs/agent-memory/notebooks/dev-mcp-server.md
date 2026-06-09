@@ -1,5 +1,27 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-09 · BATCH5-CI-C-AL — DONE
+
+**Task:** BATCH5-CI-C-AL (arch-S25 verdict table) | Sprint: CI-RED-RECONCILE | Size: L | DJ: dev-mcp-server-S24
+**Scope:** 20 files — PHASE A (15 REWRITE-STALE test-only), PHASE B (4 FIX-PROD + their test rewrites), PHASE C (1821a GREEN-in-isolation, no work).
+**Root cause diagnosis:**
+- DT-3 regex fires on "Doanh thu thuần" in non-IS sections → CROSS_STMT_REVENUE_CONTRADICTION BLOCK (HC-human-confirm DV-HC-8).
+- SECTION_HEADERS parser expects "BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH" not "BẢNG KẾT QUẢ..." (TRUST-RED TR-RED-5b).
+- SQLite TEXT PK B-tree ordering (alphabetical) ≠ insertion order → wrong BB values assigned (1309 AC-8).
+- `mock.module` doesn't intercept statically-imported symbols loaded before the mock → DI injection via `_telegramBugFn` param required (1792).
+- `FIX-BCTC-MAGNITUDE-NORMALIZE` paths A/B override `totalAssets` from identity, defeating BS corruption in test data → use IS corruption (`operatingMargin > 5.0`) instead (1792 CORRUPT_BCTC_TEXT).
+- `bctc-eval-routes` HTTP 500: missing `total_assets REAL` column in test DDL.
+- VPT-1 stale detection uses real clock; inject `now=2026-06-09T06:00:00Z` (UTC 06<15 = in-publish-window).
+- `newsHeadlinesRefreshJob.e2e` used `/news/bloomberg/headlines` route; actual routes are `/bloomberg/headlines`.
+**Prod fixes (PHASE B):**
+- `bbAlertScanJob.ts`: added `ORDER BY code` to watchlist query for deterministic alphabetical iteration.
+- `balanceSheetExtractor.ts`: 3 `sbMap === null` guards on FIX-BCTC-MAGNITUDE-NORMALIZE paths A/B + magnitude inference; path with sbMap≠null sets `effectiveMultiplier=1`.
+- `parseBctcReport.ts`: added `_telegramBugFn` DI param; made `storeReport` async; replaced fire-and-forget with awaited DI-or-dynamic-import send.
+**Commits:** `ad55e240` (Phase A — 15 test files), `cb03b761` (Phase B — 4 prod files + 6 test files).
+**Result:** 179 pass / 0 fail across all 20 target files (2.30s). tsc CLEAN. Mutex released.
+
+---
+
 ## 2026-06-09 · BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE — REVIEW
 
 **Task:** BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE | Sprint: CI-RED-RECONCILE | Size: M | DJ: dev-mcp-server-S23
