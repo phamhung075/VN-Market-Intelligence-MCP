@@ -12,6 +12,13 @@
 - `bctc_table_rows` WHERE `statement_section = "income_statement"` for this `report_id` (for NI comparison)
 - TICKER, QUARTER, report_id
 
+## Gate-Vision Check (BEFORE any code-keyed lookup)
+
+Apply skill `.claude/skills/bctc-gate-vision/SKILL.md` §Gate check.
+Read `needs_vision_verify` + `vision_verify_markers` for this extraction unit.
+Codes T1–T3 below are all code-keyed — if any target code appears in `flagged_codes`,
+anchor by label+position or escalate to vision per skill protocol before using the value.
+
 ## E4 — Field Availability Check
 
 1. Verify `statement_section = "cash_flow"` rows exist. If count = 0:

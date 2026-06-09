@@ -60,6 +60,15 @@ Tái kiểm tra: chữ số cuối không xác định. Sai lệch lớn hơn d�
 flag: "[ĐỘ TIN CẬY THẤP — OCR 5678900 vs image ~5678960/5678990, nâng từ vàng lên đỏ]"
 ```
 
+## Gate-Vision Pre-Check (BEFORE fetching page image)
+
+Apply skill `.claude/skills/bctc-gate-vision/SKILL.md` §Applying to refine_bctc_md.
+Check if the unit carries `needs_vision_verify == true` and whether `flagged_cell.page_number`
+appears in `vision_verify_markers[*].page_numbers`. If yes, the extractor pre-flagged this page —
+use the marker's `page_numbers` directly for `get_bctc_page_image()` (skip re-scan).
+Log: `[GATE-VISION] extractor pre-flagged page <N>; using marker page for vision.`
+If the page is NOT in any marker, proceed with Steps 1-4 unchanged (VALUE disagreement path).
+
 ## Steps
 
 1. `get_bctc_page_text(report_id, flagged_cell.page_number)` → `ocr_text`.

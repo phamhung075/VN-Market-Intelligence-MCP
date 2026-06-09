@@ -14,6 +14,14 @@
 - TICKER, QUARTER, report_id
 - pass_1_result through pass_4_result (session state — for cross-referencing)
 
+## Gate-Vision Check (BEFORE any code-keyed lookup)
+
+Apply skill `.claude/skills/bctc-gate-vision/SKILL.md` §Gate check.
+Read `needs_vision_verify` + `vision_verify_markers` for this extraction unit.
+This pass reads all bctc_table_rows sections — if any code used in corroboration or
+segment lookup appears in `flagged_codes`, anchor by label+position or escalate to vision
+per skill protocol before using the value.
+
 ## E4 — Field Availability Check
 
 1. `bctc_layout_units.stitched_markdown` is OPTIONAL — only available if BCTC-LAYOUT-FIRST sprint deployed.
