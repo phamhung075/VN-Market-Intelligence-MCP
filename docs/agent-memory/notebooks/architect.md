@@ -1,8 +1,30 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-09T06:30Z | **Sprint:** CI-RED-RECONCILE
+**Last updated:** 2026-06-09T08:30Z | **Sprint:** CI-RED-RECONCILE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-09T08:30Z — CI-172-RESIDUAL-FILESCOPE: file-scope confirmation for C1/C3/C4
+
+**Task:** SCOPE-CONFIRMATION / sha 7bea53d0 / 172 fail / 0 errors
+
+**Method:** grep CI log /tmp/ci_80266839417.log (345 raw fail lines / 2 = 172 native). Per-cluster file-scope confirmed. kinhDichTools.ts production audit. C3 error-type determination from "a beforeEach/afterEach hook timed out" log evidence.
+
+**C1 confirmed (42 fails, 9 files, NOT 5 files as spike plan assumed):**
+- 028-sbv-rates (9), 025-yahoo-finance (7), 1423a-us10y (3), 1487-yahoo-extended (3), 1833l-yahoo-404 (1), 239-macro-indicator-refresh (3), 239-market-context (1), 239c-macro-refresh-integration (1 — cron-fixture, C5 overlap), 1352a-macro-marketscan (2). ALL test-only. Fix = globalThis.fetch mock + JSON-field asserts per 1881a template.
+
+**C3 confirmed (20 fails, 4 files — root cause DIFFERENT from P7 destroyers):**
+- 1129 (5), 1173 (3), 1124 (6): "beforeEach/afterEach hook timed out" = InMemoryTransport stall; fix = `afterEach(async () => { await client?.close(); })`.
+- 1295d (6): SQLiteError FOREIGN KEY constraint on `DELETE FROM agent_signals`; fix = `PRAGMA foreign_keys=OFF` wrapper or delete FK children first. All test-only.
+
+**C4 confirmed (25 fails, 5 file-groups — PROD touches required):**
+- kinhDichTools.ts (714), 285-kinhdich (7), 1416-wave5 (9), 1472-diacritics-batch2 (1), 1410-sweep (1).
+- RULING (A): production fix. kinhDichTools.ts has ASCII placeholders and missing explain_hexagram sections (judgment/image/haos). Fix via QUE_DATA local library (Path A — no Go service change). leadershipTools.ts and formatAccuracyReport also need diacritics.
+- Source-scan test (1414) asserts `| Quẻ ${r.hexagramNumber}` but prod uses `r.hexagram` — variable name alignment needed; check KinhDichHistoryResponse type.
+
+**Net projection: 42+20+25 = 87 of 172 → 0. Remaining after C1+C3+C4: ~85 (C5+C6+C7+C8+C9).**
+
+**Brief:** `docs/architecture-briefs/2026-06-09-ci-172-residual-filescope.md`
 
 ## 2026-06-09T06:30Z — SPIKE-CI-C1-MACRO-INJECT-SEAM: C1 macro seam audit + verdict
 
