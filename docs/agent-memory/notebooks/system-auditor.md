@@ -4,6 +4,18 @@ Cycle log: Latest first. Pruned to ≤200L (section count limited). Each cycle a
 
 ---
 
+## c285 · 2026-06-09T02:31:45Z
+### Audit Run Tier-2 (02:30 UTC 2026-06-09 → Tuesday early morning)
+- Tier: 2 | Cron jobs: 100+ monitored | Sources: 27+ checked | VPS routes: 7 checked
+- Anomalies: 2 CRITICAL new (B-02, B-11) + 1 HIGH cron crash | Status: DEGRADED
+- B-02 bctc-discover stale 9.5h (threshold 2h out-of-window) → CRITICAL
+- B-11 news-vps stale 1.03h (threshold 0.5h) → CRITICAL
+- A-29 cron vnstockFundamentalsRefresh: CRASHED (0% success, last 2026-06-08 01:00)
+- VPS Service Health: vn-news-fetch unhealthy (1h 1m uptime); vn-sbv-fetch stale 22+h
+- Crons: 100+ running with 98-100% success rates; bctcQueueEnricherJob RUNNING (not error)
+
+---
+
 ## c284 · 2026-06-09T02:07:52Z
 ### Audit Run Tier-1 (02:07 UTC 2026-06-09 → Tuesday morning)
 - Tier: 1 | Services: 6 checked | Health endpoints: 5 probed
@@ -31,10 +43,3 @@ Cycle log: Latest first. Pruned to ≤200L (section count limited). Each cycle a
 - C-06 market_messages 3h: 0 (expects >0) — WARN
 - C-08 orphaned alerts: 41 (expects 0) — WARN
 - C-09 macro_indicators: 1 (expects ≥3) — CRITICAL
-
----
-
-## c282 · 2026-06-08T20:48:09Z
-### Audit Run Tier-2 (20:45 UTC 2026-06-08)
-- Tier: 2 | Cron fire: all OK | Sources: 27 checked
-- Anomalies: 3 stale sources (B-01/B-02/B-11 WARN) | Status: DEGRADED
