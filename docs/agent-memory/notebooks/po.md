@@ -1,24 +1,24 @@
 # PO Notebook
 
-## c · 2026-06-09T02:55Z — CI-RED-RECONCILE: FU-P6 REVIEW->DONE + open FU-P7 (5th touch) + raw-verify 2 auditor CRITICALs (po-S19)
+## c · 2026-06-09T04:14Z — CI-RED-RECONCILE: P8 gate FAILED -> PARK schema-drift (PATH B) + open FU-CI-PROFILE-629 (po-S21)
 
-**Trigger:** OOB ci_red `docs/signals/ci-p6-gate-result-507e3cee-20260609T0250Z.json` (router CI-measured P6 + reverted b9e305ae) + 2 deferred auditor Tier-2 CRITICALs (sau-...3050/3051, NEW in signal_queue). PO owns board; router owns push+gate. DJ-GATE-1.
+**Trigger:** OOB ci_red `docs/signals/ci-p8-gate-result-6295cb32-20260609T0410Z.json` (router CI-measured P8 native fail+error 631 vs 629 = +2 WORSE, P5 pattern reproduced; router already REVERTED apps/ to 629 baseline 880ffca6 byte-identical 2a6044b1, tsc clean, pushed). PO owns board; router owns push+gate. DJ-GATE-1.
 
-**FU-SCHEMA-DRIFT-P6 = DONE (spike sound, direction (b) disproven — same pattern as P5).**
-- SPIKE diagnosis correct (closeDb() afterAll nullifies _db singleton; prod getDb() fallback hits empty :memory:). Only direction (b) afterAll-reinit failed: native 629->630 (+1 WORSE), ZERO residual classes healed, buckets byte-identical to after-P4. Reinit re-runs the SAME incomplete canonical schema -> cannot heal tables it omits. Router reverted 3 test files; apps/ byte-identical to e442cf11. No phantom FIX-P6-IMPL task existed (router impl'd directly) — recorded in P5-SELFHEAL note, NOT invented to flip.
+**DECISION = PATH B (autonomous strategic pivot).** PARK schema-drift cluster best-effort-exhausted; 629 = schema-drift FLOOR. PIVOT sprint to full-corpus failure taxonomy, attack by ROI.
+- WHY: schema-drift's BEST outcome removes only ~tens of 629 (the 4-5 table-MISSING classes self-heal repeatably heals) and even that nets ~breakeven (created_at x3 column-existence collision claws it back). 6 touches, 4 consecutive disproven fix-hypotheses (P5/P6/P7/P8) on ONE ROI-capped cluster that CANNOT reach /goal 0-fail by itself. Continuing = sunk-cost. A full-corpus taxonomy is the real unblock.
+- created_at root cause (recorded for later): NOT a missing-DEFAULT — it's a column-EXISTENCE drift. A column-less competing CREATE TABLE wins the IF NOT EXISTS race on the fresh :memory: singleton. Missing DEFAULT would throw NOT NULL on INSERT, not 'no such column' on query. Revisit ONLY if taxonomy later shows schema-drift is largest/cheapest (it is demonstrably not).
 
-**Opened FU-SCHEMA-DRIFT-P7 = ARCHITECT SPIKE (5th touch, recurring-bug). ONLY untried root-cause lever.**
-- All 4 prior levers exhausted: P5 prod getDb self-heal (+6/created_at-drift), P6 afterAll-reinit (+1/zero-heal), P4 per-file inline-DDL (per-file isolation only), 9454baad mechanized injection (+219). Residual buckets byte-identical P4/P5/P6 = canonical initDatabase()/slices NEVER CREATE the dominant tables (agent_signals/sbv_rates_history/positions/commodity_prices*/imf_indicators). LEVER: ADD missing CREATE TABLE IF NOT EXISTS into canonical (additive, IF NOT EXISTS, low prod risk) — exactly what P4 gate flagged. HARD: source each DDL from OWNING prod module, NOT invent (invented DDL sank P5).
+**Board edits (1 atomic jq pass, commit-mutex held):**
+- FU-SCHEMA-DRIFT-P8-IMPL (in_progress): REVIEW->REWORK (gate failed, reverted; effectively shelved, superseded by FU-CI-PROFILE-629 — note recorded). Single status key.
+- FU-SCHEMA-DRIFT-P8 architect spike: KEPT DONE (direction sound, only created_at hypothesis disproven — spike-sound/fix-wrong, po-S18/19/20 precedent).
+- +FU-CI-PROFILE-629 (architect SPIKE, TODO, timebox 120m, zone apps/mcp-server/): profile ALL 629 native fails -> cluster/root-cause/native-count, ranked attack order. Deliverable docs/architecture-briefs/2026-06-09-ci-629-failure-taxonomy.md. NO code change (gate = taxonomy delivered).
+- Owner = architect (no dispatch row for test-corpus profiling; no-code root-cause taxonomy = SPIKE/design pattern; deliverable is a brief doc).
 
-**2 auditor CRITICALs — RAW-VERIFIED MYSELF (verify-raw-not-badges):**
-- sau-...3051 bctc-discover B-02: REAL. get_sla_status bctc 598min/120min breached. vn-bctc-fetch healthy but data stale = discovery/write dead = vnstockFundamentals crash. FOLD into FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (TODO critical). No new task.
-- sau-...3050 news-vps B-11: REAL + RECURRING. get_sla_status news 84/30min breached + get_vps_service_health vn-news-fetch UNHEALTHY uptime 1h21m. 2nd occ/48h (06-07 same ~1h44m; FIX-NEWS-VPS-PROBE DONE but did NOT stick). ~1h uptime = crash-restart loop. Recurring-bug rule -> opened FIX-NEWS-VPS-CRASH-LOOP (ops-vps-fetch, def fix not probe).
+**SSOT discipline:** backlog 78->79 (+1 exactly), in_progress unchanged, done 122 unchanged, signal_queue.rows EXACTLY 56 preserved (no whole-object rewrite). Temp validated [ -s ] && jq -e . && size>600000 (701293) BEFORE mv. commit-mutex (task_kind:commit-mutex owner:po ttl 120s) claimed+released around write to serialize vs cowork */15 dispatcher. Commit 09b0b43d (2 owned paths, explicit pathspec, NOT pushed — router owns).
 
-**LESSON:** When a spike's diagnosis is correct but its chosen fix-direction fails empirically, the SPIKE stays DONE and a NEW spike opens for the next lever — don't REWORK a sound spike. After 4 failed levers on the same surface, return to the root-cause recommendation the FIRST gate already flagged (add missing canonical tables) instead of re-trying isolation tricks. A recurring service crash-restart (~1h uptime twice in 48h) is a def-fix recurring-bug, not a transient — a prior PROBE that didn't make it stick = escalate.
+**LESSON:** After N consecutive disproven fix-hypotheses on a cluster whose best-case ROI is capped well below the goal, STOP escalating to the next touch — PARK it as best-effort-exhausted and profile the whole corpus to attack by ROI. Iterating the lowest-ROI surface is sunk-cost even when each spike is individually sound. Open the diagnostic/taxonomy spike, NOT the next dev impl (WIP gate + don't churn).
 
 ## Carry-over
-- ROUTER OWNS: push (notebook+journal+orch-state commit) + dispatch FU-SCHEMA-DRIFT-P7 to ARCHITECT (SPIKE 120m, add-missing-canonical-tables) BEFORE any dev re-impl + route FIX-NEWS-VPS-CRASH-LOOP to ops-vps-fetch (journalctl -u vn-news-fetch recon) + FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE already TODO (covers bctc-discover). Next P7 gate = native fail+error DROP vs 629 + residual buckets shrink.
-- EPIC target: monotonic native DROP; P7 add-canonical-tables cures the singleton-pollution residual.
-- vn-news-fetch + vn-bctc-fetch BOTH in crash-restart class — if recon shows shared VPS infra-exhaustion, fold into one VPS-stability spike.
-- Still open (file as WIP frees, <=2): A-33 fundamentals crash (now also = bctc B-02 staleness root); BCTC get_bctc_full empty #3106; pollNews 0-items #3102.
-- agent-father: auditor weekday-mislabel signal pending (gate = next 2 runs match `date +%A`). DWF AC-P0-3-6 canary stays RED (never fix).
+- ROUTER OWNS: push (this notebook + journal + orch-state commit 09b0b43d, 3 ahead of origin) + dispatch FU-CI-PROFILE-629 to ARCHITECT (SPIKE 120m, full-corpus 629 taxonomy) BEFORE any attack dev task. Do NOT open the next attack task until taxonomy delivered (gated). WIP<=2 honored (architect lane, 0 IN_PROGRESS).
+- Schema-drift PARKED: no 7th touch. created_at column-existence diagnosis archived in po-S21 journal if ever needed.
+- Still-open from prior cycles (router routing): FIX-NEWS-VPS-CRASH-LOOP (ops-vps-fetch), FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (covers bctc-discover), Bug A FIX-NEWS-VPS-HEALTH-SQL needs mcp-server container REBUILD (ops) for live false-UNHEALTHY benefit.
