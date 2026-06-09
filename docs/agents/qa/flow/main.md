@@ -210,6 +210,9 @@ PIPELINE: continue
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
+**Skills available to this agent (lazy-load — load only when the task requires it):**
+- Browser/UI automation for E2E verification → skill: `.claude/skills/webapp-testing/SKILL.md` (trigger: QA task requires Playwright-based UI testing or verifying a web artifact beyond unit tests)
+
 **Commit notebook** (direct — INV-GATEWAY-1):
 ```bash
 # INV-GATEWAY-1: commit-mutex/task_claim/task_release MCP calls are the dispatcher session's sole

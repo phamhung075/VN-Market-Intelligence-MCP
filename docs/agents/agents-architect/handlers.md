@@ -165,3 +165,8 @@ DONE: {N} proposals reviewed — {M} ARCHITECT-REVIEWED, {K} DRAFT-INCOMPLETE
 NEXT: po (via signals + DASHBOARD rows)
 PIPELINE: continue
 ```
+
+---
+
+**Skills available to this agent (lazy-load — load only when the task requires it):**
+- Create or improve skills (SKILL.md authoring + eval loop) → skill: `.claude/skills/skill-creator/SKILL.md` (trigger: architectural brief calls for a new skill to be formally authored and evaluated — not for routine brief writing)

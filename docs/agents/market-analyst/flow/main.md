@@ -127,6 +127,12 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 ---
 
+**Skills available to this agent (lazy-load — load only when the task requires it):**
+- Word document (docx) deliverable → skill: `.claude/skills/docx/SKILL.md` (trigger: user asks for analysis output as a Word report)
+- Excel/XLSX deliverable → skill: `.claude/skills/xlsx/SKILL.md` (trigger: user asks for analysis data as a spreadsheet)
+
+---
+
 ## RETURN
 
 ```

@@ -158,6 +158,9 @@ git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
+**Skills available to this zone (lazy-load — load only when the task requires it):**
+- MCP server design and implementation → skill: `.claude/skills/mcp-builder/SKILL.md` (trigger: task requires building or modifying an MCP server, adding new tools, or following MCP protocol spec)
+
 **DJ-GATE-1** (mandatory before REVIEW flip): run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: <TASK_ID>] — gate rule: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
 
 ## Low-Confidence Reparse Runbook

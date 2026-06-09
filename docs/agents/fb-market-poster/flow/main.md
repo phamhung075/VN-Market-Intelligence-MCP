@@ -468,6 +468,9 @@ Notebook entry format:
 - Post writes at 20:07 VN after EOD dish (08:37 UTC) — data is fresh
 ```
 
+**Skills available to this agent (lazy-load — load only when the task requires it):**
+- Word document (docx) deliverable → skill: `.claude/skills/docx/SKILL.md` (trigger: user asks for the post formatted as a .docx report rather than the standard .md file)
+
 ---
 
 ## RETURN

@@ -1,5 +1,16 @@
 # Agent Father — Notebook
 
+## c294 · 2026-06-09T00:00Z — SKILL-WIRE-11 + CODE-SIMPLIFIER-REGISTER
+
+- Task: Wire 11 new skill dirs into correct agent flows; register code-simplifier into dev team.
+- `spec` skill: FLAGGED BROKEN. `.claude/skills/spec/` has no `SKILL.md` — only `agent-skills-spec.md` (a URL redirect). Not wired to any agent. Needs authoring before it can be attached.
+- `internal-comms` placement: Wired to `po/flow/main.md` only (lazy-load, English work-channel status comms). Justification: pm/po are the only agents who produce English team-facing status updates (3P, leadership updates). Language boundary: never for MARKET output. Weak fit acknowledged.
+- `skill-creator`: Wired to agent-father/flow/main.md and agents-architect/handlers.md. Rationale: agent-father authors SKILL.md files as part of lifecycle; agents-architect may commission new skills as part of briefs.
+- `code-simplifier`: Plugin-provided (`.claude/settings.json` enabledPlugins). No local `.claude/agents/code-simplifier.md` created — plugin owns the agent. Only wired: dispatch table row + dev-team handoff chain clarification (on-demand lane) + agent-roster row + system-map.json entry.
+- Position in dev team: on-demand, post-QA-green or user request. Distinct from code-janitor (DRY/cron) and /code-review (bug gate). Not in gated chain.
+- Skill→flow attachment pattern: lazy-load pointer (single line with trigger condition) appended to owning flow's tail. No skill bodies inlined. DRY: each skill referenced from exactly one or two flows (none duplicated).
+- Files changed: 11 flow/handler files + dispatch/SKILL.md + agent-roster.md + system-map.json + this notebook.
+
 ## c293 · 2026-06-08T00:00Z — FIX-COWORK-GATEWAY-GATE
 
 - Task: FIX-COWORK-GATEWAY-GATE (HIGH, S). Incident: FANOUT-2026-06-08 — market-watcher false-greened (fabricated shipped cycle + coverage-state stamps), news-scout half-failed (prose plan vs BLOCKED exit) when CLI gateway dropped.

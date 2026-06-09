@@ -38,6 +38,7 @@ Count → `docs/data/project-stats.json#analysisAgentCount`. Files live in `.cla
 | System Auditor | `system-auditor.md` | Health audit: memory, DB, docs sync, anomaly detection | Sonnet |
 | Claude Manager Helper | `claude-manager-helper.md` | Context janitor: CLAUDE.md slim, docs sync, memory hygiene | Sonnet |
 | Code Janitor | `code-janitor.md` | DRY auditor cron (every 3h): duplicate ticker maps, hard-coded arrays, magic numbers, schema duplication | Haiku |
+| **Code Simplifier** | **plugin-provided** (`code-simplifier@claude-plugins-official`) | On-demand clarity/consistency/maintainability pass on recently-modified code; quality-only, no bug hunting; complements code-janitor (DRY) and /code-review (bugs); invoke post-QA-green or on user request | Sonnet |
 | Agent Father | `agent-father.md` | Creates, edits, reviews, maintains all agents per AGENT_CREATION_GUIDE.md | Sonnet |
 | Agents Architect | `agents-architect.md` | Design inter-agent comms, system context, architecture briefs → signals agent-father | Sonnet |
 | Semble Search | `.claude/skills/semble-search/SKILL.md` | Code search decision guide: when to use Semble vs Grep/Glob/Read | N/A (skill, not agent) |

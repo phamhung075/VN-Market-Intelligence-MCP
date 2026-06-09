@@ -18,6 +18,9 @@ For spike tasks (`mode: "spike"`): `docs/agents/developer/flow/feature-spike.md`
 
 Service docs: `docs/architecture/microservice/pdf-extractor/`. See `docs/protocols/bctc-extraction-runbook.md`. Agent definition: `.claude/agents/dev-pdf-extractor.md`.
 
+**Skills available to this zone (lazy-load — load only when the task requires it):**
+- PDF operations (merge, split, OCR, text/table extraction, form-fill, create) → skill: `.claude/skills/pdf/SKILL.md` (trigger: task involves Python-level PDF manipulation outside the VPS pipeline — e.g. local testing, repair, or new extraction tooling)
+
 ---
 
 ## Extraction Failure Debug Subroutine (run FIRST when investigating any BCTC extraction failure)

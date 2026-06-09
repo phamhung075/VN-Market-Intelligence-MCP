@@ -91,3 +91,10 @@ For each ticker in RELEASE_TICKERS or ROUTINE_TICKERS, invoke the balance-sheet-
 → skill: `.claude/skills/management-track-record/SKILL.md`
 
 After quarterly BCTC is loaded in stage-analyze.md AND ownership-governance-screen returns `governance_score=YELLOW`, invoke management-track-record skill. Focus on plan-accuracy check: compare last 3 years of stated annual revenue targets vs. actuals. Flag PLAN-DRIFT if deviation > 30% in 2+ years. Weight revenue accuracy over profit accuracy. Pass verdict to governance disposition in stage-log-notify.md.
+
+---
+
+**Skills available to this agent (lazy-load — load only when the task requires it):**
+- PDF manipulation (merge, split, OCR, extract text/tables) → skill: `.claude/skills/pdf/SKILL.md` (trigger: task involves local PDF repair, format conversion, or ad-hoc extraction outside the VPS pipeline)
+- Word document (docx) creation/editing → skill: `.claude/skills/docx/SKILL.md` (trigger: task requires producing a formal BCTC report deliverable as a .docx file)
+- Excel/XLSX data handling → skill: `.claude/skills/xlsx/SKILL.md` (trigger: task requires reading or producing a spreadsheet from BCTC financial data)

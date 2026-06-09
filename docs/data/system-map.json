@@ -10,7 +10,7 @@
     ".claude/skills/telegram-channel-routing/SKILL.md",
     "docs/data/stock-classification.json#watchlist"
   ],
-  "lastUpdated": "2026-05-26",
+  "lastUpdated": "2026-06-09",
   "project": {
     "name": "vn-market-intelligence",
     "microservices": [
@@ -863,6 +863,14 @@
       {
         "id": "code-janitor",
         "type": "dev-core"
+      },
+      {
+        "id": "code-simplifier",
+        "type": "dev-core",
+        "source": "plugin",
+        "plugin_id": "code-simplifier@claude-plugins-official",
+        "role": "On-demand clarity/consistency/maintainability pass on recently-modified code; quality-only, no bug hunting",
+        "invoke": "on-demand post-QA-green or user request"
       },
       {
         "id": "cowork-refactory-expert",

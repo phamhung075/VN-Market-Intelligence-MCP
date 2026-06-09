@@ -50,6 +50,7 @@ description: >
 | strategy quality audit | `tran-ngoc-bau` | `main` | TNB methodology compliance |
 | inter-agent architecture / brief | `agents-architect` | `main` | Outputs `docs/architecture-briefs/*.md` |
 | write / regenerate / view facebook post | `fb-market-poster` | `main` | Plain-Vietnamese daily FB post → docs/social/fb-post-YYYY-MM-DD.md |
+| simplify / clean up / clarify recently-changed code — quality only (no bug hunting) | `code-simplifier` | n/a (plugin-provided; no local flow) | Clarity/consistency/maintainability pass on code the developer already modified; complements code-janitor's DRY sweep and /code-review's bug focus; invoke on-demand post-QA-green or on request |
 
 Agent files → `.claude/agents/*.md` | Flows → `docs/agents/{agent}/flow/main.md` (dispatcher) → sub-flows.
 
@@ -71,6 +72,14 @@ Agent files → `.claude/agents/*.md` | Flows → `docs/agents/{agent}/flow/main
 | QA | Developer/Fixer | caveman | `[QA] Review Record` in handoff, `.task_board` task status → IN_PROGRESS |
 | QA | PM | caveman | `.task_board` task status → DONE, branch merged |
 | Fixer | QA | caveman | `[Fixer] Fix Record` in handoff, `.task_board` task status → REVIEW |
+
+**code-simplifier — On-Demand Quality Lane** (not in the gated chain; invoked after QA-green or on user request)
+
+| When | Agent | Trigger |
+|------|-------|---------|
+| Post-QA-green code cleanup (on demand) | `code-simplifier` | User asks to "simplify", "clean up", "improve clarity" of code the developer just shipped; or dev team requests a readability pass before archiving the task |
+
+Distinction from peers: `code-janitor` = DRY/dedup/hardcode sweep (cron, structural); `code-simplifier` = readability/clarity/naming (on-demand, non-structural); `/code-review` (plugin) = bug hunting + correctness gate.
 
 **Ops — Infra Lane** (parallel to dev chain, triggered by any agent or user)
 

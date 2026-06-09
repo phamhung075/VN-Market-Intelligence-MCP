@@ -183,6 +183,12 @@ git commit -m "chore(memory/dev-frontend): notebook YYYY-MM-DD"
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
+**Skills available to this zone (lazy-load — load only when the task requires it):**
+- UI design / visual polish → skill: `.claude/skills/frontend-design/SKILL.md` (distinctive production-grade interfaces; trigger: user asks to build/style a component, page, or dashboard)
+- Multi-component React artifacts (shadcn/ui) → skill: `.claude/skills/web-artifacts-builder/SKILL.md` (trigger: complex artifact with state management or shadcn components)
+- Apply consistent theme/palette to artifact → skill: `.claude/skills/theme-factory/SKILL.md` (trigger: user requests theming or color scheme on any artifact)
+- Playwright UI testing → skill: `.claude/skills/webapp-testing/SKILL.md` (trigger: task requires browser automation or E2E verification beyond G12 render-gate)
+
 **Decision journal** (mandatory — before REVIEW):
 → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id from task_board — e.g. TASK-NNN>"]
 Write at minimum ONE entry per task stamped with its task-id (record WHY implementation choices — build tier, approach). Routine: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.

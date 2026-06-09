@@ -141,3 +141,7 @@ git commit -m "chore(memory/po): notebook YYYY-MM-DD"
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
+**Skills available to this agent (lazy-load — load only when the task requires it):**
+- Word document (docx) deliverable → skill: `.claude/skills/docx/SKILL.md` (trigger: user asks for a sprint brief, project charter, or status report as a .docx file)
+- Internal team status communications → skill: `.claude/skills/internal-comms/SKILL.md` (trigger: user asks for a 3P update, project update, or leadership status report in English — work channel only, never for MARKET output)
