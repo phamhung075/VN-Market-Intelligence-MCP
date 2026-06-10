@@ -293,49 +293,52 @@ describe("1293b: MCP Signal Validation", () => {
       expect(result.valid).toBe(true);
     });
 
-    it("should reject urgent_news missing severity", () => {
+    it("should accept urgent_news with only headline and source (severity optional post-SYS-FUNC-05)", () => {
+      // SYS-FUNC-05 fix: severity is optional so callers that supply partial
+      // urgent_news signals are not blocked. headline+source without severity is valid.
       const payload = {
         headline: "SBV emergency liquidity injection",
         source: "sbv_official",
-        // severity missing
+        // severity intentionally absent — now optional
+      };
+
+      const result = validateSignalPayload("urgent_news", payload);
+      expect(result.valid).toBe(true);
+    });
+
+    it("should reject urgent_news with invalid severity enum value", () => {
+      const payload = {
+        headline: "SBV emergency liquidity injection",
+        source: "sbv_official",
+        severity: "extremely_high", // invalid severity — not in enum
       };
 
       const result = validateSignalPayload("urgent_news", payload);
       if (!result.valid) {
         expect(result.errors.some((e) => e.includes("severity"))).toBe(true);
       } else {
-        expect.unreachable("Should have failed validation");
+        expect.unreachable("Should have failed validation — invalid enum value");
       }
     });
 
-    it("should reject urgent_news with invalid severity", () => {
+    it("should accept urgent_news with only confidence+summary (minimal router payload, no headline/source/severity)", () => {
+      // SYS-FUNC-05 root cause: router posts urgent_news with only {confidence, summary}
+      // in the finding_data (or omits finding_data entirely). Schema must not block this.
       const payload = {
-        headline: "SBV emergency liquidity injection",
-        source: "sbv_official",
-        severity: "extremely_high", // invalid severity
+        confidence: 0.7,
+        summary: "test",
       };
 
       const result = validateSignalPayload("urgent_news", payload);
-      if (!result.valid) {
-        expect(result.errors.some((e) => e.includes("severity"))).toBe(true);
-      } else {
-        expect.unreachable("Should have failed validation");
-      }
+      expect(result.valid).toBe(true);
     });
 
-    it("should reject urgent_news missing headline", () => {
-      const payload = {
-        // headline missing
-        source: "sbv_official",
-        severity: "critical",
-      };
-
-      const result = validateSignalPayload("urgent_news", payload);
-      if (!result.valid) {
-        expect(result.errors.some((e) => e.includes("headline"))).toBe(true);
-      } else {
-        expect.unreachable("Should have failed validation");
-      }
+    it("should accept urgent_news when finding_data is undefined (SYS-FUNC-05 live-failure case)", () => {
+      // SYS-FUNC-05 exact live failure: call omits finding_data entirely.
+      // Before fix: schema.safeParse(undefined) → Zod path=[] "Required" → "root: Required".
+      // After fix: undefined normalised to {} → all-optional schema → valid.
+      const result = validateSignalPayload("urgent_news", undefined);
+      expect(result.valid).toBe(true);
     });
   });
 

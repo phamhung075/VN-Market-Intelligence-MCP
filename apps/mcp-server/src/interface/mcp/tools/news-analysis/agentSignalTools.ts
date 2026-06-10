@@ -110,7 +110,13 @@ export function validateSignalPayload(
     return { valid: true };
   }
 
-  const result = schema.safeParse(findingData);
+  // Normalize undefined/null finding_data to {} so callers that omit
+  // finding_data entirely don't hit a Zod "root: Required" parse error.
+  // All per-type schemas treat their fields as optional where the field is
+  // genuinely optional (e.g. UrgentNewsFindingDataSchema), so {} is a valid
+  // minimal payload for those types.
+  const normalizedData = findingData == null ? {} : findingData;
+  const result = schema.safeParse(normalizedData);
   if (!result.success) {
     const errors = result.error.issues.map((issue) => {
       const path = issue.path.length > 0 ? issue.path.join(".") : "root";
