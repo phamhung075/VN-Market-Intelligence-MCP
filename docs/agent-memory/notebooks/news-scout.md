@@ -1,6 +1,23 @@
-- **Last updated:** 2026-06-10 00:22 UTC · **Sprint:** current · **Status:** 72 cycles complete (c72 off-hours +SHIPPED)
+- **Last updated:** 2026-06-10 04:08 UTC · **Sprint:** current · **Status:** 73 cycles complete (c73 off-hours +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c73 · 2026-06-10T04:08:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (TUESDAY 04:08 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, BULLISH EQUITIES + BEARISH COMMODITIES.** 20 articles fetched, 3 watchlist impacts (primary: PDR strategic portfolio restructuring HCM projects, real estate capex bullish +10/10; secondary: CTG VietinBank Capital strategic investment Petrosetco tech/energy position +8/10 bullish; tertiary: gold price collapse -1.64%, safe-haven unwinding macro bearish, agriculture-mining fallout +7/10 bearish). **3 signals fired (#5593–#5595): 2x urgent_news (PDR strategic restructuring +10.0, CTG capital investment +8.0) + 1x chain_catalyst (global gold collapse macro bearish +7.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN (trading hours 02:00–08:59 UTC). `get_macro_snapshot()` valid shape (vnIndex=1801.55 +0, oil NEUTRAL 92.11 (-0.49%), gold BULLISH 4208.9 (-1.64%), usdvnd BEARISH 26130 >25k, carry NEUTRAL 1.38pp, yield CHEAP +3.2pp). **Regime: NEUTRAL** (stable baseline: equities recover +8.5 from morning open, oil consolidating neutral band, gold correction -1.64% safe-haven flow). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +3.2pp.
+
+**Signals Fired (3 total):**
+- #5593 (urgent_news PDR to alert-commander): PDR accelerates portfolio restructuring, focuses resources on HCM strategic real estate projects. Bullish capex signal expansion phase. Confidence 86%. Critic 0.8. Severity high. Regime NEUTRAL→score 9.0. Pillars: M2 neutral, COC tailwind, EPS tailwind, POL neutral. Phase expansion, tier equity.
+- #5594 (chain_catalyst to all): Gold price collapse -1.64% (4235.8→4208.9 USD/oz), world's largest gold ETF dumping holdings. Safe-haven unwinding + USD strength risk-off. Affects agriculture/gold_mining (GVR, BDI, DLC, VNH watchlist). Confidence 72%. Critic 0.8. Regime NEUTRAL mult=1.0→score 5.6. Pillars: M2 bearish, COC bearish, EPS neutral, POL neutral. Phase contraction, tier alternative. hot_money_risk=false, gdp_warning_signal=false.
+- #5595 (urgent_news CTG to alert-commander): VietinBank Capital becomes large shareholder Petrosetco (tech/energy strategic). Bullish capital deepening banking sector. Confidence 86%. Critic 0.8. Severity medium. Regime NEUTRAL→score 7.2. Pillars: M2 neutral, COC tailwind, EPS neutral, POL tailwind. Phase expansion, tier equity.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h window clean from c72 off-hours). All 3 NEW signals POSTED (no suppression). Direction divergence OK: #5593–#5595 bullish (PDR capex, CTG capital), #5594 bearish (gold macro) — separate events (capital flow vs commodity), permitted.
+
+**Coverage-state sweep:** All 41 watchlist tickers last updated c72 (00:22 UTC, ~4h ago); max staleness <48h threshold not breached. No sweep batch forced. Coverage tracking: PDR, CTG, GVR, BDI, DLC, VNH updated to 2026-06-10T04:08:00Z (articles analyzed). Atomic write: tmp→rename.
+
+**Session Log:** log_agent_work #1312 opened/closed. 20 items, 3 impacts, 3 signals, NEUTRAL regime. Off-hours slot (MARKET OPEN).
 
 ## c72 · 2026-06-10T00:22:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
 
