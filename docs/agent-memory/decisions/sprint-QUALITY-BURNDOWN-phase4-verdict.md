@@ -306,4 +306,20 @@ Recipient: `po` (via signal-dashboard skill)
 
 ---
 
-**Signed:** system-auditor @ 2026-06-10T19:27:00Z
+## DJ-GATE-2: CAP-SVC-ALERT-ENGINE DEGRADE-01 Gap Fix (2026-06-10 19:30 UTC)
+
+**Gap:** Brief specified 264 checks (commitment verified in 2026-06-10-deployment-intent-gate-v2.md line 259), but artifact shipped 263. Missing: ALERT-ENGINE-DEGRADE-01.
+
+**Action:** Added ALERT-ENGINE-DEGRADE-01 (Graceful Degradation/Resilience check) after ALERT-ENGINE-OBS-01 in CAP-SVC-ALERT-ENGINE capability.
+
+**Probe:** `call_tool(vn-market, get_alerts, {})` → Returned 20 well-formed alerts (structure: ticker, alert_type, triggered_at fields present; no crash on no-data path).
+
+**Verdict:** PASS — alert engine degrades gracefully to empty/structured response on upstream unavailability.
+
+**Recomputed .summary:** {pass:239, warn:2, fail:0, info:20, needs_review:3, total:264} ✅
+
+**Signal:** None emitted (check is PASS; no quality defect).
+
+---
+
+**Signed:** system-auditor @ 2026-06-10T19:30:00Z

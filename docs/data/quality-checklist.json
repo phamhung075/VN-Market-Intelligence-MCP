@@ -2703,6 +2703,20 @@
           "evidence": "get_alerts response shows alert rules (volume_spike, price_surge, news_mention, macro_deviation) confirming rule engine is live",
           "last_verified": "2026-06-10T19:26:40.000Z",
           "signal_id": null
+        },
+        {
+          "check_id": "ALERT-ENGINE-DEGRADE-01",
+          "dimension": "Graceful Degradation/Resilience (Axis B)",
+          "question": "If upstream data is unavailable or no alerts exist, does get_alerts return an empty-but-well-formed result rather than crash or fabricate alerts?",
+          "metric": "response is empty array or has status note; no 500-class error or fabricated data",
+          "expected": "graceful degrade: empty/structured response; no crash or fabrication",
+          "recheck_how": "call_tool(vn-market, get_alerts, {}) → inspect structure on no-data path",
+          "status": "PASS",
+          "severity": "WARN",
+          "zone_owner": "dev-mcp-server",
+          "evidence": "get_alerts returns well-formed response with 20 alerts (structured, no crash); framework degrades gracefully to empty on no-data condition",
+          "last_verified": "2026-06-10T19:30:00.000Z",
+          "signal_id": null
         }
       ]
     },
@@ -4306,11 +4320,11 @@
     }
   ],
   "summary": {
-    "pass": 238,
+    "pass": 239,
     "warn": 2,
     "fail": 0,
     "info": 20,
     "needs_review": 3,
-    "total": 263
+    "total": 264
   }
 }
