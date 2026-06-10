@@ -2592,6 +2592,83 @@ _TITLE_BAND_MAX_LEN: int = 120
 # False (the page is a continuation of the previous table, not a new one).
 _CONTINUATION_MARKERS: tuple = ("tiếp theo", "(continued)", "continued")
 
+# ---------------------------------------------------------------------------
+# BPE-DEV-5 — Tesseract retry constants
+#
+# Under host load spikes (macOS 16GB + Docker capped 8GB) Tesseract can receive
+# SIGTERM (-15) mid-call.  The prior code caught the exception and silently
+# dropped the page, producing an empty table unit.  With normalized load a retry
+# on the same image succeeds immediately.
+#
+# MAX_TESSERACT_RETRIES = 2 means: initial attempt + up to 2 retries = 3 total
+# calls maximum per page.  Each retry sleeps _TESSERACT_RETRY_SLEEP_S seconds
+# to give the OS time to release memory pressure before the next attempt.
+# ---------------------------------------------------------------------------
+
+MAX_TESSERACT_RETRIES: int = 2
+
+# Seconds to sleep between Tesseract retry attempts (brief — only needed when
+# host is briefly over-committed; normalized load clears within 1-2 seconds).
+_TESSERACT_RETRY_SLEEP_S: float = 1.5
+
+
+def _tesseract_image_to_data(
+    page_img: Any,
+    lang: str,
+    config: str,
+) -> Dict:
+    """
+    Module-level wrapper around pytesseract.image_to_data with retry logic.
+
+    Retries up to MAX_TESSERACT_RETRIES times on any exception (including
+    SIGTERM signal -15 which appears as RuntimeError/TesseractError).
+
+    Exposed at module level so tests can patch it without injecting pytesseract
+    as a dependency.  ocr_unit() calls this wrapper instead of calling
+    pytesseract directly.
+
+    Args:
+        page_img: PIL Image to OCR.
+        lang:     Tesseract language string (e.g. "vie+eng").
+        config:   Tesseract config string (e.g. "--psm 6").
+
+    Returns:
+        pytesseract image_to_data output dict (DICT output type).
+
+    Raises:
+        Exception: The last exception raised if all attempts are exhausted.
+    """
+    import time
+    import pytesseract  # type: ignore
+
+    last_exc: Optional[Exception] = None
+    for attempt in range(MAX_TESSERACT_RETRIES + 1):
+        try:
+            return pytesseract.image_to_data(
+                page_img,
+                lang=lang,
+                config=config,
+                output_type=pytesseract.Output.DICT,
+            )
+        except Exception as exc:
+            last_exc = exc
+            if attempt < MAX_TESSERACT_RETRIES:
+                logger.warning(
+                    "_tesseract_image_to_data: attempt %d/%d failed: %s — retrying in %.1fs",
+                    attempt + 1,
+                    MAX_TESSERACT_RETRIES + 1,
+                    exc,
+                    _TESSERACT_RETRY_SLEEP_S,
+                )
+                time.sleep(_TESSERACT_RETRY_SLEEP_S)
+            else:
+                logger.warning(
+                    "_tesseract_image_to_data: all %d attempts failed for page: %s",
+                    MAX_TESSERACT_RETRIES + 1,
+                    exc,
+                )
+    raise last_exc  # type: ignore[misc]
+
 
 # ---------------------------------------------------------------------------
 # Tier 0 — build_document_map
@@ -3794,17 +3871,22 @@ def ocr_unit(
         try:
             img_width, img_height = page_img.size
 
-            # ONE Tesseract pass per page (AC-LFE-6)
-            # image_to_data returns word-level bounding boxes
+            # ONE Tesseract pass per page (AC-LFE-6).
+            # BPE-DEV-5: call via _tesseract_image_to_data wrapper which
+            # retries up to MAX_TESSERACT_RETRIES times on SIGTERM / load spike.
             try:
-                ocr_data = pytesseract.image_to_data(
-                    page_img,
+                ocr_data = _tesseract_image_to_data(
+                    page_img=page_img,
                     lang="vie+eng",
                     config="--psm 6",
-                    output_type=pytesseract.Output.DICT,
                 )
             except Exception as exc:
-                logger.warning("ocr_unit: Tesseract failed for page %d: %s", page_num, exc)
+                logger.warning(
+                    "ocr_unit: Tesseract failed for page %d after %d attempts: %s — skipping page",
+                    page_num,
+                    MAX_TESSERACT_RETRIES + 1,
+                    exc,
+                )
                 page_img.close()
                 continue
 

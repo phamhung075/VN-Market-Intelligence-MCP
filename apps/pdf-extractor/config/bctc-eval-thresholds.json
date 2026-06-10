@@ -1,0 +1,43 @@
+{
+  "schema_version": "1",
+  "detector_version": "v1",
+  "stages": {
+    "1_RASTERIZE": {
+      "page_count_tolerance": 0,
+      "sha_stability_required": true
+    },
+    "2_LAYOUT_DETECT": {
+      "golden_table_count_exact": true,
+      "abandon_rate_max": 0.20,
+      "median_conf_min": 0.70
+    },
+    "3_OCR": {
+      "vn_diacritic_ratio_min": 0.30,
+      "numeric_ratio_in_tables_min": 0.40,
+      "required_anchor_phrases": [
+        "TỔNG CỘNG TÀI SẢN",
+        "LỢI NHUẬN SAU THUẾ"
+      ]
+    },
+    "4_TABLE_RECONSTRUCT": {
+      "label_coverage_min": 0.90,
+      "code_coverage_min": 0.80,
+      "exact_dup_max": 0,
+      "value_blank_label_max": 0
+    },
+    "5_MARKDOWN_RENDER": {
+      "roundtrip_row_match_min": 0.95,
+      "roundtrip_value_drift_max": 0.01
+    },
+    "6_STRUCTURED_EXTRACT": {
+      "golden_row_match_min": 0.90,
+      "balance_pass_is_signal_only": true,
+      "qoq_outlier_threshold": 2.0
+    }
+  },
+  "status_rules": {
+    "red": "any hard gate fails",
+    "yellow": "soft warnings only (balance_pass=false, qoq_outlier, golden_diff non-empty but within tolerance)",
+    "green": "all hard gates pass, no warnings"
+  }
+}

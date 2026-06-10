@@ -95,9 +95,27 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Thresholds loader — application layer reads the SSOT file once per call.
 # Domain detectors accept the loaded dict so they remain pure functions.
+#
+# BPE-DEV-5: Two-path lookup:
+#   1. /app/config/bctc-eval-thresholds.json  — baked into image (primary,
+#      available in all containers regardless of volume mounts)
+#   2. ../../../docs/data/bctc-eval-thresholds.json  — project-root path
+#      (works in local dev and host-mounted deployments)
+#
+# The project root path resolves to /docs/data/ in the container (not mounted),
+# so path 1 is the durable production path.
 # ---------------------------------------------------------------------------
 
-_THRESHOLDS_FILE = os.path.join(
+# Primary: baked into container image via Dockerfile COPY config/ → /app/config/
+_THRESHOLDS_FILE_PRIMARY = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "config",
+    "bctc-eval-thresholds.json",
+)
+
+# Fallback: project-root path (works in local dev / mounted deployments)
+_THRESHOLDS_FILE_FALLBACK = os.path.join(
     os.path.dirname(__file__),
     "..",
     "..",
@@ -110,23 +128,27 @@ _THRESHOLDS_FILE = os.path.join(
 
 def _load_thresholds() -> Optional[Dict]:
     """
-    Load docs/data/bctc-eval-thresholds.json.
+    Load bctc-eval-thresholds.json.
 
-    Returns the parsed dict or None if the file does not yet exist.
+    Tries primary path first (in-image /app/config/), then fallback (project root).
+    Returns the parsed dict or None if neither path exists.
     Domain detectors fall back to built-in defaults when thresholds=None.
     """
-    path = os.path.normpath(_THRESHOLDS_FILE)
-    try:
-        with open(path, "r", encoding="utf-8") as fh:
-            return json.load(fh)
-    except (OSError, json.JSONDecodeError) as exc:
-        logger.warning(
-            "ExtractLayoutFirstUseCase: could not load thresholds from %s: %s — "
-            "detectors will use built-in defaults",
-            path,
-            exc,
-        )
-        return None
+    for candidate in (_THRESHOLDS_FILE_PRIMARY, _THRESHOLDS_FILE_FALLBACK):
+        path = os.path.normpath(candidate)
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except (OSError, json.JSONDecodeError):
+            continue
+
+    logger.warning(
+        "ExtractLayoutFirstUseCase: could not load thresholds from %s or %s — "
+        "detectors will use built-in defaults",
+        os.path.normpath(_THRESHOLDS_FILE_PRIMARY),
+        os.path.normpath(_THRESHOLDS_FILE_FALLBACK),
+    )
+    return None
 
 
 # ---------------------------------------------------------------------------
