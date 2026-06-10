@@ -28,6 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   // loads as a real document and its scripts execute.
   { to: "/dashboard/bctc-inspect", label: "BCTC Inspect", reload: true },
   { to: "/dashboard/orchestration", label: "Orchestration" },
+  { to: "/dashboard/quality-audit", label: "Quality Audit" },
 ];
 
 /** Shared NavLink class helper — keeps active/hover styling DRY. */
