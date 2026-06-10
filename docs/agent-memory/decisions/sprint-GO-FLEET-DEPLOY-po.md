@@ -41,3 +41,12 @@
 - Keep stale "kernel-panic / absent-by-design" _note -> REJECTED: disproven by GFD-6/8/10 soak (11 containers @ ~1.3-2.1 GiB << 8 GiB cap); rewrote honestly crediting the Go-port lightness + rag lazy-load.
 **why-decision:** Ground truth (docker ps: all 6 Up+healthy) + GFD-11 qa-verify (6/6 /health 200) make the old premise factually wrong; SSOT must reflect proven reality, not legacy guard prose.
 **why-change:** Axis-A path turned out MATERIALIZED-edit (not derived-auto) — adjusted from "verify-then-maybe-edit" to definite edit of 6 entries.
+
+### STEP po-S5 · po · 2026-06-10T22:46:57Z
+**task-id:** GFD-12
+**what-done:** Added 2 infra-test backlog tasks (INFRA-TEST-TZ-FIX -> dev-alert-engine, INFRA-TEST-SEEDDATE-FIX -> dev-stock-price); set GFD-12 status_note with the remaining dispatch chain; HELD GFD-12 at READY (not DONE).
+**what-considered:**
+- Flip GFD-12 DONE now -> REJECTED: api-gateway /health still shows the 6 as not_deployed (hardcoded main.go:44 default + compose:280 ENV). DONE requires the code+compose root-cause fix (dev-api-gateway) + targeted rebuild (ops) + re-verify 6x ok — none done yet. Flipping now would be a false-green.
+- Make the api-gateway main.go/docker-compose edit myself -> REJECTED: init.md hard rule "NEVER write production code"; api-gateway zone belongs to dev-api-gateway, HONOR-PANIC-GUARD rebuild belongs to ops.
+**why-decision:** PO owns SSOT (system-map), quality-audit artifact, orch-state, backlog — all done. The runtime fix is a dev/ops dispatch the router must spawn; my surface lacks spawn + MCP-gateway tools, so I hand the exact edits + rebuild + verify gate back to the router and keep GFD-12 honest at READY.
+**why-change:** Discovered my sub-agent surface has no spawn/gateway binding -> cannot self-dispatch dev-api-gateway/ops or take the commit-mutex; serialized PO commits myself (explicit pathspecs, git show --stat verify) and surfaced the binding gap.

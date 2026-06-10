@@ -4842,7 +4842,8 @@
               "Update quality-audit Axis-A checks to PASS",
               "Authorize router push to origin/main"
             ],
-            "id": "GFD-12"
+            "id": "GFD-12",
+            "status_note": "GFD-12 PO-SIGN in progress (po S4): SSOT graduation DONE (system-map all 12 services, not_deployed lists emptied, _note rewritten, _last_verified=2026-06-11) + 6 Axis-A AVAIL checks flipped INFO/grey->PASS (commit 22b52065). 2 infra-test backlog tasks added (INFRA-TEST-TZ-FIX, INFRA-TEST-SEEDDATE-FIX). REMAINING before DONE: (a) dev-api-gateway must set main.go:44 NOT_DEPLOYED_SERVICES default to \"\" + docker-compose.yml:280 to empty (ROOT-CAUSE, not ENV-only); (b) ops targeted rebuild: docker compose build api-gateway && docker compose up -d --no-deps api-gateway (NEVER down&&up); (c) re-verify curl :4000/health .services shows 6x ok (rag,ta,stock,kinh-dich,alert,news) latency>0. GFD-12 stays READY until (c) green."
           },
           {
             "id": "GFD-13",
@@ -6541,6 +6542,50 @@
         "size": "S",
         "status_note": "AC: DS-DEGRADE-01 re-check returns PASS | signal:qc-DS-DEGRADE-01-4044 | get_public_contracts returns empty (no data); no stale flag in response. Data serve layer may be uninitialized.",
         "created_at": "2026-06-10T09:27:20Z"
+      },
+      {
+        "id": "INFRA-TEST-TZ-FIX",
+        "type": "FIX",
+        "owner": "dev-alert-engine",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "apps/alert-engine/",
+        "priority": "medium",
+        "sprint": "BACKLOG",
+        "labels": [
+          "infra-test",
+          "timezone",
+          "pre-existing",
+          "non-blocking",
+          "go-fleet-followup"
+        ],
+        "title": "alert-engine: fix pre-existing timezone (TZ) unit-test bug. Surfaced during GFD-11 qa-verify (GO-FLEET-DEPLOY) as one RED infra test package — NOT a runtime defect (container is Up+healthy, get_alerts live). Test asserts wall-clock/TZ-dependent value; harden to a fixed TZ or inject clock so it is deterministic.",
+        "gate": "go test ./... in apps/alert-engine passes the TZ package green on any host TZ; container health unaffected.",
+        "created_at": "2026-06-10T22:46:57Z",
+        "created_by": "po",
+        "note": "[po S5 GFD-12 2026-06-10T22:46:57Z] Carved out of GFD-12 sign-off. GFD-11 flagged 2 pre-existing infra test bugs non-blocking; tracked separately from GO-FLEET-DEPLOY. NOT in_progress (WIP<=2)."
+      },
+      {
+        "id": "INFRA-TEST-SEEDDATE-FIX",
+        "type": "FIX",
+        "owner": "dev-stock-price",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "apps/stock-price/",
+        "priority": "medium",
+        "sprint": "BACKLOG",
+        "labels": [
+          "infra-test",
+          "seed-date",
+          "pre-existing",
+          "non-blocking",
+          "go-fleet-followup"
+        ],
+        "title": "stock-price: fix pre-existing seed-date unit-test bug. Surfaced during GFD-11 qa-verify (GO-FLEET-DEPLOY) as one RED infra test package — NOT a runtime defect (container is Up+healthy, get_market_snapshot live). Test depends on a hardcoded/elapsed seed date; harden to a relative or injected date so it is deterministic.",
+        "gate": "go test ./... in apps/stock-price passes the seed-date package green regardless of current date; container health unaffected.",
+        "created_at": "2026-06-10T22:46:57Z",
+        "created_by": "po",
+        "note": "[po S5 GFD-12 2026-06-10T22:46:57Z] Carved out of GFD-12 sign-off. GFD-11 flagged 2 pre-existing infra test bugs non-blocking; tracked separately from GO-FLEET-DEPLOY. NOT in_progress (WIP<=2)."
       }
     ],
     "archive": [],
