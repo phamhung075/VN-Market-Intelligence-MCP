@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-224 · 2026-06-10 · CI-RED CLUSTER-A sprint_goal schema drift fix — APPROVED GREEN
+
+Sprint: CI-RED-RECONCILE | Task: CI-RED-CLUSTER-A | Verdict: DATA-DRIFT-FIXED | Checks cleared: CI-TEST-02, MCP-TEST-01, SYS-TEST-01, CI-TEST-04
+
+Probe: `bun test 1338-sprint-goal-retrospective.test.ts` isolated — 2 pass / 1 fail BEFORE fix. Exact failure: `entries.length` = 0 (sprint_goal was a plain string). Both production code (orchestrationHandler.ts projectSprintGoal L212-229) and test agreed on canonical `{entries:[{sprint_id,...}]}` shape. Drift was in DATA. Migrated orch-state.json .sprint_goal from plain string to canonical entries[] object (CI-RED-RECONCILE OPEN + BCTC-PROSE-EXTRACT CLOSED). Atomic temp-rename write, verified non-empty + valid JSON. Re-ran: 3 pass / 0 fail / 1 skip — ALL GREEN. DJ-GATE-1: sprint-CI-RED-RECONCILE-qa.md § qa-S1.
+
 ## cycle-223 · 2026-06-10 · BPE-QA-1 RE-VERIFY BCTC-PROSE-EXTRACT final E2E gate — APPROVED GREEN
 
 Sprint: BCTC-PROSE-EXTRACT | Task: BPE-QA-1 (round 2) + BPE-DEV-5 | Verdict: APPROVED | Report: reports/TASK_REPORT_BPE-QA-1.md

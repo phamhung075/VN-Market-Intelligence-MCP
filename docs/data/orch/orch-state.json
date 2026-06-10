@@ -10609,5 +10609,23 @@
       }
     ]
   },
-  "sprint_goal": "BCTC-PROSE-EXTRACT (opened 2026-06-09, high, zone apps/mcp-server/ + OCR pipeline). GOAL: FPT Q1-2026 every page with visible rendered text serves its content via inspector (table pages->rows, prose pages->prose text); NO page shows 'No OCR text'/empty pek_coverage_gap. 2 shipped commits KEPT (producer prose-stitch + serving). RE-DIAGNOSIS: root is OCR coverage gap (pages 11-22, 36-46 absent) + total_pages COUNT-vs-MAX bug, NOT just prose-stitch. Architect BLOCKER-2 'benign' ruling OVERRULED pending SPIKE. recurring-bug escalation -> architect root-cause SPIKE FIRST. Chain: architect SPIKE -> dev-mcp-server GAP-1 fix -> ops OCR re-run (11-22,36-46) -> dev re-flow -> qa end-to-end on page 12/16/notes. DoD: page 12 + notes section serve real content live, verified raw not badges; drive to DONE not a slice. Next: BPE-SPIKE-1 (agents-architect)."
+  "sprint_goal": {
+    "_updated_at": "2026-06-10T00:00:00Z",
+    "_updated_by": "qa-clusterA",
+    "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
+    "entries": [
+      {
+        "sprint_id": "CI-RED-RECONCILE",
+        "status": "OPEN",
+        "vision": "Fix CI RED on main — root-cause each failing cluster (schema drift, mock contamination, dead tests, assertion logic). DoD: gh run list --limit 1 -> success.",
+        "created_at": "2026-06-08T00:00:00Z"
+      },
+      {
+        "sprint_id": "BCTC-PROSE-EXTRACT",
+        "status": "CLOSED",
+        "vision": "BCTC-PROSE-EXTRACT (opened 2026-06-09, high, zone apps/mcp-server/ + OCR pipeline). GOAL: FPT Q1-2026 every page with visible rendered text serves its content via inspector (table pages->rows, prose pages->prose text); NO page shows 'No OCR text'/empty pek_coverage_gap. 2 shipped commits KEPT (producer prose-stitch + serving). RE-DIAGNOSIS: root is OCR coverage gap (pages 11-22, 36-46 absent) + total_pages COUNT-vs-MAX bug, NOT just prose-stitch. Architect BLOCKER-2 'benign' ruling OVERRULED pending SPIKE. recurring-bug escalation -> architect root-cause SPIKE FIRST. Chain: architect SPIKE -> dev-mcp-server GAP-1 fix -> ops OCR re-run (11-22,36-46) -> dev re-flow -> qa end-to-end on page 12/16/notes. DoD: page 12 + notes section serve real content live, verified raw not badges; drive to DONE not a slice. Next: BPE-SPIKE-1 (agents-architect).",
+        "created_at": "2026-06-09T00:00:00Z"
+      }
+    ]
+  }
 }

@@ -1,6 +1,8 @@
 {
-  "locked": false,
-  "owner_agent": null,
-  "task": null,
-  "expires_at": null
+  "locked": true,
+  "owner_agent": "qa-clusterA",
+  "task": "FIX-CLUSTER-A-CI-RED",
+  "expires_at": "2026-06-10T17:13:17Z",
+  "acquired_at": "2026-06-10T17:10:17Z",
+  "ttl_seconds": 180
 }
