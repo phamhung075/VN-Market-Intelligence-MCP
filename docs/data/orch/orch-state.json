@@ -4547,7 +4547,7 @@
             "kind": "sprint-task",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "READY",
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "depends_on": [
