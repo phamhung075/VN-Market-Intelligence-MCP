@@ -1,8 +1,25 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-10 00:00 UTC | **Sprint:** BCTC-PROSE-EXTRACT
+**Last updated:** 2026-06-10 08:30 UTC | **Sprint:** QUALITY-AUDIT-FRAMEWORK
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-10T08:30Z — arch-QA-1: QUALITY-AUDIT-FRAMEWORK Phase 0
+
+**Task:** QUALITY-AUDIT-FRAMEWORK (ISO-25010 external-auditor quality checklist)
+
+**Method:** Read plan, system-map.json (full), project-stats.json, api-gateway main.go (NOT_DEPLOYED_SERVICES) + registry.go. Adopted external-auditor stance — all checks derived from published behavioral contract, NOT code internals.
+
+**Key findings:**
+- NOT_DEPLOYED_SERVICES default in api-gateway main.go:44 includes "pdf" — but system-map intends pdf-extractor DEPLOYED. Flagged as GW-CONTRACT-03 severity:CRITICAL.
+- 6 undeployed services (stock-price, ta, kinh-dich, alert-engine, rag, news-fetch) correctly gated as INFO/grey — no spurious FAIL checks.
+- 240 checks total across 38 capabilities: 12 MCP tool categories, 6 deployed services, 6 undeployed (INFO), 6 cron groups + VPS proxy, Database, Telegram, Agent coordination, Prediction accuracy, Memory/search, CI pipeline, Data sources.
+- All 234 non-INFO checks initialized NEEDS-REVIEW with concrete recheck_how (call_tool or curl probe) and zone_owner.
+
+**Outputs:**
+- docs/architecture-briefs/2026-06-10-quality-audit-framework.md
+- docs/data/quality-checklist.json (240 checks, 38 caps, jq-validated)
+- docs/agent-memory/decisions/sprint-QUALITY-AUDIT-FRAMEWORK-architect.md (DJ entry)
 
 ## 2026-06-10T00:00Z — arch-S27: BPE-SPIKE-1 OCR coverage root-cause SPIKE
 
