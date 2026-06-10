@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-05T16:37:44Z
-
-**Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md` (v1)
-
-EMIT-DARK-RECURRING: H1 (stale session) + H3 (early-exit) both ruled out by post-fix telemetry evidence. H2 CONFIRMED — Steps 4.7+4.8 are agent-interpreted prose with fail-safe semantics; LLM agent narrates and skips, producing zero disk output while proceeding to spawn. Code fix required (not operator action): anchor pressure-state write to telemetry.md Step 6 (observable mandatory artifact) + optional pre-dispatch shell script for pure-bash fields. Priority: low (legacy cadence safe).
-
-**Signal dropped:** `docs/signals/emit-dark-root-cause-20260605T163744Z.json` → agent-father
-
----
-
 ## 2026-06-05T18:09:00Z
 
 **Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md` (v2 — DEFINITIVE, supersedes v1 + Option B)
@@ -47,3 +37,13 @@ CI-health → fix-task bridge design: institutionalizes automated CI failure det
 CI-TEST-ISOLATION-SPIKE: 3-bucket triage of 639 bun failures. B1 (DOMINANT) — `1862c-transport-session-eviction.test.ts` poisons process-level module cache via `mock.module()` at module scope with no restore; all test files after 1862c in run order inherit MockMcpServer without `.tool()` → ~269 cascade failures. Fix: wrap mock in `beforeAll`/`afterAll` + `mock.restore()`. B2 — 63 inline test DDLs missing `data_env` column (canonical DDL in schema-news.ts adds it via guarded ALTER; inline copies don't replicate) → ~96 SQLiteError + pollNews timeout failures. Fix: replace inline DDLs with `initNewsTables(db)` call. B3 — BANK-AWARE-1 missing `statement_section` → 3 failures. Bucket A (24 obsolete): 089-tool-macro (15 tests, HTTP rewire 98df0f43 removed injection points), 1414 FILE 1 (7+ tests, HTTP rewire 6fc7b6b3 deleted template literals), 1503 AC3 (1 test, DPI-4 upsert strategy 32d201e8), 1190 schedulerFileCount (1 test, hardcoded 44 vs actual 64). Bucket C (~39 real regressions): TR-RED-5b (finalize_bctc_refine, e74dd0e1), macro freshness (239a/239c), orch-state wip fields (1837a), notebook .bak + developer.md (1839b), diacritics (1472), cron-registry missing entry. DWF canary intentionally RED — DO NOT TOUCH. Fix plan: B first (2 systemic fixes), then A (removal dev task), then C (regression fixes per zone).
 
 **Signal dropped:** `docs/signals/ci-test-isolation-spike-20260608T200000Z.json` → pm
+
+---
+
+## 2026-06-10T20:35:25Z
+
+**Brief:** `docs/architecture-briefs/2026-06-10-go-fleet-deploy/brief.md`
+
+GO-FLEET-DEPLOY: 6 not_deployed_by_design services must genuinely run. 4/6 Go-ready (build exit 0): stock-price, technical-analysis, kinh-dich-service, alert-engine — DEPLOY+SOAK only. news-fetch = genuine Node→Go port (core RSS/API paths; Playwright excluded). rag-service = Python singleton with tight 512m/768m cap + new /embed/health probe (rejected Go-wrapper sidecar: IPC overhead, no memory saving, new failure modes). Full fleet projects to ~2.0 GiB RSS leaving 74% headroom. HONOR-PANIC-GUARD soak gate defined: ABORT if free pages < 500k OR swap > 4 GiB OR service RSS > cap. Bring-up order: kinh-dich → ta → alert → stock → rag → news. Task batch GFD-2 through GFD-12 dispatched to pm.
+
+**Signal dropped:** `docs/signals/go-fleet-deploy-brief-20260610T203525Z.json` → pm
