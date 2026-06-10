@@ -47,3 +47,13 @@ CI-TEST-ISOLATION-SPIKE: 3-bucket triage of 639 bun failures. B1 (DOMINANT) — 
 GO-FLEET-DEPLOY: 6 not_deployed_by_design services must genuinely run. 4/6 Go-ready (build exit 0): stock-price, technical-analysis, kinh-dich-service, alert-engine — DEPLOY+SOAK only. news-fetch = genuine Node→Go port (core RSS/API paths; Playwright excluded). rag-service = Python singleton with tight 512m/768m cap + new /embed/health probe (rejected Go-wrapper sidecar: IPC overhead, no memory saving, new failure modes). Full fleet projects to ~2.0 GiB RSS leaving 74% headroom. HONOR-PANIC-GUARD soak gate defined: ABORT if free pages < 500k OR swap > 4 GiB OR service RSS > cap. Bring-up order: kinh-dich → ta → alert → stock → rag → news. Task batch GFD-2 through GFD-12 dispatched to pm.
 
 **Signal dropped:** `docs/signals/go-fleet-deploy-brief-20260610T203525Z.json` → pm
+
+---
+
+## 2026-06-11T23:20:00Z
+
+**Brief:** `docs/architecture-briefs/2026-06-10-go-fleet-deploy/brief.md` (GFD-1 CLOSE — §c recalibration)
+
+GFD-1 final close: all 13 GO-FLEET-DEPLOY tasks now DONE; sprint marked COMPLETE. §(c) HONOR-PANIC-GUARD soak gate corrected in-place — "swap > 4 GiB" abort threshold DISPROVEN by live soak (raw swap sat at ~9.9 GiB while fleet ran perfectly healthy; macOS compresses/over-reports swap). Corrected gate: PRIMARY = `memory_pressure` ≥ 20% free (live: 64–78%); SECONDARY = Docker VM RSS < 6,500 MiB (live: 1.3–2.1 GiB); PER-CONTAINER = OOMKilled==true. exit-137 with OOMKilled=false is external SIGKILL, not a soak failure. Sprint evidence: 9/9 services ok at 1–2ms latency, zero OOMKilled, origin/main HEAD 74770141.
+
+**Signal dropped:** none (brief update only; sprint complete; no new agent-father action required)

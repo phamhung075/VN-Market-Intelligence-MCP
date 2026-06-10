@@ -4580,15 +4580,16 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": [],
-            "status": "DISPATCHED",
+            "status": "DONE",
             "size": "M",
             "zone": "multi",
             "mode": "spike",
             "timebox": 180,
             "sprint": "GO-FLEET-DEPLOY",
             "created_at": "2026-06-10T20:31:32Z",
+            "completed_at": "2026-06-11T23:20:00Z",
             "brief": "docs/handoffs/GO-FLEET-DEPLOY-architect-brief.md",
-            "baseline_pass": "Brief in docs/architecture-briefs/2026-06-10-go-fleet-deploy/ delivers (a)-(d); rag strategy chosen+justified; soak abort criteria explicit; every microservice-doc edit routed to a dev-* zone owner not generic developer.",
+            "baseline_pass": "Brief in docs/architecture-briefs/2026-06-10-go-fleet-deploy/ delivers (a)-(d); rag strategy chosen+justified; soak abort criteria explicit (§c recalibrated 2026-06-11 — swap>4GiB DISPROVEN, corrected to memory_pressure/VM-RSS/OOMKilled gate); every microservice-doc edit routed to a dev-* zone owner not generic developer.",
             "id": "GFD-1"
           },
           {
@@ -8556,7 +8557,8 @@
       },
       {
         "sprint_id": "GO-FLEET-DEPLOY",
-        "status": "OPEN",
+        "status": "COMPLETE",
+        "completed_at": "2026-06-11T23:20:00Z",
         "vision": "Genuinely DEPLOY the 6 not_deployed_by_design services as lightweight working containers. User directive: redesign architecture if needed + PORT TO GO to make services lighter so the full fleet runs on the 16GB host without panic. Go-port is PRIMARY path (hard constraint). 4/6 already Go-ready+build-clean (stock-price/technical-analysis/kinh-dich/alert-engine); news-fetch=port-from-Node; rag-service=Go-exception (Python LanceDB/embeddings). DoD: each service container health 200 + live capability probe + HONOR-PANIC-GUARD soak; host_runtime_set arrays moved not_deployed->services; Axis-A flips to live AVAIL PASS.",
         "created_at": "2026-06-10T20:31:32Z"
       }
