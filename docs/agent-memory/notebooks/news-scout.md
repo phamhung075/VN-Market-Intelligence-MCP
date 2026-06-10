@@ -1,6 +1,21 @@
-- **Last updated:** 2026-06-09 20:07 UTC · **Sprint:** current · **Status:** 71 cycles complete (c71 off-hours +SHIPPED)
+- **Last updated:** 2026-06-10 00:22 UTC · **Sprint:** current · **Status:** 72 cycles complete (c72 off-hours +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c72 · 2026-06-10T00:22:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (TUESDAY 00:22 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, BULLISH CAPITAL FLOW SIGNALS.** 20 articles fetched, 8 watchlist impacts (primary: VietinBank Capital enters Petrosetco capital inflow CTG +8/10 bullish; secondary: EVN massive deposits utilities liquidity POW +8/10 bullish; tertiary: VinFast USD 1B capital raise VIC +8/10 bullish; quaternary: VIC taxi app India rank #1 +6/10 neutral). **3 signals fired (#5573–#5575): 2x urgent_news (CTG capital +8.0, POW utilities +8.0) + 1x chain_catalyst (VinFast tech spillover +8.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours). `get_macro_snapshot()` valid shape (vnIndex=1793.05 +2.52, oil NEUTRAL 92.53 (-0.03%), gold BULLISH 4235.8 (-1.01%), usdvnd BEARISH 26128, carry NEUTRAL 1.38pp, yield CHEAP +3.2pp). **Regime: NEUTRAL** (stable baseline, no directional shift). Carry NEUTRAL 1.38pp; equity yield CHEAP +3.2pp.
+
+**Signals Fired (3 total):**
+- #5573 (urgent_news CTG to alert-commander): VietinBank Capital major shareholder position. Banking capital inflow bullish. Confidence 86%. Critic 0.8. Regime NEUTRAL→score 8.0. Pillars: M2 bullish, COC neutral, EPS neutral, POL neutral. Phase expansion, tier equity.
+- #5574 (urgent_news POW to alert-commander): EVN deposits 150,000 tỷ liquidity recovery. Utilities bullish EPS tailwind. Confidence 74%. Critic 0.8. Regime NEUTRAL→score 8.0. Pillars: M2 bullish, COC neutral, EPS bullish, POL neutral. Phase expansion, tier equity.
+- #5575 (chain_catalyst to all): VinFast USD 1B capital raise. Tech/EV sector bullish spillover. VIC affected. Confidence 85%. Critic 0.8. Regime NEUTRAL→score 8.0. Pillars: M2 bullish, COC positive, EPS bullish, POL supportive. Phase expansion, tier equity.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h prior clean from c71). All 3 NEW signals POSTED (no suppression). Direction: all bullish (capital inflow theme consistent). Coverage-state sweep check: all tickers recently updated c71 (16:11 UTC, ~8h ago); no stale >48h detected. No sweep forced.
+
+**Session Log:** log_agent_work #1310 opened/closed. 20 items, 8 impacts, 3 signals, NEUTRAL regime. Off-hours slot (MARKET CLOSED).
 
 ## c71 · 2026-06-09T20:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
 
