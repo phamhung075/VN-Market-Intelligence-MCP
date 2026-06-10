@@ -44,3 +44,15 @@
 **status-flip:** IN-DESIGN → BRIEF-COMPLETE  
 **what-done:** Authored brief at `docs/architecture-briefs/2026-06-10-go-fleet-deploy/brief.md`. Dropped signal to pm at `docs/signals/go-fleet-deploy-brief-20260610T203525Z.json`. Defined GFD-2 through GFD-12 task batch.  
 **why-decision:** All four deliverables complete: (a) inventory, (b) topology + rag decision, (c) footprint math + soak gate, (d) per-service DoD including new rag probe. Signaling pm for implementation chain dispatch.
+
+---
+
+### STEP A-5 · agents-architect · 2026-06-11T00:00:00Z
+**task-id:** GFD-13
+**status-flip:** OPEN → DESIGN-COMPLETE
+**what-done:** Designed lazy-load mechanism for rag-service embedding model. Authored architecture brief and implementation handoff for dev-rag-service.
+**what-considered:**
+- `asyncio.Lock` + `asyncio.to_thread()` → CHOSEN: event-loop safe; model load offloaded to thread; double-check pattern prevents duplicate load
+- `threading.Lock` → REJECTED: synchronous lock in async context blocks event loop during acquire
+- Warm-up on /embed/health probe → REJECTED: health probe must stay cheap; passive read only
+**why-decision:** `asyncio.Lock` with lazy-init (created inside first async call, not at import time) is the idiomatic Python pattern for async lazy singletons. `asyncio.to_thread()` keeps the event loop responsive during the 2-60s model load window. Cold state on /embed/health returns 200 (not 503) — cold is normal, not failure. reservations.memory drops to 256m (sized to ~150 MiB idle); limits.memory stays 768m (sized to warm peak).

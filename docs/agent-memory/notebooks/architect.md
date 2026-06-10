@@ -1,8 +1,26 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-10 18:30 UTC | **Sprint:** QUALITY-AUDIT-FRAMEWORK
+**Last updated:** 2026-06-11 00:00 UTC | **Sprint:** GO-FLEET-DEPLOY
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-11T00:00Z — arch-S28: GFD-13 rag-service lazy-load embedding
+
+**Task:** GFD-13 (S, zone: apps/rag-service/, sprint: GO-FLEET-DEPLOY)
+
+**Method:** Read embedder.py (84L), app_factory.py (122L), handlers.py (173L), main.py (71L), GFD-7 handoff, go-fleet-deploy/brief.md. Full brownfield index of rag-service infrastructure + interface layers.
+
+**Key findings:**
+- Eager load triggered at: `build_lifespan() → embedder.initialize() → _load_model() → SentenceTransformer(...)`. Single callstack, single fix point.
+- `_load_model()` already idempotent (self._model guard at line 44). `_raw_embed()` already calls `_load_model()` as fallback. The class is nearly lazy by design — only the explicit `initialize()` call in the lifespan forced eager load.
+- Chosen mechanism: `asyncio.Lock` (lazy-init, created in first async context) + `asyncio.to_thread(_load_model)` + double-check pattern. 3 files only: embedder.py, handlers.py, docker-compose.yml.
+- `/embed/health` contract: cold = 200 model_loaded:false state:cold (NORMAL, not error). 503 only on lancedb unreachable, load_error flag set, or embedder not wired. Probe stays passive — NEVER triggers load.
+- Memory: limits.memory=768m UNCHANGED (warm peak); reservations.memory 512m→256m (sized to idle ~150 MiB).
+
+**Outputs:**
+- docs/architecture-briefs/2026-06-10-rag-lazy-load.md
+- docs/handoffs/GFD-13-rag-service-lazy-load-embedding.md
+- docs/agent-memory/decisions/sprint-GO-FLEET-DEPLOY-architect.md § STEP A-5
 
 ## 2026-06-10T08:30Z — arch-QA-1: QUALITY-AUDIT-FRAMEWORK Phase 0
 
