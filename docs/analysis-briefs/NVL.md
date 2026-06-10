@@ -22,3 +22,15 @@
 **[Market Watcher] 16:00 UTC**
 Close: 13.850 VND | Change: +1.84% | RSI: ~43 | Volume: 10.79M (+102% avg) | YoY: -27.86% | Regime: FII_OUTFLOW_RISK
 Insider: no activity | Brief action: Reduce / Watch sector pressure
+
+## EOD 2026-06-09
+
+**[Market Watcher] 16:10 UTC**
+Close: 13,250 VND | Change: -4.33% daily | RSI: N/A | Volume: N/A | YoY: N/A | Regime: NEUTRAL
+Insider: no activity | Brief action: Reduce | Anomaly: YES (4.33% single-day drop in real estate sector, continued distress)
+
+## EOD 2026-06-10
+
+**[Market Watcher] 16:07 UTC**
+Close: 13,200 VND | Change: -0.38% daily | RSI: N/A | Volume: 10.42M (-25.8% avg) | YoY: N/A | Regime: NEUTRAL
+Insider: no activity | Brief action: Watch | Anomaly: NO (recovery within tight range; sector stabilization pattern)
