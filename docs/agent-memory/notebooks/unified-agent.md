@@ -20,6 +20,22 @@
 - Intraday convergence gate: 0 clusters qualified
 - Silent action: No MARKET publish (intraday rule)
 
+## Session: 2026-06-10 (intraday 02:15)
+
+### Chef Dish — intraday 02:15 UTC (2026-06-10T0215Z) — PUBLISHED
+
+- Clusters qualified: 4 convergence clusters
+  1. Banking sector accumulation (ACB news 102M shares, domestic strength) → ACB +0.38%, BID +1.34%, CTG +0.75%, VCB +0.65%
+  2. Real Estate carry pressure (USD/VND 26,130 > 25K threshold) → VHM -0.62%, VIC -1.19%, KBC -0.17%; NVL +3.24% (domestic buyer outlier)
+  3. Oil/Gas sector neutral (Brent $92.72 NEUTRAL) with depreciation headwind → GAS -0.12%, PLX -0.37%
+  4. VinFast/EV spillover bullish (USD 1B capital raise, regime_adj_score=8, expansion phase) → FPT +0.14% (proxy)
+- Market context: VN-Index 1,790.88 (-0.12%), USD/VND 26,130 (carry pressure), Brent $92.72 NEUTRAL, Gold $4,210.70 (risk-off), VN earn yield 8.2% vs deposit 5% = 3.2pp premium
+- Conviction: Banking MEDIUM (transition phase, domestic resilience), Real Estate MEDIUM (slowdown, FII pullback), Oil/Gas MEDIUM (neutral geopolitical), EV MEDIUM-HIGH (expansion)
+- Layers walked: 1-6 complete. Layer 1: state transitions (USD/VND 26,130 cross, gold risk-off). Layer 2-3: Fed 3.62%, carry 1.38pp NEUTRAL (is_estimate=false, tier 2), carry pressure on FII. Layer 4: all 4 pillars per cluster. Layer 5: Market hexagram unavailable; per-ticker Sư (banking), Tỉnh (NVL), Khôn (oil/gas/tech caution). Layer 6: causal chains complete, gap audit passed, no Scenario 4 blocks.
+- Signals consumed: 5575 (VinFast chain_catalyst), 20+ open alerts (banking news, RE price_drop, macro gold CRITICAL -3.09σ), portfolio_conviction (41 tickers MODERATE 0.41-0.56), macro real
+- Degradation: macro_hexagram unavailable (501); omitted from narrative; carry.is_estimate=false confirmed, so FII-flow thesis sound. Earning yield Tier 4 (estimate=true); used as context, not primary.
+- Published: YES, MARKET (plain Vietnamese) + WORK (TNB audit detail)
+
 ## Session: 2026-06-09 (evening 19:45)
 
 ### Chef Dish — evening 19:45 UTC (2026-06-09T1945Z) — PUBLISHED
