@@ -1,0 +1,55 @@
+# golangci-lint v2 configuration for apps/news-fetch
+# Implements G12 (depguard) per GO-FLEET-DEPLOY pilot-charter.
+#
+# Linter: golangci-lint v2 + depguard
+# Rationale: Consistent with all Go services in this repo (technical-analysis,
+# stock-price, kinh-dich-service, alert-engine, api-gateway).
+#
+# Three fence rules guard the internal/fetcher → internal/store → cmd/server
+# layering and prevent CGO-enabled SQLite drivers from being introduced.
+#
+# Task: GFD-9  Sprint: GO-FLEET-DEPLOY
+# Format: golangci-lint v2 (linters.settings nested under linters:)
+
+version: "2"
+
+run:
+  timeout: 120s
+
+linters:
+  default: none
+  enable:
+    - depguard
+  settings:
+    depguard:
+      rules:
+        # Fence-A: internal/fetcher must not import internal/store directly.
+        # Fetchers return plain []RssItem; the caller (cmd/server/main.go) bridges
+        # the two layers. This prevents circular or layer-skipping imports.
+        fence-a:
+          files:
+            - "**/internal/fetcher/**"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/news-fetch/internal/store"
+              desc: "Fence-A: fetcher layer must not import store layer"
+
+        # Fence-B: internal/store must not import internal/fetcher.
+        # The store is a pure persistence adapter; it must not depend on fetchers.
+        fence-b:
+          files:
+            - "**/internal/store/**"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/news-fetch/internal/fetcher"
+              desc: "Fence-B: store layer must not import fetcher layer"
+
+        # Fence-C: ban CGO-backed SQLite driver.
+        # Only modernc.org/sqlite (pure-Go, CGO_ENABLED=0) is permitted.
+        # mattn/go-sqlite3 requires CGO and must never be introduced.
+        fence-c:
+          files:
+            - "**/*.go"
+          deny:
+            - pkg: "github.com/mattn/go-sqlite3"
+              desc: "Fence-C: use modernc.org/sqlite only (CGO_ENABLED=0 requirement)"
+            - pkg: "github.com/ncruces/go-sqlite3"
+              desc: "Fence-C: use modernc.org/sqlite only (CGO_ENABLED=0 requirement)"

@@ -4756,11 +4756,12 @@
             "depends": [
               "GFD-1"
             ],
-            "status": "READY",
+            "status": "DONE",
             "size": "L",
             "zone": "apps/news-fetch",
             "sprint": "GO-FLEET-DEPLOY",
             "created_at": "2026-06-10T20:31:32Z",
+            "completed_at": "2026-06-10T21:08:00Z",
             "acceptance_criteria": [
               "New go.mod at apps/news-fetch/ with modernc/sqlite",
               "Port VPS-proxied news fetch paths: vneconomy-rss, vnexpress-rss, newsapi, news-vps",
@@ -4771,6 +4772,7 @@
               "Unit test coverage for fetch paths",
               "go build ./... exit 0"
             ],
+            "note": "[developer DJ-GATE-1 2026-06-10T21:08Z] DONE — Go port complete. go build ./... exit 0; golangci-lint 0 issues (depguard 3 fences); go test ./... 21/21 PASS. modernc/sqlite CGO=0. schema: rag_analyses (id,created_at,level,source_url,source_title,source_type,published_at) matches mcp-server schema-news.ts contract. Node src/ retained. NEXT: GFD-10 (ops deploy).",
             "id": "GFD-9"
           },
           {
