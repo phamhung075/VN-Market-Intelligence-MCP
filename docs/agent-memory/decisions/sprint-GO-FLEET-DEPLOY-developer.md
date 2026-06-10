@@ -62,3 +62,20 @@ reference. Deletion deferred to post-deploy GFD-10 verification.
 
 GFD-9: READY → DONE (same commit as this DJ entry per DJ-GATE-1 rule).
 GFD-10 (ops deploy) is now unblocked.
+
+---
+
+## GFD-12-CODE — api-gateway NOT_DEPLOYED_SERVICES stale default cleared
+
+**Date:** 2026-06-11T00:45Z
+**Agent:** dev-api-gateway
+**Task-id:** GFD-12-CODE
+**Sprint:** GO-FLEET-DEPLOY
+
+### Root-cause
+
+`apps/api-gateway/cmd/server/main.go:44` hard-coded `"rag,ta,stock,kinh-dich,alert,news"` as the fallback default for `NOT_DEPLOYED_SERVICES`. `docker-compose.yml:280` also pinned the same 6-list as the explicit env value. Both caused the gateway `/health` to report all 6 now-live SSOT-graduated services as `not_deployed` even after commit a6e1e8f8 promoted them to deployed.
+
+### Fix
+
+Changed both to empty: default arg `""` in main.go, and `NOT_DEPLOYED_SERVICES=` (blank) in docker-compose.yml. The `splitCSV("")` call returns an empty slice — correct zero-exclusion behaviour. `go build ./...` exits 0.

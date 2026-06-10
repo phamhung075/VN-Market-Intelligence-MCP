@@ -41,7 +41,7 @@ func main() {
 		"api": mcpURL,
 	}
 
-	notDeployedRaw := getenv("NOT_DEPLOYED_SERVICES", "rag,ta,stock,kinh-dich,alert,news")
+	notDeployedRaw := getenv("NOT_DEPLOYED_SERVICES", "")
 	notDeployed := splitCSV(notDeployedRaw)
 
 	// Registry receives the same not-deployed set so that HandleProxy can
