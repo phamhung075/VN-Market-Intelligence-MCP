@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-222 · 2026-06-10 · BPE-QA-1 BCTC-PROSE-EXTRACT final E2E gate — CHANGES_REQUESTED
+
+Sprint: BCTC-PROSE-EXTRACT | Task: BPE-QA-1 | Verdict: CHANGES_REQUESTED | Report: reports/TASK_REPORT_BPE-QA-1.md
+
+Container: mcp-server Up 28 min (healthy), 8 peers intact, pdf-extractor unhealthy pre-existing. RAW-VERIFIED (no badge relay). A-PROSE PASS: page 12 text_content=4099 chars, has_pek:true, pek_coverage_gap:null, confidence:1.0 — original defect resolved. total_pages=46 everywhere (GAP-1 confirmed). Spot-check pp.16,23,30,40,46 all non-empty (794-5706 chars). pdf_extracted_text FPT: 46/46 pages present, all pages 11-22 + 36-46 present with len 1013-7449, conf=0.8. B-TABLE REGRESSION: bctc_layout_units for e8ea3df5 has 18 units total. ONLY 5 non-empty (all prose: schema_pages 12,15,16,18,30). 13 EMPTY (all table: schema_pages 1-6,7-9,10,11,13-14,20,21-28,29,31-34,35,36,37-41,42-46). Table pages 1-10 serve pek_coverage_gap:true + raw OCR fallback — no structured table content. Other reports (DGC/DIG/VNM/EIB/SHB/DHG/BSR/VEA) all empty=0 for their layout units — regression is FPT Q1-2026 specific. DJ-GATE-1: sprint-BCTC-PROSE-EXTRACT-qa.md § qa-S4. orch-state BPE-QA-1 READY→CHANGES_REQUESTED, BPE-DEV-5 created (READY).
+
 ## cycle-221 · 2026-06-10 · BPE-DEV-3 BCTC-PROSE-EXTRACT OCR coverage fixes gate — APPROVED
 
 Sprint: BCTC-PROSE-EXTRACT | Task: BPE-DEV-3 | Verdict: APPROVED | Commits: 5ea9f121 + ef9826d7
