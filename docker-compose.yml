@@ -276,6 +276,7 @@ services:
     - ALERT_URL=http://alert-engine:5006
     - NEWS_URL=http://news-fetch:5008
     - SYSTEM_MAP_PATH=/etc/system-map/system-map.json
+    - NOT_DEPLOYED_SERVICES=rag,ta,stock,kinh-dich,alert,news
     restart: unless-stopped
     healthcheck:
       test:
