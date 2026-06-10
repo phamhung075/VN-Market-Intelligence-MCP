@@ -4473,7 +4473,7 @@
             "kind": "sprint-task",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "READY",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/",
             "depends_on": [
@@ -4482,7 +4482,7 @@
             "created_at": "2026-06-09T23:06:19Z",
             "title": "GAP-1+GAP-3-code (mcp-server zone). GAP-1: bctcInspectHandler.ts total_pages COUNT(*)->MAX(page_number) at L537,L584,L627 + non-PEK path OFFSET pagination->point-lookup (WHERE filename=? AND page_number=?) at L650-659 (removes off-by-N). GAP-3 code: pdfOcrWorker.ts L270 skip-guard <10-><3 with logger.warn(page,charcount,reason); add DPI 200->300 escalation retry for low-output (<50 char) pages; per-skip observability log. RISK-OCR-2: add confidence<0.1 guard in inspector fallback to suppress junk. Add regression test. NOTE: completeness guard L200-213 freezes existing 35-row dataset -> BPE-OPS-1 must delete rows AFTER this deploys+rebuilds. Brief: docs/architecture-briefs/2026-06-09-bctc-prose-ocr-coverage-rootcause.md",
             "blockers": "BPE-SPIKE-1 (architect must confirm semantics + whether off-by-N exists before patch)",
-            "note": "Well-specified code bug raw-verified by PO; KEEP shipped commits, additive only. Unblocks after SPIKE-1 confirms.",
+            "note": "Well-specified code bug raw-verified by PO; KEEP shipped commits, additive only. Unblocks after SPIKE-1 confirms. | [dev-mcp-server 2026-06-10] BPE-DEV-3 IMPL DONE. commit 5ea9f121. 15 new tests GREEN. tsc clean. tools=157. sched=78. Container rebuilt (e50369dc). NEXT: qa.",
             "agent": "dev-mcp-server"
           },
           {

@@ -1,5 +1,22 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-10 · BPE-DEV-3 — DONE
+
+**Task:** BPE-DEV-3 | Sprint: BCTC-PROSE-EXTRACT | Size: S | DJ: dev-mcp-server-S28
+**Scope:** GAP-1 (total_pages COUNT→MAX + OFFSET→point-lookup) + GAP-3 code (skip-guard <10→<3, DPI escalation, RISK-OCR-2 confidence<0.1 guard).
+
+**GAP-1 (bctcInspectHandler.ts):** Three COUNT(*) sites changed to MAX(page_number). FPT: COUNT=35, MAX=46 — OCR range was capped at 35 pages. Non-PEK OFFSET pagination changed to point-lookup (WHERE page_number=?). Old: OFFSET 11 = row 11 = page 23 (wrong). New: WHERE page_number=12 = empty (correct — page absent).
+
+**GAP-3 (pdfOcrWorker.ts):** Skip threshold <10→<3. DPI escalation: low-output pages (<50 chars first-pass) retried at 300 DPI before skip. RISK-OCR-2: confidence<0.1 guard in handler coverage-gap fallback to suppress stray-char rows. All skip paths now emit logger.warn with page/chars/reason.
+
+**Results:** 15 new tests GREEN. 136/136 core tests pass. tsc clean. tools=157. sched=78. Commit 5ea9f121.
+**Rebuild:** container rebuilt (force-recreate). Image eb2f3da5→e50369dc. Health: healthy. Peers intact.
+**PIPELINE:** BPE-OPS-1 (delete 35 stale FPT rows + re-OCR) is next after rebuild. DO NOT re-OCR with old container.
+
+Zone health: bun test 0 fail (136/136 core), tsc clean, 157 tools intact, 78 cron.schedule | HEALTHY
+
+---
+
 ## 2026-06-09 · BATCH5-CI-RESIDUAL-INFRA — DONE
 
 **Task:** BATCH5-CI-RESIDUAL-INFRA | Sprint: CI-RED-RECONCILE | Size: M | DJ: dev-mcp-server-S25
