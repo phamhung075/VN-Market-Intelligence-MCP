@@ -2,6 +2,26 @@
 
 Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_engine.db (write)
 
+---
+
+### 2026-06-10 GFD-4 — Pre-deploy validation gate DONE (DJ-GATE-1)
+
+**Task:** GFD-4 sprint GO-FLEET-DEPLOY — pre-deploy production-readiness validation (gate check, no feature build).
+
+**Decision:** All 4 DoD items verified from existing code — zero code changes required.
+
+**DoD evidence:**
+- DoD-1 PASS: `/health` route registered in `pkg/interface/http/router.go` line 41 (`r.Get("/health", handleHealth)`). `handleHealth` returns HTTP 200 + `{"status":"ok","service":"alert-engine","port":5006}`. Live-verified: `go run ./cmd/server/main.go` + `curl -s http://localhost:5006/health` → HTTP_STATUS_CODE=200, body=`{"port":5006,"service":"alert-engine","status":"ok"}`.
+- DoD-2 PASS: `go.mod` requires `github.com/mattn/go-sqlite3 v1.14.24` (CGO). Dockerfile builder=`golang:1.22-alpine` with `apk add gcc musl-dev sqlite-dev` (musl libc + CGO deps present); runtime=`alpine:3.20` with `apk add sqlite-libs ca-certificates tzdata`. CGO_ENABLED=1 build command explicit. No CGO-link failure risk.
+- DoD-3 PASS: `golangci-lint run ./... → 0 issues` (exit 0). `.golangci.yml` has depguard enabled, v2 format, three fence rules fence-a/fence-b/fence-c enforcing DDD layer isolation.
+- DoD-4 PASS: `docker-compose.yml` alert-engine healthcheck: `test: [CMD, wget, -qO-, http://localhost:5006/health]`, interval=30s, timeout=10s, retries=3, start_period=10s.
+
+**Files checked (not changed):** `apps/alert-engine/cmd/server/main.go`, `apps/alert-engine/pkg/interface/http/router.go`, `apps/alert-engine/Dockerfile`, `apps/alert-engine/.golangci.yml`, `apps/alert-engine/go.mod`, `docker-compose.yml` (alert-engine section).
+
+**Commit:** same commit as GFD-4 status flip (DJ-GATE-1 constraint met).
+
+---
+
 > Archive: docs/archive/notebooks/dev-alert-engine-2026-05-21.md (pre-trim history)
 
 ## Working Memory

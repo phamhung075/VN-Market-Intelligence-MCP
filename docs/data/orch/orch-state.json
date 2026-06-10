@@ -4641,7 +4641,8 @@
             "depends": [
               "GFD-1"
             ],
-            "status": "READY",
+            "status": "DONE",
+            "completed_at": "2026-06-10T20:55:00Z",
             "size": "S",
             "zone": "apps/alert-engine",
             "sprint": "GO-FLEET-DEPLOY",
@@ -4652,6 +4653,7 @@
               "Dockerfile has musl/libc for CGO sqlite support",
               "docker-compose.yml healthcheck definition correct for port 5006"
             ],
+            "evidence": "DoD-1: GET /health → HTTP 200 {status:ok,service:alert-engine,port:5006} confirmed via go run ./cmd/server/main.go local test. DoD-2: go.mod uses mattn/go-sqlite3 v1.14.24 (CGO_ENABLED=1); Dockerfile builder=golang:1.22-alpine with apk add gcc musl-dev sqlite-dev; runtime=alpine:3.20 with sqlite-libs. CGO link coherent — musl libc present in both stages. DoD-3: golangci-lint run ./... exit 0, 0 issues, depguard enabled with fence-a/b/c rules in .golangci.yml. DoD-4: docker-compose.yml healthcheck test=[CMD,wget,-qO-,http://localhost:5006/health] interval=30s timeout=10s retries=3 start_period=10s. No code changes required — all gates already in place.",
             "id": "GFD-4"
           },
           {
