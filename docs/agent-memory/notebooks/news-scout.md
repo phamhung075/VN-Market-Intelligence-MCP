@@ -1,6 +1,18 @@
-- **Last updated:** 2026-06-10 04:08 UTC · **Sprint:** current · **Status:** 73 cycles complete (c73 off-hours +SHIPPED)
+- **Last updated:** 2026-06-10 05:07 UTC · **Sprint:** current · **Status:** 74 cycles complete (c74 sentiment +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c74 · 2026-06-10T05:07:00Z (sentiment, slot=news-scout-sentiment) — SHIPPED
+
+**Sentiment batch cycle (TUESDAY 05:07 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, MIXED BULLISH/BEARISH.** 20 articles fetched, 13 watchlist impacts (primary: PDR strategic real estate capex acceleration HCM projects bullish +10/10; secondary: CTG VietinBank Capital enters Petrosetco banking/tech bullish +8/10; tertiary: NVL price surge +6.88% intraday breakout bullish +7/10; quaternary: EVN deposits 150,000 tỷ utilities liquidity recovery POW +8/10 bullish; quinary: gold crash -1.74% safe-haven unwinding bearish -7/10). **4 signals fired (#5596–#5599): 4x urgent_news (PDR real estate capex +10.0, CTG banking capital +8.0, NVL price surge +7.0, POW utilities +8.0). Gold collapse #5594 from c73 suppressed (identical macro catalyst, TTL active).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN (trading hours 02:00–08:59 UTC). `get_macro_snapshot()` valid shape (vnIndex=1801.26 +8.21, oil NEUTRAL 92.06 (-0.54%), gold BULLISH 4204.9 (-1.74%), usdvnd BEARISH 26130 >25k, carry NEUTRAL 1.38pp, yield CHEAP +3.2pp). **Regime: NEUTRAL** (stable macro, slight risk-off tilt: gold -1.74%, equities stable +8.2 delta intraday). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +3.2pp.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: 1 prior entry (#5594 gold collapse, chain_catalyst, from c73 04:08 UTC, TTL=120min active). New candidates: 4x urgent_news (PDR, CTG, NVL, POW — all distinct event/stock pairs, no dedup match). Gold cascade #5594 suppressed (identical event, direction match, within TTL window). All 4 NEW urgent_news POSTED (no suppression).
+
+**Coverage-state sweep:** No stale tickers >48h; max staleness ~13h from c69 (2026-06-09T16:11:00Z). No sweep batch forced. Analyzed tickers: PDR, CTG, NVL, POW + all 41 watchlist covered via impact chain. Atomic write: tmp→rename.
+
+**Session Log:** log_agent_work #1313 opened/closed. 20 items, 13 impacts, 4 signals, NEUTRAL regime. Sentiment slot (MARKET OPEN).
 
 ## c73 · 2026-06-10T04:08:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
 
