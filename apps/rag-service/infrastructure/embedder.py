@@ -6,9 +6,12 @@ Model: paraphrase-multilingual-MiniLM-L12-v2
   → 384-dim vectors, supports Vietnamese / French / English
   → ~400MB, auto-downloads on first run to embedding_cache_dir
 
-Singleton pattern: model loaded once at startup, reused for all requests.
+GFD-13: lazy-load singleton — model is NOT loaded at startup.
+It loads on the first real embed() / embed_batch() call via _ensure_model_loaded().
+Container starts at ~150 MiB; warm RSS spikes to ~600-700 MiB on first embed.
 """
 
+import asyncio
 import logging
 from typing import Optional
 
@@ -24,21 +27,46 @@ class SentenceTransformersEmbedder(EmbedderPort):
     """
     Production embedder using sentence-transformers.
 
-    Call initialize() once at startup (or it's done lazily on first embed call).
-    Thread-safe: sentence-transformers encode() is reentrant.
+    GFD-13: lazy-load — model loads on first embed call, not at startup.
+    Thread-safe: asyncio.Lock guards the one-time load path; encode() is reentrant.
     """
 
     def __init__(self, model_name: str, cache_dir: str) -> None:
         self._model_name = model_name
         self._cache_dir = cache_dir
-        self._model = None  # lazy-loaded
+        self._model = None          # lazy-loaded — None until first embed call
+        self._load_lock = None      # asyncio.Lock — created lazily inside first async call
+        self._load_error: Optional[Exception] = None  # set if model load fails
 
     async def initialize(self) -> None:
         """
-        Eagerly load the model.
-        Call from FastAPI lifespan so first request isn't slow.
+        Lazy-load: model loads on first embed call, not at startup.
+        This method is intentionally a no-op (interface contract preserved for app_factory.py).
+        GFD-13: eager startup load removed — deferred to first _ensure_model_loaded() call.
         """
-        self._load_model()
+        logger.info(
+            "rag-service lazy-load enabled — embedding model will load on first embed call"
+        )
+
+    async def _ensure_model_loaded(self) -> None:
+        """Lazy-init the model exactly once. Thread-safe via asyncio.Lock."""
+        if self._model is not None:       # fast path — already loaded
+            return
+        if self._load_error is not None:  # previous load attempt failed — surface error
+            raise RuntimeError(
+                f"embedding model failed to load: {self._load_error}"
+            ) from self._load_error
+        # Lazy-init the lock (must be created inside a running event loop)
+        if self._load_lock is None:
+            self._load_lock = asyncio.Lock()
+        async with self._load_lock:
+            if self._model is not None:   # double-check inside lock
+                return
+            try:
+                await asyncio.to_thread(self._load_model)
+            except Exception as exc:
+                self._load_error = exc
+                raise
 
     def _load_model(self):
         if self._model is not None:
@@ -72,6 +100,7 @@ class SentenceTransformersEmbedder(EmbedderPort):
 
     async def embed(self, text: str) -> EmbeddingVector:
         """Embed a single text. Uses batch encode internally."""
+        await self._ensure_model_loaded()
         results = self._raw_embed([text])
         return EmbeddingVector(dims=_DIMS, values=results[0])
 
@@ -79,5 +108,6 @@ class SentenceTransformersEmbedder(EmbedderPort):
         """Embed multiple texts in one batch (more efficient)."""
         if not texts:
             return []
+        await self._ensure_model_loaded()
         results = self._raw_embed(texts)
         return [EmbeddingVector(dims=_DIMS, values=v) for v in results]

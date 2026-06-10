@@ -157,7 +157,7 @@ services:
           memory: 768m
           cpus: '1.0'
         reservations:
-          memory: 512m
+          memory: 256m
           cpus: '0.5'
   technical-analysis:
     build:

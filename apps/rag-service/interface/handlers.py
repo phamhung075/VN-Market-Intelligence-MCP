@@ -42,11 +42,14 @@ def register_routes(
 
     @router.get("/embed/health")
     async def embed_health() -> Response:
-        """Capability probe — verifies sentence-transformer model + LanceDB index.
+        """Capability probe — cold/warm state reporting. NEVER triggers model load.
 
-        GFD-7: read-only, non-blocking.
-        Returns 200 {"status":"ok","model_loaded":true,"index_size":<int>,"model_name":"<str>"}
-        Returns 503 {"status":"error","reason":"<str>"} on any failure.
+        Cold (model not loaded yet): 200 {"status":"ok","model_loaded":false,"state":"cold",...}
+        Warm (model loaded):         200 {"status":"ok","model_loaded":true,"state":"warm",...}
+        503 ONLY on genuine failure (LanceDB unreachable, or model load previously failed).
+
+        GFD-13: cold state is NORMAL — do NOT return 503 merely because model is not loaded.
+        This handler is PURELY PASSIVE — it reads _model but NEVER calls _ensure_model_loaded().
         """
         try:
             if embedder is None:
@@ -56,30 +59,49 @@ def register_routes(
                     media_type="application/json",
                 )
 
-            # Test 1: model loaded — _model is None until initialize()/first embed call.
-            model_obj = getattr(embedder, "_model", None)
-            if model_obj is None:
-                return Response(
-                    status_code=503,
-                    content=json.dumps({"status": "error", "reason": "model not loaded"}),
-                    media_type="application/json",
-                )
-
-            # 1-token encode smoke test (synchronous, non-blocking for a single token).
-            model_obj.encode("a", convert_to_tensor=False, show_progress_bar=False)
-
-            # Test 2: LanceDB row count (0 acceptable on fresh deploy).
+            # LanceDB index_size — queryable without the model
             index_size = 0
             if vector_store is not None:
                 index_size = await vector_store.count()
 
             model_name: str = getattr(embedder, "_model_name", "unknown")
+            model_obj = getattr(embedder, "_model", None)
+            load_error = getattr(embedder, "_load_error", None)
+
+            # Surface a previous failed load attempt as 503
+            if load_error is not None:
+                return Response(
+                    status_code=503,
+                    content=json.dumps({
+                        "status": "error",
+                        "reason": f"model load failed: {load_error}",
+                    }),
+                    media_type="application/json",
+                )
+
+            if model_obj is None:
+                # Cold state — normal, not an error
+                return Response(
+                    status_code=200,
+                    content=json.dumps({
+                        "status": "ok",
+                        "model_loaded": False,
+                        "state": "cold",
+                        "index_size": index_size,
+                        "model_name": model_name,
+                    }),
+                    media_type="application/json",
+                )
+
+            # Warm state — run 1-token smoke test to confirm model is callable
+            model_obj.encode("a", convert_to_tensor=False, show_progress_bar=False)
 
             return Response(
                 status_code=200,
                 content=json.dumps({
                     "status": "ok",
                     "model_loaded": True,
+                    "state": "warm",
                     "index_size": index_size,
                     "model_name": model_name,
                 }),
