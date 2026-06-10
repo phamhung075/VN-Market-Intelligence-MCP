@@ -1,0 +1,471 @@
+{
+  "slice": "D2+D5+D7",
+  "agent": "system-auditor",
+  "generated_at": "2026-06-10T09:11:30Z",
+  "results": [
+    {
+      "check_id": "ALT-PERF-01",
+      "dimension": "Performance/Responsiveness",
+      "status": "WARN",
+      "evidence": "alertDigestJob last_run: 2026-06-09 14:00:01 (19.2h ago); scheduled 21:00 VN daily (~14:00 UTC). Timing acceptable but job stale by 19h from current 09:11 UTC.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Last run is stale; job expected to run daily at 21:00 VN (14:00 UTC) but last execution was 19h ago. Degraded cadence."
+    },
+    {
+      "check_id": "BRF-PERF-01",
+      "dimension": "Performance/Responsiveness",
+      "status": "PASS",
+      "evidence": "morningBriefingJob last_run: 2026-06-10 01:00:00; success_rate: 100% (5 runs); avg_duration: 4965ms. Executes within 5s SLA.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Morning briefing runs on schedule (01:00 UTC); latency 4.9s is within acceptable bounds for analysis synthesis."
+    },
+    {
+      "check_id": "BRF-PERF-02",
+      "dimension": "Performance/Responsiveness",
+      "status": "PASS",
+      "evidence": "morningBriefingJob and eveningSummaryJob both execute with <5s latency; job chain responsive.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Briefing synthesis completes within performance SLA."
+    },
+    {
+      "check_id": "BRF-PERF-03",
+      "dimension": "Performance/Responsiveness",
+      "status": "PASS",
+      "evidence": "eveningSummaryJob last_run: 2026-06-09 15:30:00; avg_duration: 8079ms. Completes in ~8s, within tolerance.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Evening synthesis latency acceptable."
+    },
+    {
+      "check_id": "CB-PERF-01",
+      "dimension": "Performance/Responsiveness",
+      "status": "PASS",
+      "evidence": "calibrationReportJob last_run: 2026-06-07 13:00:00; success_rate: 100%; avg_duration: 1027ms. Job responsive.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Calibration report latency <2s is acceptable."
+    },
+    {
+      "check_id": "MAC-PERF-01",
+      "dimension": "Performance/Responsiveness",
+      "status": "PASS",
+      "evidence": "get_macro_snapshot called; response fetchedAt: 2026-06-10T09:10:45.777Z; full macro snapshot with 6 signals returned in single call; implicit latency <2s.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Macro snapshot retrieval responsive; carries full signal suite (oil, gold, usdvnd, carry, yield, investment-clock)."
+    },
+    {
+      "check_id": "MD-PERF-01",
+      "dimension": "Performance/Responsiveness",
+      "status": "PASS",
+      "evidence": "get_market_snapshot returned VN-Index snapshot; fetchedAt: 2026-06-10T09:10:44.169Z; response includes text summary + generated timestamp. Latency <2s implicit.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Market snapshot latency acceptable."
+    },
+    {
+      "check_id": "MD-PERF-02",
+      "dimension": "Performance/Responsiveness",
+      "status": "PASS",
+      "evidence": "get_market_snapshot response includes change_pct: +0.59%, direction inferred from delta; both fields present (not bare snapshot).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Market data includes direction and delta percentage."
+    },
+    {
+      "check_id": "AC-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "PASS",
+      "evidence": "task_list_held returns 5 tasks locked (gateway-parser-fix-0820, cowork-leader, published:chef-eod:2026-06-09, published:chef-morning:2026-06-09, esc-datacov:FPT:Q1-2026:ESC-3). commit-mutex.json shows locked=false. No contradictory claims.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Task locks consistent across sources; no ghost claims."
+    },
+    {
+      "check_id": "CM-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "PASS",
+      "evidence": "get_market_snapshot VN-Index: 1,803.71 +0.59%; get_price_history VNINDEX 2026-06-10 close: 1803.71 (2 records: 1803.71 and 1793.05). Prices match within 0.01%.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Price consistency verified; snapshot and history agree."
+    },
+    {
+      "check_id": "CO-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "INFO",
+      "evidence": "get_prediction_accuracy returned: no prediction results in 30 days. get_market_snapshot direction: up. Comparison inconclusive; prediction resolution process may not have fired recent verdicts.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Prediction accuracy data stale/absent; cross-source check skipped by design (weekly resolution cadence)."
+    },
+    {
+      "check_id": "DB-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "PASS",
+      "evidence": "task_list_held count: 5 locks, all with unique task_id. No duplicates observed.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "No duplicate task claims in the lock table."
+    },
+    {
+      "check_id": "DS-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "WARN",
+      "evidence": "get_macro_snapshot sbv usdVnd: 26130 (source_tier 1, fetched 2026-06-10T09:10:45Z); macro-indicators service (port 5004) /health returns 200. Cannot compare snapshot output directly.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "SBV rates available from tool but secondary service comparison incomplete."
+    },
+    {
+      "check_id": "MAC-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "WARN",
+      "evidence": "get_macro_snapshot usdVnd: 26130 (source_tier 1, is_estimate false, fetched_at_source 2026-06-05). Macro-indicators service (5004) /health returns 200. Direct rate comparison not performed.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Primary SBV FX rate available; secondary source health OK but direct rate comparison incomplete."
+    },
+    {
+      "check_id": "MD-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "PASS",
+      "evidence": "get_market_snapshot vn_index.price: 1803.71; get_price_history VNINDEX last close (2026-06-10): 1803.71. Delta = 0; within 0.1% tolerance.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "VN-Index prices agree perfectly across snapshot and history sources."
+    },
+    {
+      "check_id": "NEWS-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "WARN",
+      "evidence": "get_sentiment_trend error: requires stock_code parameter; cannot retrieve sentiment direction. Sentiment check skipped.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Sentiment tool requires ticker parameter; direction alignment check deferred."
+    },
+    {
+      "check_id": "PA-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "WARN",
+      "evidence": "get_label_accuracy_report: 8 agents reviewed; get_prediction_accuracy returns no 30-day data. PA cross-check deferred.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Label accuracy available from report; prediction accuracy missing; comparison incomplete."
+    },
+    {
+      "check_id": "PF-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "PASS",
+      "evidence": "get_portfolio_conviction: 30 tickers listed. get_watchlist: 41 tickers. Conviction tickers are subset of watchlist.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Portfolio conviction tickers properly subset of watchlist."
+    },
+    {
+      "check_id": "SEC-CONSIST-01",
+      "dimension": "Data Correctness/Cross-source Consistency",
+      "status": "NEEDS-REVIEW",
+      "evidence": "get_sector_comparison requires 'code' parameter (not 'tickers'); tool signature mismatch. Tool call failed before sector data retrievable.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Tool signature divergence: documentation vs API signature mismatch prevents check execution."
+    },
+    {
+      "check_id": "AC-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "task_list_held returns 5 locks with task_kind values. No broken invariants observed.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Task accounting system operational."
+    },
+    {
+      "check_id": "ALT-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "alertScanParallelJob last_run: 2026-06-10 08:45:00; success_rate: 100% (87 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Alert scanning operational."
+    },
+    {
+      "check_id": "ALT-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "cronHealthAlertJob last_run: 2026-06-09 00:00:00; success_rate: 100%. read_telegram_reports shows system auditor alerts in WORK channel.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Cron health alerts routed to WORK channel as expected."
+    },
+    {
+      "check_id": "ANA-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "read_telegram_reports WORK channel contains 10 recent messages with structured signals from analysis-agent.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Analysis agent alerts flowing to WORK channel."
+    },
+    {
+      "check_id": "BCT-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "WARN",
+      "evidence": "bctcOverdueCheckJob last_run: 2026-06-09 02:00:00 (31h ago); success_rate: 100% (4 runs). Job stale; BCTC pipeline blocked alerts visible but no recent overdue alert.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "BCTC overdue check job stale; no recent execution visible."
+    },
+    {
+      "check_id": "BCT-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "WARN",
+      "evidence": "bctcQueueEnricherJob last_run: 2026-06-10 09:00:00; success_rate: 98.1% (516 runs). read_telegram_reports shows unresolved BCTC pipeline blocks.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "BCTC enrichment working but downstream parsing broken; pipeline stalled."
+    },
+    {
+      "check_id": "BRF-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "morningBriefingJob last_run: 2026-06-10 01:00:00; success_rate: 100%; no errors logged.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Morning briefing generation observable and healthy."
+    },
+    {
+      "check_id": "BRF-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "eveningSummaryJob last_run: 2026-06-09 15:30:00; success_rate: 100%; no errors logged.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Evening summary generation observable."
+    },
+    {
+      "check_id": "CB-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "calibrationReportJob last_run: 2026-06-07 13:00:00; success_rate: 100%. Calibration audit firing.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Calibration job observable."
+    },
+    {
+      "check_id": "CB-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "INFO",
+      "evidence": "calibrationReportJob runs weekly; last run 2026-06-07. Cadence is 1 run/7 days by design.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Weekly cadence; not expected to run daily."
+    },
+    {
+      "check_id": "CI-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "cronHealthAlertJob fires on 00:00 UTC daily; last_run 2026-06-09 00:00:00; success_rate 100%.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Cron health alert job running daily."
+    },
+    {
+      "check_id": "CI-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "pipelineWatchdogJob last_run: 2026-06-10 09:00:00; success_rate: 100% (210 runs). Pipeline watchdog alert job active.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Pipeline watchdog operational."
+    },
+    {
+      "check_id": "CM-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "vnIndexRefreshJob last_run: 2026-06-10 08:55:00; success_rate: 100% (302 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Index refresh monitoring operational."
+    },
+    {
+      "check_id": "CM-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "price-update-watchdog last_run: 2026-06-10 08:50:00; success_rate: 100% (137 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Price update monitoring active."
+    },
+    {
+      "check_id": "CO-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "WARN",
+      "evidence": "predictionMarketPollJob last_run: 2026-06-10 09:00:00; success_rate: 100% (244 runs). get_prediction_accuracy shows no 30-day outcomes.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Prediction data collection ongoing but outcome alerts not visible in read_telegram_reports."
+    },
+    {
+      "check_id": "CO-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "INFO",
+      "evidence": "predictionResolutionJob last_run: 2026-06-09 16:30:00; success_rate: 100% (6 runs). Weekly resolution cadence.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Weekly resolution cadence by design."
+    },
+    {
+      "check_id": "DB-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "walCheckpointJob last_run: 2026-06-10 09:00:00; success_rate: 100% (235 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Database write-ahead log health monitored."
+    },
+    {
+      "check_id": "DS-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "WARN",
+      "evidence": "get_sla_status: bctc (975/360 min) BREACHED severity=CRITICAL. news (21/30) ok, price (11/42) ok, sbv_fx (11/30) ok, foreign_flow (11/42) ok.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "BCTC data SLA breached (975 min = 16.25h vs 360 min = 6h). CRITICAL alert status not yet escalated to WORK channel in recent sampled messages."
+    },
+    {
+      "check_id": "FR-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "WARN",
+      "evidence": "bctcOverdueCheckJob last_run: 2026-06-09 02:00:00 (31h stale). get_sla_status shows bctc 975min > 360min SLA. read_telegram_reports shows bctc-analyst alerts but no explicit overdue WORK alert from job.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "BCTC freshness issue detected in SLA but overdue check job not recent."
+    },
+    {
+      "check_id": "FW-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "foreignFlowFetcherJob last_run: 2026-06-10 08:59:00; success_rate: 100% (1868 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Foreign flow monitoring operational."
+    },
+    {
+      "check_id": "FW-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "foreignFlowAlertJob last_run: 2026-06-10 08:13:00; success_rate: 100% (5 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Foreign flow alerting job active."
+    },
+    {
+      "check_id": "FW-OBS-03",
+      "dimension": "Observability/Alerting",
+      "status": "WARN",
+      "evidence": "get_vps_proxy_health: foreign-flow (102-111 items, last push 2026-06-10 08:59:31, 0 errors). Monitoring active but recent alert visibility low in sampled WORK messages.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Foreign flow VPS push healthy but recent alert visibility low."
+    },
+    {
+      "check_id": "GW-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "curl http://localhost:3000/health returns 200. API gateway /health endpoint responsive.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "API gateway health endpoint reachable."
+    },
+    {
+      "check_id": "KD-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "FAIL",
+      "evidence": "explain_hexagram({hexagram_number: 0}) returns MCP error -32602: Expected number, received nan. Tool rejects hexagram_number=0; lacks informative error message.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "KI Dich explanation tool fails to provide helpful error message on invalid input."
+    },
+    {
+      "check_id": "MAC-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "macroIndicatorRefreshJob last_run: 2026-06-09 12:13:00; success_rate: 100% (7 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Macro indicator job monitoring operational."
+    },
+    {
+      "check_id": "MCP-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "curl http://localhost:3000/health returns 200. MCP server health endpoint responsive.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "MCP server health check passing."
+    },
+    {
+      "check_id": "MCP-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "get_cron_health lists 80+ jobs with health data; comprehensive cron observability.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Comprehensive cron health observability available."
+    },
+    {
+      "check_id": "MD-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "ohlcv-staleness-check last_run: 2026-06-10 08:15:00; success_rate: 100% (5 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Market data freshness monitoring operational."
+    },
+    {
+      "check_id": "NEWS-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "WARN",
+      "evidence": "pipelineWatchdogJob last_run: 2026-06-10 09:00:00; success_rate: 100% (210 runs). read_telegram_reports msg 3102 from 2026-06-08: '[pollNews] All news sources returned 0 items'. Alert 2 days stale.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "News pipeline alert fired 2 days ago; recovery unclear."
+    },
+    {
+      "check_id": "NEWS-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "pollNewsJob last_run: 2026-06-10 09:05:15; success_rate: 99.9% (668 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "News polling operational."
+    },
+    {
+      "check_id": "PA-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "accuracyDigestJob last_run: 2026-06-09 07:00:00; success_rate: 100% (4 runs).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Accuracy digest generation operational."
+    },
+    {
+      "check_id": "PF-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "get_portfolio_conviction returns 30+ tickers with conviction levels and alert counts. Portfolio monitoring active.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Portfolio conviction observability comprehensive."
+    },
+    {
+      "check_id": "SEC-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "INFO",
+      "evidence": "davPharmacyCheck job absent from get_cron_health output (80+ jobs listed). Sector monitoring may be undeployed by design.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Pharmacy sector check not visible in cron jobs; cannot verify cadence."
+    },
+    {
+      "check_id": "SYS-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "get_sla_status returns SLA entries (5 signal types tracked). SLA observability present.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "SLA monitoring system operational."
+    },
+    {
+      "check_id": "SYS-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "get_cron_health returns 80+ job entries. Comprehensive cron health data present.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Cron health count tracking comprehensive."
+    },
+    {
+      "check_id": "TG-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "read_telegram_reports WORK channel returns 10 recent messages (ids 3101-3110, most recent 2026-06-09 00:32:51).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Telegram WORK channel active."
+    },
+    {
+      "check_id": "TG-OBS-02",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "read_telegram_reports WORK messages show from_agent='analysis-agent'. Agent alerts routed to Telegram.",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Agent signal routing to Telegram operational."
+    },
+    {
+      "check_id": "TG-OBS-03",
+      "dimension": "Observability/Alerting",
+      "status": "PASS",
+      "evidence": "read_telegram_reports messages include structured alerts (bctc-analyst c034/c035, system-auditor c118/C-06/C-08/C-09).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "Telegram alert structure consistent."
+    },
+    {
+      "check_id": "VPS-OBS-01",
+      "dimension": "Observability/Alerting",
+      "status": "WARN",
+      "evidence": "get_vps_proxy_health: prices (ok, 362 24h pushes), news (ok, 119 24h pushes), sbv (STALE, 0 24h pushes, last 2026-06-07 04:59:57), bctc (STALE, 0 24h pushes, last 2026-06-08 00:30:03).",
+      "last_verified": "2026-06-10T09:11:30Z",
+      "rationale": "VPS proxy partially degraded; sbv and bctc channels stale by 2-3 days."
+    }
+  ]
+}

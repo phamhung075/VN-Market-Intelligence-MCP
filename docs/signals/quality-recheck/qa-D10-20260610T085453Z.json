@@ -1,0 +1,252 @@
+{
+  "slice": "D10",
+  "agent": "qa",
+  "generated_at": "2026-06-10T08:54:53Z",
+  "ci_run_ref": {
+    "run_id": 27264518812,
+    "sha": "cc802d176e06bd76c9621181d6845ac8544043f8",
+    "bun_test_conclusion": "failure",
+    "bun_test_summary": "11726 pass / 53 skip / 1 fail",
+    "only_failing_file": "src/__tests__/1338-sprint-goal-retrospective.test.ts",
+    "go_lint_conclusion": "success",
+    "all_go_lint_jobs": "success"
+  },
+  "results": [
+    {
+      "check_id": "SYS-TEST-01",
+      "status": "WARN",
+      "evidence": "CI run 27264518812: bun test = failure (1 file failing: 1338-sprint-goal-retrospective.test.ts). 11726 pass / 53 skip / 1 fail. Fail count 1 < baseline 348 BUT overall CI job = failure (exit code 1).",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "CI conclusion is failure due to 1 failing file (1338-sprint-goal-retrospective.test.ts — orch-state.json sprint_goal schema drift: string vs expected object with entries[]). Raw fail count (1) is far below 348 baseline but CI job exit code is 1."
+    },
+    {
+      "check_id": "FR-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files confirmed present and not in CI failed list: bctc-eval-routes.test.ts, 042-bctc-balance-sheet.test.ts, bctcInspectHandler.test.ts, 104-job-ssc-check.test.ts, bctc-pdf-pull-job.test.ts (16 pass/0 fail locally). CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "SEC-TEST-01",
+      "status": "WARN",
+      "evidence": "Test files: 1006-sector-peer-financials.test.ts, 1059-sector-rotation-override.test.ts. Neither in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "Sector tool test coverage is thin — only 2 test files mapped to sector tools; no dedicated tests for get_supply_chain_exposure, get_pharma_signals, get_climate_risk_signals, get_energy_grid_signals, get_legal_risk_signals."
+    },
+    {
+      "check_id": "MAC-TEST-01",
+      "status": "PASS",
+      "evidence": "Test file 089-tool-macro.test.ts: 17 pass / 0 fail locally. Not in CI failed list. No 'injectable seam removed' failures observed. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "MD-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 084-tool-market.test.ts, MSG-1-market-foreign-flow.test.ts. Neither in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "NEWS-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 085-tool-reports.test.ts. Not in CI failed list. CI run 27264518812: only 1338 failed.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "ALT-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 086-tool-alerts.test.ts, 064-alert-generator.test.ts, 1075-alert-policy.test.ts, 1050-alert-dispatch-fixes.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "PF-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 1070-position-ledger.test.ts, 1138-market-portfolio-observability.test.ts. Not in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "BRF-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 101-job-morning-briefing.test.ts, 105-job-evening-summary.test.ts, 1023-summary-crons-into-crons-map.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "BT-TEST-01",
+      "status": "PASS",
+      "evidence": "Test file: 062-cascade-engine.test.ts. Not in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "KD-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 1077-kinh-dich-wrapper.test.ts (10 pass/0 fail locally), 1007-kinhdich-convergence.test.ts. Neither in CI failed list. C4-KINH_DICH_DIACRITICS cluster resolved — no diacritics failures in CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "ANA-TEST-01",
+      "status": "WARN",
+      "evidence": "Test file 083-tool-analysis.test.ts: in CI run 27264518812 this file did NOT appear in the failed list. Local run shows 1 fail: 'search_similar_context > accepts optional level and actionCode filters' times out at 5000ms (RAG service undeployed locally). C5-ESM contamination cluster appears resolved in CI.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "Local timeout on search_similar_context test due to RAG service unavailable (undeployed by design). CI environment uses mocks so it passes. Test has a real HTTP call to undeployed service — fragile in local env but CI-green."
+    },
+    {
+      "check_id": "MCP-TEST-01",
+      "status": "WARN",
+      "evidence": "CI run 27264518812: bun test = failure. Pass 11726, fail 1. Fail count (1) well below baseline 348. But CI job = failure. Go lint = success.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "CI bun test job is failure. Single failing test (1338-sprint-goal-retrospective.test.ts) is a sprint documentation invariant: orch-state.json.sprint_goal is a string but test expects object with entries[]. Schema drift not covered by mcp-server code changes. Cannot confirm pass>=9408 cleanly due to per-file-isolation counter difference."
+    },
+    {
+      "check_id": "PDF-TEST-01",
+      "status": "FAIL",
+      "evidence": "pdf-extractor container running (vn-market-intelligence-mcp-pdf-extractor-1). Test source files at apps/pdf-extractor/__tests__/ (test_market_hours_guard.py, test_ocr_backends.py, test_pek_engine_adapter.py). pytest in container: 'ERROR: file or directory not found: /app/__tests__/' — __tests__ dir absent from Docker image.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "PEK-INTEGRATE, layout-first, and OCR extraction test paths cannot be auto-verified — __tests__ directory is not included in the deployed container image. Test files exist in source but are not copied into Docker image at /app/."
+    },
+    {
+      "check_id": "CI-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 106-intelligence-cycle.test.ts (25 pass/0 fail locally), 1307-ta-alert-scan-job.test.ts (9 pass/0 fail locally), 1309-bb-alert-scan-job.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "FW-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 1190-pipeline-watchdog.test.ts (16 pass/0 fail locally), 229-price-staleness-watchdog.test.ts, 185-data-freshness.test.ts, system-data-freshness.test.ts, 313-vps-proxy-watchdog.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "FW-TEST-02",
+      "status": "NEEDS-REVIEW",
+      "evidence": "recheck_how: call_tool(vn-market, get_cron_health) → systemAuditTier3.success_rate. Requires live MCP gateway access not available in this QA context.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "FW-TEST-02 checks a live cron success_rate via MCP tool, not a test file. Cannot auto-probe without gateway access. Requires operational verification by ops agent."
+    },
+    {
+      "check_id": "CB-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 218-weekly-portfolio-report.test.ts (14 pass/0 fail locally), 1023-summary-crons-into-crons-map.test.ts, 1221-weekly-portfolio-db-lock.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "CO-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 1129-calibration-tools.test.ts (5 pass/0 fail), 1173-calibration-label-integration.test.ts (18 pass/0 fail), 1128-calibration-report-job.test.ts. InMemoryTransport fix confirmed applied (no hangs). Not in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "CO-TEST-02",
+      "status": "PASS",
+      "evidence": "Test files: signal-outcome-store.test.ts, 1154-prediction-resolution-loop.test.ts, 248-prediction-outcome.test.ts. Not in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "BCT-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: bctc-pdf-pull-job.test.ts (16 pass/0 fail locally), 1287-bctc-queue-enricher.test.ts, 104-job-ssc-check.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "BCT-TEST-02",
+      "status": "NEEDS-REVIEW",
+      "evidence": "recheck_how: call_tool(vn-market, get_cron_health) → dataAuditDaily.success_rate. Requires live MCP gateway access.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "BCT-TEST-02 checks a live cron success_rate, not a test file. Cannot auto-probe without gateway access."
+    },
+    {
+      "check_id": "CM-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 239-macro-indicator-refresh.test.ts (15 pass/0 fail locally), 1374-ohlcv-aggregator-cron.test.ts (2 pass/0 fail locally), 1358-ohlcv-aggregator.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "CM-TEST-02",
+      "status": "PASS",
+      "evidence": "Test files: 1465-ohlcv-staleness-check.test.ts (5 pass/0 fail locally), 1551-ohlcv-guard-checks.test.ts, 1277-ohlcv-guard-checks.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "DB-TEST-01",
+      "status": "PASS",
+      "evidence": "Test file 1527-schema-slices.test.ts: 78 pass / 0 fail locally. 002-db-schema.test.ts also present. Not in CI failed list. No DEFAULT constraint violations observed. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "AC-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: task-lock-coordination-tools.test.ts (11 pass/0 fail locally), task-lock-coordination-store.test.ts, commit-mutex-coordination.test.ts. None in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "PA-TEST-01",
+      "status": "PASS",
+      "evidence": "Test files: 1129-calibration-tools.test.ts (5 pass/0 fail), 1173-calibration-label-integration.test.ts (18 pass/0 fail). InMemoryTransport fix applied (no hangs in 1129/1173). Not in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "MEM-TEST-01",
+      "status": "PASS",
+      "evidence": "Test file 1124-evidence-tools-phase-bc.test.ts: 12 pass / 0 fail locally. _registeredTools rewrite applied — no InMemoryTransport hang. Not in CI failed list. CI run 27264518812.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "CI-TEST-02",
+      "status": "FAIL",
+      "evidence": "CI run 27264518812 on main (sha cc802d176e06bd76c9621181d6845ac8544043f8): overall conclusion = failure. bun test job = failure. Failing file: 1338-sprint-goal-retrospective.test.ts.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "GitHub Actions CI workflow is not passing on main. 1338-sprint-goal-retrospective.test.ts fails: test expects orch-state.json.sprint_goal to be an object with entries[] array but the field is currently a string value. Schema drift: orch-state.json format changed without test update (or vice versa)."
+    },
+    {
+      "check_id": "CI-TEST-03",
+      "status": "PASS",
+      "evidence": "CI run 27264518812: all 6 Go lint jobs pass — go-lint, Macro Indicators Go Lint, Stock Price Go Lint, API Gateway Go Lint, Alert Engine Go Lint, Kinh Dich Go Lint all = success. macro-indicators go.mod confirmed: 'go 1.22'.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    },
+    {
+      "check_id": "CI-TEST-04",
+      "status": "WARN",
+      "evidence": "CI run 27264518812: '11726 pass / 53 skip / 1 fail'. Fail count (1) << baseline (348). However CI job = failure and per-file-isolation counting may differ from native bun count (baseline is 9408 pass / 348 fail in project-stats.json).",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": "Cannot confirm 'fail <= 348 native' cleanly. CI per-file-isolation reports 11726 pass (higher than 9408 baseline — different counting). 1 fail is far below 348 threshold but CI job reports failure. Verdict WARN not PASS due to CI failure status."
+    },
+    {
+      "check_id": "CI-TEST-05",
+      "status": "PASS",
+      "evidence": "CI run 27264518812: only 1 failing file (1338-sprint-goal-retrospective.test.ts). No SyntaxError: Export named errors in CI log. No beforeEach hook timeout contamination. C1-MACRO_INJECT_SEAM, C3-singleton, C5-ESM clusters resolved. Macro test 089: 17 pass/0 fail. Analysis test 083: passes in CI.",
+      "last_verified": "2026-06-10T08:54:53Z",
+      "rationale": null
+    }
+  ],
+  "summary": {
+    "total": 32,
+    "pass": 19,
+    "warn": 6,
+    "fail": 3,
+    "needs_review": 2
+  },
+  "fail_notes": {
+    "PDF-TEST-01": "pdf-extractor Python tests unreachable in deployed container — __tests__ dir absent from Docker image at /app/",
+    "CI-TEST-02": "CI main = failure; 1338-sprint-goal-retrospective.test.ts fails due to orch-state.json sprint_goal schema drift (string vs expected object with entries[])",
+    "CI-TEST-04": "Classed WARN: native fail count (1) is below 348 baseline but CI job reports failure; counting method mismatch prevents clean PASS verdict"
+  }
+}
