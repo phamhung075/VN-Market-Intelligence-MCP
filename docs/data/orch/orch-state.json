@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-10T18:08:09Z",
+    "_updated_at": "2026-06-10T20:31:32Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -4566,6 +4566,32 @@
         "retriage_note": "RE-FLOW re-diagnosis 2026-06-09: 2 shipped commits (32e9571a producer prose-stitch QA-GREEN, 338ec4c8 serving QA-GREEN, mcp-server live image eb2f3da5becd) are correct-but-INSUFFICIENT — KEEP, build on top. Stop-hook goal STILL ACTIVE (FPT Q1 page 12 serves 'No OCR text'). Root moved upstream TWICE (prose-stitch->serving-filter->OCR-coverage). Architect BLOCKER-2 ruling ('46-vs-35 gap benign/irrelevant, no action') now CONTRADICTED by raw evidence — pages 11-15+17-22 have NO pdf_extracted_text rows yet page 12 has VISIBLE rendered prose. PO raw-verified: GAP-1 handler L538/L585 total_pages=COUNT(*) (=35) must be MAX(page_number) (=46); pdfOcrWorker L254 iterates 1..min(46,80) so OCR worker is NOT range-truncated -> GAP-3 absence is genuine OCR-skip/image-page/misalignment, NOT benign. Recurring-bug escalation -> mandatory architect SPIKE before any patch.",
         "closed_at": "2026-06-10T04:35:51Z",
         "note": "CLOSED 2026-06-10 by PO sign-off (po-S58). QA-GREEN BPE-QA-1 (commit 0cb106a3) raw-verified end-to-end: page-12 prose=4099 chars (orig defect RESOLVED), table page-3 balance sheet=7175 chars, 0 empty layout units (was 13), total_pages=46 (GAP-1 fix), quarantine non-blocking (metadata only), all 46 OCR pages present, 8 peers unchanged. User intent met: BOTH table AND prose pages serve real content for AI analysis. Shipped: BPE-DEV-3(5ea9f121/ef9826d7 mcp-server total_pages COUNT->MAX + skip-guard<3 + DPI300 + RISK-OCR-2), BPE-OPS-1(re-OCR 46pp), BPE-DEV-4(prose re-flow), BPE-DEV-5(c2069deb/76f3546d Tesseract retry + thresholds mount + table re-flow). NON-BLOCKING follow-up -> EVAL-PUSH-DOUBLE-ENCODE backlog (cosmetic instrumentation artifact)."
+      },
+      {
+        "id": "GO-FLEET-DEPLOY",
+        "label": "Port-to-Go + genuinely deploy the 6 not_deployed_by_design services as lightweight containers (user directive: use Go to make it lighter so all run). 4/6 Go-ready; news-fetch=port; rag=Go-exception.",
+        "status": "active",
+        "opened_at": "2026-06-10T20:31:32Z",
+        "priority": "high",
+        "evidence": "PO live-measured 2026-06-10: go build ./... exit 0 for stock-price/technical-analysis/kinh-dich/alert-engine (go.mod+cmd/server/main.go+depguard, all compose-wired). news-fetch=NONE go.mod (still Node). rag-service=pure Python (LanceDB/embeddings, compose reserves 1g/limits 1.5g). Footprint proof: 2 deployed Go services = smallest containers (api-gateway 9MiB, macro-indicators 13MiB) vs Node monolith 914MiB; 6 Go @ ~10-20MiB ~= 60-120MiB << 6.4GB headroom. 5/6 capabilities already serve live from monolith; only rag is DARK. Brief: docs/handoffs/GO-FLEET-DEPLOY-architect-brief.md.",
+        "tasks": [
+          {
+            "title": "DESIGN: Go-fleet target topology — (a) per-service Go-port status inventory; (b) Go-service-per-capability target + dev-* zone owner each + EXPLICIT rag exception strategy (Go-shell+Py-embedding-sidecar vs lone-Python-capped); (c) full-Go-fleet footprint math vs 6.4GB headroom + HONOR-PANIC-GUARD soak gate w/ abort criteria; (d) per-service working-correctly DoD = health 200 + live capability_manifest probe (define a rag probe, currently none). Route microservice-doc edits to matching dev-* zone owner.",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "DISPATCHED",
+            "size": "M",
+            "zone": "multi",
+            "mode": "spike",
+            "timebox": 180,
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "brief": "docs/handoffs/GO-FLEET-DEPLOY-architect-brief.md",
+            "baseline_pass": "Brief in docs/architecture-briefs/2026-06-10-go-fleet-deploy/ delivers (a)-(d); rag strategy chosen+justified; soak abort criteria explicit; every microservice-doc edit routed to a dev-* zone owner not generic developer.",
+            "id": "GFD-1"
+          }
+        ]
       }
     ],
     "backlog": [
@@ -8179,8 +8205,8 @@
     }
   ],
   "sprint_goal": {
-    "_updated_at": "2026-06-10T00:00:00Z",
-    "_updated_by": "qa-clusterA",
+    "_updated_at": "2026-06-10T20:31:32Z",
+    "_updated_by": "po",
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
     "entries": [
       {
@@ -8194,6 +8220,12 @@
         "status": "CLOSED",
         "vision": "BCTC-PROSE-EXTRACT (opened 2026-06-09, high, zone apps/mcp-server/ + OCR pipeline). GOAL: FPT Q1-2026 every page with visible rendered text serves its content via inspector (table pages->rows, prose pages->prose text); NO page shows 'No OCR text'/empty pek_coverage_gap. 2 shipped commits KEPT (producer prose-stitch + serving). RE-DIAGNOSIS: root is OCR coverage gap (pages 11-22, 36-46 absent) + total_pages COUNT-vs-MAX bug, NOT just prose-stitch. Architect BLOCKER-2 'benign' ruling OVERRULED pending SPIKE. recurring-bug escalation -> architect root-cause SPIKE FIRST. Chain: architect SPIKE -> dev-mcp-server GAP-1 fix -> ops OCR re-run (11-22,36-46) -> dev re-flow -> qa end-to-end on page 12/16/notes. DoD: page 12 + notes section serve real content live, verified raw not badges; drive to DONE not a slice. Next: BPE-SPIKE-1 (agents-architect).",
         "created_at": "2026-06-09T00:00:00Z"
+      },
+      {
+        "sprint_id": "GO-FLEET-DEPLOY",
+        "status": "OPEN",
+        "vision": "Genuinely DEPLOY the 6 not_deployed_by_design services as lightweight working containers. User directive: redesign architecture if needed + PORT TO GO to make services lighter so the full fleet runs on the 16GB host without panic. Go-port is PRIMARY path (hard constraint). 4/6 already Go-ready+build-clean (stock-price/technical-analysis/kinh-dich/alert-engine); news-fetch=port-from-Node; rag-service=Go-exception (Python LanceDB/embeddings). DoD: each service container health 200 + live capability probe + HONOR-PANIC-GUARD soak; host_runtime_set arrays moved not_deployed->services; Axis-A flips to live AVAIL PASS.",
+        "created_at": "2026-06-10T20:31:32Z"
       }
     ]
   }
