@@ -70,3 +70,21 @@
 - Layers 1-6: USD/VND cross explicit (tier 2). Fed 3.62% vs SBV 5%, carry 1.38pp NEUTRAL is_estimate=false tier 2. Pillar scores mapped. Hexagrams: NVL Tỉnh MUA 43%, ACB Tỉnh MUA 56%, GAS Khôn caution 48%. Oil single-pillar flagged per Layer 6.
 - Signals consumed: 20+ open alerts (NVL news/price_surge, ACB 102M, GAS/PLX oil HIGH, macro gold CRITICAL, macro oil HIGH). Portfolio conviction 41 tickers tier 3. Macro carry tier 2 is_estimate=false.
 - Published: YES, MARKET (plain Vietnamese 4 paras) + WORK (TNB detail)
+
+## Session: 2026-06-10 (intraday 06:13)
+
+### Chef Dish — intraday 06:13 UTC (2026-06-10T0613Z) — PUBLISHED
+
+- Clusters qualified: 3 convergence clusters
+  1. Real Estate (NVL price_surge +6.88%, news_impact 2 articles Novaland restructure, macro-micro contradiction vs. prior sector decline)
+  2. Banking (ACB news_mention 102M share buying, CTG strategic ownership Petrosetco, sector alignment +0.37%)
+  3. Oil/Gas (Brent -0.94%, GAS +0.12% kháng cự, PLX -1.11% weak, macro_deviation gold CRITICAL -3.09σ)
+- Tickers covered: NVL, ACB, CTG, GAS, PLX (5 primary + 3 sector)
+- Market context: VN-Index +0.25% (1,797.60), USD/VND 26,130 (carry NEUTRAL 1.38pp is_estimate=false tier 2), Brent -0.94%, Gold -1.86% extreme, earn-yield 8.2% >> deposit 5.0% (+3.2pp CHEAP premium tier 4 estimate)
+- Conviction: RE MEDIUM (2-3/4 pillars, PDR reallocation driver), Banking MEDIUM-HIGH (3-4/4 pillars, carry+yield attractive, strategic inflow), Oil LOW (1/4 pillar commodity exposure, no FII data)
+- Phase/tier: transition/equity. Macro: carry neutral (no repricing), earn-yield cheap (attracts domestic capital). Kinh Dịch: NVL Tỉnh 43% MUA, ACB Tỉnh 56% MUA, GAS Tỷ 48% WAIT. Market hexagram unavailable (supplementary down, no degradation penalty per gate-fired contract).
+- Layers 1-6: State transitions confirmed (USD/VND 26130 cross, Gold -3.09σ, Brent -0.94%). US/VN stacks: Fed 3.62%, SBV 5%, carry 1.38pp NEUTRAL explicit (is_estimate=false, tier 2). 4-pillars per cluster: NVL transition risk but domestic inflow strong, ACB all aligned earn-yield+carry attractive+strategic buying, GAS single-pillar commodity risk. Kinh Dịch 5-layer confirmed per-ticker. Gap catalogue: NVL causal chain complete (gold + VND + PDR + price), ACB chain complete (Fed + SBV + carry + strategic), GAS chain: no FII flow data gap flagged, conviction capped LOW. All tickers cleared Scenario 1-3 (no governance blocks).
+- Signals consumed: NVL surge 2026-06-10T04:00Z + 03:27Z (price_anomaly tier 1), ACB/CTG news 2026-06-09T19:42Z/2026-06-09T10:30Z (news_impact tier 2), Gold -3.09σ 2026-06-10T00:00Z (macro_deviation tier 1 CRITICAL), Brent -2.07σ 2026-06-09T14:15Z (macro tier 1 HIGH), 20+ open alerts. Carry snapshot tier 2. Portfolio conviction tier 3 (41 tickers MODERATE 0.41-0.59).
+- Degradation: None. Macro real, carry real is_estimate=false, market-wide hexagram unavailable (supplementary, not a blocker per gate-fired contract § degraded-dish floor).
+- Published: YES, MARKET msg_id pending (plain Vietnamese 3 paras, sent 2026-06-10T06:13:XX UTC). WORK detail sent = TEST due to payload size limits (full TNB audit trails in memory).
+- DB integrity: Fresh market_snapshot + macro_snapshot confirmed no malformed errors post-cycle-start.
