@@ -2,6 +2,45 @@
 
 ## Working Memory
 
+### 2026-06-10 — BPE-DEV-5 DONE (BCTC-PROSE-EXTRACT sprint)
+
+**Task:** BPE-DEV-5 | Size: M | Sprint: BCTC-PROSE-EXTRACT | Status: REVIEW
+
+**Root defects fixed:**
+1. BLOCKER-A (already resolved in mcp-server): verified `total_pages=46` returned by no-page summary endpoint. No code change needed on pdf-extractor side.
+2. BLOCKER-B (Tesseract SIGTERM under load): Added `MAX_TESSERACT_RETRIES=2` constant + `_tesseract_image_to_data()` module-level wrapper that retries up to 2x with 1.5s sleep. `ocr_unit()` now calls wrapper instead of `pytesseract.image_to_data` directly. SIGTERM → retry → success on normalized load.
+3. Missing thresholds: added `apps/pdf-extractor/config/bctc-eval-thresholds.json` baked into image. Two-path lookup in `_load_thresholds()` (primary: `/app/config/`, fallback: project root).
+
+**Result (FPT Q1-2026):** 0 empty units (was 13 empty). 14 table units with real tabular markdown. 5 prose units unchanged (page 12 = 4099 chars). Inspector page 3 = 7175 chars, page 12 = 4099 chars, `pek_coverage_gap=None`.
+
+**Tests:** 5 new tests in `test_ocr_unit_tesseract_retry.py` — AC1 retry-succeeds, AC2 all-retries-exhausted-skipped, AC3 MAX_TESSERACT_RETRIES exposed, AC3b helper exposed, AC4 Fence-A. 785 pass / 36 pre-existing fail (no regressions). Sandbox: 27/27 primitive GREEN + 6 intentional-RED, 1/1 module GREEN.
+
+**Commit:** `c2069deb`
+
+Zone health: 0 empty layout units on FPT Q1-2026 corpus. All 46 pages covered. No DDD violations. | HEALTHY
+
+---
+
+### 2026-06-10 — BPE-DEV-1 DONE (BCTC-PROSE-EXTRACT sprint, producer)
+
+**Task:** BPE-DEV-1 | Size: M | Sprint: BCTC-PROSE-EXTRACT | Status: REVIEW
+
+**Root defect fixed:** `ocr_unit()` prose branch in generic_md_table_extractor.py declared `prose_lines=[]` and looped pages but never appended — returned `stitched_markdown:""` for every prose unit for 7+ sprints. Prose/notes pages (thuyết minh) were silently dropped.
+
+**BLOCKER-3 serial order respected:**
+1. Commit `1588a591` — GATE-VISION table work (dtos, layout_invariants, bctc_code_whitelist, 2 test files) — 45 tests green
+2. Commit `6e518935` — BPE-DEV-1 prose fix (generic_md_table_extractor.py + call site + test_generic_extractor_prose.py) — 16 tests green
+
+**Fix pattern:** ocr_unit() signature extended with `ocr_pages: Optional[List[Dict]]=None`; prose branch builds page→text map with dual-key fallback (`text`/`text_content`); skips blank pages; emits `_prose_no_text=True` when ALL pages blank; `row_count` = non-empty line count.
+
+**RISK-5 audit:** grepped `assert_called_with.*ocr_unit` across all test files — zero matches. No fixture updates needed.
+
+**Test results:** 16/16 prose unit tests GREEN; 736/736 total unit tests pass (excluding 36 pre-existing failures confirmed via git stash baseline).
+
+**NEXT:** dev-mcp-server takes TASK_BPE-DEV-2 — bctcInspectHandler query extension + pek_coverage_gap semantics + bctcFullTools prose_sections.
+
+---
+
 ### 2026-06-08 — A20-EVENTLOOP-ASYNC-TO-THREAD DONE (DJ-GATE-1)
 
 **Task:** A20-EVENTLOOP-ASYNC-TO-THREAD | Size: S | Sprint: ORCH-DASH-DECISION-DRILLDOWN | Status: DONE (code landed; ops rebuild pending)
