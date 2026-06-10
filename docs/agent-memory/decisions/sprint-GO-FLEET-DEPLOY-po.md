@@ -50,3 +50,11 @@
 - Make the api-gateway main.go/docker-compose edit myself -> REJECTED: init.md hard rule "NEVER write production code"; api-gateway zone belongs to dev-api-gateway, HONOR-PANIC-GUARD rebuild belongs to ops.
 **why-decision:** PO owns SSOT (system-map), quality-audit artifact, orch-state, backlog — all done. The runtime fix is a dev/ops dispatch the router must spawn; my surface lacks spawn + MCP-gateway tools, so I hand the exact edits + rebuild + verify gate back to the router and keep GFD-12 honest at READY.
 **why-change:** Discovered my sub-agent surface has no spawn/gateway binding -> cannot self-dispatch dev-api-gateway/ops or take the commit-mutex; serialized PO commits myself (explicit pathspecs, git show --stat verify) and surfaced the binding gap.
+
+### STEP po-S6 · po · 2026-06-11T23:05:00Z
+**task-id:** GFD-12
+**what-done:** Flipped GFD-12 READY->DONE (completed_at=2026-06-11T23:05:00Z) after raw-verifying the gate the S5 hold was waiting on.
+**what-considered:**
+- only path: gate is now GENUINELY green. po raw-verified (not relaying badge): curl :4000/health top status=ok; 9/9 services ok incl all 6 ported (alert,kinh-dich,news,rag,stock,ta) latency>0 (1-2ms); zero not_deployed; api-gateway OOMKilled=false exit=0 running=true healthy; 13 containers Up. Root-cause fix landed: 72531938 (empty NOT_DEPLOYED_SERVICES default main.go:44 + compose:280) + c9b56c87 (ops targeted rebuild, no down&&up). origin/main HEAD=c9b56c87=local HEAD.
+**why-decision:** The exact S5 abort condition (".services shows the 6 as not_deployed") is now resolved at the runtime layer; DONE is no longer a false-green — every acceptance criterion (SSOT graduation 22b52065, Axis-A PASS, live fleet) is satisfied. Sprint deployment chain GFD-2..GFD-13 all DONE.
+**why-change:** No change from plan — S5 explicitly held DONE pending this gate; S6 executes the planned flip now that the gate is real. GFD-1 (design SPIKE, owner agents-architect) remains DISPATCHED — left untouched, no PO evidence to terminate it; router owns push.

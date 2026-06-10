@@ -4832,7 +4832,7 @@
             "depends": [
               "GFD-11"
             ],
-            "status": "READY",
+            "status": "DONE",
             "size": "S",
             "zone": "docs/data/system-map.json",
             "sprint": "GO-FLEET-DEPLOY",
@@ -4843,7 +4843,8 @@
               "Authorize router push to origin/main"
             ],
             "id": "GFD-12",
-            "status_note": "GFD-12 PO-SIGN in progress (po S4): SSOT graduation DONE (system-map all 12 services, not_deployed lists emptied, _note rewritten, _last_verified=2026-06-11) + 6 Axis-A AVAIL checks flipped INFO/grey->PASS (commit 22b52065). 2 infra-test backlog tasks added (INFRA-TEST-TZ-FIX, INFRA-TEST-SEEDDATE-FIX). REMAINING before DONE: (a) dev-api-gateway must set main.go:44 NOT_DEPLOYED_SERVICES default to \"\" + docker-compose.yml:280 to empty (ROOT-CAUSE, not ENV-only); (b) ops targeted rebuild: docker compose build api-gateway && docker compose up -d --no-deps api-gateway (NEVER down&&up); (c) re-verify curl :4000/health .services shows 6x ok (rag,ta,stock,kinh-dich,alert,news) latency>0. GFD-12 stays READY until (c) green."
+            "status_note": "GFD-12 DONE (po S6): gateway gate GENUINELY GREEN — router + po raw-verified. curl :4000/health top status=ok; 9/9 services ok incl all 6 ported (alert,kinh-dich,news,rag,stock,ta) with latency>0 (1-2ms); zero not_deployed. api-gateway OOMKilled=false exit=0 running=true healthy; 13 containers Up. Root-cause fix = commits 72531938 (empty NOT_DEPLOYED_SERVICES default main.go:44 + compose:280) + c9b56c87 (ops targeted rebuild, no down&&up). SSOT graduation (22b52065) + Axis-A PASS already shipped. READY->DONE flip authorized; router owns push.",
+            "completed_at": "2026-06-11T23:05:00Z"
           },
           {
             "id": "GFD-13",
