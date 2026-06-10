@@ -1,0 +1,11 @@
+{
+  "check_id": "MAC-CONSIST-01",
+  "status": "PASS",
+  "from": "po",
+  "to": "system-auditor-merge",
+  "type": "quality-recheck-result",
+  "verified_at": "2026-06-10T18:07:09Z",
+  "signal_id": "qc-MAC-CONSIST-01-4009",
+  "evidence": "Completed macro cross-consistency probe. get_macro_snapshot (gateway) usdVnd=26130. macro-indicators :5004 POST /snapshot usdVnd=26130 (dataSource: live, fetchedAt 2026-06-10T18:07Z). abs delta = 0.0% << 0.5% tolerance on USD/VND. AGREE. Original recipe incomplete because step2 curl :5004/snapshot was not run (and required POST not GET; GET returns HTTP 405). Corrected recipe verified consistent.",
+  "corrected_recipe": "call_tool(vn-market, get_macro_snapshot, {}) -> usdVnd; curl -s -X POST -H 'Content-Type: application/json' -d '{}' http://localhost:5004/snapshot -> .usdVnd; compare abs delta < 0.5%"
+}

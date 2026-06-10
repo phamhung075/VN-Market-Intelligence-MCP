@@ -1,0 +1,11 @@
+{
+  "check_id": "VPS-OBS-01",
+  "status": "PASS",
+  "from": "po",
+  "to": "system-auditor-merge",
+  "type": "quality-recheck-result",
+  "verified_at": "2026-06-10T18:07:09Z",
+  "signal_id": "qc-VPS-OBS-01-4037",
+  "evidence": "Completed VPS observability probe via call_tool(get_vps_proxy_health,{}). Tool returns full per-service health table: prices ok (362 24h pushes), news ok (116 24h pushes), sbv ok (last push 2026-06-10 17:52:40, 2 24h pushes), bctc STALE flagged YES (last 2026-06-08 00:30, 0 24h pushes) with explicit alert line 'STALE: bctc — VPS may be down or unreachable'. The observability mechanism is present and functioning: proxy reachable, per-service freshness observable, and stale-detection correctly raises a flag. Original recipe missed the correct call (used get_cron_health vpsServiceHealth instead of get_vps_proxy_health). NOTE: bctc data staleness itself is a Cluster-E upstream-data issue, not an observability defect — observability correctly DETECTS and FLAGS it, which is exactly what this check verifies.",
+  "corrected_recipe": "call_tool(vn-market, get_vps_proxy_health, {}) -> confirm per-service health table returns with stale-flagging present"
+}

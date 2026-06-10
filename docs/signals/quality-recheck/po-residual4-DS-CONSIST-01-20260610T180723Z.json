@@ -1,0 +1,11 @@
+{
+  "check_id": "DS-CONSIST-01",
+  "status": "PASS",
+  "from": "po",
+  "to": "system-auditor-merge",
+  "type": "quality-recheck-result",
+  "verified_at": "2026-06-10T18:07:09Z",
+  "signal_id": "qc-DS-CONSIST-01-4042",
+  "evidence": "Completed two-step cross-consistency probe. get_macro_snapshot (gateway) usdVnd=26130 (source_tier 1, is_estimate false). macro-indicators :5004 POST /snapshot usdVnd=26130. abs(26130-26130)/26130 = 0.0% << 0.5% tolerance. AGREE. Original recipe was incomplete because step2 used GET (HTTP 405 Method Not Allowed); /snapshot requires POST. Corrected recipe: call_tool(get_macro_snapshot,{}) usdVnd vs `curl -s -X POST -H 'Content-Type: application/json' -d '{}' http://localhost:5004/snapshot | jq .usdVnd`.",
+  "corrected_recipe": "call_tool(vn-market, get_macro_snapshot, {}) -> usdVnd; curl -s -X POST -H 'Content-Type: application/json' -d '{}' http://localhost:5004/snapshot -> .usdVnd; compare abs delta < 0.5%"
+}

@@ -1,0 +1,11 @@
+{
+  "check_id": "NEWS-CONSIST-01",
+  "status": "PASS",
+  "from": "po",
+  "to": "system-auditor-merge",
+  "type": "quality-recheck-result",
+  "verified_at": "2026-06-10T18:06:55Z",
+  "signal_id": "qc-NEWS-CONSIST-01-4015",
+  "evidence": "Completed news cross-consistency probe with required stock_code param. call_tool(get_sentiment_trend,{stock_code:'FPT'}) returns well-shaped 7-day sentiment trend: 'ỔN ĐỊNH (slope +0.00)' (stable). call_tool(get_market_snapshot,{}) vn_index direction='up' (+0.59%, 1803.71). Sentiment stable/neutral vs market mildly up — NOT persistently contradictory (within expected lag). Consistent. Original recipe failed because get_sentiment_trend requires a stock_code parameter that was missing; supplying watchlist ticker FPT yields a valid retrievable result.",
+  "corrected_recipe": "call_tool(vn-market, get_sentiment_trend, {stock_code:'FPT'}) direction vs call_tool(vn-market, get_market_snapshot, {}) vn_index.direction -> check not persistently contradictory"
+}
