@@ -5,7 +5,7 @@
 **Sprint:** GO-FLEET-DEPLOY  
 **Size:** S (est. 2h)  
 **Depends on:** GFD-1 (architecture brief complete)  
-**Status:** IN_PROGRESS
+**Status:** DONE
 
 ## Context
 
@@ -15,10 +15,10 @@ technical-analysis is a Go service with go build exit 0 confirmed by PO (2026-06
 
 ## Acceptance Criteria (DoD)
 
-- [ ] `cmd/server/main.go` /health endpoint exists and returns HTTP 200 locally with JSON containing `"status":"ok"` or equivalent
-- [ ] `golangci-lint run ./...` passes with depguard enabled (Factory v2 G12 gate)
-- [ ] Dockerfile has `CGO_ENABLED=0` explicitly set (modernc/sqlite, no CGO dependencies)
-- [ ] `docker-compose.yml` healthcheck definition correct for port 5003 (interval, timeout, retries)
+- [x] `cmd/server/main.go` /health endpoint exists and returns HTTP 200 locally with JSON containing `"status":"ok"` or equivalent
+- [x] `golangci-lint run ./...` passes with depguard enabled (Factory v2 G12 gate)
+- [x] Dockerfile has `CGO_ENABLED=0` explicitly set (modernc/sqlite, no CGO dependencies)
+- [x] `docker-compose.yml` healthcheck definition correct for port 5003 (interval, timeout, retries)
 
 ## File Paths
 
@@ -58,3 +58,17 @@ Once GFD-3 passes, it unblocks GFD-6 (deploy + HONOR-PANIC-GUARD soak).
 - This is a gate check, not a feature implementation
 - modernc/sqlite is CGO=0 compatible (pure Go)
 - If Dockerfile missing CGO_ENABLED=0, add it
+
+## Decision Journal — GFD-3 completion (2026-06-10T20:47Z)
+
+**STEP: GFD-3 status flip IN_PROGRESS → DONE**
+
+- **Who:** dev-technical-analysis
+- **When:** 2026-06-10T20:47Z
+- **Decision:** All 4 DoD gates pass as-built. No code changes required.
+- **Evidence:**
+  - DoD-1 (health endpoint): `GET /health` → HTTP 200 `{"status":"ok","service":"technical-analysis","port":5003}` confirmed via `go run ./cmd/server/main.go` local run.
+  - DoD-2 (CGO=0 + modernc sqlite): Dockerfile line 18 `RUN CGO_ENABLED=0 GOOS=linux go build`; go.mod has `modernc.org/sqlite v1.29.9`; no `mattn/go-sqlite3` present.
+  - DoD-3 (golangci-lint): `golangci-lint run ./...` exit 0, "0 issues."; depguard enabled with fence-a/fence-b/fence-c rules in `.golangci.yml`.
+  - DoD-4 (compose healthcheck): `docker-compose.yml` technical-analysis block has `test: [CMD, wget, -qO-, http://localhost:5003/health]`, `interval: 30s`, `timeout: 10s`, `retries: 3`, `start_period: 10s`.
+- **Unblocks:** GFD-6 (ops deploy + HONOR-PANIC-GUARD soak)

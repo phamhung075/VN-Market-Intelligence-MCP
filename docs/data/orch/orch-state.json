@@ -4598,11 +4598,12 @@
             "depends": [
               "GFD-1"
             ],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/kinh-dich-service",
             "sprint": "GO-FLEET-DEPLOY",
             "created_at": "2026-06-10T20:31:32Z",
+            "completed_at": "2026-06-10T22:49:00Z",
             "acceptance_criteria": [
               "cmd/server/main.go /health endpoint returns 200 locally",
               "golangci-lint run ./... passes with depguard",
@@ -4618,17 +4619,19 @@
             "depends": [
               "GFD-1"
             ],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/technical-analysis",
             "sprint": "GO-FLEET-DEPLOY",
             "created_at": "2026-06-10T20:31:32Z",
+            "completed_at": "2026-06-10T20:47:00Z",
             "acceptance_criteria": [
               "cmd/server/main.go /health endpoint returns 200 locally",
               "golangci-lint run ./... passes with depguard",
               "Dockerfile has CGO_ENABLED=0 (modernc sqlite, no CGO)",
               "docker-compose.yml healthcheck definition correct for port 5003"
             ],
+            "evidence": "DoD-1: GET /health → HTTP 200 {status:ok,service:technical-analysis,port:5003} confirmed via go run local test. DoD-2: Dockerfile RUN CGO_ENABLED=0 GOOS=linux go build (line 18); go.mod uses modernc.org/sqlite v1.29.9, no mattn/go-sqlite3. DoD-3: golangci-lint run ./... exit 0, depguard enabled with fence-a/b/c rules in .golangci.yml. DoD-4: docker-compose.yml healthcheck test=[CMD,wget,-qO-,http://localhost:5003/health] interval=30s timeout=10s retries=3 start_period=10s. No code changes required — all gates already in place.",
             "id": "GFD-3"
           },
           {
