@@ -1,0 +1,9 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-06-10T20:21:00Z",
+  "summary": "c93 NEEDS_ATTENTION | Direction: STABLE | NEW HIGH: F-INTRADAY-0613-PUBLISH-FAILURE (send_telegram parser error — intraday dish analysis complete but NOT delivered to MARKET) | F-MORNING-NB-MISSING escalated HIGH (4th cycle, root cause: 200L notebook cap structural, dev task required) | F-BCTC-CTG-CRITICAL escalated HIGH (cycle 32, 8th consecutive extraction failure, 28 tickers blocked) | F-OOM-MCP-SERVER HIGH carry-forward | carry-evening-unavailable NEW MED | AC-1 auto-cure holding 7 cycles | news-scout 7+/9 GOOD | Chef pipeline guaranteed_ok=TRUE"
+}

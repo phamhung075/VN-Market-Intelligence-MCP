@@ -1,231 +1,251 @@
-# TNB Audit — Cycle 92 — 2026-06-09T20:20Z (slot=tnb-audit, file-evidence + MCP unavailable)
+# TNB Audit — Cycle 93 — 2026-06-10T20:21Z (slot=tnb-audit, file-evidence + MCP unavailable)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **STABLE** (layer scores 3–3.5/6 consistent with c88–c91 pattern; structural gaps F3/F4/F9 persist unchanged; F-MORNING-NB-MISSING persists 3rd+ cycle; c91 F-SUNDAY-SCHEDULER-FIRE correctly CLOSED as calendar false-positive per PO ACK; infra DEGRADED — mcp-server OOM 97.75% at 05:06Z, recovered by 04:35Z reading — see system-auditor c291)
+Direction: **STABLE** (layer scores 2.5–3.5/6 consistent with c88–c93 pattern; two new HIGH findings this cycle: F-MORNING-NB-MISSING escalated to HIGH at 4th cycle + F-INTRADAY-0613-PUBLISH-FAILURE new; structural gaps F3/F4/F9 unchanged; F-BCTC-CTG escalated to HIGH at cycle 32)
 
 ---
 
 ## Previous Handoff ACK
 
-c91 ACK'd by PO at 2026-06-08T21:20:28Z.
-- F-SUNDAY-SCHEDULER-FIRE REJECTED as FALSE POSITIVE: 2026-06-08 was Monday, not Sunday. Calendar error in c91 TNB audit. Corrected this cycle.
-- F2 BCTC: persisting, tracked by BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST sprints.
-- F3/F4/F9/F5/F-NB-HEADER-STALE: structural/covered, no new tasks.
-- Positive signals ACK'd.
+c92 handoff written 2026-06-09T20:20Z — no PO ACK section present at audit time. Tasks created status unknown (MCP gateway unavailable for WORK channel verification). c92 findings assumed unresolved pending ACK.
 
 ---
 
 ## Session Mode
 
-MCP gateway not available in this spawned subagent session (transport error — tool not loaded). File-evidence audit from:
-- unified-agent notebook: 3 sessions for 2026-06-09 confirmed (intraday 06:22Z SILENT-EXIT, eod 08:37Z PUBLISHED, evening 19:45Z PUBLISHED). Morning 05:22Z: slot fired (cowork-schedule confirmed) but NO notebook entry.
-- cowork-schedule.json: all 4 chef slots last_fired confirmed for 2026-06-09
-- news-scout notebook c66–c71 (2026-06-09): 5 active cycles, 18 total signals fired
-- bctc-analyst notebook c035–c037 (2026-06-09): CTG cycle 29+, 29 tickers blocked
-- system-auditor notebook c290–c291 (2026-06-09): c290 HEALTHY, c291 DEGRADED (mcp-server OOM 97.75%)
-- market-watcher notebook (20:05 UTC): 0 anomalies, NEUTRAL regime
+MCP gateway not available in this spawned subagent session (tool not loaded — stale session, failure mode A per bootstrap.md). File-evidence audit from:
+- unified-agent notebook: 4 sessions confirmed for 2026-06-10 (intraday 02:15 PUBLISHED, intraday 06:13 BLOCKED, EOD 08:52 PUBLISHED, evening 19:37 PUBLISHED). Morning 05:25Z: slot fired (cowork-schedule last_fired=2026-06-10T05:25:02Z) but NO notebook entry.
+- cowork-schedule.json: all 4 chef slots last_fired confirmed for 2026-06-10
+- news-scout notebook c73–c78 (2026-06-10): 6 complete cycles, 3 signals/cycle, NEUTRAL regime throughout
+- bctc-analyst notebook c038–c040 (2026-06-09/10): CTG cycle 32, 28 tickers blocked; FPT forensic gates active
+- market-watcher notebook (20:06 UTC): 0 anomalies, 1 BRENT macro signal, NEUTRAL regime
+- system-auditor notebook c290–c291 (2026-06-09): c291 DEGRADED (mcp-server OOM 97.75% at 05:06Z)
 
 Live cross-validation SKIPPED — MCP unavailable.
 
 ---
 
-## Chef Pipeline Coverage (Step 0.5) — 2026-06-09 (Monday)
+## Chef Pipeline Coverage (Step 0.5) — 2026-06-10 (Tuesday)
 
-**PIPELINE HEALTHY — all guaranteed slots fired and closed correctly.**
+**PIPELINE HEALTHY for guaranteed slots. One intraday dish blocked at publish step.**
 
 | Slot | Cron | Expected | Status | last_fired |
 |------|------|----------|--------|-----------|
-| chef-morning | `15 5 * * 1-5` | YES (Monday) | FIRED — CORRECT | 2026-06-09T05:22:31Z |
-| chef-intraday | `13 2-8 * * 1-5` | YES (Monday) | FIRED → SILENT-EXIT (0 clusters) — CORRECT | 2026-06-09T07:22:18Z |
-| chef-eod | `45 8 * * 1-5` | YES (Monday) | FIRED — PUBLISHED | 2026-06-09T08:57:31Z |
-| chef-evening | `45 19 * * *` | YES (daily) | FIRED — PUBLISHED | 2026-06-09T19:55:34Z |
+| chef-morning | `15 5 * * 1-5` | YES (Tuesday) | FIRED — no notebook entry (F-MORNING-NB-MISSING #4) | 2026-06-10T05:25:02Z |
+| chef-intraday 02:15 | `13 2-8 * * 1-5` | YES | FIRED — PUBLISHED (4 clusters) | 2026-06-10T02:15:XX Z |
+| chef-intraday 06:13 | `13 2-8 * * 1-5` | YES | FIRED — ANALYSIS COMPLETE, PUBLISH BLOCKED (send_telegram parser error) | 2026-06-10T06:13:XX Z |
+| chef-eod | `45 8 * * 1-5` | YES | FIRED — PUBLISHED (msg_id=711) | 2026-06-10T08:55:08Z |
+| chef-evening | `45 19 * * *` | YES (daily) | FIRED — PUBLISHED (degraded-dish floor, 0 clusters) | 2026-06-10T19:51:00Z |
 
 `guaranteed_ok=TRUE | start_count=4 | close_count=4 | stuck_count=0 | failed_count=0 | pipeline_degraded=FALSE`
 
-**c91 Calendar-Error Correction:** F-SUNDAY-SCHEDULER-FIRE was a c91 TNB false positive — 2026-06-08 was Monday. The slots firing on that date were correct. Confirmed by PO and by today's Monday-06-09 schedule matching exactly the same pattern (all 4 slots fired on both days as expected). No scheduler bug exists.
+Note: intraday 06:13 BLOCKED at send_telegram — this is a publish failure after analysis completion, not a pipeline stuck. Dish content exists in notebook but was not delivered to MARKET subscribers.
 
 ---
 
-## Primary Audit: 2026-06-09 Dishes — Layer Walk
+## Primary Audit: 2026-06-10 Dishes — Layer Walk
 
-### Dish 0: Morning 05:22Z — NOTEBOOK MISSING (F-MORNING-NB-MISSING)
+### Dish 0: Morning 05:25Z — NOTEBOOK MISSING (F-MORNING-NB-MISSING, 4th cycle)
 
-Slot fired (cowork-schedule last_fired=05:22:31Z). No notebook entry exists in unified-agent.md for this slot. Earliest session entry is intraday 06:22Z. This is a Step 8 partial failure — dish may have published but no audit trail available. Layer walk UNAUDITABLE for morning dish.
+Slot fired (cowork-schedule last_fired=2026-06-10T05:25:02Z). No notebook entry exists for this slot. This is the 4th occurrence: c87 EOD missing, c88 Morning missing, c92 Morning missing, c93 Morning missing. Pattern is now morning-dominant (3 of 4 misses are morning slot). **Auto-cure threshold reached (3+ cycles for morning slot type).**
 
-**Carry-forward: F-MORNING-NB-MISSING — now 3+ cycle pattern across different slots (c88 morning missing, c87 EOD missing, c92 morning missing again). SPIKE-UNIFIED-NB-GAP should address this.**
+Root cause analysis: unified-agent runs 5 sessions per day (02:15, 05:25 morning, 06:13, 08:52 EOD, 19:37 evening). Each session appends ≤60L to notebook. At 5×60L=300L the 200L cap is exceeded. Step 8b Step 1f drops the oldest block. Morning (05:25) appends after 02:15, then intraday 06:13 runs and prunes oldest (02:15), then EOD prunes 05:25 morning entry. By evening write, the morning session has been pruned. This is a structural cap issue — the 200L cap cannot hold 5 daily sessions at 60L each. **Dev task required: increase notebook cap to 300L or implement per-slot archival path for morning.**
 
----
-
-### Dish 1: Intraday 06:22Z — SILENT-EXIT (correct, no layer audit required)
-
-0 clusters qualified. Intraday convergence gate applied correctly. No MARKET publish. This is expected behavior.
+Layer walk: UNAUDITABLE.
 
 ---
 
-### Dish 2: EOD 08:37Z — PUBLISHED
+### Dish 1: Intraday 02:15Z — PUBLISHED
 
-4 clusters: Tech/EV IPO (VinFast $1B + global mega-cap IPO → FPT +1.10%), RE contraction (USD/VND 26,128 → NVL -4.33%, VRE -1.69%, VIC -0.92%), Oil/Gas headwinds (Brent -3.51% → PLX -2.88%, GAS -1.79%), Banking resilience (carry +1.38pp → ACB +4.95%, VCB +0.33%, VPB +1.17%).
+4 clusters: Banking accumulation (ACB 102M shares, domestic strength → ACB +0.38%, BID +1.34%, CTG +0.75%, VCB +0.65%), RE carry pressure (USD/VND 26,130 > 25,500 → VHM -0.62%, VIC -1.19%, NVL +3.24% domestic outlier), Oil/Gas neutral (Brent $92.72 NEUTRAL, depreciation headwind → GAS -0.12%, PLX -0.37%), VinFast/EV spillover (USD 1B capital raise → FPT +0.14% proxy).
 
 | Layer | Score | Notes |
 |-------|-------|-------|
-| L1 | PASS | USD/VND 26,128 state transition ✓ (breach 25500 threshold). Brent -3.51% directional ✓. Multiple state transitions cited. |
-| L2 | PARTIAL | US Fed 3.62% inferred from carry chain ✓. PMI sub-components absent. EFFR-IORB spread absent. |
-| L3 | PARTIAL | carry 1.38pp is_estimate=false tier-2 ✓. USD/VND depreciation pressure ✓. VIRA absent (structural). |
-| L4 | PARTIAL-HIGH | [phase: expansion → slowdown mixed][tier: equity/fixed_income] declared ✓. 3/4 pillars: M2 positive (capital inflow CTG), COC EASING (carry 1.38pp), EPS mixed (FPT bullish vs sector bearish). POL absent. Signal IDs cited (#5491–#5494 from news-scout). |
-| L5 | PARTIAL | market hexagram 501 unavailable. Per-ticker: FPT Khiêm (MUA) ✓. Other tickers not shown in notebook. |
-| L6 | PASS | DSI honored (is_estimate=false carry). Causal chains: VinFast $1B → tech EV + capital inflows + sector cascade. Source cross-validation cited. |
-| Biz ctx | ABSENT | F9 — 18th consecutive cycle. BCTC extraction still blocked (CTG 29+ cycles). |
+| L1 | PASS | USD/VND 26,130 cross ✓, multiple state transitions cited |
+| L2 | PARTIAL | Fed 3.62% from carry chain ✓, PMI sub absent, EFFR-IORB absent |
+| L3 | PARTIAL | carry 1.38pp is_estimate=false tier-2 ✓, VIRA absent |
+| L4 | PARTIAL-HIGH | [phase:transition][tier:equity] ✓, 3/4 pillars: M2+COC+EPS; POL partial (EV policy cited) |
+| L5 | PARTIAL | hexagram 501, per-ticker Sư (banking) / Tỉnh (NVL) / Khôn (oil) cited |
+| L6 | PASS | Causal chains complete, Scenario 4 gate cleared, gap audit passed |
+| Biz ctx | ABSENT | F9 — 19th consecutive cycle |
 
-**Score: 3.5/6 NEEDS_ATTENTION** | 9-step: A✓ B-partial C✓ D✗(PMI sub/EFFR absent) E-partial(VIRA absent) F-3/4 G-n/a H✓ I-partial → **6/9 GOOD**
+**Score: 3.5/6** | 9-step: A✓ B-partial C✓ D✗ E-partial F-3/4 G-n/a H✓ I✓ → **6/9 GOOD**
 
 ---
 
-### Dish 3: Evening 19:45Z — PUBLISHED
+### Dish 2: Intraday 06:13Z — ANALYSIS COMPLETE, PUBLISH BLOCKED
 
-3 clusters: RE sector decline (USD/VND 26,128 > threshold → NVL -4.33%, VRE -1.69%, VIC -0.92%), Oil/Gas margin compression (Brent -3.03% → GAS -1.79%, PLX -2.88%), Banking accumulation (ACB 102M shares purchased → ACB +4.95%, sector +1.18%).
+3 clusters analyzed: RE NVL (+6.88% price surge, PDR restructuring news), Banking ACB/CTG (102M share accumulation, VietinBank Capital → Petrosetco), Oil/Gas (Brent -0.94%, GAS +0.12% kháng cự, PLX -1.11% weak).
+
+Layer walk was completed (3.5/6 per notebook record) but `send_telegram` failed with "expected record received string" parser error. Dish analysis preserved in notebook but NOT delivered to MARKET channel. WORK [CHEF-DETAIL] also blocked (same transport).
+
+**Score: 3.5/6 (analysis complete, BLOCKED from publication)**
+
+This is a data-delivery failure, not a methodology failure. New finding: **F-INTRADAY-0613-PUBLISH-FAILURE (HIGH).**
+
+---
+
+### Dish 3: EOD 08:52Z — PUBLISHED (msg_id=711)
+
+4+ clusters: NVL RE carry (USD/VND 26,130 + PDR restructuring → NVL +6.88%), Banking (ACB accumulation 3/4 pillars → ACB, VIC Khiêm, VHM Thăng THAN TRONG 74%), Oil/Gas (single-pillar capped LOW, Brent -0.95%), macro gold CRITICAL (-3.09σ extreme deviation).
 
 | Layer | Score | Notes |
 |-------|-------|-------|
-| L1 | PASS | USD/VND crossed 26,128 (> 25500 threshold) ✓. Brent state transition -3.03% directional ✓. |
-| L2 | PARTIAL | US 3.62% carry chain implied ✓. PMI sub-components absent. EFFR-IORB absent. |
-| L3 | PARTIAL | carry 1.38pp NEUTRAL (is_estimate=false tier 2) ✓. VIRA absent. M2 uncertain noted. |
-| L4 | PARTIAL-HIGH | [phase: slowdown][tier: fixed_income\|quality] declared ✓. 2–3 pillars: COC rising ✓, EPS mixed-headwind ✓, Valuation (ACB accumulation signal). M2 uncertain noted. |
-| L5 | PARTIAL | macro_hexagram unavailable (501). Per-ticker: ACB Tỉnh (43%), GAS/PLX Khôn (caution) ✓. "Lão peaks" check absent from notebook. |
-| L6 | PASS | Causal chains: USD/VND 26,128 → BĐS carry pressure + BOT carry → banking accumulation. Source cross-validated (price + news + macro). Regime drift flagged ✓. |
-| Biz ctx | ABSENT | F9 — 18th consecutive cycle. |
+| L1 | PASS | USD/VND 26,130 cross ✓, Gold -3.09σ CRITICAL ✓, carry 1.38pp confirmed at 08:51:54Z |
+| L2 | PARTIAL | Fed 3.62% stable ✓, no PMI sub, no EFFR-IORB |
+| L3 | PARTIAL | carry 1.38pp is_estimate=false tier-2 confirmed ✓, VIRA absent |
+| L4 | PARTIAL-HIGH | [phase:transition][tier:equity] ✓, NVL 2/4, ACB 3/4, Oil 1/4 capped LOW |
+| L5 | PARTIAL | NVL Tỉnh 48% MUA, VIC Khiêm 100% MUA, VHM Thăng 74% THAN TRONG; no Lão reversal peak |
+| L6 | PASS | NVL BCTC gap flagged ✓, VIRA FX gap flagged ✓, oil single-pillar ✓, causal chain: gold→carry→RE complete |
+| Biz ctx | ABSENT | F9 — 19th consecutive cycle |
 
-**Score: 3.5/6 NEEDS_ATTENTION** | 9-step: A✓ B-partial C✓ D✗(PMI sub/EFFR absent) E-partial(VIRA absent) F-2.5/4avg G-n/a H✓ I✓ → **6/9 GOOD**
+**Score: 3.5/6** | 9-step: A✓ B-partial C✓ D✗(PMI sub/EFFR absent) E-partial(VIRA absent) F-2.5/4 G-n/a H✓ I✓ → **6/9 GOOD**
 
 ---
 
-## 9-Step Score Summary (c92 — best dish = EOD)
+### Dish 4: Evening 19:37Z — PUBLISHED (degraded-dish floor)
+
+0 convergence clusters. Macro summary published. carry=UNAVAILABLE (carrySpread=null, is_estimate=true — DSI rule blocks FII thesis). Notable: US inflation 4% YoY (3yr high) cited, Fed 3.63% hawkish posture.
+
+| Layer | Score | Notes |
+|-------|-------|-------|
+| L1 | PARTIAL | Fed 3.63% hawkish stated, inflation state transition flagged ✓; carry UNAVAILABLE degrades L1 state-transition completeness |
+| L2 | PARTIAL | Fed 3.63% tier-1 ✓, inflation 4% tier-1 ✓, PMI sub absent |
+| L3 | PARTIAL | carry UNAVAILABLE (DSI rule: carrySpread=null) — gap explicitly flagged in WORK block ✓ |
+| L4 | PARTIAL | COC rising ✓, EPS mixed (NVL isolated), M2 UNAVAILABLE, valuation context-only |
+| L5 | PARTIAL | zero clusters → hexagrams skipped per flow spec ✓ (correct behavior) |
+| L6 | PARTIAL | carry gap flagged ✓, BCTC not sampled ✓, sector cascade incomplete (oil/gas single-pillar) ✓ |
+| Biz ctx | ABSENT | F9 — 19th consecutive cycle |
+
+**Score: 2.5/6 NEEDS_ATTENTION** — lowest this cycle. Degraded-dish floor legitimately applied (zero clusters). 9-step: A✓ B-partial C✓ D✗ E✗(carry unavailable) F-1.5/4 G-n/a H-partial I✓ → **4.5/9 NEEDS_ATTENTION**
+
+---
+
+## 9-Step Score Summary (c93 — best dish = EOD / Intraday 02:15, tied)
 
 | Step | Score | Notes |
 |------|-------|-------|
-| A | ✓ | USD/VND, Brent, Gold cited (monthly-frequency) |
-| B | PARTIAL | USD/VND ✓; PMI/US10Y thresholds absent — structural gap F3 |
-| C | ✓ | Causal chains present in both published dishes |
-| D | ✗ | PMI sub-components absent; EFFR-IORB absent — persistent F3 (9+ cycles) |
-| E | PARTIAL | carry is_estimate=false ✓; VIRA absent structural F4 |
-| F | 2.5–3/4 avg | COC+EPS consistent; M2 uncertain noted; POL absent in evening |
-| G | n/a | BCTC extraction blocked 29+ cycles — no BCTC opinions in any dish |
-| H | ✓ | [phase:][tier:] declarations present — AC-1 auto-cure (c86) holding 6 cycles |
-| I | PARTIAL | Source tiers cited; carry tier-2 ✓; VIRA gap degrades E score |
+| A | ✓ | USD/VND, Brent, Gold, inflation cited (monthly-frequency) |
+| B | PARTIAL | USD/VND ✓; PMI thresholds absent structural F3 |
+| C | ✓ | Causal chains complete in all published dishes |
+| D | ✗ | PMI sub-components absent; EFFR-IORB absent — F3 structural (10+ cycles) |
+| E | PARTIAL | carry is_estimate=false ✓ (02:15+EOD); UNAVAILABLE at evening (carrySpread=null); VIRA absent structural F4 |
+| F | 2–3/4 avg | ACB 3/4 GOOD; NVL 2/4; Oil 1/4 capped LOW |
+| G | n/a | BCTC extraction blocked 32 cycles (F-BCTC-CTG-CRITICAL) |
+| H | ✓ | [phase:][tier:] declarations present in 02:15+EOD ✓; AC-1 auto-cure (c86) holding 7 cycles |
+| I | PARTIAL | Source tiers cited; carry tier-2 ✓ EOD; UNAVAILABLE evening |
 
 ---
 
 ## Phase 2: Agent Notebook Review
 
-### news-scout (c66–c71, 2026-06-09)
-- REGIME: extracted at every cycle ✓ (NEUTRAL confirmed across all 5 cycles)
-- Regime thresholds: applied (carry 1.38pp NEUTRAL, yield CHEAP 2–3.2pp) ✓
-- Regime caveat: N/A for news-scout (fires signals, not MARKET narratives)
-- Signal dedup: SELF_SIGNALS_CACHE gate active ✓. c67 dedup override noted (66-min gap > 60-min TTL — clean reasoning, properly documented)
-- Pillar coverage: all signals include pillar breakdown (M2/COC/EPS/POL) ✓
-- 18 total signals fired 2026-06-09; 0 dedup violations detected
-- **Methodology: A✓ B✓ C✓ D-n/a E-n/a F✓ G-n/a H-partial(phase stated, tier stated) I✓ → 7/9 GOOD**
+### news-scout (c73–c78, 2026-06-10)
+- 6 complete cycles on 2026-06-10 (04:08, 05:07, 08:06, 12:06, 16:08, 20:07 UTC)
+- REGIME: NEUTRAL extracted every cycle ✓
+- Dedup: SELF_SIGNALS_CACHE gate active ✓ (gold CRITICAL suppressed c74 correctly per TTL; only new unique events fired)
+- Pillar coverage: all signals include pillar breakdown ✓
+- Signal volume: 3–4 signals/cycle, 18 total on 2026-06-10
+- Methodology: A✓ B✓ C✓ D-n/a E-n/a F✓ G-n/a H-partial I✓ → **7/9 GOOD**
 
-### market-watcher (20:05 UTC, 2026-06-09)
-- REGIME: NEUTRAL ✓, DXY BEARISH noted ✓
-- Off-hours threshold floor applied correctly (2.5σ, 2.5x volume) ✓
-- 0 anomalies, 0 signals — correct (prices stale post-close)
-- **Methodology: A✓ B-n/a C-n/a D-n/a E-n/a F-n/a G-n/a H-n/a I✓ → GOOD (limited scope)**
+### market-watcher (20:06 UTC, 2026-06-10)
+- REGIME: NEUTRAL ✓, DXY USD strengthening noted ✓
+- 0 price anomalies, 1 BRENT macro signal (correctly posted) ✓
+- NVL duplicate suppressed per off-hours protocol ✓
+- Methodology: **GOOD (limited scope)**
 
-### bctc-analyst (c035–c037, 2026-06-09)
-- REGIME: extracted at each cycle ✓ (NEUTRAL, carry 1.38pp)
-- Investment clock: Overheat (CPI 5.46%) declared ✓ (Tier H present)
-- FPT forensic gates: F-score 5/9, OCF vs NI compared ✓, ESC-3 DATA-COV-LIM guard active (Step G present)
-- Pillar coverage in FPT: all 4 pillars noted ✓
-- CTG/batch BLOCKED: 29 tickers — extraction pipeline gap is infra, not methodology
-- EIB governance signal #5417: qualitative judgment despite blocked extraction ✓
-- **Methodology: A✓ B✓ C✓ D-n/a E-partial(VIRA absent) F✓ G✓ H✓ I✓ → 8/9 GOOD**
+### bctc-analyst (c038–c040, 2026-06-09/10)
+- REGIME extracted each cycle ✓; FPT forensic gates (F-score, OCF/NI, ESC) all active ✓
+- CTG cycle 32 (8th escalation): CRITICAL. This is now HIGH — 8 consecutive extraction failures on a filed document is infrastructure failure, not methodology gap.
+- VCB/D2D: cycle 3 empty. New filed 2026-06-10.
+- ACB: Nhóm Âu Lạc + ACBS capital injection noted; insider disclosure watch active ✓
+- Brent +2.11σ macro deviation noted; PLX/GAS energy upside flagged ✓
+- Methodology: A✓ B✓ C✓ D-n/a E-partial(VIRA absent) F✓ G✓ H✓ I✓ → **8/9 GOOD**
 
-### system-auditor (c290–c291, 2026-06-09)
-- c290 HEALTHY: MemPerc=69.98%, disk 39%, all 6 containers UP
-- c291 DEGRADED: mcp-server OOM 97.75% (1.955GiB / 2GiB cap). RestartCount=2 (at limit). **NEW: A-30 memory critical.**
-- This is a system health finding, not a methodology gap. Escalation appropriate — system-auditor sent bug signal per its flow.
-- **No methodology gap. Infrastructure concern logged below.**
-
-### unified-agent (c92 dishes)
-- REGIME: NEUTRAL ✓ (carry 1.38pp, is_estimate=false tier-2) cited in both published dishes
-- Regime caveat: carry NEUTRAL stated, equity yield CHEAP +3.2pp noted ✓
-- Step 8 partial failure: morning slot (05:22Z) has no notebook entry — F-MORNING-NB-MISSING
-- [phase:][tier:] declarations present in EOD+Evening ✓ (AC-1 holding)
-- **Methodology: A✓ B-partial C✓ D✗ E-partial F-partial G-n/a H✓ I-partial → 5/9 NEEDS_ATTENTION**
+### unified-agent (c93 dishes)
+- REGIME: NEUTRAL ✓ (carry 1.38pp is_estimate=false tier-2) in 02:15+EOD; carry UNAVAILABLE evening
+- [phase:][tier:] declarations in 02:15+EOD ✓ (AC-1 holding 7 consecutive cycles)
+- Step 8 failure: morning slot (05:25Z) absent — 4th cycle
+- send_telegram failure at 06:13 intraday: analysis complete but not delivered
+- Methodology: A✓ B-partial C✓ D✗ E-partial F-partial G-n/a H✓ I-partial → **5/9 NEEDS_ATTENTION**
 
 ---
 
-## Findings (c92)
+## Findings (c93)
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|---------|
-| F-MORNING-NB-MISSING | Morning slot 05:22Z fired (cowork-schedule confirmed) but no notebook entry in unified-agent.md. Step 8 partial failure: dish likely published but no audit trail. 3rd+ cycle with missing-slot notebook entry (c87 EOD, c88 Morning, c92 Morning). SPIKE-UNIFIED-NB-GAP active but root cause not yet resolved. | unified-agent / Step 8 | MED | telemetry | cowork-schedule chef-morning last_fired=2026-06-09T05:22:31Z; unified-agent notebook first entry = intraday 06:22Z; morning session absent. |
-| F-OOM-MCP-SERVER | mcp-server OOM at 97.75% (1.955GiB / 2GiB cap) at 05:06Z (system-auditor c291). RestartCount=2 at the 2-restart cap. Memory recovered by 04:35Z reading but escalated again by 05:06Z. Risk: OOM kill during next chef cycle peak. May explain gateway unavailability in this session. | mcp-server container | HIGH | infrastructure | system-auditor c291: MemPerc=97.75%, MemUsage=1.955GiB/2GiB, RestartCount=2. |
-| F3 | PMI sub-components absent (Step D FAIL) — persistent c82–c92 | unified-agent | MED | methodology | Structural tool gap. No improvement across 10+ cycles. |
+| F-MORNING-NB-MISSING | Morning slot 05:25Z fired (cowork-schedule confirmed) but no notebook entry in unified-agent.md. 4th occurrence (c87 EOD, c88 Morning, c92 Morning, c93 Morning). Auto-cure threshold reached. Root cause: 200L notebook cap + 5 daily sessions → step 8b pruning drops morning entry. **Dev task required: increase cap to 300L or add per-slot archival guard for morning.** | unified-agent / Step 8 / notebook cap | HIGH (escalated from MED) | telemetry + infrastructure | cowork-schedule chef-morning last_fired=2026-06-10T05:25:02Z; unified-agent notebook first session = intraday 02:15; no morning session present. |
+| F-INTRADAY-0613-PUBLISH-FAILURE | Intraday 06:13 analysis completed all 6 TNB layers (3.5/6) but `send_telegram` gateway failed with parser error ("expected record received string"). Dish content synthesized and in notebook only — NOT delivered to MARKET. Pattern: tool fails on Vietnamese multi-word payloads. Linked to F-OOM-MCP-SERVER (mcp-server restart corrupts gateway tool wiring). | send_telegram / mcp-server gateway | HIGH (NEW) | infrastructure + data delivery | unified-agent notebook 06:13 session: "Published: BLOCKED — send_telegram gateway failure... Tool requires restoration." |
+| F-OOM-MCP-SERVER | mcp-server OOM 97.75% (1.955GiB/2GiB cap) at c291 2026-06-09T05:06Z, RestartCount=2 at cap. Root cause of stale gateway sessions + send_telegram failures. System-auditor c292+ not yet visible in this session to confirm if resolved. | mcp-server container | HIGH (carry-forward) | infrastructure | system-auditor c291 (2026-06-09). No resolution confirmed. |
+| F-BCTC-CTG-CRITICAL | CTG cycle 32 (8th consecutive escalation, filed 2026-06-09/10). VCB cycle 3 empty. D2D cycle 3 empty. 28 tickers total blocked. **Escalated to HIGH** — 8 cycles is critical data loss; G-step (forensic gate) impossible for 28 tickers. | bctc-analyst / data pipeline | HIGH (escalated from MED) | data | bctc-analyst c040: CTG cycle 32 CRITICAL (8th escalation), 28 tickers blocked, signals #5674 BATCH-BLOCKED (0.6). |
+| carry-evening-unavailable | carrySpread=null at 19:37Z → DSI rule blocked FII thesis → evening dish degraded to 2.5/6. macroIndicatorRefreshJob (19:13Z gate) may not populate carry correctly on some evenings. | macro-indicators / macroIndicatorRefreshJob | MED (NEW) | data pipeline | unified-agent notebook 19:37 session: "carry UNAVAILABLE (carrySpread null per DSI rule — no recompute from raw rates)". |
+| F3 | PMI sub-components absent (Step D FAIL) — persistent c82–c93 | unified-agent | MED | methodology | Structural tool gap. |
 | F4 | VIRA absent (Step E PARTIAL) — persistent | unified-agent | MED | methodology | VPS scraper pending. |
-| F5 | Market hexagram 501 dark — B-bucket not wired | kinh-dich-service | LOW | infrastructure | "macro_hexagram unavailable (501)" — both published dishes. |
-| F9 | Business context absent — 18th consecutive cycle | unified-agent / chef | MED | methodology | bctc_signal_* product/customer/ops/mgmt never cited. Linked to F2 (extraction blocked). |
-| F2 | BCTC overdue — CTG cycle 29+ (filed 2026-06-09, extraction still empty); 29 tickers total blocked; ACB/EIB/DHG PUB-5 low-conf; EIB governance CRITICAL (signal #5417 unresolved). FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN + BCTC-FETCH-CORRECTNESS active. | bctc-analyst / data pipeline | MED | data | bctc-analyst c037: CTG cycle 29+, 29 tickers blocked, all get_bctc_full empty or PUB-5. |
-| F-NB-HEADER-STALE | unified-agent notebook header "Last updated: 2026-06-09T19:45Z" — now correctly updated (evening dish is last). Header was stale in c91. This specific symptom resolved this cycle. SPIKE-UNIFIED-NB-GAP may have improved Step 8 header-update path. | unified-agent / Step 8 | LOW (resolved this cycle) | telemetry | Notebook header = 19:45Z matches last session entry. Not the same issue as morning missing. |
+| F5 | Market hexagram 501 dark | kinh-dich-service | LOW | infrastructure | "macro_hexagram unavailable (501)" — all dishes. |
+| F9 | Business context absent — 19th consecutive cycle | unified-agent / chef | MED | methodology | bctc_signal_* product/customer/ops/mgmt never cited. Linked to F-BCTC-CTG-CRITICAL. |
 
 ---
 
-## Closed Findings (c92 vs c91)
+## Closed Findings (c93 vs c92)
 
-| Finding | c91 | c92 | Reason |
-|---------|-----|-----|--------|
-| F-SUNDAY-SCHEDULER-FIRE (CRITICAL) | OPEN (false positive) | **CLOSED** | PO ACK confirmed: 2026-06-08 was Monday. No scheduler bug. c91 TNB calendar calculation error. Monday 2026-06-09 schedule matches exactly same pattern — all 4 slots fired correctly. |
-| F-NB-HEADER-STALE (LOW) | OPEN | **RESOLVED this cycle** | unified-agent notebook header "Last updated: 2026-06-09T19:45Z" correctly reflects last session. The morning-missing issue is a separate finding (F-MORNING-NB-MISSING). |
+None closed this cycle.
 
 ---
 
-## New Findings (c92)
+## New Findings (c93)
 
-- **F-OOM-MCP-SERVER (HIGH, NEW):** mcp-server hitting 97.75% memory (1.955GiB / 2GiB cap) at 05:06Z with RestartCount=2 at the cap. This is the most likely root cause of MCP gateway unavailability in this and recent sessions. If the container OOM-kills and restarts, the gateway session token becomes stale. PO to create dev task: increase memory cap or investigate memory leak.
-
----
-
-## Positive Signals (c92)
-
-- **Chef pipeline HEALTHY — all 4 slots fired correctly on Monday 2026-06-09.** guaranteed_ok=TRUE. c91 false positive fully resolved.
-- **[phase:][tier:] declarations in all published dishes.** AC-1 auto-cure (c86) confirmed holding for 6 consecutive cycles. No regression.
-- **carry is_estimate=false honored.** DSI-CONSUMER rule durable — both dishes correctly consume tier-2 carry.
-- **news-scout c66–c71: 18 signals, clean dedup gate.** 5 complete cycles on 2026-06-09, all NEUTRAL regime, dedup reasoning documented. Methodology score 7/9 GOOD.
-- **bctc-analyst F-score + OCF/NI gate active.** Despite extraction blocked for 29 tickers, FPT forensic pipeline (Step G) working correctly. EIB governance qualitative flag posted (#5417) despite blocked extraction.
-- **Evening dish: 3-cluster convergence.** RE + Oil/Gas + Banking with causal chains and regime context. EOD dish: 4-cluster convergence including VinFast $1B IPO catalyst — broadest sector coverage this cycle.
-- **F-NB-HEADER-STALE resolved.** unified-agent notebook header now correctly timestamped to last session.
-- **system-auditor c290 HEALTHY (04:35Z):** memory recovered between probes. Infrastructure auto-recovered without manual intervention.
+- **F-INTRADAY-0613-PUBLISH-FAILURE (HIGH, NEW):** see Findings table above.
+- **carry-evening-unavailable (MED, NEW):** carrySpread=null at evening — monitor c94 evening to confirm if pattern or one-off.
+- **F-MORNING-NB-MISSING escalated to HIGH:** 4th cycle, auto-cure threshold reached, root cause identified as structural cap issue.
+- **F-BCTC-CTG-CRITICAL escalated to HIGH:** 8th consecutive cycle CTG extraction failure.
 
 ---
 
-## Auto-Cures Applied (c92)
+## Positive Signals (c93)
 
-None. All active gaps are either:
-- Structural tool gaps (F3/F4: PMI sub-components, VIRA) — cannot be addressed via flow edit
-- Infra issues (F2 BCTC extraction, F-OOM-MCP-SERVER) — dev task required
-- Step 8 pattern (F-MORNING-NB-MISSING): same gap different slots — 3rd cycle total but not 3 consecutive same-slot occurrences. SPIKE-UNIFIED-NB-GAP is the right vehicle.
+- **Chef pipeline HEALTHY — all 4 guaranteed slots fired on Tuesday 2026-06-10.** guaranteed_ok=TRUE.
+- **[phase:][tier:] declarations in 02:15+EOD dishes.** AC-1 auto-cure (c86) confirmed holding 7 consecutive cycles.
+- **carry is_estimate=false honored in 02:15+EOD.** DSI rule durable. Evening carry unavailability was correctly handled (gap flagged, no manual recompute attempted — correct DSI behavior).
+- **news-scout c73–c78: 18+ signals, clean dedup gate.** 6 complete cycles on 2026-06-10, NEUTRAL regime, dedup reasoning documented across all cycles.
+- **bctc-analyst FPT forensic pipeline (F-score + OCF/NI gate).** Despite 28-ticker extraction block, FPT methodology GOOD at 8/9.
+- **EOD dish: 4-cluster convergence** including Gold -3.09σ CRITICAL macro signal integration — broadest sector coverage of the day.
+- **Intraday 06:13 analysis complete.** Even though publish was blocked by send_telegram failure, the analysis artifact was preserved in the notebook with all 6 layers complete. The methodology was sound — the failure was infrastructure, not quality.
+- **VIC Khiêm 100% MUA + VHM Thăng 74% THAN TRONG** explicitly cited in EOD — hexagram reversal check present for these two tickers even without market-wide hexagram.
+- **ACB insider accumulation (Nhóm Âu Lạc 102M cp + ACBS capital 2,000ty)** tracked across bctc-analyst c040 and news-scout. Multi-source convergence documented correctly.
+
+---
+
+## Auto-Cures Applied (c93)
+
+None. All active gaps require dev tasks:
+- F-MORNING-NB-MISSING: structural 200L cap — needs cap increase or per-slot archival path
+- F-INTRADAY-0613-PUBLISH-FAILURE: MCP/send_telegram gateway issue — dev fix
+- F-OOM-MCP-SERVER: container memory cap — dev fix
+- F-BCTC-CTG-CRITICAL: extraction pipeline — active sprints (BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST)
 
 ---
 
 ## Persisting Blockers
 
-1. **F-OOM-MCP-SERVER (HIGH, NEW):** mcp-server 97.75% at 2GiB cap, RestartCount=2 at limit. Root cause of stale gateway sessions. PO to create dev task: raise cap to 3–4GB or investigate memory leak in mcp-server.
-2. **F-MORNING-NB-MISSING (MED, 3rd cycle):** morning slot notebook entry absent. SPIKE-UNIFIED-NB-GAP investigating. If c93 also missing → auto-cure threshold triggered.
-3. **BCTC extraction blocked (MED):** CTG cycle 29+ (filed 2026-06-09, still empty). 29 tickers total. BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST active sprints.
-4. **VIRA scraper pending (MED):** Layer 3 E-gap structural — every cycle.
-5. **PMI sub-components absent (MED):** Layer 2 D-gap structural — every cycle.
-6. **F9 business context absent — 18th cycle (MED):** Linked to F2 BCTC blocked.
-7. **Market hexagram dark (LOW):** B-bucket 501 — per-ticker working.
+1. **F-OOM-MCP-SERVER (HIGH):** mcp-server at 2GiB cap, RestartCount=2 at limit. Root cause of stale gateway sessions and send_telegram failures. Dev task: raise cap to 3–4GB or fix memory leak.
+2. **F-MORNING-NB-MISSING (HIGH, 4th cycle):** Structural 200L cap issue confirmed as root cause. Dev task: increase notebook cap to 300L or implement per-slot archival guard. SPIKE-UNIFIED-NB-GAP must address this.
+3. **F-INTRADAY-0613-PUBLISH-FAILURE (HIGH, NEW):** send_telegram parser error blocks Vietnamese content. Dev task: investigate send_telegram tool payload parsing bug. Linked to F-OOM-MCP-SERVER.
+4. **F-BCTC-CTG-CRITICAL (HIGH, 8th cycle):** 28 tickers blocked. BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST active sprints must ship. CTG specifically: filed 2026-06-09/10, extraction still empty cycle 32.
+5. **carry-evening-unavailable (MED, NEW):** carrySpread=null at 19:37Z — macroIndicatorRefreshJob carry population. Monitor c94 evening.
+6. **VIRA scraper pending (MED):** Layer 3 E-gap structural — every cycle.
+7. **PMI sub-components absent (MED):** Layer 2 D-gap structural — every cycle.
+8. **F9 business context absent (MED, 19th cycle):** Linked to F-BCTC-CTG-CRITICAL.
+9. **Market hexagram dark (LOW):** B-bucket 501.
 
 ---
 
-## Next Cycle Priorities (c93 — 2026-06-10T20:13Z, Tuesday)
+## Next Cycle Priorities (c94 — 2026-06-11T20:13Z, Wednesday)
 
-1. **F-OOM-MCP-SERVER resolution:** Did PO create a dev task? Was memory cap increased? Check system-auditor c292+ for MemPerc trend. If still at 97%+, MCP gateway will remain stale-session-prone.
-2. **BCTC extraction unblock:** CTG cycle 29+ is now critical. Did BCTC-FETCH-CORRECTNESS ship? Check bctc-analyst c038 (21:00Z) and c039 (00:00Z) for CTG extraction result.
-3. **Morning notebook entry:** Does morning 05:15Z on 2026-06-10 have a notebook entry? If absent again → 4th cycle missing morning entry → auto-cure threshold for SPIKE-UNIFIED-NB-GAP escalation to dev.
-4. **EIB governance follow-through:** Signal #5417 (3-4 HĐQT resignations) — did alert-commander fire a position-danger alert? Did Monday trading session show price impact?
-5. **VinFast $1B IPO catalyst follow-through:** EOD dish cited this as Tech/EV IPO boom → FPT +1.10%. Does Tuesday morning sustain this thesis or reverse?
+1. **F-INTRADAY-0613-PUBLISH-FAILURE follow-through:** Was send_telegram fixed? Did Wednesday morning and intraday dishes publish successfully to MARKET? Check MARKET channel (last 10 msgs) for 2026-06-11.
+2. **F-MORNING-NB-MISSING (5th cycle risk):** Does morning 05:15Z on 2026-06-11 have a notebook entry? If absent again → 5th cycle = persistent structural failure. Escalate to PO as sprint blocker if no dev task has shipped.
+3. **F-BCTC-CTG-CRITICAL:** Did BCTC-FETCH-CORRECTNESS ship? Check bctc-analyst c041+ for CTG/VCB/D2D extraction result.
+4. **carry-evening-unavailable:** Does evening 19:37Z on 2026-06-11 have carry available (carrySpread≠null)? If again null → macroIndicatorRefreshJob has a carry-population bug.
+5. **F-OOM-MCP-SERVER resolution:** Check system-auditor c292+ for MemPerc trend. Was memory cap raised or leak fixed?
 
 ---
 

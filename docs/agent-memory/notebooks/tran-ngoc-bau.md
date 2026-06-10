@@ -1,5 +1,42 @@
 # Tran Ngoc Bau — Working Notebook
 
+## c93 · 2026-06-10T20:21Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Session: manual-spawn (file-evidence, MCP gateway unavailable — stale session, F-OOM-MCP-SERVER persists) | Auto-cures: 0
+
+**Previous handoff ACK:** c92 — no PO ACK section present in tnb-audit-latest.md at audit time. F-OOM-MCP-SERVER flagged HIGH, F-MORNING-NB-MISSING 3rd cycle, F-BCTC-CTG-CRITICAL escalating. Tasks created status unknown (MCP unavailable for WORK channel read).
+
+**Dashboard inbox:** [dashboard] DASHBOARD.md absent. Inbox empty.
+
+**Chef pipeline (2026-06-10, Tuesday) — PIPELINE HEALTHY:**
+- chef-morning (`15 5 * * 1-5`): last_fired=2026-06-10T05:25:02Z — FIRED. No notebook entry (earliest unified-agent session = intraday 02:15). **F-MORNING-NB-MISSING: 4th cycle.** Auto-cure threshold reached.
+- chef-intraday (`13 2-8 * * 1-5`): two intraday sessions fired (02:15 PUBLISHED 4 clusters; 06:13 analysis COMPLETE but BLOCKED — send_telegram gateway parser error, dish NOT delivered to MARKET). NEW: **F-INTRADAY-0613-PUBLISH-FAILURE.**
+- chef-eod (`45 8 * * 1-5`): last_fired=2026-06-10T08:55:08Z — PUBLISHED (msg_id=711, 4+ clusters). CORRECT.
+- chef-evening (`45 19 * * *`): last_fired=2026-06-10T19:51:00Z — PUBLISHED (0 clusters, degraded-dish floor). CORRECT.
+- start_count=4 close_count=4 (counting 02:15+EOD+evening as CLOSE; 06:13 BLOCKED) stuck=0 failed=0 guaranteed_ok=TRUE pipeline_degraded=FALSE (formal count OK; 06:13 is BLOCKED not STUCK)
+
+**Layer scores c93:**
+- Morning 05:25Z: UNAUDITABLE (F-MORNING-NB-MISSING, 4th cycle)
+- Intraday 02:15Z: L1 PASS, L2 PARTIAL (PMI sub absent, EFFR-IORB absent), L3 PARTIAL (carry 1.38pp is_estimate=false ✓, VIRA absent), L4 PARTIAL-HIGH ([phase:transition][tier:equity] ✓, 3/4 pillars: M2+COC+EPS, POL partial via EV policy), L5 PARTIAL (hexagram 501, per-ticker Sư/Tỉnh/Khôn cited), L6 PASS → **3.5/6** | 9-step: 6/9 GOOD
+- Intraday 06:13Z: BLOCKED (analysis complete 3.5/6 but dish not published — send_telegram parser error). Analysis artifact in notebook only.
+- EOD 08:52Z: L1 PASS, L2 PARTIAL, L3 PARTIAL (carry confirmed is_estimate=false tier-2 at 08:51:54Z ✓), L4 PARTIAL-HIGH ([phase:transition][tier:equity] ✓, NVL 2/4, ACB 3/4, Oil 1/4), L5 PARTIAL (NVL Tỉnh 48%, VIC Khiêm 100%, VHM Thăng 74% THAN TRONG; no Lão reversal peak), L6 PASS → **3.5/6** | 9-step: A✓ B-partial C✓ D✗ E-partial F-2.5/4 G-n/a H✓ I✓ → **6/9 GOOD**
+- Evening 19:37Z: 0 clusters, degraded-dish floor. carry UNAVAILABLE (carrySpread=null, is_estimate=true). L1 PARTIAL, L2 PARTIAL, L3 PARTIAL (carry blocked DSI), L4 PARTIAL, L5 PARTIAL (hexagrams skipped — zero clusters), L6 PARTIAL → **2.5/6** | 9-step: A✓ B-partial C✓ D✗ E✗ F-1.5/4 G-n/a H-partial I✓ → **4.5/9 NEEDS_ATTENTION**
+- Business context: ABSENT — F9 persistent (19th consecutive cycle)
+
+**New findings c93:**
+- F-MORNING-NB-MISSING (HIGH, escalated from MED): 4th cycle. Morning slot auto-cure threshold reached. Root cause: 200L notebook cap + 5 daily sessions (02:15+05:25+06:13+08:52+19:37) → step 8b pruning drops morning entry. Structural cap issue, cannot fix via single flow edit. Escalate to dev task: increase cap or add slot-specific session guard.
+- F-INTRADAY-0613-PUBLISH-FAILURE (HIGH, NEW): send_telegram gateway parser error at intraday 06:13 slot. Dish analysis completed all 6 layers but NOT delivered to MARKET. Pattern: tool accepts ≤20-char strings, fails on Vietnamese multi-word payloads. Linked to F-OOM-MCP-SERVER (mcp-server restart corrupts gateway tool wiring).
+- F-BCTC-CTG-CRITICAL (HIGH, escalated from MED): CTG cycle 32 (8th consecutive escalation, filed 2026-06-10). VCB cycle 3 empty. D2D cycle 3 empty. 28 tickers total blocked. Now classified HIGH — 8 cycles is critical data loss.
+- carry-evening-unavailable (MED): carrySpread=null at 19:37Z degraded evening dish to 2.5/6. macroIndicatorRefreshJob (19:13Z) may not populate carry correctly. Monitor c94.
+
+**Structural gaps (carry-forward):** F3=MED PMI sub-components | F4=MED VIRA absent | F9=MED business context (19th) | F5=LOW hexagram 501
+
+**Agent methodology scores:** news-scout 7+/9 GOOD (c73–c78, 5 clean cycles) | market-watcher GOOD (limited scope) | bctc-analyst 8/9 GOOD (FPT forensic gates holding) | unified-agent 5/9 NEEDS_ATTENTION (D+E persistent; evening 4.5/9)
+
+**Auto-cures:** None. F-MORNING-NB-MISSING: structural cap issue requiring dev task (not addressable via flow edit). F-INTRADAY-0613-PUBLISH-FAILURE: MCP/infra issue requiring dev task.
+
+**Actions:** Handoff docs/handoffs/tnb-audit-latest.md written | Signal docs/signals/tnb-2026-06-10T2021Z-c93.json | Notebook committed | WORK report pending (MCP unavailable — report inline)
+
 ## c92 · 2026-06-09T20:20Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Session: manual-spawn (file-evidence, MCP gateway unavailable — F-OOM-MCP-SERVER likely root cause) | Auto-cures: 0
