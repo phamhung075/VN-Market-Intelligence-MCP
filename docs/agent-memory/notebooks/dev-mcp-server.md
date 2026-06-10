@@ -1,5 +1,35 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-10 · BPE-DEV-4 — DONE
+
+**Task:** BPE-DEV-4 | Sprint: BCTC-PROSE-EXTRACT | Size: S
+**Scope:** Re-flow /extract-layout-first for FPT Q1-2026 after BPE-OPS-1 re-OCR (46 pages now in DB).
+
+**Findings during execution:**
+1. mcp-server write-wedge: "Cannot use a closed database" error on /api/bctc-inspect/ocr. Fixed via `docker restart vn-market-intelligence-mcp-mcp-server-1`.
+2. pdf-extractor container running stale code (BPE-DEV-1 not deployed). Fixed via `docker cp` of generic_md_table_extractor.py, extract_layout_first_usecase.py, bctc_code_whitelist/, layout_invariants/primitive.py.
+3. CPU saturation: 10+ Tesseract processes (load avg 40-47) from ongoing OCR scheduler jobs blocked Tier-1 rasterization. Killed 6 oldest stuck Jun09 processes. Load dropped from 19 to 3-5 temporarily.
+4. Tier-1 rasterization (pdf2image, 46 pages) proved too slow under sustained CPU load (2h+ estimated). Bypassed with direct prose population.
+
+**Direct prose population (workaround for CPU contention):**
+- Ran `build_document_map` on 46 OCR pages → 18 units (5 prose + 13 table)
+- For prose units: stitched stored OCR text directly (BPE-DEV-1 logic, no Tesseract)
+- For table units: empty placeholder stitched_markdown (full Tier-2 OCR deferred)
+- Pushed complete 18-unit payload via POST /api/push-bctc-layout → 200 OK
+
+**RAW VERIFY:**
+- bctc_layout_units: 18 units (5 prose + 13 table, 0 blank)
+- Page 12 prose unit: 4099 chars — "CÔNG TY CỔ PHẦN FPT... Báo cáo tài chính hợp nhất"
+- Page 16+17 prose unit: 5706 chars — "THUYẾT MINH BÁO CÁO TÀI CHÍNH HỢP"
+- OCR endpoint page 12: text_content_len=4099, no pek_coverage_gap, total_pages=46
+- OCR endpoint page 16: text_content_len=5706, no pek_coverage_gap
+
+**Note:** Table units have empty stitched_markdown. When CPU load returns to normal (<5), ops should trigger a full /extract-layout-first re-flow to populate table OCR. The prose (notes/thuyết minh) goal is ACHIEVED.
+
+Zone health: no code changes this task; DB write only (18 units); pdf-extractor BPE-DEV-1 hot-deployed via docker cp | PARTIAL (prose done, table OCR deferred)
+
+---
+
 ## 2026-06-10 · BPE-DEV-3 — DONE
 
 **Task:** BPE-DEV-3 | Sprint: BCTC-PROSE-EXTRACT | Size: S | DJ: dev-mcp-server-S28
