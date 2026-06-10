@@ -1,28 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-06-10 15:10 UTC (c039) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c037 · 2026-06-09T18:15Z
-### Analysis Cycle (18:07–18:15 UTC) — mode: mixed
-- E2 guard: PASS (18:07 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-2.
-- Double-publish guard: claimed=true (bctc-slot-2:2026-06-09). Log ID: 1307.
-- Mode: mixed. 1 routine (FPT, E3 cache hit) + 29 release BLOCKED (CTG cycle 29+; VCB/MBB/HPG/VHM/VPB/VRE/KBC/D2D/NVL/TCH/REE/HVN/MWG/SSI/HCM/DPM/GVR/NKG/POW/VCI/VIC/PPC/PLX/HSG empty; ACB 38%/EIB 31%/DHG 44% PUB-5).
-- Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%. Market EY 8.20% CHEAP (+3.20pp). VN-Index 1793.05 (UP +2.52). Investment clock: Overheat (CPI 5.46%).
-- Macro: Brent $90.06 NEUTRAL (-4.53% session); Gold $4,286.2 BULLISH (risk-off, -1.28%); USD/VND 26128 BEARISH.
-- Context: gold -2.18σ, oil -2.07σ macro deviation alerts. BĐS: NVL -4.33%, VRE -1.69%, VIC -0.92%. Dầu khí: PLX -2.88%, GAS -1.79%. VN-Index đảo chiều phục hồi sau nhịp giảm sốc.
-- FPT Q1-2026 routine: E3 CACHE HIT — passes skipped. PE 13.8 vs sector 17.3 (-20%); ROE 28.3%; EY spread +2.25pp FAIR. Net profit 2,476.8ty (19.8%). OCF -2,847.8ty seasonal Q1 (Q4 +4,108ty bình thường). Balance imbalance=0. ESC: 2=PASS, 3=DATA-COV-LIM GUARD-HELD (~28d). trick_confidence=medium. F-score=5/9. Insider: clean.
-- Release batch (29 tickers): CTG cycle 29+ CRITICAL (filed 2026-06-09). VCB/D2D also filed 2026-06-09 — extraction still empty. All get_bctc_full empty or PUB-5 low-conf. RELEASE deferred cycle 29+.
-- Legal carry: NVL bond 5,000ty 2026-09-15 (~98d). VPB Lạng Sơn. CMG/VNECO2 tax_penalty. PC1 arrest unresolved.
-- Signals: #5545 FPT fundamental_validation (0.8), #5546 BATCH-BLOCKED (0.6).
-- Signal files: bctc_signal_FPT_20260609_routine.json (c037), bctc_signal_BATCH_RELEASE_20260609_pending.json (29 tickers).
-
-### Carry-over to c038 (next slot, 2026-06-09 21:00 UTC)
-- CTG cycle 29+ CRITICAL: filed 2026-06-09, extraction still empty. Pipeline fix MUST deploy.
-- VCB (filed 2026-06-09), D2D (filed 2026-06-09): new filings, extraction pending.
-- 29 tickers total BLOCKED. ACB/EIB/DHG: PUB-5 low-conf re-extraction needed.
-- NVL bond maturity risk (~98d). VPB Lạng Sơn legal open.
-- FPT ESC-3: DATA-COV-LIM GUARD-HELD (~28d remaining).
-- Brent -4.53% session: GAS/PLX energy sector headwind active. Monitor.
+**Last updated:** 2026-06-10 18:12 UTC (c040) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c038 · 2026-06-09T21:10Z
 ### Analysis Cycle (21:00–21:10 UTC) — mode: mixed
@@ -34,10 +12,9 @@
 - FPT Q1-2026 routine: E3 CACHE HIT — passes skipped. PE 13.8 vs sector 17.3 (-20%); ROE 28.3%; EY spread +2.25pp FAIR. Net profit 2,476.8ty (19.8%). OCF -2,847.8ty seasonal Q1. Balance imbalance=0. ESC: 2=PASS, 3=DATA-COV-LIM GUARD-HELD (~27d). trick_confidence=medium. F-score=5/9. Insider: clean.
 - Release batch: CTG cycle 30+ CRITICAL (6th consecutive escalation, filed 2026-06-09). VCB filed 2026-06-09 (1st cycle empty). D2D filed 2026-06-09 (1st cycle empty). 28 tickers total. RELEASE deferred.
 - Chain findings (2h): CTG urgent_news #5551 (VietinBank Capital→Petrosetco). NVL chain_catalyst bearish conf=0.75 #5553 (sector selloff -4.33%). POW urgent_news #5552. Macro: Gold -2.18σ, Oil -2.07σ alerts active.
-- ACB note: +4.95% session; Nhóm Âu Lạc gom 102M cổ phiếu per cafef; no formal insider disclosure registered. Không phải insider trading signal. Alert-commander notified.
+- ACB note: +4.95% session; Nhóm Âu Lạc gom 102M cổ phiếu per cafef; no formal insider disclosure registered.
 - Legal carry: CMG/VNECO2 tax_penalty (2026-05-29), PC1 arrest unresolved (2026-05-21), VPB Lạng Sơn open (2026-05-20). NVL bond 5,000ty due 2026-09-15 (~98d).
 - Signals: #5560 FPT fundamental_validation (0.8), #5561 BATCH-BLOCKED (0.6).
-- Signal files: bctc_signal_FPT_20260609_routine.json (c038), bctc_signal_BATCH_RELEASE_20260609_pending.json (28 tickers).
 
 ### Carry-over to c039 (next slot, 2026-06-10 00:00 UTC)
 - CTG cycle 30+ CRITICAL: 6th consecutive escalation. Pipeline fix deploy URGENT.
@@ -59,9 +36,7 @@
 - Release batch: CTG cycle 31+ CRITICAL (7th consecutive escalation, filed 2026-06-09). VCB (cycle 2 empty). D2D (cycle 2 empty). 28 tickers BLOCKED. RELEASE deferred.
 - Chain findings (30 min): 0 open findings.
 - Legal carry: CMG/VNECO2 tax_penalty, PC1 arrest unresolved, VPB Lạng Sơn open. NVL bond 5,000ty due 2026-09-15 (~96d).
-- Notable: NVL +6.88% + "bất ngờ có biến" news + BĐS sector recovery after yesterday's selloff. Monitor fundamental when extraction unblocks.
 - Signals: #5657 FPT fundamental_validation (0.8), #5658 BATCH-BLOCKED (0.6).
-- Signal files: bctc_signal_FPT_20260610_routine.json, bctc_signal_BATCH_RELEASE_20260610_pending.json.
 
 ### Carry-over to c040 (next slot, 2026-06-10 18:00 UTC)
 - CTG cycle 31+ CRITICAL: 7th consecutive escalation. Pipeline fix MUST ship before c040.
@@ -70,3 +45,27 @@
 - NVL bond 5,000ty due 2026-09-15 (~96d). NVL +6.88% session — monitor price + news for fundamental catalyst.
 - FPT ESC-3: DATA-COV-LIM GUARD-HELD (~26d remaining).
 - Gold -3.09σ EXTREME deviation: macro risk-off signal. Monitor GAS/PLX energy sector.
+
+## c040 · 2026-06-10T18:12Z
+### Analysis Cycle (18:06–18:12 UTC) — mode: mixed
+- E2 guard: PASS (18:06 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-2.
+- Double-publish guard: claimed=true (bctc-slot-2:2026-06-10). Log ID: 1322.
+- Mode: mixed. 1 routine (FPT, E3 cache hit) + 28 release BLOCKED (CTG cycle 32 CRITICAL; VCB/D2D cycle 3 empty; 25 mã khác empty/PUB-5).
+- Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%. Market EY 7.05% CHEAP (+2.05pp). VN-Index 1803.71. Investment clock: Overheat (CPI 5.46%).
+- Macro: Brent $94.29 NEUTRAL (+1.87%); Gold $4,134.6 BULLISH (risk-off, -3.38%); USD/VND 26130 BEARISH. Macro alert: Brent +2.11σ (HIGH). PLX news: dầu neo cao → hoàn nhập dự phòng tồn kho.
+- FPT Q1-2026 routine: E3 CACHE HIT — passes skipped. PE 13.8 vs sector 17.3 (-20%); ROE 28.3%; EY spread +2.25pp FAIR. Net profit 2,476.8ty (19.8%). OCF -2,847.8ty Q1 mùa vụ bình thường (Q4 +4,108ty ratio 1.64). Balance imbalance=0. ESC: 2=PASS, 3=DATA-COV-LIM GUARD-HELD (~25d). trick_confidence=medium. F-score=5/9. Insider: clean.
+- Release batch: CTG cycle 32 CRITICAL (8th cycle, filed 2026-06-10). VCB filed 2026-06-10 (cycle 3 empty). D2D filed 2026-06-10 (cycle 3 empty). 28 tickers BLOCKED. RELEASE deferred.
+- Chain findings (30 min): 2 ops signals (unknown stock, no ticker relevance). Kinhdich + search_similar: VPS connectivity unavailable — non-critical, logged.
+- Legal carry: CMG/VNECO2 tax_penalty, PC1 arrest unresolved, VPB Lạng Sơn open. NVL bond 5,000ty due 2026-09-15 (~95d).
+- Notable: NVL +6.88% (3 consecutive alerts); Brent +2.11σ macro deviation; Gold -3.38% continued decline; ACB insider accumulation (Nhóm Âu Lạc 102M cp + ACBS vốn tăng 2,000ty).
+- Signals: #5673 FPT fundamental_validation (0.8), #5674 BATCH-BLOCKED (0.6).
+- Signal files: bctc_signal_FPT_20260610_routine.json (c040), bctc_signal_BATCH_RELEASE_20260610_pending.json (28 tickers).
+
+### Carry-over to c041 (next slot, 2026-06-10 21:00 UTC)
+- CTG cycle 32 CRITICAL: 8th consecutive escalation. Pipeline fix MUST deploy before c041.
+- VCB (cycle 3), D2D (cycle 3): extraction still empty. Monitor.
+- 28 tickers BLOCKED. ACB/EIB/DHG: PUB-5 re-extraction unresolved.
+- NVL bond 5,000ty due 2026-09-15 (~95d). NVL +6.88% — monitor fundamental when extraction unblocks.
+- FPT ESC-3: DATA-COV-LIM GUARD-HELD (~25d remaining).
+- Brent +2.11σ HIGH deviation: GAS/PLX energy upside risk monitor.
+- ACB: Nhóm Âu Lạc accumulation + ACBS capital injection — watch for formal insider disclosure.

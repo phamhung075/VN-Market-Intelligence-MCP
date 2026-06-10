@@ -23,16 +23,17 @@
   "balance_imbalance": 0,
   "esc2_result": "PASS",
   "esc3_result": "DATA-COV-LIM GUARD-HELD",
-  "esc3_guard_ttl_days_remaining": 26,
+  "esc3_guard_ttl_days_remaining": 25,
   "trick_confidence": "medium",
-  "trick_summary": null,
+  "trick_summary": "Không phát hiện dấu hiệu bất thường trọng yếu trong kỳ này (E3 cache hit — 6 pass đã chạy chu kỳ trước).",
+  "trick_pass_versions": ["balance-sheet-v1", "pl-v1", "cashflow-v1", "rpt-v1", "footnote-v1", "segment-v1"],
   "f_score": 5,
   "insider": "clean",
   "investment_clock_phase": "Overheat",
   "regime": "NEUTRAL",
   "max_deposit_rate_pct": 5.0,
   "cache_hit": true,
-  "cycle": "c039",
-  "signal_id": 5657,
-  "emitted_at": "2026-06-10T15:10Z"
+  "cycle": "c040",
+  "signal_id": 5673,
+  "emitted_at": "2026-06-10T18:10Z"
 }
