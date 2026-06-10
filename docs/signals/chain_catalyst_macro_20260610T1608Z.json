@@ -1,0 +1,49 @@
+{
+  "from": "news-scout",
+  "to": "all",
+  "type": "chain_catalyst",
+  "signal_type": "chain_catalyst",
+  "headline": "Macro headwinds: Gold decline + USD strength + Oil neutral. Risk-off sentiment.",
+  "source": "bootstrap",
+  "published_at": "2026-06-10T16:07:00Z",
+  "sentiment": "bearish",
+  "impact_score": 8,
+  "regime_adjusted_score": 8.0,
+  "regime": "NEUTRAL",
+  "affected_sectors": ["utilities", "banking", "oil_gas"],
+  "affected_stocks": ["VCB", "BID", "ACB", "GAS", "PLX"],
+  "macro_signals": {
+    "gold_decline_pct": -3.0,
+    "gold_price_usd": 4151,
+    "gold_below_threshold": true,
+    "usdvnd_depreciation": true,
+    "usdvnd_rate": 26130,
+    "oil_neutral": true,
+    "oil_price_usd": 92.49
+  },
+  "pillars": {
+    "M2": "bearish",
+    "COC": "neutral",
+    "EPS": "neutral",
+    "POL": "bearish"
+  },
+  "phase": "slowdown",
+  "tier": "cash",
+  "payload": {
+    "title": "Macro headwinds: Gold decline + USD strength + Oil neutral",
+    "detail": "Gold -3% (risk-off), USDVND 26130 (VND depreciation headwind). Global liquidity tightening. Banking deposit rate pressure. | regime=NEUTRAL regime_adj_score=8.0 | pillars=M2:bearish,COC:neutral,EPS:neutral,POL:bearish | phase=slowdown tier=cash"
+  },
+  "finding_data": {
+    "event_type": "macro",
+    "direction": "bearish",
+    "confidence": 0.88,
+    "affected_stocks": ["VCB", "BID", "ACB"],
+    "affected_sectors": ["utilities", "banking"],
+    "headline": "Macro headwinds: Gold decline + USD strength + Oil neutral. Risk-off sentiment.",
+    "source": "system_status",
+    "hot_money_risk": false,
+    "gdp_warning_signal": false
+  },
+  "createdAt": "2026-06-10T16:08:37Z",
+  "ttl_minutes": 120
+}

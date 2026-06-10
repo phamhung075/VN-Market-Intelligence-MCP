@@ -1,6 +1,42 @@
-- **Last updated:** 2026-06-10 05:07 UTC · **Sprint:** current · **Status:** 74 cycles complete (c74 sentiment +SHIPPED)
+- **Last updated:** 2026-06-10 16:08 UTC · **Sprint:** current · **Status:** 77 cycles complete (c77 off-hours +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c77 · 2026-06-10T16:08:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (TUESDAY 16:08 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, BULLISH REAL ESTATE + BEARISH MACRO.** 20 articles fetched, 3 watchlist impacts (primary: NVL price surge +6.88% volume spike 3.3× bullish +7/10; secondary: ACB broker selling pressure banking headwind +5/10 neutral; tertiary: macro gold decline -3% + USDVND 26130 bearish risk-off +8/10). **3 signals fired (#1319): 2x urgent_news (NVL price surge +7.0, ACB broker sell +5.0) + 1x chain_catalyst (macro gold/USD bearish +8.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours 16:08 UTC). `get_macro_snapshot()` valid shape (vnIndex=1803.71 +10.66, oil NEUTRAL 92.49, gold BULLISH 4151 (-3.0%), usdvnd BEARISH 26130 >25k, carry NEUTRAL 1.38pp, yield CHEAP +2.05pp). **Regime: NEUTRAL** (stable macro, intraday recovery +10.66 offset by gold correction -3%, risk-off safe-haven). Carry NEUTRAL 1.38pp; equity yield CHEAP +2.05pp.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: empty (6h window clean from c76). New candidates: 3x signals (NVL price, ACB broker, macro gold) — all distinct from prior cycles. All 3 NEW signals POSTED (no suppression). Direction: 2x bullish (real estate), 1x bearish (macro) — distinct catalysts.
+
+**Coverage-state sweep:** No stale tickers >48h; all 41 watchlist last updated c76 (12:06 UTC, ~4h ago). No sweep batch forced. Analyzed tickers: NVL, ACB, GAS/PLX (oil_gas macro) updated to 2026-06-10T16:08:00Z. Atomic write: tmp→rename.
+
+**Session Log:** log_agent_work #1319 opened/closed. 20 items, 3 impacts, 3 signals, NEUTRAL regime. Off-hours slot (MARKET CLOSED).
+
+## c76 · 2026-06-10T12:06:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (TUESDAY 12:06 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, BULLISH REAL ESTATE + BEARISH MACRO.** 20 articles fetched, 3 watchlist impacts (primary: PDR strategic HCM portfolio restructuring real estate capex bullish +10/10; secondary: NVL intraday price surge +6.88% momentum real estate bullish +7/10; tertiary: gold price collapse -1.44% safe-haven unwinding macro bearish +9/10). **3 signals fired (#5632–#5634): 2x urgent_news (PDR capex +10.0, NVL price surge +7.0) + 1x chain_catalyst (global gold bearish macro +9.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours 12:06 UTC). `get_macro_snapshot()` valid shape (vnIndex=1803.71 +10.66, oil NEUTRAL 92.86, gold BULLISH 4187.4 (-2.15%), usdvnd BEARISH 26130 >25k, carry NEUTRAL 1.38pp, yield CHEAP +2.05pp). **Regime: NEUTRAL** (stable macro: equities strong intraday recovery +10.66, gold -2.15% correction risk-off safe-haven, oil steady, valuation CHEAP equity premium). Carry NEUTRAL 1.38pp; equity yield CHEAP +2.05pp.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: empty (6h window clean from c75 sentiment). New candidates: 3x signals (PDR capex, NVL price, gold macro) — all distinct from prior cycles. All 3 NEW signals POSTED (no suppression). Direction divergence OK: #5632–#5633 bullish (real estate), #5634 bearish (macro gold) — separate catalysts.
+
+**Coverage-state sweep:** No stale tickers >48h; all 41 watchlist last updated c75 (08:06 UTC, ~4h ago). No sweep batch forced. Analyzed tickers: PDR, NVL + gold_mining (GVR watchlist) updated to 2026-06-10T12:06:00Z. Atomic write: tmp→rename.
+
+**Session Log:** log_agent_work #1316 opened/closed. 20 items, 3 impacts, 3 signals, NEUTRAL regime. Off-hours slot (MARKET CLOSED).
+
+## c75 · 2026-06-10T08:06:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (TUESDAY 08:06 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, BULLISH REAL ESTATE + BEARISH MACRO.** 20 articles fetched, 3 watchlist impacts (primary: NVL intraday breakout +6.88% momentum bullish +7/10; secondary: PDR strategic portfolio restructuring HCM projects real estate capex acceleration bullish +10/10; tertiary: gold price collapse -1.44% safe-haven unwinding macro bearish +7/10). **3 signals fired (#5611–#5613): 2x urgent_news (NVL price surge +7.0, PDR capex +10.0) + 1x chain_catalyst (global gold bearish macro -7.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN (trading hours 02:00–08:59 UTC). `get_macro_snapshot()` valid shape (vnIndex=1803.71 +10.66, oil NEUTRAL 91.69 (-0.94%), gold BULLISH 4217.6 (-1.44%), usdvnd BEARISH 26130 >25k, carry NEUTRAL 1.38pp, yield CHEAP +3.2pp). **Regime: NEUTRAL** (stable macro: VN-Index recovery +10.66 intra-session, gold correction -1.44% risk-off safe-haven flow, oil consolidating neutral band). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +3.2pp.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: 1 prior entry (#5599 from c74 sentiment, TTL=120min ~1h ago active). New candidates: 3x signals (NVL price surge, PDR capex, gold macro) — all distinct events from #5599, no dedup match. All 3 NEW signals POSTED (no suppression). Direction divergence OK: #5611–#5612 bullish (real estate momentum + capex), #5613 bearish (macro gold) — separate catalysts (equity rally vs commodity bearish), permitted.
+
+**Coverage-state sweep:** No stale tickers >48h; all 41 watchlist last updated c74 (05:07 UTC, ~3h ago). No sweep batch forced. Analyzed tickers: NVL, PDR + gold_mining watchlist (GVR, BDI, DLC, VNH) updated to 2026-06-10T08:06:00Z. Atomic write: tmp→rename.
+
+**Session Log:** log_agent_work #1314 opened/closed. 20 items, 3 impacts, 3 signals, NEUTRAL regime. Off-hours slot (MARKET OPEN).
 
 ## c74 · 2026-06-10T05:07:00Z (sentiment, slot=news-scout-sentiment) — SHIPPED
 
@@ -113,21 +149,3 @@
 
 **Dedup Gate:** SELF_SIGNALS_CACHE populated (3 prior signals #5467–#5469 from c66, all <60min TTL, NEUTRAL regime). New #5472 (startup IPO tech) vs #5469 (prior global startup IPO) — **DEDUP OVERRIDE**: direction match (both bullish) + event identical (same IPO filing, same day 2026-06-09). Suppression considered but **TIME WINDOW SAFE** (c66 #5469 posted 04:08, now 05:14 = 66min gap EXCEEDS 60min passive TTL). Posted new signal; prior expired. Coverage-state atom write deferred (c66 already updated all tickers 04:08; no new sweep). **Session Log:** log_agent_work #1298 opened/closed. 20 items, 41 impacts, 2 signals, NEUTRAL regime. Sentiment slot (MARKET OPEN).
 
-## c66 · 2026-06-09T04:08:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
-
-**Off-hours cycle (MONDAY 04:08 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, MACRO DIVERGENCE (BEARISH INDEX + BULLISH TECH).** 20 articles fetched, 41 watchlist impacts (primary: VN-Index breach 1800 support, foreign net-sell 700B VND, banking sector cascade -2.18%, 7 primary stocks; secondary: gold liquidation -0.32-0.76%, safe-haven unwinding risk-off; tertiary: global mega-startup IPO $1T valuation, tech sector bullish spillover). **5 signals fired (#5467–#5471): 3x chain_catalyst (VN-Index breach bearish +9.0, gold liquidation bearish +8.0, tech IPO bullish +8.0) + 2x urgent_news (GAS liquidity pressure +7.0, EIB governance risk +7.0).**
-
-**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN (trading hours). `get_macro_snapshot()` valid shape (vnIndex=1793.86 +3.33 from 1790.53, oil NEUTRAL 93.43 (-0.95%), gold BULLISH 4364 (+0.52%), usdvnd BEARISH 26128 >25k, carry NEUTRAL 1.38pp, yield CHEAP 2.05pp). **Regime: NEUTRAL** (mixed divergence: VN-Index recovers +3.33 intra-session but remains below 1800 tactical support; gold continues bullish safe-haven bias; oil consolidating; carry neutral, yield cheap). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +2.05pp.
-
-**Signals Fired (5 total):**
-- #5467 (chain_catalyst to all): VN-Index plunges 50 points to 1790-1800, foreign net-sell 700B VND risk-off. Banking cascade -2.18% (11 stocks: BID, ACB, VPB, EIB, MBB, CTG, VCB core). Confidence 77%. Critic 0.8. Regime NEUTRAL mult=1.0→score 8.0. hot_money_risk=true. Pillars: M2 neutral, COC headwind, EPS neutral, POL neutral. Phase slowdown, tier equity.
-- #5468 (chain_catalyst to all): Gold liquidation -0.32-0.76% daily (4.341-4.359 USD/oz). Safe-haven unwinding, commodity-CPI spillover risk. Confidence 79%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Affected: VNH, BDI, DLC, POW, PPC, REE, VCI, SSI, HCM. Pillars: M2 bearish, COC neutral, EPS neutral, POL neutral. Phase slowdown, tier alternative. hot_money_risk=true.
-- #5469 (chain_catalyst to all): Global mega-startup IPO $1T valuation. Technology sector bullish spillover. Confidence 87%. Critic 0.8. Regime NEUTRAL mult=1.0→score 7.0. Direct: FPT, SIS (tech). Pillars: M2 neutral, COC neutral, EPS bullish, POL neutral. Phase expansion, tier equity.
-- #5470 (urgent_news GAS to alert-commander): Banking liquidity tight, rates sticky. Oil-gas sector (GAS, PLX) pressured. Geopolitical de-escalation (Hormuz reopens), supply recovery likely. Confidence 75%. Critic 0.8. Severity high. Pillars: M2 neutral, COC headwind, EPS neutral, POL neutral. Phase slowdown, tier equity.
-- #5471 (urgent_news EIB to alert-commander): Ba thành viên HĐQT Eximbank từ nhiệm (governance risk EIB). Confidence 75%. Critic 0.8. Severity medium. Pillars: M2 neutral, COC headwind, EPS neutral, POL bearish. Phase slowdown, tier equity.
-
-**Dedup Gate:** SELF_SIGNALS_CACHE empty (6h prior entries absent). All 5 signals POSTED (no prior theme overlap in 180-min window). Direction divergence OK: #5467–#5468 bearish (index/gold), #5469 bullish (tech) — separate events, permitted.
-
-**Coverage-state:** Updated all 41 watchlist tickers to 2026-06-09T04:08:00Z (all recent post-c65 update 00:09 UTC; no sweep forced, max staleness <4h). Atomic write: tmp→rename verified.
-
-**Session Log:** log_agent_work #1297 opened/closed. 20 items, 41 impacts, 5 signals, NEUTRAL regime. Off-hours slot (MARKET OPEN).

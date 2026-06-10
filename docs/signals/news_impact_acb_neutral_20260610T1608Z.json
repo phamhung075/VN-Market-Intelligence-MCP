@@ -1,0 +1,43 @@
+{
+  "from": "news-scout",
+  "to": "unified-agent",
+  "type": "news_impact",
+  "signal_type": "urgent_news",
+  "stock_code": "ACB",
+  "headline": "ACB của Chủ tịch Trần Hùng Huy bị tự doanh CTCK bán ròng mạnh nhất phiên 10/6",
+  "source": "cafef",
+  "published_at": "2026-06-10T12:55:00Z",
+  "sentiment": "neutral",
+  "impact_score": 5,
+  "regime_adjusted_score": 5.0,
+  "regime": "NEUTRAL",
+  "affected_sectors": ["banking", "securities"],
+  "affected_stocks": ["ACB", "BID", "EIB", "MBB", "CTG", "VPB", "VCB", "VCI", "SSI", "HCM", "VDC"],
+  "technical_signals": {
+    "insider_selling": true,
+    "selling_direction": "broker_net_short"
+  },
+  "pillars": {
+    "M2": "neutral",
+    "COC": "headwind",
+    "EPS": "neutral",
+    "POL": "neutral"
+  },
+  "phase": "slowdown",
+  "tier": "fixed_income",
+  "payload": {
+    "title": "ACB của Chủ tịch Trần Hùng Huy bị tự doanh CTCK bán ròng mạnh nhất phiên 10/6",
+    "detail": "ACB net selling by brokers at highest since 10/6 morning. Banking sector headwind signal from securities selling pressure. | regime=NEUTRAL regime_adj_score=5.0 | pillars=M2:neutral,COC:headwind,EPS:neutral,POL:neutral | phase=slowdown tier=fixed_income"
+  },
+  "finding_data": {
+    "headline": "ACB của Chủ tịch Trần Hùng Huy bị tự doanh CTCK bán ròng mạnh nhất phiên 10/6",
+    "source": "cafef",
+    "severity": "low",
+    "confidence": 0.84,
+    "hot_money_risk": false,
+    "cpi_pressure_risk": false,
+    "gdp_warning_signal": false
+  },
+  "createdAt": "2026-06-10T16:08:36Z",
+  "ttl_minutes": 120
+}
