@@ -894,6 +894,32 @@ export function registerBctcFullTools(
       const db = _testDb ?? getDb();
       const upperCode = code.toUpperCase().trim();
 
+      // FR-DEGRADE-01 FIX: detect bctc VPS proxy staleness before serving.
+      // SLA = 2 days. When the last successful BCTC push is beyond SLA, inject
+      // unavailable flag even when returning empty so callers know the reason.
+      const BCTC_VPS_SLA_HOURS = 48;
+      let bctcVpsStaleSince: string | null = null;
+      try {
+        const lastBctcPush = db
+          .prepare<{ pushed_at: string }, []>(
+            `SELECT pushed_at FROM vps_push_log
+             WHERE service = 'bctc' AND status = 'ok'
+             ORDER BY pushed_at DESC LIMIT 1`,
+          )
+          .get();
+
+        if (lastBctcPush) {
+          const pushAt = new Date(lastBctcPush.pushed_at);
+          const ageHours = (Date.now() - pushAt.getTime()) / 3_600_000;
+          if (ageHours > BCTC_VPS_SLA_HOURS) {
+            bctcVpsStaleSince = pushAt.toISOString();
+          }
+        }
+        // If no push record at all, we cannot assert staleness — treat as unknown.
+      } catch {
+        // vps_push_log may not exist in test DBs — ignore
+      }
+
       try {
         // ── 1. Fetch latest financial report ─────────────────────────────
         const conditions: string[] = ["action_code = $code"];
@@ -916,6 +942,22 @@ export function registerBctcFullTools(
           .get(params);
 
         if (!latestRow) {
+          // FR-DEGRADE-01 FIX: when no data found, signal stale/unavailable with reason.
+          if (bctcVpsStaleSince !== null) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: JSON.stringify({
+                    unavailable: true,
+                    reason: "vps_stale",
+                    stale_since: bctcVpsStaleSince,
+                    message: `BCTC VPS proxy stale (last ok push: ${bctcVpsStaleSince}, SLA=${BCTC_VPS_SLA_HOURS}h). Chưa có dữ liệu BCTC cho ${upperCode}.`,
+                  }),
+                },
+              ],
+            };
+          }
           return {
             content: [
               {

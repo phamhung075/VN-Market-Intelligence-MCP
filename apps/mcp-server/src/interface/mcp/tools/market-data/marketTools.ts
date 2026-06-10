@@ -321,11 +321,27 @@ export function registerMarketTools(server: McpServer): void {
           }
         }
 
+        // MD-FUNC-01 FIX: inject machine-readable vn_index struct alongside prose text.
+        // Callers can parse response.vn_index.price as a number; prose text is preserved.
+        const vnIndexStruct: {
+          price: number;
+          change_pct: number;
+          direction: "up" | "down" | "flat";
+        } | null = vnIndex
+          ? {
+              price: vnIndex.price,
+              change_pct: vnIndex.changePct,
+              direction:
+                vnIndex.changePct > 0 ? "up" : vnIndex.changePct < 0 ? "down" : "flat",
+            }
+          : null;
+
         return {
           content: [{ type: "text" as const, text: JSON.stringify({
             source_tier: 2 as const,
             text,
             fetchedAt: generatedAt,
+            vn_index: vnIndexStruct,
           }, null, 2) }],
         };
       } catch (err) {

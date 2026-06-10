@@ -205,16 +205,21 @@ export interface UrgentNewsFindingData {
   regime?: "TIGHTENING" | "NEUTRAL" | "EASING";
 }
 
+// SYS-FUNC-05 FIX: headline, source, severity made optional so callers that supply
+// only confidence/summary (minimal urgent_news posts) are not rejected with a
+// "root: Required" error. The interface fields are kept for full payloads; the schema
+// is the validation gate and must not block valid partial signals.
 export const UrgentNewsFindingDataSchema = z.object({
-  headline: z.string().min(1),
-  source: z.string().min(1),
-  severity: z.enum(["low", "medium", "high", "critical"]),
+  headline: z.string().min(1).optional(),
+  source: z.string().min(1).optional(),
+  severity: z.enum(["low", "medium", "high", "critical"]).optional(),
   catalyst_stock_code: z.string().min(2).optional(),
   catalyst_direction: z.enum(["bullish", "bearish", "neutral"]).optional(),
   time_to_price_move: z.number().min(0).optional(),
   confidence: z.number().min(0).max(1).optional(),
   regime: z.enum(["TIGHTENING", "NEUTRAL", "EASING"]).optional(),
-});
+  summary: z.string().optional(),
+}).passthrough();
 
 // ── CrossValidateFindingData ───────────────────────────────────────────────────
 

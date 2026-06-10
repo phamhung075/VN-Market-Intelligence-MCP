@@ -15,6 +15,10 @@ import {
   type HttpClient,
   type PublicContract,
 } from "../../../../infrastructure/fetchers/muasamcong.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+
+// DS-DEGRADE-01: SLA for muasamcong upstream — 7 days (weekly update cadence).
+const MUASAMCONG_SLA_HOURS = 7 * 24;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handler (exported for direct testing)
@@ -51,11 +55,51 @@ export async function getPublicContractsHandler(
   }
 
   if (contracts.length === 0) {
+    // DS-DEGRADE-01 FIX: distinguish stale upstream from genuinely no data.
+    // Check the public_contracts table for the most recent fetched_at row.
+    // If the latest record is older than MUASAMCONG_SLA_HOURS, signal stale=true.
+    try {
+      await initDatabase();
+      const db = getDb();
+      const latestRow = db
+        .prepare<{ fetched_at: string }, []>(
+          "SELECT fetched_at FROM public_contracts ORDER BY fetched_at DESC LIMIT 1",
+        )
+        .get();
+
+      if (latestRow) {
+        const fetchedAt = new Date(latestRow.fetched_at);
+        const ageHours = (Date.now() - fetchedAt.getTime()) / 3_600_000;
+
+        if (ageHours > MUASAMCONG_SLA_HOURS) {
+          // Upstream stale — last known data exceeds SLA window
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  stale: true,
+                  stale_since: fetchedAt.toISOString(),
+                  source: "muasamcong",
+                  message: `Dữ liệu muasamcong stale — lần cập nhật cuối: ${fetchedAt.toISOString()} (${ageHours.toFixed(1)}h trước, SLA=${MUASAMCONG_SLA_HOURS}h)`,
+                }),
+              },
+            ],
+          };
+        }
+      }
+    } catch {
+      // DB unavailable — fall through to generic unavailable response
+    }
+
     return {
       content: [
         {
           type: "text" as const,
-          text: "Không tìm thấy gói thầu nào. Dữ liệu có thể chưa được cập nhật.",
+          text: JSON.stringify({
+            unavailable: true,
+            reason: "Không tìm thấy gói thầu nào. Dữ liệu có thể chưa được cập nhật.",
+          }),
         },
       ],
     };

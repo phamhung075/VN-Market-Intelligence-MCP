@@ -169,6 +169,12 @@ export interface AccuracyReport {
   unknowns: number;
   /** True when scoreable (hits+misses) < 20 — not enough data to trust the % */
   insufficientSample: boolean;
+  /**
+   * ALT-FUNC-02 FIX: top-level aggregate accuracy rate in [0,1] range.
+   * null when no scoreable data (hits+misses === 0).
+   * Calculated as hits / (hits + misses).
+   */
+  accuracy_rate: number | null;
 }
 
 /**
@@ -196,6 +202,7 @@ export function formatAccuracyReport(
     misses: 0,
     unknowns: 0,
     insufficientSample: false,
+    accuracy_rate: null,
   });
 
   if (rows.length === 0) {
@@ -392,6 +399,9 @@ export function formatAccuracyReport(
     summary_by_type[sigType] = counts;
   }
 
+  // ALT-FUNC-02 FIX: aggregate accuracy_rate = hits / (hits + misses), null when no data.
+  const accuracy_rate = scoreable > 0 ? hits / scoreable : null;
+
   return {
     text: lines.join("\n"),
     summary_by_type,
@@ -401,6 +411,7 @@ export function formatAccuracyReport(
     misses,
     unknowns,
     insufficientSample,
+    accuracy_rate,
   };
 }
 

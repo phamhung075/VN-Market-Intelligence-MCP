@@ -751,14 +751,40 @@ export function registerKinhDichTools(server: McpServer): void {
     "explain_hexagram",
     "Get the full Vietnamese explanation for a hexagram (1-64): name, Chinese character, judgment, image, 6 hao lines, and trading implications.",
     {
+      // KD-OBS-01 FIX: accept any integer at Zod level; range guard is inside
+      // the handler so out-of-range inputs return a graceful error object
+      // instead of a raw MCP -32602 protocol error.
       number: z.coerce
         .number()
         .int()
-        .min(1)
-        .max(64)
         .describe("Hexagram number 1-64"),
+      hexagram_number: z.coerce
+        .number()
+        .int()
+        .optional()
+        .describe("Alias for number (1-64) — preferred parameter name"),
     },
-    async ({ number }) => {
+    async (args) => {
+      // Support both `number` and `hexagram_number` parameter names
+      const number = (args as unknown as { hexagram_number?: number; number?: number }).hexagram_number
+        ?? (args as unknown as { number?: number }).number
+        ?? 0;
+
+      // KD-OBS-01: graceful range guard — return structured error instead of -32602
+      if (number < 1 || number > 64) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                error: "hexagram_number must be 1–64",
+                received: number,
+              }),
+            },
+          ],
+        };
+      }
+
       // Path A: use local QUE_DATA library — zero Go service / no HTTP call
       const meta = QUE_META.find((q) => q.id === number);
       const data = QUE_DATA[number];

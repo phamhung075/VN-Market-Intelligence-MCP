@@ -232,11 +232,22 @@ export function registerCoordinationTools(server: McpServer): void {
         ...(owner_agent !== undefined ? { owner_agent } : {}),
         ...(expired !== undefined ? { expired } : {}),
       });
+
+      // AC-FUNC-02 FIX: normalize field names to contract spec.
+      // Contract expects `owner` (alias of owner_agent) and `expires_at` as ISO string.
+      // Keep owner_agent for backward compat; add owner alongside.
+      // expires_at in DB is Unix epoch (integer seconds) — convert to ISO-8601 string.
+      const normalizedLocks = result.locks.map((lock) => ({
+        ...lock,
+        owner: lock.owner_agent,
+        expires_at: new Date(lock.expires_at * 1000).toISOString(),
+      }));
+
       return {
         content: [
           {
             type: "text" as const,
-            text: JSON.stringify(result),
+            text: JSON.stringify({ locks: normalizedLocks, count: result.count }),
           },
         ],
       };
