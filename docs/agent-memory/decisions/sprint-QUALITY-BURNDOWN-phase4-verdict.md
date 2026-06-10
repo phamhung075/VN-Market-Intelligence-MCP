@@ -168,3 +168,27 @@ Emitted 4 quality-mismatch signal rows to orch-state.json .signal_queue.rows[] (
 4. Router pushes commits post-merge-writer
 
 **Verdict:** READY FOR COMMIT + PUSH
+
+---
+
+## DJ-GATE-1: Residual-4 Fold Complete (2026-06-10 18:30 UTC)
+
+**Agent:** system-auditor (final fold)  
+**Status:** CLOSED
+
+**Action:** PO corrected recipes and re-probed all 4 residual WARN checks:
+1. DS-CONSIST-01 → PASS (recipe fixed: added step2 POST to /snapshot; cross-verified usdVnd=26130)
+2. MAC-CONSIST-01 → PASS (recipe fixed: added step2 POST to /snapshot; abs delta=0.0%)
+3. VPS-OBS-01 → PASS (recipe fixed: swapped get_vps_proxy_health; confirmed per-service table + stale-flagging)
+4. NEWS-CONSIST-01 → PASS (recipe fixed: added stock_code='FPT' param; sentiment vs market direction consistent)
+
+**Result:**
+- Folded all 4 PASS verdicts into quality-checklist.json
+- Recomputed .summary from rows: {pass:217, warn:0, fail:0, info:20, needs_review:3, total:240}
+- Verified warn=0 ✅
+- Burn-down COMPLETE
+
+**Summary transition:**
+- Before fold: {pass:213, warn:4, fail:0, info:20, needs_review:3}
+- After fold: {pass:217, warn:0, fail:0, info:20, needs_review:3}
+- Overall: HEALTHY (0 WARN, 0 FAIL)
