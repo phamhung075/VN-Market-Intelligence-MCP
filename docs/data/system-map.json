@@ -659,7 +659,7 @@
           "flaresolverr"
         ],
         "host_runtime_set": {
-          "_note": "Services INTENDED to run on this 16GB Mac host. Full fleet kernel-panics (project_host_memory_panic). Services absent from this set are defined-in-repo but NOT deployed by design — auditor must report them INFO/grey, never CRITICAL/WARN.",
+          "_note": "Services INTENDED to run on this 16GB Mac host. Full fleet kernel-panics (project_host_memory_panic). Services absent from this set are defined-in-repo but NOT deployed by design — Axis-A (Container Reliability) checks report them INFO/grey, never CRITICAL/WARN. Axis-B (Capability) checks ARE scored PASS/WARN/FAIL based on live mcp-server probes; dark services (rag-service) WARN when pipeline health unverifiable.",
           "_ssot": "docs/data/system-map.json .project.infrastructure.docker.host_runtime_set",
           "_last_verified": "2026-06-05",
           "services": [
