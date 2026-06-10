@@ -1,17 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-09T19:45Z · **Cycle:** Chef Evening 19:45 UTC
-
-## Session: 2026-06-09 (eod 08:37)
-
-### Chef Dish — eod 08:37 UTC (2026-06-09T0837Z) — PUBLISHED
-
-- Clusters qualified: 4 major convergence clusters
-  1. Tech/EV IPO boom (VinFast $1B + global mega-cap IPO) → FPT +1.10%, Khiêm (MUA) hex
-  2. Real estate contraction (USD/VND carry pressure 26.128) → NVL -4.33%, VRE -1.69%, VIC -0.92% (sector -2.31% avg)
-  3. Oil/Gas headwinds (Brent $92.65 NEUTRAL, supply relief) → PLX -2.88%, GAS -1.79% (sector -1.99% avg)
-  4. Banking resilience (carry spread +1.38pp, sector +1.18%) → ACB +4.95%, VCB +0.33%, VPB +1.17%
-- Published: YES, MARKET + WORK channels
+**Last updated:** 2026-06-10T05:21Z · **Cycle:** Chef Morning 05:15 UTC
 
 ## Session: 2026-06-09 (intraday 06:22)
 
@@ -66,3 +55,18 @@
 - Signals consumed: 19 open alerts (price_drop real_estate, price_drop oil_gas, news_mention ACB/VHM/GAS/CTG, macro_deviation gold/oil, tier 1-2), portfolio_conviction (41 tickers), macro_snapshot (carry real, tier 2)
 - Degradation: macro_hexagram unavailable (501); omitted from narrative; carry.is_estimate=false so spread stated but not FII-flow-dependent
 - Published: YES, MARKET (plain Vietnamese) + WORK (TNB audit detail)
+
+## Session: 2026-06-10 (morning 05:15)
+
+### Chef Dish — morning 05:15 UTC (2026-06-10T0521Z) — PUBLISHED
+
+- Clusters qualified: 4 convergence clusters
+  1. Real Estate carry pressure (NVL news 2 articles + price_surge +6.88%, USD/VND 26.130 > 25.500 threshold)
+  2. Banking domestic accumulation (ACB 102M shares + sector momentum BID +1.82%, ACB +1.51%, CTG +0.60%)
+  3. Oil/Gas neutral-to-bearish (US SP500 weak, Brent $92.06 neutral band, GAS +0.36%, PLX -0.25%)
+  4. Macro gold critical reversal (Gold -3.09σ below mean 4338.7, safe-haven demand shift signal)
+- Tickers covered: NVL, ACB, BID, CTG, GAS, PLX (6 tickers, 3 sectors)
+- Conviction: RE MEDIUM (2/4 pillars), Banking MEDIUM-HIGH (3/4 pillars), Oil LOW (1/4 pillar), Macro CRITICAL risk-off signal
+- Layers 1-6: USD/VND cross explicit (tier 2). Fed 3.62% vs SBV 5%, carry 1.38pp NEUTRAL is_estimate=false tier 2. Pillar scores mapped. Hexagrams: NVL Tỉnh MUA 43%, ACB Tỉnh MUA 56%, GAS Khôn caution 48%. Oil single-pillar flagged per Layer 6.
+- Signals consumed: 20+ open alerts (NVL news/price_surge, ACB 102M, GAS/PLX oil HIGH, macro gold CRITICAL, macro oil HIGH). Portfolio conviction 41 tickers tier 3. Macro carry tier 2 is_estimate=false.
+- Published: YES, MARKET (plain Vietnamese 4 paras) + WORK (TNB detail)
