@@ -45,3 +45,27 @@
 - REBUILD REQUIRED note acknowledged — end-to-end TC-2/TC-2b/TC-5 round-trip against real producer data can only be confirmed post-container rebuild.
 
 **why-change:** only path — all checks green. No arch concern (extended existing tools, no new MCP tool).
+
+## Entry qa-S3 · 2026-06-10 · task-id: BPE-DEV-3
+
+**verdict:** APPROVED
+
+**what-considered:**
+- BPE-DEV-3-ocr-coverage-fixes.test.ts: 15/15 PASS (live re-run by QA — not relayed from dev). 31 expect() calls.
+- Regression suite (pek-render-seam.test.ts 12/12, bctcInspectHandler.test.ts 13/13, PROSE-DEV-1 5/5, 292-ocr-audit 24/24, 1352c-ocr-health-logging 20/20): all pass individually. Batch failure = Bun 1.3.13 isolation pre-existing (same pattern as qa-S2/cycle-220; each file passes solo).
+- tsc --noEmit: EXIT 0 (empty output = 0 errors). Verified live.
+- Fence check: COUNT=35 vs MAX=46 in in-memory fixture. Tests assert total_pages=46; if COUNT used → get 35 → FAIL. Fence GENUINE — confirmed by live arithmetic probe.
+- GAP-1 SQL all parameterized: MAX(page_number) queries use `?` placeholder; point-lookup WHERE page_number=? also parameterized. No string interpolation.
+- GAP-3 threshold: `finalText.length < 3` in source; no active `} else if (pageText.length < 10)` branch. Tests 6+7 verify via source readFileSync.
+- GAP-3 DPI escalation: `300` present in source; `pageText.length < 50` guard present. logger.warn `[ocr] page` present.
+- RISK-OCR-2: `confidence < 0.1` guard at bctcInspectHandler.ts L584 confirmed in source. Test 13 verifies via readFileSync.
+- ocrStats counter logic: tests 14+15 verify NEW_THRESHOLD=3 boundary (5-char not lowChar, 2-char is lowChar).
+- DDD: bctcInspectHandler.ts — interface layer. Import from application/usecases (parsePdfFilenameTokens) is PRE-EXISTING since BPE-DEV-2; not introduced by this task. pdfOcrWorker.ts — infra layer. Neither file imports from domain (correct). Domain layer has no infra imports.
+- Security: no process.env in either changed file. No hardcoded secrets. SQL parameterized throughout.
+- mock-guard: EXIT 0 on both changed production files.
+- Bare catch at pdfOcrWorker.ts L304: new, intentional. DPI escalation best-effort — if escalation fails, original pageText preserved; comment explicit. Not a silent data loss path.
+- Container: image sha256:e50369dc confirmed, healthy, Up 13 min. All 6 peers intact (rag-service, news-fetch, macro-indicators, frontend, api-gateway, mcp-gateway all healthy).
+- BCTC eval gate: no report_id in task scope (code-only OCR fix; data re-run is BPE-OPS-1). N/A.
+- Full bun test suite: Bun 1.3.13 OOM/isolation pre-existing; confirmed via targeted suite coverage. Not a regression.
+
+**why-change:** only path — all checks green. No arch concern (SQL correction in interface layer + infra threshold change; no new domain service, no new MCP tool, no cross-service HTTP).

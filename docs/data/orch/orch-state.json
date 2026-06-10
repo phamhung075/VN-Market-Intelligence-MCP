@@ -1,14 +1,14 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-09T23:16:37Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-10T00:21:29Z",
+  "_updated_by": "qa",
   "head": {
-    "status": "ready",
-    "updated_at": "2026-06-09T23:16:37Z",
-    "updated_by": "po",
-    "active_task_id": "BPE-DEV-3",
-    "next_agent": "dev-mcp-server"
+    "status": "idle",
+    "updated_at": "2026-06-10T00:21:29Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -4473,7 +4473,7 @@
             "kind": "sprint-task",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
             "depends_on": [
@@ -4482,7 +4482,7 @@
             "created_at": "2026-06-09T23:06:19Z",
             "title": "GAP-1+GAP-3-code (mcp-server zone). GAP-1: bctcInspectHandler.ts total_pages COUNT(*)->MAX(page_number) at L537,L584,L627 + non-PEK path OFFSET pagination->point-lookup (WHERE filename=? AND page_number=?) at L650-659 (removes off-by-N). GAP-3 code: pdfOcrWorker.ts L270 skip-guard <10-><3 with logger.warn(page,charcount,reason); add DPI 200->300 escalation retry for low-output (<50 char) pages; per-skip observability log. RISK-OCR-2: add confidence<0.1 guard in inspector fallback to suppress junk. Add regression test. NOTE: completeness guard L200-213 freezes existing 35-row dataset -> BPE-OPS-1 must delete rows AFTER this deploys+rebuilds. Brief: docs/architecture-briefs/2026-06-09-bctc-prose-ocr-coverage-rootcause.md",
             "blockers": "BPE-SPIKE-1 (architect must confirm semantics + whether off-by-N exists before patch)",
-            "note": "Well-specified code bug raw-verified by PO; KEEP shipped commits, additive only. Unblocks after SPIKE-1 confirms. | [dev-mcp-server 2026-06-10] BPE-DEV-3 IMPL DONE. commit 5ea9f121. 15 new tests GREEN. tsc clean. tools=157. sched=78. Container rebuilt (e50369dc). NEXT: qa.",
+            "note": "Well-specified code bug raw-verified by PO; KEEP shipped commits, additive only. Unblocks after SPIKE-1 confirms. | [dev-mcp-server 2026-06-10] BPE-DEV-3 IMPL DONE. commit 5ea9f121. 15 new tests GREEN. tsc clean. tools=157. sched=78. Container rebuilt (e50369dc). NEXT: qa. | [qa 2026-06-10T00:21:29Z] APPROVED. 15/15 BPE-DEV-3 tests GREEN (QA re-run). tsc clean. Fence genuine (COUNT=35 vs MAX=46). DDD/security/mock-guard PASS. Container e50369dc healthy. DJ-GATE-1 written sprint-BCTC-PROSE-EXTRACT-qa.md qa-S3.",
             "agent": "dev-mcp-server"
           },
           {
@@ -4491,7 +4491,7 @@
             "kind": "ops-task",
             "type": "OPS",
             "owner": "ops",
-            "status": "BLOCKED",
+            "status": "READY",
             "size": "M",
             "zone": "apps/mcp-server/ (OCR pipeline/data)",
             "depends_on": [
@@ -4500,7 +4500,7 @@
             "created_at": "2026-06-09T23:06:19Z",
             "title": "OCR re-run for FPT Q1-2026 missing pages: re-run bctcReparseJob/pdfOcrWorker OCR for pages 11-15, 17-22 (currently absent) AND 36-46 (only fetchable after BPE-DEV-3 fixes total_pages range). Apply architect-prescribed remedy from SPIKE-1 (e.g. higher DPI / different PSM / image-page OCR pass) if guard was wrongly dropping text pages. Verify pdf_extracted_text gains rows for those pages, then trigger re-flow into bctc_layout_units.",
             "blockers": "BPE-SPIKE-1 (remedy choice) + BPE-DEV-3 (fetch range)",
-            "note": "GAP-3 = THE root cause. Re-run must be on real FPT corpus, raw-verified post-run (SELECT page_number FROM pdf_extracted_text WHERE filename LIKE FPT% must cover 11-46).",
+            "note": "GAP-3 = THE root cause. Re-run must be on real FPT corpus, raw-verified post-run (SELECT page_number FROM pdf_extracted_text WHERE filename LIKE FPT% must cover 11-46). | [qa 2026-06-10T00:21:29Z] UNBLOCKED — BPE-DEV-3 DONE. BPE-OPS-1 READY: delete 35 stale FPT Q1-2026 rows + re-OCR with image e50369dc.",
             "agent": "ops"
           },
           {

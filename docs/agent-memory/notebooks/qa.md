@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-221 · 2026-06-10 · BPE-DEV-3 BCTC-PROSE-EXTRACT OCR coverage fixes gate — APPROVED
+
+Sprint: BCTC-PROSE-EXTRACT | Task: BPE-DEV-3 | Verdict: APPROVED | Commits: 5ea9f121 + ef9826d7
+
+QA re-ran: 15/15 BPE-DEV-3-ocr-coverage-fixes.test.ts GREEN (31 expect() calls). Regression: pek-render-seam 12/12, bctcInspectHandler 13/13, PROSE-DEV-1 5/5, 292-ocr-audit 24/24, 1352c-ocr-health-logging 20/20 — all pass individually. Full suite exit 0 (background run confirmed). Batch-run 4 failures = Bun 1.3.13 isolation pre-existing. tsc --noEmit: EXIT 0. Fence GENUINE: COUNT=35 vs MAX=46 in test fixture; assert 46 → FAIL on revert to COUNT confirmed via arithmetic probe. GAP-1 SQL: all 3 total_pages sites use MAX(page_number) with `?` placeholder; non-PEK point-lookup WHERE page_number=? parameterized. GAP-3: finalText.length < 3 in source; no active `} else if (pageText.length < 10)` branch; DPI=300 escalation present; logger.warn `[ocr] page` present. RISK-OCR-2: confidence<0.1 guard at L584 confirmed. DDD PASS: interface+infra layers only; domain unchanged; application import pre-existing from BPE-DEV-2. Security PASS: no process.env, no secrets. mock-guard EXIT 0. Container e50369dc healthy (Up 13 min, image sha256:e50369dc confirmed). 6 peers intact. Bare catch at pdfOcrWorker L304 new+justified (DPI escalation best-effort). DJ-GATE-1: sprint-BCTC-PROSE-EXTRACT-qa.md qa-S3. orch-state BPE-DEV-3 REVIEW→DONE, BPE-OPS-1 BLOCKED→READY.
+
 ## cycle-220 · 2026-06-10 · BPE-DEV-2 BCTC-PROSE-EXTRACT prose consumer/serving gate — APPROVED
 
 Sprint: BCTC-PROSE-EXTRACT | Task: BPE-DEV-2 | Verdict: APPROVED | Commit: 5cea706a
