@@ -13,7 +13,7 @@ build/
 venv/
 *.db
 data/
-__tests__/
+# __tests__/ intentionally NOT excluded — test suite must ship in image (PDF-TEST-01)
 .git/
 .gitignore
 
