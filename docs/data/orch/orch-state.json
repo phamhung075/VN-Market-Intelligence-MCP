@@ -8539,6 +8539,20 @@
         "payload_ref": null,
         "zone_owner": "dev-pdf-extractor",
         "triage_note": "Root-cause the structured-extraction empty-return (PDF stored but get_bctc_full empty). Recurring 28+ cycles for CTG. Surfaced by cowork bctc-analyst c036 2026-06-09T15:15Z."
+      },
+      {
+        "id": "cwk-chef-false-parser-failure-20260610T0828Z",
+        "ts": "2026-06-10T08:29:00Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow_bug",
+        "summary": "chef (unified-agent) falsely reported send_telegram parser-failure on intraday 08:20 cycle, did NOT publish dish, polluted channel=market with 7 debug fragments (id703-709). send_telegram verified healthy; dispatcher RAW-verified + completed publish -> MARKET id=710 08:28:18Z. 2nd chef publish-reliability bug (cf cwk-chef-eod-marker) -> recurring-bug-escalation -> architect. Fix: chef.md must RAW-verify own publish by id, never emit test fragments to market, route errors to bug.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "zone_owner": null,
+        "check_id": null,
+        "payload_ref": "docs/signals/cwk-chef-false-parser-failure-20260610T0828Z.json",
+        "triage_note": ""
       }
     ],
     "archive": [
