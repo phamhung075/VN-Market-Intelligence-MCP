@@ -52,7 +52,8 @@ def create_app(
 
     router = APIRouter()
     # DFR-P3: pass vector_store so /admin/rebuild-fts can call _build_fts_index()
-    register_routes(router, search_usecase, index_usecase, vector_store=real_vector_store)
+    # GFD-7: pass embedder so /embed/health can probe model + index
+    register_routes(router, search_usecase, index_usecase, vector_store=real_vector_store, embedder=real_embedder)
     app.include_router(router)
 
     return app

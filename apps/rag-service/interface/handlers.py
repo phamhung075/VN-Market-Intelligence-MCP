@@ -5,10 +5,11 @@ Handlers delegate all business logic to application usecases.
 HTTP concerns (status codes, serialization) are handled here.
 """
 
+import json
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 
 from application.usecases import SearchUseCase, IndexUseCase
 from interface.serializers import (
@@ -25,17 +26,72 @@ def register_routes(
     search_usecase: SearchUseCase,
     index_usecase: IndexUseCase,
     vector_store: Any = None,
+    embedder: Any = None,
 ) -> None:
     """Attach all routes to the given APIRouter.
 
-    vector_store: optional VectorStorePort instance needed for /admin/rebuild-fts.
-    If not provided, the rebuild endpoint returns 503.
+    vector_store: optional VectorStorePort instance needed for /admin/rebuild-fts
+    and /embed/health.  If not provided those endpoints return 503.
+    embedder: optional EmbedderPort instance needed for /embed/health model probe.
     """
 
     @router.get("/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
         """Liveness probe."""
         return HealthResponse()
+
+    @router.get("/embed/health")
+    async def embed_health() -> Response:
+        """Capability probe — verifies sentence-transformer model + LanceDB index.
+
+        GFD-7: read-only, non-blocking.
+        Returns 200 {"status":"ok","model_loaded":true,"index_size":<int>,"model_name":"<str>"}
+        Returns 503 {"status":"error","reason":"<str>"} on any failure.
+        """
+        try:
+            if embedder is None:
+                return Response(
+                    status_code=503,
+                    content=json.dumps({"status": "error", "reason": "embedder not wired"}),
+                    media_type="application/json",
+                )
+
+            # Test 1: model loaded — _model is None until initialize()/first embed call.
+            model_obj = getattr(embedder, "_model", None)
+            if model_obj is None:
+                return Response(
+                    status_code=503,
+                    content=json.dumps({"status": "error", "reason": "model not loaded"}),
+                    media_type="application/json",
+                )
+
+            # 1-token encode smoke test (synchronous, non-blocking for a single token).
+            model_obj.encode("a", convert_to_tensor=False, show_progress_bar=False)
+
+            # Test 2: LanceDB row count (0 acceptable on fresh deploy).
+            index_size = 0
+            if vector_store is not None:
+                index_size = await vector_store.count()
+
+            model_name: str = getattr(embedder, "_model_name", "unknown")
+
+            return Response(
+                status_code=200,
+                content=json.dumps({
+                    "status": "ok",
+                    "model_loaded": True,
+                    "index_size": index_size,
+                    "model_name": model_name,
+                }),
+                media_type="application/json",
+            )
+        except Exception as exc:
+            logger.exception("embed_health probe failed")
+            return Response(
+                status_code=503,
+                content=json.dumps({"status": "error", "reason": str(exc)}),
+                media_type="application/json",
+            )
 
     @router.post("/search")
     async def search(body: SearchRequestSchema) -> dict:

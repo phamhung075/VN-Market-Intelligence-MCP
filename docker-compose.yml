@@ -154,10 +154,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1.5g
+          memory: 768m
           cpus: '1.0'
         reservations:
-          memory: 1g
+          memory: 512m
           cpus: '0.5'
   technical-analysis:
     build:
