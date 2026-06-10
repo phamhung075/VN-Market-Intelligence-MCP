@@ -1,8 +1,0 @@
-{
-  "locked": true,
-  "owner_agent": "dev-pdf-extractor",
-  "task": "PDF-TEST-01-fix-tests-not-shipped",
-  "expires_at": "2026-06-10T17:40:00Z",
-  "acquired_at": "2026-06-10T17:37:00Z",
-  "ttl_seconds": 180
-}

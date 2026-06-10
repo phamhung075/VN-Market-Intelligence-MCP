@@ -52,3 +52,6 @@ docs/data/md-dependency-graph.html
 docs/data/pressure-state.json
 docs/data/vn-market-tasks.json
 docs/data/BATCH_S_1849_SUMMARY.md
+
+# runtime commit serialization lock — operational state, never version-controlled
+docs/data/commit-mutex.json
