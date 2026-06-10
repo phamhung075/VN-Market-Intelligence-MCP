@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-225 · 2026-06-11 · GFD-11 GO-FLEET-DEPLOY full-fleet verification gate — PARTIAL (service PASS, 2 pre-existing test bugs)
+
+Sprint: GO-FLEET-DEPLOY | Task: GFD-11 | Verdict: PARTIAL | Report: reports/TASK_REPORT_GFD-11.md
+
+6/6 service-level /health probes independently confirmed LIVE (HTTP 200, raw curled). rag-service lazy-load: 12/12 pytest PASS (model_loaded=true, state=warm, index_size=16392, OOMKilled=false). news-fetch 2 pkg PASS. kinh-dich-service 6 pkg PASS. technical-analysis 7 pkg PASS. alert-engine: 6/7 pkg PASS — FAIL: TestSQLiteAlertRepository_CountTodayAlerts (sqlite_test.go:190, pre-existing TZ mismatch: CountTodayAlerts uses now.Location()/CEST, test inserts UTC timestamps). stock-price: 6/7 pkg PASS — FAIL: TestSQLiteRepo_GetHistory_OHLCFieldParity (fetchers_test.go:252, pre-existing hardcoded seedDate=2026-05-22 outside 7-day query window). Both failures pre-date GO-FLEET-DEPLOY delta — confirmed by grep of sprint commits. DDD PASS: all 6 services ports+adapters, no domain->infra leaks. Security PASS: no secrets/process.env; POST fetch endpoints internal-ops only; /health read-only. Deferred to GFD-12: system-map update, api-gateway env+rebuild, Axis-A flip. po CLEARED to run GFD-12. DJ-GATE-1: sprint-GO-FLEET-DEPLOY-qa.md § qa-S1.
+
 ## cycle-224 · 2026-06-10 · CI-RED CLUSTER-A sprint_goal schema drift fix — APPROVED GREEN
 
 Sprint: CI-RED-RECONCILE | Task: CI-RED-CLUSTER-A | Verdict: DATA-DRIFT-FIXED | Checks cleared: CI-TEST-02, MCP-TEST-01, SYS-TEST-01, CI-TEST-04

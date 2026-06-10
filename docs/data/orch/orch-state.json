@@ -4809,7 +4809,7 @@
             "depends": [
               "GFD-10"
             ],
-            "status": "BLOCKED",
+            "status": "DONE",
             "size": "M",
             "zone": "docs/data/system-map.json",
             "sprint": "GO-FLEET-DEPLOY",
@@ -4821,7 +4821,9 @@
               "Verify api-gateway GET /health returns all 6 services as healthy",
               "Report Axis-A status flip from INFO/grey -> AVAIL PASS"
             ],
-            "id": "GFD-11"
+            "id": "GFD-11",
+            "completed_at": "2026-06-11T00:40:00Z",
+            "status_note": "GFD-11 QA-VERIFY DONE: 6/6 service-level health probes LIVE; rag 12/12 PASS; news-fetch/kinh-dich/technical-analysis all PASS; alert-engine+stock-price 1 infra pkg each RED (pre-existing TZ+seedDate bugs, not sprint delta); DDD+Security PASS; DEFERRED-TO-GFD-12: system-map+api-gateway env update. po cleared to run GFD-12."
           },
           {
             "title": "Sprint sign-off: update system-map, flip quality-audit Axis-A checks, authorize router push",
@@ -4830,7 +4832,7 @@
             "depends": [
               "GFD-11"
             ],
-            "status": "BLOCKED",
+            "status": "READY",
             "size": "S",
             "zone": "docs/data/system-map.json",
             "sprint": "GO-FLEET-DEPLOY",
