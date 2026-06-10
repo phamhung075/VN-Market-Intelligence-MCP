@@ -8,7 +8,8 @@
     "updated_at": "2026-06-10T00:21:29Z",
     "updated_by": "qa",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": null,
+    "_updated_at": "2026-06-10T04:35:51Z"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -53,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-10T02:30:00Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-10T04:35:51Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4396,7 +4397,7 @@
       {
         "id": "BCTC-PROSE-EXTRACT",
         "label": "BCTC extractor silently DROPS prose / non-table pages — Thuyet minh (notes-to-FS) text never reaches OCR/text output nor AI-analysis layer. User-reported on FPT Q1 2026 inspector p12/46.",
-        "status": "active",
+        "status": "DONE",
         "opened_at": "2026-06-09T21:42:04Z",
         "priority": "high",
         "zone": "apps/pdf-extractor/",
@@ -4491,7 +4492,7 @@
             "kind": "ops-task",
             "type": "OPS",
             "owner": "ops",
-            "status": "READY",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/ (OCR pipeline/data)",
             "depends_on": [
@@ -4500,7 +4501,7 @@
             "created_at": "2026-06-09T23:06:19Z",
             "title": "OCR re-run for FPT Q1-2026 missing pages: re-run bctcReparseJob/pdfOcrWorker OCR for pages 11-15, 17-22 (currently absent) AND 36-46 (only fetchable after BPE-DEV-3 fixes total_pages range). Apply architect-prescribed remedy from SPIKE-1 (e.g. higher DPI / different PSM / image-page OCR pass) if guard was wrongly dropping text pages. Verify pdf_extracted_text gains rows for those pages, then trigger re-flow into bctc_layout_units.",
             "blockers": "BPE-SPIKE-1 (remedy choice) + BPE-DEV-3 (fetch range)",
-            "note": "GAP-3 = THE root cause. Re-run must be on real FPT corpus, raw-verified post-run (SELECT page_number FROM pdf_extracted_text WHERE filename LIKE FPT% must cover 11-46). | [qa 2026-06-10T00:21:29Z] UNBLOCKED — BPE-DEV-3 DONE. BPE-OPS-1 READY: delete 35 stale FPT Q1-2026 rows + re-OCR with image e50369dc.",
+            "note": "GAP-3 = THE root cause. Re-run must be on real FPT corpus, raw-verified post-run (SELECT page_number FROM pdf_extracted_text WHERE filename LIKE FPT% must cover 11-46). | [qa 2026-06-10T00:21:29Z] UNBLOCKED — BPE-DEV-3 DONE. BPE-OPS-1 READY: delete 35 stale FPT Q1-2026 rows + re-OCR with image e50369dc. | DONE 2026-06-10 (PO close): QA BPE-QA-1 raw-verified re-OCR outcome — 46/46 FPT pages present in pdf_extracted_text, page 12=4099 chars, pages 11-22 + 36-46 all populated. Outcome corroborated independent of status flag.",
             "agent": "ops"
           },
           {
@@ -4562,7 +4563,9 @@
         ],
         "_retriage_at": "2026-06-09T23:06:19Z",
         "_retriage_by": "po",
-        "retriage_note": "RE-FLOW re-diagnosis 2026-06-09: 2 shipped commits (32e9571a producer prose-stitch QA-GREEN, 338ec4c8 serving QA-GREEN, mcp-server live image eb2f3da5becd) are correct-but-INSUFFICIENT — KEEP, build on top. Stop-hook goal STILL ACTIVE (FPT Q1 page 12 serves 'No OCR text'). Root moved upstream TWICE (prose-stitch->serving-filter->OCR-coverage). Architect BLOCKER-2 ruling ('46-vs-35 gap benign/irrelevant, no action') now CONTRADICTED by raw evidence — pages 11-15+17-22 have NO pdf_extracted_text rows yet page 12 has VISIBLE rendered prose. PO raw-verified: GAP-1 handler L538/L585 total_pages=COUNT(*) (=35) must be MAX(page_number) (=46); pdfOcrWorker L254 iterates 1..min(46,80) so OCR worker is NOT range-truncated -> GAP-3 absence is genuine OCR-skip/image-page/misalignment, NOT benign. Recurring-bug escalation -> mandatory architect SPIKE before any patch."
+        "retriage_note": "RE-FLOW re-diagnosis 2026-06-09: 2 shipped commits (32e9571a producer prose-stitch QA-GREEN, 338ec4c8 serving QA-GREEN, mcp-server live image eb2f3da5becd) are correct-but-INSUFFICIENT — KEEP, build on top. Stop-hook goal STILL ACTIVE (FPT Q1 page 12 serves 'No OCR text'). Root moved upstream TWICE (prose-stitch->serving-filter->OCR-coverage). Architect BLOCKER-2 ruling ('46-vs-35 gap benign/irrelevant, no action') now CONTRADICTED by raw evidence — pages 11-15+17-22 have NO pdf_extracted_text rows yet page 12 has VISIBLE rendered prose. PO raw-verified: GAP-1 handler L538/L585 total_pages=COUNT(*) (=35) must be MAX(page_number) (=46); pdfOcrWorker L254 iterates 1..min(46,80) so OCR worker is NOT range-truncated -> GAP-3 absence is genuine OCR-skip/image-page/misalignment, NOT benign. Recurring-bug escalation -> mandatory architect SPIKE before any patch.",
+        "closed_at": "2026-06-10T04:35:51Z",
+        "note": "CLOSED 2026-06-10 by PO sign-off (po-S58). QA-GREEN BPE-QA-1 (commit 0cb106a3) raw-verified end-to-end: page-12 prose=4099 chars (orig defect RESOLVED), table page-3 balance sheet=7175 chars, 0 empty layout units (was 13), total_pages=46 (GAP-1 fix), quarantine non-blocking (metadata only), all 46 OCR pages present, 8 peers unchanged. User intent met: BOTH table AND prose pages serve real content for AI analysis. Shipped: BPE-DEV-3(5ea9f121/ef9826d7 mcp-server total_pages COUNT->MAX + skip-guard<3 + DPI300 + RISK-OCR-2), BPE-OPS-1(re-OCR 46pp), BPE-DEV-4(prose re-flow), BPE-DEV-5(c2069deb/76f3546d Tesseract retry + thresholds mount + table re-flow). NON-BLOCKING follow-up -> EVAL-PUSH-DOUBLE-ENCODE backlog (cosmetic instrumentation artifact)."
       }
     ],
     "backlog": [
@@ -5733,6 +5736,18 @@
         "context": "Ops recreate resolved symptom (FIX-MCP-MEMORY-OOM-INVESTIGATE), but underlying code leak remains. Fresh container at 5.25% memory, climbed to 87.08% over 12 hours uptime. Likely: unbounded caches, unclosed MCP connections, or streaming handler leaks.",
         "deliverable": "Audit + fix: (1) MCP session/connection pooling (close vs reuse); (2) Cache size limits + eviction policy; (3) Streaming handler cleanup; (4) Node.js GC tuning. Verify via 24h sustained memory test post-fix.",
         "gate": "Memory stays <50% for 72h continuous operation (test container)."
+      },
+      {
+        "id": "EVAL-PUSH-DOUBLE-ENCODE",
+        "task_id": "EVAL-PUSH-DOUBLE-ENCODE",
+        "title": "BCTC eval push handler: eval_push_client.py double-encodes gate_failures + metrics_json as JSON strings before HTTP POST; mcp-server push handler (bctcEvalPushStageHandler.ts ~L94) Array.isArray() check rejects the string and reverts gate_failures to []. Result: BCTC eval overall_status=red is self-contradictory (status=red but gate_failures=[], metrics={}) — an instrumentation artifact, NOT a real gate failure. Content serving is UNAFFECTED. FIX: stop double-encoding in producer OR coerce/parse the JSON-string in handler. Add regression assertion that a pushed gate_failures array survives round-trip.",
+        "owner": "po",
+        "priority": "low",
+        "status": "backlog",
+        "zone": "multi",
+        "sprint": null,
+        "created_at": "2026-06-10T04:35:51Z",
+        "note": "Surfaced by QA BPE-QA-1 (TASK_REPORT_BPE-QA-1.md §C, RE-VERIFY Round 2). Cosmetic/instrumentation debt — does NOT block content-serving (sprint BCTC-PROSE-EXTRACT DoD met independently). eval_push_client.py NOT modified by that sprint; pre-existing, exposed when BPE-DEV-5 re-extraction triggered a fresh RASTERIZE eval push (other reports carry 2026-05-28 yellow backfill placeholder, never freshly pushed). Zone=multi: dev-pdf-extractor (producer eval_push_client.py) + dev-mcp-server (handler bctcEvalPushStageHandler.ts) — architect must split owner before dev."
       }
     ],
     "archive": [],

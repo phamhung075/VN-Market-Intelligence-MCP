@@ -33,3 +33,13 @@
 - Accept brief's BLOCKER-2 OVERRULE as-is — ACCEPTED: user page-12 screenshot (dense VN prose) is raw evidence; prior "benign blank pages" was speculative; SPIKE re-verified loop is NOT range-truncated so pages 11-22 are genuine OCR-skip.
 **why-decision:** Brief raw-verified: GAP-1 = interface-layer SQL correction (COUNT->MAX + OFFSET->point-lookup, no domain touch); GAP-3-code = infra-layer skip-guard <10-><3 + DPI escalation. CRITICAL ordering: completeness guard L200-213 freezes 35-row set, so OPS-1 delete+re-OCR MUST follow DEV-3 deploy+rebuild — encoded as depends_on chain DEV-3->OPS-1->DEV-4->QA-1.
 **why-change:** No change from architect's prescribed split — PO folded GAP-1+GAP-3-code into single DEV-3 per shared-zone/single-rebuild rationale.
+
+### STEP po-S4 · po · 2026-06-10T04:35:51Z
+**task-id:** BCTC-PROSE-EXTRACT
+**what-done:** FINAL sign-off — closed sprint (status=DONE, closed_at) after raw re-read of QA BPE-QA-1 (commit 0cb106a3) + git-history corroboration of all shipped commits; flipped BPE-OPS-1 READY->DONE (QA raw-verified its 46/46 re-OCR outcome); logged non-blocking eval-push artifact as separate backlog task EVAL-PUSH-DOUBLE-ENCODE.
+**what-considered:**
+- REJECT on table-page emptiness (QA Round-1 BLOCKING regression) — REJECTED: BPE-DEV-5 fixed it, QA Round-2 re-verified 0 empty units (was 13) with genuine tabular markdown raw-confirmed.
+- Fold the eval-push red into this sprint as a blocker — REJECTED: instrumentation artifact (gate_failures=[] yet status=red via double-encode), content serving UNAFFECTED, eval_push_client.py not in this sprint's diff; belongs in separate low-pri backlog.
+- Independent live MCP smoke probe — bctc-inspect is an HTTP route, not a registered MCP tool reachable via call_tool; QA's direct-endpoint raw probing IS the canonical verification path; corroborated via git log + orch-state notes.
+**why-decision:** DoD met independently of badges — orig user defect (page 12 "No OCR text") RESOLVED (prose=4099 chars Vietnamese), BOTH table+prose paths serve real content, total_pages=46, peers intact. Stop-hook success condition satisfied by close.
+**why-change:** no change from plan — full chain driven to DONE not a slice, per user intent.
