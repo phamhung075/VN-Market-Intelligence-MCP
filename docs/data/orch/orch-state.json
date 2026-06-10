@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-10T20:31:32Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-10T20:45:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4590,6 +4590,242 @@
             "brief": "docs/handoffs/GO-FLEET-DEPLOY-architect-brief.md",
             "baseline_pass": "Brief in docs/architecture-briefs/2026-06-10-go-fleet-deploy/ delivers (a)-(d); rag strategy chosen+justified; soak abort criteria explicit; every microservice-doc edit routed to a dev-* zone owner not generic developer.",
             "id": "GFD-1"
+          },
+          {
+            "title": "Pre-deploy validation gate for kinh-dich-service: verify health endpoint exists, lint/depguard pass, compose healthcheck correct",
+            "type": "DEV-VAL",
+            "owner": "dev-kinh-dich",
+            "depends": [
+              "GFD-1"
+            ],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "apps/kinh-dich-service",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "cmd/server/main.go /health endpoint returns 200 locally",
+              "golangci-lint run ./... passes with depguard",
+              "docker-compose.yml healthcheck definition correct for port 5005",
+              "No build errors: go build ./... exit 0"
+            ],
+            "id": "GFD-2"
+          },
+          {
+            "title": "Pre-deploy validation gate for technical-analysis: verify health endpoint exists, lint/depguard pass, CGO=0 flag in Dockerfile",
+            "type": "DEV-VAL",
+            "owner": "dev-technical-analysis",
+            "depends": [
+              "GFD-1"
+            ],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "apps/technical-analysis",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "cmd/server/main.go /health endpoint returns 200 locally",
+              "golangci-lint run ./... passes with depguard",
+              "Dockerfile has CGO_ENABLED=0 (modernc sqlite, no CGO)",
+              "docker-compose.yml healthcheck definition correct for port 5003"
+            ],
+            "id": "GFD-3"
+          },
+          {
+            "title": "Pre-deploy validation gate for alert-engine: verify health endpoint exists, lint/depguard pass, CGO sqlite + libc in image",
+            "type": "DEV-VAL",
+            "owner": "dev-alert-engine",
+            "depends": [
+              "GFD-1"
+            ],
+            "status": "READY",
+            "size": "S",
+            "zone": "apps/alert-engine",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "cmd/server/main.go /health endpoint returns 200 locally",
+              "golangci-lint run ./... passes with depguard",
+              "Dockerfile has musl/libc for CGO sqlite support",
+              "docker-compose.yml healthcheck definition correct for port 5006"
+            ],
+            "id": "GFD-4"
+          },
+          {
+            "title": "Pre-deploy validation gate for stock-price: verify health endpoint exists, lint/depguard pass, CGO sqlite + VPS_HOST env wiring",
+            "type": "DEV-VAL",
+            "owner": "dev-stock-price",
+            "depends": [
+              "GFD-1"
+            ],
+            "status": "READY",
+            "size": "S",
+            "zone": "apps/stock-price",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "cmd/server/main.go /health endpoint returns 200 locally",
+              "golangci-lint run ./... passes with depguard",
+              "docker-compose.yml has VPS_HOST env var wired correctly",
+              "docker-compose.yml healthcheck definition correct for port 5000/5010"
+            ],
+            "id": "GFD-5"
+          },
+          {
+            "title": "Add /embed/health probe endpoint to rag-service FastAPI app + reduce memory limits to 512m/768m in compose",
+            "type": "DEV-FEAT",
+            "owner": "dev-rag-service",
+            "depends": [
+              "GFD-1"
+            ],
+            "status": "READY",
+            "size": "M",
+            "zone": "apps/rag-service",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "New GET /embed/health endpoint returns 200 with {status:ok, model_loaded:true, index_size:int, model_name:str}",
+              "Endpoint verifies sentence-transformer model is loaded (1-token encode test)",
+              "Endpoint verifies LanceDB table is accessible (row count query)",
+              "docker-compose.yml updated: reservations.memory 1g->512m, limits.memory 1.5g->768m",
+              "Endpoint fails fast with 503 if model not loaded"
+            ],
+            "id": "GFD-7"
+          },
+          {
+            "title": "Deploy + HONOR-PANIC-GUARD soak (kinh-dich, technical-analysis, alert-engine, stock-price)",
+            "type": "OPS-DEPLOY",
+            "owner": "ops",
+            "depends": [
+              "GFD-2",
+              "GFD-3",
+              "GFD-4",
+              "GFD-5"
+            ],
+            "status": "BLOCKED",
+            "size": "L",
+            "zone": "docker-compose",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "Bring-up order: kinh-dich (5005) -> ta (5003) -> alert (5006) -> stock (5000/5010)",
+              "Targeted rebuild ONLY: docker compose build <svc> && docker compose up -d --no-deps <svc>",
+              "10-minute sustained watch window per service (20 samples @ 30s intervals)",
+              "ABORT if: free pages < 500k OR swap > 4GiB OR Go-svc RSS > 200MiB OR swap growth > 500MiB",
+              "After each passes DoD: update api-gateway NOT_DEPLOYED_SERVICES env var to remove service short_key",
+              "Emit decision-journal STEP per service status flip (DJ-GATE-1)"
+            ],
+            "soak_window_minutes": 10,
+            "id": "GFD-6"
+          },
+          {
+            "title": "Deploy rag-service (depends on GFD-7 + all Go services soaked)",
+            "type": "OPS-DEPLOY",
+            "owner": "ops",
+            "depends": [
+              "GFD-7",
+              "GFD-6"
+            ],
+            "status": "BLOCKED",
+            "size": "L",
+            "zone": "docker-compose",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "Targeted build+up for rag-service only: docker compose build rag-service && docker compose up -d --no-deps rag-service",
+              "Extended soak window: 20 minutes (model warm-up takes up to 60s on first request)",
+              "ABORT if: swap > 4GiB during model load OR rag RSS > 768MiB",
+              "Verify GET /embed/health returns model_loaded:true after soak",
+              "Update api-gateway NOT_DEPLOYED_SERVICES to remove 'rag'"
+            ],
+            "soak_window_minutes": 20,
+            "id": "GFD-8"
+          },
+          {
+            "title": "Port news-fetch from Node to Go: implement RSS/API news fetch logic, add /health endpoint, use modernc/sqlite (CGO=0)",
+            "type": "DEV-PORT",
+            "owner": "developer",
+            "depends": [
+              "GFD-1"
+            ],
+            "status": "READY",
+            "size": "L",
+            "zone": "apps/news-fetch",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "New go.mod at apps/news-fetch/ with modernc/sqlite",
+              "Port VPS-proxied news fetch paths: vneconomy-rss, vnexpress-rss, newsapi, news-vps",
+              "Playwright/chromium scraping excluded (delegated to mcp-server existing path)",
+              "Implement GET /health endpoint returning 200 + JSON",
+              "SQLite writes via modernc/sqlite with CGO=0",
+              "golangci-lint run ./... exit 0 with depguard",
+              "Unit test coverage for fetch paths",
+              "go build ./... exit 0"
+            ],
+            "id": "GFD-9"
+          },
+          {
+            "title": "Deploy news-fetch (depends on GFD-9 port complete)",
+            "type": "OPS-DEPLOY",
+            "owner": "ops",
+            "depends": [
+              "GFD-9",
+              "GFD-8"
+            ],
+            "status": "BLOCKED",
+            "size": "M",
+            "zone": "docker-compose",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "Targeted build+up for news-fetch: docker compose build news-fetch && docker compose up -d --no-deps news-fetch",
+              "10-minute soak window",
+              "Verify get_agent_signals probe returns real data via mcp-server",
+              "Update api-gateway NOT_DEPLOYED_SERVICES to remove 'news'"
+            ],
+            "soak_window_minutes": 10,
+            "id": "GFD-10"
+          },
+          {
+            "title": "Full fleet capability verification: run capability_manifest probes for all 6 services, verify system-map update, api-gateway /health aggregation",
+            "type": "QA-VERIFY",
+            "owner": "qa",
+            "depends": [
+              "GFD-10"
+            ],
+            "status": "BLOCKED",
+            "size": "M",
+            "zone": "docs/data/system-map.json",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "Run capability_manifest probes for all 6 services",
+              "Verify system-map host_runtime_set.services includes all 6",
+              "Verify system-map not_deployed_by_design is now empty",
+              "Verify api-gateway GET /health returns all 6 services as healthy",
+              "Report Axis-A status flip from INFO/grey -> AVAIL PASS"
+            ],
+            "id": "GFD-11"
+          },
+          {
+            "title": "Sprint sign-off: update system-map, flip quality-audit Axis-A checks, authorize router push",
+            "type": "PO-SIGN",
+            "owner": "po",
+            "depends": [
+              "GFD-11"
+            ],
+            "status": "BLOCKED",
+            "size": "S",
+            "zone": "docs/data/system-map.json",
+            "sprint": "GO-FLEET-DEPLOY",
+            "created_at": "2026-06-10T20:31:32Z",
+            "acceptance_criteria": [
+              "Move 6 services from not_deployed_by_design[] -> services[] in system-map",
+              "Update quality-audit Axis-A checks to PASS",
+              "Authorize router push to origin/main"
+            ],
+            "id": "GFD-12"
           }
         ]
       }
