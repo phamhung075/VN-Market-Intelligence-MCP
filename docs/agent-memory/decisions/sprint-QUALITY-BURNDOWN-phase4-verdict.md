@@ -152,7 +152,7 @@ Emitted 4 quality-mismatch signal rows to orch-state.json .signal_queue.rows[] (
 
 ## Artifact Changes
 
-- **docs/data/quality-checklist.json** → recomputed summary {pass:213, warn:4, fail:0, info:20, needs_review:3, total:240}
+- **docs/data/quality-checklist.json** → recomputed summary {pass:213, warn:4, fail:0, info:20, needs_review:3, total:240}; fixed .summary key-casing (UPPERCASE→lowercase) to match frontend consumer contract (apps/frontend routes/dashboard.quality-audit.tsx lines 349–369)
 - **docs/data/orch/orch-state.json** → added 4 signal rows
 - **decision-journal** → this entry
 

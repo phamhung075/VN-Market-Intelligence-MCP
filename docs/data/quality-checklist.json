@@ -1,7 +1,7 @@
 {
   "_schema": "v1",
   "_ssot": true,
-  "_updated_at": "2026-06-10T19:59:45.313352Z",
+  "_updated_at": "2026-06-10T18:02:57.223Z",
   "_updated_by": "system-auditor",
   "generated_at": "2026-06-10T09:23:04Z",
   "framework": "ISO-25010 + market-intel dims",
@@ -3984,11 +3984,11 @@
     }
   ],
   "summary": {
-    "PASS": 213,
-    "WARN": 4,
-    "FAIL": 0,
-    "INFO": 20,
-    "NEEDS-REVIEW": 3,
+    "pass": 213,
+    "warn": 4,
+    "fail": 0,
+    "info": 20,
+    "needs_review": 3,
     "total": 240
   }
 }
