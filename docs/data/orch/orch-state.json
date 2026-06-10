@@ -4663,7 +4663,7 @@
             "depends": [
               "GFD-1"
             ],
-            "status": "READY",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/stock-price",
             "sprint": "GO-FLEET-DEPLOY",
@@ -4674,6 +4674,7 @@
               "docker-compose.yml has VPS_HOST env var wired correctly",
               "docker-compose.yml healthcheck definition correct for port 5000/5010"
             ],
+            "completed_at": "2026-06-10T20:56:30Z",
             "id": "GFD-5"
           },
           {

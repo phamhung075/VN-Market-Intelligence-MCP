@@ -238,6 +238,7 @@ services:
     - PORT=5000
     - DB_PATH=/app/data/market.db
     - STOCK_PRICE_DB_PATH=/app/data/stock_price.db
+    - VPS_HOST=125.212.251.27
     - APP_ENV=production
     restart: unless-stopped
     healthcheck:
