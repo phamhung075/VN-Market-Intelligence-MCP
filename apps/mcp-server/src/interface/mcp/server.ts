@@ -77,6 +77,7 @@ import { handleBctcInspectCorrect } from "./routes/bctcCorrectHandler.js"; // HC
 import { handleBctcInspectConfirm, handleBctcInspectConfirmReset } from "./routes/bctcConfirmHandler.js"; // HC-DEV-3: POST /api/bctc-inspect/confirm/{doc_id}[/reset]
 import { handleGetOrchestration } from "./routes/orchestrationHandler.js"; // OSC-4a: GET /api/orchestration
 import { getOrchStatePath } from "../../infrastructure/orchStateStore.js";
+import { handleGetQualityChecklist } from "./routes/qualityChecklistHandler.js"; // QUALITY-AUDIT Phase 1: GET /api/quality-checklist
 // FE-REROUTE Phase 1+2: new REST read endpoints for frontend pages (FE-RR-1..6 + FE-RR-13/14)
 import { handleKinhDichReading } from "./routes/kinhDichReadingHandler.js";
 import { handleKinhDichMarket } from "./routes/kinhDichMarketHandler.js";
@@ -1896,6 +1897,16 @@ export async function createBunServer(
     if (method === "GET" && pathname === "/api/orchestration") {
       const orchPath = getOrchStatePath(process.cwd());
       handleGetOrchestration(req, res, orchPath);
+      return;
+    }
+
+    // ── QUALITY-AUDIT Phase 1: GET /api/quality-checklist — read-only artifact ──
+    // Serves docs/data/quality-checklist.json for the quality-audit dashboard consumer.
+    // Returns 200+JSON on success; 500 if file missing or unreadable.
+    if (method === "GET" && pathname === "/api/quality-checklist") {
+      const { resolve } = await import("node:path");
+      const checklistPath = resolve(process.cwd(), "docs", "data", "quality-checklist.json");
+      handleGetQualityChecklist(req, res, checklistPath);
       return;
     }
 

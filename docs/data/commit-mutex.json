@@ -1,6 +1,6 @@
 {
-  "locked": false,
-  "owner_agent": null,
-  "task": null,
-  "expires_at": null
+  "locked": true,
+  "owner_agent": "dev-mcp-server",
+  "task": "QUALITY-CHECKLIST-HTTP-ENDPOINT",
+  "expires_at": "2026-06-10T10:00:00Z"
 }
