@@ -36,6 +36,22 @@
 - Degradation: macro_hexagram unavailable (501); omitted from narrative; carry.is_estimate=false confirmed, so FII-flow thesis sound. Earning yield Tier 4 (estimate=true); used as context, not primary.
 - Published: YES, MARKET (plain Vietnamese) + WORK (TNB audit detail)
 
+## Session: 2026-06-10 (intraday 04:26)
+
+### Chef Dish — intraday 04:26 UTC (2026-06-10T0426Z) — PUBLISHED
+
+- Clusters qualified: 4 convergence clusters
+  1. Real Estate Carry Pressure (NVL price_surge +6.88%, USD/VND cross 26.130 > 25.500) → portfolio_conviction NVL MODERATE Tỉnh 43% MUA
+  2. Banking Accumulation (ACB news 102M shares, domestic fund strategic, tier 2), BID +1.82%, ACB +1.51% → banking sector +0.71%
+  3. Oil/Gas Neutral Drift (SP500 weak despite Brent NEUTRAL $92.11, GAS +0.24%, PLX -0.49%, Khôn hexagram caution) → conviction LOW, context-only (Layer 6 single-pillar flag)
+  4. Gold Critical Reversal (macro alert CRITICAL -3.09σ below mean 4338.7, $4208.9 -1.64%) → extreme-signal gate trigger
+- Market context: VN-Index 1,801.53 live (+0.47% AoP), USD/VND 26,130, Brent $92.11 NEUTRAL, Gold $4,208.9 (-1.64%), earn_yield 8.2% vs deposit 5.0% = 3.2pp CHEAP (is_estimate=true tier 4)
+- Conviction: Real Estate MEDIUM (transition, 2/4 pillars), Banking MEDIUM (transition, 2.5/4 pillars), Oil LOW (slowdown, 1/4 pillar), Gold CRITICAL severity
+- Layers walked: 1-6 complete. Layer 1: state transitions USD/VND 26.130 cross, ACB domestic accumulation, gold -3.09σ extreme. Layer 2-3: US Fed 3.62% weak SP500; VN USD/VND pressure (gaps: CPI/VIRA unavailable). Layer 4: RE 1.5/4 MEDIUM, Banking 2.5/4 MEDIUM, Oil 1/4 LOW. Layer 5: market_hexagram unavailable (501); per-ticker NVL Tỉnh 43%, ACB Tỉnh 56%, GAS/PLX Khôn 48%. Layer 6: single-pillar flags (oil sector), source cross-validated (cafef + portfolio_conviction), regime drift USD/VND explicit.
+- Signals consumed: #5594 (gold collapse chain_catalyst), 20+ open alerts (NVL price_surge x2, ACB news, CTG Petrosetco, GAS/PLX oil, HCM news, VHM news, macro gold CRITICAL -3.09σ, macro oil HIGH -2.07σ, price_drop RE 8 tickers), portfolio_conviction 41 tickers MODERATE, macro_snapshot carry 1.38pp (tier 2 is_estimate=false)
+- Degradation: macro_hexagram unavailable (501) — omitted from narrative cleanly; earning_yield is_estimate=true tier 4 — context only; carry.is_estimate=false tier 2 — FII thesis sound
+- Published: YES, MARKET msg_id=699 + WORK block_b (TNB audit detail). Sent 2026-06-10T04:23:15Z
+
 ## Session: 2026-06-09 (evening 19:45)
 
 ### Chef Dish — evening 19:45 UTC (2026-06-09T1945Z) — PUBLISHED
