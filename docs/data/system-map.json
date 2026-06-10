@@ -659,18 +659,16 @@
           "flaresolverr"
         ],
         "host_runtime_set": {
-          "_note": "Services INTENDED to run on this 16GB Mac host. Full fleet kernel-panics (project_host_memory_panic). Services absent from this set are defined-in-repo but NOT deployed by design — Axis-A (Container Reliability) checks report them INFO/grey, never CRITICAL/WARN. Axis-B (Capability) checks ARE scored PASS/WARN/FAIL based on live mcp-server probes; dark services (rag-service) WARN when pipeline health unverifiable.",
+          "_note": "Services INTENDED to run on this 16GB Mac host. FULL FLEET IS DEPLOYED + SOAK-PROVEN (sprint GO-FLEET-DEPLOY, 2026-06-11): all 11 service containers run concurrently at only ~1.3-2.1 GiB total RSS, far under the 8 GiB Docker cap — NO kernel panic. The earlier project_host_memory_panic premise is DISPROVEN for THIS fleet config: the 6 previously-undeployed services were ported Node/Python -> lightweight Go (~10-14 MiB RSS each) and rag-service lazy-loads its embedding model (cold ~150 MiB, warm 748/768m, OOMKilled=false). Every service now runs as a real container; none are absent-by-design. Axis-A (Container Reliability) checks score all of them AVAIL/PASS against live docker ps. Axis-B (Capability) checks score PASS/WARN/FAIL on live mcp-server + service /health probes.",
           "_ssot": "docs/data/system-map.json .project.infrastructure.docker.host_runtime_set",
-          "_last_verified": "2026-06-05",
+          "_last_verified": "2026-06-11",
           "services": [
             "mcp-server",
             "api-gateway",
             "frontend",
             "macro-indicators",
             "mcp-gateway",
-            "pdf-extractor"
-          ],
-          "not_deployed_by_design": [
+            "pdf-extractor",
             "stock-price",
             "technical-analysis",
             "kinh-dich-service",
@@ -678,6 +676,7 @@
             "rag-service",
             "news-fetch"
           ],
+          "not_deployed_by_design": [],
           "_name_map_note": "Registry/frontend use short-keys (registry.go map keys + SERVICES[] in dashboard.services.tsx). Compose names differ. This map is the authoritative bridge — devs MUST use short_key form in code, never compose_name.",
           "short_key_to_compose": {
             "mcp": "mcp-server",
@@ -690,14 +689,7 @@
             "alert": "alert-engine",
             "news": "news-fetch"
           },
-          "not_deployed_short_keys": [
-            "rag",
-            "ta",
-            "stock",
-            "kinh-dich",
-            "alert",
-            "news"
-          ],
+          "not_deployed_short_keys": [],
           "capability_manifest": {
             "_note": "Maps each short_key to the mcp-server probe that verifies its capability is LIVE. Probe runs server-side in api-gateway /health (bounded, cached TTL 60s). Never fan-out all 156 tools.",
             "_ground_truth_date": "2026-06-02",

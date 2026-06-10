@@ -32,3 +32,12 @@
 - Dispatch dev-* directly to deploy → REJECTED: user explicitly authorized architecture REDESIGN; that is the architect's gate, not PO's. Must not skip design.
 **why-decision:** CLAUDE.md: router never implements; PO routes design work to architect first. The redesign authorization makes the architect brief mandatory before any dev/ops dispatch.
 **why-change:** no change from plan.
+
+### STEP po-S4 · po · 2026-06-10T22:46:57Z
+**task-id:** GFD-12
+**what-done:** SSOT graduation: system-map host_runtime_set now lists all 12 services (6 graduated in), not_deployed_by_design[] + not_deployed_short_keys[] emptied, _note rewritten + _last_verified=2026-06-11; flipped 6 materialized Axis-A AVAIL checks INFO/grey -> PASS/WARN.
+**what-considered:**
+- Hand-edit Axis-A vs assume derived-on-read -> VERIFIED first: quality-checklist.json holds 6 MATERIALIZED AVAIL entries (STOCK/TA/KINH/ALERT/RAG/NEWS-AVAIL-01) — NOT computed-on-read, so explicit edit required.
+- Keep stale "kernel-panic / absent-by-design" _note -> REJECTED: disproven by GFD-6/8/10 soak (11 containers @ ~1.3-2.1 GiB << 8 GiB cap); rewrote honestly crediting the Go-port lightness + rag lazy-load.
+**why-decision:** Ground truth (docker ps: all 6 Up+healthy) + GFD-11 qa-verify (6/6 /health 200) make the old premise factually wrong; SSOT must reflect proven reality, not legacy guard prose.
+**why-change:** Axis-A path turned out MATERIALIZED-edit (not derived-auto) — adjusted from "verify-then-maybe-edit" to definite edit of 6 entries.
