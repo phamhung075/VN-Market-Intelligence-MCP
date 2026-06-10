@@ -69,3 +69,34 @@
 - Full bun test suite: Bun 1.3.13 OOM/isolation pre-existing; confirmed via targeted suite coverage. Not a regression.
 
 **why-change:** only path — all checks green. No arch concern (SQL correction in interface layer + infra threshold change; no new domain service, no new MCP tool, no cross-service HTTP).
+
+## Entry qa-S4 · 2026-06-10 · task-id: BPE-QA-1
+
+**verdict:** CHANGES_REQUESTED
+
+**what-considered (raw-verified — no badge relay):**
+
+CONTAINER: mcp-server Up 28 min (healthy), all 8 peers intact (rag-service, news-fetch, macro-indicators, frontend, api-gateway, mcp-gateway all healthy). pdf-extractor Up 42 hours (unhealthy — pre-existing state, not introduced by this sprint).
+
+A. PROSE — PASS:
+- Page 12 (core defect): `text_content` length=4099, `has_pek:true`, `pek_coverage_gap:null` (i.e. covered), `confidence:1.0`, `unit_id=d3c5059e`. Vietnamese prose confirmed ("THUYẾT MINH BÁO CÁO TÀI CHÍNH HỢP NHẤT"). Fix for original defect is confirmed live.
+- `total_pages=46` on every page response — GAP-1 fix confirmed.
+- Spot-check prose pages (16, 23, 30, 40, 46): all return non-empty text. Page 16: 5706 chars (PEK unit). Pages 23, 40, 46, 30: pek_coverage_gap:true but pdf_extracted_text fallback serves real Vietnamese text (794–2120 chars). No "No OCR text" anywhere.
+- pdf_extracted_text for FPT: 46/46 pages present (ALL pages 1-46 in DB), confidence=0.8. Pages 11-22: all 12 present with len 1801-7449. Pages 36-46: all 11 present with len 1013-3324.
+
+B. TABLE PAGES — REGRESSION CONFIRMED:
+- bctc_layout_units for report `e8ea3df5`: 18 total units, **13 empty (stitched_markdown=''), 5 non-empty**.
+- The 5 non-empty units are all `page_type=prose` (schema_pages 12, 15, 16, 18, 30). 
+- The 13 empty units are ALL `page_type=table` (schema_pages 1-6, 7-9, 10, 11, 13-14, 20, 21-28, 29, 31-34, 35, 36, 37-41, 42-46).
+- Table pages 1-10 (balance sheet / income statement region) serve `pek_coverage_gap:true` + fallback to raw OCR from pdf_extracted_text. The OCR text is not structured table data — it is raw scanned text which is unsuitable for structured table analysis.
+- Contrast: OTHER reports' bctc_layout_units (DGC, DIG, VNM, EIB, SHB, DHG, BSR, VEA) all have `empty=0, nonempty=N` — their table units ARE populated. FPT Q1-2026 (this sprint's target) is the ONLY report with `empty=13` table units. This is the DEV-4 regression.
+- FPT Q4-2025 (report e71f845d) has `empty=4, nonempty=27` — its prior extraction was mostly intact, confirming regression is specific to this sprint's layout-first re-flow run on FPT Q1-2026.
+
+C. INTEGRITY:
+- No other ticker's pdf_extracted_text was touched. All non-FPT filenames show normal row counts (confirmed via SELECT DISTINCT filename scan covering 62 distinct filenames).
+- No data was deleted; only FPT bctc_layout_units table units are empty (structural gap, not a deletion).
+
+**blocking-issue:**
+- `apps/pdf-extractor/` (layout-first extraction pipeline): bctc_layout_units for FPT Q1-2026 report `e8ea3df5` has 13 table units with `stitched_markdown=''`. These are schema_pages 1-6, 7-9, 10, 11, 13-14, 20, 21-28, 29, 31-34, 35, 36, 37-41, 42-46. All page_type=table. The user's goal "correct table and no table extract" requires these to contain real tabular content. Empty table units = user goal not met for the majority of the PDF's content.
+
+**why-change:** PROSE half of user's goal is fixed (original defect resolved). TABLE half regressed: 13/18 layout units are empty placeholders for table pages. Per task spec: if prose is fixed but tables regressed → CHANGES_REQUESTED, not green. User's explicit requirement is BOTH table AND prose extraction. This verdict opens BPE-DEV-5.

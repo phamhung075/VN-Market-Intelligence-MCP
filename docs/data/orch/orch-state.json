@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-10T02:05:48Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-10T02:30:00Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4528,7 +4528,7 @@
             "kind": "qa-task",
             "type": "QA",
             "owner": "qa",
-            "status": "READY",
+            "status": "CHANGES_REQUESTED",
             "size": "S",
             "zone": "apps/mcp-server/",
             "depends_on": [
@@ -4537,9 +4537,27 @@
             "created_at": "2026-06-09T23:06:19Z",
             "title": "END-TO-END live verify on FPT Q1-2026: inspector serves real content for ORIGINALLY-FAILING page 12 (prose text, NOT 'No OCR text'), page 16 (notes header B 09-DN/HN), and notes section pages ~23-46. total_pages reports 46. NO page with visible rendered text serves empty/pek_coverage_gap. prose_sections present in get_bctc_full AI tool. Confirm against raw live (bctc-inspect smoke + SQL), not badges.",
             "blockers": "BPE-DEV-4",
-            "note": "DoD arbiter for Stop-hook goal. Router must verify raw per feedback_router_verify_raw_not_badges before sign-off. Sprint NOT done until page 12 + notes serve real content end-to-end.",
+            "note": "DoD arbiter for Stop-hook goal. Router must verify raw per feedback_router_verify_raw_not_badges before sign-off. Sprint NOT done until page 12 + notes serve real content end-to-end. | [qa 2026-06-10] CHANGES_REQUESTED. Prose fix confirmed LIVE (page 12: 4099 chars, has_pek:true, no coverage gap). total_pages=46 confirmed. REGRESSION: 13/18 bctc_layout_units table units empty (stitched_markdown=\"\") for schema_pages 1-6,7-9,10,11,13-14,20,21-28,29,31-34,35,36,37-41,42-46. All page_type=table. User goal requires BOTH table AND prose. BPE-DEV-5 created. Report: reports/TASK_REPORT_BPE-QA-1.md.",
             "agent": "qa",
-            "updated_at": "2026-06-10T02:05:48Z"
+            "updated_at": "2026-06-10T02:30:00Z"
+          },
+          {
+            "id": "BPE-DEV-5",
+            "task_id": "BPE-DEV-5",
+            "kind": "sprint-task",
+            "type": "FIX",
+            "owner": "dev-pdf-extractor",
+            "status": "READY",
+            "size": "M",
+            "zone": "apps/pdf-extractor/",
+            "depends_on": [
+              "BPE-QA-1"
+            ],
+            "created_at": "2026-06-10T02:30:00Z",
+            "title": "Re-run full /extract-layout-first re-flow for FPT Q1-2026 to populate table-type bctc_layout_units. BPE-DEV-4 stored prose units (5/18 non-empty) but left all 13 table-type units with empty stitched_markdown via CPU-load workaround. CPU load has normalized. Trigger proper Tier-1 rasterization+extraction pipeline so table pages (schema_pages 1-6,7-9,10,11,13-14,20,21-28,29,31-34,35,36,37-41,42-46) get real structured content. Target: 0 empty units (match DGC/DIG/VNM pattern: empty=0,nonempty=N). Do NOT overwrite the 5 populated prose units.",
+            "blockers": "BPE-QA-1 (regression identified)",
+            "note": "Defect: bctc_layout_units for report_id=e8ea3df5-3f32-413d-a3eb-c71634c0438d has 13/18 units with stitched_markdown=''. All are page_type=table. OCR pdf_extracted_text has all 46 pages (len 1013-7449). The layout extractor in apps/pdf-extractor/ must be invoked to (1) detect table regions, (2) run structured table extraction (Tier-1 rasterization / PEK table path), (3) emit non-empty stitched_markdown for each table unit. Prose units (unit_ids: d3c5059e, feab2fea, df54a60b, c67b9246, 3681e780) MUST NOT be overwritten.",
+            "agent": "dev-pdf-extractor"
           }
         ],
         "_retriage_at": "2026-06-09T23:06:19Z",
