@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-223 · 2026-06-10 · BPE-QA-1 RE-VERIFY BCTC-PROSE-EXTRACT final E2E gate — APPROVED GREEN
+
+Sprint: BCTC-PROSE-EXTRACT | Task: BPE-QA-1 (round 2) + BPE-DEV-5 | Verdict: APPROVED | Report: reports/TASK_REPORT_BPE-QA-1.md
+
+pdf-extractor Up 9 min (healthy), mcp-server Up ~1h (healthy), 8 peers intact. RAW-VERIFIED. A-LAYOUT: 19 units total, empty_count=0 (was 13). 14 table units: stitched_markdown 768–12674 chars; spot-checked [3-6]=7175 balance-sheet rows (codes 100/110/111/112), [7-9]=7030 income-stmt rows. 5 prose units unchanged: page 12=4099 chars, quarantined=0. B-QUARANTINE: source audit L527-554 bctcInspectHandler.ts — stitched_markdown served if non-empty regardless of quarantined=1. Live: page 3 text=7175 quarantined=True pek_coverage_gap=None; page 7 text=7030 quarantined=True. C-SERVING: pp.3,7,12,16,23,30,40,46 all non-empty, total_pages=46. D-EVAL: overall_status=red stage1 RASTERIZE — instrumentation artifact: eval_push_client.py double-encodes gate_failures/metrics as JSON strings; push handler strips to []/{}; status=red preserved; gate_failures=[]. Pre-existing bug, eval_push_client not in BPE-DEV-5 diff. Does not block content serving. E-TESTS: 45/45 new tests PASS (code_whitelist 16, bs_identities 22, tesseract_retry 5). 36 full-suite failures = pre-existing asyncio isolation. DDD PASS. Security PASS. mock-guard EXIT 0. F-INTEGRITY: peers DGC/DIG/VNM/BSR/DHG/EIB/SHB/VEA all unchanged. BPE-QA-1 DONE, BPE-DEV-5 DONE. Sprint BCTC-PROSE-EXTRACT DoD met. CAUTION: eval_push_client double-encoding needs backlog fix. DJ-GATE-1: sprint-BCTC-PROSE-EXTRACT-qa.md § qa-S5.
+
 ## cycle-222 · 2026-06-10 · BPE-QA-1 BCTC-PROSE-EXTRACT final E2E gate — CHANGES_REQUESTED
 
 Sprint: BCTC-PROSE-EXTRACT | Task: BPE-QA-1 | Verdict: CHANGES_REQUESTED | Report: reports/TASK_REPORT_BPE-QA-1.md
