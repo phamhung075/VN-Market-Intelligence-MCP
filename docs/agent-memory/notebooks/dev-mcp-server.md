@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-PAGE14 — GET /api/shareholders — DONE
+
+**Task:** TASK17-PAGE14 endpoint wave — "Cơ cấu cổ đông tại thời điểm công bố" (Ownership Structure Snapshot).
+**Scope:** apps/mcp-server/ — shareholdersStore.ts (new), shareholdersHandler.ts (new), server.ts (import + route), TASK17-PAGE14 test (new).
+**Contract:** vnstock_shareholders (1593 rows live, 32 distinct codes, 15–107 holders/code). own_percent on 0–100 scale. Per-code SUM can exceed 100 (NVL 107%, KDC 112%) — use top1/top5 concentration + holder roster, NOT disclosed sum as float. asOf = MAX(fetched_at) = 2026-04-14T18:08:47.720Z.
+**Key decisions:** (1) classifyConcentration: top1>=50→high, >=15→medium, else low (null/NaN→low). (2) computeCodeMetrics: top5 = sum first 5 own_percent (null→0), rounded 2dp; disclosedPct = sum all (may exceed 100). (3) buildRanking: grouped by code, sorted top1Pct DESC; tie-break code ASC (deterministic). (4) HOLDERS_ROW_CAP=200, TOP_N=5. (5) resolveSelectedCode: uppercase + validate; fallback to codes[0]→"". (6) Handler exports handleGetShareholdersHttp (HTTP) + handleGetShareholders (pure, testable). (7) Empty table → 200 zeroed envelope (no 404/500).
+**Live probe FPT ?code=FPT:** holderCount=86, top1Name="Trương Gia Bình", top1Pct=6.89, top5Pct=23.25 (6.89+5.67+4.58+3.69+2.42), disclosedPct=56.29, concentration=low (top1<15). Default (no code): selectedCode=first code alphabetically.
+**Gates:** bun tsc exit 0 | bun test 62 pass / 0 fail (132 expect() calls). Handler zero SQL/getDb.
+**Commit:** ee3f4e88 | 4 files changed | 1195 insertions
+**Zone health:** bun test 62/0 scoped | tsc exit 0 | HEALTHY
+
 ## 2026-06-11 · TASK17-PAGE13 TIE-BREAK FIX — buildByType + buildSummary — DONE
 
 **Task:** Post-ship defect fix — non-deterministic tie-break ordering in `buildByType` and `buildSummary#topActiveCodes`.
