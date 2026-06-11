@@ -1,5 +1,18 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · FIX-EVIDENCE-PIPELINE-STARVED — DONE
+
+**Task:** FIX-EVIDENCE-PIPELINE-STARVED (backlog, high priority, zone apps/mcp-server/).
+**Root cause:** `getForeignFlowHistoryFromDb` in `foreignFlowAlertJob.ts` queried `ORDER BY date ASC LIMIT 10` (oldest 10 rows). The oldest rows (April 2026) had `foreign_net_vol=0`, so cumulative sum = 0, zero-data guard fired, all 41 watchlist stocks skipped → 0 fragments written since 2026-05-27. `evidenceAccumulatorJob` silently stamped `status=success` with `rows_written=0` rather than raising an alert.
+**Secondary finding:** `insider_transactions` table is empty (SSC geo-block VPS fetcher returns []). Separate concern — insiderCheckJob is best-effort external dependency. No action needed in mcp-server zone.
+**Fix 1 (foreignFlowAlertJob.ts):** Changed query to `ORDER BY date DESC LIMIT ?`, then `.slice().reverse()` for cumsum ordering. Deltas now correctly reflect recent net flow data.
+**Fix 2 (evidenceAccumulatorJob.ts):** Throw with message `evidence_fragments is empty — producer starvation detected` when `stockRows.length === 0`, so `recordJobRun` stamps `status=error` and the problem is visible.
+**Tests:** 6 new assertions in `FIX-EVIDENCE-PIPELINE-STARVED.test.ts` (all GREEN); `1118` empty-case test updated to `rejects.toThrow`. 20 tests in 1118+1133 GREEN. `tsc --noEmit` exit 0.
+**Live verification:** Fixed query for ACB returns `foreignVolume=-1017939` (non-zero), `all-zero=false`. Container rebuilt (healthy). Manual job trigger: 41 stocks scanned, 7 skipped (insufficient data), 0 HIGH signals today (genuine market condition — no 3+ day streak with >100k shares). evidence_fragments insertStore verified working (id=178).
+**Files:** `apps/mcp-server/src/scheduler/market-data/foreignFlowAlertJob.ts`, `apps/mcp-server/src/scheduler/news-analysis/evidenceAccumulatorJob.ts`, `apps/mcp-server/src/__tests__/1118-evidence-accumulator-job.test.ts`, `apps/mcp-server/src/__tests__/FIX-EVIDENCE-PIPELINE-STARVED.test.ts`
+**Commit:** 27eaece9
+**Zone health:** bun test 6/0 scoped + 20/0 regression | tsc exit 0 | 157 tools unchanged | 78 cron.schedule | HEALTHY
+
 ## 2026-06-11 · TASK17-PAGE14 — GET /api/shareholders — DONE
 
 **Task:** TASK17-PAGE14 endpoint wave — "Cơ cấu cổ đông tại thời điểm công bố" (Ownership Structure Snapshot).
