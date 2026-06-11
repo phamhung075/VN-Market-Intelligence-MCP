@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 PAGE 11 — GET /api/kinh-dich-signals — DONE
+
+**Task:** TASK17-PAGE11 endpoint wave — "Tín hiệu Kinh Dịch" (I-Ching hexagram trading signals per stock).
+**Scope:** apps/mcp-server/ — kinhDichStore.ts (new), kinhDichSignalsHandler.ts (new), server.ts (import + route wire), TASK17-PAGE11 test (new).
+**Contract:** kinhdich_readings (38,430 rows live, 58 symbols, 2026-04-05→2026-06-11). source: cycle=37662, manual=768. 0 null trading_signal/action_note.
+**Key decisions:** (1) Accent-fold: foldViet() strips Vietnamese diacritics before regex test → both "tích cực" and "tich cuc" → "positive"; "tiêu cực" and "tieu cuc" → "negative". (2) THAN TRONG must be matched before single-word actions (two words with space in rawAction). (3) getLatestReadingsPerSymbol uses correlated subquery MAX(timestamp) per stock_code filtered by source — single prepared statement, no WINDOW function (SQLite compatible). (4) getPreviousReadingsPerSymbol uses nested correlated subquery for second-most-recent. (5) actionPriority sort: MUA(0)<THAN TRONG(1)<GIU(2)<CHO(3)<BAN(4)<UNKNOWN(5); tie-break confidence DESC (null=-Inf), then stockCode ASC. (6) Invalid ?source= falls back to "cycle".
+**Live endpoint (cycle, 57 symbols as of 2026-06-11):** THAN TRONG=21, GIU=19 (positive+negative), BAN=9, MUA=8, rest unknown/cho=0. tradingDate="2026-06-11". Top 5 snapshot (sorted): DPM(MUA,conf=1.0), EIB(MUA,0.738), KBC(MUA,0.431), KDH(MUA,0.563), DIG(MUA,0.563), SAB(MUA,0.563), SHB(MUA,0.563), VIX(MUA,0.563) then THAN TRONG by confidence desc.
+**Tests:** 74 pass / 0 fail (214 expect() calls). tsc exit 0.
+**Commit:** 62271502
+**Zone health:** bun test 74/0 scoped | tsc exit 0 | tools count unchanged | scheduler count unchanged | HEALTHY
+
 ## 2026-06-11 · TASK-17 PAGE 10 — GET /api/sector-cascade — DONE
 
 **Task:** TASK17-PAGE10 endpoint wave — "Tín hiệu dây chuyền theo ngành" (Sector Cascade Signals).

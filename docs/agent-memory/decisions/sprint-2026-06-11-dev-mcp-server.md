@@ -73,3 +73,13 @@
 - Store SQL directly in handler — rejected: violates DDD layer rule; getCascadeHitsSince in infrastructure/db/cascadeSignalStore; handler maps + aggregates only
 **why-decision:** space-format sinceIso matches column's literal format → string comparison works; NaN-guard on parseInt ensures "0" clamps to MIN_WINDOW_DAYS=1 not fallback to DEFAULT; pure-aggregation handler preserves DDD layer separation.
 **why-change:** one red→fix cycle on the "0" clamp edge case (test AC-21); live probe confirmed 7d window returns ~416 rows matching ground-truth distribution.
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-11T13:45:00Z
+**task-id:** TASK-17-PAGE-11
+**what-done:** Shipped GET /api/kinh-dich-signals (kinhDichStore + kinhDichSignalsHandler + server.ts route + 74-test suite).
+**what-considered:**
+- Regex on raw signal string (no fold) — refuted: accent variants ("tích cực" vs "tich cuc") need fold; foldViet() strips diacritics before /tich *cuc/ match
+- WINDOW function for latest-per-symbol — refuted: correlated subquery is simpler and SQLite-compatible without requiring modern SQLite window-function support
+- Separate "positive" regex per variant — rejected: too brittle; fold once then single ASCII regex covers all observed encodings
+**why-decision:** foldViet accent-fold + single-pass regex covers all 20+ observed signal encodings; correlated subquery keeps SQL readable + parameterized; handler has zero SQL (pure DDD interface layer).
+**why-change:** no change from spec; tsc exit 0 on first attempt after fixing a type-narrowing issue (row.action_note: string|null in test assertion).
