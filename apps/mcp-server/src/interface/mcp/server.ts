@@ -121,6 +121,8 @@ import { handleGetKinhDichSignals } from "./routes/kinhDichSignalsHandler.js";
 import { handleGetGlobalMarkets } from "./routes/globalMarketsHandler.js";
 // TASK17-PAGE13: GET /api/corporate-events — Recent Corporate Actions Monitor, stored-data-only
 import { handleGetCorporateEvents } from "./routes/corporateEventsHandler.js";
+// TASK17-PAGE14: GET /api/shareholders — Major-holder ownership structure snapshot, stored-data-only
+import { handleGetShareholdersHttp } from "./routes/shareholdersHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2167,6 +2169,17 @@ export async function createBunServer(
     // Public endpoint (no auth).
     if (method === "GET" && pathname === "/api/corporate-events") {
       handleGetCorporateEvents(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE14: GET /api/shareholders ──────────────────────────────
+    // Serves Major-holder Ownership Structure ("Cơ cấu cổ đông tại thời điểm công bố").
+    // Snapshot capability — data from vnstock_shareholders table.
+    // Query params: ?code=XXX (optional ticker, case-insensitive; invalid/absent → first code)
+    // Stored-data-only (NO live network/microservice calls).
+    // Public endpoint (no auth).
+    if (method === "GET" && pathname === "/api/shareholders") {
+      handleGetShareholdersHttp(req, res, db);
       return;
     }
 
