@@ -97,6 +97,8 @@ import { handleGetAnalysisBriefIndex } from "./routes/analysisBriefIndexHandler.
 import { handleGetNewsSentiment } from "./routes/newsSentimentHandler.js";
 // TASK-17 P1-2a: GET /api/macro-regime — macro snapshot reshaped for frontend
 import { handleGetMacroRegime } from "./routes/macroRegimeHandler.js";
+// TASK-17 P2-1a: GET /api/price-history/:ticker — OHLC history DTO for frontend
+import { handleGetPriceHistory } from "./routes/priceHistoryServeHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2027,6 +2029,15 @@ export async function createBunServer(
     // ── TASK-17 P1-2a: GET /api/macro-regime — macro snapshot for frontend ──
     if (method === "GET" && pathname === "/api/macro-regime") {
       await handleGetMacroRegime(req, res);
+      return;
+    }
+
+    // ── TASK-17 P2-1a: GET /api/price-history/:ticker — OHLC history DTO ──
+    // Matches /api/price-history/<TICKER> (one path segment after prefix).
+    // Proxies stock-price Go service; never serves DB directly; 502 on failure.
+    if (method === "GET" && pathname.startsWith("/api/price-history/")) {
+      const ticker = decodeURIComponent(pathname.slice("/api/price-history/".length).split("?")[0] ?? "");
+      await handleGetPriceHistory(req, res, ticker);
       return;
     }
 
