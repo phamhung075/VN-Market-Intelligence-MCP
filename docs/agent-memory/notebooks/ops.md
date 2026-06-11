@@ -6142,3 +6142,65 @@ mcp-gateway                                       Up 17 hours (healthy)
 - Tie-break fix: VERIFIED — FPT correctly ranked in slot 8 for corporate-events endpoint
 - No service interruption; no orphans; strict no-deps procedure honored
 
+
+---
+
+## Session: 2026-06-11 (TASK17-PAGE13 Frontend Redeploy)
+
+**Task:** Targeted rebuild + redeploy of frontend container ONLY to ship TASK17-PAGE13 "Sự kiện doanh nghiệp gần đây" corporate-events page.
+
+**Context:** Origin/main = 3d44ae1d (TASK17-PAGE13 corporate-events DONE); new routes live in:
+- apps/frontend/app/routes/api.corporate-events.tsx
+- apps/frontend/app/routes/dashboard.corporate-events.tsx
+- TopNav.tsx nav item added
+
+### Execution Steps
+
+**Step 1: Verify git HEAD**
+- Current HEAD: 3d44ae1d62db8265325117c8e7a8168050c5d3eb
+- Git status: clean, no uncommitted changes
+- Ready to build
+
+**Step 2: Capture old frontend image ID**
+- Container: vn-market-intelligence-mcp-frontend-1
+- Old Image ID: sha256:0c8494418f7e471aa110e0426cf86113fe1b179d8c50e00df64cd84dad6184bc
+
+**Step 3: Rebuild frontend ONLY**
+- Command: `docker compose build frontend`
+- Build result: SUCCESS (25.6s build time)
+- Client chunks: 1723 modules transformed; SSR bundle 517.02 kB
+- Generated new build artifacts for api.corporate-events, dashboard.corporate-events routes
+- New Image ID: sha256:3e6a7cd34bcd42e887c32bdb8e00642794c39d3ed13e53d0cc835ac619b18e68
+
+**Step 4: Deploy new container (--no-deps)**
+- Command: `docker compose up -d --no-deps frontend`
+- Result: Container recreated successfully (11 seconds old)
+- Health status: UP and healthy
+
+**Step 5: Verify fleet integrity**
+- Total running containers: 11 (matching expected count)
+- All containers: HEALTHY
+- Non-targeted services: UNTOUCHED
+  - alert-engine: UP 17 hours (healthy)
+  - api-gateway: UP 7 hours (healthy)
+  - kinh-dich-service: UP 10 hours (healthy)
+  - macro-indicators: UP 17 hours (healthy)
+  - mcp-server: UP 14 minutes (healthy)
+  - news-fetch: UP 17 hours (healthy)
+  - pdf-extractor: UP 17 hours (healthy)
+  - rag-service: UP 2 hours (healthy)
+  - stock-price: UP 17 hours (healthy)
+  - technical-analysis: UP 18 hours (healthy)
+
+**Step 6: Smoke test**
+- Endpoint: GET /dashboard/corporate-events
+- HTTP Code: 200 ✓
+- Endpoint: GET /api/corporate-events
+- HTTP Code: 200 ✓
+
+**Summary:**
+- OLD frontend image: 0c8494418f7e471aa110e0426cf86113fe1b179d8c50e00df64cd84dad6184bc
+- NEW frontend image: 3e6a7cd34bcd42e887c32bdb8e00642794c39d3ed13e53d0cc835ac619b18e68
+- Fleet health: 11/11 healthy, no peer contamination
+- Smoke: 200 OK for both dashboard and API routes
+- Status: DEPLOY COMPLETE ✓
