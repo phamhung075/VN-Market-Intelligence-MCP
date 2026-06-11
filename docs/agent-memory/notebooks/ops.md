@@ -3939,3 +3939,123 @@ technical-analysis                                Up 13 hours (healthy)
 
 **DEPLOYMENT STATUS: SUCCESS ✓**
 - All AC (acceptance criteria) met: live data contract verified, all endpoints responding, all containers healthy, no peer damage.
+
+---
+
+## Session: 2026-06-11 (FRONTEND-REBUILD — "Dự báo AI & Kết quả" Page LIVE)
+
+**Task:** Targeted rebuild of FRONTEND container to deploy new "Dự báo AI & Kết quả" (AI Prediction & Results) page from commit 427e49df (now on origin/main). Verify SSR + proxy integration to mcp-server.
+
+**Status:** DONE — Verified Live (2026-06-11 13:12:02Z)
+
+### Execution Steps
+
+**Step 1: Capture old image ID**
+- Old frontend image ID: `sha256:f3d63b3876309ef51c1adecfa093f21b367a3de3911bde598c578d57961a501d`
+
+**Step 2: Build fresh frontend image**
+- Command: `docker compose build frontend`
+- Build output shows: "Image vn-market-intelligence-mcp-frontend Built" ✓
+- New image manifest SHA: `sha256:64fd5a533aa70958a8f3ab7032001c1175fd932edecfba448dfb43d3e4b2d44a` (DIFFERENT from old)
+
+**Step 3: Launch rebuilt container (no mass-up, no mass-down, no --force-recreate)**
+- Command: `docker compose up -d --no-deps frontend && sleep 5`
+- Container recreated: `vn-market-intelligence-mcp-frontend-1` (10 seconds ago, UP 9 seconds)
+- Port: `0.0.0.0:3001->3001/tcp` ✓
+- Health: **(healthy)** ✓
+
+### Fleet Health Verification (Mandatory Post-Rebuild)
+
+**All 11 running containers (host_runtime_set) status:**
+```
+NAME                                              SERVICE              STATUS                       PORTS
+vn-market-intelligence-mcp-alert-engine-1         alert-engine         Up 13 hours (healthy)        0.0.0.0:5006->5006/tcp
+vn-market-intelligence-mcp-api-gateway-1          api-gateway          Up 3 hours (healthy)         0.0.0.0:4000->4000/tcp
+vn-market-intelligence-mcp-frontend-1             frontend             Up 9 seconds (healthy)       0.0.0.0:3001->3001/tcp [REBUILT]
+vn-market-intelligence-mcp-kinh-dich-service-1    kinh-dich-service    Up 5 hours (healthy)         0.0.0.0:5005->5005/tcp
+vn-market-intelligence-mcp-macro-indicators-1     macro-indicators     Up 13 hours (healthy)        0.0.0.0:5004->5004/tcp
+vn-market-intelligence-mcp-mcp-server-1           mcp-server           Up 4 minutes (healthy)       0.0.0.0:3000->3000/tcp
+vn-market-intelligence-mcp-news-fetch-1           news-fetch           Up 13 hours (healthy)        0.0.0.0:5008->5008/tcp
+vn-market-intelligence-mcp-pdf-extractor-1        pdf-extractor        Up 13 hours (healthy)        0.0.0.0:5001->5001/tcp
+vn-market-intelligence-mcp-rag-service-1          rag-service          Up ~1 hour (healthy)         0.0.0.0:5002->5002/tcp
+vn-market-intelligence-mcp-stock-price-1          stock-price          Up 13 hours (healthy)        0.0.0.0:5010->5000/tcp
+vn-market-intelligence-mcp-technical-analysis-1   technical-analysis   Up 13 hours (healthy)        0.0.0.0:5003->5003/tcp
+```
+
+**Result: ALL 11 Up (healthy)** ✓ — No collateral damage, no cascade failures.
+
+### Page Rendering Verification
+
+**Curl Test 1: SSR Title Render Check**
+```bash
+curl -s http://localhost:3001/dashboard/prediction-claims | grep -o 'Dự báo AI & Kết quả' | head -1
+```
+**Output:** `Dự báo AI & Kết quả` ✓ (Title renders server-side)
+
+**Curl Test 2: Proxy to mcp-server calibration endpoint**
+```bash
+curl -s http://localhost:3001/api/prediction-claims | jq '.calibration'
+```
+**Output (Raw):**
+```json
+{
+  "total": 7,
+  "resolved": 4,
+  "correct": 3,
+  "wrong": 1,
+  "pending": 3,
+  "hitRate": 0.75,
+  "avgBrier": 0.13787500000000003
+}
+```
+✓ **Verified:** Frontend proxy wired to mcp-server prediction-claims endpoint. Expected data returned (7 total claims, 3 correct, 1 wrong, 3 pending, 75% hit rate, ~0.138 Brier score).
+
+**Curl Test 3: Query parameter forwarding**
+```bash
+curl -s "http://localhost:3001/api/prediction-claims?outcome=correct" | jq '.count'
+```
+**Output:** `3` ✓ (Correct: outcome filter parameter forwarded through proxy, returns exactly 3 matching claims)
+
+**Curl Test 4: SSR outcome badge render count**
+```bash
+curl -s http://localhost:3001/dashboard/prediction-claims | grep -c -o 'Đang chờ\|Đúng\|Sai'
+```
+**Output:** `11` ✓ (11 outcome badges rendered: "Đang chờ" (Pending), "Đúng" (Correct), "Sai" (Wrong) — non-zero confirms SSR rendering of predictions list)
+
+**Curl Test 5: Nav tab presence**
+```bash
+curl -s http://localhost:3001/dashboard/prediction-claims | grep -o 'Dự báo AI' | head -1
+```
+**Output:** `Dự báo AI` ✓ (Nav tab "Dự báo AI" (AI Prediction) present in page)
+
+### Summary
+
+| Checkpoint | Old Image ID | New Image ID | Status |
+|-----------|---|---|---|
+| Image SHA | `f3d63b3876...` | `64fd5a533a...` | ✓ DIFFERENT (new build confirmed) |
+| Build | N/A | Built 2026-06-11 13:11Z | ✓ SUCCESS |
+| Container | Removed | Recreated healthy | ✓ UP (healthy) |
+| Fleet | 11 healthy | 11 healthy | ✓ NO DAMAGE |
+| Title render | N/A | "Dự báo AI & Kết quả" | ✓ SSR WORKS |
+| Proxy calibration | N/A | total:7, correct:3, wrong:1, pending:3, hitRate:0.75, avgBrier:0.1379 | ✓ LIVE |
+| Query filter | N/A | outcome=correct → count:3 | ✓ FORWARDED |
+| SSR badges | N/A | 11 outcome badges | ✓ RENDERED |
+| Nav tab | N/A | "Dự báo AI" | ✓ PRESENT |
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓ — FRONTEND DEPLOYMENT COMPLETE**
+
+- ✓ Targeted rebuild ONLY: no down, no mass-up, no --force-recreate, no --remove-orphans
+- ✓ New image built: manifest SHA `64fd5a533a...` (distinct from old `f3d63b3876...`)
+- ✓ All 11 containers healthy post-rebuild: ZERO collateral damage
+- ✓ New page "Dự báo AI & Kết quả" renders SSR (title found in HTML)
+- ✓ Frontend→mcp-server proxy wired: returns calibration data (total=7, correct=3, wrong=1, pending=3)
+- ✓ Query parameters forwarded: outcome filter works (correct → 3)
+- ✓ Outcome badges SSR: 11 badges (Đúng/Sai/Đang chờ) rendered server-side
+- ✓ Navigation tab present: "Dự báo AI" in page
+
+**Production Status:** New prediction claims page now LIVE at http://localhost:3001/dashboard/prediction-claims. All integration points verified.
+
+**Data Integrity:** Zero rows updated, zero DB mutations (read-only SSR + API pass-through).
+
