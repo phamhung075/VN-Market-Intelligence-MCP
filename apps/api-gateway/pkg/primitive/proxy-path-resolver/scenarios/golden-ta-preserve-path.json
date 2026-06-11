@@ -1,0 +1,16 @@
+{
+  "scenario": "golden-ta-preserve-path",
+  "tier": "primitive",
+  "primitive": "proxy-path-resolver",
+  "description": "F2 regression — preserve-path service (ta): verbatim=true must return the full path unchanged. /ta/indicators must resolve to /ta/indicators, NOT /indicators. The technical-analysis service registers routes at its own /ta/* prefix; stripping /ta produces an upstream 404.",
+  "input": {
+    "reqPath": "/ta/indicators",
+    "noProbe": true
+  },
+  "expected": {
+    "resolvedPath": "/ta/indicators"
+  },
+  "verdict": "PASS",
+  "note": "verbatim=true is computed at call site as svc.NoProbe || svc.PreservePath. For ta: NoProbe=false, PreservePath=true → verbatim=true. Scenario input uses noProbe=true as the boolean value that reaches the resolver. This golden scenario validates the verbatim guard is operative for ta.",
+  "fix_reference": "F2 TASK-17 — gateway /ta/* prefix-strip bug"
+}

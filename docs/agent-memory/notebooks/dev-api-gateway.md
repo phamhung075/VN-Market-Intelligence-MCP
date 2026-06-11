@@ -4,6 +4,38 @@ Zone: `apps/api-gateway/` | Stack: TS/Bun (active) + Go 1.22 (Phase 1 new siblin
 
 ## Working Memory
 
+**Last task:** F2 — gateway /ta/* prefix-strip bug fix — 2026-06-11
+
+**Status:** DONE — commit TBD. ta service now has PreservePath=true; gateway forwards /ta/indicators verbatim to technical-analysis:5003.
+
+**Root cause:** ResolveProxyPath("/ta/indicators", noProbe=false) stripped /ta → forwarded /indicators → upstream 404. technical-analysis registers routes at /ta/*.
+
+**Fix:** Added PreservePath bool to ServiceConfig (orthogonal to NoProbe). Set for ta in registry. Call site passes svc.NoProbe || svc.PreservePath to resolver. Gateway module RoutingPorts.LookupService updated to 4-return-value signature.
+
+**Test evidence:** TestProxy_TA_PreservesFullPath PASS — upstream captures /ta/indicators. TestProxy_TA_OtherServices_StillStrip PASS — macro still stripped. 10 packages go test PASS. Sandbox G12: primitive 14/14, module 1/1. lint 0 issues.
+
+**Decision journal:** docs/agent-memory/decisions/sprint-F2-GATEWAY-TA-PREFIX-STRIP-dev-api-gateway.md
+
+---
+
+**Last task:** CLUSTER-B quality burn-down — NOT_DEPLOYED_SERVICES config drift fix — 2026-06-10
+
+**Status:** DONE — commit 2e88b0b5. api-gateway needs TARGETED rebuild (never down&&up).
+
+**Root cause confirmed:** system-map `host_runtime_set` lists `pdf-extractor` as deployed. Go default at `cmd/server/main.go:44` wrongly had `pdf` in NOT_DEPLOYED_SERVICES. No compose env override corrected it.
+
+**Fix:** (1) Added `NOT_DEPLOYED_SERVICES=rag,ta,stock,kinh-dich,alert,news` to api-gateway service block in `docker-compose.yml` (primary running fix). (2) Corrected Go fallback default to `rag,ta,stock,kinh-dich,alert,news` for honesty. Derived from system-map `not_deployed_short_keys` SSOT — zero manual guessing.
+
+**DoD curl:** `curl localhost:4000/health | jq '.services.pdf.not_deployed'` must return `false` after targeted rebuild.
+
+**G12 gate:** sandbox primitive total=13 pass=13, module total=1 pass=1. go test ./... 10 packages PASS. go vet+build clean.
+
+**Clears:** GW-CONTRACT-03, PDF-CONTRACT-02, PDF-AVAIL-02.
+
+---
+
+
+
 **Last task:** F-4 SPIKE — /mcp/* prefix-strip duality — alias-only fix — 2026-06-07
 
 **Status:** F-4 DONE

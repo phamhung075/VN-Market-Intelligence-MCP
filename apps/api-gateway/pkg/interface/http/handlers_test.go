@@ -377,7 +377,7 @@ func TestServiceHealth_UnknownService_404(t *testing.T) {
 
 func TestProxyPath_RealService_StripPrefix(t *testing.T) {
 	svc := &domain.ServiceConfig{Name: "stock", NoProbe: false}
-	got := ppr.ResolveProxyPath("/stock/health", svc.NoProbe)
+	got := ppr.ResolveProxyPath("/stock/health", svc.NoProbe || svc.PreservePath)
 	want := "/health"
 	if got != want {
 		t.Errorf("ResolveProxyPath /stock/health: got %s, want %s", got, want)
@@ -386,7 +386,7 @@ func TestProxyPath_RealService_StripPrefix(t *testing.T) {
 
 func TestProxyPath_VirtualAlias_FullPath(t *testing.T) {
 	svc := &domain.ServiceConfig{Name: "api", NoProbe: true}
-	got := ppr.ResolveProxyPath("/api/push-news", svc.NoProbe)
+	got := ppr.ResolveProxyPath("/api/push-news", svc.NoProbe || svc.PreservePath)
 	want := "/api/push-news"
 	if got != want {
 		t.Errorf("ResolveProxyPath /api/push-news: got %s, want %s", got, want)
@@ -395,10 +395,21 @@ func TestProxyPath_VirtualAlias_FullPath(t *testing.T) {
 
 func TestProxyPath_MultiSegment(t *testing.T) {
 	svc := &domain.ServiceConfig{Name: "macro", NoProbe: false}
-	got := ppr.ResolveProxyPath("/macro/indicators", svc.NoProbe)
+	got := ppr.ResolveProxyPath("/macro/indicators", svc.NoProbe || svc.PreservePath)
 	want := "/indicators"
 	if got != want {
 		t.Errorf("ResolveProxyPath /macro/indicators: got %s, want %s", got, want)
+	}
+}
+
+// TestProxyPath_TA_PreservePath is the F2 regression test.
+// ta has PreservePath=true — the gateway must forward /ta/indicators verbatim.
+func TestProxyPath_TA_PreservePath(t *testing.T) {
+	svc := &domain.ServiceConfig{Name: "ta", NoProbe: false, PreservePath: true}
+	got := ppr.ResolveProxyPath("/ta/indicators", svc.NoProbe || svc.PreservePath)
+	want := "/ta/indicators"
+	if got != want {
+		t.Errorf("F2 regression: ResolveProxyPath /ta/indicators with PreservePath: got %s, want %s", got, want)
 	}
 }
 
@@ -726,6 +737,80 @@ func TestProxy_DeployedMacro_NotRerouted(t *testing.T) {
 	}
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", rec.Code)
+	}
+}
+
+// TestProxy_TA_PreservesFullPath is the F2 regression test (TASK-17).
+// Before fix: POST /ta/indicators → upstream received /indicators → upstream 404.
+// After fix:  POST /ta/indicators → upstream receives /ta/indicators → upstream 200.
+// The technical-analysis service registers routes at its own /ta/* prefix.
+func TestProxy_TA_PreservesFullPath(t *testing.T) {
+	var capturedPath string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"rsi":62.5,"macd":0.12}`))
+	}))
+	defer upstream.Close()
+
+	// ta is deployed (NOT in notDeployed list) → direct proxy with PreservePath=true.
+	reg := infrastructure.NewStaticServiceRegistry(map[string]string{
+		"ta": upstream.URL,
+	})
+	mockSvc := &mockAggregateHealthService{health: fixedHealth}
+	aggrUC := application.NewAggregateHealthUseCaseFromService(mockSvc)
+	checker := &mockHealthCheckerForUC{}
+	serviceUC := application.NewServiceHealthUseCase(reg, checker)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	handlers := httphandler.NewGatewayHandlers(aggrUC, serviceUC, reg, logger)
+	router := httphandler.NewRouter(handlers, logger)
+
+	req := httptest.NewRequest(http.MethodPost, "/ta/indicators", strings.NewReader(`{"code":"FPT"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("F2: expected 200, got %d", rec.Code)
+	}
+	if capturedPath != "/ta/indicators" {
+		t.Errorf("F2: upstream must receive /ta/indicators (verbatim), got %q (was /indicators before fix)", capturedPath)
+	}
+}
+
+// TestProxy_TA_OtherServices_StillStrip is an anti-regression check.
+// Deploying PreservePath=true for ta must NOT affect other services (macro, stock, etc.)
+// which still expect the /service prefix to be stripped.
+func TestProxy_TA_OtherServices_StillStrip(t *testing.T) {
+	var capturedPath string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"snapshot":true}`))
+	}))
+	defer upstream.Close()
+
+	reg := infrastructure.NewStaticServiceRegistry(map[string]string{
+		"macro": upstream.URL,
+	})
+	mockSvc := &mockAggregateHealthService{health: fixedHealth}
+	aggrUC := application.NewAggregateHealthUseCaseFromService(mockSvc)
+	checker := &mockHealthCheckerForUC{}
+	serviceUC := application.NewServiceHealthUseCase(reg, checker)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	handlers := httphandler.NewGatewayHandlers(aggrUC, serviceUC, reg, logger)
+	router := httphandler.NewRouter(handlers, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/macro/snapshot", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("anti-regression: expected 200, got %d", rec.Code)
+	}
+	// macro does NOT have PreservePath — prefix must be stripped to /snapshot
+	if capturedPath != "/snapshot" {
+		t.Errorf("anti-regression: macro upstream must receive /snapshot (stripped), got %q", capturedPath)
 	}
 }
 

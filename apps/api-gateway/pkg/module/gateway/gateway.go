@@ -25,9 +25,13 @@ import (
 // They are satisfied by pkg/infrastructure adapters wired in cmd/server/main.go.
 // The module never imports infrastructure directly.
 type RoutingPorts interface {
-	// LookupService resolves a service name to its target URL and noProbe flag.
-	// Returns ("", false, false) when the service is not registered.
-	LookupService(name string) (targetURL string, noProbe bool, ok bool)
+	// LookupService resolves a service name to its routing attributes.
+	//   targetURL    — base URL for the upstream service.
+	//   noProbe      — true for virtual-alias services excluded from health probes.
+	//   preservePath — true when the upstream expects the full path verbatim
+	//                  (e.g. /ta/indicators must NOT be stripped to /indicators).
+	//   ok           — false when the service is not registered.
+	LookupService(name string) (targetURL string, noProbe bool, preservePath bool, ok bool)
 
 	// ServiceStatuses returns a snapshot of all registered service health statuses
 	// as plain strings ("ok", "degraded", "down").
@@ -78,14 +82,16 @@ func (g *GatewayModule) Route(reqPath, prefixToStrip string) RouteResult {
 	// Step 1 — route-service-matcher: extract service name from the request path.
 	serviceName := rsm.ExtractServiceName(reqPath, prefixToStrip)
 
-	// Step 2 — ports: resolve the target URL and noProbe flag.
-	targetURL, noProbe, ok := g.ports.LookupService(serviceName)
+	// Step 2 — ports: resolve the target URL, noProbe, and preservePath flags.
+	targetURL, noProbe, preservePath, ok := g.ports.LookupService(serviceName)
 	if !ok {
 		return RouteResult{ServiceName: serviceName, Found: false}
 	}
 
 	// Step 3 — proxy-path-resolver: compute the downstream path.
-	downstreamPath := ppr.ResolveProxyPath(reqPath, noProbe)
+	// verbatim=true when the service is a virtual alias (noProbe) OR when the
+	// upstream registers routes under its own prefix (preservePath).
+	downstreamPath := ppr.ResolveProxyPath(reqPath, noProbe || preservePath)
 
 	return RouteResult{
 		ServiceName:    serviceName,

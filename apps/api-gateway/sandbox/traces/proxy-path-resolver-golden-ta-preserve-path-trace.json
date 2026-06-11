@@ -1,0 +1,19 @@
+{
+  "scenario": "golden-ta-preserve-path",
+  "scenario_file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/api-gateway/pkg/primitive/proxy-path-resolver/scenarios/golden-ta-preserve-path.json",
+  "tier": "primitive",
+  "primitive": "proxy-path-resolver",
+  "status": "PASS",
+  "intentional_failure_fixture": false,
+  "inputs": {
+    "reqPath": "/ta/indicators",
+    "noProbe": true
+  },
+  "expected": {
+    "resolvedPath": "/ta/indicators"
+  },
+  "actual": {
+    "resolvedPath": "/ta/indicators"
+  },
+  "run_at": "2026-06-11T08:21:11Z"
+}

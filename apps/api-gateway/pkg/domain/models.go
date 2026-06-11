@@ -60,4 +60,8 @@ type ServiceConfig struct {
 	TimeoutMs      int64
 	ProxyTimeoutMs int64 // overrides TimeoutMs*5 for slow scrapers; 0 = use default
 	NoProbe        bool  // virtual alias services: excluded from health probes
+	PreservePath   bool  // when true the gateway forwards the full request path verbatim
+	// (does NOT strip the leading /:service segment).  Used when the upstream
+	// service registers its own routes under its own prefix (e.g. /ta/indicators).
+	// Orthogonal to NoProbe: a PreservePath service is still health-probed.
 }

@@ -10,18 +10,19 @@ import "strings"
 // ResolveProxyPath determines the downstream path for a proxy request.
 //
 // Rules:
-//   - noProbe=true  (virtual alias, e.g. "/api/*"): return reqPath verbatim.
-//   - noProbe=false (real service):                  strip the leading /:service
-//     segment using SplitN(reqPath, "/", 3).
+//   - verbatim=true  (virtual alias or preserve-path service): return reqPath
+//     unchanged.  Callers set this when svc.NoProbe || svc.PreservePath.
+//   - verbatim=false (normal real service):                    strip the leading
+//     /:service segment using SplitN(reqPath, "/", 3).
 //     If the path has fewer than 3 parts (e.g. "/stock" with no trailing
 //     segment), the downstream path is "/" — never an empty string or a panic.
 //
 // This is a PROMOTE of the exported ProxyPath function from
 // pkg/interface/http/handlers.go. Behaviour is identical; only the call
 // signature changes: the *domain.ServiceConfig parameter is replaced by the
-// single boolean field that matters (noProbe), keeping this package pure.
-func ResolveProxyPath(reqPath string, noProbe bool) string {
-	if noProbe {
+// single boolean field that matters (verbatim), keeping this package pure.
+func ResolveProxyPath(reqPath string, verbatim bool) string {
+	if verbatim {
 		return reqPath
 	}
 	// Strip leading /:service segment.

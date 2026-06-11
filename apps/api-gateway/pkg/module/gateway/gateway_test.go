@@ -10,18 +10,19 @@ import (
 // No I/O, no net/http, no external state — pure test double.
 type stubPorts struct {
 	services map[string]struct {
-		targetURL string
-		noProbe   bool
+		targetURL    string
+		noProbe      bool
+		preservePath bool
 	}
 	statuses map[string]string
 }
 
-func (s *stubPorts) LookupService(name string) (string, bool, bool) {
+func (s *stubPorts) LookupService(name string) (string, bool, bool, bool) {
 	svc, ok := s.services[name]
 	if !ok {
-		return "", false, false
+		return "", false, false, false
 	}
-	return svc.targetURL, svc.noProbe, true
+	return svc.targetURL, svc.noProbe, svc.preservePath, true
 }
 
 func (s *stubPorts) ServiceStatuses() map[string]string {
@@ -32,17 +33,21 @@ func (s *stubPorts) ServiceStatuses() map[string]string {
 func newStub() *stubPorts {
 	return &stubPorts{
 		services: map[string]struct {
-			targetURL string
-			noProbe   bool
+			targetURL    string
+			noProbe      bool
+			preservePath bool
 		}{
-			"macro":     {targetURL: "http://macro-service:8081", noProbe: false},
-			"stock":     {targetURL: "http://stock-price:8082", noProbe: false},
-			"api":       {targetURL: "http://mcp-server:3000", noProbe: true}, // virtual alias
+			"macro": {targetURL: "http://macro-service:8081", noProbe: false, preservePath: false},
+			"stock": {targetURL: "http://stock-price:8082", noProbe: false, preservePath: false},
+			"api":   {targetURL: "http://mcp-server:3000", noProbe: true, preservePath: false}, // virtual alias
+			// ta: preservePath=true — upstream registers routes at /ta/* prefix
+			"ta": {targetURL: "http://technical-analysis:5003", noProbe: false, preservePath: true},
 		},
 		statuses: map[string]string{
 			"macro": "ok",
 			"stock": "ok",
 			"api":   "ok",
+			"ta":    "ok",
 		},
 	}
 }
@@ -93,6 +98,28 @@ func TestRoute_MultiPrimitive_VirtualAlias(t *testing.T) {
 	}
 	if result.DownstreamPath != "/api/push-news" {
 		t.Errorf("DownstreamPath: got %q, want %q (verbatim for noProbe)", result.DownstreamPath, "/api/push-news")
+	}
+}
+
+// TestRoute_MultiPrimitive_TA_PreservePath is the F2 regression test for the module layer.
+// /ta/indicators → ExtractServiceName = "ta" → LookupService = (url, noProbe=false, preservePath=true)
+// → ResolveProxyPath("/ta/indicators", false||true=true) = "/ta/indicators" (verbatim).
+func TestRoute_MultiPrimitive_TA_PreservePath(t *testing.T) {
+	mod := gateway.New(newStub())
+	result := mod.Route("/ta/indicators", "/")
+
+	if !result.Found {
+		t.Fatal("expected Found=true for registered service 'ta'")
+	}
+	if result.ServiceName != "ta" {
+		t.Errorf("ServiceName: got %q, want %q", result.ServiceName, "ta")
+	}
+	// Key assertion: path must be preserved verbatim, NOT stripped to /indicators.
+	if result.DownstreamPath != "/ta/indicators" {
+		t.Errorf("F2 regression — DownstreamPath: got %q, want %q", result.DownstreamPath, "/ta/indicators")
+	}
+	if result.TargetURL != "http://technical-analysis:5003" {
+		t.Errorf("TargetURL: got %q, want %q", result.TargetURL, "http://technical-analysis:5003")
 	}
 }
 
@@ -175,8 +202,9 @@ func TestAggregateHealth_AllDown(t *testing.T) {
 func TestAggregateHealth_Empty(t *testing.T) {
 	stub := &stubPorts{
 		services: map[string]struct {
-			targetURL string
-			noProbe   bool
+			targetURL    string
+			noProbe      bool
+			preservePath bool
 		}{},
 		statuses: map[string]string{},
 	}

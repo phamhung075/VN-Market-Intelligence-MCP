@@ -386,7 +386,9 @@ func (h *GatewayHandlers) HandleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build downstream path via primitive (proxy-path-resolver).
-	downstreamPath := ppr.ResolveProxyPath(r.URL.Path, svc.NoProbe)
+	// verbatim=true when the service is a virtual alias (NoProbe) OR when the
+	// upstream registers routes under its own prefix (PreservePath).
+	downstreamPath := ppr.ResolveProxyPath(r.URL.Path, svc.NoProbe || svc.PreservePath)
 
 	proxy := httputil.NewSingleHostReverseProxy(targetBase)
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {

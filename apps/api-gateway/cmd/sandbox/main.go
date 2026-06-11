@@ -447,18 +447,19 @@ func executePrimitive(s Scenario, traceDir string) (bool, error) {
 // exclusively by the sandbox. No net/http, no DB, no credentials.
 type sandboxPorts struct {
 	services map[string]struct {
-		targetURL string
-		noProbe   bool
+		targetURL    string
+		noProbe      bool
+		preservePath bool
 	}
 	statuses map[string]string
 }
 
-func (p *sandboxPorts) LookupService(name string) (string, bool, bool) {
+func (p *sandboxPorts) LookupService(name string) (string, bool, bool, bool) {
 	svc, ok := p.services[name]
 	if !ok {
-		return "", false, false
+		return "", false, false, false
 	}
-	return svc.targetURL, svc.noProbe, true
+	return svc.targetURL, svc.noProbe, svc.preservePath, true
 }
 
 func (p *sandboxPorts) ServiceStatuses() map[string]string {
@@ -511,8 +512,9 @@ func executeGatewayModule(data []byte, name string) (TraceResult, error) {
 	// step-3 statuses (health statuses). No infrastructure imported.
 	ports := &sandboxPorts{
 		services: map[string]struct {
-			targetURL string
-			noProbe   bool
+			targetURL    string
+			noProbe      bool
+			preservePath bool
 		}{},
 		statuses: map[string]string{},
 	}
@@ -520,11 +522,13 @@ func executeGatewayModule(data []byte, name string) (TraceResult, error) {
 	// Populate the service registry from routing_result.
 	if s.RoutingResult.ServiceName != "" {
 		ports.services[s.RoutingResult.ServiceName] = struct {
-			targetURL string
-			noProbe   bool
+			targetURL    string
+			noProbe      bool
+			preservePath bool
 		}{
-			targetURL: s.RoutingResult.TargetURL,
-			noProbe:   false,
+			targetURL:    s.RoutingResult.TargetURL,
+			noProbe:      false,
+			preservePath: false,
 		}
 	}
 
