@@ -6085,3 +6085,60 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 17 hours (healthy)
 
 **Incidents:** None.
 
+
+---
+
+## Session: 2026-06-11 (Targeted Rebuild — Tie-Break Fix for GET /api/corporate-events)
+
+**Task:** Deploy merged tie-break fix on origin/main (HEAD 71d0a683) for `/api/corporate-events` endpoint. Targeted rebuild ONLY: mcp-server container.
+
+**Procedure:** STRICT — no down, no bare up -d, no --force-recreate, no --remove-orphans.
+
+### Execution Steps
+
+**Step 1: Verify HEAD**
+- Confirmed: `git rev-parse HEAD` = 71d0a683
+
+**Step 2: Record OLD image ID**
+- OLD mcp-server image: `sha256:90249a2a3bb19753e6f5966695338c11ab9990e19bb6fdd1fa7bf0552715570b`
+
+**Step 3: Build mcp-server ONLY**
+- Command: `docker compose build mcp-server`
+- Build completed successfully (all layers cached except src/ copy)
+- New image: `sha256:cfbba14a1d1e0bac934b849fc87391adf80255e28e81e8958f793ccc11485254`
+- Verified: Image ID differs from OLD ✓
+
+**Step 4: Bring up rebuilt mcp-server**
+- Command: `docker compose up -d --no-deps mcp-server`
+- No orphans removed, no other services touched ✓
+
+**Step 5: Verify 13-container health**
+```
+mcp-server-1                                      Up 11 seconds (healthy)
+frontend-1                                        Up 27 minutes (healthy)
+api-gateway-1                                     Up 7 hours (healthy)
+kinh-dich-service-1                               Up 9 hours (healthy)
+rag-service-1                                     Up 2 hours (healthy)
+news-fetch-1                                      Up 17 hours (healthy)
+stock-price-1                                     Up 17 hours (healthy)
+alert-engine-1                                    Up 17 hours (healthy)
+technical-analysis-1                              Up 17 hours (healthy)
+pdf-extractor-1                                   Up 17 hours (healthy)
+macro-indicators-1                                Up 17 hours (healthy)
+headroom-proxy                                    Up 17 hours
+mcp-gateway                                       Up 17 hours (healthy)
+```
+
+**Step 6: Smoke test — tie-break fix verification**
+- Call: `curl -s 'http://localhost:3000/api/corporate-events?days=90'`
+- Parsed topActiveCodes: `[('SHB', 28), ('SSI', 15), ('MWG', 13), ('NVL', 11), ('ACB', 9), ('KDH', 9), ('VIX', 9), ('FPT', 8)]`
+- **Result:** FPT now in slot 8 with 8 events — tie-break fix LIVE ✓ (MBB no longer present in top slots)
+
+### Summary
+
+- OLD image: 90249a2a3bb1
+- NEW image: cfbba14a1d1e
+- All 13 containers healthy (mcp-server passed health check in <15s)
+- Tie-break fix: VERIFIED — FPT correctly ranked in slot 8 for corporate-events endpoint
+- No service interruption; no orphans; strict no-deps procedure honored
+
