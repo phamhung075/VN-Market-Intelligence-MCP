@@ -66,6 +66,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/foreign-flow", label: "Khối ngoại" },
   { to: "/dashboard/agm-plan-actual", label: "Kế hoạch vs TH" },
   { to: "/dashboard/prediction-claims", label: "Dự báo AI" },
+  { to: "/dashboard/conviction-history", label: "Niềm tin AI" },
 ];
 
 /**
