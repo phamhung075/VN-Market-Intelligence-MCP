@@ -103,3 +103,31 @@ If most items lack the field, the column is effectively unusable for decision-ma
 - Architect brief: `docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md`
 - BA spec: `docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md` § A-02
 - Zone standard: `docs/policies/dev-standards.md`
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/foreignFlowHandler.ts` — added `stale_fields: string[]` to `ForeignFlowResponse` interface; added `computeStaleFields(items)` exported function (post-`buildSummary` scan, >50% null threshold); updated `handleGetForeignFlow` to compute and include `stale_fields` in response body
+  - `apps/mcp-server/src/__tests__/REAUDIT-003-foreign-flow-stale-fields.test.ts` — new test file (13 tests)
+- **Tests written:** `REAUDIT-003-foreign-flow-stale-fields.test.ts` — 13 assertions: AC-2 empty→[], AC-3 all-null→all-3-fields, AC-4 exactly-50%-not-stale, AC-5 51%-stale, AC-6 mixed scenario, AC-8 majority-non-null, single-item cases, HTTP handler integration (stale_fields in response, production shape, empty rows, non-null rows, null values preserved in items)
+- **Git commits:** f662302d feat(mcp-server/REAUDIT-003): add stale_fields to ForeignFlowResponse (NFR-C-5)
+- **Type check:** clean (bun tsc --noEmit exit 0)
+- **bun test (targeted):** 44 pass / 0 fail (REAUDIT-003 + 1986-foreign-flow-endpoint)
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 78 cron.schedule entries — matches pre-task baseline
+- **Docs updated:** NONE (interface-only change, no architecture doc impact)
+- **Graphify:** skipped (no docs impacted)
+
+**G12 Gate Evidence:**
+- Gate 1 (bun test targeted): 44 pass / 0 fail
+- Gate 2a (tsc): exit 0
+- Gate 2c (tool count): 157 — unchanged
+- Gate 2d (scheduler count): 78 — unchanged
+
+**Zone health:** bun test 0 fail (targeted), 157 tools intact, scheduler 78 cron.schedule | HEALTHY
+
+**Decision journal:** computeStaleFields scans allItems (full day set, not the display-limited items slice) — consistent with how buildSummary already uses allItems for authoritative counts. Parameterized SQL not needed here (pure in-memory array scan, no SQL). Fields checked: exactly the 3 structurally-absent fields identified in live probe (2026-06-11).

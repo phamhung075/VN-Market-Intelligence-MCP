@@ -30,3 +30,13 @@
 **Live stale state (2026-06-11):** shareholders stale=true staleByDays=3 (asOf=2026-04-14, 58d); financials stale=true staleByDays=43 (asOf=2026-04-15, 57d); others within threshold.
 **Tests:** 24 new TCs in REAUDIT-002-staleness.test.ts. 257 existing handler tests GREEN. tsc exit 0. toolCount=157. schedulerCount=78.
 **Commit:** 70a33a80 | Zone health: HEALTHY
+
+---
+
+## 2026-06-11 · REAUDIT-003 — NFR-C-5 stale_fields in ForeignFlowResponse — REVIEW
+
+**Task:** REAUDIT-003 | Sprint: SHIP-WAVE-REAUDIT | Priority: HIGH | Zone: apps/mcp-server/
+**Root cause:** currentHoldingRatio, maxHoldingRatio, marketCapBn are null on 100% of ~103 rows (structural upstream gap). Handler correctly passed them through as null, but response had no signal to distinguish "not available" from "missing today".
+**Fix (foreignFlowHandler.ts):** Added `stale_fields: string[]` to `ForeignFlowResponse` interface. Added `computeStaleFields(items)` — scans allItems (full day set) post-buildSummary; if >50% null for a field, appends field name to array. Updated `handleGetForeignFlow` to compute and include `stale_fields`. Additive contract — items still carry null values unchanged.
+**Tests:** 13 new TCs in REAUDIT-003-foreign-flow-stale-fields.test.ts. AC-2 empty→[], AC-3 all-null→3-fields, AC-4 exactly-50%-not-stale (strict >50%), AC-5 >50%→stale, AC-6 mixed, AC-8 majority-non-null, HTTP handler integration. 44 pass / 0 fail (targeted). tsc exit 0. toolCount=157. schedulerCount=78.
+**Commit:** f662302d | Zone health: HEALTHY

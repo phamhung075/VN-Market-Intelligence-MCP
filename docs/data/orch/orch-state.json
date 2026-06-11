@@ -6722,7 +6722,7 @@
         "id": "REAUDIT-003",
         "title": "NFR-C-5 foreign-flow stale_fields: mcp-server implementation",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "apps/mcp-server/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "high",
