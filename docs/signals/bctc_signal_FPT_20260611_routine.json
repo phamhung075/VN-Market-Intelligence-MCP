@@ -6,11 +6,11 @@
   "beat_miss": null,
   "net_profit_delta_pct": null,
   "product": "Dịch vụ CNTT, xuất khẩu phần mềm, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
-  "customer": "Khách hàng doanh nghiệp IT trong nước và nước ngoài, thuê bao viễn thông SME/hộ gia đình",
-  "ops": "Biên lợi nhuận ròng 19.8%; xuất khẩu phần mềm biên ~28%; OCF Q1 âm do mùa vụ (-2,847.8ty), Q4/2025 OCF +4,108ty (1.64x net profit)",
-  "mgmt": "Tăng trưởng EPS ổn định; guidance FY2025 đạt 3 quý liên tiếp; buyback cổ phiếu đúng lịch trình",
+  "customer": "Doanh nghiệp CNTT trong nước và nước ngoài, thuê bao viễn thông SME/hộ gia đình",
+  "ops": "Biên lợi nhuận ròng 19.8%; OCF Q1 âm -2,847.8ty (mùa vụ), Q4/2025 +4,108ty (1.64x NI); D/E 0.40x bảo thủ",
+  "mgmt": "Lợi nhuận Q1-2026 +19.8% YoY; 3 quý liên tiếp đáp ứng guidance; buyback cổ phiếu đúng tiến độ",
   "e3_cache_hit": true,
-  "e3_hash_prefix": "cached-c039",
+  "e3_cycle": 7,
   "valuation": {
     "pe": 13.8,
     "pe_vs_sector": "DISCOUNT -20%",
@@ -23,7 +23,7 @@
   "esc_gate": {
     "esc_1": "SKIP (E3 cache hit)",
     "esc_2": "PASS (imbalance=0)",
-    "esc_3": "DATA-COV-LIM (2q < 4q) GUARD-HELD cycle6",
+    "esc_3": "DATA-COV-LIM (2q < 4q) GUARD-HELD cycle7 (~20d)",
     "esc_4": "SKIP (E3 cache hit)",
     "esc_5": "SKIP (no refined units)"
   },
@@ -32,9 +32,9 @@
   "max_deposit_rate_pct": 5.0,
   "investment_clock": "Overheat_CORE_VN",
   "legal_risk": "none",
-  "macro_notable": "USD/VND 26325 EXTREME +5.25sigma (2026-06-11T13:30Z)",
-  "signal_id": 5770,
-  "cycle_id": "20260611-1500",
-  "emitted_at": "2026-06-11T15:07:00Z",
-  "cycle_slot": "bctc-analyst-slot-1"
+  "macro_notable": "Gold $4,234.8 +4.02% risk-off HIGH alert; Oil $88.94 -7.57% LOW alert; USD/VND 26,325 EXTREME +5.25sigma",
+  "signal_id": 5796,
+  "cycle_id": "20260611-2100",
+  "emitted_at": "2026-06-11T21:08Z",
+  "cycle_slot": "bctc-analyst-slot-3"
 }
