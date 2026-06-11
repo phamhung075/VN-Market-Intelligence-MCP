@@ -6,6 +6,8 @@
 
 ## Status
 
+2026-06-11 — TASK-17 P1-2b macro-regime page DONE. Commit d303d7d4. api.macro-regime.tsx proxy (arrayBuffer pipe, 502 on network fail, pass-through 4xx/5xx). dashboard.macro.tsx SSR self-fetch fetchMacroData extracted (non-fatal: 502/503/network-throw/bad-shape all return error string + null signals). InvestmentClockCard prominent phase + plain-VN explanation. 3 SignalCards (oil/gold/usdvnd) with DirectionPill BULLISH=green/BEARISH=red/NEUTRAL=grey. 4 IndicatorTiles (VNINDEX/Oil/Gold/USD-VND). Honest degrade: unavailable banner, stale banner, calendar.available:false shows note. TopNav Vĩ Mô comingSoon removed. SSOT test updated (17/17). New vitest 7/7. tsc 0 errors.
+
 2026-06-11 — TASK-17 P1-1b news-sentiment page DONE. Commit 769a8131. api.news-sentiment.tsx proxy (arrayBuffer pipe, 502 on network fail, pass-through 4xx/5xx). dashboard.news.tsx SSR self-fetch non-fatal (empty-state on 5xx/network/shape-mismatch, never crash). SentimentPill green/red/grey. tickers+sectors chips when present. stale banner when stale_served=true. TopNav Tin Tức enabled (comingSoon removed). SSOT test updated. 23 new tests. 31/31 test files 411/411 GREEN. tsc 0 errors.
 
 Zone health: Tier 3 api layer complete, Tier 4 routes +1 (news page), 411/411 Vitest GREEN, tsc clean | HEALTHY
