@@ -16,6 +16,10 @@
  * P0-5 NAV restructure: analyst tabs are primary (top level); ops/infra
  * tabs are secondary and collapsed under the "Hệ Thống" Collapsible group.
  * Uses the existing Radix Collapsible primitive (no new deps).
+ *
+ * P0-5-FIX: comingSoon tabs render as disabled spans (not NavLinks) to
+ * prevent dead-link 404s for routes not yet implemented. Enabled analyst
+ * tabs point only to existing route files (verified against app/routes/).
  */
 import { useState } from "react";
 import { Link, NavLink, useLocation } from "@remix-run/react";
@@ -25,23 +29,37 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 
-export type NavItem = { to: string; label: string; reload?: boolean };
+export type NavItem = {
+  to: string;
+  label: string;
+  reload?: boolean;
+  comingSoon?: boolean;
+};
 
-/** PRIMARY analyst-facing tabs — always visible in the top nav. */
+/**
+ * PRIMARY analyst-facing tabs — always visible in the top nav.
+ *
+ * Route existence verified against apps/frontend/app/routes/ (2026-06-11):
+ *   - /dashboard/analysis  → dashboard.analysis.tsx  EXISTS  → enabled (label: "Cổ Phiếu")
+ *   - All other analyst targets → NO route file yet   → comingSoon: true
+ *
+ * comingSoon items render as disabled spans (not NavLinks) — no dead links.
+ */
 export const ANALYST_NAV: NavItem[] = [
-  { to: "/dashboard", label: "Tổng Quan" },
-  { to: "/dashboard/watchlist", label: "Danh Mục" },
-  { to: "/dashboard/stock", label: "Cổ Phiếu" },
-  { to: "/dashboard/news", label: "Tin Tức" },
-  { to: "/dashboard/macro", label: "Vĩ Mô" },
-  { to: "/dashboard/ai-intel", label: "AI Intel" },
-  { to: "/dashboard/bctc", label: "Tài Chính" },
-  { to: "/dashboard/alerts", label: "Cảnh Báo" },
+  { to: "/dashboard", label: "Tổng Quan", comingSoon: true },
+  { to: "/dashboard/watchlist", label: "Danh Mục", comingSoon: true },
+  { to: "/dashboard/analysis", label: "Cổ Phiếu" },
+  { to: "/dashboard/news", label: "Tin Tức", comingSoon: true },
+  { to: "/dashboard/macro", label: "Vĩ Mô", comingSoon: true },
+  { to: "/dashboard/ai-intel", label: "AI Intel", comingSoon: true },
+  { to: "/dashboard/bctc", label: "Tài Chính", comingSoon: true },
+  { to: "/dashboard/alerts", label: "Cảnh Báo", comingSoon: true },
 ];
 
 /**
  * SYSTEM group — ops/infra tabs collapsed by default under "Hệ Thống".
  * dashboard.db is retired from nav (route file kept for a later phase).
+ * bctc-eval and bctc-inspect are restored per P0-5-FIX architect brief.
  * bctc-inspect: reload:true forces full browser navigation so the raw HTML
  * response loads as a real document and its scripts execute.
  */
@@ -51,6 +69,8 @@ export const SYSTEM_NAV: NavItem[] = [
   { to: "/dashboard/vps", label: "VPS Proxy" },
   { to: "/dashboard/orchestration", label: "Orchestration" },
   { to: "/dashboard/quality-audit", label: "Quality Audit" },
+  { to: "/dashboard/bctc-eval", label: "BCTC Eval" },
+  { to: "/dashboard/bctc-inspect", label: "BCTC Inspect", reload: true },
 ];
 
 /**
@@ -59,8 +79,7 @@ export const SYSTEM_NAV: NavItem[] = [
  * should use this. Active NAV = ANALYST_NAV (top level) + SYSTEM_NAV (System group).
  *
  * Note: /dashboard/db (Database) is retired from nav per P0-5 brief.
- * Note: /dashboard/bctc-eval and /dashboard/bctc-inspect are kept as routes
- *       but accessed via the Tài Chính (/dashboard/bctc) analyst page.
+ * Note: comingSoon items are present in the array but render as disabled spans.
  */
 export const NAV_ITEMS: NavItem[] = [...ANALYST_NAV, ...SYSTEM_NAV];
 
@@ -125,16 +144,29 @@ export function TopNav() {
           </NavLink>
 
           {/* PRIMARY analyst tabs — always visible */}
-          {ANALYST_NAV.map(({ to, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/dashboard"}
-              className={navLinkClass}
-            >
-              {label}
-            </NavLink>
-          ))}
+          {ANALYST_NAV.map(({ to, label, comingSoon }) =>
+            comingSoon ? (
+              <span
+                key={to}
+                aria-disabled="true"
+                className="inline-flex cursor-not-allowed items-center gap-1 rounded px-3 py-1.5 text-sm font-medium text-slate-600"
+              >
+                {label}
+                <span className="rounded bg-slate-700 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Sắp có
+                </span>
+              </span>
+            ) : (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === "/dashboard"}
+                className={navLinkClass}
+              >
+                {label}
+              </NavLink>
+            )
+          )}
 
           {/* SYSTEM group — collapsed by default */}
           <Collapsible open={systemOpen} onOpenChange={setSystemOpen}>
