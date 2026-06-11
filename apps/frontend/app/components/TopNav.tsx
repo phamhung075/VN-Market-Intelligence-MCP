@@ -49,6 +49,7 @@ export type NavItem = {
  *   - /dashboard/intel    → dashboard.intel.tsx        EXISTS  → enabled (label: "Bản Tin AI") — TASK-17 intel
  *   - /dashboard/alerts   → dashboard.alerts.tsx       EXISTS  → enabled (label: "Cảnh Báo") — TASK-17 alerts
  *   - /dashboard/prediction-claims → dashboard.prediction-claims.tsx EXISTS → enabled (label: "Dự báo AI") — TASK17-PRED
+ *   - /dashboard/market-summaries  → dashboard.market-summaries.tsx  EXISTS → enabled (label: "Lưu trữ Thị trường") — TASK-17 PAGE 8
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -67,6 +68,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/agm-plan-actual", label: "Kế hoạch vs TH" },
   { to: "/dashboard/prediction-claims", label: "Dự báo AI" },
   { to: "/dashboard/conviction-history", label: "Niềm tin AI" },
+  { to: "/dashboard/market-summaries", label: "Lưu trữ Thị trường" },
 ];
 
 /**

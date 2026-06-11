@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-11 | **Sprint:** TASK17-AGM page
+**Last updated:** 2026-06-11 | **Sprint:** TASK-17-PAGE-8 market-summaries archive
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-11 — TASK-17-PAGE-8 market-summaries archive DONE. api.market-summaries.tsx transparent proxy (period+limit+id forwarded, arrayBuffer pipe, MCP_SERVER_BASE_URL SSOT). dashboard.market-summaries.tsx dual-mode SSR loader: ?id=<id>→DETAIL (full narrative+keyEvents timeline+per-ticker performance table with client-side search box+recommendations table; item:null→honest empty-state "Không tìm thấy báo cáo"); no ?id→LIST (period picker with live counts from periods block, report cards with summaryPreview+chips). Live payload STEP 0 verified before typing: keyEvents={date,title,impact,direction}, stockPerformance={symbol,firstPrice,lastPrice,changePct,alertCount}, recommendations={symbol,outlook,confidence,reasoning}. Exported helpers: fetchSummaries, PERIOD_LABELS, formatDateRange, formatChangePct, changePctColorClass, outlookLabel, outlookColorClass, filterTickers. TopNav: ANALYST_NAV += "Lưu trữ Thị trường" (/dashboard/market-summaries) — count 13→14, NAV_ITEMS 20→21. FE-HEADER-SSOT-top-nav.test.tsx updated (counts+new-tab assertion, 21 tests GREEN). 62 new vitest GREEN (task17-market-summaries-loader.test.ts). tsc 0 errors. DJ-GATE-1 decision journal in sprint-CI-RED-RECONCILE-dev-frontend.md.
+
+Zone health: Tier 4 routes +1 (market-summaries archive page), tsc clean, 62 new tests GREEN, ANALYST_NAV 14 items | HEALTHY
 
 2026-06-11 — TASK17-AGM page DONE. api.agm-plan-actual.tsx transparent proxy (year+limit forwarded, arrayBuffer pipe, MCP_SERVER_BASE_URL SSOT). dashboard.agm-plan-actual.tsx SSR loader fetchAgmPlanActualData(origin, params?) exported named helper (non-fatal: 502/503/network-throw/bad-shape return degraded). Year selector via SSR GET param (Form+hidden input). SummaryBanner 4 chips: Vượt KH/Đạt/Chưa đạt/Đang thực hiện. Per-stock cards with 3 metrics (Doanh thu/LN trước thuế/LN sau thuế), progress bar, status badge. CRITICAL IN_PROGRESS guard: completion_pct null → "Đang thực hiện" not "0%", actual_ty null → "—" not "0 tỷ", grey bar not red BEHIND bar. ytd_ty context shown if non-null. TopNav: ANALYST_NAV + "Kế hoạch vs TH" (/dashboard/agm-plan-actual). Exported helpers: formatTy, formatPct, formatCompletion, statusLabel, statusColorClass. 44/44 tests GREEN. tsc 0 errors.
 
