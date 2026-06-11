@@ -3756,3 +3756,119 @@ Endpoint `/api/agm-plan-actual` now LIVE, serving REAL data with correct:
 
 **Incident Notes:** None. Single-service targeted rebuild with health validation per FLEET-HOST-SAFETY protocol. No errors. Deployment time: 9 minutes (build+verify).
 
+
+---
+
+## Session: 2026-06-11 (DEPLOY-AGM-PLAN-ACTUAL — Frontend Targeted Rebuild)
+
+**Task:** Deploy the new "Kế hoạch vs Thực hiện" frontend page (commit 2ad1f685) via TARGETED rebuild of frontend ONLY, then verify it renders REAL data server-side.
+
+**Status:** DONE — Verified Live (2026-06-11 12:49-13:00Z)
+
+### Execution Steps
+
+**Step 1: Capture old image ID and container health baseline**
+- Old frontend image: `sha256:e50f07eb49a8712926182a20e868cf204fea36a81284a92d756e64d760524fcc`
+- Container health: 11/11 healthy (alert-engine, api-gateway, frontend, kinh-dich-service, macro-indicators, mcp-server, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis)
+
+**Step 2: Targeted rebuild — frontend ONLY**
+- Command: `docker compose build frontend`
+- Build completed successfully: npm ci cached, npm run build executed fresh, artifact stage completed
+- Build time: 24.8s (full npm build with Vite compilation)
+- Build output confirms all new route chunks compiled:
+  - Generated empty chunk: "api.agm-plan-actual-l0sNRNKZ.js" ✓
+  - ViteJS manifest updated ✓
+  - SSR bundle built successfully ✓
+
+**Step 3: Deploy without cascade**
+- Command: `docker compose up -d --no-deps frontend && sleep 5`
+- Container recreated and started: `vn-market-intelligence-mcp-frontend-1`
+- No other services touched (--no-deps flag enforced)
+
+**Step 4: Verify new image differs from old**
+- New frontend image: `sha256:f3d63b3876309ef51c1adecfa093f21b367a3de3911bde598c578d57961a501d`
+- Status: ✓ DIFFERS from old (e50f07eb → f3d63b38)
+
+**Step 5: Health verification — ALL 11 containers**
+- Baseline: 11 containers
+- After rebuild: 11 containers all healthy (waited 13s for frontend to stabilize from "starting" to "healthy")
+- Status: ✓ NO CASCADE DAMAGE
+
+### Verification Tests (Raw A/B/C/D)
+
+**A) HTTP Status 200**
+```
+curl -s -o /dev/null -w '%{http_code}\n' "http://localhost:3001/dashboard/agm-plan-actual"
+→ 200 ✓
+```
+
+**B) Proxy endpoint live data (2024 closed year)**
+```
+curl -s "http://localhost:3001/api/agm-plan-actual?year=2024" | jq '{defaultYear, count, fpt:(.items[]|select(.stockCode=="FPT")|.metrics[]|select(.ptid==5)|{plan_ty,actual_ty,completion_pct,status})}'
+→ {
+  "defaultYear": 2025,
+  "count": 33,
+  "fpt": {
+    "plan_ty": 61850,
+    "actual_ty": 62962.652,
+    "completion_pct": 101.8,
+    "status": "EXCEEDED"
+  }
+}
+✓ EXACT MATCH: plan_ty 61850, actual_ty ~62962.65, completion_pct 101.8, status "EXCEEDED"
+```
+
+**C) SSR HTML rendered with live data (default year 2025)**
+```
+curl -s "http://localhost:3001/dashboard/agm-plan-actual" -o /tmp/agm.html -w 'bytes=%{size_download}\n'
+→ bytes=145869
+
+Python verification (Vietnamese term count):
+- "Kế hoạch vs Thực hiện" (page title): 2 ✓
+- "Vượt KH" (exceeded status): 38 ✓
+- "Chưa đạt" (not achieved status): 14 ✓
+- "Đang thực hiện" (in progress status): 73 ✓
+- "Doanh thu" (revenue label): 33 ✓
+- "FPT" (sample ticker): 2 ✓
+- "HPG" (sample ticker): 2 ✓
+- "VIC" (sample ticker): 2 ✓
+
+Status: ✓ ALL TERMS PRESENT — page renders real data server-side
+```
+
+**D) Open year guard (2026 open year)**
+```
+curl -s "http://localhost:3001/dashboard/agm-plan-actual?year=2026" -o /tmp/agm2026.html
+
+Python verification:
+- HTML size: 141088 bytes (substantial content) ✓
+- "Đang thực hiện" (in progress status): 192 occurrences ✓
+- Status: ✓ OPEN YEAR RENDERS CORRECTLY with "Đang thực hiện" present (no false 0% red bars expected)
+```
+
+### Summary
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| Old image ID | ✓ CAPTURED | e50f07eb49a8... |
+| Build complete | ✓ PASS | 24.8s, npm build fresh, route chunks compiled |
+| New image built | ✓ PASS | f3d63b3876... (differs from old) |
+| No cascade | ✓ PASS | 11/11 containers healthy post-rebuild |
+| HTTP 200 | ✓ PASS | /dashboard/agm-plan-actual returns 200 |
+| API proxy FPT 2024 | ✓ PASS | plan_ty 61850, actual_ty 62962.652, completion_pct 101.8, status "EXCEEDED" |
+| SSR HTML rendered | ✓ PASS | 145869 bytes, all 8 terms present (title, 3 status labels, revenue, 3 tickers) |
+| Open year guard | ✓ PASS | 2026 renders 141088 bytes, "Đang thực hiện" present (192 occurrences) |
+
+**Page Status:** "Kế hoạch vs Thực hiện" frontend now LIVE and serving real data.
+
+**Scope Confirmed:** Only frontend container rebuilt. All other services untouched.
+
+**DoD Status:** ACHIEVED ✓
+- Targeted rebuild (frontend ONLY) ✓
+- Image ID verified different ✓
+- All 11 containers healthy (no cascade) ✓
+- A/B/C/D verification tests PASS ✓
+- Live data confirmed server-side ✓
+
+**Next:** Router verifies diff(served-vs-live) and closes the page.
+
