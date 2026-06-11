@@ -404,6 +404,22 @@ describe("buildByType", () => {
     const result = buildByType(events);
     expect(result[0]!.categoryLabel).toBe("Phát hành cổ phiếu");
   });
+
+  it("AC-8 TIE-BREAK: equal-count types ordered by eventType ASC", () => {
+    // ZZTYPE and AATYPE both count=2; AATYPE must come first (code-ASC tie-break)
+    const events: EventItem[] = [
+      { code: "A", eventType: "ZZTYPE", category: "other", categoryLabel: "ZZ", title: "t", detail: "d", eventDate: "2026-06-01" },
+      { code: "B", eventType: "ZZTYPE", category: "other", categoryLabel: "ZZ", title: "t", detail: "d", eventDate: "2026-06-01" },
+      { code: "C", eventType: "AATYPE", category: "other", categoryLabel: "AA", title: "t", detail: "d", eventDate: "2026-06-01" },
+      { code: "D", eventType: "AATYPE", category: "other", categoryLabel: "AA", title: "t", detail: "d", eventDate: "2026-06-01" },
+    ];
+    const result = buildByType(events);
+    // Both have count=2; tie-break by eventType ASC → AATYPE before ZZTYPE
+    expect(result[0]!.eventType).toBe("AATYPE");
+    expect(result[0]!.count).toBe(2);
+    expect(result[1]!.eventType).toBe("ZZTYPE");
+    expect(result[1]!.count).toBe(2);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -482,6 +498,25 @@ describe("buildSummary", () => {
     }));
     const summary = buildSummary(events);
     expect(summary.topActiveCodes.length).toBeLessThanOrEqual(8);
+  });
+
+  it("AC-9 TIE-BREAK: topActiveCodes equal-count entries ordered by code ASC", () => {
+    // ZZZ and AAA both have count=2; AAA must appear before ZZZ (code-ASC tie-break)
+    const events: EventItem[] = [
+      { code: "ZZZ", eventType: "DIV", category: "dividend", categoryLabel: "", title: "", detail: "", eventDate: "2026-06-05" },
+      { code: "ZZZ", eventType: "DIV", category: "dividend", categoryLabel: "", title: "", detail: "", eventDate: "2026-06-04" },
+      { code: "AAA", eventType: "DIV", category: "dividend", categoryLabel: "", title: "", detail: "", eventDate: "2026-06-03" },
+      { code: "AAA", eventType: "DIV", category: "dividend", categoryLabel: "", title: "", detail: "", eventDate: "2026-06-02" },
+      { code: "MMM", eventType: "ISS", category: "issuance", categoryLabel: "", title: "", detail: "", eventDate: "2026-06-01" },
+    ];
+    const summary = buildSummary(events);
+    // ZZZ and AAA both count=2 — AAA comes first (ASC); MMM count=1 is last
+    expect(summary.topActiveCodes[0]!.code).toBe("AAA");
+    expect(summary.topActiveCodes[0]!.count).toBe(2);
+    expect(summary.topActiveCodes[1]!.code).toBe("ZZZ");
+    expect(summary.topActiveCodes[1]!.count).toBe(2);
+    expect(summary.topActiveCodes[2]!.code).toBe("MMM");
+    expect(summary.topActiveCodes[2]!.count).toBe(1);
   });
 });
 

@@ -205,7 +205,7 @@ export function buildByType(rows: EventItem[]): ByTypeItem[] {
   }
   return Array.from(counts.entries())
     .map(([eventType, { categoryLabel, count }]) => ({ eventType, categoryLabel, count }))
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => b.count - a.count || a.eventType.localeCompare(b.eventType));
 }
 
 /**
@@ -237,7 +237,7 @@ export function buildSummary(rows: EventItem[]): EventSummary {
 
   const topActiveCodes = Array.from(codeCount.entries())
     .map(([code, count]) => ({ code, count }))
-    .sort((a, b) => b.count - a.count)
+    .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code))
     .slice(0, TOP_ACTIVE_CODES_CAP);
 
   return {
