@@ -8,17 +8,21 @@
  *   {
  *     items: [
  *       { id: string, triggeredAt: ISO8601, severity: "low"|"medium"|"high"|"critical",
- *         signals: string[], affectedActions: [{code: string, expectedImpact: string, confidence: number}],
+ *         signals: Signal[], affectedActions: [{code: string, expectedImpact: string, confidence: number}],
  *         message: string|null, read: 0|1, sentBy: string,
  *         confidenceScore: number|null, outcome: string|null }
  *     ],
  *     count: number, fetchedAt: ISO8601
  *   }
  *
+ * Signal shape (v2 — object, not string):
+ *   { type: string, severity: string, message: string, confidence: number }
+ *
  * Sections rendered:
  *   - Summary header: total + per-severity chips (critical/high/medium/low)
  *   - Severity filter (client-side)
- *   - Table: newest-first, time-ago, severity badge, signal tags, tickers+impact, message, confidence, outcome
+ *   - Table: newest-first, time-ago, severity badge, signal chips (type label + confidence%,
+ *     message in title tooltip), tickers+impact, message, confidence, outcome
  *
  * All user-facing copy in plain Vietnamese.
  * Honest empty state only on degrade (502/503/timeout or items==[]).
@@ -47,11 +51,22 @@ export interface AffectedAction {
   confidence: number;
 }
 
+/**
+ * Signal object shape — v2 contract (mcp-server).
+ * All fields are optional-safe: render must not throw on missing/empty values.
+ */
+export interface Signal {
+  type: string;
+  severity: string;
+  message: string;
+  confidence: number;
+}
+
 export interface AlertItem {
   id: string;
   triggeredAt: string;
   severity: AlertSeverity;
-  signals: string[];
+  signals: Signal[];
   affectedActions: AffectedAction[];
   message: string | null;
   read: 0 | 1;
@@ -241,10 +256,76 @@ function SeverityChip({
   );
 }
 
-function SignalTag({ label }: { label: string }) {
+// ---------------------------------------------------------------------------
+// Signal type → Vietnamese display label (analyst-friendly)
+// ---------------------------------------------------------------------------
+
+const SIGNAL_TYPE_LABEL: Record<string, string> = {
+  price_surge: "Giá tăng mạnh",
+  price_drop: "Giá giảm mạnh",
+  volume_spike: "Khối lượng đột biến",
+  volume_drop: "Khối lượng sụt giảm",
+  news_mention: "Tin tức",
+  circuit_breaker: "Ngắt mạch",
+  foreign_net_sell: "Khối ngoại bán ròng",
+  foreign_net_buy: "Khối ngoại mua ròng",
+  earnings_beat: "Vượt kỳ vọng lợi nhuận",
+  earnings_miss: "Dưới kỳ vọng lợi nhuận",
+};
+
+/** Map a raw signal type string to a Vietnamese label. Falls back to raw type. */
+export function signalTypeLabel(type: string): string {
+  if (!type) return "—";
+  return SIGNAL_TYPE_LABEL[type.toLowerCase()] ?? type;
+}
+
+// ---------------------------------------------------------------------------
+// Signal severity → chip colour classes (high→red, medium→yellow, low→grey)
+// ---------------------------------------------------------------------------
+
+function signalChipColour(severity: string): string {
+  switch ((severity ?? "").toLowerCase()) {
+    case "high":
+    case "critical":
+      return "border-red-700 bg-red-950 text-red-300";
+    case "medium":
+      return "border-yellow-700 bg-yellow-950 text-yellow-300";
+    case "low":
+    default:
+      return "border-slate-600 bg-slate-700 text-slate-300";
+  }
+}
+
+/**
+ * SignalChip — renders a single Signal object as a tagged chip.
+ * Shows: type label (prominent), confidence %, message in title tooltip.
+ * Safe against missing/empty fields — never throws.
+ */
+function SignalChip({ signal }: { signal: Signal }) {
+  const rawType = typeof signal?.type === "string" ? signal.type : "";
+  // Skip rendering if type is completely empty
+  if (!rawType) return null;
+
+  const label = signalTypeLabel(rawType);
+  const colourClass = signalChipColour(signal?.severity ?? "");
+  const hasConfidence =
+    typeof signal?.confidence === "number" && !Number.isNaN(signal.confidence);
+  const confidenceText = hasConfidence
+    ? `${Math.round(signal.confidence * 100)}%`
+    : null;
+  const tooltip = typeof signal?.message === "string" && signal.message
+    ? signal.message
+    : undefined;
+
   return (
-    <span className="inline-block rounded border border-slate-600 bg-slate-700 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">
-      {label}
+    <span
+      className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${colourClass}`}
+      title={tooltip}
+    >
+      <span>{label}</span>
+      {confidenceText && (
+        <span className="font-normal opacity-70">{confidenceText}</span>
+      )}
     </span>
   );
 }
@@ -338,12 +419,12 @@ function AlertRow({
         <SeverityBadge severity={item.severity} />
       </td>
 
-      {/* Signals */}
+      {/* Signals — object chips (type + confidence + message tooltip) */}
       <td className="px-3 py-2">
-        {item.signals.length > 0 ? (
+        {Array.isArray(item.signals) && item.signals.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {item.signals.map((sig, i) => (
-              <SignalTag key={i} label={sig} />
+              <SignalChip key={i} signal={sig} />
             ))}
           </div>
         ) : (

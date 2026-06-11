@@ -13,15 +13,19 @@
  *   - Compute per-severity counts correctly from returned items.
  *   - Not throw on items with missing optional fields (message, outcome, confidenceScore).
  *
- * Strategy: import fetchAlertsData directly (exported named helper).
- * Remix strips `loader` in jsdom — the named helper bypasses that.
+ * signals[] shape is now Signal objects (v2 contract) — NOT string[].
+ * Fixtures below use realistic object-shaped signals to prevent the string[]
+ * fixture class of bug that let the old contract ship broken.
+ *
+ * Strategy: import fetchAlertsData + signalTypeLabel directly (exported named helpers).
+ * Remix strips `loader` in jsdom — the named helpers bypass that.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchAlertsData } from "~/routes/dashboard.alerts";
+import { fetchAlertsData, signalTypeLabel } from "~/routes/dashboard.alerts";
 
 // ---------------------------------------------------------------------------
-// Fixtures
+// Fixtures — object-shaped signals (v2 contract)
 // ---------------------------------------------------------------------------
 
 const ORIGIN = "http://localhost:3001";
@@ -29,11 +33,25 @@ const FETCHED_AT = "2026-06-11T08:05:00.000Z";
 const TS_1 = "2026-06-11T08:00:00.000Z";
 const TS_2 = "2026-06-11T07:00:00.000Z";
 
+/** 2-signal alert: price_surge + volume_spike (tests multi-chip row) */
 const SAMPLE_ALERT_HIGH = {
   id: "alert-001",
   triggeredAt: TS_1,
   severity: "high" as const,
-  signals: ["VOLUME_SPIKE", "PRICE_BREAK"],
+  signals: [
+    {
+      type: "price_surge",
+      severity: "high",
+      message: "Giá VCB tăng 7% trong 1 phiên, vượt ngưỡng kháng cự 92k",
+      confidence: 0.87,
+    },
+    {
+      type: "volume_spike",
+      severity: "medium",
+      message: "Khối lượng giao dịch VCB gấp 3.2 lần trung bình 20 phiên",
+      confidence: 0.91,
+    },
+  ],
   affectedActions: [
     { code: "VCB", expectedImpact: "sell", confidence: 0.82 },
     { code: "BID", expectedImpact: "monitor", confidence: 0.65 },
@@ -45,11 +63,19 @@ const SAMPLE_ALERT_HIGH = {
   outcome: null,
 };
 
+/** 1-signal news_mention alert */
 const SAMPLE_ALERT_CRITICAL = {
   id: "alert-002",
   triggeredAt: TS_2,
   severity: "critical" as const,
-  signals: ["CIRCUIT_BREAKER"],
+  signals: [
+    {
+      type: "news_mention",
+      severity: "high",
+      message: "HPG đề cập trong bản tin khẩn của HOSE — tạm ngừng giao dịch",
+      confidence: 0.95,
+    },
+  ],
   affectedActions: [{ code: "HPG", expectedImpact: "halt", confidence: 0.95 }],
   message: null,
   read: 1 as const,
@@ -58,6 +84,7 @@ const SAMPLE_ALERT_CRITICAL = {
   outcome: "Cổ phiếu bị tạm dừng giao dịch",
 };
 
+/** Empty signals[] row — must not crash render */
 const SAMPLE_ALERT_LOW = {
   id: "alert-003",
   triggeredAt: TS_2,
@@ -449,10 +476,139 @@ describe("fetchAlertsData — malformed item fields (non-fatal)", () => {
     const data = await fetchAlertsData(ORIGIN);
 
     const item = data.items[0];
-    expect(item.signals).toEqual(["VOLUME_SPIKE", "PRICE_BREAK"]);
+    // signals is now Signal[] — verify object shape preserved
+    expect(Array.isArray(item.signals)).toBe(true);
+    expect(item.signals).toHaveLength(2);
+    expect(item.signals[0]).toMatchObject({ type: "price_surge", severity: "high", confidence: 0.87 });
+    expect(item.signals[1]).toMatchObject({ type: "volume_spike", severity: "medium", confidence: 0.91 });
     expect(item.affectedActions).toHaveLength(2);
     expect(item.affectedActions[0].code).toBe("VCB");
     expect(item.confidenceScore).toBe(0.78);
     expect(item.message).toBe("Khối ngoại bán ròng mạnh — VCB và BID áp lực");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 8 — Signal object shape correctness (v2 contract)
+// ---------------------------------------------------------------------------
+
+describe("fetchAlertsData — signal object shape (v2)", () => {
+  it("2-signal row: signals array has 2 objects with type+severity+message+confidence", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(HEALTHY_DTO), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+
+    const data = await fetchAlertsData(ORIGIN);
+
+    const item = data.items[0]; // SAMPLE_ALERT_HIGH — 2 signals
+    expect(item.signals).toHaveLength(2);
+    const sig0 = item.signals[0];
+    const sig1 = item.signals[1];
+
+    // Both signals are objects not strings
+    expect(typeof sig0).toBe("object");
+    expect(typeof sig1).toBe("object");
+
+    // First signal: price_surge
+    expect(sig0.type).toBe("price_surge");
+    expect(sig0.severity).toBe("high");
+    expect(sig0.confidence).toBe(0.87);
+    expect(sig0.message).toContain("VCB");
+
+    // Second signal: volume_spike
+    expect(sig1.type).toBe("volume_spike");
+    expect(sig1.severity).toBe("medium");
+    expect(sig1.confidence).toBe(0.91);
+  });
+
+  it("1-signal news_mention row: single signal object", async () => {
+    const newsDto = {
+      items: [SAMPLE_ALERT_CRITICAL],
+      count: 1,
+      fetchedAt: FETCHED_AT,
+    };
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(newsDto), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+
+    const data = await fetchAlertsData(ORIGIN);
+
+    const item = data.items[0];
+    expect(item.signals).toHaveLength(1);
+    expect(item.signals[0].type).toBe("news_mention");
+    expect(item.signals[0].severity).toBe("high");
+    expect(item.signals[0].confidence).toBe(0.95);
+    expect(item.signals[0].message).toContain("HPG");
+  });
+
+  it("empty signals[] row: signals array is empty, no crash", async () => {
+    const emptySignalsDto = {
+      items: [SAMPLE_ALERT_LOW],
+      count: 1,
+      fetchedAt: FETCHED_AT,
+    };
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(emptySignalsDto), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+
+    const data = await fetchAlertsData(ORIGIN);
+
+    const item = data.items[0];
+    expect(item.signals).toEqual([]);
+    expect(data.error).toBeNull();
+  });
+
+  it("multi-item DTO: 2-signal row yields 2 distinct signal objects", async () => {
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(MULTI_ITEM_DTO), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+
+    const data = await fetchAlertsData(ORIGIN);
+
+    const highAlert = data.items.find((i) => i.id === "alert-001");
+    expect(highAlert).toBeDefined();
+    expect(highAlert!.signals).toHaveLength(2);
+    // Distinct types
+    const types = highAlert!.signals.map((s) => s.type);
+    expect(types).toContain("price_surge");
+    expect(types).toContain("volume_spike");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 9 — signalTypeLabel helper mapping
+// ---------------------------------------------------------------------------
+
+describe("signalTypeLabel — Vietnamese label mapping", () => {
+  it("maps price_surge to Vietnamese label", () => {
+    expect(signalTypeLabel("price_surge")).toBe("Giá tăng mạnh");
+  });
+
+  it("maps volume_spike to Vietnamese label", () => {
+    expect(signalTypeLabel("volume_spike")).toBe("Khối lượng đột biến");
+  });
+
+  it("maps news_mention to Vietnamese label", () => {
+    expect(signalTypeLabel("news_mention")).toBe("Tin tức");
+  });
+
+  it("falls back to raw type string for unknown type", () => {
+    expect(signalTypeLabel("exotic_unknown_type")).toBe("exotic_unknown_type");
+  });
+
+  it("returns em-dash for empty string (guard)", () => {
+    expect(signalTypeLabel("")).toBe("—");
   });
 });
