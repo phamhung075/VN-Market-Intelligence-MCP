@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 MAW-P1-1a — DONE
+
+**Task:** TASK-17 P1-1a — GET /api/news-sentiment endpoint (MAW-P1-1a)
+**Scope:** apps/mcp-server/ — newsSentimentHandler.ts (new), server.ts (import + route wire), TASK-17 test file (new)
+**Source:** `rag_analyses` table (market.db) — real synthesised news; fields: source_title, source_url, sentiment, impact_score, impact_direction, confidence, summary, tags, affected_domains, published_at, created_at. Source verified on host data/market.db.
+**Endpoint:** `GET /api/news-sentiment` → `{generated_at, stale_served, oldest_item_ts, count, items:[{id,title,source,source_ts,sentiment,sentiment_score,impact_direction,confidence,affected_tickers,affected_sectors,impact_summary}]}`
+**Staleness:** stale_served=true when newest item > 6h old. 200 always (never silent stale).
+**Mount gap:** NONE — rag_analyses is in market.db which is already mounted in the container.
+**Tests:** 17 pass / 0 fail (51 expect() calls). tsc clean. Full suite: 11894 tests / 0 fail (exit 0). Tool count 157 unchanged. Scheduler 78 unchanged.
+**Commit:** 933d1a7a
+
 ## 2026-06-11 · TASK-17 MAW-P0-2/P0-3 — DONE
 
 **Task:** TASK-17 Market Analyst Workbench P0 — 2 new backend GET endpoints
