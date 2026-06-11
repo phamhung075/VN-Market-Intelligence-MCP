@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-11T11:15:08Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-11T18:17:48Z",
+  "_updated_by": "architect",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-11T09:00:00Z",
@@ -5922,7 +5922,7 @@
         "id": "FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE",
         "title": "vnstock fundamentals BROKEN — two modes: (a) cron CRASH recurring 3x/24h c118-c120; (b) SILENT WRITE-PATH FAILURE: fetcher logs success in vnstock_fetch_log (2026-06-10 18:16-18:20 ACB financials/balance_sheet/cash_flow, ACV financials) but rows NEVER land in vnstock_financials/vnstock_balance_sheet/vnstock_cash_flow. Architect root-cause SPIKE.",
         "owner": "agents-architect",
-        "status": "TODO",
+        "status": "REVIEW",
         "type": "SPIKE",
         "mode": "spike",
         "size": "S",
@@ -5930,7 +5930,8 @@
         "priority": "critical",
         "created_at": "2026-06-08T19:05:00Z",
         "status_note": "Created by po triage-S7 from signal sau-2026-06-08T18:36:27Z-a33 (A-33). Recurring-bug rule FIRES (3 occurrences/24h across auditor cycles c118/c119/c120; prior tick po-S6 WATCH condition met). Per recurring-bug-escalation: NOT a point-patch -> architect-first SPIKE to root-cause the cron crash before any dev fix. Cron registry zone = dev-mcp-server. AC: A-33 check passes Tier-N (vnstockFundamentalsRefresh success>0, no signal_queue A-33 row, no BUG alert 7d). Priority: critical. | MERGED 2026-06-11 router DATA-FRESHNESS AUDIT (ground-truth from live named-volume DB): vnstock_financials MAX(fetched_at)=2026-04-15 (57d stale, 79 rows) DESPITE vnstock_fetch_log showing financials/balance_sheet/cash_flow rows fetched 2026-06-10 18:16-18:20 (ACB financials, ACB balance_sheet, ACB cash_flow, ACV financials). Cron vnstockFundamentalsRefresh last ran 2026-06-08 status=success. So distinct from crash mode: a SILENT write failure / upsert no-op on the vnstock fundamentals write path — fetcher succeeds, write never persists. Architect SPIKE must root-cause BOTH the cron crash AND the silent write-path drop. Zone: dev-mcp-server (write path) + possibly dev-vps-crawls (fetcher). Unblocks FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM on a successful vnstock sync). REVISED AC: after a refresh run, vnstock_financials MAX(fetched_at) within 7 days AND vnstock_balance_sheet/vnstock_cash_flow likewise refresh AND cron success>0 (no A-33 signal, no BUG alert 7d).",
-        "merged_at": "2026-06-11T17:53:21Z"
+        "merged_at": "2026-06-11T17:53:21Z",
+        "review_note": "Architect SPIKE done 2026-06-11. Brief: docs/architecture-briefs/2026-06-11-vnstock-fundamentals-silent-drop.md. Root causes identified: Mode A = fetch_log stamped before null result confirmed, Mode B = startup probe fires into write-wedge causing OOM cascade. 6-fix plan handed to dev-mcp-server."
       },
       {
         "id": "FIX-SBV-FX-VPS-FETCHER-UNHEALTHY",

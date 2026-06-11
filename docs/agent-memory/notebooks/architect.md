@@ -1,8 +1,23 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-11 07:30 UTC | **Sprint:** MAW-FRONTEND-REDESIGN
+**Last updated:** 2026-06-11 20:30 UTC | **Sprint:** FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-11T20:30Z — FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (SPIKE, REVIEW)
+
+**Task:** FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE | backlog, CRITICAL, zone apps/mcp-server/
+**Output:** docs/architecture-briefs/2026-06-11-vnstock-fundamentals-silent-drop.md
+
+**Mode A (Silent Write Drop) — Root Cause:**
+`vnstock_fetch_log` is stamped by `markFetched()` AFTER the table write in `storeFinancials()` (vnstockStore.ts:354) — if the Python fetch returns `null` (timeout/rate-limit), `markFetched(code, "financials", 30)` IS still called (30-min backoff path in syncVnstockData.ts:252-254). So the fetch_log entries for 2026-06-10 18:16-18:20 are the BACKOFF-path writes (null results), not success writes. No data landed in `vnstock_financials` because Python returned null for those tickers. `MAX(fetched_at)=2026-04-15` confirms the last real write was April-15 weekly cron; no subsequent weekly cron has succeeded. The `INSERT OR REPLACE` upsert on `UNIQUE(code, year_report, quarter, source)` is functionally correct but `fetched_at` comes from the Python script datetime (not `datetime('now')`), making staleness queries unreliable.
+
+**Mode B (Recurring Crash) — Root Cause:**
+`runVnstockStartupProbe` is invoked as `void (async () => {...})()` in startScheduler.ts:966 — no `recordJobRun` wrapper, so crashes are invisible in `cron_job_runs`. The probe's guard catch block (`vnstockStartupProbe.ts:108-113`) sets `shouldFire=true` on ANY DB error including write-wedge "closed database" errors — this fires a 30-ticker sweep against a wedged DB, 90× Python subprocesses spike memory, triggering OOM restart, which triggers another probe. The ~3×/24h pattern matches the multiple force-recreate restarts observed in cowork telemetry (06:20, 17:05 UTC).
+
+**6-fix plan handed to dev-mcp-server** (Fix 4 first = stop crash cascade, Fix 3 = observability, Fix 2 = fail-loud, Fix 1 = accurate timestamps, Fix 5+6 = data quality).
+**BUILD-STANDARD: not-applicable.** No new primitives.
+**No code written** — spike-only per recurring-bug rule (root cause must be understood before any fix).
 
 ## 2026-06-11T07:30Z — arch-MAW-1: Market Analyst Workbench frontend redesign
 
