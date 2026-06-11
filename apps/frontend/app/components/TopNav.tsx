@@ -63,6 +63,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/bctc", label: "Tài Chính" },
   { to: "/dashboard/alerts", label: "Cảnh Báo" },
   { to: "/dashboard/foreign-flow", label: "Khối ngoại" },
+  { to: "/dashboard/agm-plan-actual", label: "Kế hoạch vs TH" },
 ];
 
 /**

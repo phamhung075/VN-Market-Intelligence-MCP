@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-11 | **Sprint:** P0-6 TASK-17 alerts
+**Last updated:** 2026-06-11 | **Sprint:** TASK17-AGM page
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-11 — TASK17-AGM page DONE. api.agm-plan-actual.tsx transparent proxy (year+limit forwarded, arrayBuffer pipe, MCP_SERVER_BASE_URL SSOT). dashboard.agm-plan-actual.tsx SSR loader fetchAgmPlanActualData(origin, params?) exported named helper (non-fatal: 502/503/network-throw/bad-shape return degraded). Year selector via SSR GET param (Form+hidden input). SummaryBanner 4 chips: Vượt KH/Đạt/Chưa đạt/Đang thực hiện. Per-stock cards with 3 metrics (Doanh thu/LN trước thuế/LN sau thuế), progress bar, status badge. CRITICAL IN_PROGRESS guard: completion_pct null → "Đang thực hiện" not "0%", actual_ty null → "—" not "0 tỷ", grey bar not red BEHIND bar. ytd_ty context shown if non-null. TopNav: ANALYST_NAV + "Kế hoạch vs TH" (/dashboard/agm-plan-actual). Exported helpers: formatTy, formatPct, formatCompletion, statusLabel, statusColorClass. 44/44 tests GREEN. tsc 0 errors.
+
+Zone health: Tier 4 routes +1 (AGM plan-actual page), tsc clean, 44 new tests GREEN, IN_PROGRESS regression guard shipped | HEALTHY
 
 2026-06-11 — TASK-17 alerts RENDER FIX — signals[] string[]→Signal objects. Commit 4469dcd2. dashboard.alerts.tsx: Signal interface {type,severity,message,confidence}; signalTypeLabel() VN map (price_surge→"Giá tăng mạnh", volume_spike→"Khối lượng đột biến", news_mention→"Tin tức", unknown fallback=raw); SignalChip colours by signal.severity (high/critical=red, medium=yellow, low=grey), shows type label + confidence% + message as title tooltip; guards empty/missing fields (type:""→null render, confidence missing→omit%). AlertItem.signals typed Signal[]. task17-alerts-loader.test.ts fixtures re-seeded with object-shaped signals; Suite 8 (2-signal shape, 1-signal news_mention, empty-signals no-crash, multi-item 2-chip assertion); Suite 9 (signalTypeLabel VN mapping). 30/30 tests GREEN (+9 new). tsc exit 0. NOT pushed.
 
