@@ -100,6 +100,8 @@ export interface CorporateEventsDto {
   windowDays: number;
   since: string;
   asOf: string;
+  stale?: boolean;
+  staleByDays?: number;
   typeFilter: string | null;
   events: CorporateEvent[];
   byType: ByTypeEntry[];
@@ -116,6 +118,8 @@ export interface LoaderData {
   windowDays: number;
   since: string;
   asOf: string;
+  stale: boolean;
+  staleByDays: number;
   typeFilter: string | null;
   events: CorporateEvent[];
   byType: ByTypeEntry[];
@@ -218,6 +222,8 @@ export async function fetchCorporateEventsData(
   let windowDays = days ?? 90;
   let since = "";
   let asOf = "";
+  let stale = false;
+  let staleByDays = 0;
   let typeFilter: string | null = null;
   let events: CorporateEvent[] = [];
   let byType: ByTypeEntry[] = [];
@@ -248,6 +254,8 @@ export async function fetchCorporateEventsData(
           typeof dto.windowDays === "number" ? dto.windowDays : windowDays;
         since = typeof dto.since === "string" ? dto.since : "";
         asOf = typeof dto.asOf === "string" ? dto.asOf : "";
+        stale = typeof dto.stale === "boolean" ? dto.stale : false;
+        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
         typeFilter =
           typeof dto.typeFilter === "string" ? dto.typeFilter : null;
         events = Array.isArray(dto.events) ? dto.events : [];
@@ -291,6 +299,8 @@ export async function fetchCorporateEventsData(
     windowDays,
     since,
     asOf,
+    stale,
+    staleByDays,
     typeFilter,
     events,
     byType,
@@ -418,6 +428,8 @@ export default function CorporateEventsPage() {
     windowDays,
     since,
     asOf,
+    stale,
+    staleByDays,
     events,
     byType,
     summary,
@@ -480,6 +492,16 @@ export default function CorporateEventsPage() {
           className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300"
         >
           Không thể tải dữ liệu sự kiện doanh nghiệp — {error}
+        </div>
+      )}
+
+      {/* Stale data warning banner */}
+      {!error && stale && (
+        <div
+          role="status"
+          className="rounded border border-amber-700 bg-amber-950 px-4 py-3 text-sm text-amber-300"
+        >
+          Dữ liệu đã cũ {staleByDays} ngày — có thể không cập nhật
         </div>
       )}
 

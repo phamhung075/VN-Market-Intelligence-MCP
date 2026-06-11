@@ -70,6 +70,8 @@ export interface ReputationSummary {
 export interface ReputationDto {
   generatedAt: string;
   asOf: string | null;
+  stale?: boolean;
+  staleByDays?: number;
   summary: ReputationSummary;
   leaderboard: ReputationEntry[];
   history: Record<string, HistoryPoint[]>;
@@ -82,6 +84,8 @@ export interface ReputationDto {
 export interface LoaderData {
   generatedAt: string;
   asOf: string | null;
+  stale: boolean;
+  staleByDays: number;
   summary: ReputationSummary;
   leaderboard: ReputationEntry[];
   history: Record<string, HistoryPoint[]>;
@@ -149,6 +153,8 @@ export async function fetchReputationData(origin: string): Promise<LoaderData> {
   const emptyByRisk: ByRisk = { safe: 0, watch: 0, warning: 0, danger: 0 };
   let generatedAt = new Date().toISOString();
   let asOf: string | null = null;
+  let stale = false;
+  let staleByDays = 0;
   let summary: ReputationSummary = {
     total: 0,
     avgScore: null,
@@ -179,6 +185,8 @@ export async function fetchReputationData(origin: string): Promise<LoaderData> {
         generatedAt =
           typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
         asOf = typeof dto.asOf === "string" ? dto.asOf : null;
+        stale = typeof dto.stale === "boolean" ? dto.stale : false;
+        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
         summary = {
           total:
             typeof dto.summary?.total === "number" ? dto.summary.total : 0,
@@ -224,6 +232,8 @@ export async function fetchReputationData(origin: string): Promise<LoaderData> {
   return {
     generatedAt,
     asOf,
+    stale,
+    staleByDays,
     summary,
     leaderboard,
     history,
@@ -302,7 +312,7 @@ function LeaderboardRow({
 // ---------------------------------------------------------------------------
 
 export default function ReputationPage() {
-  const { asOf, summary, leaderboard, error } =
+  const { asOf, stale, staleByDays, summary, leaderboard, error } =
     useLoaderData<typeof loader>();
 
   const isEmpty = !error && summary.total === 0;
@@ -335,6 +345,16 @@ export default function ReputationPage() {
           className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300"
         >
           Không thể tải dữ liệu uy tín doanh nghiệp — {error}
+        </div>
+      )}
+
+      {/* Stale data warning banner */}
+      {!error && stale && (
+        <div
+          role="status"
+          className="rounded border border-amber-700 bg-amber-950 px-4 py-3 text-sm text-amber-300"
+        >
+          Dữ liệu đã cũ {staleByDays} ngày — có thể không cập nhật
         </div>
       )}
 

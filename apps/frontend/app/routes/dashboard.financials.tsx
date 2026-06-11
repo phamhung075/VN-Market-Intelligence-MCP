@@ -96,6 +96,8 @@ export interface FinancialsRankings {
 export interface FinancialsDto {
   generatedAt: string;
   asOf: string;
+  stale?: boolean;
+  staleByDays?: number;
   count: number;
   rows: FinancialsRow[];
   summary: FinancialsSummary;
@@ -109,6 +111,8 @@ export interface FinancialsDto {
 export interface LoaderData {
   generatedAt: string;
   asOf: string;
+  stale: boolean;
+  staleByDays: number;
   count: number;
   rows: FinancialsRow[];
   summary: FinancialsSummary | null;
@@ -165,6 +169,8 @@ export function formatDate(iso: string): string {
 export async function fetchFinancialsData(origin: string): Promise<LoaderData> {
   let generatedAt = new Date().toISOString();
   let asOf = "";
+  let stale = false;
+  let staleByDays = 0;
   let count = 0;
   let rows: FinancialsRow[] = [];
   let summary: FinancialsSummary | null = null;
@@ -193,6 +199,8 @@ export async function fetchFinancialsData(origin: string): Promise<LoaderData> {
         generatedAt =
           typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
         asOf = typeof dto.asOf === "string" ? dto.asOf : "";
+        stale = typeof dto.stale === "boolean" ? dto.stale : false;
+        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
         count = typeof dto.count === "number" ? dto.count : 0;
         rows = Array.isArray(dto.rows) ? dto.rows : [];
         summary =
@@ -221,6 +229,8 @@ export async function fetchFinancialsData(origin: string): Promise<LoaderData> {
   return {
     generatedAt,
     asOf,
+    stale,
+    staleByDays,
     count,
     rows,
     summary,
@@ -379,7 +389,7 @@ function HighestRevenueYoyRow({
 // ---------------------------------------------------------------------------
 
 export default function FinancialsPage() {
-  const { asOf, count, rows, summary, rankings, error } =
+  const { asOf, stale, staleByDays, count, rows, summary, rankings, error } =
     useLoaderData<typeof loader>();
 
   const isEmpty = !error && rows.length === 0;
@@ -412,6 +422,16 @@ export default function FinancialsPage() {
           className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300"
         >
           Không thể tải dữ liệu định giá — {error}
+        </div>
+      )}
+
+      {/* Stale data warning banner */}
+      {!error && stale && (
+        <div
+          role="status"
+          className="rounded border border-amber-700 bg-amber-950 px-4 py-3 text-sm text-amber-300"
+        >
+          Dữ liệu đã cũ {staleByDays} ngày — có thể không cập nhật
         </div>
       )}
 

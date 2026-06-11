@@ -68,6 +68,8 @@ export interface ConvictionSummary {
 export interface ConvictionHistoryDto {
   generatedAt: string;
   tradingDate: string;
+  stale?: boolean;
+  staleByDays?: number;
   snapshot: ConvictionRow[];
   series: Record<string, ConvictionRow[]>;
   summary: ConvictionSummary;
@@ -81,6 +83,8 @@ export interface ConvictionHistoryDto {
 export interface ConvictionLoaderData {
   generatedAt: string;
   tradingDate: string;
+  stale: boolean;
+  staleByDays: number;
   snapshot: ConvictionRow[];
   series: Record<string, ConvictionRow[]>;
   summary: ConvictionSummary;
@@ -204,6 +208,8 @@ export async function fetchConvictionData(
 ): Promise<ConvictionLoaderData> {
   let generatedAt = new Date().toISOString();
   let tradingDate = "";
+  let stale = false;
+  let staleByDays = 0;
   let snapshot: ConvictionRow[] = [];
   let series: Record<string, ConvictionRow[]> = {};
   let summary: ConvictionSummary = { ...EMPTY_SUMMARY };
@@ -235,6 +241,8 @@ export async function fetchConvictionData(
           typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
         tradingDate =
           typeof dto.tradingDate === "string" ? dto.tradingDate : "";
+        stale = typeof dto.stale === "boolean" ? dto.stale : false;
+        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
         snapshot = Array.isArray(dto.snapshot) ? dto.snapshot : [];
         series =
           dto.series !== null &&
@@ -280,6 +288,8 @@ export async function fetchConvictionData(
   return {
     generatedAt,
     tradingDate,
+    stale,
+    staleByDays,
     snapshot,
     series,
     summary,
@@ -638,6 +648,8 @@ export default function ConvictionHistoryPage() {
   const {
     generatedAt,
     tradingDate,
+    stale,
+    staleByDays,
     snapshot,
     series,
     summary,
@@ -647,7 +659,7 @@ export default function ConvictionHistoryPage() {
 
   const isEmpty = !error && (count === 0 || !tradingDate);
 
-  const { fresh, stale } = !isEmpty
+  const { fresh, stale: staleRows } = !isEmpty
     ? partitionSnapshot(snapshot, tradingDate)
     : { fresh: [], stale: [] };
 
@@ -679,6 +691,16 @@ export default function ConvictionHistoryPage() {
           className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300"
         >
           Không thể tải dữ liệu niềm tin AI — {error}
+        </div>
+      )}
+
+      {/* Stale data warning banner */}
+      {!error && stale && (
+        <div
+          role="status"
+          className="rounded border border-amber-700 bg-amber-950 px-4 py-3 text-sm text-amber-300"
+        >
+          Dữ liệu đã cũ {staleByDays} ngày — có thể không cập nhật
         </div>
       )}
 
@@ -731,8 +753,8 @@ export default function ConvictionHistoryPage() {
       )}
 
       {/* SECONDARY collapsible — stale rows (default collapsed) */}
-      {!error && stale.length > 0 && (
-        <StaleSection rows={stale} series={series} tradingDate={tradingDate} />
+      {!error && staleRows.length > 0 && (
+        <StaleSection rows={staleRows} series={series} tradingDate={tradingDate} />
       )}
     </div>
   );
