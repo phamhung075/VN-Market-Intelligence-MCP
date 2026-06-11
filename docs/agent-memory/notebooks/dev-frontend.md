@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-11 | **Sprint:** TASK-14-TOOLTIP-FIX
+**Last updated:** 2026-06-11 | **Sprint:** P0-6 TASK-17
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-11 — TASK-17 watchlist Kinh Dịch tile enrichment DONE. Commit d1f831e0. Proxy route api.kinh-dich.reading.$code.tsx (API_GATEWAY_URL SSOT). fetchKinhDichReadingNonFatal non-fatal (null on 503/network). WatchlistTileData.kd optional. Loader enriches all tiles in parallel when overview visible. KdTilePill: QueName+signal pill+confidence bar; renders nothing on degrade. 30/30 test files 388/388 GREEN (+7). tsc 0 errors.
+
+Zone health: test coverage stable, Tier 3 api layer complete, Tier 4 watchlist + analysis routes complete, KD enrichment non-fatal per spec | HEALTHY
 
 2026-06-11 — GO-FLEET-DEPLOY correctness fix DONE. Removed "not deployed on this host by design" scaffolding from dashboard (banner, not_deployed_count/live_count, CapabilityBadge fallback, not_deployed_* display states, not_deployed as ServiceStatus). All services now genuinely deployed; unreachable service = DOWN (RED). VPS discrimination (503 no-such-host) remapped to down. 61/61 tests GREEN (3 test files updated). tsc 0 errors.
 
