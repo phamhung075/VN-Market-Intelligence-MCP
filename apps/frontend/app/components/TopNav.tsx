@@ -54,6 +54,7 @@ export type NavItem = {
  *   - /dashboard/sector-cascade   → dashboard.sector-cascade.tsx    EXISTS → enabled (label: "Dây chuyền ngành") — TASK-17 PAGE 10
  *   - /dashboard/kinh-dich-signals → dashboard.kinh-dich-signals.tsx EXISTS → enabled (label: "Tín hiệu Kinh Dịch") — TASK-17 PAGE 11
  *   - /dashboard/global-markets   → dashboard.global-markets.tsx   EXISTS → enabled (label: "Bối cảnh toàn cầu") — TASK-17 PAGE 12
+ *   - /dashboard/corporate-events → dashboard.corporate-events.tsx EXISTS → enabled (label: "Sự kiện doanh nghiệp") — TASK-17 PAGE 13
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -77,6 +78,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/sector-cascade", label: "Dây chuyền ngành" },
   { to: "/dashboard/kinh-dich-signals", label: "Tín hiệu Kinh Dịch" },
   { to: "/dashboard/global-markets", label: "Bối cảnh toàn cầu" },
+  { to: "/dashboard/corporate-events", label: "Sự kiện doanh nghiệp" },
 ];
 
 /**
@@ -98,7 +100,7 @@ export const SYSTEM_NAV: NavItem[] = [
 
 /**
  * NAV_ITEMS — backward-compat union of all nav entries.
- * SSOT: ANALYST_NAV (18) + SYSTEM_NAV (7) = 25 total.
+ * SSOT: ANALYST_NAV (19) + SYSTEM_NAV (7) = 26 total.
  * Any consumer that iterates all routes should use this.
  * Active NAV = ANALYST_NAV (top level) + SYSTEM_NAV (System group).
  *
