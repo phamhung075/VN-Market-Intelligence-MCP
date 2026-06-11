@@ -31,7 +31,7 @@ import type { Database } from "bun:sqlite";
 import { getDb } from "../../infrastructure/db/schema.js";
 import {
   saveReputation,
-  getReputation,
+  getReputationPrior,
 } from "../../infrastructure/db/reputationStore.js";
 import { classifyRiskLevel } from "../../domain/services/reputationScorer.js";
 import type { ReputationScore } from "../../domain/services/reputationScorer.js";
@@ -186,15 +186,14 @@ export async function runReputationComputeJob(
     ).all() as { code: string }[];
 
     const today = new Date().toISOString().slice(0, 10);
-    // Prior week date for trend comparison
-    const priorDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
 
     for (const { code } of watchlistRows) {
       try {
-        // Fetch prior week score for trend computation (may be null)
-        const priorRecord = getReputation(db, code, priorDate);
+        // Fetch most recent prior score for trend computation (may be null).
+        // Uses getReputationPrior (date < today) instead of an exact -7d date
+        // match, which always returned null due to irregular probe intervals
+        // (rows land at 3d/4d/7d gaps, never exactly 7 calendar days prior).
+        const priorRecord = getReputationPrior(db, code, today);
         const priorScore = priorRecord?.score;
 
         const rep = computeFn(db, code, priorScore);

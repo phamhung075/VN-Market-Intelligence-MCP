@@ -26,7 +26,7 @@ import {
   runReputationComputeJob,
   type ReputationComputeOptions,
 } from "../scheduler/news/reputationComputeJob.js";
-import { getReputation } from "../infrastructure/db/reputationStore.js";
+import { getReputation, getReputationPrior, saveReputation } from "../infrastructure/db/reputationStore.js";
 
 // ── DDL helper ────────────────────────────────────────────────────────────────
 
@@ -353,6 +353,129 @@ describe("Task 1922d — runReputationComputeJob: result shape", () => {
     expect(typeof result.tickersFailed).toBe("number");
     expect(result.tickersProcessed + result.tickersFailed).toBe(3);
 
+    db.close();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REAUDIT-001 — getReputationPrior unit tests (store layer)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("REAUDIT-001 — getReputationPrior: empty DB returns null", () => {
+  it("returns null when reputation_scores table is empty", () => {
+    const db = buildDb();
+    const result = getReputationPrior(db, "VCB", "2026-06-11");
+    expect(result).toBeNull();
+    db.close();
+  });
+});
+
+describe("REAUDIT-001 — getReputationPrior: single row before threshold", () => {
+  it("returns that row when one row exists strictly before beforeDate", () => {
+    const db = buildDb();
+    db.prepare(`
+      INSERT INTO reputation_scores (code, date, score, trend, risk_level, computed_at)
+      VALUES ('VCB', '2026-06-09', 62.5, 'stable', 'safe', datetime('now'))
+    `).run();
+    const result = getReputationPrior(db, "VCB", "2026-06-11");
+    expect(result).not.toBeNull();
+    expect(result!.score).toBe(62.5);
+    expect(result!.stockCode).toBe("VCB");
+    db.close();
+  });
+
+  it("returns null when the only row is on beforeDate (not strictly before)", () => {
+    const db = buildDb();
+    db.prepare(`
+      INSERT INTO reputation_scores (code, date, score, trend, risk_level, computed_at)
+      VALUES ('VCB', '2026-06-11', 58.0, 'stable', 'watch', datetime('now'))
+    `).run();
+    const result = getReputationPrior(db, "VCB", "2026-06-11");
+    expect(result).toBeNull();
+    db.close();
+  });
+});
+
+describe("REAUDIT-001 — getReputationPrior: multiple rows with gaps returns most recent", () => {
+  it("returns the most recent row before beforeDate when multiple prior rows exist", () => {
+    const db = buildDb();
+    const rows: [string, number][] = [
+      ["2026-05-18", 62.5],
+      ["2026-05-22", 45.0],
+      ["2026-05-31", 64.0],
+      ["2026-06-03", 58.0],
+      ["2026-06-06", 66.0],
+    ];
+    for (const [date, score] of rows) {
+      db.prepare(`
+        INSERT INTO reputation_scores (code, date, score, trend, risk_level, computed_at)
+        VALUES ('VCB', ?, ?, 'stable', 'safe', datetime('now'))
+      `).run(date, score);
+    }
+    // Query prior to 2026-06-09 — should return 2026-06-06 row (most recent < 2026-06-09)
+    const result = getReputationPrior(db, "VCB", "2026-06-09");
+    expect(result).not.toBeNull();
+    expect(result!.score).toBe(66.0);
+    db.close();
+  });
+
+  it("is ticker-scoped: returns null for a different ticker even when rows exist", () => {
+    const db = buildDb();
+    db.prepare(`
+      INSERT INTO reputation_scores (code, date, score, trend, risk_level, computed_at)
+      VALUES ('HPG', '2026-06-06', 55.0, 'stable', 'watch', datetime('now'))
+    `).run();
+    const result = getReputationPrior(db, "VCB", "2026-06-09");
+    expect(result).toBeNull();
+    db.close();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REAUDIT-001 — trend detection via getReputationPrior (integration path)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("REAUDIT-001 — runReputationComputeJob: trend computed from prior DB row", () => {
+  it("writes trend='improving' when prior score is 10 lower (delta > 1)", async () => {
+    const db = buildDb();
+    seedWatchlist(db, ["VCB"]);
+    // No mentions/signals → current score = base=50; prior=40 → delta=10 → improving
+    db.prepare(`
+      INSERT INTO reputation_scores (code, date, score, trend, risk_level, computed_at)
+      VALUES ('VCB', '2026-06-06', 40.0, 'stable', 'watch', datetime('now'))
+    `).run();
+
+    const opts: ReputationComputeOptions = {
+      _db: db,
+      _sendWorkFn: async () => undefined,
+    };
+    await runReputationComputeJob(opts);
+
+    const written = getReputation(db, "VCB", new Date().toISOString().slice(0, 10));
+    expect(written).not.toBeNull();
+    expect(written!.trend).toBe("improving");
+    db.close();
+  });
+
+  it("writes trend='deteriorating' when prior score is 10 higher (delta < -1)", async () => {
+    const db = buildDb();
+    seedWatchlist(db, ["VCB"]);
+    // 100% negative → current score = 20; prior = 50 → delta = -30 → deteriorating
+    seedMentions(db, "VCB", 5, 5);
+    db.prepare(`
+      INSERT INTO reputation_scores (code, date, score, trend, risk_level, computed_at)
+      VALUES ('VCB', '2026-06-06', 50.0, 'stable', 'watch', datetime('now'))
+    `).run();
+
+    const opts: ReputationComputeOptions = {
+      _db: db,
+      _sendWorkFn: async () => undefined,
+    };
+    await runReputationComputeJob(opts);
+
+    const written = getReputation(db, "VCB", new Date().toISOString().slice(0, 10));
+    expect(written).not.toBeNull();
+    expect(written!.trend).toBe("deteriorating");
     db.close();
   });
 });

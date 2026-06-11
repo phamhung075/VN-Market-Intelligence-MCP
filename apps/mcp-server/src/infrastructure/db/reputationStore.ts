@@ -108,6 +108,48 @@ export function getReputation(
   };
 }
 
+/**
+ * Retrieve the most recent reputation score for a stock strictly before a
+ * given date. Used by the reputation compute job to fetch the prior-period
+ * score for trend comparison, regardless of irregular row intervals.
+ *
+ * Returns null if no row with date < beforeDate exists for this code.
+ *
+ * @param db         Active bun:sqlite Database instance
+ * @param code       Stock ticker
+ * @param beforeDate Date string (YYYY-MM-DD); returns the latest row < this date
+ * @returns          ReputationScore or null
+ */
+export function getReputationPrior(
+  db: Database,
+  code: string,
+  beforeDate: string,
+): ReputationScore | null {
+  const row = db.prepare(`
+    SELECT code, score, trend, risk_level, computed_at
+    FROM reputation_scores
+    WHERE code = ? AND date < ?
+    ORDER BY date DESC
+    LIMIT 1
+  `).get(code, beforeDate) as {
+    code: string;
+    score: number;
+    trend: string;
+    risk_level: string;
+    computed_at: string;
+  } | null;
+
+  if (!row) return null;
+
+  return {
+    stockCode: row.code,
+    score: row.score,
+    riskLevel: row.risk_level as RiskLevel,
+    trend: row.trend as "improving" | "stable" | "deteriorating",
+    computedAt: row.computed_at,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // TASK17-PAGE18 — Leaderboard queries
 // ─────────────────────────────────────────────────────────────────────────────
