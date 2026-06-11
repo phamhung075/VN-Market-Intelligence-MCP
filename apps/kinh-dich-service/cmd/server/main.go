@@ -25,10 +25,11 @@ func main() {
 		port = "5005"
 	}
 
-	// Infrastructure layer - repositories and adapters
-	repo := infrastructure.NewSQLiteReadingRepository()
+	// Infrastructure layer - adapters
 	markovAdapter := infrastructure.NewSQLiteMarkovAdapter()
-	priceScoreAdapter := infrastructure.NewSQLitePriceScoreAdapter(repo)
+	// Use HTTP price history source (reads PRICE_HISTORY_URL env, default: http://api-gateway:4000)
+	priceSource := infrastructure.NewHTTPPriceHistorySource()
+	priceScoreAdapter := infrastructure.NewPriceScoreAdapter(priceSource)
 
 	// Domain layer - services
 	readingService := domain.NewReadingService(markovAdapter, priceScoreAdapter)

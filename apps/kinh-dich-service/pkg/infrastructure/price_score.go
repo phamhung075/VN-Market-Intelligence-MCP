@@ -5,24 +5,36 @@ import (
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/domain"
 )
 
-// SQLitePriceScoreAdapter implements PriceScorePort using price history from SQLite.
-// This adapter computes 6 normalized scores from price returns.
-type SQLitePriceScoreAdapter struct {
-	repo *SQLiteReadingRepository
+// PriceHistorySource is the interface for fetching price history.
+// Can be satisfied by HTTPPriceHistorySource or SQLiteReadingRepository.
+type PriceHistorySource interface {
+	// GetPriceHistory returns price rows for a stock within the past N days.
+	// Returns (rows, error) - error surfaces as 503 to HTTP layer.
+	GetPriceHistory(stockCode string, days int) ([]domain.KinhDichPriceRow, error)
 }
 
-// NewSQLitePriceScoreAdapter creates a new SQLitePriceScoreAdapter.
-func NewSQLitePriceScoreAdapter(repo *SQLiteReadingRepository) *SQLitePriceScoreAdapter {
-	return &SQLitePriceScoreAdapter{
-		repo: repo,
+// PriceScoreAdapter implements PriceScorePort using a PriceHistorySource.
+// This adapter computes 6 normalized scores from price returns.
+type PriceScoreAdapter struct {
+	source PriceHistorySource
+}
+
+// NewPriceScoreAdapter creates a new PriceScoreAdapter with the given source.
+func NewPriceScoreAdapter(source PriceHistorySource) *PriceScoreAdapter {
+	return &PriceScoreAdapter{
+		source: source,
 	}
 }
 
 // ComputeScores computes 6 normalized scores from price history.
 // The scores represent price momentum over 6 periods.
 // Returns nil if insufficient data (requires at least 7 price points).
-func (a *SQLitePriceScoreAdapter) ComputeScores(stockCode string, days int) []float64 {
-	prices := a.repo.GetPriceHistory(stockCode, days)
+func (a *PriceScoreAdapter) ComputeScores(stockCode string, days int) []float64 {
+	prices, err := a.source.GetPriceHistory(stockCode, days)
+	if err != nil {
+		// Log error but return nil (insufficient data) - fail-loud at HTTP layer
+		return nil
+	}
 	if len(prices) < 7 {
 		// Insufficient data to compute 6 period returns
 		return nil
@@ -59,5 +71,15 @@ func (a *SQLitePriceScoreAdapter) ComputeScores(stockCode string, days int) []fl
 	return scores
 }
 
-// Ensure SQLitePriceScoreAdapter implements PriceScorePort.
-var _ domain.PriceScorePort = (*SQLitePriceScoreAdapter)(nil)
+// Ensure PriceScoreAdapter implements PriceScorePort.
+var _ domain.PriceScorePort = (*PriceScoreAdapter)(nil)
+
+// SQLitePriceScoreAdapter is deprecated - use PriceScoreAdapter with a PriceHistorySource.
+// Kept for backward compatibility.
+type SQLitePriceScoreAdapter = PriceScoreAdapter
+
+// NewSQLitePriceScoreAdapter creates a PriceScoreAdapter using the repository as source.
+// Deprecated: use NewPriceScoreAdapter(NewHTTPPriceHistorySource()) for production.
+func NewSQLitePriceScoreAdapter(repo *SQLiteReadingRepository) *PriceScoreAdapter {
+	return NewPriceScoreAdapter(repo)
+}

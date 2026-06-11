@@ -54,7 +54,8 @@ func (r *SQLiteReadingRepository) GetTopTransitions(fromHexagram int, stockCode 
 
 // GetPriceHistory returns price rows for a stock within the past N days.
 // Stub implementation - real DB access in Phase 2.
-func (r *SQLiteReadingRepository) GetPriceHistory(stockCode string, days int) []domain.KinhDichPriceRow {
-	// Stub: return empty slice
-	return nil
+// Implements PriceHistorySource interface (returns nil, nil for stub).
+func (r *SQLiteReadingRepository) GetPriceHistory(stockCode string, days int) ([]domain.KinhDichPriceRow, error) {
+	// Stub: return empty slice (not an error, just no local data)
+	return nil, nil
 }
