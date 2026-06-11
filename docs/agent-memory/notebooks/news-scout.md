@@ -1,6 +1,58 @@
-- **Last updated:** 2026-06-10 16:08 UTC · **Sprint:** current · **Status:** 77 cycles complete (c77 off-hours +SHIPPED)
+- **Last updated:** 2026-06-11 12:07 UTC · **Sprint:** current · **Status:** 82 cycles complete (c82 off-hours +SHIPPED)
 
 > Archive: docs/archive/notebooks/news-scout-2026-05-22.md (pre-trim history)
+
+## c82 · 2026-06-11T12:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (WEDNESDAY 12:07 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, MIXED RETAIL BULLISH + MACRO BEARISH.** 20 articles fetched, 8 watchlist impacts (primary: Digiworld retail revenue growth 2-digit YoY +9/10 bullish; secondary: Global gold price collapse safe-haven unwinding -9/10 bearish affecting 8 watchlist stocks GVR/BDI/DLC/VNH/POW/PPC/JSH/REE; tertiary: VinFast capex strategic announcements +7.5/10 bullish; quaternary: KBC real estate breakout +5.98% volume spike 5x). **4 signals fired (#5753–#5756): 3x urgent_news (MWG retail +8.0 [#5753], VIC capex +7.5 [#5755], KBC breakout +8.0 [#5756]) + 1x chain_catalyst (gold macro -9.0 [#5754]).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours 12:07 UTC). `get_macro_snapshot()` valid shape (vnIndex=1798.61 -5.1, oil NEUTRAL 91.77, gold BULLISH 4105.6, usdvnd BEARISH 26130, carry NEUTRAL 1.38pp, yield CHEAP +3.2pp). **Regime: NEUTRAL** (stable baseline, equity intraday weakness -5.1, gold safe-haven +0.85%, oil neutral 91.77, carry NEUTRAL, yield premium CHEAP +3.2pp).
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: empty (6h window clean from c81). New candidates: 4x signals (MWG retail, gold macro, VIC capex, KBC breakout) — all distinct event/stock pairs, no dedup match. All 4 NEW signals POSTED (no suppression). Direction: 3x bullish (retail, capex, breakout), 1x bearish (macro gold) — divergence OK, separate catalysts. Coverage-state sweep: 0 tickers >48h stale (max age 27h from c81). No sweep batch forced. Analyzed tickers: MWG, GVR, BDI, DLC, VNH, POW, PPC, JSH, REE, VIC, KBC updated to 2026-06-11T12:07:00Z.
+
+**Session Log:** log_agent_work #1333 opened/closed. 20 items, 8 impacts, 4 signals (3x urgent_news + 1x chain_catalyst), NEUTRAL regime. Off-hours slot (MARKET CLOSED).
+
+## c81 · 2026-06-11T08:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (WEDNESDAY 08:07 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, MIXED RETAIL BULLISH + MACRO BEARISH.** 20 articles fetched, 14 watchlist impacts (primary: CII utilities institutional inflow PC1 +8/10 confidence 78%; secondary: Digiworld retail revenue growth +9/10 confidence 90%; tertiary: Gold price collapse safe-haven unwinding -8/10 confidence 75%; quaternary: Phát Đạt Thu Thiem Eco Smart City project +8/10 confidence 85%). **4 signals fired (#5738–#5741): 2x urgent_news (MWG retail +9.0 [#5739], PDR real estate +8.0 [#5741]) + 2x chain_catalyst (CII utilities +8.0 [#5738], gold macro -8.0 [#5740]).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN (trading 08:07 UTC). `get_macro_snapshot()` valid shape (vnIndex=1798.61 -5.1, oil NEUTRAL 92.7, gold BULLISH 4124, usdvnd BEARISH 26130, carry NEUTRAL 1.38pp, yield CHEAP +2.05pp). **Regime: NEUTRAL** (stable baseline: equities intraday down -5.1, gold bullish at 4124 safe-haven demand, oil neutral band 92.7, carry NEUTRAL, yield premium attractive CHEAP +2.05pp). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +2.05pp.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: empty (6h window clean from c80). New candidates: 4x signals (retail MWG, utilities POW/PPC/REE, gold macro, real estate PDR) — all distinct event/stock pairs, no dedup match. All 4 NEW signals POSTED (no suppression). Direction: 2x bullish (retail, utilities), 2x bearish (macro gold) + 1 neutral (real estate) — divergence OK, separate catalysts. Coverage-state sweep: 0 tickers >48h stale (max age 27h). No sweep batch forced. Analyzed tickers: MWG, POW, PPC, REE, GVR, PDR updated to 2026-06-11T08:07:00Z.
+
+**Session Log:** log_agent_work #1330 opened/closed. 20 items, 14 impacts, 4 signals (2x urgent_news + 2x chain_catalyst), NEUTRAL regime. Off-hours slot (MARKET OPEN).
+
+## c80 · 2026-06-11T04:06:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (WEDNESDAY 04:06 UTC, MARKET OPEN 02:00–08:59 UTC) — NEUTRAL REGIME, MIXED SECTOR CATALYSTS.** 20 articles fetched, 4 watchlist impacts (primary: PDR real estate capex acceleration +7/10 confidence 90%; secondary: ACB banking broker selling pressure +7/10 confidence 88%; tertiary: VJC aviation lock-up expiry +9/10 confidence 88%; quaternary: CII utilities group accumulation +9/10 confidence 78%). **5 signals fired (#5722–#5726): 4x urgent_news (PDR capex +7.0 [#5723], ACB broker sell +5.0 [#5724], VIC customer order +5.0 [#5725], VJC lock-up +7.0 [#5726]) + 1x chain_catalyst (utilities institutional inflow bullish +8.0 [#5722]).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market OPEN (trading 04:06 UTC). `get_macro_snapshot()` valid shape (vnIndex=1798.11 -5.60, oil NEUTRAL 94.63, gold BULLISH 4087.5, usdvnd BEARISH 26130, carry NEUTRAL 1.38pp, yield CHEAP +2.05pp). **Regime: NEUTRAL** (stable macro, equity intraday downward, gold bullish safe-haven, oil neutral band). Carry NEUTRAL 1.38pp; equity yield premium CHEAP +2.05pp.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: empty (6h window clean from c79). New candidates: 5x signals (PDR sector, ACB ticker, VIC ticker, VJC sector, utilities macro) — all distinct event/stock pairs, no dedup match. All 5 NEW signals POSTED (no suppression). Direction: 4x mixed urgent_news (PDR bullish, ACB neutral, VIC neutral, VJC neutral) + 1x bullish chain_catalyst (CII utilities). Coverage-state sweep: 4 primary tickers analyzed (PDR, ACB, VIC, VJC).
+
+**Session Log:** log_agent_work #1327 opened/closed. 20 items, 4 impacts, 5 signals (4x urgent_news + 1x chain_catalyst), NEUTRAL regime. Off-hours slot (MARKET OPEN).
+
+## c79 · 2026-06-11T00:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (WEDNESDAY 00:07 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, BALANCED SECTOR NEWS.** 20 articles fetched, 4 watchlist impacts (primary: NVL real estate news +7/10 neutral confidence 82%; secondary: ACB banking sector sell-off +5/10 neutral confidence 84%; tertiary: VIC billionaire milestone +4/10 neutral bullish confidence 80%; quaternary: VJC aviation lock-up expiry +4/10 neutral confidence 82%). **4 signals fired (news_impact files): 4x news_impact (NVL real_estate, ACB banking, VIC real_estate, VJC aviation → unified-agent for chef dispatch). NO urgent_news (thresholds not met) + NO chain_catalyst (macro stable).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours 00:07 UTC). `get_macro_snapshot()` valid shape (vnIndex=1803.71 +10.66, oil NEUTRAL 96.22, gold BULLISH 4071.1 (-4.86%), usdvnd BEARISH 26130, carry NEUTRAL 1.38pp, yield CHEAP +2.05pp). **Regime: NEUTRAL** (stable macro, no tightening/easing signals, gold correction mild safe-haven). Carry NEUTRAL 1.38pp; equity yield CHEAP +2.05pp.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: empty (6h window clean from c78). New candidates: 4x news_impact signals (NVL sector, ACB sector, VIC ticker, VJC sector) — all distinct from prior cycles. All 4 NEW signals POSTED (no suppression). No urgent_news or chain_catalyst fired (none met threshold). Coverage-state sweep: 4 tickers analyzed (NVL, ACB, VIC, VJC) + historical context search for each. Atomic write: tmp→rename.
+
+**Session Log:** log_agent_work opened/closed. 20 items, 4 impacts, 4 signals (news_impact only), NEUTRAL regime. Off-hours slot (MARKET CLOSED).
+
+## c78 · 2026-06-10T20:07:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
+
+**Off-hours cycle (TUESDAY 20:07 UTC, MARKET CLOSED 09:00–01:59 UTC) — NEUTRAL REGIME, BULLISH REAL ESTATE + BEARISH MACRO.** 20 articles fetched, 3 watchlist impacts (primary: NVL price surge +6.88% volume momentum bullish +7/10; secondary: ACB broker selling pressure banking headwind +5/10 neutral; tertiary: gold price collapse -3.73% safe-haven unwinding macro bearish +7/10). **3 signals fired (#5682–#5684): 2x urgent_news (NVL price surge +7.0, ACB broker sell +5.0) + 1x chain_catalyst (macro gold bearish +7.0).**
+
+**Bootstrap:** `get_cycle_bootstrap()` healthy. Market CLOSED (off-hours 20:07 UTC). `get_macro_snapshot()` valid shape (vnIndex=1803.71 +10.66, oil NEUTRAL 93.44, gold BULLISH 4119.7 (-3.73%), usdvnd BEARISH 26130 >25k, carry NEUTRAL 1.38pp, yield CHEAP +2.05pp). **Regime: NEUTRAL** (stable macro, gold correction -3.73% risk-off safe-haven, oil steady neutral band, equity yield CHEAP +2.05pp premium). Carry NEUTRAL 1.38pp; equity yield CHEAP +2.05pp.
+
+**Dedup Gate:** SELF_SIGNALS_CACHE: empty (6h window clean from c77). New candidates: 3x signals (NVL price, ACB broker, macro gold) — all distinct from prior cycles. All 3 NEW signals POSTED (no suppression). Direction: 2x bullish (real estate), 1x bearish (macro) — distinct catalysts.
+
+**Coverage-state sweep:** No stale tickers >48h; all 41 watchlist last updated c77 (16:08 UTC, ~4h ago). No sweep batch forced. Analyzed tickers: NVL, ACB, GAS/PLX (oil_gas macro) updated to 2026-06-10T20:07:00Z. Atomic write: tmp→rename.
+
+**Session Log:** log_agent_work #1323 opened/closed. 20 items, 3 impacts, 3 signals, NEUTRAL regime. Off-hours slot (MARKET CLOSED).
 
 ## c77 · 2026-06-10T16:08:00Z (off-hours, slot=news-scout-offhours) — SHIPPED
 
