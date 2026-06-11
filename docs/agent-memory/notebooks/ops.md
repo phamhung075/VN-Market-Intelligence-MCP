@@ -3872,3 +3872,70 @@ Python verification:
 
 **Next:** Router verifies diff(served-vs-live) and closes the page.
 
+
+---
+
+## Session: 2026-06-11 (DEPLOY-PREDICTION-CLAIMS)
+
+**Task:** Targeted rebuild of mcp-server to deploy newly-pushed `GET /api/prediction-claims` endpoint (commit 69aec59c).
+
+**Context:** Commit 69aec59c adds AI prediction accountability ledger endpoint serving the "Dự báo AI & Kết quả" (AI Forecast & Results) data. Includes predictionClaimStore, predictionClaimsHandler interface layer, SQL outcome filtering, and calibration metrics (hitRate, avgBrier).
+
+### Execution Steps
+
+**Step 1: REBUILD mcp-server (TARGETED)**
+- Old image ID: sha256:f75267d30ce5ad6642a9126fedeefb1080f45cf17624583b312b0843f7770591
+- Command: `docker compose build mcp-server`
+- New image ID: sha256:ef5f09fc53ac2764d8f8fde540d6632e87703db34add20cb8ba869b3eeadbdfa
+- Build completed successfully; container restarted with `docker compose up -d --no-deps mcp-server`
+- No other containers affected (--no-deps, no down/up -d/--force-recreate/--remove-orphans)
+
+**Step 2: Verify ALL 11 containers HEALTHY**
+```
+NAME                                              STATUS
+alert-engine                                      Up 13 hours (healthy)
+api-gateway                                       Up 3 hours (healthy)
+frontend                                          Up 13 minutes (healthy)
+kinh-dich-service                                 Up 5 hours (healthy)
+macro-indicators                                  Up 13 hours (healthy)
+mcp-server                                        Up 8 seconds (healthy)          ← JUST RESTARTED
+news-fetch                                        Up 13 hours (healthy)
+pdf-extractor                                     Up 13 hours (healthy)
+rag-service                                       Up 1 hour (healthy)
+stock-price                                       Up 13 hours (healthy)
+technical-analysis                                Up 13 hours (healthy)
+```
+
+**Step 3: VERIFY ENDPOINT — 5 Live Data Tests**
+
+**Test 1: Calibration object**
+```json
+{
+  "total": 7,
+  "resolved": 4,
+  "correct": 3,
+  "wrong": 1,
+  "pending": 3,
+  "hitRate": 0.75,
+  "avgBrier": 0.13787500000000003
+}
+```
+
+**Test 2: Count & array length parity**
+- curl -s http://localhost:3000/api/prediction-claims | jq '.count, (.claims | length)'
+- Result: 7, 7 ✓
+
+**Test 3: Outcome filter (correct)**
+- curl -s "http://localhost:3000/api/prediction-claims?outcome=correct" | jq '.count'
+- Result: 3 ✓
+
+**Test 4: Outcome filter (pending)**
+- curl -s "http://localhost:3000/api/prediction-claims?outcome=pending" | jq '.count'
+- Result: 3 ✓
+
+**Test 5: Pagination (limit=2) with unfiltered calibration**
+- curl -s "http://localhost:3000/api/prediction-claims?limit=2" | jq '.count, .calibration.total'
+- Result: count=2, calibration.total=7 ✓ (correct: calibration spans full DB, not filtered)
+
+**DEPLOYMENT STATUS: SUCCESS ✓**
+- All AC (acceptance criteria) met: live data contract verified, all endpoints responding, all containers healthy, no peer damage.
