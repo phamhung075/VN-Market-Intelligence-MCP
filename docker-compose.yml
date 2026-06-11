@@ -22,6 +22,7 @@ services:
     - ./docs/data/daily-dashboard.json:/app/docs/data/daily-dashboard.json
     - ./docs/data/orch:/app/docs/data/orch
     - ./docs/signals:/app/docs/signals
+    - ./docs/analysis-briefs:/app/docs/analysis-briefs:ro
     - /Users/admin/.ssh/id_rsa:/run/secrets/vps_ssh_key:ro
     - bctc-page-images:/data/bctc-page-images
     environment:
