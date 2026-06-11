@@ -6,6 +6,10 @@
 
 ## Status
 
+2026-06-11 — TASK-17 P1-1b news-sentiment page DONE. Commit 769a8131. api.news-sentiment.tsx proxy (arrayBuffer pipe, 502 on network fail, pass-through 4xx/5xx). dashboard.news.tsx SSR self-fetch non-fatal (empty-state on 5xx/network/shape-mismatch, never crash). SentimentPill green/red/grey. tickers+sectors chips when present. stale banner when stale_served=true. TopNav Tin Tức enabled (comingSoon removed). SSOT test updated. 23 new tests. 31/31 test files 411/411 GREEN. tsc 0 errors.
+
+Zone health: Tier 3 api layer complete, Tier 4 routes +1 (news page), 411/411 Vitest GREEN, tsc clean | HEALTHY
+
 2026-06-11 — TASK-17 watchlist Kinh Dịch tile enrichment DONE. Commit d1f831e0. Proxy route api.kinh-dich.reading.$code.tsx (API_GATEWAY_URL SSOT). fetchKinhDichReadingNonFatal non-fatal (null on 503/network). WatchlistTileData.kd optional. Loader enriches all tiles in parallel when overview visible. KdTilePill: QueName+signal pill+confidence bar; renders nothing on degrade. 30/30 test files 388/388 GREEN (+7). tsc 0 errors.
 
 Zone health: test coverage stable, Tier 3 api layer complete, Tier 4 watchlist + analysis routes complete, KD enrichment non-fatal per spec | HEALTHY
