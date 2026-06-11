@@ -127,6 +127,8 @@ import { handleGetShareholdersHttp } from "./routes/shareholdersHandler.js";
 import { handleGetOfficersHttp } from "./routes/officersHandler.js";
 // TASK17-PAGE16: GET /api/financials — Cross-sectional Valuation & Fundamentals Screener, stored-data-only
 import { handleGetFinancialsHttp } from "./routes/financialsHandler.js";
+// TASK17-PAGE17: GET /api/fed-rates — US Fed EFFR/IORB liquidity spread time-series
+import { handleGetFedRatesHttp } from "./routes/fedRatesHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2206,6 +2208,16 @@ export async function createBunServer(
     // Public endpoint (no auth).
     if (method === "GET" && pathname === "/api/financials") {
       handleGetFinancialsHttp(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE17: GET /api/fed-rates ────────────────────────────────
+    // Serves US Fed EFFR/IORB liquidity spread time-series ("Lãi suất Fed Mỹ").
+    // 180-day fixed lookback; returns latest effr/iorb/spread + trend30d + series[].
+    // Stored-data-only (fred_series_daily table via fetchEffrIorbSamples).
+    // Public endpoint (no auth). Only GET served (others → 405).
+    if (method === "GET" && pathname === "/api/fed-rates") {
+      handleGetFedRatesHttp(req, res, db);
       return;
     }
 
