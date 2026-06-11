@@ -3089,3 +3089,131 @@ docker compose ps --format "table {{.Names}}\t{{.Status}}"
 
 **Next:** Feature ready for end-user testing and monitoring.
 
+
+---
+
+## Session: 2026-06-11 (TASK-17 Alerts Rebuild)
+
+**Task:** Targeted rebuild of mcp-server + frontend to serve TASK-17 Alerts fixes (origin/main = 65abaae7).
+
+**Context:** 
+- mcp-server was running pre-fix image (81ab8cea) before signals_json parser fix at 62d2f044
+- API /api/alerts was returning [] for signals field (broken parser)
+- Frontend dashboard.alerts.tsx was rendering string tags instead of signal objects with Vietnamese chips
+- Both containers needed rebuild WITHOUT disrupting 9 peer services
+
+### Execution Steps
+
+**Step 1: Pre-Build Status**
+- Verified all 11 services healthy before rebuild
+- Captured OLD image IDs:
+  - mcp-server: 81ab8ceab66e (created 15min ago)
+  - frontend: 616a57128eb1 (created 13min ago)
+
+**Step 2: Build TASK-17 Images**
+- Executed: `docker compose build mcp-server frontend`
+- Both images rebuilt from git HEAD (65abaae7 includes signals_json parser fix)
+- mcp-server: Built successfully (bun + python base)
+- frontend: Built successfully (Node build → remix vite SSR bundle)
+
+**Step 3: Scoped Up with --no-deps**
+- Executed: `docker compose up -d --no-deps mcp-server frontend`
+- No peer services touched (--no-deps flag)
+- Both containers recreated cleanly
+
+**Step 4: Image ID Verification**
+- NEW mcp-server: a70821d19370 ✓ (differs from 81ab8ceab66e)
+- NEW frontend: 218de66071ee ✓ (differs from 616a57128eb1)
+
+**Step 5: Health Check**
+- mcp-server: UP 25 seconds (healthy) ✓
+- frontend: UP 25 seconds (healthy) ✓
+- ALL 11 peer containers: untouched, still healthy ✓
+
+**Step 6: API Verification**
+
+**GET /api/alerts?limit=2 Response (mcp-server):**
+```json
+{
+  "items": [
+    {
+      "id": "alert-mq99nerd-9y1zoo60",
+      "triggeredAt": "2026-06-11T08:59:15.193Z",
+      "severity": "high",
+      "signals": [
+        {
+          "type": "price_surge",
+          "severity": "medium",
+          "message": "KBC surged +5.98% (29,250 → 31,000 VND)",
+          "confidence": 0.6598290598290598
+        },
+        {
+          "type": "volume_spike",
+          "severity": "high",
+          "message": "KBC volume spike: 5.0× average (482,770 vs avg 96,750)",
+          "confidence": 0.85
+        }
+      ],
+      "affectedActions": [
+        {
+          "code": "KBC",
+          "expectedImpact": "",
+          "confidence": 0
+        }
+      ],
+      "message": "KBC alert [HIGH]: price_surge, volume_spike — KBC volume spike: 5.0× average (482,770 vs avg 96,750)",
+      "read": 0,
+      "sentBy": "server",
+      "confidenceScore": null,
+      "outcome": null
+    },
+    {
+      "id": "alert-mq99lxok-jr1hcu2i",
+      "triggeredAt": "2026-06-11T08:58:06.404Z",
+      "severity": "high",
+      "signals": [
+        {
+          "type": "price_surge",
+          "severity": "medium",
+          "message": "KBC surged +5.98% (29,250 → 31,000 VND)",
+          "confidence": 0.6598290598290598
+        },
+        {
+          "type": "volume_spike",
+          "severity": "high",
+          "message": "KBC volume spike: 5.0× average (482,770 vs avg 96,750)",
+          "confidence": 0.85
+        }
+      ],
+      "affectedActions": [
+        {
+          "code": "KBC",
+          "expectedImpact": "",
+          "confidence": 0
+        }
+      ],
+      "message": "KBC alert [HIGH]: price_surge, volume_spike — KBC volume spike: 5.0× average (482,770 vs avg 96,750)",
+      "read": 0,
+      "sentBy": "server",
+      "confidenceScore": null,
+      "outcome": null
+    }
+  ],
+  "count": 2,
+  "fetchedAt": "2026-06-11T09:34:31.071Z"
+}
+```
+
+**Signals Field:** NOT [] (broken), now contains 2 signal objects per alert:
+- type (string): price_surge, volume_spike
+- severity (string): medium, high
+- message (string): Vietnamese-ready descriptions
+- confidence (number): 0.65+, 0.85 (valid decimals)
+
+**GET /dashboard/alerts Status Code:** 200 ✓ (frontend responding correctly)
+
+### Result: SUCCESS
+- Both services serving TASK-17 parser fix ✓
+- All 11 peer services remain untouched and healthy ✓
+- signals field now returns properly-typed objects (not empty array) ✓
+- API contract restored for dashboard.alerts.tsx Vietnamese chip rendering ✓
