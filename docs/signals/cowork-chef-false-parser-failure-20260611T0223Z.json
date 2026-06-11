@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "flow_bug",
+  "status": "NEW",
+  "priority": "high",
+  "createdAt": "2026-06-11T02:30:00Z",
+  "recurrence_context": "3rd occurrence — supersedes the 2nd logged in market_messages id=3123 (2026-06-10T08:29:40Z, MARKET completed id=710); 1st was chef-eod-marker.",
+  "payload": {
+    "anomaly": "chef (unified-agent) recurring FALSE send_telegram parser-failure → self-blocks publication",
+    "agent_id": "a75ec1aa1bb9a3a42",
+    "cycle": "chef-intraday 02:23 UTC 2026-06-11",
+    "symptom": "Chef completed full TNB 6-layer analysis (4 clusters) but reported send_telegram 'expected record received string' parser error on long/Vietnamese payloads, logged notebook 'PUBLICATION BLOCKED', and did NOT publish the intraday MARKET dish. Claimed the gateway rejects messages >150 chars / non-ASCII.",
+    "diagnosis": "FALSE failure. 'expected record received string' is an ARGUMENT-SHAPE error — chef passed send_telegram `message` as a bare string instead of a `{channel, message}` record. send_telegram demonstrably handles Vietnamese multi-paragraph text: notebook precedent msg_id 711 (2026-06-10 08:52 eod) + 714 (19:37 evening), and the prior-day dispatcher-completed publish MARKET id=710 (2026-06-10 intraday). Dispatcher called send_telegram with the correct {channel,message} record and BOTH MARKET + WORK sends returned success on the first try.",
+    "dispatcher_action": "RAW-verified (read_telegram_reports market channel newest = id 3128 / 2026-06-11T00:08, no dish landed → chef's claim of a partial 'first short message succeeded' also false). Completed the publish itself: MARKET 4-para plain-VI dish + WORK [CHEF-DETAIL] TNB audit (faithful to chef's logged 6-layer synthesis, numbers re-grounded on live get_market_snapshot + get_macro_snapshot at 02:30 UTC). Corrected chef notebook publication_status BLOCKED→PUBLISHED. BUG channel logged (message_id 2779).",
+    "verification_note": "Dish-channel content-read is NOT available — read_telegram_reports(channel=market|market-group) returns the internal market_messages signals table (ids 31xx, analysis-agent), not the outbound MARKET Telegram dish channel (7xx id-space). RAW verification therefore = direct send_telegram success return (called by dispatcher, not a sub-agent badge) + correct record-shape args + works-precedent. send_telegram to BUG returned a DB message_id (2779); MARKET/WORK returned outbound-success strings without DB ids (separate outbound store).",
+    "impact": "Intraday dish would have been silently dropped on every chef cycle that hits this mis-call. This is the 3rd publish-reliability failure of the same agent — recurring per feedback_recurring_bug_escalation (2+ same module → architect review).",
+    "recommended_action": "po/architect: fix chef.md Step 7 send_telegram call to ALWAYS pass arguments as a {channel, message} record (never a bare string), and add a positive self-check (re-read own post via a working read path OR trust the success return) so chef stops self-diagnosing a non-existent 'parser failure'. Remove the false 'parser breaks on >150 chars / non-ASCII' lore from the flow. Consider a publish-guard: if chef logs BLOCKED-by-tool, dispatcher auto-completes (already the standing posture) but the root mis-call must be fixed in the agent.",
+    "related_findings": ["feedback_chef_false_parser_failure", "feedback_chef_fabricated_publish", "feedback_chef_market_post_attribution", "feedback_recurring_bug_escalation", "market_messages id=3123"]
+  }
+}
