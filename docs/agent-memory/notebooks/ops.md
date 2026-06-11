@@ -4319,3 +4319,349 @@ Sample prices: ['59800', '58900', '50300', '50100', '57000']
 - No breaking changes detected in peer services
 
 **Deployment complete. TASK-17 live on origin/main aaba8dd6.**
+
+---
+
+## Session: 2026-06-11 (TARGETED REBUILD — mcp-server GET /api/sector-rotation)
+
+**Task:** Targeted rebuild of mcp-server container ONLY to pick up commit 2bb469e6 (new endpoint GET /api/sector-rotation).
+
+**Status:** DONE — Verified Live (2026-06-11 14:31:53Z)
+
+### Execution Steps
+
+**Step 0: Pre-flight verification**
+- Git: Already at commit 2bb469e6 `feat(mcp-server/api): TASK17-PAGE9 GET /api/sector-rotation — Sector Money Flow endpoint` ✓
+- Current containers: All 11 healthy
+- Image record: old sha256:0f709f2042a4095f13f97fd941561c55de26056122a89a8ab7ab3cf4a9812164
+
+**Step 1: Targeted rebuild (single service, no cascade)**
+- Command: `docker compose build mcp-server && docker compose up -d --no-deps mcp-server && sleep 5`
+- Build completed successfully: all layers processed, new image built
+- Old image SHA: `0f709f2042a4095f13f97fd941561c55de26056122a89a8ab7ab3cf4a9812164`
+- **NEW image SHA: `dd707c92a27cdce9ac0fed88750fb968f6031c57874f02da6147e6894692633f`** ✓ (distinct from old)
+- Container recreated and healthy: `Up 7 seconds (healthy)` ✓
+
+**Step 2: Fleet health verification (mandatory post-rebuild)**
+
+All 11 containers healthy + no cascade damage:
+```
+alert-engine         Up 15 hours (healthy)
+api-gateway          Up 4 hours (healthy)
+frontend             Up 25 minutes (healthy)
+kinh-dich-service    Up 7 hours (healthy)
+macro-indicators     Up 15 hours (healthy)
+mcp-server           Up 7 seconds (healthy) — REBUILT
+news-fetch           Up 14 hours (healthy)
+pdf-extractor        Up 15 hours (healthy)
+rag-service          Up 3 hours (healthy)
+stock-price          Up 15 hours (healthy)
+technical-analysis   Up 15 hours (healthy)
+```
+
+**Step 3: Serve-confirm GET /api/sector-rotation endpoint**
+
+**Raw Response (FULL JSON):**
+```json
+{
+  "generatedAt": "2026-06-11T12:31:53.987Z",
+  "tradingDate": "2026-06-11T12:15:02.679Z",
+  "priceSource": "stored",
+  "only1dAvailable": true,
+  "sectors": [
+    {
+      "sector": "agriculture",
+      "sectorNameVi": "Nông nghiệp & Thủy sản",
+      "classification": "NEUTRAL",
+      "avg1dReturn": 2.135,
+      "avg5dReturn": null,
+      "stockCount": 2,
+      "stocks": ["GVR", "VNH"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "chemicals",
+      "sectorNameVi": "Hóa chất & Đạo thải",
+      "classification": "NEUTRAL",
+      "avg1dReturn": 1.24,
+      "avg5dReturn": null,
+      "stockCount": 1,
+      "stocks": ["DPM"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "other",
+      "sectorNameVi": "Khác",
+      "classification": "NEUTRAL",
+      "avg1dReturn": 0.4,
+      "avg5dReturn": null,
+      "stockCount": 2,
+      "stocks": ["VEA", "VNM"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "utilities",
+      "sectorNameVi": "Điện & Năng lượng",
+      "classification": "NEUTRAL",
+      "avg1dReturn": 0.18000000000000002,
+      "avg5dReturn": null,
+      "stockCount": 3,
+      "stocks": ["POW", "PPC", "REE"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "machinery",
+      "sectorNameVi": "Máy móc / Công nghiệp",
+      "classification": "NEUTRAL",
+      "avg1dReturn": 0,
+      "avg5dReturn": null,
+      "stockCount": 1,
+      "stocks": ["DAG"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "real_estate",
+      "sectorNameVi": "Bất động sản",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -0.06142857142857142,
+      "avg5dReturn": null,
+      "stockCount": 7,
+      "stocks": ["D2D", "KBC", "NVL", "TCH", "VHM", "VIC", "VRE"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "pharma",
+      "sectorNameVi": "Dược phẩm",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -0.11,
+      "avg5dReturn": null,
+      "stockCount": 1,
+      "stocks": ["DHG"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "oil_gas",
+      "sectorNameVi": "Dầu khí",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -0.25,
+      "avg5dReturn": null,
+      "stockCount": 2,
+      "stocks": ["GAS", "PLX"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "banking",
+      "sectorNameVi": "Ngân hàng",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -0.34285714285714286,
+      "avg5dReturn": null,
+      "stockCount": 7,
+      "stocks": ["ACB", "BID", "CTG", "EIB", "MBB", "VCB", "VPB"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "aviation",
+      "sectorNameVi": "Hàng không",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -0.46499999999999997,
+      "avg5dReturn": null,
+      "stockCount": 2,
+      "stocks": ["ACV", "HVN"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "steel",
+      "sectorNameVi": "Thép",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -0.6866666666666666,
+      "avg5dReturn": null,
+      "stockCount": 3,
+      "stocks": ["HPG", "HSG", "NKG"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "securities",
+      "sectorNameVi": "Chứng khoán",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -0.8766666666666668,
+      "avg5dReturn": null,
+      "stockCount": 3,
+      "stocks": ["HCM", "SSI", "VCI"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "tech",
+      "sectorNameVi": "Công nghệ",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -1.48,
+      "avg5dReturn": null,
+      "stockCount": 1,
+      "stocks": ["FPT"],
+      "watchlistWarning": false
+    },
+    {
+      "sector": "retail",
+      "sectorNameVi": "Bán lẻ & Tiêu dùng",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -1.66,
+      "avg5dReturn": null,
+      "stockCount": 1,
+      "stocks": ["MWG"],
+      "watchlistWarning": false
+    }
+  ],
+  "summary": {
+    "inflow": 0,
+    "outflow": 0,
+    "neutral": 14,
+    "topInflow": [
+      {
+        "sector": "agriculture",
+        "sectorNameVi": "Nông nghiệp & Thủy sản",
+        "classification": "NEUTRAL",
+        "avg1dReturn": 2.135,
+        "avg5dReturn": null,
+        "stockCount": 2,
+        "stocks": ["GVR", "VNH"],
+        "watchlistWarning": false
+      },
+      {
+        "sector": "chemicals",
+        "sectorNameVi": "Hóa chất & Đạo thải",
+        "classification": "NEUTRAL",
+        "avg1dReturn": 1.24,
+        "avg5dReturn": null,
+        "stockCount": 1,
+        "stocks": ["DPM"],
+        "watchlistWarning": false
+      },
+      {
+        "sector": "other",
+        "sectorNameVi": "Khác",
+        "classification": "NEUTRAL",
+        "avg1dReturn": 0.4,
+        "avg5dReturn": null,
+        "stockCount": 2,
+        "stocks": ["VEA", "VNM"],
+        "watchlistWarning": false
+      },
+      {
+        "sector": "utilities",
+        "sectorNameVi": "Điện & Năng lượng",
+        "classification": "NEUTRAL",
+        "avg1dReturn": 0.18000000000000002,
+        "avg5dReturn": null,
+        "stockCount": 3,
+        "stocks": ["POW", "PPC", "REE"],
+        "watchlistWarning": false
+      },
+      {
+        "sector": "machinery",
+        "sectorNameVi": "Máy móc / Công nghiệp",
+        "classification": "NEUTRAL",
+        "avg1dReturn": 0,
+        "avg5dReturn": null,
+        "stockCount": 1,
+        "stocks": ["DAG"],
+        "watchlistWarning": false
+      }
+    ],
+    "topOutflow": [
+      {
+        "sector": "retail",
+        "sectorNameVi": "Bán lẻ & Tiêu dùng",
+        "classification": "NEUTRAL",
+        "avg1dReturn": -1.66,
+        "avg5dReturn": null,
+        "stockCount": 1,
+        "stocks": ["MWG"],
+        "watchlistWarning": false
+      },
+      {
+        "sector": "tech",
+        "sectorNameVi": "Công nghệ",
+        "classification": "NEUTRAL",
+        "avg1dReturn": -1.48,
+        "avg5dReturn": null,
+        "stockCount": 1,
+        "stocks": ["FPT"],
+        "watchlistWarning": false
+      },
+      {
+        "sector": "securities",
+        "sectorNameVi": "Chứng khoán",
+        "classification": "NEUTRAL",
+        "avg1dReturn": -0.8766666666666668,
+        "avg5dReturn": null,
+        "stockCount": 3,
+        "stocks": ["HCM", "SSI", "VCI"],
+        "watchlistWarning": false
+      },
+      {
+        "sector": "steel",
+        "sectorNameVi": "Thép",
+        "classification": "NEUTRAL",
+        "avg1dReturn": -0.6866666666666666,
+        "avg5dReturn": null,
+        "stockCount": 3,
+        "stocks": ["HPG", "HSG", "NKG"],
+        "watchlistWarning": false
+      },
+      {
+        "sector": "aviation",
+        "sectorNameVi": "Hàng không",
+        "classification": "NEUTRAL",
+        "avg1dReturn": -0.46499999999999997,
+        "avg5dReturn": null,
+        "stockCount": 2,
+        "stocks": ["ACV", "HVN"],
+        "watchlistWarning": false
+      }
+    ]
+  },
+  "count": 14
+}
+```
+
+**Ground Truth Verification:**
+- ✓ `only1dAvailable: true` (as expected)
+- ✓ `count: 14` sectors (as expected)
+- ✓ `priceSource: "stored"` (as expected)
+- ✓ Sectors sorted by avg1dReturn DESC:
+  - agriculture +2.135 (n2) ✓
+  - chemicals +1.24 (n1) ✓
+  - other +0.40 (n2) ✓
+  - utilities +0.18 (n3) ✓
+  - machinery 0.0 (n1) ✓
+  - real_estate -0.0614 (n7) ✓
+  - pharma -0.11 (n1) ✓
+  - oil_gas -0.25 (n2) ✓
+  - banking -0.3429 (n7) ✓
+  - aviation -0.465 (n2) ✓
+  - steel -0.6867 (n3) ✓
+  - securities -0.8767 (n3) ✓
+  - tech -1.48 (n1) ✓
+  - retail -1.66 (n1) ✓
+- ✓ Summary: inflow=0, outflow=0, neutral=14 ✓
+- ✓ topInflow: [agriculture, chemicals, other, utilities, machinery] ✓
+- ✓ topOutflow: [retail, tech, securities, steel, aviation] ✓
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| New image built | ✓ PASS | Old: 0f709f20..., New: dd707c92... (distinct) |
+| Container health | ✓ PASS | Up (healthy), /health 200 |
+| Fleet intact | ✓ PASS | All 11 containers healthy, no cascade damage |
+| Endpoint live | ✓ PASS | GET /api/sector-rotation → HTTP 200 |
+| Response correct | ✓ PASS | only1dAvailable=true, count=14, sectors sorted DESC, summary correct |
+| Ground truth match | ✓ PASS | All 14 sectors + returns + classifications + counts verified |
+
+**Scope Confirmed:** Only mcp-server rebuilt. Other containers unchanged (no mass-start, no --force-recreate, no --remove-orphans).
+
+**Production Status:** Commit 2bb469e6 (GET /api/sector-rotation endpoint) now LIVE and serving correct data.
+
+**Next:** Router can proceed with endpoint integration + downstream consumers.
+
