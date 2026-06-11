@@ -23,17 +23,18 @@
   "esc_gate": {
     "esc_1": "SKIP (E3 cache hit)",
     "esc_2": "PASS (imbalance=0)",
-    "esc_3": "DATA-COV-LIM (2q < 4q)",
+    "esc_3": "DATA-COV-LIM (2q < 4q) GUARD-HELD cycle6",
     "esc_4": "SKIP (E3 cache hit)",
     "esc_5": "SKIP (no refined units)"
   },
   "trick_confidence": "medium",
   "regime": "NEUTRAL",
   "max_deposit_rate_pct": 5.0,
-  "investment_clock": "Overheat",
+  "investment_clock": "Overheat_CORE_VN",
   "legal_risk": "none",
-  "signal_id": 5704,
-  "cycle_id": "20260611-0000",
-  "emitted_at": "2026-06-11T00:15Z",
-  "cycle_slot": "bctc-analyst-slot-4"
+  "macro_notable": "USD/VND 26325 EXTREME +5.25sigma (2026-06-11T13:30Z)",
+  "signal_id": 5770,
+  "cycle_id": "20260611-1500",
+  "emitted_at": "2026-06-11T15:07:00Z",
+  "cycle_slot": "bctc-analyst-slot-1"
 }
