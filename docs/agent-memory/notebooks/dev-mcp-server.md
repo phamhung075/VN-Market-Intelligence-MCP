@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-FOREIGN-FLOW — GET /api/foreign-flow — DONE
+
+**Task:** TASK17-FOREIGN-FLOW endpoint wave — new public HTTP route
+**Scope:** apps/mcp-server/ — foreignFlowHandler.ts (new), server.ts (import + route wire), 1986-foreign-flow-endpoint.test.ts (new)
+**Live contract probed (2026-06-11):** vnstock_trading_stats 103 rows; current_holding_ratio, max_holding_ratio, market_cap_bn ALL NULL today — handler degrades nulls gracefully. foreign_volume signed integer (>0=BUY, <0=SELL, 0=FLAT).
+**Raw probe top buys:** HNG|50000, VNM|49960, KBC|44270, GVR|36890, PVS|33645 | **Top sells:** NVL|-393749, VPB|-129601, EIB|-128460, HDB|-119672, TCB|-109557
+**Endpoint:** GET /api/foreign-flow?limit=N → {tradingDate, items:[{code,foreignVolume,direction,foreignRoom,currentHoldingRatio,maxHoldingRatio,marketCapBn,fetchedAt}], summary:{netBuyCount,netSellCount,topBuys,topSells}, count, fetchedAt}
+**Null policy:** null numerics pass through as null in JSON (not 0) — preserves "unknown" semantics.
+**Tests:** 30 pass / 0 fail (95 expect() calls). tsc exit 0. Full suite: 11921 pass / 38 fail (38 pre-existing: network mocks, chromium absent — no new failures).
+**Zone health:** tsc exit 0 | 30/0 scoped | tools/scheduler unchanged
+
 ## 2026-06-11 · TASK-17 CONTRACT FIX — signals_json object shape — DONE
 
 **Task:** TASK-17 Alerts — CONTRACT FIX (SOLE COMMITTER)
