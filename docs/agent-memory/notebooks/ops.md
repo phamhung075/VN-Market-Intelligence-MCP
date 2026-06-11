@@ -4059,3 +4059,88 @@ curl -s http://localhost:3001/dashboard/prediction-claims | grep -o 'Dự báo A
 
 **Data Integrity:** Zero rows updated, zero DB mutations (read-only SSR + API pass-through).
 
+
+---
+
+## Session: 2026-06-11 (DEPLOY-CONVICTION-HISTORY — commit 36cb928e)
+
+**Task:** Deploy the new `GET /api/conviction-history` endpoint (commit 36cb928e, already on origin/main) by targeted rebuild of mcp-server container only.
+
+**Context:** Commit 36cb928e feat(mcp-server/TASK17): GET /api/conviction-history AI conviction tracker. This endpoint serves conviction_tracker table (766 rows, 52 symbols) with rolling peak scores and bullish/bearish signals.
+
+### Execution Steps
+
+**Step 1: Pre-deploy Docker State**
+- Prior mcp-server image ID: ef5f09fc53ac
+- All 11 containers healthy (14h+ uptime, no recent restarts)
+- Repo HEAD: 36cb928e (conviction-history endpoint already committed)
+
+**Step 2: Targeted Rebuild (NO bare down/up-d)**
+- Executed: `docker compose build mcp-server` (CACHED + layer export 2.3s)
+- New image ID: 7da6b1157b82 (CHANGED ✓)
+- Executed: `docker compose up -d --no-deps mcp-server` (--no-deps prevents peer destruction)
+- Container recreated, startup completed
+
+**Step 3: Post-Rebuild Health Check**
+- Waited 3 seconds for container stabilization
+- Executed: `docker compose ps` (11 services)
+- Result: mcp-server healthy (5 seconds uptime), ALL 11 peers healthy
+- Status: ZERO collateral damage ✓
+
+**Step 4: Endpoint Verification**
+- Probe: `curl -s http://localhost:3000/api/conviction-history | head -c 1200`
+- HTTP Status: 200 OK ✓
+- generatedAt: "2026-06-11T11:30:02.457Z" (current, system time correct)
+- tradingDate: "2026-06-09" (live market date) ✓
+- snapshot count: 52 records (all symbols in conviction_tracker)
+- snapshot[0]: {"symbol":"BSR","date":"2026-04-23","peakScore":0.58,"signal":"bearish"}
+
+**Step 5: Full Response Structure Verification**
+```json
+{
+  "generatedAt": "2026-06-11T11:30:02.457Z",
+  "tradingDate": "2026-06-09",
+  "snapshot_count": 52,
+  "snapshot_first": {
+    "symbol": "BSR",
+    "date": "2026-04-23",
+    "peakScore": 0.58,
+    "signal": "bearish"
+  },
+  "summary": {
+    "symbols": 52,
+    "bullish": 12,
+    "bearish": 19,
+    "neutral": 21,
+    "unknown": 0,
+    "avgPeakScore": 0.5115384615384614,
+    "topBullish": [
+      {"symbol": "HUT", "date": "2026-04-23", "peakScore": 0.56, "signal": "bullish"},
+      {"symbol": "SAB", "date": "2026-04-23", "peakScore": 0.56, "signal": "bullish"},
+      {"symbol": "ACB", "date": "2026-06-09", "peakScore": 0.54, "signal": "bullish"},
+      {"symbol": "HPG", "date": "2026-06-09", "peakScore": 0.52, "signal": "bullish"},
+      {"symbol": "FPT", "date": "2026-06-09", "peakScore": 0.52, "signal": "bullish"}
+    ],
+    "topBearish": [
+      {"symbol": "BSR", "date": "2026-04-23", "peakScore": 0.58, "signal": "bearish"},
+      {"symbol": "GEX", "date": "2026-04-23", "peakScore": 0.58, "signal": "bearish"},
+      {"symbol": "DXG", "date": "2026-04-23", "peakScore": 0.56, "signal": "bearish"},
+      {"symbol": "VND", "date": "2026-04-23", "peakScore": 0.56, "signal": "bearish"},
+      {"symbol": "DIG", "date": "2026-04-23", "peakScore": 0.55, "signal": "bearish"}
+    ]
+  }
+}
+```
+
+### Deployment Result: SUCCESS ✓
+
+- Image ID changed: ef5f09fc53ac → 7da6b1157b82
+- mcp-server status: healthy (5s uptime)
+- All 11 containers healthy: alert-engine, api-gateway, frontend, kinh-dich-service, macro-indicators, mcp-server, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis
+- Endpoint live: GET /api/conviction-history → HTTP 200
+- Data: 52 symbols, conviction_tracker table (2026-06-09 trading date), peak scores 0.58 max, signal distribution (12 bullish / 19 bearish / 21 neutral)
+- No code changes made (commit 36cb928e pre-existing on origin/main)
+- No peer containers destroyed
+
+Deployment complete. Endpoint ready for integration with frontend prediction-claims page.
+
