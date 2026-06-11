@@ -41,6 +41,11 @@ import {
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 import { QueName } from "~/components/QueName";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
 import { StockChart } from "~/components/charts/StockChart";
 import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
 import { formatChangePct } from "~/domain/formatters/change-pct.js";
@@ -60,6 +65,31 @@ const KD_SAMPLE_TICKERS = ["FPT", "VNM", "HPG", "VCB", "MSN", "VIC", "SSI", "VJC
 // Domain interfaces
 // --------------------------------------------------------------------------
 
+// --------------------------------------------------------------------------
+// AnalysisBrief — AI deep-dive per ticker (P0-4)
+// --------------------------------------------------------------------------
+
+/** Shape returned by GET /api/analysis-brief/:ticker (200 OK). */
+interface AnalysisBriefDto {
+  ticker: string;
+  fundamentals: string | null;
+  news: string | null;
+  price: string | null;
+  synthesis: string | null;
+  raw: string | null;
+  updatedAt: string | null;
+}
+
+/** Error shapes returned by GET /api/analysis-brief/:ticker. */
+interface AnalysisBriefError {
+  error: "not_found" | "invalid_ticker" | "io_error" | string;
+  ticker?: string;
+}
+
+type AnalysisBriefResult =
+  | { ok: true; brief: AnalysisBriefDto }
+  | { ok: false; status: number; errorCode: string };
+
 interface StockDetail {
   reading: KinhDichReading;
   prices: PricePoint[];
@@ -77,6 +107,7 @@ interface LoaderData {
   selectedStockInfo: WatchlistStock | null;
   detail: StockDetail | null;
   detailError: string | null;
+  analysisBrief: AnalysisBriefResult | null;
   watchlistTiles: Record<string, WatchlistTileData>;
   errors: string[];
   fetchedAt: string;
@@ -157,6 +188,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
     ? WATCHLIST_STOCKS.find((s) => s.ticker === selectedStock) ?? null
     : null;
 
+  // Analysis brief — AI deep-dive per ticker (P0-4, non-fatal)
+  let analysisBrief: AnalysisBriefResult | null = null;
+  if (selectedStock) {
+    try {
+      const origin =
+        typeof process !== "undefined" && process.env["FRONTEND_ORIGIN"]
+          ? process.env["FRONTEND_ORIGIN"]
+          : "http://localhost:3001";
+      const briefResponse = await fetch(
+        `${origin}/api/analysis-brief/${encodeURIComponent(selectedStock)}`,
+        { headers: { Accept: "application/json" } },
+      );
+      if (briefResponse.ok) {
+        const raw = (await briefResponse.json()) as unknown;
+        analysisBrief = { ok: true, brief: raw as AnalysisBriefDto };
+      } else {
+        let errorCode = "io_error";
+        try {
+          const errBody = (await briefResponse.json()) as AnalysisBriefError;
+          errorCode = errBody.error ?? "io_error";
+        } catch {
+          // non-parseable error body — use default
+        }
+        analysisBrief = { ok: false, status: briefResponse.status, errorCode };
+      }
+    } catch {
+      // network failure — leave analysisBrief null (gracefully degraded)
+    }
+  }
+
   return json<LoaderData>({
     market,
     readings,
@@ -166,6 +227,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     selectedStockInfo,
     detail,
     detailError,
+    analysisBrief,
     watchlistTiles,
     errors,
     fetchedAt: new Date().toISOString(),
@@ -1454,6 +1516,133 @@ function StockDetailPanel({
 }
 
 // --------------------------------------------------------------------------
+// AI Deep-Dive panel (P0-4)
+// --------------------------------------------------------------------------
+
+/**
+ * StalenessTag — shows how old the analysis brief is.
+ * Age > 24h → amber "CŨ"; else shows timestamp.
+ */
+function StalenessTag({ updatedAt }: { updatedAt: string | null }) {
+  if (!updatedAt) return null;
+  const ageMs = Date.now() - new Date(updatedAt).getTime();
+  const isStale = ageMs > 24 * 60 * 60 * 1000;
+  return (
+    <span
+      className={
+        isStale
+          ? "rounded border border-amber-600 bg-amber-900 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-300"
+          : "rounded border border-slate-600 bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400"
+      }
+    >
+      {isStale ? "CŨ" : ""}
+      <ClientTimestamp iso={updatedAt} className="ml-1 font-normal normal-case tracking-normal" />
+    </span>
+  );
+}
+
+/**
+ * BriefSection — a labelled collapsible section for one brief field.
+ * label: Vietnamese label (Cơ bản / Tin tức / Giá / Tổng hợp)
+ * content: prose string or null
+ */
+function BriefSection({
+  label,
+  content,
+  defaultOpen = false,
+}: {
+  label: string;
+  content: string | null;
+  defaultOpen?: boolean;
+}) {
+  if (!content) {
+    return (
+      <div className="rounded border border-slate-700 bg-slate-800/50 px-4 py-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {label}
+        </span>
+        <p className="mt-1 text-xs text-slate-600 italic">Chưa có dữ liệu.</p>
+      </div>
+    );
+  }
+
+  return (
+    <Collapsible defaultOpen={defaultOpen}>
+      <div className="rounded border border-slate-700 bg-slate-800/50">
+        <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {label}
+          </span>
+          <span aria-hidden="true" className="text-slate-500 text-xs select-none">
+            ▾
+          </span>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="border-t border-slate-700 px-4 py-3">
+            <p className="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap">
+              {content}
+            </p>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
+/**
+ * AiDeepDivePanel — renders the AI analysis brief for a selected ticker.
+ * Shows fundamentals / news / price / synthesis as labelled collapsible sections.
+ * On 404 → "chưa có phân tích cho mã này" (no fabrication).
+ * On network failure (null) → silent — panel not rendered.
+ */
+function AiDeepDivePanel({
+  result,
+  ticker,
+}: {
+  result: AnalysisBriefResult | null;
+  ticker: string;
+}) {
+  if (result === null) {
+    // Network failure — degrade silently (fetch failed entirely).
+    return null;
+  }
+
+  if (!result.ok) {
+    if (result.errorCode === "not_found" || result.status === 404) {
+      return (
+        <div className="rounded border border-slate-700 bg-slate-800/50 px-4 py-4 text-sm text-slate-500 italic">
+          Chưa có phân tích chuyên sâu cho mã {ticker}.
+        </div>
+      );
+    }
+    // Other upstream errors (400, 500, 502…) — show terse message.
+    return (
+      <div className="rounded border border-red-800 bg-red-950 px-4 py-3 text-sm text-red-300">
+        Không thể tải phân tích AI cho {ticker} ({result.errorCode}).
+      </div>
+    );
+  }
+
+  const { brief } = result;
+
+  return (
+    <div className="space-y-3">
+      {/* Header: ticker + staleness badge */}
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-sm font-bold text-blue-400">{brief.ticker}</span>
+        <StalenessTag updatedAt={brief.updatedAt} />
+      </div>
+
+      {/* Collapsible sections — Vietnamese labels */}
+      <BriefSection label="Tổng hợp" content={brief.synthesis} defaultOpen />
+      <BriefSection label="Cơ bản" content={brief.fundamentals} />
+      <BriefSection label="Tin tức" content={brief.news} />
+      <BriefSection label="Giá" content={brief.price} />
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
 // Page
 // --------------------------------------------------------------------------
 
@@ -1467,6 +1656,7 @@ export default function AnalysisDashboard() {
     selectedStockInfo,
     detail,
     detailError,
+    analysisBrief,
     watchlistTiles,
     errors,
     fetchedAt,
@@ -1539,6 +1729,18 @@ export default function AnalysisDashboard() {
           snapshot={snapshot}
           watchlistTiles={watchlistTiles}
         />
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* AI Deep Dive — shown when a stock is selected (P0-4)               */}
+      {/* ------------------------------------------------------------------ */}
+      {selectedStock && (
+        <SectionCard
+          title="Phân Tích Chuyên Sâu (AI)"
+          subtitle={selectedStock}
+        >
+          <AiDeepDivePanel result={analysisBrief} ticker={selectedStock} />
+        </SectionCard>
       )}
 
       {/* ------------------------------------------------------------------ */}
