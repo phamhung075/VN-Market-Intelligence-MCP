@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-PAGE9 — GET /api/sector-rotation — DONE
+
+**Task:** TASK17-PAGE9 endpoint wave — "Dòng tiền theo ngành" (Sector Money Flow) analyst page.
+**Scope:** apps/mcp-server/ — sectorRotationStore.ts (new), sectorRotationHandler.ts (new), server.ts (import + route wire), TASK17-PAGE9 test (new).
+**Contract:** watchlist 41 codes × market_prices 121 rows (filter to watchlist only) + market_prices_history baseline. change_pct = authoritative 1d. price5dAgo = null today (only 2-day history). only1dAvailable=true. 14 sectors sorted by avg1dReturn DESC.
+**Key decisions:** (1) Filter priceMap to watchlist-only codes → matches ground-truth contract (reference stocks dilute sector averages). (2) Derive price1dAgo from changePct so classifySector() can apply inflow/outflow thresholds when 5d baseline exists. (3) Build representedSectors explicitly from watchlist+priceMap to include "chemicals"/"machinery" not in ALL_DOMAINS. (4) only1dAvailable = result.only1dAvailable (correct once price1dAgo derived).
+**Live-probed result (2026-06-11):** 14 sectors, only1dAvailable=true, agriculture +2.135 (n2), chemicals +1.24 (n1), ... retail -1.66 (n1). topInflow=[agriculture,chemicals,other,utilities,machinery], topOutflow=[retail,tech,securities,steel,aviation]. Exactly matches ground truth.
+**Tests:** 29 pass / 0 fail (122 expect() calls). tsc exit 0.
+**Endpoint:** GET /api/sector-rotation → {generatedAt, tradingDate, priceSource:"stored", only1dAvailable, sectors:[{sector,sectorNameVi,classification,avg1dReturn,avg5dReturn,stockCount,stocks,watchlistWarning}], summary:{inflow,outflow,neutral,topInflow,topOutflow}, count}
+**Zone health:** bun test 29/0 scoped | tsc exit 0 | 157 tools intact | scheduler 78 cron.schedule | HEALTHY
+
 ## 2026-06-11 · TASK17-SUMMARIES — GET /api/market-summaries — DONE
 
 **Task:** TASK17-SUMMARIES endpoint wave — CHEF market intelligence archive (daily/weekly/monthly/quarterly/yearly synthesised summaries).

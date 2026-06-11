@@ -111,6 +111,8 @@ import { handleGetPredictionClaims } from "./routes/predictionClaimsHandler.js";
 import { handleGetConvictionHistory } from "./routes/convictionHistoryHandler.js";
 // TASK17-SUMMARIES: GET /api/market-summaries — CHEF daily/weekly/monthly synthesised market intelligence archive
 import { handleGetMarketSummaries } from "./routes/marketSummaryHandler.js";
+// TASK17-PAGE9: GET /api/sector-rotation — Sector Money Flow ("Dòng tiền theo ngành"), stored-data-only
+import { handleGetSectorRotation } from "./routes/sectorRotationHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2103,6 +2105,16 @@ export async function createBunServer(
     // ?limit=N → default 60, clamp [1,200].
     if (method === "GET" && pathname === "/api/market-summaries") {
       handleGetMarketSummaries(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE9: GET /api/sector-rotation ────────────────────────────
+    // Serves Sector Money Flow ("Dòng tiền theo ngành") analyst page.
+    // Stored-data-only (NO live fan-out) — fast, deterministic, structured JSON.
+    // Reuses detectSectorRotation() domain service; different from get_sector_rotation MCP tool.
+    // Public endpoint (no auth).
+    if (method === "GET" && pathname === "/api/sector-rotation") {
+      handleGetSectorRotation(req, res, db);
       return;
     }
 

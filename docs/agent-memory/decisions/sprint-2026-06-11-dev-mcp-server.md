@@ -53,3 +53,13 @@
 - Separate array/object JSON parsing in store — rejected: store = SQL only; parseJsonField + mapKeyedToArray live in handler (interface layer) to preserve DDD layer separation
 **why-decision:** DUAL-MODE pattern (list=light / detail=full) keeps the endpoint frontend-friendly without overfetching; mapKeyedToArray normalises the ticker-keyed objects to consistent {symbol,...} arrays the frontend can iterate uniformly; parseJsonField fails closed (never throws) making the endpoint resilient to stale/corrupt CHEF writes.
 **why-change:** no change from plan; live contract was precise (probed 2026-06-11).
+
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-11T12:30:00Z
+**task-id:** TASK-17 PAGE 9
+**what-done:** Built GET /api/sector-rotation — sectorRotationStore.ts (3 read helpers), sectorRotationHandler.ts (mapEntry+applySortOrder+buildSummary+handler), server.ts route wire, 29-test suite (122 expect calls). 0 fail. tsc clean. Live probe exact match.
+**what-considered:**
+- Include all 121 market_prices rows — refuted: reference stocks dilute sector averages; ground truth uses watchlist-only; filter to watchlist codes only
+- Use only1dAvailable from domain service directly — required deriving price1dAgo from changePct first (classifySector needs price1dAgo for threshold eval); domain then correctly computes only1dAvailable
+- Pass empty sectors[] to detectSectorRotation — refuted: "chemicals"/"machinery" not in ALL_DOMAINS; build representedSectors from watchlist+priceMap and pass explicitly
+**why-decision:** watchlist-filter + price1dAgo-derivation + explicit-sectors together produce the 14-sector result that exactly matches ground truth (probed 2026-06-11T12:00).
+**why-change:** no change from plan; three implementation subtleties found during red-green cycle, all resolved definitively.
