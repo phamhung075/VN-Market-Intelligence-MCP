@@ -63,3 +63,13 @@
 - Pass empty sectors[] to detectSectorRotation — refuted: "chemicals"/"machinery" not in ALL_DOMAINS; build representedSectors from watchlist+priceMap and pass explicitly
 **why-decision:** watchlist-filter + price1dAgo-derivation + explicit-sectors together produce the 14-sector result that exactly matches ground truth (probed 2026-06-11T12:00).
 **why-change:** no change from plan; three implementation subtleties found during red-green cycle, all resolved definitively.
+
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-06-11T13:00:00Z
+**task-id:** TASK-17 PAGE 10
+**what-done:** Built GET /api/sector-cascade — cascadeSignalStore.ts (getCascadeHitsSince), cascadeSignalHandler.ts (parseDirection+resolveSector+parseAffectedStocks+aggregateBySector+mapHit+buildSummary+handler), server.ts route wire, 47-test suite (328 expect calls). 0 fail. tsc clean.
+**what-considered:**
+- Use `|| DEFAULT_WINDOW_DAYS` fallback on parseInt("0") — refuted: parseInt("0")=0 is falsy, causes "0" to fall back to 7 not clamp to 1; use NaN-check instead (isNaN guard)
+- hit_at filter: ISO "T" format ("2026-06-04T00:00:00") — refuted by live probe: column stores "YYYY-MM-DD HH:MM:SS" (space); ISO string comparison fails; use .toISOString().slice(0,19).replace("T"," ")
+- Store SQL directly in handler — rejected: violates DDD layer rule; getCascadeHitsSince in infrastructure/db/cascadeSignalStore; handler maps + aggregates only
+**why-decision:** space-format sinceIso matches column's literal format → string comparison works; NaN-guard on parseInt ensures "0" clamps to MIN_WINDOW_DAYS=1 not fallback to DEFAULT; pure-aggregation handler preserves DDD layer separation.
+**why-change:** one red→fix cycle on the "0" clamp edge case (test AC-21); live probe confirmed 7d window returns ~416 rows matching ground-truth distribution.

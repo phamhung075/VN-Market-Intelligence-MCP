@@ -113,6 +113,8 @@ import { handleGetConvictionHistory } from "./routes/convictionHistoryHandler.js
 import { handleGetMarketSummaries } from "./routes/marketSummaryHandler.js";
 // TASK17-PAGE9: GET /api/sector-rotation — Sector Money Flow ("Dòng tiền theo ngành"), stored-data-only
 import { handleGetSectorRotation } from "./routes/sectorRotationHandler.js";
+// TASK17-PAGE10: GET /api/sector-cascade — Sector Cascade Signals ("Tín hiệu dây chuyền theo ngành"), stored-data-only
+import { handleGetSectorCascade } from "./routes/cascadeSignalHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2115,6 +2117,16 @@ export async function createBunServer(
     // Public endpoint (no auth).
     if (method === "GET" && pathname === "/api/sector-rotation") {
       handleGetSectorRotation(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE10: GET /api/sector-cascade ───────────────────────────
+    // Serves Sector Cascade Signals ("Tín hiệu dây chuyền theo ngành") analyst page.
+    // Aggregates cascade_rule_hits by sector, computes netBias (up−down), sorted DESC.
+    // Stored-data-only (NO live fan-out) — fast, deterministic, structured JSON.
+    // Public endpoint (no auth).
+    if (method === "GET" && pathname === "/api/sector-cascade") {
+      handleGetSectorCascade(req, res, db);
       return;
     }
 

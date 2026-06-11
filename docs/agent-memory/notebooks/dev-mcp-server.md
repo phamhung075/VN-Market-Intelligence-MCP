@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 PAGE 10 — GET /api/sector-cascade — DONE
+
+**Task:** TASK17-PAGE10 endpoint wave — "Tín hiệu dây chuyền theo ngành" (Sector Cascade Signals).
+**Scope:** apps/mcp-server/ — cascadeSignalStore.ts (new), cascadeSignalHandler.ts (new), server.ts (import + route wire), TASK17-PAGE10 test (new).
+**Contract:** cascade_rule_hits (8,570 rows live, span 2026-02-16→2026-06-11). rule_key = "{sector}_{up|down|neutral}". hit_at = "YYYY-MM-DD HH:MM:SS" (space, no T). 7d window: ~416 rows. Aggregation: group by resolved sector → up/down/neutral/total/netBias, sorted netBias DESC tie-break total DESC.
+**Key decisions:** (1) hit_at filter: space-format sinceIso — `.toISOString().slice(0,19).replace("T"," ")` required for correct string comparison. (2) ?days=0 clamp fix — use NaN-guard not `|| default` so "0" clamps to MIN=1 not falls back to 7. (3) resolveSector: prefer affected_sector; fallback to rule_key prefix (everything before last "_") for multi-word sectors like "gold_mining". (4) parseAffectedStocks: defensive null/empty/JSON-array/comma-split — never throws.
+**Live probe 7d (sectors sorted netBias DESC):** tech +19 (21/2/20,43), real_estate +7 (13/6/4,23), retail +7 (7/0/4,11), gold_mining +4 (10/6/5,21), logistics +4 (4/0/1,5), aviation +2 (2/0/6,8), pharma +1 (1/0/170,171), utilities +1 (4/3/16,23), construction +1 (1/0/0,1), banking 0 (3/3/19,25), steel 0 (0/0/13,13), machinery 0 (0/0/8,8), chemicals 0 (0/0/6,6), agriculture 0 (3/3/5,11), automotive 0 (0/0/3,3), securities -2 (9/11/18,38), oil_gas -2 (0/2/4,6).
+**Tests:** 47 pass / 0 fail (328 expect() calls). tsc exit 0.
+**Zone health:** bun test 47/0 scoped | tsc exit 0 | 157 tools intact | scheduler 78 cron.schedule | HEALTHY
+
 ## 2026-06-11 · TASK17-PAGE9 — GET /api/sector-rotation — DONE
 
 **Task:** TASK17-PAGE9 endpoint wave — "Dòng tiền theo ngành" (Sector Money Flow) analyst page.
