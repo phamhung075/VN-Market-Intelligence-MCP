@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 CONTRACT FIX — signals_json object shape — DONE
+
+**Task:** TASK-17 Alerts — CONTRACT FIX (SOLE COMMITTER)
+**Bug:** parseSignalsJson filtered `typeof v === "string"` but live DB signals_json is an array of objects. All 1016 rows returned signals:[].
+**Root cause confirmed:** prior schema comment said "JSON string[]" — incorrect. Ground truth: `[{type,severity,actionCode,message,confidence,detectedAt,...}]`.
+**Fix:** Exported `SignalSummary` type `{type,severity,message,confidence}`; rewrote `parseSignalsJson` to map objects → SignalSummary, skip non-objects, degrade missing fields. JSDoc updated to document real object shape.
+**parseAffectedActionsJson:** verified safe on `{code}`-only shape — degrades expectedImpact→"", confidence→0; no crash.
+**Test reseeded:** 1985-alerts-endpoint.test.ts — all string[] signal seeds replaced with realistic ground-truth object arrays (price_surge+volume_spike 2-signal, news_mention 1-signal, null row, malformed JSON row). Added {code}-only affectedActions test.
+**Result:** 34 pass / 0 fail (88 expect() calls). tsc exit 0.
+**Zone health:** bun test 34/0 scoped | tsc clean | tools/scheduler unchanged
+
 ## 2026-06-11 · TASK-17 Alerts ENDPOINT WAVE — DONE
 
 **Task:** TASK-17 Alerts page — ENDPOINT WAVE — GET /api/alerts
