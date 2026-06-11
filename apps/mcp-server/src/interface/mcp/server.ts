@@ -99,6 +99,8 @@ import { handleGetNewsSentiment } from "./routes/newsSentimentHandler.js";
 import { handleGetMacroRegime } from "./routes/macroRegimeHandler.js";
 // TASK-17 P2-1a: GET /api/price-history/:ticker — OHLC history DTO for frontend
 import { handleGetPriceHistory } from "./routes/priceHistoryServeHandler.js";
+// TASK-17 Alerts ENDPOINT WAVE: GET /api/alerts — live alerts table for dashboard
+import { handleGetAlerts } from "./routes/alertsHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2038,6 +2040,14 @@ export async function createBunServer(
     if (method === "GET" && pathname.startsWith("/api/price-history/")) {
       const ticker = decodeURIComponent(pathname.slice("/api/price-history/".length).split("?")[0] ?? "");
       await handleGetPriceHistory(req, res, ticker);
+      return;
+    }
+
+    // ── TASK-17 Alerts ENDPOINT WAVE: GET /api/alerts ────────────────────
+    // Serves the live alerts table for the dashboard Alerts page.
+    // Supports ?limit= (default 50, max 200) and optional ?severity= filter.
+    if (method === "GET" && pathname === "/api/alerts") {
+      handleGetAlerts(req, res, db);
       return;
     }
 

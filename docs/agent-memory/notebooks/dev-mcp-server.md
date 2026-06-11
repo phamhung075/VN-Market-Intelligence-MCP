@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 Alerts ENDPOINT WAVE — DONE
+
+**Task:** TASK-17 Alerts page — ENDPOINT WAVE — GET /api/alerts
+**Scope:** apps/mcp-server/ — alertsHandler.ts (new), server.ts (import + route wire), 1985-alerts-endpoint.test.ts (new)
+**Source:** `alerts` table (market.db, named volume) — 1016 live rows, actively written. Schema probed for optional ALTER TABLE columns (confidence_score, outcome) — guarded so fresh test DBs never fail.
+**Endpoint:** `GET /api/alerts?limit=N&severity=X` → `{items:[{id,triggeredAt,severity,signals:[],affectedActions:[],message,read,sentBy,confidenceScore,outcome}], count, fetchedAt}`
+**JSON parse guards:** parseSignalsJson + parseAffectedActionsJson — null/malformed → [] never throws.
+**Tests:** 24 pass / 0 fail (50 expect() calls). tsc clean (bun tsc --noEmit exit 0).
+**Zone health:** tsc exit 0 | 24/0 scoped test | tools/scheduler unchanged
+
 ## 2026-06-11 · ALERT-WRITER-RECONCILE — DONE/VERIFIED
 
 **Task:** SPIKE ALERT-WRITER-RECONCILE — verify canonical alerts writer on live mcp-server
