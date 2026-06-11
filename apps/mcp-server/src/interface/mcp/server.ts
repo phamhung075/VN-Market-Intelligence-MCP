@@ -91,6 +91,8 @@ import { handlePushSbvRates } from "./routes/pushSbvRatesHandler.js";
 import { handleGetMarketDigest } from "./routes/marketDigestHandler.js";
 // MAW-P0-3: GET /api/analysis-brief/:ticker — per-ticker analysis brief
 import { handleGetAnalysisBrief } from "./routes/analysisBriefHandler.js";
+// MAW-P1-1a: GET /api/news-sentiment — synthesised news + sentiment items
+import { handleGetNewsSentiment } from "./routes/newsSentimentHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2002,6 +2004,12 @@ export async function createBunServer(
     if (method === "GET" && pathname.startsWith("/api/analysis-brief/")) {
       const ticker = pathname.slice("/api/analysis-brief/".length);
       handleGetAnalysisBrief(req, res, ticker, process.cwd());
+      return;
+    }
+
+    // ── MAW-P1-1a: GET /api/news-sentiment — synthesised news + sentiment ──
+    if (method === "GET" && pathname === "/api/news-sentiment") {
+      handleGetNewsSentiment(req, res, db);
       return;
     }
 
