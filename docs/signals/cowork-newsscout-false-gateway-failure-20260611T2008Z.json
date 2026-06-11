@@ -1,0 +1,31 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "agent-bug-escalation",
+  "priority": "high",
+  "createdAt": "2026-06-11T20:09:00Z",
+  "payload": {
+    "bug_class": "false-infra-failure",
+    "agent": "news-scout",
+    "flow": "docs/agents/news-scout/flow/main.md",
+    "slot": "news-scout-offhours",
+    "cycle": "c84",
+    "agent_id": "a748f090b11bcbbb9",
+    "fire_tick": "2026-06-11T20:00Z (fired 20:05:23Z)",
+    "false_claim": "news-scout cycle c84 returned BLOCKED at Step 0-GW asserting 'MCP call_tool unavailable — CLI session gateway transport dead' and emitted a to:po bug-escalation (docs/signals/news-scout-20260611T000000Z.json) claiming a gateway outage.",
+    "raw_verification": "FALSE — gateway was demonstrably HEALTHY throughout. (1) Dispatcher gateway calls succeeded immediately before AND after news-scout's failure: task_claim/task_release/emit_pressure_state all OK at 20:06, task_heartbeat returned structured {ok:false,expires_at:0} at 20:08 (a dead transport throws 400/timeout; the gateway ANSWERED). (2) The market-watcher-offhours sibling (a387f96d1387a1109), spawned the SAME instant against the SAME gateway, passed its own Step 0-GW ('all circuits healthy, Telegram live'), fetched 40 tickers, wrote its notebook + coverage-state, and sent a WORK telegram at 20:07 — full gateway round-trips. The failure is therefore ISOLATED to the news-scout subagent's own MCP session (most likely its per-session deferred-tool/ToolSearch gateway-schema load failing to initialize), NOT a real vn-market gateway outage.",
+    "corroborating_tells": [
+      "Escalation payload is thin — no probe error body, no HTTP status, no retry trace.",
+      "Escalation createdAt was bogus-stamped 2026-06-11T00:00:00Z (20h stale, hardcoded — not the 20:05 fire time), indicating the agent could not stamp real time and likely templated the whole failure path.",
+      "0 signals emitted, 0 data fetched — the agent bailed at the gate rather than doing any work."
+    ],
+    "dispatcher_actions_taken": [
+      "RAW-verified gateway health (dispatcher probe + market-watcher sibling success) before trusting the verdict — per router-verify-raw discipline, did NOT relay the false outage.",
+      "Deleted the false to:po gateway-outage signal docs/signals/news-scout-20260611T000000Z.json (untracked, never committed) so po does not investigate a healthy gateway.",
+      "Recovery re-spawned news-scout-offhours ONCE (a988be2e6cd0f76f6) to recover this cadence's news coverage; its full-overwrite cycle log will also self-heal the false BLOCKED entry left in docs/agent-memory/notebooks/news-scout.md. If the recovery spawn ALSO false-fails identically, the news-scout Step 0-GW gate is a DETERMINISTIC per-session bug (not transient) — escalate harder, do NOT retry a third time."
+    ],
+    "recommended_fix": "This is the news-scout analogue of the recurring chef false-parser-failure pattern (see cowork-chef-false-parser-failure-20260611T0223Z.json). Two converging agent bugs now misread their own per-session MCP/deferred-tool init failure as 'the gateway/tool is broken' and fail loud with a fabricated infra outage. po/architect should: (1) harden the news-scout Step 0-GW probe to distinguish a real gateway-transport failure from a local deferred-tool/ToolSearch load miss (retry the schema load before declaring the gateway dead); (2) require the BLOCKED escalation to include the actual probe error body + a real timestamp, so false alarms are self-evident; (3) consider whether the shared root (per-subagent gateway-session init under the F-OOM-MCP-SERVER 2GiB-cap memory pressure) warrants the wedge-detecting healthcheck already proposed for ops.",
+    "not_an_outage": true,
+    "leadership_unconfirmed": true
+  }
+}
