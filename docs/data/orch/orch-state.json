@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-11T11:15:08Z",
+    "_updated_at": "2026-06-11T17:53:21Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -5920,7 +5920,7 @@
       },
       {
         "id": "FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE",
-        "title": "vnstockFundamentalsRefresh cron CRASH (0% success) RECURRING 3x/24h (01:00,18:07,18:36 UTC, c118/c119/c120) — architect root-cause SPIKE (recurring-bug rule fired), zone dev-mcp-server cron registry",
+        "title": "vnstock fundamentals BROKEN — two modes: (a) cron CRASH recurring 3x/24h c118-c120; (b) SILENT WRITE-PATH FAILURE: fetcher logs success in vnstock_fetch_log (2026-06-10 18:16-18:20 ACB financials/balance_sheet/cash_flow, ACV financials) but rows NEVER land in vnstock_financials/vnstock_balance_sheet/vnstock_cash_flow. Architect root-cause SPIKE.",
         "owner": "agents-architect",
         "status": "TODO",
         "type": "SPIKE",
@@ -5929,7 +5929,8 @@
         "zone": "apps/mcp-server/",
         "priority": "critical",
         "created_at": "2026-06-08T19:05:00Z",
-        "status_note": "Created by po triage-S7 from signal sau-2026-06-08T18:36:27Z-a33 (A-33). Recurring-bug rule FIRES (3 occurrences/24h across auditor cycles c118/c119/c120; prior tick po-S6 WATCH condition met). Per recurring-bug-escalation: NOT a point-patch -> architect-first SPIKE to root-cause the cron crash before any dev fix. Cron registry zone = dev-mcp-server. AC: A-33 check passes Tier-N (vnstockFundamentalsRefresh success>0, no signal_queue A-33 row, no BUG alert 7d). Priority: critical."
+        "status_note": "Created by po triage-S7 from signal sau-2026-06-08T18:36:27Z-a33 (A-33). Recurring-bug rule FIRES (3 occurrences/24h across auditor cycles c118/c119/c120; prior tick po-S6 WATCH condition met). Per recurring-bug-escalation: NOT a point-patch -> architect-first SPIKE to root-cause the cron crash before any dev fix. Cron registry zone = dev-mcp-server. AC: A-33 check passes Tier-N (vnstockFundamentalsRefresh success>0, no signal_queue A-33 row, no BUG alert 7d). Priority: critical. | MERGED 2026-06-11 router DATA-FRESHNESS AUDIT (ground-truth from live named-volume DB): vnstock_financials MAX(fetched_at)=2026-04-15 (57d stale, 79 rows) DESPITE vnstock_fetch_log showing financials/balance_sheet/cash_flow rows fetched 2026-06-10 18:16-18:20 (ACB financials, ACB balance_sheet, ACB cash_flow, ACV financials). Cron vnstockFundamentalsRefresh last ran 2026-06-08 status=success. So distinct from crash mode: a SILENT write failure / upsert no-op on the vnstock fundamentals write path — fetcher succeeds, write never persists. Architect SPIKE must root-cause BOTH the cron crash AND the silent write-path drop. Zone: dev-mcp-server (write path) + possibly dev-vps-crawls (fetcher). Unblocks FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM on a successful vnstock sync). REVISED AC: after a refresh run, vnstock_financials MAX(fetched_at) within 7 days AND vnstock_balance_sheet/vnstock_cash_flow likewise refresh AND cron success>0 (no A-33 signal, no BUG alert 7d).",
+        "merged_at": "2026-06-11T17:53:21Z"
       },
       {
         "id": "FIX-SBV-FX-VPS-FETCHER-UNHEALTHY",
@@ -6621,6 +6622,56 @@
           "prediction-resolver",
           "data-integrity"
         ]
+      },
+      {
+        "id": "FIX-EVIDENCE-PIPELINE-STARVED",
+        "title": "evidence pipeline STARVED (silent chain): evidence_fragments=0 rows (empty) -> evidenceAccumulatorJob reports success EVERY run but rows_written=0 since 2026-05-27 -> evidence_scores frozen 2026-05-27 (369 rows), evidence_likelihood_ratios frozen 2026-05-24 (45 rows). Root cause UPSTREAM: fragment producer stopped + fragments TTL-expired; accumulator starves -> writes 0 -> falsely reports success.",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_by": "po",
+        "created_at": "2026-06-11T17:53:21Z",
+        "status_note": "Created by po triage 2026-06-11 from router DATA-FRESHNESS AUDIT (ground-truth, live named-volume DB vn-market-intelligence-mcp_market_data @ 2026-06-11 ~17:45 UTC). SILENT-SWALLOW / green-but-does-nothing class. evidence_fragments=0 (empty); evidence_scores frozen 2026-05-27 (last non-zero accumulator runs: 05-27=7, 05-25=8, 05-18=18); evidence_likelihood_ratios frozen 2026-05-24 (45). evidenceAccumulatorJob runs ~every 2d, status=success every run, rows_written=0 since 05-27. Root cause is UPSTREAM of the accumulator: whatever writes evidence_fragments stopped AND existing fragments TTL-expired (ttl_days/expires_at cols) -> accumulator has nothing to consume -> writes 0 -> falsely stamps success. Fix BOTH: (1) restore the fragment producer write path; (2) make evidenceAccumulatorJob fail-loud (not success) when input is empty / it writes 0 rows. AC: evidence_fragments non-empty AND evidenceAccumulatorJob rows_written>0 on next run AND evidence_scores MAX(score_date) within 3 days."
+      },
+      {
+        "id": "FIX-PREDICTION-SIGNALS-EMPTY",
+        "title": "prediction_signals poll green-but-empty: table frozen 2026-04-27 (45d, 6 rows) while predictionMarketPollJob ran 2026-06-11 17:30 status=success (predictionMarketPollJob + predictionResolutionJob both running). Poll executes, zero signals land 45d.",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "created_by": "po",
+        "created_at": "2026-06-11T17:53:21Z",
+        "status_note": "Created by po triage 2026-06-11 from router DATA-FRESHNESS AUDIT (ground-truth, live named-volume DB @ 2026-06-11 ~17:45 UTC). prediction_signals frozen 2026-04-27 (45d, 6 rows); predictionMarketPollJob ran 2026-06-11 17:30 (0d ago) status=success; both predictionMarketPollJob and predictionResolutionJob running. Poll executes but no signals persist for 45d. DEDUP/cross-ref: CO-OBS-01-FIX (observability of same poll job, accuracy angle) and PRED-RESOLVER-GAP-FIX (resolver outcome NULL) are RELATED but DISTINCT — this task is specifically the write/threshold gap on prediction_signals. Zone: dev-mcp-server (or the prediction-market source crawler). AC: confirm whether 0 qualifying signals is legitimate (no qualifying event 45d) vs a write/threshold bug; if bug, signals land on next qualifying event and table fetched_at advances."
+      },
+      {
+        "id": "FIX-CRON-JOB-RUNS-DOUBLE-LOG",
+        "title": "cron_job_runs double-logging: every job run logged TWICE per started_at (one row blank rows_written, one with the integer). Minor observability bug — inflates run counts + corrupts rows_written aggregates used by audits.",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "created_by": "po",
+        "created_at": "2026-06-11T17:53:21Z",
+        "status_note": "Created by po triage 2026-06-11 from router DATA-FRESHNESS AUDIT (ground-truth, live named-volume DB @ 2026-06-11 ~17:45 UTC). cron_job_runs writes two rows per (job, started_at): one with blank/null rows_written and one with the integer. Likely a start-row + completion-row pattern that should be a single upsert, OR a duplicate logger call. Skews success_rate and rows_written telemetry the freshness audits rely on (this is the class of bug that masked the green-but-empty findings). AC: exactly one row per job run in cron_job_runs (start-then-update on the same row, or single completion write)."
+      },
+      {
+        "id": "INVESTIGATE-EMPTY-DATA-TABLES",
+        "title": "5 EMPTY data tables — confirm intended-empty vs dead-pipeline: credit_data(0), insider_transactions(0), public_contracts(0), pharma_events(0), broker_sanctions(0). Each has a writer somewhere; 0 rows may be by-design (rare events) OR a dead pipeline. SINGLE investigation task (not 5).",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "type": "SPIKE",
+        "mode": "spike",
+        "timebox": 120,
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "created_by": "po",
+        "created_at": "2026-06-11T17:53:21Z",
+        "status_note": "Created by po triage 2026-06-11 from router DATA-FRESHNESS AUDIT (ground-truth, live named-volume DB @ 2026-06-11 ~17:45 UTC). Tables with 0 rows: credit_data, insider_transactions, public_contracts, pharma_events, broker_sanctions. DEDUP/cross-ref: DS-DEGRADE-01-FIX already covers the SERVE-layer for public_contracts (get_public_contracts returns empty, no stale flag) — this SPIKE is the WRITER/pipeline angle across all 5. For EACH table trace its writer: confirm it is wired + runs; classify empty-by-design (genuinely rare events: insider/contracts/pharma/sanctions) vs dead-pipeline (writer never wired / crashes silently). AC: documented per-table verdict (empty-by-design OR dead-pipeline-with-root-cause); any dead pipeline becomes its own follow-up FIX."
       }
     ],
     "archive": [],
