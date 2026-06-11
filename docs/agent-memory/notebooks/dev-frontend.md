@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-11 | **Sprint:** TASK-17-PAGE-8 market-summaries archive
+**Last updated:** 2026-06-11 | **Sprint:** TASK-17-PAGE-9 sector-rotation page
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-11 — TASK-17-PAGE-9 Dòng tiền theo ngành DONE. api.sector-rotation.tsx transparent proxy (arrayBuffer pipe, 502 on netfail, MCP_SERVER_BASE_URL SSOT, no query params). dashboard.sector-rotation.tsx SSR loader fetchSectorRotationData(origin) exported named helper (non-fatal: 502/upstream-error/network-throw/bad-shape all return error+[]). Honest 5d-accumulating banner: when only1dAvailable===true shows blue info banner in Vietnamese — explains 5d classification NOT yet available, page ranks by 1d move, will auto-upgrade; never fakes DONG_TIEN_VAO/RA verdict. Summary stat cards (VÀO/RA/TRUNG LẬP counts). Top inflow/outflow highlight cards. Main sector ranking table (rank/sectorNameVi/avg1d/avg5d/badge/stockCount/stocks). watchlistWarning → amber ⚠ marker on row. Empty state (count=0 → honest "chưa có dữ liệu" card). Exported helpers: fetchSectorRotationData, formatReturn, returnColorClass, classificationLabel, classificationBadgeClass, format5dReturn, formatTradingDate. DJ-GATE-1: chose named-export fetchSectorRotationData (Remix strips loader in jsdom context; same pattern as all prior pages); only1dAvailable banner is the anti-demo invariant. TopNav: ANALYST_NAV += "Dòng tiền ngành" (/dashboard/sector-rotation) — count 14→15, NAV_ITEMS 21→22. FE-HEADER-SSOT-top-nav.test.tsx updated (counts 14→15/21→22, +1 ENABLED assertion, 22 tests GREEN). 54 new vitest GREEN (task17-sector-rotation-loader.test.ts, 21 suites). tsc 0 errors.
+
+Zone health: Tier 4 routes +1 (sector-rotation page), tsc clean, 54 new tests GREEN, ANALYST_NAV 15 items | HEALTHY
 
 2026-06-11 — TASK-17-PAGE-8 market-summaries archive DONE. api.market-summaries.tsx transparent proxy (period+limit+id forwarded, arrayBuffer pipe, MCP_SERVER_BASE_URL SSOT). dashboard.market-summaries.tsx dual-mode SSR loader: ?id=<id>→DETAIL (full narrative+keyEvents timeline+per-ticker performance table with client-side search box+recommendations table; item:null→honest empty-state "Không tìm thấy báo cáo"); no ?id→LIST (period picker with live counts from periods block, report cards with summaryPreview+chips). Live payload STEP 0 verified before typing: keyEvents={date,title,impact,direction}, stockPerformance={symbol,firstPrice,lastPrice,changePct,alertCount}, recommendations={symbol,outlook,confidence,reasoning}. Exported helpers: fetchSummaries, PERIOD_LABELS, formatDateRange, formatChangePct, changePctColorClass, outlookLabel, outlookColorClass, filterTickers. TopNav: ANALYST_NAV += "Lưu trữ Thị trường" (/dashboard/market-summaries) — count 13→14, NAV_ITEMS 20→21. FE-HEADER-SSOT-top-nav.test.tsx updated (counts+new-tab assertion, 21 tests GREEN). 62 new vitest GREEN (task17-market-summaries-loader.test.ts). tsc 0 errors. DJ-GATE-1 decision journal in sprint-CI-RED-RECONCILE-dev-frontend.md.
 
