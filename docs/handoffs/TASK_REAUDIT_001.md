@@ -99,3 +99,31 @@ The actual computation happens at cron time. Using `today` (the date being compu
 - Architect brief: `docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md`
 - BA spec: `docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md` § A-16
 - Zone standard: `docs/policies/dev-standards.md` § Zone Enforcement
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/reputationStore.ts` — add `getReputationPrior(db, code, beforeDate)`: `WHERE code=? AND date < ? ORDER BY date DESC LIMIT 1`, null-safe, returns `ReputationScore | null`
+  - `apps/mcp-server/src/scheduler/news/reputationComputeJob.ts` — drop `priorDate` exact-offset calc; import `getReputationPrior` (remove `getReputation` import); call `getReputationPrior(db, code, today)` in per-ticker loop
+  - `apps/mcp-server/src/__tests__/1922d-reputation-compute.test.ts` — 9 new tests: `getReputationPrior` (empty DB, single row before threshold, row ON threshold returns null, multi-row irregular gaps returns most recent, ticker-scope isolation) + end-to-end `runReputationComputeJob` trend write (improving path: prior=40 current=50 → improving; deteriorating path: 100% neg mentions + prior=50 → deteriorating)
+- **Tests written:** `apps/mcp-server/src/__tests__/1922d-reputation-compute.test.ts` — 9 new assertions, 81 total pass across 4 reputation test files, GREEN
+- **Git commits:** `b9f003ab fix(mcp-server/REAUDIT-001): reputation trend always stable — replace exact-date prior lookup with getReputationPrior`
+- **Type check:** clean (bun tsc --noEmit exit 0)
+- **bun test:** 81 pass / 0 fail (reputation test files: 1922d, 1037, 264, TASK17-PAGE18)
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 78 cron.schedule entries — unchanged from pre-task
+- **Docs updated:** NONE (infrastructure/scheduler fix, no architecture change)
+- **Graphify:** skipped (no docs impacted)
+
+**Decision journal:**
+- Root cause confirmed: `priorDate = today - 7d` string; `getReputation(db, code, priorDate)` uses `WHERE date=?`; production rows at irregular intervals never land exactly 7d prior; lookup always null; trend always stable.
+- Fix is minimal: new store function with `date < ?` instead of `date = ?` + remove dead offset calc in job. Handler untouched — trend is persisted at compute time.
+- `beforeDate = today` (not a hardcoded offset) so fix is resilient to any future gap pattern.
+
+**QA timing note:** Trend values in DB update only on next cron run (08:30 UTC daily). QA must wait for that cron cycle after ops rebuilds mcp-server container. QA can trigger job manually if endpoint exposed. Expected outcome: trend distribution shows non-zero improving/deteriorating for tickers with genuine score deltas (VCB series confirmed: 62.5 → 45 → 64 → 58 → 66).
+
+Zone health: bun test 81 pass 0 fail (reputation suite) / 12698 pass 0 fail (full suite) — tsc clean — 157 tools intact — 78 cron.schedule — HEALTHY

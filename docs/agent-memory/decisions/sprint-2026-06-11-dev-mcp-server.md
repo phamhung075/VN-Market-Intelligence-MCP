@@ -93,3 +93,12 @@
 - cny_vnd_rate in store SELECT — excluded entirely per dead-column constraint; 0/1226 coverage confirmed live
 **why-decision:** NaN-guard + zero-as-missing together make delta computation honest; 3-layer architecture (store SQL / handler aggregation / server.ts registration) preserves DDD; computeDelta exported for unit tests per task spec.
 **why-change:** no change from spec; one red→fix on parseInt("0") clamp edge case (same pattern as S7).
+
+### STEP dev-mcp-server-S9 · dev-mcp-server · 2026-06-11T22:05:00Z
+**task-id:** REAUDIT-001
+**what-done:** Fixed reputation trend always "stable" — added `getReputationPrior` to reputationStore.ts + replaced broken exact-date prior lookup in reputationComputeJob.ts. 9 new tests, 81 pass total.
+**what-considered:**
+- Keep exact-date lookup but compute multiple candidate dates — rejected: fragile; doesn't handle future irregular intervals
+- New store fn `getReputationPrior(db, code, beforeDate)` — chosen: minimal (one SQL fn), correct (`date < ? ORDER BY date DESC LIMIT 1`), resilient to any gap pattern
+**why-decision:** `date < ?` replaces `date = ?` — resolves the never-match condition without changing the handler contract or DB schema. Fix lives at the source (compute job) not the read path.
+**why-change:** no change from architect plan; parameterized SQL per dev-standards; `beforeDate=today` (not offset) ensures correctness on any cron-run cadence.
