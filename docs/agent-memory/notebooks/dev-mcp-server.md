@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-PAGE13 TIE-BREAK FIX — buildByType + buildSummary — DONE
+
+**Task:** Post-ship defect fix — non-deterministic tie-break ordering in `buildByType` and `buildSummary#topActiveCodes`.
+**Root cause:** count-only `.sort((a,b) => b.count - a.count)` — tie group FPT/KDC/MBB/VCI all count=8 resolved by Map insertion order (non-deterministic). Similarly DDIND/DDINS both=62 in byType.
+**Fix:** Added secondary sort key — topActiveCodes: `|| a.code.localeCompare(b.code)`; byType: `|| a.eventType.localeCompare(b.eventType)`. Ordering-only; no counts/SQL/logic changed.
+**Tests added:** AC-8 TIE-BREAK (AATYPE before ZZTYPE at equal count) + AC-9 TIE-BREAK (AAA before ZZZ at equal count). All 60 tests pass.
+**Live probe post-fix (?days=90):** topActiveCodes: SHB 28, SSI 15, MWG 13, NVL 11, ACB 9, KDH 9, VIX 9, **FPT 8** (slot 8 = FPT, code-ASC winner of FPT/KDC/MBB/VCI tie). byType: ISS 69, DDIND 62, DDINS 62 (DDIND before DDINS by ASC tie-break), DDRP 18, AGME 12, DIV 10, AIS 7, OTHE 1, EGME 1.
+**Commit:** 199e76b1 | tsc exit 0 | bun test 60 pass / 0 fail (+2 new tie-break tests)
+**Zone health:** bun test 60/0 scoped | tsc exit 0 | tools count unchanged | scheduler count unchanged | HEALTHY
+
 ## 2026-06-11 · TASK17-PAGE13 — GET /api/corporate-events — DONE
 
 **Task:** TASK17-PAGE13 endpoint wave — "Sự kiện doanh nghiệp gần đây" (Recent Corporate Actions Monitor).
