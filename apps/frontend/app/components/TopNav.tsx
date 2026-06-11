@@ -51,6 +51,7 @@ export type NavItem = {
  *   - /dashboard/prediction-claims → dashboard.prediction-claims.tsx EXISTS → enabled (label: "Dự báo AI") — TASK17-PRED
  *   - /dashboard/market-summaries  → dashboard.market-summaries.tsx  EXISTS → enabled (label: "Lưu trữ Thị trường") — TASK-17 PAGE 8
  *   - /dashboard/sector-rotation  → dashboard.sector-rotation.tsx   EXISTS → enabled (label: "Dòng tiền ngành") — TASK-17 PAGE 9
+ *   - /dashboard/sector-cascade   → dashboard.sector-cascade.tsx    EXISTS → enabled (label: "Dây chuyền ngành") — TASK-17 PAGE 10
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -71,6 +72,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/conviction-history", label: "Niềm tin AI" },
   { to: "/dashboard/market-summaries", label: "Lưu trữ Thị trường" },
   { to: "/dashboard/sector-rotation", label: "Dòng tiền ngành" },
+  { to: "/dashboard/sector-cascade", label: "Dây chuyền ngành" },
 ];
 
 /**
