@@ -11,6 +11,7 @@ import { useLoaderData, Link, Form } from "@remix-run/react";
 import {
   fetchKinhDichMarket,
   fetchKinhDichReading,
+  fetchKinhDichReadingNonFatal,
   fetchMacroSnapshot,
   fetchPriceHistory,
   fetchStockSignals,
@@ -155,6 +156,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
     watchlistTiles = await fetchWatchlistPrices(ACTIVE_TICKERS);
   } catch {
     // non-fatal — overview cards show "—" for price
+  }
+
+  // KD reading enrichment for watchlist tiles — TASK-17.
+  // Fetch ALL active tickers in parallel; each call is non-fatal (null on 503/error).
+  // Only runs when the overview grid is shown (no selectedStock) to avoid bulk load on detail view.
+  if (!selectedStock && Object.keys(watchlistTiles).length > 0) {
+    const kdTickers = ACTIVE_TICKERS;
+    const kdResults = await Promise.allSettled(
+      kdTickers.map((t) => fetchKinhDichReadingNonFatal(t)),
+    );
+    kdTickers.forEach((ticker, idx) => {
+      const r = kdResults[idx];
+      const reading = r.status === "fulfilled" ? r.value : null;
+      if (watchlistTiles[ticker]) {
+        watchlistTiles[ticker] = { ...watchlistTiles[ticker], kd: reading };
+      }
+    });
   }
 
   // Detail — only when a stock is selected
@@ -490,8 +508,51 @@ function StockSelector({ selectedStock }: { selectedStock: string | null }) {
 // --------------------------------------------------------------------------
 
 /**
- * Single tile card: ticker + company + last price + direction + signal count.
+ * KD signal pill for a watchlist tile — TASK-17.
+ * Shows signal string (from API) with colour-coding.
+ * Returns null (no render) when reading is absent or degraded.
+ */
+function KdTilePill({ reading }: { reading: KinhDichReading | null | undefined }) {
+  if (!reading) return null;
+  const sig = reading.signal.toUpperCase();
+  const colorCls = sig.includes("MUA") || sig.includes("BULLISH")
+    ? "border-green-700 bg-green-950 text-green-300"
+    : sig.includes("BÁN") || sig.includes("BAN") || sig.includes("BEARISH")
+      ? "border-red-700 bg-red-950 text-red-300"
+      : sig.includes("THẬN TRỌNG") || sig.includes("THAN TRONG")
+        ? "border-yellow-700 bg-yellow-950 text-yellow-300"
+        : "border-slate-600 bg-slate-800 text-slate-400";
+  const pct = Math.round(reading.confidence * 100);
+  const barColor = pct >= 60 ? "bg-green-500" : pct >= 35 ? "bg-yellow-500" : "bg-red-500";
+
+  return (
+    <div className="mt-2 space-y-1">
+      {/* Quẻ name + signal pill */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <QueName
+          hexagram={reading.hexagram}
+          name={reading.name}
+          className="text-[10px] text-slate-400"
+        />
+        <span className={`inline-flex items-center rounded border px-1 py-0.5 text-[10px] font-semibold ${colorCls}`}>
+          {reading.signal}
+        </span>
+      </div>
+      {/* Confidence bar */}
+      <div className="flex items-center gap-1.5">
+        <div className="h-1 w-12 rounded-full bg-slate-700">
+          <div className={`h-1 rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-[10px] text-slate-500">{pct}%</span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Single tile card: ticker + company + last price + direction + signal count + KD reading.
  * Clicking navigates to ?stock=XXX to load full detail.
+ * KD pill is non-fatal — renders nothing when reading is absent (TASK-17).
  */
 function WatchlistTile({
   stock,
@@ -500,7 +561,6 @@ function WatchlistTile({
   stock: WatchlistStock;
   tile: WatchlistTileData | undefined;
 }) {
-  const arrow = tile ? formatDirectionArrow(tile.direction) : { symbol: "—", cls: "text-slate-600" };
   const changePctDisplay = tile ? formatChangePct(tile.changePct) : null;
   const hasPrice = tile !== undefined;
 
@@ -550,6 +610,9 @@ function WatchlistTile({
           </span>
         </div>
       )}
+
+      {/* KD reading pill — non-fatal: renders nothing when kd is undefined/null */}
+      <KdTilePill reading={tile?.kd} />
     </Link>
   );
 }

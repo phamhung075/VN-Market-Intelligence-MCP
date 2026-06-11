@@ -270,6 +270,26 @@ export async function fetchKinhDichReading(code: string): Promise<KinhDichReadin
   return apiGet<KinhDichReading>(`/kinh-dich/reading/${encodeURIComponent(code)}`);
 }
 
+/**
+ * Non-fatal per-stock hexagram reading for watchlist tile enrichment (TASK-17).
+ * Returns null on any non-2xx response (including 503 ErrInsufficientData) or network failure.
+ * Designed for use in parallel Promise.allSettled tile enrichment loops where a missing
+ * KD reading must NEVER crash the watchlist page.
+ * Endpoint: GET /kinh-dich/reading/:code via API_GATEWAY_URL
+ */
+export async function fetchKinhDichReadingNonFatal(
+  code: string,
+): Promise<KinhDichReading | null> {
+  try {
+    const url = `${API_GATEWAY_URL}/kinh-dich/reading/${encodeURIComponent(code)}`;
+    const response = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!response.ok) return null;
+    return (await response.json()) as KinhDichReading;
+  } catch {
+    return null;
+  }
+}
+
 // --------------------------------------------------------------------------
 // Technical Analysis snapshot
 // --------------------------------------------------------------------------
@@ -432,6 +452,7 @@ export async function fetchStockSignals(code: string, limit = 10): Promise<Agent
 /**
  * Lightweight data for a single tile in the watchlist overview grid.
  * Intentionally minimal — close price, direction, change %, signal count.
+ * kd is optional: populated by TASK-17 enrichment loop; null = degraded (503 / no data).
  */
 export interface WatchlistTileData {
   ticker: string;
@@ -439,6 +460,8 @@ export interface WatchlistTileData {
   changePct: number;
   direction: "up" | "down" | "flat";
   signalCount: number;
+  /** Kinh Dịch reading for this ticker. undefined = not fetched; null = fetch failed / degraded. */
+  kd?: KinhDichReading | null;
 }
 
 function toWatchlistTileData(ticker: string, raw: unknown): WatchlistTileData | null {
