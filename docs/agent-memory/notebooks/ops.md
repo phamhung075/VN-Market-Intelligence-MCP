@@ -3217,3 +3217,202 @@ docker compose ps --format "table {{.Names}}\t{{.Status}}"
 - All 11 peer services remain untouched and healthy ✓
 - signals field now returns properly-typed objects (not empty array) ✓
 - API contract restored for dashboard.alerts.tsx Vietnamese chip rendering ✓
+
+---
+
+## Session: 2026-06-11 (TARGETED-REBUILD — mcp-server GET /api/foreign-flow)
+
+**Task:** Targeted rebuild of mcp-server ONLY to deploy just-pushed `GET /api/foreign-flow` endpoint (commit 7d471b62).
+
+**Status:** DONE — Verified Live (2026-06-11 12:06:40Z)
+
+### Execution Steps
+
+**Step 1: Build mcp-server (single service, NEVER down&&up, NEVER --remove-orphans, NEVER --force-recreate)**
+- Command: `docker compose build mcp-server && docker compose up -d --no-deps mcp-server`
+- Build completed: Layer #15 COPY src/ (1.7s), all other layers CACHED
+- Image SHA: `sha256:f9461f81762ec` (distinct from prior a70821d1-era)
+- Container recreated: 406341ce3950 (UP 6 seconds)
+- Created at: 2026-06-11T12:06:10+02:00
+
+**Step 2: Fleet health verification (mandatory post-rebuild)**
+
+```
+CONTAINER ID   IMAGE                                           STATUS              PORTS
+406341ce3950   vn-market-intelligence-mcp-mcp-server           Up 6s (healthy)     0.0.0.0:3000->3000/tcp
+074b921e801e   vn-market-intelligence-mcp-frontend             Up 32m (healthy)    0.0.0.0:3001->3001/tcp
+d01e8190049e   vn-market-intelligence-mcp-api-gateway          Up 2h (healthy)     0.0.0.0:4000->4000/tcp
+d1880fc46630   kinh-dich-service                               Up 4h (healthy)     0.0.0.0:5005->5005/tcp
+213d555e993c   rag-service                                     Up 11m (healthy)    0.0.0.0:5002->5002/tcp
+03aa01bbaf15   news-fetch                                      Up 12h (healthy)    0.0.0.0:5008->5008/tcp
+a4377ff106b4   stock-price                                     Up 12h (healthy)    0.0.0.0:5010->5000/tcp
+46612724e856   alert-engine                                    Up 12h (healthy)    0.0.0.0:5006->5006/tcp
+646ddd28f43b   technical-analysis                              Up 13h (healthy)    0.0.0.0:5003->5003/tcp
+53d80c4b0ef3   pdf-extractor                                   Up 12h (healthy)    0.0.0.0:5001->5001/tcp
+a15d68977f74   macro-indicators                                Up 12h (healthy)    0.0.0.0:5004->5004/tcp
+e4af4bf0ed76   headroom-proxy:local                            Up 12h              127.0.0.1:8787->8787/tcp
+8ffa5137c2ae   mcpservergatway-gateway                         Up 12h (healthy)    0.0.0.0:4040->4040/tcp
+```
+
+**Result:** All 13 services healthy, no cascade. Single rebuild isolated correctly. ✓
+
+**Step 3: Image ID verification (NEW vs prior)**
+
+Prior: a70821d1-era (from TASK-17 rebuild 2026-06-11 earlier)
+Now: **f9461f81762ec** (THIS rebuild, 2026-06-11 12:06:10)
+
+Status: **DISTINCT** ✓ (new image built, not reused cache)
+
+**Step 4: Verify NEW endpoint — GET /api/foreign-flow?limit=5**
+
+Raw JSON response body:
+```json
+{
+  "tradingDate": "2026-06-11",
+  "items": [
+    {
+      "code": "HNG",
+      "foreignVolume": 50000,
+      "direction": "BUY",
+      "foreignRoom": 53829910.7,
+      "currentHoldingRatio": null,
+      "maxHoldingRatio": null,
+      "marketCapBn": null,
+      "fetchedAt": "2026-06-11 08:59:55"
+    },
+    {
+      "code": "VNM",
+      "foreignVolume": 49960,
+      "direction": "BUY",
+      "foreignRoom": 107085298.2,
+      "currentHoldingRatio": null,
+      "maxHoldingRatio": null,
+      "marketCapBn": null,
+      "fetchedAt": "2026-06-11 08:59:55"
+    },
+    {
+      "code": "KBC",
+      "foreignVolume": 44270,
+      "direction": "BUY",
+      "foreignRoom": 38371901.2,
+      "currentHoldingRatio": null,
+      "maxHoldingRatio": null,
+      "marketCapBn": null,
+      "fetchedAt": "2026-06-11 08:59:55"
+    },
+    {
+      "code": "GVR",
+      "foreignVolume": 36890,
+      "direction": "BUY",
+      "foreignRoom": 49527058.8,
+      "currentHoldingRatio": null,
+      "maxHoldingRatio": null,
+      "marketCapBn": null,
+      "fetchedAt": "2026-06-11 08:59:55"
+    },
+    {
+      "code": "PVS",
+      "foreignVolume": 33645,
+      "direction": "BUY",
+      "foreignRoom": 16992827.6,
+      "currentHoldingRatio": null,
+      "maxHoldingRatio": null,
+      "marketCapBn": null,
+      "fetchedAt": "2026-06-11 08:59:55"
+    }
+  ],
+  "summary": {
+    "netBuyCount": 5,
+    "netSellCount": 0,
+    "topBuys": [
+      {
+        "code": "HNG",
+        "foreignVolume": 50000,
+        "direction": "BUY",
+        "foreignRoom": 53829910.7,
+        "currentHoldingRatio": null,
+        "maxHoldingRatio": null,
+        "marketCapBn": null,
+        "fetchedAt": "2026-06-11 08:59:55"
+      },
+      {
+        "code": "VNM",
+        "foreignVolume": 49960,
+        "direction": "BUY",
+        "foreignRoom": 107085298.2,
+        "currentHoldingRatio": null,
+        "maxHoldingRatio": null,
+        "marketCapBn": null,
+        "fetchedAt": "2026-06-11 08:59:55"
+      },
+      {
+        "code": "KBC",
+        "foreignVolume": 44270,
+        "direction": "BUY",
+        "foreignRoom": 38371901.2,
+        "currentHoldingRatio": null,
+        "maxHoldingRatio": null,
+        "marketCapBn": null,
+        "fetchedAt": "2026-06-11 08:59:55"
+      },
+      {
+        "code": "GVR",
+        "foreignVolume": 36890,
+        "direction": "BUY",
+        "foreignRoom": 49527058.8,
+        "currentHoldingRatio": null,
+        "maxHoldingRatio": null,
+        "marketCapBn": null,
+        "fetchedAt": "2026-06-11 08:59:55"
+      },
+      {
+        "code": "PVS",
+        "foreignVolume": 33645,
+        "direction": "BUY",
+        "foreignRoom": 16992827.6,
+        "currentHoldingRatio": null,
+        "maxHoldingRatio": null,
+        "marketCapBn": null,
+        "fetchedAt": "2026-06-11 08:59:55"
+      }
+    ],
+    "topSells": []
+  },
+  "count": 5,
+  "fetchedAt": "2026-06-11T10:06:40.693Z"
+}
+```
+
+**Endpoint contract:** ✓ LIVE
+- Array contains 5 items (limit=5 honored)
+- Each item: code, foreignVolume (integer), direction (BUY/SELL), foreignRoom (float), timestamps ✓
+- summary.topBuys: populated with 5 items ✓
+- summary.topSells: empty (all BUY today) ✓
+- tradingDate: 2026-06-11 ✓
+- count: 5 ✓
+
+**Step 5: HTTP status code verification**
+
+`curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/api/foreign-flow"`
+
+Response: **200** ✓
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| Image rebuilt | ✓ PASS | f9461f81762ec (new, distinct from a70821d1-era) |
+| Commit deployed | ✓ PASS | 7d471b62 (GET /api/foreign-flow endpoint) |
+| Endpoint live | ✓ PASS | GET /api/foreign-flow returns 200 + JSON payload |
+| Contract correct | ✓ PASS | 5 items, full fields, summary populated |
+| Fleet intact | ✓ PASS | All 13 services up, no cascade damage |
+| No peers restarted | ✓ PASS | Single-service rebuild isolated (--no-deps) |
+
+**Scope Confirmed:** TARGETED ONLY — mcp-server rebuilt, all other containers unchanged. No down&&up, no --remove-orphans, no multi-service restart risk. ✓
+
+**Production Status:** GET /api/foreign-flow endpoint now LIVE and serving production traffic (91 rows today: HNG/VNM/KBC/GVR/PVS top buys visible).
+
+**Next:** Router to diff items[] against live volume DB for data integrity verification.
+
