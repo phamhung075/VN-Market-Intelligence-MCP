@@ -1,13 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-09 · BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE — REVIEW
-
-**Task:** BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE | Sprint: CI-RED-RECONCILE | Size: M | DJ: dev-mcp-server-S23
-**Root cause:** InMemoryTransport+Client ~5000ms timeout on Bun 1.3.13/Ubuntu CI. 3 test files: MSG-1-market-foreign-flow, RAPID-A-get-company-profile-tool, RAPID-H-insider-lookback. Rewired to `_registeredTools` direct handler. 20 total tests all pass. tsc CLEAN. projected_delta -15.
-**Status:** REVIEW — router owns push + CI gate.
-
----
-
 ## 2026-06-10 · BPE-DEV-2 — REVIEW
 
 **Task:** BPE-DEV-2 | Sprint: BCTC-PROSE-EXTRACT | Size: M | DJ: dev-mcp-server-S27
@@ -23,9 +15,18 @@
 **Task:** REAUDIT-001 | Sprint: SHIP-WAVE-REAUDIT | Priority: CRITICAL | Zone: apps/mcp-server/
 **Root cause:** reputationComputeJob computed priorDate=today-7d and called getReputation(db,code,priorDate) with WHERE date=? exact match. Production rows land at irregular intervals (3-7d gaps) so lookup always returned null → priorScore=undefined → trend="stable" for 100% of 235 rows.
 **Fix 1 (reputationStore.ts):** Added getReputationPrior(db,code,beforeDate) — WHERE code=? AND date < ? ORDER BY date DESC LIMIT 1. Parameterized SQL. Returns ReputationScore|null.
-**Fix 2 (reputationComputeJob.ts):** Removed priorDate offset calc. Replaced getReputation(db,code,priorDate) with getReputationPrior(db,code,today). Import updated. Comment explains why.
-**Tests:** 9 new TCs in 1922d-reputation-compute.test.ts — getReputationPrior: empty-DB null, single-row, row-ON-threshold=null, multi-row-gaps-returns-most-recent, ticker-scope. runReputationComputeJob end-to-end: prior=40+no-data=improving; 100%-neg+prior=50=deteriorating.
-**Results:** 81 pass / 0 fail (4 reputation test files). tsc --noEmit exit 0. toolCount=157. schedulerCount=78.
-**QA timing:** trend values update only on next 08:30 UTC cron run after ops rebuild. VCB series (62.5→45→64→58→66) should yield non-stable trends.
-**Commit:** b9f003ab
-**Zone health:** bun test 81/0 scoped | tsc exit 0 | 157 tools intact | 78 cron.schedule | HEALTHY
+**Fix 2 (reputationComputeJob.ts):** Removed priorDate offset calc. Replaced getReputation(db,code,priorDate) with getReputationPrior(db,code,today). Import updated.
+**Tests:** 9 new TCs. 81 pass / 0 fail. tsc exit 0. toolCount=157. schedulerCount=78.
+**QA timing:** trend values update only on next 08:30 UTC cron run after ops rebuild.
+**Commit:** b9f003ab | Zone health: HEALTHY
+
+---
+
+## 2026-06-11 · REAUDIT-002 — NFR-C-1 stale flags on 5 handlers — DONE
+
+**Task:** REAUDIT-002 | Sprint: SHIP-WAVE-REAUDIT | Priority: HIGH | Zone: apps/mcp-server/
+**New file:** `_staleness.ts` — `computeStaleness(asOfDate, thresholdDays, now)` utility. Null/empty-safe. Injectable clock. Returns `{stale, staleByDays}`.
+**5 handlers updated:** conviction-history (2d/tradingDate), corporate-events (3d/max eventDate), shareholders (55d/asOf), financials (14d/asOf), reputation (3d/asOf). `now` param added to each for testability. All existing response fields unchanged (additive contract).
+**Live stale state (2026-06-11):** shareholders stale=true staleByDays=3 (asOf=2026-04-14, 58d); financials stale=true staleByDays=43 (asOf=2026-04-15, 57d); others within threshold.
+**Tests:** 24 new TCs in REAUDIT-002-staleness.test.ts. 257 existing handler tests GREEN. tsc exit 0. toolCount=157. schedulerCount=78.
+**Commit:** 70a33a80 | Zone health: HEALTHY

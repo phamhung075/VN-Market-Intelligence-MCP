@@ -102,3 +102,12 @@
 - New store fn `getReputationPrior(db, code, beforeDate)` — chosen: minimal (one SQL fn), correct (`date < ? ORDER BY date DESC LIMIT 1`), resilient to any gap pattern
 **why-decision:** `date < ?` replaces `date = ?` — resolves the never-match condition without changing the handler contract or DB schema. Fix lives at the source (compute job) not the read path.
 **why-change:** no change from architect plan; parameterized SQL per dev-standards; `beforeDate=today` (not offset) ensures correctness on any cron-run cadence.
+
+### STEP dev-mcp-server-S10 · dev-mcp-server · 2026-06-11T22:20:00Z
+**task-id:** REAUDIT-002
+**what-done:** Added computeStaleness utility + stale/staleByDays fields to 5 handler response contracts (conviction-history, corporate-events, shareholders, financials, reputation). 24 new tests, 257 regression GREEN.
+**what-considered:**
+- Option B (middleware) — rejected: thresholds differ per endpoint (2d/3d/14d/55d); no clean DDD home for cross-cutting config
+- Option A (per-handler) + shared `_staleness.ts` — chosen: explicit per-endpoint semantics; DRY; correct DDD layer (interface only)
+**why-decision:** `_staleness.ts` keeps calendar-day logic in one place; each handler calls with its own threshold constant; `now` param enables deterministic tests without Date mocking.
+**why-change:** no change from architect plan; threshold values from spec (55d not 60d catches current 58d stale shareholders state).
