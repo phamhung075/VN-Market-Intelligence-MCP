@@ -73,7 +73,7 @@
       "depends_on": "foreignFlowAlertJob:08:13:UTC — 24-min gate; signal written to DB before this trigger fires",
       "enabled": true,
       "policy_id": null,
-      "last_fired": "2026-06-10T08:55:08Z",
+      "last_fired": "2026-06-11T08:51:00Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",
