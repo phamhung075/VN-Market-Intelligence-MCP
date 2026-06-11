@@ -111,3 +111,40 @@ Backward compatibility: if response is cached or comes from old build, fields ma
 - BA spec: `docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md` § A-05, A-11, A-12, A-14
 - Zone standard: `docs/policies/dev-standards.md`
 - Template reference: `dashboard.financials.tsx` L399-401, `dashboard.shareholders.tsx` L436-438
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** frontend
+- **Zone:** apps/frontend/
+- **Build tier:** 4 (feature routes)
+- **Contract probe:** GET /api/shareholders → stale=true, staleByDays=3 (LIVE 2026-06-11). GET /api/financials → stale=true, staleByDays=43. Other 3 endpoints stale=false, staleByDays=0. All 5 top-level keys confirmed before writing code.
+- **Files modified:**
+  - `apps/frontend/app/routes/dashboard.conviction-history.tsx` — stale/staleByDays in DTO+LoaderData+fetchConvictionData; renamed partition `stale→staleRows` to avoid conflict with loader field; stale banner render
+  - `apps/frontend/app/routes/dashboard.corporate-events.tsx` — stale/staleByDays in DTO+LoaderData+fetchCorporateEventsData; stale banner render
+  - `apps/frontend/app/routes/dashboard.shareholders.tsx` — stale/staleByDays in DTO+LoaderData+fetchShareholdersData; stale banner render
+  - `apps/frontend/app/routes/dashboard.financials.tsx` — stale/staleByDays in DTO+LoaderData+fetchFinancialsData; stale banner render
+  - `apps/frontend/app/routes/dashboard.reputation.tsx` — stale/staleByDays in DTO+LoaderData+fetchReputationData; stale banner render
+- **Tests written:** `apps/frontend/app/__tests__/reaudit-fe-001-stale-banners.test.ts` — 21 assertions GREEN (16 suites: stale=false/true/missing/502 for each of 5 endpoints)
+- **Git commits:** e787187f feat(frontend/REAUDIT-FE-001): NFR-C-1 stale banners on 5 dashboard pages
+- **Type check:** tsc --noEmit exit 0 (0 errors)
+- **Service tests:** 21 pass / 0 fail (new); 1438 pass / 21 fail full suite (21 failures are pre-existing nav count tests unrelated to this task — verified via git stash)
+- **Docs updated:** NONE
+- **Graphify:** skipped (no docs impacted)
+
+### Vitest evidence
+
+```
+✓ app/__tests__/reaudit-fe-001-stale-banners.test.ts  (21 tests) 36ms
+Test Files  1 passed (1)
+     Tests  21 passed (21)
+```
+
+### Full suite evidence
+
+```
+Test Files  6 failed | 53 passed (59)
+     Tests  21 failed | 1438 passed (1459)
+```
+Pre-existing failures: nav count tests (FE-HEADER-SSOT-top-nav, task17-page14/15/16/17/18-nav) — all fail on stale nav count assertions from earlier sessions; confirmed pre-existing via stash test.

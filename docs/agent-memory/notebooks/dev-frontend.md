@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-11 | **Sprint:** TASK-17-PAGE-13 corporate-events page
+**Last updated:** 2026-06-11 | **Sprint:** SHIP-WAVE-REAUDIT — REAUDIT-FE-001 stale banners
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-11 — REAUDIT-FE-001 NFR-C-1 stale banners DONE. Commit e787187f. 5 pages updated: conviction-history, corporate-events, shareholders, financials, reputation. Contract probed from LIVE before writing code (shareholders stale=true/staleByDays=3, financials stale=true/staleByDays=43, others false/0). Pattern: stale/staleByDays added to DTO+LoaderData+fetch helper+page component; amber banner with role=status renders when stale===true (hidden otherwise). conviction-history variable renamed stale→staleRows to avoid conflict with new loader field. 21 new vitest GREEN (reaudit-fe-001-stale-banners.test.ts: 16 suites covering stale=false/true/missing/502 for all 5 endpoints). tsc 0 errors. Pre-existing 21 nav count failures unrelated (confirmed via stash).
+
+Zone health: Tier 4 stale banners live on 5 pages, contract from live payload, tsc clean, 21 new tests GREEN | HEALTHY
 
 2026-06-11 — TASK-17-PAGE-13 Sự kiện doanh nghiệp gần đây DONE. Commit 0a6fbf42. api.corporate-events.tsx transparent proxy (?days=+?type= forwarded, arrayBuffer pipe, 502 on netfail, MCP_SERVER_BASE_URL SSOT; verbatim mirror of api.sector-cascade.tsx — diff: comments+path+additional ?type= param only). dashboard.corporate-events.tsx SSR loader fetchCorporateEventsData(origin, days?) exported named helper (non-fatal: 502/upstream-error/network-throw/bad-shape all return error+[]). HONEST FRAMING (load-bearing): backward-looking monitor — 0 future rows in source table; NO "sắp tới"/"upcoming"/"calendar" in any label. Lookback window selector: anchor links for [30,90,180,365] ngày (server round-trip, clampDays whitelist). Client-side category filter: tabs Tất cả/Cổ tức/Phát hành/Nội bộ/ĐHĐCĐ/Khác → filterEvents() on events[].category; counts from summary.{dividend/issuance/insider/meeting/other}. byType breakdown table (eventType+categoryLabel+count, desc). topActiveCodes chips {code:count}. Event list: code badge + categoryColorClass badge (emerald/blue/amber/purple/slate per category) + detail/title + eventDate right-aligned. Empty state: "Không có sự kiện trong khoảng thời gian này". PageHeader reused. TopNav ANALYST_NAV 18→19 (+Sự kiện doanh nghiệp /dashboard/corporate-events ENABLED), NAV_ITEMS 25→26. FE-HEADER-SSOT-top-nav.test.tsx updated (counts 18→19/25→26, +1 ENABLED assertion, 26 tests GREEN). 67 new vitest GREEN (task17-corporate-events-loader.test.ts, 16 suites: clampDays/ALLOWED_DAYS/categoryColorClass/filterEvents/FILTER_OPTIONS/fixture-A/fixture-B/category-filter-logic/byType/topActiveCodes/honest-framing/fetchData×5). tsc 0 errors. NOT pushed.
 
