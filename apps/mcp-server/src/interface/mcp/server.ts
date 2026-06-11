@@ -119,6 +119,8 @@ import { handleGetSectorCascade } from "./routes/cascadeSignalHandler.js";
 import { handleGetKinhDichSignals } from "./routes/kinhDichSignalsHandler.js";
 // TASK17-PAGE12: GET /api/global-markets — Global Market Context / World Risk Barometer, stored-data-only
 import { handleGetGlobalMarkets } from "./routes/globalMarketsHandler.js";
+// TASK17-PAGE13: GET /api/corporate-events — Recent Corporate Actions Monitor, stored-data-only
+import { handleGetCorporateEvents } from "./routes/corporateEventsHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2153,6 +2155,18 @@ export async function createBunServer(
     // Public endpoint (no auth).
     if (method === "GET" && pathname === "/api/global-markets") {
       handleGetGlobalMarkets(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE13: GET /api/corporate-events ──────────────────────────
+    // Serves Recent Corporate Actions Monitor ("Sự kiện doanh nghiệp gần đây").
+    // Backward-looking activity monitor from vnstock_events table.
+    // Query params: ?days=N (look-back window, default 90, clamp [7,365])
+    //               ?type=T (optional event_type filter, e.g. "DIV", "AGME")
+    // Stored-data-only (NO live network/microservice calls).
+    // Public endpoint (no auth).
+    if (method === "GET" && pathname === "/api/corporate-events") {
+      handleGetCorporateEvents(req, res, db);
       return;
     }
 
