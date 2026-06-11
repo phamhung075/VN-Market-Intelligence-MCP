@@ -6600,3 +6600,82 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/sharehold
 **Procedure compliance:** ✓ Strict targeted rebuild used | ✓ No --force-recreate or --remove-orphans | ✓ All 11 peers untouched.
 
 ---
+
+---
+
+## 2026-06-11 — TASK17-PAGE16: Targeted mcp-server Rebuild
+
+### Task
+Deploy new `GET /api/financials` valuation & fundamentals screener endpoint (commit f334604b on origin/main).
+
+### OLD Image ID
+```
+sha256:a9f53c3892b25d4da5d45ad9fc1555197590953e544ed90f941a59d4ab5db9df
+```
+
+### Rebuild Procedure
+
+**Step 1:** Record old image ID ✓  
+**Step 2:** From repo ROOT: `docker compose build mcp-server && docker compose up -d --no-deps mcp-server` ✓  
+**Step 3:** Verify new image ID differs ✓
+
+### NEW Image ID
+```
+sha256:ae42b26b82223ef9e0733da276f7db287fecf5e4fce618d3742f2f783e92c550
+```
+
+**ID Match:** OLD ≠ NEW ✓
+
+### Step 4: All 11 Containers Present + Healthy
+
+```
+vn-market-intelligence-mcp-alert-engine-1         Up 19 hours (healthy)
+vn-market-intelligence-mcp-api-gateway-1          Up 8 hours (healthy)
+vn-market-intelligence-mcp-frontend-1             Up 15 minutes (healthy)
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 11 hours (healthy)
+vn-market-intelligence-mcp-macro-indicators-1     Up 19 hours (healthy)
+vn-market-intelligence-mcp-mcp-server-1           Up 16 seconds (healthy)
+vn-market-intelligence-mcp-news-fetch-1           Up 18 hours (healthy)
+vn-market-intelligence-mcp-pdf-extractor-1        Up 21 minutes (healthy)
+vn-market-intelligence-mcp-rag-service-1          Up 7 minutes (healthy)
+vn-market-intelligence-mcp-stock-price-1          Up 19 hours (healthy)
+vn-market-intelligence-mcp-technical-analysis-1   Up 19 hours (healthy)
+```
+
+**Count:** 11/11 ✓ | **All healthy:** ✓ | **Peers untouched:** ✓
+
+### Step 5: Smoke Tests
+
+#### Test 1: GET /api/financials (response structure)
+
+```bash
+curl -s "http://localhost:3000/api/financials" | head -c 400
+```
+
+**Result (first 400 chars):**
+```
+{"generatedAt":"2026-06-11T16:19:55.173Z","asOf":"2026-04-15T10:00:15.953332","count":78,"rows":[{"code":"ACB","period":"2025Q4","yearReport":2025,"quarter":4,"revenueBn":16080.42,"revenueYoy":18.95,"netProfitBn":2784.68,"netProfitYoy":-38.74,"eps":542,"pe":7.81,"pb":1.29,"roe":17.56,"roa":1.65,"debtToEquity":9.85,"netProfitMargin":39.26,"nim":null,"npl":null},{"code":"ACV","period":"2025Q4","year
+```
+
+**Status:** ✓ JSON valid | count present | rows array present | summary metrics present
+
+#### Test 2: GET /api/financials (count validation)
+
+```bash
+curl -s "http://localhost:3000/api/financials" | python3 -c "import sys,json;d=json.load(sys.stdin);print('count',d['count'],'medianPe',d['summary']['medianPe'])"
+```
+
+**Result:**
+```
+count 78 medianPe 14.09
+```
+
+**Status:** ✓ count=78 verified | medianPe=14.09 from summary | endpoint fully functional
+
+### Status
+
+**TASK17-PAGE16 DEPLOYED:** mcp-server successfully rebuilt with new /api/financials endpoint.  
+**Incidents:** None.  
+**Procedure compliance:** ✓ Strict targeted rebuild used | ✓ No --force-recreate or --remove-orphans | ✓ All 11 peers untouched and healthy.
+
+---
