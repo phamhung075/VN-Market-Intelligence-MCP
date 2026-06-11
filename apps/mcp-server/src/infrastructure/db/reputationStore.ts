@@ -107,3 +107,70 @@ export function getReputation(
     computedAt: row.computed_at,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK17-PAGE18 — Leaderboard queries
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * One row in the latest-snapshot leaderboard.
+ * risk_level is mapped to camelCase riskLevel by the store.
+ */
+export interface ReputationSnapshotRow {
+  code: string;
+  score: number;
+  trend: string;
+  riskLevel: string;
+  date: string;
+}
+
+/**
+ * Return all reputation rows at the single latest date (across all tickers).
+ * Ordered score DESC, code ASC — matching the leaderboard presentation order.
+ * Returns [] when the table is empty (no throw).
+ *
+ * @param db - Active bun:sqlite Database instance
+ * @returns  Array of ReputationSnapshotRow (may be empty)
+ */
+export function getLatestReputationSnapshot(db: Database): ReputationSnapshotRow[] {
+  const rows = db.prepare(`
+    SELECT code, score, trend, risk_level, date
+    FROM reputation_scores
+    WHERE date = (SELECT MAX(date) FROM reputation_scores)
+    ORDER BY score DESC, code ASC
+  `).all() as Array<{ code: string; score: number; trend: string; risk_level: string; date: string }>;
+
+  return rows.map((r) => ({
+    code: r.code,
+    score: r.score,
+    trend: r.trend,
+    riskLevel: r.risk_level,
+    date: r.date,
+  }));
+}
+
+/**
+ * One row in the full history result set (all dates, all tickers).
+ * Used for per-code sparklines — caller groups by code.
+ */
+export interface ReputationHistoryRow {
+  code: string;
+  date: string;
+  score: number;
+}
+
+/**
+ * Return all reputation_scores rows ordered code ASC, date ASC.
+ * Used to build per-code sparklines in the leaderboard response.
+ * Returns [] when the table is empty (no throw).
+ *
+ * @param db - Active bun:sqlite Database instance
+ * @returns  Array of ReputationHistoryRow (may be empty)
+ */
+export function getReputationHistory(db: Database): ReputationHistoryRow[] {
+  return db.prepare(`
+    SELECT code, date, score
+    FROM reputation_scores
+    ORDER BY code ASC, date ASC
+  `).all() as ReputationHistoryRow[];
+}
