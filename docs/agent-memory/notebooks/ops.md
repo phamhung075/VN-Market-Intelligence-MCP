@@ -5996,3 +5996,92 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 17 hours (healthy)
 
 **Duration:** ~4 minutes (from build-start to all verifications complete)
 
+
+---
+
+## Session: 2026-06-11 (TARGETED REBUILD — mcp-server GET /api/corporate-events LIVE)
+
+**Task:** Rebuild ONLY the mcp-server container to deploy commit a5796492 (adds GET /api/corporate-events endpoint).
+
+**Status:** DONE — Verified Live (2026-06-11 16:51:20Z)
+
+### Execution Steps
+
+**Step 1: Confirm git HEAD**
+- Command: `git rev-parse HEAD`
+- Result: `a5796492f7c396e3d53526fa2e9662c1882aef2d` ✓ (matches expected HEAD)
+
+**Step 2: Record OLD image ID**
+- Command: `docker inspect --format '{{.Image}}' vn-market-intelligence-mcp-mcp-server-1`
+- Result: `sha256:7dec47d19341b354e9a5d2e88a3ed0f1f459055ef0dc3b419414b0d84d26e48b` ✓
+- **OLD ID (baseline):** `7dec47d19341b354e9a5d2e88a3ed0f1f459055ef0dc3b419414b0d84d26e48b`
+
+**Step 3: Build mcp-server (single service)**
+- Command: `docker compose build mcp-server`
+- Build completed successfully: all layers processed
+- Dockerfile stages: base (Ubuntu 22.04) → copy src/ → copy tsconfig.json + bctc-schema.ts + mcp.config.json
+- Duration: ~12s (layers mostly cached)
+- Build manifest: SHA `sha256:8a1481a2d2614e8217c4359ba013b5a6d1f6b0b5300d5e3a7f49e2d9064c89e0`
+
+**Step 4: Start container (--no-deps, no other services)**
+- Command: `docker compose up -d --no-deps mcp-server && sleep 5`
+- Container created and started
+- Status: UP after 5s
+
+**Step 5: Verify NEW image ID (differs from OLD)**
+- Command: `docker inspect --format '{{.Image}}' vn-market-intelligence-mcp-mcp-server-1`
+- Result: `sha256:90249a2a3bb19753e6f5966695338c11ab9990e19bb6fdd1fa7bf0552715570b` ✓
+- **NEW ID (live):** `90249a2a3bb19753e6f5966695338c11ab9990e19bb6fdd1fa7bf0552715570b`
+- **VERIFICATION:** NEW ID ≠ OLD ID ✓ (different image deployed)
+
+**Step 6: Verify ALL 13 containers healthy**
+- Command: `docker ps --format "table {{.Names}}\t{{.Status}}"`
+- Results:
+  ```
+  vn-market-intelligence-mcp-mcp-server-1           Up 9 seconds (healthy)
+  vn-market-intelligence-mcp-frontend-1             Up 19 minutes (healthy)
+  vn-market-intelligence-mcp-api-gateway-1          Up 6 hours (healthy)
+  vn-market-intelligence-mcp-kinh-dich-service-1    Up 9 hours (healthy)
+  vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)
+  vn-market-intelligence-mcp-news-fetch-1           Up 17 hours (healthy)
+  vn-market-intelligence-mcp-stock-price-1          Up 17 hours (healthy)
+  vn-market-intelligence-mcp-alert-engine-1         Up 17 hours (healthy)
+  vn-market-intelligence-mcp-technical-analysis-1   Up 17 hours (healthy)
+  vn-market-intelligence-mcp-pdf-extractor-1        Up 17 hours (healthy)
+  vn-market-intelligence-mcp-macro-indicators-1     Up 17 hours (healthy)
+  headroom-proxy                                    Up 17 hours
+  mcp-gateway                                       Up 17 hours (healthy)
+  ```
+- **COUNT:** 13 services (11 app + headroom-proxy + mcp-gateway) ✓
+- **STATUS:** ALL HEALTHY ✓
+
+**Step 7: Smoke test GET /api/corporate-events**
+- Command: `curl -s 'http://localhost:3000/api/corporate-events?days=90' | head -c 400`
+- Response (first 400 bytes):
+  ```
+  {"generatedAt":"2026-06-11T14:51:20.472Z","windowDays":90,"since":"2026-03-13","asOf":"2026-06-08","typeFilter":null,"events":[{"code":"VJC","eventType":"ISS","category":"issuance","categoryLabel":"Phát hành cổ phiếu","title":"Share Issue - Stock dividend ratio 30.0%","detail":"Phát hành cổ phiếu - Trả Cổ tức bằng Cổ phiếu tỉ lệ 30.0%","eventDate":"2026-06-08"},{"code":
+  ```
+- **HTTP Status:** 200 ✓
+- **JSON Keys Present:** generatedAt, windowDays, since, asOf, typeFilter, events, byType, summary ✓
+- **Proof:** Endpoint is LIVE and returning valid corporate-events data
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| Git HEAD | ✓ PASS | a5796492f7c396e3d53526fa2e9662c1882aef2d |
+| OLD image recorded | ✓ PASS | 7dec47d19341b354e9a5d2e88a3ed0f1f459055ef0dc3b419414b0d84d26e48b |
+| Build completed | ✓ PASS | Manifest SHA 8a1481a2d2614... |
+| NEW image deployed | ✓ PASS | 90249a2a3bb19753e6f5966695338c11ab9990e19bb6fdd1fa7bf0552715570b (≠ OLD) |
+| All 13 containers healthy | ✓ PASS | docker ps: 13/13 UP, 11 app services ✓, headroom-proxy ✓, mcp-gateway ✓ |
+| GET /api/corporate-events works | ✓ PASS | HTTP 200, valid JSON, keys present (generatedAt/windowDays/since/events) |
+| Collateral damage check | ✓ PASS | No restarts of other services, all maintain original uptime |
+
+**Production Status:** GET /api/corporate-events endpoint now LIVE on commit a5796492. Container rebuilt, smoke-tested, fleet healthy.
+
+**Scope Confirmed:** ONLY mcp-server rebuilt. Other containers (frontend, api-gateway, pdf-extractor, macro-indicators, all data-layers) untouched.
+
+**Incidents:** None.
+
