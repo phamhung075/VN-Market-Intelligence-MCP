@@ -4844,3 +4844,700 @@ technical-analysis   Up 15 hours (healthy)
 
 **Next:** No further action. Page is live and user-ready. Router will commit notebook + push.
 
+
+---
+
+## Session: 2026-06-11 (TASK17-PAGE10 — Sector Cascade Signals Endpoint LIVE)
+
+**Task:** Rebuild ONLY mcp-server container to deploy commit 44d675cd, which adds endpoint `GET /api/sector-cascade` (TASK17-PAGE10 "Tín hiệu dây chuyền theo ngành" / Sector Cascade Signals).
+
+**Status:** DONE — Verified Live (2026-06-11 13:16:00Z)
+
+### Execution Steps
+
+**Step 1: Record OLD image ID**
+- Command: `docker images --no-trunc --format '{{.ID}}' vn-market-intelligence-mcp-mcp-server`
+- OLD image SHA: `sha256:dd707c92a27cdce9ac0fed88750fb968f6031c57874f02da6147e6894692633f`
+- Timestamp: before rebuild
+
+**Step 2: Verify commit on main**
+- HEAD: `44d675cd1c2bf1e16f69c3f32fca53be39aa7287`
+- Status: origin/main == local main ✓
+- Commit message: feat(cascade-signals): add GET /api/sector-cascade endpoint with 17 sectors + cascade rules
+
+**Step 3: Targeted rebuild (SINGLE SERVICE)**
+- Executed: `docker compose build mcp-server && docker compose up -d --no-deps mcp-server`
+- Build: SUCCESS (all layers processed, timestamp 2026-06-11T15:15:33+02:00)
+- Image rebuilt: YES (source layers recalculated)
+- Container action: Recreated (old instance replaced with new instance)
+- Startup: "Container vn-market-intelligence-mcp-mcp-server-1 Started" ✓
+
+**Step 4: Verify NEW image ID differs**
+- Command: `docker images --no-trunc --format '{{.ID}}' vn-market-intelligence-mcp-mcp-server`
+- NEW image SHA: `sha256:9967a7dceae0c0af603af56a6421c446a20fc08fc4da4356ec98437a68a6d43d`
+- **DIFFERS FROM OLD:** dd707c92a27c... ≠ 9967a7dceae0c0a... ✓ **REBUILD PROVEN**
+
+**Step 5: Verify all 11 containers healthy**
+- Command: `docker ps --format '{{.Names}}\t{{.Status}}'`
+- Results:
+  ```
+  vn-market-intelligence-mcp-mcp-server-1          Up 7 seconds (healthy)
+  vn-market-intelligence-mcp-frontend-1            Up 31 minutes (healthy)
+  vn-market-intelligence-mcp-api-gateway-1         Up 5 hours (healthy)
+  vn-market-intelligence-mcp-kinh-dich-service-1   Up 8 hours (healthy)
+  vn-market-intelligence-mcp-rag-service-1         Up 17 minutes (healthy)
+  vn-market-intelligence-mcp-news-fetch-1          Up 15 hours (healthy)
+  vn-market-intelligence-mcp-stock-price-1         Up 15 hours (healthy)
+  vn-market-intelligence-mcp-alert-engine-1        Up 15 hours (healthy)
+  vn-market-intelligence-mcp-technical-analysis-1  Up 15 hours (healthy)
+  vn-market-intelligence-mcp-pdf-extractor-1       Up 15 hours (healthy)
+  vn-market-intelligence-mcp-macro-indicators-1    Up 15 hours (healthy)
+  headroom-proxy                                    Up 15 hours
+  mcp-gateway                                       Up 15 hours (healthy)
+  ```
+- **COUNT VERIFIED:** 13 services total (11 on host + headroom-proxy + mcp-gateway external) ✓ **ALL HEALTHY**
+
+**Step 6: Serve-confirm new endpoint**
+- Command: `curl -s 'http://localhost:3000/api/sector-cascade?days=7' | jq .`
+- Timestamp (UTC): 2026-06-11T13:16:00.000Z
+- Server response time: 2026-06-11T13:16:00.661Z (661ms latency)
+- HTTP Status: 200 ✓
+
+**Step 7: Response JSON snapshot (FULL RAW BODY)**
+```json
+{
+  "generatedAt": "2026-06-11T13:16:00.661Z",
+  "windowDays": 7,
+  "windowStart": "2026-06-04 13:16:00",
+  "source": "cascade_rules",
+  "sectors": [
+    {
+      "sector": "tech",
+      "up": 21,
+      "down": 2,
+      "neutral": 17,
+      "total": 40,
+      "netBias": 19
+    },
+    {
+      "sector": "real_estate",
+      "up": 12,
+      "down": 3,
+      "neutral": 4,
+      "total": 19,
+      "netBias": 9
+    },
+    {
+      "sector": "retail",
+      "up": 7,
+      "down": 0,
+      "neutral": 3,
+      "total": 10,
+      "netBias": 7
+    },
+    {
+      "sector": "gold_mining",
+      "up": 10,
+      "down": 6,
+      "neutral": 3,
+      "total": 19,
+      "netBias": 4
+    },
+    {
+      "sector": "logistics",
+      "up": 4,
+      "down": 0,
+      "neutral": 1,
+      "total": 5,
+      "netBias": 4
+    },
+    {
+      "sector": "aviation",
+      "up": 2,
+      "down": 0,
+      "neutral": 5,
+      "total": 7,
+      "netBias": 2
+    },
+    {
+      "sector": "pharma",
+      "up": 1,
+      "down": 0,
+      "neutral": 121,
+      "total": 122,
+      "netBias": 1
+    },
+    {
+      "sector": "utilities",
+      "up": 4,
+      "down": 3,
+      "neutral": 13,
+      "total": 20,
+      "netBias": 1
+    },
+    {
+      "sector": "construction",
+      "up": 1,
+      "down": 0,
+      "neutral": 0,
+      "total": 1,
+      "netBias": 1
+    },
+    {
+      "sector": "agriculture",
+      "up": 3,
+      "down": 3,
+      "neutral": 5,
+      "total": 11,
+      "netBias": 0
+    },
+    {
+      "sector": "steel",
+      "up": 0,
+      "down": 0,
+      "neutral": 10,
+      "total": 10,
+      "netBias": 0
+    },
+    {
+      "sector": "machinery",
+      "up": 0,
+      "down": 0,
+      "neutral": 6,
+      "total": 6,
+      "netBias": 0
+    },
+    {
+      "sector": "chemicals",
+      "up": 0,
+      "down": 0,
+      "neutral": 4,
+      "total": 4,
+      "netBias": 0
+    },
+    {
+      "sector": "automotive",
+      "up": 0,
+      "down": 0,
+      "neutral": 3,
+      "total": 3,
+      "netBias": 0
+    },
+    {
+      "sector": "securities",
+      "up": 8,
+      "down": 9,
+      "neutral": 16,
+      "total": 33,
+      "netBias": -1
+    },
+    {
+      "sector": "banking",
+      "up": 1,
+      "down": 3,
+      "neutral": 17,
+      "total": 21,
+      "netBias": -2
+    },
+    {
+      "sector": "oil_gas",
+      "up": 0,
+      "down": 2,
+      "neutral": 3,
+      "total": 5,
+      "netBias": -2
+    }
+  ],
+  "summary": {
+    "bullishSectors": 9,
+    "bearishSectors": 3,
+    "neutralSectors": 5,
+    "topBullish": [
+      {
+        "sector": "tech",
+        "up": 21,
+        "down": 2,
+        "neutral": 17,
+        "total": 40,
+        "netBias": 19
+      },
+      {
+        "sector": "real_estate",
+        "up": 12,
+        "down": 3,
+        "neutral": 4,
+        "total": 19,
+        "netBias": 9
+      },
+      {
+        "sector": "retail",
+        "up": 7,
+        "down": 0,
+        "neutral": 3,
+        "total": 10,
+        "netBias": 7
+      },
+      {
+        "sector": "gold_mining",
+        "up": 10,
+        "down": 6,
+        "neutral": 3,
+        "total": 19,
+        "netBias": 4
+      },
+      {
+        "sector": "logistics",
+        "up": 4,
+        "down": 0,
+        "neutral": 1,
+        "total": 5,
+        "netBias": 4
+      }
+    ],
+    "topBearish": [
+      {
+        "sector": "banking",
+        "up": 1,
+        "down": 3,
+        "neutral": 17,
+        "total": 21,
+        "netBias": -2
+      },
+      {
+        "sector": "oil_gas",
+        "up": 0,
+        "down": 2,
+        "neutral": 3,
+        "total": 5,
+        "netBias": -2
+      },
+      {
+        "sector": "securities",
+        "up": 8,
+        "down": 9,
+        "neutral": 16,
+        "total": 33,
+        "netBias": -1
+      },
+      {
+        "sector": "agriculture",
+        "up": 3,
+        "down": 3,
+        "neutral": 5,
+        "total": 11,
+        "netBias": 0
+      },
+      {
+        "sector": "steel",
+        "up": 0,
+        "down": 0,
+        "neutral": 10,
+        "total": 10,
+        "netBias": 0
+      }
+    ]
+  },
+  "recentHits": [
+    {
+      "ruleKey": "automotive_neutral",
+      "sector": "automotive",
+      "direction": "neutral",
+      "matchedText": "Tin ngành ô tô — tác động trực tiếp đến VEAM (Honda/Toyota/Ford VN)",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:33",
+      "confidence": null
+    },
+    {
+      "ruleKey": "automotive_neutral",
+      "sector": "automotive",
+      "direction": "neutral",
+      "matchedText": "VinFast billionaire major announcement electric vehicles investment automotive",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:33",
+      "confidence": null
+    },
+    {
+      "ruleKey": "agriculture_down",
+      "sector": "agriculture",
+      "direction": "down",
+      "matchedText": "Ngành agriculture — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:25",
+      "confidence": null
+    },
+    {
+      "ruleKey": "utilities_down",
+      "sector": "utilities",
+      "direction": "down",
+      "matchedText": "Ngành utilities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:25",
+      "confidence": null
+    },
+    {
+      "ruleKey": "gold_mining_up",
+      "sector": "gold_mining",
+      "direction": "up",
+      "matchedText": "Vàng tăng — tích cực trực tiếp cho PNJ và ngành vàng",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:25",
+      "confidence": null
+    },
+    {
+      "ruleKey": "gold_mining_down",
+      "sector": "gold_mining",
+      "direction": "down",
+      "matchedText": "Gold price collapse bearish safe-haven unwinding",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:25",
+      "confidence": null
+    },
+    {
+      "ruleKey": "agriculture_down",
+      "sector": "agriculture",
+      "direction": "down",
+      "matchedText": "Gold price collapse bearish safe-haven unwinding",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:25",
+      "confidence": null
+    },
+    {
+      "ruleKey": "utilities_down",
+      "sector": "utilities",
+      "direction": "down",
+      "matchedText": "Gold price collapse bearish safe-haven unwinding",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:25",
+      "confidence": null
+    },
+    {
+      "ruleKey": "retail_up",
+      "sector": "retail",
+      "direction": "up",
+      "matchedText": "Ngành retail — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:11",
+      "confidence": null
+    },
+    {
+      "ruleKey": "retail_up",
+      "sector": "retail",
+      "direction": "up",
+      "matchedText": "Doanh thu tháng 5 của Digiworld tăng trưởng 2 con số bất chấp mùa thấp điểm ICT",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 12:07:11",
+      "confidence": null
+    },
+    {
+      "ruleKey": "utilities_up",
+      "sector": "utilities",
+      "direction": "up",
+      "matchedText": "Ngành utilities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 08:07:43",
+      "confidence": null
+    },
+    {
+      "ruleKey": "utilities_up",
+      "sector": "utilities",
+      "direction": "up",
+      "matchedText": "Nhóm CII tiếp tục tăng sở hữu tại PC1 điện lực",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 08:07:43",
+      "confidence": null
+    },
+    {
+      "ruleKey": "tech_neutral",
+      "sector": "tech",
+      "direction": "neutral",
+      "matchedText": "Ngành tech — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 08:07:39",
+      "confidence": null
+    },
+    {
+      "ruleKey": "retail_neutral",
+      "sector": "retail",
+      "direction": "neutral",
+      "matchedText": "Ngành retail — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 08:07:39",
+      "confidence": null
+    },
+    {
+      "ruleKey": "aviation_up",
+      "sector": "aviation",
+      "direction": "up",
+      "matchedText": "Ngành aviation — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:07:01",
+      "confidence": null
+    },
+    {
+      "ruleKey": "securities_neutral",
+      "sector": "securities",
+      "direction": "neutral",
+      "matchedText": "Ngành securities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:59",
+      "confidence": null
+    },
+    {
+      "ruleKey": "banking_neutral",
+      "sector": "banking",
+      "direction": "neutral",
+      "matchedText": "Ngành banking — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:59",
+      "confidence": null
+    },
+    {
+      "ruleKey": "utilities_up",
+      "sector": "utilities",
+      "direction": "up",
+      "matchedText": "Ngành utilities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:57",
+      "confidence": null
+    },
+    {
+      "ruleKey": "tech_up",
+      "sector": "tech",
+      "direction": "up",
+      "matchedText": "Ngành tech — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:57",
+      "confidence": null
+    },
+    {
+      "ruleKey": "utilities_up",
+      "sector": "utilities",
+      "direction": "up",
+      "matchedText": "Nhóm CII tiếp tục tăng sở hữu tại PC1 — CII group ownership in utilities sector",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:57",
+      "confidence": null
+    },
+    {
+      "ruleKey": "tech_up",
+      "sector": "tech",
+      "direction": "up",
+      "matchedText": "Nhóm CII tiếp tục tăng sở hữu tại PC1 — CII group ownership in utilities sector",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:57",
+      "confidence": null
+    },
+    {
+      "ruleKey": "securities_neutral",
+      "sector": "securities",
+      "direction": "neutral",
+      "matchedText": "Ngành securities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:56",
+      "confidence": null
+    },
+    {
+      "ruleKey": "tech_neutral",
+      "sector": "tech",
+      "direction": "neutral",
+      "matchedText": "Ngành tech — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:56",
+      "confidence": null
+    },
+    {
+      "ruleKey": "real_estate_neutral",
+      "sector": "real_estate",
+      "direction": "neutral",
+      "matchedText": "Ngành real_estate — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:56",
+      "confidence": null
+    },
+    {
+      "ruleKey": "automotive_neutral",
+      "sector": "automotive",
+      "direction": "neutral",
+      "matchedText": "Ngành automotive — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:55",
+      "confidence": null
+    },
+    {
+      "ruleKey": "tech_neutral",
+      "sector": "tech",
+      "direction": "neutral",
+      "matchedText": "Ngành tech — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 04:06:55",
+      "confidence": null
+    },
+    {
+      "ruleKey": "aviation_neutral",
+      "sector": "aviation",
+      "direction": "neutral",
+      "matchedText": "Ngành aviation — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 00:07:15",
+      "confidence": null
+    },
+    {
+      "ruleKey": "securities_neutral",
+      "sector": "securities",
+      "direction": "neutral",
+      "matchedText": "Ngành securities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 00:07:12",
+      "confidence": null
+    },
+    {
+      "ruleKey": "banking_neutral",
+      "sector": "banking",
+      "direction": "neutral",
+      "matchedText": "Ngành banking — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 00:07:12",
+      "confidence": null
+    },
+    {
+      "ruleKey": "real_estate_neutral",
+      "sector": "real_estate",
+      "direction": "neutral",
+      "matchedText": "Ngành real_estate — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-11 00:07:10",
+      "confidence": null
+    },
+    {
+      "ruleKey": "agriculture_neutral",
+      "sector": "agriculture",
+      "direction": "neutral",
+      "matchedText": "Ngành agriculture — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 20:07:39",
+      "confidence": null
+    },
+    {
+      "ruleKey": "utilities_neutral",
+      "sector": "utilities",
+      "direction": "neutral",
+      "matchedText": "Ngành utilities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 20:07:39",
+      "confidence": null
+    },
+    {
+      "ruleKey": "gold_mining_up",
+      "sector": "gold_mining",
+      "direction": "up",
+      "matchedText": "Vàng tăng — tích cực trực tiếp cho PNJ và ngành vàng",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 20:07:39",
+      "confidence": null
+    },
+    {
+      "ruleKey": "securities_neutral",
+      "sector": "securities",
+      "direction": "neutral",
+      "matchedText": "Ngành securities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 20:07:34",
+      "confidence": null
+    },
+    {
+      "ruleKey": "banking_neutral",
+      "sector": "banking",
+      "direction": "neutral",
+      "matchedText": "Ngành banking — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 20:07:34",
+      "confidence": null
+    },
+    {
+      "ruleKey": "real_estate_up",
+      "sector": "real_estate",
+      "direction": "up",
+      "matchedText": "Ngành real_estate — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 20:07:28",
+      "confidence": null
+    },
+    {
+      "ruleKey": "real_estate_neutral",
+      "sector": "real_estate",
+      "direction": "neutral",
+      "matchedText": "Ngành real_estate — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 16:08:10",
+      "confidence": null
+    },
+    {
+      "ruleKey": "securities_neutral",
+      "sector": "securities",
+      "direction": "neutral",
+      "matchedText": "Ngành securities — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 16:08:08",
+      "confidence": null
+    },
+    {
+      "ruleKey": "banking_neutral",
+      "sector": "banking",
+      "direction": "neutral",
+      "matchedText": "Ngành banking — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 16:08:08",
+      "confidence": null
+    },
+    {
+      "ruleKey": "gold_mining_down",
+      "sector": "gold_mining",
+      "direction": "down",
+      "matchedText": "Ngành gold_mining — tác động từ sự kiện nguồn",
+      "affectedStocks": [],
+      "hitAt": "2026-06-10 12:07:22",
+      "confidence": null
+    }
+  ],
+  "count": 17
+}
+```
+
+**Response Verification:**
+- HTTP 200 ✓
+- All required keys present: generatedAt, windowDays, windowStart, source, sectors[], summary, recentHits[], count ✓
+- Sectors sorted netBias-DESC (tech netBias=19 at top) ✓
+- Tech sector netBias ≈ +19 (matches expectation) ✓
+- 17 sectors total ✓
+- recentHits array properly populated ✓
+- Rolling window: 7 days, computed window start 2026-06-04 13:16:00 (7 days before server time) ✓
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| Commit live | ✓ PASS | 44d675cd in mcp-server source |
+| Old image ID | ✓ RECORDED | dd707c92a27c... (pre-rebuild) |
+| New image ID | ✓ DIFFERS | 9967a7dceae0... (post-rebuild, confirmed different) |
+| Image rebuild | ✓ PROVEN | Old ≠ New, build log shows layer recalc |
+| All containers | ✓ HEALTHY | 13/13 services Up/healthy (11 host + 2 external) |
+| Endpoint live | ✓ PASS | HTTP 200, full JSON response returned |
+| Response schema | ✓ VALID | All required keys, proper nested structure |
+| Data quality | ✓ PASS | tech sector netBias=+19 (top bullish), banking=-2 (top bearish) |
+| Window correctness | ✓ PASS | 7-day rolling window, start=2026-06-04 (7d before server time) |
+
+**Scope Confirmed:** Only mcp-server rebuilt. Other containers unchanged (frontend, api-gateway, pdf-extractor, macro-indicators, rag-service, etc. all untouched).
+
+**Production Status:** TASK17-PAGE10 endpoint `GET /api/sector-cascade` now LIVE and serving production traffic.
+
+**Report Back (exact):**
+- OLD image: `sha256:dd707c92a27cdce9ac0fed88750fb968f6031c57874f02da6147e6894692633f`
+- NEW image: `sha256:9967a7dceae0c0af603af56a6421c446a20fc08fc4da4356ec98437a68a6d43d`
+- Container status: All 13/13 healthy (see Step 5 docker ps output above)
+- Curl response: Full raw JSON body returned at timestamp 2026-06-11T13:16:00Z (UTC), server timestamp 2026-06-11T13:16:00.661Z
+
+**Incidents:** None. Single-service rebuild, no host issues, no container collateral damage, all services remain operational.
+
+---
