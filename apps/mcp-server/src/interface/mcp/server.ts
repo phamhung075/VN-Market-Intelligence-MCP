@@ -123,6 +123,8 @@ import { handleGetGlobalMarkets } from "./routes/globalMarketsHandler.js";
 import { handleGetCorporateEvents } from "./routes/corporateEventsHandler.js";
 // TASK17-PAGE14: GET /api/shareholders — Major-holder ownership structure snapshot, stored-data-only
 import { handleGetShareholdersHttp } from "./routes/shareholdersHandler.js";
+// TASK17-PAGE15: GET /api/officers — Board of Directors & Management ("Ban lãnh đạo & quản trị"), stored-data-only
+import { handleGetOfficersHttp } from "./routes/officersHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2180,6 +2182,17 @@ export async function createBunServer(
     // Public endpoint (no auth).
     if (method === "GET" && pathname === "/api/shareholders") {
       handleGetShareholdersHttp(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE15: GET /api/officers ──────────────────────────────────
+    // Serves Board of Directors & Management ("Ban lãnh đạo & quản trị").
+    // Governance counterpart to the shareholders endpoint.
+    // Query params: ?code=XXX (optional ticker, case-insensitive; invalid/absent → first code)
+    // Stored-data-only (NO live network/microservice calls).
+    // Public endpoint (no auth).
+    if (method === "GET" && pathname === "/api/officers") {
+      handleGetOfficersHttp(req, res, db);
       return;
     }
 
