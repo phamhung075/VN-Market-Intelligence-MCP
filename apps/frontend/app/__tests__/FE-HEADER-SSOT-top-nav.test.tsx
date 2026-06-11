@@ -7,6 +7,7 @@
  *     - "Tổng Quan" (/dashboard) is ENABLED (no comingSoon) — dashboard._index.tsx exists (P0-1).
  *     - "Tin Tức" (/dashboard/news) is ENABLED (no comingSoon) — dashboard.news.tsx exists (TASK-17 P1-1b).
  *     - "Vĩ Mô" (/dashboard/macro) is ENABLED (no comingSoon) — dashboard.macro.tsx exists (TASK-17 P1-2b).
+ *     - "Tài Chính" (/dashboard/bctc) is ENABLED (no comingSoon) — dashboard.bctc.tsx exists (TASK-17 P1-3b).
  *  3. SYSTEM_NAV has 7 ops/infra tabs (incl. bctc-eval + bctc-inspect; excl. db).
  *  4. NAV_ITEMS is the union (analyst + system) — 15 total.
  *  5. The "Cổ Phiếu" tab links to /dashboard/analysis (the existing route) — NOT /dashboard/stock.
@@ -53,7 +54,7 @@ describe("TopNav — ANALYST_NAV canonical list", () => {
         { to: "/dashboard/news", label: "Tin Tức" },
         { to: "/dashboard/macro", label: "Vĩ Mô" },
         { to: "/dashboard/ai-intel", label: "AI Intel", comingSoon: true },
-        { to: "/dashboard/bctc", label: "Tài Chính", comingSoon: true },
+        { to: "/dashboard/bctc", label: "Tài Chính" },
         { to: "/dashboard/alerts", label: "Cảnh Báo", comingSoon: true },
       ];
     expected.forEach(({ to, label, comingSoon }, i) => {
