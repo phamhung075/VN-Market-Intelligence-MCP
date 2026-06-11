@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-11T19:13:09Z",
+    "_updated_at": "2026-06-11T19:27:17Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -4886,16 +4886,32 @@
     ],
     "backlog": [
       {
+        "id": "ARCH-SHIP-WAVE-REAUDIT",
+        "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
+        "owner": "architect",
+        "status": "TODO",
+        "zone": "multi",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "high",
+        "desc": "Brownfield analysis from docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md (APPROVED). Rule NFR-C-1 stale-flag Option A (handler) vs B (middleware). Probe reputation_scores trend distribution + design trend-delta fix (PO ruled A-16 DEGRADED in-scope). Split zone:multi fixes (endpoint+page): NFR-C-4 stockPerformance direction, NFR-C-5 foreign-flow stale_fields, NFR-C-7 reputation trend. Order: BROKEN->DEGRADED->NFR. Output design brief -> pm decomposes.",
+        "created_at": "2026-06-11T19:27:17Z",
+        "created_by": "po"
+      },
+      {
         "id": "BA-SHIP-WAVE-REAUDIT",
         "title": "Requirement spec for SHIP-WAVE-REAUDIT: live-behavior re-audit of TASK-17 ship wave (19 items) + triage matrix",
         "owner": "ba",
-        "status": "TODO",
+        "status": "DONE",
         "zone": "docs/agents/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "high",
         "desc": "Decompose into a per-endpoint LIVE-PROBE audit matrix: for each of the 17 TASK-17 endpoint+page pairs + FIX-VNSTOCK-FUNDAMENTALS + FIX-EVIDENCE-PIPELINE-STARVED, define the live probe (exact curl + frontend loader path), the GOOD/DEGRADED/BROKEN rubric, and the expected well-shaped contract (directional fields, stale flags, non-empty rules). Output FR per ship-wave item + improvement-lane NFRs (no prose-where-JSON, must carry direction/delta on market data, must flag stale). Architect splits multi-zone (mcp-server endpoint vs frontend page) where a fix spans both.",
         "created_at": "2026-06-11T19:13:09Z",
-        "created_by": "po"
+        "created_by": "po",
+        "updated_at": "2026-06-11T21:00:00Z",
+        "spec_file": "docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md",
+        "completed_at": "2026-06-11T19:27:17Z",
+        "completed_by": "po"
       },
       {
         "id": "TASK17-FOREIGN-FLOW",
@@ -8607,10 +8623,10 @@
       }
     ],
     "head": {
-      "next": "ba",
-      "task": "BA-SHIP-WAVE-REAUDIT",
+      "next": "architect",
+      "task": "ARCH-SHIP-WAVE-REAUDIT",
       "sprint": "SHIP-WAVE-REAUDIT",
-      "set_at": "2026-06-11T19:13:09Z",
+      "set_at": "2026-06-11T19:27:17Z",
       "set_by": "po"
     },
     "done_verified": [
@@ -8718,5 +8734,16 @@
         "created_by": "po"
       }
     ]
-  }
+  },
+  "decision_journal": [
+    {
+      "task_id": "BA-SHIP-WAVE-REAUDIT",
+      "sprint_id": "SHIP-WAVE-REAUDIT",
+      "agent": "ba",
+      "timestamp": "2026-06-11T21:00:00Z",
+      "what_considered": "only path: probe all 19 items live (curl + DB query), produce per-item GOOD/DEGRADED/BROKEN rubric from actual payload, map to DDD layers",
+      "decision": "wrote SHIP-WAVE-REAUDIT-BA-spec.md with 17 endpoint+page pairs + 2 fix-verify items + 9 improvement-lane NFRs; 0 PO blockers; 1 architect ruling needed (stale-flag Option A vs B)",
+      "why_change": "no change from plan; spec complete as directed"
+    }
+  ]
 }
