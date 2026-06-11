@@ -2795,3 +2795,107 @@ All 6 ported services (alert, kinh-dich, news, rag, stock, ta) now report status
 
 **STATUS**: Ready for PO flip of GFD-12 ticket.
 
+
+---
+
+## Session: 2026-06-11 (FRONTEND-REBUILD — dashboard.intel page)
+
+**Task:** Targeted rebuild of frontend container only → live-verify new dashboard.intel route renders with live CHEF data.
+
+**Context:** origin/main advanced to commit 5e84aa24 with new frontend route `apps/frontend/app/routes/dashboard.intel.tsx` ("Bản Tin AI" — AI Intel / CHEF Bulletin hub). Container must pick up new route via rebuild. STRICT constraints: NO full down/up (peer destruction ~21min), targeted build+deploy only. Non-committer role (concurrent po committer).
+
+### Execution Steps
+
+**Step 1: VERIFY NEW ROUTE DEPLOYED**
+- File check: `ls -la apps/frontend/app/routes/dashboard.intel.tsx`
+- Status: 7.3 KB file present, dated 2026-06-11 10:27
+- Git HEAD: 5e84aa24 chore(memory/dev-frontend): notebook 2026-06-11 intel page
+
+**Step 2: TARGETED BUILD (frontend only)**
+- Command: `docker compose build frontend` (from repo root)
+- Result: SUCCESS
+  - Image SHA: 2f507d3d61fa13930c463372c7a3bf03d7edb2dbf0f544727155542077a49bce
+  - Build time: 34.7 seconds
+  - Final layer: "naming to docker.io/library/vn-market-intelligence-mcp-frontend:latest"
+
+**Step 3: DEPLOY (no-deps, no-down)**
+- Command: `docker compose up -d --no-deps frontend && sleep 3`
+- Result: SUCCESS
+  - Container action: Recreated (not recreate-orphans, no destructive flags)
+  - Startup time: 9 seconds
+  - Health: UP (healthy)
+  - Port: 3001 → 3001 (unchanged)
+
+**Step 4: PEER INTEGRITY CHECK**
+- Baseline: 11 services (from docker ps pre-rebuild)
+- Post-rebuild count: 11 services (unchanged)
+- All statuses: Up (healthy)
+- No service restart cascade or downtime observed
+
+Services verified Up & healthy:
+1. alert-engine (5006) — 11h stable
+2. api-gateway (4000) — 8m stable
+3. frontend (3001) — 9s stable [REBUILT THIS SESSION]
+4. kinh-dich-service (5005) — 3h stable
+5. macro-indicators (5004) — 11h stable
+6. mcp-server (3000, 4004) — 1h stable [DATA PROVIDER]
+7. news-fetch (5008) — 10h stable
+8. pdf-extractor (5001) — 11h stable
+9. rag-service (5002) — 10h stable
+10. stock-price (5010) — 11h stable
+11. technical-analysis (5003) — 11h stable
+
+**Step 5: ENDPOINT PROBE 1 — DATA SOURCE (mcp-server market-digest)**
+- URL: `curl -s http://localhost:3000/api/market-digest`
+- Status: HTTP 200 OK
+- Response: JSON with 3 live CHEF bulletins
+- Sample content:
+  ```json
+  {
+    "items": [
+      {
+        "text": "Bản tin sáng Pháp — Thị trường VN (11/06/2026)\n
+                 VN-Index: 1.797 (-7 / -0.37%)\n
+                 🌐 Thị trường toàn cầu: VIX: 22.22, DXY: 99.94, S&P500: 7267...\n
+                 GAS alert [HIGH]: news_mention...\n
+                 PLX alert [HIGH]: news_mention...",
+        "ts": "2026-06-11 06:00:01",
+        "type": "france_summary",
+        "from_agent": "france-summary"
+      },
+      {...2 more bulletins}
+    ],
+    "count": 3,
+    "fetchedAt": "2026-06-11T08:34:30.357Z"
+  }
+  ```
+- Live CHEF data confirmed: Vietnamese market bulletins with real data (VN-Index, sector alerts, foreign flows, macro indicators)
+
+**Step 6: ENDPOINT PROBE 2 — FRONTEND PAGE (dashboard.intel)**
+- URL: `curl -s http://localhost:3001/dashboard/intel`
+- Status: HTTP 200 OK
+- Response size: 30,561 bytes (full HTML document)
+- Page title: `<title>Bản Tin AI — VN Market Intelligence</title>`
+- Page heading: `<h1>Bản Tin AI — CHEF Bulletin Hub</h1>`
+- Page description: `<p>Bản tin thị trường tổng hợp từ AI agent — phân tích, nhận định và cảnh báo</p>`
+- Section: `<h2>Bản tin mới nhất</h2>` (Latest bulletins)
+- Rendered content includes:
+  - CHEF bulletin card with type badge (france_summary)
+  - Full bulletin text: "Bản tin sáng Pháp — Thị trường VN (11/06/2026)"
+  - VN-Index data with direction and percentage
+  - Market alerts: GAS [HIGH], PLX [HIGH]
+  - Global market context: VIX, DXY, S&P500
+- Vietnamese markers found: "Bản Tin", "VN-Index", "france-summary", "Bản tin mới nhất"
+
+**VERIFICATION COMPLETE**
+
+✓ BUILD: SUCCESS — frontend image rebuilt with new dashboard.intel.tsx route
+✓ DEPLOY: SUCCESS — container up in 9 seconds, no downtime
+✓ PEER INTEGRITY: SUCCESS — all 11 services Up & healthy, zero disturbance
+✓ DATA SOURCE: SUCCESS — mcp-server delivers live CHEF bulletins (3 items, real market data)
+✓ PAGE RENDER: SUCCESS — /dashboard/intel loads HTTP 200 with 30.5 KB HTML
+✓ CHEF CONTENT: SUCCESS — page renders real Vietnamese market bulletin data (VN-Index, sector alerts, macro indicators)
+
+**FINAL VERDICT: PASS**
+Frontend container rebuilt and live-verified. Dashboard.intel page successfully renders live CHEF bulletins from mcp-server with real market data. No peer disturbance. All 11 services remain healthy.
+
