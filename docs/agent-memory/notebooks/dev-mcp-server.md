@@ -1,5 +1,20 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE — DONE
+
+**Task:** FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (CRITICAL, apps/mcp-server/, 6 fixes from architect SPIKE brief).
+**Root causes:** Mode B = startup probe fires sweep on write-wedge DB (any DB error → shouldFire=true) → 90 Python forks → OOM cascade. Mode A = markFetched on null/backoff path stamps fetch_log as "fetched" even though storeFinancials never called → fetch_log lies; data tables frozen.
+**Fix 4 (wedge-guard):** vnstockStartupProbe.ts catch block now checks error message — "Cannot use a closed database" / "unable to open database" / "disk I/O error" → return without firing. Non-wedge errors (missing table etc.) still fire per FR-6. Breaks OOM restart cascade.
+**Fix 3 (observability):** startScheduler.ts startup probe IIFE now wrapped in jobRunRepo.wrapRun('vnstockStartupProbe') → probe runs appear in cron_job_runs; crashes recorded as status=error.
+**Fix 2 (fail-loud 0-rows):** runVnstockFundamentalsJob measures DB row delta (vnstock_financials + balance_sheet + cash_flow count before/after sweep). rowsWritten=0 with tickers>0 → WORK alert immediately. Via injectable getDbFn for tests.
+**Fix 1 (accurate fetched_at):** storeFinancials/storeBalanceSheet/storeCashFlow use datetime('now') in SQL instead of Python-supplied f.fetchedAt. MAX(fetched_at) staleness queries now honest. Updated vnstock-3statement.test.ts to time-range assertion.
+**Fix 5 (bare except):** FINANCE_SCRIPT `except: pass` replaced with `except Exception as ratio_err: sys.stderr.write(...)`. pe/pb/roe/roa schema drift now surfaces in container logs.
+**Fix 6 (metrics):** VnstockJobResult gains rowsWritten field; cron entry returns result.rowsWritten (actual rows) not result.succeeded (ticker count). runSweep returns rowsWritten:0 (computed by caller via DB delta).
+**Tests:** 9 new TCs in fix-vnstock-fundamentals-crash-spike.test.ts; 1942a + vnstock-3statement updated. 39 related tests all GREEN. tsc exit 0.
+**Files:** vnstockStartupProbe.ts, startScheduler.ts, vnstockFundamentalsJob.ts, vnstockStore.ts (3 functions), vnstockBridge.ts, 3 test files.
+**Commit:** f4f5ce65
+**Zone health:** bun test 39/0 scoped+regression | tsc exit 0 | 157 tools unchanged | 78 cron.schedule | HEALTHY
+
 ## 2026-06-11 · FIX-EVIDENCE-PIPELINE-STARVED — DONE
 
 **Task:** FIX-EVIDENCE-PIPELINE-STARVED (backlog, high priority, zone apps/mcp-server/).
