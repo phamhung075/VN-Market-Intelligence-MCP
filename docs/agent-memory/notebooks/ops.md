@@ -6318,3 +6318,82 @@ Both endpoints reachable. No deep-verify (router does serve-diff itself).
 
 ---
 
+## 2026-06-11 — TASK17-PAGE14 Frontend Deploy (Shareholders Page)
+
+**Task:** Targeted rebuild + redeploy of frontend container only for new `/dashboard/shareholders` page (Cơ cấu cổ đông).
+
+**Backend Status:** `GET /api/shareholders` endpoint already LIVE via mcp-server.
+
+### Build & Deploy Log
+
+**OLD Frontend Image ID:** `sha256:3e6a7cd34bcd42e887c32bdb8e00642794c39d3ed13e53d0cc835ac619b18e68`
+
+**Command Executed:**
+```bash
+docker compose build frontend
+docker compose up -d --no-deps frontend && sleep 5
+```
+
+**NEW Frontend Image ID:** `sha256:facdfdb072cdf9ee990e50c0b1b430b570e9c72ef132f02e0d2ac296d14de87e`
+
+Image SHA differs: `3e6a7cd` → `facdfdb` ✓
+
+### Vite Build Output
+
+- 1727 modules transformed
+- client assets gzipped: 7.83 kB (shareholders route bundle)
+- SSR bundle: 533.55 kB
+- Build time: 14.95s (client) + 1.40s (server) = 16.35s total
+
+### Post-Deploy Health Check
+
+**All 11 Fleet Services — HEALTHY:**
+
+```
+vn-market-intelligence-mcp-alert-engine-1          Up 18 hours (healthy)
+vn-market-intelligence-mcp-api-gateway-1           Up 7 hours (healthy)
+vn-market-intelligence-mcp-frontend-1              Up 7 seconds (healthy)     ← REBUILT
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 10 hours (healthy)
+vn-market-intelligence-mcp-macro-indicators-1      Up 18 hours (healthy)
+vn-market-intelligence-mcp-mcp-server-1            Up 12 minutes (healthy)
+vn-market-intelligence-mcp-news-fetch-1            Up 17 hours (healthy)
+vn-market-intelligence-mcp-pdf-extractor-1         Up 18 hours (healthy)
+vn-market-intelligence-mcp-rag-service-1           Up 3 hours (healthy)
+vn-market-intelligence-mcp-stock-price-1           Up 18 hours (healthy)
+vn-market-intelligence-mcp-technical-analysis-1    Up 18 hours (healthy)
+```
+
+Count: 11/11 ✓ | No peer collateral ✓
+
+### Smoke Tests (Frontend Origin :3001)
+
+1. **Shareholders Page (no params):**
+   - Endpoint: `http://localhost:3001/dashboard/shareholders`
+   - HTTP: `200` ✓
+
+2. **Shareholders Page (with code param):**
+   - Endpoint: `http://localhost:3001/dashboard/shareholders?code=FPT`
+   - HTTP: `200` ✓
+
+3. **Shareholders API Proxy (backend route):**
+   - Endpoint: `http://localhost:3001/api/shareholders?code=FPT`
+   - HTTP: `200` ✓ (proxies to mcp-server `/api/shareholders`)
+
+### Scope Confirmed
+
+**ONLY frontend rebuilt.** No other service touched:
+- No `docker compose down` (forbidden pattern avoided)
+- No bare `docker compose up -d` (scoped to `--no-deps frontend`)
+- No `--force-recreate`, `--remove-orphans`, or similar
+- All peer containers remain on original images + uptimes
+
+### Production Status
+
+**TASK17-PAGE14 SHIPPED:** Frontend page `/dashboard/shareholders` + proxy now live on origin :3001. Backed by mcp-server endpoint `GET /api/shareholders` (already LIVE as of prior deploy).
+
+**Incidents:** None.
+
+**Duration:** 4 minutes build + deploy + verify.
+
+---
+
