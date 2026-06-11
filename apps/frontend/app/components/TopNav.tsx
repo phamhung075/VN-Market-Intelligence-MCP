@@ -39,7 +39,7 @@ export type NavItem = {
 /**
  * PRIMARY analyst-facing tabs — always visible in the top nav.
  *
- * Route existence verified against apps/frontend/app/routes/ (2026-06-11, TASK-17 PAGE 15):
+ * Route existence verified against apps/frontend/app/routes/ (2026-06-11, TASK-17 PAGE 17):
  *   - /dashboard          → dashboard._index.tsx    EXISTS  → enabled (label: "Tổng Quan")
  *   - /dashboard/analysis  → dashboard.analysis.tsx  EXISTS  → enabled (label: "Cổ Phiếu")
  *   - /dashboard/technical → dashboard.technical.tsx EXISTS  → enabled (label: "Kỹ Thuật") — TASK-17 P2-1b
@@ -58,6 +58,7 @@ export type NavItem = {
  *   - /dashboard/shareholders    → dashboard.shareholders.tsx    EXISTS → enabled (label: "Cơ cấu cổ đông") — TASK-17 PAGE 14
  *   - /dashboard/officers        → dashboard.officers.tsx        EXISTS → enabled (label: "Ban lãnh đạo") — TASK-17 PAGE 15
  *   - /dashboard/financials      → dashboard.financials.tsx      EXISTS → enabled (label: "Định giá") — TASK-17 PAGE 16
+ *   - /dashboard/fed-rates       → dashboard.fed-rates.tsx        EXISTS → enabled (label: "Lãi suất Fed") — TASK-17 PAGE 17
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -85,6 +86,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/shareholders", label: "Cơ cấu cổ đông" },
   { to: "/dashboard/officers", label: "Ban lãnh đạo" },
   { to: "/dashboard/financials", label: "Định giá" },
+  { to: "/dashboard/fed-rates", label: "Lãi suất Fed" },
 ];
 
 /**
@@ -106,7 +108,7 @@ export const SYSTEM_NAV: NavItem[] = [
 
 /**
  * NAV_ITEMS — backward-compat union of all nav entries.
- * SSOT: ANALYST_NAV (22) + SYSTEM_NAV (7) = 29 total.
+ * SSOT: ANALYST_NAV (23) + SYSTEM_NAV (7) = 30 total.
  * Any consumer that iterates all routes should use this.
  * Active NAV = ANALYST_NAV (top level) + SYSTEM_NAV (System group).
  *
