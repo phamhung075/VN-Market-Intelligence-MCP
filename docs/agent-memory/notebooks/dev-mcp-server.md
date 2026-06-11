@@ -1,5 +1,24 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-AGM — GET /api/agm-plan-actual — DONE
+
+**Task:** TASK17-AGM endpoint wave — AGM plan-vs-actual delivery analysis
+**Scope:** apps/mcp-server/ — agmPlanActualHandler.ts (new), agmPlanStore.ts (+queryAgmPlanActual + AgmPlanActualItem), server.ts (import + route wire), TASK17-AGM-agm-plan-actual-endpoint.test.ts (new)
+**Contract:** agm_plan + agm_actuals joined on (stock_code, year, ptid); full-year actual = report_term_id=1; open year (no term_id=1) → IN_PROGRESS never BEHIND.
+**Verified sanity numbers reproduced:** FPT 2024 rev 101.8% EXCEEDED; HPG 2023 rev 80.2% BEHIND; HPG 2023 pat 85.0% BEHIND; VIC 2024 pat 117.2% EXCEEDED.
+**OPEN-YEAR GUARD:** buildMetrics checks for fullYearRow (term_id=1) before computing pct. No term_id=1 → actual_ty=null, completion_pct=null, status=IN_PROGRESS. YTD from highest non-1 term provided as context.
+**Tests:** 44 pass / 0 fail (119 expect() calls). tsc exit 0. toolCount 157 unchanged. schedulerCount 78 unchanged.
+**Endpoint:** GET /api/agm-plan-actual?year=YYYY&limit=N → {generatedAt, defaultYear, availableYears, items:[{stockCode,year,metrics:[{ptid,label,plan_ty,actual_ty,completion_pct,status,ytd_ty,ytd_term_id}]}], summary:{year,exceeded,onTrack,behind,inProgress,total}, count}
+**Zone health:** bun test 44/0 scoped | tsc exit 0 | 157 tools intact | scheduler 78 cron.schedule | HEALTHY
+
+## 2026-06-11 · TASK17-FOREIGN-FLOW Wave 1b — summary correctness fix — DONE
+
+**Task:** TASK17-FOREIGN-FLOW Wave 1b — fix two correctness defects in GET /api/foreign-flow
+**DEFECT 1 fixed:** summary was computed over limit-truncated rowset. queryForeignFlow now fetches all latest-day rows (LIMIT MAX_LIMIT=500 > ~103 real), slices display items AFTER shaping, returns {allItems, items}. Handler passes allItems to buildSummary.
+**DEFECT 2 fixed:** topSells was slice(0,5) on DESC-ordered rows → returned 5 smallest sellers. Now sorts netSells ASC by foreignVolume before slice → most-negative first (NVL -393749 is topSells[0]).
+**Tests:** replaced self-confirming AC-11 with distinct-magnitude ordering assertions; added REGRESSION dual-defect test (?limit=3 catches both bugs). 31 pass / 0 fail. tsc exit 0.
+**Commit:** ba81bdaf
+
 ## 2026-06-11 · TASK17-FOREIGN-FLOW — GET /api/foreign-flow — DONE
 
 **Task:** TASK17-FOREIGN-FLOW endpoint wave — new public HTTP route

@@ -182,6 +182,89 @@ export function getAgmPlan(
     .all(code);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Bulk read for endpoint — plan + actuals tagged by source
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Unified row type for AGM plan-vs-actual comparison.
+ * Combines plan rows (source="plan") and actual rows (source="actual") in one list.
+ * Consumers group by stock_code + ptid to compute completion_pct.
+ */
+export interface AgmPlanActualItem {
+  stock_code: string;
+  year: number;
+  ptid: number;
+  pt_name: string;
+  value_ty: number | null;
+  source: "plan" | "actual";
+  /** Only set when source="actual". report_term_id=1 is the full-year comparison row. */
+  report_term_id: number | null;
+}
+
+/**
+ * Fetch all plan and actual rows for every stock for a given year.
+ * Returns a unified list tagged by source ("plan" | "actual") so the handler
+ * can group by (stock_code, ptid) and compute plan-vs-actual ratios.
+ *
+ * Full-year actual = row with report_term_id = 1.
+ * YTD rows = report_term_id in {2, 3, 4, 5} — included for context labeling.
+ *
+ * TASK17-AGM: used by agmPlanActualHandler to serve GET /api/agm-plan-actual.
+ */
+export function queryAgmPlanActual(
+  db: Database,
+  year: number,
+): AgmPlanActualItem[] {
+  // Plan rows for the year
+  const planRows = db
+    .prepare<{ stock_code: string; year: number; ptid: number; pt_name: string; value_ty: number | null }, [number]>(
+      `SELECT stock_code, year, ptid, pt_name, value_ty
+       FROM agm_plan
+       WHERE year = ?
+       ORDER BY stock_code ASC, ptid ASC`,
+    )
+    .all(year) as { stock_code: string; year: number; ptid: number; pt_name: string; value_ty: number | null }[];
+
+  // Actual rows for the year (all terms — including term_id=1 for full-year)
+  const actualRows = db
+    .prepare<{ stock_code: string; year: number; ptid: number; report_term_id: number; value_ty: number | null }, [number]>(
+      `SELECT stock_code, year, ptid, report_term_id, value_ty
+       FROM agm_actuals
+       WHERE year = ?
+       ORDER BY stock_code ASC, ptid ASC, report_term_id ASC`,
+    )
+    .all(year) as { stock_code: string; year: number; ptid: number; report_term_id: number; value_ty: number | null }[];
+
+  const result: AgmPlanActualItem[] = [];
+
+  for (const r of planRows) {
+    result.push({
+      stock_code: r.stock_code,
+      year: r.year,
+      ptid: r.ptid,
+      pt_name: r.pt_name,
+      value_ty: r.value_ty ?? null,
+      source: "plan",
+      report_term_id: null,
+    });
+  }
+
+  for (const r of actualRows) {
+    result.push({
+      stock_code: r.stock_code,
+      year: r.year,
+      ptid: r.ptid,
+      pt_name: "",
+      value_ty: r.value_ty ?? null,
+      source: "actual",
+      report_term_id: r.report_term_id,
+    });
+  }
+
+  return result;
+}
+
 /**
  * Fetch actual reported values for a ticker (optionally filtered by year).
  */

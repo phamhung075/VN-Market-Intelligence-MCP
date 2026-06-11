@@ -25,3 +25,12 @@
 - Fix clients.ts only + expect callers to pass closes — chosen: callers updated too (taAlertScanJob, bbAlertScanJob now query daily_ohlcv and pass closes)
 **why-decision:** definitive fix at root — URL + field + candle-source all corrected in one pass; no symptom-patching.
 **why-change:** secondary root cause (market_prices_history only 2 days vs daily_ohlcv 37+ days) found during investigation; fixed in same commit to avoid partial-fix regression.
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-11T10:45:00Z
+**task-id:** TASK17-AGM
+**what-done:** Built GET /api/agm-plan-actual handler + queryAgmPlanActual store fn + 44-test suite (119 expect calls). 0 fail. tsc clean.
+**what-considered:**
+- Put join SQL in handler directly — rejected: violates DDD layer rule (no SQL in interface); store fn is the right owner
+- Single query with LEFT JOIN — possible but brittle on per-term-id filtering; chosen: two separate queries (plan + actuals) unified into AgmPlanActualItem[] for clarity + testability
+**why-decision:** DDD layer strictly enforced (queryAgmPlanActual in infrastructure/db/agmPlanStore); IN_PROGRESS guard implemented at buildMetrics level (fullYearRow lookup on report_term_id=1 only) — open year never misclassified.
+**why-change:** no change from plan; spec was precise enough to implement directly.

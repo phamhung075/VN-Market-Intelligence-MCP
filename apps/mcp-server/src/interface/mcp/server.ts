@@ -103,6 +103,8 @@ import { handleGetPriceHistory } from "./routes/priceHistoryServeHandler.js";
 import { handleGetAlerts } from "./routes/alertsHandler.js";
 // TASK17-FOREIGN-FLOW: GET /api/foreign-flow — latest-day foreign net buy/sell
 import { handleGetForeignFlow } from "./routes/foreignFlowHandler.js";
+// TASK17-AGM: GET /api/agm-plan-actual — AGM plan-vs-actual delivery analysis
+import { handleGetAgmPlanActual } from "./routes/agmPlanActualHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2058,6 +2060,15 @@ export async function createBunServer(
     // Public endpoint (no auth). Supports ?limit= (default 200, max 500).
     if (method === "GET" && pathname === "/api/foreign-flow") {
       handleGetForeignFlow(req, res, db);
+      return;
+    }
+
+    // ── TASK17-AGM: GET /api/agm-plan-actual ──────────────────────────────
+    // Serves AGM plan-vs-actual delivery analysis for "Kế hoạch vs Thực hiện" page.
+    // Public endpoint (no auth). Supports ?year=YYYY (default = latest closed year)
+    // and ?limit=N (default 200, max 500).
+    if (method === "GET" && pathname === "/api/agm-plan-actual") {
+      handleGetAgmPlanActual(req, res, db);
       return;
     }
 
