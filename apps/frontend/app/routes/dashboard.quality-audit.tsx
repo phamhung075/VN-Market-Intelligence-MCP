@@ -48,8 +48,8 @@ export const meta: MetaFunction = () => [
 /** Closed enum for check-level status values. */
 type CheckStatus = "PASS" | "WARN" | "FAIL" | "INFO" | "NEEDS_REVIEW";
 
-/** Deploy status for a capability. */
-type DeployStatus = "DEPLOYED" | "UNDEPLOYED_BY_DESIGN" | string;
+/** Deploy status for a capability — open string from the upstream API. */
+type DeployStatus = string;
 
 interface AuditCheck {
   check_id: string;
@@ -164,7 +164,7 @@ function CheckStatusBadge({ status }: { status: CheckStatus }) {
   );
 }
 
-/** Badge for capability deploy_status. Grey for UNDEPLOYED_BY_DESIGN. */
+/** Badge for capability deploy_status. Blue for DEPLOYED, grey for any other value. */
 function DeployStatusBadge({ status }: { status: DeployStatus }) {
   const isDeployed = status === "DEPLOYED";
   return (

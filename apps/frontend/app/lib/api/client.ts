@@ -59,7 +59,7 @@ export async function apiGet<T>(path: string): Promise<T> {
  */
 export interface GatewayHealth {
   status: "ok" | "degraded" | "down";
-  services: Record<string, "ok" | "degraded" | "down" | "not_deployed">;
+  services: Record<string, "ok" | "degraded" | "down">;
   timestamp: string;
   latencies?: Record<string, number>;
   checkedAt?: string;
@@ -117,8 +117,8 @@ export async function fetchServiceHealth(service: string): Promise<ServiceHealth
   return { service, status: "down" };
 }
 
-function isServiceStatus(v: unknown): v is "ok" | "degraded" | "down" | "not_deployed" {
-  return v === "ok" || v === "degraded" || v === "down" || v === "not_deployed";
+function isServiceStatus(v: unknown): v is "ok" | "degraded" | "down" {
+  return v === "ok" || v === "degraded" || v === "down";
 }
 
 // --------------------------------------------------------------------------

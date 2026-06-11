@@ -1,20 +1,16 @@
 /**
  * /dashboard/services — Service Health dashboard.
  *
- * Implements the 2-axis Service Health model (FOU-3-FE):
- *   Axis 1 — Container status: deployed (ok/degraded/down) | not_deployed
- *   Axis 2 — Capability via mcp-server: live | data_limited | dark | n/a
+ * Shows live container status for all 12 microservices in the fleet.
+ * All services are deployed as of GO-FLEET-DEPLOY (2026-06-11).
  *
- * Composed display logic:
- *   deployed + ok/degraded       → GREEN/YELLOW (existing, unchanged)
- *   deployed + down              → RED "DOWN" (ALWAYS, anti-false-green invariant)
- *   not_deployed + live          → BLUE "LIVE via mcp-server"
- *   not_deployed + data_limited  → AMBER "LIMITED via mcp-server" + capabilityNote
- *   not_deployed + dark          → GREY "NOT DEPLOYED"
- *   not_deployed + n/a           → GREY "NOT DEPLOYED"
+ * Display logic (single-axis: container status is authoritative):
+ *   ok       → GREEN  "UP"
+ *   degraded → YELLOW "DEGRADED"
+ *   down     → RED    "DOWN"  (ALWAYS — anti-false-green invariant)
  *
- * ANTI-FALSE-GREEN: capability axis is additive ONLY for not_deployed services.
- * A deployed service that is DOWN renders RED regardless of any capability value.
+ * Capability axis is informational (rendered as a secondary badge) but
+ * NEVER overrides a down verdict. A crashed container is always RED.
  *
  * Pure compose logic lives in ~/domain/health-compose.ts (importable without Remix).
  */
@@ -22,7 +18,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { fetchGatewayHealth } from "~/lib/api/client";
-import type { CapabilityStatus, ServiceRow, ServiceStatus } from "~/domain/health";
+import type { ServiceRow, ServiceStatus } from "~/domain/health";
 import {
   composeRowDisplayState,
   composeOverallStatus,
@@ -102,59 +98,18 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 // Components
 // --------------------------------------------------------------------------
 
-/**
- * CapabilityBadge — private to this route, domain-specific.
- * Renders the second-axis indicator for not_deployed services.
- * For deployed services this component is NOT rendered (container status is authoritative).
- */
-interface CapabilityBadgeProps {
-  capability: CapabilityStatus;
-  capabilityNote?: string;
-}
-
-function CapabilityBadge({ capability, capabilityNote }: CapabilityBadgeProps) {
-  if (capability === "live") {
-    return (
-      <span className="rounded border border-blue-700 bg-blue-900 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-blue-300">
-        LIVE via mcp-server
-      </span>
-    );
-  }
-  if (capability === "data_limited") {
-    return (
-      <span className="inline-flex flex-col">
-        <span className="rounded border border-yellow-700 bg-yellow-900 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-yellow-300">
-          LIMITED via mcp-server
-        </span>
-        {capabilityNote && (
-          <span className="mt-0.5 text-xs text-yellow-500">{capabilityNote}</span>
-        )}
-      </span>
-    );
-  }
-  // dark or n/a → grey NOT DEPLOYED
-  return (
-    <span className="rounded border border-slate-600 bg-slate-800 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-slate-400">
-      NOT DEPLOYED
-    </span>
-  );
-}
-
 type StatusBadgeProps = {
   status: ServiceStatus;
-  capability?: CapabilityStatus;
-  capabilityNote?: string;
 };
 
 /**
- * StatusBadge — renders the composed 2-axis state badge for a service row.
+ * StatusBadge — renders the container status badge for a service row.
  *
- * For deployed services (ok/degraded/down): renders single-axis badge.
- *   down → always RED (anti-false-green invariant; capability is ignored).
- * For not_deployed services: delegates to CapabilityBadge.
+ * Single-axis: container status is always authoritative.
+ *   down → always RED (anti-false-green invariant).
  */
-function StatusBadge({ status, capability = "n/a", capabilityNote }: StatusBadgeProps) {
-  const displayState = composeRowDisplayState(status, capability);
+function StatusBadge({ status }: StatusBadgeProps) {
+  const displayState = composeRowDisplayState(status, "n/a");
 
   switch (displayState) {
     case "deployed_up":
@@ -170,16 +125,12 @@ function StatusBadge({ status, capability = "n/a", capabilityNote }: StatusBadge
         </span>
       );
     case "deployed_down":
-      // Anti-false-green: deployed + down = RED, regardless of capability
+      // Anti-false-green: down = RED, no exceptions
       return (
         <span className="rounded border border-red-700 bg-red-900 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-red-300">
           DOWN
         </span>
       );
-    case "not_deployed_live":
-    case "not_deployed_data_limited":
-    case "not_deployed_dark":
-      return <CapabilityBadge capability={capability} capabilityNote={capabilityNote} />;
   }
 }
 
@@ -187,12 +138,8 @@ export default function ServerDashboard() {
   const { rows, overallStatus, checkedAt, error } =
     useLoaderData<typeof loader>();
 
-  // Top badge: ignores not_deployed, driven by deployed services only.
+  // Top badge: driven by full fleet status.
   const topStatus = composeOverallStatus(rows, overallStatus);
-  const notDeployedCount = rows.filter((r) => r.status === "not_deployed").length;
-  const notDeployedLiveCount = rows.filter(
-    (r) => r.status === "not_deployed" && r.capability === "live",
-  ).length;
 
   return (
     <div className="w-full">
@@ -202,14 +149,6 @@ export default function ServerDashboard() {
           actions={
             <div className="flex flex-col items-end">
               {topStatus && <StatusBadge status={topStatus} />}
-              {notDeployedCount > 0 && (
-                <p className="mt-1 text-xs text-slate-500">
-                  {notDeployedCount} service(s) not deployed on this host by design
-                  {notDeployedLiveCount > 0 && (
-                    <> — {notDeployedLiveCount} LIVE via mcp-server</>
-                  )}
-                </p>
-              )}
             </div>
           }
         />
@@ -258,11 +197,7 @@ export default function ServerDashboard() {
                   {row.name}
                 </td>
                 <td className="px-4 py-3">
-                  <StatusBadge
-                    status={row.status}
-                    capability={row.capability}
-                    capabilityNote={row.capabilityNote}
-                  />
+                  <StatusBadge status={row.status} />
                 </td>
                 <td className="px-4 py-3 text-right text-slate-400">
                   {row.latencyMs != null ? `${row.latencyMs} ms` : "—"}

@@ -1,16 +1,15 @@
 /**
- * A-01b-3 — not_deployed status rendering tests.
+ * A-01b-3 — Service status rendering tests (full fleet).
+ *
+ * GO-FLEET-DEPLOY (2026-06-11): all 12 services are now genuinely deployed.
+ * Updated from former "not_deployed × deployed" fixture set to full-fleet reality.
  *
  * Tests the loader row-mapping logic (domain layer, pure) for the
  * dashboard.services route:
- *   - Clause A: 5×ok + 7×not_deployed → top badge non-red, grey rows
+ *   - Clause A: full fleet ok → top badge green, all rows UP
  *   - Clause B: deployed service down → red row, top badge non-ok
  *   - Latency guard: -1 sentinel → null (renders "—")
  *   - Anti-false-green: blanket "down" fallback ONLY for truly missing status
- *
- * These tests replicate the row-mapping logic from the loader to keep tests
- * framework-free (no Remix request mocking needed). The logic is a pure map()
- * — if the logic changes the tests will break (intended).
  */
 
 import { describe, it, expect } from "vitest";
@@ -50,96 +49,63 @@ function mapRows(health: GatewayHealthFixture): ServiceRow[] {
 }
 
 // ---------------------------------------------------------------------------
-// Clause A — 5×ok + 7×not_deployed → correct rendering
+// Clause A — full fleet ok → all rows UP
 // ---------------------------------------------------------------------------
 
-describe("Clause A — not_deployed gateway response", () => {
+describe("Clause A — full fleet healthy response", () => {
   const fixture: GatewayHealthFixture = {
     status: "ok",
     services: {
-      mcp:       "ok",
-      macro:     "ok",
-      pdf:       "not_deployed",
-      rag:       "not_deployed",
-      ta:        "not_deployed",
-      stock:     "not_deployed",
-      "kinh-dich": "not_deployed",
-      alert:     "not_deployed",
-      news:      "not_deployed",
+      mcp:         "ok",
+      pdf:         "ok",
+      rag:         "ok",
+      ta:          "ok",
+      macro:       "ok",
+      stock:       "ok",
+      "kinh-dich": "ok",
+      alert:       "ok",
+      news:        "ok",
     },
     latencies: {
-      mcp:   12,
-      macro: 45,
-      pdf:   -1,
-      rag:   -1,
-      ta:    -1,
-      stock: -1,
-      "kinh-dich": -1,
-      alert: -1,
-      news:  -1,
+      mcp:         12,
+      pdf:         45,
+      rag:         30,
+      ta:          20,
+      macro:       15,
+      stock:       8,
+      "kinh-dich": 10,
+      alert:       5,
+      news:        25,
     },
   };
 
-  it("overall status is ok — top badge must be non-red", () => {
+  it("overall status is ok — top badge must be green", () => {
     expect(fixture.status).toBe("ok");
-    expect(fixture.status).not.toBe("degraded");
-    expect(fixture.status).not.toBe("down");
   });
 
-  it("7 services render as not_deployed (grey), NOT down (red)", () => {
+  it("all 9 tracked services render as ok (UP)", () => {
     const rows = mapRows(fixture);
-    const notDeployed = rows.filter((r) => r.status === "not_deployed");
+    const ok = rows.filter((r) => r.status === "ok");
     const down = rows.filter((r) => r.status === "down");
+    const degraded = rows.filter((r) => r.status === "degraded");
 
-    expect(notDeployed).toHaveLength(7);
+    expect(ok).toHaveLength(9);
     expect(down).toHaveLength(0);
+    expect(degraded).toHaveLength(0);
   });
 
-  it("identifies the correct 7 not_deployed service names", () => {
+  it("all rows have positive latencyMs (real services responding)", () => {
     const rows = mapRows(fixture);
-    const ndNames = rows
-      .filter((r) => r.status === "not_deployed")
-      .map((r) => r.name);
-    expect(ndNames).toEqual(
-      expect.arrayContaining(["pdf", "rag", "ta", "stock", "kinh-dich", "alert", "news"])
-    );
-  });
-
-  it("deployed services (mcp, macro) have ok status", () => {
-    const rows = mapRows(fixture);
-    const mcp   = rows.find((r) => r.name === "mcp");
-    const macro = rows.find((r) => r.name === "macro");
-    expect(mcp?.status).toBe("ok");
-    expect(macro?.status).toBe("ok");
-  });
-
-  it("not_deployed rows have null latencyMs (latency -1 sentinel → null)", () => {
-    const rows = mapRows(fixture);
-    const ndRows = rows.filter((r) => r.status === "not_deployed");
-    for (const row of ndRows) {
-      expect(row.latencyMs).toBeNull();
+    for (const row of rows) {
+      expect(row.latencyMs).not.toBeNull();
+      expect(row.latencyMs).toBeGreaterThan(0);
     }
   });
 
-  it("deployed rows have non-null positive latencyMs", () => {
+  it("no down rows — info sub-text condition false", () => {
     const rows = mapRows(fixture);
-    const mcp   = rows.find((r) => r.name === "mcp");
-    const macro = rows.find((r) => r.name === "macro");
-    expect(mcp?.latencyMs).toBe(12);
-    expect(macro?.latencyMs).toBe(45);
-  });
-
-  it("info sub-text condition: overallStatus===ok AND some rows are not_deployed", () => {
-    const rows = mapRows(fixture);
-    const showInfoText =
-      fixture.status === "ok" && rows.some((r) => r.status === "not_deployed");
-    expect(showInfoText).toBe(true);
-  });
-
-  it("info sub-text count: 7 not_deployed rows", () => {
-    const rows = mapRows(fixture);
-    const ndCount = rows.filter((r) => r.status === "not_deployed").length;
-    expect(ndCount).toBe(7);
+    const hasDown = rows.some((r) => r.status === "down");
+    expect(hasDown).toBe(false);
   });
 });
 
@@ -151,15 +117,15 @@ describe("Clause B — deployed service down → degraded, not suppressed", () =
   const fixture: GatewayHealthFixture = {
     status: "degraded",
     services: {
-      mcp:       "down",      // deployed but stopped — must render RED
-      macro:     "ok",
-      pdf:       "not_deployed",
-      rag:       "not_deployed",
-      ta:        "not_deployed",
-      stock:     "not_deployed",
-      "kinh-dich": "not_deployed",
-      alert:     "not_deployed",
-      news:      "not_deployed",
+      mcp:         "down",   // deployed but stopped — must render RED
+      pdf:         "ok",
+      rag:         "ok",
+      ta:          "ok",
+      macro:       "ok",
+      stock:       "ok",
+      "kinh-dich": "ok",
+      alert:       "ok",
+      news:        "ok",
     },
     latencies: {
       mcp:   -1,
@@ -172,30 +138,16 @@ describe("Clause B — deployed service down → degraded, not suppressed", () =
     expect(fixture.status).toBe("degraded");
   });
 
-  it("mcp (deployed, stopped) renders as down (red)", () => {
+  it("mcp (deployed, stopped) renders as down (RED)", () => {
     const rows = mapRows(fixture);
     const mcp = rows.find((r) => r.name === "mcp");
     expect(mcp?.status).toBe("down");
   });
 
-  it("not_deployed rows remain not_deployed — NOT flipped to down", () => {
+  it("other services remain ok — only mcp is down", () => {
     const rows = mapRows(fixture);
-    const ndRows = rows.filter((r) => r.status === "not_deployed");
-    expect(ndRows).toHaveLength(7);
-    // Confirm none of the not_deployed services flipped to down
-    const shouldBeND = ["pdf", "rag", "ta", "stock", "kinh-dich", "alert", "news"];
-    for (const name of shouldBeND) {
-      const row = rows.find((r) => r.name === name);
-      expect(row?.status).toBe("not_deployed");
-    }
-  });
-
-  it("info sub-text suppressed: overallStatus===degraded, no ok+nd sub-text", () => {
-    const rows = mapRows(fixture);
-    // Info text should only appear when overall is ok
-    const showInfoText =
-      fixture.status === "ok" && rows.some((r) => r.status === "not_deployed");
-    expect(showInfoText).toBe(false);
+    const okRows = rows.filter((r) => r.status === "ok");
+    expect(okRows).toHaveLength(8);
   });
 
   it("down row has null latencyMs (-1 sentinel guarded)", () => {
@@ -256,17 +208,6 @@ describe("Anti-false-green — fallback only for truly missing status", () => {
     expect(mcp?.status).toBe("down");
   });
 
-  it("not_deployed explicit value is preserved, NOT overridden by fallback", () => {
-    const fixture: GatewayHealthFixture = {
-      status: "ok",
-      services: { pdf: "not_deployed" },
-    };
-    const rows = mapRows(fixture);
-    const pdf = rows.find((r) => r.name === "pdf");
-    expect(pdf?.status).toBe("not_deployed");
-    expect(pdf?.status).not.toBe("down");
-  });
-
   it("ok explicit value is preserved, NOT overridden by fallback", () => {
     const fixture: GatewayHealthFixture = {
       status: "ok",
@@ -286,20 +227,40 @@ describe("Anti-false-green — fallback only for truly missing status", () => {
     const mcp = rows.find((r) => r.name === "mcp");
     expect(mcp?.status).toBe("down");
   });
+
+  it("degraded explicit value is preserved", () => {
+    const fixture: GatewayHealthFixture = {
+      status: "degraded",
+      services: { ta: "degraded" },
+    };
+    const rows = mapRows(fixture);
+    const ta = rows.find((r) => r.name === "ta");
+    expect(ta?.status).toBe("degraded");
+  });
 });
 
 // ---------------------------------------------------------------------------
 // ServiceStatus type completeness
 // ---------------------------------------------------------------------------
 
-describe("ServiceStatus union — not_deployed is a valid member", () => {
-  it("accepts not_deployed as a valid ServiceStatus value", () => {
-    const s: ServiceStatus = "not_deployed";
-    expect(s).toBe("not_deployed");
+describe("ServiceStatus union — three-state deployed fleet", () => {
+  it("accepts ok as a valid ServiceStatus value", () => {
+    const s: ServiceStatus = "ok";
+    expect(s).toBe("ok");
   });
 
-  it("accepts all four status literals", () => {
-    const statuses: ServiceStatus[] = ["ok", "degraded", "down", "not_deployed"];
-    expect(statuses).toHaveLength(4);
+  it("accepts degraded as a valid ServiceStatus value", () => {
+    const s: ServiceStatus = "degraded";
+    expect(s).toBe("degraded");
+  });
+
+  it("accepts down as a valid ServiceStatus value", () => {
+    const s: ServiceStatus = "down";
+    expect(s).toBe("down");
+  });
+
+  it("accepts all three status literals (full-fleet — no not_deployed)", () => {
+    const statuses: ServiceStatus[] = ["ok", "degraded", "down"];
+    expect(statuses).toHaveLength(3);
   });
 });

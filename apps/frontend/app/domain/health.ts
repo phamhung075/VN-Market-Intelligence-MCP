@@ -3,14 +3,18 @@
  * Tier 1 of DDD: pure TypeScript — ZERO imports from app/lib/api/ or app/components/.
  *
  * These types reflect api-gateway /health endpoint response shapes.
+ *
+ * GO-FLEET-DEPLOY (2026-06-11): all 12 services are now genuinely deployed.
+ * "not_deployed" has been removed from ServiceStatus — every service that is
+ * unreachable at runtime is genuinely DOWN and must render RED (anti-false-green).
  */
 
 /** Status of a single microservice. */
-export type ServiceStatus = "ok" | "degraded" | "down" | "not_deployed";
+export type ServiceStatus = "ok" | "degraded" | "down";
 
 /**
  * Capability of a service as observed via mcp-server probes.
- * Used as the second axis in the 2-axis Service Health model.
+ * Used as the second axis in the Service Health model.
  *
  * - "live":         probe confirmed capability is working
  * - "data_limited": probe responded but data is partial/stale
@@ -50,8 +54,8 @@ export interface ServiceRow {
   latencyMs: number | null;
   /**
    * Capability axis — defaults to "n/a" when absent from the /health payload.
-   * Only meaningful for not_deployed services. For deployed services, the
-   * container status (ok/degraded/down) is authoritative — capability is ignored.
+   * Container status (ok/degraded/down) is always authoritative.
+   * Capability is informational only — never overrides a down verdict.
    */
   capability: CapabilityStatus;
   /**
