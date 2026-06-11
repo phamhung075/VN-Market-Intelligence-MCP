@@ -9,6 +9,7 @@
  *     - "Tin Tức" (/dashboard/news) is ENABLED (no comingSoon) — dashboard.news.tsx exists (TASK-17 P1-1b).
  *     - "Vĩ Mô" (/dashboard/macro) is ENABLED (no comingSoon) — dashboard.macro.tsx exists (TASK-17 P1-2b).
  *     - "Tài Chính" (/dashboard/bctc) is ENABLED (no comingSoon) — dashboard.bctc.tsx exists (TASK-17 P1-3b).
+ *     - "Bản Tin AI" (/dashboard/intel) is ENABLED (no comingSoon) — dashboard.intel.tsx exists (TASK-17 intel).
  *  3. SYSTEM_NAV has 7 ops/infra tabs (incl. bctc-eval + bctc-inspect; excl. db).
  *  4. NAV_ITEMS is the union (analyst + system) — 16 total.
  *  5. The "Cổ Phiếu" tab links to /dashboard/analysis (the existing route) — NOT /dashboard/stock.
@@ -55,7 +56,7 @@ describe("TopNav — ANALYST_NAV canonical list", () => {
         { to: "/dashboard/technical", label: "Kỹ Thuật" },
         { to: "/dashboard/news", label: "Tin Tức" },
         { to: "/dashboard/macro", label: "Vĩ Mô" },
-        { to: "/dashboard/ai-intel", label: "AI Intel", comingSoon: true },
+        { to: "/dashboard/intel", label: "Bản Tin AI" },
         { to: "/dashboard/bctc", label: "Tài Chính" },
         { to: "/dashboard/alerts", label: "Cảnh Báo", comingSoon: true },
       ];
@@ -78,6 +79,13 @@ describe("TopNav — ANALYST_NAV canonical list", () => {
     expect(tech).toBeDefined();
     expect(tech!.to).toBe("/dashboard/technical");
     expect(tech!.comingSoon).toBeUndefined();
+  });
+
+  it("'Bản Tin AI' tab points to /dashboard/intel and is ENABLED (no comingSoon)", () => {
+    const intel = ANALYST_NAV.find((n) => n.label === "Bản Tin AI");
+    expect(intel).toBeDefined();
+    expect(intel!.to).toBe("/dashboard/intel");
+    expect(intel!.comingSoon).toBeUndefined();
   });
 });
 
@@ -151,7 +159,7 @@ describe("TopNav — rendered output", () => {
       "Kỹ Thuật",
       "Tin Tức",
       "Vĩ Mô",
-      "AI Intel",
+      "Bản Tin AI",
       "Tài Chính",
       "Cảnh Báo",
     ];
