@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 P2-1a — DONE
+
+**Task:** TASK-17 P2-1a — GET /api/price-history/:ticker serve endpoint
+**Scope:** apps/mcp-server/ — priceHistoryServeHandler.ts (new), stockPriceHttpClient.ts (new), server.ts (import + route wire), TASK-17-P2-1a test file (new)
+**Upstream:** GET http://stock-price:5000/price/history?code=TICKER&days=N — env SSOT STOCK_PRICE_URL via getStockPriceBaseUrl() (mirrors macroHttpClient pattern)
+**Endpoint:** `GET /api/price-history/:ticker?days=N` → `{ticker, generated_at, data_source, stale_served, count, latest:{date,close,change_abs,change_pct}, candles:[...]}` — candles ascending oldest→newest, latest computed from last two candles, 502+data_source:"unavailable" on failure, 400 on junk ticker, honest 200+count:0 on empty history.
+**Live served envelope:** VCB 5-day via gateway: count:4, latest:{date:"2026-06-11",close:61800,change_pct:0.162}
+**Tests:** 14 pass / 0 fail (43 expect() calls). tsc clean (bun tsc --noEmit exit 0).
+**Commit:** b1b7394c
+
 ## 2026-06-11 · TASK-17 P1-3a — DONE
 
 **Task:** TASK-17 P1-3a — GET /api/analysis-briefs catalogue index
