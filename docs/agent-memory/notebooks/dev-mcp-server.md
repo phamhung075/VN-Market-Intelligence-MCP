@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-CONVICTION — GET /api/conviction-history — DONE
+
+**Task:** TASK17-CONVICTION endpoint wave — AI conviction tracker ("Niềm tin AI theo cổ phiếu")
+**Scope:** apps/mcp-server/ — convictionHistoryStore.ts (new), convictionHistoryHandler.ts (new), server.ts (import + route wire), schema-system.ts (conviction_history table added), TASK17-CONVICTION test (new).
+**Contract:** conviction_history (766 rows, 52 symbols, 2026-04-01→2026-06-09). peak_score 0.4–0.73. dominant_signal NULLABLE: bullish/bearish/neutral pass through; NULL→"unknown" (never coerced to neutral). Snapshot = MAX(date) per symbol, peakScore DESC. Series = full ASC history per symbol (sparklines). avgPeakScore = mean over snapshot; null when empty (divide-by-zero guard).
+**Schema fix:** conviction_history was not in initDatabase() — added to schema-system.ts with UNIQUE(symbol,date) + ALTER TABLE IF NOT EXISTS guard for dominant_signal backcompat.
+**Simulation result (3-symbol seed):** snapshot[0]={"symbol":"VCB","date":"2026-06-09","peakScore":0.6,"signal":"bullish"}, summary={symbols:3,bullish:2,bearish:1,neutral:0,unknown:0,avgPeakScore:0.56,topBullish:[VCB,ACB],topBearish:[PLX]}.
+**Tests:** 32 pass / 0 fail (117 expect() calls). tsc exit 0.
+**Endpoint:** GET /api/conviction-history?limit=N → {generatedAt, tradingDate, snapshot:[{symbol,date,peakScore,signal}], series:{symbol:[{date,peakScore,signal}]}, summary:{symbols,bullish,bearish,neutral,unknown,avgPeakScore,topBullish,topBearish}, count}
+**Zone health:** bun test 32/0 scoped | tsc exit 0 | HEALTHY
+
 ## 2026-06-11 · TASK17-PRED — GET /api/prediction-claims — DONE
 
 **Task:** TASK17-PRED endpoint wave — AI prediction accountability / calibration ledger

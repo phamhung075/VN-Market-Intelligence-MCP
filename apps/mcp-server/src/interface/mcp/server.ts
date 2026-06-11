@@ -107,6 +107,8 @@ import { handleGetForeignFlow } from "./routes/foreignFlowHandler.js";
 import { handleGetAgmPlanActual } from "./routes/agmPlanActualHandler.js";
 // TASK17-PRED: GET /api/prediction-claims — AI prediction accountability / calibration ledger
 import { handleGetPredictionClaims } from "./routes/predictionClaimsHandler.js";
+// TASK17-CONVICTION: GET /api/conviction-history — AI conviction tracker per stock
+import { handleGetConvictionHistory } from "./routes/convictionHistoryHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2080,6 +2082,14 @@ export async function createBunServer(
     // and ?outcome=correct|wrong|pending (optional filter).
     if (method === "GET" && pathname === "/api/prediction-claims") {
       handleGetPredictionClaims(req, res, db);
+      return;
+    }
+
+    // ── TASK17-CONVICTION: GET /api/conviction-history ────────────────────
+    // Serves AI conviction tracker ("Niềm tin AI theo cổ phiếu") per stock.
+    // Public endpoint (no auth). Supports ?limit=N (default 2000, max 2000).
+    if (method === "GET" && pathname === "/api/conviction-history") {
+      handleGetConvictionHistory(req, res, db);
       return;
     }
 

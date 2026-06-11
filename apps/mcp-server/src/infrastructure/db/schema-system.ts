@@ -208,6 +208,26 @@ export function initSystemTables(db: Database): void {
   // Task 1150: creation_price column
   try { db.exec(`ALTER TABLE prediction_claims ADD COLUMN creation_price REAL`); } catch {}
 
+  // ── Conviction History (TASK17-CONVICTION) ───────────────────────────────
+  // AI conviction tracker: per-stock, per-date peak_score + dominant_signal.
+  // dominant_signal is NULLABLE — NULL rows must be handled by consumers
+  // (mapped to "unknown", never coerced to neutral).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS conviction_history (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      symbol           TEXT NOT NULL,
+      date             TEXT NOT NULL,
+      peak_score       REAL NOT NULL,
+      dominant_signal  TEXT,
+      created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(symbol, date)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ch_symbol ON conviction_history(symbol)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ch_date   ON conviction_history(date)`);
+  // Live DB may have older rows without dominant_signal — guard the ADD COLUMN
+  try { db.exec(`ALTER TABLE conviction_history ADD COLUMN dominant_signal TEXT`); } catch {}
+
   // ── Calibration Snapshots (Task 1127) ─────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS calibration_snapshots (
