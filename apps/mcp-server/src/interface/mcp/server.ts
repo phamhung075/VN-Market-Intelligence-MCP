@@ -91,8 +91,6 @@ import { handlePushSbvRates } from "./routes/pushSbvRatesHandler.js";
 import { handleGetMarketDigest } from "./routes/marketDigestHandler.js";
 // MAW-P0-3: GET /api/analysis-brief/:ticker — per-ticker analysis brief
 import { handleGetAnalysisBrief } from "./routes/analysisBriefHandler.js";
-// TASK-17 P1-3a: GET /api/analysis-briefs — catalogue index of all briefs
-import { handleGetAnalysisBriefIndex } from "./routes/analysisBriefIndexHandler.js";
 // MAW-P1-1a: GET /api/news-sentiment — synthesised news + sentiment items
 import { handleGetNewsSentiment } from "./routes/newsSentimentHandler.js";
 // TASK-17 P1-2a: GET /api/macro-regime — macro snapshot reshaped for frontend
@@ -2000,13 +1998,6 @@ export async function createBunServer(
     // ── MAW-P0-2: GET /api/market-digest — last 3 CHEF synthesis dishes ──
     if (method === "GET" && pathname === "/api/market-digest") {
       handleGetMarketDigest(req, res, db);
-      return;
-    }
-
-    // ── TASK-17 P1-3a: GET /api/analysis-briefs — catalogue index of ALL briefs ──
-    // Exact match MUST come before the /api/analysis-brief/:ticker prefix match.
-    if (method === "GET" && pathname === "/api/analysis-briefs") {
-      handleGetAnalysisBriefIndex(req, res, process.cwd());
       return;
     }
 
