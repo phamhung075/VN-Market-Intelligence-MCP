@@ -107,6 +107,24 @@ export async function runVnstockStartupProbe(
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    // Fix 4 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): distinguish DB write-wedge / closed-DB
+    // errors from ordinary query failures.
+    //
+    // A write-wedge DB (WAL flush in progress after force-recreate) returns
+    // "Cannot use a closed database" or "unable to open database" or "disk I/O error".
+    // Firing the sweep against a wedged DB causes 90 Python forks → OOM kill → restart cascade.
+    // On write-wedge: log and RETURN without firing — inert probe is the safe fallback.
+    //
+    // All other DB errors (e.g. missing table — table not yet created on first boot) are
+    // genuine "we can't tell if data is present" situations: fire as before (safe fallback).
+    const isDbUnavailable =
+      msg.includes("Cannot use a closed database") ||
+      msg.includes("unable to open database") ||
+      msg.includes("disk I/O error");
+    if (isDbUnavailable) {
+      log(`[vnstock-startup] DB unavailable (${msg}) — skipping sweep to avoid wedge amplification`);
+      return;
+    }
     log(`[vnstock-startup] startup probe error: ${msg} — scheduling sweep anyway`);
     shouldFire = true;
     reason = "DB query error (safe fallback)";

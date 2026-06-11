@@ -963,13 +963,18 @@ export function startScheduler() {
   //        Otherwise                                              → skip
   // _isFundamentalsRunning in vnstockFundamentalsJob handles overlap with the
   // Monday cron — no second lock is needed here (AC-7).
+  // Fix 3 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): wrap probe in jobRunRepo.wrapRun so
+  // probe invocations appear in cron_job_runs with proper status=error when they crash.
+  // Previously this was fire-and-forget void — crashes were invisible to the auditor.
   void (async () => {
-    await runVnstockStartupProbe({
-      getDb,
-      runJob: () => runVnstockFundamentalsJob(),
-      scheduleDelay: (ms: number) => new Promise<void>((res) => setTimeout(res, ms)),
-      log,
-    })
+    await jobRunRepo.wrapRun('vnstockStartupProbe', async () => {
+      await runVnstockStartupProbe({
+        getDb,
+        runJob: () => runVnstockFundamentalsJob(),
+        scheduleDelay: (ms: number) => new Promise<void>((res) => setTimeout(res, ms)),
+        log,
+      });
+    });
   })()
 
   // Sprint SELF-IMPROVE-GATE Phase 2 — Self-improvement detection (09:02 UTC daily)

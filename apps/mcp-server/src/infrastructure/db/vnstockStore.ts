@@ -339,22 +339,34 @@ export function markFetched(
 // Store functions
 // ---------------------------------------------------------------------------
 
-export function storeFinancials(f: VnstockFinancials): void {
+/**
+ * Fix 1 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): use datetime('now') for fetched_at
+ * instead of f.fetchedAt (Python script datetime.now() — may be stale by batch delay).
+ * SQLite server time ensures MAX(fetched_at) staleness queries reflect actual write time.
+ *
+ * Fix 2 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): return { changes } so callers can
+ * accumulate actual DB rows written. changes=1 means a row was inserted or replaced;
+ * changes=0 would indicate no write occurred (defensive — INSERT OR REPLACE always writes).
+ * Note: Bun sqlite stmt.run() returns { changes, lastInsertRowid }; use that not db.changes.
+ * Math.min(changes, 1) not needed — Bun's driver reports 1 even for a REPLACE (not 2).
+ */
+export function storeFinancials(f: VnstockFinancials): { changes: number } {
   const db = getDb();
-  db.prepare(
+  const result = db.prepare(
     `INSERT OR REPLACE INTO vnstock_financials
      (code, year_report, quarter, revenue_bn, revenue_yoy, net_profit_bn, net_profit_yoy,
       eps, pe, pb, roe, roa, debt_to_equity, net_profit_margin, nim, npl, source, fetched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
   ).run(
     f.code, f.yearReport, f.quarter, f.revenue, f.revenueYoY, f.netProfit, f.netProfitYoY,
     f.eps, f.pe, f.pb, f.roe, f.roa, f.debtToEquity, f.netProfitMargin,
-    f.nim, f.npl, f.source, f.fetchedAt,
+    f.nim, f.npl, f.source,
   );
   markFetched(f.code, "financials");
   // Task 1941d: lift net_profit_bn into financial_reports.net_profit_api_bridge
   // so cashFlowTool prefers the API value over OCR extraction for OCF/NI ratio.
   bridgeNetProfitToFinancialReports(getDb(), f.code);
+  return { changes: result.changes };
 }
 
 // Cached column-presence flag — production DBs predate the `date` column
@@ -814,22 +826,27 @@ export function getEvents(code: string): VnstockEvent[] {
 
 /**
  * Store a balance sheet row. Uses INSERT OR REPLACE (UPSERT on unique key).
+ *
+ * Fix 1 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): use datetime('now') for fetched_at
+ * instead of bs.fetchedAt (Python-supplied timestamp may be stale by batch delay).
+ * Fix 2: return { changes } for caller to accumulate actual DB rows written.
  */
-export function storeBalanceSheet(bs: VnstockBalanceSheet): void {
+export function storeBalanceSheet(bs: VnstockBalanceSheet): { changes: number } {
   const db = getDb();
-  db.prepare(
+  const result = db.prepare(
     `INSERT OR REPLACE INTO vnstock_balance_sheet
      (code, year_report, quarter, total_assets_bn, total_liabilities_bn, total_equity_bn,
       cash_bn, short_term_debt_bn, long_term_debt_bn, receivables_bn, inventory_bn,
       source, fetched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
   ).run(
     bs.code, bs.yearReport, bs.quarter,
     bs.totalAssets, bs.totalLiabilities, bs.totalEquity,
     bs.cash, bs.shortTermDebt, bs.longTermDebt, bs.receivables, bs.inventory,
-    bs.source, bs.fetchedAt,
+    bs.source,
   );
   markFetched(bs.code, "balance_sheet");
+  return { changes: result.changes };
 }
 
 /**
@@ -868,24 +885,29 @@ export function getLatestBalanceSheet(code: string): VnstockBalanceSheet | null 
 
 /**
  * Store a cash flow row. Uses INSERT OR REPLACE (UPSERT on unique key).
+ *
+ * Fix 1 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): use datetime('now') for fetched_at
+ * instead of cf.fetchedAt (Python-supplied timestamp may be stale by batch delay).
+ * Fix 2: return { changes } for caller to accumulate actual DB rows written.
  */
-export function storeCashFlow(cf: VnstockCashFlow): void {
+export function storeCashFlow(cf: VnstockCashFlow): { changes: number } {
   const db = getDb();
-  db.prepare(
+  const result = db.prepare(
     `INSERT OR REPLACE INTO vnstock_cash_flow
      (code, year_report, quarter, operating_cf_bn, investing_cf_bn,
       financing_cf_bn, net_cf_bn, source, fetched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
   ).run(
     cf.code, cf.yearReport, cf.quarter,
     cf.operatingCashFlow, cf.investingCashFlow,
     cf.financingCashFlow, cf.netCashFlow,
-    cf.source, cf.fetchedAt,
+    cf.source,
   );
   markFetched(cf.code, "cash_flow");
   // Task 1878a: bridge OCF to financial_reports immediately after store.
   // Updates ALL quarters for this ticker (idempotent, covers historical rows).
   bridgeOCFToFinancialReports(db, cf.code);
+  return { changes: result.changes };
 }
 
 /**

@@ -34,6 +34,7 @@ import { syncVnstockData } from "../../application/usecases/syncVnstockData.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import type { Database } from "bun:sqlite";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Job name constants
@@ -56,6 +57,14 @@ let _isTradingStatsRunning = false;
 export interface VnstockJobResult {
   succeeded: number;
   failed: string[];
+  /**
+   * Fix 2/6 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): actual DB rows written across all
+   * financial tables (vnstock_financials + vnstock_balance_sheet + vnstock_cash_flow).
+   * Measured as a row-count delta before/after the sweep — 0 means no data landed.
+   * Previously this field did not exist; cron entry used `succeeded` (ticker count) which
+   * gives false-positive success even when Python times out for all tickers.
+   */
+  rowsWritten: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,6 +81,12 @@ export interface VnstockJobOptions {
   syncFn?: (ticker: string) => Promise<void>;
   /** Injectable WORK telegram sender — defaults to sendTelegramWork */
   sendWorkFn?: (msg: string) => Promise<unknown>;
+  /**
+   * Injectable DB getter for row-count delta measurement (Fix 2).
+   * Defaults to production getDb().
+   * Tests that do not supply this receive rowsWritten=0 (safe default).
+   */
+  getDbFn?: () => Database;
   /**
    * Test-only flag: when true, resets the isRunning guard before executing.
    * This allows tests to control concurrency state explicitly.
@@ -127,7 +142,37 @@ async function runSweep(
     }
   }
 
-  return { succeeded, failed };
+  // rowsWritten is computed by the caller via DB delta — runSweep itself has no DB access.
+  return { succeeded, failed, rowsWritten: 0 };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Row-count helper (Fix 2 — accurate rowsWritten measurement)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Count total rows across the three financial data tables.
+ * Used for a before/after delta to measure actual rows written in a sweep.
+ * Returns -1 if the DB is unavailable (write-wedge / missing tables) — callers
+ * treat -1 as "measurement unavailable" and skip the 0-rows guard.
+ */
+function countFinancialRows(db: Database): number {
+  try {
+    const row = db
+      .prepare<{ total: number }, []>(
+        `SELECT (
+           SELECT COUNT(*) FROM vnstock_financials
+         ) + (
+           SELECT COUNT(*) FROM vnstock_balance_sheet
+         ) + (
+           SELECT COUNT(*) FROM vnstock_cash_flow
+         ) AS total`,
+      )
+      .get();
+    return row?.total ?? 0;
+  } catch {
+    return -1; // DB unavailable — skip delta measurement
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -167,26 +212,53 @@ export async function runVnstockFundamentalsJob(
   // Concurrency guard (FR-4)
   if (_isFundamentalsRunning) {
     logger.warn(`[${JOB_NAME_FUNDAMENTALS}] already running — skipping duplicate invocation`);
-    return { succeeded: 0, failed: [] };
+    return { succeeded: 0, failed: [], rowsWritten: 0 };
   }
 
   _isFundamentalsRunning = true;
 
   const sendWorkFn = options?.sendWorkFn ?? sendTelegramWork;
-  let result: VnstockJobResult = { succeeded: 0, failed: [] };
+  let result: VnstockJobResult = { succeeded: 0, failed: [], rowsWritten: 0 };
 
   try {
     const tickers = options?.tickers ?? readWatchlistTickers();
     const syncFn = options?.syncFn ?? defaultSyncFn;
 
+    // Fix 2 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): measure actual rows written via
+    // DB row-count delta before/after the sweep.
+    // Uses getDbFn if injected (test seam); falls back to production getDb().
+    // countFinancialRows returns -1 when the DB is unavailable — skip measurement.
+    const _getDb = options?.getDbFn ?? getDb;
+    let rowsBefore = -1;
+    try {
+      rowsBefore = countFinancialRows(_getDb());
+    } catch {
+      // DB unavailable at sweep start — proceed without measurement
+    }
+
     logger.info(`[${JOB_NAME_FUNDAMENTALS}] starting sweep`, { tickerCount: tickers.length });
 
     result = await runSweep(JOB_NAME_FUNDAMENTALS, tickers, syncFn);
+
+    // Fix 6 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): compute accurate rowsWritten.
+    // Delta = rows after sweep minus rows before. If DB was unavailable (rowsBefore=-1),
+    // rowsWritten stays 0 (conservative — does not over-claim success).
+    let rowsWritten = 0;
+    if (rowsBefore >= 0) {
+      try {
+        const rowsAfter = countFinancialRows(_getDb());
+        rowsWritten = rowsAfter >= 0 ? Math.max(0, rowsAfter - rowsBefore) : 0;
+      } catch {
+        // DB unavailable at sweep end — rowsWritten stays 0
+      }
+    }
+    result = { ...result, rowsWritten };
 
     logger.info(`[${JOB_NAME_FUNDAMENTALS}] sweep complete`, {
       succeeded: result.succeeded,
       failedCount: result.failed.length,
       failed: result.failed,
+      rowsWritten,
     });
 
     // FR-5: fail-loud on WORK channel when any tickers failed
@@ -195,6 +267,20 @@ export async function runVnstockFundamentalsJob(
       await sendWorkFn(
         `[${JOB_NAME_FUNDAMENTALS}] Sweep incomplete — ${result.failed.length} ticker(s) failed: ${failList}. ` +
         `Succeeded: ${result.succeeded}/${tickers.length}. Check logs for per-ticker errors.`,
+      );
+    }
+
+    // Fix 2C (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): fail-loud 0-rows guard.
+    // If the sweep ran (tickers present, rowsBefore measurement available) but zero
+    // rows landed in the financial tables, alert on WORK channel immediately.
+    // Covers the Mode A silent-drop: Python times out / RATE_LIMITED → all tickers return
+    // null → markFetched() is called (fetch_log shows activity) but storeFinancials() was
+    // never called → data tables remain frozen.
+    if (rowsBefore >= 0 && rowsWritten === 0 && tickers.length > 0) {
+      await sendWorkFn(
+        `[${JOB_NAME_FUNDAMENTALS}] WARNING: sweep complete but 0 rows written to ` +
+        `vnstock_financials/balance_sheet/cash_flow. All ${tickers.length} tickers returned null. ` +
+        `Check VCI API availability and Python subprocess logs.`,
       );
     }
   } catch (err) {
@@ -216,8 +302,11 @@ export async function runVnstockFundamentalsJob(
 export async function runVnstockFundamentalsJobCron(): Promise<void> {
   const db = getDb();
   await recordJobRun(db, JOB_NAME_FUNDAMENTALS, async () => {
-    const result = await runVnstockFundamentalsJob();
-    return { rowsWritten: result.succeeded };
+    // Fix 6 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): use result.rowsWritten (actual DB row
+    // delta) instead of result.succeeded (ticker count). Previously succeeded=30 while
+    // zero rows landed gave a false-positive success signal in cron_job_runs.
+    const result = await runVnstockFundamentalsJob({ getDbFn: () => db });
+    return { rowsWritten: result.rowsWritten };
   });
 }
 
@@ -248,13 +337,13 @@ export async function runVnstockTradingStatsJob(
   // Concurrency guard (FR-4)
   if (_isTradingStatsRunning) {
     logger.warn(`[${JOB_NAME_TRADING_STATS}] already running — skipping duplicate invocation`);
-    return { succeeded: 0, failed: [] };
+    return { succeeded: 0, failed: [], rowsWritten: 0 };
   }
 
   _isTradingStatsRunning = true;
 
   const sendWorkFn = options?.sendWorkFn ?? sendTelegramWork;
-  let result: VnstockJobResult = { succeeded: 0, failed: [] };
+  let result: VnstockJobResult = { succeeded: 0, failed: [], rowsWritten: 0 };
 
   try {
     const tickers = options?.tickers ?? readWatchlistTickers();

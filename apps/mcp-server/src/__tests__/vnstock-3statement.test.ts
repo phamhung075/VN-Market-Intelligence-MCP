@@ -128,10 +128,16 @@ describe("vnstock balance sheet store", () => {
       source: "vnstock" as const,
       fetchedAt: "2026-04-03T08:30:00.000Z",
     };
+    const testStart = new Date();
     storeBalanceSheet(bs);
     const retrieved = getLatestBalanceSheet("VEA");
     expect(retrieved!.source).toBe("vnstock");
-    expect(retrieved!.fetchedAt).toBe("2026-04-03T08:30:00.000Z");
+    // Fix 1 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): fetched_at is now set by
+    // SQLite's datetime('now') at write time, not by the Python-supplied fetchedAt.
+    // Use a time-range assertion instead of exact equality.
+    const storedAt = new Date(retrieved!.fetchedAt.replace(" ", "T") + "Z");
+    expect(storedAt.getTime()).toBeGreaterThanOrEqual(testStart.getTime() - 1000);
+    expect(storedAt.getTime()).toBeLessThanOrEqual(Date.now() + 1000);
   });
 });
 

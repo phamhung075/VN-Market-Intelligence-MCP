@@ -79,7 +79,7 @@ describe("TASK 1942a — vnstock startup backfill probe", () => {
     let jobCalled = false;
     const runJob = mock(async () => {
       jobCalled = true;
-      return { succeeded: 3, failed: [] };
+      return { succeeded: 3, failed: [], rowsWritten: 0 };
     });
 
     const logs: string[] = [];
@@ -111,7 +111,7 @@ describe("TASK 1942a — vnstock startup backfill probe", () => {
     let jobCalled = false;
     const runJob = mock(async () => {
       jobCalled = true;
-      return { succeeded: 10, failed: [] };
+      return { succeeded: 10, failed: [], rowsWritten: 0 };
     });
 
     const logs: string[] = [];
@@ -139,7 +139,7 @@ describe("TASK 1942a — vnstock startup backfill probe", () => {
     let jobCalled = false;
     const runJob = mock(async () => {
       jobCalled = true;
-      return { succeeded: 10, failed: [] };
+      return { succeeded: 10, failed: [], rowsWritten: 0 };
     });
 
     const logs: string[] = [];
@@ -163,7 +163,7 @@ describe("TASK 1942a — vnstock startup backfill probe", () => {
     let jobCalled = false;
     const runJob = mock(async () => {
       jobCalled = true;
-      return { succeeded: 0, failed: [] };
+      return { succeeded: 0, failed: [], rowsWritten: 0 };
     });
 
     const logs: string[] = [];
@@ -194,7 +194,7 @@ describe("TASK 1942a — vnstock startup backfill probe", () => {
 
     await runVnstockStartupProbe({
       getDb: () => db,
-      runJob: async () => ({ succeeded: 0, failed: [] }),
+      runJob: async () => ({ succeeded: 0, failed: [], rowsWritten: 0 }),
       scheduleDelay: async (ms: number) => {
         delays.push(ms);
       },
@@ -214,7 +214,7 @@ describe("TASK 1942a — vnstock startup backfill probe", () => {
     let jobCalled = false;
     const runJob = mock(async () => {
       jobCalled = true;
-      return { succeeded: 0, failed: [] };
+      return { succeeded: 0, failed: [], rowsWritten: 0 };
     });
 
     const logs: string[] = [];

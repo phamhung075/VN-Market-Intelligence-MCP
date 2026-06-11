@@ -411,7 +411,12 @@ try:
             roa = float(r.get(('Chỉ tiêu khả năng sinh lợi', 'ROA (%)'), 0) or 0)
             de = float(r.get(('Chỉ tiêu cơ cấu nguồn vốn', 'Debt/Equity'), 0) or 0)
             npm = float(r.get(('Chỉ tiêu khả năng sinh lợi', 'Net Profit Margin (%)'), 0) or 0)
-        except: pass
+        except Exception as ratio_err:
+            # Fix 5 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): was bare except: pass — silently
+            # zeroed pe/pb/roe/roa on any column-key mismatch (vnstock schema drift).
+            # Now logs the error to stderr so schema changes surface in container logs.
+            # pe/pb/roe/roa remain 0.0 as before — acceptable fallback but now visible.
+            sys.stderr.write(f'vnstock ratio columns error for {symbol}: {ratio_err}\\n')
 
     result = {
         'code': '${symbol}',
