@@ -6,6 +6,8 @@
 
 ## Status
 
+2026-06-11 — GO-FLEET-DEPLOY correctness fix DONE. Removed "not deployed on this host by design" scaffolding from dashboard (banner, not_deployed_count/live_count, CapabilityBadge fallback, not_deployed_* display states, not_deployed as ServiceStatus). All services now genuinely deployed; unreachable service = DOWN (RED). VPS discrimination (503 no-such-host) remapped to down. 61/61 tests GREEN (3 test files updated). tsc 0 errors.
+
 2026-06-06 — F-3 FETCH-OPS-PAGE-TRUTH REVIEW commit f02bbc66. Replaced Reuters/Bloomberg panels with real fetch-status data: 13 VN sources freshness table (ageMs humanized, green/amber/red dots), VPS proxy panel (5 legs), BCTC pipeline (pending/done/failed). New types: FetchSourceStatus, VpsProxyStatus, BctcPipelineStatus, FetchStatus + helpers formatSourceAge/sourceStatusColor. 380/380 Vitest GREEN (+17). tsc 0 errors. Container rebuilt 8626cacc51c0. Live 200 verified.
 2026-06-06 — FIX-ORCH-DONE-GRID-COLS REVIEW commit f802b378. Extracted DONE_GRID const (120px|1fr|110px|90px|130px|24px) shared by header + all data rows; status_note moved to DecisionAccordion banner; Title cell min-w-0 + break-words + line-clamp-2. 363/363 Vitest GREEN. tsc 0 errors. Container rebuilt + live 200.
 2026-06-05 — ARCH-ORCH-F3 REVIEW commit 1b71198a. Decision accordion on /dashboard/orchestration. StepDto+DecisionsDto types; DoneTaskGroup multi-open Set<string>; DecisionAccordion + StepCard inline; sprintId threaded from sprint_goal.sprint_id. 26 new tests. 353/353 GREEN. tsc 0 errors. Container rebuilt.
@@ -32,6 +34,7 @@
 
 ## Zone health
 
+2026-06-11: 61/61 changed-file tests GREEN, tsc clean, GO-FLEET-DEPLOY not_deployed removal complete — full fleet 9 services all deploy_up paths | HEALTHY
 2026-06-06: 380/380 Vitest GREEN (+17 F-3 tests), tsc clean, F-3 fetch-status page live (13 VN sources, VPS proxy, BCTC pipeline, zero hardcoded names) | HEALTHY
 
 <!-- Pruned 2026-06-05 (cap-compliance 205→192): oldest cycle P1-FE (2026-05-25, formatter extraction, commits 3ef797d0/eeb4d2f8/9b55a086) — superseded by Status summary; full detail in git history. Carried insight: Docker holds port 3001 (TCP LISTEN) even when container stopped → use PORT=3099 env for host-side Playwright runs. -->
