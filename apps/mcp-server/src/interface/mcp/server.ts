@@ -131,6 +131,8 @@ import { handleGetFinancialsHttp } from "./routes/financialsHandler.js";
 import { handleGetFedRatesHttp } from "./routes/fedRatesHandler.js";
 // TASK17-PAGE18: GET /api/reputation — Corporate-reputation (news-sentiment) risk leaderboard
 import { handleGetReputationHttp } from "./routes/reputationHandler.js";
+// TASK17-PAGE19: GET /api/news-buzz — News-buzz / mention-velocity leaderboard
+import { handleGetNewsBuzzHttp } from "./routes/newsBuzzHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2230,6 +2232,14 @@ export async function createBunServer(
     // Public endpoint (no auth). Only GET served (others → 405).
     if (method === "GET" && pathname === "/api/reputation") {
       handleGetReputationHttp(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE19: GET /api/news-buzz ────────────────────────────────
+    // News-buzz / mention-velocity leaderboard over the live mention_velocity table.
+    // Data-anchored 7-day window (windowEnd = MAX(hour)). Only GET served (others → 405).
+    if (method === "GET" && pathname === "/api/news-buzz") {
+      handleGetNewsBuzzHttp(req, res, db);
       return;
     }
 

@@ -1,5 +1,5 @@
 /**
- * Mention Velocity Store — Task 265
+ * Mention Velocity Store — Task 265 + TASK17-PAGE19
  *
  * SQLite adapter for tracking hourly mention velocity per stock.
  *
@@ -12,6 +12,9 @@
  *
  * UNIQUE constraint on (code, hour) — upserts increment counts.
  * Auto-delete rows older than 30 days on each recordMention call.
+ *
+ * Read functions (TASK17-PAGE19):
+ *   getNewsBuzzWindow — data-anchored 7-day aggregation for GET /api/news-buzz.
  */
 
 import type { Database } from "bun:sqlite";
@@ -110,6 +113,103 @@ export function getVelocity(
     sourceCount: row.source_count,
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TASK17-PAGE19 — News Buzz Window (read path)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * One row in the news-buzz leaderboard.
+ * Aggregated over the 7-day data-anchored window.
+ */
+export interface NewsBuzzRow {
+  code: string;
+  mentions: number;
+  negative: number;
+  sources: number;
+  hoursActive: number;
+}
+
+/**
+ * Full result of getNewsBuzzWindow.
+ * windowStart / windowEnd are the resolved ISO strings from the DB;
+ * both are null when the table is empty.
+ */
+export interface NewsBuzzWindow {
+  windowStart: string | null;
+  windowEnd: string | null;
+  rows: NewsBuzzRow[];
+}
+
+/**
+ * Aggregate mention_velocity into a news-buzz leaderboard over a data-anchored window.
+ *
+ * Window contract (data-anchored, NOT now-relative):
+ *   windowEnd   = SELECT MAX(hour) FROM mention_velocity
+ *   windowStart = datetime(windowEnd, '-<days> days')
+ *   Predicate:  hour > windowStart  (exclusive lower bound)
+ *
+ * Returns {windowStart:null, windowEnd:null, rows:[]} when the table is empty.
+ * Rows are ordered mentions DESC, code ASC.
+ *
+ * @param db   - Active bun:sqlite Database instance
+ * @param days - Lookback in days (default 7)
+ */
+export function getNewsBuzzWindow(db: Database, days = 7): NewsBuzzWindow {
+  // Step 1: resolve windowEnd from the data (data-anchored, not clock-anchored)
+  const endRow = db.prepare(
+    `SELECT MAX(hour) AS window_end FROM mention_velocity`,
+  ).get() as { window_end: string | null } | null;
+
+  const windowEnd = endRow?.window_end ?? null;
+
+  // Empty table guard
+  if (!windowEnd) {
+    return { windowStart: null, windowEnd: null, rows: [] };
+  }
+
+  // Step 2: resolve windowStart relative to windowEnd
+  const startRow = db.prepare(
+    `SELECT datetime(?, '-' || ? || ' days') AS window_start`,
+  ).get(windowEnd, days) as { window_start: string } | null;
+
+  const windowStart = startRow?.window_start ?? null;
+
+  if (!windowStart) {
+    return { windowStart: null, windowEnd, rows: [] };
+  }
+
+  // Step 3: aggregate — STRICTLY GREATER than windowStart (exclusive lower bound)
+  const raw = db.prepare(`
+    SELECT code,
+           SUM(mention_count)  AS mentions,
+           SUM(negative_count) AS negative,
+           SUM(source_count)   AS sources,
+           COUNT(*)            AS hoursActive
+    FROM mention_velocity
+    WHERE hour > ?
+    GROUP BY code
+    ORDER BY mentions DESC, code ASC
+  `).all(windowStart) as {
+    code: string;
+    mentions: number;
+    negative: number;
+    sources: number;
+    hoursActive: number;
+  }[];
+
+  const rows: NewsBuzzRow[] = raw.map((r) => ({
+    code: r.code,
+    mentions: r.mentions,
+    negative: r.negative,
+    sources: r.sources,
+    hoursActive: r.hoursActive,
+  }));
+
+  return { windowStart, windowEnd, rows };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Compute the baseline (rolling average) mention count for a stock.
