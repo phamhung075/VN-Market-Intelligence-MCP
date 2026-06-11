@@ -42,6 +42,7 @@ export type NavItem = {
  * Route existence verified against apps/frontend/app/routes/ (2026-06-11):
  *   - /dashboard          → dashboard._index.tsx    EXISTS  → enabled (label: "Tổng Quan")
  *   - /dashboard/analysis  → dashboard.analysis.tsx  EXISTS  → enabled (label: "Cổ Phiếu")
+ *   - /dashboard/technical → dashboard.technical.tsx EXISTS  → enabled (label: "Kỹ Thuật") — TASK-17 P2-1b
  *   - /dashboard/news     → dashboard.news.tsx       EXISTS  → enabled (label: "Tin Tức") — TASK-17 P1-1b
  *   - /dashboard/macro    → dashboard.macro.tsx       EXISTS  → enabled (label: "Vĩ Mô") — TASK-17 P1-2b
  *   - /dashboard/bctc     → dashboard.bctc.tsx         EXISTS  → enabled (label: "Tài Chính") — TASK-17 P1-3b
@@ -53,6 +54,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard", label: "Tổng Quan" },
   { to: "/dashboard/watchlist", label: "Danh Mục", comingSoon: true },
   { to: "/dashboard/analysis", label: "Cổ Phiếu" },
+  { to: "/dashboard/technical", label: "Kỹ Thuật" },
   { to: "/dashboard/news", label: "Tin Tức" },
   { to: "/dashboard/macro", label: "Vĩ Mô" },
   { to: "/dashboard/ai-intel", label: "AI Intel", comingSoon: true },

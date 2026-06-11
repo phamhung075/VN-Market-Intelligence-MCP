@@ -3,13 +3,14 @@
  *
  * Asserts that:
  *  1. TopNav renders the branding link "VN Market Intelligence"
- *  2. ANALYST_NAV has 8 primary analyst tabs, in order, with correct labels + comingSoon flags.
+ *  2. ANALYST_NAV has 9 primary analyst tabs, in order, with correct labels + comingSoon flags.
  *     - "Tổng Quan" (/dashboard) is ENABLED (no comingSoon) — dashboard._index.tsx exists (P0-1).
+ *     - "Kỹ Thuật" (/dashboard/technical) is ENABLED (no comingSoon) — dashboard.technical.tsx exists (TASK-17 P2-1b).
  *     - "Tin Tức" (/dashboard/news) is ENABLED (no comingSoon) — dashboard.news.tsx exists (TASK-17 P1-1b).
  *     - "Vĩ Mô" (/dashboard/macro) is ENABLED (no comingSoon) — dashboard.macro.tsx exists (TASK-17 P1-2b).
  *     - "Tài Chính" (/dashboard/bctc) is ENABLED (no comingSoon) — dashboard.bctc.tsx exists (TASK-17 P1-3b).
  *  3. SYSTEM_NAV has 7 ops/infra tabs (incl. bctc-eval + bctc-inspect; excl. db).
- *  4. NAV_ITEMS is the union (analyst + system) — 15 total.
+ *  4. NAV_ITEMS is the union (analyst + system) — 16 total.
  *  5. The "Cổ Phiếu" tab links to /dashboard/analysis (the existing route) — NOT /dashboard/stock.
  *  6. comingSoon tabs render as disabled spans (aria-disabled="true"), NOT as links.
  *  7. Enabled analyst tabs render as NavLinks.
@@ -41,16 +42,17 @@ function renderTopNav(initialPath = "/") {
 }
 
 describe("TopNav — ANALYST_NAV canonical list", () => {
-  it("exports exactly 8 analyst nav items", () => {
-    expect(ANALYST_NAV).toHaveLength(8);
+  it("exports exactly 9 analyst nav items", () => {
+    expect(ANALYST_NAV).toHaveLength(9);
   });
 
-  it("contains all 8 analyst items in order with correct labels and comingSoon flags", () => {
+  it("contains all 9 analyst items in order with correct labels and comingSoon flags", () => {
     const expected: Array<{ to: string; label: string; comingSoon?: boolean }> =
       [
         { to: "/dashboard", label: "Tổng Quan" },
         { to: "/dashboard/watchlist", label: "Danh Mục", comingSoon: true },
         { to: "/dashboard/analysis", label: "Cổ Phiếu" },
+        { to: "/dashboard/technical", label: "Kỹ Thuật" },
         { to: "/dashboard/news", label: "Tin Tức" },
         { to: "/dashboard/macro", label: "Vĩ Mô" },
         { to: "/dashboard/ai-intel", label: "AI Intel", comingSoon: true },
@@ -69,6 +71,13 @@ describe("TopNav — ANALYST_NAV canonical list", () => {
     expect(stock).toBeDefined();
     expect(stock!.to).toBe("/dashboard/analysis");
     expect(stock!.comingSoon).toBeUndefined();
+  });
+
+  it("'Kỹ Thuật' tab points to /dashboard/technical and is ENABLED (no comingSoon)", () => {
+    const tech = ANALYST_NAV.find((n) => n.label === "Kỹ Thuật");
+    expect(tech).toBeDefined();
+    expect(tech!.to).toBe("/dashboard/technical");
+    expect(tech!.comingSoon).toBeUndefined();
   });
 });
 
@@ -106,9 +115,9 @@ describe("TopNav — SYSTEM_NAV canonical list", () => {
 });
 
 describe("TopNav — NAV_ITEMS union (backward compat)", () => {
-  it("NAV_ITEMS is the union of ANALYST_NAV + SYSTEM_NAV (15 items total)", () => {
+  it("NAV_ITEMS is the union of ANALYST_NAV + SYSTEM_NAV (16 items total)", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(15);
+    expect(NAV_ITEMS).toHaveLength(16);
   });
 
   it("Database tab (/dashboard/db) is absent from NAV_ITEMS (retired from nav per P0-5)", () => {
@@ -133,12 +142,13 @@ describe("TopNav — rendered output", () => {
     expect(screen.getByText("Hệ Thống")).toBeTruthy();
   });
 
-  it("renders all 8 analyst nav labels", () => {
+  it("renders all 9 analyst nav labels", () => {
     renderTopNav();
     const expectedLabels = [
       "Tổng Quan",
       "Danh Mục",
       "Cổ Phiếu",
+      "Kỹ Thuật",
       "Tin Tức",
       "Vĩ Mô",
       "AI Intel",
