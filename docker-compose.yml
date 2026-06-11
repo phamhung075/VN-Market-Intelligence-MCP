@@ -107,9 +107,6 @@ services:
       - -f
       - http://localhost:5001/health
       interval: 30s
-      # ARCH-A20-CPU-CGROUP-REVIEW: cpus raised to 2.0 so uvicorn retains ~1 core
-      # while Tesseract OCR consumes the other. /health responds <1s under load.
-      # 30s timeout kept as safety margin; start_period 60s covers PEK model warm-up.
       timeout: 30s
       retries: 3
       start_period: 60s
@@ -117,11 +114,6 @@ services:
       resources:
         limits:
           memory: 2.5g
-          # ARCH-A20-CPU-CGROUP-REVIEW: raised from 1.0 to 2.0.
-          # Root cause: ProcessPoolExecutor child (Tesseract) consumes the full
-          # 1-core CFS quota, leaving 0 slices for uvicorn → healthcheck times out.
-          # 2.0 cores: Tesseract ~1 core + uvicorn retains ~1 core → probe <1ms.
-          # Host: 6 Docker VM CPUs; peers idle → 3+ cores headroom. Safe.
           cpus: '2.0'
         reservations:
           memory: 1g
@@ -312,6 +304,7 @@ services:
     - DB_PATH=/app/data/market.db
     - DB_READONLY=true
     - APP_ENV=production
+    - PRICE_HISTORY_URL=http://api-gateway:4000
     restart: unless-stopped
     healthcheck:
       test:
