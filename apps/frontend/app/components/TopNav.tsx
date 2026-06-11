@@ -39,7 +39,7 @@ export type NavItem = {
 /**
  * PRIMARY analyst-facing tabs — always visible in the top nav.
  *
- * Route existence verified against apps/frontend/app/routes/ (2026-06-11, TASK-17 PAGE 12):
+ * Route existence verified against apps/frontend/app/routes/ (2026-06-11, TASK-17 PAGE 14):
  *   - /dashboard          → dashboard._index.tsx    EXISTS  → enabled (label: "Tổng Quan")
  *   - /dashboard/analysis  → dashboard.analysis.tsx  EXISTS  → enabled (label: "Cổ Phiếu")
  *   - /dashboard/technical → dashboard.technical.tsx EXISTS  → enabled (label: "Kỹ Thuật") — TASK-17 P2-1b
@@ -55,6 +55,7 @@ export type NavItem = {
  *   - /dashboard/kinh-dich-signals → dashboard.kinh-dich-signals.tsx EXISTS → enabled (label: "Tín hiệu Kinh Dịch") — TASK-17 PAGE 11
  *   - /dashboard/global-markets   → dashboard.global-markets.tsx   EXISTS → enabled (label: "Bối cảnh toàn cầu") — TASK-17 PAGE 12
  *   - /dashboard/corporate-events → dashboard.corporate-events.tsx EXISTS → enabled (label: "Sự kiện doanh nghiệp") — TASK-17 PAGE 13
+ *   - /dashboard/shareholders    → dashboard.shareholders.tsx    EXISTS → enabled (label: "Cơ cấu cổ đông") — TASK-17 PAGE 14
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -79,6 +80,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/kinh-dich-signals", label: "Tín hiệu Kinh Dịch" },
   { to: "/dashboard/global-markets", label: "Bối cảnh toàn cầu" },
   { to: "/dashboard/corporate-events", label: "Sự kiện doanh nghiệp" },
+  { to: "/dashboard/shareholders", label: "Cơ cấu cổ đông" },
 ];
 
 /**
@@ -100,7 +102,7 @@ export const SYSTEM_NAV: NavItem[] = [
 
 /**
  * NAV_ITEMS — backward-compat union of all nav entries.
- * SSOT: ANALYST_NAV (19) + SYSTEM_NAV (7) = 26 total.
+ * SSOT: ANALYST_NAV (20) + SYSTEM_NAV (7) = 27 total.
  * Any consumer that iterates all routes should use this.
  * Active NAV = ANALYST_NAV (top level) + SYSTEM_NAV (System group).
  *
