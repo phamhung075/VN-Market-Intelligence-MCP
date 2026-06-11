@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 P1-3a — DONE
+
+**Task:** TASK-17 P1-3a — GET /api/analysis-briefs catalogue index
+**Scope:** apps/mcp-server/ — analysisBriefReader.ts (extended), analysisBriefIndexHandler.ts (new), server.ts (import + route wire), TASK17-P1-3a test file (new)
+**Source:** docs/analysis-briefs/*.md (46 files) — real verdict+confidence, never financial_reports DB (placeholder rows).
+**Endpoint:** `GET /api/analysis-briefs` → `{generated_at, count, items:[{ticker, exchange, latest_period, released, verdict_label, verdict_summary, confidence, updated_at}]}` — sort updated_at desc, alpha ties.
+**Key design:** readAnalysisBriefIndex reuses same briefsDir resolution as readAnalysisBrief. 5 exported parse helpers for testability. Malformed file = null fields, ticker still listed. Empty/absent dir = count:0 (not 500). Route registered BEFORE /:ticker prefix match.
+**Concurrent-agent note:** dev-frontend TASK-17-P1-3b staged these files in a prior commit and then reverted them (commit 9f91194a); re-implemented cleanly from this session.
+**Tests:** 19 pass / 0 fail (64 expect() calls). tsc clean (bun tsc --noEmit exit 0).
+**Commit:** f4aa1889
+
 ## 2026-06-11 · TASK-17 P1-2a — DONE
 
 **Task:** TASK-17 P1-2a — GET /api/macro-regime (Macro & Regime frontend serve endpoint)
