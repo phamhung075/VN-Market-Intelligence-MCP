@@ -5541,3 +5541,80 @@ technical-analysis   Up 15 hours (healthy)
 **Incidents:** None. Single-service rebuild, no host issues, no container collateral damage, all services remain operational.
 
 ---
+
+---
+
+## Session: 2026-06-11 (Frontend Deployment — Task: Deploy Sector Cascade Page)
+
+**Task:** Targeted rebuild of FRONTEND container ONLY for commit 7e3cfb4f, which adds the analyst page `/dashboard/sector-cascade` ("Tín hiệu dây chuyền theo ngành") + proxy route `/api/sector-cascade` + TopNav item.
+
+**Context:** New feature release; no code changes to other services. Strict rebuild protocol enforced: no `down`, no bare `up -d`, no `--force-recreate`, no touching other 10 containers.
+
+### Execution Steps
+
+**Step 1: Verify commit**
+- Current HEAD: 7e3cfb4f (feat: sector-cascade page — Tín hiệu dây chuyền theo ngành)
+- Already on origin/main ✓
+
+**Step 2: Record OLD frontend image ID**
+- Before: `sha256:1a086168c0fc51de0d656f719905539c87dfdc99780493d75c56779b53c9358c`
+
+**Step 3: Targeted build + recreate**
+- Command: `docker compose build frontend && docker compose up -d --no-deps frontend`
+- Build output: vite bundle successful (2 passes: 14.10s client + 2.78s SSR)
+- Generated chunks include: `api.sector-cascade-l0sNRNKZ.js` (empty stub, correct)
+- Generated page: `dashboard.sector-cascade-BFOCVj_6.js` (8.71 kB gzipped)
+- No errors during build; container started successfully
+
+**Step 4: Verify NEW frontend image ID**
+- After: `sha256:759426d295ca7ac11307ce7a98ccf060c7f4916bbadb7369d937f9f379e2cc40`
+- **Differs from OLD** ✓ Rebuild confirmed
+
+**Step 5: Container health check**
+- All 11 core services healthy:
+  - vn-market-intelligence-mcp-frontend-1 Up 6 seconds (healthy)
+  - vn-market-intelligence-mcp-mcp-server-1 Up 13 minutes (healthy)
+  - vn-market-intelligence-mcp-api-gateway-1 Up 5 hours (healthy)
+  - vn-market-intelligence-mcp-kinh-dich-service-1 Up 8 hours (healthy)
+  - vn-market-intelligence-mcp-rag-service-1 Up 30 minutes (healthy)
+  - vn-market-intelligence-mcp-news-fetch-1 Up 15 hours (healthy)
+  - vn-market-intelligence-mcp-stock-price-1 Up 16 hours (healthy)
+  - vn-market-intelligence-mcp-alert-engine-1 Up 16 hours (healthy)
+  - vn-market-intelligence-mcp-technical-analysis-1 Up 16 hours (healthy)
+  - vn-market-intelligence-mcp-pdf-extractor-1 Up 16 hours (healthy)
+  - vn-market-intelligence-mcp-macro-indicators-1 Up 16 hours (healthy)
+- Plus 2 sidecar containers (headroom-proxy, mcp-gateway) healthy
+- **All containers stable** ✓
+
+**Step 6a: Proxy curl test**
+- Endpoint: `http://localhost:3001/api/sector-cascade?days=7`
+- Response HTTP code: **200**
+- JSON structure verified:
+  - `generatedAt` present
+  - `windowDays: 7` ✓
+  - `source: "cascade_rules"` ✓
+  - `sectors[]` array present with objects: tech (up:21, down:2, neutral:17), real_estate, retail, gold_mining, logistics, etc.
+- **Proxy route functional** ✓
+
+**Step 6b: Page HTML curl test**
+- Endpoint: `http://localhost:3001/dashboard/sector-cascade`
+- Response HTTP code: **200**
+- Response size: **60857 bytes**
+- Content verification:
+  - "Tín hiệu dây chuyền theo ngành" found (page title) ✓
+  - "Dây chuyền ngành" found (TopNav item) ✓
+  - Sector labels "Công nghệ" and "Ngân hàng" found in HTML ✓
+- **Page HTML functional** ✓
+
+### QA Gate Status
+
+**CLEARED ✓**
+
+- ✓ Commit 7e3cfb4f deployed
+- ✓ OLD image ≠ NEW image (rebuild proven)
+- ✓ All 11 services healthy
+- ✓ Proxy returns HTTP 200 + valid JSON with cascade_rules sectors
+- ✓ Page returns HTTP 200 + 60857 bytes + required Vietnamese strings
+- ✓ Feature ready for user access at http://localhost:3001/dashboard/sector-cascade
+
+**Recommendation:** Frontend sector-cascade feature live and verified. Ready for analyst workflows.
