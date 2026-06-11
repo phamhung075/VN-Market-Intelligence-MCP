@@ -46,6 +46,7 @@ import {
   getEventsSinceByType,
   type CorporateEventRow,
 } from "../../../infrastructure/db/corporateEventsStore.js";
+import { computeStaleness } from "./_staleness.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -121,12 +122,19 @@ export interface EventSummary {
   topActiveCodes: { code: string; count: number }[];
 }
 
+/** Staleness threshold for corporate-events data: 3 calendar days. */
+export const CORPORATE_EVENTS_STALENESS_THRESHOLD_DAYS = 3;
+
 /** Full response body for GET /api/corporate-events. */
 export interface CorporateEventsResponse {
   generatedAt: string;
   windowDays: number;
   since: string;
   asOf: string;
+  /** true when asOf is more than 3 calendar days old */
+  stale: boolean;
+  /** Calendar days past the 3-day staleness threshold (0 when not stale) */
+  staleByDays: number;
   typeFilter: string | null;
   events: EventItem[];
   byType: ByTypeItem[];
@@ -276,11 +284,13 @@ export function computeSinceDate(nowIso: string, days: number): string {
  * @param req - Incoming HTTP request (reads ?days= and ?type= query params)
  * @param res - HTTP response
  * @param db  - SQLite database instance (injected by server.ts)
+ * @param now - Optional clock override for staleness testing (defaults to new Date())
  */
 export function handleGetCorporateEvents(
   req: IncomingMessage,
   res: ServerResponse,
   db: Database,
+  now: Date = new Date(),
 ): void {
   try {
     const url = new URL(req.url ?? "/", "http://localhost");
@@ -297,7 +307,7 @@ export function handleGetCorporateEvents(
       typeParam !== null && KNOWN_EVENT_TYPES.has(typeParam) ? typeParam : null;
 
     // Compute since date
-    const since = computeSinceDate(new Date().toISOString(), windowDays);
+    const since = computeSinceDate(now.toISOString(), windowDays);
 
     // ── Read from store ──────────────────────────────────────────────────────
     let rawRows: CorporateEventRow[];
@@ -309,11 +319,18 @@ export function handleGetCorporateEvents(
 
     // 200-on-empty: when no rows, return zeroed envelope
     if (rawRows.length === 0) {
+      const { stale: emptyStale, staleByDays: emptyStaleByDays } = computeStaleness(
+        null,
+        CORPORATE_EVENTS_STALENESS_THRESHOLD_DAYS,
+        now,
+      );
       const emptyBody: CorporateEventsResponse = {
-        generatedAt: new Date().toISOString(),
+        generatedAt: now.toISOString(),
         windowDays,
         since,
         asOf: "",
+        stale: emptyStale,
+        staleByDays: emptyStaleByDays,
         typeFilter,
         events:  [],
         byType:  [],
@@ -344,11 +361,20 @@ export function handleGetCorporateEvents(
     const byType  = buildByType(events);
     const summary = buildSummary(events);
 
+    // Staleness — threshold 3 calendar days (latest eventDate vs now)
+    const { stale, staleByDays } = computeStaleness(
+      asOf || null,
+      CORPORATE_EVENTS_STALENESS_THRESHOLD_DAYS,
+      now,
+    );
+
     const body: CorporateEventsResponse = {
-      generatedAt: new Date().toISOString(),
+      generatedAt: now.toISOString(),
       windowDays,
       since,
       asOf,
+      stale,
+      staleByDays,
       typeFilter,
       events,
       byType,

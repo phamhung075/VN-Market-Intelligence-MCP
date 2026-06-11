@@ -47,6 +47,7 @@ import {
   getAsOf,
   type ShareholderRow,
 } from "../../../infrastructure/db/shareholdersStore.js";
+import { computeStaleness } from "./_staleness.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -99,10 +100,17 @@ export interface RankingItem {
   concentrationLabel: string;
 }
 
+/** Staleness threshold for shareholders data: 55 calendar days. */
+export const SHAREHOLDERS_STALENESS_THRESHOLD_DAYS = 55;
+
 /** Full response body for GET /api/shareholders. */
 export interface ShareholdersResponse {
   generatedAt: string;
   asOf: string | null;
+  /** true when asOf is more than 55 calendar days old */
+  stale: boolean;
+  /** Calendar days past the 55-day staleness threshold (0 when not stale) */
+  staleByDays: number;
   codes: string[];
   selectedCode: string;
   holders: HolderItem[];
@@ -270,11 +278,13 @@ export function resolveSelectedCode(requested: string | null, codes: string[]): 
  *
  * @param db    - SQLite database instance (injected)
  * @param query - Parsed URL query params (expects optional ?code=)
+ * @param now   - Optional clock override for staleness testing (defaults to new Date())
  * @returns ShareholdersResponse object (caller serialises to JSON)
  */
 export function handleGetShareholders(
   db: Database,
   query: URLSearchParams,
+  now: Date = new Date(),
 ): ShareholdersResponse {
   const codes = getDistinctCodes(db);
   const allRows = getAllShareholders(db);
@@ -284,9 +294,12 @@ export function handleGetShareholders(
   const selectedCode = resolveSelectedCode(requestedCode, codes);
 
   if (codes.length === 0 || allRows.length === 0) {
+    const { stale, staleByDays } = computeStaleness(null, SHAREHOLDERS_STALENESS_THRESHOLD_DAYS, now);
     return {
-      generatedAt:     new Date().toISOString(),
+      generatedAt:     now.toISOString(),
       asOf:            null,
+      stale,
+      staleByDays,
       codes:           [],
       selectedCode:    "",
       holders:         [],
@@ -311,9 +324,14 @@ export function handleGetShareholders(
   // Build cross-company ranking
   const ranking = buildRanking(allRows);
 
+  // Staleness — threshold 55 calendar days (shareholders data updated quarterly)
+  const { stale, staleByDays } = computeStaleness(asOf, SHAREHOLDERS_STALENESS_THRESHOLD_DAYS, now);
+
   return {
-    generatedAt:     new Date().toISOString(),
+    generatedAt:     now.toISOString(),
     asOf,
+    stale,
+    staleByDays,
     codes,
     selectedCode,
     holders,
@@ -341,7 +359,7 @@ export function handleGetShareholdersHttp(
 ): void {
   try {
     const url = new URL(req.url ?? "/", "http://localhost");
-    const body = handleGetShareholders(db, url.searchParams);
+    const body = handleGetShareholders(db, url.searchParams, new Date());
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(body));
   } catch (err) {

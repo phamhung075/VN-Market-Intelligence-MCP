@@ -62,6 +62,7 @@ import {
   getConvictionHistoryRows,
   type ConvictionRow,
 } from "../../../infrastructure/db/convictionHistoryStore.js";
+import { computeStaleness } from "./_staleness.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -107,10 +108,17 @@ export interface ConvictionSummary {
   topBearish: ConvictionSnapshotItem[];
 }
 
+/** Staleness threshold for conviction-history data: 2 calendar days. */
+export const CONVICTION_STALENESS_THRESHOLD_DAYS = 2;
+
 /** Full response body for GET /api/conviction-history. */
 export interface ConvictionHistoryResponse {
   generatedAt: string;
   tradingDate: string;
+  /** true when tradingDate is more than 2 calendar days old */
+  stale: boolean;
+  /** Calendar days past the 2-day staleness threshold (0 when not stale) */
+  staleByDays: number;
   snapshot: ConvictionSnapshotItem[];
   series: Record<string, ConvictionSeriesPoint[]>;
   summary: ConvictionSummary;
@@ -284,9 +292,18 @@ export function handleGetConvictionHistory(
     const series = buildSeries(rows);
     const summary = buildSummary(snapshot);
 
+    // Staleness — threshold 2 calendar days (conviction data fetched daily)
+    const { stale, staleByDays } = computeStaleness(
+      tradingDate || null,
+      CONVICTION_STALENESS_THRESHOLD_DAYS,
+      now,
+    );
+
     const body: ConvictionHistoryResponse = {
       generatedAt: now.toISOString(),
       tradingDate,
+      stale,
+      staleByDays,
       snapshot,
       series,
       summary,

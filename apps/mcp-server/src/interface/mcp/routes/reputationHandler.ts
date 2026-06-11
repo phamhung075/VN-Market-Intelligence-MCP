@@ -41,6 +41,7 @@ import {
   getLatestReputationSnapshot,
   getReputationHistory,
 } from "../../../infrastructure/db/reputationStore.js";
+import { computeStaleness } from "./_staleness.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -82,6 +83,10 @@ export type HistoryMap = Record<string, HistoryEntry[]>;
 export interface ReputationResponse {
   generatedAt: string;
   asOf: string | null;
+  /** true when asOf is more than 3 calendar days old */
+  stale: boolean;
+  /** Calendar days past the 3-day staleness threshold (0 when not stale) */
+  staleByDays: number;
   summary: ReputationSummary;
   leaderboard: LeaderboardEntry[];
   history: HistoryMap;
@@ -91,24 +96,31 @@ export interface ReputationResponse {
 // Handler orchestration
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Staleness threshold for reputation data: 3 calendar days. */
+export const REPUTATION_STALENESS_THRESHOLD_DAYS = 3;
+
 /**
  * Orchestrate the GET /api/reputation response.
  * Called by the HTTP handler with an injected DB instance.
  * NO SQL here — all DB access goes through store functions.
  *
- * @param db - SQLite database instance (injected by server.ts — NO getDb() here)
+ * @param db  - SQLite database instance (injected by server.ts — NO getDb() here)
+ * @param now - Optional clock override for staleness testing (defaults to new Date())
  * @returns ReputationResponse object (caller serialises to JSON)
  */
-export function handleGetReputation(db: Database): ReputationResponse {
-  const generatedAt = new Date().toISOString();
+export function handleGetReputation(db: Database, now: Date = new Date()): ReputationResponse {
+  const generatedAt = now.toISOString();
 
   const snapshot = getLatestReputationSnapshot(db);
 
   // Empty-state guard — do NOT throw when table has no rows.
   if (snapshot.length === 0) {
+    const { stale, staleByDays } = computeStaleness(null, REPUTATION_STALENESS_THRESHOLD_DAYS, now);
     return {
       generatedAt,
       asOf: null,
+      stale,
+      staleByDays,
       summary: {
         total: 0,
         avgScore: null,
@@ -156,9 +168,14 @@ export function handleGetReputation(db: Database): ReputationResponse {
     history[r.code]!.push({ date: r.date, score: r.score });
   }
 
+  // Staleness — threshold 3 calendar days
+  const { stale, staleByDays } = computeStaleness(asOf, REPUTATION_STALENESS_THRESHOLD_DAYS, now);
+
   return {
     generatedAt,
     asOf,
+    stale,
+    staleByDays,
     summary: { total, avgScore, byRisk },
     leaderboard,
     history,
@@ -189,7 +206,7 @@ export function handleGetReputationHttp(
   }
 
   try {
-    const body = handleGetReputation(db);
+    const body = handleGetReputation(db, new Date());
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(body));
   } catch (err) {

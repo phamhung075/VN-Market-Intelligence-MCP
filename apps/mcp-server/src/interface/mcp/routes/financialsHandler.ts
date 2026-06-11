@@ -45,6 +45,7 @@ import {
   getAsOf,
   type FinancialRow,
 } from "../../../infrastructure/db/financialsStore.js";
+import { computeStaleness } from "./_staleness.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -106,10 +107,17 @@ export interface ScreenerRankings {
   highestRevenueYoy: HighestRevenueYoyEntry[];
 }
 
+/** Staleness threshold for financials data: 14 calendar days. */
+export const FINANCIALS_STALENESS_THRESHOLD_DAYS = 14;
+
 /** Full response body for GET /api/financials. */
 export interface FinancialsResponse {
   generatedAt: string;
   asOf: string | null;
+  /** true when asOf is more than 14 calendar days old */
+  stale: boolean;
+  /** Calendar days past the 14-day staleness threshold (0 when not stale) */
+  staleByDays: number;
   count: number;
   rows: ScreenerRow[];
   summary: ScreenerSummary;
@@ -256,19 +264,25 @@ export function buildRankings(rows: ScreenerRow[]): ScreenerRankings {
  * Pure-ish (deterministic given same DB state) — can be called directly in tests.
  * No query params needed — full-universe screener with no filtering.
  *
- * @param db - SQLite database instance (injected by server.ts — NO getDb() here)
+ * @param db  - SQLite database instance (injected by server.ts — NO getDb() here)
+ * @param now - Optional clock override for staleness testing (defaults to new Date())
  * @returns FinancialsResponse object (caller serialises to JSON)
  */
-export function handleGetFinancials(db: Database): FinancialsResponse {
+export function handleGetFinancials(db: Database, now: Date = new Date()): FinancialsResponse {
   const rawRows = getLatestPerCode(db);
   const asOf = getAsOf(db);
   const rows = rawRows.map(mapRow);
   const summary = buildSummary(rows);
   const rankings = buildRankings(rows);
 
+  // Staleness — threshold 14 calendar days (financials updated quarterly)
+  const { stale, staleByDays } = computeStaleness(asOf, FINANCIALS_STALENESS_THRESHOLD_DAYS, now);
+
   return {
-    generatedAt: new Date().toISOString(),
+    generatedAt: now.toISOString(),
     asOf,
+    stale,
+    staleByDays,
     count: rows.length,
     rows,
     summary,
@@ -294,7 +308,7 @@ export function handleGetFinancialsHttp(
   db: Database,
 ): void {
   try {
-    const body = handleGetFinancials(db);
+    const body = handleGetFinancials(db, new Date());
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(body));
   } catch (err) {
