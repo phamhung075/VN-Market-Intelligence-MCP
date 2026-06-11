@@ -87,6 +87,10 @@ import { handleNewsHeadlines } from "./routes/newsHeadlinesHandler.js";
 import { handleVpsProxyHealth } from "./routes/vpsProxyHealthHandler.js";
 import { handleFetchStatus } from "./routes/fetchStatusHandler.js";
 import { handlePushSbvRates } from "./routes/pushSbvRatesHandler.js";
+// MAW-P0-2: GET /api/market-digest — last 3 CHEF synthesis dishes
+import { handleGetMarketDigest } from "./routes/marketDigestHandler.js";
+// MAW-P0-3: GET /api/analysis-brief/:ticker — per-ticker analysis brief
+import { handleGetAnalysisBrief } from "./routes/analysisBriefHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -1984,6 +1988,20 @@ export async function createBunServer(
     // F-4 additive alias: gateway strips /mcp → /api/news/headlines (direct proxy path)
     if (method === "GET" && pathname === "/api/news/headlines") {
       handleNewsHeadlines(req, res, db);
+      return;
+    }
+
+    // ── MAW-P0-2: GET /api/market-digest — last 3 CHEF synthesis dishes ──
+    if (method === "GET" && pathname === "/api/market-digest") {
+      handleGetMarketDigest(req, res, db);
+      return;
+    }
+
+    // ── MAW-P0-3: GET /api/analysis-brief/:ticker — per-ticker brief ──────
+    // Matches /api/analysis-brief/<TICKER> (one path segment after prefix)
+    if (method === "GET" && pathname.startsWith("/api/analysis-brief/")) {
+      const ticker = pathname.slice("/api/analysis-brief/".length);
+      handleGetAnalysisBrief(req, res, ticker, process.cwd());
       return;
     }
 

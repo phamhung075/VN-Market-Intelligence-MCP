@@ -1,5 +1,32 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 MAW-P0-2/P0-3 — DONE
+
+**Task:** TASK-17 Market Analyst Workbench P0 — 2 new backend GET endpoints
+**Scope:** apps/mcp-server/ — marketDigestHandler, analysisBriefReader, analysisBriefHandler, server.ts wiring, 2 test files
+**DJ-GATE-1:** P0-2 sources `market_messages` DB directly (no MCP tool dispatch); filters to CHEF_SYNTHESIS_AGENTS (morning-briefing/evening-summary/france-summary). P0-3 reads `docs/analysis-briefs/{TICKER}.md` via filesystem adapter in infrastructure/fileStore; sanitises ticker against path traversal; returns 404 JSON for missing file.
+
+Endpoints shipped:
+- `GET /api/market-digest` → last 3 CHEF synthesis dishes `{items:[{id,text,ts,type,from_agent}], count, fetchedAt}`
+- `GET /api/analysis-brief/:ticker` → `{ticker, fundamentals, news, price, synthesis, raw, updatedAt}` | 404 if missing | 400 if invalid ticker
+
+Tests: 24 pass (10 for market-digest, 14 for analysis-brief). bun tsc --noEmit clean.
+Files changed: marketDigestHandler.ts, analysisBriefReader.ts, analysisBriefHandler.ts, server.ts (imports + route wiring), 1983-*.test.ts, 1984-*.test.ts
+
+## 2026-06-10 · QUALITY-BURNDOWN-CHIJ — DONE
+
+**Task:** quality-burndown-CHIJ batch (7 fixes) | Commit: 815ccaed
+**Scope:** 7 contract fixes across Clusters C+H+I+J. 18 new tests green. tsc clean.
+- FIX1 SYS-FUNC-05: UrgentNewsFindingDataSchema fields optional → urgent_news minimal payload passes
+- FIX2 MD-FUNC-01: get_market_snapshot adds vn_index:{price,change_pct,direction} struct
+- FIX3 ALT-FUNC-02: get_alert_accuracy AccuracyReport gains accuracy_rate:number|null
+- FIX4 AC-FUNC-02: task_list_held normalizes owner (alias) + expires_at as ISO-8601 string
+- FIX5 DS-DEGRADE-01: get_public_contracts checks public_contracts.fetched_at vs SLA 7d
+- FIX6 FR-DEGRADE-01: get_bctc_full checks vps_push_log bctc SLA 48h → stale signal
+- FIX7 KD-OBS-01: explain_hexagram soft range guard in handler → graceful {error} not -32602
+**Root causes:** schema over-validation, missing structured output fields, contract drift on field names, absent degradation flags.
+**DJ-GATE-1 note:** no tracked status flipped — all fixes are additive (new fields/relaxed validation).
+
 ## 2026-06-10 · BPE-DEV-4 — DONE
 
 **Task:** BPE-DEV-4 | Sprint: BCTC-PROSE-EXTRACT | Size: S
