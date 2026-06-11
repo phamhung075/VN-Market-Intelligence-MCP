@@ -1,13 +1,13 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-10T21:01:49Z",
-  "_updated_by": "dev-rag-service",
+  "_updated_at": "2026-06-11T08:45:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-10T00:21:29Z",
-    "updated_by": "qa",
-    "active_task_id": null,
+    "status": "active",
+    "updated_at": "2026-06-11T08:45:00Z",
+    "updated_by": "dev-mcp-server",
+    "active_task_id": "ALERT-WRITER-RECONCILE",
     "next_agent": null,
     "_updated_at": "2026-06-10T04:35:51Z"
   },
@@ -6593,7 +6593,7 @@
         "id": "ALERT-WRITER-RECONCILE",
         "type": "SPIKE",
         "owner": "dev-mcp-server",
-        "status": "BACKLOG",
+        "status": "IN_PROGRESS",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -6613,7 +6613,7 @@
         "downstream_blocked": "TASK-17 deferred frontend Alerts page — building it over an empty alerts table = rejected 'demo over empty source' anti-pattern. Frontend reads the same FROM alerts SSOT; it stays gated until this spike confirms the live writer populates rows.",
         "created_at": "2026-06-11T08:34:59Z",
         "created_by": "po",
-        "note": "[po triage 2026-06-11T08:34:59Z] Created from F1 triage. Evidence: alert-engine cmd/server/main.go:40 opens alert_engine.db (own DB); router.go /evaluate = validation only; mcp-server cronConfig.ts has the real writers; alerts.ts sent_by DEFAULT 'server' + foreignFlowAlertJob/taAlertScanJob/bbAlertScanJob INSERT INTO alerts. Dev snapshot market.db cron_job_runs only has pollNews (newest 2026-06-09) so it CANNOT prove writer-dead — MUST verify on live container, not snapshot. NOT in_progress (WIP<=2)."
+        "note": "[po triage 2026-06-11T08:34:59Z] Created from F1 triage. Evidence: alert-engine cmd/server/main.go:40 opens alert_engine.db (own DB); router.go /evaluate = validation only; mcp-server cronConfig.ts has the real writers; alerts.ts sent_by DEFAULT 'server' + foreignFlowAlertJob/taAlertScanJob/bbAlertScanJob INSERT INTO alerts. Dev snapshot market.db cron_job_runs only has pollNews (newest 2026-06-09) so it CANNOT prove writer-dead — MUST verify on live container, not snapshot. NOT in_progress (WIP<=2). | [dev-mcp-server 2026-06-11T08:45Z] IN_PROGRESS: live probe confirms cron registered + firing every 15min (success telemetry present). Root cause found: URL mismatch — client calls /indicators, TA service serves /ta/indicators; field mismatch code vs symbol; response array-vs-scalar. taAlertScan + bbAlertScan: success_count=0 EVERY cycle = 0 RSI/BB alerts ever fired. foreignFlowAlertJob: healthy, rows_written=0 = no HIGH signal today. Fix: clients.ts URL + field + response mapping + pass closes from local DB."
       }
     ],
     "archive": [],
