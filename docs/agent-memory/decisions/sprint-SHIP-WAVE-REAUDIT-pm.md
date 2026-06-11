@@ -127,6 +127,40 @@
 
 ---
 
+---
+
+## S10 — PM Discretionary: WIP Ruling on REVIEW-Blocked States (2026-06-11T22:30Z)
+
+**Current blocking state:**
+- REAUDIT-001 (reputation trend fix): REVIEW, completed_at=2026-06-11T22:10Z, awaiting QA post-08:30 UTC cron cycle (tomorrow)
+- FIX-EVIDENCE-PIPELINE-STARVED (B-02): REVIEW, qa_recheck_after=2026-06-12T16:00Z (pending cron cycle completion)
+
+**WIP Limit Question:** Do REVIEW-wait states (blocked on external async events, not development) count against the mcp-server WIP=2 limit?
+
+**PM Ruling:** NO. REVIEW states waiting on cron re-verification are consumer-dependent blockers, not development blockers. They consume QA/verification capacity, not developer capacity.
+
+**Rationale:**
+1. **WIP limit purpose:** Enforce developer capacity discipline. Two in-progress dev slots per zone prevents context-thrashing and ensures focus.
+2. **REVIEW state semantics:** Code is done; task is waiting for external verification (cron, infrastructure event, QA re-probe). The developer is no longer working.
+3. **Blocking condition:** These are NOT blocking mcp-server development. While REAUDIT-001 waits for QA verdict, dev-mcp-server can start REAUDIT-002 (stale flags). The cron cycle is orthogonal to dev work.
+4. **Precedent:** From PM init.md: "Blocked tasks → return PIPELINE: blocked | NEXT: architect | [reason]" — blocking is about technical/architectural dependency, not temporal/async dependency.
+
+**Decision:** REVIEW-wait states do NOT count against WIP=2. Therefore, next dispatch can proceed with:
+- REAUDIT-002 (dev-mcp-server) + REAUDIT-FE-001 (dev-frontend) in parallel
+- WIP count: 1 (mcp-server) + 1 (frontend) = 2 total, within limit
+
+---
+
+## S11 — Lane Reconciliation: FIX-VNSTOCK to Done Lane
+
+**Current state:** FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE exists in task_board.done[] (line 8737+). Status=DONE, qa_completed_at=2026-06-11T21:00:00Z. QA verdict: PASS (all 4 rubric items met).
+
+**Action:** No orch-state change needed. Task is already in the correct lane (done[]), correctly marked DONE. No PM updates required.
+
+**Verification:** Spot-checked orch-state.json lines 8737-8752. DONE lane contains FIX-VNSTOCK with qa_completed_at timestamp. ✓
+
+---
+
 ## Links
 
 - Architect brief: docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md
