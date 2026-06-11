@@ -80,16 +80,24 @@ function getForeignFlowHistoryFromDb(
   code: string,
   days = 10,
 ): DailyForeignFlow[] {
-  // Query daily_ohlcv ASC so we can build a running cumulative sum.
-  // COALESCE foreign_net_vol to 0 for rows where foreign flow was not yet written.
-  const rows = database
+  // BUG-FIX (FIX-EVIDENCE-PIPELINE-STARVED): the original query used
+  // ORDER BY date ASC LIMIT ?, which returned the OLDEST `days` rows in the
+  // table (not the most-recent ones). When the table grows beyond `days` rows,
+  // the oldest historical rows have foreign_net_vol=0, so the cumulative sum
+  // was always 0 and the zero-data guard skipped every stock, writing 0
+  // evidence fragments since 2026-05-27.
+  //
+  // Fix: query the MOST RECENT `days` rows (ORDER BY date DESC LIMIT ?), then
+  // reverse in memory to obtain ASC order for the cumulative-sum build.
+  // The cumulative-sum delta invariant is preserved: deltas[i] = net_vol of day i.
+  const recent = database
     .prepare<unknown, [string, number]>(
       `SELECT code,
               date,
               COALESCE(foreign_net_vol, 0) AS net_vol
        FROM daily_ohlcv
        WHERE code = ?
-       ORDER BY date ASC
+       ORDER BY date DESC
        LIMIT ?`,
     )
     .all(code, days) as Array<{
@@ -98,9 +106,12 @@ function getForeignFlowHistoryFromDb(
     net_vol: number;
   }>;
 
+  // Reverse to ASC order so the cumulative sum runs oldest→newest.
+  const asc = recent.slice().reverse();
+
   // Build cumulative sum (ascending) so delta[i] = net_vol[i] when reversed.
   let cumsum = 0;
-  const ascending: DailyForeignFlow[] = rows.map((row) => {
+  const ascending: DailyForeignFlow[] = asc.map((row) => {
     cumsum += row.net_vol;
     return {
       code: row.code,

@@ -71,8 +71,16 @@ export async function runEvidenceAccumulator(
     .all(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) as { stock: string }[];
 
   if (stockRows.length === 0) {
-    logger.debug("[evidence-accumulator] no active fragments — nothing to accumulate");
-    return { stocks: 0, purged };
+    // FAIL-LOUD (FIX-EVIDENCE-PIPELINE-STARVED): an empty evidence_fragments table
+    // means the upstream producer (foreignFlowAlertJob / insiderCheckJob) is starved.
+    // Throw so recordJobRun stamps status='error' — never stamp success-with-0.
+    // This surfaces the starvation in cron_job_runs.error_msg so operators can detect it.
+    const errMsg =
+      `[evidence-accumulator] evidence_fragments is empty (purged=${purged}) — ` +
+      "producer starvation detected; upstream fragment writers are writing 0 rows. " +
+      "Check foreignFlowAlertJob / insiderCheckJob cron_job_runs for root cause.";
+    logger.warn(errMsg);
+    throw new Error(errMsg);
   }
 
   const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"

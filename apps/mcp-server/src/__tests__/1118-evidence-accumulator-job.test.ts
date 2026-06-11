@@ -151,10 +151,14 @@ describe("Task 1118 — evidenceAccumulatorJob", () => {
   });
 
   describe("Empty case", () => {
-    it("returns { stocks: 0, purged: 0 } when no fragments", async () => {
-      const result = await runEvidenceAccumulator(db);
-      expect(result).toEqual({ stocks: 0, purged: 0 });
+    it("throws with producer-starvation message when no fragments exist (FIX-EVIDENCE-PIPELINE-STARVED: fail-loud, not silent success)", async () => {
+      // Changed by FIX-EVIDENCE-PIPELINE-STARVED: empty evidence_fragments must
+      // throw so recordJobRun stamps status='error', not silent status='success'.
+      await expect(runEvidenceAccumulator(db)).rejects.toThrow(
+        /evidence_fragments is empty/,
+      );
 
+      // No scores written when starvation detected
       const scoreCount = db.prepare("SELECT COUNT(*) as c FROM evidence_scores").get() as { c: number };
       expect(scoreCount.c).toBe(0);
     });
