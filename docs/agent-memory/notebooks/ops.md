@@ -6754,3 +6754,83 @@ Status: ✓ Proxy successfully reaches mcp-server /api/financials endpoint
 **Incidents:** None  
 **Procedure Compliance:** Strict targeted rebuild used | no --force-recreate/--remove-orphans | no bare down/up
 
+
+---
+
+## Cycle 2026-06-11 T18:46 — mcp-server Rebuild (GET /api/fed-rates)
+
+**Task:** Targeted rebuild of mcp-server container only to deploy new `GET /api/fed-rates` endpoint (commit d3677375, already on origin/main).
+
+**Baseline (BEFORE)**
+
+```
+OLD image ID: sha256:ae42b26b82223ef9e0733da276f7db287fecf5e4fce618d3742f2f783e92c550
+Peer uptime snapshot:
+  - frontend: Up 14 minutes (healthy)
+  - api-gateway: Up 8 hours (healthy)
+  - kinh-dich-service: Up 11 hours (healthy)
+  - rag-service: Up 34 minutes (healthy)
+  - news-fetch: Up 18 hours (healthy)
+  - stock-price: Up 19 hours (healthy)
+  - alert-engine: Up 19 hours (healthy)
+  - technical-analysis: Up 19 hours (healthy)
+  - pdf-extractor: Up 48 minutes (healthy)
+  - macro-indicators: Up 19 hours (healthy)
+  - headroom-proxy: Up 19 hours
+  - mcp-gateway: Up 19 hours (healthy)
+```
+
+**Rebuild Execution**
+
+```bash
+docker compose build mcp-server && docker compose up -d --no-deps mcp-server
+```
+
+Status: ✓ BUILD+LAUNCH successful (17s total)
+
+**NEW image ID: sha256:802f67fa54c040e983e7263734cb463f7dfe077f9b00c09eede2cfe81c2f969b**
+
+**Confirmation:** OLD ≠ NEW ✓
+
+### Post-Rebuild Container Health (5s after launch)
+
+```
+NAME                                              STATUS                    PEER_UPTIME_CHANGED?
+vn-market-intelligence-mcp-mcp-server-1           Up 12 seconds (healthy)   THIS SERVICE
+vn-market-intelligence-mcp-frontend-1             Up 15 minutes (healthy)   NO — same
+vn-market-intelligence-mcp-api-gateway-1          Up 8 hours (healthy)      NO — same
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 11 hours (healthy)     NO — same
+vn-market-intelligence-mcp-rag-service-1          Up 35 minutes (healthy)   NO — same
+vn-market-intelligence-mcp-news-fetch-1           Up 18 hours (healthy)     NO — same
+vn-market-intelligence-mcp-stock-price-1          Up 19 hours (healthy)     NO — same
+vn-market-intelligence-mcp-alert-engine-1         Up 19 hours (healthy)     NO — same
+vn-market-intelligence-mcp-technical-analysis-1   Up 19 hours (healthy)     NO — same
+vn-market-intelligence-mcp-pdf-extractor-1        Up 49 minutes (healthy)   NO — same
+vn-market-intelligence-mcp-macro-indicators-1     Up 19 hours (healthy)     NO — same
+headroom-proxy                                    Up 19 hours               NO — same
+mcp-gateway                                       Up 19 hours (healthy)     NO — same
+```
+
+**Count:** 13/13 containers running ✓ | **Peers untouched (no restart):** ✓
+
+### Smoke Test: GET /api/fed-rates
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/fed-rates
+```
+
+**Response:** 200 ✓
+
+**Status:** New endpoint live and accessible.
+
+### Summary
+
+**Rebuild Status:** ✓ SUCCESS  
+**Image Updated:** ✓ (ae42b26...sha256:802f67fa)  
+**All 13 Containers Healthy:** ✓  
+**ALL Peer Containers Untouched:** ✓ (zero restarts outside mcp-server)  
+**New GET /api/fed-rates Endpoint:** ✓ (HTTP 200)
+
+**Incidents:** None  
+**Procedure Compliance:** Strict targeted rebuild used | no destructive flags | no peer collateral
+
