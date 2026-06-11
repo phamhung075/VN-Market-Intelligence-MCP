@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-PAGE13 — GET /api/corporate-events — DONE
+
+**Task:** TASK17-PAGE13 endpoint wave — "Sự kiện doanh nghiệp gần đây" (Recent Corporate Actions Monitor).
+**Scope:** apps/mcp-server/ — corporateEventsStore.ts (new), corporateEventsHandler.ts (new), server.ts (import + route wire), TASK17-PAGE13 test (new).
+**Contract:** vnstock_events (2603 rows live, 53 codes, 2013-06-07→2026-06-08). 0 future rows — backward-looking only. event_type taxonomy: DDIND 706, DDINS 690, AGME 288, ISS 255, DDRP 213, DIV 203, AIS 134, EGME 54, OTHE 35, AGMR 7, SUSP 6, NLIS 6.
+**Key decisions:** (1) CATEGORY_MAP 12 known types → {category, categoryLabel(VN)}; unknown → {other, raw_type}. (2) pickDetail: non-empty description.trim() wins over eventName (description=Vietnamese, eventName=English). (3) computeSinceDate: pure UTC Date math → slice(0,10) "YYYY-MM-DD" for string-comparable WHERE clause. (4) Optional getEventsSinceByType parameterized helper for ?type= filter (avoids post-DB-call filtering overhead when possible). (5) ?type= unknown/absent → typeFilter=null in response + no filter applied. (6) byType ordered desc by count; topActiveCodes capped at 8; 200-on-empty zeroed envelope.
+**Live DB probe (?days=90, 2026-06-11):** count=242, since=2026-03-13, asOf=2026-06-08. byType: ISS 69, DDINS 62, DDIND 62, DDRP 18, AGME 12, DIV 10, AIS 7, OTHE 1, EGME 1. summary: distinctCodes=47, dividend=10, issuance=76, insider=142, meeting=13, other=1. topActiveCodes: SHB 28, SSI 15, MWG 13, NVL 11, ACB 9, KDH 9, VIX 9, FPT 8. First 8 events: VJC ISS 2026-06-08, ACB ISS 2026-06-05, ACB DIV 2026-06-05, ACB DDIND 2026-06-05, DIG DDIND 2026-06-05, DIG DDIND 2026-06-05, DIG DDRP 2026-06-05, HPG DDIND 2026-06-05.
+**Tests:** 58 pass / 0 fail (137 expect() calls). tsc exit 0.
+**Commit:** ff01e8ca
+**Zone health:** bun test 58/0 scoped | tsc exit 0 | tools count unchanged | scheduler count unchanged | HEALTHY
+
 ## 2026-06-11 · TASK17-PAGE12 — GET /api/global-markets — DONE
 
 **Task:** TASK17-PAGE12 endpoint wave — "Bối cảnh thị trường toàn cầu" (Global Market Context / World Risk Barometer).
