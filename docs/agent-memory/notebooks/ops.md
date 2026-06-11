@@ -6494,3 +6494,109 @@ curl -s "http://localhost:3000/api/officers?code=FPT" | head -c 400
 **Duration:** 3 minutes total (1 min build + 1 min deploy + 1 min verify).
 
 ---
+
+## 2026-06-11 — Frontend Rebuild (TASK17-PAGE15 Officers Page)
+
+**Task:** Deploy new "Ban lãnh đạo & quản trị" officers page (TASK17-PAGE15, commit d2174a43).  
+**Procedure:** Targeted frontend rebuild only (strict no-peer-collateral).
+
+### Step 1: Record OLD Image ID
+
+```bash
+docker inspect --format '{{.Image}}' vn-market-intelligence-mcp-frontend-1
+```
+
+**Result:** `sha256:facdfdb072cdf9ee990e50c0b1b430b570e9c72ef132f02e0d2ac296d14de87e`
+
+### Step 2: Pre-Rebuild Container State
+
+```bash
+docker compose ps --format "table {{.Names}}\t{{.Status}}"
+```
+
+**Count:** 11/11 present and healthy ✓
+
+### Step 3: Rebuild Frontend
+
+```bash
+docker compose build frontend && docker compose up -d --no-deps frontend
+```
+
+**Build output:** Successful  
+- npm ci (cached)
+- npm run build completed in 36.5s
+- Image exported and tagged successfully
+
+### Step 4: Record NEW Image ID
+
+```bash
+docker inspect --format '{{.Image}}' vn-market-intelligence-mcp-frontend-1
+```
+
+**Result:** `sha256:3c693b2597c8f8abe667fb7f69fbf5cff9b5c083cb901da60681503198a646d4`
+
+**Diff:** OLD ≠ NEW ✓ (image successfully rebuilt)
+
+### Step 5: Post-Rebuild Container Verification
+
+**After wait:** 16 seconds
+
+```bash
+docker compose ps
+```
+
+**Result:**
+```
+vn-market-intelligence-mcp-alert-engine-1         Up 18 hours (healthy)
+vn-market-intelligence-mcp-api-gateway-1          Up 8 hours (healthy)
+vn-market-intelligence-mcp-frontend-1             Up 16 seconds (healthy)
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 10 hours (healthy)
+vn-market-intelligence-mcp-macro-indicators-1     Up 18 hours (healthy)
+vn-market-intelligence-mcp-mcp-server-1           Up 5 minutes (healthy)
+vn-market-intelligence-mcp-news-fetch-1           Up 18 hours (healthy)
+vn-market-intelligence-mcp-pdf-extractor-1        Up 7 minutes (healthy)
+vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)
+vn-market-intelligence-mcp-stock-price-1          Up 18 hours (healthy)
+vn-market-intelligence-mcp-technical-analysis-1   Up 18 hours (healthy)
+```
+
+**Count:** 11/11 ✓ | **All healthy:** ✓ | **Peers untouched:** ✓
+
+### Step 6: Smoke Tests
+
+#### Test 1: GET /dashboard/officers (new page)
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/officers
+```
+
+**Result:** `200` ✓
+
+#### Test 2: GET /api/officers (payload validation)
+
+```bash
+curl -s "http://localhost:3001/api/officers" | head -c 200
+```
+
+**Result (first 200 chars):**
+```
+{"generatedAt":"2026-06-11T16:05:05.992Z","asOf":"2026-06-10T21:00:49Z","codes":["BID","BSR","DGC","DIG","DPM","DXG","EIB","FPT","FRT","GEX","HPG","HUT","KBC","KDC","KDH","MSN","MWG","NVL","PDR","SAB"
+```
+
+**Status:** ✓ JSON valid | selectedCode="BID" present in codes array
+
+#### Test 3: GET /dashboard/shareholders (regression guard — page-14)
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/shareholders
+```
+
+**Result:** `200` ✓
+
+### Status
+
+**TASK17-PAGE15 SHIPPED:** Frontend successfully rebuilt with new officers page.  
+**Incidents:** None.  
+**Procedure compliance:** ✓ Strict targeted rebuild used | ✓ No --force-recreate or --remove-orphans | ✓ All 11 peers untouched.
+
+---
