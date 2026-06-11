@@ -974,3 +974,87 @@ None. All items are diagnosable from live probes and code. The audit matrix abov
 3. FIX-VNSTOCK-FUNDAMENTALS (B-01) and FIX-EVIDENCE-PIPELINE (B-02) are already in codebase — QA verifies, no new dev work needed unless live probe shows they are not effective.
 4. Ops rebuilds containers after every code change; QA re-verifies live post-rebuild before marking DONE.
 5. `reputation` trend defect (NFR-C-7) may require scheduler investigation in `apps/mcp-server/src/scheduler/` — if confirmed defect, it escalates from improvement-lane to DEGRADED and gets a fix task.
+
+---
+
+## [QA] Review Record — B-01: FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE
+
+**QA date:** 2026-06-11T21:00:00Z
+**Commit verified:** f4f5ce65
+**Container:** vn-market-intelligence-mcp-mcp-server-1 (Up ~1h, healthy, rebuilt post-fix ~18:40 UTC)
+
+**Live probes executed:**
+
+1. `cron_job_runs WHERE job_name='vnstockFundamentalsRefresh' ORDER BY started_at DESC LIMIT 5`
+   - Result: 3 entries — 2026-06-08 status=crashed (pre-fix), 2026-06-01 status=success rows_written=33, 2026-05-18 status=crashed.
+   - No post-fix weekly run yet (next Mon 01:00 UTC). Expected — weekly schedule.
+
+2. `cron_job_runs WHERE job_name='vnstockStartupProbe' ORDER BY started_at DESC LIMIT 5`
+   - Result: 1 entry — 2026-06-11 18:40:33 status=success rows_written=null duration_ms=5.
+   - Fix 3 (wrapRun) CONFIRMED ACTIVE: startup probe now stamps cron_job_runs.
+   - No wedge condition on this run (status=success, not error).
+
+3. `SELECT COUNT(*) as c, MAX(fetched_at) FROM vnstock_financials`
+   - Result: c=79, latest=2026-04-15T10:00:15. Count > 0. Not BROKEN.
+
+4. Code audit (container source):
+   - Fix 4 wedge-guard: `vnstockStartupProbe.ts` L121 `msg.includes("Cannot use a closed database")` confirmed.
+   - Fix 2 rowsWritten delta: `vnstockFundamentalsJob.ts` L250 `rowsAfter - rowsBefore` confirmed.
+   - Fix 3 wrapRun: startup probe confirmed wrapping cron_job_runs entries.
+
+**Verdict: PASS**
+
+Rubric check:
+- `cron_job_runs` has entries for `vnstockFundamentalsRefresh` with `status` field populated — PASS (3 entries, status values: crashed/success/crashed).
+- No stuck `status=running` row — PASS.
+- `vnstock_financials` count > 0 — PASS (79 rows).
+- Fix 3 wrapRun observable via startup probe entry — PASS.
+- Fix 4 wedge-guard code present and active — PASS.
+
+**Caveat:** Fix 2 fail-loud WORK alert (rowsWritten=0 guard) cannot be exercised until next weekly refresh (Mon). If next run shows rowsWritten=0 with tickers>0 and NO WORK alert fires, re-open.
+
+**Status flip:** FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE → DONE
+
+---
+
+## [QA] Review Record — B-02: FIX-EVIDENCE-PIPELINE-STARVED
+
+**QA date:** 2026-06-11T21:00:00Z
+**Commit verified:** 27eaece9
+**Container:** vn-market-intelligence-mcp-mcp-server-1 (rebuilt ~18:40 UTC, healthy)
+
+**Live probes executed:**
+
+1. `SELECT COUNT(*) as c, MAX(timestamp) as latest FROM evidence_fragments`
+   - Result: c=0, latest=null. Evidence_fragments STILL EMPTY.
+
+2. `cron_job_runs WHERE job_name LIKE '%evidence%' OR job_name LIKE '%foreignFlow%' ORDER BY started_at DESC LIMIT 10`
+   - foreignFlowAlertJob: last run 2026-06-11 08:13:00 status=success rows_written=0 — PRE-REBUILD (fix not active).
+   - evidenceAccumulatorJob: last run 2026-06-08 16:00:00 status=success rows_written=0 — PRE-REBUILD.
+   - No post-fix cron cycle has run for either job.
+
+3. Code audit (container source):
+   - Fix 1 query: `foreignFlowAlertJob.ts` L100 `ORDER BY date DESC` confirmed.
+   - Fix 2 fail-loud: `evidenceAccumulatorJob.ts` L79 `evidence_fragments is empty` throw confirmed.
+
+4. `daily_ohlcv` data availability check:
+   - Count=31545, latest=2026-06-11, earliest=2026-04-23.
+   - Non-zero foreign_net_vol rows exist on 2026-06-11 (e.g. ACB=6006, ACV=148, ANV=-1910).
+   - Fix will find real data when it runs (DESC query will hit non-zero rows).
+
+**Verdict: PENDING — re-check after 2026-06-12T16:00:00Z**
+
+Fix code is deployed and verified in container. However no cron cycle has elapsed since rebuild:
+- `foreignFlowAlertJob` next scheduled run: 2026-06-12 08:13 UTC.
+- `evidenceAccumulatorJob` next scheduled run: 2026-06-12 16:00 UTC.
+
+Per BA spec edge case: "QA re-verifies AFTER next cron run (not immediately after deploy)."
+
+**Re-check conditions (ALL must pass to flip to DONE):**
+1. `foreignFlowAlertJob` `cron_job_runs` entry with `started_at >= 2026-06-12 08:13` and `rows_written > 0`.
+2. `evidence_fragments.count > 0` after accumulator run.
+3. `evidenceAccumulatorJob` `cron_job_runs` entry with `started_at >= 2026-06-12 16:00` and `status=success rows_written > 0`.
+
+**If foreignFlowAlertJob rows_written=0 after 2026-06-12 run:** Fix is NOT effective — re-open as new dev task (not verify-only).
+
+**Status:** FIX-EVIDENCE-PIPELINE-STARVED remains REVIEW (PENDING re-check after 2026-06-12T16:00:00Z)

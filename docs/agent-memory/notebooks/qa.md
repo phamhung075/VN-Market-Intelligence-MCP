@@ -1,5 +1,15 @@
 # QA — Notebook
 
+## cycle-226 · 2026-06-11 · SHIP-WAVE-REAUDIT B-01/B-02 live-probe audit — B-01 DONE / B-02 PENDING
+
+Sprint: SHIP-WAVE-REAUDIT | Tasks: FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (B-01) + FIX-EVIDENCE-PIPELINE-STARVED (B-02) | Methodology: raw live probe via docker exec keinos/sqlite3 pattern (named volume).
+
+B-01 DONE: Fix code f4f5ce65 confirmed in container. vnstockStartupProbe post-rebuild run 18:40:33 status=success (Fix3 wrapRun active). wedge-guard L121 confirmed. rowsWritten delta L250 confirmed. vnstock_financials count=79. No stuck running rows. Weekly refresh not triggered post-fix (expected; next Mon). Rubric met.
+
+B-02 PENDING: Fix code 27eaece9 confirmed in container (ORDER BY date DESC L100, fail-loud throw L79). evidence_fragments.count=0 still — both foreignFlowAlertJob (08:13) and evidenceAccumulatorJob (2026-06-08) ran pre-rebuild. No post-fix cycle elapsed. BA spec edge case applies: re-check after 2026-06-12 16:00 UTC. Re-check: foreignFlowAlertJob rows_written>0 + evidence_fragments.count>0 + accumulator success. If rows_written=0 → fix ineffective → new dev task.
+
+DJ-GATE-1: sprint-SHIP-WAVE-REAUDIT-qa.md § qa-S1 (B-01) + qa-S2 (B-02).
+
 ## cycle-225 · 2026-06-11 · GFD-11 GO-FLEET-DEPLOY full-fleet verification gate — PARTIAL (service PASS, 2 pre-existing test bugs)
 
 Sprint: GO-FLEET-DEPLOY | Task: GFD-11 | Verdict: PARTIAL | Report: reports/TASK_REPORT_GFD-11.md

@@ -6635,9 +6635,10 @@
         "priority": "high",
         "created_by": "po",
         "created_at": "2026-06-11T17:53:21Z",
-        "status_note": "Created by po triage 2026-06-11 from router DATA-FRESHNESS AUDIT (ground-truth, live named-volume DB vn-market-intelligence-mcp_market_data @ 2026-06-11 ~17:45 UTC). SILENT-SWALLOW / green-but-does-nothing class. evidence_fragments=0 (empty); evidence_scores frozen 2026-05-27 (last non-zero accumulator runs: 05-27=7, 05-25=8, 05-18=18); evidence_likelihood_ratios frozen 2026-05-24 (45). evidenceAccumulatorJob runs ~every 2d, status=success every run, rows_written=0 since 05-27. Root cause is UPSTREAM of the accumulator: whatever writes evidence_fragments stopped AND existing fragments TTL-expired (ttl_days/expires_at cols) -> accumulator has nothing to consume -> writes 0 -> falsely stamps success. Fix BOTH: (1) restore the fragment producer write path; (2) make evidenceAccumulatorJob fail-loud (not success) when input is empty / it writes 0 rows. AC: evidence_fragments non-empty AND evidenceAccumulatorJob rows_written>0 on next run AND evidence_scores MAX(score_date) within 3 days.",
+        "status_note": "Created by po triage 2026-06-11 from router DATA-FRESHNESS AUDIT (ground-truth, live named-volume DB vn-market-intelligence-mcp_market_data @ 2026-06-11 ~17:45 UTC). SILENT-SWALLOW / green-but-does-nothing class. evidence_fragments=0 (empty); evidence_scores frozen 2026-05-27 (last non-zero accumulator runs: 05-27=7, 05-25=8, 05-18=18); evidence_likelihood_ratios frozen 2026-05-24 (45). evidenceAccumulatorJob runs ~every 2d, status=success every run, rows_written=0 since 05-27. Root cause is UPSTREAM of the accumulator: whatever writes evidence_fragments stopped AND existing fragments TTL-expired (ttl_days/expires_at cols) -> accumulator has nothing to consume -> writes 0 -> falsely stamps success. Fix BOTH: (1) restore the fragment producer write path; (2) make evidenceAccumulatorJob fail-loud (not success) when input is empty / it writes 0 rows. AC: evidence_fragments non-empty AND evidenceAccumulatorJob rows_written>0 on next run AND evidence_scores MAX(score_date) within 3 days. | [QA] 2026-06-11 PENDING: Fix code confirmed in container (ORDER BY date DESC at L100, fail-loud throw at L79 evidenceAccumulatorJob). evidence_fragments.count=0 — no cron cycle has run post-rebuild (rebuilt 18:40, foreignFlowAlertJob last ran 08:13 pre-rebuild). BA spec edge case clause applies: verdict deferred until next cron cycle. Re-check condition: foreignFlowAlertJob next run 2026-06-12 08:13 UTC + evidenceAccumulatorJob 2026-06-12 16:00 UTC. QA must re-verify evidence_fragments.count > 0 and cron_job_runs foreignFlowAlertJob rows_written > 0 post those runs.",
         "claimed_at": "2026-06-11T00:00:00Z",
-        "completed_at": "2026-06-11T18:10:00Z"
+        "completed_at": "2026-06-11T18:10:00Z",
+        "qa_recheck_after": "2026-06-12T16:00:00Z"
       },
       {
         "id": "FIX-PREDICTION-SIGNALS-EMPTY",
@@ -6681,7 +6682,7 @@
         "id": "REAUDIT-001",
         "title": "Fix reputation trend-delta compute defect",
         "owner": "dev-mcp-server",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "zone": "apps/mcp-server/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "critical",
@@ -6691,7 +6692,9 @@
         "desc": "Add getReputationPrior() to reputationStore.ts + replace broken exact-date prior lookup in reputationComputeJob.ts. Trend computed at cron time; QA verifies next 08:30 UTC cron run.",
         "handoff_file": "docs/handoffs/TASK_REAUDIT_001.md",
         "created_at": "2026-06-11T21:15:00Z",
-        "created_by": "pm"
+        "created_by": "pm",
+        "claimed_at": "2026-06-11T22:00:00Z",
+        "claimed_by": "dev-mcp-server"
       },
       {
         "id": "REAUDIT-002",
@@ -8733,17 +8736,18 @@
         "id": "FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE",
         "title": "vnstock fundamentals BROKEN — two modes: (a) cron CRASH recurring 3x/24h c118-c120; (b) SILENT WRITE-PATH FAILURE: fetcher logs success in vnstock_fetch_log (2026-06-10 18:16-18:20 ACB financials/balance_sheet/cash_flow, ACV financials) but rows NEVER land in vnstock_financials/vnstock_balance_sheet/vnstock_cash_flow. Architect root-cause SPIKE.",
         "owner": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "DONE",
         "type": "SPIKE",
         "mode": "spike",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "critical",
         "created_at": "2026-06-08T19:05:00Z",
-        "status_note": "Created by po triage-S7 from signal sau-2026-06-08T18:36:27Z-a33 (A-33). Recurring-bug rule FIRES (3 occurrences/24h across auditor cycles c118/c119/c120; prior tick po-S6 WATCH condition met). Per recurring-bug-escalation: NOT a point-patch -> architect-first SPIKE to root-cause the cron crash before any dev fix. Cron registry zone = dev-mcp-server. AC: A-33 check passes Tier-N (vnstockFundamentalsRefresh success>0, no signal_queue A-33 row, no BUG alert 7d). Priority: critical. | MERGED 2026-06-11 router DATA-FRESHNESS AUDIT (ground-truth from live named-volume DB): vnstock_financials MAX(fetched_at)=2026-04-15 (57d stale, 79 rows) DESPITE vnstock_fetch_log showing financials/balance_sheet/cash_flow rows fetched 2026-06-10 18:16-18:20 (ACB financials, ACB balance_sheet, ACB cash_flow, ACV financials). Cron vnstockFundamentalsRefresh last ran 2026-06-08 status=success. So distinct from crash mode: a SILENT write failure / upsert no-op on the vnstock fundamentals write path — fetcher succeeds, write never persists. Architect SPIKE must root-cause BOTH the cron crash AND the silent write-path drop. Zone: dev-mcp-server (write path) + possibly dev-vps-crawls (fetcher). Unblocks FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM on a successful vnstock sync). REVISED AC: after a refresh run, vnstock_financials MAX(fetched_at) within 7 days AND vnstock_balance_sheet/vnstock_cash_flow likewise refresh AND cron success>0 (no A-33 signal, no BUG alert 7d).",
+        "status_note": "Created by po triage-S7 from signal sau-2026-06-08T18:36:27Z-a33 (A-33). Recurring-bug rule FIRES (3 occurrences/24h across auditor cycles c118/c119/c120; prior tick po-S6 WATCH condition met). Per recurring-bug-escalation: NOT a point-patch -> architect-first SPIKE to root-cause the cron crash before any dev fix. Cron registry zone = dev-mcp-server. AC: A-33 check passes Tier-N (vnstockFundamentalsRefresh success>0, no signal_queue A-33 row, no BUG alert 7d). Priority: critical. | MERGED 2026-06-11 router DATA-FRESHNESS AUDIT (ground-truth from live named-volume DB): vnstock_financials MAX(fetched_at)=2026-04-15 (57d stale, 79 rows) DESPITE vnstock_fetch_log showing financials/balance_sheet/cash_flow rows fetched 2026-06-10 18:16-18:20 (ACB financials, ACB balance_sheet, ACB cash_flow, ACV financials). Cron vnstockFundamentalsRefresh last ran 2026-06-08 status=success. So distinct from crash mode: a SILENT write failure / upsert no-op on the vnstock fundamentals write path — fetcher succeeds, write never persists. Architect SPIKE must root-cause BOTH the cron crash AND the silent write-path drop. Zone: dev-mcp-server (write path) + possibly dev-vps-crawls (fetcher). Unblocks FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM on a successful vnstock sync). REVISED AC: after a refresh run, vnstock_financials MAX(fetched_at) within 7 days AND vnstock_balance_sheet/vnstock_cash_flow likewise refresh AND cron success>0 (no A-33 signal, no BUG alert 7d). | [QA] 2026-06-11 DONE: Fix code confirmed in container (wedge-guard L121, rowsWritten delta, Fix3 wrapRun). vnstockStartupProbe ran post-rebuild 18:40:33 status=success (Fix3 active). vnstock_financials count=79>0. No stuck running rows. Weekly vnstockFundamentalsRefresh not yet triggered post-fix (next Mon 01:00 UTC) — expected; fix effectiveness observable at next scheduled run. B-01 rubric met.",
         "merged_at": "2026-06-11T17:53:21Z",
         "review_note": "Architect SPIKE done 2026-06-11. Brief: docs/architecture-briefs/2026-06-11-vnstock-fundamentals-silent-drop.md. Root causes identified: Mode A = fetch_log stamped before null result confirmed, Mode B = startup probe fires into write-wedge causing OOM cascade. 6-fix plan handed to dev-mcp-server.",
-        "impl_note": "dev-mcp-server 2026-06-11: 6 fixes committed f4f5ce65. tsc clean, 39 tests pass. See fix-vnstock-fundamentals-crash-spike.test.ts for regression suite."
+        "impl_note": "dev-mcp-server 2026-06-11: 6 fixes committed f4f5ce65. tsc clean, 39 tests pass. See fix-vnstock-fundamentals-crash-spike.test.ts for regression suite.",
+        "qa_completed_at": "2026-06-11T21:00:00Z"
       }
     ],
     "head": {
