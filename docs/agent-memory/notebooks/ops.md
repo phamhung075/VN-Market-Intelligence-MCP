@@ -6834,3 +6834,93 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/fed-rates
 **Incidents:** None  
 **Procedure Compliance:** Strict targeted rebuild used | no destructive flags | no peer collateral
 
+
+---
+
+## 2026-06-11 — Frontend Rebuild: Fed Rates Page Deployment
+
+**Task:** Targeted rebuild of frontend container only to deploy new "Lãi suất Fed Mỹ" page (commit f56eeb1f).
+
+**Procedure:** Strict non-destructive rebuild (no down/up -d bare/--force-recreate/--remove-orphans).
+
+### Pre-Rebuild State
+
+```
+OLD frontend image ID: sha256:ffab821aa19d9f671bf5024b303617ff37dc3afbe8162b38103db2c101ab686e
+```
+
+**Peer Container Uptime BEFORE rebuild:**
+- mcp-server: 8 minutes
+- api-gateway: 8 hours
+- kinh-dich-service: 11 hours
+- rag-service: 43 minutes
+- news-fetch: 19 hours
+- stock-price: 19 hours
+- alert-engine: 19 hours
+- technical-analysis: 19 hours
+- pdf-extractor: 57 minutes
+- macro-indicators: 19 hours
+- headroom-proxy: 19 hours
+- mcp-gateway: 19 hours
+
+### Build & Launch
+
+```bash
+docker compose build frontend && docker compose up -d --no-deps frontend
+```
+
+**Status:** ✓ BUILD successful (26.3s build time)
+
+### Post-Rebuild Container Health
+
+```
+NEW frontend image ID: sha256:6d61bee92eccfd19c977cd849269983ecbfaa659798606d43d0df7f858964405
+```
+
+**Confirmation:** OLD ≠ NEW ✓
+
+**All 13 containers healthy:** ✓
+
+```
+vn-market-intelligence-mcp-frontend-1             Up 11 seconds (healthy)   — REBUILT
+vn-market-intelligence-mcp-mcp-server-1           Up 10 minutes (healthy)   — UNTOUCHED
+vn-market-intelligence-mcp-api-gateway-1          Up 9 hours (healthy)      — UNTOUCHED
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 11 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-rag-service-1          Up 45 minutes (healthy)   — UNTOUCHED
+vn-market-intelligence-mcp-news-fetch-1           Up 19 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-stock-price-1          Up 19 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-alert-engine-1         Up 19 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-technical-analysis-1   Up 19 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-pdf-extractor-1        Up 59 minutes (healthy)   — UNTOUCHED
+vn-market-intelligence-mcp-macro-indicators-1     Up 19 hours (healthy)     — UNTOUCHED
+headroom-proxy                                    Up 19 hours               — UNTOUCHED
+mcp-gateway                                       Up 19 hours (healthy)     — UNTOUCHED
+```
+
+**Peer restart collateral:** NONE ✓
+
+### Smoke Tests (from host)
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/fed-rates   → 200 ✓
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/fed-rates         → 200 ✓
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/financials  → 200 ✓ (regression)
+```
+
+**All endpoints live:**
+- `/dashboard/fed-rates` — new page deployment ✓
+- `/api/fed-rates` — proxy to mcp-server ✓
+- `/dashboard/financials` — regression test (page-16 still serves) ✓
+
+### Summary
+
+**Status:** ✓ SUCCESS
+
+**Image Updated:** OLD sha256:ffab821aa19d... → NEW sha256:6d61bee92ecc...  
+**All 13 Containers Healthy:** ✓  
+**All Peer Containers Untouched:** ✓ (zero collateral restarts)  
+**All Smoke Tests Pass:** ✓ (3/3 HTTP 200)  
+**New Fed Rates Page:** ✓ Live and accessible
+
+**Incidents:** None  
+**Procedure Compliance:** Strict targeted rebuild | no destructive flags
