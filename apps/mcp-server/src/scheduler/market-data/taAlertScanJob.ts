@@ -43,7 +43,8 @@ import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.
 /** Dependency-injectable params — all optional; production uses defaults. */
 export interface TaAlertScanDeps {
   db?: Database;
-  computeFn?: (code: string) => Promise<ComputeTAResponse>;
+  /** Injectable compute function receiving code + closes array for testability. */
+  computeFn?: (code: string, closes: number[]) => Promise<ComputeTAResponse>;
   nowFn?: () => Date;
 }
 
@@ -74,12 +75,14 @@ interface CooldownRow {
 // SQL constants
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Uses daily_ohlcv (OHLCV table) for closing prices — provides 30–60 days of
+// daily candle data required for RSI(14) computation (≥15 rows needed).
+// market_prices_history only has intraday ticks and is insufficient for TA.
 const CANDLE_SQL = `
-  SELECT date(fetched_at) AS day, AVG(price) AS close_price
-    FROM market_prices_history
+  SELECT date AS day, close AS close_price
+    FROM daily_ohlcv
    WHERE code = ?
-     AND fetched_at >= datetime('now', '-60 days')
-   GROUP BY date(fetched_at)
+     AND date >= date('now', '-60 days')
    ORDER BY day ASC
 `;
 
@@ -111,7 +114,7 @@ const INSERT_ALERT_SQL = `
  */
 export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertScanResult> {
   const database: Database = deps?.db ?? getDb();
-  const computeFn = deps?.computeFn ?? ((code: string) => computeTAIndicators({ code }));
+  const computeFn = deps?.computeFn ?? (async (code: string, closes: number[]) => computeTAIndicators({ code, closes }));
   const nowFn = deps?.nowFn ?? (() => new Date());
 
   const cycleStart = Date.now();
@@ -146,10 +149,14 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
     scanned++;
 
     try {
-      // a. Call TA Service to compute indicators via HTTP
-      const taResponse = await computeFn(code);
+      // a. Fetch close prices from local DB (needed for pure-compute TA service path)
+      const candleRows = database.query<CandleRow, [string]>(CANDLE_SQL).all(code);
+      const closes = candleRows.map(r => r.close_price);
 
-      // b. Extract RSI from response
+      // b. Call TA Service to compute indicators via HTTP, passing closes array
+      const taResponse = await computeFn(code, closes);
+
+      // c. Extract RSI from response
       const rsi = taResponse.rsi;
 
       // e. null RSI → skip with pending annotation (insufficient history)

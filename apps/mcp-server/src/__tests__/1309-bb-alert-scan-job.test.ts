@@ -27,6 +27,24 @@ function buildTestDb(): Database {
     )
   `);
 
+  // daily_ohlcv is the candle source for CANDLE_SQL (bbAlertScanJob uses this table).
+  // Tests insert rows with today's UTC date so the stale-candle guard passes.
+  // The computeFn is injected — actual close values provided here are used for
+  // the stale-candle date check and the BB position message (close price).
+  db.run(`
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code TEXT NOT NULL,
+      date TEXT NOT NULL,
+      open REAL NOT NULL,
+      high REAL NOT NULL,
+      low REAL NOT NULL,
+      close REAL NOT NULL,
+      volume REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (code, date)
+    )
+  `);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
@@ -44,6 +62,15 @@ function buildTestDb(): Database {
   return db;
 }
 
+/** Insert a daily_ohlcv row for today's UTC date with the given close price. */
+function insertTodayCandle(db: Database, code: string, close: number): void {
+  const today = new Date().toISOString().slice(0, 10);
+  db.run(
+    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, 0, '')",
+    [code, today, close, close, close, close]
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: controlled computeFn factory for BB tests
 //
@@ -54,8 +81,8 @@ function buildTestDb(): Database {
 
 function makeComputeFn(
   bb20: { upper: number; mid: number; lower: number } | null
-): (code: string) => Promise<ComputeTAResponse> {
-  return async (code: string): Promise<ComputeTAResponse> => ({
+): (code: string, closes: number[]) => Promise<ComputeTAResponse> {
+  return async (code: string, _closes: number[]): Promise<ComputeTAResponse> => ({
     code,
     trend: "TREN_DUNG" as const,
     ...(bb20 != null ? { bb: { upper: bb20.upper, middle: bb20.mid, lower: bb20.lower } } : {}),
@@ -108,10 +135,8 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
   // AC-1: Breakout-up alert fires (close > bb20.upper)
   it("AC-1: fires ta_bb_breakout_up alert when close > bb20.upper", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
-    // Provide at least one candle row so close = 88000
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('VCB', 88000, datetime('now'))"
-    );
+    // Provide today's candle so stale-candle guard passes; close = 88000
+    insertTodayCandle(db, "VCB", 88000);
 
     const result = await runBbAlertScan({
       db,
@@ -146,10 +171,8 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
   // AC-2: Breakout-down alert fires (close < bb20.lower)
   it("AC-2: fires ta_bb_breakout_down alert when close < bb20.lower", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
-    // Provide candle row so close = 22000
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('HPG', 22000, datetime('now'))"
-    );
+    // Provide today's candle so stale-candle guard passes; close = 22000
+    insertTodayCandle(db, "HPG", 22000);
 
     const result = await runBbAlertScan({
       db,
@@ -176,9 +199,7 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
   it("AC-3: no alert when close is inside bb20 band", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
     // close = 84000, inside [82000, 86000]
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('VCB', 84000, datetime('now'))"
-    );
+    insertTodayCandle(db, "VCB", 84000);
 
     const result = await runBbAlertScan({
       db,
@@ -193,9 +214,7 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
   // AC-4: No alert when bb20 is null (insufficient candle history)
   it("AC-4: no alert when bb20 is null (fewer than 20 candles)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('VCB', 88000, datetime('now'))"
-    );
+    insertTodayCandle(db, "VCB", 88000);
 
     const result = await runBbAlertScan({
       db,
@@ -208,9 +227,9 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
   });
 
   // AC-5: No alert when candles array is empty (no price history for ticker)
-  it("AC-5: no alert when market_prices_history has no rows for ticker", async () => {
+  it("AC-5: no alert when daily_ohlcv has no rows for ticker", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
-    // No rows inserted into market_prices_history
+    // No rows inserted into daily_ohlcv — stale-candle guard skips this ticker
 
     const result = await runBbAlertScan({
       db,
@@ -225,9 +244,7 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
   // AC-6: Cooldown suppresses repeat breakout_up within 4 hours
   it("AC-6: cooldown suppresses second ta_bb_breakout_up alert within 4 hours (T+30min)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('VCB', 88000, datetime('now'))"
-    );
+    insertTodayCandle(db, "VCB", 88000);
 
     const t0 = new Date("2026-04-15T03:00:00Z");
 
@@ -255,9 +272,7 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
   // AC-7: Cooldown lifts after 4 hours
   it("AC-7: cooldown does not suppress alert after 4 hours (triggered_at manipulated to >4h ago)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('VCB', 88000, datetime('now'))"
-    );
+    insertTodayCandle(db, "VCB", 88000);
 
     const t0 = new Date("2026-04-15T03:00:00Z");
 
@@ -291,17 +306,11 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
     db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
 
     // VCB: close=88000 > upper=86500 → fires
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('VCB', 88000, datetime('now'))"
-    );
+    insertTodayCandle(db, "VCB", 88000);
     // TCB: close=90000 > upper=87000 → fires
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('TCB', 90000, datetime('now'))"
-    );
+    insertTodayCandle(db, "TCB", 90000);
     // HPG: close=50000 inside [45000, 55000] → no alert
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('HPG', 50000, datetime('now'))"
-    );
+    insertTodayCandle(db, "HPG", 50000);
 
     // Per-ticker BB: mapped by alphabetical iteration order (runBbAlertScan uses ORDER BY code).
     // Alphabetical: HPG → TCB → VCB.
@@ -311,7 +320,7 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
       { upper: 86500, mid: 84000, lower: 82000 },  // VCB (alpha 2) — 88000 > 86500 → fires
     ];
     let callIndex = 0;
-    const perTickerComputeFn = async (code: string): Promise<ComputeTAResponse> => {
+    const perTickerComputeFn = async (code: string, _closes: number[]): Promise<ComputeTAResponse> => {
       const bb20 = bbByCallOrder[callIndex++] ?? null;
       return {
         code,
@@ -348,15 +357,9 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
     db.run("INSERT INTO watchlist (code) VALUES ('TCB')");
     db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
 
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('VCB', 88000, datetime('now'))"
-    );
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('TCB', 90000, datetime('now'))"
-    );
-    db.run(
-      "INSERT INTO market_prices_history (code, price, fetched_at) VALUES ('HPG', 88000, datetime('now'))"
-    );
+    insertTodayCandle(db, "VCB", 88000);
+    insertTodayCandle(db, "TCB", 90000);
+    insertTodayCandle(db, "HPG", 88000);
 
     // VCB=fires, TCB=throws, HPG=fires
     const callOrder = [
@@ -365,7 +368,7 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
       { bb20: { upper: 86500, mid: 84000, lower: 82000 }, throws: false },
     ];
     let callIdx = 0;
-    const isolatedComputeFn = async (code: string): Promise<ComputeTAResponse> => {
+    const isolatedComputeFn = async (code: string, _closes: number[]): Promise<ComputeTAResponse> => {
       const spec = callOrder[callIdx++]!;
       if (spec.throws) {
         throw new Error("Mock BB computation failure for TCB");

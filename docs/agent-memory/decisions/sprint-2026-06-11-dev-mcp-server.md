@@ -16,3 +16,12 @@
 - BROKEN: URL+contract mismatch — CONFIRMED: client calls POST /indicators, TA service serves POST /ta/indicators; client sends {code} but service expects {symbol}; client expects scalar rsi/bb but service returns arrays; TA service DB path is stub (GetCandles returns "not implemented") so symbol-only call returns empty
 **why-decision:** URL + field name + response shape mismatch is the definitive root cause. Fix: clients.ts URL+field+response mapping + pass closes array from local market_prices_history.
 **why-change:** no change from plan — verdict branch (b) BROKEN confirmed, fix required.
+
+### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-06-11T09:00:00Z
+**task-id:** ALERT-WRITER-RECONCILE
+**what-done:** Fixed 3 root causes in apps/mcp-server/: URL mismatch, field name mismatch, candle source mismatch. Updated 7 test files. 42 tests pass, tsc clean.
+**what-considered:**
+- Fix only URL (partial) — refuted: field mismatch + candle source also broken, partial fix still yields 0 RSI alerts
+- Fix clients.ts only + expect callers to pass closes — chosen: callers updated too (taAlertScanJob, bbAlertScanJob now query daily_ohlcv and pass closes)
+**why-decision:** definitive fix at root — URL + field + candle-source all corrected in one pass; no symptom-patching.
+**why-change:** secondary root cause (market_prices_history only 2 days vs daily_ohlcv 37+ days) found during investigation; fixed in same commit to avoid partial-fix regression.

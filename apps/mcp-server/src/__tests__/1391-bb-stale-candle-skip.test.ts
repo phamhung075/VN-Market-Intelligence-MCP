@@ -21,6 +21,21 @@ function buildTestDb(): Database {
       code TEXT, price REAL, fetched_at TEXT
     )
   `);
+  // daily_ohlcv is the candle source for CANDLE_SQL after the ALERT-WRITER-RECONCILE fix.
+  // The stale-candle guard checks daily_ohlcv.date (YYYY-MM-DD) against today's UTC date.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code TEXT NOT NULL,
+      date TEXT NOT NULL,
+      open REAL NOT NULL,
+      high REAL NOT NULL,
+      low REAL NOT NULL,
+      close REAL NOT NULL,
+      volume REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (code, date)
+    )
+  `);
   db.run(`
     CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
@@ -43,12 +58,20 @@ function countAlerts(db: Database): number {
 
 function makeBbFn(
   bb20: { upper: number; mid: number; lower: number }
-): (code: string) => Promise<ComputeTAResponse> {
-  return async (code) => ({
+): (code: string, closes: number[]) => Promise<ComputeTAResponse> {
+  return async (code, _closes) => ({
     code,
     trend: "TREN_DUNG" as const,
     bb: { upper: bb20.upper, middle: bb20.mid, lower: bb20.lower },
   });
+}
+
+/** Insert a daily_ohlcv row with the given date (YYYY-MM-DD) and close price. */
+function insertCandle(db: Database, code: string, date: string, close: number): void {
+  db.run(
+    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, 0, '')",
+    [code, date, close, close, close, close]
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,12 +92,9 @@ describe("Task 1391 — bbAlertScanJob: skip stale candle (not today)", () => {
     const yesterday = new Date(Date.now() - 24 * 3600 * 1000)
       .toISOString()
       .slice(0, 10);
-    db.run(
-      `INSERT INTO market_prices_history (code, price, fetched_at)
-       VALUES ('FPT', 73100, '${yesterday}T09:00:00Z')`
-    );
+    insertCandle(db, "FPT", yesterday, 73100);
 
-    // BB says breakout_up — but candle is stale, so no alert must fire
+    // BB says breakout_up — but candle is stale (not today's date), so no alert must fire
     const result = await runBbAlertScan({
       db,
       computeFn: makeBbFn({ upper: 72000, mid: 70000, lower: 68000 }),
@@ -89,10 +109,7 @@ describe("Task 1391 — bbAlertScanJob: skip stale candle (not today)", () => {
   it("AC-2: fires alert when latest candle is from today (fresh snapshot)", async () => {
     // Today's candle — fresh, should fire
     const today = new Date().toISOString().slice(0, 10);
-    db.run(
-      `INSERT INTO market_prices_history (code, price, fetched_at)
-       VALUES ('FPT', 74400, '${today}T09:00:00Z')`
-    );
+    insertCandle(db, "FPT", today, 74400);
 
     const result = await runBbAlertScan({
       db,
@@ -116,10 +133,7 @@ describe("Task 1391 — bbAlertScanJob: skip stale candle (not today)", () => {
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 3600 * 1000)
       .toISOString()
       .slice(0, 10);
-    db.run(
-      `INSERT INTO market_prices_history (code, price, fetched_at)
-       VALUES ('FPT', 73100, '${twoDaysAgo}T09:00:00Z')`
-    );
+    insertCandle(db, "FPT", twoDaysAgo, 73100);
 
     const result = await runBbAlertScan({
       db,

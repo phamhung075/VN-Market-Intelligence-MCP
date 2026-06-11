@@ -67,8 +67,15 @@ async function fetchWithRetry(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ComputeTARequest {
+  /** Stock ticker (uppercase). Mapped to 'symbol' in the TA service HTTP body. */
   code: string;
   days?: number;
+  /**
+   * Close prices array (oldest→newest). When provided these are forwarded to
+   * the TA service as 'closes' for the pure-compute path (no DB lookup needed).
+   * Required for RSI/BB computation — the TA service DB-backed path is a stub.
+   */
+  closes?: number[];
 }
 
 export interface ComputeTAResponse {
@@ -93,17 +100,80 @@ export interface ComputeTAResponse {
   candlesAvailable?: number;
 }
 
+/**
+ * Raw response shape from the Go TA service (POST /ta/indicators).
+ * All indicator fields are arrays (time-series), not scalars.
+ * The last element of each array is the most-recent value.
+ */
+interface TAServiceRawResponse {
+  symbol?: string;
+  rsi?: number[];
+  macdLine?: number[];
+  signalLine?: number[];
+  histogram?: number[];
+  bollingerUpper?: number[];
+  bollingerMiddle?: number[];
+  bollingerLower?: number[];
+  sma?: number[];
+  ema?: number[];
+}
+
+/** Return last element of an array, or undefined if empty/absent. */
+function last(arr?: number[]): number | undefined {
+  if (!arr || arr.length === 0) return undefined;
+  return arr[arr.length - 1];
+}
+
 export async function computeTAIndicators(req: ComputeTARequest): Promise<ComputeTAResponse> {
-  const url = `${BASE_URLS.ta}/indicators`;
+  // TA service endpoint is POST /ta/indicators (NOT /indicators — fixes URL mismatch).
+  // Request uses 'symbol' field (NOT 'code') + 'closes' array for pure-compute path.
+  const url = `${BASE_URLS.ta}/ta/indicators`;
+  const body: { symbol: string; closes?: number[] } = { symbol: req.code };
+  if (req.closes && req.closes.length > 0) {
+    body.closes = req.closes;
+  }
   const response = await fetchWithRetry(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
+    body: JSON.stringify(body),
   });
   if (!response.ok) {
     throw new Error(`[TA Service] ${response.status}: ${await response.text()}`);
   }
-  return response.json();
+  const raw: TAServiceRawResponse = await response.json();
+
+  // Map array time-series response → scalar ComputeTAResponse expected by callers.
+  // Last element of each array = most-recent indicator value.
+  const rsi = last(raw.rsi);
+  const macdValue = last(raw.macdLine);
+  const macdSignal = last(raw.signalLine);
+  const macdHist = last(raw.histogram);
+  const sma = last(raw.sma);
+  const bbUpper = last(raw.bollingerUpper);
+  const bbMiddle = last(raw.bollingerMiddle);
+  const bbLower = last(raw.bollingerLower);
+
+  const mapped: ComputeTAResponse = {
+    code: req.code,
+    trend: 'NEUTRAL', // TA service does not return trend; default for now
+  };
+  if (req.closes !== undefined) {
+    mapped.candlesAvailable = req.closes.length;
+  }
+
+  if (rsi !== undefined) mapped.rsi = rsi;
+  if (sma !== undefined) {
+    // sma array — use last for ma20 (TA service uses period 20 by default)
+    mapped.ma20 = sma;
+  }
+  if (macdValue !== undefined && macdSignal !== undefined && macdHist !== undefined) {
+    mapped.macd = { value: macdValue, signal: macdSignal, histogram: macdHist };
+  }
+  if (bbUpper !== undefined && bbMiddle !== undefined && bbLower !== undefined) {
+    mapped.bb = { upper: bbUpper, middle: bbMiddle, lower: bbLower };
+  }
+
+  return mapped;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

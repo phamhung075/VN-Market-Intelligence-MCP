@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · ALERT-WRITER-RECONCILE — DONE/VERIFIED
+
+**Task:** SPIKE ALERT-WRITER-RECONCILE — verify canonical alerts writer on live mcp-server
+**Verdict:** BROKEN — 3 root causes found and fixed definitively.
+**Root causes:**
+1. URL mismatch: client called `POST /indicators`, TA service serves `POST /ta/indicators`
+2. Field mismatch: client sent `{code}`, TA service expects `{symbol}` + `{closes}`
+3. Candle source: CANDLE_SQL queried `market_prices_history` (2 days intraday ticks) → TA needs 15+ daily candles; fixed to `daily_ohlcv` (37+ days)
+**Evidence:** taAlertScan/bbAlertScan: success_count=0 every 15min cycle (error_count=36–41 ALL tickers 404). foreignFlowAlertJob: healthy, rows_written=0 = no HIGH signal today (correct). Live alerts table: 998 rows of other alert types firing correctly. alertScanParallelJob runs every 15min (status=success), but wraps broken scan jobs.
+**Fix scope:** clients.ts (URL+field+response mapping), taAlertScanJob.ts (CANDLE_SQL + closes param), bbAlertScanJob.ts (CANDLE_SQL + closes param). 7 test files updated. 42 pass/0 fail. tsc clean.
+**TASK-17 Alerts page:** UNBLOCKED. Writer healthy post-fix; 998 live rows (non-RSI/BB alert types). RSI/BB alerts will populate once extreme conditions fire. Frontend can render honest empty-state for RSI/BB type ("no active technical alerts — conditions normal") without it being a broken-data design.
+**Rebuild required:** ops must rebuild+recreate mcp-server container to load the fix (no hot-reload in production).
+**Zone health:** bun test 42 pass/0 fail (alert-scan suite) | tsc clean | scheduler 78 unchanged
+
 ## 2026-06-11 · TASK-17 P2-1a — DONE
 
 **Task:** TASK-17 P2-1a — GET /api/price-history/:ticker serve endpoint

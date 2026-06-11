@@ -44,7 +44,8 @@ import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.
 /** Dependency-injectable params — all optional; production uses defaults. */
 export interface BbAlertScanDeps {
   db?: Database;
-  computeFn?: (code: string) => Promise<ComputeTAResponse>;
+  /** Injectable compute function receiving code + closes array for testability. */
+  computeFn?: (code: string, closes: number[]) => Promise<ComputeTAResponse>;
   nowFn?: () => Date;
 }
 
@@ -75,12 +76,14 @@ interface CooldownRow {
 // SQL constants (identical to taAlertScanJob — copy verbatim)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Uses daily_ohlcv (OHLCV table) for closing prices — provides 30–60 days of
+// daily candle data required for BB20 computation (≥20 rows needed).
+// market_prices_history only has intraday ticks and is insufficient for TA.
 const CANDLE_SQL = `
-  SELECT date(fetched_at) AS day, AVG(price) AS close_price
-    FROM market_prices_history
+  SELECT date AS day, close AS close_price
+    FROM daily_ohlcv
    WHERE code = ?
-     AND fetched_at >= datetime('now', '-60 days')
-   GROUP BY date(fetched_at)
+     AND date >= date('now', '-60 days')
    ORDER BY day ASC
 `;
 
@@ -112,7 +115,7 @@ const INSERT_ALERT_SQL = `
  */
 export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertScanResult> {
   const database: Database = deps?.db ?? getDb();
-  const computeFn = deps?.computeFn ?? ((code: string) => computeTAIndicators({ code }));
+  const computeFn = deps?.computeFn ?? (async (code: string, closes: number[]) => computeTAIndicators({ code, closes }));
   const nowFn = deps?.nowFn ?? (() => new Date());
 
   const cycleStart = Date.now();
@@ -172,8 +175,9 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
       }
       const close = Math.round(lastCandle.close_price);
 
-      // d. Call TA microservice to compute indicators (async, via HTTP)
-      const indicators = await computeFn(code);
+      // d. Call TA microservice to compute indicators (async, via HTTP), passing closes array
+      const closes = candleRows.map(r => r.close_price);
+      const indicators = await computeFn(code, closes);
 
       // e. Extract BB20 bands
       const bb20 = indicators.bb;

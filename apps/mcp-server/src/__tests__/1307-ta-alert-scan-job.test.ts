@@ -27,6 +27,23 @@ function buildTestDb(): Database {
     )
   `);
 
+  // daily_ohlcv is the candle source for TA (CANDLE_SQL uses this table).
+  // Tests seed minimal rows so the candle query doesn't throw "no such table".
+  // The computeFn is injected — actual close values don't affect test outcomes.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code TEXT NOT NULL,
+      date TEXT NOT NULL,
+      open REAL NOT NULL,
+      high REAL NOT NULL,
+      low REAL NOT NULL,
+      close REAL NOT NULL,
+      volume REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (code, date)
+    )
+  `);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
@@ -48,8 +65,8 @@ function buildTestDb(): Database {
 // Helper: controlled computeFn factories
 // ─────────────────────────────────────────────────────────────────────────────
 
-function makeComputeFn(rsi: number | null): (code: string) => Promise<ComputeTAResponse> {
-  return async (code: string): Promise<ComputeTAResponse> => ({
+function makeComputeFn(rsi: number | null): (code: string, closes: number[]) => Promise<ComputeTAResponse> {
+  return async (code: string, _closes: number[]): Promise<ComputeTAResponse> => ({
     code,
     trend: "TREN_DUNG" as const,
     ...(rsi !== null ? { rsi } : {}),
@@ -57,8 +74,8 @@ function makeComputeFn(rsi: number | null): (code: string) => Promise<ComputeTAR
 }
 
 /** computeFn that always throws — used by AC-9's per-ticker override */
-function makeThrowingComputeFn(): (code: string) => Promise<ComputeTAResponse> {
-  return async (_code: string) => {
+function makeThrowingComputeFn(): (code: string, closes: number[]) => Promise<ComputeTAResponse> {
+  return async (_code: string, _closes: number[]) => {
     throw new Error("Mock TA error for test");
   };
 }
@@ -248,12 +265,11 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
     db.run("INSERT INTO watchlist (code) VALUES ('TCB')");
     db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
 
-    // We need per-ticker RSI control. The computeFn receives DailyCandle[] but not the code.
-    // The test populates market_prices_history with distinct prices per code so we can distinguish them.
-    // But since computeFn is injected and replaces real computation, we need a stateful approach.
+    // We need per-ticker RSI control. The computeFn receives code + closes array.
+    // Since computeFn is injected and replaces real computation, we use a stateful approach.
     const rsiByCallOrder = [74.2, 71.5, 50.0]; // VCB→overbought, TCB→overbought, HPG→neutral
     let callIndex = 0;
-    const perTickerComputeFn = async (code: string): Promise<ComputeTAResponse> => {
+    const perTickerComputeFn = async (code: string, _closes: number[]): Promise<ComputeTAResponse> => {
       const rsi = rsiByCallOrder[callIndex++] ?? null;
       return {
         code,
@@ -297,7 +313,7 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
       { rsi: 75.0, throws: false },
     ];
     let callIdx = 0;
-    const isolatedComputeFn = async (code: string): Promise<ComputeTAResponse> => {
+    const isolatedComputeFn = async (code: string, _closes: number[]): Promise<ComputeTAResponse> => {
       const spec = callOrder[callIdx++]!;
       if (spec.throws) {
         throw new Error("Mock TA computation failure for TCB");

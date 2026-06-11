@@ -31,6 +31,20 @@ function buildTestDb(): Database {
       code TEXT, price REAL, fetched_at TEXT
     )
   `);
+  // daily_ohlcv is required by CANDLE_SQL (ALERT-WRITER-RECONCILE fix)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code TEXT NOT NULL,
+      date TEXT NOT NULL,
+      open REAL NOT NULL,
+      high REAL NOT NULL,
+      low REAL NOT NULL,
+      close REAL NOT NULL,
+      volume REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (code, date)
+    )
+  `);
   db.run(`
     CREATE TABLE IF NOT EXISTS alerts (
       id TEXT PRIMARY KEY,
@@ -57,8 +71,8 @@ function makeCandles(n: number) {
 function makeComputeFn(
   rsi: number | null,
   candlesAvailable: number,
-): (code: string) => Promise<ComputeTAResponse> {
-  return async (code: string): Promise<ComputeTAResponse> => ({
+): (code: string, closes: number[]) => Promise<ComputeTAResponse> {
+  return async (code: string, _closes: number[]): Promise<ComputeTAResponse> => ({
     code,
     trend: "NEUTRAL" as const,
     candlesAvailable,
