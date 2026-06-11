@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK-17 P1-2a — DONE
+
+**Task:** TASK-17 P1-2a — GET /api/macro-regime (Macro & Regime frontend serve endpoint)
+**Scope:** apps/mcp-server/ — macroRegimeHandler.ts (new), server.ts (import + route wire), TASK-17-P1-2a test file (new)
+**Upstream:** POST http://macro-indicators:5004/snapshot — env SSOT MACRO_INDICATORS_URL via getMacroBaseUrl() (same SSOT as all macro tools)
+**Endpoint:** `GET /api/macro-regime` → flat DTO: `{generated_at, data_source, stale_served, indicators:{vnIndex,oilUsd,goldUsd,usdVnd}, signals:{investment_clock,oil,gold,usdvnd}, calendar:{available,events,note}}`
+**Key design:** oil.impact normalised to oil.direction (uniform shape across 3 signals); 502 + data_source:"unavailable" on any upstream failure; never fabricates numbers; reasoning text verbatim from upstream.
+**Tests:** 10 pass / 0 fail (45 expect() calls). tsc clean (bun tsc --noEmit exit 0).
+**Commit:** 921ea271
+
 ## 2026-06-11 · TASK-17 MAW-P1-1a — DONE
 
 **Task:** TASK-17 P1-1a — GET /api/news-sentiment endpoint (MAW-P1-1a)
