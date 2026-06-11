@@ -7097,3 +7097,66 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/fed-rates
 
 **Incidents:** None  
 **Procedure Compliance:** Strict targeted rebuild | build + up -d --no-deps | no destructive flags
+
+---
+
+## 2026-06-11 | mcp-server Targeted Rebuild — GET /api/news-buzz Endpoint (TASK17-PAGE19)
+
+**Objective:** Ship new GET /api/news-buzz endpoint (commit 1a89361b); targeted rebuild of mcp-server ONLY.
+
+**Procedure:** docker compose build mcp-server → docker compose up -d --no-deps mcp-server (NO destructive flags).
+
+### Image Update
+
+**OLD:** sha256:3054dfbb92de4158e164e8e4110ef7983a706aef2c6b0b6405cea34095fcbf2b  
+**NEW:** sha256:6be31ebb900b5c880609c844ce481166f41d0a9e0172ba11b76d066bdba853d2
+
+**Confirmation:** OLD ≠ NEW ✓
+
+### Post-Rebuild Container Health
+
+**All 13 containers healthy:** ✓
+
+```
+vn-market-intelligence-mcp-alert-engine-1         Up 20 hours (healthy)
+vn-market-intelligence-mcp-api-gateway-1          Up 9 hours (healthy)
+vn-market-intelligence-mcp-frontend-1             Up 15 minutes (healthy)
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 12 hours (healthy)
+vn-market-intelligence-mcp-macro-indicators-1     Up 20 hours (healthy)
+vn-market-intelligence-mcp-mcp-server-1           Up 12 seconds (healthy)  — REBUILT
+vn-market-intelligence-mcp-news-fetch-1           Up 19 hours (healthy)
+vn-market-intelligence-mcp-pdf-extractor-1        Up 2 hours (healthy)
+vn-market-intelligence-mcp-rag-service-1          Up About an hour (healthy)
+vn-market-intelligence-mcp-stock-price-1          Up 20 hours (healthy)
+vn-market-intelligence-mcp-technical-analysis-1   Up 20 hours (healthy)
+headroom-proxy                                    Up 20 hours
+mcp-gateway                                       Up 20 hours (healthy)
+```
+
+**Peer restart collateral:** NONE ✓ (all peers retain baseline uptimes; only mcp-server restarted)
+
+### Smoke Tests (from host :3000)
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/news-buzz       → 200 ✓
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/reputation      → 200 ✓
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/fed-rates       → 200 ✓
+```
+
+**Endpoints verified:**
+- `/api/news-buzz` (new endpoint, TASK17-PAGE19) — LIVE ✓
+- `/api/reputation` (existing endpoint, regression test) — LIVE ✓
+- `/api/fed-rates` (existing endpoint, regression test) — LIVE ✓
+
+### Summary
+
+**Status:** ✓ SUCCESS
+
+**Image Updated:** OLD sha256:3054dfbb92de... → NEW sha256:6be31ebb900b5c...  
+**All 13 Containers Healthy:** ✓  
+**All Peer Containers Untouched:** ✓ (zero collateral restarts)  
+**All Smoke Tests Pass:** ✓ (3/3 HTTP 200)  
+**New /api/news-buzz Endpoint:** ✓ Live and accessible
+
+**Incidents:** None  
+**Procedure Compliance:** Strict targeted rebuild | build + up -d --no-deps | no destructive flags
