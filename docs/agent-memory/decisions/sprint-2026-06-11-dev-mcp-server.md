@@ -43,3 +43,13 @@
 - Use getResolvedClaims + getPendingClaims separately — possible but requires two DB round-trips; chosen: getAllClaimsForTracker (single query, outcome filter in SQL) + separate full-scan for calibration to ensure stats cover ALL rows regardless of ?outcome= filter
 **why-decision:** two-call strategy (full scan for calibration, filtered for claims[]) ensures AC-8 compliance (calibration always reflects total DB state); hitRate/avgBrier null-guards prevent NaN/Infinity on zero-resolved edge case.
 **why-change:** no change from plan; task spec was precise with live contract + aggregates to match.
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-11T12:00:00Z
+**task-id:** TASK17-SUMMARIES
+**what-done:** Built GET /api/market-summaries (list + detail mode) — marketSummaryStore.ts (3 read helpers), marketSummaryHandler.ts (parseJsonField + mapKeyedToArray + buildListItem + buildDetail + HTTP handler), server.ts route wire, 34-test suite (100 expect calls). 0 fail. tsc clean.
+**what-considered:**
+- Include summary_text in list query — rejected: ~12.7KB per row × 60 rows = ~760KB JSON payload; instead use `substr(summary_text,1,300) AS summary_preview` via SQL alias; detail mode (?id=) fetches full text
+- 404 on missing id — rejected per task spec ("keep simple, frontend shows empty"); chosen: 200 + {item:null}
+- Separate array/object JSON parsing in store — rejected: store = SQL only; parseJsonField + mapKeyedToArray live in handler (interface layer) to preserve DDD layer separation
+**why-decision:** DUAL-MODE pattern (list=light / detail=full) keeps the endpoint frontend-friendly without overfetching; mapKeyedToArray normalises the ticker-keyed objects to consistent {symbol,...} arrays the frontend can iterate uniformly; parseJsonField fails closed (never throws) making the endpoint resilient to stale/corrupt CHEF writes.
+**why-change:** no change from plan; live contract was precise (probed 2026-06-11).

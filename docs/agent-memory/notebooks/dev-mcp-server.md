@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-SUMMARIES — GET /api/market-summaries — DONE
+
+**Task:** TASK17-SUMMARIES endpoint wave — CHEF market intelligence archive (daily/weekly/monthly/quarterly/yearly synthesised summaries).
+**Scope:** apps/mcp-server/ — marketSummaryStore.ts (new), marketSummaryHandler.ts (new), server.ts (import + route wire), TASK17-SUMMARIES test (new).
+**Contract:** market_summaries (97 rows live). period_type: daily=76/weekly=13/monthly=5/quarterly=2/yearly=1. *_json cols NULLABLE+potentially malformed. stock_performance_json + recommendation_json are OBJECTS keyed by ticker → converted to arrays with `symbol` field. key_events_json is already an array. parseJsonField fails closed to fallback — never throws.
+**CRITICAL shape:** LIST mode selects `substr(summary_text,1,300) AS summary_preview` (no full text). DETAIL mode (?id=) selects full summary_text + all json. 200-on-empty for both modes (no 404 — item:null for missing id).
+**buildDetail output (prod-shape seed):** {id:"daily-2026-06-10", stockPerformance:[{symbol:"VCB",firstPrice:61700,...},{symbol:"FPT",...},{symbol:"HPG",...}], recommendations:[{symbol:"VCB",outlook:"neutral",...},{symbol:"FPT",outlook:"bullish",confidence:0.72},{symbol:"HPG",outlook:"bearish"}], keyEvents:[2 events], newsCount:15, alertCount:3, reportCount:1}.
+**Tests:** 34 pass / 0 fail (100 expect() calls). tsc exit 0.
+**Endpoint:** GET /api/market-summaries → LIST {generatedAt,periods:{daily:N,...},items:[{id,periodType,periodStart,periodEnd,createdAt,newsCount,alertCount,reportCount,summaryPreview,keyEventCount,stockCount}],count} | ?id=X → DETAIL {generatedAt,item:{id,periodType,periodStart,periodEnd,createdAt,updatedAt,summaryText,keyEvents,stockPerformance,recommendations,newsCount,alertCount,reportCount}|null}
+**Zone health:** bun test 34/0 scoped | tsc exit 0 | HEALTHY
+
 ## 2026-06-11 · TASK17-CONVICTION — GET /api/conviction-history — DONE
 
 **Task:** TASK17-CONVICTION endpoint wave — AI conviction tracker ("Niềm tin AI theo cổ phiếu")

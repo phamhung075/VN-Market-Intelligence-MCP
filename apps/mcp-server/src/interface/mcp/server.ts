@@ -109,6 +109,8 @@ import { handleGetAgmPlanActual } from "./routes/agmPlanActualHandler.js";
 import { handleGetPredictionClaims } from "./routes/predictionClaimsHandler.js";
 // TASK17-CONVICTION: GET /api/conviction-history — AI conviction tracker per stock
 import { handleGetConvictionHistory } from "./routes/convictionHistoryHandler.js";
+// TASK17-SUMMARIES: GET /api/market-summaries — CHEF daily/weekly/monthly synthesised market intelligence archive
+import { handleGetMarketSummaries } from "./routes/marketSummaryHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2090,6 +2092,17 @@ export async function createBunServer(
     // Public endpoint (no auth). Supports ?limit=N (default 2000, max 2000).
     if (method === "GET" && pathname === "/api/conviction-history") {
       handleGetConvictionHistory(req, res, db);
+      return;
+    }
+
+    // ── TASK17-SUMMARIES: GET /api/market-summaries ───────────────────────
+    // Serves CHEF market intelligence archive (daily/weekly/monthly/quarterly/yearly).
+    // Public endpoint (no auth).
+    // ?id=<id> → detail mode (full summary_text + parsed json arrays).
+    // ?period=daily|weekly|... → list filter (invalid ignored).
+    // ?limit=N → default 60, clamp [1,200].
+    if (method === "GET" && pathname === "/api/market-summaries") {
+      handleGetMarketSummaries(req, res, db);
       return;
     }
 
