@@ -32,6 +32,7 @@ import {
   parseAffectedActionsJson,
   type AlertItem,
   type AlertsResponse,
+  type SignalSummary,
 } from "../interface/mcp/routes/alertsHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,7 +107,34 @@ function makeFakeReq(url: string = "/api/alerts"): import("node:http").IncomingM
 
 // ─────────────────────────────────────────────────────────────────────────────
 // parseSignalsJson unit tests
+// Ground-truth shape (live DB): array of objects with type/severity/message/confidence
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Realistic signal objects matching ground-truth DB shape
+const PRICE_SURGE_SIGNAL = {
+  type: "price_surge",
+  severity: "medium",
+  actionCode: "KBC",
+  message: "KBC surged +5.98% (29,250 → 31,000 VND)",
+  confidence: 0.6598290598290598,
+  detectedAt: "2026-06-11T08:59:15.191Z",
+};
+const VOLUME_SPIKE_SIGNAL = {
+  type: "volume_spike",
+  severity: "high",
+  actionCode: "KBC",
+  message: "KBC volume spike: 3.2x average",
+  confidence: 0.82,
+  detectedAt: "2026-06-11T09:00:01.000Z",
+};
+const NEWS_MENTION_SIGNAL = {
+  type: "news_mention",
+  severity: "low",
+  actionCode: "FPT",
+  message: "FPT mentioned in 3 news articles today",
+  confidence: 0.55,
+  detectedAt: "2026-06-11T07:30:00.000Z",
+};
 
 describe("parseSignalsJson", () => {
   it("returns [] for null", () => {
@@ -125,14 +153,58 @@ describe("parseSignalsJson", () => {
     expect(parseSignalsJson('{"key": "value"}')).toEqual([]);
   });
 
-  it("parses valid string[] correctly", () => {
-    const result = parseSignalsJson('["signal-A", "signal-B"]');
-    expect(result).toEqual(["signal-A", "signal-B"]);
+  it("maps a single price_surge object to SignalSummary", () => {
+    const raw = JSON.stringify([PRICE_SURGE_SIGNAL]);
+    const result = parseSignalsJson(raw);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual<SignalSummary>({
+      type: "price_surge",
+      severity: "medium",
+      message: "KBC surged +5.98% (29,250 → 31,000 VND)",
+      confidence: 0.6598290598290598,
+    });
   });
 
-  it("filters non-string elements from array", () => {
-    const result = parseSignalsJson('["ok", 123, null, "also-ok"]');
-    expect(result).toEqual(["ok", "also-ok"]);
+  it("maps a 2-signal row (price_surge + volume_spike) correctly", () => {
+    const raw = JSON.stringify([PRICE_SURGE_SIGNAL, VOLUME_SPIKE_SIGNAL]);
+    const result = parseSignalsJson(raw);
+    expect(result).toHaveLength(2);
+    expect(result[0]!.type).toBe("price_surge");
+    expect(result[1]!.type).toBe("volume_spike");
+    expect(typeof result[0]!.confidence).toBe("number");
+    expect(typeof result[1]!.confidence).toBe("number");
+  });
+
+  it("maps a news_mention object correctly", () => {
+    const raw = JSON.stringify([NEWS_MENTION_SIGNAL]);
+    const result = parseSignalsJson(raw);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.type).toBe("news_mention");
+    expect(result[0]!.severity).toBe("low");
+    expect(result[0]!.message).toBe("FPT mentioned in 3 news articles today");
+    expect(result[0]!.confidence).toBe(0.55);
+  });
+
+  it("drops actionCode and detectedAt from output (not in SignalSummary)", () => {
+    const raw = JSON.stringify([PRICE_SURGE_SIGNAL]);
+    const result = parseSignalsJson(raw);
+    expect(result[0]).not.toHaveProperty("actionCode");
+    expect(result[0]).not.toHaveProperty("detectedAt");
+  });
+
+  it("skips non-object elements (strings, numbers, null) in the array", () => {
+    const raw = JSON.stringify([PRICE_SURGE_SIGNAL, "stale-string", 42, null, VOLUME_SPIKE_SIGNAL]);
+    const result = parseSignalsJson(raw);
+    expect(result).toHaveLength(2);
+    expect(result[0]!.type).toBe("price_surge");
+    expect(result[1]!.type).toBe("volume_spike");
+  });
+
+  it("degrades missing fields to empty string / 0", () => {
+    const raw = JSON.stringify([{}]);
+    const result = parseSignalsJson(raw);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual<SignalSummary>({ type: "", severity: "", message: "", confidence: 0 });
   });
 });
 
@@ -158,6 +230,16 @@ describe("parseAffectedActionsJson", () => {
 
   it("returns [] when JSON is not an array", () => {
     expect(parseAffectedActionsJson('{"code":"X"}')).toEqual([]);
+  });
+
+  it("parses {code}-only shape (no expectedImpact/confidence) without crashing", () => {
+    // Ground-truth DB shape: affected_actions_json element is just {"code":"KBC"}
+    const raw = JSON.stringify([{ code: "KBC" }]);
+    const result = parseAffectedActionsJson(raw);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.code).toBe("KBC");
+    expect(result[0]!.expectedImpact).toBe("");  // degrades to ""
+    expect(result[0]!.confidence).toBe(0);       // degrades to 0
   });
 });
 
@@ -217,13 +299,66 @@ describe("TASK-17 — queryAlerts", () => {
     expect(items).toHaveLength(1); // only 1 row in DB
   });
 
-  it("AC-9: signals_json parsed to string[]", () => {
+  it("AC-9: signals_json (object array) parsed to SignalSummary[]", () => {
     const db = getDb();
-    const signals = JSON.stringify(["bullish-momentum", "vcp-breakout"]);
+    const signals = JSON.stringify([PRICE_SURGE_SIGNAL]);
     insertAlert(db, { id: "f1", triggered_at: "2026-06-11T10:00:00Z", severity: "high", signals_json: signals });
 
     const items = queryAlerts(db);
-    expect(items[0]!.signals).toEqual(["bullish-momentum", "vcp-breakout"]);
+    expect(items[0]!.signals).toHaveLength(1);
+    expect(items[0]!.signals[0]!.type).toBe("price_surge");
+    expect(items[0]!.signals[0]!.severity).toBe("medium");
+    expect(typeof items[0]!.signals[0]!.confidence).toBe("number");
+  });
+
+  it("AC-9b: 2-signal row (price_surge + volume_spike) yields 2 SignalSummary elements", () => {
+    const db = getDb();
+    const signals = JSON.stringify([PRICE_SURGE_SIGNAL, VOLUME_SPIKE_SIGNAL]);
+    insertAlert(db, { id: "f2", triggered_at: "2026-06-11T11:00:00Z", severity: "high", signals_json: signals });
+
+    const items = queryAlerts(db);
+    expect(items[0]!.signals).toHaveLength(2);
+    expect(items[0]!.signals[0]!.type).toBe("price_surge");
+    expect(items[0]!.signals[1]!.type).toBe("volume_spike");
+  });
+
+  it("AC-9c: 1-signal news_mention row yields correct SignalSummary", () => {
+    const db = getDb();
+    const signals = JSON.stringify([NEWS_MENTION_SIGNAL]);
+    insertAlert(db, { id: "f3", triggered_at: "2026-06-11T07:30:00Z", severity: "low", signals_json: signals });
+
+    const items = queryAlerts(db);
+    expect(items[0]!.signals).toHaveLength(1);
+    expect(items[0]!.signals[0]!.type).toBe("news_mention");
+    expect(items[0]!.signals[0]!.message).toBe("FPT mentioned in 3 news articles today");
+  });
+
+  it("AC-9d: null signals_json → signals: []", () => {
+    const db = getDb();
+    insertAlert(db, { id: "f4", triggered_at: "2026-06-11T06:00:00Z", severity: "low", signals_json: null });
+
+    const items = queryAlerts(db);
+    expect(items[0]!.signals).toEqual([]);
+  });
+
+  it("AC-9e: malformed signals_json → signals: []", () => {
+    const db = getDb();
+    insertAlert(db, { id: "f5", triggered_at: "2026-06-11T05:00:00Z", severity: "low", signals_json: "{bad json" });
+
+    const items = queryAlerts(db);
+    expect(items[0]!.signals).toEqual([]);
+  });
+
+  it("AC-9f: affectedActions parses {code}-only shape correctly", () => {
+    const db = getDb();
+    const actions = JSON.stringify([{ code: "KBC" }]);
+    insertAlert(db, { id: "f6", triggered_at: "2026-06-11T04:00:00Z", severity: "medium", affected_actions_json: actions });
+
+    const items = queryAlerts(db);
+    expect(items[0]!.affectedActions).toHaveLength(1);
+    expect(items[0]!.affectedActions[0]!.code).toBe("KBC");
+    expect(items[0]!.affectedActions[0]!.expectedImpact).toBe("");
+    expect(items[0]!.affectedActions[0]!.confidence).toBe(0);
   });
 
   it("AC-10: ?severity= filter returns only matching rows", () => {
@@ -244,9 +379,10 @@ describe("TASK-17 — queryAlerts", () => {
     expect(Array.isArray(items)).toBe(true);
   });
 
-  it("each item has the expected camelCase shape", () => {
+  it("each item has the expected camelCase shape (realistic object-shaped signals_json)", () => {
     const db = getDb();
-    const signals = JSON.stringify(["sig1"]);
+    // Use ground-truth object shape — NOT legacy string array
+    const signals = JSON.stringify([PRICE_SURGE_SIGNAL]);
     const actions = JSON.stringify([{ code: "FPT", expectedImpact: "bullish", confidence: 0.9 }]);
     insertAlert(db, {
       id: "h1",
@@ -266,6 +402,9 @@ describe("TASK-17 — queryAlerts", () => {
     expect(typeof item.triggeredAt).toBe("string");
     expect(typeof item.severity).toBe("string");
     expect(Array.isArray(item.signals)).toBe(true);
+    // signals are SignalSummary objects, not strings
+    expect(item.signals).toHaveLength(1);
+    expect(item.signals[0]!.type).toBe("price_surge");
     expect(Array.isArray(item.affectedActions)).toBe(true);
     expect(item.message).toBe("test alert");
     expect(item.read).toBe(0);

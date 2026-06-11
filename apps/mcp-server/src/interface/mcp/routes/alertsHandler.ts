@@ -16,7 +16,12 @@
  *         id:              string,
  *         triggeredAt:     string,       // ISO 8601 triggered_at
  *         severity:        string,       // low | medium | high | critical
- *         signals:         string[],     // parsed from signals_json ([] on null/error)
+ *         signals:         Array<{       // parsed from signals_json ([] on null/error)
+ *                            type:       string,   // e.g. "price_surge", "volume_spike", "news_mention"
+ *                            severity:   string,   // e.g. "medium", "high"
+ *                            message:    string,   // human-readable description
+ *                            confidence: number    // 0–1
+ *                          }>,
  *         affectedActions: Array<{code:string, expectedImpact:string, confidence:number}>,
  *         message:         string | null,
  *         read:            number,       // 0 | 1
@@ -69,6 +74,20 @@ interface AlertRow {
   outcome: string | null;
 }
 
+/**
+ * One signal element parsed from signals_json.
+ * Ground-truth shape (live DB):
+ *   { type, severity, actionCode, message, confidence, detectedAt }
+ * We expose only the fields the frontend needs; actionCode/detectedAt are dropped
+ * (ticker lives in affectedActions, time is in triggeredAt).
+ */
+export interface SignalSummary {
+  type: string;
+  severity: string;
+  message: string;
+  confidence: number;
+}
+
 /** One affected action in the parsed response. */
 export interface AffectedAction {
   code: string;
@@ -81,7 +100,7 @@ export interface AlertItem {
   id: string;
   triggeredAt: string;
   severity: string;
-  signals: string[];
+  signals: SignalSummary[];
   affectedActions: AffectedAction[];
   message: string | null;
   read: number;
@@ -102,15 +121,28 @@ export interface AlertsResponse {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Parse a JSON string that should be a string[] into a string[].
- * Returns [] on null, empty, or any parse error — never throws.
+ * Parse signals_json (array of signal objects) into SignalSummary[].
+ * Ground-truth element shape: { type, severity, actionCode, message, confidence, detectedAt, ... }
+ * We map only { type, severity, message, confidence }; extra fields are silently dropped.
+ * Non-object array elements are skipped.
+ * Returns [] on null, empty, non-array, or any parse error — never throws.
  */
-export function parseSignalsJson(raw: string | null): string[] {
+export function parseSignalsJson(raw: string | null): SignalSummary[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((v): v is string => typeof v === "string");
+    const result: SignalSummary[] = [];
+    for (const el of parsed) {
+      if (el === null || typeof el !== "object" || Array.isArray(el)) continue;
+      result.push({
+        type: typeof el.type === "string" ? el.type : "",
+        severity: typeof el.severity === "string" ? el.severity : "",
+        message: typeof el.message === "string" ? el.message : "",
+        confidence: typeof el.confidence === "number" ? el.confidence : 0,
+      });
+    }
+    return result;
   } catch {
     return [];
   }
