@@ -6,6 +6,10 @@
 
 ## Status
 
+2026-06-11 — TASK-17 intel AI Intel / CHEF Bulletin Hub DONE. Commit 7dea1291. dashboard.intel.tsx SSR page with fetchIntelData(origin) exported named helper (non-fatal: 502/503/network-throw/bad-shape all return degraded, count:0 → empty state). Latest CHEF dish prominent at top (whitespace-pre-wrap, emoji preserved), older dishes below. Vietnamese copy. PageHeader + ClientTimestamp reused. TopNav: /dashboard/ai-intel comingSoon stub → /dashboard/intel "Bản Tin AI" ENABLED. SSOT test updated (19/19 GREEN +1 new Bản Tin AI assertion). 16 new vitest GREEN (fetchIntelData: happy/empty/502/503/network-throw/shape-guard/text-preservation). api.market-digest.tsx proxy already live — NOT touched. tsc 0 errors.
+
+Zone health: Tier 4 routes +1 (AI Intel page), tsc clean, 16+19 vitest GREEN | HEALTHY
+
 2026-06-11 — TASK-17 P2-1b Price & Technical page DONE. Commit c38a5820. api.price-history.$ticker.tsx proxy (arrayBuffer pipe, days param forwarded, 502 on network fail, pass-through 4xx/5xx, MCP_SERVER_BASE_URL SSOT). dashboard.technical.tsx SSR loader self-fetch fetchPriceHistory extracted (non-fatal: 502/503/network-throw/bad-shape all return degraded, count:0 → empty state). LatestPriceStat colour-coded green(up)/red(down) direction+delta. StockChart REUSED (lightweight-charts, no new dep). StatsRow: period high/low, latest volume, trading days. TickerSwitcher: all active tickers from WATCHLIST_STOCKS SSOT. TopNav: "Kỹ Thuật" (/dashboard/technical) enabled. SSOT test updated 8→9 analyst items, 15→16 NAV_ITEMS, new Kỹ Thuật assertion. 23 new vitest GREEN. tsc 0 errors. 34/34 test files 459/459 GREEN.
 
 Zone health: Tier 3 api layer complete, Tier 4 routes +1 (price/technical page), SSOT 18/18, tsc clean | HEALTHY
