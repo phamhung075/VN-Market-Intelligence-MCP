@@ -62,6 +62,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/intel", label: "Bản Tin AI" },
   { to: "/dashboard/bctc", label: "Tài Chính" },
   { to: "/dashboard/alerts", label: "Cảnh Báo" },
+  { to: "/dashboard/foreign-flow", label: "Khối ngoại" },
 ];
 
 /**
