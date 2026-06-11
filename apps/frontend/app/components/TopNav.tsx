@@ -39,7 +39,7 @@ export type NavItem = {
 /**
  * PRIMARY analyst-facing tabs — always visible in the top nav.
  *
- * Route existence verified against apps/frontend/app/routes/ (2026-06-11):
+ * Route existence verified against apps/frontend/app/routes/ (2026-06-11, TASK-17 PAGE 12):
  *   - /dashboard          → dashboard._index.tsx    EXISTS  → enabled (label: "Tổng Quan")
  *   - /dashboard/analysis  → dashboard.analysis.tsx  EXISTS  → enabled (label: "Cổ Phiếu")
  *   - /dashboard/technical → dashboard.technical.tsx EXISTS  → enabled (label: "Kỹ Thuật") — TASK-17 P2-1b
@@ -53,6 +53,7 @@ export type NavItem = {
  *   - /dashboard/sector-rotation  → dashboard.sector-rotation.tsx   EXISTS → enabled (label: "Dòng tiền ngành") — TASK-17 PAGE 9
  *   - /dashboard/sector-cascade   → dashboard.sector-cascade.tsx    EXISTS → enabled (label: "Dây chuyền ngành") — TASK-17 PAGE 10
  *   - /dashboard/kinh-dich-signals → dashboard.kinh-dich-signals.tsx EXISTS → enabled (label: "Tín hiệu Kinh Dịch") — TASK-17 PAGE 11
+ *   - /dashboard/global-markets   → dashboard.global-markets.tsx   EXISTS → enabled (label: "Bối cảnh toàn cầu") — TASK-17 PAGE 12
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -75,6 +76,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/sector-rotation", label: "Dòng tiền ngành" },
   { to: "/dashboard/sector-cascade", label: "Dây chuyền ngành" },
   { to: "/dashboard/kinh-dich-signals", label: "Tín hiệu Kinh Dịch" },
+  { to: "/dashboard/global-markets", label: "Bối cảnh toàn cầu" },
 ];
 
 /**
@@ -96,8 +98,9 @@ export const SYSTEM_NAV: NavItem[] = [
 
 /**
  * NAV_ITEMS — backward-compat union of all nav entries.
- * SSOT: ANALYST_NAV + SYSTEM_NAV. Any consumer that iterates all routes
- * should use this. Active NAV = ANALYST_NAV (top level) + SYSTEM_NAV (System group).
+ * SSOT: ANALYST_NAV (18) + SYSTEM_NAV (7) = 25 total.
+ * Any consumer that iterates all routes should use this.
+ * Active NAV = ANALYST_NAV (top level) + SYSTEM_NAV (System group).
  *
  * Note: /dashboard/db (Database) is retired from nav per P0-5 brief.
  * Note: comingSoon items are present in the array but render as disabled spans.
