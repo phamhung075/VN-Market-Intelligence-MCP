@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-11T18:10:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-11T19:13:09Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4886,6 +4886,18 @@
     ],
     "backlog": [
       {
+        "id": "BA-SHIP-WAVE-REAUDIT",
+        "title": "Requirement spec for SHIP-WAVE-REAUDIT: live-behavior re-audit of TASK-17 ship wave (19 items) + triage matrix",
+        "owner": "ba",
+        "status": "TODO",
+        "zone": "docs/agents/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "high",
+        "desc": "Decompose into a per-endpoint LIVE-PROBE audit matrix: for each of the 17 TASK-17 endpoint+page pairs + FIX-VNSTOCK-FUNDAMENTALS + FIX-EVIDENCE-PIPELINE-STARVED, define the live probe (exact curl + frontend loader path), the GOOD/DEGRADED/BROKEN rubric, and the expected well-shaped contract (directional fields, stale flags, non-empty rules). Output FR per ship-wave item + improvement-lane NFRs (no prose-where-JSON, must carry direction/delta on market data, must flag stale). Architect splits multi-zone (mcp-server endpoint vs frontend page) where a fix spans both.",
+        "created_at": "2026-06-11T19:13:09Z",
+        "created_by": "po"
+      },
+      {
         "id": "TASK17-FOREIGN-FLOW",
         "status": "TODO",
         "type": "SPRINT-S",
@@ -8595,10 +8607,10 @@
       }
     ],
     "head": {
-      "next": "agents-architect",
-      "task": "BPE-SPIKE-1",
-      "sprint": "BCTC-PROSE-EXTRACT",
-      "set_at": "2026-06-09T23:06:19Z",
+      "next": "ba",
+      "task": "BA-SHIP-WAVE-REAUDIT",
+      "sprint": "SHIP-WAVE-REAUDIT",
+      "set_at": "2026-06-11T19:13:09Z",
       "set_by": "po"
     },
     "done_verified": [
@@ -8670,7 +8682,7 @@
     ]
   },
   "sprint_goal": {
-    "_updated_at": "2026-06-10T20:31:32Z",
+    "_updated_at": "2026-06-11T19:13:09Z",
     "_updated_by": "po",
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
     "entries": [
@@ -8692,6 +8704,18 @@
         "completed_at": "2026-06-11T23:20:00Z",
         "vision": "Genuinely DEPLOY the 6 not_deployed_by_design services as lightweight working containers. User directive: redesign architecture if needed + PORT TO GO to make services lighter so the full fleet runs on the 16GB host without panic. Go-port is PRIMARY path (hard constraint). 4/6 already Go-ready+build-clean (stock-price/technical-analysis/kinh-dich/alert-engine); news-fetch=port-from-Node; rag-service=Go-exception (Python LanceDB/embeddings). DoD: each service container health 200 + live capability probe + HONOR-PANIC-GUARD soak; host_runtime_set arrays moved not_deployed->services; Axis-A flips to live AVAIL PASS.",
         "created_at": "2026-06-10T20:31:32Z"
+      },
+      {
+        "sprint_id": "SHIP-WAVE-REAUDIT",
+        "status": "OPEN",
+        "priority": "high",
+        "zone": "multi",
+        "vision": "Re-audit the last ship wave (TASK-17 dashboard: 17 GET /api/* endpoints + 17 frontend pages, + FIX-VNSTOCK-FUNDAMENTALS f4f5ce65, + FIX-EVIDENCE-PIPELINE-STARVED 27eaece9) on LIVE behavior, not lint. User signal: 'many code not give best result' = shipped pages return suboptimal/empty/wrong-shaped data in real use. Every endpoint+page pair gets a LIVE probe verdict GOOD/DEGRADED/BROKEN with raw-payload evidence (verify raw values not badges; live DB = named volume not host ./data; contract from live payload not schema comment). Then triage every DEGRADED/BROKEN into fix tasks and drive the dev chain to DONE with QA-green live verification.",
+        "scope_in": "LIVE behavioral re-audit of the 17 TASK-17 endpoint+page pairs (alerts, foreign-flow, agm-plan-actual, prediction-claims, conviction-history, market-summaries, sector-rotation, sector-cascade, kinh-dich-signals, global-markets, corporate-events, shareholders, officers, financials, fed-rates, reputation, news-buzz) + the 2 mcp-server fixes (FIX-VNSTOCK-FUNDAMENTALS, FIX-EVIDENCE-PIPELINE-STARVED). Each: curl live endpoint AND open frontend loader path; judge correct/non-empty/well-shaped/directional. IMPROVEMENT LANE: technically-200 but weak counts as a problem — empty arrays without stale flags, prose where JSON expected, missing direction/delta on market data, stale data not flagged, frontend rendering payload poorly. Fix ALL DEGRADED/BROKEN; rebuild containers after code change; re-verify live post-rebuild.",
+        "scope_out": "NOT redoing the 44-check quality burn-down (239 PASS already). NOT touching BCTC/OCR pipeline sprints. NOT new pages/endpoints beyond the ship wave. The 2 WARN + 3 needs_review residuals from the burn-down fold in ONLY if they touch a ship-wave endpoint/page.",
+        "success_metric": "Every one of the 19 audited items has a GOOD verdict with live raw-payload evidence at QA sign-off. Zero DEGRADED/BROKEN remaining. Improvement-lane items (weak-but-200) resolved or explicitly DEFERRED-PRODUCT with rationale. Containers rebuilt + re-verified live post-fix. Ship completion, not slices.",
+        "created_at": "2026-06-11T19:13:09Z",
+        "created_by": "po"
       }
     ]
   }
