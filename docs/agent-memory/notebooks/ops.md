@@ -4665,3 +4665,182 @@ technical-analysis   Up 15 hours (healthy)
 
 **Next:** Router can proceed with endpoint integration + downstream consumers.
 
+
+---
+
+## Session: 2026-06-11 (FRONTEND-REBUILD — sector-rotation page LIVE)
+
+**Task:** Targeted rebuild of frontend container ONLY to pick up commit c0f8ce24 (new: api.sector-rotation.tsx proxy, dashboard.sector-rotation.tsx page, TopNav update). Render-confirm /dashboard/sector-rotation page deployed correctly.
+
+**Status:** DONE — VERIFIED LIVE (2026-06-11 14:45Z)
+
+### Execution Steps
+
+**Step 1: Record OLD frontend image**
+- OLD image SHA: `sha256:88cf6` (8 hex chars)
+- Container status: UP (36 minutes old, healthy)
+
+**Step 2: Targeted rebuild (single service)**
+- Command: `docker compose build frontend && docker compose up -d --no-deps frontend && sleep 5`
+- Build succeeded: all layers processed
+- Output shows new compiled routes:
+  ```
+  Generated an empty chunk: "api.sector-rotation-l0sNRNKZ.js".
+  build/client/assets/dashboard.sector-rotation-LW1oN5wk.js  6.90 kB │ gzip:  2.28 kB
+  ```
+- Build duration: ~24s (includes Remix SSR compilation)
+- Exit code: 0 ✓
+
+**Step 3: Verify NEW image differs and container healthy**
+- NEW image SHA: `sha256:1a086` (8 hex chars)
+- **Image ID DIFFERS:** `sha256:88cf6` → `sha256:1a086` ✓ (confirmed new build, not reused)
+- Container status: `Up 9 seconds (healthy)` ✓
+- All 11 services healthy (docker ps):
+  - alert-engine, api-gateway, frontend (NEW), kinh-dich-service, macro-indicators
+  - mcp-server, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis
+  - All: UP (healthy) ✓
+
+**Step 4: RENDER-CONFIRM sector-rotation page (SSR HTML)**
+
+**Page fetch:** `curl -s http://localhost:3001/dashboard/sector-rotation`
+- **HTML size:** 30,681 bytes ✓
+- **Status code:** 200 ✓
+
+**Verification checklist (SSR'd content in HTML):**
+
+| Element | Expected | Found | Status |
+|---------|----------|-------|--------|
+| Page title | "Dòng tiền theo ngành — VN Market Intelligence" | ✓ Present in `<title>` | ✓ PASS |
+| TopNav link | "Dòng tiền ngành" | ✓ Present (2x: sidebar + link text) | ✓ PASS |
+| Sector 1st (agriculture) | "+2.13%" | ✓ Found in multiple renders | ✓ PASS |
+| Sector last (retail) | "-1.66%" | ✓ Found at bottom of rankings | ✓ PASS |
+| 5-day accumulating text | "Đang tích lũy lịch sử 5 ngày" | ✓ Present in blue banner | ✓ PASS |
+| Summary inflow | "0" (count) | ✓ Present: "Dòng tiền VÀO" → "0" | ✓ PASS |
+| Summary outflow | "0" (count) | ✓ Present: "Dòng tiền RA" → "0" | ✓ PASS |
+| Summary neutral | "14" (count) | ✓ Present: "Trung lập" → "14" | ✓ PASS |
+| All 14 sector names (Vietnamese) | agriculture/chemicals/other/utilities/machinery/real_estate/pharma/oil_gas/banking/aviation/steel/securities/tech/retail | ✓ All found in table rows | ✓ PASS |
+| Sector ordering (DESC by 1d avg) | agriculture (+2.13) → ... → retail (-1.66) | ✓ Verified in rank order | ✓ PASS |
+
+**HTML snippet verification (key values in SSR'd output):**
+```html
+<!-- Page title in header -->
+<title>Dòng tiền theo ngành — VN Market Intelligence</title>
+
+<!-- TopNav current link -->
+<a data-discover="true" aria-current="page" ... href="/dashboard/sector-rotation">Dòng tiền ngành</a>
+
+<!-- 5-day accumulation banner -->
+<div role="status" class="rounded border border-blue-700 bg-blue-950 ...">
+  <span class="font-semibold">Đang tích lũy lịch sử 5 ngày.</span>
+  ...Phân loại sẽ tự động nâng cấp khi lịch sử đủ 5 phiên.
+</div>
+
+<!-- Summary counts -->
+<p class="text-2xl font-bold text-emerald-400">0</p>
+<p class="mt-0.5 text-xs font-medium text-slate-500 uppercase tracking-wide">Dòng tiền VÀO</p>
+
+<p class="text-2xl font-bold text-red-400">0</p>
+<p class="mt-0.5 text-xs font-medium text-slate-500 uppercase tracking-wide">Dòng tiền RA</p>
+
+<p class="text-2xl font-bold text-slate-400">14</p>
+<p class="mt-0.5 text-xs font-medium text-slate-500 uppercase tracking-wide">Trung lập</p>
+
+<!-- Table rows (agriculture first) -->
+<td class="px-3 py-2 text-xs font-bold text-slate-100 whitespace-nowrap">Nông nghiệp & Thủy sản</td>
+<td class="px-3 py-2 text-xs font-semibold tabular-nums text-right text-emerald-400">+2.13%</td>
+
+<!-- Table rows (retail last) -->
+<td class="px-3 py-2 text-xs font-bold text-slate-100 whitespace-nowrap">Bán lẻ & Tiêu dùng</td>
+<td class="px-3 py-2 text-xs font-semibold tabular-nums text-right text-red-400">-1.66%</td>
+```
+
+**RENDER-CONFIRM RESULT: ALL ELEMENTS PRESENT ✓ PASS**
+
+**Step 5: PROXY API CONFIRMATION**
+
+**Endpoint:** `curl -s http://localhost:3001/api/sector-rotation | jq '.'`
+
+**Response verification:**
+```json
+{
+  "generatedAt": "2026-06-11T12:44:59.075Z",
+  "tradingDate": "2026-06-11T12:15:02.679Z",
+  "priceSource": "stored",
+  "only1dAvailable": true,
+  "sectors": [
+    {
+      "sector": "agriculture",
+      "sectorNameVi": "Nông nghiệp & Thủy sản",
+      "classification": "NEUTRAL",
+      "avg1dReturn": 2.135,
+      "avg5dReturn": null,
+      "stockCount": 2,
+      "stocks": ["GVR", "VNH"],
+      "watchlistWarning": false
+    },
+    ...
+    {
+      "sector": "retail",
+      "sectorNameVi": "Bán lẻ & Tiêu dùng",
+      "classification": "NEUTRAL",
+      "avg1dReturn": -1.66,
+      "avg5dReturn": null,
+      "stockCount": 1,
+      "stocks": ["MWG"],
+      "watchlistWarning": false
+    }
+  ]
+}
+```
+
+**Proxy API verification checklist:**
+
+| Element | Expected | Actual | Status |
+|---------|----------|--------|--------|
+| only1dAvailable | true | true ✓ | ✓ PASS |
+| Sector count | 14 | 14 ✓ | ✓ PASS |
+| agriculture (sector[0]) avg1dReturn | 2.135 | 2.135 ✓ | ✓ PASS |
+| retail (sector[-1]) avg1dReturn | -1.66 | -1.66 ✓ | ✓ PASS |
+| Descending order | agriculture first, retail last | ✓ Verified in array | ✓ PASS |
+| all5dReturns | null (only 1d available) | null ✓ | ✓ PASS |
+| classification | all NEUTRAL (only 1d available) | all NEUTRAL ✓ | ✓ PASS |
+
+**PROXY API RESULT: ALL VALUES MATCH GROUND TRUTH ✓ PASS**
+
+### QA Gate Status
+
+**CLEARED ✓ — PAGE LIVE AND VERIFIED**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| OLD image SHA | `sha256:88cf6` | Recorded pre-build ✓ |
+| NEW image SHA | `sha256:1a086` | Built 2026-06-11 14:44Z ✓ |
+| Image ID differs | ✓ PASS | 88cf6 ≠ 1a086 ✓ |
+| All 11 containers healthy | ✓ PASS | docker ps: all UP (healthy) ✓ |
+| HTML byte size | 30,681 | SSR rendered successfully ✓ |
+| Page title present | ✓ PASS | "Dòng tiền theo ngành" in `<title>` ✓ |
+| TopNav "Dòng tiền ngành" | ✓ PASS | Link present + aria-current="page" ✓ |
+| 5-day banner text | ✓ PASS | "Đang tích lũy lịch sử 5 ngày" ✓ |
+| Summary inflow=0 | ✓ PASS | "Dòng tiền VÀO" → 0 ✓ |
+| Summary outflow=0 | ✓ PASS | "Dòng tiền RA" → 0 ✓ |
+| Summary neutral=14 | ✓ PASS | "Trung lập" → 14 ✓ |
+| Agriculture first (+2.13%) | ✓ PASS | Rank 1, text "+2.13%", class text-emerald-400 ✓ |
+| Retail last (-1.66%) | ✓ PASS | Rank 14, text "-1.66%", class text-red-400 ✓ |
+| All 14 sectors rendered | ✓ PASS | All 14 Vietnamese names in table ✓ |
+| Proxy API returns JSON | ✓ PASS | /api/sector-rotation → 200 OK ✓ |
+| API only1dAvailable | ✓ PASS | only1dAvailable=true in JSON ✓ |
+| API agriculture first | ✓ PASS | sectors[0].avg1dReturn=2.135 ✓ |
+| API retail last | ✓ PASS | sectors[-1].avg1dReturn=-1.66 ✓ |
+| API all NEUTRAL | ✓ PASS | All 14 sectors classification=NEUTRAL ✓ |
+
+**DEPLOYMENT RESULT: SUCCESSFUL ✓ LIVE AND VERIFIED**
+
+- Commit c0f8ce24 code LIVE in running frontend container ✓
+- Page routes (dashboard.sector-rotation + api.sector-rotation) verified in Remix SSR bundle ✓
+- HTML rendered correctly with all expected Vietnamese text, values, and styling ✓
+- Proxy API serving correct JSON with ground-truth sector data (14 sectors, order by avg1dReturn DESC, only1dAvailable=true) ✓
+- No half-built or stale state ✓
+- All peer containers remain healthy (no cascade damage) ✓
+
+**Next:** No further action. Page is live and user-ready. Router will commit notebook + push.
+
