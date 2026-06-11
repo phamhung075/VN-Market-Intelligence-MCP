@@ -117,6 +117,8 @@ import { handleGetSectorRotation } from "./routes/sectorRotationHandler.js";
 import { handleGetSectorCascade } from "./routes/cascadeSignalHandler.js";
 // TASK17-PAGE11: GET /api/kinh-dich-signals — Kinh Dịch hexagram trading signals per stock, stored-data-only
 import { handleGetKinhDichSignals } from "./routes/kinhDichSignalsHandler.js";
+// TASK17-PAGE12: GET /api/global-markets — Global Market Context / World Risk Barometer, stored-data-only
+import { handleGetGlobalMarkets } from "./routes/globalMarketsHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2140,6 +2142,17 @@ export async function createBunServer(
     // Public endpoint (no auth).
     if (method === "GET" && pathname === "/api/kinh-dich-signals") {
       handleGetKinhDichSignals(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE12: GET /api/global-markets ────────────────────────────
+    // Serves Global Market Context / World Risk Barometer ("Bối cảnh thị trường toàn cầu").
+    // 12 world-market indicators from commodity_prices_history: current + delta + direction.
+    // Query param: ?window=N (sparkline days, default 7, clamp [1,30]).
+    // Stored-data-only (NO live network/microservice calls).
+    // Public endpoint (no auth).
+    if (method === "GET" && pathname === "/api/global-markets") {
+      handleGetGlobalMarkets(req, res, db);
       return;
     }
 
