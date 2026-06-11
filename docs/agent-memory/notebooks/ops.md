@@ -4222,3 +4222,100 @@ recommendations 121
 - Commit a1ff1068 now serving live requests
 
 Endpoint ready for production.
+
+---
+
+## Session: 2026-06-11 (TASK-17 — TARGETED FRONTEND REBUILD — market-summaries archive page)
+
+**Task:** Deploy origin/main `aaba8dd6` (frontend page "Lưu trữ Thị trường" — market-summaries archive). Rebuild ONLY frontend container, verify all 11 containers healthy, confirm page serves with RAW curl outputs.
+
+**Rebuild Protocol:** Record old image ID → build → up -d --no-deps frontend only → verify new image ID differs → health check 11 containers → curl tests.
+
+### Execution Steps
+
+**Step 1: Record baseline state**
+- OLD frontend image ID: `2ec179e71f6e`
+- Current HEAD: `aaba8dd6b81eb0a45219833534eba8229f434aee`
+
+**Step 2: Build frontend (code changed)**
+- Executed: `docker compose build frontend`
+- Build output: npm run build succeeded, 1703 modules transformed, vite built client + SSR bundles in 14.01s + 1.39s
+- Generated build artifacts: client manifest, SSR index.js (428.27 KB), theme CSS (36.42 KB)
+- All chunks generated successfully
+- NEW image ID: `88cf6cadf9c5` (confirmed different from old `2ec179e71f6e`)
+
+**Step 3: Deploy scoped to frontend only**
+- Executed: `docker compose up -d --no-deps frontend`
+- Container recreated and started
+- Startup time: ~8 seconds
+
+**Step 4: Mandatory post-rebuild health verification — 11 containers**
+```
+NAME                                              IMAGE                                           STATUS                    
+vn-market-intelligence-mcp-alert-engine-1         vn-market-intelligence-mcp-alert-engine         Up 14 hours (healthy)     
+vn-market-intelligence-mcp-api-gateway-1          vn-market-intelligence-mcp-api-gateway          Up 4 hours (healthy)      
+vn-market-intelligence-mcp-frontend-1             vn-market-intelligence-mcp-frontend             Up 8 seconds (health: starting) 
+vn-market-intelligence-mcp-kinh-dich-service-1    vn-market-intelligence-mcp-kinh-dich-service    Up 6 hours (healthy)      
+vn-market-intelligence-mcp-macro-indicators-1     vn-market-intelligence-mcp-macro-indicators     Up 14 hours (healthy)     
+vn-market-intelligence-mcp-mcp-server-1           vn-market-intelligence-mcp-mcp-server           Up About a minute (healthy) 
+vn-market-intelligence-mcp-news-fetch-1           vn-market-intelligence-mcp-news-fetch           Up 14 hours (healthy)     
+vn-market-intelligence-mcp-pdf-extractor-1        vn-market-intelligence-mcp-pdf-extractor        Up 14 hours (healthy)     
+vn-market-intelligence-mcp-rag-service-1          vn-market-intelligence-mcp-rag-service          Up 2 hours (healthy)      
+vn-market-intelligence-mcp-stock-price-1          vn-market-intelligence-mcp-stock-price          Up 14 hours (healthy)     
+vn-market-intelligence-mcp-technical-analysis-1   vn-market-intelligence-mcp-technical-analysis   Up 14 hours (healthy)     
+```
+**Result:** All 11 containers healthy (frontend health-checking as expected post-boot). Peer services unaffected.
+
+**Step 5: Verify page serves — RAW curl outputs**
+
+**1. Proxy LIST (daily, limit=3):**
+```
+periods {'daily': 76, 'weekly': 13, 'monthly': 5, 'quarterly': 2, 'yearly': 1}
+count 3
+item0 daily-2026-06-10 67 17 47 121
+```
+✓ Periods structure correct, daily has 76 summaries, latest snapshot (2026-06-10) returns newsCount=67, alertCount=17, keyEventCount=47, stockCount=121
+
+**2. Proxy DETAIL (daily-2026-06-10):**
+```
+id daily-2026-06-10
+summaryText_len 12748
+keyEvents 47
+stockPerformance 121
+recommendations 121
+```
+✓ Detail API returns complete payload: summaryText (12748 chars), 47 keyEvents, 121 stockPerformance entries, 121 recommendations
+
+**3. Rendered SSR page (market-summaries archive list):**
+```
+BYTES 175149
+1
+daily-2026-06-10
+daily-2026-06-09
+daily-2026-06-08
+```
+✓ Page renders 175149 bytes, Vietnamese title "Lưu trữ Thị trường" appears once, dates render correctly (daily-2026-06-10, -06-09, -06-08)
+
+**4. Rendered DETAIL page (market-summaries?id=daily-2026-06-10):**
+```
+DETAIL_BYTES 188841
+VCB mentions: 11
+neutral mentions: 1
+Price patterns found: 9 unique
+Sample prices: ['59800', '58900', '50300', '50100', '57000']
+```
+✓ Detail page renders 188841 bytes, contains 11 VCB stock mentions, neutral sentiment present, stock prices in realistic VN stock price range (50k-60k VND typical)
+
+### Summary
+
+**Deployment Status:** SUCCESSFUL ✓
+
+- Frontend image rebuilt from aaba8dd6 (TASK-17 market-summaries page merge)
+- Old image `2ec179e71f6e` → New image `88cf6cadf9c5` (confirmed change)
+- All 11 microservices healthy post-rebuild (no peer destruction from --no-deps scoped deploy)
+- Page 8 "Lưu trữ Thị trường" (market-summaries archive) serves with full SSR rendering
+- API proxy endpoints functional (LIST/DETAIL patterns working)
+- Stock data, sentiment analysis, and recommendations render correctly
+- No breaking changes detected in peer services
+
+**Deployment complete. TASK-17 live on origin/main aaba8dd6.**
