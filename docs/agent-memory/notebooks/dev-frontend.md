@@ -1,6 +1,6 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-05 | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
+**Last updated:** 2026-06-11 | **Sprint:** TASK-14-TOOLTIP-FIX
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
@@ -47,26 +47,6 @@
 - Promise.allSettled() for parallel fetch with per-source error isolation
 - unknown + type guards (no `any`) in all API response parsers
 - Remix .server suffix in route files with default export = Remix v7+ code-split violation
-
-## Cycle P2-FE — 2026-05-26 (Phase 2 — ESLint fence G4)
-
-- P2-A: `frontend-pre-ci` annotated tag created at fd6bc6a4. Tag SHA: 3fbbd5e021c1b5a611a96ca23ed72ed0790a841a. Local-only.
-- P2-B: `eslint.config.mjs` created with Fence-A/B/C adapted for Remix app/ layout. devDeps: eslint@8.57.1, eslint-plugin-boundaries@6.0.2, @typescript-eslint/parser@8.60.0, @typescript-eslint/eslint-plugin@8.60.0, eslint-import-resolver-typescript@4.4.4. `lint:fence` script added. Initial commit: 437e8514. Fix commit (mode:full + TS resolver + rule order): 9cc11a31.
-- P2-C: Deliberate Fence-A violation proof (NEVER committed). Added `import type { GatewayHealth } from '../../lib/api/client.js'` to direction-arrow.ts. ESLint exit 1, output: "Fence-A: domain/formatters must not import api-client layer". Reverted. Post-revert exit 0. git status clean.
-- Key learnings:
-  - eslint-plugin-boundaries v6 FOLDER mode appends /**/* to pattern for segment matching — files directly in a folder (not subdirectory) need mode:"full"
-  - .js-suffixed ESM imports not resolved by default resolver; need eslint-import-resolver-typescript
-  - ~ Remix alias requires tsconfig.json paths + TS resolver to resolve correctly
-  - last-write-wins: put most-specific fence rule LAST in rules array to control error message
-  - checkUnknownLocals:true needed as fallback for any remaining unresolved imports
-
-## Cycle P2-F — 2026-05-26 (G10 blind-fix)
-
-- G10 injected bug: `direction-arrow.ts` line 22 — `symbol: "↑↑"` (double arrow) instead of `symbol: "↑"`. Comment marker `// G10-INJECTED-BUG` present.
-- Fix: reverted to single-arrow `"↑"`, removed bug comment.
-- Diagnosis: Vitest output → `expected '↑↑' to be '↑'` → traced to formatDirectionArrow("up") in direction-arrow.ts → single-line fix.
-- Verify: 179/179 Vitest, tsc exit 0, lint:fence exit 0. Cycles used: 1.
-- Signal: docs/signals/dev-frontend-p2f-fix-20260526T125755Z.json
 
 ## Cycle P2-H — 2026-05-26 (macro snapshot signals keyed-object contract fix)
 
@@ -198,3 +178,12 @@ Zone health: 320/320 Vitest GREEN (+7 new), tsc clean, 12 files changed | HEALTH
 - Verify: 303/303 Vitest GREEN (+8). tsc --noEmit exit 0. Commit b16d6a89.
 - Key pattern: change:null = unavailable (Tier-3 cache); change:0 = genuine flat day. changePercent is new nullable alias of Go *float64; changePct (existing WatchlistTileData field) is unaffected.
 - NEEDS REBUILD: frontend container (ops to dispatch).
+
+## Cycle TASK-14-TOOLTIP-FIX — 2026-06-11
+
+- Task: Kinh Dịch quẻ hover tooltip content never appeared — `cursor-help` visible, no content paint.
+- Root cause: `TooltipContent` className uses `tailwindcss-animate` utility classes (`animate-in`, `fade-in-0`, `zoom-in-95`, `slide-in-from-*`, `data-[state=*]:*`). Plugin was not registered → classes generated no CSS → tooltip mounted at `opacity:0`, never transitioned.
+- Fix path chosen: PLUGIN (kept shadcn animation contract intact).
+- Files changed: `apps/frontend/package.json` (added `tailwindcss-animate ^1.0.7` devDep), `apps/frontend/tailwind.config.ts` (import + register plugin), `apps/frontend/package-lock.json` (updated by npm install).
+- Verify: tsc --noEmit exit 0. Build succeeded 30.43 kB CSS. grep build/client/assets/theme-*.css confirms `animate-in`, `fade-in`, `zoom-in`, `slide-in-from` all present.
+- Commit: 48eb49a0. Not pushed, not rebuilt — router owns both.
