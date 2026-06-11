@@ -101,6 +101,8 @@ import { handleGetMacroRegime } from "./routes/macroRegimeHandler.js";
 import { handleGetPriceHistory } from "./routes/priceHistoryServeHandler.js";
 // TASK-17 Alerts ENDPOINT WAVE: GET /api/alerts — live alerts table for dashboard
 import { handleGetAlerts } from "./routes/alertsHandler.js";
+// TASK17-FOREIGN-FLOW: GET /api/foreign-flow — latest-day foreign net buy/sell
+import { handleGetForeignFlow } from "./routes/foreignFlowHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2048,6 +2050,14 @@ export async function createBunServer(
     // Supports ?limit= (default 50, max 200) and optional ?severity= filter.
     if (method === "GET" && pathname === "/api/alerts") {
       handleGetAlerts(req, res, db);
+      return;
+    }
+
+    // ── TASK17-FOREIGN-FLOW: GET /api/foreign-flow ────────────────────────
+    // Serves latest trading day's foreign net buy/sell from vnstock_trading_stats.
+    // Public endpoint (no auth). Supports ?limit= (default 200, max 500).
+    if (method === "GET" && pathname === "/api/foreign-flow") {
+      handleGetForeignFlow(req, res, db);
       return;
     }
 
