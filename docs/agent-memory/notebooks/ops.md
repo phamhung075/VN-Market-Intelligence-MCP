@@ -7007,3 +7007,93 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/fed-rates   →
 
 **Incidents:** None  
 **Procedure Compliance:** Strict targeted rebuild | build + up -d --no-deps | no destructive flags
+
+---
+
+## 2026-06-11 19:22 — Targeted Frontend Rebuild + Redeploy
+
+**Task:** Ship page-18 "Điểm Uy tín Doanh nghiệp" reputation leaderboard at `/dashboard/reputation` (commit 2aca5b9f from origin/main).
+
+**Procedure:** Strict targeted rebuild — no down/up/--force-recreate/--remove-orphans.
+
+### Pre-Rebuild State
+
+**OLD Frontend Image ID:** `sha256:6d61bee92eccfd19c977cd849269983ecbfaa659798606d43d0df7f858964405`
+
+**Container Baseline:**
+```
+mcp-server:     9 min
+api-gateway:    9h
+kinh-dich:      12h
+mcp-gateway:    20h
+alert-engine:   20h
+macro-indicators: 20h
+news-fetch:     19h
+pdf-extractor:  ~1h
+rag-service:    ~1h
+stock-price:    20h
+technical-analysis: 20h
+headroom-proxy: 20h
+frontend:       24 min (pre-rebuild)
+```
+
+### Build & Deploy
+
+```bash
+docker compose build frontend
+# Output: Image vn-market-intelligence-mcp-frontend Built
+docker compose up -d --no-deps frontend && sleep 5
+# Output: Container vn-market-intelligence-mcp-frontend-1 Recreate/Recreated/Starting/Started
+```
+
+**NEW Frontend Image ID:** `sha256:cd76519d685b77306fcbdd5f4d90e89076783bcde1328eb744d6cb7454fafa3b`
+
+**Confirmation:** OLD ≠ NEW ✓
+
+### Post-Rebuild Container Health
+
+**All 13 containers healthy:** ✓
+
+```
+vn-market-intelligence-mcp-frontend-1             Up 8 seconds (healthy)    — REBUILT
+vn-market-intelligence-mcp-mcp-server-1           Up 10 minutes (healthy)   — UNTOUCHED
+vn-market-intelligence-mcp-api-gateway-1          Up 9 hours (healthy)      — UNTOUCHED
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 12 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-rag-service-1          Up About an hour (healthy) — UNTOUCHED
+vn-market-intelligence-mcp-news-fetch-1           Up 19 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-stock-price-1          Up 20 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-alert-engine-1         Up 20 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-technical-analysis-1   Up 20 hours (healthy)     — UNTOUCHED
+vn-market-intelligence-mcp-pdf-extractor-1        Up About an hour (healthy) — UNTOUCHED
+vn-market-intelligence-mcp-macro-indicators-1     Up 20 hours (healthy)     — UNTOUCHED
+headroom-proxy                                    Up 20 hours               — UNTOUCHED
+mcp-gateway                                       Up 20 hours (healthy)     — UNTOUCHED
+```
+
+**Peer restart collateral:** NONE ✓ (all peers retain baseline uptimes; only frontend has fresh uptime)
+
+### Smoke Tests (from host :3001)
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/reputation  → 200 ✓
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/reputation         → 200 ✓
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/fed-rates    → 200 ✓
+```
+
+**Endpoints verified:**
+- `/dashboard/reputation` (new page-18 leaderboard) — LIVE ✓
+- `/api/reputation` (proxy resource route) — LIVE ✓
+- `/dashboard/fed-rates` (existing endpoint, regression test) — LIVE ✓
+
+### Summary
+
+**Status:** ✓ SUCCESS
+
+**Image Updated:** OLD sha256:6d61bee9... → NEW sha256:cd76519d...  
+**All 13 Containers Healthy:** ✓  
+**All Peer Containers Untouched:** ✓ (zero collateral restarts)  
+**All Smoke Tests Pass:** ✓ (3/3 HTTP 200)  
+**New /dashboard/reputation Page:** ✓ Live and accessible
+
+**Incidents:** None  
+**Procedure Compliance:** Strict targeted rebuild | build + up -d --no-deps | no destructive flags
