@@ -7290,3 +7290,52 @@ mcp-gateway               Up 21 hours (healthy)
 
 **Incidents:** None  
 **Procedure Compliance:** Strict targeted rebuild | `docker compose build mcp-server && docker compose up -d --no-deps mcp-server` | no destructive flags | post-rebuild watch confirms fix operational
+
+---
+
+## Session: 2026-06-11 (SHIP-WAVE-REAUDIT — REAUDIT-001 rebuild)
+
+**Task:** Rebuild mcp-server container to deploy REAUDIT-001 merged code (reputation trend fix: reputationStore.ts + reputationComputeJob.ts). Prepare for 08:30 UTC cron tomorrow.
+
+**Context:** REAUDIT-001 merged on main. Container rebuild MANDATORY so tomorrow's 08:30 UTC reputationComputeJob runs fixed code.
+
+### Execution Steps
+
+**Step 1: REBUILD mcp-server**
+- Build: `docker compose build mcp-server`
+- Status: SUCCESS — all steps cached, new image layers exported
+- Image SHA (new): b188f4045f0f
+- Command: `docker compose up -d --no-deps mcp-server` → Recreated
+- Volume warning (expected): vn-market-intelligence-mcp_market_data already exists but not created by Compose (it's external)
+- Container startup time: ~5s
+
+**Step 2: Verify image match (memory lesson: rebuild race)**
+- Running container image SHA: b188f4045f0f
+- Fresh build image SHA: b188f4045f0f
+- Match: ✓ CONFIRMED
+
+**Step 3: Health check — :3000**
+- Endpoint: `http://localhost:3000/health`
+- Response: `{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":157,"sessions":0,"uptime":9.067343597999999}`
+- Status: HEALTHY ✓
+- Tool count: 157 ✓ (expected ~157)
+- No crash loop in logs: ✓ (checked last 60 lines, no error/crash/exception/panic)
+
+**Step 4: Peer container verification (lesson: rebuild-recreate destroys peers)**
+- `docker compose ps --filter "status=running"`: 12 lines (11 services + header)
+- All 11 peer containers still UP after mcp-server rebuild ✓
+- Services: alert-engine, api-gateway, frontend, kinh-dich-service, macro-indicators, mcp-server, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis — ALL HEALTHY
+
+**Step 5: Disk cleanup (mandatory on ≥2nd rebuild per disk-bloat rule)**
+- `docker builder prune -f --keep-storage 2GB`: Total 1.407GB reclaimable
+- `docker image prune -f`: 0B reclaimed (none untagged)
+- `df -h`: /dev/disk1s4s1 — 22Gi avail, 39% capacity (healthy, no ENOSPC risk)
+
+**Step 6: Named volume verification**
+- Volume: vn-market-intelligence-mcp_market_data
+- Access check: `get_market_snapshot` tool call → SUCCESS
+- DB reachable: ✓
+- Data: market_data still mounted, untouched by rebuild ✓
+
+### Outcome
+✓ COMPLETE — mcp-server rebuilt, verified, peers intact, cron-ready for 2026-06-11 08:30 UTC tomorrow
