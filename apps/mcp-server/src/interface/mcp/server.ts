@@ -105,6 +105,8 @@ import { handleGetAlerts } from "./routes/alertsHandler.js";
 import { handleGetForeignFlow } from "./routes/foreignFlowHandler.js";
 // TASK17-AGM: GET /api/agm-plan-actual — AGM plan-vs-actual delivery analysis
 import { handleGetAgmPlanActual } from "./routes/agmPlanActualHandler.js";
+// TASK17-PRED: GET /api/prediction-claims — AI prediction accountability / calibration ledger
+import { handleGetPredictionClaims } from "./routes/predictionClaimsHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2069,6 +2071,15 @@ export async function createBunServer(
     // and ?limit=N (default 200, max 500).
     if (method === "GET" && pathname === "/api/agm-plan-actual") {
       handleGetAgmPlanActual(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PRED: GET /api/prediction-claims ───────────────────────────
+    // Serves AI prediction accountability / calibration ledger for "Dự báo AI & Kết quả" page.
+    // Public endpoint (no auth). Supports ?limit=N (default 100, max 500)
+    // and ?outcome=correct|wrong|pending (optional filter).
+    if (method === "GET" && pathname === "/api/prediction-claims") {
+      handleGetPredictionClaims(req, res, db);
       return;
     }
 

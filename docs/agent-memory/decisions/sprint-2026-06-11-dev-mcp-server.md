@@ -34,3 +34,12 @@
 - Single query with LEFT JOIN — possible but brittle on per-term-id filtering; chosen: two separate queries (plan + actuals) unified into AgmPlanActualItem[] for clarity + testability
 **why-decision:** DDD layer strictly enforced (queryAgmPlanActual in infrastructure/db/agmPlanStore); IN_PROGRESS guard implemented at buildMetrics level (fullYearRow lookup on report_term_id=1 only) — open year never misclassified.
 **why-change:** no change from plan; spec was precise enough to implement directly.
+
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-06-11T11:00:00Z
+**task-id:** TASK17-PRED
+**what-done:** Built GET /api/prediction-claims handler + getAllClaimsForTracker store fn + 26-test suite (110 expect calls). 0 fail. tsc clean. Route wired in server.ts.
+**what-considered:**
+- Embed calibration SQL in handler — rejected: violates DDD; store fn owns all SQL; handler maps + aggregates only
+- Use getResolvedClaims + getPendingClaims separately — possible but requires two DB round-trips; chosen: getAllClaimsForTracker (single query, outcome filter in SQL) + separate full-scan for calibration to ensure stats cover ALL rows regardless of ?outcome= filter
+**why-decision:** two-call strategy (full scan for calibration, filtered for claims[]) ensures AC-8 compliance (calibration always reflects total DB state); hitRate/avgBrier null-guards prevent NaN/Infinity on zero-resolved edge case.
+**why-change:** no change from plan; task spec was precise with live contract + aggregates to match.

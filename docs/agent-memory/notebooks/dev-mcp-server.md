@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-PRED — GET /api/prediction-claims — DONE
+
+**Task:** TASK17-PRED endpoint wave — AI prediction accountability / calibration ledger
+**Scope:** apps/mcp-server/ — predictionClaimsHandler.ts (new), predictionClaimStore.ts (+getAllClaimsForTracker), server.ts (import + route wire), TASK17-PRED-prediction-claims-endpoint.test.ts (new)
+**Contract:** prediction_claims table. Outcome: NULL→pending, 1→correct, 0→wrong. Past resolution_date + NULL outcome = legitimately pending (resolver couldn't determine). hitRate=correct/resolved (null when resolved=0). avgBrier=mean over resolved rows WITH brier_score (null when none). Nullable columns: targetPrice, creationPrice, actualPrice, brierScore, resolvedAt pass as null never 0.
+**Live-probed aggregates matched:** total=7, resolved=4, correct=3, wrong=1, pending=3, hitRate=0.75, avgBrier=(0.0576+0.0529+0.0441+0.3969)/4≈0.1379.
+**AC-8 design:** calibration computed over ALL rows (full DB scan), claims[] separately filtered by ?outcome= — ensures stats always reflect whole ledger.
+**Tests:** 26 pass / 0 fail (110 expect() calls). tsc exit 0. toolCount 157 unchanged. schedulerCount 78 unchanged.
+**Endpoint:** GET /api/prediction-claims?limit=N&outcome=correct|wrong|pending → {generatedAt, calibration:{total,resolved,correct,wrong,pending,hitRate,avgBrier}, claims:[{id,stock,agentId,claimText,direction,targetPrice,creationPrice,confidence,resolutionDate,outcome,actualPrice,brierScore,createdAt,resolvedAt}], count}
+**Zone health:** bun test 26/0 scoped | tsc exit 0 | 157 tools intact | scheduler 78 cron.schedule | HEALTHY
+
 ## 2026-06-11 · TASK17-AGM — GET /api/agm-plan-actual — DONE
 
 **Task:** TASK17-AGM endpoint wave — AGM plan-vs-actual delivery analysis

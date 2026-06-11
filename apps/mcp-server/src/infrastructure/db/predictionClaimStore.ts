@@ -292,3 +292,68 @@ export function getClaimsByAgent(
     .all(agentId) as ClaimDbRow[];
   return rows.map(mapRow);
 }
+
+/**
+ * Return ALL claims (resolved + pending) ordered for the calibration tracker:
+ * resolution_date DESC, then id DESC (newest due-date first; ties broken by insert order).
+ *
+ * Used by GET /api/prediction-claims — the "Dự báo AI & Kết quả" accountability ledger.
+ *
+ * Optional filters:
+ *   - outcome: "correct" | "wrong" | "pending" — maps to resolution_outcome 1/0/NULL
+ *
+ * @param db      - SQLite database connection
+ * @param limit   - Max rows to return (default 100, caller should clamp to [1,500])
+ * @param outcome - Optional outcome filter ("correct" | "wrong" | "pending")
+ */
+export function getAllClaimsForTracker(
+  db: Database,
+  limit = 100,
+  outcome?: "correct" | "wrong" | "pending",
+): PredictionClaimRow[] {
+  if (outcome === "correct") {
+    const rows = db
+      .prepare(
+        `SELECT * FROM prediction_claims
+         WHERE resolution_outcome = 1
+         ORDER BY resolution_date DESC, id DESC
+         LIMIT ?`,
+      )
+      .all(limit) as ClaimDbRow[];
+    return rows.map(mapRow);
+  }
+
+  if (outcome === "wrong") {
+    const rows = db
+      .prepare(
+        `SELECT * FROM prediction_claims
+         WHERE resolution_outcome = 0
+         ORDER BY resolution_date DESC, id DESC
+         LIMIT ?`,
+      )
+      .all(limit) as ClaimDbRow[];
+    return rows.map(mapRow);
+  }
+
+  if (outcome === "pending") {
+    const rows = db
+      .prepare(
+        `SELECT * FROM prediction_claims
+         WHERE resolution_outcome IS NULL
+         ORDER BY resolution_date DESC, id DESC
+         LIMIT ?`,
+      )
+      .all(limit) as ClaimDbRow[];
+    return rows.map(mapRow);
+  }
+
+  // No outcome filter — return all
+  const rows = db
+    .prepare(
+      `SELECT * FROM prediction_claims
+       ORDER BY resolution_date DESC, id DESC
+       LIMIT ?`,
+    )
+    .all(limit) as ClaimDbRow[];
+  return rows.map(mapRow);
+}
