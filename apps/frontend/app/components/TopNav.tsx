@@ -47,6 +47,7 @@ export type NavItem = {
  *   - /dashboard/macro    → dashboard.macro.tsx       EXISTS  → enabled (label: "Vĩ Mô") — TASK-17 P1-2b
  *   - /dashboard/bctc     → dashboard.bctc.tsx         EXISTS  → enabled (label: "Tài Chính") — TASK-17 P1-3b
  *   - /dashboard/intel    → dashboard.intel.tsx        EXISTS  → enabled (label: "Bản Tin AI") — TASK-17 intel
+ *   - /dashboard/alerts   → dashboard.alerts.tsx       EXISTS  → enabled (label: "Cảnh Báo") — TASK-17 alerts
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -60,7 +61,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard/macro", label: "Vĩ Mô" },
   { to: "/dashboard/intel", label: "Bản Tin AI" },
   { to: "/dashboard/bctc", label: "Tài Chính" },
-  { to: "/dashboard/alerts", label: "Cảnh Báo", comingSoon: true },
+  { to: "/dashboard/alerts", label: "Cảnh Báo" },
 ];
 
 /**

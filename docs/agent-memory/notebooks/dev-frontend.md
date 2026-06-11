@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-11 | **Sprint:** P0-6 TASK-17
+**Last updated:** 2026-06-11 | **Sprint:** P0-6 TASK-17 alerts
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-11 — TASK-17 alerts Alerts page DONE. api.alerts.tsx proxy (querystring limit+severity passthrough, arrayBuffer pipe, 502 on network fail, pass-through 4xx/5xx, MCP_SERVER_BASE_URL SSOT). dashboard.alerts.tsx SSR loader self-fetch fetchAlertsData(origin, params?) exported named helper (non-fatal: 502/503/network-throw/bad-shape all return degraded, count:0 → empty VN honest state). Summary header with per-severity chips (critical/high/medium/low), severity filter control (client-side), table newest-first (time-ago+timestamp, severity badge, signal tags, ticker+impact pills, message, confidenceScore%, outcome). TopNav: /dashboard/alerts comingSoon stub → ENABLED "Cảnh Báo". SSOT test updated (20/20 GREEN +1 Cảnh Báo ENABLED assertion). 21 new vitest GREEN. tsc 0 errors. NOT pushed.
+
+Zone health: Tier 4 routes +1 (alerts page), tsc clean, 21 new tests GREEN | HEALTHY
 
 2026-06-11 — TASK-17 intel AI Intel / CHEF Bulletin Hub DONE. Commit 7dea1291. dashboard.intel.tsx SSR page with fetchIntelData(origin) exported named helper (non-fatal: 502/503/network-throw/bad-shape all return degraded, count:0 → empty state). Latest CHEF dish prominent at top (whitespace-pre-wrap, emoji preserved), older dishes below. Vietnamese copy. PageHeader + ClientTimestamp reused. TopNav: /dashboard/ai-intel comingSoon stub → /dashboard/intel "Bản Tin AI" ENABLED. SSOT test updated (19/19 GREEN +1 new Bản Tin AI assertion). 16 new vitest GREEN (fetchIntelData: happy/empty/502/503/network-throw/shape-guard/text-preservation). api.market-digest.tsx proxy already live — NOT touched. tsc 0 errors.
 
