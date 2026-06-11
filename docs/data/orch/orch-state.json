@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-11T19:27:17Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-11T19:37:38Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -6676,6 +6676,142 @@
         "created_by": "po",
         "created_at": "2026-06-11T17:53:21Z",
         "status_note": "Created by po triage 2026-06-11 from router DATA-FRESHNESS AUDIT (ground-truth, live named-volume DB @ 2026-06-11 ~17:45 UTC). Tables with 0 rows: credit_data, insider_transactions, public_contracts, pharma_events, broker_sanctions. DEDUP/cross-ref: DS-DEGRADE-01-FIX already covers the SERVE-layer for public_contracts (get_public_contracts returns empty, no stale flag) — this SPIKE is the WRITER/pipeline angle across all 5. For EACH table trace its writer: confirm it is wired + runs; classify empty-by-design (genuinely rare events: insider/contracts/pharma/sanctions) vs dead-pipeline (writer never wired / crashes silently). AC: documented per-table verdict (empty-by-design OR dead-pipeline-with-root-cause); any dead pipeline becomes its own follow-up FIX."
+      },
+      {
+        "id": "REAUDIT-001",
+        "title": "Fix reputation trend-delta compute defect",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "critical",
+        "type": "SPRINT-DEV",
+        "depends_on": [],
+        "size": "M",
+        "desc": "Add getReputationPrior() to reputationStore.ts + replace broken exact-date prior lookup in reputationComputeJob.ts. Trend computed at cron time; QA verifies next 08:30 UTC cron run.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_001.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "REAUDIT-002",
+        "title": "NFR-C-1 stale flag: 5 handlers + shared staleness utility",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "high",
+        "type": "SPRINT-DEV",
+        "depends_on": [
+          "REAUDIT-001"
+        ],
+        "size": "M",
+        "desc": "Add stale/staleByDays to convictionHistoryHandler, corporateEventsHandler, shareholdersHandler, financialsHandler, reputationHandler. Create _staleness.ts utility. Paired with FE-REAUDIT-1.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_002.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "REAUDIT-003",
+        "title": "NFR-C-5 foreign-flow stale_fields: mcp-server implementation",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "high",
+        "type": "SPRINT-DEV",
+        "depends_on": [],
+        "size": "S",
+        "desc": "Add stale_fields: string[] to ForeignFlowResponse. Scan items after buildSummary(): if >50% null for field, add to array. Paired with FE-REAUDIT-2.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_003.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "REAUDIT-004",
+        "title": "NFR-C-4 stockPerformance direction field: mcp-server implementation",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "medium",
+        "type": "SPRINT-DEV",
+        "depends_on": [],
+        "size": "S",
+        "desc": "Add direction: 'up'|'down'|'flat' to each stockPerformance item in marketSummaryHandler. Derived from changePct sign. Paired with FE-REAUDIT-3.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_004.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "REAUDIT-005",
+        "title": "NFR-C-6 financials yoyDirection field",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "low",
+        "type": "SPRINT-DEV",
+        "depends_on": [],
+        "size": "S",
+        "desc": "Add revenueYoyDirection and netProfitYoyDirection to financials rows. Derived from yoy field signs. Improvement lane, lowest priority.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_005.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "REAUDIT-FE-001",
+        "title": "NFR-C-1 stale flag: stale banners on 5 pages",
+        "owner": "dev-frontend",
+        "status": "TODO",
+        "zone": "apps/frontend/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "high",
+        "type": "SPRINT-DEV",
+        "depends_on": [
+          "REAUDIT-002"
+        ],
+        "size": "M",
+        "desc": "Add stale banner to conviction-history, corporate-events, shareholders, financials, reputation pages. Pattern: 'Dữ liệu đã cũ N ngày'. Paired with REAUDIT-002.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_FE_001.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "REAUDIT-FE-002",
+        "title": "NFR-C-5 foreign-flow stale_fields: column header badge",
+        "owner": "dev-frontend",
+        "status": "TODO",
+        "zone": "apps/frontend/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "high",
+        "type": "SPRINT-DEV",
+        "depends_on": [
+          "REAUDIT-003"
+        ],
+        "size": "S",
+        "desc": "Render 'Không có dữ liệu' badge on column header when field in stale_fields array. Paired with REAUDIT-003.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_FE_002.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "REAUDIT-FE-003",
+        "title": "NFR-C-4 stockPerformance direction: arrow rendering",
+        "owner": "dev-frontend",
+        "status": "TODO",
+        "zone": "apps/frontend/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "medium",
+        "type": "SPRINT-DEV",
+        "depends_on": [
+          "REAUDIT-004"
+        ],
+        "size": "S",
+        "desc": "Render direction arrow (↑/↓/—) next to changePct number in market-summaries. Paired with REAUDIT-004.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_FE_003.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm"
       }
     ],
     "archive": [],
