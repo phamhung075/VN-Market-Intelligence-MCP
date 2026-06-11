@@ -93,6 +93,8 @@ import { handleGetMarketDigest } from "./routes/marketDigestHandler.js";
 import { handleGetAnalysisBrief } from "./routes/analysisBriefHandler.js";
 // MAW-P1-1a: GET /api/news-sentiment — synthesised news + sentiment items
 import { handleGetNewsSentiment } from "./routes/newsSentimentHandler.js";
+// TASK-17 P1-2a: GET /api/macro-regime — macro snapshot reshaped for frontend
+import { handleGetMacroRegime } from "./routes/macroRegimeHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2010,6 +2012,12 @@ export async function createBunServer(
     // ── MAW-P1-1a: GET /api/news-sentiment — synthesised news + sentiment ──
     if (method === "GET" && pathname === "/api/news-sentiment") {
       handleGetNewsSentiment(req, res, db);
+      return;
+    }
+
+    // ── TASK-17 P1-2a: GET /api/macro-regime — macro snapshot for frontend ──
+    if (method === "GET" && pathname === "/api/macro-regime") {
+      await handleGetMacroRegime(req, res);
       return;
     }
 
