@@ -110,6 +110,8 @@ export interface ForeignFlowResponse {
   summary: ForeignFlowSummary;
   count: number;
   fetchedAt: string;
+  /** Column-level unavailability: field names where >50% of allItems have null values. */
+  stale_fields: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -212,6 +214,38 @@ export function buildSummary(items: ForeignFlowItem[]): ForeignFlowSummary {
   };
 }
 
+/**
+ * Scan items and return names of fields where >50% of items have null values.
+ * Only checks the three structurally-absent fields: currentHoldingRatio,
+ * maxHoldingRatio, marketCapBn.
+ *
+ * Returns empty array when items is empty (no threshold can be crossed).
+ * Threshold is strictly >50% — exactly 50% null does NOT trigger.
+ *
+ * Exported for testability.
+ */
+export function computeStaleFields(items: ForeignFlowItem[]): string[] {
+  if (items.length === 0) return [];
+
+  const threshold = items.length * 0.5;
+  let currentHoldingRatioNulls = 0;
+  let maxHoldingRatioNulls = 0;
+  let marketCapBnNulls = 0;
+
+  for (const item of items) {
+    if (item.currentHoldingRatio === null) currentHoldingRatioNulls++;
+    if (item.maxHoldingRatio === null) maxHoldingRatioNulls++;
+    if (item.marketCapBn === null) marketCapBnNulls++;
+  }
+
+  const staleFields: string[] = [];
+  if (currentHoldingRatioNulls > threshold) staleFields.push("currentHoldingRatio");
+  if (maxHoldingRatioNulls > threshold) staleFields.push("maxHoldingRatio");
+  if (marketCapBnNulls > threshold) staleFields.push("marketCapBn");
+
+  return staleFields;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // HTTP handler
 // ─────────────────────────────────────────────────────────────────────────────
@@ -238,10 +272,11 @@ export function handleGetForeignFlow(
       Math.max(1, parseInt(limitParam ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT),
     );
 
-    // allItems = full latest-day set (for authoritative summary)
+    // allItems = full latest-day set (for authoritative summary + stale_fields scan)
     // items    = display-limited slice (for client)
     const { tradingDate, allItems, items } = queryForeignFlow(db, limit);
     const summary = buildSummary(allItems);
+    const stale_fields = computeStaleFields(allItems);
 
     const body: ForeignFlowResponse = {
       tradingDate,
@@ -249,6 +284,7 @@ export function handleGetForeignFlow(
       summary,
       count: items.length,
       fetchedAt: now.toISOString(),
+      stale_fields,
     };
 
     res.writeHead(200, { "Content-Type": "application/json" });
