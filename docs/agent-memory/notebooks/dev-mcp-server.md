@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-11 · TASK17-PAGE12 — GET /api/global-markets — DONE
+
+**Task:** TASK17-PAGE12 endpoint wave — "Bối cảnh thị trường toàn cầu" (Global Market Context / World Risk Barometer).
+**Scope:** apps/mcp-server/ — globalMarketsStore.ts (new), globalMarketsHandler.ts (new), server.ts (import + route wire), TASK17-PAGE12 test (new).
+**Contract:** commodity_prices_history (1226 rows live, hourly, ~51d span). 12 indicators: brent/gold/copper/silver/sp500/shanghai/hang_seng/vix/dxy/usd_vnd/jpy_vnd/us10y. cny_vnd_rate=0/1226=DEAD excluded entirely. ZERO-AS-MISSING: baseline<=0 → delta=null (no -100% fabrication).
+**Key decisions:** (1) NaN-guard for parseInt("0") in window param — same fix as sector-cascade S7. (2) getBaselineRow uses WHERE fetched_at<=? ORDER BY fetched_at DESC LIMIT 1 — parameterized with ISO string subtractDays(currentAt, 1/7) from JS Date math preserving Z suffix for correct SQLite string compare. (3) computeDelta: baseline<=0 returns all-null (not -100%). (4) buildSummary: riskTone heuristic = vixBand→risk-tone (low→risk-on, high→risk-off, else neutral). topMovers sorted |deltaPct24h| DESC, cap 5, null excluded. (5) series: v>0 filter per point (drops zero-filled older rows from sparklines).
+**Live endpoint (2026-06-11T14:00:03.345Z):** brent=92.32(-0.3024%↓), gold=4106.7(-1.6642%↓), copper=6.259(-0.3503%↓), silver=64.125(-0.8274%↓), sp500=7310.4(-1.0323%↓), shanghai=3987.015(-0.1555%↓), hang_seng=24249.29(-0.6501%↓), vix=21.52(+2.3787%↑), dxy=100.103(+0.2112%↑), usd_vnd=26325(+0.2094%↑), jpy_vnd=163.55(+0.1224%↑), us10y=4.525(+0.0221%↑). vixBand=elevated, riskTone=neutral. topMovers=[vix,gold,sp500,silver,hang_seng].
+**Tests:** 35 pass / 0 fail (179 expect() calls). tsc exit 0.
+**Zone health:** bun test 35/0 scoped | tsc exit 0 | tools count unchanged | scheduler count unchanged | HEALTHY
+
 ## 2026-06-11 · TASK-17 PAGE 11 — GET /api/kinh-dich-signals — DONE
 
 **Task:** TASK17-PAGE11 endpoint wave — "Tín hiệu Kinh Dịch" (I-Ching hexagram trading signals per stock).

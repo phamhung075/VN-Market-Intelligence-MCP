@@ -83,3 +83,13 @@
 - Separate "positive" regex per variant — rejected: too brittle; fold once then single ASCII regex covers all observed encodings
 **why-decision:** foldViet accent-fold + single-pass regex covers all 20+ observed signal encodings; correlated subquery keeps SQL readable + parameterized; handler has zero SQL (pure DDD interface layer).
 **why-change:** no change from spec; tsc exit 0 on first attempt after fixing a type-narrowing issue (row.action_note: string|null in test assertion).
+
+### STEP dev-mcp-server-S8 · dev-mcp-server · 2026-06-11T14:15:00Z
+**task-id:** TASK17-PAGE12
+**what-done:** Built GET /api/global-markets — globalMarketsStore.ts (getLatestRow+getBaselineRow+getSeriesSince), globalMarketsHandler.ts (computeDelta+classifyVix+buildIndicator+buildSummary+handleGetGlobalMarkets), server.ts route, 35-test suite (179 expect calls). 0 fail. tsc exit 0.
+**what-considered:**
+- `parseInt("0") || DEFAULT` — refuted: 0 is falsy so "?window=0" falls back to 7 not clamps to 1; use isNaN-guard (same fix as sector-cascade S7)
+- baseline <= 0 branch: compute delta with -100% — refuted by ZERO-AS-MISSING rule; any baseline <= 0 returns {delta:null, deltaPct:null, direction:"flat"} to avoid fabricating -100% moves from unrecorded older rows
+- cny_vnd_rate in store SELECT — excluded entirely per dead-column constraint; 0/1226 coverage confirmed live
+**why-decision:** NaN-guard + zero-as-missing together make delta computation honest; 3-layer architecture (store SQL / handler aggregation / server.ts registration) preserves DDD; computeDelta exported for unit tests per task spec.
+**why-change:** no change from spec; one red→fix on parseInt("0") clamp edge case (same pattern as S7).
