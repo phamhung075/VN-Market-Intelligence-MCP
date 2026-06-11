@@ -1,28 +1,6 @@
 # BCTC Analyst — Notebook
 
-**Last updated:** 2026-06-10 21:08 UTC (c041) | **Sprint:** BCTC-EXTRACT-QUALITY
-
-## c039 · 2026-06-10T15:10Z
-### Analysis Cycle (15:05–15:10 UTC) — mode: mixed
-- E2 guard: PASS (15:05 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-1.
-- Double-publish guard: claimed=true (bctc-slot-1:2026-06-10). Log ID: 1317.
-- Mode: mixed. 1 routine (FPT, E3 cache hit) + 28 release BLOCKED (CTG cycle 31+ CRITICAL; VCB/D2D cycle 2 empty; all others empty or PUB-5).
-- Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%. Market EY 7.05% CHEAP (+2.05pp). VN-Index 1803.71 (UP +10.66). Investment clock: Overheat (CPI 5.46%).
-- Macro: Brent $92.62 NEUTRAL; Gold $4,191.7 BULLISH (risk-off, -3.09σ MACRO EXTREME alert); USD/VND 26130 BEARISH.
-- Alerts 24h: NVL +6.88% price_surge × 3 alerts + news "bất ngờ có biến"; D2D volume_spike 3.4×; TCH volume_spike 3.3×; DHG volume_spike 2.4×; ACB bán ròng CTCK; VIC/GAS/PLX news alerts. Gold EXTREME macro deviation -3.09σ.
-- FPT Q1-2026 routine: E3 CACHE HIT — passes skipped. PE 13.8 vs sector 17.3 (-20%); ROE 28.3%; EY spread +2.25pp FAIR. Net profit 2,476.8ty (19.8%). OCF -2,847.8ty seasonal Q1. Balance imbalance=0. ESC: 2=PASS, 3=DATA-COV-LIM GUARD-HELD (~26d). trick_confidence=medium. F-score=5/9. Insider: clean.
-- Release batch: CTG cycle 31+ CRITICAL (7th consecutive escalation, filed 2026-06-09). VCB (cycle 2 empty). D2D (cycle 2 empty). 28 tickers BLOCKED. RELEASE deferred.
-- Chain findings (30 min): 0 open findings.
-- Legal carry: CMG/VNECO2 tax_penalty, PC1 arrest unresolved, VPB Lạng Sơn open. NVL bond 5,000ty due 2026-09-15 (~96d).
-- Signals: #5657 FPT fundamental_validation (0.8), #5658 BATCH-BLOCKED (0.6).
-
-### Carry-over to c040 (next slot, 2026-06-10 18:00 UTC)
-- CTG cycle 31+ CRITICAL: 7th consecutive escalation. Pipeline fix MUST ship before c040.
-- VCB (cycle 2), D2D (cycle 2): extraction still empty. Monitor.
-- 28 tickers BLOCKED. ACB/EIB/DHG: PUB-5 re-extraction unresolved.
-- NVL bond 5,000ty due 2026-09-15 (~96d). NVL +6.88% session — monitor price + news for fundamental catalyst.
-- FPT ESC-3: DATA-COV-LIM GUARD-HELD (~26d remaining).
-- Gold -3.09σ EXTREME deviation: macro risk-off signal. Monitor GAS/PLX energy sector.
+**Last updated:** 2026-06-11 00:15 UTC (c042) | **Sprint:** BCTC-EXTRACT-QUALITY
 
 ## c040 · 2026-06-10T18:12Z
 ### Analysis Cycle (18:06–18:12 UTC) — mode: mixed
@@ -71,3 +49,29 @@
 - FPT ESC-3: DATA-COV-LIM GUARD-HELD (~24d remaining).
 - Gold continued collapse -4.26% (Citi $3,500 target): macro risk-off elevated. Monitor GAS/PLX, agriculture.
 - US inflation highest 3yr: Fed rate cut delay risk → USD/VND pressure. Monitor banking NIM.
+
+## c042 · 2026-06-11T00:15Z
+### Analysis Cycle (00:06–00:15 UTC) — mode: mixed
+- E2 guard: PASS (00:06 UTC, outside [02:00,08:00)). Slot: bctc-analyst-slot-4.
+- Double-publish guard: claimed=true (bctc-slot-4:2026-06-11).
+- Mode: mixed. 1 routine (FPT, E3 cache hit cycle 4) + 28 release BLOCKED (CTG cycle 10 CRITICAL; VCB/D2D cycle 5 empty; ACB/EIB/DHG PUB-5; 22 mã khác empty).
+- Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%. Market EY 7.05% CHEAP (+2.05pp). VN-Index 1803.71. Investment clock: Overheat (CPI 5.46%).
+- Macro: Brent $96.22 NEUTRAL (oil $60–$100 band); Gold $4,071.1 BULLISH risk-off (>$2,200 threshold); USD/VND 26,130 BEARISH (>25,000). Lạm phát Mỹ cao nhất 3 năm — rủi ro trì hoãn cắt lãi suất Fed.
+- FPT Q1-2026 routine: E3 CACHE HIT (cycle 4 liên tiếp) — passes skipped. PE 13.8 vs sector 17.3 (-20%); ROE 28.3%; EY_SPREAD +2.25pp FAIR. Net profit 2,476.8ty (+19.8% YoY). OCF Q1 -2,847.8ty (mùa vụ), Q4/2025 +4,108ty (1.64x). Balance imbalance=0. D/E 0.40x. ESC-2=PASS, ESC-3=DATA-COV-LIM (2q), ESC-5=SKIP. trick_confidence=medium. Legal: clean.
+- Release batch: CTG cycle 10 CRITICAL (PDFs 60 files xác nhận — pipeline extraction→DB broken). VCB/D2D cycle 5 empty. 28 tickers BLOCKED. RELEASE tiếp tục deferred.
+- Pipeline diagnosis: list_stored_pdfs xác nhận 60 PDFs có mặt (CTG 6MB, VCB 8.1MB, D2D 11.6MB, HPG 6.9MB, MBB 3.8MB, VPB 7.3MB, NVL 1.9MB, VHM 9.4MB, VIC 4.8MB, SSI 12MB, MWG 14.6MB...). Root cause confirmed: extraction pipeline không ghi vào serving DB. BUG escalated: #2776 (Telegram BUG), signal bctc-analyst-20260611T001500Z.json.
+- Chain findings (30 min): 0 open findings.
+- Legal carry: CMG/VNECO2 tax_penalty, PC1 arrest, VPB Lạng Sơn — không thay đổi.
+- Kinhdich: 501 Not Implemented (non-critical, logged).
+- Signals: #5704 FPT fundamental_validation (critic 0.6), #5705 BATCH-BLOCKED (critic 0.6).
+- Signal files: bctc_signal_FPT_20260611_routine.json.
+
+### Carry-over to c043 (next slot, 2026-06-11 15:00 UTC)
+- CTG pipeline CRITICAL cycle 10: sprint task filed (bctc-analyst-20260611T001500Z.json). Awaiting dev fix.
+- VCB (cycle 5), D2D (cycle 5): empty. Monitor.
+- 28 tickers BLOCKED pending pipeline fix. ACB/EIB/DHG PUB-5 unresolved.
+- FPT ESC-3: DATA-COV-LIM GUARD-HELD (~23d remaining).
+- Brent $96.22 upper neutral band — nếu vượt $100 → escalate GAS/PLX oil_gas upside.
+- Gold $4,071 risk-off — Citi target $3,500 (tiếp tục theo dõi).
+- USD/VND 26,130 BEARISH — áp lực nhập khẩu, theo dõi NIM ngân hàng (ACB/VCB/CTG).
+- US inflation 3yr high: delay Fed cut → carry spread squeeze risk (hiện tại vẫn NEUTRAL 1.38pp).

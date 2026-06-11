@@ -1,0 +1,8 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] CRITICAL pipeline block cycle 10: get_bctc_full returns empty for 28 watchlist tickers (CTG, VCB, D2D, HPG, MBB, VPB, NVL, VHM, VIC, SSI, MWG + 17 others) despite PDFs confirmed in list_stored_pdfs (60 files). ACB/EIB/DHG blocked at PUB-5 (confidence 31-44%). Root cause: PDF extraction pipeline writes to storage but not to serving DB layer. 10 consecutive cycles blocked for CTG (filed 2026-06-10). All Q1-2026 release analysis deferred. Sprint task required: debug extraction-to-DB write path for affected tickers.",
+  "priority": "high",
+  "createdAt": "2026-06-11T00:15:00Z"
+}

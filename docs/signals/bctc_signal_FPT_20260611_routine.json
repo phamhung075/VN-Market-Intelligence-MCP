@@ -1,0 +1,39 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Dịch vụ CNTT, xuất khẩu phần mềm, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Khách hàng doanh nghiệp IT trong nước và nước ngoài, thuê bao viễn thông SME/hộ gia đình",
+  "ops": "Biên lợi nhuận ròng 19.8%; xuất khẩu phần mềm biên ~28%; OCF Q1 âm do mùa vụ (-2,847.8ty), Q4/2025 OCF +4,108ty (1.64x net profit)",
+  "mgmt": "Tăng trưởng EPS ổn định; guidance FY2025 đạt 3 quý liên tiếp; buyback cổ phiếu đúng lịch trình",
+  "e3_cache_hit": true,
+  "e3_hash_prefix": "cached-c039",
+  "valuation": {
+    "pe": 13.8,
+    "pe_vs_sector": "DISCOUNT -20%",
+    "ey_pct": 7.25,
+    "ey_spread_pp": 2.25,
+    "verdict": "FAIR",
+    "roe_pct": 28.3,
+    "de_ratio": 0.40
+  },
+  "esc_gate": {
+    "esc_1": "SKIP (E3 cache hit)",
+    "esc_2": "PASS (imbalance=0)",
+    "esc_3": "DATA-COV-LIM (2q < 4q)",
+    "esc_4": "SKIP (E3 cache hit)",
+    "esc_5": "SKIP (no refined units)"
+  },
+  "trick_confidence": "medium",
+  "regime": "NEUTRAL",
+  "max_deposit_rate_pct": 5.0,
+  "investment_clock": "Overheat",
+  "legal_risk": "none",
+  "signal_id": 5704,
+  "cycle_id": "20260611-0000",
+  "emitted_at": "2026-06-11T00:15Z",
+  "cycle_slot": "bctc-analyst-slot-4"
+}
