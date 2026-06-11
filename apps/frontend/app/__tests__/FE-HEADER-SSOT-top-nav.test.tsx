@@ -5,6 +5,7 @@
  *  1. TopNav renders the branding link "VN Market Intelligence"
  *  2. ANALYST_NAV has 8 primary analyst tabs, in order, with correct labels + comingSoon flags.
  *     - "Tổng Quan" (/dashboard) is ENABLED (no comingSoon) — dashboard._index.tsx exists (P0-1).
+ *     - "Tin Tức" (/dashboard/news) is ENABLED (no comingSoon) — dashboard.news.tsx exists (TASK-17 P1-1b).
  *  3. SYSTEM_NAV has 7 ops/infra tabs (incl. bctc-eval + bctc-inspect; excl. db).
  *  4. NAV_ITEMS is the union (analyst + system) — 15 total.
  *  5. The "Cổ Phiếu" tab links to /dashboard/analysis (the existing route) — NOT /dashboard/stock.
@@ -48,7 +49,7 @@ describe("TopNav — ANALYST_NAV canonical list", () => {
         { to: "/dashboard", label: "Tổng Quan" },
         { to: "/dashboard/watchlist", label: "Danh Mục", comingSoon: true },
         { to: "/dashboard/analysis", label: "Cổ Phiếu" },
-        { to: "/dashboard/news", label: "Tin Tức", comingSoon: true },
+        { to: "/dashboard/news", label: "Tin Tức" },
         { to: "/dashboard/macro", label: "Vĩ Mô", comingSoon: true },
         { to: "/dashboard/ai-intel", label: "AI Intel", comingSoon: true },
         { to: "/dashboard/bctc", label: "Tài Chính", comingSoon: true },

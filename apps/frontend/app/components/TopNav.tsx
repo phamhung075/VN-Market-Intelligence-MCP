@@ -42,6 +42,7 @@ export type NavItem = {
  * Route existence verified against apps/frontend/app/routes/ (2026-06-11):
  *   - /dashboard          → dashboard._index.tsx    EXISTS  → enabled (label: "Tổng Quan")
  *   - /dashboard/analysis  → dashboard.analysis.tsx  EXISTS  → enabled (label: "Cổ Phiếu")
+ *   - /dashboard/news     → dashboard.news.tsx       EXISTS  → enabled (label: "Tin Tức") — TASK-17 P1-1b
  *   - All other analyst targets → NO route file yet   → comingSoon: true
  *
  * comingSoon items render as disabled spans (not NavLinks) — no dead links.
@@ -50,7 +51,7 @@ export const ANALYST_NAV: NavItem[] = [
   { to: "/dashboard", label: "Tổng Quan" },
   { to: "/dashboard/watchlist", label: "Danh Mục", comingSoon: true },
   { to: "/dashboard/analysis", label: "Cổ Phiếu" },
-  { to: "/dashboard/news", label: "Tin Tức", comingSoon: true },
+  { to: "/dashboard/news", label: "Tin Tức" },
   { to: "/dashboard/macro", label: "Vĩ Mô", comingSoon: true },
   { to: "/dashboard/ai-intel", label: "AI Intel", comingSoon: true },
   { to: "/dashboard/bctc", label: "Tài Chính", comingSoon: true },
