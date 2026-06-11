@@ -6,6 +6,10 @@
 
 ## Status
 
+2026-06-11 — TASK-17 P2-1b Price & Technical page DONE. Commit c38a5820. api.price-history.$ticker.tsx proxy (arrayBuffer pipe, days param forwarded, 502 on network fail, pass-through 4xx/5xx, MCP_SERVER_BASE_URL SSOT). dashboard.technical.tsx SSR loader self-fetch fetchPriceHistory extracted (non-fatal: 502/503/network-throw/bad-shape all return degraded, count:0 → empty state). LatestPriceStat colour-coded green(up)/red(down) direction+delta. StockChart REUSED (lightweight-charts, no new dep). StatsRow: period high/low, latest volume, trading days. TickerSwitcher: all active tickers from WATCHLIST_STOCKS SSOT. TopNav: "Kỹ Thuật" (/dashboard/technical) enabled. SSOT test updated 8→9 analyst items, 15→16 NAV_ITEMS, new Kỹ Thuật assertion. 23 new vitest GREEN. tsc 0 errors. 34/34 test files 459/459 GREEN.
+
+Zone health: Tier 3 api layer complete, Tier 4 routes +1 (price/technical page), SSOT 18/18, tsc clean | HEALTHY
+
 2026-06-11 — TASK-17 P1-3b Financial Reports hub DONE. Commits f1e7ec50 (feat) + 9f91194a (corrective: drop concurrent mcp-server contamination). api.analysis-briefs.tsx proxy (arrayBuffer pipe, 502 on network fail, pass-through 4xx/5xx, MCP_SERVER_BASE_URL SSOT). dashboard.bctc.tsx SSR loader self-fetch fetchAnalysisBriefs extracted (non-fatal: 502/503/network-throw/bad-shape all return error+[] items). Responsive grid of BriefCards — ticker, ExchangeChip, period+released, VerdictPill (Bullish/Positive/In-line=green, Bearish/Negative/Caution=red, neutral/unknown=grey), verdict_summary clamped 2 lines, ConfidenceBar. Client-side ticker search + HOSE/HNX/UPCOM exchange filter. Card whole-links to /dashboard/analysis?stock={ticker}. TopNav: Tài Chính (/dashboard/bctc) un-stubbed (comingSoon removed). SSOT test updated (17/17). New vitest 17/17 GREEN. tsc 0 errors.
 
 Zone health: Tier 3 api layer complete, Tier 4 routes +1 (financial reports hub), SSOT 17/17, tsc clean | HEALTHY
