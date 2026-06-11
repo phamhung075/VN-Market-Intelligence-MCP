@@ -26,11 +26,12 @@ func main() {
 	}
 
 	// Infrastructure layer - repositories and adapters
-	_ = infrastructure.NewSQLiteReadingRepository()
+	repo := infrastructure.NewSQLiteReadingRepository()
 	markovAdapter := infrastructure.NewSQLiteMarkovAdapter()
+	priceScoreAdapter := infrastructure.NewSQLitePriceScoreAdapter(repo)
 
 	// Domain layer - services
-	readingService := domain.NewReadingService(markovAdapter)
+	readingService := domain.NewReadingService(markovAdapter, priceScoreAdapter)
 
 	// Application layer - use cases
 	readingUseCase := application.NewReadingUseCase(readingService)

@@ -41,10 +41,23 @@ func NewRouter(uc *application.ReadingUseCase) http.Handler {
 
 	// GET /market - Get market reading (VNINDEX)
 	r.Get("/market", func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Not implemented - pending B-bucket primitive wiring",
-		})
+		resp, err := uc.MarketReading()
+		if err != nil {
+			if err == application.ErrInsufficientData {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				json.NewEncoder(w).Encode(map[string]string{
+					"error": err.Error(),
+				})
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": err.Error(),
+			})
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(resp)
 	})
 
 	// GET /readings/{code}/history - Get reading history
