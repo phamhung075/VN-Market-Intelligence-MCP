@@ -6679,3 +6679,78 @@ count 78 medianPe 14.09
 **Procedure compliance:** ✓ Strict targeted rebuild used | ✓ No --force-recreate or --remove-orphans | ✓ All 11 peers untouched and healthy.
 
 ---
+
+## 2026-06-11 TASK17-PAGE16 Frontend Rebuild (Định giá Screener)
+
+**Task:** Targeted frontend rebuild to deploy "Định giá & Cơ bản" valuation screener page (commit 63bc5899 on origin/main adds api.financials.tsx proxy + dashboard.financials.tsx + TopNav "Định giá" tab).
+
+**Prerequisites:** /api/financials backend endpoint ALREADY deployed on mcp-server; this rebuild is FRONTEND ONLY.
+
+### Pre-Rebuild State
+
+```
+OLD frontend image ID: sha256:3c693b2597c8f8abe667fb7f69fbf5cff9b5c083cb901da60681503198a646d4
+Container uptime: 2026-06-11T16:04:46.028987963Z
+```
+
+### Build & Deploy
+
+```bash
+docker compose build frontend && docker compose up -d --no-deps frontend
+```
+
+**New frontend image ID:** sha256:ffab821aa19d9f671bf5024b303617ff37dc3afbe8162b38103db2c101ab686e  
+**Confirmation:** OLD ≠ NEW ✓
+
+### Post-Rebuild Container Health
+
+```
+NAME                                              STATUS                    UPTIME_AT_CHECK
+vn-market-intelligence-mcp-alert-engine-1         Up 19 hours (healthy)     Original
+vn-market-intelligence-mcp-api-gateway-1          Up 8 hours (healthy)      Original
+vn-market-intelligence-mcp-frontend-1             Up 8 seconds (healthy)     RESTARTED
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 11 hours (healthy)     Original
+vn-market-intelligence-mcp-macro-indicators-1     Up 19 hours (healthy)     Original
+vn-market-intelligence-mcp-mcp-server-1           Up 12 minutes (healthy)   Original
+vn-market-intelligence-mcp-news-fetch-1           Up 18 hours (healthy)     Original
+vn-market-intelligence-mcp-pdf-extractor-1        Up 34 minutes (healthy)   Original
+vn-market-intelligence-mcp-rag-service-1          Up 20 minutes (healthy)   Original
+vn-market-intelligence-mcp-stock-price-1          Up 19 hours (healthy)     Original
+vn-market-intelligence-mcp-technical-analysis-1   Up 19 hours (healthy)     Original
+```
+
+**Count:** 11/11 healthy ✓ | **Peers untouched:** ✓
+
+### Smoke Tests (Raw Output)
+
+#### Test 5a: GET /dashboard/financials HTTP code
+```
+200
+```
+Status: ✓
+
+#### Test 5b: Check "Định giá" in page content
+```
+has_title: True
+bytes: 146515
+```
+Status: ✓ Page title contains "Định giá" | response size 146515 bytes (valid)
+
+#### Test 5c: GET /api/financials proxy HTTP code
+```
+200
+```
+Status: ✓ Proxy successfully reaches mcp-server /api/financials endpoint
+
+### Summary
+
+**Rebuild Status:** ✓ SUCCESS  
+**Frontend Image Updated:** ✓ (old → new)  
+**All 11 Containers Healthy:** ✓  
+**Peer Containers Untouched:** ✓ (only frontend restarted)  
+**New Valuation Screener Live:** ✓ (http://localhost:3001/dashboard/financials accessible with "Định giá" title)  
+**Backend Proxy Working:** ✓ (/api/financials routed to mcp-server correctly)  
+
+**Incidents:** None  
+**Procedure Compliance:** Strict targeted rebuild used | no --force-recreate/--remove-orphans | no bare down/up
+
