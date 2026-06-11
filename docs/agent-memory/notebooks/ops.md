@@ -3517,3 +3517,100 @@ Response: **200** ✓
 
 **Recommendation:** Foreign-flow summary fix (ba81bdaf) deployed and verified. Endpoint now serves accurate summary counts independent of pagination.
 
+
+## Session: 2026-06-11 (FRONTEND-REBUILD-FOREIGN-FLOW)
+
+**Task:** TARGETED rebuild of frontend ONLY to deploy the new Khối Ngoại (foreign-flow) page (commit 3f074d03, on origin/main).
+
+**Status:** DONE — Verified Live (2026-06-11 12:24:36Z)
+
+### Execution Steps
+
+**Step 1: Build frontend (single service only)**
+- Command: `docker compose build frontend`
+- Build completed successfully: Remix vite:build ✓
+- Build output shows frontend-flow chunks generated correctly
+- Build duration: ~27s (incremental, deps cached)
+- New image SHA: `sha256:e50f07eb49a8712926182a20e868cf204fea36a81284a92d756e64d760524fcc`
+
+**Prior frontend image:** `sha256:218de66071eee6628259689d1a9b59a55451a1877b6e2001289cb5fa37e6d3b9`
+**New frontend image:** `sha256:e50f07eb49a8712926182a20e868cf204fea36a81284a92d756e64d760524fcc` ✓ CHANGED
+
+**Step 2: Start frontend container (no-deps, no-build, single service)**
+- Command: `docker compose up -d --no-deps frontend && sleep 5`
+- Container recreated: vn-market-intelligence-mcp-frontend-1
+- Status: UP (7 seconds, healthy) ✓
+
+**Step 3: Verify all containers healthy (no cascade)**
+- All 11 services running healthy (no cascade damage):
+  - alert-engine (5006) ✓
+  - api-gateway (4000) ✓
+  - frontend (3001) ✓ **REBUILT**
+  - kinh-dich-service (5005) ✓
+  - macro-indicators (5004) ✓
+  - mcp-server (3000) ✓
+  - news-fetch (5008) ✓
+  - pdf-extractor (5001) ✓
+  - rag-service (5002) ✓
+  - stock-price (5010) ✓
+  - technical-analysis (5003) ✓
+
+**Step 4: Endpoint verification**
+
+**4a. Page health (HTTP status):**
+```
+curl -s -o /dev/null -w '%{http_code}' "http://localhost:3001/dashboard/foreign-flow"
+→ 200 ✓
+```
+
+**4b. Proxy API response (real data verification):**
+```
+curl -s "http://localhost:3001/api/foreign-flow?limit=5" | jq '.summary | {netBuyCount, netSellCount, topSells: .topSells[0]}'
+→ {
+  "netBuyCount": 30,
+  "netSellCount": 61,
+  "topSells": {
+    "code": "NVL",
+    "foreignVolume": -393749,
+    "direction": "SELL",
+    "foreignRoom": 97777804.2,
+    ...
+  }
+}
+```
+**Verification:** netBuyCount=30 ✓, netSellCount=61 ✓, topSells[0].code=NVL ✓
+
+**4c. SSR HTML content (Vietnamese labels + real tickers):**
+```
+curl -s "http://localhost:3001/dashboard/foreign-flow" | grep -E "Khối Ngoại|mua ròng|bán ròng" | head -5
+→ Title: "Khối Ngoại — VN Market Intelligence"
+→ Page header: "Khối Ngoại"
+→ Subtitle: "Giao dịch mua/bán ròng của nhà đầu tư nước ngoài"
+→ Summary cards: "Khối ngoại hôm nay" + "30 mã mua ròng" + "61 mã bán ròng"
+```
+
+**HTML table verification (real data in SSR):**
+- Top buyers: HNG (+50.000), VNM (+49.960), KBC (+44.270), GVR (+36.890), PVS (+33.645)
+- Top sellers: NVL (-393.749), VPB (-129.601), EIB (-128.460), HDB (-119.672), TCB (-109.557)
+- All tickers and numbers rendered correctly in SSR HTML ✓
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| Old image | ✓ PASS | Prior: 218de66071ee... |
+| New image | ✓ PASS | Built: e50f07eb49a8... (DIFFERENT) |
+| Page HTTP 200 | ✓ PASS | http://localhost:3001/dashboard/foreign-flow → 200 |
+| Proxy API data | ✓ PASS | netBuyCount=30, netSellCount=61, topSells[0]=NVL |
+| SSR content | ✓ PASS | Vietnamese labels (Khối Ngoại, mua ròng, bán ròng) + real tickers in HTML |
+| Fleet health | ✓ PASS | All 11 services UP (healthy), no cascade |
+
+**Scope Confirmed:** Only frontend container rebuilt. mcp-server, api-gateway, pdf-extractor, and all other services remain untouched and healthy.
+
+**Production Status:** Foreign-flow page now LIVE with Khối Ngoại title, Vietnamese labels, and real foreign flow data verified through SSR + API proxy.
+
+**Next:** QA dashboard smoke-test (verify page navigation, table sorting, data loading in browser).
+
+---
