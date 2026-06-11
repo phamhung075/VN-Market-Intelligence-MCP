@@ -4144,3 +4144,81 @@ curl -s http://localhost:3001/dashboard/prediction-claims | grep -o 'Dự báo A
 
 Deployment complete. Endpoint ready for integration with frontend prediction-claims page.
 
+
+---
+
+## Session: 2026-06-11 (Targeted mcp-server rebuild for a1ff1068)
+
+**Task:** Rebuild mcp-server container ONLY to deploy commit a1ff1068 (new endpoint GET /api/market-summaries). No code changes, no peer container destruction.
+
+**Execution Steps**
+
+**Step 1: Record pre-rebuild state**
+- Current mcp-server image: sha256:7da6b1157b821f2f199a8b5925b5f4f7da79637806f162c40fa9f4503d392cf3
+- Container: vn-market-intelligence-mcp-mcp-server-1 (Up 20 minutes, healthy)
+- All 11 services healthy pre-rebuild
+
+**Step 2: Build new image**
+- Executed: `docker compose build mcp-server`
+- Result: New image sha256:0f709f2042a4095f13f97fd941561c55de26056122a89a8ab7ab3cf4a9812164
+- Build complete, no errors
+
+**Step 3: Deploy with no-deps flag (STRICT: no peer recreation)**
+- Executed: `docker compose up -d --no-deps mcp-server && sleep 5`
+- Confirmed: No bare down, no --force-recreate, no --remove-orphans
+- Result: mcp-server restarted with new image (9 seconds uptime, healthy)
+
+**Step 4: Verify image change**
+- Old image: sha256:7da6b1157b821f2f199a8b5925b5f4f7da79637806f162c40fa9f4503d392cf3
+- New image: sha256:0f709f2042a4095f13f97fd941561c55de26056122a89a8ab7ab3cf4a9812164
+- Status: CHANGED ✓
+
+**Step 5: Confirm all 11 containers healthy**
+```
+alert-engine          Up 14 hours (healthy)
+api-gateway           Up 3 hours (healthy)
+frontend              Up 12 minutes (healthy)
+kinh-dich-service     Up 6 hours (healthy)
+macro-indicators      Up 14 hours (healthy)
+mcp-server            Up 9 seconds (healthy)
+news-fetch            Up 14 hours (healthy)
+pdf-extractor         Up 14 hours (healthy)
+rag-service           Up 2 hours (healthy)
+stock-price           Up 14 hours (healthy)
+technical-analysis    Up 14 hours (healthy)
+```
+
+**Step 6: Verify new endpoint /api/market-summaries**
+
+**Test 1 — LIST mode (default, last 60):**
+```
+periods {'daily': 76, 'weekly': 13, 'monthly': 5, 'quarterly': 2, 'yearly': 1}
+count 60
+item0 {'id': 'daily-2026-06-10', 'periodType': 'daily', 'periodStart': '2026-06-10', 'periodEnd': '2026-06-10', 'createdAt': '2026-06-10T09:10:45.925Z', 'newsCount': 67, 'alertCount': 17, 'reportCount': 0, 'summaryPreview': '=== Daily Market Intelligence Summary ===...', 'keyEventCount': 47, 'stockCount': 121}
+```
+
+**Test 2 — PERIOD filter (weekly):**
+```
+weekly count 13 first weekly-2026-06-01
+```
+
+**Test 3 — DETAIL mode (id=daily-2026-06-10):**
+```
+id daily-2026-06-10
+summaryText_len 12748
+keyEvents 47
+stockPerformance 121 {'symbol': 'VCB', 'firstPrice': 61700, 'lastPrice': 61700, 'changePct': 0.33, 'alertCount': 0}
+recommendations 121
+```
+
+### Result: SUCCESS ✓
+
+- Image rebuilt and deployed: sha256:7da6b... → sha256:0f709...
+- Endpoint /api/market-summaries live and responding
+- All three modes working: LIST (default), PERIOD filter, DETAIL (by id)
+- All 11 containers healthy post-rebuild
+- No peer containers recreated
+- No code changes made by ops agent
+- Commit a1ff1068 now serving live requests
+
+Endpoint ready for production.
