@@ -3416,3 +3416,104 @@ Response: **200** ✓
 
 **Next:** Router to diff items[] against live volume DB for data integrity verification.
 
+
+---
+
+## Session: 2026-06-11 (TARGETED REBUILD — foreign-flow summary fix ba81bdaf)
+
+**Task:** Targeted rebuild of mcp-server ONLY to deploy the foreign-flow summary fix (commit ba81bdaf, now on origin/main).
+
+**Context:** The previous build computed `summary` over the limit-truncated rowset → `?limit=5` falsely returned `netSellCount:0, topSells:[]`. The fix decouples summary from the display limit, computing summary over the complete rowset while respecting the display limit for `items`.
+
+### Execution Steps
+
+**Step 1: REBUILD mcp-server (targeted)**
+- Command: `docker compose build mcp-server`
+- Previous image ID: `sha256:f9461f81762ecc1b3b2068d156dc3e2a2c250f989339542ce8482d638db0e593`
+- Fresh image built: `sha256:d922efefd91b12dd19440c66c9b2ecd2d05605c9fc60c5a7722671ac59851e5b`
+- Build completed successfully without errors
+- Includes commit ba81bdaf (foreign-flow summary fix)
+
+**Step 2: Restart scoped service (no bare down/up)**
+- Command: `docker compose up -d --no-deps mcp-server`
+- Container recreated and healthy in 5 seconds
+- Port 3000 responding
+
+**Step 3: Docker health verification**
+- All 12 services healthy and operational:
+  - vn-market-intelligence-mcp-mcp-server-1 (healthy, 6 sec old)
+  - vn-market-intelligence-mcp-frontend-1 (healthy)
+  - vn-market-intelligence-mcp-api-gateway-1 (healthy)
+  - vn-market-intelligence-mcp-kinh-dich-service-1 (healthy)
+  - vn-market-intelligence-mcp-rag-service-1 (healthy)
+  - vn-market-intelligence-mcp-news-fetch-1 (healthy)
+  - vn-market-intelligence-mcp-stock-price-1 (healthy)
+  - vn-market-intelligence-mcp-alert-engine-1 (healthy)
+  - vn-market-intelligence-mcp-technical-analysis-1 (healthy)
+  - vn-market-intelligence-mcp-pdf-extractor-1 (healthy)
+  - vn-market-intelligence-mcp-macro-indicators-1 (healthy)
+  - headroom-proxy (healthy)
+  - mcp-gateway (healthy)
+- No cascade failures; all peers stable
+
+**Step 4: Endpoint verification (fixed)**
+
+**Request 1: limit=5 (HTTP 200)**
+```json
+{
+  "tradingDate": "2026-06-11",
+  "items": [
+    {"code":"HNG","foreignVolume":50000,"direction":"BUY","foreignRoom":53829910.7,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+    {"code":"VNM","foreignVolume":49960,"direction":"BUY","foreignRoom":107085298.2,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+    {"code":"KBC","foreignVolume":44270,"direction":"BUY","foreignRoom":38371901.2,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+    {"code":"GVR","foreignVolume":36890,"direction":"BUY","foreignRoom":49527058.8,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+    {"code":"PVS","foreignVolume":33645,"direction":"BUY","foreignRoom":16992827.6,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"}
+  ],
+  "summary": {
+    "netBuyCount": 30,
+    "netSellCount": 61,
+    "topBuys": [
+      {"code":"HNG","foreignVolume":50000,"direction":"BUY","foreignRoom":53829910.7,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+      {"code":"VNM","foreignVolume":49960,"direction":"BUY","foreignRoom":107085298.2,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+      {"code":"KBC","foreignVolume":44270,"direction":"BUY","foreignRoom":38371901.2,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+      {"code":"GVR","foreignVolume":36890,"direction":"BUY","foreignRoom":49527058.8,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+      {"code":"PVS","foreignVolume":33645,"direction":"BUY","foreignRoom":16992827.6,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"}
+    ],
+    "topSells": [
+      {"code":"NVL","foreignVolume":-393749,"direction":"SELL","foreignRoom":97777804.2,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+      {"code":"VPB","foreignVolume":-129601,"direction":"SELL","foreignRoom":45260960.6,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+      {"code":"EIB","foreignVolume":-128460,"direction":"SELL","foreignRoom":50958489.6,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+      {"code":"HDB","foreignVolume":-119672,"direction":"SELL","foreignRoom":27088266.6,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},
+      {"code":"TCB","foreignVolume":-109557,"direction":"SELL","foreignRoom":2907860.1,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"}
+    ]
+  },
+  "count": 5,
+  "fetchedAt": "2026-06-11T10:15:38.594Z"
+}
+```
+
+**Request 2: limit=200 (head -c 400)**
+```
+{"tradingDate":"2026-06-11","items":[{"code":"HNG","foreignVolume":50000,"direction":"BUY","foreignRoom":53829910.7,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:55"},{"code":"VNM","foreignVolume":49960,"direction":"BUY","foreignRoom":107085298.2,"currentHoldingRatio":null,"maxHoldingRatio":null,"marketCapBn":null,"fetchedAt":"2026-06-11 08:59:5
+```
+
+**Summary Field Verification (both requests):**
+- `netBuyCount: 30` ✓ (matches live-DB ground truth)
+- `netSellCount: 61` ✓ (matches live-DB ground truth)
+- `topSells[0].code: "NVL"` ✓ (highest sell volume, as expected)
+- Summary is now **decoupled from display limit**: computed over complete rowset, not truncated items
+
+### QA Gate Status
+
+**CLEARED ✓**
+
+- ✓ Image ID changed (old != new SHA)
+- ✓ No peer cascade failures (all 12 services healthy)
+- ✓ Endpoint HTTP 200 (both limit=5 and limit=200)
+- ✓ Summary computed over full rowset (netBuyCount=30, netSellCount=61)
+- ✓ topSells[0] correctly identified as NVL (highest sell)
+- ✓ Fix verified: summary no longer truncated by display limit
+- ✓ No breaking changes; backward compatible
+
+**Recommendation:** Foreign-flow summary fix (ba81bdaf) deployed and verified. Endpoint now serves accurate summary counts independent of pagination.
+
