@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-11T09:00:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-11T11:15:08Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-11T09:00:00Z",
@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-11T09:38:05Z",
+    "_updated_at": "2026-06-11T11:15:08Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -6601,6 +6601,26 @@
         "created_at": "2026-06-10T22:46:57Z",
         "created_by": "po",
         "note": "[po S5 GFD-12 2026-06-10T22:46:57Z] Carved out of GFD-12 sign-off. GFD-11 flagged 2 pre-existing infra test bugs non-blocking; tracked separately from GO-FLEET-DEPLOY. NOT in_progress (WIP<=2)."
+      },
+      {
+        "id": "PRED-RESOLVER-GAP-FIX",
+        "type": "FIX",
+        "owner": "dev",
+        "zone": "apps/mcp-server",
+        "route_to": "dev",
+        "status": "TODO",
+        "priority": "high",
+        "size": "M",
+        "created_at": "2026-06-11T11:15:08Z",
+        "created_by": "po",
+        "sprint": "BACKLOG",
+        "title": "Prediction resolver stamps resolved_at but leaves resolution_outcome NULL — claims 1/6/7 stuck pending forever",
+        "context": "Live evidence (named-volume DB, 2026-06-11), discovered during TASK17-PRED page build. The prediction resolver cron (apps/mcp-server, calls setClaimOutcome / resolves prediction_claims) stamps resolved_at but leaves resolution_outcome=NULL on 3 claims whose resolution_date is already past. These never enter hitRate/calibration accounting, silently inflating the pending bucket and never crediting/debiting the AI track record. Two distinct sub-bugs in the same resolver: (1) actual_price never fetched — ids 6 (VIC, bullish, target 224700, creation 214000) and 7 (GAS, bullish, target 78960, creation 75200) both have resolved_at=2026-06-09T16:30Z but actual_price=NULL, so target-hit is undeterminable; (2) no rule for neutral + null target — id 1 (FPT, direction=neutral, target_price=NULL, creation_price=NULL) stamped resolved_at but has no resolution rule for a neutral claim with no target.",
+        "status_note": "Resolver must (a) fetch + persist actual_price for bullish/bearish claims at resolution time so target-hit is determinable; (b) define an explicit rule for neutral / null-target claims (e.g. classify by price move vs creation_price, OR mark a distinct terminal status excluded from hitRate — never leave outcome NULL after resolved_at is set). AC met when ids 1/6/7 re-resolve to a non-NULL verdict (or explicit excluded status) and no claim has resolved_at set with resolution_outcome NULL.",
+        "labels": [
+          "prediction-resolver",
+          "data-integrity"
+        ]
       }
     ],
     "archive": [],
