@@ -7160,3 +7160,56 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/fed-rates      
 
 **Incidents:** None  
 **Procedure Compliance:** Strict targeted rebuild | build + up -d --no-deps | no destructive flags
+
+---
+
+## 2026-06-11 19:47 — Frontend Rebuild for news-buzz page (TASK17-PAGE19)
+
+**Task:** Targeted rebuild of frontend container only to ship new news-buzz page (commit e0a5427e: dashboard.news-buzz.tsx + api.news-buzz.tsx proxy + TopNav nav tab).
+
+### Image Update
+
+**OLD image id:** sha256:cd76519d685b77306fcbdd5f4d90e89076783bcde1328eb744d6cb7454fafa3b  
+**NEW image id:** sha256:fb793c0cd814c6862d7eadf28273f26394c1f9ddef24e16b4ba1032933397f01  
+**Confirmation:** OLD ≠ NEW ✓
+
+### Post-Rebuild Container Health
+
+**All 11 active containers healthy:** ✓
+
+```
+alert-engine         Up 20 hours (healthy)
+api-gateway          Up 9 hours (healthy)
+frontend             Up 9 seconds (healthy)     — REBUILT (just now)
+kinh-dich-service    Up 12 hours (healthy)
+macro-indicators     Up 20 hours (healthy)
+mcp-server           Up 9 minutes (healthy)     — (separate recent rebuild)
+news-fetch           Up 19 hours (healthy)
+pdf-extractor        Up 2 hours (healthy)
+rag-service          Up 2 hours (healthy)
+stock-price          Up 20 hours (healthy)
+technical-analysis   Up 20 hours (healthy)
+```
+
+**Peer restart collateral:** NONE ✓ (all peers retain baseline uptimes; only frontend restarted per target)
+
+### Smoke Tests (from host :3001)
+
+```
+/dashboard/news-buzz       → 200 ✓
+/api/news-buzz             → 200 ✓
+/dashboard/reputation      → 200 ✓ (PAGE-18 regression)
+```
+
+### Summary
+
+**Status:** ✓ SUCCESS
+
+**Image Updated:** OLD cd76519d → NEW fb793c0cd8  
+**All 11 Containers Healthy:** ✓  
+**Peer Containers Untouched:** ✓ (zero collateral restarts)  
+**All Smoke Tests Pass:** ✓ (3/3 HTTP 200)  
+**New /dashboard/news-buzz Page:** ✓ Live and accessible
+
+**Incidents:** None  
+**Procedure Compliance:** Strict targeted rebuild | `docker compose build frontend && docker compose up -d --no-deps frontend` | no destructive flags
