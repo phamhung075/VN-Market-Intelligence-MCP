@@ -6,6 +6,10 @@
 
 ## Status
 
+2026-06-11 — TASK-17 alerts RENDER FIX — signals[] string[]→Signal objects. Commit 4469dcd2. dashboard.alerts.tsx: Signal interface {type,severity,message,confidence}; signalTypeLabel() VN map (price_surge→"Giá tăng mạnh", volume_spike→"Khối lượng đột biến", news_mention→"Tin tức", unknown fallback=raw); SignalChip colours by signal.severity (high/critical=red, medium=yellow, low=grey), shows type label + confidence% + message as title tooltip; guards empty/missing fields (type:""→null render, confidence missing→omit%). AlertItem.signals typed Signal[]. task17-alerts-loader.test.ts fixtures re-seeded with object-shaped signals; Suite 8 (2-signal shape, 1-signal news_mention, empty-signals no-crash, multi-item 2-chip assertion); Suite 9 (signalTypeLabel VN mapping). 30/30 tests GREEN (+9 new). tsc exit 0. NOT pushed.
+
+Zone health: Tier 4 alerts page + RENDER FIX complete, tsc clean, 30/30 tests GREEN | HEALTHY
+
 2026-06-11 — TASK-17 alerts Alerts page DONE. api.alerts.tsx proxy (querystring limit+severity passthrough, arrayBuffer pipe, 502 on network fail, pass-through 4xx/5xx, MCP_SERVER_BASE_URL SSOT). dashboard.alerts.tsx SSR loader self-fetch fetchAlertsData(origin, params?) exported named helper (non-fatal: 502/503/network-throw/bad-shape all return degraded, count:0 → empty VN honest state). Summary header with per-severity chips (critical/high/medium/low), severity filter control (client-side), table newest-first (time-ago+timestamp, severity badge, signal tags, ticker+impact pills, message, confidenceScore%, outcome). TopNav: /dashboard/alerts comingSoon stub → ENABLED "Cảnh Báo". SSOT test updated (20/20 GREEN +1 Cảnh Báo ENABLED assertion). 21 new vitest GREEN. tsc 0 errors. NOT pushed.
 
 Zone health: Tier 4 routes +1 (alerts page), tsc clean, 21 new tests GREEN | HEALTHY
