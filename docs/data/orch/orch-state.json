@@ -1,15 +1,15 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-11T18:36:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-11T19:33:43Z",
+  "_updated_by": "architect",
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-11T09:00:00Z",
-    "updated_by": "dev-mcp-server",
-    "active_task_id": null,
-    "next_agent": null,
-    "_updated_at": "2026-06-10T04:35:51Z"
+    "status": "review",
+    "updated_at": "2026-06-11T19:33:43Z",
+    "updated_by": "architect",
+    "active_task_id": "ARCH-SHIP-WAVE-REAUDIT",
+    "next_agent": "pm",
+    "_updated_at": "2026-06-11T19:33:43Z"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -4886,18 +4886,6 @@
     ],
     "backlog": [
       {
-        "id": "ARCH-SHIP-WAVE-REAUDIT",
-        "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
-        "owner": "architect",
-        "status": "TODO",
-        "zone": "multi",
-        "sprint": "SHIP-WAVE-REAUDIT",
-        "priority": "high",
-        "desc": "Brownfield analysis from docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md (APPROVED). Rule NFR-C-1 stale-flag Option A (handler) vs B (middleware). Probe reputation_scores trend distribution + design trend-delta fix (PO ruled A-16 DEGRADED in-scope). Split zone:multi fixes (endpoint+page): NFR-C-4 stockPerformance direction, NFR-C-5 foreign-flow stale_fields, NFR-C-7 reputation trend. Order: BROKEN->DEGRADED->NFR. Output design brief -> pm decomposes.",
-        "created_at": "2026-06-11T19:27:17Z",
-        "created_by": "po"
-      },
-      {
         "id": "BA-SHIP-WAVE-REAUDIT",
         "title": "Requirement spec for SHIP-WAVE-REAUDIT: live-behavior re-audit of TASK-17 ship wave (19 items) + triage matrix",
         "owner": "ba",
@@ -8655,6 +8643,23 @@
         "created_at": "2026-06-11T08:34:59Z",
         "created_by": "po",
         "note": "[po triage 2026-06-11T08:34:59Z] Created from F1 triage. Evidence: alert-engine cmd/server/main.go:40 opens alert_engine.db (own DB); router.go /evaluate = validation only; mcp-server cronConfig.ts has the real writers; alerts.ts sent_by DEFAULT 'server' + foreignFlowAlertJob/taAlertScanJob/bbAlertScanJob INSERT INTO alerts. Dev snapshot market.db cron_job_runs only has pollNews (newest 2026-06-09) so it CANNOT prove writer-dead — MUST verify on live container, not snapshot. NOT in_progress (WIP<=2). | [dev-mcp-server 2026-06-11T08:45Z] IN_PROGRESS: live probe confirms cron registered + firing every 15min (success telemetry present). Root cause found: URL mismatch — client calls /indicators, TA service serves /ta/indicators; field mismatch code vs symbol; response array-vs-scalar. taAlertScan + bbAlertScan: success_count=0 EVERY cycle = 0 RSI/BB alerts ever fired. foreignFlowAlertJob: healthy, rows_written=0 = no HIGH signal today. Fix: clients.ts URL + field + response mapping + pass closes from local DB. | [dev-mcp-server 2026-06-11T09:00Z] DONE/VERIFIED: root cause confirmed + fixed. URL /indicators→/ta/indicators, code→symbol field, array→scalar response mapping, CANDLE_SQL market_prices_history→daily_ohlcv, closes array passed to TA service. Tests: 42 pass/0 fail (tsc clean). Rebuild required (ops). foreignFlowAlertJob: healthy-quiet (rows_written=0 today = no HIGH signal). TASK-17 Alerts page UNBLOCKED: writer now reaches live DB; table has 998 rows live; new RSI/BB alerts will fire when extreme conditions occur."
+      }
+    ],
+    "review": [
+      {
+        "id": "ARCH-SHIP-WAVE-REAUDIT",
+        "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
+        "owner": "architect",
+        "status": "REVIEW",
+        "zone": "multi",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "high",
+        "desc": "Brownfield analysis from docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md (APPROVED). Rule NFR-C-1 stale-flag Option A (handler) vs B (middleware). Probe reputation_scores trend distribution + design trend-delta fix (PO ruled A-16 DEGRADED in-scope). Split zone:multi fixes (endpoint+page): NFR-C-4 stockPerformance direction, NFR-C-5 foreign-flow stale_fields, NFR-C-7 reputation trend. Order: BROKEN->DEGRADED->NFR. Output design brief -> pm decomposes.",
+        "created_at": "2026-06-11T19:27:17Z",
+        "created_by": "po",
+        "updated_at": "2026-06-11T19:33:43Z",
+        "updated_by": "architect",
+        "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md"
       }
     ]
   },

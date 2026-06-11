@@ -1,8 +1,19 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-11 20:30 UTC | **Sprint:** FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE
+**Last updated:** 2026-06-11 21:45 UTC | **Sprint:** SHIP-WAVE-REAUDIT
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-11T21:45Z — SHIP-WAVE-REAUDIT (ARCH-SHIP-WAVE-REAUDIT, REVIEW)
+
+**Task:** ARCH-SHIP-WAVE-REAUDIT | backlog→REVIEW, HIGH, zone multi  
+**Output:** docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md
+
+**Key findings:**
+- reputation trend=stable ROOT CAUSE: `priorDate = today - 7d` exact ISO string; `getReputation(db, code, priorDate)` exact date match → always null; trend branch never executes. Fix: new `getReputationPrior(db, code, beforeDate)` using `WHERE date < beforeDate ORDER BY date DESC LIMIT 1`. No handler change needed — computed at cron time, stored in DB.
+- NFR-C-1 stale flag: Option A (handler-level) ruled over Option B (middleware). Thresholds vary per endpoint; inline is 3-4 lines; middleware has no clean DDD home. New shared `_staleness.ts` utility for the computation.
+- 8 files in mcp-server + 5 files in frontend to modify. Zero new services, no schema changes.
+- A-04 prediction-claims upstream stale (39d no new): DEFERRED-PRODUCT — producer cron issue outside this sprint scope.
 
 ## 2026-06-11T20:30Z — FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (SPIKE, REVIEW)
 
