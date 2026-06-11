@@ -152,16 +152,21 @@ export function shapeRow(row: TradingStatsRow): ForeignFlowItem {
 /**
  * Query foreign flow stats for the latest trading day.
  *
+ * Returns ALL rows for the latest trading day (capped at MAX_LIMIT=500, which
+ * safely exceeds the ~103 real rows) plus a display-limited slice.
+ *
  * @param db    - SQLite database instance (injected)
- * @param limit - Max rows to return (default 200, clamped [1, 500])
- * @returns Object with tradingDate and items (net buys first)
+ * @param limit - Max rows for the DISPLAY items slice (default 200, clamped [1, 500])
+ * @returns Object with tradingDate, allItems (full day, for summary), and items (display slice)
  */
 export function queryForeignFlow(
   db: Database,
   limit: number = DEFAULT_LIMIT,
-): { tradingDate: string; items: ForeignFlowItem[] } {
+): { tradingDate: string; allItems: ForeignFlowItem[]; items: ForeignFlowItem[] } {
   const clampedLimit = Math.min(MAX_LIMIT, Math.max(1, isNaN(limit) ? DEFAULT_LIMIT : limit));
 
+  // Fetch the full latest-day set (capped at MAX_LIMIT — well above real row count ~103).
+  // Summary is computed over allItems; display items are sliced after.
   const sql = `
     SELECT code, foreign_volume, foreign_room,
            current_holding_ratio, max_holding_ratio, market_cap_bn,
@@ -173,35 +178,37 @@ export function queryForeignFlow(
     LIMIT ?
   `;
 
-  const rows = db.prepare<TradingStatsRow, [number]>(sql).all(clampedLimit) as TradingStatsRow[];
+  const rows = db.prepare<TradingStatsRow, [number]>(sql).all(MAX_LIMIT) as TradingStatsRow[];
 
   const tradingDate = rows.length > 0 ? (rows[0]!.date) : "";
-  const items = rows.map(shapeRow);
+  const allItems = rows.map(shapeRow);
+  const items = allItems.slice(0, clampedLimit);
 
-  return { tradingDate, items };
+  return { tradingDate, allItems, items };
 }
 
 /**
- * Build summary block from shaped items.
- * topBuys: first 5 (already DESC, highest positive first).
- * topSells: last 5 reversed to ascending magnitude order (most negative first).
+ * Build summary block from the FULL latest-day shaped items.
+ * topBuys:  first 5 (already DESC, highest positive first).
+ * topSells: 5 most-negative foreignVolume (most negative first = biggest sellers first).
  * Exported for testability.
  */
 export function buildSummary(items: ForeignFlowItem[]): ForeignFlowSummary {
   const netBuys = items.filter((i) => i.direction === "BUY");
   const netSells = items.filter((i) => i.direction === "SELL");
 
-  // topSells: we want "biggest net sellers" = most negative foreignVolume.
-  // Items already sorted DESC (buys first, sells at end lowest values last),
-  // so sell rows appear at the tail; slice last 5 then reverse for ascending
-  // (most negative first = worst sellers first).
-  const topSellsCandidates = netSells.slice(0, 5);
+  // topSells: sort sell rows by foreignVolume ASC so most-negative comes first,
+  // then take the first 5. This is independent of the order items arrive in.
+  const topSells = netSells
+    .slice()
+    .sort((a, b) => a.foreignVolume - b.foreignVolume)
+    .slice(0, 5);
 
   return {
     netBuyCount: netBuys.length,
     netSellCount: netSells.length,
     topBuys: netBuys.slice(0, 5),
-    topSells: topSellsCandidates,
+    topSells,
   };
 }
 
@@ -231,8 +238,10 @@ export function handleGetForeignFlow(
       Math.max(1, parseInt(limitParam ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT),
     );
 
-    const { tradingDate, items } = queryForeignFlow(db, limit);
-    const summary = buildSummary(items);
+    // allItems = full latest-day set (for authoritative summary)
+    // items    = display-limited slice (for client)
+    const { tradingDate, allItems, items } = queryForeignFlow(db, limit);
+    const summary = buildSummary(allItems);
 
     const body: ForeignFlowResponse = {
       tradingDate,

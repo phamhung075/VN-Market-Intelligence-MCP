@@ -233,17 +233,32 @@ describe("buildSummary", () => {
     expect(summary.topBuys[0]!.foreignVolume).toBe(1000);
   });
 
-  it("topSells = up to 5 net sell items (most negative first)", () => {
+  // AC-11: topSells must be ordered most-negative first (biggest net sellers first).
+  // This test uses VARYING magnitudes in NON-sorted order to catch the slice(0,5) bug
+  // that would return smallest sellers instead of biggest sellers.
+  it("AC-11: topSells = 5 most-negative items, most-negative first (distinct magnitudes)", () => {
+    // Items passed in arbitrary order (not pre-sorted by magnitude) with 6 sell rows
+    // so slice(0,5) on unsorted input would give wrong answer.
     const sells: ForeignFlowItem[] = [
-      { code: "S1", foreignVolume: -10, direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
-      { code: "S2", foreignVolume: -500, direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
-      { code: "S3", foreignVolume: -200, direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
+      { code: "S_SMALL",  foreignVolume: -10,   direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
+      { code: "S_MED1",   foreignVolume: -200,  direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
+      { code: "S_BIG1",   foreignVolume: -500,  direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
+      { code: "S_MED2",   foreignVolume: -150,  direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
+      { code: "S_BIG2",   foreignVolume: -400,  direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
+      { code: "S_TINY",   foreignVolume: -5,    direction: "SELL", foreignRoom: null, currentHoldingRatio: null, maxHoldingRatio: null, marketCapBn: null, fetchedAt: PROD_FETCHED },
     ];
     const summary = buildSummary(sells);
-    // topSells: first 5 of the sell items (already sorted DESC so sells come last in items DESC order)
-    // Here all items are sells; first 5 sliced = first 3 = S1(-10), S2(-500), S3(-200)
-    expect(summary.topSells).toHaveLength(3);
-    expect(summary.netSellCount).toBe(3);
+    expect(summary.topSells).toHaveLength(5);
+    expect(summary.netSellCount).toBe(6);
+    // Most-negative first: -500, -400, -200, -150, -10
+    expect(summary.topSells[0]!.code).toBe("S_BIG1");   // -500
+    expect(summary.topSells[0]!.foreignVolume).toBe(-500);
+    expect(summary.topSells[1]!.code).toBe("S_BIG2");   // -400
+    expect(summary.topSells[2]!.foreignVolume).toBe(-200);
+    expect(summary.topSells[3]!.foreignVolume).toBe(-150);
+    expect(summary.topSells[4]!.foreignVolume).toBe(-10);
+    // S_TINY (-5) is the 6th-largest seller and must NOT appear in topSells
+    expect(summary.topSells.some((i) => i.code === "S_TINY")).toBe(false);
   });
 
   it("empty items → zero counts and empty arrays", () => {
@@ -575,14 +590,79 @@ describe("TASK17-FOREIGN-FLOW — handleGetForeignFlow HTTP handler", () => {
     expect(body.summary.topBuys).toHaveLength(5);
     expect(body.summary.topBuys[0]!.code).toBe("HNG");
     expect(body.summary.topBuys[0]!.foreignVolume).toBe(50000);
-    // topSells: first 5 sell items in DESC order (items sorted DESC overall;
-    // sells appear at the tail — first sell = least negative = TCB -109557,
-    // last sell = most negative = NVL -393749).
+    // topSells: 5 most-negative (most negative first = NVL, VPB, EIB, HDB, TCB)
     expect(body.summary.topSells).toHaveLength(5);
-    // all topSells items have direction SELL
     expect(body.summary.topSells.every((i) => i.direction === "SELL")).toBe(true);
+    expect(body.summary.topSells[0]!.code).toBe("NVL");   // most negative -393749
+    expect(body.summary.topSells[0]!.foreignVolume).toBe(-393749);
+    expect(body.summary.topSells[1]!.code).toBe("VPB");   // -129601
+    expect(body.summary.topSells[2]!.code).toBe("EIB");   // -128460
     // ordering: items DESC so buys first
     expect(body.items[0]!.direction).toBe("BUY");
     expect(body.items[body.items.length - 1]!.direction).toBe("SELL");
+  });
+
+  // DUAL-DEFECT REGRESSION (TASK17-FOREIGN-FLOW Wave 1b):
+  // Catches DEFECT 1 (summary computed over limit-truncated rowset) AND
+  // DEFECT 2 (topSells returns smallest sellers instead of biggest sellers).
+  // Seed: 8 buys + 8 sells; request ?limit=3.
+  // Pre-fix: summary.netBuyCount=3, summary.netSellCount=0, topSells[0] = smallest seller.
+  // Post-fix: summary reflects ALL 16 rows; topSells[0] is the MOST NEGATIVE ticker.
+  it("REGRESSION: summary is authoritative over full day even with ?limit=3 (catches both defects)", () => {
+    const db = getDb();
+    // 8 buys with descending volumes
+    const buys = [
+      { code: "B1", foreign_volume: 80000 },
+      { code: "B2", foreign_volume: 70000 },
+      { code: "B3", foreign_volume: 60000 },
+      { code: "B4", foreign_volume: 50000 },
+      { code: "B5", foreign_volume: 40000 },
+      { code: "B6", foreign_volume: 30000 },
+      { code: "B7", foreign_volume: 20000 },
+      { code: "B8", foreign_volume: 10000 },
+    ];
+    // 8 sells with varying magnitudes (NOT pre-sorted — tests that topSells sorts correctly)
+    const sells = [
+      { code: "S_WORST",  foreign_volume: -900000 },  // most negative — must be topSells[0]
+      { code: "S_2ND",    foreign_volume: -500000 },
+      { code: "S_3RD",    foreign_volume: -300000 },
+      { code: "S_4TH",    foreign_volume: -200000 },
+      { code: "S_5TH",    foreign_volume: -100000 },
+      { code: "S_SMALL1", foreign_volume: -50000  },
+      { code: "S_SMALL2", foreign_volume: -20000  },
+      { code: "S_TINY",   foreign_volume: -1000   },  // smallest seller — must NOT be in topSells
+    ];
+    for (const d of [...buys, ...sells]) {
+      insertRow(db, { ...d, date: PROD_DATE });
+    }
+
+    const res = makeMockRes();
+    handleGetForeignFlow(
+      makeFakeReq("/api/foreign-flow?limit=3"),
+      res as unknown as import("node:http").ServerResponse,
+      db,
+    );
+
+    const body = JSON.parse(res.body) as ForeignFlowResponse;
+
+    // DEFECT 1 guard: summary must reflect the full 8+8 day, NOT just the 3 display items
+    expect(body.items).toHaveLength(3);          // display limited
+    expect(body.count).toBe(3);                  // count = items.length (display)
+    expect(body.summary.netBuyCount).toBe(8);    // FULL day — NOT 3
+    expect(body.summary.netSellCount).toBe(8);   // FULL day — NOT 0
+
+    // DEFECT 2 guard: topSells[0] must be the MOST NEGATIVE ticker (S_WORST -900000)
+    expect(body.summary.topSells).toHaveLength(5);
+    expect(body.summary.topSells[0]!.code).toBe("S_WORST");
+    expect(body.summary.topSells[0]!.foreignVolume).toBe(-900000);
+    expect(body.summary.topSells[1]!.code).toBe("S_2ND");
+    expect(body.summary.topSells[4]!.code).toBe("S_5TH");   // 5th most-negative
+    // S_TINY is the smallest seller — must NOT appear in top 5
+    expect(body.summary.topSells.some((i) => i.code === "S_TINY")).toBe(false);
+
+    // topBuys still correct
+    expect(body.summary.topBuys).toHaveLength(5);
+    expect(body.summary.topBuys[0]!.code).toBe("B1");       // highest buy
+    expect(body.summary.topBuys[0]!.foreignVolume).toBe(80000);
   });
 });
