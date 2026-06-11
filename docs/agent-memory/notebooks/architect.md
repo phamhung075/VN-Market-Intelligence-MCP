@@ -1,8 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-11 00:00 UTC | **Sprint:** GO-FLEET-DEPLOY
+**Last updated:** 2026-06-11 07:30 UTC | **Sprint:** MAW-FRONTEND-REDESIGN
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-11T07:30Z — arch-MAW-1: Market Analyst Workbench frontend redesign
+
+**Task:** MAW-2026-06-11 (L, multi-zone: apps/frontend/ + apps/mcp-server/)
+
+**Method:** Full brownfield read — all 11 route files, TopNav SSOT, api/client.ts, system-map.json (full tool list, watchlist, agents, data_sources), docs/analysis-briefs/ inventory, agent notebooks (market-watcher, news-scout cycle data), project-stats.json. Adopted VN market analyst lens throughout.
+
+**Key findings:**
+- 6 of 9 nav tabs are ops-only (services, fetch, vps, db, orchestration, quality-audit) — never seen by analyst.
+- `dashboard.analysis.tsx` has good bones: watchlist tiles + KD + TA + signals + chart — but missing: AI synthesis from docs/analysis-briefs/, CHEF market digest, foreign flow, enriched news.
+- `_index.tsx` home page is a dev skeleton (gateway status + 5 nav links) — zero analyst value.
+- ~40 MCP tools are analyst-relevant but have zero frontend surface (foreign flow, investment clock, market digest, earnings calendar, sector rotation, AI intel).
+- `docs/analysis-briefs/{TICKER}.md` files contain rich multi-agent synthesis (fundamentals, price, news, quarterly synthesis) — completely untapped by frontend. 46 tickers covered.
+- CHEF unified-agent produces 3 guaranteed daily MARKET channel dishes — not surfaced at all.
+- news-scout fires 3-5 signals per cycle with full impact analysis — surfaced only in agent signals table (raw), never as analyst-readable news feed.
+
+**Design decisions:**
+- BUILD-STANDARD: lean (apps/frontend/ exists, apps/mcp-server/ exists)
+- Home page replacement (P0): VNINDEX + CHEF digest + macro snapshot. Reuse existing components.
+- NAV restructure: 8 analyst tabs primary + System collapsed group (6 ops tabs). TopNav SSOT only change.
+- 2 new mcp-server GET endpoints needed for P0: /api/analysis-brief/:ticker + /api/market-digest.
+- Analysis-brief endpoint: filesystem reader (infrastructure layer adapter) — NOT a MCP tool, a plain GET handler.
+- Market-digest endpoint: wraps get_market_message_digest tool result, 60s TTL cache.
+- All P1+ tasks split into dev-frontend + dev-mcp-server subtasks (multi-zone).
+
+**Outputs:**
+- docs/architecture-briefs/2026-06-11-market-analyst-workbench.md (this brief)
+- Notebook updated
 
 ## 2026-06-11T00:00Z — arch-S28: GFD-13 rag-service lazy-load embedding
 
