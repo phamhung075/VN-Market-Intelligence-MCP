@@ -6397,3 +6397,100 @@ Count: 11/11 ✓ | No peer collateral ✓
 
 ---
 
+
+---
+
+## Session: 2026-06-11 — Targeted Rebuild mcp-server (TASK17-PAGE15)
+
+**Task:** Deploy new `GET /api/officers` endpoint (commit b9276093 on origin/main).
+**Constraint:** Targeted rebuild of mcp-server ONLY — no collateral restarts.
+**Execution:** 2026-06-11 17:51-17:52 UTC+2
+
+### Step 1: Record OLD Image ID
+
+```
+docker inspect --format '{{.Image}}' vn-market-intelligence-mcp-mcp-server-1
+```
+
+**Result:** `sha256:e807e00521546c5c5e0d1025e6e3bbd2e7558fe0b6d6b30c8b0fbd1d8c4d71a8`
+
+### Step 2: Targeted Build & Deploy
+
+```bash
+docker compose build mcp-server && docker compose up -d --no-deps mcp-server
+```
+
+**Pattern:** No `down` | No bare `up -d` | No `--force-recreate` | No `--remove-orphans`
+**Duration:** ~29s build + deploy
+
+### Step 3: Record NEW Image ID
+
+```
+docker inspect --format '{{.Image}}' vn-market-intelligence-mcp-mcp-server-1
+```
+
+**Result:** `sha256:a9f53c3892b25d4da5d45ad9fc1555197590953e544ed90f941a59d4ab5db9df`
+
+**Verification:** OLD ≠ NEW ✓ (SHA differ)
+
+### Step 4: Peer Fleet Health Check
+
+```bash
+docker ps --filter name=vn-market-intelligence-mcp --format "table {{.Names}}\t{{.Status}}"
+```
+
+**All 11 Containers — PRESENT & HEALTHY:**
+
+```
+vn-market-intelligence-mcp-mcp-server-1           Up 5 seconds (health: starting)     ← REBUILT
+vn-market-intelligence-mcp-frontend-1             Up 12 minutes (healthy)
+vn-market-intelligence-mcp-api-gateway-1          Up 7 hours (healthy)
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 10 hours (healthy)
+vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)
+vn-market-intelligence-mcp-news-fetch-1           Up 18 hours (healthy)
+vn-market-intelligence-mcp-stock-price-1          Up 18 hours (healthy)
+vn-market-intelligence-mcp-alert-engine-1         Up 18 hours (healthy)
+vn-market-intelligence-mcp-technical-analysis-1   Up 18 hours (healthy)
+vn-market-intelligence-mcp-pdf-extractor-1        Up 18 hours (healthy)
+vn-market-intelligence-mcp-macro-indicators-1     Up 18 hours (healthy)
+```
+
+**Count:** 11/11 ✓ | **No peer collateral:** ✓
+
+### Step 5: Smoke Tests
+
+#### Test 1: GET /api/officers (default code)
+
+```bash
+curl -s "http://localhost:3000/api/officers" | head -c 400
+```
+
+**Response (first 400 chars):**
+```
+{"generatedAt":"2026-06-11T15:52:12.979Z","asOf":"2026-06-10T21:00:49Z","codes":["BID","BSR","DGC","DIG","DPM","DXG","EIB","FPT","FRT","GEX","HPG","HUT","KBC","KDC","KDH","MSN","MWG","NVL","PDR","SAB","SHB","SSI","VCB","VCI","VEA","VHM","VIC","VIX","VJC","VND","VNM","VRE"],"selectedCode":"BID","officers":[{"rank":1,"name":"Lê Kim Hòa","position":"Thành viên Hội đồng Quản trị","ownPerc
+```
+
+**Status:** ✓ JSON valid | selectedCode="BID" | officers array present
+
+#### Test 2: GET /api/officers?code=FPT
+
+```bash
+curl -s "http://localhost:3000/api/officers?code=FPT" | head -c 400
+```
+
+**Response (first 400 chars):**
+```
+{"generatedAt":"2026-06-11T15:52:16.048Z","asOf":"2026-06-10T21:00:49Z","codes":["BID","BSR","DGC","DIG","DPM","DXG","EIB","FPT","FRT","GEX","HPG","HUT","KBC","KDC","KDH","MSN","MWG","NVL","PDR","SAB","SHB","SSI","VCB","VCI","VEA","VHM","VIC","VIX","VJC","VND","VNM","VRE"],"selectedCode":"FPT","officers":[{"rank":1,"name":"Trương Gia Bình","position":"Chủ tịch Hội đồng Quản trị","o
+```
+
+**Status:** ✓ JSON valid | selectedCode="FPT" | officers array present
+
+### Production Status
+
+**TASK17-PAGE15 SHIPPED:** mcp-server now hosts new `GET /api/officers` endpoint from commit b9276093.
+
+**Incidents:** None.
+
+**Duration:** 3 minutes total (1 min build + 1 min deploy + 1 min verify).
+
+---
