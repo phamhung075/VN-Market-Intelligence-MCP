@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-10T20:45:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-11T09:38:05Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4885,6 +4885,19 @@
       }
     ],
     "backlog": [
+      {
+        "id": "TASK17-FOREIGN-FLOW",
+        "status": "TODO",
+        "type": "SPRINT-S",
+        "zone": "multi",
+        "title": "TASK-17 Foreign-flow page: live foreign net-buy/sell over vnstock_trading_stats (confirmed 91 rows TODAY 2026-06-11, directional 30 buy/61 sell)",
+        "desc": "Next TASK-17 anti-demo page. Source PROBED LIVE-HEALTHY: market.db.vnstock_trading_stats (named volume vn-market-intelligence-mcp_market_data, DB_PATH=/app/data/market.db). Serve-path mirrors api.alerts.tsx precedent: mcp-server NEW GET /api/foreign-flow (NOT the existing diagnostic /api/foreign-flow-status, which is auth-gated + has a contract bug reading holding_ratio/updated_at vs real cols current_holding_ratio/fetched_at) -> frontend api.foreign-flow.tsx transparent proxy -> dashboard.foreign-flow.tsx loader+page. LIVE CONTRACT (real cols, never schema comment): {code, foreign_volume (INT, sign=direction: <0 net SELL, >0 net BUY), foreign_room, current_holding_ratio, max_holding_ratio, market_cap_bn, date, fetched_at}. Real sample today: {code:NVL, foreign_volume:-393749, foreign_room:97777804.2, date:'2026-06-11', fetched_at:'2026-06-11 08:59:55'} (net SELL); top net BUY {HNG:50000, VNM:49960, KBC:44270}. DoD: /api/foreign-flow serves real rows filtered date=latest, sorted by ABS(foreign_volume); page renders VN net buy/sell direction+delta (not raw snapshot); served diff-matches live DB. zone=multi: architect splits dev-mcp-server (endpoint) + dev-frontend (proxy+page). Cite ALERT contract-mismatch defect class (bit 3x): dev MUST probe a real row before writing DTO.",
+        "size": "S",
+        "baseline_pass": true,
+        "created_by": "po",
+        "created_at": "2026-06-11T09:38:05Z",
+        "sprint": "TASK-17"
+      },
       {
         "id": "BPE-ARCH-1",
         "title": "BCTC-PROSE-EXTRACT architect SPIKE + design brief — 5 blockers: ocr_unit injection path (BLOCKER-1), OCR gap root cause (BLOCKER-2), patch order for active uncommitted work (BLOCKER-3), AI tool arch (BLOCKER-4), structural root-cause for module family (BLOCKER-5). Spec: docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md",
