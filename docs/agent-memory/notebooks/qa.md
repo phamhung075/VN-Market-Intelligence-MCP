@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-227 · 2026-06-11 · REAUDIT-FE-001 NFR-C-1 stale banners QA gate — APPROVED
+
+Sprint: SHIP-WAVE-REAUDIT | Task: REAUDIT-FE-001 | Verdict: APPROVED | Commit: e787187f | Report: reports/TASK_REPORT_REAUDIT-FE-001.md
+
+Task test suite (21 tests) GREEN QA-reproduced. tsc --noEmit exit 0. DDD PASS: no infrastructure/application imports in 5 modified page routes. Security PASS: process.env hits are pre-existing FRONTEND_ORIGIN pattern (zero lines added by commit). mock-guard exit 0. Full suite: 1280 pass / 170 fail — git stash confirmed identical 1280/170 baseline without REAUDIT changes → zero regression delta. Live raw API probe: /api/shareholders stale=true/staleByDays=3, /api/financials stale=true/staleByDays=43 — SSR HTML confirms banner rendered on both stale pages ("Dữ liệu đã cũ" + amber-950 class). /api/conviction-history, /api/corporate-events, /api/reputation all stale=false → no banner in SSR HTML on those 3 pages. conviction-history amber=StaleTag row-level (pre-existing, distinct CSS pattern: text-[10px] badge vs role=status div). BCTC eval gate N/A (frontend-only). orch-state REAUDIT-FE-001 REVIEW→DONE. DJ-GATE-1: sprint-SHIP-WAVE-REAUDIT-qa.md § qa-S3.
+
 ## cycle-226 · 2026-06-11 · SHIP-WAVE-REAUDIT B-01/B-02 live-probe audit — B-01 DONE / B-02 PENDING
 
 Sprint: SHIP-WAVE-REAUDIT | Tasks: FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE (B-01) + FIX-EVIDENCE-PIPELINE-STARVED (B-02) | Methodology: raw live probe via docker exec keinos/sqlite3 pattern (named volume).

@@ -15,6 +15,21 @@
 **why-decision:** BA spec rubric GOOD = "at least 1 entry for vnstockFundamentalsRefresh with status field populated" — entry exists (2026-06-08 crashed). Fix 3 observable (startup probe stamped). Fix 4 code verified active. Weekly cron not yet triggered post-fix — this is expected (deploy 2026-06-11, next Mon). Verdict PASS with re-check note for next Mon run.
 **why-change:** No change from plan — BA spec said verify-only unless fix ineffective. Fixes are effective per code + probe evidence available.
 
+### STEP qa-S3 · qa · 2026-06-11T23:00:00Z
+**task-id:** REAUDIT-FE-001
+**what-done:** Full QA gate for NFR-C-1 stale banner feature on 5 frontend pages. APPROVED.
+**what-considered:**
+- task test suite (21 tests) GREEN — QA-reproduced: 21 pass / 0 fail
+- tsc --noEmit: exit 0 (QA-reproduced)
+- DDD scan: clean on all 5 page routes (no infrastructure/application imports)
+- Security: process.env hits are FRONTEND_ORIGIN pre-existing pattern; none introduced by commit e787187f (verified via git show grep)
+- mock-guard: exit 0 (no fabricated data)
+- Full suite: 1280 pass / 170 fail — git stash confirmed identical 1280/170 without REAUDIT changes → zero regression delta
+- Live API raw-probed: /api/shareholders stale=true/staleByDays=3, /api/financials stale=true/staleByDays=43 — banners render in SSR HTML. /api/conviction-history, /api/corporate-events, /api/reputation all stale=false — no banner in SSR HTML (conviction-history amber= row-level StaleTag not page banner, confirmed by CSS class pattern)
+- BCTC eval gate: N/A (frontend-only task, no BCTC report touches)
+**why-decision:** All checks pass. Live raw evidence matches expected behavior (banner present when stale=true, absent when stale=false). No arch concern (pure frontend route extension, no new domain/MCP/cross-service). APPROVED.
+**why-change:** No change from plan — only path: all checks green.
+
 ### STEP qa-S2 · qa · 2026-06-11T20:50:00Z
 **task-id:** FIX-EVIDENCE-PIPELINE-STARVED
 **what-done:** Live-probed B-02 fix effectiveness; issued PENDING verdict per BA spec edge case.

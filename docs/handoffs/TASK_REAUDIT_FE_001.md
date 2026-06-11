@@ -148,3 +148,34 @@ Test Files  6 failed | 53 passed (59)
      Tests  21 failed | 1438 passed (1459)
 ```
 Pre-existing failures: nav count tests (FE-HEADER-SSOT-top-nav, task17-page14/15/16/17/18-nav) — all fail on stale nav count assertions from earlier sessions; confirmed pre-existing via stash test.
+
+---
+
+## [QA] Review Record — 2026-06-11
+
+**Verdict:** APPROVED
+**Round:** 1
+
+**Checks run:**
+- `bun test app/__tests__/reaudit-fe-001-stale-banners.test.ts` → 21 pass / 0 fail (QA-reproduced)
+- `bun tsc --noEmit` → exit 0 (0 errors)
+- DDD scan (infrastructure/application imports) → CLEAN on all 5 modified page files
+- Security scan (process.env, secrets) → pre-existing FRONTEND_ORIGIN pattern only; zero lines added in commit diff
+- mock-guard exit 0
+
+**Full suite baseline:** 1280 pass / 170 fail with REAUDIT changes; identical 1280/170 without (git stash confirmed). Zero regression introduced by REAUDIT-FE-001 commit.
+
+**Live raw verification (5 pages):**
+
+| Page | API stale flag | API staleByDays | Banner rendered |
+|---|---|---|---|
+| /dashboard/shareholders | true | 3 | YES — SSR HTML contains "Dữ liệu đã cũ" + amber-950 |
+| /dashboard/financials | true | 43 | YES — SSR HTML contains "Dữ liệu đã cũ" + amber-950 |
+| /dashboard/conviction-history | false | 0 | NO — "Dữ liệu đã cũ" absent from SSR HTML |
+| /dashboard/corporate-events | false | 0 | NO — "Dữ liệu đã cũ" absent from SSR HTML |
+| /dashboard/reputation | false | 0 | NO — "Dữ liệu đã cũ" absent from SSR HTML |
+
+Note: conviction-history amber CSS present = row-level StaleTag (pre-existing per-row indicator), NOT page-level stale banner. Confirmed distinct by pattern: row tags use `text-[10px]` badge, page banner uses `role="status"` div.
+
+**Report:** reports/TASK_REPORT_REAUDIT-FE-001.md
+**DJ:** docs/agent-memory/decisions/sprint-SHIP-WAVE-REAUDIT-qa.md § qa-S3
