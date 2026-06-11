@@ -125,6 +125,8 @@ import { handleGetCorporateEvents } from "./routes/corporateEventsHandler.js";
 import { handleGetShareholdersHttp } from "./routes/shareholdersHandler.js";
 // TASK17-PAGE15: GET /api/officers — Board of Directors & Management ("Ban lãnh đạo & quản trị"), stored-data-only
 import { handleGetOfficersHttp } from "./routes/officersHandler.js";
+// TASK17-PAGE16: GET /api/financials — Cross-sectional Valuation & Fundamentals Screener, stored-data-only
+import { handleGetFinancialsHttp } from "./routes/financialsHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2193,6 +2195,17 @@ export async function createBunServer(
     // Public endpoint (no auth).
     if (method === "GET" && pathname === "/api/officers") {
       handleGetOfficersHttp(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE16: GET /api/financials ────────────────────────────────
+    // Serves Cross-sectional Valuation & Fundamentals Screener.
+    // One row per code (latest period), full universe — no query params.
+    // Returns rows + summary medians (pe/pb/roe) + top-5 rankings.
+    // Stored-data-only (NO live network/microservice calls).
+    // Public endpoint (no auth).
+    if (method === "GET" && pathname === "/api/financials") {
+      handleGetFinancialsHttp(req, res, db);
       return;
     }
 
