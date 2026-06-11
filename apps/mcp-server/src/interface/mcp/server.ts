@@ -115,6 +115,8 @@ import { handleGetMarketSummaries } from "./routes/marketSummaryHandler.js";
 import { handleGetSectorRotation } from "./routes/sectorRotationHandler.js";
 // TASK17-PAGE10: GET /api/sector-cascade — Sector Cascade Signals ("Tín hiệu dây chuyền theo ngành"), stored-data-only
 import { handleGetSectorCascade } from "./routes/cascadeSignalHandler.js";
+// TASK17-PAGE11: GET /api/kinh-dich-signals — Kinh Dịch hexagram trading signals per stock, stored-data-only
+import { handleGetKinhDichSignals } from "./routes/kinhDichSignalsHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -2127,6 +2129,17 @@ export async function createBunServer(
     // Public endpoint (no auth).
     if (method === "GET" && pathname === "/api/sector-cascade") {
       handleGetSectorCascade(req, res, db);
+      return;
+    }
+
+    // ── TASK17-PAGE11: GET /api/kinh-dich-signals ─────────────────────────
+    // Serves Kinh Dịch hexagram trading signals ("Tín hiệu Kinh Dịch") per stock.
+    // Latest reading per symbol, signal-flip detection, actionPriority sort.
+    // Stored-data-only (NO live fan-out, NO kinh-dich-service call).
+    // Query param: ?source=cycle|manual|all (default "cycle").
+    // Public endpoint (no auth).
+    if (method === "GET" && pathname === "/api/kinh-dich-signals") {
+      handleGetKinhDichSignals(req, res, db);
       return;
     }
 
