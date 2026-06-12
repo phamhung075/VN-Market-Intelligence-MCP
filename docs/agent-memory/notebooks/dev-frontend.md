@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-12 | **Sprint:** SHIP-WAVE-REAUDIT — REAUDIT-FE-002 foreign-flow stale_fields badge
+**Last updated:** 2026-06-12 | **Sprint:** SHIP-WAVE-REAUDIT — REAUDIT-FE-003 stockPerformance direction arrow
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-12 — REAUDIT-FE-003 NFR-C-4 stockPerformance direction arrow DONE. Commit 9bda7325. Live probe before coding: direction field confirmed LIVE on payload (DEV-REAUDIT-4 satisfied). StockPerf.direction? added as optional "up"|"down"|"flat". Exported directionArrow() → Unicode glyph (↑/↓/—/"") and directionArrowColorClass() → Tailwind class (mirrors changePctColorClass color family). Arrow rendered inline before changePct in table cell with aria-label (Tăng/Giảm/Đi ngang). undefined → "" backward compat (no crash). 21 new vitest GREEN (5 suites: glyph/colorClass/StockPerf-type/alignment/backward-compat). tsc 0 errors. Playwright 4/4 GREEN. Rebuild batched with FE-002 (ops to rebuild frontend after both FE-002+FE-003 are REVIEW).
+
+Zone health: direction arrow live in market-summaries stock table, tsc clean, 21 new tests GREEN, Playwright 4/4 | HEALTHY
 
 2026-06-12 — REAUDIT-FE-002 NFR-C-5 foreign-flow stale_fields column badge DONE. Commit 11308f1c. Contract probed live before coding: stale_fields=["currentHoldingRatio","maxHoldingRatio","marketCapBn"] confirmed on 2026-06-12. Pattern: ForeignFlowDto.stale_fields?:string[] + LoaderData.stale_fields:string[]; fetchForeignFlowData parses array or defaults to [] (backward compat). Exported isFieldStale(field, staleFields?) and staleColumnLabel(field, staleFields?) helpers. Column headers "Tỷ lệ sở hữu" + "Vốn hóa" render inline "Không có dữ liệu" badge (slate-700 bg, 10px) when field is in stale_fields. 15 new vitest GREEN (stale_fields parse/absent/empty/5xx/network/3-fields, isFieldStale 4 cases, staleColumnLabel 5 cases). tsc 0 errors. 4/4 Playwright GREEN. Rebuild batched with FE-003.
 

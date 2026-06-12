@@ -92,3 +92,42 @@ Frontend receives direction pre-computed from backend. Keeps separation of conce
 - Architect brief: `docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md`
 - BA spec: `docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md` § A-10
 - Zone standard: `docs/policies/dev-standards.md`
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** frontend
+- **Zone:** apps/frontend/
+- **Build tier:** 4 (feature component — Tier 3 API layer GREEN, gate met)
+- **Files modified:**
+  - `apps/frontend/app/routes/dashboard.market-summaries.tsx` — StockPerf.direction? field, directionArrow() + directionArrowColorClass() helpers, arrow render in changePct cell
+  - `apps/frontend/app/__tests__/reaudit-fe-003-stock-direction-arrow.test.ts` — 21 tests NEW
+  - `docs/data/orch/orch-state.json` — task status → REVIEW
+- **Tests written:** `app/__tests__/reaudit-fe-003-stock-direction-arrow.test.ts` — 21 assertions, GREEN
+- **Git commits:** `9bda7325 feat(frontend/SHIP-WAVE-REAUDIT): REAUDIT-FE-003 direction arrow in stock performance table`
+- **Type check:** clean (tsc --noEmit, 0 errors)
+- **Service tests:**
+  - Vitest: `21 new pass / 0 fail` (reaudit-fe-003 suite); `83 pass / 0 fail` (market-summaries combined)
+  - Full suite: 1474+ pass, 21 pre-existing nav-count failures (unrelated, pre-existed before this task)
+  - Playwright G12: `4/4 PASS` (render-check.spec.ts 3/3 + smoke.spec.ts 1/1)
+- **Docs updated:** NONE (no new API shape or config change in frontend docs scope)
+- **Graphify:** skipped (no docs impacted)
+
+### Live probe evidence (2026-06-12, pre-implementation)
+
+```
+GET http://localhost:3000/api/market-summaries?id=daily-2026-06-11
+stockPerformance[0]: {"symbol":"VCB","firstPrice":61600,"lastPrice":61600,"changePct":-0.16,"alertCount":1,"direction":"down"}
+stockPerformance[1]: {"symbol":"BID","firstPrice":41400,"lastPrice":41400,"changePct":-0.6,"alertCount":0,"direction":"down"}
+```
+direction field LIVE on payload — REAUDIT-004 dependency confirmed satisfied.
+
+### Vitest summary line
+```
+Tests  83 passed (83)
+```
+### Playwright summary line
+```
+4 passed (3.5s)
+```
