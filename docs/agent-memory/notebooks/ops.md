@@ -171,3 +171,58 @@ All sessions completed with QA gates cleared; no peer destruction; disk maintain
 
 **Status:** RESOLVED — no infrastructure action needed; queue management issue flagged for enricher review.
 
+
+## Session: 2026-06-13 (FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE — mcp-server rebuild)
+
+**Task:** Rebuild mcp-server for FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE (BLOCK-5 confidence recompute gate at finalizeBctcRefineTool.ts).
+
+### Execution Summary
+
+**Procedure:** Single-service rebuild (docker compose up -d --build mcp-server ONLY)
+- Git HEAD verified: 0a0b6db4 (contains c38c76e6)
+- Build completed successfully; new image: sha256:5521a124bb452...
+- Container recreated with matching image ID ✓
+
+**Post-rebuild Verification (all gates passed):**
+
+| Gate | Check | Status |
+|---|---|---|
+| a | Built image ID == running container ID | MATCH (y) |
+| b | Peer containers (13 expected) | 13/13 ALL HEALTHY (y) |
+| c | Health endpoint 200 + ToolCount 157 | 200 OK + 157 (y) |
+| d | Boot logs clean (scheduler active) | CLEAN BOOT (y) |
+
+**Health Endpoint Response:**
+```json
+{
+  "status": "ok",
+  "name": "vn-market",
+  "version": "1.0.0",
+  "toolCount": 157,
+  "sessions": 0,
+  "uptime": 46.19s
+}
+```
+
+**Bootstrap Timeline:**
+- [bootstrap] Starting VN Market Intelligence MCP
+- [bootstrap] Database ready (WAL checkpoint complete)
+- [bootstrap] MCP server ready on port 3000
+- [bootstrap] Scheduler started — cron jobs active (80 cron keys)
+- No crash loop, no fatal errors ✓
+
+**Peer Services Status (all running):**
+- mcp-server, frontend, api-gateway, kinh-dich-service, rag-service
+- news-fetch, stock-price, alert-engine, technical-analysis, pdf-extractor
+- macro-indicators, headroom-proxy, mcp-gateway
+
+**QA Gate:** CLEARED ✓
+- No rebuild race detected (image ID match confirmed)
+- All 13 peer containers survived rebuild (--no-deps isolation)
+- Tool registration: 157 correct (confidence-recompute gate integrated)
+- Cron scheduler healthy with all periodic jobs active
+
+**Note:** Minor in-flight cron artifact during recreate moment is known/expected and accepted.
+
+**Next:** QA verification stage.
+
