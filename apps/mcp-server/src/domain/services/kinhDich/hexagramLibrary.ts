@@ -1,6 +1,11 @@
-// src/domain/services/kinhDich/hexagramLibrary.ts
-// Auto-generated from Python kinhdich_logic source — DO NOT EDIT manually
-// 64 hexagrams + 8 trigrams ported faithfully from que_shared.py + rewrite_*.py
+/**
+ * AUTO-GENERATED downstream.
+ * Source of truth: apps/kinh-dich-service/dashboard/que-reference.js (emitted via go run ./cmd/sandbox -emit-reference)
+ * DO NOT EDIT description text independently. Any divergence from que-reference.js is a defect.
+ *
+ * Used by kinhDichTools.ts at runtime (reads state.trend) — no changes to data structure.
+ * gen-que-descriptions.ts reads que-reference.js directly (no longer uses hexagramLibrary.ts as codegen source).
+ */
 
 export interface TrigramMeta {
   name: string;
