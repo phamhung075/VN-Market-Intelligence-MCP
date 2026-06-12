@@ -66,8 +66,8 @@ export function QueName({ hexagram, name, className }: QueNameProps): ReactNode 
         >
           <p className="font-semibold text-slate-100 mb-1">{name}</p>
           <p className="text-slate-300">{desc.coreMeaning}</p>
-          {desc.state_trend && (
-            <p className="mt-1 text-slate-400 italic">{desc.state_trend}</p>
+          {desc.marketTrendLabel && (
+            <p className="mt-1 text-slate-400">{desc.marketTrendLabel}</p>
           )}
         </TooltipContent>
       </Tooltip>
