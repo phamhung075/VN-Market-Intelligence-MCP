@@ -1,5 +1,17 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-12 · FIX-FINALIZE-STATUS-STUCK-PARTIAL — queue deadlock fix + response transparency — REVIEW
+
+**Task:** FIX-FINALIZE-STATUS-STUCK-PARTIAL | Sprint: BCTC-ANALYTICS-LAYER | Priority: P0/high | Zone: apps/mcp-server/
+**Root cause:** Two bugs caused infinite queue deadlock: (1) getBctcPendingRefineTool returned PARTIAL reports even when ALL bctc_refined_units were window_status=DONE (data-quality PARTIAL, no work remaining) — ACB fea19bae with 27/27 DONE units stayed as permanent queue head, blocking 34 PENDING reports. (2) finalizeBctcRefineTool response only returned `{ok,rows_parsed}` — no visibility into BEQ-7 overrides.
+**Fix A:** Added SQL exclusion subquery to getBctcPendingRefineTool WHERE clause: `AND NOT (refine_status='PARTIAL' AND COUNT(non-DONE units)=0 AND COUNT(all units)>0)`. Index `idx_bctc_refined_units_report_status ON bctc_refined_units(report_id, window_status)` added to schema for O(log n) lookup.
+**Fix B:** Added `callerWasDone` tracking in finalizeBctcRefineTool. Response now includes `effective_status` (actual written refine_status) and `beg7_override` (true when BEQ-7 fired). Additive — existing callers unchanged.
+**Tests:** 6 new tests across 2 existing files (DV-FINALIZE-1b/2b/4 in BEQ-SECTION-GUARD.test.ts; DV-FIX-A-1/2/3 in FIX-REFINE-PENDING-SCHEMA.test.ts). 21 pass / 0 fail targeted. tsc clean. toolCount=157. schedulerCount=79.
+**Ops rebuild required** before live verification of AC-1-1 queue advance.
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, queue deadlock fixed | HEALTHY
+
+---
+
 ## 2026-06-12 · CI-RED-8081e584-FIX (Round 2) — 3 new failing tests fixed — DONE
 
 **Task:** CI-RED-8081e584-FIX (round 2) | Sprint: CI-RED-8081e584 | Priority: HIGH | Zone: apps/mcp-server/
