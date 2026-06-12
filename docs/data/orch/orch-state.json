@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-12T15:10:00Z",
+  "_updated_at": "2026-06-12T15:13:17Z",
   "_updated_by": "po",
   "head": {
     "status": "review",
@@ -4995,6 +4995,34 @@
           }
         ],
         "completed_at": "2026-06-12T12:02:22Z"
+      },
+      {
+        "id": "FE-CORPEVENTS-TICKER-FILTER",
+        "label": "Add client-side ticker filter to /dashboard/corporate-events page (PO ruling: frontend-only, populate from payload, no api change)",
+        "status": "active",
+        "opened_at": "2026-06-12",
+        "priority": "medium",
+        "evidence": "PO decision 2026-06-12: client-side filter only, payload = SSOT for ticker codes, extend existing filterEvents pattern. Live contract verified curl :3001 returns 237 events/46 distinct codes. Replaces zone:multi server-param option per user directive (DRY).",
+        "tasks": [
+          {
+            "id": "FE-CORPEVENTS-TICKER-FILTER",
+            "title": "Add ticker selector UI + extend filterEvents function to compose with category filter",
+            "type": "FEATURE",
+            "owner": "dev-frontend",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "priority": "medium",
+            "created_at": "2026-06-12T15:15:00Z",
+            "depends": [],
+            "files": [
+              "apps/frontend/app/routes/dashboard.corporate-events.tsx",
+              "apps/frontend/app/__tests__/task17-corporate-events-loader.test.ts"
+            ],
+            "handoff": "docs/handoffs/TASK_FE-CORPEVENTS-TICKER-FILTER.md",
+            "note": "AC-1..10 per handoff; PO-ruled frontend-only (avoid touching mcp-server); selector = 'Tất cả' default + [... new Set(events.map(e=>e.code))].sort(). No /api contract change. Tests: 3+ new test cases (ticker filter, all filter, empty set). Ready for dev-frontend dispatch."
+          }
+        ]
       }
     ],
     "backlog": [
@@ -6976,6 +7004,18 @@
         "updated_at": "2026-06-12T15:10:00Z",
         "scope_ruling": "frontend-only — contract verified live, payload carries events[].code; no server param needed",
         "userRequest": "http://localhost:3001/dashboard/corporate-events can select stock for filter all event"
+      },
+      {
+        "id": "ARCH-QUE-REFERENCE-PAGE",
+        "title": "Technical design for QUE-REFERENCE-PAGE — codegen field-set extension shape + Kinh Dich reference page layout (route/nav/search) + optional QueName deep-link",
+        "owner": "architect",
+        "status": "TODO",
+        "zone": "multi",
+        "sprint": "QUE-REFERENCE-PAGE",
+        "priority": "medium",
+        "desc": "Lightweight brownfield design. RULINGS NEEDED: (1) Codegen shape: extend scripts/gen-que-descriptions.ts to emit the full reference field set WITHOUT regressing the existing 2-field tooltip QueDescription type (PO-Q3). Decide: enrich the single generated file with an additive richer type, OR emit a second que-descriptions-detail.generated.ts. Map every SSOT field (name, chinese, upper/lower, upperElement/lowerElement, coreMeaning.vi, marketTrendLabel.vi, stateInterpretation.vi, favorable.vi, warning.vi, phases[6] action/outcome/gloss.vi) -> generated type. NEVER hardcode 64 texts. (2) Page layout: route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx (mirror dashboard.kinh-dich-signals.tsx), nav entry in TopNav ANALYST_NAV SSOT (plain-VN label), all-64 card/list render with full VN detail, client-side search/filter by name+number, non-technical plain-Vietnamese. (3) Optional QueName deep-link to /dashboard/kinh-dich-reference#que-<id> — rule in/out (must NOT regress tooltip). Output: design brief in docs/architecture-briefs/. Split multi-zone if any (codegen script vs frontend page both route to dev-frontend per QUE-TOOLTIP-DRY re-route precedent; kinh-dich-service Go untouched).",
+        "created_at": "2026-06-12T15:13:17Z",
+        "created_by": "po"
       }
     ],
     "archive": [],
@@ -9263,6 +9303,20 @@
         "wip_rule": "dev-frontend currently has REAUDIT-FE-002 + REAUDIT-FE-003 in REVIEW and FIX-FETCH-VERYSTALE-LABEL TODO. RULE: this sprint's dev-frontend task is SEQUENCED behind those — dev-frontend picks it up only after REAUDIT-FE-002/003 clear REVIEW. BA/architect/PM stages run in parallel now (no frontend WIP impact).",
         "created_at": "2026-06-12T11:05:10Z",
         "completed_at": "2026-06-12T12:02:22Z"
+      },
+      {
+        "sprint_id": "QUE-REFERENCE-PAGE",
+        "status": "OPEN",
+        "priority": "medium",
+        "zone": "multi",
+        "vision": "ONE Kinh Dich reference page on the frontend that shows the detailed plain-Vietnamese description of ALL 64 hexagrams (que) — a browsable encyclopedia, served from the kinh-dich-service SSOT, NEVER hardcoded. User request (verbatim): \"Kinh Dich i need one page for description detail all que\".",
+        "scope_in": "(1) CODEGEN EXTENSION (PO-Q1 ruling): scripts/gen-que-descriptions.ts emits a FULLER field set for the reference page beyond the 2-field tooltip set — full set = name, chinese, upper/lower trigram + upperElement/lowerElement, coreMeaning.vi, marketTrendLabel.vi, stateInterpretation.vi, favorable.vi, warning.vi, and the 6-entry phases[] (hao lines: action/outcome + vi gloss). Architect rules the exact emitted shape (single richer generated type, or a second detail-scoped generated file — keep the existing 2-field tooltip set intact so QueName tooltip ruling PO-Q3 is NOT regressed). NEVER hardcode the 64 texts — all text traces to apps/kinh-dich-service/dashboard/que-reference.js SSOT through codegen. (2) NEW PAGE (PO-Q2 ruling): route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx (Remix file-route convention, mirrors dashboard.kinh-dich-signals.tsx); nav entry added to the TopNav SSOT (ANALYST_NAV in apps/frontend/app/components/TopNav.tsx) label plain-Vietnamese e.g. \"Tra cuu Kinh Dich\"; renders all 64 que as cards/list with number+name+chinese char + full Vietnamese detail; client-side search/filter by que name or number; plain-Vietnamese for non-technical reader. (3) DEEP-LINK (PO-Q3-page ruling): the existing QueName tooltip MAY deep-link to this reference page anchored to the hexagram (e.g. /dashboard/kinh-dich-reference#que-<id>) — OPTIONAL, low-risk, include only if it does not regress the tooltip; architect rules.",
+        "scope_out": "NOT authoring any new hexagram interpretation text (SSOT already has all 64 Vietnamese descriptions). NOT redesigning kinh-dich market logic or get_portfolio_conviction. NOT touching kinh-dich-service Go code — que-reference.js is a generated read-only artifact input. NOT changing the QueName 2-field tooltip behavior/contract from PO-Q3 (tooltip stays as-is; only optional additive deep-link). NOT a new server endpoint unless architect proves codegen path insufficient (codegen-from-static-file is the proven QUE-TOOLTIP-DRY pattern — prefer it).",
+        "success_metric": "QA loads the LIVE rebuilt frontend, navigates via the new nav entry to /dashboard/kinh-dich-reference, sees ALL 64 hexagrams each with full plain-Vietnamese detail (core meaning, state interpretation, favorable, warning, market trend, 6 hao phases), uses search/filter to find a que by name and by number, and confirms via grep that the 64 texts are NOT hardcoded in the page (they trace to que-descriptions.generated.* which traces to the kinh-dich-service SSOT). QueName 2-field tooltip still works unregressed. Ship completion, not a slice.",
+        "wip_rule": "dev-frontend WIP=2 discipline. FE-CORPEVENTS-TICKER-FILTER is in BACKLOG (PM decomposing now) and dev-frontend in_progress=0. RULE: architect + pm stages of this sprint run NOW in parallel (no frontend WIP impact). The dev-frontend IMPL task is SEQUENCED behind FE-CORPEVENTS-TICKER-FILTER per WIP=2 — dev-frontend picks up the reference-page impl only after FE-CORPEVENTS-TICKER-FILTER clears in_progress. Mirrors QUE-TOOLTIP-DRY wip_rule precedent.",
+        "data_foundation": "VERIFIED by PO 2026-06-12: apps/kinh-dich-service/dashboard/que-reference.js = 64 entries, each with name/chinese/upper/lower/upperElement/lowerElement/coreMeaning.vi/marketTrend/marketTrendLabel.vi/stateInterpretation.vi/favorable.vi/warning.vi/phases[6]. Codegen scripts/gen-que-descriptions.ts currently emits ONLY coreMeaning+marketTrendLabel (2 fields, PO-Q3 tooltip scope). Generated -> apps/frontend/app/lib/que-descriptions.generated.ts. Shared component apps/frontend/app/components/QueName.tsx exists. Route convention = Remix file-based (routes/dashboard.<name>.tsx). Nav SSOT = TopNav.tsx ANALYST_NAV/NAV_ITEMS.",
+        "created_at": "2026-06-12T15:13:17Z",
+        "created_by": "po"
       }
     ]
   },
