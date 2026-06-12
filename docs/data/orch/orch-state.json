@@ -9093,6 +9093,19 @@
         "verified_at": "2026-06-12T14:19:00Z",
         "verified_by": "ops",
         "status_note": "OPS rebuild verification PASSED 2026-06-12T14:19Z: frontend image rebuilt sha256:1d6d2c441da7b6804bfadb739e8acbc28275e4dec9e085a29d0a84f1da506750; sourceStatusLabel live in compiled bundle; all 11 peers intact and healthy; smoke test passed (dashboard.fetch renders, JS includes very-stale label mapping)"
+      },
+      {
+        "id": "FE-CORPEVENTS-TICKER-FILTER",
+        "title": "Bộ lọc theo mã chứng khoán trên trang Sự kiện doanh nghiệp",
+        "owner": "dev-frontend",
+        "status": "DONE",
+        "zone": "apps/frontend/",
+        "sprint": "FE-CORPEVENTS-TICKER-FILTER",
+        "priority": "medium",
+        "type": "SPRINT-S",
+        "closed_at": "2026-06-12T17:45:00Z",
+        "closed_by": "qa",
+        "commit": "4f0d407a"
       }
     ],
     "in_progress": [
@@ -9199,23 +9212,6 @@
         "updated_at": "2026-06-11T19:33:43Z",
         "updated_by": "architect",
         "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md"
-      },
-      {
-        "id": "FE-CORPEVENTS-TICKER-FILTER",
-        "title": "Bộ lọc theo mã chứng khoán trên trang Sự kiện doanh nghiệp",
-        "owner": "dev-frontend",
-        "status": "REVIEW",
-        "zone": "apps/frontend/",
-        "sprint": "FE-CORPEVENTS-TICKER-FILTER",
-        "priority": "medium",
-        "type": "SPRINT-S",
-        "desc": "User request: trang /dashboard/corporate-events cần bộ chọn mã (ticker) để lọc danh sách sự kiện theo 1 mã, mặc định 'Tất cả'. FILE: apps/frontend/app/routes/dashboard.corporate-events.tsx. CONTRACT VERIFIED LIVE 2026-06-12 (curl :3001/api/corporate-events?days=90): payload đã có events[].code cho mọi sự kiện (237 events / 46 distinct codes). => CLIENT-SIDE filter, KHÔNG cần param server, KHÔNG đụng zone mcp-server. IMPL: (1) Add helper exported `filterByCode(events, code)` next to existing `filterEvents`; (2) derive ticker option list từ `[...new Set(events.map(e=>e.code))].sort()` — NEVER hardcode, NEVER read watchlist SSOT (the payload IS the source of truth for present codes); (3) add a select/dropdown control (reuse existing button-tab styling OR a <select>, plain-Vietnamese label e.g. 'Mã:' with default option 'Tất cả'); (4) compose ticker filter WITH existing category filter (both client-side useState) — apply both before render; (5) ticker counts optional via events count per code. CONSTRAINTS: plain-Vietnamese labels; stale banner (REAUDIT-FE-001) + days selector + category filter MUST keep working with ticker filter active; reset category-empty-state text stays correct. TESTS: extend apps/frontend/app/__tests__/task17-corporate-events-loader.test.ts — unit-cover filterByCode (all/match/no-match) + the derived unique-code list. AC: select shows 'Tất cả' + every code present in current window (sorted); selecting a code filters list to that code only; 'Tất cả' restores full list; combines correctly with category tabs + days selector; no hardcoded tickers; FE tests green.",
-        "created_at": "2026-06-12T15:10:00Z",
-        "created_by": "po",
-        "updated_at": "2026-06-12T15:45:00Z",
-        "scope_ruling": "frontend-only — contract verified live, payload carries events[].code; no server param needed",
-        "userRequest": "http://localhost:3001/dashboard/corporate-events can select stock for filter all event",
-        "updated_by": "dev-frontend"
       }
     ]
   },

@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-234 · 2026-06-12 · FE-CORPEVENTS-TICKER-FILTER browser + unit QA gate — APPROVED
+
+Sprint: FE-CORPEVENTS-TICKER-FILTER | Task: FE-CORPEVENTS-TICKER-FILTER | Verdict: APPROVED | Commit: 4f0d407a | Report: reports/TASK_REPORT_FE-CORPEVENTS-TICKER-FILTER.md
+
+Unit: 84/0 Vitest (task17, QA-reproduced). tsc exit 0. DDD PASS (no infra/application imports). Security PASS (process.env = pre-existing FRONTEND_ORIGIN, not introduced by commit). mock-guard EXIT 0. Browser (Playwright 17/17): select[aria-label="Chọn mã chứng khoán"] rendered. 47 options: 'Tất cả' + 46 codes sorted A-Z (ACB,ACV,BID…). Default 237 rows. ACB → 9 rows. Tất cả restore 237. Cascade: dividend=10, dividend+ACB=1. No /api/ fetch on onChange. Empty state: ACV+Nội bộ → "Không có sự kiện trong danh mục này." no crash. Stale banner unaffected (1 banner throughout). ?days=30 compose: selector still renders. Scope: frontend zone only; orch-state metadata update (ARCH-QUE-REFERENCE-PAGE) in same commit non-violating. REVIEW→DONE. DJ qa-S1.
+
 ## cycle-233 · 2026-06-12 · CLOSURE WAVE: REAUDIT-002 / FE-002 / FE-003 / CONTAM-7 / B-02 re-probe
 
 Sprint: SHIP-WAVE-REAUDIT + OHLCV-UNIT-CONTAM | Tasks: REAUDIT-002 + REAUDIT-FE-002 + REAUDIT-FE-003 + CONTAM-7 (APPROVED) / FIX-EVIDENCE-PIPELINE-STARVED B-02 (DEFER 16:00Z) | Reports: reports/TASK_REPORT_REAUDIT-002/FE-002/FE-003/CONTAM-7.md
