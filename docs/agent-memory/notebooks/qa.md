@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-239 · 2026-06-13 · FIX-FINALIZE-STATUS-STUCK-PARTIAL QA gate — APPROVED
+
+Sprint: BCTC-ANALYTICS-LAYER | Task: FIX-FINALIZE-STATUS-STUCK-PARTIAL | Verdict: APPROVED | Commit under test: 4b30adbc
+
+Gate 1 PASS: LIVE DB (keinos/sqlite3 named vol) → queue head = b48f7e6a (NOT fea19bae ACB). Fix A SQL exclusion subquery working. Gate 2 PASS: EXPLAIN QUERY PLAN — both correlated subqueries use COVERING INDEX (idx_bctc_refined_units_report_status + idx_bru_report) — O(log n), not SCAN. RF-1 mitigated. Gate 3 PASS: finalizeBctcRefineTool.ts response additive (effective_status + beg7_override fields present, lines 1126–1130); callerWasDone tracking at line 134; BEQ-7 guard KEPT with arch ruling comment (lines 326–341); index in schema-financial-reports.ts:466. No removed fields. DDD PASS (no forbidden cross-layer imports). Security PASS. mock-guard EXIT 0. Gate 4 PASS: 21 pass / 0 fail (BEQ-SECTION-GUARD + FIX-REFINE-PENDING-SCHEMA, 86 expects). Full suite 12788/50 — 50 pre-existing (none BCTC). AC-5-1 satisfied. Board FIX-FINALIZE-STATUS-STUCK-PARTIAL REVIEW→DONE.
+
 ## cycle-238 · 2026-06-12 · CI-RED-8081e584-FIX QA gate — APPROVED
 
 Sprint: CI-RED-8081e584 | Task: CI-RED-8081e584-FIX | Verdict: APPROVED | Report: reports/TASK_REPORT_CI-RED-8081e584-FIX.md

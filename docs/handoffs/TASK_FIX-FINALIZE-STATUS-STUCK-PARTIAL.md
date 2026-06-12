@@ -210,3 +210,53 @@ Zone health: bun test 21/21 targeted pass, 12788 total pass (50 pre-existing fai
 ### Ops Rebuild Required
 
 Container must be rebuilt before live verification gates (AC-1-1, AC-1-2) can be checked against the live DB. The index `idx_bctc_refined_units_report_status` will be created automatically on container startup via `initFinancialReportsTables` (CREATE INDEX IF NOT EXISTS — idempotent).
+
+---
+
+## [QA] Review Record
+
+**Verdict:** APPROVED
+**QA agent:** qa
+**Date:** 2026-06-13
+**Commit under test:** 4b30adbc (7 files)
+**Container image:** 5a8a44c3695d (running, health 200)
+
+### Gate Results
+
+**Gate 1 — LIVE queue head (must not be fea19bae):** PASS
+- Direct DB query via keinos/sqlite3 sidecar on named volume `vn-market-intelligence-mcp_market_data`:
+  `SELECT id, refine_status ... LIMIT 1` → `b48f7e6a-f045-4550-91f9-dbe27e67c252|PARTIAL`
+- id ≠ fea19bae: CONFIRMED. Stuck ACB excluded from queue.
+
+**Gate 2 — EXPLAIN QUERY PLAN (index O(log n)):** PASS
+- Both correlated subqueries confirmed index lookup (not SCAN):
+  - Subquery 1 (window_status != DONE): `SEARCH u USING COVERING INDEX idx_bctc_refined_units_report_status (report_id=?)`
+  - Subquery 2 (COUNT all units): `SEARCH u USING COVERING INDEX idx_bru_report (report_id=?)`
+- O(log n) satisfied for both. RF-1 mitigated.
+
+**Gate 3 — Code review (effective_status + beg7_override + BEQ-7 guard):** PASS
+- `finalizeBctcRefineTool.ts` line 134: `callerWasDone` tracking variable present.
+- Lines 1126–1130: response includes `ok`, `rows_parsed`, `effective_status: report_status`, `beg7_override: callerWasDone && report_status === "PARTIAL"`. Additive — no existing fields removed.
+- Lines 326–341: BEQ-7 section-completeness guard present with arch ruling comment. KEPT per architect ruling.
+- `schema-financial-reports.ts` line 466: `CREATE INDEX IF NOT EXISTS idx_bctc_refined_units_report_status ON bctc_refined_units(report_id, window_status)` present.
+- `getBctcPendingRefineTool.ts` lines 119–146: NOT exclusion subquery present with all three conditions matching architect brief SQL exactly.
+- DDD: interface layer imports infrastructure/db + domain services — no forbidden cross-layer imports. PASS.
+- Security: no process.env, no hardcoded secrets, no SQL string interpolation (limit uses template literal for numeric-only LIMIT clause). PASS.
+- mock-guard: EXIT 0 — no fabricated-data patterns.
+
+**Gate 4 — Tests:** PASS
+- `BEQ-SECTION-GUARD.test.ts` + `FIX-REFINE-PENDING-SCHEMA.test.ts`: 21 pass / 0 fail (86 expect() calls, 1407ms)
+- Full suite baseline: 12788 pass / 50 fail (50 pre-existing, none BCTC refine) — AC-5-1 satisfied (>8800).
+
+### AC Checklist (QA-verified)
+
+- [x] AC-1-1: queue head = b48f7e6a (NOT fea19bae) — LIVE verified
+- [x] AC-2-1: `effective_status` in response — code + test verified
+- [x] AC-2-2: `beg7_override: true` when BEQ-7 fires — DV-FINALIZE-1b
+- [x] AC-2-3: `beg7_override: false` when no override — DV-FINALIZE-2b/4
+- [x] AC-3-1: exclusion subquery present in getBctcPendingRefineTool.ts lines 119–146
+- [x] AC-3-2: index idx_bctc_refined_units_report_status in schema-financial-reports.ts:466
+- [x] AC-3-3: EXPLAIN QUERY PLAN — both subqueries use COVERING INDEX — O(log n)
+- [x] AC-4-1: additive response shape, tsc exit 0
+- [x] AC-4-2: tests appended to existing files (no new test files created)
+- [x] AC-5-1: 12788 pass > 8800 baseline

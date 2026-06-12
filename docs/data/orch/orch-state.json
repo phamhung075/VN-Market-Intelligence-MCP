@@ -425,7 +425,7 @@
             "title": "finalize_bctc_refine(report_status=DONE) returns ok+rows_parsed but leaves financial_reports.refine_status=PARTIAL — queue-head deadlock: get_bctc_pending_refine permanently re-serves ACB fea19bae (27/27 windows already DONE in bctc_refined_units) so the 34 PENDING reports behind it never drain, deadlocking REFINE-CRON-ARM (P0). Find the actual code path: server likely recomputes refine_status from coverage/confidence and overrides the caller-supplied DONE. Fix so a fully-refined report (all windows pushed) transitions OUT of the pending queue.",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "apps/mcp-server/src/",
             "created_at": "2026-06-12T21:12:58Z",
             "priority": "high",
