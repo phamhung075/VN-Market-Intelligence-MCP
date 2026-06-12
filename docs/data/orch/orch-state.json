@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T21:34:29Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-13T00:30:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -7106,6 +7106,20 @@
         "created_at": "2026-06-12T21:32:14Z",
         "created_by": "po",
         "_updated_at": "2026-06-12T21:32:14Z"
+      },
+      {
+        "id": "FIX-BCTC-VPS-QUEUE-SYNC",
+        "title": "Fix BCTC VPS queue-sync gap: 10 tickers (VNM,VEA,SHB,HUT,DIG,DXG,KDH,PDR,MSN,FRT) pending 532-539 attempts with 404s, no retry cap, no deferred transition; upstream discovery queue mismatch — those 10 are NOT in VPS discovery queue, PDFs never cached. Add retry cap on 404, transition to deferred_infra, re-sync lost tickers to VPS discovery queue OR mark url_not_found if genuinely unavailable.",
+        "type": "BUG",
+        "owner": "dev-mcp-server",
+        "status": "TODO",
+        "size": "S",
+        "zone": "apps/mcp-server/src/scheduler/financial-reports/",
+        "priority": "high",
+        "sprint": "BCTC-FETCH-CORRECTNESS",
+        "created_at": "2026-06-13T00:30:00Z",
+        "created_by": "pm",
+        "note": "ops→pm handoff BCTC-VPS-STALLED-FETCH diagnosed 2026-06-13 05:50Z (docs/agent-memory/notebooks/ops.md). Root cause raw-verified: (1) bctc_vps_queue has 10 pending rows at 532-539 attempts each with infinite 404 retry, no cap, no deferred transition. (2) Queue-sync gap: those 10 tickers NOT in VPS-side discovery queue (holds ACV,BDI,DAG,DLC,JSH,SIS,VDC,VNH,SAB,VIX), so VPS never caches their PDFs. (3) Secondary: 8 rows source_url but 0 attempts, 8 rows NULL source_url never enriched. Acceptance: G1) 404 cap N=10 → deferred_infra / G2) lost tickers synced to VPS discovery OR marked url_not_found / G3) LIVE PROOF: VNM + MSN Q1 2026 cached+pulled / G4) attempts histogram sane. Files: bctcPdfPullJob.ts + bctcQueueEnricherJob.ts + VPS push client."
       }
     ],
     "archive": [],
@@ -9447,8 +9461,9 @@
         "type": "data_stale",
         "summary": "B-13 WARN: 26 stale pending BCTC rows (created > 72h)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "resolution": "diagnosed; task FIX-BCTC-VPS-QUEUE-SYNC created"
       },
       {
         "id": "sau-c06-202606122230",
@@ -9458,8 +9473,9 @@
         "type": "db_integrity_breach",
         "summary": "C-06 WARN: 0 market_messages in last 3 hours (expected > 0)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolution": "FALSE_POSITIVE (VN-night quiet window)"
       },
       {
         "id": "sau-b06-202606122230",
@@ -9469,8 +9485,9 @@
         "type": "data_stale",
         "summary": "B-06 WARN: VPS bctc service stale (last push 2026-06-08, 4+ days)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "resolution": "diagnosed; task FIX-BCTC-VPS-QUEUE-SYNC created"
       },
       {
         "id": "sau-a29-202606122230",
@@ -9480,8 +9497,9 @@
         "type": "system_issue",
         "summary": "A-29 WARN: intelligenceCycleJob crashed at 2026-06-12 22:15",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolution": "FALSE_POSITIVE (deploy-kill artifact)"
       }
     ],
     "archive": []
