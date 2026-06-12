@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-12 | **Sprint:** SHIP-WAVE-REAUDIT — REAUDIT-FE-003 stockPerformance direction arrow
+**Last updated:** 2026-06-12 | **Sprint:** QUE-TOOLTIP-DRY — QUE-TOOLTIP-DRY-1a codegen pipeline rewrite
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-12 — QUE-TOOLTIP-DRY-1a codegen pipeline rewrite DONE. Commit 8f1fcdb0. scripts/gen-que-descriptions.ts rewritten: readFileSync que-reference.js → strip window.__QUE_REFERENCE__ wrapper + trailing semicolon → JSON.parse → emit 2-field interface (coreMeaning + marketTrendLabel). QueDescription 4→2 fields (dropped judgment_interpretation/image_action/state_trend). apps/frontend/app/lib/que-descriptions.generated.ts regenerated: 64 entries, header "Source: apps/kinh-dich-service/dashboard/que-reference.js". QueName.tsx: desc.state_trend→desc.marketTrendLabel, italic class removed from secondary tooltip line. 14 new vitest GREEN (entry count / interface shape / field rename / quẻ 1 spot-check / NFR-3 no-op). tsc 0 errors. Playwright 4/4 GREEN. Blocks QUE-TOOLTIP-DRY-1b.
+
+Zone health: QUE-TOOLTIP-DRY-1a REVIEW, tsc clean, 14 new tests GREEN, Playwright 4/4, codegen SSOT aligned to kinh-dich-service | HEALTHY
 
 2026-06-12 — REAUDIT-FE-003 NFR-C-4 stockPerformance direction arrow DONE. Commit 9bda7325. Live probe before coding: direction field confirmed LIVE on payload (DEV-REAUDIT-4 satisfied). StockPerf.direction? added as optional "up"|"down"|"flat". Exported directionArrow() → Unicode glyph (↑/↓/—/"") and directionArrowColorClass() → Tailwind class (mirrors changePctColorClass color family). Arrow rendered inline before changePct in table cell with aria-label (Tăng/Giảm/Đi ngang). undefined → "" backward compat (no crash). 21 new vitest GREEN (5 suites: glyph/colorClass/StockPerf-type/alignment/backward-compat). tsc 0 errors. Playwright 4/4 GREEN. Rebuild batched with FE-002 (ops to rebuild frontend after both FE-002+FE-003 are REVIEW).
 

@@ -107,6 +107,35 @@ Note: `className` removes `italic`.
 
 ---
 
+---
+
+## [Developer] Implementation Record
+
+- **Service:** frontend + scripts
+- **Zone:** scripts/ + apps/frontend/
+- **Build tier:** 4 (component interface + codegen pipeline)
+- **Files modified:**
+  - `scripts/gen-que-descriptions.ts` — rewritten to readFileSync que-reference.js, strip JS wrapper, JSON.parse, emit 2-field interface
+  - `apps/frontend/app/lib/que-descriptions.generated.ts` — regenerated (64 entries, 2 fields: coreMeaning + marketTrendLabel, header cites que-reference.js)
+  - `apps/frontend/app/components/QueName.tsx` — `desc.state_trend` → `desc.marketTrendLabel`, removed `italic` class from secondary tooltip line
+  - `docs/data/orch/orch-state.json` — task status TODO → IN_PROGRESS → REVIEW
+- **Tests written:**
+  - `apps/frontend/app/__tests__/QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.ts` — 14 assertions GREEN (64 entries count, 2-field interface, field rename verification, quẻ 1 spot-check, NFR-3 graceful no-op)
+- **Git commits:** `8f1fcdb0 feat(frontend/QUE-TOOLTIP-DRY-1a): codegen pipeline rewrite + QueDescription 2-field interface`
+- **Type check:** clean (tsc --noEmit exit 0)
+- **Service tests:** 14 pass / 0 fail (new tests); 21 pre-existing TopNav count failures unrelated to this task
+- **Playwright (G12):** 4/4 GREEN
+- **Grep AC:** `grep "Source:.*que-reference" apps/frontend/app/lib/que-descriptions.generated.ts` → 1 match
+- **Quẻ 1 spot-check:** coreMeaning = "Sức sáng tạo nguyên thủy, năng lượng dương cương kiện không ngừng vận hành" (1 clause, matches que-reference.js); marketTrendLabel = "Thuận lợi (THUẬN LỢI)"
+- **RF-2 verified:** `grep -rn "state_trend\|judgment_interpretation\|image_action" apps/frontend/app/` returns only test assertion strings, zero runtime consumers
+- **Docs updated:** handoff + notebook dev-frontend
+- **Graphify:** skipped (no architecture doc changed)
+
+**Vitest summary:** Tests 14 passed (14) — `app/__tests__/QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.ts`
+**Playwright summary:** 4 passed (4.4s) — `tests/e2e/render-check.spec.ts`
+
+---
+
 ## Risk Flags
 
 - **RF-1 (LOW):** que-reference.js file format must be verified (whitespace + semicolon variants). Mitigation: smoke test confirms 64 entries.

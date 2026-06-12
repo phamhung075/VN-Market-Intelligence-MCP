@@ -4937,7 +4937,7 @@
             "id": "QUE-TOOLTIP-DRY-1a",
             "title": "Codegen pipeline: gen-que-descriptions.ts rewrite + QueName.tsx interface update",
             "owner": "dev-kinh-dich",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "zone": "scripts/ + apps/frontend/",
             "type": "FEATURE",
             "size": "M",
