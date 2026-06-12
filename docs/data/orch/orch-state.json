@@ -4,12 +4,11 @@
   "_updated_at": "2026-06-12T20:08:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-12T20:08:00Z",
-    "updated_by": "dev-mcp-server",
-    "active_task_id": "CI-RED-8081e584-FIX",
-    "next_agent": "qa",
-    "_updated_at": "2026-06-12T20:08:00Z"
+    "status": "idle",
+    "updated_at": "2026-06-12T20:27:31Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null
   },
   "dashboard_section_cache": {
     "section_name": "po",

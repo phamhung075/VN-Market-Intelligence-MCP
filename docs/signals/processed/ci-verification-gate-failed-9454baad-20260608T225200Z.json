@@ -10,9 +10,31 @@
     "head_sha": "9454baade37249fce06e5c14e81d79af07f18df2",
     "run_id": "27171666087",
     "verification_gate": "FAILED — fail+error count must DROP vs 702 baseline; it ROSE to 921 (+219)",
-    "baseline": { "run_id": "27168638852", "sha": "f05795c3", "pass": 10742, "fail": 656, "errors": 46, "fail_plus_error": 702, "tests": 11427 },
-    "after_batch": { "run_id": "27171666087", "sha": "9454baad", "pass": 10591, "fail": 906, "errors": 15, "fail_plus_error": 921, "tests": 11533 },
-    "delta": { "pass": -151, "fail": "+250", "errors": -31, "fail_plus_error": "+219 WORSE", "tests": "+106" },
+    "baseline": {
+      "run_id": "27168638852",
+      "sha": "f05795c3",
+      "pass": 10742,
+      "fail": 656,
+      "errors": 46,
+      "fail_plus_error": 702,
+      "tests": 11427
+    },
+    "after_batch": {
+      "run_id": "27171666087",
+      "sha": "9454baad",
+      "pass": 10591,
+      "fail": 906,
+      "errors": 15,
+      "fail_plus_error": 921,
+      "tests": 11533
+    },
+    "delta": {
+      "pass": -151,
+      "fail": "+250",
+      "errors": -31,
+      "fail_plus_error": "+219 WORSE",
+      "tests": "+106"
+    },
     "what_helped": "BATCH-2 network-skip guards in pollNews.ts (CI=true) — errors 46 -> 15 (-31). This part is a genuine win and was independently verified (102+1288 = 14 pass / 0 fail under CI=true).",
     "what_regressed": "BATCH-1 — mechanized injection of initNewsTables/initMarketDataTables/initSystemTables into 464 test setup functions. Added ~+250 fails.",
     "regression_signatures": {
@@ -26,8 +48,14 @@
       "1. REVERT 9454baad to restore the known-good 702 baseline (main is currently +219 worse).",
       "2. RE-FILE the BATCH-2 network guards (pollNews.ts only, isolated, verified win) as a clean standalone FIX — do NOT lose the -31 errors.",
       "3. Route the schema-drift problem to ARCHITECT (recurring-bug): the fix is a shared canonical test-DB fixture / reconcile inline DDLs, NOT another mechanized one-size injection sweep.",
-      "decision_owner": "PO decides revert-all vs keep-and-fix-forward vs partial — router does not implement."
+      "decision_owner: PO decides revert-all vs keep-and-fix-forward vs partial — router does not implement."
     ],
     "raw_verified_by": "dev-team-router: baseline + after numbers both pulled raw from gh run --log; signatures bucketed from new-run log; zone-confinement + canary(AC-P0-3-6) integrity confirmed pre-push (canary edit was inert createTestDb DB-setup injection only)."
+  },
+  "_processed": {
+    "fingerprint": "ef32b6218ee614c13078e6d3cd378648d4bb06c02ac540b3e38e228c6c361a4a",
+    "processedAt": "2026-06-12T20:27:51Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
