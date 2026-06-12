@@ -4,7 +4,25 @@
 **BA task:** BA-QUE-TOOLTIP-DRY
 **Spec authored:** 2026-06-12T11:30:00Z
 **Author:** ba
+**Status:** APPROVED
+**Approved by:** po @ 2026-06-12T11:13:41Z
 **NEXT:** architect
+
+---
+
+## PO Sign-off (2026-06-12T11:13:41Z) — APPROVED
+
+Spec matches vision: render-site inventory is exhaustive (2 user-facing pages, 1 unguarded site found), ONE shared component (QueName.tsx) enforced by grep-gated NFR-1/NFR-2 (DRY / code-janitor class satisfied), tooltip = plain Vietnamese. Approved. PO rulings below are binding on the architect.
+
+**PO-Q2 (SINGLE SSOT — binding product ruling, resolves the SHAPE of BLOCKER-1 but not the mechanism):** The repo currently has TWO parallel hexagram-description sources — `apps/mcp-server/.../hexagramLibrary.ts` (Pipeline A, live codegen) and `apps/kinh-dich-service/dashboard/que-reference.js` (Pipeline B, the SSOT I designated). This dual-source state is itself a latent SSOT-drift defect (the "fix doesn't reach the duplicate" class). **Product requirement: the end state MUST have exactly ONE source of truth for hexagram description text — not two that can drift.** The architect picks the MECHANISM (BLOCKER-1 Option A bulk endpoint, or Option B declare hexagramLibrary.ts a generated downstream mirror of que-reference.js) — that is a technical-design call I do not override. But "two independent hand-maintainable sources may continue to coexist" is NOT an acceptable resolution. If Option B is chosen, hexagramLibrary.ts must be machine-derived from / gate-checked against que-reference.js, not independently editable.
+
+**PO-Q3 (tooltip fields — binding product ruling on BLOCKER-3):** AC is "plain Vietnamese, non-technical reader." AFFIRM the BA recommendation: tooltip shows `coreMeaning.vi` (primary, 1 clause) + `marketTrendLabel.vi` (secondary label). DO NOT surface `stateInterpretation.vi` / `favorable.vi` / `warning.vi` inline on hover — too verbose for a hover affordance and conflicts with the non-technical-reader AC. Architect may keep these as out-of-scope for the hover tooltip.
+
+**PO-Q4 (BLOCKER-2 FlipRow — ruling on principle, architect confirms feasibility):** Product intent = EVERY user-facing quẻ name carries the tooltip. So IF `KinhDichFlip` already carries numeric `fromHexagramNumber`/`toHexagramNumber` ids, FlipRow IS in scope for QueName migration. If the DTO lacks the ids, adding DTO fields is a separate change — architect may DEFER FlipRow to a follow-up task (explicitly out of this sprint) rather than expand scope mid-sprint. Either way the deferral must be explicit, not silent.
+
+**PO-Q5 (FR-2 SSOT-trace AC):** FR-2's acceptance ("text traces to kinh-dich-service SSOT not a frontend constant") is product-load-bearing and stays. QA verifies the rendered tooltip text matches que-reference.js `.vi` output, not just that a tooltip appears.
+
+No further PO blockers. Drive to DONE (ship completion, not a slice): FR-1 + FR-2 + FR-3 + NFR-1/2/3 all in scope; FlipRow per PO-Q4.
 
 ---
 
