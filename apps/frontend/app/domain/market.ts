@@ -415,6 +415,23 @@ export function sourceStatusColor(
   return "red";
 }
 
+/**
+ * Human-readable status label for a FetchSourceStatus row.
+ * Mirrors sourceStatusColor thresholds so label text is consistent with dot colour:
+ *   - "no-data"          → "no data"
+ *   - color green        → "fresh"
+ *   - color amber (stale, ageMs 2–12h) → "stale"
+ *   - color red (stale, ageMs > 12h)   → "very stale"
+ * Pure function — safe for unit tests and loaders.
+ */
+export function sourceStatusLabel(source: FetchSourceStatus): string {
+  const color = sourceStatusColor(source);
+  if (color === "grey") return "no data";
+  if (color === "green") return "fresh";
+  if (color === "amber") return "stale";
+  return "very stale";
+}
+
 // --------------------------------------------------------------------------
 // Technical Analysis types
 // --------------------------------------------------------------------------

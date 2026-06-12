@@ -12,7 +12,7 @@ import {
   fetchMacroExternal,
 } from "~/lib/api/client";
 import type { MacroData, FetchStatus, FetchSourceStatus, VpsProxyServiceStatus } from "~/domain/market";
-import { parseMacroSources, formatSourceAge, sourceStatusColor } from "~/domain/market";
+import { parseMacroSources, formatSourceAge, sourceStatusColor, sourceStatusLabel } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 
@@ -101,6 +101,7 @@ function SourceFreshnessTable({ sources }: { sources: FetchSourceStatus[] }) {
           const color = sourceStatusColor(src);
           const dotClass = STATUS_DOT_CLASS[color] ?? STATUS_DOT_CLASS["grey"];
           const age = formatSourceAge(src.ageMs);
+          const label = sourceStatusLabel(src);
           return (
             <tr key={src.id} className="border-b border-slate-800">
               <td className="py-1.5 text-slate-300 font-medium">{src.id}</td>
@@ -122,7 +123,7 @@ function SourceFreshnessTable({ sources }: { sources: FetchSourceStatus[] }) {
                             : "text-slate-500"
                     }
                   >
-                    {src.status}
+                    {label}
                   </span>
                 </div>
               </td>
