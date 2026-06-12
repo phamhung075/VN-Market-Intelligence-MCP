@@ -1,15 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-10 · BPE-DEV-2 — REVIEW
-
-**Task:** BPE-DEV-2 | Sprint: BCTC-PROSE-EXTRACT | Size: M | DJ: dev-mcp-server-S27
-**Scope:** Serving layer — bctcInspectHandler + bctcFullTools prose extension.
-**Fix:** bctcInspectHandler L511-591: page_type filter changed from `= 'table'` to `IN ('table', 'prose')`. EC-1 guard: empty prose stitched_markdown falls through to pdf_extracted_text fallback (pek_coverage_gap:true). New semantics: gap=true means "no content of either type." bctcFullTools: added ProseSectionEntry interface + prose_sections[] to BctcStructuredData; new query on bctc_layout_units (quarantine=0, stitched_markdown != '', sorted by page asc); 4000-char cap per unit with prose_truncated flag (RISK-6).
-**Tests:** 12 new (PROSE-UNIT-SERVE.test.ts) + 59 pass on 5 affected files. tsc CLEAN. tools=157. sched=78.
-**Commit:** 5cea706a. REBUILD REQUIRED before live.
-
----
-
 ## 2026-06-11 · REAUDIT-001 — Fix reputation trend always stable — DONE
 
 **Task:** REAUDIT-001 | Sprint: SHIP-WAVE-REAUDIT | Priority: CRITICAL | Zone: apps/mcp-server/
@@ -40,3 +30,14 @@
 **Fix (foreignFlowHandler.ts):** Added `stale_fields: string[]` to `ForeignFlowResponse` interface. Added `computeStaleFields(items)` — scans allItems (full day set) post-buildSummary; if >50% null for a field, appends field name to array. Updated `handleGetForeignFlow` to compute and include `stale_fields`. Additive contract — items still carry null values unchanged.
 **Tests:** 13 new TCs in REAUDIT-003-foreign-flow-stale-fields.test.ts. AC-2 empty→[], AC-3 all-null→3-fields, AC-4 exactly-50%-not-stale (strict >50%), AC-5 >50%→stale, AC-6 mixed, AC-8 majority-non-null, HTTP handler integration. 44 pass / 0 fail (targeted). tsc exit 0. toolCount=157. schedulerCount=78.
 **Commit:** f662302d | Zone health: HEALTHY
+
+---
+
+## 2026-06-12 · CONTAM-1 — ohlcvUnitGuard.ts domain service — REVIEW
+
+**Task:** CONTAM-1 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/
+**New file:** `domain/services/market-data/ohlcvUnitGuard.ts` — `validateOhlcvUnit(code,type,open,high,low,close)` + `normalizeOhlcvToVnd(type,v)`. Constants: STOCK_MIN_VND=100, STOCK_MAX_VND=10M, HILO_RATIO_MAX=5. Pure function, no I/O.
+**Key design:** normalizeOhlcvToVnd scales WHOLE row by ×1000 when max(o,h,l,c)<100 (stock type) — never per-field. Index type always returned unchanged. Zero row passed through unchanged (let validator reject it). TC-9 correctly catches that open=100/close=10M spans a ratio of 100000>5 (invalid).
+**Tests:** 17 TCs in unit/ohlcvUnitGuard.test.ts — all GREEN. 3 describe blocks: validateOhlcvUnit (9 cases), normalizeOhlcvToVnd (4 cases), constants (3 cases). tsc exit 0. toolCount=157. schedulerCount=78.
+**Commit:** (pending below)
+Zone health: bun test 17 pass 0 fail (targeted), tsc clean, 157 tools intact, 78 cron.schedule (unchanged) | HEALTHY

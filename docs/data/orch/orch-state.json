@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-12T08:20:00Z",
+  "_updated_at": "2026-06-12T08:00:19Z",
   "_updated_by": "architect",
   "head": {
     "status": "review",
@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T07:43:16Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-12T11:20:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -6835,31 +6835,135 @@
         "created_by": "pm"
       },
       {
-        "id": "OHLCV-UNIT-CONTAM-ARCH-1",
-        "type": "SPIKE",
-        "title": "ARCHITECT SPIKE: design single unit-invariant for daily_ohlcv write boundary across ALL writers (pushPricesHandler ON-CONFLICT MAX/MIN merge fuses mixed-scale rows; ohlcvDailyAggregatorJob overwrites from ticks; ≥1 thousand-scale source writes raw 0.9 without *1000). Decide: (a) canonical unit = VND-units enforced at every write via shared normalizer; (b) drop cross-writer MIN/MAX merge or guard it with scale-sanity assert; (c) backfill/repair plan for 385 existing contaminated rows. Also confirm market_prices_history mixed-unit ticks (VNH had 900 + 1000 both unit-scale today, yet daily_ohlcv low=0.9 — pin the thousand-scale source).",
-        "question": "What single unit-normalization invariant + guard makes daily_ohlcv writes scale-safe across all 3+ writers, and how to repair the 385 contaminated historical rows?",
-        "owner": "architect",
-        "status": "TODO",
+        "id": "CONTAM-1",
+        "type": "FEATURE",
+        "owner": "dev-mcp-server",
+        "status": "ASSIGNED",
         "size": "S",
-        "zone": "multi",
-        "mode": "spike",
-        "timebox": 120,
-        "priority": "critical",
+        "zone": "apps/mcp-server/src/domain/services/",
         "sprint": "OHLCV-UNIT-CONTAM",
-        "created_at": "2026-06-12T07:43:16Z",
-        "labels": [
-          "unit-normalization",
-          "daily_ohlcv",
-          "cross-writer-merge",
-          "data-contamination",
-          "user-reported",
-          "change-pct",
-          "penny-stock",
-          "recurring-class",
-          "not-reaudit"
+        "priority": "critical",
+        "depends": [],
+        "title": "Create ohlcvUnitGuard.ts (validateOhlcvUnit + normalizeOhlcvToVnd) pure domain service + unit tests",
+        "handoff": "docs/handoffs/TASK_CONTAM_1.md",
+        "created_at": "2026-06-12T08:00:19Z"
+      },
+      {
+        "id": "CONTAM-2",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "ASSIGNED",
+        "size": "S",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1"
         ],
-        "note": "recurring-bug-escalation candidate (unit-norm-at-write class — see memory feedback_contract_from_live_payload). SPIKE mandatory pre-condition for dev: contract/multi-writer change. Emitter franceSummaryJob.ts is faithful — DO NOT patch the briefing; fix the write boundary + repair data."
+        "title": "Writer A pushPricesHandler.ts — unit guard + ON CONFLICT open self-heal (CASE open<100 THEN excluded ELSE keep)",
+        "handoff": "docs/handoffs/TASK_CONTAM_2.md",
+        "created_at": "2026-06-12T08:00:19Z"
+      },
+      {
+        "id": "CONTAM-3",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "ASSIGNED",
+        "size": "XS",
+        "zone": "apps/mcp-server/src/interface/mcp/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1"
+        ],
+        "title": "Writer B /api/push-ohlcv-history (server.ts) — per-bar unit guard before insert",
+        "handoff": "docs/handoffs/TASK_CONTAM_3.md",
+        "created_at": "2026-06-12T08:00:19Z"
+      },
+      {
+        "id": "CONTAM-4",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "ASSIGNED",
+        "size": "S",
+        "zone": "apps/mcp-server/src/scheduler/market-data/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1"
+        ],
+        "title": "PRIMARY: Writers D/E VNDIRECT backfill — NORMALIZE thousand-VND->full-VND (×1000) then guard then upsert. NOT skip. PO-amended handoff.",
+        "handoff": "docs/handoffs/TASK_CONTAM_4.md",
+        "created_at": "2026-06-12T08:00:19Z"
+      },
+      {
+        "id": "CONTAM-5",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "ASSIGNED",
+        "size": "S",
+        "zone": "apps/mcp-server/src/scheduler/market-data/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1"
+        ],
+        "title": "Writer C ohlcvDailyAggregatorJob.ts — unit guard on derived OHLC before upsert",
+        "handoff": "docs/handoffs/TASK_CONTAM_5.md",
+        "created_at": "2026-06-12T08:00:19Z"
+      },
+      {
+        "id": "CONTAM-6",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "ASSIGNED",
+        "size": "M",
+        "zone": "scripts/migrations/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-2",
+          "CONTAM-4"
+        ],
+        "title": "Repair migration for 385 contaminated rows (off-hours, dry-run+live; WHERE excludes all-zero rows)",
+        "handoff": "docs/handoffs/TASK_CONTAM_6.md",
+        "created_at": "2026-06-12T08:00:19Z"
+      },
+      {
+        "id": "CONTAM-7",
+        "type": "TEST",
+        "owner": "dev-mcp-server",
+        "status": "ASSIGNED",
+        "size": "M",
+        "zone": "apps/mcp-server/src/__tests__/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1",
+          "CONTAM-2",
+          "CONTAM-3",
+          "CONTAM-4",
+          "CONTAM-5",
+          "CONTAM-6"
+        ],
+        "title": "Detection job ohlcvSanityCheckJob.ts + integration suite (all 5 writers + repair + self-heal)",
+        "handoff": "docs/handoffs/TASK_CONTAM_7.md",
+        "created_at": "2026-06-12T08:00:19Z"
+      },
+      {
+        "id": "ALLZERO-OHLCV-FETCH",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "sprint": "BACKLOG",
+        "priority": "medium",
+        "depends": [],
+        "title": "Bulk all-zero daily_ohlcv rows (0/0/0/0 stamped 2026-05-30T11:47:00.921Z across FPT/GAS/HPG/VCB/BID) — a failed bulk fetch wrote zeros; distinct from OHLCV-UNIT-CONTAM. Find emitter + guard.",
+        "handoff": "docs/handoffs/BACKLOG_CONTAM_8.md",
+        "created_at": "2026-06-12T08:00:19Z",
+        "note": "out-of-scope of unit-contam per PO; queued follow-up"
       }
     ],
     "archive": [],
@@ -8760,6 +8864,37 @@
         "closed_at": "2026-06-09T21:50:17Z",
         "sprint": "BCTC-PROSE-EXTRACT",
         "priority": "high"
+      },
+      {
+        "id": "OHLCV-UNIT-CONTAM-ARCH-1",
+        "type": "SPIKE",
+        "title": "ARCHITECT SPIKE: design single unit-invariant for daily_ohlcv write boundary across ALL writers (pushPricesHandler ON-CONFLICT MAX/MIN merge fuses mixed-scale rows; ohlcvDailyAggregatorJob overwrites from ticks; ≥1 thousand-scale source writes raw 0.9 without *1000). Decide: (a) canonical unit = VND-units enforced at every write via shared normalizer; (b) drop cross-writer MIN/MAX merge or guard it with scale-sanity assert; (c) backfill/repair plan for 385 existing contaminated rows. Also confirm market_prices_history mixed-unit ticks (VNH had 900 + 1000 both unit-scale today, yet daily_ohlcv low=0.9 — pin the thousand-scale source).",
+        "question": "What single unit-normalization invariant + guard makes daily_ohlcv writes scale-safe across all 3+ writers, and how to repair the 385 contaminated historical rows?",
+        "owner": "architect",
+        "status": "DONE",
+        "size": "S",
+        "zone": "multi",
+        "mode": "spike",
+        "timebox": 120,
+        "priority": "critical",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "created_at": "2026-06-12T07:43:16Z",
+        "labels": [
+          "unit-normalization",
+          "daily_ohlcv",
+          "cross-writer-merge",
+          "data-contamination",
+          "user-reported",
+          "change-pct",
+          "penny-stock",
+          "recurring-class",
+          "not-reaudit"
+        ],
+        "note": "recurring-bug-escalation candidate (unit-norm-at-write class — see memory feedback_contract_from_live_payload). SPIKE mandatory pre-condition for dev: contract/multi-writer change. Emitter franceSummaryJob.ts is faithful — DO NOT patch the briefing; fix the write boundary + repair data.",
+        "po_verdict": "APPROVED_WITH_AMENDMENTS",
+        "po_amendment": "PO design-gate: APPROVED WITH MANDATORY AMENDMENTS (live-verified by PO before PM decomposition). (1) ROOT-CAUSE CORRECTION: brief's 'first-push isStock=false' hypothesis (L200) is unverified/likely wrong — live evidence shows thousand-scale seed predates Writer A: VNH 2026-06-11 row is uniform 0.9/0.9/0.9/0.9 with SPACE-format updated_at (datetime('now')) = backfill Writer D (taOhlcvBackfillJob.ts L113 VALUES ...,datetime('now')), NOT Writer A (which multiplies *1000 and stamps ISO-Z). (2) WRITER D/E NOT CLEAN: brief asserts VNDIRECT = full-VND (L73,L145) — FALSE per live data: VNDIRECT api-finfo v4/stock_prices returns THOUSAND-VND (VCB=62.3=62,300; VNH=0.9=900; DAG=1.4). taOhlcvBackfillJob.ts L255-259 inserts r.open/high/low/close with NO *1000 and NO validation → injects thousand-scale seed rows. ohlcvBackfill.ts (Writer E) must be re-verified live too. (3) CONTAM-4 SCOPE UPGRADE: change from 'defensive guard' to PRIMARY FIX — Writers D/E must NORMALIZE to full-VND (verify live unit per source; multiply when thousand-scale) before upsert, not just range-skip. The unit guard (CONTAM-1) range-skip alone would DROP every VNDIRECT row (all <100 floor) — guard must normalize or the backfill stops working. (4) RETAINED AS-IS: CONTAM-1 ohlcvUnitGuard domain service, CONTAM-2 Writer A ON-CONFLICT open self-heal + MAX/MIN guard, CONTAM-5 sanity-check cron, CONTAM-6 repair migration, CONTAM-7 tests. (5) SEPARATE DEFECT NOTED (out of scope, queue follow-up): bulk all-zero rows 0.0/0.0/0.0/0.0 stamped 2026-05-30T11:47:00.921Z across FPT/GAS/HPG/VCB/BID = a failed bulk fetch wrote zeros — distinct from unit-contam; do NOT fold in, but repair script CONTAM-6 should NOT crash on them.",
+        "po_signed_at": "2026-06-12T07:53:30Z",
+        "handoff": "docs/architecture-briefs/2026-06-12-ohlcv-unit-contam-arch-1.md"
       }
     ],
     "in_progress": [
@@ -8796,11 +8931,12 @@
       }
     ],
     "head": {
-      "next": "architect",
-      "task": "ARCH-SHIP-WAVE-REAUDIT",
-      "sprint": "SHIP-WAVE-REAUDIT",
-      "set_at": "2026-06-11T19:27:17Z",
-      "set_by": "po"
+      "next": "dev-mcp-server",
+      "task": "CONTAM-1",
+      "sprint": "OHLCV-UNIT-CONTAM",
+      "set_at": "2026-06-12T08:00:19Z",
+      "set_by": "po",
+      "note": "PM decomposed 7 tasks (handoffs in docs/handoffs/). PO REJECTED+REWROTE CONTAM-4 handoff: PM applied amendment label but coded skip-not-normalize; corrected to normalize thousand-VND->full-VND + added normalizeOhlcvToVnd to CONTAM-1. Start CONTAM-1; then CONTAM-2/3/4/5 parallel (WIP cap); CONTAM-6 off-hours after CONTAM-2+4 deployed; CONTAM-7 last."
     },
     "done_verified": [
       {
@@ -8845,6 +8981,20 @@
         "updated_at": "2026-06-11T19:33:43Z",
         "updated_by": "architect",
         "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md"
+      },
+      {
+        "id": "CONTAM-1",
+        "title": "Create ohlcvUnitGuard.ts domain service + unit tests",
+        "type": "FEATURE",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "size": "S",
+        "zone": "apps/mcp-server/src/domain/services/",
+        "priority": "critical",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "created_at": "2026-06-12T08:00:00Z",
+        "started_at": "2026-06-12T11:00:00Z",
+        "completed_at": "2026-06-12T11:20:00Z"
       }
     ]
   },
@@ -8945,6 +9095,23 @@
       "emitter": "apps/mcp-server/src/scheduler/briefings/franceSummaryJob.ts L498-501 (Top biến động giá)",
       "root-cause": "No single unit-normalization invariant at daily_ohlcv write boundary; pushPricesHandler ON-CONFLICT high=MAX/low=MIN fuses a thousand-scale write with a unit-scale write into one corrupt row.",
       "not-reaudit": true
+    },
+    {
+      "ts": "2026-06-12T07:53:30Z",
+      "by": "po",
+      "task_id": "OHLCV-UNIT-CONTAM-ARCH-1",
+      "decision": "Design APPROVED WITH MANDATORY AMENDMENTS; SPIKE→DONE; head→pm.",
+      "what-considered": "(a) reject wholesale — REJECTED: 90% of brief (guard arch, Writer A fix, repair, tests) is sound; (b) approve as-is — REJECTED: root-cause + Writer-D-clean claims live-falsified, CONTAM-4 under-scoped (range-skip would drop all VNDIRECT rows); (c) approve-with-amendments + route to pm — CHOSEN.",
+      "why-change": "PO live-probe (keinos sqlite3) found thousand-scale seed rows carry SPACE-format datetime(now) timestamp = Writer D taOhlcvBackfillJob, contradicting brief claim VNDIRECT=full-VND. CONTAM-4 must NORMALIZE not just guard.",
+      "evidence": "VNH 2026-06-11 0.9/0.9/0.9/0.9 space-ts; VCB 62.3 space-ts; taOhlcvBackfillJob.ts L113 datetime(now) + L255-259 no *1000."
+    },
+    {
+      "ts": "2026-06-12T08:00:19Z",
+      "by": "po",
+      "task_id": "CONTAM-4",
+      "decision": "REJECTED + rewrote CONTAM-4 handoff before dev dispatch; registered 7 CONTAM tasks + 1 backlog into board; head->dev-mcp-server CONTAM-1.",
+      "what-considered": "(a) accept PM handoffs as-is — REJECTED: CONTAM-4 had the amendment HEADER but the code pattern still `continue`-skipped (range-skip would drop ALL VNDIRECT rows <100 floor, silently break backfill, never repair seed) and still repeated the falsified 'VNDIRECT=full-VND' claim; (b) bounce whole sprint back to PM — REJECTED: only CONTAM-4 (+ a CONTAM-1 helper add) was wrong, rest sound; surgical fix faster; (c) PO rewrite CONTAM-4 to normalize-then-guard + add normalizeOhlcvToVnd helper to CONTAM-1 — CHOSEN.",
+      "why-change": "Amendment substance (normalize, not skip) was not implemented by PM despite label; guard-skip on thousand-VND VNDIRECT data = data-loss + backfill outage."
     }
   ]
 }
