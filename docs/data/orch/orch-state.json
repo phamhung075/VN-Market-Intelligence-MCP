@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-12T20:08:00Z",
+  "_updated_at": "2026-06-13T00:00:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
@@ -443,7 +443,7 @@
             "title": "extraction_confidence never recomputed after refine/finalize — ACB stuck at 0.375 even after full 27/27 refine + 106 rows parsed, so serve gate PUB-5 (confidence<50%) blocks get_bctc_full(ACB) permanently. A successful refine pass can never lift PUB-5. Fix: recompute confidence at finalize from refined coverage/row-quality, OR make PUB-5 consider refine coverage/refined-row quality instead of the pre-refine OCR metric.",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "zone": "apps/mcp-server/src/",
             "created_at": "2026-06-12T21:12:58Z",
             "priority": "medium",
@@ -9437,6 +9437,50 @@
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
         "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-b13-202606122230",
+        "ts": "2026-06-12T22:30:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "B-13 WARN: 26 stale pending BCTC rows (created > 72h)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c06-202606122230",
+        "ts": "2026-06-12T22:30:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "C-06 WARN: 0 market_messages in last 3 hours (expected > 0)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-b06-202606122230",
+        "ts": "2026-06-12T22:30:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "B-06 WARN: VPS bctc service stale (last push 2026-06-08, 4+ days)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-a29-202606122230",
+        "ts": "2026-06-12T22:30:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "A-29 WARN: intelligenceCycleJob crashed at 2026-06-12 22:15",
+        "severity": "HIGH",
+        "status": "NEW",
         "payload_ref": null
       }
     ],

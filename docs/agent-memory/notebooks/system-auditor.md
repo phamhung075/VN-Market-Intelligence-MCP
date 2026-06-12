@@ -1,3 +1,14 @@
+## c298 · 2026-06-12T22:30:24Z
+### Audit Run Tier-2 (22:30 UTC 2026-06-12)
+- Tier: 2 | Sources: 28 | VPS: 4 | Crons: 70+
+- Anomalies: 4 new WARN (B-06/B-13/C-06/A-29) | Dedup: 0 skipped
+- Status: DEGRADED
+- **B-06:** VPS bctc stale (4+ days)
+- **B-13:** 26 pending BCTC > 72h
+- **C-06:** 0 market_messages/3h
+- **A-29:** intelligenceCycleJob crashed 22:15
+- ✓ C-07: 112/24h, rate-limits OK, SLA OK
+
 
 ## c297 · 2026-06-12T22:10:20Z
 ### Audit Run Tier-1 (22:09–22:10 UTC 2026-06-12 → Thursday evening)
