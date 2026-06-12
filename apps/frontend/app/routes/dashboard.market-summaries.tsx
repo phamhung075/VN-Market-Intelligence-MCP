@@ -35,7 +35,8 @@
  *
  * Named exports (pure helpers for unit tests):
  *   fetchSummaries, PERIOD_LABELS, formatDateRange, formatChangePct,
- *   changePctColorClass, outlookLabel, outlookColorClass, filterTickers
+ *   changePctColorClass, directionArrow, directionArrowColorClass,
+ *   outlookLabel, outlookColorClass, filterTickers
  *
  * Decision journal (DJ-GATE-1): New read-only dashboard page.
  * No state mutations, no DB access from frontend — pure HTTP read over proxy.
@@ -100,7 +101,8 @@ export interface KeyEvent {
 }
 
 /** A stock performance row in the DETAIL response.
- *  Live payload: { symbol, firstPrice, lastPrice, changePct, alertCount }
+ *  Live payload (2026-06-12): { symbol, firstPrice, lastPrice, changePct, alertCount, direction }
+ *  direction added by DEV-REAUDIT-4 (mcp-server marketSummaryHandler). Optional for backward compat.
  */
 export interface StockPerf {
   symbol: string;
@@ -108,6 +110,7 @@ export interface StockPerf {
   lastPrice: number;
   changePct: number;
   alertCount: number;
+  direction?: "up" | "down" | "flat";
 }
 
 /** A recommendation row in the DETAIL response.
@@ -372,6 +375,31 @@ export function changePctColorClass(pct: number): string {
   if (pct > 0) return "text-emerald-400";
   if (pct < 0) return "text-red-400";
   return "text-slate-400";
+}
+
+/**
+ * Map stockPerformance direction field to Unicode arrow glyph.
+ * "up" → ↑, "down" → ↓, "flat" → —, undefined/unknown → "" (no arrow).
+ * NFR-C-4 (REAUDIT-FE-003): direction field supplied by DEV-REAUDIT-4.
+ */
+export function directionArrow(direction: "up" | "down" | "flat" | undefined): string {
+  if (direction === "up") return "↑";
+  if (direction === "down") return "↓";
+  if (direction === "flat") return "—";
+  return "";
+}
+
+/**
+ * Map stockPerformance direction field to Tailwind text color class.
+ * Mirrors changePctColorClass color family: up=emerald, down=red, flat=slate.
+ * undefined/unknown → "" (no class — backward compat).
+ * NFR-C-4 (REAUDIT-FE-003): direction field supplied by DEV-REAUDIT-4.
+ */
+export function directionArrowColorClass(direction: "up" | "down" | "flat" | undefined): string {
+  if (direction === "up") return "text-emerald-400";
+  if (direction === "down") return "text-red-400";
+  if (direction === "flat") return "text-slate-400";
+  return "";
 }
 
 /**
@@ -889,6 +917,20 @@ function DetailView({
                   <td
                     className={`px-3 py-2 text-right tabular-nums font-bold ${changePctColorClass(row.changePct)}`}
                   >
+                    {row.direction && (
+                      <span
+                        className={`mr-0.5 ${directionArrowColorClass(row.direction)}`}
+                        aria-label={
+                          row.direction === "up"
+                            ? "Tăng"
+                            : row.direction === "down"
+                            ? "Giảm"
+                            : "Đi ngang"
+                        }
+                      >
+                        {directionArrow(row.direction)}
+                      </span>
+                    )}
                     {formatChangePct(row.changePct)}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-slate-400">

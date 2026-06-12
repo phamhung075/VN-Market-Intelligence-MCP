@@ -6783,7 +6783,7 @@
         "id": "REAUDIT-FE-002",
         "title": "NFR-C-5 foreign-flow stale_fields: column header badge",
         "owner": "dev-frontend",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "apps/frontend/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "high",
