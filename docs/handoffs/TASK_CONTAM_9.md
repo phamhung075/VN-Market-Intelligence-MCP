@@ -117,6 +117,19 @@ If confirmed that CONTAM-2 guard is incomplete:
 
 ---
 
+## [PM] Router Probe Evidence — Updated 2026-06-12T22:30Z
+
+**Fresh leak specimen (FPT ticker, user-visible on frontend chart):**
+- FPT 2026-06-03: `open=74.8, high=77700, low=0, close=76500` (open ~hundred-scale, high ~thousand-scale — mixed-unit defect)
+- FPT 2026-06-11: `open=0, high=73900, low=0, close=73100` (partial-zero pattern)
+- FPT 2026-06-12: `open=73.1, high=74300, low=0, close=73500` — **INSERTED TODAY POST-GUARD** (confirms CONTAM-2/3/4/5 still bleeding; SM-3 class confirmed live)
+
+**Leak path:** FPT 2026-06-12 row insertion timestamp ≈ this morning's rebuild → cron_job_runs around insert time identifies active writer. Chart self-heals once rows are repaired (no frontend change needed).
+
+**Status:** User-visible severity → escalated CRITICAL.
+
+---
+
 ## [Developer] Implementation Record
 
 (To be filled by dev-mcp-server)
