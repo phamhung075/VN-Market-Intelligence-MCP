@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T10:11:40Z",
+    "_updated_at": "2026-06-12T10:19:00Z",
     "_updated_by": "pm",
     "active_sprints": [
       {
@@ -4906,7 +4906,8 @@
             "sprint": "OHLCV-UNIT-CONTAM",
             "depends": [],
             "note": "QA scope miss SM-1: VNH 2026-06-12 close=1000.0 exactly excluded by > 1000 boundary (should be >= 1000)",
-            "done_at": "2026-06-12T10:18:04Z"
+            "done_at": "2026-06-12T10:18:04Z",
+            "closed_at": "2026-06-12T10:19:00Z"
           },
           {
             "id": "CONTAM-9",
