@@ -49,3 +49,11 @@
 - Option B (chosen): dual-schema — strict for type-safety, loose for post_agent_signal (preserves SYS-FUNC-05)
 **why-decision:** Strict schema is the 1293a/1295a contract; loose schema is the SYS-FUNC-05 requirement — they are separate concerns. Dual-schema is the correct DDD boundary.
 **why-change:** no change from plan
+
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-13T00:50:00Z
+**task-id:** FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE
+**what-done:** Added BLOCK-5 to finalizeBctcRefineTool.ts — recompute extraction_confidence from weighted section coverage; raise-only guard prevents downgrade of good OCR confidence.
+**what-considered:**
+- only path: non-fatal try/catch block after BLOCK-4, reusing already-in-scope finalRows + imported checkSectionCompleteness; PUB-5 coverage-aware rejected per architect brief (fixes only serve path, leaves stale value for all other consumers)
+**why-decision:** Raise-only guard (refinedConfidence > currentConfidence) is the hard invariant. finalizeBctcRefineTool already has finalRows and checkSectionCompleteness imported; zero new dependencies needed.
+**why-change:** no change from plan
