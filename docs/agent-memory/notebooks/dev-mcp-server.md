@@ -1,26 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-12 · REAUDIT-005 — financials yoyDirection fields (NFR-C-6) — REVIEW
-
-**Task:** REAUDIT-005 | Sprint: SHIP-WAVE-REAUDIT | Priority: LOW | Zone: apps/mcp-server/
-**Change:** `interface/mcp/routes/financialsHandler.ts` — added `YoyDirection` type alias; added `revenueYoyDirection` and `netProfitYoyDirection` to `ScreenerRow` type; exported `deriveYoyDirection()` pure helper (null/undefined/NaN → "flat"); wired into `mapRow()`. Updated `TASK17-PAGE16-financials-endpoint.test.ts` fixture helpers + requiredFields.
-**Key decision:** Derived at map time in interface layer (no DB change). `deriveYoyDirection` handles null/undefined/NaN edge cases gracefully via `Number.isFinite` guard. Same pattern as REAUDIT-004 `deriveDirection`. No breaking change to existing fields.
-**Tests:** `REAUDIT-005-financials-yoy-direction.test.ts` — 31 pass / 0 fail (AC-1..AC-8). Combined 143 pass / 0 fail with REAUDIT-002/003/004 + TASK17-PAGE16. tsc clean. toolCount=157. schedulerCount=79.
-Zone health: tsc clean, 157 tools intact, 79 cron.schedule, 31 new tests GREEN | HEALTHY
-
----
-
-## 2026-06-12 · REAUDIT-004 — stockPerformance direction field (NFR-C-4) — REVIEW
-
-**Task:** REAUDIT-004 | Sprint: SHIP-WAVE-REAUDIT | Priority: MEDIUM | Zone: apps/mcp-server/
-**Change:** `interface/mcp/routes/marketSummaryHandler.ts` — added `direction: "up" | "down" | "flat"` to `StockPerformanceItem` type; added exported `deriveDirection(changePct)` pure helper (null/undefined/NaN → "flat"); wired into `buildDetail()` map: passes raw changePct through `deriveDirection()` rather than defaulting to 0.
-**Key decision:** Derived at read time in interface layer (no DB change). `deriveDirection` handles null/undefined/NaN edge cases gracefully. Previous session had already partially landed the implementation in the handler; this run confirmed the code was correct, wrote missing tests, and committed.
-**Tests:** `REAUDIT-004-stock-perf-direction.test.ts` — 11 pass / 0 fail (AC-1..AC-10 + null JSON guard). Combined 82 pass / 0 fail with REAUDIT-002/003 + TASK17-SUMMARIES. tsc clean. toolCount=157. schedulerCount=79.
-**Commit:** a22d2257
-Zone health: tsc clean, 157 tools intact, 79 cron.schedule, 11 new tests GREEN | HEALTHY
-
----
-
 ## 2026-06-12 · CONTAM-3 — Writer B /api/push-ohlcv-history unit guard — REVIEW
 
 **Task:** CONTAM-3 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/
@@ -40,3 +19,14 @@ Zone health: tsc clean, 157 tools intact, targeted tests 37 pass / 0 fail | HEAL
 **Scope clarification:** handoff mis-titled Writer C guard; po_amendment + arch brief §CONTAM-5 + dispatch CONTEXT all confirm CONTAM-5 = sanity-check cron. Implemented per authoritative spec.
 **Tests:** 10 TCs in CONTAM-5-ohlcv-sanity-check.test.ts — 10 pass / 0 fail. AC-1 clean, AC-2 contamination+BUG, AC-3 zero-skip, AC-4 window, AC-5 index-exempt, AC-6 multi-hit, AC-7 error-swallow, AC-8 empty-watchlist, AC-9 hilo-ratio. tsc exit 0. toolCount=157. schedulerCount=79.
 Zone health: bun test 10 pass 0 fail (targeted), tsc clean, 157 tools intact, 79 cron.schedule | HEALTHY
+
+---
+
+## 2026-06-12 · CONTAM-6 — repair-ohlcv-unit-contamination migration — REVIEW
+
+**Task:** CONTAM-6 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: scripts/migrations/
+**New files:** `scripts/migrations/repair-ohlcv-unit-contamination.ts` (dry-run + live, exportable `runRepair()`); `scripts/migrations/__tests__/CONTAM-6-repair-ohlcv-unit-contamination.test.ts` (14 TCs, 31 expect calls). Script pointer added to `docs/policies/dev-standards.md` § Script Persistence.
+**Repair executed (LIVE):** dry-run 376 rows identified → live-run 376 rows normalized (open*1000, low*1000) → 0 remaining contaminated. 116 all-zero rows skipped (binding amendment, separate defect). 97 tickers repaired, date range 2026-05-18 to 2026-06-12.
+**Key decision:** docker cp + docker exec pattern for named volume (local market.db is stale 0-row decoy); `runRepair()` exported for in-memory test isolation. Row count 385→376: VNH 2026-06-12 has close=1000.0 (not >1000) — correctly outside heuristic boundary.
+**Tests:** 14 pass / 0 fail (in-memory SQLite). tsc clean. toolCount=157. schedulerCount=79.
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, repair 376/376 rows, 0 remaining | HEALTHY

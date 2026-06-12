@@ -17,6 +17,21 @@ Any script useful for the work or reusable later MUST be saved to `scripts/` —
 
 After saving: **update the owning flow/skill doc with a canonical pointer** (`node scripts/...` usage line) so future agents discover it instead of rewriting it. Pattern: `docs/agents/dev-team/flow/drain-signals.md` §0a-1 "CANONICAL SCRIPT".
 
+**CANONICAL: OHLCV unit contamination repair (CONTAM-6)**
+```bash
+# Dry-run (count + sample, no writes):
+bun run scripts/migrations/repair-ohlcv-unit-contamination.ts --dry-run
+
+# Live against named volume (docker exec):
+docker cp scripts/migrations/repair-ohlcv-unit-contamination.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/repair-ohlcv-migration.ts
+docker exec -it vn-market-intelligence-mcp-mcp-server-1 \
+  bun run /app/repair-ohlcv-migration.ts --live
+```
+Detects WHERE (open < 100 OR low < 100) AND close > 1000 AND open > 0 AND low > 0.
+Excludes all-zero rows (2026-05-30T11:47Z bulk-zeros defect — out of scope).
+Repair: open*1000, low*1000. data_env preserved (RF-5).
+
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
 **Maintenance (user directive 2026-06-07):** agents MAY update/upgrade an existing `scripts/` script to work better or optimize (fix bugs, harden, speed up, extend) — improving the shared script beats writing a parallel one-off. Rules: (1) if the script implements a flow spec, edit the spec first, then the script — they MUST stay in sync; (2) smoke-test after the change (clean no-op run at minimum); (3) keep the usage contract (CLI args/env/stdout) backward-compatible or update every caller + flow pointer in the same commit; (4) commit under commit-mutex.

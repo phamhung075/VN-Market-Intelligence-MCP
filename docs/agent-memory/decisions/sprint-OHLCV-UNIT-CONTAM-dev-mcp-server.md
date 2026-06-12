@@ -50,3 +50,12 @@
 - Wire after ohlcvDailyAggregator (15:00 UTC) vs standalone time (requires fresh rows post-aggregation)
 **why-decision:** 7-day window catches trailing contamination without full-table scan cost; 15:05 UTC ensures aggregated rows are present before check fires
 **why-change:** handoff TASK_CONTAM_5.md was mis-titled (Writer C guard) — po_amendment + arch brief + CONTEXT all confirm CONTAM-5 = sanity-check cron; implemented per po_amendment
+
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-12T09:32:58Z
+**task-id:** CONTAM-6
+**what-done:** Created repair-ohlcv-unit-contamination.ts migration; dry-run confirmed 376 contaminated rows; live-run executed 376 repairs; 0 remaining; 14 tests GREEN
+**what-considered:**
+- Run script directly on host with bun:sqlite (local market.db is stale 0-row decoy)
+- Copy + run inside container via docker cp + docker exec (gives access to named volume)
+**why-decision:** Live DB in named volume; docker exec pattern is the only correct approach per project memory; script keeps DB_PATH env override for testability
+**why-change:** Row count 385→376 (9 fewer); VNH 2026-06-12 close=1000.0 (not >1000) correctly excluded by heuristic boundary; 116 all-zero rows skipped per binding amendment; detection matches handoff spec exactly
