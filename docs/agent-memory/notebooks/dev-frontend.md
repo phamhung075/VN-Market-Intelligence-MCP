@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-11 | **Sprint:** SHIP-WAVE-REAUDIT — REAUDIT-FE-001 stale banners
+**Last updated:** 2026-06-12 | **Sprint:** SHIP-WAVE-REAUDIT — REAUDIT-FE-002 foreign-flow stale_fields badge
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-12 — REAUDIT-FE-002 NFR-C-5 foreign-flow stale_fields column badge DONE. Commit 11308f1c. Contract probed live before coding: stale_fields=["currentHoldingRatio","maxHoldingRatio","marketCapBn"] confirmed on 2026-06-12. Pattern: ForeignFlowDto.stale_fields?:string[] + LoaderData.stale_fields:string[]; fetchForeignFlowData parses array or defaults to [] (backward compat). Exported isFieldStale(field, staleFields?) and staleColumnLabel(field, staleFields?) helpers. Column headers "Tỷ lệ sở hữu" + "Vốn hóa" render inline "Không có dữ liệu" badge (slate-700 bg, 10px) when field is in stale_fields. 15 new vitest GREEN (stale_fields parse/absent/empty/5xx/network/3-fields, isFieldStale 4 cases, staleColumnLabel 5 cases). tsc 0 errors. 4/4 Playwright GREEN. Rebuild batched with FE-003.
+
+Zone health: foreign-flow page stale_fields badge live, tsc clean, 15 new tests GREEN, Playwright 4/4 | HEALTHY
 
 2026-06-11 — REAUDIT-FE-001 NFR-C-1 stale banners DONE. Commit e787187f. 5 pages updated: conviction-history, corporate-events, shareholders, financials, reputation. Contract probed from LIVE before writing code (shareholders stale=true/staleByDays=3, financials stale=true/staleByDays=43, others false/0). Pattern: stale/staleByDays added to DTO+LoaderData+fetch helper+page component; amber banner with role=status renders when stale===true (hidden otherwise). conviction-history variable renamed stale→staleRows to avoid conflict with new loader field. 21 new vitest GREEN (reaudit-fe-001-stale-banners.test.ts: 16 suites covering stale=false/true/missing/502 for all 5 endpoints). tsc 0 errors. Pre-existing 21 nav count failures unrelated (confirmed via stash).
 

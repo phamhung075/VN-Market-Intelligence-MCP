@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T09:28:21Z",
+    "_updated_at": "2026-06-12T09:32:14Z",
     "_updated_by": "dev-frontend",
     "active_sprints": [
       {
@@ -6801,7 +6801,7 @@
         "id": "REAUDIT-FE-003",
         "title": "NFR-C-4 stockPerformance direction: arrow rendering",
         "owner": "dev-frontend",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "apps/frontend/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "medium",

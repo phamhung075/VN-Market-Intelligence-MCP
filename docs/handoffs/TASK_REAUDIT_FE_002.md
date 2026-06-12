@@ -91,3 +91,22 @@ Consistent with project standards (non-technical user, plain Vietnamese prose).
 - Architect brief: `docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md`
 - BA spec: `docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md` § A-02
 - Zone standard: `docs/policies/dev-standards.md`
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** frontend
+- **Zone:** apps/frontend/
+- **Build tier:** 4 (feature route update)
+- **Files modified:**
+  - `apps/frontend/app/routes/dashboard.foreign-flow.tsx` — ForeignFlowDto.stale_fields?:string[], LoaderData.stale_fields:string[], fetchForeignFlowData stale_fields parse+default-[]; isFieldStale()+staleColumnLabel() helpers exported; column headers "Tỷ lệ sở hữu"+"Vốn hóa" render "Không có dữ liệu" badge when field in stale_fields
+- **Tests written:**
+  - `apps/frontend/app/__tests__/reaudit-fe-002-foreign-flow-stale-fields.test.ts` — 15 assertions GREEN (stale_fields parse, backward-compat absent→[], 5xx→[], network→[], all 3 live fields, isFieldStale 4 cases, staleColumnLabel 5 cases)
+- **Git commits:** 11308f1c feat(frontend/REAUDIT-FE-002): stale_fields column header badge on foreign-flow page
+- **Type check:** tsc --noEmit exit 0 (clean)
+- **Service tests:** 15 pass / 0 fail (new); 1474/1495 total — 21 pre-existing nav-count failures unrelated to this task (confirmed pre-existing)
+- **Playwright gate:** 4/4 render checks PASS
+- **Live probe:** curl http://localhost:3001/api/foreign-flow?limit=5 2026-06-12 → stale_fields=["currentHoldingRatio","maxHoldingRatio","marketCapBn"] confirmed; contract used as source of truth per rule.
+- **Docs updated:** NONE (no architecture doc impact — Tier 4 feature extension only)
+- **Graphify:** skipped (no docs impacted)
