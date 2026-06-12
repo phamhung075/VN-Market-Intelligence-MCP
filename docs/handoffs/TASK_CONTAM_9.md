@@ -167,3 +167,70 @@ User-reported frontend display defects (price table/chart) on 2026-06-12:
 - **Scheduler count:** 79 cron.schedule entries — matches pre-task baseline
 - **Docs updated:** `docs/policies/dev-standards.md` § Script Persistence — CONTAM-9 canonical pointer added
 - **Graphify:** skipped (no architecture docs impacted)
+
+---
+
+## [QA] Review Record — 2026-06-12T22:55Z
+
+**Verdict:** APPROVED
+**QA cycle:** 237
+**Sprint:** OHLCV-UNIT-CONTAM | Task: CONTAM-9
+**Dev commit reviewed:** 6657fc3e
+**Container image verified:** 2fc9222cd4b6 (created 2026-06-12T17:33:04Z, started 17:55:54Z)
+
+### Test Pipeline
+
+| Suite | Result |
+|---|---|
+| `scripts/migrations/__tests__/CONTAM-9-repair-ohlcv-low-zero.test.ts` (12 TCs, 51 expect) | 12 pass / 0 fail |
+| `apps/mcp-server/src/__tests__/unit/ohlcvUnitGuard.test.ts` (20 TCs, 47 expect) | 20 pass / 0 fail |
+| `apps/mcp-server/src/__tests__/1987-contam2-push-prices-ohlcv-guard.test.ts` (7 TCs, 20 expect) | 7 pass / 0 fail |
+| **Total targeted** | **39 pass / 0 fail** |
+| `bun tsc --noEmit` | 0 errors |
+
+### Checks
+
+| Check | Result |
+|---|---|
+| DDD: `ohlcvUnitGuard.ts` (domain/services) — no infrastructure imports | PASS |
+| Security: no `process.env` in changed production files | PASS |
+| Security: no hardcoded secrets/tokens | PASS |
+| mock-guard (production source files) | EXIT 0 — PASS |
+
+### LIVE DB Verification (keinos/sqlite3 sidecar, named volume `vn-market-intelligence-mcp_market_data`)
+
+| Query | Result |
+|---|---|
+| Class A: `open<100 AND open>0 AND close>1000 AND low=0` | **0 rows** |
+| Class B: `open=0 AND NOT all-zero` | **0 rows** |
+| Class C: `low=0 AND close>=1000` | **0 rows** |
+| FPT 2026-06-12 | open=73100, high=74300, low=72369, close=73500 |
+| FPT 2026-06-11 | open=73100 (was 0), low=72369 (was 0) |
+| FPT day change 2026-06-12 | **+0.547%** (was +100447.2% — user-visible bug CLOSED) |
+
+### Spot-Check Tickers
+
+| Ticker | 2026-06-12 open | low | close | low=0 remaining |
+|---|---|---|---|---|
+| VCB | 61600 | 60984 | 61600 | 0 |
+| HPG | 23300 | 22968 | 23200 | 0 |
+| ACB | 26500 | 26235 | 26500 | 0 |
+
+All three watchlist tickers: full-VND scale, low > 0, sane % changes (ACB +0.0%, HPG -0.4%, VCB +0.0%).
+
+### Rule 3 Guard Verification
+
+`mixed_unit` string count in running container's `ohlcvUnitGuard.ts`: **1** — Rule 3 cross-field check confirmed present.
+
+### Definition of Done — Gate Check
+
+- [x] Root-cause identified: pre-guard container + MIN(low,0) ON CONFLICT propagation
+- [x] All 3 classes repaired: A=519, B=598, C=1175 rows (dev record); live DB = 0 residual
+- [x] Verification: 0 rows remaining for all 3 contamination patterns
+- [x] Script in `scripts/migrations/` with pointer in `docs/policies/dev-standards.md`
+- [x] Commit with Task: CONTAM-9 trailer (6657fc3e)
+- [x] Tests pass: 39/39 targeted TCs + tsc clean
+- [x] User-visible +100447% bug resolved: FPT now shows +0.547%
+
+**CONTAM-9: REVIEW → DONE**
+**DJ:** `docs/agent-memory/decisions/sprint-OHLCV-UNIT-CONTAM-qa.md` § qa-S7

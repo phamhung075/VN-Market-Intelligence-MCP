@@ -4914,14 +4914,15 @@
             "title": "Investigate and repair 519 rows with low=0 contamination pattern (SM-2 + SM-3 scope miss)",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "created_at": "2026-06-12T10:05:29Z",
             "priority": "critical",
             "size": "M",
             "sprint": "OHLCV-UNIT-CONTAM",
             "depends": [],
-            "note": "460 pre-repair legacy rows + 59 post-repair rows with pattern: open<100 AND close>1000 AND low=0. Outside CONTAM-6 binding amendment scope. Requires root-cause (writer or upstream)"
+            "note": "460 pre-repair legacy rows + 59 post-repair rows with pattern: open<100 AND close>1000 AND low=0. Outside CONTAM-6 binding amendment scope. Requires root-cause (writer or upstream)",
+            "closed_at": "2026-06-12T22:55:00Z"
           }
         ]
       },

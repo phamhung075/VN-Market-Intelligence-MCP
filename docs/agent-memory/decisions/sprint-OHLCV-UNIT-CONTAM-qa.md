@@ -67,6 +67,30 @@
 **why-decision:** APPROVED. Integration suite covers all 5 writer paths + repair migration + sanity detection job. Full behavior chain validated. Test count delta +1 (boundary test from CONTAM-8) is non-blocking — adds coverage, no regression.
 **why-change:** No change from plan — only path: all checks green.
 
+### STEP qa-S7 · qa · 2026-06-12T22:50:00Z
+**task-id:** CONTAM-9
+**what-done:** QA gate for low=0/open=0 partial-zero repair (3-pass migration) + Rule 3 mixed_unit guard + ON CONFLICT low self-heal + TC-7/TC-14/TC-15/TC-16. APPROVED.
+**what-considered:**
+- 12 migration TCs GREEN (CONTAM-9-repair-ohlcv-low-zero.test.ts): 51 expect() calls.
+- 20 ohlcvUnitGuard TCs GREEN (including TC-14/15/16 for CONTAM-9 Rule 3): 47 expect() calls.
+- 7 pushPricesHandler TCs GREEN (including TC-7 low self-heal): 20 expect() calls.
+- tsc --noEmit: exit 0 (empty output = clean).
+- DDD PASS: ohlcvUnitGuard.ts (domain/services) has zero infrastructure imports.
+- Security PASS: no process.env, no hardcoded secrets in any changed production file.
+- mock-guard EXIT 0: no fabricated-data patterns in production source.
+- LIVE DB (keinos sidecar, named volume):
+  - Class A (open<100 AND open>0 AND close>1000 AND low=0): 0 rows.
+  - Class B (open=0, not all-zero): 0 rows.
+  - Class C (low=0 AND close>=1000): 0 rows.
+  - FPT 2026-06-12: open=73100, high=74300, low=72369, close=73500 — CORRECT.
+  - FPT 2026-06-11: open=73100 (was 0), low=72369 (was 0) — CORRECT.
+  - FPT day change 2026-06-12: +0.547% — confirms +100447% bug resolved. User-visible defect closed.
+- Spot-checks (VCB, HPG, ACB): all full-VND scale, low>0, sane pct ranges. 0 remaining contamination rows.
+- Rule 3 mixed_unit guard confirmed in running container (/app/src/domain/services/market-data/ohlcvUnitGuard.ts, grep=1).
+- toolCount=157, schedulerCount=79 unchanged per dev record.
+**why-decision:** APPROVED. All 39 targeted tests pass. Live DB confirms 0 residual rows across all 3 classes. User-visible +100447% bug resolved (~+0.55% now). DoD fully met: root cause identified + all 3 classes repaired + guard plugged + script in scripts/ with dev-standards pointer.
+**why-change:** No change from plan — only path: all checks green.
+
 ### STEP qa-S5 · qa · 2026-06-12T10:15:00Z
 **task-id:** CONTAM-8
 **what-done:** QA gate for boundary fix close >= 1000 + TR-6 test + live repair of VNH 2026-06-12. APPROVED.

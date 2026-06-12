@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-237 · 2026-06-12 · CONTAM-9 low=0/open=0 repair QA gate — APPROVED
+
+Sprint: OHLCV-UNIT-CONTAM | Task: CONTAM-9 | Verdict: APPROVED | Report: reports/TASK_REPORT_CONTAM-9.md
+
+Migration TCs (12/0): AC-1..AC-12 all GREEN. Guard TCs (20/0): TC-14/15/16 (Rule 3 mixed_unit) GREEN. pushPricesHandler TC-7 (low self-heal) GREEN. Total targeted: 39/0. tsc exit 0. DDD PASS (ohlcvUnitGuard.ts domain/services: zero infra imports). Security PASS (no process.env, no secrets). mock-guard EXIT 0. LIVE DB (keinos sidecar named volume): Class A=0, Class B=0, Class C=0 rows. FPT 2026-06-12: open=73100 high=74300 low=72369 close=73500. FPT 2026-06-11: open=73100 low=72369 (both were 0 before repair). FPT day change: +0.547% (was +100447.2% — user bug CLOSED). Spot-checks VCB/HPG/ACB: full-VND, low>0, sane ranges, 0 contamination remaining. Rule 3 mixed_unit guard confirmed in running container (grep=1). toolCount=157, schedulerCount=79 unchanged. Dev commit 6657fc3e. CONTAM-9 REVIEW→DONE. DJ qa-S7 appended to sprint-OHLCV-UNIT-CONTAM-qa.md.
+
 ## cycle-236 · 2026-06-12 · EVIDENCE-ACCUM-SILENT-CRON pre-rebuild gate — APPROVED
 
 Sprint: EVIDENCE-ACCUM-SILENT-CRON | Task: EVIDENCE-ACCUM-SILENT-CRON | Verdict: APPROVED (pre-rebuild) | Commit: 53d00955
