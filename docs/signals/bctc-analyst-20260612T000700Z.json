@@ -1,0 +1,8 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] CTG BCTC Q1-2026 BLOCKED cycle 14 — bug#2776 not in recent_fixes after 14 cycles. VCB cycle9, D2D cycle9 also empty. deploy fix urgently.",
+  "priority": "high",
+  "createdAt": "2026-06-12T00:07:00Z"
+}

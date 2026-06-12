@@ -56,5 +56,27 @@
 - Brent $88.94 LOW alert — if <$85 → escalate GAS/PLX downside.
 - USD/VND EXTREME 26,325: monitor ACB/VCB/CTG NIM squeeze.
 - World Cup liquidity thin: securities (SSI/HCM/VCI) headwind near term.
-- KBC: nếu pipeline fix c046 → ưu tiên extraction KBC (vol 5x + PDF 3MB có sẵn).
+- KBC: nếu pipeline fix c047 → ưu tiên extraction KBC (vol 5x + PDF 3MB có sẵn).
 - Digiworld/MWG: retail recovery — MWG/DGW extraction priority khi pipeline fix.
+
+## c046 · 2026-06-12T00:07Z
+### Analysis Cycle (00:06–00:08 UTC) — mode: routine
+- E2 guard: PASS (00:07 UTC). Slot: bctc-analyst-slot-4. Log ID: 1341.
+- Double-publish guard: claimed=true (bctc-slot-4:2026-06-12).
+- Mode: routine (release tickers BLOCKED — no processable release data).
+- Regime: NEUTRAL (carry +1.38pp). Max Deposit Rate: 5.00%. Market EY 8.20% CHEAP (+3.20pp). VN-Index 1798.61 (-5.1). Investment clock: Overheat/CORE_VN.
+- Macro: Gold $4,246.2 BULLISH risk-off; Brent $88.48 NEUTRAL; USD/VND 26,130 BEARISH. EXTREME alert 26,325 (+5.25σ) at 13:30 UTC prior day still in stack.
+- FPT Q1-2026: E3 CACHE HIT cycle 8 — passes skipped. Net profit 2,476.8ty (+19.8% YoY). PE 13.8 vs sector 17.3 (-20%); ROE 28.3%; EY_SPREAD +2.25pp FAIR. OCF -2,847ty (mùa vụ Q1). Balance imbalance=0. D/E 0.40x. ESC-2 PASS; ESC-3 DATA-COV-LIM GUARD-HELD (~19d); ESC-1/4/5 PASS. Insider: clean. Legal: clean. Chain: 0.
+- Release batch: CTG cycle 14 CRITICAL (#2776 undeployed, escalated BUG msg_id=2787 + signal file). VCB cycle 9 empty. D2D cycle 9 empty. 28 mã BLOCKED.
+- Signals: #5813 FPT fundamental_validation (0.8) → alert-commander.
+- Signal file: docs/signals/bctc_signal_FPT_20260612_routine.json
+- Bug signal: docs/signals/bctc-analyst-20260612T000700Z.json
+
+### Carry-over to c047 (next slot, 2026-06-12 15:00 UTC)
+- CTG cycle 15 CRITICAL: bug#2776 escalated cycle 14. Check recent_fixes at c047 start — if not fixed, skip silently (no re-escalation same day).
+- VCB (cycle 10), D2D (cycle 10): filed 2026-06-11, extraction broken. Monitor.
+- 28 tickers BLOCKED. ACB/EIB/DHG PUB-5 cycle 6 unresolved.
+- FPT ESC-3: DATA-COV-LIM GUARD-HELD (~19d remaining).
+- Gold $4,246 risk-off trend persists; if >$4,300 → escalate GAS/POW/REE defensive signals.
+- KBC vol 5x persists: priority extraction khi pipeline fix.
+- USD/VND EXTREME 26,325 prior day: monitor ACB/VCB/CTG NIM squeeze.
