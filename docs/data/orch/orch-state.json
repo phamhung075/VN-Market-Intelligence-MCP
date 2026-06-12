@@ -443,13 +443,13 @@
             "title": "extraction_confidence never recomputed after refine/finalize — ACB stuck at 0.375 even after full 27/27 refine + 106 rows parsed, so serve gate PUB-5 (confidence<50%) blocks get_bctc_full(ACB) permanently. A successful refine pass can never lift PUB-5. Fix: recompute confidence at finalize from refined coverage/row-quality, OR make PUB-5 consider refine coverage/refined-row quality instead of the pre-refine OCR metric.",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "apps/mcp-server/src/",
             "created_at": "2026-06-12T21:12:58Z",
             "priority": "medium",
             "size": "M",
             "sprint": "BCTC-ANALYTICS-LAYER",
-            "status_note": "[PO triage 2026-06-12T21:12:58Z] P1. Raw-verified: ACB extraction_confidence=0.375 unchanged after full refine. PUB-5 evaluates the pre-refine OCR confidence BEFORE PUB-3, so refine success is invisible to the gate. Same class as DONE-MOOT tasks BAL-1b-DEV/BAL-1d-DEV (banks EIB/SHB blocked at PUB-5 <50% before PUB-3 reached) — those fixed bank-path/report_scope but NOT confidence-recompute-at-finalize, so this root is still open. Depends on FIX-FINALIZE-STATUS-STUCK-PARTIAL landing first (finalize must run cleanly before confidence-recompute is observable). ARCHITECT to rule: recompute-at-finalize vs PUB-5 coverage-aware.",
+            "status_note": "[QA 2026-06-13] APPROVED — G1: BLOCK-5 fired (old=0.375, new=0.6); G2: DB=0.6; G3: get_bctc_full(ACB) serves real data (Net Revenue 6,989 tỷ); G4: VNM=0.9375 unchanged; G5: generic, no hardcode; G6: 35/0 targeted + tsc clean. 52 suite fails pre-existing (same class as prior cycle 50). Commit c38c76e6.",
             "depends": [
               "FIX-FINALIZE-STATUS-STUCK-PARTIAL"
             ],

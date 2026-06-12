@@ -167,3 +167,27 @@ if (refinedConfidence > currentConfidence) {
 2. `SELECT extraction_confidence FROM financial_reports WHERE id='fea19bae-2b7a-4954-b3e0-e09d7bfc7390'` → expect ≥ 0.6 (1.0 if all 3 sections)
 3. `get_bctc_full(ACB)` → must return real financial data (PUB-5 unblocked)
 4. Confirm VNM confidence does not decrease (guard check)
+
+---
+
+## [QA] Review Record
+
+- **Verdict:** APPROVED
+- **Date:** 2026-06-13
+- **Commit reviewed:** c38c76e6
+- **QA agent:** qa
+
+**Gate results:**
+
+| Gate | Result | Evidence |
+|------|--------|----------|
+| G1: finalize_bctc_refine fires BLOCK-5 | PASS | Log: `BLOCK-5 extraction_confidence recomputed` — old=0.375, new=0.6, hasBalanceSheet:true, hasIncomeStatement:false, hasCashFlow:true; ok:true, rows_parsed:106 |
+| G2: DB extraction_confidence after finalize | PASS | `SELECT extraction_confidence … WHERE id='fea19bae…'` → 0.6 (was 0.375 pre-finalize; > 0.5 ✓) |
+| G3: get_bctc_full(ACB) serves real data | PASS | Net Revenue 6,989 tỷ, Net Profit 4,320 tỷ, Total Assets 1,030,900 tỷ, confidence 60%; PUB-5 not blocking |
+| G4: VNM confidence unchanged (raise-only) | PASS | `SELECT action_code, extraction_confidence … WHERE action_code='VNM'` → VNM\|0.9375 (unchanged) |
+| G5: code review — generic, no hardcode | PASS | Diff: `report_id` variable throughout; formula `(hasBalanceSheet?0.4:0)+…` per AC-2-2; guard `if (refinedConfidence > currentConfidence)` per AC-2-3; parameterized SQL `?`; non-fatal try/catch; fires on every finalize call regardless of ticker |
+| G6: targeted test suites | PASS | DE2=7/0, AR=20/0, FU-6f=8/0 — 35 pass / 0 fail; tsc --noEmit EXIT 0 |
+
+**BCTC eval:** yellow (non-blocking per pipeline gate)
+
+**Notes:** ACB confidence = 0.6 (not 1.0) because income_statement section absent — ACB is a bank; KQKD (income statement) section not found by checkSectionCompleteness. Balance sheet (0.4) + cash flow (0.2) = 0.6. This is correct behavior: 0.6 > 0.375 → override fires; 0.6 > 0.5 → PUB-5 unblocked. Guard correctly preserves VNM (0.9375 > 0.6 → no override). Raise-only invariant holds.

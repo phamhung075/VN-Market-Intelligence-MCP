@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-240 · 2026-06-13 · FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE QA gate — APPROVED
+
+Sprint: BCTC-ANALYTICS-LAYER | Task: FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE | Verdict: APPROVED | Commit: c38c76e6
+
+G1 PASS: finalize_bctc_refine(fea19bae, DONE) → ok:true, rows_parsed:106; mcp-server log shows BLOCK-5 fired: old_confidence=0.375, new_confidence=0.6, hasBalanceSheet:true, hasIncomeStatement:false, hasCashFlow:true. G2 PASS: DB SELECT extraction_confidence → 0.6 (was 0.375 pre-finalize). G3 PASS: get_bctc_full(ACB) → real financial data served (Net Revenue 6,989 tỷ, Net Profit 4,320 tỷ, Total Assets 1,030,900 tỷ, confidence 60%); PUB-5 no longer blocking. G4 PASS: VNM extraction_confidence=0.9375 unchanged (raise-only guard preserved). G5 PASS: c38c76e6 diff — generic mechanism (report_id variable), no per-ticker hardcode, fires for ALL tickers, formula exact per AC-2-2, guard `if (refinedConfidence > currentConfidence)` exact per AC-2-3, parameterized SQL. G6 PASS: DE2=7/0, AR=20/0, FU-6f=8/0 (35 total pass/0 fail); tsc --noEmit EXIT 0. BCTC eval yellow (non-blocking per pipeline gate). Board REVIEW→DONE.
+
 ## cycle-239 · 2026-06-13 · FIX-FINALIZE-STATUS-STUCK-PARTIAL QA gate — APPROVED
 
 Sprint: BCTC-ANALYTICS-LAYER | Task: FIX-FINALIZE-STATUS-STUCK-PARTIAL | Verdict: APPROVED | Commit under test: 4b30adbc
