@@ -111,6 +111,8 @@ const TICKER_COVERAGE_SQL = `
 // DPI-4 R-5 audit fix: replaced INSERT OR REPLACE (row-destructive DELETE+INSERT)
 // with ON CONFLICT DO UPDATE SET to preserve foreign flow columns.
 // Matches the same pattern as pushPricesHandler and server.ts (DPI-4 scope).
+// CONTAM-9: this job's purpose is to HEAL corrupt rows (low=0 from 1972 bug).
+// Always unconditionally overwrite with fetched values — backfill is the source of truth.
 const UPSERT_SQL = `
   INSERT INTO daily_ohlcv
     (code, date, open, high, low, close, volume, updated_at)

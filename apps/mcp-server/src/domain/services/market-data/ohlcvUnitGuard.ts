@@ -55,11 +55,14 @@ export interface Ohlcv {
  * Validates that open/high/low/close conform to the full-VND unit invariant.
  *
  * Rules (in application order — first failure wins):
- *  1. Zero guard — any zero value is invalid market data.
+ *  1. Zero guard — any zero value is invalid market data (partial-zero defect class).
  *  2. Stock range guard — for stocks: all four fields must be in [STOCK_MIN_VND, STOCK_MAX_VND].
  *     (Index type is exempt — VNINDEX ~1200 is valid.)
- *  3. High/Low ratio sanity — high / low must be ≤ HILO_RATIO_MAX.
- *  4. Plausibility — low ≤ open ≤ high  AND  low ≤ close ≤ high.
+ *  3. Cross-field unit disagreement — if any field is < 100 while another is >= 1000, the row
+ *     has mixed-unit contamination (CONTAM-9: open in thousand-VND while close in full-VND).
+ *     This check fires before the per-field range guard to give a more descriptive reason.
+ *  4. High/Low ratio sanity — high / low must be ≤ HILO_RATIO_MAX.
+ *  5. Plausibility — low ≤ open ≤ high  AND  low ≤ close ≤ high.
  *
  * @param code   Ticker symbol (used in reason string for caller logging)
  * @param type   "stock" | "index"
@@ -78,7 +81,7 @@ export function validateOhlcvUnit(
   low: number,
   close: number,
 ): OhlcvValidationResult {
-  // Rule 1 — Zero guard
+  // Rule 1 — Zero guard (partial-zero defect class: any single zero is invalid)
   const fields: [string, number][] = [
     ["open", open],
     ["high", high],
@@ -109,7 +112,23 @@ export function validateOhlcvUnit(
     }
   }
 
-  // Rule 3 — High/Low ratio sanity
+  // Rule 3 — Cross-field unit disagreement (CONTAM-9 guard)
+  // If any field is < STOCK_MIN_VND and another is >= 1000, the row has mixed-unit fields.
+  // This catches patterns like open=73.1 (thousand-VND) with close=73500 (full-VND).
+  // Only applies to stocks (index values span a wider range naturally).
+  if (type === "stock") {
+    const hasSubFloor = fields.some(([, v]) => v < STOCK_MIN_VND);
+    const hasFullVnd  = fields.some(([, v]) => v >= 1000);
+    if (hasSubFloor && hasFullVnd) {
+      const summary = fields.map(([f, v]) => `${f}=${v}`).join(" ");
+      return {
+        valid: false,
+        reason: `mixed_unit: ${code} cross-field unit disagreement — ${summary}`,
+      };
+    }
+  }
+
+  // Rule 4 — High/Low ratio sanity
   if (low > 0 && high / low > HILO_RATIO_MAX) {
     const ratio = (high / low).toFixed(2);
     return {
@@ -118,7 +137,7 @@ export function validateOhlcvUnit(
     };
   }
 
-  // Rule 4 — Plausibility: low ≤ open ≤ high AND low ≤ close ≤ high
+  // Rule 5 — Plausibility: low ≤ open ≤ high AND low ≤ close ≤ high
   if (open < low || open > high || close < low || close > high) {
     return {
       valid: false,

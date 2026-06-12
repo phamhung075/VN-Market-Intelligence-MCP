@@ -28,9 +28,24 @@ docker cp scripts/migrations/repair-ohlcv-unit-contamination.ts \
 docker exec -it vn-market-intelligence-mcp-mcp-server-1 \
   bun run /app/repair-ohlcv-migration.ts --live
 ```
-Detects WHERE (open < 100 OR low < 100) AND close > 1000 AND open > 0 AND low > 0.
+Detects WHERE (open < 100 OR low < 100) AND close >= 1000 AND open > 0 AND low > 0.
 Excludes all-zero rows (2026-05-30T11:47Z bulk-zeros defect — out of scope).
 Repair: open*1000, low*1000. data_env preserved (RF-5).
+
+**CANONICAL: OHLCV low-zero / partial-zero repair (CONTAM-9)**
+```bash
+# Dry-run (count + sample, no writes):
+bun run scripts/migrations/repair-ohlcv-unit-contamination-low-zero.ts --dry-run
+
+# Live against named volume (docker exec):
+docker cp scripts/migrations/repair-ohlcv-unit-contamination-low-zero.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/repair-ohlcv-low-zero.ts
+docker exec -it vn-market-intelligence-mcp-mcp-server-1 \
+  bun run /app/repair-ohlcv-low-zero.ts --live
+```
+Three-pass repair: A=mixed-unit open (open<100 AND open>0 AND low=0): open*1000 + low estimate;
+B=partial-zero open (open=0, not all-zero): open=close; C=remaining low=0 (close>=1000): low=ROUND(close*0.99).
+Excludes all-zero rows (separate defect). data_env preserved (RF-5).
 
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 

@@ -281,6 +281,33 @@ describe("CONTAM-2 — pushPricesHandler unit guard + open self-heal", () => {
     expect(after2!.open).toBeCloseTo(80_000, 0);
   });
 
+  // TC-7: CONTAM-9 — low=0 self-heal via ON CONFLICT low fix
+  //   Seed a row with low=0 (legacy contamination). Push a valid update with low > 0.
+  //   Verify: low is updated to the valid push value (not kept at 0 via MIN(0, n)=0).
+  test("TC-7: CONTAM-9 low=0 self-heal — valid push overwrites legacy low=0 via ON CONFLICT", async () => {
+    const log = makeLog();
+    // Seed contaminated row: open=73100 (valid), low=0 (contaminated legacy)
+    db.prepare(
+      "INSERT INTO daily_ohlcv (code,date,open,high,low,close,volume,updated_at) VALUES (?,?,?,?,?,?,?,?)"
+    ).run("FPT", new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10), 73100, 74300, 0, 73500, 0, new Date().toISOString());
+
+    const before = db.prepare("SELECT low FROM daily_ohlcv WHERE code='FPT'").get() as { low: number } | null;
+    expect(before?.low).toBe(0); // confirm contaminated
+
+    // Push valid price with a real low (p.low provided as non-zero)
+    // price=73.2 → pv=73200, p.low="72.5" → low=72500
+    const req = makeRequest([
+      { code: "FPT", price: 73.2, type: "stock", high: "74.5", low: "72.5" },
+    ]);
+    const res = makeResponse();
+    await handlePushPrices(req, res as unknown as ServerResponse, db, log as unknown as ReturnType<typeof import("../infrastructure/logger.js").createLogger>);
+
+    const after = db.prepare("SELECT low FROM daily_ohlcv WHERE code='FPT'").get() as { low: number } | null;
+    // CONTAM-9 fix: low should be 72500 (from new push), NOT 0 (which old MIN clause would give)
+    expect(after?.low).toBeCloseTo(72500, 0);
+    expect(after?.low).toBeGreaterThan(0);
+  });
+
   // TC-6: RF-1 — HTTP 200 is always returned, even when every row is rejected by the guard
   test("TC-6: RF-1 — HTTP 200 returned even when all rows rejected by guard", async () => {
     const log = makeLog();

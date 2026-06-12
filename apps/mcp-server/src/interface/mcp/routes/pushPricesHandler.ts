@@ -164,13 +164,19 @@ export async function handlePushPrices(
     // CONTAM-2: ON CONFLICT clause includes open self-heal via CASE — if the existing
     // open is contaminated (< 100, i.e. thousand-VND leakage), the next valid push
     // overwrites it. Guard below ensures only full-VND rows reach this statement.
+    // CONTAM-9 (low-zero boundary fix): MIN(daily_ohlcv.low, excluded.low) permanently
+    // propagates legacy low=0 contamination (MIN(0, n) = 0 for any positive n).
+    // Fix: if existing low is 0 (sentinel / legacy contaminated), use excluded.low;
+    // otherwise take the true minimum. This allows valid pushes to self-heal low=0 rows.
     const ohlcvUpsert = db.prepare(`
       INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(code, date) DO UPDATE SET
         open = CASE WHEN daily_ohlcv.open < 100 THEN excluded.open ELSE daily_ohlcv.open END,
         high = MAX(daily_ohlcv.high, excluded.high),
-        low = MIN(daily_ohlcv.low, excluded.low),
+        low  = CASE WHEN daily_ohlcv.low = 0 THEN excluded.low
+                    ELSE MIN(daily_ohlcv.low, excluded.low)
+               END,
         close = excluded.close,
         volume = excluded.volume,
         updated_at = excluded.updated_at

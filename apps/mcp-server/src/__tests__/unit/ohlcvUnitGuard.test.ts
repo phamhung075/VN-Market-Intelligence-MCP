@@ -5,13 +5,14 @@
  * Tests the pure domain service: validateOhlcvUnit + normalizeOhlcvToVnd.
  * No I/O, no DB, no external deps.
  *
- * 13 test cases covering:
+ * 17 test cases covering:
  *  - Stock in-range, below-100, above-10M
  *  - Index exemption
  *  - Inverted OHLC
- *  - Zero field
+ *  - Zero field (partial-zero class)
  *  - H/L ratio boundary (5 = valid, 6 = invalid)
  *  - Maximum valid span
+ *  - Cross-field mixed-unit detection (CONTAM-9 Rule 3)
  *  - normalizeOhlcvToVnd: thousand-scale, full-VND no-op, index no-op, whole-row preserves relationships
  */
 import { describe, expect, it } from "bun:test";
@@ -100,6 +101,37 @@ describe("validateOhlcvUnit", () => {
   it("open=100 (STOCK_MIN_VND floor), close=500, ratio=5 exactly → valid", () => {
     const result = validateOhlcvUnit("TST", "stock", 100, 500, 100, 500);
     expect(result.valid).toBe(true);
+  });
+
+  // TC-14: CONTAM-9 Rule 3 — mixed-unit cross-field: open=73.1 (thousand-scale), close=73500 (full-VND)
+  //   Zero guard fires first (low=0) → but if we remove low=0, then cross-field check must fire
+  it("stock mixed-unit: open=73.1 (below_100) while high=74300 (full-VND) → invalid via unit contamination (below_100 rule)", () => {
+    // Rule 2 fires first (stock range: open=73.1 < 100) before Rule 3
+    const result = validateOhlcvUnit("FPT", "stock", 73.1, 74300, 72800, 73500);
+    expect(result.valid).toBe(false);
+    // Rule 2 fires first (open=73.1 < 100 → below_100)
+    expect(result.reason).toContain("below_100");
+  });
+
+  // TC-15: CONTAM-9 Rule 3 — index type is exempt from mixed-unit check
+  it("index type with sub-100 value + full-VND value → valid (cross-field check exempt for index)", () => {
+    // Index can have values < 100 (e.g. specialty sub-indices)
+    // Rule 2 is exempt for index, Rule 3 is also exempt for index
+    const result = validateOhlcvUnit("SPECIAL_IDX", "index", 50, 55, 48, 52);
+    // Rule 1 (zero) and Rules 2-3 (range/cross-field) don't apply to index
+    // Rule 4 (H/L ratio): 55/48 ≈ 1.1 → valid
+    // Rule 5 (plausibility): low=48 ≤ open=50 ≤ high=55, low=48 ≤ close=52 ≤ high=55 → valid
+    expect(result.valid).toBe(true);
+  });
+
+  // TC-16: CONTAM-9 — zero_ohlc fires before cross-field check (Rule 1 priority)
+  it("low=0 (partial-zero defect) → invalid with zero_ohlc reason (Rule 1 wins)", () => {
+    // FPT 2026-06-12 pattern: open=73.1, high=74300, low=0, close=73500
+    // Rule 1 fires first: low=0 → zero_ohlc
+    const result = validateOhlcvUnit("FPT", "stock", 73.1, 74300, 0, 73500);
+    expect(result.valid).toBe(false);
+    expect(result.reason).toContain("zero_ohlc");
+    expect(result.reason).toContain("low");
   });
 });
 
