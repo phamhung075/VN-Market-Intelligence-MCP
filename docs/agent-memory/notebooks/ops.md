@@ -226,3 +226,48 @@ All sessions completed with QA gates cleared; no peer destruction; disk maintain
 
 **Next:** QA verification stage.
 
+---
+
+## Session: 2026-06-13 01:37-01:38Z (FIX-PENDING-REFINE-TICKER-TARGETING — mcp-server rebuild)
+
+**Task:** Rebuild mcp-server to ship FIX-PENDING-REFINE-TICKER-TARGETING (commit 3a57df69, optional `ticker` + `report_id` params added to `get_bctc_pending_refine` tool).
+
+### Execution Summary
+
+**Pre-state:** mcp-server container running image `5521a124bb45...` (predates commit 3a57df69); QA blocked pending live rebuild.
+
+**Build + Post-Rebuild Verification**
+- Build: SUCCESS; new image `6ae35a037021bc1851738bbc...` (513MB, contains 3a57df69)
+- Image ID check: old `5521a124bb45...` ≠ new `6ae35a037021...` (rebuild race safe) ✓
+- Container recreated with NO peer destruction ✓
+
+**Peer Container Status (all 11 services UP, none restarted):**
+```
+alert-engine         Up 2 days (healthy)
+api-gateway          Up 39 hours (healthy)
+frontend             Up 8 hours (healthy)
+kinh-dich-service    Up 42 hours (healthy)
+macro-indicators     Up 2 days (healthy)
+mcp-server           Up 9 seconds (healthy) ← JUST REBUILT
+news-fetch           Up 2 days (healthy)
+pdf-extractor        Up 32 hours (healthy)
+rag-service          Up 52 minutes (healthy)
+stock-price          Up 2 days (healthy)
+technical-analysis   Up 2 days (healthy)
+```
+
+**Live Code Verification**
+- Smoke test: `get_bctc_pending_refine(ticker="CTG", limit=1)` → SUCCESS ✓
+  - Tool accepted optional `ticker` param (no unknown-param error)
+  - Result: CTG-filtered record (1 record returned with CTG BCTC Q1/2026 report)
+  - Confirms new code live in running container ✓
+- System status: `get_system_status()` → 200 OK, ToolCount 157, uptime 12s ✓
+
+**QA Gate:** CLEARED ✓
+- New ticker-targeting logic live and callable
+- All peer services remain healthy (isolation preserved)
+- Image ID match confirmed (no macOS rebuild race)
+- No contamination or wedge detected; DB write-path verifiable
+
+**Status:** PIPELINE: continue — QA gates ready to run full test suite.
+
