@@ -1,0 +1,57 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "cc": "architect",
+  "type": "ci_gate_pass_with_variance_note",
+  "priority": "high",
+  "createdAt": "2026-06-09T18:55:00Z",
+  "dedup_key": "ci_batch4_gate_result:c34ddfc4",
+  "payload": {
+    "check_id": "CI-BATCH4-GATE-c34ddfc4",
+    "task_under_test": "BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS",
+    "verdict": "GATE PASSED — all 8 BATCH4 config-drift victims at ZERO fail markers (BATCH4_VICTIMS_ALL_CURED grep confirmed: 1343e/1349a/1837a/230-AC-4c/1336-named-volume/schedulerFileCount/cowork-schedule-policy_id/chef-intraday all absent from fail roster). native_fail 55 -> 26 (-29), pass 11705 -> 11734 (+29), skip 42 unchanged, tests 11802 unchanged. Perfectly additive (fail-delta == pass-delta == 29). errors 0 (no errors line). Sum invariant: 11734 pass + 42 skip + 26 fail = 11802 = Ran tests. Route BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS REVIEW -> DONE.",
+    "variance_note": "BATCH4 fixed 8 GENUINE config-drift fails (dev isolation-probed all 7 files pass-alone: 1343e 5p/0f, 1349f 11p/0f, 1837a 5p/0f, 230 13p/0f, 1336 3p/0f, 1190 16p/0f, DWF-phase1-cadence 48p/0f). But the absolute dropped -29, not -8. The extra ~21 of the drop is FAVORABLE ORDERING: this run's file-execution order exposed LESS contamination than the BATCH3 run (which exposed +15). This is the SAME contamination-variance phenomenon (absolute is non-deterministic until per-file process isolation lands). 26 is THIS run's number; do NOT treat it as the stable genuine floor.",
+    "residual_26_all_BATCH5_class": "The 21 unique residual fail anchors map EXACTLY to the BATCH5 C-AL (assertion-logic + FIX-PROD) roster — zero BATCH0-4 class fails remain. Residual roster: AC-1 teChromiumNews cold-start, AC-4 sleepMs 2000, Bug 1 data/pdfs mkdir startup (FIX-PDF-VOLUME-SBV-TABLE), DV-HC-8 corrected-value survive finalize, Hotfix VCB parser, scanDiskForStrandedPdfs, TASK-1549 watchdog, TRUST-RED sanity gates, Task 1100 getCronJobHealthSummary, Task 1309 bbAlertScan, Task 1328e conviction routing, Task 1352a macroIndicatorRefresh, Task 1416b trimToBalanceSheetWindow, Task 1503 writeForeignFlowToOhlcv, Task 1792 conviction debounce, Task 1793 pollNews cooldown, Task 1879a FRED, VPT-1 vps-proxy-health, bctcDiscovery DDD guard, handleBctcEvalRecompute, newsHeadlinesRefreshJob E2E. (21 anchors -> 26 fails: some anchors carry >1 failing it().)",
+    "1328e_confirms_batch5": "Task 1328e conviction routing STILL red post-BATCH2/3/4 -> CONFIRMS the arch-S23 reclassification BATCH2->BATCH5 was correct to REVERT. 1328e is a BATCH5 item (contaminator not in the 12 mock-stub files OR genuinely stale in suite-order).",
+    "baseline_absolute": {
+      "sha": "5c86974d",
+      "run_id": "27227648426",
+      "bun_job_id": "80399016022",
+      "native_fail": 55,
+      "native_errors": 0,
+      "fail_plus_error": 55,
+      "tests": 11802,
+      "pass": 11705,
+      "skip": 42,
+      "note": "BATCH3 run — contamination-inflated, not a stable baseline"
+    },
+    "batch4_absolute": {
+      "sha": "c34ddfc4",
+      "run_id": "27228454995",
+      "bun_job_id": "80401852406",
+      "native_fail": 26,
+      "native_errors": 0,
+      "fail_plus_error": 26,
+      "tests": 11802,
+      "pass": 11734,
+      "skip": 42,
+      "note": "8 genuine BATCH4 cured + favorable ordering. Non-deterministic until process-isolation lands."
+    },
+    "delta_native": {
+      "fail_plus_error": "-29 (55 -> 26)",
+      "pass": "+29 (11705 -> 11734)",
+      "tests": "0 (11802)",
+      "skip": "0 (42)"
+    },
+    "measurement_method": "bun NATIVE summary gh run view 27228454995 --job=80401852406 --log final block '  11734 pass / 42 skip / 26 fail / Ran 11802 tests across 1037 files' (no errors line => native_errors=0). Run conclusion=failure IGNORED. BATCH4 victim anchors grepped from '(fail)' roster => 0 markers (BATCH4_VICTIMS_ALL_CURED). Residual 21 unique anchors enumerated via grep '(fail)' | sort -u => all BATCH5 C-AL class.",
+    "ARCHITECT_PHASE2_LANDED": "Architect arch-S24 Phase-2 isolation design SHIPPED (commit 5938e3a3, docs-only, pushed). DECISION: Option A (per-file process isolation) — each test file in its own bun process via scripts/ci-per-file-isolation.sh at P=16, runner emits a bun-native-format summary line for /goal Stop-hook compatibility, exits 1 on any fail. Option B (global-reset harness) REJECTED (bun 1.3.13 lacks file-boundary lifecycle hooks; BATCH2 meta-guard empirically proved partial-surface coverage fails). Owners: dev-mcp-server (scripts/ci-per-file-isolation.sh + setup.ts STOCK_PRICE_DB_PATH env passthrough + dev-standards pointer), ops (.github/workflows/ci.yml). Router DISPATCHED both (Wave 1) immediately after this gate. This is the user-demanded 'rethink architecture for testing ci di' — it makes the gate DETERMINISTIC (fail count = genuine fails, order-independent).",
+    "po_action_requested": "Fold into the next batched board write (combine BATCH2+BATCH3+BATCH4): (1) BATCH4-CI-C-CD-CONFIG-DRIFT-ASSERTS REVIEW -> DONE (cite THIS signal, 8-victim 0-fail). (2) BATCH2 REVIEW -> DONE + BATCH3 REVIEW -> DONE (from prior signals). (3) REVERT 1328e classification BATCH2 -> BATCH5 (confirmed still red). (4) CREATE two tracking tasks per architect P2-7: IMPL-CI-PER-FILE-ISOLATION (dev-mcp-server + ops, in flight) and RETIRE-CI-GATE-APPARATUS (ops, BLOCKED until genuine=0). (5) ci_absolute: do NOT rebaseline to 26 OR 55 as a stable number — record 'non-deterministic 26..55 by ordering; stable gate number pending IMPL-CI-PER-FILE-ISOLATION (Option A) which makes fail count = genuine fails'. After isolation lands, the per-file aggregated fail IS the authoritative deterministic gate. (6) DJ-GATE-1 po-S<N>. Verify single-status-key + 246 unique after write.",
+    "next": "Router Wave 1: dev-mcp-server (isolation script+setup+dev-standards) + ops (ci.yml) dispatched in parallel. Wave 2: architect BATCH5 C-AL per-file triage (21 anchors) + PO batched board write. Wave 3: BATCH5 dev (assertion-logic + FIX-PROD). DEFINITIVE green = genuine BATCH5 fixes (26 -> 0) AROUND the now-deterministic per-file gate. Continue /goal loop. Cluster-6 schema-drift PARKED."
+  },
+  "_processed": {
+    "fingerprint": "563c72cf7179a1af69c5e2403654bc8c5666557968017600c6f382e18f02c0db",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

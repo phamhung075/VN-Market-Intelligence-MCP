@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T18:05:14Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": null
+    },
+    "last_fired_timestamp": "2026-06-09T18:05:53Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": null,
+    "note": "Daily 18:00 BCTC analyst slot-2 fired (cron 0 18 * * *, policy bctc-offmarket resolved to cron/no-cadence-gate, last fired yesterday 2026-06-08T18:06:04Z). bctc-analyst spawned BACKGROUND (BGFAN-1, agentId a8091e94437c7d268) — analyst/processor not MARKET publisher: selects mode (routine vs release) per get_earnings_calendar() calendar gate; routine = EY spread / valuation / chain validation / multi-pass trick detection; release = QoQ/YoY beat-miss + ledger write to docs/analysis-briefs/{TICKER}.md. Writes docs/agent-memory/notebooks/bctc-analyst.md (full overwrite). Does NOT send_telegram MARKET -> no publish-marker gate, no double-post risk. E2 guard self-enforced (now 18:05 UTC = 01:05 VN, outside [02:00,08:00) VN window -> pass allowed). NOTE: release-mode 24-ticker extraction may still hit the untracked get_bctc_full empty-return blocker (open CRITICAL cwk-bctc-extract-empty-24tickers-20260609 to:po, zone_owner dev-pdf-extractor) — agent handles gracefully. Per-work-item token cowork-slot:bctc-analyst-slot-2 claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok, renewed +1800s). Step 4.7 tick-snapshot SKIPPED (documented non-blocking fallback — agent self-bootstraps via get_cycle_bootstrap). last_fired updated 18:05:53Z. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Step 0a: 6 NEW signal_queue rows all to:po (3 db_integrity_breach C-04/C-06/C-08 + 1 CRITICAL orch-clobber jq-bug + 1 chef-eod-marker flow_bug + 1 CRITICAL bctc-extract-empty) — dev-team domain, left NEW for po triage, none cowork-actionable. Completion arrives via async notification.",
+    "spawned_agent_ids": {
+      "bctc-analyst-slot-2": "a8091e94437c7d268"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T18:06:00Z",
+  "_processed": {
+    "fingerprint": "eb829745df9edc590b5102d7b10b5705a29d5c777f8bc65f9caab54b93a7ee98",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

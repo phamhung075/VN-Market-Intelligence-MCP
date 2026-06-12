@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-10T20:24:19Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+    "line_count": 249,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 49,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "d666dc77f201b32076e0ce9c667aee38fd3582edd265eac8cd9b5efcd94817c3",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

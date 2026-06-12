@@ -1,0 +1,66 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "cc": "architect",
+  "type": "ci_gate_partial_contamination_variance",
+  "priority": "critical",
+  "createdAt": "2026-06-09T18:42:00Z",
+  "dedup_key": "ci_batch3_gate_result:5c86974d",
+  "payload": {
+    "check_id": "CI-BATCH3-GATE-5c86974d",
+    "task_under_test": "BATCH3-CI-C-MH-MARKET-HOURS-GATE-NOW-SEAM",
+    "verdict": "BATCH3 GENUINE FIX CONFIRMED (route REVIEW -> DONE) — all 6 target 1407b market-hours-gate fails CURED (0 fail markers in CI native log). HOWEVER the run absolute ROSE 40 -> 55, NOT fell to 34. This is NOT a regression from BATCH3 (a test-only frozen-clock change to 1407b cannot break get_market_cap/get_insider/get_alerts prod). It is CONTAMINATION VARIANCE: the 1407b timing change reshuffled file execution order, exposing 22 different contamination victims. CONFIRMED via isolation probe: 1146-get-insider-transactions = 17 pass / 0 fail ALONE.",
+    "ARCHITECTURAL_ROOT_CAUSE": "The bun suite runs SINGLE-PROCESS with a shared ESM/mock registry, shared Bun.env, shared toolRegistry singleton, and shared DB-path/in-memory-DB. Test files leak global state into whichever file the scheduler runs next. The native absolute therefore JITTERS run-to-run by the size of the contamination set (observed +/-15) purely as a function of ordering. CONSEQUENCE: class-by-class GENUINE fixes (BATCH0-5) are necessary but CANNOT CONVERGE THE /goal GATE on their own — ordering alone can leave 20+ red even after every genuine test-vs-prod divergence is fixed. The BATCH2 meta-guard (mock.module-without-afterAll) passed with 0 violations yet contamination persists => there are leak surfaces BEYOND mock.module: (1) Bun.env mutation (Task 1400 Bun.env DB-isolation, Task 1352a FRED_API_KEY), (2) toolRegistry singleton mutation (1875c 'registered in full toolRegistry', FIX-B-2 get_market_cap 'tool is registered', 1110 get_alerts, 1146 get_insider), (3) DB-path / in-memory-DB state (Task 1400, Task 293 OCR cache, Task 030 PDF extractor).",
+    "ESCALATION": "Router spawned ARCHITECT for a Phase-2 isolation design addendum to docs/architecture-briefs/2026-06-09-testing-ci-architecture-rethink.md. Decision required: (A) CI per-file PROCESS ISOLATION / sharding (each test file in its own bun process => zero cross-file leak => contamination deterministically 0; genuine fails = each file's pass-alone result; cost = wall-clock, mitigate via xargs -P / matrix shards) vs (B) comprehensive GLOBAL-STATE-RESET harness (shared preload/afterEach restoring mock.module + Bun.env + toolRegistry + DB-path after every file; cheaper wall-clock but must enumerate ALL leak surfaces and is fragile — meta-guard already proved mock.module-only is insufficient). This is the user-demanded 'rethink architecture for testing ci di'. Pairs with the genuine-fix batches; does NOT replace them.",
+    "batch3_genuine_cured": [
+      "1407b MH-1 off-hours price",
+      "1407b MH-2 off-hours foreign_flow",
+      "1407b MH-9 weekend price",
+      "1407b MH-10 weekend foreign_flow",
+      "1407b MH-12 Labour-Day price",
+      "1407b MH-13 Labour-Day foreign_flow"
+    ],
+    "batch3_per_victim_flip": "All 6 1407b MH anchors => 0 fail markers in CI native log (grep '(fail)' | grep 1407b == 0). Dev froze off-hours/weekend/holiday stale-ages above the dynamic SLA threshold (4000/1300/2700 min) reusing the pre-existing now-seam from arch-S20/Task-1282a (NO prod change). Isolation probe 14 pass / 0 fail (was 8 pass / 6 fail). Net it()-delta 0.",
+    "contamination_victims_exposed_this_ordering": {
+      "Task 1146 get_insider_transactions": "9 fails — CONFIRMED pass-alone (17 pass / 0 fail) => CONTAMINATION (toolRegistry/mock leak)",
+      "Task 1110 get_alerts sentBy filter": "4 fails — contamination class (registry/mock)",
+      "FIX-B-2 get_market_cap MCP tool": "3 fails — contamination class (tool registration leak)",
+      "Task 1400 DB isolation Bun.env namespace": "2 fails — contamination class (Bun.env DB_PATH leak)",
+      "Task 030 PDF Extractor": "2 fails — contamination class",
+      "Task 293 OCR cache fallback": "1 fail — contamination class",
+      "1875c record_signal_outcome dispatch": "1 fail — contamination class (toolRegistry registration leak)"
+    },
+    "baseline_absolute": {
+      "sha": "92e2c1ea",
+      "run_id": "27227014423",
+      "bun_job_id": "80396804993",
+      "native_fail": 40,
+      "native_errors": 0,
+      "fail_plus_error": 40,
+      "tests": 11802,
+      "pass": 11720,
+      "skip": 42
+    },
+    "batch3_absolute": {
+      "sha": "5c86974d",
+      "run_id": "27227648426",
+      "bun_job_id": "80399016022",
+      "native_fail": 55,
+      "native_errors": 0,
+      "fail_plus_error": 55,
+      "tests": 11802,
+      "pass": 11705,
+      "skip": 42,
+      "note": "+15 from contamination reshuffle, NOT regression. 6 genuine 1407b cured. Absolute is non-deterministic until process-isolation lands."
+    },
+    "measurement_method": "bun NATIVE summary gh run view 27227648426 --job=80399016022 --log final block ' 11705 pass / 42 skip / 55 fail / Ran 11802 tests'. Roster diff vs 92e2c1ea: comm -13/-23 on sorted unique '(fail)' markers => 22 NEW (all contamination class), 7 GONE (6 genuine 1407b + 1 flaky 1793e). 1146 isolation probe: bun test src/__tests__/1146-get-insider-transactions.test.ts => 17 pass / 0 fail ALONE.",
+    "po_action_requested": "(1) BATCH3-CI-C-MH-MARKET-HOURS-GATE-NOW-SEAM REVIEW -> DONE (genuine 6-fail cure confirmed; cite THIS signal). (2) DO NOT rebaseline ci_absolute to 55 as a regression — the genuine baseline is unchanged; the +15 is contamination variance. Record the contamination-variance finding in the sprint decision journal. (3) Await the architect Phase-2 isolation design before declaring any absolute as the stable gate number. (4) BATCH2 REVIEW->DONE + revert 1328e->BATCH5 (from prior ci-batch2 signal) can be folded into the same board write.",
+    "next": "Router: BATCH4 dev (config-drift, 8 genuine fails) in flight — continue. Architect Phase-2 isolation design (docs-only) in flight. Then BATCH5 (genuine assertion/prod). The DEFINITIVE green requires BOTH: (a) genuine batches BATCH0-5 fix all test-vs-prod divergence, (b) process-isolation/global-reset kills contamination variance. Continue /goal loop. Cluster-6 schema-drift PARKED."
+  },
+  "_processed": {
+    "fingerprint": "b1c65cb1678ede8066d68d0473be2b964ea89b94d3e83269e5a9ae849335adcd",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

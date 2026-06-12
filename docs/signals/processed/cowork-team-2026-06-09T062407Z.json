@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T06:24:07Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60
+    },
+    "last_fired_timestamp": "2026-06-09T06:23:48Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:15",
+    "leader_lock": "self_held_heartbeat_renewed",
+    "dev_head": "unknown",
+    "devq": 3,
+    "signal_backlog": 16,
+    "spawn_mode": "foreground",
+    "publish_outcome": "self_suppressed_no_publish",
+    "publish_verified": "marker_FREE_raw_probe_claimed_true_then_released",
+    "note": "chef-intraday cadence-due (119min since 04:21, no sibling collision: morning dish was 05:22 ~58min prior = intended hourly intraday cadence). Spawned unified-agent FOREGROUND subagent (20 tool_uses, 90s). CHEF self-suppressed per intraday convergence gate: zero new clusters since morning dish — banking recovery (ACB +2.97% vs yesterday -2.18%) is price-healing not new convergence; oil flat, tech hexagram unchanged, carry 1.38pp unchanged, no 2-sigma extremes. RAW VERIFY (not badge): probed published:chef-intraday:2026-06-09 -> claimed=true = marker FREE = NO publish happened = suppression report CONFIRMED truthful. Probe released ok=true (no false-block). last_fired updated to 06:23:48Z (slot RAN even though publish suppressed) so matcher does not re-spawn chef every tick on stale cadence; next intraday due ~07:23. Zero MARKET double-post. Token released ok=true. emit_pressure_state success (cycle_snapshot_promoted:true)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T06:24:07Z",
+  "_processed": {
+    "fingerprint": "d0aaa6b685d24e7e1db813474b4f8261ed83e52d5b21533f8ba65b0a2ad3e555",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

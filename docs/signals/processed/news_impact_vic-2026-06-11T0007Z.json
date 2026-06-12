@@ -1,0 +1,29 @@
+{
+  "from": "news-scout",
+  "to": "unified-agent",
+  "type": "news_impact",
+  "event_id": "chain-1781136434346-56bky7",
+  "createdAt": "2026-06-11T00:07:00Z",
+  "stocks_impacted": [
+    "VIC"
+  ],
+  "primary_stock": "VIC",
+  "sector": "real_estate",
+  "headline": "Tỷ phú Phạm Nhật Vượng lại lập kỷ lục mới",
+  "source": "cafef",
+  "sentiment": "bullish",
+  "impact_score": 4,
+  "confidence": 0.8,
+  "detail": "VIC positive billionaire news — founder wealth milestone, bullish signal for company trajectory. Single stock impact.",
+  "pillars": "M2:neutral,COC:tailwind,EPS:tailwind,POL:neutral",
+  "investment_clock_phase": "expansion",
+  "pyramid_tier": "equity",
+  "regime": "NEUTRAL",
+  "ttl_hours": 24,
+  "_processed": {
+    "fingerprint": "11bb6a12e25c162c88d4f2050a7a1357386ab0a7b6d6dd7d833437f6ce9d0766",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

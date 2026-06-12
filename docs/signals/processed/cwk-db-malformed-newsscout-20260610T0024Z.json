@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "db_integrity_breach",
+  "severity": "CRITICAL",
+  "status": "NEW",
+  "payload": {
+    "detected_by": "news-scout",
+    "detected_at": "2026-06-10T00:24:00Z",
+    "symptom": "SQLite raised 'database disk image is malformed' mid-cycle (news-scout c72). LanceDB timeout observed in same cycle.",
+    "blast_radius": "Price/market-data writes degraded; LanceDB semantic store affected. File-based signal bus (orch-state.json .signal_queue + docs/signals/*.json) UNAFFECTED — news-scout signals #5573/#5574/#5575 were posted successfully BEFORE corruption surfaced.",
+    "likely_root_cause_of": "cwk-bctc-extract-empty-24tickers-20260609 (pipeline_bug CRITICAL, already in queue) — empty 24-ticker BCTC extraction is consistent with a malformed underlying SQLite image. Recommend po correlate these two as one incident.",
+    "dispatcher_action": "ROUTE-ONLY — DB repair / PRAGMA integrity_check / restore-from-backup is dev/ops domain, NOT cowork-dispatcher lane. No cowork fix attempted. Routed file-bus side-channel because the corrupt store is DB-backed and a DB-write route could be unreliable.",
+    "recommended_owner": "ops (integrity_check + backup replay per backup_structural_smoke gate) escalated by po"
+  },
+  "priority": "high",
+  "createdAt": "2026-06-10T00:36:00Z",
+  "_processed": {
+    "fingerprint": "969d88666ea8a624cdc05e887f492d44b0897170c5840143b95cc3e2057116d6",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "from": "news-scout",
+  "to": "unified-agent",
+  "type": "news_impact",
+  "event_id": "chain-1781136435477-u6kbf7",
+  "createdAt": "2026-06-11T00:07:00Z",
+  "stocks_impacted": [
+    "VJC",
+    "HVN",
+    "ACV"
+  ],
+  "primary_stock": "VJC",
+  "sector": "aviation",
+  "headline": "Hơn 22 triệu cổ phiếu Vietjet phát hành 9 năm trước sắp được giao dịch",
+  "source": "cafef",
+  "sentiment": "neutral",
+  "impact_score": 4,
+  "confidence": 0.82,
+  "detail": "Aviation sector news — 22M VJC shares from 2017 issuance becoming tradeable (lock-up expiry event). Potential supply overhang. Affects VJC directly and broader aviation sector (HVN, ACV).",
+  "pillars": "M2:neutral,COC:neutral,EPS:headwind,POL:neutral",
+  "investment_clock_phase": "expansion",
+  "pyramid_tier": "equity",
+  "regime": "NEUTRAL",
+  "ttl_hours": 24,
+  "_processed": {
+    "fingerprint": "1f9746ea747fb820a273f3fc8f84fc31c8be5708695d9a36297ec632213de4df",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-06-09T02:50:00Z",
+  "dedup_key": "ci_p6_gate_result:507e3cee",
+  "payload": {
+    "check_id": "CI-P6-GATE-507e3cee",
+    "task_under_test": "FIX-SCHEMA-DRIFT-P6-IMPL",
+    "head_sha": "507e3cee",
+    "run_id": "27180463231",
+    "conclusion": "failure — VERIFICATION GATE FAILED (net-negative, zero healing). Code commit REVERTED by router (b9e305ae).",
+    "verification_gate": "fail+error must DROP below the 629 absolute (after-P4 e442cf11). It ROSE to 630 (+1) AND healed zero residual classes. GATE FAILED.",
+    "measurement_method": "bun NATIVE summary tally from `gh run view 27180463231 --log` ('NNN pass / NNN skip / NNN fail / NNN errors / Ran N tests' block). Native-to-native only.",
+    "after_p4_native": {
+      "run_id": "27177364641",
+      "sha": "e442cf11",
+      "pass": 10886,
+      "skip": 36,
+      "fail": 615,
+      "errors": 14,
+      "fail_plus_error": 629,
+      "tests": 11537
+    },
+    "after_p6_native": {
+      "run_id": "27180463231",
+      "sha": "507e3cee",
+      "pass": 10885,
+      "skip": 36,
+      "fail": 616,
+      "errors": 14,
+      "fail_plus_error": 630,
+      "tests": 11537
+    },
+    "delta_native": {
+      "pass": "-1",
+      "skip": "0",
+      "fail": "+1",
+      "errors": "0",
+      "fail_plus_error": "+1 WORSE",
+      "tests": "0"
+    },
+    "empirical_finding": "Direction (b) — re-init canonical schema in the afterAll of the 3 Contract-A singleton-killer files (084/089/1527) — is EMPIRICALLY INEFFECTIVE. The residual no-such-table OCCURRENCE buckets (marker-scale ~2x) are BYTE-FOR-BYTE IDENTICAL to the 629 after-P4 baseline: agent_signals 37, sbv_rates_history 19, positions 19, commodity_prices_history 19, commodity_prices 16, daily_ohlcv 5, imf_indicators 3, no-such-column foreign_net_vol 3, deep_fetch_queue 2, cron_job_runs 2, watchlist/vps_service_health/vnstock_trading_stats/signal_quality_audit/insider_transactions/evidence_scores 1 each. ZERO classes healed. The +1 native fail is within run-to-run flake noise but the change delivers no benefit.",
+    "root_cause_why_b_failed": "afterAll(closeDb(); await initDatabase()) re-runs the SAME canonical initDatabase() that NEVER CREATES the dominant residual tables (agent_signals, sbv_rates_history, positions, commodity_prices*, imf_indicators). Re-initializing an incomplete schema cannot heal tables that schema omits. The reinit also does not reliably reach the NEXT file's getDb() — bun runs files in one process but the _db module singleton + each file's own beforeAll/closeDb lifecycle means the reinit'd handle is closed again before the polluted file runs. Direction (b) was the wrong lever.",
+    "router_actions_done": "Native summary read from gh run view 27180463231 --log (10885 pass / 36 skip / 616 fail / 14 errors / Ran 11537). Residual buckets diffed vs 629 (identical). 3 test files (084/089/1527) REVERTED to pre-P6 afterAll form (commit b9e305ae, explicit pathspec, tsc CLEAN, DJ-GATE-1 inline). apps/ now byte-identical to e442cf11 (629 native baseline) — git-proven empty diff `git diff e442cf11 HEAD -- apps/`. Pushed 507e3cee->b9e305ae. Dev notebook + decision journal from 507e3cee RETAINED (not reverted). P6 impl lock RELEASED.",
+    "po_action_requested": "1) Flip signal_queue/board task FIX-SCHEMA-DRIFT-P6-IMPL REVIEW/IN_PROGRESS -> REWORK (gate failed, reverted). 2) FU-SCHEMA-DRIFT-P6 architect spike remains DONE — only its chosen direction (b) was disproven empirically (same as P5 pattern: spike sound, fix-hypothesis wrong). 3) Re-route to ARCHITECT for a follow-up spike (5th touch of CI-test-schema surface — recurring-bug). NEW DIRECTION REQUIRED, all prior levers exhausted: self-heal in production getDb() (P5, +6), run-order test-isolation/afterAll-reinit (P6, +1/zero-heal), per-file inline-DDL patch (P4, only reaches per-file-isolation failures not cross-file singleton), mechanized one-size init injection (9454baad, +219). The ONLY untried lever that targets the actual root cause: ADD the missing CREATE TABLE IF NOT EXISTS statements for the dominant residual tables (agent_signals, sbv_rates_history, positions, commodity_prices, commodity_prices_history, imf_indicators, + the long tail) INTO canonical initDatabase() / its init slices, so the shared singleton DB actually contains them. This is additive, IF NOT EXISTS, low production risk, and is exactly the 'Contract-A canonical initDatabase() to CREATE these tables' recommendation the P4 gate signal already flagged. Architect must verify each missing table's authoritative DDL (from its owning production module, not invented) before adding.",
+    "next_gate": "After architect re-spike (add-missing-tables-to-canonical direction) + dev re-impl: same native-summary method vs the 629 absolute. fail+error must DROP, and the agent_signals/sbv_rates_history/positions/commodity_prices* residual buckets must shrink toward zero."
+  },
+  "_processed": {
+    "fingerprint": "6c9f791db8575402918f8910b75a0afe2139df4fcd5e11d5d6b33de32593b784",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-09T16:09:36Z",
+  "payload": {
+    "file": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-architect.md",
+    "line_count": 625,
+    "cap": 600,
+    "class": "sprint-decision-journal",
+    "overage": 25,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "9a9125f5db8daf13581368231d3925288cc678e1de3099006fd712278048cf29",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

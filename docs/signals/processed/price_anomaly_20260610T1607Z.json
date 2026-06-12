@@ -1,0 +1,88 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-06-10T16:07:40.000Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "NVL",
+      "price": 13200,
+      "daily_change_pct": -0.38,
+      "yoy_change_pct": null,
+      "volume": 10424500,
+      "vs_avg_pct": 74,
+      "rsi": null,
+      "sentiment": "NVL mentioned in 2 articles — Cổ phiếu Novaland bất ngờ có biến",
+      "insider_activity": "no activity",
+      "brief_action": "Watch",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "recovery within tight range; sector stabilization pattern"
+    },
+    {
+      "code": "D2D",
+      "price": 32400,
+      "daily_change_pct": 0.93,
+      "yoy_change_pct": null,
+      "volume": 23000,
+      "vs_avg_pct": 338,
+      "rsi": null,
+      "sentiment": "no recent news mentions",
+      "insider_activity": "no activity",
+      "brief_action": "Watch",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "volume spike 3.4x average (2300 vs avg 680)"
+    },
+    {
+      "code": "TCH",
+      "price": 15200,
+      "daily_change_pct": 2.7,
+      "yoy_change_pct": null,
+      "volume": 785740,
+      "vs_avg_pct": 325,
+      "rsi": null,
+      "sentiment": "real estate sector consolidation",
+      "insider_activity": "foreign net sell -97030 shares",
+      "brief_action": "Reduce",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "volume spike 3.3x average (785740 vs avg 241460)"
+    },
+    {
+      "code": "DHG",
+      "price": 93300,
+      "daily_change_pct": -0.11,
+      "yoy_change_pct": null,
+      "volume": 970000,
+      "vs_avg_pct": 243,
+      "rsi": null,
+      "sentiment": "pharma sector neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Hold",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "volume spike 2.4x average (970 vs avg 400)"
+    },
+    {
+      "code": "VCB",
+      "price": 61700,
+      "daily_change_pct": 0.33,
+      "yoy_change_pct": null,
+      "volume": 2309200,
+      "vs_avg_pct": 90,
+      "rsi": null,
+      "sentiment": "banking sector stable; ACB insider: female educator accumulating 102M shares",
+      "insider_activity": "no activity",
+      "brief_action": "Hold",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    }
+  ],
+  "_processed": {
+    "fingerprint": "1e42a753bd2ac38b83b9f5e35f3c8328a7a4ba3b0511acd5bce64b06a678be38",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

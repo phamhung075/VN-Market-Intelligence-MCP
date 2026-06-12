@@ -1,0 +1,56 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-11T02:21:16Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 6,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 240
+    },
+    "last_fired_timestamp": "2026-06-11T02:22:00Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "leader_lock": "UNCONFIRMED",
+    "leadership_unconfirmed": true,
+    "signal_backlog": 0,
+    "note": "02:15 UTC FIRE (2026-06-11) — chef-intraday, the FIRST market-hours PUBLISHER slot of the UTC day. unified-agent CHEF, cron 13 2-8 * * 1-5 (VN weekday intraday session), policy_id chef-intraday, last_fired 2026-06-10T08:29:40Z (240-min cadence edge, due_reason cadence) -> intraday dish cycle; fired 02:21 UTC = 09:21 ICT = VN morning session OPEN (Thu 2026-06-11, non-holiday trading day) -> calendar_status=open. PUBLISHER path: spawned BACKGROUND agentId a75ec1aa1bb9a3a42 per BGFAN-1; REQUIRES RAW-verify-on-completion (by content+id>baseline, NOT from_agent) — chef publishes a MARKET dish; the publish marker is publisher-owned (inside chef flow), dispatcher does NOT set publish markers but DOES RAW-verify the actual MARKET post on completion and completes the publish itself if chef fabricated/false-failed (memory feedback_chef_fabricated_publish / feedback_chef_false_parser_failure / feedback_chef_market_post_attribution). NOT spawned as dry-run (feedback_chef_dryrun_publishes). Per-work-item token cowork-slot:chef-intraday claimed(true)->released(ok=true) try/finally. At THIS tick the dispatcher commits ONLY slot bookkeeping (cowork-schedule.json last_fired chef-intraday + this telemetry), pathspec-scoped; the MARKET publish is chef-owned + RAW-verified on completion. LEADER LOCK DEGRADED: Step 0b task_heartbeat(cowork-leader) returned ok:false (21st consecutive since the 2026-06-10 21:50 mcp-server event; lease orphaned, renew-only, no reachable recreate path — see committed escalations cowork-leader-lease-orphan-20260610T220000Z.json + cowork-leader-lease-orphan-reescalate-20260611T000000Z.json to:po, root F-OOM-MCP-SERVER). Dispatcher proceeds SINGLE-DISPATCHER (single deployment => no peer => no split-brain) flagging leadership_unconfirmed=true; re-escalation throttled at-most-once-per-UTC-day (today's already spent at 00:06). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true (FIRE). Step 0a drain: signal_queue tolerant filter -> 0 NEW, 0 cowork-actionable, 0 to:po. STANDING (po/dev own, dispatcher leaves NEW): CTG extraction CRITICAL (c042 batch-block, 28-ticker release blocked, escalation bctc-analyst-20260611T001500Z.json — pipeline fix must deploy before bctc-analyst slot-1 at 15:00 UTC); leader-lease orphan. CONTEXT: this is the 2026-06-11 UTC trading day intraday open. Next gatherer cadence edge 04:00 UTC (news-scout-offhours + market-watcher-offhours). Next chef-intraday cadence edge ~06:13 UTC (240-min). Next bctc-analyst slot-1 15:00 UTC.",
+    "spawned_agent_ids": {
+      "chef-intraday": "a75ec1aa1bb9a3a42"
+    }
+  },
+  "priority": "high",
+  "createdAt": "2026-06-11T02:22:00Z",
+  "_processed": {
+    "fingerprint": "6f2a549e37c25efd3ae85d96396518f36f8b134d31d7c26d61b09aca8c48262b",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T09:06:39Z",
+    "matched_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "refine-bctc-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-1": null
+    },
+    "last_fired_timestamp": "2026-06-09T09:06:39Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "09:00",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 17,
+    "note": "Daily 09:00 BCTC refine slot fired (cron 0 9 * * *, policy bctc-offmarket resolved to cron/no-cadence-gate, last fired yesterday 2026-06-08T09:06:03Z). refine_bctc_md spawned BACKGROUND (BGFAN-1, agentId af5746717c80e0361) — processor not publisher: calls get_bctc_pending_refine(limit:1), processes OLDEST pending row (≤7-window CHUNK), skips cover-letter PDFs (CV_CBTT / TICKER_YEAR_Qn page_count<=4), pushes refined units to DB. Does NOT publish MARKET → no publish-marker gate, no double-post risk. Per-work-item token cowork-slot:refine-bctc-slot-1 claimed(true)->released(ok=true) try/finally. Leader lock self-held (heartbeat ok, renewed +1800s). last_fired updated 09:06:39Z on spawn-launch. emit_pressure_state success (adaptive, pressure-state ~8min fresh at match), cycle_snapshot_promoted=false. Step 0a: 5 NEW signal_queue rows all to:po (4 system-auditor db_integrity_breach/system-issue + cwk-chef-eod-marker-bug flow_bug from prior cycle) — dev-team domain, left NEW for po triage, none cowork-actionable this tick. Completion arrives via async notification.",
+    "spawned_agent_ids": {
+      "refine-bctc-slot-1": "af5746717c80e0361"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T09:06:46Z",
+  "_processed": {
+    "fingerprint": "835aa1615235c8e87bd21f5dd837582ed480d94615dc23f503e896e64ff5fe7d",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

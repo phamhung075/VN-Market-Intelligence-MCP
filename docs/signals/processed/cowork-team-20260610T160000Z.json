@@ -1,0 +1,69 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T16:05:14Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-eod"
+    ],
+    "deduped_slots": [
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240,
+      "market-watcher-eod": 240
+    },
+    "last_fired_timestamp": "2026-06-10T16:07:00Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 8,
+    "note": "EOD gatherer window (16:00 UTC weekday). THREE slots matched but only TWO won: market-watcher appeared in BOTH market-watcher-offhours (cron 0 */4, gatherer-standard cadence 240) AND market-watcher-eod (cron 0 16 * * 1-5) — this is the EXPECTED structural 16:00 weekday overlap, NOT schema drift, so the Step 4b collision WARN is exempt (R3 intentional multi-slot; spec exempts intentional overlap from the WORK warning). DEDUP: same agent + same flow + same notebook (market-watcher.md, coverage-state.json full-overwrite) would race if spawned twice, so market-watcher spawned ONCE via the EOD slot (canonical at 16:00 — runs eod.md end-of-day path which is the superset of the offhours cadence gather AND owns the gatherer-notebook batch-commit window). market-watcher-offhours marked fired (last_fired bumped) but NOT spawned — covered by the EOD run. Both won slots are GATHERER path (NOT publishers) — spawned BACKGROUND per BGFAN-1: no RAW-verify, no publish gate, no blocking. news-scout agentId a0a8510e609978b54 (fetch news, sentiment, impact chains, legal/crisis -> notebook full-overwrite). market-watcher agentId afd6097feb767f220 (EOD: prices/anomalies/macro/supply-chain/climate/energy + eod.md digest -> notebook full-overwrite + coverage-state.json). Gatherer notebooks (news-scout.md, market-watcher.md, coverage-state.json) are the DEFERRED-by-design batch — they commit at THIS 16:00 EOD window via dispatcher-completes-commit AFTER the background market-watcher EOD agent completes (cowork agents lack Bash). At THIS tick the dispatcher commits ONLY slot bookkeeping (cowork-schedule.json last_fired x3 + this telemetry), pathspec-scoped; the gatherer-notebook EOD batch-commit happens on the completion notification. Per-work-item tokens cowork-slot:news-scout-offhours + cowork-slot:market-watcher-eod both claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok:true renewed +1800s expires 1781109382). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true (EOD cycle). Step 0a: 8 NEW signal_queue rows ALL to:po (1 sau-d4 system_issue LOW + 3 db_integrity_breach WARN sau-c283-c08/c06/c04 + 1 sau-20260609T033800Z CRITICAL + 1 cwk-chef-eod-marker flow_bug HIGH + 1 cwk-bctc-extract-empty pipeline_bug CRITICAL + 1 cwk-chef-false-parser-failure flow_bug HIGH) -> 0 cowork-actionable, left NEW for po triage. No new flow_bug this cycle. CONTEXT: VN market closed for the day; both CHEF crons exhausted (intraday 13 2-8 done 08:13; eod 45 8 done 08:45); refine-bctc-slot-1 fired 09:00 + refine-bctc-slot-2 fired 14:00 (report 173038f2 PARTIAL 14/62, resumes unit-0014); gatherers prior fire 12:00; bctc-analyst-slot-1 fired 15:00 (cycle c039). Next CHEF chef-morning tomorrow 05:15. Next bctc-analyst slot edge 18:00 UTC (c040).",
+    "spawned_agent_ids": {
+      "news-scout-offhours": "a0a8510e609978b54",
+      "market-watcher-eod": "afd6097feb767f220"
+    }
+  },
+  "priority": "high",
+  "createdAt": "2026-06-10T16:07:00Z",
+  "_processed": {
+    "fingerprint": "571a7f6d3bf09017c6c6bc14e0a987db9213ae398abe81802b7ad93ed0c6c6ee",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

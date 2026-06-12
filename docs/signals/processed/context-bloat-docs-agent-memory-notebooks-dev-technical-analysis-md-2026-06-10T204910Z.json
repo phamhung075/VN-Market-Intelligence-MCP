@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-10T20:49:10Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/dev-technical-analysis.md",
+    "line_count": 202,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 2,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "854807fb2c5f0fd609bb547f031cf2adc6045315d16ae06694a029bf76d03e8b",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

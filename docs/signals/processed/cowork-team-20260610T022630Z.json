@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T02:26:30Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60
+    },
+    "last_fired_timestamp": "2026-06-10T02:26:18Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 6,
+    "note": "Intraday CHEF dish (cron 13 2-8 * * 1-5, policy chef-intraday cadence 60min, last intraday 2026-06-09T07:22:18Z ~19h ago = due). unified-agent spawned FOREGROUND (BGFAN-1 PUBLISHER path, agentId a9f9001816607643b) — walks TNB 6-layer + publishes synthesized dish to MARKET. RAW-VERIFY PASSED: get_unreviewed_market_messages confirms MARKET msg id=698 sent_at 2026-06-10 02:22:32, plain-VN 4-paragraph prose, content matches dish (gold 4210 risk-off / USD-VND 26130 crossing 25000 / banking ACB+BID accum / RE VHM-VIC-NVL carry-split / oil GAS-PLX neutral / VinFast 1B USD -> FPT EV-spillover / EY 8.2pct vs deposit 5pct / watch 26500). SINGLE publish, NOT fabricated, zero double-post (AC-6 satisfied). 4 clusters qualified, conviction floor MEDIUM (macro_hexagram unavailable 501 -> degraded-dish floor applied, cap medium). DATA-INTEGRITY: dispatcher pre-warned agent of news-scout 00:24Z 'database disk image is malformed'; agent reports all market-data tools returned fresh non-empty values at 02:20 — corruption did NOT block this cycle (likely transient or isolated to a non-CHEF store; routed separately to po). Per-work-item token cowork-slot:chef-intraday claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok, renewed +1800s). last_fired updated 02:26:18Z. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Dispatcher-completes-commit: unified-agent.md notebook (+16L) committed 56b85393 under commit-mutex, pathspec-scoped. Step 0a: 6 NEW signal_queue rows all to:po (3 db_integrity_breach WARN + 1 system-issue CRITICAL + 1 chef-eod-marker flow_bug HIGH + 1 bctc-extract-empty pipeline_bug CRITICAL) — left NEW for po triage, none cowork-actionable. Next intraday CHEF: 03:13 UTC.",
+    "spawned_agent_ids": {
+      "chef-intraday": "a9f9001816607643b"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-10T02:26:30Z",
+  "_processed": {
+    "fingerprint": "ce2ecdfcb6516a7cfc6bb0158c73f2097364eed0d71ef53feb33b3090baa13e8",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

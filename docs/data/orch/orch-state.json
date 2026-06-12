@@ -9268,8 +9268,8 @@
       "created_at": "2026-06-10T19:30:04.668103Z",
       "acknowledged": false
     },
-    "_updated_at": "2026-06-11T03:00:00.504Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-12T19:26:33Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "sau-d4-202606110300",
@@ -9279,10 +9279,11 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
-    ]
+    ],
+    "archive": []
   },
   "sprint_goal": {
     "_updated_at": "2026-06-12T12:02:22Z",

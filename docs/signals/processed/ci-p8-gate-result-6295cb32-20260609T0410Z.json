@@ -1,0 +1,58 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-06-09T04:10:00Z",
+  "dedup_key": "ci_p8_gate_result:6295cb32",
+  "payload": {
+    "check_id": "CI-P8-GATE-6295cb32",
+    "task_under_test": "FIX-SCHEMA-DRIFT-P8-IMPL",
+    "head_sha": "6295cb32",
+    "run_id": "27183086425",
+    "bun_test_job_id": "80246190261",
+    "conclusion": "failure — VERIFICATION GATE FAILED (+2, P5 pattern reproduced). Code commit REVERTED by router (880ffca6, apps/ byte-identical to 2a6044b1 = 629 baseline). Docs/journal/orch-state retained.",
+    "verification_gate": "native fail+error must DROP below the 629 absolute (after-P4 e442cf11). It ROSE to 631 (+2). GATE FAILED.",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80246190261 --log` ('NNN pass / NNN skip / NNN fail / NNN errors / Ran N tests' block). Native-to-native only.",
+    "after_p4_native": {
+      "run_id": "27177364641",
+      "sha": "e442cf11",
+      "pass": 10886,
+      "skip": 36,
+      "fail": 615,
+      "errors": 14,
+      "fail_plus_error": 629,
+      "tests": 11537
+    },
+    "after_p8_native": {
+      "run_id": "27183086425",
+      "sha": "6295cb32",
+      "pass": 10885,
+      "skip": 36,
+      "fail": 617,
+      "errors": 14,
+      "fail_plus_error": 631,
+      "tests": 11538
+    },
+    "delta_native": {
+      "pass": "-1",
+      "skip": "0",
+      "fail": "+2",
+      "errors": "0",
+      "fail_plus_error": "+2 WORSE",
+      "tests": "+1"
+    },
+    "empirical_finding": "P8 reproduced the P5 result almost exactly. Residual no-such-table OCCURRENCE buckets (marker-scale ~2x) vs the 629 baseline: HEALED -> sbv_rates_history 19->0, commodity_prices_history 19->0, imf_indicators 3->0, vps_service_health 1->0, daily_ohlcv 5->4 (same 4+1 classes P5 healed). UNCHANGED -> agent_signals 37, positions 19, commodity_prices 16, foreign_net_vol(no-such-column) 3, deep_fetch_queue 2, cron_job_runs 2, watchlist/vnstock_trading_stats/signal_quality_audit/insider_transactions/evidence_scores 1 each. NEW REGRESSION -> 'no such column: created_at' 0->3 (IDENTICAL to P5's +3). The 3 DDL DEFAULT reconciles (rag_analyses/agent_feedback/signal_quality_audit) did NOT prevent the created_at x3 regression.",
+    "root_cause_why_p8_failed": "The architect's diagnosis was WRONG. 'no such column: created_at' is a column-EXISTENCE drift, NOT a missing-DEFAULT problem. A missing DEFAULT on a NOT NULL column produces a CONSTRAINT error ('NOT NULL constraint failed') on INSERT, not 'no such column' on SELECT/query. The created_at x3 errors mean some table is being CREATED (and winning the IF NOT EXISTS race on the fresh :memory: singleton) by a DDL that OMITS the created_at column entirely — a competing/drifted CREATE TABLE elsewhere (production sibling slice, a P4 per-file inline-DDL fixture, or a test helper). Adding DEFAULT to the canonical DDL cannot help when a column-less DDL creates the table first. The self-heal DIRECTION is sound and reproducibly heals the table-MISSING classes (P5 and P8 both healed the same 4); it is the created_at column-EXISTENCE collision that nets it negative.",
+    "router_actions_done": "Native summary read from gh run view --job=80246190261 --log (10885 pass / 36 skip / 617 fail / 14 errors / Ran 11538). Residual buckets diffed vs 629 (created_at 0->3 NEW; 4 classes healed). 4 P8 code files (schema-news.ts, schema-system.ts, schema.ts, setup.ts) REVERTED to 2a6044b1 in commit 880ffca6 (explicit pathspec, tsc CLEAN local + pre-push, DJ-GATE-1 dev-team-router inline). apps/ proven byte-identical to 2a6044b1 (629 baseline) via empty `git diff HEAD 2a6044b1 -- apps/`. Pushed 6295cb32->880ffca6. Architect P8 brief (b051392d), dev P8 notebook + decision journal RETAINED (docs). P8-IMPL lock RELEASED. NOTE: cowork dispatcher commit 31c502e1 (04:06 tick, docs-only, apps/ untouched) held local behind next code push.",
+    "po_action_requested": "1) Flip signal_queue/board FIX-SCHEMA-DRIFT-P8-IMPL REVIEW -> REWORK (gate failed, reverted). 2) FU-SCHEMA-DRIFT-P8 architect spike remains DONE — destroyer/self-heal direction sound; only the created_at root-cause hypothesis (missing-DEFAULT) was disproven empirically, same spike-sound/fix-wrong pattern as P5/P6/P7. 3) STRATEGIC DECISION REQUIRED (6th touch, 4 consecutive fix-hypotheses disproven P5/P6/P7/P8). Router recommends PO choose ONE: (A) 7th touch with a DIAGNOSTIC-FIRST mandate — architect must REPRODUCE the created_at x3 locally (run ONLY the 1-3 specific test files that emit 'no such column: created_at' — safe, NOT the full suite) to capture the EXACT 3 table names, then `grep -rn 'CREATE TABLE.*<tablename>'` across apps/ (production slices + P4 per-file inline DDL + test helpers/fixtures) to find the COLUMN-LESS competing DDL that wins the IF NOT EXISTS race, reconcile ALL definitions of those 3 tables to a single column-set, THEN re-apply self-heal. NO MORE GUESSING from DEFAULT-presence. OR (B) PARK the schema-drift cluster as best-effort-exhausted (document 629 as the schema-drift floor; self-heal nets ~breakeven so this is NOT the highest-ROI cluster) and PIVOT the CI-RED-RECONCILE sprint to PROFILE the full 629: categorize ALL failure clusters by root-cause + native count, then attack the largest/cheapest cluster first. KEY CONTEXT for the /goal ci/cd-pass objective: even a perfect schema-drift fix removes only ~tens of the 629 native fails; CI cannot reach 0 fail by iterating this one cluster — the sprint needs a full-corpus failure taxonomy to make real progress toward green.",
+    "exhausted_levers": "P4 per-file inline-DDL (-5, KEPT e442cf11) | P5 production getDb() self-heal (+6, created_at x3, reverted d1aa19c5) | P6 afterAll non-destroyers 084/089/1527 (+1 zero-heal, reverted b9e305ae) | P7 afterAll real destroyers (+1 zero-heal, reverted 2a6044b1) | P8 DDL-DEFAULT reconcile + self-heal re-apply (+2, created_at x3 PERSISTS, reverted 880ffca6) | 9454baad mechanized one-size init (+219, reverted).",
+    "next_gate": "If PO picks (A): after architect diagnostic re-spike + dev re-impl, same native-summary method vs 629 — fail+error must DROP and created_at must reach 0. If PO picks (B): new gate = full-corpus failure taxonomy delivered (cluster -> root-cause -> native-count), no code change to gate."
+  },
+  "_processed": {
+    "fingerprint": "1b900a6333a66e358eaf940036175d69057ff619cf594eea98c69f3204ac9e4d",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

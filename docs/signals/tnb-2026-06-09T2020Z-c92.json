@@ -1,9 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "audit-handoff",
-  "payload": "docs/handoffs/tnb-audit-latest.md",
-  "priority": "high",
-  "createdAt": "2026-06-09T20:20:00Z",
-  "summary": "c92 NEEDS_ATTENTION | Direction: STABLE | NEW: F-OOM-MCP-SERVER HIGH (mcp-server 97.75% OOM, RestartCount=2, likely root cause of stale gateway sessions) | F-SUNDAY-SCHEDULER-FIRE CLOSED (c91 false positive) | F-MORNING-NB-MISSING 3rd+ cycle | BCTC CTG cycle 29+ blocked | 18th consecutive F9 business context absent | Chef pipeline HEALTHY (guaranteed_ok=TRUE) | AC-1 auto-cure holding 6 cycles"
-}

@@ -1,0 +1,62 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T20:06:09Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30
+    },
+    "last_fired_timestamp": "2026-06-09T20:06:09Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 76,
+    "note": "4-hourly off-hours gatherer fan-out (cron 0 */4 * * *, policy gatherer-standard, 20:00 nominal tick). Both slots last fired 16:08:59Z (~4h ago) = on-cadence due (cadence_minutes 30, well past). Spawned BACKGROUND parallel in one block (BGFAN-1): news-scout agentId a7265957c3da69307, market-watcher agentId ace767bfcf8371f5f. Gatherers write own notebooks + emit signals; they do NOT publish MARKET -> no publish-marker verification applies (no double-post risk). Per-work-item tokens cowork-slot:news-scout-offhours + cowork-slot:market-watcher-offhours both claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok=true, renewed +1800s). last_fired updated 20:06:09Z both. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Pressure-state fresh (~10min at match, <20min window -> no legacy fallback). Step 0a: 6 NEW signal_queue rows all to:po (3 sau db_integrity_breach WARN + 1 system-issue CRITICAL orch-clobber + cwk-chef-eod-marker-bug HIGH + cwk-bctc-extract-empty-24tickers CRITICAL) -> dev-team domain, left NEW for po triage, none cowork-actionable this tick. Completion arrives via async notification. Next 4-hourly gather at 00:00 UTC.",
+    "spawned_agent_ids": {
+      "news-scout-offhours": "a7265957c3da69307",
+      "market-watcher-offhours": "ace767bfcf8371f5f"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T20:06:13Z",
+  "_processed": {
+    "fingerprint": "b0b14753a74438ca466b466f0227bd248861deffc95ffcc487f241e62c0de776",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

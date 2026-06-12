@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T05:06:00Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-sentiment": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": 30
+    },
+    "last_fired_timestamp": "2026-06-10T05:05:47Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:00",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 7,
+    "note": "Daily 05:00 news-scout-sentiment slot fired (cron 0 5 * * 1-5, policy gatherer-standard, last fired 2026-06-09T05:08:56Z ~24h ago = due). news-scout spawned BACKGROUND (BGFAN-1 GATHERER path, agentId a353b5eb843332677) — fetch news + sentiment + impact chains + legal/crisis signals -> writes notebook + posts signals to queue. NOT a MARKET publisher -> no send_telegram MARKET, no publish-marker gate, no RAW-verify, no double-post risk (AC-6 N/A). DATA-INTEGRITY: dispatcher pre-warned agent of 00:24Z 'database disk image is malformed'; 04:05 gatherer pair + 04:23 chef all confirmed DB write path healthy since. Agent instructed: if malformed recurs, post signals to file-bus side-channel + route db_integrity_breach to po. Per-work-item token cowork-slot:news-scout-sentiment claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok:true, renewed +1800s expires 1781069718). last_fired updated 05:05:47Z. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Step 0a: 7 NEW signal_queue rows all to:po (1 sau-d4-202606100300 system_issue LOW + 3 db_integrity_breach WARN sau-c283-c08/c06/c04 + 1 sau-20260609T033800Z system-issue CRITICAL + 1 cwk-chef-eod-marker flow_bug HIGH + 1 cwk-bctc-extract-empty pipeline_bug CRITICAL) — left NEW for po triage, none cowork-actionable. Completion arrives via async notification; dispatcher-completes-commit for notebook + coverage-state at completion. Next chef-intraday: 05:13 UTC.",
+    "spawned_agent_ids": {
+      "news-scout-sentiment": "a353b5eb843332677"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-10T05:06:00Z",
+  "_processed": {
+    "fingerprint": "339580b11232a836bd4adbe87394ce2bd3f74382576d6a51a1c886bd8f684335",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

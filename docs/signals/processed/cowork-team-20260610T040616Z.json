@@ -1,0 +1,62 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T04:06:16Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30
+    },
+    "last_fired_timestamp": "2026-06-10T04:05:52Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:00",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 7,
+    "note": "Offhours gatherer pair fired (cron 0 */4 * * *, policy gatherer-standard, last fired 2026-06-10T00:20:00Z catch-up ~3h45m ago = due). Both spawned BACKGROUND (BGFAN-1 GATHERER path): news-scout agentId ac1bcad59e0ac970f, market-watcher agentId a29e8afd10e42c734. Gatherers are NOT MARKET publishers -> no publish-marker gate, no RAW-verify, no double-post risk (AC-6 N/A). news-scout: fetch news + sentiment + impact chains + legal/crisis signals -> writes notebook + posts signals to queue. market-watcher: track prices + anomaly detection + macro/supply-chain/climate/energy risk -> writes notebook. Per-work-item tokens cowork-slot:news-scout-offhours + cowork-slot:market-watcher-offhours both claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok, renewed +1800s). last_fired updated 04:05:52Z for both slots. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Step 0a: 7 NEW signal_queue rows all to:po (1 sau-d4 system_issue LOW + 3 db_integrity_breach WARN + 1 system-issue CRITICAL + 1 chef-eod-marker flow_bug HIGH + 1 bctc-extract-empty pipeline_bug CRITICAL) — left NEW for po triage, none cowork-actionable. DATA-INTEGRITY WATCH: prior news-scout cycle (00:24Z) hit 'database disk image is malformed' — this fresh news-scout cycle will re-probe DB health; if corruption persists, signals may fail to post (file-bus unaffected). Completion arrives via async notification; dispatcher-completes-commit for notebook outputs at completion. Next chef-intraday: 04:13 UTC.",
+    "spawned_agent_ids": {
+      "news-scout-offhours": "ac1bcad59e0ac970f",
+      "market-watcher-offhours": "a29e8afd10e42c734"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-10T04:06:16Z",
+  "_processed": {
+    "fingerprint": "5c00cb7bcc77e570a77ce27f509a7fb8f274ded0fee9b64a47a845c54c4a9f83",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

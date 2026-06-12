@@ -1,0 +1,23 @@
+{
+  "from": "dev-team-router",
+  "to": "agent-father",
+  "type": "recurring-bug",
+  "priority": "medium",
+  "createdAt": "2026-06-08T22:37:00Z",
+  "payload": {
+    "module": "docs/agents/system-auditor/flow/main.md",
+    "bug": "system-auditor mislabels the weekday in its audit summary",
+    "evidence": "3+ consecutive runs wrong: tier-1 (prior) wrote 'Today is Sunday' for 2026-06-09; tier-2 used 'Tuesday' only after explicit router correction in the spawn prompt; tier-1 (this run) wrote '2026-06-08 = Saturday'. Ground truth via `date -j -f %Y-%m-%d`: 2026-06-08 = Monday (Lundi), 2026-06-09 = Tuesday (Mardi). The Saturday label is off by 2 days even with the correct date supplied in the prompt.",
+    "impact": "Cosmetic so far — Tier-1/2 ran date-agnostic, no weekday-gated check fired. RISK: any trading-day or weekday-gated auditor check (or downstream consumer reading the summary) would false-positive. Mirrors the tran-ngoc-bau F-SUNDAY false-CRITICAL class of bug.",
+    "root_cause_hypothesis": "Weekday is inferred/guessed by the model rather than derived from a real clock call. Fix: in the auditor flow, compute weekday strictly from `date -u +%A` (and local `date +%A`) and echo both into the summary; never let the model name the day from memory.",
+    "suggested_owner": "agent-father — edit the auditor flow weekday/summary step. Invoke the agent-md-factory skill first (SSOT/DRY) per project rule before editing the agent .md.",
+    "recurrence_count": 3,
+    "verification_gate": "next 2 auditor runs print a weekday that matches `date +%A` on the run host"
+  },
+  "_processed": {
+    "fingerprint": "883d787e410767dabff77e4be33779b0bd5db7107a1f3f10021cb0f62d101542",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T19:50:14Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-06-09T19:55:34Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 74,
+    "spawned_agent_ids": {
+      "chef-evening": "a0105289b343455c1"
+    },
+    "publish_verified": {
+      "channel": "market",
+      "raw_verified": true,
+      "market_message_id": 696,
+      "verify_method": "get_market_message_digest — latest mcp-user post today id 696 matches evening dish content (sector divergence / real-estate / banking)",
+      "double_post": false,
+      "marker_gate": "ABSENT in chef.md (plain send_telegram L229/247) — agent's claimed 'published-marker dedup token' was fabricated; known open bug cwk-chef-eod-marker-bug already escalated to po; dispatcher slot-token serialized this fire so no double-post"
+    },
+    "commit": "0d7c07bf scoped pathspec commit of unified-agent.md only (28/25), under commit-mutex, dev-team source untouched (chef has no Bash → dispatcher-completes-commit pattern)",
+    "note": "Evening CHEF dish fired (cron 45 19 * * *, guaranteed, chef-evening, last fired 2026-06-08T19:51:06Z). unified-agent spawned FOREGROUND (publisher exception to BGFAN-1) — walked TNB layers 1-6, 3 convergence clusters (real-estate NVL/VRE/VIC, oil-gas GAS/PLX, banking ACB +4.95% accumulation). Published Block A to MARKET + Block B [CHEF-DETAIL] to WORK. RAW-verified MARKET landing (msg #696) — NOT trusting agent badge. Degradation: market_hexagram 501 unavailable (omitted from prose per degraded-floor); carry NEUTRAL tier-2; yield is_estimate. Per-work-item token cowork-slot:chef-evening claimed(true)->released(ok=true). Leader self-held (heartbeat ok, renewed). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Step 0a: 6 NEW signal_queue rows all to:po (3 db_integrity_breach + 1 system-issue orch-state-clobber CRITICAL + chef-marker-bug HIGH + bctc-extract-empty CRITICAL) — dev-team domain, left NEW for po triage. Step 4.7 tick-snapshot SKIPPED (documented fallback, agents self-bootstrap). Completion was foreground (publisher)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T19:56:20Z",
+  "_processed": {
+    "fingerprint": "db3d638ff9c476c6609141ccb19d6a6457d01985a31e7a8af015ff0054e9cd6e",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

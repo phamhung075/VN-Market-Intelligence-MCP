@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260609T052246Z",
+    "matched_slots": [
+      "chef-morning"
+    ],
+    "won_slots": [
+      "chef-morning"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "spawn_mode": "foreground",
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [
+      "chef-intraday"
+    ],
+    "due_reasons": {
+      "chef-morning": "cron"
+    },
+    "cadence_minutes": {
+      "chef-morning": null
+    },
+    "last_fired_timestamp": "2026-06-09T05:22:31Z",
+    "last_fired_slots": [
+      "chef-morning"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:15",
+    "leader_lock": "self_held_rebind",
+    "publish_verified": "marker_held_by_unified-agent_ttl100800",
+    "signal_backlog": 16,
+    "note": "chef-morning guaranteed dish; spawned FOREGROUND (orphan-avoidance for guaranteed publish slot after prior background orphan); MARKET publish verified via published-marker raw probe (held by unified-agent), not badge; chef-intraday cadence-skipped (elapsed 3259s<3600s); 4 NEW po-addressed signals left for dev-team drain"
+  },
+  "priority": "low",
+  "createdAt": "20260609T052246Z",
+  "_processed": {
+    "fingerprint": "2d9205912c07c1c9f4f49ea3cb892b015595907d5e9f59f8750cd8d6c310c574",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

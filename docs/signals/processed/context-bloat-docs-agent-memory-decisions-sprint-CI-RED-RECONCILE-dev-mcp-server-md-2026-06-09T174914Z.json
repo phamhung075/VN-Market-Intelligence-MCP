@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-09T17:49:14Z",
+  "payload": {
+    "file": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-mcp-server.md",
+    "line_count": 795,
+    "cap": 600,
+    "class": "sprint-decision-journal",
+    "overage": 195,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "6762dabe219afd95a1164051db167c2e02630447bad6b39f67b3429912417347",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

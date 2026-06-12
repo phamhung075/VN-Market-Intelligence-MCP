@@ -1,0 +1,70 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "cc": "architect",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T17:47:00Z",
+  "dedup_key": "ci_batch1_gate_result:54b09df2",
+  "payload": {
+    "check_id": "CI-BATCH1-GATE-54b09df2",
+    "task_under_test": "BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE",
+    "verdict": "GATE PASSED — CLEAN ABSOLUTE MOVER. The 3 transport-hang test files (MSG-1-market-foreign-flow, RAPID-A-get-company-profile-tool, RAPID-H-insider-lookback) were rewritten to drop MCP InMemoryTransport+Client.callTool and invoke _registeredTools directly (commit 54b09df2). All 3 victims now show ZERO (fail) markers in the CI native log. The absolute moved 55 -> 45 (-10), with pass 11706 -> 11716 (+10) — a perfectly additive move (fail-delta == pass-delta), confirming an additive direct-invocation rewrite rather than a mock.module ESM-cache contamination reshuffle. Route BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE REVIEW -> DONE.",
+    "absolute_moved_cleanly": "native_fail 55 -> 45 (-10), pass 11706 -> 11716 (+10), errors 0 (no errors line in final summary block), tests/skip unchanged (11803/42). Additive clean mover class (like Task 1173 transport REWRITE and Task 1282a now-seam) — fail-delta exactly matches pass-delta.",
+    "projected_vs_actual": "Projected -15 (transport-hang class est.); actual -10. The 3 rewritten files contributed exactly 10 of the 55 fails. The ~5-fail gap means the transport-hang fingerprint is NOT fully contained in these 3 files (other files in the long tail may share it) OR the class-size projection over-counted. Authoritative number is the gate absolute = 45. No regression introduced (additive move). Not a blocker — continue the batch sequence; any residual transport-hang fails will surface by class in the remaining roster.",
+    "pattern": "TRANSPORT-HANG-REWRITE (per /goal: prod was CORRECT — the test harness used a flaky MCP InMemoryTransport round-trip that hook-timed-out ~5000ms under shared-process load; fix = call the prod tool fn directly via _registeredTools, no transport. Coverage RETAINED: zero it()/test() removed across all 3 files [verified net it-delta = 0 added / 0 removed]; the assertions are identical, only the invocation path changed).",
+    "baseline_absolute": {
+      "sha": "63d53931",
+      "run_id": "27222329410",
+      "bun_job_id": "80380149470",
+      "native_fail": 55,
+      "native_errors": 0,
+      "fail_plus_error": 55,
+      "tests": 11803,
+      "pass": 11706,
+      "skip": 42
+    },
+    "batch1_absolute": {
+      "sha": "54b09df2",
+      "run_id": "27224701657",
+      "bun_job_id": "80388629799",
+      "native_fail": 45,
+      "native_errors": 0,
+      "fail_plus_error": 45,
+      "tests": 11803,
+      "pass": 11716,
+      "skip": 42
+    },
+    "delta_native": {
+      "fail_plus_error": "-10 (55 -> 45)",
+      "pass": "+10 (11706 -> 11716)",
+      "tests": "0 (11803 unchanged)",
+      "note": "Additive clean mover; fail-delta == pass-delta == 10."
+    },
+    "per_victim_flip": {
+      "MSG-1-market-foreign-flow.test.ts": {
+        "post_fix_fail": 0,
+        "flip": "fail->pass CONFIRMED (8 pass alone locally; 0 fail markers in CI)"
+      },
+      "RAPID-A-get-company-profile-tool.test.ts": {
+        "post_fix_fail": 0,
+        "flip": "fail->pass CONFIRMED (8 pass alone locally; 0 fail markers in CI)"
+      },
+      "RAPID-H-insider-lookback.test.ts": {
+        "post_fix_fail": 0,
+        "flip": "fail->pass CONFIRMED (4 pass alone locally; 0 fail markers in CI)"
+      }
+    },
+    "coverage_check": "Zero coverage lost. Net it()/test() delta across all 3 files = 0 added / 0 removed (git show verified). Assertions unchanged; only the MCP transport round-trip replaced by direct _registeredTools invocation. tsc --noEmit CLEAN.",
+    "measurement_method": "bun NATIVE summary from gh run view --job=80388629799 --log final block ' 11716 pass / 42 skip / 45 fail / 35392 expect() calls / Ran 11803 tests' (no errors line => native_errors=0). Run conclusion=failure IGNORED (irrelevant). Per-victim: grep '(fail)' on the 3 file describe names => 0.",
+    "router_actions_done": "Architect arch-S21 SPIKE (4bfd5bba) isolation-probe taxonomy; arch-S22 BATCH0 triage (6275625f, docs-only). Dev dev-mcp-server-S23 BATCH1 rewrite (54b09df2): MSG-1/RAPID-A/RAPID-H direct-invocation, 8/8/4 pass alone, tsc clean, BATCH1 TODO->REVIEW. Router raw-verified (linear c857b5eb->6275625f->54b09df2, owned-paths-only, NO foreign/pdf-extractor/BATCH0 leak, zero it() removed, DJ-GATE-1 dev-mcp-server-S23 same-commit, orch jq-valid 843930B / schema v3 / 246 unique ids / single-status-key OK / ci_absolute untouched at 55, mutex released), pushed c857b5eb..54b09df2 (pre-push tsc OK), gate-watched run 27224701657 to completion; victims 0-fail CONFIRMED, absolute 55->45 clean.",
+    "po_action_requested": "BATCHED single board write under commit-mutex (serialize AFTER the in-flight BATCH0 dev commit lands — do NOT race orch-state): (1) BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE REVIEW -> DONE with DJ-GATE-1 (decision-journal STEP in sprint-CI-RED-RECONCILE-po.md, stamped task-id, SAME commit) citing the 3-victim 0-fail flip + clean -10 absolute. (2) REBASELINE ci_absolute 55 -> 45 (sha 54b09df2, run_id 27224701657, bun_job_id 80388629799, native_fail 45, native_errors 0, fail_plus_error 45, pass 11716, skip 42, tests 11803), updated_by po-S<N>, supersedes '55 (63d53931)'. Sync long_tail_triage_policy.absolute to '45 (sha 54b09df2, run 27224701657, job 80388629799)'. (3) Leave BATCH0 at REVIEW (its own gate pending). Verify single-status-key + 246 unique ids after the write.",
+    "next": "Router holds PO dispatch until BATCH0 dev (a0b9b378) commits its orch edit, to serialize the board write. Then: verify BATCH0 commit, dispatch PO (BATCH1 DONE + rebaseline 45), push BATCH0+PO commits, gate-watch BATCH0 victims (Task 1331a TEST-2, DWF AC-P0-3-6, DV-P2-4 trio) -> projected 45 -> ~40. Remaining classes in the 45-roster: BATCH3 market-hours-gate (1407b MH-1/2/9/10/12/13), BATCH4 config-drift (cron-registry 43, cowork-schedule 14-slot policy_id, 1336 named volume, 1349a scheduler section, 1837a/230 schema/agent-md, 1100 cron health), BATCH5 assertion-logic (VCB B-3b parser x3, 1416b trim, 1352a A-1, 1328e, 1309, 1503, 1879a, 1793, 1792, 1100), BATCH2 mock-stub-leak. Cluster-6 schema-drift PARKED."
+  },
+  "_processed": {
+    "fingerprint": "0b8df6349993d81625168f106f5911101533a202d6d332f84c7c3366358da385",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T18:05:14Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": 240
+    },
+    "last_fired_timestamp": "2026-06-10T18:06:00Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 12,
+    "note": "Second daily off-market BCTC analyst slot (cron 0 18 * * *, slot bctc-analyst-slot-2, policy bctc-offmarket cadence 240min, last_fired 2026-06-09T18:05:53Z = yesterday = due today at 18:00 edge; fired 18:05, drift 5). ANALYST WORKER path (NOT a publisher) — bctc-analyst spawned BACKGROUND (agentId aa5423835e8fb4371): no RAW-verify, no publish gate, no blocking. E2 guard checked: now ~18:05 UTC is OUTSIDE the [02:00,08:00) VN-market refuse window, so new pass start permitted. Mode (routine vs earnings-release) self-selected per cycle by the agent's own get_earnings_calendar() gate. Agent writes ONLY its permitted outputs: notebook bctc-analyst.md (full overwrite); docs/analysis-briefs/{TICKER}.md ONLY on mode=release; data/bctc-analysis-cache/ (E3 idempotency cache, git-ignored); emits docs/signals/bctc_signal_*.json deliverables. bctc-analyst has NO shell -> dispatcher-completes-commit applies on its completion notification (notebook + any analysis-brief + signal deliverables committed per-cycle, NOT deferred — bctc-analyst is a non-gatherer; only the gatherer pair defers to EOD). At THIS tick the dispatcher commits ONLY slot bookkeeping (cowork-schedule.json last_fired + this telemetry), pathspec-scoped; the analyst deliverables commit on completion. Per-work-item token cowork-slot:bctc-analyst-slot-2 claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok:true renewed +1800s expires 1781116523). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Step 0a: 12 NEW signal_queue rows (up from 8 at the 16:00 fire; +4 new), ALL to:po, 0 cowork-actionable, left NEW for po triage. No new flow_bug routable to cowork this cycle. CONTEXT: VN market closed for the day; both CHEF crons exhausted (intraday 13 2-8 done 08:13; eod 45 8 done 08:45); refine-bctc-slot-1 fired 09:00 + refine-bctc-slot-2 fired 14:00 (report 173038f2 PARTIAL 14/62); gatherers EOD fired 16:00 (market-watcher session 1318 = 3 vol anomalies D2D/TCH/DHG; news-scout c77 = 3 signals NVL +6.88%/ACB/macro-chain) + their deliverables committed; bctc-analyst-slot-1 fired 15:00 (cycle c039 FPT routine). This is the slot-2 cycle (c040 expected). Next bctc-analyst slot edge 21:00 UTC (slot-3). Next CHEF chef-morning tomorrow 05:15.",
+    "spawned_agent_ids": {
+      "bctc-analyst-slot-2": "aa5423835e8fb4371"
+    }
+  },
+  "priority": "high",
+  "createdAt": "2026-06-10T18:06:00Z",
+  "_processed": {
+    "fingerprint": "6d931650b7141194d0b2ca14943ced759817662b7723d6abcd57de4744944abd",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

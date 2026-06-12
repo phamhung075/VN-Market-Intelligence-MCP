@@ -1,0 +1,85 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_red",
+  "priority": "high",
+  "createdAt": "2026-06-09T00:13:21Z",
+  "dedup_key": "ci_p2_gate_result:6c3b8701",
+  "payload": {
+    "check_id": "CI-P2-GATE-6c3b8701",
+    "task_under_test": "FIX-SCHEMA-DRIFT-P2",
+    "head_sha": "6c3b8701",
+    "code_commit": "e3501171",
+    "run_id": "27175100853",
+    "conclusion": "failure (CI workflow stays red — residual fails remain — but the VERIFICATION GATE PASSED)",
+    "verification_gate": "fail+error must DROP vs 702 native baseline (f05795c3) — it DROPPED to 634 (-68). GATE PASSED.",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --log` (the authoritative 702-comparable absolute, per po S15 next-gate note). The native block IS in the API log after all — grep the 'NNN pass / NNN fail / NNN errors / Ran N tests' block. The tab-filtered MARKER method over-counts ~2x (it reported 1164 fail vs native 620) and must NOT be used for absolutes — only native-to-native is valid.",
+    "baseline_702_native": {
+      "run_id": "27168638852",
+      "sha": "f05795c3",
+      "pass": 10742,
+      "skip": null,
+      "fail": 656,
+      "errors": 46,
+      "fail_plus_error": 702,
+      "tests": 11427
+    },
+    "after_p2_native": {
+      "run_id": "27175100853",
+      "sha": "6c3b8701",
+      "pass": 10881,
+      "skip": 36,
+      "fail": 620,
+      "errors": 14,
+      "fail_plus_error": 634,
+      "tests": 11537
+    },
+    "delta_native": {
+      "pass": "+139",
+      "fail": "-36",
+      "errors": "-32",
+      "fail_plus_error": "-68 BETTER",
+      "tests": "+110 (more tests now execute = P1 unmasking + P2 coverage)"
+    },
+    "regression_classes_check": {
+      "double_create_table_already_exists": 0,
+      "not_null_constraint_failed": 0,
+      "data_env_P1_class": 0,
+      "verdict": "B2 (9454baad) regression classes stayed at 0; P1 data_env class stayed cleared. No regressions introduced."
+    },
+    "residual_dominant_fail_signatures": {
+      "_caveat": "These are raw OCCURRENCE counts from the log (same over-count scale as the marker method) — they indicate WHICH classes remain, NOT exact native magnitude. Authoritative residual total = native fail 620 + errors 14 = 634.",
+      "no_such_table": {
+        "agent_signals": 37,
+        "sbv_rates_history": 19,
+        "positions": 19,
+        "commodity_prices_history": 19,
+        "commodity_prices": 16,
+        "daily_ohlcv": 5,
+        "imf_indicators": 3,
+        "deep_fetch_queue": 2,
+        "cron_job_runs": 2,
+        "watchlist": 1,
+        "vps_service_health": 1,
+        "vnstock_trading_stats": 1
+      },
+      "no_such_column": {
+        "foreign_net_vol": 3
+      }
+    },
+    "diagnosis": "P2 is a genuine, regression-free win: native fail+error 702->634 (-68), pass +139, errors 46->14 (-32), 110 more tests now run. P1+P2 together cleared data_env + most of the unmasked schema layer. BUT the no-such-table macro/portfolio classes (agent_signals/sbv_rates_history/positions/commodity_prices*/imf_indicators) PERSIST at high occurrence — these tests are NOT Contract-B inline-DDL files P2 could patch; they hit the SHARED SINGLETON DB whose canonical initDatabase() never creates these tables (or creates them in a path the test bypasses). This is exactly the parked FU-SCHEMA-DRIFT-P4 (pure-singleton isolation audit, brief Phase 4).",
+    "router_recommendation": [
+      "P2 = genuine regression-free win, verification gate PASSED (702->634 native). Recommend PO flip FIX-SCHEMA-DRIFT-P2 REVIEW->DONE.",
+      "PROMOTE FU-SCHEMA-DRIFT-P4 (pure-singleton isolation audit) from backlog to active FIX: scope = the residual no-such-table macro/portfolio classes (agent_signals/sbv_rates_history/positions/commodity_prices*/imf_indicators/daily_ohlcv) that run against the singleton initDatabase() path. Fix per architect brief Phase 4 (two-fixture-contract: Contract A canonical init must create these tables, OR isolate these tests to Contract B). Net fail should drop further.",
+      "Next gate: same native-summary method (bun 'NNN fail / NNN errors / Ran N tests' block from gh run view --log) vs the 634 absolute. fail+error must DROP.",
+      "decision_owner: PO decides P2 DONE vs rework, and whether to promote P4 now (WIP<=2; P2 closing frees the slot)."
+    ],
+    "raw_verified_by": "dev-team-router: native summary block read from gh run view --log (10881 pass / 36 skip / 620 fail / 14 errors / Ran 11537 tests); regression classes double-create=0, NOT NULL=0, data_env=0 confirmed by grep; e3501171 raw-verified zone-confined apps/mcp-server/ (117 files) + 1 orch-state board flip, DJ-GATE-1 step inline in note, single status key; pushed 8e1dfaa3->6c3b8701 (pre-push tsc OK)."
+  },
+  "_processed": {
+    "fingerprint": "02e8782c112270b2ba74eb04f57c333783494cdc1f78b56cc6cee6919305a722",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "from": "agents-architect",
+  "to": "pm",
+  "type": "architecture_brief_ready",
+  "sprint": "GO-FLEET-DEPLOY",
+  "task_id": "GFD-1",
+  "brief_path": "docs/architecture-briefs/2026-06-10-go-fleet-deploy/brief.md",
+  "signal_file": "docs/signals/go-fleet-deploy-brief-20260610T203525Z.json",
+  "createdAt": "2026-06-10T20:35:25Z",
+  "priority": "high",
+  "summary": "Architecture brief complete for GO-FLEET-DEPLOY. 4 services DEPLOY+SOAK (go build exit 0), rag = Python singleton with 512m/768m cap + new /embed/health probe, news-fetch = genuine Node-to-Go port. Full task batch GFD-2 through GFD-12 ready for pm to dispatch.",
+  "rag_strategy": "option_b_python_singleton_mem_cap",
+  "next_tasks": [
+    {
+      "id": "GFD-2",
+      "owner": "dev-kinh-dich",
+      "description": "Pre-deploy validation gate: health endpoint + golangci-lint + depguard pass"
+    },
+    {
+      "id": "GFD-3",
+      "owner": "dev-technical-analysis",
+      "description": "Pre-deploy validation gate: CGO=0 confirm + golangci-lint pass"
+    },
+    {
+      "id": "GFD-4",
+      "owner": "dev-alert-engine",
+      "description": "Pre-deploy validation gate: CGO sqlite + Dockerfile musl check + golangci-lint"
+    },
+    {
+      "id": "GFD-5",
+      "owner": "dev-stock-price",
+      "description": "Pre-deploy validation gate: CGO sqlite + VPS env wiring + golangci-lint"
+    },
+    {
+      "id": "GFD-6",
+      "owner": "ops",
+      "description": "Sequential targeted deploy + HONOR-PANIC-GUARD soak (kinh-dich → ta → alert → stock). Depends on GFD-2,3,4,5."
+    },
+    {
+      "id": "GFD-7",
+      "owner": "dev-rag-service",
+      "description": "Add /embed/health probe endpoint + reduce compose mem limits to 512m/768m"
+    },
+    {
+      "id": "GFD-8",
+      "owner": "ops",
+      "description": "Deploy rag-service with extended 20-min soak. Depends on GFD-7."
+    },
+    {
+      "id": "GFD-9",
+      "owner": "developer",
+      "description": "Port news-fetch Node->Go: RSS/API paths only, CGO=0, modernc/sqlite, golangci-lint"
+    },
+    {
+      "id": "GFD-10",
+      "owner": "ops",
+      "description": "Deploy news-fetch Go port. Depends on GFD-9."
+    },
+    {
+      "id": "GFD-11",
+      "owner": "qa",
+      "description": "Full fleet capability verification: all 6 probes + system-map audit"
+    },
+    {
+      "id": "GFD-12",
+      "owner": "po",
+      "description": "Sprint sign-off: system-map update, Axis-A flip, router push auth"
+    }
+  ],
+  "hard_constraints": [
+    "Targeted rebuild ONLY — never docker compose down && up",
+    "HONOR-PANIC-GUARD soak gate with ABORT criteria per brief §c",
+    "Factory v2 G12 + depguard on every Go service",
+    "Commit via explicit pathspec from repo ROOT; DJ-GATE-1 on every status flip",
+    "No push — commit + report; router owns push"
+  ],
+  "_processed": {
+    "fingerprint": "225e5f0b19f306f5ad457e6fe8995450133b7963d06018554d015e89dba450ba",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

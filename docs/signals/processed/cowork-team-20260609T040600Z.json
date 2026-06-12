@@ -1,0 +1,42 @@
+{
+  "signal_type": "cowork-team-tick",
+  "classification": "FIRE",
+  "tick_id": "04:06",
+  "fire_time": "2026-06-09T04:06:00Z",
+  "emitted_at": "2026-06-09T04:07:06Z",
+  "drift_min": 6,
+  "matched_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "won_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "collision_warn": [],
+  "leader_lock": "acquired_fresh",
+  "leader_lock_note": "claimed=true fresh — 02:21 leader (ttl 1800s) expired ~02:51 untouched across silent ticks 02:36..03:51. Clean fresh acquisition at 04:06. Slot tokens remain hard dup-spawn gate.",
+  "spawned": [
+    "docs/agents/news-scout/flow/main.md",
+    "docs/agents/market-watcher/flow/main.md"
+  ],
+  "agent_ids": [
+    "add57b024dc69b727",
+    "aa0b0ee36cbfe0868"
+  ],
+  "calendar_status": "open",
+  "macro": {
+    "vnIndex": 1790.53,
+    "changePct": -2.63,
+    "regime": "RISK_OFF",
+    "volatility_level": "high"
+  },
+  "drain_note": "5 NEW signal_queue rows (sau-c283-c08/c06/c04 + sau-20260609T033542Z/033800Z) all addressed to po — left NEW for dev-team drain (no po slot firing).",
+  "note": "04:00 UTC 4h gatherer batch (cron 0 */4). news-scout-offhours + market-watcher-offhours (gatherer-standard, last fired 00:06, due cadence). 2 distinct agents, collision moot. Both slot tokens won/released ok, snapshot fresh, emit ok 04:07:06Z. In-session intraday gather (VN open). Carry: CTG cycle 27+ CRITICAL, EIB #5417, chef 02:21 dish MARKET id689.",
+  "_processed": {
+    "fingerprint": "0ffde3df94b760d46683a4c4f6ce55fbd8b985918941e6ca84f8a394b8de7bbe",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

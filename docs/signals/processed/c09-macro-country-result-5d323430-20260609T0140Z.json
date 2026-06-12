@@ -1,0 +1,24 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "investigation_result",
+  "priority": "normal",
+  "createdAt": "2026-06-09T01:40:00Z",
+  "dedup_key": "c09_macro_country_result:5d323430",
+  "payload": {
+    "signal_under_test": "sau-c283-c09",
+    "verdict": "AUDITOR FALSE-POSITIVE — no data regression, no mcp-server code change needed",
+    "raw_finding": "macro_indicators holds exactly 1 row (country='vietnam', fetched_at 2026-06-08 12:13:00, fresh ~12h before signal). Schema is UNIQUE(country) — country-keyed, one row per country. There was never a multi-country writer. The probe's >=8 threshold is structurally impossible.",
+    "root_cause": "Auditor probe bug introduced in commit a95c514a (FIX-AUDITOR-DB-CHECKS-HOSTSIDE, 2026-06-07): the C-09 probe was rewritten from count(DISTINCT indicator_key) (pre-refactor indicator-row table) to count(DISTINCT country) while keeping the inherited >=8 threshold. indicator_key column no longer exists; country count is always 1.",
+    "fix": "Commit 5d323430 — docs/agents/system-auditor/flow/main.md C-09 row: query changed to CASE-SUM of the 12 non-null indicator columns on the vietnam row; threshold >=8 -> >=3. Inline note: threshold rises to >=12 once TRADING_ECONOMICS_API_KEY is wired. 3 files (auditor flow + dev-mcp-server notebook + decision journal DJ-GATE-1 dev-mcp-server-S6). NO apps/mcp-server code changed -> ZERO CI impact.",
+    "secondary_finding": "TRADING_ECONOMICS_API_KEY absent from container env -> VPS hourly fetch-tradingeconomics.sh silently skips; only 3/12 indicator columns populated (cpi/gdp_growth/interest_rate via the HTML-scraper path in macroIndicatorRefreshJob). Wiring the key would fill the remaining 9 columns. NOT a regression — pre-existing config gap. Router note: optional follow-up, low priority.",
+    "router_actions_done": "Commit 5d323430 raw-verified (3 files, docs/flow-confined, DJ-GATE-1 present, tsc clean per agent). Lock task:sau-c283-c09 RELEASED (ok:true). Commit is docs-only -> HELD unpushed, will bundle behind next code commit (CI has no path filter).",
+    "po_action_requested": "Flip signal_queue row sau-c283-c09 status TRIAGED -> RESOLVED (false-positive, fixed). Optionally backlog a low-priority CFG task to wire TRADING_ECONOMICS_API_KEY into the container env for full 12-column macro coverage."
+  },
+  "_processed": {
+    "fingerprint": "e3e0cfcf9a70cd936ee1be88770c25b3d2377e636f23ce8f909b2690c1639768",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

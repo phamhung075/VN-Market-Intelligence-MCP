@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-06-11T20:35Z",
+  "summary": "c94 NEEDS_ATTENTION IMPROVING — AC-4 auto-cure applied (chef false-parser-failure Step 7); F-MORNING-NB-MISSING RESOLVED; carry-evening-unavailable RESOLVED; EOD 4/6 best cycle; F-OOM-MCP-SERVER + F-BCTC-CTG-CRITICAL (cycle 12) persist HIGH; c93+c94 handoffs unACKd",
+  "_processed": {
+    "fingerprint": "72aea10a664aaba42b0508f1fc604c79075d746f39e3c8d98e546b54af1bc095",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

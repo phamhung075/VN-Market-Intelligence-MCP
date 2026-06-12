@@ -1,0 +1,33 @@
+{
+  "ticker": "BATCH_RELEASE",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "release",
+  "status": "BLOCKED",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "blocked_tickers": 28,
+  "blocked_detail": {
+    "CTG": "CRITICAL cycle 33 — 9th consecutive empty (filed 2026-06-10)",
+    "VCB": "cycle 4 empty (filed 2026-06-10)",
+    "D2D": "cycle 4 empty (filed 2026-06-10)",
+    "ACB": "PUB-5 confidence 38% — below 50% threshold",
+    "EIB": "PUB-5 confidence 31% — below 50% threshold",
+    "DHG": "PUB-5 confidence 44% — below 50% threshold",
+    "others_22": "Chua co du lieu BCTC — VPB, MBB, HPG, NVL, VHM, VIC, SSI, HCM, DPM, GVR, VRE, REE, TCH, KBC, POW, HVN, MWG, HSG, NKG, VCI + 2 more"
+  },
+  "product": null,
+  "customer": null,
+  "ops": null,
+  "mgmt": null,
+  "signal_id_bus": 5692,
+  "cycle": "c041",
+  "slot": "bctc-analyst-slot-3",
+  "emitted_at": "2026-06-10T21:08Z",
+  "_processed": {
+    "fingerprint": "e212bc4ad12fd80a917dab3f0e9b89235a6a33868a7037f0c832c18377ff285e",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

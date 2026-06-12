@@ -1,0 +1,74 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-12T00:05:15Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cron",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": null,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": "2026-06-12T00:06:00Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "UNCONFIRMED",
+    "leadership_unconfirmed": true,
+    "signal_backlog": 1,
+    "spawned_agent_ids": {
+      "bctc-analyst-slot-4": "a5bfd5cb37ce1c1d2",
+      "news-scout-offhours": "a5ca39de558eb2264",
+      "market-watcher-offhours": "a0fd4d6ce8aeee98e"
+    },
+    "raw_verify_required": false,
+    "eod_batch_commit": false,
+    "note": "00:00 UTC FIRE (2026-06-12) — THREE slots matched at the midnight cadence edge, THREE distinct agents on distinct flows => NO same-agent collision coalesce, 3 background spawns (BGFAN-1). (1) bctc-analyst-slot-4 (cron 0 0 * * *, policy_id bctc-offmarket, guaranteed:false, last_fired 2026-06-11T00:06:00Z, due_reason cron) = bctc-analyst cycle c046, ANALYST WORKER path. (2)+(3) news-scout-offhours + market-watcher-offhours (cron 0 */4 * * *, gatherer-standard, cadence 240min, last_fired 2026-06-11T20:06:00Z, due_reason cadence) = GATHERER path. Fired 00:05 UTC = 07:05 ICT, post-market off-hours (VN market opens 02:00 UTC / 09:00 ICT). E2 GUARD (bctc-analyst): refuses to START a new pass if now_utc in [02:00,08:00) VN window; 00:05 UTC is OFF-MARKET (before the 02:00 open) so the pass is permitted. ANALYST WORKER (bctc-analyst): runs routine analysis or earnings-release per get_earnings_calendar() gate; mode selected per cycle. Does NOT post to MARKET -> NO RAW-verify-on-completion. Has gateway access but no commit access -> dispatcher-completes-commit its artifacts on completion: notebook docs/agent-memory/notebooks/bctc-analyst.md (full overwrite) + any docs/analysis-briefs/{TICKER}.md emitted ONLY on mode=release, pathspec-scoped under commit-mutex, verified via git status (declared/observed outputs only, never git add -A). GATHERER path (news-scout + market-watcher): NO RAW-verify-on-completion (gatherers fetch/snapshot + write their OWN notebooks docs/agent-memory/notebooks/{news-scout,market-watcher}.md + emit own signals; not publishers, no MARKET dish). Their output is DEFERRED to the NEXT EOD batch-commit (2026-06-12 16:00 UTC daily EOD window; the 20:00(06-11) + this 00:00 + upcoming 04:00/08:00/12:00 gatherer fires accumulate until then). Per-work-item tokens cowork-slot:{bctc-analyst-slot-4,news-scout-offhours,market-watcher-offhours} all claimed(true)->released(ok=true) try/finally. last_fired written atomically (empty-guard passed) for all 3 slots -> 2026-06-12T00:06:00Z. At THIS tick the dispatcher commits ONLY slot bookkeeping (cowork-schedule.json last_fired + this telemetry), pathspec-scoped under commit-mutex; analyst output committed on completion, gatherer output agent-owned+deferred. EXPECTED WORK c046: this is the cycle flagged where CTG hitting 14 cycles BLOCKED triggers the bctc-analyst's OWN immediate dev-team/ops escalation (Bug #2776 CTG extraction fix undeployed since cycle 12; 28-ticker release BATCH-BLOCKED at c045 cycle 13 per signal #5797). The analyst owns that escalation per its flow; the dispatcher does NOT own the fix, only commits whatever notebook/brief it writes. LEADER LOCK DEGRADED: Step 0b task_heartbeat(cowork-leader) returned ok:false,expires_at:0 (still orphaned post 17:37 recreate 06-11; renew-only, no reachable recreate path — root F-OOM-MCP-SERVER 2GiB cap). Dispatcher proceeds SINGLE-DISPATCHER (single deployment => no peer => no split-brain) flagging leadership_unconfirmed=true; re-escalation throttled at-most-once-per-UTC-day — this is the FIRST tick of the 2026-06-12 UTC day, the daily re-escalation budget RESETS but is NOT spent here (no new failure mode; orphan is a known standing item, escalation deferred until a fresh data point or the gatherer/analyst surfaces one). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true (FIRE). Gateway HEALTHY this tick (heartbeat structured response + 3 slot claims claimed:true + 3 releases ok:true + pressure all OK; no 502/400 — the 06-11 20:20 transient 502 stayed a one-off, no recurrence across 20:35..23:50 SILENT ticks). Step 0a drain: signal_queue tolerant filter -> 1 NEW to:po row (sau-d4-202606110300, system-auditor system_issue: held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row) — NOT cowork-actionable, left NEW for dev-team/po; 0 cowork-actionable. PRIOR DAY (2026-06-11) RESOLVED: full chef dish set published (intraday/morning/france/intraday/eod/evening ids 718-722,725 + server-cron 723/724); tnb-audit c94 AUDITOR committed HEAD e2f4e3a7 (+ AC-4 chef.md false-parser auto-cure, first gate intraday 02:13Z 2026-06-12); 21:00 bctc-analyst c045 ANALYST WORKER committed HEAD d6438223 (FPT routine E3 cache-hit cycle 7 + 28-ticker release BATCH-BLOCKED cycle 13 CRITICAL); 20:00 gatherer edge incl. news-scout c84 false-gateway self-healed + escalated po HEAD 5ba2b1af. STANDING (po/dev own, dispatcher leaves NEW): F-BCTC-CTG-CRITICAL (Bug #2776 undeployed 13+ cycles, 28 tickers blocked — bctc-analyst c046 escalates if CTG hits cycle 14); auditor lock-integrity finding FPT:Q1-2026:ESC-3 (sau-d4); converging false-infra-failure agent-bug class (chef false-parser AC-4-applied + news-scout false-gateway -> po/architect); F-OOM-MCP-SERVER + leader-lease orphan (data points: 06-11 17:05-17:37 write-wedge + 20:20 transient 502 — ops/po weigh 2GiB cap raise or wedge/overload-detecting healthcheck); c93+c94 tran-ngoc-bau PO handoffs unacknowledged. Next: these 3 agents' output handled on completion (bctc-analyst dispatcher-completes-commit; gatherers EOD-deferred); next cadence edge 04:00 UTC gatherer fire 2026-06-12."
+  },
+  "priority": "high",
+  "createdAt": "2026-06-12T00:06:00Z",
+  "_processed": {
+    "fingerprint": "7fc60b7d1f7e3be1d2b5d99b8ab5073e3a6f0baf6fda5cac43aa9949a8998c5c",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

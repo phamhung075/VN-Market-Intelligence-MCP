@@ -1,0 +1,56 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T19:50:14Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-06-10T19:51:00Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 0,
+    "raw_verify_baseline_market_id": 713,
+    "note": "Evening CHEF dish (cron 45 19 * * *, slot chef-evening, guaranteed=true, agent unified-agent flow chef.md, last_fired 2026-06-09T19:55:34Z = yesterday = due today at 19:45 edge; fired 19:50, drift 5). PUBLISHER path — unified-agent spawned BACKGROUND (agentId aa39a774814149fe5) per BGFAN-1 (spawn-fanout.md L79 mandates run_in_background=true for ALL spawns incl publishers; cowork agents are independent parallel fan-out). The published-marker gate (published:chef-evening:<VN-date> ttl 100800s) lives INSIDE chef.md before send_telegram — the dispatcher does NOT set publish markers (FR-P2-7 publisher-owned). RAW-VERIFY-ON-COMPLETION: per memory chef-fabricated-publish / chef-false-parser-failure / chef-dryrun-publishes, the dispatcher MUST RAW-verify via get_unreviewed_market_messages that a NEW MARKET message id > baseline 713 from unified-agent/chef actually posted, NOT trust chef's self-report. Baseline at spawn time = max id 713 (evening-summary 15:30 server-cron); all current MARKET rows are server-cron auto-posts (evening-summary/alert-digest/morning-briefing/france-summary) + mcp-user replies — NO unified-agent dish posted yet today. If chef self-reports 'sent' but no new id>713 appears -> fabricated publish; if chef reports parser-failure but a new id DID appear -> false-parser inverse mode (do NOT re-send). If chef genuinely did NOT publish AND should have -> router completes publish itself per memory. Per-work-item token cowork-slot:chef-evening claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok:true renewed +1800s expires 1781122832). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true (FIRE). Step 0a drain: signal_queue SHAPE CHANGED to a bare ARRAY (len 2, no longer {rows:[]}); tolerant filter (if type==object then .rows else . end) applied per NEVER-fail-loud rule -> 0 NEW rows, 0 cowork-actionable, 0 to:po. (Prior ticks read 8->12 NEW via the old .rows path; the array now exposes 0 NEW — either the queue was drained/acked upstream or the 2 array elements are non-NEW; left as-is, not dispatcher-actionable.) CONTEXT: VN market closed for the day; chef-morning + chef-intraday + chef-eod CHEF crons all exhausted earlier; gatherers EOD fired 16:00 (committed); bctc-analyst slot-1 15:00 (c039 FPT) + slot-2 18:00 (c040 FPT routine FAIR + RELEASE batch-blocked CTG cycle32, deliverables committed). This chef-evening is the last scheduled publisher of the UTC day. Next bctc-analyst slot-3 at 21:00 UTC (c041). Next CHEF chef-morning tomorrow ~05:15 UTC.",
+    "spawned_agent_ids": {
+      "chef-evening": "aa39a774814149fe5"
+    }
+  },
+  "priority": "high",
+  "createdAt": "2026-06-10T19:51:00Z",
+  "_processed": {
+    "fingerprint": "a47b57b3c0c0641d084bd45bd04a3fe596af227dab642b18b4f36018bc7c95c3",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

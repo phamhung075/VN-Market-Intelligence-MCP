@@ -1,0 +1,64 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T12:06:06Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30
+    },
+    "last_fired_timestamp": "2026-06-09T12:06:06Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "12:00",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 17,
+    "note": "4-hourly off-hours gatherer fan-out (cron 0 */4 * * *, policy gatherer-standard). Both slots last fired 08:06:24Z (~4h ago) = on-cadence due. Spawned BACKGROUND parallel in one block (BGFAN-1): news-scout agentId a00fc3634f4fa9da9, market-watcher agentId abfa0c025166c02e3. Gatherers write to own notebooks + emit signals; they do NOT publish MARKET, so no publish-marker verification applies (no double-post risk). Per-work-item tokens cowork-slot:news-scout-offhours + cowork-slot:market-watcher-offhours both claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok, renewed +1800s). last_fired updated 12:06:06Z both on spawn-launch. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Step 0a: 5 NEW signal_queue rows all to:po (dev-team domain, left NEW). Completion arrives via async notification. Next 4-hourly gather at 16:00 UTC.",
+    "spawned_agent_ids": {
+      "news-scout-offhours": "a00fc3634f4fa9da9",
+      "market-watcher-offhours": "abfa0c025166c02e3"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T12:06:11Z",
+  "_processed": {
+    "fingerprint": "cc857a30d1d514b30a3000f8ac8d61e1035fe1173e76b413e95081b5f64241d7",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

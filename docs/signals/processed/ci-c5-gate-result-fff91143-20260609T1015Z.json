@@ -1,0 +1,74 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T10:15:00Z",
+  "dedup_key": "ci_c5_gate_result:fff91143",
+  "payload": {
+    "check_id": "CI-C5-GATE-fff91143",
+    "task_under_test": "FIX-CI-C5-UNMOCKED-HTTP-FETCHES",
+    "verdict": "GATE PASSED — UNAMBIGUOUS. -33 absolute + all 4 named victims flipped individually + zero regression. Route REVIEW -> DONE and REBASELINE 135 -> 102.",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80297590558 --log` (NNN pass / NNN skip / NNN fail; errors line omitted => 0) for the absolute, PLUS per-victim (fail)-count disambiguated to EXACT Task-id prefix (grep -oE 'Task NNNNx') vs the 135 baseline job 80278819016.",
+    "baseline_absolute": {
+      "sha": "3663bd12",
+      "run_id": "27193376550",
+      "bun_job_id": "80278819016",
+      "native_fail": 135,
+      "native_errors": 0,
+      "fail_plus_error": 135,
+      "tests": 11816,
+      "pass": 11639,
+      "skip": 42
+    },
+    "c5_fix_absolute": {
+      "sha": "fff91143",
+      "run_id": "27198910454",
+      "bun_job_id": "80297590558",
+      "native_fail": 102,
+      "native_errors": 0,
+      "fail_plus_error": 102,
+      "tests": 11816,
+      "pass": 11672,
+      "skip": 42
+    },
+    "delta_native": {
+      "fail_plus_error": "-33 (135->102) — far beyond the +/-3 jitter band, unambiguous",
+      "pass": "+33",
+      "tests": "0 (no test add/remove)"
+    },
+    "per_victim_flip": {
+      "Task 028 (sbv-rates)": {
+        "baseline_fail": 9,
+        "c5_fail": 0,
+        "flip": "fail->pass CONFIRMED"
+      },
+      "Task 025 (yahoo-finance)": {
+        "baseline_fail": 7,
+        "c5_fail": 0,
+        "flip": "fail->pass CONFIRMED"
+      },
+      "Task 1423a (us10y-yield ^TNX)": {
+        "baseline_fail": 6,
+        "c5_fail": 0,
+        "flip": "fail->pass CONFIRMED (all 5 T-1..T-5 pass)"
+      },
+      "Task 1487 (yahoo-finance-extended)": {
+        "baseline_fail": 3,
+        "c5_fail": 0,
+        "flip": "fail->pass CONFIRMED"
+      }
+    },
+    "disambiguation_note": "A naive grep -F 'Task 1423' over-matched 22 fails — those are ALL Task 1423e (a SEPARATE pre-existing cluster: 22 fail in BOTH the 135 baseline AND the C5 run, byte-stable, zero C5 impact). The actual C5 victim Task 1423a went 6->0. C5 did NOT regress 1423e; it was never a C5 victim. Lesson: per-victim checks MUST grep the exact task-id prefix (1423a), never the numeric stem (1423), or sibling clusters (1423b/1423e) contaminate the tally.",
+    "fix_summary": "DI-seam pattern (b): REMOVED file-top mock.module() from 083 (lines 14-26) + 123 (lines 29-40, incl dead retriever.js mock); added optional _testCommodityFetcher/_testSbvFetcher/_testRagRetriever Zod seam to run_impact_chain handler in analysis.ts (conditional spread, zero prod hot-path change); ddd-1b + all 4 victims UNTOUCHED. NO new mock.module() anywhere (the falsified 22470e44 vector avoided). Local: tsc clean, 083=16 pass, 123=27 pass/1 skip.",
+    "router_actions_done": "Raw-verified commit fff91143: linear graph, mock.module()=0 in both files, only the intended analysis.ts prod seam (no other prod leak), single-status-key OK, 222 unique task ids, ci_absolute UNCHANGED pre-gate. Pushed 37140fa9..fff91143 (pre-push tsc OK). Gate-watched run 27198910454 to completion; disambiguated per-victim flips to exact prefix.",
+    "po_action_requested": "BATCHED single board write (dev C5 agent is DONE — no concurrent writer): (1) FIX-CI-C5-UNMOCKED-HTTP-FETCHES REVIEW->DONE with DJ. (2) FIX-CI-C6-SSOT-WATCHLIST-SECTOR-DRIFT REVIEW->DONE with DJ (its gate already passed — see ci-c6-gate-result-37bb2e7d signal; named DGC assertion flipped other->chemicals). (3) REBASELINE ci_absolute 135 -> 102 (sha fff91143, run 27198910454, job 80297590558, native_fail 102, pass 11672, skip 42, tests 11816), updated_by po-S31, supersedes 135. New band ~102 +/-3 (floor ~99). (4) Open/queue a NEW cluster for Task 1423e (22 pre-existing fails, root cause TBD — route to architect-first triage: prod-vs-test confirm before any fix). All flips DJ-GATE-1 (decision-journal STEP same commit, stamped task-ids). Single jq pass under commit-mutex.",
+    "next": "After PO board write + router push: continue /goal loop. Remaining native fail ~102 — next clusters: Task 1423e (22, NEW, architect-first), plus the prior backlog C7 (assertion-logic: 1792/1352a/1328e/1407b — architect prod-vs-test confirm) and C8 (REMOVE-obsolete-triage — architect REMOVE-evidence, protect DWF-is-trading-day canary). Cluster-6 schema-drift stays PARKED."
+  },
+  "_processed": {
+    "fingerprint": "57181fbdbb215a62ed5a4a592a7003482472e15e8a7ac134a14b7fbbb0316013",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

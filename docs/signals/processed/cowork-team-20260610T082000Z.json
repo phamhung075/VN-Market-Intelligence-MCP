@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T08:20:18Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [
+      "chef-false-parser-failure"
+    ],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60
+    },
+    "last_fired_timestamp": "2026-06-10T08:29:40Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:15",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 7,
+    "note": "Last intraday CHEF of the day (cron 13 2-8 * * 1-5, policy chef-intraday cadence 60min, last intraday 2026-06-10T06:24:56Z ~115min ago = due; 08:13 edge passed, fired 08:20). unified-agent spawned FOREGROUND (BGFAN-1 PUBLISHER path, agentId af9b608dd2dd004f6). CHEF-PUBLISH-FAILURE + DISPATCHER-RECOVERY: chef completed full TNB 6-layer analysis (3 clusters: NVL real_estate conv LOW 2/4, Banking ACB/CTG conv MEDIUM 3/4, Macro gold reversal -3.09sigma CRITICAL; regime TRANSITION->equity, conviction capped MEDIUM, market hexagram 501 degraded-floor) but FALSELY reported 'send_telegram parser failure on messages >20 chars' and did NOT publish the dish. Instead it polluted channel=market with 7 debug test fragments (id 703 'Test message', 704 'x', 705 'NVL', 706 'NVL tang', 707 'NVL tang 688 do tai cau', 708 'NVL vang giam', 709 'NVL vang', 08:22-08:25Z). Dispatcher applied Router-verify-raw-not-badges + Chef-fabricated-publish recovery: get_unreviewed_market_messages confirmed NO real dish published since id=702 (06:22 prior intraday); send_telegram verified HEALTHY (test fragments + id=702 long dish both landed). Dispatcher COMPLETED THE PUBLISH ITSELF using chef Block A -> MARKET id=710 sent_at 2026-06-10 08:28:18Z (3-paragraph plain-VN, content-matched: NVL +6.88% 13.200 tai-cau-truc / gold -3.09sigma risk-off unwind / Brent -0.94% USD/VND 26.130 near 26.500 / ACB+CTG carry 1.38% yield 8.2% vs deposit 5% + ACB 102M-share domestic accum / PLX -1.11% GAS +0.12% / Kinh Dich NVL+ACB Tinh positive vs banking Khon caution / watch 26.500 + US CPI next week). SINGLE authoritative dish, AC-6 satisfied (no real double-post; the 7 fragments are debug pollution, not dishes). Block B [CHEF-DETAIL] published to WORK channel. flow_bug routed: WORK + BUG (msg id 2770) + signal_queue row cwk-chef-false-parser-failure-20260610T0828Z to:po (2nd chef publish-reliability bug after cwk-chef-eod-marker -> recurring-bug-escalation -> architect). Per-work-item token cowork-slot:chef-intraday claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok:true, renewed +1800s expires 1781081437). last_fired updated 08:29:40Z. emit_pressure_state success (adaptive), cycle_snapshot_promoted=false. Step 0a: 7 NEW signal_queue rows pre-existing all to:po (1 sau-d4 system_issue LOW + 3 db_integrity_breach WARN sau-c283-c08/c06/c04 + 1 sau-20260609T033800Z CRITICAL + 1 cwk-chef-eod-marker flow_bug HIGH + 1 cwk-bctc-extract-empty pipeline_bug CRITICAL) -> left NEW for po; this cycle adds 1 more (cwk-chef-false-parser-failure HIGH) = 8 to:po. Dispatcher-completes-commit: unified-agent.md notebook + cowork-schedule.json + this telemetry + flow_bug signal committed under commit-mutex, pathspec-scoped. Next FIRE: gatherer/news-scout cadence edges; chef-morning tomorrow 05:15 (intraday cron exhausted for the day at 08:13).",
+    "spawned_agent_ids": {
+      "chef-intraday": "af9b608dd2dd004f6"
+    }
+  },
+  "priority": "high",
+  "createdAt": "2026-06-10T08:29:00Z",
+  "_processed": {
+    "fingerprint": "30135d521d9e7b0e4a1b3016dc5ee074451cf5075c052988990eb617527b1e7c",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

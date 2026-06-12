@@ -1,0 +1,62 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T20:05:16Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": "2026-06-10T20:06:00Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 0,
+    "note": "Post-EOD offhours gatherer window (20:00 UTC, cron 0 */4 = 00/04/08/12/16/20). BOTH gatherer-standard slots (news-scout-offhours + market-watcher-offhours, cadence 240min, last_fired 2026-06-10T16:07:00Z = the 16:00 EOD fire = due now at the 20:00 cadence edge; fired 20:05, drift 5). NO market-watcher-eod overlap at 20:00 (eod is the 16:00 weekday slot only), so unlike the 16:00 tick there is NO dedup collision — both slots are distinct agents, both spawned. GATHERER path (NOT publishers) — spawned BACKGROUND per BGFAN-1: no RAW-verify, no publish gate, no blocking. news-scout agentId ac2027d1d6ec3020e (fetch news, sentiment, impact chains, legal/crisis -> notebook news-scout.md full-overwrite). market-watcher agentId aac06a5c1cf05708c (prices/anomalies/macro/supply-chain/climate/energy -> notebook market-watcher.md full-overwrite + coverage-state.json). Gatherer notebooks (news-scout.md, market-watcher.md, coverage-state.json) are the DEFERRED-by-design batch — they normally commit at the 16:00 EOD market-watcher-eod window via dispatcher-completes-commit. This 20:00 fire is AFTER today's EOD batch already ran (16:00, committed); these post-EOD gatherer notebook overwrites carry to the NEXT EOD window (tomorrow 16:00) per the deferred-commit rule (gatherers are the only agents that defer; non-gatherers commit per-cycle). At THIS tick the dispatcher commits ONLY slot bookkeeping (cowork-schedule.json last_fired x2 + this telemetry), pathspec-scoped. Per-work-item tokens cowork-slot:news-scout-offhours + cowork-slot:market-watcher-offhours both claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok:true renewed +1800s expires 1781123747). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true (FIRE). Step 0a drain: signal_queue bare ARRAY shape (tolerant filter (if type==object then .rows else . end) per NEVER-fail-loud) -> 0 NEW rows, 0 cowork-actionable, 0 to:po. CONTEXT: VN market closed for the day; all CHEF crons exhausted (intraday 06:13, eod 08:52, evening 19:50 = published MARKET id 714, RAW-verified content-match); bctc-analyst slot-1 15:00 (c039) + slot-2 18:00 (c040) done & committed. This 20:00 is a pure gatherer refresh. Next FIRE candidate: bctc-analyst-slot-3 at 21:00 UTC (c041, ANALYST WORKER per-cycle commit). Next CHEF chef-morning tomorrow ~05:15 UTC. Next gatherer cadence edge 00:00 UTC.",
+    "spawned_agent_ids": {
+      "news-scout-offhours": "ac2027d1d6ec3020e",
+      "market-watcher-offhours": "aac06a5c1cf05708c"
+    }
+  },
+  "priority": "high",
+  "createdAt": "2026-06-10T20:06:00Z",
+  "_processed": {
+    "fingerprint": "ecdd7386e9ce4b9e04d79b62f9a190c2e23a0be6c810632f85ea02d56a1a4709",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

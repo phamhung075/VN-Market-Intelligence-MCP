@@ -1,0 +1,51 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_fail",
+  "priority": "high",
+  "createdAt": "2026-06-09T09:30:00Z",
+  "dedup_key": "ci_c5_gate_result:22470e44",
+  "payload": {
+    "check_id": "CI-C5-GATE-22470e44",
+    "task_under_test": "FIX-CI-C5-UNMOCKED-HTTP-FETCHES",
+    "verdict": "GATE FAILED — REGRESSION. Reverted by router.",
+    "baseline_absolute": {
+      "sha": "3663bd12",
+      "run_id": "27193376550",
+      "bun_job_id": "80278819016",
+      "native_fail": 135,
+      "native_errors": 0,
+      "fail_plus_error": 135,
+      "tests": 11816,
+      "pass": 11639,
+      "skip": 42
+    },
+    "c5_under_test_native": {
+      "sha": "22470e44",
+      "run_id": "27196358844",
+      "bun_job_id": "80288899677",
+      "native_fail": 145,
+      "native_errors": 0,
+      "fail_plus_error": 145,
+      "tests": 11804,
+      "pass": 11617,
+      "skip": 42
+    },
+    "delta_native": {
+      "fail_plus_error": "+10 WORSE",
+      "pass": "-22",
+      "tests": "-12"
+    },
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80288899677 --log` (NNN pass / NNN skip / NNN fail block; errors omitted => 0). Native-to-native vs the 135 absolute.",
+    "empirical_finding": "C5 fix BACKFIRED. The four targeted contamination victims did NOT unblock and got WORSE: per-test-file fail tally in the C5 run shows Task1423=30, Task028=22, Task025=20, Task1487=8 (=80 fails in the exact files that were projected to drop to ~0), PLUS new collateral rag=24 and Task1124=24. Root cause: the ddd-1b-rag-http-client.test.ts file-top `mock.module()` re-registration RE-SPREAD the same Bun ESM-cache contamination it was meant to cure (the C5 root-cause vector applied as the cure reproduced the disease). The delegating-mock approach in 083/123 also failed to lift the sbv/yahoo null returns. The static-stub contamination theory's proposed FIX does not hold empirically.",
+    "router_actions_done": "Raw-verified C5 run 27196358844 job 80288899677 native summary = 145 fail / 0 err (vs 135). Confirmed regression attributable to test-only commit 22470e44 (only 3 test files changed prod-behavior-wise; zero prod src). REVERTED the 3 test files (083/123/ddd-1b) to their pre-C5 state (= sha 3663bd12 content) via `git checkout 22470e44~1 -- <3 files>`, committed 275dd7c8 with explicit pathspec, pushed 22470e44..275dd7c8 (pre-push tsc OK). Board/DJ/orch-state from 22470e44 left intact for PO to flip cleanly (avoided messy 752KB SSOT revert). Watcher armed on revert run 27197018430 to CONFIRM restoration to ~135.",
+    "po_action_requested": "1) Flip FIX-CI-C5-UNMOCKED-HTTP-FETCHES REVIEW -> REWORK (NOT done) with DJ po-S29 (decision-journal STEP same commit, stamped task-id) noting the regression + revert 275dd7c8. 2) KEEP the sprint baseline absolute at 135 (sha 3663bd12) — the revert restores it; do NOT rebaseline to 145. 3) RE-DISPATCH C5: route to ARCHITECT first, not dev — the static-stub mock-contamination cure (delegating mocks + ddd-1b mock.module() re-registration) is empirically falsified; architect must re-examine WHY sbv/yahoo victims still return null and propose a contamination-safe strategy that does NOT add any new file-top mock.module() (that vector demonstrably leaks). 4) C6 (SSOT-watchlist-sector-drift, REWRITE) is INDEPENDENT of C5 and remains dispatchable to dev now against the 135 baseline.",
+    "next_gate": "After architect re-spec + dev re-fix of C5: same native-summary method vs the 135 absolute. fail+error MUST drop below 135. Until then, 135 (sha 3663bd12) stands as the verified-good baseline."
+  },
+  "_processed": {
+    "fingerprint": "8d55714f512b0cea11aab74e6f4a7bf9271771687307f0138ebd1396357e7a4f",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

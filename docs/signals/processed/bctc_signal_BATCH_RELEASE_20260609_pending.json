@@ -1,0 +1,195 @@
+{
+  "ticker": "BATCH-RELEASE-28-TICKERS",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "release",
+  "status": "BLOCKED",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "cycle": "c038",
+  "cycle_time_utc": "2026-06-09T21:10:00Z",
+  "slot": "bctc-analyst-slot-3",
+  "new_filings_today": [
+    "CTG (filed 2026-06-09)",
+    "VCB (filed 2026-06-09)",
+    "D2D (filed 2026-06-09)"
+  ],
+  "chain_findings_new": {
+    "CTG": "urgent_news #5551 VietinBank Capital→Petrosetco",
+    "NVL": "chain_catalyst bearish conf=0.75 #5553",
+    "POW": "urgent_news #5552"
+  },
+  "acb_note": "ACB +4.95% session; Nhom Au Lac gom 102M shares per cafef; no formal insider disclosure registered",
+  "tickers": {
+    "CTG": {
+      "cycles_blocked": "30+",
+      "pdf_stored": true,
+      "pdf_size_mb": 6,
+      "pdf_date": "2026-06-09",
+      "severity": "CRITICAL",
+      "filed_date": "2026-06-09"
+    },
+    "VCB": {
+      "cycles_blocked": 1,
+      "pdf_stored": false,
+      "filed_date": "2026-06-09",
+      "note": "filed today, no PDF yet"
+    },
+    "REE": {
+      "cycles_blocked": 3,
+      "pdf_stored": true,
+      "pdf_size_mb": 3.3,
+      "pdf_date": "2026-06-07"
+    },
+    "NVL": {
+      "cycles_blocked": 3,
+      "pdf_stored": true,
+      "pdf_size_mb": 1.9,
+      "pdf_date": "2026-06-08"
+    },
+    "D2D": {
+      "cycles_blocked": 3,
+      "pdf_stored": true,
+      "pdf_size_mb": 11.6,
+      "pdf_date": "2026-06-07"
+    },
+    "TCH": {
+      "cycles_blocked": 3,
+      "pdf_stored": true,
+      "pdf_size_mb": 15.1,
+      "pdf_date": "2026-06-07"
+    },
+    "HPG": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 6.9,
+      "pdf_date": "2026-06-07"
+    },
+    "MBB": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 3.8,
+      "pdf_date": "2026-06-07"
+    },
+    "VPB": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 7.3,
+      "pdf_date": "2026-06-07"
+    },
+    "VHM": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 9.4,
+      "pdf_date": "2026-06-08"
+    },
+    "VRE": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 10.2,
+      "pdf_date": "2026-06-07"
+    },
+    "KBC": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 3,
+      "pdf_date": "2026-06-08"
+    },
+    "HCM": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 9.6,
+      "pdf_date": "2026-06-08"
+    },
+    "SSI": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 12,
+      "pdf_date": "2026-06-07"
+    },
+    "HVN": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 16.4,
+      "pdf_date": "2026-06-07"
+    },
+    "MWG": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 14.6,
+      "pdf_date": "2026-06-07"
+    },
+    "DPM": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 2,
+      "pdf_date": "2026-06-07"
+    },
+    "GVR": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 7.5,
+      "pdf_date": "2026-06-07"
+    },
+    "NKG": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 11.3,
+      "pdf_date": "2026-06-07"
+    },
+    "POW": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 11.1,
+      "pdf_date": "2026-06-07"
+    },
+    "VCI": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 14.5,
+      "pdf_date": "2026-06-07"
+    },
+    "VIC": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 4.8,
+      "pdf_date": "2026-06-07"
+    },
+    "PPC": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 14.8,
+      "pdf_date": "2026-06-07"
+    },
+    "PLX": {
+      "cycles_blocked": 1,
+      "pdf_stored": true,
+      "pdf_size_mb": 14.8,
+      "pdf_date": "2026-06-07"
+    }
+  },
+  "low_confidence_tickers": {
+    "ACB": {
+      "conf_pct": 38,
+      "status": "PUB-5"
+    },
+    "EIB": {
+      "conf_pct": 31,
+      "status": "PUB-5"
+    },
+    "DHG": {
+      "conf_pct": 44,
+      "status": "PUB-5"
+    }
+  },
+  "extraction_status": "get_bctc_full returns empty for all 24 tickers",
+  "action_required": "dev-team unblock extraction pipeline — cycle 28+ critical for CTG",
+  "signal_id_bus": 5534,
+  "critic_score": 0.6,
+  "_processed": {
+    "fingerprint": "94713e7fcd3ed39679ba56a536d44b96da389c32d07ced06458327c6c890c632",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

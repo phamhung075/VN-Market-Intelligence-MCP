@@ -1,0 +1,97 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "cc": "architect",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T18:30:00Z",
+  "dedup_key": "ci_batch2_gate_result:92e2c1ea",
+  "payload": {
+    "check_id": "CI-BATCH2-GATE-92e2c1ea",
+    "task_under_test": "BATCH2-CI-C-MS-MOCK-STUB-LEAK-GUARD",
+    "verdict": "GATE PASSED (clean additive mover, NO regression) — BUT projected contamination drain did NOT materialize. The 12 mock.module() contaminator files got afterAll-restore guards + a permanent meta-test (mock-module-afterall-guard.test.ts) was added. Absolute moved 42 -> 40 (-2), pass 11717 -> 11720 (+3), tests 11801 -> 11802 (+1 = the new meta-guard test, green). Sum invariant holds: 11720 pass + 42 skip + 40 fail = 11802 = Ran tests. errors 0 (no errors line). Route BATCH2-CI-C-MS-MOCK-STUB-LEAK-GUARD REVIEW -> DONE — the structural fix + meta-guard are permanent value and the move is clean. NO regression.",
+    "projected_vs_actual": "Projected ~42 -> ~32 (-10, assuming 1328e + downstream victims were contamination drained by the 12-file afterAll fix). ACTUAL 42 -> 40 (-2). The contamination drain was only 2 fails, NOT 10. This CONFIRMS the isolation-probe lesson (feedback_isolation_probe_before_cluster_triage): contamination was only ~13% of the red suite, not the dominant cause. Authoritative number is the gate absolute = 40. No regression (additive +3 pass). Not a blocker.",
+    "CRITICAL_1328e_still_red": "Task 1328e — notifyTelegramAlert conviction routing > 'HIGH alert without conviction option -> output unchanged from pre-1328e baseline' STILL shows a (fail) marker in the full-suite CI native log AFTER the BATCH2 fix. The arch-S23 RECLASSIFICATION of 1328e from BATCH5 -> BATCH2 was INCORRECT: 1328e passes ALONE (12 pass/0 fail in isolation probe) so it IS a contamination victim, but its actual contaminator file is NOT among the 12 fixed (084/089/1298b/1318/1397c/1423d/1423f/1466/1570c/1881a/1898b/1903a) — OR the assertion is genuinely stale against post-1328e prod when run in suite order. ACTION: REVERT 1328e back to BATCH5 (assertion-logic) for dedicated triage — do NOT mark it cured by BATCH2.",
+    "pattern": "MOCK-STUB-LEAK-GUARD: each of the 12 files that call mock.module() now stores the real export as _real<Name> before mocking and adds afterAll(() => mock.module(path, () => _real<Name>)) to restore the ESM registry, preventing cross-file leak. PLUS a permanent meta-test (apps/mcp-server/src/__tests__/lint/mock-module-afterall-guard.test.ts) scans the whole test tree and FAILS if any file calls mock.module() without a matching afterAll restore (was 12 violations, now 0). Coverage RETAINED: zero it()/test() removed; only afterAll hooks added + 1 new meta-guard test.",
+    "baseline_absolute": {
+      "sha": "e1ee78b9",
+      "run_id": "27225351774",
+      "bun_job_id": "80390917327",
+      "native_fail": 42,
+      "native_errors": 0,
+      "fail_plus_error": 42,
+      "tests": 11801,
+      "pass": 11717,
+      "skip": 42
+    },
+    "batch2_absolute": {
+      "sha": "92e2c1ea",
+      "run_id": "27227014423",
+      "bun_job_id": "80396804993",
+      "native_fail": 40,
+      "native_errors": 0,
+      "fail_plus_error": 40,
+      "tests": 11802,
+      "pass": 11720,
+      "skip": 42
+    },
+    "delta_native": {
+      "fail_plus_error": "-2 (42 -> 40)",
+      "pass": "+3 (11717 -> 11720)",
+      "tests": "+1 (11801 -> 11802, new meta-guard test)",
+      "skip": "0 (42 unchanged)"
+    },
+    "coverage_check": "Zero coverage lost. 12 files got afterAll-restore hooks (additive), 1 new meta-guard test added (green). No it()/test() removed. tsc --noEmit CLEAN (pre-push). 0 mock.module-without-afterAll violations remain (meta-guard green).",
+    "measurement_method": "bun NATIVE summary from gh run view 27227014423 --job=80396804993 --log final block ' 11720 pass / 42 skip / 40 fail / Ran 11802 tests across 1037 files' (no errors line => native_errors=0). Run conclusion=failure IGNORED (irrelevant). Remaining 40 unique fail markers enumerated via grep '(fail)' | sort -u.",
+    "remaining_40_roster_by_batch": {
+      "BATCH3_market_hours_gate_6": [
+        "1407b MH-1 off-hours price",
+        "1407b MH-2 off-hours foreign_flow",
+        "1407b MH-9 weekend price",
+        "1407b MH-10 weekend foreign_flow",
+        "1407b MH-12 Labour-Day price",
+        "1407b MH-13 Labour-Day foreign_flow"
+      ],
+      "BATCH4_config_drift": [
+        "1343e bctc_vps_queue watchlist (reclassified 26->34)",
+        "1349a scheduler section removal",
+        "1837a orch-state v3 schema AC-1",
+        "230 AC-4c Step-0b in 7 agent .md",
+        "1336 named volume market_data",
+        "cron-registry schedulerFileCount 43",
+        "cowork-schedule 14 slots policy_id",
+        "T-12 EC-6 chef-intraday interval"
+      ],
+      "BATCH5_assertion_logic_and_fix_prod": [
+        "VCB B-3b x3 (equity_total/total_liabilities/routes-split-block)",
+        "DV-HC-8 corrected-value survive finalize",
+        "scanDiskForStrandedPdfs watchlist match",
+        "TRUST-RED TR-RED-5b finalize gate",
+        "1100 getCronJobHealthSummary last_run",
+        "1309 bbAlertScan multi-ticker",
+        "1328e conviction routing (REVERTED from BATCH2)",
+        "1352a A-1 macroIndicatorRefresh WORK msg",
+        "1416b trimToBalanceSheetWindow VNM",
+        "1503 AC3 writeForeignFlowToOhlcv",
+        "1792 x2 conviction debounce DDL",
+        "1793 (e) pollNews DB warn not swallow",
+        "1879a T7 FRED missing-key fail-loud",
+        "VPT-1 (c) vps-proxy stale push frozen-now",
+        "bctcDiscovery DDD guard throw",
+        "handleBctcEvalRecompute 200 stages",
+        "AC-1 teChromiumNews cold-start retry",
+        "AC-4 sleepMs 2000",
+        "newsHeadlinesRefresh x2 bloomberg/reuters URL"
+      ]
+    },
+    "router_actions_done": "Dev dev-mcp-server-S25 BATCH2 mock-stub-leak (92e2c1ea): 12 contaminator files afterAll-restore + permanent meta-guard test, 0 violations after fix, BATCH2 TODO->REVIEW, DJ-GATE-1 same-commit. Router raw-verified (linear e1ee78b9->92e2c1ea, owned-paths-only test-tree only NO foreign/pdf-extractor leak, zero it() removed, orch jq-valid/schema v3/246 unique/single-status-key OK/ci_absolute untouched at 42, mutex released), pushed 3ef16fd7..92e2c1ea (pre-push tsc OK), gate-watched run 27227014423 to completion. Absolute 42->40 clean, +3 pass additive, meta-guard green.",
+    "po_action_requested": "When the next PO batched board write fires (combine with BATCH3 once its gate lands): (1) BATCH2-CI-C-MS-MOCK-STUB-LEAK-GUARD REVIEW -> DONE (cite THIS signal, clean -2 + permanent meta-guard, NO regression). (2) REVERT 1328e classification BATCH2 -> BATCH5 in the BATCH5 task spec / triage table (it is NOT cured; still red in suite; contaminator not in the 12 OR genuinely stale). (3) REBASELINE ci_absolute 42 -> 40 (sha 92e2c1ea, run_id 27227014423, bun_job_id 80396804993, native_fail 40, native_errors 0, fail_plus_error 40, pass 11720, skip 42, tests 11802), updated_by po-S<N>, supersedes '42 (e1ee78b9)'. Sync long_tail_triage_policy.absolute to '40 (sha 92e2c1ea, run 27227014423, job 80396804993)'. (4) DJ-GATE-1 po-S<N> same-commit. Verify single-status-key + 246 unique ids after write.",
+    "next": "Router continues pipeline: BATCH3 dev (a4cfaaa3, market-hours now-seam) in flight -> verify+push+gate (projected -6, the 6x 1407b MH). Then dispatch BATCH4 (config-drift, 8 items incl reclassified 1343e). Then BATCH5 (assertion-logic + FIX-PROD, ~20 items incl reverted 1328e). PO batched rebaselines periodically. Continue /goal loop toward native fail+error=0. Cluster-6 schema-drift PARKED."
+  },
+  "_processed": {
+    "fingerprint": "632062262e988feb8070092b9fe358854ce557e6e3e789cb7db5ef665acd51d9",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

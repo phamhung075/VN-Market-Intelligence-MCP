@@ -1,0 +1,61 @@
+{
+  "from": "news-scout",
+  "to": "unified-agent",
+  "type": "news_impact",
+  "signal_type": "urgent_news",
+  "stock_code": "NVL",
+  "headline": "Cổ phiếu Novaland bất ngờ có biến",
+  "source": "cafef",
+  "published_at": "2026-06-10T04:47:00Z",
+  "sentiment": "bullish",
+  "impact_score": 7,
+  "regime_adjusted_score": 7,
+  "regime": "NEUTRAL",
+  "affected_sectors": [
+    "real_estate"
+  ],
+  "affected_stocks": [
+    "NVL",
+    "VIC",
+    "VHM",
+    "VRE",
+    "D2D",
+    "KBC",
+    "TCH"
+  ],
+  "technical_signals": {
+    "price_surge": true,
+    "surge_pct": 6.88,
+    "volume_spike": true,
+    "spike_factor": 3.3
+  },
+  "pillars": {
+    "M2": "neutral",
+    "COC": "neutral",
+    "EPS": "tailwind",
+    "POL": "neutral"
+  },
+  "phase": "recovery",
+  "tier": "equity",
+  "payload": {
+    "title": "Cổ phiếu Novaland bất ngờ có biến",
+    "detail": "NVL surged +6.88% amid 3.3× volume spike. Real estate sector tailwind. Positive news driver. | regime=NEUTRAL regime_adj_score=7.0 | pillars=M2:neutral,COC:neutral,EPS:tailwind,POL:neutral | phase=recovery tier=equity"
+  },
+  "finding_data": {
+    "headline": "Cổ phiếu Novaland bất ngờ có biến",
+    "source": "cafef",
+    "severity": "medium",
+    "confidence": 0.82,
+    "hot_money_risk": false,
+    "cpi_pressure_risk": false,
+    "gdp_warning_signal": false
+  },
+  "createdAt": "2026-06-10T16:08:35Z",
+  "ttl_minutes": 120,
+  "_processed": {
+    "fingerprint": "4695d67155e2a764021c1d1b3c1736fd4d8f4821c2f3a6f86495d4cd1e2ca5b0",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

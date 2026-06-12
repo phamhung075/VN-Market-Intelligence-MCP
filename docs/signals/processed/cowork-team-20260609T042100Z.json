@@ -1,0 +1,38 @@
+{
+  "signal_type": "cowork-team-tick",
+  "classification": "FIRE",
+  "tick_id": "04:21",
+  "fire_time": "2026-06-09T04:21:00Z",
+  "emitted_at": "2026-06-09T04:22:25Z",
+  "drift_min": 6,
+  "matched_slots": [
+    "chef-intraday"
+  ],
+  "won_slots": [
+    "chef-intraday"
+  ],
+  "collision_warn": [],
+  "leader_lock": "own_held",
+  "leader_lock_note": "claimed=false → task_heartbeat ok=true (owner_agent=cowork-dispatcher match) = OWN-HELD. 04:06 leader (ttl 1800s, expires ~04:36) still live within the 15-min gap; heartbeat renewed to expires_at 1780980706 (~04:51) and proceeded per leader-lock.md OWN-HELD path. Slot token remained the hard dup-spawn gate (claimed=true, no dup chef).",
+  "spawned": [
+    "docs/agents/unified-agent/flow/chef.md"
+  ],
+  "agent_ids": [
+    "a126a61dd6fbf5e6c"
+  ],
+  "calendar_status": "open",
+  "macro": {
+    "vnIndex": 1790.53,
+    "changePct": -2.63,
+    "regime": "RISK_OFF",
+    "volatility_level": "high"
+  },
+  "drain_note": "5 NEW signal_queue rows (sau-c283-c08/c06/c04 + sau-20260609T033542Z/033800Z) all to po — left NEW for dev-team drain.",
+  "note": "2nd chef-intraday FIRE of 9/6 session (cron 13 2-8, last 02:21, cadence 60min). CHEF TNB 6-layer over fresh news-scout c66 convergence (5 signals #5467-#5471: 1800 breach + FII -700B banking cascade, gold, tech IPO, GAS/PLX, EIB) + market-watcher 0 anomalies. Slot token won/released ok, snapshot fresh, emit ok 04:22:25Z. First OWN-HELD leader path this session (two FIRE ticks 04:06+04:21 inside one 1800s TTL). Carry: CTG cycle 27+ CRITICAL, EIB #5417, chef 02:21 dish MARKET id689.",
+  "_processed": {
+    "fingerprint": "fda7db2e6d7af8092f768cf73814cd9f58affbe414bc2da6e9bc003b32f9ecbc",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

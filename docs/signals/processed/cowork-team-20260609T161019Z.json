@@ -1,0 +1,74 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T16:10:19Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence",
+      "market-watcher-eod": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 30,
+      "market-watcher-offhours": 30,
+      "market-watcher-eod": 30
+    },
+    "last_fired_timestamp": "2026-06-09T16:08:59Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "16:00",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 48,
+    "collision_warned": [
+      "market-watcher: market-watcher-offhours + market-watcher-eod"
+    ],
+    "note": "4-hourly off-hours gatherer fan-out + weekday EOD market-watcher coincide at 16:00 (nominal_tick 16:00, drift 5). 3 slots WON (all claimed=true): news-scout-offhours (cron 0 */4, last 12:06), market-watcher-offhours (cron 0 */4, last 12:06), market-watcher-eod (cron 0 16 * * 1-5, last yesterday 16:06). market-watcher matched 2 distinct slots -> R3 intentional multi-slot, WARN-only sent to WORK, both spawned with distinct per-work-item tokens (cowork-slot:market-watcher-offhours + cowork-slot:market-watcher-eod). Spawned BACKGROUND (BGFAN-1): news-scout a22935f54997a9051, market-watcher-offhours a8a4825b725620693, market-watcher-eod aa0fcfbd44119c724. Gatherers write own notebooks + emit signals; do NOT publish MARKET -> no publish-marker gate, no double-post risk. All 3 per-work-item tokens claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok, renewed +1800s exp 1781023032). last_fired updated 16:08:59Z all 3. Step 4.2 pressure adaptive (fresh ~15min<20 threshold, stale_warning false). Step 4.3 calendar=open no suppression. Step 4.4 cadence all elapsed>>30min due. Step 4.5 freshness gate fails (regime RISK_OFF, backlog!=0, open) no downgrade. Step 4.7 tick-snapshot pre-step SKIPPED (manual round-trip of 4KB bootstrap payload with embedded newlines risks malformed JSON; documented non-blocking fallback -> agents self-bootstrap via get_cycle_bootstrap). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true (promoted from prior snapshot). Step 0a: 6 NEW signal_queue rows all to:po (3 sau db_integrity_breach + 1 sau system-issue CRITICAL orch-clobber + 1 cwk chef-eod-marker flow_bug + 1 cwk bctc-extract-empty pipeline_bug CRITICAL) -- dev-team domain, left NEW for po triage, none cowork-actionable. Completions arrive via async notification.",
+    "spawned_agent_ids": {
+      "news-scout-offhours": "a22935f54997a9051",
+      "market-watcher-offhours": "a8a4825b725620693",
+      "market-watcher-eod": "aa0fcfbd44119c724"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T16:10:19Z",
+  "_processed": {
+    "fingerprint": "e6fa4c6d40a895ae8be23939b6a82a417f66362560ebb16af210a39d5d3b4f9a",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

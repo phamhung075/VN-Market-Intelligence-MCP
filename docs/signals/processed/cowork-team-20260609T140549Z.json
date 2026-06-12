@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T14:05:44Z",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "refine-bctc-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": null
+    },
+    "last_fired_timestamp": "2026-06-09T14:05:44Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "14:00",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 17,
+    "note": "Daily 14:00 BCTC refine slot-2 fired (cron 0 14 * * *, policy bctc-offmarket resolved to cron, last fired yesterday 2026-06-08T14:06:06Z). refine_bctc_md spawned BACKGROUND (BGFAN-1, agentId aa802e532c0fb52f2) — processor not publisher: resumes oldest pending refine via get_bctc_pending_refine+skip-set (DGC Q4 2025 had 13 windows 0021-0033 remaining after slot-1 09:06 chunk processed 0014-0020); skips cover-letter PDFs. Does NOT publish MARKET -> no marker gate, no double-post risk. Per-work-item token cowork-slot:refine-bctc-slot-2 claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok, renewed +1800s). last_fired updated 14:05:44Z. emit_pressure_state success (adaptive), cycle_snapshot_promoted=false. Step 0a: 5 NEW signal_queue rows all to:po (dev-team domain, left NEW). Completion via async notification.",
+    "spawned_agent_ids": {
+      "refine-bctc-slot-2": "aa802e532c0fb52f2"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T14:05:49Z",
+  "_processed": {
+    "fingerprint": "af0ad43a50a329d8102907bf7a2ee72a89c6e5f3c348b8f32640ecfbcd548373",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

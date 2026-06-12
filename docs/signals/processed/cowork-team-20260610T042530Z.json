@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-10T04:25:30Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 60
+    },
+    "last_fired_timestamp": "2026-06-10T04:25:11Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:15",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 7,
+    "note": "Intraday CHEF dish (cron 13 2-8 * * 1-5, policy chef-intraday cadence 60min, last intraday 2026-06-10T02:26:18Z ~114min ago = cadence satisfied = due; note the 03:13 edge was cadence-suppressed at ~54min). unified-agent spawned FOREGROUND (BGFAN-1 PUBLISHER path, agentId a92291115cad95903) — walks TNB 6-layer + publishes synthesized dish to MARKET. RAW-VERIFY PASSED: get_unreviewed_market_messages confirms MARKET msg id=699 sent_at 2026-06-10 04:23:15, plain-VN 4-paragraph prose; id=698 was the prior 02:22 dish so id=699 is the ONLY new message this cycle. Content matches dish (gold 4210/-3.09sigma extreme risk-off / USD-VND 26.130 crossing 25.500 import-cost pressure on RE / ACB 102M-share fund accumulation / banking BID+1.82 ACB+1.51 VCB+0.49 / NVL +6.88 retail accumulation / Brent 92.11 NEUTRAL GAS-PLX mixed / Kinh Dich que Khon caution / watch 26.200 trigger). SINGLE publish, NOT fabricated, zero double-post (AC-6 satisfied). 4 clusters qualified, conviction floor MEDIUM (macro_hexagram unavailable 501 -> degraded-dish floor applied, cap medium; four-factor-synthesis tool also unavailable downstream -> tickers carried via Layer-6 analysis). DATA-INTEGRITY: dispatcher pre-warned agent of news-scout 00:24Z 'database disk image is malformed'; agent reports all market-data tools returned fresh non-empty values at 04:20 -> corruption did NOT block this cycle (transient/cleared, consistent with 04:05 gatherer pair both reporting healthy DB; routed separately to po as cwk-db-malformed-newsscout-20260610T0024Z). Per-work-item token cowork-slot:chef-intraday claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok:true, renewed +1800s expires 1781067033). last_fired updated 04:25:11Z. emit_pressure_state success (adaptive), cycle_snapshot_promoted=false. Dispatcher-completes-commit: unified-agent.md notebook committed under commit-mutex, pathspec-scoped. Step 0a: 7 NEW signal_queue rows all to:po (1 sau-d4-202606100300 system_issue LOW + 3 db_integrity_breach WARN sau-c283-c08/c06/c04 + 1 sau-20260609T033800Z system-issue CRITICAL + 1 cwk-chef-eod-marker flow_bug HIGH + 1 cwk-bctc-extract-empty pipeline_bug CRITICAL) — left NEW for po triage, none cowork-actionable. Next intraday CHEF: 05:13 UTC.",
+    "spawned_agent_ids": {
+      "chef-intraday": "a92291115cad95903"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-10T04:25:30Z",
+  "_processed": {
+    "fingerprint": "4b7dd4d286c333b064e91ab7dce6f90f4e214cdde254631fa94d7c079fe65e9b",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T05:05:00Z",
+  "dedup_key": "ci_cluster1_gate_result:2acb7192",
+  "payload": {
+    "check_id": "CI-CLUSTER1-GATE-2acb7192",
+    "task_under_test": "FIX-CI-MCP-SDK-MOCK-CONTAM",
+    "head_sha": "2acb7192",
+    "run_id": "27184744909",
+    "bun_test_job_id": "80251172255",
+    "conclusion": "PASS — VERIFICATION GATE MET. Cluster-1 (MCP-SDK mock contamination) cleared. Native fail+error DROPPED 629 -> 346 (-283, -45%). Code commit RETAINED (5fa2822d). CI run conclusion is still 'failure' only because total != 0 (CI intentionally RED until 0 fail; expected).",
+    "verification_gate": "native fail+error must DROP well below the 629 absolute (after-P4 e442cf11). It dropped to 346. GATE MET (-283).",
+    "measurement_method": "bun NATIVE summary tally from `gh run view --job=80251172255 --log` ('NNN pass / NNN skip / NNN fail / NNN errors / Ran N tests' block). Native-to-native only.",
+    "after_p4_native": {
+      "run_id": "27177364641",
+      "sha": "e442cf11",
+      "pass": 10886,
+      "skip": 36,
+      "fail": 615,
+      "errors": 14,
+      "fail_plus_error": 629,
+      "tests": 11537
+    },
+    "after_cluster1_native": {
+      "run_id": "27184744909",
+      "sha": "2acb7192",
+      "pass": 11416,
+      "skip": 42,
+      "fail": 344,
+      "errors": 2,
+      "fail_plus_error": 346,
+      "tests": 11802
+    },
+    "delta_native": {
+      "pass": "+530",
+      "skip": "+6",
+      "fail": "-271",
+      "errors": "-12",
+      "fail_plus_error": "-283 BETTER",
+      "tests": "+265"
+    },
+    "empirical_finding": "The architect taxonomy Cluster-1 hypothesis (1862c mock.module() leaks a connect-only McpServer to 69+ downstream files via Bun's ESM cache, ~355 native fail) is EMPIRICALLY CONFIRMED. Option-A fix (add full no-op stubs tool()/registerTool()/_registeredTools/server/close/isConnected to MockMcpServer) cleared the cascade: fail -271, errors -12 (the 12 SDK-related errors are gone; the 2 remaining errors = Cluster-5 dead-reuters _deprecated tests). Test COUNT rose +265 (11537 -> 11802) because files that previously CRASHED OUT entirely now EXECUTE their tests — so ~265 previously-masked tests now run. Net -283 vs the ~355 estimate: ~72 of the 'Cluster-1' tally were real assertion failures that were hidden behind the crash and are now VISIBLE (they belong to other clusters / their own logic, not the mock). This is the largest single net improvement of the entire CI-RED-RECONCILE sprint (vs schema-drift P5-P8 which all netted breakeven-or-worse).",
+    "router_actions_done": "Raw-verified dev commit 5fa2822d TEST-FILE-ONLY (36 insertions, only 1862c-transport-session-eviction.test.ts; zero production code via git show --stat), tsc clean (pre-push hook OK), targeted tests pass (5/26/52/7 native). Bundled 6 commits (5fa2822d dev fix + 2acb7192 dev notebook + f922173c PO board + d767f0a3 architect taxonomy + 661ba5a0 auditor + c6d046ba cowork) into ONE push f4d0d0c1->2acb7192 (no origin drift, pre-push tsc OK). Native summary read from gh run view --job=80251172255 --log. Code RETAINED (gate passed). NEW ABSOLUTE BASELINE = 346 (344 fail + 2 err / Ran 11802, sha 2acb7192).",
+    "po_action_requested": "1) Flip board/signal_queue FIX-CI-MCP-SDK-MOCK-CONTAM TODO -> DONE (DJ-GATE-1: decision-journal STEP in the SAME commit, stamped task-id). 2) UPDATE the sprint baseline absolute everywhere it is referenced from 629 -> 346 (sha 2acb7192, run 27184744909, job 80251172255: 344 fail + 2 err / Ran 11802). The 629 absolute is now SUPERSEDED. 3) Un-queue the next two LOW-cost non-prod clusters to TODO with the NEW 346 baseline: FIX-CI-DATA-SYMLINK-ENOENT (Cluster 2, ~91 native, owner per zone — CI workflow / setup.ts; symlink apps/mcp-server/data absent in CI) and FIX-CI-DEAD-REUTERS-TESTS (Cluster 5, the 2 remaining errors — delete 2 _deprecated test files importing deleted reuters.js). Both were QUEUED behind Cluster-1; Cluster-1 is now DONE so they unblock. 4) Note Cluster-5 is now the ENTIRE remaining error count (2 err) — cheapest possible next win.",
+    "next_gate": "After Cluster-2 + Cluster-5 fixes (dev): same native-summary method vs the NEW 346 absolute. fail+error must DROP (expect ~253 if Cluster-2's ~91 and Cluster-5's 2 clear; some of the ~91 may be previously-masked truth like Cluster-1 was). Then re-profile the residual against the taxonomy: Cluster-3 (ASSERTION/LOGIC ~159) and Cluster-4 (UNDEFINED-FN ~21) remain; Cluster-6 schema-drift PARKED (~4, do not re-open)."
+  },
+  "_processed": {
+    "fingerprint": "48bffe282149021e0e282470fcaa924c4e3535a1b24cb7620e54430317c42163",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

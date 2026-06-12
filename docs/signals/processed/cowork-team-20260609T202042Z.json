@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T20:20:37Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-06-09T20:20:37Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "self-held-renewed",
+    "signal_backlog": 76,
+    "note": "Daily 20:13 TNB strategy-supervisor audit slot fired (cron 13 20 * * *, guaranteed=true, no cadence gate, last fired yesterday 2026-06-08T20:21:08Z). tran-ngoc-bau spawned BACKGROUND (BGFAN-1, agentId a103d809f862e9e4a) — Strategy Supervisor / auditor, NOT a MARKET publisher: audits chef narrative (unified-agent dishes) for TNB 6-layer walk completeness, confirms all 6 layers cited + business context present + gap catalogue applied. Tools Read/Edit/Write/Glob/Grep only (no Bash, no gateway publish) -> does NOT send_telegram MARKET -> no publish-marker gate, no double-post risk. Per-work-item token cowork-slot:tnb-audit claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok=true, renewed +1800s). last_fired updated 20:20:37Z. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Step 0a: 6 NEW signal_queue rows all to:po (3 sau db_integrity_breach WARN + 1 system-issue CRITICAL + cwk-chef-eod-marker-bug HIGH + cwk-bctc-extract-empty-24tickers CRITICAL) -> dev-team domain, left NEW for po triage, none cowork-actionable. Audit output (notebook/audit-brief) may need dispatcher-completes-commit on async completion. Completion arrives via async notification.",
+    "spawned_agent_ids": {
+      "tnb-audit": "a103d809f862e9e4a"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T20:20:42Z",
+  "_processed": {
+    "fingerprint": "7e3420a3d209d1c414093ccf04224b19f529c1e9fb377d03982ad737f0de45b0",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

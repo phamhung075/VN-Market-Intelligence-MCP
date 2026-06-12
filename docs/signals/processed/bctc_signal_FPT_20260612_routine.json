@@ -1,0 +1,67 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Dịch vụ IT xuất khẩu phần mềm, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp IT trong nước và offshore, thuê bao viễn thông SME, sinh viên FPT Edu",
+  "ops": "Biên lợi nhuận gộp 34%; OCF Q1 -2,847ty (mùa vụ, Q4/2025 bù +4,108ty); D/E 0.40x an toàn",
+  "mgmt": "Tăng trưởng LN ổn định; hướng dẫn FY2025 đạt 3 quý liên tiếp; mua lại cổ phiếu đúng kế hoạch",
+  "ey_spread_pp": 2.25,
+  "ey_label": "FAIR",
+  "pe_ratio": 13.8,
+  "sector_pe": 17.3,
+  "pe_discount_pct": -20,
+  "roe_pct": 28.3,
+  "net_profit_tybvnd": 2476.8,
+  "ocf_tybvnd": -2847.8,
+  "d_e_ratio": 0.4,
+  "total_assets_tybvnd": 68586.1,
+  "equity_tybvnd": 40122,
+  "liabilities_tybvnd": 28464.1,
+  "balance_imbalance": 0,
+  "esc2_result": "PASS",
+  "esc3_result": "DATA-COV-LIM GUARD-HELD (~19d remaining)",
+  "esc1_result": "PASS",
+  "esc4_result": "PASS",
+  "esc5_result": "PASS",
+  "escalation_status": "NONE",
+  "insider": "clean",
+  "legal": "clean",
+  "chain_findings": 0,
+  "e3_cache_hit": true,
+  "e3_cache_cycle": 8,
+  "signal_id_bus": 5813,
+  "cycle": "c046",
+  "slot": "bctc-analyst-slot-4",
+  "regime": "NEUTRAL",
+  "carry_spread_pp": 1.38,
+  "market_ey_pct": 8.2,
+  "market_ey_label": "CHEAP",
+  "release_batch_status": {
+    "CTG": {
+      "status": "BLOCKED",
+      "cycle": 14,
+      "reason": "bug#2776 undeployed — extraction empty"
+    },
+    "VCB": {
+      "status": "BLOCKED",
+      "cycle": 9,
+      "reason": "filed 2026-06-11, extraction empty"
+    },
+    "D2D": {
+      "status": "BLOCKED",
+      "cycle": 9,
+      "reason": "filed 2026-06-11, extraction empty"
+    }
+  },
+  "timestamp": "2026-06-12T00:07:00Z",
+  "_processed": {
+    "fingerprint": "199b613b2b7464b28daaa6f9fb3dff9589b9d2aa17efcfb0088ca37ccf9f114e",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

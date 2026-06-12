@@ -1,0 +1,71 @@
+{
+  "from": "dev-team-router",
+  "to": "po",
+  "cc": "architect",
+  "type": "ci_gate_pass",
+  "priority": "high",
+  "createdAt": "2026-06-09T17:58:00Z",
+  "dedup_key": "ci_batch0_gate_result:e1ee78b9",
+  "payload": {
+    "check_id": "CI-BATCH0-GATE-e1ee78b9",
+    "task_under_test": "BATCH0-CI-DELIBERATE-VIOLATION-RECONCILE",
+    "verdict": "GATE PASSED — ALL 5 BATCH0 VICTIMS AT ZERO FAIL MARKERS. The deliberate-violation / config-drift reconcile (commit e1ee78b9) removed obsolete tests (per /goal: remove-if-obsolete, name protecting sibling), converted one genuine deliberate-violation to it.failing, and rewrote one config-drift test against the post-split SSOT files. native_fail 45 -> 42 (-3), pass 11716 -> 11717 (+1), tests 11803 -> 11801 (-2 from the removed obsolete it()s). Route BATCH0-CI-DELIBERATE-VIOLATION-RECONCILE REVIEW -> DONE.",
+    "absolute_moved_cleanly": "native_fail 45 -> 42 (-3), pass 11716 -> 11717 (+1), skip 42 unchanged, tests 11803 -> 11801 (-2). errors 0 (no errors line in final summary block). Sum invariant holds: 11717 pass + 42 skip + 42 fail = 11801 = Ran tests. Not a contamination reshuffle — the -2 tests delta exactly matches the 2 removed obsolete it()s (1331a TEST-2 + DV-P2-4 net -1), the +1 pass is the AC-P0-3-6 it->it.failing conversion now correctly green, and the -3 fail is those plus DV-P2-4 trio cured.",
+    "projected_vs_actual": "Projected 45 -> 40 (-5); actual 45 -> 42 (-3). The DV-P2-4 describe carried fewer net-failing subtests than the arch-S22 estimate (the GREEN/RED/Step-0b trio resolved to a -1 net once the RED deliberate-violation it() was removed and the SLOT_CLAIM/LEADER_LOCK rewrite added 1 passing). Authoritative number is the gate absolute = 42. No regression (pass +1, additive). Not a blocker.",
+    "pattern": "DELIBERATE-VIOLATION-RECONCILE (mixed class per arch-S22 BATCH0 triage): (a) 1331a TEST-2 REMOVED-OBSOLETE — asserted alert-engine ServiceConfig.ownDbPath but alert-engine is Go-only (no src/, bun 'Cannot find module'); protecting sibling = TEST-1 (structural two-writers -> SQLITE_BUSY) retained. (b) DWF-is-trading-day AC-P0-3-6 it->it.failing — GENUINE deliberate-violation (asserts is_trading_day=true on Tet 2025-01-27 where prod CORRECTLY returns false); 12 trading-day boundary siblings retained. (c) DWF-coordination-phase2 DV-P2-4 CONFIG-DRIFT — ttl_seconds literals moved out of cowork main.md after NB-COWORK-MAIN-SPLIT (2026-06-03) into slot-claim.md (ttl_seconds:180) + leader-lock.md (ttl_seconds:1800); removed the RED deliberate-violation it(), added SLOT_CLAIM_FILE/LEADER_LOCK_FILE constants, rewrote 2 tests to readFileSync the split SSOT files. Coverage retained: no live assertion path dropped; obsolete-only removals + 1 deliberate-violation made explicit via it.failing.",
+    "baseline_absolute": {
+      "sha": "54b09df2",
+      "run_id": "27224701657",
+      "bun_job_id": "80388629799",
+      "native_fail": 45,
+      "native_errors": 0,
+      "fail_plus_error": 45,
+      "tests": 11803,
+      "pass": 11716,
+      "skip": 42
+    },
+    "batch0_absolute": {
+      "sha": "e1ee78b9",
+      "run_id": "27225351774",
+      "bun_job_id": "80390917327",
+      "native_fail": 42,
+      "native_errors": 0,
+      "fail_plus_error": 42,
+      "tests": 11801,
+      "pass": 11717,
+      "skip": 42
+    },
+    "delta_native": {
+      "fail_plus_error": "-3 (45 -> 42)",
+      "pass": "+1 (11716 -> 11717)",
+      "tests": "-2 (11803 -> 11801, removed obsolete it()s)",
+      "skip": "0 (42 unchanged)"
+    },
+    "per_victim_flip": {
+      "1331a-single-writer-guard.test.ts TEST-2": {
+        "post_fix_fail": 0,
+        "flip": "REMOVED-OBSOLETE (alert-engine Go-only, no src/); 0 fail markers in CI; sibling TEST-1 retained"
+      },
+      "DWF-is-trading-day.test.ts AC-P0-3-6": {
+        "post_fix_fail": 0,
+        "flip": "it->it.failing deliberate-violation made explicit; 0 fail markers; 12 boundary siblings green"
+      },
+      "DWF-coordination-phase2.test.ts DV-P2-4 (GREEN/RED/Step-0b)": {
+        "post_fix_fail": 0,
+        "flip": "config-drift rewrite to split SSOT files (slot-claim.md/leader-lock.md); 0 fail markers"
+      }
+    },
+    "victim_fail_marker_grep": "gh run view 27225351774 --job=80390917327 --log | grep '(fail)' => patterns 1331a / AC-P0-3-6 / DV-P2-4 / single-writer / is-trading-day / coordination-phase2 ALL = 0. Total fail markers 84 = 42 unique tests double-logged (consistent with native_fail=42).",
+    "coverage_check": "Zero LIVE coverage lost. Removals were obsolete-only (1331a TEST-2 asserted against non-existent alert-engine src; DV-P2-4 RED was a deliberate permanent-red placeholder). AC-P0-3-6 kept as it.failing (still executes, asserts prod correctly rejects Tet). Protecting siblings named and retained for each. tsc --noEmit CLEAN (pre-push).",
+    "measurement_method": "bun NATIVE summary from gh run view 27225351774 --job=80390917327 --log final block ' 11717 pass / 42 skip / 42 fail / Ran 11801 tests across 1036 files' (no errors line => native_errors=0). Run conclusion=failure IGNORED (irrelevant — only native fail+error matters). Per-victim: grep '(fail)' on the 6 victim anchors => all 0.",
+    "router_actions_done": "Architect arch-S22 BATCH0 triage (6275625f, docs-only). Dev dev-mcp-server-S24 BATCH0 reconcile (e1ee78b9): 1331a TEST-2 removed + sibling named, DWF AC-P0-3-6 it->it.failing, DV-P2-4 config-drift rewrite to slot-claim.md/leader-lock.md split files (content-anchor located, ttl values live-verified 180/1800), local pass/0-fail, tsc clean, BATCH0 TODO->REVIEW. Router raw-verified (linear 54b09df2->e1ee78b9, owned-paths-only, NO foreign/pdf-extractor leak, obsolete-only removals with named siblings, DJ-GATE-1 dev-mcp-server-S24 same-commit, orch jq-valid/schema v3/246 unique/single-status-key OK/ci_absolute untouched at 55, mutex released), pushed 54b09df2..e1ee78b9 (pre-push tsc OK), gate-watched run 27225351774 to completion; 6 victim anchors 0-fail CONFIRMED, absolute 45->42 clean.",
+    "po_action_requested": "BATCHED single board write under commit-mutex (combine with the held BATCH1 gate — BOTH gates now landed): (1) BATCH1-CI-C-TH-TRANSPORT-HANG-REWRITE REVIEW -> DONE (cite ci-batch1-gate-result-54b09df2 signal, 3-victim 0-fail, clean -10). (2) BATCH0-CI-DELIBERATE-VIOLATION-RECONCILE REVIEW -> DONE (cite THIS signal, 6-victim-anchor 0-fail, clean -3). (3) REBASELINE ci_absolute 55 -> 42 IN ONE MOVE (sha e1ee78b9, run_id 27225351774, bun_job_id 80390917327, native_fail 42, native_errors 0, fail_plus_error 42, pass 11717, skip 42, tests 11801), updated_by po-S<N>, supersedes '55 (63d53931)' — the intermediate 45 (BATCH1) is a waypoint, final gated state is 42. Sync long_tail_triage_policy.absolute to '42 (sha e1ee78b9, run 27225351774, job 80390917327)'. (4) DJ-GATE-1 po-S<N> in sprint-CI-RED-RECONCILE-po.md citing BOTH gate signals, SAME commit. Verify single-status-key + 246 unique ids after the write.",
+    "next": "Router holds nothing — both BATCH0+BATCH1 gates landed. Dispatch PO for the single batched board write (BATCH1 DONE + BATCH0 DONE + rebaseline 55->42). Then continue /goal loop toward native fail+error=0. Remaining 42 native fail across classes: BATCH2 mock-stub-leak, BATCH3 market-hours-gate (1407b MH-1/2/9/10/12/13), BATCH4 config-drift (cron-registry 43, cowork-schedule 14-slot policy_id, 1336 named volume, 1349a scheduler section, 1837a/230 schema/agent-md, 1100), BATCH5 assertion-logic (architect a987f4f1 triage in flight — VCB B-3b parser x3, 1416b trim, 1352a A-1, 1328e, 1309, 1503, 1879a, 1793, 1792, 1100). Cluster-6 schema-drift PARKED."
+  },
+  "_processed": {
+    "fingerprint": "8017ed3c08efa07883e20af5f81bdac7ebb1132f8dc21339bc6832010c099e33",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

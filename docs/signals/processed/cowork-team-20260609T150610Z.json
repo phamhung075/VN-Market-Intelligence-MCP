@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-09T15:06:06Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": null
+    },
+    "last_fired_timestamp": "2026-06-09T15:06:06Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "self-held-renewed",
+    "dev_head": "unknown",
+    "devq": 1,
+    "signal_backlog": 40,
+    "note": "Daily 15:00 BCTC analyst slot fired (cron 0 15 * * *, policy bctc-offmarket resolved to cron/no-cadence-gate, last fired yesterday 2026-06-08T15:06:05Z). bctc-analyst spawned BACKGROUND (BGFAN-1, agentId a5919c82937e04f9e) — analyst/processor not MARKET publisher: selects mode (routine vs release) per get_earnings_calendar() calendar gate; routine = EY spread / valuation / chain validation / multi-pass trick detection; release = QoQ/YoY beat-miss + ledger write. Writes docs/agent-memory/notebooks/bctc-analyst.md (full overwrite) + conditional docs/analysis-briefs/{TICKER}.md on mode=release. Does NOT send_telegram MARKET -> no publish-marker gate, no double-post risk. E2 guard self-enforced by agent (now 15:06 UTC = 22:06 VN, outside [02:00,08:00) VN window -> pass allowed). Per-work-item token cowork-slot:bctc-analyst-slot-1 claimed(true)->released(ok=true) try/finally. Leader self-held (heartbeat ok, renewed +1800s). last_fired updated 15:06:06Z. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true. Step 0a: 5 NEW signal_queue rows all to:po (3 db_integrity_breach + 1 system-issue + 1 chef-eod-marker flow_bug) — dev-team domain, left NEW for po triage, none cowork-actionable this tick. Completion arrives via async notification.",
+    "spawned_agent_ids": {
+      "bctc-analyst-slot-1": "a5919c82937e04f9e"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-09T15:06:10Z",
+  "_processed": {
+    "fingerprint": "4d98f5516f97554211781289ce8c599b7b41fa77f09b280b4fd417e624b842cf",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

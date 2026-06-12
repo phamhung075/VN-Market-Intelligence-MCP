@@ -1,0 +1,88 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-06-09T16:10:09Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "VCB",
+      "price": 61500,
+      "daily_change_pct": 0.33,
+      "yoy_change_pct": -2.07,
+      "volume": 2564800,
+      "vs_avg_pct": 112.5,
+      "rsi": 52.8,
+      "sentiment": "neutral — gold >$2200 (risk-off macro backdrop)",
+      "insider_activity": "no activity reported",
+      "brief_action": "Hold",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "ACB",
+      "price": 26500,
+      "daily_change_pct": 4.95,
+      "yoy_change_pct": 12.77,
+      "volume": 48784500,
+      "vs_avg_pct": 145.2,
+      "rsi": 54.4,
+      "sentiment": "bullish technical setup — MACD histogram positive",
+      "insider_activity": "no activity reported",
+      "brief_action": "Watch for consolidation",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "volume spike: 48.78M vs avg ~23M (2.1x) + 4.95% daily move"
+    },
+    {
+      "code": "NVL",
+      "price": 13250,
+      "daily_change_pct": -4.33,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "bearish — real estate weakness",
+      "insider_activity": "no activity reported",
+      "brief_action": "Reduce",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "4.33% single-day drop in real estate sector"
+    },
+    {
+      "code": "PLX",
+      "price": 40500,
+      "daily_change_pct": -2.88,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "bearish — oil/gas weakness",
+      "insider_activity": "no activity reported",
+      "brief_action": "Hold",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "GAS",
+      "price": 82400,
+      "daily_change_pct": -1.79,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "bearish — energy sector headwind",
+      "insider_activity": "no activity reported",
+      "brief_action": "Hold",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    }
+  ],
+  "_processed": {
+    "fingerprint": "ec5cefcd919ac74da6e74bc0844d21b2fb3dea828d2c8f586b0ed1ad24e47ba2",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

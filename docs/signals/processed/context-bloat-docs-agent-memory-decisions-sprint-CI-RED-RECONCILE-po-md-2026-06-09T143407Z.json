@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-09T14:34:07Z",
+  "payload": {
+    "file": "docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-po.md",
+    "line_count": 651,
+    "cap": 600,
+    "class": "sprint-decision-journal",
+    "overage": 51,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "4678bf931ead9a903c737fb28a5c0ce483fcfa847378efac0cf789dea651868e",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

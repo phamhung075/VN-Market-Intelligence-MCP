@@ -1,0 +1,57 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-11T18:05:16Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "spawned_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": null
+    },
+    "last_fired_timestamp": "2026-06-11T18:06:00Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "UNCONFIRMED",
+    "leadership_unconfirmed": true,
+    "signal_backlog": 1,
+    "spawned_agent_ids": {
+      "bctc-analyst-slot-2": "ac8e8e5198e086857"
+    },
+    "raw_verify_required": false,
+    "note": "18:00 UTC FIRE (2026-06-11) — bctc-analyst-slot-2 daily off-market financial-analysis worker (cron 0 18 * * *, guaranteed:false, policy_id bctc-offmarket, last_fired 2026-06-10T18:06:00Z, due_reason cron). Fired 18:05 UTC, nominal tick 18:00. 18:00 UTC = 01:00 ICT next day — OUTSIDE the bctc-analyst E2 guard window [02:00,08:00) UTC VN-market — correct off-market analysis window, cycle may start a new pass. Single slot — NO same-agent collision (this is the SECOND daily bctc-analyst cron edge: slot-1 fired 15:00, slot-2 now 18:00, distinct crons). ANALYST WORKER path (NOT publisher, NOT gatherer): runs routine analysis (EY spread, valuation, chain validation, multi-pass trick detection) OR earnings-release mode per get_earnings_calendar() gate; writes ONLY its notebook (docs/agent-memory/notebooks/bctc-analyst.md, full-overwrite cycle log) plus docs/analysis-briefs/{TICKER}.md on mode=release, and a git-ignored E3 idempotency cache under data/bctc-analysis-cache/. Does NOT post to MARKET — therefore NO RAW-verify-on-completion. Dispatcher-completes-commit on completion: when the worker finishes, the dispatcher commits its notebook + any docs/analysis-briefs/{TICKER}.md it produced, pathspec-scoped under commit-mutex (the agent has no bash/commit access). Spawned BACKGROUND per BGFAN-1 (bctc-analyst agentId ac8e8e5198e086857, slot=bctc-analyst-slot-2) with the matcher trigger_prompt (run docs/agents/bctc-analyst/flow/main.md slot=bctc-analyst-slot-2). Per-work-item token cowork-slot:bctc-analyst-slot-2 claimed(true)->released(ok=true) try/finally. last_fired written atomically (empty-guard passed) -> 2026-06-11T18:06:00Z. At THIS tick the dispatcher commits ONLY slot bookkeeping (cowork-schedule.json last_fired + this telemetry), pathspec-scoped under commit-mutex; the analyst output is committed on completion. INFRA NOTE — MCP-SERVER OUTAGE RECOVERED PRE-FIRE: between 17:05 and 17:20 UTC the mcp-server entered a write-wedge state (every gateway call failed with 'dial vn-market: calling initialize: failed to write: 400 Bad Request' — HTTP up but MCP initialize rejected; NOT a clean OOM-kill signature). Sustained ~17 min across 17:20/17:35 SILENT ticks (pressure-emit failed, drains continued via local jq). Dispatcher escalated to ops (agentId a86fc8bfaae6260a9) at 17:35 given the imminent guaranteed 18:00 FIRE. Ops root-caused write-wedge (matches memory 'mcp-server write-wedge'), recovered via targeted `docker compose up -d --force-recreate --no-deps mcp-server` (peers preserved, no down&&up), ~2 min; memory stable 19% of 2GiB cap. Dispatcher RAW-verified recovery at 17:50 (heartbeat returned ok:false orphan response, not 400) BEFORE this FIRE — gateway confirmed healthy; this 18:00 FIRE gate walk executed cleanly with zero gateway errors. No new escalation (known failure mode, recovered; F-OOM/wedge re-escalation throttle spent 00:06). LEADER LOCK DEGRADED: Step 0b task_heartbeat(cowork-leader) returned ok:false (still orphaned post-recreate; renew-only, no reachable recreate path — root F-OOM-MCP-SERVER 2GiB cap, container recreate at 17:37 did not re-seed the leader lease). Dispatcher proceeds SINGLE-DISPATCHER (single deployment => no peer => no split-brain) flagging leadership_unconfirmed=true. emit_pressure_state success (adaptive), cycle_snapshot_promoted=true (FIRE). Step 0a drain: signal_queue tolerant filter -> 1 NEW to:po row (sau-d4-202606110300, system-auditor system_issue: held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row) — NOT cowork-actionable, left NEW for dev-team/po; 0 cowork-actionable. STANDING (po/dev own, dispatcher leaves NEW): CTG extraction CRITICAL (28-ticker release blocked, Bug #2776, confirmed still blocked by bctc-analyst c043 at 15:00 — release batch BLOCKED cycle 11, 60 PDFs unserved; this 18:00 cycle may block again on CTG serving-DB writes but still runs its routine pass on other tickers); auditor lock-integrity finding FPT:Q1-2026:ESC-3; 3rd chef false-parser-failure -> po/architect; leader-lease orphan + F-OOM-MCP-SERVER (NOW with a fresh write-wedge data point at 17:05-17:37 — ops/po should weigh whether the 2GiB cap raise or a wedge-detecting healthcheck is warranted). MACRO WATCH (market-watcher/alert-commander domain — NOT dispatcher-actionable): from 16:00 EOD market-watcher (a68dfa7a) USDVND 26130 weakening + 0 anomalies emitted (KBC +5.98% suppressed as 08:06 offhours dup); news-scout c83 (a221e5cc) fired 3 chain_catalyst signals #5772 gold safe-haven unwind / #5773 retail recovery MWG / #5774 EVN earnings utilities. CONTEXT: trading day fully closed; today's MARKET dishes complete (chef-intraday 02:31 id=718, chef-morning 05:22 id=719, france-summary 06:00 id=720, chef-intraday 08:22 id=721, chef-eod 08:51 id=722). refine-bctc slot-1 09:00 + slot-2 14:00 fired WORKER (DIG Q4 2025, cumulative 28/62, 34 remaining, resumable, DB-pathway-owned). bctc-analyst slot-1 15:00 fired ANALYST WORKER (FPT routine E3 cache hit, committed HEAD 121d5fe4). 16:00 gatherer fire + EOD batch-commit HEAD 1bd99b4b; 16:00 gatherers' own output (price_anomaly_20260611T1600Z.json, news signals #5772-5774, KBC/GVR briefs, 2 notebooks, coverage-state) DEFERRED to NEXT EOD batch. Next: this 18:00 analyst output committed on completion; next gatherer cadence edge 20:00 UTC."
+  },
+  "priority": "high",
+  "createdAt": "2026-06-11T18:06:00Z",
+  "_processed": {
+    "fingerprint": "e5547bc21f8abf1341b6ec734ec2fb89769c2195f421d10f8f41eb7b402db219",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

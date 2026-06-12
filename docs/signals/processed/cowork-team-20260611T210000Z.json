@@ -1,0 +1,58 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-11T21:05:19Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "spawned_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": null
+    },
+    "last_fired_timestamp": "2026-06-11T21:06:00Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "UNCONFIRMED",
+    "leadership_unconfirmed": true,
+    "signal_backlog": 1,
+    "spawned_agent_ids": {
+      "bctc-analyst-slot-3": "adbe8de5842c2ece2"
+    },
+    "raw_verify_required": false,
+    "eod_batch_commit": false,
+    "note": "21:00 UTC FIRE (2026-06-11) — bctc-analyst-slot-3 (cron 0 21 * * *, policy_id bctc-offmarket, guaranteed:false, last_fired 2026-06-10T21:06:00Z, due_reason cron). Fired 21:05 UTC, nominal tick 21:00 = bctc-analyst cycle c045. Single slot — NO same-agent collision coalesce. ANALYST WORKER path (NOT publisher, NOT gatherer): bctc-analyst runs routine analysis (EY spread, valuation, chain validation, multi-pass trick detection) or earnings-release mode per the get_earnings_calendar() calendar gate; mode selected per cycle. It does NOT post to MARKET -> NO RAW-verify-on-completion. It has gateway access but no commit access -> dispatcher-completes-commit its artifacts on completion: notebook docs/agent-memory/notebooks/bctc-analyst.md (cycle log, full overwrite) + any docs/analysis-briefs/{TICKER}.md emitted on mode=release, pathspec-scoped under commit-mutex, verified via git status (declared/observed outputs only, never git add -A). NOTE E2 GUARD: bctc-analyst refuses to START a new pass if now_utc in [02:00,08:00) VN market window; 21:05 UTC is OFF-MARKET (well outside) so the pass is permitted. Spawned BACKGROUND per BGFAN-1 (agentId adbe8de5842c2ece2, slot=bctc-analyst-slot-3) with the matcher trigger_prompt (run docs/agents/bctc-analyst/flow/main.md slot=bctc-analyst-slot-3). Per-work-item token cowork-slot:bctc-analyst-slot-3 claimed(true)->released(ok=true) try/finally. last_fired written atomically (empty-guard passed) -> 2026-06-11T21:06:00Z. At THIS tick the dispatcher commits ONLY slot bookkeeping (cowork-schedule.json last_fired + this telemetry), pathspec-scoped under commit-mutex; the analyst output is committed on completion. EXPECTED WORK c045: this is the cycle flagged to attempt the CTG-BLOCKED 28-ticker release (cycle 12 CRITICAL, Bug #2776 fix for CTG extraction NOT deployed per bctc-analyst c044 at 18:06 — not in get_recent_fixes top 10; VCB/D2D cycle 7 empty). If CTG is STILL blocked at c045 the analyst itself escalates to ops (per its flow); the dispatcher does not own that fix, only commits whatever notebook/brief it writes. LEADER LOCK DEGRADED: Step 0b task_heartbeat(cowork-leader) returned ok:false,expires_at:0 (still orphaned post 17:37 recreate; renew-only, no reachable recreate path — root F-OOM-MCP-SERVER 2GiB cap). Dispatcher proceeds SINGLE-DISPATCHER (single deployment => no peer => no split-brain) flagging leadership_unconfirmed=true; re-escalation throttled at-most-once-per-UTC-day (today's spent at 00:06). emit_pressure_state success (adaptive), cycle_snapshot_promoted=true (FIRE). Gateway HEALTHY this tick (heartbeat structured response + slot claim + pressure all OK; the 20:20 transient 502 stayed a one-off — no recurrence at 20:35/20:50 SILENT ticks or this 21:00 FIRE). Step 0a drain: signal_queue tolerant filter -> 1 NEW to:po row (sau-d4-202606110300, system-auditor system_issue: held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row) — NOT cowork-actionable, left NEW for dev-team/po; 0 cowork-actionable. PRIOR TICKS RESOLVED THIS HOUR: 20:13 tnb-audit AUDITOR c94 completed + dispatcher-completes-committed 4 artifacts HEAD e2f4e3a7 (notebook + handoff tnb-audit-latest.md + signal tnb-c94.json + AC-4 chef.md false-parser auto-cure: Step 7 Block A+B send_telegram()->call_tool gateway wrapper, sanity-checked clean 2-hunk root-cause fix, first gate intraday 02:13Z 2026-06-12); audit verdict NEEDS_ATTENTION/IMPROVING, closed F-MORNING-NB-MISSING + carry-evening-unavailable, new MED F-NEWS-SCOUT-FALSE-GATEWAY independently confirms today's news-scout c84 false-infra-failure (already escalated to po HEAD 5ba2b1af). 20:35 + 20:50 SILENT ticks clean. STANDING (po/dev own, dispatcher leaves NEW): F-BCTC-CTG-CRITICAL cycle 12 (this c045 attempts it); auditor lock-integrity finding FPT:Q1-2026:ESC-3 (sau-d4); converging false-infra-failure agent-bug class (3rd chef false-parser + news-scout false-gateway -> po/architect; AC-4 now applied to chef.md as first auto-cure); F-OOM-MCP-SERVER + leader-lease orphan (data points: 17:05-17:37 write-wedge + 20:20 transient 502 — ops/po weigh 2GiB cap raise or wedge/overload-detecting healthcheck); c93+c94 tran-ngoc-bau PO handoffs unacknowledged 2 consecutive cycles. CONTEXT: trading day fully closed (08:59 UTC); today's MARKET chef dishes complete (chef-intraday 02:31 id=718, chef-morning 05:22 id=719, france-summary 06:00 id=720, chef-intraday 08:22 id=721, chef-eod 08:51 id=722, chef-evening 19:52 id=725); server-cron alert-digest 14:00 id=723 + evening-summary 15:30 id=724. Next: this bctc-analyst c045 output committed on completion; next gatherer cadence edge 00:00 UTC 2026-06-12."
+  },
+  "priority": "high",
+  "createdAt": "2026-06-11T21:06:00Z",
+  "_processed": {
+    "fingerprint": "87088014113513dd38173787d11c0708e77e89f073ad8b30bc4610bebabd5c97",
+    "processedAt": "2026-06-12T19:26:03Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
