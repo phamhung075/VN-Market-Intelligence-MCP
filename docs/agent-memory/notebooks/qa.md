@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-236 · 2026-06-12 · EVIDENCE-ACCUM-SILENT-CRON pre-rebuild gate — APPROVED
+
+Sprint: EVIDENCE-ACCUM-SILENT-CRON | Task: EVIDENCE-ACCUM-SILENT-CRON | Verdict: APPROVED (pre-rebuild) | Commit: 53d00955
+
+bun test (targeted): 8/0 (T1–T7 green, 10 expect() calls, 72ms). tsc exit 0. DDD PASS (scheduler→infra imports pre-existing). Security PASS (no process.env, no secrets). Mock-guard PASS (in-process :memory: DB only). Code review: recoverMissedExecutions:true on evidenceAccumulator (L475–477) and reputationCompute (L916–925) in startScheduler.ts. Dedup guard in runEvidenceAccumulatorWithDb: skips if success/running row exists today UTC, fail-open on missing table. Double-wrap fix: default fn calls runEvidenceAccumulator(db) directly (single recordJobRun). Dev baseline 12870/0 confirmed. REBUILD_REQUIRED. Cron-gated re-check: evidenceAccumulatorJob 2026-06-13 16:00 UTC. DJ EVIDENCE-ACCUM-SILENT-CRON.md § QA Review Record.
+
 ## cycle-235 · 2026-06-12 · FIX-EVIDENCE-PIPELINE-STARVED B-02 cron-gated re-check — CHANGES_REQUESTED
 
 Sprint: SHIP-WAVE-REAUDIT | Task: FIX-EVIDENCE-PIPELINE-STARVED | Verdict: CHANGES_REQUESTED

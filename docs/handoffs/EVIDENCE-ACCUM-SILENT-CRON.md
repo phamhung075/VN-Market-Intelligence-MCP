@@ -143,9 +143,36 @@ Both tasks show the same pattern:
 
 - [x] Root cause documented in commit message (clear explanation of the miss)
 - [x] Fix code reviewed and merged (on main, commit 53d00955)
+- [x] QA pre-rebuild gate APPROVED (2026-06-12T16:45Z) — see § QA Review Record below
 - [ ] OPS rebuilds container post-fix
 - [ ] QA re-verifies live cron_job_runs entry with status=success
 - [ ] Task marked DONE in task_board only after live cron tick verification
+
+---
+
+## [QA] Review Record — EVIDENCE-ACCUM-SILENT-CRON (pre-rebuild gate)
+
+**QA date:** 2026-06-12T16:45:00Z
+**Commit verified:** 53d00955
+**Scope:** Pre-rebuild code gate (ops rebuild pending)
+
+**Tests:** `bun test src/__tests__/EVIDENCE-ACCUM-SILENT-CRON.test.ts` → 8 pass / 0 fail (T1–T7 all green, 10 expect() calls). tsc --noEmit exit 0.
+
+**DDD scan:** `startupHelpers.ts` infrastructure imports (`cronJobRunStore`, `circuitBreakerRegistry`) are pre-existing scheduler→infra calls — not introduced by this commit. No domain→infra violation.
+
+**Security scan:** New test file has zero `process.env`, no hardcoded secrets. Clean.
+
+**Code review (changed files):**
+
+1. `startScheduler.ts` L475–477 — `cron.schedule(CRONS.evidenceAccumulator, ..., { timezone: 'UTC', recoverMissedExecutions: true })` — correct option applied. Comment accurately explains the event-loop-saturation root cause.
+2. `startScheduler.ts` L916–925 — `reputationCompute` also gets `recoverMissedExecutions: true`. Both confirmed misfire jobs patched.
+3. `startupHelpers.ts` L231–258 — `runEvidenceAccumulatorWithDb` dedup guard: queries `cron_job_runs WHERE status IN ('success','running') AND started_at >= date('now')`. Skip if cnt > 0. Fail-open on missing table. Default fn calls `runEvidenceAccumulator(db)` directly (single `recordJobRun` wrap — double-wrap eliminated).
+
+**Mock-guard:** No mocks introduced in test file. All assertions use in-process `bun:sqlite` `:memory:` DB — no network, no side-effects.
+
+**Verdict: APPROVED — REBUILD_REQUIRED**
+
+Fix is sound. Rebuild required before live cron tick can be verified. Cron-gated re-check: evidenceAccumulatorJob next tick 2026-06-13 16:00 UTC.
 
 ---
 

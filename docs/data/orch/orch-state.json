@@ -5038,7 +5038,7 @@
             "id": "EVIDENCE-ACCUM-SILENT-CRON",
             "title": "Debug evidenceAccumulatorJob silent cron miss — recurring pattern with reputationComputeJob",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "IN_PROGRESS",
             "zone": "apps/mcp-server/src/scheduler/",
             "created_at": "2026-06-12T16:20:00Z",
             "type": "FIX",
@@ -5048,7 +5048,8 @@
             "blocks": [
               "SHIP-WAVE-REAUDIT"
             ],
-            "note": "Second silent node-cron miss in 2 days. First: reputationComputeJob 2026-06-11 08:30 UTC. Job registered in CRONS map, peers fire, job silent, manual trigger works. Root cause: scheduler registration, silent error, concurrency guard, or evidence-fragments query condition. Link to FU-REPUTATION-CRON-MISS (0eb4a917) for pattern escalation."
+            "note": "Dev DONE commit 53d00955 (recoverMissedExecutions+dedup+double-wrap fix). QA pre-rebuild APPROVED 2026-06-12T16:45Z (8/0 tests, tsc clean, DDD+security PASS). REBUILD_REQUIRED. Cron-gated re-check: evidenceAccumulatorJob 2026-06-13 16:00 UTC + reputationComputeJob 2026-06-13 08:30 UTC.",
+            "qa_note": "[QA] APPROVED pre-rebuild: 8/0 bun tests, tsc exit 0, DDD PASS, security PASS. Fix: recoverMissedExecutions:true on evidenceAccumulator+reputationCompute; dedup guard in runEvidenceAccumulatorWithDb; double-wrap eliminated. DJ: EVIDENCE-ACCUM-SILENT-CRON.md § QA Review Record."
           }
         ]
       }
