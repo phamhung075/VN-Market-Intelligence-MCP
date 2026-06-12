@@ -93,9 +93,41 @@ WHERE (open < 100 OR low < 100)
 
 ## [Developer] Implementation Record
 
-(To be filled by dev-mcp-server)
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `scripts/migrations/repair-ohlcv-unit-contamination.ts` — CONTAM_WHERE `close > 1000` → `close >= 1000` (comment + const); header comment updated
+  - `apps/mcp-server/src/__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts` — TR-4 stale `close > 1000` in inline verify query fixed to `close >= 1000`; TR-6 boundary test added (close=1000.0 exactly detected + repaired)
+- **Tests written:** TR-6 boundary case (1 new test in CONTAM-7 suite) — 1 assertion, GREEN
+- **Git commits:** (see below)
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 62 pass / 0 fail (CONTAM suite); 45 pass / 0 fail (CONTAM-7 alone, +1 TR-6)
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 79 cron.schedule entries — matches pre-task baseline
+- **Docs updated:** NONE
+- **Graphify:** skipped (no docs impacted)
 
-- **Commit:** (git hash)
-- **Dry-run result:** N rows identified
-- **Live-run result:** N rows normalized
-- **Verification:** 0 remaining contaminated rows
+### G12 Gate Evidence
+
+| Gate | Result |
+|------|--------|
+| bun test (CONTAM suite) | 62 pass / 0 fail |
+| bun tsc --noEmit | exit 0 (TSC_CLEAN) |
+| toolCount | 157 (matches baseline) |
+| schedulerCount | 79 (matches baseline) |
+
+### Dry-run result
+`1 row identified: VNH 2026-06-12 open=0.9→900 low=0.9→900 close=1000 data_env=null`
+
+### Live-run result
+`1 row normalized (UPDATE committed: 1 rows changed)`
+
+### Verification
+`Remaining contaminated rows: 0 (close >= 1000 heuristic clean)`
+
+### VNH post-verify (live DB)
+`VNH 2026-06-12: open=900, high=1000, low=900, close=1000`
+
+### Derived pct-change sanity
+`vs 2026-06-10 close=900: (1000-900)/900 = +11.1% — within |pct|<30% bound`
+`Note: VNH 2026-06-11 close=0.9 is CONTAM-9 (low=0 family, out of scope for this task)`

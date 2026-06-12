@@ -6,10 +6,12 @@
  * while close is in full-VND scale.
  *
  * Background: VNDIRECT Writers D/E delivered open/low in thousand-VND while
- * high/close came in full-VND. Heuristic: if open < 100 AND close > 1000 (and
+ * high/close came in full-VND. Heuristic: if open < 100 AND close >= 1000 (and
  * neither field is zero), the row is contaminated. Fix: multiply open and low
  * by 1000. The 2026-05-30T11:47Z bulk all-zero rows are a SEPARATE defect and
  * are excluded from this repair (see BINDING AMENDMENT in TASK_CONTAM_6.md).
+ * CONTAM-8 (2026-06-12): boundary corrected from close > 1000 to close >= 1000
+ *   to capture VNH 2026-06-12 (open=0.9, close=1000.0 exactly).
  *
  * RF-3 (race guard): Run during off-hours — outside VN trading hours
  *   02:00–09:00 UTC (09:00–16:00 ICT) to avoid racing with live writers.
@@ -84,11 +86,12 @@ export interface RepairOptions {
 
 /**
  * Detection WHERE clause (binding amendment: exclude all-zero rows).
- * Matches the spec in TASK_CONTAM_6.md exactly.
+ * CONTAM-8 fix: boundary changed from close > 1000 to close >= 1000 to capture
+ * rows where close is exactly 1000 (e.g. VNH 2026-06-12 open=0.9, close=1000.0).
  */
 const CONTAM_WHERE = [
   "(open < 100 OR low < 100)",
-  "AND close > 1000",
+  "AND close >= 1000",
   "AND open > 0",
   "AND low > 0",
   "AND NOT (open = 0 AND low = 0 AND high = 0 AND close = 0)",

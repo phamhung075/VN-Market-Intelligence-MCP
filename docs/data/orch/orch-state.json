@@ -4898,7 +4898,7 @@
             "title": "Fix repair heuristic boundary — close >= 1000 not > 1000 (SM-1 scope miss)",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "TODO",
+            "status": "REVIEW",
             "zone": "apps/mcp-server/",
             "created_at": "2026-06-12T10:05:29Z",
             "priority": "critical",

@@ -791,15 +791,33 @@ describe("T7: Repair script (runRepair) — dry-run + live-run (CONTAM-6)", () =
 
     runRepair(db, { dryRun: false, logger: silentLog });
 
-    // No contaminated rows remain (open >= 100 AND close > 1000 pattern gone)
+    // No contaminated rows remain — CONTAM-8 boundary: close >= 1000
     const remain = db
       .prepare(
         `SELECT COUNT(*) as cnt FROM daily_ohlcv
-         WHERE (open < 100 OR low < 100) AND close > 1000 AND open > 0 AND low > 0
+         WHERE (open < 100 OR low < 100) AND close >= 1000 AND open > 0 AND low > 0
            AND NOT (open = 0 AND low = 0 AND high = 0 AND close = 0)`,
       )
       .get() as { cnt: number };
     expect(remain.cnt).toBe(0);
+  });
+
+  it("TR-6 (CONTAM-8): boundary case close=1000.0 exactly is detected and repaired", () => {
+    // VNH 2026-06-12 pattern: open=0.9 (thousand-VND scale), close=1000.0 exactly
+    // Old boundary (close > 1000) missed this row; new boundary (close >= 1000) catches it
+    insertRepairRow(db, "VNH", "2026-06-12", 0.9, 1000.0, 0.9, 1000.0);
+
+    const before = runRepair(db, { dryRun: true, logger: silentLog });
+    expect(before.contaminated_count).toBe(1); // correctly detected
+
+    runRepair(db, { dryRun: false, logger: silentLog });
+
+    const row = db
+      .prepare("SELECT open, high, low, close FROM daily_ohlcv WHERE code='VNH' AND date='2026-06-12'")
+      .get() as { open: number; high: number; low: number; close: number } | undefined;
+    expect(row?.open).toBeCloseTo(900, 0);   // 0.9 * 1000
+    expect(row?.low).toBeCloseTo(900, 0);    // 0.9 * 1000
+    expect(row?.close).toBe(1000.0);         // unchanged (already full-VND)
   });
 
   it("TR-5: data_env column preserved after live-run (RF-5)", () => {
