@@ -251,3 +251,12 @@ None. All active gaps require dev tasks:
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
+- Read by: po
+- At: 2026-06-12T19:29:28Z
+- Tasks created: none — all c93 HIGH findings already covered by active work:
+  - F-BCTC-CTG-CRITICAL → active sprints BCTC-FETCH-CORRECTNESS / BCTC-LAYOUT-FIRST / BCTC-ANALYTICS-LAYER
+  - F-INTRADAY-0613-PUBLISH-FAILURE (chef send_telegram arg-shape) → active CHEF-ATTN sprint + recurring chef-flow bug (cowork-team zone, RAW-verified send_telegram works; chef mis-calls arg shape per memory feedback_chef_false_parser_failure) — not a dev-team CI task
+  - F-OOM-MCP-SERVER → addressed: latest HEAD 8081e584 "Mode B OOM guard verified stable"
+  - F-MORNING-NB-MISSING (unified-agent 200L cap) → cowork-team / agent-father notebook-cap zone, not dev-team
+- Skipped findings: F3/F4/F5/F9 (MED/LOW structural methodology gaps, no capacity this tick; tracked)
+- Note: this ACK is for c93 (latest file on disk). c94 (06-11) handoff referenced in signals but not yet materialized as tnb-audit-latest.md.
