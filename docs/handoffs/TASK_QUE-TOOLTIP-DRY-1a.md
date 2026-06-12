@@ -145,3 +145,28 @@ Note: `className` removes `italic`.
 
 ## Signal to QA
 Once this task reaches REVIEW, Subtask 1b (SnapshotRow migration + NFR gates) is unblocked and may proceed in parallel.
+
+---
+
+## [QA] Review Record
+
+**QA date:** 2026-06-12T12:00Z
+**Verdict:** APPROVED
+
+### Checks performed
+
+| Check | Result |
+|---|---|
+| Sprint tests (14 — QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.ts) | 14 pass / 0 fail |
+| tsc --noEmit (frontend) | 0 errors |
+| DDD scan (domain→infrastructure imports) | PASS — 0 matches |
+| Security scan (process.env, hardcoded secrets) | PASS — pre-existing server-side origin pattern, not sprint-introduced |
+| mock-guard | PASS (exit 0) |
+| Generated file header cites que-reference.js | CONFIRMED (line 3) |
+| 64 entries in QUE_DESCRIPTIONS | CONFIRMED (node count) |
+| old fields absent (state_trend, judgment_interpretation, image_action) | CONFIRMED (grep exit=1) |
+| italic removed from secondary tooltip line | CONFIRMED (grep exit=1) |
+| Quẻ 1 spot-check: coreMeaning = "Sức sáng tạo nguyên thủy..." | MATCHES que-reference.js exactly |
+| Quẻ 1 spot-check: marketTrendLabel = "Thuận lợi (THUẬN LỢI)" | MATCHES que-reference.js exactly |
+
+**Status: DONE**

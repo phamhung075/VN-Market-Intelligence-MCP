@@ -142,3 +142,29 @@ This task depends on QUE-TOOLTIP-DRY-1a completing first. Once 1a is merged, 1b 
 - **NFR-2:** `grep -rn "Thuận lợi\|Bất lợi\|Trung tính\|THUẬN LỢI\|BẤT LỢI\|TRUNG TÍNH" apps/frontend/app/routes/` → matches found are: (a) kinh-dich-signals.tsx L21 = comment documenting API `trend` field contract, (b) kinh-dich-signals.tsx L188 = `sentimentLabel()` mapping "neutral"→"Trung tính" (API sentiment field, not hexagram description text), (c) kinh-dich-signals.tsx L635 = summary stats count label, (d) sector-cascade/global-markets/market-summaries — unrelated pages using these as general market direction labels. **No hexagram description text from QUE_DESCRIPTIONS is hardcoded in any route** — NFR-2 satisfied.
 - **NFR-3:** QueName.tsx L40-L45 fallback (`if (!desc) return <span>...`) unchanged by FR-1 — no-op verified. 1a test `hexagram 0 returns undefined` still GREEN.
 - **Graphify:** skipped (no docs/architecture impacted)
+
+---
+
+## [QA] Review Record
+
+**QA date:** 2026-06-12T12:00Z
+**Verdict:** APPROVED
+
+### Checks performed
+
+| Check | Result |
+|---|---|
+| Sprint tests (14 — QUE-TOOLTIP-DRY-1a still GREEN) | 14 pass / 0 fail |
+| tsc --noEmit (frontend) | 0 errors |
+| DDD scan | PASS — 0 matches |
+| Security scan | PASS — process.env in kinh-dich-signals.tsx is pre-existing (sprint diff shows 0 lines touching it) |
+| mock-guard | PASS (exit 0) |
+| SnapshotRow L484-L489: QueName component | CONFIRMED (Read tool) |
+| QueName import at L55 | CONFIRMED |
+| NFR-1 (0 Tooltip* in routes/) | PASS — exit 1 (0 matches) |
+| NFR-2 (0 hexagram hardcoded VN text in routes) | PASS — all grep hits are API docs/sentiment/sector labels, not hexagram description text |
+| NFR-3 (QueName L40-45 fallback intact) | PASS — unchanged, hexagram=0 test GREEN |
+| FlipRow (PO-Q4 regression check) | PASS — PLAIN renders: stockCode, fromAction, toAction only; no QueName, no tooltip |
+| Pre-existing failures scope | 170 fail confirmed as pre-sprint baseline — 0 new failures introduced |
+
+**Status: DONE**

@@ -1,5 +1,14 @@
 # QA — Notebook
 
+## cycle-232 · 2026-06-12 · QUE-TOOLTIP-DRY 3-subtask QA wave — ALL APPROVED
+
+Sprint: QUE-TOOLTIP-DRY | Tasks: 1a + 1b + 3 | Verdict: ALL APPROVED | Report: reports/TASK_REPORT_QUE-TOOLTIP-DRY.md
+
+1a (codegen pipeline): 14 sprint tests GREEN. Generated file 64 entries, 2 fields (coreMeaning+marketTrendLabel), header cites que-reference.js. Quẻ 1 spot-check exact match. state_trend/judgment_interpretation/image_action absent. italic removed. tsc exit 0. mock-guard PASS.
+1b (FR-1 SnapshotRow + NFR): SnapshotRow L484-L489 = QueName confirmed. NFR-1 exit=1 (0 Tooltip* in routes). NFR-2 exit=0 but all hits are API docs/sentiment labels — 0 hexagram description hardcoding. NFR-3 fallback intact. FlipRow PLAIN (PO-Q4 deferral regression-free). tsc exit 0. mock-guard PASS. Pre-existing 170 failures confirmed as pre-sprint baseline.
+3 (hexagramLibrary annotation): 107 kinhDich tests GREEN. JSDoc header confirmed. Zero data changes. tsc exit 0. mock-guard PASS.
+Frontend image: sha256:e47f66ad6d1e healthy (/health 200). DJ: sprint-QUE-TOOLTIP-DRY-qa.md. Board: 1a/1b/3 REVIEW→DONE.
+
 ## cycle-231 · 2026-06-12 · CONTAM-8 boundary repair QA gate — APPROVED
 
 Sprint: OHLCV-UNIT-CONTAM | Task: CONTAM-8 | Verdict: APPROVED | Report: reports/TASK_REPORT_CONTAM-8.md

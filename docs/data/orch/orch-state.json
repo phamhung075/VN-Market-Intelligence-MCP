@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T11:45:30Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-12T11:59:34Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4937,7 +4937,7 @@
             "id": "QUE-TOOLTIP-DRY-1a",
             "title": "Codegen pipeline: gen-que-descriptions.ts rewrite + QueName.tsx interface update",
             "owner": "dev-kinh-dich",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "scripts/ + apps/frontend/",
             "type": "FEATURE",
             "size": "M",
@@ -4949,13 +4949,15 @@
               "apps/frontend/app/lib/que-descriptions.generated.ts",
               "apps/frontend/app/components/QueName.tsx"
             ],
-            "note": "SSOT alignment: codegen now reads kinh-dich-service/dashboard/que-reference.js directly, bypassing hexagramLibrary.ts. Blocks QUE-TOOLTIP-DRY-1b."
+            "note": "SSOT alignment: codegen now reads kinh-dich-service/dashboard/que-reference.js directly, bypassing hexagramLibrary.ts. Blocks QUE-TOOLTIP-DRY-1b.",
+            "completed_at": "2026-06-12T11:59:34Z",
+            "completed_by": "qa"
           },
           {
             "id": "QUE-TOOLTIP-DRY-1b",
             "title": "FR-1: SnapshotRow migration to QueName + NFR grep gates",
             "owner": "dev-frontend",
-            "status": "REVIEW",
+            "status": "DONE",
             "commit": "0c444385",
             "zone": "apps/frontend/",
             "type": "FEATURE",
@@ -4968,13 +4970,15 @@
             "files": [
               "apps/frontend/app/routes/dashboard.kinh-dich-signals.tsx"
             ],
-            "note": "Migrate unguarded SnapshotRow (L484-L489) to QueName component; verify NFR-1/2/3 grep gates pass (0 duplicate markup, 0 hardcoded VN text, no regression)."
+            "note": "Migrate unguarded SnapshotRow (L484-L489) to QueName component; verify NFR-1/2/3 grep gates pass (0 duplicate markup, 0 hardcoded VN text, no regression).",
+            "completed_at": "2026-06-12T11:59:34Z",
+            "completed_by": "qa"
           },
           {
             "id": "QUE-TOOLTIP-DRY-3",
             "title": "Annotation: hexagramLibrary.ts downstream constraint",
             "owner": "dev-mcp-server",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "apps/mcp-server/src/domain/services/kinhDich/",
             "type": "FEATURE",
             "size": "XS",
@@ -4985,7 +4989,9 @@
               "apps/mcp-server/src/domain/services/kinhDich/hexagramLibrary.ts"
             ],
             "note": "Comment-only change: declare hexagramLibrary.ts as generated downstream of que-reference.js (PO-Q2 enforcement). Zero data changes. Parallel with QUE-TOOLTIP-DRY-1a.",
-            "commit": "66621b03"
+            "commit": "66621b03",
+            "completed_at": "2026-06-12T11:59:34Z",
+            "completed_by": "qa"
           }
         ]
       }
