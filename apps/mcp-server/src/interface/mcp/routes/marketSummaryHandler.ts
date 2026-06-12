@@ -115,6 +115,8 @@ export interface StockPerformanceItem {
   lastPrice: number;
   changePct: number;
   alertCount: number;
+  /** Derived from changePct at read time. null/undefined changePct → "flat". */
+  direction: "up" | "down" | "flat";
 }
 
 /** One recommendation entry (converted from keyed object). */
@@ -145,6 +147,22 @@ export interface MarketSummaryDetail {
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure helpers — exported for unit testing
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Derive directional state from a changePct value.
+ * null / undefined / NaN → "flat" (treat missing data as flat).
+ * Exported for unit testing (REAUDIT-004).
+ */
+export function deriveDirection(
+  changePct: number | null | undefined,
+): "up" | "down" | "flat" {
+  if (changePct === null || changePct === undefined || !Number.isFinite(changePct)) {
+    return "flat";
+  }
+  if (changePct > 0) return "up";
+  if (changePct < 0) return "down";
+  return "flat";
+}
 
 /**
  * Safely parse a JSON string field.
@@ -255,13 +273,17 @@ export function buildDetail(row: MarketSummaryRow): MarketSummaryDetail {
   // stock_performance_json is an OBJECT keyed by ticker → convert to array
   const rawStockPerf = parseJsonField<unknown>(row.stock_performance_json, null);
   const stockPerfArray = mapKeyedToArray(rawStockPerf);
-  const stockPerformance: StockPerformanceItem[] = stockPerfArray.map((item) => ({
-    symbol: typeof item["symbol"] === "string" ? item["symbol"] : "",
-    firstPrice: typeof item["firstPrice"] === "number" ? item["firstPrice"] : 0,
-    lastPrice: typeof item["lastPrice"] === "number" ? item["lastPrice"] : 0,
-    changePct: typeof item["changePct"] === "number" ? item["changePct"] : 0,
-    alertCount: typeof item["alertCount"] === "number" ? item["alertCount"] : 0,
-  }));
+  const stockPerformance: StockPerformanceItem[] = stockPerfArray.map((item) => {
+    const changePct = typeof item["changePct"] === "number" ? item["changePct"] : 0;
+    return {
+      symbol: typeof item["symbol"] === "string" ? item["symbol"] : "",
+      firstPrice: typeof item["firstPrice"] === "number" ? item["firstPrice"] : 0,
+      lastPrice: typeof item["lastPrice"] === "number" ? item["lastPrice"] : 0,
+      changePct,
+      alertCount: typeof item["alertCount"] === "number" ? item["alertCount"] : 0,
+      direction: deriveDirection(typeof item["changePct"] === "number" ? item["changePct"] : null),
+    };
+  });
 
   // recommendation_json is an OBJECT keyed by ticker → convert to array
   const rawRec = parseJsonField<unknown>(row.recommendation_json, null);
