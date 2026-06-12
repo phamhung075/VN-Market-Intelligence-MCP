@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-12 · CONTAM-3 — Writer B /api/push-ohlcv-history unit guard — REVIEW
+
+**Task:** CONTAM-3 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/
+**Change:** `interface/mcp/server.ts` — added `validateOhlcvUnit` import from `domain/services/market-data/ohlcvUnitGuard.js`. In `/api/push-ohlcv-history` bar loop: try/catch guard before `stmt.run()`, rejects bars where open/high/low/close out of full-VND range for stock type. HTTP 200 preserved regardless of guard outcome (RF-1 VPS backoff prevention). `skipped` counter added to log and response body.
+**Key decision:** TCBS backfill always stock type (fetch-ohlcv-backfill.sh spec confirmed); guard-only (no normalize) correct because TCBS delivers full-VND (arch brief §Writer B confirmed).
+**Tests:** 37 pass / 0 fail (targeted: unit/ + CONTAM-4 + REAUDIT-003). tsc clean. toolCount=157. schedulerCount=79 (sibling CONTAM-5 added 1 cron — not this task).
+**Commit:** d1379fa4
+Zone health: tsc clean, 157 tools intact, targeted tests 37 pass / 0 fail | HEALTHY
+
+---
+
 ## 2026-06-12 · CONTAM-1 — ohlcvUnitGuard.ts domain service — REVIEW
 
 **Task:** CONTAM-1 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/

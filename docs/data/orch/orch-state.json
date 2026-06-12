@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T11:10:00Z",
+    "_updated_at": "2026-06-12T11:20:00Z",
     "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
@@ -6854,7 +6854,7 @@
         "id": "CONTAM-3",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "size": "XS",
         "zone": "apps/mcp-server/src/interface/mcp/",
         "sprint": "OHLCV-UNIT-CONTAM",
@@ -6886,7 +6886,7 @@
         "id": "CONTAM-5",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "ASSIGNED",
+        "status": "IN_PROGRESS",
         "size": "S",
         "zone": "apps/mcp-server/src/scheduler/market-data/",
         "sprint": "OHLCV-UNIT-CONTAM",

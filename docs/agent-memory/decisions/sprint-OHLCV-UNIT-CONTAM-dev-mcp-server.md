@@ -24,6 +24,15 @@
 **why-decision:** try/catch mandatory per RF-1 (guard error must never reach HTTP layer); CASE WHEN open<100 preserves intraday open semantics while self-healing contaminated rows
 **why-change:** no change from plan — AC and handoff spec followed exactly
 
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-06-12T11:20:00Z
+**task-id:** CONTAM-3
+**what-done:** Added validateOhlcvUnit guard in /api/push-ohlcv-history bar loop in server.ts; import added at file top; try/catch preserves HTTP 200; skipped counter tracked in log + response
+**what-considered:**
+- Hard-code type="stock" vs implement isIndex(code) helper
+- Use normalizeOhlcvToVnd (like CONTAM-4) vs pure guard
+**why-decision:** TCBS backfill exclusively provides stocks (no index codes in fetch-ohlcv-backfill.sh); hard-coding "stock" is correct and simpler. Writer B receives full-VND from TCBS (confirmed in arch brief L53-56 — unlike VNDIRECT/Writer D which is thousand-VND); no normalize step needed here, guard-only is the correct approach
+**why-change:** no change from plan — AC and handoff spec followed exactly
+
 ### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-12T08:30:00Z
 **task-id:** CONTAM-4
 **what-done:** Added normalizeOhlcvToVnd + validateOhlcvUnit to Writers D (taOhlcvBackfillJob) and E (ohlcvBackfill); 7 TCs GREEN; live-probe confirmed VNDIRECT = thousand-VND
