@@ -23,7 +23,7 @@
 
 Bun.env["DB_PATH"] = ":memory:";
 
-import { describe, it, test, expect, beforeEach, afterEach, mock } from "bun:test";
+import { describe, it, test, expect, beforeEach, afterEach, afterAll, mock } from "bun:test";
 import { Database } from "bun:sqlite";
 
 // ─── Domain guard (T1) ───────────────────────────────────────────────────────
@@ -1014,4 +1014,10 @@ describe("T8: ohlcvSanityCheckJob — 7-day detection + Telegram (CONTAM-5)", ()
     expect(result.hitCount).toBe(0);
     expect(result.sentBug).toBe(false);
   });
+});
+
+// Restore all module-scope mocks so stubs do not bleed into sibling test files
+// via the Bun ESM cache. Required by mock-module-afterall-guard lint rule.
+afterAll(() => {
+  mock.restore();
 });

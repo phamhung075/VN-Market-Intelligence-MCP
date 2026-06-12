@@ -72,6 +72,10 @@ describe("Task 1285 — macro_deviation cooldown bypass fix", () => {
       getWatchlistCodesFn: async () => ["MACRO"],
       syncSectorPeersFn: async () => ({ synced: 0, skipped: 0, apiCalls: 0 }),
       computeHexagramsFn: async () => 0,
+      // CI-RED-8081e584-FIX (round 2): inject no-ops to prevent real HTTP calls
+      // (Yahoo Finance + SBV + vnstock) from causing 30 s bun test timeout in CI.
+      macroFetchFn: async () => {},
+      vnstockSyncFn: async () => {},
       readUnnotifiedAlertsFn: async () => [makeMacroAlert("macro-2026-04-15-vnindex-high")],
       markAlertNotifiedFn: async (id: string) => { markLog.push(id); },
       sendAlertsFn: async (alerts: Alert[]) => {
@@ -131,6 +135,10 @@ describe("Task 1285 — macro_deviation cooldown bypass fix", () => {
       getWatchlistCodesFn: async () => ["MACRO"],
       syncSectorPeersFn: async () => ({ synced: 0, skipped: 0, apiCalls: 0 }),
       computeHexagramsFn: async () => 0,
+      // CI-RED-8081e584-FIX (round 2): inject no-ops to prevent real HTTP calls
+      // (Yahoo Finance + SBV + vnstock) from causing 30 s bun test timeout in CI.
+      macroFetchFn: async () => {},
+      vnstockSyncFn: async () => {},
       readUnnotifiedAlertsFn: async () => [alert1, alert2],
       markAlertNotifiedFn: async (id: string) => { markLog.push(id); },
       sendAlertsFn: async (alerts: Alert[]) => {

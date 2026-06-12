@@ -136,6 +136,20 @@ export interface CycleDeps {
    * Signature: (params: PredictionClaimInput) => number
    */
   insertClaimFn?: (params: import("../../infrastructure/db/predictionClaimStore.js").PredictionClaimInput) => number;
+  /**
+   * CI-RED-8081e584-FIX (round 2) — Injectable macro fetch hook for test isolation.
+   * When not injected, step A2 runs the real Yahoo Finance + SBV HTTP calls.
+   * Inject `async () => {}` in tests to skip real network calls and prevent
+   * 30 s bun test timeout in CI where outbound HTTP may be throttled/blocked.
+   */
+  macroFetchFn?: () => Promise<void>;
+  /**
+   * CI-RED-8081e584-FIX (round 2) — Injectable vnstock sync hook for test isolation.
+   * When not injected, step A3 runs the real syncVnstockData call.
+   * Inject `async () => {}` in tests to skip real network calls and prevent
+   * 30 s bun test timeout in CI where outbound HTTP may be throttled/blocked.
+   */
+  vnstockSyncFn?: (codes: string[]) => Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -623,8 +637,9 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
   }
 
   // Step A2: Fetch macro data (always — builds σ history 24/7)
+  // macroFetchFn is injectable for test isolation (prevents real HTTP calls in CI).
   try {
-    await withTimeout((async () => {
+    const macroFetchFn = deps.macroFetchFn ?? (async () => {
       try {
         const { fetchYahooFinancePrices, storeCommoditySnapshot } = await import("../../infrastructure/fetchers/yahooFinance.js");
         const commodity = await fetchYahooFinancePrices();
@@ -635,7 +650,8 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
         const sbv = await fetchSbvRates();
         if (sbv) await storeSbvSnapshot(sbv);
       } catch { /* best-effort */ }
-    })(), "step A2 macroFetch");
+    });
+    await withTimeout(macroFetchFn(), "step A2 macroFetch");
   } catch { /* non-fatal */ }
 
   // Step A2.5: Macro deviation alerts (Backlog 765 fix — Loop #29)
@@ -710,16 +726,27 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
 
   // Step A3: vnstock lazy sync (background — respects rate limits + staleness cache)
   // Runs for all watchlist stocks, skips if data is still fresh.
+  // vnstockSyncFn is injectable for test isolation (prevents real HTTP calls in CI).
   try {
     await withTimeout((async () => {
-      const { syncVnstockData } = await import("../../application/usecases/syncVnstockData.js");
-      const { getDb: getDatabase } = await import("../../infrastructure/db/schema.js");
-      const watchlistRows = getDatabase()
-        .prepare("SELECT code FROM watchlist")
-        .all() as Array<{ code: string }>;
-      const codes = watchlistRows.map((r: { code: string }) => r.code);
-      if (codes.length > 0) {
-        await syncVnstockData(codes);
+      if (deps.vnstockSyncFn) {
+        // Injected in tests to skip real vnstock HTTP calls
+        const { getDb: getDatabase } = await import("../../infrastructure/db/schema.js");
+        const watchlistRows = getDatabase()
+          .prepare("SELECT code FROM watchlist")
+          .all() as Array<{ code: string }>;
+        const codes = watchlistRows.map((r: { code: string }) => r.code);
+        await deps.vnstockSyncFn(codes);
+      } else {
+        const { syncVnstockData } = await import("../../application/usecases/syncVnstockData.js");
+        const { getDb: getDatabase } = await import("../../infrastructure/db/schema.js");
+        const watchlistRows = getDatabase()
+          .prepare("SELECT code FROM watchlist")
+          .all() as Array<{ code: string }>;
+        const codes = watchlistRows.map((r: { code: string }) => r.code);
+        if (codes.length > 0) {
+          await syncVnstockData(codes);
+        }
       }
     })(), "step A3 vnstockSync");
   } catch { /* non-fatal — vnstock is best-effort */ }

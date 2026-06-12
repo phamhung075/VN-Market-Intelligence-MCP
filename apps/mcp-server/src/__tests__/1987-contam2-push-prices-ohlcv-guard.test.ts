@@ -18,7 +18,7 @@
  * Integration style: in-memory SQLite DB, real handlePushPrices call, mock log.
  */
 
-import { describe, test, expect, beforeEach, mock } from "bun:test";
+import { describe, test, expect, beforeEach, afterAll, mock } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 
@@ -323,4 +323,10 @@ describe("CONTAM-2 — pushPricesHandler unit guard + open self-heal", () => {
     const body = JSON.parse(res._body());
     expect(body.ok).toBe(true);
   });
+});
+
+// Restore all module-scope mocks so stubs do not bleed into sibling test files
+// via the Bun ESM cache. Required by mock-module-afterall-guard lint rule.
+afterAll(() => {
+  mock.restore();
 });

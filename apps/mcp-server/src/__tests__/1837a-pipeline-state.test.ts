@@ -69,7 +69,13 @@ describe("1837a — orch-state.json schema (v3)", () => {
 
   it("AC-2: head.status is one of the valid pipeline statuses", () => {
     const state = loadOrchState();
-    const validStatuses = ["in_progress", "idle", "blocked", "stale"];
+    // Valid orch-state head statuses (snake_case):
+    //   idle        — no active task
+    //   in_progress — task being worked on
+    //   blocked     — waiting on external dependency
+    //   stale       — state not updated recently
+    //   review      — task done, awaiting QA/PO sign-off (added 2026-06-12)
+    const validStatuses = ["in_progress", "idle", "blocked", "stale", "review"];
     expect(validStatuses).toContain(state.head.status);
   });
 
