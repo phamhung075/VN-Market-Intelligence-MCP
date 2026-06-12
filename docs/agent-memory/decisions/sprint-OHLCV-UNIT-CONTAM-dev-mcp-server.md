@@ -41,3 +41,12 @@
 - try/catch around both normalize and guard calls (match Writer A/D precedent)
 **why-decision:** live-probe 2026-06-12: VNH=2.7, KSD=4.9 (same endpoint as Writer D) — THOUSAND-VND confirmed; skip-on-guard-fail would DROP all rows (backfill outage); normalize is the only correct path per PO binding amendment
 **why-change:** no change from handoff spec — Writer E uses same endpoint → same normalize pattern applied
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-12T12:30:00Z
+**task-id:** CONTAM-5
+**what-done:** Created ohlcvSanityCheckJob.ts (full-table scan + sendTelegramBug fail-loud) + wired into startScheduler at 15:05 UTC Mon-Fri; 10 TCs GREEN; cronJobCount 78→79
+**what-considered:**
+- Scan last 7 days only vs whole table (arch brief D4 says last 7 days per watchlist)
+- Wire after ohlcvDailyAggregator (15:00 UTC) vs standalone time (requires fresh rows post-aggregation)
+**why-decision:** 7-day window catches trailing contamination without full-table scan cost; 15:05 UTC ensures aggregated rows are present before check fires
+**why-change:** handoff TASK_CONTAM_5.md was mis-titled (Writer C guard) — po_amendment + arch brief + CONTEXT all confirm CONTAM-5 = sanity-check cron; implemented per po_amendment

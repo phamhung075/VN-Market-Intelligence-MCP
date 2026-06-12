@@ -187,4 +187,9 @@ export const CRONS = {
   deepFetchVps:               Bun.env.CRON_DEEP_FETCH_VPS                           ?? '*/5 * * * *',
   /** deepFetchMainJob — every 5 min, drain up to maxPlaywrightPerCycle=5 vps-failed rows via news-fetch Playwright — DFR-P2-MCP */
   deepFetchMain:              Bun.env.CRON_DEEP_FETCH_MAIN                          ?? '*/5 * * * *',
+  /** ohlcvSanityCheck — CONTAM-5 full-table unit contamination scan: daily Mon-Fri 15:05 UTC (22:05 VN)
+   *  Fires 5 min after ohlcvDailyAggregator (15:00 UTC) so aggregated rows are available.
+   *  Scans last 7 days × watchlist tickers; sends BUG Telegram on any mixed-scale row.
+   *  Tolerates known all-zero rows (BACKLOG_CONTAM_8) without spamming. */
+  ohlcvSanityCheck:           Bun.env.CRON_OHLCV_SANITY_CHECK                       ?? '5 15 * * 1-5',
 }

@@ -6867,7 +6867,7 @@
         "id": "CONTAM-5",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "size": "S",
         "zone": "apps/mcp-server/src/scheduler/market-data/",
         "sprint": "OHLCV-UNIT-CONTAM",

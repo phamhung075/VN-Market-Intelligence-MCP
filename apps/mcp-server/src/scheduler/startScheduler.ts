@@ -46,6 +46,7 @@ import { runVerdictResolutionJobCron } from './alerts/verdictResolutionJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.js'
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
+import { runOhlcvSanityCheck } from './market-data/ohlcvSanityCheckJob.js'
 import { runTaOhlcvBackfill } from './market-data/taOhlcvBackfillJob.js'
 import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
@@ -576,6 +577,20 @@ export function startScheduler() {
   cron.schedule(CRONS.ohlcvDailyAggregator, async () => {
     await jobRunRepo.wrapRun('ohlcv-daily-aggregator', async () => {
       await runOhlcvDailyAggregator()
+    })
+  }, { timezone: 'UTC' })
+
+  // 15:05 UTC Mon-Fri — OHLCV unit sanity check — CONTAM-5 / Sprint OHLCV-UNIT-CONTAM
+  // Fires 5 min after ohlcvDailyAggregator (15:00 UTC). Scans last 7 days of daily_ohlcv
+  // for all watchlist tickers. Sends BUG Telegram on any mixed-scale (contaminated) row.
+  // Tolerates all-zero rows (BACKLOG_CONTAM_8 known defect) without spamming.
+  cron.schedule(CRONS.ohlcvSanityCheck, async () => {
+    await jobRunRepo.wrapRun('ohlcv-sanity-check', async () => {
+      const result = await runOhlcvSanityCheck()
+      if (result.hitCount > 0) {
+        log(`[ohlcv-sanity] contamination detected: ${result.hitCount} row(s), sentBug=${result.sentBug}`)
+      }
+      return { rowsWritten: result.hitCount }
     })
   }, { timezone: 'UTC' })
 
