@@ -143,7 +143,7 @@ export function handleVpsProxyHealth(
   now: Date = new Date(),
 ): void {
   try {
-    const rawServices = getVpsProxyHealth(db);
+    const rawServices = getVpsProxyHealth(db, now);
     const marketHoursActive = isVnMarketHours(now);
 
     const services = rawServices.map((s) => {

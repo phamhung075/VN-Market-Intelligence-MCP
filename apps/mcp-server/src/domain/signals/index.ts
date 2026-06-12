@@ -8,6 +8,7 @@ export {
   ChainCatalystFindingDataSchema,
   PriceConfirmationFindingDataSchema,
   UrgentNewsFindingDataSchema,
+  UrgentNewsLooseSchema,
   CrossValidateFindingDataSchema,
   SignalSchemas,
   type ChainCatalystFindingData,

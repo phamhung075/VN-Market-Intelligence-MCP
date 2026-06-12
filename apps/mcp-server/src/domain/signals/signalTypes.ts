@@ -205,11 +205,30 @@ export interface UrgentNewsFindingData {
   regime?: "TIGHTENING" | "NEUTRAL" | "EASING";
 }
 
-// SYS-FUNC-05 FIX: headline, source, severity made optional so callers that supply
-// only confidence/summary (minimal urgent_news posts) are not rejected with a
-// "root: Required" error. The interface fields are kept for full payloads; the schema
-// is the validation gate and must not block valid partial signals.
+// Strict schema: headline, source, severity are REQUIRED (original 1293a contract).
+// Use this for type-safety validation and the fluent builder's build() method.
 export const UrgentNewsFindingDataSchema = z.object({
+  headline: z.string().min(1),
+  source: z.string().min(1),
+  severity: z.enum(["low", "medium", "high", "critical"]),
+  catalyst_stock_code: z.string().min(2).optional(),
+  catalyst_direction: z.enum(["bullish", "bearish", "neutral"]).optional(),
+  time_to_price_move: z.number().min(0).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  regime: z.enum(["TIGHTENING", "NEUTRAL", "EASING"]).optional(),
+});
+
+/**
+ * SYS-FUNC-05: Permissive schema for post_agent_signal validation.
+ *
+ * Agents that post minimal urgent_news payloads (e.g. {confidence, summary})
+ * must not be rejected with "root: Required". This loose schema accepts any
+ * subset of fields, including the empty object.
+ *
+ * DO NOT use this for type-safety enforcement or builder validation.
+ * Use UrgentNewsFindingDataSchema (strict) for those cases.
+ */
+export const UrgentNewsLooseSchema = z.object({
   headline: z.string().min(1).optional(),
   source: z.string().min(1).optional(),
   severity: z.enum(["low", "medium", "high", "critical"]).optional(),

@@ -40,7 +40,7 @@ import { checkRegimeConfidenceThreshold } from "../../../../domain/services/regi
 import {
   ChainCatalystFindingDataSchema,
   PriceConfirmationFindingDataSchema,
-  UrgentNewsFindingDataSchema,
+  UrgentNewsLooseSchema,
   CrossValidateFindingDataSchema,
   PriceAnomalyFindingDataSchema,
   SignalFeedbackFindingDataSchema,
@@ -77,7 +77,10 @@ const PayloadSchema = z.object({
 const SIGNAL_TYPE_VALIDATORS = {
   chain_catalyst: ChainCatalystFindingDataSchema,
   price_confirmation: PriceConfirmationFindingDataSchema,
-  urgent_news: UrgentNewsFindingDataSchema,
+  // SYS-FUNC-05: use the loose schema here so agents posting minimal payloads
+  // {confidence, summary} are not rejected. The strict UrgentNewsFindingDataSchema
+  // remains the type-safety / builder contract (see signalTypes.ts).
+  urgent_news: UrgentNewsLooseSchema,
   cross_validate: CrossValidateFindingDataSchema,
   price_anomaly: PriceAnomalyFindingDataSchema,
   signal_feedback: SignalFeedbackFindingDataSchema,

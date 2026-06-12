@@ -87,11 +87,20 @@ export interface VpsServiceHealth {
 
 /**
  * Get health summary for all VPS proxy services.
+ *
+ * @param db   Optional database instance (defaults to global getDb())
+ * @param now  Optional current time for 24h window calculation (defaults to new Date()).
+ *             Injectable for deterministic testing with fixed timestamps.
  */
-export function getVpsProxyHealth(db?: Database): VpsServiceHealth[] {
+export function getVpsProxyHealth(db?: Database, now: Date = new Date()): VpsServiceHealth[] {
   const d = db ?? getDb();
   const services: VpsService[] = ["prices", "news", "sbv", "bctc"];
   const results: VpsServiceHealth[] = [];
+
+  // Compute 24h cutoff as an ISO string so the SQL comparison uses the injected 'now'
+  // rather than SQLite's wall-clock datetime('now'). This makes the function testable
+  // with fixed timestamps (e.g. VPT-1 test (c) injects a historical 'now').
+  const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
   for (const service of services) {
     // Last push
@@ -100,7 +109,7 @@ export function getVpsProxyHealth(db?: Database): VpsServiceHealth[] {
        WHERE service = ? ORDER BY pushed_at DESC LIMIT 1`,
     ).get(service) as { pushed_at: string; items_count: number; status: string } | null;
 
-    // 24h stats
+    // 24h stats relative to injected 'now'
     const stats = d.prepare(
       `SELECT
          COUNT(*) as total_pushes,
@@ -108,8 +117,8 @@ export function getVpsProxyHealth(db?: Database): VpsServiceHealth[] {
          SUM(items_count) as total_items,
          AVG(duration_ms) as avg_duration
        FROM vps_push_log
-       WHERE service = ? AND pushed_at >= datetime('now', '-24 hours')`,
-    ).get(service) as {
+       WHERE service = ? AND pushed_at >= ?`,
+    ).get(service, cutoff24h) as {
       total_pushes: number;
       error_count: number;
       total_items: number;
