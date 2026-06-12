@@ -5027,6 +5027,30 @@
         ],
         "closed_at": "2026-06-12T15:41:26Z",
         "signed_off_by": "po"
+      },
+      {
+        "id": "EVIDENCE-ACCUM-SILENT-CRON",
+        "type": "FIX",
+        "created_at": "2026-06-12T16:20:00Z",
+        "status": "active",
+        "tasks": [
+          {
+            "id": "EVIDENCE-ACCUM-SILENT-CRON",
+            "title": "Debug evidenceAccumulatorJob silent cron miss — recurring pattern with reputationComputeJob",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/scheduler/",
+            "created_at": "2026-06-12T16:20:00Z",
+            "type": "FIX",
+            "size": "M",
+            "priority": "high",
+            "depends": [],
+            "blocks": [
+              "SHIP-WAVE-REAUDIT"
+            ],
+            "note": "Second silent node-cron miss in 2 days. First: reputationComputeJob 2026-06-11 08:30 UTC. Job registered in CRONS map, peers fire, job silent, manual trigger works. Root cause: scheduler registration, silent error, concurrency guard, or evidence-fragments query condition. Link to FU-REPUTATION-CRON-MISS (0eb4a917) for pattern escalation."
+          }
+        ]
       }
     ],
     "backlog": [
