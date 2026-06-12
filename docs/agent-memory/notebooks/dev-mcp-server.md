@@ -1,28 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-11 · REAUDIT-001 — Fix reputation trend always stable — DONE
-
-**Task:** REAUDIT-001 | Sprint: SHIP-WAVE-REAUDIT | Priority: CRITICAL | Zone: apps/mcp-server/
-**Root cause:** reputationComputeJob computed priorDate=today-7d and called getReputation(db,code,priorDate) with WHERE date=? exact match. Production rows land at irregular intervals (3-7d gaps) so lookup always returned null → priorScore=undefined → trend="stable" for 100% of 235 rows.
-**Fix 1 (reputationStore.ts):** Added getReputationPrior(db,code,beforeDate) — WHERE code=? AND date < ? ORDER BY date DESC LIMIT 1. Parameterized SQL. Returns ReputationScore|null.
-**Fix 2 (reputationComputeJob.ts):** Removed priorDate offset calc. Replaced getReputation(db,code,priorDate) with getReputationPrior(db,code,today). Import updated.
-**Tests:** 9 new TCs. 81 pass / 0 fail. tsc exit 0. toolCount=157. schedulerCount=78.
-**QA timing:** trend values update only on next 08:30 UTC cron run after ops rebuild.
-**Commit:** b9f003ab | Zone health: HEALTHY
-
----
-
-## 2026-06-11 · REAUDIT-002 — NFR-C-1 stale flags on 5 handlers — DONE
-
-**Task:** REAUDIT-002 | Sprint: SHIP-WAVE-REAUDIT | Priority: HIGH | Zone: apps/mcp-server/
-**New file:** `_staleness.ts` — `computeStaleness(asOfDate, thresholdDays, now)` utility. Null/empty-safe. Injectable clock. Returns `{stale, staleByDays}`.
-**5 handlers updated:** conviction-history (2d/tradingDate), corporate-events (3d/max eventDate), shareholders (55d/asOf), financials (14d/asOf), reputation (3d/asOf). `now` param added to each for testability. All existing response fields unchanged (additive contract).
-**Live stale state (2026-06-11):** shareholders stale=true staleByDays=3 (asOf=2026-04-14, 58d); financials stale=true staleByDays=43 (asOf=2026-04-15, 57d); others within threshold.
-**Tests:** 24 new TCs in REAUDIT-002-staleness.test.ts. 257 existing handler tests GREEN. tsc exit 0. toolCount=157. schedulerCount=78.
-**Commit:** 70a33a80 | Zone health: HEALTHY
-
----
-
 ## 2026-06-11 · REAUDIT-003 — NFR-C-5 stale_fields in ForeignFlowResponse — REVIEW
 
 **Task:** REAUDIT-003 | Sprint: SHIP-WAVE-REAUDIT | Priority: HIGH | Zone: apps/mcp-server/
@@ -41,3 +18,15 @@
 **Tests:** 17 TCs in unit/ohlcvUnitGuard.test.ts — all GREEN. 3 describe blocks: validateOhlcvUnit (9 cases), normalizeOhlcvToVnd (4 cases), constants (3 cases). tsc exit 0. toolCount=157. schedulerCount=78.
 **Commit:** 5762ec3d
 Zone health: bun test 17 pass 0 fail (targeted), tsc clean, 157 tools intact, 78 cron.schedule (unchanged) | HEALTHY
+
+---
+
+## 2026-06-12 · CONTAM-4 — Writers D & E VNDIRECT normalize-then-guard — REVIEW
+
+**Task:** CONTAM-4 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/
+**Root cause confirmed:** VNDIRECT api-finfo v4/stock_prices returns THOUSAND-VND for all tickers (live-probe 2026-06-12: KSD=4.9, VHH=2.7, NQB=10.1 — same endpoint for both Writer D and E). Writer D (taOhlcvBackfillJob) and Writer E (ohlcvBackfill) were inserting thousand-scale rows without normalization, seeding contaminated VNH=0.9 rows.
+**Fix (taOhlcvBackfillJob.ts):** Imported normalizeOhlcvToVnd + validateOhlcvUnit. In insertMany transaction: normalize WHOLE row ×1000 (try/catch), guard post-normalize values (try/catch), upsert normalized full-VND. ON CONFLICT DO UPDATE self-heals contaminated seeds.
+**Fix (ohlcvBackfill.ts):** Same import + same normalize-then-guard-then-upsert pattern. console.error for guard rejects (no logger import in this file). INSERT OR IGNORE — does not overwrite existing rows (self-heal is Writer D's role).
+**Writer E live-probe:** Same `api-finfo.vndirect.com.vn/v4/stock_prices` endpoint → THOUSAND-VND confirmed; normalize pattern applied identically.
+**Tests:** 7 TCs in CONTAM-4-writers-d-e-normalize.test.ts — all GREEN. AC-D1 VNH 0.9→900, AC-D2 full-VND no-op, AC-D3 seed self-heal, AC-D4 zero-row rejected, AC-D5 row-count not dropped, AC-E1 Writer E normalize, AC-E2 Writer E new-date written. Full suite: 12770 pass / 0 fail (exit 0). tsc clean. toolCount=157. schedulerCount=78.
+Zone health: bun test 12770 pass 0 fail, tsc clean, 157 tools intact, 78 cron.schedule — HEALTHY

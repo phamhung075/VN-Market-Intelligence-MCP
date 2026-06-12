@@ -14,3 +14,21 @@
 - Place guard directly in domain/services/ root
 **why-decision:** market-data/ subfolder is the canonical location for market-data domain validators per foreignFlowValidator.ts precedent; clean DDD separation
 **why-change:** no change from plan — AC exactly followed; normalizeOhlcvToVnd WHOLE-ROW rule correctly implemented (per PO amendment: never per-field)
+
+### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-06-12T11:25:00Z
+**task-id:** CONTAM-2
+**what-done:** Added validateOhlcvUnit guard + ON CONFLICT open self-heal to pushPricesHandler.ts; 6 integration TCs GREEN
+**what-considered:**
+- Wrap guard in try/catch (RF-1 VPS backoff risk) vs direct call
+- CASE WHEN open<100 vs always-update open (semantic: preserve open from first valid push)
+**why-decision:** try/catch mandatory per RF-1 (guard error must never reach HTTP layer); CASE WHEN open<100 preserves intraday open semantics while self-healing contaminated rows
+**why-change:** no change from plan — AC and handoff spec followed exactly
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-12T08:30:00Z
+**task-id:** CONTAM-4
+**what-done:** Added normalizeOhlcvToVnd + validateOhlcvUnit to Writers D (taOhlcvBackfillJob) and E (ohlcvBackfill); 7 TCs GREEN; live-probe confirmed VNDIRECT = thousand-VND
+**what-considered:**
+- normalize-then-guard (handoff spec) vs guard-only (would drop all VNDIRECT rows)
+- try/catch around both normalize and guard calls (match Writer A/D precedent)
+**why-decision:** live-probe 2026-06-12: VNH=2.7, KSD=4.9 (same endpoint as Writer D) — THOUSAND-VND confirmed; skip-on-guard-fail would DROP all rows (backfill outage); normalize is the only correct path per PO binding amendment
+**why-change:** no change from handoff spec — Writer E uses same endpoint → same normalize pattern applied
