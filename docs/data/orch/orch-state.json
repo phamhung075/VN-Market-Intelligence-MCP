@@ -1,15 +1,15 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-11T19:33:43Z",
+  "_updated_at": "2026-06-12T08:20:00Z",
   "_updated_by": "architect",
   "head": {
     "status": "review",
-    "updated_at": "2026-06-11T19:33:43Z",
+    "updated_at": "2026-06-12T08:20:00Z",
     "updated_by": "architect",
-    "active_task_id": "ARCH-SHIP-WAVE-REAUDIT",
+    "active_task_id": "OHLCV-UNIT-CONTAM-ARCH-1",
     "next_agent": "pm",
-    "_updated_at": "2026-06-11T19:33:43Z"
+    "_updated_at": "2026-06-12T08:20:00Z"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-11T19:37:38Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-12T07:43:16Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4882,6 +4882,16 @@
             "status_note": "Blocks the rag portion of the GFD-10 full soak. AC in docs/handoffs/GFD-13-rag-service-lazy-load-embedding.md"
           }
         ]
+      },
+      {
+        "id": "OHLCV-UNIT-CONTAM",
+        "label": "daily_ohlcv unit-contamination — split-scale OHLC rows (open/low thousand-VND vs high/close VND-units) corrupt change_pct. User-reported via France summary 'Top biến động giá' (VNH +111011.11%). 385 contaminated rows, ~all watchlist tickers, systemic since ingest.",
+        "status": "active",
+        "opened_at": "2026-06-12",
+        "priority": "critical",
+        "evidence": "Router+PO raw-verified live (keinos sqlite3 sidecar on vn-market-intelligence-mcp_market_data volume, market.db). VNH 2026-06-12 row: open=0.9,high=1000,low=0.9,close=1000. (1000-0.9)/0.9*100 = 111011.11%. franceSummaryJob.ts ORDER BY ABS(change_pct) DESC surfaces it. SQL is CORRECT — data is contaminated. Cross-writer race: pushPricesHandler.ts ON CONFLICT does high=MAX/low=MIN merge which FUSES a thousand-scale (0.9) write with a unit-scale (1000) write into one split-scale row; ohlcvDailyAggregatorJob.ts overwrites from market_prices_history ticks. No single normalized-unit invariant at daily_ohlcv write boundary.",
+        "source": "user-report 2026-06-12",
+        "note": "NEW user-reported defect — NOT folded into SHIP-WAVE-REAUDIT per router. recurring-class=unit-normalization-at-write."
       }
     ],
     "backlog": [
@@ -6823,6 +6833,33 @@
         "handoff_file": "docs/handoffs/TASK_REAUDIT_FE_003.md",
         "created_at": "2026-06-11T21:15:00Z",
         "created_by": "pm"
+      },
+      {
+        "id": "OHLCV-UNIT-CONTAM-ARCH-1",
+        "type": "SPIKE",
+        "title": "ARCHITECT SPIKE: design single unit-invariant for daily_ohlcv write boundary across ALL writers (pushPricesHandler ON-CONFLICT MAX/MIN merge fuses mixed-scale rows; ohlcvDailyAggregatorJob overwrites from ticks; ≥1 thousand-scale source writes raw 0.9 without *1000). Decide: (a) canonical unit = VND-units enforced at every write via shared normalizer; (b) drop cross-writer MIN/MAX merge or guard it with scale-sanity assert; (c) backfill/repair plan for 385 existing contaminated rows. Also confirm market_prices_history mixed-unit ticks (VNH had 900 + 1000 both unit-scale today, yet daily_ohlcv low=0.9 — pin the thousand-scale source).",
+        "question": "What single unit-normalization invariant + guard makes daily_ohlcv writes scale-safe across all 3+ writers, and how to repair the 385 contaminated historical rows?",
+        "owner": "architect",
+        "status": "TODO",
+        "size": "S",
+        "zone": "multi",
+        "mode": "spike",
+        "timebox": 120,
+        "priority": "critical",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "created_at": "2026-06-12T07:43:16Z",
+        "labels": [
+          "unit-normalization",
+          "daily_ohlcv",
+          "cross-writer-merge",
+          "data-contamination",
+          "user-reported",
+          "change-pct",
+          "penny-stock",
+          "recurring-class",
+          "not-reaudit"
+        ],
+        "note": "recurring-bug-escalation candidate (unit-norm-at-write class — see memory feedback_contract_from_live_payload). SPIKE mandatory pre-condition for dev: contract/multi-writer change. Emitter franceSummaryJob.ts is faithful — DO NOT patch the briefing; fix the write boundary + repair data."
       }
     ],
     "archive": [],
@@ -8897,6 +8934,17 @@
       "what_considered": "only path: probe all 19 items live (curl + DB query), produce per-item GOOD/DEGRADED/BROKEN rubric from actual payload, map to DDD layers",
       "decision": "wrote SHIP-WAVE-REAUDIT-BA-spec.md with 17 endpoint+page pairs + 2 fix-verify items + 9 improvement-lane NFRs; 0 PO blockers; 1 architect ruling needed (stale-flag Option A vs B)",
       "why_change": "no change from plan; spec complete as directed"
+    },
+    {
+      "ts": "2026-06-12T07:43:48Z",
+      "by": "po",
+      "task_id": "OHLCV-UNIT-CONTAM-ARCH-1",
+      "decision": "Created critical sprint OHLCV-UNIT-CONTAM + architect SPIKE for user-reported VNH +111011.11% price-movement defect.",
+      "what-considered": "(1) straight FIX to dev — REJECTED: 3+ writers + cross-writer MIN/MAX merge + 385-row repair = contract/multi-zone, needs architect unit-invariant design first (recurring-bug-escalation class). (2) patch the briefing emitter — REJECTED: franceSummaryJob.ts SQL is faithful, garbage-in; patching it hides systemic data contamination. (3) architect SPIKE then dev — CHOSEN.",
+      "why-change": "Router hypothesis (unit mismatch) confirmed live: daily_ohlcv rows are split-scale (open/low thousand-VND, high/close VND-units); systemic across ~all watchlist tickers, not VNH-only.",
+      "emitter": "apps/mcp-server/src/scheduler/briefings/franceSummaryJob.ts L498-501 (Top biến động giá)",
+      "root-cause": "No single unit-normalization invariant at daily_ohlcv write boundary; pushPricesHandler ON-CONFLICT high=MAX/low=MIN fuses a thousand-scale write with a unit-scale write into one corrupt row.",
+      "not-reaudit": true
     }
   ]
 }

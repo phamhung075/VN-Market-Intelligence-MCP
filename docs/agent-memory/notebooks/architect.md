@@ -1,8 +1,24 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-11 21:45 UTC | **Sprint:** SHIP-WAVE-REAUDIT
+**Last updated:** 2026-06-12 08:20 UTC | **Sprint:** OHLCV-UNIT-CONTAM
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-12T08:20Z — OHLCV-UNIT-CONTAM-ARCH-1 (SPIKE/DESIGN, REVIEW)
+
+**Task:** OHLCV-UNIT-CONTAM-ARCH-1 | critical, zone apps/mcp-server/
+**Output:** docs/architecture-briefs/2026-06-12-ohlcv-unit-contam-arch-1.md
+
+**Key findings:**
+- 5 writers confirmed: pushPricesHandler (A), /api/push-ohlcv-history server.ts (B), ohlcvDailyAggregatorJob (C), taOhlcvBackfillJob (D), ohlcvBackfill.ts (E).
+- VPS BGData API emits thousand-VND; Writer A multiplies by 1000. All other writers (B/D/E) receive full-VND from TCBS/VNDirect — no scale issue in those paths.
+- Root cause: Writer A ON CONFLICT clause never updates `open`. If first intraday push has type misclassification (isStock=false → pv=thousand-VND), `open` is stored at wrong scale. Subsequent correct pushes update `close` (full-VND) but `open` persists. MAX/MIN merge fuses both scales. Result: open=0.9, close=1000 for VNH/FPT class.
+- Writer C (aggregator) is NOT a contaminator — reads already-scaled market_prices_history ticks.
+- Repair: recompute from ticks (recent) + SQL multiply heuristic (historical) + taOhlcvBackfill re-run for >30d rows.
+- Detection: new `ohlcvSanityCheckJob.ts` + inline guard at all 5 write paths.
+- New domain service: `ohlcvUnitGuard.ts` (pure function, DDD compliant).
+- 7 tasks proposed (CONTAM-1..7), sequential then partially parallel.
+- RF-1 (HIGH): guard must NOT throw to HTTP layer — VPS backoff risk.
 
 ## 2026-06-11T21:45Z — SHIP-WAVE-REAUDIT (ARCH-SHIP-WAVE-REAUDIT, REVIEW)
 
