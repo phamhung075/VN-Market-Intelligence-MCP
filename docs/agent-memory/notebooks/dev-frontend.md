@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-12 | **Sprint:** FIX-FETCH-VERYSTALE-LABEL
+**Last updated:** 2026-06-12 | **Sprint:** FE-CORPEVENTS-TICKER-FILTER
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-12 — FE-CORPEVENTS-TICKER-FILTER DONE. Commit 4f0d407a. Add client-side ticker selector to /dashboard/corporate-events. filterEvents gains optional selectedTicker param (default 'Tất cả' — backward-compat). Cascade: category filter THEN ticker filter. distinctCodes derived from payload events[].code via [...new Set(...)].sort() — never hardcoded. Ticker `<select>` integrated into existing filter bar beside category tabs (plain-VN label 'Mã:'). 31 new vitest GREEN across Suite 17/18/19 (AC-7 ticker filter, cascade, distinctCodes dedup). Total task17 file: 84 pass / 0 fail. tsc 0 errors. Playwright 4/4 GREEN. Full suite: 1518 pass / 21 pre-existing nav-count failures (unrelated, confirmed). REBUILD: batched with QUE-REFERENCE-PAGE per CONTEXT.
+
+Zone health: FE-CORPEVENTS-TICKER-FILTER REVIEW, tsc clean, 84 tests GREEN, Playwright 4/4, ticker selector live in corporate-events filter bar | HEALTHY
 
 2026-06-12 — FIX-FETCH-VERYSTALE-LABEL DONE. Commit 5c6f194e. Root: SourceFreshnessTable rendered `src.status` verbatim (API enum, no "very stale" value), so red-dot sources (ageMs > 12h) showed "stale" text. Fix: exported `sourceStatusLabel()` in market.ts — maps `sourceStatusColor()` return to display string (grey→"no data", green→"fresh", amber→"stale", red→"very stale"). SourceFreshnessTable now calls `sourceStatusLabel(src)` instead of `src.status`. 13 new vitest GREEN (5 suites: no-data/fresh/amber-range/red-range/regression-guard). tsc 0 errors. Playwright 4/4 GREEN. 1501 vitest pass / 21 pre-existing nav-count failures unrelated. REBUILD: batched — ops to rebuild frontend.
 
