@@ -6762,16 +6762,17 @@
         "id": "FIX-EVIDENCE-PIPELINE-STARVED",
         "title": "evidence pipeline STARVED (silent chain): evidence_fragments=0 rows (empty) -> evidenceAccumulatorJob reports success EVERY run but rows_written=0 since 2026-05-27 -> evidence_scores frozen 2026-05-27 (369 rows), evidence_likelihood_ratios frozen 2026-05-24 (45 rows). Root cause UPSTREAM: fragment producer stopped + fragments TTL-expired; accumulator starves -> writes 0 -> falsely reports success.",
         "owner": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "CHANGES_REQUESTED",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
         "created_by": "po",
         "created_at": "2026-06-11T17:53:21Z",
-        "status_note": "[QA] 2026-06-12T12:11Z PARTIAL: foreignFlowAlertJob rows_written=18 today, evidence_fragments=9>0. DEFER: evidenceAccumulatorJob not yet run (fires 16:00Z UTC). Recheck at 2026-06-12T16:00Z. Fix code ORDER BY date DESC confirmed in source. DJ: sprint-SHIP-WAVE-REAUDIT-qa.md § qa-S2b.",
+        "status_note": "[QA] 2026-06-12T16:15Z CHANGES_REQUESTED: C1 PASS (foreignFlowAlertJob 2026-06-12 08:13 rows_written=18), C2 PASS (evidence_fragments count=9 latest=2026-06-12T08:13Z), C3 FAIL (evidenceAccumulatorJob did not fire at 16:00Z — scheduler tick confirmed active via dataAuditJob:daily but accumulator absent from cron_job_runs and container logs). DJ: SHIP-WAVE-REAUDIT-BA-spec.md § QA Review Record B-02 Re-check.",
         "claimed_at": "2026-06-11T00:00:00Z",
         "completed_at": "2026-06-11T18:10:00Z",
-        "qa_recheck_after": "2026-06-12T16:00:00Z"
+        "qa_recheck_after": "2026-06-12T16:00:00Z",
+        "qa_reviewed_at": "2026-06-12T16:15:00Z"
       },
       {
         "id": "FIX-PREDICTION-SIGNALS-EMPTY",

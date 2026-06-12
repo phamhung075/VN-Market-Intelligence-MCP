@@ -1058,3 +1058,50 @@ Per BA spec edge case: "QA re-verifies AFTER next cron run (not immediately afte
 **If foreignFlowAlertJob rows_written=0 after 2026-06-12 run:** Fix is NOT effective — re-open as new dev task (not verify-only).
 
 **Status:** FIX-EVIDENCE-PIPELINE-STARVED remains REVIEW (PENDING re-check after 2026-06-12T16:00:00Z)
+
+---
+
+## [QA] Review Record — B-02 Re-check: FIX-EVIDENCE-PIPELINE-STARVED
+
+**QA re-check date:** 2026-06-12T16:15:00Z
+**Re-check trigger:** Scheduled cron-gated re-check per re-check conditions above (all three must pass post-2026-06-12 16:00Z UTC)
+
+**Live probes executed (named volume vn-market-intelligence-mcp_market_data):**
+
+**Condition 1 — foreignFlowAlertJob run >= 2026-06-12 08:13 AND rows_written > 0:**
+Raw row: `foreignFlowAlertJob|success|18|2026-06-12 08:13:00`
+Result: PASS — started_at=2026-06-12 08:13:00, status=success, rows_written=18.
+
+**Condition 2 — evidence_fragments.count > 0:**
+Raw row: `SELECT COUNT(*) as count, MAX(timestamp) as latest FROM evidence_fragments` → `9|2026-06-12T08:13:00.921Z`
+Result: PASS — count=9, latest=2026-06-12T08:13:00.921Z (matches foreignFlowAlertJob run).
+
+**Condition 3 — evidenceAccumulatorJob run >= 2026-06-12 16:00 AND status=success AND rows_written > 0:**
+Raw rows (all evidenceAccumulatorJob entries, DESC):
+```
+evidenceAccumulatorJob|success||2026-06-08 16:00:00
+evidenceAccumulatorJob|success|0|2026-06-08 16:00:00
+evidenceAccumulatorJob|success||2026-06-07 16:00:00
+```
+Result: FAIL — no entry with started_at >= 2026-06-12 16:00:00.
+
+**Additional evidence — cron_job_runs since 16:00 UTC today (other jobs DID fire):**
+```
+askQueueCheckJob|success|0|2026-06-12 16:12:00
+vpsServiceHealthJob|success||2026-06-12 16:10:00
+verdictResolutionJob|success|0|2026-06-12 16:07:00
+vpsServiceHealthJob|success||2026-06-12 16:05:00
+deepFetchVpsJob|success|0|2026-06-12 16:05:00
+deepFetchMainJob|success|0|2026-06-12 16:05:00
+pollNewsJob|success||2026-06-12 16:04:13
+dataAuditJob:daily|success|34|2026-06-12 16:00:00
+```
+Scheduler tick at 16:00 confirmed active (`dataAuditJob:daily` fired). `evidenceAccumulatorJob` was absent from tick despite CRONS map registration (confirmed via scheduler log: "80 cron keys in CRONS map"). Container healthy, no env override for CRON_EVIDENCE_ACCUMULATOR.
+
+**Container logs grep for "evidence|accumulator" post-16:00:** zero entries. Job did not execute.
+
+**Verdict: CHANGES_REQUESTED**
+
+Conditions 1 and 2 PASS. Condition 3 FAIL: `evidenceAccumulatorJob` missed its 16:00 UTC cron tick despite the scheduler being live and other `0 16 * * *` jobs firing. Root cause unknown — possible missed cron.schedule() registration for evidenceAccumulator in deployed build, or a silent registration failure not reflected in the "80 cron keys" count.
+
+**Status flip:** FIX-EVIDENCE-PIPELINE-STARVED → CHANGES_REQUESTED

@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-235 · 2026-06-12 · FIX-EVIDENCE-PIPELINE-STARVED B-02 cron-gated re-check — CHANGES_REQUESTED
+
+Sprint: SHIP-WAVE-REAUDIT | Task: FIX-EVIDENCE-PIPELINE-STARVED | Verdict: CHANGES_REQUESTED
+
+Re-check at 2026-06-12T16:15Z. C1 PASS: foreignFlowAlertJob 2026-06-12 08:13:00 status=success rows_written=18. C2 PASS: evidence_fragments count=9 latest=2026-06-12T08:13:00.921Z. C3 FAIL: evidenceAccumulatorJob did not fire at 16:00Z — scheduler tick confirmed active (dataAuditJob:daily ran at 16:00:00, other cron jobs at 16:04–16:12), no evidenceAccumulatorJob entry in cron_job_runs for 2026-06-12, no container log entry. cron registered in CRONS map (80 keys at startup) but job absent from tick. CHANGES_REQUESTED. NEXT: pm to open new dev task with evidence.
+
 ## cycle-234 · 2026-06-12 · FE-CORPEVENTS-TICKER-FILTER browser + unit QA gate — APPROVED
 
 Sprint: FE-CORPEVENTS-TICKER-FILTER | Task: FE-CORPEVENTS-TICKER-FILTER | Verdict: APPROVED | Commit: 4f0d407a | Report: reports/TASK_REPORT_FE-CORPEVENTS-TICKER-FILTER.md
