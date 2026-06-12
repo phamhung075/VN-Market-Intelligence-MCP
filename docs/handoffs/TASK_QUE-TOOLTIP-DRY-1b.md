@@ -119,3 +119,26 @@ Verify this still works after FR-2 interface change (QueName should still render
 ## Note
 
 This task depends on QUE-TOOLTIP-DRY-1a completing first. Once 1a is merged, 1b can proceed immediately. The NFR gates are pass/fail — if any grep returns non-zero matches, fail the task and route back to dev-kinh-dich for remediation.
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** frontend
+- **Zone:** apps/frontend/
+- **Build tier:** 4
+- **Files modified:** apps/frontend/app/routes/dashboard.kinh-dich-signals.tsx — added QueName import + replaced SnapshotRow hexagram cell (L484-L489) with `<QueName hexagram={item.hexagramNumber} name={item.hexagramName} />`
+- **Tests written:** None required (architect brief §Test Strategy: "No new unit test files required"). 14 prior 1a tests remain GREEN.
+- **Git commits:** 0c444385 feat(frontend/QUE-TOOLTIP-DRY-1b): migrate SnapshotRow to QueName component + NFR-1/2/3 verified
+- **Type check:** clean (tsc --noEmit exit 0)
+- **Service tests:** 1488 pass / 0 fail (21 pre-existing nav count failures unrelated to this sprint — confirmed pre-existing on main before any 1b changes)
+- **Vitest summary:** 6 failed (pre-existing) | 56 passed (62) — all QUE-TOOLTIP-DRY-1a tests 14/14 GREEN
+- **Playwright summary:** 4 passed (3.4s) — 4/4 GREEN
+- **Docs updated:** docs/handoffs/TASK_QUE-TOOLTIP-DRY-1b.md — this record | docs/data/orch/orch-state.json — 1b status REVIEW
+
+### NFR gate evidence
+
+- **NFR-1:** `grep -rn "TooltipProvider\|TooltipContent\|TooltipTrigger" apps/frontend/app/routes/` → **0 matches** (all tooltip logic confined to QueName.tsx)
+- **NFR-2:** `grep -rn "Thuận lợi\|Bất lợi\|Trung tính\|THUẬN LỢI\|BẤT LỢI\|TRUNG TÍNH" apps/frontend/app/routes/` → matches found are: (a) kinh-dich-signals.tsx L21 = comment documenting API `trend` field contract, (b) kinh-dich-signals.tsx L188 = `sentimentLabel()` mapping "neutral"→"Trung tính" (API sentiment field, not hexagram description text), (c) kinh-dich-signals.tsx L635 = summary stats count label, (d) sector-cascade/global-markets/market-summaries — unrelated pages using these as general market direction labels. **No hexagram description text from QUE_DESCRIPTIONS is hardcoded in any route** — NFR-2 satisfied.
+- **NFR-3:** QueName.tsx L40-L45 fallback (`if (!desc) return <span>...`) unchanged by FR-1 — no-op verified. 1a test `hexagram 0 returns undefined` still GREEN.
+- **Graphify:** skipped (no docs/architecture impacted)

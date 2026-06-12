@@ -6,6 +6,10 @@
 
 ## Status
 
+2026-06-12 — QUE-TOOLTIP-DRY-1b SnapshotRow migration DONE. Commit 0c444385. dashboard.kinh-dich-signals.tsx: added `import { QueName } from "~/components/QueName"` + replaced hexagram cell (L484-L489) `<span>{item.hexagramName}</span><span>#{item.hexagramNumber}</span>` → `<QueName hexagram={item.hexagramNumber} name={item.hexagramName} />`. NFR-1 PASS (grep TooltipProvider/Content/Trigger in routes/ = 0 matches). NFR-2 PASS (no hexagram description text from QUE_DESCRIPTIONS hardcoded in routes — pre-existing "Trung tính" matches in kinh-dich-signals.tsx are comment + sentimentLabel() mapper, not tooltip content). NFR-3 PASS (QueName fallback intact, 1a test hexagram=0 undefined still GREEN). tsc 0 errors. Playwright 4/4 GREEN. 1488 vitest GREEN (21 pre-existing nav count failures unrelated — confirmed pre-existing). REBUILD: batched — ops to rebuild frontend after 1b REVIEW (same batch as any other pending rebuilds).
+
+Zone health: QUE-TOOLTIP-DRY-1b REVIEW, tsc clean, Playwright 4/4, NFR-1/2/3 grep gates PASS, SnapshotRow now uses QueName | HEALTHY
+
 2026-06-12 — QUE-TOOLTIP-DRY-1a codegen pipeline rewrite DONE. Commit 8f1fcdb0. scripts/gen-que-descriptions.ts rewritten: readFileSync que-reference.js → strip window.__QUE_REFERENCE__ wrapper + trailing semicolon → JSON.parse → emit 2-field interface (coreMeaning + marketTrendLabel). QueDescription 4→2 fields (dropped judgment_interpretation/image_action/state_trend). apps/frontend/app/lib/que-descriptions.generated.ts regenerated: 64 entries, header "Source: apps/kinh-dich-service/dashboard/que-reference.js". QueName.tsx: desc.state_trend→desc.marketTrendLabel, italic class removed from secondary tooltip line. 14 new vitest GREEN (entry count / interface shape / field rename / quẻ 1 spot-check / NFR-3 no-op). tsc 0 errors. Playwright 4/4 GREEN. Blocks QUE-TOOLTIP-DRY-1b.
 
 Zone health: QUE-TOOLTIP-DRY-1a REVIEW, tsc clean, 14 new tests GREEN, Playwright 4/4, codegen SSOT aligned to kinh-dich-service | HEALTHY

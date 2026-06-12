@@ -4954,8 +4954,9 @@
           {
             "id": "QUE-TOOLTIP-DRY-1b",
             "title": "FR-1: SnapshotRow migration to QueName + NFR grep gates",
-            "owner": "dev-kinh-dich",
-            "status": "TODO",
+            "owner": "dev-frontend",
+            "status": "REVIEW",
+            "commit": "0c444385",
             "zone": "apps/frontend/",
             "type": "FEATURE",
             "size": "M",
