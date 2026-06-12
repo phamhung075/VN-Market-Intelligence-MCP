@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T15:41:26Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-12T19:40:36Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -4884,49 +4884,6 @@
         ]
       },
       {
-        "id": "OHLCV-UNIT-CONTAM",
-        "label": "daily_ohlcv unit-contamination — split-scale OHLC rows (open/low thousand-VND vs high/close VND-units) corrupt change_pct. User-reported via France summary 'Top biến động giá' (VNH +111011.11%). 385 contaminated rows, ~all watchlist tickers, systemic since ingest.",
-        "status": "active",
-        "opened_at": "2026-06-12",
-        "priority": "critical",
-        "evidence": "Router+PO raw-verified live (keinos sqlite3 sidecar on vn-market-intelligence-mcp_market_data volume, market.db). VNH 2026-06-12 row: open=0.9,high=1000,low=0.9,close=1000. (1000-0.9)/0.9*100 = 111011.11%. franceSummaryJob.ts ORDER BY ABS(change_pct) DESC surfaces it. SQL is CORRECT — data is contaminated. Cross-writer race: pushPricesHandler.ts ON CONFLICT does high=MAX/low=MIN merge which FUSES a thousand-scale (0.9) write with a unit-scale (1000) write into one split-scale row; ohlcvDailyAggregatorJob.ts overwrites from market_prices_history ticks. No single normalized-unit invariant at daily_ohlcv write boundary.",
-        "source": "user-report 2026-06-12",
-        "note": "NEW user-reported defect — NOT folded into SHIP-WAVE-REAUDIT per router. recurring-class=unit-normalization-at-write.",
-        "tasks": [
-          {
-            "id": "CONTAM-8",
-            "title": "Fix repair heuristic boundary — close >= 1000 not > 1000 (SM-1 scope miss)",
-            "owner": "dev-mcp-server",
-            "type": "FIX",
-            "status": "DONE",
-            "zone": "apps/mcp-server/",
-            "created_at": "2026-06-12T10:05:29Z",
-            "priority": "critical",
-            "size": "S",
-            "sprint": "OHLCV-UNIT-CONTAM",
-            "depends": [],
-            "note": "QA scope miss SM-1: VNH 2026-06-12 close=1000.0 exactly excluded by > 1000 boundary (should be >= 1000)",
-            "done_at": "2026-06-12T10:18:04Z",
-            "closed_at": "2026-06-12T10:19:00Z"
-          },
-          {
-            "id": "CONTAM-9",
-            "title": "Investigate and repair 519 rows with low=0 contamination pattern (SM-2 + SM-3 scope miss)",
-            "owner": "dev-mcp-server",
-            "type": "FIX",
-            "status": "DONE",
-            "zone": "apps/mcp-server/",
-            "created_at": "2026-06-12T10:05:29Z",
-            "priority": "critical",
-            "size": "M",
-            "sprint": "OHLCV-UNIT-CONTAM",
-            "depends": [],
-            "note": "460 pre-repair legacy rows + 59 post-repair rows with pattern: open<100 AND close>1000 AND low=0. Outside CONTAM-6 binding amendment scope. Requires root-cause (writer or upstream)",
-            "closed_at": "2026-06-12T22:55:00Z"
-          }
-        ]
-      },
-      {
         "id": "QUE-TOOLTIP-DRY",
         "label": "QUE-TOOLTIP-DRY — Hexagram Tooltip SSOT + QueName Migration",
         "status": "done",
@@ -9186,12 +9143,7 @@
       }
     ],
     "head": {
-      "next": "dev-mcp-server",
-      "task": "CONTAM-2+CONTAM-3+CONTAM-4+CONTAM-5",
-      "sprint": "OHLCV-UNIT-CONTAM",
-      "set_at": "2026-06-12T08:11:47Z",
-      "set_by": "po",
-      "note": "CONTAM-1 DONE_VERIFIED (committed 5762ec3d). Dispatch CONTAM-2/3/4/5 in PARALLEL (disjoint files, all depend only on CONTAM-1, WIP cap honored). CONTAM-4 = PO-rewritten handoff: NORMALIZE VNDIRECT thousand-VND->full-VND (normalizeOhlcvToVnd now exists), never skip. Then CONTAM-6 off-hours after 2+4 deployed; CONTAM-7 last."
+      "note": "OHLCV-UNIT-CONTAM closed; PO to review next sprint goals"
     },
     "done_verified": [
       {
@@ -9256,6 +9208,52 @@
         "updated_at": "2026-06-11T19:33:43Z",
         "updated_by": "architect",
         "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md"
+      }
+    ],
+    "closed_sprints": [
+      {
+        "id": "OHLCV-UNIT-CONTAM",
+        "label": "daily_ohlcv unit-contamination — split-scale OHLC rows (open/low thousand-VND vs high/close VND-units) corrupt change_pct. User-reported via France summary 'Top biến động giá' (VNH +111011.11%). 385 contaminated rows, ~all watchlist tickers, systemic since ingest.",
+        "status": "closed",
+        "opened_at": "2026-06-12",
+        "priority": "critical",
+        "evidence": "Router+PO raw-verified live (keinos sqlite3 sidecar on vn-market-intelligence-mcp_market_data volume, market.db). VNH 2026-06-12 row: open=0.9,high=1000,low=0.9,close=1000. (1000-0.9)/0.9*100 = 111011.11%. franceSummaryJob.ts ORDER BY ABS(change_pct) DESC surfaces it. SQL is CORRECT — data is contaminated. Cross-writer race: pushPricesHandler.ts ON CONFLICT does high=MAX/low=MIN merge which FUSES a thousand-scale (0.9) write with a unit-scale (1000) write into one split-scale row; ohlcvDailyAggregatorJob.ts overwrites from market_prices_history ticks. No single normalized-unit invariant at daily_ohlcv write boundary.",
+        "source": "user-report 2026-06-12",
+        "note": "NEW user-reported defect — NOT folded into SHIP-WAVE-REAUDIT per router. recurring-class=unit-normalization-at-write.",
+        "tasks": [
+          {
+            "id": "CONTAM-8",
+            "title": "Fix repair heuristic boundary — close >= 1000 not > 1000 (SM-1 scope miss)",
+            "owner": "dev-mcp-server",
+            "type": "FIX",
+            "status": "DONE",
+            "zone": "apps/mcp-server/",
+            "created_at": "2026-06-12T10:05:29Z",
+            "priority": "critical",
+            "size": "S",
+            "sprint": "OHLCV-UNIT-CONTAM",
+            "depends": [],
+            "note": "QA scope miss SM-1: VNH 2026-06-12 close=1000.0 exactly excluded by > 1000 boundary (should be >= 1000)",
+            "done_at": "2026-06-12T10:18:04Z",
+            "closed_at": "2026-06-12T10:19:00Z"
+          },
+          {
+            "id": "CONTAM-9",
+            "title": "Investigate and repair 519 rows with low=0 contamination pattern (SM-2 + SM-3 scope miss)",
+            "owner": "dev-mcp-server",
+            "type": "FIX",
+            "status": "DONE",
+            "zone": "apps/mcp-server/",
+            "created_at": "2026-06-12T10:05:29Z",
+            "priority": "critical",
+            "size": "M",
+            "sprint": "OHLCV-UNIT-CONTAM",
+            "depends": [],
+            "note": "460 pre-repair legacy rows + 59 post-repair rows with pattern: open<100 AND close>1000 AND low=0. Outside CONTAM-6 binding amendment scope. Requires root-cause (writer or upstream)",
+            "closed_at": "2026-06-12T22:55:00Z"
+          }
+        ],
+        "closed_at": "2026-06-12T19:40:36Z"
       }
     ]
   },
