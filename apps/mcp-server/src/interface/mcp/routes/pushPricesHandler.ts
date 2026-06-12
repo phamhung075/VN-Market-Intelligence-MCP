@@ -19,6 +19,7 @@ import {
   _setStaleTickers_lastNotifiedDate,
   isVnTradingWindowUtc,
 } from "../server-startup.js";
+import { validateOhlcvUnit } from "../../../domain/services/market-data/ohlcvUnitGuard.js";
 
 export async function handlePushPrices(
   req: IncomingMessage,
@@ -160,10 +161,14 @@ export async function handlePushPrices(
     }
 
     // Update daily OHLCV (kept 2+ years for volatility analysis)
+    // CONTAM-2: ON CONFLICT clause includes open self-heal via CASE — if the existing
+    // open is contaminated (< 100, i.e. thousand-VND leakage), the next valid push
+    // overwrites it. Guard below ensures only full-VND rows reach this statement.
     const ohlcvUpsert = db.prepare(`
       INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(code, date) DO UPDATE SET
+        open = CASE WHEN daily_ohlcv.open < 100 THEN excluded.open ELSE daily_ohlcv.open END,
         high = MAX(daily_ohlcv.high, excluded.high),
         low = MIN(daily_ohlcv.low, excluded.low),
         close = excluded.close,
@@ -176,6 +181,31 @@ export async function handlePushPrices(
       const pv = isStock ? p.price * 1000 : p.price;
       const high = p.high ? parseFloat(p.high) * (isStock ? 1000 : 1) : pv;
       const low = p.low ? parseFloat(p.low) * (isStock ? 1000 : 1) : pv;
+
+      // CONTAM-2: Unit guard — reject rows where OHLCV values are not in full-VND range.
+      // Fail-loud (log.error + skip row). RF-1: guard is wrapped in try/catch so any
+      // unexpected error here never throws to the HTTP layer (VPS gets HTTP 200 always).
+      try {
+        const guardResult = validateOhlcvUnit(
+          p.code,
+          isStock ? "stock" : "index",
+          pv,   // open (first push value)
+          high,
+          low,
+          pv,   // close (same as open on push; updated by subsequent pushes)
+        );
+        if (!guardResult.valid) {
+          log.error(`[pushPrices] unit guard rejected ${p.code}: ${guardResult.reason}`);
+          continue; // Skip upsert; HTTP 200 still returned to VPS (RF-1)
+        }
+      } catch (guardErr) {
+        // Guard must never propagate — log and skip to prevent VPS backoff (RF-1)
+        log.error(`[pushPrices] unit guard threw for ${p.code} — skipping row`, {
+          error: guardErr instanceof Error ? guardErr.message : String(guardErr),
+        });
+        continue;
+      }
+
       ohlcvUpsert.run(p.code, vnDate, pv, high, low, pv, p.volume ?? 0, now);
     }
 
