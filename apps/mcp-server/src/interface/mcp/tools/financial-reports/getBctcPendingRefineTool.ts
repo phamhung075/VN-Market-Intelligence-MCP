@@ -83,6 +83,19 @@ const InputSchema = z.object({
     .max(100)
     .optional()
     .describe("Maximum reports to return (default: no limit, max 100)"),
+  ticker: z
+    .string()
+    .optional()
+    .describe("Filter by ticker symbol (action_code). Ignored when report_id is supplied."),
+  report_id: z
+    .string()
+    .optional()
+    .describe(
+      "Fetch a specific report by ID (returns array of 0 or 1). " +
+        "Takes precedence over ticker. " +
+        "RF-3: bypasses text_status/refine_status queue-eligibility filters — intentional for force-re-verify; " +
+        "confirm_status guard (CONFIRMED exclusion) is still enforced.",
+    ),
 });
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -110,41 +123,94 @@ export function buildGetBctcPendingRefineHandler(
       };
     }
 
-    const { limit } = parsed.data;
+    const { limit, ticker, report_id } = parsed.data;
     const db = dbOverride ?? getDb();
 
     try {
-      // Build query with optional LIMIT
-      // FIX-FINALIZE-STATUS-STUCK-PARTIAL (Fix A):
-      // Exclude PARTIAL reports where ALL bctc_refined_units rows are window_status='DONE'
-      // AND at least one unit exists. These are data-quality PARTIALs (BEQ-7 section guard
-      // fired at finalize but all windows are processed) — there is no refine work remaining.
-      // PENDING and FAILED eligibility is unchanged.
-      // Index: idx_bctc_refined_units_report_status (report_id, window_status) — O(log n) lookup.
-      const limitClause = limit ? `LIMIT ${limit}` : "";
-      const rows = db
-        .prepare<PendingRefineRow, []>(
-          `SELECT id, pdf_path, refine_status, text_status, confirm_status
-           FROM financial_reports
-           WHERE text_status = 'COMPLETE'
-             AND refine_status IN ('PENDING', 'PARTIAL', 'FAILED')
-             AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
-             AND NOT (
-               refine_status = 'PARTIAL'
-               AND (
-                 SELECT COUNT(*) FROM bctc_refined_units u
-                 WHERE u.report_id = financial_reports.id
-                   AND u.window_status != 'DONE'
-               ) = 0
-               AND (
-                 SELECT COUNT(*) FROM bctc_refined_units u
-                 WHERE u.report_id = financial_reports.id
-               ) > 0
-             )
-           ORDER BY parsed_at ASC
-           ${limitClause}`,
-        )
-        .all();
+      // Build query based on supplied parameters.
+      //
+      // Branch 1 — report_id supplied:
+      //   Fetch the single report by primary key. Skips text_status / refine_status
+      //   queue-eligibility filters (RF-3: intentional — caller knows exactly which report
+      //   they want; enables force-re-verify on any status). confirm_status guard is retained.
+      //
+      // Branch 2 — ticker supplied (no report_id):
+      //   Standard queue query + AND action_code = ? filter.
+      //
+      // Branch 3 — default (no ticker, no report_id):
+      //   Standard queue query unchanged.
+      //   FIX-FINALIZE-STATUS-STUCK-PARTIAL (Fix A):
+      //   Exclude PARTIAL reports where ALL bctc_refined_units rows are window_status='DONE'
+      //   AND at least one unit exists. These are data-quality PARTIALs (BEQ-7 section guard
+      //   fired at finalize but all windows are processed) — there is no refine work remaining.
+      //   Index: idx_bctc_refined_units_report_status (report_id, window_status) — O(log n).
+
+      let rows: PendingRefineRow[];
+
+      if (report_id !== undefined) {
+        // Branch 1: direct fetch by report_id — bypasses queue-eligibility filters (RF-3)
+        rows = db
+          .prepare<PendingRefineRow, [string]>(
+            `SELECT id, pdf_path, refine_status, text_status, confirm_status
+             FROM financial_reports
+             WHERE id = ?
+               AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')`,
+          )
+          .all(report_id);
+      } else if (ticker !== undefined) {
+        // Branch 2: ticker-filtered queue query
+        const limitClause = limit ? `LIMIT ${limit}` : "";
+        rows = db
+          .prepare<PendingRefineRow, [string]>(
+            `SELECT id, pdf_path, refine_status, text_status, confirm_status
+             FROM financial_reports
+             WHERE text_status = 'COMPLETE'
+               AND refine_status IN ('PENDING', 'PARTIAL', 'FAILED')
+               AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
+               AND NOT (
+                 refine_status = 'PARTIAL'
+                 AND (
+                   SELECT COUNT(*) FROM bctc_refined_units u
+                   WHERE u.report_id = financial_reports.id
+                     AND u.window_status != 'DONE'
+                 ) = 0
+                 AND (
+                   SELECT COUNT(*) FROM bctc_refined_units u
+                   WHERE u.report_id = financial_reports.id
+                 ) > 0
+               )
+               AND action_code = ?
+             ORDER BY parsed_at ASC
+             ${limitClause}`,
+          )
+          .all(ticker);
+      } else {
+        // Branch 3: default queue query (unchanged behavior)
+        const limitClause = limit ? `LIMIT ${limit}` : "";
+        rows = db
+          .prepare<PendingRefineRow, []>(
+            `SELECT id, pdf_path, refine_status, text_status, confirm_status
+             FROM financial_reports
+             WHERE text_status = 'COMPLETE'
+               AND refine_status IN ('PENDING', 'PARTIAL', 'FAILED')
+               AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
+               AND NOT (
+                 refine_status = 'PARTIAL'
+                 AND (
+                   SELECT COUNT(*) FROM bctc_refined_units u
+                   WHERE u.report_id = financial_reports.id
+                     AND u.window_status != 'DONE'
+                 ) = 0
+                 AND (
+                   SELECT COUNT(*) FROM bctc_refined_units u
+                   WHERE u.report_id = financial_reports.id
+                 ) > 0
+               )
+             ORDER BY parsed_at ASC
+             ${limitClause}`,
+          )
+          .all();
+      }
 
       const reports: PendingRefineReport[] = await Promise.all(
         rows.map(async (row) => {
@@ -256,22 +322,26 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
   server.tool(
     "get_bctc_pending_refine",
     "Return financial reports pending agentic refine processing, with pre-partitioned windows. " +
-      "Queries financial_reports WHERE text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL','FAILED') " +
+      "Default: queries financial_reports WHERE text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL','FAILED') " +
       "AND confirm_status != 'CONFIRMED'. " +
       "PARTIAL reports where ALL bctc_refined_units rows are window_status='DONE' are excluded — " +
       "these are data-quality PARTIALs (BEQ-7 section guard fired but no refine work remains). " +
       "FAILED reports are included so the fleet cron can retry them (e.g. Option-Y legacy failures). " +
+      "Optional ticker parameter (action_code) filters results to a specific stock. " +
+      "Optional report_id parameter fetches one specific report by primary key regardless of queue status " +
+      "(bypasses text_status/refine_status filters — intentional for force-re-verify; confirm_status guard retained). " +
+      "report_id takes precedence over ticker when both are supplied. " +
       "Output: Array<{ id, filename, page_count, text_status, confirm_status, refine_status, windows[] }> " +
       "ordered by parsed_at ASC. " +
       "filename = basename(pdf_path). page_count = max page from pdf_extracted_text (0 if unknown). " +
-      "text_status always 'COMPLETE' for returned rows (Phase 0 readiness guard). " +
-      "confirm_status is null or non-CONFIRMED (Phase 0 belt-and-suspenders guard). " +
+      "text_status always 'COMPLETE' for default/ticker rows (Phase 0 readiness guard). " +
+      "confirm_status is null or non-CONFIRMED for all branches (Phase 0 belt-and-suspenders guard). " +
       "windows[] is the server-side pre-partitioned list; each entry: " +
       "{ unit_id, page_numbers, page_type ('table'|'prose'|'continuation'), needs_image }. " +
       "windows is [] if page texts are unavailable (flow handles gracefully). " +
       "Used by the host-level fleet cron (refine_bctc_md flow). " +
       "Read-only — idempotent, safe to re-run. " +
-      "Optional limit parameter caps results (default: all pending, max 100).",
+      "Optional limit parameter caps results (default: all pending, max 100). limit ignored when report_id is supplied.",
     {
       limit: z
         .number()
@@ -279,7 +349,20 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
         .min(1)
         .max(100)
         .optional()
-        .describe("Maximum reports to return (omit for all pending, max 100)"),
+        .describe("Maximum reports to return (omit for all pending, max 100). Ignored when report_id is supplied."),
+      ticker: z
+        .string()
+        .optional()
+        .describe("Filter by ticker symbol (action_code). Ignored when report_id is supplied."),
+      report_id: z
+        .string()
+        .optional()
+        .describe(
+          "Fetch a specific report by ID (returns array of 0 or 1). " +
+            "Takes precedence over ticker. " +
+            "Bypasses queue-eligibility filters (text_status/refine_status) — for force-re-verify; " +
+            "confirm_status guard (CONFIRMED exclusion) is still enforced.",
+        ),
     },
     async (input) => {
       return handler(input);

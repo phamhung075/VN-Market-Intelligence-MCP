@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T23:30:45Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-13T01:30:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -463,13 +463,13 @@
             "title": "get_bctc_pending_refine silently ignores ticker argument (probed live: {ticker:'CTG',limit:1} still returns ACB) AND no tool exists to fetch a specific report's windows by report_id. Blocks on-demand refine of REFINE-CRON-ARM verification-gate ticker CTG (c6b17c36-1f4f-48bc-a367-b48afc163ceb, PENDING, 0 units). Fix: honor the ticker filter in get_bctc_pending_refine, and/or add a get-windows-by-report_id tool.",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "zone": "apps/mcp-server/src/",
             "created_at": "2026-06-12T21:12:58Z",
             "priority": "low",
             "size": "S",
             "sprint": "BCTC-ANALYTICS-LAYER",
-            "status_note": "[PO triage 2026-06-12T21:12:58Z] P2. Live-probed: get_bctc_pending_refine(arguments={ticker:'CTG',limit:1}) returns ACB, ignoring the ticker filter. No by-report_id windows-fetch tool exists. Needed to on-demand-verify CTG (c6b17c36, PENDING, 0 units) — the REFINE-CRON-ARM verification-gate ticker. Lower priority than the deadlock (BUG1) which auto-drains the queue, but required for targeted verification. | dev-mcp-server started 2026-06-13T00:00Z",
+            "status_note": "[PO triage 2026-06-12T21:12:58Z] P2. Live-probed: get_bctc_pending_refine(arguments={ticker:'CTG',limit:1}) returns ACB, ignoring the ticker filter. No by-report_id windows-fetch tool exists. Needed to on-demand-verify CTG (c6b17c36, PENDING, 0 units) — the REFINE-CRON-ARM verification-gate ticker. Lower priority than the deadlock (BUG1) which auto-drains the queue, but required for targeted verification. | dev-mcp-server started 2026-06-13T00:00Z | dev-mcp-server REVIEW 2026-06-13T01:30Z — tsc clean, 12786 pass/52 fail (pre-existing noise), 157 tools, 79 cron.schedule",
             "depends": [
               "FIX-FINALIZE-STATUS-STUCK-PARTIAL"
             ],

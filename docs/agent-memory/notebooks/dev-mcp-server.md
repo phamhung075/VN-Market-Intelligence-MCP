@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-13 · FIX-PENDING-REFINE-TICKER-TARGETING — ticker + report_id params — REVIEW
+
+**Task:** FIX-PENDING-REFINE-TICKER-TARGETING | Sprint: BCTC-ANALYTICS-LAYER | Priority: P2/low | Zone: apps/mcp-server/
+**Root cause:** getBctcPendingRefineTool.ts Zod InputSchema only had `limit` — `ticker` and `report_id` were stripped silently by safeParse, making all calls return the oldest PENDING/PARTIAL regardless of intended filter.
+**Fix:** Extended InputSchema with `ticker` (z.string().optional()) and `report_id` (z.string().optional()). Refactored SQL into 3 branches: (1) report_id → `WHERE id=? AND confirm_status guard` — bypasses queue-eligibility filters (RF-3 intentional); (2) ticker → standard queue query + `AND action_code=?`; (3) default unchanged. All SQL uses parameterized placeholders. Tool description updated. RF-3 code comment added.
+**Docs:** docs/agents/tools/list/get_bctc_pending_refine.md updated with ticker + report_id entries (AC-5-1).
+**Tests:** 0 new files (AC-6-2). Existing suite: 12786 pass / 52 fail (pre-existing) / exit 0. tsc clean.
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, ticker/report_id params shipped | HEALTHY
+
+---
+
 ## 2026-06-13 · FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE — confidence recompute at finalize — REVIEW
 
 **Task:** FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE | Sprint: BCTC-ANALYTICS-LAYER | Priority: P1 | Zone: apps/mcp-server/
