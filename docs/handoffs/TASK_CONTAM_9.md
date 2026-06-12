@@ -130,12 +130,40 @@ If confirmed that CONTAM-2 guard is incomplete:
 
 ---
 
+## [PM] Fresh User Evidence — 2026-06-12 (appended per CONTAM-9 user directive)
+
+User-reported frontend display defects (price table/chart) on 2026-06-12:
+- FPT 2026-06-12: close=73.500 displayed with biến động +100447.2%, open=73,1, high=74.300, low=0, volume=568.820
+- FPT 2026-06-11: close=73.100, open=0, high=73.900, low=0, volume=350.73
+- User verdict: "close is 0 is impossible" — partial-zero rows (open=0 and/or low=0) plus mixed-unit rows (open hundred-scale vs close/high thousand-scale) are being SERVED and the % change calc explodes (+100447.2%) because prev-close vs close are on different unit scales.
+
+**Developer confirmation:** All 3 defect classes confirmed live on 2026-06-12 DB:
+- SM-2/SM-3: 519 rows with open<100+low=0 (mixed-unit contamination)
+- Partial-zero open: 598 rows with open=0 (not all-zero)
+- Low=0: 1694 total rows with low=0 and close>=1000
+
 ## [Developer] Implementation Record
 
-(To be filled by dev-mcp-server)
-
-- **Root-cause finding:** (writer path or upstream source)
-- **Rows identified:** N (expected ~519)
-- **Repair decision:** (proceed with writer-scoped fix or escalate upstream)
-- **Commit:** (git hash if repair executed)
-- **Verification:** 0 rows remaining (exact match on pattern)
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/ + scripts/migrations/
+- **Root-cause finding:** Pre-guard container run (2026-06-12T08:59Z, 25min before CONTAM-2/3/4/5 rebuild at 09:24Z) inserted SM-3 rows. Legacy SM-2 rows were excluded by CONTAM-6 binding amendment (`low > 0` guard). Additionally `MIN(daily_ohlcv.low, excluded.low)` ON CONFLICT clause permanently propagated any legacy `low=0` via MIN(0, n)=0 — active ongoing leak even with guards in place.
+- **Rows identified:** Class A=519, Class B=598, Class C=1694 total low=0 rows
+- **Repair decision:** Writer-scoped fix (confirmed pre-guard container; guards now working). Proceeded with all three repair classes.
+- **Files modified:**
+  - `scripts/migrations/repair-ohlcv-unit-contamination-low-zero.ts` — new migration (3-pass: A/B/C)
+  - `scripts/migrations/__tests__/CONTAM-9-repair-ohlcv-low-zero.test.ts` — 12 TCs
+  - `apps/mcp-server/src/domain/services/market-data/ohlcvUnitGuard.ts` — added Rule 3 mixed-unit cross-field check
+  - `apps/mcp-server/src/__tests__/unit/ohlcvUnitGuard.test.ts` — 3 new TCs (TC-14/15/16)
+  - `apps/mcp-server/src/interface/mcp/routes/pushPricesHandler.ts` — CONTAM-9 low=0 self-heal ON CONFLICT fix
+  - `apps/mcp-server/src/__tests__/1987-contam2-push-prices-ohlcv-guard.test.ts` — TC-7 low self-heal
+  - `apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts` — comment clarification
+  - `docs/policies/dev-standards.md` — CONTAM-9 script pointer added
+- **Live repair executed (2026-06-12T17:25Z):** A=519, B=598, C=1175 rows updated
+- **Verification:** 0 Class A, 0 Class B, 0 Class C rows remaining (all queries = 0)
+- **Commit:** 6657fc3e
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test (targeted):** 89 pass / 0 fail across changed test files
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 79 cron.schedule entries — matches pre-task baseline
+- **Docs updated:** `docs/policies/dev-standards.md` § Script Persistence — CONTAM-9 canonical pointer added
+- **Graphify:** skipped (no architecture docs impacted)

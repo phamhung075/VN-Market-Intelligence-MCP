@@ -1,13 +1,13 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-12 · EVIDENCE-ACCUM-SILENT-CRON — node-cron silent tick drop fix — REVIEW
+## 2026-06-12 · CONTAM-9 — low=0/open=0 partial-zero repair + write boundary fix — REVIEW
 
-**Task:** EVIDENCE-ACCUM-SILENT-CRON | Priority: HIGH | Zone: apps/mcp-server/src/scheduler/
-**Root cause:** node-cron v3.0.3 drops ticks under event loop saturation (vnstockFundamentalsJob startup sweep at 16:00 UTC). `matchTime()` fires late; `missedExecutions > 0`; for `i > 0`, emission skipped when `recoverMissedExecutions=false`. Same mechanism took reputationComputeJob 2026-06-11, evidenceAccumulatorJob 2026-06-12.
-**Fix (3-part):** (1) `recoverMissedExecutions: true` on evidenceAccumulator + reputationCompute cron registrations. (2) Same-day DB-backed dedup guard in `runEvidenceAccumulatorWithDb` — blocks double-execution on same UTC day. (3) Double-wrap fix: `startupHelpers.ts` default fn changed from `runEvidenceAccumulatorJob()` (which called `recordJobRun` internally) to `runEvidenceAccumulator(db)` — eliminates the two-row-per-tick pattern visible on 2026-06-07/08.
-**Tests:** 8 new assertions in EVIDENCE-ACCUM-SILENT-CRON.test.ts (T1-T7 dedup states). 12870 pass / 0 fail. tsc exit 0. toolCount=157. schedulerCount=79.
-**Commit:** 53d00955
-Zone health: tsc clean, 157 tools intact, 79 cron.schedule, systemic cron-miss class fixed (recoverMissedExecutions) | HEALTHY
+**Task:** CONTAM-9 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: scripts/migrations/ + apps/mcp-server/
+**Root cause:** CONTAM-6 binding amendment (`low>0`) left 519 SM-2/SM-3 rows (open<100+low=0) unrepaired. Also MIN(daily_ohlcv.low, excluded.low) ON CONFLICT clause permanently propagated legacy low=0 via MIN(0,n)=0. SM-3 origin: pre-guard container run at 08:59Z (25min before CONTAM-2/3/4/5 rebuild at 09:24Z).
+**Repair (3-pass, single transaction):** A=519 rows (open*1000, low=ROUND(MIN(open*1000,close)*0.99,2)); B=598 rows (open=close); C=1175 remaining low=0 (low=ROUND(close*0.99,2)). Total 0 Class A/B/C remaining. Writer fix: ON CONFLICT `low = CASE WHEN daily_ohlcv.low=0 THEN excluded.low ELSE MIN(...) END`. Guard Rule 3: cross-field mixed-unit detection (any field<100 + another>=1000 → mixed_unit).
+**Tests:** 12 new CONTAM-9 migration TCs, +3 ohlcvUnitGuard TCs, +1 TC-7 pushPrices low self-heal. 89 pass / 0 fail. tsc clean. toolCount=157. schedulerCount=79.
+**Commit:** 6657fc3e
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, all 3 partial-zero contamination classes resolved, write boundary closed | HEALTHY
 
 ---
 
@@ -31,13 +31,3 @@ Zone health: tsc clean, 157 tools intact, 79 cron.schedule, repair boundary corr
 **Tests:** 14 pass / 0 fail (in-memory SQLite). tsc clean. toolCount=157. schedulerCount=79.
 Zone health: tsc clean, 157 tools intact, 79 cron.schedule, repair 376/376 rows, 0 remaining | HEALTHY
 
----
-
-## 2026-06-12 · QUE-TOOLTIP-DRY-3 — hexagramLibrary.ts downstream annotation — REVIEW
-
-**Task:** QUE-TOOLTIP-DRY-3 | Sprint: QUE-TOOLTIP-DRY | Priority: HIGH | Zone: apps/mcp-server/src/domain/services/kinhDich/
-**Change:** `hexagramLibrary.ts` file-header — replaced 3-line `//` comment with 7-line JSDoc block: AUTO-GENERATED downstream of apps/kinh-dich-service/dashboard/que-reference.js. DO NOT EDIT description text independently. PO-Q2 enforcement per arch brief Option B.
-**Key decision:** comment-only; zero data changes, zero TS type changes. kinhDichTools.ts runtime reads state.trend — unaffected.
-**Tests:** 107 pass / 0 fail (kinhDich targeted: hexagram-library + hexagram-library-rebuild + kinhdich-tools + kinhdich-differentiation-smoke). tsc clean. toolCount=157. schedulerCount=79.
-**Commit:** 66621b03
-Zone health: tsc clean, 157 tools intact, 79 cron.schedule, annotation-only change no behavior drift | HEALTHY

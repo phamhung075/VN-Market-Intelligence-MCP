@@ -4914,7 +4914,7 @@
             "title": "Investigate and repair 519 rows with low=0 contamination pattern (SM-2 + SM-3 scope miss)",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "IN_PROGRESS",
+            "status": "REVIEW",
             "zone": "apps/mcp-server/",
             "created_at": "2026-06-12T10:05:29Z",
             "priority": "critical",
