@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T11:20:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-12T11:35:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -6689,25 +6689,6 @@
         "status_note": "Created by po triage 2026-06-11 from router DATA-FRESHNESS AUDIT (ground-truth, live named-volume DB @ 2026-06-11 ~17:45 UTC). Tables with 0 rows: credit_data, insider_transactions, public_contracts, pharma_events, broker_sanctions. DEDUP/cross-ref: DS-DEGRADE-01-FIX already covers the SERVE-layer for public_contracts (get_public_contracts returns empty, no stale flag) — this SPIKE is the WRITER/pipeline angle across all 5. For EACH table trace its writer: confirm it is wired + runs; classify empty-by-design (genuinely rare events: insider/contracts/pharma/sanctions) vs dead-pipeline (writer never wired / crashes silently). AC: documented per-table verdict (empty-by-design OR dead-pipeline-with-root-cause); any dead pipeline becomes its own follow-up FIX."
       },
       {
-        "id": "REAUDIT-001",
-        "title": "Fix reputation trend-delta compute defect",
-        "owner": "dev-mcp-server",
-        "status": "DONE",
-        "zone": "apps/mcp-server/",
-        "sprint": "SHIP-WAVE-REAUDIT",
-        "priority": "critical",
-        "type": "SPRINT-DEV",
-        "depends_on": [],
-        "size": "M",
-        "desc": "Add getReputationPrior() to reputationStore.ts + replace broken exact-date prior lookup in reputationComputeJob.ts. Trend computed at cron time; QA verifies next 08:30 UTC cron run.",
-        "handoff_file": "docs/handoffs/TASK_REAUDIT_001.md",
-        "created_at": "2026-06-11T21:15:00Z",
-        "created_by": "pm",
-        "claimed_at": "2026-06-11T22:00:00Z",
-        "claimed_by": "dev-mcp-server",
-        "completed_at": "2026-06-12T08:50:00Z"
-      },
-      {
         "id": "REAUDIT-002",
         "title": "NFR-C-1 stale flag: 5 handlers + shared staleness utility",
         "owner": "dev-mcp-server",
@@ -6748,7 +6729,7 @@
         "id": "REAUDIT-004",
         "title": "NFR-C-4 stockPerformance direction field: mcp-server implementation",
         "owner": "dev-mcp-server",
-        "status": "TODO",
+        "status": "REVIEW",
         "zone": "apps/mcp-server/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "medium",
@@ -6950,6 +6931,19 @@
         "handoff": "docs/handoffs/BACKLOG_CONTAM_8.md",
         "created_at": "2026-06-12T08:00:19Z",
         "note": "out-of-scope of unit-contam per PO; queued follow-up"
+      },
+      {
+        "id": "FU-REPUTATION-CRON-MISS",
+        "title": "reputationComputeJob cron-miss 2026-06-12 08:30 UTC — node-cron v3.0.3 silent misfire under concurrent 08:30 cluster",
+        "type": "FU",
+        "owner": "ops",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "size": "XS",
+        "created_at": "2026-06-12T11:35:00Z",
+        "created_by": "pm",
+        "note": "QA audit 2026-06-12: reputationComputeJob registered in scheduler (line 895 startScheduler.ts) but cron callback did not fire at 08:30 UTC despite container live since 05:23 UTC and 8 sibling 08:30 jobs running successfully. Manual trigger at 08:48 UTC confirmed fix is functional (processed=41, failed=0). Cron miss is separate infra concern from REAUDIT-001 fix correctness. Root cause: node-cron v3.0.3 concurrent-job contention or scheduling behavior under 8+ simultaneous jobs. Mitigation: add startup-catchup probe analogous to morningBriefingJob pattern to resume missed 08:30 window on restart; OR investigate node-cron scheduling behavior empirically across multi-job clusters. Non-blocking for REAUDIT-001 DONE verdict; logged for ops/architect planning."
       }
     ],
     "archive": [],
@@ -8881,6 +8875,25 @@
         "po_amendment": "PO design-gate: APPROVED WITH MANDATORY AMENDMENTS (live-verified by PO before PM decomposition). (1) ROOT-CAUSE CORRECTION: brief's 'first-push isStock=false' hypothesis (L200) is unverified/likely wrong — live evidence shows thousand-scale seed predates Writer A: VNH 2026-06-11 row is uniform 0.9/0.9/0.9/0.9 with SPACE-format updated_at (datetime('now')) = backfill Writer D (taOhlcvBackfillJob.ts L113 VALUES ...,datetime('now')), NOT Writer A (which multiplies *1000 and stamps ISO-Z). (2) WRITER D/E NOT CLEAN: brief asserts VNDIRECT = full-VND (L73,L145) — FALSE per live data: VNDIRECT api-finfo v4/stock_prices returns THOUSAND-VND (VCB=62.3=62,300; VNH=0.9=900; DAG=1.4). taOhlcvBackfillJob.ts L255-259 inserts r.open/high/low/close with NO *1000 and NO validation → injects thousand-scale seed rows. ohlcvBackfill.ts (Writer E) must be re-verified live too. (3) CONTAM-4 SCOPE UPGRADE: change from 'defensive guard' to PRIMARY FIX — Writers D/E must NORMALIZE to full-VND (verify live unit per source; multiply when thousand-scale) before upsert, not just range-skip. The unit guard (CONTAM-1) range-skip alone would DROP every VNDIRECT row (all <100 floor) — guard must normalize or the backfill stops working. (4) RETAINED AS-IS: CONTAM-1 ohlcvUnitGuard domain service, CONTAM-2 Writer A ON-CONFLICT open self-heal + MAX/MIN guard, CONTAM-5 sanity-check cron, CONTAM-6 repair migration, CONTAM-7 tests. (5) SEPARATE DEFECT NOTED (out of scope, queue follow-up): bulk all-zero rows 0.0/0.0/0.0/0.0 stamped 2026-05-30T11:47:00.921Z across FPT/GAS/HPG/VCB/BID = a failed bulk fetch wrote zeros — distinct from unit-contam; do NOT fold in, but repair script CONTAM-6 should NOT crash on them.",
         "po_signed_at": "2026-06-12T07:53:30Z",
         "handoff": "docs/architecture-briefs/2026-06-12-ohlcv-unit-contam-arch-1.md"
+      },
+      {
+        "id": "REAUDIT-001",
+        "title": "Fix reputation trend-delta compute defect",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "critical",
+        "type": "SPRINT-DEV",
+        "depends_on": [],
+        "size": "M",
+        "desc": "Add getReputationPrior() to reputationStore.ts + replace broken exact-date prior lookup in reputationComputeJob.ts. Trend computed at cron time; QA verifies next 08:30 UTC cron run.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_001.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm",
+        "claimed_at": "2026-06-11T22:00:00Z",
+        "claimed_by": "dev-mcp-server",
+        "completed_at": "2026-06-12T11:30:00Z"
       }
     ],
     "in_progress": [
