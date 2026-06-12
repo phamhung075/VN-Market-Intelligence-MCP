@@ -39,5 +39,5 @@
 **New file:** `domain/services/market-data/ohlcvUnitGuard.ts` — `validateOhlcvUnit(code,type,open,high,low,close)` + `normalizeOhlcvToVnd(type,v)`. Constants: STOCK_MIN_VND=100, STOCK_MAX_VND=10M, HILO_RATIO_MAX=5. Pure function, no I/O.
 **Key design:** normalizeOhlcvToVnd scales WHOLE row by ×1000 when max(o,h,l,c)<100 (stock type) — never per-field. Index type always returned unchanged. Zero row passed through unchanged (let validator reject it). TC-9 correctly catches that open=100/close=10M spans a ratio of 100000>5 (invalid).
 **Tests:** 17 TCs in unit/ohlcvUnitGuard.test.ts — all GREEN. 3 describe blocks: validateOhlcvUnit (9 cases), normalizeOhlcvToVnd (4 cases), constants (3 cases). tsc exit 0. toolCount=157. schedulerCount=78.
-**Commit:** (pending below)
+**Commit:** 5762ec3d
 Zone health: bun test 17 pass 0 fail (targeted), tsc clean, 157 tools intact, 78 cron.schedule (unchanged) | HEALTHY
