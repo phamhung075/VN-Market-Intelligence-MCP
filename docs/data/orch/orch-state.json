@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T00:30:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-12T23:30:45Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -463,13 +463,13 @@
             "title": "get_bctc_pending_refine silently ignores ticker argument (probed live: {ticker:'CTG',limit:1} still returns ACB) AND no tool exists to fetch a specific report's windows by report_id. Blocks on-demand refine of REFINE-CRON-ARM verification-gate ticker CTG (c6b17c36-1f4f-48bc-a367-b48afc163ceb, PENDING, 0 units). Fix: honor the ticker filter in get_bctc_pending_refine, and/or add a get-windows-by-report_id tool.",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "zone": "apps/mcp-server/src/",
             "created_at": "2026-06-12T21:12:58Z",
             "priority": "low",
             "size": "S",
             "sprint": "BCTC-ANALYTICS-LAYER",
-            "status_note": "[PO triage 2026-06-12T21:12:58Z] P2. Live-probed: get_bctc_pending_refine(arguments={ticker:'CTG',limit:1}) returns ACB, ignoring the ticker filter. No by-report_id windows-fetch tool exists. Needed to on-demand-verify CTG (c6b17c36, PENDING, 0 units) — the REFINE-CRON-ARM verification-gate ticker. Lower priority than the deadlock (BUG1) which auto-drains the queue, but required for targeted verification.",
+            "status_note": "[PO triage 2026-06-12T21:12:58Z] P2. Live-probed: get_bctc_pending_refine(arguments={ticker:'CTG',limit:1}) returns ACB, ignoring the ticker filter. No by-report_id windows-fetch tool exists. Needed to on-demand-verify CTG (c6b17c36, PENDING, 0 units) — the REFINE-CRON-ARM verification-gate ticker. Lower priority than the deadlock (BUG1) which auto-drains the queue, but required for targeted verification. | dev-mcp-server started 2026-06-13T00:00Z",
             "depends": [
               "FIX-FINALIZE-STATUS-STUCK-PARTIAL"
             ],
@@ -5106,6 +5106,22 @@
     ],
     "backlog": [
       {
+        "id": "CI-RED-b7b84d9b-FIX",
+        "title": "CI-RED-b7b84d9b-FIX — CI RED: bun test (per-file-isolation) — src/__tests__/160-stock-aliases.test.ts",
+        "owner": "po",
+        "status": "TODO",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "sprint": "CI-RED-b7b84d9b",
+        "created_at": "2026-06-12T23:30:45Z",
+        "created_by": "po",
+        "verification_gate": "ci_green_on_subsequent_push",
+        "desc": "CI workflow 'CI' job 'bun test' RED on main HEAD b7b84d9b (run 27440686989): 12766 pass / 53 skip / 1 fail; FAILEDFILE src/__tests__/160-stock-aliases.test.ts under per-file-isolation. PO RAW-VERIFY: file passes LOCALLY 34 pass / 0 fail (standard run) → CI-isolation-only / order-dependence flake, NOT broken product code. Dual-run pattern: same commit b7b84d9b has run 27440686945 SUCCESS + run 27440686989 FAILURE → nondeterministic isolation state leak. Scope: make 160-stock-aliases deterministic under per-file-isolation (beforeEach/afterEach state reset, no shared singleton/db leakage). RECONCILE: this is the unmet ci_green_on_subsequent_push gate of CI-RED-8081e584-FIX (subsequent push b7b84d9b RED) — but a DIFFERENT file than 8081e584 scope (1293a/1295a/VPT-1, all still pass), so a FRESH flake surfaced by the gate, not a regression of the prior fix.",
+        "note": "[po triage 2026-06-12T23:30Z] Created from ci_red signal CI-RED-b7b84d9b (ci-health-probe, run 27440686989). Outranks FIX-BCTC-VPS-QUEUE-SYNC (CI-red blocks whole merge pipeline — every push shows red) → front of backlog. Supersedes the open verification gate of CI-RED-8081e584-FIX.",
+        "status_note": "AC: gh run list --branch main --limit 3 shows the 'CI' workflow conclusion=success for a push AFTER b7b84d9b (verification_gate=ci_green_on_subsequent_push). 160-stock-aliases must pass in per-file-isolation mode AND standard mode. Priority: high. Failing job: bun test."
+      },
+      {
         "id": "BA-SHIP-WAVE-REAUDIT",
         "title": "Requirement spec for SHIP-WAVE-REAUDIT: live-behavior re-audit of TASK-17 ship wave (19 items) + triage matrix",
         "owner": "ba",
@@ -7045,14 +7061,14 @@
         "id": "CI-RED-8081e584-FIX",
         "title": "CI-RED-8081e584-FIX — CI RED: bun test (3 files: 1293a-signal-type-safety, 1295a-signal-builders, VPT-1-vps-proxy-health-endpoint)",
         "owner": "dev-mcp-server",
-        "status": "DONE",
+        "status": "DONE-GATE-SUPERSEDED",
         "zone": "apps/mcp-server/",
         "priority": "high",
         "created_at": "2026-06-12T19:29:28Z",
         "created_by": "po",
         "sprint": "CI-RED-8081e584",
         "desc": "CI RED on origin/main HEAD 8081e5845932a9c25a906760d652224311103957, run 27369577099. bun test job = failure: 12577 pass / 53 skip / 7 fail across 3 FAILED FILES: src/__tests__/1293a-signal-type-safety.test.ts, src/__tests__/1295a-signal-builders.test.ts, src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts. RECONCILED: NOT the known CLUSTER-A 1338-sprint-goal-retrospective debt (that file no longer fails — resolved by CI-RED-RECONCILE DONE) and NOT the ~170 frontend vitest debt (these are mcp-server bun-test files). This is a NEW regression adjacent to recent signal-type-safety / signal-builders / vps-proxy-health work (post_agent_signal validator + EVIDENCE-ACCUM signal-builder changes). Fail count (7) << baseline 348, but job RED because these 3 specific files fail — fix the 3 files.",
-        "status_note": "QA APPROVED 2026-06-12. CI GREEN (run 27440565189, commit 8a2ef725): 12767 pass / 53 skip / 0 fail. 6 fixed files + 2 neighbor suites all pass locally. tsc clean. DDD/security/mock-guard PASS. toolCount=157 schedulerCount=79. Report: reports/TASK_REPORT_CI-RED-8081e584-FIX.md. DJ: sprint-CI-RED-8081e584-qa.md.",
+        "status_note": "QA APPROVED 2026-06-12. CI GREEN (run 27440565189, commit 8a2ef725): 12767 pass / 53 skip / 0 fail. 6 fixed files + 2 neighbor suites all pass locally. tsc clean. DDD/security/mock-guard PASS. toolCount=157 schedulerCount=79. Report: reports/TASK_REPORT_CI-RED-8081e584-FIX.md. DJ: sprint-CI-RED-8081e584-qa.md. | [po reconcile 2026-06-12T23:30Z] GATE UNMET: subsequent push b7b84d9b (run 27440686989) RED — ci_green_on_subsequent_push NOT satisfied. Own scope (1293a/1295a/VPT-1) verified still passing; new red is a DIFFERENT file (160-stock-aliases isolation flake). Open gate handed to CI-RED-b7b84d9b-FIX. Status DONE->DONE-GATE-SUPERSEDED so board shows no DONE on an unmet gate.",
         "implementation_record": {
           "service": "mcp-server",
           "zone": "apps/mcp-server/",
@@ -7072,7 +7088,7 @@
           "docs_updated": "NONE",
           "graphify": "skipped (no docs impacted)"
         },
-        "_updated_at": "2026-06-12T20:24:58Z"
+        "_updated_at": "2026-06-12T23:30:45Z"
       },
       {
         "id": "FIX-CHEF-SENDTELEGRAM-ARGSHAPE",
