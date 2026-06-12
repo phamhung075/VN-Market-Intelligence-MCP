@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-12 · REAUDIT-005 — financials yoyDirection fields (NFR-C-6) — REVIEW
+
+**Task:** REAUDIT-005 | Sprint: SHIP-WAVE-REAUDIT | Priority: LOW | Zone: apps/mcp-server/
+**Change:** `interface/mcp/routes/financialsHandler.ts` — added `YoyDirection` type alias; added `revenueYoyDirection` and `netProfitYoyDirection` to `ScreenerRow` type; exported `deriveYoyDirection()` pure helper (null/undefined/NaN → "flat"); wired into `mapRow()`. Updated `TASK17-PAGE16-financials-endpoint.test.ts` fixture helpers + requiredFields.
+**Key decision:** Derived at map time in interface layer (no DB change). `deriveYoyDirection` handles null/undefined/NaN edge cases gracefully via `Number.isFinite` guard. Same pattern as REAUDIT-004 `deriveDirection`. No breaking change to existing fields.
+**Tests:** `REAUDIT-005-financials-yoy-direction.test.ts` — 31 pass / 0 fail (AC-1..AC-8). Combined 143 pass / 0 fail with REAUDIT-002/003/004 + TASK17-PAGE16. tsc clean. toolCount=157. schedulerCount=79.
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, 31 new tests GREEN | HEALTHY
+
+---
+
 ## 2026-06-12 · REAUDIT-004 — stockPerformance direction field (NFR-C-4) — REVIEW
 
 **Task:** REAUDIT-004 | Sprint: SHIP-WAVE-REAUDIT | Priority: MEDIUM | Zone: apps/mcp-server/
