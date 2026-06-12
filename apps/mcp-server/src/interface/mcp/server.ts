@@ -41,6 +41,7 @@ export {
   _resetStaleTickers_lastNotifiedDate,
   isVnTradingWindowUtc,
 } from "./server-startup.js";
+import { validateOhlcvUnit } from "../../domain/services/market-data/ohlcvUnitGuard.js";
 import { handlePushPrices } from "./routes/pushPricesHandler.js";
 import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
 import { handleWebhook } from "./routes/webhookHandler.js";
@@ -1154,6 +1155,7 @@ export async function createBunServer(
         `);
 
         let inserted = 0;
+        let skipped = 0;
         const upsertAll = db.transaction(() => {
           for (const bar of bars) {
             const open  = typeof bar.open  === "number" ? bar.open  : 0;
@@ -1163,15 +1165,32 @@ export async function createBunServer(
             const high   = typeof bar.high   === "number" ? bar.high   : open;
             const low    = typeof bar.low    === "number" ? bar.low    : open;
             const volume = typeof bar.volume === "number" ? bar.volume : 0;
+
+            // CONTAM-3: unit guard — reject bars that are not full-VND scale
+            // TCBS data is always stock type (no index in backfill payload).
+            // Guard fails loud (log.error + skip) but never throws to preserve HTTP 200.
+            try {
+              const guardResult = validateOhlcvUnit(code, "stock", open, high, low, close);
+              if (!guardResult.valid) {
+                log.error("[push-ohlcv-history] unit guard rejected", { code, date, reason: guardResult.reason });
+                skipped++;
+                continue;
+              }
+            } catch (guardErr) {
+              log.error("[push-ohlcv-history] unit guard threw", { code, date, error: guardErr instanceof Error ? guardErr.message : String(guardErr) });
+              skipped++;
+              continue;
+            }
+
             stmt.run(code, date, open, high, low, close, volume, now);
             inserted++;
           }
         });
         upsertAll();
 
-        log.info("[push-ohlcv-history] inserted bars", { code, count: inserted });
+        log.info("[push-ohlcv-history] inserted bars", { code, count: inserted, skipped });
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, inserted, code }));
+        res.end(JSON.stringify({ ok: true, inserted, skipped, code }));
       } catch (err) {
         log.error("[push-ohlcv-history] parse error", { error: err instanceof Error ? err.message : String(err) });
         res.writeHead(400, { "Content-Type": "application/json" });
