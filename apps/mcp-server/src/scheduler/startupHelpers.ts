@@ -11,7 +11,7 @@
 
 import { runWeeklyAudit } from './news-analysis/dataAuditJob.js'
 import { runBctcReparseJob } from './financial-reports/bctcReparseJob.js'
-import { runEvidenceAccumulatorJob } from './news-analysis/evidenceAccumulatorJob.js'
+import { runEvidenceAccumulator } from './news-analysis/evidenceAccumulatorJob.js'
 import { runBaseRateComputationJob } from './macro/baseRateComputationJob.js'
 import { runPredictionResolutionJob } from './macro/predictionResolutionJob.js'
 import { runCalibrationReportJob } from './macro/calibrationReportJob.js'
@@ -216,11 +216,44 @@ export async function runBctcReparseWithDb(
   await recordJobRun(db, 'bctcReparseJob', fn)
 }
 
-/** evidenceAccumulatorJob — task 1118 */
+/** evidenceAccumulatorJob — task 1118
+ *
+ * Same-day dedup guard (EVIDENCE-ACCUM-SILENT-CRON fix): if recoverMissedExecutions
+ * fires the callback twice on the same UTC day, the second call finds an existing
+ * success row and skips — preventing double-work without any observable side-effect
+ * (evidence_scores uses UPSERT so a second write is idempotent, but double
+ * recordJobRun rows are noisy and the dedup prevents them).
+ *
+ * Double-wrap fix: fn defaults to runEvidenceAccumulator(db) — the core logic that
+ * does NOT itself call recordJobRun. Previous default was runEvidenceAccumulatorJob()
+ * which called recordJobRun internally, producing two cron_job_runs rows per tick.
+ */
 export async function runEvidenceAccumulatorWithDb(
   db: Database,
-  fn: () => Promise<void> = async () => { await runEvidenceAccumulatorJob() },
+  fn: () => Promise<{ rowsWritten?: number } | void> = async () => {
+    const result = await runEvidenceAccumulator(db)
+    return { rowsWritten: result.stocks }
+  },
 ): Promise<void> {
+  // Same-day dedup: skip if a success or running row already exists for today UTC.
+  // Prevents double-execution when recoverMissedExecutions replays a tick that
+  // already ran earlier in the same UTC day.
+  try {
+    const existing = db
+      .prepare<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt FROM cron_job_runs
+         WHERE job_name = 'evidenceAccumulatorJob'
+           AND status IN ('success', 'running')
+           AND started_at >= date('now')`,
+      )
+      .get()
+    if ((existing?.cnt ?? 0) > 0) {
+      log('[evidence-accumulator] already ran today — dedup skip (recoverMissedExecutions guard)')
+      return
+    }
+  } catch {
+    // Table missing in test env — proceed without dedup (fail-open)
+  }
   await recordJobRun(db, 'evidenceAccumulatorJob', fn)
 }
 

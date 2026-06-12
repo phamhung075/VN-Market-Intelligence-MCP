@@ -466,9 +466,15 @@ export function startScheduler() {
   }, { timezone: 'UTC' })
 
   // Daily 23:00 VN (16:00 UTC) — Evidence accumulator — task 1118
+  // recoverMissedExecutions: true — if the event loop is stalled at fire time
+  // (e.g. vnstockFundamentalsJob startup sweep occupying the event loop),
+  // node-cron replays the missed tick on recovery instead of skipping until tomorrow
+  // (EVIDENCE-ACCUM-SILENT-CRON root cause: event loop saturation drops tick when
+  // recoverMissedExecutions is false). Safe: runEvidenceAccumulatorWithDb has a
+  // same-day DB-backed dedup guard that prevents double execution.
   cron.schedule(CRONS.evidenceAccumulator, async () => {
     await runEvidenceAccumulatorWithDb(db)
-  }, { timezone: 'UTC' })
+  }, { timezone: 'UTC', recoverMissedExecutions: true })
 
   // Sunday 19:00 UTC (02:00 VN Monday) — Base rate computation — task 1122, Sprint 059
   cron.schedule(CRONS.baseRateComputation, async () => {
@@ -907,12 +913,16 @@ export function startScheduler() {
   // Iterates all watchlist tickers, aggregates 7-day mention_velocity + agent_signals,
   // computes reputation score (0-100) and persists to reputation_scores table.
   // Fail-loud to WORK channel on job-level error; per-ticker failures are non-fatal.
+  // recoverMissedExecutions: true — prevents silent drop under event loop saturation
+  // (FU-REPUTATION-CRON-MISS 2026-06-11 + EVIDENCE-ACCUM-SILENT-CRON 2026-06-12: same
+  // class of miss — node-cron drops tick when event loop is busy and autorecover=false).
+  // jobRunRepo.wrapRun dedup: if already ran today, second fire is a no-op write (upsert).
   cron.schedule(CRONS.reputationCompute, async () => {
     await jobRunRepo.wrapRun('reputationComputeJob', async () => {
       const result = await runReputationComputeJob()
       return { rowsWritten: result.tickersProcessed }
     })
-  }, { timezone: 'UTC' })
+  }, { timezone: 'UTC', recoverMissedExecutions: true })
 
   // Monday 03:00 UTC — Public contracts weekly scrape — Task B
   // Fetches government procurement award results from muasamcong.mpi.gov.vn.
