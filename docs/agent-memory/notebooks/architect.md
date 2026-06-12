@@ -1,8 +1,23 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-12 09:00 UTC | **Sprint:** QUE-TOOLTIP-DRY
+**Last updated:** 2026-06-12 20:40 UTC | **Sprint:** BCTC-CTG-FLEET-SERVE-SPIKE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-12T15:45Z — ARCH-QUE-REFERENCE-PAGE (DESIGN, REVIEW)
+
+**Task:** ARCH-QUE-REFERENCE-PAGE | zone: apps/frontend/ + scripts/
+**Output:** docs/architecture-briefs/2026-06-12-que-reference-page.md
+
+**Key findings:**
+- D1: Second generated artifact `que-descriptions-detail.generated.ts` with `QueDetailDescription` (13 fields + phases[6]). Keeps existing `QueDescription` 2-field contract sealed — QUE-TOOLTIP-DRY-1a AC-2 test not regressed. Both emitted by single `bun run gen:que` invocation.
+- D2: Route `dashboard.kinh-dich-reference.tsx`, no API proxy needed (static generated import), zero-latency SSR.
+- D3: Nav entry `{ to: "/dashboard/kinh-dich-reference", label: "Tra cứu Kinh Dịch" }` in ANALYST_NAV after kinh-dich-signals.
+- D4: Page = client-side search (64 items, useState filter) + 64 QueCard components with full VN labels for action/outcome codes.
+- D5: QueName deep-link INCLUDED via additive `withDetailLink?: boolean` prop (default false). Plain anchor `<a href>` inside TooltipContent avoids Remix Link hydration issue in Radix portal. NFR-1 preserved.
+- D6: No `api.kinh-dich-reference.tsx` proxy route — all static.
+- BUILD-STANDARD: lean (apps/frontend/ exists). 4 subtasks for PM (1a codegen, 1b route, 2 nav+QueName, TEST).
+- Sequencing: dev-frontend impl blocked on FE-CORPEVENTS-TICKER-FILTER clearing per PO WIP=2 rule.
 
 ## 2026-06-12T09:00Z — ARCH-QUE-TOOLTIP-DRY (DESIGN, REVIEW)
 
