@@ -53,7 +53,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T19:41:05Z",
+    "_updated_at": "2026-06-12T20:44:18Z",
     "_updated_by": "pm",
     "active_sprints": [
       {
@@ -384,6 +384,41 @@
             "note": "Schedule for 2026-06-14: delete data/market.db.bak-20260607T100225, data/market.db.bak-20260607T103143-CORRUPT-ORIGINAL, data/market_dump_20260607T103239.sql (~670MB total) + container /tmp dumps. ONLY after confirming live DB still integrity_check=ok at that date.",
             "depends_on": [],
             "due_date": "2026-06-14"
+          },
+          {
+            "id": "REFINE-CRON-ARM",
+            "title": "ARM the fleet refine cron in Claude schedule at '0 9,14,20 * * *' UTC via agent-father CronCreate",
+            "owner": "agent-father",
+            "type": "OPS",
+            "status": "TODO",
+            "zone": ".claude/commands/crons/cron-refine-bctc.md",
+            "created_at": "2026-06-12T20:44:18Z",
+            "priority": "high",
+            "size": "XS",
+            "sprint": "BCTC-ANALYTICS-LAYER",
+            "status_note": "Spike BCTC-CTG-FLEET-SERVE-SPIKE completed 2026-06-12. Root cause: cron skill exists (cron-refine-bctc.md) but never armed in scheduler. This task executes the arm operation. Verification gate: get_bctc_full(CTG) returns financial data (not 'Chưa có dữ liệu BCTC') after first cron fire. CronCreate id ec99e6c1 already spawned 2026-06-12T20:55Z (first validation run in progress).",
+            "depends": [],
+            "note": "Brief: docs/architecture-briefs/2026-06-12-bctc-ctg-fleet-serve-gap.md. Blocks 33 tickers (CTG, VCB, GVR, KBC, SSI, VPB, VHM, VIC, VRE, +24) at refine_status=PENDING. AC: (1) CronList shows cron-refine-bctc active; (2) next fire within 24h; (3) after first fire, get_bctc_full(CTG) serves real financial scalars.",
+            "files": [
+              ".claude/commands/crons/cron-refine-bctc.md"
+            ]
+          },
+          {
+            "id": "BCTC-PDF-PATH-BACKFILL",
+            "title": "Backfill financial_reports.pdf_path for D2D + KDC (NULL paths; pdf_extracted_text has pages but fetchAllPageTexts cannot find them)",
+            "owner": "dev-mcp-server",
+            "type": "FIX",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
+            "created_at": "2026-06-12T20:44:18Z",
+            "priority": "medium",
+            "size": "S",
+            "sprint": "BCTC-ANALYTICS-LAYER",
+            "status_note": "Secondary finding from spike BCTC-CTG-FLEET-SERVE-SPIKE. D2D + KDC have refine_status=PENDING + OCR text available but pdf_path=NULL. The refine flow skips these at windows=[] gate because fetchAllPageTexts(basename(NULL)) returns empty. Separate from REFINE-CRON-ARM; can proceed after cron is verified working on the 33-ticker fleet.",
+            "depends": [
+              "REFINE-CRON-ARM"
+            ],
+            "note": "Brief: docs/architecture-briefs/2026-06-12-bctc-ctg-fleet-serve-gap.md § Secondary fix. Backfill pdf_path from pdf_extracted_text row filename. AC: D2D + KDC rows have pdf_path populated; get_bctc_pending_refine returns windows > 0 for both."
           }
         ]
       },
