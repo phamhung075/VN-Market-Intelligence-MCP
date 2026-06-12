@@ -52,6 +52,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { QueName } from "~/components/QueName";
 
 export const meta: MetaFunction = () => [
   { title: "Tín hiệu Kinh Dịch — VN Market Intelligence" },
@@ -481,12 +482,9 @@ function SnapshotRow({ item, idx }: { item: KinhDichSnapshotItem; idx: number })
       <td className="px-3 py-2 text-xs font-bold font-mono text-slate-100 whitespace-nowrap">
         {item.stockCode}
       </td>
-      {/* Quẻ: hexagramName + "#"+hexagramNumber */}
+      {/* Quẻ: QueName shared component — tooltip + fallback */}
       <td className="px-3 py-2 text-xs text-slate-300 whitespace-nowrap">
-        <span className="font-semibold">{item.hexagramName || "—"}</span>
-        <span className="ml-1 text-slate-500 tabular-nums">
-          #{item.hexagramNumber}
-        </span>
+        <QueName hexagram={item.hexagramNumber} name={item.hexagramName} />
       </td>
       {/* Khuyến nghị */}
       <td className="px-3 py-2">
