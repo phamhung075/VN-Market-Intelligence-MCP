@@ -198,3 +198,34 @@ WHERE (open < 100 OR low < 100)
 | Scheduler count | 79 cron.schedule (matches baseline) |
 | Repair dry-run | 376 rows identified |
 | Repair live-run | 376 rows normalized, 0 remaining |
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-06-12
+- **Verdict:** APPROVED
+- **Report:** reports/TASK_REPORT_CONTAM-6.md
+- **DJ entry:** docs/agent-memory/decisions/sprint-OHLCV-UNIT-CONTAM-qa-contam6.md
+
+### Live DB Checks (named volume vn-market-intelligence-mcp_market_data)
+
+| Check | Result |
+|-------|--------|
+| (1) Contamination scan — 0 remaining (exact heuristic) | 0 rows PASS |
+| (2a) VNH recent: same scale | Jun08-10 open=900/close=900 PASS |
+| (2b) FPT recent: no 1000x gap | Jun09-10 clean range PASS |
+| (3) TRA ~79000, PVI ~78000, DFF ~500 | All plausible PASS |
+| (4) All-zero rows untouched | 116 PASS |
+| (5) Script in scripts/ + dev-standards pointer | PASS |
+| (6) pct-change VNH/FPT (< 30%) | 0.0% / 0.68% PASS |
+| bun test (14 CONTAM-6 targeted) | 14 pass / 0 fail PASS |
+| tsc --noEmit | exit 0 PASS |
+
+### Scope Miss Findings (logged for follow-up — non-blocking)
+
+- SM-1: VNH 2026-06-12 close=1000.0 exactly — strict `> 1000` boundary miss, 1 row unrepaired. Heuristic should be `>= 1000`. New ticket.
+- SM-2: 460 pre-repair rows with low=0 pattern (open<100, close>1000, low=0) — outside binding amendment scope (low>0 guard). New ticket.
+- SM-3: 59 today's rows same low=0 pattern — CONTAM-2 guard did not block. CONTAM-2 scope review needed.
+
+None introduced by CONTAM-6. Task scope met per binding amendment and DoD.

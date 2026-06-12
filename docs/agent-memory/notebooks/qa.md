@@ -1,5 +1,13 @@
 # QA — Notebook
 
+## cycle-230 · 2026-06-12 · CONTAM-6 repair migration QA gate — APPROVED
+
+Sprint: OHLCV-UNIT-CONTAM | Task: CONTAM-6 | Verdict: APPROVED | Report: reports/TASK_REPORT_CONTAM-6.md
+
+Live DB probe (named volume, keinos sidecar). Check 1: contamination scan = 0 remaining (WHERE open<100 OR low<100 AND NOT all-zero AND open>0 AND low>0 AND close>1000) — PASS. Check 4: all-zero rows = 116 — PASS. Check 2a VNH Jun08-10: open=900/close=900 same scale — PASS. Check 2b FPT Jun09-10: open=72900-73700 range — PASS. Check 3 spot-checks: TRA ~79000, PVI ~77500-78200, DFF ~400-500 (genuinely low-priced stock) — all plausible PASS. Check 5: script at scripts/migrations/repair-ohlcv-unit-contamination.ts + dev-standards.md pointer — PASS. Check 6: VNH pct 0.0%, FPT pct 0.68% — both <30% PASS. Test: 14 pass / 0 fail. tsc: exit 0.
+
+Scope miss findings (non-blocking, logged for follow-up): SM-1 VNH 2026-06-12 close=1000.0 exactly (boundary `>1000` strict, 1 row miss); SM-2 460 pre-repair rows with low=0 pattern outside heuristic scope; SM-3 59 today's rows same low=0 pattern (CONTAM-2 guard gap). None introduced by CONTAM-6. Task DoD met. CONTAM-6 REVIEW→DONE. DJ: sprint-OHLCV-UNIT-CONTAM-qa-contam6.md.
+
 ## cycle-229 · 2026-06-12 · SHIP-WAVE-REAUDIT + OHLCV-UNIT-CONTAM 7-task QA wave — ALL APPROVED
 
 Sprint: SHIP-WAVE-REAUDIT + OHLCV-UNIT-CONTAM | Tasks: REAUDIT-003/004/005 + CONTAM-2/3/4/5 | Verdict: ALL 7 APPROVED | Reports: reports/TASK_REPORT_REAUDIT-003/004/005.md + reports/TASK_REPORT_CONTAM-2/3/4/5.md
