@@ -1,27 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-12 · CONTAM-3 — Writer B /api/push-ohlcv-history unit guard — REVIEW
-
-**Task:** CONTAM-3 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/
-**Change:** `interface/mcp/server.ts` — added `validateOhlcvUnit` import from `domain/services/market-data/ohlcvUnitGuard.js`. In `/api/push-ohlcv-history` bar loop: try/catch guard before `stmt.run()`, rejects bars where open/high/low/close out of full-VND range for stock type. HTTP 200 preserved regardless of guard outcome (RF-1 VPS backoff prevention). `skipped` counter added to log and response body.
-**Key decision:** TCBS backfill always stock type (fetch-ohlcv-backfill.sh spec confirmed); guard-only (no normalize) correct because TCBS delivers full-VND (arch brief §Writer B confirmed).
-**Tests:** 37 pass / 0 fail (targeted: unit/ + CONTAM-4 + REAUDIT-003). tsc clean. toolCount=157. schedulerCount=79 (sibling CONTAM-5 added 1 cron — not this task).
-**Commit:** d1379fa4
-Zone health: tsc clean, 157 tools intact, targeted tests 37 pass / 0 fail | HEALTHY
-
----
-
-## 2026-06-12 · CONTAM-5 — ohlcvSanityCheckJob sanity-check cron — REVIEW
-
-**Task:** CONTAM-5 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/
-**New file:** `scheduler/market-data/ohlcvSanityCheckJob.ts` — full-table scan (last 7d × watchlist), calls validateOhlcvUnit (CONTAM-1), sends sendTelegramBug on contamination hits. All-zero rows (BACKLOG_CONTAM_8) skipped without spamming.
-**Cron wiring:** `cronConfig.ts` `ohlcvSanityCheck` = 15:05 UTC Mon-Fri (5 min after ohlcvDailyAggregator at 15:00). `startScheduler.ts` import + jobRunRepo.wrapRun registration. cronJobCount 78→79.
-**Scope clarification:** handoff mis-titled Writer C guard; po_amendment + arch brief §CONTAM-5 + dispatch CONTEXT all confirm CONTAM-5 = sanity-check cron. Implemented per authoritative spec.
-**Tests:** 10 TCs in CONTAM-5-ohlcv-sanity-check.test.ts — 10 pass / 0 fail. AC-1 clean, AC-2 contamination+BUG, AC-3 zero-skip, AC-4 window, AC-5 index-exempt, AC-6 multi-hit, AC-7 error-swallow, AC-8 empty-watchlist, AC-9 hilo-ratio. tsc exit 0. toolCount=157. schedulerCount=79.
-Zone health: bun test 10 pass 0 fail (targeted), tsc clean, 157 tools intact, 79 cron.schedule | HEALTHY
-
----
-
 ## 2026-06-12 · CONTAM-7 — Integration test suite (all 5 writers + repair + sanity job) — REVIEW
 
 **Task:** CONTAM-7 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/src/__tests__/
@@ -51,3 +29,14 @@ Zone health: tsc clean, 157 tools intact, 79 cron.schedule, repair boundary corr
 **Key decision:** docker cp + docker exec pattern for named volume (local market.db is stale 0-row decoy); `runRepair()` exported for in-memory test isolation. Row count 385→376: VNH 2026-06-12 has close=1000.0 (not >1000) — correctly outside heuristic boundary.
 **Tests:** 14 pass / 0 fail (in-memory SQLite). tsc clean. toolCount=157. schedulerCount=79.
 Zone health: tsc clean, 157 tools intact, 79 cron.schedule, repair 376/376 rows, 0 remaining | HEALTHY
+
+---
+
+## 2026-06-12 · QUE-TOOLTIP-DRY-3 — hexagramLibrary.ts downstream annotation — REVIEW
+
+**Task:** QUE-TOOLTIP-DRY-3 | Sprint: QUE-TOOLTIP-DRY | Priority: HIGH | Zone: apps/mcp-server/src/domain/services/kinhDich/
+**Change:** `hexagramLibrary.ts` file-header — replaced 3-line `//` comment with 7-line JSDoc block: AUTO-GENERATED downstream of apps/kinh-dich-service/dashboard/que-reference.js. DO NOT EDIT description text independently. PO-Q2 enforcement per arch brief Option B.
+**Key decision:** comment-only; zero data changes, zero TS type changes. kinhDichTools.ts runtime reads state.trend — unaffected.
+**Tests:** 107 pass / 0 fail (kinhDich targeted: hexagram-library + hexagram-library-rebuild + kinhdich-tools + kinhdich-differentiation-smoke). tsc clean. toolCount=157. schedulerCount=79.
+**Commit:** 66621b03
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, annotation-only change no behavior drift | HEALTHY

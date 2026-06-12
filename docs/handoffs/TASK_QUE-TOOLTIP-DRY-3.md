@@ -99,3 +99,47 @@ This annotation enforces that principle:
 ## Note
 
 This task is a parallel sibling to QUE-TOOLTIP-DRY-1a (codegen rewrite). It can be completed independently and in any order. No code conflicts expected.
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/src/domain/services/kinhDich/
+- **Files modified:** apps/mcp-server/src/domain/services/kinhDich/hexagramLibrary.ts:1-8 — replaced 3-line `//` comment block with 7-line JSDoc block declaring AUTO-GENERATED downstream of que-reference.js
+- **Tests written:** none (annotation-only change; no new test surface)
+- **Git commits:** 66621b03 docs(mcp-server/QUE-TOOLTIP-DRY-3): annotate hexagramLibrary.ts as generated downstream of que-reference.js
+- **Type check:** clean (bun tsc --noEmit — exit 0, no output)
+- **bun test:** 107 pass / 0 fail (kinhDich targeted suite: 280-hexagram-library.test.ts + 301-hexagram-library-rebuild.test.ts + 285-kinhdich-tools.test.ts + 302-kinhdich-differentiation-smoke.test.ts)
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 79 cron.schedule entries — matches pre-task baseline
+- **Docs updated:** NONE
+- **Graphify:** skipped (no docs impacted)
+
+### G12 Gate Evidence
+
+| Gate | Result |
+|------|--------|
+| bun tsc --noEmit | exit 0, no output |
+| bun test (kinhDich targeted) | 107 pass / 0 fail |
+| tool count | 157 (matches baseline) |
+| scheduler count | 79 (matches baseline) |
+
+### Diff verification
+
+```
+diff --git a/apps/mcp-server/src/domain/services/kinhDich/hexagramLibrary.ts b/...
+-// src/domain/services/kinhDich/hexagramLibrary.ts
+-// Auto-generated from Python kinhdich_logic source — DO NOT EDIT manually
+-// 64 hexagrams + 8 trigrams ported faithfully from que_shared.py + rewrite_*.py
++/**
++ * AUTO-GENERATED downstream.
++ * Source of truth: apps/kinh-dich-service/dashboard/que-reference.js (emitted via go run ./cmd/sandbox -emit-reference)
++ * DO NOT EDIT description text independently. Any divergence from que-reference.js is a defect.
++ *
++ * Used by kinhDichTools.ts at runtime (reads state.trend) — no changes to data structure.
++ * gen-que-descriptions.ts reads que-reference.js directly (no longer uses hexagramLibrary.ts as codegen source).
++ */
+```
+
+All AC met: header updated (3-point annotation), zero data changes, zero TS type changes, kinhDichTools.ts unaffected, file compiles clean.
