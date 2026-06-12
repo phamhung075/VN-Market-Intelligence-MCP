@@ -1,8 +1,20 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-12 08:20 UTC | **Sprint:** OHLCV-UNIT-CONTAM
+**Last updated:** 2026-06-12 09:00 UTC | **Sprint:** QUE-TOOLTIP-DRY
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-12T09:00Z — ARCH-QUE-TOOLTIP-DRY (DESIGN, REVIEW)
+
+**Task:** ARCH-QUE-TOOLTIP-DRY | multi-zone: apps/frontend/ + scripts/ + apps/mcp-server/
+**Output:** docs/architecture-briefs/2026-06-12-que-tooltip-dry.md + [Architect] Brownfield Findings appended to docs/handoffs/QUE-TOOLTIP-DRY-BA-spec.md
+
+**Key findings:**
+- BLOCKER-1 resolved: Option B (codegen mirror). Text drift already live — quẻ 1 coreMeaning differs between hexagramLibrary.ts (2 sentences) and que-reference.js (1 clause). que-reference.js is a committed static file; gen-que-descriptions.ts can parse it directly with no network dependency. hexagramLibrary.ts declared as downstream-annotation-only.
+- BLOCKER-2 resolved: FlipRow EXPLICITLY DEFERRED. KinhDichFlip DTO (L79-L86) has no fromHexagramNumber/toHexagramNumber fields. FlipRow renders action badges only; no hexagram names in that component. Migration requires separate DTO + API change.
+- BLOCKER-3 pre-ruled: coreMeaning.vi (primary) + marketTrendLabel.vi (secondary badge). QueDescription interface shrinks from 4 fields to 2. state_trend (raw ASCII prefix) replaced by marketTrendLabel (clean VN label).
+- FR-1: 3-line swap in SnapshotRow — hexagramNumber already present on KinhDichSnapshotItem.
+- BUILD-STANDARD: lean. 3 subtasks for PM.
 
 ## 2026-06-12T08:20Z — OHLCV-UNIT-CONTAM-ARCH-1 (SPIKE/DESIGN, REVIEW)
 

@@ -6884,11 +6884,14 @@
     "id": "ARCH-QUE-TOOLTIP-DRY",
     "title": "QUE-TOOLTIP-DRY architect brownfield analysis + technical design. Resolve BLOCKER-1 (single-SSOT mechanism per PO-Q2: bulk endpoint vs codegen mirror — NO dual independent source allowed), BLOCKER-2 (FlipRow DTO id availability per PO-Q4), BLOCKER-3 (already ruled PO-Q3: coreMeaning.vi + marketTrendLabel.vi only). Output design brief + zone-multi split (frontend FR-1/FR-3/NFR + kinh-dich-service/mcp-server data-pipeline FR-2).",
     "owner": "architect",
-    "status": "TODO",
+    "status": "REVIEW",
     "zone": "multi",
     "sprint_id": "QUE-TOOLTIP-DRY",
     "spec": "docs/handoffs/QUE-TOOLTIP-DRY-BA-spec.md",
-    "created_at": "2026-06-12T11:13:41Z"
+    "created_at": "2026-06-12T11:13:41Z",
+    "updated_at": "2026-06-12T09:00Z",
+    "handoff": "docs/handoffs/QUE-TOOLTIP-DRY-BA-spec.md",
+    "brief": "docs/architecture-briefs/2026-06-12-que-tooltip-dry.md"
    }
   ],
   "archive": [],

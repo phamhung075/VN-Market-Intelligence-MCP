@@ -204,3 +204,191 @@ Architect runs brownfield analysis on:
 6. `apps/kinh-dich-service/pkg/interface/http/router.go` — `/hexagram/{number}/explain` exists; no bulk `/que-reference` route
 
 Resolve BLOCKER-1, BLOCKER-2, BLOCKER-3 before dev dispatch.
+
+---
+
+## [Architect] Brownfield Findings
+
+**Spec:** docs/handoffs/QUE-TOOLTIP-DRY-BA-spec.md
+**Architect task:** ARCH-QUE-TOOLTIP-DRY
+**Design authored:** 2026-06-12T09:00Z
+**Sprint:** QUE-TOOLTIP-DRY
+
+---
+
+### Zone
+
+**Multi-zone split required:**
+
+| Zone | Specialist | Scope |
+|---|---|---|
+| `apps/frontend/` | dev-kinh-dich | FR-1 (SnapshotRow migration), FR-3 (touch/keyboard verify), NFR-1/2/3, QueName component FR-2 consumer changes |
+| `scripts/` | dev-kinh-dich | FR-2 pipeline: rewrite gen-que-descriptions.ts to read que-reference.js |
+| `apps/mcp-server/src/domain/services/kinhDich/` | dev-mcp-server | FR-2: declare hexagramLibrary.ts as machine-derived downstream; add codegen comment + read-only constraint |
+
+PM must split into per-zone subtasks routed to dev-kinh-dich (FR-1 + FR-2 pipeline + FR-3 + NFR) and dev-mcp-server (FR-2 hexagramLibrary constraint annotation).
+
+---
+
+### BLOCKER-1 Resolution — Mechanism: Option B (codegen mirror)
+
+**Decision: Option B — declare hexagramLibrary.ts a generated downstream; rewrite gen-que-descriptions.ts to read que-reference.js directly.**
+
+**Evidence (text drift already exists):**
+- `hexagramLibrary.ts` quẻ 1 `coreMeaning`: "Sức sáng tạo nguyên thủy, năng lượng dương cương kiện không ngừng vận hành. Trời vận hành mạnh mẽ — người quân tử tự cường không nghỉ." (2 sentences)
+- `que-reference.js` quẻ 1 `coreMeaning.vi`: "Sức sáng tạo nguyên thủy, năng lượng dương cương kiện không ngừng vận hành" (1 clause)
+- `state_trend` in generated file: "THUẬN LỢI — năng lượng dương cực mạnh…" (from hexagramLibrary.ts `state.trend` — raw ASCII prefix)
+- `marketTrendLabel.vi` in que-reference.js: "Thuận lợi (THUẬN LỢI)" (clean Vietnamese label, PO-designated tooltip secondary field)
+- The drift is already live. FR-2 AC "text traces to kinh-dich-service SSOT" is FAILING today.
+
+**Why Option B beats Option A:**
+- Option A (bulk `/que-reference` endpoint) adds a Go router change + HTTP call at `bun run gen:que` build time → docker dependency during frontend codegen → brittle in CI (kinh-dich-service must be running when developer regenerates)
+- Option B: `que-reference.js` is a static file already committed in the repo; gen-que-descriptions.ts can parse it with `JSON.parse(readFileSync(...).replace("window.__QUE_REFERENCE__ = ", "").replace(/;\s*$/, ""))` — no network call, zero infra dependency
+- The Go `GetAllQueReferences()` function exists and is proven (file is auto-generated from the same source), but the emitted JS file is the most direct static artifact
+
+**Enforcement gate (dual-source forbidden):**
+- hexagramLibrary.ts comment header updated to: "AUTO-GENERATED downstream — DO NOT EDIT. Source of truth = apps/kinh-dich-service/dashboard/que-reference.js via go run ./cmd/sandbox -emit-reference. hexagramLibrary.ts is regenerated from que-reference.js by scripts/gen-hexagram-library.ts (TBD) or kept in sync manually — any divergence is a defect."
+- gen-que-descriptions.ts comment updated to cite que-reference.js as source
+- gen-que-descriptions.ts output file header updated: "Source: apps/kinh-dich-service/dashboard/que-reference.js"
+- CI NFR-2 grep gate already enforces no hardcoded VI text in routes — partial coverage. PM to note: a future CI check `diff <(bun run gen:que 2>/dev/null; cat apps/frontend/app/lib/que-descriptions.generated.ts)` would fully gate drift, but is out-of-sprint scope.
+
+---
+
+### BLOCKER-2 Resolution — FlipRow: EXPLICITLY DEFERRED
+
+**Verdict: FlipRow QueName migration is OUT OF SCOPE for this sprint.**
+
+**Evidence (DTO inspection):**
+`KinhDichFlip` interface (`dashboard.kinh-dich-signals.tsx` L79–L86):
+```typescript
+export interface KinhDichFlip {
+  stockCode: string;
+  fromAction: string;
+  toAction: string;
+  toSentiment: string;
+  confidence: number | null;
+  timestamp: string;
+}
+```
+The DTO carries NO `fromHexagramNumber` / `toHexagramNumber` fields. FlipRow renders `flip.fromAction` and `flip.toAction` (action strings), NOT hexagram names — confirmed at L452–L471. The `fromHexagramName` / `toHexagramName` mentioned in BA spec edge-cases do NOT appear in the live DTO.
+
+Per PO-Q4: "If the DTO lacks the ids, adding DTO fields is a separate change — architect may DEFER FlipRow to a follow-up task." FlipRow is therefore **explicitly deferred**. Follow-up task: "QUE-TOOLTIP-DRY-FLIP-ROW — add fromHexagramNumber/toHexagramNumber to KinhDichFlip DTO (API + frontend) and migrate FlipRow to QueName."
+
+---
+
+### BLOCKER-3 (Pre-ruled by PO-Q3) — Tooltip fields confirmed
+
+**Fields: `coreMeaning.vi` (primary) + `marketTrendLabel.vi` (secondary label)**
+
+**Current state vs target:**
+
+| Field | Current generated file | Target (que-reference.js) |
+|---|---|---|
+| Primary | `coreMeaning` (from hexagramLibrary.ts — longer, 2 sentences for quẻ 1) | `coreMeaning.vi` (1 clause) |
+| Secondary | `state_trend` (raw ASCII prefix, e.g. "THUẬN LỢI — năng lượng...") | `marketTrendLabel.vi` (clean, e.g. "Thuận lợi (THUẬN LỢI)") |
+
+**QueDescription interface must change:**
+```typescript
+export interface QueDescription {
+  coreMeaning: string;       // maps from que-reference.js coreMeaning.vi
+  marketTrendLabel: string;  // maps from que-reference.js marketTrendLabel.vi
+  // judgment_interpretation, image_action, state_trend REMOVED (not used in tooltip)
+}
+```
+
+**QueName.tsx tooltip content changes:**
+- Replace `{desc.coreMeaning}` — no change (field renamed, same intent)
+- Replace `{desc.state_trend}` → `{desc.marketTrendLabel}` (the clean Vietnamese label)
+- Remove `italic` style from secondary line (marketTrendLabel is a label badge, not prose)
+
+---
+
+### Verified Paths
+
+| File | Change | Layer | Zone |
+|---|---|---|---|
+| `scripts/gen-que-descriptions.ts` | Rewrite to parse `apps/kinh-dich-service/dashboard/que-reference.js` directly; emit `coreMeaning` (from `.vi`) + `marketTrendLabel` (from `.vi`); drop `judgment_interpretation`, `image_action`, `state_trend` | infrastructure/pipeline | scripts/ → dev-kinh-dich |
+| `apps/frontend/app/lib/que-descriptions.generated.ts` | Re-run gen:que (output of above — regenerated, not hand-edited) | infrastructure | frontend → dev-kinh-dich |
+| `apps/frontend/app/components/QueName.tsx` | Update `QueDescription` interface (2 fields); update tooltip secondary line `state_trend` → `marketTrendLabel`; remove italic | interface | frontend → dev-kinh-dich |
+| `apps/frontend/app/routes/dashboard.kinh-dich-signals.tsx` L484–L489 | Replace `<span>` pair in `SnapshotRow` with `<QueName hexagram={item.hexagramNumber} name={item.hexagramName} />`; add `QueName` import | interface | frontend → dev-kinh-dich |
+| `apps/mcp-server/src/domain/services/kinhDich/hexagramLibrary.ts` | Update file comment header to declare it a generated downstream of que-reference.js; no data changes | domain (annotation only) | mcp-server → dev-mcp-server |
+
+---
+
+### Reuse Patterns
+
+- `QueName.tsx` is already the SSOT for tooltip rendering — FR-1 is a 3-line import + component swap.
+- `QUE_DESCRIPTIONS` import already present in `QueName.tsx` — no new import chain.
+- `hexagramNumber` is already on `KinhDichSnapshotItem` (L67, type `number`) — prop passes cleanly.
+- `que-reference.js` parses as JSON after stripping the `window.__QUE_REFERENCE__ = ` wrapper and trailing semicolon — no Go binary invocation needed at build time.
+- No new React components, no new MCP tools, no new DB tables, no new Docker services.
+
+---
+
+### Design Decisions
+
+**DDD layer assignment:**
+- FR-1 (SnapshotRow swap): Interface layer — `apps/frontend/app/routes/`
+- FR-2 (codegen rewrite): Infrastructure layer — `scripts/` produces static data contract consumed by interface
+- FR-3 (touch/keyboard): Interface layer — already implemented, regression test only
+- NFR-1/2/3: Interface layer — grep-gated, dev validates during FR-1/FR-2 changes
+
+**hexagramLibrary.ts scope:** Only a comment annotation (2–3 lines). No TS data changes — the codegen now reads que-reference.js instead of hexagramLibrary.ts, so hexagramLibrary.ts data is no longer consumed by gen:que. This is intentional: hexagramLibrary.ts remains live for kinhDichTools.ts runtime (MCP tool Q/A data), but its description text is no longer the codegen source. The SSOT for tooltip text is que-reference.js.
+
+**Field mapping from que-reference.js to generated file:**
+```
+que-reference.js[i].coreMeaning.vi  → QueDescription.coreMeaning
+que-reference.js[i].marketTrendLabel.vi → QueDescription.marketTrendLabel
+```
+
+**No bulk HTTP endpoint needed.** Static file parse at codegen time = zero network dependency, zero infra coupling.
+
+---
+
+### Risk Flags
+
+- **RF-1 (LOW):** que-reference.js strip regex must handle the semicolon + optional whitespace at end of file. Test with `que-reference.js` as-is before shipping. Mitigation: dev adds a smoke test (`bun run gen:que && node -e "const d=require('./apps/frontend/app/lib/que-descriptions.generated.ts'); console.log(Object.keys(d.QUE_DESCRIPTIONS).length)"`) confirming 64 entries.
+- **RF-2 (LOW):** `QueDescription` interface rename (`state_trend` → `marketTrendLabel`) is a breaking change for any other consumer of `QUE_DESCRIPTIONS`. Current grep: only `QueName.tsx` imports it. Dev must verify no new consumers added since BA spec.
+- **RF-3 (LOW):** hexagramLibrary.ts runtime consumers (kinhDichTools.ts) read `state.trend` — not `marketTrendLabel`. No change to runtime behavior. The annotation-only change to hexagramLibrary.ts header is safe.
+- **RF-4 (INFO):** coreMeaning text shortens for some quẻ (e.g. quẻ 1 drops second sentence). PO has approved que-reference.js as SSOT — this is the intended text, not a regression.
+
+---
+
+### Build Standard
+
+**BUILD-STANDARD: lean**
+`apps/frontend/` exists. `apps/mcp-server/` exists. No new service, no new Docker container, no new MCP tool.
+
+---
+
+### Task Split for PM
+
+PM must produce 3 subtasks:
+
+**Subtask 1 — DEV-KINH-DICH-QUE-TOOLTIP-PIPELINE (zone: scripts/ + apps/frontend/)**
+- Owner: dev-kinh-dich
+- Scope: Rewrite `scripts/gen-que-descriptions.ts` to read `apps/kinh-dich-service/dashboard/que-reference.js`; update `QueDescription` interface to 2 fields (`coreMeaning`, `marketTrendLabel`); re-run `bun run gen:que`; update `QueName.tsx` tooltip secondary field.
+- Corresponds to: FR-2 (SSOT alignment + codegen) + QueName component update
+- Acceptance: `grep "Source:.*que-reference" apps/frontend/app/lib/que-descriptions.generated.ts` passes; 64 entries; `coreMeaning`+`marketTrendLabel` fields present; text matches que-reference.js `.vi` output
+
+**Subtask 2 — DEV-KINH-DICH-QUE-TOOLTIP-FR1-NFR (zone: apps/frontend/)**
+- Owner: dev-kinh-dich
+- Scope: Migrate `SnapshotRow` in `dashboard.kinh-dich-signals.tsx` L484–L489 to `<QueName>`; verify NFR-1 grep gate (0 Tooltip* outside components/); NFR-2 grep gate (0 hardcoded VN text in routes); NFR-3 no-op fallback not broken.
+- Corresponds to: FR-1 + FR-3 verify + NFR-1/2/3
+- Dependency: Subtask 1 must complete first (QueDescription interface must be stable)
+
+**Subtask 3 — DEV-MCP-SERVER-QUE-DOWNSTREAM-ANNOTATION (zone: apps/mcp-server/)**
+- Owner: dev-mcp-server
+- Scope: Update `apps/mcp-server/src/domain/services/kinhDich/hexagramLibrary.ts` file-header comment (3 lines) to declare it a generated downstream of que-reference.js. No data changes.
+- Corresponds to: BLOCKER-1 Option B enforcement (dual-source forbidden per PO-Q2)
+- Note: Can run in parallel with Subtask 1 (disjoint files)
+
+**Explicitly deferred (out of sprint):**
+- FlipRow QueName migration — requires new `fromHexagramNumber`/`toHexagramNumber` fields in `KinhDichFlip` DTO + API change. Track as follow-up task `QUE-TOOLTIP-DRY-FLIP-ROW`.
+
+---
+
+### Scan Clean
+
+No DDD violations detected. No new interfaces proposed. All changes extend existing patterns.
+`Scan clean: true`
