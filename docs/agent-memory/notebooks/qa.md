@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-238 · 2026-06-12 · CI-RED-8081e584-FIX QA gate — APPROVED
+
+Sprint: CI-RED-8081e584 | Task: CI-RED-8081e584-FIX | Verdict: APPROVED | Report: reports/TASK_REPORT_CI-RED-8081e584-FIX.md
+
+Two dev rounds (b4eeaf49 + 8a2ef725) fixed 6 failing tests. Round 1: UrgentNewsFindingDataSchema restored strict + UrgentNewsLooseSchema extracted for post_agent_signal SIGNAL_TYPE_VALIDATORS; getVpsProxyHealth now:Date injectable. Round 2: intelligenceCycleJob macroFetchFn/vnstockSyncFn deps injectable (no prod behavior change); 1837a "review" added to validStatuses; CONTAM-7 + 1987 afterAll mock.restore guards added. Local: 169 pass / 0 fail (6 fixed + 2 neighbor suites). tsc exit 0. DDD PASS. Security PASS. mock-guard EXIT 0. toolCount=157, schedulerCount=79. CI GREEN: run 27440565189 on 8a2ef725 = 12767 pass / 53 skip / 0 fail. b7b84d9b notebook-chore CI failure (160-stock-aliases network-flake) is pre-existing/unrelated — passes locally 34/0. Board CI-RED-8081e584-FIX REVIEW→DONE. DJ sprint-CI-RED-8081e584-qa.md § qa-S1.
+
 ## cycle-237 · 2026-06-12 · CONTAM-9 low=0/open=0 repair QA gate — APPROVED
 
 Sprint: OHLCV-UNIT-CONTAM | Task: CONTAM-9 | Verdict: APPROVED | Report: reports/TASK_REPORT_CONTAM-9.md
