@@ -53,7 +53,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T21:12:58Z",
+    "_updated_at": "2026-06-12T21:34:29Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -7073,6 +7073,39 @@
           "graphify": "skipped (no docs impacted)"
         },
         "_updated_at": "2026-06-12T20:24:58Z"
+      },
+      {
+        "id": "FIX-CHEF-SENDTELEGRAM-ARGSHAPE",
+        "title": "Chef (unified-agent) recurring 3x publish-reliability bug — send_telegram arg-shape mis-call: passes message as bare string instead of {channel,message} record, then falsely logs send_telegram \"expected record received string\" parser-failure + PUBLICATION BLOCKED, dropping the dish (gateway is healthy — dispatcher RAW-verified send works each time, msg 710/711/714). 3rd occurrence (chef-eod-marker 1st, id=710 2nd 2026-06-10, id=3129 3rd 2026-06-11). Recurring-bug-escalation: fix the cowork agent .md publish step to ALWAYS call send_telegram with the {channel,message} record shape; remove the false-parser-failure self-report path. Owner routes through agent-md-factory (SSOT/DRY) — NOT a router workaround, NOT apps/* code.",
+        "owner": "cowork-refactory-expert",
+        "status": "NEW",
+        "zone": "cross-service/",
+        "sprint": null,
+        "priority": "high",
+        "desc": "RECURRING 3x (recurring-bug-escalation threshold). Root: chef send_telegram arg-shape mis-call, NOT gateway. Must invoke agent-md-factory skill before editing the chef/unified-agent .md. DoD: chef publish step calls send_telegram({channel,message}); the false \"expected record received string\" self-block path removed; next intraday dish publishes without dispatcher hand-completion. Evidence: telegram report id=3129; TNB c93 F-INTRADAY-0613-PUBLISH-FAILURE.",
+        "source_reports": [
+          3129
+        ],
+        "created_at": "2026-06-12T21:32:14Z",
+        "created_by": "po",
+        "_updated_at": "2026-06-12T21:32:14Z"
+      },
+      {
+        "id": "OPS-POLLNEWS-NIGHT-ZERO",
+        "title": "pollNews returns 0 items from ALL sources at ~23:00 UTC two consecutive nights (2026-06-10 23:00, 2026-06-11 23:30) — only 3/7 sources active (cafef/vnexpress/vneconomy/teChromiumNews/reuters/tradingeconomics/newsapi). Night-window fetch/proxy health: check VPS proxy nighttime availability + the 4 inactive sources. Infra/fetch lane, NOT a methodology gap.",
+        "owner": "ops",
+        "status": "NEW",
+        "zone": "infrastructure/news-fetch",
+        "sprint": null,
+        "priority": "medium",
+        "desc": "Two-night recurrence (ids 3127, 3133) — rule out a transient. Check: (1) VPS proxy health 23:00-23:30 UTC window (all VN geo-blocked sources route via Vinahost VPS); (2) why only 3/7 sources active — are 4 disabled/credential-expired or all-zero from proxy outage; (3) news-fetch service container state at night. DoD: identify whether root is VPS-proxy night outage vs per-source config; if proxy, restore + verify a 23:00 poll returns >0; if source-config, file follow-up. Evidence: telegram reports 3127/3133.",
+        "source_reports": [
+          3127,
+          3133
+        ],
+        "created_at": "2026-06-12T21:32:14Z",
+        "created_by": "po",
+        "_updated_at": "2026-06-12T21:32:14Z"
       }
     ],
     "archive": [],

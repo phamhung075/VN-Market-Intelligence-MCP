@@ -260,3 +260,12 @@ None. All active gaps require dev tasks:
   - F-MORNING-NB-MISSING (unified-agent 200L cap) → cowork-team / agent-father notebook-cap zone, not dev-team
 - Skipped findings: F3/F4/F5/F9 (MED/LOW structural methodology gaps, no capacity this tick; tracked)
 - Note: this ACK is for c93 (latest file on disk). c94 (06-11) handoff referenced in signals but not yet materialized as tnb-audit-latest.md.
+
+## PO ACK — triage-tick delta
+- Read by: po
+- At: 2026-06-12T21:33:42Z
+- Delta vs 19:29Z ACK: c93 F-INTRADAY-0613-PUBLISH-FAILURE (chef send_telegram arg-shape) was prior-ACK'd as "out-of-dev-zone, no task" — but live telegram report id=3129 is the 3rd recurrence (chef-eod 1st, id=710 2nd). Recurring-bug-escalation threshold crossed → NOW tracked as **FIX-CHEF-SENDTELEGRAM-ARGSHAPE** (P-high, owner cowork-refactory-expert via agent-md-factory, zone cross-service/). Closes the "no task" gap.
+- Tasks created this tick: FIX-CHEF-SENDTELEGRAM-ARGSHAPE, OPS-POLLNEWS-NIGHT-ZERO (2-night pollNews 0-items, infra/VPS-proxy).
+- OHLCV contam report id=3135: NO new task — timestamp reconcile shows its 15:05Z sanity run PREDATES CONTAM-9 fix (committed 17:26Z, QA-approved 19:38Z "0 contaminated rows"). The 69 rows are pre-fix; CONTAM-9 already cured. resolution=monitoring (verify next sanity run = 0). A drafted FIX-OHLCV-CONTAM-LOWZERO-RECUR was backed out as duplicate.
+- F-BCTC-CTG-CRITICAL: 8 telegram reports (3125/3126/3128/3131/3132/3134/3136/3137) resolved=duplicate against in-flight FIX-FINALIZE-STATUS-STUCK-PARTIAL (P0) + FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE (P1) + BCTC-CTG-FLEET-SERVE-SPIKE (S3). No new BCTC tasks (would duplicate).
+- Orphan lock esc-datacov:FPT:Q1-2026:ESC-3 (report 3130): LET-EXPIRE confirmed (.locks empty, self-expired).
