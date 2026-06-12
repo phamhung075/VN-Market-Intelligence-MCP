@@ -6,6 +6,14 @@
 
 ---
 
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-12T09:00:00Z
+**task-id:** REAUDIT-005
+**what-done:** Added `revenueYoyDirection` and `netProfitYoyDirection` fields to `ScreenerRow` type and `mapRow()` in `financialsHandler.ts`; exported `deriveYoyDirection()` pure helper; 31 new tests (REAUDIT-005-financials-yoy-direction.test.ts).
+**what-considered:**
+- only: derive at map time in `mapRow()` — pure sign check, no domain logic, no DB schema change; `deriveYoyDirection` handles null/undefined/NaN → "flat"; same pattern as REAUDIT-004 `deriveDirection`.
+**why-decision:** NFR-C-6 spec mandates derived fields at map time; null yoy → "flat" is the safest default (no directional claim when data is absent); NaN/Infinity also → "flat" via `Number.isFinite` guard.
+**why-change:** no change from plan
+
 ### STEP dev-mcp-server-S1 · dev-mcp-server · 2026-06-11T22:50:00Z
 **task-id:** REAUDIT-004
 **what-done:** Added `direction: "up" | "down" | "flat"` derived field to `StockPerformanceItem` type and `buildDetail()` in `marketSummaryHandler.ts`; exported `deriveDirection()` pure helper.

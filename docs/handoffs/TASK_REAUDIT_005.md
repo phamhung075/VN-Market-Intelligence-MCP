@@ -99,3 +99,34 @@ Each metric (revenue, net profit) has its own trend story. Separate fields allow
 - Architect brief: `docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md`
 - BA spec: `docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md` § A-14 improvement lane
 - Zone standard: `docs/policies/dev-standards.md`
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/financialsHandler.ts` — Added `YoyDirection` type alias; added `revenueYoyDirection` and `netProfitYoyDirection` fields to `ScreenerRow` interface; exported `deriveYoyDirection(value)` pure helper (null/undefined/NaN → "flat", >0 → "up", <0 → "down"); updated `mapRow()` to compute both direction fields
+  - `apps/mcp-server/src/__tests__/TASK17-PAGE16-financials-endpoint.test.ts` — Updated `makeRow()` and `makeScreenerRow()` fixture helpers to include new direction fields; updated AC-2 field-presence check and AC-5 requiredFields array
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/REAUDIT-005-financials-yoy-direction.test.ts` — 31 assertions, GREEN (deriveYoyDirection + mapRow direction fields + handleGetFinancials integration)
+- **Git commits:** see below
+- **Type check:** clean (bun tsc --noEmit, 0 errors)
+- **bun test (targeted):** 143 pass / 0 fail (REAUDIT-002..005 + TASK17-PAGE16 combined)
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 79 cron.schedule entries — matches CONTAM-5 baseline
+- **Docs updated:** NONE (interface-only change, no architecture doc touch)
+- **Graphify:** skipped (no docs impacted)
+
+### G12 Gate Evidence
+
+| Gate | Result |
+|------|--------|
+| bun test (REAUDIT-005 + TASK17-PAGE16) | 95 pass / 0 fail |
+| bun test (REAUDIT sprint batch 002..005) | 143 pass / 0 fail |
+| bun tsc --noEmit | exit 0, 0 errors |
+| toolCount | 157 (unchanged) |
+| schedulerCount | 79 (unchanged) |
+
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, 31 new tests GREEN, REAUDIT sprint 143 pass total | HEALTHY

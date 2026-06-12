@@ -6745,7 +6745,7 @@
         "id": "REAUDIT-005",
         "title": "NFR-C-6 financials yoyDirection field",
         "owner": "dev-mcp-server",
-        "status": "TODO",
+        "status": "REVIEW",
         "zone": "apps/mcp-server/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "low",

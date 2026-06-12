@@ -40,6 +40,7 @@ import {
   type ScreenerRow,
   type ScreenerSummary,
   type ScreenerRankings,
+  type YoyDirection,
 } from "../interface/mcp/routes/financialsHandler.js";
 import type { FinancialRow } from "../infrastructure/db/financialsStore.js";
 
@@ -287,7 +288,7 @@ describe("mapRow", () => {
     expect(mapRow(baseRow).pe).toBe(18.5);
   });
 
-  it("AC-2: all camelCase fields present", () => {
+  it("AC-2: all camelCase fields present (including yoyDirection fields)", () => {
     const r = mapRow(baseRow);
     expect("code" in r).toBe(true);
     expect("period" in r).toBe(true);
@@ -295,8 +296,10 @@ describe("mapRow", () => {
     expect("quarter" in r).toBe(true);
     expect("revenueBn" in r).toBe(true);
     expect("revenueYoy" in r).toBe(true);
+    expect("revenueYoyDirection" in r).toBe(true);
     expect("netProfitBn" in r).toBe(true);
     expect("netProfitYoy" in r).toBe(true);
+    expect("netProfitYoyDirection" in r).toBe(true);
     expect("eps" in r).toBe(true);
     expect("pe" in r).toBe(true);
     expect("pb" in r).toBe(true);
@@ -334,8 +337,10 @@ describe("buildRankings", () => {
       quarter: 4,
       revenueBn: null,
       revenueYoy: null,
+      revenueYoyDirection: "flat" as YoyDirection,
       netProfitBn: null,
       netProfitYoy: null,
+      netProfitYoyDirection: "flat" as YoyDirection,
       eps: null,
       pe: null,
       pb: null,
@@ -523,7 +528,8 @@ describe("buildSummary", () => {
   function makeScreenerRow(overrides: Partial<ScreenerRow>): ScreenerRow {
     return {
       code: "X", period: "2024Q4", yearReport: 2024, quarter: 4,
-      revenueBn: null, revenueYoy: null, netProfitBn: null, netProfitYoy: null,
+      revenueBn: null, revenueYoy: null, revenueYoyDirection: "flat" as YoyDirection,
+      netProfitBn: null, netProfitYoy: null, netProfitYoyDirection: "flat" as YoyDirection,
       eps: null, pe: null, pb: null, roe: null, roa: null,
       debtToEquity: null, netProfitMargin: null, nim: null, npl: null,
       ...overrides,
@@ -820,7 +826,8 @@ describe("TASK17-PAGE16 — handleGetFinancialsHttp (in-memory DB)", () => {
     const row = body.rows[0]!;
     const requiredFields = [
       "code", "period", "yearReport", "quarter",
-      "revenueBn", "revenueYoy", "netProfitBn", "netProfitYoy",
+      "revenueBn", "revenueYoy", "revenueYoyDirection",
+      "netProfitBn", "netProfitYoy", "netProfitYoyDirection",
       "eps", "pe", "pb", "roe", "roa",
       "debtToEquity", "netProfitMargin", "nim", "npl",
     ];

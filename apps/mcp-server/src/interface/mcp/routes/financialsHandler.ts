@@ -51,6 +51,9 @@ import { computeStaleness } from "./_staleness.js";
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Directional classification for a YoY growth field. */
+export type YoyDirection = "up" | "down" | "flat";
+
 /** One row in the screener response — latest period per code. */
 export interface ScreenerRow {
   code: string;
@@ -59,8 +62,12 @@ export interface ScreenerRow {
   quarter: number;
   revenueBn: number | null;
   revenueYoy: number | null;
+  /** Directional classification of revenueYoy: "up" (>0), "down" (<0), "flat" (0 or null) */
+  revenueYoyDirection: YoyDirection;
   netProfitBn: number | null;
   netProfitYoy: number | null;
+  /** Directional classification of netProfitYoy: "up" (>0), "down" (<0), "flat" (0 or null) */
+  netProfitYoyDirection: YoyDirection;
   eps: number | null;
   pe: number | null;
   pb: number | null;
@@ -129,6 +136,24 @@ export interface FinancialsResponse {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Derive directional classification from a YoY growth value.
+ *
+ * Rules (NFR-C-6):
+ *   value > 0  → "up"
+ *   value < 0  → "down"
+ *   value === 0, null, undefined → "flat"
+ *
+ * @param value - YoY percentage value (may be null/undefined)
+ * @returns YoyDirection
+ */
+export function deriveYoyDirection(value: number | null | undefined): YoyDirection {
+  if (value == null || !Number.isFinite(value)) return "flat";
+  if (value > 0) return "up";
+  if (value < 0) return "down";
+  return "flat";
+}
+
+/**
  * Compute the median of a number array.
  *
  * Definition (LOAD-BEARING — do NOT change):
@@ -164,23 +189,25 @@ export function computeMedian(values: (number | null | undefined)[]): number | n
  */
 export function mapRow(row: FinancialRow): ScreenerRow {
   return {
-    code:             row.code,
-    period:           `${row.yearReport}Q${row.quarter}`,
-    yearReport:       row.yearReport,
-    quarter:          row.quarter,
-    revenueBn:        row.revenueBn,
-    revenueYoy:       row.revenueYoy,
-    netProfitBn:      row.netProfitBn,
-    netProfitYoy:     row.netProfitYoy,
-    eps:              row.eps,
-    pe:               row.pe,
-    pb:               row.pb,
-    roe:              row.roe,
-    roa:              row.roa,
-    debtToEquity:     row.debtToEquity,
-    netProfitMargin:  row.netProfitMargin,
-    nim:              row.nim,
-    npl:              row.npl,
+    code:                    row.code,
+    period:                  `${row.yearReport}Q${row.quarter}`,
+    yearReport:              row.yearReport,
+    quarter:                 row.quarter,
+    revenueBn:               row.revenueBn,
+    revenueYoy:              row.revenueYoy,
+    revenueYoyDirection:     deriveYoyDirection(row.revenueYoy),
+    netProfitBn:             row.netProfitBn,
+    netProfitYoy:            row.netProfitYoy,
+    netProfitYoyDirection:   deriveYoyDirection(row.netProfitYoy),
+    eps:                     row.eps,
+    pe:                      row.pe,
+    pb:                      row.pb,
+    roe:                     row.roe,
+    roa:                     row.roa,
+    debtToEquity:            row.debtToEquity,
+    netProfitMargin:         row.netProfitMargin,
+    nim:                     row.nim,
+    npl:                     row.npl,
   };
 }
 
