@@ -177,3 +177,9 @@ node-cron v3.0.3 `Scheduler.matchTime()` uses `setTimeout(matchTime, 1000)`. Whe
 - Two rows written (expected — old code); post-rebuild will produce one row with `rows_written=9`
 
 **Next scheduled tick:** 2026-06-13 16:00 UTC (daily `0 16 * * *`). QA must verify `evidenceAccumulatorJob` row appears with `status=success, rows_written > 0` at that tick.
+
+**G12 DoD Gate Evidence:**
+- `bun tsc --noEmit`: exit 0 (clean)
+- `bun test`: 12870 pass / 0 fail (Mode B OOM crash after run — known, not test failure)
+- Tool count: 157 (matches baseline)
+- Scheduler count: 79 cron.schedule entries (matches baseline)
