@@ -1,15 +1,15 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-12T15:41:26Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-12T20:08:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "review",
-    "updated_at": "2026-06-12T08:20:00Z",
-    "updated_by": "architect",
-    "active_task_id": "OHLCV-UNIT-CONTAM-ARCH-1",
-    "next_agent": "pm",
-    "_updated_at": "2026-06-12T08:20:00Z"
+    "updated_at": "2026-06-12T20:08:00Z",
+    "updated_by": "dev-mcp-server",
+    "active_task_id": "CI-RED-8081e584-FIX",
+    "next_agent": "qa",
+    "_updated_at": "2026-06-12T20:08:00Z"
   },
   "dashboard_section_cache": {
     "section_name": "po",

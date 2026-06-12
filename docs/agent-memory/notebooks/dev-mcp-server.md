@@ -1,5 +1,18 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-12 · CI-RED-8081e584-FIX (Round 2) — 3 new failing tests fixed — DONE
+
+**Task:** CI-RED-8081e584-FIX (round 2) | Sprint: CI-RED-8081e584 | Priority: HIGH | Zone: apps/mcp-server/
+**Root causes (3 failures on CI run 27439334298):**
+(1) 1285-macro-alert-cooldown: step A2 (Yahoo Finance/SBV) + step A3 (vnstock) made real HTTP calls with 2-min withTimeout each — in CI outbound HTTP is throttled, both blocked until bun's 30s per-test timeout fired. Fix: added `macroFetchFn` + `vnstockSyncFn` injectable deps to CycleDeps; 1285 test injects async no-ops.
+(2) 1837a-pipeline-state: head.status was "review" (set by CONTAM-9 REVIEW transition) but test only allowed ["in_progress","idle","blocked","stale"]. Fix: added "review" to validStatuses.
+(3) mock-module-afterall-guard: CONTAM-7 + 1987-contam2 called mock.module() at module scope without afterAll(() => mock.restore()). Fix: added afterAll import + restore to both files.
+**Tests:** 1285×8 pass, 1837a×5 pass, mock-guard×1 pass; 1293a+1295a+VPT-1 still pass (no regression). tsc clean. toolCount=157. schedulerCount=79.
+**Commit:** 8a2ef725
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, CI-RED round 2 fixes committed | HEALTHY
+
+---
+
 ## 2026-06-12 · CI-RED-8081e584-FIX — Restore UrgentNews strict schema + injectable VPS 24h window — REVIEW
 
 **Task:** CI-RED-8081e584-FIX | Sprint: CI-RED-8081e584 | Priority: HIGH | Zone: apps/mcp-server/
