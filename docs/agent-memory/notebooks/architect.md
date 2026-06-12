@@ -1,8 +1,25 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-12 20:40 UTC | **Sprint:** BCTC-CTG-FLEET-SERVE-SPIKE
+**Last updated:** 2026-06-12 22:10 UTC | **Sprint:** BCTC-ANALYTICS-LAYER
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-12T22:10Z — BCTC-ANALYTICS-LAYER Refine State Machine Ruling (DESIGN, REVIEW)
+
+**Task:** FIX-FINALIZE-STATUS-STUCK-PARTIAL + FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE + FIX-PENDING-REFINE-TICKER-TARGETING | zone: apps/mcp-server/src/
+**Output:** docs/architecture-briefs/2026-06-12-bctc-refine-state-machine-ruling.md
+
+**Key findings:**
+- BUG1 root cause confirmed: BEQ-7 section guard (finalizeBctcRefineTool.ts:328–341) fires `checkSectionCompleteness(finalRows)` when caller passes `report_status=DONE`. If ANY of balance_sheet/income_statement/cash_flow sections absent from finalRows → silent override to PARTIAL → DB write PARTIAL → queue predicate `IN ('PENDING','PARTIAL','FAILED')` re-serves the report indefinitely. BEQ-7 is CORRECT (server owns completeness invariant). Bug is queue SQL not distinguishing "work remaining PARTIAL" from "fully-processed data-quality PARTIAL".
+- BUG1 fix: SQL exclusion subquery in getBctcPendingRefineTool to skip PARTIAL reports where ALL units are window_status=DONE (nothing left to process). Plus finalize response adds effective_status + beg7_override fields for observability.
+- BUG2 root cause confirmed: extraction_confidence written ONLY at OCR-parse time (parseBctcReport + fetchParseAndStoreBctc). finalizeBctcRefineTool BLOCK-1 through BLOCK-4 never write extraction_confidence. ACB fea19bae frozen at 0.375. PUB-5 reads the stale value → permanent block.
+- BUG2 fix: add new BLOCK-5 in finalizeBctcRefineTool: weighted section-presence confidence formula (0.4+0.4+0.2 for BS+IS+CF) using already-invoked checkSectionCompleteness result. Guard: only overwrite if refined_confidence > current (protect good OCR signal). All-3-sections → 1.0 → PUB-5 gate lifts cleanly.
+- BUG3 root cause confirmed: Zod InputSchema has only `limit`; `ticker` unknown field silently stripped. SQL has no action_code filter. Fix: add optional `ticker` and `report_id` params to existing tool (no new tool).
+- BUG3 design: report_id bypasses refine_status/text_status filter for targeted verification. ticker filters by action_code. Precedence: report_id > ticker > default queue.
+- Index RF-1: add idx_bctc_refined_units_report_status for the BUG1 exclusion subquery.
+- BUILD-STANDARD: not-applicable (bug-fix, no new primitives). All changes interface layer only.
+
+
 
 ## 2026-06-12T15:45Z — ARCH-QUE-REFERENCE-PAGE (DESIGN, REVIEW)
 
