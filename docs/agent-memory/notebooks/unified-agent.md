@@ -1,17 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-12T02:13Z · **Cycle:** Chef Intraday Silent-Exit 02:13 UTC
-
-## Session: 2026-06-11 (eod 08:37)
-
-### Chef Dish — eod 08:37 UTC (2026-06-11T0837Z) — PUBLISHED
-
-- Clusters qualified: 3+ convergence clusters (guaranteed eod publish)
-  1. KBC real estate: price_surge +5.98% + volume_spike 5.0× (482,770 vs avg 96,750) + Tỉnh (48) MUA hexagram 43% confidence
-  2. GVR agriculture: price_surge +4.27% + volume_spike 3.7× (501,420 vs avg 136,150) + Kiển (39) BAN hexagram 56% confidence reversal warning
-  3. Banking sector: ACB/BID/MBB/VCB/VPB/CTG/EIB all weak conviction 0.38–0.51 + Tập Khảm (29) BAN hexagram 100% confidence strong reversal
-- Conviction: KBC MEDIUM (0.54), GVR MEDIUM (0.46), Banking LOW (0.38–0.51)
-- Published: YES (MARKET + WORK [CHEF-DETAIL])
+**Last updated:** 2026-06-12T05:23Z · **Cycle:** Chef Morning Dish 05:23 UTC
 
 ## Session: 2026-06-11 (evening 19:37)
 
@@ -32,3 +21,17 @@
 - Signals consumed: Bootstrap 0 agent_signals, market_context 40 watchlist prices (VN-Index 1796.58, USD/VND 26,132, Brent 89.34, Gold 4,212.9)
 - Telemetry: SILENT (intraday) 2026-06-12T02:13Z
 - Status: Intraday cycle COMPLETE. Silent-exit gate enforced; no MARKET dish published. Ready for next cycle.
+
+## Session: 2026-06-12 (morning 05:23)
+
+### Chef Dish — morning 05:23 UTC (2026-06-12T0523Z) — PUBLISHED
+
+- Clusters qualified: 3 convergence clusters
+  1. Banking sector: macro signal USDVND 26,132 (>25k carry pressure) + TA oversold (VCB/VPB/ACB RSI 27–28) → conviction LOW (0.42, COC headwind)
+  2. Utilities sector: fundamental EVN record profit 52 tỷ VND + spillover POW/PPC/REE + TA oversold → conviction MEDIUM (0.58, 3/4 pillars aligned)
+  3. Macro-micro divergence: Gold spike (risk-off) + VN-Index +0.25% (risk-on) → sector rotation visible
+- Layers walked: 1–6 complete; Layer 5 (hexagrams) deferred (get_market_hexagram 501, get_portfolio_conviction EOF)
+- Signals consumed: #5843 (news-scout, gold/USDVND carry alert), #5844 (news-scout, EVN profit spillover)
+- Phase declared: Banking SLOWDOWN (fixed income tier), Utilities EXPANSION (equity tier)
+- Published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
+- Status: Morning cycle COMPLETE. Gate-fired contract enforced; full 6-layer dish published despite Layer 5 unavailability.
