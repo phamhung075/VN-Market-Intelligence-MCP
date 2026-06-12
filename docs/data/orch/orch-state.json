@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T20:44:18Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-12T21:12:58Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -419,6 +419,64 @@
               "REFINE-CRON-ARM"
             ],
             "note": "Brief: docs/architecture-briefs/2026-06-12-bctc-ctg-fleet-serve-gap.md § Secondary fix. Backfill pdf_path from pdf_extracted_text row filename. AC: D2D + KDC rows have pdf_path populated; get_bctc_pending_refine returns windows > 0 for both."
+          },
+          {
+            "id": "FIX-FINALIZE-STATUS-STUCK-PARTIAL",
+            "title": "finalize_bctc_refine(report_status=DONE) returns ok+rows_parsed but leaves financial_reports.refine_status=PARTIAL — queue-head deadlock: get_bctc_pending_refine permanently re-serves ACB fea19bae (27/27 windows already DONE in bctc_refined_units) so the 34 PENDING reports behind it never drain, deadlocking REFINE-CRON-ARM (P0). Find the actual code path: server likely recomputes refine_status from coverage/confidence and overrides the caller-supplied DONE. Fix so a fully-refined report (all windows pushed) transitions OUT of the pending queue.",
+            "owner": "dev-mcp-server",
+            "type": "FIX",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/",
+            "created_at": "2026-06-12T21:12:58Z",
+            "priority": "high",
+            "size": "M",
+            "sprint": "BCTC-ANALYTICS-LAYER",
+            "status_note": "[PO triage 2026-06-12T21:12:58Z] P0 — BLOCKS active P0 task REFINE-CRON-ARM (tasks[24]). dev-team dispatcher raw-verified vs live DB (vol vn-market-intelligence-mcp_market_data, financial_reports + bctc_refined_units): ACB fea19bae-2b7a-4954-b3e0-e09d7bfc7390 has 27/27 windows DONE in bctc_refined_units yet refine_status stays PARTIAL; finalize_bctc_refine(report_id=fea19bae,report_status=DONE) returns ok:true,rows_parsed:106 but refine_status unchanged immediately after. Result: cron ec99e6c1 (3x/day) re-grabs ACB every fire, 34 PENDING reports never drain. RECURRING-ESCALATION: 18 prior touches of finalize/refine path -> route ARCHITECT for state-machine ruling before patch (per recurring-bug-escalation policy).",
+            "depends": [],
+            "note": "Open question for dev (from dispatcher): why does finalize with report_status=DONE leave refine_status=PARTIAL? Server may recompute status from coverage/confidence and override the caller's status. Find actual code path in finalizeBctcRefineTool / bctcRefineJob. VERIFICATION GATE: (1) get_bctc_pending_refine(limit:1) returns a report that is NOT fea19bae (queue advances); (2) a subsequent refine run processes a PENDING report. Sibling: BUG report DIG 173038f2 is REJECTED_SANITY (cross-statement revenue contradiction) — human /api/bctc-inspect, NOT a dev task.",
+            "files": [
+              "apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts"
+            ]
+          },
+          {
+            "id": "FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE",
+            "title": "extraction_confidence never recomputed after refine/finalize — ACB stuck at 0.375 even after full 27/27 refine + 106 rows parsed, so serve gate PUB-5 (confidence<50%) blocks get_bctc_full(ACB) permanently. A successful refine pass can never lift PUB-5. Fix: recompute confidence at finalize from refined coverage/row-quality, OR make PUB-5 consider refine coverage/refined-row quality instead of the pre-refine OCR metric.",
+            "owner": "dev-mcp-server",
+            "type": "FIX",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/",
+            "created_at": "2026-06-12T21:12:58Z",
+            "priority": "medium",
+            "size": "M",
+            "sprint": "BCTC-ANALYTICS-LAYER",
+            "status_note": "[PO triage 2026-06-12T21:12:58Z] P1. Raw-verified: ACB extraction_confidence=0.375 unchanged after full refine. PUB-5 evaluates the pre-refine OCR confidence BEFORE PUB-3, so refine success is invisible to the gate. Same class as DONE-MOOT tasks BAL-1b-DEV/BAL-1d-DEV (banks EIB/SHB blocked at PUB-5 <50% before PUB-3 reached) — those fixed bank-path/report_scope but NOT confidence-recompute-at-finalize, so this root is still open. Depends on FIX-FINALIZE-STATUS-STUCK-PARTIAL landing first (finalize must run cleanly before confidence-recompute is observable). ARCHITECT to rule: recompute-at-finalize vs PUB-5 coverage-aware.",
+            "depends": [
+              "FIX-FINALIZE-STATUS-STUCK-PARTIAL"
+            ],
+            "note": "checkPublishability / publishabilityGuard PUB-5 path. VERIFICATION GATE: after full refine of a report, get_bctc_full(<ticker>) serves real financial scalars (not withheld by PUB-5). Cross-check vs VNM consolidated control (must stay servable, not over-blocked).",
+            "files": [
+              "apps/mcp-server/src/domain/bctc/publishabilityGuard.ts"
+            ]
+          },
+          {
+            "id": "FIX-PENDING-REFINE-TICKER-TARGETING",
+            "title": "get_bctc_pending_refine silently ignores ticker argument (probed live: {ticker:'CTG',limit:1} still returns ACB) AND no tool exists to fetch a specific report's windows by report_id. Blocks on-demand refine of REFINE-CRON-ARM verification-gate ticker CTG (c6b17c36-1f4f-48bc-a367-b48afc163ceb, PENDING, 0 units). Fix: honor the ticker filter in get_bctc_pending_refine, and/or add a get-windows-by-report_id tool.",
+            "owner": "dev-mcp-server",
+            "type": "FIX",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/",
+            "created_at": "2026-06-12T21:12:58Z",
+            "priority": "low",
+            "size": "S",
+            "sprint": "BCTC-ANALYTICS-LAYER",
+            "status_note": "[PO triage 2026-06-12T21:12:58Z] P2. Live-probed: get_bctc_pending_refine(arguments={ticker:'CTG',limit:1}) returns ACB, ignoring the ticker filter. No by-report_id windows-fetch tool exists. Needed to on-demand-verify CTG (c6b17c36, PENDING, 0 units) — the REFINE-CRON-ARM verification-gate ticker. Lower priority than the deadlock (BUG1) which auto-drains the queue, but required for targeted verification.",
+            "depends": [
+              "FIX-FINALIZE-STATUS-STUCK-PARTIAL"
+            ],
+            "note": "getBctcPendingRefine tool handler. VERIFICATION GATE: get_bctc_pending_refine({ticker:'CTG'}) returns a CTG report (or by-report_id tool fetches c6b17c36 windows). Schema-add must follow docs/standards/mcp-tools.md.",
+            "files": [
+              "apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts"
+            ]
           }
         ]
       },
