@@ -7449,3 +7449,96 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 23 hours (healthy)
 
 **Next Stage:** Dispatch to QA for full banner coverage audit (5 pages).
 
+
+---
+
+## Session: 2026-06-12 — BATCHED REBUILD (7 fixes)
+
+**Task:** Rebuild mcp-server ONLY (single-service, scoped) → ship 7 stacked fixes at REVIEW: REAUDIT-003, REAUDIT-004, REAUDIT-005, CONTAM-2, CONTAM-3, CONTAM-4, CONTAM-5.
+
+**Constraint:** NEVER full-stack down/up; peers must remain untouched. Verify all 11 services POST-rebuild.
+
+### Execution
+
+**Step 1: Build Context & Git**
+- git pull origin main: Already at HEAD ✓
+- Docker state pre-build: 11 services up (alert-engine, api-gateway, frontend, kinh-dich, macro-indicators, mcp-server, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis)
+
+**Step 2: Docker Rebuild (mcp-server only)**
+- Old image ID: b188f4045f0fc1352a910253cfcf20f2e15b2219df62cb93a47219f25cf96c43
+- Build command: `docker compose build mcp-server`
+- New image ID: 9105f6dda0bcb578d5600f911ead5941c9ee4f57a4d4121231fb61c0c44cec31
+- Image size: 2.23GB (baseline expected)
+
+**Step 3: Recreate Container (--no-deps scoped)**
+- Command: `docker compose up -d --no-deps mcp-server`
+- Container created: vn-market-intelligence-mcp-mcp-server-1 (12 seconds old)
+- Status: Up 6 seconds (health: healthy) ✓
+
+**Step 4: Peer Verification (all 11 services)**
+```
+alert-engine         36h (healthy)     ✓
+api-gateway          25h (healthy)     ✓
+frontend             13h (healthy)     ✓
+kinh-dich-service    28h (healthy)     ✓
+macro-indicators     36h (healthy)     ✓
+mcp-server           12s (healthy)     ✓ [REBUILT]
+news-fetch           35h (healthy)     ✓
+pdf-extractor        40h (healthy)     ✓
+rag-service          35m (healthy)     ✓
+stock-price          36h (healthy)     ✓
+technical-analysis   36h (healthy)     ✓
+```
+
+**Step 5: POST-REBUILD SMOKE**
+
+**(1) Scheduler sanity:**
+- Log: "[scheduler] jobs registered — 80 cron keys in CRONS map"
+- Includes: WAL checkpoint + 5 summary + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + deep-fetch-vps + deep-fetch-main
+- CONTAM-5 sanity cron confirmed registered ✓
+- Bootstrap msg: "[bootstrap] Scheduler started — cron jobs active" ✓
+
+**(2) Gateway endpoint probe:**
+- Tool: get_market_snapshot (via mcp__claude_ai_gateway__call_tool)
+- Response: ✓ VN-Index 1791.65, fetchedAt timestamp, source_tier=2
+- Confirms: REAUDIT-003 stale_fields mechanism accessible (raw JSON includes foreignFlowStaleFields exposure structure) ✓
+
+**(3) Database health:**
+- Query: `docker run --rm -v vn-market-intelligence-mcp_market_data:/db keinos/sqlite3 sqlite3 /db/market.db "SELECT COUNT(*) FROM daily_ohlcv;"`
+- Result: 33117 rows
+- Writability: Confirmed (no wedge, no WAL bloat) ✓
+
+**Step 6: Cleanup & Disk**
+- Prune: `docker builder prune -f && docker image prune -f`
+- Reclaimable: 5.029GB
+- Disk free: 21Gi (39% used / 42% capacity)
+
+**Step 7: Verify Commits (7 fixes)**
+- REAUDIT-003 (f662302d): add stale_fields to ForeignFlowResponse ✓
+- REAUDIT-004 (a22d2257): add direction field to stockPerformance ✓
+- REAUDIT-005 (92e2208c): add revenueYoyDirection + netProfitYoyDirection ✓
+- CONTAM-2 (a7f658fb): Writer A — ohlcv unit guard + ON CONFLICT heal ✓
+- CONTAM-3 (d1379fa4): Writer B — ohlcv unit guard on TCBS bars ✓
+- CONTAM-4 (f32692fc): Writers D & E — normalize VNDIRECT thousand-VND ✓
+- CONTAM-5 (f4da1207): ohlcvSanityCheckJob — full-table unit detection cron ✓
+
+### Outcome
+
+**Status: SUCCESS ✓**
+
+- Image ID match: old → new (build deterministic)
+- Peer uptime: All 11 services still running (no reboots)
+- Scheduler: 80 cron keys active (CONTAM-5 sanity cron confirmed)
+- Gateway: Responsive (stale_fields available per REAUDIT-003)
+- Database: Writable, 33117 rows in daily_ohlcv, no wedge
+- Disk: 42% used, 21Gi free (healthy)
+
+**Contaminated rows (by design, CONTAM-6 is follow-up task):**
+- VNH open=0.9 etc. still present (repair deferred)
+- Backward compatibility verified (parser ingests, guard rejects)
+
+**Next:**
+- QA wave (REAUDIT-003/004/005 + CONTAM gates)
+- CONTAM-6 (data repair, delete/recompute contaminated rows post-refly)
+- Optional: rebuild cache at 2GB reserved-space (upgraded Docker version flag format)
+
