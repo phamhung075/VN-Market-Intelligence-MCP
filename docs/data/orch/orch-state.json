@@ -6953,14 +6953,14 @@
         "id": "CI-RED-8081e584-FIX",
         "title": "CI-RED-8081e584-FIX — CI RED: bun test (3 files: 1293a-signal-type-safety, 1295a-signal-builders, VPT-1-vps-proxy-health-endpoint)",
         "owner": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "DONE",
         "zone": "apps/mcp-server/",
         "priority": "high",
         "created_at": "2026-06-12T19:29:28Z",
         "created_by": "po",
         "sprint": "CI-RED-8081e584",
         "desc": "CI RED on origin/main HEAD 8081e5845932a9c25a906760d652224311103957, run 27369577099. bun test job = failure: 12577 pass / 53 skip / 7 fail across 3 FAILED FILES: src/__tests__/1293a-signal-type-safety.test.ts, src/__tests__/1295a-signal-builders.test.ts, src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts. RECONCILED: NOT the known CLUSTER-A 1338-sprint-goal-retrospective debt (that file no longer fails — resolved by CI-RED-RECONCILE DONE) and NOT the ~170 frontend vitest debt (these are mcp-server bun-test files). This is a NEW regression adjacent to recent signal-type-safety / signal-builders / vps-proxy-health work (post_agent_signal validator + EVIDENCE-ACCUM signal-builder changes). Fail count (7) << baseline 348, but job RED because these 3 specific files fail — fix the 3 files.",
-        "status_note": "FIXED — commit b4eeaf49 on main. Root causes: (1) SYS-FUNC-05 (815ccaed) made UrgentNewsFindingDataSchema all-optional breaking 1293a+1295a; fixed by restoring strict schema + adding UrgentNewsLooseSchema for post_agent_signal validator. (2) getVpsProxyHealth used datetime('now') wall clock, not injectable now; fixed with parameterised cutoff. Evidence: 73/73 pass (1293a+1295a+VPT-1+1982-CHIJ), neighbor 56/56, tsc clean, toolCount=157, schedulerCount=79. Verification gate: ci_green_on_subsequent_push (HEAD=b4eeaf49).",
+        "status_note": "QA APPROVED 2026-06-12. CI GREEN (run 27440565189, commit 8a2ef725): 12767 pass / 53 skip / 0 fail. 6 fixed files + 2 neighbor suites all pass locally. tsc clean. DDD/security/mock-guard PASS. toolCount=157 schedulerCount=79. Report: reports/TASK_REPORT_CI-RED-8081e584-FIX.md. DJ: sprint-CI-RED-8081e584-qa.md.",
         "implementation_record": {
           "service": "mcp-server",
           "zone": "apps/mcp-server/",
@@ -6980,7 +6980,7 @@
           "docs_updated": "NONE",
           "graphify": "skipped (no docs impacted)"
         },
-        "_updated_at": "2026-06-12T19:55:00Z"
+        "_updated_at": "2026-06-12T20:24:58Z"
       }
     ],
     "archive": [],
