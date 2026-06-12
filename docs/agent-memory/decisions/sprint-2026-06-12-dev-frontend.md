@@ -25,3 +25,13 @@
 - test scope: pure data-layer tests (entry count, interface shape, spot-check against known SSOT values) — no DOM render test needed for codegen output
 **why-decision:** Option B (static file parse, no HTTP) is correct: que-reference.js is committed static artifact, zero docker dependency at codegen time. The indexOf+slice approach is robust vs comment variance.
 **why-change:** no change from architect plan
+
+---
+
+### STEP dev-frontend-S3 · dev-frontend · 2026-06-12T15:45:00Z
+**task-id:** FE-CORPEVENTS-TICKER-FILTER
+**what-done:** Extended filterEvents to accept optional selectedTicker (cascade: category→ticker); added selectedTicker useState + distinctCodes derivation from payload; rendered ticker `<select>` integrated into existing filter bar; 31 new tests (AC-7, cascade, distinctCodes).
+**what-considered:**
+- only path: payload events[].code is SSOT → [...new Set(...)].sort() is the single correct source; no watchlist read, no API param; backward-compat optional param default 'Tất cả'; filter composed as category THEN ticker per AC-4
+**why-decision:** PO ruling is binding: client-side only, payload SSOT. The optional-param approach (default 'Tất cả') satisfies AC-3 (signature UNCHANGED at call sites) with zero migration of existing callers.
+**why-change:** no change from PM plan
