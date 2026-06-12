@@ -11,15 +11,15 @@ How to create a new agent in this system. All patterns extracted from live agent
 | # | Section | File | Lines |
 |---|---------|------|-------|
 | 1 | Architecture Overview | (below) | ~12 |
-| 2-3 | Two-Zone Folder Design + Per-Agent File Map | [guide-zones.md](../guides/guide-zones.md) | ~114 |
-| 4 | Lazy-Load Protocol | [guide-lazy-load.md](../guides/guide-lazy-load.md) | ~213 |
-| 5 | Agent Definition File | [guide-agent-definition.md](../guides/guide-agent-definition.md) | ~357 |
-| 6 | Flow File Templates | [guide-flows.md](../guides/guide-flows.md) | ~192 |
-| 7-12 | Notebook, Cross-Team, Reports, Maintenance, Registry, Responsibility | [guide-agent-ops.md](../guides/guide-agent-ops.md) | ~233 |
-| 13-14 | Error Boundary & Signal Bus | [guide-error-signals.md](../guides/guide-error-signals.md) | ~53 |
-| 15-16 | Skills Catalog & Registration Checklist | [guide-skills-registration.md](../guides/guide-skills-registration.md) | ~53 |
+| 2-3 | Two-Zone Folder Design + Per-Agent File Map | [guide-zones.md](guides/guide-zones.md) | ~114 |
+| 4 | Lazy-Load Protocol | [guide-lazy-load.md](guides/guide-lazy-load.md) | ~213 |
+| 5 | Agent Definition File | [guide-agent-definition.md](guides/guide-agent-definition.md) | ~357 |
+| 6 | Flow File Templates | [guide-flows.md](guides/guide-flows.md) | ~192 |
+| 7-12 | Notebook, Cross-Team, Reports, Maintenance, Registry, Responsibility | [guide-agent-ops.md](guides/guide-agent-ops.md) | ~233 |
+| 13-14 | Error Boundary & Signal Bus | [guide-error-signals.md](guides/guide-error-signals.md) | ~53 |
+| 15-16 | Skills Catalog & Registration Checklist | [guide-skills-registration.md](guides/guide-skills-registration.md) | ~53 |
 | 17 | Quick-Start Recipes | (below) | ~24 |
-| 18 | Autonomous Quality Patterns | [guide-quality.md](../guides/guide-quality.md) | ~274 |
+| 18 | Autonomous Quality Patterns | [guide-quality.md](guides/guide-quality.md) | ~274 |
 
 ---
 
