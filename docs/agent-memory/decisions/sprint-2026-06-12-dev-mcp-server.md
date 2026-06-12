@@ -40,3 +40,12 @@
 - open=0 estimate: set to close — best-effort; open≈close on VN stocks with ±7% daily limits
 **why-decision:** MIN(0,n)=0 perpetuates contamination indefinitely — must fix write boundary; migration covers all historical rows; estimate beats serving literal 0 to frontend
 **why-change:** user extended scope to ALL tickers and ALL partial-zero variants (open=0 class added)
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-12T19:55:00Z
+**task-id:** CI-RED-8081e584-FIX
+**what-done:** Restored UrgentNewsFindingDataSchema strict (headline/source/severity required); extracted UrgentNewsLooseSchema for post_agent_signal validator; added now:Date param to getVpsProxyHealth with parameterised 24h cutoff.
+**what-considered:**
+- Option A (rejected): weaken test assertions to match loose schema — PO spec forbids weakening
+- Option B (chosen): dual-schema — strict for type-safety, loose for post_agent_signal (preserves SYS-FUNC-05)
+**why-decision:** Strict schema is the 1293a/1295a contract; loose schema is the SYS-FUNC-05 requirement — they are separate concerns. Dual-schema is the correct DDD boundary.
+**why-change:** no change from plan

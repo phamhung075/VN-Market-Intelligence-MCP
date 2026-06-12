@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-12 · CI-RED-8081e584-FIX — Restore UrgentNews strict schema + injectable VPS 24h window — REVIEW
+
+**Task:** CI-RED-8081e584-FIX | Sprint: CI-RED-8081e584 | Priority: HIGH | Zone: apps/mcp-server/
+**Root cause (3 failures):** (1) SYS-FUNC-05 commit 815ccaed made UrgentNewsFindingDataSchema all-optional to support minimal urgent_news posts — broke 1293a strict-contract tests + 1295a builder validation. (2) getVpsProxyHealth used SQLite datetime('now','-24 hours') wall clock, not the injected `now` param → test (c) historical timestamp fell outside 24h window.
+**Fix:** Restored strict UrgentNewsFindingDataSchema (headline/source/severity required). Extracted UrgentNewsLooseSchema (all-optional, passthrough) for agentSignalTools.ts SIGNAL_TYPE_VALIDATORS — SYS-FUNC-05 intent preserved. Added `now:Date` param to getVpsProxyHealth; cutoff computed as ISO string bound in parameterised SQL. vpsProxyHealthHandler passes injected now through.
+**Tests:** 73/73 pass (1293a×32 + 1295a×16 + VPT-1×7 + 1982-CHIJ×18); neighbor 56/56. tsc clean. toolCount=157. schedulerCount=79.
+**Commit:** b4eeaf49
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, CI-RED 7 fails resolved | HEALTHY
+
+---
+
 ## 2026-06-12 · CONTAM-9 — low=0/open=0 partial-zero repair + write boundary fix — REVIEW
 
 **Task:** CONTAM-9 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: scripts/migrations/ + apps/mcp-server/

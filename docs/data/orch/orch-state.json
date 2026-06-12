@@ -6952,15 +6952,35 @@
       {
         "id": "CI-RED-8081e584-FIX",
         "title": "CI-RED-8081e584-FIX — CI RED: bun test (3 files: 1293a-signal-type-safety, 1295a-signal-builders, VPT-1-vps-proxy-health-endpoint)",
-        "owner": "po",
-        "status": "TODO",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
         "zone": "apps/mcp-server/",
         "priority": "high",
         "created_at": "2026-06-12T19:29:28Z",
         "created_by": "po",
         "sprint": "CI-RED-8081e584",
         "desc": "CI RED on origin/main HEAD 8081e5845932a9c25a906760d652224311103957, run 27369577099. bun test job = failure: 12577 pass / 53 skip / 7 fail across 3 FAILED FILES: src/__tests__/1293a-signal-type-safety.test.ts, src/__tests__/1295a-signal-builders.test.ts, src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts. RECONCILED: NOT the known CLUSTER-A 1338-sprint-goal-retrospective debt (that file no longer fails — resolved by CI-RED-RECONCILE DONE) and NOT the ~170 frontend vitest debt (these are mcp-server bun-test files). This is a NEW regression adjacent to recent signal-type-safety / signal-builders / vps-proxy-health work (post_agent_signal validator + EVIDENCE-ACCUM signal-builder changes). Fail count (7) << baseline 348, but job RED because these 3 specific files fail — fix the 3 files.",
-        "status_note": "AC (verification_gate=ci_green_on_subsequent_push): gh run list --branch main --limit 3 shows conclusion=success for a push AFTER 8081e5845932a9c25a906760d652224311103957. Priority: high. Failing jobs: bun test. WIP NOTE: dev-mcp-server zone saturated (CONTAM-9 QA-in-flight + FU-SCHEMA-DRIFT-P8 REWORK); router sequence this after CONTAM-9 clears QA — CI-RED is highest priority (blocks merges) so it preempts FU-SCHEMA-DRIFT-P8 REWORK."
+        "status_note": "FIXED — commit b4eeaf49 on main. Root causes: (1) SYS-FUNC-05 (815ccaed) made UrgentNewsFindingDataSchema all-optional breaking 1293a+1295a; fixed by restoring strict schema + adding UrgentNewsLooseSchema for post_agent_signal validator. (2) getVpsProxyHealth used datetime('now') wall clock, not injectable now; fixed with parameterised cutoff. Evidence: 73/73 pass (1293a+1295a+VPT-1+1982-CHIJ), neighbor 56/56, tsc clean, toolCount=157, schedulerCount=79. Verification gate: ci_green_on_subsequent_push (HEAD=b4eeaf49).",
+        "implementation_record": {
+          "service": "mcp-server",
+          "zone": "apps/mcp-server/",
+          "files_modified": [
+            "apps/mcp-server/src/domain/signals/signalTypes.ts — restore strict UrgentNewsFindingDataSchema + add UrgentNewsLooseSchema",
+            "apps/mcp-server/src/domain/signals/index.ts — export UrgentNewsLooseSchema",
+            "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts — swap to UrgentNewsLooseSchema in SIGNAL_TYPE_VALIDATORS",
+            "apps/mcp-server/src/infrastructure/db/vpsPushLogStore.ts — add now:Date param to getVpsProxyHealth, parameterise 24h cutoff",
+            "apps/mcp-server/src/interface/mcp/routes/vpsProxyHealthHandler.ts — pass now to getVpsProxyHealth"
+          ],
+          "tests_written": "0 new — all 7 existing tests now pass (fixes to production code only)",
+          "git_commits": "b4eeaf49 fix(mcp-server/CI-RED-8081e584): restore UrgentNews strict schema + testable VPS 24h window",
+          "type_check": "clean (bun tsc --noEmit)",
+          "bun_test": "73 pass / 0 fail (1293a×32 + 1295a×16 + VPT-1×7 + 1982-CHIJ×18); neighbor 56/56",
+          "tool_count": "157 tools — matches pre-task baseline",
+          "scheduler_count": "79 cron.schedule entries — matches pre-task baseline",
+          "docs_updated": "NONE",
+          "graphify": "skipped (no docs impacted)"
+        },
+        "_updated_at": "2026-06-12T19:55:00Z"
       }
     ],
     "archive": [],
