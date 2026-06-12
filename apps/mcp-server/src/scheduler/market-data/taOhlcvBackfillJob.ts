@@ -28,6 +28,10 @@
 
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
+import {
+  normalizeOhlcvToVnd,
+  validateOhlcvUnit,
+} from "../../domain/services/market-data/ohlcvUnitGuard.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -249,13 +253,58 @@ export async function runTaOhlcvBackfill(
       ) {
         continue;
       }
+
+      // CONTAM-4: VNDIRECT api-finfo v4/stock_prices returns THOUSAND-VND (live-verified:
+      // VCB=62.3, VNH=0.9, DAG=1.4 — all < 100 floor). Normalize WHOLE row ×1000 before
+      // upsert. normalizeOhlcvToVnd is a no-op when the row is already full-VND.
+      // NEVER skip a sub-100 row here — it is a valid thousand-scale record, not garbage.
+      let norm: { open: number; high: number; low: number; close: number };
+      try {
+        norm = normalizeOhlcvToVnd("stock", {
+          open: r.open,
+          high: r.high,
+          low: r.low,
+          close: r.close,
+        });
+      } catch (normErr) {
+        logger.error(
+          `[taOhlcvBackfill] normalize error ${r.code} ${r.date}: ${normErr instanceof Error ? normErr.message : String(normErr)}`,
+        );
+        continue;
+      }
+
+      // Guard post-normalize values — a still-out-of-range row after normalization
+      // indicates genuinely corrupt data (e.g. all-zero row); log + skip, never throw.
+      try {
+        const guardResult = validateOhlcvUnit(
+          r.code,
+          "stock",
+          norm.open,
+          norm.high,
+          norm.low,
+          norm.close,
+        );
+        if (!guardResult.valid) {
+          logger.error(
+            `[taOhlcvBackfill] post-normalize guard rejected ${r.code} ${r.date}: ${guardResult.reason}`,
+          );
+          continue;
+        }
+      } catch (guardErr) {
+        logger.error(
+          `[taOhlcvBackfill] guard threw ${r.code} ${r.date}: ${guardErr instanceof Error ? guardErr.message : String(guardErr)}`,
+        );
+        continue;
+      }
+
+      // Upsert normalized full-VND values — self-heals any contaminated seed rows.
       upsertStmt.run(
         r.code,
         r.date,
-        r.open,
-        r.high,
-        r.low,
-        r.close,
+        norm.open,
+        norm.high,
+        norm.low,
+        norm.close,
         r.nmVolume ?? 0,
       );
     }

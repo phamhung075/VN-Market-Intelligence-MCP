@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-12T08:00:19Z",
+  "_updated_at": "2026-06-12T08:11:47Z",
   "_updated_by": "architect",
   "head": {
     "status": "review",
@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T11:20:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-12T08:11:47Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -6835,24 +6835,10 @@
         "created_by": "pm"
       },
       {
-        "id": "CONTAM-1",
-        "type": "FEATURE",
-        "owner": "dev-mcp-server",
-        "status": "ASSIGNED",
-        "size": "S",
-        "zone": "apps/mcp-server/src/domain/services/",
-        "sprint": "OHLCV-UNIT-CONTAM",
-        "priority": "critical",
-        "depends": [],
-        "title": "Create ohlcvUnitGuard.ts (validateOhlcvUnit + normalizeOhlcvToVnd) pure domain service + unit tests",
-        "handoff": "docs/handoffs/TASK_CONTAM_1.md",
-        "created_at": "2026-06-12T08:00:19Z"
-      },
-      {
         "id": "CONTAM-2",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "ASSIGNED",
+        "status": "IN_PROGRESS",
         "size": "S",
         "zone": "apps/mcp-server/src/interface/mcp/routes/",
         "sprint": "OHLCV-UNIT-CONTAM",
@@ -6884,7 +6870,7 @@
         "id": "CONTAM-4",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "ASSIGNED",
+        "status": "REVIEW",
         "size": "S",
         "zone": "apps/mcp-server/src/scheduler/market-data/",
         "sprint": "OHLCV-UNIT-CONTAM",
@@ -8932,11 +8918,11 @@
     ],
     "head": {
       "next": "dev-mcp-server",
-      "task": "CONTAM-1",
+      "task": "CONTAM-2+CONTAM-3+CONTAM-4+CONTAM-5",
       "sprint": "OHLCV-UNIT-CONTAM",
-      "set_at": "2026-06-12T08:00:19Z",
+      "set_at": "2026-06-12T08:11:47Z",
       "set_by": "po",
-      "note": "PM decomposed 7 tasks (handoffs in docs/handoffs/). PO REJECTED+REWROTE CONTAM-4 handoff: PM applied amendment label but coded skip-not-normalize; corrected to normalize thousand-VND->full-VND + added normalizeOhlcvToVnd to CONTAM-1. Start CONTAM-1; then CONTAM-2/3/4/5 parallel (WIP cap); CONTAM-6 off-hours after CONTAM-2+4 deployed; CONTAM-7 last."
+      "note": "CONTAM-1 DONE_VERIFIED (committed 5762ec3d). Dispatch CONTAM-2/3/4/5 in PARALLEL (disjoint files, all depend only on CONTAM-1, WIP cap honored). CONTAM-4 = PO-rewritten handoff: NORMALIZE VNDIRECT thousand-VND->full-VND (normalizeOhlcvToVnd now exists), never skip. Then CONTAM-6 off-hours after 2+4 deployed; CONTAM-7 last."
     },
     "done_verified": [
       {
@@ -8964,6 +8950,26 @@
         "created_at": "2026-06-11T08:34:59Z",
         "created_by": "po",
         "note": "[po triage 2026-06-11T08:34:59Z] Created from F1 triage. Evidence: alert-engine cmd/server/main.go:40 opens alert_engine.db (own DB); router.go /evaluate = validation only; mcp-server cronConfig.ts has the real writers; alerts.ts sent_by DEFAULT 'server' + foreignFlowAlertJob/taAlertScanJob/bbAlertScanJob INSERT INTO alerts. Dev snapshot market.db cron_job_runs only has pollNews (newest 2026-06-09) so it CANNOT prove writer-dead — MUST verify on live container, not snapshot. NOT in_progress (WIP<=2). | [dev-mcp-server 2026-06-11T08:45Z] IN_PROGRESS: live probe confirms cron registered + firing every 15min (success telemetry present). Root cause found: URL mismatch — client calls /indicators, TA service serves /ta/indicators; field mismatch code vs symbol; response array-vs-scalar. taAlertScan + bbAlertScan: success_count=0 EVERY cycle = 0 RSI/BB alerts ever fired. foreignFlowAlertJob: healthy, rows_written=0 = no HIGH signal today. Fix: clients.ts URL + field + response mapping + pass closes from local DB. | [dev-mcp-server 2026-06-11T09:00Z] DONE/VERIFIED: root cause confirmed + fixed. URL /indicators→/ta/indicators, code→symbol field, array→scalar response mapping, CANDLE_SQL market_prices_history→daily_ohlcv, closes array passed to TA service. Tests: 42 pass/0 fail (tsc clean). Rebuild required (ops). foreignFlowAlertJob: healthy-quiet (rows_written=0 today = no HIGH signal). TASK-17 Alerts page UNBLOCKED: writer now reaches live DB; table has 998 rows live; new RSI/BB alerts will fire when extreme conditions occur."
+      },
+      {
+        "id": "CONTAM-1",
+        "title": "Create ohlcvUnitGuard.ts domain service + unit tests",
+        "type": "FEATURE",
+        "owner": "dev-mcp-server",
+        "status": "DONE_VERIFIED",
+        "size": "S",
+        "zone": "apps/mcp-server/src/domain/services/",
+        "priority": "critical",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "created_at": "2026-06-12T08:00:00Z",
+        "started_at": "2026-06-12T11:00:00Z",
+        "completed_at": "2026-06-12T11:20:00Z",
+        "po_verdict": "ACCEPTED",
+        "po_signed_at": "2026-06-12T08:11:47Z",
+        "po_note": "PO read committed ohlcvUnitGuard.ts: normalizeOhlcvToVnd does WHOLE-ROW scaling (L170-175, never per-field) — matches amendment; validateOhlcvUnit 5 rules correct. 17 tests green, tsc clean. Foundation unblocks CONTAM-2/3/4/5.",
+        "commits": [
+          "5762ec3d"
+        ]
       }
     ],
     "review": [
@@ -8981,20 +8987,6 @@
         "updated_at": "2026-06-11T19:33:43Z",
         "updated_by": "architect",
         "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md"
-      },
-      {
-        "id": "CONTAM-1",
-        "title": "Create ohlcvUnitGuard.ts domain service + unit tests",
-        "type": "FEATURE",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "size": "S",
-        "zone": "apps/mcp-server/src/domain/services/",
-        "priority": "critical",
-        "sprint": "OHLCV-UNIT-CONTAM",
-        "created_at": "2026-06-12T08:00:00Z",
-        "started_at": "2026-06-12T11:00:00Z",
-        "completed_at": "2026-06-12T11:20:00Z"
       }
     ]
   },
@@ -9112,6 +9104,14 @@
       "decision": "REJECTED + rewrote CONTAM-4 handoff before dev dispatch; registered 7 CONTAM tasks + 1 backlog into board; head->dev-mcp-server CONTAM-1.",
       "what-considered": "(a) accept PM handoffs as-is — REJECTED: CONTAM-4 had the amendment HEADER but the code pattern still `continue`-skipped (range-skip would drop ALL VNDIRECT rows <100 floor, silently break backfill, never repair seed) and still repeated the falsified 'VNDIRECT=full-VND' claim; (b) bounce whole sprint back to PM — REJECTED: only CONTAM-4 (+ a CONTAM-1 helper add) was wrong, rest sound; surgical fix faster; (c) PO rewrite CONTAM-4 to normalize-then-guard + add normalizeOhlcvToVnd helper to CONTAM-1 — CHOSEN.",
       "why-change": "Amendment substance (normalize, not skip) was not implemented by PM despite label; guard-skip on thousand-VND VNDIRECT data = data-loss + backfill outage."
+    },
+    {
+      "ts": "2026-06-12T08:11:47Z",
+      "by": "po",
+      "task_id": "CONTAM-1",
+      "decision": "CONTAM-1 ACCEPTED (read source, not badge); deduped stale ASSIGNED backlog twin; head->dev for CONTAM-2/3/4/5 parallel wave.",
+      "what-considered": "only path: foundation pure-fn verified correct (whole-row normalize), green tests + tsc clean; no rework needed.",
+      "why-change": "no change from plan"
     }
   ]
 }

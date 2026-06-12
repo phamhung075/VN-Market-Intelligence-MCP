@@ -18,6 +18,10 @@
 import type { Database } from "bun:sqlite";
 import { BROWSER_UA } from "./browserHeaders.js";
 import { currentDataEnv } from "../envCheck.js";
+import {
+  normalizeOhlcvToVnd,
+  validateOhlcvUnit,
+} from "../../domain/services/market-data/ohlcvUnitGuard.js";
 
 const VNDIRECT_STOCK_PRICES_BASE = "https://api-finfo.vndirect.com.vn/v4";
 
@@ -191,13 +195,57 @@ export async function runOhlcvBackfill(
             r.low == null ||
             r.close == null
           ) continue;
+
+          // CONTAM-4: VNDIRECT api-finfo v4/stock_prices returns THOUSAND-VND (live-verified
+          // 2026-06-12: VNH=2.7, KSD=4.9, NQB=10.1 — same endpoint as Writer D, same scale).
+          // Normalize WHOLE row ×1000 before upsert. no-op when row is already full-VND.
+          // NEVER skip a sub-100 stock row here — it is thousand-scale, not garbage.
+          let norm: { open: number; high: number; low: number; close: number };
+          try {
+            norm = normalizeOhlcvToVnd("stock", {
+              open: r.open,
+              high: r.high,
+              low: r.low,
+              close: r.close,
+            });
+          } catch (normErr) {
+            console.error(
+              `[ohlcvBackfill] normalize error ${r.code} ${r.date}: ${normErr instanceof Error ? normErr.message : String(normErr)}`,
+            );
+            continue;
+          }
+
+          // Guard post-normalize values — still-out-of-range after normalization is
+          // genuinely corrupt (e.g. all-zero row); log + skip, never throw.
+          try {
+            const guardResult = validateOhlcvUnit(
+              r.code,
+              "stock",
+              norm.open,
+              norm.high,
+              norm.low,
+              norm.close,
+            );
+            if (!guardResult.valid) {
+              console.error(
+                `[ohlcvBackfill] post-normalize guard rejected ${r.code} ${r.date}: ${guardResult.reason}`,
+              );
+              continue;
+            }
+          } catch (guardErr) {
+            console.error(
+              `[ohlcvBackfill] guard threw ${r.code} ${r.date}: ${guardErr instanceof Error ? guardErr.message : String(guardErr)}`,
+            );
+            continue;
+          }
+
           upsert.run(
             r.code,
             r.date,
-            r.open,
-            r.high,
-            r.low,
-            r.close,
+            norm.open,
+            norm.high,
+            norm.low,
+            norm.close,
             r.nmVolume ?? 0,
             dataEnv,
           );
