@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T11:35:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-12T09:28:21Z",
+    "_updated_by": "dev-frontend",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -6783,7 +6783,7 @@
         "id": "REAUDIT-FE-002",
         "title": "NFR-C-5 foreign-flow stale_fields: column header badge",
         "owner": "dev-frontend",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "zone": "apps/frontend/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "high",
@@ -6801,7 +6801,7 @@
         "id": "REAUDIT-FE-003",
         "title": "NFR-C-4 stockPerformance direction: arrow rendering",
         "owner": "dev-frontend",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "zone": "apps/frontend/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "medium",
@@ -6883,7 +6883,7 @@
         "id": "CONTAM-6",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "ASSIGNED",
+        "status": "IN_PROGRESS",
         "size": "M",
         "zone": "scripts/migrations/",
         "sprint": "OHLCV-UNIT-CONTAM",

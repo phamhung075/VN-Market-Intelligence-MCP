@@ -74,6 +74,7 @@ export interface ForeignFlowDto {
   summary: ForeignFlowSummary;
   count: number;
   fetchedAt: string;
+  stale_fields?: string[]; // NFR-C-5: fields structurally unavailable at source (>50% null)
 }
 
 // ---------------------------------------------------------------------------
@@ -87,6 +88,7 @@ export interface LoaderData {
   count: number;
   fetchedAt: string;
   error: string | null;
+  stale_fields: string[]; // NFR-C-5: always an array, empty when all fields are available
 }
 
 // ---------------------------------------------------------------------------
@@ -112,6 +114,7 @@ export async function fetchForeignFlowData(
   let count = 0;
   let fetchedAt = new Date().toISOString();
   let error: string | null = null;
+  let stale_fields: string[] = [];
 
   try {
     const qs = new URLSearchParams();
@@ -137,6 +140,8 @@ export async function fetchForeignFlowData(
         count = typeof dto.count === "number" ? dto.count : items.length;
         fetchedAt =
           typeof dto.fetchedAt === "string" ? dto.fetchedAt : fetchedAt;
+        // NFR-C-5: parse stale_fields — default to [] when absent (backward compat)
+        stale_fields = Array.isArray(dto.stale_fields) ? dto.stale_fields : [];
         summary =
           dto.summary !== null &&
           typeof dto.summary === "object" &&
@@ -169,7 +174,34 @@ export async function fetchForeignFlowData(
         : "Không thể kết nối tới máy chủ dữ liệu khối ngoại";
   }
 
-  return { tradingDate, items, summary, count, fetchedAt, error };
+  return { tradingDate, items, summary, count, fetchedAt, error, stale_fields };
+}
+
+// ---------------------------------------------------------------------------
+// NFR-C-5 — stale_fields helpers (exported for testing)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when `field` is listed in `stale_fields`.
+ * Safe when stale_fields is undefined (backward compat — server not yet rebuilt).
+ */
+export function isFieldStale(
+  field: string,
+  staleFields: string[] | undefined
+): boolean {
+  if (!staleFields) return false;
+  return staleFields.includes(field);
+}
+
+/**
+ * Returns the Vietnamese badge label "Không có dữ liệu" when the field is stale,
+ * or empty string when the field has data.
+ */
+export function staleColumnLabel(
+  field: string,
+  staleFields: string[] | undefined
+): string {
+  return isFieldStale(field, staleFields) ? "Không có dữ liệu" : "";
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {
@@ -448,7 +480,7 @@ function SortHeader({
 // ---------------------------------------------------------------------------
 
 export default function ForeignFlowPage() {
-  const { tradingDate, items, summary, count, fetchedAt, error } =
+  const { tradingDate, items, summary, count, fetchedAt, error, stale_fields } =
     useLoaderData<typeof loader>();
 
   const [sortKey, setSortKey] = useState<SortKey>("foreignVolume");
@@ -559,10 +591,20 @@ export default function ForeignFlowPage() {
                   onClick={handleSort}
                 />
                 <th className="px-3 py-2 font-medium text-slate-400 whitespace-nowrap">
-                  Tỷ lệ sở hữu
+                  <span>Tỷ lệ sở hữu</span>
+                  {isFieldStale("currentHoldingRatio", stale_fields) && (
+                    <span className="ml-1.5 inline-block rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-normal text-slate-400 border border-slate-600">
+                      Không có dữ liệu
+                    </span>
+                  )}
                 </th>
                 <th className="px-3 py-2 font-medium text-slate-400 whitespace-nowrap">
-                  Vốn hóa
+                  <span>Vốn hóa</span>
+                  {isFieldStale("marketCapBn", stale_fields) && (
+                    <span className="ml-1.5 inline-block rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-normal text-slate-400 border border-slate-600">
+                      Không có dữ liệu
+                    </span>
+                  )}
                 </th>
               </tr>
             </thead>
