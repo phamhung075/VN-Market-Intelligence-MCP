@@ -22,3 +22,11 @@
 - only: no SQL change needed — pure in-memory array scan, no hot path concern (~103 rows × 3 fields = O(N)).
 **why-decision:** allItems is the authoritative dataset for column-level availability; using the display-limited slice would give wrong signal if limit < row-count. Strict >50% threshold from spec (exactly 50% not stale).
 **why-change:** no change from plan
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-12T08:54:00Z
+**task-id:** REAUDIT-004
+**what-done:** Re-run after dead session: confirmed implementation from S1 was present but uncommitted; wrote 11 unit tests (AC-1..AC-10 + null guard) and committed both files.
+**what-considered:**
+- only: verify existing uncommitted code is correct before adding tests — avoids rewriting work.
+**why-decision:** Previous session died before commit; code was correct (tsc clean, logic matches spec); tests were missing; added and committed both together per G12 DoD gate.
+**why-change:** no change from plan — re-run of same task, same approach confirmed correct.

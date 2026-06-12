@@ -94,3 +94,30 @@ Direction is a pure sign derivation from changePct. No business logic, no domain
 - Architect brief: `docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md`
 - BA spec: `docs/handoffs/SHIP-WAVE-REAUDIT-BA-spec.md` § A-10
 - Zone standard: `docs/policies/dev-standards.md`
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/marketSummaryHandler.ts:166 — add StockPerformanceItem.direction field + deriveDirection() helper + buildDetail() map wire`
+  - `apps/mcp-server/src/__tests__/REAUDIT-004-stock-perf-direction.test.ts (NEW) — 11 tests for AC-1..AC-10 + null guard`
+- **Tests written:** `apps/mcp-server/src/__tests__/REAUDIT-004-stock-perf-direction.test.ts` — 11 assertions, GREEN
+- **Git commits:** `a22d2257 feat(mcp-server/REAUDIT-004): add direction field to stockPerformance items (NFR-C-4)`
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 11 pass / 0 fail (REAUDIT-004 file); 82 pass / 0 fail (REAUDIT-002/003/004 + TASK17-SUMMARIES combined)
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 79 cron.schedule entries — matches pre-task baseline
+- **Docs updated:** NONE (pure interface-layer add, no architecture doc impact)
+- **Graphify:** skipped (no docs impacted)
+
+### Gate Evidence
+
+| Gate | Command | Result |
+|---|---|---|
+| bun test (REAUDIT-004) | `bun test src/__tests__/REAUDIT-004-stock-perf-direction.test.ts` | 11 pass / 0 fail |
+| tsc | `bun tsc --noEmit` | exit 0, no errors |
+| Tool count | `bun scripts/gen-project-stats.ts --dry-run` | 157 tools |
+| Scheduler count | `grep -rc "cron\.schedule" apps/mcp-server/src/scheduler/` | 79 |

@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-12 · REAUDIT-004 — stockPerformance direction field (NFR-C-4) — REVIEW
+
+**Task:** REAUDIT-004 | Sprint: SHIP-WAVE-REAUDIT | Priority: MEDIUM | Zone: apps/mcp-server/
+**Change:** `interface/mcp/routes/marketSummaryHandler.ts` — added `direction: "up" | "down" | "flat"` to `StockPerformanceItem` type; added exported `deriveDirection(changePct)` pure helper (null/undefined/NaN → "flat"); wired into `buildDetail()` map: passes raw changePct through `deriveDirection()` rather than defaulting to 0.
+**Key decision:** Derived at read time in interface layer (no DB change). `deriveDirection` handles null/undefined/NaN edge cases gracefully. Previous session had already partially landed the implementation in the handler; this run confirmed the code was correct, wrote missing tests, and committed.
+**Tests:** `REAUDIT-004-stock-perf-direction.test.ts` — 11 pass / 0 fail (AC-1..AC-10 + null JSON guard). Combined 82 pass / 0 fail with REAUDIT-002/003 + TASK17-SUMMARIES. tsc clean. toolCount=157. schedulerCount=79.
+**Commit:** a22d2257
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, 11 new tests GREEN | HEALTHY
+
+---
+
 ## 2026-06-12 · CONTAM-3 — Writer B /api/push-ohlcv-history unit guard — REVIEW
 
 **Task:** CONTAM-3 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/
