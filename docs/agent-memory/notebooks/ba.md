@@ -1,20 +1,18 @@
 # BA — Notebook
 
-**Last updated:** 2026-06-09 | **Sprint:** BCTC-PROSE-EXTRACT
+**Last updated:** 2026-06-12 | **Sprint:** QUE-TOOLTIP-DRY
 
-## BCTC-PROSE-EXTRACT-BA · 2026-06-09
+## QUE-TOOLTIP-DRY-BA · 2026-06-12
 
-Spec complete. Task: BPE-BA-1. REQ file: `docs/handoffs/BCTC-PROSE-EXTRACT-BA-spec.md`. Zero PO blockers. 5 architect blockers. Recurring-bug-escalation=true — architect SPIKE mandatory before dev. NEXT: architect.
+Spec complete. Task: BA-QUE-TOOLTIP-DRY. REQ file: `docs/handoffs/QUE-TOOLTIP-DRY-BA-spec.md`. Zero PO blockers. 3 architect blockers. NEXT: architect.
 
 Key BA findings (raw-read, not relayed):
-- Root defect: `ocr_unit()` in `generic_md_table_extractor.py` prose branch declares `prose_lines: List[str] = []` then loops pages without ever appending. Returns `stitched_markdown: ""` always for prose units. Comment says "stored text suffices" but stored text is never read. Single-line bug.
-- Second layer: `bctcInspectHandler.ts` OCR serve query filters `page_type = 'table'` only — prose units are never returned as PEK hits, always fall to `pek_coverage_gap: true` path, which hits `pdf_extracted_text` legacy table with 46-vs-35 gap.
-- `pdf_extracted_text` gap (46 vs 35 pages): root cause unknown. Architect SPIKE must audit write path. Key candidates: `ocr_text_source.py`, `ocr_adapter.py`, `ocr_worker.py`.
-- Active uncommitted table-extraction work touches `extract_layout_first_usecase.py` (same file as prose fix). Patch order ruling required from architect (BLOCKER-3).
-- BLOCKER-1: `ocr_unit()` must receive stored OCR pages. Option A (pass as parameter, default None) recommended over Option B (inject port into function).
-- FR-4 AI tool: prose text may reach 15-30KB for thuyết minh sections. Context-window pagination strategy required in architect design.
-- NFR-3: prose units must return `rows_for_gate: []` — all 5 invariant gates have empty-input early exits (verified in source).
-- `_ALLOW_PROSE_IN_TABLE_UNIT = True` flag: prose-in-table pages flow through table path, not affected by FR-1.
+- Render sites: 2 pages (dashboard.analysis = 5 call sites all GUARDED via QueName; dashboard.kinh-dich-signals SnapshotRow = UNGUARDED plain spans). No quẻ render in conviction-history, market-summaries, index, intel.
+- QueName.tsx already exists as SSOT shared component with Radix tooltip. Imports QUE_DESCRIPTIONS from scripts/gen-que-descriptions.ts → que-descriptions.generated.ts.
+- FR-1 (easy): SnapshotRow migration — swap plain spans to `<QueName hexagram={item.hexagramNumber} name={item.hexagramName} />`. hexagramNumber already in KinhDichSnapshotItem DTO.
+- FR-2 (data pipeline): PO SSOT = kinh-dich-service que-reference.js. Current codegen source = mcp-server hexagramLibrary.ts. Alignment path = BLOCKER-1 (architect decides endpoint vs local-mirror).
+- BLOCKER-2: FlipRow renders fromHexagramName/toHexagramName as plain text — needs architect to confirm numeric ids available in KinhDichFlip DTO before scoping QueName migration.
+- BLOCKER-3: architect must specify which VI fields to show in tooltip (recommended: coreMeaning.vi + marketTrendLabel.vi only; stateInterpretation.vi too verbose for hover).
 
 **Last updated:** 2026-06-08 | **Sprint:** DEEPFETCH-RAG-REDESIGN
 
