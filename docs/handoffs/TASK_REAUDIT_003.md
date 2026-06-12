@@ -131,3 +131,21 @@ If most items lack the field, the column is effectively unusable for decision-ma
 **Zone health:** bun test 0 fail (targeted), 157 tools intact, scheduler 78 cron.schedule | HEALTHY
 
 **Decision journal:** computeStaleFields scans allItems (full day set, not the display-limited items slice) — consistent with how buildSummary already uses allItems for authoritative counts. Parameterized SQL not needed here (pure in-memory array scan, no SQL). Fields checked: exactly the 3 structurally-absent fields identified in live probe (2026-06-11).
+
+---
+
+## [QA] Review Record · 2026-06-12T09:45:00Z
+
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_REAUDIT-003.md
+**DJ entry:** sprint-SHIP-WAVE-REAUDIT-qa.md § qa-S5
+
+**Evidence:**
+- bun test REAUDIT-003: 13 pass / 0 fail (QA-reproduced)
+- tsc --noEmit: exit 0 (QA-reproduced)
+- DDD: PASS (interface layer, no infra/application imports)
+- Security: PASS (no process.env, no secrets, mock-guard EXIT 0)
+- Live probe GET /api/foreign-flow?limit=5: stale_fields=["currentHoldingRatio","maxHoldingRatio","marketCapBn"] — all 3 expected null-column names populated; items pass-through intact
+- toolCount=157, schedulerCount=78 — unchanged
+
+**Status:** REAUDIT-003 → DONE

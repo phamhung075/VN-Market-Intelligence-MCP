@@ -121,3 +121,21 @@ Direction is a pure sign derivation from changePct. No business logic, no domain
 | tsc | `bun tsc --noEmit` | exit 0, no errors |
 | Tool count | `bun scripts/gen-project-stats.ts --dry-run` | 157 tools |
 | Scheduler count | `grep -rc "cron\.schedule" apps/mcp-server/src/scheduler/` | 79 |
+
+---
+
+## [QA] Review Record · 2026-06-12T09:45:00Z
+
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_REAUDIT-004.md
+**DJ entry:** sprint-SHIP-WAVE-REAUDIT-qa.md § qa-S6
+
+**Evidence:**
+- bun test REAUDIT-004: 11 pass / 0 fail (QA-reproduced)
+- tsc --noEmit: exit 0 (QA-reproduced)
+- DDD: PASS (interface layer, pre-existing infra import unchanged)
+- Security: PASS (mock-guard EXIT 0)
+- Live probe GET /api/market-summaries?id=weekly-2026-06-01: stockPerformance[0]={symbol:"VCB",changePct:-0.8,direction:"down"} — direction correct for negative changePct; 121 items all have direction field
+- toolCount=157, schedulerCount=79 — unchanged
+
+**Status:** REAUDIT-004 → DONE

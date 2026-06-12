@@ -1,0 +1,53 @@
+# Decision Journal — Sprint OHLCV-UNIT-CONTAM · qa
+
+**Sprint goal:** Fix OHLCV unit contamination at all 5 write points (A–E); sanity cron for ongoing detection.
+**Agent:** qa
+**Started:** 2026-06-12T09:30:00Z
+
+---
+
+### STEP qa-S1 · qa · 2026-06-12T09:40:00Z
+**task-id:** CONTAM-2
+**what-done:** QA gate for Writer A guard + ON CONFLICT open self-heal in pushPricesHandler.ts. APPROVED.
+**what-considered:**
+- 6 unit TCs GREEN (QA-reproduced). tsc clean. DDD PASS. Security PASS. mock-guard EXIT 0.
+- ON CONFLICT CASE WHEN open<100: self-heal confirmed at L171. Guard at L188-207 with try/catch, log.error + continue, RF-1 preserved.
+- TC-2 self-heal: contaminated open=0.9 overwritten by valid push. TC-6 RF-1: HTTP 200 even when all rows rejected.
+- Code-only gate (no live DB contamination probe needed — CONTAM-6 owns that, per concurrency note).
+**why-decision:** APPROVED. Both primary changes (guard + self-heal) confirmed in source. Tests green. No arch concern (interface layer, domain call permitted).
+**why-change:** No change from plan — only path: all checks green.
+
+### STEP qa-S2 · qa · 2026-06-12T09:40:00Z
+**task-id:** CONTAM-3
+**what-done:** QA gate for Writer B guard in /api/push-ohlcv-history (server.ts). APPROVED.
+**what-considered:**
+- XS task; no dedicated test file per handoff (CONTAM-7 covers Writer B integration). Targeted 37 TCs from sibling files GREEN.
+- server.ts L1169-1183: guard in bar loop with try/catch, log.error + skipped++ + continue, HTTP 200 preserved.
+- Smart-Skip applied for lack of dedicated test: XS handoff explicitly notes CONTAM-7 integration test as AC coverage; tsc green + code-level verification sufficient per precedent (same pattern as CONTAM-2 test strategy).
+**why-decision:** APPROVED. Code correctly implements the guard. HTTP 200 preservation confirmed in source. No regression (21 additive lines only).
+**why-change:** No change from plan — XS explicit scope correctly implemented.
+
+### STEP qa-S3 · qa · 2026-06-12T09:40:00Z
+**task-id:** CONTAM-4
+**what-done:** QA gate for Writers D & E normalize-then-guard in taOhlcvBackfillJob.ts + ohlcvBackfill.ts. APPROVED.
+**what-considered:**
+- 7 unit TCs GREEN (QA-reproduced). Full suite 12770/0. tsc clean. DDD PASS. Security PASS. mock-guard EXIT 0.
+- taOhlcvBackfillJob.ts L259-295 + ohlcvBackfill.ts L205-240: normalize-then-guard-then-upsert confirmed in both files.
+- Binding amendment complied: NORMALIZE ×1000 (not skip) — AC-D1 TC: VNH open=0.9 written as 900. AC-D5 TC: 35 rows written for clean batch (no data loss).
+- Writer E live-probe evidence in handoff: KSD=4.9, VHH=2.7 — thousand-VND confirmed; same pattern applied.
+- Contaminated row count not verified (CONTAM-6 owns repair migration; concurrency note prohibits row-level check here).
+**why-decision:** APPROVED. Both files implement normalize-then-guard correctly per binding amendment. Row-drop risk (forbidden skip) eliminated per TC-D5.
+**why-change:** No change from plan — binding amendment scope exactly followed.
+
+### STEP qa-S4 · qa · 2026-06-12T09:40:00Z
+**task-id:** CONTAM-5
+**what-done:** QA gate for ohlcvSanityCheckJob cron (contamination detection). APPROVED.
+**what-considered:**
+- 10 unit TCs GREEN (QA-reproduced). tsc clean. DDD PASS. Security PASS. mock-guard EXIT 0.
+- cronConfig.ts L190-194: ohlcvSanityCheck at "5 15 * * 1-5" confirmed. startScheduler.ts L587: cron.schedule registered.
+- Container startup log: "80 cron keys in CRONS map" — confirms cron active in live container.
+- grep -rc cron.schedule src/scheduler/ = 79 (matches developer baseline). gen-project-stats --dry-run: cronJobCount=79.
+- Scope clarification: CONTAM-5 = sanity-check cron (not Writer C guard, which is a separate concern). Developer correctly identified authoritative spec.
+- All-zero tolerance (TC-3) confirmed — no spam from BACKLOG_CONTAM_8 defect rows.
+**why-decision:** APPROVED. Cron registered, live in container, all 10 TCs green. Fail-loud pattern (sendBug on contamination) correct per arch brief Decision 4.
+**why-change:** No change from plan — scope note in developer handoff validated; cron registration confirmed in container.

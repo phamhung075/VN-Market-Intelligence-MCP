@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-12T08:11:47Z",
-  "_updated_by": "architect",
+  "_updated_at": "2026-06-12T09:45:00Z",
+  "_updated_by": "qa",
   "head": {
     "status": "review",
     "updated_at": "2026-06-12T08:20:00Z",
@@ -6710,54 +6710,6 @@
         "completed_at": "2026-06-11T22:30:00Z"
       },
       {
-        "id": "REAUDIT-003",
-        "title": "NFR-C-5 foreign-flow stale_fields: mcp-server implementation",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "sprint": "SHIP-WAVE-REAUDIT",
-        "priority": "high",
-        "type": "SPRINT-DEV",
-        "depends_on": [],
-        "size": "S",
-        "desc": "Add stale_fields: string[] to ForeignFlowResponse. Scan items after buildSummary(): if >50% null for field, add to array. Paired with FE-REAUDIT-2.",
-        "handoff_file": "docs/handoffs/TASK_REAUDIT_003.md",
-        "created_at": "2026-06-11T21:15:00Z",
-        "created_by": "pm"
-      },
-      {
-        "id": "REAUDIT-004",
-        "title": "NFR-C-4 stockPerformance direction field: mcp-server implementation",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "sprint": "SHIP-WAVE-REAUDIT",
-        "priority": "medium",
-        "type": "SPRINT-DEV",
-        "depends_on": [],
-        "size": "S",
-        "desc": "Add direction: 'up'|'down'|'flat' to each stockPerformance item in marketSummaryHandler. Derived from changePct sign. Paired with FE-REAUDIT-3.",
-        "handoff_file": "docs/handoffs/TASK_REAUDIT_004.md",
-        "created_at": "2026-06-11T21:15:00Z",
-        "created_by": "pm"
-      },
-      {
-        "id": "REAUDIT-005",
-        "title": "NFR-C-6 financials yoyDirection field",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "zone": "apps/mcp-server/",
-        "sprint": "SHIP-WAVE-REAUDIT",
-        "priority": "low",
-        "type": "SPRINT-DEV",
-        "depends_on": [],
-        "size": "S",
-        "desc": "Add revenueYoyDirection and netProfitYoyDirection to financials rows. Derived from yoy field signs. Improvement lane, lowest priority.",
-        "handoff_file": "docs/handoffs/TASK_REAUDIT_005.md",
-        "created_at": "2026-06-11T21:15:00Z",
-        "created_by": "pm"
-      },
-      {
         "id": "REAUDIT-FE-001",
         "title": "NFR-C-1 stale flag: stale banners on 5 pages",
         "owner": "dev-frontend",
@@ -6814,70 +6766,6 @@
         "handoff_file": "docs/handoffs/TASK_REAUDIT_FE_003.md",
         "created_at": "2026-06-11T21:15:00Z",
         "created_by": "pm"
-      },
-      {
-        "id": "CONTAM-2",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "size": "S",
-        "zone": "apps/mcp-server/src/interface/mcp/routes/",
-        "sprint": "OHLCV-UNIT-CONTAM",
-        "priority": "critical",
-        "depends": [
-          "CONTAM-1"
-        ],
-        "title": "Writer A pushPricesHandler.ts — unit guard + ON CONFLICT open self-heal (CASE open<100 THEN excluded ELSE keep)",
-        "handoff": "docs/handoffs/TASK_CONTAM_2.md",
-        "created_at": "2026-06-12T08:00:19Z"
-      },
-      {
-        "id": "CONTAM-3",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "size": "XS",
-        "zone": "apps/mcp-server/src/interface/mcp/",
-        "sprint": "OHLCV-UNIT-CONTAM",
-        "priority": "critical",
-        "depends": [
-          "CONTAM-1"
-        ],
-        "title": "Writer B /api/push-ohlcv-history (server.ts) — per-bar unit guard before insert",
-        "handoff": "docs/handoffs/TASK_CONTAM_3.md",
-        "created_at": "2026-06-12T08:00:19Z"
-      },
-      {
-        "id": "CONTAM-4",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "size": "S",
-        "zone": "apps/mcp-server/src/scheduler/market-data/",
-        "sprint": "OHLCV-UNIT-CONTAM",
-        "priority": "critical",
-        "depends": [
-          "CONTAM-1"
-        ],
-        "title": "PRIMARY: Writers D/E VNDIRECT backfill — NORMALIZE thousand-VND->full-VND (×1000) then guard then upsert. NOT skip. PO-amended handoff.",
-        "handoff": "docs/handoffs/TASK_CONTAM_4.md",
-        "created_at": "2026-06-12T08:00:19Z"
-      },
-      {
-        "id": "CONTAM-5",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "size": "S",
-        "zone": "apps/mcp-server/src/scheduler/market-data/",
-        "sprint": "OHLCV-UNIT-CONTAM",
-        "priority": "critical",
-        "depends": [
-          "CONTAM-1"
-        ],
-        "title": "Writer C ohlcvDailyAggregatorJob.ts — unit guard on derived OHLC before upsert",
-        "handoff": "docs/handoffs/TASK_CONTAM_5.md",
-        "created_at": "2026-06-12T08:00:19Z"
       },
       {
         "id": "CONTAM-6",
@@ -8894,6 +8782,132 @@
         "claimed_at": "2026-06-11T22:00:00Z",
         "claimed_by": "dev-mcp-server",
         "completed_at": "2026-06-12T11:30:00Z"
+      },
+      {
+        "id": "REAUDIT-003",
+        "title": "NFR-C-5 foreign-flow stale_fields: mcp-server implementation",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "high",
+        "type": "SPRINT-DEV",
+        "depends_on": [],
+        "size": "S",
+        "desc": "Add stale_fields: string[] to ForeignFlowResponse. Scan items after buildSummary(): if >50% null for field, add to array. Paired with FE-REAUDIT-2.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_003.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm",
+        "qa_approved_at": "2026-06-12T09:45:00Z",
+        "qa_report": "reports/TASK_REPORT_REAUDIT_003.md"
+      },
+      {
+        "id": "REAUDIT-004",
+        "title": "NFR-C-4 stockPerformance direction field: mcp-server implementation",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "medium",
+        "type": "SPRINT-DEV",
+        "depends_on": [],
+        "size": "S",
+        "desc": "Add direction: 'up'|'down'|'flat' to each stockPerformance item in marketSummaryHandler. Derived from changePct sign. Paired with FE-REAUDIT-3.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_004.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm",
+        "qa_approved_at": "2026-06-12T09:45:00Z",
+        "qa_report": "reports/TASK_REPORT_REAUDIT_004.md"
+      },
+      {
+        "id": "REAUDIT-005",
+        "title": "NFR-C-6 financials yoyDirection field",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "zone": "apps/mcp-server/",
+        "sprint": "SHIP-WAVE-REAUDIT",
+        "priority": "low",
+        "type": "SPRINT-DEV",
+        "depends_on": [],
+        "size": "S",
+        "desc": "Add revenueYoyDirection and netProfitYoyDirection to financials rows. Derived from yoy field signs. Improvement lane, lowest priority.",
+        "handoff_file": "docs/handoffs/TASK_REAUDIT_005.md",
+        "created_at": "2026-06-11T21:15:00Z",
+        "created_by": "pm",
+        "qa_approved_at": "2026-06-12T09:45:00Z",
+        "qa_report": "reports/TASK_REPORT_REAUDIT_005.md"
+      },
+      {
+        "id": "CONTAM-2",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "size": "S",
+        "zone": "apps/mcp-server/src/interface/mcp/routes/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1"
+        ],
+        "title": "Writer A pushPricesHandler.ts — unit guard + ON CONFLICT open self-heal (CASE open<100 THEN excluded ELSE keep)",
+        "handoff": "docs/handoffs/TASK_CONTAM_2.md",
+        "created_at": "2026-06-12T08:00:19Z",
+        "qa_approved_at": "2026-06-12T09:45:00Z",
+        "qa_report": "reports/TASK_REPORT_CONTAM_2.md"
+      },
+      {
+        "id": "CONTAM-3",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "size": "XS",
+        "zone": "apps/mcp-server/src/interface/mcp/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1"
+        ],
+        "title": "Writer B /api/push-ohlcv-history (server.ts) — per-bar unit guard before insert",
+        "handoff": "docs/handoffs/TASK_CONTAM_3.md",
+        "created_at": "2026-06-12T08:00:19Z",
+        "qa_approved_at": "2026-06-12T09:45:00Z",
+        "qa_report": "reports/TASK_REPORT_CONTAM_3.md"
+      },
+      {
+        "id": "CONTAM-4",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "size": "S",
+        "zone": "apps/mcp-server/src/scheduler/market-data/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1"
+        ],
+        "title": "PRIMARY: Writers D/E VNDIRECT backfill — NORMALIZE thousand-VND->full-VND (×1000) then guard then upsert. NOT skip. PO-amended handoff.",
+        "handoff": "docs/handoffs/TASK_CONTAM_4.md",
+        "created_at": "2026-06-12T08:00:19Z",
+        "qa_approved_at": "2026-06-12T09:45:00Z",
+        "qa_report": "reports/TASK_REPORT_CONTAM_4.md"
+      },
+      {
+        "id": "CONTAM-5",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "size": "S",
+        "zone": "apps/mcp-server/src/scheduler/market-data/",
+        "sprint": "OHLCV-UNIT-CONTAM",
+        "priority": "critical",
+        "depends": [
+          "CONTAM-1"
+        ],
+        "title": "Writer C ohlcvDailyAggregatorJob.ts — unit guard on derived OHLC before upsert",
+        "handoff": "docs/handoffs/TASK_CONTAM_5.md",
+        "created_at": "2026-06-12T08:00:19Z",
+        "qa_approved_at": "2026-06-12T09:45:00Z",
+        "qa_report": "reports/TASK_REPORT_CONTAM_5.md"
       }
     ],
     "in_progress": [

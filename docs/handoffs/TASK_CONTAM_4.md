@@ -186,3 +186,22 @@ for (const record of records) {
 | tsc | `bun tsc --noEmit` | exit 0 (clean) |
 | tool count | `gen-project-stats.ts --dry-run` | 157 tools — matches baseline |
 | scheduler count | `grep -rc cron.schedule scheduler/` | 78 — matches baseline |
+
+---
+
+## [QA] Review Record · 2026-06-12T09:45:00Z
+
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_CONTAM-4.md
+**DJ entry:** sprint-OHLCV-UNIT-CONTAM-qa.md § qa-S3
+
+**Evidence:**
+- bun test CONTAM-4: 7 pass / 0 fail (QA-reproduced); full suite 12770 pass / 0 fail (exit 0)
+- tsc --noEmit: exit 0 (QA-reproduced)
+- DDD: PASS (scheduler + infrastructure layers; domain import allowed)
+- Security: PASS (mock-guard EXIT 0)
+- taOhlcvBackfillJob.ts L259-295 + ohlcvBackfill.ts L205-240: normalize-then-guard-then-upsert in both files
+- Binding amendment: NORMALIZE ×1000 not skip — AC-D1 (VNH=0.9→900), AC-D5 (35 rows written) confirmed
+- toolCount=157, schedulerCount=78 — unchanged
+
+**Status:** CONTAM-4 → DONE

@@ -1,5 +1,25 @@
 # QA — Notebook
 
+## cycle-229 · 2026-06-12 · SHIP-WAVE-REAUDIT + OHLCV-UNIT-CONTAM 7-task QA wave — ALL APPROVED
+
+Sprint: SHIP-WAVE-REAUDIT + OHLCV-UNIT-CONTAM | Tasks: REAUDIT-003/004/005 + CONTAM-2/3/4/5 | Verdict: ALL 7 APPROVED | Reports: reports/TASK_REPORT_REAUDIT-003/004/005.md + reports/TASK_REPORT_CONTAM-2/3/4/5.md
+
+REAUDIT-003 (stale_fields): 13 TCs GREEN. Live: GET /api/foreign-flow → stale_fields=["currentHoldingRatio","maxHoldingRatio","marketCapBn"] (all 3 known-null cols). Items pass-through intact. tsc clean. DDD PASS. Security PASS. mock-guard EXIT 0.
+
+REAUDIT-004 (stockPerformance direction): 11 TCs GREEN. Live: GET /api/market-summaries?id=weekly-2026-06-01 → stockPerformance[0]={changePct:-0.8,direction:"down"} — semantically correct. 121 items all have direction field. tsc clean. DDD PASS.
+
+REAUDIT-005 (financials yoyDirection): 31 TCs GREEN. Live: GET /api/financials?limit=3 → revenueYoy=18.95→"up", netProfitYoy=-38.74→"down". Both direction fields present, correct. tsc clean. DDD PASS.
+
+CONTAM-2 (Writer A guard + self-heal): 6 TCs GREEN. ON CONFLICT CASE WHEN open<100 self-heal at pushPricesHandler.ts:171 confirmed. Guard try/catch RF-1 preserved. tsc clean. DDD PASS. mock-guard EXIT 0.
+
+CONTAM-3 (Writer B guard): XS — targeted 37 TCs GREEN (no dedicated file; CONTAM-7 integration covers). server.ts L1169-1183 guard with try/catch + HTTP 200 preserved. tsc clean. DDD PASS.
+
+CONTAM-4 (Writers D/E normalize): 7 TCs GREEN; full suite 12770/0. taOhlcvBackfillJob + ohlcvBackfill: normalize-then-guard-then-upsert per binding amendment (×1000 not skip). TC-D1: VNH=0.9→900. TC-D5: 35 rows written. tsc clean. DDD PASS.
+
+CONTAM-5 (sanity cron): 10 TCs GREEN. cronConfig.ts + startScheduler.ts + container startup log ("80 cron keys") all confirm cron registered at 15:05 UTC Mon-Fri. grep -rc=79, cronJobCount=79. tsc clean. DDD PASS.
+
+toolCount=157, schedulerCount=79 throughout. BCTC eval gate N/A (no BCTC touches). Contaminated row state not probed (CONTAM-6 owns repair migration per concurrency note). All 7 REVIEW→DONE. DJ-GATE-1: sprint-SHIP-WAVE-REAUDIT-qa.md §§ qa-S5/S6/S7 + sprint-OHLCV-UNIT-CONTAM-qa.md §§ qa-S1/S2/S3/S4.
+
 ## cycle-228 · 2026-06-12 · REAUDIT-001 reputation trend-delta fix QA gate — APPROVED
 
 Sprint: SHIP-WAVE-REAUDIT | Task: REAUDIT-001 | Verdict: APPROVED | Report: reports/TASK_REPORT_REAUDIT-001.md

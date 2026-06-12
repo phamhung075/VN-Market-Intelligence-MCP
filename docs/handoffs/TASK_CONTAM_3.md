@@ -132,3 +132,21 @@ for (const bar of req.body.bars) {
 | Scheduler count | 79 (baseline 78+1 from sibling CONTAM-5; this task: 0 added) |
 
 Zone health: tsc clean, 157 tools intact, targeted tests 37 pass / 0 fail | HEALTHY
+
+---
+
+## [QA] Review Record · 2026-06-12T09:45:00Z
+
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_CONTAM-3.md
+**DJ entry:** sprint-OHLCV-UNIT-CONTAM-qa.md § qa-S2
+
+**Evidence:**
+- Targeted tests 37 pass / 0 fail (QA-reproduced; no dedicated test file per XS scope)
+- tsc --noEmit: exit 0 (QA-reproduced)
+- DDD: PASS (interface layer; domain import allowed)
+- Security: PASS (mock-guard EXIT 0)
+- server.ts L1169-1183: guard in bar loop with try/catch; HTTP 200 preserved (L1192); skipped count in response
+- toolCount=157, schedulerCount=79 — unchanged (CONTAM-5 added the +1)
+
+**Status:** CONTAM-3 → DONE

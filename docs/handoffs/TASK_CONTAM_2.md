@@ -171,3 +171,22 @@ Integration test (part of CONTAM-7 suite) will verify:
 | bun tsc --noEmit | exit 0, no errors |
 | toolCount | 157 (matches baseline) |
 | schedulerCount | 78 (matches baseline) |
+
+---
+
+## [QA] Review Record · 2026-06-12T09:45:00Z
+
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_CONTAM-2.md
+**DJ entry:** sprint-OHLCV-UNIT-CONTAM-qa.md § qa-S1
+
+**Evidence:**
+- bun test 1987-contam2: 6 pass / 0 fail (QA-reproduced)
+- tsc --noEmit: exit 0 (QA-reproduced)
+- DDD: PASS (interface layer; domain import allowed)
+- Security: PASS (parameterized SQL, mock-guard EXIT 0)
+- ON CONFLICT CASE WHEN open<100 self-heal clause confirmed at pushPricesHandler.ts:171
+- Guard try/catch at L188-207; RF-1 (HTTP 200) confirmed by TC-6
+- toolCount=157, schedulerCount=78 — unchanged
+
+**Status:** CONTAM-2 → DONE

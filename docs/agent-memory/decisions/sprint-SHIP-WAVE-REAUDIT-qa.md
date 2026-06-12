@@ -42,6 +42,38 @@
 **why-decision:** All checks pass. Live raw evidence matches expected behavior (banner present when stale=true, absent when stale=false). No arch concern (pure frontend route extension, no new domain/MCP/cross-service). APPROVED.
 **why-change:** No change from plan — only path: all checks green.
 
+### STEP qa-S5 · qa · 2026-06-12T09:35:00Z
+**task-id:** REAUDIT-003
+**what-done:** QA gate for NFR-C-5 stale_fields on foreign-flow handler. APPROVED.
+**what-considered:**
+- 13 unit tests GREEN (QA-reproduced). tsc clean. DDD PASS. Security PASS. mock-guard EXIT 0.
+- Live raw probe GET /api/foreign-flow?limit=5: stale_fields=["currentHoldingRatio","maxHoldingRatio","marketCapBn"] — all 3 expected null-column names present. Items pass-through intact (null values still in each item).
+- computeStaleFields scans allItems (full set, not display-limited slice) — correct per handoff decision journal.
+- toolCount=157, schedulerCount=78 unchanged.
+**why-decision:** APPROVED. All ACs met. Live response contract exactly matches spec. No arch concern (pure interface-layer additive, no new domain/MCP tool).
+**why-change:** No change from plan — only path: all checks green.
+
+### STEP qa-S6 · qa · 2026-06-12T09:35:00Z
+**task-id:** REAUDIT-004
+**what-done:** QA gate for NFR-C-4 direction field in stockPerformance. APPROVED.
+**what-considered:**
+- 11 unit tests GREEN (QA-reproduced). tsc clean. DDD PASS. Security PASS. mock-guard EXIT 0.
+- Live raw probe GET /api/market-summaries?id=weekly-2026-06-01: stockPerformance=121 items, items[0]={symbol:"VCB",changePct:-0.8,direction:"down"} — direction semantically correct.
+- deriveDirection(): null/undefined/NaN guard confirmed at L159 (Number.isFinite check).
+**why-decision:** APPROVED. Live data confirms direction computed correctly from raw changePct. No arch concern.
+**why-change:** No change from plan — only path: all checks green.
+
+### STEP qa-S7 · qa · 2026-06-12T09:35:00Z
+**task-id:** REAUDIT-005
+**what-done:** QA gate for NFR-C-6 yoyDirection fields in financials. APPROVED.
+**what-considered:**
+- 31 unit tests GREEN (QA-reproduced). tsc clean. DDD PASS. Security PASS. mock-guard EXIT 0.
+- Live raw probe GET /api/financials?limit=3: row[0] revenueYoy=18.95/revenueYoyDirection="up", netProfitYoy=-38.74/netProfitYoyDirection="down" — both directions correct for their yoy sign.
+- NaN guard present in deriveYoyDirection (Number.isNaN check before sign comparison).
+- TASK17-PAGE16 fixture helpers updated to include direction fields — no regression risk.
+**why-decision:** APPROVED. Two-field additive contract confirmed live. Low priority lane correctly implemented.
+**why-change:** No change from plan — only path: all checks green.
+
 ### STEP qa-S2 · qa · 2026-06-11T20:50:00Z
 **task-id:** FIX-EVIDENCE-PIPELINE-STARVED
 **what-done:** Live-probed B-02 fix effectiveness; issued PENDING verdict per BA spec edge case.

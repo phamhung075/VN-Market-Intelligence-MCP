@@ -130,3 +130,21 @@ Each metric (revenue, net profit) has its own trend story. Separate fields allow
 | schedulerCount | 79 (unchanged) |
 
 Zone health: tsc clean, 157 tools intact, 79 cron.schedule, 31 new tests GREEN, REAUDIT sprint 143 pass total | HEALTHY
+
+---
+
+## [QA] Review Record · 2026-06-12T09:45:00Z
+
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_REAUDIT-005.md
+**DJ entry:** sprint-SHIP-WAVE-REAUDIT-qa.md § qa-S7
+
+**Evidence:**
+- bun test REAUDIT-005: 31 pass / 0 fail (QA-reproduced)
+- tsc --noEmit: exit 0 (QA-reproduced)
+- DDD: PASS (interface layer, pre-existing infra import unchanged)
+- Security: PASS (mock-guard EXIT 0)
+- Live probe GET /api/financials?limit=3: revenueYoy=18.95→revenueYoyDirection="up"; netProfitYoy=-38.74→netProfitYoyDirection="down" — both correct
+- toolCount=157, schedulerCount=79 — unchanged
+
+**Status:** REAUDIT-005 → DONE

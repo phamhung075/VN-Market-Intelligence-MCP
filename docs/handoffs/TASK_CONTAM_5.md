@@ -149,3 +149,24 @@ db.prepare(UPSERT_SQL).run(code, date, open, high, low, close, volume, updated_a
 - cronJobCount in project-stats.json: 79 (gen-project-stats written)
 
 Zone health: bun test 10 pass 0 fail (CONTAM-5 targeted), tsc clean, 157 tools intact, 79 cron.schedule | HEALTHY
+
+---
+
+## [QA] Review Record · 2026-06-12T09:45:00Z
+
+**Verdict:** APPROVED
+**Report:** reports/TASK_REPORT_CONTAM-5.md
+**DJ entry:** sprint-OHLCV-UNIT-CONTAM-qa.md § qa-S4
+
+**Evidence:**
+- bun test CONTAM-5: 10 pass / 0 fail (QA-reproduced)
+- tsc --noEmit: exit 0 (QA-reproduced)
+- DDD: PASS (scheduler layer; domain import allowed; no application/interface imports)
+- Security: PASS (no process.env; deps injected; mock-guard EXIT 0)
+- cronConfig.ts L190-194: ohlcvSanityCheck at "5 15 * * 1-5" — CONFIRMED
+- startScheduler.ts L587: cron.schedule(CRONS.ohlcvSanityCheck, ...) — CONFIRMED
+- Container startup log: "80 cron keys in CRONS map" — cron active in live container
+- grep -rc cron.schedule src/scheduler/ = 79; cronJobCount=79 — both confirmed
+- Scope: sanity-check cron (authoritative per arch brief Decision 4; developer correctly implemented)
+
+**Status:** CONTAM-5 → DONE
