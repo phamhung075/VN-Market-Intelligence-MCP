@@ -7689,3 +7689,65 @@ technical-analysis   Up 37 hours (healthy)     ✓
 - ✓ Task status DONE, orch-state committed
 
 **NEXT: None.** Task fully closed.
+
+---
+
+## Session: 2026-06-12 (EVIDENCE-ACCUM-SILENT-CRON — rebuild for QA gate)
+
+**Task:** Rebuild mcp-server container to ship EVIDENCE-ACCUM-SILENT-CRON (commit 53d00955, QA-approved). 
+Fix: recoverMissedExecutions on evidenceAccumulator + reputationCompute crons in startScheduler.ts + dedup guard in startupHelpers.ts.
+
+**Approval:** QA-gate passed; rebuild mandatory per ops protocol (avoid peer-destruction via bare down/up).
+
+### Execution Steps
+
+**Step 1: Pre-rebuild state**
+- All 11 services UP and healthy
+- mcp-server container image: `sha256:9105f6dda0bcb578d5600f911ead5941c9ee4f57a4d4121231fb61c0c44cec31`
+- Latest commit on main: `8081e584` (chore/ops: 2026-06-11 20:40)
+
+**Step 2: REBUILD mcp-server (scoped, no-deps)**
+- Command: `docker compose build mcp-server`
+- Build completed: SUCCESS
+- New image: `sha256:eff44b535583dba6565b861e06ed2518359433f7129b7d077c7e27035f93fe6c`
+- Contained commit: 53d00955 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE, verified in git log)
+
+**Step 3: Launch with --no-deps (scoped)**
+- Command: `docker compose up -d --no-deps mcp-server`
+- Container recreated and started
+- Immediate health check: container running, no errors
+
+**Step 4: Post-rebuild verification**
+- Image ID match: container `Image` field = built image (race-check passed) ✓
+- All peers intact: `docker ps -a` shows 11 services UP
+- Health endpoint: `GET /health` → `{"status":"ok", "toolCount":157, ...}` ✓
+- Scheduler startup logs show:
+  ```
+  [SCHEDULER] [scheduler] jobs registered — 80 cron keys in CRONS map 
+  (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + 
+  SLA monitor + macro-refresh + imf-poller + session-tool-usage + 
+  tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + 
+  deep-fetch-vps + deep-fetch-main active
+  ```
+- No crashes or startup errors
+- evidenceAccumulator + reputationCompute crons now include recoverMissedExecutions recovery logic
+
+**Step 5: Disk maintenance**
+- Executed: `docker builder prune -f --keep-storage 2GB && docker image prune -f`
+- Builder cache reclaimed: 1.328GB total (0B new space freed on this run)
+- Disk headroom post-cleanup: 19GB free (42% used on /)
+
+### Outcome
+
+**Status:** COMPLETE ✓
+
+Deployed image is running new code path with:
+- `recoverMissedExecutions` active on evidenceAccumulator cron
+- `recoverMissedExecutions` active on reputationCompute cron
+- dedup guard in startupHelpers.ts preventing duplicate scheduled jobs
+
+QA re-check is scheduled for 2026-06-13 after the 08:30Z (reputationCompute) and 16:00Z (evidenceAccumulator) cron ticks.
+Router has those timers armed; the scheduler will log success/failure to cron_job_runs table.
+
+**Next:** None for tonight. Router monitors cron gate; if both ticks succeed by 2026-06-13 16:30Z, EVIDENCE-ACCUM-SILENT-CRON task moves to DONE.
+
