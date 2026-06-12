@@ -1,12 +1,13 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-12 · CONTAM-7 — Integration test suite (all 5 writers + repair + sanity job) — REVIEW
+## 2026-06-12 · EVIDENCE-ACCUM-SILENT-CRON — node-cron silent tick drop fix — REVIEW
 
-**Task:** CONTAM-7 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/src/__tests__/
-**New file:** `__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts` — 44 integration tests (8 groups: T1 guard / T2 Writer A / T3 Writer B / T4 Writer D / T5 Writer E / T6 Writer C / T7 repair / T8 sanity job). All in-memory SQLite. Import path: repair script at `../../../../scripts/migrations/` resolves correctly from __tests__/ in Bun.
-**Key insight:** ohlcvSanityCheckJob.ts (Part A of handoff) was already shipped in CONTAM-5; CONTAM-7 scope is integration test suite only. Writer C tests verify tick→aggregate→upsert path via runOhlcvDailyAggregator with in-memory market_prices_history seeding.
-**Tests:** 44 pass / 0 fail (110 expect calls). Full suite: 12861 pass / 0 fail (exit 0; Bun runtime crash after run = known Mode B OOM, not test failure). tsc exit 0. toolCount=157. schedulerCount=79.
-Zone health: tsc clean, 157 tools intact, 79 cron.schedule, integration suite CONTAM-7 44/44 pass | HEALTHY
+**Task:** EVIDENCE-ACCUM-SILENT-CRON | Priority: HIGH | Zone: apps/mcp-server/src/scheduler/
+**Root cause:** node-cron v3.0.3 drops ticks under event loop saturation (vnstockFundamentalsJob startup sweep at 16:00 UTC). `matchTime()` fires late; `missedExecutions > 0`; for `i > 0`, emission skipped when `recoverMissedExecutions=false`. Same mechanism took reputationComputeJob 2026-06-11, evidenceAccumulatorJob 2026-06-12.
+**Fix (3-part):** (1) `recoverMissedExecutions: true` on evidenceAccumulator + reputationCompute cron registrations. (2) Same-day DB-backed dedup guard in `runEvidenceAccumulatorWithDb` — blocks double-execution on same UTC day. (3) Double-wrap fix: `startupHelpers.ts` default fn changed from `runEvidenceAccumulatorJob()` (which called `recordJobRun` internally) to `runEvidenceAccumulator(db)` — eliminates the two-row-per-tick pattern visible on 2026-06-07/08.
+**Tests:** 8 new assertions in EVIDENCE-ACCUM-SILENT-CRON.test.ts (T1-T7 dedup states). 12870 pass / 0 fail. tsc exit 0. toolCount=157. schedulerCount=79.
+**Commit:** 53d00955
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, systemic cron-miss class fixed (recoverMissedExecutions) | HEALTHY
 
 ---
 

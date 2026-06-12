@@ -141,8 +141,39 @@ Both tasks show the same pattern:
 
 ## Delivery Checklist
 
-- [ ] Root cause documented in commit message (clear explanation of the miss)
-- [ ] Fix code reviewed and merged (task/evidence-accumulator-silent-cron-fix → main)
+- [x] Root cause documented in commit message (clear explanation of the miss)
+- [x] Fix code reviewed and merged (on main, commit 53d00955)
 - [ ] OPS rebuilds container post-fix
 - [ ] QA re-verifies live cron_job_runs entry with status=success
 - [ ] Task marked DONE in task_board only after live cron tick verification
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/scheduler/startScheduler.ts` — added `recoverMissedExecutions: true` to `evidenceAccumulator` and `reputationCompute` cron.schedule() calls (lines 469-478, 912-928)
+  - `apps/mcp-server/src/scheduler/startupHelpers.ts` — fixed double-wrap: import changed from `runEvidenceAccumulatorJob` to `runEvidenceAccumulator`; `runEvidenceAccumulatorWithDb` default fn now calls `runEvidenceAccumulator(db)` directly (single `recordJobRun`); added same-day DB-backed dedup guard
+- **Tests written:** `apps/mcp-server/src/__tests__/EVIDENCE-ACCUM-SILENT-CRON.test.ts` — 8 assertions (T1: single row / T2+T4: dedup blocks success / T3: error allows retry / T5: running blocks / T6: yesterday does not block / T7: missing table fail-open), GREEN
+- **Git commits:** `53d00955 fix(mcp-server/EVIDENCE-ACCUM-SILENT-CRON): recoverMissedExecutions + dedup + double-wrap fix`
+- **Type check:** clean (bun tsc --noEmit exit 0)
+- **bun test:** 12870 pass / 0 fail (Mode B OOM after run — known, not a test failure)
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 79 cron.schedule entries — matches pre-task baseline (79)
+- **Docs updated:** NONE (architecture docs unchanged)
+- **Graphify:** skipped (no docs impacted)
+
+**Root cause (confirmed):**
+
+node-cron v3.0.3 `Scheduler.matchTime()` uses `setTimeout(matchTime, 1000)`. When the event loop is saturated by `vnstockFundamentalsJob` startup sweep (100+ log entries/min, repeated RATE_LIMITED retries at 16:00 UTC), the timeout fires late. `missedExecutions = Math.floor(elapsedMs/1000)`. For `i = missedExecutions..1`, emission is guarded by `(i === 0 || this.autorecover)`. With `recoverMissedExecutions=false` (default), only `i=0` fires. By the time `i=0` is tested, the current minute has moved past `:00` → `timeMatcher.match()` returns false → tick dropped silently.
+
+**Evidence of double-wrap (historical):**
+- QA shows 2 `evidenceAccumulatorJob` rows per day on 2026-06-07 and 2026-06-08: one with `rows_written=null` (outer wrapper), one with `rows_written=N` (inner `runEvidenceAccumulatorJob`). Double-wrapping confirmed.
+
+**Manual trigger result (pre-rebuild, old container code):**
+- `runEvidenceAccumulatorWithDb(db)` executed: `stocks=9, purged=0, status=success`
+- Two rows written (expected — old code); post-rebuild will produce one row with `rows_written=9`
+
+**Next scheduled tick:** 2026-06-13 16:00 UTC (daily `0 16 * * *`). QA must verify `evidenceAccumulatorJob` row appears with `status=success, rows_written > 0` at that tick.
