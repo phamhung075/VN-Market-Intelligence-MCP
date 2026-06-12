@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-12T15:45:00Z",
-  "_updated_by": "dev-frontend",
+  "_updated_at": "2026-06-12T15:41:26Z",
+  "_updated_by": "po",
   "head": {
     "status": "review",
     "updated_at": "2026-06-12T08:20:00Z",
@@ -54,7 +54,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-12T15:10:00Z",
+    "_updated_at": "2026-06-12T15:41:26Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -4999,7 +4999,7 @@
       {
         "id": "FE-CORPEVENTS-TICKER-FILTER",
         "label": "Add client-side ticker filter to /dashboard/corporate-events page (PO ruling: frontend-only, populate from payload, no api change)",
-        "status": "active",
+        "status": "done",
         "opened_at": "2026-06-12",
         "priority": "medium",
         "evidence": "PO decision 2026-06-12: client-side filter only, payload = SSOT for ticker codes, extend existing filterEvents pattern. Live contract verified curl :3001 returns 237 events/46 distinct codes. Replaces zone:multi server-param option per user directive (DRY).",
@@ -5009,7 +5009,7 @@
             "title": "Add ticker selector UI + extend filterEvents function to compose with category filter",
             "type": "FEATURE",
             "owner": "dev-frontend",
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/frontend/",
             "priority": "medium",
@@ -5020,9 +5020,13 @@
               "apps/frontend/app/__tests__/task17-corporate-events-loader.test.ts"
             ],
             "handoff": "docs/handoffs/TASK_FE-CORPEVENTS-TICKER-FILTER.md",
-            "note": "AC-1..10 per handoff; PO-ruled frontend-only (avoid touching mcp-server); selector = 'Tất cả' default + [... new Set(events.map(e=>e.code))].sort(). No /api contract change. Tests: 3+ new test cases (ticker filter, all filter, empty set). Ready for dev-frontend dispatch."
+            "note": "AC-1..10 per handoff; PO-ruled frontend-only (avoid touching mcp-server); selector = 'Tất cả' default + [... new Set(events.map(e=>e.code))].sort(). No /api contract change. Tests: 3+ new test cases (ticker filter, all filter, empty set). Ready for dev-frontend dispatch.",
+            "completed_at": "2026-06-12T15:41:26Z",
+            "completed_by": "qa"
           }
-        ]
+        ],
+        "closed_at": "2026-06-12T15:41:26Z",
+        "signed_off_by": "po"
       }
     ],
     "backlog": [
