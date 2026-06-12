@@ -6993,13 +6993,15 @@
         "id": "ARCH-QUE-REFERENCE-PAGE",
         "title": "Technical design for QUE-REFERENCE-PAGE — codegen field-set extension shape + Kinh Dich reference page layout (route/nav/search) + optional QueName deep-link",
         "owner": "architect",
-        "status": "TODO",
-        "zone": "multi",
+        "status": "REVIEW",
+        "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",
         "desc": "Lightweight brownfield design. RULINGS NEEDED: (1) Codegen shape: extend scripts/gen-que-descriptions.ts to emit the full reference field set WITHOUT regressing the existing 2-field tooltip QueDescription type (PO-Q3). Decide: enrich the single generated file with an additive richer type, OR emit a second que-descriptions-detail.generated.ts. Map every SSOT field (name, chinese, upper/lower, upperElement/lowerElement, coreMeaning.vi, marketTrendLabel.vi, stateInterpretation.vi, favorable.vi, warning.vi, phases[6] action/outcome/gloss.vi) -> generated type. NEVER hardcode 64 texts. (2) Page layout: route apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx (mirror dashboard.kinh-dich-signals.tsx), nav entry in TopNav ANALYST_NAV SSOT (plain-VN label), all-64 card/list render with full VN detail, client-side search/filter by name+number, non-technical plain-Vietnamese. (3) Optional QueName deep-link to /dashboard/kinh-dich-reference#que-<id> — rule in/out (must NOT regress tooltip). Output: design brief in docs/architecture-briefs/. Split multi-zone if any (codegen script vs frontend page both route to dev-frontend per QUE-TOOLTIP-DRY re-route precedent; kinh-dich-service Go untouched).",
         "created_at": "2026-06-12T15:13:17Z",
-        "created_by": "po"
+        "created_by": "po",
+        "handoff": "docs/architecture-briefs/2026-06-12-que-reference-page.md",
+        "_updated_at": "2026-06-12T15:45:00Z"
       }
     ],
     "archive": [],

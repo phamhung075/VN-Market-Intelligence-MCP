@@ -186,16 +186,24 @@ export function categoryColorClass(category: EventCategory | string): string {
 }
 
 /**
- * Filter events[] by category value.
- * "all" → returns all events.
- * Other values → returns events matching that category.
+ * Filter events[] by category and optionally by ticker code.
+ * Cascade: category filter applied first, then ticker filter.
+ *
+ * category "all"       → no category filter
+ * selectedTicker "Tất cả" → no ticker filter (default)
+ *
+ * AC-3: optional tickerCode param is backward-compatible (default 'Tất cả').
+ * AC-4: category filter applied BEFORE ticker filter.
  */
 export function filterEvents(
   events: CorporateEvent[],
   category: EventCategory | "all",
+  selectedTicker: string = "Tất cả",
 ): CorporateEvent[] {
-  if (category === "all") return events;
-  return events.filter((e) => e.category === category);
+  const byCat =
+    category === "all" ? events : events.filter((e) => e.category === category);
+  if (selectedTicker === "Tất cả") return byCat;
+  return byCat.filter((e) => e.code === selectedTicker);
 }
 
 // ---------------------------------------------------------------------------
@@ -443,10 +451,16 @@ export default function CorporateEventsPage() {
   // Client-side category filter state — does NOT trigger SSR round-trip.
   const [activeCategory, setActiveCategory] = useState<EventCategory | "all">("all");
 
+  // Client-side ticker filter state — AC-2: default 'Tất cả' (show all).
+  const [selectedTicker, setSelectedTicker] = useState("Tất cả");
+
+  // Derive distinct sorted ticker codes from payload — AC-1: payload is SSOT.
+  const distinctCodes = [...new Set(events.map((e) => e.code))].sort();
+
   const isEmpty = !error && count === 0;
 
-  // Apply client-side category filter.
-  const filteredEvents = filterEvents(events, activeCategory);
+  // Apply client-side filters: category THEN ticker — AC-4.
+  const filteredEvents = filterEvents(events, activeCategory, selectedTicker);
 
   // Category filter counts from summary (server-computed).
   const categoryCounts: Record<EventCategory | "all", number> = {
@@ -554,38 +568,61 @@ export default function CorporateEventsPage() {
             </div>
           )}
 
-          {/* Category filter tabs — CLIENT-SIDE */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-medium text-slate-400 mr-1">
-              Lọc:
-            </span>
-            {CATEGORY_FILTER_OPTIONS.map(({ value, label }) => {
-              const isActive = activeCategory === value;
-              const c = categoryCounts[value];
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setActiveCategory(value)}
-                  className={[
-                    "inline-flex items-center gap-1 rounded px-3 py-1 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-slate-600 text-slate-100"
-                      : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200",
-                  ].join(" ")}
-                  aria-pressed={isActive}
-                >
-                  {label}
-                  {c > 0 && (
-                    <span
-                      className={`tabular-nums text-xs ${isActive ? "text-slate-300" : "text-slate-600"}`}
-                    >
-                      {c}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          {/* Filter bar — category tabs + ticker selector — CLIENT-SIDE */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Category filter tabs */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-400 mr-1">
+                Lọc:
+              </span>
+              {CATEGORY_FILTER_OPTIONS.map(({ value, label }) => {
+                const isActive = activeCategory === value;
+                const c = categoryCounts[value];
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setActiveCategory(value)}
+                    className={[
+                      "inline-flex items-center gap-1 rounded px-3 py-1 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-slate-600 text-slate-100"
+                        : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200",
+                    ].join(" ")}
+                    aria-pressed={isActive}
+                  >
+                    {label}
+                    {c > 0 && (
+                      <span
+                        className={`tabular-nums text-xs ${isActive ? "text-slate-300" : "text-slate-600"}`}
+                      >
+                        {c}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Ticker selector — AC-1/AC-5/AC-6 */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-400">Mã:</span>
+              <select
+                value={selectedTicker}
+                onChange={(e) => setSelectedTicker(e.target.value)}
+                className="rounded bg-slate-800 border border-slate-600 px-2 py-1 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                aria-label="Chọn mã chứng khoán"
+              >
+                <option value="Tất cả">
+                  Tất cả ({events.length})
+                </option>
+                {distinctCodes.map((code) => (
+                  <option key={code} value={code}>
+                    {code} ({events.filter((ev) => ev.code === code).length})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Event list */}

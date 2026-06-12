@@ -25,6 +25,9 @@
  *  14. fetchCorporateEventsData — bad shape → error set
  *  15. fetchCorporateEventsData — upstream 502 → error set
  *  16. fetchCorporateEventsData — Fixture B empty response → count=0, no crash
+ *  17. filterEvents ticker filter — AC-7: (a) VNM only, (b) Tất cả, (c) empty code set
+ *  18. filterEvents cascade — category THEN ticker (AC-4)
+ *  19. distinctCodes derivation — sorted A-Z, no duplicates (AC-1)
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
@@ -719,5 +722,165 @@ describe("fetchCorporateEventsData — Fixture B empty (count=0, no crash)", () 
     expect(result.summary.totalEvents).toBe(0);
     expect(result.summary.topActiveCodes).toHaveLength(0);
     expect(result.asOf).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 17: filterEvents ticker filter — AC-7 (a) VNM only (b) Tất cả (c) empty set
+// ---------------------------------------------------------------------------
+
+// Extended fixture with VNM events for AC-7a
+const FIXTURE_WITH_VNM: CorporateEvent[] = [
+  {
+    code: "VNM",
+    eventType: "CASH_DIVIDEND",
+    category: "dividend",
+    categoryLabel: "Cổ tức tiền mặt",
+    title: "VNM Cash Dividend 2025",
+    detail: "VNM chi trả cổ tức tiền mặt năm 2025",
+    eventDate: "2026-06-10",
+  },
+  {
+    code: "VNM",
+    eventType: "STOCK_ISSUANCE",
+    category: "issuance",
+    categoryLabel: "Phát hành cổ phiếu",
+    title: "VNM Stock Issuance",
+    detail: "VNM phát hành thêm cổ phiếu ESOP",
+    eventDate: "2026-06-09",
+  },
+  {
+    code: "ACB",
+    eventType: "AGM_ANNUAL",
+    category: "meeting",
+    categoryLabel: "ĐHĐCĐ thường niên",
+    title: "ACB AGM",
+    detail: "ACB tổ chức ĐHĐCĐ thường niên 2026",
+    eventDate: "2026-06-08",
+  },
+];
+
+describe("filterEvents ticker filter — AC-7", () => {
+  // AC-7a: filterEvents with ticker='VNM' returns only VNM events
+  it("(a) ticker='VNM' → returns only VNM events", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "all", "VNM");
+    expect(result).toHaveLength(2);
+    expect(result.every((e) => e.code === "VNM")).toBe(true);
+  });
+
+  // AC-7b: filterEvents with 'Tất cả' returns all events
+  it("(b) ticker='Tất cả' → returns all events (unfiltered by ticker)", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "all", "Tất cả");
+    expect(result).toHaveLength(3);
+    expect(result).toBe(FIXTURE_WITH_VNM); // same reference — no copy when both filters are 'all'
+  });
+
+  // AC-7c: empty events set → filterEvents returns [] regardless of ticker
+  it("(c) empty events array → returns [] for any ticker value", () => {
+    expect(filterEvents([], "all", "VNM")).toHaveLength(0);
+    expect(filterEvents([], "all", "Tất cả")).toHaveLength(0);
+  });
+
+  // Default param: backward-compat — calling with 2 args still works (AC-3)
+  it("(compat) calling with 2 args → behaves as selectedTicker='Tất cả'", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "all");
+    expect(result).toHaveLength(3);
+  });
+
+  // Ticker that matches no events → returns empty
+  it("ticker with no matching events → returns []", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "all", "HPG");
+    expect(result).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 18: filterEvents cascade — category THEN ticker (AC-4)
+// ---------------------------------------------------------------------------
+
+describe("filterEvents cascade — category THEN ticker (AC-4)", () => {
+  it("category='dividend' + ticker='VNM' → only VNM dividend event", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "dividend", "VNM");
+    expect(result).toHaveLength(1);
+    expect(result[0]!.code).toBe("VNM");
+    expect(result[0]!.category).toBe("dividend");
+  });
+
+  it("category='issuance' + ticker='VNM' → only VNM issuance event", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "issuance", "VNM");
+    expect(result).toHaveLength(1);
+    expect(result[0]!.code).toBe("VNM");
+    expect(result[0]!.category).toBe("issuance");
+  });
+
+  it("category='meeting' + ticker='VNM' → empty (ACB has the meeting, not VNM)", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "meeting", "VNM");
+    expect(result).toHaveLength(0);
+  });
+
+  it("category='meeting' + ticker='Tất cả' → 1 event (ACB meeting)", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "meeting", "Tất cả");
+    expect(result).toHaveLength(1);
+    expect(result[0]!.code).toBe("ACB");
+  });
+
+  it("category='all' + ticker='ACB' → 1 event (ACB meeting)", () => {
+    const result = filterEvents(FIXTURE_WITH_VNM, "all", "ACB");
+    expect(result).toHaveLength(1);
+    expect(result[0]!.code).toBe("ACB");
+  });
+
+  it("Fixture A: category='dividend' + ticker='VCB' → only VCB dividend", () => {
+    const result = filterEvents(FIXTURE_A_EVENTS, "dividend", "VCB");
+    expect(result).toHaveLength(1);
+    expect(result[0]!.code).toBe("VCB");
+  });
+
+  it("Fixture A: category='dividend' + ticker='FPT' → empty (FPT is issuance)", () => {
+    const result = filterEvents(FIXTURE_A_EVENTS, "dividend", "FPT");
+    expect(result).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 19: distinctCodes derivation — sorted A-Z, no duplicates (AC-1)
+// ---------------------------------------------------------------------------
+
+describe("distinctCodes derivation — AC-1 payload-SSOT, sorted A-Z", () => {
+  it("Fixture A: 6 events with 6 distinct codes → distinctCodes has 6 entries", () => {
+    const distinctCodes = [...new Set(FIXTURE_A_EVENTS.map((e) => e.code))].sort();
+    expect(distinctCodes).toHaveLength(6);
+  });
+
+  it("Fixture A: distinctCodes are sorted A-Z", () => {
+    const distinctCodes = [...new Set(FIXTURE_A_EVENTS.map((e) => e.code))].sort();
+    const sorted = [...distinctCodes].sort();
+    expect(distinctCodes).toEqual(sorted);
+  });
+
+  it("Fixture A: distinctCodes contains ACB, FPT, MBB, TCB, VCB, VHM", () => {
+    const distinctCodes = [...new Set(FIXTURE_A_EVENTS.map((e) => e.code))].sort();
+    expect(distinctCodes).toContain("ACB");
+    expect(distinctCodes).toContain("FPT");
+    expect(distinctCodes).toContain("MBB");
+    expect(distinctCodes).toContain("TCB");
+    expect(distinctCodes).toContain("VCB");
+    expect(distinctCodes).toContain("VHM");
+  });
+
+  it("duplicate codes in payload → distinctCodes deduplicates", () => {
+    const eventsWithDups: CorporateEvent[] = [
+      { ...FIXTURE_A_EVENTS[0]!, code: "VCB" },
+      { ...FIXTURE_A_EVENTS[1]!, code: "VCB" }, // dup
+      { ...FIXTURE_A_EVENTS[2]!, code: "FPT" },
+    ];
+    const distinctCodes = [...new Set(eventsWithDups.map((e) => e.code))].sort();
+    expect(distinctCodes).toHaveLength(2);
+    expect(distinctCodes).toEqual(["FPT", "VCB"]);
+  });
+
+  it("empty events → distinctCodes is empty array (AC-6: graceful degrade)", () => {
+    const distinctCodes = [...new Set(([] as CorporateEvent[]).map((e) => e.code))].sort();
+    expect(distinctCodes).toHaveLength(0);
   });
 });
