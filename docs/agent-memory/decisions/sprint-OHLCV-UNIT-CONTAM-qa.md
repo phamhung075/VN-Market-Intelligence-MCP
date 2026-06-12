@@ -51,3 +51,15 @@
 - All-zero tolerance (TC-3) confirmed — no spam from BACKLOG_CONTAM_8 defect rows.
 **why-decision:** APPROVED. Cron registered, live in container, all 10 TCs green. Fail-loud pattern (sendBug on contamination) correct per arch brief Decision 4.
 **why-change:** No change from plan — scope note in developer handoff validated; cron registration confirmed in container.
+
+### STEP qa-S5 · qa · 2026-06-12T10:15:00Z
+**task-id:** CONTAM-8
+**what-done:** QA gate for boundary fix close >= 1000 + TR-6 test + live repair of VNH 2026-06-12. APPROVED.
+**what-considered:**
+- Live DB (keinos sidecar): VNH 2026-06-12 open=900 low=900 high=1000 close=1000 — scale correct; pct +11.1% within |pct|<30%.
+- Full contamination scan (revised heuristic): 0 rows — CLEAN.
+- Script source confirmed: CONTAM_WHERE L94 = `"AND close >= 1000"` (was `> 1000`); commits ff2bc97e + b02fcc56 on main.
+- 45 TCs GREEN (CONTAM-7 suite, +1 TR-6). tsc exit 0. DDD PASS (migration utility, no domain imports). Security PASS. mock-guard EXIT 0.
+- TR-6 is genuine: open=0.9 close=1000.0 → contaminated_count=1 before repair, open=900/low=900 after.
+**why-decision:** APPROVED. All 4 QA checks pass raw. Boundary fix correct + live repair confirmed 0 residual contamination.
+**why-change:** No change from plan — only path: all checks green.

@@ -4898,14 +4898,15 @@
             "title": "Fix repair heuristic boundary — close >= 1000 not > 1000 (SM-1 scope miss)",
             "owner": "dev-mcp-server",
             "type": "FIX",
-            "status": "REVIEW",
+            "status": "DONE",
             "zone": "apps/mcp-server/",
             "created_at": "2026-06-12T10:05:29Z",
             "priority": "critical",
             "size": "S",
             "sprint": "OHLCV-UNIT-CONTAM",
             "depends": [],
-            "note": "QA scope miss SM-1: VNH 2026-06-12 close=1000.0 exactly excluded by > 1000 boundary (should be >= 1000)"
+            "note": "QA scope miss SM-1: VNH 2026-06-12 close=1000.0 exactly excluded by > 1000 boundary (should be >= 1000)",
+            "done_at": "2026-06-12T10:18:04Z"
           },
           {
             "id": "CONTAM-9",

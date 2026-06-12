@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-231 · 2026-06-12 · CONTAM-8 boundary repair QA gate — APPROVED
+
+Sprint: OHLCV-UNIT-CONTAM | Task: CONTAM-8 | Verdict: APPROVED | Report: reports/TASK_REPORT_CONTAM-8.md
+
+Live DB probe (named volume, keinos sidecar). VNH 2026-06-12: open=900.0 high=1000.0 low=900.0 close=1000.0 — scale correct, pct +11.1% within |pct|<30% PASS. Full contamination scan (WHERE open<100 OR low<100 AND close>=1000 AND open>0 AND low>0 AND NOT all-zero): 0 rows — CLEAN. Script source: CONTAM_WHERE L94 `AND close >= 1000` confirmed (boundary fix from `> 1000`). TR-4 stale SQL also fixed. TR-6 boundary test: open=0.9 close=1000.0 exactly — contaminated_count=1 detected BEFORE repair, open/low=900 AFTER — genuine test. Commits ff2bc97e + b02fcc56 on main. bun test CONTAM-7 suite: 45 pass / 0 fail. tsc exit 0. DDD PASS. Security PASS. mock-guard EXIT 0. CONTAM-8 REVIEW→DONE. DJ: sprint-OHLCV-UNIT-CONTAM-qa.md § qa-S5.
+
 ## cycle-230 · 2026-06-12 · CONTAM-6 repair migration QA gate — APPROVED
 
 Sprint: OHLCV-UNIT-CONTAM | Task: CONTAM-6 | Verdict: APPROVED | Report: reports/TASK_REPORT_CONTAM-6.md

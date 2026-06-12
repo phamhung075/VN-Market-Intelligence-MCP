@@ -131,3 +131,29 @@ WHERE (open < 100 OR low < 100)
 ### Derived pct-change sanity
 `vs 2026-06-10 close=900: (1000-900)/900 = +11.1% — within |pct|<30% bound`
 `Note: VNH 2026-06-11 close=0.9 is CONTAM-9 (low=0 family, out of scope for this task)`
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-06-12T10:18:00Z
+- **Verdict:** APPROVED
+- **Report:** reports/TASK_REPORT_CONTAM-8.md
+
+### Checks
+
+| Check | Result |
+|-------|--------|
+| Live DB — VNH 2026-06-12 open/low/high/close scale | open=900 low=900 high=1000 close=1000 — PASS |
+| Live DB — pct sanity \|pct\|<30% | +11.1% vs prior close=900 — PASS |
+| Live DB — full contamination scan (close>=1000 heuristic) | 0 rows remaining — PASS |
+| Script boundary scripts/migrations/repair-ohlcv-unit-contamination.ts L94 | `AND close >= 1000` confirmed — PASS |
+| TR-6 boundary test (close=1000.0 exactly) | contaminated_count=1 before; open=900/low=900 after — genuine test PASS |
+| bun test (CONTAM-7 suite, 45 TCs incl TR-6) | 45 pass / 0 fail — PASS |
+| bun tsc --noEmit | exit 0 — PASS |
+| DDD scan (modified files) | no domain→infra imports — PASS |
+| Security scan (process.env, secrets) | none found — PASS |
+| mock-guard | EXIT 0 — PASS |
+
+### Board update
+CONTAM-8 REVIEW → DONE (orch-state updated 2026-06-12T10:18:04Z)
