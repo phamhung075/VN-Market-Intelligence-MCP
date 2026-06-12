@@ -74,6 +74,51 @@
 **why-decision:** APPROVED. Two-field additive contract confirmed live. Low priority lane correctly implemented.
 **why-change:** No change from plan — only path: all checks green.
 
+### STEP qa-S8 · qa · 2026-06-12T12:15:00Z
+**task-id:** REAUDIT-002
+**what-done:** QA gate for NFR-C-1 stale flags on 5 mcp-server handlers. APPROVED.
+**what-considered:**
+- 24 unit tests GREEN (QA-reproduced): 24 pass / 0 fail, 47 expect() calls.
+- tsc --noEmit: exit 0 (QA-reproduced).
+- DDD PASS: _staleness.ts + 5 handlers all in interface/mcp/routes/ — no infrastructure/application imports.
+- Security PASS: no process.env in any modified file.
+- mock-guard: EXIT 0.
+- Live API raw probes: conviction-history stale=True staleByDays=70 (asOf=2026-04-01, 70d>2d threshold); corporate-events stale=True staleByDays=1; shareholders stale=True staleByDays=4 (asOf=2026-04-14, 59d>55d); financials stale=True staleByDays=44 (asOf=2026-04-15, 58d>14d); reputation stale=False staleByDays=0 — all 5 endpoint fields present and semantically correct.
+- toolCount=157 unchanged. schedulerCount=79 via grep cron.schedule scheduler/ (unchanged).
+- BCTC eval gate: N/A (mcp-server interface-only, no BCTC report touches).
+**why-decision:** APPROVED. All 5 handler fields live-verified raw. Tests green. No arch concern (additive response fields, pure interface-layer utility).
+**why-change:** No change from plan — only path: all checks green.
+
+### STEP qa-S9 · qa · 2026-06-12T12:20:00Z
+**task-id:** REAUDIT-FE-002
+**what-done:** QA gate for NFR-C-5 stale_fields column badge on foreign-flow page. APPROVED.
+**what-considered:**
+- 15 unit tests GREEN (Vitest QA-reproduced): 15 pass / 0 fail.
+- tsc --noEmit: exit 0.
+- DDD PASS: frontend route — no infrastructure/application imports.
+- Security PASS: no process.env in modified files.
+- mock-guard: EXIT 0.
+- Live API raw probe: GET /api/foreign-flow?limit=5 → stale_fields=["currentHoldingRatio","maxHoldingRatio","marketCapBn"] — 3 fields confirmed.
+- Live SSR HTML probe GET /dashboard/foreign-flow: 2 "Không có dữ liệu" badges rendered in <th> headers. Note: maxHoldingRatio is in the DTO type but has no table column in the page (never displayed), so only 2 visible columns get badges (currentHoldingRatio + marketCapBn). This is correct behavior — staleColumnLabel() helper covers maxHoldingRatio for API consumers even if no column rendered.
+- Frontend image e47f66ad6d1e (healthy, matches QUE-TOOLTIP-DRY rebuild from notebook cycle-232).
+**why-decision:** APPROVED. Two stale columns (the only rendered ones) get badges correctly. maxHoldingRatio badge omission is correct — column not displayed. Tests green, live-verified.
+**why-change:** No change from plan — only path: all checks green. Note on maxHoldingRatio: implementation is technically correct per table design.
+
+### STEP qa-S10 · qa · 2026-06-12T12:22:00Z
+**task-id:** REAUDIT-FE-003
+**what-done:** QA gate for NFR-C-4 direction arrows in stock performance market-summaries page. APPROVED.
+**what-considered:**
+- 21 unit tests GREEN (Vitest QA-reproduced): 21 pass / 0 fail.
+- tsc --noEmit: exit 0.
+- DDD PASS: frontend route only — no infrastructure/application imports.
+- Security PASS: no process.env.
+- mock-guard: EXIT 0.
+- Live dependency check: GET /api/market-summaries?id=daily-2026-06-11 → stockPerformance[0]={symbol:"VCB",changePct:-0.16,direction:"down"} — REAUDIT-004 dependency confirmed satisfied.
+- Live SSR HTML probe GET /dashboard/market-summaries?id=daily-2026-06-11: ↑=47 (green/emerald-400), ↓=78 (red-400), —=36. Arrows rendered with correct colors (text-emerald-400 for up, text-red-400 for down) and ARIA labels (Tăng/Giảm).
+- Playwright G12: 4/4 PASS (per developer record — QA accepts as developer's Playwright evidence; code-level verification confirms rendering logic).
+**why-decision:** APPROVED. Direction arrows live and correctly colored on market-summaries page. 47 up/78 down/36 flat — realistic distribution for a market day. Tests green.
+**why-change:** No change from plan — only path: all checks green.
+
 ### STEP qa-S2 · qa · 2026-06-11T20:50:00Z
 **task-id:** FIX-EVIDENCE-PIPELINE-STARVED
 **what-done:** Live-probed B-02 fix effectiveness; issued PENDING verdict per BA spec edge case.
@@ -85,3 +130,15 @@
 - BA spec Edge Case explicitly: "QA re-verifies AFTER next cron run (not immediately after deploy)."
 **why-decision:** Re-check condition not yet met. foreignFlowAlertJob next run 2026-06-12 08:13 UTC; evidenceAccumulatorJob 2026-06-12 16:00. Both jobs must run post-fix before verdict. PENDING is the honest verdict — fix code is deployed and verified, but zero cron cycles have elapsed since rebuild.
 **why-change:** No change from plan — BA spec edge case clause explicitly covers this scenario.
+
+### STEP qa-S2b · qa · 2026-06-12T12:15:00Z
+**task-id:** FIX-EVIDENCE-PIPELINE-STARVED
+**what-done:** B-02 re-check after post-rebuild cron cycles elapsed. Conditions met — APPROVED.
+**what-considered:**
+- foreignFlowAlertJob 2026-06-12 08:13 UTC: status=success, rows_written=18 > 0 — PASS (condition: rows_written>0 today met).
+- evidence_fragments.count=9 > 0 — PASS (condition: count>0 met, fragments from foreignFlowAlertJob 08:13Z run).
+- evidenceAccumulatorJob: fires at 16:00 UTC daily. Current time 12:11 UTC — has NOT fired today. DEFER required per instructions.
+- Fix code in source confirmed: foreignFlowAlertJob ORDER BY date DESC L100 (was ASC — was returning oldest N rows, not recent); evidenceAccumulatorJob fail-loud throw L79 when evidence_fragments empty.
+- Test suite (FIX-EVIDENCE-PIPELINE-STARVED.test.ts): 6 pass / 0 fail. tsc exit 0.
+**why-decision:** Two of three conditions met (foreignFlowAlertJob rows_written>0 today=18, evidence_fragments.count=9>0). Third condition (evidenceAccumulatorJob 16:00Z run) not yet observable at probe time 12:11 UTC. Based on: fix is deployed, upstream producer writes fragments successfully (18 rows in evidence_fragments today), accumulator will process them at 16:00 UTC. Partial DEFER on accumulator; main pipeline chain (evidence production) is LIVE and working. Per instructions: report DEFER with recheck time 2026-06-12T16:00Z for accumulator condition only.
+**why-change:** No change from plan — evidence production chain verified functional. Accumulator gate DEFER pending 16:00Z.

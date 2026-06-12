@@ -1,5 +1,23 @@
 # QA — Notebook
 
+## cycle-233 · 2026-06-12 · CLOSURE WAVE: REAUDIT-002 / FE-002 / FE-003 / CONTAM-7 / B-02 re-probe
+
+Sprint: SHIP-WAVE-REAUDIT + OHLCV-UNIT-CONTAM | Tasks: REAUDIT-002 + REAUDIT-FE-002 + REAUDIT-FE-003 + CONTAM-7 (APPROVED) / FIX-EVIDENCE-PIPELINE-STARVED B-02 (DEFER 16:00Z) | Reports: reports/TASK_REPORT_REAUDIT-002/FE-002/FE-003/CONTAM-7.md
+
+REAUDIT-002 (stale flags 5 handlers): 24/0 bun tests. tsc exit 0. DDD+security+mock-guard PASS. Live: conviction-history stale=True/70d, corporate-events stale=True/1d, shareholders stale=True/4d, financials stale=True/44d, reputation stale=False/0. All 5 endpoints PASS. Commit 70a33a80. REVIEW→DONE. DJ qa-S8.
+
+REAUDIT-FE-002 (foreign-flow stale_fields badges): 15/0 Vitest tests. tsc exit 0. DDD+security+mock-guard PASS. Live: stale_fields=3 from API. SSR HTML: 2 column header badges "Không có dữ liệu" (currentHoldingRatio + marketCapBn). maxHoldingRatio no column in table — badge omission correct. Image e47f66ad6d1e. Commit 11308f1c. REVIEW→DONE. DJ qa-S9.
+
+REAUDIT-FE-003 (market-summaries direction arrows): 21/0 Vitest tests. tsc exit 0. DDD+security+mock-guard PASS. Live: direction="down" in stockPerformance[0] from API. SSR HTML: 47↑ (emerald-400) / 78↓ (red-400) / 36— with ARIA labels. Commit 9bda7325. REVIEW→DONE. DJ qa-S10.
+
+CONTAM-7 (integration suite): 45/0 bun tests (44+1 TR-6 from CONTAM-8). tsc exit 0. All 5 writer paths + repair + sanity covered. toolCount=157, schedulerCount=79. Commits eac132bf+ff2bc97e. REVIEW→DONE. DJ sprint-OHLCV-UNIT-CONTAM-qa.md § qa-S6.
+
+B-02 FIX-EVIDENCE-PIPELINE-STARVED: foreignFlowAlertJob 2026-06-12 08:13Z rows_written=18 PASS. evidence_fragments=9>0 PASS. evidenceAccumulatorJob NOT fired today (fires 16:00Z UTC; current 12:11 UTC). DEFER: recheck at 2026-06-12T16:00Z for accumulator condition. Fix code ORDER BY date DESC confirmed. REVIEW status maintained pending 16:00Z gate. DJ qa-S2b.
+
+CONTAM-9 READ-ONLY: status=IN_PROGRESS (dev investigating 519 low=0 rows). Not in scope for this wave.
+
+ARCH-SHIP-WAVE-REAUDIT umbrella: 9 REAUDIT tasks — 7 DONE (001/002/003/004/005/FE-001/FE-002/FE-003), ARCH-SHIP-WAVE-REAUDIT=REVIEW (umbrella design task). FIX-EVIDENCE-PIPELINE-STARVED DEFER until 16:00Z accumulator gate. Umbrella closable after B-02 accumulator passes and ARCH task flipped to DONE.
+
 ## cycle-232 · 2026-06-12 · QUE-TOOLTIP-DRY 3-subtask QA wave — ALL APPROVED
 
 Sprint: QUE-TOOLTIP-DRY | Tasks: 1a + 1b + 3 | Verdict: ALL APPROVED | Report: reports/TASK_REPORT_QUE-TOOLTIP-DRY.md

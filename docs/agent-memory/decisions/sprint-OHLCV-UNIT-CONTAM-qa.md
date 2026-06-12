@@ -52,6 +52,21 @@
 **why-decision:** APPROVED. Cron registered, live in container, all 10 TCs green. Fail-loud pattern (sendBug on contamination) correct per arch brief Decision 4.
 **why-change:** No change from plan — scope note in developer handoff validated; cron registration confirmed in container.
 
+### STEP qa-S6 · qa · 2026-06-12T12:25:00Z
+**task-id:** CONTAM-7
+**what-done:** QA gate for integration test suite (all 5 writers + repair script + sanity job). APPROVED.
+**what-considered:**
+- 45 tests GREEN (bun test QA-reproduced): 45 pass / 0 fail, 114 expect() calls. Handoff stated 44 — delta +1 is TR-6 boundary test added by CONTAM-8 (explains count; not a blocker).
+- tsc --noEmit: exit 0.
+- DDD PASS: test file (test layer) — no domain/infra boundary violations in test code.
+- Security PASS: in-memory SQLite only, no process.env.
+- mock-guard: N/A (test file, no production source changed).
+- Coverage verified: T1 validateOhlcvUnit 13 tests, T2 Writer A 5 tests, T3 Writer B 4 tests, T4 Writer D 4 tests, T5 Writer E 3 tests, T6 Writer C 3 tests, T7 repair script 5 tests, T8 sanity job 8 tests — all 5 writers + repair + detection covered.
+- Part A (ohlcvSanityCheckJob.ts): confirmed already created in CONTAM-5 per handoff note; cron 15:05 UTC Mon-Fri, entry `ohlcvSanityCheck` in cronConfig.ts confirmed. schedulerCount=79 matches.
+- toolCount=157 unchanged. schedulerCount=79 unchanged.
+**why-decision:** APPROVED. Integration suite covers all 5 writer paths + repair migration + sanity detection job. Full behavior chain validated. Test count delta +1 (boundary test from CONTAM-8) is non-blocking — adds coverage, no regression.
+**why-change:** No change from plan — only path: all checks green.
+
 ### STEP qa-S5 · qa · 2026-06-12T10:15:00Z
 **task-id:** CONTAM-8
 **what-done:** QA gate for boundary fix close >= 1000 + TR-6 test + live repair of VNH 2026-06-12. APPROVED.
