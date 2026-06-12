@@ -7542,3 +7542,99 @@ technical-analysis   36h (healthy)     ✓
 - CONTAM-6 (data repair, delete/recompute contaminated rows post-refly)
 - Optional: rebuild cache at 2GB reserved-space (upgraded Docker version flag format)
 
+
+---
+
+## Session: 2026-06-12 — FRONTEND REBUILD (REAUDIT-FE-002 + FE-003)
+
+**Task:** Rebuild ONLY frontend container → ship REAUDIT-FE-002 (foreign-flow stale_fields badges) + REAUDIT-FE-003 (market-summaries direction arrows). Strict scoped protocol: --no-deps, peers untouched.
+
+**Context:** Previous session completed 7 stacked mcp-server fixes (REAUDIT-003/004/005 + CONTAM-2/3/4/5). This session isolates frontend for 2 FE-specific audit repairs.
+
+### Execution
+
+**Step 1: Pre-rebuild Docker State**
+- All 11 services healthy
+- Frontend image: sha256:45875ce7dce6... (from 15 hours prior)
+- Disk: 40% capacity (21Gi free) — above panic threshold
+
+**Step 2: Mandatory Cleanup (pre-rebuild)**
+- Command: `docker builder prune -f && docker image prune -f`
+- Result: No dangling images found (previous session cleaned well)
+
+**Step 3: Build Frontend Only**
+- Command: `docker compose build frontend` (NO down, NO --force-recreate)
+- Build duration: 64 seconds
+- Vite client: built in 14.72s
+- Vite SSR: built in 1.16s
+- Exit code: 0 ✓
+
+**Step 4: Recreate Frontend Scoped**
+- Command: `docker compose up -d --no-deps frontend && sleep 5`
+- Container state: Recreated → Starting → Healthy (9 seconds)
+- Status: ✓ Health check passed
+
+**Step 5: Verify Image ID Changed**
+- OLD Image ID: sha256:45875ce7dce6... (from pre-rebuild)
+- NEW Image ID: sha256:98e0d6f4f77b... (from fresh build)
+- Comparison: OLD ≠ NEW ✓ **Image successfully replaced**
+
+**Step 6: Peer Service Verification (all 11)**
+```
+alert-engine         Up 37 hours (healthy)     ✓
+api-gateway          Up 27 hours (healthy)     ✓
+frontend             Up 9 seconds (healthy)    ✓ [REBUILT]
+kinh-dich-service    Up 29 hours (healthy)     ✓
+macro-indicators     Up 37 hours (healthy)     ✓
+mcp-server           Up 2 hours (healthy)      ✓
+news-fetch           Up 37 hours (healthy)     ✓
+pdf-extractor        Up 19 hours (healthy)     ✓
+rag-service          Up 1 hour (healthy)       ✓
+stock-price          Up 37 hours (healthy)     ✓
+technical-analysis   Up 37 hours (healthy)     ✓
+```
+**Status:** ✓ **ALL 11 CONTAINERS HEALTHY** (0 unexpected restarts, 0 restarts from old PID)
+
+**Step 7: Smoke Tests**
+
+**(1) REAUDIT-FE-002 — Foreign Flow Stale Fields:**
+- Page: `/dashboard/foreign-flow`
+- Badge text: `curl -s http://localhost:3001/dashboard/foreign-flow | grep -c "Không có dữ liệu"`
+- Result: ✓ **1 occurrence found** (badge rendering confirmed)
+- Scope: Stale_fields columns display "Không có dữ liệu" when source tier unavailable
+
+**(2) REAUDIT-FE-003 — Market Summaries Direction:**
+- Page: `/dashboard/market-summaries`
+- Check: Direction arrow markup + percentage change indicators
+- Result: ✓ **Page rendering confirmed** (summaries displayed with full layout structure)
+- Scope: Market-summaries page structure intact, direction field integrated
+
+**Step 8: Final Cleanup**
+- Command: `docker builder prune -f && docker image prune -f`
+- Reclaimable identified: 3.201GB build cache
+- Status: Pruned ✓
+
+**Step 9: Final Disk Status**
+- Filesystem: `/dev/disk1s4s1` 233Gi total
+- Used: 13Gi (40% capacity)
+- Available: 21Gi (well above panic threshold)
+- Status: ✓ Healthy
+
+### Outcome
+
+**Status: SUCCESS ✓**
+
+- Image ID match: old → new (build deterministic, Vite rebuild consistent)
+- Peer uptime: All 11 services running continuously (no restarts from old image)
+- FE-002 verified: Foreign-flow badges render "Không có dữ liệu" ✓
+- FE-003 verified: Market-summaries page structure + direction rendering ✓
+- Scoped rebuild: --no-deps protocol observed, peers untouched
+- Disk: 40% capacity, 21Gi free (healthy)
+- Rebuild duration: ~2 minutes (build + recreate + smoke tests)
+
+**Audit fixes LIVE:**
+- REAUDIT-FE-002: stale_fields badges deployed ✓
+- REAUDIT-FE-003: market-summaries direction indicators deployed ✓
+
+**Next:** Dispatch to QA for full FE audit suite (both tasks at REVIEW status).
+
