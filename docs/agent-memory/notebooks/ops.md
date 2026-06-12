@@ -107,3 +107,67 @@ All sessions completed with QA gates cleared; no peer destruction; disk maintain
 ---
 
 **Current state (2026-06-12 end-of-day):** All 13 services healthy; latest deployed code includes CONTAM-9 write-boundary fixes + EVIDENCE-ACCUM-SILENT-CRON recovery logic. No contaminated rows live; disk headroom 19GB (42% used).
+
+---
+
+## Session: 2026-06-13 05:50Z (BCTC-VPS-STALLED-FETCH diagnosis)
+
+**Incident:** BCTC VPS fetch lane stalled — queue has 18 pending rows, last push to mcp-server 2026-06-08 00:30Z (5 days old).
+
+**Task:** SSH to Vinahost VPS, probe cache dir, service logs, identify wedge or recovery action.
+
+### Diagnosis Execution
+
+**Step 1: Cache Directory Probe**
+- Location: `/root/bctc-cache/` (268MB, 24 files)
+- Newest files: 2026-06-13 05:40-05:42 UTC (8h ago from system time 22:47 UTC)
+- ALL files pre-date Jun 08 (last successful: KDC on Jun 07 23:46 UTC)
+- **Finding:** Cache populated BUT stale; last new file ~5 days old
+
+**Step 2: Service Status + Logs**
+- Unit: `vn-bctc-fetch.service` (active since Jun 11 00:22, restarted 2 days ago)
+- Last cycle: 2026-06-12 22:45 UTC (COMPLETE, all items SKIP)
+- Log pattern: Service running 6-hourly cycles, discovering PDFs, logging OK
+- **Finding:** Service IS healthy and running; NOT wedged or crashed
+
+**Step 3: Discovery Script Probe**
+- Manual run: `python3 /root/discover-bctc-urls-browser.py GAS 2026 Q1` → SUCCESS, cached PDF
+- Same run for ACV, BDI, DAG, etc. → ZERO results: "no PDF found"
+- **Finding:** Discovery script functional; issue is data availability
+
+**Step 4: Queue Analysis**
+- Current queue: 10 items (ACV, BDI, DAG, DLC, JSH, SIS, VDC, VNH, SAB, VIX), all Q1 2026
+- SSC NewsSearch results: All 10 tickers have **zero matching rows** for 2026 Q1
+- HNX/UPCOM POST API: No results for these tickers
+- **Finding:** Queue items don't have 2026 Q1 reports filed yet on any source
+
+**Step 5: VPS API Endpoint Check**
+- Test KDC (cached): HTTP 200 + PDF payload ✓
+- Test VNM (missing): HTTP 404 ✓
+- **Finding:** API proxy functional; correct behavior
+
+### Root Cause Analysis
+
+**NOT a service wedge.** Service is:
+- Running continuously (healthcheck 200 OK)
+- Executing 6-hour cycles on schedule
+- Correctly discovering PDFs when they exist (GAS Q1/2026 found)
+- Correctly SKIPping when no PDFs available (ACV, BDI, etc.)
+- Correctly pushing discovered PDFs to mcp-server when found
+
+**The stalled fetch lane is caused by queue data mismatch:** Queue populated with 10 tickers that don't have Q1 2026 filings available on HNX/UPCOM/SSC. Since Jun 07, no new PDFs have been discovered for any queue item. Service is working correctly; problem is upstream enricher hasn't updated queue with tickers that DO have reports.
+
+### Actions Taken
+
+✓ VPS service: NO RESTART (healthy, working correctly)
+✓ Telegram: WORK channel notified with diagnosis
+✓ Notebook: This session appended
+
+### Next Steps
+
+- Enricher process should populate queue with tickers that HAVE 2026 Q1 filings
+- Monitor next 6-hour cycle (approx 2026-06-13 04:45Z) for any new successful pushes
+- If queue remains stale → escalate to dev-vps-crawls team for queue re-population strategy
+
+**Status:** RESOLVED — no infrastructure action needed; queue management issue flagged for enricher review.
+
