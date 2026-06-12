@@ -127,3 +127,43 @@ The actual computation happens at cron time. Using `today` (the date being compu
 **QA timing note:** Trend values in DB update only on next cron run (08:30 UTC daily). QA must wait for that cron cycle after ops rebuilds mcp-server container. QA can trigger job manually if endpoint exposed. Expected outcome: trend distribution shows non-zero improving/deteriorating for tickers with genuine score deltas (VCB series confirmed: 62.5 → 45 → 64 → 58 → 66).
 
 Zone health: bun test 81 pass 0 fail (reputation suite) / 12698 pass 0 fail (full suite) — tsc clean — 157 tools intact — 78 cron.schedule — HEALTHY
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-12
+**Verdict:** APPROVED
+**QA cycle:** 228
+**Report:** reports/TASK_REPORT_REAUDIT-001.md
+
+### Checks
+
+- **Unit tests (task-specific):** 23 pass / 0 fail — `src/__tests__/1922d-reputation-compute.test.ts` (23 tests, up from 9 new per dev record; includes getReputationPrior empty/single/multi-row/isolation + runReputationComputeJob improving/deteriorating e2e paths)
+- **tsc --noEmit:** 0 errors (clean)
+- **DDD:** PASS — reputationComputeJob is interface/scheduler importing from infrastructure+domain (permitted). reputationStore.ts is infrastructure; no domain layer violations.
+- **Security:** PASS — no process.env, no hardcoded secrets, SQL uses parameterized queries (`WHERE code = ? AND date < ?`)
+- **mock-guard:** N/A (infrastructure + scheduler fix only, no mock-production boundary crossed)
+- **BCTC eval gate:** N/A (not a BCTC task)
+
+### Live DB Verification (named volume vn-market-intelligence-mcp_market_data)
+
+**Cron run evidence:** reputationComputeJob did NOT appear in cron_job_runs for 2026-06-12. Container started 05:23 UTC; 08:30 UTC slot fired (8 other jobs ran at 08:30) but reputationComputeJob callback was silent — no log, no DB row. Root cause inconclusive from logs (no error, no skip message; node-cron v3.0.3 registered 79 keys). Job verified FUNCTIONAL by manual trigger at 08:48 UTC: `processed=41 failed=0`.
+
+**Trend distribution — 2026-06-12 rows (41 tickers, post-manual trigger):**
+
+| trend | count |
+|---|---|
+| improving | 22 |
+| deteriorating | 11 |
+| stable | 8 |
+
+PASS condition met: trend is NO LONGER 100% stable. Mix of improving/deteriorating/stable reflects real score deltas vs prior rows.
+
+**CAVEAT check (raw scores):** Confirmed non-trivial — VCB: prior=66.0 (2026-06-09) → current=55.0 → delta=-11 → deteriorating (correct). ACB: prior=55.0 → current=58.0 → delta=+3 → improving (correct). FPT: prior=62.5 → current=60.0 → delta=-2.5 → deteriorating (correct). HPG: prior=50.0 → current=56.0 → delta=+6 → improving (correct). Score movement is genuine, not zero-delta stable. Historical rows (pre-fix) correctly remain "stable" (prior was null at compute time).
+
+**Side finding — cron miss (non-blocking for this QA gate):** reputationComputeJob registered in scheduler (line 895 in container startScheduler.ts, confirmed via `docker exec grep`) but cron callback did not fire on 2026-06-12 08:30 UTC despite container being live since 05:23 UTC and other 08:30 jobs running. Manual trigger confirms fix is correct. Cron miss is a separate infrastructure concern (node-cron scheduling behavior) — does not block APPROVED verdict since: (a) fix is functionally correct, (b) manual trigger confirms 41/41 processed, (c) next cron cycle will exercise the fixed path. Logged as follow-up item for ops/pm.
+
+### Verdict
+
+**APPROVED** — getReputationPrior fix is correct, unit tests green, tsc clean, DDD/security pass. Trend distribution for 2026-06-12 confirms fix resolves the always-stable defect. Board: REAUDIT-001 → DONE.

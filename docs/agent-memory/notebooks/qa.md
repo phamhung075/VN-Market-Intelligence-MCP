@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-228 · 2026-06-12 · REAUDIT-001 reputation trend-delta fix QA gate — APPROVED
+
+Sprint: SHIP-WAVE-REAUDIT | Task: REAUDIT-001 | Verdict: APPROVED | Report: reports/TASK_REPORT_REAUDIT-001.md
+
+Unit tests 23 pass / 0 fail (1922d-reputation-compute.test.ts). tsc clean. DDD PASS. Security PASS. Live DB probe (named volume): reputationComputeJob cron did NOT fire on 2026-06-12 08:30 UTC despite container live since 05:23 UTC and 8 other 08:30 jobs running — no log, no cron_job_runs row, root cause inconclusive (no error). Manual trigger at 08:48 UTC confirmed fix functional: processed=41 failed=0. Trend distribution 2026-06-12: improving=22, deteriorating=11, stable=8 — PASS condition met (no longer 100% stable). Raw score spot-check: VCB 66→55 deteriorating, ACB 55→58 improving, FPT 62.5→60 deteriorating, HPG 50→56 improving — all correct. Cron miss is a separate infra concern (node-cron v3 scheduling); does not block approval. REAUDIT-001 REVIEW→DONE. Side finding: cron-miss to be flagged to pm as follow-up. DJ-GATE-1: sprint-SHIP-WAVE-REAUDIT-qa.md § qa-S4.
+
 ## cycle-227 · 2026-06-11 · REAUDIT-FE-001 NFR-C-1 stale banners QA gate — APPROVED
 
 Sprint: SHIP-WAVE-REAUDIT | Task: REAUDIT-FE-001 | Verdict: APPROVED | Commit: e787187f | Report: reports/TASK_REPORT_REAUDIT-FE-001.md

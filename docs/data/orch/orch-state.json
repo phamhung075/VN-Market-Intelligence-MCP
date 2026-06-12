@@ -6692,7 +6692,7 @@
         "id": "REAUDIT-001",
         "title": "Fix reputation trend-delta compute defect",
         "owner": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "DONE",
         "zone": "apps/mcp-server/",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "critical",
@@ -6705,7 +6705,7 @@
         "created_by": "pm",
         "claimed_at": "2026-06-11T22:00:00Z",
         "claimed_by": "dev-mcp-server",
-        "completed_at": "2026-06-11T22:10:00Z"
+        "completed_at": "2026-06-12T08:50:00Z"
       },
       {
         "id": "REAUDIT-002",

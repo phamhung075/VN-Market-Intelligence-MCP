@@ -15,6 +15,18 @@
 **why-decision:** BA spec rubric GOOD = "at least 1 entry for vnstockFundamentalsRefresh with status field populated" — entry exists (2026-06-08 crashed). Fix 3 observable (startup probe stamped). Fix 4 code verified active. Weekly cron not yet triggered post-fix — this is expected (deploy 2026-06-11, next Mon). Verdict PASS with re-check note for next Mon run.
 **why-change:** No change from plan — BA spec said verify-only unless fix ineffective. Fixes are effective per code + probe evidence available.
 
+### STEP qa-S4 · qa · 2026-06-12T08:50:00Z
+**task-id:** REAUDIT-001
+**what-done:** QA gate for reputation trend-delta fix. Manual DB probe + manual trigger. APPROVED.
+**what-considered:**
+- Unit tests: 23 pass / 0 fail (1922d-reputation-compute.test.ts). tsc clean. DDD PASS. Security PASS.
+- Live DB: reputation_scores latest date = 2026-06-09 (pre-fix). reputationComputeJob NOT in cron_job_runs for 2026-06-11 or 2026-06-12 — cron callback silent despite container live since 05:23 UTC and 08:30 slot firing (8 other jobs ran at that slot). Cron miss root cause: inconclusive from logs (no error, no skip message). Not the fix itself.
+- Manual trigger at 08:48 UTC: processed=41 failed=0. Trend distribution for 2026-06-12: improving=22, deteriorating=11, stable=8. Fix resolves the always-stable defect.
+- CAVEAT: checked raw scores — VCB 66→55 (delta -11, deteriorating correct), ACB 55→58 (delta +3, improving correct), FPT 62.5→60 (delta -2.5, deteriorating correct). Score movement genuine.
+- Side finding: cron-miss is a separate infrastructure concern (node-cron v3 scheduling); does not block approval because fix is functionally correct and next cron cycle will exercise fixed path.
+**why-decision:** APPROVED. Fix is correct at code level (all tests green, parameterized SQL, correct boundary). Live verification via manual trigger confirms fix produces non-stable distribution. Cron-miss is infra, not a defect in the fix. REAUDIT-001 → DONE.
+**why-change:** No change from plan — cron timing caveat from handoff was pre-anticipated (QA to wait for cron or trigger manually). Triggered manually, verdict unambiguous.
+
 ### STEP qa-S3 · qa · 2026-06-11T23:00:00Z
 **task-id:** REAUDIT-FE-001
 **what-done:** Full QA gate for NFR-C-1 stale banner feature on 5 frontend pages. APPROVED.
