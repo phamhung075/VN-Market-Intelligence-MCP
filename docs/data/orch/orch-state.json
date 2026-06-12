@@ -9241,6 +9241,15 @@
  },
  "decision_journal": [
   {
+   "task_id": "FIX-FETCH-VERYSTALE-LABEL",
+   "sprint_id": "FIX-FETCH-VERYSTALE-LABEL",
+   "agent": "dev-frontend",
+   "timestamp": "2026-06-12T00:00:00Z",
+   "what_considered": "only path: add sourceStatusLabel() pure helper mapping sourceStatusColor() tiers to text — avoids touching API contract or domain enum; mirrors REAUDIT-FE-001/002 stale helper pattern",
+   "decision": "sourceStatusLabel() in market.ts; SourceFreshnessTable reads label not src.status; 13 new tests covering all 4 colour tiers + regression guard",
+   "why_change": "no change from plan; cosmetic label fix exactly as spec'd in orch-state note"
+  },
+  {
    "task_id": "BA-SHIP-WAVE-REAUDIT",
    "sprint_id": "SHIP-WAVE-REAUDIT",
    "agent": "ba",

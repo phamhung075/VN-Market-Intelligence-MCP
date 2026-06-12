@@ -1,10 +1,14 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-12 | **Sprint:** QUE-TOOLTIP-DRY — QUE-TOOLTIP-DRY-1a codegen pipeline rewrite
+**Last updated:** 2026-06-12 | **Sprint:** FIX-FETCH-VERYSTALE-LABEL
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
+
+2026-06-12 — FIX-FETCH-VERYSTALE-LABEL DONE. Commit 5c6f194e. Root: SourceFreshnessTable rendered `src.status` verbatim (API enum, no "very stale" value), so red-dot sources (ageMs > 12h) showed "stale" text. Fix: exported `sourceStatusLabel()` in market.ts — maps `sourceStatusColor()` return to display string (grey→"no data", green→"fresh", amber→"stale", red→"very stale"). SourceFreshnessTable now calls `sourceStatusLabel(src)` instead of `src.status`. 13 new vitest GREEN (5 suites: no-data/fresh/amber-range/red-range/regression-guard). tsc 0 errors. Playwright 4/4 GREEN. 1501 vitest pass / 21 pre-existing nav-count failures unrelated. REBUILD: batched — ops to rebuild frontend.
+
+Zone health: FIX-FETCH-VERYSTALE-LABEL REVIEW, tsc clean, Playwright 4/4, very-stale label now consistent with red dot colour | HEALTHY
 
 2026-06-12 — QUE-TOOLTIP-DRY-1b SnapshotRow migration DONE. Commit 0c444385. dashboard.kinh-dich-signals.tsx: added `import { QueName } from "~/components/QueName"` + replaced hexagram cell (L484-L489) `<span>{item.hexagramName}</span><span>#{item.hexagramNumber}</span>` → `<QueName hexagram={item.hexagramNumber} name={item.hexagramName} />`. NFR-1 PASS (grep TooltipProvider/Content/Trigger in routes/ = 0 matches). NFR-2 PASS (no hexagram description text from QUE_DESCRIPTIONS hardcoded in routes — pre-existing "Trung tính" matches in kinh-dich-signals.tsx are comment + sentimentLabel() mapper, not tooltip content). NFR-3 PASS (QueName fallback intact, 1a test hexagram=0 undefined still GREEN). tsc 0 errors. Playwright 4/4 GREEN. 1488 vitest GREEN (21 pre-existing nav count failures unrelated — confirmed pre-existing). REBUILD: batched — ops to rebuild frontend after 1b REVIEW (same batch as any other pending rebuilds).
 
