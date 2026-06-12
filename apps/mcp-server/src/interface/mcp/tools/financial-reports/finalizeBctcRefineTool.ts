@@ -129,6 +129,9 @@ export function buildFinalizeBctcRefineHandler(
     const { report_id, report_status: callerReportStatus } = parsed.data;
     // BEQ-7: effectiveStatus may be overridden to PARTIAL if section guard fires
     let report_status: "DONE" | "PARTIAL" | "FAILED" = callerReportStatus;
+    // FIX-FINALIZE-STATUS-STUCK-PARTIAL (Fix B): track whether caller supplied DONE
+    // so the response can surface beg7_override=true when BEQ-7 fires.
+    const callerWasDone = callerReportStatus === "DONE";
     const db = dbOverride ?? getDb();
 
     try {
@@ -325,6 +328,12 @@ export function buildFinalizeBctcRefineHandler(
       // section-incomplete (e.g., agentic refine produced only income_statement rows),
       // override to PARTIAL. The server is the SSOT for completeness invariant.
       // Empty finalRows also triggers this guard (fail-safe: no evidence → PARTIAL).
+      //
+      // ARCH RULING (2026-06-12): This guard is CORRECT and MUST NOT be removed or weakened.
+      // The caller does not have section visibility; the server owns the DONE/PARTIAL decision.
+      // The beg7_override field in the response (Fix B) surfaces the override to callers.
+      // The queue predicate fix (Fix A in getBctcPendingRefineTool) prevents infinite re-queue
+      // when all windows are DONE but BEQ-7 fires (data-quality PARTIAL, not work-remaining).
       if (report_status === "DONE") {
         const completeness = checkSectionCompleteness(finalRows);
         if (!completeness.isComplete) {
@@ -1104,11 +1113,21 @@ export function buildFinalizeBctcRefineHandler(
         rows_parsed: totalRows,
       });
 
+      // FIX-FINALIZE-STATUS-STUCK-PARTIAL (Fix B): include effective_status and beg7_override
+      // so callers can observe when BEQ-7 overrode their supplied report_status.
+      // - effective_status: the actual refine_status written to financial_reports (DONE/PARTIAL/FAILED)
+      // - beg7_override: true when caller supplied DONE but BEQ-7 section guard overrode to PARTIAL
+      // This is additive (non-breaking) — existing callers that only read ok+rows_parsed continue to work.
       return {
         content: [
           {
             type: "text" as const,
-            text: JSON.stringify({ ok: true, rows_parsed: totalRows }),
+            text: JSON.stringify({
+              ok: true,
+              rows_parsed: totalRows,
+              effective_status: report_status,
+              beg7_override: callerWasDone && report_status === "PARTIAL",
+            }),
           },
         ],
       };
@@ -1139,7 +1158,12 @@ export function registerFinalizeBctcRefineTool(server: McpServer): void {
       "INSERT rows → UPDATE financial_reports.refine_status. " +
       "FAILED windows contribute NO rows (isolation invariant). " +
       "report_status must be determined by the caller (DONE/PARTIAL/FAILED) based on window aggregation. " +
-      "Output: { ok: true, rows_parsed: number } or { error: string }.",
+      "BEQ-7 server-side guard: if caller supplies DONE but parsed rows are section-incomplete, " +
+      "effective status is overridden to PARTIAL (server owns completeness invariant). " +
+      "Output: { ok: true, rows_parsed: number, effective_status: 'DONE'|'PARTIAL'|'FAILED', " +
+      "beg7_override: boolean } — beg7_override=true when BEQ-7 fired. " +
+      "Response is additive; callers reading only ok+rows_parsed continue to work unchanged. " +
+      "Error: { error: string }.",
     {
       report_id: z.string().min(1).describe("Financial report ID"),
       report_status: z

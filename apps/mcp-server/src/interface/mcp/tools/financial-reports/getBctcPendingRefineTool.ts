@@ -115,6 +115,12 @@ export function buildGetBctcPendingRefineHandler(
 
     try {
       // Build query with optional LIMIT
+      // FIX-FINALIZE-STATUS-STUCK-PARTIAL (Fix A):
+      // Exclude PARTIAL reports where ALL bctc_refined_units rows are window_status='DONE'
+      // AND at least one unit exists. These are data-quality PARTIALs (BEQ-7 section guard
+      // fired at finalize but all windows are processed) — there is no refine work remaining.
+      // PENDING and FAILED eligibility is unchanged.
+      // Index: idx_bctc_refined_units_report_status (report_id, window_status) — O(log n) lookup.
       const limitClause = limit ? `LIMIT ${limit}` : "";
       const rows = db
         .prepare<PendingRefineRow, []>(
@@ -123,6 +129,18 @@ export function buildGetBctcPendingRefineHandler(
            WHERE text_status = 'COMPLETE'
              AND refine_status IN ('PENDING', 'PARTIAL', 'FAILED')
              AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
+             AND NOT (
+               refine_status = 'PARTIAL'
+               AND (
+                 SELECT COUNT(*) FROM bctc_refined_units u
+                 WHERE u.report_id = financial_reports.id
+                   AND u.window_status != 'DONE'
+               ) = 0
+               AND (
+                 SELECT COUNT(*) FROM bctc_refined_units u
+                 WHERE u.report_id = financial_reports.id
+               ) > 0
+             )
            ORDER BY parsed_at ASC
            ${limitClause}`,
         )
@@ -240,6 +258,8 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
     "Return financial reports pending agentic refine processing, with pre-partitioned windows. " +
       "Queries financial_reports WHERE text_status='COMPLETE' AND refine_status IN ('PENDING','PARTIAL','FAILED') " +
       "AND confirm_status != 'CONFIRMED'. " +
+      "PARTIAL reports where ALL bctc_refined_units rows are window_status='DONE' are excluded — " +
+      "these are data-quality PARTIALs (BEQ-7 section guard fired but no refine work remains). " +
       "FAILED reports are included so the fleet cron can retry them (e.g. Option-Y legacy failures). " +
       "Output: Array<{ id, filename, page_count, text_status, confirm_status, refine_status, windows[] }> " +
       "ordered by parsed_at ASC. " +

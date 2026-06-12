@@ -221,6 +221,108 @@ describe("FIX-REFINE-PENDING-SCHEMA — get_bctc_pending_refine extended schema"
     expect(ids).toContain(REPORT_B);
   });
 
+  // ── DV-FIX-A-1: Fully-processed PARTIAL excluded from queue ─────────────────
+
+  it("DV-FIX-A-1: PARTIAL report with ALL units window_status=DONE is excluded from queue (Fix A)", async () => {
+    // Simulate ACB fea19bae scenario: PARTIAL report with 2 DONE units
+    const REPORT_DONE_PARTIAL = "fea19bae-dead-beef-0000-000000000001";
+    insertReport(db, REPORT_DONE_PARTIAL, {
+      refine_status: "PARTIAL",
+      text_status: "COMPLETE",
+      confirm_status: "PENDING",
+      action_code: "ACB",
+    });
+    // Insert 2 DONE units for this report
+    db.run(
+      `INSERT INTO bctc_refined_units (report_id, unit_id, page_numbers_json, markdown, window_status, refined_at)
+       VALUES (?, 'unit-1', '[1]', 'md1', 'DONE', datetime('now'))`,
+      [REPORT_DONE_PARTIAL],
+    );
+    db.run(
+      `INSERT INTO bctc_refined_units (report_id, unit_id, page_numbers_json, markdown, window_status, refined_at)
+       VALUES (?, 'unit-2', '[2]', 'md2', 'DONE', datetime('now'))`,
+      [REPORT_DONE_PARTIAL],
+    );
+
+    // Insert a genuine PENDING report — this one MUST be returned
+    const REPORT_PENDING = "ccc00000-0000-0000-0000-000000000010";
+    insertReport(db, REPORT_PENDING, {
+      refine_status: "PENDING",
+      text_status: "COMPLETE",
+      confirm_status: "PENDING",
+      action_code: "CTG",
+    });
+
+    const handler = buildGetBctcPendingRefineHandler(db, {
+      getPageTextFn: async () => "",
+    });
+
+    const result = await handler({ limit: 10 });
+    const reports = parseResult(result) as Array<Record<string, unknown>>;
+    const ids = reports.map((r) => r["id"]);
+
+    // Fully-processed PARTIAL must be excluded
+    expect(ids).not.toContain(REPORT_DONE_PARTIAL);
+    // Genuine PENDING must be included
+    expect(ids).toContain(REPORT_PENDING);
+  });
+
+  it("DV-FIX-A-2: PARTIAL report with at least one non-DONE unit remains in queue (genuine partial)", async () => {
+    // Genuine PARTIAL: 1 DONE unit + 1 FAILED unit → still has work remaining
+    const REPORT_GENUINE_PARTIAL = "aabbccdd-0000-0000-0000-000000000002";
+    insertReport(db, REPORT_GENUINE_PARTIAL, {
+      refine_status: "PARTIAL",
+      text_status: "COMPLETE",
+      confirm_status: "PENDING",
+      action_code: "VNM",
+    });
+    db.run(
+      `INSERT INTO bctc_refined_units (report_id, unit_id, page_numbers_json, markdown, window_status, refined_at)
+       VALUES (?, 'unit-1', '[1]', 'md1', 'DONE', datetime('now'))`,
+      [REPORT_GENUINE_PARTIAL],
+    );
+    db.run(
+      `INSERT INTO bctc_refined_units (report_id, unit_id, page_numbers_json, markdown, window_status, refined_at)
+       VALUES (?, 'unit-2', '[2]', 'md2', 'FAILED', datetime('now'))`,
+      [REPORT_GENUINE_PARTIAL],
+    );
+
+    const handler = buildGetBctcPendingRefineHandler(db, {
+      getPageTextFn: async () => "",
+    });
+
+    const result = await handler({ limit: 10 });
+    const reports = parseResult(result) as Array<Record<string, unknown>>;
+    const ids = reports.map((r) => r["id"]);
+
+    // Genuine PARTIAL (has FAILED units) must remain in queue
+    expect(ids).toContain(REPORT_GENUINE_PARTIAL);
+  });
+
+  it("DV-FIX-A-3: PARTIAL report with zero units stays in queue (units may not have been pushed yet)", async () => {
+    // PARTIAL with 0 units: the second COUNT subquery is = 0, so NOT(...) condition is false
+    // → report stays eligible (not excluded)
+    const REPORT_ZERO_UNITS = "00000000-0000-0000-0000-000000000003";
+    insertReport(db, REPORT_ZERO_UNITS, {
+      refine_status: "PARTIAL",
+      text_status: "COMPLETE",
+      confirm_status: "PENDING",
+      action_code: "HPG",
+    });
+    // No bctc_refined_units inserted
+
+    const handler = buildGetBctcPendingRefineHandler(db, {
+      getPageTextFn: async () => "",
+    });
+
+    const result = await handler({ limit: 10 });
+    const reports = parseResult(result) as Array<Record<string, unknown>>;
+    const ids = reports.map((r) => r["id"]);
+
+    // Zero units → second subquery COUNT = 0 → NOT(...) is false → report stays in queue
+    expect(ids).toContain(REPORT_ZERO_UNITS);
+  });
+
   // ── DV-5: page_type = "continuation" for multi-page window ───────────────
 
   it("DV-5: page_type='continuation' when window spans multiple pages via continuation marker", async () => {

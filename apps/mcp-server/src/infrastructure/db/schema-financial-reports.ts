@@ -459,6 +459,11 @@ export function initFinancialReportsTables(db: Database): void {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bru_report ON bctc_refined_units(report_id)`);
+  // FIX-FINALIZE-STATUS-STUCK-PARTIAL (RF-1 mitigation):
+  // Composite index on (report_id, window_status) for the Fix-A exclusion subquery in
+  // getBctcPendingRefineTool. Both correlated subqueries (COUNT(*) where window_status!=DONE
+  // and COUNT(*) total) are O(log n) with this index instead of O(n) full scan.
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bctc_refined_units_report_status ON bctc_refined_units(report_id, window_status)`);
 
   // ── BCTC-AGENTIC-REFINE: text_status + refine_status on financial_reports ─
   // Idempotent migrations: check PRAGMA table_info before ALTER TABLE.

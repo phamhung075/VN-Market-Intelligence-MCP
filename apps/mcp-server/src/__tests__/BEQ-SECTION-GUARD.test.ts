@@ -349,6 +349,52 @@ BÁO CÁO LƯU CHUYỂN TIỀN TỆ
     expect(dbRow?.refine_status).toBe("DONE");
   });
 
+  it("DV-FINALIZE-1b: income-only override → response includes effective_status=PARTIAL and beg7_override=true", async () => {
+    const id = "beq7000-0000-7000-8000-000000000011";
+    insertReportWithIncomeOnlyUnit(id);
+
+    const handler = buildFinalizeBctcRefineHandler(db);
+    const result = await handler({ report_id: id, report_status: "DONE" });
+    const body = JSON.parse(result.content[0].text);
+
+    // Fix B: response must include effective_status and beg7_override
+    expect(body.ok).toBe(true);
+    expect(body.effective_status).toBe("PARTIAL");
+    expect(body.beg7_override).toBe(true);
+    // Legacy fields still present
+    expect(typeof body.rows_parsed).toBe("number");
+  });
+
+  it("DV-FINALIZE-2b: complete sections → response includes effective_status=DONE and beg7_override=false", async () => {
+    const id = "beq7000-0000-7000-8000-000000000012";
+    insertReportWithCompleteUnit(id);
+
+    const handler = buildFinalizeBctcRefineHandler(db);
+    const result = await handler({ report_id: id, report_status: "DONE" });
+    const body = JSON.parse(result.content[0].text);
+
+    expect(body.ok).toBe(true);
+    expect(body.effective_status).toBe("DONE");
+    // Caller supplied DONE, BEQ-7 did NOT fire → beg7_override must be false
+    expect(body.beg7_override).toBe(false);
+    expect(typeof body.rows_parsed).toBe("number");
+  });
+
+  it("DV-FINALIZE-4: caller supplies PARTIAL → effective_status=PARTIAL, beg7_override=false", async () => {
+    const id = "beq7000-0000-7000-8000-000000000013";
+    insertReportWithIncomeOnlyUnit(id);
+
+    const handler = buildFinalizeBctcRefineHandler(db);
+    // Caller already supplies PARTIAL — BEQ-7 guard does not fire (only fires when caller=DONE)
+    const result = await handler({ report_id: id, report_status: "PARTIAL" });
+    const body = JSON.parse(result.content[0].text);
+
+    expect(body.ok).toBe(true);
+    expect(body.effective_status).toBe("PARTIAL");
+    // callerWasDone=false → beg7_override must be false
+    expect(body.beg7_override).toBe(false);
+  });
+
   it("DV-FINALIZE-3: empty parsed rows (0 DONE units) → PARTIAL (fail-safe)", async () => {
     const id = "beq7000-0000-7000-8000-000000000003";
     // Report with NO refined units at all — finalRows will be empty
