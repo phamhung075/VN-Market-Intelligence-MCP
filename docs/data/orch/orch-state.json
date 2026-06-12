@@ -6790,7 +6790,7 @@
         "id": "CONTAM-7",
         "type": "TEST",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "size": "M",
         "zone": "apps/mcp-server/src/__tests__/",
         "sprint": "OHLCV-UNIT-CONTAM",
