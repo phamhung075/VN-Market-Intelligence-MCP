@@ -59,3 +59,12 @@
 - Copy + run inside container via docker cp + docker exec (gives access to named volume)
 **why-decision:** Live DB in named volume; docker exec pattern is the only correct approach per project memory; script keeps DB_PATH env override for testability
 **why-change:** Row count 385→376 (9 fewer); VNH 2026-06-12 close=1000.0 (not >1000) correctly excluded by heuristic boundary; 116 all-zero rows skipped per binding amendment; detection matches handoff spec exactly
+
+### STEP dev-mcp-server-S7 · dev-mcp-server · 2026-06-12T10:05:00Z
+**task-id:** CONTAM-7
+**what-done:** Created CONTAM-7-ohlcv-unit-contam-integration.test.ts — 44 integration tests (8 groups: T1..T8) covering all 5 writers + repair + sanity job; 44 pass / 0 fail
+**what-considered:**
+- Single unified integration file (handoff spec) vs cross-file import orchestration
+- Inline repair logic in T7 tests vs import runRepair from scripts/migrations/ (cross-zone)
+**why-decision:** Import runRepair from scripts/migrations/ is cleaner than duplicating repair SQL; relative path `../../../../scripts/migrations/` resolves from __tests__/ correctly in Bun. ohlcvSanityCheckJob.ts already existed from CONTAM-5 (Part A scope already done); CONTAM-7 scope = integration test suite only.
+**why-change:** Part A (detection job) was already shipped as CONTAM-5; CONTAM-7 handoff scope is the test suite (confirmed in sprint state + notebook). No src changes needed.

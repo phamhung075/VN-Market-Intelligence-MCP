@@ -22,6 +22,16 @@ Zone health: bun test 10 pass 0 fail (targeted), tsc clean, 157 tools intact, 79
 
 ---
 
+## 2026-06-12 · CONTAM-7 — Integration test suite (all 5 writers + repair + sanity job) — REVIEW
+
+**Task:** CONTAM-7 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: apps/mcp-server/src/__tests__/
+**New file:** `__tests__/CONTAM-7-ohlcv-unit-contam-integration.test.ts` — 44 integration tests (8 groups: T1 guard / T2 Writer A / T3 Writer B / T4 Writer D / T5 Writer E / T6 Writer C / T7 repair / T8 sanity job). All in-memory SQLite. Import path: repair script at `../../../../scripts/migrations/` resolves correctly from __tests__/ in Bun.
+**Key insight:** ohlcvSanityCheckJob.ts (Part A of handoff) was already shipped in CONTAM-5; CONTAM-7 scope is integration test suite only. Writer C tests verify tick→aggregate→upsert path via runOhlcvDailyAggregator with in-memory market_prices_history seeding.
+**Tests:** 44 pass / 0 fail (110 expect calls). Full suite: 12861 pass / 0 fail (exit 0; Bun runtime crash after run = known Mode B OOM, not test failure). tsc exit 0. toolCount=157. schedulerCount=79.
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, integration suite CONTAM-7 44/44 pass | HEALTHY
+
+---
+
 ## 2026-06-12 · CONTAM-6 — repair-ohlcv-unit-contamination migration — REVIEW
 
 **Task:** CONTAM-6 | Sprint: OHLCV-UNIT-CONTAM | Priority: CRITICAL | Zone: scripts/migrations/
