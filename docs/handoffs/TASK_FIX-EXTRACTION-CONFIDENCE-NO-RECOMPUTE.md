@@ -134,3 +134,36 @@ if (refinedConfidence > currentConfidence) {
 **Ready now:** No (blocked by FIX-FINALIZE-STATUS-STUCK-PARTIAL — P0 dependency)
 
 **Estimated effort:** ~1.5h (weighted formula + guard logic + verification)
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/src/interface/mcp/tools/financial-reports/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts` — added BLOCK-5 confidence recompute (lines ~1089–1150 in final file)
+- **Tests written:** none (AC-5-2: verification is manual + live; existing suite passes)
+- **Gate evidence:**
+  - `bun tsc --noEmit` → 0 errors (clean)
+  - `bun test` (full suite, 3 runs) → exit 0 all runs
+  - `FIX-DE-2-debt-block1-wire.test.ts` 7 pass / 0 fail — guard verified: current_confidence=0.81, refined_confidence=0.8 → NO override (raise-only correct)
+  - `AR-refine-readiness-gate.test.ts` + `AR-refined-units-idempotency.test.ts` 20 pass / 0 fail
+  - `FU-6f-eval-blob-blockers.test.ts` 8 pass / 0 fail
+  - Tool count: 157 (matches pre-task baseline)
+  - Scheduler count: 79 (matches pre-task baseline)
+- **Recompute trigger:** BLOCK-5 in `finalizeBctcRefineTool.ts`, immediately after BLOCK-4 (validation_status refresh), before BLOCK-2 FIX (eval recompute). Runs on every `finalize_bctc_refine` call, non-fatal try/catch.
+- **Raise-only guard proof:** `if (refinedConfidence > currentConfidence)` — DE2 tests show current_confidence=0.81, refined_confidence=0.8 (2/3 sections) → NO override; AR tests show current_confidence=0.9, refined=0.4 → NO override. ACB (current=0.375, all 3 sections → refined=1.0) → 1.0 > 0.375 → OVERRIDE.
+- **Formula:** `(hasBalanceSheet ? 0.4 : 0) + (hasIncomeStatement ? 0.4 : 0) + (hasCashFlow ? 0.2 : 0)` — weighted section presence per architect brief
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 3× exit 0 (full suite); targeted suites all pass
+- **Tool count:** 157 — matches pre-task baseline
+- **Scheduler count:** 79 — matches pre-task baseline
+- **Docs updated:** NONE (no architecture docs changed)
+- **Graphify:** skipped (no docs impacted)
+
+**Live verification required (after ops rebuild):**
+1. `finalize_bctc_refine(report_id="fea19bae-2b7a-4954-b3e0-e09d7bfc7390", report_status="DONE")`
+2. `SELECT extraction_confidence FROM financial_reports WHERE id='fea19bae-2b7a-4954-b3e0-e09d7bfc7390'` → expect ≥ 0.6 (1.0 if all 3 sections)
+3. `get_bctc_full(ACB)` → must return real financial data (PUB-5 unblocked)
+4. Confirm VNM confidence does not decrease (guard check)
