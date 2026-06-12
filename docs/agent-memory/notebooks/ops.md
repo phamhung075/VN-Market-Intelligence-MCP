@@ -7638,3 +7638,54 @@ technical-analysis   Up 37 hours (healthy)     ✓
 
 **Next:** Dispatch to QA for full FE audit suite (both tasks at REVIEW status).
 
+
+---
+
+## Session: 2026-06-12 (FIX-FETCH-VERYSTALE-LABEL — rebuild verification)
+
+**Task:** Rebuild frontend container only with FIX-FETCH-VERYSTALE-LABEL (REVIEW → DONE). QA closure wave complete; safe to recreate.
+
+**Context:** Frontend fix implements `sourceStatusLabel(source)` helper to derive label text from color tier instead of raw `src.status` enum. Ensures "very stale" label appears for sources > 12h old (matching red dot color), not just "stale".
+
+### Execution Summary
+
+**Step 1: Pre-rebuild state**
+- Git HEAD: pulled and clean (local 85 commits ahead, untracked files only)
+- Current frontend image: sha256:e47f66ad6d1ebd7a364d8a9818fae8a4c9eb57684f6eb8d5154171b537de6e68
+- All 11 Docker services healthy
+
+**Step 2: Rebuild frontend (docker compose build frontend)**
+- Build output: Clean; 1747 modules transformed; Remix client + SSR build succeeded
+- New frontend image: sha256:1d6d2c441da7b6804bfadb739e8acbc28275e4dec9e085a29d0a84f1da506750
+- Build took ~40s total
+
+**Step 3: Recreate container (docker compose up -d --no-deps frontend)**
+- Executed: Clean container recreation without touching peers
+- Container started: healthy within 11 seconds
+
+**Step 4: Post-rebuild validation**
+- Docker ps -a: 11/11 services healthy ✓
+  - alert-engine (39h), api-gateway (28h), frontend (11s ✓ NEW), kinh-dich-service (31h), macro-indicators (39h)
+  - mcp-server (3h), news-fetch (38h), pdf-extractor (20h), rag-service (42m), stock-price (39h), technical-analysis (38h)
+- Smoke: curl /dashboard/fetch → Remix app renders 200 OK ✓
+- Smoke: verified sourceStatusLabel in compiled /app/build/server/index.js ✓
+- Disk: 90% / 233Gi (normal, no action needed)
+
+**Step 5: Task status flip**
+- Moved FIX-FETCH-VERYSTALE-LABEL from backlog.REVIEW → done.DONE
+- Updated orch-state.json with ops verification note
+- Committed: chore(orch-state): FIX-FETCH-VERYSTALE-LABEL → DONE (1219b3c7)
+
+### QA Gate Status
+
+**CLEARED ✓**
+
+- ✓ Frontend image ID confirmed changed (old e47f → new 1d6d)
+- ✓ sourceStatusLabel compiled live in bundle (verified in server/index.js)
+- ✓ All 11 peer services remain healthy (no restart, no touch)
+- ✓ Frontend container recreated cleanly with --no-deps (no dependency side effects)
+- ✓ Smoke test passed (page renders, AC met: "live verify localhost:3001/dashboard/fetch")
+- ✓ Disk healthy (90% normal)
+- ✓ Task status DONE, orch-state committed
+
+**NEXT: None.** Task fully closed.
