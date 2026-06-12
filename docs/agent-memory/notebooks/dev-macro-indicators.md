@@ -1,224 +1,85 @@
 # dev-macro-indicators — Notebook
 
-Zone: `apps/macro-indicators/` | Stack: Go (pilot) | DB: none (reads market.db read-only)
+Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only)
 
-## Archived sessions (detail → git log)
-
-- P1-E1 (41a7d866) — dashboard stub HTML, G12 streak #3, 20/20 GREEN
-- P2-X1 (61c3dce4) — 5 remaining primitives, carry/yield/oil/gold/usdvnd, 20/20 GREEN
-- P2-X3 (88adeb70) — snapshot/carry/yield handlers, 501 resolved, G3 DI wiring
-- P2-X4 (535e7bdc) — dashboard 6/6 primitives data sync, G9 unblocked
-- Category chip relabeling (f0a8760c) — Valid Input/Edge Case/Bad Input labels
-- MACRO-SEED-WIRING (a148db3d) — MarketIndexPort added, VNIndex reads market.db
-- MACRO-VNINDEX-DATA-GAP — two-tier query (market_prices PRIMARY + macro_indicators SECONDARY)
-- Docker crash-loop fix (f85ad1d9) — Dockerfile TS→Go multi-stage, router_test assertions
-
-## Working Memory — Sprint DATA-PIPELINE-INTEGRITY
-
-### Session 2026-05-30 — DPI-1+DPI-2: SBV canonical FX + live computedAt
-
-**DPI-1:** `SBVRateSQLiteAdapter` reads `sbv_rates.usd_vnd_official WHERE source='sbv'` (6h staleBound, RFC3339Nano). Wired in Execute() after `resolveMarketPrices()` — replaces usdVnd if >0, OIL/GOLD unaffected. `cmd/server/main.go` switched from `NewSBVRateRepository()` to `NewSBVRateSQLiteAdapter()`. 4 new infra tests + 4 new application tests (DPI-1 AC-3/AC-5 + DPI-2 AC-2). Commit: 86f702bf.
-
-**DPI-2:** Deleted `const fixtureComputedAt = "2026-05-23T00:00:00Z"`. `computedAt := time.Now().UTC().Format(time.RFC3339)` at top of Execute(). Both carry and yield ComputedAt now reflect actual call time.
-
-**BLOCKER surfaced to PO:** frozen fixture inputs (4.7/5.33/8.2) = carry/yield regime never changes → split to DPI-2b.
-
-Status: REVIEW — ops REBUILD required (after mcp-server).
-
-### Session 2026-05-30 — DPI-2b: wire live carry/yield inputs from market.db
-
-**Why:** DPI-2 computedAt-only fix = cosmetic. frozen Fed 5.33 > frozen VND 4.7 → carry permanently FII_OUTFLOW_RISK regardless of computedAt.
-
-**Port added (`pkg/domain/ports.go`):** `CarryYieldInputsPort` — 3 methods: `GetVNDDepositRate` / `GetFedFundsRate` / `GetEarningYield`. All return (0, nil) on absent/stale (safe-degrade).
-
-**Adapter added (`pkg/infrastructure/repositories.go`):** `CarryYieldInputsSQLiteAdapter`:
-- `fetchVNDDepositRateFromDB`: `sbv_rates.max_deposit_rate_pct WHERE source='sbv'`, 26h staleBound
-- `fetchFedFundsRateFromDB`: `fred_series_daily WHERE series='EFFR' ORDER BY date DESC`, 96h staleBound — date column = DateOnly (YYYY-MM-DD), not RFC3339Nano
-- `fetchEarningYieldFromDB`: `tracked_indicators WHERE indicator='market_earning_yield' ORDER BY extracted_at DESC`, 26h staleBound
-
-**Resolver pattern (`pkg/application/usecases.go`):** `resolveVNDDepositRate` / `resolveFedFundsRate` / `resolveEarningYield` — port>0 ? port : fixture const. Execute() uses resolved values for CarryTradeInput + YieldSpreadInput. Fixture consts kept (safe-degrade fallback, not deleted).
-
-**Composition root (`cmd/server/main.go`):** `NewCarryYieldInputsSQLiteAdapter()` injected as 4th arg to `NewComputeMacroUseCase`.
-
-**Test additions:**
-- `repositories_test.go`: extended `newInMemoryDB` (added `max_deposit_rate_pct` col to sbv_rates, added `fred_series_daily` + `tracked_indicators`); 9 new adapter tests (fresh/stale/absent per input).
-- `usecases_test.go`: 8 existing calls updated (nil 4th arg); `stubCarryYieldInputs` added; 6 new DPI-2b tests (AC-1..4 + AC-4-nil + AC-6 regime-flip).
-
-**AC-6 REGIME-FLIP DV (deposit=6.0, fed=4.0 → spread=2.00 NEUTRAL vs frozen −0.63 FII_OUTFLOW_RISK):**
-```
-DPI-2b AC-6 REGIME-FLIP PROVEN: carrySpread 2.00, regime NEUTRAL (was FII_OUTFLOW_RISK)
-```
-
-**Build:** `go build ./...` CLEAN | `go vet ./...` CLEAN | `go test ./...` ALL PASS (12 packages).
-
-**Commit:** 56f39ec2 (9 files: ports.go, repositories.go, repositories_test.go, usecases.go, usecases_test.go, main.go, handlers_snapshot_contract_test.go, DPI-2b.md, TASKS.md).
-
-**Status:** REVIEW — ops must REBUILD macro-indicators (after DPI-1/2 same container) → QA AC-7 live re-probe.
-
-**AC-7 QA verification query (post-rebuild):**
-```sql
-SELECT max_deposit_rate_pct, fetched_at FROM sbv_rates WHERE source='sbv';
-SELECT value, date FROM fred_series_daily WHERE series='EFFR' ORDER BY date DESC LIMIT 1;
-SELECT value, extracted_at FROM tracked_indicators WHERE indicator='market_earning_yield' ORDER BY extracted_at DESC LIMIT 1;
-```
-Cross-check vs `get_macro_snapshot` carry.vndDepositRate / carry.fedFundsRate / yield.earningYield. Fixture fallback (4.7/5.33/8.2) is CORRECT if rows absent/stale — not a bug.
-
-Zone health: DPI-2b impl DONE; AC-6 PROVEN; ops REBUILD required; QA AC-7 pending | HEALTHY
-
-## Session 2026-06-04 — DSI-INV-1: suppress fixture carry regime, extend dataSource liveness gate
-
-**Bug confirmed live:** `get_macro_snapshot` returned `carry.fedFundsRate=5.33` (fixture) with `dataSource="live"`.
-
-**FRED port diagnosis:**
-- Port IS wired: `CarryYieldInputsSQLiteAdapter.GetFedFundsRate` → `fetchFedFundsRateFromDB`.
-- DB HAS EFFR data: `value=3.62, date=2026-05-28`. BUT date is 187.5h ago > 96h `effrStaleBound` → staleness gate returns (0, nil) → fixture 5.33 used.
-- `earnYield` similarly stale: `tracked_indicators` row is 58h old > 26h bound → fixture 8.2 used.
-- `vndDeposit` IS live: `sbv_rates.max_deposit_rate_pct=5` fresh today.
-- **Root cause:** `allLive` only checked commodity inputs (oil/gold/usdVnd) — not fedFunds/vndDeposit. Fixture fedFunds stamped as "live".
-
-**DSI-INV-1 fix (commit 09e93d76):**
-
-1. Resolvers now return `(float64, isLive bool)`: `resolveVNDDepositRate` / `resolveFedFundsRate` / `resolveEarningYield`.
-2. Carry suppression gate: `carryInputsLive = fedFundsLive && vndDepositLive`. When false → `CarrySignalDTO{regime="UNKNOWN", carrySpread=nil, is_estimate=true, source_tier=4}`.
-3. dataSource extended: `"live"` only when `allCommodityLive && carryInputsLive`.
-4. `GetFedFundsSourceDate` added to `CarryYieldInputsPort` + infra: returns FRED `MAX(date)` regardless of staleness for `fetched_at_source` on carry DTO. Never `time.Now()` on fallback path.
-5. `CarrySignalDTO` / `YieldSignalDTO` DTOs added to `dtos.go` with `IsEstimate`, `SourceTier`, `FetchedAtSource`.
-
-**Files changed:** `pkg/domain/ports.go` | `pkg/infrastructure/repositories.go` | `pkg/application/dtos.go` | `pkg/application/usecases.go` | `pkg/application/usecases_test.go`
-
-**Test results:** `go test ./...` ALL PASS (12 packages) | `golangci-lint run`: 0 issues | sandbox: primitive 18/18, module 2/2 GREEN.
-
-**Expected post-rebuild behavior:** carry will show `regime="UNKNOWN", is_estimate=true, source_tier=4, fetched_at_source="2026-05-28"` until FRED EFFR data is refreshed in `fred_series_daily` (a separate data pipeline issue).
-
-**Ops action required:** REBUILD macro-indicators container. QA verify `get_macro_snapshot` shows `carry.regime="UNKNOWN"` and `dataSource="estimate"` (not "live").
-
-Zone health: DSI-INV-1 SHIPPED 09e93d76; ops REBUILD required | HEALTHY
-
-## Session 2026-06-05 — FDA-2 + FDA-3: per-field provenance on price fields + honest /external
-
-**Sprint:** FAKE-DATA-AUDIT — same contamination class as DSI-INV-1 (carry/yield), now applied to vnIndex/oil/gold/usdVnd top-level price fields.
-
-**FDA-2 fix (dtos.go + usecases.go):**
-- Added `VNIndexIsEstimate/VNIndexSourceTier`, `OilIsEstimate/OilSourceTier`, `GoldIsEstimate/GoldSourceTier`, `USDVndIsEstimate/USDVndSourceTier` to `MacroSnapshotResponse`.
-- `resolveVNIndex` now returns `(float64, bool)` — fixture path → `isLive=false`.
-- `resolveMarketPrices` now returns 6 values: `(oilPrice, goldPrice, usdVnd, oilLive, goldLive, usdVndLive)` — per-field liveness.
-- `Execute()` populates per-field provenance: fixture fallback → `is_estimate=true + source_tier=4`; live port → `source_tier=1` (exchange-direct for commodities).
-
-**FDA-3 fix (usecases.go + handlers_external.go):**
-- `FetchedAt` in `MacroSnapshotResponse` is zero (`time.Time{}`) on all-fixture path — `time.Now()` only when `anyLive=true`. Prevents fresh-stamping fixture data.
-- `handleExternal`: derives per-source status from field provenance instead of hardcoding `"ok"`. `summary.failed` counts degraded sources. On fixture fallback, sources report `"estimate"` and `summary.failed>0`.
-
-**Live path verification:** `cmd/server/main.go` wires `SQLiteMarketIndexRepository`, `SBVRateSQLiteAdapter`, `CarryYieldInputsSQLiteAdapter` unconditionally. Commodity: `SQLiteCommodityRepository` gated on `COMMODITY_LIVE_MODE=true`; `HTTPCommodityFetcher` (fixture) is default when unset — per-field provenance covers both paths correctly.
-
-**Test results:** 11 new tests (8 application + 3 HTTP). RED→GREEN confirmed. `go test ./...` 78 tests PASS / 0 FAIL. `go build ./...` CLEAN. `go vet ./...` CLEAN. Sandbox: primitive 18/18 + module 2/2 GREEN.
-
-**Commit:** 0712c3a7 — 5 files (dtos.go, usecases.go, usecases_test.go, handlers_external.go, handlers_snapshot_contract_test.go)
-
-**Ops action required:** REBUILD macro-indicators container. QA: verify `get_macro_snapshot` shows per-field provenance on price fields; verify `/external` reports `summary.failed>0` when carry inputs are fixture (current live state with stale EFFR).
+**Runbook:** `docs/protocols/fail-loud-protocol.md` — SBV/FRED/computed staleness gates, fixture fallback tiers.
 
 ---
 
-## 2026-06-06 — FETCH-OPS-PAGE-TRUTH F-2: remove fake latency field
+## Session 2026-06-08 (FIX-MACRO-GO-DIRECTIVE — sprint CI-RED-RECONCILE)
 
-**Task:** F-2 (XS) — DELETE `totalLatencyMs:0` from summary map in `handlers_external.go:161`.
+**Task:** Align `go.mod` go directive from 1.25.0 → 1.22 (repo standard). CI golangci-lint v2.0.2 (built go1.24) exits 3 on any module targeting go > builder.
 
-**D-3 applied:** Handler reads SQLite only (no live HTTP); fake-zero latency removed. No per-source `latencyMs` fields existed. Frontend `optional` guard ensures latency span disappears cleanly.
+**Finding:** Prior `go mod tidy` with local go1.26.2 over-pinned indirect deps: `golang.org/x/sys v0.42.0` and `modernc.org/libc v1.72.3`. Both are safe to downpin.
 
 **Changes:**
-- `handlers_external.go:161`: `"summary": map[string]interface{}{"ok": okCount, "failed": failedCount}` (removed `"totalLatencyMs": 0`)
-- `handlers_snapshot_contract_test.go`: `TestExternalBodyContract` now asserts ABSENCE of `totalLatencyMs`; new `TestHandlersExternalLatencyRemoved` (AC-3 explicit).
+- `go.mod`: `go 1.25.0` → `go 1.22` + added `toolchain go1.22.0` (matches api-gateway pattern)
+- Downpinned: modernc.org/libc 1.72.3 → 1.49.3; golang.org/x/sys 0.42.0 → 0.19.0; 3 other modernc deps to lower versions
 
-**Tests:** 11/11 PASS (`pkg/interface/http`). Full suite 13/13 packages PASS. `go vet` clean.
+**Verification:** `go build ./...` CLEAN, `go vet ./...` CLEAN, `go test ./...` 12/12 PASS, `golangci-lint run` 0 issues.
 
-**Status:** F-2 TODO→REVIEW. Pending: ops REBUILD macro-indicators + QA verify `GET :5004/external` has no `totalLatencyMs`.
-
-Zone health: FDA-2+FDA-3 SHIPPED 0712c3a7; ops REBUILD required | HEALTHY
-
-## Session 2026-06-07 — U4 direction+delta sweep (sprint TOOL-SURFACE-UPGRADE)
-
-**Task:** TSU-DEV-U4 — add `prev_session_delta` + `direction` to all 4 headline values in `get_macro_snapshot`.
-
-**Design:** Extended `MarketIndexPort` with `FetchPrevSessionVnIndex()` (second-most-recent `daily_ohlcv` close, OFFSET 1). Added `computeDelta(current, prev)` pure helper (nil prev → nil/"unknown"; flat threshold 0.1% of current). Oil/gold/usdVnd: single-row tables, no history → always (nil, "unknown"), never fabricated.
-
-**Files changed:**
-- `pkg/domain/ports.go` — `MarketIndexPort.FetchPrevSessionVnIndex` added
-- `pkg/application/dtos.go` — 8 new fields on `MacroSnapshotResponse` (VNIndexDelta/Direction + OilUSDDelta/Direction + GoldUSDDelta/Direction + USDVndDelta/Direction)
-- `pkg/application/usecases.go` — `resolvePrevSessionVnIndex`, `computeDelta`, `Execute()` updated
-- `pkg/application/usecases_test.go` — `stubMarketIndex.FetchPrevSessionVnIndex` + 8 new tests (T-U4-1..7)
-- `pkg/infrastructure/repositories.go` — `FetchPrevSessionVnIndex`, `fetchPrevSessionVnIndexFromDB` added
-- `pkg/infrastructure/repositories_test.go` — `daily_ohlcv` table in `newInMemoryDB` + 4 new tests (T-U4-5)
-- `pkg/interface/http/handlers_snapshot_contract_test.go` — stubs updated for new port method
-
-**Tests:** `go test ./...` ALL PASS (12 packages). Sandbox: primitive 18/18 GREEN, module 2/2 GREEN. `go vet ./...` CLEAN.
-
-**Status:** REVIEW — ops REBUILD macro-indicators required. QA: verify `get_macro_snapshot` JSON includes `vnIndexDelta` (number or null) + `vnIndexDirection` + `oilUsdDelta` (null) + `oilUsdDirection` ("unknown") etc.
+**Status:** REVIEW (awaiting CI verification post-push)
 
 ---
 
-## Session 2026-06-08 — FIX-MACRO-GO-FIXTURE-FALLBACK
+## Session 2026-06-08 (FIX-MACRO-REFRESH-DEAD — CRITICAL)
 
-**Root cause:** `effrStaleBound=96h` rejected FRED EFFR rows from mid-week (e.g. Tuesday) when queried on Sunday (120h > 96h) → fixture 5.33 served every weekend.
+**Root cause:** macroIndicatorRefreshJob silent-swallow. Two blockers:
+1. `clients.ts:26` reads `MACRO_SERVICE_URL`, docker-compose sets `MACRO_INDICATORS_URL` → always localhost:5004 (refused)
+2. `macroIndicatorRefreshJob` outer catch returns void (not re-throw) → wrapRun records success on failure
 
-**Fix:** `effrStaleBound` extended from 96h to 168h (7 days) in `repositories.go`. FRED publishes business days only; 168h covers any single-week gap including 4-day holiday weekends. Fallback chain now: DB row within 168h (tier 2) → fixture 5.33 only when table empty (tier 4).
-
-**Files changed:**
-- `pkg/infrastructure/repositories.go` — `effrStaleBound` 96h → 168h + updated comment
-- `pkg/infrastructure/repositories_test.go` — stale bound comment updated (8d not 5d); `TestFetchFedFundsRateFromDB_WeekendSim` added (5-day row passes 168h gate)
-- `pkg/application/usecases_test.go` — `TestWeekendSim_BridgedDBValueServed` (AC-1) + `TestWeekendSim_FixtureOnlyWhenBothFail` (AC-2)
-
-**Live verification:** POST /snapshot → `fedFundsRate=3.62, source_tier=2, is_estimate=false, regime=NEUTRAL`. Commit: e03b3ca3.
-
-**Tests:** `go test ./...` ALL PASS (12 packages). Zero new failures.
-
----
-
-## Session 2026-06-08 — FIX-MACRO-REFRESH-DEAD (CRITICAL)
-
-**Task:** Fix macro_indicators stale 22+ days. macroIndicatorRefreshJob showing SUCCESS at <100ms = silent-swallow class.
-
-**One-pass audit — all swallows found:**
-1. `clients.ts:26` reads `MACRO_SERVICE_URL`, docker-compose sets `MACRO_INDICATORS_URL` → always localhost:5004 (refused). ROOT CAUSE.
-2. `macroIndicatorRefreshJob` outer catch returns void (not re-throw) → wrapRun records 'success' on failure. ROOT CAUSE.
-3-6: Three non-fatal inner catches + recordJobRun table-missing path. Acceptable by design.
-
-**Fixes (mcp-server zone, commit b7ce338f):**
+**Fixes (commit b7ce338f):**
 - `clients.ts:26`: `MACRO_SERVICE_URL` → `MACRO_INDICATORS_URL`
 - `macroIndicatorRefreshJob.ts`: added `throw err;` after Telegram alert in outer catch
-- `FIX-MACRO-REFRESH-DEAD.test.ts`: 5 tests GREEN (env-var wiring + fail-loud contract + happy path)
+- 5 new tests (env-var wiring, fail-loud contract, happy path) GREEN
 
 **Baseline evidence:**
-- Before: `macro_indicators.fetched_at = 2026-05-16` (22+ days stale), job duration 82ms, status=success
-- After: `macro_indicators.fetched_at = 2026-06-08 02:36:41` (fresh), job duration ~17s (real HTTP), getMacroSnapshot returns live data
-- Fail-loud demo: threw=true, alert_sent=true, recorded_status={status:"error"}
+- Before: macro_indicators.fetched_at = 2026-05-16 (22+ days stale), job duration 82ms, status=success
+- After: macro_indicators.fetched_at = 2026-06-08 02:36:41 (fresh), job duration ~17s (real HTTP), live data returned
 
-**Auditor C-09 compliance:** macro_indicators now refreshed → SLA check will pass. B-12 not applicable (sbv_rates was already fresh).
-
-Zone health: FIX-MACRO-REFRESH-DEAD SHIPPED b7ce338f; container rebuilt; macro freshness restored | HEALTHY
+**Status:** SHIPPED; container rebuilt; macro freshness restored
 
 ---
 
-## Session 2026-06-08 — FIX-MACRO-GO-DIRECTIVE (sprint CI-RED-RECONCILE)
+## Session 2026-06-07 (U4 direction+delta sweep — sprint TOOL-SURFACE-UPGRADE)
 
-**Task:** Align `apps/macro-indicators/go.mod` `go` directive from `1.25.0` to `1.22` (repo standard). CI golangci-lint v2.0.2 (built go1.24) exits 3 on any module targeting go > builder.
+**Task:** Add `prev_session_delta` + `direction` to all 4 headline values (vnIndex, oil, gold, usdVnd) in `get_macro_snapshot`.
 
-**Finding — dep over-pin:** Prior `go mod tidy` with local go1.26.2 wrote two indirect deps that themselves require go 1.25.0: `golang.org/x/sys v0.42.0` and `modernc.org/libc v1.72.3`. `modernc.org/sqlite@v1.29.9` (direct dep) requires only `libc v1.49.3` (go 1.20). Both high pins were over-eager MVS artifacts from the newer local toolchain — NOT actual minimum requirements. Downpinning is safe.
+**Design:** Extended `MarketIndexPort.FetchPrevSessionVnIndex()` (second-most-recent daily_ohlcv close, OFFSET 1). Pure `computeDelta(current, prev)` helper (nil prev → nil/"unknown"; 0.1% flat threshold). Oil/gold/usdVnd: single-row tables → always (nil, "unknown"), never fabricated.
 
-**Changes:** `apps/macro-indicators/go.mod`
-- `go 1.25.0` → `go 1.22`
-- Added `toolchain go1.22.0` (prevents future tidy re-bumps; matches api-gateway + stock-price pattern)
-- `modernc.org/libc v1.72.3` → `v1.49.3`
-- `golang.org/x/sys v0.42.0` → `v0.19.0`
-- `modernc.org/gc/v3 v3.1.2` → `v3.0.0-20240107210532-573471604cb6`
-- `modernc.org/mathutil v1.7.1` → `v1.6.0`, `modernc.org/memory v1.11.0` → `v1.8.0`, `modernc.org/strutil v1.2.1` → `v1.2.0`
+**Changes:**
+- `ports.go`: `MarketIndexPort.FetchPrevSessionVnIndex` added
+- `dtos.go`: 8 new fields (vnIndexDelta/Direction + oilDelta/Direction + goldDelta/Direction + usdvndDelta/Direction)
+- `usecases.go`: `resolvePrevSessionVnIndex`, `computeDelta`, Execute() updated
+- `repositories.go`: `FetchPrevSessionVnIndex`, `fetchPrevSessionVnIndexFromDB` added
+- 8 new tests (T-U4-1..7) + test DB table updates
 
-**go.sum:** No edits needed — existing file already had checksums for all lower versions.
+**Tests:** `go test ./...` ALL PASS (12 packages), sandbox primitive 18/18 + module 2/2 GREEN.
 
-**Verification:** `go build ./...` CLEAN | `go vet ./...` CLEAN | `go test ./...` 12/12 PASS | `golangci-lint run` 0 issues.
+**Status:** REVIEW (ops REBUILD required; QA verify JSON includes delta/direction fields)
 
-**DJ-GATE-1:** Written to `docs/agent-memory/decisions/sprint-CI-RED-RECONCILE-dev-macro-indicators.md` before REVIEW flip.
+---
 
-**Board:** FIX-MACRO-GO-DIRECTIVE → REVIEW (docs/data/orch/orch-state.json).
+## Archive: Earlier Sessions (2026-06-06 through 2026-05-30)
 
-**Status:** REVIEW / await-push. DONE gate = GREEN ci.yml after subsequent push. Ops pushes; PO signs off on next ci.yml run.
+**2026-06-06:** F-2 FETCH-OPS-PAGE-TRUTH — removed fake `totalLatencyMs:0` from summary map in handlers_external.go. AC-3 explicit absence test added. Status REVIEW (ops REBUILD).
 
-Zone health: FIX-MACRO-GO-DIRECTIVE impl REVIEW; go.mod go 1.22 + toolchain go1.22.0; local all-green; awaiting CI verification | HEALTHY
+**2026-06-05:** FDA-2 + FDA-3 — added per-field provenance on price fields (vnIndex, oil, gold, usdVnd) + liveness flags (is_estimate/source_tier). `/external` derives status from field provenance instead of hardcoding. 11 new tests RED→GREEN. Commit 0712c3a7.
+
+**2026-06-04:** DSI-INV-1 — suppress fixture carry regime when FRED/VND inputs stale. Resolvers now return (float64, isLive bool). Carry suppression gate: `carryInputsLive = fedFundsLive && vndDepositLive`. When false → `regime="UNKNOWN", is_estimate=true, source_tier=4`. GetFedFundsSourceDate added (returns FRED MAX(date) regardless of staleness for fetched_at_source). Commit 09e93d76. Status ops REBUILD.
+
+**2026-06-08:** FIX-MACRO-GO-FIXTURE-FALLBACK — extended `effrStaleBound` from 96h to 168h (7 days) to cover single-week gaps on weekends. FRED publishes business days only. Fallback chain: DB row within 168h (tier 2) → fixture 5.33 only when table empty (tier 4). Commit e03b3ca3. Tests: WeekendSim_BridgedDBValueServed + WeekendSim_FixtureOnlyWhenBothFail PASS.
+
+**2026-05-30:** DPI-1 — `SBVRateSQLiteAdapter` reads `sbv_rates.usd_vnd_official` (6h staleBound, RFC3339Nano); replaces usdVnd if >0. Commit 86f702bf. BLOCKER: frozen fixture carry (4.7/5.33/8.2).
+
+**2026-05-30:** DPI-2 — deleted `fixtureComputedAt`, added `computedAt := time.Now().UTC().Format(time.RFC3339)` at Execute() call time.
+
+**2026-05-30:** DPI-2b — wired live carry/yield inputs from market.db. `CarryYieldInputsPort` (3 methods: GetVNDDepositRate, GetFedFundsRate, GetEarningYield). Resolvers pattern: port>0 ? port : fixture. AC-6 REGIME-FLIP PROVEN (deposit=6.0, fed=4.0 → carrySpread 2.00 NEUTRAL vs frozen −0.63 FII_OUTFLOW_RISK). Commit 56f39ec2.
+
+**Earlier:** P1-E1, P2-X1–P2-X4 (primitives, handlers, DI wiring) — 20/20 GREEN. Category chip relabeling. MACRO-SEED-WIRING. Docker crash-loop fix (Dockerfile TS→Go multi-stage). All committed to history.
+
+---
+
+**Current state (2026-06-08):** FIX-MACRO-GO-DIRECTIVE REVIEW (CI verification pending); FIX-MACRO-REFRESH-DEAD SHIPPED (macro freshness restored); U4 direction+delta REVIEW (ops REBUILD required); all provisioning gates functional (staleness, fixture fallback, per-field provenance).
+
+**Zone health:** HEALTHY — all critical data pipeline fixes shipped; macro refresh cycle active; FRED EFFR stale (known, tier-2 fallback active until data-ingest refreshes).

@@ -179,24 +179,4 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 **G8:** honest red/green from sandbox PASS
 **G12:** 30/30 GREEN PASS
 
----
-
-### 2026-05-23 — P2-B3 Remove TODO:migrate comments (cycle-26 — confirmed no-op)
-
-**Task:** P2-B3 — Remove all "TODO: migrate" comments from mcp-server + technical-analysis.
-
-**Status:** DONE — no-op confirmed (no commit needed)
-
-**AC-1:** `grep -r 'TODO.*migrat' apps/mcp-server/src/ apps/technical-analysis/ --include='*.ts' --include='*.go'` → 0 results. PASS.
-
-**AC-2:** No logic changes — no source changes at all. PASS.
-
-**AC-3:** bun test (from apps/mcp-server): 9382 pass / 283 fail / 35 skip / 9700 total — delta vs P2-B2 baseline = 0. go test ./...: 7 packages ok, exit 0. PASS.
-
-**Sandbox 30/30 GREEN** (25 primitive + 5 module) — G12 DoD PASS.
-
-**Confirmation:** PO pre-dispatch finding correct. P2-B0 inventory §E had already documented zero TODO:migrate patterns. This was always a confirmatory no-op.
-
-**Done signal:** `docs/signals/dev-ta-p2-b3-done-20260523T085446Z.json`
-
-**Next:** P2-B4 (integration test verification — owned by qa).
+**Archive:** P2-B3 (no-op confirmed, 0 TODO:migrate patterns), P2-B0 inventory prep, etc. Full history in git log.

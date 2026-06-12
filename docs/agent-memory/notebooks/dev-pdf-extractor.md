@@ -1,279 +1,67 @@
 # dev-pdf-extractor — Notebook
 
-## Working Memory
-
-### 2026-06-10 — BPE-DEV-5 DONE (BCTC-PROSE-EXTRACT sprint)
-
-**Task:** BPE-DEV-5 | Size: M | Sprint: BCTC-PROSE-EXTRACT | Status: REVIEW
-
-**Root defects fixed:**
-1. BLOCKER-A (already resolved in mcp-server): verified `total_pages=46` returned by no-page summary endpoint. No code change needed on pdf-extractor side.
-2. BLOCKER-B (Tesseract SIGTERM under load): Added `MAX_TESSERACT_RETRIES=2` constant + `_tesseract_image_to_data()` module-level wrapper that retries up to 2x with 1.5s sleep. `ocr_unit()` now calls wrapper instead of `pytesseract.image_to_data` directly. SIGTERM → retry → success on normalized load.
-3. Missing thresholds: added `apps/pdf-extractor/config/bctc-eval-thresholds.json` baked into image. Two-path lookup in `_load_thresholds()` (primary: `/app/config/`, fallback: project root).
-
-**Result (FPT Q1-2026):** 0 empty units (was 13 empty). 14 table units with real tabular markdown. 5 prose units unchanged (page 12 = 4099 chars). Inspector page 3 = 7175 chars, page 12 = 4099 chars, `pek_coverage_gap=None`.
-
-**Tests:** 5 new tests in `test_ocr_unit_tesseract_retry.py` — AC1 retry-succeeds, AC2 all-retries-exhausted-skipped, AC3 MAX_TESSERACT_RETRIES exposed, AC3b helper exposed, AC4 Fence-A. 785 pass / 36 pre-existing fail (no regressions). Sandbox: 27/27 primitive GREEN + 6 intentional-RED, 1/1 module GREEN.
-
-**Commit:** `c2069deb`
-
-Zone health: 0 empty layout units on FPT Q1-2026 corpus. All 46 pages covered. No DDD violations. | HEALTHY
-
----
-
-### 2026-06-10 — BPE-DEV-1 DONE (BCTC-PROSE-EXTRACT sprint, producer)
-
-**Task:** BPE-DEV-1 | Size: M | Sprint: BCTC-PROSE-EXTRACT | Status: REVIEW
-
-**Root defect fixed:** `ocr_unit()` prose branch in generic_md_table_extractor.py declared `prose_lines=[]` and looped pages but never appended — returned `stitched_markdown:""` for every prose unit for 7+ sprints. Prose/notes pages (thuyết minh) were silently dropped.
-
-**BLOCKER-3 serial order respected:**
-1. Commit `1588a591` — GATE-VISION table work (dtos, layout_invariants, bctc_code_whitelist, 2 test files) — 45 tests green
-2. Commit `6e518935` — BPE-DEV-1 prose fix (generic_md_table_extractor.py + call site + test_generic_extractor_prose.py) — 16 tests green
-
-**Fix pattern:** ocr_unit() signature extended with `ocr_pages: Optional[List[Dict]]=None`; prose branch builds page→text map with dual-key fallback (`text`/`text_content`); skips blank pages; emits `_prose_no_text=True` when ALL pages blank; `row_count` = non-empty line count.
-
-**RISK-5 audit:** grepped `assert_called_with.*ocr_unit` across all test files — zero matches. No fixture updates needed.
-
-**Test results:** 16/16 prose unit tests GREEN; 736/736 total unit tests pass (excluding 36 pre-existing failures confirmed via git stash baseline).
-
-**NEXT:** dev-mcp-server takes TASK_BPE-DEV-2 — bctcInspectHandler query extension + pek_coverage_gap semantics + bctcFullTools prose_sections.
-
----
-
-### 2026-06-08 — A20-EVENTLOOP-ASYNC-TO-THREAD DONE (DJ-GATE-1)
-
-**Task:** A20-EVENTLOOP-ASYNC-TO-THREAD | Size: S | Sprint: ORCH-DASH-DECISION-DRILLDOWN | Status: DONE (code landed; ops rebuild pending)
-
-**DJ-GATE-1 — Decision Trail:**
-
-Root cause confirmed per architect brief: `extract_tables()` and `extract_text_ocr()` in `PdfplumberExtractionEngine` were `async def` with NO `await` — pdfplumber page iteration + pytesseract.image_to_string() ran synchronously on the uvicorn event loop, blocking `/health` for the full extraction duration (40-80 page BCTC PDFs = 30s+). Three prior CPU/cgroup patches failed because extra CPU quota only helps the blocking call finish faster; it does not un-block the event loop for concurrent coroutines.
-
-**Decision:** asyncio.to_thread() wrap — matching the established pattern in 6 other infrastructure files. Rejected: workers=N (memory multiplication, OOM risk, reverses deliberate max_workers=1). Zone: infrastructure only, zero caller changes.
-
-**Files changed:**
-- `apps/pdf-extractor/infrastructure/extraction_engine.py` — add `import asyncio`; extract sync bodies → `_extract_tables_sync()` + `_extract_text_ocr_sync()`; public methods → thin `asyncio.to_thread()` wrappers
-- `apps/pdf-extractor/__tests__/unit/test_extraction_engine_nonblocking.py` — NEW: TC-EE-1 + TC-EE-2 thread-isolation regression guards
-
-**Test results:** TC-EE-1 GREEN, TC-EE-2 GREEN. Full suite: 850 passed, 40 failed (all pre-existing FU-DEBT), 1 skipped. Zero regressions.
-
-**NEXT:** ops targeted rebuild → QA multi-probe gate (18/18 x 10s) → unblock FIX-AUDITOR-A20-MULTIPROBE.
-
-
-### 2026-06-07 — FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN DONE
-
-**Task:** FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN | Size: S | Status: DONE (rebuild pending)
-
-**Root cause:** 3 push clients called urllib.request.urlopen() directly in async methods, blocking the asyncio event loop (up to 30s) and starving /health. Same class as A-13 incident.
-
-**Fix:** Applied asyncio.to_thread(_do_request) pattern (mirrors table_push_client.py) to layout_first_push_client.py, md_table_push_client.py, eval_push_client.py. Added import asyncio + _do_request closure wrapping urlopen in each.
-
-**Tests added:** TC-PUSH-LF-1, TC-PUSH-MD-1, TC-PUSH-EVAL-1 — all GREEN. Suite: 848 passed (+3 vs baseline).
-
-**NEXT:** ops rebuild pdf-extractor container single-service.
-
-### 2026-06-07 — HEALTH-BLOCK incident fix (48a64056, f0999cff)
-
-**Incident:** pdf-extractor Up but health=unhealthy. Docker healthcheck `curl -f http://localhost:5001/health` exceeded 10s timeout repeatedly. CPU 100%. Container restarted at 18:48 UTC, wedged immediately, 5 consecutive healthcheck failures. Connection accepted, no bytes returned.
-
-**Root cause (confirmed via ps aux + TCP backlog inspection):** TWO synchronous blocking calls on the asyncio event loop thread inside `POST /extract-tables`:
-1. `ocr_port.locate_balance_sheet_pages()` + `ocr_port.ocr_pages()` (Tesseract via pytesseract.image_to_string → subprocess.run) — pin event loop at 100% CPU for 10-30s per page
-2. `TablePushClient.push_table()` — `urllib.request.urlopen()` in async def, blocking event loop for up to 30s per push
-
-Both calls were directly on the event loop thread; unlike `/extract-md-tables`, `/pek-extract`, and `/extract-layout-first` (which use `background_tasks.add_task()`), `/extract-tables` was a direct `await execute()` with no offloading.
-
-**Fix:**
-- `application/extract_tables_usecase.py`: wrap both OcrPort calls in `asyncio.to_thread()`
-- `infrastructure/table_push_client.py`: wrap `urllib.request.urlopen()` in `asyncio.to_thread()` via `_do_request()` closure
-
-**Tests added:**
-- `__tests__/unit/test_extract_tables_usecase.py::test_tc11_ocr_port_runs_in_worker_thread_not_event_loop` — TC11 RED then GREEN
-- `__tests__/unit/test_table_push_client_nonblocking.py::test_tc_push_1_urlopen_runs_in_worker_thread_not_event_loop` — TC-PUSH-1 RED then GREEN
-- Full suite: 738 passed, 11 skipped
-
-**Verification:** Container health=healthy failing_streak:0; host `curl http://127.0.0.1:5001/health` → 200 {"status":"ok",...}
-
-Zone health: /extract-tables event loop blocking fixed; two asyncio.to_thread guards in place. alert_adapter.py send_work_alert() has 5s urllib call — latent issue, low-frequency path only (BT-5 gate block). | HEALTHY
-
-### 2026-06-07 — FEAT-PDF-EXTRACTOR-LOCAL-INPUT DONE (7aa18020)
-
-**Task:** FEAT-PDF-EXTRACTOR-LOCAL-INPUT | Priority: M/P2 | Status: DONE
-
-**Root cause fixed:** POST /extract only accepted HTTP/HTTPS URLs (HTTPPDFStorageRepository.fetch_pdf did plain aiohttp GET). VPS-hosted PDFs returned 401. Scanned PDFs fell back to Bun pdf-parse → text-layer-only garbage. mcp-server and pdf-extractor already share volume ./data/pdfs:/app/data/pdfs — local-path input mode makes the full OCR pipeline reachable for every already-downloaded PDF.
-
-**Files changed (commit 7aa18020):**
-- `infrastructure/repositories.py` — NEW `LocalPDFStorageRepository`: implements `PDFStorageRepository.fetch_pdf` from disk; path-traversal guard (Path.resolve + prefix check), file-existence check, size cap (`PDF_LOCAL_SIZE_CAP_MB` env, default 200 MB)
-- `interface/serializers.py` — `ExtractPDFRequestSchema`: url now Optional; `model_validator` requires url OR pdf_path; `to_dto` carries pdf_path through
-- `application/dtos.py` — `ExtractPDFRequest`: add `Optional[str] pdf_path` field
-- `application/usecases.py` — `ExtractPDFUseCase.execute`: use `pdf_path` as `effective_url` when set → zero domain-layer changes
-- `interface/handlers.py` — `register_routes`: add `local_extract_usecase` param; `/extract` branches on pdf_path → local use case; HTTP 503 graceful degrade when local mode not wired
-- `main.py` — wire `LocalPDFStorageRepository` + `local_extract_service` + `local_extract_usecase`; inject into `register_routes`
-- `__tests__/unit/test_local_pdf_input.py` — NEW: 21 tests (happy path, traversal, missing file, size cap, schema validation, url regression, handler routing)
-
-**Test results:** 842 passed (baseline 821 + 21 new). 40 pre-existing failures unchanged. Zero regressions.
-
-**Consumer-side request shape (dev-mcp-server follow-up):**
-```json
-POST /extract
-{"pdf_path": "/app/data/pdfs/<filename>.pdf", "source_type": "bctc"}
-```
-pdf_path must be an absolute container path under /app/data/pdfs (shared volume).
-
-**NEXT:** ops rebuild pdf-extractor container. dev-mcp-server: update extractViaMicroservice / triggerPushBctcExtraction to pass pdf_path for locally-stored PDFs (OUT-OF-SCOPE for this task — dev-mcp-server zone).
-
 Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (write)
 
-## Working Memory
-
-### 2026-05-31 — FU-TRUST-REFRESH/FU-1 COMPLETE (af50d67a)
-
-**Task:** FU-1 | Sprint: FU-TRUST-REFRESH | Status: DONE — NEXT: ops FU-2 (rebuild + rasterize)
-
-**Root cause fixed:** `/page-text` endpoint returned `{"text":"","source":"sqlite_ocr"}` permanently because `main.py create_app()` never constructed/passed `ocr_text_source` to `register_routes()`. Real OCR text (FPT 35 pages, ACB 27 pages) existed in `pdf_extracted_text` but never reached the Haiku refine agent — which fabricated digit-run placeholders instead.
-
-**Files changed (commit af50d67a):**
-- `infrastructure/config.py` — added `market_db_path: str` + `MARKET_DB_PATH` env var (default `/app/data/market.db`)
-- `main.py` — import `select_ocr_text_source`; call `_probe_ocr_source` startup self-check; pass `ocr_text_source + ocr_source_ok` to `register_routes()`
-- `interface/serializers.py` — `HealthResponse` gets `ocr_source_ok: bool` field (RISK-1 surface)
-- `interface/handlers.py` — `register_routes()` accepts `ocr_source_ok`; `/health` exposes it; `/page-text` returns `source_reachable:false` on exception (NOT silent empty string)
-- `infrastructure/ocr_text_source.py` — `SqliteOcrTextSource.get_page_text` uses read-only URI (`file:...?mode=ro`); raises on unreachable DB
-- `docker-compose.yml` — added `MARKET_DB_PATH: /app/data/market.db` to pdf-extractor env block
-- `__tests__/unit/test_fu1_fail_loud.py` — NEW: 10 deliberate-violation tests (RED-before/GREEN-after)
-- `__tests__/unit/test_ocr_text_source.py` — updated: `test_raises_on_bad_db_path` confirms new raises contract
-
-**DoD evidence (live container):**
-- `GET /page-text?filename=20260424-FPT-BCTC-hop-nhat-Quy-1-nam-2026.pdf&page_number=7` → `source_reachable:true`, 2764 chars real Vietnamese text including "Doanh thu bán hàng và cung cấp dịch vụ", "Lợi nhuận gộp về bán hàng"
-- `/health` → `{"status":"ok","ocr_source_ok":true}`
-- DV test: `MARKET_DB_PATH=/nonexistent` → probe returns False + `/health ocr_source_ok:false` + `/page-text source_reachable:false`
-- 23/23 unit tests PASS (10 fail-loud DV + 13 ocr_text_source). text_table_extractor.py 0-diff. PEK PRISTINE.
-
-**REBUILD REQUIRED before FU-3 re-refine:** Container was already rebuilt prior to this session (af50d67a is on main and the running container reflects current HEAD). Confirm with ops (FU-2) before triggering refine cron.
+**Runbook:** `docs/protocols/async-blocking-pattern.md` — asyncio.to_thread() for sync I/O, /health health-checks on overloaded services.
 
 ---
 
-### 2026-05-30 — BTB-DRIFT-DEV COMPLETE (06fb1f10 + test_anti_drift_grouper)
+## Session: 2026-06-10 (BPE-DEV-5 + BPE-DEV-1 — BCTC prose extraction sprint)
 
-**Task:** BTB-DRIFT-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild + off-hours re-extract)
+**Task:** BPE-DEV-5 (size M) + BPE-DEV-1 (size M) — fix Tesseract SIGTERM under load + missing prose extraction.
 
-**Additional file (this cycle):** `__tests__/unit/test_anti_drift_grouper.py` — NEW 9 tests per architect spec (AD-1, AD-2, DV-1-B, DV-2-B, 9-page regression, 12-page, two-distinct-adjacent). All 718/718 unit tests pass. AD-2 PROVEN-RED evidence documented in test docstrings. 9-page regression PROVEN-RED evidence documented. text_table_extractor.py 0-diff. PEK PRISTINE.
+### BPE-DEV-5: BLOCKER-B (Tesseract SIGTERM) + missing thresholds
 
-**Exactly ONE grouping implementation:** `bctc_page_grouper.group_pages_into_units()` is the SOLE grouper. PATH A (`build_document_map`) delegates via `bctc_page_grouper.PageDescriptor` adapter. PATH B (`_run_extraction` Step 2) builds `PageDescriptor` from bboxes and calls directly. `_group_bboxes_into_units` DELETED — `hasattr(pek_engine_adapter, "_group_bboxes_into_units")` returns False (AD-2 GREEN).
+- Added `MAX_TESSERACT_RETRIES=2` constant + `_tesseract_image_to_data()` retry wrapper (1.5s sleep between attempts)
+- Added `bctc-eval-thresholds.json` baked into image; two-path lookup: primary `/app/config/`, fallback project root
+- FPT Q1-2026 result: 0 empty units (was 13 empty); 14 table units with real markdown; 5 prose units stable
+- Tests: 5 new in `test_ocr_unit_tesseract_retry.py` (all AC1-AC4 PASS); 785 pass / 36 pre-existing fail (no regressions)
+- **Commit:** `c2069deb`
 
----
+### BPE-DEV-1: Missing prose extraction fix
 
-### 2026-05-30 — BTB-DRIFT-DEV COMMITTED (06fb1f10)
+- Root cause: `ocr_unit()` declared `prose_lines=[]` but never appended → returned empty `stitched_markdown` for all prose units for 7+ sprints
+- Fix: ocr_unit() extended with `ocr_pages: Optional[List[Dict]]=None`; prose branch builds page→text map; skips blank pages; emits `_prose_no_text=True` when blank
+- Tests: 16/16 prose unit tests GREEN; 736/736 total unit tests PASS (no regressions)
+- **Commit:** `6e518935`
 
-**Task:** BTB-DRIFT-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild + off-hours re-extract)
-
-**Root cause fixed:** PATH A (build_document_map) and PATH B (_group_bboxes_into_units) were two independent grouping implementations. BTB-ARCH state-machine fix landed on PATH A only; PATH B (live user path via /api/trigger-pek-extract) still discarded prose units (BLOCKING-2) and had no D-5 title-band signal.
-
-**Files changed (commit 06fb1f10):**
-- `infrastructure/bctc_page_grouper.py` — NEW canonical SSOT (PageDescriptor dataclasses, _is_continuous, prose-unit emission, blank-bridge, D-5)
-- `infrastructure/unit_grouper.py` — NEW dict-based shim + _has_new_title; delegates to bctc_page_grouper
-- `infrastructure/pek_engine_adapter.py` — DELETED _group_bboxes_into_units; _run_extraction Step 2 now uses bctc_page_grouper.group_pages_into_units directly
-- `infrastructure/generic_md_table_extractor.py` — build_document_map inline state-machine replaced with unit_grouper.group_pages_into_units call
-- `__tests__/unit/test_grouping_convergence.py` — NEW anti-drift gate CG-1+CG-2
-- `__tests__/unit/test_unit_grouper.py` — NEW 38 tests
-- `__tests__/unit/test_table_boundary_state_machine.py` — Class C delegates to canonical grouper; Class A2 for _has_new_title
-
-**DoD evidence:**
-- CG-1 PROVEN-RED (neither path called group_pages_into_units before fix) → PROVEN-GREEN
-- CG-2 PROVEN-RED (PATH B discarded prose, PATH A emitted) → PROVEN-GREEN
-- DV-1 GREEN (table-prose-table → 3 units), DV-2 GREEN (title-band fires)
-- 709/709 tests (659 baseline + 50 new), 1 warning (unrelated asyncio)
-- text_table_extractor.py 0-diff. PDF-Extract-Kit PRISTINE.
-
-**Concurrent agent note:** bctc_page_grouper.py was created by a concurrent session. Adapted unit_grouper.py to be a shim over it. Both agree on grouping semantics.
-
-### 2026-05-30 — BTB-UNBLOCK-DEV COMMITTED (b1e826c2)
-
-**Task:** BTB-UNBLOCK-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild + patient instrumented run)
-
-**Files changed (commit b1e826c2):**
-- `apps/pdf-extractor/interface/handlers.py` — FAIL-LOUD exc_info=True + ECHO-vs-DB log wording in `_run_pek_extract`
-- `apps/pdf-extractor/infrastructure/pek_engine_adapter.py` — per-page heartbeat in `_run_table_extraction` + hard timeout (ThreadPoolExecutor, PEK_EXTRACTION_TIMEOUT_SECONDS env, default 30min) in `extract_layout_and_tables`
-- `apps/pdf-extractor/__tests__/test_pek_engine_adapter.py` — +6 new tests (TestFailLoudAndTimeout), DV-GUARD PROVEN-RED
-- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — boundary comment only, state machine UNCHANGED
-
-**Test results:** 38/38 in test_pek_engine_adapter.py PASS. DV-GUARD: test_run_pek_extract_logs_exc_info_true_on_failure PROVEN-RED on reverted handler (exc_info=None), GREEN on current code.
-
-**Constraints verified:** text_table_extractor.py 0-diff. PDF-Extract-Kit PRISTINE. No GPU deps. No new heavy imports (stdlib only: time, concurrent.futures). Scoped commit (4 files, no contamination).
-
-**NEXT: ops** — rebuild pdf-extractor container (no-cache), then ONE patient instrumented off-hours re-extraction of FPT e71f845d to completion (NO premature kill). Watch per-page heartbeat logs. After completion: verify DIRECT in-container market.db COUNT. If push 200-OK but COUNT=0 → real write-wedge → NEXT dev-mcp-server BTB-UNBLOCK-MCP.
+**QA:** Both sessions REVIEW status. Zone healthy (0 empty layout units on FPT Q1-2026, all 46 pages covered).
 
 ---
 
-### 2026-05-29 — BTB-DEV COMMITTED (d297f3ba)
+## Session: 2026-06-08 (A20-EVENTLOOP-ASYNC-TO-THREAD)
 
-**Task:** BTB-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild)
+**Task:** A20 — fix event loop blocking from `extract_tables()` + `extract_text_ocr()` (async def with no await).
 
-**Files changed (commit d297f3ba):**
-- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — all 4 root causes fixed in one pass
-- `apps/pdf-extractor/__tests__/unit/test_table_boundary_state_machine.py` — NEW: 42 pure-function tests
-- `apps/pdf-extractor/__tests__/unit/test_document_map.py` — _simulate_grouping updated to new state machine; 58/58 pass
-
-**Test results:** 659/659 unit tests PASS. DV-1 PROVEN-RED pre-fix, GREEN post-fix. DV-2 PROVEN-RED pre-fix, GREEN post-fix.
-
-**Constraints verified:** PDF-Extract-Kit PRISTINE (0-diff). text_table_extractor.py 0-diff. Scoped commit (3 files). No GPU deps. No new imports.
+- Root cause: pdfplumber page iteration + pytesseract.image_to_string() ran synchronously on uvicorn event loop, blocking `/health` for 30-80s (40-80 page PDFs)
+- Fix: asyncio.to_thread() wrap — extracted sync bodies (`_extract_tables_sync` + `_extract_text_ocr_sync`); public methods thin wrappers
+- Tests: 2 new regression guards (TC-EE-1 + TC-EE-2) GREEN; full suite 850 passed, 40 pre-existing FU-DEBT, 1 skipped
+- **Outcome:** QA gate unblocked; ops rebuild pending
 
 ---
 
-### 2026-05-28 — BCTC-EVAL-PDFX READY (unstaged)
+## Session: 2026-06-07 (FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN)
 
-**Task:** BCTC-EVAL-PDFX | Sprint: BCTC-EVAL-SUBSTRATE | Status: READY (files unstaged — main terminal commits)
+**Root cause:** 3 push clients called `urllib.request.urlopen()` directly in async methods, blocking event loop (up to 30s).
 
-**Test results:** 36/36 PASS. DDD compliance verified. PEK subtree CLEAN.
-
-**NEXT:** ops BCTC-EVAL-PDFX deploy.
-
----
-
-### 2026-06-03 — LF-DEPLOY-IMPL DONE-CODE (awaiting ops rebuild)
-
-**Task:** LF-DEPLOY-IMPL | Sprint: BCTC-LAYOUT-FIRST | Status: DONE-CODE
-3-signal page classifier (money+codes+dates), prose-in-table-unit guard. 707/707 PASS (+30). See handoff TASK_BCTC-MD-TABLE.md for full details.
+- Fix: applied asyncio.to_thread(_do_request) pattern to layout_first_push_client.py, md_table_push_client.py, eval_push_client.py
+- Tests: 3 new (TC-PUSH-LF-1, TC-PUSH-MD-1, TC-PUSH-EVAL-1) GREEN; suite 848 passed (+3)
+- Alert: alert_adapter.py send_work_alert() has 5s urllib call — latent issue, low-frequency path only
 
 ---
 
-### 2026-06-08 — FIX-PDF-EXTRACTOR-UNHEALTHY (3rd A-20 recurrence)
+## Archive: Earlier Sessions (2026-05-31 through 2026-05-28)
 
-**Task:** FIX-PDF-EXTRACTOR-UNHEALTHY | Size: S | Status: DONE (ops recovery) | Ticket: router-pdf-extractor-unhealthy + sau-c105-a20
+**2026-05-31:** FU-TRUST-REFRESH/FU-1 — `/page-text` endpoint returning empty string fixed; `ocr_text_source` now passed to register_routes; `MARKET_DB_PATH` env added; 23/23 unit tests PASS; container rebuild required before FU-3 re-refine.
 
-**Root cause (confirmed):** `cpus: '1.0'` in docker-compose pdf-extractor deploy.resources.limits. When Tesseract OCR runs in the ProcessPoolExecutor child process at 99.2% CPU, the Linux CFS cgroup allocates the entire 1-core budget to the child. The parent uvicorn process receives 0 scheduler slices → `/health` curl probe exit=-1 at 30s timeout. ProcessPoolExecutor isolates GIL contention only — it does NOT escape the shared cgroup CPU quota. Evidence: docker inspect NanoCpus=1000000000 + ps aux tesseract@99.2% + all 5 probes exit=-1.
+**2026-05-30:** BTB-DRIFT-DEV — canonical grouping via `bctc_page_grouper.py` SSOT; PATH A (build_document_map) + PATH B (_run_extraction) unified; prose-unit emission + D-5 title-band signal fixed; 718/718 unit tests PASS; AD-2 PROVEN-GREEN.
 
-**Why prior fixes failed:**
-- `48a64056`: asyncio.to_thread() — same process, GIL still shared, OS can't schedule healthcheck handler
-- `3033e1dc`: ProcessPoolExecutor — moved OCR to child process, but child + parent share same CFS cgroup → child starves parent
+**2026-05-29:** BTB-DEV — 4 root causes (state machine) fixed in generic_md_table_extractor.py; 42 pure-function tests added; 659/659 PASS; DV-1 + DV-2 PROVEN-GREEN.
 
-**Recurring-bug verdict:** 3RD A-20 RECURRENCE. RECURRING-BUG rule armed: NO CODE FIX. Architect escalation signal `A20-3RD-CPU-CGROUP-ARCHITECT` written to orch-state.json signal_queue. Architect options: (A) raise cpus to 2.0, (B) Tesseract sidecar container, (C) healthcheck gate during active OCR.
+**2026-06-08:** FIX-PDF-EXTRACTOR-UNHEALTHY (A-20, 3rd recurrence) — `cpus: '1.0'` CFS cgroup budget exhaustion. asyncio.to_thread + ProcessPoolExecutor insufficient (shared cgroup). Escalated to architect (options: cpus 2.0 / Tesseract sidecar / healthcheck gate during active OCR). Operational recovery: docker restart. BCTC batch unblocked.
 
-**Sensor gap (c103 vs c105):** c103 (00:07Z) showed healthy because the container had been freshly restarted ~40min prior (no active OCR job). c105 (01:03Z) caught it because an active BCTC batch extraction was in flight (Tesseract at 99.2%). A-20 class is load-triggered, not always-present. Auditor hardening needed: check probe from within cgroup scope (exec -based probe, not external network call) OR monitor tesseract process existence alongside /health curl. This change is to the auditor flow .md — signal row created for agent-father.
-
-**Operational recovery:** `docker restart` (no rebuild, ProcessPoolExecutor fix already in image from 3033e1dc). Container healthy in first two post-restart probes (exit=0). BCTC batch unblocked.
-
-**BCTC reparse:** VHM/HCM/HSG/KBC = "Chưa có dữ liệu BCTC" (no financial_reports rows — initial ingest never completed). Reparse script requires existing rows — not applicable. VPS fetch triggered for Q1-2026. BLOCKED: container becomes unhealthy at first Tesseract OCR probe (01:26-01:37Z window = 11 min healthy then re-fail). Reparse unblocked only after architect raises cpus to ≥2.0.
-
-### 2026-06-08 — PDFX-SINGLE-WORKER-BLOCKING (3033e1dc)
-ProcessPoolExecutor(max_workers=1) → OCR child process → /health 200 OK during OCR. asyncio.to_thread() insufficient (same process). D6: max_workers=1. History: `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md`.
+**2026-06-08:** BCTC staleness probe — FIX-PDF-EXTRACTOR-UNHEALTHY re-scoped; zone_missing_tier3 signal emitted to PO (dev-mcp-server); root cause: bctcQueueEnricherJob placeholder-URL matching gap (18 rows stuck in 404 retry loop).
 
 ---
 
-### 2026-06-08T15:47Z — FIX-PDF-EXTRACTOR-UNHEALTHY re-scope: BCTC staleness probe (zone-boundary exit)
-
-**Cycle:** 15:10–15:47Z | Task: FIX-PDF-EXTRACTOR-UNHEALTHY (re-scoped to data-ingest FIX, direct Step 3)
-**Outcome:** ROOT CAUSE NOT IN ZONE → zone_missing_tier3 signal emitted → po for dev-mcp-server re-route
-
-**Queue live (15:40Z):** 328 deferred_infra | 48 done | 27 url_not_found | 26 pending
-**financial_reports latest parsed_at:** 2026-06-08T02:15:48Z (~33 min stale at probe time — NOT 38.5h)
-**pdf-extractor container:** HEALTHY (Up 7h, port 5001 responding)
-**VPS bctc-cache:** 24 PDFs available; service running (sleeping 21600s after 11:48Z run)
-**VPS bctc-fetch last run:** 2026-06-08T11:48Z — 10 items processed, 0 PDFs found (content not yet published)
-
-**Root cause of 26 stuck pending rows (two sub-classes):**
-1. 8 null-url rows (ACV/BDI/DAG/DLC/JSH/SIS/VDC/VNH): PDFs genuinely not published by companies yet.
-2. 18 placeholder-url rows (VNM/VEA/SHB etc.): `backfillBctcQ12026.ts` inserted canonical placeholder URLs (`VNM_2026_Q1.pdf`). VPS cache never stores files with canonical names. `bctcQueueEnricherJob` WHERE clause (`source_url IS NULL OR 'MISSING' OR '/test-%'`) does NOT match these placeholder VPS URLs — so enricher skips them, pull job retries 404s forever (VNM: 435 attempts). Both root files are in `apps/mcp-server/`.
-
-**Why BCTC is not critically stale today:** 5 reports processed today (KDC, NVL×2, CTG, REE via BCTC push + extraction pipeline). The system-auditor "38.5h stale" claim was based on a snapshot taken before today's activity. Actual staleness ~33 min.
-
-**Signal emitted:** `dpe-20260608T154700Z` | type: zone_missing_tier3 | to: po | suggestedZone: dev-mcp-server | files: bctcQueueEnricherJob.ts + backfillBctcQ12026.ts
-**Decision journal:** `docs/agent-memory/decisions/sprint-ORCH-DASH-DECISION-DRILLDOWN-dev-pdf-extractor.md § DJ-GATE-1`
+**Current state (2026-06-10):** All async-blocking fixes deployed; prose extraction pipeline restored; A-20 architecture escalated (awaiting cpus increase); zone healthy.
