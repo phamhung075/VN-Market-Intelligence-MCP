@@ -1,3 +1,4 @@
+<!-- size-justification: 149L — thin pointer + Go-only language enforcement, smoke checks, G12 DoD gate, security/zero-credentials clause, Depguard Fence Gate (3 fences), pre-revert tag protocol, references table; all sections are AC-locked and non-separable; mirrors dev-stock-price pattern for Go pilot. -->
 # dev-kinh-dich — Main (Pointer)
 
 **Zone:** `apps/kinh-dich-service/`

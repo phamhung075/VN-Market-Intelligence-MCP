@@ -76,6 +76,12 @@ Ops agents run HTTP recon and produce structured docs; Dev agents implement scra
 | Dev VPS Crawls | `dev-vps-crawls.md` | Implement lightweight scrapers on VPS (no headless browser) | `docs/vps-crawl-techniques/` |
 | Dev Mainserver Crawls | `dev-mainserver-crawls.md` | Implement scrapers on main server (headless browser permitted) | `docs/mainserver-crawl-techniques/` |
 
+## Specialized Leaf Workers (spawned on-demand — NOT cron-driven)
+
+| Agent | File | Role | Spawned by |
+|-------|------|------|------------|
+| BCTC Refine MD | `refine_bctc_md.md` | OCR text + page images → trusted markdown per FR-13 contract; processes one CHUNK (≤7 windows), resumable; Haiku runtime | bctc-analyst (Option-C refine path) |
+
 **Semble tools:** `developer`, `architect`, `ba`, `fixer`, `code-janitor`, `system-auditor` all carry `mcp__semble__search` + `mcp__semble__find_related` in their tool lists.
 
 Dev team cron workflow:
@@ -134,7 +140,7 @@ DEV TEAM (Claude Code CLI — local cron, every 1h)
 Channel env vars → `jq '.project.channels[] | {id, env_var, purpose}' docs/data/system-map.json`
 Agent counts → `docs/data/project-stats.json`
 
-**Analysis Team count:** 10 agents — see `docs/data/project-stats.json#analysisAgentCount`.
+**Analysis Team count:** see `docs/data/project-stats.json#analysisAgentCount`.
 
 ## Three-Channel Rules
 

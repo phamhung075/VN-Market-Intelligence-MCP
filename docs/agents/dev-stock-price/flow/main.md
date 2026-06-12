@@ -1,3 +1,4 @@
+<!-- size-justification: 184L — thin pointer + Language Mode detection table, smoke checks (Go+TS dual-column), G12 DoD gate, R-CGO gate (Phase-1 once), security/CGO clause, Fence Rules (3 Depguard fences with explicit grep checks), pre-revert tag protocol, references table; all sections are AC-locked per pilot charter and non-separable. -->
 # dev-stock-price — Main (Pointer)
 
 **Zone:** `apps/stock-price/`

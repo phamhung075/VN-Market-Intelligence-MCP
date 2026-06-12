@@ -1,3 +1,4 @@
+<!-- size-justification: 121L — complete brownfield protocol with inline zone-detect/index/design/handoff steps + Standard Detection matrix + decision-journal gate; splitting individual steps into sub-flows yields no reuse benefit for a single-agent flow. -->
 # Architect — Main Flow
 
 **Tools:** `docs/agents/tools/package/architect.md`
