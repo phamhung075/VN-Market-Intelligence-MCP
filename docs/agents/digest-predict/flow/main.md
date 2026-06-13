@@ -12,6 +12,34 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 
 **Tools:** `docs/agents/tools/package/digest-predict.md`
 
+## PUBLISHED MARKER GATE (Layer-A dedup — MANDATORY before Dispatch)
+
+<!-- AC-5 / FIX-COWORK-GUARANTEED-BACKSTOP: Layer-A RemoteTriggers fire independent CLI sessions
+     that bypass the cowork-team dispatcher. This gate prevents double-publish of the weekly
+     digest when both Layer-A and Layer-B fire digest-sunday concurrently.
+     Pattern source: docs/agents/cowork-team/flow/spawn-fanout.md § Published marker gate (FR-P2-7)
+     Weekly slot: WORK_DATE = ISO week (YYYY-WW); ttl_seconds ~8d (691200) per spawn-fanout.md -->
+
+```
+SLOT_ID   = "digest-sunday"
+WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%G-W%V   # ISO week, e.g. 2026-W25
+
+PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "published:digest-sunday:" + WORK_DATE,
+  task_kind:   "cowork-slot",
+  owner_agent: "digest-predict",
+  ttl_seconds: 691200    # ~8 days — weekly slot (spawn-fanout.md)
+})
+
+if PUBLISH_CLAIM.claimed != true:
+  log "[digest-predict] publish blocked — already published slot=digest-sunday week=" + WORK_DATE
+  EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+```
+
+If `claimed == true`: proceed through the Dispatch table below.
+
+---
+
 ## Dispatch (UTC clock — Vietnam = UTC+7)
 
 | Window | Sub-flow |

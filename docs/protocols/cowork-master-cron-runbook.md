@@ -1,7 +1,7 @@
 # Cowork Master Cron — Runbook
 
 **Owner:** agent-father
-**Last updated:** 2026-05-20 (Sprint 1957b)
+**Last updated:** 2026-06-13 (FIX-COWORK-GUARANTEED-BACKSTOP — Layer-A restored for 5 guaranteed slots)
 **Related skill:** `.claude/skills/cron-cowork-team/SKILL.md`
 **Schedule SSOT:** `docs/data/cowork-schedule.json`
 **Dispatcher flow:** `docs/agents/cowork-team/flow/main.md`
@@ -11,13 +11,26 @@
 
 ## 1. Architecture in one paragraph
 
-The cowork pipeline uses two overlapping layers of persistence:
+The cowork pipeline uses two overlapping layers of persistence — **both layers are permanently active and MUST COEXIST** until the §9 stability gate clears (see §9):
 
-**Layer A — RemoteTriggers (12 slots, session-independent):** Registered in claude.ai, these fire their own session per slot. They survive CLI session end. They cover all `guaranteed: true` slots (chef-morning, chef-eod, chef-evening, tnb-audit, digest-sunday) plus the hourly off-hours gatherers (news-scout-offhours, news-scout-sentiment, market-watcher-offhours, market-watcher-eod, financial-analyst-morning, financial-analyst-midday, chef-intraday).
+**Layer A — RemoteTriggers (5 guaranteed slots, session-independent, RESTORED 2026-06-13):**
+Registered in claude.ai workspace `env_011CV1yonRDFUhYhGEdkVwqj`. Fire their own independent CLI sessions. Survive CLI session end and deliberate session restarts. Cover the 5 `guaranteed: true` slots:
+
+| slot_id | cron | trigger_id | status |
+|---|---|---|---|
+| chef-morning | `15 5 * * 1-5` | pending router creation | awaiting router |
+| chef-eod | `45 8 * * 1-5` | pending router creation | awaiting router |
+| chef-evening | `45 19 * * *` | pending router creation | awaiting router |
+| digest-sunday | `47 13 * * 0` | pending router creation | awaiting router |
+| tnb-audit | `13 20 * * *` | pending router creation | awaiting router |
+
+Note: trigger_ids will be written to `docs/data/cowork-schedule.json` by the router after RemoteTrigger creation. Previous trigger_ids (trig_019n…, trig_011H…, trig_01CL…, trig_014G…, trig_01Lp…) were deleted in error before the §9 stability gate was met — this sprint restores them.
 
 **Layer B — Master CronCreate (*/15, session-scoped):** Registered via Claude Code CLI `CronCreate`. Fires every 15 minutes, reads `docs/data/cowork-schedule.json`, fans out to matching slots (including sub-hourly market-hours slots not coverable by RemoteTriggers). **This layer evaporates on CLI session end.**
 
 When both layers are active, coverage is complete. When Layer B evaporates (session-end), Layer A keeps guaranteed dishes running. The `*/15` sub-hourly slots (news-scout-market, market-watcher-market, alert-commander-market) go dark until Layer B is re-armed.
+
+**Dedup:** Both layers may fire the same guaranteed slot within the same window. The published-marker gate (`published:<slot_id>:<work_date>` task_claim, first-writer-wins) inside each agent's own flow (`chef.md`, `tran-ngoc-bau/flow/main.md`, `digest-predict/flow/main.md`) prevents double-publish. Gate added AC-5 / FIX-COWORK-GUARANTEED-BACKSTOP 2026-06-13.
 
 ---
 
@@ -211,5 +224,20 @@ All 5 pass = full recovery confirmed.
 ## 9. Preventing recurrence
 
 - **Always invoke `/cron-cowork-team` at session start.** Add it to personal workflow before any other CLI work during VN market hours.
-- **1951d cutover gate:** The 12 RemoteTriggers must NOT be deleted until 1957b is done (skill + runbook exist) AND the cron-cowork-team skill is proven stable across ≥2 session restarts. Task 1951d in `docs/data/orch/orch-state.json .task_board` is blocked on `1957b-done`.
+- **Layer-A deletion lock (ACTIVE):** `docs/data/cowork-schedule.json._notes.layer_a_deletion_locked = true`. The 5 guaranteed-slot RemoteTriggers MUST NOT be deleted until the stability_log below shows ≥2 session-restart survivals AND PO explicitly clears the lock via a dedicated sprint task. The previous deletion (before 2026-06-13) happened before the gate was met and caused the 32h gap. Do not repeat.
+- **Layer A + Layer B COEXIST PERMANENTLY** until the lock is cleared. Both firing the same slot is expected and safe — the published-marker gate inside each agent flow prevents double-publish.
 - **System-auditor Tier-1 check:** The system-auditor agent (30-min cron) monitors cowork silence. If it detects no chef output in >6h during market hours, it drops a signal row to `docs/data/orch/orch-state.json .signal_queue.rows[]` with `to: "ops"`. Ops reads this and invokes the recovery flow (Section 4 above).
+
+### §9.stability_log — Layer-A Restart Survival Log
+
+Two documented session-restart survivals required before any Layer-A deletion is proposed.
+Seed: empty — awaiting first verified survival (target: Mon 2026-06-16 chef-morning at 05:15 UTC).
+
+| # | Date (UTC) | Restart type | Slot survived | Layer-A trigger_id | Verified by |
+|---|---|---|---|---|---|
+| — | awaiting Mon 2026-06-16 | deliberate CLI kill | chef-morning (05:15Z) | pending router creation | — |
+| — | (2nd restart — TBD) | TBD | TBD | TBD | — |
+
+**Fill condition:** After a deliberate CLI session kill (no `/cron-cowork-team` re-arm), observe `cowork-schedule.json chef-morning.last_fired` update AND a Telegram MARKET message — this confirms Layer-A fired independently. Log date + trigger_id + verifying agent.
+
+**Deletion lock clearance:** PO creates an explicit sprint task after 2 rows are filled. Agent-father then sets `layer_a_deletion_locked: false` and updates this table.

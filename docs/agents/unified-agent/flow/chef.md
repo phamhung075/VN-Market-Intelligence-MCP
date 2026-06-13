@@ -1,4 +1,4 @@
-<!-- size-justification: 321L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5 -->
+<!-- size-justification: 350L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13 -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -26,6 +26,35 @@ Input: `$DISH_TYPE` = `morning` | `intraday` | `eod` | `evening`
 → Telemetry spec (ENTRY / CLOSE / FAILED / SILENT / try-catch boundary): `docs/agents/unified-agent/flow/chef-telemetry.md`
 
 > Error boundary → skill: `.claude/skills/cowork-boundary/SKILL.md`
+
+---
+
+## Step 0.5 — PUBLISHED MARKER GATE (Layer-A dedup — run BEFORE any send_telegram)
+
+<!-- AC-5 / FIX-COWORK-GUARANTEED-BACKSTOP: Layer-A RemoteTriggers fire independent CLI sessions
+     that bypass the cowork-team dispatcher. This gate is the ONLY dedup defence when both
+     Layer-A and Layer-B fire the same slot concurrently.
+     Pattern source: docs/agents/cowork-team/flow/spawn-fanout.md § Published marker gate (FR-P2-7) -->
+
+Determine the slot being executed from the invocation prompt (`slot=<slot_id>`).
+
+```
+SLOT_ID  = <slot_id from prompt>   # e.g. chef-morning | chef-eod | chef-evening
+WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d   # VN date GMT+7
+
+PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "published:" + SLOT_ID + ":" + WORK_DATE,
+  task_kind:   "cowork-slot",
+  owner_agent: "unified-agent",
+  ttl_seconds: 100800    # 28h — daily slot (ARCH-DECIDE-D)
+})
+
+if PUBLISH_CLAIM.claimed != true:
+  log "[chef] publish blocked — already published slot=" + SLOT_ID + " date=" + WORK_DATE
+  EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+```
+
+If `claimed == true`: proceed to Step 0 GATHER. The marker is now held — send_telegram in Step 7 will proceed.
 
 ---
 

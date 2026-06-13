@@ -12,6 +12,34 @@ If you find yourself about to refuse execution or delegate upward → that is th
 
 > Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
+## PUBLISHED MARKER GATE (Layer-A dedup — MANDATORY before Dispatch)
+
+<!-- AC-5 / FIX-COWORK-GUARANTEED-BACKSTOP: Layer-A RemoteTriggers fire independent CLI sessions
+     that bypass the cowork-team dispatcher. This gate prevents double-publish of the tnb-audit
+     WORK report when both Layer-A and Layer-B fire concurrently.
+     Pattern source: docs/agents/cowork-team/flow/spawn-fanout.md § Published marker gate (FR-P2-7)
+     Weekly slot: WORK_DATE = ISO week (YYYY-WW); ttl_seconds ~8d (691200) per spawn-fanout.md -->
+
+```
+SLOT_ID   = "tnb-audit"
+WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%G-W%V   # ISO week, e.g. 2026-W25
+
+PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "published:tnb-audit:" + WORK_DATE,
+  task_kind:   "cowork-slot",
+  owner_agent: "tran-ngoc-bau",
+  ttl_seconds: 691200    # ~8 days — weekly slot (spawn-fanout.md)
+})
+
+if PUBLISH_CLAIM.claimed != true:
+  log "[tran-ngoc-bau] publish blocked — already published slot=tnb-audit week=" + WORK_DATE
+  EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
+```
+
+If `claimed == true`: proceed through the Dispatch table below.
+
+---
+
 ## Audit Target (Sprint 1949 update)
 
 **Primary target:** The 3 daily MARKET dishes published by `unified-agent` (chef) — Morning (05:23 UTC), EOD (08:37 UTC), Evening (19:37 UTC).
