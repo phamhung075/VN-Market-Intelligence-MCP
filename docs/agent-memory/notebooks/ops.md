@@ -271,3 +271,34 @@ technical-analysis   Up 2 days (healthy)
 
 **Status:** PIPELINE: continue — QA gates ready to run full test suite.
 
+
+## Session: 2026-06-13 (FIX-PENDING-REFINE-LIMIT-CHECKKIND — mcp-server rebuild)
+
+**Task:** Targeted rebuild of mcp-server to bake SDK exact pin + z.coerce.number() resilience (commit 897877ec).
+
+### Execution Summary
+
+**Step 1-5: Rebuild + Post-rebuild Verification**
+- Rebuild: `docker compose build --no-cache mcp-server && docker compose up -d mcp-server`
+- Image SHA: `09c7e3b3ce42138c2b2210d9dadbcf67adb9b3bc5ccf4aa5733b01a2efd38227`
+- Container image match: YES (no macOS race detected)
+- SDK pin verified IN-CONTAINER:
+  - package.json: `"@modelcontextprotocol/sdk": "1.29.0"` (exact, no caret)
+  - node_modules: `"version": "1.29.0"` ✓
+- Health endpoint: `{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":157}` ✓
+- All 11 peer services UP (healthy): alert-engine, api-gateway, frontend, kinh-dich-service, macro-indicators, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis ✓
+
+**Smoke Test: get_bctc_pending_refine(limit:1)**
+- Result: 1 row returned (b48f7e6a-f045-4550-91f9-dbe27e67c252)
+- Structure: windows[] with unit_id, page_numbers, page_type, needs_image ✓
+- No check.kind validation error (z.coerce.number() + SDK 1.29.0 handling working) ✓
+
+**QA Gate:** COMPLETE ✓
+- Image freshly built with --no-cache (dependency layer re-resolved)
+- SDK pin hardened into image
+- Peers isolated with --no-deps (no recreation of unrelated containers)
+- Smoke returned proper payload shape, confirms limit param handling resilience
+
+**Commit:** 897877ec FIX-PENDING-REFINE-LIMIT-CHECKKIND
+
+---
