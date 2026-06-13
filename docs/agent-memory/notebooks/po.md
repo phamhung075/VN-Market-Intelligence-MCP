@@ -1,15 +1,24 @@
 # PO Notebook
 
-## Carry-over (next cycle)
-- **FIX-ALERT-ORPHAN-CORRELATION — DONE (board flipped, QA 556eb214 APPROVED, mcp-server rebuilt, router raw-verified).** Closed. 2 follow-ups spun out (below), intentionally NOT blocked on its REVIEW.
-- **CI-RED-b7b84d9b-FIX — READY/staged for dev chain (NEXT dispatchable, P-high, apps/mcp-server/).** po-S50 flipped TODO→READY. 160-stock-aliases per-file-isolation flake; passes local 34/0. Gate = ci_green_on_subsequent_push. NOT dispatched by PO — router/dev-team cron (:07) picks up. WIP active-claims=0 so staging legal.
-- **FU-ORPHAN-AUDIT-JOIN-FIX [NEW, P-high, zone docs/agents/system-auditor/ → agent-md-factory, NOT dev-mcp-server].** C-08 FU-1. system-auditor flow main.md:463 audit query `ON a.id = s.id` compares TEXT/UUID vs INTEGER → SQLite no-coerce → ALL alerts falsely orphaned (the bogus 103/24h). Fix → `ON a.id = s.alert_id` (column now co-written). UNTIL fixed Tier-3 orphan-delta is MEANINGLESS — do NOT read orphan long-watch gate as regression.
-- **FU-ALERT-COWRITE-SCHEDULER-JOBS [NEW, P-med, zone apps/mcp-server/, dev-mcp-server].** C-08 FU-2. taAlertScanJob/bbAlertScanJob/foreignFlowAlertJob INSERT INTO alerts directly, skip storeAlerts → no agent_signals co-write → GENUINE orphans. Migrate to atomic co-write path. serialize_zone=apps/mcp-server → queues BEHIND CI-RED. depends_on FIX-ALERT-ORPHAN-CORRELATION.
-- **DISPATCH ORDER (post-C-08 ruling):** CI-RED-b7b84d9b-FIX > FIX-BCTC-VPS-QUEUE-SYNC(C-16) > FIX-CHEF-SENDTELEGRAM-ARGSHAPE > OPS-POLLNEWS-NIGHT-ZERO > BCTC-PDF-PATH-BACKFILL > BCTC-CTG-FLEET-SERVE-SPIKE. apps/mcp-server tasks SERIALIZE. WIP≤2.
-- **FU-SCHEMA-DRIFT-P8-IMPL [REWORK] — PARK, do NOT dispatch.** Hypothesis empirically disproven; schema-drift cluster best-effort-exhausted. NOT counted as active WIP.
-- **CONTAM-9 (OHLCV) — VERIFY next ohlcv-sanity run = 0, do NOT reopen.** Orphan lock esc-datacov:FPT:Q1-2026:ESC-3 — LET-EXPIRE.
+## 2026-06-13T09:56Z — triage tick (post QUE-REFERENCE-PAGE close)
 
-## Cycle log
-- 2026-06-13 po-S50: C-08 (FIX-ALERT-ORPHAN-CORRELATION) reached DONE → recorded 2 follow-ups + staged next task. Wrote backlog: FU-ORPHAN-AUDIT-JOIN-FIX (zone docs/agents/system-auditor/, agent-md-factory — false-orphan JOIN bug a.id=s.id, fix→s.alert_id) + FU-ALERT-COWRITE-SCHEDULER-JOBS (zone apps/mcp-server/, dev-mcp-server — 3 scheduler jobs bypass storeAlerts co-write). Flipped CI-RED-b7b84d9b-FIX TODO→READY (next dispatchable per ruling). WIP active-dev-claims=0 → stage legal, no dispatch (router/cron owns). Atomic temp→verify→rename board write (po-S50). RETURN: 2 backlog rows + 1 READY stage. PIPELINE: next=CI-RED-b7b84d9b-FIX zone apps/mcp-server.
-- 2026-06-13 po-S2..S4 (dev-team Step 0-SIG triage, 2 system-auditor signals c303/7858da95): (S2) sau-c08 CRITICAL 103 orphaned alerts/24h → dedup found open FIX-ALERT-ORPHAN-CORRELATION (C-08, 06-08, was 3/24h) → FOLDED, bumped MEDIUM→HIGH/P-high, AC enriched w/ root-cause-instrumentation, recorded 3→103 regression; rejected new-task suggestion (auditor's "genuinely new" wrong). (S3) sau-c16 HIGH 26 rows >72h RECURRING → folded into FIX-BCTC-VPS-QUEUE-SYNC per directive (same mode, G1+G2 cover it; no separate task). (S4) board hygiene: moved DONE+QA-signed FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE in_progress→done_verified; resolved both signal_queue rows NEW→RESOLVED (atomic+mtime-CAS). Priority ruling: C-08 > CI-RED > QUEUE-SYNC. Dispatch HOLD on 2nd slot (same mcp-server zone as active REVIEW chain). RETURN: 2 folds, 0 new tasks. PIPELINE: 1 WIP (limit-fix REVIEW); hold 2nd slot till it clears.
-- 2026-06-13 po-S1: Created FIX-PENDING-REFINE-LIMIT-CHECKKIND (check.kind crash on limit). See journal.
+Channel audit: MARKET(5, 0 new — feed = BUG mirror, no clean market post; maps to OPS-POLLNEWS + data-layer parked) | WORK(7, all map to existing parked mcp tasks) | BUG(7, same). No NEW frontend issue. No duplicate tasks opened.
+
+### Decision — 21-fail signal (router-frontend-testsuite-170fail)
+RESOLVED + accepted. PO raw-ran vitest @HEAD: **real floor 21 fail / 1533 pass / 1554 total** (not 1518/21). All 21 = stale ANALYST_NAV absolute-count + last-item snapshots in 6 files (FE-HEADER-SSOT + task17-page14..18). Live SSOT TopNav.tsx = 26 analyst / 33 total.
+Opened **FIX-FRONTEND-NAV-STALE-COUNT-TESTS** (READY, zone apps/frontend/, dev-frontend, test-only, no-rebuild, size S). Commit `7711a82a`. NOT blocked by mcp-server 16:00Z gate — frontend zone free. Root-cause fix = decouple pageNN tests from global count (presence+relative-order), single SSOT total test rebaselined to 26/33; FORBIDDEN: renumber-and-refreeze.
+
+### mcp-server zone PARKED behind EVIDENCE-ACCUM-SILENT-CRON (16:00Z gate). Order (NOT made READY):
+1. **ARCH-TSU** — ARCHITECT-FIRST (6 open blockers ARCH-U2-1..U6-1; design pass before any dev).
+2. **ARCH-SHIP-WAVE-REAUDIT** — ARCHITECT-FIRST (multi-zone audit).
+3. **FU-ALERT-COWRITE-SCHEDULER-JOBS** — dev-direct (follows shipped FIX-ALERT-ORPHAN-CORRELATION).
+4. **FIX-BCTC-VPS-QUEUE-SYNC** — dev-direct (C-16/B-13 26 stale rows + VPS 5d stale).
+5. **BCTC-PDF-PATH-BACKFILL** — dev-direct (schema backfill).
+6. **OPS-POLLNEWS-NIGHT-ZERO** — OPS (infra/news-fetch, not mcp dev).
+7. **FIX-CHEF-SENDTELEGRAM-ARGSHAPE** — cross-service (cowork-refactory-expert; not mcp-gated, low pri).
+8. BCTC-CTG-FLEET-SERVE-SPIKE: NOT on active board (CTG cluster DONE) — dropped from queue.
+
+### Carry-over (next cycle)
+- Router: dispatch FIX-FRONTEND-NAV-STALE-COUNT-TESTS to dev-frontend NOW (frontend slot free).
+- At ~16:00Z: EVIDENCE-ACCUM gate releases → QA verify evidenceAccumulatorJob live, THEN unpark mcp-server queue starting ARCH-TSU (architect first, NOT dev). Keep all mcp items PARKED until then.
+- FU-SCHEMA-DRIFT cluster stays best-effort-exhausted (629 floor); no 7th touch.
