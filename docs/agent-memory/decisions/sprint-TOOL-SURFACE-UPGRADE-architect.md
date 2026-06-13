@@ -68,6 +68,14 @@
 **why-decision:** bctc tool has dry_run + tickers filter; news tool is source-based; merging into one tool produces a confusing schema. Description update is sufficient.
 **why-change:** no change from plan
 
+### STEP architect-S9 · architect · 2026-06-13T16:35:00Z
+**task-id:** ARCH-TSU
+**what-done:** Authored docs/architecture-briefs/2026-06-13-tool-surface-upgrade.md. All 6 ARCH-BLOCKER resolutions confirmed from brownfield scan already in BA spec. Tool-count binding: SSOT pointer = docs/data/project-stats.json toolCount (not hardcoded). U4 zone split flagged: dev-macro-indicators is separate from dev-mcp-server slot. U3 5-question verdicts finalized: 5 deregister, 7 integrate. Fan-out stubs ordered with TSU-DEV-U2-PARITY as final mcp-server task. sessionCount field REMOVED (semantically wrong post-gateway). No code written.
+**what-considered:**
+- Only path: write brief from confirmed evidence; all blockers resolved in BA spec brownfield scan 2026-06-07
+**why-decision:** All ARCH-BLOCKER resolutions were already in place; brief synthesizes and formalizes them into file:line seams + DoD per AC1-AC9.
+**why-change:** no change from plan
+
 ### STEP architect-S8 · architect · 2026-06-07T08:03:51Z
 **task-id:** ARCH-TSU
 **what-done:** U4 ARCH-U4-1 resolved. VnIndex prev-session: market_prices table stores only latest price (PRIMARY KEY = code, no history); market_prices_history stores time-series rows (code, price, fetched_at). daily_ohlcv stores daily close (code, date, close). commodity_prices stores only latest commodity row (single row per source). Conclusion: VnIndex prev-close = daily_ohlcv ORDER BY date DESC LIMIT 2 (second row = yesterday close). Oil/gold prev = commodity_prices has no history (single row) → null/unknown. usdVnd prev = sbv_rates has no history column → null/unknown. Only VnIndex can serve real delta; others must serve direction:"unknown" unless a prev-session snapshot job is added (out of scope this sprint).
