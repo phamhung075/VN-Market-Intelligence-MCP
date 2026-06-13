@@ -9345,16 +9345,14 @@
         "created_at": "2026-06-07T19:20:08Z",
         "note": "Latent follow-up from A-13 root-cause fix (signal sau-2026060719035-a13). Rare path (BT-5 gate block only) but identical event-loop-starvation class fixed in extract_tables_usecase.py + table_push_client.py (48a64056, f0999cff). AC: send_work_alert offloaded (to_thread or async client), unit test, suite green, no sync urllib on loop remains in apps/pdf-extractor (grep proof). | PO-S50 2026-06-13: RESOLVED-ALREADY-SHIPPED — RAW-verified: commit 473f7cd2 (fix(pdf-extractor/infra): FIX-PDFX-ALERT-ADAPTER-BLOCKING offload urllib to thread); alert_adapter.py:71 async def send_work_alert, :136 await asyncio.to_thread(_do_request) wraps the blocking urlopen; unit test __tests__/unit/test_alert_adapter_nonblocking.py present; grep-proof AC met (no sync urllib reachable from async context in apps/pdf-extractor). Event-loop-starvation A-13 class now FULLY closed across pdf-extractor (extract_tables_usecase 48a64056, table_push_client f0999cff, 3 push-clients FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN, engine A20-EVENTLOOP-ASYNC-TO-THREAD, alert_adapter 473f7cd2). Backlog row was drift — never marked DONE.",
         "closed_at": "2026-06-13T10:20:14Z"
-      }
-    ],
-    "in_progress": [
+      },
       {
         "id": "FIX-COWORK-GUARANTEED-BACKSTOP",
         "type": "SPRINT-S",
         "title": "Durable backstop for guaranteed cowork dishes during */15 dispatcher (Layer B) downtime — 5th recurrence of morning/EOD dish-miss. ROOT (c94, live-evidence): the session-scoped */15 cowork-team master dispatcher (Layer B) evaporated 2026-06-12T05:30Z→2026-06-13T14:00Z (~32h gap; last heartbeat docs/signals/processed/cowork-team-20260612T051500Z.json, then ZERO until slots resumed 14:08Z). Every guaranteed slot whose cron boundary fell in that window missed: chef-morning(05:15) AND chef-eod(08:45) on both 06-12 + 06-13. The runbook (docs/protocols/cowork-master-cron-runbook.md §1,§9) designed Layer A (per-slot RemoteTriggers) as the session-INDEPENDENT backstop for exactly these guaranteed slots — but cowork-schedule.json now shows ALL guaranteed slots trigger_status=deleted, trigger_id=null (_superseded_by:cowork-dispatcher migration). Layer A was deleted BEFORE §9's stability gate (skill proven across >=2 restarts) was met. Result: a single Layer-B session-evaporation now silently drops ALL guaranteed dishes with zero backstop = the recurring root. DESIGN a durable fix: either (A) restore Layer-A RemoteTriggers for the 4 guaranteed chef/audit slots (session-independent), or (B) add a silence-watchdog that detects >20min cowork-team heartbeat gap during VN market hours (02:00-08:30Z Mon-Fri per runbook §2 Signature A) and auto-re-arms /cron-cowork-team, or (C) make Layer B durability survive session-end. Architect picks A/B/C with rationale; agent-father implements. This is NOT a dev-mcp-server code change and NOT a cowork-schedule.json data edit — it is a cowork-reliability flow/skill/trigger design task. Subsumes both F-EOD-SCHEDULE-STALE(NEW/HIGH) and F-MORNING-NB-MISSING(HIGH,5th) — same incident, one root.",
         "owner": "agent-father",
         "route": "agent-father",
-        "status": "IN_PROGRESS",
+        "status": "done",
         "size": "S",
         "priority": "high",
         "recurring": true,
@@ -9383,9 +9381,55 @@
           "journal": "docs/agent-memory/decisions/sprint-FIX-COWORK-GUARANTEED-BACKSTOP-architect.md",
           "dedup": "last_fired wall-clock gate (Sprint 1951 §7) — first-writer-wins, second exits silent. AC-5: agent-father MUST verify gate lives IN each agent flow (chef.md, tnb main.md, digest-predict main.md), not dispatcher-only, else Layer-A bypass double-publishes.",
           "stability_gate": "add layer_a_deletion_locked:true to cowork-schedule.json._notes — requires 2x restart-survival + PO clearance before any future Layer-A deletion."
+        },
+        "done_at": "2026-06-13T21:19:56Z",
+        "done_by": "router",
+        "router_implementation": {
+          "disposition": "IMPLEMENTED-AWAITING-MON-LIVE-VERIFY",
+          "option": "A — Layer-A per-slot RemoteTriggers (session-independent)",
+          "ac_status": "AC-1 (5 triggers created) DONE; AC-2 (trigger_id writeback) DONE; AC-3 (layer_a_deletion_locked) DONE; AC-4 (runbook §1/§9 + stability_log) DONE; AC-5 (dedup gate verify-in-flow) DONE; AC-6 (G1-G4 live) PENDING Mon 2026-06-15.",
+          "commits": [
+            "a5a357d3 (agent-father: dedup gate in 3 flows + deletion lock + runbook)",
+            "c809d66c (router: 5 triggers + trigger_id writeback)"
+          ],
+          "triggers_created": {
+            "chef-morning": {
+              "id": "trig_01FdUF4YWg8TqpXVnBLC7GYj",
+              "next_run": "2026-06-15T05:15:00Z"
+            },
+            "chef-eod": {
+              "id": "trig_01NS8j25rYt4meXVqHyRsVNn",
+              "next_run": "2026-06-15T08:45:00Z"
+            },
+            "chef-evening": {
+              "id": "trig_013zatVHSRiChMJwm5XtSBEx",
+              "next_run": "2026-06-14T19:45:00Z"
+            },
+            "digest-sunday": {
+              "id": "trig_01FjB1WhF1bpgH1oYZF4BYru",
+              "next_run": "2026-06-14T13:47:00Z"
+            },
+            "tnb-audit": {
+              "id": "trig_01QgnBwnEyzLj5as55i53tea",
+              "next_run": "2026-06-14T20:13:00Z"
+            }
+          },
+          "router_raw_overrides": "Brief §3 env_011CV1yonRDFUhYhGEdkVwqj was pulled from the DELETED chef triggers (unverifiable). Router substituted PROVEN-LIVE env_01DNWKA2KMxnk5Utn1moxjoF + gateway connector 5c86b49b (url https://zenmidi.com/gateway) — both confirmed firing on the active Team-MCP-Health-Recheck trigger (last_fired 2026-06-13T20:02Z). Brief's events:[{prompt}] shorthand REJECTED by create API; correct shape = job_config.ccr.events[].data.message{content,role} with session_context (model/sources/allowed_tools) nested INSIDE job_config.ccr; mcp_connections top-level. Contract discovered iteratively + locked.",
+          "dedup_gate_live": "chef.md:46 (published:<slot>:<work_date> YYYY-MM-DD 28h ttl), tnb main.md:28 (published:tnb-audit:<YYYY-WW> ~8d), digest-predict main.md:28 (published:digest-sunday:<YYYY-WW> ~8d). First-writer-wins; Layer-A + Layer-B coexist without double-publish.",
+          "layer_b_status": "Layer-B */15 dispatcher (cron a95078d1) currently ARMED this session — fired 21:05Z this cycle. Immediate stopgap already in place; Layer-A is the permanent session-independent remedy. No /cron-cowork-team re-arm needed now.",
+          "deletion_lock": "cowork-schedule.json._notes.layer_a_deletion_locked=true — Layer-B fallback must NOT be deleted until 2x session-restart survivals logged in runbook §9.stability_log AND PO clears the flag."
+        },
+        "live_verification_gate": {
+          "note": "PROMOTE done -> done_verified only after these fire LIVE. First chef-morning fire = Mon 2026-06-15T05:15Z (trigger next_run, authoritative; supersedes the groomed gate's mislabeled '06-16').",
+          "G1": "chef-morning fires Mon 2026-06-15 ~05:15-05:35Z: cowork-schedule.json chef-morning.last_fired updates + 2026-06-15 morning entry in docs/agent-memory/notebooks/unified-agent.md.",
+          "G2": "chef-eod fires Mon 2026-06-15 ~08:45-09:05Z: last_fired update + EOD notebook entry.",
+          "G3": "survives deliberate CLI session restart with NO manual /cron-cowork-team — a post-restart guaranteed-slot boundary still fires (session-independence = root closed). RemoteTriggers are claude.ai-hosted so this is structurally satisfied; confirm by observing a fire after any restart.",
+          "G4": "no double-publish: when Layer-B */15 AND Layer-A both fire the same slot/day, the published:<slot>:<date> claim makes exactly one publish (other exits silent).",
+          "closer": "TNB c95+ audit confirms morning+EOD present for 2 consecutive market days (Mon 06-15 + Tue 06-16) = recurrence #5 closed -> a future dev-team tick promotes to done_verified."
         }
       }
     ],
+    "in_progress": [],
     "head": {
       "note": "FDA-9 (rag-service _distance fail-open fabricated-similarity) groomed READY; mcp-server zone untouched (frozen behind EVIDENCE-ACCUM gate)"
     },
