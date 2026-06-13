@@ -1,5 +1,25 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-14 · FIX-FUNDAMENTALS-REFRESH-CRON-DEAD — vnstock banner suppression SHIPPED
+
+**Tasks:** FIX-FUNDAMENTALS-REFRESH-CRON-DEAD (P0) + FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT (P1)
+**Root cause:** vnstock v4 emits TWO stdout banners on every `Vnstock().stock()` + finance API call:
+1. Deprecation notice with box-drawing chars (╭╮│) → mis-detected as RATE_LIMITED by `isRateLimitResponse(BOX_DRAWING_RE)`
+2. Community-edition limit notice (ℹ️ prefix, non-JSON) → `stripAnsiAndDetectJunk` marks junk=true
+
+Both banners caused every financial fetch to return null → `markFetched()` was called (fetch_log updated) → `storeFinancials()` never called → financial tables frozen since 2026-04-15. Jun-8 cron crash was container restart mid-run (zombie reaper set crashed; no thrown exception).
+
+**Fix:** `apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts`
+- Wrapped ALL vnstock API calls (init + data calls) in `sys.stdout = _io.StringIO()` blocks
+- Banners discarded; JSON printed only after `sys.stdout = _real_stdout` restore
+- Applied to all 10 Python script templates: FINANCE, TRADING_STATS, OFFICERS, SHAREHOLDERS, INTRADAY, ORDER_BOOK, BALANCE_SHEET, CASH_FLOW, NEWS, PRICE
+- Exported `SUPPRESS_BANNER` + `RESTORE_STDOUT` for test coverage
+
+**Tests:** 12 new assertions in `fix-fundamentals-refresh-cron-dead.test.ts` — all GREEN
+**Live verification:** 2-ticker sync (ACB, VCB) wrote rows to vnstock_financials within 90s of deploy; fetch_log updated with live timestamps
+**G12 gate:** tsc clean, 12 pass / 0 fail, 157 tools, 79 cron.schedule
+**Commit:** c35db4fc
+
 ## 2026-06-14 · FIX-MCP-CRASH-LOOP-WRITEWAL BC-1 — WAL root fix SHIPPED
 
 **Task:** BC-1 | Sprint: FIX-MCP-CRASH-LOOP-WRITEWAL | Zone: apps/mcp-server/src/infrastructure/db/ + scheduler/

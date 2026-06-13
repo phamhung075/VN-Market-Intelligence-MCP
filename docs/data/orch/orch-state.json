@@ -7190,7 +7190,7 @@
       {
         "id": "FIX-FUNDAMENTALS-REFRESH-CRON-DEAD",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P0",
         "zone_owner": "apps/mcp-server/",
         "owner": "dev-mcp-server",
@@ -7231,7 +7231,7 @@
       {
         "id": "FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P1",
         "zone_owner": "apps/mcp-server/",
         "owner": "dev-mcp-server",
