@@ -4,6 +4,19 @@
 
 ---
 
+## Session: 2026-06-13 (QUE-REFERENCE-PAGE-TEST)
+
+**QUE-REFERENCE-PAGE-TEST IN_PROGRESS→REVIEW (commit 13a3bfd0)**
+- Created apps/frontend/app/__tests__/QUE-REFERENCE-PAGE-detail.test.ts — 13 tests (T1–T6) against QUE_DETAIL map.
+- Extended (renamed) QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.ts → .tsx — added 2 deep-link tests (withDetailLink anchor/no-anchor).
+- Tooltip primitives mocked via vi.mock to avoid React Fast Refresh HMR transforms in jsdom.
+- vitest before: 21 fail / 1518 pass. After: 21 fail / 1533 pass. Delta: +15. tsc: EXIT 0.
+- Status: REVIEW
+
+Zone health: Tier 4 feature routes 19/19 done, test suite +15 new tests, 21 pre-existing failures stable | HEALTHY
+
+---
+
 ## Session: 2026-06-13 (QUE-REFERENCE-PAGE-1b)
 
 **QUE-REFERENCE-PAGE-1b IN_PROGRESS→REVIEW (commit daabfd73)**
