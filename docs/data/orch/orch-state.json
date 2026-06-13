@@ -5,10 +5,10 @@
   "_updated_by": "po-s52-health-triage",
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-13T22:42:16Z",
+    "updated_at": "2026-06-13T22:47:41Z",
     "updated_by": "dev-team",
     "active_task_id": "BC-1",
-    "next_agent": "dev-mcp-server"
+    "next_agent": "ops"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -9634,7 +9634,12 @@
         ],
         "claimed_at": "2026-06-13T22:42:16Z",
         "claimed_by": "router",
-        "dispatch_note": "Dispatched dev-mcp-server 2026-06-13T22:42:16Z. ROOT FIX: wal_autocheckpoint 4000->1000 (schema.ts:109) + runForcedTruncateCheckpoint() in checkpoint.ts (BEGIN IMMEDIATE;COMMIT then wal_checkpoint(TRUNCATE)) + rewire 30min cron unconditional in startScheduler.ts + unit test. GENERIC db-layer. Handoff: docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-BC-1.md"
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-13T22:42:16Z. ROOT FIX: wal_autocheckpoint 4000->1000 (schema.ts:109) + runForcedTruncateCheckpoint() in checkpoint.ts (BEGIN IMMEDIATE;COMMIT then wal_checkpoint(TRUNCATE)) + rewire 30min cron unconditional in startScheduler.ts + unit test. GENERIC db-layer. Handoff: docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-BC-1.md",
+        "stage": "code-done->ops-rebuild",
+        "code_done_at": "2026-06-13T22:47:41Z",
+        "commit": "b41070b7",
+        "tsc": "clean",
+        "unit_tests": "6 pass 0 fail"
       }
     ],
     "head": {
