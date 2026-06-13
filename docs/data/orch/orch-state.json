@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T22:28:45Z",
-    "_updated_by": "po-s52-health-triage",
+    "_updated_at": "2026-06-14T00:30:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -7203,7 +7203,7 @@
       {
         "id": "FIX-BCTC-VPS-PIPELINE-STALE-5D",
         "type": "FIX",
-        "status": "TODO",
+        "status": "HANDOFF",
         "priority": "P0",
         "zone_owner": "apps/pdf-extractor/",
         "owner": "dev-pdf-extractor",
@@ -7211,7 +7211,22 @@
         "title": "FIX-BCTC-VPS-PIPELINE-STALE-5D — BCTC VPS pipeline stale: bctc last push 2026-06-08 00:30 (5+ days), 0 new PDFs while Q1-2026 earnings window active (24h SLA, highly overdue). vn-bctc-fetch reports 'healthy' on TCP ping only — masks dead data push.",
         "scope": "SSH VPS; inspect vn-bctc-fetch process + cron. Fix health check to validate data-push freshness not just TCP ping (root cause = liveness vs data-freshness conflation). PLAN-ONLY at PO layer — dev-team + ops chain implements. Distinct from FIX-SBV-FX-VPS-FETCHER-UNHEALTHY (I7) and FIX-NEWS-VPS-CRASH-LOOP.",
         "user_impact": "HIGH — Q1 earnings PDFs silently not ingested; analyst layer serves stale financials.",
-        "depends": []
+        "depends": [],
+        "zone_verdict": "OUT_OF_ZONE",
+        "handoff_to": "dev-mcp-server",
+        "diagnosis": "ROOT CAUSE IDENTIFIED (dev-pdf-extractor 2026-06-14): The 5-day stall (Jun 8 01:17 UTC → Jun 13 20:45 UTC) was caused by bctcQueueEnricherJob (apps/mcp-server/) failing to discover HSX iboard URLs for 16 pending Q1-2026 tickers over 341 consecutive enricher runs. bctcPdfPullJob ran 118 times Jun 8-12 but found 0 pending rows with valid source_url — not a pull-job crash, VPS death, or pdf-extractor rejection. The 'healthy' mask: vn-bctc-fetch is passive=true in vpsHealthPoller.ts (apps/mcp-server/src/domain/services/vpsHealthPoller.ts:169) — always returns healthy regardless of data push age. Pipeline self-recovered Jun 13 20:45 UTC when iboard discovery returned 11 URLs; 7 PDFs downloaded Jun 13 21:35-22:17. Pipeline is LIVE as of Jun 13 22:21 UTC. HANDOFF ITEMS for dev-mcp-server: (1) vpsHealthPoller.ts: replace vn-bctc-fetch passive=true with an active freshness query on bctc_vps_queue (e.g. max(last_attempt) WHERE status=done, stale if >24h during earnings window). (2) bctcQueueEnricherJob: add alerting when urlsPopulated=0 for N consecutive runs during active earnings window (detect discovery stall before it reaches 5 days). (3) 9 remaining pending rows still have no source_url: ACV/BDI/DAG/DLC/JSH/SIS/VDC (created Apr 30), VNH (May 12), VEA (May 19) — these are HNX/UPCOM tickers not covered by discoverHosePdfUrls (HSX-only discovery). pdf-extractor zone is clean — no code changes needed in apps/pdf-extractor/.",
+        "live_evidence": {
+          "pipeline_active": true,
+          "last_download_utc": "2026-06-13 22:17:09",
+          "pdfs_downloaded_jun13": 7,
+          "pending_with_url": 10,
+          "pending_no_url": 9,
+          "bctcPdfPullJob_runs_jun8_12": 118,
+          "bctcQueueEnricher_runs_jun8_12": 341,
+          "enricher_zero_url_runs": 339,
+          "container_start_jun13": "2026-06-13T22:21:35Z",
+          "vn_bctc_fetch_health_type": "passive=always-healthy (vpsHealthPoller.ts:169)"
+        }
       },
       {
         "id": "FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT",
@@ -10812,7 +10827,89 @@
         "closed_at": "2026-06-12T19:40:36Z"
       }
     ],
-    "ready": []
+    "ready": [
+      {
+        "id": "BC-1",
+        "title": "FIX-MCP-CRASH-LOOP-BC-1 — WAL checkpoint policy: wal_autocheckpoint=1000 + runForcedTruncateCheckpoint() unconditional every 30 min",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "created_at": "2026-06-14T00:30:00Z",
+        "created_by": "pm",
+        "files_summary": "Modify: schema.ts (PRAGMA), checkpoint.ts (new runForcedTruncateCheckpoint), startScheduler.ts (30-min cron). Create: test file FIX-MCP-CRASH-LOOP-BC-waltruncate.test.ts",
+        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-BC-1.md",
+        "depends_on": [],
+        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
+        "accepts": [
+          "WAL frame count stays <1000 under 10k-write load",
+          "wal_autocheckpoint=1000 on fresh connection",
+          "runForcedTruncateCheckpoint() issues BEGIN IMMEDIATE then TRUNCATE in order",
+          "Live uptime >4h, WAL <5MB, no restart",
+          "tsc 0 errors"
+        ]
+      },
+      {
+        "id": "A-1",
+        "title": "FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert: cron_job_runs sentinel + 30-min poller (>=2 restarts/4h -> WORK alert)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "created_at": "2026-06-14T00:30:00Z",
+        "created_by": "pm",
+        "files_summary": "Modify: composition-root.ts (startup sentinel), cronConfig.ts (cron), startScheduler.ts (register job). Create: restartCadenceAlertJob.ts + test file",
+        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-A-1.md",
+        "depends_on": [
+          "BC-1"
+        ],
+        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
+        "blocked_by": [
+          "BC-1"
+        ],
+        "accepts": [
+          "Alert fires when 2+ startup rows in last 4h",
+          "Alert silent when 1 row",
+          "No false alert after single force-recreate",
+          "tsc 0 errors"
+        ]
+      },
+      {
+        "id": "D-1",
+        "title": "FIX-MCP-CRASH-LOOP-D-1 — WAL escalation gate: escalateFn injected into checkWalFileSize(), writes atomic orch-state signal when WAL>10MB",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "READY",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "created_at": "2026-06-14T00:30:00Z",
+        "created_by": "pm",
+        "files_summary": "Modify: checkpoint.ts (escalateFn param), startScheduler.ts (escalation closure). Create: test file FIX-MCP-CRASH-LOOP-D-wal-escalation.test.ts",
+        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-D-1.md",
+        "depends_on": [
+          "BC-1"
+        ],
+        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
+        "blocked_by": [
+          "BC-1"
+        ],
+        "accepts": [
+          "escalateFn not called when WAL<=10MB",
+          "escalateFn called once when WAL>10MB with byte count",
+          "escalateFn rejection is non-fatal",
+          "Orch-state write uses temp-rename",
+          "tsc 0 errors"
+        ]
+      }
+    ]
   },
   "signal_queue": {
     "0": {
