@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T09:16:38Z",
+  "_updated_at": "2026-06-13T10:15:37Z",
   "_updated_by": "qa",
   "head": {
     "status": "idle",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T09:56:48Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-13T10:15:37Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -7270,46 +7270,6 @@
         "note": "Source: agent-father factory-conformance recheck 2026-06-13. PO DEFER (not now): the flow is correct and functional at 627L; splitting is debt-reduction not a reliability fix. Companion to FU-AUDITOR-FLOW-RESIDUALS / FIX-AUDITOR-* cluster — bundle the split with the next system-auditor flow change to avoid a churn-only commit. Mirrors NB-COWORK-MAIN-SPLIT pattern. Re-prioritize when an auditor-flow sprint is already open.",
         "created_at": "2026-06-13T09:02:02Z",
         "closed_at": "2026-06-13T09:02:02Z"
-      },
-      {
-        "id": "FIX-FRONTEND-NAV-STALE-COUNT-TESTS",
-        "title": "FIX-FRONTEND-NAV-STALE-COUNT-TESTS — 21 stale ANALYST_NAV absolute-count/last-item assertions fail at HEAD (live nav=26 analyst / 33 total; tests frozen at 19..24). 6 files: FE-HEADER-SSOT-top-nav + task17-page14..18-nav. Standing /goal recheck. Pre-existing, delta=0 across whole QUE sprint — NOT a regression.",
-        "owner": "dev-frontend",
-        "status": "REVIEW",
-        "type": "FIX",
-        "zone": "apps/frontend/",
-        "priority": "medium",
-        "size": "S",
-        "created_at": "2026-06-13T09:56:48Z",
-        "created_by": "po",
-        "test_only": true,
-        "no_rebuild": true,
-        "baseline_pass": "raw vitest @HEAD: 21 fail / 1533 pass / 1554 total (PO ran 2026-06-13 ~10:05Z). Target: 0 fail / 1554 pass.",
-        "verification_gate": "npx vitest run in apps/frontend => 0 fail; the 6 named files all green; full-suite pass count rises by exactly 21 (no other test touched).",
-        "desc": "ROOT-CAUSE CLASS (anti-pattern, fix definitively not symptom): the task17-pageNN-nav tests assert the ABSOLUTE ANALYST_NAV total *at the moment that page was added* (page14 -> 'exactly 20', page15 -> 21, page16 -> 22, page17 -> 23, page18 -> 24) plus 'last/second-to-last entry is X'. Every subsequent nav addition breaks all earlier snapshots — so the suite floor grows by ~4 fails per page added. Live SSOT (app/components/TopNav.tsx) is now ANALYST_NAV=26, SYSTEM_NAV=7, NAV_ITEMS=33. FE-HEADER-SSOT-top-nav.test.tsx also asserts stale 'exactly 19' / 'union 26 total'. FIX = decouple each pageNN test from the global count: each pageNN test should assert ONLY that ITS item exists and sits adjacent to its declared predecessor (presence + relative order), NOT an absolute length; move the single absolute-total assertion into ONE canonical test (FE-HEADER-SSOT-top-nav) rebaselined to 26 analyst / 33 total / 7 system. This stops the recurrence — next page addition only touches the one SSOT test, not 5 historical files. FORBIDDEN: blanket renumber-the-constants-and-move-on that re-freezes the same brittle absolute counts (would re-break on PAGE 20). Update the 'last ANALYST_NAV entry' / 'second-to-last' assertions to the predecessor-relative form too.",
-        "files": [
-          "apps/frontend/app/__tests__/FE-HEADER-SSOT-top-nav.test.tsx",
-          "apps/frontend/app/__tests__/task17-page14-shareholders-nav.test.tsx",
-          "apps/frontend/app/__tests__/task17-page15-officers-nav.test.tsx",
-          "apps/frontend/app/__tests__/task17-page16-financials-nav.test.tsx",
-          "apps/frontend/app/__tests__/task17-page17-fedrates-nav.test.tsx",
-          "apps/frontend/app/__tests__/task17-page18-reputation-nav.test.tsx"
-        ],
-        "note": "[po triage 2026-06-13T09:56:48Z] Opened from reconciled signal router-frontend-testsuite-170fail-2026-06-13T08-50Z. Zone apps/frontend/ is FREE (mcp-server zone parked behind EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate — this task does NOT touch mcp-server). Test-only, no codegen-of-prod, no rebuild. Router: route as direct FIX (dev-team Step 3) to dev-frontend NOW. dev-frontend MUST raw-verify 0-fail full suite before REVIEW.",
-        "dispatch_note": "WIP free slot in apps/frontend zone; EVIDENCE-ACCUM gate holds only apps/mcp-server. Dispatch ALLOWED to dev-frontend immediately.",
-        "claimed_by": "dev-frontend",
-        "claimed_at": "2026-06-13T09:58:00Z",
-        "review_commit": "e43480e0",
-        "review_at": "2026-06-13T12:12:00Z",
-        "review_evidence": {
-          "vitest_before": "21 fail / 1533 pass",
-          "vitest_after": "0 fail / 1554 pass",
-          "pass_delta": "+21",
-          "tsc": "EXIT 0",
-          "full_suite": "64 files / 1554 pass / 0 fail",
-          "decoupling": "relative-order findIndex+adjacency + derived structural invariant; single SSOT canary; NOT renumber-refreeze",
-          "files": "6 test files only; no production/TopNav/mcp-server/orch-state"
-        }
       }
     ],
     "archive": [],
@@ -9685,6 +9645,50 @@
         ],
         "sprint_closed_at": "2026-06-13T09:51:41Z",
         "sprint_closed_by": "qa"
+      },
+      {
+        "id": "FIX-FRONTEND-NAV-STALE-COUNT-TESTS",
+        "title": "FIX-FRONTEND-NAV-STALE-COUNT-TESTS — 21 stale ANALYST_NAV absolute-count/last-item assertions fail at HEAD (live nav=26 analyst / 33 total; tests frozen at 19..24). 6 files: FE-HEADER-SSOT-top-nav + task17-page14..18-nav. Standing /goal recheck. Pre-existing, delta=0 across whole QUE sprint — NOT a regression.",
+        "owner": "dev-frontend",
+        "status": "done_verified",
+        "type": "FIX",
+        "zone": "apps/frontend/",
+        "priority": "medium",
+        "size": "S",
+        "created_at": "2026-06-13T09:56:48Z",
+        "created_by": "po",
+        "test_only": true,
+        "no_rebuild": true,
+        "baseline_pass": "raw vitest @HEAD: 21 fail / 1533 pass / 1554 total (PO ran 2026-06-13 ~10:05Z). Target: 0 fail / 1554 pass.",
+        "verification_gate": "npx vitest run in apps/frontend => 0 fail; the 6 named files all green; full-suite pass count rises by exactly 21 (no other test touched).",
+        "desc": "ROOT-CAUSE CLASS (anti-pattern, fix definitively not symptom): the task17-pageNN-nav tests assert the ABSOLUTE ANALYST_NAV total *at the moment that page was added* (page14 -> 'exactly 20', page15 -> 21, page16 -> 22, page17 -> 23, page18 -> 24) plus 'last/second-to-last entry is X'. Every subsequent nav addition breaks all earlier snapshots — so the suite floor grows by ~4 fails per page added. Live SSOT (app/components/TopNav.tsx) is now ANALYST_NAV=26, SYSTEM_NAV=7, NAV_ITEMS=33. FE-HEADER-SSOT-top-nav.test.tsx also asserts stale 'exactly 19' / 'union 26 total'. FIX = decouple each pageNN test from the global count: each pageNN test should assert ONLY that ITS item exists and sits adjacent to its declared predecessor (presence + relative order), NOT an absolute length; move the single absolute-total assertion into ONE canonical test (FE-HEADER-SSOT-top-nav) rebaselined to 26 analyst / 33 total / 7 system. This stops the recurrence — next page addition only touches the one SSOT test, not 5 historical files. FORBIDDEN: blanket renumber-the-constants-and-move-on that re-freezes the same brittle absolute counts (would re-break on PAGE 20). Update the 'last ANALYST_NAV entry' / 'second-to-last' assertions to the predecessor-relative form too.",
+        "files": [
+          "apps/frontend/app/__tests__/FE-HEADER-SSOT-top-nav.test.tsx",
+          "apps/frontend/app/__tests__/task17-page14-shareholders-nav.test.tsx",
+          "apps/frontend/app/__tests__/task17-page15-officers-nav.test.tsx",
+          "apps/frontend/app/__tests__/task17-page16-financials-nav.test.tsx",
+          "apps/frontend/app/__tests__/task17-page17-fedrates-nav.test.tsx",
+          "apps/frontend/app/__tests__/task17-page18-reputation-nav.test.tsx"
+        ],
+        "note": "[po triage 2026-06-13T09:56:48Z] Opened from reconciled signal router-frontend-testsuite-170fail-2026-06-13T08-50Z. Zone apps/frontend/ is FREE (mcp-server zone parked behind EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate — this task does NOT touch mcp-server). Test-only, no codegen-of-prod, no rebuild. Router: route as direct FIX (dev-team Step 3) to dev-frontend NOW. dev-frontend MUST raw-verify 0-fail full suite before REVIEW.",
+        "dispatch_note": "WIP free slot in apps/frontend zone; EVIDENCE-ACCUM gate holds only apps/mcp-server. Dispatch ALLOWED to dev-frontend immediately.",
+        "claimed_by": "dev-frontend",
+        "claimed_at": "2026-06-13T09:58:00Z",
+        "review_commit": "e43480e0",
+        "review_at": "2026-06-13T12:12:00Z",
+        "review_evidence": {
+          "vitest_before": "21 fail / 1533 pass",
+          "vitest_after": "0 fail / 1554 pass",
+          "pass_delta": "+21",
+          "tsc": "EXIT 0",
+          "full_suite": "64 files / 1554 pass / 0 fail",
+          "decoupling": "relative-order findIndex+adjacency + derived structural invariant; single SSOT canary; NOT renumber-refreeze",
+          "files": "6 test files only; no production/TopNav/mcp-server/orch-state"
+        },
+        "done_at": "2026-06-13T10:15:37Z",
+        "done_by": "qa",
+        "qa_verdict": "APPROVED",
+        "qa_cycle": "cycle-249"
       }
     ],
     "review": [
