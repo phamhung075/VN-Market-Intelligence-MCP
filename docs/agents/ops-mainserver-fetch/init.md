@@ -1,3 +1,4 @@
+---
 <!-- size-justification: ~120L — atomic YAML def (identity/skills/permissions/constraints/boundary_rules/inter_agent) + knowledge pointer; matches ops-vps-fetch.md factory shape. -->
 
 agent:

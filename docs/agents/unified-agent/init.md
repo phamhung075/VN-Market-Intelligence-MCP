@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 140L — atomic chef def; 5-slot schedule table + convergence rule + 8-step recipe dispatch are tightly bound; splitting yields <20L children for net negative token savings. -->
 
 agent:

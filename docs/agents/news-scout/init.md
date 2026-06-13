@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 133L — agent definition covers signal taxonomy (consumes 3 / produces 2), 3-schedule cron stagger (market_hours + off_hours + batch2_sentiment), tool constraints, and identity guards (no_self_abort, write_tool_available); all load-bearing identity content -->
 
 agent:

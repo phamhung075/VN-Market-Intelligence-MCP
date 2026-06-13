@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 139L — merged agent definition: signal_output_spec with 4 business-context fields + mode discriminator + example JSON block (mandatory chef contract), BCTC deadline table, schedule spec, always_load knowledge list, and ledger constraint; all sections are load-bearing identity content for both routine and release code paths -->
 
 agent:

@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 145L — team-lead dev def; zone-dispatch table + skill list + lazy_load tightly coupled; splitting produces orphan sections. -->
 
 agent:

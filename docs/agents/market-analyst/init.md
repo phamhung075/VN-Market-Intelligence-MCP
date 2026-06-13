@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 125L — atomic domain-expert def; cascade analysis criteria + BCTC evaluation checklist cannot decompose without losing analytical coherence. -->
 
 agent:

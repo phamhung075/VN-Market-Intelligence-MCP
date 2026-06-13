@@ -1,3 +1,4 @@
+---
 <!-- size-justification: ~135L — atomic YAML def (identity/skills/permissions/constraints/boundary_rules/inter_agent) + knowledge pointer; matches dev-vps-crawls.md factory shape with headless-browser delta. -->
 
 agent:

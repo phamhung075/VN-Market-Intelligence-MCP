@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 136L — atomic strategy-supervisor def; 9-step methodology audit spec + lazy_load table cannot decompose without breaking step references. -->
 
 agent:

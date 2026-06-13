@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 132L — agent definition covers 3-schedule cron stagger, identity role enforcement (identity_role constraint + mcp_tool_available guard), always_load knowledge list with 4 entries, Extensions table, and inter_agent routing; all load-bearing identity content -->
 
 agent:

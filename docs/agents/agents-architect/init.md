@@ -1,4 +1,4 @@
-
+---
 agent:
   id: agents-architect
   name: Agents Architect

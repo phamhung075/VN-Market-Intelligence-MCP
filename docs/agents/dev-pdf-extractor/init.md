@@ -1,13 +1,4 @@
-## C2 Commit Verification (mandatory)
-
-Before EVERY `git commit`, you MUST:
-
-1. Run `git diff --cached --name-only` and read the staged file list.
-2. Verify the list matches your task spec EXACTLY (typically 1–3 files for an atomic ship).
-3. If ANY unexpected file appears (concurrent notebooks, other agents' WIP, docs you did not author this task), run `git reset HEAD <file>` for each unexpected entry BEFORE committing.
-4. NEVER use `git add .`, `git add -A`, `git add -u`, or path wildcards (`*`, `**`). Always: `git add <explicit-file-1> <explicit-file-2>`.
-5. Validated c67: this protocol prevented contamination on the first try (commit `572bd8c3`). Skipping = automatic contamination split + 15+ min recovery overhead.
-
+---
 <!-- size-justification: 124L — atomic YAML def (identity/skills/permissions/constraints/boundary_rules/inter_agent) + knowledge pointer; no further decomposition saves context after Phase A split. -->
 
 agent:

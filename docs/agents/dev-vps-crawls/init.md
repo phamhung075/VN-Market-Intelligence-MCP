@@ -1,3 +1,4 @@
+---
 <!-- size-justification: ~130L — atomic YAML def (identity/skills/permissions/constraints/boundary_rules/inter_agent) + knowledge pointer; matches dev-pdf-extractor.md factory shape. -->
 
 agent:

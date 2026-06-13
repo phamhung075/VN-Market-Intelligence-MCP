@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 132L — atomic QA gatekeeper def; checklist criteria + inter_agent routing table cannot decompose cleanly without losing step references. -->
 
 agent:

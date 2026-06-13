@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 121L — atomic rewrite-expert def; live-system-scan procedure + tool-surface mapping rules cannot decompose without losing procedural integrity. -->
 
 agent:

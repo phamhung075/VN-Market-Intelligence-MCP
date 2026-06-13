@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 137L — atomic cowork agent with tightly-bound knowledge/inter_agent block; splitting yields <40L children for net negative token savings. -->
 
 agent:

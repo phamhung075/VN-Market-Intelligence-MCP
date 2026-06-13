@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 138L — atomic cowork agent with tightly-bound signal conviction matrix, regime tables, and channel routing; splitting yields <30L children for net negative token savings. -->
 
 agent:

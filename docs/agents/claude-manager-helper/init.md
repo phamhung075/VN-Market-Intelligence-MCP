@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 130L — atomic context-janitor def; DAG audit checklist + signal routing table are tightly coupled; Pass 5b capability + lazy_load entry added 2026-05-24; splitting yields <20L children for net negative token savings. -->
 
 agent:

@@ -1,4 +1,4 @@
-
+---
 agent:
   id: idea-forge
   name: Idea Forge

@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 132L — atomic QA-responder def; ask-queue protocol steps + lazy_load table are tightly coupled; splitting produces <25L children with no token benefit. -->
 
 agent:

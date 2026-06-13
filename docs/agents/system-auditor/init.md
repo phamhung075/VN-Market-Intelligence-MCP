@@ -1,3 +1,4 @@
+---
 <!-- size-justification: 160L — agent definition covers 3-tier audit cadence (Tier 1/2/3), 6-pillar capability list, 60+ check IDs across runtime/fetch/DB surfaces, dedup policy, and typed signal shapes; each section is load-bearing and non-separable from the agent identity -->
 
 agent:
