@@ -5858,7 +5858,7 @@
         "type": "FIX",
         "size": "S",
         "owner": "dev-pdf-extractor",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "apps/pdf-extractor/",
         "created_at": "2026-06-07T20:17:23Z",
         "status_note": "From signal dev-20260607T193304 (test_infra_debt, MED, zone_owner dev-pdf-extractor). AC: full unit suite green in any test order (pytest -p no:randomly AND default order). || PO 2026-06-08T02:17:24Z: deferred 2nd tick — zone apps/pdf-extractor/ FROZEN pending ARCH-A20-CPU-CGROUP-REVIEW (test-only change likely safe, but slot lost to CRITICAL FIX-MACRO-REFRESH-DEAD anyway). Resume next free slot; if architect review still in flight, test-file-only scope MAY proceed with explicit no-src-no-compose constraint.\n\nZone unfrozen 2026-06-08 acb48383 — eligible next triage || PO-S50 2026-06-13T10:19Z: GROOMED READY. RAW-verified still genuine — asyncio_mode='auto' set (pyproject.toml:30), 10 test files still call deprecated get_event_loop(); no commit has addressed it. Zone freeze (ARCH-A20-CPU-CGROUP-REVIEW) long since lifted (acb48383); scope is test-files-only so even a frozen src-zone would not block. apps/mcp-server zone untouched. Root-cause mandate: kill the get_event_loop/AUTO-mode conflict class so the suite is green in ANY order, not just patch the 36 reds.",
@@ -5885,7 +5885,9 @@
           "Production src under apps/pdf-extractor/{infrastructure,application,domain}/ UNCHANGED — git diff shows test-files-only. No compose/Dockerfile edit, no rebuild required (test_only, no_rebuild)."
         ],
         "groomed_by": "po",
-        "groomed_at": "2026-06-13T10:20:14Z"
+        "groomed_at": "2026-06-13T10:20:14Z",
+        "claimed_by": "dev-pdf-extractor",
+        "claimed_at": "2026-06-13T10:20:00Z"
       },
       {
         "id": "FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN",
