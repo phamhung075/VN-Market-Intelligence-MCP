@@ -7252,7 +7252,7 @@
         "id": "FIX-PDFX-PYTESSERACT-CONTAMINATION",
         "title": "Restore sys.modules['pytesseract'] unconditionally in test_ocr_backends.py to stop cross-test import poisoning",
         "owner": "dev-pdf-extractor",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "apps/pdf-extractor/",
         "type": "FIX",
         "size": "XS",
@@ -7275,7 +7275,9 @@
           "apps/pdf-extractor/__tests__/test_ocr_backends.py:558-566",
           "apps/pdf-extractor/__tests__/integration/test_extract_md_tables_fpt.py:97,167,184"
         ],
-        "note": "Continues killing pdf-extractor CI-red class (follow-up to FIX-PDFX-TEST-LOOP-POLLUTION, commit 27d09912). QA-isolated hand-off. Free zone — apps/mcp-server FROZEN until EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate; not touched."
+        "note": "Continues killing pdf-extractor CI-red class (follow-up to FIX-PDFX-TEST-LOOP-POLLUTION, commit 27d09912). QA-isolated hand-off. Free zone — apps/mcp-server FROZEN until EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate; not touched.",
+        "claimed_by": "dev-pdf-extractor",
+        "claimed_at": "2026-06-13T10:55:43Z"
       }
     ],
     "archive": [],
