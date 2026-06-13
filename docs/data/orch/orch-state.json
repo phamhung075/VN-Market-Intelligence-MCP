@@ -5,7 +5,7 @@
   "_updated_by": "po-s52-health-triage",
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-13T23:00:45Z",
+    "updated_at": "2026-06-13T23:29:43Z",
     "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null
@@ -9654,7 +9654,17 @@
           "not_before": "2026-06-14T03:00:45Z",
           "criteria": "uptime > 4h with NO restart-loop AND WAL -wal file < 5MB under sustained load (non-market-dependent, weekend-safe)",
           "promoter": "next dev-team tick after not_before: raw-probe docker uptime + WAL size; if pass -> BC-1 done_verified, unblock+sequence A-1 then D-1; if WAL>=5MB or restart seen -> reopen BC-1",
-          "crash_cadence_broken": "old image re-wedged ~every 2h (08:07/18:31/20:24Z); deploy at 22:49Z BEFORE the ~00:20Z window. If mcp-server is still up past ~00:30Z with WAL bounded, cadence is broken."
+          "crash_cadence_broken": "old image re-wedged ~every 2h (08:07/18:31/20:24Z); deploy at 22:49Z BEFORE the ~00:20Z window. If mcp-server is still up past ~00:30Z with WAL bounded, cadence is broken.",
+          "reconciliation": {
+            "observed_at": "2026-06-13T23:29:43Z",
+            "forward_roll": "Container force-recreated 2026-06-13T23:18:20Z by sibling dev-team tick deploying FIX-FUNDAMENTALS-REFRESH-CRON-DEAD (c35db4fc). RestartCount=0 (deliberate deploy, NOT a crash).",
+            "running_image": "sha256:3d4fa47af822ccb0be448f179cac75b2ba2acd9a356af76db3fbc697a0cfd505",
+            "bc1_still_live": "PRAGMA wal_autocheckpoint=1000 raw-verified on named-volume market.db — BC-1 WAL fix present in the newer image. Image hash change f0c53f54->sha256:3d4fa47af822ccb0be448f179cac75b2ba2acd9a356af76db3fbc697a0cfd505 is a forward-roll, NOT a regression.",
+            "wal_bytes_observed": 2879912,
+            "partial_pass": "No auto-restart (RestartCount=0) since BC-1 went live; WAL 2879912B < 5MB threshold. Crash-cadence (old ~2h) shows NO recurrence.",
+            "uptime_baseline_reset": "2026-06-13T23:18:20Z — promoter MUST key the >4h uptime window off this deliberate-deploy baseline (not the original 22:49Z deploy), and key crash-cadence off RestartCount (auto-restarts), NOT raw container uptime.",
+            "promoter_guard": "DO NOT reopen BC-1 on image-hash mismatch alone. Verify via LIVE PRAGMA=1000 + RestartCount==0 + WAL<5MB. Reopen ONLY on RestartCount>0 (auto-crash) or WAL>=5MB."
+          }
         }
       }
     ],
