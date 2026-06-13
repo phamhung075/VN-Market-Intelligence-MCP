@@ -1,6 +1,32 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-12 | **Sprint:** FE-CORPEVENTS-TICKER-FILTER → REAUDIT-FE (stale indicators)
+**Last updated:** 2026-06-13 | **Sprint:** QUE-REFERENCE-PAGE
+
+---
+
+## Session: 2026-06-13 (QUE-REFERENCE-PAGE-1b)
+
+**QUE-REFERENCE-PAGE-1b IN_PROGRESS→REVIEW (commit daabfd73)**
+- Created apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx (262 lines).
+- Imports QUE_DETAIL (64 entries) from que-descriptions-detail.generated.ts — zero hardcoded strings.
+- Client-side search/filter: filterQues() — by id, name (romanized), chinese character — pure client, no API.
+- Responsive grid: 1 col (mobile) → 2 (sm) → 3 (lg) → 4 (xl).
+- QueCard: header (#id chinese name) + trend badge + trigrams + coreMeaning + stateInterpretation + favorable + warning + 6-hào table with actionLabel/outcomeLabel mapped to plain Vietnamese.
+- Action map: GIU→"Giữ vững", TIEN→"Tiến", THAN→"Thận trọng", LUI→"Lui", CHO→"Chờ".
+- Outcome map: CAT→"Tốt lành", HUNG→"Xấu", LE→"Vất vả nhưng thành công", VO CUU→"Không lỗi".
+- trendBadgeClass: THUẬN LỢI=emerald, BẤT LỢI=red, TRUNG TÍNH=slate.
+- Deep-link anchors id="que-{id}" with scroll-mt-20 for sticky nav clearance.
+- Named exports: actionLabel, outcomeLabel, trendBadgeClass, filterQues.
+- tsc: 0 errors. vitest: 21 failed / 1518 passed (21 pre-existing TopNav count tests unchanged).
+- Status: REVIEW
+
+Zone health: Tier 4 feature routes 19/19 done (kinh-dich-reference added), tsc clean, 21 pre-existing failures stable | HEALTHY
+
+---
+
+## Session: 2026-06-12 (FE-CORPEVENTS-TICKER-FILTER + FIX-FETCH-VERYSTALE-LABEL + QUE-TOOLTIP-DRY)
+
+**Last updated (previous):** 2026-06-12 | **Sprint:** FE-CORPEVENTS-TICKER-FILTER → REAUDIT-FE (stale indicators)
 
 **Runbook:** `.github/workflows/ci.yml` § frontend-build job; `docs/standards/remix-ssr-patterns.md` — hydration guards, SSR non-fatal fetch.
 
