@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T00:24:07Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-13T01:40:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-12T20:27:31Z",
@@ -5109,7 +5109,7 @@
         "id": "FIX-PENDING-REFINE-LIMIT-CHECKKIND",
         "title": "FIX-PENDING-REFINE-LIMIT-CHECKKIND — get_bctc_pending_refine crashes 'undefined is not an object (check.kind)' whenever limit arg supplied — regression baked into rebuild 2026-06-13 01:37 (image 6ae35a037021, commit 3a57df69). Blocks refine cron (11:03 local) at flow step 1.",
         "owner": "dev-mcp-server",
-        "status": "TODO",
+        "status": "REVIEW",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",

@@ -22,26 +22,11 @@ Zone health: tsc clean, 157 tools intact, 79 cron.schedule, confidence recompute
 
 ---
 
-## 2026-06-12 · FIX-FINALIZE-STATUS-STUCK-PARTIAL — queue deadlock fix + response transparency — REVIEW
+## 2026-06-13 · FIX-PENDING-REFINE-LIMIT-CHECKKIND — z.coerce.number + SDK pin — REVIEW
 
-**Task:** FIX-FINALIZE-STATUS-STUCK-PARTIAL | Sprint: BCTC-ANALYTICS-LAYER | Priority: P0/high | Zone: apps/mcp-server/
-**Root cause:** Two bugs caused infinite queue deadlock: (1) getBctcPendingRefineTool returned PARTIAL reports even when ALL bctc_refined_units were window_status=DONE (data-quality PARTIAL, no work remaining) — ACB fea19bae with 27/27 DONE units stayed as permanent queue head, blocking 34 PENDING reports. (2) finalizeBctcRefineTool response only returned `{ok,rows_parsed}` — no visibility into BEQ-7 overrides.
-**Fix A:** Added SQL exclusion subquery to getBctcPendingRefineTool WHERE clause: `AND NOT (refine_status='PARTIAL' AND COUNT(non-DONE units)=0 AND COUNT(all units)>0)`. Index `idx_bctc_refined_units_report_status ON bctc_refined_units(report_id, window_status)` added to schema for O(log n) lookup.
-**Fix B:** Added `callerWasDone` tracking in finalizeBctcRefineTool. Response now includes `effective_status` (actual written refine_status) and `beg7_override` (true when BEQ-7 fired). Additive — existing callers unchanged.
-**Tests:** 6 new tests across 2 existing files (DV-FINALIZE-1b/2b/4 in BEQ-SECTION-GUARD.test.ts; DV-FIX-A-1/2/3 in FIX-REFINE-PENDING-SCHEMA.test.ts). 21 pass / 0 fail targeted. tsc clean. toolCount=157. schedulerCount=79.
-**Ops rebuild required** before live verification of AC-1-1 queue advance.
-Zone health: tsc clean, 157 tools intact, 79 cron.schedule, queue deadlock fixed | HEALTHY
-
----
-
-## 2026-06-12 · CI-RED-8081e584-FIX (Round 2) — 3 new failing tests fixed — DONE
-
-**Task:** CI-RED-8081e584-FIX (round 2) | Sprint: CI-RED-8081e584 | Priority: HIGH | Zone: apps/mcp-server/
-**Root causes (3 failures on CI run 27439334298):**
-(1) 1285-macro-alert-cooldown: step A2 (Yahoo Finance/SBV) + step A3 (vnstock) made real HTTP calls with 2-min withTimeout each — in CI outbound HTTP is throttled, both blocked until bun's 30s per-test timeout fired. Fix: added `macroFetchFn` + `vnstockSyncFn` injectable deps to CycleDeps; 1285 test injects async no-ops.
-(2) 1837a-pipeline-state: head.status was "review" (set by CONTAM-9 REVIEW transition) but test only allowed ["in_progress","idle","blocked","stale"]. Fix: added "review" to validStatuses.
-(3) mock-module-afterall-guard: CONTAM-7 + 1987-contam2 called mock.module() at module scope without afterAll(() => mock.restore()). Fix: added afterAll import + restore to both files.
-**Tests:** 1285×8 pass, 1837a×5 pass, mock-guard×1 pass; 1293a+1295a+VPT-1 still pass (no regression). tsc clean. toolCount=157. schedulerCount=79.
-**Commit:** 8a2ef725
-Zone health: tsc clean, 157 tools intact, 79 cron.schedule, CI-RED round 2 fixes committed | HEALTHY
-
+**Task:** FIX-PENDING-REFINE-LIMIT-CHECKKIND | Priority: high | Zone: apps/mcp-server/
+**Root cause:** @modelcontextprotocol/sdk floated ^1.8.0 → 1.29.0 via Dockerfile `|| bun install` fallback + zod 3.25.76. SDK 1.29.0 + zod 3.25.76 produces Bun 1.3.13 JIT module-state corruption in the running container: ZodNumber._parse (zod/v3/types.js:1086) iterates undefined entries in _def.checks → `check.kind` crash. The crash is process-state specific: Docker restart clears it; full replica scripts run clean.
+**Fix:** z.coerce.number() on 4 tools (getBctcPendingRefineTool, getFedLiquiditySpreadTool, carryTools, sequential-market-analysis) — aligns with working-tool pattern; all .int()/.min()/.max() constraints preserved. SDK exact pinned to "1.29.0" (removes ^ drift vector). Primary resolution: rebuild + restart clears corrupted Bun state.
+**Tests:** 44 targeted pass / 0 fail; full run 12880 tests. tsc clean. Commit: 897877ec.
+**Live verify:** G1 {limit:1} → 1 row; G2 {ticker:CTG,limit:1} → 1 CTG row; G3 {} → 35 rows; G4 {report_id} → 1 row.
+Zone health: bun test 12880 pass, 157 tools intact, 79 cron.schedule, check.kind crash fixed | HEALTHY
