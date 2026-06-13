@@ -7158,35 +7158,6 @@
         "closed_at": "2026-06-13T09:02:02Z"
       },
       {
-        "id": "TSU-DEV-U2-PARITY",
-        "title": "TSU-DEV-U2-PARITY — FINAL registry/count parity: re-run gen-tool-registry + parity test AFTER all U3 (5 deregistrations) + U6 commits land; assert final settled count == 157; update docs/data/tool-registry.json + project-stats.json toolCount to generator output. MUST BE LAST mcp-server task (R-1).",
-        "owner": "dev-mcp-server",
-        "status": "READY",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "size": "S",
-        "created_at": "2026-06-13T16:43:08Z",
-        "created_by": "po",
-        "depends_on": [
-          "TSU-DEV-U3",
-          "TSU-DEV-U6"
-        ],
-        "blocked_by": [],
-        "files": [
-          "apps/mcp-server/src/__tests__/tool-registry-parity.test.ts",
-          "docs/data/tool-registry.json",
-          "docs/data/project-stats.json"
-        ],
-        "baseline_pass": "Live mcp-server suite floor 9408 pass / 348 fail. Post-task: parity test GREEN at settled count 157; project-stats.json toolCount==157 (generator-arbitrated).",
-        "verification_gate": "no_cached_pass_bun_isolation",
-        "verification_gate_detail": "QA: (1) `bun scripts/gen-tool-registry.ts` -> docs/data/tool-registry.json totalCount==157 (162 minus 5 U3 deregistrations; U6 removed 0); (2) bun test tool-registry-parity in ISOLATION -> PASS at 157 (no cached pass — confirm it re-ran against the post-U3/U6 source); (3) list_server_tools('vn-market') RAW count == 157; (4) `bun scripts/gen-project-stats.ts` -> project-stats.json toolCount==157. This is the count-drop confirmation deferred from U3.",
-        "root_cause_requirement": "Sequencing (brief R-1 / U2 sequencing constraint): a parity test run BEFORE U3 deregistrations + U6 settle FAILS on count mismatch (stale 162 vs 157). This stub is pinned the FINAL mcp-server task. FIX: re-run the U2-GEN generator against the post-U3/post-U6 source, confirm totalCount==157, update tool-registry.json + project-stats.json toolCount. FORBIDDEN: running this before U3 AND U6 are committed; hardcoding 157 (generator must derive it).",
-        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U2 sequencing + AC8 (commit 371437a7). MUST BE LAST — depends on U3 AND U6 deregistration/description commits. The U2-GEN generator (built first wave) is RE-RUN here against the settled surface. | [router 2026-06-13T19:25:16Z] NOTE: U3 closed PRE-SHIPPED (06-07). When U6 settles, U2-PARITY is the final registry/count reconcile vs HEAD — expect counts already at 06-07 settled values; verify, do not assume drift.",
-        "dispatch_note": "UNBLOCKED 2026-06-13T19:27:15Z by router (deps TSU-DEV-U3 + TSU-DEV-U6 both done_verified). FINAL reconcile: re-run scripts/gen-tool-registry.ts, confirm docs/data/tool-registry.json + docs/data/project-stats.json#toolCount match LIVE list_server_tools count. PRE-SHIP CONTEXT: U3/U6 work shipped 06-07; live count already settled (~157). Expect NO drift — verify-and-confirm, regenerate only if artifacts lag. Data-artifact task (not apps/mcp-server runtime) -> no container rebuild.",
-        "unblocked_at": "2026-06-13T19:27:15Z"
-      },
-      {
         "id": "FU-SCHEMA-DRIFT-P8-IMPL",
         "title": "Impl: DDL DEFAULT reconciliation (3 tables) + P5 self-heal re-apply in getDb() + preload initDatabase() in setup.ts — FU-SCHEMA-DRIFT-P8 direction (a) per architect brief 2026-06-09-fu-schema-drift-p8-spike.md",
         "type": "BUG",
@@ -10428,6 +10399,46 @@
           "count": "UNCHANGED vs post-U3 — U6 removes no server.tool() block (NFR-U6-3 not triggered).",
           "live": "Container built from HEAD ~49min ago (img 1042a2a9) -> updated descriptions served live; no rebuild needed.",
           "test_commit": "3dd0d7bd (U6 test + description clarifications), sibling to 06-07 ship 50772c2a"
+        }
+      },
+      {
+        "id": "TSU-DEV-U2-PARITY",
+        "title": "TSU-DEV-U2-PARITY — FINAL registry/count parity: re-run gen-tool-registry + parity test AFTER all U3 (5 deregistrations) + U6 commits land; assert final settled count == 157; update docs/data/tool-registry.json + project-stats.json toolCount to generator output. MUST BE LAST mcp-server task (R-1).",
+        "owner": "dev-mcp-server",
+        "status": "done_verified",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "size": "S",
+        "created_at": "2026-06-13T16:43:08Z",
+        "created_by": "po",
+        "depends_on": [
+          "TSU-DEV-U3",
+          "TSU-DEV-U6"
+        ],
+        "blocked_by": [],
+        "files": [
+          "apps/mcp-server/src/__tests__/tool-registry-parity.test.ts",
+          "docs/data/tool-registry.json",
+          "docs/data/project-stats.json"
+        ],
+        "baseline_pass": "Live mcp-server suite floor 9408 pass / 348 fail. Post-task: parity test GREEN at settled count 157; project-stats.json toolCount==157 (generator-arbitrated).",
+        "verification_gate": "no_cached_pass_bun_isolation",
+        "verification_gate_detail": "QA: (1) `bun scripts/gen-tool-registry.ts` -> docs/data/tool-registry.json totalCount==157 (162 minus 5 U3 deregistrations; U6 removed 0); (2) bun test tool-registry-parity in ISOLATION -> PASS at 157 (no cached pass — confirm it re-ran against the post-U3/U6 source); (3) list_server_tools('vn-market') RAW count == 157; (4) `bun scripts/gen-project-stats.ts` -> project-stats.json toolCount==157. This is the count-drop confirmation deferred from U3.",
+        "root_cause_requirement": "Sequencing (brief R-1 / U2 sequencing constraint): a parity test run BEFORE U3 deregistrations + U6 settle FAILS on count mismatch (stale 162 vs 157). This stub is pinned the FINAL mcp-server task. FIX: re-run the U2-GEN generator against the post-U3/post-U6 source, confirm totalCount==157, update tool-registry.json + project-stats.json toolCount. FORBIDDEN: running this before U3 AND U6 are committed; hardcoding 157 (generator must derive it).",
+        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U2 sequencing + AC8 (commit 371437a7). MUST BE LAST — depends on U3 AND U6 deregistration/description commits. The U2-GEN generator (built first wave) is RE-RUN here against the settled surface. | [router 2026-06-13T19:25:16Z] NOTE: U3 closed PRE-SHIPPED (06-07). When U6 settles, U2-PARITY is the final registry/count reconcile vs HEAD — expect counts already at 06-07 settled values; verify, do not assume drift.",
+        "dispatch_note": "UNBLOCKED 2026-06-13T19:27:15Z by router (deps TSU-DEV-U3 + TSU-DEV-U6 both done_verified). FINAL reconcile: re-run scripts/gen-tool-registry.ts, confirm docs/data/tool-registry.json + docs/data/project-stats.json#toolCount match LIVE list_server_tools count. PRE-SHIP CONTEXT: U3/U6 work shipped 06-07; live count already settled (~157). Expect NO drift — verify-and-confirm, regenerate only if artifacts lag. Data-artifact task (not apps/mcp-server runtime) -> no container rebuild.",
+        "unblocked_at": "2026-06-13T19:27:15Z",
+        "closed_at": "2026-06-13T19:28:46Z",
+        "closed_by": "router",
+        "no_rebuild": true,
+        "review_evidence": {
+          "disposition": "VERIFIED-PARITY-NO-DRIFT",
+          "summary": "Final registry/count reconcile after U3/U6 settled. 4-way parity at 157, zero drift; artifacts already correct -> NO regeneration commit needed.",
+          "four_way_157": "generator recompute=157 (bun run scripts/gen-tool-registry.ts -> totalCount=157); docs/data/project-stats.json#toolCount=157; docs/data/tool-registry.json totalCount=157; LIVE container /health(:3000) toolCount=157 status=ok.",
+          "drift_check": "Generator re-run produced byte-identical content (excl. lastUpdated timestamp) for both artifacts; timestamp churn restored via git checkout -> tree clean, no commit.",
+          "rebuild": "NONE — data-artifact verification only; no apps/mcp-server runtime change.",
+          "context": "U3/U6 deregistration+description work shipped 06-07 (50772c2a); live count already at settled 157 -> no drift, as anticipated."
         }
       }
     ],
