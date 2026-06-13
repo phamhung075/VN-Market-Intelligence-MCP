@@ -7275,7 +7275,7 @@
         "id": "FIX-FRONTEND-NAV-STALE-COUNT-TESTS",
         "title": "FIX-FRONTEND-NAV-STALE-COUNT-TESTS — 21 stale ANALYST_NAV absolute-count/last-item assertions fail at HEAD (live nav=26 analyst / 33 total; tests frozen at 19..24). 6 files: FE-HEADER-SSOT-top-nav + task17-page14..18-nav. Standing /goal recheck. Pre-existing, delta=0 across whole QUE sprint — NOT a regression.",
         "owner": "dev-frontend",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "type": "FIX",
         "zone": "apps/frontend/",
         "priority": "medium",
@@ -7298,7 +7298,18 @@
         "note": "[po triage 2026-06-13T09:56:48Z] Opened from reconciled signal router-frontend-testsuite-170fail-2026-06-13T08-50Z. Zone apps/frontend/ is FREE (mcp-server zone parked behind EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate — this task does NOT touch mcp-server). Test-only, no codegen-of-prod, no rebuild. Router: route as direct FIX (dev-team Step 3) to dev-frontend NOW. dev-frontend MUST raw-verify 0-fail full suite before REVIEW.",
         "dispatch_note": "WIP free slot in apps/frontend zone; EVIDENCE-ACCUM gate holds only apps/mcp-server. Dispatch ALLOWED to dev-frontend immediately.",
         "claimed_by": "dev-frontend",
-        "claimed_at": "2026-06-13T09:58:00Z"
+        "claimed_at": "2026-06-13T09:58:00Z",
+        "review_commit": "e43480e0",
+        "review_at": "2026-06-13T12:12:00Z",
+        "review_evidence": {
+          "vitest_before": "21 fail / 1533 pass",
+          "vitest_after": "0 fail / 1554 pass",
+          "pass_delta": "+21",
+          "tsc": "EXIT 0",
+          "full_suite": "64 files / 1554 pass / 0 fail",
+          "decoupling": "relative-order findIndex+adjacency + derived structural invariant; single SSOT canary; NOT renumber-refreeze",
+          "files": "6 test files only; no production/TopNav/mcp-server/orch-state"
+        }
       }
     ],
     "archive": [],
