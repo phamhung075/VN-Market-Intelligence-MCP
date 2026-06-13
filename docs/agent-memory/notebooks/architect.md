@@ -1,8 +1,22 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-13 21:00 UTC | **Sprint:** FIX-COWORK-GUARANTEED-BACKSTOP
+**Last updated:** 2026-06-14 00:15 UTC | **Sprint:** FIX-MCP-CRASH-LOOP-WRITEWAL
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T00:15Z — FIX-MCP-CRASH-LOOP-WRITEWAL Design Brief (DESIGN, REVIEW)
+
+**Task:** FIX-MCP-CRASH-LOOP-WRITEWAL | zone: apps/mcp-server/ (db/connection layer + scheduler)
+**Output:** docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md, docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md
+
+**Root cause confirmed:** `wal_autocheckpoint=4000` (16 MB) + FULL-only live-hours cron. 40+ cron jobs hold read snapshots that pin WAL frames; passive autocheckpoint is defeated by concurrent readers; FULL mode never resets WAL file size. TRUNCATE + reader-expiry via `BEGIN IMMEDIATE; COMMIT` is the definitive fix.
+
+**Key design choices:**
+- Lower `wal_autocheckpoint` 4000→1000 (4 MB trigger, 4× more frequent passive drain)
+- `runForcedTruncateCheckpoint()` = BEGIN IMMEDIATE + COMMIT + PRAGMA TRUNCATE, every 30 min unconditionally
+- Restart-cadence alert via existing `cron_job_runs` sentinel (no new table)
+- Orch-state escalation injected at scheduler layer (not inside infrastructure — DDD boundary preserved)
+- BUILD-STANDARD: not-applicable (bug-fix)
 
 ## 2026-06-13T21:00Z — FIX-COWORK-GUARANTEED-BACKSTOP Design Brief (DESIGN, REVIEW)
 
