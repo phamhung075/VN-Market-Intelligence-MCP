@@ -7161,7 +7161,7 @@
         "id": "TSU-DEV-U3",
         "title": "TSU-DEV-U3 — 12 weak-claim tool verdicts: DEREGISTER 5 zero-claim tools (read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day) + INTEGRATE 7 (description updates) per brief 4-layer verdict matrix. Signal cowork-refactory-expert (PM lane) after commit.",
         "owner": "dev-mcp-server",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -7184,7 +7184,9 @@
         "verification_gate_detail": "QA after rebuild: (1) list_server_tools('vn-market') RAW response does NOT contain ANY of the 5 deregistered names (read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day); (2) the 7 integrated tools' descriptions updated per matrix (mark_alert_outcome 'post-hoc; complements write_alert_verdict'; get_market_foreign_flow 'market-wide SUM; distinct from get_foreign_flow per-ticker'; diagnose+reset_foreign_flow_circuit_breaker paired; get_label_accuracy_report 'per-label; complement to get_calibration_report'; get_public_contracts; list_flagged_bctc_cells + submit_bctc_correction BCTC human-inspect); (3) bun test ISOLATION green (no cached pass). Count-drop parity is verified LATER by U2-PARITY (sequenced last), NOT here.",
         "root_cause_requirement": "Root cause (brief U3): 12 tools have zero usage claims across all 4 layers; single-layer grep is FORBIDDEN (NFR-U3-2, 2026-05-03 = 6/6 false positives). Verdicts already adjudicated in the brief via full 4-layer + internal-call sweep (ARCH-U3-1: is_trading_day NOT called on main, only in unmerged DWF-PHASE1 worktree -> DEREGISTER; NFR-U3-1: read_bctc_pdf settled FIRST -> DEREGISTER, overlaps get_bctc_page_text/image). FIX: remove the 5 server.tool() blocks + orphaned imports; update the 7 integrate-target descriptions. FORBIDDEN: re-litigating verdicts with a fresh single-layer grep; deregistering any of the 7 integrate tools; removing diagnose/reset circuit-breaker (paired INTEGRATE). PM (NFR-COWORK-SIGNAL/R-5) queues cowork-refactory-expert signal after THIS commit: 5 list/ entries removed + 7 package/*.md updates. Architect/dev do NOT touch docs/agents/tools/{list,package}/.",
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U3 (commit 371437a7). BLOCKED on U1+U2-GEN (both must commit first — mcp-server serialization + U2 generator must exist before tool removals so count is measurable). Unblocks after both deps DONE.",
-        "dispatch_note": "BLOCKED — do NOT dispatch until TSU-DEV-U1 AND TSU-DEV-U2-GEN are DONE. Then enters mcp-server slot (serialized)."
+        "dispatch_note": "DISPATCHED by router 2026-06-13T18:44:07Z — mcp-server slot acquired (serialized, in-flight was 0)",
+        "claimed_at": "2026-06-13T18:44:07Z",
+        "claimed_by": "router"
       },
       {
         "id": "TSU-DEV-U6",
