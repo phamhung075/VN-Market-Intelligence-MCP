@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T01:42:20Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-13T08:09:33Z",
+    "_updated_by": "po-S50",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -5129,7 +5129,7 @@
         "id": "CI-RED-b7b84d9b-FIX",
         "title": "CI-RED-b7b84d9b-FIX — CI RED: bun test (per-file-isolation) — src/__tests__/160-stock-aliases.test.ts",
         "owner": "po",
-        "status": "TODO",
+        "status": "READY",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -5138,8 +5138,10 @@
         "created_by": "po",
         "verification_gate": "ci_green_on_subsequent_push",
         "desc": "CI workflow 'CI' job 'bun test' RED on main HEAD b7b84d9b (run 27440686989): 12766 pass / 53 skip / 1 fail; FAILEDFILE src/__tests__/160-stock-aliases.test.ts under per-file-isolation. PO RAW-VERIFY: file passes LOCALLY 34 pass / 0 fail (standard run) → CI-isolation-only / order-dependence flake, NOT broken product code. Dual-run pattern: same commit b7b84d9b has run 27440686945 SUCCESS + run 27440686989 FAILURE → nondeterministic isolation state leak. Scope: make 160-stock-aliases deterministic under per-file-isolation (beforeEach/afterEach state reset, no shared singleton/db leakage). RECONCILE: this is the unmet ci_green_on_subsequent_push gate of CI-RED-8081e584-FIX (subsequent push b7b84d9b RED) — but a DIFFERENT file than 8081e584 scope (1293a/1295a/VPT-1, all still pass), so a FRESH flake surfaced by the gate, not a regression of the prior fix.",
-        "note": "[po triage 2026-06-12T23:30Z] Created from ci_red signal CI-RED-b7b84d9b (ci-health-probe, run 27440686989). Outranks FIX-BCTC-VPS-QUEUE-SYNC (CI-red blocks whole merge pipeline — every push shows red) → front of backlog. Supersedes the open verification gate of CI-RED-8081e584-FIX.",
-        "status_note": "AC: gh run list --branch main --limit 3 shows the 'CI' workflow conclusion=success for a push AFTER b7b84d9b (verification_gate=ci_green_on_subsequent_push). 160-stock-aliases must pass in per-file-isolation mode AND standard mode. Priority: high. Failing job: bun test."
+        "note": "[po triage 2026-06-12T23:30Z] Created from ci_red signal CI-RED-b7b84d9b (ci-health-probe, run 27440686989). Outranks FIX-BCTC-VPS-QUEUE-SYNC (CI-red blocks whole merge pipeline — every push shows red) → front of backlog. Supersedes the open verification gate of CI-RED-8081e584-FIX. | [po-S50 2026-06-13] C-08 (FIX-ALERT-ORPHAN-CORRELATION) cleared DONE; per PO ruling this is NEXT after C-08. WIP=0 active dev claims (FU-SCHEMA-DRIFT-P8-IMPL PARKED/REWORK, ARCH-SHIP-WAVE-REAUDIT in REVIEW) -> staging does not breach WIP<=2. zone apps/mcp-server free. STAGED READY for hourly dev-team cron (:07) / router pickup. NOT dispatched by PO.",
+        "status_note": "AC: gh run list --branch main --limit 3 shows the 'CI' workflow conclusion=success for a push AFTER b7b84d9b (verification_gate=ci_green_on_subsequent_push). 160-stock-aliases must pass in per-file-isolation mode AND standard mode. Priority: high. Failing job: bun test.",
+        "ready_at": "2026-06-13T08:09:33Z",
+        "ready_by": "po-S50"
       },
       {
         "id": "BA-SHIP-WAVE-REAUDIT",
@@ -7159,6 +7161,39 @@
         "created_by": "pm",
         "note": "ops→pm handoff BCTC-VPS-STALLED-FETCH diagnosed 2026-06-13 05:50Z (docs/agent-memory/notebooks/ops.md). Root cause raw-verified: (1) bctc_vps_queue has 10 pending rows at 532-539 attempts each with infinite 404 retry, no cap, no deferred transition. (2) Queue-sync gap: those 10 tickers NOT in VPS-side discovery queue (holds ACV,BDI,DAG,DLC,JSH,SIS,VDC,VNH,SAB,VIX), so VPS never caches their PDFs. (3) Secondary: 8 rows source_url but 0 attempts, 8 rows NULL source_url never enriched. Acceptance: G1) 404 cap N=10 → deferred_infra / G2) lost tickers synced to VPS discovery OR marked url_not_found / G3) LIVE PROOF: VNM + MSN Q1 2026 cached+pulled / G4) attempts histogram sane. Files: bctcPdfPullJob.ts + bctcQueueEnricherJob.ts + VPS push client. | [C-16 FOLD 2026-06-13T01:27Z by po] sau-c16-2026-06-13T00-30-35Z (26 BCTC rows pending >72h in bctc_vps_queue, RECURRING also 2026-06-12T22:30) folded here — same failure mode as the queue-sync orphan/no-retry-cap class this task already fixes. G2 (re-sync orphans OR url_not_found) + G1 (404 cap → deferred_infra) cover the >72h stale-pending rows directly; the 26 stale = the un-capped/un-deferred remnant. No separate task created (per dedup directive). C-16 must read 0 (or all-deferred) after G1+G2 ship — add to G4 live proof.",
         "updated_at": "2026-06-13T01:27:23Z"
+      },
+      {
+        "id": "FU-ORPHAN-AUDIT-JOIN-FIX",
+        "title": "system-auditor orphan-correlation audit query (C-08, docs/agents/system-auditor/flow/main.md line 463) uses JOIN ... ON a.id = s.id — compares alerts.id (TEXT/UUID) to agent_signals.id (INTEGER); SQLite never coerces -> permanently reports ALL alerts orphaned (this WAS the false '103 orphans/24h' metric). Change to ON a.id = s.alert_id now that the alert_id column exists and is co-written (FIX-ALERT-ORPHAN-CORRELATION shipped it).",
+        "type": "FIX",
+        "owner": "agent-md-factory",
+        "status": "NEW",
+        "size": "S",
+        "zone": "docs/agents/system-auditor/",
+        "priority": "high",
+        "sprint": null,
+        "desc": "ZONE = system-auditor flow / agent-md-factory (SSOT/DRY) — NOT apps/mcp-server, NOT dev-mcp-server. Follow-up surfaced during FIX-ALERT-ORPHAN-CORRELATION; intentionally NOT blocked on its REVIEW. The C-08 Tier-3 audit query at docs/agents/system-auditor/flow/main.md:463 reads `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.id WHERE s.id IS NULL ...` — a.id is TEXT/UUID, s.id is INTEGER autoincrement; SQLite does no implicit cross-type coercion so the join NEVER matches and every alert reports as orphaned (the spurious '103 orphans/24h'). Fix: `ON a.id = s.alert_id`. DoD: line 463 query joins on s.alert_id; a manual run on the LIVE named-volume DB returns ~0 orphans (post co-write). Invoke agent-md-factory skill before editing the flow .md. UNTIL FIXED the Tier-3 orphan-delta metric is meaningless — orphan long-watch gate must NOT be read as a regression signal.",
+        "created_at": "2026-06-13T08:09:33Z",
+        "created_by": "po",
+        "_updated_at": "2026-06-13T08:09:33Z",
+        "blocks_metric": "tier3-orphan-delta-long-watch"
+      },
+      {
+        "id": "FU-ALERT-COWRITE-SCHEDULER-JOBS",
+        "title": "Three scheduler jobs INSERT INTO alerts directly, bypassing storeAlerts/storeAlertsFromCommander, so they do NOT co-write agent_signals rows -> they still generate genuine orphans. Migrate taAlertScanJob, bbAlertScanJob, foreignFlowAlertJob to the atomic alert->signal co-write path (route through storeAlerts) so the orphan-delta gate can fully close to ~0.",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "NEW",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "sprint": null,
+        "desc": "ZONE = apps/mcp-server (dev-mcp-server). Follow-up from FIX-ALERT-ORPHAN-CORRELATION (atomic alert->signal co-write + alert_id column, commit 7cbca67a/556eb214). Files: apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts, apps/mcp-server/src/scheduler/alerts/bbAlertScanJob.ts, apps/mcp-server/src/scheduler/market-data/foreignFlowAlertJob.ts. These three INSERT INTO alerts directly and skip storeAlerts/storeAlertsFromCommander, so no agent_signals row is co-written and the alert is a GENUINE orphan (distinct from the FU-1 false-orphan join bug). DoD: all three jobs route through storeAlerts (or the same atomic co-write helper); each emitted alert co-writes an agent_signals row carrying alert_id; live verify on named-volume DB that orphan-delta from these jobs -> ~0. Generic across ALL tickers — no per-ticker hardcode. SERIALIZE: same zone as the dev chain head (CI-RED-b7b84d9b-FIX); dispatch AFTER it clears to honor zone-serialization + WIP<=2.",
+        "created_at": "2026-06-13T08:09:33Z",
+        "created_by": "po",
+        "_updated_at": "2026-06-13T08:09:33Z",
+        "depends_on": "FIX-ALERT-ORPHAN-CORRELATION",
+        "serialize_zone": "apps/mcp-server/"
       }
     ],
     "archive": [],
