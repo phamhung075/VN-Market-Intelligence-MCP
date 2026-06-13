@@ -56,6 +56,20 @@ def _ensure_stub(module_name: str, **attrs: object) -> None:
                 setattr(existing, name, value)
 
 
+# Pre-populate sys.modules before calling _ensure_stub so that, when the real
+# package is installed, it lands in sys.modules NOW (the real module with all
+# its attributes, including Output).  _ensure_stub then takes the else-branch
+# and only fills in any genuinely absent attrs — it does NOT replace the real
+# module with a minimal stub that lacks Output.
+try:
+    import pdf2image as _pdf2image_real  # noqa: F401
+except ImportError:
+    pass
+try:
+    import pytesseract as _pytesseract_real  # noqa: F401
+except ImportError:
+    pass
+
 _ensure_stub("pdf2image", convert_from_path=MagicMock())
 _ensure_stub("pytesseract", image_to_string=MagicMock())
 

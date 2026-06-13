@@ -553,17 +553,14 @@ class TestToPilAndFailLoud:
                 raise ImportError("No module named 'pytesseract'")
             return original_import(name, *args, **kwargs)
 
-        import sys
-        # Ensure pytesseract is not already in sys.modules (would bypass __import__)
-        saved = sys.modules.pop("pytesseract", None)
-        try:
+        # Use patch.dict to scope pytesseract absence — auto-restores pre-test
+        # state unconditionally on exit, whether or not pytesseract was pre-imported.
+        import sys  # noqa: F401  (already imported at module level; kept for clarity)
+        with patch.dict("sys.modules", {"pytesseract": None}):
             with patch("builtins.__import__", side_effect=_import_that_blocks_pytesseract):
                 backend = TesseractVieBackend()
                 with pytest.raises(RuntimeError, match="required packages not installed"):
                     backend.recognize_text(image)
-        finally:
-            if saved is not None:
-                sys.modules["pytesseract"] = saved
 
     def test_c_paddle_backend_handles_real_ndarray(self):
         """
