@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-05T18:09:00Z
-
-**Brief:** `docs/architecture-briefs/2026-06-05-emit-dark-root-cause.md` (v2 — DEFINITIVE, supersedes v1 + Option B)
-
-Option B (d6738df3) live-falsified: 18:01:29Z FIRE wrote signal JSON with resolved placeholder values but pressure-state.json still absent. Smoking gun: `"matched_slots": ["bctc-analyst-slot-2"]` in live signal vs literal `[<slot_ids from MATCHES>]` in telemetry.md template — proves LLM never ran bash, only narrated. Corrected root cause: cowork dispatcher is a pure narration engine; bash fences are never executed; LLM writes the signal file via Write-tool using in-context values and skips the pressure-state heredoc because its inputs (signal_backlog/dev_queue_depth/host_headroom_mb) require real shell. Three code fixes all failed same class. Fix: Option C — add emit_pressure_state MCP tool (server-side shell computation + atomic file write); replace bash fence in telemetry.md with call_tool instruction (LLM demonstrably executes call_tool). Option E (retirement) documented as contingency only.
-
-**Signals dropped:** `docs/signals/emit-dark-option-c-20260605T180900Z.json` → developer; `docs/signals/emit-dark-telemetry-patch-20260605T180900Z.json` → agent-father (gated on tool deploy)
-
----
-
 ## 2026-06-06T18:46:34Z
 
 **Brief:** `docs/architecture-briefs/2026-06-06-headroom-context-compression.md`
@@ -40,16 +30,6 @@ CI-TEST-ISOLATION-SPIKE: 3-bucket triage of 639 bun failures. B1 (DOMINANT) — 
 
 ---
 
-## 2026-06-10T20:35:25Z
-
-**Brief:** `docs/architecture-briefs/2026-06-10-go-fleet-deploy/brief.md`
-
-GO-FLEET-DEPLOY: 6 not_deployed_by_design services must genuinely run. 4/6 Go-ready (build exit 0): stock-price, technical-analysis, kinh-dich-service, alert-engine — DEPLOY+SOAK only. news-fetch = genuine Node→Go port (core RSS/API paths; Playwright excluded). rag-service = Python singleton with tight 512m/768m cap + new /embed/health probe (rejected Go-wrapper sidecar: IPC overhead, no memory saving, new failure modes). Full fleet projects to ~2.0 GiB RSS leaving 74% headroom. HONOR-PANIC-GUARD soak gate defined: ABORT if free pages < 500k OR swap > 4 GiB OR service RSS > cap. Bring-up order: kinh-dich → ta → alert → stock → rag → news. Task batch GFD-2 through GFD-12 dispatched to pm.
-
-**Signal dropped:** `docs/signals/go-fleet-deploy-brief-20260610T203525Z.json` → pm
-
----
-
 ## 2026-06-11T23:20:00Z
 
 **Brief:** `docs/architecture-briefs/2026-06-10-go-fleet-deploy/brief.md` (GFD-1 CLOSE — §c recalibration)
@@ -57,3 +37,13 @@ GO-FLEET-DEPLOY: 6 not_deployed_by_design services must genuinely run. 4/6 Go-re
 GFD-1 final close: all 13 GO-FLEET-DEPLOY tasks now DONE; sprint marked COMPLETE. §(c) HONOR-PANIC-GUARD soak gate corrected in-place — "swap > 4 GiB" abort threshold DISPROVEN by live soak (raw swap sat at ~9.9 GiB while fleet ran perfectly healthy; macOS compresses/over-reports swap). Corrected gate: PRIMARY = `memory_pressure` ≥ 20% free (live: 64–78%); SECONDARY = Docker VM RSS < 6,500 MiB (live: 1.3–2.1 GiB); PER-CONTAINER = OOMKilled==true. exit-137 with OOMKilled=false is external SIGKILL, not a soak failure. Sprint evidence: 9/9 services ok at 1–2ms latency, zero OOMKilled, origin/main HEAD 74770141.
 
 **Signal dropped:** none (brief update only; sprint complete; no new agent-father action required)
+
+---
+
+## 2026-06-13T16:18:10Z
+
+**Brief:** `docs/architecture-briefs/2026-06-13-origin-lag-push-discipline.md`
+
+FU-ORIGIN-LAG-PUSH-DISCIPLINE: recurring root-cause (30+ unpushed commits/2h, 3 consecutive maintenance passes). Root cause confirmed: commit-mutex and commit-boundary NEVER push; generic commit/SKILL.md pushes bare (no rebase-retry, fails non-fast-forward). Design: fold bounded rebase-retry push step into commit-mutex critical section as Step 3d-PUSH (1 initial + 1 rebase-retry attempt, abort on conflict, bug-telegram on failure). TTL bumped 60s → 90s to preserve 4× headroom. commit-boundary gets RULE 4 (same guard, no-gateway path). commit/SKILL.md Step 3 gets guard. PO flow inline commit block replaced with skill reference. 4 agent-father tasks decomposed in brief §6. Race-safety: push is inside the already-serialized mutex window; no two agents push concurrently; rebase-retry operates on stable local HEAD. orch-state.json updated on disk (backlog→ready); pm to commit.
+
+**Signal dropped:** `docs/signals/origin-lag-push-discipline-20260613T161810Z.json` → pm
