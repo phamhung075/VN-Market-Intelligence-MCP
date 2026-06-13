@@ -95,9 +95,9 @@ describe("TopNav — new item is last in ANALYST_NAV", () => {
     expect(secondLast!.to).toBe("/dashboard/financials");
   });
 
-  it("ANALYST_NAV[22] is 'Lãi suất Fed' (zero-based index)", () => {
-    expect(ANALYST_NAV[22]!.label).toBe("Lãi suất Fed");
-    expect(ANALYST_NAV[22]!.to).toBe("/dashboard/fed-rates");
+  it("ANALYST_NAV[23] is 'Lãi suất Fed' (zero-based index, after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[23]!.label).toBe("Lãi suất Fed");
+    expect(ANALYST_NAV[23]!.to).toBe("/dashboard/fed-rates");
   });
 });
 
@@ -169,13 +169,13 @@ describe("TopNav — regression guard: PAGE 16 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[21] is 'Định giá' (index unchanged from PAGE 16)", () => {
-    expect(ANALYST_NAV[21]!.label).toBe("Định giá");
-    expect(ANALYST_NAV[21]!.to).toBe("/dashboard/financials");
+  it("ANALYST_NAV[22] is 'Định giá' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[22]!.label).toBe("Định giá");
+    expect(ANALYST_NAV[22]!.to).toBe("/dashboard/financials");
   });
 
-  it("ANALYST_NAV[22] is 'Lãi suất Fed' (the new PAGE 17 entry)", () => {
-    expect(ANALYST_NAV[22]!.label).toBe("Lãi suất Fed");
-    expect(ANALYST_NAV[22]!.to).toBe("/dashboard/fed-rates");
+  it("ANALYST_NAV[23] is 'Lãi suất Fed' (the new PAGE 17 entry)", () => {
+    expect(ANALYST_NAV[23]!.label).toBe("Lãi suất Fed");
+    expect(ANALYST_NAV[23]!.to).toBe("/dashboard/fed-rates");
   });
 });

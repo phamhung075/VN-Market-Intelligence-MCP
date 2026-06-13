@@ -95,9 +95,9 @@ describe("TopNav — new item is last in ANALYST_NAV", () => {
     expect(secondLast!.to).toBe("/dashboard/fed-rates");
   });
 
-  it("ANALYST_NAV[23] is 'Uy tín DN' (zero-based index)", () => {
-    expect(ANALYST_NAV[23]!.label).toBe("Uy tín DN");
-    expect(ANALYST_NAV[23]!.to).toBe("/dashboard/reputation");
+  it("ANALYST_NAV[24] is 'Uy tín DN' (zero-based index, after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[24]!.label).toBe("Uy tín DN");
+    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/reputation");
   });
 });
 
@@ -170,13 +170,13 @@ describe("TopNav — regression guard: PAGE 17 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[22] is 'Lãi suất Fed' (index unchanged from PAGE 17)", () => {
-    expect(ANALYST_NAV[22]!.label).toBe("Lãi suất Fed");
-    expect(ANALYST_NAV[22]!.to).toBe("/dashboard/fed-rates");
+  it("ANALYST_NAV[23] is 'Lãi suất Fed' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[23]!.label).toBe("Lãi suất Fed");
+    expect(ANALYST_NAV[23]!.to).toBe("/dashboard/fed-rates");
   });
 
-  it("ANALYST_NAV[23] is 'Uy tín DN' (the new PAGE 18 entry)", () => {
-    expect(ANALYST_NAV[23]!.label).toBe("Uy tín DN");
-    expect(ANALYST_NAV[23]!.to).toBe("/dashboard/reputation");
+  it("ANALYST_NAV[24] is 'Uy tín DN' (the new PAGE 18 entry)", () => {
+    expect(ANALYST_NAV[24]!.label).toBe("Uy tín DN");
+    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/reputation");
   });
 });

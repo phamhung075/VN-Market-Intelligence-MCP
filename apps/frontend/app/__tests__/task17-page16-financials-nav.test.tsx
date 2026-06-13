@@ -95,9 +95,9 @@ describe("TopNav — new item is last in ANALYST_NAV", () => {
     expect(secondLast!.to).toBe("/dashboard/officers");
   });
 
-  it("ANALYST_NAV[21] is 'Định giá' (zero-based index)", () => {
-    expect(ANALYST_NAV[21]!.label).toBe("Định giá");
-    expect(ANALYST_NAV[21]!.to).toBe("/dashboard/financials");
+  it("ANALYST_NAV[22] is 'Định giá' (zero-based index, after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[22]!.label).toBe("Định giá");
+    expect(ANALYST_NAV[22]!.to).toBe("/dashboard/financials");
   });
 });
 
@@ -168,13 +168,13 @@ describe("TopNav — regression guard: PAGE 15 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[20] is 'Ban lãnh đạo' (index unchanged)", () => {
-    expect(ANALYST_NAV[20]!.label).toBe("Ban lãnh đạo");
-    expect(ANALYST_NAV[20]!.to).toBe("/dashboard/officers");
+  it("ANALYST_NAV[21] is 'Ban lãnh đạo' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[21]!.label).toBe("Ban lãnh đạo");
+    expect(ANALYST_NAV[21]!.to).toBe("/dashboard/officers");
   });
 
-  it("ANALYST_NAV[21] is 'Định giá' (the new entry)", () => {
-    expect(ANALYST_NAV[21]!.label).toBe("Định giá");
-    expect(ANALYST_NAV[21]!.to).toBe("/dashboard/financials");
+  it("ANALYST_NAV[22] is 'Định giá' (the new entry)", () => {
+    expect(ANALYST_NAV[22]!.label).toBe("Định giá");
+    expect(ANALYST_NAV[22]!.to).toBe("/dashboard/financials");
   });
 });

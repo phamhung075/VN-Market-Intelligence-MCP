@@ -6,9 +6,10 @@
  * Zero duplicated name/tooltip rendering elsewhere.
  *
  * Props:
- *   hexagram  — numeric id (1–64)
- *   name      — Vietnamese name string from the API
- *   className — optional CSS class for the trigger span
+ *   hexagram        — numeric id (1–64)
+ *   name            — Vietnamese name string from the API
+ *   className       — optional CSS class for the trigger span
+ *   withDetailLink  — when true, renders a deep-link anchor inside the tooltip
  */
 import type { ReactNode } from "react";
 import {
@@ -26,6 +27,12 @@ export interface QueNameProps {
   name: string;
   /** Optional CSS class for the trigger span. */
   className?: string;
+  /**
+   * When true, renders an anchor inside the TooltipContent pointing to the
+   * kinh-dich-reference page section for this hexagram.
+   * Default: false/undefined — no link rendered (byte-identical to prior behaviour).
+   */
+  withDetailLink?: boolean;
 }
 
 /**
@@ -33,7 +40,7 @@ export interface QueNameProps {
  * tooltip showing the description from QUE_DESCRIPTIONS.
  * Gracefully falls back to a plain span if the hexagram id has no description entry.
  */
-export function QueName({ hexagram, name, className }: QueNameProps): ReactNode {
+export function QueName({ hexagram, name, className, withDetailLink }: QueNameProps): ReactNode {
   const desc = QUE_DESCRIPTIONS[hexagram];
 
   // Graceful no-op: no description found for this id
@@ -68,6 +75,14 @@ export function QueName({ hexagram, name, className }: QueNameProps): ReactNode 
           <p className="text-slate-300">{desc.coreMeaning}</p>
           {desc.marketTrendLabel && (
             <p className="mt-1 text-slate-400">{desc.marketTrendLabel}</p>
+          )}
+          {withDetailLink && (
+            <a
+              href={`/dashboard/kinh-dich-reference#que-${hexagram}`}
+              className="mt-1 block text-slate-400 underline hover:text-slate-200"
+            >
+              Xem chi tiết →
+            </a>
           )}
         </TooltipContent>
       </Tooltip>

@@ -162,13 +162,13 @@ describe("TopNav — regression guard: PAGE 14 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[19] is 'Cơ cấu cổ đông' (index unchanged)", () => {
-    expect(ANALYST_NAV[19]!.label).toBe("Cơ cấu cổ đông");
-    expect(ANALYST_NAV[19]!.to).toBe("/dashboard/shareholders");
+  it("ANALYST_NAV[20] is 'Cơ cấu cổ đông' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[20]!.label).toBe("Cơ cấu cổ đông");
+    expect(ANALYST_NAV[20]!.to).toBe("/dashboard/shareholders");
   });
 
-  it("ANALYST_NAV[20] is 'Ban lãnh đạo' (the new entry)", () => {
-    expect(ANALYST_NAV[20]!.label).toBe("Ban lãnh đạo");
-    expect(ANALYST_NAV[20]!.to).toBe("/dashboard/officers");
+  it("ANALYST_NAV[21] is 'Ban lãnh đạo' (the new entry)", () => {
+    expect(ANALYST_NAV[21]!.label).toBe("Ban lãnh đạo");
+    expect(ANALYST_NAV[21]!.to).toBe("/dashboard/officers");
   });
 });

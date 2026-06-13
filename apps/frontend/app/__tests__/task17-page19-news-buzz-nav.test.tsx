@@ -35,8 +35,8 @@ function renderTopNav(initialPath = "/") {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — ANALYST_NAV count after PAGE 19 addition", () => {
-  it("exports exactly 25 analyst nav items", () => {
-    expect(ANALYST_NAV).toHaveLength(25);
+  it("exports exactly 26 analyst nav items (25 + Tra cứu Kinh Dịch from QUE-REFERENCE-PAGE-2)", () => {
+    expect(ANALYST_NAV).toHaveLength(26);
   });
 });
 
@@ -45,9 +45,9 @@ describe("TopNav — ANALYST_NAV count after PAGE 19 addition", () => {
 // ---------------------------------------------------------------------------
 
 describe("TopNav — NAV_ITEMS total after PAGE 19 addition", () => {
-  it("NAV_ITEMS is ANALYST_NAV (25) + SYSTEM_NAV (7) = 32 total", () => {
+  it("NAV_ITEMS is ANALYST_NAV (26) + SYSTEM_NAV (7) = 33 total (QUE-REFERENCE-PAGE-2 added)", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(32);
+    expect(NAV_ITEMS).toHaveLength(33);
   });
 
   it("SYSTEM_NAV still has 7 items (unchanged)", () => {
@@ -95,9 +95,9 @@ describe("TopNav — new item is last in ANALYST_NAV", () => {
     expect(secondLast!.to).toBe("/dashboard/reputation");
   });
 
-  it("ANALYST_NAV[24] is 'Tin nhắc đến' (zero-based index)", () => {
-    expect(ANALYST_NAV[24]!.label).toBe("Tin nhắc đến");
-    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/news-buzz");
+  it("ANALYST_NAV[25] is 'Tin nhắc đến' (zero-based index, after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[25]!.label).toBe("Tin nhắc đến");
+    expect(ANALYST_NAV[25]!.to).toBe("/dashboard/news-buzz");
   });
 });
 
@@ -171,13 +171,13 @@ describe("TopNav — regression guard: PAGE 18 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[23] is 'Uy tín DN' (index unchanged from PAGE 18)", () => {
-    expect(ANALYST_NAV[23]!.label).toBe("Uy tín DN");
-    expect(ANALYST_NAV[23]!.to).toBe("/dashboard/reputation");
+  it("ANALYST_NAV[24] is 'Uy tín DN' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[24]!.label).toBe("Uy tín DN");
+    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/reputation");
   });
 
-  it("ANALYST_NAV[24] is 'Tin nhắc đến' (the new PAGE 19 entry)", () => {
-    expect(ANALYST_NAV[24]!.label).toBe("Tin nhắc đến");
-    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/news-buzz");
+  it("ANALYST_NAV[25] is 'Tin nhắc đến' (the new PAGE 19 entry)", () => {
+    expect(ANALYST_NAV[25]!.label).toBe("Tin nhắc đến");
+    expect(ANALYST_NAV[25]!.to).toBe("/dashboard/news-buzz");
   });
 });

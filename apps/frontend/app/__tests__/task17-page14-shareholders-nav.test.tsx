@@ -154,13 +154,13 @@ describe("TopNav — regression guard: PAGE 13 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[18] is 'Sự kiện doanh nghiệp' (index unchanged)", () => {
-    expect(ANALYST_NAV[18]!.label).toBe("Sự kiện doanh nghiệp");
-    expect(ANALYST_NAV[18]!.to).toBe("/dashboard/corporate-events");
+  it("ANALYST_NAV[19] is 'Sự kiện doanh nghiệp' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
+    expect(ANALYST_NAV[19]!.label).toBe("Sự kiện doanh nghiệp");
+    expect(ANALYST_NAV[19]!.to).toBe("/dashboard/corporate-events");
   });
 
-  it("ANALYST_NAV[19] is 'Cơ cấu cổ đông' (the new entry)", () => {
-    expect(ANALYST_NAV[19]!.label).toBe("Cơ cấu cổ đông");
-    expect(ANALYST_NAV[19]!.to).toBe("/dashboard/shareholders");
+  it("ANALYST_NAV[20] is 'Cơ cấu cổ đông' (the new entry)", () => {
+    expect(ANALYST_NAV[20]!.label).toBe("Cơ cấu cổ đông");
+    expect(ANALYST_NAV[20]!.to).toBe("/dashboard/shareholders");
   });
 });
