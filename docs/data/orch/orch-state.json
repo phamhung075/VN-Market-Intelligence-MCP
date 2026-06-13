@@ -7230,7 +7230,7 @@
         "id": "QUE-REFERENCE-PAGE-1b",
         "title": "Build dashboard.kinh-dich-reference.tsx route with search/grid",
         "owner": "dev-frontend",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",
@@ -7253,7 +7253,10 @@
         "handoff": "docs/data/orch/HANDOFF-QUE-REFERENCE-PAGE-1b.md",
         "parent_brief": "ARCH-QUE-REFERENCE-PAGE",
         "claimed_by": "dev-frontend",
-        "claimed_at": "2026-06-13T08:50:00Z"
+        "claimed_at": "2026-06-13T08:50:00Z",
+        "completed_at": "2026-06-13T11:09:00Z",
+        "completed_by": "dev-frontend",
+        "commit": "daabfd73"
       },
       {
         "id": "QUE-REFERENCE-PAGE-2",
