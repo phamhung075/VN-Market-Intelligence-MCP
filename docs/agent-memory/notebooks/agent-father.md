@@ -1,5 +1,26 @@
 # Agent Father — Notebook
 
+## c295 · 2026-06-13 — agent-md-factory recheck pass-5 (2h cycle)
+
+### Keep (maintenance) — pass-5 sweep
+- Trigger: scheduled (2h cycle, pass-5 of recurring factory recheck)
+- Agents scanned: 41 init.md + 42 .claude/agents/*.md
+- Auto-fixes: 0 (no new trivial violations found)
+- Escalations: 0
+- Orphans: 0
+
+### Checks run
+- **Frontmatter line-1**: 40/41 init.md pass; semble-search/init.md known exception (stub doc, not YAML agent def; flagged in 37aab6e3 — still correct, not a regression). All 42 .claude/agents/*.md pass.
+- **Size-justification headers (flow files >120L)**: All 34 flow files checked; all pass with size-justification in first 3 lines. Prior fix held: disagreement-verify.md, keep.md, etc.
+- **ea201caa SKILL.md fixes**: signal-dashboard/SKILL.md + system-map-query/SKILL.md both have `---` on line 1 — fix held.
+- **DRY C2 duplicate blocks**: No C2/git-rev-parse duplicates found in any dev-* agent init.md — 37aab6e3 fix held.
+- **Dangling skill pointers**: 0 dangling refs across all docs/agents/ and .claude/agents/ files (41 skills present, all referenced skills resolve).
+- **New drift since pass-4 (d39e342f)**: None. No new agents, no new flow files, no new .claude/agents/*.md files.
+- Modified files outside agent-father zone (po/flow/main.md, cowork notebooks, coverage-state): all from other agents, not touched.
+
+### Lesson
+Checker script must use `head -3` not `head -1` for size-justification presence — files with YAML frontmatter (`---` on line 1) carry the comment on line 2 per ea201caa pattern. `head -1` gives false FAIL on those files.
+
 ## c294 · 2026-06-09T00:00Z — SKILL-WIRE-11 + CODE-SIMPLIFIER-REGISTER
 
 - Task: Wire 11 new skill dirs into correct agent flows; register code-simplifier into dev team.
