@@ -6801,7 +6801,7 @@
         "id": "INFRA-TEST-SEEDDATE-FIX",
         "type": "FIX",
         "owner": "dev-stock-price",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "size": "S",
         "zone": "apps/stock-price/",
         "priority": "medium",
@@ -6836,7 +6836,17 @@
         "groomed_at": "2026-06-13T11:51:55Z",
         "groomed_by": "po",
         "claimed_by": "dev-stock-price",
-        "claimed_at": "2026-06-13T11:53:08Z"
+        "claimed_at": "2026-06-13T11:53:08Z",
+        "review_commit": "3b5c4ba8",
+        "review_at": "2026-06-13T11:56:46Z",
+        "review_evidence": {
+          "router_uncached_green": true,
+          "full_suite_ok7": true,
+          "test_only_diff": true,
+          "production_untouched": "fetchers.go:235",
+          "adverse_date_proof": "yesterday in [now-7d,now] forall now",
+          "now_relative": "time.Now().UTC().AddDate(0,0,-1)"
+        }
       },
       {
         "id": "PRED-RESOLVER-GAP-FIX",
