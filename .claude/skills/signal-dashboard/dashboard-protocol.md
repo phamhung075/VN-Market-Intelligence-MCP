@@ -22,8 +22,10 @@ status = NEW
 
 **Atomic write procedure:**
 ```bash
-# 1. Read current state
-CURRENT=$(cat docs/data/orch/orch-state.json)
+# 1. Read current state — NEVER cat full file to model context; bash-only pipeline is safe here
+#    (This cat runs inside a bash write-path pipeline, not surfaced to the model.
+#     Rule: docs/standards/orch-state-access.md §1)
+CURRENT=$(cat docs/data/orch/orch-state.json) # bash-only pipeline — not surfaced to model
 
 # 2. Build new row JSON
 NEW_ROW=$(cat <<'EOF'
@@ -84,7 +86,8 @@ If no stored cache (first run, or cowork agent with no cache) → skip Phase 1, 
 **Phase 2 — JQ FILTER (~200 tokens):**
 ```bash
 # 1. Read .signal_queue.rows[] filtered by to == my-agent-id AND status == "NEW"
-NEW_ROWS=$(cat docs/data/orch/orch-state.json | jq \
+STATE=$(cat docs/data/orch/orch-state.json) # bash-only pipeline — not surfaced to model (rule: docs/standards/orch-state-access.md §1)
+NEW_ROWS=$(printf '%s' "$STATE" | jq \
   --arg agent "<my-agent-id>" \
   '[.signal_queue.rows[] | select(.to == $agent and .status == "NEW")]')
 
@@ -93,7 +96,8 @@ NEW_ROWS=$(cat docs/data/orch/orch-state.json | jq \
 #    b. Note: type + summary → route to relevant flow step
 
 # 3. Mark each processed row NEW → READ (atomic write — modify only status of matched rows)
-UPDATED=$(cat docs/data/orch/orch-state.json | jq \
+STATE=$(cat docs/data/orch/orch-state.json) # bash-only pipeline — not surfaced to model (rule: docs/standards/orch-state-access.md §1)
+UPDATED=$(printf '%s' "$STATE" | jq \
   --arg agent "<my-agent-id>" \
   '(.signal_queue.rows[] | select(.to == $agent and .status == "NEW") | .status) |= "READ"')
 TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
@@ -139,7 +143,8 @@ Cowork equivalents must also call PRUNE after their consume step.
 # 5. Enforce max 200 rows in .signal_queue.rows[] — prune oldest resolved/read first if at cap (RISK-6 guard)
 
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-UPDATED=$(cat docs/data/orch/orch-state.json | jq \
+STATE=$(cat docs/data/orch/orch-state.json) # bash-only pipeline — not surfaced to model (rule: docs/standards/orch-state-access.md §1)
+UPDATED=$(printf '%s' "$STATE" | jq \
   --arg now "$NOW" \
   --arg agent "<my-agent-id>" '
   . as $root |

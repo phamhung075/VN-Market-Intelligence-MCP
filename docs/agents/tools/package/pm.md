@@ -7,7 +7,7 @@
 
 | Tool | Purpose |
 |------|---------|
-| Read | Read `docs/data/orch/orch-state.json .task_board`, sprint status, handoff files |
+| Read | jq-slice `docs/data/orch/orch-state.json .task_board` (see docs/standards/orch-state-access.md §1 — never Read-tool full file), sprint status, handoff files |
 | Edit | Not for orch-state.json (use Bash+atomic write); update handoff files only |
 | Write | Create sprint summaries, retrospectives |
 | Glob | Find all task and sprint documentation |
@@ -35,7 +35,7 @@
 Read: docs/sprints/SPRINT_XXX.md
 
 # Check task status
-Read + jq: docs/data/orch/orch-state.json .task_board
+jq-slice only: docs/data/orch/orch-state.json .task_board (never Read-tool full file — docs/standards/orch-state-access.md §1)
 
 # Compare performance across releases
 compare_backtest_runs(run_ids=["v1.0", "v1.1"])

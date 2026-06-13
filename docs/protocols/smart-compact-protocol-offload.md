@@ -49,7 +49,10 @@ After `/compact` fires, the main terminal resumes by:
 
 1. Read notebook: `docs/agent-memory/notebooks/main.md` (main terminal working memory)
 2. Call `get_agent_work_log(tag="dev-loop-tier-N")` to find last completed tier
-3. Re-read `docs/data/orch/orch-state.json .task_board` for current task states
+3. Slice `.task_board` via jq for current task states (see `docs/standards/orch-state-access.md §1`):
+   ```bash
+   TASKS=$(jq -c '[.task_board.active_sprints[].tasks[]]' docs/data/orch/orch-state.json)
+   ```
 4. Skip already-Done tasks — spawn only Pending/In-Progress tasks for the current tier
 5. Continue from Step 3 at the correct tier index — do not restart from Step 1
 

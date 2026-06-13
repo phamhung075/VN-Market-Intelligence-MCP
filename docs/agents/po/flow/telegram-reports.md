@@ -79,7 +79,8 @@ Search `docs/data/orch/orch-state.json` `.task_board` for keyword overlap (title
 ### 2d. Recurrence Check
 For non-duplicate reports, check if this pattern has appeared before:
 ```bash
-cat docs/data/orch/orch-state.json | jq '.task_board | (.active_sprints[].tasks[], .backlog[], .archive[]) | select(.title | test("<keywords>"; "i"))'
+# jq slice — bash-only; never pipe full file into model context (rule: docs/standards/orch-state-access.md §1)
+jq --arg kw "<keywords>" '.task_board | (.active_sprints[].tasks[], .backlog[], .archive[]) | select(.title | test($kw; "i"))' docs/data/orch/orch-state.json
 git log --oneline --all --grep="<keywords>" | head -10
 ```
 - ≥2 previous occurrences of same module/component → **recurrent issue**

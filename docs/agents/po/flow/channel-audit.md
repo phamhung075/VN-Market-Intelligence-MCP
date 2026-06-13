@@ -57,7 +57,8 @@ Before opening a new bug task, verify the issue wasn't already fixed:
 
 **1. Check `docs/data/orch/orch-state.json` `.task_board`** — search for the same module/ticker/tool name in Done tasks:
 ```bash
-cat docs/data/orch/orch-state.json | jq '.task_board.active_sprints[].tasks[] | select(.status=="DONE" and (.title | test("<keyword>"; "i")))'
+# jq slice only (rule: docs/standards/orch-state-access.md §1)
+jq --arg kw "<keyword>" '.task_board.active_sprints[].tasks[] | select(.status=="DONE" and (.title | test($kw; "i")))' docs/data/orch/orch-state.json
 ```
 If a matching Done task exists → the fix was merged. Suspect **deploy gap** (see below).
 

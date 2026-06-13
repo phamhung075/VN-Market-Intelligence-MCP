@@ -38,7 +38,8 @@ Task status updates: `docs/data/orch/orch-state.json` `.task_board` tasks (atomi
 
 ```bash
 # task_board count gate — run before any planning work
-TASK_COUNT=$(cat "$PROJECT_ROOT/docs/data/orch/orch-state.json" | jq '[.task_board.active_sprints[].tasks[]] | length')
+# jq slice only — NEVER cat full file to model context (rule: docs/standards/orch-state-access.md §1)
+TASK_COUNT=$(jq '[.task_board.active_sprints[].tasks[]] | length' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
 if [ "$TASK_COUNT" -gt 80 ]; then
   echo "[pm] task_board has $TASK_COUNT tasks > 80 — invoking task-archive sub-flow before continuing"
   # → Run sub-flow: docs/agents/pm/flow/task-archive.md, then resume here
@@ -121,8 +122,11 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:
 Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue` (including `plan_blocked`, `task_slate_ready`, or any pm-originated row), perform a fresh read of `docs/data/orch/orch-state.json`:
 
 ```
-1. Read docs/data/orch/orch-state.json (do NOT use any cached snapshot from earlier in this cycle)
-2. Extract `.head.status` field
+1. Slice `.head.status` via jq — NEVER use Read tool (see `docs/standards/orch-state-access.md §1`):
+   ```bash
+   head_status=$(jq -r '.head.status' docs/data/orch/orch-state.json)
+   ```
+2. Check `head_status` field
 3. If .head.status == "idle" OR "closed" (case-insensitive substring match):
      → SKIP signal write
      → Log: "[pm] Sprint idle/closed — signal_queue write suppressed (stale-race guard)"

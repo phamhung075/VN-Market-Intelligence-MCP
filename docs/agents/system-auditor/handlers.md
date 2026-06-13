@@ -37,7 +37,10 @@ If both empty and `.head.active_task_id` is null → log "D4 pass: no held locks
 
 **Step R-2 — orch-state.json `.head` cross-check (AC-4)**
 
-Read `docs/data/orch/orch-state.json`. Extract `.head.active_task_id` (may be null).
+Slice `.head` via jq (see `docs/standards/orch-state-access.md §1`):
+```bash
+head_active_task=$(jq -r '.head.active_task_id // empty' docs/data/orch/orch-state.json)
+```
 
 For each held lock from Step R-1:
 - Check `bare_task_id = held.task_id.startsWith("task:") ? held.task_id.slice(5) : held.task_id`
@@ -45,7 +48,11 @@ For each held lock from Step R-1:
 
 **Step R-3 — `.task_board` owner/status cross-check (AC-1, AC-2, AC-3)**
 
-Read `$PROJECT_ROOT/docs/data/orch/orch-state.json` (absolute path — NEVER use relative path; CWD may have drifted). Extract `.task_board.active_sprints[].tasks[]`. For each held lock from Step R-1:
+Slice `.task_board` via jq (absolute path — CWD may have drifted; see `docs/standards/orch-state-access.md §1`):
+```bash
+TASKS=$(jq -c '[.task_board.active_sprints[].tasks[]]' "$PROJECT_ROOT/docs/data/orch/orch-state.json")
+```
+For each held lock from Step R-1:
 
 ```
 bare_task_id = held.task_id.startsWith("task:") ? held.task_id.slice(5) : held.task_id

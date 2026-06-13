@@ -164,14 +164,15 @@ Non-fatal: probe errors log and fall through. On RED HEAD: emits `ci_red` signal
 <!-- jump:pipeline-resume -->
 ## Step 0b — Pipeline Resume + Session Gate
 
-Read ONLY `head` block from `docs/data/orch/orch-state.json` for routing (~150 tokens):
+Slice `.head` from `docs/data/orch/orch-state.json` (~150 tokens — see `docs/standards/orch-state-access.md §1`):
 ```bash
-CURRENT=$(cat docs/data/orch/orch-state.json)
-head_status       = $(echo "$CURRENT" | jq -r '.head.status')
-head_active_task  = $(echo "$CURRENT" | jq -r '.head.active_task_id')
-head_next_agent   = $(echo "$CURRENT" | jq -r '.head.next_agent')
-head_next_action  = $(echo "$CURRENT" | jq -r '.head.next_action')
-head_updated_at   = $(echo "$CURRENT" | jq -r '.head.updated_at')
+# NEVER cat the full file — jq slice only
+HEAD=$(jq -c '.head' docs/data/orch/orch-state.json)
+head_status       =$(printf '%s' "$HEAD" | jq -r '.status')
+head_active_task  =$(printf '%s' "$HEAD" | jq -r '.active_task_id')
+head_next_agent   =$(printf '%s' "$HEAD" | jq -r '.next_agent')
+head_next_action  =$(printf '%s' "$HEAD" | jq -r '.next_action')
+head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
 ```
 `narrative.*` block is lazy-loaded only on explicit human-facing resume request — do NOT read at cold start.
 
