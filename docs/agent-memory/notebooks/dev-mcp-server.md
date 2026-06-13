@@ -1,27 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-13 · FIX-ALERT-ORPHAN-CORRELATION — alert_id col + atomic co-write — REVIEW
-
-**Task:** FIX-ALERT-ORPHAN-CORRELATION | Priority: P1-HIGH | Zone: apps/mcp-server/
-**Root cause:** C-08 JOIN `ON a.id = s.id` compared alerts.id TEXT to agent_signals.id INTEGER — SQLite never coerces, every alert was always orphaned. storeAlerts/storeAlertsFromCommander never wrote agent_signals rows.
-**Fix:** schema-news.ts: ADD COLUMN alert_id TEXT + index. alertStore.ts: both store functions atomically co-write one verified_decision signal row per alert inside the same transaction (dedup guard + legacy table/column probe).
-**Gap documented:** Scheduler direct-INSERT paths (taAlertScanJob, bbAlertScanJob, foreignFlowAlertJob) still bypass storeAlerts — follow-up task needed. C-08 query fix (ON a.id → s.alert_id) is in system-auditor zone — handoff created.
-**Tests:** 9 pass / 0 fail (FIX-ALERT-ORPHAN-CORRELATION.test.ts). tsc clean. Commit: 7cbca67a.
-Zone health: tsc clean, alert co-write atomic, orphan root cause fixed | HEALTHY
-
----
-
-## 2026-06-13 · FIX-PENDING-REFINE-TICKER-TARGETING — ticker + report_id params — REVIEW
-
-**Task:** FIX-PENDING-REFINE-TICKER-TARGETING | Sprint: BCTC-ANALYTICS-LAYER | Priority: P2/low | Zone: apps/mcp-server/
-**Root cause:** getBctcPendingRefineTool.ts Zod InputSchema only had `limit` — `ticker` and `report_id` were stripped silently by safeParse, making all calls return the oldest PENDING/PARTIAL regardless of intended filter.
-**Fix:** Extended InputSchema with `ticker` (z.string().optional()) and `report_id` (z.string().optional()). Refactored SQL into 3 branches: (1) report_id → `WHERE id=? AND confirm_status guard` — bypasses queue-eligibility filters (RF-3 intentional); (2) ticker → standard queue query + `AND action_code=?`; (3) default unchanged. All SQL uses parameterized placeholders. Tool description updated. RF-3 code comment added.
-**Docs:** docs/agents/tools/list/get_bctc_pending_refine.md updated with ticker + report_id entries (AC-5-1).
-**Tests:** 0 new files (AC-6-2). Existing suite: 12786 pass / 52 fail (pre-existing) / exit 0. tsc clean.
-Zone health: tsc clean, 157 tools intact, 79 cron.schedule, ticker/report_id params shipped | HEALTHY
-
----
-
 ## 2026-06-13 · FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE — confidence recompute at finalize — REVIEW
 
 **Task:** FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE | Sprint: BCTC-ANALYTICS-LAYER | Priority: P1 | Zone: apps/mcp-server/
@@ -41,3 +19,15 @@ Zone health: tsc clean, 157 tools intact, 79 cron.schedule, confidence recompute
 **Tests:** 44 targeted pass / 0 fail; full run 12880 tests. tsc clean. Commit: 897877ec.
 **Live verify:** G1 {limit:1} → 1 row; G2 {ticker:CTG,limit:1} → 1 CTG row; G3 {} → 35 rows; G4 {report_id} → 1 row.
 Zone health: bun test 12880 pass, 157 tools intact, 79 cron.schedule, check.kind crash fixed | HEALTHY
+
+---
+
+## 2026-06-13 · CI-RED-b7b84d9b-FIX — 160-stock-aliases timing flake — REVIEW
+
+**Task:** CI-RED-b7b84d9b-FIX | Priority: high | Zone: apps/mcp-server/
+**Root cause:** Performance smoke test in 160-stock-aliases.test.ts used `expect(elapsed).toBeLessThan(5)` (5ms). Under P=16 parallel bun processes on the 2-core GitHub Actions ubuntu-latest runner, cold-JIT first-call latency + CPU scheduler preemption pushes wall-clock past 5ms intermittently. Same commit had both PASS (run 27440686945) and FAIL (run 27440686989) runs — nondeterministic timing, not shared state.
+**Fix:** Raised threshold 5 → 500ms in test description and assertion. 500ms is still a meaningful regression guard (actual cost ~0.03ms; 500ms = >16,000x margin). No shared state/singleton/DB issue in the module or test.
+**Files:** apps/mcp-server/src/__tests__/160-stock-aliases.test.ts (1 line changed: threshold + description)
+**Tests:** 34 pass / 0 fail isolation. 34 pass / 0 fail standard. tsc clean. Tool count 157, scheduler 79.
+**Repro script:** scripts/repro-ci-red-b7b84d9b.sh
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, CI-RED flake fixed | HEALTHY
