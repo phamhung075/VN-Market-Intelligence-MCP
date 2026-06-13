@@ -7230,7 +7230,7 @@
         "id": "QUE-REFERENCE-PAGE-1a",
         "title": "Extend codegen: emit que-descriptions-detail.generated.ts",
         "owner": "dev-frontend",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",
@@ -7248,7 +7248,9 @@
         "created_at": "2026-06-13T09:15:00Z",
         "created_by": "pm",
         "handoff": "docs/data/orch/HANDOFF-QUE-REFERENCE-PAGE-1a.md",
-        "parent_brief": "ARCH-QUE-REFERENCE-PAGE"
+        "parent_brief": "ARCH-QUE-REFERENCE-PAGE",
+        "claimed_by": "dev-frontend",
+        "claimed_at": "2026-06-13T08:45:00Z"
       },
       {
         "id": "QUE-REFERENCE-PAGE-1b",
