@@ -114,9 +114,16 @@ export function initNewsTables(db: Database): void {
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN critic_notes TEXT DEFAULT NULL`); } catch {}
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN retry_count INTEGER DEFAULT 0`); } catch {}
 
+  // FIX-ALERT-ORPHAN-CORRELATION — alert correlation column.
+  // Links an agent_signals row back to the alerts.id that caused it.
+  // Used by C-08 query: SELECT ... FROM alerts a LEFT JOIN agent_signals s ON a.id = s.alert_id
+  // where s.alert_id IS NULL.  Replaces the broken JOIN ON a.id = s.id (TEXT vs INTEGER mismatch).
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN alert_id TEXT`); } catch {}
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_stock ON agent_signals(stock_code, created_at)`);
+  try { db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_alert_id ON agent_signals(alert_id)`); } catch {}
 
   // ── Mention Velocity (Task 265) ───────────────────────────────────────────
   db.exec(`

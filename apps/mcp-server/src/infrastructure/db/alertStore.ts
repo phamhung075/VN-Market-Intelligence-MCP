@@ -43,6 +43,31 @@ export function isDocAlreadyProcessed(docId: string, db: Database): boolean {
   return row !== null && row !== undefined;
 }
 
+// ── alert_id column probe (cached per DB connection) ─────────────────────────
+// FIX-ALERT-ORPHAN-CORRELATION: check whether agent_signals has the alert_id
+// column. Uses try/catch on a LIMIT-0 probe so legacy DBs (pre-migration) are
+// handled gracefully — the alert row is still written; only the signal row is
+// skipped when the column is absent.
+function hasAgentSignalsAlertIdColumn(db: Database): boolean {
+  try {
+    db.prepare("SELECT alert_id FROM agent_signals LIMIT 0").all();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ── hasAgentSignalsTable ────────────────────────────────────────────────────
+// AC-7: gracefully skip signal write if agent_signals table doesn't exist yet.
+function hasAgentSignalsTable(db: Database): boolean {
+  try {
+    db.prepare("SELECT 1 FROM agent_signals LIMIT 0").all();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Persist alert records to the SQLite `alerts` table.
  *
@@ -51,6 +76,12 @@ export function isDocAlreadyProcessed(docId: string, db: Database): boolean {
  *
  * Sets `sent_by = 'server'` to indicate the alert originated from the server
  * scheduler (Step E rule-based alerts).
+ *
+ * FIX-ALERT-ORPHAN-CORRELATION: also writes one `agent_signals` row per alert
+ * (signal_type='verified_decision', from_agent='alert-engine', to_agent='all',
+ * alert_id=alert.id) inside the same transaction. This fixes the C-08 audit
+ * check whose JOIN `ON a.id = s.id` was comparing TEXT to INTEGER (always NULL).
+ * The corrected C-08 query uses `ON a.id = s.alert_id` instead.
  *
  * @param alerts - Array of Alert objects returned by `generateAlerts`
  * @param db     - Active bun:sqlite Database connection (injected by caller)
@@ -66,6 +97,25 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
       (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'server', ?, ?)
   `);
 
+  // FIX-ALERT-ORPHAN-CORRELATION: co-write agent_signals row for C-08 correlation.
+  // Guarded: skip gracefully when alert_id column or agent_signals table is absent.
+  const writeSignal = hasAgentSignalsTable(db) && hasAgentSignalsAlertIdColumn(db);
+  const insertSignal = writeSignal
+    ? db.prepare(`
+        INSERT OR IGNORE INTO agent_signals
+          (from_agent, to_agent, signal_type, stock_code, payload, status,
+           created_at, expires_at, alert_id)
+        VALUES
+          ('alert-engine', 'all', 'verified_decision', ?, '{}', 'unread',
+           ?, datetime(?, '+2 hours'), ?)
+      `)
+    : null;
+
+  // Dedup guard: skip signal write if a row with this alert_id already exists.
+  const checkSignal = writeSignal
+    ? db.prepare("SELECT 1 FROM agent_signals WHERE alert_id = ? LIMIT 1")
+    : null;
+
   const insertMany = db.transaction((rows: Alert[]) => {
     for (const alert of rows) {
       insert.run(
@@ -78,6 +128,19 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
         alert.confidence_score ?? null,
         alert.validated_at ?? null,
       );
+      // Co-write agent_signals correlation row (fail-loud if insert throws)
+      if (insertSignal && checkSignal) {
+        const existing = checkSignal.get(alert.id);
+        if (!existing) {
+          const stockCode = alert.actionCode === "MACRO" ? null : (alert.actionCode || null);
+          insertSignal.run(
+            stockCode,
+            alert.createdAt,
+            alert.createdAt,
+            alert.id,
+          );
+        }
+      }
     }
   });
 
@@ -93,6 +156,9 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
  *
  * Uses INSERT OR IGNORE so the function is idempotent.
  *
+ * FIX-ALERT-ORPHAN-CORRELATION: same co-write logic as storeAlerts — writes
+ * one agent_signals row per alert with alert_id = alert.id.
+ *
  * @param alerts - Array of Alert objects produced by the Alert Commander
  * @param db     - Active bun:sqlite Database connection (injected by caller)
  */
@@ -107,6 +173,24 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
       (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'alert-commander', ?, ?)
   `);
 
+  // FIX-ALERT-ORPHAN-CORRELATION: co-write agent_signals row for C-08 correlation.
+  const writeSignal = hasAgentSignalsTable(db) && hasAgentSignalsAlertIdColumn(db);
+  const insertSignal = writeSignal
+    ? db.prepare(`
+        INSERT OR IGNORE INTO agent_signals
+          (from_agent, to_agent, signal_type, stock_code, payload, status,
+           created_at, expires_at, alert_id)
+        VALUES
+          ('alert-engine', 'all', 'verified_decision', ?, '{}', 'unread',
+           ?, datetime(?, '+2 hours'), ?)
+      `)
+    : null;
+
+  // Dedup guard: skip signal write if a row with this alert_id already exists.
+  const checkSignal = writeSignal
+    ? db.prepare("SELECT 1 FROM agent_signals WHERE alert_id = ? LIMIT 1")
+    : null;
+
   const insertMany = db.transaction((rows: Alert[]) => {
     for (const alert of rows) {
       insert.run(
@@ -119,6 +203,18 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
         alert.confidence_score ?? null,
         alert.validated_at ?? null,
       );
+      if (insertSignal && checkSignal) {
+        const existing = checkSignal.get(alert.id);
+        if (!existing) {
+          const stockCode = alert.actionCode === "MACRO" ? null : (alert.actionCode || null);
+          insertSignal.run(
+            stockCode,
+            alert.createdAt,
+            alert.createdAt,
+            alert.id,
+          );
+        }
+      }
     }
   });
 
