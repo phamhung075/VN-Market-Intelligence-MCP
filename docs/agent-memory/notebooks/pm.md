@@ -1,5 +1,17 @@
 # PM — Notebook
 
+## c306 QUE-REFERENCE-PAGE decomposition · 2026-06-13T091500Z
+
+ARCH-QUE-REFERENCE-PAGE DESIGN COMPLETE → decomposed into 4 atomic frontend subtasks. Parent task: READY-FOR-PM → DECOMPOSED. Subtasks:
+- QUE-REFERENCE-PAGE-1a (READY, no blockers) — extend codegen, emit que-descriptions-detail.generated.ts
+- QUE-REFERENCE-PAGE-1b (READY, blocked by 1a) — build dashboard.kinh-dich-reference.tsx route
+- QUE-REFERENCE-PAGE-2 (READY, blocked by 1b) — add QueName deep-link + TopNav entry
+- QUE-REFERENCE-PAGE-TEST (READY, parallel with 1a) — write QUE_DETAIL tests + QueName deep-link tests
+
+All zone: apps/frontend/ (parallel-safe, FREE, no mcp-server work). WIP constraint: +1 available (EVIDENCE-ACCUM-SILENT-CRON holds 1/2). Task 1a dispatch-ready-now. Handoff file + jq script → scripts/pm-decompose-que-reference.jq. Commit 24722293.
+
+---
+
 ## c305 OHLCV-UNIT-CONTAM sprint closure · 2026-06-12T194036Z
 
 CONTAM sprint successfully closed (9/9 DONE/VERIFIED). Root-cause: MIN(low, legacy_low)=0 propagation via ON CONFLICT. CONTAM-8 (SM-1 boundary fix), CONTAM-9 (519 low=0 rows, 3-pass repair). QA verified 39 tests PASS, DB clean (0 contamination rows). FPT +100447.2% → +0.547% (user bug fixed). Commits 545a225b + 937279ec. orch-state: closed_sprints created, active_sprints 25→24.
