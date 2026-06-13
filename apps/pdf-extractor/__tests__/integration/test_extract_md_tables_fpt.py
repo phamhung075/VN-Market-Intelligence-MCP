@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import sys
 import os
-import asyncio
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -269,7 +268,7 @@ class TestExtractMdTablesFPT:
             f"ocr_as_markdown should contain ## or > elements, got: {result[:200]}"
         )
 
-    def test_ac3_use_case_executes_without_error(self):
+    async def test_ac3_use_case_executes_without_error(self):
         """
         AC-3: ExtractMdTablesUseCase.execute() completes without raising an exception.
 
@@ -282,11 +281,9 @@ class TestExtractMdTablesFPT:
         # Patch _count_pages to return 5 (only process 5 pages)
         from unittest.mock import patch
         with patch.object(ExtractMdTablesUseCase, "_count_pages", return_value=5):
-            result = asyncio.get_event_loop().run_until_complete(
-                uc.execute(
-                    report_id="fpt-md-test-001",
-                    pdf_path=str(_FPT_PDF_PATH),
-                )
+            result = await uc.execute(
+                report_id="fpt-md-test-001",
+                pdf_path=str(_FPT_PDF_PATH),
             )
 
         assert "tables_detected" in result

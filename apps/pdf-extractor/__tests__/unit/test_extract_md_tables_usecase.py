@@ -18,7 +18,6 @@ Coverage:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import tempfile
@@ -173,23 +172,21 @@ def _patch_pdf2image():
 class TestExtractMdTablesUseCaseAC4:
     """AC-4: use case calls push once with correct arguments."""
 
-    def test_push_called_once_with_correct_report_id(self):
+    async def test_push_called_once_with_correct_report_id(self):
         """Push is called exactly once and receives the report_id."""
         uc, ext, push = _make_use_case()
 
         with _patch_count_pages(3), _patch_rasterize_page(), _patch_pdf2image():
-            result = asyncio.get_event_loop().run_until_complete(
-                uc.execute(
-                    report_id="abc-123",
-                    pdf_path="/fake/test.pdf",
-                )
+            result = await uc.execute(
+                report_id="abc-123",
+                pdf_path="/fake/test.pdf",
             )
 
         assert push.called, "push_md_tables was not called"
         assert push.call_args is not None
         assert push.call_args["report_id"] == "abc-123"
 
-    def test_push_receives_md_tables(self):
+    async def test_push_receives_md_tables(self):
         """Push receives the md_tables list from the extractor."""
         expected_tables = ["| A | B |\n|---|---|\n| 1 | 2 |"]
         ext = FakeGenericMdTableExtractor(md_tables=expected_tables)
@@ -197,14 +194,12 @@ class TestExtractMdTablesUseCaseAC4:
         uc = ExtractMdTablesUseCase(md_extractor=ext, md_push_client=push)
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            asyncio.get_event_loop().run_until_complete(
-                uc.execute(report_id="report-001", pdf_path="/fake/test.pdf")
-            )
+            await uc.execute(report_id="report-001", pdf_path="/fake/test.pdf")
 
         assert push.call_args is not None
         assert push.call_args["md_tables"] == expected_tables
 
-    def test_return_shape_pushed_true(self):
+    async def test_return_shape_pushed_true(self):
         """execute() returns {tables_detected: N >= 1, pushed: True} on success."""
         expected_tables = [
             "| Col1 | Col2 |\n|---|---|\n| cell1 | cell2 |",
@@ -214,15 +209,13 @@ class TestExtractMdTablesUseCaseAC4:
 
         # 1 page: extractor called once per page (returns 2 tables per call)
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            result = asyncio.get_event_loop().run_until_complete(
-                uc.execute(report_id="r-001", pdf_path="/fake/p.pdf")
-            )
+            result = await uc.execute(report_id="r-001", pdf_path="/fake/p.pdf")
 
         assert result["pushed"] is True
         # 1 page × 2 tables per page = 2 tables_detected
         assert result["tables_detected"] >= 1
 
-    def test_push_failure_returns_pushed_false(self):
+    async def test_push_failure_returns_pushed_false(self):
         """If push raises, execute() returns pushed=False (no re-raise)."""
         push = FakeMdPushClient()
         push.set_raise(RuntimeError("network error"))
@@ -230,41 +223,35 @@ class TestExtractMdTablesUseCaseAC4:
         uc = ExtractMdTablesUseCase(md_extractor=ext, md_push_client=push)
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            result = asyncio.get_event_loop().run_until_complete(
-                uc.execute(report_id="r-002", pdf_path="/fake/p.pdf")
-            )
+            result = await uc.execute(report_id="r-002", pdf_path="/fake/p.pdf")
 
         assert result["pushed"] is False
         assert isinstance(result["tables_detected"], int)
 
-    def test_empty_extractor_result(self):
+    async def test_empty_extractor_result(self):
         """Zero tables extracted → pushed=True (push called with empty list), tables_detected=0."""
         ext = FakeGenericMdTableExtractor(md_tables=[])
         push = FakeMdPushClient()
         uc = ExtractMdTablesUseCase(md_extractor=ext, md_push_client=push)
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            result = asyncio.get_event_loop().run_until_complete(
-                uc.execute(report_id="r-003", pdf_path="/fake/p.pdf")
-            )
+            result = await uc.execute(report_id="r-003", pdf_path="/fake/p.pdf")
 
         assert result["tables_detected"] == 0
         assert result["pushed"] is True
         assert push.called
 
-    def test_ocr_as_markdown_passed_to_push(self):
+    async def test_ocr_as_markdown_passed_to_push(self):
         """doc_ocr_text triggers ocr_as_markdown computation passed to push."""
         ext = FakeGenericMdTableExtractor(ocr_as_markdown="## Header\n> 88.000.000")
         push = FakeMdPushClient()
         uc = ExtractMdTablesUseCase(md_extractor=ext, md_push_client=push)
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            asyncio.get_event_loop().run_until_complete(
-                uc.execute(
-                    report_id="r-004",
-                    pdf_path="/fake/p.pdf",
-                    doc_ocr_text="A. TAI SAN\n88.089.621",
-                )
+            await uc.execute(
+                report_id="r-004",
+                pdf_path="/fake/p.pdf",
+                doc_ocr_text="A. TAI SAN\n88.089.621",
             )
 
         assert push.call_args is not None
@@ -274,7 +261,7 @@ class TestExtractMdTablesUseCaseAC4:
 class TestExtractMdTablesUseCaseAC6:
     """AC-6: PDF with > MAX_PAGES → WARNING logged, at most MAX_PAGES processed."""
 
-    def test_page_limit_fires_for_large_pdf(self, caplog):
+    async def test_page_limit_fires_for_large_pdf(self, caplog):
         """
         A PDF with MAX_PAGES + 5 pages triggers a WARNING log message
         containing 'page limit reached'.
@@ -294,9 +281,7 @@ class TestExtractMdTablesUseCaseAC6:
             with _patch_count_pages(large_page_count), \
                  patch.object(ExtractMdTablesUseCase, "_rasterize_page", recording_rasterize), \
                  _patch_pdf2image():
-                asyncio.get_event_loop().run_until_complete(
-                    uc.execute(report_id="r-large", pdf_path="/fake/large.pdf")
-                )
+                await uc.execute(report_id="r-large", pdf_path="/fake/large.pdf")
 
         # AC-6: WARNING must be logged
         warning_messages = [r.message for r in caplog.records if r.levelno >= logging.WARNING]
@@ -309,7 +294,7 @@ class TestExtractMdTablesUseCaseAC6:
             f"Expected ≤{MAX_PAGES} pages rasterized, got {len(pages_rasterized)}"
         )
 
-    def test_small_pdf_no_warning(self, caplog):
+    async def test_small_pdf_no_warning(self, caplog):
         """
         A PDF with ≤ MAX_PAGES pages does NOT trigger the page-limit WARNING.
         """
@@ -319,9 +304,7 @@ class TestExtractMdTablesUseCaseAC6:
 
         with caplog.at_level(logging.WARNING, logger="application.extract_md_tables_usecase"):
             with _patch_count_pages(5), _patch_rasterize_page(), _patch_pdf2image():
-                asyncio.get_event_loop().run_until_complete(
-                    uc.execute(report_id="r-small", pdf_path="/fake/small.pdf")
-                )
+                await uc.execute(report_id="r-small", pdf_path="/fake/small.pdf")
 
         warning_messages = [r.message for r in caplog.records if r.levelno >= logging.WARNING]
         page_limit_warnings = [m for m in warning_messages if "page limit" in m.lower()]
@@ -390,7 +373,7 @@ class TestOcrFetchClientInjection:
         )
         return uc, ext, push, ocr_client
 
-    def test_ocr_fetch_client_called_when_no_doc_ocr_text(self):
+    async def test_ocr_fetch_client_called_when_no_doc_ocr_text(self):
         """
         When doc_ocr_text is None, ocr_fetch_client.fetch_ocr_text is called
         with the correct report_id.
@@ -398,18 +381,16 @@ class TestOcrFetchClientInjection:
         uc, ext, push, ocr_client = self._make_use_case_with_ocr_client()
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            asyncio.get_event_loop().run_until_complete(
-                uc.execute(
-                    report_id="fetch-test-001",
-                    pdf_path="/fake/test.pdf",
-                    # doc_ocr_text NOT provided → should trigger Step 0
-                )
+            await uc.execute(
+                report_id="fetch-test-001",
+                pdf_path="/fake/test.pdf",
+                # doc_ocr_text NOT provided → should trigger Step 0
             )
 
         assert ocr_client.called, "fetch_ocr_text was not called when doc_ocr_text=None"
         assert ocr_client.last_report_id == "fetch-test-001"
 
-    def test_ocr_fetch_client_not_called_when_doc_ocr_text_provided(self):
+    async def test_ocr_fetch_client_not_called_when_doc_ocr_text_provided(self):
         """
         When doc_ocr_text is explicitly provided by caller, the fetch client
         must NOT be called (avoid redundant HTTP call).
@@ -417,19 +398,17 @@ class TestOcrFetchClientInjection:
         uc, ext, push, ocr_client = self._make_use_case_with_ocr_client()
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            asyncio.get_event_loop().run_until_complete(
-                uc.execute(
-                    report_id="fetch-test-002",
-                    pdf_path="/fake/test.pdf",
-                    doc_ocr_text="Already provided OCR text",
-                )
+            await uc.execute(
+                report_id="fetch-test-002",
+                pdf_path="/fake/test.pdf",
+                doc_ocr_text="Already provided OCR text",
             )
 
         assert not ocr_client.called, (
             "fetch_ocr_text was called even though doc_ocr_text was explicitly provided"
         )
 
-    def test_fetched_ocr_text_appears_in_push_as_markdown(self):
+    async def test_fetched_ocr_text_appears_in_push_as_markdown(self):
         """
         The OCR text returned by fetch_ocr_text is converted to markdown
         and passed to push_md_tables as ocr_as_markdown (non-empty string).
@@ -440,16 +419,14 @@ class TestOcrFetchClientInjection:
         )
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            asyncio.get_event_loop().run_until_complete(
-                uc.execute(report_id="fetch-test-003", pdf_path="/fake/test.pdf")
-            )
+            await uc.execute(report_id="fetch-test-003", pdf_path="/fake/test.pdf")
 
         assert push.call_args is not None, "push_md_tables was not called"
         ocr_md = push.call_args["ocr_as_markdown"]
         assert isinstance(ocr_md, str), "ocr_as_markdown must be a string"
         assert len(ocr_md) > 0, "ocr_as_markdown must be non-empty when OCR text is fetched"
 
-    def test_ocr_fetch_client_not_injected_no_crash(self):
+    async def test_ocr_fetch_client_not_injected_no_crash(self):
         """
         When no ocr_fetch_client is provided (None), use case continues normally
         without Step 0. ocr_as_markdown stays empty (original behavior).
@@ -463,16 +440,14 @@ class TestOcrFetchClientInjection:
         )
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            result = asyncio.get_event_loop().run_until_complete(
-                uc.execute(report_id="no-client-001", pdf_path="/fake/test.pdf")
-            )
+            result = await uc.execute(report_id="no-client-001", pdf_path="/fake/test.pdf")
 
         assert result["pushed"] is True
         # Push still called; ocr_as_markdown is "" (no text, no client)
         assert push.called
         assert push.call_args["ocr_as_markdown"] == ""
 
-    def test_graceful_degrade_when_fetch_raises(self):
+    async def test_graceful_degrade_when_fetch_raises(self):
         """
         If ocr_fetch_client.fetch_ocr_text raises an exception, the use case
         must NOT crash. It continues and ocr_as_markdown stays empty.
@@ -482,9 +457,7 @@ class TestOcrFetchClientInjection:
         )
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            result = asyncio.get_event_loop().run_until_complete(
-                uc.execute(report_id="fail-fetch-001", pdf_path="/fake/test.pdf")
-            )
+            result = await uc.execute(report_id="fail-fetch-001", pdf_path="/fake/test.pdf")
 
         # Must not raise; must return normally with pushed status
         assert "pushed" in result
@@ -492,7 +465,7 @@ class TestOcrFetchClientInjection:
         # Push still attempted even if OCR fetch failed
         assert push.called
 
-    def test_empty_fetch_result_gives_empty_ocr_markdown(self):
+    async def test_empty_fetch_result_gives_empty_ocr_markdown(self):
         """
         When fetch_ocr_text returns empty string (no stored OCR), ocr_as_markdown
         in the push call is also empty string.
@@ -500,9 +473,7 @@ class TestOcrFetchClientInjection:
         uc, ext, push, ocr_client = self._make_use_case_with_ocr_client(ocr_text="")
 
         with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
-            asyncio.get_event_loop().run_until_complete(
-                uc.execute(report_id="empty-ocr-001", pdf_path="/fake/test.pdf")
-            )
+            await uc.execute(report_id="empty-ocr-001", pdf_path="/fake/test.pdf")
 
         assert push.call_args is not None
         assert push.call_args["ocr_as_markdown"] == ""

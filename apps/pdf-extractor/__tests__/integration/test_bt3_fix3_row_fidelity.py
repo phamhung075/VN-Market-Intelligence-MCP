@@ -413,7 +413,7 @@ def test_bt3_fix3_row_fidelity_inline_fixture():
 # ---------------------------------------------------------------------------
 
 @pytest.mark.slow
-def test_bt3_fix3_real_ocr_fidelity():
+async def test_bt3_fix3_real_ocr_fidelity():
     """
     BT3-FIX-3 SLOW TEST: real PdfOcrAdapter + ExtractTablesUseCase with pdf_path only.
 
@@ -430,7 +430,6 @@ def test_bt3_fix3_real_ocr_fidelity():
 
     The same 12 ACs are asserted against the live Tesseract output.
     """
-    import asyncio
     from typing import Dict, List, Optional
 
     from application.extract_tables_usecase import ExtractTablesUseCase
@@ -457,13 +456,11 @@ def test_bt3_fix3_real_ocr_fidelity():
         ocr_port=PdfOcrAdapter(),
     )
 
-    result = asyncio.get_event_loop().run_until_complete(
-        usecase.execute(
-            report_id="e71f845d-ffa5-48f9-8f09-30ac2cd09c65",
-            pdf_path=_FPT_PDF_PATH,
-            statement_section="balance_sheet",
-            # NO pre_supplied_pages — forces fresh Tesseract via PdfOcrAdapter
-        )
+    result = await usecase.execute(
+        report_id="e71f845d-ffa5-48f9-8f09-30ac2cd09c65",
+        pdf_path=_FPT_PDF_PATH,
+        statement_section="balance_sheet",
+        # NO pre_supplied_pages — forces fresh Tesseract via PdfOcrAdapter
     )
 
     stored_rows = push_client.last_rows

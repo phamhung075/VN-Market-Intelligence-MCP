@@ -137,17 +137,12 @@ def _fpt_rows() -> List[Dict]:
     ]
 
 
-def _run(coro):
-    """Run a coroutine synchronously in tests."""
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 # ---------------------------------------------------------------------------
 # TC1 — happy path: all adapters called, return shape correct
 # ---------------------------------------------------------------------------
 
 
-def test_tc1_happy_path_all_adapters_called():
+async def test_tc1_happy_path_all_adapters_called():
     rows = _fpt_rows()
     assembler = FakeTableAssembler(rows=rows)
     push_client = FakePushClient(rows_stored=len(rows))
@@ -157,12 +152,10 @@ def test_tc1_happy_path_all_adapters_called():
         table_push_client=push_client,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="test-report-id-1",
-            pdf_path="/tmp/fpt.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="test-report-id-1",
+        pdf_path="/tmp/fpt.pdf",
+        statement_section="balance_sheet",
     )
 
     # assembler was called
@@ -180,7 +173,7 @@ def test_tc1_happy_path_all_adapters_called():
 # ---------------------------------------------------------------------------
 
 
-def test_tc2_fpt_golden_balance_check_balanced():
+async def test_tc2_fpt_golden_balance_check_balanced():
     rows = _fpt_rows()
     assembler = FakeTableAssembler(rows=rows)
     push_client = FakePushClient(rows_stored=3)
@@ -190,12 +183,10 @@ def test_tc2_fpt_golden_balance_check_balanced():
         table_push_client=push_client,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="fpt-uuid-golden",
-            pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="fpt-uuid-golden",
+        pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
+        statement_section="balance_sheet",
     )
 
     assert result["balance_pass"] is True, (
@@ -213,7 +204,7 @@ def test_tc2_fpt_golden_balance_check_balanced():
 # ---------------------------------------------------------------------------
 
 
-def test_tc3_unbalanced_fixture_returns_false():
+async def test_tc3_unbalanced_fixture_returns_false():
     """
     Assets=100, Liab=50, Equity=40 → 100 != 50+40=90 → unbalanced.
     """
@@ -257,12 +248,10 @@ def test_tc3_unbalanced_fixture_returns_false():
         table_push_client=push_client,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="unbalanced-test",
-            pdf_path="/tmp/test.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="unbalanced-test",
+        pdf_path="/tmp/test.pdf",
+        statement_section="balance_sheet",
     )
 
     assert result["balance_pass"] is False, (
@@ -279,7 +268,7 @@ def test_tc3_unbalanced_fixture_returns_false():
 # ---------------------------------------------------------------------------
 
 
-def test_tc4_return_shape_has_required_keys():
+async def test_tc4_return_shape_has_required_keys():
     assembler = FakeTableAssembler(rows=[])
     push_client = FakePushClient(rows_stored=0)
 
@@ -288,12 +277,10 @@ def test_tc4_return_shape_has_required_keys():
         table_push_client=push_client,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="shape-test",
-            pdf_path="/tmp/test.pdf",
-            statement_section="income_statement",
-        )
+    result = await usecase.execute(
+        report_id="shape-test",
+        pdf_path="/tmp/test.pdf",
+        statement_section="income_statement",
     )
 
     assert set(result.keys()) >= {"rows_stored", "balance_pass", "balance_delta"}
@@ -304,7 +291,7 @@ def test_tc4_return_shape_has_required_keys():
 # ---------------------------------------------------------------------------
 
 
-def test_tc5_push_client_receives_correct_payload():
+async def test_tc5_push_client_receives_correct_payload():
     rows = _fpt_rows()
     assembler = FakeTableAssembler(rows=rows, period_current="31/12/2025", period_prior="31/12/2024")
     push_client = FakePushClient(rows_stored=len(rows))
@@ -314,12 +301,10 @@ def test_tc5_push_client_receives_correct_payload():
         table_push_client=push_client,
     )
 
-    _run(
-        usecase.execute(
-            report_id="payload-test-id",
-            pdf_path="/tmp/fpt.pdf",
-            statement_section="balance_sheet",
-        )
+    await usecase.execute(
+        report_id="payload-test-id",
+        pdf_path="/tmp/fpt.pdf",
+        statement_section="balance_sheet",
     )
 
     assert push_client.call_args is not None
@@ -341,7 +326,7 @@ def test_tc5_push_client_receives_correct_payload():
 # ---------------------------------------------------------------------------
 
 
-def test_tc6_empty_rows_handled_gracefully():
+async def test_tc6_empty_rows_handled_gracefully():
     assembler = FakeTableAssembler(rows=[])
     push_client = FakePushClient(rows_stored=0)
 
@@ -350,12 +335,10 @@ def test_tc6_empty_rows_handled_gracefully():
         table_push_client=push_client,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="empty-rows-test",
-            pdf_path="/tmp/empty.pdf",
-            statement_section="cash_flow",
-        )
+    result = await usecase.execute(
+        report_id="empty-rows-test",
+        pdf_path="/tmp/empty.pdf",
+        statement_section="cash_flow",
     )
 
     assert push_client.called
@@ -368,7 +351,7 @@ def test_tc6_empty_rows_handled_gracefully():
 # ---------------------------------------------------------------------------
 
 
-def test_tc7_rows_stored_echoed_from_push_client():
+async def test_tc7_rows_stored_echoed_from_push_client():
     rows = _fpt_rows()
     assembler = FakeTableAssembler(rows=rows)
     push_client = FakePushClient(rows_stored=42)
@@ -378,12 +361,10 @@ def test_tc7_rows_stored_echoed_from_push_client():
         table_push_client=push_client,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="echo-test",
-            pdf_path="/tmp/fpt.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="echo-test",
+        pdf_path="/tmp/fpt.pdf",
+        statement_section="balance_sheet",
     )
 
     assert result["rows_stored"] == 42
@@ -394,7 +375,7 @@ def test_tc7_rows_stored_echoed_from_push_client():
 # ---------------------------------------------------------------------------
 
 
-def test_tc8_assembler_called_with_correct_args():
+async def test_tc8_assembler_called_with_correct_args():
     assembler = FakeTableAssembler(rows=[])
     push_client = FakePushClient(rows_stored=0)
 
@@ -403,12 +384,10 @@ def test_tc8_assembler_called_with_correct_args():
         table_push_client=push_client,
     )
 
-    _run(
-        usecase.execute(
-            report_id="args-test",
-            pdf_path="/tmp/test.pdf",
-            statement_section="income_statement",
-        )
+    await usecase.execute(
+        report_id="args-test",
+        pdf_path="/tmp/test.pdf",
+        statement_section="income_statement",
     )
 
     assert assembler.call_args is not None
@@ -422,7 +401,7 @@ def test_tc8_assembler_called_with_correct_args():
 # ---------------------------------------------------------------------------
 
 
-def test_tc9_balance_delta_sign():
+async def test_tc9_balance_delta_sign():
     """
     Assets=200, Liab=100, Equity=50 → delta = 200 - 150 = 50 (positive).
     """
@@ -442,12 +421,10 @@ def test_tc9_balance_delta_sign():
         table_push_client=push_client,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="delta-sign-test",
-            pdf_path="/tmp/test.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="delta-sign-test",
+        pdf_path="/tmp/test.pdf",
+        statement_section="balance_sheet",
     )
 
     # delta = 200 - (100 + 50) = 50
@@ -459,7 +436,7 @@ def test_tc9_balance_delta_sign():
 # ---------------------------------------------------------------------------
 
 
-def test_tc10_exact_match_delta_zero_balance_pass_true():
+async def test_tc10_exact_match_delta_zero_balance_pass_true():
     """
     Assets = Liab + Equity exactly → delta=0.0 → balance_pass=True.
     """
@@ -479,12 +456,10 @@ def test_tc10_exact_match_delta_zero_balance_pass_true():
         table_push_client=push_client,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="exact-match-test",
-            pdf_path="/tmp/test.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="exact-match-test",
+        pdf_path="/tmp/test.pdf",
+        statement_section="balance_sheet",
     )
 
     assert result["balance_pass"] is True

@@ -32,7 +32,7 @@ Note: the fixture uses simplified but structurally faithful text — enough to
 exercise the section-filter + period-detection logic without requiring real OCR.
 """
 
-import asyncio
+
 import sys
 import os
 from typing import Dict, List, Optional
@@ -374,11 +374,7 @@ class FakeOcrPortRaiseOnCall:
         )
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
-def test_path_a_with_noisy_pages_after_bt7_fix_filters_to_bs_section():
+async def test_path_a_with_noisy_pages_after_bt7_fix_filters_to_bs_section():
     """
     THE KEY BT-7 TEST.
 
@@ -407,13 +403,11 @@ def test_path_a_with_noisy_pages_after_bt7_fix_filters_to_bs_section():
         ocr_port=ocr_port,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="fpt-q4-2025-bt7-test",
-            pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
-            statement_section="balance_sheet",
-            pre_supplied_pages=noisy_pages,
-        )
+    result = await usecase.execute(
+        report_id="fpt-q4-2025-bt7-test",
+        pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
+        statement_section="balance_sheet",
+        pre_supplied_pages=noisy_pages,
     )
 
     # ---------- Assertions: what BT-7 fix must achieve ----------
@@ -474,7 +468,7 @@ def test_path_a_with_noisy_pages_after_bt7_fix_filters_to_bs_section():
     )
 
 
-def test_path_a_period_prior_is_31_12_2024():
+async def test_path_a_period_prior_is_31_12_2024():
     """
     After BT-7 fix, period_prior must be 31/12/2024 (the second date in the BS header)
     not any other date from noise pages.
@@ -493,13 +487,11 @@ def test_path_a_period_prior_is_31_12_2024():
         ocr_port=ocr_port,
     )
 
-    _run(
-        usecase.execute(
-            report_id="fpt-q4-period-prior-test",
-            pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
-            statement_section="balance_sheet",
-            pre_supplied_pages=noisy_pages,
-        )
+    await usecase.execute(
+        report_id="fpt-q4-period-prior-test",
+        pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
+        statement_section="balance_sheet",
+        pre_supplied_pages=noisy_pages,
     )
 
     period_prior = push_client.call_args.get("period_prior")
@@ -509,7 +501,7 @@ def test_path_a_period_prior_is_31_12_2024():
     )
 
 
-def test_path_b_slow_real_ocr_test_still_green():
+async def test_path_b_slow_real_ocr_test_still_green():
     """
     Sanity check: the Path B (no pre_supplied_pages) with a FakeOcrPort
     that returns only the BS pages still works — BT-7 must not break Path B.
@@ -536,12 +528,10 @@ def test_path_b_slow_real_ocr_test_still_green():
         ocr_port=ocr_port,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="path-b-sanity",
-            pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="path-b-sanity",
+        pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
+        statement_section="balance_sheet",
     )
 
     assert result.get("balance_pass") is True, (

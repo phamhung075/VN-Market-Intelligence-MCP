@@ -247,7 +247,7 @@ class _FakePushClient:
         return {"ok": True, "rows_stored": len(rows)}
 
 
-def test_extract_tables_usecase_with_real_extractor_fixture() -> None:
+async def test_extract_tables_usecase_with_real_extractor_fixture() -> None:
     """
     ExtractTablesUseCase.execute() with real TextTableExtractor + fixture pages
     + fake push client.
@@ -258,7 +258,6 @@ def test_extract_tables_usecase_with_real_extractor_fixture() -> None:
     - push client called once with correct report_id
     - No subclass override — real parser code path exercised.
     """
-    import asyncio
     from infrastructure.text_table_extractor import TextTableExtractor
     from application.extract_tables_usecase import ExtractTablesUseCase
 
@@ -308,12 +307,10 @@ def test_extract_tables_usecase_with_real_extractor_fixture() -> None:
         table_push_client=fake_push,
     )
 
-    result = asyncio.get_event_loop().run_until_complete(
-        usecase_fixture.execute(
-            report_id=report_id,
-            pdf_path="/fake/path/to/fpt.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase_fixture.execute(
+        report_id=report_id,
+        pdf_path="/fake/path/to/fpt.pdf",
+        statement_section="balance_sheet",
     )
 
     assert result["rows_stored"] >= 70, (

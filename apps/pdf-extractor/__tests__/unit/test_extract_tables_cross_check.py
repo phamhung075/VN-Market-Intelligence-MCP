@@ -18,7 +18,6 @@ All blocking is DDD-compliant:
     - No HTTP/DB calls in the gate logic
 """
 
-import asyncio
 import sys
 import os
 
@@ -230,16 +229,12 @@ def _decimal_shift_rows() -> List[Dict]:
     ]
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 # ---------------------------------------------------------------------------
 # TC-GW1: FPT golden → gate PASS → push called once
 # ---------------------------------------------------------------------------
 
 
-def test_gw1_fpt_golden_gate_passes_push_called_once():
+async def test_gw1_fpt_golden_gate_passes_push_called_once():
     """
     FPT balanced rows (balance_pass=True, no decimal-shift anomaly):
     gate must PASS and push must be called exactly once.
@@ -254,12 +249,10 @@ def test_gw1_fpt_golden_gate_passes_push_called_once():
         alert_port=alert_port,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="fpt-golden-uuid",
-            pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="fpt-golden-uuid",
+        pdf_path="/data/pdfs/FPT_2025_Q4.pdf",
+        statement_section="balance_sheet",
     )
 
     assert push_client.called, "push_table must be called when gate passes"
@@ -276,7 +269,7 @@ def test_gw1_fpt_golden_gate_passes_push_called_once():
 # ---------------------------------------------------------------------------
 
 
-def test_gw2_unbalanced_fixture_blocks_push():
+async def test_gw2_unbalanced_fixture_blocks_push():
     """
     Unbalanced rows (balance_pass=False):
     gate BLOCKS push; blocked_reason = 'cross_check_fail'; alert emitted.
@@ -291,12 +284,10 @@ def test_gw2_unbalanced_fixture_blocks_push():
         alert_port=alert_port,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="unbalanced-report-uuid",
-            pdf_path="/tmp/unbalanced.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="unbalanced-report-uuid",
+        pdf_path="/tmp/unbalanced.pdf",
+        statement_section="balance_sheet",
     )
 
     assert not push_client.called, "push_table must NOT be called when gate blocks"
@@ -311,7 +302,7 @@ def test_gw2_unbalanced_fixture_blocks_push():
 # ---------------------------------------------------------------------------
 
 
-def test_gw3_decimal_shift_fixture_blocks_push():
+async def test_gw3_decimal_shift_fixture_blocks_push():
     """
     Rows where total_assets is 1_000_000× larger than (liab+equity sum).
     reconcile_figures must return 'shift' → gate BLOCKS push.
@@ -326,12 +317,10 @@ def test_gw3_decimal_shift_fixture_blocks_push():
         alert_port=alert_port,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="decimal-shift-uuid",
-            pdf_path="/tmp/shift.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="decimal-shift-uuid",
+        pdf_path="/tmp/shift.pdf",
+        statement_section="balance_sheet",
     )
 
     assert not push_client.called, (
@@ -347,7 +336,7 @@ def test_gw3_decimal_shift_fixture_blocks_push():
 # ---------------------------------------------------------------------------
 
 
-def test_gw4_alert_message_contains_report_id():
+async def test_gw4_alert_message_contains_report_id():
     """Alert message must contain the report_id so the WORK channel reader can diagnose."""
     assembler = FakeTableAssembler(rows=_unbalanced_rows())
     push_client = FakePushClient()
@@ -359,12 +348,10 @@ def test_gw4_alert_message_contains_report_id():
         alert_port=alert_port,
     )
 
-    _run(
-        usecase.execute(
-            report_id="alert-format-test-uuid",
-            pdf_path="/tmp/test.pdf",
-            statement_section="balance_sheet",
-        )
+    await usecase.execute(
+        report_id="alert-format-test-uuid",
+        pdf_path="/tmp/test.pdf",
+        statement_section="balance_sheet",
     )
 
     assert len(alert_port.alerts) >= 1
@@ -379,7 +366,7 @@ def test_gw4_alert_message_contains_report_id():
 # ---------------------------------------------------------------------------
 
 
-def test_gw5_blocked_reason_value_is_cross_check_fail():
+async def test_gw5_blocked_reason_value_is_cross_check_fail():
     """Verify the exact string value of blocked_reason when gate fires."""
     assembler = FakeTableAssembler(rows=_unbalanced_rows())
     push_client = FakePushClient()
@@ -391,12 +378,10 @@ def test_gw5_blocked_reason_value_is_cross_check_fail():
         alert_port=alert_port,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="blocked-reason-test",
-            pdf_path="/tmp/test.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="blocked-reason-test",
+        pdf_path="/tmp/test.pdf",
+        statement_section="balance_sheet",
     )
 
     assert result["blocked_reason"] == "cross_check_fail"
@@ -408,7 +393,7 @@ def test_gw5_blocked_reason_value_is_cross_check_fail():
 # ---------------------------------------------------------------------------
 
 
-def test_gw6_blocked_reason_none_when_gate_passes():
+async def test_gw6_blocked_reason_none_when_gate_passes():
     """When extraction is clean, blocked_reason must be None (or absent)."""
     assembler = FakeTableAssembler(rows=_fpt_rows())
     push_client = FakePushClient(rows_stored=4)
@@ -420,12 +405,10 @@ def test_gw6_blocked_reason_none_when_gate_passes():
         alert_port=alert_port,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="clean-extraction-test",
-            pdf_path="/tmp/fpt.pdf",
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id="clean-extraction-test",
+        pdf_path="/tmp/fpt.pdf",
+        statement_section="balance_sheet",
     )
 
     assert result.get("blocked_reason") is None

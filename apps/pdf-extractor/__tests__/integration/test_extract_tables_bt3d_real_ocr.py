@@ -29,7 +29,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-import asyncio
+
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -84,7 +84,7 @@ class _FakePushClient:
 # ---------------------------------------------------------------------------
 
 @pytest.mark.slow
-def test_extract_tables_usecase_real_ocr_path() -> None:
+async def test_extract_tables_usecase_real_ocr_path() -> None:
     """
     BT-3-D REAL OCR PATH TEST.
 
@@ -140,12 +140,10 @@ def test_extract_tables_usecase_real_ocr_path() -> None:
 
     report_id = "bt3d-fpt-real-ocr-test-uuid-0001"
 
-    result = asyncio.get_event_loop().run_until_complete(
-        usecase.execute(
-            report_id=report_id,
-            pdf_path=str(_FPT_PDF_PATH),
-            statement_section="balance_sheet",
-        )
+    result = await usecase.execute(
+        report_id=report_id,
+        pdf_path=str(_FPT_PDF_PATH),
+        statement_section="balance_sheet",
     )
 
     # ---- Assertions ----

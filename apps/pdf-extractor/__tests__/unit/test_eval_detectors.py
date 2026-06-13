@@ -658,9 +658,8 @@ class TestEvalPushClient:
             "detector_version": "v1",
         }
 
-    def test_push_stage_raises_on_http_500(self):
+    async def test_push_stage_raises_on_http_500(self):
         """EvalPushClient.push_stage MUST raise on HTTP 500 — no bare except."""
-        import asyncio
         import urllib.error
         from unittest.mock import MagicMock, patch
 
@@ -680,17 +679,14 @@ class TestEvalPushClient:
 
         with patch("urllib.request.urlopen", side_effect=http_error):
             with pytest.raises(urllib.error.HTTPError) as exc_info:
-                asyncio.get_event_loop().run_until_complete(
-                    client.push_stage(
-                        report_id="test-report-id",
-                        stage_result=self._make_stage_result(),
-                    )
+                await client.push_stage(
+                    report_id="test-report-id",
+                    stage_result=self._make_stage_result(),
                 )
             assert exc_info.value.code == 500
 
-    def test_push_stage_success_returns_ok_dict(self):
+    async def test_push_stage_success_returns_ok_dict(self):
         """EvalPushClient.push_stage returns parsed JSON response on success."""
-        import asyncio
         import io
         from unittest.mock import MagicMock, patch
 
@@ -705,17 +701,14 @@ class TestEvalPushClient:
         mock_response.__exit__ = MagicMock(return_value=False)
 
         with patch("urllib.request.urlopen", return_value=mock_response):
-            result = asyncio.get_event_loop().run_until_complete(
-                client.push_stage(
-                    report_id="test-report-id",
-                    stage_result=self._make_stage_result(),
-                )
+            result = await client.push_stage(
+                report_id="test-report-id",
+                stage_result=self._make_stage_result(),
             )
         assert result["ok"] is True
 
-    def test_push_stage_raises_on_url_error(self):
+    async def test_push_stage_raises_on_url_error(self):
         """EvalPushClient.push_stage MUST raise on network failure."""
-        import asyncio
         import urllib.error
         from unittest.mock import patch
 
@@ -727,9 +720,7 @@ class TestEvalPushClient:
         url_error = urllib.error.URLError(reason="Connection refused")
         with patch("urllib.request.urlopen", side_effect=url_error):
             with pytest.raises(urllib.error.URLError):
-                asyncio.get_event_loop().run_until_complete(
-                    client.push_stage(
-                        report_id="test-report-id",
-                        stage_result=self._make_stage_result(),
-                    )
+                await client.push_stage(
+                    report_id="test-report-id",
+                    stage_result=self._make_stage_result(),
                 )

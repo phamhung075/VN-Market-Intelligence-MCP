@@ -46,7 +46,6 @@ ASSERTIONS (all required for a CLEAN pass):
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
@@ -125,16 +124,12 @@ class FakeOcrPortRaiseOnCall:
         )
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 # ---------------------------------------------------------------------------
 # THE KEY TEST: full production pipeline on the REAL 46-page FPT Q4 OCR
 # ---------------------------------------------------------------------------
 
 
-def test_full_pipeline_real_fpt_q4_ocr_balance_pass():
+async def test_full_pipeline_real_fpt_q4_ocr_balance_pass():
     """
     BT3-FIX-2 MAIN TEST: full production pipeline on REAL 46-page FPT Q4 OCR.
 
@@ -189,13 +184,11 @@ def test_full_pipeline_real_fpt_q4_ocr_balance_pass():
         ocr_port=ocr_port,
     )
 
-    result = _run(
-        usecase.execute(
-            report_id="e71f845d-ffa5-48f9-8f09-30ac2cd09c65",  # real FPT Q4 report_id
-            pdf_path="/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf",
-            statement_section="balance_sheet",
-            pre_supplied_pages=full_pages,
-        )
+    result = await usecase.execute(
+        report_id="e71f845d-ffa5-48f9-8f09-30ac2cd09c65",  # real FPT Q4 report_id
+        pdf_path="/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf",
+        statement_section="balance_sheet",
+        pre_supplied_pages=full_pages,
     )
 
     # -----------------------------------------------------------------------
