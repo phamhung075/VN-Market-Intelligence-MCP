@@ -7183,7 +7183,18 @@
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U1 (docs/architecture-briefs/2026-06-13-tool-surface-upgrade.md, commit 371437a7). FIRST WAVE — READY. apps/mcp-server SERIALIZATION: U1 + U2-GEN both READY + both mcp-server zone; router dispatches ONLY ONE into the mcp-server slot. PO RECOMMENDATION: dispatch U1 FIRST (smaller M-size, isolated telemetry seam, unblocks nothing downstream so lowest-risk to start while U2-GEN's larger generator+parity work queues next into the freed slot). U4 (macro-indicators) runs in PARALLEL.",
         "dispatch_note": "READY. mcp-server zone serialization: ONE of {U1,U2-GEN} into the slot. PO recommends U1 first. Router raw-verifies + claims.",
         "claimed_by": "dev-mcp-server",
-        "claimed_at": "2026-06-13T16:44:43Z"
+        "claimed_at": "2026-06-13T16:44:43Z",
+        "review_commit": "829931b3",
+        "review_at": "2026-06-13T17:09:44Z",
+        "no_rebuild": false,
+        "needs_rebuild": true,
+        "review_evidence": {
+          "scope": "perCallCounterStore.ts(new)+server.ts hook+trackSessionToolUsageJob.ts rewrite+caller+tests+docs",
+          "unit": "8 bun pass + deliberate-fail RED proof (5 flipped)",
+          "tsc": "clean",
+          "toolcount": 157,
+          "rebuild": "REQUIRED — runtime telemetry hook; mcp-server Up 9h predates commit; QA live-verify needs rebuilt container"
+        }
       },
       {
         "id": "TSU-DEV-U2-GEN",
@@ -7216,7 +7227,7 @@
         "id": "TSU-DEV-U4",
         "title": "TSU-DEV-U4 — get_macro_snapshot prev-session delta+direction: extend SnapshotDTO with prev_session_delta (*float64) + direction enum (up/down/flat/unknown) for the 4 headline metrics; compute VNINDEX delta from daily_ohlcv LIMIT 2; emit null/unknown for oil/gold/usdVnd (prev-session NOT persisted). SEPARATE ZONE — parallel-eligible.",
         "owner": "dev-macro-indicators",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "type": "IMPL",
         "zone": "apps/macro-indicators/",
         "priority": "high",
@@ -7237,7 +7248,17 @@
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U4 (commit 371437a7). FIRST WAVE — READY + PARALLEL-ELIGIBLE. R-3: apps/macro-indicators/ is dev-macro-indicators territory, a SEPARATE zone from apps/mcp-server/ — it does NOT consume the mcp-server serialization slot and runs in PARALLEL with whichever single mcp-server task (U1 or U2-GEN) the router dispatches. MUST NOT be assigned to dev-mcp-server.",
         "dispatch_note": "READY + PARALLEL. Separate zone (macro-indicators) — independent of the mcp-server slot. Router may dispatch this concurrently with the chosen mcp-server task. Router raw-verifies + claims.",
         "claimed_by": "dev-macro-indicators",
-        "claimed_at": "2026-06-13T16:44:43Z"
+        "claimed_at": "2026-06-13T16:44:43Z",
+        "review_commit": "56822e4a",
+        "review_at": "2026-06-13T17:09:44Z",
+        "no_rebuild": true,
+        "review_evidence": {
+          "live_confirmed": "get_macro_snapshot serves vnIndexDelta=-6.96 vnIndexDirection=down; oil/gold/usdVnd null+unknown (DSI serve-null)",
+          "runtime_preexisting": "9880eadc 2026-06-07",
+          "today_test_only": "56822e4a repositories_test.go seed-date-rot fix",
+          "uncached": "go test ./... -count=1 12/12 pass",
+          "rebuild": "NOT needed — runtime already live-correct"
+        }
       },
       {
         "id": "TSU-DEV-U3",
