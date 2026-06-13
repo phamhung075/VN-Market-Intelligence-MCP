@@ -25,10 +25,21 @@ This is the correct conservative DSI posture: a false-null is safer than a false
 - AC-U5-6: Holding Ratio column present when holdingRatio>0 — PASS (T-U5-3)
 - AC-U5-7: existing columns Net Vol + Foreign Room present after fix — PASS (T-U5-7)
 
-## Live-Verify Status
-Code gate: APPROVED. Live-verify deferred to sprint-final rebuild per handoff policy.
-QA-U5-1/U5-2/U5-3 live calls (get_foreign_flow/get_company_profile) pending container rebuild.
+## Live-Verify Gate (cycle-258 · 2026-06-13 · commit 2d2a0bc5)
+Container rebuilt: image 302d5cb6→1042a2a9, toolCount 157, DB intact.
+- UNIT UNCACHED: bun test TSU-DEV-U5 + vnstock-foreign-flow --no-cache → 28/0 (488ms)
+- TSC: exit 0 (clean)
+- FENCE RED PROOF: hasRealHoldingData=true break → T-U5-1 RED (0.00% fabricated column appeared) + T-U5-FENCE nullOutput RED. 9/2 fail. Restore → 11/0 GREEN. Gate is real.
+- LIVE FPT: table = "Date | Net Vol (daily) | Foreign Room" — Holding Ratio column ABSENT. No fabricated 0.00%.
+- LIVE VNM: same — Holding Ratio column ABSENT.
+- LIVE HPG: same — Holding Ratio column ABSENT.
+- COMPANY PROFILE FPT: foreign_holding_ratio: null (not fabricated 0).
+- RESIDUAL ?? 0 AUDIT: foreignFlowTools.ts:105 inside if(hasRealHoldingData); foreignFlowAnalyzer.ts:115 inside isHoldingRatioFabricated ? null : guard. Both real-data-only paths. Not fabrication.
+- MOCK-GUARD: exit 0. DDD: PASS. SECURITY: PASS.
+- DSI INVARIANT: live-confirmed. "no data" = column omitted across all 3 tickers. Never 0%-everywhere fabrication.
+
+verdict: APPROVED (live-verify complete)
 
 ## Merge Status
-Commits c21cec46 + 43894aaf already on main (branch merged by developer).
+Commit 2d2a0bc5 on main (branch task/TSU-DEV-U5 merged by developer before QA live-verify gate, confirmed scope-clean).
 No additional merge action required.

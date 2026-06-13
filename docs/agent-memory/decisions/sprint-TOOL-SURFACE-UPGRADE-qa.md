@@ -152,3 +152,26 @@
 - Gateway live spot-check: not available in specialist sub-session (INV-GATEWAY-1); ops already verified get_market_summary + trigger_news_vps_fetch; source-code evidence authoritative for remaining pairs.
 **why-decision:** All pipeline checks green. No logic change, no arch concern (description-only, no new tool, no cross-service HTTP). Tool count 157 preserved. APPROVED.
 **why-change:** no change from plan.
+
+---
+
+### STEP qa-S11 · qa · 2026-06-13T20:30:00Z
+**task-id:** TSU-DEV-U5
+**what-done:** QA LIVE-VERIFY gate for foreign-flow null holding ratio DSI fix (commit 2d2a0bc5). Seam files: foreignFlowAnalyzer.ts, vnstockStore.ts, foreignFlowTools.ts (production source, companyProfileTools.ts unchanged per task design). Test files: TSU-DEV-U5-foreign-flow-null-holding-ratio.test.ts + vnstock-foreign-flow.test.ts.
+**what-considered:**
+- G1 UNIT UNCACHED: bun test TSU-DEV-U5 + vnstock-foreign-flow --no-cache → 28 pass / 0 fail (488ms). Own run.
+- G2 TSC: bun tsc --noEmit → exit 0, no output. Clean.
+- G3 FENCE RED PROOF: broke hasRealHoldingData = true (foreignFlowTools.ts:70) → T-U5-1 RED (expected "Holding Ratio" absent, received present with 0.00% column) + T-U5-FENCE nullOutput assertion RED. 9 pass / 2 fail. Restored → 11/0 GREEN. Fence exercises real gate.
+- G4 LIVE FPT: get_foreign_flow table = "Date | Net Vol (daily) | Foreign Room" — Holding Ratio column ABSENT. No 0.00% fabricated values.
+- G5 LIVE VNM: same table format — Holding Ratio column ABSENT. Confirmed.
+- G6 LIVE HPG: same table format — Holding Ratio column ABSENT. Confirmed.
+- G7 COMPANY PROFILE: get_company_profile FPT → foreign_holding_ratio: null. Not fabricated 0.
+- G8 RESIDUAL ?? 0 AUDIT: foreignFlowTools.ts:105 inside if(hasRealHoldingData) — real-data branch only. foreignFlowAnalyzer.ts:115 in isHoldingRatioFabricated ? null : ... — fabricated path returns null before reaching ??0. Both are tsc null-narrowing artifacts, not fabrication paths. Mock-guard exit 0 confirms.
+- G9 HOLDINGRATIOCHANGE5D NULL: T-U5-4 proves signal.holdingRatioChange5d===null when all holdingRatio=null. Analyzer lines 113-115 verified.
+- G10 SCOPE PASS: git show --name-only = 8 files — 2 tests, 3 production source, 3 docs. No orch-state, no unrelated production.
+- G11 DDD: interface→infra imports in foreignFlowTools.ts permitted (interface layer). domain/services/foreignFlowAnalyzer.ts has no infra imports. PASS.
+- G12 SECURITY: no process.env, no hardcoded secrets in any modified file. PASS.
+- G13 MOCK-GUARD: exit 0. PASS.
+- DSI INVARIANT: "no data" served as column-omitted (not 0%-everywhere). Live confirms: 3 tickers all show 2-column table, never 3-column with fabricated 0%.
+**why-decision:** All pipeline checks green. Live behavior matches DSI invariant exactly — Holding Ratio column correctly omitted for all live tickers (VPS never provides this field). FENCE proves the gate is real. Unit + tsc + mock-guard + DDD + security all clean. No fabrication path. APPROVED.
+**why-change:** no change from plan.
