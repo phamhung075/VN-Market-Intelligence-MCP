@@ -175,8 +175,18 @@ func TestSQLiteAlertRepository_CountTodayAlerts(t *testing.T) {
 	mustInitTables(t, db)
 	repo := NewSQLiteAlertRepository(db)
 
-	todayISO := time.Now().UTC().Format(time.RFC3339Nano)
-	yesterday := time.Now().UTC().Add(-25 * time.Hour).Format(time.RFC3339Nano)
+	// Injected reference: noon local time today and noon local time yesterday.
+	// CountTodayAlerts uses time.Now() (local TZ) for its "today start" boundary,
+	// so all fixtures must be anchored in local time to match that boundary.
+	// Using noon (12:00) guarantees each fixture is unambiguously in its own
+	// calendar day regardless of any host TZ offset (max ±14h from UTC).
+	// Using AddDate(0,0,-1) is a calendar-day step — never ambiguous unlike -25h.
+	refNow := time.Now()
+	todayNoon := time.Date(refNow.Year(), refNow.Month(), refNow.Day(), 12, 0, 0, 0, refNow.Location())
+	yesterdayNoon := todayNoon.AddDate(0, 0, -1)
+
+	todayISO := todayNoon.Format(time.RFC3339Nano)
+	yesterday := yesterdayNoon.Format(time.RFC3339Nano)
 
 	insertTestAlert(t, db, "VCB", todayISO)
 	insertTestAlert(t, db, "VCB", todayISO)
@@ -338,10 +348,20 @@ func TestReadPendingOutcomeAlerts_ExcludesOlderThan90Days(t *testing.T) {
 	db := freshDB(t)
 	mustInitTables(t, db)
 
-	old := time.Now().UTC().Add(-91 * 24 * time.Hour).Format(time.RFC3339Nano)
-	now := time.Now().UTC().Format(time.RFC3339Nano)
+	// Injected reference: noon UTC today. ReadPendingOutcomeAlerts uses a 90-day
+	// cutoff anchored at time.Now().UTC(). Using noon guarantees the "old" record
+	// at -91 calendar days is always strictly below the cutoff, and the "recent"
+	// record is always strictly above it, regardless of host TZ or clock position
+	// within the day. AddDate(0,0,-91) is a calendar-day step — unambiguous unlike
+	// a fixed -91*24h offset that can land on the cutoff boundary near midnight UTC.
+	refUTC := time.Now().UTC()
+	refNoon := time.Date(refUTC.Year(), refUTC.Month(), refUTC.Day(), 12, 0, 0, 0, time.UTC)
+
+	old := refNoon.AddDate(0, 0, -91).Format(time.RFC3339Nano)
+	recent := refNoon.Format(time.RFC3339Nano)
+
 	insertTestAlert(t, db, "OLD", old)
-	insertTestAlert(t, db, "RECENT", now)
+	insertTestAlert(t, db, "RECENT", recent)
 
 	rows, err := ReadPendingOutcomeAlerts(db, 0)
 	if err != nil {
