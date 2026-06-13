@@ -7230,7 +7230,7 @@
         "id": "QUE-REFERENCE-PAGE-1b",
         "title": "Build dashboard.kinh-dich-reference.tsx route with search/grid",
         "owner": "dev-frontend",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",
@@ -7251,7 +7251,9 @@
         "created_at": "2026-06-13T09:15:00Z",
         "created_by": "pm",
         "handoff": "docs/data/orch/HANDOFF-QUE-REFERENCE-PAGE-1b.md",
-        "parent_brief": "ARCH-QUE-REFERENCE-PAGE"
+        "parent_brief": "ARCH-QUE-REFERENCE-PAGE",
+        "claimed_by": "dev-frontend",
+        "claimed_at": "2026-06-13T08:50:00Z"
       },
       {
         "id": "QUE-REFERENCE-PAGE-2",
@@ -9800,6 +9802,17 @@
         "severity": "HIGH",
         "status": "RESOLVED",
         "payload_ref": null
+      },
+      {
+        "id": "router-frontend-testsuite-170fail-2026-06-13T08-50Z",
+        "ts": "2026-06-13T08:50:00Z",
+        "from": "dev-team-dispatcher",
+        "to": "po",
+        "type": "test_suite_pre_existing_failures",
+        "summary": "apps/frontend test suite: 170 pre-existing failures (1360 pass) at HEAD — bctc-eval, TopNav DOM, fetch-* suites. Surfaced during QUE-REFERENCE-PAGE-1a QA baseline-diff (delta=0, not caused by 1a). Standing /goal item: needs triage sprint.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "reports/TASK_REPORT_QUE-REFERENCE-PAGE-1a.md"
       }
     ],
     "archive": [
