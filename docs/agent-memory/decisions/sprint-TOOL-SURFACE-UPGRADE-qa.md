@@ -101,6 +101,30 @@
 **why-decision:** All 6 gate checks pass. Test-only scope confirmed. No prod-code change. No arch concern. APPROVED.
 **why-change:** no change from plan.
 
+### STEP qa-S9 · qa · 2026-06-13T17:30:00Z
+**task-id:** TSU-DEV-U1
+**what-done:** QA LIVE-VERIFY gate for commit 829931b3. Per-call telemetry counter (perCallCounterStore.ts singleton, handler-proxy in server.ts, trackSessionToolUsageJob.ts rewrite). Container freshly rebuilt (ffd70997→302d5cb6). Gate: unit tests, tsc, live MCP calls, in-process code-trace, sessionCount removal, scope check, fence-false-green proof, DDD/security/mock-guard.
+**what-considered:**
+- G1 UNIT TSU-DEV-U1 PASS: bun test src/__tests__/TSU-DEV-U1-per-call-counter.test.ts → 8 pass / 0 fail (own uncached run, 263ms).
+- G2 UNIT 1299c PASS: bun test src/__tests__/1299c-session-cache.test.ts → 8 pass / 0 fail (own uncached run, 63ms). TC-7/TC-8 updated for perCallCounterStore (sessionToolCache dead in gateway model).
+- G3 UNIT 1356b PASS: bun test src/__tests__/1356b-track-session-tool-usage-job-gaps.test.ts → 8 pass / 0 fail (own uncached run, 49ms). TSU-1..8 all green. 24 total across 3 suites.
+- G4 TSC PASS: bun tsc --noEmit → exit 0, no output, no errors.
+- G5 FENCE-FALSE-GREEN PROOF: replaced incrementTool with no-op in inline bun eval → getSnapshot()["get_market_snapshot"] = undefined (not 1). Confirmed: T-U1-1 would FAIL with no-op. Real incrementTool produced correct count of 3. Suite is NOT a no-op.
+- G6 BASELINE: tool-usage-stats.json before live calls → generatedAt:2026-06-13T17:22:48.132Z, uniqueTools:0, toolCounts:{}, sessionCount ABSENT (3 keys only: generatedAt, uniqueTools, toolCounts).
+- G7 LIVE MCP CALLS (6 total via /mcp streamable HTTP, from inside container): get_market_snapshot ×3 (ids 2,5,6) → real VN-Index 1791.65 data returned; get_macro_snapshot ×2 (ids 3,7) → real macro data returned; get_alerts ×1 (id 4) → 20 alerts returned. All 6 calls succeeded with real data. HTTP endpoint: POST localhost:3000/mcp with Accept: application/json, text/event-stream.
+- G8 MECHANISM TRACE: /mcp route (server.ts:364) creates fresh McpServer instance per call (stateless). createMcpServerInstance() (server.ts:240) runs proxy loop (lines 264-276): wraps every _registeredTools handler to call incrementTool(toolName). incrementTool writes to module-level Map counterStore (perCallCounterStore.ts:20). Bun module cache is process-scoped → all 6 requests shared same singleton. After 6 calls: get_market_snapshot:3, get_macro_snapshot:2, get_alerts:1 in-process.
+- G9 CRON ANALYSIS: trackSessionToolUsageJob scheduled at CRONS.trackSessionToolUsage = `0 */8 * * *` (startScheduler.ts:779, cronConfig.ts:117). Fires at 00:00/08:00/16:00 UTC. No manual trigger tool exists. Cannot force flush in-gate. Gate task spec allows code-trace path for this case.
+- G10 FLUSH LOGIC TRACE: trackSessionToolUsageJob() (lines 48-62): calls getCounterSnapshot() → reads counterStore Map → builds ToolUsageStats{generatedAt, uniqueTools, toolCounts} → writeFileSync to OUTPUT_PATH. sessionCount field NOT present in ToolUsageStats interface or construction. Next scheduled flush (next 8h mark) will write non-zero toolCounts for the tools called this session.
+- G11 SESSIONCOUNT REMOVED: ToolUsageStats interface has 3 fields only (generatedAt, uniqueTools, toolCounts). T-U1-7 asserts stats.sessionCount === undefined and passes. Baseline JSON has 3 keys only (python3 confirmed: sessionCount=False).
+- G12 SCOPE PASS: git show --stat 829931b3 → 9 files: 3 test files, perCallCounterStore.ts (new), server.ts (+20L proxy hook), startScheduler.ts (±6L wiring), trackSessionToolUsageJob.ts (rewrite), docs/microservice/mcp-server/infrastructure.md, docs/handoffs/TASK_TSU-DEV-U1.md. Zero unrelated production files.
+- G13 NO-FABRICATION: tools NOT called (e.g. send_telegram, get_price) show zero in counterStore — no fabricated increments. Only 3 distinct tools called; only those 3 would appear in next flush.
+- G14 DDD PASS: perCallCounterStore.ts = pure infra singleton (Map only, no imports). trackSessionToolUsageJob.ts imports only from infrastructure/telemetry and infrastructure/projectRoot. Zero domain→infra violations.
+- G15 SECURITY PASS: no process.env, no hardcoded secrets/passwords/tokens in U1 production files.
+- G16 MOCK-GUARD PASS: bash scripts/audits/mock-guard.sh → exit 0, "no fabricated-data patterns found in production source."
+- Residual noted: next 8h cron fire will materialize non-zero toolCounts in JSON. Not a blocker per gate spec.
+**why-decision:** All 8 AC-U1-1..8 verified. Unit suites green (own uncached runs). TSC clean. Fence-false-green confirmed non-trivially. Live MCP calls confirmed real data returned (not fabricated). In-process counter mechanism traced and confirmed sound (module singleton, synchronous Map.set, per-request proxy installation). sessionCount removed from interface and JSON. Scope clean (9 files, all U1 seam). DDD/security/mock-guard all pass. APPROVED with residual: cron-only flush not yet materialized (next 8h boundary); per gate spec this is acceptable.
+**why-change:** no change from plan.
+
 ### STEP qa-S6 · qa · 2026-06-07T13:30:00Z
 **task-id:** TSU-DEV-U6
 **what-done:** QA gate for description-only updates across 6 files, 10 tools, 5 TSH leftover pairs (commits 3dd0d7bd + ac1043a4 on main).
