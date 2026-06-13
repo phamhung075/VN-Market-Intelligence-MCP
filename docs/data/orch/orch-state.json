@@ -5,10 +5,10 @@
   "_updated_by": "po-s52-health-triage",
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-13T22:38:47Z",
+    "updated_at": "2026-06-13T22:42:16Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-MCP-CRASH-LOOP-WRITEWAL",
-    "next_agent": "pm"
+    "active_task_id": "BC-1",
+    "next_agent": "dev-mcp-server"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -9608,6 +9608,33 @@
         "architect_done_at": "2026-06-13T22:38:47Z",
         "handoff": "docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md",
         "brief": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md"
+      },
+      {
+        "id": "BC-1",
+        "title": "FIX-MCP-CRASH-LOOP-BC-1 — WAL checkpoint policy: wal_autocheckpoint=1000 + runForcedTruncateCheckpoint() unconditional every 30 min",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "IN_PROGRESS",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "created_at": "2026-06-14T00:30:00Z",
+        "created_by": "pm",
+        "files_summary": "Modify: schema.ts (PRAGMA), checkpoint.ts (new runForcedTruncateCheckpoint), startScheduler.ts (30-min cron). Create: test file FIX-MCP-CRASH-LOOP-BC-waltruncate.test.ts",
+        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-BC-1.md",
+        "depends_on": [],
+        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
+        "accepts": [
+          "WAL frame count stays <1000 under 10k-write load",
+          "wal_autocheckpoint=1000 on fresh connection",
+          "runForcedTruncateCheckpoint() issues BEGIN IMMEDIATE then TRUNCATE in order",
+          "Live uptime >4h, WAL <5MB, no restart",
+          "tsc 0 errors"
+        ],
+        "claimed_at": "2026-06-13T22:42:16Z",
+        "claimed_by": "router",
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-13T22:42:16Z. ROOT FIX: wal_autocheckpoint 4000->1000 (schema.ts:109) + runForcedTruncateCheckpoint() in checkpoint.ts (BEGIN IMMEDIATE;COMMIT then wal_checkpoint(TRUNCATE)) + rewire 30min cron unconditional in startScheduler.ts + unit test. GENERIC db-layer. Handoff: docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-BC-1.md"
       }
     ],
     "head": {
@@ -10828,30 +10855,6 @@
       }
     ],
     "ready": [
-      {
-        "id": "BC-1",
-        "title": "FIX-MCP-CRASH-LOOP-BC-1 — WAL checkpoint policy: wal_autocheckpoint=1000 + runForcedTruncateCheckpoint() unconditional every 30 min",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "READY",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
-        "created_at": "2026-06-14T00:30:00Z",
-        "created_by": "pm",
-        "files_summary": "Modify: schema.ts (PRAGMA), checkpoint.ts (new runForcedTruncateCheckpoint), startScheduler.ts (30-min cron). Create: test file FIX-MCP-CRASH-LOOP-BC-waltruncate.test.ts",
-        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-BC-1.md",
-        "depends_on": [],
-        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
-        "accepts": [
-          "WAL frame count stays <1000 under 10k-write load",
-          "wal_autocheckpoint=1000 on fresh connection",
-          "runForcedTruncateCheckpoint() issues BEGIN IMMEDIATE then TRUNCATE in order",
-          "Live uptime >4h, WAL <5MB, no restart",
-          "tsc 0 errors"
-        ]
-      },
       {
         "id": "A-1",
         "title": "FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert: cron_job_runs sentinel + 30-min poller (>=2 restarts/4h -> WORK alert)",
