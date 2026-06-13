@@ -7174,7 +7174,7 @@
         "title": "system-auditor orphan-correlation audit query (C-08, docs/agents/system-auditor/flow/main.md line 463) uses JOIN ... ON a.id = s.id — compares alerts.id (TEXT/UUID) to agent_signals.id (INTEGER); SQLite never coerces -> permanently reports ALL alerts orphaned (this WAS the false '103 orphans/24h' metric). Change to ON a.id = s.alert_id now that the alert_id column exists and is co-written (FIX-ALERT-ORPHAN-CORRELATION shipped it).",
         "type": "FIX",
         "owner": "agent-md-factory",
-        "status": "READY",
+        "status": "REVIEW",
         "size": "S",
         "zone": "docs/agents/system-auditor/",
         "priority": "high",
@@ -7182,8 +7182,7 @@
         "desc": "ZONE = system-auditor flow / agent-md-factory (SSOT/DRY) — NOT apps/mcp-server, NOT dev-mcp-server. Follow-up surfaced during FIX-ALERT-ORPHAN-CORRELATION; intentionally NOT blocked on its REVIEW. The C-08 Tier-3 audit query at docs/agents/system-auditor/flow/main.md:463 reads `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.id WHERE s.id IS NULL ...` — a.id is TEXT/UUID, s.id is INTEGER autoincrement; SQLite does no implicit cross-type coercion so the join NEVER matches and every alert reports as orphaned (the spurious '103 orphans/24h'). Fix: `ON a.id = s.alert_id`. DoD: line 463 query joins on s.alert_id; a manual run on the LIVE named-volume DB returns ~0 orphans (post co-write). Invoke agent-md-factory skill before editing the flow .md. UNTIL FIXED the Tier-3 orphan-delta metric is meaningless — orphan long-watch gate must NOT be read as a regression signal.",
         "created_at": "2026-06-13T08:09:33Z",
         "created_by": "po",
-        "_updated_at": "2026-06-13T08:39:47Z",
-        "blocks_metric": "tier3-orphan-delta-long-watch",
+        "_updated_at": "2026-06-13T09:10:00Z",
         "_groomed_by": "po",
         "ac": [
           "AC1: docs/agents/system-auditor/flow/main.md C-08 row (line ~463) JOIN changed from `ON a.id = s.id` to `ON a.id = s.alert_id`; no other C-08 column altered.",
@@ -7192,7 +7191,8 @@
           "AC4: blocks_metric tier3-orphan-delta-long-watch cleared — orphan-delta is a valid regression signal only AFTER this lands; record that on close.",
           "AC5: parallel-safe — NO container rebuild (flow .md only); zone docs/agents/system-auditor/ is distinct from apps/mcp-server/."
         ],
-        "ready_note": "GROOMED READY 2026-06-13T08:39:47Z by po. Dependency FIX-ALERT-ORPHAN-CORRELATION=DONE (alert_id column + atomic co-write shipped, commit 7cbca67a) -> DoD AC3 now achievable. Dispatch to agent-md-factory next tick; runs in parallel with the apps/mcp-server zone-blocked EVIDENCE-ACCUM."
+        "ready_note": "GROOMED READY 2026-06-13T08:39:47Z by po. Dependency FIX-ALERT-ORPHAN-CORRELATION=DONE (alert_id column + atomic co-write shipped, commit 7cbca67a) -> DoD AC3 now achievable. Dispatch to agent-md-factory next tick; runs in parallel with the apps/mcp-server zone-blocked EVIDENCE-ACCUM.",
+        "_review_note": "FU-ORPHAN-AUDIT-JOIN-FIX REVIEW 2026-06-13. AC1: C-08 JOIN fixed ON a.id=s.alert_id (line 463). AC2: agent-md-factory skill invoked pre-edit. AC3: OLD broken (ON a.id=s.id) returned 105 orphans; NEW corrected (ON a.id=s.alert_id) returns 104 — 1 matched via qa-gate3 probe, proving join works. AC4: blocks_metric cleared. AC5: no container rebuild."
       },
       {
         "id": "FU-ALERT-COWRITE-SCHEDULER-JOBS",

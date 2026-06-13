@@ -121,3 +121,14 @@
   - `docs/agents/digest-predict/flow/monday.md` — P-6 notebook commit migrated
 - Audit verdict (6 agents): fb-market-poster=CORRECT (OVERWRITE class, defers to skill); digest-predict daily/weekly/monthly=CORRECT (defer to cowork-end-cycle→skill); all 5 above=FLOW-ORPHAN now fixed.
 - Commit: 04b20c87
+
+## c298 · 2026-06-13T09:10Z — FU-ORPHAN-AUDIT-JOIN-FIX
+
+- Task: Fix C-08 orphan-audit query JOIN in system-auditor flow (docs/agents/system-auditor/flow/main.md line 463).
+- Root cause: `ON a.id = s.id` joined alerts.id (TEXT/UUID) to agent_signals.id (INTEGER autoincrement) — SQLite never coerces TEXT↔INT, so every alert reported as orphaned permanently.
+- Fix: Changed to `ON a.id = s.alert_id` — both TEXT, correct correlation column (shipped by FIX-ALERT-ORPHAN-CORRELATION commit 7cbca67a).
+- AC2 gate: agent-md-factory skill invoked pre-edit (P-1 thru P-6 all clear — unique occurrence, no YAML frontmatter, no circular dep, no duplication).
+- AC3 live probe: OLD broken query → 105 orphans; NEW corrected query → 104. Diff of 1 = qa-gate3 probe signal that genuinely matches via alert_id, proving join now works. 104 real unmatched alerts (alert_id population only started post-7cbca67a — expected).
+- AC4: blocks_metric tier3-orphan-delta-long-watch cleared on board row.
+- AC5: no container rebuild — flow .md only, zone docs/agents/system-auditor/ isolated from apps/mcp-server/.
+- Board: FU-ORPHAN-AUDIT-JOIN-FIX READY→REVIEW.
