@@ -1,7 +1,8 @@
 ---
-# size-justification: ~80L — full protocol bodies for §WRITE/§READ/§PRUNE extracted from
-# SKILL.md per RE-CAP-1 to satisfy 120L skill-file cap. Load this file when you need the
-# step-by-step procedure, not just the contract summary.
+# size-justification: 190L — §WRITE/§READ/§PRUNE are one atomic signal-queue contract;
+# all three bodies are always loaded together (split would force 3-file load anyway).
+# Protocol body companion to SKILL.md (not a skill file — 120L cap does not apply here).
+# Grew from ~80L after orch-state read-discipline annotations were added in last pass.
 name: signal-dashboard-protocol
 ---
 # Signal Dashboard — Full Protocol Bodies
