@@ -7252,7 +7252,7 @@
         "id": "FIX-PDFX-PYTESSERACT-CONTAMINATION",
         "title": "Restore sys.modules['pytesseract'] unconditionally in test_ocr_backends.py to stop cross-test import poisoning",
         "owner": "dev-pdf-extractor",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "zone": "apps/pdf-extractor/",
         "type": "FIX",
         "size": "XS",
@@ -7277,7 +7277,21 @@
         ],
         "note": "Continues killing pdf-extractor CI-red class (follow-up to FIX-PDFX-TEST-LOOP-POLLUTION, commit 27d09912). QA-isolated hand-off. Free zone — apps/mcp-server FROZEN until EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate; not touched.",
         "claimed_by": "dev-pdf-extractor",
-        "claimed_at": "2026-06-13T10:55:43Z"
+        "claimed_at": "2026-06-13T10:55:43Z",
+        "review_commit": "8f92f465",
+        "review_at": "2026-06-13T11:25:57Z",
+        "review_evidence": {
+          "ac1_test_ac3_full_suite_order": "PASS (test_ac3_table_count_ge2 + test_ac3_each_table_is_valid_pipe_table) in default no:randomly order",
+          "ac2_grep_bare_pop": "0 hits (grep_exit=1) in test_ocr_backends.py",
+          "ac3_residual": "2 failed = test_bt3_fix3_real_ocr_fidelity + test_extract_tables_usecase_real_ocr_path (both @pytest.mark.slow container-only, host-skipped)",
+          "ac4_order_independence": "identical 2-fail/955-pass across default + seed=12345 + seed=99999",
+          "ac5_diff_scope": "2 files, both __tests__/ (test_ocr_backends.py + unit/test_ocr_adapter_psm6_guard.py); no prod src, no Dockerfile/compose/requirements/pyproject",
+          "second_bug_found": "test_ocr_adapter_psm6_guard.py module-import _ensure_stub inserted Output-less pytesseract stub at collection; fixed via eager real-import (generic, covers pdf2image+pytesseract)",
+          "router_raw_verified": "AC2 grep + AC5 diff scope confirmed raw by router",
+          "test_only": true,
+          "no_rebuild": true,
+          "zone_pure": "apps/pdf-extractor"
+        }
       }
     ],
     "archive": [],
