@@ -7161,7 +7161,7 @@
         "id": "TSU-DEV-U1",
         "title": "TSU-DEV-U1 — Per-call telemetry counter: replace dead sessionToolCache (never populated under gateway per-call model) with a synchronous per-call invocation counter; flush to docs/agent-memory/modules/tool-usage-stats.json; REMOVE sessionCount (semantically undefined post-gateway).",
         "owner": "dev-mcp-server",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -7181,7 +7181,9 @@
         "verification_gate_detail": "QA via gateway: (1) invoke ANY tool via call_tool(server=vn-market) once; (2) force-run trackSessionToolUsageJob; (3) assert docs/agent-memory/modules/tool-usage-stats.json toolCounts[<invokedTool>] >= 1 AND sessionCount field ABSENT AND uniqueTools == Object.keys(toolCounts).length. Run bun test in ISOLATION (no cached pass) — verify the new perCallCounterStore test actually executed (deliberate-fail proof: break increment, confirm test goes red, revert).",
         "root_cause_requirement": "Root cause (brief U1): sessionToolCache is populated only at the SSE handshake (server.ts:205) which NEVER fires under the gateway per-call dial-drop model, so trackSessionToolUsageJob reads an always-empty snapshot -> sessionCount:0/toolCounts:{} permanently. FIX the cause: new singleton perCallCounterStore.ts (Map<string,number>, exports incrementTool/getSnapshot/resetCounters, no I/O); wrap each handler in server.ts AFTER registerAllTools(server) completes (~L220, same _registeredTools private-field pattern already used at server.ts:203-219 — R-2: applying BEFORE registerAllTools wraps an empty map, FORBIDDEN) with a proxy that calls incrementTool(name) then delegates; trackSessionToolUsageJob reads perCallCounterStore.getSnapshot(). FORBIDDEN: keeping sessionToolCache read-path or renaming sessionCount to a still-meaningless field — REMOVE it. Output schema: { generatedAt, uniqueTools, toolCounts:{[name]:number} }.",
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U1 (docs/architecture-briefs/2026-06-13-tool-surface-upgrade.md, commit 371437a7). FIRST WAVE — READY. apps/mcp-server SERIALIZATION: U1 + U2-GEN both READY + both mcp-server zone; router dispatches ONLY ONE into the mcp-server slot. PO RECOMMENDATION: dispatch U1 FIRST (smaller M-size, isolated telemetry seam, unblocks nothing downstream so lowest-risk to start while U2-GEN's larger generator+parity work queues next into the freed slot). U4 (macro-indicators) runs in PARALLEL.",
-        "dispatch_note": "READY. mcp-server zone serialization: ONE of {U1,U2-GEN} into the slot. PO recommends U1 first. Router raw-verifies + claims."
+        "dispatch_note": "READY. mcp-server zone serialization: ONE of {U1,U2-GEN} into the slot. PO recommends U1 first. Router raw-verifies + claims.",
+        "claimed_by": "dev-mcp-server",
+        "claimed_at": "2026-06-13T16:44:43Z"
       },
       {
         "id": "TSU-DEV-U2-GEN",
@@ -7214,7 +7216,7 @@
         "id": "TSU-DEV-U4",
         "title": "TSU-DEV-U4 — get_macro_snapshot prev-session delta+direction: extend SnapshotDTO with prev_session_delta (*float64) + direction enum (up/down/flat/unknown) for the 4 headline metrics; compute VNINDEX delta from daily_ohlcv LIMIT 2; emit null/unknown for oil/gold/usdVnd (prev-session NOT persisted). SEPARATE ZONE — parallel-eligible.",
         "owner": "dev-macro-indicators",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "type": "IMPL",
         "zone": "apps/macro-indicators/",
         "priority": "high",
@@ -7233,7 +7235,9 @@
         "verification_gate_detail": "QA: (1) `go test ./... -count=1` in apps/macro-indicators (NO cached pass) -> green incl. new delta test; (2) call_tool(server=vn-market, tool=get_macro_snapshot) RAW response includes prev_session_delta + direction for all 4 metrics; VNINDEX shows a real delta+direction (up/down/flat), oil/gold/usdVnd show prev_session_delta:null + direction:'unknown' (NEVER fabricated). direction is a STRING enum not boolean (NFR-U4-1).",
         "root_cause_requirement": "Root cause (brief U4): get_macro_snapshot serves point-in-time values with no delta vs previous session (violates feedback_market_data_direction.md). FIX in the Go macro-indicators zone (the TS MCP tool is a passthrough proxy — NO change there, new JSON fields flow through automatically): dtos.go extend SnapshotDTO additively with PrevSessionDelta *float64 + Direction string for each of 4 headline values; usecases.go compute delta = current - prev_close from daily_ohlcv VNINDEX two-row (assign up/down/flat; flat if |delta|<threshold; unknown if prev absent); repositories.go:154-197 FetchVNIndex extend to return prev-close row alongside current (ARCH-U4-1: daily_ohlcv has (code,date,close) -> prev-session computable for VNINDEX only; oilUsd/goldUsd/usdVnd sit in single-row commodity_prices/sbv_rates with NO history -> emit null/unknown). FORBIDDEN: fabricating a delta for oil/gold/usdVnd; renaming/removing existing SnapshotDTO fields; touching the TS macro tool.",
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U4 (commit 371437a7). FIRST WAVE — READY + PARALLEL-ELIGIBLE. R-3: apps/macro-indicators/ is dev-macro-indicators territory, a SEPARATE zone from apps/mcp-server/ — it does NOT consume the mcp-server serialization slot and runs in PARALLEL with whichever single mcp-server task (U1 or U2-GEN) the router dispatches. MUST NOT be assigned to dev-mcp-server.",
-        "dispatch_note": "READY + PARALLEL. Separate zone (macro-indicators) — independent of the mcp-server slot. Router may dispatch this concurrently with the chosen mcp-server task. Router raw-verifies + claims."
+        "dispatch_note": "READY + PARALLEL. Separate zone (macro-indicators) — independent of the mcp-server slot. Router may dispatch this concurrently with the chosen mcp-server task. Router raw-verifies + claims.",
+        "claimed_by": "dev-macro-indicators",
+        "claimed_at": "2026-06-13T16:44:43Z"
       },
       {
         "id": "TSU-DEV-U3",
