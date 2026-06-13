@@ -9527,8 +9527,11 @@
         "type": "system_issue",
         "summary": "held lock po-triage-20260613 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-13T08:28:04Z",
+        "resolved_by": "dev-team",
+        "resolution": "false-positive: ephemeral dispatcher-mutex key (po-triage-*) / C-08 task-lock released by PO + task DONE — auditor held-lock check does not recognize transient mutex keys"
       },
       {
         "id": "sau-d4-202606130300",
@@ -9538,8 +9541,11 @@
         "type": "system_issue",
         "summary": "held lock FIX-ALERT-ORPHAN-CORRELATION has no orch-state task_board row",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-13T08:28:04Z",
+        "resolved_by": "dev-team",
+        "resolution": "false-positive: ephemeral dispatcher-mutex key (po-triage-*) / C-08 task-lock released by PO + task DONE — auditor held-lock check does not recognize transient mutex keys"
       },
       {
         "id": "sau-d4-202606110300",
