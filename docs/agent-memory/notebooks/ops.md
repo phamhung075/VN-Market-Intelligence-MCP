@@ -302,3 +302,29 @@ technical-analysis   Up 2 days (healthy)
 **Commit:** 897877ec FIX-PENDING-REFINE-LIMIT-CHECKKIND
 
 ---
+## Session: 2026-06-13 (FIX-ALERT-ORPHAN-CORRELATION — mcp-server rebuild)
+
+**Task:** Rebuild mcp-server to ship FIX-ALERT-ORPHAN-CORRELATION (idempotent ALTER TABLE migration + atomic co-write path).
+
+**Commit:** 7cbca67a (fix(mcp-server/FIX-ALERT-ORPHAN-CORRELATION): atomic alert→signal co-write + alert_id column)
+
+### Execution Summary
+
+**Rebuild Execution**
+- Command: `docker compose up -d --build mcp-server` (targeted, no-deps, no down)
+- mcp-server image: old → `ffd709975717` (new) ✓
+- Build time: 65s; all peers unchanged
+- Container lifecycle: Recreate only (no rebuild cascade)
+
+**Post-Rebuild Verification**
+1. **All 11 services healthy:** alert-engine, api-gateway, frontend, kinh-dich-service, macro-indicators, mcp-server, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis ✓
+2. **mcp-server health:** 200 OK, `{"status":"ok","toolCount":157,"sessions":0,"uptime":65.85...}` ✓
+3. **Migration verified:** `PRAGMA table_info(agent_signals)` shows new column 28: `alert_id|TEXT|0||0` (idempotent, no errors) ✓
+4. **Peer stability:** Zero service kills, zero restarts, uptime preserved ✓
+
+**QA Gate:** CLEARED ✓
+- New image ID confirmed live in container vs docker images registry
+- Migration atomic: alert_id column present, schema intact
+- Health endpoint responds; no startup errors in mcp-server logs
+- Ready for QA verification of co-write path + orphan-correlation fix logic
+
