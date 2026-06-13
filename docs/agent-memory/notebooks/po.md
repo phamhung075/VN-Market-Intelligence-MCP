@@ -1,19 +1,39 @@
 # PO Notebook
 
-## 2026-06-13T21:28Z — Triage (dev-team Step 1, Sat off-market 21:26Z tick) → NOTHING (idle)
+## 2026-06-13T22:28Z — DETECT→FIX bridge: promote health-recheck findings to task board
 
-Delta-tick re-triage of 3 drained signals. Verdict: **NOTHING** — no new/groomed task. WIP=0, board unchanged.
+Closed the recurring detect→track gap (project_anomaly_task_bridge). The every-2h
+health-recheck detector was firing but its output never reached the board — 32 open
+findings accumulating while dev-team sat idle (0 in_progress).
 
-### Signals dispositioned (all drained → docs/signals/processed/)
-- **tnb-20260613T202300** (c94 audit-handoff, NEEDS_ATTENTION): already ACK'd 20:54Z. Its two HIGH findings — F-EOD-SCHEDULE-STALE (NEW) + F-MORNING-NB-MISSING (5th) — are SAME-root and already subsumed by **FIX-COWORK-GUARANTEED-BACKSTOP** (done[], commit 45553a28, rec_count=5). Root = Layer-B */15 dispatcher 32h evaporation 06-12→06-13. G1-G4 gate first live-fires Mon 06-15/16. NOT duplicated, NOT re-opened. Appended delta-tick ACK to handoff.
-- **bctc_signal_FPT_20260613_routine** (#6005): mode=routine, all gates clean (balance_ok, insider/legal clean, 0 chain). esc_3 = DATA-COV-LIM-GUARD-**HELD**-16d → suppression working as designed, not a breach. No task.
-- **cowork-team-20260613T210726Z**: pure FIRE telemetry (priority low, errors []). Confirms Layer-B re-arm (cron a95078d1) caught bctc-analyst-slot-3 @21:05Z, ending the 32h outage = stopgap working. Informational only.
+### Promoted: 10 deduped FIX tasks (backlog 145→155, commit c68edcfa)
+- **P0** (5d data-pipeline deaths, highest user-impact — silently rot served data):
+  - FIX-FUNDAMENTALS-REFRESH-CRON-DEAD (B1, apps/mcp-server) — 0 refreshes since 06-08
+  - FIX-BCTC-VPS-PIPELINE-STALE-5D (B5, apps/pdf-extractor) — 0 PDFs, Q1 window open
+- **P1**: FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT (I13/I5), FIX-TA-INDICATORS-TIER3-ROUTING (B2),
+  FIX-HNX-UPCOM-PRICE-SOURCES-DEAD (B4), FIX-OHLCV-DAILY-AGGREGATOR-STALE (I3)
+- **P2**: FIX-MARKET-HEXAGRAM-TOOL-MISSING (B10), FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS
+  (B3/6/7/8/9/11/12 bundled — 1 doc-fix class), FIX-COMMODITY-WTI-DELTA-CORRUPT (I10/I8/I4)
+- **P3**: FIX-ALERT-CASCADE-OUTCOME-DEAD (M1/M2)
 
-### Constraints honored
-- Saturday off-market → no market-hours live-verify dispatched; backstop G1-G4 deferred to Mon market day as designed. WIP ≤ 2 respected (dispatched 0).
+### Deduped-skipped (already tracked): I7→FIX-SBV-FX-VPS-FETCHER-UNHEALTHY,
+I11→FIX-MCP-CRASH-LOOP-WRITEWAL. SCHEMA-DRIFT-P5/P8 are DDL self-heal (distinct from
+the B-series tool-package param-doc drift — NOT deduped, correctly separate).
 
-### Carry-forward (tracked, unchanged)
-- **bug #2776 undeployed** → blocks CTG/VCB/D2D bctc release (signal #6006); F-BCTC-CTG-CRITICAL 10th esc, 28+ tickers blocked. Active BCTC sprints + free-zone mcp-server backlog (FIX-MCP-MEMORY-CODE-LEAK, FIX-LANCEDB-INSERT-SEGFAULT, FIX-PREDICTION-SIGNALS-EMPTY, FIX-REE-BS-SECTION-REGEX, FIX-CRON-JOB-RUNS-DOUBLE-LOG, FIX-SCHEMA-DRIFT-P5-SELFHEAL REWORK) = grooming candidates when a market-day tick opens WIP.
-- F3/F4/F9 structural MED; F5 hexagram 501 LOW.
-- FIX-COWORK-GUARANTEED-BACKSTOP awaiting Mon G1-G4 — do NOT re-open.
-- SPIKE_DOCLANG-OTSL-OVERLAP still open: measure DocLang validate overlap vs native stage-4/layout_invariants gates; net-new>0 → thin CI-gate, else close. Route to architect only if A justified.
+### Deferred (next pass): I1 (FRED key env), I2 (RSS endpoints), I6 (feedback backlog
+drain), I9 (hydro), I12 (VCB reparse — overlaps VCB-MISSING-PDFS/FU-BCTC-RATIOS-N-A),
+M3-M7 (lower-leverage doc/test debt). One-line reason: known-env or lower-impact than
+the data-pipeline deaths; promote if they persist 2+ more recheck cycles.
+
+### New reusable tooling
+- scripts/po-s52-health-recheck-batch-triage.jq — GLOBAL-dedup batch backlog appender
+  (skips any id present in ANY board array incl. active_sprints[].tasks). Reusable for
+  any detector-report → board promotion. Payload: po-s52-health-recheck-batch-payload.json.
+
+### Gates honored
+JSON-valid · jq global-dedup (0 collisions) · tsc GREEN pre-push · explicit-stage (3 files)
+· commit-mutex po-commit-s52 claimed+released · pushed c68edcfa.
+
+### Carry-forward
+- Next recheck pass (00:07Z) verifies these 10 ids present + ranks deferred set.
+- B1/B5 are P0 — router should route to dev-mcp-server + dev-pdf-extractor first.
