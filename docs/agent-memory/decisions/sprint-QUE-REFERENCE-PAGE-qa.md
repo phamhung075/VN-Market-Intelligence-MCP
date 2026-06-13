@@ -86,3 +86,28 @@ G9 SECURITY PASS: No `process.env`, no hardcoded secrets.
 G10 BCTC-EVAL: N/A — frontend-only nav/component task, no BCTC report_ids in scope.
 
 **why-change:** No change from plan — all 10 checks green. APPROVED.
+
+---
+
+### STEP qa-S4 · qa · 2026-06-13T11:48Z
+**task-id:** QUE-REFERENCE-PAGE-TEST
+**what-done:** QA gate for QUE-REFERENCE-PAGE-TEST (commit 13a3bfd0 — add QUE_DETAIL integrity tests T1–T6 + QueName deep-link tests via .ts→.tsx rename).
+**verdict:** APPROVED
+
+**what-considered:**
+
+G1 TSC PASS: `npx tsc --noEmit` in apps/frontend → EXIT 0, 0 errors.
+
+G2 VITEST NO-REGRESSION PASS: Before (13a3bfd0^, old .ts present) = 21 fail / 1518 pass. After (13a3bfd0, .tsx + detail.test.ts) = 21 fail / 1533 pass. Delta = 0 new failures, +15 passes. Matches dev-reported AC exactly.
+
+G3 RENAME INTEGRITY PASS: Old `.ts` fully removed (no orphan twin). New `.tsx` is strict superset: all 19 describe/it lines from old file present verbatim in new file (set-diff = empty). Net-new: 1 describe (`QueName — withDetailLink deep-link anchor`) + 2 its (withDetailLink=true renders anchor; default renders no anchor) = 22 total lines (old 19 → new 22, +3).
+
+G4 VI.MOCK SCOPE INERT PASS: The 19 pre-existing tests operate on `QUE_DESCRIPTIONS` (pure data map — no React, no render, no QueName). `vi.mock("../components/ui/tooltip")` is scoped only to `QueName` render tests (lines 152–173). The mock has zero effect on data-shape assertions — they never call `render()`. Mock is inert for 19 pre-existing tests; relied upon only by the 2 new anchor tests.
+
+G5 GENERIC-NOT-HARDCODED PASS: T2 uses `Object.values(QUE_DETAIL).forEach()` (line 43, 58). T3 uses `Object.values(QUE_DETAIL).forEach()` (lines 67, 73). Only T4 (spot-check quẻ 1) uses `QUE_DETAIL[1]` literal index. Only the #que-1 deep-link test uses hexagram=1 literal. No per-hexagram hardcode table anywhere in either test file.
+
+G6 NO-SKIP/ONLY/XIT PASS: grep on full diff returned CLEAN — no `.skip`, `.only`, `xit`, `xdescribe`, or `// it(` patterns introduced.
+
+G7 ZONE PASS: `git show 13a3bfd0 --name-only` → only `apps/frontend/app/__tests__/*`. Zero `apps/mcp-server` files touched.
+
+**why-change:** No change from plan — all 7 gates green. APPROVED. Sprint final subtask; sprint-close follows.
