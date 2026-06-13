@@ -1,6 +1,21 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-13 | **Sprint:** QUE-REFERENCE-PAGE
+**Last updated:** 2026-06-13 | **Sprint:** FIX-FRONTEND-NAV-STALE-COUNT-TESTS
+
+---
+
+## Session: 2026-06-13 (FIX-FRONTEND-NAV-STALE-COUNT-TESTS)
+
+**FIX-FRONTEND-NAV-STALE-COUNT-TESTS IN_PROGRESS→REVIEW (commit e43480e0)**
+- Fixed 21 stale frozen-count assertions in 6 test files (no production code touched).
+- FE-HEADER-SSOT-top-nav.test.tsx: rebaselined 19→26 analyst / 26→33 total (SSOT).
+- task17-page14 through page18: replaced absolute-count + last/second-to-last assertions with relative-order via findIndex predecessor approach.
+- New assertion style: find item by label, find predecessor by label, assert itemIdx === predecessorIdx + 1.
+- NAV_ITEMS totals in per-page tests replaced with structural invariant only (no frozen literal sum).
+- vitest before: 21 fail / 1533 pass. After: 0 fail / 1554 pass. Delta: +21. tsc: EXIT 0.
+- Status: REVIEW
+
+Zone health: 6 nav test files decoupled from frozen counts, 0 failures, relative-order pattern now canonical for per-page nav tests | HEALTHY
 
 ---
 
