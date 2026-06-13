@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T10:54:57Z",
+  "_updated_at": "2026-06-13T11:51:55Z",
   "_updated_by": "po",
   "head": {
     "status": "idle",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T11:41:03Z",
-    "_updated_by": "po-S50",
+    "_updated_at": "2026-06-13T11:51:55Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -6801,7 +6801,7 @@
         "id": "INFRA-TEST-SEEDDATE-FIX",
         "type": "FIX",
         "owner": "dev-stock-price",
-        "status": "BACKLOG",
+        "status": "READY",
         "size": "S",
         "zone": "apps/stock-price/",
         "priority": "medium",
@@ -6814,10 +6814,27 @@
           "go-fleet-followup"
         ],
         "title": "stock-price: fix pre-existing seed-date unit-test bug. Surfaced during GFD-11 qa-verify (GO-FLEET-DEPLOY) as one RED infra test package — NOT a runtime defect (container is Up+healthy, get_market_snapshot live). Test depends on a hardcoded/elapsed seed date; harden to a relative or injected date so it is deterministic.",
-        "gate": "go test ./... in apps/stock-price passes the seed-date package green regardless of current date; container health unaffected.",
+        "gate": "cd apps/stock-price && go test ./pkg/infrastructure/ -run TestSQLiteRepo_GetHistory_OHLCFieldParity -count=1 -v is GREEN at today's date AND at simulated future dates (now+30d / now+180d / now+1y); go test ./... -count=1 green; container health unaffected.",
         "created_at": "2026-06-10T22:46:57Z",
         "created_by": "po",
-        "note": "[po S5 GFD-12 2026-06-10T22:46:57Z] Carved out of GFD-12 sign-off. GFD-11 flagged 2 pre-existing infra test bugs non-blocking; tracked separately from GO-FLEET-DEPLOY. NOT in_progress (WIP<=2)."
+        "note": "[po S5 GFD-12 2026-06-10T22:46:57Z] Carved out of GFD-12 sign-off. GFD-11 flagged 2 pre-existing infra test bugs non-blocking; tracked separately from GO-FLEET-DEPLOY. NOT in_progress (WIP<=2). | [po S50 groom 2026-06-13T11:51:55Z] -> READY. Confirmed ALREADY RED today (seedDate 2026-05-22 + 7d window, now 2026-06-13). Generic relative-date fix; test_only/no_rebuild; -count=1 cache-defeat + future-date proof gate.",
+        "blocked_by": [],
+        "test_only": true,
+        "no_rebuild": true,
+        "acceptance_criteria": [
+          "ROOT CAUSE: apps/stock-price/pkg/infrastructure/fetchers_test.go TestSQLiteRepo_GetHistory_OHLCFieldParity seeds daily_ohlcv with a hardcoded seedDate=\"2026-05-22\"; GetHistory filters `date >= date('now','-7 days')`, so the seeded row drifts out of the window once now > seedDate+7d and len(history) becomes 0. Today (2026-06-13) the test is already RED.",
+          "GENERIC FIX: derive seedDate from current date at runtime so the row always lands inside the GetHistory lookback window — e.g. seedDate := time.Now().UTC().AddDate(0,0,-1).Format(\"2006-01-02\") and reuse that same value for the updated_at literal and the row.Date assertion. No hardcoded calendar date, no widening the -7d window, no t.Skip.",
+          "ASSERTION INTACT: keep the asymmetric OHLCV field-parity assertions (open=10/high=40/low=5/close=20/volume=1000) and assert row.Date == the relative seedDate so any Scan column-transposition still fails loudly.",
+          "DETERMINISM GATE: cd apps/stock-price && go test ./pkg/infrastructure/ -run TestSQLiteRepo_GetHistory_OHLCFieldParity -count=1 -v passes GREEN. Use -count=1 because Go's test cache does NOT key on wall-clock date and would otherwise serve a stale PASS/FAIL.",
+          "ADVERSE-CONDITION PROOF: prove green under simulated future dates — run the package with libfaketime or a date-injection harness at now+30d, now+180d and now+1y (or, if no faketime available, document the relative-date math proving the seeded row is always >= date('now','-7d')). The fix must hold for any current date, not just today.",
+          "NO REGRESSION: cd apps/stock-price && go test ./... -count=1 stays green; container health unaffected (test_only — no rebuild, no deploy).",
+          "SCOPE: edit ONLY apps/stock-price/pkg/infrastructure/fetchers_test.go (and, if a shared test helper is cleaner, a sibling *_test.go in the same package). Do NOT touch production fetchers.go — GetHistory windowing is correct."
+        ],
+        "target_files": [
+          "apps/stock-price/pkg/infrastructure/fetchers_test.go"
+        ],
+        "groomed_at": "2026-06-13T11:51:55Z",
+        "groomed_by": "po"
       },
       {
         "id": "PRED-RESOLVER-GAP-FIX",
