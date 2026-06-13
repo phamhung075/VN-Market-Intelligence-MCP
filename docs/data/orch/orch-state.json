@@ -10534,8 +10534,8 @@
       "created_at": "2026-06-10T19:30:04.668103Z",
       "acknowledged": false
     },
-    "_updated_at": "2026-06-13T03:00:00.615Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-13T19:34:05Z",
+    "_updated_by": "po",
     "rows": [
       {
         "id": "sau-d4-202606130300",
@@ -10573,8 +10573,11 @@
         "type": "system_issue",
         "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
         "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-13T19:34:05Z",
+        "resolved_by": "po",
+        "resolution": "RESOLVED-auditor-blind-spot + now-moot: esc-datacov:FPT:Q1-2026:ESC-3 is NOT a dispatcher-mutex key (unlike the 3 sibling sau-d4 false-positives) — it was a REAL escalation-TTL coordination.db lock from the ESC-3 data-coverage guard (esc-datacov: 30d TTL, route ops) which INTENTIONALLY has no orch-state task_board row (escalation locks are not tasks). Auditor D-4 check does not recognize the esc-datacov:* key class -> false 'orphaned' flag. LIVE PROOF: task_list_held now returns count=0 (lock TTL-expired + GC'd by gcExpiredLocks since the 06-11 signal). Genuinely orphaned? NO. Stale lock to release? NONE remain. Disposition: blind-spot, now moot. FOLLOW-UP for auditor hardening: D-4 should whitelist escalation key classes (esc-datacov:*, published:*, dispatcher mutex) that legitimately lack task_board rows — see existing FU-AUDITOR-D4-SIGNAL-ID."
       },
       {
         "id": "sau-b13-202606122230",
@@ -10584,9 +10587,11 @@
         "type": "data_stale",
         "summary": "B-13 WARN: 26 stale pending BCTC rows (created > 72h)",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null,
-        "resolution": "diagnosed; task FIX-BCTC-VPS-QUEUE-SYNC created"
+        "resolution": "RESOLVED-already-groomed: downstream SYMPTOM of B-06 root. Live DB: 26 pending rows all created >72h (oldest 2026-04-30, newest 2026-05-19) — exactly the un-capped/un-deferred remnant. Folded into FIX-BCTC-VPS-QUEUE-SYNC (G1+G2); C-16 acceptance updated to require this count read 0/all-deferred post-fix. No separate task per root/symptom dedup.",
+        "resolved_at": "2026-06-13T19:34:05Z",
+        "resolved_by": "po"
       },
       {
         "id": "sau-b06-202606122230",
@@ -10596,9 +10601,11 @@
         "type": "data_stale",
         "summary": "B-06 WARN: VPS bctc service stale (last push 2026-06-08, 4+ days)",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null,
-        "resolution": "diagnosed; task FIX-BCTC-VPS-QUEUE-SYNC created"
+        "resolution": "RESOLVED-already-groomed: ROOT confirmed via live named-volume DB. bctc_vps_queue pending=26 (all >72h), 10 tickers (VNM,VEA,SHB,HUT,DIG,DXG,KDH,PDR,MSN,FRT) at 555-562 attempts STILL retrying 404s as of 2026-06-13 19:30 (no retry cap, no deferred transition); other 16 have 0 attempts / NULL source_url (never enriched — queue-sync gap). This is the ROOT of both B-06 and B-13. Already groomed into EXISTING task FIX-BCTC-VPS-QUEUE-SYNC (TODO/high/dev-mcp-server, zone apps/mcp-server/src/scheduler/financial-reports/) whose G1(404 cap to deferred_infra)+G2(re-sync orphans OR url_not_found) cover both; C-16/B-13 explicitly folded in (note 2026-06-13T01:27Z). NO new task — would duplicate. DEDUP vs FIX-SBV-FX-VPS-FETCHER-UNHEALTHY: DIFFERENT fetcher (vn-sbv-fetch macro/SBV_FX, dev-macro-indicators) — no overlap, not merged. Router: dispatch FIX-BCTC-VPS-QUEUE-SYNC on next mcp-server serialization slot.",
+        "resolved_at": "2026-06-13T19:34:05Z",
+        "resolved_by": "po"
       },
       {
         "id": "sau-c08-2026-06-13T00-30-35Z",
