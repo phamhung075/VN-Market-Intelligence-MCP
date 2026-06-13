@@ -826,16 +826,28 @@ func TestFetchEarningYieldFromDB_AbsentRow(t *testing.T) {
 
 // TestFetchPrevSessionVnIndex_ReturnSecondMostRecent (T-U4-5):
 // With 3 VNINDEX rows, returns the second-most-recent close (OFFSET 1).
+//
+// Seed-date lesson: dates are derived from time.Now() (relative offsets) so the
+// test never rots on a future calendar date. The query orders by date DESC, so
+// only the relative ordering of the three dates matters — not the values themselves.
 func TestFetchPrevSessionVnIndex_ReturnSecondMostRecent(t *testing.T) {
 	db := newInMemoryDB(t)
 	ctx := context.Background()
 
-	// Insert 3 rows: most recent last so ORDER BY date DESC gives 2026-06-03, 2026-06-02, 2026-06-01.
+	// Use relative dates: today-2, today-1, today (ensures ORDER BY date DESC gives today, today-1, today-2).
+	today := time.Now().UTC()
+	d0 := today.AddDate(0, 0, -2).Format(time.DateOnly) // oldest
+	d1 := today.AddDate(0, 0, -1).Format(time.DateOnly) // second-most-recent (prev session)
+	d2 := today.Format(time.DateOnly)                   // most recent (current session)
+
 	_, err := db.Exec(`
 		INSERT INTO daily_ohlcv (code, date, close) VALUES
-		('VNINDEX', '2026-06-01', 1210.0),
-		('VNINDEX', '2026-06-02', 1220.5),
-		('VNINDEX', '2026-06-03', 1230.0)`)
+		(?, ?, 1210.0),
+		(?, ?, 1220.5),
+		(?, ?, 1230.0)`,
+		"VNINDEX", d0,
+		"VNINDEX", d1,
+		"VNINDEX", d2)
 	if err != nil {
 		t.Fatalf("insert daily_ohlcv: %v", err)
 	}
@@ -854,11 +866,14 @@ func TestFetchPrevSessionVnIndex_ReturnSecondMostRecent(t *testing.T) {
 
 // TestFetchPrevSessionVnIndex_OnlyOneRow_ReturnsNil (T-U4-5 safe-degrade):
 // With only 1 VNINDEX row, OFFSET 1 returns no row → nil (first-day safe-degrade).
+//
+// Seed-date lesson: date derived from time.Now() to avoid rot.
 func TestFetchPrevSessionVnIndex_OnlyOneRow_ReturnsNil(t *testing.T) {
 	db := newInMemoryDB(t)
 	ctx := context.Background()
 
-	_, err := db.Exec(`INSERT INTO daily_ohlcv (code, date, close) VALUES ('VNINDEX', '2026-06-03', 1230.0)`)
+	today := time.Now().UTC().Format(time.DateOnly)
+	_, err := db.Exec(`INSERT INTO daily_ohlcv (code, date, close) VALUES ('VNINDEX', ?, 1230.0)`, today)
 	if err != nil {
 		t.Fatalf("insert daily_ohlcv: %v", err)
 	}
@@ -889,15 +904,23 @@ func TestFetchPrevSessionVnIndex_EmptyTable_ReturnsNil(t *testing.T) {
 
 // TestFetchPrevSessionVnIndex_OtherCodes_NotIncluded:
 // Rows for non-VNINDEX codes must not affect the result.
+//
+// Seed-date lesson: dates derived from time.Now() to avoid rot.
 func TestFetchPrevSessionVnIndex_OtherCodes_NotIncluded(t *testing.T) {
 	db := newInMemoryDB(t)
 	ctx := context.Background()
 
-	// Only HOSE and HNX rows — no VNINDEX → nil.
+	today := time.Now().UTC()
+	d1 := today.AddDate(0, 0, -1).Format(time.DateOnly)
+	d2 := today.Format(time.DateOnly)
+
+	// Only HOSE rows — no VNINDEX → nil.
 	_, err := db.Exec(`
 		INSERT INTO daily_ohlcv (code, date, close) VALUES
-		('HOSE', '2026-06-02', 500.0),
-		('HOSE', '2026-06-03', 510.0)`)
+		(?, ?, 500.0),
+		(?, ?, 510.0)`,
+		"HOSE", d1,
+		"HOSE", d2)
 	if err != nil {
 		t.Fatalf("insert daily_ohlcv: %v", err)
 	}
