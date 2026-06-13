@@ -35,6 +35,16 @@
 **why-decision:** Generator output 157 == live /health 157 == grep evidence (156+1); brief's 162 was pre-sprint estimate before any cleanup occurred; current source is ground truth
 **why-change:** No code changes needed — gen-tool-registry.ts and parity test already existed (commit a5b34816); only regenerated artifacts (tool-registry.json, project-stats.json) needed updating
 
+### STEP dev-mcp-server-S4 · dev-mcp-server · 2026-06-13T21:59:00Z
+**task-id:** FIX-BCTC-VPS-QUEUE-SYNC
+**what-done:** Added MAX_404_ATTEMPTS=10 cap in bctcPdfPullJob (G1) + orphan-re-sync arm in bctcQueueEnricherJob (G2); 18 new tests pass; tsc clean; orch-state NOT touched
+**what-considered:**
+- Hardcode the 10 stuck ticker names and reset them by name: FORBIDDEN — GENERIC-FIX MANDATE; also fragile (new tickers would slip through)
+- Cap per-ticker attempt sub-table with TTL: overkill — a named constant cap on the existing `attempts` column is sufficient; no schema change needed
+- URL pattern detection (LIKE/NOT LIKE) vs VPS API probe for "is file actually cached": VPS probe would add live network dependency to enricher; pattern detection is deterministic and captures ALL placeholder URLs structurally
+**why-decision:** Pattern `NOT LIKE '%/20%'` on VPS URL is the canonical programmatic set-difference: placeholder filenames never start with a date, real cached files always do; no ticker names hardcoded; covers all past+future stuck rows generically
+**why-change:** No change from plan — ops diagnosis matched the code path exactly; cap=10 chosen because rows at 562 are 56x the cap already, so 10 is aggressive but appropriate to stop the hammer quickly
+
 ### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-13T20:01:00Z
 **task-id:** TSU-DEV-U5
 **what-done:** Removed `?? 0` fabrication from `vnstockStore.ts:573` → `?? null`; updated `DailyForeignFlow.holdingRatio: number | null`; updated analyzer `isHoldingRatioFabricated` to check `=== null || === 0`; `holdingRatioChange5d` now `number | null` (null when fabricated); output gates in foreignFlowTools.ts verified; FENCE proof added to TSU-DEV-U5 test; vnstock-foreign-flow.test.ts:171 updated for new type
