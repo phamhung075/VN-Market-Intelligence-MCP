@@ -52,6 +52,42 @@ git reset --soft HEAD~1   # undo commit (keeps changes staged)
 # then: git restore --staged <intruder-file> and re-commit
 ```
 
+## RULE 4 — PUSH (after RULE 3)
+
+After RULE 3 self-verify passes, push to origin using the bounded rebase-retry guard
+(same semantics as `.claude/skills/commit-mutex/SKILL.md` Step 3d-PUSH; that skill is
+the SSOT for the guard logic — see it for full shell implementation):
+
+```bash
+# PUSH — bounded rebase-retry guard (MAX 2 push attempts)
+git push origin main
+PUSH_EXIT=$?
+if [ $PUSH_EXIT -ne 0 ]; then
+  git pull --rebase origin main
+  REBASE_EXIT=$?
+  if [ $REBASE_EXIT -ne 0 ]; then
+    # Rebase conflict — abort cleanly; do NOT auto-resolve
+    git rebase --abort 2>/dev/null || true
+    # Log to notebook/session-log: "[<agent>] commit-boundary: push rebase CONFLICT
+    #   — rebase aborted; commit local-only. Paths: <own_paths>."
+    # EXIT push step — commit preserved; no task_release step (no mutex held here)
+  else
+    git push origin main
+    PUSH2_EXIT=$?
+    if [ $PUSH2_EXIT -ne 0 ]; then
+      # Log to notebook/session-log: "[<agent>] commit-boundary: push retry FAILED
+      #   after rebase; commit local-only. Paths: <own_paths>."
+    fi
+  fi
+fi
+```
+
+**Key semantics (DRY — mirrors commit-mutex §3d-PUSH):**
+- 1 initial push + 1 rebase-retry = 2 total push attempts. Not infinite.
+- Conflict → `git rebase --abort` → log to notebook (no bug-telegram since no gateway binding).
+- No `task_release` step: commit-boundary agents hold no mutex.
+- Commit is always preserved locally on any failure path.
+
 ---
 
 ## Commit-Mutex Gap — R-HANDOFF Protocol

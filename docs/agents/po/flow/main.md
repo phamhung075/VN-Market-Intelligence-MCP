@@ -131,14 +131,16 @@ Write at minimum ONE entry per task you complete stamped with its task-id. Routi
 
 > Invariant: timestamp = current UTC, never future, never speculative. ALWAYS get via `date -u +"%Y-%m-%dT%H:%M:%SZ"` before any ACK append or notebook header.
 
-**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
-```bash
-# own_paths: [docs/agent-memory/notebooks/po.md]
-# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
-git add docs/agent-memory/notebooks/po.md
-git commit -m "chore(memory/po): notebook YYYY-MM-DD"
+**Commit notebook** (mutex-guarded):
+```
+→ skill: .claude/skills/commit-mutex/SKILL.md
+  own_paths: ["docs/agent-memory/notebooks/po.md"]
+  intent:    "chore(memory/po): notebook YYYY-MM-DD"
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
+
+**Reusable triage scripts** (idempotent backlog appends — atomic temp→verify→rename):
+- `scripts/po-s50-origin-lag-triage.jq` — append a PLAN-ONLY task to `.task_board.backlog`, skipping if `id` already present.
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 

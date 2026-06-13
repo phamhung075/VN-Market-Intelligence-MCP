@@ -59,8 +59,33 @@ EOF
 
 ## Step 3 — Push to main
 
+Use the bounded rebase-retry guard (same semantics as `.claude/skills/commit-mutex/SKILL.md`
+Step 3d-PUSH, which is the SSOT — see it for full guard rationale and conflict semantics):
+
 ```bash
+# Bounded rebase-retry push — MAX 2 total push attempts; abort on conflict
 git push origin main
+PUSH_EXIT=$?
+if [ $PUSH_EXIT -ne 0 ]; then
+  git pull --rebase origin main
+  REBASE_EXIT=$?
+  if [ $REBASE_EXIT -ne 0 ]; then
+    # Rebase conflict — abort cleanly; never auto-resolve
+    git rebase --abort 2>/dev/null || true
+    send_telegram(channel="bug",
+      "[<agent>] commit: push rebase CONFLICT — rebase aborted; commit local-only. \
+       Paths: <staged_paths>. Manual reconcile required.")
+    # Commit is preserved locally; EXIT push step
+  else
+    git push origin main
+    PUSH2_EXIT=$?
+    if [ $PUSH2_EXIT -ne 0 ]; then
+      send_telegram(channel="bug",
+        "[<agent>] commit: push retry FAILED after rebase; commit local-only. \
+         Paths: <staged_paths>.")
+    fi
+  fi
+fi
 ```
 
 ## Step 4 — Merge and clean branch (only if NOT on main)
