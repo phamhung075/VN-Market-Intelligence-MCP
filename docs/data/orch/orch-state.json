@@ -6801,7 +6801,7 @@
         "id": "INFRA-TEST-SEEDDATE-FIX",
         "type": "FIX",
         "owner": "dev-stock-price",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "size": "S",
         "zone": "apps/stock-price/",
         "priority": "medium",
@@ -6834,7 +6834,9 @@
           "apps/stock-price/pkg/infrastructure/fetchers_test.go"
         ],
         "groomed_at": "2026-06-13T11:51:55Z",
-        "groomed_by": "po"
+        "groomed_by": "po",
+        "claimed_by": "dev-stock-price",
+        "claimed_at": "2026-06-13T11:53:08Z"
       },
       {
         "id": "PRED-RESOLVER-GAP-FIX",
