@@ -1,4 +1,5 @@
 ---
+<!-- size-justification: 127L — atomic sub-flow D; guidance system-prompt block + worked 3-example set + gate-vision pre-check + step list + dual RETURN schemas (DONE/FAILED) are operationally inseparable; splitting would orphan the example set from the verdict logic. -->
 agent:
   id: refine_bctc_md
   model: haiku
