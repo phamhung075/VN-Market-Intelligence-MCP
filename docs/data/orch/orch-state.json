@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T18:55:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-13T18:42:59Z",
+    "_updated_by": "po-S51",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -7243,6 +7243,23 @@
         "root_cause_requirement": "Sequencing (brief R-1 / U2 sequencing constraint): a parity test run BEFORE U3 deregistrations + U6 settle FAILS on count mismatch (stale 162 vs 157). This stub is pinned the FINAL mcp-server task. FIX: re-run the U2-GEN generator against the post-U3/post-U6 source, confirm totalCount==157, update tool-registry.json + project-stats.json toolCount. FORBIDDEN: running this before U3 AND U6 are committed; hardcoding 157 (generator must derive it).",
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U2 sequencing + AC8 (commit 371437a7). MUST BE LAST — depends on U3 AND U6 deregistration/description commits. The U2-GEN generator (built first wave) is RE-RUN here against the settled surface.",
         "dispatch_note": "BLOCKED — do NOT dispatch until BOTH TSU-DEV-U3 AND TSU-DEV-U6 are DONE. LAST mcp-server task. Router serializes."
+      },
+      {
+        "id": "FU-SCHEMA-DRIFT-P8-IMPL",
+        "title": "Impl: DDL DEFAULT reconciliation (3 tables) + P5 self-heal re-apply in getDb() + preload initDatabase() in setup.ts — FU-SCHEMA-DRIFT-P8 direction (a) per architect brief 2026-06-09-fu-schema-drift-p8-spike.md",
+        "type": "BUG",
+        "owner": "dev-mcp-server",
+        "status": "SUPERSEDED",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "critical",
+        "sprint": "CI-RED-RECONCILE",
+        "created_at": "2026-06-09T00:00:00Z",
+        "note": "[dev-mcp-server DJ-GATE-1 2026-06-09] IMPL: rag_analyses/agent_feedback/signal_quality_audit created_at DEFAULT added; getDb() P5 self-heal re-applied (9 slices excl. initFinancialReportsTables); setup.ts await initDatabase() preload added. tsc clean. Router owns CI gate. | po-S21: CI-P8-GATE-6295cb32 FAILED (native fail+error 631 vs 629, +2 WORSE; created_at x3 regression PERSISTS — DDL-DEFAULT hypothesis disproven). Router reverted apps/ to 629 baseline (880ffca6, byte-identical 2a6044b1). REVIEW->REWORK: fix off main, hypothesis empirically disproven (4th consecutive P5/P6/P7/P8). Schema-drift cluster PARKED best-effort-exhausted per PO path-B decision; 629 documented as schema-drift FLOOR. No 7th touch opened. Superseded by FU-CI-PROFILE-629 (full-corpus failure taxonomy). || [po-S51 2026-06-13T18:42:59Z] CLOSING STAMP: formalizing exit from in_progress[] -> backlog[] status=SUPERSEDED. Hypothesis empirically disproven 4 consecutive touches (P5/P6/P7/P8); 629 is the documented schema-drift FLOOR; apps/ already reverted byte-identical to 629 baseline (880ffca6 / 2a6044b1). No 7th touch. Superseded by FU-CI-PROFILE-629 (now DONE). Frees the single serialized apps/mcp-server/ code slot for TSU-DEV-U3.",
+        "updated_at": "2026-06-09T04:14:34Z",
+        "closed_at": "2026-06-13T18:42:59Z",
+        "closed_by": "po-S51",
+        "disposition": "PARKED-BEST-EFFORT-EXHAUSTED / SUPERSEDED-BY-FU-CI-PROFILE-629"
       }
     ],
     "archive": [],
@@ -9404,22 +9421,7 @@
         "closed_at": "2026-06-13T10:20:14Z"
       }
     ],
-    "in_progress": [
-      {
-        "id": "FU-SCHEMA-DRIFT-P8-IMPL",
-        "title": "Impl: DDL DEFAULT reconciliation (3 tables) + P5 self-heal re-apply in getDb() + preload initDatabase() in setup.ts — FU-SCHEMA-DRIFT-P8 direction (a) per architect brief 2026-06-09-fu-schema-drift-p8-spike.md",
-        "type": "BUG",
-        "owner": "dev-mcp-server",
-        "status": "REWORK",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "critical",
-        "sprint": "CI-RED-RECONCILE",
-        "created_at": "2026-06-09T00:00:00Z",
-        "note": "[dev-mcp-server DJ-GATE-1 2026-06-09] IMPL: rag_analyses/agent_feedback/signal_quality_audit created_at DEFAULT added; getDb() P5 self-heal re-applied (9 slices excl. initFinancialReportsTables); setup.ts await initDatabase() preload added. tsc clean. Router owns CI gate. | po-S21: CI-P8-GATE-6295cb32 FAILED (native fail+error 631 vs 629, +2 WORSE; created_at x3 regression PERSISTS — DDL-DEFAULT hypothesis disproven). Router reverted apps/ to 629 baseline (880ffca6, byte-identical 2a6044b1). REVIEW->REWORK: fix off main, hypothesis empirically disproven (4th consecutive P5/P6/P7/P8). Schema-drift cluster PARKED best-effort-exhausted per PO path-B decision; 629 documented as schema-drift FLOOR. No 7th touch opened. Superseded by FU-CI-PROFILE-629 (full-corpus failure taxonomy).",
-        "updated_at": "2026-06-09T04:14:34Z"
-      }
-    ],
+    "in_progress": [],
     "head": {
       "note": "FDA-9 (rag-service _distance fail-open fabricated-similarity) groomed READY; mcp-server zone untouched (frozen behind EVIDENCE-ACCUM gate)"
     },
