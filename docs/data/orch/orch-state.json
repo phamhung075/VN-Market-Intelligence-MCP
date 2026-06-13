@@ -7187,53 +7187,6 @@
         "dispatch_note": "BLOCKED — do NOT dispatch until TSU-DEV-U1 AND TSU-DEV-U2-GEN are DONE. Then enters mcp-server slot (serialized)."
       },
       {
-        "id": "TSU-DEV-U5",
-        "title": "TSU-DEV-U5 — Foreign-flow fabricated holding_ratio (DSI defect, SAME CLASS as the FDA-9 fail-open just shipped): kill `current_holding_ratio ?? 0` fabrication (vnstockStore.ts:561) at the OUTPUT layer — serve-null gates so get_foreign_flow / get_company_profile NEVER render 0.00% as a real ratio. HIGH-VALUE correctness/DSI-fabrication fix.",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "size": "M",
-        "created_at": "2026-06-13T16:43:08Z",
-        "created_by": "po",
-        "depends_on": [
-          "TSU-DEV-U1",
-          "TSU-DEV-U2-GEN"
-        ],
-        "blocked_by": [
-          "TSU-DEV-U1",
-          "TSU-DEV-U2-GEN"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/market-data/foreignFlowTools.ts",
-          "apps/mcp-server/src/domain/services/foreignFlowAnalyzer.ts",
-          "apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts"
-        ],
-        "baseline_pass": "Live mcp-server suite floor 9408 pass / 348 fail. Post-fix: foreignFlowTools.ts:186 test UPDATED to assert Holding Ratio column ABSENT (R-4 — was asserting presence with holdingRatio:0); no NET regression.",
-        "verification_gate": "no_cached_pass_bun_isolation",
-        "verification_gate_detail": "QA: (1) call_tool get_foreign_flow RAW output does NOT contain a 'Holding Ratio' column NOR a 'Holding ratio change (5d)' line when all holding ratios are 0; (2) call_tool get_company_profile foreign_holding_ratio emits null (NOT 0) when current_holding_ratio is 0; (3) foreignFlowAnalyzer holdingRatioChange5d == null when history.every(r=>r.holdingRatio===0) AND is_holding_ratio_fabricated:true flag present on ForeignFlowSignal; (4) bun test ISOLATION green incl. the UPDATED foreignFlowTools.ts:186 assert-ABSENT test (deliberate-fail proof it runs). HIGH-VALUE: same fail-open/fabrication class as FDA-9.",
-        "root_cause_requirement": "Root cause (brief U5): get_foreign_flow renders 'Holding Ratio: 0.00%' for every ticker daily. VPS ingest (vps-scripts/fetch-foreign-flow.sh) fetches only fBVol/fSVolume/fRoom; bgapidatafeed.vps.com.vn exposes NO holding_ratio field (ARCH-U5-1 confirmed, audit comment L42-48). vnstockStore.ts:561 `row.current_holding_ratio ?? 0` fabricates 0 as real -> DSI invariant violation. FIX at the OUTPUT layer (serve-null), NOT a migration (FR-U5-3: columns stay): foreignFlowTools.ts add hasRealHoldingData guard -> omit Holding Ratio column header+cell (L89-96) and the holdingRatioChange5d signal line (L78-80) when false; foreignFlowAnalyzer.ts guard holdingRatioChange5d=null when all-zero + add is_holding_ratio_fabricated flag (NFR-U5-2); companyProfileTools.ts emit null not 0; update foreignFlowTools.ts:186 test to assert ABSENT (R-4); strip 'holding ratio change' from tool description until data is real. FORBIDDEN: keep serving 0 as real; a schema migration; symptom-patch at the store ?? 0 alone without the output gates.",
-        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U5 (commit 371437a7). FLAGGED HIGH-VALUE — LAST-SHIP CORRECTNESS / DSI-FABRICATION defect, same class as the FDA-9 fail-open just shipped (never serve fabricated data as real). BLOCKED on U1+U2-GEN. May run in the mcp-server slot in serial queue after U3 (per brief stub: parallel-with-U3 if mcp-server slot allows serial queueing) — router serializes the slot.",
-        "dispatch_note": "BLOCKED — do NOT dispatch until TSU-DEV-U1 AND TSU-DEV-U2-GEN are DONE. High-value DSI fix. Then enters mcp-server slot (serialized with U3).",
-        "claimed_by": "dev-mcp-server",
-        "claimed_at": "2026-06-13T17:53:52Z",
-        "review_commit": "2d2a0bc5",
-        "review_at": "2026-06-13T18:20:18Z",
-        "no_rebuild": false,
-        "needs_rebuild": true,
-        "review_evidence": {
-          "root_fix": "vnstockStore.ts:573 ?? 0 -> ?? null",
-          "analyzer_guard": "isHoldingRatioFabricated -> holdingRatioChange5d=null when all absent (no delta off fabricated 0)",
-          "format_gate": "foreignFlowTools hasRealHoldingData -> column omitted when absent",
-          "residual_qq0_safe": "both behind guards (tsc null-safety artifacts)",
-          "unit": "28 pass uncached + FENCE deliberate-fail proof",
-          "tsc": "clean",
-          "scope": "5 code/test files, NO orch-state",
-          "rebuild": "REQUIRED for live get_foreign_flow/get_company_profile verify"
-        }
-      },
-      {
         "id": "TSU-DEV-U6",
         "title": "TSU-DEV-U6 — TSH leftover merge verdicts: DESCRIPTION-ONLY updates on 9 tools (get_patterns/get_technical_indicators, 5x trigger_*_vps_fetch, get_market_summary/generate_market_summary, get_insider_signals/get_insider_transactions). NO server.tool() removals (all verdicts: keep separate, clarify).",
         "owner": "dev-mcp-server",
@@ -10385,6 +10338,68 @@
           "dual_api_scan": true,
           "data_only_no_rebuild": true,
           "hand_decay_killed": true
+        }
+      },
+      {
+        "id": "TSU-DEV-U5",
+        "title": "TSU-DEV-U5 — Foreign-flow fabricated holding_ratio (DSI defect, SAME CLASS as the FDA-9 fail-open just shipped): kill `current_holding_ratio ?? 0` fabrication (vnstockStore.ts:561) at the OUTPUT layer — serve-null gates so get_foreign_flow / get_company_profile NEVER render 0.00% as a real ratio. HIGH-VALUE correctness/DSI-fabrication fix.",
+        "owner": "dev-mcp-server",
+        "status": "done_verified",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "size": "M",
+        "created_at": "2026-06-13T16:43:08Z",
+        "created_by": "po",
+        "depends_on": [
+          "TSU-DEV-U1",
+          "TSU-DEV-U2-GEN"
+        ],
+        "blocked_by": [
+          "TSU-DEV-U1",
+          "TSU-DEV-U2-GEN"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/market-data/foreignFlowTools.ts",
+          "apps/mcp-server/src/domain/services/foreignFlowAnalyzer.ts",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts"
+        ],
+        "baseline_pass": "Live mcp-server suite floor 9408 pass / 348 fail. Post-fix: foreignFlowTools.ts:186 test UPDATED to assert Holding Ratio column ABSENT (R-4 — was asserting presence with holdingRatio:0); no NET regression.",
+        "verification_gate": "no_cached_pass_bun_isolation",
+        "verification_gate_detail": "QA: (1) call_tool get_foreign_flow RAW output does NOT contain a 'Holding Ratio' column NOR a 'Holding ratio change (5d)' line when all holding ratios are 0; (2) call_tool get_company_profile foreign_holding_ratio emits null (NOT 0) when current_holding_ratio is 0; (3) foreignFlowAnalyzer holdingRatioChange5d == null when history.every(r=>r.holdingRatio===0) AND is_holding_ratio_fabricated:true flag present on ForeignFlowSignal; (4) bun test ISOLATION green incl. the UPDATED foreignFlowTools.ts:186 assert-ABSENT test (deliberate-fail proof it runs). HIGH-VALUE: same fail-open/fabrication class as FDA-9.",
+        "root_cause_requirement": "Root cause (brief U5): get_foreign_flow renders 'Holding Ratio: 0.00%' for every ticker daily. VPS ingest (vps-scripts/fetch-foreign-flow.sh) fetches only fBVol/fSVolume/fRoom; bgapidatafeed.vps.com.vn exposes NO holding_ratio field (ARCH-U5-1 confirmed, audit comment L42-48). vnstockStore.ts:561 `row.current_holding_ratio ?? 0` fabricates 0 as real -> DSI invariant violation. FIX at the OUTPUT layer (serve-null), NOT a migration (FR-U5-3: columns stay): foreignFlowTools.ts add hasRealHoldingData guard -> omit Holding Ratio column header+cell (L89-96) and the holdingRatioChange5d signal line (L78-80) when false; foreignFlowAnalyzer.ts guard holdingRatioChange5d=null when all-zero + add is_holding_ratio_fabricated flag (NFR-U5-2); companyProfileTools.ts emit null not 0; update foreignFlowTools.ts:186 test to assert ABSENT (R-4); strip 'holding ratio change' from tool description until data is real. FORBIDDEN: keep serving 0 as real; a schema migration; symptom-patch at the store ?? 0 alone without the output gates.",
+        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U5 (commit 371437a7). FLAGGED HIGH-VALUE — LAST-SHIP CORRECTNESS / DSI-FABRICATION defect, same class as the FDA-9 fail-open just shipped (never serve fabricated data as real). BLOCKED on U1+U2-GEN. May run in the mcp-server slot in serial queue after U3 (per brief stub: parallel-with-U3 if mcp-server slot allows serial queueing) — router serializes the slot.",
+        "dispatch_note": "BLOCKED — do NOT dispatch until TSU-DEV-U1 AND TSU-DEV-U2-GEN are DONE. High-value DSI fix. Then enters mcp-server slot (serialized with U3).",
+        "claimed_by": "dev-mcp-server",
+        "claimed_at": "2026-06-13T17:53:52Z",
+        "review_commit": "2d2a0bc5",
+        "review_at": "2026-06-13T18:20:18Z",
+        "no_rebuild": false,
+        "needs_rebuild": true,
+        "review_evidence": {
+          "root_fix": "vnstockStore.ts:573 ?? 0 -> ?? null",
+          "analyzer_guard": "isHoldingRatioFabricated -> holdingRatioChange5d=null when all absent (no delta off fabricated 0)",
+          "format_gate": "foreignFlowTools hasRealHoldingData -> column omitted when absent",
+          "residual_qq0_safe": "both behind guards (tsc null-safety artifacts)",
+          "unit": "28 pass uncached + FENCE deliberate-fail proof",
+          "tsc": "clean",
+          "scope": "5 code/test files, NO orch-state",
+          "rebuild": "REQUIRED for live get_foreign_flow/get_company_profile verify"
+        },
+        "qa_verdict": "APPROVED",
+        "qa_agent": "10927493",
+        "closed_at": "2026-06-13T18:37:44Z",
+        "rebuilt_image": "1042a2a9",
+        "qa_evidence": {
+          "unit_28pass_uncached": true,
+          "tsc_clean": true,
+          "fence_red_proof": true,
+          "live_3tickers_column_absent": "FPT/VNM/HPG no fabricated 0%",
+          "company_profile_null": true,
+          "holdingratiochange5d_null": true,
+          "dsi_serve_null_confirmed": true,
+          "fabrication_class_killed": true,
+          "rebuild_applied": true
         }
       }
     ],
