@@ -5680,7 +5680,7 @@
         "id": "ARCH-TSU",
         "title": "Technical design for TOOL-SURFACE-UPGRADE: U1 counter hook, U2 generator design, U3 12-tool verdicts, U4 delta sweep, U5 VPS holding-ratio ingest, U6 merge diffs",
         "owner": "architect",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "type": "SPRINT-M",
         "priority": "P1",
         "zone": "apps/mcp-server/src/",
@@ -5705,7 +5705,9 @@
           "AC9 (NO-CODE GATE): deliverable is the brief only — NO server code changed, NO container rebuild, NO test/CI gate run. DoD is satisfied by brief presence + fan-out stubs, not by a green build."
         ],
         "unparked_at": "2026-06-13T16:28:41Z",
-        "unpark_evidence": "EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate SATISFIED — router RAW-verified named-volume DB: evidenceAccumulatorJob|2026-06-13 16:00:01|success (no error_msg); mcp-server Up 9h healthy; gate clock 16:26Z. apps/mcp-server/src/ zone OPEN."
+        "unpark_evidence": "EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate SATISFIED — router RAW-verified named-volume DB: evidenceAccumulatorJob|2026-06-13 16:00:01|success (no error_msg); mcp-server Up 9h healthy; gate clock 16:26Z. apps/mcp-server/src/ zone OPEN.",
+        "claimed_by": "architect",
+        "claimed_at": "2026-06-13T16:31:04Z"
       },
       {
         "id": "HPG-REPARSE-POST-REBUILD",
