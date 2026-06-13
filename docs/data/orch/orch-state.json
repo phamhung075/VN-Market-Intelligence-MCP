@@ -7158,45 +7158,6 @@
         "closed_at": "2026-06-13T09:02:02Z"
       },
       {
-        "id": "TSU-DEV-U1",
-        "title": "TSU-DEV-U1 — Per-call telemetry counter: replace dead sessionToolCache (never populated under gateway per-call model) with a synchronous per-call invocation counter; flush to docs/agent-memory/modules/tool-usage-stats.json; REMOVE sessionCount (semantically undefined post-gateway).",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "priority": "high",
-        "size": "M",
-        "created_at": "2026-06-13T16:43:08Z",
-        "created_by": "po",
-        "depends_on": [],
-        "blocked_by": [],
-        "files": [
-          "apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts",
-          "apps/mcp-server/src/interface/mcp/server.ts",
-          "apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts",
-          "docs/agent-memory/modules/tool-usage-stats.json"
-        ],
-        "baseline_pass": "Live mcp-server suite floor per project-stats.json: 9408 pass / 348 fail (testBaseline). Post-fix: no NET regression below floor; new perCallCounterStore unit test added (counter increments + getSnapshot shallow-copy + resetCounters).",
-        "verification_gate": "no_cached_pass_bun_isolation",
-        "verification_gate_detail": "QA via gateway: (1) invoke ANY tool via call_tool(server=vn-market) once; (2) force-run trackSessionToolUsageJob; (3) assert docs/agent-memory/modules/tool-usage-stats.json toolCounts[<invokedTool>] >= 1 AND sessionCount field ABSENT AND uniqueTools == Object.keys(toolCounts).length. Run bun test in ISOLATION (no cached pass) — verify the new perCallCounterStore test actually executed (deliberate-fail proof: break increment, confirm test goes red, revert).",
-        "root_cause_requirement": "Root cause (brief U1): sessionToolCache is populated only at the SSE handshake (server.ts:205) which NEVER fires under the gateway per-call dial-drop model, so trackSessionToolUsageJob reads an always-empty snapshot -> sessionCount:0/toolCounts:{} permanently. FIX the cause: new singleton perCallCounterStore.ts (Map<string,number>, exports incrementTool/getSnapshot/resetCounters, no I/O); wrap each handler in server.ts AFTER registerAllTools(server) completes (~L220, same _registeredTools private-field pattern already used at server.ts:203-219 — R-2: applying BEFORE registerAllTools wraps an empty map, FORBIDDEN) with a proxy that calls incrementTool(name) then delegates; trackSessionToolUsageJob reads perCallCounterStore.getSnapshot(). FORBIDDEN: keeping sessionToolCache read-path or renaming sessionCount to a still-meaningless field — REMOVE it. Output schema: { generatedAt, uniqueTools, toolCounts:{[name]:number} }.",
-        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U1 (docs/architecture-briefs/2026-06-13-tool-surface-upgrade.md, commit 371437a7). FIRST WAVE — READY. apps/mcp-server SERIALIZATION: U1 + U2-GEN both READY + both mcp-server zone; router dispatches ONLY ONE into the mcp-server slot. PO RECOMMENDATION: dispatch U1 FIRST (smaller M-size, isolated telemetry seam, unblocks nothing downstream so lowest-risk to start while U2-GEN's larger generator+parity work queues next into the freed slot). U4 (macro-indicators) runs in PARALLEL.",
-        "dispatch_note": "READY. mcp-server zone serialization: ONE of {U1,U2-GEN} into the slot. PO recommends U1 first. Router raw-verifies + claims.",
-        "claimed_by": "dev-mcp-server",
-        "claimed_at": "2026-06-13T16:44:43Z",
-        "review_commit": "829931b3",
-        "review_at": "2026-06-13T17:09:44Z",
-        "no_rebuild": false,
-        "needs_rebuild": true,
-        "review_evidence": {
-          "scope": "perCallCounterStore.ts(new)+server.ts hook+trackSessionToolUsageJob.ts rewrite+caller+tests+docs",
-          "unit": "8 bun pass + deliberate-fail RED proof (5 flipped)",
-          "tsc": "clean",
-          "toolcount": 157,
-          "rebuild": "REQUIRED — runtime telemetry hook; mcp-server Up 9h predates commit; QA live-verify needs rebuilt container"
-        }
-      },
-      {
         "id": "TSU-DEV-U2-GEN",
         "title": "TSU-DEV-U2-GEN — Tool-registry generator from source + parity test: static-grep generator scanning BOTH server.tool( AND server.registerTool( in tools/**/*.ts; deliberate-violation parity test (NFR-FENCE); sync project-stats.json toolCount from generator output (generator is the SSOT arbiter, not /health, not a hardcoded literal).",
         "owner": "dev-mcp-server",
@@ -10329,6 +10290,58 @@
           "adverse_date_proof": true,
           "dsi_serve_null_intentional": true,
           "no_rebuild": true
+        }
+      },
+      {
+        "id": "TSU-DEV-U1",
+        "title": "TSU-DEV-U1 — Per-call telemetry counter: replace dead sessionToolCache (never populated under gateway per-call model) with a synchronous per-call invocation counter; flush to docs/agent-memory/modules/tool-usage-stats.json; REMOVE sessionCount (semantically undefined post-gateway).",
+        "owner": "dev-mcp-server",
+        "status": "done_verified",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "size": "M",
+        "created_at": "2026-06-13T16:43:08Z",
+        "created_by": "po",
+        "depends_on": [],
+        "blocked_by": [],
+        "files": [
+          "apps/mcp-server/src/infrastructure/telemetry/perCallCounterStore.ts",
+          "apps/mcp-server/src/interface/mcp/server.ts",
+          "apps/mcp-server/src/scheduler/system/trackSessionToolUsageJob.ts",
+          "docs/agent-memory/modules/tool-usage-stats.json"
+        ],
+        "baseline_pass": "Live mcp-server suite floor per project-stats.json: 9408 pass / 348 fail (testBaseline). Post-fix: no NET regression below floor; new perCallCounterStore unit test added (counter increments + getSnapshot shallow-copy + resetCounters).",
+        "verification_gate": "no_cached_pass_bun_isolation",
+        "verification_gate_detail": "QA via gateway: (1) invoke ANY tool via call_tool(server=vn-market) once; (2) force-run trackSessionToolUsageJob; (3) assert docs/agent-memory/modules/tool-usage-stats.json toolCounts[<invokedTool>] >= 1 AND sessionCount field ABSENT AND uniqueTools == Object.keys(toolCounts).length. Run bun test in ISOLATION (no cached pass) — verify the new perCallCounterStore test actually executed (deliberate-fail proof: break increment, confirm test goes red, revert).",
+        "root_cause_requirement": "Root cause (brief U1): sessionToolCache is populated only at the SSE handshake (server.ts:205) which NEVER fires under the gateway per-call dial-drop model, so trackSessionToolUsageJob reads an always-empty snapshot -> sessionCount:0/toolCounts:{} permanently. FIX the cause: new singleton perCallCounterStore.ts (Map<string,number>, exports incrementTool/getSnapshot/resetCounters, no I/O); wrap each handler in server.ts AFTER registerAllTools(server) completes (~L220, same _registeredTools private-field pattern already used at server.ts:203-219 — R-2: applying BEFORE registerAllTools wraps an empty map, FORBIDDEN) with a proxy that calls incrementTool(name) then delegates; trackSessionToolUsageJob reads perCallCounterStore.getSnapshot(). FORBIDDEN: keeping sessionToolCache read-path or renaming sessionCount to a still-meaningless field — REMOVE it. Output schema: { generatedAt, uniqueTools, toolCounts:{[name]:number} }.",
+        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U1 (docs/architecture-briefs/2026-06-13-tool-surface-upgrade.md, commit 371437a7). FIRST WAVE — READY. apps/mcp-server SERIALIZATION: U1 + U2-GEN both READY + both mcp-server zone; router dispatches ONLY ONE into the mcp-server slot. PO RECOMMENDATION: dispatch U1 FIRST (smaller M-size, isolated telemetry seam, unblocks nothing downstream so lowest-risk to start while U2-GEN's larger generator+parity work queues next into the freed slot). U4 (macro-indicators) runs in PARALLEL.",
+        "dispatch_note": "READY. mcp-server zone serialization: ONE of {U1,U2-GEN} into the slot. PO recommends U1 first. Router raw-verifies + claims.",
+        "claimed_by": "dev-mcp-server",
+        "claimed_at": "2026-06-13T16:44:43Z",
+        "review_commit": "829931b3",
+        "review_at": "2026-06-13T17:09:44Z",
+        "no_rebuild": false,
+        "needs_rebuild": true,
+        "review_evidence": {
+          "scope": "perCallCounterStore.ts(new)+server.ts hook+trackSessionToolUsageJob.ts rewrite+caller+tests+docs",
+          "unit": "8 bun pass + deliberate-fail RED proof (5 flipped)",
+          "tsc": "clean",
+          "toolcount": 157,
+          "rebuild": "REQUIRED — runtime telemetry hook; mcp-server Up 9h predates commit; QA live-verify needs rebuilt container"
+        },
+        "qa_verdict": "APPROVED",
+        "qa_agent": "0415b406",
+        "closed_at": "2026-06-13T17:28:49Z",
+        "rebuilt_image": "302d5cb6e09b",
+        "qa_evidence": {
+          "unit": "24/24 green (3 suites)+deliberate-fail proof",
+          "tsc": "clean",
+          "live_mechanism": "6 gateway calls -> counter {market:3,macro:2,alerts:1} exact no-doublecount",
+          "sessioncount_removed": true,
+          "scope_clean": true,
+          "flush_cron": "0 */8 * * * materializes JSON next fire (non-blocking residual)",
+          "rebuild_applied": true
         }
       }
     ],
