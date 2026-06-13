@@ -1,20 +1,19 @@
 # PO Notebook
 
-## 2026-06-13T12:11Z — free-zone dispatcher tick → STOP (no high-value code defect)
+## 2026-06-13T21:28Z — Triage (dev-team Step 1, Sat off-market 21:26Z tick) → NOTHING (idle)
 
-Hourly tick under standing /goal (recheck last-ship, fix determinism/silent-fabrication). mcp-server zone FROZEN behind EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate (now 12:11Z, NOT open). mcp-server backlog = 76 before/after (UNCHANGED — selected & dispatched nothing). WIP passive gate intact.
+Delta-tick re-triage of 3 drained signals. Verdict: **NOTHING** — no new/groomed task. WIP=0, board unchanged.
 
-### Raw-verified ALL free-zone (non-mcp-server) dev-* candidates — none meet bar
-- **VERIFY-PDFX-TRAVERSAL-GUARD** — guard ALREADY shipped: `repositories.py:259-272` `LocalPDFStorageRepository.fetch_pdf` resolves `Path(url).resolve()` then rejects `not str(resolved).startswith(self._pdf_data_dir)` → PDFDownloadError. ALREADY tested: `test_local_pdf_input.py:88-107` (`/etc/passwd` + `../../etc/passwd` + symlink rejected). Premise satisfied; no code defect. Residual = 500-vs-400 on `/extract-tables` broad-except (handlers.py:355) = cosmetic HTTP nuance, NOT determinism/fabrication.
-- **GW-CONTRACT-03-FIX / PDF-CONTRACT-02-FIX** — NOT_DEPLOYED_SERVICES env/config drift, entangled w/ PARKED pdf-extractor deploy intent. Not last-ship determinism/correctness.
-- **FIX-SBV-FX-VPS-FETCHER-UNHEALTHY** — title self-declares "VPS fetcher infra itself is down" → ops/infra-availability, no dev-* code fix.
-- **FU-SBV-EFFECTIVE-DATE-COLUMN** — self-declares "provenance completeness, not correctness"; depends on VPS fetcher (infra).
-- **BPE-ARCH-1** — architect SPIKE, not dev code.
+### Signals dispositioned (all drained → docs/signals/processed/)
+- **tnb-20260613T202300** (c94 audit-handoff, NEEDS_ATTENTION): already ACK'd 20:54Z. Its two HIGH findings — F-EOD-SCHEDULE-STALE (NEW) + F-MORNING-NB-MISSING (5th) — are SAME-root and already subsumed by **FIX-COWORK-GUARANTEED-BACKSTOP** (done[], commit 45553a28, rec_count=5). Root = Layer-B */15 dispatcher 32h evaporation 06-12→06-13. G1-G4 gate first live-fires Mon 06-15/16. NOT duplicated, NOT re-opened. Appended delta-tick ACK to handoff.
+- **bctc_signal_FPT_20260613_routine** (#6005): mode=routine, all gates clean (balance_ok, insider/legal clean, 0 chain). esc_3 = DATA-COV-LIM-GUARD-**HELD**-16d → suppression working as designed, not a breach. No task.
+- **cowork-team-20260613T210726Z**: pure FIRE telemetry (priority low, errors []). Confirms Layer-B re-arm (cron a95078d1) caught bctc-analyst-slot-3 @21:05Z, ending the 32h outage = stopgap working. Informational only.
 
-### Decision: STOP loop this tick (sanctioned by tick contract)
-No board mutation. No groom. No dispatch. Recommended router END the loop cleanly.
+### Constraints honored
+- Saturday off-market → no market-hours live-verify dispatched; backstop G1-G4 deferred to Mon market day as designed. WIP ≤ 2 respected (dispatched 0).
 
-### Carry-over (next cycle)
-- At ~16:00Z: EVIDENCE-ACCUM gate releases → QA verify evidenceAccumulatorJob live, THEN unpark mcp-server queue starting ARCH-TSU (architect first, NOT dev). Keep all mcp items PARKED until then.
-- If a NEW determinism/flaky free-zone defect surfaces (channel/TNB), groom it; otherwise free zones are exhausted of high-value code work this cycle.
-- VERIFY-PDFX-TRAVERSAL-GUARD can be marked DONE-ALREADY-SATISFIED (guard+tests present) by qa/router — no dev needed.
+### Carry-forward (tracked, unchanged)
+- **bug #2776 undeployed** → blocks CTG/VCB/D2D bctc release (signal #6006); F-BCTC-CTG-CRITICAL 10th esc, 28+ tickers blocked. Active BCTC sprints + free-zone mcp-server backlog (FIX-MCP-MEMORY-CODE-LEAK, FIX-LANCEDB-INSERT-SEGFAULT, FIX-PREDICTION-SIGNALS-EMPTY, FIX-REE-BS-SECTION-REGEX, FIX-CRON-JOB-RUNS-DOUBLE-LOG, FIX-SCHEMA-DRIFT-P5-SELFHEAL REWORK) = grooming candidates when a market-day tick opens WIP.
+- F3/F4/F9 structural MED; F5 hexagram 501 LOW.
+- FIX-COWORK-GUARANTEED-BACKSTOP awaiting Mon G1-G4 — do NOT re-open.
+- SPIKE_DOCLANG-OTSL-OVERLAP still open: measure DocLang validate overlap vs native stage-4/layout_invariants gates; net-new>0 → thin CI-gate, else close. Route to architect only if A justified.

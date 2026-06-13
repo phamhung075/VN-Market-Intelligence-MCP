@@ -220,3 +220,16 @@ None. Active gaps require dev tasks:
 - ROUTER ACTION REQUIRED: run `/cron-cowork-team` re-arm now to restore Layer-B coverage immediately (the ~32h gap is the un-rearmed dispatcher). The groomed task is the permanent remedy; the re-arm is the stopgap. (PO does not claim/dispatch — router owns claim+dispatch+re-arm.)
 - Carry-forward (NOT in scope of this single-signal triage, already tracked): F-BCTC-CTG-CRITICAL (active BCTC sprints), F3/F4/F9 (structural MED), F5 hexagram 501 (LOW).
 - Skipped findings: none of the three target findings skipped — all dispositioned.
+
+---
+## PO ACK (delta tick — dev-team Step 1 triage)
+- Read by: po
+- At: 2026-06-13T21:28:26Z
+- Tick: dev-team spawn 2026-06-13T21:26Z (Saturday, off-market)
+- Disposition: NO NEW TASK. This delta tick re-triages the same c94 handoff already ACK'd at 2026-06-13T20:54:01Z. Both target findings remain covered:
+  - **F-EOD-SCHEDULE-STALE (NEW/HIGH)** + **F-MORNING-NB-MISSING (HIGH, 5th)** → already subsumed by **FIX-COWORK-GUARANTEED-BACKSTOP** (now in `done[]`, commit 45553a28, recurrence_count=5). Same root (Layer-B */15 dispatcher 32h evaporation 06-12→06-13). Verification gate G1-G4 first live-fires Mon 2026-06-15/16 (next VN market day). NOT duplicated. Do NOT re-open.
+  - Live evidence the stopgap re-arm worked: cowork-team-20260613T210726Z telemetry confirms Layer-B re-arm (cron a95078d1) caught bctc-analyst-slot-3 at 21:05Z, ending the 32h outage. Pipeline resumed.
+- Carry-forward (already tracked, unchanged): F-BCTC-CTG-CRITICAL (bug #2776 undeployed → blocks CTG/VCB/D2D release per signal #6006; active BCTC sprints + free-zone backlog); F3/F4/F9 (structural MED); F5 hexagram 501 (LOW).
+- Saturday off-market constraint honored: no market-hours live-verify dispatched this tick; backstop G1-G4 verification deferred to Mon market day as designed.
+- Tasks created: none — all findings covered by existing board state.
+- Skipped findings: none.
