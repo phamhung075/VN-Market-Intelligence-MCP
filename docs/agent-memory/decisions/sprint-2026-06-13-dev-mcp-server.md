@@ -45,6 +45,16 @@
 **why-decision:** Pattern `NOT LIKE '%/20%'` on VPS URL is the canonical programmatic set-difference: placeholder filenames never start with a date, real cached files always do; no ticker names hardcoded; covers all past+future stuck rows generically
 **why-change:** No change from plan — ops diagnosis matched the code path exactly; cap=10 chosen because rows at 562 are 56x the cap already, so 10 is aggressive but appropriate to stop the hammer quickly
 
+### STEP dev-mcp-server-S6 · dev-mcp-server · 2026-06-14T01:20:00Z
+**task-id:** FIX-FUNDAMENTALS-REFRESH-CRON-DEAD
+**what-done:** Suppressed vnstock stdout banners in all 10 Python script templates; live verified 2-ticker sync writes rows to vnstock_financials within 90s
+**what-considered:**
+- Patch `isRateLimitResponse()` to skip banner detection: too brittle — real rate-limit and banner use same characters; false negative risk
+- Upgrade to vnstock new API (`vnstock.api.quote`): requires schema migration for all 10 script templates + untested compatibility; out of scope for P0
+- Capture stdout around ALL vnstock API calls (chosen): surgical, reversible; same pattern as EVENTS_SCRIPT since Task 1780
+**why-decision:** stdout capture is the only path that eliminates false-positive rate-limit detection without changing data contracts or API surface; two banners (init + data call) required wrapping both, not just init
+**why-change:** Initial probe only captured init banner; second probe revealed `income_statement()` also emits community-edition notice; extended capture to ALL data API calls in each script
+
 ### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-13T20:01:00Z
 **task-id:** TSU-DEV-U5
 **what-done:** Removed `?? 0` fabrication from `vnstockStore.ts:573` → `?? null`; updated `DailyForeignFlow.holdingRatio: number | null`; updated analyzer `isHoldingRatioFabricated` to check `=== null || === 0`; `holdingRatioChange5d` now `number | null` (null when fabricated); output gates in foreignFlowTools.ts verified; FENCE proof added to TSU-DEV-U5 test; vnstock-foreign-flow.test.ts:171 updated for new type
