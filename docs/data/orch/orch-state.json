@@ -7264,7 +7264,7 @@
         "id": "QUE-REFERENCE-PAGE-2",
         "title": "Add QueName deep-link + TopNav entry",
         "owner": "dev-frontend",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",
@@ -7279,13 +7279,13 @@
           "No existing QueName call sites modified",
           "Route is reachable from nav"
         ],
-        "blocked_by": [
-          "QUE-REFERENCE-PAGE-1b"
-        ],
+        "blocked_by": [],
         "created_at": "2026-06-13T09:15:00Z",
         "created_by": "pm",
         "handoff": "docs/data/orch/HANDOFF-QUE-REFERENCE-PAGE-2.md",
-        "parent_brief": "ARCH-QUE-REFERENCE-PAGE"
+        "parent_brief": "ARCH-QUE-REFERENCE-PAGE",
+        "claimed_by": "dev-frontend",
+        "claimed_at": "2026-06-13T09:18:00Z"
       },
       {
         "id": "QUE-REFERENCE-PAGE-TEST",
@@ -7308,7 +7308,9 @@
           "QueName test includes: default (no prop) renders no anchor",
           "All tests pass"
         ],
-        "blocked_by": [],
+        "blocked_by": [
+          "QUE-REFERENCE-PAGE-2"
+        ],
         "created_at": "2026-06-13T09:15:00Z",
         "created_by": "pm",
         "handoff": "docs/data/orch/HANDOFF-QUE-REFERENCE-PAGE-TEST.md",
