@@ -1,5 +1,24 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-13 · FIX-BCTC-VPS-QUEUE-SYNC — 404 retry cap + orphan re-sync — REVIEW
+
+**Task:** FIX-BCTC-VPS-QUEUE-SYNC | Priority: high BUG | Zone: apps/mcp-server/src/scheduler/financial-reports/
+**Root cause (ops raw-verified):**
+- G1: `bctc_vps_queue` had 10 rows at 532-562 attempts (VNM, VEA, SHB, HUT, DIG, DXG, KDH, PDR, MSN, FRT Q1-2026) — no retry cap, no `deferred_infra` transition, VPS hammered forever with 404s.
+- G2: Those 10 rows had placeholder VPS source_url (`<VPS_BASE><TICKER>/<TICKER>_YEAR_Q.pdf`) — never actually cached on VPS. Several 0-attempt rows have the same placeholder pattern. Root cause: placeholder URLs auto-generated at seed time (no date-prefix, not a real cache file). VPS discovery arm not triggered because source_url IS NOT NULL.
+**Fix seams:**
+1. `bctcPdfPullJob.ts` — G1: `MAX_404_ATTEMPTS=10` named constant exported. `recordFailedAttempt()` helper: if `row.attempts + 1 >= MAX_404_ATTEMPTS` → `deferred_infra`, else `pending`. Added `deferred` count to `BctcPdfPullResult`. Added `attempts` column to `SELECT`. All 4 failure paths routed through `recordFailedAttempt()`.
+2. `bctcQueueEnricherJob.ts` — G2: orphan-re-sync arm added. Detects rows where `source_url LIKE VPS_BASE%` AND `source_url NOT LIKE '%/20%'` (placeholder filename, no date-prefix). Resets `source_url=NULL, status='pending', attempts=0` → re-discovery on next cycle. Covers `pending` + `deferred_infra` statuses. Also: `orphansResynced` added to result type. `VPS_BCTC_ENRICH_BASE_URL` and `VPS_PLACEHOLDER_NOT_LIKE` constants document the detection rule.
+**Orphan detection proof (generic, not hardcoded):** SQL set-difference: `LIKE VPS_BASE% AND NOT LIKE '%/20%'`. Real cached VPS files always start with date (`20YYMMDD-`). Placeholder files start with ticker (`VNM_2026_Q1.pdf`). No ticker names, no date ranges in the query.
+**Expected G3 outcome (VNM/MSN Q1-2026):** Both have placeholder VPS URLs → orphan arm resets → enricher re-discovers → if hsx.vn / VPS-Playwright finds a real cached PDF: `done`. If no upstream PDF available: `url_not_found` (HONEST terminal state, not fabricated cached). QA should calibrate G3 to whichever state the live VPS reports.
+**Tests:** FIX-BCTC-VPS-QUEUE-SYNC.test.ts — 18 pass / 0 fail. FENCE proofs: G1-FENCE (guard-absent shows deferred=0), G2-FENCE (inverted NOT LIKE hits real URLs). All BCTC tests (8 files, 91 tests): 91 pass / 0 fail. Full test baseline: 157 tools, 79 cron.schedule.
+**tsc:** clean (exit 0).
+**Pre-rebuild live DB observation:** `SELECT status, attempts, COUNT(*) FROM bctc_vps_queue GROUP BY status, attempts`: 10 rows at pending/562 (stuck), 16 at pending/0, 27 at url_not_found, 328 at deferred_infra, 48 at done. After rebuild+1 enricher cycle: those 10 stuck rows should hit cap in the first pull cycle → deferred_infra → orphan arm resets → NULL → re-discovery.
+**REBUILD REQUIRED:** ops rebuilds container. QA verifies G3 (VNM/MSN) and G4 (stuck-count→0/all-deferred).
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, G1+G2 deployed | HEALTHY
+
+---
+
 ## 2026-06-13 · TSU-DEV-U3 — Deregister 5 / Integrate 7 weak-claim tools — REVIEW
 
 **Task:** TSU-DEV-U3 | Sprint: TOOL-SURFACE-UPGRADE | Priority: P2 | Zone: apps/mcp-server/src/interface/mcp/tools/

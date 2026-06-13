@@ -67,6 +67,17 @@ export const MIN_PDF_BYTES = 10_240;
 /** Default max items per run. */
 const DEFAULT_BATCH_SIZE = 10;
 
+/**
+ * Maximum number of 404 / fetch-error attempts before a queue row is
+ * transitioned to `deferred_infra` (stop hammering the VPS).
+ *
+ * FIX-BCTC-VPS-QUEUE-SYNC: rows that exceed this cap are parked at
+ * `deferred_infra`; the bctcQueueEnricherJob orphan-re-sync arm will
+ * clear the stale VPS placeholder URL and re-attempt discovery.
+ * Named constant — change here to apply to ALL rows, no ticker list.
+ */
+export const MAX_404_ATTEMPTS = 10;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,6 +122,11 @@ export interface BctcPdfPullResult {
   downloaded: number;
   /** Items that failed (HTTP error, size guard, fetch throw). */
   failed: number;
+  /**
+   * FIX-BCTC-VPS-QUEUE-SYNC G1: rows transitioned to deferred_infra because
+   * their attempt count reached MAX_404_ATTEMPTS. Subset of `failed`.
+   */
+  deferred: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,6 +139,7 @@ interface QueueRow {
   period_year: number;
   period_quarter: string;
   source_url: string;
+  attempts: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -233,6 +250,7 @@ export async function runBctcPdfPullJob(opts: {
     itemsProcessed: 0,
     downloaded: 0,
     failed: 0,
+    deferred: 0,
   };
 
   // ── 1. Query pending pull-eligible rows ──────────────────────────────────
@@ -245,7 +263,7 @@ export async function runBctcPdfPullJob(opts: {
   try {
     rows = db
       .query<QueueRow, [string, string, number]>(
-        `SELECT id, action_code, period_year, period_quarter, source_url
+        `SELECT id, action_code, period_year, period_quarter, source_url, attempts
          FROM bctc_vps_queue
          WHERE status = 'pending'
            AND (source_url LIKE ? OR source_url LIKE ?)
@@ -271,6 +289,40 @@ export async function runBctcPdfPullJob(opts: {
   const updateAttempt = db.prepare<void, [number]>(
     `UPDATE bctc_vps_queue SET attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
   );
+  /**
+   * FIX-BCTC-VPS-QUEUE-SYNC G1: transition to deferred_infra when attempts
+   * exceed MAX_404_ATTEMPTS. This stops the infinite-404 VPS hammer loop.
+   * The bctcQueueEnricherJob orphan-re-sync arm will pick these up and either
+   * push a fresh discovery or mark url_not_found when genuinely unavailable.
+   */
+  const updateDeferredInfra = db.prepare<void, [number]>(
+    `UPDATE bctc_vps_queue SET status = 'deferred_infra', attempts = attempts + 1, last_attempt = datetime('now') WHERE id = ?`,
+  );
+
+  /**
+   * FIX-BCTC-VPS-QUEUE-SYNC G1 helper: record a failed fetch attempt.
+   *
+   * When the row's current attempts (pre-increment) already equals or exceeds
+   * MAX_404_ATTEMPTS - 1, the NEXT attempt pushes it over the cap → park at
+   * `deferred_infra`. Otherwise increment attempts and leave `pending`.
+   *
+   * Applies to ALL rows by attempt count — never by ticker name.
+   */
+  function recordFailedAttempt(row: QueueRow): void {
+    if (row.attempts + 1 >= MAX_404_ATTEMPTS) {
+      updateDeferredInfra.run(row.id);
+      result.deferred++;
+      logger.warn("[bctcPdfPull] attempt cap reached — transitioning to deferred_infra", {
+        ticker: row.action_code,
+        year: row.period_year,
+        quarter: row.period_quarter,
+        attempts: row.attempts + 1,
+        cap: MAX_404_ATTEMPTS,
+      });
+    } else {
+      updateAttempt.run(row.id);
+    }
+  }
 
   // ── 2. Download each PDF ──────────────────────────────────────────────────
   for (const row of rows) {
@@ -292,7 +344,7 @@ export async function runBctcPdfPullJob(opts: {
         error: err instanceof Error ? err.message : String(err),
       });
       result.failed++;
-      updateAttempt.run(row.id);
+      recordFailedAttempt(row);
       continue;
     }
 
@@ -304,7 +356,7 @@ export async function runBctcPdfPullJob(opts: {
         status: response.status,
       });
       result.failed++;
-      updateAttempt.run(row.id);
+      recordFailedAttempt(row);
       continue;
     }
 
@@ -318,7 +370,7 @@ export async function runBctcPdfPullJob(opts: {
         error: err instanceof Error ? err.message : String(err),
       });
       result.failed++;
-      updateAttempt.run(row.id);
+      recordFailedAttempt(row);
       continue;
     }
 
@@ -330,7 +382,7 @@ export async function runBctcPdfPullJob(opts: {
         minBytes: MIN_PDF_BYTES,
       });
       result.failed++;
-      updateAttempt.run(row.id);
+      recordFailedAttempt(row);
       continue;
     }
 
@@ -351,7 +403,7 @@ export async function runBctcPdfPullJob(opts: {
         error: err instanceof Error ? err.message : String(err),
       });
       result.failed++;
-      updateAttempt.run(row.id);
+      recordFailedAttempt(row);
       continue;
     }
 
@@ -395,6 +447,7 @@ export async function runBctcPdfPullJob(opts: {
     itemsProcessed: result.itemsProcessed,
     downloaded: result.downloaded,
     failed: result.failed,
+    deferred: result.deferred,
   });
 
   return result;

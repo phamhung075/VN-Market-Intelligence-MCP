@@ -53,6 +53,35 @@ const DISCOVERY_TIMEOUT_MS = 5_000;
  */
 const MAX_ENRICH_ATTEMPTS = 5;
 
+/**
+ * VPS bctc-files endpoint base URL — same value as in bctcPdfPullJob.
+ * Declared here to build the orphan-detection LIKE filter without importing
+ * from a sibling scheduler file (avoids circular dep risk).
+ */
+const VPS_BCTC_ENRICH_BASE_URL = "http://125.212.251.27:8765/bctc-files/";
+
+/**
+ * FIX-BCTC-VPS-QUEUE-SYNC G2: VPS placeholder URL LIKE suffix pattern.
+ *
+ * Real VPS cache filenames start with a date prefix (YYYYMMDD-...), e.g.:
+ *   http://125.212.251.27:8765/bctc-files/VNM/20260130-VNM-...pdf
+ *
+ * Placeholder filenames (auto-generated at seed time, never actually cached)
+ * follow the pattern <TICKER>_<YEAR>_Q<N>.pdf — NO date prefix:
+ *   http://125.212.251.27:8765/bctc-files/VNM/VNM_2026_Q1.pdf
+ *
+ * The programmatic distinguisher: real cached URLs contain `/20` in the
+ * filename segment (date prefix starts with `20`), placeholders do not.
+ * We select rows WHERE source_url LIKE VPS_BASE% AND source_url NOT LIKE
+ * `%/20%` — computed from row data, never a hardcoded ticker list.
+ *
+ * These orphan rows should have source_url reset to NULL so the enricher
+ * can re-discover the real cached PDF URL via discoverHosePdfUrls().
+ * If re-discovery still returns no URL, the normal MAX_ENRICH_ATTEMPTS
+ * gate will eventually mark them url_not_found — honest terminal state.
+ */
+const VPS_PLACEHOLDER_NOT_LIKE = "%/20%";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,6 +91,14 @@ export interface BctcQueueEnricherRunResult {
   urlsPopulated: number;
   timeoutFailures: number;
   partialFailures: number;
+  /**
+   * FIX-BCTC-VPS-QUEUE-SYNC G2: number of orphaned-URL rows (VPS placeholder
+   * source_url that was never actually cached) whose source_url was reset to
+   * NULL so re-discovery can proceed. These rows came from the orphan-re-sync
+   * arm and are NOT counted in itemsProcessed (discovery is deferred to the
+   * next enricher cycle after the reset).
+   */
+  orphansResynced: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,6 +128,7 @@ export async function runBctcQueueEnricherJob(opts: {
     urlsPopulated: 0,
     timeoutFailures: 0,
     partialFailures: 0,
+    orphansResynced: 0,
   };
 
   // ── Query items awaiting enrichment ──────────────────────────────────────
@@ -188,6 +226,71 @@ export async function runBctcQueueEnricherJob(opts: {
         error: msg,
       });
       return result;
+    }
+  }
+
+  // ── FIX-BCTC-VPS-QUEUE-SYNC G2: Orphan re-sync arm ─────────────────────────
+  //
+  // Detects local queue rows with a VPS placeholder source_url that was never
+  // actually cached on the VPS (programmatic set-difference: local VPS URLs
+  // whose filename segment does NOT contain the date-prefix that real cached
+  // files always have). Resets source_url to NULL so Arm 1 picks them up on
+  // the NEXT enricher cycle for fresh discovery.
+  //
+  // Detection is GENERIC — computed from row data (URL pattern), never a
+  // hardcoded ticker or date list. The rule:
+  //   VPS URL: source_url LIKE '<VPS_BASE>%'
+  //   Placeholder (NOT a real cache file): source_url NOT LIKE '%/20%'
+  //     (real VPS cache filenames start with a date, e.g. "20260130-VNM-...")
+  //
+  // Also re-syncs 'deferred_infra' rows that have a VPS placeholder URL
+  // (transitioned there by bctcPdfPullJob's G1 cap). Reset source_url=NULL
+  // and status='pending' so the enricher can discover the real URL.
+  //
+  // Includes only pending + deferred_infra rows (done / url_not_found stay).
+  // Runs before the main query early-return so orphans get cleared even when
+  // queueItems (the Arm 1+2 result) is empty.
+  {
+    const ORPHAN_SQL = `
+      SELECT id, action_code, period_year, period_quarter, source_url
+      FROM bctc_vps_queue
+      WHERE status IN ('pending', 'deferred_infra')
+        AND source_url LIKE ?
+        AND source_url NOT LIKE ?
+      LIMIT 50`;
+
+    type OrphanRow = { id: number; action_code: string; period_year: number; period_quarter: string; source_url: string };
+
+    let orphanRows: OrphanRow[] = [];
+    try {
+      orphanRows = db
+        .query<OrphanRow, [string, string]>(ORPHAN_SQL)
+        .all(`${VPS_BCTC_ENRICH_BASE_URL}%`, VPS_PLACEHOLDER_NOT_LIKE);
+    } catch (orphanErr) {
+      // Non-fatal — orphan arm is best-effort; log and continue to main arm.
+      logger.debug("[bctcQueueEnricher] orphan-re-sync query failed (non-fatal)", {
+        error: orphanErr instanceof Error ? orphanErr.message : String(orphanErr),
+      });
+      orphanRows = [];
+    }
+
+    if (orphanRows.length > 0) {
+      const resetOrphanStmt = db.prepare<void, [number]>(
+        `UPDATE bctc_vps_queue SET source_url = NULL, status = 'pending', attempts = 0, last_attempt = datetime('now') WHERE id = ?`,
+      );
+      for (const orphan of orphanRows) {
+        resetOrphanStmt.run(orphan.id);
+        result.orphansResynced++;
+        logger.info("[bctcQueueEnricher] orphan VPS placeholder URL reset for re-discovery", {
+          ticker: orphan.action_code,
+          year: orphan.period_year,
+          quarter: orphan.period_quarter,
+          stale_url: orphan.source_url,
+        });
+      }
+      logger.info("[bctcQueueEnricher] orphan-re-sync arm complete", {
+        orphansResynced: result.orphansResynced,
+      });
     }
   }
 
