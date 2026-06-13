@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T08:30:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-13T08:39:47Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-12T20:27:31Z",
@@ -5098,8 +5098,12 @@
             "blocks": [
               "SHIP-WAVE-REAUDIT"
             ],
-            "note": "Dev DONE commit 53d00955 (recoverMissedExecutions+dedup+double-wrap fix). QA pre-rebuild APPROVED 2026-06-12T16:45Z (8/0 tests, tsc clean, DDD+security PASS). REBUILD_REQUIRED. Cron-gated re-check: evidenceAccumulatorJob 2026-06-13 16:00 UTC + reputationComputeJob 2026-06-13 08:30 UTC.",
-            "qa_note": "[QA] APPROVED pre-rebuild: 8/0 bun tests, tsc exit 0, DDD PASS, security PASS. Fix: recoverMissedExecutions:true on evidenceAccumulator+reputationCompute; dedup guard in runEvidenceAccumulatorWithDb; double-wrap eliminated. DJ: EVIDENCE-ACCUM-SILENT-CRON.md § QA Review Record."
+            "note": "Dev DONE commit 53d00955 (recoverMissedExecutions+dedup+double-wrap) — CONFIRMED ancestor of HEAD. ADJUDICATION 2026-06-13T08:39:47Z by po: REBUILD_REQUIRED is SATISFIED — mcp-server container rebuilt 07:52 UTC today from current HEAD; 53d00955 is LIVE in the running image. Two cron-gated live re-checks remain: (a) reputationComputeJob 08:30 UTC FIRED ~08:30 (now live-verifiable) -> QA dispatched to verify recovered execution against LIVE named-volume reputation_scores (sqlite sidecar, NOT host ./data); (b) evidenceAccumulatorJob 16:00 UTC still ~7.5h future. RULING: item legitimately HOLDS the apps/mcp-server zone until the 16:00 evidenceAccumulatorJob gate lands and is live-verified — DONE is GATED on the 16:00 re-check, not on rebuild. This is the documented zone-block reason.",
+            "qa_note": "[QA] APPROVED pre-rebuild: 8/0 bun tests, tsc exit 0, DDD PASS, security PASS. Fix: recoverMissedExecutions:true on evidenceAccumulator+reputationCompute; dedup guard in runEvidenceAccumulatorWithDb; double-wrap eliminated. DJ: EVIDENCE-ACCUM-SILENT-CRON.md § QA Review Record.",
+            "zone_block_reason": "Holds apps/mcp-server zone until 2026-06-13T16:00Z evidenceAccumulatorJob cron-gated live re-check lands (rebuild gate already met; DONE gated on 16:00 firing).",
+            "gate_status": "rebuild=MET; reputationCompute-0830=QA-VERIFY-NOW; evidenceAccumulator-1600=PENDING-FUTURE",
+            "_updated_at": "2026-06-13T08:39:47Z",
+            "_adjudicated_by": "po"
           }
         ]
       }
@@ -7170,7 +7174,7 @@
         "title": "system-auditor orphan-correlation audit query (C-08, docs/agents/system-auditor/flow/main.md line 463) uses JOIN ... ON a.id = s.id — compares alerts.id (TEXT/UUID) to agent_signals.id (INTEGER); SQLite never coerces -> permanently reports ALL alerts orphaned (this WAS the false '103 orphans/24h' metric). Change to ON a.id = s.alert_id now that the alert_id column exists and is co-written (FIX-ALERT-ORPHAN-CORRELATION shipped it).",
         "type": "FIX",
         "owner": "agent-md-factory",
-        "status": "NEW",
+        "status": "READY",
         "size": "S",
         "zone": "docs/agents/system-auditor/",
         "priority": "high",
@@ -7178,8 +7182,17 @@
         "desc": "ZONE = system-auditor flow / agent-md-factory (SSOT/DRY) — NOT apps/mcp-server, NOT dev-mcp-server. Follow-up surfaced during FIX-ALERT-ORPHAN-CORRELATION; intentionally NOT blocked on its REVIEW. The C-08 Tier-3 audit query at docs/agents/system-auditor/flow/main.md:463 reads `SELECT count(*) FROM alerts a LEFT JOIN agent_signals s ON a.id = s.id WHERE s.id IS NULL ...` — a.id is TEXT/UUID, s.id is INTEGER autoincrement; SQLite does no implicit cross-type coercion so the join NEVER matches and every alert reports as orphaned (the spurious '103 orphans/24h'). Fix: `ON a.id = s.alert_id`. DoD: line 463 query joins on s.alert_id; a manual run on the LIVE named-volume DB returns ~0 orphans (post co-write). Invoke agent-md-factory skill before editing the flow .md. UNTIL FIXED the Tier-3 orphan-delta metric is meaningless — orphan long-watch gate must NOT be read as a regression signal.",
         "created_at": "2026-06-13T08:09:33Z",
         "created_by": "po",
-        "_updated_at": "2026-06-13T08:09:33Z",
-        "blocks_metric": "tier3-orphan-delta-long-watch"
+        "_updated_at": "2026-06-13T08:39:47Z",
+        "blocks_metric": "tier3-orphan-delta-long-watch",
+        "_groomed_by": "po",
+        "ac": [
+          "AC1: docs/agents/system-auditor/flow/main.md C-08 row (line ~463) JOIN changed from `ON a.id = s.id` to `ON a.id = s.alert_id`; no other C-08 column altered.",
+          "AC2: agent-md-factory skill invoked BEFORE editing the flow .md (SSOT/DRY gate).",
+          "AC3: manual run of the corrected C-08 query against the LIVE named-volume market.db (via keinos/sqlite3 sidecar, NOT host ./data) returns ~0 orphans (post FIX-ALERT-ORPHAN-CORRELATION alert_id co-write).",
+          "AC4: blocks_metric tier3-orphan-delta-long-watch cleared — orphan-delta is a valid regression signal only AFTER this lands; record that on close.",
+          "AC5: parallel-safe — NO container rebuild (flow .md only); zone docs/agents/system-auditor/ is distinct from apps/mcp-server/."
+        ],
+        "ready_note": "GROOMED READY 2026-06-13T08:39:47Z by po. Dependency FIX-ALERT-ORPHAN-CORRELATION=DONE (alert_id column + atomic co-write shipped, commit 7cbca67a) -> DoD AC3 now achievable. Dispatch to agent-md-factory next tick; runs in parallel with the apps/mcp-server zone-blocked EVIDENCE-ACCUM."
       },
       {
         "id": "FU-ALERT-COWRITE-SCHEDULER-JOBS",
