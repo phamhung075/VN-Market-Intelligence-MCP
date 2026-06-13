@@ -277,10 +277,23 @@ class LanceDBVectorStore(VectorStorePort):
                 except (json.JSONDecodeError, ValueError):
                     tags = []
 
-            # _distance is set on vector/FTS results; _relevance_score on hybrid RRF results
-            distance = float(
-                row.get("_distance") or row.get("_relevance_score") or 0.0
-            )
+            # Resolve distance signal using ABSENT-KEY-aware logic.
+            # MUST NOT use truthiness `or` — Python `0.0 or X` evaluates to X,
+            # which silently discards a LEGITIMATE _distance==0.0 (true identical-
+            # vector match) and pushes it down the fallback chain.
+            #
+            # Fail-SAFE default: 1.0 (→ similarity 0.5 via 1/(1+d)) — aligns with
+            # sibling at domain/module/retrieval/module.py:102 which uses
+            # `float(result.get("distance", 1.0))`.  A missing signal MUST yield a
+            # NEUTRAL/low score, never 1.0 (which would be a fabricated perfect match).
+            #
+            # _distance is set on vector/FTS results; _relevance_score on hybrid RRF results.
+            if "_distance" in row and row["_distance"] is not None:
+                distance = float(row["_distance"])
+            elif "_relevance_score" in row and row["_relevance_score"] is not None:
+                distance = float(row["_relevance_score"])
+            else:
+                distance = 1.0  # fail-safe: absent signal → low similarity (0.5), not perfect match
             results.append(
                 SearchResult(
                     id=row.get("id", ""),

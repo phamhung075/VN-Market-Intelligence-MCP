@@ -3,6 +3,9 @@ Unit tests — domain/services.py
 
 Tests: compute_recency_score, apply_temporal_decay, filter_by_max_distance, SearchService.rank
 All pure functions — no I/O, no mocks needed.
+
+Also covers FDA-9 regression tests for infrastructure/_dedup_and_trim distance resolution
+(AC5: absent _distance -> fail-safe low similarity; present _distance==0.0 -> similarity 1.0).
 """
 
 import math
@@ -24,6 +27,8 @@ from domain.services import (
     DEFAULT_HALF_LIFE_DAYS,
     DEFAULT_MAX_DISTANCE,
 )
+from infrastructure.repositories import LanceDBVectorStore
+from domain.primitive.similarity_scorer.similarity_scorer import score as similarity_score
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────
@@ -272,3 +277,136 @@ class TestSearchServiceRank:
         ]
         ranked = self.service.rank(results)
         assert ranked[0].id == "new"
+
+
+# ── FDA-9 regression: _dedup_and_trim distance resolution ────────────────
+# AC5 (test, fail-loud): self-confirming tests that PROVE the bug first,
+# then verify the fix.  These tests use LanceDBVectorStore._dedup_and_trim()
+# (infrastructure layer) directly — no LanceDB I/O, only the pure Python
+# dict-processing logic is exercised.
+#
+# Bug summary:
+#   BEFORE fix: `float(row.get("_distance") or row.get("_relevance_score") or 0.0)`
+#     (a) ABSENT key → 0.0 → similarity 1.0 (FABRICATED perfect match)
+#     (b) _distance==0.0 → Python `0.0 or ...` coalesces away the real 0.0
+#   AFTER fix: absent-key-aware explicit `if "_distance" in row` chain,
+#     fail-safe default 1.0 → similarity 0.5 (low/neutral, not perfect).
+# ─────────────────────────────────────────────────────────────────────────
+
+
+def _make_row(
+    id: str = "r1",
+    distance_key: str | None = "_distance",
+    distance_val: float | None = 0.5,
+) -> dict:
+    """Build a minimal LanceDB row dict with the given distance key/value."""
+    row: dict = {
+        "id": id,
+        "level": "global",
+        "title": f"Title {id}",
+        "summary": f"Summary {id}",
+        "tags": "[]",
+        "action_code": "",
+        "created_at": datetime.now(tz=timezone.utc).isoformat(),
+        "ticker": "",
+        "sector": "",
+        "source_domain": "",
+        "depth_tier": "shallow",
+        "doc_type": "news",
+        "published_at": "",
+        "confidence": 0.0,
+        "impact_score": 0.0,
+    }
+    if distance_key is not None and distance_val is not None:
+        row[distance_key] = distance_val
+    return row
+
+
+class TestFDA9DistanceResolution:
+    """
+    FDA-9: self-confirming regression tests for _dedup_and_trim distance coalesce fix.
+
+    Each test constructs a minimal row dict, calls _dedup_and_trim(), reads the
+    resulting SearchResult.distance, and derives the similarity via the production
+    formula (1/(1+d)) to assert served quality.
+    """
+
+    def _store(self) -> LanceDBVectorStore:
+        """Return a LanceDBVectorStore instance with no DB init (we only call _dedup_and_trim)."""
+        return LanceDBVectorStore(db_path="/dev/null")  # path unused — no I/O in _dedup_and_trim
+
+    # AC5(a): absent _distance key → fail-safe distance 1.0 → similarity ~0.5 (NOT 1.0)
+    def test_absent_distance_key_yields_fail_safe_low_similarity(self):
+        """
+        Row has NEITHER _distance NOR _relevance_score.
+        MUST default to distance=1.0 (fail-safe) → similarity=0.5, NOT 1.0.
+        BUG: old code defaulted to 0.0 → similarity=1.0 (fabricated perfect match).
+        """
+        row = _make_row(distance_key=None)  # no distance key at all
+        store = self._store()
+        results = store._dedup_and_trim([row], limit=10)
+        assert len(results) == 1
+        distance = results[0].distance
+        similarity = similarity_score(distance)
+        assert distance == pytest.approx(1.0), (
+            f"Expected fail-safe distance=1.0, got {distance}. "
+            "A missing signal must NOT default to 0.0 (fabricated perfect match)."
+        )
+        assert similarity == pytest.approx(0.5), (
+            f"Expected fail-safe similarity=0.5, got {similarity}. "
+            "BUG: 0.0 distance would yield 1.0 (fabricated perfect match)."
+        )
+
+    # AC5(b): present _distance==0.0 → similarity 1.0 (PRESERVED, not coalesced away)
+    def test_distance_zero_preserved_as_identical_vector_match(self):
+        """
+        Row has _distance=0.0 (true identical-vector match).
+        MUST yield similarity=1.0.
+        BUG: old code used `row.get("_distance") or ...` which Python evaluates as
+        `0.0 or ...` == truthy-False, silently coalescing 0.0 away.
+        """
+        row = _make_row(distance_key="_distance", distance_val=0.0)
+        store = self._store()
+        results = store._dedup_and_trim([row], limit=10)
+        assert len(results) == 1
+        distance = results[0].distance
+        similarity = similarity_score(distance)
+        assert distance == pytest.approx(0.0), (
+            f"Expected distance=0.0 (identical-vector match) preserved, got {distance}. "
+            "BUG: old `or` coalesced 0.0 away to a fallback value."
+        )
+        assert similarity == pytest.approx(1.0), (
+            f"Expected similarity=1.0 for identical-vector match, got {similarity}."
+        )
+
+    # Extra AC: row with only _relevance_score (hybrid RRF path) resolves correctly
+    def test_only_relevance_score_resolves_correctly(self):
+        """
+        Row has _relevance_score but no _distance (hybrid RRF result).
+        MUST use _relevance_score as the distance value.
+        """
+        row = _make_row(distance_key="_relevance_score", distance_val=0.3)
+        store = self._store()
+        results = store._dedup_and_trim([row], limit=10)
+        assert len(results) == 1
+        distance = results[0].distance
+        assert distance == pytest.approx(0.3), (
+            f"Expected _relevance_score=0.3 to be used as distance, got {distance}."
+        )
+        similarity = similarity_score(distance)
+        # 1/(1+0.3) ≈ 0.769
+        assert similarity == pytest.approx(1.0 / 1.3, abs=1e-6)
+
+    # Verify _distance takes priority over _relevance_score when both present
+    def test_distance_takes_priority_over_relevance_score(self):
+        """
+        When both _distance and _relevance_score are present, _distance wins.
+        """
+        row = _make_row(distance_key="_distance", distance_val=0.2)
+        row["_relevance_score"] = 0.9  # also present — must be ignored
+        store = self._store()
+        results = store._dedup_and_trim([row], limit=10)
+        assert len(results) == 1
+        assert results[0].distance == pytest.approx(0.2), (
+            f"Expected _distance=0.2 to take priority over _relevance_score=0.9."
+        )
