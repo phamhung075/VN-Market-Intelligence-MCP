@@ -126,6 +126,50 @@ export function stripAnsiAndDetectJunk(raw: string, label: string): JunkCheckRes
 }
 
 // ---------------------------------------------------------------------------
+// Python stdout-capture helper (FIX-FUNDAMENTALS-REFRESH-CRON-DEAD)
+//
+// vnstock added a deprecation-notice banner (box-drawing chars ╭╮│) emitted to
+// stdout on every Vnstock().stock() call since 2025-08-31.  isRateLimitResponse()
+// uses BOX_DRAWING_RE to detect rate-limiting, so the banner was being mis-detected
+// as a rate-limit response — all financial fetches silently returned null.
+//
+// Fix: inject a compact Python preamble that redirects sys.stdout to a StringIO
+// buffer for the duration of the Vnstock() init, then restores it so JSON goes to
+// the real stdout.  Same pattern used by EVENTS_SCRIPT since Task 1780.
+// ---------------------------------------------------------------------------
+
+/**
+ * Python preamble that suppresses the vnstock deprecation banner.
+ *
+ * Exported for unit tests so TC-3 can assert the pattern is present.
+ *
+ * Usage in Python script template:
+ *   SUPPRESS_BANNER captures sys.stdout before Vnstock() init, discards banner output.
+ *   RESTORE_STDOUT restores sys.stdout so subsequent print(json.dumps(...)) calls reach pipe.
+ *
+ * Pattern (per script):
+ *   _real_stdout = sys.stdout
+ *   sys.stdout = _io.StringIO()
+ *   try:
+ *     stock = Vnstock().stock(...)
+ *   finally:
+ *     sys.stdout = _real_stdout
+ *
+ * SUPPRESS_BANNER redirects sys.stdout → StringIO so any print() inside the
+ * Vnstock() + .stock() constructors (deprecation notice, progress bars) are
+ * captured and discarded.  RESTORE_STDOUT returns sys.stdout to the real fd so
+ * subsequent print() calls (our JSON output) reach runPython's stdout pipe.
+ */
+export const SUPPRESS_BANNER = `
+import io as _io, sys as _sys
+_real_stdout = _sys.stdout
+_sys.stdout = _io.StringIO()
+`;
+export const RESTORE_STDOUT = `
+_sys.stdout = _real_stdout
+`;
+
+// ---------------------------------------------------------------------------
 // Global rate limiter — 50 RPM sliding window (Task 1833i)
 // ---------------------------------------------------------------------------
 
@@ -326,16 +370,27 @@ async function runPythonWithBackoff<T>(script: string, label: string): Promise<T
 // ---------------------------------------------------------------------------
 
 const PRICE_SCRIPT = (symbols: string[], days: number) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: suppress vnstock deprecation banner on stdout
+_real_stdout = sys.stdout
+sys.stdout = _io.StringIO()
 try:
     from vnstock import Vnstock
     from datetime import datetime, timedelta
+finally:
+    sys.stdout = _real_stdout
+try:
     end = datetime.now().strftime('%Y-%m-%d')
     start = (datetime.now() - timedelta(days=${days})).strftime('%Y-%m-%d')
     results = []
     for sym in ${JSON.stringify(symbols)}:
         try:
-            stock = Vnstock().stock(symbol=sym, source='VCI')
+            _buf = _io.StringIO()
+            sys.stdout = _buf
+            try:
+                stock = Vnstock().stock(symbol=sym, source='VCI')
+            finally:
+                sys.stdout = _real_stdout
             df = stock.quote.history(start=start, end=end, interval='1D')
             if df is not None and len(df) > 0:
                 last = df.iloc[-1]
@@ -352,9 +407,11 @@ try:
                     'changePct': round(change_pct, 2)
                 })
         except Exception as e:
+            sys.stdout = _real_stdout
             sys.stderr.write(f'vnstock error {sym}: {e}\\n')
     print(json.dumps(results))
 except Exception as e:
+    sys.stdout = _real_stdout
     sys.stderr.write(f'vnstock fatal: {e}\\n')
     print('[]')
 `;
@@ -376,72 +433,88 @@ export async function fetchVnstockPrices(
 // ---------------------------------------------------------------------------
 
 const FINANCE_SCRIPT = (symbol: string) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: vnstock emits two stdout banners:
+# 1. Vnstock().stock() deprecation notice (box-drawing chars — mis-detected as RATE_LIMIT)
+# 2. income_statement/balance_sheet/cash_flow community-edition notice (starts with info emoji)
+# Fix: capture stdout around ALL vnstock API calls; print JSON only after restoring real stdout.
+_real_stdout = sys.stdout
+inc = None
+ratio = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
-
+    sys.stdout = _io.StringIO()
     inc = stock.finance.income_statement(period='quarter')
+    sys.stdout = _io.StringIO()
     ratio = stock.finance.ratio(period='quarter')
-
-    if inc is None or len(inc) == 0:
-        print('null')
-        sys.exit(0)
-
-    last = inc.iloc[0]
-    r = ratio.iloc[0] if ratio is not None and len(ratio) > 0 else None
-
-    rev = float(last.get('Revenue (Bn. VND)', 0) or 0)
-    _ni_keys = [
-        'Attributable to parent company',
-        'Net Profit After Tax (Bn. VND)',
-        'Lợi nhuận sau thuế',
-    ]
-    _ni_raw = next((last.get(k) for k in _ni_keys if last.get(k) not in (None, 0)), None)
-    net = float(_ni_raw) if _ni_raw is not None else 0  # keep 0 for ratio math; None only when truly absent
-
-    # Ratios - handle multi-level columns
-    pe = pb = roe = roa = de = npm = 0.0
-    nim_val = npl_val = None
-    if r is not None:
-        try:
-            pe = float(r.get(('Chỉ tiêu định giá', 'P/E'), 0) or 0)
-            pb = float(r.get(('Chỉ tiêu định giá', 'P/B'), 0) or 0)
-            roe = float(r.get(('Chỉ tiêu khả năng sinh lợi', 'ROE (%)'), 0) or 0)
-            roa = float(r.get(('Chỉ tiêu khả năng sinh lợi', 'ROA (%)'), 0) or 0)
-            de = float(r.get(('Chỉ tiêu cơ cấu nguồn vốn', 'Debt/Equity'), 0) or 0)
-            npm = float(r.get(('Chỉ tiêu khả năng sinh lợi', 'Net Profit Margin (%)'), 0) or 0)
-        except Exception as ratio_err:
-            # Fix 5 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): was bare except: pass — silently
-            # zeroed pe/pb/roe/roa on any column-key mismatch (vnstock schema drift).
-            # Now logs the error to stderr so schema changes surface in container logs.
-            # pe/pb/roe/roa remain 0.0 as before — acceptable fallback but now visible.
-            sys.stderr.write(f'vnstock ratio columns error for {symbol}: {ratio_err}\\n')
-
-    result = {
-        'code': '${symbol}',
-        'yearReport': int(last.get('yearReport', 0)),
-        'quarter': int(last.get('lengthReport', 0)),
-        'source': 'vnstock',
-        'revenue': round(rev / 1e9, 2),
-        'revenueYoY': round(float(last.get('Revenue YoY (%)', 0) or 0) * 100, 2),
-        'netProfit': round(net / 1e9, 2),
-        'netProfitYoY': round(float(last.get('Attribute to parent company YoY (%)', 0) or 0) * 100, 2),
-        'eps': int(last.get('EPS_basis', 0) or 0),
-        'pe': round(pe, 2),
-        'pb': round(pb, 2),
-        'roe': round(roe * 100, 2),
-        'roa': round(roa * 100, 2),
-        'debtToEquity': round(de, 2),
-        'netProfitMargin': round(npm * 100, 2),
-        'nim': None,
-        'npl': None,
-        'fetchedAt': __import__('datetime').datetime.now().isoformat()
-    }
-    print(json.dumps(result))
 except Exception as e:
-    sys.stderr.write(f'vnstock finance error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock finance error: {_fetch_err}\\n')
     print('null')
+elif inc is None or len(inc) == 0:
+    print('null')
+else:
+    try:
+        last = inc.iloc[0]
+        r = ratio.iloc[0] if ratio is not None and len(ratio) > 0 else None
+
+        rev = float(last.get('Revenue (Bn. VND)', 0) or 0)
+        _ni_keys = [
+            'Attributable to parent company',
+            'Net Profit After Tax (Bn. VND)',
+            'Lợi nhuận sau thuế',
+        ]
+        _ni_raw = next((last.get(k) for k in _ni_keys if last.get(k) not in (None, 0)), None)
+        net = float(_ni_raw) if _ni_raw is not None else 0  # keep 0 for ratio math; None only when truly absent
+
+        # Ratios - handle multi-level columns
+        pe = pb = roe = roa = de = npm = 0.0
+        nim_val = npl_val = None
+        if r is not None:
+            try:
+                pe = float(r.get(('Chỉ tiêu định giá', 'P/E'), 0) or 0)
+                pb = float(r.get(('Chỉ tiêu định giá', 'P/B'), 0) or 0)
+                roe = float(r.get(('Chỉ tiêu khả năng sinh lợi', 'ROE (%)'), 0) or 0)
+                roa = float(r.get(('Chỉ tiêu khả năng sinh lợi', 'ROA (%)'), 0) or 0)
+                de = float(r.get(('Chỉ tiêu cơ cấu nguồn vốn', 'Debt/Equity'), 0) or 0)
+                npm = float(r.get(('Chỉ tiêu khả năng sinh lợi', 'Net Profit Margin (%)'), 0) or 0)
+            except Exception as ratio_err:
+                # Fix 5 (FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE): was bare except: pass — silently
+                # zeroed pe/pb/roe/roa on any column-key mismatch (vnstock schema drift).
+                # Now logs the error to stderr so schema changes surface in container logs.
+                # pe/pb/roe/roa remain 0.0 as before — acceptable fallback but now visible.
+                sys.stderr.write(f'vnstock ratio columns error for ${symbol}: {ratio_err}\\n')
+
+        result = {
+            'code': '${symbol}',
+            'yearReport': int(last.get('yearReport', 0)),
+            'quarter': int(last.get('lengthReport', 0)),
+            'source': 'vnstock',
+            'revenue': round(rev / 1e9, 2),
+            'revenueYoY': round(float(last.get('Revenue YoY (%)', 0) or 0) * 100, 2),
+            'netProfit': round(net / 1e9, 2),
+            'netProfitYoY': round(float(last.get('Attribute to parent company YoY (%)', 0) or 0) * 100, 2),
+            'eps': int(last.get('EPS_basis', 0) or 0),
+            'pe': round(pe, 2),
+            'pb': round(pb, 2),
+            'roe': round(roe * 100, 2),
+            'roa': round(roa * 100, 2),
+            'debtToEquity': round(de, 2),
+            'netProfitMargin': round(npm * 100, 2),
+            'nim': None,
+            'npl': None,
+            'fetchedAt': __import__('datetime').datetime.now().isoformat()
+        }
+        print(json.dumps(result))
+    except Exception as e:
+        sys.stderr.write(f'vnstock finance error: {e}\\n')
+        print('null')
 `;
 
 export async function fetchVnstockFinancials(code: string): Promise<VnstockFinancials | null> {
@@ -460,53 +533,67 @@ export async function fetchVnstockFinancials(code: string): Promise<VnstockFinan
 // ---------------------------------------------------------------------------
 
 const TRADING_STATS_SCRIPT = (symbol: string) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: capture stdout around ALL vnstock API calls
+_real_stdout = sys.stdout
+df = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    sys.stdout = _io.StringIO()
     df = stock.company.trading_stats()
-    if df is None or len(df) == 0:
-        print('null')
-        sys.exit(0)
-    r = df.iloc[0]
-    # --- Column mapping updated for vnstock schema (2026-06-04 FIX-B) ---
-    # New schema: free_float, foreigner_percentage, maximum_foreign_percentage,
-    #             average_match_volume1_month, highest_price1_year, lowest_price1_year,
-    #             current_price, market_cap (raw VND), number_of_shares_mkt_cap
-    # Prices in new schema are already in VND (no *1000 needed).
-    # market_cap is available directly here — ratio() call removed (was broken).
-    mc_raw = r.get('market_cap', None)
-    market_cap_bn = round(float(mc_raw) / 1e9, 2) if mc_raw is not None else None
-    if market_cap_bn is None:
-        sys.stderr.write(f'vnstock trading_stats: market_cap missing for ${symbol}\\n')
-    hp = float(r.get('highest_price1_year', 0) or 0)
-    lp = float(r.get('lowest_price1_year', 0) or 0)
-    cp = float(r.get('current_price', 0) or 0)
-    pct_from_high = round((cp - hp) / hp * 100, 2) if hp else 0.0
-    pct_from_low = round((cp - lp) / lp * 100, 2) if lp else 0.0
-    # foreignVolume: derived as foreigner_percentage * shares (cumulative foreign holding)
-    # foreignRoom: free_float (shares available for foreign purchase)
-    foreigner_pct = float(r.get('foreigner_percentage', 0) or 0)
-    shares = float(r.get('number_of_shares_mkt_cap', 0) or 0)
-    foreign_vol_derived = int(foreigner_pct * shares)
-    result = {
-        'code': '${symbol}',
-        'foreignRoom': int(r.get('free_float', 0) or 0),
-        'foreignVolume': foreign_vol_derived,
-        'currentHoldingRatio': round(foreigner_pct, 4),
-        'maxHoldingRatio': round(float(r.get('maximum_foreign_percentage', 0) or 0), 4),
-        'avgVolume2w': int(r.get('average_match_volume1_month', 0) or 0),
-        'high52w': hp,
-        'low52w': lp,
-        'pctFromHigh52w': pct_from_high,
-        'pctFromLow52w': pct_from_low,
-        'marketCapBn': market_cap_bn,
-        'fetchedAt': __import__('datetime').datetime.now().isoformat()
-    }
-    print(json.dumps(result))
 except Exception as e:
-    sys.stderr.write(f'vnstock trading_stats error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock trading_stats error: {_fetch_err}\\n')
     print('null')
+elif df is None or len(df) == 0:
+    print('null')
+else:
+    try:
+        r = df.iloc[0]
+        # --- Column mapping updated for vnstock schema (2026-06-04 FIX-B) ---
+        # New schema: free_float, foreigner_percentage, maximum_foreign_percentage,
+        #             average_match_volume1_month, highest_price1_year, lowest_price1_year,
+        #             current_price, market_cap (raw VND), number_of_shares_mkt_cap
+        # Prices in new schema are already in VND (no *1000 needed).
+        # market_cap is available directly here — ratio() call removed (was broken).
+        mc_raw = r.get('market_cap', None)
+        market_cap_bn = round(float(mc_raw) / 1e9, 2) if mc_raw is not None else None
+        if market_cap_bn is None:
+            sys.stderr.write(f'vnstock trading_stats: market_cap missing for ${symbol}\\n')
+        hp = float(r.get('highest_price1_year', 0) or 0)
+        lp = float(r.get('lowest_price1_year', 0) or 0)
+        cp = float(r.get('current_price', 0) or 0)
+        pct_from_high = round((cp - hp) / hp * 100, 2) if hp else 0.0
+        pct_from_low = round((cp - lp) / lp * 100, 2) if lp else 0.0
+        # foreignVolume: derived as foreigner_percentage * shares (cumulative foreign holding)
+        # foreignRoom: free_float (shares available for foreign purchase)
+        foreigner_pct = float(r.get('foreigner_percentage', 0) or 0)
+        shares = float(r.get('number_of_shares_mkt_cap', 0) or 0)
+        foreign_vol_derived = int(foreigner_pct * shares)
+        result = {
+            'code': '${symbol}',
+            'foreignRoom': int(r.get('free_float', 0) or 0),
+            'foreignVolume': foreign_vol_derived,
+            'currentHoldingRatio': round(foreigner_pct, 4),
+            'maxHoldingRatio': round(float(r.get('maximum_foreign_percentage', 0) or 0), 4),
+            'avgVolume2w': int(r.get('average_match_volume1_month', 0) or 0),
+            'high52w': hp,
+            'low52w': lp,
+            'pctFromHigh52w': pct_from_high,
+            'pctFromLow52w': pct_from_low,
+            'marketCapBn': market_cap_bn,
+            'fetchedAt': __import__('datetime').datetime.now().isoformat()
+        }
+        print(json.dumps(result))
+    except Exception as e:
+        sys.stderr.write(f'vnstock trading_stats error: {e}\\n')
+        print('null')
 `;
 
 export async function fetchVnstockTradingStats(code: string): Promise<VnstockTradingStats | null> {
@@ -524,27 +611,41 @@ export async function fetchVnstockTradingStats(code: string): Promise<VnstockTra
 // ---------------------------------------------------------------------------
 
 const OFFICERS_SCRIPT = (symbol: string) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: capture stdout around ALL vnstock API calls
+_real_stdout = sys.stdout
+df = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    sys.stdout = _io.StringIO()
     df = stock.company.officers()
-    if df is None or len(df) == 0:
-        print('[]')
-        sys.exit(0)
-    results = []
-    for _, r in df.iterrows():
-        results.append({
-            'code': '${symbol}',
-            'name': str(r.get('officer_name', '')),
-            'position': str(r.get('officer_position', '')),
-            'ownPercent': round(float(r.get('officer_own_percent', 0) or 0) * 100, 4),
-            'quantity': int(r.get('quantity', 0) or 0)
-        })
-    print(json.dumps(results))
 except Exception as e:
-    sys.stderr.write(f'vnstock officers error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock officers error: {_fetch_err}\\n')
     print('[]')
+elif df is None or len(df) == 0:
+    print('[]')
+else:
+    try:
+        results = []
+        for _, r in df.iterrows():
+            results.append({
+                'code': '${symbol}',
+                'name': str(r.get('officer_name', '')),
+                'position': str(r.get('officer_position', '')),
+                'ownPercent': round(float(r.get('officer_own_percent', 0) or 0) * 100, 4),
+                'quantity': int(r.get('quantity', 0) or 0)
+            })
+        print(json.dumps(results))
+    except Exception as e:
+        sys.stderr.write(f'vnstock officers error: {e}\\n')
+        print('[]')
 `;
 
 export async function fetchVnstockOfficers(code: string): Promise<VnstockOfficer[]> {
@@ -557,26 +658,40 @@ export async function fetchVnstockOfficers(code: string): Promise<VnstockOfficer
 // ---------------------------------------------------------------------------
 
 const SHAREHOLDERS_SCRIPT = (symbol: string) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: capture stdout around ALL vnstock API calls
+_real_stdout = sys.stdout
+df = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    sys.stdout = _io.StringIO()
     df = stock.company.shareholders()
-    if df is None or len(df) == 0:
-        print('[]')
-        sys.exit(0)
-    results = []
-    for _, r in df.iterrows():
-        results.append({
-            'code': '${symbol}',
-            'name': str(r.get('share_holder', '')),
-            'quantity': int(r.get('quantity', 0) or 0),
-            'ownPercent': round(float(r.get('share_own_percent', 0) or 0) * 100, 2)
-        })
-    print(json.dumps(results))
 except Exception as e:
-    sys.stderr.write(f'vnstock shareholders error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock shareholders error: {_fetch_err}\\n')
     print('[]')
+elif df is None or len(df) == 0:
+    print('[]')
+else:
+    try:
+        results = []
+        for _, r in df.iterrows():
+            results.append({
+                'code': '${symbol}',
+                'name': str(r.get('share_holder', '')),
+                'quantity': int(r.get('quantity', 0) or 0),
+                'ownPercent': round(float(r.get('share_own_percent', 0) or 0) * 100, 2)
+            })
+        print(json.dumps(results))
+    except Exception as e:
+        sys.stderr.write(f'vnstock shareholders error: {e}\\n')
+        print('[]')
 `;
 
 export async function fetchVnstockShareholders(code: string): Promise<VnstockShareholder[]> {
@@ -589,31 +704,45 @@ export async function fetchVnstockShareholders(code: string): Promise<VnstockSha
 // ---------------------------------------------------------------------------
 
 const INTRADAY_SCRIPT = (symbol: string) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: capture stdout around ALL vnstock API calls
+_real_stdout = sys.stdout
+df = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    sys.stdout = _io.StringIO()
     df = stock.quote.intraday()
-    if df is None or len(df) == 0:
-        print('[]')
-        sys.exit(0)
-    df = df.tail(100)
-    results = []
-    for _, r in df.iterrows():
-        mt = str(r.get('match_type', 'Unknown'))
-        if mt == 'Bu': mt = 'Buy'
-        elif mt == 'Se': mt = 'Sell'
-        results.append({
-            'code': '${symbol}',
-            'time': str(r.get('time', r.get('datetime', ''))),
-            'price': float(r.get('price', 0)) * 1000,
-            'volume': int(r.get('volume', 0)),
-            'matchType': mt
-        })
-    print(json.dumps(results))
 except Exception as e:
-    sys.stderr.write(f'vnstock intraday error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock intraday error: {_fetch_err}\\n')
     print('[]')
+elif df is None or len(df) == 0:
+    print('[]')
+else:
+    try:
+        df = df.tail(100)
+        results = []
+        for _, r in df.iterrows():
+            mt = str(r.get('match_type', 'Unknown'))
+            if mt == 'Bu': mt = 'Buy'
+            elif mt == 'Se': mt = 'Sell'
+            results.append({
+                'code': '${symbol}',
+                'time': str(r.get('time', r.get('datetime', ''))),
+                'price': float(r.get('price', 0)) * 1000,
+                'volume': int(r.get('volume', 0)),
+                'matchType': mt
+            })
+        print(json.dumps(results))
+    except Exception as e:
+        sys.stderr.write(f'vnstock intraday error: {e}\\n')
+        print('[]')
 `;
 
 export async function fetchVnstockIntraday(code: string): Promise<VnstockIntradayTick[]> {
@@ -629,42 +758,56 @@ export async function fetchVnstockIntraday(code: string): Promise<VnstockIntrada
 // ---------------------------------------------------------------------------
 
 const ORDER_BOOK_SCRIPT = (symbol: string) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: capture stdout around ALL vnstock API calls
+_real_stdout = sys.stdout
+df = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    sys.stdout = _io.StringIO()
     df = stock.quote.price_depth()
-    if df is None or len(df) == 0:
-        print('null')
-        sys.exit(0)
-    bids = []
-    asks = []
-    for _, r in df.iterrows():
-        side = str(r.get('side', r.get('type', ''))).lower()
-        price = float(r.get('price', 0)) * 1000
-        vol = int(r.get('volume', r.get('quantity', 0)))
-        if side in ('bid', 'buy', 'b'):
-            bids.append({'price': price, 'volume': vol})
-        elif side in ('ask', 'sell', 's'):
-            asks.append({'price': price, 'volume': vol})
-    bids = sorted(bids, key=lambda x: -x['price'])[:10]
-    asks = sorted(asks, key=lambda x: x['price'])[:10]
-    bid_total = sum(b['volume'] for b in bids)
-    ask_total = sum(a['volume'] for a in asks)
-    imbalance = bid_total / ask_total if ask_total > 0 else 0
-    result = {
-        'code': '${symbol}',
-        'bids': bids,
-        'asks': asks,
-        'bidTotal': bid_total,
-        'askTotal': ask_total,
-        'imbalanceRatio': round(imbalance, 4),
-        'fetchedAt': __import__('datetime').datetime.now().isoformat()
-    }
-    print(json.dumps(result))
 except Exception as e:
-    sys.stderr.write(f'vnstock price_depth error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock price_depth error: {_fetch_err}\\n')
     print('null')
+elif df is None or len(df) == 0:
+    print('null')
+else:
+    try:
+        bids = []
+        asks = []
+        for _, r in df.iterrows():
+            side = str(r.get('side', r.get('type', ''))).lower()
+            price = float(r.get('price', 0)) * 1000
+            vol = int(r.get('volume', r.get('quantity', 0)))
+            if side in ('bid', 'buy', 'b'):
+                bids.append({'price': price, 'volume': vol})
+            elif side in ('ask', 'sell', 's'):
+                asks.append({'price': price, 'volume': vol})
+        bids = sorted(bids, key=lambda x: -x['price'])[:10]
+        asks = sorted(asks, key=lambda x: x['price'])[:10]
+        bid_total = sum(b['volume'] for b in bids)
+        ask_total = sum(a['volume'] for a in asks)
+        imbalance = bid_total / ask_total if ask_total > 0 else 0
+        result = {
+            'code': '${symbol}',
+            'bids': bids,
+            'asks': asks,
+            'bidTotal': bid_total,
+            'askTotal': ask_total,
+            'imbalanceRatio': round(imbalance, 4),
+            'fetchedAt': __import__('datetime').datetime.now().isoformat()
+        }
+        print(json.dumps(result))
+    except Exception as e:
+        sys.stderr.write(f'vnstock price_depth error: {e}\\n')
+        print('null')
 `;
 
 export async function fetchVnstockOrderBook(code: string): Promise<VnstockOrderBook | null> {
@@ -785,54 +928,68 @@ export async function fetchVnstockEvents(code: string): Promise<VnstockEvent[]> 
  * Values are in raw VND in the DataFrame — we divide by 1e9 to get billion VND.
  */
 const BALANCE_SHEET_SCRIPT = (symbol: string) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: capture stdout around ALL vnstock API calls
+_real_stdout = sys.stdout
+df = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    sys.stdout = _io.StringIO()
     df = stock.finance.balance_sheet(period='quarter')
-    if df is None or len(df) == 0:
-        print('null')
-        sys.exit(0)
-    last = df.iloc[0]
-    def g(key, default=0):
-        v = last.get(key, default)
-        return float(v or 0)
-    # Total assets / liabilities / equity (common to both bank and non-bank)
-    total_assets = g('TOTAL ASSETS (Bn. VND)') / 1e9
-    total_liab = g('LIABILITIES (Bn. VND)') / 1e9
-    total_equity = g("OWNER'S EQUITY(Bn.VND)") / 1e9
-    cash = g('Cash and cash equivalents (Bn. VND)') / 1e9
-    # Debt: non-bank has explicit short/long; bank approximated from bonds
-    short_debt = g('Short-term borrowings (Bn. VND)') / 1e9
-    long_debt = g('Long-term borrowings (Bn. VND)') / 1e9
-    if short_debt == 0 and long_debt == 0:
-        # Bank: use convertible bonds/CDs as long debt proxy
-        long_debt = g('Convertible bonds/CDs and other valuable papers issued') / 1e9
-    # Receivables
-    receivables = g('Accounts receivable (Bn. VND)') / 1e9
-    # Inventory (non-bank)
-    inventory = g('Net Inventories') / 1e9
-    if inventory == 0:
-        inventory = g('Inventories, Net (Bn. VND)') / 1e9
-    result = {
-        'code': '${symbol}',
-        'yearReport': int(last.get('yearReport', 0)),
-        'quarter': int(last.get('lengthReport', 0)),
-        'totalAssets': round(total_assets, 2),
-        'totalLiabilities': round(total_liab, 2),
-        'totalEquity': round(total_equity, 2),
-        'cash': round(cash, 2),
-        'shortTermDebt': round(short_debt, 2),
-        'longTermDebt': round(long_debt, 2),
-        'receivables': round(receivables, 2),
-        'inventory': round(inventory, 2),
-        'source': 'vnstock',
-        'fetchedAt': __import__('datetime').datetime.now().isoformat()
-    }
-    print(json.dumps(result))
 except Exception as e:
-    sys.stderr.write(f'vnstock balance_sheet error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock balance_sheet error: {_fetch_err}\\n')
     print('null')
+elif df is None or len(df) == 0:
+    print('null')
+else:
+    try:
+        last = df.iloc[0]
+        def g(key, default=0):
+            v = last.get(key, default)
+            return float(v or 0)
+        # Total assets / liabilities / equity (common to both bank and non-bank)
+        total_assets = g('TOTAL ASSETS (Bn. VND)') / 1e9
+        total_liab = g('LIABILITIES (Bn. VND)') / 1e9
+        total_equity = g("OWNER'S EQUITY(Bn.VND)") / 1e9
+        cash = g('Cash and cash equivalents (Bn. VND)') / 1e9
+        # Debt: non-bank has explicit short/long; bank approximated from bonds
+        short_debt = g('Short-term borrowings (Bn. VND)') / 1e9
+        long_debt = g('Long-term borrowings (Bn. VND)') / 1e9
+        if short_debt == 0 and long_debt == 0:
+            # Bank: use convertible bonds/CDs as long debt proxy
+            long_debt = g('Convertible bonds/CDs and other valuable papers issued') / 1e9
+        # Receivables
+        receivables = g('Accounts receivable (Bn. VND)') / 1e9
+        # Inventory (non-bank)
+        inventory = g('Net Inventories') / 1e9
+        if inventory == 0:
+            inventory = g('Inventories, Net (Bn. VND)') / 1e9
+        result = {
+            'code': '${symbol}',
+            'yearReport': int(last.get('yearReport', 0)),
+            'quarter': int(last.get('lengthReport', 0)),
+            'totalAssets': round(total_assets, 2),
+            'totalLiabilities': round(total_liab, 2),
+            'totalEquity': round(total_equity, 2),
+            'cash': round(cash, 2),
+            'shortTermDebt': round(short_debt, 2),
+            'longTermDebt': round(long_debt, 2),
+            'receivables': round(receivables, 2),
+            'inventory': round(inventory, 2),
+            'source': 'vnstock',
+            'fetchedAt': __import__('datetime').datetime.now().isoformat()
+        }
+        print(json.dumps(result))
+    except Exception as e:
+        sys.stderr.write(f'vnstock balance_sheet error: {e}\\n')
+        print('null')
 `;
 
 export async function fetchVnstockBalanceSheet(code: string): Promise<VnstockBalanceSheet | null> {
@@ -861,44 +1018,58 @@ export async function fetchVnstockBalanceSheet(code: string): Promise<VnstockBal
  * Values are in raw VND — divide by 1e9 to get billion VND.
  */
 const CASH_FLOW_SCRIPT = (symbol: string) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: capture stdout around ALL vnstock API calls
+_real_stdout = sys.stdout
+df = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    sys.stdout = _io.StringIO()
     df = stock.finance.cash_flow(period='quarter')
-    if df is None or len(df) == 0:
-        print('null')
-        sys.exit(0)
-    last = df.iloc[0]
-    def g(key, default=0):
-        v = last.get(key, default)
-        return float(v or 0)
-    # Fallback keys: VCI column name varies by sector (banking, steel, tech)
-    _ocf_keys = [
-        'Net cash inflows/outflows from operating activities',
-        'Lưu chuyển tiền thuần từ hoạt động kinh doanh',
-        'Net Cash From Operating Activities',
-    ]
-    operating_raw = next((last.get(k) for k in _ocf_keys if last.get(k) not in (None, 0)), None)
-    operating = float(operating_raw) / 1e9 if operating_raw is not None else None
-    investing = g('Net Cash Flows from Investing Activities') / 1e9
-    financing = g('Cash flows from financial activities') / 1e9
-    net = g('Net increase/decrease in cash and cash equivalents') / 1e9
-    result = {
-        'code': '${symbol}',
-        'yearReport': int(last.get('yearReport', 0)),
-        'quarter': int(last.get('lengthReport', 0)),
-        'operatingCashFlow': round(operating, 2) if operating is not None else None,
-        'investingCashFlow': round(investing, 2),
-        'financingCashFlow': round(financing, 2),
-        'netCashFlow': round(net, 2),
-        'source': 'vnstock',
-        'fetchedAt': __import__('datetime').datetime.now().isoformat()
-    }
-    print(json.dumps(result))
 except Exception as e:
-    sys.stderr.write(f'vnstock cash_flow error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock cash_flow error: {_fetch_err}\\n')
     print('null')
+elif df is None or len(df) == 0:
+    print('null')
+else:
+    try:
+        last = df.iloc[0]
+        def g(key, default=0):
+            v = last.get(key, default)
+            return float(v or 0)
+        # Fallback keys: VCI column name varies by sector (banking, steel, tech)
+        _ocf_keys = [
+            'Net cash inflows/outflows from operating activities',
+            'Lưu chuyển tiền thuần từ hoạt động kinh doanh',
+            'Net Cash From Operating Activities',
+        ]
+        operating_raw = next((last.get(k) for k in _ocf_keys if last.get(k) not in (None, 0)), None)
+        operating = float(operating_raw) / 1e9 if operating_raw is not None else None
+        investing = g('Net Cash Flows from Investing Activities') / 1e9
+        financing = g('Cash flows from financial activities') / 1e9
+        net = g('Net increase/decrease in cash and cash equivalents') / 1e9
+        result = {
+            'code': '${symbol}',
+            'yearReport': int(last.get('yearReport', 0)),
+            'quarter': int(last.get('lengthReport', 0)),
+            'operatingCashFlow': round(operating, 2) if operating is not None else None,
+            'investingCashFlow': round(investing, 2),
+            'financingCashFlow': round(financing, 2),
+            'netCashFlow': round(net, 2),
+            'source': 'vnstock',
+            'fetchedAt': __import__('datetime').datetime.now().isoformat()
+        }
+        print(json.dumps(result))
+    except Exception as e:
+        sys.stderr.write(f'vnstock cash_flow error: {e}\\n')
+        print('null')
 `;
 
 export async function fetchVnstockCashFlow(code: string): Promise<VnstockCashFlow | null> {
@@ -922,38 +1093,52 @@ export async function fetchVnstockCashFlow(code: string): Promise<VnstockCashFlo
  *   'news_title', 'news_source_link', 'public_date' (epoch ms), 'lang_code'
  */
 const NEWS_SCRIPT = (symbol: string, limit: number) => `
-import json, sys
+import json, sys, io as _io
+# FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: capture stdout around ALL vnstock API calls
+_real_stdout = sys.stdout
+df = None
+_fetch_err = None
 try:
+    sys.stdout = _io.StringIO()
     from vnstock import Vnstock
     stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    sys.stdout = _io.StringIO()
     df = stock.company.news()
-    if df is None or len(df) == 0:
-        print('[]')
-        sys.exit(0)
-    df = df.head(${limit})
-    results = []
-    for _, r in df.iterrows():
-        pub = r.get('public_date', None)
-        if pub:
-            try:
-                from datetime import datetime, timezone
-                ts = int(pub) / 1000
-                date_str = datetime.fromtimestamp(ts, tz=timezone.utc).strftime('%Y-%m-%d')
-            except:
-                date_str = str(pub)[:10]
-        else:
-            date_str = ''
-        results.append({
-            'code': '${symbol}',
-            'title': str(r.get('news_title', '')),
-            'date': date_str,
-            'source': str(r.get('lang_code', 'vi')),
-            'url': str(r.get('news_source_link', ''))
-        })
-    print(json.dumps(results))
 except Exception as e:
-    sys.stderr.write(f'vnstock news error: {e}\\n')
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout
+if _fetch_err is not None:
+    sys.stderr.write(f'vnstock news error: {_fetch_err}\\n')
     print('[]')
+elif df is None or len(df) == 0:
+    print('[]')
+else:
+    try:
+        df = df.head(${limit})
+        results = []
+        for _, r in df.iterrows():
+            pub = r.get('public_date', None)
+            if pub:
+                try:
+                    from datetime import datetime, timezone
+                    ts = int(pub) / 1000
+                    date_str = datetime.fromtimestamp(ts, tz=timezone.utc).strftime('%Y-%m-%d')
+                except:
+                    date_str = str(pub)[:10]
+            else:
+                date_str = ''
+            results.append({
+                'code': '${symbol}',
+                'title': str(r.get('news_title', '')),
+                'date': date_str,
+                'source': str(r.get('lang_code', 'vi')),
+                'url': str(r.get('news_source_link', ''))
+            })
+        print(json.dumps(results))
+    except Exception as e:
+        sys.stderr.write(f'vnstock news error: {e}\\n')
+        print('[]')
 `;
 
 /**
