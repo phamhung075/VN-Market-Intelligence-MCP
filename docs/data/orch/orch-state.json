@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T08:39:47Z",
+  "_updated_at": "2026-06-13T08:48:41Z",
   "_updated_by": "po",
   "head": {
     "status": "idle",
@@ -5698,14 +5698,18 @@
         "id": "ARCH-TSU",
         "title": "Technical design for TOOL-SURFACE-UPGRADE: U1 counter hook, U2 generator design, U3 12-tool verdicts, U4 delta sweep, U5 VPS holding-ratio ingest, U6 merge diffs",
         "owner": "architect",
-        "status": "REVIEW",
+        "status": "PARKED",
         "type": "SPRINT-M",
         "priority": "P1",
         "zone": "apps/mcp-server/src/",
         "sprint": "TOOL-SURFACE-UPGRADE",
         "created_at": "2026-06-07T08:30:00Z",
         "note": "REQ spec at docs/handoffs/TOOL-SURFACE-UPGRADE-BA-spec.md. 6 architect blockers: ARCH-U2-1 (static vs startup reg), ARCH-U2-2 (161 vs 162 delta), ARCH-U3-1 (is_trading_day internal call), ARCH-U4-1 (prev-session data availability), ARCH-U5-1 (VPS holding_ratio field), ARCH-U6-1 (trigger consolidation + 2 new pairs).",
-        "completed_at": "2026-06-07T08:04:00Z"
+        "completed_at": "2026-06-07T08:04:00Z",
+        "park_reason": "Design pass NOT complete: no architect brief deliverable exists (only the BA input spec TOOL-SURFACE-UPGRADE-BA-spec.md); note still lists 6 OPEN architect blockers (ARCH-U2-1/U2-2/U3-1/U4-1/U5-1/U6-1). The stamped completed_at is stale/bogus — REVIEW state was wrong. Needs a real architect design pass to resolve the 6 blockers + emit a brief BEFORE any READY.",
+        "zone_block_reason": "Zone apps/mcp-server/src/ is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z evidenceAccumulatorJob gate. Architect re-design dispatch waits for zone release (architect designs read-only, but the implementation it unblocks targets the held zone, so do not dispatch into a held lane).",
+        "_updated_at": "2026-06-13T08:48:41Z",
+        "_adjudicated_by": "po"
       },
       {
         "id": "HPG-REPARSE-POST-REBUILD",
@@ -7078,7 +7082,7 @@
         "id": "ARCH-QUE-REFERENCE-PAGE",
         "title": "Technical design for QUE-REFERENCE-PAGE — codegen field-set extension shape + Kinh Dich reference page layout (route/nav/search) + optional QueName deep-link",
         "owner": "architect",
-        "status": "REVIEW",
+        "status": "READY-FOR-PM",
         "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",
@@ -7086,7 +7090,10 @@
         "created_at": "2026-06-12T15:13:17Z",
         "created_by": "po",
         "handoff": "docs/architecture-briefs/2026-06-12-que-reference-page.md",
-        "_updated_at": "2026-06-12T15:45:00Z"
+        "_updated_at": "2026-06-13T08:48:41Z",
+        "park_reason": null,
+        "accept_note": "ACCEPTED 2026-06-13T08:48:41Z by po. Architect brief docs/architecture-briefs/2026-06-12-que-reference-page.md = DESIGN COMPLETE (\"hand to PM\"); all 3 RULINGS resolved in brief. Zone apps/frontend/ is parallel-safe + currently FREE (NOT the held apps/mcp-server zone). Route to pm for decomposition (codegen script + frontend page, both -> dev-frontend per QUE-TOOLTIP-DRY precedent). This is the single item the router dispatches NOW.",
+        "_adjudicated_by": "po"
       },
       {
         "id": "CI-RED-8081e584-FIX",
@@ -9450,7 +9457,7 @@
         "id": "ARCH-SHIP-WAVE-REAUDIT",
         "title": "Technical design for SHIP-WAVE-REAUDIT — brownfield analysis + NFR impl design from APPROVED BA spec",
         "owner": "architect",
-        "status": "REVIEW",
+        "status": "PARKED",
         "zone": "multi",
         "sprint": "SHIP-WAVE-REAUDIT",
         "priority": "high",
@@ -9459,7 +9466,11 @@
         "created_by": "po",
         "updated_at": "2026-06-11T19:33:43Z",
         "updated_by": "architect",
-        "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md"
+        "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md",
+        "park_reason": "Architect brief docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md is DESIGN COMPLETE, but accept -> pm-decomposition mints per-zone subtasks where zone:multi explicitly spans apps/mcp-server/ + apps/frontend/ (NFR-C-4/5/7 endpoint+page fixes). Cannot accept-and-dispatch while the apps/mcp-server lane is held — decomposition would queue work into a serialized+held zone.",
+        "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
+        "_updated_at": "2026-06-13T08:48:41Z",
+        "_adjudicated_by": "po"
       }
     ],
     "closed_sprints": [
