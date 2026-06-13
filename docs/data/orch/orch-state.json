@@ -5481,7 +5481,7 @@
         "title": "rag repositories.py defaults missing LanceDB _distance to 0.0 → fabricated perfect-similarity (1.0); inconsistent w/ module.py fail-safe 1.0",
         "type": "FIX",
         "sprint": "FAKE-DATA-AUDIT",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "P3",
         "size": "S",
         "zone": "apps/rag-service",
@@ -5510,7 +5510,9 @@
           "AC5 (test, fail-loud): add a unit test in test_domain_services.py proving (a) absent _distance -> low similarity (not 1.0), (b) present _distance==0.0 -> similarity 1.0 preserved. Tests are self-confirming (assert the served similarity, not the internal default).",
           "AC6 (suite, no-cached-pass): full rag-service unit suite green run from a clean (no-cached) invocation — pytest with cache disabled (e.g. -p no:cacheprovider) — pure Python change, test_only=true, no_rebuild=true (no container rebuild needed)."
         ],
-        "ready_note": "READY by po 2026-06-13T12:02:02Z — raw-verified defect at repositories.py:282 (similarity formula 1/(1+d), d=0.0 -> 1.0 fabricated). Generic fail-safe alignment to module.py:102. test_only/no_rebuild. FAKE-DATA-AUDIT arc; last-ship correctness/silent-fabrication class."
+        "ready_note": "READY by po 2026-06-13T12:02:02Z — raw-verified defect at repositories.py:282 (similarity formula 1/(1+d), d=0.0 -> 1.0 fabricated). Generic fail-safe alignment to module.py:102. test_only/no_rebuild. FAKE-DATA-AUDIT arc; last-ship correctness/silent-fabrication class.",
+        "claimed_by": "dev-rag-service",
+        "claimed_at": "2026-06-13T12:02:59Z"
       },
       {
         "title": "shippingIndex stale 'SCFI placeholder resolves to BDI' comment — misleading, code does NOT fabricate (delete comment)",
