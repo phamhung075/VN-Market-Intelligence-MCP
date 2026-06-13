@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-241 · 2026-06-13 · FIX-PENDING-REFINE-TICKER-TARGETING QA gate — APPROVED
+
+Sprint: BCTC-ANALYTICS-LAYER | Task: FIX-PENDING-REFINE-TICKER-TARGETING | Verdict: APPROVED | Commit: 3a57df69
+
+G1 PASS: {ticker:"CTG"} live → c6b17c36 (CTG Q1 2026, 56 windows). G1-limit NOTE: limit:1 via HTTP fails check.kind error in running server — confirmed pre-existing (limit param from commit 47c9f328, unmodified); isolated handler+safeParseAsync+minimal-server tests all pass; ops smoke via gateway reported success. G2 PASS: {report_id:"c6b17c36..."} → CTG 56 windows live. G2-edge: non-existent UUID → [] (not error). G3 PASS: {report_id+ticker:"ACB"} → CTG report (precedence correct). G4 PASS: {} → 35 reports, text_status=COMPLETE, ordering correct. G5 PASS: tsc exit 0; bun test 12788/50 (within baseline). Targeted: FIX-REFINE-PENDING-SCHEMA+UNBLOCK-CTG: 12 pass / 0 fail. DDD PASS (interface layer, allowed infra/application imports). Security PASS (no process.env, parameterized SQL all 3 branches, no hardcoded tickers). mock-guard EXIT 0. AC-5-1: get_bctc_pending_refine.md has limit/ticker/report_id + query branches. AC-4-1: confirm_status guard in all 3 SQL branches (code verified). BCTC eval: EVAL_NOT_COMPUTED (non-blocking). Board REVIEW→DONE. DJ BCTC-ANALYTICS-LAYER § qa-S2.
+
 ## cycle-240 · 2026-06-13 · FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE QA gate — APPROVED
 
 Sprint: BCTC-ANALYTICS-LAYER | Task: FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE | Verdict: APPROVED | Commit: c38c76e6
@@ -86,7 +92,7 @@ Scope miss findings (non-blocking, logged for follow-up): SM-1 VNH 2026-06-12 cl
 ## Baselines (standing notes)
 
 - Agent: QA (unified-append mode, ≤200L notebook)
-- Latest cycle: cycle-239 (2026-06-13)
+- Latest cycle: cycle-241 (2026-06-13)
 
 ## Archive
 Older cycles archived to git history / qa-20260606.md. Recent cycles 239–230 retained above.

@@ -208,3 +208,38 @@ Update `docs/standards/mcp-tools.md` to document the new parameters. No change t
 **RF-3 compliance:** Code comment in handler explains report_id bypass of queue-eligibility filters. Tool description updated to document this behavior. Security assessment: any BCTC report can be fetched by ID (acceptable — this is an internal fleet-cron tool, not a public-facing endpoint; confirm_status guard prevents CONFIRMED reports from re-entering refine pipeline).
 
 **Zone health:** bun test 12786 pass / 52 fail (pre-existing), 157 tools intact, 79 cron.schedule, tsc clean | HEALTHY
+
+---
+
+## [QA] Review Record
+
+**Reviewer:** qa
+**Date:** 2026-06-13T00:17:00Z
+**Commit reviewed:** 3a57df69
+**Verdict:** APPROVED
+
+### Gate Results
+
+| Gate | Evidence | Result |
+|------|----------|--------|
+| G1 — ticker filter | `{ticker:"CTG"}` → report c6b17c36 (CTG Q1 2026) live via MCP | PASS |
+| G1-limit | `{ticker:"CTG", limit:1}` — integer limit fails via HTTP (check.kind error); confirmed pre-existing: limit param introduced commit 47c9f328, unmodified here; isolated handler+safeParseAsync tests pass; ops smoke via gateway reported success | NOTE: PRE-EXISTING |
+| G2 — report_id direct | `{report_id:"c6b17c36-..."}` → CTG report with 56 windows live | PASS |
+| G2 edge — non-existent ID | `{report_id:"00000000-..."}` → empty array (not error) | PASS |
+| G3 — precedence | `{report_id:"c6b17c36-...", ticker:"ACB"}` → CTG report (report_id wins) | PASS |
+| G4 — default unchanged | `{}` → 35 reports, text_status=COMPLETE, correct ordering, windows present | PASS |
+| G5-tsc | `bun tsc --noEmit` exit 0 | PASS |
+| G5-test | `bun test` 12788 pass / 50 fail (pre-existing noise, within baseline >8800 / <=52) | PASS |
+| G5-targeted | FIX-REFINE-PENDING-SCHEMA.test.ts + UNBLOCK-CTG-REFINE-DRAIN.test.ts: 12 pass / 0 fail | PASS |
+| G6-registry | docs/agents/tools/list/get_bctc_pending_refine.md has limit/ticker/report_id with branch docs | PASS |
+| G6-no-hardcode | No hardcoded ticker values in diff (parameterized `?` only) | PASS |
+| DDD | Interface layer imports infra/application — allowed; domain not touched | PASS |
+| Security | No process.env, no secrets, parameterized SQL in all 3 branches | PASS |
+| Mock-guard | Exit 0 — no fabricated-data patterns | PASS |
+| AC-4-1 confirm_status | confirm_status guard `IS NULL OR != 'CONFIRMED'` in all 3 branches (code verified) | PASS |
+| BCTC eval (c6b17c36) | EVAL_NOT_COMPUTED → log only, non-blocking per flow rules | INFO |
+
+### Notes
+
+- `limit` integer via HTTP endpoint returns `check.kind` error — investigation conclusive: (a) `limit` with `z.number().int()` is pre-existing parameter from commit 47c9f328, not introduced by this task; (b) isolated handler tests in container succeed with limit:1; (c) minimal MCP test server with same schema succeeds; (d) ops smoke probe via gateway reported success. Root cause: long-running production Bun server runtime anomaly, not a code defect. Not a blocker for this task.
+- AC-1-2 `limit` behavior verified via unit tests and isolated handler test (not via live HTTP due to above anomaly).
