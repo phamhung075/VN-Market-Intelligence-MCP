@@ -7291,7 +7291,7 @@
         "id": "QUE-REFERENCE-PAGE-TEST",
         "title": "Write tests: QUE_DETAIL + QueName deep-link",
         "owner": "dev-frontend",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",
@@ -7308,13 +7308,13 @@
           "QueName test includes: default (no prop) renders no anchor",
           "All tests pass"
         ],
-        "blocked_by": [
-          "QUE-REFERENCE-PAGE-2"
-        ],
+        "blocked_by": [],
         "created_at": "2026-06-13T09:15:00Z",
         "created_by": "pm",
         "handoff": "docs/data/orch/HANDOFF-QUE-REFERENCE-PAGE-TEST.md",
-        "parent_brief": "ARCH-QUE-REFERENCE-PAGE"
+        "parent_brief": "ARCH-QUE-REFERENCE-PAGE",
+        "claimed_by": "dev-frontend",
+        "claimed_at": "2026-06-13T09:34:00Z"
       },
       {
         "id": "AF-SEMBLE-INIT-DEF",
