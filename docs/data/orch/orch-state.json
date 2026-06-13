@@ -7247,51 +7247,6 @@
         "note": "Source: agent-father factory-conformance recheck 2026-06-13. PO DEFER (not now): the flow is correct and functional at 627L; splitting is debt-reduction not a reliability fix. Companion to FU-AUDITOR-FLOW-RESIDUALS / FIX-AUDITOR-* cluster — bundle the split with the next system-auditor flow change to avoid a churn-only commit. Mirrors NB-COWORK-MAIN-SPLIT pattern. Re-prioritize when an auditor-flow sprint is already open.",
         "created_at": "2026-06-13T09:02:02Z",
         "closed_at": "2026-06-13T09:02:02Z"
-      },
-      {
-        "id": "FIX-PDFX-PYTESSERACT-CONTAMINATION",
-        "title": "Restore sys.modules['pytesseract'] unconditionally in test_ocr_backends.py to stop cross-test import poisoning",
-        "owner": "dev-pdf-extractor",
-        "status": "REVIEW",
-        "zone": "apps/pdf-extractor/",
-        "type": "FIX",
-        "size": "XS",
-        "priority": "P1",
-        "test_only": true,
-        "no_rebuild": true,
-        "blocked_by": [],
-        "created_at": "2026-06-13T10:54:57Z",
-        "created_by": "po",
-        "root_cause": "test_ocr_backends.py:558 `saved = sys.modules.pop(\"pytesseract\", None)` restores ONLY `if saved is not None` (line 565). When pytesseract was not previously imported, the module stays ABSENT from sys.modules after the test, poisoning later tests that import it. Victim: integration/test_extract_md_tables_fpt.py:97 `import pytesseract` → test_ac3_table_count_ge2 (line 167) and test_ac3_each_table_is_valid_pipe_table (line 184) fail with `cannot import name 'Output' from 'pytesseract'`. Root-cause RAW-proven by QA isolation run: `2 passed in 79.42s`.",
-        "fix_recipe": "Restore sys.modules['pytesseract'] UNCONDITIONALLY (try/finally that re-inserts even when saved is None is wrong — instead delete the key only if it was absent, or use `patch.dict(\"sys.modules\", {\"pytesseract\": None})` which scopes the absence to the test correctly and auto-restores prior state). Prefer patch.dict over manual pop/restore.",
-        "acceptance": [
-          "test_ac3_table_count_ge2 and test_ac3_each_table_is_valid_pipe_table (integration/test_extract_md_tables_fpt.py) PASS in full-suite run order, not just isolation",
-          "grep-proof: no remaining bare `sys.modules.pop` in test_ocr_backends.py without an unconditional/scoped restore (manual pop/restore replaced or guarded)",
-          "Full apps/pdf-extractor suite residual failures drop from 4 to 2 — only the 2 @pytest.mark.slow container-only real-OCR tests remain (legit host-skips)",
-          "Diff is test-files-only: production src under apps/pdf-extractor/ unchanged; no Dockerfile/compose/requirements change",
-          "no_rebuild honored — no container rebuild needed (test-only change)"
-        ],
-        "evidence_refs": [
-          "apps/pdf-extractor/__tests__/test_ocr_backends.py:558-566",
-          "apps/pdf-extractor/__tests__/integration/test_extract_md_tables_fpt.py:97,167,184"
-        ],
-        "note": "Continues killing pdf-extractor CI-red class (follow-up to FIX-PDFX-TEST-LOOP-POLLUTION, commit 27d09912). QA-isolated hand-off. Free zone — apps/mcp-server FROZEN until EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate; not touched.",
-        "claimed_by": "dev-pdf-extractor",
-        "claimed_at": "2026-06-13T10:55:43Z",
-        "review_commit": "8f92f465",
-        "review_at": "2026-06-13T11:25:57Z",
-        "review_evidence": {
-          "ac1_test_ac3_full_suite_order": "PASS (test_ac3_table_count_ge2 + test_ac3_each_table_is_valid_pipe_table) in default no:randomly order",
-          "ac2_grep_bare_pop": "0 hits (grep_exit=1) in test_ocr_backends.py",
-          "ac3_residual": "2 failed = test_bt3_fix3_real_ocr_fidelity + test_extract_tables_usecase_real_ocr_path (both @pytest.mark.slow container-only, host-skipped)",
-          "ac4_order_independence": "identical 2-fail/955-pass across default + seed=12345 + seed=99999",
-          "ac5_diff_scope": "2 files, both __tests__/ (test_ocr_backends.py + unit/test_ocr_adapter_psm6_guard.py); no prod src, no Dockerfile/compose/requirements/pyproject",
-          "second_bug_found": "test_ocr_adapter_psm6_guard.py module-import _ensure_stub inserted Output-less pytesseract stub at collection; fixed via eager real-import (generic, covers pdf2image+pytesseract)",
-          "router_raw_verified": "AC2 grep + AC5 diff scope confirmed raw by router",
-          "test_only": true,
-          "no_rebuild": true,
-          "zone_pure": "apps/pdf-extractor"
-        }
       }
     ],
     "archive": [],
@@ -9791,6 +9746,64 @@
           "new_failures": 0,
           "residual_root_cause": "4 pre-existing: 2 @slow container-only OCR path; 2 test_ac3 pass in isolation (2 passed/79.42s) — poisoned by test_ocr_backends.py sys.modules.pop restore gap",
           "followup_candidate": "FIX-PDFX-PYTESSERACT-CONTAMINATION (for PO, not created)"
+        }
+      },
+      {
+        "id": "FIX-PDFX-PYTESSERACT-CONTAMINATION",
+        "title": "Restore sys.modules['pytesseract'] unconditionally in test_ocr_backends.py to stop cross-test import poisoning",
+        "owner": "dev-pdf-extractor",
+        "status": "done_verified",
+        "zone": "apps/pdf-extractor/",
+        "type": "FIX",
+        "size": "XS",
+        "priority": "P1",
+        "test_only": true,
+        "no_rebuild": true,
+        "blocked_by": [],
+        "created_at": "2026-06-13T10:54:57Z",
+        "created_by": "po",
+        "root_cause": "test_ocr_backends.py:558 `saved = sys.modules.pop(\"pytesseract\", None)` restores ONLY `if saved is not None` (line 565). When pytesseract was not previously imported, the module stays ABSENT from sys.modules after the test, poisoning later tests that import it. Victim: integration/test_extract_md_tables_fpt.py:97 `import pytesseract` → test_ac3_table_count_ge2 (line 167) and test_ac3_each_table_is_valid_pipe_table (line 184) fail with `cannot import name 'Output' from 'pytesseract'`. Root-cause RAW-proven by QA isolation run: `2 passed in 79.42s`.",
+        "fix_recipe": "Restore sys.modules['pytesseract'] UNCONDITIONALLY (try/finally that re-inserts even when saved is None is wrong — instead delete the key only if it was absent, or use `patch.dict(\"sys.modules\", {\"pytesseract\": None})` which scopes the absence to the test correctly and auto-restores prior state). Prefer patch.dict over manual pop/restore.",
+        "acceptance": [
+          "test_ac3_table_count_ge2 and test_ac3_each_table_is_valid_pipe_table (integration/test_extract_md_tables_fpt.py) PASS in full-suite run order, not just isolation",
+          "grep-proof: no remaining bare `sys.modules.pop` in test_ocr_backends.py without an unconditional/scoped restore (manual pop/restore replaced or guarded)",
+          "Full apps/pdf-extractor suite residual failures drop from 4 to 2 — only the 2 @pytest.mark.slow container-only real-OCR tests remain (legit host-skips)",
+          "Diff is test-files-only: production src under apps/pdf-extractor/ unchanged; no Dockerfile/compose/requirements change",
+          "no_rebuild honored — no container rebuild needed (test-only change)"
+        ],
+        "evidence_refs": [
+          "apps/pdf-extractor/__tests__/test_ocr_backends.py:558-566",
+          "apps/pdf-extractor/__tests__/integration/test_extract_md_tables_fpt.py:97,167,184"
+        ],
+        "note": "Continues killing pdf-extractor CI-red class (follow-up to FIX-PDFX-TEST-LOOP-POLLUTION, commit 27d09912). QA-isolated hand-off. Free zone — apps/mcp-server FROZEN until EVIDENCE-ACCUM-SILENT-CRON 16:00Z gate; not touched.",
+        "claimed_by": "dev-pdf-extractor",
+        "claimed_at": "2026-06-13T10:55:43Z",
+        "review_commit": "8f92f465",
+        "review_at": "2026-06-13T11:25:57Z",
+        "review_evidence": {
+          "ac1_test_ac3_full_suite_order": "PASS (test_ac3_table_count_ge2 + test_ac3_each_table_is_valid_pipe_table) in default no:randomly order",
+          "ac2_grep_bare_pop": "0 hits (grep_exit=1) in test_ocr_backends.py",
+          "ac3_residual": "2 failed = test_bt3_fix3_real_ocr_fidelity + test_extract_tables_usecase_real_ocr_path (both @pytest.mark.slow container-only, host-skipped)",
+          "ac4_order_independence": "identical 2-fail/955-pass across default + seed=12345 + seed=99999",
+          "ac5_diff_scope": "2 files, both __tests__/ (test_ocr_backends.py + unit/test_ocr_adapter_psm6_guard.py); no prod src, no Dockerfile/compose/requirements/pyproject",
+          "second_bug_found": "test_ocr_adapter_psm6_guard.py module-import _ensure_stub inserted Output-less pytesseract stub at collection; fixed via eager real-import (generic, covers pdf2image+pytesseract)",
+          "router_raw_verified": "AC2 grep + AC5 diff scope confirmed raw by router",
+          "test_only": true,
+          "no_rebuild": true,
+          "zone_pure": "apps/pdf-extractor"
+        },
+        "verified_at": "2026-06-13T11:38:14Z",
+        "qa_verdict": "APPROVED",
+        "qa_agent": "a0ea62b",
+        "qa_evidence": {
+          "ac1": "2 passed/955 deselected (test_ac3 pair) in default order",
+          "ac2": "grep sys.modules.pop = exit 1 / 0 matches",
+          "ac3": "2 failed/955 passed residual = test_bt3_fix3_real_ocr_fidelity + test_extract_tables_usecase_real_ocr_path (@slow, /app/data/pdfs host-skip)",
+          "ac4": "identical 2-fail set across default + seed=12345 + seed=99999",
+          "ac5": "2 files both __tests__/ (test_ocr_backends.py + unit/test_ocr_adapter_psm6_guard.py); no prod/Dockerfile/compose/requirements/pyproject",
+          "contamination_class_killed": "sys.modules.pop restore-gap + _ensure_stub collection-time Output-less stub (generic eager real-import for pdf2image+pytesseract)",
+          "test_only": true,
+          "no_rebuild": true
         }
       }
     ],
