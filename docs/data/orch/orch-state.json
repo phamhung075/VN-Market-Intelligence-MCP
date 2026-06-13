@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T18:42:59Z",
-    "_updated_by": "po-S51",
+    "_updated_at": "2026-06-13T20:30:02Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -5118,6 +5118,24 @@
       }
     ],
     "backlog": [
+      {
+        "id": "SPIKE-DOCLANG-OTSL-OVERLAP",
+        "title": "SPIKE-DOCLANG-OTSL-OVERLAP — Does external `doclang validate` flag any BCTC table-structure defect the native stage-4 TABLE_RECONSTRUCT eval + layout_invariants gates do NOT already flag? Time-boxed overlap measurement to decide whether DocLang adoption (option A: serializer→.dclg.xml→validate as CI gate) earns a build sprint.",
+        "owner": "architect",
+        "status": "TODO",
+        "type": "SPIKE",
+        "mode": "spike",
+        "zone": "apps/pdf-extractor/",
+        "priority": "low",
+        "size": "S",
+        "timebox": 120,
+        "created_at": "2026-06-13T20:30:02Z",
+        "created_by": "po",
+        "question": "Serialize the last N real BCTC extractions (use live quarantine + eval-history corpus, not synthetic) to .dclg.xml per DocLang v0 OTSL spec, run `pip install doclang; doclang validate`, and count: how many structural defects does doclang flag that stage-4 TABLE_RECONSTRUCT (config/bctc-eval-thresholds.json: exact_dup_max, value_blank_label_max, label/code coverage) + domain/primitives/layout_invariants (balance-identity-across-stitch, codes-monotonic-across-page-boundary) DID NOT already flag? Output: net-new-defect count + 2-3 example diffs.",
+        "decision_gate": "net-new > 0 => architect scopes DocLang option A (thin serializer as CI/eval gate alongside existing 6-stage eval), then po→dev-pdf-extractor. net-new = 0 => CLOSE: DocLang adds nothing over the shipped LF-EXTRACT native invariant gates; do not build.",
+        "context": "Triage of DocLang adoption analysis 2026-06-13. Analysis premise PARTIALLY FALSE on raw-verify: cross-page/continuation/merged-cell handling ALREADY EXISTS (application/extract_layout_first_usecase.py LF-EXTRACT, shipped sprint BCTC-LAYOUT-FIRST 2026-06-03 commits 92e8a2ca..b006ef17, RESOLVED+live-verified; GATE-VISION cell markers commit 1588a591). DocLang option B (canonical IR) REJECTED — duplicates shipped IR, defect class quiet (last ~15 pdf-extractor commits all async/test-infra, zero structural table-loss). DocLang option C (rest of project) correct — structured JSON/SQLite, irrelevant. Only residual = external standardized validator MAY catch defects native gates miss; this SPIKE measures that overlap before committing any build.",
+        "note": "[po triage 2026-06-13T20:30:02Z] Evidence-gated per analysis recommendation. PO could not reach live bctc-eval store from this session (gateway discovery meta-tools unreachable) — used git-history as failure-class proxy (authoritative for resolution status). ARCHITECT must prefer live POST /api/bctc-eval/push-stage history corpus over synthetic when running the SPIKE."
+      },
       {
         "id": "FIX-PENDING-REFINE-LIMIT-CHECKKIND",
         "title": "FIX-PENDING-REFINE-LIMIT-CHECKKIND — get_bctc_pending_refine crashes 'undefined is not an object (check.kind)' whenever limit arg supplied — regression baked into rebuild 2026-06-13 01:37 (image 6ae35a037021, commit 3a57df69). Blocks refine cron (11:03 local) at flow step 1.",
@@ -10664,8 +10682,21 @@
         "resolved_at": "2026-06-13T09:56:48Z",
         "resolved_by": "po",
         "resolution": "Triaged + accepted. PO raw-ran vitest @HEAD: real floor 21 fail / 1533 pass / 1554 total (not 1518/21). All 21 = stale ANALYST_NAV absolute-count/ordering snapshots in 6 files (FE-HEADER-SSOT + task17-page14..18). Opened apps/frontend test-only FIX-FRONTEND-NAV-STALE-COUNT-TESTS (READY, dev-frontend). NOT blocked by mcp-server 16:00Z gate. Root-cause fix = decouple pageNN tests from absolute count, single SSOT total test rebaselined to 26/33."
+      },
+      {
+        "id": "tnb-20260613T202300",
+        "ts": "2026-06-13T20:23:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c94 audit NEEDS_ATTENTION: F-EOD-SCHEDULE-STALE(NEW/HIGH) + F-MORNING-NB-MISSING(5th) + F-OOM CLOSED",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       }
     ],
+    "_updated_at": "2026-06-13T20:23:00Z",
+    "_updated_by": "tran-ngoc-bau",
     "archive": [
       {
         "id": "sau-c06-202606122230",

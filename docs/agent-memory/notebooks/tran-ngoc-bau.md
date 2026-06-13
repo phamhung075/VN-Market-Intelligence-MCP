@@ -4,6 +4,23 @@
 
 ---
 
+## c94 · 2026-06-13T20:23Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE DEGRADED (only evening confirmed; morning/intraday/EOD absent from notebook + cowork-schedule)
+
+**Layer scores (auditable dishes):** Evening 19:37Z — 3/6 NEEDS_ATTENTION | Morning/Intraday/EOD — UNAUDITABLE (cowork-schedule not updated for 2026-06-13)
+
+**New findings (HIGH):**
+- **F-MORNING-NB-MISSING (5th cycle + F-EOD-SCHEDULE-STALE NEW):** Morning absent for 5th consecutive cycle. EOD last_fired in cowork-schedule = 2026-06-11T08:51Z (2 days stale — also missed 2026-06-12 Thursday). This escalates from notebook-cap issue to dispatcher coverage failure. cowork-schedule not updating last_fired for chef-morning/eod slots on 2026-06-13. Pipeline coverage: start_count=1, close_count=1, guaranteed_ok=FALSE.
+- **F-OOM-MCP-SERVER RESOLVED:** system-auditor c306 (2026-06-13T01:39:58Z): MemPerc=29.84% (vs c291's 97.75%), RestartCount=0. All 12 services UP healthy. mcp-gateway Up 2 days healthy. F-OOM-MCP-SERVER closed.
+- **F-BCTC-CTG-CRITICAL (CTG cycle 17–18, VCB/D2D cycle 12–13):** Bug #2776 persistently undeployed 17+ cycles. Filed 2026-06-13, DB still empty. 28+ tickers blocked.
+
+**Carry-forward gaps:** F3=PMI-sub | F4=VIRA | F9=business-context (20th cycle) | F5=hexagram-501
+
+**Actions:** Handoff written | Signal emitted to docs/signals/ | Notebook committed (commit-mutex SKIPPED — MCP unavailable per C-2 FAIL-CLOSED) | WORK report pending (MCP unavailable)
+
+---
+
 ## c93 · 2026-06-10T20:21Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE HEALTHY (4 slots fired, 1 BLOCKED)
