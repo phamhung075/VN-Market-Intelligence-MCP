@@ -1,4 +1,3 @@
-<!-- size-justification: 150L — SSOT query reference; 8 jq query groups (microservices, agents, zones, channels, data sources, watchlist, infrastructure) each with multiple named patterns; a query reference loses utility if split — agents need the full pattern set in one load -->
 ---
 name: system-map-query
 description: >
@@ -6,6 +5,7 @@ description: >
   Load when an agent needs service config, agent lists, zones, channels,
   data sources, or watchlist data. Use jq — never hardcode these values.
 ---
+<!-- size-justification: 150L — SSOT query reference; 8 jq query groups (microservices, agents, zones, channels, data sources, watchlist, infrastructure) each with multiple named patterns; a query reference loses utility if split — agents need the full pattern set in one load -->
 
 ## SSOT File
 
