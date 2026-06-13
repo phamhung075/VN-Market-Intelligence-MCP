@@ -5,7 +5,7 @@
   "_updated_by": "po-s52-health-triage",
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-13T22:31:06Z",
+    "updated_at": "2026-06-13T22:38:47Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-MCP-CRASH-LOOP-WRITEWAL",
     "next_agent": "pm"
@@ -7190,7 +7190,7 @@
       {
         "id": "FIX-FUNDAMENTALS-REFRESH-CRON-DEAD",
         "type": "FIX",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "priority": "P0",
         "zone_owner": "apps/mcp-server/",
         "owner": "dev-mcp-server",
@@ -7216,7 +7216,7 @@
       {
         "id": "FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT",
         "type": "FIX",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "priority": "P1",
         "zone_owner": "apps/mcp-server/",
         "owner": "dev-mcp-server",
@@ -9588,7 +9588,11 @@
         "depends_on": [],
         "claimed_at": "2026-06-13T22:31:06Z",
         "claimed_by": "router",
-        "dispatch_note": "SPRINT-S dispatched architect 2026-06-13T22:31:06Z. RECURRING write-wedge (4 crashes/26h ~2h cadence, re-crashed ~00:20Z 06-14). Design split of 3 fix-classes: (B/C) GENERIC db-connection-layer WAL checkpoint policy (PRAGMA wal_autocheckpoint + periodic PRAGMA optimize + manual wal_checkpoint(TRUNCATE)) = load-bearing root fix ships FIRST; (A) ops restart-cadence alert; (D) orch-state WAL>10MB escalation gate. Scope = apps/mcp-server/ db layer + ops-monitoring + orch-state gate. GENERIC at db/connection layer (NOT per-table/per-ticker). Root-cause-definitive (replaces force-recreate symptom-patch). Live-verify (non-market): uptime>4h no restart-loop + WAL<5MB under load. Output: architecture brief -> docs/architecture-briefs/, signal pm."
+        "dispatch_note": "SPRINT-S dispatched architect 2026-06-13T22:31:06Z. RECURRING write-wedge (4 crashes/26h ~2h cadence, re-crashed ~00:20Z 06-14). Design split of 3 fix-classes: (B/C) GENERIC db-connection-layer WAL checkpoint policy (PRAGMA wal_autocheckpoint + periodic PRAGMA optimize + manual wal_checkpoint(TRUNCATE)) = load-bearing root fix ships FIRST; (A) ops restart-cadence alert; (D) orch-state WAL>10MB escalation gate. Scope = apps/mcp-server/ db layer + ops-monitoring + orch-state gate. GENERIC at db/connection layer (NOT per-table/per-ticker). Root-cause-definitive (replaces force-recreate symptom-patch). Live-verify (non-market): uptime>4h no restart-loop + WAL<5MB under load. Output: architecture brief -> docs/architecture-briefs/, signal pm.",
+        "stage": "architect-done->pm",
+        "architect_done_at": "2026-06-13T22:38:47Z",
+        "handoff": "docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md",
+        "brief": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md"
       }
     ],
     "head": {
