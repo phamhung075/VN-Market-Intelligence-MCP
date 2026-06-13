@@ -1,8 +1,41 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-13 16:38 UTC | **Sprint:** TOOL-SURFACE-UPGRADE
+**Last updated:** 2026-06-13 21:00 UTC | **Sprint:** FIX-COWORK-GUARANTEED-BACKSTOP
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-13T21:00Z — FIX-COWORK-GUARANTEED-BACKSTOP Design Brief (DESIGN, REVIEW)
+
+**Task:** FIX-COWORK-GUARANTEED-BACKSTOP | zone: docs/agents/cowork-team/flow/ (cowork reliability)
+**Output:** docs/architecture-briefs/2026-06-13-cowork-guaranteed-backstop.md
+
+**Chosen: Option A — Restore Layer-A RemoteTriggers for 5 guaranteed slots.**
+
+**Key findings:**
+- Option C (launchd/durable CronCreate) rejected: no proven persistence mechanism; exact observed failure mode.
+- Option B (watchdog) rejected: watchdog itself needs session-independent trigger = proxies Option A with 20+ min latency gap; G3 unsatisfied.
+- Option A closes root: RemoteTriggers are session-independent, survived the 32h Layer-B gap per runbook §1.
+- Dedup mechanism: `last_fired` wall-clock gate already exists from sprint 1951 dual-layer parallel run (§7 of 2026-05-18-cowork-team-command.md). Agent-father must VERIFY it lives in each agent flow (not only in dispatcher), not just assume.
+- §9 stability gate violation: Layer A was deleted before 2x session-restart survivals — deletion lock field added to cowork-schedule.json._notes to prevent recurrence.
+- 5 slots: chef-morning, chef-eod, chef-evening, digest-sunday, tnb-audit. chef-intraday excluded (sub-hourly, API_MIN_INTERVAL blocks RemoteTrigger).
+- Workspace trigger count: 3 existing + 5 new = 8 total (well within any limit).
+- BUILD-STANDARD: not-applicable (reliability fix).
+
+## 2026-06-13T20:45Z — SPIKE-DOCLANG-OTSL-OVERLAP Measurement (SPIKE, CLOSED)
+
+**Task:** SPIKE-DOCLANG-OTSL-OVERLAP | zone: apps/pdf-extractor/
+**Output:** scripts/spike-doclang-otsl-overlap.py, docs/agent-memory/decisions/spike-doclang-otsl-overlap.md
+
+**Verdict: net-new = 0 → CLOSE. DocLang adds nothing over native gates.**
+
+**Key findings:**
+- 5 real BCTC reports, 17 pseudo-tables from bctc_table_rows (live pipeline DB via docker exec).
+- DocLang validation (XSD + Schematron): 0/17 flagged. Native gates: 7/17 flagged.
+- Root cause: DocLang rectangular rule checks cell COUNT equality only. Our extractor always emits fixed-width rows (empty strings for missing values) → structurally valid XML even for orphan rows. Semantic emptiness ≠ structural shape violation.
+- Native `check_no_orphan_rows()` catches semantic orphans; `code_coverage_min` catches sparse code columns. These are disjoint defect classes DocLang cannot reach.
+- Confirmed validator is live: deliberate rectangular violation injected into synthetic XML was caught correctly by Schematron `table-rectangular-grid`.
+- Also checked bctc_layout_units layer (62 table-type units): 51/62 appear jagged in markdown parse — all are OCR-collapsed pages (artifact), not genuine structural defects. 4/51 already quarantined; rest caught by native code_coverage gate.
+- Decision: do NOT build DocLang serializer (Option A). BUILD-STANDARD: not-applicable.
 
 ## 2026-06-13T16:38Z — ARCH-TSU TOOL-SURFACE-UPGRADE Design Brief (DESIGN, REVIEW)
 
