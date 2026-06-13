@@ -7190,7 +7190,7 @@
         "id": "TSU-DEV-U5",
         "title": "TSU-DEV-U5 — Foreign-flow fabricated holding_ratio (DSI defect, SAME CLASS as the FDA-9 fail-open just shipped): kill `current_holding_ratio ?? 0` fabrication (vnstockStore.ts:561) at the OUTPUT layer — serve-null gates so get_foreign_flow / get_company_profile NEVER render 0.00% as a real ratio. HIGH-VALUE correctness/DSI-fabrication fix.",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -7217,7 +7217,21 @@
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U5 (commit 371437a7). FLAGGED HIGH-VALUE — LAST-SHIP CORRECTNESS / DSI-FABRICATION defect, same class as the FDA-9 fail-open just shipped (never serve fabricated data as real). BLOCKED on U1+U2-GEN. May run in the mcp-server slot in serial queue after U3 (per brief stub: parallel-with-U3 if mcp-server slot allows serial queueing) — router serializes the slot.",
         "dispatch_note": "BLOCKED — do NOT dispatch until TSU-DEV-U1 AND TSU-DEV-U2-GEN are DONE. High-value DSI fix. Then enters mcp-server slot (serialized with U3).",
         "claimed_by": "dev-mcp-server",
-        "claimed_at": "2026-06-13T17:53:52Z"
+        "claimed_at": "2026-06-13T17:53:52Z",
+        "review_commit": "2d2a0bc5",
+        "review_at": "2026-06-13T18:20:18Z",
+        "no_rebuild": false,
+        "needs_rebuild": true,
+        "review_evidence": {
+          "root_fix": "vnstockStore.ts:573 ?? 0 -> ?? null",
+          "analyzer_guard": "isHoldingRatioFabricated -> holdingRatioChange5d=null when all absent (no delta off fabricated 0)",
+          "format_gate": "foreignFlowTools hasRealHoldingData -> column omitted when absent",
+          "residual_qq0_safe": "both behind guards (tsc null-safety artifacts)",
+          "unit": "28 pass uncached + FENCE deliberate-fail proof",
+          "tsc": "clean",
+          "scope": "5 code/test files, NO orch-state",
+          "rebuild": "REQUIRED for live get_foreign_flow/get_company_profile verify"
+        }
       },
       {
         "id": "TSU-DEV-U6",
