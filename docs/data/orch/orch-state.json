@@ -53,7 +53,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T11:51:55Z",
+    "_updated_at": "2026-06-13T12:02:02Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -5481,19 +5481,36 @@
         "title": "rag repositories.py defaults missing LanceDB _distance to 0.0 → fabricated perfect-similarity (1.0); inconsistent w/ module.py fail-safe 1.0",
         "type": "FIX",
         "sprint": "FAKE-DATA-AUDIT",
-        "status": "BACKLOG",
+        "status": "READY",
         "priority": "P3",
         "size": "S",
         "zone": "apps/rag-service",
         "files": [
           "apps/rag-service/infrastructure/repositories.py",
-          "apps/rag-service/.../module.py"
+          "apps/rag-service/domain/module/retrieval/module.py",
+          "apps/rag-service/__tests__/unit/test_domain_services.py"
         ],
         "severity": "LOW",
         "note": "repositories.py:191 `distance=float(row.get('_distance', 0.0))`. similarity_scorer computes 1.0/(1.0+distance) so distance=0.0 → similarity=1.0 (perfect match) served to the RAG consumer if the column is ever absent. Mitigated: _distance is a LanceDB-guaranteed column on every vector-search row, so never missing in practice (LOW). Inconsistency: sibling module.py:102 defaults the same concept to 1.0 (fail-safe, low similarity) — opposite direction. FIX: default to a sentinel yielding LOW similarity (large distance / inf) or fail-loud if _distance absent; align with module.py:102.",
         "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
         "depends_on": null,
-        "id": "FDA-9"
+        "id": "FDA-9",
+        "owner": "dev-rag-service",
+        "groomed_at": "2026-06-13T12:02:02Z",
+        "groomed_by": "po",
+        "test_only": true,
+        "no_rebuild": true,
+        "defect_site": "apps/rag-service/infrastructure/repositories.py:282 — float(row.get(\"_distance\") or row.get(\"_relevance_score\") or 0.0)",
+        "sibling_ref": "apps/rag-service/domain/module/retrieval/module.py:102 — float(result.get(\"distance\", 1.0)) (fail-SAFE)",
+        "acceptance_criteria": [
+          "AC1 (root fix, GENERIC): when neither _distance nor _relevance_score is present on a LanceDB row, repositories.py MUST NOT default to 0.0 (which fabricates similarity=1.0 perfect match). Default to a fail-SAFE sentinel (large distance -> low similarity) OR fail-loud — consistent across ALL rows/queries, no per-row or per-query special-casing.",
+          "AC2 (alignment): direction MUST match sibling module.py:102 fail-safe semantics (absent signal -> LOW similarity, never perfect). Document the chosen sentinel/raise in a code comment citing both call sites.",
+          "AC3 (no-mask): do NOT widen a test threshold or skip to make this pass; do NOT hardcode a specific distance value tied to one fixture. Fix the default-resolution logic itself.",
+          "AC4 (legit-zero preserved): a genuine _distance == 0.0 (true identical-vector match) MUST still yield similarity 1.0 — the `or` short-circuit currently mis-coalesces a real 0.0 into the fallback chain; resolution MUST distinguish ABSENT key from present-0.0.",
+          "AC5 (test, fail-loud): add a unit test in test_domain_services.py proving (a) absent _distance -> low similarity (not 1.0), (b) present _distance==0.0 -> similarity 1.0 preserved. Tests are self-confirming (assert the served similarity, not the internal default).",
+          "AC6 (suite, no-cached-pass): full rag-service unit suite green run from a clean (no-cached) invocation — pytest with cache disabled (e.g. -p no:cacheprovider) — pure Python change, test_only=true, no_rebuild=true (no container rebuild needed)."
+        ],
+        "ready_note": "READY by po 2026-06-13T12:02:02Z — raw-verified defect at repositories.py:282 (similarity formula 1/(1+d), d=0.0 -> 1.0 fabricated). Generic fail-safe alignment to module.py:102. test_only/no_rebuild. FAKE-DATA-AUDIT arc; last-ship correctness/silent-fabrication class."
       },
       {
         "title": "shippingIndex stale 'SCFI placeholder resolves to BDI' comment — misleading, code does NOT fabricate (delete comment)",
@@ -9381,7 +9398,7 @@
       }
     ],
     "head": {
-      "note": "OHLCV-UNIT-CONTAM closed; PO to review next sprint goals"
+      "note": "FDA-9 (rag-service _distance fail-open fabricated-similarity) groomed READY; mcp-server zone untouched (frozen behind EVIDENCE-ACCUM gate)"
     },
     "done_verified": [
       {
