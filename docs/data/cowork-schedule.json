@@ -34,10 +34,10 @@
       "enabled": true,
       "policy_id": null,
       "last_fired": "2026-06-12T05:21:00Z",
-      "trigger_id": null,
+      "trigger_id": "trig_01FdUF4YWg8TqpXVnBLC7GYj",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "deleted",
-      "last_reactivated_at": null
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
       "slot_id": "chef-intraday",
@@ -76,10 +76,10 @@
       "enabled": true,
       "policy_id": null,
       "last_fired": "2026-06-11T08:51:00Z",
-      "trigger_id": null,
+      "trigger_id": "trig_01NS8j25rYt4meXVqHyRsVNn",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "deleted",
-      "last_reactivated_at": null
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
       "slot_id": "chef-evening",
@@ -97,10 +97,10 @@
       "enabled": true,
       "policy_id": null,
       "last_fired": "2026-06-13T19:52:52Z",
-      "trigger_id": null,
+      "trigger_id": "trig_013zatVHSRiChMJwm5XtSBEx",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "deleted",
-      "last_reactivated_at": null
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
       "slot_id": "digest-sunday",
@@ -118,10 +118,10 @@
       "enabled": true,
       "policy_id": null,
       "last_fired": "2026-05-31T13:50:47Z",
-      "trigger_id": null,
+      "trigger_id": "trig_01FjB1WhF1bpgH1oYZF4BYru",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "deleted",
-      "last_reactivated_at": null
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
       "slot_id": "tnb-audit",
@@ -139,10 +139,10 @@
       "enabled": true,
       "policy_id": null,
       "last_fired": "2026-06-13T20:23:36Z",
-      "trigger_id": null,
+      "trigger_id": "trig_01QgnBwnEyzLj5as55i53tea",
       "_superseded_by": "cowork-dispatcher",
-      "trigger_status": "deleted",
-      "last_reactivated_at": null
+      "trigger_status": "active",
+      "last_reactivated_at": "2026-06-13T21:18:35Z"
     },
     {
       "slot_id": "bctc-analyst-slot-1",
