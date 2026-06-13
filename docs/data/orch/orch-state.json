@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T16:43:08Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-13T18:55:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-12T20:27:31Z",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T16:43:08Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-13T18:55:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -7161,7 +7161,7 @@
         "id": "TSU-DEV-U1",
         "title": "TSU-DEV-U1 — Per-call telemetry counter: replace dead sessionToolCache (never populated under gateway per-call model) with a synchronous per-call invocation counter; flush to docs/agent-memory/modules/tool-usage-stats.json; REMOVE sessionCount (semantically undefined post-gateway).",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",

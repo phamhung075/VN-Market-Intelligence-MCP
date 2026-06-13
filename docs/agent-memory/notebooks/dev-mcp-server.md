@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-13 · TSU-DEV-U1 — Per-call telemetry counter — REVIEW
+
+**Task:** TSU-DEV-U1 | Sprint: TOOL-SURFACE-UPGRADE | Priority: high | Zone: apps/mcp-server/
+**Root cause:** sessionToolCache never populated under gateway per-call model (gateway dials SSE per-call, drops connection; sessionId never fires; trackSessionToolUsageJob reads always-empty snapshot → sessionCount:0/toolCounts:{} permanently).
+**Fix:** New perCallCounterStore.ts singleton (Map<string,number>, exports incrementTool/getSnapshot/resetCounters/getTool). Handler-proxy hook installed in server.ts createMcpServerInstance() after registerAllTools() — wraps _registeredTools entries with synchronous Map.set() increment. trackSessionToolUsageJob.ts rewritten: reads counter snapshot, removes sessionCount field, keeps uniqueTools + toolCounts. startScheduler rowsWritten = stats.uniqueTools.
+**Tests:** 8 pass / 0 fail isolation (TSU-DEV-U1-per-call-counter.test.ts). Deliberate-violation proof: broke incrementTool → 5 tests RED → reverted → 8 GREEN. tsc clean.
+**Commit:** 829931b3 feat(TOOL-SURFACE-UPGRADE/telemetry): TSU-DEV-U1 per-call telemetry counter
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, perCallCounterStore shipped | HEALTHY
+
+---
+
 ## 2026-06-13 · FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE — confidence recompute at finalize — REVIEW
 
 **Task:** FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE | Sprint: BCTC-ANALYTICS-LAYER | Priority: P1 | Zone: apps/mcp-server/
