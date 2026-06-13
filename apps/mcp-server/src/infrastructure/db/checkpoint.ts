@@ -243,6 +243,72 @@ export async function runIntegrityCheck(
   return { ok, details, walBytes };
 }
 
+/** Deps injectable for runForcedTruncateCheckpoint (unit testing). */
+export interface ForcedTruncateDeps {
+  db?: Database;
+  log?: (msg: string) => void;
+}
+
+/**
+ * Runs a forced TRUNCATE WAL checkpoint.
+ *
+ * Issues `BEGIN IMMEDIATE; COMMIT` to flush in-flight writers and force
+ * all existing reader snapshots to expire, then calls
+ * `PRAGMA wal_checkpoint(TRUNCATE)` to reset the WAL file to zero length.
+ *
+ * This is the BC-1 ROOT FIX for the WAL wedge crash loop:
+ * passive autocheckpoint at 4000 frames was defeated by 40+ concurrent
+ * cron-job reader snapshots. TRUNCATE + BEGIN IMMEDIATE breaks the reader
+ * pin every 30 min unconditionally during live and off-hours.
+ *
+ * BEGIN IMMEDIATE may stall writes up to busy_timeout (5 s) — bounded and
+ * acceptable; cron jobs already tolerate write retry.
+ *
+ * @param deps — optional injectable deps (db, log) for unit testing
+ * @returns { walSize, checkpointed } — walSize=frames in WAL, checkpointed=boolean
+ */
+export async function runForcedTruncateCheckpoint(
+  deps?: ForcedTruncateDeps,
+): Promise<{ walSize: number; checkpointed: boolean }> {
+  const _db = deps?.db ?? getDb();
+  const _log = deps?.log ?? ((msg: string) => logger.info(msg));
+
+  // Step 1: Acquire and immediately release a write transaction so any
+  // long-lived reader snapshots see a new transaction boundary and expire.
+  // try/finally ensures we never leak an open transaction even if busy_timeout stalls.
+  try {
+    _db.exec("BEGIN IMMEDIATE");
+    _db.exec("COMMIT");
+  } catch (err) {
+    // If BEGIN IMMEDIATE fails (e.g. another writer holds the lock longer than
+    // busy_timeout), ensure we don't leave a dangling transaction.
+    try { _db.exec("ROLLBACK"); } catch { /* best-effort rollback */ }
+    _log(`[checkpoint] runForcedTruncateCheckpoint: BEGIN IMMEDIATE failed — ${err instanceof Error ? err.message : String(err)}`);
+    // Non-fatal: proceed to TRUNCATE anyway; it may partially drain the WAL.
+  }
+
+  // Step 2: TRUNCATE checkpoint — resets WAL file to zero length once all
+  // frames have been drained (guaranteed now that reader snapshots expired).
+  try {
+    const result = _db.query<{ busy: number; log: number; checkpointed: number }, []>(
+      "PRAGMA wal_checkpoint(TRUNCATE)",
+    ).get();
+
+    // SQLite returns log=-1 / checkpointed=-1 when WAL is not applicable
+    // (e.g. :memory: DB or journal_mode != WAL). Treat as "WAL empty / no-op".
+    const rawLog = result?.log ?? 0;
+    const rawCheckpointed = result?.checkpointed ?? 0;
+    const walSize = rawLog < 0 ? 0 : rawLog;
+    const checkpointed = rawLog < 0 || (rawCheckpointed >= rawLog && rawLog >= 0);
+
+    _log(`[checkpoint] runForcedTruncateCheckpoint complete — walSize=${walSize} checkpointed=${checkpointed}`);
+    return { walSize, checkpointed };
+  } catch (err) {
+    _log(`[checkpoint] runForcedTruncateCheckpoint: PRAGMA TRUNCATE failed — ${err instanceof Error ? err.message : String(err)}`);
+    return { walSize: 0, checkpointed: false };
+  }
+}
+
 /**
  * Registers SIGTERM and SIGINT handlers that run a TRUNCATE checkpoint
  * before the process exits. Ensures data integrity on graceful shutdown.

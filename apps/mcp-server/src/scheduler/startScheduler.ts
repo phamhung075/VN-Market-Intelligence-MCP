@@ -13,7 +13,7 @@ import { runMorningBriefing } from './briefings/morningBriefingJob.js'
 import { runEveningSummary } from './briefings/eveningSummaryJob.js'
 import { runIntelligenceCycle } from './news-analysis/intelligenceCycleJob.js'
 import { registerSummaryJobs, runSummaryJob } from './summaryJobs.js'
-import { runWalCheckpoint, registerShutdownHook, backupDatabase, checkWalFileSize } from '../infrastructure/db/checkpoint.js'
+import { runWalCheckpoint, registerShutdownHook, backupDatabase, checkWalFileSize, runForcedTruncateCheckpoint } from '../infrastructure/db/checkpoint.js'
 import { runIntegrityCheckJob } from './integrityCheckJob.js'
 import { walCheckpointAlert } from './walCheckpointAlert.js'
 import { runPatternWatch } from './news-analysis/patternWatchJob.js'
@@ -193,18 +193,20 @@ export function startScheduler() {
     })
   }, { timezone: 'Asia/Ho_Chi_Minh', recoverMissedExecutions: true })
 
-  // Every 30min — WAL checkpoint (task 1329a)
-  // FULL mode during live hours; TRUNCATE + backup during off-hours 03:00-05:00 UTC.
+  // Every 30min — WAL checkpoint (task 1329a / BC-1 ROOT FIX)
+  // BC-1: unconditional TRUNCATE every 30 min via runForcedTruncateCheckpoint()
+  // (issues BEGIN IMMEDIATE to expire reader snapshots then PRAGMA wal_checkpoint(TRUNCATE)).
+  // Replaces the FULL(live)/TRUNCATE(off-hours) split that left WAL wedged at 4000 frames.
+  // Off-hours backup call preserved for data safety.
   // Overridable via CRON_WAL_CHECKPOINT env var.
   cron.schedule(CRONS.walCheckpoint, async () => {
     await jobRunRepo.wrapRun('walCheckpointJob', async () => {
       const hour = new Date().getUTCHours();
-      // Off-hours 03:00-05:00 UTC: TRUNCATE + backup. Live hours: FULL (non-blocking).
       const isOffHours = hour >= 3 && hour < 5;
-      const mode = isOffHours ? 'TRUNCATE' : 'FULL';
       await checkWalFileSize(Bun.env.DB_PATH ?? 'market.db');
-      const walResult = runWalCheckpoint(mode);
-      await walCheckpointAlert(walResult);
+      // BC-1 ROOT FIX: TRUNCATE unconditionally every 30 min
+      const walResult = await runForcedTruncateCheckpoint();
+      await walCheckpointAlert({ walSize: walResult.walSize, checkpointed: walResult.checkpointed ? walResult.walSize : 0 });
       if (isOffHours) {
         await backupDatabase(Bun.env.DB_PATH ?? 'market.db');
       }

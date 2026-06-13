@@ -106,7 +106,7 @@ export function getDb(): Database {
   _db = new Database(dbPath);
   _db.exec("PRAGMA journal_mode = WAL");
   _db.exec("PRAGMA foreign_keys = ON");
-  _db.exec("PRAGMA wal_autocheckpoint=4000");
+  _db.exec("PRAGMA wal_autocheckpoint=1000");
   _db.exec("PRAGMA busy_timeout=5000");
   _dbStat = statSync(dbPath, { throwIfNoEntry: false });
   return _db;
