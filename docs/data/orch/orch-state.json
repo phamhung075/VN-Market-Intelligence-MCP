@@ -9816,10 +9816,12 @@
         "from": "dev-team-dispatcher",
         "to": "po",
         "type": "test_suite_pre_existing_failures",
-        "summary": "apps/frontend test suite: 170 pre-existing failures (1360 pass) at HEAD — bctc-eval, TopNav DOM, fetch-* suites. Surfaced during QUE-REFERENCE-PAGE-1a QA baseline-diff (delta=0, not caused by 1a). Standing /goal item: needs triage sprint.",
-        "severity": "MEDIUM",
+        "summary": "apps/frontend suite floor RECONCILED: 21 fails / 1518 pass at HEAD daabfd73 (was mis-stated 170/1360 — that was the pre-QUE-TOOLTIP-DRY baseline f9cfc569; ~149 already fixed since). Remaining 21 = TopNav DOM count tests + bctc-eval + fetch-* suites, all pre-existing, delta=0 across QUE-REFERENCE-PAGE-1a/1b. Standing /goal triage: fix the real 21.",
+        "severity": "LOW",
         "status": "NEW",
-        "payload_ref": "reports/TASK_REPORT_QUE-REFERENCE-PAGE-1a.md"
+        "payload_ref": "reports/TASK_REPORT_QUE-REFERENCE-PAGE-1a.md",
+        "reconciled_at": "2026-06-13T09:26:00Z",
+        "verified_by": "router(2x raw vitest: 1b-dev + qa, both 1518/21)"
       }
     ],
     "archive": [
