@@ -148,3 +148,47 @@ NONE (no architecture changes — resilience-only fix)
 ### Graphify
 
 skipped (no docs impacted)
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-13
+**QA cycle:** 242
+**Verdict:** APPROVED
+**Dev commit:** 897877ec
+
+### Gate Results
+
+**G1** PASS — get_bctc_pending_refine({limit:1}) → 1 row (b48f7e6a, VEA, 48 windows), isError:false, NO check.kind error.
+
+**G2** PASS — {ticker:"CTG",limit:1} → exactly 1 CTG row (id=c6b17c36, "20260428 - CTG - BCTC hop nhat Quy I.2026...", 56 windows).
+
+**G3** PASS:
+- {ticker:"CTG"} → CTG row c6b17c36 (regression on TICKER-TARGETING intact)
+- {report_id:"c6b17c36-..."} → 1 CTG row (direct fetch works)
+- {report_id:"00000000-..."} → [] empty array (non-existent → empty, not error)
+- {} → full queue returned (multi-row, ~35 reports per baseline)
+
+**G4** PASS (collateral tools):
+- get_fed_liquidity_spread({days:30}) → isError:false, effr:3.62, iorb:3.65, spread:-0.03, 19 samples. Clean.
+- get_macro_calendar({days:7}) → isError:false, daysRequested:7, status:"unavailable" (data-not-found, not schema crash). Clean.
+- sequential_market_analysis (no revisesThought/branchFromThought) → "originalHandler is not a function" error. Investigated: error originates in server.ts:268-271 telemetry proxy wrapping tool.handle class-method, pre-existing (git log shows only scaffold commit 8fc72534 before 897877ec). The coerce change touched only L56+L59 (2 lines), handler/registration untouched. NOT introduced by this task. Pre-existing issue, out of scope.
+
+**G5** PASS:
+- Targeted tests: 32 pass / 0 fail (FIX-REFINE-PENDING-SCHEMA x12, BEQ-4a-pending-docs-guard x12, AR-refine-readiness-gate x8)
+- tsc --noEmit: EXIT 0 (clean)
+- DDD scan: interface layer importing infrastructure/logger + db — allowed per established pattern (cycle-241 precedent)
+- Security: no process.env in modified files, mock-guard EXIT 0
+- Full suite: 12880 pass / 0 fail per dev record (baseline was 12788 — net +92 tests, all passing)
+
+**G6** ROOT-CAUSE STANDARD — PASS:
+- Dep-diff record is coherent and specific: Dockerfile `|| bun install` fallback silences --frozen-lockfile, allows `^` ranges to float. SDK ^1.8.0 floated to 1.29.0, zod ^3.23.0 floated to 3.25.76. SDK 1.29.0 + zod 3.25.76 + Bun 1.3.13 combination produces JIT module-state corruption in ZodNumber._parse `_def.checks` loop under live server process only (standalone bun script in same container works, confirming in-process state corruption not source/dep bug).
+- Durable mitigations in place: (a) exact SDK pin "1.29.0" removes the `^` drift vector; (b) z.coerce.number() on all vulnerable optional-int params aligns with established safe pattern — bypasses ZodNumber._parse before check loop.
+- Epistemic limit acknowledged: crash is in-process state, restart clears symptom — non-recurrence not provable by probing alone. Green probes confirm mitigations are active, not that corruption cannot recur.
+- Residual risk: if check.kind reappears on any tool in a future rebuild, escalate to architect — Bun version pin (bun.lockb baseline + Dockerfile FROM bun:x.y.z exact) may be needed.
+- VERDICT: root-cause record satisfies AC. NOT a symptom-patch — the coerce change is a resilience pattern, not removal of constraints (.int/.min/.max preserved). SDK pin is load-bearing (closes the drift vector).
+
+**BCTC Eval Gate:** N/A — task is tooling/schema fix, not a BCTC report data change.
+
+**Summary:** All gates pass. Dev commit 897877ec ships z.coerce.number() on 4 tools + exact SDK pin. Primary resolution (Docker rebuild + restart) proven live. Residual risk documented.

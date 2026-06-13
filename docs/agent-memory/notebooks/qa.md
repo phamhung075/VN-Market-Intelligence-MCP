@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-242 · 2026-06-13 · FIX-PENDING-REFINE-LIMIT-CHECKKIND QA gate — APPROVED
+
+Task: FIX-PENDING-REFINE-LIMIT-CHECKKIND | Dev commit: 897877ec | Verdict: APPROVED | Board: DONE. G1 PASS: {limit:1}→1 row (b48f7e6a VEA), no check.kind error. G2 PASS: {ticker:CTG,limit:1}→1 CTG row (c6b17c36, 56w). G3 PASS: ticker-only/report_id/non-existent/no-arg all correct. G4 PASS: fed_liquidity_spread{days:30}→effr:3.62 clean; macro_calendar{days:7}→daysRequested:7 clean; sequential_market_analysis originalHandler error is pre-existing (server.ts telemetry proxy, pre-dates this task, not in scope). G5 PASS: targeted 32/0, tsc EXIT 0, DDD PASS (infra imports allowed in interface layer), security PASS, mock-guard EXIT 0; full suite 12880/0 per dev record (+92 vs baseline 12788). G6 ROOT CAUSE PASS: dep-diff coherent (Dockerfile ||bun install drift vector proven, SDK ^1.8.0→1.29.0+zod→3.25.76 = Bun JIT corruption in live process); durable mitigations: exact SDK pin + z.coerce pattern; epistemic limit acknowledged (restart clears, non-recurrence unprovable); residual risk recorded (architect escalation if recurs). Board REVIEW→DONE 2026-06-13T01:42:20Z.
+
 ## cycle-241 · 2026-06-13 · FIX-PENDING-REFINE-TICKER-TARGETING QA gate — APPROVED
 
 Sprint: BCTC-ANALYTICS-LAYER | Task: FIX-PENDING-REFINE-TICKER-TARGETING | Verdict: APPROVED | Commit: 3a57df69
