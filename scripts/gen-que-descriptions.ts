@@ -1,7 +1,8 @@
 /**
  * gen-que-descriptions.ts
- * Codegen script: reads que-reference.js from kinh-dich-service and emits
- * apps/frontend/app/lib/que-descriptions.generated.ts.
+ * Codegen script: reads que-reference.js from kinh-dich-service and emits TWO artifacts:
+ *   1. apps/frontend/app/lib/que-descriptions.generated.ts        (2-field tooltip contract)
+ *   2. apps/frontend/app/lib/que-descriptions-detail.generated.ts (12-field + phases full detail)
  *
  * Run: bun run scripts/gen-que-descriptions.ts
  * (from repo root, e.g. via `bun run gen:que` in apps/frontend/package.json)
@@ -10,9 +11,13 @@
  * Re-run whenever que-reference.js is regenerated via:
  *   CGO_ENABLED=0 go run ./cmd/sandbox -emit-reference
  *
- * Field mapping:
+ * Field mapping (tooltip):
  *   queReference[i].coreMeaning.vi     → QueDescription.coreMeaning
  *   queReference[i].marketTrendLabel.vi → QueDescription.marketTrendLabel
+ *
+ * Field mapping (detail):
+ *   All fields from que-reference.js including stateInterpretation.vi, favorable.vi,
+ *   warning.vi, and phases[6]{phase, action, outcome, gloss.vi}
  */
 import { readFileSync, writeFileSync } from "fs";
 import { resolve, dirname } from "path";
@@ -42,14 +47,42 @@ const stripped = afterAssign
   .replace(/;\s*$/, "")
   .trim();
 
+interface QuePhase {
+  phase: number;
+  action: string;
+  outcome: string;
+  gloss: { vi: string; en: string };
+}
+
 interface QueRefEntry {
   id: number;
+  name: string;
+  chinese: string;
+  upper: string;
+  lower: string;
+  upperElement: string;
+  lowerElement: string;
   coreMeaning: { vi: string; en: string };
   marketTrendLabel: { vi: string; en: string };
+  stateInterpretation: { vi: string; en: string };
+  favorable: { vi: string; en: string };
+  warning: { vi: string; en: string };
+  phases: QuePhase[];
   [key: string]: unknown;
 }
 
 const queReference: QueRefEntry[] = JSON.parse(stripped);
+
+// Empty-file guard: fail loud if SSOT read yields 0 entries
+if (!queReference || queReference.length === 0) {
+  throw new Error(
+    `[gen-que-descriptions] SSOT read yielded 0 entries from ${queRefPath} — aborting`
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BLOCK 1 (unchanged): Emit que-descriptions.generated.ts (tooltip)
+// ═══════════════════════════════════════════════════════════════════
 
 const outPath = resolve(
   __dirname,
@@ -94,4 +127,104 @@ ${entries.join(",\n")},
 writeFileSync(outPath, output, "utf-8");
 console.log(
   `[gen-que-descriptions] Written ${entries.length} entries → ${outPath}`
+);
+
+// ═══════════════════════════════════════════════════════════════════
+// BLOCK 2 (new): Emit que-descriptions-detail.generated.ts (full detail)
+// ═══════════════════════════════════════════════════════════════════
+
+const detailPath = resolve(
+  __dirname,
+  "../apps/frontend/app/lib/que-descriptions-detail.generated.ts"
+);
+
+// Build the detail entries map from que-reference.js
+const detailEntries: string[] = [];
+
+for (const entry of queReference) {
+  if (!entry || !entry.id) continue;
+
+  // Escape backtick characters in all string fields for template-literal safety
+  const safeName            = entry.name.replace(/`/g, "\\`");
+  const safeChinese         = entry.chinese.replace(/`/g, "\\`");
+  const safeUpper           = entry.upper.replace(/`/g, "\\`");
+  const safeLower           = entry.lower.replace(/`/g, "\\`");
+  const safeUpperElement    = entry.upperElement.replace(/`/g, "\\`");
+  const safeLowerElement    = entry.lowerElement.replace(/`/g, "\\`");
+  const safeCoreMeaning     = entry.coreMeaning.vi.replace(/`/g, "\\`");
+  const safeMarketTrend     = entry.marketTrendLabel.vi.replace(/`/g, "\\`");
+  const safeStateInterp     = entry.stateInterpretation.vi.replace(/`/g, "\\`");
+  const safeFavorable       = entry.favorable.vi.replace(/`/g, "\\`");
+  const safeWarning         = entry.warning.vi.replace(/`/g, "\\`");
+
+  const phasesLines = entry.phases.map((p) => {
+    const safeGloss = p.gloss.vi.replace(/`/g, "\\`");
+    return `      { phase: ${p.phase}, action: \`${p.action}\`, outcome: \`${p.outcome}\`, gloss: \`${safeGloss}\` }`;
+  }).join(",\n");
+
+  detailEntries.push(
+    `  ${entry.id}: {
+    id: ${entry.id},
+    name: \`${safeName}\`,
+    chinese: \`${safeChinese}\`,
+    upper: \`${safeUpper}\`,
+    lower: \`${safeLower}\`,
+    upperElement: \`${safeUpperElement}\`,
+    lowerElement: \`${safeLowerElement}\`,
+    coreMeaning: \`${safeCoreMeaning}\`,
+    marketTrendLabel: \`${safeMarketTrend}\`,
+    stateInterpretation: \`${safeStateInterp}\`,
+    favorable: \`${safeFavorable}\`,
+    warning: \`${safeWarning}\`,
+    phases: [
+${phasesLines}
+    ],
+  }`
+  );
+}
+
+const detailOutput = `/**
+ * AUTO-GENERATED from scripts/gen-que-descriptions.ts
+ * Source: apps/kinh-dich-service/dashboard/que-reference.js
+ *
+ * Full Kinh Dịch reference set — all 64 hexagrams with extended Vietnamese detail.
+ * DO NOT EDIT manually. Re-run: bun run gen:que
+ */
+
+export interface QueDetailDescription {
+  id: number;
+  name: string;
+  chinese: string;
+  upper: string;
+  lower: string;
+  upperElement: string;
+  lowerElement: string;
+  coreMeaning: string;
+  marketTrendLabel: string;
+  stateInterpretation: string;
+  favorable: string;
+  warning: string;
+  phases: Array<{
+    phase: number;
+    action: string;
+    outcome: string;
+    gloss: string;
+  }>;
+}
+
+export const QUE_DETAIL: Record<number, QueDetailDescription> = {
+${detailEntries.join(",\n")},
+};
+`;
+
+// Empty-file guard: fail loud if generated output is empty
+if (!detailOutput || detailOutput.length === 0) {
+  throw new Error(
+    "[gen-que-descriptions] Generated detail output is empty — aborting write"
+  );
+}
+
+writeFileSync(detailPath, detailOutput, "utf-8");
+console.log(
+  `[gen-que-descriptions] Written ${detailEntries.length} detail entries → ${detailPath}`
 );
