@@ -141,6 +141,7 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **Reusable triage scripts** (idempotent backlog appends — atomic temp→verify→rename):
 - `scripts/po-s50-origin-lag-triage.jq` — append a PLAN-ONLY task to `.task_board.backlog`, skipping if `id` already present.
+- `scripts/po-s51-cowork-guaranteed-backstop-groom.jq` — append a READY task to `.task_board.ready` (idempotent across all board arrays) + flip a tnb signal row NEW→RESOLVED in one atomic pass. Pattern reusable for any "groom one task + resolve its source signal" single-signal triage (`--arg now`, CAS-guard the rename).
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 

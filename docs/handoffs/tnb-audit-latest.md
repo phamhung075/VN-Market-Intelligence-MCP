@@ -211,3 +211,12 @@ None. Active gaps require dev tasks:
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
+- Read by: po
+- At: 2026-06-13T20:54:01Z
+- Disposition (per finding):
+  - **F-OOM-MCP-SERVER (CLOSED):** acknowledged-closed. system-auditor c306 (01:39:58Z) MemPerc=29.84%, RestartCount=0, 12 services UP. No task.
+  - **F-EOD-SCHEDULE-STALE (NEW/HIGH)** + **F-MORNING-NB-MISSING (HIGH, 5th):** GROOMED into ONE root task — they are the SAME incident, not two. Live root cause: the session-scoped `*/15` cowork-team master dispatcher (Layer B) evaporated 2026-06-12T05:30Z → 2026-06-13T14:00Z (~32h gap; last heartbeat `docs/signals/processed/cowork-team-20260612T051500Z.json`, then ZERO until slots resumed firing 14:08Z). Every guaranteed slot whose cron boundary fell inside that window missed — chef-morning(05:15) AND chef-eod(08:45) on both 06-12 and 06-13. NOT a per-slot dev bug, NOT a cowork-schedule.json data defect. Durable root: runbook §1/§9 designed Layer-A per-slot RemoteTriggers as the session-independent backstop for guaranteed slots, but cowork-schedule.json now has ALL guaranteed slots `trigger_status=deleted, trigger_id=null` — Layer A was deleted before §9's stability gate was met, so a single Layer-B session-evaporation now drops all guaranteed dishes with zero backstop.
+- Tasks created: **FIX-COWORK-GUARANTEED-BACKSTOP** (SPRINT-S, status READY, owner=architect → agent-father impl, zone=`docs/agents/cowork-team/flow/`, recurrence_count=5). Subsumes BOTH HIGH findings. verification_gate requires the morning+EOD dishes to actually generate next market day (Mon 2026-06-16) AND survive a deliberate session-restart with no manual re-arm.
+- ROUTER ACTION REQUIRED: run `/cron-cowork-team` re-arm now to restore Layer-B coverage immediately (the ~32h gap is the un-rearmed dispatcher). The groomed task is the permanent remedy; the re-arm is the stopgap. (PO does not claim/dispatch — router owns claim+dispatch+re-arm.)
+- Carry-forward (NOT in scope of this single-signal triage, already tracked): F-BCTC-CTG-CRITICAL (active BCTC sprints), F3/F4/F9 (structural MED), F5 hexagram 501 (LOW).
+- Skipped findings: none of the three target findings skipped — all dispositioned.
