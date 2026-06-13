@@ -5088,7 +5088,7 @@
             "id": "EVIDENCE-ACCUM-SILENT-CRON",
             "title": "Debug evidenceAccumulatorJob silent cron miss — recurring pattern with reputationComputeJob",
             "owner": "dev-mcp-server",
-            "status": "IN_PROGRESS",
+            "status": "done_verified",
             "zone": "apps/mcp-server/src/scheduler/",
             "created_at": "2026-06-12T16:20:00Z",
             "type": "FIX",
@@ -5103,7 +5103,16 @@
             "zone_block_reason": "Holds apps/mcp-server zone until 2026-06-13T16:00Z evidenceAccumulatorJob cron-gated live re-check lands (rebuild gate already met; DONE gated on 16:00 firing).",
             "gate_status": "rebuild=MET; reputationCompute-0830=PASS(41codes/41rows/79ms-single-burst/fresh-2026-06-13T08:30:00.9xxZ); evidenceAccumulator-1600=PENDING-FUTURE",
             "_updated_at": "2026-06-13T08:39:47Z",
-            "_adjudicated_by": "po"
+            "_adjudicated_by": "po",
+            "closed_at": "2026-06-13T19:37:28Z",
+            "closed_by": "router",
+            "review_evidence": {
+              "disposition": "VERIFIED-LIVE",
+              "summary": "Stale IN_PROGRESS gate driven to closure. Dev 53d00955 (recoverMissedExecutions+dedup+double-wrap) ancestor of HEAD; container rebuilt (PO adjudication 2026-06-13T08:39:47Z); router live-verified the post-rebuild fire.",
+              "live_raw": "named-volume DB cron_job_runs: evidenceAccumulatorJob 2026-06-13 16:00:01 status=success rows_written=9 — SINGLE clean run (no duplicate). First scheduled fire after the 06-12 18:36 fix in the rebuilt container.",
+              "double_log_resolved": "Pre-fix runs (06-05..06-12) double-logged; post-rebuild 06-13 16:00 is single -> dedup/double-wrap fix confirmed working live. (Broader cross-job double-log tracked separately by FIX-CRON-JOB-RUNS-DOUBLE-LOG.)",
+              "rebuild": "Already done (PO-adjudicated REBUILD_REQUIRED satisfied); no further rebuild."
+            }
           }
         ]
       }
