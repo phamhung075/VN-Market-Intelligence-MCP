@@ -25,3 +25,12 @@
 - increase threshold: correct root cause — 5ms tight under P=16 CPU contention; actual cost ~0.03ms; 500ms still guards O(n²)
 **why-decision:** Same commit had both PASS and FAIL CI runs (27440686945/27440686989) — nondeterministic wall-clock from cold-JIT + scheduler preemption on 2-core runner; no shared state involved
 **why-change:** no change from plan — single-line threshold fix is the only valid path given AC constraints
+
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-13T17:43:00Z
+**task-id:** TSU-DEV-U2-GEN
+**what-done:** Regenerated tool-registry.json (totalCount=157) and project-stats.json via existing generator; verified parity test 8/8 GREEN; documented ARCH-U2-2 reconciliation (brief estimated 162, actual=157)
+**what-considered:**
+- Trust brief's 162 estimate and force generator output to match: REJECTED — brief says "generator is the arbiter"; hardcoding violates GENERIC-FIX MANDATE
+- Re-scan to find missing tools to reach 162: did scan; 156 server.tool( + 1 server.registerTool( = 157 unique; live /health also says 157; no discrepancy exists
+**why-decision:** Generator output 157 == live /health 157 == grep evidence (156+1); brief's 162 was pre-sprint estimate before any cleanup occurred; current source is ground truth
+**why-change:** No code changes needed — gen-tool-registry.ts and parity test already existed (commit a5b34816); only regenerated artifacts (tool-registry.json, project-stats.json) needed updating
