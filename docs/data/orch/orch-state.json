@@ -7161,7 +7161,7 @@
         "id": "TSU-DEV-U2-GEN",
         "title": "TSU-DEV-U2-GEN — Tool-registry generator from source + parity test: static-grep generator scanning BOTH server.tool( AND server.registerTool( in tools/**/*.ts; deliberate-violation parity test (NFR-FENCE); sync project-stats.json toolCount from generator output (generator is the SSOT arbiter, not /health, not a hardcoded literal).",
         "owner": "dev-mcp-server",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "type": "IMPL",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -7182,7 +7182,9 @@
         "verification_gate_detail": "QA: (1) run `bun scripts/gen-tool-registry.ts` -> valid JSON at docs/data/tool-registry.json with _maintained_by header + totalCount==162 (pre-U3) grouped by source folder; (2) bun test tool-registry-parity in ISOLATION -> PASS; (3) deliberate-violation proof: inject fake name '__test_fake_tool__' into registry, assert parity test goes RED, revert -> GREEN (this is NOT a skip-the-proof exit-0 fence); (4) `bun scripts/gen-project-stats.ts` -> project-stats.json toolCount == generator totalCount.",
         "root_cause_requirement": "Root cause (brief U2): docs/data/tool-registry.json hand-decayed (125 listed 2026-05-03 vs 162 live); no generator existed. FIX: scripts/gen-tool-registry.ts scans apps/mcp-server/src/interface/mcp/tools/**/*.ts, regex-extracts names from BOTH `server.tool(\"name\",` AND `server.registerTool(\"name\",` (the registerTool API at analysis/sequential-market-analysis.ts:241 is the 161->162 delta-of-1 per ARCH-U2-2; ARCH-U2-1 confirmed no registrations live outside tools/**), groups by parent-folder category, writes {_maintained_by:'generator (do not hand-edit)', lastUpdated, totalCount, groups}. Parity test re-runs the same extraction and asserts registry.totalCount==source count AND every registry name exists in source. scripts/gen-project-stats.ts imports totalCount to populate project-stats.json toolCount (FR-U2-4). FORBIDDEN: single-API grep (would miss registerTool and undercount by 1); hardcoding 162; hand-editing tool-registry.json.",
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U2 (commit 371437a7). FIRST WAVE — READY. mcp-server SERIALIZATION peer of U1 — only ONE into the slot. PO recommends U1 first (this L-size generator queues next into the freed mcp-server slot). NFR-U2-1: _maintained_by header mandatory. This task ESTABLISHES the generator that U2-PARITY re-runs LAST.",
-        "dispatch_note": "READY. mcp-server zone serialization peer of U1. PO recommends U1 first; U2-GEN next into freed slot. Router raw-verifies + claims."
+        "dispatch_note": "READY. mcp-server zone serialization peer of U1. PO recommends U1 first; U2-GEN next into freed slot. Router raw-verifies + claims.",
+        "claimed_by": "dev-mcp-server",
+        "claimed_at": "2026-06-13T17:29:28Z"
       },
       {
         "id": "TSU-DEV-U3",
