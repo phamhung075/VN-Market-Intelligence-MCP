@@ -3,7 +3,9 @@
  *
  * Asserts that:
  *  1. TopNav renders the branding link "VN Market Intelligence"
- *  2. ANALYST_NAV has 19 primary analyst tabs, in order, with correct labels + comingSoon flags.
+ *  2. ANALYST_NAV has 26 primary analyst tabs (live SSOT as of QUE-REFERENCE-PAGE + TASK-17 through PAGE 19).
+ *     This is the SINGLE canonical absolute-count assertion for ANALYST_NAV — do NOT duplicate
+ *     in per-page tests (task17-pageNN-*-nav.test.tsx).
  *     - "Tổng Quan" (/dashboard) is ENABLED (no comingSoon) — dashboard._index.tsx exists (P0-1).
  *     - "Kỹ Thuật" (/dashboard/technical) is ENABLED (no comingSoon) — dashboard.technical.tsx exists (TASK-17 P2-1b).
  *     - "Tin Tức" (/dashboard/news) is ENABLED (no comingSoon) — dashboard.news.tsx exists (TASK-17 P1-1b).
@@ -15,10 +17,18 @@
  *     - "Dòng tiền ngành" (/dashboard/sector-rotation) is ENABLED — dashboard.sector-rotation.tsx exists (TASK-17 PAGE 9).
  *     - "Dây chuyền ngành" (/dashboard/sector-cascade) is ENABLED — dashboard.sector-cascade.tsx exists (TASK-17 PAGE 10).
  *     - "Tín hiệu Kinh Dịch" (/dashboard/kinh-dich-signals) is ENABLED — dashboard.kinh-dich-signals.tsx exists (TASK-17 PAGE 11).
+ *     - "Tra cứu Kinh Dịch" (/dashboard/kinh-dich-reference) is ENABLED — dashboard.kinh-dich-reference.tsx exists (QUE-REFERENCE-PAGE-2).
  *     - "Bối cảnh toàn cầu" (/dashboard/global-markets) is ENABLED — dashboard.global-markets.tsx exists (TASK-17 PAGE 12).
  *     - "Sự kiện doanh nghiệp" (/dashboard/corporate-events) is ENABLED — dashboard.corporate-events.tsx exists (TASK-17 PAGE 13).
+ *     - "Cơ cấu cổ đông" (/dashboard/shareholders) is ENABLED — dashboard.shareholders.tsx exists (TASK-17 PAGE 14).
+ *     - "Ban lãnh đạo" (/dashboard/officers) is ENABLED — dashboard.officers.tsx exists (TASK-17 PAGE 15).
+ *     - "Định giá" (/dashboard/financials) is ENABLED — dashboard.financials.tsx exists (TASK-17 PAGE 16).
+ *     - "Lãi suất Fed" (/dashboard/fed-rates) is ENABLED — dashboard.fed-rates.tsx exists (TASK-17 PAGE 17).
+ *     - "Uy tín DN" (/dashboard/reputation) is ENABLED — dashboard.reputation.tsx exists (TASK-17 PAGE 18).
+ *     - "Tin nhắc đến" (/dashboard/news-buzz) is ENABLED — dashboard.news-buzz.tsx exists (TASK-17 PAGE 19).
  *  3. SYSTEM_NAV has 7 ops/infra tabs (incl. bctc-eval + bctc-inspect; excl. db).
- *  4. NAV_ITEMS is the union (analyst + system) — 26 total.
+ *  4. NAV_ITEMS is the union (analyst + system) — 33 total.
+ *     This is the SINGLE canonical absolute-total assertion — do NOT duplicate in per-page tests.
  *  5. The "Cổ Phiếu" tab links to /dashboard/analysis (the existing route) — NOT /dashboard/stock.
  *  6. comingSoon tabs render as disabled spans (aria-disabled="true"), NOT as links.
  *  7. Enabled analyst tabs render as NavLinks.
@@ -29,6 +39,9 @@
  *
  * If ANALYST_NAV or SYSTEM_NAV are trimmed, reordered, or merged incorrectly,
  * these tests fail loudly — preventing silent drift.
+ *
+ * UPDATE RULE: when a new analyst page is added, bump the count assertion here AND
+ * add the new item to the label list below. Do NOT add count assertions in per-page tests.
  */
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -50,8 +63,8 @@ function renderTopNav(initialPath = "/") {
 }
 
 describe("TopNav — ANALYST_NAV canonical list", () => {
-  it("exports exactly 19 analyst nav items", () => {
-    expect(ANALYST_NAV).toHaveLength(19);
+  it("exports exactly 26 analyst nav items (live SSOT: through TASK-17 PAGE 19 + QUE-REFERENCE-PAGE-2)", () => {
+    expect(ANALYST_NAV).toHaveLength(26);
   });
 
   it("contains first 9 analyst items in order with correct labels and comingSoon flags", () => {
@@ -179,9 +192,9 @@ describe("TopNav — SYSTEM_NAV canonical list", () => {
 });
 
 describe("TopNav — NAV_ITEMS union (backward compat)", () => {
-  it("NAV_ITEMS is the union of ANALYST_NAV + SYSTEM_NAV (26 items total)", () => {
+  it("NAV_ITEMS is the union of ANALYST_NAV + SYSTEM_NAV (33 items total: 26 analyst + 7 system)", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(26);
+    expect(NAV_ITEMS).toHaveLength(33);
   });
 
   it("Database tab (/dashboard/db) is absent from NAV_ITEMS (retired from nav per P0-5)", () => {
@@ -206,7 +219,7 @@ describe("TopNav — rendered output", () => {
     expect(screen.getByText("Hệ Thống")).toBeTruthy();
   });
 
-  it("renders all 19 analyst nav labels", () => {
+  it("renders all 26 analyst nav labels", () => {
     renderTopNav();
     const expectedLabels = [
       "Tổng Quan",
@@ -226,8 +239,15 @@ describe("TopNav — rendered output", () => {
       "Dòng tiền ngành",
       "Dây chuyền ngành",
       "Tín hiệu Kinh Dịch",
+      "Tra cứu Kinh Dịch",
       "Bối cảnh toàn cầu",
       "Sự kiện doanh nghiệp",
+      "Cơ cấu cổ đông",
+      "Ban lãnh đạo",
+      "Định giá",
+      "Lãi suất Fed",
+      "Uy tín DN",
+      "Tin nhắc đến",
     ];
     for (const label of expectedLabels) {
       expect(screen.getByText(label)).toBeTruthy();

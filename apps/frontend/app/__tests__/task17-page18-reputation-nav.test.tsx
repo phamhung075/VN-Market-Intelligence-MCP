@@ -1,16 +1,19 @@
 /**
  * task17-page18-reputation-nav.test.tsx
  *
- * TopNav SSOT count + new item guard for TASK-17 PAGE 18 (Điểm Uy tín Doanh nghiệp).
+ * TopNav SSOT presence + relative-order guard for TASK-17 PAGE 18 (Điểm Uy tín Doanh nghiệp).
  *
  * Asserts:
- *   1. ANALYST_NAV now has 24 items (was 23 before PAGE 18).
- *   2. NAV_ITEMS total is 31 (ANALYST_NAV 24 + SYSTEM_NAV 7).
- *   3. 'Uy tín DN' item exists at /dashboard/reputation and is ENABLED.
- *   4. The new item is the last in ANALYST_NAV (appended at end).
- *   5. TopNav renders the new label in the DOM.
- *   6. The new tab renders as a NavLink (not a disabled span).
- *   7. Regression guard: PAGE 17 {to: "/dashboard/fed-rates"} item still present.
+ *   1. 'Uy tín DN' item exists at /dashboard/reputation and is ENABLED.
+ *   2. The item appears immediately AFTER 'Lãi suất Fed' in ANALYST_NAV (relative order).
+ *      Does NOT assert absolute array position or total count — decoupled from nav growth.
+ *   3. NAV_ITEMS structural invariant: length == ANALYST_NAV.length + SYSTEM_NAV.length.
+ *   4. TopNav renders the new label in the DOM.
+ *   5. The new tab renders as a NavLink (not a disabled span).
+ *   6. Regression guard: PAGE 17 {to: "/dashboard/fed-rates"} item still present.
+ *
+ * Design principle: a per-page test must NOT break when page-(N+k) is later added.
+ * Absolute count is asserted only in FE-HEADER-SSOT-top-nav.test.tsx.
  */
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -31,23 +34,22 @@ function renderTopNav(initialPath = "/") {
 }
 
 // ---------------------------------------------------------------------------
-// Suite 1: ANALYST_NAV count
+// Suite 1: ANALYST_NAV minimum size (decoupled — no frozen absolute count)
 // ---------------------------------------------------------------------------
 
 describe("TopNav — ANALYST_NAV count after PAGE 18 addition", () => {
-  it("exports exactly 24 analyst nav items", () => {
-    expect(ANALYST_NAV).toHaveLength(24);
+  it("ANALYST_NAV has at least 24 items (PAGE 18 was appended, nav may have grown since)", () => {
+    expect(ANALYST_NAV.length).toBeGreaterThanOrEqual(24);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Suite 2: NAV_ITEMS total count
+// Suite 2: NAV_ITEMS structural invariant (no frozen total)
 // ---------------------------------------------------------------------------
 
 describe("TopNav — NAV_ITEMS total after PAGE 18 addition", () => {
-  it("NAV_ITEMS is ANALYST_NAV (24) + SYSTEM_NAV (7) = 31 total", () => {
+  it("NAV_ITEMS length equals ANALYST_NAV.length + SYSTEM_NAV.length (structural invariant)", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(31);
   });
 
   it("SYSTEM_NAV still has 7 items (unchanged)", () => {
@@ -77,27 +79,30 @@ describe("TopNav — 'Uy tín DN' new item", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Suite 4: new item position
+// Suite 4: relative order — PAGE 18 item comes immediately after PAGE 17 predecessor
 // ---------------------------------------------------------------------------
 
 describe("TopNav — new item is last in ANALYST_NAV", () => {
-  it("last ANALYST_NAV entry is 'Uy tín DN'", () => {
-    const last = ANALYST_NAV.at(-1);
-    expect(last).toBeDefined();
-    expect(last!.label).toBe("Uy tín DN");
-    expect(last!.to).toBe("/dashboard/reputation");
+  it("'Uy tín DN' appears immediately after 'Lãi suất Fed' in ANALYST_NAV (relative order)", () => {
+    const predecessorIdx = ANALYST_NAV.findIndex((n) => n.label === "Lãi suất Fed");
+    const itemIdx = ANALYST_NAV.findIndex((n) => n.label === "Uy tín DN");
+    expect(predecessorIdx).toBeGreaterThanOrEqual(0);
+    expect(itemIdx).toBeGreaterThan(predecessorIdx);
+    // Immediately adjacent — no items between predecessor and PAGE 18 item
+    expect(itemIdx).toBe(predecessorIdx + 1);
   });
 
-  it("second-to-last ANALYST_NAV entry is 'Lãi suất Fed' (adjacent placement)", () => {
-    const secondLast = ANALYST_NAV.at(-2);
-    expect(secondLast).toBeDefined();
-    expect(secondLast!.label).toBe("Lãi suất Fed");
-    expect(secondLast!.to).toBe("/dashboard/fed-rates");
+  it("'Lãi suất Fed' predecessor appears before 'Uy tín DN' in ANALYST_NAV (adjacent placement)", () => {
+    const predIdx = ANALYST_NAV.findIndex((n) => n.to === "/dashboard/fed-rates");
+    const itemIdx = ANALYST_NAV.findIndex((n) => n.to === "/dashboard/reputation");
+    expect(predIdx).toBeGreaterThanOrEqual(0);
+    expect(itemIdx).toBe(predIdx + 1);
   });
 
-  it("ANALYST_NAV[24] is 'Uy tín DN' (zero-based index, after QUE-REFERENCE-PAGE-2 insertion)", () => {
-    expect(ANALYST_NAV[24]!.label).toBe("Uy tín DN");
-    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/reputation");
+  it("'Uy tín DN' entry exists with correct route in ANALYST_NAV", () => {
+    const item = ANALYST_NAV.find((n) => n.to === "/dashboard/reputation");
+    expect(item).toBeDefined();
+    expect(item!.label).toBe("Uy tín DN");
   });
 });
 
@@ -111,7 +116,7 @@ describe("TopNav — rendered DOM includes new label", () => {
     expect(screen.getByText("Uy tín DN")).toBeTruthy();
   });
 
-  it("renders all 24 analyst nav labels", () => {
+  it("renders all analyst nav labels present as of PAGE 18", () => {
     renderTopNav();
     const expectedLabels = [
       "Tổng Quan",
@@ -170,13 +175,17 @@ describe("TopNav — regression guard: PAGE 17 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[23] is 'Lãi suất Fed' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
-    expect(ANALYST_NAV[23]!.label).toBe("Lãi suất Fed");
-    expect(ANALYST_NAV[23]!.to).toBe("/dashboard/fed-rates");
+  it("'Lãi suất Fed' appears before 'Uy tín DN' in ANALYST_NAV", () => {
+    const predIdx = ANALYST_NAV.findIndex((n) => n.to === "/dashboard/fed-rates");
+    const itemIdx = ANALYST_NAV.findIndex((n) => n.to === "/dashboard/reputation");
+    expect(predIdx).toBeGreaterThanOrEqual(0);
+    expect(itemIdx).toBeGreaterThan(predIdx);
   });
 
-  it("ANALYST_NAV[24] is 'Uy tín DN' (the new PAGE 18 entry)", () => {
-    expect(ANALYST_NAV[24]!.label).toBe("Uy tín DN");
-    expect(ANALYST_NAV[24]!.to).toBe("/dashboard/reputation");
+  it("'Uy tín DN' entry exists with correct route and is enabled", () => {
+    const item = ANALYST_NAV.find((n) => n.to === "/dashboard/reputation");
+    expect(item).toBeDefined();
+    expect(item!.label).toBe("Uy tín DN");
+    expect(item!.comingSoon).toBeUndefined();
   });
 });

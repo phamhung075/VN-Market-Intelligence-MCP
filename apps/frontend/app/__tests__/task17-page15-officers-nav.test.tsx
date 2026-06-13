@@ -1,16 +1,19 @@
 /**
  * task17-page15-officers-nav.test.tsx
  *
- * TopNav SSOT count + new item guard for TASK-17 PAGE 15 (Ban lãnh đạo & quản trị).
+ * TopNav SSOT presence + relative-order guard for TASK-17 PAGE 15 (Ban lãnh đạo & quản trị).
  *
  * Asserts:
- *   1. ANALYST_NAV now has 21 items (was 20 before PAGE 15).
- *   2. NAV_ITEMS total is 28 (ANALYST_NAV 21 + SYSTEM_NAV 7).
- *   3. 'Ban lãnh đạo' item exists at /dashboard/officers and is ENABLED.
- *   4. The new item is the last in ANALYST_NAV (appended at end, adjacent to shareholders).
- *   5. TopNav renders the new label in the DOM.
- *   6. The new tab renders as a NavLink (not a disabled span).
- *   7. All previously-existing analyst tabs still present (regression guard — PAGE 14 last).
+ *   1. 'Ban lãnh đạo' item exists at /dashboard/officers and is ENABLED.
+ *   2. The item appears immediately AFTER 'Cơ cấu cổ đông' in ANALYST_NAV (relative order).
+ *      Does NOT assert absolute array position or total count — decoupled from nav growth.
+ *   3. NAV_ITEMS structural invariant: length == ANALYST_NAV.length + SYSTEM_NAV.length.
+ *   4. TopNav renders the new label in the DOM.
+ *   5. The new tab renders as a NavLink (not a disabled span).
+ *   6. All previously-existing analyst tabs still present (regression guard — PAGE 14 last).
+ *
+ * Design principle: a per-page test must NOT break when page-(N+k) is later added.
+ * Absolute count is asserted only in FE-HEADER-SSOT-top-nav.test.tsx.
  */
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -31,23 +34,22 @@ function renderTopNav(initialPath = "/") {
 }
 
 // ---------------------------------------------------------------------------
-// Suite 1: ANALYST_NAV count
+// Suite 1: ANALYST_NAV minimum size (decoupled — no frozen absolute count)
 // ---------------------------------------------------------------------------
 
 describe("TopNav — ANALYST_NAV count after PAGE 15 addition", () => {
-  it("exports exactly 21 analyst nav items", () => {
-    expect(ANALYST_NAV).toHaveLength(21);
+  it("ANALYST_NAV has at least 21 items (PAGE 15 was appended, nav may have grown since)", () => {
+    expect(ANALYST_NAV.length).toBeGreaterThanOrEqual(21);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Suite 2: NAV_ITEMS total count
+// Suite 2: NAV_ITEMS structural invariant (no frozen total)
 // ---------------------------------------------------------------------------
 
 describe("TopNav — NAV_ITEMS total after PAGE 15 addition", () => {
-  it("NAV_ITEMS is ANALYST_NAV (21) + SYSTEM_NAV (7) = 28 total", () => {
+  it("NAV_ITEMS length equals ANALYST_NAV.length + SYSTEM_NAV.length (structural invariant)", () => {
     expect(NAV_ITEMS).toHaveLength(ANALYST_NAV.length + SYSTEM_NAV.length);
-    expect(NAV_ITEMS).toHaveLength(28);
   });
 
   it("SYSTEM_NAV still has 7 items (unchanged)", () => {
@@ -77,22 +79,24 @@ describe("TopNav — 'Ban lãnh đạo' new item", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Suite 4: new item position
+// Suite 4: relative order — PAGE 15 item comes immediately after PAGE 14 predecessor
 // ---------------------------------------------------------------------------
 
 describe("TopNav — new item is last in ANALYST_NAV", () => {
-  it("last ANALYST_NAV entry is 'Ban lãnh đạo'", () => {
-    const last = ANALYST_NAV.at(-1);
-    expect(last).toBeDefined();
-    expect(last!.label).toBe("Ban lãnh đạo");
-    expect(last!.to).toBe("/dashboard/officers");
+  it("'Ban lãnh đạo' appears immediately after 'Cơ cấu cổ đông' in ANALYST_NAV (relative order)", () => {
+    const predecessorIdx = ANALYST_NAV.findIndex((n) => n.label === "Cơ cấu cổ đông");
+    const itemIdx = ANALYST_NAV.findIndex((n) => n.label === "Ban lãnh đạo");
+    expect(predecessorIdx).toBeGreaterThanOrEqual(0);
+    expect(itemIdx).toBeGreaterThan(predecessorIdx);
+    // Immediately adjacent — no items between predecessor and PAGE 15 item
+    expect(itemIdx).toBe(predecessorIdx + 1);
   });
 
-  it("second-to-last ANALYST_NAV entry is 'Cơ cấu cổ đông' (adjacent placement)", () => {
-    const secondLast = ANALYST_NAV.at(-2);
-    expect(secondLast).toBeDefined();
-    expect(secondLast!.label).toBe("Cơ cấu cổ đông");
-    expect(secondLast!.to).toBe("/dashboard/shareholders");
+  it("'Cơ cấu cổ đông' predecessor appears before 'Ban lãnh đạo' in ANALYST_NAV (adjacent placement)", () => {
+    const predIdx = ANALYST_NAV.findIndex((n) => n.to === "/dashboard/shareholders");
+    const itemIdx = ANALYST_NAV.findIndex((n) => n.to === "/dashboard/officers");
+    expect(predIdx).toBeGreaterThanOrEqual(0);
+    expect(itemIdx).toBe(predIdx + 1);
   });
 });
 
@@ -106,7 +110,7 @@ describe("TopNav — rendered DOM includes new label", () => {
     expect(screen.getByText("Ban lãnh đạo")).toBeTruthy();
   });
 
-  it("renders all 21 analyst nav labels", () => {
+  it("renders all analyst nav labels present as of PAGE 15", () => {
     renderTopNav();
     const expectedLabels = [
       "Tổng Quan",
@@ -162,13 +166,17 @@ describe("TopNav — regression guard: PAGE 14 tab still present", () => {
     expect(item!.comingSoon).toBeUndefined();
   });
 
-  it("ANALYST_NAV[20] is 'Cơ cấu cổ đông' (index after QUE-REFERENCE-PAGE-2 insertion)", () => {
-    expect(ANALYST_NAV[20]!.label).toBe("Cơ cấu cổ đông");
-    expect(ANALYST_NAV[20]!.to).toBe("/dashboard/shareholders");
+  it("'Cơ cấu cổ đông' appears before 'Ban lãnh đạo' in ANALYST_NAV", () => {
+    const predIdx = ANALYST_NAV.findIndex((n) => n.to === "/dashboard/shareholders");
+    const itemIdx = ANALYST_NAV.findIndex((n) => n.to === "/dashboard/officers");
+    expect(predIdx).toBeGreaterThanOrEqual(0);
+    expect(itemIdx).toBeGreaterThan(predIdx);
   });
 
-  it("ANALYST_NAV[21] is 'Ban lãnh đạo' (the new entry)", () => {
-    expect(ANALYST_NAV[21]!.label).toBe("Ban lãnh đạo");
-    expect(ANALYST_NAV[21]!.to).toBe("/dashboard/officers");
+  it("'Ban lãnh đạo' entry exists with correct route and is enabled", () => {
+    const item = ANALYST_NAV.find((n) => n.to === "/dashboard/officers");
+    expect(item).toBeDefined();
+    expect(item!.label).toBe("Ban lãnh đạo");
+    expect(item!.comingSoon).toBeUndefined();
   });
 });
