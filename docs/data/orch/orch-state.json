@@ -4,11 +4,11 @@
   "_updated_at": "2026-06-13T22:28:45Z",
   "_updated_by": "po-s52-health-triage",
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-12T20:27:31Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-13T22:31:06Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null
+    "active_task_id": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+    "next_agent": "architect"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -7188,30 +7188,6 @@
         "disposition": "PARKED-BEST-EFFORT-EXHAUSTED / SUPERSEDED-BY-FU-CI-PROFILE-629"
       },
       {
-        "id": "FIX-MCP-CRASH-LOOP-WRITEWAL",
-        "title": "FIX-MCP-CRASH-LOOP-WRITEWAL — MCP server crash-loop root cause (write-wedge, WAL accumulation) + production safeguards",
-        "owner": "dev-mcp-server",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "size": "M",
-        "created_at": "2026-06-13T22:22:00Z",
-        "created_by": "ops",
-        "evidence": "Health-recheck incident I11-R2: 3 restarts in 24h with ~2h cadence on 2026-06-13. WAL pattern: 7.30MB→15.65MB→16MB. No OOM/SIGSEGV in logs, memory 25.68% of cap. Write-wedge signature confirmed. Ops force-recreate (22:21Z) reset WAL to 656KB, service healthy, peers intact, DB operational. No crash trigger in logs; restart clears state. Hypothesis: SQLite WAL checkpoint stalled under disk/memory pressure.",
-        "root_cause": "SQLite WAL not checkpointing under load, accumulates unbounded. Triggered by: (a) disk I/O saturation (market.db 274MB + large crons), (b) concurrent writes to multiple .db files, (c) WAL mode misconfiguration. Container has memory headroom (25.68%), so not OOM. Under sustained write + host swap pressure, checkpoint stalls → restart-loop.",
-        "fix_class": [
-          "IMMEDIATE: add restart cadence alert to ops monitoring (invisible between health sweeps)",
-          "CODE FIX: implement WAL checkpoint policy (PRAGMA optimize + wal_checkpoint every 30m in heartbeat cron)",
-          "CODE FIX: audit coordination.db + alert_engine.db for WAL checkpoint",
-          "MONITORING: add orch-state alert gate (WAL>10MB on next health-recheck triggers escalation)",
-          "OPTIONAL: tune SQLite cache_size/page_size if margin <1GB total DB+WAL"
-        ],
-        "verification_gate": "Live uptime >4h without restart-loop; WAL stays <5MB during sustained load; orch-state alert triggers if WAL anomaly recurs",
-        "note": "Non-blocking follow-up from ops force-recreate. Crash-loop recurred 3x in 24h across multiple health sweeps but was NOT tracked in task_board until escalated (detect-fix gap). Recurring-pattern → elevated priority. Do NOT treat as merely operational cleanup — write-wedge will re-emerge on same ~2h cadence without code fix.",
-        "depends_on": []
-      },
-      {
         "id": "FIX-FUNDAMENTALS-REFRESH-CRON-DEAD",
         "type": "FIX",
         "status": "TODO",
@@ -9585,7 +9561,35 @@
         }
       }
     ],
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "title": "FIX-MCP-CRASH-LOOP-WRITEWAL — MCP server crash-loop root cause (write-wedge, WAL accumulation) + production safeguards",
+        "owner": "dev-mcp-server",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "size": "SPRINT-S",
+        "created_at": "2026-06-13T22:22:00Z",
+        "created_by": "ops",
+        "evidence": "Health-recheck incident I11-R2: 3 restarts in 24h with ~2h cadence on 2026-06-13. WAL pattern: 7.30MB→15.65MB→16MB. No OOM/SIGSEGV in logs, memory 25.68% of cap. Write-wedge signature confirmed. Ops force-recreate (22:21Z) reset WAL to 656KB, service healthy, peers intact, DB operational. No crash trigger in logs; restart clears state. Hypothesis: SQLite WAL checkpoint stalled under disk/memory pressure.",
+        "root_cause": "SQLite WAL not checkpointing under load, accumulates unbounded. Triggered by: (a) disk I/O saturation (market.db 274MB + large crons), (b) concurrent writes to multiple .db files, (c) WAL mode misconfiguration. Container has memory headroom (25.68%), so not OOM. Under sustained write + host swap pressure, checkpoint stalls → restart-loop.",
+        "fix_class": [
+          "IMMEDIATE: add restart cadence alert to ops monitoring (invisible between health sweeps)",
+          "CODE FIX: implement WAL checkpoint policy (PRAGMA optimize + wal_checkpoint every 30m in heartbeat cron)",
+          "CODE FIX: audit coordination.db + alert_engine.db for WAL checkpoint",
+          "MONITORING: add orch-state alert gate (WAL>10MB on next health-recheck triggers escalation)",
+          "OPTIONAL: tune SQLite cache_size/page_size if margin <1GB total DB+WAL"
+        ],
+        "verification_gate": "Live uptime >4h without restart-loop; WAL stays <5MB during sustained load; orch-state alert triggers if WAL anomaly recurs",
+        "note": "Non-blocking follow-up from ops force-recreate. Crash-loop recurred 3x in 24h across multiple health sweeps but was NOT tracked in task_board until escalated (detect-fix gap). Recurring-pattern → elevated priority. Do NOT treat as merely operational cleanup — write-wedge will re-emerge on same ~2h cadence without code fix.",
+        "depends_on": [],
+        "claimed_at": "2026-06-13T22:31:06Z",
+        "claimed_by": "router",
+        "dispatch_note": "SPRINT-S dispatched architect 2026-06-13T22:31:06Z. RECURRING write-wedge (4 crashes/26h ~2h cadence, re-crashed ~00:20Z 06-14). Design split of 3 fix-classes: (B/C) GENERIC db-connection-layer WAL checkpoint policy (PRAGMA wal_autocheckpoint + periodic PRAGMA optimize + manual wal_checkpoint(TRUNCATE)) = load-bearing root fix ships FIRST; (A) ops restart-cadence alert; (D) orch-state WAL>10MB escalation gate. Scope = apps/mcp-server/ db layer + ops-monitoring + orch-state gate. GENERIC at db/connection layer (NOT per-table/per-ticker). Root-cause-definitive (replaces force-recreate symptom-patch). Live-verify (non-market): uptime>4h no restart-loop + WAL<5MB under load. Output: architecture brief -> docs/architecture-briefs/, signal pm."
+      }
+    ],
     "head": {
       "note": "FDA-9 (rag-service _distance fail-open fabricated-similarity) groomed READY; mcp-server zone untouched (frozen behind EVIDENCE-ACCUM gate)"
     },
