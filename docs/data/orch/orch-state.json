@@ -7224,43 +7224,6 @@
         "dispatch_note": "READY. mcp-server zone serialization peer of U1. PO recommends U1 first; U2-GEN next into freed slot. Router raw-verifies + claims."
       },
       {
-        "id": "TSU-DEV-U4",
-        "title": "TSU-DEV-U4 — get_macro_snapshot prev-session delta+direction: extend SnapshotDTO with prev_session_delta (*float64) + direction enum (up/down/flat/unknown) for the 4 headline metrics; compute VNINDEX delta from daily_ohlcv LIMIT 2; emit null/unknown for oil/gold/usdVnd (prev-session NOT persisted). SEPARATE ZONE — parallel-eligible.",
-        "owner": "dev-macro-indicators",
-        "status": "REVIEW",
-        "type": "IMPL",
-        "zone": "apps/macro-indicators/",
-        "priority": "high",
-        "size": "M",
-        "created_at": "2026-06-13T16:43:08Z",
-        "created_by": "po",
-        "depends_on": [],
-        "blocked_by": [],
-        "files": [
-          "apps/macro-indicators/pkg/application/dtos.go",
-          "apps/macro-indicators/pkg/application/usecases.go",
-          "apps/macro-indicators/pkg/infrastructure/repositories.go"
-        ],
-        "baseline_pass": "Go macro-indicators suite green at HEAD. Post-impl: additive struct fields only (NFR-U4-2, no rename/removal); new usecase delta-computation test.",
-        "verification_gate": "no_cached_pass_go_count_1",
-        "verification_gate_detail": "QA: (1) `go test ./... -count=1` in apps/macro-indicators (NO cached pass) -> green incl. new delta test; (2) call_tool(server=vn-market, tool=get_macro_snapshot) RAW response includes prev_session_delta + direction for all 4 metrics; VNINDEX shows a real delta+direction (up/down/flat), oil/gold/usdVnd show prev_session_delta:null + direction:'unknown' (NEVER fabricated). direction is a STRING enum not boolean (NFR-U4-1).",
-        "root_cause_requirement": "Root cause (brief U4): get_macro_snapshot serves point-in-time values with no delta vs previous session (violates feedback_market_data_direction.md). FIX in the Go macro-indicators zone (the TS MCP tool is a passthrough proxy — NO change there, new JSON fields flow through automatically): dtos.go extend SnapshotDTO additively with PrevSessionDelta *float64 + Direction string for each of 4 headline values; usecases.go compute delta = current - prev_close from daily_ohlcv VNINDEX two-row (assign up/down/flat; flat if |delta|<threshold; unknown if prev absent); repositories.go:154-197 FetchVNIndex extend to return prev-close row alongside current (ARCH-U4-1: daily_ohlcv has (code,date,close) -> prev-session computable for VNINDEX only; oilUsd/goldUsd/usdVnd sit in single-row commodity_prices/sbv_rates with NO history -> emit null/unknown). FORBIDDEN: fabricating a delta for oil/gold/usdVnd; renaming/removing existing SnapshotDTO fields; touching the TS macro tool.",
-        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U4 (commit 371437a7). FIRST WAVE — READY + PARALLEL-ELIGIBLE. R-3: apps/macro-indicators/ is dev-macro-indicators territory, a SEPARATE zone from apps/mcp-server/ — it does NOT consume the mcp-server serialization slot and runs in PARALLEL with whichever single mcp-server task (U1 or U2-GEN) the router dispatches. MUST NOT be assigned to dev-mcp-server.",
-        "dispatch_note": "READY + PARALLEL. Separate zone (macro-indicators) — independent of the mcp-server slot. Router may dispatch this concurrently with the chosen mcp-server task. Router raw-verifies + claims.",
-        "claimed_by": "dev-macro-indicators",
-        "claimed_at": "2026-06-13T16:44:43Z",
-        "review_commit": "56822e4a",
-        "review_at": "2026-06-13T17:09:44Z",
-        "no_rebuild": true,
-        "review_evidence": {
-          "live_confirmed": "get_macro_snapshot serves vnIndexDelta=-6.96 vnIndexDirection=down; oil/gold/usdVnd null+unknown (DSI serve-null)",
-          "runtime_preexisting": "9880eadc 2026-06-07",
-          "today_test_only": "56822e4a repositories_test.go seed-date-rot fix",
-          "uncached": "go test ./... -count=1 12/12 pass",
-          "rebuild": "NOT needed — runtime already live-correct"
-        }
-      },
-      {
         "id": "TSU-DEV-U3",
         "title": "TSU-DEV-U3 — 12 weak-claim tool verdicts: DEREGISTER 5 zero-claim tools (read_bctc_pdf, backfill_bctc_scalars, compute_accruals, get_accuracy_context, is_trading_day) + INTEGRATE 7 (description updates) per brief 4-layer verdict matrix. Signal cowork-refactory-expert (PM lane) after commit.",
         "owner": "dev-mcp-server",
@@ -10318,6 +10281,54 @@
             "TSU-DEV-U2-PARITY(LAST)"
           ],
           "toolcount_ssot": "docs/data/project-stats.json#toolCount (generator-arbitrated, post-U3 target 157)"
+        }
+      },
+      {
+        "id": "TSU-DEV-U4",
+        "title": "TSU-DEV-U4 — get_macro_snapshot prev-session delta+direction: extend SnapshotDTO with prev_session_delta (*float64) + direction enum (up/down/flat/unknown) for the 4 headline metrics; compute VNINDEX delta from daily_ohlcv LIMIT 2; emit null/unknown for oil/gold/usdVnd (prev-session NOT persisted). SEPARATE ZONE — parallel-eligible.",
+        "owner": "dev-macro-indicators",
+        "status": "done_verified",
+        "type": "IMPL",
+        "zone": "apps/macro-indicators/",
+        "priority": "high",
+        "size": "M",
+        "created_at": "2026-06-13T16:43:08Z",
+        "created_by": "po",
+        "depends_on": [],
+        "blocked_by": [],
+        "files": [
+          "apps/macro-indicators/pkg/application/dtos.go",
+          "apps/macro-indicators/pkg/application/usecases.go",
+          "apps/macro-indicators/pkg/infrastructure/repositories.go"
+        ],
+        "baseline_pass": "Go macro-indicators suite green at HEAD. Post-impl: additive struct fields only (NFR-U4-2, no rename/removal); new usecase delta-computation test.",
+        "verification_gate": "no_cached_pass_go_count_1",
+        "verification_gate_detail": "QA: (1) `go test ./... -count=1` in apps/macro-indicators (NO cached pass) -> green incl. new delta test; (2) call_tool(server=vn-market, tool=get_macro_snapshot) RAW response includes prev_session_delta + direction for all 4 metrics; VNINDEX shows a real delta+direction (up/down/flat), oil/gold/usdVnd show prev_session_delta:null + direction:'unknown' (NEVER fabricated). direction is a STRING enum not boolean (NFR-U4-1).",
+        "root_cause_requirement": "Root cause (brief U4): get_macro_snapshot serves point-in-time values with no delta vs previous session (violates feedback_market_data_direction.md). FIX in the Go macro-indicators zone (the TS MCP tool is a passthrough proxy — NO change there, new JSON fields flow through automatically): dtos.go extend SnapshotDTO additively with PrevSessionDelta *float64 + Direction string for each of 4 headline values; usecases.go compute delta = current - prev_close from daily_ohlcv VNINDEX two-row (assign up/down/flat; flat if |delta|<threshold; unknown if prev absent); repositories.go:154-197 FetchVNIndex extend to return prev-close row alongside current (ARCH-U4-1: daily_ohlcv has (code,date,close) -> prev-session computable for VNINDEX only; oilUsd/goldUsd/usdVnd sit in single-row commodity_prices/sbv_rates with NO history -> emit null/unknown). FORBIDDEN: fabricating a delta for oil/gold/usdVnd; renaming/removing existing SnapshotDTO fields; touching the TS macro tool.",
+        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U4 (commit 371437a7). FIRST WAVE — READY + PARALLEL-ELIGIBLE. R-3: apps/macro-indicators/ is dev-macro-indicators territory, a SEPARATE zone from apps/mcp-server/ — it does NOT consume the mcp-server serialization slot and runs in PARALLEL with whichever single mcp-server task (U1 or U2-GEN) the router dispatches. MUST NOT be assigned to dev-mcp-server.",
+        "dispatch_note": "READY + PARALLEL. Separate zone (macro-indicators) — independent of the mcp-server slot. Router may dispatch this concurrently with the chosen mcp-server task. Router raw-verifies + claims.",
+        "claimed_by": "dev-macro-indicators",
+        "claimed_at": "2026-06-13T16:44:43Z",
+        "review_commit": "56822e4a",
+        "review_at": "2026-06-13T17:09:44Z",
+        "no_rebuild": true,
+        "review_evidence": {
+          "live_confirmed": "get_macro_snapshot serves vnIndexDelta=-6.96 vnIndexDirection=down; oil/gold/usdVnd null+unknown (DSI serve-null)",
+          "runtime_preexisting": "9880eadc 2026-06-07",
+          "today_test_only": "56822e4a repositories_test.go seed-date-rot fix",
+          "uncached": "go test ./... -count=1 12/12 pass",
+          "rebuild": "NOT needed — runtime already live-correct"
+        },
+        "qa_verdict": "APPROVED",
+        "qa_agent": "da4ff094",
+        "closed_at": "2026-06-13T17:15:19Z",
+        "qa_evidence": {
+          "live": "get_macro_snapshot vnIndexDelta=-6.96 dir=down; oil/gold/usd null+unknown",
+          "uncached_12_12": true,
+          "seeddate_class_fixed": true,
+          "adverse_date_proof": true,
+          "dsi_serve_null_intentional": true,
+          "no_rebuild": true
         }
       }
     ],
