@@ -4,11 +4,11 @@
   "_updated_at": "2026-06-13T22:28:45Z",
   "_updated_by": "po-s52-health-triage",
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-13T22:47:41Z",
+    "status": "idle",
+    "updated_at": "2026-06-13T23:00:45Z",
     "updated_by": "dev-team",
-    "active_task_id": "BC-1",
-    "next_agent": "ops"
+    "active_task_id": null,
+    "next_agent": null
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -9582,7 +9582,7 @@
         "title": "FIX-MCP-CRASH-LOOP-WRITEWAL — MCP server crash-loop root cause (write-wedge, WAL accumulation) + production safeguards",
         "owner": "dev-mcp-server",
         "type": "FIX",
-        "status": "REVIEW",
+        "status": "IN_PROGRESS",
         "priority": "high",
         "zone": "apps/mcp-server/",
         "size": "SPRINT-S",
@@ -9599,7 +9599,7 @@
         "architect_handoff": "docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md",
         "architect_brief": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
         "architect_completed_at": "2026-06-14T00:15Z",
-        "note": "ARCHITECT REVIEW DONE 2026-06-14T00:15Z. Root cause: passive autocheckpoint blocked by concurrent reader snapshots (40+ cron jobs); wal_autocheckpoint=4000 threshold reached then wedged. Root fix: wal_autocheckpoint->1000 + runForcedTruncateCheckpoint() unconditional every 30m. 3-task sequence: BC-1 (root, ships first) -> A-1 (guardrail, after BC-1 live) -> D-1 (escalation, after BC-1 live). Next: pm breaks into atomic sprint tasks.",
+        "note": "BC-1 (root) DEPLOYED LIVE 22:49Z awaiting >4h verify; A-1/D-1 blocked_by BC-1 until live-verified",
         "depends_on": [],
         "claimed_at": "2026-06-13T22:31:06Z",
         "claimed_by": "router",
@@ -9614,7 +9614,7 @@
         "title": "FIX-MCP-CRASH-LOOP-BC-1 — WAL checkpoint policy: wal_autocheckpoint=1000 + runForcedTruncateCheckpoint() unconditional every 30 min",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "DEPLOYED-AWAITING-LIVE-VERIFY",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -9639,7 +9639,23 @@
         "code_done_at": "2026-06-13T22:47:41Z",
         "commit": "b41070b7",
         "tsc": "clean",
-        "unit_tests": "6 pass 0 fail"
+        "unit_tests": "6 pass 0 fail",
+        "deployed_at": "2026-06-13T23:00:45Z",
+        "deployed_by": "ops",
+        "deploy": {
+          "new_image": "sha256:f0c53f54",
+          "old_image": "sha256:2c6ae1ca",
+          "peers_intact": true,
+          "live_pragma_wal_autocheckpoint": 1000,
+          "wal_baseline_bytes_at_recreate": 0,
+          "wal_bytes_2min": 1503832
+        },
+        "live_verification_gate": {
+          "not_before": "2026-06-14T03:00:45Z",
+          "criteria": "uptime > 4h with NO restart-loop AND WAL -wal file < 5MB under sustained load (non-market-dependent, weekend-safe)",
+          "promoter": "next dev-team tick after not_before: raw-probe docker uptime + WAL size; if pass -> BC-1 done_verified, unblock+sequence A-1 then D-1; if WAL>=5MB or restart seen -> reopen BC-1",
+          "crash_cadence_broken": "old image re-wedged ~every 2h (08:07/18:31/20:24Z); deploy at 22:49Z BEFORE the ~00:20Z window. If mcp-server is still up past ~00:30Z with WAL bounded, cadence is broken."
+        }
       }
     ],
     "head": {
