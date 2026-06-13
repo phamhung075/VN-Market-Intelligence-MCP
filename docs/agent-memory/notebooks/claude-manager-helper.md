@@ -1,10 +1,58 @@
 # Claude Manager Helper — Notebook
 
-**Last cycle:** 2026-06-13T15:05:00Z (Friday git-diff audit + session archival)
+**Last cycle:** 2026-06-13T14:20:00Z (Friday Pass-4 recheck; frontmatter alignment validated)
 
-**Cycles:** [2026-06-13](#cycle-2026-06-13-fri) | [2026-06-01](#cycle-2026-06-01-mon)
+**Cycles:** [2026-06-13-pass4](#cycle-2026-06-13-pass4) | [2026-06-13](#cycle-2026-06-13-fri) | [2026-06-01](#cycle-2026-06-01-mon)
 
-## Cycle 2026-06-13 (Fri): Git-Diff Audit + Session Archival
+## Cycle 2026-06-13-Pass4 (Fri 14:20Z): Recheck — Frontmatter Alignment Validation
+
+**Trigger:** Scheduled 2h recheck cycle, pass 4 of 4. Context: Earlier passes (1–3) completed today 12:05–14:07Z; now validating changes from 3 recent commits (38060a83, 52abf5ae, 3b0159c2).
+
+**Input:** `git diff --name-only HEAD~3..HEAD` → 4 files:
+- `.claude/skills/signal-dashboard/SKILL.md` (GROUP_AGENTS, frontmatter fix 38060a83)
+- `.claude/skills/system-map-query/SKILL.md` (GROUP_AGENTS, frontmatter fix 38060a83)
+- `docs/signals/processed/context-bloat-*.json` (bloat signal archival 52abf5ae)
+- `docs/agent-memory/health/team-tool-recheck-2026-06-13-1407.md` (health report 3b0159c2, 169L transient)
+
+**Weekday:** Friday (6) — no Mon/Thu full-subtree heal. Run standard 10-pass + pass-9b skip.
+
+### Pass 0: Location Audit
+**RESULT: OK.** Health report correctly in docs/agent-memory/health/. No root .md violations. Processed signal correctly moved.
+
+### Passes 1–3: Tree-Map, Volatile Split, Agent Pointers
+**SKIPPED** — GROUP_KNOWLEDGE empty; GROUP_AGENTS skills contain no hardcoded stats or tool references.
+
+### Pass 4: CLAUDE.md Bloat
+**SKIPPED** — no CLAUDE.md changes. Current: 45L (cap 120L) ✓
+
+### Pass 5: Size Caps
+**RESULT: OK**
+- task_board: 11/80 ✓
+- sprint_goal.entries: 6/15 ✓
+
+### Pass 5b: Context-Bloat Signal Consumer
+**RESULT: OK (1 processed)**
+- Found 1 active signal: `context-bloat--claude-skills-system-map-query-SKILL-md-2026-06-13T122042Z.json` (151L vs 120L cap)
+- **Action:** Checked SKILL.md for size-justification comment → FOUND: "150L — SSOT query reference; 8 jq groups...agents need full pattern set in one load"
+- **Decision:** File intentionally oversized per factory rules. Moved signal to docs/signals/processed/ (no semantic escalation).
+
+### Pass 6–9: Memory, Dedup, Telegram, Tool-Agent
+**ALL SKIPPED or OK** — no stale memory; no send_telegram calls; no GROUP_TOOLS changes.
+
+### Pass 9b: Full-Subtree Heal
+**SKIPPED** — Friday (not Mon/Thu); no manual docheal requested.
+
+### Pass 10: Summary
+**AUTO-FIXES:** 1
+- Moved context-bloat signal to processed/ (commit 20f72d0f)
+
+**ESCALATIONS:** 0
+
+**QUALITY:** Full (all applicable passes run; mechanical gates passed; no semantic drift).
+
+---
+
+## Cycle 2026-06-13 (Fri 15:05Z): Git-Diff Audit + Session Archival
 
 **Trigger:** Manual recheck + improvement pass. Context: Passes 1–2 clean (factory fixes 37aab6e3 + 84ca3ef0 pushed; origin synced). Focus on what changed since.
 

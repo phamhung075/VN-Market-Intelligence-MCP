@@ -122,6 +122,26 @@
 - Audit verdict (6 agents): fb-market-poster=CORRECT (OVERWRITE class, defers to skill); digest-predict daily/weekly/monthly=CORRECT (defer to cowork-end-cycle→skill); all 5 above=FLOW-ORPHAN now fixed.
 - Commit: 04b20c87
 
+## c299 · 2026-06-13T15:30Z — keep/pass-4 maintenance sweep
+
+- Trigger: manual (2h cycle, pass-4 of recurring agent-md-factory recheck)
+- Agents scanned: 41 docs/agents/*/init.md + 42 .claude/agents/*.md
+- Auto-fixes: 0 (all new drifts are OFF-LIMITS deferred items)
+- Escalations: 0 (drifts correctly identified as deferred)
+- Orphans: 0 new
+
+### What held (no regression)
+- Frontmatter line-1 (---): 40/41 docs/agents/*/init.md pass; 42/42 .claude/agents/*.md pass
+- ea201caa SKILL.md fixes: signal-dashboard + system-map-query both confirmed `---` line-1
+- No duplicated C2 commit blocks in dev-* agents
+- Origin sync: HEAD == origin/main (0 commits ahead after fetch)
+- Flow size-justification: all flow/*.md >120L already have header; refine_bctc_md/flow/disagreement-verify.md (127L) has `---` line-1 + size-just on line-2 (compliant, prior scan mis-read)
+
+### New drift found (deferred — OFF-LIMITS this pass)
+- docs/agents/semble-search/init.md line-1 is blank → AF-SEMBLE-INIT-DEF (known deferred stub)
+- .claude/skills/{dispatch-claim,task-lock,token-economy}/SKILL.md use `# Skill:` header not `---` → STYLE-SKILL-FRONTMATTER-ALIGN (deferred category, long-standing)
+- Lesson: SKILL.md files split into two styles (frontmatter vs `# Skill:` header); both categories long-established pre-pass-1; not new drift
+
 ## c298 · 2026-06-13T09:10Z — FU-ORPHAN-AUDIT-JOIN-FIX
 
 - Task: Fix C-08 orphan-audit query JOIN in system-auditor flow (docs/agents/system-auditor/flow/main.md line 463).
