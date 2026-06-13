@@ -17,8 +17,8 @@
     "last_linecount": 2,
     "po": {
       "section_name": "po",
-      "last_mtime": "2026-06-07T07:19:38Z",
-      "last_linecount": 15
+      "last_mtime": 1781313960,
+      "last_linecount": 5
     }
   },
   "narrative": {
@@ -9473,7 +9473,7 @@
       "created_at": "2026-06-10T19:30:04.668103Z",
       "acknowledged": false
     },
-    "_updated_at": "2026-06-12T19:26:33Z",
+    "_updated_at": "2026-06-13T01:26:00Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -9500,18 +9500,6 @@
         "resolution": "diagnosed; task FIX-BCTC-VPS-QUEUE-SYNC created"
       },
       {
-        "id": "sau-c06-202606122230",
-        "ts": "2026-06-12T22:30:24Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "db_integrity_breach",
-        "summary": "C-06 WARN: 0 market_messages in last 3 hours (expected > 0)",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "resolution": "FALSE_POSITIVE (VN-night quiet window)"
-      },
-      {
         "id": "sau-b06-202606122230",
         "ts": "2026-06-12T22:30:24Z",
         "from": "system-auditor",
@@ -9524,18 +9512,6 @@
         "resolution": "diagnosed; task FIX-BCTC-VPS-QUEUE-SYNC created"
       },
       {
-        "id": "sau-a29-202606122230",
-        "ts": "2026-06-12T22:30:24Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "A-29 WARN: intelligenceCycleJob crashed at 2026-06-12 22:15",
-        "severity": "HIGH",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "resolution": "FALSE_POSITIVE (deploy-kill artifact)"
-      },
-      {
         "id": "sau-c08-2026-06-13T00-30-35Z",
         "ts": "2026-06-13T00:30:35Z",
         "from": "system-auditor",
@@ -9543,7 +9519,7 @@
         "type": "db_integrity_breach",
         "summary": "C-08 CRITICAL: 103 orphaned alerts (no corresponding agent_signals in last 24h)",
         "severity": "CRITICAL",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       },
       {
@@ -9554,11 +9530,36 @@
         "type": "db_integrity_breach",
         "summary": "C-16 WARN: 26 stale BCTC pending rows (>72h old)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null
       }
     ],
-    "archive": []
+    "archive": [
+      {
+        "id": "sau-c06-202606122230",
+        "ts": "2026-06-12T22:30:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "C-06 WARN: 0 market_messages in last 3 hours (expected > 0)",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolution": "FALSE_POSITIVE (VN-night quiet window)"
+      },
+      {
+        "id": "sau-a29-202606122230",
+        "ts": "2026-06-12T22:30:24Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "A-29 WARN: intelligenceCycleJob crashed at 2026-06-12 22:15",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolution": "FALSE_POSITIVE (deploy-kill artifact)"
+      }
+    ]
   },
   "sprint_goal": {
     "_updated_at": "2026-06-12T12:02:22Z",
