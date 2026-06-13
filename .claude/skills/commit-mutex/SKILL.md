@@ -1,4 +1,4 @@
-<!-- size-justification: 201L (81L overage) — complete acquire/critical-section/release protocol with 6 backoff-retry entries, fail-closed C-2/C-2b enum-drift paths, jitter formula, foreign-restore rule, release protocol, and code-paste wiring template. All steps load-bearing and executed in sequence; backoff table entries are data (not prose) and cannot be abbreviated. Split would break protocol documentation contract (single reference point for dispatcher-only rule enforcement). -->
+<!-- size-justification: 230L (110L overage) — complete acquire/critical-section/release protocol with 6 backoff-retry entries, fail-closed C-2/C-2b enum-drift paths, jitter formula, foreign-restore rule, Step 3d-PUSH rebase-retry guard (bounded 2-attempt + conflict-abort semantics), release protocol, and code-paste wiring template. All steps load-bearing and executed in sequence; backoff table and push guard are data/code (not prose) and cannot be abbreviated. Split would break protocol documentation contract (single reference point for dispatcher-only rule enforcement). -->
 # Skill: commit-mutex
 
 > **INV-GATEWAY-1 (enforced 2026-06-07):** This skill is DISPATCHER-ONLY. Dev-*/qa/ba/pm/architect
@@ -34,7 +34,7 @@ result = call_tool(server="vn-market", tool="task_claim", arguments={
   task_id:     "commit-mutex:main",
   task_kind:   "commit-mutex",
   owner_agent: "<your-agent-id>",
-  ttl_seconds: 60,
+  ttl_seconds: 90,
   payload:     JSON({ paths: ["<path1>", "<path2>", ...], intent: "<one-line commit summary>" })
 })
 ```
@@ -119,7 +119,36 @@ AC: <criterion>
 EOF
 )"
 
-# 3d. Post-commit verify — must be empty
+# 3d-PUSH. Attempt push. If non-fast-forward: rebase once and retry.
+# MAX 2 total push attempts. Abort on conflict; never auto-resolve.
+# Lock is still held during this entire block.
+git push origin main
+PUSH_EXIT=$?
+if [ $PUSH_EXIT -ne 0 ]; then
+  # Retry: rebase then push
+  git pull --rebase origin main
+  REBASE_EXIT=$?
+  if [ $REBASE_EXIT -ne 0 ]; then
+    # Rebase conflict — abort cleanly, do not leave rebase state
+    git rebase --abort 2>/dev/null || true
+    send_telegram(channel="bug",
+      "[<agent>] commit-mutex: push rebase CONFLICT — rebase aborted; commit local-only. \
+       Paths: <own_paths>. Manual reconcile required.")
+    # EXIT push step — commit is preserved; origin lags by this one commit only
+    # Proceed to Step 3e (post-commit verify) then Step 4 (release) immediately
+  else
+    git push origin main
+    PUSH2_EXIT=$?
+    if [ $PUSH2_EXIT -ne 0 ]; then
+      send_telegram(channel="bug",
+        "[<agent>] commit-mutex: push retry FAILED after rebase; commit local-only. \
+         Paths: <own_paths>.")
+      # Proceed to Step 3e (post-commit verify) then Step 4 (release)
+    fi
+  fi
+fi
+
+# 3e. Post-commit verify — must be empty
 git diff --cached --name-only
 # If non-empty → send_telegram(channel="bug", "[<agent>] commit-mutex: residual staged files post-commit")
 ```
@@ -162,21 +191,23 @@ fail-loud-protocol violation detectable in post-merge review.
 
 ## No-Heartbeat Rule
 
-commit-mutex does NOT require `task_heartbeat` calls. The critical section is 2–10s
-under normal conditions; TTL=60s is 6× headroom. Adding heartbeat round-trips to a
-2–10s window would add unnecessary MCP latency. The TTL handles crash-mid-section
-recovery automatically (next claimer wins after ≤60s).
+commit-mutex does NOT require `task_heartbeat` calls. The critical section (including
+push + worst-case rebase-retry) is 5–20s under normal conditions; TTL=90s is 4.5×
+headroom. Adding heartbeat round-trips to this window would add unnecessary MCP
+latency. The TTL handles crash-mid-section recovery automatically (next claimer wins
+after ≤90s).
 
 ---
 
 ## TTL and Stale-Lock Reclaim
 
-TTL=60s. If the holder crashes before `task_release`, the lock expires in ≤60s and
+TTL=90s. If the holder crashes before `task_release`, the lock expires in ≤90s and
 the next `task_claim` call wins (overwrite semantics built into `coordination.db`).
 No external watchdog needed. Inspect stuck locks via:
 ```
 call_tool(server="vn-market", tool="task_list_held", arguments={ kind: "commit-mutex", expired: true })
 ```
+TTL rationale: 90s / 20s worst-case critical section (commit + push + rebase-retry) = 4.5× headroom. See brief §3.2.
 
 ---
 
@@ -189,13 +220,16 @@ call_tool(server="vn-market", tool="task_list_held", arguments={ kind: "commit-m
   intent:    "<commit summary>"
 
 Protocol:
-1. task_claim("commit-mutex:main", kind="commit-mutex", ttl=60)
+1. task_claim("commit-mutex:main", kind="commit-mutex", ttl=90)
    - MCP error / db_unavailable → bug-telegram → SKIP commit → EXIT   [C-2]
    - claimed=false, NO current_holder, NO error → mechanism broken → bug-telegram → SKIP → EXIT   [C-2b]
    - claimed=false WITH current_holder → backoff (exp+jitter, 6 retries, ~125s max) → give-up → bug-telegram → SKIP
 2. git add <exact own_paths only>
 3. git diff --cached --name-only → if foreign: git restore --staged <foreign> only → re-check
 4. git commit -m heredoc
-5. git diff --cached --name-only → must be empty
-6. task_release("commit-mutex:main")  ← always, even on abort
+5. git push origin main → if non-fast-forward: git pull --rebase origin main && git push origin main
+   - rebase conflict → git rebase --abort → bug-telegram → commit stays local-only
+   - push2 fail → bug-telegram → commit stays local-only
+6. git diff --cached --name-only → must be empty  (Step 3e)
+7. task_release("commit-mutex:main")  ← always, even on abort
 ```
