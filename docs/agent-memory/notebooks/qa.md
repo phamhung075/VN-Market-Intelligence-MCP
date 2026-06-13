@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-245 · 2026-06-13 · QUE-REFERENCE-PAGE-1a QA gate — APPROVED
+
+Task: QUE-REFERENCE-PAGE-1a | Dev commit: 11460170 | Verdict: APPROVED | Board: DONE. AC-1 PASS: que-descriptions-detail.generated.ts exists (91359B); que-descriptions.generated.ts NOT in commit diff (byte-unchanged). AC-2 PASS: QUE_DETAIL 64 entries (raw count); all 64 × 12 fields + phases[6] × 4 fields (node eval); spot-checks id=1,32,64 all match SSOT; generic loop (no per-quẻ special-casing); empty guard present. AC-3 PASS: tsc --noEmit exit 0 in apps/frontend. AC-4 NO-REGRESSION PASS: parent f9cfc569 = 1360 pass / 170 fail; HEAD 11460170 = 1360 pass / 170 fail — identical, 0 new failures. Note: dev claimed 1518/21, actual raw 1360/170 — both parent+HEAD identical, proving 0 regression. AC-5 PASS: QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.ts 14/14. BCTC eval: N/A (frontend codegen, no report_id). Board: REVIEW→DONE. Unblocked: QUE-REFERENCE-PAGE-1b, QUE-REFERENCE-PAGE-TEST. DJ: sprint-QUE-REFERENCE-PAGE-qa.md § qa-S1.
+
 ## cycle-244 · 2026-06-13 · CI-RED-b7b84d9b-FIX QA gate — APPROVED
 
 Task: CI-RED-b7b84d9b-FIX | Fix commit: 6d424304 | Verdict: APPROVED | Board: DONE. Smart-Skip applied (test-only change — no DDD/security scan). AC-1 PASS: 34/0 standard mode + 34/0 per-file-isolation mode (both confirmed raw). AC-2 PASS: tsc --noEmit exit 0 in apps/mcp-server. AC-3 PASS: CI run 27461707296, HEAD b556afbb, conclusion success, 12782 pass / 53 skip / 0 fail. AC-4 PASS: threshold 500ms is a generic constant at 160-stock-aliases.test.ts:315; 20-stock watchlist is a fixed test array (not per-ticker conditional); no .skip/.todo/.only anywhere in the 319L file; meaningful guard (>16000x actual ~0.03ms cost). Board REVIEW→DONE 2026-06-13T08:35:00Z. DJ sprint-CI-RED-b7b84d9b-qa.md § qa-S1.
