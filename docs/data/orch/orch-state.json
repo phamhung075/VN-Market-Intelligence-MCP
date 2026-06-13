@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T09:03:01Z",
+  "_updated_at": "2026-06-13T09:16:38Z",
   "_updated_by": "qa",
   "head": {
     "status": "idle",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T09:02:02Z",
-    "_updated_by": "po-s50-factory-recheck-triage",
+    "_updated_at": "2026-06-13T09:16:38Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -7230,7 +7230,7 @@
         "id": "QUE-REFERENCE-PAGE-1b",
         "title": "Build dashboard.kinh-dich-reference.tsx route with search/grid",
         "owner": "dev-frontend",
-        "status": "REVIEW",
+        "status": "DONE",
         "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",
@@ -7256,7 +7256,9 @@
         "claimed_at": "2026-06-13T08:50:00Z",
         "completed_at": "2026-06-13T11:09:00Z",
         "completed_by": "dev-frontend",
-        "commit": "daabfd73"
+        "commit": "daabfd73",
+        "done_at": "2026-06-13T09:16:38Z",
+        "done_by": "qa"
       },
       {
         "id": "QUE-REFERENCE-PAGE-2",

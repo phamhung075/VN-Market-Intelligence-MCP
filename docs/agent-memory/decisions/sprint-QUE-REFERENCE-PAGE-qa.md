@@ -24,3 +24,34 @@ AC-4 NO-REGRESSION PASS: Baseline established RAW at parent f9cfc569: 1360 pass 
 AC-5 PASS: QUE-TOOLTIP-DRY-1a-codegen-pipeline.test.ts → 14/14 pass.
 
 **why-change:** No change from plan — all checks green. APPROVED.
+
+---
+
+### STEP qa-S2 · qa · 2026-06-13T11:15Z
+**task-id:** QUE-REFERENCE-PAGE-1b
+**what-done:** QA gate for QUE-REFERENCE-PAGE-1b (dashboard.kinh-dich-reference.tsx, 262L, single new file).
+**verdict:** APPROVED
+
+**what-considered:**
+
+G1 TSC PASS: `npx tsc --noEmit` in apps/frontend → exit 0, 0 errors.
+
+G2 LINT PASS: `npx eslint apps/frontend/app/routes/dashboard.kinh-dich-reference.tsx` → exit 0. Only pre-existing boundaries plugin deprecation warnings (not introduced by this commit).
+
+G3 NO-REGRESSION PASS: Parent e4b104b5 (file absent) = 1518 pass / 21 fail. HEAD (file present) = 1518 pass / 21 fail. Delta = 0. Note: floor upgraded from 1360/170 (pre-11460170) to 1518/21 (post QUE-TOOLTIP-DRY 1b). The 21 pre-existing failures are task17-page18-reputation-nav and related nav adjacency tests, unrelated to this commit. Dev-reported 1518/21 matches raw.
+
+G4 64 ENTRIES: `Object.values(QUE_DETAIL).sort()` at line 215 — no slice/cap. `filterQues` at line 96 takes full list, returns filtered subset (empty-query returns all). QUE_DETAIL confirmed 64 keys.
+
+G5 DEEP-LINKS: `id={\`que-\${que.id}\`}` at line 118 in QueCard — every card gets the anchor.
+
+G6 VIETNAMESE-ONLY: All rendered labels in Vietnamese (Tra cứu Kinh Dịch, Tìm theo tên hoặc số quẻ..., Tìm thấy, Thượng quái, Hạ quái, Ý nghĩa cốt lõi, Trạng thái hiện tại, Thuận, Cảnh báo, Sáu hào, Hào, Hành động, Kết quả, Giải nghĩa). No English UI jargon in rendered text.
+
+G7 MOBILE-FIRST: `grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4` — mobile-first responsive grid.
+
+G8 DDD PASS: No `from.*infrastructure` or `from.*application` imports. Interface layer only.
+
+G9 SECURITY PASS: No `process.env`, no hardcoded secrets.
+
+G10 MOCK-GUARD EXIT 0: No fabricated-data patterns.
+
+**why-change:** No change from plan — all 10 checks green. APPROVED.
