@@ -220,12 +220,16 @@ func TestSQLiteRepo_GetHistory_OHLCFieldParity(t *testing.T) {
 	defer oCleanup()
 
 	// Seed one row with asymmetric OHLCV values directly into daily_ohlcv.
+	// Derive seedDate relative to now so it always lands inside GetHistory's
+	// date >= date('now','-7 days') window. Yesterday is safe: within [now-7d, now].
 	db, err := sql.Open("sqlite3", marketDB+"?_journal_mode=WAL")
 	if err != nil {
 		t.Fatalf("open market.db for seeding: %v", err)
 	}
+	now := time.Now().UTC()
+	seedDate := now.AddDate(0, 0, -1).Format("2006-01-02")         // yesterday
+	seedUpdatedAt := now.AddDate(0, 0, -1).Format(time.RFC3339)    // same instant for updated_at
 	const (
-		seedDate   = "2026-05-22"
 		seedOpen   = 10.0
 		seedHigh   = 40.0
 		seedLow    = 5.0
@@ -236,7 +240,7 @@ func TestSQLiteRepo_GetHistory_OHLCFieldParity(t *testing.T) {
 		`INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		"FPT", seedDate, seedOpen, seedHigh, seedLow, seedClose, seedVolume,
-		"2026-05-22T00:00:00Z",
+		seedUpdatedAt,
 	)
 	db.Close()
 	if err != nil {
