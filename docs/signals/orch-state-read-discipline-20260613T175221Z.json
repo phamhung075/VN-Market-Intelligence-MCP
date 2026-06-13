@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-06-13-orch-state-read-discipline.md",
+  "priority": "high",
+  "createdAt": "2026-06-13T17:52:21Z",
+  "summary": "ORCH-STATE-READ-DISCIPLINE: 12-edit inventory to eliminate 233K-token full-file reads; SSOT=docs/standards/orch-state-access.md (new); guard sentence + jq recipes; AC tests included."
+}
