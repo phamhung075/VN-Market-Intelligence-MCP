@@ -6055,7 +6055,7 @@
         "type": "FIX",
         "size": "S",
         "owner": "po",
-        "status": "TODO",
+        "status": "REVIEW",
         "zone": "apps/mcp-server/",
         "title": "C-08: orphaned alerts (alerts rows with NO agent_signals) — 24h count regressed 3→103; fix alert→signal write-path consistency",
         "created_at": "2026-06-08T01:17:08Z",

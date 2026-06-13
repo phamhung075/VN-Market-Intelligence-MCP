@@ -1,5 +1,16 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-13 · FIX-ALERT-ORPHAN-CORRELATION — alert_id col + atomic co-write — REVIEW
+
+**Task:** FIX-ALERT-ORPHAN-CORRELATION | Priority: P1-HIGH | Zone: apps/mcp-server/
+**Root cause:** C-08 JOIN `ON a.id = s.id` compared alerts.id TEXT to agent_signals.id INTEGER — SQLite never coerces, every alert was always orphaned. storeAlerts/storeAlertsFromCommander never wrote agent_signals rows.
+**Fix:** schema-news.ts: ADD COLUMN alert_id TEXT + index. alertStore.ts: both store functions atomically co-write one verified_decision signal row per alert inside the same transaction (dedup guard + legacy table/column probe).
+**Gap documented:** Scheduler direct-INSERT paths (taAlertScanJob, bbAlertScanJob, foreignFlowAlertJob) still bypass storeAlerts — follow-up task needed. C-08 query fix (ON a.id → s.alert_id) is in system-auditor zone — handoff created.
+**Tests:** 9 pass / 0 fail (FIX-ALERT-ORPHAN-CORRELATION.test.ts). tsc clean. Commit: 7cbca67a.
+Zone health: tsc clean, alert co-write atomic, orphan root cause fixed | HEALTHY
+
+---
+
 ## 2026-06-13 · FIX-PENDING-REFINE-TICKER-TARGETING — ticker + report_id params — REVIEW
 
 **Task:** FIX-PENDING-REFINE-TICKER-TARGETING | Sprint: BCTC-ANALYTICS-LAYER | Priority: P2/low | Zone: apps/mcp-server/
