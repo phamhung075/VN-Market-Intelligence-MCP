@@ -1,5 +1,18 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-13 · TSU-DEV-U2-GEN — Tool-registry generator + parity test — REVIEW
+
+**Task:** TSU-DEV-U2-GEN | Sprint: TOOL-SURFACE-UPGRADE | Priority: high | Zone: scripts/ + apps/mcp-server/__tests__/
+**Root cause:** docs/data/tool-registry.json was hand-edited and decayed (hand-maintained count drifted from live source; no generator existed to enforce SSOT).
+**RECONCILIATION (ARCH-U2-2):** Brief estimated 162 (161 server.tool + 1 server.registerTool). Static scan shows 156 server.tool( + 1 server.registerTool( = 157. Generator says 157. Live /health says 157. ACTUAL = 157. Brief's 162 was pre-sprint estimate, not live reality. No discrepancy between generator and /health.
+**Fix:** scripts/gen-tool-registry.ts (already existed from prior commit a5b34816) — scans both APIs, emits grouped JSON. scripts/gen-project-stats.ts already imports from registry. Regenerated docs/data/tool-registry.json (totalCount=157, 12 groups). docs/data/project-stats.json toolCount=157 confirmed. apps/mcp-server/src/__tests__/tool-registry-parity.test.ts (already existed) — 8 tests GREEN.
+**Deliberate-violation proof:** Injected __test_fake_tool__ → T-U2-5 + T-U2-6 RED. Reverted → 8 GREEN. Fence proven.
+**Idempotency:** Content (totalCount/groups/tools) byte-identical across runs; only lastUpdated timestamp differs.
+**tsc:** clean. No runtime code changed.
+Zone health: tsc clean, 157 tools intact (generator verified), 79 cron.schedule, parity test 8 pass | HEALTHY
+
+---
+
 ## 2026-06-13 · TSU-DEV-U1 — Per-call telemetry counter — REVIEW
 
 **Task:** TSU-DEV-U1 | Sprint: TOOL-SURFACE-UPGRADE | Priority: high | Zone: apps/mcp-server/

@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T18:55:00Z",
+  "_updated_at": "2026-06-13T17:40:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
@@ -7161,7 +7161,7 @@
         "id": "TSU-DEV-U2-GEN",
         "title": "TSU-DEV-U2-GEN — Tool-registry generator from source + parity test: static-grep generator scanning BOTH server.tool( AND server.registerTool( in tools/**/*.ts; deliberate-violation parity test (NFR-FENCE); sync project-stats.json toolCount from generator output (generator is the SSOT arbiter, not /health, not a hardcoded literal).",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "type": "IMPL",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -7184,7 +7184,9 @@
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U2 (commit 371437a7). FIRST WAVE — READY. mcp-server SERIALIZATION peer of U1 — only ONE into the slot. PO recommends U1 first (this L-size generator queues next into the freed mcp-server slot). NFR-U2-1: _maintained_by header mandatory. This task ESTABLISHES the generator that U2-PARITY re-runs LAST.",
         "dispatch_note": "READY. mcp-server zone serialization peer of U1. PO recommends U1 first; U2-GEN next into freed slot. Router raw-verifies + claims.",
         "claimed_by": "dev-mcp-server",
-        "claimed_at": "2026-06-13T17:29:28Z"
+        "claimed_at": "2026-06-13T17:29:28Z",
+        "completed_at": "2026-06-13T17:40:00Z",
+        "completed_by": "dev-mcp-server"
       },
       {
         "id": "TSU-DEV-U3",
