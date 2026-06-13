@@ -53,10 +53,10 @@ export const sequentialMarketAnalysisSchema = z.object({
   isRevision: z.boolean().optional()
     .describe("Whether this thought revises previous analysis"),
 
-  revisesThought: z.number().int().optional()
+  revisesThought: z.coerce.number().int().optional()
     .describe("Which thought number is being reconsidered"),
 
-  branchFromThought: z.number().int().optional()
+  branchFromThought: z.coerce.number().int().optional()
     .describe("Thought number where this analysis branches"),
 
   branchId: z.string().optional()

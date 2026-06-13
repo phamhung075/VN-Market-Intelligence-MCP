@@ -123,7 +123,7 @@ export function registerCarryTools(server: McpServer): void {
       "Source tier: 3 (derived — static computed schedule from macro-indicators service).",
     {
       /** Number of calendar days to look ahead (default 60, max 365). */
-      days: z.number().int().min(1).max(365).optional(),
+      days: z.coerce.number().int().min(1).max(365).optional(),
     },
     async (args) => {
       const { days } = args as { days?: number };

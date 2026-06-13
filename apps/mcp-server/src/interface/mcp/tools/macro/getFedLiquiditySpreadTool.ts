@@ -54,7 +54,7 @@ export function registerFedLiquiditySpreadTool(server: McpServer): void {
        * Lookback window in calendar days for sample selection (default 60).
        * Increase to 90+ for more stable OLS trend on sparse data.
        */
-      days: z.number().int().min(1).max(365).optional(),
+      days: z.coerce.number().int().min(1).max(365).optional(),
     },
     (args) => {
       const { days } = args as { days?: number };

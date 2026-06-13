@@ -77,6 +77,7 @@ export interface PendingRefineReport {
 
 const InputSchema = z.object({
   limit: z
+    .coerce
     .number()
     .int()
     .min(1)
@@ -344,6 +345,7 @@ export function registerGetBctcPendingRefineTool(server: McpServer): void {
       "Optional limit parameter caps results (default: all pending, max 100). limit ignored when report_id is supplied.",
     {
       limit: z
+        .coerce
         .number()
         .int()
         .min(1)
