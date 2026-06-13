@@ -6801,7 +6801,7 @@
         "id": "INFRA-TEST-TZ-FIX",
         "type": "FIX",
         "owner": "dev-alert-engine",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "size": "S",
         "zone": "apps/alert-engine/",
         "priority": "medium",
@@ -6831,7 +6831,9 @@
           "QA verifies by reading the RAW go test output for the infrastructure package (PASS line) under the two TZs — not a badge or a self-reported green."
         ],
         "acceptance_criteria_count": 5,
-        "ready_note": "[po-S50 groom 2026-06-13T11:39Z] Promoted to READY for dispatcher. Picked over alternatives per /goal recheck-last-ship lens: this hardens GO-FLEET-DEPLOY last-ship code (a non-deterministic TZ test that does not give best result) in a now-FREE zone, is a clean test_only+no_rebuild generic fix with a crisp 2-TZ determinism gate, and does NOT touch the FROZEN apps/mcp-server/ zone (16:00Z EVIDENCE-ACCUM gate). Grounded: apps/alert-engine/pkg/infrastructure/sqlite_test.go L138/178-179/337-341 use time.Now().UTC() with fixed offsets that can straddle a day boundary."
+        "ready_note": "[po-S50 groom 2026-06-13T11:39Z] Promoted to READY for dispatcher. Picked over alternatives per /goal recheck-last-ship lens: this hardens GO-FLEET-DEPLOY last-ship code (a non-deterministic TZ test that does not give best result) in a now-FREE zone, is a clean test_only+no_rebuild generic fix with a crisp 2-TZ determinism gate, and does NOT touch the FROZEN apps/mcp-server/ zone (16:00Z EVIDENCE-ACCUM gate). Grounded: apps/alert-engine/pkg/infrastructure/sqlite_test.go L138/178-179/337-341 use time.Now().UTC() with fixed offsets that can straddle a day boundary.",
+        "claimed_by": "dev-alert-engine",
+        "claimed_at": "2026-06-13T11:42:32Z"
       },
       {
         "id": "INFRA-TEST-SEEDDATE-FIX",
