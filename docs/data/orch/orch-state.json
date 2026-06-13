@@ -7186,7 +7186,18 @@
         "claimed_by": "dev-mcp-server",
         "claimed_at": "2026-06-13T17:29:28Z",
         "completed_at": "2026-06-13T17:40:00Z",
-        "completed_by": "dev-mcp-server"
+        "completed_by": "dev-mcp-server",
+        "review_commit": "58e23e89",
+        "review_at": "2026-06-13T17:46:42Z",
+        "no_rebuild": true,
+        "review_evidence": {
+          "generator_emits": "157 (live bun run, not hand-set)",
+          "reconcile": "159 server.tool naive + 1 registerTool = 160 textual -> generator dedups to 157 == live /health 157 == project-stats 157",
+          "parity": "8 pass uncached",
+          "deliberate_violation": "dev showed RED on injected fake tool",
+          "no_runtime_code": true,
+          "brief_162_estimate_was_wrong": true
+        }
       },
       {
         "id": "TSU-DEV-U3",
