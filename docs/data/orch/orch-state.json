@@ -9352,122 +9352,6 @@
     ],
     "in_progress": [
       {
-        "id": "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH",
-        "parent_id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
-        "type": "TASK",
-        "title": "Update .claude/skills/commit-mutex/SKILL.md: add Step 3d-PUSH + bump TTL to 90s",
-        "desc": "Add Step 3d-PUSH (rebase-retry guard) inside critical section immediately after Step 3c (git commit) and before Step 3d (post-commit verify). Bounded to 2 total push attempts (1 initial + 1 rebase-retry). Abort on rebase conflict with bug-telegram. Also bump TTL from 60s to 90s in acquire block and quick-reference section. This is the SSOT location for all gateway-capable agent push paths.",
-        "owner": "agent-father",
-        "priority": "P1",
-        "zone": "skills/commit-mutex",
-        "status": "ready",
-        "depends": [],
-        "size": "M",
-        "acceptance_criteria": "Step 3d-PUSH inserted after Step 3c with exact guard block from brief §3.3 / TTL bumped to 90s in acquire+quick-ref / no other changes / skill deployable / no syntax errors",
-        "created_at": "2026-06-13T16:25:51Z",
-        "created_by": "pm"
-      },
-      {
-        "id": "FU-ORIGIN-LAG-PUSH-B-BOUNDARY-PUSH",
-        "parent_id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
-        "type": "TASK",
-        "title": "Update .claude/skills/commit-boundary/SKILL.md: add RULE 4 (push guard)",
-        "desc": "Add RULE 4 (PUSH after RULE 3) to commit-boundary for agents-architect and agent-father no-gateway commits. Same bounded rebase-retry guard as mutex Step 3d-PUSH. On rebase conflict: git rebase --abort, log to notebook. One-liner form acceptable given lower concurrency (wip ≤ 1 enforced upstream), but full conflict-detect + abort must still be implemented.",
-        "owner": "agent-father",
-        "priority": "P1",
-        "zone": "skills/commit-boundary",
-        "status": "ready",
-        "depends": [
-          "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH"
-        ],
-        "size": "S",
-        "acceptance_criteria": "RULE 4 added after RULE 3 with rebase-retry guard / conflict abort implemented / no post-task_release step needed (no mutex) / skill deployable",
-        "created_at": "2026-06-13T16:25:51Z",
-        "created_by": "pm"
-      },
-      {
-        "id": "FU-ORIGIN-LAG-PUSH-C-GENERIC-PUSH",
-        "parent_id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
-        "type": "TASK",
-        "title": "Update .claude/skills/commit/SKILL.md: replace bare push with rebase-retry guard",
-        "desc": "Replace the current bare `git push origin main` in Step 3 with the bounded guard block from brief §3.3. Same retry semantics: 1 initial push attempt, 1 rebase-retry if non-fast-forward, abort on conflict with bug-telegram, commit preserved locally.",
-        "owner": "agent-father",
-        "priority": "P1",
-        "zone": "skills/commit",
-        "status": "ready",
-        "depends": [
-          "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH"
-        ],
-        "size": "S",
-        "acceptance_criteria": "Bare push replaced with full guard block / conflict handling and bug-telegram present / same retry semantics as §3.3 / no other changes / skill deployable",
-        "created_at": "2026-06-13T16:25:51Z",
-        "created_by": "pm"
-      },
-      {
-        "id": "FU-ORIGIN-LAG-PUSH-D-PO-FLOW-FIX",
-        "parent_id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
-        "type": "TASK",
-        "title": "Fix docs/agents/po/flow/main.md: replace inline commit block with skill reference",
-        "desc": "Lines 134-139 contain an inline notebook-commit block (git add + git commit only). This diverges from declared commit-mutex pattern and never pushes. Replace with canonical skill reference already present elsewhere in the file: `→ skill: .claude/skills/commit-mutex/SKILL.md` with own_paths and intent parameters. This leverages the mutex + push from Task A automatically.",
-        "owner": "agent-father",
-        "priority": "P1",
-        "zone": "agents/po/flow",
-        "status": "ready",
-        "depends": [
-          "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH"
-        ],
-        "size": "S",
-        "acceptance_criteria": "Inline commit block deleted / skill reference inserted with own_paths=[docs/agent-memory/notebooks/po.md] / intent set / push inheritance verified by reading deployed Task A / no logic change to po flow",
-        "created_at": "2026-06-13T16:25:51Z",
-        "created_by": "pm"
-      },
-      {
-        "id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
-        "type": "SPIKE",
-        "mode": "design",
-        "title": "RECURRING: local-main commits never pushed -> origin perpetually lags (30 unpushed/2h); add race-safe push step to commit SSOT",
-        "desc": "RECURRING ROOT-CAUSE (PLAN-ONLY — do NOT implement; route design to agents-architect). Surfaced across 3 consecutive maintenance passes 2026-06-13: agents commit to local main but rarely push, so origin/main perpetually lags — observed 27, then 30+ unpushed commits in ~2h windows (PO RAW-VERIFIED 2026-06-13T12:18Z: `git rev-list --count origin/main..main` = 30), forcing a rebase+push reconciliation every cycle. This is the symptom being cleared manually each pass; fix the cause.\n\nROOT-CAUSE DIRECTION (PO investigation): commit and push are SPLIT across skills. The generic `.claude/skills/commit/SKILL.md` HAS a push step (Step 3 `git push origin main`) but it is a BARE push with NO rebase-retry guard — under the known concurrent-commit-race it fails non-fast-forward and just errors, so it is unreliable. The HIGH-FREQUENCY commit paths — maintenance-lane `.claude/skills/commit-boundary/SKILL.md`, the mutex-guarded notebook-commit pattern (`.claude/skills/commit-mutex/SKILL.md`), and per-agent notebook commits embedded in flow docs (e.g. docs/agents/po/flow/main.md L134-140: `git add` + `git commit` only) — DO NOT PUSH AT ALL. So every notebook/orch-state commit (the bulk of commit volume) lands local-only and origin lags by construction.\n\nCANDIDATE FIXES TO EVALUATE (architect picks/scopes; must NOT create push-storm races — respect lessons: concurrent commit race=serialize parallel workers share index, merge-gate cherry-pick serialize, commit-mutex):\n(1) Add an explicit push step to the commit-boundary / commit-mutex SSOT so every committing agent pushes its OWN work, WRAPPED in a rebase-retry guard (`git push || (git pull --rebase origin main && git push)`, bounded retries) reusing the existing commit-mutex window so the push is serialized — no new race surface. PREFERRED on first read: push happens inside the already-serialized mutex window, attribution stays with the committing agent, no separate daemon.\n(2) Periodic auto-push cron/hook that pushes accumulated local main on a short interval (decouples push from commit; single pusher = naturally race-free, but adds a cron + latency + a new always-on component; reconcile against existing cron inventory in docs/data/system-map.json).\n(3) post-commit git hook that pushes — REJECT-LEANING: fires on EVERY commit under high concurrency = push-storm + non-fast-forward churn, directly violates concurrent-commit-race lesson unless gated behind the same mutex (then it is just option 1 relocated to a hook).\n\nDEDUP: PO searched backlog/active_sprints/in_progress/review/done/done_verified — NO existing push/sync/origin-lag/unpushed/rebase task. This is genuinely new.\n\nDELIVERABLE (architect): a design brief in docs/architecture-briefs/ choosing approach (1 vs 2, scoping the rebase-retry guard + mutex reuse + bounded-retry + race-safety proof), naming the single SSOT location for the push step, and listing every commit path that must adopt it. Then pm decomposes + agent-father implements the skill/flow edits. CONSTRAINT: do NOT touch docs/agents/*/init.md (agents confirmed active there). Acceptance: after fix, `git rev-list --count origin/main..main` stays bounded (target ≤ small N) across a full maintenance cycle with NO manual rebase+push reconciliation, and NO push-storm / non-fast-forward error spam in logs.",
-        "status": "in_progress",
-        "plan_only": true,
-        "owner": "agents-architect",
-        "priority": "P2-recurring",
-        "zone": "cross-service/",
-        "route": "agents-architect (design brief) -> pm (decompose) -> agent-father (impl skill/flow edits)",
-        "escalation": "recurring-bug class (3 consecutive maintenance passes) -> architect design gate per recurring_bug_escalation lesson",
-        "constraints": [
-          "do NOT touch docs/agents/*/init.md",
-          "fix must NOT create push-storm race (reuse commit-mutex serialization)"
-        ],
-        "candidate_fixes": [
-          "1-push-in-commit-boundary-mutex-window-with-rebase-retry (PREFERRED)",
-          "2-periodic-auto-push-cron-single-pusher",
-          "3-post-commit-hook-push (REJECT-LEANING: storm risk)"
-        ],
-        "evidence": {
-          "unpushed_at_triage": 30,
-          "probe": "git rev-list --count origin/main..main",
-          "windows_observed": [
-            "27",
-            "30+"
-          ],
-          "passes": 3
-        },
-        "created_by": "po",
-        "created_at": "2026-06-13T12:18:35Z",
-        "brief_path": "docs/architecture-briefs/2026-06-13-origin-lag-push-discipline.md",
-        "signal_path": "docs/signals/origin-lag-push-discipline-20260613T161810Z.json",
-        "brief_completed_at": "2026-06-13T16:18:10Z",
-        "next_step": "pm: decompose into 4 agent-father tasks per brief §6",
-        "decomposed_at": "2026-06-13T16:25:51Z",
-        "decomposed_by": "pm",
-        "subtask_ids": [
-          "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH",
-          "FU-ORIGIN-LAG-PUSH-B-BOUNDARY-PUSH",
-          "FU-ORIGIN-LAG-PUSH-C-GENERIC-PUSH",
-          "FU-ORIGIN-LAG-PUSH-D-PO-FLOW-FIX"
-        ]
-      },
-      {
         "id": "FU-SCHEMA-DRIFT-P8-IMPL",
         "title": "Impl: DDL DEFAULT reconciliation (3 tables) + P5 self-heal re-apply in getDb() + preload initDatabase() in setup.ts — FU-SCHEMA-DRIFT-P8 direction (a) per architect brief 2026-06-09-fu-schema-drift-p8-spike.md",
         "type": "BUG",
@@ -10063,6 +9947,137 @@
           "no_code_change": true,
           "po_triage": "3be8a574"
         }
+      },
+      {
+        "id": "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH",
+        "parent_id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
+        "type": "TASK",
+        "title": "Update .claude/skills/commit-mutex/SKILL.md: add Step 3d-PUSH + bump TTL to 90s",
+        "desc": "Add Step 3d-PUSH (rebase-retry guard) inside critical section immediately after Step 3c (git commit) and before Step 3d (post-commit verify). Bounded to 2 total push attempts (1 initial + 1 rebase-retry). Abort on rebase conflict with bug-telegram. Also bump TTL from 60s to 90s in acquire block and quick-reference section. This is the SSOT location for all gateway-capable agent push paths.",
+        "owner": "agent-father",
+        "priority": "P1",
+        "zone": "skills/commit-mutex",
+        "status": "done_verified",
+        "depends": [],
+        "size": "M",
+        "acceptance_criteria": "Step 3d-PUSH inserted after Step 3c with exact guard block from brief §3.3 / TTL bumped to 90s in acquire+quick-ref / no other changes / skill deployable / no syntax errors",
+        "created_at": "2026-06-13T16:25:51Z",
+        "created_by": "pm",
+        "completed_at": "2026-06-13T16:32:47Z",
+        "completed_by": "agent-father",
+        "commit": "2f1051ca"
+      },
+      {
+        "id": "FU-ORIGIN-LAG-PUSH-B-BOUNDARY-PUSH",
+        "parent_id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
+        "type": "TASK",
+        "title": "Update .claude/skills/commit-boundary/SKILL.md: add RULE 4 (push guard)",
+        "desc": "Add RULE 4 (PUSH after RULE 3) to commit-boundary for agents-architect and agent-father no-gateway commits. Same bounded rebase-retry guard as mutex Step 3d-PUSH. On rebase conflict: git rebase --abort, log to notebook. One-liner form acceptable given lower concurrency (wip ≤ 1 enforced upstream), but full conflict-detect + abort must still be implemented.",
+        "owner": "agent-father",
+        "priority": "P1",
+        "zone": "skills/commit-boundary",
+        "status": "done_verified",
+        "depends": [
+          "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH"
+        ],
+        "size": "S",
+        "acceptance_criteria": "RULE 4 added after RULE 3 with rebase-retry guard / conflict abort implemented / no post-task_release step needed (no mutex) / skill deployable",
+        "created_at": "2026-06-13T16:25:51Z",
+        "created_by": "pm",
+        "completed_at": "2026-06-13T16:32:47Z",
+        "completed_by": "agent-father",
+        "commit": "2afa7f12"
+      },
+      {
+        "id": "FU-ORIGIN-LAG-PUSH-C-GENERIC-PUSH",
+        "parent_id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
+        "type": "TASK",
+        "title": "Update .claude/skills/commit/SKILL.md: replace bare push with rebase-retry guard",
+        "desc": "Replace the current bare `git push origin main` in Step 3 with the bounded guard block from brief §3.3. Same retry semantics: 1 initial push attempt, 1 rebase-retry if non-fast-forward, abort on conflict with bug-telegram, commit preserved locally.",
+        "owner": "agent-father",
+        "priority": "P1",
+        "zone": "skills/commit",
+        "status": "done_verified",
+        "depends": [
+          "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH"
+        ],
+        "size": "S",
+        "acceptance_criteria": "Bare push replaced with full guard block / conflict handling and bug-telegram present / same retry semantics as §3.3 / no other changes / skill deployable",
+        "created_at": "2026-06-13T16:25:51Z",
+        "created_by": "pm",
+        "completed_at": "2026-06-13T16:32:47Z",
+        "completed_by": "agent-father",
+        "commit": "2afa7f12"
+      },
+      {
+        "id": "FU-ORIGIN-LAG-PUSH-D-PO-FLOW-FIX",
+        "parent_id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
+        "type": "TASK",
+        "title": "Fix docs/agents/po/flow/main.md: replace inline commit block with skill reference",
+        "desc": "Lines 134-139 contain an inline notebook-commit block (git add + git commit only). This diverges from declared commit-mutex pattern and never pushes. Replace with canonical skill reference already present elsewhere in the file: `→ skill: .claude/skills/commit-mutex/SKILL.md` with own_paths and intent parameters. This leverages the mutex + push from Task A automatically.",
+        "owner": "agent-father",
+        "priority": "P1",
+        "zone": "agents/po/flow",
+        "status": "done_verified",
+        "depends": [
+          "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH"
+        ],
+        "size": "S",
+        "acceptance_criteria": "Inline commit block deleted / skill reference inserted with own_paths=[docs/agent-memory/notebooks/po.md] / intent set / push inheritance verified by reading deployed Task A / no logic change to po flow",
+        "created_at": "2026-06-13T16:25:51Z",
+        "created_by": "pm",
+        "completed_at": "2026-06-13T16:32:47Z",
+        "completed_by": "agent-father",
+        "commit": "2afa7f12"
+      },
+      {
+        "id": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
+        "type": "SPIKE",
+        "mode": "design",
+        "title": "RECURRING: local-main commits never pushed -> origin perpetually lags (30 unpushed/2h); add race-safe push step to commit SSOT",
+        "desc": "RECURRING ROOT-CAUSE (PLAN-ONLY — do NOT implement; route design to agents-architect). Surfaced across 3 consecutive maintenance passes 2026-06-13: agents commit to local main but rarely push, so origin/main perpetually lags — observed 27, then 30+ unpushed commits in ~2h windows (PO RAW-VERIFIED 2026-06-13T12:18Z: `git rev-list --count origin/main..main` = 30), forcing a rebase+push reconciliation every cycle. This is the symptom being cleared manually each pass; fix the cause.\n\nROOT-CAUSE DIRECTION (PO investigation): commit and push are SPLIT across skills. The generic `.claude/skills/commit/SKILL.md` HAS a push step (Step 3 `git push origin main`) but it is a BARE push with NO rebase-retry guard — under the known concurrent-commit-race it fails non-fast-forward and just errors, so it is unreliable. The HIGH-FREQUENCY commit paths — maintenance-lane `.claude/skills/commit-boundary/SKILL.md`, the mutex-guarded notebook-commit pattern (`.claude/skills/commit-mutex/SKILL.md`), and per-agent notebook commits embedded in flow docs (e.g. docs/agents/po/flow/main.md L134-140: `git add` + `git commit` only) — DO NOT PUSH AT ALL. So every notebook/orch-state commit (the bulk of commit volume) lands local-only and origin lags by construction.\n\nCANDIDATE FIXES TO EVALUATE (architect picks/scopes; must NOT create push-storm races — respect lessons: concurrent commit race=serialize parallel workers share index, merge-gate cherry-pick serialize, commit-mutex):\n(1) Add an explicit push step to the commit-boundary / commit-mutex SSOT so every committing agent pushes its OWN work, WRAPPED in a rebase-retry guard (`git push || (git pull --rebase origin main && git push)`, bounded retries) reusing the existing commit-mutex window so the push is serialized — no new race surface. PREFERRED on first read: push happens inside the already-serialized mutex window, attribution stays with the committing agent, no separate daemon.\n(2) Periodic auto-push cron/hook that pushes accumulated local main on a short interval (decouples push from commit; single pusher = naturally race-free, but adds a cron + latency + a new always-on component; reconcile against existing cron inventory in docs/data/system-map.json).\n(3) post-commit git hook that pushes — REJECT-LEANING: fires on EVERY commit under high concurrency = push-storm + non-fast-forward churn, directly violates concurrent-commit-race lesson unless gated behind the same mutex (then it is just option 1 relocated to a hook).\n\nDEDUP: PO searched backlog/active_sprints/in_progress/review/done/done_verified — NO existing push/sync/origin-lag/unpushed/rebase task. This is genuinely new.\n\nDELIVERABLE (architect): a design brief in docs/architecture-briefs/ choosing approach (1 vs 2, scoping the rebase-retry guard + mutex reuse + bounded-retry + race-safety proof), naming the single SSOT location for the push step, and listing every commit path that must adopt it. Then pm decomposes + agent-father implements the skill/flow edits. CONSTRAINT: do NOT touch docs/agents/*/init.md (agents confirmed active there). Acceptance: after fix, `git rev-list --count origin/main..main` stays bounded (target ≤ small N) across a full maintenance cycle with NO manual rebase+push reconciliation, and NO push-storm / non-fast-forward error spam in logs.",
+        "status": "done_verified",
+        "plan_only": true,
+        "owner": "agents-architect",
+        "priority": "P2-recurring",
+        "zone": "cross-service/",
+        "route": "agents-architect (design brief) -> pm (decompose) -> agent-father (impl skill/flow edits)",
+        "escalation": "recurring-bug class (3 consecutive maintenance passes) -> architect design gate per recurring_bug_escalation lesson",
+        "constraints": [
+          "do NOT touch docs/agents/*/init.md",
+          "fix must NOT create push-storm race (reuse commit-mutex serialization)"
+        ],
+        "candidate_fixes": [
+          "1-push-in-commit-boundary-mutex-window-with-rebase-retry (PREFERRED)",
+          "2-periodic-auto-push-cron-single-pusher",
+          "3-post-commit-hook-push (REJECT-LEANING: storm risk)"
+        ],
+        "evidence": {
+          "unpushed_at_triage": 30,
+          "probe": "git rev-list --count origin/main..main",
+          "windows_observed": [
+            "27",
+            "30+"
+          ],
+          "passes": 3
+        },
+        "created_by": "po",
+        "created_at": "2026-06-13T12:18:35Z",
+        "brief_path": "docs/architecture-briefs/2026-06-13-origin-lag-push-discipline.md",
+        "signal_path": "docs/signals/origin-lag-push-discipline-20260613T161810Z.json",
+        "brief_completed_at": "2026-06-13T16:18:10Z",
+        "next_step": "pm: decompose into 4 agent-father tasks per brief §6",
+        "decomposed_at": "2026-06-13T16:25:51Z",
+        "decomposed_by": "pm",
+        "subtask_ids": [
+          "FU-ORIGIN-LAG-PUSH-A-MUTEX-PUSH",
+          "FU-ORIGIN-LAG-PUSH-B-BOUNDARY-PUSH",
+          "FU-ORIGIN-LAG-PUSH-C-GENERIC-PUSH",
+          "FU-ORIGIN-LAG-PUSH-D-PO-FLOW-FIX"
+        ],
+        "completed_at": "2026-06-13T16:32:47Z",
+        "completed_by": "agent-father",
+        "commit": "2afa7f12"
       }
     ],
     "review": [
