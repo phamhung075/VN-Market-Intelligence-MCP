@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T10:15:37Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-13T10:20:14Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -5839,18 +5839,6 @@
         "note": "analysis-agent fires one telegram per low-confidence extraction; backlog drain produced 6 reports today (#3066-#3071, all resolved monitoring/duplicate against the quality chain). Batch per-cycle or suppress while ticker-period already covered by an open quality row. | PO 2026-06-07T19:20:08Z: PROMOTED backlog->TODO — 11 more duplicate reports today (#3074-#3084, all same low-confidence-guard class, resolved monitoring this tick). Noise recurs every analysis cycle until batching/suppression ships."
       },
       {
-        "id": "FIX-PDFX-ALERT-ADAPTER-BLOCKING",
-        "title": "alert_adapter.py send_work_alert(): sync urllib.request.urlopen(5s) on asyncio event loop — same blocking-IO class as today's A-13 incident; offload via asyncio.to_thread",
-        "type": "FIX",
-        "owner": "po",
-        "status": "TODO",
-        "size": "XS",
-        "zone": "apps/pdf-extractor/",
-        "priority": "medium",
-        "created_at": "2026-06-07T19:20:08Z",
-        "note": "Latent follow-up from A-13 root-cause fix (signal sau-2026060719035-a13). Rare path (BT-5 gate block only) but identical event-loop-starvation class fixed in extract_tables_usecase.py + table_push_client.py (48a64056, f0999cff). AC: send_work_alert offloaded (to_thread or async client), unit test, suite green, no sync urllib on loop remains in apps/pdf-extractor (grep proof)."
-      },
-      {
         "id": "CLEAN-TRIGGER-PPC-REPARSE",
         "title": "Stray untracked one-off apps/mcp-server/trigger-ppc-reparse.ts (37L direct-DB reparse trigger) — fold into a proper ops script/recipe or delete",
         "type": "CLEAN",
@@ -5869,11 +5857,35 @@
         "title": "pdf-extractor unit suite red: 36 order-dependent failures — deprecated asyncio.get_event_loop test helper conflicts with pytest-asyncio AUTO mode; migrate helper to asyncio.run/loop-per-test",
         "type": "FIX",
         "size": "S",
-        "owner": "po",
-        "status": "TODO",
+        "owner": "dev-pdf-extractor",
+        "status": "READY",
         "zone": "apps/pdf-extractor/",
         "created_at": "2026-06-07T20:17:23Z",
-        "status_note": "From signal dev-20260607T193304 (test_infra_debt, MED, zone_owner dev-pdf-extractor). AC: full unit suite green in any test order (pytest -p no:randomly AND default order). || PO 2026-06-08T02:17:24Z: deferred 2nd tick — zone apps/pdf-extractor/ FROZEN pending ARCH-A20-CPU-CGROUP-REVIEW (test-only change likely safe, but slot lost to CRITICAL FIX-MACRO-REFRESH-DEAD anyway). Resume next free slot; if architect review still in flight, test-file-only scope MAY proceed with explicit no-src-no-compose constraint.\n\nZone unfrozen 2026-06-08 acb48383 — eligible next triage"
+        "status_note": "From signal dev-20260607T193304 (test_infra_debt, MED, zone_owner dev-pdf-extractor). AC: full unit suite green in any test order (pytest -p no:randomly AND default order). || PO 2026-06-08T02:17:24Z: deferred 2nd tick — zone apps/pdf-extractor/ FROZEN pending ARCH-A20-CPU-CGROUP-REVIEW (test-only change likely safe, but slot lost to CRITICAL FIX-MACRO-REFRESH-DEAD anyway). Resume next free slot; if architect review still in flight, test-file-only scope MAY proceed with explicit no-src-no-compose constraint.\n\nZone unfrozen 2026-06-08 acb48383 — eligible next triage || PO-S50 2026-06-13T10:19Z: GROOMED READY. RAW-verified still genuine — asyncio_mode='auto' set (pyproject.toml:30), 10 test files still call deprecated get_event_loop(); no commit has addressed it. Zone freeze (ARCH-A20-CPU-CGROUP-REVIEW) long since lifted (acb48383); scope is test-files-only so even a frozen src-zone would not block. apps/mcp-server zone untouched. Root-cause mandate: kill the get_event_loop/AUTO-mode conflict class so the suite is green in ANY order, not just patch the 36 reds.",
+        "priority": "medium",
+        "blocked_by": [],
+        "test_only": true,
+        "no_rebuild": true,
+        "files": [
+          "apps/pdf-extractor/__tests__/unit/test_extract_tables_cross_check.py",
+          "apps/pdf-extractor/__tests__/unit/test_eval_detectors.py",
+          "apps/pdf-extractor/__tests__/unit/test_bt7_path_a_section_filter.py",
+          "apps/pdf-extractor/__tests__/unit/test_extract_tables_usecase.py",
+          "apps/pdf-extractor/__tests__/unit/test_extract_md_tables_usecase.py",
+          "apps/pdf-extractor/__tests__/integration/test_bt3_fix2_full_pipeline.py",
+          "apps/pdf-extractor/__tests__/integration/test_extract_tables_bt3d_real_ocr.py",
+          "apps/pdf-extractor/__tests__/integration/test_bt3_fix3_row_fidelity.py",
+          "apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.py",
+          "apps/pdf-extractor/__tests__/integration/test_extract_md_tables_fpt.py"
+        ],
+        "acceptance_criteria": [
+          "pdf-extractor unit+integration suite green in DEFAULT order AND under pytest -p no:randomly AND under -p randomly with a fixed seed (no order-dependent failures).",
+          "ROOT CAUSE (not symptom): the ~36 failures stem from deprecated asyncio.get_event_loop() test helpers clashing with pyproject.toml asyncio_mode='auto'. Migrate every get_event_loop() call site (10 files, see files[]) to pytest-asyncio AUTO idiom (async def test + await) or asyncio.run()/fresh-loop-per-test. NO leftover get_event_loop() in apps/pdf-extractor/__tests__ — grep proof in handoff.",
+          "No shared/global event loop leaks across tests (each async test gets its own loop; no 'attached to a different loop' / 'event loop is closed' errors).",
+          "Production src under apps/pdf-extractor/{infrastructure,application,domain}/ UNCHANGED — git diff shows test-files-only. No compose/Dockerfile edit, no rebuild required (test_only, no_rebuild)."
+        ],
+        "groomed_by": "po",
+        "groomed_at": "2026-06-13T10:20:14Z"
       },
       {
         "id": "FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN",
@@ -9416,6 +9428,19 @@
         "created_at": "2026-06-12T08:00:19Z",
         "qa_completed_at": "2026-06-12T12:25:00Z",
         "qa_note": "[QA] APPROVED: 45/0 bun tests (44+1 from CONTAM-8 TR-6), tsc exit 0, toolCount=157, schedulerCount=79. All 5 writers + repair + sanity job covered. DJ: sprint-OHLCV-UNIT-CONTAM-qa.md § qa-S6."
+      },
+      {
+        "id": "FIX-PDFX-ALERT-ADAPTER-BLOCKING",
+        "title": "alert_adapter.py send_work_alert(): sync urllib.request.urlopen(5s) on asyncio event loop — same blocking-IO class as today's A-13 incident; offload via asyncio.to_thread",
+        "type": "FIX",
+        "owner": "po",
+        "status": "DONE",
+        "size": "XS",
+        "zone": "apps/pdf-extractor/",
+        "priority": "medium",
+        "created_at": "2026-06-07T19:20:08Z",
+        "note": "Latent follow-up from A-13 root-cause fix (signal sau-2026060719035-a13). Rare path (BT-5 gate block only) but identical event-loop-starvation class fixed in extract_tables_usecase.py + table_push_client.py (48a64056, f0999cff). AC: send_work_alert offloaded (to_thread or async client), unit test, suite green, no sync urllib on loop remains in apps/pdf-extractor (grep proof). | PO-S50 2026-06-13: RESOLVED-ALREADY-SHIPPED — RAW-verified: commit 473f7cd2 (fix(pdf-extractor/infra): FIX-PDFX-ALERT-ADAPTER-BLOCKING offload urllib to thread); alert_adapter.py:71 async def send_work_alert, :136 await asyncio.to_thread(_do_request) wraps the blocking urlopen; unit test __tests__/unit/test_alert_adapter_nonblocking.py present; grep-proof AC met (no sync urllib reachable from async context in apps/pdf-extractor). Event-loop-starvation A-13 class now FULLY closed across pdf-extractor (extract_tables_usecase 48a64056, table_push_client f0999cff, 3 push-clients FIX-PDFX-PUSH-CLIENTS-ASYNC-URLOPEN, engine A20-EVENTLOOP-ASYNC-TO-THREAD, alert_adapter 473f7cd2). Backlog row was drift — never marked DONE.",
+        "closed_at": "2026-06-13T10:20:14Z"
       }
     ],
     "in_progress": [
