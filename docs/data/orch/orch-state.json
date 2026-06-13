@@ -7264,7 +7264,7 @@
         "id": "QUE-REFERENCE-PAGE-2",
         "title": "Add QueName deep-link + TopNav entry",
         "owner": "dev-frontend",
-        "status": "REVIEW",
+        "status": "DONE",
         "zone": "apps/frontend/",
         "sprint": "QUE-REFERENCE-PAGE",
         "priority": "medium",

@@ -55,3 +55,34 @@ G9 SECURITY PASS: No `process.env`, no hardcoded secrets.
 G10 MOCK-GUARD EXIT 0: No fabricated-data patterns.
 
 **why-change:** No change from plan — all 10 checks green. APPROVED.
+
+---
+
+### STEP qa-S3 · qa · 2026-06-13T11:32Z
+**task-id:** QUE-REFERENCE-PAGE-2
+**what-done:** QA gate for QUE-REFERENCE-PAGE-2 (commit a8ec7821 — QueName.tsx withDetailLink prop + TopNav Tra cứu Kinh Dịch entry + 6 test index-shift fixes).
+**verdict:** APPROVED
+
+**what-considered:**
+
+G1 TSC PASS: `npx tsc --noEmit` in apps/frontend → EXIT 0, 0 errors.
+
+G2 VITEST NO-REGRESSION PASS: Parent a8ec7821^ = 21 fail / 1518 pass. HEAD a8ec7821 = 21 fail / 1518 pass. Delta = 0. Pre-existing 21 failures are task17-page14-to-19 nav count assertions (stale floor from earlier pages, unrelated to QUE-REFERENCE-PAGE-2 changes).
+
+G3 CALL-SITES NOT MODIFIED PASS: `git show a8ec7821 -- apps/frontend/app/routes/dashboard.analysis.tsx apps/frontend/app/routes/dashboard.kinh-dich-signals.tsx` → empty diff. Neither file touched. `withDetailLink` is a purely additive optional prop; existing call sites unchanged.
+
+G4 LINT PASS: `npx eslint app/components/QueName.tsx app/components/TopNav.tsx` → EXIT 0. Only pre-existing boundaries plugin deprecation warnings (not introduced by this commit).
+
+G5 VIETNAMESE-ONLY PASS: TopNav entry label = "Tra cứu Kinh Dịch"; QueName link text = "Xem chi tiết →". Both are Vietnamese-only rendered labels.
+
+G6 TEST-FILE INTENT PRESERVED PASS: All 6 modified test files (page14–page19) update ANALYST_NAV positional indices from N to N+1 due to mid-array insertion of kinh-dich-reference at index 17. Index assertions confirmed correct against actual ANALYST_NAV array (26 items): [19]=corporate-events, [20]=shareholders, [21]=officers, [22]=financials, [23]=fed-rates, [24]=reputation, [25]=news-buzz. Each test still asserts the same label+route at the corrected position — no assertion intent lost.
+
+G7 ADDITIVE-PROP PASS: `withDetailLink?: boolean` defaults to undefined (falsy). No existing render changes. Anchor only rendered when prop is true. No literal hexagram id hardcoded; anchor href uses `\`/dashboard/kinh-dich-reference#que-${hexagram}\`` with runtime hexagram prop.
+
+G8 DDD PASS: No `from.*infrastructure` or `from.*application` imports in modified files.
+
+G9 SECURITY PASS: No `process.env`, no hardcoded secrets.
+
+G10 BCTC-EVAL: N/A — frontend-only nav/component task, no BCTC report_ids in scope.
+
+**why-change:** No change from plan — all 10 checks green. APPROVED.
