@@ -6801,7 +6801,7 @@
         "id": "INFRA-TEST-TZ-FIX",
         "type": "FIX",
         "owner": "dev-alert-engine",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "size": "S",
         "zone": "apps/alert-engine/",
         "priority": "medium",
@@ -6833,7 +6833,17 @@
         "acceptance_criteria_count": 5,
         "ready_note": "[po-S50 groom 2026-06-13T11:39Z] Promoted to READY for dispatcher. Picked over alternatives per /goal recheck-last-ship lens: this hardens GO-FLEET-DEPLOY last-ship code (a non-deterministic TZ test that does not give best result) in a now-FREE zone, is a clean test_only+no_rebuild generic fix with a crisp 2-TZ determinism gate, and does NOT touch the FROZEN apps/mcp-server/ zone (16:00Z EVIDENCE-ACCUM gate). Grounded: apps/alert-engine/pkg/infrastructure/sqlite_test.go L138/178-179/337-341 use time.Now().UTC() with fixed offsets that can straddle a day boundary.",
         "claimed_by": "dev-alert-engine",
-        "claimed_at": "2026-06-13T11:42:32Z"
+        "claimed_at": "2026-06-13T11:42:32Z",
+        "review_commit": "02bed9fa",
+        "review_at": "2026-06-13T11:46:15Z",
+        "review_evidence": {
+          "router_4tz_uncached": "ALL GREEN: TZ=UTC + Pacific/Kiritimati(+14) + America/New_York(-4) + Asia/Kolkata(+5:30), go test -count=1 ./pkg/infrastructure/...",
+          "diff_scope": "1 file, sqlite_test.go only; no prod/Dockerfile/go.mod/go.sum",
+          "sites_anchored": "CountTodayAlerts (today/yesterday noon-anchored, local loc) + ExcludesOlderThan90Days (UTC noon -91 calendar days)",
+          "open_for_qa": "AC1 completeness — confirm no remaining TZ-fragile assertion among ±1h sites (L274/L295) etc.",
+          "test_only": true,
+          "no_rebuild": true
+        }
       },
       {
         "id": "INFRA-TEST-SEEDDATE-FIX",
