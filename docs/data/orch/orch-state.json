@@ -9534,6 +9534,28 @@
         "status": "RESOLVED",
         "payload_ref": null,
         "resolution": "FALSE_POSITIVE (deploy-kill artifact)"
+      },
+      {
+        "id": "sau-c08-2026-06-13T00-30-35Z",
+        "ts": "2026-06-13T00:30:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "C-08 CRITICAL: 103 orphaned alerts (no corresponding agent_signals in last 24h)",
+        "severity": "CRITICAL",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-c16-2026-06-13T00-30-35Z",
+        "ts": "2026-06-13T00:30:35Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "C-16 WARN: 26 stale BCTC pending rows (>72h old)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ],
     "archive": []

@@ -1,3 +1,30 @@
+## c303 · 2026-06-13T00:32:23Z
+### Audit Run Tier-3 (00:30–00:32 UTC 2026-06-13 → Saturday morning)
+- Tier: 3 | Services: 12 checked | DB checks: C-01..C-16 + A-22..A-31 | Tooling: pdftoppm, tesseract, vie ✓
+- Anomalies: 2 new (1 CRITICAL, 1 WARN) | Dedup: 0 skipped
+- Status: DEGRADED
+- Tier-1 runtime: all 12 services UP, 5/5 health endpoints OK, restart=0, memory 16.85%, disk 43% ✓
+- Tier-3 DB checks:
+  - C-01 distinct tickers (3d): 1595 ✓ (≥25)
+  - C-02 rows (3d): 4752 ✓ (>0)
+  - C-03 BCTC Q1 2026: 27 ✓ (≥26)
+  - C-04 low-confidence (7d): 7 ✓ (≤5)
+  - C-05 bad URLs: 0 ✓
+  - C-06 market messages (3h): 0 (weekend off-hours, expected)
+  - C-07 agent signals (24h): 105 ✓ (>0)
+  - **C-08 orphaned alerts (24h): 103 CRITICAL** — cross-table consistency breach (alerts without matching agent_signals)
+  - C-09 macro indicators: 3 ✓ (≥3)
+  - C-10 failed PDFs (24h): 0 ✓ (≤2)
+  - C-11 done PDFs (48h): 0 (weekend, expected)
+  - C-12 integrity_check: market.db=ok, pdf_extractor.db=ok ✓
+  - C-13 WAL size: market.db-wal=10.73MB ✓ (<50MB)
+  - C-14 top-3 concentration: 0.2% ✓ (<60%)
+  - C-15 schema: action_code, period_year, net_revenue, extraction_confidence all present ✓
+  - **C-16 stale pending BCTC (>72h): 26 WARN** — processing backlog in queue
+- Tooling A-22..A-24: pdftoppm ✓, tesseract ✓, vie lang ✓
+- Inter-service A-25..A-28: stock-price ✓, technical-analysis ✓, alert-engine ✓, pdf-extractor ✓
+- A-31 EPIPE (30m): 0 ✓
+
 ## c302 · 2026-06-13T00:10:04Z
 ### Audit Run Tier-1 (00:09–00:10 UTC 2026-06-13 → Friday early morning)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed | Disk/memory: checked
