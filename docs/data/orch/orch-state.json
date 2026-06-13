@@ -7044,7 +7044,7 @@
         "title": "Fix BCTC VPS queue-sync gap: 10 tickers (VNM,VEA,SHB,HUT,DIG,DXG,KDH,PDR,MSN,FRT) pending 532-539 attempts with 404s, no retry cap, no deferred transition; upstream discovery queue mismatch — those 10 are NOT in VPS discovery queue, PDFs never cached. Add retry cap on 404, transition to deferred_infra, re-sync lost tickers to VPS discovery queue OR mark url_not_found if genuinely unavailable.",
         "type": "BUG",
         "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "size": "S",
         "zone": "apps/mcp-server/src/scheduler/financial-reports/",
         "priority": "high",
@@ -7054,7 +7054,16 @@
         "note": "ops→pm handoff BCTC-VPS-STALLED-FETCH diagnosed 2026-06-13 05:50Z (docs/agent-memory/notebooks/ops.md). Root cause raw-verified: (1) bctc_vps_queue has 10 pending rows at 532-539 attempts each with infinite 404 retry, no cap, no deferred transition. (2) Queue-sync gap: those 10 tickers NOT in VPS-side discovery queue (holds ACV,BDI,DAG,DLC,JSH,SIS,VDC,VNH,SAB,VIX), so VPS never caches their PDFs. (3) Secondary: 8 rows source_url but 0 attempts, 8 rows NULL source_url never enriched. Acceptance: G1) 404 cap N=10 → deferred_infra / G2) lost tickers synced to VPS discovery OR marked url_not_found / G3) LIVE PROOF: VNM + MSN Q1 2026 cached+pulled / G4) attempts histogram sane. Files: bctcPdfPullJob.ts + bctcQueueEnricherJob.ts + VPS push client. | [C-16 FOLD 2026-06-13T01:27Z by po] sau-c16-2026-06-13T00-30-35Z (26 BCTC rows pending >72h in bctc_vps_queue, RECURRING also 2026-06-12T22:30) folded here — same failure mode as the queue-sync orphan/no-retry-cap class this task already fixes. G2 (re-sync orphans OR url_not_found) + G1 (404 cap → deferred_infra) cover the >72h stale-pending rows directly; the 26 stale = the un-capped/un-deferred remnant. No separate task created (per dedup directive). C-16 must read 0 (or all-deferred) after G1+G2 ship — add to G4 live proof.",
         "updated_at": "2026-06-13T01:27:23Z",
         "claimed_at": "2026-06-13T19:39:10Z",
-        "claimed_by": "router"
+        "claimed_by": "router",
+        "dev_commit": "f1c66801",
+        "rebuilt_image": "2c6ae1ca (from 1042a2a9)",
+        "router_review": {
+          "at": "2026-06-13T20:17:59Z",
+          "by": "router",
+          "code_raw": "f1c66801 touches only bctcPdfPullJob.ts+bctcQueueEnricherJob.ts+test+notebook (0 orch-state). MAX_404_ATTEMPTS=10 named const; cap by attempt-count (generic). Orphan detect = structural URL set-diff (LIKE VPS_BASE% AND NOT LIKE %/20%) — NO hardcoded tickers. 18 tests pass independently + G1/G2 FENCE. tsc clean.",
+          "mechanism_live": "G2 PROVEN: new-image enricher 20:15 reset all 10 symptom tickers (VNM..FRT) from 532-562 attempts/placeholder-url to pending@0/source_url=NULL — infinite-404 hammer broken. Image 2c6ae1ca live, bctc jobs running.",
+          "settling": "G3/G4 are time-dependent: reset orphans await next discovery cycle -> done (PDF found) | url_not_found (unavailable) | re-defer at cap if re-404. 328 deferred_infra@0att are PRE-EXISTING (not this cap). QA to render terminal verdict over next pull(20:30)+enricher cycles."
+        }
       },
       {
         "id": "FU-ORPHAN-AUDIT-JOIN-FIX",
