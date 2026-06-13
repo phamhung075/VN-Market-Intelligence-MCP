@@ -5,6 +5,12 @@
 # docs/data/file-size-caps.json (SSOT). If the file exceeds its cap,
 # emits a context_bloat_breach signal to docs/signals/ for claude-manager-helper.
 #
+# HONORS size-justification headers: files with valid justifications that cover
+# their overage are skipped (not considered violations).
+#
+# DEDUP: if an unprocessed context-bloat-*.json signal already exists for the
+# target file, skips emission (one open signal per file max).
+#
 # Input contract: PostToolUse hook JSON received on STDIN.
 #   { "tool_name": "Write", "tool_input": { "file_path": "..." }, ... }
 #
@@ -76,6 +82,55 @@ LINE_COUNT=$(wc -l < "$FILE_PATH" 2>/dev/null | tr -d ' ' || true)
 
 # Within cap → exit clean
 [ "$LINE_COUNT" -le "$MATCHED_CAP" ] && exit 0
+
+# --- BREACH DETECTED (overage exists) → check for justification ---
+# Honor <!-- size-justification: ... --> (HTML comment, for .md files)
+# or # size-justification: ... (for other formats).
+# Presence of a size-justification comment indicates a deliberate factory decision.
+# Skip emission if the comment is present (the comment itself is the signal).
+
+JUSTIFIED=0
+if [ -f "$FILE_PATH" ]; then
+  # Extract first few lines to check for size-justification comment
+  JUSTIFICATION_LINE=$(head -5 "$FILE_PATH" 2>/dev/null | grep -E '(<!--.*size-justification:|#.*size-justification:)' | head -1 || true)
+
+  if [ -n "$JUSTIFICATION_LINE" ]; then
+    # Extract the declared cap from the justification (first number found)
+    DECLARED_CAP=$(echo "$JUSTIFICATION_LINE" | grep -oE '[0-9]+' | head -1 || true)
+
+    if [ -n "$DECLARED_CAP" ]; then
+      # Honor the justification ONLY if declared cap is within tolerance of actual.
+      # Tolerance: ±10% (handles minor drift from edits after justification written).
+      # If declared cap is MUCH smaller than actual (e.g., 80L declared vs 185L actual),
+      # the justification is STALE and should not block signal emission.
+      TOLERANCE=$((DECLARED_CAP / 10))
+      if [ "$TOLERANCE" -lt 5 ]; then TOLERANCE=5; fi  # min tolerance 5L
+
+      UPPER_BOUND=$((DECLARED_CAP + TOLERANCE))
+      LOWER_BOUND=$((DECLARED_CAP - TOLERANCE))
+
+      if [ "$LINE_COUNT" -le "$UPPER_BOUND" ]; then
+        # Actual line count is within tolerance of declared cap — justification is current
+        JUSTIFIED=1
+      fi
+    fi
+  fi
+fi
+
+if [ "$JUSTIFIED" -eq 1 ]; then
+  # File has a current (non-stale) size-justification — skip signal
+  exit 0
+fi
+
+# --- DEDUP CHECK: skip if unprocessed signal already exists for this file ---
+# Signal stem: context-bloat-<file-path-dashes> (without timestamp)
+SIGNAL_STEM_PREFIX="context-bloat-$(echo "$REL_PATH" | tr '/.' '-')"
+EXISTING_SIGNAL=$(find "$SIGNALS_DIR" -maxdepth 1 -name "${SIGNAL_STEM_PREFIX}-*.json" 2>/dev/null | head -1 || true)
+
+if [ -n "$EXISTING_SIGNAL" ]; then
+  # An unprocessed signal already exists for this file — avoid duplicate
+  exit 0
+fi
 
 # --- BREACH DETECTED → emit maintenance signal to file bus ---
 TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || true)"
