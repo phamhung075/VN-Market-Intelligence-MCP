@@ -5481,7 +5481,7 @@
         "title": "rag repositories.py defaults missing LanceDB _distance to 0.0 → fabricated perfect-similarity (1.0); inconsistent w/ module.py fail-safe 1.0",
         "type": "FIX",
         "sprint": "FAKE-DATA-AUDIT",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P3",
         "size": "S",
         "zone": "apps/rag-service",
@@ -5512,7 +5512,16 @@
         ],
         "ready_note": "READY by po 2026-06-13T12:02:02Z — raw-verified defect at repositories.py:282 (similarity formula 1/(1+d), d=0.0 -> 1.0 fabricated). Generic fail-safe alignment to module.py:102. test_only/no_rebuild. FAKE-DATA-AUDIT arc; last-ship correctness/silent-fabrication class.",
         "claimed_by": "dev-rag-service",
-        "claimed_at": "2026-06-13T12:02:59Z"
+        "claimed_at": "2026-06-13T12:02:59Z",
+        "review_commit": "418c4812",
+        "review_at": "2026-06-13T12:07:25Z",
+        "review_evidence": {
+          "router_uncached_targeted": "4 passed",
+          "full_suite_uncached": "156 passed",
+          "scope": "test+repositories.py only",
+          "fix": "absent-key-aware, fail-safe 1.0 default, legit 0.0 preserved",
+          "sweep": "confidence/impact_score = SQL-NULL guards, different class"
+        }
       },
       {
         "title": "shippingIndex stale 'SCFI placeholder resolves to BDI' comment — misleading, code does NOT fabricate (delete comment)",
