@@ -6,6 +6,20 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-06-13 (TSU-DEV-U4 seed-date fix — sprint TOOL-SURFACE-UPGRADE)
+
+**Task:** Fix hardcoded calendar dates (2026-06-01/02/03) in T-U4-5 infrastructure tests for `fetchPrevSessionVnIndexFromDB`.
+
+**Finding:** U4 implementation (commit 9880eadc, 2026-06-07) used hardcoded calendar dates for daily_ohlcv row ordering. These would not rot on ordering tests but violate the seed-date lesson — relative dates required per task mandate.
+
+**Changes:** `repositories_test.go` — replaced 3 hardcoded dates with `time.Now().UTC().AddDate(0, 0, -N)` offsets in 3 of 4 U4 test functions. Empty-table test unchanged (no dates needed). Commit 56822e4a.
+
+**Verification:** `go test ./... -count=1` ALL PASS (12 packages); no production logic changed; fences A/B/C clean; sandbox primitive 18/18 + module 2/2 GREEN.
+
+**Status:** DONE — ops REBUILD of macro-indicators container required before QA live-verifies delta/direction in get_macro_snapshot response.
+
+---
+
 ## Session 2026-06-08 (FIX-MACRO-GO-DIRECTIVE — sprint CI-RED-RECONCILE)
 
 **Task:** Align `go.mod` go directive from 1.25.0 → 1.22 (repo standard). CI golangci-lint v2.0.2 (built go1.24) exits 3 on any module targeting go > builder.
