@@ -9352,8 +9352,8 @@
         "id": "FIX-COWORK-GUARANTEED-BACKSTOP",
         "type": "SPRINT-S",
         "title": "Durable backstop for guaranteed cowork dishes during */15 dispatcher (Layer B) downtime — 5th recurrence of morning/EOD dish-miss. ROOT (c94, live-evidence): the session-scoped */15 cowork-team master dispatcher (Layer B) evaporated 2026-06-12T05:30Z→2026-06-13T14:00Z (~32h gap; last heartbeat docs/signals/processed/cowork-team-20260612T051500Z.json, then ZERO until slots resumed 14:08Z). Every guaranteed slot whose cron boundary fell in that window missed: chef-morning(05:15) AND chef-eod(08:45) on both 06-12 + 06-13. The runbook (docs/protocols/cowork-master-cron-runbook.md §1,§9) designed Layer A (per-slot RemoteTriggers) as the session-INDEPENDENT backstop for exactly these guaranteed slots — but cowork-schedule.json now shows ALL guaranteed slots trigger_status=deleted, trigger_id=null (_superseded_by:cowork-dispatcher migration). Layer A was deleted BEFORE §9's stability gate (skill proven across >=2 restarts) was met. Result: a single Layer-B session-evaporation now silently drops ALL guaranteed dishes with zero backstop = the recurring root. DESIGN a durable fix: either (A) restore Layer-A RemoteTriggers for the 4 guaranteed chef/audit slots (session-independent), or (B) add a silence-watchdog that detects >20min cowork-team heartbeat gap during VN market hours (02:00-08:30Z Mon-Fri per runbook §2 Signature A) and auto-re-arms /cron-cowork-team, or (C) make Layer B durability survive session-end. Architect picks A/B/C with rationale; agent-father implements. This is NOT a dev-mcp-server code change and NOT a cowork-schedule.json data edit — it is a cowork-reliability flow/skill/trigger design task. Subsumes both F-EOD-SCHEDULE-STALE(NEW/HIGH) and F-MORNING-NB-MISSING(HIGH,5th) — same incident, one root.",
-        "owner": "architect",
-        "route": "architect",
+        "owner": "agent-father",
+        "route": "agent-father",
         "status": "IN_PROGRESS",
         "size": "S",
         "priority": "high",
@@ -9375,7 +9375,15 @@
         "router_action_required": "After done_verified, ROUTER must run /cron-cowork-team re-arm to restore Layer-B coverage immediately (the ~32h gap is still un-rearmed for sub-hourly slots). The durable fix above is the permanent remedy; the re-arm is the immediate stopgap.",
         "claimed_at": "2026-06-13T21:03:05Z",
         "claimed_by": "router",
-        "dispatch_note": "Dispatched architect 2026-06-13T21:03:05Z. SPRINT-S cowork-reliability design: pick A (restore Layer-A per-slot RemoteTriggers, session-independent) / B (silence-watchdog auto-re-arm on >20min market-hours heartbeat gap) / C (durable Layer-B survive session-end), with rationale. agent-father implements. Scope = cowork flow/skill/trigger ONLY — NOT mcp-server code, NOT cowork-schedule.json data edit. Honor §9 stability gate (proven >=2 restarts) before deleting any fallback. Output: architecture brief -> docs/architecture-briefs/, signal agent-father."
+        "dispatch_note": "architect DONE 2026-06-13T21:08:25Z option A; agent-father implementing AC-1..AC-5 (verify last_fired gate in flows -> create 5 RemoteTriggers -> write trigger_ids to cowork-schedule.json -> layer_a_deletion_locked -> runbook §1/§9 -> commit -> report G3). MUST be live before Mon 2026-06-16 05:15Z chef-morning.",
+        "architect_decision": {
+          "option": "A",
+          "summary": "Restore Layer-A per-slot RemoteTriggers (session-independent) for 5 guaranteed slots: chef-morning, chef-eod, chef-evening, digest-sunday, tnb-audit (chef-intraday EXCLUDED — sub-hourly */15 blocked by RemoteTrigger API_MIN_INTERVAL, stays Layer-B only).",
+          "brief": "docs/architecture-briefs/2026-06-13-cowork-guaranteed-backstop.md",
+          "journal": "docs/agent-memory/decisions/sprint-FIX-COWORK-GUARANTEED-BACKSTOP-architect.md",
+          "dedup": "last_fired wall-clock gate (Sprint 1951 §7) — first-writer-wins, second exits silent. AC-5: agent-father MUST verify gate lives IN each agent flow (chef.md, tnb main.md, digest-predict main.md), not dispatcher-only, else Layer-A bypass double-publishes.",
+          "stability_gate": "add layer_a_deletion_locked:true to cowork-schedule.json._notes — requires 2x restart-survival + PO clearance before any future Layer-A deletion."
+        }
       }
     ],
     "head": {
