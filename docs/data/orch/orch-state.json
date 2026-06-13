@@ -5122,7 +5122,7 @@
         "id": "SPIKE-DOCLANG-OTSL-OVERLAP",
         "title": "SPIKE-DOCLANG-OTSL-OVERLAP — Does external `doclang validate` flag any BCTC table-structure defect the native stage-4 TABLE_RECONSTRUCT eval + layout_invariants gates do NOT already flag? Time-boxed overlap measurement to decide whether DocLang adoption (option A: serializer→.dclg.xml→validate as CI gate) earns a build sprint.",
         "owner": "architect",
-        "status": "TODO",
+        "status": "DONE",
         "type": "SPIKE",
         "mode": "spike",
         "zone": "apps/pdf-extractor/",
@@ -5134,7 +5134,8 @@
         "question": "Serialize the last N real BCTC extractions (use live quarantine + eval-history corpus, not synthetic) to .dclg.xml per DocLang v0 OTSL spec, run `pip install doclang; doclang validate`, and count: how many structural defects does doclang flag that stage-4 TABLE_RECONSTRUCT (config/bctc-eval-thresholds.json: exact_dup_max, value_blank_label_max, label/code coverage) + domain/primitives/layout_invariants (balance-identity-across-stitch, codes-monotonic-across-page-boundary) DID NOT already flag? Output: net-new-defect count + 2-3 example diffs.",
         "decision_gate": "net-new > 0 => architect scopes DocLang option A (thin serializer as CI/eval gate alongside existing 6-stage eval), then po→dev-pdf-extractor. net-new = 0 => CLOSE: DocLang adds nothing over the shipped LF-EXTRACT native invariant gates; do not build.",
         "context": "Triage of DocLang adoption analysis 2026-06-13. Analysis premise PARTIALLY FALSE on raw-verify: cross-page/continuation/merged-cell handling ALREADY EXISTS (application/extract_layout_first_usecase.py LF-EXTRACT, shipped sprint BCTC-LAYOUT-FIRST 2026-06-03 commits 92e8a2ca..b006ef17, RESOLVED+live-verified; GATE-VISION cell markers commit 1588a591). DocLang option B (canonical IR) REJECTED — duplicates shipped IR, defect class quiet (last ~15 pdf-extractor commits all async/test-infra, zero structural table-loss). DocLang option C (rest of project) correct — structured JSON/SQLite, irrelevant. Only residual = external standardized validator MAY catch defects native gates miss; this SPIKE measures that overlap before committing any build.",
-        "note": "[po triage 2026-06-13T20:30:02Z] Evidence-gated per analysis recommendation. PO could not reach live bctc-eval store from this session (gateway discovery meta-tools unreachable) — used git-history as failure-class proxy (authoritative for resolution status). ARCHITECT must prefer live POST /api/bctc-eval/push-stage history corpus over synthetic when running the SPIKE."
+        "note": "[po triage 2026-06-13T20:30:02Z] Evidence-gated per analysis recommendation. PO could not reach live bctc-eval store from this session (gateway discovery meta-tools unreachable) — used git-history as failure-class proxy (authoritative for resolution status). ARCHITECT must prefer live POST /api/bctc-eval/push-stage history corpus over synthetic when running the SPIKE.",
+        "status_note": "CLOSED: net-new=0. DocLang rectangular rule catches column-count mismatches only; our extractor always emits fixed-width rows (empty strings for missing values). Native gates (check_no_orphan_rows, code_coverage_min, layout quarantine) catch all 7 defects found. DocLang adds no coverage not already present. Script: scripts/spike-doclang-otsl-overlap.py. Decision: do NOT build DocLang serializer (Option A). 2026-06-13."
       },
       {
         "id": "FIX-PENDING-REFINE-LIMIT-CHECKKIND",
@@ -9346,7 +9347,37 @@
         "closed_at": "2026-06-13T10:20:14Z"
       }
     ],
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-COWORK-GUARANTEED-BACKSTOP",
+        "type": "SPRINT-S",
+        "title": "Durable backstop for guaranteed cowork dishes during */15 dispatcher (Layer B) downtime — 5th recurrence of morning/EOD dish-miss. ROOT (c94, live-evidence): the session-scoped */15 cowork-team master dispatcher (Layer B) evaporated 2026-06-12T05:30Z→2026-06-13T14:00Z (~32h gap; last heartbeat docs/signals/processed/cowork-team-20260612T051500Z.json, then ZERO until slots resumed 14:08Z). Every guaranteed slot whose cron boundary fell in that window missed: chef-morning(05:15) AND chef-eod(08:45) on both 06-12 + 06-13. The runbook (docs/protocols/cowork-master-cron-runbook.md §1,§9) designed Layer A (per-slot RemoteTriggers) as the session-INDEPENDENT backstop for exactly these guaranteed slots — but cowork-schedule.json now shows ALL guaranteed slots trigger_status=deleted, trigger_id=null (_superseded_by:cowork-dispatcher migration). Layer A was deleted BEFORE §9's stability gate (skill proven across >=2 restarts) was met. Result: a single Layer-B session-evaporation now silently drops ALL guaranteed dishes with zero backstop = the recurring root. DESIGN a durable fix: either (A) restore Layer-A RemoteTriggers for the 4 guaranteed chef/audit slots (session-independent), or (B) add a silence-watchdog that detects >20min cowork-team heartbeat gap during VN market hours (02:00-08:30Z Mon-Fri per runbook §2 Signature A) and auto-re-arms /cron-cowork-team, or (C) make Layer B durability survive session-end. Architect picks A/B/C with rationale; agent-father implements. This is NOT a dev-mcp-server code change and NOT a cowork-schedule.json data edit — it is a cowork-reliability flow/skill/trigger design task. Subsumes both F-EOD-SCHEDULE-STALE(NEW/HIGH) and F-MORNING-NB-MISSING(HIGH,5th) — same incident, one root.",
+        "owner": "architect",
+        "route": "architect",
+        "status": "IN_PROGRESS",
+        "size": "S",
+        "priority": "high",
+        "recurring": true,
+        "recurrence_count": 5,
+        "zone": "docs/agents/cowork-team/flow/",
+        "depends": [],
+        "baseline_pass": false,
+        "files": [
+          "docs/data/cowork-schedule.json",
+          "docs/protocols/cowork-master-cron-runbook.md",
+          ".claude/skills/cron-cowork-team/SKILL.md",
+          "docs/agents/cowork-team/flow/main.md"
+        ],
+        "verification_gate": "PROVE the morning dish actually generates next cycle, not just that a trigger exists: (G1) on the NEXT VN market day (Mon 2026-06-16), chef-morning slot fires — cowork-schedule.json chef-morning.last_fired updates to a 2026-06-16T05:1x..05:3xZ timestamp AND a 2026-06-16 morning entry appears in docs/agent-memory/notebooks/unified-agent.md; (G2) same for chef-eod (last_fired 2026-06-16T08:4x..09:0xZ + EOD notebook entry); (G3) survives a deliberate CLI session restart — after restart with NO manual /cron-cowork-team, a guaranteed slot whose boundary falls post-restart still fires within one cron period (proves backstop is session-independent, i.e. closes the recurring root rather than re-arming by hand); (G4) silence-watchdog (if option B) emits a re-arm action on a simulated >20min market-hours heartbeat gap. TNB c95+ audit confirms morning+EOD present for 2 consecutive market days = recurrence closed.",
+        "source": "tnb-audit c94 (tnb-20260613T202300) — F-EOD-SCHEDULE-STALE + F-MORNING-NB-MISSING",
+        "groomed_by": "po",
+        "groomed_at": "2026-06-13T20:54:01Z",
+        "router_action_required": "After done_verified, ROUTER must run /cron-cowork-team re-arm to restore Layer-B coverage immediately (the ~32h gap is still un-rearmed for sub-hourly slots). The durable fix above is the permanent remedy; the re-arm is the immediate stopgap.",
+        "claimed_at": "2026-06-13T21:03:05Z",
+        "claimed_by": "router",
+        "dispatch_note": "Dispatched architect 2026-06-13T21:03:05Z. SPRINT-S cowork-reliability design: pick A (restore Layer-A per-slot RemoteTriggers, session-independent) / B (silence-watchdog auto-re-arm on >20min market-hours heartbeat gap) / C (durable Layer-B survive session-end), with rationale. agent-father implements. Scope = cowork flow/skill/trigger ONLY — NOT mcp-server code, NOT cowork-schedule.json data edit. Honor §9 stability gate (proven >=2 restarts) before deleting any fallback. Output: architecture brief -> docs/architecture-briefs/, signal agent-father."
+      }
+    ],
     "head": {
       "note": "FDA-9 (rag-service _distance fail-open fabricated-similarity) groomed READY; mcp-server zone untouched (frozen behind EVIDENCE-ACCUM gate)"
     },
@@ -10564,34 +10595,7 @@
         "closed_at": "2026-06-12T19:40:36Z"
       }
     ],
-    "ready": [
-      {
-        "id": "FIX-COWORK-GUARANTEED-BACKSTOP",
-        "type": "SPRINT-S",
-        "title": "Durable backstop for guaranteed cowork dishes during */15 dispatcher (Layer B) downtime — 5th recurrence of morning/EOD dish-miss. ROOT (c94, live-evidence): the session-scoped */15 cowork-team master dispatcher (Layer B) evaporated 2026-06-12T05:30Z→2026-06-13T14:00Z (~32h gap; last heartbeat docs/signals/processed/cowork-team-20260612T051500Z.json, then ZERO until slots resumed 14:08Z). Every guaranteed slot whose cron boundary fell in that window missed: chef-morning(05:15) AND chef-eod(08:45) on both 06-12 + 06-13. The runbook (docs/protocols/cowork-master-cron-runbook.md §1,§9) designed Layer A (per-slot RemoteTriggers) as the session-INDEPENDENT backstop for exactly these guaranteed slots — but cowork-schedule.json now shows ALL guaranteed slots trigger_status=deleted, trigger_id=null (_superseded_by:cowork-dispatcher migration). Layer A was deleted BEFORE §9's stability gate (skill proven across >=2 restarts) was met. Result: a single Layer-B session-evaporation now silently drops ALL guaranteed dishes with zero backstop = the recurring root. DESIGN a durable fix: either (A) restore Layer-A RemoteTriggers for the 4 guaranteed chef/audit slots (session-independent), or (B) add a silence-watchdog that detects >20min cowork-team heartbeat gap during VN market hours (02:00-08:30Z Mon-Fri per runbook §2 Signature A) and auto-re-arms /cron-cowork-team, or (C) make Layer B durability survive session-end. Architect picks A/B/C with rationale; agent-father implements. This is NOT a dev-mcp-server code change and NOT a cowork-schedule.json data edit — it is a cowork-reliability flow/skill/trigger design task. Subsumes both F-EOD-SCHEDULE-STALE(NEW/HIGH) and F-MORNING-NB-MISSING(HIGH,5th) — same incident, one root.",
-        "owner": "architect",
-        "route": "architect",
-        "status": "READY",
-        "size": "S",
-        "priority": "high",
-        "recurring": true,
-        "recurrence_count": 5,
-        "zone": "docs/agents/cowork-team/flow/",
-        "depends": [],
-        "baseline_pass": false,
-        "files": [
-          "docs/data/cowork-schedule.json",
-          "docs/protocols/cowork-master-cron-runbook.md",
-          ".claude/skills/cron-cowork-team/SKILL.md",
-          "docs/agents/cowork-team/flow/main.md"
-        ],
-        "verification_gate": "PROVE the morning dish actually generates next cycle, not just that a trigger exists: (G1) on the NEXT VN market day (Mon 2026-06-16), chef-morning slot fires — cowork-schedule.json chef-morning.last_fired updates to a 2026-06-16T05:1x..05:3xZ timestamp AND a 2026-06-16 morning entry appears in docs/agent-memory/notebooks/unified-agent.md; (G2) same for chef-eod (last_fired 2026-06-16T08:4x..09:0xZ + EOD notebook entry); (G3) survives a deliberate CLI session restart — after restart with NO manual /cron-cowork-team, a guaranteed slot whose boundary falls post-restart still fires within one cron period (proves backstop is session-independent, i.e. closes the recurring root rather than re-arming by hand); (G4) silence-watchdog (if option B) emits a re-arm action on a simulated >20min market-hours heartbeat gap. TNB c95+ audit confirms morning+EOD present for 2 consecutive market days = recurrence closed.",
-        "source": "tnb-audit c94 (tnb-20260613T202300) — F-EOD-SCHEDULE-STALE + F-MORNING-NB-MISSING",
-        "groomed_by": "po",
-        "groomed_at": "2026-06-13T20:54:01Z",
-        "router_action_required": "After done_verified, ROUTER must run /cron-cowork-team re-arm to restore Layer-B coverage immediately (the ~32h gap is still un-rearmed for sub-hourly slots). The durable fix above is the permanent remedy; the re-arm is the immediate stopgap."
-      }
-    ]
+    "ready": []
   },
   "signal_queue": {
     "0": {
