@@ -9,12 +9,34 @@
  *  - Quẻ 1 spot-check: coreMeaning + marketTrendLabel match que-reference.js .vi values
  *  - NFR-3: QueName graceful no-op on hexagram=0 (missing id renders plain span, no crash)
  *  - No italic on secondary tooltip line (class check)
+ *
+ * QUE-REFERENCE-PAGE-TEST additions (deep-link prop):
+ *  - withDetailLink=true renders an anchor whose href contains #que-1
+ *  - default (prop absent) renders NO anchor (byte-parity with prior behaviour)
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import { render } from "@testing-library/react";
 import {
   QUE_DESCRIPTIONS,
 } from "../lib/que-descriptions.generated";
 import type { QueDescription } from "../lib/que-descriptions.generated";
+
+// Mock the Radix tooltip primitives to avoid React Fast Refresh HMR transform
+// issues with forwardRef in jsdom test context. The mock renders tooltip content
+// inline (no portal) so anchors are visible in the component tree immediately.
+vi.mock("../components/ui/tooltip", () => {
+  const React = require("react");
+  return {
+    TooltipProvider: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
+      React.createElement("div", { "data-testid": "tooltip-trigger" }, children),
+    TooltipContent: ({ children }: { children: React.ReactNode }) =>
+      React.createElement("div", { "data-testid": "tooltip-content" }, children),
+  };
+});
+
+import { QueName } from "../components/QueName";
 
 // ── AC-1: exactly 64 entries ─────────────────────────────────────────────────
 describe("QUE_DESCRIPTIONS entries count", () => {
@@ -117,5 +139,36 @@ describe("NFR-3: QUE_DESCRIPTIONS graceful undefined for missing ids", () => {
 
   it("hexagram 65 returns undefined (no crash)", () => {
     expect(QUE_DESCRIPTIONS[65]).toBeUndefined();
+  });
+});
+
+// ── QueName deep-link tests (QUE-REFERENCE-PAGE-TEST) ────────────────────────
+//
+// The tooltip primitives are mocked (see top of file) so TooltipContent renders
+// inline — no portal, no timing delay. The anchor is directly queryable in the
+// rendered container.
+//
+describe("QueName — withDetailLink deep-link anchor", () => {
+  it("withDetailLink=true renders an anchor whose href contains #que-1 (hexagram=1)", () => {
+    const { container } = render(
+      <QueName hexagram={1} name="Kiền" withDetailLink={true} />
+    );
+
+    // The mocked TooltipContent renders inline; anchor is directly in the tree.
+    const anchors = container.querySelectorAll("a");
+    const hrefs = Array.from(anchors).map((a) => a.getAttribute("href") ?? "");
+    expect(hrefs.some((h) => h.includes("#que-1"))).toBe(true);
+  });
+
+  it("default / withDetailLink absent renders NO anchor (byte-parity with prior behaviour)", () => {
+    const { container } = render(
+      <QueName hexagram={1} name="Kiền" />
+    );
+
+    // Without withDetailLink, the deep-link anchor must not be present.
+    const anchors = container.querySelectorAll("a");
+    const hrefs = Array.from(anchors).map((a) => a.getAttribute("href") ?? "");
+    expect(hrefs.some((h) => h.includes("#que-1"))).toBe(false);
+    expect(hrefs.some((h) => h.startsWith("/dashboard/kinh-dich-reference"))).toBe(false);
   });
 });
