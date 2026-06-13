@@ -88,6 +88,19 @@
 **why-decision:** All four probes return 157 with delta=0. All 6 ACs met. Bun crash definitively pre-dates sprint. No arch concern (terminal verification task, no new code, no new tool, no cross-service HTTP). APPROVED.
 **why-change:** no change from plan.
 
+### STEP qa-S8 · qa · 2026-06-13T17:13:00Z
+**task-id:** TSU-DEV-U4
+**what-done:** QA gate cycle-2 for 56822e4a — test-only seed-date-rot fix in repositories_test.go (T-U4-5 class).
+**what-considered:**
+- go test ./... -count=1: 12/12 packages green (own uncached run; no "(cached)" output).
+- Live POST :5004/snapshot: vnIndexDelta=-6.960 vnIndexDirection="down"; oil/gold/usdVnd delta=null direction="unknown". Matches U4 spec exactly.
+- grep 20[0-9][0-9]-[0-9][0-9]-[0-9][0-9] repositories_test.go: 4 hits (lines 198/225/271/278) are `2026-05-26` fixture timestamps for FetchVNIndex primary/secondary resolution tests — NOT relative-window seeds; NOT T-U4 tests; NOT the seed-date-rot class. T-U4-5 block (lines 838-841/875/913-914) confirmed 100% time.Now().AddDate() — zero calendar literals.
+- git show --stat 56822e4a: 1 file only (repositories_test.go, 39 lines). Runtime dtos.go/usecases.go/repositories.go absent.
+- Adverse-date proof: d0=now-2, d1=now-1, d2=now; ORDER BY date DESC → d2,d1,d0; OFFSET 1 = d1; assertion *got==1220.5 holds for ANY run date. Math: now-2 < now-1 < now always true in UTC.
+- DSI null intent: oil/gold/usdVnd have no daily history table; null+unknown is the correct honest response.
+**why-decision:** All 6 gate checks pass. Test-only scope confirmed. No prod-code change. No arch concern. APPROVED.
+**why-change:** no change from plan.
+
 ### STEP qa-S6 · qa · 2026-06-07T13:30:00Z
 **task-id:** TSU-DEV-U6
 **what-done:** QA gate for description-only updates across 6 files, 10 tools, 5 TSH leftover pairs (commits 3dd0d7bd + ac1043a4 on main).
