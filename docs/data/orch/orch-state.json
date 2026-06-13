@@ -53,7 +53,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-13T00:24:07Z",
+    "_updated_at": "2026-06-13T01:27:23Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -6055,9 +6055,11 @@
         "owner": "po",
         "status": "TODO",
         "zone": "apps/mcp-server/",
-        "title": "C-08: 3 orphaned alerts in 24h (no corresponding agent_signal) — audit alert dedup/correlation write path",
+        "title": "C-08: orphaned alerts (alerts rows with NO agent_signals) — 24h count regressed 3→103; fix alert→signal write-path consistency",
         "created_at": "2026-06-08T01:17:08Z",
-        "status_note": "MEDIUM. From sau-c104-c08 + report 3097. AC: orphan source identified; correlation write fixed or orphans justified+documented; C-08 PASS."
+        "status_note": "HIGH (escalated from MEDIUM). Folded sau-c08-2026-06-13T00-30-35Z (103 orphans/24h) into pre-existing C-08 task (was 3/24h on 2026-06-08). 34x jump = recent regression in alert creation→signal write sequence OR long-standing partial-write now amplified. ROOT-CAUSE REQUIRED: instrument/read the alert creation path and find WHERE the write sequence drops the agent_signals row — NO symptom-patch backfill-only. AC (live gate): (1) new alerts each get a matching agent_signals row; (2) orphan count stops growing (C-08 24h delta ~0 across two consecutive Tier-3 audits); (3) root cause documented (the exact drop point). C-08 PASS Tier-N + no BUG alert 7d.",
+        "priority": "high",
+        "updated_at": "2026-06-13T01:27:23Z"
       },
       {
         "id": "FIX-REE-BS-SECTION-REGEX",
@@ -7153,7 +7155,8 @@
         "sprint": "BCTC-FETCH-CORRECTNESS",
         "created_at": "2026-06-13T00:30:00Z",
         "created_by": "pm",
-        "note": "ops→pm handoff BCTC-VPS-STALLED-FETCH diagnosed 2026-06-13 05:50Z (docs/agent-memory/notebooks/ops.md). Root cause raw-verified: (1) bctc_vps_queue has 10 pending rows at 532-539 attempts each with infinite 404 retry, no cap, no deferred transition. (2) Queue-sync gap: those 10 tickers NOT in VPS-side discovery queue (holds ACV,BDI,DAG,DLC,JSH,SIS,VDC,VNH,SAB,VIX), so VPS never caches their PDFs. (3) Secondary: 8 rows source_url but 0 attempts, 8 rows NULL source_url never enriched. Acceptance: G1) 404 cap N=10 → deferred_infra / G2) lost tickers synced to VPS discovery OR marked url_not_found / G3) LIVE PROOF: VNM + MSN Q1 2026 cached+pulled / G4) attempts histogram sane. Files: bctcPdfPullJob.ts + bctcQueueEnricherJob.ts + VPS push client."
+        "note": "ops→pm handoff BCTC-VPS-STALLED-FETCH diagnosed 2026-06-13 05:50Z (docs/agent-memory/notebooks/ops.md). Root cause raw-verified: (1) bctc_vps_queue has 10 pending rows at 532-539 attempts each with infinite 404 retry, no cap, no deferred transition. (2) Queue-sync gap: those 10 tickers NOT in VPS-side discovery queue (holds ACV,BDI,DAG,DLC,JSH,SIS,VDC,VNH,SAB,VIX), so VPS never caches their PDFs. (3) Secondary: 8 rows source_url but 0 attempts, 8 rows NULL source_url never enriched. Acceptance: G1) 404 cap N=10 → deferred_infra / G2) lost tickers synced to VPS discovery OR marked url_not_found / G3) LIVE PROOF: VNM + MSN Q1 2026 cached+pulled / G4) attempts histogram sane. Files: bctcPdfPullJob.ts + bctcQueueEnricherJob.ts + VPS push client. | [C-16 FOLD 2026-06-13T01:27Z by po] sau-c16-2026-06-13T00-30-35Z (26 BCTC rows pending >72h in bctc_vps_queue, RECURRING also 2026-06-12T22:30) folded here — same failure mode as the queue-sync orphan/no-retry-cap class this task already fixes. G2 (re-sync orphans OR url_not_found) + G1 (404 cap → deferred_infra) cover the >72h stale-pending rows directly; the 26 stale = the un-capped/un-deferred remnant. No separate task created (per dedup directive). C-16 must read 0 (or all-deferred) after G1+G2 ship — add to G4 live proof.",
+        "updated_at": "2026-06-13T01:27:23Z"
       }
     ],
     "archive": [],
@@ -9316,23 +9319,6 @@
         "created_at": "2026-06-09T00:00:00Z",
         "note": "[dev-mcp-server DJ-GATE-1 2026-06-09] IMPL: rag_analyses/agent_feedback/signal_quality_audit created_at DEFAULT added; getDb() P5 self-heal re-applied (9 slices excl. initFinancialReportsTables); setup.ts await initDatabase() preload added. tsc clean. Router owns CI gate. | po-S21: CI-P8-GATE-6295cb32 FAILED (native fail+error 631 vs 629, +2 WORSE; created_at x3 regression PERSISTS — DDL-DEFAULT hypothesis disproven). Router reverted apps/ to 629 baseline (880ffca6, byte-identical 2a6044b1). REVIEW->REWORK: fix off main, hypothesis empirically disproven (4th consecutive P5/P6/P7/P8). Schema-drift cluster PARKED best-effort-exhausted per PO path-B decision; 629 documented as schema-drift FLOOR. No 7th touch opened. Superseded by FU-CI-PROFILE-629 (full-corpus failure taxonomy).",
         "updated_at": "2026-06-09T04:14:34Z"
-      },
-      {
-        "id": "FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE",
-        "title": "vnstock fundamentals BROKEN — two modes: (a) cron CRASH recurring 3x/24h c118-c120; (b) SILENT WRITE-PATH FAILURE: fetcher logs success in vnstock_fetch_log (2026-06-10 18:16-18:20 ACB financials/balance_sheet/cash_flow, ACV financials) but rows NEVER land in vnstock_financials/vnstock_balance_sheet/vnstock_cash_flow. Architect root-cause SPIKE.",
-        "owner": "dev-mcp-server",
-        "status": "DONE",
-        "type": "SPIKE",
-        "mode": "spike",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "critical",
-        "created_at": "2026-06-08T19:05:00Z",
-        "status_note": "Created by po triage-S7 from signal sau-2026-06-08T18:36:27Z-a33 (A-33). Recurring-bug rule FIRES (3 occurrences/24h across auditor cycles c118/c119/c120; prior tick po-S6 WATCH condition met). Per recurring-bug-escalation: NOT a point-patch -> architect-first SPIKE to root-cause the cron crash before any dev fix. Cron registry zone = dev-mcp-server. AC: A-33 check passes Tier-N (vnstockFundamentalsRefresh success>0, no signal_queue A-33 row, no BUG alert 7d). Priority: critical. | MERGED 2026-06-11 router DATA-FRESHNESS AUDIT (ground-truth from live named-volume DB): vnstock_financials MAX(fetched_at)=2026-04-15 (57d stale, 79 rows) DESPITE vnstock_fetch_log showing financials/balance_sheet/cash_flow rows fetched 2026-06-10 18:16-18:20 (ACB financials, ACB balance_sheet, ACB cash_flow, ACV financials). Cron vnstockFundamentalsRefresh last ran 2026-06-08 status=success. So distinct from crash mode: a SILENT write failure / upsert no-op on the vnstock fundamentals write path — fetcher succeeds, write never persists. Architect SPIKE must root-cause BOTH the cron crash AND the silent write-path drop. Zone: dev-mcp-server (write path) + possibly dev-vps-crawls (fetcher). Unblocks FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM on a successful vnstock sync). REVISED AC: after a refresh run, vnstock_financials MAX(fetched_at) within 7 days AND vnstock_balance_sheet/vnstock_cash_flow likewise refresh AND cron success>0 (no A-33 signal, no BUG alert 7d). | [QA] 2026-06-11 DONE: Fix code confirmed in container (wedge-guard L121, rowsWritten delta, Fix3 wrapRun). vnstockStartupProbe ran post-rebuild 18:40:33 status=success (Fix3 active). vnstock_financials count=79>0. No stuck running rows. Weekly vnstockFundamentalsRefresh not yet triggered post-fix (next Mon 01:00 UTC) — expected; fix effectiveness observable at next scheduled run. B-01 rubric met.",
-        "merged_at": "2026-06-11T17:53:21Z",
-        "review_note": "Architect SPIKE done 2026-06-11. Brief: docs/architecture-briefs/2026-06-11-vnstock-fundamentals-silent-drop.md. Root causes identified: Mode A = fetch_log stamped before null result confirmed, Mode B = startup probe fires into write-wedge causing OOM cascade. 6-fix plan handed to dev-mcp-server.",
-        "impl_note": "dev-mcp-server 2026-06-11: 6 fixes committed f4f5ce65. tsc clean, 39 tests pass. See fix-vnstock-fundamentals-crash-spike.test.ts for regression suite.",
-        "qa_completed_at": "2026-06-11T21:00:00Z"
       }
     ],
     "head": {
@@ -9384,6 +9370,25 @@
         "commits": [
           "5762ec3d"
         ]
+      },
+      {
+        "id": "FIX-VNSTOCK-FUNDAMENTALS-CRASH-SPIKE",
+        "title": "vnstock fundamentals BROKEN — two modes: (a) cron CRASH recurring 3x/24h c118-c120; (b) SILENT WRITE-PATH FAILURE: fetcher logs success in vnstock_fetch_log (2026-06-10 18:16-18:20 ACB financials/balance_sheet/cash_flow, ACV financials) but rows NEVER land in vnstock_financials/vnstock_balance_sheet/vnstock_cash_flow. Architect root-cause SPIKE.",
+        "owner": "dev-mcp-server",
+        "status": "DONE_VERIFIED",
+        "type": "SPIKE",
+        "mode": "spike",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "critical",
+        "created_at": "2026-06-08T19:05:00Z",
+        "status_note": "Created by po triage-S7 from signal sau-2026-06-08T18:36:27Z-a33 (A-33). Recurring-bug rule FIRES (3 occurrences/24h across auditor cycles c118/c119/c120; prior tick po-S6 WATCH condition met). Per recurring-bug-escalation: NOT a point-patch -> architect-first SPIKE to root-cause the cron crash before any dev fix. Cron registry zone = dev-mcp-server. AC: A-33 check passes Tier-N (vnstockFundamentalsRefresh success>0, no signal_queue A-33 row, no BUG alert 7d). Priority: critical. | MERGED 2026-06-11 router DATA-FRESHNESS AUDIT (ground-truth from live named-volume DB): vnstock_financials MAX(fetched_at)=2026-04-15 (57d stale, 79 rows) DESPITE vnstock_fetch_log showing financials/balance_sheet/cash_flow rows fetched 2026-06-10 18:16-18:20 (ACB financials, ACB balance_sheet, ACB cash_flow, ACV financials). Cron vnstockFundamentalsRefresh last ran 2026-06-08 status=success. So distinct from crash mode: a SILENT write failure / upsert no-op on the vnstock fundamentals write path — fetcher succeeds, write never persists. Architect SPIKE must root-cause BOTH the cron crash AND the silent write-path drop. Zone: dev-mcp-server (write path) + possibly dev-vps-crawls (fetcher). Unblocks FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM on a successful vnstock sync). REVISED AC: after a refresh run, vnstock_financials MAX(fetched_at) within 7 days AND vnstock_balance_sheet/vnstock_cash_flow likewise refresh AND cron success>0 (no A-33 signal, no BUG alert 7d). | [QA] 2026-06-11 DONE: Fix code confirmed in container (wedge-guard L121, rowsWritten delta, Fix3 wrapRun). vnstockStartupProbe ran post-rebuild 18:40:33 status=success (Fix3 active). vnstock_financials count=79>0. No stuck running rows. Weekly vnstockFundamentalsRefresh not yet triggered post-fix (next Mon 01:00 UTC) — expected; fix effectiveness observable at next scheduled run. B-01 rubric met.",
+        "merged_at": "2026-06-11T17:53:21Z",
+        "review_note": "Architect SPIKE done 2026-06-11. Brief: docs/architecture-briefs/2026-06-11-vnstock-fundamentals-silent-drop.md. Root causes identified: Mode A = fetch_log stamped before null result confirmed, Mode B = startup probe fires into write-wedge causing OOM cascade. 6-fix plan handed to dev-mcp-server.",
+        "impl_note": "dev-mcp-server 2026-06-11: 6 fixes committed f4f5ce65. tsc clean, 39 tests pass. See fix-vnstock-fundamentals-crash-spike.test.ts for regression suite.",
+        "qa_completed_at": "2026-06-11T21:00:00Z",
+        "verified_at": "2026-06-13T01:27:23Z",
+        "verified_by": "po"
       }
     ],
     "review": [
@@ -9473,8 +9478,8 @@
       "created_at": "2026-06-10T19:30:04.668103Z",
       "acknowledged": false
     },
-    "_updated_at": "2026-06-13T01:26:00Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-13T01:27:23Z",
+    "_updated_by": "po",
     "rows": [
       {
         "id": "sau-d4-202606110300",
@@ -9519,7 +9524,7 @@
         "type": "db_integrity_breach",
         "summary": "C-08 CRITICAL: 103 orphaned alerts (no corresponding agent_signals in last 24h)",
         "severity": "CRITICAL",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null
       },
       {
@@ -9530,7 +9535,7 @@
         "type": "db_integrity_breach",
         "summary": "C-16 WARN: 26 stale BCTC pending rows (>72h old)",
         "severity": "HIGH",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null
       }
     ],
