@@ -69,6 +69,46 @@ broker_sanctions (id INTEGER PK, broker_name, sanction_start, sanction_end, seve
 | `davPharmacy.ts` | Pharma supply data |
 | `hydrologicalData.ts` | Water level forecasts |
 
+### vnstock Python Bridge (`fetchers/vnstockBridge.ts`)
+
+Spawns Python subprocesses to call the `vnstock` library (v4, community edition) for financial fundamentals, price history, and corporate data.
+
+**Banner suppression (FIX-FUNDAMENTALS-REFRESH-CRON-DEAD, 2026-06-14):**
+vnstock v4 emits two stdout banners that corrupt JSON output detection:
+1. Deprecation notice (box-drawing chars ╭──╮) on `Vnstock().stock()` init → mis-detected as rate-limit by `isRateLimitResponse()` via `BOX_DRAWING_RE`
+2. Community-edition notice (ℹ️ prefix) on each data API call (`income_statement()`, `balance_sheet()`, `cash_flow()`, etc.) → detected as junk by `stripAnsiAndDetectJunk()`
+
+**Fix:** Each of the 10 Python script templates wraps ALL vnstock API calls in stdout redirect:
+```python
+_real_stdout = sys.stdout
+try:
+    sys.stdout = _io.StringIO()   # suppress init banner
+    stock = Vnstock().stock(...)
+    sys.stdout = _io.StringIO()   # suppress data call banner
+    df = stock.finance.income_statement(...)
+    sys.stdout = _io.StringIO()   # suppress per-call banner
+    ratio = stock.finance.ratio(...)
+except Exception as e:
+    _fetch_err = e
+finally:
+    sys.stdout = _real_stdout     # always restore before JSON output
+```
+
+**Scripts patched (all 10):** `PRICE_SCRIPT`, `FINANCE_SCRIPT`, `TRADING_STATS_SCRIPT`, `OFFICERS_SCRIPT`, `SHAREHOLDERS_SCRIPT`, `INTRADAY_SCRIPT`, `ORDER_BOOK_SCRIPT`, `BALANCE_SHEET_SCRIPT`, `CASH_FLOW_SCRIPT`, `NEWS_SCRIPT`
+
+**Exported constants** (for tests):
+- `SUPPRESS_BANNER` — Python snippet that redirects stdout to StringIO
+- `RESTORE_STDOUT` — Python snippet that restores `_real_stdout`
+
+**Key detection functions:**
+- `isRateLimitResponse(output)` — matches `BOX_DRAWING_RE` or `RATE_LIMIT_KEYWORDS` against stderr/stdout
+- `stripAnsiAndDetectJunk(output)` — returns `{junk: true}` when first non-whitespace char is not `{` or `[` (catches non-JSON like ℹ️)
+- `runPythonWithBackoff(script, ticker)` — 3 retries with exponential backoff on RATE_LIMITED; returns null on junk
+
+**Rate limiter:** `VnstockRateLimiter` — token bucket, shared across all 30 watchlist tickers
+
+**Circuit breaker integration:** `syncVnstockData.ts` tracks `consecutiveOpens`; after `FAIL_THRESHOLD=3` failures opens for `RESET_MS=2h` (doubles on each open: 2h→4h→8h)
+
 ## Repositories (6 SQLite implementations)
 - `SqliteWatchlistRepository`, `SqliteMarketPriceRepository`
 - `SqliteKinhDichScoreRepository`, `SqliteHexagramRepository`

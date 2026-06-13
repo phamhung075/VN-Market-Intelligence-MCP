@@ -36,6 +36,11 @@
 | `1412-diacritics-wave3.test.ts` | Vietnamese text parsing |
 | `1434-morning-briefing-commodity-values.test.ts` | Commodity data in briefings |
 
+### vnstock Bridge
+| Test File | Coverage |
+|-----------|----------|
+| `fix-fundamentals-refresh-cron-dead.test.ts` | 12 tests: `isRateLimitResponse` rejects box-drawing banner (TC-1 to TC-5), `stripAnsiAndDetectJunk` rejects ℹ️ prefix (TC-6 to TC-9), `SUPPRESS_BANNER`/`RESTORE_STDOUT` constant format guards (TC-10 to TC-12) |
+
 ### Analysis & Backtesting
 | Test File | Coverage |
 |-----------|----------|
