@@ -1,5 +1,18 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-14 · FIX-MCP-CRASH-LOOP-WRITEWAL BC-1 — WAL root fix SHIPPED
+
+**Task:** BC-1 | Sprint: FIX-MCP-CRASH-LOOP-WRITEWAL | Zone: apps/mcp-server/src/infrastructure/db/ + scheduler/
+**Root cause:** wal_autocheckpoint=4000 (16MB) + FULL-only live-hours cron defeated by 40+ concurrent reader snapshots pinning WAL frames → WAL wedges at threshold → ~2h crash cadence.
+**Fix:**
+1. `schema.ts:109` — wal_autocheckpoint 4000 → 1000 (4MB threshold, passive drain 4x more often).
+2. `checkpoint.ts` — added `runForcedTruncateCheckpoint(deps?)`: BEGIN IMMEDIATE (expires reader snapshots) + PRAGMA wal_checkpoint(TRUNCATE); injectable deps; normalizes SQLite -1 return (WAL not applicable) to {walSize:0, checkpointed:true}; non-fatal on all errors.
+3. `startScheduler.ts` — replaced FULL(live)/TRUNCATE(off-hours) split with unconditional runForcedTruncateCheckpoint() every 30min; off-hours backup call preserved.
+4. `FIX-MCP-CRASH-LOOP-BC-waltruncate.test.ts` — 6 tests: call order, return shape, wal_autocheckpoint=1000, 10k-write load (<1000 frames post-truncate), concurrent reader.
+**Results:** bun test 6/6 pass. tsc 0 errors. Commit: b41070b7. NEXT: ops-rebuild (build --no-cache mcp-server + up -d --no-deps --force-recreate mcp-server). A-1 and D-1 unblocked.
+
+---
+
 ## 2026-06-13 · FIX-BCTC-VPS-QUEUE-SYNC — 404 retry cap + orphan re-sync — REVIEW
 
 **Task:** FIX-BCTC-VPS-QUEUE-SYNC | Priority: high BUG | Zone: apps/mcp-server/src/scheduler/financial-reports/
