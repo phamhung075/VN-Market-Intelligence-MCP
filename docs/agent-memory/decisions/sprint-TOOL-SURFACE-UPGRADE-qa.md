@@ -125,6 +125,21 @@
 **why-decision:** All 8 AC-U1-1..8 verified. Unit suites green (own uncached runs). TSC clean. Fence-false-green confirmed non-trivially. Live MCP calls confirmed real data returned (not fabricated). In-process counter mechanism traced and confirmed sound (module singleton, synchronous Map.set, per-request proxy installation). sessionCount removed from interface and JSON. Scope clean (9 files, all U1 seam). DDD/security/mock-guard all pass. APPROVED with residual: cron-only flush not yet materialized (next 8h boundary); per gate spec this is acceptable.
 **why-change:** no change from plan.
 
+### STEP qa-S10 · qa · 2026-06-13T18:10:00Z
+**task-id:** TSU-DEV-U2-GEN
+**what-done:** QA gate re-verification of commit 58e23e89 — regenerated tool-registry.json + project-stats.json artifacts; generator and parity test pre-existed from a5b34816; this commit syncs artifacts to live source scan (reconciled count 157).
+**what-considered:**
+- G1 GENERATOR OWN RUN: bun run scripts/gen-tool-registry.ts → totalCount=157, 12 groups, written to tool-registry.json. Confirmed independently, not relayed.
+- G2 PARITY TEST UNCACHED: bun test tool-registry-parity.test.ts --no-cache → 8 pass / 0 fail (179ms).
+- G3 FENCE-FALSE-GREEN PROOF: injected __test_fake_tool__ + bumped totalCount to 158 in tool-registry.json → T-U2-5 FAIL (expected 157 received 158) + T-U2-6 FAIL (missing ["__test_fake_tool__"]); git checkout restores → 8/8 pass. Suite is real.
+- G4 4-WAY AGREEMENT: generator=157, /health toolCount=157, project-stats.json=157, tool-registry.json totalCount=157. Delta=0.
+- G5 SCOPE PASS: git show --stat 58e23e89 = 4 files: dev-mcp-server.md + orch-state.json + project-stats.json + tool-registry.json. NO mcp-server runtime code. no_rebuild=true confirmed.
+- G6 IDEMPOTENCY: generator run twice → same totalCount/groups/tools, only lastUpdated differs. Content byte-identical modulo timestamp.
+- G7 DUAL-API SCAN: TOOL_PATTERNS lines 55-58 confirm /server\.tool\s*\(/ AND /server\.registerTool\s*\(/. Naive count: 156 server.tool + 1 server.registerTool = 157. Generator dedups to 157 matching source.
+- TSC: exit 0 (0 lines output). DDD: no forbidden imports in generator or test file. Security: no process.env, no secrets. Smart-Skip mock-guard: no production source modified.
+**why-decision:** All QA gates independently verified. 4-way count agreement. Fence is real (RED on injection). Scope clean (data artifacts only). APPROVED.
+**why-change:** no change from plan.
+
 ### STEP qa-S6 · qa · 2026-06-07T13:30:00Z
 **task-id:** TSU-DEV-U6
 **what-done:** QA gate for description-only updates across 6 files, 10 tools, 5 TSH leftover pairs (commits 3dd0d7bd + ac1043a4 on main).
