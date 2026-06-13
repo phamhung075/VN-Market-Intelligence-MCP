@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-13 · TSU-DEV-U3 — Deregister 5 / Integrate 7 weak-claim tools — REVIEW
+
+**Task:** TSU-DEV-U3 | Sprint: TOOL-SURFACE-UPGRADE | Priority: P2 | Zone: apps/mcp-server/src/interface/mcp/tools/
+**Status:** Implementation verified complete in HEAD (commit 50772c2a, QA-approved 2e321dec). This cycle re-verified all evidence per task brief requirements.
+**Part A — Deregister (5):** read_bctc_pdf (reports.ts — server.tool block removed, superseded by OCR/PEK pipeline), backfill_bctc_scalars (backfillBctcScalarsTool.ts — no-op, admin-only), compute_accruals (computeAccrualsTool.ts — no-op, domain calc no live store), get_accuracy_context (getAccuracyContextTool.ts — no-op, get_calibration_report covers use case), is_trading_day (isTradingDayTool.ts — no-op, DWF-PHASE1 unshipped worktree).
+**Part B — Integrate (7 description-only):** mark_alert_outcome (post-hoc + write_alert_verdict lifecycle + ops/alert-commander package), get_market_foreign_flow (market-wide SUM vs per-ticker + market-analyst package), diagnose+reset_foreign_flow_circuit_breaker (ops/debug pair), get_label_accuracy_report (label-level vs calibration curve + market-analyst), get_public_contracts (tran-ngoc-bau package confirmed), list_flagged_bctc_cells (bctc-analyst inspect flow), submit_bctc_correction (BCTC-HUMAN-CONFIRM entry point).
+**Tests:** TSU-DEV-U3-weak-claim-tools.test.ts — 12 pass / 0 fail. FENCE proof: T-U3-5 re-added is_trading_day registration → RED (1 fail), restored → GREEN (12 pass). Integration test (123-integration-mcp.test.ts) 27 pass / 0 fail.
+**RAW grep:** server.tool("read_bctc_pdf"|"backfill_bctc_scalars"|"compute_accruals"|"get_accuracy_context"|"is_trading_day") → zero live registration hits across apps/mcp-server/src/.
+**tsc:** exit 0 (clean). **Full suite baseline (pre-existing):** 12798 pass / 50 fail (50 failures are pre-existing deprecated/stale tests in _deprecated/ unrelated to U3).
+**Tool count:** 157 (162−5 deregistered). Scheduler count: 79 cron.schedule (unchanged).
+Zone health: tsc clean, 157 tools (5 deregistered per U3), all 12 U3 tests green, FENCE verified | HEALTHY
+
+---
+
 ## 2026-06-13 · TSU-DEV-U5 — Foreign-flow null holding ratio (DSI serve-null) — REVIEW
 
 **Task:** TSU-DEV-U5 | Sprint: TOOL-SURFACE-UPGRADE | Priority: high | Zone: apps/mcp-server/
