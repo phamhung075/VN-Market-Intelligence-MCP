@@ -7158,36 +7158,10 @@
         "closed_at": "2026-06-13T09:02:02Z"
       },
       {
-        "id": "TSU-DEV-U6",
-        "title": "TSU-DEV-U6 — TSH leftover merge verdicts: DESCRIPTION-ONLY updates on 9 tools (get_patterns/get_technical_indicators, 5x trigger_*_vps_fetch, get_market_summary/generate_market_summary, get_insider_signals/get_insider_transactions). NO server.tool() removals (all verdicts: keep separate, clarify).",
-        "owner": "dev-mcp-server",
-        "status": "READY",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "priority": "medium",
-        "size": "S",
-        "created_at": "2026-06-13T16:43:08Z",
-        "created_by": "po",
-        "depends_on": [
-          "TSU-DEV-U3"
-        ],
-        "blocked_by": [],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/"
-        ],
-        "baseline_pass": "Live mcp-server suite floor 9408 pass / 348 fail. Post-fix: description-string changes only; NO tool count change (NFR-U6-3 not triggered); no NET regression.",
-        "verification_gate": "no_cached_pass_bun_isolation",
-        "verification_gate_detail": "QA: (1) the 9 tool description strings updated per brief FR-U6-1..4 (get_patterns 'RAG corpus historical pattern' vs get_technical_indicators 'quantitative momentum, TA engine port 5003'; 5x trigger_*_vps_fetch document each VPS script + return shape; get_market_summary 'read-cache-first' vs generate_market_summary 'force-regenerate'; get_insider_signals 'classification engine, caller provides transactions[]' vs get_insider_transactions 'DB reader from SSC disclosure store'); (2) NO server.tool() block removed; (3) list_server_tools count UNCHANGED vs post-U3; (4) bun test ISOLATION green.",
-        "root_cause_requirement": "Root cause (brief U6): TSH sprint (2026-05-31) produced written merge diffs for overlapping tool pairs but never executed description updates. ARCH-U6-1 RESOLVED all 4 pairs = KEEP BOTH/SEPARATE, description-update only (verified distinct data sources / cache semantics / layers per brief). FIX: update the 9 description strings only. FORBIDDEN: removing any server.tool() block (NFR-U6-3 must NOT trigger); merging any pair (architect ruled keep-separate); touching get_market_summary registration (may be referenced in cowork flows — description only).",
-        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U6 (commit 371437a7). BLOCKED on U3 (description updates must land AFTER U3 deregistrations settle so the surface is stable). Unblocks after U3 DONE.",
-        "dispatch_note": "UNBLOCKED 2026-06-13T19:25:16Z by router (dep TSU-DEV-U3 done_verified). PRE-SHIP FLAG: U6 likely already shipped — its test TSU-DEV-U6-tsh-leftover-descriptions.test.ts committed at 3dd0d7bd, sibling to the 06-07 50772c2a ship. Handler MUST verify-before-reimplement (live list_server_tools + grep HEAD descriptions) like U3; do NOT blindly re-edit. If already satisfied -> close SATISFIED-PRE-SHIPPED, no rebuild.",
-        "unblocked_at": "2026-06-13T19:25:16Z"
-      },
-      {
         "id": "TSU-DEV-U2-PARITY",
         "title": "TSU-DEV-U2-PARITY — FINAL registry/count parity: re-run gen-tool-registry + parity test AFTER all U3 (5 deregistrations) + U6 commits land; assert final settled count == 157; update docs/data/tool-registry.json + project-stats.json toolCount to generator output. MUST BE LAST mcp-server task (R-1).",
         "owner": "dev-mcp-server",
-        "status": "BLOCKED",
+        "status": "READY",
         "type": "FIX",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -7198,10 +7172,7 @@
           "TSU-DEV-U3",
           "TSU-DEV-U6"
         ],
-        "blocked_by": [
-          "TSU-DEV-U3",
-          "TSU-DEV-U6"
-        ],
+        "blocked_by": [],
         "files": [
           "apps/mcp-server/src/__tests__/tool-registry-parity.test.ts",
           "docs/data/tool-registry.json",
@@ -7212,7 +7183,8 @@
         "verification_gate_detail": "QA: (1) `bun scripts/gen-tool-registry.ts` -> docs/data/tool-registry.json totalCount==157 (162 minus 5 U3 deregistrations; U6 removed 0); (2) bun test tool-registry-parity in ISOLATION -> PASS at 157 (no cached pass — confirm it re-ran against the post-U3/U6 source); (3) list_server_tools('vn-market') RAW count == 157; (4) `bun scripts/gen-project-stats.ts` -> project-stats.json toolCount==157. This is the count-drop confirmation deferred from U3.",
         "root_cause_requirement": "Sequencing (brief R-1 / U2 sequencing constraint): a parity test run BEFORE U3 deregistrations + U6 settle FAILS on count mismatch (stale 162 vs 157). This stub is pinned the FINAL mcp-server task. FIX: re-run the U2-GEN generator against the post-U3/post-U6 source, confirm totalCount==157, update tool-registry.json + project-stats.json toolCount. FORBIDDEN: running this before U3 AND U6 are committed; hardcoding 157 (generator must derive it).",
         "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U2 sequencing + AC8 (commit 371437a7). MUST BE LAST — depends on U3 AND U6 deregistration/description commits. The U2-GEN generator (built first wave) is RE-RUN here against the settled surface. | [router 2026-06-13T19:25:16Z] NOTE: U3 closed PRE-SHIPPED (06-07). When U6 settles, U2-PARITY is the final registry/count reconcile vs HEAD — expect counts already at 06-07 settled values; verify, do not assume drift.",
-        "dispatch_note": "BLOCKED — do NOT dispatch until BOTH TSU-DEV-U3 AND TSU-DEV-U6 are DONE. LAST mcp-server task. Router serializes."
+        "dispatch_note": "UNBLOCKED 2026-06-13T19:27:15Z by router (deps TSU-DEV-U3 + TSU-DEV-U6 both done_verified). FINAL reconcile: re-run scripts/gen-tool-registry.ts, confirm docs/data/tool-registry.json + docs/data/project-stats.json#toolCount match LIVE list_server_tools count. PRE-SHIP CONTEXT: U3/U6 work shipped 06-07; live count already settled (~157). Expect NO drift — verify-and-confirm, regenerate only if artifacts lag. Data-artifact task (not apps/mcp-server runtime) -> no container rebuild.",
+        "unblocked_at": "2026-06-13T19:27:15Z"
       },
       {
         "id": "FU-SCHEMA-DRIFT-P8-IMPL",
@@ -10417,6 +10389,45 @@
           "source_raw": "HEAD: 5 deregistered tools = 0 server.tool() registrations each; 3 integrate controls present (get_bctc_page_text, get_market_foreign_flow, list_flagged_bctc_cells = 1 each).",
           "rebuild": "NONE — already live (U5 rebuild image 1042a2a9 ~49min ago built from HEAD incl. 50772c2a). U4 pre-existing-impl pattern.",
           "count_parity": "deferred to TSU-DEV-U2-PARITY per gate (not verified here)"
+        }
+      },
+      {
+        "id": "TSU-DEV-U6",
+        "title": "TSU-DEV-U6 — TSH leftover merge verdicts: DESCRIPTION-ONLY updates on 9 tools (get_patterns/get_technical_indicators, 5x trigger_*_vps_fetch, get_market_summary/generate_market_summary, get_insider_signals/get_insider_transactions). NO server.tool() removals (all verdicts: keep separate, clarify).",
+        "owner": "dev-mcp-server",
+        "status": "done_verified",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "size": "S",
+        "created_at": "2026-06-13T16:43:08Z",
+        "created_by": "po",
+        "depends_on": [
+          "TSU-DEV-U3"
+        ],
+        "blocked_by": [],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/"
+        ],
+        "baseline_pass": "Live mcp-server suite floor 9408 pass / 348 fail. Post-fix: description-string changes only; NO tool count change (NFR-U6-3 not triggered); no NET regression.",
+        "verification_gate": "no_cached_pass_bun_isolation",
+        "verification_gate_detail": "QA: (1) the 9 tool description strings updated per brief FR-U6-1..4 (get_patterns 'RAG corpus historical pattern' vs get_technical_indicators 'quantitative momentum, TA engine port 5003'; 5x trigger_*_vps_fetch document each VPS script + return shape; get_market_summary 'read-cache-first' vs generate_market_summary 'force-regenerate'; get_insider_signals 'classification engine, caller provides transactions[]' vs get_insider_transactions 'DB reader from SSC disclosure store'); (2) NO server.tool() block removed; (3) list_server_tools count UNCHANGED vs post-U3; (4) bun test ISOLATION green.",
+        "root_cause_requirement": "Root cause (brief U6): TSH sprint (2026-05-31) produced written merge diffs for overlapping tool pairs but never executed description updates. ARCH-U6-1 RESOLVED all 4 pairs = KEEP BOTH/SEPARATE, description-update only (verified distinct data sources / cache semantics / layers per brief). FIX: update the 9 description strings only. FORBIDDEN: removing any server.tool() block (NFR-U6-3 must NOT trigger); merging any pair (architect ruled keep-separate); touching get_market_summary registration (may be referenced in cowork flows — description only).",
+        "note": "[po fan-out 2026-06-13] Materialized from ARCH-TSU brief §U6 (commit 371437a7). BLOCKED on U3 (description updates must land AFTER U3 deregistrations settle so the surface is stable). Unblocks after U3 DONE.",
+        "dispatch_note": "UNBLOCKED 2026-06-13T19:25:16Z by router (dep TSU-DEV-U3 done_verified). PRE-SHIP FLAG: U6 likely already shipped — its test TSU-DEV-U6-tsh-leftover-descriptions.test.ts committed at 3dd0d7bd, sibling to the 06-07 50772c2a ship. Handler MUST verify-before-reimplement (live list_server_tools + grep HEAD descriptions) like U3; do NOT blindly re-edit. If already satisfied -> close SATISFIED-PRE-SHIPPED, no rebuild.",
+        "unblocked_at": "2026-06-13T19:25:16Z",
+        "closed_at": "2026-06-13T19:27:15Z",
+        "closed_by": "router",
+        "no_rebuild": true,
+        "review_evidence": {
+          "disposition": "SATISFIED-PRE-SHIPPED",
+          "summary": "U6 = description-only updates on 9 TSH-leftover tools (KEEP-SEPARATE verdicts). Already present in HEAD; no server.tool removal (count unchanged). Router-verified in-code + live.",
+          "test_raw": "bun test TSU-DEV-U6-tsh-leftover-descriptions.test.ts = 17 pass / 0 fail (35 expect) against HEAD; source-text scan.",
+          "fence_proof": "Deliberate-violation: broke '5003' marker in technicalIndicatorTools.ts -> T-U6-2 RED (16 pass/1 fail); restored -> 17/0 GREEN; tree clean. Test is non-vacuous.",
+          "source_raw": "Distinctive markers present in correct tool files: 5003 (technicalIndicatorTools.ts), fetch-bctc.sh (priceDebugTriggerTool.ts), SSC (insiderTools.ts), rag_analyses (marketTools.ts).",
+          "count": "UNCHANGED vs post-U3 — U6 removes no server.tool() block (NFR-U6-3 not triggered).",
+          "live": "Container built from HEAD ~49min ago (img 1042a2a9) -> updated descriptions served live; no rebuild needed.",
+          "test_commit": "3dd0d7bd (U6 test + description clarifications), sibling to 06-07 ship 50772c2a"
         }
       }
     ],
