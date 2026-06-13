@@ -168,7 +168,9 @@ describe("Task 280 — Foreign Flow Analyzer", () => {
     ];
     const signal = analyzeForeignFlow(history);
     expect(signal).not.toBeNull();
-    expect(Math.abs(signal!.holdingRatioChange5d)).toBeLessThan(0.005);
+    // holdingRatioChange5d is a real number here (history has non-null holding data)
+    expect(signal!.holdingRatioChange5d).not.toBeNull();
+    expect(Math.abs(signal!.holdingRatioChange5d as number)).toBeLessThan(0.005);
   });
 
   // 11. Net sell streak — 4 days should still count as consecutiveDays=4

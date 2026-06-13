@@ -1,5 +1,22 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-13 · TSU-DEV-U5 — Foreign-flow null holding ratio (DSI serve-null) — REVIEW
+
+**Task:** TSU-DEV-U5 | Sprint: TOOL-SURFACE-UPGRADE | Priority: high | Zone: apps/mcp-server/
+**Root cause:** `vnstockStore.ts:573` `row.current_holding_ratio ?? 0` fabricated 0 as real holding ratio. VPS API (`bgapidatafeed.vps.com.vn`) returns no `holding_ratio` field (ARCH-U5-1 confirmed). Every served `Holding Ratio: 0.00%` was fabricated — DSI invariant violation (never serve fabricated data as real). Same class as FDA-9 fail-open.
+**Fix seams:**
+  1. `vnstockStore.ts:573` — `?? 0` → `?? null` (carry absence through, not fabricated zero)
+  2. `foreignFlowAnalyzer.ts` — `DailyForeignFlow.holdingRatio: number | null`; `ForeignFlowSignal.holdingRatioChange5d: number | null`; `isHoldingRatioFabricated` check updated to `=== null || === 0`; `holdingRatioChange5d = null` when fabricated; reasoning guard changed to `holdingRatioChange5d !== null`
+  3. `foreignFlowTools.ts` — `hasRealHoldingData = !signal.is_holding_ratio_fabricated` gate; null check added on signal render; test injection path updated to `holdingRatio: null`; `fmtRatio(row.holdingRatio ?? 0)` for real-data branch
+  4. `companyProfileTools.ts` — `foreign_holding_ratio = null` when `current_holding_ratio <= 0` (already correct pre-task; verified)
+**Tests:** 25 pass (TSU-DEV-U5 test file) + 17 in vnstock-foreign-flow.test.ts = 42 pass total across U5 + related. FENCE-FALSE-GREEN proof: T-U5-FENCE inline — null history → absent, real history → present; gate discrimination proven in same test.
+**Type fix downstream:** `vnstock-foreign-flow.test.ts:171` updated `Math.abs(signal!.holdingRatioChange5d)` → `Math.abs(signal!.holdingRatioChange5d as number)` with not-null assertion.
+**tsc:** clean. **Docs updated:** domain-model.md foreignFlowAnalyzer.ts row.
+**REBUILD REQUIRED:** container must be rebuilt before QA live-verifies get_foreign_flow / get_company_profile. no_rebuild=false. Router dispatches ops.
+Zone health: tsc clean, 157 tools intact (no tool count change), 79 cron.schedule, serve-null DSI fix shipped | HEALTHY
+
+---
+
 ## 2026-06-13 · TSU-DEV-U2-GEN — Tool-registry generator + parity test — REVIEW
 
 **Task:** TSU-DEV-U2-GEN | Sprint: TOOL-SURFACE-UPGRADE | Priority: high | Zone: scripts/ + apps/mcp-server/__tests__/

@@ -34,3 +34,13 @@
 - Re-scan to find missing tools to reach 162: did scan; 156 server.tool( + 1 server.registerTool( = 157 unique; live /health also says 157; no discrepancy exists
 **why-decision:** Generator output 157 == live /health 157 == grep evidence (156+1); brief's 162 was pre-sprint estimate before any cleanup occurred; current source is ground truth
 **why-change:** No code changes needed — gen-tool-registry.ts and parity test already existed (commit a5b34816); only regenerated artifacts (tool-registry.json, project-stats.json) needed updating
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-13T20:01:00Z
+**task-id:** TSU-DEV-U5
+**what-done:** Removed `?? 0` fabrication from `vnstockStore.ts:573` → `?? null`; updated `DailyForeignFlow.holdingRatio: number | null`; updated analyzer `isHoldingRatioFabricated` to check `=== null || === 0`; `holdingRatioChange5d` now `number | null` (null when fabricated); output gates in foreignFlowTools.ts verified; FENCE proof added to TSU-DEV-U5 test; vnstock-foreign-flow.test.ts:171 updated for new type
+**what-considered:**
+- Fix at store only (`?? null`) without touching output layer: FORBIDDEN per brief — output layer must gate rendering
+- Keep `?? 0` in store and only fix output layer: FORBIDDEN per task dispatch ("FORBIDDEN: keeping `?? 0`")
+- Change `holdingRatio: number | null` (canonical null for absent): chosen — matches DSI distinguish-absent-from-zero principle; cascades cleanly through analyzer + formatter
+**why-decision:** `null` is semantically correct for "VPS API does not provide this field"; `0` could be mistaken for a genuine zero holding; FDA-9 lesson: absent-key vs present-zero must be distinguishable
+**why-change:** Brief said store could keep `?? 0` but task dispatch explicitly said "carry null/undefined through"; task dispatch is authoritative; type cascade was contained to 4 files + 1 downstream test

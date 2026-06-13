@@ -80,8 +80,8 @@ export function formatForeignFlowOutput(
   lines.push(`  Net volume 3d: ${signal.totalNetVolume3d >= 0 ? "+" : ""}${fmtVol(signal.totalNetVolume3d)} shares`);
   lines.push(`  Net volume 5d: ${signal.totalNetVolume5d >= 0 ? "+" : ""}${fmtVol(signal.totalNetVolume5d)} shares`);
 
-  // Only emit holding ratio change when real data is available
-  if (hasRealHoldingData) {
+  // Only emit holding ratio change when real data is available (null check guards TypeScript narrowing)
+  if (hasRealHoldingData && signal.holdingRatioChange5d !== null) {
     const ratioChange = signal.holdingRatioChange5d;
     const ratioSign = ratioChange >= 0 ? "+" : "";
     lines.push(`  Holding ratio change (5d): ${ratioSign}${(ratioChange * 100).toFixed(3)}%`);
@@ -102,7 +102,7 @@ export function formatForeignFlowOutput(
       const date = row.date.slice(0, 10).padEnd(12);
       const vol = fmtVol(row.foreignVolume).padStart(14);
       const room = fmtVol(row.foreignRoom).padStart(13);
-      const ratio = fmtRatio(row.holdingRatio).padStart(15);
+      const ratio = fmtRatio(row.holdingRatio ?? 0).padStart(15);
       lines.push(`  ${date}|${vol} |${room} |${ratio}`);
     }
   } else {
@@ -203,7 +203,7 @@ export function registerForeignFlowTools(
               date: row.date as string,
               foreignVolume: cumsum,
               foreignRoom: 0,
-              holdingRatio: 0,
+              holdingRatio: null, // VPS API does not return holding_ratio — absent, not fabricated zero
             };
           });
           history = ascending.reverse();

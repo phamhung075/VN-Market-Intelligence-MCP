@@ -570,7 +570,7 @@ export function getForeignFlowHistory(code: string, days = 10): DailyForeignFlow
     date: row.date,
     foreignVolume: row.foreign_volume ?? 0,
     foreignRoom: row.foreign_room ?? 0,
-    holdingRatio: row.current_holding_ratio ?? 0,
+    holdingRatio: row.current_holding_ratio ?? null,
   }));
 }
 

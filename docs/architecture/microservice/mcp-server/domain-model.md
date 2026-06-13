@@ -66,7 +66,7 @@
 |---------|-----------|
 | `baseRateComputer.ts` | Risk-free rate computation |
 | `correlationCalculator.ts` | Stock correlation matrices |
-| `foreignFlowAnalyzer.ts` | Foreign investor flow analysis |
+| `foreignFlowAnalyzer.ts` | Foreign investor flow analysis — `DailyForeignFlow.holdingRatio: number \| null` (null = absent, VPS API does not return this field; DSI-U5 fix 2026-06-13); `ForeignFlowSignal.is_holding_ratio_fabricated: boolean` guards all render paths |
 | `intradayAnalyzer.ts` | Minute-level price movement |
 | `orderBookAnalyzer.ts` | Bid/ask imbalance detection |
 | `sectorRotationDetector.ts` | Sector leadership rotation |

@@ -22,7 +22,7 @@ export interface DailyForeignFlow {
   date: string;           // ISO date "YYYY-MM-DD"
   foreignVolume: number;  // cumulative foreign volume held
   foreignRoom: number;    // remaining foreign room
-  holdingRatio: number;   // e.g. 0.30 = 30% foreign ownership
+  holdingRatio: number | null;  // e.g. 0.30 = 30% foreign ownership; null = absent (VPS API does not return this field)
 }
 
 /** Severity matching existing domain convention (lowercase). */
@@ -35,8 +35,8 @@ export interface ForeignFlowSignal {
   consecutiveDays: number;
   totalNetVolume3d: number;  // sum of net volume deltas over last 3 days
   totalNetVolume5d: number;  // sum of net volume deltas over last 5 days
-  holdingRatioChange5d: number;  // latest holdingRatio minus 5-day-ago holdingRatio
-  /** true when all holding_ratio values are 0 (fabricated per DSI invariant — VPS API does not return this field) */
+  holdingRatioChange5d: number | null;  // latest holdingRatio minus 5-day-ago holdingRatio; null when holding data is absent
+  /** true when all holding_ratio values are null or 0 (absent per DSI invariant — VPS API does not return this field) */
   is_holding_ratio_fabricated: boolean;
   severity: FlowSeverity;
   reasoning: string;
@@ -103,14 +103,16 @@ export function analyzeForeignFlow(
 
   // --- Holding ratio change over 5 days ---
   // history[0] = today, history[5] = 5 days ago (if available)
-  // is_holding_ratio_fabricated = true when all holdingRatio values are 0
-  // (VPS API bgapidatafeed.vps.com.vn does NOT return holding_ratio — DSI invariant)
-  const isHoldingRatioFabricated = history.every((r) => r.holdingRatio === 0);
+  // is_holding_ratio_fabricated = true when all holdingRatio values are absent (null or 0).
+  // VPS API bgapidatafeed.vps.com.vn does NOT return holding_ratio — DSI invariant.
+  // null = genuinely absent (canonical after vnstockStore.ts fix); 0 = legacy fabricated fallback.
+  const isHoldingRatioFabricated = history.every((r) => r.holdingRatio === null || r.holdingRatio === 0);
   const latest = history[0]!;
   const oldest5d = history.length >= 6 ? history[5]! : history[history.length - 1]!;
-  const holdingRatioChange5d = isHoldingRatioFabricated
-    ? 0
-    : latest.holdingRatio - oldest5d.holdingRatio;
+  // null when absent — never compute a delta off null values
+  const holdingRatioChange5d: number | null = isHoldingRatioFabricated
+    ? null
+    : (latest.holdingRatio ?? 0) - (oldest5d.holdingRatio ?? 0);
 
   // --- Determine direction ---
   let netFlowDirection: "net_buy" | "net_sell" | "neutral";
@@ -151,7 +153,7 @@ export function analyzeForeignFlow(
     reasoning = `neutral: no clear directional pattern (3d net: ${totalNetVolume3d > 0 ? "+" : ""}${formatVol(totalNetVolume3d)})`;
   }
 
-  if (!isHoldingRatioFabricated && Math.abs(holdingRatioChange5d) > 0.005) {
+  if (holdingRatioChange5d !== null && Math.abs(holdingRatioChange5d) > 0.005) {
     const pctChange = (holdingRatioChange5d * 100).toFixed(2);
     reasoning += `; foreign ownership ${holdingRatioChange5d > 0 ? "up" : "down"} ${Math.abs(parseFloat(pctChange))}% over 5d`;
   }
