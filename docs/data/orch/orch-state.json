@@ -16,6 +16,15 @@
   },
   "decision_journal": [
     {
+      "by": "po",
+      "task_id": "KINHDICH-HOVER-ENRICH",
+      "ts": "2026-06-14T17:01:00Z",
+      "decision": "Created SPRINT-S KINHDICH-HOVER-ENRICH (single zone apps/kinh-dich-service/), ready->ba.",
+      "root-cause": "qref hover render (index.html L2497-2505) shows only coreMeaning.vi — terse one-clause (avg36/min17 chars). Rich fields (stateInterpretation/favorable/warning/6 phases) exist but click-gated, not on hover.",
+      "what-considered": "(1) frontend-only tooltip widen — REJECTED: data clause itself too terse for many quẻ. (2) data-only enrich — REJECTED: richer data still click-gated, never shows on hover. (3) split dev-frontend+dev-kinh-dich — REJECTED: dashboard lives INSIDE apps/kinh-dich-service/, not apps/frontend; same zone. (4) one single-zone SPRINT-S via ba->architect->dev-kinh-dich enriching data AND surfacing richer text on hover for ALL 64 — CHOSEN.",
+      "why-change": "Raw-read collapsed apparent two-zone split into one zone; GENERIC mandate (all 64) + plain-VN authoring needs BA spec first."
+    },
+    {
       "agent": "dev-frontend",
       "decision": "sourceStatusLabel() in market.ts; SourceFreshnessTable reads label not src.status; 13 new tests covering all 4 colour tiers + regression guard",
       "sprint_id": "FIX-FETCH-VERYSTALE-LABEL",
