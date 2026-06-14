@@ -36,7 +36,7 @@ The following patterns are **FORBIDDEN** in all ops flows:
 docker compose up -d --no-deps --no-build <service>
 
 # Rebuild after code change:
-docker compose build <service> && docker compose up -d --no-deps <service>
+docker compose build <service> && docker compose up -d --no-deps <service> && docker builder prune -f
 
 # Inspect only:
 docker compose ps
@@ -48,13 +48,33 @@ docker logs -f <service> --tail 100
 docker compose ps
 docker logs -f mcp-server --tail 100
 # REBUILD mcp-server after code change:
-docker compose build mcp-server && docker compose up -d --no-deps mcp-server && sleep 5
+docker compose build mcp-server && docker compose up -d --no-deps mcp-server && sleep 5 && docker builder prune -f
 # RELAUNCH mcp-server (clean-exit, no code change):
 docker compose up -d --no-deps --no-build mcp-server && sleep 5
 curl http://localhost:3000/health
 ```
 
 NEVER: `bun --hot` | `bun --watch` | `nodemon` | `pm2` | manual Bun restarts
+
+## WHY: Builder Prune Is Mandatory After Every Rebuild
+
+`docker builder prune -f` is an **unconditional final step** of every targeted rebuild.
+
+**Root cause — 3 recurrences:**
+- 2026-05-27: Docker build-cache accumulation from repeated `build --no-cache mcp-server` consumed host disk.
+- 2026-06-07: Same pattern; manual `docker builder prune -f` recovered ~18 GB.
+- 2026-06-14: Hit 97% / 6.7 Gi free; ENOSPC-blocked a QA agent; recovery again required `docker builder prune -f` (reclaimed 18.62 GB). A documented rule ("≥2 rebuilds/day → builder prune") existed but was never codified into the flow — it relied on memory and kept recurring.
+
+**Why unconditional (not heuristic):** The ≥2/day threshold is impossible to track reliably across agent sessions. Making prune mandatory every rebuild eliminates the tracking burden and prevents accumulation from the first rebuild.
+
+**Safety properties (must NOT be feared):**
+- `docker builder prune -f` removes ONLY inactive build cache layers — it never touches running containers, named volumes (including `market.db`), or tagged images.
+- It is safe to run at any time while services are running.
+
+**generic_mandate — do NOT scope to mcp-server only:**
+The builder cache is **host-wide**, not per-service. One prune step covers all 6 `host_runtime_set` services (see `docs/data/system-map.json` `.project.infrastructure.docker.host_runtime_set`). Never add a service condition; always run bare `docker builder prune -f`.
+
+---
 
 ## Post-Rebuild Health Verification (MANDATORY)
 
@@ -80,6 +100,13 @@ jq -r '.project.microservices[] | "curl -s -o /dev/null -w \"%{http_code}\\n\" h
 - `send_telegram(channel="bug")` with collateral-damage signal: `🚨 POST-REBUILD COLLATERAL: <service> healthy but <other-service> degraded after rebuild`
 - `docker compose up -d --no-deps --no-build <degraded-service>` → re-verify
 - If still failing after 1 restart → escalate (do NOT mark rebuild as successful in signal/notebook)
+
+**Final step — builder cache prune (MANDATORY, run AFTER health checks pass, BEFORE notebook write):**
+```bash
+docker builder prune -f
+```
+This step is unconditional — see § WHY: Builder Prune Is Mandatory After Every Rebuild above.
+Do NOT skip on the grounds that "only one rebuild was done today" — the heuristic ≥2/day threshold is abolished.
 
 **Notebook write** → `docs/agent-memory/notebooks/ops.md`
 

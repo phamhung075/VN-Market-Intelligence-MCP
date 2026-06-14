@@ -74,6 +74,20 @@
 
 **NEXT:** QA — NB-PRUNE-1 ready for deliberate-violation verification.
 
+## Session 2026-06-14 — FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY (doc-only)
+
+**Task:** Codify `docker builder prune -f` as unconditional final step in `docs/agents/ops/flow/docker.md`.
+
+**Root cause:** 3rd recurrence (2026-05-27, 2026-06-07, 2026-06-14) of host disk-full from Docker build-cache accumulation. A ≥2/day rule existed in memory but was never in the flow. Third occurrence ENOSPC-blocked a QA agent at 97% / 6.7 Gi free; recovery reclaimed 18.62 GB.
+
+**Fix — 4 locations in docs/agents/ops/flow/docker.md:**
+1. FORBIDDEN § "Rebuild after code change" one-liner: appended `&& docker builder prune -f`.
+2. Docker Commands § REBUILD mcp-server comment: appended `&& docker builder prune -f` after `sleep 5`.
+3. New § WHY: Builder Prune Is Mandatory After Every Rebuild: 3 recurrences, safety properties, generic_mandate (host-wide, never scope to mcp-server only).
+4. Post-Rebuild Health Verification § Final step: prune block AFTER health checks pass, BEFORE notebook write; abolished ≥2/day heuristic.
+
+**Pattern:** Undocumented recurring-cost rules must be codified as mandatory unconditional steps — memory-reliant heuristics always recur.
+
 ## Session 2026-06-07 — FIX-CI-LINT-STACK (cross-service CI fix)
 
 **Task:** Bump golangci-lint-action v6.1.1 -> v7.0.0 at 6 sites; delete kinh-dich-ts-lint job.
