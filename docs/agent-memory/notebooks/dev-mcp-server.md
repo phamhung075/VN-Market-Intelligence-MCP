@@ -1,5 +1,21 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-14 · FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert guardrail SHIPPED
+
+**Tasks:** A-1 (S, guardrail layer after BC-1 root fix)
+**Root cause addressed:** No visibility into repeated mcp-server restarts within a 4h window.
+
+**Implementation:**
+- `composition-root.ts`: startup sentinel write to `cron_job_runs` (job_name='mcpServerStartup', status='success') immediately after WAL replay (step 1c). Uses `insertCronJobRunStart` + `updateCronJobRunEnd` directly — best-effort try/catch.
+- `scheduler/system/restartCadenceAlertJob.ts` (new): queries sentinel rows in last 4h; sends WORK-channel alert when count≥2. Injectable db+sendFn for TDD. Non-fatal error handling.
+- `scheduler/cronConfig.ts`: `restartCadenceAlert: '15,45 * * * *'` (staggered 15min from WAL checkpoint at :00 and :30).
+- `scheduler/startScheduler.ts`: registered via `jobRunRepo.wrapRun('restartCadenceAlertJob', ...)` with `db` injection. Passes live db so no second getDb() call needed.
+
+**Tests:** 4 unit tests in `FIX-MCP-CRASH-LOOP-A-restart-cadence.test.ts` — all GREEN (4/4)
+**tsc:** 0 errors
+**Commit:** ef0ce87c
+**Board:** A-1 moved to REVIEW; QA/live-verify gate next.
+
 ## 2026-06-14 · FIX-FUNDAMENTALS-REFRESH-CRON-DEAD — vnstock banner suppression SHIPPED
 
 **Tasks:** FIX-FUNDAMENTALS-REFRESH-CRON-DEAD (P0) + FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT (P1)
