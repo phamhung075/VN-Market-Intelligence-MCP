@@ -5,8 +5,7 @@
 **4a. MARKET channel**
 Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempts
 - > 3 pending → `send_alert_digest(alerts=[], channel="market")`
-- ≤ 3 → `send_telegram(channel="market")` per alert
-Format: `docs/standards/alert-message-format.md` (Vietnamese, full diacritics)
+- ≤ 3 → `send_telegram(channel="market", message=<alert_text>)` per alert — format: `docs/standards/alert-message-format.md` (Vietnamese, full diacritics)
 
 Append regime caveat to each MARKET alert (Vietnamese):
 - `TIGHTENING` + bullish signal:
@@ -26,7 +25,7 @@ After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 - Input: `ticker` (alert.ticker), `direction` (bullish|bearish, from signal), `conviction` (0–1, from signal), `alertSource` (signal_type: urgent_news|verified_chain|chain_catalyst|price_anomaly|position_danger|watchlist_opportunity), `firedAt` (ISO 8601 now)
 - Output: `{ success: true, id, verdict: "pending" }`
 - On success: log `"Verdict {id} recorded as pending for {ticker}"` → continue to Step 4b
-- On error: log to session → `send_telegram(channel="work", "BUG: write_alert_verdict failed for {ticker}")`
+- On error: log to session → `send_telegram(channel="work", message="[alert-commander] BUG: write_alert_verdict failed for {ticker}")`
 
 **4b. WORK channel** — ULTRA tier per `.claude/skills/caveman/SKILL.md` (cycle-status ping = inter-agent state change):
 ```

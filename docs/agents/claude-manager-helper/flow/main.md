@@ -7,7 +7,7 @@
 `git diff --name-only HEAD~3..HEAD` → changed file groups · weekday (Mon/Thu = full-subtree day)
 
 ## Output
-Fixed violations | pass report | `send_telegram(channel="bug")` on issues
+Fixed violations | pass report | `send_telegram(channel="bug", message=...)` on issues
 
 ---
 

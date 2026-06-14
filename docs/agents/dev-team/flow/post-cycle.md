@@ -27,11 +27,11 @@ If exit 0: silent.
 
 **4.1 — Post-execution checks:**
 1. Non-main branches remain → add CLEAN batch → Step 1.
-2. `read_telegram_reports(status="new").length > 0` → `send_telegram(work, "Found N new report(s)")` → Step 1.
-3. `list_unresolved_reports()` non-monitoring count > 0 → `send_telegram(work, "Found N unresolved")` → Step 1.
-4. **Monitoring-only guard (C-6):** ALL unresolved are monitoring → `send_telegram(work, "N in monitoring — no action.")` → archive + exit. (Prevents infinite loop.)
+2. `read_telegram_reports(status="new").length > 0` → `send_telegram(channel="work", message="[dev-team] Found N new report(s)")` → Step 1.
+3. `list_unresolved_reports()` non-monitoring count > 0 → `send_telegram(channel="work", message="[dev-team] Found N unresolved")` → Step 1.
+4. **Monitoring-only guard (C-6):** ALL unresolved are monitoring → `send_telegram(channel="work", message="[dev-team] N in monitoring — no action.")` → archive + exit. (Prevents infinite loop.)
 5. **Archive resolved** (fixed/wontfix/duplicate): `process_telegram_report(id, delete_telegram_message=true)` for each.
-6. Nothing remaining → `send_telegram(work, "Dev loop idle.")` → EXIT.
+6. Nothing remaining → `send_telegram(channel="work", message="[dev-team] Dev loop idle.")` → EXIT.
 
 ---
 
@@ -48,7 +48,7 @@ if ctx > 25%:
      git add docs/agent-memory/notebooks/main.md
      git commit -m "chore(memory/dev-team): notebook YYYY-MM-DD"
      # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
-  4. send_telegram(work, "Sprint boundary — offloaded state, ctx at N%")
+  4. send_telegram(channel="work", message="[dev-team] Sprint boundary — offloaded state, ctx at N%")
   5. Return  # hook: ctx>40% → /compact | ctx 30-40% → decision:block | ctx<30% → silent
 ```
 After compact: resume from Step 1 via smart-compact-protocol.md.

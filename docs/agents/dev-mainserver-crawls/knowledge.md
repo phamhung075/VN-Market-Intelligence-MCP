@@ -111,7 +111,7 @@ Each technique file MUST contain a RAM cost section (additional requirement vs V
 When adding a headless scraper:
 1. Measure actual RSS: `/usr/bin/time -v python <scraper>.py 2>&1 | grep "Maximum resident"`
 2. Document in technique doc under `## RAM Profiling`.
-3. If current container headless total + new scraper RAM > 80% of container limit → send_telegram(work) with flag for ops to adjust compose memory limits.
+3. If current container headless total + new scraper RAM > 80% of container limit → `send_telegram(channel="work", message="[dev-mainserver-crawls] RAM budget: container at {N}% — flag for ops to adjust compose memory limits")` with flag for ops to adjust compose memory limits.
 4. NEVER modify `docker-compose.yml` directly — that is ops's job.
 
 ---

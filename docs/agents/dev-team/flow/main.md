@@ -35,7 +35,7 @@ outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
 })
 if not outer_claim.claimed:
   log "[dev-team] SKIP on-demand " + agent_id + " — cron holds lock (" + outer_claim.current_holder.owner_agent + ")"
-  send_telegram(channel="work", "[dev-team] on-demand " + agent_id + " SKIP — cron holds lock")
+  send_telegram(channel="work", message="[dev-team] on-demand " + agent_id + " SKIP — cron holds lock")
   # fall through; do NOT spawn
 else:
   try:
@@ -109,7 +109,7 @@ if not sf_result.claimed:
 if .git/HEAD.lock not exists:
   # T5: worktree prune (always, lock absent branch)
   pruned = $(git worktree prune -v 2>&1 | head -20)
-  if pruned non-empty: send_telegram(work, "[PREFLIGHT] git worktree prune: {pruned}")
+  if pruned non-empty: send_telegram(channel="work", message="[PREFLIGHT] git worktree prune: {pruned}")
   # T6: 24h worktree lock expiry sweep
   if .claude/worktrees/ exists:
     for each f in .claude/worktrees/*/.git/*.lock:
@@ -133,15 +133,15 @@ else:
     # F4 (c59-T2): all commit steps use git_commit_retry idiom on index.lock/HEAD.lock
     #   → docs/protocols/head-lock-self-cure.md § F4
     rm .git/HEAD.lock
-    send_telegram(work, "[PREFLIGHT] HEAD.lock removed — age={age}s size={lock_size}B pid_alive=false — {ISO timestamp}")
+    send_telegram(channel="work", message="[PREFLIGHT] HEAD.lock removed — age={age}s size={lock_size}B pid_alive=false — {ISO timestamp}")
     session_headlock_count++
     if session_headlock_count >= 3 within 24h:
-      send_telegram(work, "HEAD.lock recurred 3x in 24h — architect rethink needed")
+      send_telegram(channel="work", message="[dev-team] HEAD.lock recurred 3x in 24h — architect rethink needed")
       write docs/signals/{ts}-headlock-recurrence.json:
         {from: "dev-team", to: "architect", type: "recurring-bug", payload: {module: ".git/HEAD.lock", count: 3}}
     # T5+T6: run worktree gc after lock clearance too
     pruned = $(git worktree prune -v 2>&1 | head -20)
-    if pruned non-empty: send_telegram(work, "[PREFLIGHT] git worktree prune: {pruned}")
+    if pruned non-empty: send_telegram(channel="work", message="[PREFLIGHT] git worktree prune: {pruned}")
     if .claude/worktrees/ exists:
       for each f in .claude/worktrees/*/.git/*.lock:
         age_h = (now() - mtime(f)) / 3600
@@ -149,11 +149,11 @@ else:
     JUMP TO drain-signals
 
   elif age <= 60s:
-    send_telegram(bug, "HEAD.lock too young ({age}s) size={lock_size}B — may be active write — escalate ops")
+    send_telegram(channel="bug", message="[dev-team] HEAD.lock too young ({age}s) size={lock_size}B — may be active write — escalate ops")
     JUMP TO end
 
   elif pid_alive:
-    send_telegram(bug, "HEAD.lock held by live git pid size={lock_size}B — escalate ops")
+    send_telegram(channel="bug", message="[dev-team] HEAD.lock held by live git pid size={lock_size}B — escalate ops")
     JUMP TO end
 ```
 
@@ -241,7 +241,7 @@ head_updated_at   =$(printf '%s' "$HEAD" | jq -r '.updated_at')
 - `head.status == "idle"` or `head` missing or v1 schema → fall through to Step 1.
 
 <!-- jump:session-gate -->
-**Session Gate:** `docs/data/orch/orch-state.json` `.task_board` empty AND no Telegram reports AND `pendingSignals` empty → `send_telegram(work, "Dev loop idle.")` → JUMP TO `end`.
+**Session Gate:** `docs/data/orch/orch-state.json` `.task_board` empty AND no Telegram reports AND `pendingSignals` empty → `send_telegram(channel="work", message="[dev-team] Dev loop idle.")` → JUMP TO `end`.
 
 ---
 
@@ -283,7 +283,7 @@ call_tool(server="vn-market", tool="task_release", arguments={ task_id: triage_k
 | SPRINT-L | — | ba → architect → pm; post-merge architect review | sequential |
 | NEW-SERVICE | `BUILD-STANDARD: full` | ba → architect → pm → dev-`<svc>` → qa | Full relay + G1–G12 + three-level dashboard. dev-`<svc>` loads standard at Step 0c. |
 | NEW-FEATURE | `BUILD-STANDARD: lean` | pm → dev-`<svc>` | One dev-`<svc>` agent, no relay. Fence + sandbox/replay DoD mandatory. dev-`<svc>` loads standard at Step 0c. |
-| UNBLOCK | — | S4: see dispatch block below | `send_telegram(work, "Unblocked: [brief]")` → EXIT |
+| UNBLOCK | — | S4: see dispatch block below | `send_telegram(channel="work", message="[dev-team] Unblocked: [brief]")` → EXIT |
 | CLEAN | — | S4: see dispatch block below | qa flow handles cleanup → EXIT |
 
 **S4 UNBLOCK dispatch:**

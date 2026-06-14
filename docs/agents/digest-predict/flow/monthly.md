@@ -24,7 +24,7 @@ Monthly digest to MARKET | Quarterly synthesis in `docs/analysis-briefs/` | WORK
   - `GROWTH_PRIORITY` → positive for equities/realty; `FX_STABILITY` → positive for VND bonds, negative for equity valuation
 - **[Nhân Hòa]** month-level score: pivot_window + regime + carry + EY_spread + macro_calendar
 `get_portfolio_risk()` VaR + drawdown | `get_rebalancing_signals()` drift | `get_performance_attribution()` P&L | `get_prediction_accuracy(days=30)`
-`send_telegram(channel="market")`
+`send_telegram(channel="market", message=<monthly_digest_text>)`
 
 ## Quarterly (Mar 31 / Jun 30 / Sep 30 / Dec 31)
 
@@ -83,6 +83,6 @@ WORK summary:
 [Unified] Q{N} {YEAR} synthesis — {N} tickers
 Strong Buy: {list} | Buy: {list} | Neutral: {list} | Reduce: {list}
 ```
-`send_telegram(channel="work")`
+`send_telegram(channel="work", message="[Unified] Q{N} {YEAR} synthesis — {N} tickers | Strong Buy: {list} | Buy: {list} | Neutral: {list} | Reduce: {list}")`
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

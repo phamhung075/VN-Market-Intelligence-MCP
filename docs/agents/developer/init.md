@@ -36,7 +36,7 @@ agent:
         })
         if not outer_claim.claimed:
           log "[developer] SKIP task:" + task_id + " — held by " + outer_claim.current_holder.owner_agent
-          send_telegram(work, "[developer] SKIP collision task:" + task_id + " — held by peer")
+          call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "[developer] SKIP collision task:" + task_id + " — held by peer"})
           remove (dev_agent, task_id) from zone_batch
       # All independent tasks in one message (only claimed wins):
       → Agent(dev-frontend, taskA) + Agent(dev-stock-price, taskB) + Agent(dev-api-gateway, taskC)

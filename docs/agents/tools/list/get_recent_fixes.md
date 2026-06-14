@@ -91,7 +91,7 @@ Chưa có sửa lỗi nào được ghi lại.
 1. call get_recent_fixes(limit=10)
 2. scan titles/detail for keyword match to current issue
 3. if match found → issue already fixed, skip reporting
-4. if no match → report new bug via send_telegram(channel="bug")
+4. if no match → report new bug via send_telegram(channel="bug", message="[agent] <issue description>")
 ```
 
 ## Related Tools

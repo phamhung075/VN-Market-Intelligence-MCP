@@ -132,4 +132,4 @@ Cross-reference any service reported DOWN with the `--- docker ps -a ---` lines 
   "dedup_key": "microservice_degraded:<service_id>:<check_id>"
 }
 ```
-Routing: severity ≥ WARN AND dedup_key not seen last 7d → `send_telegram(channel="bug")`. Always append DASHBOARD.md row for WARN/CRITICAL.
+Routing: severity ≥ WARN AND dedup_key not seen last 7d → `send_telegram(channel="bug", message="[system-auditor] {severity}: {summary} — see DASHBOARD.md")`. Always append DASHBOARD.md row for WARN/CRITICAL.

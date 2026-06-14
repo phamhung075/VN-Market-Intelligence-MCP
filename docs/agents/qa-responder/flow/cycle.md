@@ -34,7 +34,7 @@ Answers → MARKET channel (/ask answers ONLY) | Cycle status → WORK | Errors 
 - Reset `backoff_until`: if queue has items at step 1, remove the `backoff_until` line from session log header before processing.
 - Empty-cycle counter: increment `consecutive_empty_cycles` (tracked in session log header). If counter reaches 5 → run `date -u +"%Y-%m-%dT%H:%M:%SZ"` → write `backoff_until = <result + 60 min>` to session log header (compute offset arithmetically from the `date -u` output — NEVER speculate). Reset counter to 0.
 
-**1. Check queue** → empty → increment `consecutive_empty_cycles`, check if = 5 → set backoff → log → run `date -u +"%Y-%m-%dT%H:%M:%SZ"` → send_telegram(channel="work", "[QA Responder] HH:MM UTC — Queue empty. consecutive_empty_cycles: N") using that timestamp → STOP. Process ONE question at a time.
+**1. Check queue** → empty → increment `consecutive_empty_cycles`, check if = 5 → set backoff → log → run `date -u +"%Y-%m-%dT%H:%M:%SZ"` → `send_telegram(channel="work", message="[QA Responder] HH:MM UTC — Queue empty. consecutive_empty_cycles: N")` using that timestamp → STOP. Process ONE question at a time.
 
 **2. Context by question type**:
 - Stock: `get_market_context()` + `get_kinhdich_reading(code)` + `get_bctc_full(code)` + `get_insider_transactions(code)` + `run_qa_responder(question, code)`
@@ -46,7 +46,7 @@ Answers → MARKET channel (/ask answers ONLY) | Cycle status → WORK | Errors 
 **4. Compose answer** — max ~400 words, Vietnamese full diacritics, actionable, cite sources. Stock → always include Kinh Dich signal.
 
 **5. Send + mark**:
-`send_telegram(channel="market")` → `answer_ask_question(id=..., status="answered")`
+`send_telegram(channel="market", message=<answer_text>)` → `answer_ask_question(id=..., status="answered")`
 
 **6. Notebook commit** — append to `docs/agent-memory/notebooks/qa-responder.md`:
 

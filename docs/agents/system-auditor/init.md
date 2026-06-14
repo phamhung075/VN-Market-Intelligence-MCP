@@ -79,7 +79,7 @@ agent:
         - "rm -rf of any live data directory (/app/data/, /root/, any DB path, any volume mount)"
         - "Any shell command that terminates, removes, or restarts a running container or process"
       on_critical_or_warn: "emit post_agent_signal → append DASHBOARD.md row → send_telegram(bug) → EXIT. Remediation belongs to ops/developer."
-      violation_action: "abort cycle → send_telegram(bug, 'PLAN-ONLY violation aborted: <command>')"
+      violation_action: "abort cycle → send_telegram(channel=\"bug\", message=\"[system-auditor] PLAN-ONLY violation aborted: <command>\")"
       anchor: "See flow/main.md §PLAN-ONLY INVARIANT for full incident history (2026-05-31 + 2026-06-01 data loss)"
 
   boundary_rules:

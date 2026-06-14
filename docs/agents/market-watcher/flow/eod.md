@@ -24,7 +24,7 @@ Then append `docs/analysis-briefs/{TICKER}.md` [Market Watcher]:
 ```
 YYYY-MM-DD 16:00 | Close: {price} VND | RSI: {rsi} | Vol: {volume} ({vs_avg_pct}% avg) | YoY: {yoy_change}%
 ```
-Write fails → `send_telegram(channel="bug")` immediately, still proceed to B.
+Write fails → `send_telegram(channel="bug", message="[market-watcher] EOD ledger write failed for {TICKER} — proceeding to signal file")` immediately, still proceed to B.
 
 **B. SIGNAL FILE** — write `docs/signals/price_anomaly_<YYYYMMDDTHHMM>.json`:
 

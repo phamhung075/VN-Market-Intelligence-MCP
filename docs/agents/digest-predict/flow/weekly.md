@@ -56,8 +56,8 @@ Cải thiện hệ thống tuần này:
 Tổng feedback: {N} từ {agents}
 ```
 
-`send_telegram(channel="market")`
-`send_telegram(channel="work", "[Digest & Predict] HH:MM UTC — WEEKLY sent. Next: TIME")`
+`send_telegram(channel="market", message=<weekly_digest_text>)`
+`send_telegram(channel="work", message="[Digest & Predict] HH:MM UTC — WEEKLY sent. Next: TIME")`
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 

@@ -23,7 +23,7 @@ EXPECTED_AGENT = "market-watcher"
 ACTUAL_AGENT   = YAML frontmatter `name` field (from agent definition header)
 
 if ACTUAL_AGENT != EXPECTED_AGENT:
-  send_telegram(channel="bug", "[market-watcher] IDENTITY_CHECK=FAIL — context overflow likely. Expected: market-watcher, got: " + ACTUAL_AGENT)
+  send_telegram(channel="bug", message="[market-watcher] IDENTITY_CHECK=FAIL — context overflow likely. Expected: market-watcher, got: " + ACTUAL_AGENT)
   EXIT with DONE: identity-fail | PIPELINE: blocked
 else:
   log "IDENTITY_CHECK=OK — agent=market-watcher"

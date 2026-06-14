@@ -117,7 +117,7 @@ agent:
         })
         if not outer_claim.claimed:
           log "[ba] SKIP task:" + req_id + " — held by " + outer_claim.current_holder.owner_agent
-          send_telegram(work, "[ba] SKIP collision task:" + req_id + " — held by peer")
+          call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "[ba] SKIP collision task:" + req_id + " — held by peer"})
           remove req_id from specs_ready
       # All independent specs in one message (only claimed wins):
       → BA writes REQ_NNN.md for goalA + REQ_MMM.md for goalB simultaneously

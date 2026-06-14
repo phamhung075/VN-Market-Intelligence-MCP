@@ -63,7 +63,7 @@ Du bao tuan moi:
 Monday prediction: if `nhân_hòa_score ≤ 1` → replace prediction section with:
 `"Dự báo tuần mới: Thiên Thời bất lợi — không đưa ra dự báo hướng (Nhân Hòa: {score}/5). Chờ ≥3/5 điều kiện thuận."`
 
-`send_telegram(channel="market")`
+`send_telegram(channel="market", message=<digest_text>)`
 
 **2b. Chain analysis** `get_open_chain_findings()`
 - 3 confirms → "Chuỗi xác nhận hoàn tất: {stock} — {action} ({conviction}% xác tín)"

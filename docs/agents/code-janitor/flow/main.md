@@ -34,7 +34,7 @@ Append to `docs/data/orch/orch-state.json .task_board.backlog[]` (atomic write p
 ```json
 {"id": "JANITOR-NNN", "summary": "DRY: [description]", "priority": "normal"}
 ```
-`send_telegram(channel="bug")`: "Found N DRY violations, proposed M backlog tasks"
+`send_telegram(channel="bug", message="[code-janitor] Found N DRY violations, proposed M backlog tasks")`
 
 ## Escalation Reporting (when sweep finds unfixed doublons)
 

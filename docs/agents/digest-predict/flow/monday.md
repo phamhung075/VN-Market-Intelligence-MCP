@@ -36,7 +36,7 @@ Note: does NOT skip predictions entirely — predictions are still useful in TIG
 **P-1.** `get_watchlist()`
 
 **P-2. Prerequisite** `get_evidence_summary(stock)` for ≥1 ticker
-All "No evidence" → `send_telegram(channel="work", "Monday prediction skipped: zero evidence.")` → EXIT
+All "No evidence" → `send_telegram(channel="work", message="[digest-predict] Monday prediction skipped: zero evidence.")` → EXIT
 
 **P-3. Evidence** per ticker `get_evidence_summary(stock)`
 Skip "No evidence" | parse: `bullish_score`, `bearish_score`, `neutral_score`, likelihood ratios
@@ -91,7 +91,7 @@ git commit -m "chore(memory/digest-predict): notebook YYYY-MM-DD"
 
 **P-7.** `log_agent_work(summary="Created {N} claims for {TICKERS}. Horizons: {5d:X,10d:Y,20d:Z}. Avg: {avg}. Dampening: {yes/no}.")`
 
-**P-8. WORK**: `send_telegram(channel="work", "[digest-predict] Monday claims: {N}\n- {TICKER}: {claim_text} (p={prob}, {horizon}d)\n...")`
+**P-8. WORK**: `send_telegram(channel="work", message="[digest-predict] Monday claims: {N}\n- {TICKER}: {claim_text} (p={prob}, {horizon}d)\n...")`
 `DAMPENING_ACTIVE` → append "Self-correction: confidence -10%."
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`

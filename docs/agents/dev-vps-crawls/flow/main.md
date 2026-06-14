@@ -101,7 +101,7 @@ If new technique needed: proceed to Step 3b (research).
 ```bash
 ssh root@$VINAHOST_IP "echo ok"
 ```
-Timeout × 3 → send_telegram(bug) + EXIT.
+Timeout × 3 → `send_telegram(channel="bug", message="[dev-vps-crawls] VPS SSH connection failed after 3 attempts — EXIT")` + EXIT.
 
 ### 4b — Write Scraper Script
 Deploy `/root/scrapers/<source-name>.py` on VPS:

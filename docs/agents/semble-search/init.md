@@ -1,4 +1,3 @@
-
 Semantic code search using the semble CLI.
 
 Skill spec → `.claude/skills/semble-search/SKILL.md`

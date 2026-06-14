@@ -48,7 +48,7 @@ for each (agent, task_id) in tier_batch:
   })
   if not outer_claim.claimed:
     log "[dev-team] SKIP task:" + task_id + " — held by " + outer_claim.current_holder.owner_agent
-    send_telegram(work, "[dev-team] SKIP collision task:" + task_id + " — held by peer session")
+    send_telegram(channel="work", message="[dev-team] SKIP collision task:" + task_id + " — held by peer session")
   else:
     spawned_batch.append((agent, task_id))
 

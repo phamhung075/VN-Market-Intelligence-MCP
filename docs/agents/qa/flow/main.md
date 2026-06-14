@@ -26,7 +26,7 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 >   docs/data/orch/orch-state.json > "$tmp"
 > [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
 > ```
-> Then continue with the standard error-boundary exit (send_telegram(bug) + drop signal + EXIT).
+> Then continue with the standard error-boundary exit (`send_telegram(channel="bug", message="[qa] tool failure — EXIT")` + drop signal + EXIT).
 > **DECISION JOURNAL RULE:** Terminal output is STATUS-ONLY (RETURN + caveman). All reasoning → `docs/agent-memory/decisions/sprint-<id>.md` via skill `.claude/skills/decision-journal/SKILL.md`.
 
 ---
@@ -150,7 +150,7 @@ verdict: APPROVED | CHANGES_REQUESTED
 ## Approval
 
 <!-- jump:approved -->
-**DJ-GATE-1** (before DONE flip): verify `docs/agent-memory/decisions/sprint-<SPRINT_ID>-*.md` contains `task-id:** <TASK_ID>`; if absent → status stays REVIEW, `status_note: "journal-missing"`, send_telegram(work, "[DJ-GATE-1] journal absent for <TASK_ID>"). Full gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
+**DJ-GATE-1** (before DONE flip): verify `docs/agent-memory/decisions/sprint-<SPRINT_ID>-*.md` contains `task-id:** <TASK_ID>`; if absent → status stays REVIEW, `status_note: "journal-missing"`, `send_telegram(channel="work", message="[DJ-GATE-1] journal absent for <TASK_ID> — held REVIEW")`. Full gate: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
 
 **APPROVED**: append `[QA] Review Record` → release sprint-task lock → merge + push + clean → return.
 Merge commit subject must follow `docs/policies/commit-convention.md` — use `chore` or `feat` type, `<sprint>/<area>` scope; `Task:` trailer optional for merge commits bundling multiple tasks. Merge commits are AC-trailer exempt (AC lives on the feat/fix commit).
@@ -224,4 +224,4 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 <!-- jump:emergency -->
 ## Emergency
-Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green
+Tests fail on main → revert breaking commit → `send_telegram(channel="bug", message="[qa] EMERGENCY: tests red on main — breaking commit reverted, merges blocked")` → open Backlog task → no merges until green

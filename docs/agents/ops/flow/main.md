@@ -49,7 +49,7 @@ trigger_news_vps_fetch(verbose=true, dry_run=false)
 trigger_sbv_vps_fetch(verbose=true, dry_run=false)
 trigger_foreign_flow_vps_fetch(verbose=true, dry_run=false)
 ```
-Debug: `dry_run=true` first → check `failed[].reason` → `send_telegram(channel="bug")` → `log_fix(...)`
+Debug: `dry_run=true` first → check `failed[].reason` → `send_telegram(channel="bug", message="[ops] VPS fetch failed: {service} — {reason}")` → `log_fix(...)`
 
 ```
 🔍 VPS DEBUG REPORT — <service> — <date>
@@ -108,7 +108,7 @@ Diagnostic steps (in order):
    docker inspect pdf-extractor --format "{{.Config.Image}}"
    ```
 4. If version drift confirmed → REBUILD pdf-extractor (`docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) pdf-extractor && docker compose up -d --no-deps pdf-extractor`), then re-run mandatory health check → `docs/agents/ops/flow/docker.md` § Post-Rebuild Health Verification.
-5. Report to WORK channel with `send_telegram(channel="work")` detailing the drift and action taken.
+5. Report to WORK channel: `send_telegram(channel="work", message="[ops] OCR regression fix: {service} rebuilt — PaddleOCR drift resolved")` detailing the drift and action taken.
 
 Status semantics for eval: red = hard fail, yellow = soft warning, green = pass. A fleet-wide OCR regression typically shows `3_OCR` stage red across multiple reports — distinguish from isolated single-report red (single-PDF data issue, not a regression).
 
@@ -116,7 +116,7 @@ Status semantics for eval: red = hard fail, yellow = soft warning, green = pass.
 
 ## Incident Protocol
 1. Diagnose — Docker/VPS/DB/network?
-2. `send_telegram(channel="bug")`: "Investigating [issue]"
+2. `send_telegram(channel="bug", message="[ops] Investigating [issue]")`
 3. Attempt recovery per section above
 4. Fails → Escalate
 5. Document → append to incident log

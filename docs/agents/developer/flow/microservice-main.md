@@ -57,7 +57,7 @@ if BUILD-STANDARD: not-applicable or tag absent:
    - VERIFY: `git branch --show-current` must equal `task/NNN-kebab-description` before touching any file
 3. Read `docs/handoffs/TASK_NNN.md` first — use `files_to_read/modify/create` directly, skip redundant scanning
 4. `depends_on` not Done → STOP, notify PM
-5. Load knowledge files (fail-loud → `send_telegram(channel="bug")`, STOP)
+5. Load knowledge files (fail-loud → `send_telegram(channel="bug", message="[dev-<service>] knowledge load failed for task:" + task_id)`, STOP)
 6. **Zone restriction** — only touch files in `apps/<service>/`. If changes needed outside zone, STOP and notify PM.
 
 **6b. Sprint-task lock — dispatcher holds it**

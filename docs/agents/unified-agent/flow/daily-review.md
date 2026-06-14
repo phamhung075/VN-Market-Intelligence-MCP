@@ -14,11 +14,7 @@ Daily summary to WORK | freshness flags
 
 ---
 
-**1.** `send_telegram(channel="work")`:
-```
-Daily coordination summary ({date}):
-- News: {N} new, {M} important | Alerts: {sent}/{total} | System: {ok|degraded} | Bugs: {N}
-```
+**1.** `send_telegram(channel="work", message="Daily coordination summary ({date}):\n- News: {N} new, {M} important | Alerts: {sent}/{total} | System: {ok|degraded} | Bugs: {N}")`
 
 **2. BUG observe** `read_telegram_reports(status="new", unclaimed_only=false)` — DO NOT claim or re-file
 

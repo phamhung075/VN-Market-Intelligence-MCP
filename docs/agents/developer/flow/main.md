@@ -73,10 +73,10 @@ Read handoff using delta-read skill:
      '.head = {status:$s, updated_at:$t, updated_by:$u, active_task_id:null, next_agent:null}' \
      docs/data/orch/orch-state.json > "$tmp"
    [ -s "$tmp" ] && jq -e '.head' "$tmp" > /dev/null && mv "$tmp" docs/data/orch/orch-state.json
-   send_telegram(channel="bug", "[developer] STOP: depends_on not Done for task:" + task_id + " — head reset idle")
+   send_telegram(channel="bug", message="[developer] STOP: depends_on not Done for task:" + task_id + " — head reset idle")
    ```
    EXIT (PIPELINE: blocked)
-5. Load knowledge files (fail-loud → run STOP-RELEASE block above first, then `send_telegram(channel="bug")`, STOP)
+5. Load knowledge files (fail-loud → run STOP-RELEASE block above first, then `send_telegram(channel="bug", message="[developer] knowledge load failed for task:" + task_id)`, STOP)
 6. **Before creating any new file** → look up canonical location in `docs/policies/docs-organization.md` table.
    Quick ref: source→`apps/mcp-server/src/` | tests→`apps/mcp-server/src/__tests__/` | reports→`reports/` | handoffs→`docs/handoffs/` | never at root.
 
