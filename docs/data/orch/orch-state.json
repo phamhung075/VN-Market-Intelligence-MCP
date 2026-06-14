@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "updated_at": "2026-06-14T11:02:33Z",
-    "updated_by": "qa",
-    "note": "FIX-MCP-500-SYMBOL-TO-STRING done_verified — WebStandard transport swap eliminates Symbol-key JIT corruption at root; 12942 tests pass, tsc clean, live VCB/FPT verified. Next eligible: ARCH-CRON-SCHEDULER-RELIABILITY in ready[]."
+    "status": "in_progress",
+    "updated_at": "2026-06-14T11:34:55Z",
+    "updated_by": "dev-team",
+    "active_task_id": "ARCH-CRON-SCHEDULER-RELIABILITY",
+    "next_agent": "architect",
+    "note": "Router routed PO triage BATCH (tick 11:06Z, Sunday off-market). A=ARCH-CRON-SCHEDULER-RELIABILITY in_progress -> architect (DESIGN stage; recurring-bug escalation; zone apps/mcp-server free; dep done_verified). B=FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS review -> qa (cross-service docs gate, parallel, no contention). WIP=2 different zones. ARCH-SHIP-WAVE-REAUDIT stays PARKED."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11894,8 +11894,7 @@
       "active_task_id": null,
       "next_agent": null
     },
-    "in_progress": [],
-    "ready": [
+    "in_progress": [
       {
         "baseline_pass": false,
         "depends": [
@@ -11918,7 +11917,7 @@
         "sequencing": "WIP=2 — dev-mcp-server is SATURATED (FIX-MCP-CRASH-LOOP-WRITEWAL in_progress + BC-1 deploy-verify; A-1/D-1 ready). Architect + design stages may run NOW in parallel (no dev-mcp-server WIP impact). The dev-mcp-server IMPL task is SEQUENCED behind the crash-loop fix landing — a wedged/crash-looping server is itself a source of loop-saturation tick drops, so the scheduler fix must land on a stable server.",
         "size": "S",
         "source": "router cron-scheduler silent-misfire cluster brief 2026-06-14T02:20Z (LIVE-verified) — subsumes ohlcv + fundamentals-autofire + reputation; recurring class first named in 53d00955",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "subsumes": [
           "FIX-OHLCV-DAILY-AGGREGATOR-STALE",
           "FU-REPUTATION-CRON-MISS",
@@ -11927,9 +11926,14 @@
         "title": "node-cron v3.0.3 scheduler reliability — durable root-cause fix for the silent-misfire cluster (RECURRING, 3rd+ touch -> architect-bound). LIVE EVIDENCE (router 2026-06-14T02:20Z, PO re-verified): (1) ohlcvDailyAggregatorJob — get_pipeline_health 02:22Z confirms 'Aggregator last run: 2026-06-12', missed Fri 06-13 weekday, all 16 sectors N/A rotation. (2) vnstockFundamentalsRefresh — auto-fire never restored: commit c35db4fc fixed ONLY the vnstock-v4 stdout-banner data-correctness bug (fetches returned null -> tables frozen) and explicitly states the Jun-8 'crash' was a container restart mid-run; the cron AUTO-FIRE was never verified to resume (QA APPROVED via MANUAL trigger only). (3) reputationComputeJob — cron-miss 06-12 08:30, the SECOND miss after 06-11 was supposedly fixed by 53d00955. ROOT CLASS (named in 53d00955 commit msg): node-cron drops ticks when the event loop is saturated and recoverMissedExecutions=false; missedExecutions>0 -> autorecover guard skips emission -> tick gone; peer jobs sharing the same minute (08:30 cluster, daily-aggregate cluster) compound it. The per-job recoverMissedExecutions:true patch (53d00955, evidenceAccumulator+reputation only) did NOT durably close the class — it RECURRED on reputation and never covered aggregator/fundamentals. ARCHITECT must design the DEFINITIVE scheduler fix, not another per-job patch: candidate levers (architect rules A/B/C combination) — (A) upgrade or replace node-cron with a scheduler that does not silently drop ticks under loop saturation; (B) apply recoverMissedExecutions:true uniformly to ALL scheduled jobs + add deterministic per-tick dedup (cron_job_runs same-UTC-day guard, mirroring the EVIDENCE-ACCUM precedent) so uniform recovery cannot double-fire; (C) STAGGER the concurrent clusters (add per-job minute jitter so 08:30 / daily-aggregate jobs no longer collide on one tick); (D) add a missed-fire WATCHDOG that detects last_run age > 2x cadence per job and self-heals (force-run) or emits a WORK alert — closing the silent-miss blind spot that let these rot 3-6 days undetected. agent-father / dev-mcp-server implements after architect brief.",
         "type": "SPRINT-S",
         "verification_gate": "Prove the cluster auto-fires durably, not just that one manual run works: (G1) ohlcvDailyAggregatorJob auto-fires next VN market day — get_pipeline_health 'Aggregator last run' advances to that day with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires on its cadence and repopulates financial tables (live VCB/ACB/CTG rows newer than the run) with NO manual trigger; (G3) reputationComputeJob fires at its 08:30 tick on a market day even with peer jobs on the same minute (cron_job_runs row present, no miss); (G4) inject loop-saturation at a scheduled tick in test and assert the tick is recovered/emitted (regression test for the dropped-tick class, mirroring EVIDENCE-ACCUM-SILENT-CRON.test.ts); (G5) missed-fire watchdog emits a WORK alert + self-heal when a job's last_run age > 2x cadence. QA verifies LIVE raw (pipeline-health payload + cron_job_runs rows), never badges. Ship completion across the whole cluster, not one job.",
-        "zone": "apps/mcp-server/"
+        "zone": "apps/mcp-server/",
+        "next_agent": "architect",
+        "claimed_at": "2026-06-14T11:34:55Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router routed PO BATCH (tick 11:06Z). DESIGN stage -> architect (recurring-bug escalation, recurrence_count 3). zone apps/mcp-server/ free post-FIX-MCP-500; dep FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) -> IMPL gate sound. Architect designs the DEFINITIVE node-cron scheduler fix per A/B/C/D levers + G1-G5 verification gate; NO per-job symptom patch. IMPL (dev-mcp-server) SEQUENCED after brief, bun tests BEFORE ops rebuild (RED-PREPUSH), targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down), LIVE-verify auto-fire (pipeline-health + cron_job_runs), never badges."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -11965,7 +11969,11 @@
         "type": "FIX",
         "user_impact": "MEDIUM — multiple agent bootstrap/tool calls fail validation; cheap high-leverage doc fix.",
         "verified_stale_zero": true,
-        "zone_owner": "cross-service/"
+        "zone_owner": "cross-service/",
+        "next_agent": "qa",
+        "dispatched_at": "2026-06-14T11:34:55Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "Router routed PO BATCH UNBLOCK (tick 11:06Z). STUCK in review with next_agent=null -> qa final gate. Pure docs/agents/*.md tool-package param-doc fixes (B3/B6/B7/B8/B9/B11/B12); zone_owner cross-service/, NO same-zone contention with ARCH-CRON. No rebuild (docs only). qa verifies the 7 documented-arg==server-required-arg fixes RAW vs live tool schemas, then -> done_verified."
       }
     ]
   },
