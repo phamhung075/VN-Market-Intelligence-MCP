@@ -22,6 +22,7 @@
 //   POST /macro-indicators     — NSO monthly IIP data for 4 sectors (VMT-3b)
 //   POST /cpi-components       — NSO monthly CPI 15-row basket data (VMT-4)
 //   POST /trade-balance        — NSO monthly trade totals + HS breakdown + bloc_split (VMT-1a + VMT-1b)
+//   POST /liquidity-state      — policy_rates (SBV HTML) + SJC-gold-gap + fx_coupling + IRS (VMT-5a)
 package http
 
 import (
@@ -48,12 +49,14 @@ import (
 // MacroIndicatorsGSO is the VMT-3b use case for POST /macro-indicators (NSO IIP).
 // CPIComponents is the VMT-4 use case for POST /cpi-components (NSO CPI baskets).
 // TradeBalance is the VMT-1a+1b use case for POST /trade-balance (NSO trade totals + bloc_split).
+// LiquidityState is the VMT-5a use case for POST /liquidity-state (policy_rates + SJC gap + FX coupling).
 type RouterConfig struct {
 	Snapshot           *application.ComputeMacroUseCase
 	BOP                *application.BOPUseCase
 	MacroIndicatorsGSO *application.MacroIndicatorsGSOUseCase
 	CPIComponents      *application.CPIComponentsUseCase
 	TradeBalance       *application.TradeBalanceUseCase
+	LiquidityState     *application.LiquidityStateUseCase
 	Logger             *slog.Logger
 }
 
@@ -93,6 +96,14 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	// is_estimate=false for trade totals + HS rows (VMT-1a); bloc_split always is_estimate=true (VMT-1b).
 	if cfg.TradeBalance != nil {
 		r.Post("/trade-balance", handleTradeBalance(cfg.TradeBalance, cfg.Logger))
+	}
+
+	// VMT-5a: liquidity-state endpoint (policy_rates + SJC-gold-gap + fx_coupling + IRS).
+	// policy_rates: SBV HTML (direct, no VPS proxy) or sbv_rates DB fallback.
+	// sjc_gold_gap + fx_coupling: EXISTING market.db reads (DD-7, no new crawl).
+	// irs: is_estimate=true PERMANENT (DD-6, HNX OTC IRS not machine-readable).
+	if cfg.LiquidityState != nil {
+		r.Post("/liquidity-state", handleLiquidityState(cfg.LiquidityState, cfg.Logger))
 	}
 
 	return r

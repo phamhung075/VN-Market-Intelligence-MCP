@@ -6,6 +6,55 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-06-14 (VMT-5a-LIQUIDITY-STATE-NO-GATE — sprint VN-MACRO-TOOLING A4 WAVE-2)
+
+**Task:** Implement VMT-5a (POST /liquidity-state) — three blocs: policy_rates (SBV HTML direct + DB fallback) + sjc_gold_gap (market.db EXISTING reads, DD-7) + fx_coupling (market.db reads) + irs (is_estimate=true PERMANENT DD-6).
+
+**Contract source:** scripts/probes/vmt-4-sample.json (SBV FX + OMO sections). Live DB probe: sbv_rates has refinancing_rate_pct=4.5, discount_rate_pct=1.5; commodity_prices (yahoo) has gold_usd_per_oz=4238.8, dxy=99.807, usd_vnd=26250. No SJC crawler row → SJCPriceMnVND=0 → fail-closed is_estimate=true.
+
+**Key decisions:**
+- policy_rates: SBV HTML direct fetch (www.sbv.gov.vn/webcenter/portal, no VPS proxy per task spec). Falls back to sbv_rates DB (refi+discount only; lombard=0 on fallback). is_estimate=true on DB fallback.
+- sjc_gold_gap: No SJC table in market.db → SJCPriceMnVND=0 permanently until SJC crawler lands → ComputeSJCGoldGap fail-closed (is_estimate=true, gap=0). worldPriceMnVND = gold_usd_per_oz * usd_vnd / 1e6 * troyOzPerTael (1.20565).
+- fx_coupling: sbv_rates.usd_vnd_official as center rate; dxy+cny from commodity_prices (yahoo). BandPct=5.0 (SBV ±5% policy constant). usd_vnd_buy/sell=0 (not in sbv_rates table — safe degrade).
+- IRS: BuildIRSField() → is_estimate=true PERMANENT (DD-6) — same pattern as VMT-1b bloc_split.
+
+**Files created (8):**
+- `pkg/domain/models_vmt_liquidity.go` — PolicyRates, SJCGoldGap, FXCoupling, IRSField, LiquidityStateRecord domain models
+- `pkg/domain/services_vmt_liquidity.go` — BuildIRSField (always true), ConvertWorldGoldToMnVND, ComputeSJCGoldGap, BuildFXCoupling
+- `pkg/domain/services_vmt_liquidity_test.go` — 15 tests (IRS always-true, anchor gold conversion, SJC fail-closed, FX coupling)
+- `pkg/application/dtos_vmt_liquidity.go` — PolicyRatesDTO, SJCGoldGapDTO, FXCouplingDTO, LiquidityStateIRSDTO, LiquidityStateResponse
+- `pkg/application/usecases_vmt_liquidity.go` — LiquidityStateUseCase (PolicyRatesProvider + SJCFXProvider interfaces)
+- `pkg/application/usecases_vmt_liquidity_test.go` — 7 tests (nil guards, IRS always-true incl. error paths, SJC fail-closed, anchor, policy fallback)
+- `pkg/infrastructure/adapters_vmt_sjc_fx.go` — SJCGoldFXAdapter (market.db reads) + ParseSBVPolicyRatesHTML + FetchSBVPolicyRatesFromHTML + FetchSBVPolicyRatesFromDB
+- `pkg/interface/http/handlers_vmt_liquidity.go` — handleLiquidityState chi handler for POST /liquidity-state
+
+**Files modified (2):**
+- `pkg/interface/http/router.go` — RouterConfig extended (LiquidityState field), POST /liquidity-state route added
+- `cmd/server/main.go` — policyRatesAdapter + sjcFXAdapter + LiquidityStateUseCase wired
+
+**Key invariants confirmed:**
+- IRS.IsEstimate=true on ALL paths (DD-6 PERMANENT) including nil-provider, fetch-error, parse-error
+- SJCGoldGap.IsEstimate=true when SJC absent from DB (fail-closed, DD-7 — no SJC crawler yet)
+- policy_rates.IsEstimate=true on DB fallback path; false on HTML success
+- FXCoupling.IsEstimate=false when center rate > 0; true on DB absent/stale
+- dbPath = /app/data/market.db (LIVE named volume from DB_PATH env) — NOT host ./data/market.db
+- NO new excelize / NO new heavy dep (HTML + SQLite only)
+- NO new crawl/fetch for sjc_gold_gap (existing DB reads only, DD-7 compliant)
+- TLS: buildDirectTLSConfig NEVER InsecureSkipVerify=true; VPS_CACERT_PATH pattern respected
+
+**Anchor test results (G12 DoD PASS):**
+- policy_rates parse: refi=4.5 PASS, discount=1.5 PASS (DB anchor from live sbv_rates)
+- sjc_gap: SJC absent → gap=0, is_estimate=true CONFIRMED (fail-closed)
+- irs: is_estimate=true ALWAYS CONFIRMED (5 test cases incl. all error paths)
+- world gold anchor: gold=4238.8 USD/oz * usd_vnd=26250 * troyOzPerTael=1.20565 / 1e6 ≈ 134.2 mn VND/tael PASS
+- FX coupling anchor: usd_center=25155, band=5.0%, dxy=99.807 PASS
+
+**Verification:** `go build ./...` GREEN, `go test ./... -count=1` ALL PASS (11 packages, 0 fail), `golangci-lint run` 0 issues.
+
+**Commit scope (explicit path):** 10 files — 8 new + 2 modified — ALL in apps/macro-indicators/. Notebook staged separately.
+
+---
+
 ## Session 2026-06-14 (VMT-1a-TRADE-BALANCE + VMT-1b-BLOC-SPLIT — sprint VN-MACRO-TOOLING A3 WAVE-2)
 
 **Task:** Implement VMT-1a (trade balance + HS attribution) + VMT-1b (bloc_split FDI estimate) in ONE pass. Bundled A3 per contract. NSO Excel cache REUSED from A2 (getOrFetchNSOMonthlyExcel, 6h TTL, cache hit — no new excelize/fetcher).
