@@ -1,36 +1,33 @@
 # PO Notebook
 
-## 2026-06-14T02:24Z — triage: node-cron silent-misfire cluster → ONE architect root-cause
+## 2026-06-14T07:10Z — opened sprint DOCLANG-SERIALIZE (user directive project-doclang-priority-format)
 
-Router cluster brief (LIVE 02:20Z). Consolidated 3 dead/missed crons under ONE
-architect-bound root-cause task. WIP held at 2 (FIX-MCP-CRASH-LOOP-WRITEWAL + BC-1).
+**Decision:** phased, evidence-respecting. Phase 1 BUILD now, Phase 2 GATED.
 
-### Board mutations (scripts/po-s58-cron-scheduler-reliability-consolidate.jq)
-- **NEW** `ARCH-CRON-SCHEDULER-RELIABILITY` → ready[] (SPRINT-S, architect, P1, rc=3,
-  depends=[FIX-MCP-CRASH-LOOP-WRITEWAL]). Levers: replace/upgrade node-cron · uniform
-  recoverMissedExecutions+dedup · cluster stagger · missed-fire watchdog (last_run>2x cadence).
-- **CORRECTED false-done** `FIX-FUNDAMENTALS-REFRESH-CRON-DEAD`: data-correctness banner
-  fix (c35db4fc) is GENUINE done_verified — kept. autofire_status=STILL-OPEN, folded into
-  parent. c35db4fc msg itself says Jun-8 "crash" = container restart; QA verified MANUAL
-  trigger only → auto-fire never restored = distinct open defect.
-- **FOLDED** FIX-OHLCV-DAILY-AGGREGATOR-STALE + FU-REPUTATION-CRON-MISS → parent (same root).
-- **NEW** `FIX-NEWS-CB-FALSE-CLOSED` → backlog (I2: Reuters+TradingEconomics 14 errors,
-  CB still [OK]; lower threshold + never-succeeded-since-restart detector).
-- **FOLDED I7** (vn-sbv-fetch crash-loop) into existing FIX-SBV-FX-VPS-FETCHER-UNHEALTHY.
+### Board mutations (orch-state.json, atomic temp→verify→rename)
+- **NEW sprint_goal** `DOCLANG-SERIALIZE` (active): adopt DocLang `.dclg.xml` v0
+  (ns https://www.doclang.ai/ns/v0) as canonical OUTPUT/representation format for
+  pdf-extractor extractions — ADDITIVE, never replacing `bctc_table_rows`.
+- **NEW** `BA-DOCLANG-SERIALIZE` → backlog (SPRINT-S, ba, zone apps/pdf-extractor/, P-med).
+  Phase 1: production `DocLangSerializer` in `apps/pdf-extractor/infrastructure/` rendering
+  existing layout-first extractor output → `.dclg.xml`. Promotes throwaway
+  `scripts/spike-doclang-otsl-overlap.py`. bctc_table_rows MUST stay unchanged.
+- **NEW** `SPIKE-DOCLANG-AUTHORED-DOCS` → backlog (SPIKE, architect, zone docs/agents/,
+  gated_behind BA-DOCLANG-SERIALIZE). Phase 2: feasibility of converting authored docs/
+  markdown → .dclg.xml — what breaks across docs DAG, consumer benefit? Findings ONLY.
 
-### Root-cause confirmation (3rd+ touch → escalation)
-53d00955 (EVIDENCE-ACCUM, Jun-12) already NAMED the class: node-cron v3.0.3 drops ticks
-under loop saturation when recoverMissedExecutions=false; per-job patch RECURRED on
-reputation (06-12) + never covered aggregator/fundamentals. Per feedback_recurring_bug_
-escalation → architect owns durable fix, no more per-job symptom patches.
+### Anti-confusion ruling (critical)
+Prior `SPIKE-DOCLANG-OTSL-OVERLAP` (net-new=0 defects) killed DocLang as a VALIDATION
+GATE (Option A). THIS sprint = DocLang as OUTPUT/REPRESENTATION format — distinct scope,
+no contradiction. scope_out spells it out so dev/architect don't re-litigate the gate question.
 
-### Live evidence
-get_pipeline_health 02:22Z: "Aggregator last run: 2026-06-12" (missed Fri 06-13).
-TNB c94 already ACK'd (cowork-pipeline coverage — separate from this cron cluster).
-Schema-drift (0e81b642) NOT re-dispatched per router (genuinely complete).
+### Why NOT bundle Phase 2 into Phase 1
+docs/ markdown is consumed AS markdown by agents+skills+hooks; DocLang targets extracted
+unstructured content, not authored prose. Bundling couples low-risk additive serializer to
+high-blast-radius agent-flow-reader breakage. Gate Phase 2 behind a feasibility spike.
 
 ### Carry-over
-- Architect + design run NOW (no dev-mcp-server WIP impact); dev IMPL sequenced AFTER
-  crash-loop fix lands (wedged server = loop-saturation tick-drop source).
-- Monday market-day: verify aggregator/fundamentals/reputation auto-fire (G1-G3 gates).
-- BC-1 live-verify gate ~03:00Z; watch genuine crash vs deploy-recreate.
+- Sprint umbrella lock `task:DOCLANG-SERIALIZE` claimed (ttl 3600).
+- Pipeline: po → ba (spec) → architect (design) → dev-pdf-extractor (build) → qa.
+- NEXT = ba writes spec for BA-DOCLANG-SERIALIZE. SPIKE-DOCLANG-AUTHORED-DOCS stays TODO
+  until Phase 1 ships, then architect runs the feasibility spike.
