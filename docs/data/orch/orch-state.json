@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-14T08:47:39Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-14T09:10:18Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "FIX-FE-CHART-PRICE-DOMAIN done_verified (qa cycle 266 APPROVED + router RAW). User chart bug CLOSED end-to-end (DATA half ALLZERO-OHLCV-FETCH + FRONTEND half FIX-FE both done_verified). WIP=0. Next eligible: ARCH-CRON-SCHEDULER-RELIABILITY (ready[], apps/mcp-server, depends_on=null) on a future dispatcher tick."
+    "active_task_id": "FIX-MCP-500-SYMBOL-TO-STRING",
+    "next_agent": "dev-mcp-server",
+    "note": "P0: mcp-server 500s on every MCP request (Cannot convert a symbol to a string), masked by healthy container. Surfaced by cowork tick (refine fan-out aborted). dev-mcp-server in flight (router-spawned). Prime suspect 9088c052 ALLZERO read-guard. Fleet cowork layer DOWN until fixed; frontend dashboard OK."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -308,6 +308,18 @@
         "to": "po",
         "ts": "2026-06-13T20:23:00Z",
         "type": "audit-handoff"
+      },
+      {
+        "id": "cowork-team-20260614T090913-gw-outage",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "infra-outage",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "vn-market gateway dial FAILED (Internal Server Error) — corroborated by 2 independent callers (refine_bctc_md agent + router RAW-probe). Connection-level, affects all 146 tools. Blocks ALL cowork agents (refine-bctc-slot-1 fire FAILED 09:08Z; 12:00 gatherer bucket will also fail). Likely mcp-server down/write-wedged or gateway upstream dial broken. Needs ops: docker ps vn-market + mcp-server :3000 + gateway upstream health.",
+        "payload_ref": "",
+        "disposition": "",
+        "ts": "2026-06-14T09:09:13Z"
       }
     ]
   },
@@ -11832,7 +11844,25 @@
       "active_task_id": null,
       "next_agent": null
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "id": "FIX-MCP-500-SYMBOL-TO-STRING",
+        "title": "mcp-server returns HTTP 500 on every MCP request — \"Cannot convert a symbol to a string\"",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "status": "IN_PROGRESS",
+        "depends_on": null,
+        "next_agent": "dev-mcp-server",
+        "claimed_at": "2026-06-14T09:10:18Z",
+        "claimed_by": "router",
+        "origin": "cowork-team dispatcher tick 2026-06-14T09:05Z (refine-bctc-slot-1 fan-out aborted — downstream MCP 500)",
+        "symptom": "Every MCP request 500s incl SSE handshake. Log: [createBunServer] Unhandled request error: Cannot convert a symbol to a string. Container healthy (passive-health masks dead data). Running since ~08:16Z.",
+        "prime_suspect": "9088c052 ALLZERO-OHLCV-FETCH (read-guard on request hot path); secondary 7cbca67a FIX-ALERT-ORPHAN-CORRELATION",
+        "scope_note": "MCP tool-call surface only (all cowork agents + call_tool). Frontend dashboard UNAFFECTED.",
+        "acceptance": "Root-cause the Symbol->string TypeError; targeted code fix in apps/mcp-server (NOT a blind revert unless RCA points there); mcp-server build + unit/integration green; ops rebuild --no-cache mcp-server + up -d --no-deps --force-recreate; LIVE proof: public /vn-market/mcp returns 200 on a real tool handshake AND call_tool(get_market_snapshot or get_bctc_pending_refine) returns a valid payload (not 500); logs clean of the symbol error for >=2 min. Then -> review (qa).",
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-14T09:10:18Z by router on P0 cowork-tick escalation. Fix root cause definitif (CLAUDE.md), not a symptom mask. If RCA confirms 9088c052 read-guard, fix the guard's coercion (do not drop the zero-candle purge — that closed the user chart bug DATA half). Run mcp-server tests BEFORE handing to ops for rebuild (RED-PREPUSH strands fleet). Verify LIVE via call_tool through the gateway, not just rows_stored/200."
+      }
+    ],
     "ready": [
       {
         "baseline_pass": false,
