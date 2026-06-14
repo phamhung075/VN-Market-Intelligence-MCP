@@ -86,11 +86,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T13:44:48Z",
+    "updated_at": "2026-06-14T14:11:14Z",
     "updated_by": "dev-team",
     "active_task_id": "T3-ARCH-CRON-WATCHDOG",
     "next_agent": "dev-mcp-server",
-    "note": "T3-ARCH-CRON-WATCHDOG CHANGES_REQUESTED -> dev-mcp-server. ops OPS-GREEN OVERTURNED by router RAW-verify (false-green): WATCHDOG_MANIFEST 3/16 keys mismatch recorded job_name (ohlcvDailyAggregatorJob/foreignFlowAlert/taOhlcvBackfill) => false 'never ran' alerts + monitor blind to those 3. Fix manifest keys + add manifest-integrity test (generic guard). baseRateComputationJob 20d-stale = genuine finding to spin out. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
+    "note": "T3-ARCH-CRON-WATCHDOG round-3 CHANGES_REQUESTED -> dev-mcp-server. (A) 3 key fixes ACCEPTED (9a7e1aef). (B) REJECTED: WD-10 manifest-integrity test is a tautology (compares two hand-typed lists in one module; never reads wrapRun/recordJobRun call sites) -> name-drift still ships green. Fix: WD-11 derives recorded-name set from registration SOURCE files + resolves JOB_NAME_FUNDAMENTALS const & summaryJob:daily template; assert every manifest key in derived set; prove fail-loud by flipping a call-site literal. tsc 0 + bun watchdog green before ops. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -336,6 +336,30 @@
         "ts": "2026-06-14T09:54:55Z",
         "resolved_at": "2026-06-14T11:29:16Z",
         "resolved_by": "po"
+      },
+      {
+        "id": "cowork-team-20260614T135826-digest-dup",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect-dedup-bypass",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "DOUBLE MARKET POST: digest-sunday published twice for 2026-06-14. RemoteTrigger backstop fired at cron 13:47Z (log 1365, notebook 13:51Z, marker published:digest-sunday:2026-W25) then */15 dispatcher re-fired 13:52Z (log 1366, marker ...2026-W24, claimed=true). TWO root causes: (A) digest-predict ISO-week calc inconsistent — one path computes W25 for Sun 2026-06-14, correct ISO week is W24 (off-by-one at Sunday week-boundary); differing week-key defeats publish-marker dedup. (B) RemoteTrigger fires do NOT update cowork-schedule.json .last_fired, so dispatcher matcher sees stale last_fired (2026-05-31) and re-fires guaranteed slots the backstop already ran. Fix A: canonical ISO-week helper (date +%V semantics) shared across digest-predict publish-gate. Fix B: either RemoteTrigger writes last_fired, or matcher skips guaranteed slots when publish-marker for current period already claimed. Highest risk on Sunday (week boundary). Also re-confirms known B10 get_market_hexagram missing (report id 3150).",
+        "payload_ref": "",
+        "disposition": "",
+        "ts": "2026-06-14T13:58:26Z"
+      },
+      {
+        "id": "cowork-team-20260614T140924-refine-lock-wedge",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect-refine-lock-no-reclaim",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "REFINE PIPELINE WEDGED on expired-but-unreclaimable lock. refine-bctc-slot-2 worker (daily 14:00Z fire) SKIPPED: 'lock held by pid-1-ts-1781443890325, expires 2026-06-14T02:49:03Z' — expiry is 11h20m IN THE PAST as of 14:09Z, yet acquire was REFUSED. Pending work blocked: VCB Q4.2025 hop-nhat (report bdcfa5e0, 72p/26 windows, refine_status=PENDING). Root cause: refine lock-acquire does NOT reclaim an EXPIRED lock (treats present+expired as held). This is the recurring [Lock orphaned by rebuild] class where LET-EXPIRE remedy has now FAILED — expiry passed but new session still cannot acquire, so every daily refine fire will keep skipping indefinitely. FIX: lock-acquire must reclaim/overwrite a lock whose expiry < now (TTL-based steal). owner=dev-mcp-server (refine lock module). pid-1 = container/cron session; safe to steal once expired. Do NOT manually clear from dispatcher (concurrent-corruption risk if a live session holds it).",
+        "payload_ref": "",
+        "disposition": "",
+        "ts": "2026-06-14T14:09:24Z"
       }
     ]
   },
@@ -12077,11 +12101,12 @@
         "impl_verified_by": "dev-team",
         "impl_verdict": "RAW-verified GREEN: commit 55ea2ccf clean 4 files apps/mcp-server@HEAD (orch-state untouched); tsc exit 0 (router re-ran); 14/14 bun watchdog tests; WIRED startScheduler.ts:1175 scheduleCron(CRONS.schedulerWatchdog)+jobRunRepo.wrapRun, cronConfig */10 * * * *; double-log immune (SELECT MAX(started_at)); recovery-safe (T4 alert-dedup 2h cooldown Map, alert-only, no WAL write).",
         "ops_instructions": "TARGETED REBUILD ONLY: docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server. NEVER docker compose down (rebuild-recreate-destroys-peers). docker ps -a after to confirm all peers Up/healthy. Then LIVE verification: (1) startup logs show scheduler started + cron keys registered (expect 82 now — +1 schedulerWatchdog) + NO 'Cannot convert a symbol to a string'; (2) confirm schedulerWatchdogJob appears in the registered-cron-keys log line; (3) within ~10 min the watchdog fires its first tick — RAW-probe cron_job_runs via keinos/sqlite3 sidecar (docker run --rm --volumes-from <cid> keinos/sqlite3 sqlite3 /app/data/market.db \"SELECT job_name,MAX(started_at) FROM cron_job_runs WHERE job_name='schedulerWatchdogJob' GROUP BY job_name\") — confirm it ran; (4) verify it did NOT spam WORK channel (alert-only + 2h cooldown — at most one alert per genuinely-stale job, and on a healthy fleet likely ZERO alerts); (5) router-style own gateway call_tool(get_pipeline_health or get_market_snapshot) returns valid payload, no 500. Report image build timestamp, peer count, the cron-key count (expect 82), watchdog first-fire evidence, and any WORK alerts it emitted (with the stale job names if any). On ops-green -> qa LIVE gate -> done_verified CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY.",
-        "changes_requested_at": "2026-06-14T13:44:48Z",
+        "changes_requested_at": "2026-06-14T14:11:14Z",
         "changes_requested_by": "dev-team",
-        "review_round": 2,
-        "cr_reason": "ops OPS-GREEN OVERTURNED by router RAW-verification (false-green). WATCHDOG_MANIFEST has 3/16 job-name keys that mismatch recorded cron_job_runs.job_name => false 'has never run' alerts + watchdog blind to those 3 jobs. FIX: (A) correct keys ohlcvDailyAggregatorJob->ohlcv-daily-aggregator, foreignFlowAlert->foreignFlowAlertJob, taOhlcvBackfill->ta-ohlcv-backfill (verify against the literal each job records under via recordJobRun/wrapRun); (B) add manifest-integrity test asserting every manifest key exists in canonical job-name set (fail-loud, generic guard vs future drift); (C) NOTE secondary: flat cadence model flags weekday-only summary jobs on weekends — raise with architect if non-trivial, not a hard blocker. After fix: tsc 0 + bun watchdog tests green (incl new integrity test) before re-handing to ops. Genuine finding to SPIN OUT separately: baseRateComputationJob is 20.78d stale (weekly job actually broken).",
-        "ops_deploy_note": "Image 13:28:53Z deployed LIVE (82 cron keys, 13 peers healthy, no 500) — the DEPLOY itself was clean; only the manifest correctness failed. dev fix is code-only; ops will targeted-rebuild again after."
+        "review_round": 3,
+        "cr_reason": "PART (B) REJECTED — false-GREEN. WD-10 is a tautology: imports CANONICAL_WATCHDOG_JOB_NAMES (hand-maintained literal array) from the SAME module as WATCHDOG_MANIFEST and asserts they agree with each other; never reads the wrapRun/recordJobRun call sites. The exact name-drift bug still ships green (rename a wrapRun literal in startScheduler.ts, leave the watchdog module -> manifest key still == canonical entry -> WD-10 passes -> live queries wrong name -> false 'never ran'). FIX round3: (B1) add WD-11 that DERIVES the recorded-name set by READING registration sources at test time (startScheduler.ts, src/scheduler/jobs/**/*.ts, startupHelpers.ts) and extracting wrapRun(...)/recordJobRun(...) literal args; resolve 2 indirections (JOB_NAME_FUNDAMENTALS const value; summaryJob:${periodType} template -> cover 'summaryJob:daily'). (B2) assert every WATCHDOG_MANIFEST key is in that source-derived set, fail-loud with offending key+file. (B3) prove fail-loud by flipping a CALL-SITE literal (not a manifest key) -> WD-11 RED; restore -> green; document in commit. Keep WD-10 as secondary manifest<->canonical check. Gates: tsc 0 + bun watchdog green (incl WD-11). (C) weekday TODO stays deferred to architect, non-blocking.",
+        "ops_deploy_note": "Image 13:28:53Z deployed LIVE (82 cron keys, 13 peers healthy, no 500) — the DEPLOY itself was clean; only the manifest correctness failed. dev fix is code-only; ops will targeted-rebuild again after.",
+        "round2_partial_accept": "PART (A) ACCEPTED at 9a7e1aef: 3 manifest keys corrected (ohlcv-daily-aggregator, foreignFlowAlertJob, ta-ohlcv-backfill) + liveManifest selfHealFn wrapRun literals matched; tsc 0, watchdog 17/17 (router re-ran)."
       }
     ],
     "ready": [],
