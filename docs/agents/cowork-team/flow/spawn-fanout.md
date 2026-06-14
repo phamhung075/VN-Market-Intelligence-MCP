@@ -53,8 +53,7 @@ if MARKER_CLAIM.claimed != true:
   log "[cowork] publish blocked — already published work-id=<slot_id>:<WORK_DATE>"
   EXIT   # Do NOT call send_telegram — already published today
 
-# Marker claimed → proceed with send_telegram
-send_telegram(channel, message, ...)
+# Marker claimed → proceed with send_telegram(channel="<target>", message="<content>")
 ```
 
 TTL values:
@@ -83,11 +82,11 @@ Track spawn results: success (no error) vs failure (agent tool returns error).
 
 **On spawn failure for any slot:**
 - Log to `errors[]` in telemetry (Step 6).
-- `send_telegram(channel=work, "[cowork-team] spawn failed: <slot.slot_id> — <one-line error>")`
+- `send_telegram(channel="work", message="[cowork-team] spawn failed: <slot.slot_id> — <one-line error>")`
 - Continue remaining spawns. R4: one slot failure never blocks others.
 
 **On flow path missing** (slot.flow_path does not exist as a file — verify before spawn):
-- `send_telegram(channel=work, "[cowork-team] flow missing: <slot.slot_id> → <slot.flow_path>")`
+- `send_telegram(channel="work", message="[cowork-team] flow missing: <slot.slot_id> → <slot.flow_path>")`
 - Add to `errors[]`. Skip this slot's spawn.
 
 **After each spawn attempt (success OR failure) — release per-work-item token immediately (try/finally):**

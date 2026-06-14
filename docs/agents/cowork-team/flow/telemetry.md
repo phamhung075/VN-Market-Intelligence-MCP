@@ -85,6 +85,6 @@ cat > docs/signals/cowork-team-${ISO}-error.json <<EOF
 EOF
 ```
 
-`send_telegram(channel=work, "[cowork-team] ERROR ${ISO} — <message> (step <N>)")`
+`send_telegram(channel="work", message="[cowork-team] ERROR ${ISO} — <message> (step <N>)")`
 
 Then EXIT.

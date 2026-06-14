@@ -28,7 +28,7 @@ else:
 if PRESSURE_FILE is missing or fails JSON parse:
   reason = "missing" if file absent else "malformed"
   log "[cowork] WARN: pressure-state.json unavailable (" + reason + ") — cadence fallback to legacy cron"
-  send_telegram(channel=work, "[cowork] WARN: pressure-state.json unavailable — cadence fallback to legacy cron (reason: " + reason + ")")
+  send_telegram(channel="work", message="[cowork] WARN: pressure-state.json unavailable — cadence fallback to legacy cron (reason: " + reason + ")")
   PRESSURE_MODE = "legacy"
   → skip to Step 4.5b (CADENCE_MATCHES = MATCHES; proceed to Step 4.6)
 else:

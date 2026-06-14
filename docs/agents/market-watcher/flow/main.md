@@ -33,7 +33,7 @@ Pattern: If name/color/description fields are missing or wrong (context window t
 
 1. Read current UTC time.
 2. Match the window above (evaluate market row first, then prepost, then EOD, then offhours); all times resolve to a sub-flow — there is no unconditional EXIT branch.
-3. Run Step 0 smoke probe: `call_tool(server="vn-market", tool="get_system_status")`. On failure → `send_telegram(channel=bug, "[market-watcher] Step 0 smoke probe FAILED")` → EXIT.
+3. Run Step 0 smoke probe: `call_tool(server="vn-market", tool="get_system_status")`. On failure → `send_telegram(channel="bug", message="[market-watcher] Step 0 smoke probe FAILED")` → EXIT.
 4. Read and execute the matched sub-flow end-to-end, passing `mode` (e.g. `mode=prepost`) as a parameter so cycle.md can apply the correct threshold floor.
 5. Return that sub-flow's RETURN block verbatim.
 

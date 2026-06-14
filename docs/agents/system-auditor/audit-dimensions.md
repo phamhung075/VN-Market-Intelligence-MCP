@@ -105,8 +105,8 @@ for each target_file in [docs/data/orch/orch-state.json]:
   bucket each commit timestamp into 15-min windows (floor to nearest :00/:15/:30/:45)
   for each window:
     if len(commits_in_window) >= 2:
-      send_telegram(channel=work,
-        "[system-auditor] D-N: concurrent writes detected on <target_file> — " +
+      send_telegram(channel="work",
+        message="[system-auditor] D-N: concurrent writes detected on <target_file> — " +
         len(commits_in_window) + " commits in 15-min window " + window_key +
         " (last-writer-wins risk). Escalate to po.")
       write signal_queue row: {to: "po", type: "concurrent-write-alert", summary: "concurrent writes on orch-state.json window:" + window_key}

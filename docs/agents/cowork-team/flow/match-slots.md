@@ -21,7 +21,7 @@ DRIFT_MIN=$(echo "$RAW" | jq '.drift_min')
 Script SSOT: `scripts/agents-flow/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns `{"slots": [{slot_id, agent, flow_path, cron, trigger_prompt}, ...], "drift_min": <N>}`. `drift_min` = `actualUTCMinute − nominalTick` (always 0–14).
 
 **On script error** (non-zero exit / non-JSON output / schedule.json missing):
-- `send_telegram(channel=work, "[cowork-team] slot-matcher failed: <stderr first line>")`
+- `send_telegram(channel="work", message="[cowork-team] slot-matcher failed: <stderr first line>")`
 - Write `docs/signals/cowork-team-${NOW_ISO}-error.json` → `{from:"cowork-team", to:"po", type:"matcher-error", payload:{error:"<msg>"}, createdAt:"${NOW_ISO}"}`
 - EXIT immediately.
 
@@ -38,8 +38,8 @@ After receiving `DRIFT_MIN` from the slot-matcher script:
 
 ```
 if DRIFT_MIN > 10:
-  send_telegram(channel=work,
-    "[cowork-team] WARN drift_min=${DRIFT_MIN} exceeds 10min threshold; slot lock safety margin narrowing. Review system load. Safe limit: drift_min < 15.")
+  send_telegram(channel="work",
+    message="[cowork-team] WARN drift_min=${DRIFT_MIN} exceeds 10min threshold; slot lock safety margin narrowing. Review system load. Safe limit: drift_min < 15.")
   # Do NOT block — proceed to Step 4. Warning only.
 ```
 
@@ -70,8 +70,8 @@ If MATCHES is `[]` or empty (i.e. `jq 'length == 0'` on the slots array):
 Before spawning, group MATCHES by `agent_id`. For any `agent_id` that appears in ≥2 slots:
 
 ```
-send_telegram(channel=work,
-  "[cowork-team] WARN collision: agent_id=<id> matched <N> slots: <slot_id_1>, <slot_id_2>, ... — all will spawn (R3). Check schedule schema if unexpected.")
+send_telegram(channel="work",
+  message="[cowork-team] WARN collision: agent_id=<id> matched <N> slots: <slot_id_1>, <slot_id_2>, ... — all will spawn (R3). Check schedule schema if unexpected.")
 ```
 
 This is a WARNING only — do NOT block spawns. Intentional multi-slot fires (e.g. `*/15` slots) are expected per brief §5 R3.
