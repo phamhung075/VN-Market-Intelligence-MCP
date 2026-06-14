@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T23:02:35Z",
+    "updated_at": "2026-06-14T23:18:05Z",
     "updated_by": "dev-team",
     "active_task_id": "VMT-8-MACRO-GRACEFUL-FAILCLOSE",
-    "next_agent": "ops",
-    "note": "VMT-8-MACRO-GRACEFUL-FAILCLOSE DONE (dev-macro-indicators a174dacb, commit 7a176a44, router RAW-verified gates GREEN: on-main; 14 files all apps/macro-indicators/** handlers-unchanged; foreign-capture NONE; independent go build/vet rc=0 + go test ok; fail-close invariants at code level — 5 degraded*Response return (resp,nil) Status=degraded+IsEstimate=true+BlockedReason -> G2 HTTP200; error*Response fmt.Errorf -> G3 nil-provider HTTP500 preserved; PERMANENT is_estimate held on degraded path G4 — never flipped; generic across all 5 use-cases /goal#2; 209 PASS/0 FAIL). CODE merge gate satisfied BUT NOT LIVE — container macro-indicators-1 holds ops 0608f6aa image (Up ~18m), pre-7a176a44. === -> head dev->ops: FORCE-RECREATE macro-indicators single service (memory: rebuild after dev change; NEVER compose down — kills peers ~21min) + LIVE-verify via gateway re-probe (NOT badges): get_vn_trade_balance + get_vn_bop must now return 200 with Status=degraded + is_estimate=true + blocked_reason (was opaque-500 / timeout) while VPS upstream sources stay dark (NSO selector + BOP encoding still unfixed — those are SEPARATE accuracy tasks routed to PO); get_vn_liquidity_state stays 200 honest. On ops live-green -> router RAW re-probes each tool itself (not ops badge) -> VMT-8 done_verified + release task:VMT-8. === PARALLEL: F1 VPS :3128 RESOLVED (VPS-AVAIL-02-FIX resolved, commit b1390d66, proxy RAW-proven 200). PO holds signal dev-team-20260614T225734Z-vps-cluster-reconcile (NEW): reconcile other-3 VPS tasks individually + mint 2 dev-zone accuracy tasks (F-NSO-SELECTOR + F-BOP-ENCODING, COMPLEMENTARY to VMT-8, sequence after) + proxy-ACL security note. HELD: F3 cronJobCount (dev-mcp-server low); S2 07-06 methodology brief (agent-father, greenlit sequenced-after-incident); context-bloat ops.md prune. VMT-3a-PMI blocked-probe5. Commit explicit path only."
+    "next_agent": "po",
+    "note": "VMT-8-MACRO-GRACEFUL-FAILCLOSE LIVE-VERIFY = PARTIAL (router RAW re-probe, NOT the ops 4/5 badge). Container RAW-fresh (macro-indicators image 7df03ef2c0a1 Up~5m, 7a176a44, 12 peers healthy, no compose down). VMT-8 degrade path LIVE-PROVEN (ops captured real degraded-200 for trade/macro/cpi in fast-fail window + liquidity 200 honest + unit G2 re-run) -> VMT-8 code = done, CORRECT, generic, did NOT regress. BUT router independent gateway re-probe 23:13Z = trade/macro/cpi + bop ALL TIMEOUT (only liquidity 200, local market.db); VPS :3128 RAW-proven alive+fast (curl 200 0.5s) so NOT proxy-down. ROOT = UNBOUNDED upstream fetch (no per-fetch ctx deadline < gateway timeout -> slow NSO/SBV origin -> Fetch HANGS past gateway deadline -> timeout before degrade path emits; corroborates+generalizes ops' bop diagnosis). done_verified WITHHELD. === -> head ops->po: PO TRIAGE (next dev-team tick): (1) MINT F-MACRO-FETCH-DEADLINE (apps/macro-indicators, dev-macro-indicators, GENERIC /goal#2 — bound every upstream fetch http.Client{Timeout}/ctx deadline ~8s < gateway timeout so HANG -> fast ctx.DeadlineExceeded -> VMT-8 degrade path -> 200; ABSORBS the standalone bop-timeout). This is the COMPLETION of /goal#1 'best result' for the 4 fetch tools. (2) STACK ORDER on apps/macro-indicators (serialize same files): VMT-8(done) -> F-MACRO-FETCH-DEADLINE(reliability) -> F-BOP-ENCODING + F-NSO-SELECTOR(accuracy). (3) PO also holds signal dev-team-20260614T225734Z-vps-cluster-reconcile (NEW): reconcile other-3 VPS tasks individually + proxy-ACL security note. === PARALLEL DONE: F1 VPS :3128 RESOLVED (VPS-AVAIL-02-FIX resolved, b1390d66, proxy RAW-proven). === HELD: F3 cronJobCount (dev-mcp-server low); S2 07-06 methodology brief (agent-father greenlit, sequenced-after-incident); context-bloat ops.md prune. VMT-3a-PMI blocked-probe5. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -171,7 +171,7 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-14T22:57:34Z",
+    "_updated_at": "2026-06-14T23:18:05Z",
     "_updated_by": "dev-team",
     "archive": [
       {
@@ -397,6 +397,18 @@
         "payload_ref": "commit 0608f6aa; ops notebook docs/agent-memory/notebooks/ops-vps-fetch.md (c011); live re-probe trade_balance=opaque500 / bop=timeout / liquidity_state=200",
         "disposition": "",
         "ts": "2026-06-14T22:57:34Z"
+      },
+      {
+        "id": "dev-team-20260614T231805Z-vmt8-liveverify-fetch-deadline",
+        "from": "dev-team",
+        "to": "po",
+        "type": "live-verify-partial + dev-zone-rootcause(fetch-deadline) — BLOCKING /goal#1",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "VMT-8 LIVE-VERIFY = PARTIAL (router RAW re-probe, NOT the ops 4/5 badge). ops caught a fast-fail window (4/5 degraded-200); router re-probe 8min later = trade/macro/cpi + bop ALL TIMEOUT, only liquidity 200. Container RAW-fresh (7df03ef2c0a1, 7a176a44) + VPS :3128 RAW-alive (curl 200 0.5s) -> NOT proxy-down. NEW ROOT CAUSE [F-MACRO-FETCH-DEADLINE]: macro-indicators upstream fetches (NSO Excel for trade/macro/cpi; SBV Liferay for bop) have NO per-fetch context deadline shorter than the gateway timeout. When the origin is slow, uc.fetcher.Fetch(ctx,...) HANGS past the gateway deadline -> gateway TIMEOUT before VMT-8's degrade path can emit its 200. VMT-8 degrades only on a FAST fetch-ERROR; it cannot rescue a HANG. This is the TRUE completion of /goal#1 'best result' for these endpoints — VMT-8 made them HONEST-on-fast-fail; F-MACRO-FETCH-DEADLINE makes them RELIABLY-graceful-on-hang. PO: mint F-MACRO-FETCH-DEADLINE (zone=apps/macro-indicators, owner=dev-macro-indicators, GENERIC across all 5 use-cases /goal#2 — bound every upstream fetch with an http.Client{Timeout}/context deadline ~8s < gateway timeout so a hang converts to a fast ctx.DeadlineExceeded that VMT-8's existing degrade path catches -> 200). This ABSORBS the standalone bop-timeout from signal dev-team-20260614T225734Z (same root). STACK ORDER on apps/macro-indicators (serialize, same files): VMT-8(done) -> F-MACRO-FETCH-DEADLINE(reliability, this) -> F-BOP-ENCODING + F-NSO-SELECTOR(accuracy, restore real data). VMT-8 itself = done (code correct, merge-gated, degrade path live-proven); done_verified WITHHELD pending F-MACRO-FETCH-DEADLINE.",
+        "payload_ref": "ops notebook 13630170; router raw re-probe 23:13Z (3x NSO-tool timeout + bop timeout, liquidity 200); VPS :3128 curl 200 0.5s; container image 7df03ef2c0a1 Up~5m",
+        "disposition": "",
+        "ts": "2026-06-14T23:18:05Z"
       }
     ]
   },
@@ -494,7 +506,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T23:02:35Z",
+    "_updated_at": "2026-06-14T23:18:05Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -9183,7 +9195,11 @@
         "done_at": "2026-06-14T23:02:35Z",
         "done_commit": "7a176a44",
         "done_agent": "a174dacb",
-        "router_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — gates GREEN: 7a176a44 on main; git show --name-only 14 files ALL apps/macro-indicators/** (5 dtos+5 usecases+4 tests), handlers UNCHANGED (fix in use-case layer); foreign-capture NONE, orch-state not staged; independent go build/vet rc=0, go test all ok. FAIL-CLOSE invariants confirmed at code level + uncached tests: 5 degraded*Response return `}, nil` (Status=degraded, IsEstimate=true, BlockedReason set) -> G2 HTTP200 on upstream-fetch failure PASS; error*Response return fmt.Errorf (non-nil) -> G3 nil-provider HTTP500 preserved PASS; PERMANENT is_estimate held on degraded (BlocShare Decision A, CPI Weights, liquidity Rate1WPct=nil+IsEstimate Decision B) never flipped -> G4 PermanentInvariants PASS. Generic across ALL 5 use-cases (/goal#2). 209 PASS/0 FAIL. CODE merge gate satisfied; LIVE-verify pending ops rebuild (container = pre-7a176a44 0608f6aa image)."
+        "router_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — gates GREEN: 7a176a44 on main; git show --name-only 14 files ALL apps/macro-indicators/** (5 dtos+5 usecases+4 tests), handlers UNCHANGED (fix in use-case layer); foreign-capture NONE, orch-state not staged; independent go build/vet rc=0, go test all ok. FAIL-CLOSE invariants confirmed at code level + uncached tests: 5 degraded*Response return `}, nil` (Status=degraded, IsEstimate=true, BlockedReason set) -> G2 HTTP200 on upstream-fetch failure PASS; error*Response return fmt.Errorf (non-nil) -> G3 nil-provider HTTP500 preserved PASS; PERMANENT is_estimate held on degraded (BlocShare Decision A, CPI Weights, liquidity Rate1WPct=nil+IsEstimate Decision B) never flipped -> G4 PermanentInvariants PASS. Generic across ALL 5 use-cases (/goal#2). 209 PASS/0 FAIL. CODE merge gate satisfied; LIVE-verify pending ops rebuild (container = pre-7a176a44 0608f6aa image).",
+        "live_verify_at": "2026-06-14T23:18:05Z",
+        "live_verify_agent": "ops a3915addef096b8ac + router-raw-reprobe",
+        "live_verify_result": "PARTIAL. Container RAW-confirmed fresh (image 7df03ef2c0a1, Up~5m, 7a176a44, 12 peers healthy). VMT-8 degrade path LIVE-PROVEN: ops captured real degraded-200 (status=degraded+is_estimate=true+blocked_reason) for trade/macro/cpi in a fast-fail window + liquidity 200 honest + unit G2 DegradedUpstream->HTTP200 re-run. BUT router independent raw gateway re-probe 23:13Z = trade/macro/cpi + bop ALL TIMEOUT (only liquidity 200, local market.db). VPS :3128 RAW-proven alive+fast (curl 200, 0.5s) -> NOT proxy-down. ROOT = UNBOUNDED upstream fetch: no per-fetch ctx deadline < gateway timeout, so slow NSO/SBV origin -> Fetch HANGS past gateway deadline -> timeout before VMT-8 can emit degraded-200 (corroborates ops' own bop diagnosis, generalized to all 4 fetch tools). VMT-8 code correct+generic, did NOT regress; hang is pre-existing + out-of-scope. done_verified WITHHELD — endpoint live-green BLOCKED on F-MACRO-FETCH-DEADLINE.",
+        "live_verify_followup": "F-MACRO-FETCH-DEADLINE"
       }
     ],
     "closed_sprints": [
