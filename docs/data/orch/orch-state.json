@@ -5553,129 +5553,499 @@
         ],
         "tasks": [
           {
-            "id": "VMT-1-TRADE-BALANCE",
-            "title": "#1 get_vn_trade_balance — HS-group + FDI/domestic-bloc split + processing-margin (export/import) ratio; per-country import; multi-year margin series. HIGHEST leverage (T-33/34/35/36; both new skills).",
-            "type": "FEATURE",
+            "id": "PROBE-1",
+            "title": "ops-vps-fetch: Customs enterprise-type breakdown (FDI vs domestic-bloc)",
+            "type": "PROBE",
             "priority": "high",
-            "size": "L",
+            "size": "S",
             "status": "TODO",
-            "zone": "multi",
-            "owner": "dev-macro-indicators",
-            "co_owners": [
-              "dev-vps-crawls"
-            ],
+            "zone": "ops",
+            "owner": "ops-vps-crawls",
             "depends": [],
-            "data_source": "GSO / Tong cuc Hai quan monthly trade stats — geo-blocked -> Vinahost VPS.",
-            "io_contract": "in {period:'YYYY-MM'|'YTD', group_by:'bloc'|'hs_group'|'country', lookback_months?}; out total exp/imp/balance + FDI-bloc vs domestic-bloc split + per-HS {export,import,net,processing_margin} + per-country import + multi-year margin series + is_estimate.",
-            "skill_consumer": "trade-fx-pressure-decomp (primary), macro-health-read"
+            "wave": 1,
+            "blocks": [
+              "VMT-1"
+            ],
+            "blocks_fields": [
+              "bloc_split"
+            ],
+            "data_source": "https://www.customs.gov.vn/ monthly stats page, VPS-routed",
+            "note": "Probe confirms enterprise-type breakdown table format (HTML/Excel). VMT-1 total+hs_attribution can proceed without this; bloc_split field waits for PROBE result."
           },
           {
-            "id": "VMT-2-BOP",
-            "title": "#2 get_vn_bop — balance-of-payments lines (current/financial acct + E&O) with sign + derived offshore_parked_estimate (E&O proxy) + fx_swing_line (largest negative financial-acct component). (T-38/39/40).",
-            "type": "FEATURE",
+            "id": "PROBE-2",
+            "title": "ops-vps-fetch: SBV BOP page (PDF vs Excel + E&O sign convention)",
+            "type": "PROBE",
             "priority": "high",
-            "size": "L",
+            "size": "S",
             "status": "TODO",
-            "zone": "multi",
-            "owner": "dev-macro-indicators",
-            "co_owners": [
-              "dev-vps-crawls"
-            ],
+            "zone": "ops",
+            "owner": "ops-vps-crawls",
             "depends": [],
-            "data_source": "SBV quarterly BOP; cross-check IMF via existing get_imf_signals — geo-blocked -> VPS.",
-            "io_contract": "in {period, components?:[current_account,trade_goods,services,income,transfers,fdi_net,portfolio_net,other_investment_net,errors_omissions,overall_balance]}; out each line + sign + offshore_parked_estimate + fx_swing_line + is_estimate.",
-            "skill_consumer": "trade-fx-pressure-decomp (FX-incidence test), unified-agent/CHEF BOP walk"
+            "wave": 1,
+            "blocks": [
+              "VMT-2"
+            ],
+            "blocks_fields": [
+              "full_parser"
+            ],
+            "data_source": "https://www.sbv.gov.vn/ BOP quarterly publication, VPS-routed",
+            "note": "Determines if SBV BOP is PDF (requires pdf-extractor delegation) or Excel. E&O sign convention critical for fx_incidence discriminator (DD-6 in arch decision journal)."
           },
           {
-            "id": "VMT-3-MACRO-INDICATORS",
-            "title": "#3 get_vn_macro_indicators — pmi/iip/retail(nominal+real)/public_investment/fdi(registered+disbursed) with transform pre-computed (raw|ma3|ma5|yoy|ytd_cumulative); per-series is_estimate. (T-16/17/18/24/25).",
-            "type": "FEATURE",
+            "id": "PROBE-3",
+            "title": "ops-vps-fetch: GSO monthly socio-economic release (table structure for IIP/retail/FDI/CPI)",
+            "type": "PROBE",
             "priority": "high",
-            "size": "L",
+            "size": "S",
             "status": "TODO",
-            "zone": "multi",
-            "owner": "dev-macro-indicators",
-            "co_owners": [
-              "dev-vps-crawls",
-              "dev-mainserver-crawls"
-            ],
+            "zone": "ops",
+            "owner": "ops-vps-crawls",
             "depends": [],
-            "data_source": "GSO monthly socio-economic report (VPS) + S&P Global VN PMI press page (main-server fetch).",
-            "io_contract": "in {indicators:[pmi,iip,retail_sales_nominal,retail_sales_real,public_investment,fdi_registered,fdi_disbursed], transform?:'raw'|'ma3'|'ma5'|'yoy'|'ytd_cumulative'}; out each series with transform pre-computed + is_estimate. real = nominal stripped of CPI (T-18).",
-            "skill_consumer": "macro-health-read (production/consumption/investment tracks)"
+            "wave": 1,
+            "blocks": [
+              "VMT-3",
+              "VMT-4"
+            ],
+            "blocks_fields": [
+              "gso_indicators",
+              "cpi_baskets"
+            ],
+            "data_source": "https://www.gso.gov.vn/ monthly press release, VPS-routed; also S&P Global PMI page (not geo-blocked)",
+            "note": "Single probe answers both BLOCKER-3+4. GSO fields (IIP/retail/public-invest/FDI) + 11-basket CPI table. PMI path (S&P) is not geo-blocked; can proceed immediately without VPS probe."
           },
           {
-            "id": "VMT-4-CPI-COMPONENTS",
-            "title": "#4 get_cpi_components — 11 CPI baskets with weight + contribution (transport ~20%, housing/construction-materials, food, admin-priced edu/health) + derived cpi_peaked boolean (T-21 momentum of heaviest movers). (T-22; supports T-20/21/43).",
-            "type": "FEATURE",
+            "id": "PROBE-4",
+            "title": "ops-vps-fetch: SBV interbank + OMO pages (1w tenor explicit, OMO net outstanding)",
+            "type": "PROBE",
             "priority": "medium",
-            "size": "M",
+            "size": "S",
             "status": "TODO",
-            "zone": "multi",
-            "owner": "dev-macro-indicators",
-            "co_owners": [
-              "dev-vps-crawls"
-            ],
+            "zone": "ops",
+            "owner": "ops-vps-crawls",
             "depends": [],
-            "data_source": "GSO CPI release — geo-blocked -> VPS.",
-            "io_contract": "in {period, basis:'yoy'|'mom', weights?:bool}; out 11 baskets {weight, contribution, admin_priced?} + derived cpi_peaked + is_estimate.",
-            "skill_consumer": "macro-health-read (inflation track), market-watcher CPI peak-detection"
+            "wave": 1,
+            "blocks": [
+              "VMT-5"
+            ],
+            "blocks_fields": [
+              "interbank_1w",
+              "omo_outstanding"
+            ],
+            "data_source": "https://www.sbv.gov.vn/ interbank rate fixings + OMO auction pages, VPS-routed",
+            "note": "VMT-5 policy_rates + SJC + fx_coupling can proceed without this; only interbank_1w + omo_outstanding wait for PROBE result."
           },
           {
-            "id": "VMT-5-LIQUIDITY-STATE",
-            "title": "#5 get_vn_liquidity_state — interbank 1w rate + OMO outstanding (+delta vs peak) + refi/OMO floor + IRS + SJC-vs-world-gold gap (T-27) + CNY/DXY cross (T-28). (T-29/30; supports T-23/27/28).",
+            "id": "VMT-D-VPSFETCH",
+            "title": "Zone D: vpsFetch Go adapter + VpsFetchPort interface (shared dependency for all Zone A parsers)",
             "type": "FEATURE",
-            "priority": "medium",
-            "size": "M",
+            "priority": "high",
+            "size": "S",
             "status": "TODO",
-            "zone": "multi",
+            "zone": "apps/macro-indicators/pkg/infrastructure/",
             "owner": "dev-macro-indicators",
-            "co_owners": [
-              "dev-vps-crawls",
-              "dev-mainserver-crawls"
-            ],
             "depends": [],
-            "data_source": "SBV OMO + interbank fixings (VPS); SJC gold existing crawler (only gap-vs-world is new math); CNY/DXY main-server FX fetch.",
-            "io_contract": "in {} (latest) | {period}; out interbank_1w + omo_outstanding{value,delta_vs_peak} + refi_floor + irs + sjc_world_gold_gap + cny_dxy_cross + is_estimate.",
-            "skill_consumer": "macro-health-read (fx/liquidity), trade-fx-pressure-decomp"
+            "wave": 1,
+            "blocks": [
+              "VMT-1",
+              "VMT-2",
+              "VMT-3",
+              "VMT-4",
+              "VMT-5"
+            ],
+            "files_create": [
+              "apps/macro-indicators/pkg/infrastructure/vpsFetch.go"
+            ],
+            "files_modify": [
+              "apps/macro-indicators/pkg/domain/ports.go",
+              "apps/macro-indicators/cmd/server/main.go"
+            ],
+            "note": "Strict dependency: all Zone A parser use-cases import VpsFetchPort. Must land before any parser is written. TLS hardening per memory project_bctc_hnx_ssl_outage: --cacert pattern, not -k."
           },
           {
             "id": "VMT-6-CREDIT-FLOW-EXTEND",
-            "title": "EXTEND get_credit_flow_signal / VIRA-VARA survey path — return real {mean, dispersion, hawk/dove outliers} distribution instead of static-seed. Low-cost, no new crawl. (T-23 bank-survey consensus cross-check).",
+            "title": "Zone C: EXTEND get_credit_flow_signal with survey_distribution stub (is_estimate=true, no source probe needed)",
             "type": "ENHANCEMENT",
             "priority": "medium",
             "size": "M",
             "status": "TODO",
             "zone": "apps/mcp-server/src/interface/mcp/tools/sector/",
             "owner": "dev-mcp-server",
-            "co_owners": [
-              "dev-macro-indicators"
-            ],
             "depends": [],
-            "data_source": "Existing VIRA/VARA survey path (creditFlowTools.ts + schema-macro.ts) — replace static_seed with real survey distribution.",
-            "io_contract": "out existing signal + survey_distribution {mean, dispersion, hawk_outliers[], dove_outliers[]}; remove static-seed masquerade, set is_estimate honestly.",
-            "skill_consumer": "digest-predict (VIRA/VARA consensus cross-check)"
+            "wave": 1,
+            "blocks": [],
+            "files_modify": [
+              "apps/mcp-server/src/interface/mcp/tools/sector/creditFlowTools.ts"
+            ],
+            "note": "Additive field; no gate on BLOCKER-6. Existing is_estimate flags (mortgageIsEstimate, yoyIsEstimate, static_seed) MUST remain unchanged — regression gate on PR diff."
+          },
+          {
+            "id": "VMT-1a-TRADE-BALANCE-TOTAL-HS",
+            "title": "VMT-1a: trade-balance total + hs_attribution (NOT gated on PROBE-1; proceed immediately after VMT-D lands)",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "L",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "owner": "dev-macro-indicators",
+            "depends": [
+              "VMT-D-VPSFETCH"
+            ],
+            "wave": 2,
+            "blocks": [
+              "VMT-1b"
+            ],
+            "files_create": [
+              "apps/macro-indicators/pkg/interface/http/handlers_vmt_trade.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_trade.go",
+              "apps/macro-indicators/pkg/application/dtos_vmt_trade.go",
+              "apps/macro-indicators/pkg/domain/models_vmt_trade.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_trade.go",
+              "apps/macro-indicators/pkg/infrastructure/parsers_vmt_trade.go",
+              "apps/macro-indicators/pkg/infrastructure/cache_vmt.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_trade_test.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_trade_test.go"
+            ],
+            "files_modify": [
+              "apps/macro-indicators/pkg/interface/http/router.go",
+              "apps/macro-indicators/cmd/server/main.go"
+            ],
+            "note": "Total + hs_attribution + processing_margin logic. per_country_import. margin_series (multi-year). Cache adapter pattern (SQLite TTL 24h). DDD risk MED: processing_margin div-by-zero guard mandatory + unit test."
+          },
+          {
+            "id": "VMT-1b-TRADE-BALANCE-BLOC-SPLIT",
+            "title": "VMT-1b: trade-balance bloc_split field (GATED on PROBE-1; blocked until probe returns)",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "M",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "owner": "dev-macro-indicators",
+            "depends": [
+              "VMT-1a",
+              "PROBE-1"
+            ],
+            "wave": 3,
+            "blocks": [],
+            "files_modify": [
+              "apps/macro-indicators/pkg/domain/models_vmt_trade.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_trade.go",
+              "apps/macro-indicators/pkg/infrastructure/parsers_vmt_trade.go"
+            ],
+            "note": "FDI vs domestic-bloc split. PROBE-1 output determines parse strategy (direct table vs cross-join estimate). Blocks until probe payload captured in scripts/probes/vmt-1-sample.json."
+          },
+          {
+            "id": "VMT-2-BOP",
+            "title": "VMT-2: BOP (current acct + financial acct + E&O + offshore_parked_estimate + fx_incidence discriminator) — GATED on PROBE-2",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "L",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "owner": "dev-macro-indicators",
+            "depends": [
+              "VMT-D-VPSFETCH",
+              "PROBE-2"
+            ],
+            "wave": 2,
+            "blocks": [],
+            "files_create": [
+              "apps/macro-indicators/pkg/interface/http/handlers_vmt_bop.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_bop.go",
+              "apps/macro-indicators/pkg/application/dtos_vmt_bop.go",
+              "apps/macro-indicators/pkg/domain/models_vmt_bop.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_bop.go",
+              "apps/macro-indicators/pkg/infrastructure/parsers_vmt_bop.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_bop_test.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_bop_test.go"
+            ],
+            "files_modify": [
+              "apps/macro-indicators/pkg/interface/http/router.go",
+              "apps/macro-indicators/cmd/server/main.go"
+            ],
+            "note": "PROBE-2 determines Excel vs PDF parse path; may add excelize dep if Excel confirmed. E&O sign convention critical. FX-incidence discriminator logic (DD-5). Blocks until probe determines parse path."
+          },
+          {
+            "id": "VMT-3a-MACRO-INDICATORS-PMI",
+            "title": "VMT-3a: macro-indicators PMI (NOT gated; proceeds immediately after VMT-D lands)",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "M",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "owner": "dev-macro-indicators",
+            "depends": [
+              "VMT-D-VPSFETCH"
+            ],
+            "wave": 2,
+            "blocks": [
+              "VMT-3b"
+            ],
+            "files_create": [
+              "apps/macro-indicators/pkg/infrastructure/parsers_vmt_pmi.go"
+            ],
+            "note": "S&P Global PMI press page (not geo-blocked). Main-server fetch, no VPS needed. MA3 transform pre-computed. Parallelizable with GSO/CPI probing."
+          },
+          {
+            "id": "VMT-3b-MACRO-INDICATORS-GSO",
+            "title": "VMT-3b: macro-indicators GSO path (IIP/retail/public-investment/FDI) — GATED on PROBE-3",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "M",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "owner": "dev-macro-indicators",
+            "depends": [
+              "VMT-3a",
+              "PROBE-3"
+            ],
+            "wave": 3,
+            "blocks": [],
+            "files_create": [
+              "apps/macro-indicators/pkg/interface/http/handlers_vmt_macro.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_macro.go",
+              "apps/macro-indicators/pkg/application/dtos_vmt_macro.go",
+              "apps/macro-indicators/pkg/domain/models_vmt_macro.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_macro.go",
+              "apps/macro-indicators/pkg/infrastructure/parsers_vmt_gso_indicators.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_macro_test.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_macro_test.go"
+            ],
+            "files_modify": [
+              "apps/macro-indicators/pkg/interface/http/router.go",
+              "apps/macro-indicators/cmd/server/main.go"
+            ],
+            "note": "GSO IIP/retail/public-investment/FDI. Tết distortion flag on Jan/Feb. FDI supplemental vs new distinction. Blocks until PROBE-3 confirms table structure."
+          },
+          {
+            "id": "VMT-4-CPI-COMPONENTS",
+            "title": "VMT-4: CPI-components (11 baskets + weight + contribution + cpi_peaked boolean) — GATED on PROBE-3 (same GSO page)",
+            "type": "FEATURE",
+            "priority": "medium",
+            "size": "M",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "owner": "dev-macro-indicators",
+            "depends": [
+              "VMT-D-VPSFETCH",
+              "PROBE-3"
+            ],
+            "wave": 3,
+            "blocks": [],
+            "files_create": [
+              "apps/macro-indicators/pkg/interface/http/handlers_vmt_cpi.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_cpi.go",
+              "apps/macro-indicators/pkg/application/dtos_vmt_cpi.go",
+              "apps/macro-indicators/pkg/domain/models_vmt_cpi.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_cpi.go",
+              "apps/macro-indicators/pkg/infrastructure/parsers_vmt_cpi.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_cpi_test.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_cpi_test.go"
+            ],
+            "files_modify": [
+              "apps/macro-indicators/pkg/interface/http/router.go",
+              "apps/macro-indicators/cmd/server/main.go"
+            ],
+            "note": "11 CPI baskets (food, transport ~20%, admin-priced edu/health, etc). cpi_peaked momentum logic (3m rolling avg). Base-effect flag. Blocks until PROBE-3 confirms CPI basket table structure."
+          },
+          {
+            "id": "VMT-5a-LIQUIDITY-STATE-NO-GATE",
+            "title": "VMT-5a: liquidity-state policy_rates + SJC-gold-gap + fx_coupling (NOT gated; proceeds immediately after VMT-D lands)",
+            "type": "FEATURE",
+            "priority": "medium",
+            "size": "M",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "owner": "dev-macro-indicators",
+            "depends": [
+              "VMT-D-VPSFETCH"
+            ],
+            "wave": 2,
+            "blocks": [
+              "VMT-5b"
+            ],
+            "files_create": [
+              "apps/macro-indicators/pkg/interface/http/handlers_vmt_liquidity.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_liquidity.go",
+              "apps/macro-indicators/pkg/application/dtos_vmt_liquidity.go",
+              "apps/macro-indicators/pkg/domain/models_vmt_liquidity.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_liquidity.go",
+              "apps/macro-indicators/pkg/infrastructure/adapters_vmt_sjc_fx.go",
+              "apps/macro-indicators/pkg/domain/services_vmt_liquidity_test.go",
+              "apps/macro-indicators/pkg/application/usecases_vmt_liquidity_test.go"
+            ],
+            "files_modify": [
+              "apps/macro-indicators/pkg/interface/http/router.go",
+              "apps/macro-indicators/cmd/server/main.go"
+            ],
+            "note": "policy_rates (refi + discount) from existing sbv_rates table. SJC gap = sjc_price - world_price (world gold from commodity_prices table, usd/vnd from sbv_rates). CNY/DXY from main-server FX fetch (existing). No new VPS crawl. IRS field: is_estimate=true (DD-6)."
+          },
+          {
+            "id": "VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO",
+            "title": "VMT-5b: liquidity-state interbank_1w + OMO_outstanding — GATED on PROBE-4",
+            "type": "FEATURE",
+            "priority": "medium",
+            "size": "M",
+            "status": "TODO",
+            "zone": "apps/macro-indicators/",
+            "owner": "dev-macro-indicators",
+            "depends": [
+              "VMT-5a",
+              "PROBE-4"
+            ],
+            "wave": 3,
+            "blocks": [],
+            "files_create": [
+              "apps/macro-indicators/pkg/infrastructure/parsers_vmt_sbv_interbank_omo.go"
+            ],
+            "files_modify": [
+              "apps/macro-indicators/pkg/domain/models_vmt_liquidity.go",
+              "apps/macro-indicators/pkg/infrastructure/adapters_vmt_sjc_fx.go"
+            ],
+            "note": "SBV interbank 1w tenor (primary benchmark) + OMO net outstanding. PROBE-4 confirms explicit 1w tenor vs tenor grid derivation + OMO outstanding calculation. Blocks until probe returns."
+          },
+          {
+            "id": "VMT-7a-TRADE-BALANCE-HANDLER",
+            "title": "VMT-7a: MCP handler get_vn_trade_balance (Zone B, TS, HTTP proxy to Zone A endpoint)",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "S",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "VMT-1b"
+            ],
+            "wave": 4,
+            "blocks": [
+              "VMT-7-REGISTER"
+            ],
+            "files_create": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/tradeBalanceTools.ts"
+            ],
+            "files_modify": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/index.ts"
+            ],
+            "note": "Thin HTTP proxy pattern (existing macroTools.ts as reference). Zod schema matches FR-1 contract exactly. No domain logic. tsc --noEmit parity gate."
+          },
+          {
+            "id": "VMT-7b-BOP-HANDLER",
+            "title": "VMT-7b: MCP handler get_vn_bop (Zone B, TS, HTTP proxy to Zone A endpoint)",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "S",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "VMT-2"
+            ],
+            "wave": 4,
+            "blocks": [
+              "VMT-7-REGISTER"
+            ],
+            "files_create": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/bopTools.ts"
+            ],
+            "files_modify": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/index.ts"
+            ],
+            "note": "Thin HTTP proxy pattern. Zod schema matches FR-1 contract. No domain logic."
+          },
+          {
+            "id": "VMT-7c-MACRO-INDICATORS-HANDLER",
+            "title": "VMT-7c: MCP handler get_vn_macro_indicators (Zone B, TS, HTTP proxy to Zone A endpoint)",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "S",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "VMT-3b"
+            ],
+            "wave": 4,
+            "blocks": [
+              "VMT-7-REGISTER"
+            ],
+            "files_create": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/macroIndicatorsVnTools.ts"
+            ],
+            "files_modify": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/index.ts"
+            ],
+            "note": "Thin HTTP proxy pattern. Zod schema matches FR-1 contract. No domain logic."
+          },
+          {
+            "id": "VMT-7d-CPI-COMPONENTS-HANDLER",
+            "title": "VMT-7d: MCP handler get_cpi_components (Zone B, TS, HTTP proxy to Zone A endpoint)",
+            "type": "FEATURE",
+            "priority": "high",
+            "size": "S",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "VMT-4"
+            ],
+            "wave": 4,
+            "blocks": [
+              "VMT-7-REGISTER"
+            ],
+            "files_create": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/cpiComponentsTools.ts"
+            ],
+            "files_modify": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/index.ts"
+            ],
+            "note": "Thin HTTP proxy pattern. Zod schema matches FR-1 contract. No domain logic."
+          },
+          {
+            "id": "VMT-7e-LIQUIDITY-STATE-HANDLER",
+            "title": "VMT-7e: MCP handler get_vn_liquidity_state (Zone B, TS, HTTP proxy to Zone A endpoint)",
+            "type": "FEATURE",
+            "priority": "medium",
+            "size": "S",
+            "status": "TODO",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "VMT-5b"
+            ],
+            "wave": 4,
+            "blocks": [
+              "VMT-7-REGISTER"
+            ],
+            "files_create": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/liquidityStateTools.ts"
+            ],
+            "files_modify": [
+              "apps/mcp-server/src/interface/mcp/tools/macro/index.ts"
+            ],
+            "note": "Thin HTTP proxy pattern. Zod schema matches FR-1 contract. No domain logic."
           },
           {
             "id": "VMT-7-REGISTER",
-            "title": "Tool registration + gateway-surface orchestration — register get_vn_trade_balance / get_vn_bop / get_vn_macro_indicators / get_cpi_components / get_vn_liquidity_state in mcp-server; verify each reachable via call_tool wrapper (list_server_tools/search_tools); registry parity test.",
+            "title": "VMT-7: Tool registration + gateway-surface orchestration (registry.ts + discoverability gate)",
             "type": "INFRASTRUCTURE",
             "priority": "high",
             "size": "M",
             "status": "TODO",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "owner": "dev-mcp-server",
-            "co_owners": [],
             "depends": [
-              "VMT-1-TRADE-BALANCE",
-              "VMT-2-BOP",
-              "VMT-3-MACRO-INDICATORS",
-              "VMT-4-CPI-COMPONENTS",
-              "VMT-5-LIQUIDITY-STATE"
+              "VMT-7a-TRADE-BALANCE-HANDLER",
+              "VMT-7b-BOP-HANDLER",
+              "VMT-7c-MACRO-INDICATORS-HANDLER",
+              "VMT-7d-CPI-COMPONENTS-HANDLER",
+              "VMT-7e-LIQUIDITY-STATE-HANDLER"
             ],
-            "data_source": "n/a — orchestration/registration.",
-            "io_contract": "Each new tool discoverable + invocable via gateway; SCHEMA-CONTRACT acceptance verified LIVE (call_tool returns the schema the skills switch onto). Run-last gate, mirrors TOOL-SURFACE-UPGRADE U2-PARITY.",
-            "skill_consumer": "all (enables skill switch-on)"
+            "wave": 5,
+            "blocks": [],
+            "files_modify": [
+              "apps/mcp-server/src/interface/mcp/tools/registry.ts"
+            ],
+            "note": "Register 5 new tools in registry.ts. Test: list_server_tools + search_tools + call_tool each returns valid response. Schema-contract verification (skill switch-on acceptance). pnpm check + tsc --noEmit parity gate."
           }
         ]
       }
