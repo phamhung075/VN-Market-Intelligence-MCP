@@ -56,6 +56,28 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-06-15 (VMT-8-MACRO-GRACEFUL-FAILCLOSE)
+
+**Task:** Graceful fail-close on upstream-fetch failure for all 5 Zone-A use-cases (trade/bop/macro/cpi/liquidity). Was returning opaque HTTP 500 on VPS proxy down / NSO Excel parse error.
+
+**Root cause confirmed:** `errorXxxResponse` builders in all 5 use-cases returned `(populatedDegradedDTO, fmt.Errorf(...))`. Handler's `if err != nil { 500 }` discarded the good DTO.
+
+**Fix pattern (one shared, applied uniformly):**
+- New `degradedXxxResponse(blockedReason)` → returns `(resp, nil)`: Status="degraded", IsEstimate=true, BlockedReason naming unreachable source. Handler emits HTTP 200.
+- Kept `errorXxxResponse(msg)` → returns `(resp, err)`: Status="error". Handler emits HTTP 500. Only for nil-provider/wiring faults.
+- Upstream-fetch/parse errors in Execute now call degraded path; nil-provider guards call error path.
+- `degradedLiquidityResponse` added to harden liquidity's latent bug (Execute already handles upstream blocs non-fatally inline; function available for future whole-response degrade).
+
+**DTOs extended:** `BlockedReason string json:"blocked_reason,omitempty"` added to TradeBalanceResponse, BOPResponse, MacroIndicatorsGSOResponse, CPIComponentsResponse, LiquidityStateResponse.
+
+**Permanent invariants preserved on degraded paths:** BlocSplit FDI/Domestic.IsEstimate=true (ARCH Decision A), IRS.IsEstimate=true (DD-6), Interbank1W.IsEstimate=true + Rate1WPct=nil (architect Decision B), WeightsIsEstimate=true.
+
+**Test gates:** G1 (8 use-case unit tests: fetch+parse failure per use-case), G2 (4 handler HTTP-200 tests via forced-failure fixture), G3 (8 nil-provider HTTP-500 regression), G4 (3 permanent-invariant table tests). 209 tests total, all PASS.
+
+**Commit:** 7a176a44 — 14 files, apps/macro-indicators/** only.
+
+---
+
 ## Archive: Earlier Sessions (2026-06-13 through 2026-05-30)
 
 Sessions VMT-5a, VMT-1a/1b, VMT-3b/VMT-4, VMT-2 (WAVE-2 A1-A5), TSU-DEV-U4, FIX-MACRO-GO-DIRECTIVE, FIX-MACRO-REFRESH-DEAD, U4 direction+delta sweep, and pre-2026-06-07 work (P1-E1, P2-X1–P2-X4, MACRO-SEED-WIRING, Docker fixes). See git history commits c712d96...9880eadc (2026-06-14 and prior).
