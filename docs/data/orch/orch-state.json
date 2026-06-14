@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T21:18:43Z",
+    "updated_at": "2026-06-14T21:38:25Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
-    "next_agent": "dev",
-    "note": "VN-MACRO-TOOLING A4=VMT-5a-LIQUIDITY-STATE-NO-GATE DONE (a937e5e2, commit 226be604, router RAW-verified: 11 files ALL in-zone + dev notebook 1826 ins, foreign-capture guard passed/hygiene HELD 4th commit, go build + go test ./... ALL GREEN 11 pkgs, IRS+SJC is_estimate=true fail-closed incl error path, market.db LIVE named volume /app/data NOT host ./data, NO new crawl/dep, TLS InsecureSkipVerify:false, route /liquidity-state wired, A4 merge gate SATISFIED). -> A4->A5 GATE OPEN (FINAL): A5 = VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO DISPATCHED to dev-macro-indicators (SINGLE task, NEW parsers_vmt_sbv_interbank_omo.go: OMO net-outstanding tally from SBV nghiep-vu-thi-truong-mo Liferay HTML, --cacert; interbank_1w is_estimate=true PERMANENT Decision B dttktt 100% packet loss; irs DD-6 permanent). VMT-5b is the FINAL serial Zone-A task — on done+green WAVE-2 serial chain CLOSED -> VMT-7a-e + VMT-7-REGISTER handler-registration wave next. SERIAL Zone-A: one dev-macro-indicators agent at a time. VMT-3a-PMI blocked-probe5 (S&P dev-local). KINHDICH-HOVER-DETAIL chain CLOSED done_verified (e4e4991b). Commit explicit path only."
+    "next_agent": "pm",
+    "note": "VN-MACRO-TOOLING A5=VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO DONE (aa62d59b, commit 399b4a36, router RAW-verified: 10 files ALL in-zone + dev notebook 1484 ins, foreign-capture guard passed/hygiene HELD 5th commit, go.mod UNTOUCHED, HEAD on main, go build + go test ./... ALL GREEN 11 pkgs; interbank_1w is_estimate=true+rate null+blocked_reason BOTH paths Decision B; IRS is_estimate=true DD-6 incl error path; OMO net=add-absorb anchor 1217.45 bn fail-closed; TLS InsecureSkipVerify:false no -k DIRECT www.sbv.gov.vn NO VPS; market.db LIVE named volume; A5 merge gate SATISFIED). === WAVE-2 SERIAL ZONE-A CHAIN CLOSED: A1=VMT-2-BOP -> A2=VMT-3b+VMT-4 -> A3=VMT-1a+VMT-1b -> A4=VMT-5a -> A5=VMT-5b ALL DONE. === -> NEXT PHASE head dev->pm: VMT-7 Zone-B wave (apps/mcp-server/src/interface/mcp/tools/macro/ TS MCP-handler thin proxies to the now-live Zone-A HTTP endpoints) is UNSEQUENCED (serial_dispatch_order=null, merge_gate=null) + NEW ZONE (dev-mcp-server) -> pm breaks down: VMT-7a get_vn_trade_balance / 7b get_vn_bop / 7c get_vn_macro_indicators / 7d get_cpi_components / 7e get_vn_liquidity_state (separate handler files in tools/macro/, no shared file among a-e -> parallelizable WIP-gated) THEN merge gate -> VMT-7-REGISTER (registry.ts + discoverability gate, shared file, runs AFTER all 5 handlers exist). pm attaches per-handler contract (Zone-A endpoint URL + HTTP path + response DTO shape) to each. VMT-3a-PMI blocked-probe5 (S&P dev-local). KINHDICH-HOVER-DETAIL chain CLOSED done_verified (e4e4991b). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T21:18:43Z",
+    "_updated_at": "2026-06-14T21:38:25Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -6070,7 +6070,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "M",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -6105,7 +6105,11 @@
             "merge_gate": "MERGE GATE A4→A5: VMT-5a merge complete before A5 starts. FINAL WAVE-2 task in serial chain.",
             "dispatched_at": "2026-06-14T21:18:43Z",
             "dispatch_agent": "dev-macro-indicators",
-            "dispatch_unit": "A5 (FINAL serial Zone-A task — VMT-5b interbank+OMO; A4->A5 merge gate SATISFIED). NEW FILE parsers_vmt_sbv_interbank_omo.go ONLY (+ wire into existing liquidity-state usecase/handler from A4 — extend, do not duplicate). OMO from www.sbv.gov.vn nghiep-vu-thi-truong-mo Liferay HTML (Mua ky han add/reverse-repo + Ban ky han absorb + Tin phieu; net_outstanding = sum(add) - sum(absorb), maturity-date aware; --cacert NOT -k, NO VPS proxy — same SBV site as BOP/A4). probe_sample scripts/probes/vmt-4-sample.json (OMO section; June-12-2026 408KB HTML OMO PASS — confirm each month release URL pattern stable). interbank_1w is_estimate=true PERMANENT + rate_1w_pct=null + blocked_reason='dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)' (architect Decision B — NEVER flip false, no public alternative: WiData off-limits, NSO narrative unreliable, no Bloomberg/Refinitiv). irs.is_estimate=true PERMANENT (DD-6, same pattern). On done+green -> A5 is FINAL WAVE-2 task: WAVE-2 serial chain CLOSED -> then VMT-7a-e handler-registration wave + VMT-7-REGISTER. Explicit-path commit ONLY (apps/macro-indicators/** + your notebook — NEVER git add -A/orch-state/ops.md/foreign notebooks)."
+            "dispatch_unit": "A5 (FINAL serial Zone-A task — VMT-5b interbank+OMO; A4->A5 merge gate SATISFIED). NEW FILE parsers_vmt_sbv_interbank_omo.go ONLY (+ wire into existing liquidity-state usecase/handler from A4 — extend, do not duplicate). OMO from www.sbv.gov.vn nghiep-vu-thi-truong-mo Liferay HTML (Mua ky han add/reverse-repo + Ban ky han absorb + Tin phieu; net_outstanding = sum(add) - sum(absorb), maturity-date aware; --cacert NOT -k, NO VPS proxy — same SBV site as BOP/A4). probe_sample scripts/probes/vmt-4-sample.json (OMO section; June-12-2026 408KB HTML OMO PASS — confirm each month release URL pattern stable). interbank_1w is_estimate=true PERMANENT + rate_1w_pct=null + blocked_reason='dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)' (architect Decision B — NEVER flip false, no public alternative: WiData off-limits, NSO narrative unreliable, no Bloomberg/Refinitiv). irs.is_estimate=true PERMANENT (DD-6, same pattern). On done+green -> A5 is FINAL WAVE-2 task: WAVE-2 serial chain CLOSED -> then VMT-7a-e handler-registration wave + VMT-7-REGISTER. Explicit-path commit ONLY (apps/macro-indicators/** + your notebook — NEVER git add -A/orch-state/ops.md/foreign notebooks).",
+            "done_at": "2026-06-14T21:38:25Z",
+            "done_commit": "399b4a36",
+            "done_agent": "aa62d59b",
+            "router_dev_reverify_verdict": "RAW-VERIFIED (not the dev badge): git show 399b4a36 --stat = EXACTLY 10 files, ALL apps/macro-indicators/** (9) + dev notebook (1), 1484 insertions; FOREIGN-CAPTURE GUARD passed (no orch-state/ops.md/signal sweep — hygiene HELD 5th commit); go.mod UNTOUCHED; HEAD==399b4a36 on main (merge gate satisfied). go build ./... PASS + go test ./... -count=1 ALL GREEN (11 pkgs, independent re-run). INVARIANTS RAW-confirmed in source: interbank_1w fail-closed BOTH paths (usecases:259-261 success Rate1WPct=nil+IsEstimate=true+BlockedReason; :297-299 error path nil+true+'dttktt.sbv.gov.vn unreachable from VPS 100% packet loss' — architect Decision B); IRS is_estimate=true PERMANENT incl error path (services:55-56 BuildIRSField always; usecases:245 success + :282 error both true, DD-6); OMO net=TotalAdd-TotalAbsorb maturity-aware (parsers:131, ParseOK guard :143, BuildOMOFailed fail-closed true / BuildOMOSuccess false-from-parsed; anchor June-12 35d217.45+56d1000.00=net1217.45 bn VND); TLS InsecureSkipVerify=false ALWAYS no -k, OMO DIRECT www.sbv.gov.vn NO VPS (parsers:75-81); market.db LIVE named volume repositories.go:147-149 DB_PATH /app/data/market.db NOT host ./data, :165 mode=ro. golangci-lint 0. A5 merge gate SATISFIED — WAVE-2 serial Zone-A chain CLOSED."
           },
           {
             "id": "VMT-7a-TRADE-BALANCE-HANDLER",
