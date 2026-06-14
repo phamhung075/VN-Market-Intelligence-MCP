@@ -88,9 +88,9 @@
     "status": "in_progress",
     "updated_at": "2026-06-14T11:40:00Z",
     "updated_by": "architect",
-    "active_task_id": "ARCH-CRON-SCHEDULER-RELIABILITY",
-    "next_agent": "pm",
-    "note": "ARCH-CRON-SCHEDULER-RELIABILITY design COMPLETE. Brief at docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md. 4-lever fix (recoverMissedExecutions uniform + T4 dedup guards + jitter shifts + schedulerWatchdog). next_agent=pm for task breakdown. IMPL gated on FIX-MCP-CRASH-LOOP-WRITEWAL (done_verified 09e2586b)."
+    "active_task_id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
+    "next_agent": "dev-mcp-server",
+    "note": "ARCH-CRON-SCHEDULER-RELIABILITY umbrella → T1 (T4 dedup guards, READY, next_agent=dev-mcp-server). T2 and T3 READY but sequenced: T2 depends[T1], T3 depends[T2]. deploy-gate FIX-MCP-CRASH-LOOP-WRITEWAL verified live."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -417,8 +417,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T10:40:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-14T12:00:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11927,15 +11927,90 @@
         "type": "SPRINT-S",
         "verification_gate": "Prove the cluster auto-fires durably, not just that one manual run works: (G1) ohlcvDailyAggregatorJob auto-fires next VN market day — get_pipeline_health 'Aggregator last run' advances to that day with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires on its cadence and repopulates financial tables (live VCB/ACB/CTG rows newer than the run) with NO manual trigger; (G3) reputationComputeJob fires at its 08:30 tick on a market day even with peer jobs on the same minute (cron_job_runs row present, no miss); (G4) inject loop-saturation at a scheduled tick in test and assert the tick is recovered/emitted (regression test for the dropped-tick class, mirroring EVIDENCE-ACCUM-SILENT-CRON.test.ts); (G5) missed-fire watchdog emits a WORK alert + self-heal when a job's last_run age > 2x cadence. QA verifies LIVE raw (pipeline-health payload + cron_job_runs rows), never badges. Ship completion across the whole cluster, not one job.",
         "zone": "apps/mcp-server/",
-        "next_agent": "pm",
+        "next_agent": "dev-mcp-server",
         "claimed_at": "2026-06-14T11:34:55Z",
         "claimed_by": "dev-team",
-        "dispatch_note": "Router routed PO BATCH (tick 11:06Z). DESIGN stage -> architect (recurring-bug escalation, recurrence_count 3). zone apps/mcp-server/ free post-FIX-MCP-500; dep FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) -> IMPL gate sound. Architect designs the DEFINITIVE node-cron scheduler fix per A/B/C/D levers + G1-G5 verification gate; NO per-job symptom patch. IMPL (dev-mcp-server) SEQUENCED after brief, bun tests BEFORE ops rebuild (RED-PREPUSH), targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down), LIVE-verify auto-fire (pipeline-health + cron_job_runs), never badges.",
+        "dispatch_note": "Router routed PO BATCH (tick 11:06Z). DESIGN stage -> architect (recurring-bug escalation, recurrence_count 3). zone apps/mcp-server/ free post-FIX-MCP-500; dep FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) -> IMPL gate sound. Architect designs the DEFINITIVE node-cron scheduler fix per A/B/C/D levers + G1-G5 verification gate; NO per-job symptom patch. IMPL (dev-mcp-server) SEQUENCED after brief, bun tests BEFORE ops rebuild (RED-PREPUSH), targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down), LIVE-verify auto-fire (pipeline-health + cron_job_runs), never badges. [PM 2026-06-14T12:00Z] Task breakdown: T1 (T4 dedup guards) → T2 (recoverMissedExecutions + jitter) → T3 (watchdog) dispatched to dev-mcp-server. Hard ordering enforced: T1 BEFORE T2 (dedup precondition), T2 BEFORE T3. IMPL gate (FIX-MCP-CRASH-LOOP-WRITEWAL commit 09e2586b) verified done_verified.",
         "design_complete_at": "2026-06-14T11:40:00Z",
-        "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md"
+        "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
+        "next_task": "T1-ARCH-CRON-T4-DEDUP-GUARDS"
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
+        "title": "ARCH-CRON Phase 1a: T4 idempotency dedup guards on 26 jobs — precondition for recoverMissedExecutions",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "READY",
+        "depends": [],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "All T4 jobs (ohlcvDailyAggregatorJob, vnstockFundamentalsRefresh, reputationComputeJob, baseRateComputation, predictionResolution, calibrationReport, weeklyPortfolioReport, devTeamHeartbeat, verdictResolutionJob, signalOutcomeJob, alertOutcomeJob, dataAuditDaily, dataAuditWeekly, etc.) have a cron_job_runs recency check: if last successful run < 90% of declared cadence, skip recovery replay. JSDoc @idempotency T4 documented on each. bun test PASS on guard logic. Commit per docs/policies/commit-convention.md.",
+        "acceptance": {
+          "AC1": "All 26 T4 jobs modified with shouldRunCatchup()-style guard using jobRunRepo.getLastRuns()",
+          "AC2": "Each job has @idempotency JSDoc tag indicating T1/T2/T3/T4 tier",
+          "AC3": "bun test passes; no new test failures introduced",
+          "AC4": "PR review confirms dedup logic vs declared cadence matches (daily=86.4M, weekly=604.8M, etc.)"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "MANDATORY PRECONDITION before T2. Lever 2 from architect brief. Touches 13 job files per brief §5.2. No infrastructure changes; uses existing jobRunRepo.getLastRuns() method."
+      },
+      {
+        "id": "T2-ARCH-CRON-RECOVER-JITTER",
+        "title": "ARCH-CRON Phase 1b+1c: uniform recoverMissedExecutions + deterministic jitter on 8 high-collision jobs",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "READY",
+        "depends": [
+          "T1-ARCH-CRON-T4-DEDUP-GUARDS"
+        ],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "All 50+ cron.schedule() calls in startScheduler.ts have { recoverMissedExecutions: true } (except foreignFlowFetch which is every-minute). cronConfig.ts has 8 schedule shifts: ohlcvDailyAggregatorJob 0→3min, vnstockFundamentalsRefresh 0→5min, reputationComputeJob 30→33min, baseRateComputation 0→7min, predictionResolution 30→35min, calibrationReport 0→4min, cascadeBacktest 30→37min, dailyDashboard 30→38min. Env-override keys still present. bun test passes. tsc 0 errors.",
+        "acceptance": {
+          "AC1": "startScheduler.ts: all non-foreignFlowFetch cron.schedule() calls have recoverMissedExecutions: true",
+          "AC2": "cronConfig.ts: 8 default schedule keys updated with jitter offsets (3/5/33/7/35/4/37/38 minutes per brief §4.3)",
+          "AC3": "Bun.env.CRON_* override pattern verified for at least 3 jobs",
+          "AC4": "bun test passes; git diff startScheduler + cronConfig reviewed for missed sites"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "MUST follow T1 (dedup guards must be in place before replay). Lever 1 + Lever 3 from architect brief. Touches 2 core files. High-risk merge: 50+ sites touched in startScheduler.ts. Split from T1 to reduce rebase conflict surface."
+      },
+      {
+        "id": "T3-ARCH-CRON-WATCHDOG",
+        "title": "ARCH-CRON Phase 2: schedulerWatchdogJob.ts + tests — detect & self-heal missed fires",
+        "type": "SPRINT-S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "READY",
+        "depends": [
+          "T2-ARCH-CRON-RECOVER-JITTER"
+        ],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "New file apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts implements runSchedulerWatchdog() with WATCHDOG_MANIFEST (16 monitored jobs, cadenceMs + thresholdMultiplier + action). Registered in startScheduler.ts on */10 * * * * schedule with recoverMissedExecutions: true. 3 test files pass: ARCH-CRON-watchdog.test.ts (5 unit tests on alert/self-heal/rate-limit logic), ARCH-CRON-idempotency.test.ts (T4 dedup under replay), ARCH-CRON-recovery.test.ts (loop-saturation simulation). Live: after deploy, watchdog fires cron_job_runs row every 10 min. tsc 0 errors.",
+        "acceptance": {
+          "AC1": "schedulerWatchdogJob.ts created per brief §7 interface spec",
+          "AC2": "WATCHDOG_MANIFEST hardcoded with 16 entries (ohlcvDailyAggregatorJob=self-heal, vnstockFundamentalsRefresh=alert-only, etc.)",
+          "AC3": "Registered in startScheduler.ts + cronConfig.ts schedulerWatchdog key added",
+          "AC4": "ARCH-CRON-watchdog.test.ts (5 tests): no alert within cadence, alert at 1.5x, self-heal calls wrapRun, dedup prevents double execution, 2h rate-limit",
+          "AC5": "ARCH-CRON-idempotency.test.ts: per-job recovery replay tests for ohlcv, reputation, calibration",
+          "AC6": "ARCH-CRON-recovery.test.ts: event-loop saturation simulation + tick recovery verification",
+          "AC7": "bun test all green; tsc 0 errors; git diff shows only watchdog/* + test files"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "Lever 4 from architect brief. Builds on T1+T2. New scheduler/system/ module. 3 test files mirror EVIDENCE-ACCUM-SILENT-CRON test strategy. Rate-limit map in-process (no WAL writes from watchdog). Reads cron_job_runs via jobRunRepo injection (DDD clean)."
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -11979,6 +12054,6 @@
       }
     ]
   },
-  "updated_at": "2026-06-14T10:50:00Z",
-  "updated_by": "ops"
+  "updated_at": "2026-06-14T12:00:00Z",
+  "updated_by": "pm"
 }
