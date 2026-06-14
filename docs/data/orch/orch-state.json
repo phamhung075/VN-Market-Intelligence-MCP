@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-14T11:02:33Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-14T16:00:00Z",
+  "_updated_by": "architect",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -12215,7 +12215,7 @@
         "type": "FIX",
         "owner": "dev-mcp-server",
         "route": "architect",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "size": "S",
         "priority": "P1",
         "recurring": true,
@@ -12235,10 +12235,14 @@
         ],
         "created_at": "2026-06-14T14:45:14Z",
         "created_by": "po-S50",
-        "next_agent": "architect",
+        "next_agent": "dev-mcp-server",
         "claimed_at": "2026-06-14T14:51:55Z",
         "claimed_by": "dev-team",
-        "dispatch_note": "Router dispatched (tick post-T3-done, zone free; PO S50 handoff). RECURRING [Lock orphaned by rebuild] — LET-EXPIRE remedy FAILED (acquire refused 11.5h past TTL expiry). architect: design a GENERIC TTL-reclaim for refine lock-acquire covering ALL refine slots (refine-bctc-slot-1/2 + future), so a lock whose expires_at < now is reclaimable on the next acquire — BUT with steal-safety so it NEVER reclaims from a LIVE-but-slow worker (heartbeat/liveness or fencing token; the refine worker already heartbeats? confirm). Root-cause WHY LET-EXPIRE failed: does acquire even CHECK expires_at, or does it unconditionally refuse on any existing row? Read the refine lock-acquire path (push_bctc_refined_unit / finalize_bctc_refine / the refine task_claim) + the lock table schema. Output a tight brief to docs/architecture-briefs/ + signal dev-mcp-server to implement. Gates for the eventual impl: tsc 0 + a regression test that an expired lock is reclaimed AND a live-heartbeating lock is NOT stolen. Unblocks refine_bctc_md (report bdcfa5e0 VCB Q4.2025 7/26 windows + VCB Q1 / HPG Q4 / GVR_2026_Q1 / HPG_2026_Q1 / HVN_2026_Q1 pending). FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP sequenced BEHIND this (same zone, serialized). Commit by explicit path only — concurrent agent has coverage-state.json + cowork-schedule.json dirty."
+        "dispatch_note": "Router dispatched (tick post-T3-done, zone free; PO S50 handoff). RECURRING [Lock orphaned by rebuild] — LET-EXPIRE remedy FAILED (acquire refused 11.5h past TTL expiry). architect: design a GENERIC TTL-reclaim for refine lock-acquire covering ALL refine slots (refine-bctc-slot-1/2 + future), so a lock whose expires_at < now is reclaimable on the next acquire — BUT with steal-safety so it NEVER reclaims from a LIVE-but-slow worker (heartbeat/liveness or fencing token; the refine worker already heartbeats? confirm). Root-cause WHY LET-EXPIRE failed: does acquire even CHECK expires_at, or does it unconditionally refuse on any existing row? Read the refine lock-acquire path (push_bctc_refined_unit / finalize_bctc_refine / the refine task_claim) + the lock table schema. Output a tight brief to docs/architecture-briefs/ + signal dev-mcp-server to implement. Gates for the eventual impl: tsc 0 + a regression test that an expired lock is reclaimed AND a live-heartbeating lock is NOT stolen. Unblocks refine_bctc_md (report bdcfa5e0 VCB Q4.2025 7/26 windows + VCB Q1 / HPG Q4 / GVR_2026_Q1 / HPG_2026_Q1 / HVN_2026_Q1 pending). FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP sequenced BEHIND this (same zone, serialized). Commit by explicit path only — concurrent agent has coverage-state.json + cowork-schedule.json dirty.",
+        "design_brief": "docs/architecture-briefs/2026-06-14-fix-refine-lock-ttl-reclaim.md",
+        "design_complete_at": "2026-06-14T16:00:00Z",
+        "root_cause_confirmed": "Vector 1 PRIMARY: flow/main.md calls task_heartbeat+task_release WITHOUT owner_agent → legacy-path zombie after server rebuild → lock not released → orphaned. Vector 2: claimTask Step 2 TTL-steal is correct and functional once Vector 1 is fixed. Vector 3: heartbeat guards expires_at>=now (correct); tight TTL=1000s for 7-window chunk. Fix: add owner_agent:refine-orchestrator to task_heartbeat+task_release in flow doc (3 line changes) + ttl_seconds 1000→1800. No schema change. Idempotency confirmed (INSERT OR REPLACE UNIQUE(report_id,unit_id)).",
+        "ops_action_required": "task_force_release_orphan bctc-refine:bdcfa5e0 owner_agent=refine-orchestrator orphan_threshold_seconds=120 to unblock backlog immediately (before next daily slot fire)"
       }
     ],
     "ready": [

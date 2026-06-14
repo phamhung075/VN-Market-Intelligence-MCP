@@ -1,8 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 10:45 UTC | **Sprint:** DOCLANG-SERIALIZE
+**Last updated:** 2026-06-14 16:00 UTC | **Sprint:** DOCLANG-SERIALIZE
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T16:00Z — FIX-REFINE-LOCK-TTL-RECLAIM Design Brief (DESIGN, REVIEW)
+
+**Task:** FIX-REFINE-LOCK-TTL-RECLAIM | zone: apps/mcp-server/ (coordinationStore + refine_bctc_md flow)
+**Output:** docs/architecture-briefs/2026-06-14-fix-refine-lock-ttl-reclaim.md
+**next_agent:** dev-mcp-server
+
+**Root cause confirmed (3 vectors):**
+- V1 PRIMARY: flow/main.md calls task_heartbeat + task_release WITHOUT owner_agent → legacy-path (SERVER_SESSION_ID) → zombie after server rebuild → lock NOT released → orphaned.
+- V2: claimTask Step 2 (UPDATE WHERE expires_at < now) is correct and works. TTL-steal is NOT broken. It was not reached because: (a) concurrent cowork-team log lag reported stale expires_at, or (b) an unrelated second claim within TTL window blocked the steal at 14:09Z. In either case, fixing V1 (proper release) eliminates the orphan condition.
+- V3: Heartbeat guards expires_at >= now (correct). ttl_seconds=1000 (16.7 min) is tight for 7 × 120s chunk; recommended 1800s.
+- Idempotency confirmed: push_bctc_refined_unit uses INSERT OR REPLACE on UNIQUE(report_id, unit_id). Sequential processing model + skip-set dedup makes TTL-steal safe.
+
+**Fix (3 line changes in flow doc, zero schema changes):**
+- Add `owner_agent: "refine-orchestrator"` to task_heartbeat (line 82) and both task_release calls (line 97 + error boundary line 101) in flow/main.md.
+- Change ttl_seconds 1000 → 1800 (line 37).
+- Ops: task_force_release_orphan for bdcfa5e0 immediately (heartbeat_at stale by hours).
+- Regression tests T1–T5 in FIX-REFINE-LOCK-TTL-RECLAIM.test.ts (gate: tsc 0 + T1–T5 green).
+
+**Key finding:** No changes to coordinationStore.ts or schema. Generic coverage: owner_agent path in heartbeat/release already covers all refine slot lock keys (same stable owner_agent "refine-orchestrator" regardless of slot-1 or slot-2 fire).
+**BUILD-STANDARD:** not-applicable (bug-fix).
 
 ## 2026-06-14T10:45Z — SPIKE-DOCLANG-AUTHORED-DOCS (SPIKE, DONE)
 
