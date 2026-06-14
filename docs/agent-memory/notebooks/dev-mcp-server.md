@@ -168,3 +168,17 @@ Zone health: bun test 12880 pass, 157 tools intact, 79 cron.schedule, check.kind
 **Tests:** 34 pass / 0 fail isolation. 34 pass / 0 fail standard. tsc clean. Tool count 157, scheduler 79.
 **Repro script:** scripts/repro-ci-red-b7b84d9b.sh
 Zone health: tsc clean, 157 tools intact, 79 cron.schedule, CI-RED flake fixed | HEALTHY
+
+---
+
+## 2026-06-14 · FIX-MCP-500-SYMBOL-TO-STRING — WebStandardStreamableHTTPServerTransport — REVIEW
+
+**Task:** FIX-MCP-500-SYMBOL-TO-STRING | Priority: P0 | Zone: apps/mcp-server/
+**Root cause:** `StreamableHTTPServerTransport` (SDK 1.29.0) bridges Node.js HTTP through `@hono/node-server` which defines 13 Symbol-keyed prototype properties (`urlKey`, `headersKey`, `incomingKey`, `wrapBodyStream`, ...). Under Bun 1.3.13 JIT corruption (triggered ~80 min after startup during heavy `ohlcvBackfill` processing of 1608 tickers), accessing these Symbol keys attempts `Symbol→string` coercion and throws `TypeError: Cannot convert a symbol to a string` on every `/mcp` request — total cowork fleet outage.
+**Fix:** Replaced `StreamableHTTPServerTransport` with `WebStandardStreamableHTTPServerTransport` in `apps/mcp-server/src/interface/mcp/server.ts`. Added `incomingToWebRequest()` + `pipeWebResponseToNode()` helpers to bridge `Node.js IncomingMessage/ServerResponse` ↔ Web Standard `Request/Response` using `Readable.toWeb()` — no @hono/node-server dependency, no Symbol-keyed property access on the `/mcp` hot path.
+**Files:** apps/mcp-server/src/interface/mcp/server.ts (+100 lines, -5 lines)
+**Commit:** e69b354f
+**Tests:** tsc 0 errors. bun test 12847 pass, 0 new failures (53 pre-existing deprecated-test failures unchanged).
+**Local verify:** /vn-market/mcp POST → event:message 200; /vn-market/sse → event:endpoint 200; /health → 200 toolCount:157.
+**Next:** ops rebuild --no-cache mcp-server + force-recreate → live proof via call_tool get_market_snapshot.
+Zone health: tsc clean, 157 tools intact, 79 cron.schedule, Symbol-TypeError eliminated | REVIEW
