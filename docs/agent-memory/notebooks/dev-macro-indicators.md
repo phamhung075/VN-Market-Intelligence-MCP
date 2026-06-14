@@ -78,6 +78,32 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-06-15 (F-MACRO-FETCH-DEADLINE — reliability fix, size S)
+
+**Task:** Bound ALL outbound VPS fetches to `domain.FetchBudgetSec` (8s) so a hanging NSO/SBV origin fires `ctx.DeadlineExceeded` within budget → VMT-8 degrade path → HTTP 200 degraded-200. Previously callers set `TimeoutSec: 30` across 3 chained fetches (up to ~90s) causing gateway-timeout before degrade path fired.
+
+**Root cause confirmed (code read):**
+- `cache_vmt_nso.go discoverAndFetch`: `TimeoutSec: 30` on all 3 steps, outer ctx had no deadline → 3×30s = 90s hang window.
+- `usecases_vmt_bop.go fetchAndParseQuarter`: `TimeoutSec: 30`, plus fallback quarter = 2×30s = 60s.
+- `vpsFetch.go` zero-timeout fallback hardcoded `30 * time.Second`.
+
+**Fix (single SSOT — no scatter):**
+- Added `domain.FetchBudgetSec = 8` const in `pkg/domain/ports.go` — accessible to all layers, never hardcoded elsewhere.
+- `vpsFetch.go` zero-timeout fallback now uses `domain.FetchBudgetSec` (not literal 30).
+- `cache_vmt_nso.go discoverAndFetch`: `context.WithTimeout(ctx, FetchBudgetSec)` wraps WHOLE chain + per-step `TimeoutSec: FetchBudgetSec`.
+- `usecases_vmt_bop.go Execute`: `context.WithTimeout(ctx, FetchBudgetSec)` wraps ALL of `fetchRecord` (current + fallback quarter). Inner `fetchAndParseQuarter` also sets `TimeoutSec: FetchBudgetSec` (belt-and-suspenders).
+- `usecases_vmt_trade/macro/cpi.go Execute`: `context.WithTimeout(ctx, FetchBudgetSec)` wraps `GetOrFetchNSOMonthlyExcel` call.
+
+**VMT-8 degrade logic: NOT TOUCHED.** Hang → error → existing `degradedXxxResponse` path → HTTP 200.
+
+**Tests added (2 files, generic):**
+- `pkg/application/fetch_deadline_test.go`: 7 tests — `hangingVpsFetcher` + `hangingNSOProvider` stubs; asserts elapsed < FetchBudgetSec+3s slack; Status="degraded", IsEstimate=true, BlockedReason set; permanent invariants (BlocSplit, WeightsIsEstimate, OffshoreParked); already-expired ctx; const sanity gate.
+- `pkg/infrastructure/cache_vmt_nso_deadline_test.go`: 2 tests — real httptest hang server; NSO chain bounded to 8.006s (budget 11s); const SSOT structural check.
+
+**Results:** `go build ./...` rc=0, `go vet ./...` rc=0, `go test ./... -count=1` ALL PASS (11 packages, 0 fail). Deadline tests fire at exactly 8s per run.
+
+---
+
 ## Archive: Earlier Sessions (2026-06-13 through 2026-05-30)
 
 Sessions VMT-5a, VMT-1a/1b, VMT-3b/VMT-4, VMT-2 (WAVE-2 A1-A5), TSU-DEV-U4, FIX-MACRO-GO-DIRECTIVE, FIX-MACRO-REFRESH-DEAD, U4 direction+delta sweep, and pre-2026-06-07 work (P1-E1, P2-X1–P2-X4, MACRO-SEED-WIRING, Docker fixes). See git history commits c712d96...9880eadc (2026-06-14 and prior).

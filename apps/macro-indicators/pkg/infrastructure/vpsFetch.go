@@ -121,9 +121,10 @@ func (v *VpsFetchAdapter) Fetch(
 	// --- per-request timeout (in addition to the context deadline) ---
 	timeout := time.Duration(opts.TimeoutSec) * time.Second
 	if timeout < time.Second {
-		// 0 or negative = use a safe minimum so callers cannot accidentally set
-		// an unbounded timeout; context deadline remains the outer bound.
-		timeout = 30 * time.Second
+		// 0 or negative = clamp to FetchBudgetSec so callers cannot accidentally
+		// set an unbounded timeout. FetchBudgetSec is the shared SSOT (domain/ports.go).
+		// The context deadline remains the outer bound (belt-and-suspenders).
+		timeout = time.Duration(domain.FetchBudgetSec) * time.Second
 	}
 
 	client := &http.Client{

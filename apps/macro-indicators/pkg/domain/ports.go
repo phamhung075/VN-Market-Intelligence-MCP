@@ -8,6 +8,21 @@ import (
 	"time"
 )
 
+// FetchBudgetSec is the shared bounded fetch budget for ALL outbound VPS proxy calls.
+//
+// This single SSOT ensures every upstream fetch (NSO 3-step chain, SBV BOP, etc.)
+// completes well within the gateway timeout. When a remote origin hangs, the fetch
+// ctx deadline fires after FetchBudgetSec seconds → ctx.DeadlineExceeded → VMT-8
+// degrade path → HTTP 200 degraded-200 (Status="degraded", IsEstimate=true).
+//
+// Rationale: gateway timeout is ~15–20 s. 8 s leaves headroom for use-case overhead
+// and keeps the NSO 3-fetch chain (index→press→xlsx) well under budget.
+// For the NSO chain, callers must wrap the WHOLE chain in a single
+// context.WithTimeout(ctx, FetchBudgetSec*time.Second) — NOT 3×FetchBudgetSec.
+//
+// NEVER change this value without adjusting the gateway timeout accordingly.
+const FetchBudgetSec = 8
+
 // VpsFetchOptions configures a single outbound HTTP request through the VPS proxy.
 // All fields are optional; zero values select sensible defaults.
 //

@@ -199,14 +199,24 @@ func (n *NSOExcelFetcher) writeCache(ctx context.Context, db *sql.DB, period str
 // Step 1: GET NSO index page → extract latest bai-top/{YYYY}/{MM}/ link.
 // Step 2: GET press release page → extract .xlsx download URL.
 // Step 3: GET Excel URL → return raw bytes + period (YYYY-MM from URL path).
+//
+// Budget: the WHOLE 3-fetch chain is bounded by domain.FetchBudgetSec via a
+// context.WithTimeout wrapping the caller ctx. Per-step TimeoutSec is also set
+// to FetchBudgetSec so vpsFetch's http.Client respects the same ceiling
+// (belt-and-suspenders). If the origin hangs, ctx.DeadlineExceeded surfaces and
+// propagates to GetOrFetchNSOMonthlyExcel → use-case degrade path.
 func (n *NSOExcelFetcher) discoverAndFetch(ctx context.Context) ([]byte, string, error) {
+	// Belt-and-suspenders: bound the entire chain to FetchBudgetSec.
+	chainCtx, chainCancel := context.WithTimeout(ctx, time.Duration(domain.FetchBudgetSec)*time.Second)
+	defer chainCancel()
+
 	fetchOpts := domain.VpsFetchOptions{
-		TimeoutSec: 30,
+		TimeoutSec: domain.FetchBudgetSec,
 		BrowserUA:  true,
 	}
 
 	// Step 1: GET NSO index page.
-	indexBody, err := n.fetcher.Fetch(ctx, nsoIndexURL, fetchOpts)
+	indexBody, err := n.fetcher.Fetch(chainCtx, nsoIndexURL, fetchOpts)
 	if err != nil {
 		return nil, "", fmt.Errorf("step1 GET %s: %w", nsoIndexURL, err)
 	}
@@ -217,7 +227,7 @@ func (n *NSOExcelFetcher) discoverAndFetch(ctx context.Context) ([]byte, string,
 	}
 
 	// Step 2: GET press release page → extract .xlsx URL.
-	pressBody, err := n.fetcher.Fetch(ctx, pressURL, fetchOpts)
+	pressBody, err := n.fetcher.Fetch(chainCtx, pressURL, fetchOpts)
 	if err != nil {
 		return nil, "", fmt.Errorf("step2 GET %s: %w", pressURL, err)
 	}
@@ -229,7 +239,7 @@ func (n *NSOExcelFetcher) discoverAndFetch(ctx context.Context) ([]byte, string,
 
 	// Step 3: GET Excel file.
 	fetchOpts.AcceptHeader = "application/octet-stream"
-	excelBytes, err := n.fetcher.Fetch(ctx, xlsxURL, fetchOpts)
+	excelBytes, err := n.fetcher.Fetch(chainCtx, xlsxURL, fetchOpts)
 	if err != nil {
 		return nil, "", fmt.Errorf("step3 GET xlsx %s: %w", xlsxURL, err)
 	}

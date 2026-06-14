@@ -82,9 +82,15 @@ func (uc *TradeBalanceUseCase) Execute(
 
 	fetchedAt := time.Now().UTC().Format(time.RFC3339)
 
+	// Belt-and-suspenders: bound the NSO Excel fetch (cache miss → 3-step chain) to
+	// FetchBudgetSec. The infrastructure layer also bounds the chain internally, but
+	// this outer deadline protects against any hanging NSOExcelProvider implementation.
+	fetchCtx, fetchCancel := context.WithTimeout(ctx, time.Duration(domain.FetchBudgetSec)*time.Second)
+	defer fetchCancel()
+
 	// Get or fetch the NSO monthly Excel (shared with VMT-3b IIP and VMT-4 CPI).
 	// Within 6h TTL this is a cache HIT — same archive, no new VPS fetch.
-	excelBytes, period, err := uc.excelProvider.GetOrFetchNSOMonthlyExcel(ctx)
+	excelBytes, period, err := uc.excelProvider.GetOrFetchNSOMonthlyExcel(fetchCtx)
 	if err != nil {
 		// Upstream-fetch failure: degrade honestly (HTTP 200 + is_estimate=true).
 		// This is NOT a wiring fault — the provider is wired but the remote is unreachable.

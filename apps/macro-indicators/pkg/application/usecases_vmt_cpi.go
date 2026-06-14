@@ -82,8 +82,14 @@ func (uc *CPIComponentsUseCase) Execute(
 
 	fetchedAt := time.Now().UTC().Format(time.RFC3339)
 
+	// Belt-and-suspenders: bound the NSO Excel fetch to FetchBudgetSec.
+	// The infrastructure layer bounds the 3-step chain internally; this outer deadline
+	// protects against any hanging NSOExcelProvider implementation.
+	fetchCtx, fetchCancel := context.WithTimeout(ctx, time.Duration(domain.FetchBudgetSec)*time.Second)
+	defer fetchCancel()
+
 	// Get or fetch the NSO monthly Excel (shared with VMT-3b IIP).
-	excelBytes, period, err := uc.excelProvider.GetOrFetchNSOMonthlyExcel(ctx)
+	excelBytes, period, err := uc.excelProvider.GetOrFetchNSOMonthlyExcel(fetchCtx)
 	if err != nil {
 		// Upstream-fetch failure: degrade honestly (HTTP 200 + is_estimate=true).
 		return degradedCPIResponse(fmt.Sprintf("NSO monthly Excel unreachable via VPS proxy 125.212.251.27:3128: %v", err))

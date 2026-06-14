@@ -99,7 +99,14 @@ func (uc *BOPUseCase) Execute(ctx context.Context, req BOPRequest) (BOPResponse,
 	now := time.Now().UTC()
 	fetchedAt := now.Format(time.RFC3339)
 
-	record, err := uc.fetchRecord(ctx, req, now)
+	// Belt-and-suspenders: bound ALL fetch attempts (including fallback quarter retry)
+	// to a single FetchBudgetSec window. Without this, two 30s hangs stack to ~60s.
+	// fetchAndParseQuarter also applies FetchBudgetSec per-call; this outer deadline
+	// ensures the combined current+fallback path never exceeds the budget.
+	fetchCtx, fetchCancel := context.WithTimeout(ctx, time.Duration(domain.FetchBudgetSec)*time.Second)
+	defer fetchCancel()
+
+	record, err := uc.fetchRecord(fetchCtx, req, now)
 	if err != nil {
 		// Upstream-fetch/parse failure: degrade honestly (HTTP 200 + is_estimate=true).
 		// This is NOT a wiring fault — the fetcher is wired but the remote is unreachable.
@@ -184,11 +191,19 @@ func (uc *BOPUseCase) fetchRecord(ctx context.Context, req BOPRequest, now time.
 }
 
 // fetchAndParseQuarter performs the VPS fetch + parse for a single quarter window.
+//
+// Budget: context.WithTimeout(ctx, FetchBudgetSec) bounds the fetch so a hanging
+// SBV origin fires ctx.DeadlineExceeded → fetchRecord error → degradedBOPResponse
+// (HTTP 200 + Status="degraded" + IsEstimate=true). Belt-and-suspenders: TimeoutSec
+// is also set to FetchBudgetSec so the http.Client timeout matches.
 func (uc *BOPUseCase) fetchAndParseQuarter(ctx context.Context, start, end string) (domain.BOPRecord, error) {
 	url := uc.urlBuilder.BuildURL(start, end)
 
-	body, err := uc.fetcher.Fetch(ctx, url, domain.VpsFetchOptions{
-		TimeoutSec:   30,
+	fetchCtx, fetchCancel := context.WithTimeout(ctx, time.Duration(domain.FetchBudgetSec)*time.Second)
+	defer fetchCancel()
+
+	body, err := uc.fetcher.Fetch(fetchCtx, url, domain.VpsFetchOptions{
+		TimeoutSec:   domain.FetchBudgetSec,
 		BrowserUA:    true,
 		AcceptHeader: "application/json",
 	})
