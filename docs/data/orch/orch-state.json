@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-14T15:12:35Z",
+    "status": "qa",
+    "updated_at": "2026-06-14T15:19:18Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-REFINE-LOCK-TTL-RECLAIM",
-    "next_agent": "ops",
-    "note": "FIX-REFINE-LOCK-TTL-RECLAIM dev-impl GREEN (commit c080313e) + router RAW-re-verified INDEPENDENTLY (git show 3 explicit files clean; tsc 0; 5/5 tests; T1 steal/T2 no-steal non-tautological; T5 idempotent). -> ops: (1) TARGETED rebuild mcp-server for the test file (flow fix needs no rebuild — fleet-cron live), 13 peers must stay Up, no down. (2) one-time orphan clear bctc-refine:bdcfa5e0 via task_force_release_orphan to unblock 6 reports. -> qa LIVE gate -> done_verified. FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP queued behind (same zone serialized). Umbrella ARCH-CRON-SCHEDULER-RELIABILITY held Mon 2026-06-15 G1/G2/G3. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 same-zone. Commit explicit path only."
+    "next_agent": "qa",
+    "note": "FIX-REFINE-LOCK-TTL-RECLAIM ops deploy GREEN + router RAW-re-verified LIVE (independent, not the ops badge): 13 peers healthy, mcp-server image 674f872db96d, orphan lock_not_found (self-expired), get_bctc_pending_refine returns 3 claimable reports -> refine UNBLOCKED. -> qa FINAL LIVE gate + Task Report (re-run 5/5 in/against rebuilt container + live pending-refine probe). qa-APPROVED -> done_verified. FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP queued behind (same zone serialized). Umbrella ARCH-CRON-SCHEDULER-RELIABILITY held Mon 2026-06-15 G1/G2/G3. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 same-zone. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12258,13 +12258,15 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
-      },
+      }
+    ],
+    "qa": [
       {
         "id": "FIX-REFINE-LOCK-TTL-RECLAIM",
         "type": "FIX",
         "owner": "dev-mcp-server",
         "route": "architect",
-        "status": "REVIEW",
+        "status": "QA",
         "size": "S",
         "priority": "P1",
         "recurring": true,
@@ -12284,7 +12286,7 @@
         ],
         "created_at": "2026-06-14T14:45:14Z",
         "created_by": "po-S50",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "claimed_at": "2026-06-14T14:51:55Z",
         "claimed_by": "dev-team",
         "dispatch_note": "Router dispatched (tick post-T3-done, zone free; PO S50 handoff). RECURRING [Lock orphaned by rebuild] — LET-EXPIRE remedy FAILED (acquire refused 11.5h past TTL expiry). architect: design a GENERIC TTL-reclaim for refine lock-acquire covering ALL refine slots (refine-bctc-slot-1/2 + future), so a lock whose expires_at < now is reclaimable on the next acquire — BUT with steal-safety so it NEVER reclaims from a LIVE-but-slow worker (heartbeat/liveness or fencing token; the refine worker already heartbeats? confirm). Root-cause WHY LET-EXPIRE failed: does acquire even CHECK expires_at, or does it unconditionally refuse on any existing row? Read the refine lock-acquire path (push_bctc_refined_unit / finalize_bctc_refine / the refine task_claim) + the lock table schema. Output a tight brief to docs/architecture-briefs/ + signal dev-mcp-server to implement. Gates for the eventual impl: tsc 0 + a regression test that an expired lock is reclaimed AND a live-heartbeating lock is NOT stolen. Unblocks refine_bctc_md (report bdcfa5e0 VCB Q4.2025 7/26 windows + VCB Q1 / HPG Q4 / GVR_2026_Q1 / HPG_2026_Q1 / HVN_2026_Q1 pending). FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP sequenced BEHIND this (same zone, serialized). Commit by explicit path only — concurrent agent has coverage-state.json + cowork-schedule.json dirty.",
@@ -12301,10 +12303,16 @@
         "router_dev_reverified_at": "2026-06-14T15:12:35Z",
         "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show c080313e --stat = exactly 3 explicit files; concurrent coverage-state/cowork-schedule/signals NOT captured. Flow-doc diff confirms all 4 edits (L38 ttl 1800, L82+L97+L101 owner_agent). Router re-ran locally: bunx tsc --noEmit EXIT 0 (0 error lines); bun test 5 pass/0 fail/22 expect. T1 stale-steal (expiresAtOffset:-10 -> claimed:true stolen:true) and T2 no-steal (+900 -> claimed:false current_holder) are real branch exercises, not tautologies. T5 double-push both row_count:1 last-write-wins. GENERIC across ALL refine slots (shared flow doc).",
         "ops_instructions": "DEPLOY GATE — two actions, then hand to qa. (1) TARGETED REBUILD for the new test file only: cd repo root && docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server ; then docker ps -a to confirm 13 peers Up/healthy (NEVER docker compose down — rebuild-recreate-destroys-peers). The flow-doc fix itself needs NO rebuild (fleet-cron reads docs/agents/refine_bctc_md/flow/main.md live) — the rebuild is solely so qa's LIVE container has the test file. Verify image ID changed + no 'Cannot convert a symbol to a string' Bun-JIT line in startup logs. (2) ONE-TIME ORPHAN CLEAR to unblock the 6 stalled reports: call_tool(server='vn-market', tool='task_force_release_orphan', arguments={ task_id:'bctc-refine:bdcfa5e0', owner_agent:'refine-orchestrator', orphan_threshold_seconds:120 }) — RAW-verify the return shows released:true (or already-absent). Do this AFTER the rebuild so the cleared lock is not immediately re-orphaned by a mid-flight stale worker. Commit nothing except (if needed) your notebook by explicit path — concurrent agent dirty tree must NOT be captured. RETURN: image id, 13-peer health, orphan-clear raw result.",
-        "ops_dispatched_at": "2026-06-14T15:12:35Z"
+        "ops_dispatched_at": "2026-06-14T15:12:35Z",
+        "ops_deployed_at": "2026-06-14T15:19:18Z",
+        "ops_deploy_verdict": "GREEN (ops a1d2dd21): targeted build --no-cache mcp-server + up -d --no-deps --force-recreate; image 674f872db96d; 13 peers Up/healthy (no teardown); 82 cron keys; no Bun-JIT 'symbol to a string'; orphan-clear returned lock_not_found (already self-expired).",
+        "router_live_verified_at": "2026-06-14T15:19:18Z",
+        "router_live_verified_by": "dev-team",
+        "router_live_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the ops badge). docker ps: 13 Up all (healthy), mcp-server Up 48s image 674f872db96d MATCHES ops claim, no peer destroyed. ORPHAN: task_force_release_orphan{bctc-refine:bdcfa5e0}={released:false,reason:lock_not_found} -> no orphan held (self-expired). REFINE UNBLOCKED (router probed get_bctc_pending_refine directly): 3 claimable PENDING reports return cleanly (VCB Q1.2025 21w / HPG Q4.2025 15w / GVR Q1 5w), windows enumerate, no lock blocks queue. Fix is GENERIC across ALL refine slots (shared flow doc) + FORWARD-protective (post-rebuild release now carries owner_agent).",
+        "qa_instructions": "FINAL LIVE GATE — gate-keeper, write Task Report, never accept a badge. Re-confirm INDEPENDENTLY: (1) git show c080313e — 4 flow-doc edits present (docs/agents/refine_bctc_md/flow/main.md: ttl_seconds 1800; owner_agent:'refine-orchestrator' on task_heartbeat ~L82, task_release ~L97, error-boundary task_release ~L101) AND the test file apps/mcp-server/src/__tests__/FIX-REFINE-LOCK-TTL-RECLAIM.test.ts is committed; (2) re-run IN THE LIVE CONTAINER (the rebuilt image 674f872db96d has the test file): docker exec <mcp-server> sh -c 'cd /app/apps/mcp-server && bun test src/__tests__/FIX-REFINE-LOCK-TTL-RECLAIM.test.ts' -> 5/5 pass; if the container lacks bun-test/devDeps, fall back to local cd apps/mcp-server && bunx tsc --noEmit (0) + bun test (5/5) and note the container couldn't self-run; (3) confirm T1 (expired->stolen:true) and T2 (live->claimed:false) are genuine branch exercises not tautologies by reading the test bodies (expiresAtOffset -10 vs +900); (4) LIVE unblock proof: call_tool get_bctc_pending_refine(limit:1) returns a claimable PENDING report (text_status COMPLETE, windows non-empty) — the refine queue is processable, no orphan lock. On qa-APPROVED -> router RAW-confirms -> promote FIX-REFINE-LOCK-TTL-RECLAIM done_verified. Commit Task Report by EXPLICIT PATH only (concurrent agent dirty tree: coverage-state.json, cowork-schedule.json, bctc-analyst.md, docs/signals/*.json — must NOT be captured).",
+        "ops_verified": "2026-06-14T15:19:18Z"
       }
     ],
-    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
