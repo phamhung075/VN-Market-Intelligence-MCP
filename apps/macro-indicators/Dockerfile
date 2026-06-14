@@ -26,6 +26,12 @@ WORKDIR /app
 
 COPY --from=builder /out/server /app/server
 COPY api/ /app/api/
+# NSO/GSO TLS chain fix (project_bctc_hnx_ssl_outage pattern):
+# nso.gov.vn cert is issued by GlobalSign RSA OV SSL CA 2018, whose intermediate
+# is absent from Alpine default CA bundle. Bundling it here so vpsFetch TLS verify
+# passes without InsecureSkipVerify.
+COPY certs/globalsign-rsa-ov-ssl-ca-2018.pem /usr/local/share/ca-certificates/globalsign-rsa-ov-ssl-ca-2018.crt
+RUN update-ca-certificates
 
 RUN mkdir -p /app/data
 

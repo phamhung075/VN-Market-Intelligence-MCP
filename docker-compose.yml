@@ -206,6 +206,10 @@ services:
     - DB_READONLY=true
     - COMMODITY_LIVE_MODE=true
     - APP_ENV=production
+    # VPS HTTP CONNECT proxy for geo-blocked VN sources (NSO, SBV, Customs).
+    # tinyproxy on Vinahost VPS — installed 2026-06-15 (VPS-AVAIL-02-FIX root-cause fix).
+    - VPS_HTTP_HOST=125.212.251.27
+    - VPS_HTTP_PORT=3128
     restart: unless-stopped
     healthcheck:
       test:

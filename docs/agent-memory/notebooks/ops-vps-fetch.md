@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-09 03:30 UTC | **Sprint:** FIX-NEWS-VPS-CRASH-LOOP
+**Last updated:** 2026-06-15 05:50 UTC | **Sprint:** VPS-AVAIL-02-FIX (proxy :3128 outage)
 
 ---
 
@@ -38,6 +38,56 @@ Zone: ops-zone (VPS / infra)
 | 2026-06-04 08:10 | vietstock-agm-plan | RECON-AGM-1 | FETCHABLE. POST + CSRF warmup. No CF. Signal dropped. |
 | 2026-06-06 16:45 | ssc-bctc-newsearch | SPIKE-VPS-SSC-CURL-RECIPE | VIABLE-CURL. Full 3-step recipe proven. Signal dropped. |
 | 2026-06-09 03:30 | vn-news-rss | FIX-NEWS-VPS-CRASH-LOOP | Bug A: false-UNHEALTHY from timestamp format mismatch (T vs space) in vpsHealthPoller.ts MAX() — dev-zone fix required. Bug B: cursor jump from future-dated pubDate — VPS cap applied. |
+
+---
+
+## c011 · 2026-06-15T05:50Z · VPS-AVAIL-02-FIX — Proxy :3128 Outage Root Cause + Restore
+
+Trigger: INCIDENT — macro-indicators container logs show every NSO/SBV fetch failing with `proxyconnect tcp: dial tcp 125.212.251.27:3128: connect: connection refused`. Tools dark: get_vn_trade_balance, get_vn_bop, get_vn_macro_indicators, get_cpi_components.
+
+**ROOT CAUSE: Port :3128 never existed on the VPS.**
+
+The Go adapter `vpsFetch.go` in `apps/macro-indicators/pkg/infrastructure/` hardcodes `vpsHTTPPortDefault = "3128"` as an HTTP CONNECT proxy (Squid-style). But **no Squid or general forward proxy was ever installed on the VPS**. The only proxy service was `vn-vps-proxy.service` (Node.js on :8765) — a purpose-built reverse proxy for specific endpoints only (iboard, SSC, BCTC, AGM, etc.), not a general CONNECT proxy. Port :3128 was never bound. Connection refused was permanent, not a crash.
+
+**SECONDARY ISSUE: vn-vps-proxy OOM crash loop.**
+`MemoryMax=64M` cgroup limit is too tight when python3 child processes (`discover-bctc-urls-browser.py`) are spawned per-request. Service had OOM-killed and restarted 16 times by the time of diagnosis. Not related to :3128 but co-present.
+
+**RESTORE ACTIONS:**
+1. `apt-get install tinyproxy` on VPS — installed v1.11.1
+2. Configured `/etc/tinyproxy/tinyproxy.conf`: Port=3128, Allow 127.0.0.1/::1/172.16.0.0/12/10.0.0.0/8/192.168.0.0/16/176.175.78.70 (main server IPv4)
+3. Backup at `/etc/tinyproxy/tinyproxy.conf.bak-20260615`
+4. `systemctl enable && restart tinyproxy` — active, listening on 0.0.0.0:3128
+5. Raised vn-vps-proxy `MemoryMax` from 64M → 256M in `/etc/systemd/system/vn-vps-proxy.service`; backup at `.service.bak-20260615`; daemon-reload + restart
+
+**PROXY VERIFICATION (RAW):**
+- From VPS localhost: `curl -x http://127.0.0.1:3128 http://example.com` → http_code=200
+- From main server (176.175.78.70): `curl -x http://125.212.251.27:3128 http://example.com` → http_code=200
+- HTTPS CONNECT to nso.gov.vn: `CONNECT tunnel: HTTP/1.1 negotiated → 200 Connection established → TLS OK (GlobalSign RSA OV SSL CA 2018) → HTTP 301`
+- HTTPS to sbv.gov.vn: http_code=302 (normal redirect)
+- From inside macro-indicators Docker container via wget: `example.com` returns full HTML
+
+**TLS FIX (NSO/GSO):**
+NSO cert (`nso.gov.vn`) is issued by GlobalSign RSA OV SSL CA 2018, absent from Alpine default CA bundle. Fixed by:
+- Written PEM to `apps/macro-indicators/certs/globalsign-rsa-ov-ssl-ca-2018.pem`
+- Added to Dockerfile: `COPY certs/ ... + update-ca-certificates`
+- Rebuilt + restarted `vn-market-intelligence-mcp-macro-indicators-1`
+
+**POST-RESTORE TOOL STATUS:**
+- `get_vn_macro_indicators` / `get_vn_trade_balance` / `get_cpi_components`: Proxy CONNECT works, TLS OK. Error changed from `connection refused` to `no bai-top link found in NSO index page (85867 bytes)` — NSO HTML structure changed since PROBE-3, scraper selector is stale. **Proxy is fixed; scraper needs update (separate task).**
+- `get_vn_bop`: Proxy CONNECT works. Error: `context deadline exceeded` — Go vpsFetch sends OData filter URL with raw spaces (`filter=status eq 0 and ...`); tinyproxy/sbv.gov.vn rejects malformed URL. URL-encoding bug in BOP use case. **Separate scraper fix needed.**
+- `get_vn_liquidity_state`: `status: ok` with live data — unaffected (direct SBV + DB, no VPS proxy).
+
+**OPEN VPS BOARD TASKS (common root assessment):**
+- `FIX-SBV-FX-VPS-FETCHER-UNHEALTHY`: vn-sbv-fetch.service active + running — NOT caused by :3128. Separate health poller issue.
+- `FIX-NEWS-VPS-CRASH-LOOP`: vn-news-fetch.service active + running — NOT caused by :3128. Prior c009 fix (cursor cap) still holds.
+- `OPS-POLLNEWS-NIGHT-ZERO`: NOT caused by :3128. Separate issue.
+- `VPS-AVAIL-02-FIX`: RESOLVED by this cycle — tinyproxy on :3128 is the fix. :8765 OOM also fixed (MemoryMax 256M).
+
+**NOT the common root** of the 4 board tasks — vn-sbv-fetch/news-fetch/pollnews are separate issues. :3128 only affected the macro-indicators Go layer (vpsFetch.go).
+
+Remaining blockers (NOT proxy, need dev agent):
+1. NSO HTML scraper: `bai-top` link selector stale — HTML layout changed
+2. BOP OData filter: URL with spaces not encoded before passing to vpsFetch
 
 ---
 
