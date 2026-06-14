@@ -8799,7 +8799,7 @@
         "id": "BA-KINHDICH-HOVER-DETAIL",
         "title": "Requirement Spec — KINHDICH-HOVER-DETAIL (enrich quẻ hover tooltip with Tra cứu Kinh Dịch detail)",
         "owner": "ba",
-        "status": "done",
+        "status": "done_verified",
         "zone": "apps/frontend/",
         "sprint_id": "KINHDICH-HOVER-DETAIL",
         "priority": "high",
@@ -8807,7 +8807,7 @@
         "created_at": "2026-06-14T19:43:26Z",
         "spec": "docs/handoffs/KINHDICH-HOVER-DETAIL-BA-spec.md",
         "completed_at": "2026-06-14T00:00:00Z",
-        "next_agent": "po",
+        "next_agent": null,
         "dev_impl_done_at": "2026-06-14T19:54:33Z",
         "dev_impl_commit": "de8d8d0a",
         "dev_agent": "a3943c17",
@@ -8824,7 +8824,10 @@
         "qa_agent": "a3fb57d5",
         "qa_commit": "69e7a8b0",
         "qa_task_report": "docs/handoffs/TASK_REPORT_KINHDICH-HOVER-DETAIL.md",
-        "router_qa_reverify_verdict": "RAW-CORROBORATED INDEPENDENTLY (not the qa badge). git show 69e7a8b0 --stat = EXACTLY 3 files (qa.md +6 + session 2026-06-13-qa.md +4 + TASK_REPORT_KINHDICH-HOVER-DETAIL.md +111); NO board/orch-state/foreign capture; commit isolated from pm 6fa59b18 (no concurrent-commit cross-race). qa VERDICT=APPROVE. Served-chunk LOAD-BEARING proof corroborated: :3001/assets/QueName-CweIuF2T.js 67523 bytes carries stateInterpretation x2 + favorable x2 + warning x2 + que-descriptions-detail import x1 + VN labels Trạng thái/Cảnh báo/Xem chi tiết each x1; phases=0 (6-hào table correctly ABSENT from tooltip — reference-page only); FR-3 fallback hoverSummary??coreMeaning present in chunk; FR-4 deep-link /dashboard/kinh-dich-reference#que-N present; tsc --noEmit EXIT 0; 13 containers Up (12 peers intact). done_verified TECHNICAL bar MET at served layer -> po final product signoff to close done_verified."
+        "router_qa_reverify_verdict": "RAW-CORROBORATED INDEPENDENTLY (not the qa badge). git show 69e7a8b0 --stat = EXACTLY 3 files (qa.md +6 + session 2026-06-13-qa.md +4 + TASK_REPORT_KINHDICH-HOVER-DETAIL.md +111); NO board/orch-state/foreign capture; commit isolated from pm 6fa59b18 (no concurrent-commit cross-race). qa VERDICT=APPROVE. Served-chunk LOAD-BEARING proof corroborated: :3001/assets/QueName-CweIuF2T.js 67523 bytes carries stateInterpretation x2 + favorable x2 + warning x2 + que-descriptions-detail import x1 + VN labels Trạng thái/Cảnh báo/Xem chi tiết each x1; phases=0 (6-hào table correctly ABSENT from tooltip — reference-page only); FR-3 fallback hoverSummary??coreMeaning present in chunk; FR-4 deep-link /dashboard/kinh-dich-reference#que-N present; tsc --noEmit EXIT 0; 13 containers Up (12 peers intact). done_verified TECHNICAL bar MET at served layer -> po final product signoff to close done_verified.",
+        "po_signoff": "APPROVED",
+        "po_signoff_at": "2026-06-14T20:11:20Z",
+        "po_signoff_note": "Served :3001/assets/QueName-CweIuF2T.js (67522B) RAW-corroborated by PO: stateInterpretation x2 + favorable x2 + warning x2 + que-descriptions-detail import + VN labels Trạng thái/Cảnh báo/Xem chi tiết each x1, phases=0 (6-hào table correctly reference-page only) — enriched Tra-cứu-Kinh-Dịch hover live; matches user verbatim goal + sprint success_metric."
       }
     ],
     "closed_sprints": [

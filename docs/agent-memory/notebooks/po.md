@@ -1,5 +1,17 @@
 # PO Notebook
 
+## 2026-06-14T20:11Z — S55: FINAL SIGNOFF KINHDICH-HOVER-DETAIL → done_verified
+Closed the lean chain (ba→dev-frontend→ops→qa→po). qa APPROVED (69e7a8b0). PO RAW-corroborated the
+served-chunk LOAD-BEARING proof myself (not the qa badge): curl :3001/assets/QueName-CweIuF2T.js (67522B)
+→ stateInterpretation x2 + favorable x2 + warning x2 + que-descriptions-detail import x1 + VN labels
+Trạng thái/Cảnh báo/Xem chi tiết each x1, **phases=0** (6-hào table correctly reference-page only). Matches
+user verbatim goal + sprint success_metric. Set board BA-KINHDICH-HOVER-DETAIL status=done_verified,
+po_signoff=APPROVED, next_agent=null. Atomic temp→[ -s ]→jq -e→rename; id-line 722→722 UNCHANGED; .head
+(VN-MACRO active_task_id=BA-VN-MACRO-TOOLING) UNTOUCHED. Committed by EXPLICIT PATH (orch-state + notebook +
+journal); cowork dirty tree (ba/news-scout/fb-post/signals) preserved untouched. Lesson held: served-chunk
+RAW grep is the done_verified bar — green rebuild reaching no browser = nothing.
+Carry-over: KINHDICH chain CLOSED. VN-MACRO-TOOLING WAVE-2 A1=VMT-2-BOP in dev (router-owned, separate chain).
+
 ## 2026-06-14T19:42Z — S54: open KINHDICH-HOVER-DETAIL (user feature, actively waiting)
 User req (verbatim): (1) Kinh Dịch reference 1-column — RAW-confirmed ALREADY LIVE (commit 1aa9dc31,
 ops a334dc7a frontend rebuild; served chunk grid-cols-1, zero 4-col) → user only needs hard-refresh,
