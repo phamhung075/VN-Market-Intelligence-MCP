@@ -80,3 +80,33 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 **Handoff:** Task updated → HANDOFF status, owner dev-mcp-server.
 
 **Pipeline state at close:** 7 new PDFs downloaded Jun 13 21:35-22:17; FRT/SAB/VIX/VND/DGC/VJC/GEX/BSR/DBC/HUT still pending with HSX URLs; 9 tickers with no URL.
+
+---
+
+## Session: 2026-06-14 (DOCLANG-SERIALIZE Phase 1 — T1-T6)
+
+**Tasks:** DOCLANG-T1-DOMAIN through DOCLANG-T6-TESTS (sprint DOCLANG-SERIALIZE)
+
+### Decision log
+
+- XSD `thread_id` requires `xs:positiveInteger` (>= 1). `table_index=0` maps to `thread_id=1` (table_index+1) to satisfy XSD. This is a serialization detail; DTO `table_index` unchanged.
+- `<custom>` XSD has no `mixed="true"` — raw text inside `<custom>` fails validation. Used `<head><meta>report_id=...</meta></head>` instead (meta is mixed=true+xs:any).
+- EC-3 surplus rows intentionally skip `doclang.validate()` — schematron rectangular-rule fires on non-equal row cell counts. Test validates WARNING logged + surplus cells emitted.
+- Schematron requires XSLT3/Saxon-HE via `saxonche`. Installed system-wide for host dev; container risk documented in arch brief RISK-1.
+
+### Implemented
+
+- T1: `DocLangWritePort` Protocol (17th port) + `Config.doclang_output_dir` (`DOCLANG_OUTPUT_DIR`, default `/app/data/doclang`)
+- T2+T3: `infrastructure/doclang_serializer.py` — `DocLangSerializer` + `FilesystemDocLangWriteAdapter` + `NullDocLangWriteAdapter`
+- T4: `application/doclang_serialize_usecase.py` — `DocLangSerializeUseCase` (never gates, validation observability only)
+- T5: `main.py` wired (3 imports + 4 lines + `register_routes` kwarg), `requirements.txt` += `doclang==0.6.0`
+- T6: `__tests__/unit/test_doclang_serializer.py` — 13 tests: Fixtures A/B/C + EC-2/3/4 + XML escape + use case
+
+### Results
+
+- pytest: **13 new tests PASS**; full suite 967-968 passed; 2-3 pre-existing failures (real-OCR tests need missing PDF + flaky timeout test)
+- doclang.validate(): VALID on Fixtures A, B, C, EC-2, EC-4
+- mypy: 0 new errors in new files; pre-existing 18 errors in dtos.py/ports.py/module.py (not touched)
+- Commits: scaffold `5d121989` + T1 harden `2d79baed` + type-ignore fix `01ce9431`
+
+**Status:** DOCLANG-T1..T6 → REVIEW, next_agent=qa
