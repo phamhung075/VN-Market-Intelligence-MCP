@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-271 · 2026-06-14 · VMT-6-CREDIT-FLOW-EXTEND QA gate — APPROVED
+
+Task: VMT-6-CREDIT-FLOW-EXTEND | Sprint: VN-MACRO-TOOLING SPRINT-M WAVE-1 | Dev commit: 105b07c4 | Files: creditFlowTools.ts + VMT-6-credit-flow-survey-distribution.test.ts | TSC: exit 0 | Tests: 6/6 new VMT-6 pass, 25/25 total credit-flow pass (3 files: VMT-6 + 246 + 1254), 59 expect() | Regression: all is_estimate flags UNTOUCHED — diff is purely additive (no `-` removal of mortgageIsEstimate/yoyIsEstimate/static_seed) | Stub honesty: is_estimate=true, all data fields null/empty, note="VIRA/VARA no machine-readable source confirmed — manual data required" | mock-guard: exit 2 CAUTION non-blocking (flagged commented TODO line 223, not fabricated data) | DDD: PASS | Security: PASS | Verdict: APPROVED. DJ: sprint-VMT-6-CREDIT-FLOW-EXTEND-qa.md. Report: reports/TASK_REPORT_VMT-6-CREDIT-FLOW-EXTEND.md.
+
 ## cycle-270 · 2026-06-14 · KINHDICH-HOVER-ENRICH-FE QA gate — APPROVED
 
 Task: KINHDICH-HOVER-ENRICH-FE | Dev commit: 067e484d | Image: d349d070 (built 5min after commit — includes change) | Verdict: APPROVED | Surface confirmed: QueName-C7QiQvgn.js (served :3001). PRIMARY PROOF: `/assets/QueName-C7QiQvgn.js` (60,905 bytes) — 64 hoverSummary fields present, quẻ1 "Giai đoạn năng lượng mạnh nhất" FOUND, quẻ47 "Đang ở giai đoạn kiệt sức và bị bóp nghẹt" FOUND, fallback operator `hoverSummary??i.coreMeaning` confirmed in minified render. Prior chain false-green on `dashboard.kinh-dich-reference-DnsN-x37.js` — that route uses `QUE_DETAIL`/`coreMeaning` directly (full-detail page, no hoverSummary field). Correct surfaces: kinh-dich-signals + analysis (both load QueName-C7QiQvgn.js). SECONDARY: 64/64 quẻ covered (172–224 chars, avg 194), readability PASS (plain Vietnamese, no jargon), fallback intact. DJ: sprint-KINHDICH-HOVER-ENRICH-FE-qa.md.
