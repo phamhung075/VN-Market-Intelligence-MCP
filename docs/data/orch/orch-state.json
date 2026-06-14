@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T23:30:05Z",
-    "updated_by": "po",
-    "active_task_id": "VMT-8-MACRO-GRACEFUL-FAILCLOSE",
-    "next_agent": "po",
-    "note": "PO TRIAGE 2026-06-14 (post VMT-8 live-verify PARTIAL): MINTED F-MACRO-FETCH-DEADLINE->ready (lead reliability, /goal#1 completion for trade/macro/cpi/bop). PO raw-confirmed root: vpsFetch.go adapter already honors http.Client{Timeout} from opts.TimeoutSec; bug = callers set 30s (cache_vmt_nso.go discoverAndFetch 3x chained 30s for NSO trade/macro/cpi; usecases_vmt_bop.go 30s) >> gateway timeout -> hang past deadline -> gateway timeout before VMT-8 degrade emits. Fix = bound budget ~8s < gateway timeout across all 5 use-cases (generic). SEQUENCED-AFTER (backlog, HELD-sequenced, same files serialize): F-BOP-ENCODING + F-NSO-SELECTOR (accuracy, restore real data). 3 other VPS tasks reconciled individually NOT auto-closed (different roots). tinyproxy ACL note -> ops lane. VMT-8 done_verified GATED on F-MACRO-FETCH-DEADLINE live re-probe (all 5 -> 200 within gateway deadline)."
+    "updated_at": "2026-06-14T23:33:18Z",
+    "updated_by": "dev-team",
+    "active_task_id": "F-MACRO-FETCH-DEADLINE",
+    "next_agent": "dev",
+    "note": "F-MACRO-FETCH-DEADLINE DISPATCHED -> dev-macro-indicators (agent a1df1c0dd70c226a7). LEAD reliability FIX (size S, /goal#1 completion for the 4 fetch tools trade/macro/cpi/bop + /goal#2 generic). ROOT: vpsFetch.go adapter already honors http.Client{Timeout} from opts.TimeoutSec but callers set 30s >> gateway timeout (cache_vmt_nso discoverAndFetch 3-chain up to 90s; usecases_vmt_bop 30s); slow origin -> Fetch HANGS past gateway deadline -> timeout before VMT-8 degrade can emit. FIX (generic, all 5 use-cases): single bounded ~8s budget < gateway timeout (named const SSOT) on every uc.fetcher.Fetch + context.WithTimeout; NSO 3-fetch CHAIN budgeted as a whole (not 3x8s); do NOT touch VMT-8 degrade logic. GATE: unit hanging-fetcher -> ctx.DeadlineExceeded within budget + degraded-200; LIVE router re-probe all 5 Zone-A tools across timing -> 200 within gateway deadline, no raw timeout = UNBLOCKS VMT-8 done_verified. SEQUENCED-AFTER (HELD, same files, serialize): F-BOP-ENCODING + F-NSO-SELECTOR (accuracy). WIP: dev-zone in_progress=1 (this), budget<=2 OK. On dev return -> router RAW-verify gates GREEN -> head dev->ops REBUILD macro-indicators (force-recreate single svc, NEVER compose down) -> live re-probe -> done + release sequenced pair."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -506,7 +506,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T23:18:05Z",
+    "_updated_at": "2026-06-14T23:33:18Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13731,7 +13731,7 @@
         "title": "Bound every Zone-A upstream fetch with a per-fetch ctx/client deadline (~8s) < gateway timeout so a slow-origin HANG converts to a fast ctx.DeadlineExceeded that VMT-8's existing degrade path catches -> degraded-200",
         "zone": "apps/macro-indicators/",
         "owner": "dev-macro-indicators",
-        "status": "READY",
+        "status": "in_progress",
         "priority": "high",
         "size": "S",
         "baseline_pass": "go test ./pkg/... = ALL PASS (cached green) 2026-06-14",
@@ -13750,7 +13750,10 @@
         "source_signal": "dev-team-20260614T231805Z-vmt8-liveverify-fetch-deadline",
         "absorbs": "standalone bop-timeout from dev-team-20260614T225734Z (same root)",
         "created_at": "2026-06-14T23:30:05Z",
-        "created_by": "po"
+        "created_by": "po",
+        "dispatched_at": "2026-06-14T23:33:18Z",
+        "dispatched_to": "dev-macro-indicators",
+        "dispatch_agent_id": "a1df1c0dd70c226a7"
       }
     ],
     "review": [
