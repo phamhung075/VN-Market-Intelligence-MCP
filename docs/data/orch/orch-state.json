@@ -86,11 +86,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T11:34:55Z",
-    "updated_by": "dev-team",
+    "updated_at": "2026-06-14T11:40:00Z",
+    "updated_by": "architect",
     "active_task_id": "ARCH-CRON-SCHEDULER-RELIABILITY",
-    "next_agent": "architect",
-    "note": "Router routed PO triage BATCH (tick 11:06Z, Sunday off-market). A=ARCH-CRON-SCHEDULER-RELIABILITY in_progress -> architect (DESIGN stage; recurring-bug escalation; zone apps/mcp-server free; dep done_verified). B=FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS review -> qa (cross-service docs gate, parallel, no contention). WIP=2 different zones. ARCH-SHIP-WAVE-REAUDIT stays PARKED."
+    "next_agent": "pm",
+    "note": "ARCH-CRON-SCHEDULER-RELIABILITY design COMPLETE. Brief at docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md. 4-lever fix (recoverMissedExecutions uniform + T4 dedup guards + jitter shifts + schedulerWatchdog). next_agent=pm for task breakdown. IMPL gated on FIX-MCP-CRASH-LOOP-WRITEWAL (done_verified 09e2586b)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11927,10 +11927,12 @@
         "type": "SPRINT-S",
         "verification_gate": "Prove the cluster auto-fires durably, not just that one manual run works: (G1) ohlcvDailyAggregatorJob auto-fires next VN market day — get_pipeline_health 'Aggregator last run' advances to that day with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires on its cadence and repopulates financial tables (live VCB/ACB/CTG rows newer than the run) with NO manual trigger; (G3) reputationComputeJob fires at its 08:30 tick on a market day even with peer jobs on the same minute (cron_job_runs row present, no miss); (G4) inject loop-saturation at a scheduled tick in test and assert the tick is recovered/emitted (regression test for the dropped-tick class, mirroring EVIDENCE-ACCUM-SILENT-CRON.test.ts); (G5) missed-fire watchdog emits a WORK alert + self-heal when a job's last_run age > 2x cadence. QA verifies LIVE raw (pipeline-health payload + cron_job_runs rows), never badges. Ship completion across the whole cluster, not one job.",
         "zone": "apps/mcp-server/",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "claimed_at": "2026-06-14T11:34:55Z",
         "claimed_by": "dev-team",
-        "dispatch_note": "Router routed PO BATCH (tick 11:06Z). DESIGN stage -> architect (recurring-bug escalation, recurrence_count 3). zone apps/mcp-server/ free post-FIX-MCP-500; dep FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) -> IMPL gate sound. Architect designs the DEFINITIVE node-cron scheduler fix per A/B/C/D levers + G1-G5 verification gate; NO per-job symptom patch. IMPL (dev-mcp-server) SEQUENCED after brief, bun tests BEFORE ops rebuild (RED-PREPUSH), targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down), LIVE-verify auto-fire (pipeline-health + cron_job_runs), never badges."
+        "dispatch_note": "Router routed PO BATCH (tick 11:06Z). DESIGN stage -> architect (recurring-bug escalation, recurrence_count 3). zone apps/mcp-server/ free post-FIX-MCP-500; dep FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) -> IMPL gate sound. Architect designs the DEFINITIVE node-cron scheduler fix per A/B/C/D levers + G1-G5 verification gate; NO per-job symptom patch. IMPL (dev-mcp-server) SEQUENCED after brief, bun tests BEFORE ops rebuild (RED-PREPUSH), targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down), LIVE-verify auto-fire (pipeline-health + cron_job_runs), never badges.",
+        "design_complete_at": "2026-06-14T11:40:00Z",
+        "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md"
       }
     ],
     "ready": [],

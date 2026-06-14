@@ -38,6 +38,22 @@
 - Config: doclang_output_dir, default /app/data/doclang
 - BUILD-STANDARD: lean
 
+## 2026-06-14T11:40Z — ARCH-CRON-SCHEDULER-RELIABILITY DESIGN COMPLETE — pipeline advanced to pm
+
+**Task:** ARCH-CRON-SCHEDULER-RELIABILITY (recurring-bug escalation, recurrence_count 3)
+**Brief:** docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md (FINAL)
+**next_agent:** pm (for task breakdown into 3 sequential subtasks)
+
+**Summary:** Brownfield confirmed 55 CRON keys / 50+ `cron.schedule()` calls in startScheduler.ts. node-cron v3.0.3 silent-drop bug confirmed. Library swap (croner, v4) REJECTED — 55 call sites + Bun risk. Selected 4-lever fix within existing lib:
+- Lever 1: `recoverMissedExecutions: true` universally (50+ calls currently missing it)
+- Lever 2: T4 idempotency dedup guards (cron_job_runs recency check at 90% cadence window) for ~26 non-idempotent jobs
+- Lever 3: Deterministic jitter for 8 high-collision jobs in cronConfig.ts
+- Lever 4: New `schedulerWatchdogJob.ts` — last_run age > 1.5× cadence → WORK alert or self-heal via wrapRun
+
+**Phase ordering (HARD sequencing):** 1a dedup guards → 1b recoverMissedExecutions → 1c jitter → 2 watchdog
+**IMPL gate:** FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) clears the zone
+**G1–G5 verification gate:** lives in board entry; maps to 3 new test files + live cron_job_runs probe
+
 ## 2026-06-14T03:10Z — ARCH-CRON-SCHEDULER-RELIABILITY Design Brief (DESIGN, REVIEW)
 
 **Task:** ARCH-CRON-SCHEDULER-RELIABILITY | zone: apps/mcp-server/ (scheduler layer, 55 cron jobs)
