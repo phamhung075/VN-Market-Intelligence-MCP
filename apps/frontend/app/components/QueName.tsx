@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { QUE_DESCRIPTIONS } from "~/lib/que-descriptions.generated";
+import { QUE_DETAIL } from "~/lib/que-descriptions-detail.generated";
 
 export interface QueNameProps {
   /** Hexagram id (1–64). */
@@ -42,6 +43,7 @@ export interface QueNameProps {
  */
 export function QueName({ hexagram, name, className, withDetailLink }: QueNameProps): ReactNode {
   const desc = QUE_DESCRIPTIONS[hexagram];
+  const detail = QUE_DETAIL[hexagram];
 
   // Graceful no-op: no description found for this id
   if (!desc) {
@@ -68,13 +70,42 @@ export function QueName({ hexagram, name, className, withDetailLink }: QueNamePr
         </TooltipTrigger>
         <TooltipContent
           side="top"
-          className="max-w-xs text-xs leading-relaxed"
+          className="max-w-sm text-xs leading-relaxed"
           aria-label={`Quẻ ${name} — ý nghĩa`}
         >
           <p className="font-semibold text-slate-100 mb-1">{name}</p>
-          <p className="text-slate-300">{desc.hoverSummary ?? desc.coreMeaning}</p>
-          {desc.marketTrendLabel && (
-            <p className="mt-1 text-slate-400">{desc.marketTrendLabel}</p>
+          {detail ? (
+            <>
+              <p className="text-slate-300">{detail.coreMeaning}</p>
+              {detail.stateInterpretation && (
+                <p className="mt-1 text-slate-300">
+                  <span className="text-slate-400">Trạng thái: </span>
+                  {detail.stateInterpretation}
+                </p>
+              )}
+              {detail.favorable && (
+                <p className="mt-1 text-slate-300">
+                  <span className="text-slate-400">Thuận: </span>
+                  {detail.favorable}
+                </p>
+              )}
+              {detail.warning && (
+                <p className="mt-1 text-slate-300">
+                  <span className="text-slate-400">Cảnh báo: </span>
+                  {detail.warning}
+                </p>
+              )}
+              {detail.marketTrendLabel && (
+                <p className="mt-1 text-slate-400">{detail.marketTrendLabel}</p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-slate-300">{desc.hoverSummary ?? desc.coreMeaning}</p>
+              {desc.marketTrendLabel && (
+                <p className="mt-1 text-slate-400">{desc.marketTrendLabel}</p>
+              )}
+            </>
           )}
           {withDetailLink && (
             <a

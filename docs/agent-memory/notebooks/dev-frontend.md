@@ -4,6 +4,16 @@
 
 ---
 
+## Session: 2026-06-14 (KINHDICH-HOVER-DETAIL)
+
+**KINHDICH-HOVER-DETAIL DONE (1-file change, tsc green)**
+- apps/frontend/app/components/QueName.tsx: added `import { QUE_DETAIL } from "~/lib/que-descriptions-detail.generated"`; added `const detail = QUE_DETAIL[hexagram]` lookup; replaced flat single-line render with enriched branch (coreMeaning + Trạng thái + Thuận + Cảnh báo + marketTrendLabel); FR-3 fallback (`desc.hoverSummary ?? desc.coreMeaning`) preserved when detail absent; FR-4 "Xem chi tiết →" deep-link kept unconditionally; max-w-xs bumped to max-w-sm for 4-clause fit; phases[] OMITTED (reference page only).
+- tsc --noEmit: EXIT 0 (no errors). One-file scope confirmed.
+
+Zone health: QueName tooltip enriched with full QUE_DETAIL (coreMeaning+state+favorable+warning+trend); fallback intact; peer containers untouched | HEALTHY
+
+---
+
 ## Session: 2026-06-14 (KINHDICH-HOVER-ENRICH-FE)
 
 **KINHDICH-HOVER-ENRICH-FE DONE (3-file change, tsc green)**
