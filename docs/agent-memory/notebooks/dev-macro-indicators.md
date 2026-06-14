@@ -6,6 +6,55 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-06-14 (VMT-3b-GSO-IIP + VMT-4-CPI — sprint VN-MACRO-TOOLING A2 WAVE-2)
+
+**Task:** Implement VMT-3b (GSO/IIP, POST /macro-indicators) + VMT-4 (CPI Components, POST /cpi-components) in ONE pass. Shared NSO Excel download cache (Entry 11 decision). A1=VMT-2-BOP merged (dae7e68d); A2 dispatched as single agent to avoid router+cache conflict.
+
+**Contract source:** scripts/probes/vmt-3-sample.json (PROBE-3 PASS). NSO monthly Excel, sheet "2.IIPthang" (IIP) + sheet "16.CPI" (CPI). excelize v2.8.1 added (first Excel dep in this service).
+
+**Files created (14):**
+- `pkg/domain/models_vmt_macro.go` — IIPSector, MacroIndicatorsGSORecord domain models
+- `pkg/domain/models_vmt_cpi.go` — CPIBasket, CPIRecord domain models; WeightPct=nil policy documented
+- `pkg/domain/services_vmt_macro.go` — MapIIPSectorKey (4 target sectors, case-insensitive)
+- `pkg/domain/services_vmt_cpi.go` — MapCPIBasketKey (15 rows: headline + 14 baskets), CPIWeightsNote const
+- `pkg/domain/services_vmt_macro_test.go` — 10 table-driven tests for MapIIPSectorKey (anchors + edge cases)
+- `pkg/domain/services_vmt_cpi_test.go` — 17 table-driven tests for MapCPIBasketKey + CPIWeightsNote
+- `pkg/application/dtos_vmt_macro.go` — MacroIndicatorsGSORequest, MacroIndicatorsGSOResponse, IIPSectorDTO
+- `pkg/application/dtos_vmt_cpi.go` — CPIComponentsRequest, CPIComponentsResponse, CPIBasketDTO
+- `pkg/application/usecases_vmt_macro.go` — MacroIndicatorsGSOUseCase (NSOExcelProvider + IIPParser interfaces)
+- `pkg/application/usecases_vmt_cpi.go` — CPIComponentsUseCase (shared NSOExcelProvider + CPIParser interface)
+- `pkg/infrastructure/cache_vmt_nso.go` — NSOExcelFetcher: getOrFetchNSOMonthlyExcel (6h TTL, macro_vmt_cache table, 3-step NSO discovery)
+- `pkg/infrastructure/parsers_vmt_gso_indicators.go` — ParseIIPFromExcel (sheet "2.IIPthang", excelize by name)
+- `pkg/infrastructure/parsers_vmt_cpi.go` — ParseCPIFromExcel (sheet "16.CPI", YoY derived col3-col2, weights=nil)
+- `pkg/infrastructure/parsers_vmt_gso_indicators_test.go` — 4 parser tests incl. live anchor (YoY=103.27, YTD=108.79, MoM=109.08)
+- `pkg/infrastructure/parsers_vmt_cpi_test.go` — 4 parser tests incl. live anchor (MoM=0.29, YTD=4.31, YoY=5.60), weights-always-nil invariant
+- `pkg/interface/http/handlers_vmt_macro.go` — handleMacroIndicators chi handler
+- `pkg/interface/http/handlers_vmt_cpi.go` — handleCPIComponents chi handler
+
+**Files modified (3):**
+- `pkg/interface/http/router.go` — RouterConfig extended (MacroIndicatorsGSO + CPIComponents fields), POST /macro-indicators + POST /cpi-components routes
+- `cmd/server/main.go` — NSOExcelFetcher wiring (shared instance), MacroIndicatorsGSOUseCase + CPIComponentsUseCase + iipParserAdapter + cpiParserAdapter
+- `go.mod` — excelize v2.8.1 added (first Excel dep); go directive stays 1.24.0 (toolchain forces it on local go1.26.2)
+
+**Key invariants confirmed:**
+- CPI weights=null (WeightPct=nil, WeightsIsEstimate=true) — MANDATORY per architect handoff § VMT-4 weights_policy
+- NSOExcelFetcher shared instance: VMT-3b + VMT-4 use SAME instance (Entry 11) — no double VPS fetch
+- excelize matched by sheet NAME, not index (resilient to sheet order changes)
+- YoY derived as col3 - col2 (current month vs base minus prior year same month vs base)
+- parseFloatCell: plain float format for IIP (NOT VN thousands-sep format; IIP uses "103.27" not "103,27")
+- Fence-A/B/C clean; golangci-lint 0 issues; go vet clean
+
+**Anchor test results:**
+- iip_all_industry: YoYPct=103.27 PASS, YTDYoYPct=108.79 PASS, MoMPct=109.08 PASS
+- cpi_total: MoMPct=0.29 PASS, AvgYTDYoYPct=4.31 PASS, YoYPct=5.60 PASS
+- weights=nil invariant: PASS across all baskets
+
+**Verification:** `go build ./...` GREEN, `go test ./... -count=1` ALL PASS (11 packages + new tests), `golangci-lint run` 0 issues.
+
+**Next:** A3 (VMT-1a+VMT-1b trade balance, same NSO Excel, sheets 14.XK + 15.NK + 12.FDI). SERIALIZE.
+
+---
+
 ## Session 2026-06-14 (VMT-2-BOP — sprint VN-MACRO-TOOLING A1 WAVE-2)
 
 **Task:** Implement VMT-2 BOP (Balance of Payments) — first serialized Zone-A task.

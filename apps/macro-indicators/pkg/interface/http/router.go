@@ -19,6 +19,8 @@
 //   GET  /macro-calendar       — fixture response (OQ-10 deferred)
 //   GET  /external             — cached macro snapshot → MacroData shape (FE-RR-MACRO-EXTERNAL)
 //   POST /bop                  — SBV BOP quarterly data + FX-incidence + offshore_parked (VMT-2)
+//   POST /macro-indicators     — NSO monthly IIP data for 4 sectors (VMT-3b)
+//   POST /cpi-components       — NSO monthly CPI 15-row basket data (VMT-4)
 package http
 
 import (
@@ -42,12 +44,15 @@ import (
 //
 // Snapshot is the original ComputeMacroUseCase (existing — do not remove).
 // BOP is the VMT-2 use case for POST /bop.
-// Future VMT use cases (TradeBalance, MacroIndicators, CPIComponents, LiquidityState)
-// will be added to this struct in subsequent serialized Zone-A tasks (A2..A5).
+// MacroIndicatorsGSO is the VMT-3b use case for POST /macro-indicators (NSO IIP).
+// CPIComponents is the VMT-4 use case for POST /cpi-components (NSO CPI baskets).
+// Future VMT use cases (TradeBalance, LiquidityState) will be added in A3..A5.
 type RouterConfig struct {
-	Snapshot *application.ComputeMacroUseCase
-	BOP      *application.BOPUseCase
-	Logger   *slog.Logger
+	Snapshot           *application.ComputeMacroUseCase
+	BOP                *application.BOPUseCase
+	MacroIndicatorsGSO *application.MacroIndicatorsGSOUseCase
+	CPIComponents      *application.CPIComponentsUseCase
+	Logger             *slog.Logger
 }
 
 // NewRouter creates a new chi router with all HTTP handlers registered.
@@ -70,6 +75,16 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	// VMT-2: BOP endpoint (PROBE-2 PASS — SBV Liferay JSON, no Excel, no PDF).
 	if cfg.BOP != nil {
 		r.Post("/bop", handleBOP(cfg.BOP, cfg.Logger))
+	}
+
+	// VMT-3b: GSO/IIP endpoint (PROBE-3 PASS — NSO monthly Excel, sheet "2.IIPthang").
+	if cfg.MacroIndicatorsGSO != nil {
+		r.Post("/macro-indicators", handleMacroIndicators(cfg.MacroIndicatorsGSO, cfg.Logger))
+	}
+
+	// VMT-4: CPI components endpoint (PROBE-3 PASS — NSO monthly Excel, sheet "16.CPI").
+	if cfg.CPIComponents != nil {
+		r.Post("/cpi-components", handleCPIComponents(cfg.CPIComponents, cfg.Logger))
 	}
 
 	return r

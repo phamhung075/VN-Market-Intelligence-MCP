@@ -9,6 +9,13 @@
 // VMT-2 (BOP): BOPUseCase wired with VpsFetchAdapter + BOP parser + URL builder.
 // Route POST /bop added to RouterConfig. No excelize dep (pure JSON API, PROBE-2).
 //
+// VMT-3b (GSO/IIP): MacroIndicatorsGSOUseCase wired with NSOExcelFetcher + IIP parser.
+// Route POST /macro-indicators added. excelize dep added (NSO Excel parse, Entry 10).
+//
+// VMT-4 (CPI): CPIComponentsUseCase wired with shared NSOExcelFetcher + CPI parser.
+// Route POST /cpi-components added. Shares NSOExcelFetcher instance with VMT-3b.
+// CPI weights=null, is_estimate=true (architect handoff § VMT-4 weights_policy).
+//
 // Sandbox security (charter §Security Clause macro-specific addition):
 // reads ZERO secrets — only PORT (default 5004) and LOG_LEVEL (default "INFO").
 // No DB credentials, no API keys, no external service credentials in this process env.
@@ -68,10 +75,26 @@ func main() {
 	bopURLBuilder := &bopURLBuilderAdapter{}
 	bopUseCase := application.NewBOPUseCase(vpsFetchAdapter, bopParser, bopURLBuilder)
 
+	// VMT-3b (GSO/IIP) + VMT-4 (CPI): shared NSO Excel cache+fetcher.
+	// Entry 11 (sprint-VN-MACRO-TOOLING.md): ONE NSOExcelFetcher instance serves both.
+	// DB_PATH: path to market.db (read-write for macro_vmt_cache table).
+	dbPath := envStr("DB_PATH", "/app/data/market.db")
+	nsoExcelFetcher := infrastructure.NewNSOExcelFetcher(vpsFetchAdapter, dbPath)
+
+	// VMT-3b: GSO/IIP use case wiring.
+	iipParser := &iipParserAdapter{}
+	macroIndicatorsGSOUseCase := application.NewMacroIndicatorsGSOUseCase(nsoExcelFetcher, iipParser)
+
+	// VMT-4: CPI use case wiring (shares the same nsoExcelFetcher).
+	cpiParser := &cpiParserAdapter{}
+	cpiComponentsUseCase := application.NewCPIComponentsUseCase(nsoExcelFetcher, cpiParser)
+
 	router := iface.NewRouter(iface.RouterConfig{
-		Snapshot: useCase,
-		BOP:      bopUseCase,
-		Logger:   logger,
+		Snapshot:           useCase,
+		BOP:                bopUseCase,
+		MacroIndicatorsGSO: macroIndicatorsGSOUseCase,
+		CPIComponents:      cpiComponentsUseCase,
+		Logger:             logger,
 	})
 
 	addr := fmt.Sprintf(":%s", port)
@@ -151,4 +174,30 @@ func (b *bopURLBuilderAdapter) QuarterWindow(t time.Time) (string, string) {
 // PrevQuarterWindow delegates to infrastructure.PrevQuarterWindow.
 func (b *bopURLBuilderAdapter) PrevQuarterWindow(t time.Time) (string, string) {
 	return infrastructure.PrevQuarterWindow(t)
+}
+
+// ---------------------------------------------------------------------------
+// VMT-3b + VMT-4 composition-root adapters
+//
+// These bridge application.IIPParser and application.CPIParser to the concrete
+// infrastructure parser functions without pkg/infrastructure importing pkg/application.
+// Lives here (composition root — Fence-C compliant).
+// ---------------------------------------------------------------------------
+
+// iipParserAdapter implements application.IIPParser using infrastructure.ParseIIPFromExcel.
+type iipParserAdapter struct{}
+
+// ParseIIP delegates to infrastructure.ParseIIPFromExcel.
+// Returns domain.MacroIndicatorsGSORecord — satisfies the application.IIPParser interface.
+func (a *iipParserAdapter) ParseIIP(excelBytes []byte, period string) (domain.MacroIndicatorsGSORecord, error) {
+	return infrastructure.ParseIIPFromExcel(excelBytes, period)
+}
+
+// cpiParserAdapter implements application.CPIParser using infrastructure.ParseCPIFromExcel.
+type cpiParserAdapter struct{}
+
+// ParseCPI delegates to infrastructure.ParseCPIFromExcel.
+// Returns domain.CPIRecord — satisfies the application.CPIParser interface.
+func (c *cpiParserAdapter) ParseCPI(excelBytes []byte, period string) (domain.CPIRecord, error) {
+	return infrastructure.ParseCPIFromExcel(excelBytes, period)
 }
