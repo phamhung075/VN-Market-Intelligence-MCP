@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T21:48:18Z",
+    "updated_at": "2026-06-14T22:06:43Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
-    "next_agent": "dev",
-    "note": "VMT-7 Zone-B wave DISPATCHED (bundled single dev-mcp-server agent — 7a-e thin MCP proxies + VMT-7-REGISTER index.ts wire, handlers-first dependency order, ONE atomic commit). Each handler carries dispatch_contract: Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough (7d weight_pct=null+weights_is_estimate=true; 7e irs+interbank_1w is_estimate=true PERMANENT+rate_1w_pct=null; 7a bloc_split is_estimate=true; 7b offshore_parked is_estimate=true) — handler must SURFACE these honestly, never strip. http-proxy/ helper reuse; Zod=live served DTO. On done+green router RAW-verify bundle (tsc green, registry wires exactly the 5, MCP tool-count +5) -> VMT-7 wave done -> VN-MACRO-TOOLING sprint near-complete (remaining VMT-3a-PMI blocked-probe5 S&P dev-local). WAVE-2 serial Zone-A CLOSED (A1-A5). pm dup-key hygiene finding logged (router-fixed d28). Commit explicit path only."
+    "next_agent": "ops",
+    "note": "VN-MACRO-TOOLING VMT-7 Zone-B wave DONE (dev-mcp-server a6f068af, commit 5c2f4f63, router RAW-verified 8 gates GREEN: HEAD on main, 8-file scope, foreign-capture clean, independent tsc exit 0, registry wires EXACTLY 5 in terminated TOOL_REGISTRARS array, fail-closed is_estimate/blocked_reason invariants confirmed at cited lines 7a/7b/7d/7e, NO hardcoded URL getMacroBaseUrl()+MACRO_INDICATORS_URL env-generic, bun test 13037/0). All 6 VMT-7 (7a get_vn_trade_balance / 7b get_vn_bop / 7c get_vn_macro_indicators / 7d get_cpi_components / 7e get_vn_liquidity_state + VMT-7-REGISTER) status->done. CODE merge gate satisfied BUT 5 tools NOT YET LIVE (mcp-server container holds pre-VMT-7 image). === WAVE-2 serial Zone-A CLOSED (A1-A5) + Zone-B VMT-7 code DONE. === -> head dev->ops: REBUILD mcp-server (memory: rebuild after dev change; force-recreate single service, NEVER compose down — kills peers) + LIVE-VERIFY tool-count 157->162 (project-stats.json baseline) + probe one new tool live via gateway call_tool(server=vn-market, tool=get_vn_trade_balance). On ops live-green -> router updates project-stats.json toolCount->162 + PO final signoff (done_verified). Remaining open: VMT-3a-PMI blocked-probe5 (S&P Global dev-local). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T21:48:18Z",
+    "_updated_at": "2026-06-14T22:06:43Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -6117,7 +6117,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6166,7 +6166,11 @@
             "zone_a_response_dto": "TradeBalanceResponse (dtos_vmt_trade.go)",
             "dispatched_at": "2026-06-14T21:48:18Z",
             "dispatch_agent": "dev-mcp-server",
-            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough).",
+            "done_at": "2026-06-14T22:06:43Z",
+            "done_commit": "5c2f4f63",
+            "done_agent": "a6f068af",
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
           },
           {
             "id": "VMT-7b-BOP-HANDLER",
@@ -6174,7 +6178,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6224,7 +6228,11 @@
             "zone_a_response_dto": "BOPResponse (dtos_vmt_bop.go)",
             "dispatched_at": "2026-06-14T21:48:18Z",
             "dispatch_agent": "dev-mcp-server",
-            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough).",
+            "done_at": "2026-06-14T22:06:43Z",
+            "done_commit": "5c2f4f63",
+            "done_agent": "a6f068af",
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
           },
           {
             "id": "VMT-7c-MACRO-INDICATORS-HANDLER",
@@ -6232,7 +6240,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6281,7 +6289,11 @@
             "zone_a_response_dto": "MacroIndicatorsGSOResponse (dtos_vmt_macro.go)",
             "dispatched_at": "2026-06-14T21:48:18Z",
             "dispatch_agent": "dev-mcp-server",
-            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough).",
+            "done_at": "2026-06-14T22:06:43Z",
+            "done_commit": "5c2f4f63",
+            "done_agent": "a6f068af",
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
           },
           {
             "id": "VMT-7d-CPI-COMPONENTS-HANDLER",
@@ -6289,7 +6301,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6344,7 +6356,11 @@
             "zone_a_response_dto": "CPIComponentsResponse (dtos_vmt_cpi.go)",
             "dispatched_at": "2026-06-14T21:48:18Z",
             "dispatch_agent": "dev-mcp-server",
-            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough).",
+            "done_at": "2026-06-14T22:06:43Z",
+            "done_commit": "5c2f4f63",
+            "done_agent": "a6f068af",
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
           },
           {
             "id": "VMT-7e-LIQUIDITY-STATE-HANDLER",
@@ -6352,7 +6368,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "S",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6401,7 +6417,11 @@
             "zone_a_response_dto": "LiquidityStateResponse (dtos_vmt_liquidity.go)",
             "dispatched_at": "2026-06-14T21:48:18Z",
             "dispatch_agent": "dev-mcp-server",
-            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough).",
+            "done_at": "2026-06-14T22:06:43Z",
+            "done_commit": "5c2f4f63",
+            "done_agent": "a6f068af",
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
           },
           {
             "id": "VMT-7-REGISTER",
@@ -6409,7 +6429,7 @@
             "type": "INFRASTRUCTURE",
             "priority": "high",
             "size": "M",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6449,7 +6469,11 @@
             },
             "dispatched_at": "2026-06-14T21:48:18Z",
             "dispatch_agent": "dev-mcp-server",
-            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough).",
+            "done_at": "2026-06-14T22:06:43Z",
+            "done_commit": "5c2f4f63",
+            "done_agent": "a6f068af",
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
           }
         ],
         "wave1_dispatched_at": "2026-06-14T19:09:12Z"
