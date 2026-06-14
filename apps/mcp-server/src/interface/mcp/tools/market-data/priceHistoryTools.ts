@@ -204,12 +204,17 @@ export function registerPriceHistoryTools(
         }
 
         // ── Query ───────────────────────────────────────────────────────────
+        // ALLZERO-OHLCV-FETCH: AND close > 0 excludes all-zero rows (DPI-4 foreign-flow
+        // stub rows with open/high/low/close=0, and non-trading-day gap rows stamped
+        // with zeros by the bulk fetcher on 2026-05-30). A zero in the 20-period BB
+        // window detonates stdev to ±35k and zero-anchors the chart Y-axis.
         const rows = db
           .query<PriceRow, [string, number]>(
             `SELECT code, date, open, high, low, close, volume
                FROM daily_ohlcv
               WHERE code = ?
                 AND date >= date('now', '-' || ? || ' days')
+                AND close > 0
               ORDER BY date DESC`,
           )
           .all(code, lookbackDays);
