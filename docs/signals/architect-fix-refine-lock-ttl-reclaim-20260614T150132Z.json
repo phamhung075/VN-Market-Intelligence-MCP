@@ -1,0 +1,14 @@
+{
+  "signal_id": "arch-fix-refine-lock-ttl-reclaim",
+  "from_agent": "architect",
+  "to_agent": "dev-mcp-server",
+  "type": "design_complete",
+  "task_id": "FIX-REFINE-LOCK-TTL-RECLAIM",
+  "brief": "docs/architecture-briefs/2026-06-14-fix-refine-lock-ttl-reclaim.md",
+  "commit": "a92ed301",
+  "root_cause": "flow/main.md task_heartbeat+task_release missing owner_agent → legacy-path zombie after server rebuild → lock orphaned",
+  "fix": "Fix A: add owner_agent:refine-orchestrator to task_heartbeat (line 82) + task_release (line 97 + error boundary). Fix C: ttl_seconds 1000→1800. Zero schema changes.",
+  "ops_immediate": "task_force_release_orphan bctc-refine:bdcfa5e0 owner_agent=refine-orchestrator orphan_threshold_seconds=120",
+  "impl_gate": "tsc 0 + T1-T5 regression tests (FIX-REFINE-LOCK-TTL-RECLAIM.test.ts)",
+  "created_at": "2026-06-14T15:00:00Z"
+}
