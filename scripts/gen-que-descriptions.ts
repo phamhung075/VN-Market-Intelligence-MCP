@@ -14,6 +14,7 @@
  * Field mapping (tooltip):
  *   queReference[i].coreMeaning.vi     → QueDescription.coreMeaning
  *   queReference[i].marketTrendLabel.vi → QueDescription.marketTrendLabel
+ *   queReference[i].hoverSummary.vi   → QueDescription.hoverSummary
  *
  * Field mapping (detail):
  *   All fields from que-reference.js including stateInterpretation.vi, favorable.vi,
@@ -67,6 +68,7 @@ interface QueRefEntry {
   stateInterpretation: { vi: string; en: string };
   favorable: { vi: string; en: string };
   warning: { vi: string; en: string };
+  hoverSummary: { vi: string; en: string };
   phases: QuePhase[];
   [key: string]: unknown;
 }
@@ -97,11 +99,13 @@ for (const entry of queReference) {
 
   const coreMeaning = entry.coreMeaning.vi.replace(/`/g, "\\`");
   const marketTrendLabel = entry.marketTrendLabel.vi.replace(/`/g, "\\`");
+  const hoverSummary = entry.hoverSummary.vi.replace(/`/g, "\\`");
 
   entries.push(
     `  ${entry.id}: {
     coreMeaning: \`${coreMeaning}\`,
     marketTrendLabel: \`${marketTrendLabel}\`,
+    hoverSummary: \`${hoverSummary}\`,
   }`
   );
 }
@@ -117,6 +121,8 @@ export interface QueDescription {
   coreMeaning: string;
   /** Secondary label — market trend label in Vietnamese (e.g. "Thuận lợi (THUẬN LỢI)"). */
   marketTrendLabel: string;
+  /** Extended hover summary — plain Vietnamese (80–220 chars). Falls back to coreMeaning if absent. */
+  hoverSummary?: string;
 }
 
 export const QUE_DESCRIPTIONS: Record<number, QueDescription> = {

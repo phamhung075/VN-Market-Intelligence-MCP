@@ -9,263 +9,329 @@ export interface QueDescription {
   coreMeaning: string;
   /** Secondary label — market trend label in Vietnamese (e.g. "Thuận lợi (THUẬN LỢI)"). */
   marketTrendLabel: string;
+  /** Extended hover summary — plain Vietnamese (80–220 chars). Falls back to coreMeaning if absent. */
+  hoverSummary?: string;
 }
 
 export const QUE_DESCRIPTIONS: Record<number, QueDescription> = {
   1: {
     coreMeaning: `Sức sáng tạo nguyên thủy, năng lượng dương cương kiện không ngừng vận hành`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Giai đoạn năng lượng mạnh nhất, mọi hành động đều được ủng hộ. Đây là thời điểm khởi nghiệp, mở rộng hoặc đẩy mạnh — nhưng cần giữ thái độ đúng mực, không kiêu căng tự mãn khi đang ở đỉnh cao.`,
   },
   2: {
     coreMeaning: `Sức tiếp nhận vĩ đại, đức nhu thuận nuôi dưỡng vạn vật`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Thời kỳ nên hỗ trợ thay vì dẫn đầu. Thị trường cần người kiên nhẫn xây dựng nền tảng, làm việc nhóm, không phải người đứng mũi chịu sào — hãy theo dòng chảy, đừng cố tạo xu hướng mới.`,
   },
   3: {
     coreMeaning: `Khó khăn ban đầu khi vạn vật mới sinh, như hạt mầm nảy từ đất`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Giai đoạn khởi đầu gian nan — mọi thứ đang hình thành nhưng chưa ổn định. Đừng làm một mình, hãy tìm người đồng hành tin cậy và chịu khó xây từng bước nhỏ thay vì vội vàng.`,
   },
   4: {
     coreMeaning: `U mê non dại cần được khai sáng, như suối nước từ chân núi chảy ra`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Tình hình chưa rõ ràng, bản thân còn thiếu thông tin. Đây là lúc học hỏi chứ không phải ra quyết định lớn — hãy khiêm tốn tìm người có kinh nghiệm hướng dẫn trước khi hành động.`,
   },
   5: {
     coreMeaning: `Chờ đợi đúng thời cơ với niềm tin vững chắc`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Cơ hội đang đến nhưng chưa chín muồi — thời điểm chưa đúng để vào lệnh. Hãy kiên nhẫn chờ đợi với tâm thế bình tĩnh, chuẩn bị kỹ, không để lo lắng thúc đẩy hành động sai lúc.`,
   },
   6: {
     coreMeaning: `Tranh chấp và kiện tụng cần được giải quyết`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Đang có xung đột hoặc bất đồng — leo thang thêm sẽ tốn kém hơn thắng lợi mang lại. Tìm người hòa giải, chấp nhận thỏa hiệp một phần, rút lui đúng lúc thường là nước đi khôn ngoan nhất.`,
   },
   7: {
     coreMeaning: `Lực lượng có tổ chức cần kỷ luật và lãnh đạo`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Cần hành động quy mô lớn, có tổ chức và người lãnh đạo rõ ràng. Thành công đến từ kỷ luật và phối hợp — hành động lộn xộn hoặc sai người dẫn đầu sẽ dẫn đến thất bại và lãng phí nguồn lực.`,
   },
   8: {
     coreMeaning: `Liên kết và liên minh tìm kiếm lợi ích chung`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Đây là thời điểm tốt để liên minh và hợp tác. Hãy xem xét kỹ đối tác trước khi cam kết — liên kết với người đúng mang lại lợi ích lâu dài, tham gia quá muộn sẽ bỏ lỡ cơ hội tốt nhất.`,
   },
   9: {
     coreMeaning: `Thu hoạch nhỏ qua sự kiềm chế nhẹ nhàng`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Tiến bộ lớn đang bị cản trở tạm thời — tập trung tích lũy từng bước nhỏ thay vì cố đạt mục tiêu lớn ngay. Như mây đang tụ nhưng chưa mưa, kiên nhẫn chờ điều kiện chín muồi hơn.`,
   },
   10: {
     coreMeaning: `Hành xử cẩn thận như dẫm lên đuôi hổ`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Đang đi trên địa hình nguy hiểm — mọi bước đi cần hết sức thận trọng và đúng chuẩn mực. Hành xử đúng đắn và tôn trọng ranh giới quyền lực giữ bạn an toàn trong tình huống rủi ro cao.`,
   },
   11: {
     coreMeaning: `Thịnh vượng và hài hòa trong mọi thứ`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Giai đoạn thuận lợi nhất — trời đất đồng thuận, mọi điều kiện hỗ trợ hành động. Hãy mạnh dạn mở rộng và tận dụng đà tăng trưởng này, nhưng nhớ rằng cực thịnh sẽ có lúc chuyển sang suy.`,
   },
   12: {
     coreMeaning: `Trì trệ và cản trở chặn đứng tiến bộ`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Giai đoạn bế tắc — nỗ lực gặp kháng cự từ mọi phía và giao tiếp bị cản. Đây không phải lúc để mở rộng hay ra quyết định lớn — hãy rút lui, bảo tồn nguồn lực và chờ chu kỳ chuyển hướng.`,
   },
   13: {
     coreMeaning: `Tình bằng hữu và mục đích chung đoàn kết mọi người`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Thành công đến từ việc hợp tác vì mục tiêu chung, minh bạch và công khai. Lập nhóm bí mật hoặc thiên vị cục bộ sẽ thất bại — hãy xây dựng liên minh rộng rãi dựa trên lợi ích chia sẻ.`,
   },
   14: {
     coreMeaning: `Dồi dào lớn lao và thành công tột đỉnh`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Thời kỳ thịnh vượng đỉnh cao — nguồn lực dồi dào, vận may ủng hộ hành động táo bạo. Hãy triển khai toàn lực nhưng giữ thái độ khiêm tốn và trách nhiệm để duy trì thành quả lâu dài.`,
   },
   15: {
     coreMeaning: `Khiêm tốn và nhún nhường mang lại hoàn thành`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Cách tiếp cận khiêm tốn thắng ở nơi kiêu ngạo thất bại. Giảm bớt chỗ dư thừa và bổ sung chỗ thiếu hụt — thái độ nhún nhường và tự điều chỉnh đúng lúc giúp hoàn thành mục tiêu bền vững.`,
   },
   16: {
     coreMeaning: `Nhiệt huyết và sẵn sàng vui vẻ cho hành động`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Năng lượng và sự hào hứng đang tích tụ cho hành động lớn. Đây là lúc huy động đội nhóm, đặt kế hoạch và điều phối — nhưng cần đặt đúng người vào đúng vị trí để nhiệt huyết không biến thành lãng phí.`,
   },
   17: {
     coreMeaning: `Theo dõi và thích ứng với hoàn cảnh`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Thích ứng linh hoạt với xu hướng hiện tại thay vì cố tạo xu hướng mới. Theo sát diễn biến, đi theo người dẫn đầu xứng đáng — sự linh hoạt và đáp ứng nhanh mang lại thành công tốt hơn cứng nhắc.`,
   },
   18: {
     coreMeaning: `Sửa chữa sự mục nát và lỗi lầm quá khứ`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Đây là thời điểm nhận diện và sửa chữa những vấn đề tồn đọng từ trước. Cần chuẩn bị cẩn thận trước điểm xoay chiều, theo dõi sát sau đó — điều chỉnh kịp thời sẽ phục hồi lại vị thế đã mất.`,
   },
   19: {
     coreMeaning: `Tiếp cận tăng trưởng với đà thuận lợi`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Điều kiện thuận lợi đang mở ra — hãy tiến tới tự tin trong khi đà hỗ trợ. Lưu ý: cửa sổ thời gian này có giới hạn, khoảng tháng thứ tám điều kiện sẽ thay đổi, cần hành động trước khi quá muộn.`,
   },
   20: {
     coreMeaning: `Quan sát và chiêm nghiệm từ vị trí cao`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Thời điểm tốt nhất để quan sát toàn cảnh trước khi hành động. Nhìn từ vị trí cao hơn, đánh giá kỹ lưỡng — hành động vội vã bây giờ sẽ lãng phí, nhưng quan sát cẩn thận sẽ cho thấy cơ hội thực sự.`,
   },
   21: {
     coreMeaning: `Hành động quyết đoán cắn xuyên qua chướng ngại`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Có chướng ngại cần được loại bỏ dứt khoát — giải quyết vấn đề thẳng thắn, không né tránh. Như cắn xuyên qua vật cứng để hàm khép lại, cần dùng sức mạnh quyết đoán để thông đường tiến.`,
   },
   22: {
     coreMeaning: `Vẻ đẹp và trang trí tăng cường bản chất`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Chú ý đến hình thức, cách trình bày và vẻ bề ngoài có thể hỗ trợ kết quả. Nhưng hình thức chỉ bổ sung cho nội dung — những quyết định lớn, thực chất vẫn cần dựa vào bản chất chứ không chỉ vẻ đẹp bề mặt.`,
   },
   23: {
     coreMeaning: `Tách rời và xói mòn vị thế`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Nền tảng đang xói mòn, không phải lúc để hành động mạnh hay mở rộng. Hãy rút lui và bảo tồn những gì đang có — cố tiến lên lúc này sẽ đẩy nhanh tổn thất. Chờ chu kỳ chạm đáy rồi đảo chiều.`,
   },
   24: {
     coreMeaning: `Trở về và đổi mới sau khi chạm đáy`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Đã chạm đáy và bắt đầu đảo chiều — ánh sáng quay trở lại sau giai đoạn tối. Hãy bắt đầu lại với nguyên tắc đúng đắn và tận dụng đà mới, không cần vội vàng nhưng đừng bỏ lỡ điểm khởi đầu này.`,
   },
   25: {
     coreMeaning: `Ngây thơ và những sự việc bất ngờ`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Hành động tốt nhất là hành động chân thành, không tính toán. Những sự kiện bất ngờ đang diễn ra — hãy giữ thái độ ngay thẳng, phản ứng tự nhiên thay vì mưu tính. Mánh khóe sẽ phản tác dụng.`,
   },
   26: {
     coreMeaning: `Tích lũy lớn quyền lực và nguồn lực`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Nguồn lực lớn đã được tích lũy — đây là lúc triển khai khôn ngoan cho mục tiêu có ý nghĩa. Đừng giữ khư khư, hãy mang sức mạnh này ra phục vụ mục đích lớn hơn để tiếp tục bồi đắp năng lực.`,
   },
   27: {
     coreMeaning: `Nuôi dưỡng và sinh kế đúng đắn`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Xem xét những gì bạn đang nuôi dưỡng và chất lượng của những gì nuôi dưỡng bạn. Chất lượng đầu vào quyết định chất lượng đầu ra — chọn lọc cẩn thận thông tin, nguồn lực và con người xung quanh.`,
   },
   28: {
     coreMeaning: `Gánh nặng phi thường vượt quá năng lực bình thường`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Tình huống đang vượt quá sức chịu đựng bình thường — đòn nóc sắp gãy dưới sức nặng. Cần biện pháp phi thường: hoặc hành động dứt khoát và táo bạo, hoặc rút lui hoàn toàn — không có chỗ cho nửa vời.`,
   },
   29: {
     coreMeaning: `Hiểm trở chồng hiểm trở, hố sâu nối hố sâu`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Nguy hiểm chồng nguy hiểm — mỗi bước đều có hố. Hãy giữ vững tâm thế, không hoảng loạn, chảy qua từng thách thức như nước chảy qua đá. Thành thật và bình tĩnh là lá chắn tốt nhất lúc này.`,
   },
   30: {
     coreMeaning: `Bám víu vào ánh sáng và sự rõ ràng`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Rõ ràng và minh bạch là sức mạnh — nhưng ánh sáng cần bám vào nơi hỗ trợ đúng đắn để tỏa sáng lâu dài. Tìm đúng vị thế và đối tác phù hợp, sự rõ ràng kết hợp đúng nơi mang lại thành công bền vững.`,
   },
   31: {
     coreMeaning: `Ảnh hưởng và thu hút lẫn nhau`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Sự thu hút và ảnh hưởng lẫn nhau đang hoạt động — nhạy cảm với phản hồi của đối phương là chìa khóa. Tiếp cận đúng cách, lắng nghe tín hiệu từ thị trường hoặc đối tác, không áp đặt một chiều.`,
   },
   32: {
     coreMeaning: `Sự bền bỉ và kiên trì lâu dài`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Thành công đến từ cam kết kiên định, không thay đổi liên tục theo cảm xúc. Hãy duy trì hướng đi đã chọn và xây dựng thói quen bền vững — sự dao động và thiếu nhất quán sẽ phá vỡ thành quả đã có.`,
   },
   33: {
     coreMeaning: `Rút lui chiến lược và rút lui`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Đây là thời điểm rút lui có chiến lược, không phải thất bại. Xa cách những yếu tố tiêu cực và bảo tồn sức mạnh để tiến bước sau này — việc nhỏ vẫn tiếp tục được, nhưng hành động lớn không phù hợp lúc này.`,
   },
   34: {
     coreMeaning: `Quyền lực lớn và sức mạnh áp đảo`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Sức mạnh và năng lượng đang ở đỉnh — nhưng sức mạnh không có trí tuệ dẫn đường sẽ tự bẫy mình. Hành động quyết đoán nhưng phải đúng nguyên tắc, tránh dùng lực để ép buộc chỗ không hợp lý.`,
   },
   35: {
     coreMeaning: `Tiến bộ và tiến vào ánh sáng`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Bước vào ánh sáng và được công nhận — điều kiện ủng hộ tiến bộ trên nhiều mặt. Hãy chủ động tiến lên, thể hiện năng lực và nắm bắt sự công nhận đang đến, đừng ẩn mình trong giai đoạn thuận lợi này.`,
   },
   36: {
     coreMeaning: `Ánh sáng bị thương và che giấu`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Tài năng đang bị môi trường xung quanh đè nén — hãy ẩn mình chiến lược và duy trì sức mạnh bên trong. Vẫn kiên trì bên trong nhưng bề ngoài bình thường để tránh bị nhắm vào, chờ thời điểm thuận lợi hơn.`,
   },
   37: {
     coreMeaning: `Trật tự gia đình và mối quan hệ đúng đắn`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Trật tự và tổ chức bên trong là nền tảng cho hiệu quả bên ngoài. Ổn định nội bộ trước — đội nhóm, quy trình, vai trò rõ ràng. Rối loạn trong nhà sẽ phá hỏng mọi kết quả dù thị trường có thuận.`,
   },
   38: {
     coreMeaning: `Đối lập và xa cách`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Có sự bất đồng hoặc đối lập đang hiện diện, nhưng vẫn có thể làm được việc nhỏ. Đừng cố ép giải quyết xung đột sâu — hãy dùng cách tiếp cận gián tiếp, từng bước nhỏ để dần dần tìm điểm chung.`,
   },
   39: {
     coreMeaning: `Chướng ngại và khó khăn phía trước`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Phía trước có trở ngại rõ ràng — tiếp tục đẩy thẳng sẽ làm khó khăn nặng hơn. Hãy nhận ra sớm, tái định vị chiến lược, tìm người cố vấn có kinh nghiệm và tập hợp sức mạnh trước khi thử lại.`,
   },
   40: {
     coreMeaning: `Giải phóng và giải thoát khỏi căng thẳng`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Áp lực và khó khăn đang tan biến — đây là thời điểm giải phóng và chuyển động trở lại. Hành động sớm để xóa bỏ nguyên nhân gốc rễ, sau đó trở về trạng thái bình thường. Đừng kéo dài quá trình giải quyết.`,
   },
   41: {
     coreMeaning: `Giảm bớt và cắt giảm chiến lược`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Thời kỳ cần giảm bớt, đơn giản hóa và hy sinh phần dư thừa vì lợi ích lâu dài. Đây không phải thất bại — giảm đúng lúc và đúng chỗ có thể phục hồi sức mạnh và tạo nền tảng cho tăng trưởng sau.`,
   },
   42: {
     coreMeaning: `Tăng trưởng và phát triển có lợi`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Thời kỳ gia tăng và mở rộng — điều kiện ủng hộ đầu tư thêm vào những gì đang hoạt động tốt. Hãy hành động táo bạo và nắm bắt cơ hội này, đây là giai đoạn hiếm gặp khi rủi ro được bù đắp xứng đáng.`,
   },
   43: {
     coreMeaning: `Đột phá quyết định và giải quyết`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Đã đến lúc phải thông báo dứt khoát và loại bỏ yếu tố tiêu cực ra khỏi hệ thống. Trình bày vấn đề công khai, không dùng bạo lực nhưng phải kiên quyết — dùng sức mạnh mà không có tính chính đáng sẽ thất bại.`,
   },
   44: {
     coreMeaning: `Cuộc gặp gỡ bất ngờ và cám dỗ`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Có sự gặp gỡ hoặc nhân tố mới xuất hiện — cần cẩn thận đánh giá vì không phải mọi cơ hội đến đều có lợi. Một nhân tố nhỏ nhưng nguy hiểm có thể phát triển thành vấn đề lớn nếu không nhận ra kịp.`,
   },
   45: {
     coreMeaning: `Tụ họp và hội họp`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Thời điểm tốt để quy tụ người và nguồn lực dưới sự lãnh đạo đúng đắn. Đến gặp người có tầm nhìn, dâng lễ và bày tỏ cam kết thực sự — tụ họp hỗn loạn không có mục đích sẽ chỉ tạo ra rối loạn.`,
   },
   46: {
     coreMeaning: `Leo lên dần dần và tiến bộ`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Tăng trưởng đi lên từng bước, ổn định như cây mọc từ đất. Đây là thời kỳ tiến bộ có nền tảng — hãy gặp người lớn hơn để xin hướng dẫn và đi về hướng thuận lợi, không cần vội nhưng không dừng lại.`,
   },
   47: {
     coreMeaning: `Kiệt sức và giam cầm`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Đang ở giai đoạn kiệt sức và bị bóp nghẹt — nguồn lực cạn, nỗ lực không được công nhận. Đây là thử thách nhân cách: giữ vững phẩm giá và chờ đợi, không nhượng bộ nguyên tắc để thoát khỏi áp lực tạm thời.`,
   },
   48: {
     coreMeaning: `Nguồn vô tận và nền tảng`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Nguồn lực cốt lõi và nền tảng vẫn không đổi dù hoàn cảnh xung quanh thay đổi. Hãy phát triển và duy trì nguồn lực thiết yếu thay vì chỉ đuổi theo bề mặt — gần hoàn thành nhưng thiếu một chút sẽ lãng phí tất cả.`,
   },
   49: {
     coreMeaning: `Thay đổi căn bản và biến đổi`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Đây là thời điểm thay đổi lớn và cải cách hệ thống — như thay da mới sau khi cũ đã xong vai trò. Hãy thực hiện thay đổi sau khi đã thuyết phục được nhiều người, không phải trước — đừng cách mạng quá sớm.`,
   },
   50: {
     coreMeaning: `Bình thiêng và thành tựu tột đỉnh`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Đây là thời kỳ nuôi dưỡng những điều có giá trị cao và phát triển nền văn minh, văn hóa tổ chức. Hãy sử dụng nguồn lực đúng cách và đúng người — sự phù hợp giữa người dùng và công cụ tạo ra kết quả vượt trội.`,
   },
   51: {
     coreMeaning: `Sốc và sấm mang lại chuyển động`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Cú sốc bất ngờ hoặc biến động mạnh đang xảy ra — phản ứng đầu tiên là kinh ngạc nhưng sau đó bình tĩnh trở lại. Đây là hồi chuông thức tỉnh: hành động nghiêm túc, giữ an toàn, không để sốc biến thành hoảng loạn.`,
   },
   52: {
     coreMeaning: `Yên tĩnh và thiền định dừng chuyển động`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Thời điểm cần dừng lại và giữ yên lặng hoàn toàn — không phải do thụ động mà do lựa chọn có ý thức. Yên tĩnh đúng lúc tập trung sức mạnh và tâm trí; cố hoạt động lúc này sẽ tiêu hao năng lượng vô ích.`,
   },
   53: {
     coreMeaning: `Tiến bộ dần dần và phát triển ổn định`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Tiến bộ bền vững đến từng bước đúng trình tự, không thể nhảy cóc. Như ngỗng đi từng chặng lên cao, hãy tuân thủ từng giai đoạn cần thiết — vội vàng phá vỡ trình tự tự nhiên sẽ tạo bất ổn.`,
   },
   54: {
     coreMeaning: `Vị trí không đúng mang lại xui xẻo`,
     marketTrendLabel: `Bất lợi (BẤT LỢI)`,
+    hoverSummary: `Đang ở vị thế không phù hợp hoặc hành động sai thời điểm — tiến tới lúc này mang lại xui xẻo. Kiên nhẫn chờ vị trí đúng và thời điểm đúng, tránh hành động xuất phát từ áp lực hoặc vị thế yếu kém.`,
   },
   55: {
     coreMeaning: `Đầy đủ và dồi dào đỉnh cao`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Đang ở đỉnh sung túc — như mặt trời ở giữa trưa, đây là thời điểm triển khai toàn lực và hưởng thành quả. Nhưng mặt trời giữa trưa sẽ bắt đầu đi xuống, hãy hưởng nhưng đồng thời chuẩn bị cho giai đoạn kế.`,
   },
   56: {
     coreMeaning: `Du hành và tạm trú ở vùng đất xa lạ`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Đang ở trong tình thế tạm thời, như người lữ hành qua vùng đất lạ. Thành công nhỏ có thể đạt được nếu hành xử cẩn thận và khiêm tốn — kiêu ngạo hoặc bất cẩn khi ở vị thế dễ tổn thương rất nguy hiểm.`,
   },
   57: {
     coreMeaning: `Thấm nhập nhẹ nhàng và ảnh hưởng dần dần`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Hành động hiệu quả nhất lúc này là thâm nhập từ từ, kiên trì, như gió len lỏi vào mọi khe hở. Không dùng lực tấn công trực diện mà dùng sự linh hoạt liên tục — có người chỉ dẫn sẽ tốt hơn làm một mình.`,
   },
   58: {
     coreMeaning: `Niềm vui và giao tiếp hài hòa`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Niềm vui và sự trao đổi cởi mở tạo ra môi trường thuận lợi cho hợp tác. Hãy chia sẻ, giao lưu và giữ thái độ vui vẻ chân thành — nhưng phân biệt niềm vui thực sự với sự chiều chuộng rỗng tuếch có thể dẫn sai đường.`,
   },
   59: {
     coreMeaning: `Tan rã và phân tán chướng ngại`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Rào cản và sự cứng nhắc đang tan chảy, tạo điều kiện cho sự hợp nhất trở lại. Như gió thổi trên nước, hãy phân tán những ích kỷ nhỏ để phục vụ mục tiêu lớn hơn — đây là thời điểm hòa giải và kết nối lại.`,
   },
   60: {
     coreMeaning: `Tiết chế và giới hạn đúng mức`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Đặt ra giới hạn và kỷ luật rõ ràng là cần thiết để duy trì hệ thống hoạt động bền vững. Tiết chế không phải là hạn chế tiêu cực — giới hạn đúng đắn tạo ra cấu trúc giúp mọi người phát triển trong đó.`,
   },
   61: {
     coreMeaning: `Lòng thành tín từ bên trong lan tỏa ra ngoài`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Lòng trung thực và niềm tin từ bên trong lan tỏa ra ngoài và cảm hóa người khác. Hành động xuất phát từ sự thành thật thực sự sẽ được tin tưởng và ủng hộ — ngay cả kẻ cứng đầu cũng có thể được thuyết phục bằng sự chân thành.`,
   },
   62: {
     coreMeaning: `Việc nhỏ vượt quá; việc lớn chờ đợi`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Điều kiện chỉ cho phép bước nhỏ — cố gắng vươn tới mục tiêu lớn lúc này sẽ thất bại. Hãy làm những gì vừa tầm với: mục tiêu nhỏ, biện pháp thận trọng, gần trước, xa sau — đây không phải thời của chim đại bàng.`,
   },
   63: {
     coreMeaning: `Trật tự đạt được nhưng cần duy trì`,
     marketTrendLabel: `Thuận lợi (THUẬN LỢI)`,
+    hoverSummary: `Đã hoàn thành một chu kỳ thành công — nhưng chính vì hoàn thành rồi nên dễ buông lỏng. Hãy duy trì cẩn thận những gì đã đạt được vì sự trật bánh nhỏ ngay sau đỉnh thành công có thể phá hỏng tất cả.`,
   },
   64: {
     coreMeaning: `Chưa hoàn thành với tiềm năng phía trước`,
     marketTrendLabel: `Trung tính (TRUNG TÍNH)`,
+    hoverSummary: `Chưa hoàn thành nhưng đang trong quá trình — ánh sáng cuối đường hầm đang nhìn thấy được. Hãy cẩn thận và kiên trì đến cùng, không để buông lơi gần về đích, vì bước chuyển qua hoàn thành đòi hỏi tập trung nhất.`,
   },
 };

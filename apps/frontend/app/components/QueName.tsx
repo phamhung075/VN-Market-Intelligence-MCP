@@ -72,7 +72,7 @@ export function QueName({ hexagram, name, className, withDetailLink }: QueNamePr
           aria-label={`Quẻ ${name} — ý nghĩa`}
         >
           <p className="font-semibold text-slate-100 mb-1">{name}</p>
-          <p className="text-slate-300">{desc.coreMeaning}</p>
+          <p className="text-slate-300">{desc.hoverSummary ?? desc.coreMeaning}</p>
           {desc.marketTrendLabel && (
             <p className="mt-1 text-slate-400">{desc.marketTrendLabel}</p>
           )}

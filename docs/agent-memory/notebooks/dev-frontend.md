@@ -1,6 +1,19 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-13 | **Sprint:** FIX-FRONTEND-NAV-STALE-COUNT-TESTS
+**Last updated:** 2026-06-14 | **Sprint:** KINHDICH-HOVER-ENRICH-FE
+
+---
+
+## Session: 2026-06-14 (KINHDICH-HOVER-ENRICH-FE)
+
+**KINHDICH-HOVER-ENRICH-FE DONE (3-file change, tsc green)**
+- scripts/gen-que-descriptions.ts: added `hoverSummary: { vi; en }` to QueRefEntry interface; extracted + backtick-escaped `entry.hoverSummary.vi` in BLOCK 1 loop; emitted `hoverSummary` field per entry; added `hoverSummary?: string` with JSDoc to QueDescription interface in output template; updated field-mapping comment header.
+- apps/frontend/app/lib/que-descriptions.generated.ts: regenerated via `bun run scripts/gen-que-descriptions.ts` — 64 entries, 65 hoverSummary occurrences (64 + interface line), 0 entries < 80 chars, coreMeaning x64 intact, header comment preserved.
+- apps/frontend/app/components/QueName.tsx L75: `{desc.coreMeaning}` → `{desc.hoverSummary ?? desc.coreMeaning}` (coreMeaning fallback preserved).
+- tsc --noEmit: EXIT 0 (no errors). DRY mechanism intact (single SSOT→codegen→generated→QueName chain).
+- ARCH-RATIFY-FE-1 CONFIRMED. Flagging ops for frontend-only container rebuild.
+
+Zone health: KINHDICH hover tooltip enriched; 64 quẻ now show plain-VN 80–220 char summaries; peers untouched | HEALTHY
 
 ---
 
