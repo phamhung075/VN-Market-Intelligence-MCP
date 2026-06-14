@@ -117,7 +117,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": null,
-      "last_fired": "2026-05-31T13:50:47Z",
+      "last_fired": "2026-06-14T13:52:51Z",
       "trigger_id": "trig_01FjB1WhF1bpgH1oYZF4BYru",
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "active",
@@ -159,7 +159,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-06-13T15:07:58Z",
+      "last_fired": "2026-06-14T15:07:42Z",
       "trigger_id": null,
       "_note": "Slot 1 of 4. Off-market confirmed. E2 in-cycle guard provides defense-in-depth."
     },
@@ -178,7 +178,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-06-13T18:07:49Z",
+      "last_fired": "2026-06-14T18:07:57Z",
       "trigger_id": null,
       "_note": "Slot 2 of 4. Off-market confirmed."
     },
@@ -235,7 +235,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "gatherer-standard",
-      "last_fired": "2026-06-14T04:08:09Z",
+      "last_fired": "2026-06-14T16:07:47Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",
@@ -277,7 +277,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "gatherer-standard",
-      "last_fired": "2026-06-14T04:08:09Z",
+      "last_fired": "2026-06-14T16:07:47Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",
@@ -319,7 +319,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-06-11T09:06:00Z",
+      "last_fired": "2026-06-14T09:08:04Z",
       "trigger_id": null,
       "_note": "Slot 1 of 2. Off-market confirmed (09:00 UTC = 16:00 ICT, 1h after 15:00 close). Outside OFF-HOSE window (02:00-08:59 UTC). Drains backlog + steady-state ~1/day."
     },
@@ -338,7 +338,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": "bctc-offmarket",
-      "last_fired": "2026-06-13T14:08:10Z",
+      "last_fired": "2026-06-14T14:08:08Z",
       "trigger_id": null,
       "_note": "Slot 2 of 2. Off-market confirmed (14:00 UTC = 21:00 ICT). Outside OFF-HOSE window. Clear of bctc-analyst (15:00/18:00/21:00/00:00 UTC) and chef-evening (19:45 UTC). Drains backlog second window of day."
     }
