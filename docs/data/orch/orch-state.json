@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T13:15:48Z",
+    "status": "review",
+    "updated_at": "2026-06-14T13:25:41Z",
     "updated_by": "dev-team",
     "active_task_id": "T3-ARCH-CRON-WATCHDOG",
-    "next_agent": "dev-mcp-server",
-    "note": "T2-ARCH-CRON-RECOVER-JITTER DONE_VERIFIED (qa G1-G5 LIVE, router RAW-confirmed: calibration_snapshots=1, generic recovery-dedup guard, tsc 0 + 18/18; ops RED overturned as cron_job_runs double-LOG false-positive). T3-ARCH-CRON-WATCHDOG dispatched -> dev-mcp-server (IMPL: schedulerWatchdogJob Lever D every 10min, MAX(started_at) freshness not row-count, idempotent alert dedup). T3 done closes umbrella ARCH-CRON-SCHEDULER-RELIABILITY. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
+    "next_agent": "ops",
+    "note": "T3-ARCH-CRON-WATCHDOG IMPL'd (55ea2ccf) + router-RAW-verified GREEN (tsc 0, 14/14 tests, wired scheduleCron */10, double-log immune MAX(started_at), recovery-safe alert-dedup) -> ops for TARGETED rebuild + LIVE watchdog-fire gate (expect 82 cron keys, NEVER compose down). ops-green -> qa -> done_verified CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12041,37 +12041,6 @@
         "design_complete_at": "2026-06-14T11:40:00Z",
         "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
         "next_task": "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-      },
-      {
-        "id": "T3-ARCH-CRON-WATCHDOG",
-        "title": "ARCH-CRON Phase 2: schedulerWatchdogJob.ts + tests — detect & self-heal missed fires",
-        "type": "SPRINT-S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "depends": [
-          "T2-ARCH-CRON-RECOVER-JITTER"
-        ],
-        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
-        "size": "M",
-        "verification_gate": "New file apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts implements runSchedulerWatchdog() with WATCHDOG_MANIFEST (16 monitored jobs, cadenceMs + thresholdMultiplier + action). Registered in startScheduler.ts on */10 * * * * schedule with recoverMissedExecutions: true. 3 test files pass: ARCH-CRON-watchdog.test.ts (5 unit tests on alert/self-heal/rate-limit logic), ARCH-CRON-idempotency.test.ts (T4 dedup under replay), ARCH-CRON-recovery.test.ts (loop-saturation simulation). Live: after deploy, watchdog fires cron_job_runs row every 10 min. tsc 0 errors.",
-        "acceptance": {
-          "AC1": "schedulerWatchdogJob.ts created per brief §7 interface spec",
-          "AC2": "WATCHDOG_MANIFEST hardcoded with 16 entries (ohlcvDailyAggregatorJob=self-heal, vnstockFundamentalsRefresh=alert-only, etc.)",
-          "AC3": "Registered in startScheduler.ts + cronConfig.ts schedulerWatchdog key added",
-          "AC4": "ARCH-CRON-watchdog.test.ts (5 tests): no alert within cadence, alert at 1.5x, self-heal calls wrapRun, dedup prevents double execution, 2h rate-limit",
-          "AC5": "ARCH-CRON-idempotency.test.ts: per-job recovery replay tests for ohlcv, reputation, calibration",
-          "AC6": "ARCH-CRON-recovery.test.ts: event-loop saturation simulation + tick recovery verification",
-          "AC7": "bun test all green; tsc 0 errors; git diff shows only watchdog/* + test files"
-        },
-        "created_at": "2026-06-14T12:00:00Z",
-        "created_by": "pm",
-        "note": "Lever 4 from architect brief. Builds on T1+T2. New scheduler/system/ module. 3 test files mirror EVIDENCE-ACCUM-SILENT-CRON test strategy. Rate-limit map in-process (no WAL writes from watchdog). Reads cron_job_runs via jobRunRepo injection (DDD clean).",
-        "next_agent": "dev-mcp-server",
-        "claimed_at": "2026-06-14T13:15:48Z",
-        "claimed_by": "dev-team",
-        "dispatch_note": "Router dispatched T3 IMPL (tick post-T2-done). depends [T2] SATISFIED (T2 done_verified — recoverMissedExecutions global default + jitter LIVE, idempotency invariant holds in prod). Same-zone apps/mcp-server FREE (T2 done). dev-mcp-server: implement schedulerWatchdogJob.ts (Lever D, every 10 min) per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5/§7 — detect jobs whose last successful cron_job_run is older than (cron cadence + grace) and emit a WORK-channel staleness alert (dedup per job per window; do NOT auto-restart). Reuse cron_job_runs as the freshness source BUT account for the double-LOG artifact (FIX-CRON-JOB-RUNS-DOUBLE-LOG) — key on MAX(started_at) per job_name, never row counts. New job must itself be recoverMissedExecutions-safe (idempotent: keyed alert dedup, no unguarded Telegram). bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify watchdog fires + dedups, never badges. T3 done CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY."
       }
     ],
     "ready": [],
@@ -12094,6 +12063,42 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
+      },
+      {
+        "id": "T3-ARCH-CRON-WATCHDOG",
+        "title": "ARCH-CRON Phase 2: schedulerWatchdogJob.ts + tests — detect & self-heal missed fires",
+        "type": "SPRINT-S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "REVIEW",
+        "depends": [
+          "T2-ARCH-CRON-RECOVER-JITTER"
+        ],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "New file apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts implements runSchedulerWatchdog() with WATCHDOG_MANIFEST (16 monitored jobs, cadenceMs + thresholdMultiplier + action). Registered in startScheduler.ts on */10 * * * * schedule with recoverMissedExecutions: true. 3 test files pass: ARCH-CRON-watchdog.test.ts (5 unit tests on alert/self-heal/rate-limit logic), ARCH-CRON-idempotency.test.ts (T4 dedup under replay), ARCH-CRON-recovery.test.ts (loop-saturation simulation). Live: after deploy, watchdog fires cron_job_runs row every 10 min. tsc 0 errors.",
+        "acceptance": {
+          "AC1": "schedulerWatchdogJob.ts created per brief §7 interface spec",
+          "AC2": "WATCHDOG_MANIFEST hardcoded with 16 entries (ohlcvDailyAggregatorJob=self-heal, vnstockFundamentalsRefresh=alert-only, etc.)",
+          "AC3": "Registered in startScheduler.ts + cronConfig.ts schedulerWatchdog key added",
+          "AC4": "ARCH-CRON-watchdog.test.ts (5 tests): no alert within cadence, alert at 1.5x, self-heal calls wrapRun, dedup prevents double execution, 2h rate-limit",
+          "AC5": "ARCH-CRON-idempotency.test.ts: per-job recovery replay tests for ohlcv, reputation, calibration",
+          "AC6": "ARCH-CRON-recovery.test.ts: event-loop saturation simulation + tick recovery verification",
+          "AC7": "bun test all green; tsc 0 errors; git diff shows only watchdog/* + test files"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "Lever 4 from architect brief. Builds on T1+T2. New scheduler/system/ module. 3 test files mirror EVIDENCE-ACCUM-SILENT-CRON test strategy. Rate-limit map in-process (no WAL writes from watchdog). Reads cron_job_runs via jobRunRepo injection (DDD clean).",
+        "next_agent": "ops",
+        "claimed_at": "2026-06-14T13:15:48Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router dispatched T3 IMPL (tick post-T2-done). depends [T2] SATISFIED (T2 done_verified — recoverMissedExecutions global default + jitter LIVE, idempotency invariant holds in prod). Same-zone apps/mcp-server FREE (T2 done). dev-mcp-server: implement schedulerWatchdogJob.ts (Lever D, every 10 min) per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5/§7 — detect jobs whose last successful cron_job_run is older than (cron cadence + grace) and emit a WORK-channel staleness alert (dedup per job per window; do NOT auto-restart). Reuse cron_job_runs as the freshness source BUT account for the double-LOG artifact (FIX-CRON-JOB-RUNS-DOUBLE-LOG) — key on MAX(started_at) per job_name, never row counts. New job must itself be recoverMissedExecutions-safe (idempotent: keyed alert dedup, no unguarded Telegram). bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify watchdog fires + dedups, never badges. T3 done CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY.",
+        "impl_commit": "55ea2ccfaf36bc089af54ab2527d4e16ca6151f1",
+        "impl_verified_at": "2026-06-14T13:25:41Z",
+        "impl_verified_by": "dev-team",
+        "impl_verdict": "RAW-verified GREEN: commit 55ea2ccf clean 4 files apps/mcp-server@HEAD (orch-state untouched); tsc exit 0 (router re-ran); 14/14 bun watchdog tests; WIRED startScheduler.ts:1175 scheduleCron(CRONS.schedulerWatchdog)+jobRunRepo.wrapRun, cronConfig */10 * * * *; double-log immune (SELECT MAX(started_at)); recovery-safe (T4 alert-dedup 2h cooldown Map, alert-only, no WAL write).",
+        "ops_instructions": "TARGETED REBUILD ONLY: docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server. NEVER docker compose down (rebuild-recreate-destroys-peers). docker ps -a after to confirm all peers Up/healthy. Then LIVE verification: (1) startup logs show scheduler started + cron keys registered (expect 82 now — +1 schedulerWatchdog) + NO 'Cannot convert a symbol to a string'; (2) confirm schedulerWatchdogJob appears in the registered-cron-keys log line; (3) within ~10 min the watchdog fires its first tick — RAW-probe cron_job_runs via keinos/sqlite3 sidecar (docker run --rm --volumes-from <cid> keinos/sqlite3 sqlite3 /app/data/market.db \"SELECT job_name,MAX(started_at) FROM cron_job_runs WHERE job_name='schedulerWatchdogJob' GROUP BY job_name\") — confirm it ran; (4) verify it did NOT spam WORK channel (alert-only + 2h cooldown — at most one alert per genuinely-stale job, and on a healthy fleet likely ZERO alerts); (5) router-style own gateway call_tool(get_pipeline_health or get_market_snapshot) returns valid payload, no 500. Report image build timestamp, peer count, the cron-key count (expect 82), watchdog first-fire evidence, and any WORK alerts it emitted (with the stale job names if any). On ops-green -> qa LIVE gate -> done_verified CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY."
       }
     ]
   },
