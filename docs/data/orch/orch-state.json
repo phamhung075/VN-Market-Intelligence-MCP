@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T19:54:33Z",
+    "_updated_at": "2026-06-14T20:02:43Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -8692,12 +8692,18 @@
         "created_at": "2026-06-14T19:43:26Z",
         "spec": "docs/handoffs/KINHDICH-HOVER-DETAIL-BA-spec.md",
         "completed_at": "2026-06-14T00:00:00Z",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "dev_impl_done_at": "2026-06-14T19:54:33Z",
         "dev_impl_commit": "de8d8d0a",
         "dev_agent": "a3943c17",
         "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show de8d8d0a --stat = EXACTLY 2 files (apps/frontend/app/components/QueName.tsx +39/-4 + dev-frontend.md notebook +10); NO board/orch-state/signal in commit; HEAD==de8d8d0a; .head UNTOUCHED (VN-MACRO chain next_agent=architect). Diff matches BA spec: import QUE_DETAIL; detail-present branch renders coreMeaning + Trạng thái(stateInterpretation) + Thuận(favorable) + Cảnh báo(warning) + marketTrendLabel each conditional (empty omitted); FR-3 fallback desc.hoverSummary??coreMeaning when detail absent; FR-4 'Xem chi tiết →' deep-link kept unconditionally; phases[] OMITTED; max-w-xs->max-w-sm. npx tsc --noEmit EXIT 0. Compile green; NOT done_verified — frontend bundle not rebuilt, enriched tooltip served on :3001 only after ops rebuild.",
-        "ops_rebuild_instructions": "REBUILD apps/frontend ONLY (Remix serves the bundled QueName chunk; new QUE_DETAIL tooltip NOT served until rebuilt). Targeted, NEVER docker compose down: `docker compose build frontend && docker compose up -d --no-deps frontend && docker builder prune -f`. Then `docker ps -a` to confirm frontend Up+healthy AND no peer container went down (rebuild-recreate-destroys-peers guard) AND served image ID changed. Do NOT rebuild kinh-dich-service (that was the parent ENRICH wrong-surface error — real surface is Remix :3001). Return: docker ps line for frontend + builder-prune reclaimed + peers-intact confirmation + old->new image ID. On ops-green -> next_agent=qa LIVE served-chunk RAW-verify on :3001."
+        "ops_rebuild_instructions": "REBUILD apps/frontend ONLY (Remix serves the bundled QueName chunk; new QUE_DETAIL tooltip NOT served until rebuilt). Targeted, NEVER docker compose down: `docker compose build frontend && docker compose up -d --no-deps frontend && docker builder prune -f`. Then `docker ps -a` to confirm frontend Up+healthy AND no peer container went down (rebuild-recreate-destroys-peers guard) AND served image ID changed. Do NOT rebuild kinh-dich-service (that was the parent ENRICH wrong-surface error — real surface is Remix :3001). Return: docker ps line for frontend + builder-prune reclaimed + peers-intact confirmation + old->new image ID. On ops-green -> next_agent=qa LIVE served-chunk RAW-verify on :3001.",
+        "ops_rebuilt_at": "2026-06-14T20:02:43Z",
+        "ops_agent": "ac42c0d0",
+        "ops_commit": "ba247805",
+        "ops_image": "3ed501d2f5c2 (was 8978f8ce)",
+        "router_ops_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the ops badge). docker inspect frontend image=sha256:3ed501d2f5c2 (CHANGED from 8978f8ce — genuine new build deployed); docker ps frontend Up healthy :3001; 13 containers running (no peer kill cascade); curl -sI :3001/ HTTP 200. SERVED-CHUNK LOAD-BEARING PROOF: curl :3001/assets/QueName-CweIuF2T.js (67522 bytes, hash changed from prior C7QiQvgn) physically carries Vietnamese labels 'Trạng thái'/'Thuận'/'Cảnh báo'/'Xem chi tiết' ALL FOUND + stateInterpretation x2 + favorable x2 + warning x2 (new QUE_DETAIL render) + que-descriptions-detail import x1 -> served data chunk que-descriptions-detail.generated-BvF1P1Ra.js. The enriched Tra-cứu-Kinh-Dịch hover tooltip is PHYSICALLY in the LIVE :3001 browser bundle. done_verified technical bar already MET at served layer; qa formalizes with rendered-hover sampling + Task Report.",
+        "qa_live_verify_checklist": "LIVE-verify on :3001 (NOT container health — RENDER proof). (1) PRIMARY served-chunk proof (router pre-confirmed, corroborate): curl :3001/assets/QueName-CweIuF2T.js -> grep stateInterpretation/favorable/warning + labels Trạng thái/Thuận/Cảnh báo present. (2) Rendered hover: sample quẻ across favorable/neutral/unfavorable trends + a terse one (29 Khảm / 47 Khốn) — tooltip shows coreMeaning + Trạng thái + Thuận + Cảnh báo + trend (NOT just the old one-line summary); phases[] 6-hào table ABSENT (reference-page only). (3) FR-3 fallback: any quẻ lacking a QUE_DETAIL entry still renders desc.hoverSummary??coreMeaning (no crash). (4) FR-4 'Xem chi tiết →' deep-link present + points to dashboard.kinh-dich-reference. (5) NFR-1 layout: 4-clause tooltip at max-w-sm text-xs wraps cleanly, no screen-edge overflow on mobile viewport. (6) Vietnamese readability for non-technical user. Report PASS/FAIL per item + the served-chunk grep result (load-bearing). On qa APPROVE -> po final signoff -> done_verified."
       }
     ],
     "closed_sprints": [
