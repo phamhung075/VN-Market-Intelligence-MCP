@@ -1,5 +1,15 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-14 | **Sprint:** VN-MACRO-TOOLING
+
+## BA-VN-MACRO-TOOLING · 2026-06-14
+
+**Decision journal** (task_id: BA-VN-MACRO-TOOLING):
+- what-considered: "only path: decompose 7 VMT tasks from existing io_contracts in orch-state + brief; no re-invention; skill switch-on schema as acceptance boundary"
+- why-change: "no change from plan"
+
+Spec complete. REQ file: `docs/REQ_VN-MACRO-TOOLING.md`. 12 sections, 7 tools (5 new + 1 extend + 1 register). Zero PO blockers (sprint is PO-approved). Six architect blockers (BLOCKER-1 to BLOCKER-6) — all require live VPS source probe before parser is written; BLOCKER-1/BLOCKER-2 also require architect design decisions (FDI-bloc derivation strategy; BOP PDF-vs-Excel parse path). Recommended zone split: Zone A = macro-indicators Go service (new endpoints + domain logic + VPS wrapper); Zone B = mcp-server TS (new tool handlers + VMT-7 registration); Zone C = creditFlowTools.ts in-place extend; Zone D = shared VPS proxy wrapper in macro-indicators infra. NEXT: architect (multi-zone blueprint).
+
 **Last updated:** 2026-06-14 | **Sprint:** KINHDICH-HOVER-ENRICH-FE
 
 ## KINHDICH-HOVER-ENRICH-FE-BA · 2026-06-14
