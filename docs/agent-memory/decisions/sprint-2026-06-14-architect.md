@@ -32,3 +32,15 @@ Per recurring-bug-escalation policy (4th touch of same bug class). Per-job sympt
 ### build-standard-rationale
 
 `lean` — new feature (watchdog file) within existing zone (`apps/mcp-server/`). No new MCP tools, no new domain services, no new DB tables. `schedulerWatchdogJob.ts` is additive, within existing `scheduler/system/` module. The 55-job update to add `recoverMissedExecutions` is mechanical (no new behavior per job, just a flag change).
+
+---
+
+### STEP architect-S2 · architect · 2026-06-14T18:15Z
+**task-id:** ARCH-KINHDICH-HOVER-ENRICH
+**what-done:** RATIFY-1 — confirmed Option C (new `hoverSummary localized` field) as the correct, lowest-risk shape for KINHDICH-HOVER-ENRICH; board transition KINHDICH-HOVER-ENRICH→ready + ARCH task closed.
+**what-considered:**
+- Option A (widen coreMeaning.vi): REJECTED — coreMeaning is consumed by gen-que-descriptions.ts (React frontend tooltip, QUE-TOOLTIP-DRY pipeline) as a terse identifier; widening breaks that contract (confirmed brownfield read: ARCH-QUE-TOOLTIP-DRY design brief, notebook 2026-06-12T09:00Z).
+- Option B (surface stateInterpretation.vi + favorable.vi + warning.vi in hover): REJECTED — PO-Q3 verbosity ruling, warning.vi already rendered as `.qref-warning` L2504 (confirmed index.html raw-read), 3-field concat overflows inline span layout.
+- Option C (new `HoverSummary localized` field in queReference struct): RATIFIED — fits existing `localized` type pattern exactly (struct already has coreMeaning/stateInterpretation/favorable/warning all using same type); build() closure accepts localized params in sequence; regen path `CGO_ENABLED=0 go run ./cmd/sandbox -emit-reference` confirmed real (same mechanism used by initial que-reference.js generation); L2501 `loc(q.coreMeaning)` confirmed as the exact swap target; zero cross-zone impact.
+**why-decision:** Option C is the only shape that keeps all existing consumers stable (React frontend, MCP explain_hexagram, expanded detail panel), introduces no schema ambiguity, and maps cleanly to a single additive struct field + build() param. Done-bar (64 entries, zero terse residue) is fully verifiable via grep + python3 gate.
+**why-change:** no change from BA plan; ratification confirms C.

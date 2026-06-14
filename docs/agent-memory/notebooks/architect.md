@@ -1,8 +1,28 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 16:00 UTC | **Sprint:** DOCLANG-SERIALIZE
+**Last updated:** 2026-06-14 18:15 UTC | **Sprint:** KINHDICH-HOVER-ENRICH
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T18:15Z — ARCH-KINHDICH-HOVER-ENRICH RATIFY-1 (RATIFIED, CLOSED)
+
+**Task:** ARCH-KINHDICH-HOVER-ENRICH | zone: apps/kinh-dich-service/ (single zone)
+**Output:** Board transition KINHDICH-HOVER-ENRICH→ready (owner=dev-kinh-dich), ARCH task closed.
+
+**RATIFY-1 verdict: Option C CONFIRMED — new `HoverSummary localized` field.**
+
+**Brownfield findings (raw-read confirmed):**
+- `queReference` struct (hexagram_reference.go L27-42): existing fields coreMeaning/stateInterpretation/favorable/warning all use `localized` type. `HoverSummary localized` fits identically — zero pattern deviation.
+- `build()` closure signature (L105): `(id int, coreMeaning, stateInterpretation, favorable, warning localized, glosses []localized)`. Adding `hoverSummary localized` as 5th param (before glosses) is the minimal additive change.
+- L2501 index.html confirmed: `loc(q.coreMeaning)` is the exact swap target. L2504 `loc(q.warning)` → `.qref-warning` unchanged.
+- `coreMeaning` stays in struct, in que-reference.js, and in expanded detail section (L2508+). React frontend (gen-que-descriptions.ts → QUE-TOOLTIP-DRY) reads coreMeaning.vi — unaffected by this change.
+- Zone: purely `apps/kinh-dich-service/` (Go struct + generated JS + static HTML). No cross-zone touch.
+
+**BUILD-STANDARD:** not-applicable (new field inside existing zone, no new service/port/primitive).
+
+**Service rebuild required:** YES. The Go binary serves the dashboard. After hexagram_reference.go change + que-reference.js regen, the container must be rebuilt for the new JS to be served. Dev-kinh-dich must flag to ops in commit message.
+
+**QA LIVE gate confirmed well-formed:** QA must serve the running dashboard (not just file-inspect). Sample quẻ 47 + 29 + 1 for non-terse hoverSummary. Verify grep count=64 + python3 zero-short-strings check. Toggle EN↔VI. Click-expand quẻ 47 to confirm coreMeaning still visible in detail panel.
 
 ## 2026-06-14T16:00Z — FIX-REFINE-LOCK-TTL-RECLAIM Design Brief (DESIGN, REVIEW)
 
