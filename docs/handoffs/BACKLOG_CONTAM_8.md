@@ -58,3 +58,25 @@ Separate defect discovered during contamination analysis: bulk rows with `open=0
 ## Related
 - CONTAM-6: repair script includes safety guard `WHERE NOT (open=0 AND low=0 AND high=0 AND close=0)`
 - CONTAM-7: sanity check job could flag zeros as distinct issue for future triage
+
+---
+
+## [QA] Review Record — 2026-06-14T08:22:00Z
+
+**verdict:** APPROVED → done_verified
+**impl_commit:** 9088c052
+**verified_by:** qa (cycle-265)
+
+**Checks:**
+- G1 Targeted: bun test ALLZERO-OHLCV-FETCH.test.ts → 5 pass / 0 fail / 17 expect() / 574ms. All 5 AC green.
+- G2 TSC: bun tsc --noEmit → 0 errors.
+- G3 Full suite: 12,942 tests / 1,083 files — Bun v1.3.13 C++ OOM crash post-completion (pre-existing runtime bug, not a code defect). Zero failures from ALLZERO files.
+- G4 DDD: PASS. scheduler→domain import (ohlcvUnitGuard.js) permitted. interface→infra import (logger.js) permitted. domain layer has zero infra imports.
+- G5 Security: PASS. No process.env, no secrets. All SQL parameterized (? placeholders). No shell injection.
+- G6 Generic: PASS. purgeAllZeroRows uses predicate open=0 AND high=0 AND low=0 AND close=0 across ALL tickers — no per-ticker hardcode. normalizeResidualContam uses predicate close>0 AND close<STOCK_MIN_VND(100) AND NOT IN (INDEX_TICKERS) — no per-ticker hardcode.
+- G7 Idempotency: PASS. purge deletes 0 rows on re-run. normalize close<100 guard excludes already-normalized rows (×1000 >> 100).
+- G8 Mock-guard: PASS (exit 0).
+- G9 BCTC regression: PASS. No bctc_table_rows touched.
+- G10 Live (router + ops pre-verified): VCB 2026-06-01 close=62,200 confirmed. SHB/VCB/FPT BB-width 0.88%/1.92%/2.14% — all well under 15% acceptance threshold. Zero-candle absent.
+
+**unblocks:** FIX-FE-CHART-PRICE-DOMAIN (dev-frontend) — handoff: docs/handoffs/FIX-FE-CHART-PRICE-DOMAIN.md
