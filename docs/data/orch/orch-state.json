@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T21:01:41Z",
+    "updated_at": "2026-06-14T21:18:43Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
     "next_agent": "dev",
-    "note": "VN-MACRO-TOOLING A3=VMT-1a-TRADE-BALANCE + VMT-1b-BLOC-SPLIT DONE (aa0aa147, commit a3bbc866, router RAW-verified: 12 files ALL in-zone + dev notebook, foreign-capture guard passed/hygiene HELD, go build + go test ./... ALL GREEN 11 pkgs, excelize STILL single v2.8.1 cache REUSE, bloc_split is_estimate=true PERMANENT incl error path, route /trade-balance wired, anchors pass export27400/import24100/balance+3300/FDI24810, A3 merge gate SATISFIED). -> A3->A4 GATE OPEN (per BOARD serial_dispatch_order SSOT — corrected stale A4=VMT-5b narrative): A4 = VMT-5a-LIQUIDITY-STATE-NO-GATE DISPATCHED to dev-macro-indicators (SINGLE task: policy_rates SBV Liferay HTML + SJC-gold-gap + fx_coupling from EXISTING market.db reads, NO new crawl; IRS is_estimate=true DD-6 permanent). On A4 done+green -> merge gate A4->A5 -> dispatch A5=VMT-5b-INTERBANK-OMO (FINAL: interbank permanent is_estimate Decision B + OMO HTML tally; depends VMT-5a+PROBE-4 both met, serial-gated). SERIAL Zone-A: one dev-macro-indicators agent at a time. VMT-3a-PMI blocked-probe5 (S&P dev-local). VMT-7a-e + VMT-7-REGISTER (handler-registration wave) still TODO. KINHDICH-HOVER-DETAIL chain CLOSED done_verified (e4e4991b). Commit explicit path only."
+    "note": "VN-MACRO-TOOLING A4=VMT-5a-LIQUIDITY-STATE-NO-GATE DONE (a937e5e2, commit 226be604, router RAW-verified: 11 files ALL in-zone + dev notebook 1826 ins, foreign-capture guard passed/hygiene HELD 4th commit, go build + go test ./... ALL GREEN 11 pkgs, IRS+SJC is_estimate=true fail-closed incl error path, market.db LIVE named volume /app/data NOT host ./data, NO new crawl/dep, TLS InsecureSkipVerify:false, route /liquidity-state wired, A4 merge gate SATISFIED). -> A4->A5 GATE OPEN (FINAL): A5 = VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO DISPATCHED to dev-macro-indicators (SINGLE task, NEW parsers_vmt_sbv_interbank_omo.go: OMO net-outstanding tally from SBV nghiep-vu-thi-truong-mo Liferay HTML, --cacert; interbank_1w is_estimate=true PERMANENT Decision B dttktt 100% packet loss; irs DD-6 permanent). VMT-5b is the FINAL serial Zone-A task — on done+green WAVE-2 serial chain CLOSED -> VMT-7a-e + VMT-7-REGISTER handler-registration wave next. SERIAL Zone-A: one dev-macro-indicators agent at a time. VMT-3a-PMI blocked-probe5 (S&P dev-local). KINHDICH-HOVER-DETAIL chain CLOSED done_verified (e4e4991b). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T21:01:41Z",
+    "_updated_at": "2026-06-14T21:18:43Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -6012,7 +6012,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "M",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -6058,7 +6058,11 @@
             "merge_gate": "MERGE GATE A3→A4: VMT-1a + VMT-1b merge complete before A4 starts",
             "dispatched_at": "2026-06-14T21:01:41Z",
             "dispatch_agent": "dev-macro-indicators",
-            "dispatch_unit": "A4 (SINGLE task — VMT-5a liquidity-state; A3->A4 merge gate SATISFIED). policy_rates (refi/discount/lombard) from www.sbv.gov.vn Liferay HTML (same site as BOP, reachable, --cacert NOT -k, NO VPS proxy). SJC gap = sjc_price - world_price + fx_coupling from EXISTING market.db reads (sbv_rates + commodity_prices tables — DD-7, NO new fetch/crawl). IRS field is_estimate=true PERMANENT (DD-6, HNX OTC IRS not machine-readable — NEVER flip false). probe_sample scripts/probes/vmt-4-sample.json. Files: handlers/usecases/dtos/models/services_vmt_liquidity + adapters_vmt_sjc_fx + 2 tests + router.go/main.go wire. On done+green -> merge gate A4->A5 -> dispatch A5=VMT-5b (interbank permanent-estimate + OMO HTML, FINAL). Explicit-path commit ONLY (apps/macro-indicators/** + your notebook — NEVER git add -A/orch-state/ops.md)."
+            "dispatch_unit": "A4 (SINGLE task — VMT-5a liquidity-state; A3->A4 merge gate SATISFIED). policy_rates (refi/discount/lombard) from www.sbv.gov.vn Liferay HTML (same site as BOP, reachable, --cacert NOT -k, NO VPS proxy). SJC gap = sjc_price - world_price + fx_coupling from EXISTING market.db reads (sbv_rates + commodity_prices tables — DD-7, NO new fetch/crawl). IRS field is_estimate=true PERMANENT (DD-6, HNX OTC IRS not machine-readable — NEVER flip false). probe_sample scripts/probes/vmt-4-sample.json. Files: handlers/usecases/dtos/models/services_vmt_liquidity + adapters_vmt_sjc_fx + 2 tests + router.go/main.go wire. On done+green -> merge gate A4->A5 -> dispatch A5=VMT-5b (interbank permanent-estimate + OMO HTML, FINAL). Explicit-path commit ONLY (apps/macro-indicators/** + your notebook — NEVER git add -A/orch-state/ops.md).",
+            "done_at": "2026-06-14T21:18:43Z",
+            "done_commit": "226be604",
+            "done_agent": "a937e5e2",
+            "router_dev_reverify_verdict": "RAW-VERIFIED (not the dev badge): git show 226be604 --stat = EXACTLY 11 files, ALL apps/macro-indicators/** (10) + dev notebook (1), 1826 insertions; FOREIGN-CAPTURE GUARD passed (no orch-state/ops.md/signal sweep — hygiene HELD 4th commit). go build ./... PASS + go test ./... -count=1 ALL GREEN (11 pkgs, independent). INVARIANTS RAW-confirmed in source: IRS is_estimate=true PERMANENT incl error path (services:41 BuildIRSField always true DD-6; usecases:180 ALWAYS; usecases:199,204 error path keeps true); SJC gap fail-closed (services:80 true when SJC absent, DD-7 no crawler row); market.db = LIVE named volume (adapters:89-91 + main.go:94 DB_PATH default /app/data/market.db NOT host ./data, mode=ro); NO new crawl (DD-7 SJCPriceMnVND=0) NO new dep (go.mod UNCHANGED, HTML+SQLite only); TLS hardened (adapters:404 InsecureSkipVerify:false explicit, no -k); route POST /liquidity-state wired (router.go:106 + main.go:117). golangci-lint 0. A4 merge gate SATISFIED."
           },
           {
             "id": "VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO",
@@ -6066,7 +6070,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "M",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -6098,7 +6102,10 @@
               "irs_note": "irs.is_estimate=true (DD-6, permanent, same pattern as interbank)"
             },
             "serial_dispatch_order": "A5 (fifth in WAVE-2, after A3→A4 merge gates)",
-            "merge_gate": "MERGE GATE A4→A5: VMT-5a merge complete before A5 starts. FINAL WAVE-2 task in serial chain."
+            "merge_gate": "MERGE GATE A4→A5: VMT-5a merge complete before A5 starts. FINAL WAVE-2 task in serial chain.",
+            "dispatched_at": "2026-06-14T21:18:43Z",
+            "dispatch_agent": "dev-macro-indicators",
+            "dispatch_unit": "A5 (FINAL serial Zone-A task — VMT-5b interbank+OMO; A4->A5 merge gate SATISFIED). NEW FILE parsers_vmt_sbv_interbank_omo.go ONLY (+ wire into existing liquidity-state usecase/handler from A4 — extend, do not duplicate). OMO from www.sbv.gov.vn nghiep-vu-thi-truong-mo Liferay HTML (Mua ky han add/reverse-repo + Ban ky han absorb + Tin phieu; net_outstanding = sum(add) - sum(absorb), maturity-date aware; --cacert NOT -k, NO VPS proxy — same SBV site as BOP/A4). probe_sample scripts/probes/vmt-4-sample.json (OMO section; June-12-2026 408KB HTML OMO PASS — confirm each month release URL pattern stable). interbank_1w is_estimate=true PERMANENT + rate_1w_pct=null + blocked_reason='dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)' (architect Decision B — NEVER flip false, no public alternative: WiData off-limits, NSO narrative unreliable, no Bloomberg/Refinitiv). irs.is_estimate=true PERMANENT (DD-6, same pattern). On done+green -> A5 is FINAL WAVE-2 task: WAVE-2 serial chain CLOSED -> then VMT-7a-e handler-registration wave + VMT-7-REGISTER. Explicit-path commit ONLY (apps/macro-indicators/** + your notebook — NEVER git add -A/orch-state/ops.md/foreign notebooks)."
           },
           {
             "id": "VMT-7a-TRADE-BALANCE-HANDLER",
