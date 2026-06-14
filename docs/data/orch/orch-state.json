@@ -4,12 +4,12 @@
   "_updated_at": "2026-06-14T04:58:48Z",
   "_updated_by": "qa",
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T05:01:10Z",
-    "updated_by": "router",
-    "active_task_id": "A-1",
-    "next_agent": "ops",
-    "note": "A-1 APPROVED (code-merge) by qa cycle-261. Remaining: ops live-verify gate — force-recreate mcp-server, confirm cron_job_runs mcpServerStartup sentinel persists on named-volume DB + WORK alert fires on 2nd restart/4h. Promote A-1 done->done_verified ONLY after that fires LIVE."
+    "status": "idle",
+    "updated_at": "2026-06-14T07:45:00Z",
+    "updated_by": "ops",
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "A-1 promoted done_verified: live-verify PASS (sentinel rows persist, alert fired count=2)"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -9879,7 +9879,7 @@
         "title": "FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert: cron_job_runs sentinel + 30-min poller (>=2 restarts/4h -> WORK alert)",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "APPROVED",
+        "status": "done_verified",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "medium",
@@ -9892,7 +9892,29 @@
         "live_verify_gate": "PENDING — ops rebuild required: sentinel row persistence + alert fire on 2nd restart within 4h",
         "next_agent": "ops",
         "status_note": "code-merge quality APPROVED; DO NOT done_verified until ops live-verify passes",
-        "report": "reports/TASK_REPORT_FIX-MCP-CRASH-LOOP-A-1.md"
+        "report": "reports/TASK_REPORT_FIX-MCP-CRASH-LOOP-A-1.md",
+        "live_verification_result": {
+          "verified_at": "2026-06-14T07:45:00Z",
+          "verified_by": "ops",
+          "rebuild": {
+            "new_image_id": "sha256:73c3b4bc6dc45dacf71865ee5f75e8e44facfbd4fb809a85bd7efc4951b93ceb",
+            "container_health": "healthy",
+            "peers_intact": 10
+          },
+          "sentinel_persistence": {
+            "row_found": "mcpServerStartup|success|2026-06-14 05:33:15",
+            "database": "named-volume",
+            "restart_count_4h": 2
+          },
+          "alert_fire": {
+            "job_status": "success",
+            "fired_at": "2026-06-14T05:45:00Z",
+            "restart_count": 2,
+            "alert_logged": "[restart-cadence-alert] alert sent — restartCount=2"
+          },
+          "unit_tests": "4/4 PASS",
+          "summary": "A-1 live-verify PASSED: sentinel persists, cron-alert fired at :45 with count=2, all unit tests pass (no false positive on count=1)"
+        }
       }
     ],
     "in_progress": [
