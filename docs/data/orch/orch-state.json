@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T22:06:43Z",
+    "updated_at": "2026-06-14T22:33:27Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
-    "next_agent": "ops",
-    "note": "VN-MACRO-TOOLING VMT-7 Zone-B wave DONE (dev-mcp-server a6f068af, commit 5c2f4f63, router RAW-verified 8 gates GREEN: HEAD on main, 8-file scope, foreign-capture clean, independent tsc exit 0, registry wires EXACTLY 5 in terminated TOOL_REGISTRARS array, fail-closed is_estimate/blocked_reason invariants confirmed at cited lines 7a/7b/7d/7e, NO hardcoded URL getMacroBaseUrl()+MACRO_INDICATORS_URL env-generic, bun test 13037/0). All 6 VMT-7 (7a get_vn_trade_balance / 7b get_vn_bop / 7c get_vn_macro_indicators / 7d get_cpi_components / 7e get_vn_liquidity_state + VMT-7-REGISTER) status->done. CODE merge gate satisfied BUT 5 tools NOT YET LIVE (mcp-server container holds pre-VMT-7 image). === WAVE-2 serial Zone-A CLOSED (A1-A5) + Zone-B VMT-7 code DONE. === -> head dev->ops: REBUILD mcp-server (memory: rebuild after dev change; force-recreate single service, NEVER compose down — kills peers) + LIVE-VERIFY tool-count 157->162 (project-stats.json baseline) + probe one new tool live via gateway call_tool(server=vn-market, tool=get_vn_trade_balance). On ops live-green -> router updates project-stats.json toolCount->162 + PO final signoff (done_verified). Remaining open: VMT-3a-PMI blocked-probe5 (S&P Global dev-local). Commit explicit path only."
+    "next_agent": "po",
+    "note": "VN-MACRO-TOOLING VMT-7 Zone-B wave LIVE-VERIFIED -> done_verified (ops a3f8cdf854aaadf90 rebuilt mcp-server+macro-indicators; router RAW re-probed all 5 tools via gateway, not the ops badge). Zone-B PROXY layer VERIFIED: toolCount=163 live==SSOT (0a77ae34, dev-mcp-server reconciled — head-note toolCount update ALREADY DONE by owner); both containers fresh-rebuilt all peers healthy; MACRO_INDICATORS_URL wired; all 5 enumerable+routing-correct; get_vn_liquidity_state LIVE-GREEN 200 with honest fail-closed fields (Decision A/B/DD-6 LIVE-confirmed). === WAVE-2 Zone-A CLOSED (A1-A5) + VMT-7 Zone-B LIVE-VERIFIED. === BUT 4/5 tools (trade_balance/bop/macro_indicators/cpi_components) live-dark — ROOT CAUSE corroborated (router-independent + macro-indicators logs): VPS squid proxy 125.212.251.27:3128 DOWN (host alive ping195ms, :3128+:443 refuse = service-down on Vinahost VPS). NOT a Zone-B defect (proxy propagates upstream failure correctly). -> head ops->po: TRIAGE 3 findings: (F1) ACTIVE INFRA INCIDENT VPS-proxy :3128 down — router ALREADY DISPATCHED ops-vps-fetch (urgent, infra on-call) to restore squid + per-source fetchers; LIKELY COMMON ROOT of open FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + VPS-AVAIL-02-FIX — PO reconcile the VPS task cluster under one root once ops-vps-fetch reports. (F2) /goal#1 BEST-RESULT GAP: Zone-A trade-balance/bop/macro-indicators/cpi-components 500/opaque on upstream-fetch fail instead of graceful 200+is_estimate+blocked_reason like liquidity_state — GENERIC across all 4 (/goal#2), mirror liquidity_state pattern, zone dev-macro-indicators (proposed VMT-8-MACRO-GRACEFUL-FAILCLOSE), independent of infra fix (resilience). (F3 non-blocking) gen-project-stats.ts cronJobCount=81 vs note ~69 + transient corrupt-2 partial write — dev-mcp-server reconcile+harden. VMT-3a-PMI still blocked-probe5 (S&P dev-local). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T22:06:43Z",
+    "_updated_at": "2026-06-14T22:33:27Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -6117,7 +6117,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "done",
+            "status": "done_verified",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6170,7 +6170,11 @@
             "done_at": "2026-06-14T22:06:43Z",
             "done_commit": "5c2f4f63",
             "done_agent": "a6f068af",
-            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops.",
+            "done_verified_at": "2026-06-14T22:33:27Z",
+            "live_verify_agent": "a3f8cdf854aaadf90",
+            "live_verify_commit": "540a5907",
+            "live_verify_verdict": "LIVE-VERIFIED (router RAW re-probed each tool via gateway, not the ops badge): toolCount=163 live==SSOT (0a77ae34); both containers fresh-rebuilt (mcp d5cb413773, macro 1e950eb65f) all peers healthy; MACRO_INDICATORS_URL=http://macro-indicators:5004 wired; all 5 enumerable+routing-correct. get_vn_liquidity_state LIVE-GREEN 200 with honest fail-closed fields (Decision A/B/DD-6 invariants confirmed LIVE: irs is_estimate=true, interbank_1w rate_1w_pct=null+is_estimate=true+blocked_reason, omo blocked_reason, sjc/policy is_estimate=true). Zone-B PROXY layer VERIFIED. get_vn_trade_balance/get_vn_bop/get_vn_macro_indicators/get_cpi_components return opaque error — ROOT CAUSE = VPS squid proxy 125.212.251.27:3128 DOWN (host alive ping195ms, :3128+:443 refuse; macro-indicators logs vpsFetch proxyconnect refused on NSO Excel + SBV-articles) = ACTIVE INFRA INCIDENT, NOT a Zone-B defect (proxy correctly propagates upstream failure). Two follow-ups routed to PO: F1 VPS-proxy outage (router dispatched ops-vps-fetch); F2 Zone-A graceful fail-close gap (4 NSO/SBV endpoints should degrade 200+is_estimate+blocked_reason like liquidity_state — dev-macro-indicators, generic /goal#1+#2)."
           },
           {
             "id": "VMT-7b-BOP-HANDLER",
@@ -6178,7 +6182,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "done",
+            "status": "done_verified",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6232,7 +6236,11 @@
             "done_at": "2026-06-14T22:06:43Z",
             "done_commit": "5c2f4f63",
             "done_agent": "a6f068af",
-            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops.",
+            "done_verified_at": "2026-06-14T22:33:27Z",
+            "live_verify_agent": "a3f8cdf854aaadf90",
+            "live_verify_commit": "540a5907",
+            "live_verify_verdict": "LIVE-VERIFIED (router RAW re-probed each tool via gateway, not the ops badge): toolCount=163 live==SSOT (0a77ae34); both containers fresh-rebuilt (mcp d5cb413773, macro 1e950eb65f) all peers healthy; MACRO_INDICATORS_URL=http://macro-indicators:5004 wired; all 5 enumerable+routing-correct. get_vn_liquidity_state LIVE-GREEN 200 with honest fail-closed fields (Decision A/B/DD-6 invariants confirmed LIVE: irs is_estimate=true, interbank_1w rate_1w_pct=null+is_estimate=true+blocked_reason, omo blocked_reason, sjc/policy is_estimate=true). Zone-B PROXY layer VERIFIED. get_vn_trade_balance/get_vn_bop/get_vn_macro_indicators/get_cpi_components return opaque error — ROOT CAUSE = VPS squid proxy 125.212.251.27:3128 DOWN (host alive ping195ms, :3128+:443 refuse; macro-indicators logs vpsFetch proxyconnect refused on NSO Excel + SBV-articles) = ACTIVE INFRA INCIDENT, NOT a Zone-B defect (proxy correctly propagates upstream failure). Two follow-ups routed to PO: F1 VPS-proxy outage (router dispatched ops-vps-fetch); F2 Zone-A graceful fail-close gap (4 NSO/SBV endpoints should degrade 200+is_estimate+blocked_reason like liquidity_state — dev-macro-indicators, generic /goal#1+#2)."
           },
           {
             "id": "VMT-7c-MACRO-INDICATORS-HANDLER",
@@ -6240,7 +6248,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "done",
+            "status": "done_verified",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6293,7 +6301,11 @@
             "done_at": "2026-06-14T22:06:43Z",
             "done_commit": "5c2f4f63",
             "done_agent": "a6f068af",
-            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops.",
+            "done_verified_at": "2026-06-14T22:33:27Z",
+            "live_verify_agent": "a3f8cdf854aaadf90",
+            "live_verify_commit": "540a5907",
+            "live_verify_verdict": "LIVE-VERIFIED (router RAW re-probed each tool via gateway, not the ops badge): toolCount=163 live==SSOT (0a77ae34); both containers fresh-rebuilt (mcp d5cb413773, macro 1e950eb65f) all peers healthy; MACRO_INDICATORS_URL=http://macro-indicators:5004 wired; all 5 enumerable+routing-correct. get_vn_liquidity_state LIVE-GREEN 200 with honest fail-closed fields (Decision A/B/DD-6 invariants confirmed LIVE: irs is_estimate=true, interbank_1w rate_1w_pct=null+is_estimate=true+blocked_reason, omo blocked_reason, sjc/policy is_estimate=true). Zone-B PROXY layer VERIFIED. get_vn_trade_balance/get_vn_bop/get_vn_macro_indicators/get_cpi_components return opaque error — ROOT CAUSE = VPS squid proxy 125.212.251.27:3128 DOWN (host alive ping195ms, :3128+:443 refuse; macro-indicators logs vpsFetch proxyconnect refused on NSO Excel + SBV-articles) = ACTIVE INFRA INCIDENT, NOT a Zone-B defect (proxy correctly propagates upstream failure). Two follow-ups routed to PO: F1 VPS-proxy outage (router dispatched ops-vps-fetch); F2 Zone-A graceful fail-close gap (4 NSO/SBV endpoints should degrade 200+is_estimate+blocked_reason like liquidity_state — dev-macro-indicators, generic /goal#1+#2)."
           },
           {
             "id": "VMT-7d-CPI-COMPONENTS-HANDLER",
@@ -6301,7 +6313,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "done",
+            "status": "done_verified",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6360,7 +6372,11 @@
             "done_at": "2026-06-14T22:06:43Z",
             "done_commit": "5c2f4f63",
             "done_agent": "a6f068af",
-            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops.",
+            "done_verified_at": "2026-06-14T22:33:27Z",
+            "live_verify_agent": "a3f8cdf854aaadf90",
+            "live_verify_commit": "540a5907",
+            "live_verify_verdict": "LIVE-VERIFIED (router RAW re-probed each tool via gateway, not the ops badge): toolCount=163 live==SSOT (0a77ae34); both containers fresh-rebuilt (mcp d5cb413773, macro 1e950eb65f) all peers healthy; MACRO_INDICATORS_URL=http://macro-indicators:5004 wired; all 5 enumerable+routing-correct. get_vn_liquidity_state LIVE-GREEN 200 with honest fail-closed fields (Decision A/B/DD-6 invariants confirmed LIVE: irs is_estimate=true, interbank_1w rate_1w_pct=null+is_estimate=true+blocked_reason, omo blocked_reason, sjc/policy is_estimate=true). Zone-B PROXY layer VERIFIED. get_vn_trade_balance/get_vn_bop/get_vn_macro_indicators/get_cpi_components return opaque error — ROOT CAUSE = VPS squid proxy 125.212.251.27:3128 DOWN (host alive ping195ms, :3128+:443 refuse; macro-indicators logs vpsFetch proxyconnect refused on NSO Excel + SBV-articles) = ACTIVE INFRA INCIDENT, NOT a Zone-B defect (proxy correctly propagates upstream failure). Two follow-ups routed to PO: F1 VPS-proxy outage (router dispatched ops-vps-fetch); F2 Zone-A graceful fail-close gap (4 NSO/SBV endpoints should degrade 200+is_estimate+blocked_reason like liquidity_state — dev-macro-indicators, generic /goal#1+#2)."
           },
           {
             "id": "VMT-7e-LIQUIDITY-STATE-HANDLER",
@@ -6368,7 +6384,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "S",
-            "status": "done",
+            "status": "done_verified",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6421,7 +6437,11 @@
             "done_at": "2026-06-14T22:06:43Z",
             "done_commit": "5c2f4f63",
             "done_agent": "a6f068af",
-            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops.",
+            "done_verified_at": "2026-06-14T22:33:27Z",
+            "live_verify_agent": "a3f8cdf854aaadf90",
+            "live_verify_commit": "540a5907",
+            "live_verify_verdict": "LIVE-VERIFIED (router RAW re-probed each tool via gateway, not the ops badge): toolCount=163 live==SSOT (0a77ae34); both containers fresh-rebuilt (mcp d5cb413773, macro 1e950eb65f) all peers healthy; MACRO_INDICATORS_URL=http://macro-indicators:5004 wired; all 5 enumerable+routing-correct. get_vn_liquidity_state LIVE-GREEN 200 with honest fail-closed fields (Decision A/B/DD-6 invariants confirmed LIVE: irs is_estimate=true, interbank_1w rate_1w_pct=null+is_estimate=true+blocked_reason, omo blocked_reason, sjc/policy is_estimate=true). Zone-B PROXY layer VERIFIED. get_vn_trade_balance/get_vn_bop/get_vn_macro_indicators/get_cpi_components return opaque error — ROOT CAUSE = VPS squid proxy 125.212.251.27:3128 DOWN (host alive ping195ms, :3128+:443 refuse; macro-indicators logs vpsFetch proxyconnect refused on NSO Excel + SBV-articles) = ACTIVE INFRA INCIDENT, NOT a Zone-B defect (proxy correctly propagates upstream failure). Two follow-ups routed to PO: F1 VPS-proxy outage (router dispatched ops-vps-fetch); F2 Zone-A graceful fail-close gap (4 NSO/SBV endpoints should degrade 200+is_estimate+blocked_reason like liquidity_state — dev-macro-indicators, generic /goal#1+#2)."
           },
           {
             "id": "VMT-7-REGISTER",
@@ -6429,7 +6449,7 @@
             "type": "INFRASTRUCTURE",
             "priority": "high",
             "size": "M",
-            "status": "done",
+            "status": "done_verified",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6473,7 +6493,11 @@
             "done_at": "2026-06-14T22:06:43Z",
             "done_commit": "5c2f4f63",
             "done_agent": "a6f068af",
-            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops."
+            "router_dev_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — 8 gates GREEN: HEAD==5c2f4f63 on main; git show --name-only EXACTLY 8 files (5 handlers + http-proxy/index.ts + registry.ts + dev notebook); foreign-capture guard passed (no orch-state/ops/signal sweep); independent bunx tsc --noEmit exit 0; registry.ts wires EXACTLY 5 registrar fns (imports L120-124 + array L246-250 inside terminated TOOL_REGISTRARS — VMT-7-REGISTER merge gate satisfied in one atomic commit); fail-closed invariants confirmed at cited lines (7a BlocShare is_estimate PERMANENT Decision A; 7b OffshoreParked is_estimate always L57; 7d weight_pct nullable L41 null-preserved no coerce; 7e rate_1w_pct nullable L82 ALWAYS null + is_estimate PERMANENT L84 + blocked_reason required L86 Decision B); NO hardcoded base URL — getMacroBaseUrl() reads Bun.env.MACRO_INDICATORS_URL call-time (macroHttpClient.ts:15-16) env-generic; bun test 13037/0-fail. Merge gate SATISFIED. LIVE-verify (tool responds post-rebuild) pending ops.",
+            "done_verified_at": "2026-06-14T22:33:27Z",
+            "live_verify_agent": "a3f8cdf854aaadf90",
+            "live_verify_commit": "540a5907",
+            "live_verify_verdict": "LIVE-VERIFIED (router RAW re-probed each tool via gateway, not the ops badge): toolCount=163 live==SSOT (0a77ae34); both containers fresh-rebuilt (mcp d5cb413773, macro 1e950eb65f) all peers healthy; MACRO_INDICATORS_URL=http://macro-indicators:5004 wired; all 5 enumerable+routing-correct. get_vn_liquidity_state LIVE-GREEN 200 with honest fail-closed fields (Decision A/B/DD-6 invariants confirmed LIVE: irs is_estimate=true, interbank_1w rate_1w_pct=null+is_estimate=true+blocked_reason, omo blocked_reason, sjc/policy is_estimate=true). Zone-B PROXY layer VERIFIED. get_vn_trade_balance/get_vn_bop/get_vn_macro_indicators/get_cpi_components return opaque error — ROOT CAUSE = VPS squid proxy 125.212.251.27:3128 DOWN (host alive ping195ms, :3128+:443 refuse; macro-indicators logs vpsFetch proxyconnect refused on NSO Excel + SBV-articles) = ACTIVE INFRA INCIDENT, NOT a Zone-B defect (proxy correctly propagates upstream failure). Two follow-ups routed to PO: F1 VPS-proxy outage (router dispatched ops-vps-fetch); F2 Zone-A graceful fail-close gap (4 NSO/SBV endpoints should degrade 200+is_estimate+blocked_reason like liquidity_state — dev-macro-indicators, generic /goal#1+#2)."
           }
         ],
         "wave1_dispatched_at": "2026-06-14T19:09:12Z"
