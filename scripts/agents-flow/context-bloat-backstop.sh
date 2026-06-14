@@ -58,8 +58,9 @@ REL_PATH="${FILE_PATH#${PROJECT_ROOT}/}"
 # jq called once to produce TSV of pattern/cap/class rows.
 MATCHED_CAP=""
 MATCHED_CLASS=""
+MATCHED_EXEMPT_SIBLING=""
 
-while IFS=$'\t' read -r pattern cap class; do
+while IFS=$'\t' read -r pattern cap class exempt_sibling; do
   # Use bash glob-style match (fnmatch via case) — ** not natively supported
   # in bash case, but our patterns are shallow enough to work with simple globs.
   # For docs/agents/*/flow/**/*.md and .claude/skills/**/*.md we use an extended match.
@@ -67,13 +68,24 @@ while IFS=$'\t' read -r pattern cap class; do
     $pattern)
       MATCHED_CAP="$cap"
       MATCHED_CLASS="$class"
+      MATCHED_EXEMPT_SIBLING="$exempt_sibling"
       break
       ;;
   esac
-done < <(jq -r '.caps[] | [.pattern, (.cap | tostring), .class] | @tsv' "$CAPS_FILE" 2>/dev/null || true)
+done < <(jq -r '.caps[] | [.pattern, (.cap | tostring), .class, (.exempt_if_sibling // "")] | @tsv' "$CAPS_FILE" 2>/dev/null || true)
 
 # --- Non-governed path → instant exit (hot path, no wc -l) ---
 [ -z "$MATCHED_CAP" ] && exit 0
+
+# --- EXEMPT-IF-SIBLING: vendor/third-party files are not ours to govern ---
+# If the matched cap declares an exempt_if_sibling filename and a sibling with
+# that name exists in the same directory as the written file, skip governance.
+# (e.g. Anthropic vendor skills ship a LICENSE.txt next to SKILL.md.)
+if [ -n "$MATCHED_EXEMPT_SIBLING" ] && [ "$MATCHED_EXEMPT_SIBLING" != "null" ]; then
+  if [ -f "$(dirname "$FILE_PATH")/$MATCHED_EXEMPT_SIBLING" ]; then
+    exit 0
+  fi
+fi
 
 # --- MEASURE: count lines in the written file ---
 [ -f "$FILE_PATH" ] || exit 0

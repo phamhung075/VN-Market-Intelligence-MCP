@@ -21,8 +21,10 @@
     },
     {
       "pattern": ".claude/skills/**/*.md",
-      "cap": 120,
-      "class": "skill-file"
+      "cap": 200,
+      "class": "skill-file",
+      "exempt_if_sibling": "LICENSE.txt",
+      "_note": "RECALIBRATE 2026-06-14 (po S52 context-bloat-governance): cap 120→200. Evidence: first-party methodology/procedural SKILL.md files cluster 110-166L (macro-health-read 166, trade-fx-pressure-decomp 164, system-map-query 151, audit-mcp-tools 146, four-factor-synthesis 131, task-lock 131) — all load-bearing, none compressible below the old 120 cap, all previously firing FALSE context_bloat_breach signals on every edit. 200L covers the full first-party distribution with headroom. EXEMPTION: Anthropic VENDOR skills (docx/pdf/xlsx/skill-creator/mcp-builder/frontend-design/internal-comms/theme-factory/web-artifacts-builder/webapp-testing — 110-590L, not ours to compress) are identified by a sibling LICENSE.txt file and excluded from governance via exempt_if_sibling. Outliers above 200L that ARE ours (commit-mutex 235L) carry an inline <!-- size-justification: ... --> header honored by the backstop hook. SSOT consumer: scripts/agents-flow/context-bloat-backstop.sh."
     },
     {
       "pattern": ".claude/agents/*.md",
