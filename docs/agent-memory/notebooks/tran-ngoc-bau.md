@@ -4,6 +4,24 @@
 
 ---
 
+## c95 · 2026-06-14T20:13Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: SUNDAY NO-MARKET (weekday slots correctly absent; evening status unknown at audit time)
+
+**Layer scores (auditable dishes):** No new 2026-06-14 dish auditable — Sunday off-market, evening not yet fired/confirmed. Carry-forward from c94: Evening 3/6, 4.5/9 NEEDS_ATTENTION.
+
+**New findings (HIGH):**
+- **F-DIGEST-DUP-WEEK-BOUNDARY (NEW, HIGH):** digest-sunday published twice on 2026-06-14. ISO-week calc inconsistency (W25 vs W24 at Sunday boundary) + RemoteTrigger not writing last_fired defeats dedup gate. Overlaps BACKSTOP root-cause-B. Separate defect (A) = canonical ISO-week helper missing in digest-predict.
+- **F-MCP500-SYMBOL-TO-STRING CLOSED:** Root-cause fix e69b354f shipped (Hono→WebStandard transport). QA-verified c6c03f76. Done_verified.
+
+**FIX-COWORK-GUARANTEED-BACKSTOP:** Commit 45553a28, Layer-B re-arm live 2026-06-13T21:07Z. Chef morning/eod trigger_status=active (reactivated 21:18:35Z). G1-G4 verification DEFERRED to Mon 2026-06-16 (first market day).
+
+**Carry-forward gaps:** F-BCTC-CTG-CRITICAL (CTG cycle 19, VCB/D2D cycle 15) | F3=PMI-sub | F4=VIRA | F9=business-context (21st cycle) | F5=hexagram-501
+
+**Actions:** Handoff written (docs/handoffs/tnb-audit-latest.md) | Signal file to emit | Notebook committed (MCP unavailable — commit-mutex SKIPPED, C-2 FAIL-CLOSED) | WORK report pending (MCP unavailable)
+
+---
+
 ## c94 · 2026-06-13T20:23Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE DEGRADED (only evening confirmed; morning/intraday/EOD absent from notebook + cowork-schedule)
