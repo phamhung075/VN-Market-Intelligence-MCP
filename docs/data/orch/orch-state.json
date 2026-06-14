@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T18:14:05Z",
+    "updated_at": "2026-06-14T18:19:41Z",
     "updated_by": "dev-team",
     "active_task_id": "KINHDICH-HOVER-ENRICH-FE",
-    "next_agent": "ops",
-    "note": "KINHDICH-HOVER-ENRICH-FE dev-frontend DONE (adf783cd, commit 067e484d) + router RAW-re-verified INDEPENDENTLY (3 impl files+notebook, hoverSummary x64 all>=80chars in generated.ts, QueName.tsx:75 {desc.hoverSummary ?? desc.coreMeaning}, codegen backtick-escaped, tsc green, no foreign sweep). -> ops REBUILD gate: build+up -d --no-deps FRONTEND (NOT kinh-dich-service — wrong surface) + builder prune; docker ps -a peers-intact + image-id-changed. -> qa LIVE :3001 quẻ hover shows richer hoverSummary (sample favorable/neutral/unfavorable + terse quẻ e.g. 29/47, fallback id shows coreMeaning). -> po signoff -> done_verified. Single zone apps/frontend, weekend-safe. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. VN-MACRO-TOOLING (PO sprint, macro/mcp zone) concurrent no-conflict. WIP=1 active KINHDICH-FE. Commit explicit path only."
+    "next_agent": "qa",
+    "note": "KINHDICH-HOVER-ENRICH-FE ops REBUILD GREEN (acac836d, frontend image 3a4f33c7->d349d070 CHANGED, Up+healthy :3001 200, prune 1.696GB, 13 peers no-down) + router RAW-re-verified (inspect image==d349d070, curl 200). -> qa LIVE-verify gate: PRIMARY = grep the SERVED :3001 QueName bundle for a known hoverSummary substring (raw-delivery proof the new text shipped, the wrong-surface guard); THEN rendered hover shows richer hoverSummary across favorable/neutral/unfavorable + terse quẻ (29/47), coreMeaning fallback intact, no mobile overflow (longest ~210-220 chars), Vietnamese readable. -> po signoff -> done_verified. Single zone apps/frontend. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. VN-MACRO-TOOLING (PO sprint, macro/mcp) concurrent no-conflict. WIP=1. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12622,9 +12622,9 @@
         "type": "SPRINT-S",
         "zone": "apps/frontend/",
         "owner": "dev-frontend",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "lane": "in_progress",
-        "status": "dev-impl-done",
+        "status": "ops-rebuilt",
         "priority": "medium",
         "size": "S",
         "created_at": "2026-06-14T17:53:32Z",
@@ -12656,7 +12656,11 @@
         "dev_impl_done_at": "2026-06-14T18:14:05Z",
         "dev_impl_commit": "067e484d",
         "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show 067e484d --stat = EXACTLY 3 impl files + notebook, NO foreign sweep (concurrent PO-sprint skills/flows preserved uncommitted). FR-1 gen-que-descriptions.ts L102 hoverSummary backtick-escaped + L108 emit + L71/L125 type. FR-2 generated.ts hoverSummary x64 all >=80 chars (0 short), coreMeaning x64 intact, header preserved. FR-3 QueName.tsx:75 {desc.hoverSummary ?? desc.coreMeaning}, marketTrendLabel+withDetailLink untouched. tsc --noEmit zero errors. QA: longest ~210-220 chars ~4-5 lines, confirm no mobile overflow.",
-        "ops_rebuild_instructions": "REBUILD apps/frontend ONLY (Remix serves bundled que-descriptions.generated.ts; new hoverSummary NOT served until rebuilt). Targeted, NEVER docker compose down: `docker compose build frontend && docker compose up -d --no-deps frontend && docker builder prune -f`. Then `docker ps -a` to confirm frontend Up+healthy AND no peer container went down (rebuild-recreate-destroys-peers guard) AND served image ID changed. Do NOT rebuild kinh-dich-service (that was the wrong-surface error). Return: docker ps line for frontend + builder-prune reclaimed + peers-intact confirmation. On ops-green -> next_agent=qa LIVE-verify :3001 quẻ hover shows richer hoverSummary."
+        "ops_rebuild_instructions": "REBUILD apps/frontend ONLY (Remix serves bundled que-descriptions.generated.ts; new hoverSummary NOT served until rebuilt). Targeted, NEVER docker compose down: `docker compose build frontend && docker compose up -d --no-deps frontend && docker builder prune -f`. Then `docker ps -a` to confirm frontend Up+healthy AND no peer container went down (rebuild-recreate-destroys-peers guard) AND served image ID changed. Do NOT rebuild kinh-dich-service (that was the wrong-surface error). Return: docker ps line for frontend + builder-prune reclaimed + peers-intact confirmation. On ops-green -> next_agent=qa LIVE-verify :3001 quẻ hover shows richer hoverSummary.",
+        "ops_rebuilt_at": "2026-06-14T18:19:41Z",
+        "ops_rebuild_result": "GREEN (ops acac836d): frontend image 3a4f33c7->d349d070 (CHANGED, new build deployed not cached), Up+healthy :3001, curl 200 OK, builder prune 1.696GB, all peers Up (13 running, none down). Notebook 2d6bd720.",
+        "router_ops_reverify_verdict": "RAW-RE-VERIFIED: docker inspect frontend image=d349d070 (!= old 3a4f33c7); docker ps frontend Up+healthy 0.0.0.0:3001; curl -sI :3001 HTTP 200; 13 containers running no-peer-down. Build genuinely deployed. NOTE: liveness != render proof — qa must confirm the served bundle carries hoverSummary AND the tooltip renders it (wrong-surface guard).",
+        "qa_live_verify_checklist": "LIVE-verify on :3001 (NOT container health — RENDER proof): (1) PRIMARY raw-delivery proof — fetch the deployed QueName JS asset from :3001 and grep the SERVED bundle for a known hoverSummary substring (e.g. a distinctive phrase from quẻ 1 or 47 in que-descriptions.generated.ts) to prove the new text is actually in the shipped bundle, not just the source file. (2) Rendered hover: sample quẻ across favorable/neutral/unfavorable + a terse one (e.g. 29 Khảm, 47 Khốn) — tooltip shows the richer ~150-220-char hoverSummary, NOT the old short coreMeaning. (3) Fallback: any quẻ lacking hoverSummary still renders coreMeaning (?? operator). (4) Layout/NFR-3: longest hoverSummary (~210-220 chars) wraps ~4-5 lines at text-xs/max-w-xs with NO screen-edge overflow on mobile viewport. (5) Vietnamese readability for non-technical user (no unexplained jargon/Hán-Việt). Report PASS/FAIL per item + the served-bundle grep result (the load-bearing proof)."
       }
     ],
     "ready": [
