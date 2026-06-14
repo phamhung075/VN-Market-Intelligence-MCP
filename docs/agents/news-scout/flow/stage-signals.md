@@ -94,6 +94,23 @@ call_tool(server="vn-market", tool="post_agent_signal", arguments={
 
 ---
 
+**T-41 / Fake-FDI detector:**
+Before classifying any FDI-registration increase headline as bullish, check:
+1. Does the FDI-increase coincide with reported losses in the same entity's recent BCTC or news cycle?
+2. Is the registering entity a wholly-owned subsidiary of a foreign parent with multi-year loss history?
+3. If YES to either → classify as `fdi_loss_cover` (capital injection covering accumulated trading losses), NOT organic growth FDI.
+
+```
+finding_data.event_type = "fdi_loss_cover"  (NOT "fdi_inflow")
+finding_data.direction  = "neutral"          (not bullish)
+payload.detail += " | FAKE-FDI-RISK: loss-cover injection — cross-check BCTC for accumulated losses"
+```
+
+Route as a WORK/context signal to unified-agent; do NOT post as bullish FDI to MARKET channel.
+Corroborate by checking `trade-fx-pressure-decomp` margin_trap_flag (electronics assemblers with sub-1 margin are primary candidates).
+
+---
+
 Watchlist hit (breaking news) → post `urgent_news`:
 <!-- AUTO-CURE TNB c55 — 2026-05-15: F/H-step gap (3-cycle evidence c53/c54/c55).
      payload.detail must include pillar summary + cycle phase + pyramid tier (same as chain_catalyst).

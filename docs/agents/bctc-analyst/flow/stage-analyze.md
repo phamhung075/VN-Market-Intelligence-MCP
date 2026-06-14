@@ -12,6 +12,20 @@ New PDF CRITICAL → broadcast signal immediately
 **2. Analyze** per ROUTINE_TICKERS `get_watchlist()`:
 `get_bctc_full(code)` | `get_sector_comparison(code)` PE/PB/ROE vs median | `get_kinhdich_reading(code)` confirms/contradicts?
 
+**T-19 / Revenue-up / volume-flat tag (retail/consumer tickers):**
+After `get_bctc_full(code)` for tickers in retail/consumer sector (e.g. MWG):
+- Compute `real_revenue_growth = revenue_growth_yoy - cpi_yoy`
+- If `revenue_growth_yoy > 5%` AND `real_revenue_growth < 2%` → set `price_driven=true`
+- Tag the BCTC signal: `"growth_type": "price_driven"` (lạm phát, not volume expansion)
+- Apply to the beat/miss verdict: a revenue beat that is entirely price-driven is NOT a volume-demand beat
+
+**T-37 / Electronics/FDI intercompany-loss flag:**
+For electronics-assembly / FDI tickers (Samsung-ecosystem, chip/RAM assemblers):
+- Check if import costs (raw materials / components) rose > 30% YoY while output prices were flat
+- If so, set `intercompany_loss_flag=true`: "margin −30–45% likely due to parent-co transfer pricing, not standalone solvency event"
+- Do NOT treat this as a going-concern risk without corroborating evidence of standalone cash burn
+- Cross-reference: chip/RAM price spikes of 5–6× (T-37) are parent-side cost allocation, not market-rate cost
+
 After `get_bctc_full(code)` returns stock PE:
 - Compute `EARNING_YIELD = 1 / PE`
 - `EY_SPREAD = EARNING_YIELD - MAX_DEPOSIT_RATE`

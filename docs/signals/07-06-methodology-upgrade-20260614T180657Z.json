@@ -1,0 +1,32 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-06-14-07-06-methodology-upgrade.md",
+  "priority": "high",
+  "createdAt": "2026-06-14T18:06:57Z",
+  "summary": "07-06 macro methodology upgrade: 2 new cowork skills (macro-health-read, trade-fx-pressure-decomp), 2 skill EXTENDs (regime-extraction PMI-MA, four-factor-synthesis decompose-before-conclude), 6 agent flow upgrades. All files implemented directly in this session. agent-father to verify file integrity post-commit.",
+  "files_created": [
+    ".claude/skills/macro-health-read/SKILL.md",
+    ".claude/skills/trade-fx-pressure-decomp/SKILL.md",
+    "docs/architecture-briefs/2026-06-14-07-06-methodology-upgrade.md"
+  ],
+  "files_edited": [
+    ".claude/skills/regime-extraction/SKILL.md",
+    ".claude/skills/four-factor-synthesis/SKILL.md",
+    "docs/agents/market-watcher/flow/cycle.md",
+    "docs/agents/unified-agent/flow/chef.md",
+    "docs/agents/digest-predict/flow/weekly.md",
+    "docs/agents/bctc-analyst/flow/stage-analyze.md",
+    "docs/agents/news-scout/flow/stage-signals.md",
+    "docs/agents/tran-ngoc-bau/flow/audit-methodology.md",
+    "docs/references/tree-map.md"
+  ],
+  "pending_po_lane": [
+    "get_vn_trade_balance",
+    "get_vn_bop",
+    "get_vn_macro_indicators",
+    "get_cpi_components",
+    "get_vn_liquidity_state"
+  ]
+}

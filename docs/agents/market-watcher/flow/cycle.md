@@ -80,7 +80,24 @@ Per stock: apply sector flags before emitting signal:
 - `DXY_SIGNAL=USD STRENGTHENING` + sector in (banking, realty) → `fx_pressure=true`
 - `US10Y_SIGNAL=RISK-OFF` + large-cap with high FII exposure → `pe_compression_risk=true`
 
-**2. Macro + supply chain**
+**2. Macro read** → skill: `.claude/skills/macro-health-read/SKILL.md`
+Store result as MACRO_HEALTH. Log any `is_estimate=true` tracks. The MACRO_HEALTH output feeds Step 4 signal enrichment.
+
+**T-20 / oil→CPI:** Oil-shock pass-through to VN CPI is near-immediate (same month, all baskets). Drop the "lag" assumption. When oil spikes: immediately flag `cpi_pressure_imminent=true` without waiting for the next CPI print.
+
+**T-21 / CPI peak-detection:** Check MACRO_HEALTH.inflation.cpi_peaked each cycle. If `cpi_peaked=true`, emit a `macro_regime_note` in session log: "CPI rolling over — front-loaded shock absorbed." Do NOT treat any single-month CPI print as establishing a trend.
+
+**T-27 / SJC vs world gold gap:** Narrowing gap (current ~8M VND vs historic ~20M) signals easing domestic stress. Read direction, not level. Widening = stress building.
+
+**T-28 / CNY coupling:** VND stresses materially only when CNY weakens vs USD. If CNY holds or strengthens (e.g. +3.3% YTD), DOWN-WEIGHT VND-depreciation alarms even if DXY is rising. Log: `cny_coupling_active = MACRO_HEALTH.fx.cny_coupling_active`.
+
+**T-32 / leading-data principle:** Read sector movers and high-frequency signals BEFORE the next GSO print arrives. Anticipate the official series; do not wait for it.
+
+**T-43 / China PPI imported-inflation:** PPI leads CPI ~3 months. Before alarming on imported inflation, identify WHICH PPI component moved and WHETHER it hits VN consumer baskets directly (manufacturing inputs → 1–2 month lag; energy → near-immediate).
+
+**T-41 / Fake-FDI detector:** FDI-registration spikes that coincide with reported assembler losses are capital injections covering accumulated trading losses, not growth signals. Corroborate FDI spikes against MACRO_HEALTH.investment.fdi_quality_note and `trade-fx-pressure-decomp` margin_trap_flag before treating FDI as bullish.
+
+**Supply chain + sector**
 `get_sector_rotation()` | `get_supply_chain_exposure()` BDI/rates | `get_climate_risk_signals()` typhoon/El Niño | `get_energy_grid_signals()` hydro levels
 
 `get_sector_rotation()` post-processing:

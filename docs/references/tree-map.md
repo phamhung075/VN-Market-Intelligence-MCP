@@ -83,6 +83,23 @@ CLAUDE.md (root — always loaded)
 │       ├── docs/standards/tnb-methodology-layers.md (Layers 1-3: data discipline, US/VN stacks)
 │       └── docs/standards/tnb-methodology-valuation.md (Layers 4-6: 4-pillar valuation, 6-step decision, gaps)
 │
+├── .claude/skills/rapid-market-cap-screen/SKILL.md (T-1/T-3 size + valuation gate — runs before any ticker analysis)
+├── .claude/skills/balance-sheet-first-read/SKILL.md (T-2 asset-coverage + book-value check — SKILL-2)
+├── .claude/skills/four-factor-synthesis/SKILL.md (T-4 conviction matrix F/V/G/B → 4 scenarios; EXTEND T-44 decompose-before-conclude gate — SKILL-3)
+├── .claude/skills/ownership-governance-screen/SKILL.md (T-9/T-10/T-11 governance red flags — SKILL-4)
+├── .claude/skills/management-track-record/SKILL.md (T-8 mgmt track record check — SKILL-5)
+├── .claude/skills/value-trap-avoidance/SKILL.md (T-5/T-7 value-trap detection — SKILL-6)
+├── .claude/skills/regime-extraction/SKILL.md (regime from bootstrap; EXTEND T-16 PMI MA3 track)
+│   Ref brief: docs/architecture-briefs/2026-06-04-expert-rapid-analysis-skills.md
+│
+├── .claude/skills/macro-health-read/SKILL.md (T-15..T-25 Báu "two trucks → six tracks" macro read; degraded→live upgrade path)
+│   Consumers: market-watcher (Step 2), unified-agent/CHEF (Step 1.5), digest-predict (Step 0c)
+│   Ref brief: docs/architecture-briefs/2026-06-14-07-06-methodology-upgrade.md
+│
+├── .claude/skills/trade-fx-pressure-decomp/SKILL.md (T-26/T-33–T-40/T-42 Thành BOP/trade-deficit decomp; FX-incidence verdict; degraded→live upgrade path)
+│   Consumers: market-watcher (FX/trade), unified-agent/CHEF (electronics/IZ/banking), digest-predict (FX thesis)
+│   Ref brief: docs/architecture-briefs/2026-06-14-07-06-methodology-upgrade.md
+│
 ├── docs/policies/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
 │
 ├── docs/policies/docs-organization.md (index: file placement quick-ref)

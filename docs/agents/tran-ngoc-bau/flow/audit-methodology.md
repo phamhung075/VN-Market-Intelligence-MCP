@@ -28,3 +28,24 @@ Log per agent:
 ```
 
 If the same gap appears 3+ cycles in the same agent's notebook → **AUTO-CURE (Step 6 in report-cycle.md)** using the auto-cure column of the catalogue table. If gap is not in the catalogue, append it there first (do NOT inline new gaps in the flow).
+
+---
+
+### T-45 — Adversarial cross-examination gate
+
+Before this audit cycle's WORK report is finalised: confirm that at least one dish this week contained an adversarial exchange — a claim that was challenged and either defended with data or explicitly down-weighted.
+
+**Check:** Scan the CHEF-DETAIL WORK messages (Phase 1–2 audit, Step 4). Look for any of:
+- A thesis that was contradicted by another signal and the contradiction was resolved (not ignored)
+- An explicit confidence downgrade citing conflicting evidence
+- A gap marker `[gap: ...]` that forced a decomposition (T-44 gate in four-factor-synthesis)
+
+**Verdict:**
+- `adversarial_gate = PASS` if at least 1 instance found in last 7 days of CHEF dishes
+- `adversarial_gate = FAIL` if no challenge found — append to Step 7 WORK audit row:
+  ```
+  [tnb-audit] adversarial-gate FAIL — no claim challenged this week. Model: Báu vs Thành China-PPI exchange
+  (07-06 roundtable T-45): force one decompose-before-conclude check on next morning dish.
+  ```
+
+Log: `[adversarial] gate={PASS|FAIL} — {evidence or "none found"}`

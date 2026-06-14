@@ -103,14 +103,24 @@ emit SILENT Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § S
 
 ---
 
+## Step 1.5 — MACRO-HEALTH READ (Layer-1 source — run before cluster analysis)
+
+→ skill: `.claude/skills/macro-health-read/SKILL.md`
+
+Store result as MACRO_HEALTH. This replaces the raw `get_macro_snapshot` snapshot as the sole source for TNB Layer-1 macro paragraph. Log `is_estimate=true` tracks.
+
+**T-31 / Fiscal-trap narrative:** When MACRO_HEALTH.liquidity.verdict = TIGHT despite apparent profitability in the banking/rates sector, check for the "thiếu tiền" root cause: budget surplus parking deposits at SBV treasury → system liquidity tight despite individual bank profits. The transmission: government under-spends → deposits remain at SBV → commercial-bank reserve levels tight → OMO outstanding rises. Include this narrative in the Layer-2 banking/rates section when applicable.
+
+---
+
 ## Step 2 — LAYER 1 (data discipline check)
 
 For each qualifying cluster: verify signals cite **state transitions**, not just levels.
 
 Flags to check (per `tnb-methodology-layers.md`):
-- PMI crossing 50 (expansion ↔ contraction)
+- PMI crossing 50 (expansion ↔ contraction) — use MACRO_HEALTH.production MA, not raw print (T-16)
 - USD/VND crossing 25,500 or 26,500 resistance
-- CPI trend reversal (accelerating vs decelerating)
+- CPI trend reversal (accelerating vs decelerating) — use MACRO_HEALTH.inflation.cpi_peaked (T-21)
 - Volume 2x+ average (accumulation vs distribution)
 
 Mark any level-reporting-only gap in the draft for Layer 6 fix.
@@ -125,11 +135,14 @@ Mark any level-reporting-only gap in the draft for Layer 6 fix.
 - Fed rate + EFFR-IORB spread (tightening/easing posture)
 
 **VN stack:**
-- USD/VND vs 26,500 level (carry posture)
-- CPI trend (inflationary pressure)
+- USD/VND vs 26,500 level (carry posture) — source: MACRO_HEALTH.fx
+- CPI trend (inflationary pressure) — source: MACRO_HEALTH.inflation.cpi_peaked (T-21)
 - FX reserves trend via VIRA data (not WiData — off-limits)
+- **T-39 / BOP walk:** For any dish touching FX, banking, or trade: walk Current Account + Financial Account + E&O. The E&O line is the swing factor (FDI offshore parking). Source: `trade-fx-pressure-decomp` TRADE_FX.fx_incidence if available this cycle.
 
 **Thesis mapping:** US → VN via carry/FII flow chain. If US tightening → FII net-sell pressure on VN → document the transmission.
+
+**Electronics/IZ/banking sectors:** When any qualifying cluster involves these sectors, invoke `trade-fx-pressure-decomp` (skill: `.claude/skills/trade-fx-pressure-decomp/SKILL.md`) and incorporate TRADE_FX.fx_incidence and margin_trap_flag into the sector layer narrative. Degraded mode (TRADE_FX.is_estimate=true) → note gap explicitly.
 
 ---
 

@@ -104,6 +104,17 @@ Trung: F+V-only → value traps. DGC/PC/GVC: beautiful financials, severe govern
 }
 ```
 
+### Decompose-before-conclude gate (T-44 EXTEND — 07-06)
+
+Before writing any scenario verdict, run the 3-question decomposition check:
+
+1. **Which component?** — name the specific driver (e.g. "transport CPI 20% weight", "electronics exports margin").
+   A claim that names only the headline (e.g. "CPI rising") without a component attribution fails this gate.
+2. **Direct or indirect to wallet?** — does the component reach the consumer wallet immediately (transport fuel → yes, construction materials → lagged) or indirectly (PPI → importer → retailer → consumer ~1 quarter lag)?
+3. **Policy shock or structural trend?** — is this a one-off administered-price adjustment (education, health fees) or a demand-driven persistent trend? Policy shocks are front-loaded and self-correct; trends are durable.
+
+**Gate rule:** If any of the 3 questions cannot be answered from available data → do NOT assert CONVICTION on the macro leg of the thesis. Downgrade macro contribution to LOW and flag `decompose_gap=true` in the output `flags[]`.
+
 ### TNB integration note
 
 SKILL-3 → bottom-up input to TNB Layer 5 Step 3. Sequence: macro (TNB) → sector → SKILL-1/2/3/4 → Layer 5 audit.
