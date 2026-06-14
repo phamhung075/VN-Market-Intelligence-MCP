@@ -1,15 +1,15 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-14T06:50:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-14T09:58:00Z",
+  "_updated_by": "dev-technical-analysis",
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T07:40:49Z",
-    "updated_by": "dev-team",
-    "active_task_id": "ALLZERO-OHLCV-FETCH",
-    "next_agent": "dev-technical-analysis",
-    "note": "ALLZERO-OHLCV-FETCH claimed — chart-sliver DATA fix (poison 0/0/0/0 non-trading-day row detonates BB stdev + zero-anchors Y-domain). dev-technical-analysis implements per board .scope/.acceptance/.regression_note (handoff file stale). GENERIC all-ticker. Promote -> review (qa) on green pnpm check + commit. FIX-FE gated behind this."
+    "updated_at": "2026-06-14T09:58:00Z",
+    "updated_by": "dev-technical-analysis",
+    "active_task_id": null,
+    "next_agent": "qa",
+    "note": "ALLZERO-OHLCV-FETCH promoted to review. Awaiting QA sign-off. FIX-FE-CHART-PRICE-DOMAIN now unblocked."
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-14T08:15:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-14T09:58:00Z",
+    "_updated_by": "dev-technical-analysis",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -10124,30 +10124,6 @@
     ],
     "in_progress": [
       {
-        "id": "ALLZERO-OHLCV-FETCH",
-        "type": "FIX",
-        "owner": "dev-technical-analysis",
-        "status": "IN_PROGRESS",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "sprint": "BACKLOG",
-        "priority": "high",
-        "depends": [],
-        "title": "Bulk all-zero daily_ohlcv rows (0/0/0/0 stamped 2026-05-30T11:47:00.921Z across FPT/GAS/HPG/VCB/BID) — a failed bulk fetch wrote zeros; distinct from OHLCV-UNIT-CONTAM. Find emitter + guard.",
-        "handoff": "docs/handoffs/BACKLOG_CONTAM_8.md",
-        "created_at": "2026-06-12T08:00:19Z",
-        "note": "out-of-scope of unit-contam per PO; queued follow-up",
-        "promoted_by": "po-S52",
-        "promoted_at": "2026-06-14T07:20:00Z",
-        "scope": "GENERIC across ALL tickers — no per-ticker hardcode. Stop the non-trading-day gap (e.g. 2026-05-30) being written/served as a 0/0/0/0 candle in daily_ohlcv. Find the bulk-fetch emitter that stamps the all-zero row + guard it (skip-write on vol=0/open=0 non-trading day, NOT a real bar). Backfill: purge/forward-fill existing all-zero rows so every served price series (get_price_history, get_technical_indicators, chart loader) is gap-free. This is the UPSTREAM cause of (a) the absurd ±~35k Bollinger fan — a 0 inside the 20-period window detonates stdev — and (b) the chart Min=0 / zero-anchored Y-domain. Fixing here cleans BB/MA for the chart AND the alert pipeline at once.",
-        "acceptance": "Probe >=3 tickers across the price spread (low: SHB ~13.8k, mid: VCB ~61.6k, high: FPT ~73.5k) via get_price_history: NO row with close=0 on a non-trading day; stats line shows Min within the real band (not 0). BB upper/mid/lower (served + chart computeBB) within a believable σ of price (band width well under ±15% for these low-vol large-caps, NOT ±47%).",
-        "regression_note": "[po-S52 2026-06-14] LIVE-PROBE found UNIT-CONTAM REGRESSION alongside the all-zero rows: VCB still serves 2026-06-01 close=62.2 (should be ~62000 — 1000x scale, '+98935.37%' jump) despite CONTAM-2..7 all DONE. The repair migration (CONTAM-6) WHERE-excluded all-zero rows and may have missed this row, OR fresh re-contamination after the writer guards shipped. dev-technical-analysis to re-run the unit-guard normalize (×1000) over the residual outliers AS PART of this backfill — same daily_ohlcv write boundary.",
-        "claimed_at": "2026-06-14T07:40:49Z",
-        "claimed_by": "router",
-        "next_agent": "dev-technical-analysis",
-        "dispatch_note": "Dispatched dev-technical-analysis 2026-06-14T07:40:49Z. Chart-sliver DATA fix (user bug: price range min/max compressed, BB ±35k fan). AUTHORITATIVE brief = THIS board object's .scope/.acceptance/.regression_note (handoff file BACKLOG_CONTAM_8.md is the STALE pre-rescope sketch — IGNORE its low-priority/dev-mcp-server framing). Root: non-trading-day gap (2026-05-30) written as 0/0/0/0 candle in daily_ohlcv -> a 0 inside the 20-period BB window detonates stdev AND zero-anchors the chart Y-domain. GENERIC across ALL tickers — find the bulk-fetch emitter + guard skip-write on vol=0/open=0 non-trading day; backfill purge/forward-fill existing all-zero rows so get_price_history/get_technical_indicators/chart loader are gap-free. Fold VCB 2026-06-01 close=62.2 unit regression (×1000 normalize) into the same backfill. Accept: probe SHB(~13.8k)/VCB(~61.6k)/FPT(~73.5k) — no close=0 non-trading day, Min in real band, BB width <±15% not ±47%. Verify LIVE via direct market.db COUNT (named volume, NOT host ./data). Run pnpm check BEFORE commit (RED-PREPUSH). Promote -> review (qa) on green + commit. FIX-FE-CHART-PRICE-DOMAIN (dev-frontend) is gated behind this completing."
-      },
-      {
         "id": "DOCLANG-T1-DOMAIN",
         "title": "Domain + Config: DocLangWritePort + doclang_output_dir",
         "description": "Add DocLangWritePort (abstract) to domain/modules/financial_reports/ports.py as 17th port. Add doclang_output_dir field to Config with env DOCLANG_OUTPUT_DIR, default /app/data/doclang. Files: domain/modules/financial_reports/ports.py, infrastructure/config.py. ~45 min.",
@@ -11392,6 +11368,33 @@
         "claimed_at": "2026-06-14",
         "completed_at": "2026-06-14",
         "verified_stale_zero": true
+      },
+      {
+        "id": "ALLZERO-OHLCV-FETCH",
+        "type": "FIX",
+        "owner": "dev-technical-analysis",
+        "status": "REVIEW",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "sprint": "BACKLOG",
+        "priority": "high",
+        "depends": [],
+        "title": "Bulk all-zero daily_ohlcv rows (0/0/0/0 stamped 2026-05-30T11:47:00.921Z across FPT/GAS/HPG/VCB/BID) — a failed bulk fetch wrote zeros; distinct from OHLCV-UNIT-CONTAM. Find emitter + guard.",
+        "handoff": "docs/handoffs/BACKLOG_CONTAM_8.md",
+        "created_at": "2026-06-12T08:00:19Z",
+        "note": "out-of-scope of unit-contam per PO; queued follow-up",
+        "promoted_by": "po-S52",
+        "promoted_at": "2026-06-14T07:20:00Z",
+        "scope": "GENERIC across ALL tickers — no per-ticker hardcode. Stop the non-trading-day gap (e.g. 2026-05-30) being written/served as a 0/0/0/0 candle in daily_ohlcv. Find the bulk-fetch emitter that stamps the all-zero row + guard it (skip-write on vol=0/open=0 non-trading day, NOT a real bar). Backfill: purge/forward-fill existing all-zero rows so every served price series (get_price_history, get_technical_indicators, chart loader) is gap-free. This is the UPSTREAM cause of (a) the absurd ±~35k Bollinger fan — a 0 inside the 20-period window detonates stdev — and (b) the chart Min=0 / zero-anchored Y-domain. Fixing here cleans BB/MA for the chart AND the alert pipeline at once.",
+        "acceptance": "Probe >=3 tickers across the price spread (low: SHB ~13.8k, mid: VCB ~61.6k, high: FPT ~73.5k) via get_price_history: NO row with close=0 on a non-trading day; stats line shows Min within the real band (not 0). BB upper/mid/lower (served + chart computeBB) within a believable σ of price (band width well under ±15% for these low-vol large-caps, NOT ±47%).",
+        "regression_note": "[po-S52 2026-06-14] LIVE-PROBE found UNIT-CONTAM REGRESSION alongside the all-zero rows: VCB still serves 2026-06-01 close=62.2 (should be ~62000 — 1000x scale, '+98935.37%' jump) despite CONTAM-2..7 all DONE. The repair migration (CONTAM-6) WHERE-excluded all-zero rows and may have missed this row, OR fresh re-contamination after the writer guards shipped. dev-technical-analysis to re-run the unit-guard normalize (×1000) over the residual outliers AS PART of this backfill — same daily_ohlcv write boundary.",
+        "claimed_at": "2026-06-14T07:40:49Z",
+        "claimed_by": "router",
+        "next_agent": "qa",
+        "dispatch_note": "Dispatched dev-technical-analysis 2026-06-14T07:40:49Z. Chart-sliver DATA fix (user bug: price range min/max compressed, BB ±35k fan). AUTHORITATIVE brief = THIS board object's .scope/.acceptance/.regression_note (handoff file BACKLOG_CONTAM_8.md is the STALE pre-rescope sketch — IGNORE its low-priority/dev-mcp-server framing). Root: non-trading-day gap (2026-05-30) written as 0/0/0/0 candle in daily_ohlcv -> a 0 inside the 20-period BB window detonates stdev AND zero-anchors the chart Y-domain. GENERIC across ALL tickers — find the bulk-fetch emitter + guard skip-write on vol=0/open=0 non-trading day; backfill purge/forward-fill existing all-zero rows so get_price_history/get_technical_indicators/chart loader are gap-free. Fold VCB 2026-06-01 close=62.2 unit regression (×1000 normalize) into the same backfill. Accept: probe SHB(~13.8k)/VCB(~61.6k)/FPT(~73.5k) — no close=0 non-trading day, Min in real band, BB width <±15% not ±47%. Verify LIVE via direct market.db COUNT (named volume, NOT host ./data). Run pnpm check BEFORE commit (RED-PREPUSH). Promote -> review (qa) on green + commit. FIX-FE-CHART-PRICE-DOMAIN (dev-frontend) is gated behind this completing.",
+        "completed_at": "2026-06-14T09:58:00Z",
+        "completed_by": "dev-technical-analysis",
+        "review_note": "DONE: (1) read guard AND close>0 in get_price_history SQL; (2) allzeroOhlcvBackfill.ts — purgeAllZeroRows+normalizeResidualContam generic across all tickers; (3) live migration: 116 zero rows deleted, 28346 thousand-VND rows normalized; (4) VCB 2026-06-01 close=62200 confirmed; (5) probe SHB BB=0.88% VCB BB=1.92% FPT BB=2.14% all <15%; commit=9088c052"
       }
     ],
     "closed_sprints": [

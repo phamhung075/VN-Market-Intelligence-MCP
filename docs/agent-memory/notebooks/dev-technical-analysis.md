@@ -6,6 +6,31 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-06-14 — ALLZERO-OHLCV-FETCH — chart-sliver/BB-fan data fix
+
+**Task:** ALLZERO-OHLCV-FETCH (zone apps/mcp-server/) — fix all-zero OHLCV rows poisoning BB window and chart Y-domain
+
+**Status:** REVIEW — commit 9088c052
+
+**Root cause:** Non-trading-day gap rows (0/0/0/0) in daily_ohlcv. Two sources:
+- Failed bulk fetch 2026-05-30: 103 tickers stamped with zeros (not skipped).
+- DPI-4 foreign-flow stub rows: `ohlcvForeignFlowStore` inserts open/high/low/close=0 placeholders that outlast the OHLCV write for some tickers (DAG, BCG etc.)
+- A zero inside the 20-period BB window: stdev detonates to ±35k, chart Y-axis anchors to 0.
+- Also VCB 2026-06-01 close=62.2 (thousand-VND, should be 62200) survived CONTAM-2..7.
+
+**Fix (TDD RED→GREEN, 5 AC tests):**
+1. `priceHistoryTools.ts` — added `AND close > 0` to `get_price_history` SQL. Immediate read-side guard for chart + BB + alerts.
+2. `allzeroOhlcvBackfill.ts` (new) — `purgeAllZeroRows(db)`: DELETE all 0/0/0/0 rows; `normalizeResidualContam(db)`: whole-row ×1000 for close<100 contaminated rows.
+3. `ALLZERO-OHLCV-FETCH.test.ts` (new) — 5 ACs covering zero exclusion, Min stat, DPI-4 stub exclusion, normalize fix.
+
+**Live migration:** 116 all-zero rows purged, 28346 thousand-VND rows re-normalized. Container rebuilt.
+
+**Probe (live):** SHB zero_rows=0 Min=13,550 BB=0.88% | VCB zero_rows=0 Min=59,900 BB=1.92% (2026-06-01 close=62200) | FPT zero_rows=0 Min=70,000 BB=2.14%. All BB widths well under 15%.
+
+**Lessons:** DPI-4 stub rows are by design (DDD race fix); the read-side `close>0` guard is the correct surgical fix. The taOhlcvBackfill already heals stubs on next cycle (detects corrupt_cnt>0 for low=0). Generic fix — no per-ticker hardcode.
+
+---
+
 ### 2026-06-10 — GFD-3 — pre-deploy validation gate PASS
 
 **Task:** GFD-3 (Sprint GO-FLEET-DEPLOY) — pre-deploy validation gate for technical-analysis
