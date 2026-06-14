@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-14T18:15:00Z",
-  "_updated_by": "architect",
+  "_updated_at": "2026-06-14T18:36:18Z",
+  "_updated_by": "po",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -110,12 +110,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-14T18:29:14Z",
+    "status": "active",
+    "updated_at": "2026-06-14T18:36:18Z",
     "updated_by": "po",
-    "active_task_id": null,
-    "next_agent": "none",
-    "note": "KINHDICH-HOVER-ENRICH-FE FINAL SIGNOFF -> done_verified (po 2026-06-14T18:29:14Z). User complaint 'quẻ hover too short/cryptic' RESOLVED: 64 plain-VI 150-224char hoverSummary on LIVE :3001 tooltip + coreMeaning fallback; wrong-surface error corrected + router RAW-re-verified served bundle. WIP back to concurrent-only (ARCH-CRON-SCHEDULER-RELIABILITY held passive for Mon 2026-06-15 market-day G1/G2/G3 re-verify — NOT mine this run). Board idle for next cron/router tick."
+    "active_task_id": "BA-VN-MACRO-TOOLING",
+    "next_agent": "ba",
+    "note": "PO POST-SPRINT TRIAGE -> dispatch BA-VN-MACRO-TOOLING (decompose 07-06 VN-MACRO-TOOLING sprint to REQ doc). WIP=2 with passive ARCH-CRON-SCHEDULER-RELIABILITY."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -8249,6 +8249,19 @@
         "created_at": "2026-06-14T16:40:00Z",
         "title": "kinh-dich backtest returns 501 for 4 CONSECUTIVE digest cycles (run_hexagram_backtest, digest-predict/flow/weekly.md line 43)",
         "status_note": "Distinct from KD-OBS-01-FIX (that = explain_hexagram NaN validation). This = run_hexagram_backtest 501 carried over 4 cycles, surfaced in digest-predict bug-escalation 2026-06-14T13:47Z. AC: run_hexagram_backtest(days=7) returns 200 with backtest payload; if endpoint intentionally unimplemented, weekly.md must degrade gracefully (skip backtest evidence) not 501-block. Tracked here; not previously on board."
+      },
+      {
+        "id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
+        "type": "FIX",
+        "title": "fb-market-poster calls get_foreign_flow({}) + get_ticker_intelligence({}) with no code= arg -> both fail schema (code:string required) -> silent notebook fallback every cycle. Generic fix: swap to no-arg market-aggregate tools (get_market_foreign_flow for flow; pick/confirm a no-arg market-movers tool for ticker-intel, or pass watchlist iteration) — NO per-ticker hardcode.",
+        "priority": "low",
+        "size": "S",
+        "status": "NEW",
+        "zone": "cross-service/",
+        "source": "health-recheck 2026-06-14T18:07Z (BUG-NEW-01/02)",
+        "generic_mandate": "Fix the tool-selection in the fb-market-poster flow generically — no-arg market-level call, applies to all tickers, no instance hardcode.",
+        "created_at": "2026-06-14T18:36:18Z",
+        "created_by": "po"
       }
     ],
     "closed_sprints": [
@@ -12628,7 +12641,14 @@
         "done_verified_at": "2026-06-14T16:09:07Z"
       }
     ],
-    "head": "VN-MACRO-TOOLING sprint opened (PLANNING) — 7 tasks, BA spec gate next",
+    "head": {
+      "status": "active",
+      "active_task_id": "BA-VN-MACRO-TOOLING",
+      "next_agent": "ba",
+      "updated_at": "2026-06-14T18:36:18Z",
+      "updated_by": "po",
+      "note": "POST-SPRINT TRIAGE (KINHDICH-HOVER-ENRICH-FE done_verified ff2ed4b4): dispatch BA-VN-MACRO-TOOLING -> decompose VN-MACRO-TOOLING 07-06 macro-tooling sprint (5 new VN macro MCP tools + credit-flow EXTEND) to docs/REQ_VN-MACRO-TOOLING.md, then PO spec review. WIP=2 (ARCH-CRON-SCHEDULER-RELIABILITY held passive for Mon 2026-06-15 market-day G1/G2/G3 re-verify). All 11 recurring health-stream P0s already on backlog (dedup, no double-create). 1 new fb-poster no-arg-tool fix appended to backlog."
+    },
     "in_progress": [
       {
         "baseline_pass": false,
@@ -12692,7 +12712,8 @@
         "brief": "docs/analysis-briefs/07-06-methodology-gap.md",
         "depends": [],
         "created_at": "2026-06-14T18:07:41Z",
-        "created_by": "po"
+        "created_by": "po",
+        "next_agent": "ba"
       }
     ],
     "review": [
@@ -12734,6 +12755,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-14T12:00:00Z",
-  "updated_by": "pm"
+  "updated_at": "2026-06-14T18:36:18Z",
+  "updated_by": "po"
 }
