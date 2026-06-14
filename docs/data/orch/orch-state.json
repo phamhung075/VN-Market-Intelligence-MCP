@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-14T14:19:43Z",
+    "status": "qa",
+    "updated_at": "2026-06-14T14:35:07Z",
     "updated_by": "dev-team",
     "active_task_id": "T3-ARCH-CRON-WATCHDOG",
-    "next_agent": "ops",
-    "note": "T3-ARCH-CRON-WATCHDOG round-3 IMPL'd (9a7e1aef keys + 153f2e82 WD-11) + router-RAW-verified GREEN (WD-11 reads real call sites; router OWN flip of recordJobRun('insiderCheckJob') -> RED then restored 18/18; tsc 0) -> ops for TARGETED rebuild + LIVE gate. DECISIVE live check: the 3 false 'never ran' alerts (ohlcv-daily-aggregator/foreignFlowAlertJob/ta-ohlcv-backfill) must be GONE; only genuinely-stale baseRateComputationJob may alert (correct). NEVER compose down, expect 82 cron keys. ops-green -> qa -> done_verified CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
+    "next_agent": "qa",
+    "note": "T3-ARCH-CRON-WATCHDOG ops deploy GREEN + router RAW-re-verified LIVE (independent, not the ops badge): 13 peers healthy, 82 cron keys, 3 target jobs resolve to real rows under corrected keys, never-ran emit string ABSENT from full post-deploy log window -> false-never-ran class ELIMINATED (T3 scope met). alerted=8 are genuine-stale (baseRateComputationJob ~20d -> PO spin-out). -> qa FINAL LIVE gate + Task Report. qa-APPROVED -> done_verified CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED. Commit by explicit path only (concurrent agent-.md refactor in tree)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12087,7 +12087,9 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
-      },
+      }
+    ],
+    "qa": [
       {
         "id": "T3-ARCH-CRON-WATCHDOG",
         "title": "ARCH-CRON Phase 2: schedulerWatchdogJob.ts + tests — detect & self-heal missed fires",
@@ -12095,7 +12097,7 @@
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "priority": "P1",
-        "status": "REVIEW",
+        "status": "QA",
         "depends": [
           "T2-ARCH-CRON-RECOVER-JITTER"
         ],
@@ -12114,7 +12116,7 @@
         "created_at": "2026-06-14T12:00:00Z",
         "created_by": "pm",
         "note": "Lever 4 from architect brief. Builds on T1+T2. New scheduler/system/ module. 3 test files mirror EVIDENCE-ACCUM-SILENT-CRON test strategy. Rate-limit map in-process (no WAL writes from watchdog). Reads cron_job_runs via jobRunRepo injection (DDD clean).",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "claimed_at": "2026-06-14T13:15:48Z",
         "claimed_by": "dev-team",
         "dispatch_note": "Router dispatched T3 IMPL (tick post-T2-done). depends [T2] SATISFIED (T2 done_verified — recoverMissedExecutions global default + jitter LIVE, idempotency invariant holds in prod). Same-zone apps/mcp-server FREE (T2 done). dev-mcp-server: implement schedulerWatchdogJob.ts (Lever D, every 10 min) per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5/§7 — detect jobs whose last successful cron_job_run is older than (cron cadence + grace) and emit a WORK-channel staleness alert (dedup per job per window; do NOT auto-restart). Reuse cron_job_runs as the freshness source BUT account for the double-LOG artifact (FIX-CRON-JOB-RUNS-DOUBLE-LOG) — key on MAX(started_at) per job_name, never row counts. New job must itself be recoverMissedExecutions-safe (idempotent: keyed alert dedup, no unguarded Telegram). bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify watchdog fires + dedups, never badges. T3 done CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY.",
@@ -12133,7 +12135,14 @@
           "55ea2ccf (orig watchdog)",
           "9a7e1aef (A: 3 manifest keys)",
           "153f2e82 (B: WD-11 source-derived guard)"
-        ]
+        ],
+        "ops_deployed_at": "2026-06-14T14:35:07Z",
+        "ops_deploy_verdict": "GREEN (ops a6c5e2e3): image 2026-06-14T14:23:59Z, targeted build --no-cache mcp-server + up -d --no-deps --force-recreate; 13 peers Up/healthy (no teardown); 82 cron keys; no Bun-JIT corruption; 3-job freshness recent; watchdog fired checked=16 alerted=8 healed=2 with the 3 target jobs NOT alerted; get_market_snapshot + get_pipeline_health 200.",
+        "router_live_verified_at": "2026-06-14T14:35:07Z",
+        "router_live_verified_by": "dev-team",
+        "router_live_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the ops badge). PEERS: 13 Up/healthy, mcp-server Up 6min, no teardown. STARTUP 14:25:49Z: 82 cron keys + scheduler-watchdog active + Scheduler started, no 'symbol to a string'. FRESHNESS (keinos sidecar vs named volume): ohlcv-daily-aggregator 2026-06-14 14:30:01, ta-ohlcv-backfill 2026-06-14 14:30:10, foreignFlowAlertJob 2026-06-12 08:13:00 — all resolve under corrected keys. WATCHDOG 14:30:16 checked=16 alerted=8 healed=2. DECISIVE (3 ways): (1) exact never-ran emit string 'has never run — scheduler registration may be missing' ABSENT from full 40min log window -> ZERO never-ran alerts; (2) the 3 target jobs absent from every alert/stale/never/missing line; (3) all 3 resolve to real rows. => false-never-ran class ELIMINATED. The 8 alerts = genuine-stale (baseRateComputationJob ~20d known-real) -> PO spin-out, NOT a T3 regression.",
+        "qa_instructions": "FINAL LIVE GATE — gate-keeper, write Task Report, never accept a badge. Re-confirm INDEPENDENTLY: (1) git show 9a7e1aef + 153f2e82 — 3 manifest keys match recorded literals (ohlcv-daily-aggregator/foreignFlowAlertJob/ta-ohlcv-backfill) + WD-11 derives recorded-name set from registration SOURCE files (readFileSync) and asserts every WATCHDOG_MANIFEST key in it; (2) re-run locally: cd apps/mcp-server && bunx tsc --noEmit (exit 0) && bun test src/scheduler/system/__tests__/ARCH-CRON-watchdog.test.ts (18/18 incl WD-11); (3) LIVE via keinos/sqlite3 sidecar vs NAMED VOLUME /app/data/market.db: confirm the 3 jobs have recent cron_job_runs rows under the corrected keys AND docker logs --since 1h <mcp-server> | grep 'has never run — scheduler registration may be missing' returns EMPTY (the decisive proof the false alerts are gone); (4) enumerate the genuine watchdog stale alerts (alerted=8) by job_name for the PO spin-out (baseRateComputationJob ~20d expected). On qa-APPROVED -> router RAW-confirms -> promote T3 done_verified which CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY. Commit Task Report by explicit path only (concurrent agent-.md refactor dirty tree must not be captured).",
+        "ops_verified_round3": "2026-06-14T14:35:07Z"
       }
     ]
   },
