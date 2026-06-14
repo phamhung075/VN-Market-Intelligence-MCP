@@ -1,6 +1,6 @@
-// Package application — liquidity-state use case for VMT-5a (POST /liquidity-state).
+// Package application — liquidity-state use case for VMT-5a + VMT-5b (POST /liquidity-state).
 //
-// Orchestrates three blocs:
+// Orchestrates five blocs:
 //  1. policy_rates: PolicyRatesProvider.Fetch() → SBV HTML parse (direct, no VPS proxy).
 //     Falls back to DB when HTML parse fails. is_estimate=true on fallback.
 //  2. sjc_gold_gap: SJCFXProvider.FetchInputs() → domain.ComputeSJCGoldGap().
@@ -8,13 +8,19 @@
 //  3. fx_coupling: same SJCFXProvider.FetchInputs() → domain.BuildFXCoupling().
 //     DB reads from sbv_rates + commodity_prices.
 //  4. irs: domain.BuildIRSField() — always is_estimate=true (DD-6 PERMANENT).
+//  5. omo: OMOProvider.FetchOMO() → domain.BuildOMOSuccess / domain.BuildOMOFailed.
+//     SBV nghiep-vu-thi-truong-mo HTML (direct, no VPS proxy). is_estimate=false on success.
+//  6. interbank_1w: domain.BuildInterbankRate() — PERMANENTLY is_estimate=true, rate=nil.
+//     dttktt.sbv.gov.vn blocked (architect Decision B). No fetch attempted.
 //
-// INVARIANT (fail-closed): IRS.IsEstimate MUST be true on ALL paths including error paths.
-// This is enforced in errorLiquidityResponse AND in Execute(). NEVER flip to false.
-// Same pattern as VMT-1b bloc_split + VMT-4 CPI WeightsIsEstimate.
+// INVARIANTS (fail-closed):
+//   - IRS.IsEstimate MUST be true on ALL paths (DD-6 PERMANENT). NEVER flip to false.
+//   - Interbank1W.IsEstimate MUST be true on ALL paths (architect Decision B PERMANENT).
+//   - Interbank1W.Rate1WPct MUST be nil on ALL paths.
+//   - OMO.IsEstimate=true on parse failure (fail-closed).
 //
 // Fence-B: this package imports only pkg/domain; never imports pkg/infrastructure.
-// PolicyRatesProvider and SJCFXProvider are injected via interfaces.
+// PolicyRatesProvider, SJCFXProvider, and OMOProvider are injected via interfaces.
 package application
 
 import (
@@ -26,7 +32,7 @@ import (
 )
 
 // liquiditySource is the provenance label for liquidity-state responses.
-const liquiditySource = "SBV HTML (policy_rates) + market.db reads (sjc_gap + fx_coupling)"
+const liquiditySource = "SBV HTML (policy_rates + omo) + market.db reads (sjc_gap + fx_coupling)"
 
 // PolicyRatesProvider is the interface for fetching SBV key policy rates.
 // Implemented by a composition-root adapter (cmd/server/main.go, Fence-C compliant).
@@ -63,38 +69,73 @@ type SJCFXInputs struct {
 	SJCPriceMnVND float64
 }
 
-// LiquidityStateUseCase orchestrates the three liquidity-state blocs.
-// Depends on PolicyRatesProvider + SJCFXProvider (both injected interfaces).
+// OMOInputs is the application-layer DTO for OMO parse results.
+// Mirrors infrastructure.OMOParseResult but lives in the application layer (Fence-B).
+// The composition root adapter converts infrastructure.OMOParseResult → OMOInputs.
+type OMOInputs struct {
+	// TotalAddBnVND is the sum of Mua kỳ hạn (reverse-repo add) in billion VND.
+	TotalAddBnVND float64
+	// TotalAbsorbBnVND is the sum of Bán kỳ hạn + Tín phiếu in billion VND.
+	TotalAbsorbBnVND float64
+	// AuctionDate is the most-recent auction date string (DD/MM/YYYY).
+	AuctionDate string
+	// ParseOK is true when at least one add or absorb row was successfully parsed.
+	ParseOK bool
+	// ParseError holds the error message when ParseOK=false.
+	ParseError string
+}
+
+// OMOProvider is the interface for fetching SBV OMO net outstanding.
+// Implemented by a composition-root adapter (cmd/server/main.go, Fence-C compliant).
+// Returns OMOInputs — the application layer adapts to DTO via domain functions.
+type OMOProvider interface {
+	// FetchOMO fetches and parses the SBV OMO auction result HTML page.
+	// Returns OMOInputs with ParseOK=false on any fetch or parse error (fail-closed).
+	// is_estimate=true on ParseOK=false (use case calls domain.BuildOMOFailed).
+	FetchOMO(ctx context.Context) (OMOInputs, error)
+}
+
+// LiquidityStateUseCase orchestrates the five liquidity-state blocs.
+// Depends on PolicyRatesProvider + SJCFXProvider + OMOProvider (all injected interfaces).
 // No infrastructure imports (Fence-B compliant).
 type LiquidityStateUseCase struct {
 	policyRatesProvider PolicyRatesProvider
 	sjcFXProvider       SJCFXProvider
+	omoProvider         OMOProvider
 }
 
 // NewLiquidityStateUseCase creates a new LiquidityStateUseCase with injected deps.
 // policyRatesProvider: SBV HTML fetch + DB fallback adapter.
 // sjcFXProvider: market.db SJC+FX inputs adapter.
-// Both are mandatory; nil values will cause Execute to return an error
-// (with IRS.IsEstimate=true enforced in errorLiquidityResponse).
+// omoProvider: SBV OMO Liferay HTML fetch + parse adapter.
+// All are mandatory; nil values will cause Execute to return an error
+// (with IRS.IsEstimate=true + Interbank1W.IsEstimate=true enforced in errorLiquidityResponse).
 func NewLiquidityStateUseCase(
 	policyRatesProvider PolicyRatesProvider,
 	sjcFXProvider SJCFXProvider,
+	omoProvider OMOProvider,
 ) *LiquidityStateUseCase {
 	return &LiquidityStateUseCase{
 		policyRatesProvider: policyRatesProvider,
 		sjcFXProvider:       sjcFXProvider,
+		omoProvider:         omoProvider,
 	}
 }
 
-// Execute fetches and composes the three liquidity-state blocs.
+// Execute fetches and composes the five liquidity-state blocs.
 //
 // Returns LiquidityStateResponse with:
 //   - policy_rates: SBV HTML or DB fallback (is_estimate=true on fallback).
 //   - sjc_gold_gap: from market.db reads (is_estimate=true when SJC absent).
 //   - fx_coupling: from sbv_rates + commodity_prices (is_estimate=true when stale).
 //   - irs: ALWAYS is_estimate=true (DD-6, PERMANENT, enforced on ALL paths).
+//   - omo: SBV OMO HTML parse (is_estimate=false on success; is_estimate=true on failure).
+//   - interbank_1w: ALWAYS is_estimate=true + rate_1w_pct=null (architect Decision B, PERMANENT).
 //
-// Fail-closed: IRS.IsEstimate=true is set even on partial/full error paths.
+// Fail-closed invariants enforced on ALL paths including error paths:
+//   - IRS.IsEstimate=true (DD-6 PERMANENT).
+//   - Interbank1W.IsEstimate=true + Rate1WPct=nil (architect Decision B PERMANENT).
+//   - OMO.IsEstimate=true on parse failure.
 // Partial success is returned (Status="ok") even when only some blocs succeed.
 func (uc *LiquidityStateUseCase) Execute(
 	ctx context.Context,
@@ -105,6 +146,9 @@ func (uc *LiquidityStateUseCase) Execute(
 	}
 	if uc.sjcFXProvider == nil {
 		return errorLiquidityResponse("LiquidityState: sjcFXProvider is nil (not wired)")
+	}
+	if uc.omoProvider == nil {
+		return errorLiquidityResponse("LiquidityState: omoProvider is nil (not wired)")
 	}
 
 	fetchedAt := time.Now().UTC().Format(time.RFC3339)
@@ -148,6 +192,27 @@ func (uc *LiquidityStateUseCase) Execute(
 	// --- bloc 4: irs — ALWAYS is_estimate=true (DD-6 PERMANENT) ---
 	irs := domain.BuildIRSField()
 
+	// --- bloc 5: omo — SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy) ---
+	omoInputs, omoErr := uc.omoProvider.FetchOMO(ctx)
+	var omoDomain domain.OMOOutstanding
+	if omoErr != nil || !omoInputs.ParseOK {
+		blockedReason := ""
+		if omoErr != nil {
+			blockedReason = omoErr.Error()
+		} else if omoInputs.ParseError != "" {
+			blockedReason = omoInputs.ParseError
+		} else {
+			blockedReason = "OMO HTML parse: no add/absorb rows found"
+		}
+		omoDomain = domain.BuildOMOFailed(blockedReason, fetchedAt)
+	} else {
+		omoDomain = domain.BuildOMOSuccess(omoInputs.TotalAddBnVND, omoInputs.TotalAbsorbBnVND, omoInputs.AuctionDate, fetchedAt)
+	}
+
+	// --- bloc 6: interbank_1w — PERMANENTLY blocked (architect Decision B) ---
+	// dttktt.sbv.gov.vn 100% packet loss from VPS. NO fetch attempted.
+	interbank := domain.BuildInterbankRate()
+
 	return LiquidityStateResponse{
 		Status: "ok",
 		PolicyRates: PolicyRatesDTO{
@@ -180,6 +245,21 @@ func (uc *LiquidityStateUseCase) Execute(
 			IsEstimate: irs.IsEstimate, // ALWAYS true — DD-6 PERMANENT
 			Note:       irs.Note,
 		},
+		OMO: OMOOutstandingDTO{
+			NetOutstandingBnVND: omoDomain.NetOutstandingBnVND,
+			TotalAddBnVND:       omoDomain.TotalAddBnVND,
+			TotalAbsorbBnVND:    omoDomain.TotalAbsorbBnVND,
+			AuctionDate:         omoDomain.AuctionDate,
+			IsEstimate:          omoDomain.IsEstimate,
+			BlockedReason:       omoDomain.BlockedReason,
+			Source:              omoDomain.Source,
+			FetchedAt:           omoDomain.FetchedAt,
+		},
+		Interbank1W: InterbankRateDTO{
+			Rate1WPct:     interbank.Rate1WPct,     // ALWAYS nil — architect Decision B PERMANENT
+			IsEstimate:    interbank.IsEstimate,    // ALWAYS true — NEVER flip
+			BlockedReason: interbank.BlockedReason, // ALWAYS set
+		},
 		FetchedAt: fetchedAt,
 		Source:    liquiditySource,
 	}, nil
@@ -187,8 +267,11 @@ func (uc *LiquidityStateUseCase) Execute(
 
 // errorLiquidityResponse builds a LiquidityStateResponse with Status="error".
 //
-// Fail-closed invariant: IRS.IsEstimate is ALWAYS true even on error paths.
-// This ensures the DD-6 invariant is never broken regardless of the error cause.
+// Fail-closed invariants enforced even on error paths:
+//   - IRS.IsEstimate=true (DD-6 PERMANENT — NEVER flip to false).
+//   - Interbank1W.IsEstimate=true + Rate1WPct=nil (architect Decision B PERMANENT).
+//   - OMO.IsEstimate=true (fail-closed on error path).
+//   - SJCGoldGap.IsEstimate=true (fail-closed on error path).
 func errorLiquidityResponse(msg string) (LiquidityStateResponse, error) {
 	return LiquidityStateResponse{
 		Status: "error",
@@ -202,6 +285,18 @@ func errorLiquidityResponse(msg string) (LiquidityStateResponse, error) {
 		// SJCGoldGap fail-closed: is_estimate=true when absent/error.
 		SJCGoldGap: SJCGoldGapDTO{
 			IsEstimate: true, // fail-closed
+		},
+		// OMO fail-closed: is_estimate=true on error path.
+		OMO: OMOOutstandingDTO{
+			IsEstimate:    true, // fail-closed
+			BlockedReason: "liquidity-state error: " + msg,
+		},
+		// Interbank1W: PERMANENTLY blocked — same on success AND error paths.
+		// architect Decision B: dttktt.sbv.gov.vn 100% packet loss from VPS.
+		Interbank1W: InterbankRateDTO{
+			Rate1WPct:     nil,  // PERMANENT — NEVER non-nil
+			IsEstimate:    true, // PERMANENT — architect Decision B — even on error paths
+			BlockedReason: "dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)",
 		},
 	}, fmt.Errorf("%s", msg)
 }

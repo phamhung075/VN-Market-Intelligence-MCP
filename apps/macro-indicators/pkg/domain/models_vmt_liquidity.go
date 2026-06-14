@@ -128,6 +128,66 @@ type IRSField struct {
 	Note string `json:"note"`
 }
 
+// OMOOutstanding holds the SBV Open Market Operation (OMO) net outstanding.
+//
+// Source: www.sbv.gov.vn nghiep-vu-thi-truong-mo Liferay HTML (same SBV domain as BOP —
+// direct fetch, no VPS proxy). Parsed from the auction results table.
+//
+// net_outstanding_bn_vnd = sum(Mua kỳ hạn / reverse-repo add) - sum(Bán kỳ hạn / absorb) - sum(Tín phiếu).
+// Maturity-date aware: only unexpired positions count in the rolling tally.
+//
+// INVARIANT: IsEstimate=false when parsed from live SBV HTML (primary source).
+// IsEstimate=true on parse failure (fail-closed).
+type OMOOutstanding struct {
+	// NetOutstandingBnVND is the net OMO liquidity injection in billion VND.
+	// Positive = net add (reverse-repo dominates); negative = net drain.
+	// null / nil = data unavailable (parse failure).
+	NetOutstandingBnVND *float64 `json:"net_outstanding_bn_vnd"`
+
+	// TotalAddBnVND is the total Mua kỳ hạn (reverse-repo add) volume in billion VND.
+	TotalAddBnVND float64 `json:"total_add_bn_vnd"`
+
+	// TotalAbsorbBnVND is the total Bán kỳ hạn (absorb) + Tín phiếu volume in billion VND.
+	TotalAbsorbBnVND float64 `json:"total_absorb_bn_vnd"`
+
+	// AuctionDate is the date of the most-recent OMO auction (DD/MM/YYYY from SBV HTML).
+	AuctionDate string `json:"auction_date"`
+
+	// IsEstimate is false when parsed from live SBV HTML (primary source).
+	// True on parse failure (fail-closed).
+	IsEstimate bool `json:"is_estimate"`
+
+	// BlockedReason is non-empty only when IsEstimate=true due to a parse/fetch error.
+	BlockedReason string `json:"blocked_reason,omitempty"`
+
+	// Source identifies the data origin.
+	Source string `json:"source"`
+
+	// FetchedAt is the UTC timestamp (RFC3339) of the fetch.
+	FetchedAt string `json:"fetched_at"`
+}
+
+// InterbankRate holds the SBV interbank 1-week tenor rate.
+//
+// PERMANENT INVARIANT (architect Decision B):
+// dttktt.sbv.gov.vn (Oracle WebCenter, 202.58.245.101) is permanently blocked —
+// 100% packet loss from Vinahost VPS. No public alternative exists.
+// is_estimate MUST be true on ALL paths, including error paths.
+// rate_1w_pct MUST be null. blocked_reason MUST be set.
+// NEVER flip IsEstimate to false without a confirmed machine-readable replacement source.
+type InterbankRate struct {
+	// Rate1WPct is ALWAYS nil (no machine-readable source).
+	// dttktt.sbv.gov.vn 100% packet loss from VPS — permanently blocked.
+	Rate1WPct *float64 `json:"rate_1w_pct"` // always null
+
+	// IsEstimate is PERMANENTLY true (architect Decision B).
+	// NEVER flip to false.
+	IsEstimate bool `json:"is_estimate"`
+
+	// BlockedReason explains why rate_1w_pct is always null.
+	BlockedReason string `json:"blocked_reason"`
+}
+
 // LiquidityStateRecord holds the full liquidity-state snapshot.
 // Produced by the domain service and consumed by the use case.
 type LiquidityStateRecord struct {
@@ -143,6 +203,14 @@ type LiquidityStateRecord struct {
 	// IRS is the permanent estimate marker for the IRS field.
 	// is_estimate=true ALWAYS (DD-6).
 	IRS IRSField `json:"irs"`
+
+	// OMO holds the SBV OMO net outstanding parsed from Liferay HTML.
+	// is_estimate=false on parse success; is_estimate=true on parse failure.
+	OMO OMOOutstanding `json:"omo"`
+
+	// Interbank holds the SBV interbank 1-week tenor rate.
+	// is_estimate=true PERMANENTLY (architect Decision B — dttktt.sbv.gov.vn blocked).
+	Interbank InterbankRate `json:"interbank_1w"`
 
 	// FetchedAt is the UTC timestamp (RFC3339) of the overall snapshot.
 	FetchedAt string `json:"fetched_at"`

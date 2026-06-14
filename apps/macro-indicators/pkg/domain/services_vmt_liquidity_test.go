@@ -1,10 +1,13 @@
-// Package domain — tests for liquidity-state domain service functions (VMT-5a).
+// Package domain — tests for liquidity-state domain service functions (VMT-5a + VMT-5b).
 //
 // Covers:
 //   - BuildIRSField: is_estimate=true ALWAYS invariant (DD-6, including error paths).
 //   - ConvertWorldGoldToMnVND: formula + edge cases.
 //   - ComputeSJCGoldGap: normal case, SJC-absent fail-closed, is_estimate invariant.
 //   - BuildFXCoupling: center-rate present vs absent.
+//   - BuildInterbankRate: is_estimate=true ALWAYS + rate_1w_pct=nil + blocked_reason set (architect Decision B).
+//   - BuildOMOSuccess: net outstanding calculation + is_estimate=false on success.
+//   - BuildOMOFailed: is_estimate=true fail-closed + net_outstanding=nil.
 //
 // Fence-A: only the domain package is imported.
 package domain
@@ -214,5 +217,161 @@ func TestBuildFXCoupling_BandPctAlwaysSet(t *testing.T) {
 		if result.BandPct != sbvBandPct {
 			t.Errorf("BandPct must always be %.1f, got %.2f (center=%.0f)", sbvBandPct, result.BandPct, tc.center)
 		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// BuildInterbankRate — is_estimate ALWAYS true (architect Decision B, PERMANENT)
+// ---------------------------------------------------------------------------
+
+// TestBuildInterbankRate_IsEstimateAlwaysTrue is the critical invariant test.
+// Interbank.IsEstimate must be true on ALL paths — architect Decision B PERMANENT.
+// dttktt.sbv.gov.vn 100% packet loss from Vinahost VPS — no public alternative.
+func TestBuildInterbankRate_IsEstimateAlwaysTrue(t *testing.T) {
+	for i := 0; i < 5; i++ {
+		ib := BuildInterbankRate()
+		if !ib.IsEstimate {
+			t.Errorf("call %d: BuildInterbankRate().IsEstimate must be true ALWAYS (architect Decision B)", i)
+		}
+	}
+}
+
+// TestBuildInterbankRate_Rate1WPctAlwaysNil verifies rate_1w_pct is ALWAYS nil.
+// No machine-readable source exists; returning a non-nil value would be false data.
+func TestBuildInterbankRate_Rate1WPctAlwaysNil(t *testing.T) {
+	ib := BuildInterbankRate()
+	if ib.Rate1WPct != nil {
+		t.Errorf("Rate1WPct must be nil ALWAYS (architect Decision B); got %v", *ib.Rate1WPct)
+	}
+}
+
+// TestBuildInterbankRate_BlockedReasonSet verifies blocked_reason is always non-empty.
+func TestBuildInterbankRate_BlockedReasonSet(t *testing.T) {
+	ib := BuildInterbankRate()
+	if ib.BlockedReason == "" {
+		t.Error("BlockedReason must be non-empty on BuildInterbankRate (architect Decision B)")
+	}
+}
+
+// TestBuildInterbankRate_AllPathsInvariant verifies all three invariants together
+// across the path labels used by the use case.
+func TestBuildInterbankRate_AllPathsInvariant(t *testing.T) {
+	paths := []string{"success_path", "error_path", "nil_provider_path", "normal"}
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			ib := BuildInterbankRate()
+			if !ib.IsEstimate {
+				t.Errorf("[%s] IsEstimate must be true (architect Decision B, PERMANENT)", path)
+			}
+			if ib.Rate1WPct != nil {
+				t.Errorf("[%s] Rate1WPct must be nil (architect Decision B, PERMANENT)", path)
+			}
+			if ib.BlockedReason == "" {
+				t.Errorf("[%s] BlockedReason must be non-empty", path)
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// BuildOMOSuccess + BuildOMOFailed
+// ---------------------------------------------------------------------------
+
+// TestBuildOMOSuccess_NetOutstandingAnchor tests the anchor June-12-2026 OMO values.
+// From the live probe: TotalAdd=1217.45, TotalAbsorb=0.
+// Expected: NetOutstandingBnVND=1217.45, IsEstimate=false.
+func TestBuildOMOSuccess_NetOutstandingAnchor(t *testing.T) {
+	const (
+		totalAdd    = 1217.45
+		totalAbsorb = 0.0
+		auctionDate = "12/06/2026"
+		fetchedAt   = "2026-06-12T10:30:00Z"
+	)
+
+	result := BuildOMOSuccess(totalAdd, totalAbsorb, auctionDate, fetchedAt)
+
+	if result.IsEstimate {
+		t.Error("BuildOMOSuccess: IsEstimate must be false (primary SBV HTML source)")
+	}
+	if result.NetOutstandingBnVND == nil {
+		t.Fatal("BuildOMOSuccess: NetOutstandingBnVND must not be nil on success")
+	}
+	const wantNet = 1217.45
+	if math.Abs(*result.NetOutstandingBnVND-wantNet) > 0.01 {
+		t.Errorf("NetOutstandingBnVND = %.2f; want %.2f", *result.NetOutstandingBnVND, wantNet)
+	}
+	if result.TotalAddBnVND != totalAdd {
+		t.Errorf("TotalAddBnVND = %.2f; want %.2f", result.TotalAddBnVND, totalAdd)
+	}
+	if result.TotalAbsorbBnVND != totalAbsorb {
+		t.Errorf("TotalAbsorbBnVND = %.2f; want %.2f", result.TotalAbsorbBnVND, totalAbsorb)
+	}
+	if result.AuctionDate != auctionDate {
+		t.Errorf("AuctionDate = %q; want %q", result.AuctionDate, auctionDate)
+	}
+	if result.FetchedAt != fetchedAt {
+		t.Errorf("FetchedAt = %q; want %q", result.FetchedAt, fetchedAt)
+	}
+	if result.Source == "" {
+		t.Error("Source must be non-empty on success")
+	}
+}
+
+// TestBuildOMOSuccess_NetDrain tests when absorb > add (net drain).
+func TestBuildOMOSuccess_NetDrain(t *testing.T) {
+	result := BuildOMOSuccess(200, 500, "01/06/2026", "ts")
+	if result.NetOutstandingBnVND == nil {
+		t.Fatal("NetOutstandingBnVND must not be nil")
+	}
+	const wantNet = -300.0 // drain
+	if math.Abs(*result.NetOutstandingBnVND-wantNet) > 0.01 {
+		t.Errorf("NetOutstandingBnVND (drain) = %.2f; want %.2f", *result.NetOutstandingBnVND, wantNet)
+	}
+	if result.IsEstimate {
+		t.Error("IsEstimate must be false on successful parse even for drain scenario")
+	}
+}
+
+// TestBuildOMOFailed_FailClosed tests the fail-closed path.
+// is_estimate=true + NetOutstandingBnVND=nil on parse failure.
+func TestBuildOMOFailed_FailClosed(t *testing.T) {
+	const reason = "HTTP 503 from www.sbv.gov.vn"
+	result := BuildOMOFailed(reason, "2026-06-12T10:30:00Z")
+
+	if !result.IsEstimate {
+		t.Error("BuildOMOFailed: IsEstimate must be true (fail-closed)")
+	}
+	if result.NetOutstandingBnVND != nil {
+		t.Errorf("BuildOMOFailed: NetOutstandingBnVND must be nil; got %v", *result.NetOutstandingBnVND)
+	}
+	if result.BlockedReason != reason {
+		t.Errorf("BlockedReason = %q; want %q", result.BlockedReason, reason)
+	}
+	if result.Source == "" {
+		t.Error("Source must be non-empty even on failure")
+	}
+}
+
+// TestBuildOMOFailed_AllErrorPaths verifies fail-closed across multiple error path labels.
+func TestBuildOMOFailed_AllErrorPaths(t *testing.T) {
+	paths := []struct {
+		name   string
+		reason string
+	}{
+		{"http_error", "HTTP 503"},
+		{"tls_error", "TLS handshake failed"},
+		{"parse_error", "no OMO rows found"},
+		{"empty_body", "empty response body"},
+	}
+	for _, p := range paths {
+		t.Run(p.name, func(t *testing.T) {
+			result := BuildOMOFailed(p.reason, "ts")
+			if !result.IsEstimate {
+				t.Errorf("[%s] IsEstimate must be true (fail-closed)", p.name)
+			}
+			if result.NetOutstandingBnVND != nil {
+				t.Errorf("[%s] NetOutstandingBnVND must be nil (fail-closed)", p.name)
+			}
+		})
 	}
 }

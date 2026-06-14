@@ -1,4 +1,4 @@
-// Package domain — liquidity-state domain service functions for VMT-5a.
+// Package domain — liquidity-state domain service functions for VMT-5a + VMT-5b.
 //
 // Pure functions: no imports from application, infrastructure, or interface layers.
 //
@@ -7,8 +7,16 @@
 //   - ConvertWorldGoldToMnVND: world gold USD/oz → million VND/tael (1 tael = 37.5g ≈ 1.2057 troy oz).
 //   - BuildIRSField: always returns IsEstimate=true (DD-6, PERMANENT).
 //   - BuildFXCoupling: assembles FXCoupling from raw DB values.
+//   - BuildInterbankRate: always returns IsEstimate=true + Rate1WPct=nil (architect Decision B, PERMANENT).
+//   - BuildOMOFailed: returns OMOOutstanding with IsEstimate=true (parse failure fail-closed).
+//   - BuildOMOSuccess: returns OMOOutstanding with IsEstimate=false from parsed values.
 //
-// INVARIANT: IRS.IsEstimate MUST be true on ALL paths.
+// INVARIANTS:
+//   - IRS.IsEstimate MUST be true on ALL paths (DD-6 PERMANENT).
+//   - InterbankRate.IsEstimate MUST be true on ALL paths (architect Decision B PERMANENT).
+//   - InterbankRate.Rate1WPct MUST be nil on ALL paths.
+//   - OMOOutstanding.IsEstimate=true on parse failure (fail-closed).
+//
 // Fence-A: zero imports from application, infrastructure, or interface layers.
 package domain
 
@@ -29,6 +37,13 @@ const (
 	// sbvBandPct is the current SBV +/- deviation band from the central rate.
 	// VN FX policy: ±5% from daily central rate.
 	sbvBandPct = 5.0
+
+	// interbankBlockedReason is the permanent blocked_reason for interbank_1w.
+	// architect Decision B: dttktt.sbv.gov.vn 100% packet loss from Vinahost VPS — PERMANENT.
+	interbankBlockedReason = "dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)"
+
+	// omoSource is the source label for OMO data parsed from SBV Liferay HTML.
+	omoSource = "www.sbv.gov.vn nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy)"
 )
 
 // BuildIRSField returns an IRSField with IsEstimate=true PERMANENTLY.
@@ -115,5 +130,58 @@ func BuildFXCoupling(usdVNDCenter, usdVNDBuy, usdVNDSell, dxy, cnyVNDRate float6
 		CNYVNDRate:   cnyVNDRate,
 		IsEstimate:   isEstimate,
 		FetchedAt:    fetchedAt,
+	}
+}
+
+// BuildInterbankRate returns an InterbankRate with IsEstimate=true PERMANENTLY.
+//
+// Architect Decision B (PERMANENT): dttktt.sbv.gov.vn (Oracle WebCenter, 202.58.245.101)
+// is permanently unreachable from Vinahost VPS (100% packet loss). No public alternative
+// exists (WiData off-limits, NSO narrative unreliable, no Bloomberg/Refinitiv).
+//
+// This function ALWAYS returns:
+//   - Rate1WPct = nil (no live source)
+//   - IsEstimate = true (permanent)
+//   - BlockedReason = interbankBlockedReason
+//
+// NEVER modify to return false or a non-nil Rate1WPct without a confirmed replacement source.
+func BuildInterbankRate() InterbankRate {
+	return InterbankRate{
+		Rate1WPct:     nil, // PERMANENT — no machine-readable source (architect Decision B)
+		IsEstimate:    true, // PERMANENT — NEVER flip to false
+		BlockedReason: interbankBlockedReason,
+	}
+}
+
+// BuildOMOSuccess returns an OMOOutstanding from successfully parsed SBV HTML.
+//
+// Called when the OMO HTML parse succeeds (is_estimate=false, primary source).
+// netOutstandingBnVND = totalAddBnVND - totalAbsorbBnVND.
+// auctionDate is the most-recent auction date string from the SBV HTML (DD/MM/YYYY).
+func BuildOMOSuccess(totalAddBnVND, totalAbsorbBnVND float64, auctionDate, fetchedAt string) OMOOutstanding {
+	net := totalAddBnVND - totalAbsorbBnVND
+	return OMOOutstanding{
+		NetOutstandingBnVND: &net,
+		TotalAddBnVND:       totalAddBnVND,
+		TotalAbsorbBnVND:    totalAbsorbBnVND,
+		AuctionDate:         auctionDate,
+		IsEstimate:          false, // primary SBV HTML source — not an estimate
+		Source:              omoSource,
+		FetchedAt:           fetchedAt,
+	}
+}
+
+// BuildOMOFailed returns an OMOOutstanding with IsEstimate=true (fail-closed).
+//
+// Called when the OMO HTML fetch or parse fails.
+// NetOutstandingBnVND is nil — no value could be determined.
+// blockedReason should describe the failure (e.g. HTTP error or parse error message).
+func BuildOMOFailed(blockedReason, fetchedAt string) OMOOutstanding {
+	return OMOOutstanding{
+		NetOutstandingBnVND: nil, // fail-closed: cannot determine net outstanding
+		IsEstimate:          true, // fail-closed invariant
+		BlockedReason:       blockedReason,
+		Source:              omoSource,
+		FetchedAt:           fetchedAt,
 	}
 }

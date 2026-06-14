@@ -1,10 +1,12 @@
-// Package application — LiquidityStateUseCase tests (VMT-5a).
+// Package application — LiquidityStateUseCase tests (VMT-5a + VMT-5b).
 //
 // Covers:
-//   - Nil dependency guards.
-//   - Error paths: is_estimate=true on IRS even when fetch/parse fails.
+//   - Nil dependency guards (policyRates + sjcFX + omo providers).
+//   - Error paths: is_estimate=true on IRS + Interbank1W even when fetch/parse fails.
 //   - Successful execution with anchor values.
 //   - IRS is_estimate=true ALWAYS invariant (DD-6, all paths incl. error).
+//   - Interbank1W is_estimate=true + rate_1w_pct=nil ALWAYS (architect Decision B, all paths).
+//   - OMO is_estimate=false on parse success; is_estimate=true on parse failure.
 //   - SJC-absent fail-closed: is_estimate=true on sjc_gold_gap when SJC missing.
 //   - Policy rates isEstimate=true on DB fallback path.
 //
@@ -43,14 +45,44 @@ func (s *stubSJCFXProvider) FetchInputs(_ context.Context) (SJCFXInputs, error) 
 	return s.inputs, s.err
 }
 
+// stubOMOProvider is a test double for OMOProvider.
+type stubOMOProvider struct {
+	inputs OMOInputs
+	err    error
+}
+
+func (s *stubOMOProvider) FetchOMO(_ context.Context) (OMOInputs, error) {
+	return s.inputs, s.err
+}
+
+// goodOMOProvider returns the June-12-2026 anchor OMO values (ParseOK=true).
+func goodOMOProvider() *stubOMOProvider {
+	return &stubOMOProvider{
+		inputs: OMOInputs{
+			TotalAddBnVND:    1217.45,
+			TotalAbsorbBnVND: 0,
+			AuctionDate:      "12/06/2026",
+			ParseOK:          true,
+		},
+	}
+}
+
+// failOMOProvider returns a stub that simulates a parse failure (ParseOK=false).
+func failOMOProvider() *stubOMOProvider {
+	return &stubOMOProvider{
+		inputs: OMOInputs{ParseOK: false, ParseError: "HTTP 503"},
+		err:    errors.New("HTTP 503 from www.sbv.gov.vn"),
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Nil guard tests
 // ---------------------------------------------------------------------------
 
 // TestLiquidityStateUseCase_NilPolicyProvider verifies nil-provider guard.
-// IRS.IsEstimate must be true even on this error path (fail-closed).
+// IRS.IsEstimate + Interbank1W.IsEstimate must be true even on this error path (fail-closed).
 func TestLiquidityStateUseCase_NilPolicyProvider(t *testing.T) {
-	uc := NewLiquidityStateUseCase(nil, &stubSJCFXProvider{})
+	uc := NewLiquidityStateUseCase(nil, &stubSJCFXProvider{}, goodOMOProvider())
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
 	if err == nil {
 		t.Error("expected error for nil policyRatesProvider")
@@ -62,14 +94,22 @@ func TestLiquidityStateUseCase_NilPolicyProvider(t *testing.T) {
 	if !resp.IRS.IsEstimate {
 		t.Error("IRS.IsEstimate must be true on nil-provider error path (DD-6 fail-closed)")
 	}
+	// INVARIANT: Interbank1W.IsEstimate must be true + Rate1WPct=nil (architect Decision B).
+	if !resp.Interbank1W.IsEstimate {
+		t.Error("Interbank1W.IsEstimate must be true on nil-provider error path (architect Decision B)")
+	}
+	if resp.Interbank1W.Rate1WPct != nil {
+		t.Error("Interbank1W.Rate1WPct must be nil on error path (architect Decision B)")
+	}
 }
 
 // TestLiquidityStateUseCase_NilSJCFXProvider verifies nil sjcFXProvider guard.
-// IRS.IsEstimate must be true even on this error path.
+// IRS.IsEstimate + Interbank1W.IsEstimate must be true even on this error path.
 func TestLiquidityStateUseCase_NilSJCFXProvider(t *testing.T) {
 	uc := NewLiquidityStateUseCase(
 		&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
 		nil,
+		goodOMOProvider(),
 	)
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
 	if err == nil {
@@ -78,6 +118,40 @@ func TestLiquidityStateUseCase_NilSJCFXProvider(t *testing.T) {
 	// INVARIANT: IRS.IsEstimate must be true even on nil-guard error path.
 	if !resp.IRS.IsEstimate {
 		t.Error("IRS.IsEstimate must be true on nil sjcFX error path (DD-6 fail-closed)")
+	}
+	// INVARIANT: Interbank1W.IsEstimate must be true + Rate1WPct=nil (architect Decision B).
+	if !resp.Interbank1W.IsEstimate {
+		t.Error("Interbank1W.IsEstimate must be true on nil sjcFX error path (architect Decision B)")
+	}
+	if resp.Interbank1W.Rate1WPct != nil {
+		t.Error("Interbank1W.Rate1WPct must be nil on nil sjcFX error path")
+	}
+}
+
+// TestLiquidityStateUseCase_NilOMOProvider verifies nil omoProvider guard.
+// IRS.IsEstimate + Interbank1W invariants enforced even on nil omoProvider path.
+func TestLiquidityStateUseCase_NilOMOProvider(t *testing.T) {
+	uc := NewLiquidityStateUseCase(
+		&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
+		&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
+		nil,
+	)
+	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
+	if err == nil {
+		t.Error("expected error for nil omoProvider")
+	}
+	if !resp.IRS.IsEstimate {
+		t.Error("IRS.IsEstimate must be true on nil OMO error path (DD-6 fail-closed)")
+	}
+	if !resp.Interbank1W.IsEstimate {
+		t.Error("Interbank1W.IsEstimate must be true on nil OMO error path (architect Decision B)")
+	}
+	if resp.Interbank1W.Rate1WPct != nil {
+		t.Error("Interbank1W.Rate1WPct must be nil on nil OMO error path")
+	}
+	// OMO fail-closed on error path.
+	if !resp.OMO.IsEstimate {
+		t.Error("OMO.IsEstimate must be true on nil omoProvider error path (fail-closed)")
 	}
 }
 
@@ -92,43 +166,63 @@ func TestLiquidityStateUseCase_IRSIsEstimateAlwaysTrue(t *testing.T) {
 		name           string
 		policyProvider PolicyRatesProvider
 		sjcFXProvider  SJCFXProvider
+		omoProvider    OMOProvider
 		wantErr        bool
 	}{
 		{
 			name:           "normal_success",
 			policyProvider: &stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5, DiscountRatePct: 1.5, IsEstimate: false}},
 			sjcFXProvider:  &stubSJCFXProvider{inputs: SJCFXInputs{GoldUSDPerOz: 4238.8, USDVNDRate: 26250, SBVCenterRate: 25155}},
+			omoProvider:    goodOMOProvider(),
 			wantErr:        false,
 		},
 		{
 			name:           "policy_fetch_error",
 			policyProvider: &stubPolicyRatesProvider{err: errors.New("HTML fetch failed")},
 			sjcFXProvider:  &stubSJCFXProvider{inputs: SJCFXInputs{GoldUSDPerOz: 4238.8}},
+			omoProvider:    goodOMOProvider(),
 			wantErr:        false, // non-fatal: partial success
 		},
 		{
 			name:           "sjcfx_fetch_error",
 			policyProvider: &stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
 			sjcFXProvider:  &stubSJCFXProvider{err: errors.New("DB read failed")},
+			omoProvider:    goodOMOProvider(),
 			wantErr:        false, // non-fatal: safe-degrade
+		},
+		{
+			name:           "omo_fetch_error",
+			policyProvider: &stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
+			sjcFXProvider:  &stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
+			omoProvider:    failOMOProvider(),
+			wantErr:        false, // non-fatal: OMO fail-closed is_estimate=true
 		},
 		{
 			name:           "nil_policy_provider",
 			policyProvider: nil,
 			sjcFXProvider:  &stubSJCFXProvider{},
+			omoProvider:    goodOMOProvider(),
 			wantErr:        true,
 		},
 		{
 			name:           "nil_sjcfx_provider",
 			policyProvider: &stubPolicyRatesProvider{rates: domain.PolicyRates{}},
 			sjcFXProvider:  nil,
+			omoProvider:    goodOMOProvider(),
+			wantErr:        true,
+		},
+		{
+			name:           "nil_omo_provider",
+			policyProvider: &stubPolicyRatesProvider{rates: domain.PolicyRates{}},
+			sjcFXProvider:  &stubSJCFXProvider{},
+			omoProvider:    nil,
 			wantErr:        true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			uc := NewLiquidityStateUseCase(tc.policyProvider, tc.sjcFXProvider)
+			uc := NewLiquidityStateUseCase(tc.policyProvider, tc.sjcFXProvider, tc.omoProvider)
 			resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
 
 			if tc.wantErr && err == nil {
@@ -137,6 +231,14 @@ func TestLiquidityStateUseCase_IRSIsEstimateAlwaysTrue(t *testing.T) {
 			// CRITICAL: IRS.IsEstimate MUST be true on ALL paths (DD-6 permanent).
 			if !resp.IRS.IsEstimate {
 				t.Errorf("%s: IRS.IsEstimate must be true ALWAYS (DD-6 permanent) — got false", tc.name)
+			}
+			// CRITICAL: Interbank1W.IsEstimate MUST be true on ALL paths (architect Decision B).
+			if !resp.Interbank1W.IsEstimate {
+				t.Errorf("%s: Interbank1W.IsEstimate must be true ALWAYS (architect Decision B) — got false", tc.name)
+			}
+			// CRITICAL: Interbank1W.Rate1WPct MUST be nil on ALL paths.
+			if resp.Interbank1W.Rate1WPct != nil {
+				t.Errorf("%s: Interbank1W.Rate1WPct must be nil ALWAYS (architect Decision B)", tc.name)
 			}
 		})
 	}
@@ -157,6 +259,7 @@ func TestLiquidityStateUseCase_SJCAbsent_FailClosed(t *testing.T) {
 			SBVCenterRate: 25155,
 			SJCPriceMnVND: 0, // SJC absent from DB
 		}},
+		goodOMOProvider(),
 	)
 
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
@@ -188,6 +291,7 @@ func TestLiquidityStateUseCase_SJCAbsent_FailClosed(t *testing.T) {
 // June-12-2026 anchors: usd_center=25155, buy=23948, sell=26362, DXY=99.807.
 // gold_usd_per_oz=4238.8, usd_vnd=26250.
 // Policy: refi=4.5, discount=1.5 (from DB sbv_rates).
+// OMO anchor: TotalAddBnVND=1217.45, TotalAbsorb=0, net=1217.45 (June-12-2026 probe).
 func TestLiquidityStateUseCase_AnchorValues(t *testing.T) {
 	uc := NewLiquidityStateUseCase(
 		&stubPolicyRatesProvider{rates: domain.PolicyRates{
@@ -206,6 +310,7 @@ func TestLiquidityStateUseCase_AnchorValues(t *testing.T) {
 			SBVCenterRate: 25155,
 			SJCPriceMnVND: 0, // SJC not in DB yet
 		}},
+		goodOMOProvider(), // June-12-2026: add=1217.45, absorb=0
 	)
 
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
@@ -250,6 +355,32 @@ func TestLiquidityStateUseCase_AnchorValues(t *testing.T) {
 	if !resp.IRS.IsEstimate {
 		t.Error("IRS.IsEstimate must be true ALWAYS (DD-6 permanent)")
 	}
+
+	// OMO anchor: June-12-2026 — net=1217.45 bn VND, is_estimate=false (parse success).
+	if resp.OMO.IsEstimate {
+		t.Error("OMO.IsEstimate must be false when parse succeeds (primary source)")
+	}
+	if resp.OMO.NetOutstandingBnVND == nil {
+		t.Fatal("OMO.NetOutstandingBnVND must not be nil on parse success")
+	}
+	const wantOMONet = 1217.45
+	if *resp.OMO.NetOutstandingBnVND < wantOMONet-0.01 || *resp.OMO.NetOutstandingBnVND > wantOMONet+0.01 {
+		t.Errorf("OMO.NetOutstandingBnVND = %.2f; want %.2f", *resp.OMO.NetOutstandingBnVND, wantOMONet)
+	}
+	if resp.OMO.AuctionDate != "12/06/2026" {
+		t.Errorf("OMO.AuctionDate = %q; want 12/06/2026", resp.OMO.AuctionDate)
+	}
+
+	// Interbank1W: PERMANENTLY blocked (architect Decision B).
+	if !resp.Interbank1W.IsEstimate {
+		t.Error("Interbank1W.IsEstimate must be true ALWAYS (architect Decision B, PERMANENT)")
+	}
+	if resp.Interbank1W.Rate1WPct != nil {
+		t.Errorf("Interbank1W.Rate1WPct must be nil ALWAYS; got non-nil")
+	}
+	if resp.Interbank1W.BlockedReason == "" {
+		t.Error("Interbank1W.BlockedReason must be non-empty")
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +393,7 @@ func TestLiquidityStateUseCase_PolicyRatesFallback(t *testing.T) {
 	uc := NewLiquidityStateUseCase(
 		&stubPolicyRatesProvider{err: errors.New("SBV HTML fetch failed")},
 		&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
+		goodOMOProvider(),
 	)
 
 	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
@@ -279,5 +411,81 @@ func TestLiquidityStateUseCase_PolicyRatesFallback(t *testing.T) {
 	// IRS still always true.
 	if !resp.IRS.IsEstimate {
 		t.Error("IRS.IsEstimate must be true (DD-6 permanent, even on policy error path)")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// OMO fail-closed tests (VMT-5b)
+// ---------------------------------------------------------------------------
+
+// TestLiquidityStateUseCase_OMOParseFailure verifies that when OMO fetch fails,
+// omo.is_estimate=true and net_outstanding_bn_vnd=nil (fail-closed).
+// IRS + Interbank1W invariants still enforced.
+func TestLiquidityStateUseCase_OMOParseFailure(t *testing.T) {
+	uc := NewLiquidityStateUseCase(
+		&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5, IsEstimate: false}},
+		&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
+		failOMOProvider(),
+	)
+
+	resp, err := uc.Execute(context.Background(), LiquidityStateRequest{})
+	// OMO failure is non-fatal — overall response is Status="ok".
+	if err != nil {
+		t.Fatalf("unexpected error (OMO failure should be non-fatal): %v", err)
+	}
+	if resp.Status != "ok" {
+		t.Errorf("status: got %q; want ok (OMO failure is non-fatal)", resp.Status)
+	}
+
+	// OMO fail-closed: is_estimate=true + net_outstanding_bn_vnd=nil.
+	if !resp.OMO.IsEstimate {
+		t.Error("OMO.IsEstimate must be true when OMO fetch fails (fail-closed)")
+	}
+	if resp.OMO.NetOutstandingBnVND != nil {
+		t.Errorf("OMO.NetOutstandingBnVND must be nil when parse fails (fail-closed); got %v", *resp.OMO.NetOutstandingBnVND)
+	}
+
+	// IRS + Interbank1W invariants must hold even on OMO failure path.
+	if !resp.IRS.IsEstimate {
+		t.Error("IRS.IsEstimate must be true (DD-6 permanent, even on OMO failure path)")
+	}
+	if !resp.Interbank1W.IsEstimate {
+		t.Error("Interbank1W.IsEstimate must be true (architect Decision B, even on OMO failure path)")
+	}
+	if resp.Interbank1W.Rate1WPct != nil {
+		t.Error("Interbank1W.Rate1WPct must be nil even on OMO failure path")
+	}
+}
+
+// TestLiquidityStateUseCase_Interbank1W_AlwaysBlocked verifies the interbank_1w
+// is_estimate=true + rate_1w_pct=nil + blocked_reason invariants on ALL paths.
+func TestLiquidityStateUseCase_Interbank1W_AlwaysBlocked(t *testing.T) {
+	cases := []struct {
+		name        string
+		omoProvider OMOProvider
+	}{
+		{"omo_success", goodOMOProvider()},
+		{"omo_failure", failOMOProvider()},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			uc := NewLiquidityStateUseCase(
+				&stubPolicyRatesProvider{rates: domain.PolicyRates{RefiRatePct: 4.5}},
+				&stubSJCFXProvider{inputs: SJCFXInputs{SBVCenterRate: 25155}},
+				tc.omoProvider,
+			)
+			resp, _ := uc.Execute(context.Background(), LiquidityStateRequest{})
+
+			// PERMANENT INVARIANTS (architect Decision B):
+			if !resp.Interbank1W.IsEstimate {
+				t.Errorf("[%s] Interbank1W.IsEstimate must be true ALWAYS", tc.name)
+			}
+			if resp.Interbank1W.Rate1WPct != nil {
+				t.Errorf("[%s] Interbank1W.Rate1WPct must be nil ALWAYS", tc.name)
+			}
+			if resp.Interbank1W.BlockedReason == "" {
+				t.Errorf("[%s] Interbank1W.BlockedReason must be non-empty ALWAYS", tc.name)
+			}
+		})
 	}
 }

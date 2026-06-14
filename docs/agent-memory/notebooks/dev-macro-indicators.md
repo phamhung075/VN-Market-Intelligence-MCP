@@ -6,6 +6,56 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-06-14 (VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO — sprint VN-MACRO-TOOLING A5 FINAL WAVE-2)
+
+**Task:** Extend POST /liquidity-state with OMO net outstanding + interbank_1w. NO new route. Builds on A4 (VMT-5a, commit 226be604). Final serial Zone-A task in WAVE-2.
+
+**Contract source:** scripts/probes/vmt-4-sample.json (OMO section). June-12-2026 live probe: HTTP 200, 408KB HTML, OMO PASS. Anchor: Mua kỳ hạn 35d=217.45 + 56d=1000.0 = TotalAdd=1217.45 bn VND; Tổng cộng SKIPPED; TotalAbsorb=0; net=1217.45; AuctionDate=12/06/2026.
+
+**Key decisions:**
+- OMO parser: `ParseSBVOMOHTML` — walks HTML AST for `<tr>` rows; classifies by "mua kỳ hạn" (add), "bán kỳ hạn"/"tín phiếu" (absorb). "tổng cộng" rows SKIPPED. VN diacritic normalisation via `normaliseVNText`. Auction date from "ngày DD/MM/YYYY" in heading text. Volume parsed via `parseOMOVolume` (period=thousands, comma=decimal VN format).
+- OMO URL: `sbvOMOURL = https://www.sbv.gov.vn/vi/web/sbv_portal/nghi%E1%BB%87p-v%E1%BB%A5-th%E1%BB%8B-tr%C6%B0%E1%BB%9Dng-m%E1%BB%9F` — stable monthly-release page. Direct, no VPS proxy. TLS: `buildDirectTLSConfig` (same as A4 policy rates).
+- interbank_1w: PERMANENT is_estimate=true + rate_1w_pct=null + blocked_reason="dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)" (architect Decision B). NO fetch attempted. `BuildInterbankRate()` always returns these values.
+- OMO fail-closed: ParseOK=false → `BuildOMOFailed(reason, fetchedAt)` → is_estimate=true + net_outstanding=nil.
+- OMO success: `BuildOMOSuccess(add, absorb, date, ts)` → is_estimate=false + net=add-absorb.
+
+**Files created (2):**
+- `pkg/infrastructure/parsers_vmt_sbv_interbank_omo.go` — `FetchSBVOMOFromHTML`, `ParseSBVOMOHTML`, `OMOParseResult`, `parseOMOVolume`, `normaliseVNText`, `extractAuctionDate`, `isDateDDMMYYYY`
+- `pkg/infrastructure/parsers_vmt_sbv_interbank_omo_test.go` — 14 tests (volume parsing, date validation, anchor HTML, mixed add+absorb, subtotal skip, empty/malformed HTML)
+
+**Files modified (5):**
+- `pkg/domain/models_vmt_liquidity.go` — Added `OMOOutstanding` + `InterbankRate` + extended `LiquidityStateRecord`
+- `pkg/domain/services_vmt_liquidity.go` — Added `BuildInterbankRate`, `BuildOMOSuccess`, `BuildOMOFailed` + constants
+- `pkg/domain/services_vmt_liquidity_test.go` — Added 13 tests (interbank always-true, rate nil, OMO anchor, drain, fail-closed all paths)
+- `pkg/application/dtos_vmt_liquidity.go` — Added `OMOOutstandingDTO`, `InterbankRateDTO`; extended `LiquidityStateResponse`
+- `pkg/application/usecases_vmt_liquidity.go` — Added `OMOInputs`, `OMOProvider` interface; extended `LiquidityStateUseCase` (3rd arg); updated `Execute` + `errorLiquidityResponse`
+- `pkg/application/usecases_vmt_liquidity_test.go` — Updated all stubs for 3-arg constructor; added nil-OMO guard + OMO+interbank invariant tests
+- `cmd/server/main.go` — Added `omoAdapter` composition-root type + wired into `NewLiquidityStateUseCase`
+
+**Key invariants confirmed:**
+- interbank_1w: is_estimate=true on ALL paths (success, error, nil-provider, nil-omo) — architect Decision B PERMANENT
+- interbank_1w: rate_1w_pct=nil on ALL paths — NEVER non-nil
+- interbank_1w: blocked_reason="dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)" on ALL paths
+- IRS: is_estimate=true on ALL paths (DD-6 PERMANENT — A4 invariant preserved)
+- OMO: is_estimate=false on parse success (primary SBV HTML) — NOT an estimate
+- OMO: is_estimate=true on parse failure (fail-closed)
+- OMO: net_outstanding=nil on parse failure (fail-closed)
+- NO VPS proxy — SBV direct fetch (same domain as BOP/A4)
+- NO new dependency — go.mod UNCHANGED
+- NO market.db read for OMO (HTML only); existing DB reads via A4 adapters unchanged
+- DB_PATH env → /app/data/market.db (LIVE named volume) — inherited from A4
+
+**Anchor test results (G12 DoD PASS):**
+- OMO net_outstanding: 1217.45 bn VND (June-12-2026 probe: add=1217.45, absorb=0) CONFIRMED
+- interbank_1w: is_estimate=true + rate_1w_pct=null + blocked_reason set CONFIRMED (all paths incl. error)
+- IRS: is_estimate=true CONFIRMED (all paths — DD-6 permanent, inherited from A4)
+
+**Verification:** `go build ./...` GREEN, `go test ./... -count=1` ALL PASS (11 packages, 0 fail), `golangci-lint run` 0 issues. go.mod UNCHANGED (no new dep).
+
+**WAVE-2 serial Zone-A chain:** A5 DONE. FINAL task. Next: VMT-7a-e handler-registration wave + VMT-7-REGISTER.
+
+---
+
 ## Session 2026-06-14 (VMT-5a-LIQUIDITY-STATE-NO-GATE — sprint VN-MACRO-TOOLING A4 WAVE-2)
 
 **Task:** Implement VMT-5a (POST /liquidity-state) — three blocs: policy_rates (SBV HTML direct + DB fallback) + sjc_gold_gap (market.db EXISTING reads, DD-7) + fx_coupling (market.db reads) + irs (is_estimate=true PERMANENT DD-6).

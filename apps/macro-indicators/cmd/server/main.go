@@ -29,6 +29,11 @@
 // sjc_gold_gap + fx_coupling: EXISTING market.db reads (DD-7, no new crawl).
 // irs: is_estimate=true PERMANENT (DD-6, HNX OTC IRS not machine-readable).
 //
+// VMT-5b (interbank+OMO): extends POST /liquidity-state — no new route.
+// omo: SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy); omoAdapter.
+// interbank_1w: PERMANENTLY blocked (architect Decision B — dttktt.sbv.gov.vn 100% packet loss).
+// is_estimate=true + rate_1w_pct=null PERMANENT. No fetch attempted. go.mod UNCHANGED.
+//
 // Sandbox security (charter §Security Clause macro-specific addition):
 // reads ZERO secrets — only PORT (default 5004) and LOG_LEVEL (default "INFO").
 // No DB credentials, no API keys, no external service credentials in this process env.
@@ -108,13 +113,16 @@ func main() {
 	tradeParser := &tradeBalanceParserAdapter{}
 	tradeBalanceUseCase := application.NewTradeBalanceUseCase(nsoExcelFetcher, tradeParser)
 
-	// VMT-5a: liquidity-state use case wiring.
+	// VMT-5a + VMT-5b: liquidity-state use case wiring.
 	// policyRatesAdapter: SBV HTML direct fetch (www.sbv.gov.vn, no VPS proxy) + sbv_rates DB fallback.
 	// sjcGoldFXAdapter: reads EXISTING market.db commodity_prices + sbv_rates (DD-7, no new crawl).
-	// No new excelize dep (HTML + SQLite only).
+	// omoAdapter: SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy, VMT-5b).
+	// interbank_1w: PERMANENTLY blocked (architect Decision B) — no adapter needed (domain builds it).
+	// No new excelize dep (HTML + SQLite only). go.mod UNCHANGED.
 	liquidityPolicyAdapter := &policyRatesAdapter{logger: logger}
 	liquiditySJCFXAdapter := &sjcFXAdapter{inner: infrastructure.NewSJCGoldFXAdapter()}
-	liquidityStateUseCase := application.NewLiquidityStateUseCase(liquidityPolicyAdapter, liquiditySJCFXAdapter)
+	liquidityOMOAdapter := &omoAdapter{logger: logger}
+	liquidityStateUseCase := application.NewLiquidityStateUseCase(liquidityPolicyAdapter, liquiditySJCFXAdapter, liquidityOMOAdapter)
 
 	router := iface.NewRouter(iface.RouterConfig{
 		Snapshot:           useCase,
@@ -335,5 +343,52 @@ func (a *sjcFXAdapter) FetchInputs(ctx context.Context) (application.SJCFXInputs
 		SBVCenterRate: infraInputs.SBVCenterRate,
 		SBVFetchedAt:  infraInputs.SBVFetchedAt,
 		SJCPriceMnVND: infraInputs.SJCPriceMnVND,
+	}, nil
+}
+
+// ---------------------------------------------------------------------------
+// VMT-5b composition-root adapter
+//
+// Bridges application.OMOProvider to the concrete infrastructure function
+// infrastructure.FetchSBVOMOFromHTML without pkg/infrastructure importing
+// pkg/application (Fence-B violation).
+// Lives here (composition root — Fence-C compliant).
+// ---------------------------------------------------------------------------
+
+// omoAdapter implements application.OMOProvider using infrastructure.FetchSBVOMOFromHTML.
+// Fetches the SBV nghiep-vu-thi-truong-mo Liferay HTML (direct, no VPS proxy).
+// Fail-closed: ParseOK=false → use case calls domain.BuildOMOFailed (is_estimate=true).
+type omoAdapter struct {
+	logger *slog.Logger
+}
+
+// FetchOMO implements application.OMOProvider.
+// Delegates to infrastructure.FetchSBVOMOFromHTML and converts OMOParseResult → application.OMOInputs.
+// Returns ParseOK=false on any fetch or parse error (fail-closed).
+func (a *omoAdapter) FetchOMO(ctx context.Context) (application.OMOInputs, error) {
+	result, err := infrastructure.FetchSBVOMOFromHTML(ctx)
+	if err != nil {
+		if a.logger != nil {
+			a.logger.Warn("sbv_omo: fetch/parse failed", slog.Any("error", err))
+		}
+		return application.OMOInputs{
+			ParseOK:    false,
+			ParseError: err.Error(),
+		}, err
+	}
+	if !result.ParseOK {
+		if a.logger != nil {
+			a.logger.Warn("sbv_omo: parse returned ParseOK=false (no add/absorb rows found)")
+		}
+		return application.OMOInputs{
+			ParseOK:    false,
+			ParseError: "OMO HTML parse: no add/absorb rows found",
+		}, nil
+	}
+	return application.OMOInputs{
+		TotalAddBnVND:    result.TotalAddBnVND,
+		TotalAbsorbBnVND: result.TotalAbsorbBnVND,
+		AuctionDate:      result.AuctionDate,
+		ParseOK:          result.ParseOK,
 	}, nil
 }

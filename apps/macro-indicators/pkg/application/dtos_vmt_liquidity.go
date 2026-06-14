@@ -1,17 +1,22 @@
-// Package application — liquidity-state DTOs for VMT-5a HTTP/use-case boundary.
+// Package application — liquidity-state DTOs for VMT-5a + VMT-5b HTTP/use-case boundary.
 //
 // DTOs translate between the HTTP request/response and the domain model.
 // Field names match the BA spec FR-5 output schema from orch-state.json task
-// VMT-5a-LIQUIDITY-STATE-NO-GATE.
+// VMT-5a-LIQUIDITY-STATE-NO-GATE + VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO.
 //
-// Three blocs:
+// Blocs:
 //   - policy_rates (refi + discount + lombard): source=SBV HTML or DB fallback.
 //   - sjc_gold_gap: world gold vs SJC domestic price gap from market.db reads.
 //   - fx_coupling: USD/VND center + band + CNY/DXY from market.db reads.
 //   - irs: is_estimate=true PERMANENT (DD-6, HNX OTC IRS not machine-readable).
+//   - omo: SBV OMO net outstanding from nghiep-vu-thi-truong-mo Liferay HTML (VMT-5b).
+//   - interbank_1w: PERMANENTLY blocked (architect Decision B, dttktt.sbv.gov.vn unreachable).
 //
-// IRS INVARIANT (fail-closed): IRS.IsEstimate MUST be true in ALL DTOs.
-// NEVER set LiquidityStateIRSDTO.IsEstimate to false.
+// INVARIANTS (fail-closed):
+//   - LiquidityStateIRSDTO.IsEstimate MUST be true on ALL paths (DD-6 PERMANENT).
+//   - InterbankRateDTO.IsEstimate MUST be true on ALL paths (architect Decision B PERMANENT).
+//   - InterbankRateDTO.Rate1WPct MUST be nil on ALL paths.
+//   - OMOOutstandingDTO.IsEstimate=true on parse failure (fail-closed).
 //
 // No domain logic in this file — pure data containers only.
 package application
@@ -96,6 +101,49 @@ type LiquidityStateIRSDTO struct {
 	Note string `json:"note"`
 }
 
+// OMOOutstandingDTO carries the SBV OMO net outstanding parsed from Liferay HTML.
+// Source: www.sbv.gov.vn nghiep-vu-thi-truong-mo (direct, no VPS proxy).
+//
+// INVARIANT: IsEstimate=false on parse success; IsEstimate=true on parse failure (fail-closed).
+type OMOOutstandingDTO struct {
+	// NetOutstandingBnVND is the net OMO liquidity injection in billion VND.
+	// null when parse failed (fail-closed).
+	NetOutstandingBnVND *float64 `json:"net_outstanding_bn_vnd"`
+	// TotalAddBnVND is the sum of Mua kỳ hạn (reverse-repo add) in billion VND.
+	TotalAddBnVND float64 `json:"total_add_bn_vnd"`
+	// TotalAbsorbBnVND is the sum of Bán kỳ hạn + Tín phiếu (absorb) in billion VND.
+	TotalAbsorbBnVND float64 `json:"total_absorb_bn_vnd"`
+	// AuctionDate is the most-recent auction date (DD/MM/YYYY).
+	AuctionDate string `json:"auction_date"`
+	// IsEstimate is false on parse success (primary SBV HTML); true on parse failure.
+	IsEstimate bool `json:"is_estimate"`
+	// BlockedReason is non-empty only when IsEstimate=true due to fetch/parse error.
+	BlockedReason string `json:"blocked_reason,omitempty"`
+	// Source identifies the data origin.
+	Source string `json:"source"`
+	// FetchedAt is the UTC timestamp (RFC3339) of the fetch.
+	FetchedAt string `json:"fetched_at"`
+}
+
+// InterbankRateDTO carries the SBV interbank 1-week tenor rate.
+//
+// PERMANENT INVARIANT (architect Decision B):
+//   - IsEstimate MUST be true on ALL paths.
+//   - Rate1WPct MUST be nil on ALL paths.
+//   - BlockedReason MUST be set on ALL paths.
+//
+// dttktt.sbv.gov.vn (Oracle WebCenter, 202.58.245.101) = 100% packet loss from Vinahost VPS.
+// No public alternative exists (WiData off-limits, NSO narrative unreliable, no Bloomberg/Refinitiv).
+// NEVER set IsEstimate=false or Rate1WPct to a non-nil value.
+type InterbankRateDTO struct {
+	// Rate1WPct is ALWAYS nil. No machine-readable source exists.
+	Rate1WPct *float64 `json:"rate_1w_pct"` // always null
+	// IsEstimate is PERMANENTLY true (architect Decision B). NEVER flip to false.
+	IsEstimate bool `json:"is_estimate"`
+	// BlockedReason explains the permanent null rate.
+	BlockedReason string `json:"blocked_reason"`
+}
+
 // LiquidityStateResponse is the output DTO returned by LiquidityStateUseCase.Execute.
 type LiquidityStateResponse struct {
 	// Status is "ok" on success; "error" when any fetch/parse fails.
@@ -113,6 +161,14 @@ type LiquidityStateResponse struct {
 	// IRS is the permanent estimate marker.
 	// IRS.IsEstimate MUST be true ALWAYS (DD-6 — fail-closed invariant).
 	IRS LiquidityStateIRSDTO `json:"irs"`
+
+	// OMO holds the SBV OMO net outstanding from nghiep-vu-thi-truong-mo Liferay HTML.
+	// is_estimate=false on parse success; is_estimate=true on parse failure (fail-closed).
+	OMO OMOOutstandingDTO `json:"omo"`
+
+	// Interbank1W holds the SBV interbank 1-week tenor rate.
+	// PERMANENTLY blocked: is_estimate=true, rate_1w_pct=null (architect Decision B).
+	Interbank1W InterbankRateDTO `json:"interbank_1w"`
 
 	// FetchedAt is the UTC timestamp (RFC3339) of the overall snapshot.
 	FetchedAt string `json:"fetched_at"`
