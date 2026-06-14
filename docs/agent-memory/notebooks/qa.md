@@ -198,4 +198,4 @@ Live DB probe (named volume, keinos sidecar). Check 1: contamination scan = 0 re
 Scope miss findings (non-blocking, logged for follow-up): SM-1 VNH 2026-06-12 close=1000.0 exactly (boundary `>1000` strict, 1 row miss); SM-2 460 pre-repair rows with low=0 pattern outside heuristic scope; SM-3 59 today's rows same low=0 pattern (CONTAM-2 guard gap). None introduced by CONTAM-6. Task DoD met. CONTAM-6 REVIEW→DONE. DJ: sprint-OHLCV-UNIT-CONTAM-qa-contam6.md.
 
 ## Baselines / Archive
-- QA (unified-append mode, ≤200L notebook). Older cycles: git history / qa-20260606.md.
+Older cycles: git history / qa-20260606.md.
