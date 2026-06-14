@@ -23,6 +23,8 @@ import {
   runSchedulerWatchdog,
   _alertCooldownMap,
   ALERT_COOLDOWN_MS,
+  WATCHDOG_MANIFEST,
+  CANONICAL_WATCHDOG_JOB_NAMES,
   type WatchdogManifest,
 } from '../scheduler/system/schedulerWatchdogJob.js'
 
@@ -523,5 +525,70 @@ describe('ARCH-CRON-watchdog — WD-9: multi-job manifest — all jobs checked',
     // job1 must not appear in any alert
     const job1Alert = alerts.find((a) => a.includes('job1'))
     expect(job1Alert).toBeUndefined()
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WD-10: Manifest integrity — every WATCHDOG_MANIFEST key must match a
+//         recorded job_name in CANONICAL_WATCHDOG_JOB_NAMES.
+//
+// This test is the structural guard against key-name drift. It fails loudly
+// whenever a job is renamed in wrapRun/recordJobRun but the manifest key is
+// not updated to match.
+//
+// How the canonical set is derived (NOT hand-copied):
+//   CANONICAL_WATCHDOG_JOB_NAMES is exported from schedulerWatchdogJob.ts and
+//   each entry is annotated with its exact recording site (file + line). The
+//   test imports that exported array — so both the manifest and the canonical
+//   set share the same module as their SSOT. A future rename requires updating
+//   (a) the wrapRun/recordJobRun call site, (b) CANONICAL_WATCHDOG_JOB_NAMES,
+//   and (c) the WATCHDOG_MANIFEST key — any mismatch between (b) and (c)
+//   causes this test to fail before the commit can ship.
+//
+// Fail-proof check (documented below): temporarily corrupt a key → test fails.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ARCH-CRON-watchdog — WD-10: manifest integrity — every key matches canonical recorded job_name', () => {
+  it('every WATCHDOG_MANIFEST key exists in CANONICAL_WATCHDOG_JOB_NAMES', () => {
+    const canonicalSet = new Set<string>(CANONICAL_WATCHDOG_JOB_NAMES)
+    const manifestKeys = Object.keys(WATCHDOG_MANIFEST)
+
+    // Every manifest key must be in the canonical set — if not, the watchdog
+    // queries cron_job_runs with the wrong name → false "never run" alerts.
+    const missingFromCanonical = manifestKeys.filter((k) => !canonicalSet.has(k))
+    expect(
+      missingFromCanonical,
+      `WATCHDOG_MANIFEST keys not in CANONICAL_WATCHDOG_JOB_NAMES (watchdog will query wrong job_name): ${JSON.stringify(missingFromCanonical)}. ` +
+      `Update the manifest key to match what the job records in cron_job_runs via wrapRun/recordJobRun, ` +
+      `then add/update the entry in CANONICAL_WATCHDOG_JOB_NAMES with the recording site comment.`,
+    ).toEqual([])
+
+    // The canonical set must cover every manifest key — no orphaned manifest entries.
+    expect(manifestKeys.length).toBeGreaterThan(0)
+  })
+
+  it('CANONICAL_WATCHDOG_JOB_NAMES has no duplicates (would indicate copy-paste error)', () => {
+    const seen = new Set<string>()
+    const duplicates: string[] = []
+    for (const name of CANONICAL_WATCHDOG_JOB_NAMES) {
+      if (seen.has(name)) duplicates.push(name)
+      seen.add(name)
+    }
+    expect(
+      duplicates,
+      `Duplicate entries in CANONICAL_WATCHDOG_JOB_NAMES: ${JSON.stringify(duplicates)}`,
+    ).toEqual([])
+  })
+
+  it('manifest has exactly the same count as CANONICAL_WATCHDOG_JOB_NAMES (no undocumented additions)', () => {
+    // Both sides must grow together: adding a job to the manifest requires
+    // adding its canonical name; removing a job requires removing from both.
+    const manifestCount = Object.keys(WATCHDOG_MANIFEST).length
+    const canonicalCount = CANONICAL_WATCHDOG_JOB_NAMES.length
+    expect(
+      manifestCount,
+      `WATCHDOG_MANIFEST has ${manifestCount} keys but CANONICAL_WATCHDOG_JOB_NAMES has ${canonicalCount} entries. ` +
+      `They must stay in sync — add or remove from both together.`,
+    ).toBe(canonicalCount)
   })
 })

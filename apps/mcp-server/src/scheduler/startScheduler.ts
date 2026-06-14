@@ -1132,12 +1132,16 @@ export function startScheduler() {
   // non-null assertions and keep the types clean).
   const liveManifest: typeof WATCHDOG_MANIFEST = {
     ...WATCHDOG_MANIFEST,
-    ohlcvDailyAggregatorJob: {
+    // FIX-T3: inject selfHealFn for self-heal jobs using the SAME job_name key that
+    // the regular cron path writes to cron_job_runs — so the watchdog queries the
+    // correct rows and the self-heal wrapRun writes under the same name.
+    'ohlcv-daily-aggregator': {
       cadenceMs: 86_400_000,
       thresholdMultiplier: 1.5,
       action: 'self-heal',
       selfHealFn: async () => {
-        await jobRunRepo.wrapRun('ohlcvDailyAggregatorJob', async () => {
+        // Writes cron_job_runs row as 'ohlcv-daily-aggregator' — matches CRONS L631
+        await jobRunRepo.wrapRun('ohlcv-daily-aggregator', async () => {
           await runOhlcvDailyAggregator()
         })
       },
@@ -1160,12 +1164,13 @@ export function startScheduler() {
         await runEvidenceAccumulatorWithDb(db)
       },
     },
-    taOhlcvBackfill: {
+    'ta-ohlcv-backfill': {
       cadenceMs: 86_400_000,
       thresholdMultiplier: 1.5,
       action: 'self-heal',
       selfHealFn: async () => {
-        await jobRunRepo.wrapRun('taOhlcvBackfill', async () => {
+        // Writes cron_job_runs row as 'ta-ohlcv-backfill' — matches CRONS L664
+        await jobRunRepo.wrapRun('ta-ohlcv-backfill', async () => {
           await runTaOhlcvBackfill()
         })
       },

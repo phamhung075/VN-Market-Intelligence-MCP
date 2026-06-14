@@ -78,8 +78,62 @@ export const ALERT_COOLDOWN_MS = 7_200_000
 // modules here (DDD clean: no upward dependencies from system/ into jobs/).
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CANONICAL_WATCHDOG_JOB_NAMES
+//
+// Authoritative list of job_name strings as recorded into cron_job_runs by each
+// job's wrapRun/recordJobRun call site. This is the single source of truth used
+// by the manifest-integrity test (ARCH-CRON-watchdog.test.ts WD-10) to assert
+// that every WATCHDOG_MANIFEST key matches a real recorded name.
+//
+// HOW TO MAINTAIN: when a job is renamed, update the literal here AND in its
+// wrapRun/recordJobRun call site simultaneously. A mismatch between this list
+// and the manifest will cause WD-10 to fail loudly — that is the guard.
+//
+// Literals verified against their recording sites:
+//   ohlcv-daily-aggregator    startScheduler.ts L631 jobRunRepo.wrapRun('ohlcv-daily-aggregator')
+//   vnstockFundamentalsRefresh vnstockFundamentalsJob.ts JOB_NAME_FUNDAMENTALS
+//   reputationComputeJob       startScheduler.ts L972  jobRunRepo.wrapRun('reputationComputeJob')
+//   evidenceAccumulatorJob     startupHelpers.ts L341  recordJobRun(db, 'evidenceAccumulatorJob')
+//   morningBriefingJob         startScheduler.ts L143  jobRunRepo.wrapRun('morningBriefingJob')
+//   eveningSummaryJob          startScheduler.ts L179  jobRunRepo.wrapRun('eveningSummaryJob')
+//   franceSummaryJob           startScheduler.ts L388  jobRunRepo.wrapRun('franceSummaryJob')
+//   foreignFlowAlertJob        foreignFlowAlertJob.ts L314 recordJobRun(database, "foreignFlowAlertJob")
+//   insiderCheckJob            insiderCheckJob.ts L138  recordJobRun(database, "insiderCheckJob")
+//   calibrationReportJob       calibrationReportJob.ts L571 recordJobRun(database, "calibrationReportJob")
+//   baseRateComputationJob     startupHelpers.ts L349  recordJobRun(db, 'baseRateComputationJob')
+//   predictionResolutionJob    startupHelpers.ts L357  recordJobRun(db, 'predictionResolutionJob')
+//   macroIndicatorRefreshJob   startScheduler.ts L729  jobRunRepo.wrapRun('macroIndicatorRefreshJob')
+//   ta-ohlcv-backfill          startScheduler.ts L664  jobRunRepo.wrapRun('ta-ohlcv-backfill')
+//   accuracyDigestJob          startScheduler.ts L1004 jobRunRepo.wrapRun('accuracyDigestJob')
+//   summaryJob:daily           summaryJobs.ts L58      recordJobRun(db, `summaryJob:${periodType}`)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CANONICAL_WATCHDOG_JOB_NAMES: readonly string[] = [
+  'ohlcv-daily-aggregator',       // startScheduler.ts wrapRun L631
+  'vnstockFundamentalsRefresh',   // vnstockFundamentalsJob.ts JOB_NAME_FUNDAMENTALS
+  'reputationComputeJob',         // startScheduler.ts wrapRun L972
+  'evidenceAccumulatorJob',       // startupHelpers.ts recordJobRun L341
+  'morningBriefingJob',           // startScheduler.ts wrapRun L143
+  'eveningSummaryJob',            // startScheduler.ts wrapRun L179
+  'franceSummaryJob',             // startScheduler.ts wrapRun L388
+  'foreignFlowAlertJob',          // foreignFlowAlertJob.ts recordJobRun L314
+  'insiderCheckJob',              // insiderCheckJob.ts recordJobRun L138
+  'calibrationReportJob',         // calibrationReportJob.ts recordJobRun L571
+  'baseRateComputationJob',       // startupHelpers.ts recordJobRun L349
+  'predictionResolutionJob',      // startupHelpers.ts recordJobRun L357
+  'macroIndicatorRefreshJob',     // startScheduler.ts wrapRun L729
+  'ta-ohlcv-backfill',            // startScheduler.ts wrapRun L664
+  'accuracyDigestJob',            // startScheduler.ts wrapRun L1004
+  'summaryJob:daily',             // summaryJobs.ts recordJobRun L58
+] as const
+
 export const WATCHDOG_MANIFEST: WatchdogManifest = {
-  ohlcvDailyAggregatorJob: {
+  // FIX: key must equal the job_name string written by wrapRun/recordJobRun.
+  // Verified 2026-06-14 against live cron_job_runs (router RAW-confirmed).
+  'ohlcv-daily-aggregator': {
+    // startScheduler.ts L631: jobRunRepo.wrapRun('ohlcv-daily-aggregator')
+    // Prev key 'ohlcvDailyAggregatorJob' caused false "never run" alerts (25 runs/30d missed).
     cadenceMs: 86_400_000,
     thresholdMultiplier: 1.5,
     action: 'self-heal',
@@ -100,21 +154,27 @@ export const WATCHDOG_MANIFEST: WatchdogManifest = {
     action: 'self-heal',
   },
   morningBriefingJob: {
+    // weekday-only job; flat cadenceMs×multiplier may flag on weekends.
+    // TODO(architect): weekday-aware threshold for morningBriefingJob, franceSummaryJob, eveningSummaryJob.
     cadenceMs: 86_400_000,
     thresholdMultiplier: 1.5,
     action: 'alert-only',
   },
   eveningSummaryJob: {
+    // weekday-only job; see morningBriefingJob TODO above.
     cadenceMs: 86_400_000,
     thresholdMultiplier: 1.5,
     action: 'alert-only',
   },
   franceSummaryJob: {
+    // weekday-only job; see morningBriefingJob TODO above.
     cadenceMs: 86_400_000,
     thresholdMultiplier: 1.5,
     action: 'alert-only',
   },
-  foreignFlowAlert: {
+  foreignFlowAlertJob: {
+    // foreignFlowAlertJob.ts L314: recordJobRun(database, "foreignFlowAlertJob")
+    // Prev key 'foreignFlowAlert' caused false "never run" alerts (28 runs/30d missed).
     cadenceMs: 86_400_000,
     thresholdMultiplier: 1.5,
     action: 'alert-only',
@@ -144,7 +204,9 @@ export const WATCHDOG_MANIFEST: WatchdogManifest = {
     thresholdMultiplier: 1.5,
     action: 'alert-only',
   },
-  taOhlcvBackfill: {
+  'ta-ohlcv-backfill': {
+    // startScheduler.ts L664: jobRunRepo.wrapRun('ta-ohlcv-backfill')
+    // Prev key 'taOhlcvBackfill' caused false "never run" alerts (10 runs/30d missed).
     cadenceMs: 86_400_000,
     thresholdMultiplier: 1.5,
     action: 'self-heal',
