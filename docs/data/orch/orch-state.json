@@ -315,11 +315,25 @@
         "to": "po",
         "type": "infra-outage",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "SUPERSEDED",
         "summary": "vn-market gateway dial FAILED (Internal Server Error) — corroborated by 2 independent callers (refine_bctc_md agent + router RAW-probe). Connection-level, affects all 146 tools. Blocks ALL cowork agents (refine-bctc-slot-1 fire FAILED 09:08Z; 12:00 gatherer bucket will also fail). Likely mcp-server down/write-wedged or gateway upstream dial broken. Needs ops: docker ps vn-market + mcp-server :3000 + gateway upstream health.",
         "payload_ref": "",
+        "disposition": "recovered via container restart ~09:46Z; root cause open — superseded by cowork-team-20260614T0953-mcp500-recovered-rootcause-open",
+        "ts": "2026-06-14T09:09:13Z",
+        "superseded_at": "2026-06-14T09:54:55Z"
+      },
+      {
+        "id": "cowork-team-20260614T0953-mcp500-recovered-rootcause-open",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "infra-recovery-rootcause-open",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "mcp-server 500 outage (09:05-09:46Z, \"Cannot convert a symbol to a string\") RECOVERED via container restart — RAW-verified live: public /vn-market/mcp 200, gateway call_tool(get_market_snapshot) returns valid VN-Index payload, 0 symbol-errors in logs, ALLZERO purge intact. NO ROOT-CAUSE FIX SHIPPED: this is a restart-mask of the KNOWN recurring Bun-JIT-module-state-corruption (sdk:1.29.0 + zod:3.25.76, documented dev-mcp-server notebook 2026-06-13). package.json STILL pins the corrupting combo; recurrence vector live. Router-spawned dev-mcp-server agent aa64f9a4 ended with NO code fix (left +3 uncommitted diagnostic lines in server.ts). FIX-MCP-500-SYMBOL-TO-STRING remains in_progress[] for dev-team.",
+        "recommended_action": "Dev-team (:07 cron) re-dispatch dev-mcp-server to land a DEFINITIVE fix that ELIMINATES the recurrence vector (NOT another restart): pin @modelcontextprotocol/sdk to a Bun-JIT-stable version OR pin/upgrade zod off 3.25.76 OR refactor the ZodNumber._def.checks usage that trips ZodNumber._parse — whichever the agent's RCA proves. Commit the aa64f9a4 diagnostic server.ts (url+stack) as part of it. Run mcp-server bun tests BEFORE ops rebuild (RED-PREPUSH strands fleet); ops targeted rebuild --no-cache mcp-server + up -d --no-deps --force-recreate; LIVE re-verify call_tool + logs clean >=2min; then review (qa) -> done_verified. Per /goal: root cause definitif, not recurrent symptom.",
+        "payload_ref": "FIX-MCP-500-SYMBOL-TO-STRING",
         "disposition": "",
-        "ts": "2026-06-14T09:09:13Z"
+        "ts": "2026-06-14T09:54:55Z"
       }
     ]
   },
