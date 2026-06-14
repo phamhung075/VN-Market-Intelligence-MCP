@@ -2498,7 +2498,7 @@ function renderQueReference() {
         <div class="qref-row-summary" onclick="toggleQueDetail(${q.id})">
           <span class="qref-id">${q.id}.</span>
           <span class="qref-name">${escapeHtml(q.name)} ${escapeHtml(q.chinese)}</span>
-          <span class="qref-meaning">${escapeHtml(loc(q.coreMeaning))}</span>
+          <span class="qref-meaning">${escapeHtml(loc(q.hoverSummary))}</span>
           <span class="qref-trend-chip ${trendCls}">${escapeHtml(loc(q.marketTrendLabel))}</span>
           <button class="qref-row-toggle" id="qref-toggle-${q.id}" type="button" onclick="event.stopPropagation();toggleQueDetail(${q.id})">${escapeHtml(labels.expand)}</button>
           <span class="qref-warning">${escapeHtml(loc(q.warning))}</span>
