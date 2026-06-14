@@ -1,5 +1,21 @@
 # PM — Notebook
 
+## c309 DOCLANG-SERIALIZE Phase 1 sprint decomposition · 2026-06-14T081500Z
+
+ARCHITECT brief FINAL (ARCH-DOCLANG-SERIALIZE) → decomposed into 6 atomic sequential developer tasks (DDD layer stack + tests). Design: pure serializer + domain port + 2 adapters + thin use case + wiring + comprehensive tests. No schema/DB changes; additive output only (bctc_table_rows byte-for-byte regression-clean by design).
+
+Tasks created in orch-state.json task_board.backlog[] (sequential, single owner dev-pdf-extractor):
+- **DOCLANG-T1-DOMAIN** (XS, ~45min) — Add DocLangWritePort domain port (17th port) to ports.py. Add Config.doclang_output_dir field + env DOCLANG_OUTPUT_DIR (default /app/data/doclang). Handoff: TASK-DOCLANG-T1.md. AC: port + config correct, env defaults work.
+- **DOCLANG-T2-SERIALIZER** (M, ~2h) — Core pure serializer in infrastructure/doclang_serializer.py: DocLangSerializer.__init__(bbox_provider=None), serialize(tables, report_id) → XML string. Threading: group by table_index, emit <thread> + <page_break> for multi-DTO groups. Rectangular rule: pad short rows, warn surplus. Promote _escape_xml() from spike (stdlib-only, no external deps). Handoff: TASK-DOCLANG-T2.md. AC: pure transform, no I/O, threading logic, well-formed output.
+- **DOCLANG-T3-ADAPTERS** (XS, ~45min) — Two adapter classes in same file: FilesystemDocLangWriteAdapter (implements DocLangWritePort, writes to {output_dir}/{report_id}.dclg.xml), NullDocLangWriteAdapter (test no-op). Handoff: TASK-DOCLANG-T3.md. AC: adapters thread-safe, IOError handled gracefully, test-only null adapter.
+- **DOCLANG-T4-USECASE** (S, ~1h) — Thin orchestrator use case in application/doclang_serialize_usecase.py: DocLangSerializeUseCase.__init__(serializer, write_port), execute(response, report_id=None). Validation observability-only (doclang.validate() logs INFO/WARNING, never gates). Handoff: TASK-DOCLANG-T4.md. AC: never raises, validation calls log but never gate, exec-only import pattern.
+- **DOCLANG-T5-WIRING** (XS, ~30min) — Wire into main.py composition root: 3 imports + 4 construction lines (serializer, FilesystemDocLangWriteAdapter, use case). Add doclang==0.6.0 to requirements.txt. Verify pip check clean. Handoff: TASK-DOCLANG-T5.md. AC: wiring correct, doclang pinned, pip check green, no handler mods yet (additive-only).
+- **DOCLANG-T6-TESTS** (M, ~2h) — Create __tests__/unit/test_doclang_serializer.py with 3 golden fixtures + edge cases. Fixture A (single-page FPT Q4 B01-DN), Fixture B (Vietnamese diacritics UTF-8), Fixture C (cross-page synthetic, table_index=0 pages 4-5). Each: well-formed XML, doclang.validate() passes, known cell present. EC-2 (empty table), EC-3 (long row), EC-4 (short row). Use NullDocLangWriteAdapter throughout. Handoff: TASK-DOCLANG-T6.md. AC: all 3 fixtures validate, edge cases handle, existing suite green.
+
+Zone: apps/pdf-extractor/ (single zone, dev-pdf-extractor owner). Sequential chain: T1→T2→T3→T4→T5→T6 (6-task waterfall, ~7h total dev time). Estimated cadence: 2 tasks/session (T1-T2 session 1, T3-T4 session 2, T5-T6 session 3). WIP limit 2 → 1 pdf-extractor task at a time (does not conflict with other zones). Handoff files + orch-state.json task_board.backlog created. SSOT atomic: [ -s orch-state check, jq -e backlog length verify ]. Next: dispatch DOCLANG-T1 to dev-pdf-extractor, continue pm→dev→qa pipeline.
+
+---
+
 ## c308 ARCH-CRON-SCHEDULER-RELIABILITY sprint decomposition · 2026-06-14T030000Z
 
 ARCHITECT brief FINAL (ARCH-CRON-SCHEDULER-RELIABILITY) → decomposed into 5 atomic tasks in 2-phase structure. Root cause: node-cron v3.0.3 silent tick drops under event-loop saturation (`recoverMissedExecutions=false` default). Design: 4-lever system (recoverMissedExecutions + T4 dedup guards + jitter + watchdog). Architect established HARD CONSTRAINT: Phase 1a (T4 guards) MUST ship before Phase 1b (recovery enabled) to prevent double execution on replay.
