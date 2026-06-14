@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T18:07:57Z",
+    "updated_at": "2026-06-14T18:14:05Z",
     "updated_by": "dev-team",
     "active_task_id": "KINHDICH-HOVER-ENRICH-FE",
-    "next_agent": "dev-frontend",
-    "note": "KINHDICH-HOVER-ENRICH-FE architect DONE (a716bf18, commit c5ee21ae, router RAW-verified 4 files explicit-path; ARCH-RATIFY-FE-1 CONFIRMED — single-codegen extension preserves QUE-TOOLTIP-DRY, hoverSummary added to BLOCK 1 loop w/ backtick-escape, BLOCK 2 detail pipeline untouched; 6 risks all LOW+mitigated). Design blueprint in docs/handoffs/KINHDICH-HOVER-ENRICH-FE-BA-spec.md (+217L). -> dev-frontend: 3-file change (scripts/gen-que-descriptions.ts emit hoverSummary w/ backtick-escape -> regen apps/frontend/app/lib/que-descriptions.generated.ts all 64 -> QueName.tsx:75 {desc.hoverSummary ?? desc.coreMeaning}); reuse 64 pre-authored VI/EN strings from docs/handoffs/KINHDICH-HOVER-ENRICH-BA-spec.md; run tsc --noEmit before commit; explicit-path commit. Chain -> ops(targeted rebuild apps/frontend :3001 only, build+up -d --no-deps frontend, NEVER down) -> qa LIVE :3001 hover -> po signoff -> done_verified. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
+    "next_agent": "ops",
+    "note": "KINHDICH-HOVER-ENRICH-FE dev-frontend DONE (adf783cd, commit 067e484d) + router RAW-re-verified INDEPENDENTLY (3 impl files+notebook, hoverSummary x64 all>=80chars in generated.ts, QueName.tsx:75 {desc.hoverSummary ?? desc.coreMeaning}, codegen backtick-escaped, tsc green, no foreign sweep). -> ops REBUILD gate: build+up -d --no-deps FRONTEND (NOT kinh-dich-service — wrong surface) + builder prune; docker ps -a peers-intact + image-id-changed. -> qa LIVE :3001 quẻ hover shows richer hoverSummary (sample favorable/neutral/unfavorable + terse quẻ e.g. 29/47, fallback id shows coreMeaning). -> po signoff -> done_verified. Single zone apps/frontend, weekend-safe. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. VN-MACRO-TOOLING (PO sprint, macro/mcp zone) concurrent no-conflict. WIP=1 active KINHDICH-FE. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12622,9 +12622,9 @@
         "type": "SPRINT-S",
         "zone": "apps/frontend/",
         "owner": "dev-frontend",
-        "next_agent": "dev-frontend",
+        "next_agent": "ops",
         "lane": "in_progress",
-        "status": "in-progress",
+        "status": "dev-impl-done",
         "priority": "medium",
         "size": "S",
         "created_at": "2026-06-14T17:53:32Z",
@@ -12652,7 +12652,11 @@
         "design_doc": "docs/handoffs/KINHDICH-HOVER-ENRICH-FE-BA-spec.md",
         "arch_ratify_fe1": "CONFIRMED",
         "dev_dispatched_at": "2026-06-14T18:07:57Z",
-        "dev_dispatched_by": "dev-team"
+        "dev_dispatched_by": "dev-team",
+        "dev_impl_done_at": "2026-06-14T18:14:05Z",
+        "dev_impl_commit": "067e484d",
+        "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show 067e484d --stat = EXACTLY 3 impl files + notebook, NO foreign sweep (concurrent PO-sprint skills/flows preserved uncommitted). FR-1 gen-que-descriptions.ts L102 hoverSummary backtick-escaped + L108 emit + L71/L125 type. FR-2 generated.ts hoverSummary x64 all >=80 chars (0 short), coreMeaning x64 intact, header preserved. FR-3 QueName.tsx:75 {desc.hoverSummary ?? desc.coreMeaning}, marketTrendLabel+withDetailLink untouched. tsc --noEmit zero errors. QA: longest ~210-220 chars ~4-5 lines, confirm no mobile overflow.",
+        "ops_rebuild_instructions": "REBUILD apps/frontend ONLY (Remix serves bundled que-descriptions.generated.ts; new hoverSummary NOT served until rebuilt). Targeted, NEVER docker compose down: `docker compose build frontend && docker compose up -d --no-deps frontend && docker builder prune -f`. Then `docker ps -a` to confirm frontend Up+healthy AND no peer container went down (rebuild-recreate-destroys-peers guard) AND served image ID changed. Do NOT rebuild kinh-dich-service (that was the wrong-surface error). Return: docker ps line for frontend + builder-prune reclaimed + peers-intact confirmation. On ops-green -> next_agent=qa LIVE-verify :3001 quẻ hover shows richer hoverSummary."
       }
     ],
     "ready": [
