@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-14T10:40:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-14T11:02:33Z",
+  "_updated_by": "qa",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "next_agent": "qa",
-    "active_task_id": "FIX-MCP-500-SYMBOL-TO-STRING",
-    "updated_at": "2026-06-14T10:50:00Z",
-    "updated_by": "ops",
-    "note": "FIX-MCP-500 deployed + live-verified. mcp-server image rebuilt 4ca133414266d748c3bb3f58cfebbfd2e8fa8d01d6bb4e4dcabe320be41f91fe, health 200/toolCount:157, call_tool(get_market_snapshot) returns valid payload, logs clean of symbol errors >=2min."
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "updated_at": "2026-06-14T11:02:33Z",
+    "updated_by": "qa",
+    "note": "FIX-MCP-500-SYMBOL-TO-STRING done_verified — WebStandard transport swap eliminates Symbol-key JIT corruption at root; 12942 tests pass, tsc clean, live VCB/FPT verified. Next eligible: ARCH-CRON-SCHEDULER-RELIABILITY in ready[]."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11851,6 +11851,38 @@
         "qa_cycle": 266,
         "commit": "366bd297",
         "verify_note": "qa APPROVED (cycle 266) + router RAW-verified. Multi-ticker live gate GREEN: SHB(13.8k)/VCB(61.6k)/FPT(73.5k) all 4 ACs PASS — Y-domain not zero-anchored (domainMin 12314/54990/65800), candles 55.3%/70.9%/47.1% of pane (vs 6.7% pre-fix), BB 5.2%/5.1%/4.6% of price (vs ±35k fan), 0 poison rows. Generic predicate-based sanitize, ZERO executable ticker hardcode (router re-grepped 30 tickers => only a JSDoc comment). Unit 1572/1572 incl 18 new sanitize tests; tsc 0. Container rebuilt+live (2ba40ca60a35). CLOSES user chart bug end-to-end with DATA half ALLZERO-OHLCV-FETCH."
+      },
+      {
+        "id": "FIX-MCP-500-SYMBOL-TO-STRING",
+        "title": "mcp-server returns HTTP 500 on every MCP request — \"Cannot convert a symbol to a string\"",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "status": "DONE_VERIFIED",
+        "depends_on": null,
+        "next_agent": null,
+        "claimed_at": "2026-06-14T09:10:18Z",
+        "claimed_by": "router",
+        "origin": "cowork-team dispatcher tick 2026-06-14T09:05Z (refine-bctc-slot-1 fan-out aborted — downstream MCP 500)",
+        "symptom": "Every MCP request 500s incl SSE handshake. Log: [createBunServer] Unhandled request error: Cannot convert a symbol to a string. Container healthy (passive-health masks dead data). Running since ~08:16Z.",
+        "prime_suspect": "9088c052 ALLZERO-OHLCV-FETCH (read-guard on request hot path); secondary 7cbca67a FIX-ALERT-ORPHAN-CORRELATION",
+        "scope_note": "MCP tool-call surface only (all cowork agents + call_tool). Frontend dashboard UNAFFECTED.",
+        "acceptance": "Root-cause the Symbol->string TypeError; targeted code fix in apps/mcp-server (NOT a blind revert unless RCA points there); mcp-server build + unit/integration green; ops rebuild --no-cache mcp-server + up -d --no-deps --force-recreate; LIVE proof: public /vn-market/mcp returns 200 on a real tool handshake AND call_tool(get_market_snapshot or get_bctc_pending_refine) returns a valid payload (not 500); logs clean of the symbol error for >=2 min. Then -> review (qa).",
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-14T09:10:18Z by router on P0 cowork-tick escalation. Fix root cause definitif (CLAUDE.md), not a symptom mask. If RCA confirms 9088c052 read-guard, fix the guard's coercion (do not drop the zero-candle purge — that closed the user chart bug DATA half). Run mcp-server tests BEFORE handing to ops for rebuild (RED-PREPUSH strands fleet). Verify LIVE via call_tool through the gateway, not just rows_stored/200.",
+        "impl_commit": "e69b354f",
+        "impl_note": "WebStandardStreamableHTTPServerTransport — no hono, no Symbol keys. Ops: rebuild --no-cache mcp-server + force-recreate.",
+        "review_requested_at": "2026-06-14T10:40:00Z",
+        "ops_verify_timestamp": "2026-06-14T10:49:08Z",
+        "ops_verify_image_id": "4ca133414266d748c3bb3f58cfebbfd2e8fa8d01d6bb4e4dcabe320be41f91fe",
+        "ops_verify_note": "rebuilt --no-cache, force-recreate complete. New image ID 4ca133414266d748c3bb3f58cfebbfd2e8fa8d01d6bb4e4dcabe320be41f91fe created 2026-06-14T10:49:08Z. Health 200/toolCount:157. call_tool(get_market_snapshot) green with valid VN-Index payload. Zero symbol-error hits in logs >=2min post-recreate. VCB ticker data flows correctly (zero-candle purge preserved). All peer containers Up (no collateral). → QA for done_verified.",
+        "qa_agent": "qa",
+        "qa_cycle": "267",
+        "qa_approved_at": "2026-06-14T11:02:33Z",
+        "fix_commit": "e69b354f",
+        "ops_commit": "2e83ebd0",
+        "ops_image_id": "4ca133414266d748c3bb3f58cfebbfd2e8fa8d01d6bb4e4dcabe320be41f91fe",
+        "live_evidence": "VCB 61600 VND Vol 3152300 / FPT 73500 VND Vol 5688200 — valid payload, 0 symbol errors in logs, toolCount 157, /mcp WebStandard transport initialized cleanly",
+        "qa_report": "reports/TASK_REPORT_FIX-MCP-500-SYMBOL-TO-STRING.md",
+        "done_verified_at": "2026-06-14T11:02:33Z"
       }
     ],
     "head": {
@@ -11932,29 +11964,6 @@
         "user_impact": "MEDIUM — multiple agent bootstrap/tool calls fail validation; cheap high-leverage doc fix.",
         "verified_stale_zero": true,
         "zone_owner": "cross-service/"
-      },
-      {
-        "id": "FIX-MCP-500-SYMBOL-TO-STRING",
-        "title": "mcp-server returns HTTP 500 on every MCP request — \"Cannot convert a symbol to a string\"",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "status": "REVIEW",
-        "depends_on": null,
-        "next_agent": "qa",
-        "claimed_at": "2026-06-14T09:10:18Z",
-        "claimed_by": "router",
-        "origin": "cowork-team dispatcher tick 2026-06-14T09:05Z (refine-bctc-slot-1 fan-out aborted — downstream MCP 500)",
-        "symptom": "Every MCP request 500s incl SSE handshake. Log: [createBunServer] Unhandled request error: Cannot convert a symbol to a string. Container healthy (passive-health masks dead data). Running since ~08:16Z.",
-        "prime_suspect": "9088c052 ALLZERO-OHLCV-FETCH (read-guard on request hot path); secondary 7cbca67a FIX-ALERT-ORPHAN-CORRELATION",
-        "scope_note": "MCP tool-call surface only (all cowork agents + call_tool). Frontend dashboard UNAFFECTED.",
-        "acceptance": "Root-cause the Symbol->string TypeError; targeted code fix in apps/mcp-server (NOT a blind revert unless RCA points there); mcp-server build + unit/integration green; ops rebuild --no-cache mcp-server + up -d --no-deps --force-recreate; LIVE proof: public /vn-market/mcp returns 200 on a real tool handshake AND call_tool(get_market_snapshot or get_bctc_pending_refine) returns a valid payload (not 500); logs clean of the symbol error for >=2 min. Then -> review (qa).",
-        "dispatch_note": "Dispatched dev-mcp-server 2026-06-14T09:10:18Z by router on P0 cowork-tick escalation. Fix root cause definitif (CLAUDE.md), not a symptom mask. If RCA confirms 9088c052 read-guard, fix the guard's coercion (do not drop the zero-candle purge — that closed the user chart bug DATA half). Run mcp-server tests BEFORE handing to ops for rebuild (RED-PREPUSH strands fleet). Verify LIVE via call_tool through the gateway, not just rows_stored/200.",
-        "impl_commit": "e69b354f",
-        "impl_note": "WebStandardStreamableHTTPServerTransport — no hono, no Symbol keys. Ops: rebuild --no-cache mcp-server + force-recreate.",
-        "review_requested_at": "2026-06-14T10:40:00Z",
-        "ops_verify_timestamp": "2026-06-14T10:49:08Z",
-        "ops_verify_image_id": "4ca133414266d748c3bb3f58cfebbfd2e8fa8d01d6bb4e4dcabe320be41f91fe",
-        "ops_verify_note": "rebuilt --no-cache, force-recreate complete. New image ID 4ca133414266d748c3bb3f58cfebbfd2e8fa8d01d6bb4e4dcabe320be41f91fe created 2026-06-14T10:49:08Z. Health 200/toolCount:157. call_tool(get_market_snapshot) green with valid VN-Index payload. Zero symbol-error hits in logs >=2min post-recreate. VCB ticker data flows correctly (zero-candle purge preserved). All peer containers Up (no collateral). → QA for done_verified."
       }
     ]
   },
