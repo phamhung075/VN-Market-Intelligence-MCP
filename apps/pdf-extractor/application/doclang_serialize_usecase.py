@@ -111,7 +111,7 @@ class DocLangSerializeUseCase:
             path:      For logging context.
         """
         try:
-            from doclang import validate, ValidationError  # type: ignore[import]
+            from doclang import validate, ValidationError
 
             with tempfile.NamedTemporaryFile(
                 suffix=".dclg.xml", mode="w", encoding="utf-8", delete=False
