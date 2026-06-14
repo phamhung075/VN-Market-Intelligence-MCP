@@ -328,12 +328,14 @@
         "to": "po",
         "type": "infra-recovery-rootcause-open",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "mcp-server 500 outage (09:05-09:46Z, \"Cannot convert a symbol to a string\") RECOVERED via container restart — RAW-verified live: public /vn-market/mcp 200, gateway call_tool(get_market_snapshot) returns valid VN-Index payload, 0 symbol-errors in logs, ALLZERO purge intact. NO ROOT-CAUSE FIX SHIPPED: this is a restart-mask of the KNOWN recurring Bun-JIT-module-state-corruption (sdk:1.29.0 + zod:3.25.76, documented dev-mcp-server notebook 2026-06-13). package.json STILL pins the corrupting combo; recurrence vector live. Router-spawned dev-mcp-server agent aa64f9a4 ended with NO code fix (left +3 uncommitted diagnostic lines in server.ts). FIX-MCP-500-SYMBOL-TO-STRING remains in_progress[] for dev-team.",
         "recommended_action": "Dev-team (:07 cron) re-dispatch dev-mcp-server to land a DEFINITIVE fix that ELIMINATES the recurrence vector (NOT another restart): pin @modelcontextprotocol/sdk to a Bun-JIT-stable version OR pin/upgrade zod off 3.25.76 OR refactor the ZodNumber._def.checks usage that trips ZodNumber._parse — whichever the agent's RCA proves. Commit the aa64f9a4 diagnostic server.ts (url+stack) as part of it. Run mcp-server bun tests BEFORE ops rebuild (RED-PREPUSH strands fleet); ops targeted rebuild --no-cache mcp-server + up -d --no-deps --force-recreate; LIVE re-verify call_tool + logs clean >=2min; then review (qa) -> done_verified. Per /goal: root cause definitif, not recurrent symptom.",
         "payload_ref": "FIX-MCP-500-SYMBOL-TO-STRING",
-        "disposition": "",
-        "ts": "2026-06-14T09:54:55Z"
+        "disposition": "SATISFIED — DEFINITIVE root-cause fix already SHIPPED + done_verified before this signal was triaged. Recommended re-dispatch is MOOT: do NOT re-dispatch dev-mcp-server. Root cause was NOT the sdk/zod pin combo the signal hypothesised — it was Bun-1.3.13 JIT Symbol->string corruption via @hono/node-server inside StreamableHTTPServerTransport; fixed by swapping to WebStandardStreamableHTTPServerTransport (fix_commit e69b354f, ops deploy 2e83ebd0, image 4ca13341). Task FIX-MCP-500-SYMBOL-TO-STRING is in done_verified[] (qa cycle-267, c6c03f76). Router LIVE re-verified green: gateway call_tool(get_pipeline_health/get_market_snapshot) returns valid VN payload, non-zero VCB/FPT/SHB volumes, zero-candle purge intact, 0 symbol-errors. payload_ref=FIX-MCP-500-SYMBOL-TO-STRING.",
+        "ts": "2026-06-14T09:54:55Z",
+        "resolved_at": "2026-06-14T11:29:16Z",
+        "resolved_by": "po"
       }
     ]
   },
