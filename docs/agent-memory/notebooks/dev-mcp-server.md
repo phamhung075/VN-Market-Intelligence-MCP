@@ -190,3 +190,14 @@ Zone health: tsc clean, 157 tools intact, 79 cron.schedule, CI-RED flake fixed |
 **Local verify:** /vn-market/mcp POST → event:message 200; /vn-market/sse → event:endpoint 200; /health → 200 toolCount:157.
 **Next:** ops rebuild --no-cache mcp-server + force-recreate → live proof via call_tool get_market_snapshot.
 Zone health: tsc clean, 157 tools intact, 79 cron.schedule, Symbol-TypeError eliminated | REVIEW
+
+## 2026-06-14 · FIX-REFINE-LOCK-TTL-RECLAIM — owner_agent fix + TTL increase + T1-T5 tests
+
+**Task:** FIX-REFINE-LOCK-TTL-RECLAIM (P1, recurring [Lock orphaned by rebuild])
+**Root cause:** refine_bctc_md flow called task_heartbeat/task_release WITHOUT owner_agent → legacy owner_session path → zombie after every mcp-server rebuild → lock never deleted → all future refine fires blocked.
+**Fix A:** Added owner_agent:"refine-orchestrator" to task_heartbeat (~L82), happy-path task_release (~L97), and error-boundary task_release (~L101) in docs/agents/refine_bctc_md/flow/main.md.
+**Fix C:** Increased ttl_seconds from 1000 to 1800 in task_claim call (~L38) — gives 30-min window for 7-window chunks.
+**coordinationStore.ts:** No change — claimTask Step 2 stale-steal and heartbeatTask/releaseTask owner_agent paths were already correct.
+**Tests:** apps/mcp-server/src/__tests__/FIX-REFINE-LOCK-TTL-RECLAIM.test.ts — T1 (expired steal) + T2 (live no-steal) + T3 (heartbeat rebuild-sim) + T4 (release rebuild-sim) + T5 (push idempotency). 5/5 pass.
+**Gates:** tsc exit 0, bun test 5/5 green.
+**Note:** Flow fix takes effect on next cron fire (no rebuild needed). New test file lives in apps/mcp-server so ops needs targeted rebuild for qa LIVE container gate. ops clears orphan bctc-refine:bdcfa5e0 after green.

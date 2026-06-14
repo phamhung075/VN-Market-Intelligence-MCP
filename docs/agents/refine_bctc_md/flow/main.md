@@ -35,7 +35,7 @@ UTC Mon–Fri 02:00–08:59 → log `[refine-orchestrator] OFF-HOSE active` → 
 
 3. Claim lock:
    `call_tool("task_claim", { task_id: "bctc-refine:"+report.id, task_kind: "sprint-task",
-     owner_agent: "refine-orchestrator", ttl_seconds: 1000 })`
+     owner_agent: "refine-orchestrator", ttl_seconds: 1800 })`
    `claim.claimed == false` → EXIT (another session owns it).
 
 4. `text_status != "COMPLETE"` → release → EXIT. `windows` empty → release → EXIT.
@@ -79,7 +79,7 @@ for window in chunk:
 end
 ```
 
-Heartbeat every 5 min: `call_tool("task_heartbeat", { task_id: "bctc-refine:"+report.id })`
+Heartbeat every 5 min: `call_tool("task_heartbeat", { task_id: "bctc-refine:"+report.id, owner_agent: "refine-orchestrator" })`
 `ok=false` → lock stolen → EXIT (partial progress in DB; next fire resumes).
 
 ## Phase 3 — Finalize (only when ALL windows pushed)
@@ -94,11 +94,11 @@ if all_pushed >= windows.length:
 // else: leave refine_status=PARTIAL — next fire resumes remaining windows
 ```
 
-`call_tool("task_release", { task_id: "bctc-refine:"+report.id })`
+`call_tool("task_release", { task_id: "bctc-refine:"+report.id, owner_agent: "refine-orchestrator" })`
 
 ## Error Boundary
 
-Exception → `finalize_bctc_refine(report_status="FAILED")` → `task_release` → EXIT with log.
+Exception → `finalize_bctc_refine(report_status="FAILED")` → `task_release({ task_id: "bctc-refine:"+report.id, owner_agent: "refine-orchestrator" })` → EXIT with log.
 Never leave report in `IN_PROGRESS` without finalize.
 
 ## RETURN
