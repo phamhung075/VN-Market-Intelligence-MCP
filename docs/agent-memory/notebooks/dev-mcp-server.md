@@ -1,5 +1,25 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-14 · T3-ARCH-CRON-WATCHDOG round-2 — manifest key drift fixed + integrity guard added
+
+**Task:** T3-ARCH-CRON-WATCHDOG CHANGES_REQUESTED round 2 (router RAW-verified false-green)
+**Root cause:** 3/16 WATCHDOG_MANIFEST keys did not match cron_job_runs.job_name — watchdog queried wrong name → false "never run" alerts; monitor blind to those jobs' real freshness.
+
+**Fixes (A):** Corrected manifest keys in `schedulerWatchdogJob.ts`:
+- `ohlcvDailyAggregatorJob` → `ohlcv-daily-aggregator` (startScheduler wrapRun L631, 25 runs/30d)
+- `foreignFlowAlert` → `foreignFlowAlertJob` (foreignFlowAlertJob.ts recordJobRun L314, 28 runs/30d)
+- `taOhlcvBackfill` → `ta-ohlcv-backfill` (startScheduler wrapRun L664, 10 runs/30d)
+Also fixed `liveManifest` selfHealFn wrapRun literals in `startScheduler.ts` to match (ohlcvDailyAggregatorJob→ohlcv-daily-aggregator, taOhlcvBackfill→ta-ohlcv-backfill). Other 13 keys audited — all correct.
+Added `CANONICAL_WATCHDOG_JOB_NAMES` export annotated with recording sites per job.
+
+**Test (B):** Added WD-10 (3 assertions) to `ARCH-CRON-watchdog.test.ts`:
+- every manifest key in canonical set (fail-loud with exact error); no canonical duplicates; count parity.
+Fail-loud proof verified: corrupt key → WD-10 fails naming the bad key; restore → 17/17 green.
+
+**Decision (C):** weekday-only threshold non-trivial; left TODO comment in 3 summary job manifest entries + flagged for architect. Not blocking.
+
+**Commit:** 9a7e1aef | tsc: 0 errors | ARCH-CRON-watchdog.test.ts: 17 pass / 0 fail
+
 ## 2026-06-14 · T1-ARCH-CRON-T4-DEDUP-GUARDS — Recovery replay dedup guards SHIPPED
 
 **Task:** T1-ARCH-CRON-T4-DEDUP-GUARDS (M, ARCH-CRON-SCHEDULER-RELIABILITY phase 1a)
