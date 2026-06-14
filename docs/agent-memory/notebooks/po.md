@@ -1,33 +1,36 @@
 # PO Notebook
 
-## 2026-06-14T07:10Z — opened sprint DOCLANG-SERIALIZE (user directive project-doclang-priority-format)
+## 2026-06-14T11:06Z — dev-team dispatch tick (Sunday, VN market CLOSED)
 
-**Decision:** phased, evidence-respecting. Phase 1 BUILD now, Phase 2 GATED.
+Triage on a FREE apps/mcp-server zone (FIX-MCP-500-SYMBOL-TO-STRING done_verified,
+e69b354f / ops 2e83ebd0). WIP=0, head idle. Live mcp-server RAW-verified green
+(get_pipeline_health 11:28Z, non-zero rows). Off-market Sunday = SAFE mcp-server window.
 
-### Board mutations (orch-state.json, atomic temp→verify→rename)
-- **NEW sprint_goal** `DOCLANG-SERIALIZE` (active): adopt DocLang `.dclg.xml` v0
-  (ns https://www.doclang.ai/ns/v0) as canonical OUTPUT/representation format for
-  pdf-extractor extractions — ADDITIVE, never replacing `bctc_table_rows`.
-- **NEW** `BA-DOCLANG-SERIALIZE` → backlog (SPRINT-S, ba, zone apps/pdf-extractor/, P-med).
-  Phase 1: production `DocLangSerializer` in `apps/pdf-extractor/infrastructure/` rendering
-  existing layout-first extractor output → `.dclg.xml`. Promotes throwaway
-  `scripts/spike-doclang-otsl-overlap.py`. bctc_table_rows MUST stay unchanged.
-- **NEW** `SPIKE-DOCLANG-AUTHORED-DOCS` → backlog (SPIKE, architect, zone docs/agents/,
-  gated_behind BA-DOCLANG-SERIALIZE). Phase 2: feasibility of converting authored docs/
-  markdown → .dclg.xml — what breaks across docs DAG, consumer benefit? Findings ONLY.
+### Signal resolved (I own it — to=po)
+- `cowork-team-20260614T0953-mcp500-recovered-rootcause-open` NEW→RESOLVED, commit **39cbc648**.
+  Recommended re-dispatch MOOT: definitive fix already shipped. Signal's sdk/zod-pin root
+  hypothesis was WRONG — actual root = Bun-1.3.13 JIT Symbol→string corruption via
+  @hono/node-server in StreamableHTTPServerTransport → swapped to
+  WebStandardStreamableHTTPServerTransport. Atomic temp→rename, single row, explicit-path commit
+  (other agents' dirty files left untouched).
 
-### Anti-confusion ruling (critical)
-Prior `SPIKE-DOCLANG-OTSL-OVERLAP` (net-new=0 defects) killed DocLang as a VALIDATION
-GATE (Option A). THIS sprint = DocLang as OUTPUT/REPRESENTATION format — distinct scope,
-no contradiction. scope_out spells it out so dev/architect don't re-litigate the gate question.
+### BATCH returned to dispatcher
+- **A — ARCH-CRON-SCHEDULER-RELIABILITY → PULL NOW** (SPRINT-S, architect-first, apps/mcp-server).
+  Dependency FIX-MCP-CRASH-LOOP-WRITEWAL is done_verified (09e2586b) → sequencing gate cleared.
+  Live evidence ACTIVE this tick: "Aggregator last run: 2026-06-12" (missed Fri 06-13). recurring
+  ×3 → architect root-cause REQUIRED. architect/design stage = zero zone-WIP impact; IMPL stage
+  lands on a now-stable server. mcp-server tests BEFORE any ops rebuild (RED-PREPUSH strands).
+- **B — FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS → ROUTE TO QA** (final gate, next_agent was null).
+  zone_owner=cross-service/ (docs/agents/*.md only) → NO same-zone contention with A.
+  verified_stale_zero, completed — needs only the gate. No rebuild.
+- **C — ARCH-SHIP-WAVE-REAUDIT → KEEP PARKED** (multi-zone, no live forcing evidence this tick).
 
-### Why NOT bundle Phase 2 into Phase 1
-docs/ markdown is consumed AS markdown by agents+skills+hooks; DocLang targets extracted
-unstructured content, not authored prose. Bundling couples low-risk additive serializer to
-high-blast-radius agent-flow-reader breakage. Gate Phase 2 behind a feasibility spike.
+### Pending signals (non-dev)
+- 2× context-bloat signals (dev-technical-analysis.md, qa.md) → janitor/claude-manager-helper
+  lane, next maintenance window. Not dev bugs.
+- bctc_signal_FPT_20260614_routine.json → cowork bctc-analyst routine output, informational, skip.
 
 ### Carry-over
-- Sprint umbrella lock `task:DOCLANG-SERIALIZE` claimed (ttl 3600).
-- Pipeline: po → ba (spec) → architect (design) → dev-pdf-extractor (build) → qa.
-- NEXT = ba writes spec for BA-DOCLANG-SERIALIZE. SPIKE-DOCLANG-AUTHORED-DOCS stays TODO
-  until Phase 1 ships, then architect runs the feasibility spike.
+- A: po→architect (brief) → pm → dev-mcp-server (IMPL, behind crash-loop landing, now clear) → qa.
+  Verification gate G1–G5 = LIVE auto-fire proof (pipeline-health + cron_job_runs), never badges.
+- B awaits qa done_verified. C stays PARKED until evidence or a quieter window.
