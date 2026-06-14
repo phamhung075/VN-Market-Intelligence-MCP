@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T12:31:26Z",
+    "status": "review",
+    "updated_at": "2026-06-14T12:58:09Z",
     "updated_by": "dev-team",
     "active_task_id": "T2-ARCH-CRON-RECOVER-JITTER",
-    "next_agent": "dev-mcp-server",
-    "note": "T1-ARCH-CRON-T4-DEDUP-GUARDS DONE_VERIFIED (qa G1-G5 LIVE, router RAW-confirmed; dedup guard live in prod). T2-ARCH-CRON-RECOVER-JITTER dispatched -> dev-mcp-server (IMPL: recoverMissedExecutions:true + 8 jitter shifts; T1 guard makes recovery double-fire-safe). T3 BLOCKED in ready[] by depends[T2]. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
+    "next_agent": "ops",
+    "note": "T2-ARCH-CRON-RECOVER-JITTER IMPL'd (526e0c25) + router-RAW-verified GREEN (tsc 0, single-source wrapper 80 sites, 8 distinct jitter minutes, idempotency invariant holds, 12973 tests) -> ops for TARGETED rebuild + LIVE auto-fire/idempotency gate (NEVER compose down). ops-green -> qa -> done_verified UNBLOCKS T3. T3 stays depends-gated. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12001,34 +12001,6 @@
         "design_complete_at": "2026-06-14T11:40:00Z",
         "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
         "next_task": "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-      },
-      {
-        "id": "T2-ARCH-CRON-RECOVER-JITTER",
-        "title": "ARCH-CRON Phase 1b+1c: uniform recoverMissedExecutions + deterministic jitter on 8 high-collision jobs",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "depends": [
-          "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-        ],
-        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
-        "size": "M",
-        "verification_gate": "All 50+ cron.schedule() calls in startScheduler.ts have { recoverMissedExecutions: true } (except foreignFlowFetch which is every-minute). cronConfig.ts has 8 schedule shifts: ohlcvDailyAggregatorJob 0→3min, vnstockFundamentalsRefresh 0→5min, reputationComputeJob 30→33min, baseRateComputation 0→7min, predictionResolution 30→35min, calibrationReport 0→4min, cascadeBacktest 30→37min, dailyDashboard 30→38min. Env-override keys still present. bun test passes. tsc 0 errors.",
-        "acceptance": {
-          "AC1": "startScheduler.ts: all non-foreignFlowFetch cron.schedule() calls have recoverMissedExecutions: true",
-          "AC2": "cronConfig.ts: 8 default schedule keys updated with jitter offsets (3/5/33/7/35/4/37/38 minutes per brief §4.3)",
-          "AC3": "Bun.env.CRON_* override pattern verified for at least 3 jobs",
-          "AC4": "bun test passes; git diff startScheduler + cronConfig reviewed for missed sites"
-        },
-        "created_at": "2026-06-14T12:00:00Z",
-        "created_by": "pm",
-        "note": "MUST follow T1 (dedup guards must be in place before replay). Lever 1 + Lever 3 from architect brief. Touches 2 core files. High-risk merge: 50+ sites touched in startScheduler.ts. Split from T1 to reduce rebase conflict surface.",
-        "next_agent": "dev-mcp-server",
-        "claimed_at": "2026-06-14T12:31:26Z",
-        "claimed_by": "dev-team",
-        "dispatch_note": "Router dispatched T2 IMPL (tick post-T1-done). depends [T1] SATISFIED (T1 done_verified — T4 dedup precondition LIVE). dev-mcp-server: uniform recoverMissedExecutions:true across the 50+ cron.schedule() calls (Lever B) + stagger the 8 high-collision jobs in cronConfig.ts (Lever C), per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5. The T1 shouldSkipRecoveryReplay guard now PROTECTS recovery from double-firing Telegram/DB — recoverMissedExecutions is SAFE to enable. bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify recovery auto-fire (get_pipeline_health + cron_job_runs), never badges. T3 (watchdog) sequences after T2 done."
       }
     ],
     "ready": [
@@ -12079,6 +12051,39 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
+      },
+      {
+        "id": "T2-ARCH-CRON-RECOVER-JITTER",
+        "title": "ARCH-CRON Phase 1b+1c: uniform recoverMissedExecutions + deterministic jitter on 8 high-collision jobs",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "REVIEW",
+        "depends": [
+          "T1-ARCH-CRON-T4-DEDUP-GUARDS"
+        ],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "All 50+ cron.schedule() calls in startScheduler.ts have { recoverMissedExecutions: true } (except foreignFlowFetch which is every-minute). cronConfig.ts has 8 schedule shifts: ohlcvDailyAggregatorJob 0→3min, vnstockFundamentalsRefresh 0→5min, reputationComputeJob 30→33min, baseRateComputation 0→7min, predictionResolution 30→35min, calibrationReport 0→4min, cascadeBacktest 30→37min, dailyDashboard 30→38min. Env-override keys still present. bun test passes. tsc 0 errors.",
+        "acceptance": {
+          "AC1": "startScheduler.ts: all non-foreignFlowFetch cron.schedule() calls have recoverMissedExecutions: true",
+          "AC2": "cronConfig.ts: 8 default schedule keys updated with jitter offsets (3/5/33/7/35/4/37/38 minutes per brief §4.3)",
+          "AC3": "Bun.env.CRON_* override pattern verified for at least 3 jobs",
+          "AC4": "bun test passes; git diff startScheduler + cronConfig reviewed for missed sites"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "MUST follow T1 (dedup guards must be in place before replay). Lever 1 + Lever 3 from architect brief. Touches 2 core files. High-risk merge: 50+ sites touched in startScheduler.ts. Split from T1 to reduce rebase conflict surface.",
+        "next_agent": "ops",
+        "claimed_at": "2026-06-14T12:31:26Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router dispatched T2 IMPL (tick post-T1-done). depends [T1] SATISFIED (T1 done_verified — T4 dedup precondition LIVE). dev-mcp-server: uniform recoverMissedExecutions:true across the 50+ cron.schedule() calls (Lever B) + stagger the 8 high-collision jobs in cronConfig.ts (Lever C), per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5. The T1 shouldSkipRecoveryReplay guard now PROTECTS recovery from double-firing Telegram/DB — recoverMissedExecutions is SAFE to enable. bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify recovery auto-fire (get_pipeline_health + cron_job_runs), never badges. T3 (watchdog) sequences after T2 done.",
+        "impl_commit": "526e0c255bf8e081e68c4e6ff0de621c03751bf7",
+        "impl_verified_at": "2026-06-14T12:58:09Z",
+        "impl_verified_by": "dev-team",
+        "impl_verdict": "RAW-verified GREEN: commit clean 10 files apps/mcp-server@HEAD; tsc exit 0 (router re-ran); Lever B single-source scheduleCron wrapper (80 sites, opt-out spread); Lever C 8 distinct minutes {3,4,5,7,33,35,37,38}; idempotency invariant holds (monthlySignalQualityAudit+foreignFlowFetch opted out, summaryJobs idempotent period-keyed upsert zero-Telegram, evidenceAccumulator T4-guarded); 12973 tests pass.",
+        "ops_instructions": "TARGETED REBUILD ONLY: docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server. NEVER docker compose down (rebuild-recreate-destroys-peers). docker ps -a after to confirm all peers Up/healthy. Then LIVE auto-fire verification: (1) startup logs show scheduler started + cron keys registered + NO 'Cannot convert a symbol to a string'; (2) recoverMissedExecutions catch-up — if any job's last scheduled fire was missed during the restart window it replays EXACTLY ONCE (no thundering-herd; the 8 jittered jobs fire at distinct minutes); (3) RAW-probe cron_job_runs via keinos/sqlite3 sidecar against named volume (docker run --rm --volumes-from <cid> keinos/sqlite3 sqlite3 /app/data/market.db) — confirm NO duplicate success rows for any recovered job in the restart window (idempotency holds under recovery replay); (4) router-style: own gateway call_tool(get_pipeline_health or get_market_snapshot) returns valid payload, no 500. Report image build timestamp, peer count, the 3 log checks, any recovery replays observed + their cron_job_runs row counts. On ops-green -> qa LIVE idempotency gate -> done_verified UNBLOCKS T3-ARCH-CRON-WATCHDOG."
       }
     ]
   },
