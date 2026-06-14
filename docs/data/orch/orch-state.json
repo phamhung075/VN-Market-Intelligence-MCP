@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T15:27:09Z",
+    "status": "review",
+    "updated_at": "2026-06-14T15:39:57Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP",
-    "next_agent": "dev-mcp-server",
-    "note": "FIX-REFINE-LOCK-TTL-RECLAIM done_verified (67cad7ae) -> apps/mcp-server zone free. Dispatch FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (ready->in_progress, dev-mcp-server): canonical shared ISO-week helper (Sun 2026-06-14=W24) + date-range-keyed slot mutex across ALL guaranteed weekly slots (generic_mandate) + RemoteTrigger last_fired write; unit+integration dedup tests. Recurrence-prevention only (no re-post). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3 gate (no active agent). ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active same-zone. Commit explicit path only."
+    "next_agent": "ops",
+    "note": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP dev-impl GREEN (commit ccbe43ec) + router RAW-re-verified INDEPENDENTLY (git show 6 explicit files clean; tsc 0; 35/35 tests; Sun 2026-06-14=W24 via python crosscheck; canonical shared helper + get_week_period tool = GENERIC across ALL weekly slots; period-range key defeats last_fired staleness; no re-post). -> ops: TARGETED rebuild mcp-server for the new isoWeek service + get_week_period tool (flow-doc gates read live, no rebuild), all peers Up, no down; RAW-verify get_week_period returns 2026-W24. -> qa LIVE gate -> done_verified. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 same-zone. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12268,36 +12268,6 @@
         "reverify_gate": "MARKET-DAY-2026-06-15: (G1) ohlcvDailyAggregatorJob auto-fires Mon — get_pipeline_health 'Aggregator last run' advances to 2026-06-15 with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires + VCB/ACB/CTG fundamental rows newer than its run, NO manual trigger; (G3) reputationComputeJob fires at 08:30 tick under peer contention (cron_job_runs row present, no miss). QA verifies LIVE raw (pipeline-health payload + cron_job_runs named-volume rows), never badges. On all-PASS -> umbrella -> done_verified + move to done_verified[]. On any miss -> the watchdog (G5, LIVE) must have self-healed/alerted -> capture evidence + spin the residual into a scoped FIX.",
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate."
-      },
-      {
-        "id": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "size": "S",
-        "priority": "high",
-        "recurring": true,
-        "zone": "apps/mcp-server/",
-        "wip_rule": "Same zone (apps/mcp-server) as FIX-REFINE-LOCK-TTL-RECLAIM — SEQUENCED behind it (one dev-mcp-server task in-flight at a time). Picked up only after FIX-REFINE-LOCK-TTL-RECLAIM clears in_progress.",
-        "title": "digest-predict double-post dedup: single canonical ISO-week source shared by CLI dispatcher + RemoteTrigger, OR key slot-mutex on calendar period date-range not derived week label (recurrence-prevention)",
-        "root_cause": "digest-sunday published TWICE for 2026-06-14: RemoteTrigger backstop fired 13:47Z (marker published:digest-sunday:2026-W25) then */15 CLI dispatcher re-fired 13:52Z (marker ...2026-W24, claimed=true). TWO compounding root causes: (A) divergent ISO-week calc — one path computes W25 for Sun 2026-06-14 (off-by-one at the Sunday week-boundary), correct ISO week is W24; the differing week-key DEFEATS publish-marker dedup. (B) RemoteTrigger fires do NOT update cowork-schedule.json .last_fired, so the dispatcher matcher sees stale last_fired (2026-05-31) and re-fires guaranteed slots the backstop already ran. Matches [Guaranteed-slot week-key double-post] lesson.",
-        "fix": "Generic, both paths: (A) ONE canonical ISO-week helper (date +%V semantics) shared by every digest-predict publish-gate path — no path may recompute its own week label. (B) EITHER RemoteTrigger writes .last_fired on fire, OR key the slot mutex on the calendar period date-RANGE (period start/end dates) not a derived week-label string, so a one-label divergence cannot defeat dedup. Apply to ALL guaranteed weekly slots, not just digest-sunday.",
-        "generic_mandate": "Per [Guaranteed-slot week-key double-post]: dedup must key on the period date-range, not a derived week label, across every guaranteed weekly slot.",
-        "note": "Recurrence-PREVENTION only — the 2026-06-14 digest was already delivered to MARKET (twice). No re-post needed; do NOT re-send.",
-        "verification_gate": "Unit test: both dispatch paths derive the SAME week-key for Sun 2026-06-14 (must be W24, not W25) AND for adjacent week-boundary Sundays. Integration: simulate RemoteTrigger fire then CLI dispatcher tick within the same period -> exactly ONE publish (marker dedup holds). RemoteTrigger path observed to write last_fired (or mutex keyed on date-range). QA verifies the dedup gate live.",
-        "source_signal": "cowork-team-20260614T135826-digest-dup",
-        "corroboration": "docs/signals/digest-predict-20260614T134700Z.json — note: that 13:47 'gateway not reachable in subagent' is the per-session init-miss class (False-infra-failure), NOT this bug; the actual double-post is the dedup defect.",
-        "files": [
-          "apps/mcp-server/src/**/digest*",
-          "apps/mcp-server/src/**/schedule*",
-          "cowork-schedule.json"
-        ],
-        "created_at": "2026-06-14T14:45:14Z",
-        "created_by": "po-S50",
-        "next_agent": "dev-mcp-server",
-        "impl_dispatched_at": "2026-06-14T15:27:09Z",
-        "impl_dispatched_by": "dev-team",
-        "impl_dispatch_note": "Predecessor FIX-REFINE-LOCK-TTL-RECLAIM done_verified (67cad7ae) -> same-zone slot free, wip_rule condition met. IMPLEMENT per PO spec (root_cause A+B, fix, generic_mandate, verification_gate): (A) ONE canonical ISO-week helper (date +%V / ISO-8601 semantics — Sun 2026-06-14 MUST resolve to W24 not W25) shared by EVERY digest-predict publish-gate path; no path recomputes its own week label. (B) per generic_mandate, key the guaranteed-weekly slot mutex on the calendar period date-RANGE (period start/end), NOT a derived week-label string, so a one-label divergence cannot defeat dedup; ALSO have the RemoteTrigger path write cowork-schedule.json .last_fired on fire if cheap (belt-and-suspenders against the stale-last_fired re-fire). Apply to ALL guaranteed weekly slots, not just digest-sunday. TESTS (verification_gate): unit — both dispatch paths derive the SAME key for Sun 2026-06-14 (=W24) AND adjacent week-boundary Sundays; integration — simulate RemoteTrigger fire then CLI dispatcher tick within the same period -> EXACTLY ONE publish (marker dedup holds). Gates: cd apps/mcp-server && bunx tsc --noEmit exit 0 AND bun test <new test> green. Commit by EXPLICIT PATH only (concurrent agent dirty tree: bctc-analyst.md, coverage-state.json, cowork-schedule.json M + docs/signals + digest-predict session ?? — do NOT git add -A; if you legitimately edit cowork-schedule.json for fix B, stage ONLY that file by explicit path and verify the M-from-other-agent delta is yours). RECURRENCE-PREVENTION ONLY — the 2026-06-14 digest already delivered (twice) to MARKET; do NOT re-post. Flag whether a server rebuild is needed (digest code in mcp-server -> likely yes for the test + runtime helper; the cowork-schedule.json data change reads live)."
       }
     ],
     "ready": [],
@@ -12320,6 +12290,43 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
+      },
+      {
+        "id": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "REVIEW",
+        "size": "S",
+        "priority": "high",
+        "recurring": true,
+        "zone": "apps/mcp-server/",
+        "wip_rule": "Same zone (apps/mcp-server) as FIX-REFINE-LOCK-TTL-RECLAIM — SEQUENCED behind it (one dev-mcp-server task in-flight at a time). Picked up only after FIX-REFINE-LOCK-TTL-RECLAIM clears in_progress.",
+        "title": "digest-predict double-post dedup: single canonical ISO-week source shared by CLI dispatcher + RemoteTrigger, OR key slot-mutex on calendar period date-range not derived week label (recurrence-prevention)",
+        "root_cause": "digest-sunday published TWICE for 2026-06-14: RemoteTrigger backstop fired 13:47Z (marker published:digest-sunday:2026-W25) then */15 CLI dispatcher re-fired 13:52Z (marker ...2026-W24, claimed=true). TWO compounding root causes: (A) divergent ISO-week calc — one path computes W25 for Sun 2026-06-14 (off-by-one at the Sunday week-boundary), correct ISO week is W24; the differing week-key DEFEATS publish-marker dedup. (B) RemoteTrigger fires do NOT update cowork-schedule.json .last_fired, so the dispatcher matcher sees stale last_fired (2026-05-31) and re-fires guaranteed slots the backstop already ran. Matches [Guaranteed-slot week-key double-post] lesson.",
+        "fix": "Generic, both paths: (A) ONE canonical ISO-week helper (date +%V semantics) shared by every digest-predict publish-gate path — no path may recompute its own week label. (B) EITHER RemoteTrigger writes .last_fired on fire, OR key the slot mutex on the calendar period date-RANGE (period start/end dates) not a derived week-label string, so a one-label divergence cannot defeat dedup. Apply to ALL guaranteed weekly slots, not just digest-sunday.",
+        "generic_mandate": "Per [Guaranteed-slot week-key double-post]: dedup must key on the period date-range, not a derived week label, across every guaranteed weekly slot.",
+        "note": "Recurrence-PREVENTION only — the 2026-06-14 digest was already delivered to MARKET (twice). No re-post needed; do NOT re-send.",
+        "verification_gate": "Unit test: both dispatch paths derive the SAME week-key for Sun 2026-06-14 (must be W24, not W25) AND for adjacent week-boundary Sundays. Integration: simulate RemoteTrigger fire then CLI dispatcher tick within the same period -> exactly ONE publish (marker dedup holds). RemoteTrigger path observed to write last_fired (or mutex keyed on date-range). QA verifies the dedup gate live.",
+        "source_signal": "cowork-team-20260614T135826-digest-dup",
+        "corroboration": "docs/signals/digest-predict-20260614T134700Z.json — note: that 13:47 'gateway not reachable in subagent' is the per-session init-miss class (False-infra-failure), NOT this bug; the actual double-post is the dedup defect.",
+        "files": [
+          "apps/mcp-server/src/**/digest*",
+          "apps/mcp-server/src/**/schedule*",
+          "cowork-schedule.json"
+        ],
+        "created_at": "2026-06-14T14:45:14Z",
+        "created_by": "po-S50",
+        "next_agent": "ops",
+        "impl_dispatched_at": "2026-06-14T15:27:09Z",
+        "impl_dispatched_by": "dev-team",
+        "impl_dispatch_note": "Predecessor FIX-REFINE-LOCK-TTL-RECLAIM done_verified (67cad7ae) -> same-zone slot free, wip_rule condition met. IMPLEMENT per PO spec (root_cause A+B, fix, generic_mandate, verification_gate): (A) ONE canonical ISO-week helper (date +%V / ISO-8601 semantics — Sun 2026-06-14 MUST resolve to W24 not W25) shared by EVERY digest-predict publish-gate path; no path recomputes its own week label. (B) per generic_mandate, key the guaranteed-weekly slot mutex on the calendar period date-RANGE (period start/end), NOT a derived week-label string, so a one-label divergence cannot defeat dedup; ALSO have the RemoteTrigger path write cowork-schedule.json .last_fired on fire if cheap (belt-and-suspenders against the stale-last_fired re-fire). Apply to ALL guaranteed weekly slots, not just digest-sunday. TESTS (verification_gate): unit — both dispatch paths derive the SAME key for Sun 2026-06-14 (=W24) AND adjacent week-boundary Sundays; integration — simulate RemoteTrigger fire then CLI dispatcher tick within the same period -> EXACTLY ONE publish (marker dedup holds). Gates: cd apps/mcp-server && bunx tsc --noEmit exit 0 AND bun test <new test> green. Commit by EXPLICIT PATH only (concurrent agent dirty tree: bctc-analyst.md, coverage-state.json, cowork-schedule.json M + docs/signals + digest-predict session ?? — do NOT git add -A; if you legitimately edit cowork-schedule.json for fix B, stage ONLY that file by explicit path and verify the M-from-other-agent delta is yours). RECURRENCE-PREVENTION ONLY — the 2026-06-14 digest already delivered (twice) to MARKET; do NOT re-post. Flag whether a server rebuild is needed (digest code in mcp-server -> likely yes for the test + runtime helper; the cowork-schedule.json data change reads live).",
+        "dev_impl_done_at": "2026-06-14T15:39:57Z",
+        "dev_impl_commit": "ccbe43ec",
+        "dev_impl_verdict": "GREEN (dev-mcp-server a8bc7d01, commit ccbe43ec): canonical isoWeek.ts (getISOWeekPeriod + buildWeeklyPublishMarkerKey) + get_week_period MCP tool in coordinationTools.ts + PUBLISHED-MARKER-GATE rewritten in digest-predict & tran-ngoc-bau flows to use the period date-RANGE key (generic_mandate) + spawn-fanout weekly-slot note. tsc 0; 35/35 tests; Sun 2026-06-14=W24.",
+        "router_dev_reverified_at": "2026-06-14T15:39:57Z",
+        "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show ccbe43ec --stat = exactly 6 explicit files; name-only grep confirms NO concurrent-agent file (bctc-analyst/coverage-state/cowork-schedule/docs-signals) captured. Router re-ran locally: bunx tsc --noEmit TSC_EXIT=0; bun test FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts 35 pass/0 fail/90 expect. W24 root cause: python3 date(2026,6,14).strftime('%G-W%V')=2026-W24 INDEPENDENT crosscheck matches canonical helper (off-by-one Sunday-boundary defeated). GENERIC: shared helper + get_week_period tool applies to ALL guaranteed weekly slots; period-RANGE key makes last_fired staleness irrelevant as a dedup vector. No re-post (recurrence-prevention only).",
+        "ops_instructions": "DEPLOY GATE — targeted rebuild, then hand to qa. TARGETED REBUILD (the new isoWeek.ts domain service + get_week_period MCP tool are runtime code agents call at session-init): cd repo root && docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server ; then docker ps -a to confirm all peers Up/healthy (NEVER docker compose down — rebuild-recreate-destroys-peers). Verify: (1) image ID changed (docker inspect); (2) no 'Cannot convert a symbol to a string' Bun-JIT line in startup logs; (3) the new tool is live — call_tool(server='vn-market', tool='get_week_period', arguments={ date:'2026-06-14T13:47:00Z' }) returns weekLabel '2026-W24' (NOT W25) with period start/end — RAW-verify this return. The 3 flow-doc edits (digest-predict, tran-ngoc-bau, spawn-fanout) need NO rebuild (fleet-cron reads them live). Commit nothing except (if needed) your notebook by explicit path — concurrent agent dirty tree must NOT be captured. RETURN: image id, peer health count, raw get_week_period return.",
+        "ops_dispatched_at": "2026-06-14T15:39:57Z"
       }
     ],
     "qa": [],
