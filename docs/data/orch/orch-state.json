@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-14T06:00:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-14T04:58:48Z",
+  "_updated_by": "qa",
   "head": {
     "status": "review",
     "updated_at": "2026-06-14T06:00:00Z",
@@ -9872,6 +9872,26 @@
           "wal_verdict": "PASS — WAL 3.49MB (DOWN from 3.95MB at 02:02Z) < 5MB threshold. walCheckpointJob ran 04:00Z and flushed WAL — checkpoint policy holding as designed.",
           "promoter_guard_satisfied": "Reopen-criteria were RestartCount>0 OR WAL>=5MB. Neither met -> legitimate done_verified, NOT a force-promote."
         }
+      },
+      {
+        "id": "A-1",
+        "title": "FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert: cron_job_runs sentinel + 30-min poller (>=2 restarts/4h -> WORK alert)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "APPROVED",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "created_at": "2026-06-14T00:30:00Z",
+        "commit": "ef0ce87c",
+        "qa_approved_at": "2026-06-14T04:58:48Z",
+        "qa_approved_by": "qa",
+        "qa_verdict": "APPROVED — 4/4 tests green, tsc 0 errors, DDD PASS, security PASS, mock-guard PASS",
+        "live_verify_gate": "PENDING — ops rebuild required: sentinel row persistence + alert fire on 2nd restart within 4h",
+        "next_agent": "ops",
+        "status_note": "code-merge quality APPROVED; DO NOT done_verified until ops live-verify passes",
+        "report": "reports/TASK_REPORT_FIX-MCP-CRASH-LOOP-A-1.md"
       }
     ],
     "in_progress": [
@@ -11094,41 +11114,6 @@
         "claimed_at": "2026-06-14",
         "completed_at": "2026-06-14",
         "verified_stale_zero": true
-      },
-      {
-        "id": "A-1",
-        "title": "FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert: cron_job_runs sentinel + 30-min poller (>=2 restarts/4h -> WORK alert)",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "REVIEW",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "medium",
-        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
-        "created_at": "2026-06-14T00:30:00Z",
-        "created_by": "pm",
-        "files_summary": "Modify: composition-root.ts (startup sentinel), cronConfig.ts (cron), startScheduler.ts (register job). Create: restartCadenceAlertJob.ts + test file",
-        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-A-1.md",
-        "depends_on": [
-          "BC-1"
-        ],
-        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
-        "blocked_by": [
-          "BC-1"
-        ],
-        "accepts": [
-          "Alert fires when 2+ startup rows in last 4h",
-          "Alert silent when 1 row",
-          "No false alert after single force-recreate",
-          "tsc 0 errors"
-        ],
-        "in_progress_at": "2026-06-14T04:24:39Z",
-        "in_progress_by": "po",
-        "unblock_note": "BC-1 done_verified at 2026-06-14T04:24:39Z per 0407 live-verify -> depends_on satisfied. Re-established IN_PROGRESS (was actively in-flight before the 0407-reconcile discarded local pm commit 8419d2e6; intent restored). dev-mcp-server WIP=2 (FIX-MCP-CRASH-LOOP-WRITEWAL + A-1) — at limit, OK.",
-        "review_at": "2026-06-14T06:00:00Z",
-        "review_by": "dev-mcp-server",
-        "commit": "ef0ce87c",
-        "review_note": "impl done: restartCadenceAlertJob.ts + test (4/4 green) + cronConfig + startScheduler + composition-root sentinel. tsc 0 errors. awaiting QA."
       }
     ],
     "closed_sprints": [
