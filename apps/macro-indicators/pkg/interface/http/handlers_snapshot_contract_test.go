@@ -84,7 +84,7 @@ func newContractRouter() http.Handler {
 		&fakeContractMarketIndex{},
 		nil, // carryYieldInputs nil → fixture safe-degrade (contract test, not DPI-2b scope)
 	)
-	return NewRouter(uc, nil)
+	return NewRouter(RouterConfig{Snapshot: uc, BOP: nil, Logger: nil})
 }
 
 // ---------------------------------------------------------------------------
@@ -374,7 +374,7 @@ func fakeFixturePortsRouter() http.Handler {
 		&fakeContractMarketIndex{}, // returns 1280.5 (== fixtureVNIndex) → still "live" from port
 		nil, // nil carry/yield → fixture fallback for carry/yield
 	)
-	return NewRouter(uc, nil)
+	return NewRouter(RouterConfig{Snapshot: uc, BOP: nil, Logger: nil})
 }
 
 // fakeAllFixturePortsRouter wires a truly all-fixture use case (vnIndex port returns
@@ -391,7 +391,7 @@ func fakeAllFixturePortsRouter() http.Handler {
 		&fakeZeroMarketIndex{},        // zero → vnIndex fixture fallback
 		nil,                           // nil carry/yield → fixture fallback
 	)
-	return NewRouter(uc, nil)
+	return NewRouter(RouterConfig{Snapshot: uc, BOP: nil, Logger: nil})
 }
 
 // fakeEmptyCommodityFetcher always returns an empty map (simulates stale/absent DB).

@@ -6,6 +6,39 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-06-14 (VMT-2-BOP — sprint VN-MACRO-TOOLING A1 WAVE-2)
+
+**Task:** Implement VMT-2 BOP (Balance of Payments) — first serialized Zone-A task.
+
+**Contract source:** scripts/probes/vmt-2-sample.json (PROBE-2 PASS). Direct JSON GET from SBV Liferay headless API. NO Excel, NO PDF, NO excelize added.
+
+**Files created (8):**
+- `pkg/domain/models_vmt_bop.go` — BOPRecord, BOPCurrentAccount, BOPFinancialAccount, FXIncidenceResult, OffshoreParkedEstimate, BOPSnapshot domain models
+- `pkg/domain/services_vmt_bop.go` — ParseVNNumber, ComputeFXIncidence (DD-5), ComputeOffshoreParked (always is_estimate=true)
+- `pkg/domain/services_vmt_bop_test.go` — 30 table-driven tests anchored on Q4-2025 live payload
+- `pkg/infrastructure/parsers_vmt_bop.go` — ParseBOPResponse, BuildBOPFetchURL, CurrentQuarterWindow, PrevQuarterWindow
+- `pkg/application/dtos_vmt_bop.go` — BOPRequest, BOPResponse + sub-DTOs
+- `pkg/application/usecases_vmt_bop.go` — BOPUseCase (BOPParser + BOPURLBuilder interfaces, Execute(), fetchRecord(), fallback to prev quarter)
+- `pkg/application/usecases_vmt_bop_test.go` — 5 tests (live anchor, fetch error, nil fetcher, explicit window, always-estimate path)
+- `pkg/interface/http/handlers_vmt_bop.go` — handleBOP() chi handler for POST /bop
+
+**Files modified (2):**
+- `pkg/interface/http/router.go` — RouterConfig struct (DD-1), NewRouter(cfg RouterConfig), POST /bop route wired
+- `cmd/server/main.go` — BOPUseCase wiring + bopParserAdapter/bopURLBuilderAdapter composition-root types (Fence-C)
+
+**Key invariants confirmed:**
+- excelize NOT added (pure JSON API, Entry 10)
+- offshore_parked.is_estimate=true ALWAYS (never fabricated confidence)
+- E&O sign convention: BPM6, NO sign flip (loiVaSaiSot=-12375 = outflow confirmed)
+- VN number format: "7.654"=7654 M USD, NOT 7.654 (ParseVNNumber)
+- Fence-A/B/C all clean; go vet clean; go test ./... ALL PASS
+
+**Verification:** `go build ./...` green, `go test ./...` ALL PASS (all packages), go vet clean.
+
+**Next:** A1 merge gate → PM dispatches A2 (VMT-3b IIP + VMT-4 CPI, NSO Excel, excelize). SERIALIZE.
+
+---
+
 ## Session 2026-06-13 (TSU-DEV-U4 seed-date fix — sprint TOOL-SURFACE-UPGRADE)
 
 **Task:** Fix hardcoded calendar dates (2026-06-01/02/03) in T-U4-5 infrastructure tests for `fetchPrevSessionVnIndexFromDB`.

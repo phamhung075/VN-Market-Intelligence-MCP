@@ -12,13 +12,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/vn-market-intelligence/macro-indicators/pkg/application"
 )
 
 // newTestRouter wires NewRouter with nil useCase (safe — snapshot handler ignores it).
 func newTestRouter() http.Handler {
-	return NewRouter((*application.ComputeMacroUseCase)(nil), nil)
+	return NewRouter(RouterConfig{Snapshot: nil, BOP: nil, Logger: nil})
 }
 
 func TestHealthRoute(t *testing.T) {
