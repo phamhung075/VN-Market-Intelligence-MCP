@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T21:46:17Z",
+    "updated_at": "2026-06-14T21:48:18Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
     "next_agent": "dev",
-    "note": "VN-MACRO-TOOLING VMT-7 Zone-B wave SEQUENCED (pm a380126d, commit ba48c277) + router-reconciled. pm breakdown CONTENT correct: 7a-e (get_vn_trade_balance/get_vn_bop/get_vn_macro_indicators/get_cpi_components/get_vn_liquidity_state) serial_dispatch_order=1 PARALLEL (separate handler files in tools/macro/, no shared file among them; reuse existing http-proxy/ helper), each carries dispatch_contract with Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough invariants (7d weight_pct=null + weights_is_estimate=true; 7e irs+interbank_1w is_estimate=true PERMANENT + rate_1w_pct=null Decision B/DD-6; 7a bloc_split is_estimate=true Decision A; 7b offshore_parked is_estimate=true); VMT-7-REGISTER serial_dispatch_order=2 merge_gate=[7a,7b,7c,7d,7e] (shared index.ts+registry.ts, runs AFTER all 5). HYGIENE FINDING (non-blocking, router-fixed): pm wrote the 6 sequenced tasks as DUPLICATES into backlog[] (SSOT dup-key class, id-line 722->728) instead of editing the in-sprint tasks; router overlaid pm's additive fields onto canonical active_sprints[].tasks[] and dropped the 6 backlog dups (id-line back to 722) — pm must edit in-place next time, not re-create in backlog. -> head pm->dev: dispatch VMT-7a-e in PARALLEL to dev-mcp-server (WIP=2 pipeline), then VMT-7-REGISTER on merge_gate satisfied. CONTRACT FROM LIVE PAYLOAD: each handler's TS Zod output must match the real served Zone-A DTO + surface is_estimate/blocked_reason honestly (never strip). WAVE-2 serial Zone-A chain CLOSED (A1-A5 done). VMT-3a-PMI blocked-probe5 (S&P dev-local). Commit explicit path only."
+    "note": "VMT-7 Zone-B wave DISPATCHED (bundled single dev-mcp-server agent — 7a-e thin MCP proxies + VMT-7-REGISTER index.ts wire, handlers-first dependency order, ONE atomic commit). Each handler carries dispatch_contract: Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough (7d weight_pct=null+weights_is_estimate=true; 7e irs+interbank_1w is_estimate=true PERMANENT+rate_1w_pct=null; 7a bloc_split is_estimate=true; 7b offshore_parked is_estimate=true) — handler must SURFACE these honestly, never strip. http-proxy/ helper reuse; Zod=live served DTO. On done+green router RAW-verify bundle (tsc green, registry wires exactly the 5, MCP tool-count +5) -> VMT-7 wave done -> VN-MACRO-TOOLING sprint near-complete (remaining VMT-3a-PMI blocked-probe5 S&P dev-local). WAVE-2 serial Zone-A CLOSED (A1-A5). pm dup-key hygiene finding logged (router-fixed d28). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T21:46:17Z",
+    "_updated_at": "2026-06-14T21:48:18Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -6117,7 +6117,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6163,7 +6163,10 @@
             },
             "mcp_tool": "get_vn_trade_balance",
             "zone_a_endpoint": "POST /trade-balance",
-            "zone_a_response_dto": "TradeBalanceResponse (dtos_vmt_trade.go)"
+            "zone_a_response_dto": "TradeBalanceResponse (dtos_vmt_trade.go)",
+            "dispatched_at": "2026-06-14T21:48:18Z",
+            "dispatch_agent": "dev-mcp-server",
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
           },
           {
             "id": "VMT-7b-BOP-HANDLER",
@@ -6171,7 +6174,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6218,7 +6221,10 @@
             },
             "mcp_tool": "get_vn_bop",
             "zone_a_endpoint": "POST /bop",
-            "zone_a_response_dto": "BOPResponse (dtos_vmt_bop.go)"
+            "zone_a_response_dto": "BOPResponse (dtos_vmt_bop.go)",
+            "dispatched_at": "2026-06-14T21:48:18Z",
+            "dispatch_agent": "dev-mcp-server",
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
           },
           {
             "id": "VMT-7c-MACRO-INDICATORS-HANDLER",
@@ -6226,7 +6232,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6272,7 +6278,10 @@
             },
             "mcp_tool": "get_vn_macro_indicators",
             "zone_a_endpoint": "POST /macro-indicators-vn",
-            "zone_a_response_dto": "MacroIndicatorsGSOResponse (dtos_vmt_macro.go)"
+            "zone_a_response_dto": "MacroIndicatorsGSOResponse (dtos_vmt_macro.go)",
+            "dispatched_at": "2026-06-14T21:48:18Z",
+            "dispatch_agent": "dev-mcp-server",
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
           },
           {
             "id": "VMT-7d-CPI-COMPONENTS-HANDLER",
@@ -6280,7 +6289,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6332,7 +6341,10 @@
             },
             "mcp_tool": "get_cpi_components",
             "zone_a_endpoint": "POST /cpi-components",
-            "zone_a_response_dto": "CPIComponentsResponse (dtos_vmt_cpi.go)"
+            "zone_a_response_dto": "CPIComponentsResponse (dtos_vmt_cpi.go)",
+            "dispatched_at": "2026-06-14T21:48:18Z",
+            "dispatch_agent": "dev-mcp-server",
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
           },
           {
             "id": "VMT-7e-LIQUIDITY-STATE-HANDLER",
@@ -6340,7 +6352,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "S",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/mcp-server/src/interface/mcp/tools/macro/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6386,7 +6398,10 @@
             },
             "mcp_tool": "get_vn_liquidity_state",
             "zone_a_endpoint": "POST /liquidity-state",
-            "zone_a_response_dto": "LiquidityStateResponse (dtos_vmt_liquidity.go)"
+            "zone_a_response_dto": "LiquidityStateResponse (dtos_vmt_liquidity.go)",
+            "dispatched_at": "2026-06-14T21:48:18Z",
+            "dispatch_agent": "dev-mcp-server",
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
           },
           {
             "id": "VMT-7-REGISTER",
@@ -6394,7 +6409,7 @@
             "type": "INFRASTRUCTURE",
             "priority": "high",
             "size": "M",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/mcp-server/src/interface/mcp/",
             "owner": "dev-mcp-server",
             "depends": [
@@ -6431,7 +6446,10 @@
                 "tsc --noEmit clean (no type drift vs Zone-A DTOs)",
                 "manual curl test to gateway: call_tool(server='vn-market', tool='get_vn_trade_balance', arguments={}) returns 200 with TradeBalanceResponse shape"
               ]
-            }
+            },
+            "dispatched_at": "2026-06-14T21:48:18Z",
+            "dispatch_agent": "dev-mcp-server",
+            "dispatch_note": "VMT-7 Zone-B wave BUNDLED into ONE dev-mcp-server agent (router dispatch judgment: 7a-e share tools/macro/ dir + index.ts, parallel separate agents = concurrent-commit race; bundle = handlers-first then VMT-7-REGISTER, merge_gate internally satisfied in one atomic commit). Implement per this task's dispatch_contract (Zone-A endpoint + live response-DTO key_fields + critical is_estimate/blocked_reason passthrough — NEVER strip). Reuse existing tools/macro/http-proxy/ helper; Zod output schema matches the REAL served Zone-A DTO (contract from live payload). tsc --noEmit green; explicit-path commit (tools/macro/** + index.ts + your notebook ONLY — NEVER git add -A/orch-state). On done+green router RAW-verifies whole bundle (5 handlers + registry wires exactly those 5 + tool-count +5 + is_estimate passthrough)."
           }
         ],
         "wave1_dispatched_at": "2026-06-14T19:09:12Z"
