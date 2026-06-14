@@ -1,5 +1,31 @@
 # PO Notebook
 
+## 2026-06-14T19:42Z — S54: open KINHDICH-HOVER-DETAIL (user feature, actively waiting)
+User req (verbatim): (1) Kinh Dịch reference 1-column — RAW-confirmed ALREADY LIVE (commit 1aa9dc31,
+ops a334dc7a frontend rebuild; served chunk grid-cols-1, zero 4-col) → user only needs hard-refresh,
+DO NOT re-touch. (2) NEW WORK: quẻ hover tooltip must show "Tra cứu Kinh Dịch" detail of the related
+hexagram, not just today's one-line summary.
+
+**PO product decision (autonomy, no user ask): Option (a) richer tooltip** = coreMeaning + Trạng thái
+(stateInterpretation) + Thuận (favorable) + Cảnh báo (warning) + trend label; OMIT 6-hào table (tabular →
+reference page), KEEP "Xem chi tiết →" deep-link. Click-expand/big-popover rejected (UX is hover-pure).
+
+Key find: rich data **already in frontend bundle** — `QUE_DETAIL` in
+apps/frontend/app/lib/que-descriptions-detail.generated.ts carries all VN fields. So NO codegen extension
+needed — QueName.tsx just imports QUE_DETAIL + renders new fields. Near-pure single-component change.
+SSOT preserved = apps/frontend/app/components/QueName.tsx (QUE-TOOLTIP-DRY).
+
+Opened sprint via idempotent `scripts/po-s54-kinhdich-hover-detail-kickoff.jq` (atomic temp→[ -s ]→jq
+empty→rename; mutates ONLY sprint_goal.entries + task_board.backlog; head + VN-MACRO-TOOLING untouched).
+Routed **BA-KINHDICH-HOVER-DETAIL** (TODO, zone apps/frontend/). Umbrella lock task:KINHDICH-HOVER-DETAIL
+claimed (ttl 3600). Lean chain: ba → dev-frontend → ops(frontend-only rebuild) → qa.
+DONE BAR = done_verified: tsc green + qa + targeted frontend rebuild (build/up --no-deps/builder prune,
+ps -a peer-survival, image-ID delta) + RAW-verify :3001 served chunk physically contains new VN strings
+(curl route + grep stateInterpretation/favorable/warning). Wrong-surface lesson: green rebuild reaching
+no browser = nothing.
+
+Carry-over: BA writes thin spec for BA-KINHDICH-HOVER-DETAIL next.
+
 ## 2026-06-14T18:10Z — S52: open VN-MACRO-TOOLING sprint (07-06 roundtable methodology gap, tools+data lane)
 Initiative from `docs/analysis-briefs/07-06-methodology-gap.md` (## New MCP tools requested, ranked by
 leverage + bonus EXTEND). My lane = tools + data ONLY; the 2 new cowork skills (macro-health-read,

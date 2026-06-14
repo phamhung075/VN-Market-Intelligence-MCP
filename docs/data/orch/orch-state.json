@@ -468,6 +468,16 @@
         "sprint_id": "VN-MACRO-TOOLING",
         "status": "PLANNING",
         "vision": "Build 5 new VN macro MCP tools + 1 credit-flow EXTEND from the 07-06 roundtable methodology gap, in leverage order (trade-balance first). VN geo-blocked sources via Vinahost VPS; all tools reachable only via the call_tool gateway. DoD: each tool LIVE through gateway with the clean schema the cowork skills (macro-health-read, trade-fx-pressure-decomp) switch from DEGRADED is_estimate onto. Next: BA REQ + PO spec review."
+      },
+      {
+        "sprint_id": "KINHDICH-HOVER-DETAIL",
+        "status": "active",
+        "vision": "Khi người dùng rê chuột (hover) lên tên một quẻ Kinh Dịch bất kỳ trên frontend, tooltip hiển thị nội dung tham chiếu 'Tra cứu Kinh Dịch' của đúng quẻ đó — không chỉ một câu tóm tắt như hiện tại.",
+        "scope_in": "Mở rộng tooltip trong QueName.tsx (SSOT duy nhất) để hiển thị: ý nghĩa cốt lõi (coreMeaning) + Trạng thái (stateInterpretation) + Thuận (favorable) + Cảnh báo (warning) + nhãn xu hướng thị trường, lấy từ QUE_DETAIL (apps/frontend/app/lib/que-descriptions-detail.generated.ts) đã có sẵn trong bundle frontend. Giữ deep-link 'Xem chi tiết →' tới trang reference cho bảng 6 hào đầy đủ.",
+        "scope_out": "KHÔNG nhồi bảng 6 hào (phases[]) vào tooltip (thuộc về trang reference, deep-link đã có). KHÔNG sửa layout 1-cột (đã xong + live ở commit 1aa9dc31). KHÔNG đụng kinh-dich-service (chỉ phục vụ JSON, dashboard/index.html là sandbox file:// người dùng không mở). KHÔNG mở rộng codegen — QUE_DETAIL đã đủ field. Click-to-expand / popover lớn bị loại — UX là hover thuần.",
+        "success_metric": "tsc/pnpm check xanh + qa pass + frontend container rebuild đúng cách (build frontend && up -d --no-deps frontend && builder prune; docker ps -a peer-survival; image ID đổi) + RAW-verify chunk phục vụ trên :3001 thực sự chứa chuỗi tiếng Việt mới (vd stateInterpretation/favorable/warning của một quẻ). Người dùng hard-refresh thấy tooltip phong phú khi hover. (Part 1 1-cột: chỉ cần hard-refresh — đã live.)",
+        "product_decision": "Option (a) richer-tooltip chosen by PO: coreMeaning + Trạng thái + Thuận + Cảnh báo + trend label, omit 6-hào table, keep Xem chi tiết deep-link. Tooltip holds ~4 short VN clauses comfortably; 6-hào table is tabular → reference page. SSOT = QueName.tsx (QUE-TOOLTIP-DRY preserved).",
+        "created_at": "2026-06-14T19:43:26Z"
       }
     ]
   },
@@ -8655,6 +8665,17 @@
         "generic_mandate": "Fix the tool-selection in the fb-market-poster flow generically — no-arg market-level call, applies to all tickers, no instance hardcode.",
         "created_at": "2026-06-14T18:36:18Z",
         "created_by": "po"
+      },
+      {
+        "id": "BA-KINHDICH-HOVER-DETAIL",
+        "title": "Requirement Spec — KINHDICH-HOVER-DETAIL (enrich quẻ hover tooltip with Tra cứu Kinh Dịch detail)",
+        "owner": "ba",
+        "status": "TODO",
+        "zone": "apps/frontend/",
+        "sprint_id": "KINHDICH-HOVER-DETAIL",
+        "priority": "high",
+        "note": "User feature request (actively waiting). SSOT component = apps/frontend/app/components/QueName.tsx. Rich data already in-bundle = apps/frontend/app/lib/que-descriptions-detail.generated.ts (QUE_DETAIL: stateInterpretation/favorable/warning/coreMeaning/marketTrendLabel/phases). PO decision = Option (a) richer tooltip, omit 6-hào table, keep deep-link. Lean chain: ba (thin spec) → dev-frontend → ops (frontend-only rebuild) → qa. DONE BAR = done_verified per sprint success_metric (served-chunk RAW-verify on :3001).",
+        "created_at": "2026-06-14T19:43:26Z"
       }
     ],
     "closed_sprints": [
