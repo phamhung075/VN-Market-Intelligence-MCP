@@ -1,7 +1,7 @@
 {
   "_maintained_by": "generator (do not hand-edit)",
-  "lastUpdated": "2026-06-13T17:32:34.688Z",
-  "totalCount": 157,
+  "lastUpdated": "2026-06-14T22:26:20.503Z",
+  "totalCount": 163,
   "groups": [
     {
       "name": "alerts",
@@ -97,11 +97,12 @@
     },
     {
       "name": "macro",
-      "count": 18,
+      "count": 23,
       "tools": [
         "create_prediction_claim",
         "get_calibration_report",
         "get_carry_trade_signal",
+        "get_cpi_components",
         "get_evidence_summary",
         "get_fed_liquidity_spread",
         "get_imf_signals",
@@ -115,6 +116,10 @@
         "get_prediction_markets",
         "get_pyramid_tier",
         "get_rate_limit_status",
+        "get_vn_bop",
+        "get_vn_liquidity_state",
+        "get_vn_macro_indicators",
+        "get_vn_trade_balance",
         "get_yield_spread_signal",
         "record_evidence_fragment"
       ]
@@ -195,7 +200,7 @@
     },
     {
       "name": "system",
-      "count": 33,
+      "count": 34,
       "tools": [
         "add_to_watchlist",
         "answer_ask_question",
@@ -211,6 +216,7 @@
         "get_vps_proxy_health",
         "get_vps_service_health",
         "get_watchlist",
+        "get_week_period",
         "log_agent_work",
         "remove_from_watchlist",
         "restart_vps_service",
