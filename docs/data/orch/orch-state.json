@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T18:36:18Z",
-    "updated_by": "po",
+    "updated_at": "2026-06-14T18:47:06Z",
+    "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
-    "next_agent": "ba",
-    "note": "PO POST-SPRINT TRIAGE -> dispatch BA-VN-MACRO-TOOLING (decompose 07-06 VN-MACRO-TOOLING sprint to REQ doc). WIP=2 with passive ARCH-CRON-SCHEDULER-RELIABILITY."
+    "next_agent": "architect",
+    "note": "VN-MACRO-TOOLING BA spec DONE (a1ed1834, commit 11d318ea, router RAW-verified 2 files explicit-path: REQ_VN-MACRO-TOOLING.md 690L/12 sections/7 tools + ba notebook; orch-state untouched; no sweep). 6 blockers ALL need live VPS probe before parser (FDI/domestic split, SBV BOP fmt, GSO IIP/retail fmt, GSO CPI 11-basket, SBV interbank/OMO/IRS, VIRA/VARA URL). -> architect: multi-zone technical blueprint from docs/REQ_VN-MACRO-TOOLING.md (BA zone-split rec A=macro-indicators Go, B=mcp-server TS handlers+VMT-7, C=creditFlowTools.ts VMT-6, D=macro-indicators pkg/infra shared vpsFetch first). VN sources GEO-BLOCKED -> all fetches via Vinahost VPS; fail-closed never fabricate (is_estimate/confidence). Contract from LIVE payload not schema comment. Then -> pm -> dev specialists. Chain SPRINT-M ba->architect->pm. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. KINHDICH-HOVER-ENRICH-FE done_verified. WIP=2 (this + ARCH-CRON passive). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12696,9 +12696,7 @@
         "reverify_gate": "MARKET-DAY-2026-06-15: (G1) ohlcvDailyAggregatorJob auto-fires Mon — get_pipeline_health 'Aggregator last run' advances to 2026-06-15 with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires + VCB/ACB/CTG fundamental rows newer than its run, NO manual trigger; (G3) reputationComputeJob fires at 08:30 tick under peer contention (cron_job_runs row present, no miss). QA verifies LIVE raw (pipeline-health payload + cron_job_runs named-volume rows), never badges. On all-PASS -> umbrella -> done_verified + move to done_verified[]. On any miss -> the watchdog (G5, LIVE) must have self-healed/alerted -> capture evidence + spin the residual into a scoped FIX.",
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "BA-VN-MACRO-TOOLING",
         "type": "SPEC",
@@ -12706,16 +12704,24 @@
         "sprint_id": "VN-MACRO-TOOLING",
         "priority": "high",
         "size": "M",
-        "status": "READY",
+        "status": "ba-spec-done",
         "zone": "multi",
         "owner": "ba",
         "brief": "docs/analysis-briefs/07-06-methodology-gap.md",
         "depends": [],
         "created_at": "2026-06-14T18:07:41Z",
         "created_by": "po",
-        "next_agent": "ba"
+        "next_agent": "architect",
+        "lane": "in_progress",
+        "ba_spec_done_at": "2026-06-14T18:47:06Z",
+        "ba_commit": "11d318ea",
+        "ba_req_path": "docs/REQ_VN-MACRO-TOOLING.md",
+        "ba_blockers": 6,
+        "ba_zone_split": "A=apps/macro-indicators (Go endpoints+domain), B=apps/mcp-server TS handlers + VMT-7 register, C=creditFlowTools.ts VMT-6 extend, D=macro-indicators pkg/infrastructure shared vpsFetch (first, no deps)",
+        "router_ba_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY: git show 11d318ea --stat = EXACTLY 2 files (docs/REQ_VN-MACRO-TOOLING.md 690L/12 sections covering 7 tools w/ per-tool skill-switch-on acceptance contracts + ba.md notebook 10L); orch-state.json UNTOUCHED (working==HEAD, BA left board for router); NO concurrent dirty entries swept. 6 blockers ALL flagged needing live VPS probe before parser (the fail-closed-to-empty guard). READY for architect multi-zone blueprint."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
