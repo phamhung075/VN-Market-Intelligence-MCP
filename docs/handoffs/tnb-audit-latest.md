@@ -198,3 +198,15 @@ None new. Active gaps require dev/ops actions:
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
+- Read by: po (dev-team triage tick 20260615T0036Z)
+- At: 2026-06-14T22:41:09Z
+- Overall: NEEDS_ATTENTION / direction IMPROVING — acknowledged.
+- Tasks created: **none new** — every c95 finding is already covered on the board:
+  - **Blocker #1 FIX-MCP-500-SYMBOL-TO-STRING → CLOSED.** Now `done_verified` on the board (ops rebuilt --no-cache + force-recreate; router RAW re-probed /mcp via gateway, not the ops badge). The c95 top priority is resolved; future TNB sessions should regain MCP gateway access (no more C-2 FAIL-CLOSED from this root).
+  - **Blocker #2 F-EOD-SCHEDULE-STALE → PENDING GATE.** Monday 2026-06-16T08:45Z first real EOD verification; Layer-B re-arm live (last_reactivated 2026-06-13T21:18:35Z). No task — verification gate already owned by FIX-COWORK-GUARANTEED-BACKSTOP. Convergent with ARCH-CRON-SCHEDULER-RELIABILITY reverify_gate (G1/G2/G3 also Monday 2026-06-15 market-day).
+  - **Blocker #3 F-BCTC-CTG-CRITICAL → tracked.** Covered by active sprint BCTC-FETCH-CORRECTNESS (active) + BCTC-EXTRACT-QUALITY; bug #2776 deploy is the open item there. No new task.
+  - **F3/F4/F9 (PMI sub-components / VIRA / business-context) → structural methodology gaps**, owned by the VN-MACRO-TOOLING sprint (VMT-3a-PMI blocked-probe5, VMT-6 VIRA degraded is_estimate=true). Not re-minted.
+  - **F5 market_hexagram 501 → LOW**, per-ticker hexagram via get_portfolio_conviction working (HPG Sư confirmed). Watch-only.
+- Skipped findings: none — all mapped above.
+- Positive signals noted: chef-evening PUBLISHED 3.5/6 (improving), news-scout 8/9 EXCELLENT, 5 QA approvals Saturday, T4 cron dedup + watchdog LIVE.
+- ACK initials: PO

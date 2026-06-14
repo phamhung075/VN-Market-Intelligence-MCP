@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T22:33:27Z",
+    "updated_at": "2026-06-14T22:47:30Z",
     "updated_by": "dev-team",
-    "active_task_id": "BA-VN-MACRO-TOOLING",
-    "next_agent": "po",
-    "note": "VN-MACRO-TOOLING VMT-7 Zone-B wave LIVE-VERIFIED -> done_verified (ops a3f8cdf854aaadf90 rebuilt mcp-server+macro-indicators; router RAW re-probed all 5 tools via gateway, not the ops badge). Zone-B PROXY layer VERIFIED: toolCount=163 live==SSOT (0a77ae34, dev-mcp-server reconciled — head-note toolCount update ALREADY DONE by owner); both containers fresh-rebuilt all peers healthy; MACRO_INDICATORS_URL wired; all 5 enumerable+routing-correct; get_vn_liquidity_state LIVE-GREEN 200 with honest fail-closed fields (Decision A/B/DD-6 LIVE-confirmed). === WAVE-2 Zone-A CLOSED (A1-A5) + VMT-7 Zone-B LIVE-VERIFIED. === BUT 4/5 tools (trade_balance/bop/macro_indicators/cpi_components) live-dark — ROOT CAUSE corroborated (router-independent + macro-indicators logs): VPS squid proxy 125.212.251.27:3128 DOWN (host alive ping195ms, :3128+:443 refuse = service-down on Vinahost VPS). NOT a Zone-B defect (proxy propagates upstream failure correctly). -> head ops->po: TRIAGE 3 findings: (F1) ACTIVE INFRA INCIDENT VPS-proxy :3128 down — router ALREADY DISPATCHED ops-vps-fetch (urgent, infra on-call) to restore squid + per-source fetchers; LIKELY COMMON ROOT of open FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + VPS-AVAIL-02-FIX — PO reconcile the VPS task cluster under one root once ops-vps-fetch reports. (F2) /goal#1 BEST-RESULT GAP: Zone-A trade-balance/bop/macro-indicators/cpi-components 500/opaque on upstream-fetch fail instead of graceful 200+is_estimate+blocked_reason like liquidity_state — GENERIC across all 4 (/goal#2), mirror liquidity_state pattern, zone dev-macro-indicators (proposed VMT-8-MACRO-GRACEFUL-FAILCLOSE), independent of infra fix (resilience). (F3 non-blocking) gen-project-stats.ts cronJobCount=81 vs note ~69 + transient corrupt-2 partial write — dev-mcp-server reconcile+harden. VMT-3a-PMI still blocked-probe5 (S&P dev-local). Commit explicit path only."
+    "active_task_id": "VMT-8-MACRO-GRACEFUL-FAILCLOSE",
+    "next_agent": "dev",
+    "note": "VN-MACRO-TOOLING VMT-8-MACRO-GRACEFUL-FAILCLOSE DISPATCHED -> dev-macro-indicators (router dev-team tick 20260615T0036Z; PO a4c7a9bf triaged F2 /goal#1 best-result gap). /goal#1+#2 resilience fix: 4 dark Zone-A macro endpoints (trade/bop/macro/cpi) + liquidity error-path emit opaque HTTP 500 on upstream-fetch failure instead of degrading honestly (200 + is_estimate=true + per-bloc blocked_reason). PO RAW-verified root cause at code level + CORRECTED premise: errorLiquidityResponse ALSO returns non-nil error (would 500 on error path); /liquidity-state only looks graceful because its providers read LOCAL market.db (happy path) — fix is generic across ALL 5 use-cases, not 4. dev-macro-indicators returns (degradedResp, nil) on upstream-fetch/parse failure, keeps nil-provider/wiring -> 500; preserve permanent is_estimate invariants. G5 verifiable via forced-failure fixture while proxy dark. === PARALLEL IN-FLIGHT: F1 VPS squid :3128 outage -> ops-vps-fetch (a47d92aa) restoring (router dispatched Dockerfile/compose/certs changes are ITS working tree — NOT swept). PO holds VPS-cluster (FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + VPS-AVAIL-02-FIX) reconcile under one INC until ops-vps-fetch reports. === HELD: F3 gen-project-stats cronJobCount reconcile (dev-mcp-server, low); S2 07-06 methodology brief greenlit but SEQUENCED-after-incident (agent-father, not this cycle); context-bloat ops.md 235L>200 deferred until ops-vps-fetch done (claude-manager-helper prune, write-collision risk). VMT-3a-PMI blocked-probe5 (S&P dev-local). TNB c95 ACK'd no-new-tasks. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T22:33:27Z",
+    "_updated_at": "2026-06-14T22:47:30Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -9119,6 +9119,50 @@
         "po_signoff": "APPROVED",
         "po_signoff_at": "2026-06-14T20:11:20Z",
         "po_signoff_note": "Served :3001/assets/QueName-CweIuF2T.js (67522B) RAW-corroborated by PO: stateInterpretation x2 + favorable x2 + warning x2 + que-descriptions-detail import + VN labels Trạng thái/Cảnh báo/Xem chi tiết each x1, phases=0 (6-hào table correctly reference-page only) — enriched Tra-cứu-Kinh-Dịch hover live; matches user verbatim goal + sprint success_metric."
+      },
+      {
+        "id": "VMT-8-MACRO-GRACEFUL-FAILCLOSE",
+        "type": "FIX",
+        "title": "Macro endpoints graceful fail-close — return 200 + is_estimate=true + per-bloc blocked_reason on upstream-fetch failure instead of opaque HTTP 500",
+        "desc": "VN-MACRO-TOOLING /goal#1 BEST-RESULT resilience gap (router F2). The 4 Zone-A macro endpoints (POST /trade-balance, /bop, /macro-indicators, /cpi-components) return HTTP 500 with an opaque error whenever the upstream NSO/SBV fetch (VPS-proxied, currently dark per F1) fails, instead of degrading honestly the way /liquidity-state is DOCUMENTED to. This is a resilience defect that persists even after the proxy is restored: any transient upstream failure must degrade gracefully, never opaque-500. GENERIC across all endpoints (/goal#2 — ONE fix pattern, mirror the intended liquidity fail-close).",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "status": "dispatched",
+        "priority": "P1",
+        "size": "S",
+        "market_independent": true,
+        "weekend_safe": true,
+        "independent_of_F1": true,
+        "root_cause": "PO RAW-verified at code level: handlers_vmt_{trade,bop,macro,cpi}.go each do `resp, err := uc.Execute(...); if err != nil { w.WriteHeader(http.StatusInternalServerError); encode(resp); return }`. The use-case error builders errorTradeResponse / errorBOPResponse / errorMacroResponse / errorCPIResponse (pkg/application/usecases_vmt_{trade,bop,macro,cpi}.go) ALL return their populated degraded DTO TOGETHER WITH a non-nil `fmt.Errorf(...)`. Because Execute returns a non-nil error, the thin handler discards the carefully-populated fail-closed DTO and emits an opaque 500. errorLiquidityResponse has the SAME non-nil-error shape (same latent bug) — /liquidity-state only looks graceful in the live incident because its providers read local market.db (not geo-blocked) and hit the happy path; its error path would also 500.",
+        "fix_spec": "Mirror the INTENDED liquidity fail-close pattern across ALL 5 macro use-cases. On UPSTREAM-FETCH failure (vpsFetch / NSO-Excel / SBV-HTML provider error or parse failure) — as distinct from a true programming/wiring fault (nil provider) — Execute MUST return (populatedDegradedResponse, nil): Status set to a non-error degraded value (e.g. \"degraded\" / \"estimate\"), every bloc IsEstimate=true, and each affected bloc's BlockedReason naming the unreachable source per bloc (e.g. \"NSO customs Excel unreachable via VPS proxy 125.212.251.27:3128\"). The thin HTTP handlers then emit HTTP 200 with the honest degraded payload. KEEP the nil-provider/wiring-fault path returning a real error -> 500 (that is a genuine internal fault, not a degrade-able upstream gap). Apply uniformly so /liquidity-state's error path is also hardened (not just the 4 dark ones). Do NOT special-case any single endpoint — one shared pattern.",
+        "generic_mandate": "/goal#2 — one fix pattern for ALL macro endpoints. Refactor the shared shape (e.g. a common 'degrade vs hard-fail' decision: upstream-fetch/parse failure => degraded+nil; nil-provider/wiring => error) rather than copy-pasting per endpoint. Cover liquidity/trade/bop/macro/cpi. The PERMANENT is_estimate invariants already encoded (IRS DD-6, Interbank1W Decision B, VMT-1b bloc_split, VIRA/VARA) MUST be preserved — never flip a permanent is_estimate=true to false.",
+        "verification_gate": "(G1) Unit test per use-case: inject an upstream-fetch/parse failure into the provider and assert Execute returns (resp, nil) with Status!=error, every bloc IsEstimate=true, and BlockedReason populated naming the source — NOT an error. (G2) Unit test the handler path: on the degraded use-case return, assert HTTP 200 (not 500) and the JSON body carries is_estimate=true + blocked_reason. (G3) Regression: nil-provider/wiring fault STILL returns error -> HTTP 500 (genuine-fault path preserved). (G4) Permanent-estimate invariants intact (IRS/Interbank1W/bloc_split/VIRA never flipped to false). (G5) LIVE proof while F1 proxy is still dark OR via a forced-failure fixture: curl POST each of /trade-balance /bop /macro-indicators /cpi-components -> HTTP 200 + is_estimate=true + blocked_reason naming the unreachable upstream (NOT 500). QA verifies LIVE raw payload, never badges. `go test ./...` GREEN BEFORE any ops rebuild (RED-PREPUSH). go vet / gofmt clean.",
+        "mirrors_pattern_in": [
+          "apps/macro-indicators/pkg/interface/http/handlers_vmt_liquidity.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_liquidity.go"
+        ],
+        "files": [
+          "apps/macro-indicators/pkg/application/usecases_vmt_trade.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_bop.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_macro.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_cpi.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_liquidity.go",
+          "apps/macro-indicators/pkg/interface/http/handlers_vmt_trade.go",
+          "apps/macro-indicators/pkg/interface/http/handlers_vmt_bop.go",
+          "apps/macro-indicators/pkg/interface/http/handlers_vmt_macro.go",
+          "apps/macro-indicators/pkg/interface/http/handlers_vmt_cpi.go",
+          "apps/macro-indicators/pkg/interface/http/handlers_vmt_liquidity.go"
+        ],
+        "baseline_pass": false,
+        "depends_on": [],
+        "blocks": [],
+        "serialization_note": "Zone-A files (usecases_vmt_*.go) are under the VN-MACRO-TOOLING serialization guard (one dev-macro-indicators task at a time, merge-gate between). With WAVE-2 Zone-A serial chain A1-A5 now CLOSED, this fix can run as a single serial dev-macro-indicators task with no concurrent Zone-A writer. Recurring-bug escalation applies if a 2nd touch lands on the same usecases_vmt_*.go file.",
+        "created_at": "2026-06-14T22:42:39Z",
+        "created_by": "po",
+        "source": "router dev-team tick 20260615T0036Z finding F2 (/goal#1 best-result gap); PO RAW-verified root cause in handlers_vmt_*.go + usecases_vmt_*.go",
+        "dispatched_at": "2026-06-14T22:47:30Z",
+        "dispatch_agent": "dev-macro-indicators",
+        "dispatch_note": "Router dev-team dispatch 20260615 (tick 0036Z). Implement per this task's fix_spec + verification_gate G1-G5. GENERIC across all 5 use-cases (usecases_vmt_{trade,bop,macro,cpi,liquidity}.go) — on UPSTREAM-FETCH/parse failure return (populatedDegradedResponse, nil) [Status non-error, every bloc IsEstimate=true, BlockedReason naming the unreachable source per bloc]; KEEP nil-provider/wiring fault -> real error -> 500. Mirror the INTENDED liquidity fail-close. Preserve PERMANENT is_estimate invariants (IRS DD-6, Interbank1W Decision B, VMT-1b bloc_split, VIRA) — NEVER flip permanent true->false. go test ./... GREEN before any rebuild (RED-PREPUSH). Explicit-path commit (apps/macro-indicators/** + your notebook ONLY — NEVER git add -A, NEVER stage orch-state). On done+green router RAW-verifies (independent go build+test, foreign-capture guard, fail-close invariants at cited lines) then dispatches ops to force-recreate macro-indicators + QA LIVE raw verify (200+is_estimate+blocked_reason via forced-failure fixture, NOT badges)."
       }
     ],
     "closed_sprints": [
