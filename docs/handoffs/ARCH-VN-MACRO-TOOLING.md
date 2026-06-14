@@ -346,3 +346,486 @@ NEXT: pm | break into per-zone atomic dev tasks; enforce probe-gate before parse
 HANDOFF: docs/handoffs/ARCH-VN-MACRO-TOOLING.md
 PIPELINE: continue
 ```
+
+---
+
+## [Architect] PROBE-FOLD — WAVE-1 Recon Results Folded
+
+**Folded at:** 2026-06-14
+**Probes folded:** PROBE-1 (BLOCKED), PROBE-2 (PASS), PROBE-3 (PASS), PROBE-4 (OMO PASS / interbank BLOCKED)
+**Commit ref:** ops-vps-fetch f70d1b5a
+**Rule:** All parser contracts in this section are derived from live payload samples only (GA-7 / memory: feedback_contract_from_live_payload_not_schema_comment). Schema comments are never the source.
+
+---
+
+### Decision A — VMT-1b.bloc_split Fallback (PROBE-1: BLOCKED_JS_RENDER)
+
+**Situation:** `customs.gov.vn` is a JS-rendered SPA. The bridge proxy API returns HTTP 400; the backend `tongcuc.customs.gov.vn` is not DNS-resolvable externally. No enterprise-type breakdown (FDI vs domestic) is accessible by curl from VPS.
+
+**Decision: ACCEPT NSO FDI cross-join FALLBACK — `is_estimate=true` mandatory.**
+
+Rationale:
+- The Customs SPA blocking is architectural (not network/TLS) — a browser session with JS execution is the only path. Adding a headless browser (Playwright/Puppeteer) in a Go infrastructure layer is out of scope for this sprint and introduces a heavyweight dependency.
+- The NSO monthly Excel (sheet `12.FDI`, PROBE-3 PASS) provides national FDI registered + disbursed capital with M USD values. Cross-joining this with Customs total export figures (from NSO press release text or NSO export sheet `14.XK`) yields a FDI-attributed export share ESTIMATE.
+- This is a valid degraded mode: `bloc_split.fdi.is_estimate=true`, `bloc_split.domestic.is_estimate=true`. The estimate is traceable to a live source (NSO `12.FDI` sheet), not fabricated.
+- `VMT-1a` (trade-balance total + HS) is **NOT affected** — it draws from NSO export/import sheets (`14.XK`, `15.NK`) which are in the same Excel, already PASS.
+
+**VMT-1b.bloc_split contract:**
+```
+source:       NSO monthly Excel, sheet "12.FDI" + sheet "14.XK"
+fetch recipe: same 3-step NSO Excel recipe as PROBE-3 (reuse; no new probe)
+parse path:   excelize; sheet "12.FDI" row where Col1 = "Tổng số" → total registered M USD
+              sheet "14.XK" → total export M USD
+              fdi_export_share = fdi_registered_mn_usd / total_export_mn_usd  (ESTIMATE)
+is_estimate:  true (ALWAYS) — bloc_split is a cross-join approximation, never a Customs direct column
+note_field:   "Customs.gov.vn enterprise-type breakdown inaccessible (JS-SPA); FDI share derived
+               from NSO 12.FDI cross-join vs total export. is_estimate=true is permanent unless
+               Customs publishes a machine-readable enterprise breakdown."
+```
+
+**Dev rule:** `bloc_split` sub-field MUST NOT be emitted with `is_estimate=false` under any circumstance until a direct machine-readable Customs enterprise-type column is confirmed by a future probe. Fail-closed = emit `is_estimate=true` or omit the sub-field entirely; never fabricate.
+
+---
+
+### Decision B — VMT-5b.interbank Decision (PROBE-4: BLOCKED)
+
+**Situation:** `dttktt.sbv.gov.vn` (Oracle WebCenter, IP `202.58.245.101`) is 100% packet-loss from Vinahost VPS. This is a network-level block, not a TLS issue. The SBV main site (`www.sbv.gov.vn`) navigation references `dttktt` but has no fallback interbank rate table on the main domain.
+
+**Decision: OPTION 2 — Accept `interbank_1w.is_estimate=true` permanently for now. Do NOT pursue IP-whitelist investigation. Do NOT use NSO narrative mentions.**
+
+Rationale for rejecting the other options:
+- **Option 1 (alternative public endpoint):** No confirmed alternative public machine-readable interbank rate API was found. NSO press release narrative mentions are unreliable plain-text fragments — they would require natural-language parsing (NLP), which is wrong for a structured rate field. WiData is off-limits per policy (`feedback_data_sources_vn`). Bloomberg/Refinitiv are commercial. No open aggregator with a stable JSON endpoint has been identified.
+- **Option 3 (SBV IP-whitelist investigation):** This would require the user or a Vietnamese entity to submit a formal whitelist request to SBV IT. This is an indefinite administrative dependency outside the sprint scope. It should not block VMT-5b from shipping.
+- **Option 2 (is_estimate=true permanently):** The field exists in the output schema (named in the skill switch-on contract, GA-3 compliant). It returns `rate_1w_pct: null, is_estimate: true, source: null, blocked_reason: "dttktt.sbv.gov.vn unreachable from VPS — 100% packet loss; SBV Oracle WebCenter not publicly accessible"`. This is honest, fail-closed, and consistent with DD-6 (IRS permanent is_estimate).
+
+**Policy rates are NOT affected** — `refi_rate` and `discount_rate` are published on `www.sbv.gov.vn` (main site, PASS), can be scraped from the same Liferay portal as the BOP and OMO pages. Policy rates are NOT gated.
+
+**If in a future sprint `dttktt.sbv.gov.vn` becomes reachable (VPS IP changes, or SBV publishes a mirror), the parser can be added without a schema change** — the field already exists, just flip `is_estimate=false`.
+
+**VMT-5b.interbank field contract:**
+```
+rate_1w_pct:        null
+is_estimate:        true
+source:             null
+blocked_reason:     "dttktt.sbv.gov.vn unreachable from Vinahost VPS (100% packet loss)"
+note:               "Permanent is_estimate until alternative source confirmed or VPS egress path changes"
+```
+
+---
+
+### Per-Parser Live Contracts (dispatch-ready)
+
+All contracts below are derived from live payloads in `scripts/probes/vmt-{N}-sample.json`. Dev reads that file before writing any parser — never infers from schema comments.
+
+---
+
+#### VMT-1a — Trade Balance (Total + HS Attribution) — DISPATCH-READY
+
+```
+tool_id:      VMT-1a
+mcp_tool:     get_vn_trade_balance
+go_endpoint:  POST /trade-balance
+zone:         Zone A
+
+source:       NSO monthly Excel (nso.gov.vn), sheets "14.XK" (exports) + "15.NK" (imports)
+probe:        PROBE-3 (PASS) — scripts/probes/vmt-3-sample.json
+fetch recipe: [3-step NSO discovery]
+  1. GET https://www.nso.gov.vn/bao-cao-tinh-hinh-kinh-te-xa-hoi-hang-thang/
+     → regex latest bai-top/{YYYY}/{MM}/ link
+  2. GET press release page → regex \.xlsx download URL
+  3. GET Excel → sheets "14.XK" + "15.NK"
+tls:          HTTPS via GlobalSign intermediate CA (one-time VPS setup, see PROBE-3 recon.md)
+              curl --cacert /tmp/combined_ca.pem https://www.nso.gov.vn/...
+              NOT -k; intermediate cert path from VPS_CACERT_PATH_NSO env var
+parser:       excelize; sheet by NAME (stable), NOT positional index
+is_estimate:  false (for total + HS); true for bloc_split (see Decision A)
+
+field_map (from live payload context):
+  export_total_bn_usd:       sheet 14.XK, total row, absolute value column (tỷ USD)
+  import_total_bn_usd:       sheet 15.NK, total row, absolute value column (tỷ USD)
+  trade_balance_bn_usd:      = export_total - import_total (derived in domain)
+  yoy_export_pct:            sheet 14.XK, % cùng kỳ năm trước column
+  yoy_import_pct:            sheet 15.NK, % cùng kỳ năm trước column
+  hs_attribution: []         sector breakdown rows from sheet 14.XK/15.NK
+
+parse_rules:
+  - Read named sheets ("14. XK", "15. NK" — include space in name if present; verify against live)
+  - Number format: VN decimal (7.654 = 7654; see number_parse utility in vpsFetch helpers)
+  - Period field: derive from Excel header row (column label contains month/year)
+  - Use col index 0 = name, col index 2 = current month absolute, col index 3 = YTD cumulative,
+    col index 4 = % vs same period prior year (from live 13.Tongmuc sample — XK/NK same pattern)
+```
+
+#### VMT-1b — Trade Balance (bloc_split) — ESTIMATE-ONLY
+
+```
+tool_id:      VMT-1b (sub-field of VMT-1a response)
+source:       NSO monthly Excel, sheets "12.FDI" + "14.XK" (same Excel as VMT-1a — no extra fetch)
+is_estimate:  true (ALWAYS — Decision A above)
+fetch recipe: same as VMT-1a (reuse Excel already downloaded)
+
+field_map:
+  bloc_split.fdi.export_share_pct:    fdi_registered_mn_usd / total_export_mn_usd * 100
+  bloc_split.fdi.registered_mn_usd:   sheet 12.FDI, total row Col3 (Vốn đăng ký)
+  bloc_split.domestic.export_share_pct: 100 - fdi_export_share_pct
+  bloc_split.fdi.is_estimate:         true
+  bloc_split.domestic.is_estimate:    true
+  bloc_split.note:                    "Cross-join estimate: FDI capital from NSO 12.FDI vs total export; Customs SPA inaccessible"
+```
+
+---
+
+#### VMT-2 — SBV Balance of Payments — DISPATCH-READY
+
+```
+tool_id:      VMT-2
+mcp_tool:     get_vn_bop
+go_endpoint:  POST /bop
+zone:         Zone A
+
+source:       SBV Liferay headless article API
+probe:        PROBE-2 (PASS) — scripts/probes/vmt-2-sample.json
+fetch recipe: Direct JSON GET (no Excel, no PDF)
+  GET https://www.sbv.gov.vn/o/article/v1.0/articles
+    ?scopeKey=20117
+    &contentStructureId=10063168
+    &pageSize=100
+    &filter=status eq 0 and Date48362898 gt '' and Date48362898 ge '{quarter_start}' and Date48362898 le '{quarter_end}'
+  Headers: Accept: application/json, Referer: https://www.sbv.gov.vn/vi/can-can-thanh-toan-quoc-te
+  User-Agent: browser-UA (see probe recipe)
+tls:          HTTPS, system cacert works — no special cert needed
+no_excel:     true — excelize NOT needed for VMT-2 (pure JSON API)
+is_estimate:  false (all BOP fields are primary source)
+
+quarter_fields (from live Q4-2025 payload):
+  Date48362898:  "2025-12-25"   (last day of quarter, ISO date)
+  Select02257401: "quyIV"       (quarter label: quyI / quyII / quyIII / quyIV)
+
+field_map (live payload → Go struct field):
+  canCanVangLai         → current_account_total_mn_usd
+  hangHoaXuatKhau      → goods_exports_mn_usd
+  hangHoaNhapKhau      → goods_imports_mn_usd
+  hangHoaRong          → goods_net_mn_usd
+  dichVuXuatKhau       → services_exports_mn_usd
+  dichVuNhapKhau       → services_imports_mn_usd
+  dichVuRong           → services_net_mn_usd
+  thuNhapDauTuRong     → primary_income_net_mn_usd
+  chuyenGiaoVangLai    → secondary_income_net_mn_usd
+  canCanVon            → capital_account_mn_usd
+  canCanTaiChinh       → financial_account_mn_usd
+  dauTuTrucTiepRong    → fdi_net_mn_usd
+  dauTuGianTiepRong    → portfolio_investment_net_mn_usd
+  dauTuKhacRong        → other_investment_net_mn_usd
+  loiVaSaiSot          → errors_omissions_mn_usd
+  canCanTongThe        → overall_balance_mn_usd
+  duTruVaCacHangMucLien → reserve_assets_mn_usd
+
+number_parse:
+  VN number format: period = thousands separator, comma = decimal
+  "7.654" = 7,654 M USD (i.e., multiply by 1)
+  "-12.375" = -12,375 M USD
+  Go parse: strings.ReplaceAll(s, ".", "") then strings.ReplaceAll(s, ",", ".") then strconv.ParseFloat
+  IMPORTANT: "7.654" IS NOT seven point six five four — it is seven thousand six hundred fifty four.
+  Live proof: canCanVangLai="7.654" and hangHoaRong="9.135" and loiVaSaiSot="-12.375" from Q4-2025.
+
+eo_sign_convention (CONFIRMED BPM6):
+  loiVaSaiSot negative = unexplained outflows
+  loiVaSaiSot positive = unexplained inflows
+  Discriminator: FDI_BENIGN when errors_omissions_mn_usd < -1000 (i.e. < -1 bn USD)
+  NO sign flip required. Confirmed Q4-2025 loiVaSaiSot = -12375 M USD.
+
+empty_field_rule:
+  Fields with value "" (empty string) → omit or set null in Go struct
+  Examples: tinDungVaVayNoTuIMF = "", taiTroDacBiet = "" in live sample
+```
+
+---
+
+#### VMT-3a — Trade Balance PMI (S&P Global) — NOT IN NSO EXCEL — PROBE-5 PENDING
+
+```
+tool_id:      VMT-3a (PMI sub-component of MacroIndicatorsVN)
+mcp_tool:     get_vn_macro_indicators (sub-field)
+source:       S&P Global VN Manufacturing PMI press page (not geo-blocked)
+probe:        PROBE-5 — NOT YET RUN (PROBE-5 was scoped but not in WAVE-1)
+dispatch:     NOT YET DISPATCH-READY — PROBE-5 required
+gate:         Low priority; PMI is a single scalar (headline PMI + new orders sub-index)
+note:         PMI source is globally accessible (no VPS needed); dev-macro-indicators
+              can probe this from local machine as PROBE-5
+```
+
+---
+
+#### VMT-3b — IIP (Industrial Production Index) — DISPATCH-READY
+
+```
+tool_id:      VMT-3b (IIP sub-component of MacroIndicatorsVN)
+mcp_tool:     get_vn_macro_indicators (sub-field)
+go_endpoint:  POST /macro-indicators-vn
+zone:         Zone A
+
+source:       NSO monthly Excel, sheet "2.IIPthang"
+probe:        PROBE-3 (PASS) — scripts/probes/vmt-3-sample.json
+fetch recipe: same 3-step NSO Excel recipe as VMT-1a (reuse same Excel download)
+tls:          GlobalSign intermediate CA (same as VMT-1a)
+is_estimate:  false
+
+sheet_name:   "2.IIPthang"  (match by name, not index)
+columns (from live sample):
+  col 0: sector/subsector name (Vietnamese string)
+  col 1: Tháng N-1 vs cùng kỳ năm trước (%)  [prior month YoY]
+  col 2: Tháng N vs cùng kỳ năm trước (%)    [current month YoY] ← PRIMARY
+  col 3: N tháng vs cùng kỳ năm trước (%)    [YTD YoY]
+  col 4: Tháng N vs tháng trước (%)           [MoM]
+
+live sample row:
+  ["Toàn ngành công nghiệp", "109.3", "103.27", "108.79", "109.08"]
+  → iip_total_yoy_pct = 103.27 (col 2); iip_total_mom_pct = 109.08 (col 4)
+  → iip_ytd_yoy_pct = 108.79 (col 3)
+
+dedicated_excel (alternative, smaller file):
+  https://www.nso.gov.vn/wp-content/uploads/2026/06/IIP-Vie.xlsx (20,883 bytes)
+  This dedicated IIP Excel may have a simpler structure; use if main monthly Excel parsing is fragile.
+  Decision: PREFER main monthly Excel for consistency; use dedicated as fallback.
+
+target rows (stable Vietnamese labels):
+  "Toàn ngành công nghiệp"           → iip_all_industry
+  "Công nghiệp chế biến, chế tạo"   → iip_manufacturing
+  "Công nghiệp khai khoáng"          → iip_mining
+  "Sản xuất và phân phối điện"       → iip_electricity
+```
+
+---
+
+#### VMT-4 — CPI Components — DISPATCH-READY
+
+```
+tool_id:      VMT-4
+mcp_tool:     get_cpi_components
+go_endpoint:  POST /cpi-components
+zone:         Zone A
+
+source:       NSO monthly Excel, sheet "16.CPI"
+probe:        PROBE-3 (PASS) — scripts/probes/vmt-3-sample.json (cpi_11_baskets section)
+fetch recipe: same 3-step NSO Excel recipe (reuse same Excel download — ONE Excel serves VMT-1a, VMT-3b, VMT-4)
+tls:          GlobalSign intermediate CA
+is_estimate:  false for index values; weights NOT available from Excel (see below)
+
+sheet_name:   "16.CPI"  (match by name)
+columns (from live CPI section in vmt-3-sample.json):
+  col 0: basket name (Vietnamese)
+  col 1: T{N-1}/{YYYY-1} vs kỳ gốc (vs base period, prior year same month)
+  col 2: T{N}/{YYYY-1} vs kỳ gốc
+  col 3: T{N}/{YYYY} vs kỳ gốc            ← current month absolute index vs base
+  col 4: T{N}/{YYYY} vs T{N-1}/{YYYY}     ← MoM change (%): PRIMARY for "vs_prev_month_pct"
+  col 5: BQ NT/{YYYY} vs BQ NT/{YYYY-1}   ← YTD avg YoY (%): PRIMARY for "avg_ytd_yoy_pct"
+
+15 category rows (from live sample — these are the STABLE Vietnamese label strings):
+  "CHỈ SỐ GIÁ TIÊU DÙNG"                           → cpi_total (row 0, headline)
+  "Hàng ăn và dịch vụ ăn uống"                      → basket: food_dining
+  "Lương thực"                                        → sub-basket: foodstuffs
+  "Thực phẩm"                                         → sub-basket: food_products
+  "Ăn uống ngoài gia đình"                            → sub-basket: dining_out
+  "Đồ uống và thuốc lá"                              → basket: beverages_tobacco
+  "May mặc, giày dép và mũ nón"                     → basket: clothing_footwear
+  "Nhà ở, điện nước, chất đốt và VLXD"              → basket: housing_utilities
+  "Thiết bị và đồ dùng gia đình"                    → basket: household_equipment
+  "Thuốc và dịch vụ y tế"                           → basket: health
+  "Giao thông"                                        → basket: transport
+  "Thông tin và truyền thông"                        → basket: communication
+  "Giáo dục"                                          → basket: education
+  "Văn hoá, giải trí và du lịch"                    → basket: culture_recreation
+  "Hàng hóa và dịch vụ khác"                        → basket: other
+
+live values May 2026 (from sample):
+  cpi_total_yoy_pct:        5.60
+  cpi_total_mom_pct:        0.29
+  cpi_avg_5m2026_yoy_pct:  4.31
+  core_inflation_yoy_pct:  4.04 (from press release text, NOT in Excel sheet)
+
+weights_policy:
+  CRITICAL: CPI weights (trọng số) are NOT in the Excel table.
+  Do NOT attempt to infer weights from the index values.
+  weights field in output: null, is_estimate=true,
+  note: "Weights from CPI methodology PDF (updated ~every 5 years); not in monthly Excel"
+
+headline_cpi_rule:
+  YoY and MoM headline figures from press release text may differ slightly from sheet values
+  due to rounding. Sheet values are the authoritative series; press release text is supplementary.
+  If col 5 (YTD avg YoY) = 4.31% → source is Excel; if from text → add source_note field.
+```
+
+---
+
+#### VMT-5a — Liquidity State (Policy Rates + SJC + FX) — DISPATCH-READY (NOT GATED ON PROBE-4)
+
+```
+tool_id:      VMT-5a (non-OMO sub-fields of LiquidityState)
+mcp_tool:     get_vn_liquidity_state
+go_endpoint:  POST /liquidity-state
+zone:         Zone A
+
+These sub-fields are NOT gated on PROBE-4 (confirmed in original blueprint + recon):
+
+policy_rates:
+  source:     www.sbv.gov.vn (Liferay, same domain as BOP — confirmed reachable, PASS)
+  fields:     refi_rate_pct, discount_rate_pct, lombard_rate_pct
+  fetch:      HTML table parse from SBV rates page (Liferay HTML, same pattern as OMO parse)
+  is_estimate: false
+
+sjc_gap:
+  source:     market.db SJC table (existing crawler writes here — DD-7 confirmed)
+  fields:     sjc_price_mn_vnd, world_gold_usd, usd_vnd, sjc_gap_mn_vnd
+  fetch:      SQLite read via existing SBVRateSQLiteAdapter pattern (no new vpsFetch)
+  is_estimate: false
+
+fx_coupling:
+  source:     market.db sbv_rates + commodity_prices tables (existing)
+  fields:     usd_vnd_center, fx_band_pct, fx_coupling_score
+  fetch:      SQLite read (existing)
+  is_estimate: false
+  bonus:      SBV FX reference rate confirmed accessible at www.sbv.gov.vn/tỷ-giá (PROBE-4 bonus)
+              Live: usd_center_rate=25155, usd_buy=23948, usd_sell=26362 (2026-06-12)
+              Can supplement market.db read with live SBV FX page if DB data is stale.
+
+interbank_1w: → is_estimate=true (Decision B above; rate_1w_pct: null)
+irs:          → is_estimate=true (DD-6; permanent)
+```
+
+---
+
+#### VMT-5b.omo — OMO Auction Results — DISPATCH-READY
+
+```
+tool_id:      VMT-5b.omo (OMO sub-field of LiquidityState)
+mcp_tool:     get_vn_liquidity_state
+go_endpoint:  POST /liquidity-state
+zone:         Zone A
+
+source:       SBV Liferay OMO page (HTML table)
+probe:        PROBE-4 (PASS) — scripts/probes/vmt-4-sample.json (omo section)
+fetch recipe:
+  curl --cacert /etc/ssl/certs/ca-certificates.crt -L \
+    -H "User-Agent: <browser-UA>" -H "Accept-Language: vi-VN,vi;q=0.9" \
+    "https://www.sbv.gov.vn/vi/web/sbv_portal/nghi%E1%BB%87p-v%E1%BB%A5-th%E1%BB%8B-tr%C6%B0%E1%BB%9Dng-m%E1%BB%9F"
+tls:          system cacert works (no special cert)
+format:       HTML table embedded in Liferay page (NOT a JSON API — different from BOP endpoint)
+page_size:    ~408KB (full Liferay page)
+is_estimate:  false for individual auction rows; net_outstanding is computed (see below)
+
+table_columns (from live sample):
+  col 0: Loại hình giao dịch  (Transaction type — Vietnamese string)
+  col 1: Số thành viên tham gia/trúng thầu  (Members bid/won — format "N/N")
+  col 2: Khối lượng trúng thầu (Tỷ đồng)   (Volume won, Billion VND — float)
+  col 3: Lãi suất trúng thầu (%/năm)        (Interest rate won %/year — float)
+
+operation_classification (from type string in col 0):
+  contains "Mua kỳ hạn"   → class: ADD (reverse repo, injects liquidity)
+  contains "Bán kỳ hạn"   → class: ABSORB (forward sale, drains liquidity)
+  contains "Tín phiếu"    → class: ABSORB (SBV treasury bills, drains liquidity)
+  "Tổng cộng"             → total summary row; skip for individual classification
+
+tenor_parse (from type string in col 0):
+  "Mua kỳ hạn - Kỳ hạn 35 ngày" → tenor_days: 35
+  "Mua kỳ hạn - Kỳ hạn 56 ngày" → tenor_days: 56
+  Standard tenors: 7, 14, 28, 35, 56, 91 ngày
+  regex: `Kỳ hạn (\d+) ngày`
+
+date_parse (from page headline):
+  Page shows "Kết quả đấu thầu thị trường mở ngày {DD}/{MM}/{YYYY}"
+  Parse: DD/MM/YYYY → time.Time (Vietnamese date format)
+
+live_sample (2026-06-12):
+  date: "12/06/2026"
+  operations:
+    - type: "Mua kỳ hạn - Kỳ hạn 35 ngày", members: "2/2", volume_bn_vnd: 217.45, rate_pct: 4.5 → ADD
+    - type: "Mua kỳ hạn - Kỳ hạn 56 ngày", members: "6/6", volume_bn_vnd: 1000.0, rate_pct: 4.5 → ADD
+    - type: "Tổng cộng", volume_bn_vnd: 1217.45  (summary row — skip for classification)
+  total_add_bn_vnd:    1217.45
+  total_absorb_bn_vnd: 0
+
+net_outstanding_computation:
+  CRITICAL: SBV OMO page shows ONLY the latest auction result — no net outstanding total published.
+  The parser MUST maintain a rolling tally:
+    net_outstanding_bn_vnd = SUM(add volumes where maturity_date > now) - SUM(absorb volumes where maturity_date > now)
+  maturity_date = auction_date + tenor_days
+  Storage: macro_vmt_cache table (DD-3) must persist individual auction rows with:
+    columns: auction_date, tenor_days, class (ADD/ABSORB), volume_bn_vnd, maturity_date
+  On each fetch: insert new row, query SUM(ADD) - SUM(ABSORB) WHERE maturity_date > current_date
+
+html_parse_strategy:
+  1. GET page → 408KB Liferay HTML
+  2. Find headline: regex `Kết quả đấu thầu.*ngày (\d{2}/\d{2}/\d{4})`
+  3. Find HTML table within the OMO section (CSS: table within div containing that headline)
+  4. Parse table rows → col values
+  5. Skip "Tổng cộng" row
+  6. Classify + extract tenor + volume + rate per row
+  7. Compute maturity date; upsert into cache; return net outstanding
+```
+
+---
+
+### Source Map Confirmation — ungated VMT tools
+
+| Tool | Source | Probe | Gated? | Notes |
+|---|---|---|---|---|
+| VMT-1a (trade total+HS) | NSO Excel sheets 14.XK + 15.NK | PROBE-3 (PASS) | NO | Reuse same Excel as VMT-3b + VMT-4 |
+| VMT-1b (bloc_split) | NSO Excel 12.FDI + 14.XK cross-join | PROBE-3 (PASS) | NO (degraded mode) | is_estimate=true always; Decision A |
+| VMT-2 (BOP) | SBV Liferay JSON API | PROBE-2 (PASS) | NO | No Excel needed; pure JSON |
+| VMT-3a (PMI) | S&P Global press page | PROBE-5 (PENDING) | YES — PROBE-5 | Not geo-blocked; dev can probe locally |
+| VMT-3b (IIP) | NSO Excel sheet 2.IIPthang | PROBE-3 (PASS) | NO | Same Excel as above |
+| VMT-4 (CPI) | NSO Excel sheet 16.CPI | PROBE-3 (PASS) | NO | Same Excel; no weights available |
+| VMT-5a (policy+SJC+FX) | market.db + www.sbv.gov.vn | PROBE-4 bonus PASS | NO | Existing DB + Liferay |
+| VMT-5b.omo | SBV Liferay OMO HTML | PROBE-4 (PASS) | NO | Rolling tally required |
+| VMT-5b.interbank | dttktt.sbv.gov.vn | PROBE-4 (BLOCKED) | PERMANENT | is_estimate=true; Decision B |
+| VMT-5b.irs | No source found | DD-6 | PERMANENT | is_estimate=true; permanent |
+
+---
+
+### WAVE-2 Dispatch Order (Updated)
+
+**Zone A / Zone D serialization guard:** `dev-macro-indicators` parsers MUST be serialized — same service (`apps/macro-indicators/`), same chi router file, same `usecases_vmt.go` and `handlers_vmt.go`. Two concurrent dev tasks touching these files = merge conflict + recurring-bug risk (Zone A risk: MED per DDD Risk Review). PM MUST assign one dev per file; no parallel commits to `handlers_vmt.go` or `usecases_vmt.go`. Separate tasks per tool, sequential or carefully staged merge gates.
+
+```
+[WAVE-2 — NOW DISPATCH-READY after PROBE-2 + PROBE-3 + PROBE-4 OMO return]
+
+  Priority 1 — Zone D (vpsFetch adapter):
+    dev-macro-indicators: CREATE apps/macro-indicators/pkg/infrastructure/vpsFetch.go
+    Dependency: NONE — this must land before ALL Zone A parser tasks
+    Payload samples: available in scripts/probes/vmt-{2,3,4}-sample.json
+    TLS notes: per-source (SBV: system cacert; NSO: GlobalSign intermediate; see recon docs)
+
+  Priority 2 — Zone A SERIALIZED (one task at a time per file):
+    Task A1: VMT-2 (BOP parser) — DISPATCH-READY
+      live contract: this doc § VMT-2
+      sample: scripts/probes/vmt-2-sample.json
+      key risk: VN number format (7.654 ≠ 7.654 float; see number_parse above)
+    Task A2: VMT-3b (IIP) + VMT-4 (CPI) — DISPATCH-READY (share same Excel download)
+      live contract: this doc § VMT-3b + VMT-4
+      sample: scripts/probes/vmt-3-sample.json
+      key risk: excelize sheet-by-name; CPI weights NOT in Excel (null, is_estimate=true)
+      NOTE: ONE dev writes both VMT-3b + VMT-4 since they share the same Excel fetch logic
+    Task A3: VMT-1a + VMT-1b — DISPATCH-READY (same Excel, same download logic as A2)
+      live contract: this doc § VMT-1a + VMT-1b
+      sample: scripts/probes/vmt-3-sample.json (sheets 12.FDI, 14.XK, 15.NK)
+    Task A4: VMT-5b.omo — DISPATCH-READY
+      live contract: this doc § VMT-5b.omo
+      sample: scripts/probes/vmt-4-sample.json (omo section)
+      key risk: rolling net_outstanding tally in macro_vmt_cache SQLite table
+    Task A5: VMT-5a (policy rates + SJC + FX) — DISPATCH-READY
+      live contract: this doc § VMT-5a
+      source: existing market.db + www.sbv.gov.vn (no new probe needed)
+
+  STILL BLOCKED (do NOT dispatch):
+    VMT-3a (PMI): PROBE-5 required first (S&P Global press page — not geo-blocked)
+    VMT-5b.interbank: permanently is_estimate=true; no parser to write
+
+[WAVE-3 — after Zone A tasks A1..A5 merged and endpoint tests pass]
+  Zone B: wire all 5 MCP handlers to live Zone A endpoints
+  Zone B VMT-7: registry addition + gateway discoverability test
+
+[WAVE-4 — after Zone B + VMT-7 merged]
+  QA: live call_tool verification for all tools
+  PROBE-5 (PMI): can run in parallel with WAVE-3 independently
+  VMT-3a parser: dispatch after PROBE-5 returns
+```

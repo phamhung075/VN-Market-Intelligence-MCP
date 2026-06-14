@@ -1,8 +1,37 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 20:00 UTC | **Sprint:** VN-MACRO-TOOLING
+**Last updated:** 2026-06-14 21:30 UTC | **Sprint:** VN-MACRO-TOOLING (probe-fold)
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T21:30Z — ARCH-VN-MACRO-TOOLING PROBE-FOLD (DONE)
+
+**Task:** ARCH-VN-MACRO-TOOLING probe-fold | WAVE-1 recon (4 probes) folded into dispatch-ready contracts
+**Output:** `[Architect] PROBE-FOLD` section appended to `docs/handoffs/ARCH-VN-MACRO-TOOLING.md`. Decision journal entries 8–12 in `docs/agent-memory/decisions/sprint-VN-MACRO-TOOLING.md`.
+
+**Decision A — VMT-1b.bloc_split:** ACCEPT NSO FDI cross-join fallback. is_estimate=true permanent. Customs SPA JS-render is architectural block (not network); no headless browser in Go service. NSO sheet 12.FDI cross-joined with 14.XK is live, traceable, honest.
+
+**Decision B — VMT-5b.interbank:** OPTION 2 — permanent is_estimate=true; rate_1w_pct: null. No alternative public endpoint found; IP-whitelist with SBV is indefinite administrative dependency. Consistent with DD-6 (IRS). Schema field exists for future parser drop-in without schema change.
+
+**Per-parser contracts confirmed dispatch-ready:**
+- VMT-1a (trade total): NSO Excel 14.XK+15.NK — READY
+- VMT-1b (bloc_split): NSO Excel 12.FDI cross-join — READY (is_estimate=true always)
+- VMT-2 (BOP): SBV Liferay JSON API — READY (NO excelize; pure JSON; VN number parse confirmed)
+- VMT-3b (IIP): NSO Excel 2.IIPthang — READY
+- VMT-4 (CPI): NSO Excel 16.CPI — READY (weights=null is_estimate=true; no weights in Excel)
+- VMT-5a (policy+SJC+FX): market.db + www.sbv.gov.vn — READY (not gated on PROBE-4)
+- VMT-5b.omo: SBV Liferay HTML table — READY (rolling net_outstanding tally required)
+
+**Still blocked:**
+- VMT-3a (PMI): PROBE-5 pending (not geo-blocked; dev can run locally)
+- VMT-5b.interbank: permanent is_estimate=true (Decision B)
+- VMT-5b.irs: permanent is_estimate=true (DD-6)
+
+**WAVE-2 dispatch order:** Zone D first → A1 (VMT-2) → A2 (VMT-3b+4) → A3 (VMT-1a+1b) → A4 (VMT-5b.omo) → A5 (VMT-5a). SERIALIZED — Zone A MED risk, shared handler/usecase files.
+
+**Key architectural refinement:** NSO monthly Excel serves 4 tools (VMT-1a/1b/3b/4) — one cached vpsFetch per refresh cycle via `getOrFetchNSOMonthlyExcel()` application-layer helper.
+
+**DDD risk (probe-fold additions):** No new risk classes. VN number format (7.654 ≠ float 7.654) is a P0 parse-correctness risk for VMT-2 — mitigated by explicit parse rule in contract.
 
 ## 2026-06-14T20:00Z — ARCH-VN-MACRO-TOOLING (DONE)
 
