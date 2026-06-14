@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T14:11:14Z",
+    "status": "review",
+    "updated_at": "2026-06-14T14:19:43Z",
     "updated_by": "dev-team",
     "active_task_id": "T3-ARCH-CRON-WATCHDOG",
-    "next_agent": "dev-mcp-server",
-    "note": "T3-ARCH-CRON-WATCHDOG round-3 CHANGES_REQUESTED -> dev-mcp-server. (A) 3 key fixes ACCEPTED (9a7e1aef). (B) REJECTED: WD-10 manifest-integrity test is a tautology (compares two hand-typed lists in one module; never reads wrapRun/recordJobRun call sites) -> name-drift still ships green. Fix: WD-11 derives recorded-name set from registration SOURCE files + resolves JOB_NAME_FUNDAMENTALS const & summaryJob:daily template; assert every manifest key in derived set; prove fail-loud by flipping a call-site literal. tsc 0 + bun watchdog green before ops. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
+    "next_agent": "ops",
+    "note": "T3-ARCH-CRON-WATCHDOG round-3 IMPL'd (9a7e1aef keys + 153f2e82 WD-11) + router-RAW-verified GREEN (WD-11 reads real call sites; router OWN flip of recordJobRun('insiderCheckJob') -> RED then restored 18/18; tsc 0) -> ops for TARGETED rebuild + LIVE gate. DECISIVE live check: the 3 false 'never ran' alerts (ohlcv-daily-aggregator/foreignFlowAlertJob/ta-ohlcv-backfill) must be GONE; only genuinely-stale baseRateComputationJob may alert (correct). NEVER compose down, expect 82 cron keys. ops-green -> qa -> done_verified CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12065,48 +12065,6 @@
         "design_complete_at": "2026-06-14T11:40:00Z",
         "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
         "next_task": "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-      },
-      {
-        "id": "T3-ARCH-CRON-WATCHDOG",
-        "title": "ARCH-CRON Phase 2: schedulerWatchdogJob.ts + tests — detect & self-heal missed fires",
-        "type": "SPRINT-S",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "depends": [
-          "T2-ARCH-CRON-RECOVER-JITTER"
-        ],
-        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
-        "size": "M",
-        "verification_gate": "New file apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts implements runSchedulerWatchdog() with WATCHDOG_MANIFEST (16 monitored jobs, cadenceMs + thresholdMultiplier + action). Registered in startScheduler.ts on */10 * * * * schedule with recoverMissedExecutions: true. 3 test files pass: ARCH-CRON-watchdog.test.ts (5 unit tests on alert/self-heal/rate-limit logic), ARCH-CRON-idempotency.test.ts (T4 dedup under replay), ARCH-CRON-recovery.test.ts (loop-saturation simulation). Live: after deploy, watchdog fires cron_job_runs row every 10 min. tsc 0 errors.",
-        "acceptance": {
-          "AC1": "schedulerWatchdogJob.ts created per brief §7 interface spec",
-          "AC2": "WATCHDOG_MANIFEST hardcoded with 16 entries (ohlcvDailyAggregatorJob=self-heal, vnstockFundamentalsRefresh=alert-only, etc.)",
-          "AC3": "Registered in startScheduler.ts + cronConfig.ts schedulerWatchdog key added",
-          "AC4": "ARCH-CRON-watchdog.test.ts (5 tests): no alert within cadence, alert at 1.5x, self-heal calls wrapRun, dedup prevents double execution, 2h rate-limit",
-          "AC5": "ARCH-CRON-idempotency.test.ts: per-job recovery replay tests for ohlcv, reputation, calibration",
-          "AC6": "ARCH-CRON-recovery.test.ts: event-loop saturation simulation + tick recovery verification",
-          "AC7": "bun test all green; tsc 0 errors; git diff shows only watchdog/* + test files"
-        },
-        "created_at": "2026-06-14T12:00:00Z",
-        "created_by": "pm",
-        "note": "Lever 4 from architect brief. Builds on T1+T2. New scheduler/system/ module. 3 test files mirror EVIDENCE-ACCUM-SILENT-CRON test strategy. Rate-limit map in-process (no WAL writes from watchdog). Reads cron_job_runs via jobRunRepo injection (DDD clean).",
-        "next_agent": "dev-mcp-server",
-        "claimed_at": "2026-06-14T13:15:48Z",
-        "claimed_by": "dev-team",
-        "dispatch_note": "Router dispatched T3 IMPL (tick post-T2-done). depends [T2] SATISFIED (T2 done_verified — recoverMissedExecutions global default + jitter LIVE, idempotency invariant holds in prod). Same-zone apps/mcp-server FREE (T2 done). dev-mcp-server: implement schedulerWatchdogJob.ts (Lever D, every 10 min) per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5/§7 — detect jobs whose last successful cron_job_run is older than (cron cadence + grace) and emit a WORK-channel staleness alert (dedup per job per window; do NOT auto-restart). Reuse cron_job_runs as the freshness source BUT account for the double-LOG artifact (FIX-CRON-JOB-RUNS-DOUBLE-LOG) — key on MAX(started_at) per job_name, never row counts. New job must itself be recoverMissedExecutions-safe (idempotent: keyed alert dedup, no unguarded Telegram). bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify watchdog fires + dedups, never badges. T3 done CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY.",
-        "impl_commit": "55ea2ccfaf36bc089af54ab2527d4e16ca6151f1",
-        "impl_verified_at": "2026-06-14T13:25:41Z",
-        "impl_verified_by": "dev-team",
-        "impl_verdict": "RAW-verified GREEN: commit 55ea2ccf clean 4 files apps/mcp-server@HEAD (orch-state untouched); tsc exit 0 (router re-ran); 14/14 bun watchdog tests; WIRED startScheduler.ts:1175 scheduleCron(CRONS.schedulerWatchdog)+jobRunRepo.wrapRun, cronConfig */10 * * * *; double-log immune (SELECT MAX(started_at)); recovery-safe (T4 alert-dedup 2h cooldown Map, alert-only, no WAL write).",
-        "ops_instructions": "TARGETED REBUILD ONLY: docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server. NEVER docker compose down (rebuild-recreate-destroys-peers). docker ps -a after to confirm all peers Up/healthy. Then LIVE verification: (1) startup logs show scheduler started + cron keys registered (expect 82 now — +1 schedulerWatchdog) + NO 'Cannot convert a symbol to a string'; (2) confirm schedulerWatchdogJob appears in the registered-cron-keys log line; (3) within ~10 min the watchdog fires its first tick — RAW-probe cron_job_runs via keinos/sqlite3 sidecar (docker run --rm --volumes-from <cid> keinos/sqlite3 sqlite3 /app/data/market.db \"SELECT job_name,MAX(started_at) FROM cron_job_runs WHERE job_name='schedulerWatchdogJob' GROUP BY job_name\") — confirm it ran; (4) verify it did NOT spam WORK channel (alert-only + 2h cooldown — at most one alert per genuinely-stale job, and on a healthy fleet likely ZERO alerts); (5) router-style own gateway call_tool(get_pipeline_health or get_market_snapshot) returns valid payload, no 500. Report image build timestamp, peer count, the cron-key count (expect 82), watchdog first-fire evidence, and any WORK alerts it emitted (with the stale job names if any). On ops-green -> qa LIVE gate -> done_verified CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY.",
-        "changes_requested_at": "2026-06-14T14:11:14Z",
-        "changes_requested_by": "dev-team",
-        "review_round": 3,
-        "cr_reason": "PART (B) REJECTED — false-GREEN. WD-10 is a tautology: imports CANONICAL_WATCHDOG_JOB_NAMES (hand-maintained literal array) from the SAME module as WATCHDOG_MANIFEST and asserts they agree with each other; never reads the wrapRun/recordJobRun call sites. The exact name-drift bug still ships green (rename a wrapRun literal in startScheduler.ts, leave the watchdog module -> manifest key still == canonical entry -> WD-10 passes -> live queries wrong name -> false 'never ran'). FIX round3: (B1) add WD-11 that DERIVES the recorded-name set by READING registration sources at test time (startScheduler.ts, src/scheduler/jobs/**/*.ts, startupHelpers.ts) and extracting wrapRun(...)/recordJobRun(...) literal args; resolve 2 indirections (JOB_NAME_FUNDAMENTALS const value; summaryJob:${periodType} template -> cover 'summaryJob:daily'). (B2) assert every WATCHDOG_MANIFEST key is in that source-derived set, fail-loud with offending key+file. (B3) prove fail-loud by flipping a CALL-SITE literal (not a manifest key) -> WD-11 RED; restore -> green; document in commit. Keep WD-10 as secondary manifest<->canonical check. Gates: tsc 0 + bun watchdog green (incl WD-11). (C) weekday TODO stays deferred to architect, non-blocking.",
-        "ops_deploy_note": "Image 13:28:53Z deployed LIVE (82 cron keys, 13 peers healthy, no 500) — the DEPLOY itself was clean; only the manifest correctness failed. dev fix is code-only; ops will targeted-rebuild again after.",
-        "round2_partial_accept": "PART (A) ACCEPTED at 9a7e1aef: 3 manifest keys corrected (ohlcv-daily-aggregator, foreignFlowAlertJob, ta-ohlcv-backfill) + liveManifest selfHealFn wrapRun literals matched; tsc 0, watchdog 17/17 (router re-ran)."
       }
     ],
     "ready": [],
@@ -12129,6 +12087,53 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
+      },
+      {
+        "id": "T3-ARCH-CRON-WATCHDOG",
+        "title": "ARCH-CRON Phase 2: schedulerWatchdogJob.ts + tests — detect & self-heal missed fires",
+        "type": "SPRINT-S",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "REVIEW",
+        "depends": [
+          "T2-ARCH-CRON-RECOVER-JITTER"
+        ],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "New file apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts implements runSchedulerWatchdog() with WATCHDOG_MANIFEST (16 monitored jobs, cadenceMs + thresholdMultiplier + action). Registered in startScheduler.ts on */10 * * * * schedule with recoverMissedExecutions: true. 3 test files pass: ARCH-CRON-watchdog.test.ts (5 unit tests on alert/self-heal/rate-limit logic), ARCH-CRON-idempotency.test.ts (T4 dedup under replay), ARCH-CRON-recovery.test.ts (loop-saturation simulation). Live: after deploy, watchdog fires cron_job_runs row every 10 min. tsc 0 errors.",
+        "acceptance": {
+          "AC1": "schedulerWatchdogJob.ts created per brief §7 interface spec",
+          "AC2": "WATCHDOG_MANIFEST hardcoded with 16 entries (ohlcvDailyAggregatorJob=self-heal, vnstockFundamentalsRefresh=alert-only, etc.)",
+          "AC3": "Registered in startScheduler.ts + cronConfig.ts schedulerWatchdog key added",
+          "AC4": "ARCH-CRON-watchdog.test.ts (5 tests): no alert within cadence, alert at 1.5x, self-heal calls wrapRun, dedup prevents double execution, 2h rate-limit",
+          "AC5": "ARCH-CRON-idempotency.test.ts: per-job recovery replay tests for ohlcv, reputation, calibration",
+          "AC6": "ARCH-CRON-recovery.test.ts: event-loop saturation simulation + tick recovery verification",
+          "AC7": "bun test all green; tsc 0 errors; git diff shows only watchdog/* + test files"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "Lever 4 from architect brief. Builds on T1+T2. New scheduler/system/ module. 3 test files mirror EVIDENCE-ACCUM-SILENT-CRON test strategy. Rate-limit map in-process (no WAL writes from watchdog). Reads cron_job_runs via jobRunRepo injection (DDD clean).",
+        "next_agent": "ops",
+        "claimed_at": "2026-06-14T13:15:48Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router dispatched T3 IMPL (tick post-T2-done). depends [T2] SATISFIED (T2 done_verified — recoverMissedExecutions global default + jitter LIVE, idempotency invariant holds in prod). Same-zone apps/mcp-server FREE (T2 done). dev-mcp-server: implement schedulerWatchdogJob.ts (Lever D, every 10 min) per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5/§7 — detect jobs whose last successful cron_job_run is older than (cron cadence + grace) and emit a WORK-channel staleness alert (dedup per job per window; do NOT auto-restart). Reuse cron_job_runs as the freshness source BUT account for the double-LOG artifact (FIX-CRON-JOB-RUNS-DOUBLE-LOG) — key on MAX(started_at) per job_name, never row counts. New job must itself be recoverMissedExecutions-safe (idempotent: keyed alert dedup, no unguarded Telegram). bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify watchdog fires + dedups, never badges. T3 done CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY.",
+        "impl_commit": "153f2e8202e637dbcd27a55cf54d20adc87e391d",
+        "impl_verified_at": "2026-06-14T14:19:43Z",
+        "impl_verified_by": "dev-team",
+        "impl_verdict": "RAW-verified GREEN round-3: (A) 3 manifest keys match recorded literals; (B) WD-11 reads real registration sources (readFileSync) + extracts wrapRun/recordJobRun literals + resolves JOB_NAME_FUNDAMENTALS const & summaryJob:daily template, asserts every manifest key in derived set. Router OWN fail-loud proof: flipped recordJobRun(\"insiderCheckJob\") call-site literal -> WD-11 RED Missing:[\"insiderCheckJob\"] (recordJobRun path, NOT the agent's accuracyDigestJob wrapRun path); restored -> 18/18. tsc exit 0 (router re-ran). Commits clean, orch-state untouched.",
+        "ops_instructions": "TARGETED REBUILD ONLY: docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server. NEVER docker compose down (rebuild-recreate-destroys-peers). docker ps -a after to confirm all peers Up/healthy. Then LIVE verification: (1) startup logs show scheduler started + cron keys registered (expect 82 — schedulerWatchdog present; round-3 was key-rename + test only, no cron count change vs the 82 from the orig watchdog deploy) + NO 'Cannot convert a symbol to a string'; (2) within ~10 min the watchdog fires — RAW-probe cron_job_runs via keinos/sqlite3 sidecar against the NAMED VOLUME /app/data/market.db: docker run --rm --volumes-from <cid> keinos/sqlite3 sqlite3 /app/data/market.db \"SELECT job_name,MAX(started_at) FROM cron_job_runs WHERE job_name IN ('ohlcv-daily-aggregator','foreignFlowAlertJob','ta-ohlcv-backfill') GROUP BY job_name\" — confirm all 3 return recent rows (these are the 3 that were falsely 'never ran' under the old wrong keys); (3) THE DECISIVE CHECK: the watchdog must NO LONGER emit the 3 false 'has never run — scheduler registration may be missing' WORK alerts for ohlcv-daily-aggregator/foreignFlowAlertJob/ta-ohlcv-backfill. At most it should alert on GENUINELY stale jobs (baseRateComputationJob ~20d is the known-real one — that alert is CORRECT and expected, spin out separately). Read the WORK channel + grep container logs for 'scheduler-watchdog' lines; report EXACTLY which job_names (if any) it alerted on; (4) router-style own gateway call_tool(get_market_snapshot or get_pipeline_health) returns valid payload, no 500. Report image build timestamp, peer count, cron-key count (expect 82), the 3-job freshness probe result, and the full list of any watchdog WORK alerts with job names. On ops-green -> qa LIVE gate -> done_verified CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY.",
+        "changes_requested_at": "2026-06-14T14:11:14Z",
+        "changes_requested_by": "dev-team",
+        "review_round": 3,
+        "cr_reason": "PART (B) REJECTED — false-GREEN. WD-10 is a tautology: imports CANONICAL_WATCHDOG_JOB_NAMES (hand-maintained literal array) from the SAME module as WATCHDOG_MANIFEST and asserts they agree with each other; never reads the wrapRun/recordJobRun call sites. The exact name-drift bug still ships green (rename a wrapRun literal in startScheduler.ts, leave the watchdog module -> manifest key still == canonical entry -> WD-10 passes -> live queries wrong name -> false 'never ran'). FIX round3: (B1) add WD-11 that DERIVES the recorded-name set by READING registration sources at test time (startScheduler.ts, src/scheduler/jobs/**/*.ts, startupHelpers.ts) and extracting wrapRun(...)/recordJobRun(...) literal args; resolve 2 indirections (JOB_NAME_FUNDAMENTALS const value; summaryJob:${periodType} template -> cover 'summaryJob:daily'). (B2) assert every WATCHDOG_MANIFEST key is in that source-derived set, fail-loud with offending key+file. (B3) prove fail-loud by flipping a CALL-SITE literal (not a manifest key) -> WD-11 RED; restore -> green; document in commit. Keep WD-10 as secondary manifest<->canonical check. Gates: tsc 0 + bun watchdog green (incl WD-11). (C) weekday TODO stays deferred to architect, non-blocking.",
+        "ops_deploy_note": "Image 13:28:53Z deployed LIVE (82 cron keys, 13 peers healthy, no 500) — the DEPLOY itself was clean; only the manifest correctness failed. dev fix is code-only; ops will targeted-rebuild again after.",
+        "round2_partial_accept": "PART (A) ACCEPTED at 9a7e1aef: 3 manifest keys corrected (ohlcv-daily-aggregator, foreignFlowAlertJob, ta-ohlcv-backfill) + liveManifest selfHealFn wrapRun literals matched; tsc 0, watchdog 17/17 (router re-ran).",
+        "impl_commit_chain": [
+          "55ea2ccf (orig watchdog)",
+          "9a7e1aef (A: 3 manifest keys)",
+          "153f2e82 (B: WD-11 source-derived guard)"
+        ]
       }
     ]
   },
