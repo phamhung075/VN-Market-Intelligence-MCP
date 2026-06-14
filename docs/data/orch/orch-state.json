@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T19:49:34Z",
+    "updated_at": "2026-06-14T20:00:54Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
-    "next_agent": "architect",
-    "note": "VN-MACRO-TOOLING WAVE-1 PROBE-1..4 DONE (ops-vps-fetch a3e5e573, commit f70d1b5a, router RAW-verified 13 files explicit-path: 4 recon.md + 4 sample.json + 4 probe.sh + notebook; no board in commit; .head untouched; no KINHDICH/ARCH-CRON touch). OUTCOMES: PROBE-2 SBV-BOP PASS + PROBE-3 NSO-monthly-Excel PASS + PROBE-4 OMO PASS = LIVE contracts for VMT-2/VMT-3b/VMT-4/VMT-5b.omo. PROBE-1 customs.gov.vn BLOCKED_JS_RENDER -> VMT-1b.bloc_split FALLBACK (NSO FDI 12.FDI cross-ref export total -> bloc share ESTIMATE is_estimate=true) needs ARCHITECT confirm. PROBE-4 interbank dttktt.sbv.gov.vn BLOCKED (100% packet loss from VPS) -> VMT-5b.interbank ARCHITECT ESCALATION 3 opts (alt endpoint / permanent is_estimate / SBV IP-whitelist). -> architect: fold each recon into a per-parser LIVE contract (contract-from-live-payload hard rule — dev consumes probe recipe not schema comment), resolve the 2 BLOCKED sub-fields, confirm ungated VMT-1a/3a/5a live source-map, emit dispatch-ready WAVE-2/3 handoffs. SERIALIZE same-service dev-macro-indicators parsers (Zone-A MED recurring-bug guard). VMT-D-VPSFETCH done (46095c3d) + VMT-6 done (105b07c4). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. KINHDICH-HOVER-DETAIL sprint active (BA-KINHDICH-HOVER-DETAIL in flight, separate chain). Commit explicit path only."
+    "next_agent": "pm",
+    "note": "VN-MACRO-TOOLING architect PROBE-FOLD DONE (a6edfbdc, commit 9dbfcbbb, router RAW-verified 3 docs explicit-path: ARCH-VN-MACRO-TOOLING.md handoff 483L + decision journal entries 8-12 + notebook; NO Go/board/signal in commit; .head untouched). 2 BLOCKED sub-fields RESOLVED fail-closed: VMT-1b.bloc_split=NSO-FDI cross-join is_estimate=true PERMANENT (customs SPA unblockable), VMT-5b.interbank=Option2 permanent is_estimate=true+blocked_reason (no public API; IRS-DD-6 precedent). 3 PASS folded to live per-parser contracts: VMT-2=direct-JSON (NO excelize), NSO-Excel single cache serves VMT-1a/1b/3b/4, VMT-5b.omo=SBV-OMO-HTML. -> pm: attach per-parser contracts from handoff to each WAVE-2 board task + set SERIAL dispatch order A1=VMT-2 -> A2=VMT-3b+4 -> A3=VMT-1a+1b -> A4=VMT-5b.omo -> A5=VMT-5a with merge gate between each (Zone-A MED recurring-bug, handlers_vmt.go/usecases_vmt.go/dtos_vmt.go shared — SERIALIZE dev-macro-indicators). VMT-3a PMI -> blocked-probe5 (S&P NOT geo-blocked, dev-local PROBE-5 first). VMT-5b.interbank+irs permanent estimate (no parser). VMT-D-VPSFETCH done (46095c3d) + VMT-6 done (105b07c4). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. KINHDICH-HOVER-DETAIL separate chain: dev-frontend done (de8d8d0a) -> ops frontend rebuild dispatched (ac42c0d0). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5811,7 +5811,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "M",
-            "status": "ready",
+            "status": "blocked-probe5",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5826,7 +5826,9 @@
             ],
             "note": "S&P Global PMI press page (not geo-blocked). Main-server fetch, no VPS needed. MA3 transform pre-computed. Parallelizable with GSO/CPI probing.",
             "unblocked_at": "2026-06-14T19:19:17Z",
-            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)"
+            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)",
+            "probe5_gate_at": "2026-06-14T20:00:54Z",
+            "probe5_note": "PMI source = S&P Global (NOT geo-blocked) — needs PROBE-5 characterization before parser; dev-macro-indicators runs the probe LOCALLY (no VPS). Held out of WAVE-2 serial chain per architect probe-fold."
           },
           {
             "id": "VMT-3b-MACRO-INDICATORS-GSO",
@@ -13138,14 +13140,14 @@
         "sprint_id": "VN-MACRO-TOOLING",
         "priority": "high",
         "size": "M",
-        "status": "pm-breakdown-done",
+        "status": "architect-probefold-done",
         "zone": "multi",
         "owner": "ba",
         "brief": "docs/analysis-briefs/07-06-methodology-gap.md",
         "depends": [],
         "created_at": "2026-06-14T18:07:41Z",
         "created_by": "po",
-        "next_agent": "architect",
+        "next_agent": "pm",
         "lane": "in_progress",
         "ba_spec_done_at": "2026-06-14T18:47:06Z",
         "ba_commit": "11d318ea",
@@ -13160,7 +13162,7 @@
         "arch_blocker_resolutions": "BLOCKER-1 FDI/domestic split PROBE-1 gates VMT-1 bloc_split sub-field ONLY (total+hs_attribution NOT gated); BLOCKER-2 SBV BOP PROBE-2 gates VMT-2; BLOCKER-3+4 GSO monthly/CPI MERGED into PROBE-3 gates VMT-3 GSO fields + VMT-4 (PMI not gated, S&P not geo-blocked); BLOCKER-5 SBV interbank/OMO/IRS PROBE-4 gates VMT-5 interbank 1w + OMO outstanding ONLY (IRS permanently is_estimate=true, policy_rates/SJC/fx_coupling not gated); BLOCKER-6 VIRA/VARA NO probe — VMT-6 ships degraded is_estimate=true immediately. PROBE-1..4 ALL via ops-vps-fetch (VN geo-blocked -> Vinahost VPS).",
         "arch_exec_order": "WAVE-1 (parallel, no blocking deps): PROBE-1..4 via ops-vps-fetch + Zone D vpsFetch.go + Zone C VMT-6. WAVE-2: Zone A parsers follow each probe return. WAVE-3: Zone B MCP handlers wire to Zone A after endpoints live. FINAL GATE: VMT-7 register -> QA skill switch-on verification (macro-health-read + trade-fx-pressure-decomp flip is_estimate=false).",
         "arch_ddd_verdict": "Zone D LOW (identical to SBVRateSQLiteAdapter pattern, pure proxy, TLS --cacert not -k); Zone A MED (parser-F1 probe-gate enforced; div-by-zero processing-margin domain unit test mandatory; partial-series per-series is_estimate not whole-response; cache atomic SQL txn; recurring-bug escalation at 2+ commits same file); Zone B LOW (thin proxy, Zod AFTER Zone A DTO commit, tsc --noEmit parity VMT-7); Zone C LOW (additive field; PR diff confirms no is_estimate removed; VIRA/VARA fetch in infrastructure/fetchers/ not handler).",
-        "router_arch_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the architect badge): git show 675891163d --stat = EXACTLY 3 files explicit-path (docs/handoffs/ARCH-VN-MACRO-TOOLING.md +348/11 sections, decisions/sprint-VN-MACRO-TOOLING.md +57, architect.md notebook +20/-1); NO orch-state/task_board/signal_queue in commit (grep CLEAN); orch-state working==HEAD (architect left board for router); handoff doc 31875 bytes, sections Zone-Split Rationale/Verified Paths/Design Decisions/Blocker Design Resolutions(x6)/DDD Risk Review/BUILD-STANDARD/Probe Dispatch Plan/Execution Order/Scan Clean/RETURN, VMT-1..7 x41 + BLOCKER-1..6 x17. READY for pm: break into per-zone atomic dev tasks, enforce probe-gate before parser commits.",
+        "router_arch_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the arch badge): git show 9dbfcbbb --stat = EXACTLY 3 docs (handoff 483L/57KB on disk + decision journal 60L entries 8-12 + architect notebook 31L); ZERO Go code, ZERO orch-state/board/signal in commit; HEAD==9dbfcbbb; board working tree clean; .head untouched. Decisions read from journal: 2 BLOCKED sub-fields resolved fail-closed (E8 customs->NSO-FDI is_estimate=true, E9 interbank->Option2 permanent estimate), 3 PASS folded to live contracts (E10 VMT-2 pure-JSON, E11 NSO-Excel shared cache, E12 serialization). Honest is_estimate throughout (GA-4), contract-from-live-payload (GA-7). Sound + dispatch-ready.",
         "pm_breakdown_done_at": "2026-06-14T19:09:12Z",
         "pm_commit": "983af548",
         "pm_task_count": 20,
@@ -13169,7 +13171,13 @@
         "router_pm_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the pm badge): git show 983af548 --stat = 8 files explicit-path (orch-state.json + pm.md notebook + 6 TASK_*.md handoffs, all real on disk 5.4-9.8KB); .head UNTOUCHED (still next_agent=pm, router owns advancement); signal_queue 0 refs in diff; KINHDICH done + ARCH-CRON-SCHEDULER-RELIABILITY IN_PROGRESS both preserved. 20 atomic tasks in active_sprints[VN-MACRO-TOOLING].tasks. WAVE-1 = exactly 6 zero-dep. Probe-gate DAG matches architect blueprint exactly (VMT-1b<-PROBE-1 bloc_split-only / VMT-2<-PROBE-2 / VMT-3b+VMT-4<-PROBE-3, VMT-3a PMI ungated / VMT-5b<-PROBE-4 interbank-OMO-only, VMT-5a ungated). CAUGHT+FIXED: pm mislabeled probe owner=ops-vps-crawls (non-existent agent) -> corrected to ops-vps-fetch at board SSOT on all 4. READY for WAVE-1 dev fan-out.",
         "probes_done_at": "2026-06-14T19:49:34Z",
         "probe_fold_pass": "PROBE-1..4 returned (f70d1b5a): 2 PASS (BOP/NSO-monthly) + OMO PASS provide LIVE contracts for VMT-2/3b/4/5b.omo; PROBE-1 customs BLOCKED -> VMT-1b fallback design (NSO FDI cross-ref estimate) needs architect; PROBE-4 interbank BLOCKED -> VMT-5b.interbank 3-option architect decision. Architect to fold each recon into a per-parser live contract + resolve the 2 blockers before dev WAVE-2/3 fan-out (contract-from-live-payload hard rule). Ungated VMT-1a/3a/5a confirm their live source-map in the same pass.",
-        "router_probe_reverify_verdict": "RAW-VERIFIED done: git show f70d1b5a --stat = 13 files explicit-path (ops-vps-fetch.md notebook + 4 recon.md + 4 sample.json + 4 probe.sh), NO board/orch-state/signal_queue in commit, working tree clean, .head untouched, no KINHDICH/ARCH-CRON touch. 3 PASS 1 BLOCKED_JS_RENDER 1 interbank-BLOCKED matches probe RETURN."
+        "router_probe_reverify_verdict": "RAW-VERIFIED done: git show f70d1b5a --stat = 13 files explicit-path (ops-vps-fetch.md notebook + 4 recon.md + 4 sample.json + 4 probe.sh), NO board/orch-state/signal_queue in commit, working tree clean, .head untouched, no KINHDICH/ARCH-CRON touch. 3 PASS 1 BLOCKED_JS_RENDER 1 interbank-BLOCKED matches probe RETURN.",
+        "probe_fold_done_at": "2026-06-14T20:00:54Z",
+        "probe_fold_commit": "9dbfcbbb",
+        "arch_handoff": "docs/handoffs/ARCH-VN-MACRO-TOOLING.md",
+        "arch_decisions": "E8 VMT-1b=NSO-FDI-cross-join is_estimate=true PERMANENT (customs SPA unblockable); E9 VMT-5b.interbank=Option2 permanent is_estimate=true+blocked_reason (no public API, IP-whitelist out-of-scope, IRS-DD-6 precedent); E10 VMT-2=direct-JSON Liferay article API NO excelize/PDF (PROBE-2 live); E11 NSO-Excel single cache serves VMT-1a/1b/3b/4; E12 Zone-A SERIALIZE A1..A5 merge-gated (MED recurring-bug).",
+        "wave2_order": "A1=VMT-2(SBV-JSON) -> A2=VMT-3b+VMT-4(NSO-Excel IIP+CPI) -> A3=VMT-1a+VMT-1b(NSO-Excel XK/NK/FDI) -> A4=VMT-5b.omo(SBV-OMO-HTML) -> A5=VMT-5a(market.db+sbv.gov.vn). excelize added to go.mod ONCE at A2. VMT-3a PMI HELD on PROBE-5 (S&P, dev-local). VMT-5b.interbank+irs permanent estimate (no parser).",
+        "serialization_guard": "Zone A dev tasks (handlers_vmt.go/usecases_vmt.go/dtos_vmt.go) MUST be serial — one dev-macro-indicators task at a time, merge gate between each. PM enforces (feedback_recurring_bug_escalation)."
       }
     ],
     "ready": [],
