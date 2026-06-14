@@ -2,7 +2,7 @@
 
 **Load when:** deploy, restart, infrastructure changes, code deploy, post-merge verification.
 
-Server restart rules and allowed mechanisms for the 9-service microservices architecture.
+Server restart rules and allowed mechanisms for the microservices architecture (service count → `jq '.project.microservices | length' docs/data/system-map.json`).
 
 ---
 
@@ -12,7 +12,7 @@ Server restart rules and allowed mechanisms for the 9-service microservices arch
 cd $PROJECT_ROOT && docker-compose down && docker-compose up -d && sleep 5
 ```
 
-**No exceptions.** All 9 microservices restart in lockstep.
+**No exceptions.** All microservices restart in lockstep.
 
 **Banned mechanisms:** `bun --hot`, `bun --watch`, `nodemon`, `pm2`, `forever`, `node --watch`, any hot/live/fast reload — ALL FORBIDDEN in containers.
 
@@ -53,7 +53,7 @@ VPS Data Pipeline: Vinahost VPS (`$VINAHOST_IP`) → docker-compose services
 
 ## QA Validation After Code Merge
 
-1. `docker-compose ps` — all 9 services showing "Up ... (healthy)"
+1. `docker-compose ps` — all services showing "Up ... (healthy)"
 2. `curl -s http://localhost:3000/health` — returns `{"status":"ok","tools":<N>,"jobs":<M>}`
 3. `docker-compose logs mcp-server --tail 30` — no crash, no startup errors
 4. `sqlite3 /path/to/data/market.db "SELECT COUNT(*) FROM market_prices WHERE updated_at > datetime('now', '-5 minutes');"` — recent data ingestion ✓

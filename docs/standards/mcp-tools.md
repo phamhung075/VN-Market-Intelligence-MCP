@@ -1,10 +1,10 @@
 # MCP Tools — Logic & Mapping
 
-<!-- size-justification: 185L — atomic SSOT tool catalog: per-agent tool list + renamed tools table + phantom-tool resolution (MSG-3) + mandatory patterns. Splitting fragments lookup surface; all agents read this file together to resolve tool availability. -->
+<!-- size-justification: 184L — atomic SSOT tool catalog: per-agent tool list + renamed tools table + phantom-tool resolution (MSG-3) + mandatory patterns. Splitting fragments lookup surface; all agents read this file together to resolve tool availability. Call-contract details delegated to gateway-call-contract.md (SSOT). -->
 
 **Load when:** tool selection, agent rewriting, or system capability review.
 
-**Last refreshed:** 2026-06-07 (cowork-refactory-expert: discovered 161 live tools via registry scan)
+**Last refreshed:** 2026-06-07 (cowork-refactory-expert: discovered 161 live tools via registry scan — live count: `docs/data/project-stats.json` → `toolCount`)
 
 ---
 
@@ -14,8 +14,8 @@
 
 | Resource | Purpose | When to Use |
 |----------|---------|------------|
-| **`docs/agents/tools/list/<tool>.md`** (116 files) | Tool signatures, parameters, examples | Agent needs to call a tool: look up here |
-| **`docs/agents/tools/package/<agent>.md`** (22 files) | Agent's permitted tools by category | Agent starting: load this for quick reference |
+| **`docs/agents/tools/list/<tool>.md`** | Tool signatures, parameters, examples | Agent needs to call a tool: look up here |
+| **`docs/agents/tools/package/<agent>.md`** | Agent's permitted tools by category | Agent starting: load this for quick reference |
 | **`.claude/agents/<agent>.md`** | Agent definition | Agent spawning: always read first |
 | **`docs/standards/gateway-call-contract.md`** | Preflight SSOT: 6 tool-call error classes, `send_telegram` enum spec, stale-read guard | Load at agent preflight — prevents the most common call_tool failure modes |
 
@@ -23,47 +23,22 @@
 
 ### MCP Gateway — Correct Call Signature
 
-```
-call_tool(
-  server: "vn-market",        ← REQUIRED, exact name
-  tool: "<tool_name>",        ← e.g. "get_cycle_bootstrap"
-  arguments: { ... }          ← tool-specific params
-)
-```
+Full call-contract spec (server string, meta-tool vs downstream, task_id type, send_telegram enum, stale-read guard) → **`docs/standards/gateway-call-contract.md`** (SSOT).
 
-| Param | Type | Value |
-|-------|------|-------|
-| `server` | string | **`"vn-market"`** — the only MCP server. NOT `vnmarket-mcp`, NOT `vn_market`, NOT `vnmarket`. |
-| `tool` | string | Tool name from `docs/agents/tools/list/<tool>.md` |
-| `arguments` | object | Tool input params (see tool doc for schema) |
-
-**Common mistakes:**
-- ~~`tool_name`~~ → `tool`
-- ~~`input`~~ → `arguments`
-- ~~`vnmarket-mcp`~~ / ~~`vnmarket`~~ → `"vn-market"`
-
-Example:
-```
-call_tool(
-  server: "vn-market",
-  tool: "get_cycle_bootstrap",
-  arguments: { "agent_name": "alert-commander" }
-)
-```
+Quick reference: `mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<bare_name>", arguments={...})`
 
 ---
 
 ## Tool Count & List
 
-**Live tool count:** 161 tools (as of 2026-06-07)
-**SSOT inventory:** `docs/agents/tools/list/INDEX.md` — canonical full tool catalog (all 161 tools with per-tool links)
+**Live tool count:** `docs/data/project-stats.json` → `toolCount` (authoritative — never hardcode here)
+**SSOT inventory:** `docs/agents/tools/list/INDEX.md` — canonical full tool catalog with per-tool links
 **Per-tool docs:** Each tool has a `.md` file at `docs/agents/tools/list/<tool_name>.md`
-**Metadata SSOT:** `docs/data/project-stats.json` → `toolCount`
 Live verification: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
 
 ### Complete Tool Surface — Moved to INDEX.md
 
-All 161 tools are documented at `docs/agents/tools/list/INDEX.md` with categorization:
+All tools are documented at `docs/agents/tools/list/INDEX.md` with categorization:
 - **Analysis** — Sequential reasoning, market analysis chains
 - **Market Data** — Prices, foreign flow, technical indicators
 - **Financial** — BCTC, earnings, cash flow, OCF

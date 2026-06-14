@@ -10,7 +10,8 @@ Health checks and verification steps after restart.
 
 ```bash
 docker-compose ps
-# Expected: 9 services showing "Up ... (healthy)"
+# Expected: all services showing "Up ... (healthy)"
+# Live service count: jq '.project.microservices | length' docs/data/system-map.json
 ```
 
 ### Check Individual Service Logs
@@ -39,7 +40,7 @@ docker-compose ps      # Verify all healthy
 
 After code merge and restart:
 
-1. **Services healthy:** `docker-compose ps` — all 9 services showing "Up ... (healthy)"
+1. **Services healthy:** `docker-compose ps` — all services showing "Up ... (healthy)"
 
 2. **Health endpoint:** `curl -s http://localhost:3000/health` — returns `{"status":"ok","tools":<N>,"jobs":<M>}`
    - Current tool/job counts in `docs/data/project-stats.json`

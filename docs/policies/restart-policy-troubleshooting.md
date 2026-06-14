@@ -71,7 +71,7 @@ If VPS logs show data being pushed but local DB is empty, network routing throug
 - Command: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
 
 **New system (current):**
-- 9-service microservices architecture on Docker
+- Microservices architecture on Docker
 - Command: `docker-compose down && docker-compose up -d`
 
 All code migrated. Old launchctl plist removed from system.

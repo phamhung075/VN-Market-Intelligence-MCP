@@ -67,7 +67,7 @@ Alert Commander is the ONLY agent sending to MARKET. WORK channel receives a one
 
 ## Truncation Rules
 
-- `TelegramMessageFactory.formatAlertMessage()` truncates to **100 graphemes**. Alert bodies MUST NOT pass through this method — it will destroy multi-section narrative content.
+- `TelegramMessageFactory.formatAlertMessage()` truncates to **400 graphemes** (raised from 100 on 2026-04-29). Alert bodies MUST NOT pass through this method — it will destroy multi-section narrative content.
 - Use `formatConvictionBlock()` → `splitMessage()` → `sendTelegramMarket()` path (implemented in task 1328e).
 - Telegram 4096-character hard limit is handled automatically by `splitMessage()`, which splits on paragraph boundaries.
 

@@ -6,7 +6,7 @@ Why Docker-Compose is the only allowed restart mechanism.
 
 ## Deterministic State
 
-All 9 services restart clean, no half-loaded modules, no stale closures.
+All services restart clean, no half-loaded modules, no stale closures.
 
 ## Clean SQLite State
 
@@ -22,7 +22,7 @@ Data consistency across price fetch, BCTC parser, RAG indexer, etc.
 
 ## Easy Health Check
 
-`docker-compose ps` shows all 9 services' status.
+`docker-compose ps` shows all services' status.
 
 ---
 

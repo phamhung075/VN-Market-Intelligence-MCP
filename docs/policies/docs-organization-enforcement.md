@@ -33,12 +33,12 @@ If created in root by mistake → auto-moved to archive/ before next work task.
 
 ### `docs/archive/` (read-only reference)
 
-Auto-filed categories:
-- BCTC_*.md (14) — PDF extraction investigations
-- AUDIT_*.md (3) — system audits
-- Investigation/analysis files (20) — findings, root causes, discoveries
-- Operational docs (28) — sprint summaries, deployment reports, system analyses
-- Other historical (24) — tool inventories, blocker analyses, architecture reviews
+Auto-filed categories (counts are illustrative — actual file count in `docs/archive/` fluctuates as new files land):
+- BCTC_*.md — PDF extraction investigations
+- AUDIT_*.md — system audits
+- Investigation/analysis files — findings, root causes, discoveries
+- Operational docs — sprint summaries, deployment reports, system analyses
+- Other historical — tool inventories, blocker analyses, architecture reviews
 - Last migrated 2026-04-25 from cluttered root
 
 ---
