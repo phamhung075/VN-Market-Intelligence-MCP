@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T20:00:54Z",
+    "updated_at": "2026-06-14T20:09:53Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
-    "next_agent": "pm",
-    "note": "VN-MACRO-TOOLING architect PROBE-FOLD DONE (a6edfbdc, commit 9dbfcbbb, router RAW-verified 3 docs explicit-path: ARCH-VN-MACRO-TOOLING.md handoff 483L + decision journal entries 8-12 + notebook; NO Go/board/signal in commit; .head untouched). 2 BLOCKED sub-fields RESOLVED fail-closed: VMT-1b.bloc_split=NSO-FDI cross-join is_estimate=true PERMANENT (customs SPA unblockable), VMT-5b.interbank=Option2 permanent is_estimate=true+blocked_reason (no public API; IRS-DD-6 precedent). 3 PASS folded to live per-parser contracts: VMT-2=direct-JSON (NO excelize), NSO-Excel single cache serves VMT-1a/1b/3b/4, VMT-5b.omo=SBV-OMO-HTML. -> pm: attach per-parser contracts from handoff to each WAVE-2 board task + set SERIAL dispatch order A1=VMT-2 -> A2=VMT-3b+4 -> A3=VMT-1a+1b -> A4=VMT-5b.omo -> A5=VMT-5a with merge gate between each (Zone-A MED recurring-bug, handlers_vmt.go/usecases_vmt.go/dtos_vmt.go shared — SERIALIZE dev-macro-indicators). VMT-3a PMI -> blocked-probe5 (S&P NOT geo-blocked, dev-local PROBE-5 first). VMT-5b.interbank+irs permanent estimate (no parser). VMT-D-VPSFETCH done (46095c3d) + VMT-6 done (105b07c4). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. KINHDICH-HOVER-DETAIL separate chain: dev-frontend done (de8d8d0a) -> ops frontend rebuild dispatched (ac42c0d0). Commit explicit path only."
+    "next_agent": "dev",
+    "note": "VN-MACRO-TOOLING WAVE-2 pm breakdown DONE (ae4d8f2a, commit 6fa59b18, router RAW-verified: pm.md+60 + orch-state+128/-8 ONLY, id-line 20->20 unchanged, .head untouched by pm). Per-parser live_contract attached to each WAVE-2 task; SERIAL order A1=VMT-2 -> [gate] -> A2=VMT-3b+VMT-4 -> [gate] -> A3=VMT-1a+VMT-1b -> [gate] -> A4=VMT-5a -> [gate] -> A5=VMT-5b; excelize added ONCE at A2. -> dev: A1=VMT-2-BOP DISPATCHED to dev-macro-indicators (live_contract: SBV Liferay article JSON API scopeKey=20117, fetch_recipe + probe_sample scripts/probes/vmt-2-sample.json + parse_rules: VN-number period=thousands/comma=decimal, loiVaSaiSot neg=outflow BPM6 no-sign-flip; NO Excel NO PDF). ONE Zone-A task at a time — VMT-3b/4/1a/1b/5a/5b stay TODO behind merge gates. VMT-3a-PMI blocked-probe5 (S&P, dev-local). VMT-5b.interbank+irs permanent is_estimate (no parser). KINHDICH-HOVER-DETAIL separate chain: qa APPROVED (69e7a8b0) -> po final signoff. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T20:02:43Z",
+    "_updated_at": "2026-06-14T20:09:53Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -5813,7 +5813,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "L",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5851,7 +5851,10 @@
               "sample_q4_2025": "loiVaSaiSot: -12.375 (confirms negative=outflow), canCanVangLai: 7.654 (7,654 M USD, not 7.65)"
             },
             "serial_dispatch_order": "A1 (first WAVE-2)",
-            "merge_gate": "none (first in queue)"
+            "merge_gate": "none (first in queue)",
+            "dispatched_at": "2026-06-14T20:09:53Z",
+            "dispatch_agent": "dev-macro-indicators",
+            "dispatch_note": "A1 first WAVE-2 serial Zone-A. dev consumes live_contract (SBV Liferay JSON, NO Excel/PDF). On dev-done -> merge gate A1->A2 before VMT-3b+VMT-4 dispatched. SERIALIZE (handlers_vmt/usecases_vmt/dtos_vmt shared, MED recurring-bug)."
           },
           {
             "id": "VMT-3a-MACRO-INDICATORS-PMI",
@@ -8804,7 +8807,7 @@
         "created_at": "2026-06-14T19:43:26Z",
         "spec": "docs/handoffs/KINHDICH-HOVER-DETAIL-BA-spec.md",
         "completed_at": "2026-06-14T00:00:00Z",
-        "next_agent": "qa",
+        "next_agent": "po",
         "dev_impl_done_at": "2026-06-14T19:54:33Z",
         "dev_impl_commit": "de8d8d0a",
         "dev_agent": "a3943c17",
@@ -8815,7 +8818,13 @@
         "ops_commit": "ba247805",
         "ops_image": "3ed501d2f5c2 (was 8978f8ce)",
         "router_ops_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the ops badge). docker inspect frontend image=sha256:3ed501d2f5c2 (CHANGED from 8978f8ce — genuine new build deployed); docker ps frontend Up healthy :3001; 13 containers running (no peer kill cascade); curl -sI :3001/ HTTP 200. SERVED-CHUNK LOAD-BEARING PROOF: curl :3001/assets/QueName-CweIuF2T.js (67522 bytes, hash changed from prior C7QiQvgn) physically carries Vietnamese labels 'Trạng thái'/'Thuận'/'Cảnh báo'/'Xem chi tiết' ALL FOUND + stateInterpretation x2 + favorable x2 + warning x2 (new QUE_DETAIL render) + que-descriptions-detail import x1 -> served data chunk que-descriptions-detail.generated-BvF1P1Ra.js. The enriched Tra-cứu-Kinh-Dịch hover tooltip is PHYSICALLY in the LIVE :3001 browser bundle. done_verified technical bar already MET at served layer; qa formalizes with rendered-hover sampling + Task Report.",
-        "qa_live_verify_checklist": "LIVE-verify on :3001 (NOT container health — RENDER proof). (1) PRIMARY served-chunk proof (router pre-confirmed, corroborate): curl :3001/assets/QueName-CweIuF2T.js -> grep stateInterpretation/favorable/warning + labels Trạng thái/Thuận/Cảnh báo present. (2) Rendered hover: sample quẻ across favorable/neutral/unfavorable trends + a terse one (29 Khảm / 47 Khốn) — tooltip shows coreMeaning + Trạng thái + Thuận + Cảnh báo + trend (NOT just the old one-line summary); phases[] 6-hào table ABSENT (reference-page only). (3) FR-3 fallback: any quẻ lacking a QUE_DETAIL entry still renders desc.hoverSummary??coreMeaning (no crash). (4) FR-4 'Xem chi tiết →' deep-link present + points to dashboard.kinh-dich-reference. (5) NFR-1 layout: 4-clause tooltip at max-w-sm text-xs wraps cleanly, no screen-edge overflow on mobile viewport. (6) Vietnamese readability for non-technical user. Report PASS/FAIL per item + the served-chunk grep result (load-bearing). On qa APPROVE -> po final signoff -> done_verified."
+        "qa_live_verify_checklist": "LIVE-verify on :3001 (NOT container health — RENDER proof). (1) PRIMARY served-chunk proof (router pre-confirmed, corroborate): curl :3001/assets/QueName-CweIuF2T.js -> grep stateInterpretation/favorable/warning + labels Trạng thái/Thuận/Cảnh báo present. (2) Rendered hover: sample quẻ across favorable/neutral/unfavorable trends + a terse one (29 Khảm / 47 Khốn) — tooltip shows coreMeaning + Trạng thái + Thuận + Cảnh báo + trend (NOT just the old one-line summary); phases[] 6-hào table ABSENT (reference-page only). (3) FR-3 fallback: any quẻ lacking a QUE_DETAIL entry still renders desc.hoverSummary??coreMeaning (no crash). (4) FR-4 'Xem chi tiết →' deep-link present + points to dashboard.kinh-dich-reference. (5) NFR-1 layout: 4-clause tooltip at max-w-sm text-xs wraps cleanly, no screen-edge overflow on mobile viewport. (6) Vietnamese readability for non-technical user. Report PASS/FAIL per item + the served-chunk grep result (load-bearing). On qa APPROVE -> po final signoff -> done_verified.",
+        "qa_verdict": "APPROVE",
+        "qa_done_at": "2026-06-14T20:09:53Z",
+        "qa_agent": "a3fb57d5",
+        "qa_commit": "69e7a8b0",
+        "qa_task_report": "docs/handoffs/TASK_REPORT_KINHDICH-HOVER-DETAIL.md",
+        "router_qa_reverify_verdict": "RAW-CORROBORATED INDEPENDENTLY (not the qa badge). git show 69e7a8b0 --stat = EXACTLY 3 files (qa.md +6 + session 2026-06-13-qa.md +4 + TASK_REPORT_KINHDICH-HOVER-DETAIL.md +111); NO board/orch-state/foreign capture; commit isolated from pm 6fa59b18 (no concurrent-commit cross-race). qa VERDICT=APPROVE. Served-chunk LOAD-BEARING proof corroborated: :3001/assets/QueName-CweIuF2T.js 67523 bytes carries stateInterpretation x2 + favorable x2 + warning x2 + que-descriptions-detail import x1 + VN labels Trạng thái/Cảnh báo/Xem chi tiết each x1; phases=0 (6-hào table correctly ABSENT from tooltip — reference-page only); FR-3 fallback hoverSummary??coreMeaning present in chunk; FR-4 deep-link /dashboard/kinh-dich-reference#que-N present; tsc --noEmit EXIT 0; 13 containers Up (12 peers intact). done_verified TECHNICAL bar MET at served layer -> po final product signoff to close done_verified."
       }
     ],
     "closed_sprints": [
