@@ -1,0 +1,90 @@
+{
+  "probe": "PROBE-3",
+  "source": "GSO/NSO — National Statistics Office of Vietnam (nso.gov.vn)",
+  "url_probed": "https://www.nso.gov.vn/bai-top/2026/06/bao-cao-tinh-hinh-kinh-te-xa-hoi-thang-nam-va-5-thang-dau-nam-2025-2/",
+  "probe_date": "2026-06-14",
+  "verdict": "PASS",
+  "tls_note": "CRITICAL: www.gso.gov.vn cert SAN=nso.gov.vn (mismatch). Use nso.gov.vn domain with GlobalSign intermediate CA. Recipe: download http://secure.globalsign.com/cacert/gsrsaovsslca2018.crt → convert DER→PEM → cat /etc/ssl/certs/ca-certificates.crt <int.pem> > /tmp/combined.pem → curl --cacert /tmp/combined.pem https://www.nso.gov.vn/...",
+  "platform": "WordPress CMS (not Liferay)",
+  "data_format": "Excel downloads (.xlsx) per indicator + HTML press release pages (text content, no HTML tables)",
+  "parse_strategy": "EXCEL DOWNLOAD PATH — HTML pages have 0 HTML tables; all structured data is in Excel downloads. Excel path is stable and machine-readable.",
+  "monthly_excel_url_pattern": "https://www.nso.gov.vn/wp-content/uploads/{YYYY}/{MM}/02.-Bieu-T{M}.{YYYY}-final.xlsx",
+  "monthly_excel_url_may2026": "https://www.nso.gov.vn/wp-content/uploads/2026/06/02.-Bieu-T5.2026-final.xlsx",
+  "monthly_excel_size_bytes": 646186,
+  "press_release_url_pattern": "https://www.nso.gov.vn/bai-top/{YYYY}/{MM}/bao-cao-tinh-hinh-kinh-te-xa-hoi-thang-{ten-thang}-va-{n}-thang-dau-nam-{YYYY}-{rev}/",
+  "overview_index_url": "https://www.nso.gov.vn/bao-cao-tinh-hinh-kinh-te-xa-hoi-hang-thang/",
+  "all_indicators_on_one_page": false,
+  "indicator_sheets": {
+    "IIP": {
+      "sheet_name": "2.IIPthang",
+      "columns": ["Sector/subsector name", "Tháng 04 vs cùng kỳ năm trước", "Tháng 05 vs cùng kỳ năm trước", "05 tháng vs cùng kỳ năm trước", "Tháng 05 vs tháng trước"],
+      "sample_row": ["Toàn ngành công nghiệp", "109.3", "103.27", "108.79", "109.08"],
+      "unit": "% (index vs same period prior year)",
+      "dedicated_excel": "https://www.nso.gov.vn/wp-content/uploads/2026/06/IIP-Vie.xlsx",
+      "iip_dedicated_excel_size": 20883
+    },
+    "retail_sales": {
+      "sheet_name": "13. Tongmuc",
+      "columns": ["Category", "Tháng 5 tỷ đồng", "Cộng dồn 5 tháng", "% tháng 5 vs cùng kỳ năm trước", "% 5 tháng vs cùng kỳ năm trước"],
+      "sample_row": ["Bán lẻ hàng hóa", "643765.07", "647057.02", "3184957.35", "111.83", "111.20"],
+      "unit": "Tỷ đồng (Billion VND)"
+    },
+    "fdi": {
+      "sheet_name": "12.FDI",
+      "columns": ["Province/entity", "Số dự án (projects)", "Vốn đăng ký (Triệu USD registered)", "Vốn thực hiện (Triệu USD disbursed)"],
+      "total_registered_5m_2026_mn_usd": 24810,
+      "total_registered_growth_pct": 34.9,
+      "note": "FDI in sheet 12 is by province; national total embedded in press release text"
+    },
+    "cpi_11_baskets": {
+      "sheet_name": "16.CPI",
+      "baskets_vietnamese": [
+        "CHỈ SỐ GIÁ TIÊU DÙNG (Total CPI)",
+        "Hàng ăn và dịch vụ ăn uống (Food & Dining Services)",
+        "Lương thực (Foodstuffs/Staple food)",
+        "Thực phẩm (Food products)",
+        "Ăn uống ngoài gia đình (Dining out)",
+        "Đồ uống và thuốc lá (Beverages & Tobacco)",
+        "May mặc, giày dép và mũ nón (Clothing, Footwear & Hats)",
+        "Nhà ở, điện nước, chất đốt và VLXD (Housing, Utilities & Construction Materials)",
+        "Thiết bị và đồ dùng gia đình (Household Equipment & Goods)",
+        "Thuốc và dịch vụ y tế (Medicine & Health Services)",
+        "Giao thông (Transport)",
+        "Thông tin và truyền thông (Communication & Information)",
+        "Giáo dục (Education)",
+        "Văn hoá, giải trí và du lịch (Culture, Recreation & Tourism)",
+        "Hàng hóa và dịch vụ khác (Other Goods & Services)"
+      ],
+      "basket_count_note": "15 categories in sheet (some are subcategories; NSO uses 11 main groups officially)",
+      "weights_in_table": false,
+      "weights_note": "Weights (trọng số) NOT in the Excel table. Weights from CPI methodology PDF (updated ~every 5 years). CPI index values per basket are present for multiple reference periods.",
+      "sample_cpi_may2026": {
+        "total_cpi_vs_prev_month_pct": 0.29,
+        "total_cpi_vs_dec2025_pct": 3.61,
+        "total_cpi_yoy_pct": 5.60,
+        "avg_5m2026_yoy_pct": 4.31,
+        "core_inflation_5m2026_yoy_pct": 4.04
+      },
+      "columns": ["Basket name", "T04/2025 vs T04 kỳ gốc", "T05/2025 vs kỳ gốc", "T05/2026 vs kỳ gốc", "T05/2026 vs T04/2026", "BQ 5T/2026 vs BQ 5T/2025"]
+    },
+    "public_investment": {
+      "sheet_name": "11. VĐT",
+      "note": "Public investment (Vốn đầu tư) - separate sheet in monthly Excel"
+    }
+  },
+  "month_stability": "URL slug changes monthly (month name in Vietnamese). Use index page https://www.nso.gov.vn/bao-cao-tinh-hinh-kinh-te-xa-hoi-hang-thang/ to discover latest URL.",
+  "excel_stability": "Excel upload path uses same date pattern but month number may vary (T5 for May, T4 for April, etc.) and slug suffix changes. Must discover URL from press release page.",
+  "recommended_parse_config": {
+    "strategy": "Excel download (not HTML — no HTML tables in press release)",
+    "discovery": "GET index URL → extract latest bai-top/ link → GET press release page → extract .xlsx download link → GET Excel",
+    "sheet_map": {
+      "iip_monthly": "2.IIPthang",
+      "retail_sales": "13. Tongmuc",
+      "fdi": "12.FDI",
+      "cpi": "16.CPI",
+      "public_investment": "11. VĐT",
+      "agriculture": "1.Nong nghiep"
+    },
+    "parser_note": "Must use excelize (Go) or openpyxl (Python) — NOT html table parser"
+  }
+}

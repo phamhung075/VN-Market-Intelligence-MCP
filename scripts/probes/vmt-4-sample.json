@@ -1,0 +1,65 @@
+{
+  "probe": "PROBE-4",
+  "source": "State Bank of Vietnam (SBV) — Interbank Rates + OMO",
+  "probe_date": "2026-06-14",
+  "verdict_omo": "PASS",
+  "verdict_interbank_1w": "BLOCKED",
+  "tls": "HTTPS with system cacert — www.sbv.gov.vn cert valid",
+  "omo": {
+    "page_url": "https://www.sbv.gov.vn/vi/web/sbv_portal/nghi%E1%BB%87p-v%E1%BB%A5-th%E1%BB%8B-tr%C6%B0%E1%BB%9Dng-m%E1%BB%9F",
+    "page_title": "Nghiệp vụ thị trường mở",
+    "http_status": 200,
+    "page_size_bytes": 408831,
+    "data_format": "HTML table embedded in Liferay page (not a separate JSON API)",
+    "table_structure": {
+      "columns": ["Loại hình giao dịch", "Số thành viên tham gia/trúng thầu", "Khối lượng trúng thầu (Tỷ đồng)", "Lãi suất trúng thầu (%/năm)"],
+      "column_english": ["Transaction type", "Members bid/won", "Volume won (Billion VND)", "Interest rate won (%/year)"]
+    },
+    "live_sample_2026_06_12": {
+      "date": "12/06/2026",
+      "title": "Kết quả đấu thầu thị trường mở ngày 12/06/2026",
+      "operations": [
+        {"type": "Mua kỳ hạn - Kỳ hạn 35 ngày", "members": "2/2", "volume_bn_vnd": 217.45, "rate_pct": 4.5},
+        {"type": "Mua kỳ hạn - Kỳ hạn 56 ngày", "members": "6/6", "volume_bn_vnd": 1000.0, "rate_pct": 4.5},
+        {"type": "Tổng cộng", "volume_bn_vnd": 1217.45}
+      ]
+    },
+    "omo_net_outstanding": {
+      "method": "COMPUTED — must sum individual add/absorb entries over rolling window",
+      "note": "SBV OMO page shows ONLY the latest auction result, NOT a net outstanding total. Parser must maintain running tally of reverse-repo adds and maturity roll-offs to compute net outstanding.",
+      "operation_types": {
+        "add": "Mua kỳ hạn (reverse repo — adds liquidity)",
+        "absorb": "Bán kỳ hạn (forward sale — drains liquidity), Tín phiếu NHNN (NHNN treasury bills)"
+      },
+      "tenor_range_seen": ["35 ngày", "56 ngày"],
+      "standard_tenors_available": "7, 14, 28, 35, 56, 91 ngày (varies by auction)"
+    }
+  },
+  "interbank_rates": {
+    "url_from_nav": "https://dttktt.sbv.gov.vn/webcenter/portal/vi/menu/rm/ls/lsttlnh",
+    "host": "dttktt.sbv.gov.vn",
+    "ip": "202.58.245.101",
+    "reachability_from_vps": "BLOCKED — 100% packet loss (ping 202.58.245.101 from VPS = 0 received)",
+    "tls_status": "Cannot check — host unreachable",
+    "verdict": "BLOCKED — dttktt.sbv.gov.vn is the SBV old Oracle Webcenter portal that hosts interbank fixing rates. It is not reachable from Vinahost VPS.",
+    "1w_tenor_status": "UNKNOWN — cannot confirm whether explicit or must interpolate. Source unreachable.",
+    "irs_status": "is_estimate=true permanently per DD-6 — no machine-readable source found",
+    "alternative_sources": {
+      "sbv_main_nav": "SBV main site navigation references dttktt.sbv.gov.vn for interbank rates — no fallback URL on www.sbv.gov.vn found",
+      "fx_rates": "SBV FX reference rates (tỷ giá trung tâm) ARE accessible on www.sbv.gov.vn/tỷ-giá — not interbank rates",
+      "escalate_to_architect": "Interbank 1w tenor source blocked. Options: (1) Find alternative public API/endpoint, (2) Use monthly report from NSO press release text (contains narrative interbank rate mentions), (3) Mark interbank_1w as is_estimate=true pending source fix"
+    }
+  },
+  "sbv_fx_confirmed_working": {
+    "url": "https://www.sbv.gov.vn/tỷ-giá",
+    "http_status": 200,
+    "data_format": "HTML table embedded in Liferay page",
+    "live_sample": {
+      "usd_center_rate": 25155,
+      "usd_buy": 23948,
+      "usd_sell": 26362,
+      "date": "12/06/2026",
+      "reference": "218/TB-NHNN"
+    }
+  }
+}

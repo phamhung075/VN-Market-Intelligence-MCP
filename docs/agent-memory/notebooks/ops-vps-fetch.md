@@ -41,6 +41,34 @@ Zone: ops-zone (VPS / infra)
 
 ---
 
+## c010 · 2026-06-14 · VN-MACRO-TOOLING WAVE-1 — PROBE-1..4
+
+Trigger: ops-vps-fetch dispatch for VN-MACRO-TOOLING WAVE-1 sprint. Four recon probes executed in single SSH session.
+
+**PROBE-1 (Customs FDI/domestic bloc) → BLOCKED_JS_RENDER**
+customs.gov.vn is a JSP SPA. Shell page (~12KB, `<div id="main"></div>`). All content loaded via internal bridge proxy API calling `tongcuc.customs.gov.vn` which is DNS NXDOMAIN externally. Bridge API returns `{"errorMessage":"Du lieu truy cap khong hop le!"}` (HTTP 400) with no `main_new` variable. No FDI enterprise-type breakdown found machine-readable.
+Fallback approved: NSO FDI Excel sheet (`12.FDI`) for bloc_split field.
+Recon: docs/vps-sources/vmt-customs-probe/recon.md
+
+**PROBE-2 (SBV BOP) → PASS**
+Liferay DXP headless article API discovered by reading page JS. Endpoint: `GET /o/article/v1.0/articles?scopeKey=20117&contentStructureId=10063168&pageSize=100&filter=<OData>`. All 10+ BOP components in JSON (`canCanVangLai`, `loiVaSaiSot`, etc.). E&O sign convention confirmed IMF BPM6 from live Q4 2025 data (`loiVaSaiSot = "-12.375"` = -12,375 M USD negative = unexplained outflows). Vietnamese number format: period=thousands, comma=decimal.
+Recon: docs/vps-sources/vmt-sbv-bop-probe/recon.md
+
+**PROBE-3 (NSO/GSO monthly Excel) → PASS**
+TLS SAN mismatch resolved: `www.gso.gov.vn` cert issued for `nso.gov.vn`. Fix = GlobalSign RSA OV SSL CA 2018 intermediate from AIA URL, combined with system CA bundle. Use `nso.gov.vn` domain (IP 160.25.148.3). WordPress CMS. Press release HTML has 0 HTML tables — all data in Excel downloads. Monthly Excel (`02.-Bieu-T{M}.{YYYY}-final.xlsx`) has 19 sheets. Key sheets: `2.IIPthang`, `12.FDI`, `13. Tongmuc`, `16.CPI`. CPI has 15-category Vietnamese basket. URL discovery: index page → bai-top/ link → press release → .xlsx download URL.
+Recon: docs/vps-sources/vmt-nso-monthly-probe/recon.md
+
+**PROBE-4 (SBV OMO + Interbank) → PARTIAL**
+OMO PASS: `www.sbv.gov.vn` OMO page returns 408KB Liferay HTML with live auction table. June 12, 2026 auction: 35-day 217.45bn VND + 56-day 1,000bn VND, both @ 4.5%/year. Net outstanding NOT published — must compute from rolling add/absorb window.
+Interbank BLOCKED: `dttktt.sbv.gov.vn` (202.58.245.101) 100% packet loss from VPS. Oracle WebCenter portal. Cannot probe 1W tenor.
+IRS: permanently `is_estimate=true` per DD-6.
+FX reference rates (www.sbv.gov.vn/tỷ-giá): PASS bonus — USD center rate 25,155 VND (Jun 12, 2026).
+Recon: docs/vps-sources/vmt-sbv-interbank-omo-probe/recon.md
+
+Scripts: scripts/probes/vmt-probe-{1,2,3,4}.sh | Samples: scripts/probes/vmt-{1,2,3,4}-sample.json
+
+---
+
 ## c005 · 2026-06-04T08:10Z · RECON-AGM-1
 
 Trigger: operator P0 spike — find fetchable source for AGM business plan figures.

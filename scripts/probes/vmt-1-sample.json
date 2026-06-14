@@ -1,0 +1,24 @@
+{
+  "probe": "PROBE-1",
+  "source": "Vietnam Customs (Tong cuc Hai quan)",
+  "url_probed": "https://www.customs.gov.vn/",
+  "probe_date": "2026-06-14",
+  "http_status": 200,
+  "final_url": "https://www.customs.gov.vn/",
+  "anti_bot": "none",
+  "platform": "Apache Tomcat 8.0.32 + JSF SPA (Kendo UI / jQuery)",
+  "verdict": "BLOCKED_JS_RENDER",
+  "finding": "The Customs site is a single-page app. All data content is dynamically loaded via a bridge proxy API. The bridge requires a server-side session variable 'main_new' (resolved in JSP) to form the API URL. External curl cannot resolve 'main_new'. The backend host (tongcuc.customs.gov.vn) is NOT DNS-resolvable externally (NXDOMAIN). The bridge API returns HTTP 400 with error 'Du lieu truy cap khong hop le!' for all external requests.",
+  "page_structure": {
+    "framework": "JavaServer Pages (JSP) shell loading jQuery SPA content",
+    "data_api": "bridge?url=<main_new>/api/GetListPage (requires server session)",
+    "backend_host": "tongcuc.customs.gov.vn (DNS: NXDOMAIN externally)",
+    "data_format": "JSON returned by internal API (not externally accessible)"
+  },
+  "fdi_breakdown_found": false,
+  "machine_readable_data": false,
+  "fallback_strategy": "Use GSO/NSO FDI-attributed export data from nso.gov.vn monthly Excel (sheet 12.FDI). NSO publishes FDI by province/month with registered and disbursed capital (USD) in the monthly socio-economic Excel report.",
+  "sample_response": "<!DOCTYPE html><html lang='vi'><head>...<title>Tổng cục Hải Quan Việt Nam</title>... <div id='main'></div> (content loaded via AJAX bridge)",
+  "bridge_error": "{\"errorMessage\":\"Du lieu truy cap khong hop le!\"}",
+  "robots_txt": "User-agent: *  (no disallow rules, allows all crawlers)"
+}
