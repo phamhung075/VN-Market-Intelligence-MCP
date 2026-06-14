@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-14T07:10:00Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-14T07:10:12Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -7561,6 +7561,40 @@
         "source": "health-recheck 0407 NEW finding (N1) — router triage 2026-06-14",
         "groomed_by": "po",
         "groomed_at": "2026-06-14T04:24:39Z"
+      },
+      {
+        "id": "BA-DOCLANG-SERIALIZE",
+        "title": "Requirement Spec — Phase 1 DocLangSerializer: render layout-first extractor output to additive .dclg.xml v0 (apps/pdf-extractor/infrastructure/), production adapter + tests, bctc_table_rows unchanged.",
+        "owner": "ba",
+        "status": "TODO",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "priority": "medium",
+        "size": "S",
+        "created_at": "2026-06-14T07:10:12Z",
+        "created_by": "po",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "context": "User directive project-doclang-priority-format. Scope 1 (extracted content) only for Phase 1. Basis: promote scripts/spike-doclang-otsl-overlap.py (throwaway OTSL serializer from SPIKE-DOCLANG-OTSL-OVERLAP) into a production infrastructure adapter. Source data = ExtractedTableDTO + prose from application/extract_layout_first_usecase.py (LF-EXTRACT, shipped). Spec repo: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/doclang (Apache 2.0, ns https://www.doclang.ai/ns/v0). DocLang is OUTPUT format ONLY — NOT a validation gate (prior spike net-new=0). Additive: bctc_table_rows MUST stay unchanged.",
+        "acceptance_hint": "(1) DocLangSerializer in apps/pdf-extractor/infrastructure/ takes extractor output -> valid .dclg.xml v0; (2) output validates against sibling spec repo XSD/Schematron; (3) unit + golden-file tests; (4) bctc_table_rows regression-clean; (5) NOT wired as a gate."
+      },
+      {
+        "id": "SPIKE-DOCLANG-AUTHORED-DOCS",
+        "title": "SPIKE — Feasibility of converting authored docs/ (policies/protocols/agent-flows/notebooks) to DocLang .dclg.xml: what breaks across the docs DAG, do agent flow-readers/skills/hooks parse non-markdown, is there ANY consumer benefit? Findings doc only.",
+        "owner": "architect",
+        "status": "TODO",
+        "type": "SPIKE",
+        "mode": "spike",
+        "zone": "docs/agents/",
+        "priority": "low",
+        "size": "S",
+        "timebox": 120,
+        "created_at": "2026-06-14T07:10:12Z",
+        "created_by": "po",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "gated_behind": "BA-DOCLANG-SERIALIZE (Phase 1 ship first)",
+        "question": "DocLang is designed for unstructured EXTRACTED content, not authored markdown. Authored docs/ (policies/protocols/flows/notebooks) are markdown consumed AS markdown by agents + skills + hooks. (1) Inventory every consumer of docs/*.md (agent flow-readers, .claude/skills, hooks, jq/grep tooling). (2) Which break if a file becomes .dclg.xml? (3) Is there any concrete consumer benefit vs markdown? Output: findings doc + go/no-go recommendation. Do NOT convert anything in this spike.",
+        "decision_gate": "benefit>breakage AND a clean migration path exists => architect scopes a phased conversion sprint. Otherwise => CLOSE: keep authored docs as markdown; DocLang stays scoped to extracted content only.",
+        "context": "User directive project-doclang-priority-format scope 2. PO recommendation: do NOT bundle into Phase 1 — large blast radius across docs DAG, format mismatch (DocLang = extracted content, not authored prose). Gate behind Phase 1 ship."
       }
     ],
     "archive": [],
@@ -9969,39 +10003,6 @@
         "architect_done_at": "2026-06-13T22:38:47Z",
         "handoff": "docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md",
         "brief": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md"
-      },
-      {
-        "id": "D-1",
-        "title": "FIX-MCP-CRASH-LOOP-D-1 — WAL escalation gate: escalateFn injected into checkWalFileSize(), writes atomic orch-state signal when WAL>10MB",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "medium",
-        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
-        "created_at": "2026-06-14T00:30:00Z",
-        "created_by": "pm",
-        "files_summary": "Modify: checkpoint.ts (escalateFn param), startScheduler.ts (escalation closure). Create: test file FIX-MCP-CRASH-LOOP-D-wal-escalation.test.ts",
-        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-D-1.md",
-        "depends_on": [
-          "BC-1"
-        ],
-        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
-        "blocked_by": [
-          "BC-1"
-        ],
-        "accepts": [
-          "escalateFn not called when WAL<=10MB",
-          "escalateFn called once when WAL>10MB with byte count",
-          "escalateFn rejection is non-fatal",
-          "Orch-state write uses temp-rename",
-          "tsc 0 errors"
-        ],
-        "claimed_at": "2026-06-14T06:27:29Z",
-        "claimed_by": "router",
-        "next_agent": "dev-mcp-server",
-        "dispatch_note": "Dispatched dev-mcp-server 2026-06-14T06:27:29Z. Last child of FIX-MCP-CRASH-LOOP-WRITEWAL umbrella (BC-1+A-1 done_verified). Design complete via handoff docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-D-1.md + brief 2026-06-14-fix-mcp-crash-loop-writewal.md — dev-mcp-server implements directly. Scope: checkpoint.ts (escalateFn param into checkWalFileSize), startScheduler.ts (escalation closure writing atomic orch-state signal when WAL>10MB), new test FIX-MCP-CRASH-LOOP-D-wal-escalation.test.ts. GENERIC db-layer (no per-table/per-ticker). Accepts: escalateFn silent WAL<=10MB; called once WAL>10MB w/ byte count; rejection non-fatal; orch-state write temp-rename; tsc 0. Run pnpm check BEFORE commit (RED-PREPUSH)."
       }
     ],
     "head": {
@@ -11510,6 +11511,15 @@
         "data_foundation": "VERIFIED by PO 2026-06-12: apps/kinh-dich-service/dashboard/que-reference.js = 64 entries, each with name/chinese/upper/lower/upperElement/lowerElement/coreMeaning.vi/marketTrend/marketTrendLabel.vi/stateInterpretation.vi/favorable.vi/warning.vi/phases[6]. Codegen scripts/gen-que-descriptions.ts currently emits ONLY coreMeaning+marketTrendLabel (2 fields, PO-Q3 tooltip scope). Generated -> apps/frontend/app/lib/que-descriptions.generated.ts. Shared component apps/frontend/app/components/QueName.tsx exists. Route convention = Remix file-based (routes/dashboard.<name>.tsx). Nav SSOT = TopNav.tsx ANALYST_NAV/NAV_ITEMS.",
         "created_at": "2026-06-12T15:13:17Z",
         "created_by": "po"
+      },
+      {
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "status": "active",
+        "vision": "Adopt DocLang (.dclg.xml, ns https://www.doclang.ai/ns/v0) as the canonical OUTPUT/representation format for pdf-extractor financial-doc extractions — an ADDITIONAL emitted artifact alongside bctc_table_rows, never replacing it.",
+        "scope_in": "Phase 1 ONLY now: production DocLangSerializer in apps/pdf-extractor/infrastructure/ rendering existing layout-first extractor output (ExtractedTableDTO + prose) to valid .dclg.xml v0 OTSL. Promote/harden the throwaway scripts/spike-doclang-otsl-overlap.py into a real adapter with tests + schema-validation against the sibling spec repo. Phase 2 (authored docs/ conversion) is GATED behind a separate feasibility SPIKE — not built in this sprint.",
+        "scope_out": "NOT a validation/CI gate (prior SPIKE-DOCLANG-OTSL-OVERLAP killed that: net-new=0 defects). NOT replacing bctc_table_rows / native semantic gates. NOT a new extractor (DocLang does not extract — layout-first flow already ships). NOT converting authored markdown docs (policies/protocols/flows/notebooks) — that is Phase 2, gated.",
+        "success_metric": "Phase 1: every layout-first extraction can emit a .dclg.xml that validates against DocLang v0 schema (sibling repo Schematron+XSD); bctc_table_rows output unchanged (regression-clean); serializer unit + golden-file tested; qa verifies a real FPT extraction round-trips to valid .dclg.xml live. Phase 2 SPIKE: findings doc answering what-breaks / consumer-benefit BEFORE any conversion.",
+        "created_at": "2026-06-14T07:10:12Z"
       }
     ]
   },
