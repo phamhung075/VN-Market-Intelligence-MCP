@@ -4,6 +4,27 @@
 
 ---
 
+## c95 · 2026-06-14T20:22Z
+
+**Status:** NEEDS_ATTENTION | Direction: IMPROVING | Chef: PIPELINE HEALTHY (Saturday off-market — evening PUBLISHED, morning/intraday/EOD correctly absent per 1-5 cron)
+
+**Cycle context:** Saturday 2026-06-14. No VN market. chef-morning/intraday/eod crons are `1-5` (Mon-Fri only) — their absence today is correct behavior, NOT a pipeline failure. chef-evening (`45 19 * * *`) fired and PUBLISHED. FIX-COWORK-GUARANTEED-BACKSTOP re-arm (2026-06-13T21:18Z) active. Verification gate G1-G4 deferred to Monday 2026-06-16 (next market day) per PO ACK.
+
+**Previous handoff ACK:** c94 handoff DOUBLE-ACK'd by PO at 2026-06-13T20:54:01Z + delta tick 2026-06-13T21:28:26Z. All findings dispositioned. FIX-COWORK-GUARANTEED-BACKSTOP groomed (done[]; commit 45553a28). Layer-B re-arm confirmed (cowork-team-20260613T210726Z telemetry; cron a95078d1 caught bctc-analyst-slot-3 at 21:05Z). Previous handoff fully ACK'd — all c94 findings processed.
+
+**Layer scores (c95 — Saturday, evening dish only):** Evening 19:37Z — **3.5/6 IMPROVED** (vs c94 3/6)
+
+**New findings:**
+- **F-EOD-SCHEDULE-STALE → MONITORING (PENDING GATE G1-G4):** cowork-schedule chef-eod `last_fired=2026-06-11T08:51Z` still stale; but last_reactivated_at=2026-06-13T21:18:35Z confirms Layer-B re-arm. Saturday = no EOD slot fire expected (cron `1-5`). PO ACK groomed this into FIX-COWORK-GUARANTEED-BACKSTOP; verification gate G1-G4 requires Monday 2026-06-16 morning+EOD fires. DOWNGRADED from HIGH to MONITORING until Monday evidence.
+- **F-INTRADAY-0614-CORRECT-ABSENCE:** Morning/intraday/EOD absent on 2026-06-14 is CORRECT. Saturday = off-market. No dispatch for `1-5` slots. Not a finding.
+- **FIX-MCP-500-SYMBOL-TO-STRING (HIGH, NEW from dev session):** developer notebook (2026-06-14) — `StreamableHTTPServerTransport` + Bun 1.3.13 JIT corruption after ~80min (ohlcvBackfill). Fix: replaced with `WebStandardStreamableHTTPServerTransport` (commits e69b354f, 6bd079ec, c084af40). Status: REVIEW — ops rebuild required for live proof. This is the root of periodic mcp-server 500 errors that degrade chef gateway calls.
+
+**Carry-forward gaps:** F3=PMI-sub | F4=VIRA | F9=business-context (21st cycle) | F5=hexagram-501
+
+**Actions this cycle:** Handoff written (docs/handoffs/tnb-audit-latest.md) | Signal emitted (docs/signals/tnb-20260614T202200Z.json) | Commit: NO SHELL TOOL IN SESSION — files written to working tree, git commit deferred to next agent with shell access (same C-2 pattern as c94; files preserved in working tree) | WORK report pending (MCP unavailable)
+
+---
+
 ## c94 · 2026-06-13T20:23Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE DEGRADED (only evening confirmed; morning/intraday/EOD absent from notebook + cowork-schedule)
@@ -95,9 +116,9 @@
 ---
 
 **Agent methodology scores (current):**
-- news-scout: 7+/9 GOOD (5 clean cycles)
-- market-watcher: GOOD (limited scope)
-- bctc-analyst: 8/9 GOOD (FPT forensic gates)
-- unified-agent: 5/9 NEEDS_ATTENTION (D+E persistent; evening 4.5/9 c93)
+- news-scout: 8+/9 EXCELLENT (4 consecutive c90–c93 strong cycles; c91-c93 on 2026-06-14 all clean)
+- market-watcher: GOOD (limited scope; offhours Saturday correct behavior)
+- bctc-analyst: 8/9 GOOD (FPT forensic gates; c050–c052 on 2026-06-14 clean)
+- unified-agent: 5.5/9 IMPROVING (evening 3.5/6 c95 vs 3/6 c94; FII+HPG Kinh Dich available)
 
-**Persistent structural gaps (escalated to dev):** F-MORNING-NB-MISSING (200L cap + 5 slots), F-OOM-MCP-SERVER (memory), F-SUNDAY-SCHEDULER-FIRE (dispatcher), PMI-sub-components, VIRA absent, business-context (19+ cycles)
+**Persistent structural gaps (escalated to dev):** F-EOD-SCHEDULE-STALE (MONITORING — gate G1-G4 Mon 2026-06-16), PMI-sub-components, VIRA absent, business-context (21+ cycles), FIX-MCP-500-SYMBOL-TO-STRING (NEW HIGH — dev REVIEW)

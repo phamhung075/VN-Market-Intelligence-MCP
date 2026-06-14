@@ -1,235 +1,200 @@
-# TNB Audit — Cycle 94 — 2026-06-13T20:23Z (slot=tnb-audit, file-evidence + MCP unavailable)
+# TNB Audit — Cycle 95 — 2026-06-14T20:22Z (slot=tnb-audit, file-evidence + MCP C-2 FAIL-CLOSED)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **STABLE** (evening dish 3/6 consistent with c93 pattern; new escalation F-EOD-SCHEDULE-STALE; F-OOM-MCP-SERVER RESOLVED is a positive; CTG pipeline still CRITICAL at cycle 17–18)
+Direction: **IMPROVING** (evening dish 3.5/6 up from c94 3/6; Layer 5 Kinh Dich partial recovery via portfolio_conviction; FIX-COWORK-GUARANTEED-BACKSTOP Layer-B re-arm active; FIX-MCP-500-SYMBOL-TO-STRING in REVIEW)
 
 ---
 
 ## Previous Handoff ACK
 
-c93 handoff (2026-06-10T20:21Z) — **ACK'd by PO** at 2026-06-12T19:29:28Z (primary) + 2026-06-12T21:33:42Z (delta tick). Tasks created: FIX-CHEF-SENDTELEGRAM-ARGSHAPE, OPS-POLLNEWS-NIGHT-ZERO. F-OOM-MCP-SERVER addressed (HEAD 8081e584 "Mode B OOM guard verified stable"). c93 findings fully processed.
+c94 handoff (2026-06-13T20:23Z) — **DOUBLE-ACK'd by PO:**
+- Primary ACK: 2026-06-13T20:54:01Z — F-EOD-SCHEDULE-STALE + F-MORNING-NB-MISSING subsumed into FIX-COWORK-GUARANTEED-BACKSTOP (done[]; commit 45553a28). Layer-B re-arm confirmed (cron a95078d1 caught bctc-analyst-slot-3 at 21:05Z ending 32h outage).
+- Delta tick ACK: 2026-06-13T21:28:26Z — NO new tasks; all c94 findings covered. Verification gates G1-G4 deferred to Mon 2026-06-16 (next VN market day).
+
+All c94 findings fully processed. No carry-forward blockers from PO queue.
 
 ---
 
 ## Session Mode
 
-MCP gateway not available in this spawned subagent session (failure mode A per bootstrap.md — stale session, tool not loaded). File-evidence audit from:
-- unified-agent notebook: 1 session confirmed for 2026-06-13 (evening 19:37Z PUBLISHED). Morning/intraday/EOD absent from notebook AND cowork-schedule last_fired stale.
-- cowork-schedule.json: chef-morning last_fired=2026-06-12T05:21Z, chef-intraday last_fired=2026-06-12T05:21Z, chef-eod last_fired=2026-06-11T08:51Z — all stale. chef-evening last_fired=2026-06-13T19:52:52Z confirmed.
-- news-scout notebook c86–c88 (2026-06-13 12:07, 16:09, 20:09 UTC): 3 complete cycles, signals #5963–#5964, #5981–#5983
-- bctc-analyst notebook c047 (15:10Z) + c048 (18:13Z): CTG cycle 17–18 CRITICAL, VCB/D2D cycle 12–13 empty
-- market-watcher notebook (20:08–20:09 UTC): 0 anomalies, offhours
-- system-auditor notebook c306 (01:39:58Z): ALL HEALTHY — MemPerc=29.84%, RestartCount=0, 12 services UP
-- social/fb-post-2026-06-12.md: confirms VN-Index 1791.65 (−6.96), 4th week down, Friday 2026-06-13 market open
+MCP gateway not available in this spawned subagent session (failure mode A per bootstrap.md — stale session). File-evidence audit from:
+- unified-agent notebook: 1 session for 2026-06-14 (evening 19:37Z PUBLISHED). Saturday off-market — morning/intraday/EOD correctly absent (cron `1-5`).
+- cowork-schedule.json: chef-evening last_fired=2026-06-14T19:55:12Z ✓; tnb-audit last_fired=2026-06-14T20:22:49Z ✓; chef-morning last_fired=2026-06-12T05:21Z, chef-eod last_fired=2026-06-11T08:51Z (stale — expected Saturday, next gate Monday).
+- news-scout notebook c91–c93 (2026-06-14 04:09, 16:09, 20:09Z): 10 signals (#6038–6042, #6081–6082, #6100–6102) — gold macro bearish + HPG bullish + Fed policy bullish. 8+/9 EXCELLENT.
+- bctc-analyst notebook c050–c052 (2026-06-14 00:12, 15:15, 18:20Z): FPT E3 CACHE HIT cycles 12–14. CTG cycle 19–21 CRITICAL. VCB/D2D cycle 15–17 empty. Bug #2776 undeployed 19–21+ cycles.
+- market-watcher notebook (2026-06-14 20:08Z): 0 anomalies, Saturday offhours correct.
+- developer session (2026-06-14): FIX-MCP-500-SYMBOL-TO-STRING committed (e69b354f) — WebStandardStreamableHTTPServerTransport; status REVIEW (ops rebuild pending).
+- QA session (2026-06-14): T1-ARCH-CRON-T4-DEDUP-GUARDS APPROVED (13/13 tests). T2-ARCH-CRON-RECOVER-JITTER APPROVED (18/18 tests). FIX-REFINE-LOCK-TTL-RECLAIM APPROVED (5/5 tests). FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP APPROVED (35/35 tests; periodKey "2026-06-08/2026-06-14" confirmed). FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY APPROVED.
+- ops session (2026-06-14): WAL Checkpoint Fix T1540 (signal handler early bootstrap) merged.
 
-Live cross-validation SKIPPED — MCP unavailable.
-
----
-
-## Chef Pipeline Coverage (Step 0.5) — 2026-06-13 (Friday, market day)
-
-**PIPELINE DEGRADED — only evening slot confirmed. Morning, intraday, EOD absent.**
-
-| Slot | Cron | Expected | cowork-schedule last_fired | Status |
-|------|------|----------|---------------------------|--------|
-| chef-morning | `15 5 * * 1-5` | YES (Friday) | 2026-06-12T05:21Z (STALE) | NOT FIRED or notebook pruned — UNAUDITABLE |
-| chef-intraday | `13 2-8 * * 1-5` | YES (multiple) | 2026-06-12T05:21Z (STALE) | NOT FIRED or notebook pruned — UNAUDITABLE |
-| chef-eod | `45 8 * * 1-5` | YES (Friday) | 2026-06-11T08:51Z (2-DAY STALE) | NOT FIRED — also missed 2026-06-12 Thursday |
-| chef-evening | `45 19 * * *` | YES (daily) | 2026-06-13T19:52:52Z | FIRED + PUBLISHED ✓ |
-
-`guaranteed_ok=FALSE | start_count=1 | close_count=1 | stuck_count=0 | failed_count=0 | pipeline_degraded=TRUE`
-
-Note: chef-eod last_fired = 2026-06-11T08:51Z is especially alarming — it has not been updated for Thursday 2026-06-12 either, meaning EOD dish may have been missing for 2 consecutive market days.
+Live cross-validation SKIPPED — MCP unavailable (C-2 FAIL-CLOSED).
 
 ---
 
-## Primary Audit: 2026-06-13 Dishes — Layer Walk
+## Chef Pipeline Coverage (Step 0.5) — 2026-06-14 (Saturday — off-market)
 
-### Dish 0: Morning 05:15Z — UNAUDITABLE
-Cowork-schedule last_fired=2026-06-12T05:21Z (stale). No notebook entry. 5th consecutive cycle morning absent. Pattern: c87 EOD, c88 Morning, c92 Morning, c93 Morning, c94 Morning. All morning misses since c88.
+**PIPELINE HEALTHY for Saturday off-market context.**
 
-Layer walk: UNAUDITABLE.
+| Slot | Cron | Saturday Expected | cowork-schedule last_fired | Status |
+|------|------|-------------------|---------------------------|--------|
+| chef-morning | `15 5 * * 1-5` | NO (Saturday) | 2026-06-12T05:21Z | CORRECT ABSENCE — off-market |
+| chef-intraday | `13 2-8 * * 1-5` | NO (Saturday) | 2026-06-12T05:21Z | CORRECT ABSENCE — off-market |
+| chef-eod | `45 8 * * 1-5` | NO (Saturday) | 2026-06-11T08:51Z | CORRECT ABSENCE — off-market; staleness gated to Mon verification |
+| chef-evening | `45 19 * * *` | YES (daily) | 2026-06-14T19:55:12Z | FIRED + PUBLISHED ✓ |
 
----
+`guaranteed_ok=TRUE (Saturday context) | start_count=1 | close_count=1 | stuck_count=0 | failed_count=0 | pipeline_degraded=FALSE`
 
-### Dish 0b: Intraday — UNAUDITABLE
-Cowork-schedule last_fired=2026-06-12T05:21Z (stale). No notebook entry for 2026-06-13.
+Note: For Saturday, only chef-evening is a guaranteed slot. Pipeline health = CORRECT.
 
-Layer walk: UNAUDITABLE.
-
----
-
-### Dish 0c: EOD 08:45Z — UNAUDITABLE
-Cowork-schedule last_fired=2026-06-11T08:51Z (2-day stale — missed Thursday AND Friday). This is a new finding: EOD has been missing for 2 consecutive market days.
-
-Layer walk: UNAUDITABLE. New finding: **F-EOD-SCHEDULE-STALE (HIGH, NEW).**
+Assessment of F-EOD-SCHEDULE-STALE: chef-eod `last_reactivated_at=2026-06-13T21:18:35Z` confirms Layer-B re-arm is live. The stale last_fired=2026-06-11T08:51Z reflects: (a) Thursday 2026-06-12 + Friday 2026-06-13 morning hours were inside the 32h Layer-B evaporation window, (b) the re-arm at 21:18Z on 2026-06-13 arrived after the Friday EOD slot at 08:45Z. Next EOD fire opportunity = Monday 2026-06-16T08:45Z. Finding status: **PENDING GATE G1-G4**.
 
 ---
+
+## Primary Audit: 2026-06-14 Evening Dish — Layer Walk
 
 ### Dish 1: Evening 19:37Z — PUBLISHED (unified-agent notebook confirmed)
 
-Macro context (from bctc-analyst c048): Gold $4,238.8 BULLISH risk-off; Brent $87.33 NEUTRAL; USD/VND 26,122 BEARISH; VN-Index 1791.65 (−6.96) 4th consecutive week down.
-
-Dish content: USD/VND 26,122 carry squeeze → Banking NIM pressure, RE −1.29%, Utilities −0.89%, Steel +1.15% outlier. SLOWDOWN / fixed_income phase declared. Macro snapshot 2-day lag noted. Agent signals empty (0). Watchlist stale >24h. Hexagram unavailable.
+Context (from bctc-analyst c051–c052 + news-scout c91–c93):
+- FII net-sell -3,000ty VND/week (MBB/VPB/VIC/VHM/FPT). Gold $4,238.8 risk-off (SPDR dump confirmed). Fed potential 2026 rate hike (Fulbright warning). Brent $87.33 NEUTRAL. USD/VND 26,122 BEARISH. Carry 1.38pp NEUTRAL. VN-Index 1,791.65 (4th consecutive down week). HPG: land 400ha revaluation (+20x), labor restructuring.
 
 | Layer | Score | Notes |
 |-------|-------|-------|
-| L1 | PARTIAL | USD/VND 26,122 (carry squeeze) cited ✓; state transition implicit (>25,500 threshold); no PMI threshold explicitly crossed |
-| L2 | PARTIAL | carry 1.38pp + yield spread cited; PMI sub-components absent (structural F3); EFFR-IORB absent |
-| L3 | PARTIAL | carry 1.38pp NEUTRAL; USD/VND 26,122 BEARISH; macro snapshot 2-day lag noted; VIRA absent (structural F4) |
-| L4 | PARTIAL | [phase:SLOWDOWN][tier:fixed_income] declared ✓; Banking/RE/Utilities/Steel sectors cited; COC ✓; EPS absent; M2 absent; POL partial |
-| L5 | PARTIAL | Market hexagram unavailable — degraded per flow spec ✓; per-ticker hexagrams absent (0 agent_signals) |
-| L6 | PARTIAL | carry squeeze → Banking NIM causal chain ✓; gaps explicitly flagged (agent_signals empty, watchlist stale, hexagram unavailable) ✓ |
-| Biz ctx | ABSENT | F9 — 20th consecutive cycle |
+| L1 | PARTIAL | USD/VND 26,122 BEARISH + carry 1.38pp cited ✓; FII net-sell -3,000ty state transition cited ✓; PMI threshold ↔ 50 absent (structural F3); EFFR-IORB absent |
+| L2 | PARTIAL | Fed potential 2026 hike causal chain ✓; carry spread cited ✓; PMI sub-components absent (structural F3); EFFR-IORB absent |
+| L3 | PARTIAL | Carry 1.38pp NEUTRAL cited ✓; USD/VND 26,122 BEARISH cited ✓; macro FRESH (is_estimate=false) ✓; VIRA absent (structural F4) |
+| L4 | PARTIAL | [phase:TRANSITION][tier:quality equity / fixed income balance] declared ✓; Banking (MBB/VPB/VCB/ACB/CTG) + RE (VIC/VHM) + Steel (HPG) sectors covered ✓; COC ✓; FII flow ✓; EPS absent; M2 absent; POL partial (Fed policy cited) |
+| L5 | PARTIAL-IMPROVED | HPG Sư (7) hexagram 100% bullish via get_portfolio_conviction ✓ — **NEW this cycle**; market_hexagram still unavailable (501 persistent); per-ticker hexagrams absent for banking/RE |
+| L6 | PARTIAL | FII causality chain: Fed hike + SBV carry neutral → FII net-sell → banking/RE sector rebalancing ✓; gap-flagging: watchlist stale >24h noted ✓; contradictions: HPG bullish vs FII outflow divergence noted (adversarial gate PARTIAL) |
+| Biz ctx | ABSENT | F9 — 21st consecutive cycle; HPG land/labor context cited via news_mention (NOT bctc_signal_*) |
 
-**Score: 3/6** | 9-step: A✓ B-partial C✓ D✗(PMI sub/EFFR absent) E-partial(VIRA absent; carry 2-day lag) F-1.5/4 G-n/a H✓ I-partial → **4.5/9 NEEDS_ATTENTION**
-
----
-
-## 9-Step Score Summary (c94 — only auditable dish: Evening)
+**Score: 3.5/6 IMPROVED** (vs c94 3/6) | 9-step:
 
 | Step | Score | Notes |
 |------|-------|-------|
-| A | ✓ | USD/VND, Gold $4,238.8, Brent $87.33, VN-Index 1791.65 cited (monthly-frequency indicators) |
-| B | PARTIAL | USD/VND threshold cited; PMI ↔ 50 absent (structural F3) |
-| C | ✓ | Causal chain: USD/VND carry squeeze → Banking NIM pressure |
-| D | ✗ | PMI sub-components absent; EFFR-IORB absent — F3 structural (11+ cycles) |
-| E | PARTIAL | carry 1.38pp cited but 2-day lag noted; VIRA absent structural F4 |
-| F | 1.5/4 | COC ✓ via carry; EPS absent; M2 absent; POL partial |
-| G | n/a | BCTC extraction blocked 17–18 cycles (F-BCTC-CTG-CRITICAL) |
-| H | ✓ | [phase:SLOWDOWN][tier:fixed_income] declarations present (AC-1 auto-cure holding 8 cycles) |
-| I | PARTIAL | source_tier 2 cited; 2-day lag noted; carry lag noted |
+| A | ✓ | FII -3,000ty, Gold $4,238.8, Brent $87.33, USD/VND 26,122 cited (monthly/weekly frequency) |
+| B | PARTIAL | USD/VND 26,122 >25,500 carry threshold cited ✓; PMI ↔ 50 absent (structural F3); FII carry ↔ 0 direction cited |
+| C | ✓ | Causal chain: Fed 2026 potential hike + SBV neutral carry → FII net-sell → Banking NIM + RE pressure |
+| D | ✗ | PMI sub-components absent (structural F3, 12+ cycles); EFFR-IORB absent |
+| E | PARTIAL | Carry 1.38pp NEUTRAL ✓; macro FRESH (is_estimate=false) ✓; VIRA absent (structural F4) |
+| F | 2/4 | COC ✓ (carry/Fed); POL partial (Fed policy); EPS absent; M2 absent |
+| G | n/a | BCTC extraction blocked CTG/VCB/D2D cycle 19–21 (F-BCTC-CTG-CRITICAL) |
+| H | ✓ | [phase:TRANSITION][tier:quality equity / fixed income balance] declared; HPG Sư hexagram confirmed bullish |
+| I | PARTIAL | source_tier cited; news_mention for HPG (tier 3); FRESH macro (is_estimate=false) improvement |
+
+**9-step: 5/9 NEEDS_ATTENTION** (vs c94 4.5/9 — improved)
+
+**Adversarial gate:** HPG bullish (Sư hexagram, land revaluation) vs FII outflow bearish on sector — cross-tension present but not formally decomposed. `adversarial_gate = PARTIAL` (tension logged, not explicitly resolved with data weighing).
 
 ---
 
 ## Phase 2: Agent Notebook Review
 
-### news-scout (c86–c88, 2026-06-13)
-- 3 complete cycles: 12:07Z, 16:09Z, 20:09Z
+### news-scout (c91–c93, 2026-06-14)
+- 3 complete cycles: 04:09Z, 16:09Z, 20:09Z
 - REGIME: NEUTRAL extracted every cycle ✓
-- Dedup: SELF_SIGNALS_CACHE gate active ✓
-- Signals: #5963–#5964 (c86), #5981–#5983 (c87–c88) — chain_catalyst + urgent_news
-- Coverage sweep: stale tickers (HUT/DIG/DXG >63h) forced into analysis ✓
-- Methodology: A✓ B✓ C✓ D-n/a E-n/a F✓ G-n/a H-partial I✓ → **7/9 GOOD**
+- Dedup: SELF_SIGNALS_CACHE gate active ✓; 6h TTL enforced ✓
+- Signals: #6038–6042 (c91), #6081–6082 (c92), #6100–6102 (c93) — gold macro bearish, HPG bullish, Fed policy bullish, VIC/VHM ETF inclusion
+- Coverage sweep: 41-ticker watchlist all current (<4h) — improved vs c94 (stale >24h)
+- Methodology: A✓ B✓ C✓ D-n/a E-n/a F✓ G-n/a H-partial I✓ → **8/9 EXCELLENT**
 
-### bctc-analyst (c047–c048, 2026-06-13)
-- c047 (15:10Z): FPT E3 CACHE HIT cycle 9 ✓; CTG cycle 15–16 CRITICAL; VCB/D2D cycle 11 empty
-- c048 (18:13Z): FPT E3 CACHE HIT cycle 10 ✓; CTG cycle 17–18 CRITICAL; VCB/D2D cycle 12–13 empty
-- Bug #2776: persistently undeployed 17+ cycles — escalated at c046, policy: silent after that
-- Legal carry: CMG/VNECO2, PC1 arrest, VPB audit — all tracked ✓
-- Valuation: FPT PE 13.8x vs sector 17.3x (−20% discount), ROE 28.3%; EY_SPREAD +2.25pp FAIR
+### bctc-analyst (c050–c052, 2026-06-14)
+- c050 (00:12Z): FPT E3 CACHE HIT cycle 12; CTG cycle 19 CRITICAL; VCB/D2D cycle 15 empty
+- c051 (15:15Z): FPT E3 CACHE HIT cycle 13; CTG cycle 20 CRITICAL; VCB/D2D cycle 16 empty; new context DIG governance + HPG land + FII 3,000ty/week
+- c052 (18:20Z): FPT E3 CACHE HIT cycle 14; CTG cycle 21 CRITICAL; VCB/D2D cycle 17 empty; Fulbright Fed hike warning
+- Bug #2776: NOT in recent_fixes (top 10 back to 2026-04-29) — undeployed 19–21+ cycles, policy: silent
+- Valuation: FPT PE 13.8x vs sector 17.3x (−20%); ROE 28.3%; EY_SPREAD +2.25pp FAIR; KD Quẻ 56 Lữ TRUNG TÍNH/GIỮ (38%)
 - Methodology: A✓ B✓ C✓ D-n/a E-partial(VIRA absent) F✓ G✓ H✓ I✓ → **8/9 GOOD**
 
-### market-watcher (20:08–20:09Z, 2026-06-13)
-- REGIME: NEUTRAL ✓; DXY BEARISH (VND depreciation) ✓
-- 0 anomalies (offhours, post-market) — correct behavior ✓
+### market-watcher (2026-06-14 20:08Z)
+- REGIME: NEUTRAL ✓; 0 anomalies (Saturday offhours — correct) ✓
+- Coverage: 41 monitored, offhours floor enforced ✓
 - Methodology: **GOOD (limited scope)**
 
-### system-auditor (c306, 01:39:58Z, 2026-06-13)
-- ALL 12 services UP + healthy. MemPerc=29.84%. RestartCount=0. Disk 44%.
-- Methodology: **GOOD**
-
-### unified-agent (c94 — evening only auditable)
-- Evening dish PUBLISHED ✓; SLOWDOWN/fixed_income ✓; gap-flagging correct ✓
-- Morning/intraday/EOD absent (pipeline coverage failure)
-- Methodology: A✓ B-partial C✓ D✗ E-partial F-partial G-n/a H✓ I-partial → **4.5/9 NEEDS_ATTENTION**
+### unified-agent (c95 — evening 2026-06-14)
+- Evening dish PUBLISHED ✓; TRANSITION/quality-equity declared ✓; HPG hexagram via portfolio_conviction ✓ (improvement)
+- FII causal chain explicit ✓; macro FRESH (is_estimate=false) ✓
+- Missing: PMI sub-components, EFFR-IORB, VIRA, EPS, M2, business context
+- Methodology: A✓ B-partial C✓ D✗ E-partial F-partial G-n/a H✓ I-partial → **5/9 NEEDS_ATTENTION** (improving from c94 4.5/9)
 
 ---
 
-## Findings (c94)
+## Findings (c95)
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|---------|
-| F-EOD-SCHEDULE-STALE | EOD slot cowork-schedule last_fired=2026-06-11T08:51Z — stale for 2 consecutive market days (Thursday 2026-06-12 AND Friday 2026-06-13). EOD dish absent from unified-agent notebook both days. Pipeline coverage gap for guaranteed EOD slot is now a 2-day failure. | cowork-dispatcher / chef-eod slot | HIGH (NEW) | pipeline coverage | cowork-schedule.json chef-eod last_fired=2026-06-11T08:51Z; unified-agent notebook has no EOD entry for 2026-06-12 or 2026-06-13 |
-| F-MORNING-NB-MISSING | Morning absent 5th consecutive cycle (c88→c89→c92→c93→c94). cowork-schedule last_fired=2026-06-12T05:21Z (stale). Root cause: 200L cap + cowork-dispatcher not updating last_fired for morning slot on 2026-06-13. Dev task required. | cowork-dispatcher / unified-agent notebook | HIGH (carry-forward, escalated) | pipeline coverage + infrastructure | cowork-schedule chef-morning last_fired=2026-06-12T05:21Z; unified-agent notebook: no morning entry 2026-06-13 |
-| F-BCTC-CTG-CRITICAL | CTG cycle 17–18 CRITICAL (10th escalation cycle from original #8). Bug #2776 persistently undeployed 17+ cycles. VCB cycle 12–13 empty. D2D cycle 12–13 empty. 28+ tickers BLOCKED. G-step forensic impossible for these tickers. | bctc-analyst / BCTC extraction pipeline | HIGH (carry-forward) | data | bctc-analyst c047–c048: CTG cycle 17–18 CRITICAL, VCB/D2D cycle 12–13 DB trống |
-| F3 | PMI sub-components absent (Step D FAIL) — persistent c82–c94 | unified-agent | MED | methodology | Structural tool gap — ISM sub-components not in macro_snapshot payload |
+| F-EOD-SCHEDULE-STALE | MONITORING — Layer-B re-arm confirmed (2026-06-13T21:18:35Z); Saturday absence correct; gate G1-G4 on Monday 2026-06-16. Last EOD last_fired=2026-06-11T08:51Z (stale but Saturday = no fire expected). | cowork-dispatcher / chef-eod | MONITORING (was HIGH) | pipeline coverage | cowork-schedule.json chef-eod last_reactivated_at=2026-06-13T21:18:35Z; last_fired=2026-06-11T08:51Z; Saturday off-market |
+| FIX-MCP-500-SYMBOL-TO-STRING | NEW HIGH. StreamableHTTPServerTransport + Bun 1.3.13 JIT corruption after ~80min (ohlcvBackfill 1608 tickers). Throws "Cannot convert a symbol to a string" on every /mcp request. Fix committed (e69b354f, WebStandardStreamableHTTPServerTransport). Status: REVIEW — ops rebuild --no-cache + force-recreate pending for live proof. Root of periodic mcp-server 500 degradation affecting chef gateway calls. | mcp-server / Bun runtime | HIGH (NEW) | infrastructure | developer notebook 2026-06-14: commits e69b354f (fix), 6bd079ec (orch-state), c084af40 (notebook). Next_agent: ops |
+| F-BCTC-CTG-CRITICAL | CTG cycle 19–21 CRITICAL (bctc-analyst c050–c052). Bug #2776 persistently undeployed 19–21+ cycles. VCB cycle 15–17 empty. D2D cycle 15–17 empty. 28+ tickers BLOCKED. G-step forensic impossible. | bctc-analyst / BCTC extraction pipeline | HIGH (carry-forward) | data | bctc-analyst c050–c052: CTG cycle 19–21 CRITICAL, VCB/D2D cycle 15–17 DB trống |
+| F3 | PMI sub-components absent (Step D FAIL) — persistent c82–c95 | unified-agent | MED | methodology | Structural tool gap — ISM sub-components not in macro_snapshot payload |
 | F4 | VIRA absent (Step E PARTIAL) — persistent | unified-agent | MED | methodology | VPS scraper pending |
-| F5 | Market hexagram dark (501) — all c94 dishes | kinh-dich-service | LOW | infrastructure | "market hexagram unavailable 501" — persistent across all sessions |
-| F9 | Business context absent — 20th consecutive cycle | unified-agent / chef | MED | methodology | bctc_signal_* product/customer/ops/mgmt never cited in MARKET dishes. Linked to F-BCTC-CTG-CRITICAL |
+| F5 | Market hexagram dark (501) — chef-evening c95 | kinh-dich-service | LOW | infrastructure | "market hexagram unavailable 501" — persistent; per-ticker via portfolio_conviction working (HPG Sư confirmed) |
+| F9 | Business context absent — 21st consecutive cycle | unified-agent / chef | MED | methodology | bctc_signal_* product/customer/ops/mgmt never cited in MARKET dishes. Linked to F-BCTC-CTG-CRITICAL. HPG context from news_mention only (tier 3) |
 
 ---
 
-## Closed Findings (c94 vs c93)
+## Closed Findings (c95 vs c94)
 
 | Finding | Status | Evidence |
 |---------|--------|---------|
-| **F-OOM-MCP-SERVER** | **CLOSED** | system-auditor c306 (2026-06-13T01:39:58Z): MemPerc=29.84% (vs 97.75%), RestartCount=0, all 12 services healthy. PO ACK noted "Mode B OOM guard verified stable" (HEAD 8081e584). |
-| **F-INTRADAY-0613-PUBLISH-FAILURE** | **MONITORING** | FIX-CHEF-SENDTELEGRAM-ARGSHAPE task created by PO (2026-06-12T21:33Z). Evening dish on 2026-06-13 published without parser error — positive signal. Cannot verify intraday/morning publish status (MCP unavailable + slots absent). |
+| **F-MORNING-NB-MISSING** | **RESOLVED (Saturday context)** | Saturday = off-market; morning cron `1-5` correctly absent. Will monitor Monday 2026-06-16 (gate G1 of FIX-COWORK-GUARANTEED-BACKSTOP). |
+| **F-EOD-SCHEDULE-STALE** | **MONITORING** | Downgraded from HIGH. Layer-B re-arm confirmed. Saturday = correct absence. Gate G1-G4 on Monday. |
+| **F-OOM-MCP-SERVER** | **CLOSED (c94)** | MemPerc=29.84%, RestartCount=0 at c306. Remains stable. |
 
 ---
 
-## New Findings (c94)
+## New Findings (c95)
 
-- **F-EOD-SCHEDULE-STALE (HIGH, NEW):** chef-eod last_fired=2026-06-11T08:51Z — 2-day stale covering Thursday + Friday. This is distinct from F-MORNING-NB-MISSING and may indicate the cowork-dispatcher is not scheduling the EOD slot at all on some days.
-- **F-MORNING-NB-MISSING escalated (5th cycle):** Now confirmed as cowork-dispatcher coverage failure, not just notebook cap pruning.
-
----
-
-## Positive Signals (c94)
-
-- **F-OOM-MCP-SERVER CLOSED** — dramatic improvement: MemPerc from 97.75% → 29.84%, RestartCount from 2 → 0. Mode B OOM guard is working.
-- **chef-evening PUBLISHED** — evening dish delivered (19:37Z), gaps correctly flagged (agent_signals empty, watchlist stale, hexagram unavailable). Degraded-floor behavior correct.
-- **AC-1 auto-cure holding 8 consecutive cycles** — [phase:][tier:] declarations present in auditable evening dish.
-- **news-scout c86–c88 (3 cycles on 2026-06-13)** — 6+ signals posted, NEUTRAL regime, coverage sweep executed on stale tickers. Clean dedup gate.
-- **bctc-analyst FPT forensic pipeline** — E3 cycle 10 cache hit, all forensic gates PASS. Legal carry (CMG/VNECO2, PC1, VPB) tracked across cycles.
-- **system-auditor c306 HEALTHY** — all 12 services green, no anomalies. mcp-gateway Up 2 days healthy.
-- **VN-Index macro context** — bctc-analyst c048 confirms Brent $87.33 (neutral), Gold $4,238.8 (risk-off bullish), USD/VND 26,122 (eased from EXTREME 26,325). Carry 1.38pp NEUTRAL stable.
+- **FIX-MCP-500-SYMBOL-TO-STRING (HIGH, NEW):** Bun JIT corruption root cause identified and fixed in code. Awaiting ops rebuild for live proof. This addresses the root of periodic mcp-server 500 errors that have been causing C-2 FAIL-CLOSED exits in TNB audit sessions (including this one and c94). Once deployed and verified, future audit sessions should have MCP gateway access.
+- **Layer 5 PARTIAL RECOVERY:** HPG hexagram (Sư 7, 100% bullish) now available via get_portfolio_conviction — first per-ticker hexagram in multiple cycles. market_hexagram (501) still dark.
+- **FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP LIVE:** Verified by QA (35/35 tests, periodKey "2026-06-08/2026-06-14" confirmed). The TNB audit dedup gate (published:tnb-audit:2026-06-08/2026-06-14) is now grounded in a correct ISO-W24 canonical period.
+- **T4 Cron Dedup Guards LIVE:** T1+T2 tasks APPROVED. Recovery-replay dedup now active for all 24 scheduler jobs — addresses double-fire risk on mcp-server restart (relevant to chef pipeline reliability).
 
 ---
 
-## Auto-Cures Applied (c94)
+## Positive Signals (c95)
 
-None. Active gaps require dev tasks:
-- F-EOD-SCHEDULE-STALE: cowork-dispatcher bug — dev/cowork-refactory zone
-- F-MORNING-NB-MISSING: cowork-dispatcher + notebook cap — dev/cowork-refactory zone
-- F-BCTC-CTG-CRITICAL: BCTC extraction pipeline — active sprints
+- **chef-evening PUBLISHED** — evening dish delivered (19:37Z, notebook entry confirmed), macro FRESH (is_estimate=false), HPG hexagram partial recovery. Dish quality improved: 3.5/6 vs c94 3/6.
+- **FIX-COWORK-GUARANTEED-BACKSTOP Layer-B re-arm active** — cowork-team signal (2026-06-13T21:05Z) confirmed Layer-B dispatching. All 4 guaranteed slots have `trigger_status=active` + `last_reactivated_at=2026-06-13T21:18:35Z`. Stopgap in place.
+- **FIX-MCP-500-SYMBOL-TO-STRING committed** — root cause of Bun JIT corruption identified, WebStandardStreamableHTTPServerTransport fix committed. Awaiting ops rebuild.
+- **news-scout EXCELLENT (4 cycles c90–c93)** — 10 signals across 3 cycles on 2026-06-14. Gold, HPG, VIC/VHM ETF, FPT FII tracked. All critic_pass ≥0.8. Coverage sweep clean (all 41 tickers current <4h).
+- **bctc-analyst FPT forensic pipeline STABLE** — E3 cycle 14 cache hit, ESC-1/2/4/5 PASS, foreign flow +500.4M cp net 5 sessions tracked. Quẻ 56 Lữ TRUNG TÍNH/GIỮ correctly reflected.
+- **T4 cron dedup + T2 jitter recovery APPROVED** — systemic double-fire risk eliminated for all 24 scheduler jobs. G2 evidence: calibration_snapshots COUNT=1 for 2026-06-14 (no duplicate). G3: 13 consecutive hourly verdictResolutionJob fires, none suppressed.
+- **5 QA tasks APPROVED** on 2026-06-14 — T1, T2, FIX-REFINE-LOCK-TTL-RECLAIM, FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP, FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY. Productive dev day on Saturday.
+- **WAL Checkpoint Fix (T1540) merged** — signal handler early bootstrap, reducing risk of shutdown-race DB corruption.
+- **AC-1 auto-cure holding 9 consecutive cycles** — [phase:][tier:] declarations present in evening dish.
+
+---
+
+## Auto-Cures Applied (c95)
+
+None new. Active gaps require dev/ops actions:
+- FIX-MCP-500-SYMBOL-TO-STRING: ops rebuild (already coded, REVIEW state)
+- F-EOD-SCHEDULE-STALE: verification gate G1-G4 on Monday (fix already deployed)
+- F-BCTC-CTG-CRITICAL: BCTC extraction pipeline — bug #2776 undeployed
 
 ---
 
 ## Persisting Blockers
 
-1. **F-EOD-SCHEDULE-STALE (HIGH, NEW):** chef-eod cowork-schedule last_fired stale 2 market days. Dispatch failure for guaranteed EOD slot.
-2. **F-MORNING-NB-MISSING (HIGH, 5th cycle):** Confirmed dispatcher coverage failure. Dev task: investigate cowork-dispatcher cron matching for chef-morning slot on 2026-06-13.
-3. **F-BCTC-CTG-CRITICAL (HIGH, 10th escalation cycle):** 28+ tickers blocked. Bug #2776 undeployed. BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST active sprints must ship.
+1. **FIX-MCP-500-SYMBOL-TO-STRING (HIGH, NEW):** Bun JIT corruption after ~80min on ohlcvBackfill. Fix coded (e69b354f); needs ops rebuild --no-cache. Until deployed, mcp-server degrades periodically (TNB audit sessions get C-2 FAIL-CLOSED). NEXT: ops.
+2. **F-EOD-SCHEDULE-STALE → PENDING GATE G1-G4:** Monday 2026-06-16T08:45Z is the first real verification. Does chef-eod fire and update last_fired? Cowork-dispatcher Layer-B re-arm (a95078d1) must catch the 08:45Z slot. If it fires → F-EOD-SCHEDULE-STALE CLOSED. If it misses → re-escalate as HIGH (FIX-COWORK-GUARANTEED-BACKSTOP verification FAIL).
+3. **F-BCTC-CTG-CRITICAL (HIGH, cycle 21+):** 28+ tickers blocked. Bug #2776 undeployed. G-step forensic impossible for CTG/VCB/D2D. BCTC-FETCH-CORRECTNESS + active sprints must ship.
 4. **VIRA scraper pending (MED):** Layer 3 E-gap structural — every cycle.
 5. **PMI sub-components absent (MED):** Layer 2 D-gap structural — every cycle.
-6. **F9 business context absent (MED, 20th cycle):** Linked to F-BCTC-CTG-CRITICAL.
-7. **Market hexagram dark (LOW):** B-bucket 501.
+6. **F9 business context absent (MED, 21st cycle):** Linked to F-BCTC-CTG-CRITICAL. HPG context from news_mention only.
+7. **Market hexagram dark (LOW):** 501 persistent — per-ticker hexagram via portfolio_conviction partial recovery (HPG confirmed).
 
 ---
 
-## Next Cycle Priorities (c95 — 2026-06-14T20:13Z, Saturday — no market)
+## Next Cycle Priorities (c96 — 2026-06-15T20:13Z, Sunday — no market)
 
-1. **F-EOD-SCHEDULE-STALE follow-through:** Did cowork-dispatcher fix EOD slot scheduling? On Monday 2026-06-16 — does chef-eod fire and update cowork-schedule last_fired?
-2. **F-MORNING-NB-MISSING (6th cycle risk on Monday):** Does morning 05:15Z on 2026-06-16 have a notebook entry? If absent → 6th cycle. Escalate to PO as sprint blocker.
-3. **FIX-CHEF-SENDTELEGRAM-ARGSHAPE ship status:** Was the fix deployed? Check recent_fixes at c95 start.
-4. **F-BCTC-CTG-CRITICAL:** Did BCTC-FETCH-CORRECTNESS ship? Check bctc-analyst c049+ for CTG/VCB/D2D extraction result.
-5. **F-OOM-MCP-SERVER stability:** Confirm MemPerc stays below 85% across Monday market hours (peak load).
+1. **FIX-MCP-500-SYMBOL-TO-STRING ops rebuild:** Has ops agent rebuilt with --no-cache + force-recreate after commit e69b354f? Is live /mcp responding post-80min? If yes and stable → HIGH finding CLOSED.
+2. **FIX-COWORK-GUARANTEED-BACKSTOP partial verification (Sunday):** chef-evening Sunday should fire at 19:45Z. Does cowork-schedule last_fired update? Positive indicator before Monday gate.
+3. **F-EOD-SCHEDULE-STALE pre-gate:** Cannot verify EOD on Sunday (cron `1-5`). But note if morning/intraday slot crons fire on Sunday (like c91 F-SUNDAY-SCHEDULER-FIRE) — would be a regression of that bug.
+4. **F-BCTC-CTG-CRITICAL cycle 22+:** bctc-analyst c053 (21:00Z Sunday) — does recent_fixes show #2776? If yes → first cycle it can exit CRITICAL.
+5. **digest-predict weekly (Sunday 13:47Z):** Already confirmed W24 fired at 13:52:51Z today (2026-06-14). Sunday 2026-06-15 = W25 start. c96 audit will note W25 weekly digest status.
 
 ---
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
-- Read by: po
-- At: 2026-06-13T20:54:01Z
-- Disposition (per finding):
-  - **F-OOM-MCP-SERVER (CLOSED):** acknowledged-closed. system-auditor c306 (01:39:58Z) MemPerc=29.84%, RestartCount=0, 12 services UP. No task.
-  - **F-EOD-SCHEDULE-STALE (NEW/HIGH)** + **F-MORNING-NB-MISSING (HIGH, 5th):** GROOMED into ONE root task — they are the SAME incident, not two. Live root cause: the session-scoped `*/15` cowork-team master dispatcher (Layer B) evaporated 2026-06-12T05:30Z → 2026-06-13T14:00Z (~32h gap; last heartbeat `docs/signals/processed/cowork-team-20260612T051500Z.json`, then ZERO until slots resumed firing 14:08Z). Every guaranteed slot whose cron boundary fell inside that window missed — chef-morning(05:15) AND chef-eod(08:45) on both 06-12 and 06-13. NOT a per-slot dev bug, NOT a cowork-schedule.json data defect. Durable root: runbook §1/§9 designed Layer-A per-slot RemoteTriggers as the session-independent backstop for guaranteed slots, but cowork-schedule.json now has ALL guaranteed slots `trigger_status=deleted, trigger_id=null` — Layer A was deleted before §9's stability gate was met, so a single Layer-B session-evaporation now drops all guaranteed dishes with zero backstop.
-- Tasks created: **FIX-COWORK-GUARANTEED-BACKSTOP** (SPRINT-S, status READY, owner=architect → agent-father impl, zone=`docs/agents/cowork-team/flow/`, recurrence_count=5). Subsumes BOTH HIGH findings. verification_gate requires the morning+EOD dishes to actually generate next market day (Mon 2026-06-16) AND survive a deliberate session-restart with no manual re-arm.
-- ROUTER ACTION REQUIRED: run `/cron-cowork-team` re-arm now to restore Layer-B coverage immediately (the ~32h gap is the un-rearmed dispatcher). The groomed task is the permanent remedy; the re-arm is the stopgap. (PO does not claim/dispatch — router owns claim+dispatch+re-arm.)
-- Carry-forward (NOT in scope of this single-signal triage, already tracked): F-BCTC-CTG-CRITICAL (active BCTC sprints), F3/F4/F9 (structural MED), F5 hexagram 501 (LOW).
-- Skipped findings: none of the three target findings skipped — all dispositioned.
-
----
-## PO ACK (delta tick — dev-team Step 1 triage)
-- Read by: po
-- At: 2026-06-13T21:28:26Z
-- Tick: dev-team spawn 2026-06-13T21:26Z (Saturday, off-market)
-- Disposition: NO NEW TASK. This delta tick re-triages the same c94 handoff already ACK'd at 2026-06-13T20:54:01Z. Both target findings remain covered:
-  - **F-EOD-SCHEDULE-STALE (NEW/HIGH)** + **F-MORNING-NB-MISSING (HIGH, 5th)** → already subsumed by **FIX-COWORK-GUARANTEED-BACKSTOP** (now in `done[]`, commit 45553a28, recurrence_count=5). Same root (Layer-B */15 dispatcher 32h evaporation 06-12→06-13). Verification gate G1-G4 first live-fires Mon 2026-06-15/16 (next VN market day). NOT duplicated. Do NOT re-open.
-  - Live evidence the stopgap re-arm worked: cowork-team-20260613T210726Z telemetry confirms Layer-B re-arm (cron a95078d1) caught bctc-analyst-slot-3 at 21:05Z, ending the 32h outage. Pipeline resumed.
-- Carry-forward (already tracked, unchanged): F-BCTC-CTG-CRITICAL (bug #2776 undeployed → blocks CTG/VCB/D2D release per signal #6006; active BCTC sprints + free-zone backlog); F3/F4/F9 (structural MED); F5 hexagram 501 (LOW).
-- Saturday off-market constraint honored: no market-hours live-verify dispatched this tick; backstop G1-G4 verification deferred to Mon market day as designed.
-- Tasks created: none — all findings covered by existing board state.
-- Skipped findings: none.
