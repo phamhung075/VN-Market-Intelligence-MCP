@@ -482,8 +482,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T18:07:41Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-14T19:54:33Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8689,7 +8689,13 @@
         "note": "User feature request (actively waiting). SSOT component = apps/frontend/app/components/QueName.tsx. Rich data already in-bundle = apps/frontend/app/lib/que-descriptions-detail.generated.ts (QUE_DETAIL: stateInterpretation/favorable/warning/coreMeaning/marketTrendLabel/phases). PO decision = Option (a) richer tooltip, omit 6-hào table, keep deep-link. Lean chain: ba (thin spec) → dev-frontend → ops (frontend-only rebuild) → qa. DONE BAR = done_verified per sprint success_metric (served-chunk RAW-verify on :3001).",
         "created_at": "2026-06-14T19:43:26Z",
         "spec": "docs/handoffs/KINHDICH-HOVER-DETAIL-BA-spec.md",
-        "completed_at": "2026-06-14T00:00:00Z"
+        "completed_at": "2026-06-14T00:00:00Z",
+        "next_agent": "ops",
+        "dev_impl_done_at": "2026-06-14T19:54:33Z",
+        "dev_impl_commit": "de8d8d0a",
+        "dev_agent": "a3943c17",
+        "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show de8d8d0a --stat = EXACTLY 2 files (apps/frontend/app/components/QueName.tsx +39/-4 + dev-frontend.md notebook +10); NO board/orch-state/signal in commit; HEAD==de8d8d0a; .head UNTOUCHED (VN-MACRO chain next_agent=architect). Diff matches BA spec: import QUE_DETAIL; detail-present branch renders coreMeaning + Trạng thái(stateInterpretation) + Thuận(favorable) + Cảnh báo(warning) + marketTrendLabel each conditional (empty omitted); FR-3 fallback desc.hoverSummary??coreMeaning when detail absent; FR-4 'Xem chi tiết →' deep-link kept unconditionally; phases[] OMITTED; max-w-xs->max-w-sm. npx tsc --noEmit EXIT 0. Compile green; NOT done_verified — frontend bundle not rebuilt, enriched tooltip served on :3001 only after ops rebuild.",
+        "ops_rebuild_instructions": "REBUILD apps/frontend ONLY (Remix serves the bundled QueName chunk; new QUE_DETAIL tooltip NOT served until rebuilt). Targeted, NEVER docker compose down: `docker compose build frontend && docker compose up -d --no-deps frontend && docker builder prune -f`. Then `docker ps -a` to confirm frontend Up+healthy AND no peer container went down (rebuild-recreate-destroys-peers guard) AND served image ID changed. Do NOT rebuild kinh-dich-service (that was the parent ENRICH wrong-surface error — real surface is Remix :3001). Return: docker ps line for frontend + builder-prune reclaimed + peers-intact confirmation + old->new image ID. On ops-green -> next_agent=qa LIVE served-chunk RAW-verify on :3001."
       }
     ],
     "closed_sprints": [
