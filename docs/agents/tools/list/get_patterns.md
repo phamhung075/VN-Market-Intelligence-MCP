@@ -3,17 +3,17 @@
 **Purpose:** Get technical price patterns
 
 **Parameters:**
-| Name | Type | Description |
-|------|------|-------------|
-| `ticker` | `string` | Company code |
-| `pattern_type` | `string` | head_shoulders|triangle|wedge |
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `stockCode` | `string` | Yes | Stock ticker code (e.g. 'VCB') |
+| `eventKeyword` | `string` | Yes | Keyword to filter pattern events |
 
 **Returns:** Pattern detection with confidence
 
 **Example:**
 ```javascript
 call_tool(server="vn-market", tool="get_patterns", arguments={
-  "ticker": ..., "pattern_type": ...
+  "stockCode": "VCB", "eventKeyword": "breakout"
 })
 ```
 

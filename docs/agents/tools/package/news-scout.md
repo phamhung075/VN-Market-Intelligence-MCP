@@ -41,7 +41,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_watchlist` | Current watchlist tickers and metadata | — |
-| `get_agent_signals` | Recent inter-agent signals (last 24h) | — |
+| `get_agent_signals` | Recent inter-agent signals (last 24h) | `agent: string` (req) |
 | `get_macro_snapshot` | Macro regime snapshot for 0b regime detection | `source?: string, regimeType?: string` |
 
 ### US Monetary Chain

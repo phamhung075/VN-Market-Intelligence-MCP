@@ -46,8 +46,8 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 ### Financial Analysis
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `get_kinhdich_reading` | Hexagram reading for specific stock | `ticker: string` |
-| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `ticker: string, period?: string` |
+| `get_kinhdich_reading` | Hexagram reading for specific stock | `code: string` (NOT `ticker`) |
+| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `code: string` (req, NOT `ticker`) |
 | `get_insider_transactions` | Detailed insider transaction history | — |
 
 ### Macro & Prediction
@@ -172,7 +172,7 @@ for (const question of pending.questions) {
   if (question.category === "stock_analysis") {
     const bctc = await call_tool(
       server: "vn-market", tool: "get_bctc_full",
-      arguments: { ticker: question.ticker }
+      arguments: { code: question.ticker }
     );
     sources.push(`BCTC: ${bctc.filing_date}`);
     answer = `Based on latest BCTC (${bctc.period}): Revenue ${bctc.revenue}, Profit ${bctc.profit}...`;
@@ -212,7 +212,7 @@ const question = pending.questions[0]; // VCB analysis
 const bctc = await call_tool(
   server: "vn-market", tool: "get_bctc_full",
   arguments: {
-    ticker: "VCB",
+    code: "VCB",
     period: "Q1"
   }
 );
@@ -224,7 +224,7 @@ const insider = await call_tool(
 
 const kinhdich = await call_tool(
   server: "vn-market", tool: "get_kinhdich_reading",
-  arguments: { ticker: "VCB" }
+  arguments: { code: "VCB" }
 );
 
 const answer = `VCB Q1 2026 Financial Summary:

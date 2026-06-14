@@ -51,15 +51,15 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_earnings_calendar` | Filing deadlines and status for all watchlist stocks | — |
-| `get_kinhdich_reading` | Hexagram reading for specific stock | `ticker: string` |
-| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `ticker: string, period?: string` |
+| `get_kinhdich_reading` | Hexagram reading for specific stock | `code: string` (NOT `ticker`) |
+| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `code: string` (NOT `ticker`) |
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 
 ### Prediction & Sentiment
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_prediction_markets` | Market-wide prediction accuracy by signal type | — |
-| `get_sentiment_trend` | Aggregate sentiment across news and analysis | — |
+| `get_sentiment_trend` | Aggregate sentiment across news and analysis | `stock_code: string` (req) |
 
 ### Risk & Signal Analysis
 | Tool | Purpose | Key Params |
@@ -175,7 +175,7 @@ const market = await call_tool(
 
 const sentiment = await call_tool(
   server: "vn-market", tool: "get_sentiment_trend",
-  arguments: {}
+  arguments: { stock_code: "<TICKER>" }
 );
 
 const predictions = await call_tool(

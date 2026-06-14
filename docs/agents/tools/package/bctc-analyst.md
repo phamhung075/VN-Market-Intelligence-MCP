@@ -33,7 +33,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 ### Financial Reports (BCTC)
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `ticker: string, period?: "Q1"\|"Q2"\|"Q3"\|"Q4"` |
+| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `code: string` (req, NOT `ticker`), `period?: "Q1"\|"Q2"\|"Q3"\|"Q4"` |
 | `get_cash_flow` | Full 4-line CF statement + OCF/NI forensic ratio | `ticker: string, period?: "Q1"–"Q4", year?: number` |
 | `get_bctc_ocf` | Focused OCF forensic-gate: operating/investing/financing | `code: string, period_year: number, period_quarter: number` |
 | `list_stored_pdfs` | List available BCTC PDFs for all tickers | — |
@@ -80,7 +80,7 @@ All monetary values in VND millions.
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_watchlist` | Current watchlist tickers and metadata | — |
-| `get_kinhdich_reading` | Hexagram reading for specific stock | `ticker: string` |
+| `get_kinhdich_reading` | Hexagram reading for specific stock | `code: string` (NOT `ticker`) |
 | `get_insider_signals` | Insider trading activity and positions | `code: string` (req), `outstandingShares: number` (req), `windowDays?: number` |
 | `get_legal_risk_signals` | Legal/prosecution/tax penalty risks | — |
 | `get_open_chain_findings` | Findings from impact chain analysis (cross-validation) | — |

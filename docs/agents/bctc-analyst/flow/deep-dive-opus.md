@@ -38,7 +38,7 @@ Emit to session state key `deep_dive_result`; caller appends to bctc_signal outp
 
 **Context:** `flagged_pass_id`, `flagged_section`, `flagged_rows[]`, `trick_type`.
 
-1. `get_bctc_full(ticker)` — re-read flagged statement section.
+1. `get_bctc_full(code)` — re-read flagged statement section.
 2. `search_similar_context(query=ticker+" "+flagged_section, k=3)` — cross-reference footnotes.
 3. Determine: confirmed (mechanism + evidence) | refuted (false positive).
 4. `trigger_value = trick_type`, `threshold = "any_flag"`.
@@ -48,7 +48,7 @@ Emit to session state key `deep_dive_result`; caller appends to bctc_signal outp
 
 **Context:** `assets_total`, `liabilities_total`, `equity_total`, `imbalance` (decimal).
 
-1. Re-read balance sheet line items via `get_bctc_full(ticker)`.
+1. Re-read balance sheet line items via `get_bctc_full(code)`.
 2. Identify source: minority interest omission? rounding? OCR error? Propose correction.
 3. `trigger_value = imbalance`, `threshold = 0.005`.
 4. Action: OCR/rounding → `hold`; genuine discrepancy → `flag_for_human_review`.
@@ -70,7 +70,7 @@ Emit to session state key `deep_dive_result`; caller appends to bctc_signal outp
 
 **Context:** `item_type` (`related_party|one_off`), `item_amount`, `item_pct`.
 
-1. Re-read note disclosures via `get_bctc_full(ticker)`.
+1. Re-read note disclosures via `get_bctc_full(code)`.
 2. Classify: recurring vs one-off; arms-length vs related-party risk.
 3. Compute adjusted earnings = net_profit minus one-off impact.
 4. `trigger_value = item_pct`, `threshold = 0.10 (related_party) | 0.15 (one_off)`.

@@ -35,7 +35,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 ### Market Summary & Analysis
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `get_market_summary` | Daily/weekly market summary and key metrics | — |
+| `get_market_summary` | Daily/weekly market summary and key metrics | `period: 'daily'\|'weekly'\|'monthly'\|'quarterly'\|'yearly'` (req) |
 | `get_market_snapshot` | Price, volume, sector sentiment, trading halt status | — |
 | `generate_market_summary` | Generate synthesized market report | `period?: "daily" \| "weekly"` |
 | `get_performance_attribution` | Attribution of returns to factors (sector, style, etc.) | — |
@@ -44,7 +44,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_earnings_calendar` | Filing deadlines and status for all watchlist stocks | — |
-| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `ticker: string, period?: string` |
+| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `code: string` (req, NOT `ticker`) |
 | `get_sector_comparison` | Detailed metrics and rankings by sector | `metric?: string` |
 
 ### Market Rotation & Risk
@@ -65,7 +65,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 ### Kinh Dich (I-Ching) & Prediction
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
-| `get_kinhdich_reading` | Hexagram reading for specific stock | `ticker: string` |
+| `get_kinhdich_reading` | Hexagram reading for specific stock | `code: string` (NOT `ticker`) |
 | `get_market_hexagram` | Market-wide hexagram (VN-Index + macro) | — |
 | `run_hexagram_backtest` | Accuracy test of trading signals vs prices | `strategy: string, date_range: string` |
 | `get_transition_probabilities` | Markov transitions (hex → next hex) | `ticker?: string` |
@@ -182,7 +182,7 @@ if (bootstrap.system_status?.any_critical_errors) {
 // Get comprehensive market summary
 const summary = await call_tool(
   server: "vn-market", tool: "get_market_summary",
-  arguments: {}
+  arguments: { period: "daily" }
 );
 
 const generated = await call_tool(

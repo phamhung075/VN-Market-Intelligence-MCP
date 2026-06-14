@@ -151,7 +151,7 @@ call_tool(
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_bctc_full` | Full quarterly financials for a ticker (income, balance sheet, cash flow) | `code` (req), `quarters` (opt, default 4) |
-| `get_financial_summary` | Concise financial KPIs: EPS, P/E, ROE, debt ratio | `code` (req) |
+| `get_financial_summary` | Concise financial KPIs: EPS, P/E, ROE, debt ratio | `actionCode: string` (req, NOT `code` or `ticker`) |
 | `get_sector_comparison` | Stock vs sector metrics (relative performance, sector average P/E) | `code` (req) |
 
 **Example — get_bctc_full:**

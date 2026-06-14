@@ -34,7 +34,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | Tool | Purpose | Key Params |
 |------|---------|-----------|
 | `get_price_history` | OHLCV and price trends for a single ticker | `code: string, days: number` |
-| `get_patterns` | Detected chart patterns (head-and-shoulders, flags, etc.) | `code: string` |
+| `get_patterns` | Detected chart patterns (head-and-shoulders, flags, etc.) | `stockCode: string` (req), `eventKeyword: string` (req) |
 | `get_technical_indicators` | RSI, MACD, Bollinger Bands, ADX, etc. | `code: string` |
 | `get_ticker_intelligence` | Price momentum, volatility, correlation, support/resistance | `code: string` |
 
@@ -58,7 +58,7 @@ For detailed parameters and return signatures: `docs/agents/tools/list/<tool_nam
 | `get_watchlist` | Current watchlist tickers and metadata | — |
 | `get_insider_signals` | Insider trading activity and positions | — |
 | `get_open_chain_findings` | Findings from impact chain analysis (validate news impact) | — |
-| `get_kinhdich_reading` | Hexagram reading for specific stock | `ticker: string` |
+| `get_kinhdich_reading` | Hexagram reading for specific stock | `code: string` (NOT `ticker`) |
 
 ### Inter-Agent Communication
 | Tool | Purpose | Key Params |
@@ -159,7 +159,7 @@ const priceData = await call_tool(
 // Identify chart patterns
 const patterns = await call_tool(
   server: "vn-market", tool: "get_patterns",
-  arguments: { ticker: "VCB" }
+  arguments: { stockCode: "VCB", eventKeyword: "breakout" }
 );
 
 // patterns contains:

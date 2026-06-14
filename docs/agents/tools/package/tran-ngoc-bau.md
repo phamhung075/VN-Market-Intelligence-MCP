@@ -39,7 +39,7 @@ Complete index → `docs/agents/tools/list/INDEX.md`
 | `get_unreviewed_market_messages` | Find messages not yet quality-checked |
 | `review_market_message` | Label message as signal/noise after audit |
 | `send_telegram` | Send quality report to WORK, escalation to BUG |
-| `get_agent_signals` | All signals in last 24h — dedup + confidence check |
+| `get_agent_signals` | All signals in last 24h — dedup + confidence check — requires `agent: string` (req) |
 | `get_signal_effectiveness` | Signal quality metrics — hit rate per type |
 | `get_alert_accuracy` | Alert accuracy trends — Brier scores |
 | `record_signal_outcome` | Mark signal as audited |
@@ -55,7 +55,7 @@ Complete index → `docs/agents/tools/list/INDEX.md`
 | `get_sector_comparison` | Verify sector move claims |
 | `compare_financials` | Verify earnings beat/miss claims |
 | `compare_stocks` | Side-by-side stock comparison |
-| `get_sentiment_trend` | Verify sentiment claims |
+| `get_sentiment_trend` | Verify sentiment claims — requires `stock_code: string` (req) |
 | `get_watchlist` | Current watchlist for ticker validation |
 | `get_positions` | Current positions for portfolio context |
 | `get_portfolio_risk` | Portfolio risk assessment |
@@ -71,7 +71,7 @@ Complete index → `docs/agents/tools/list/INDEX.md`
 | `run_impact_chain` | Re-run impact chain to verify original |
 | `fetch_and_analyze` | Re-fetch news to verify analysis accuracy |
 | `search_similar_context` | RAG search for historical precedent |
-| `get_kinhdich_reading` | Verify Kinh Dich signal accuracy |
+| `get_kinhdich_reading` | Verify Kinh Dich signal accuracy — requires `code: string` (NOT `ticker`) |
 
 ### Risk & Intelligence Tools
 
