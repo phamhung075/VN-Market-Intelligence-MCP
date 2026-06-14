@@ -85,11 +85,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-14T14:45:00Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null
+    "status": "in_progress",
+    "updated_at": "2026-06-14T14:51:55Z",
+    "updated_by": "dev-team",
+    "active_task_id": "FIX-REFINE-LOCK-TTL-RECLAIM",
+    "next_agent": "architect",
+    "note": "FIX-REFINE-LOCK-TTL-RECLAIM (P1 recurring, dev-mcp-server zone now free post-T3) -> architect design pass. Recurring [Lock orphaned by rebuild]: LET-EXPIRE remedy FAILED. architect designs generic TTL-reclaim-on-acquire with live-worker steal-safety across ALL refine slots -> brief + signal dev-mcp-server. Unblocks stalled refine_bctc_md (6 reports). FIX-DIGEST-ISO-WEEK-DEDUP queued behind (same zone serialized). Umbrella ARCH-CRON-SCHEDULER-RELIABILITY held for Mon 2026-06-15 G1/G2/G3 market-day gate. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active same-zone. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12208,15 +12209,13 @@
         "reverify_gate": "MARKET-DAY-2026-06-15: (G1) ohlcvDailyAggregatorJob auto-fires Mon — get_pipeline_health 'Aggregator last run' advances to 2026-06-15 with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires + VCB/ACB/CTG fundamental rows newer than its run, NO manual trigger; (G3) reputationComputeJob fires at 08:30 tick under peer contention (cron_job_runs row present, no miss). QA verifies LIVE raw (pipeline-health payload + cron_job_runs named-volume rows), never badges. On all-PASS -> umbrella -> done_verified + move to done_verified[]. On any miss -> the watchdog (G5, LIVE) must have self-healed/alerted -> capture evidence + spin the residual into a scoped FIX.",
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "FIX-REFINE-LOCK-TTL-RECLAIM",
         "type": "FIX",
         "owner": "dev-mcp-server",
         "route": "architect",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "size": "S",
         "priority": "P1",
         "recurring": true,
@@ -12235,8 +12234,14 @@
           "apps/mcp-server/src/**/refine*"
         ],
         "created_at": "2026-06-14T14:45:14Z",
-        "created_by": "po-S50"
-      },
+        "created_by": "po-S50",
+        "next_agent": "architect",
+        "claimed_at": "2026-06-14T14:51:55Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router dispatched (tick post-T3-done, zone free; PO S50 handoff). RECURRING [Lock orphaned by rebuild] — LET-EXPIRE remedy FAILED (acquire refused 11.5h past TTL expiry). architect: design a GENERIC TTL-reclaim for refine lock-acquire covering ALL refine slots (refine-bctc-slot-1/2 + future), so a lock whose expires_at < now is reclaimable on the next acquire — BUT with steal-safety so it NEVER reclaims from a LIVE-but-slow worker (heartbeat/liveness or fencing token; the refine worker already heartbeats? confirm). Root-cause WHY LET-EXPIRE failed: does acquire even CHECK expires_at, or does it unconditionally refuse on any existing row? Read the refine lock-acquire path (push_bctc_refined_unit / finalize_bctc_refine / the refine task_claim) + the lock table schema. Output a tight brief to docs/architecture-briefs/ + signal dev-mcp-server to implement. Gates for the eventual impl: tsc 0 + a regression test that an expired lock is reclaimed AND a live-heartbeating lock is NOT stolen. Unblocks refine_bctc_md (report bdcfa5e0 VCB Q4.2025 7/26 windows + VCB Q1 / HPG Q4 / GVR_2026_Q1 / HPG_2026_Q1 / HVN_2026_Q1 pending). FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP sequenced BEHIND this (same zone, serialized). Commit by explicit path only — concurrent agent has coverage-state.json + cowork-schedule.json dirty."
+      }
+    ],
+    "ready": [
       {
         "id": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP",
         "type": "FIX",
