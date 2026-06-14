@@ -1,5 +1,13 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-14 | **Sprint:** KINHDICH-HOVER-ENRICH
+
+## KINHDICH-HOVER-ENRICH-BA · 2026-06-14
+
+Spec complete. Task: BA-KINHDICH-HOVER-ENRICH. REQ file: `docs/handoffs/KINHDICH-HOVER-ENRICH-BA-spec.md`. Zero PO blockers. One architect ratification (RATIFY-1: confirm Option C). NEXT: architect.
+
+Key BA findings (raw-read): qref panel in kinh-dich-service dashboard renders `loc(q.coreMeaning)` inline in `.qref-meaning` span (L2501) — avg 36 chars, min 17 (quẻ 47 = "Kiệt sức và giam cầm"). Richer fields exist but click-gated. Decision: Option C (new `HoverSummary localized` field in queReference struct) — keeps coreMeaning semantics clean (QUE-TOOLTIP-DRY PO-Q3 ruling locks it as terse), avoids dumping 3 verbose fields into an already-crowded row (warning already rendered there). Pre-authored all 64 VI+EN hoverSummary strings in spec (not just exemplars) to ensure quality and remove language-authoring burden from dev. Single-zone: dev-kinh-dich owns hexagram_reference.go + dashboard/index.html + que-reference.js regen. Zero cross-zone impact on React frontend or MCP tools.
+
 **Last updated:** 2026-06-12 | **Sprint:** QUE-TOOLTIP-DRY
 
 ## QUE-TOOLTIP-DRY-BA · 2026-06-12
