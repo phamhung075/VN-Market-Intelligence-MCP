@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-13T22:28:45Z",
-  "_updated_by": "po-s52-health-triage",
+  "_updated_at": "2026-06-14T02:24:21Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "updated_at": "2026-06-13T23:29:43Z",
@@ -53,8 +53,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-14T00:30:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-14T02:24:21Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -6161,7 +6161,10 @@
         "zone": "apps/macro-indicators/",
         "priority": "high",
         "created_at": "2026-06-08T19:05:00Z",
-        "status_note": "Created by po triage-S7 from signal sau-c119-b12 (B-12). DEDUP: FIX-MACRO-REFRESH-DEAD / FIX-SBV-REFRESH-SILENT-SWALLOW / FIX-SBV-PUSH-TYPE-COERCE / FIX-SLA-EXEMPT-NEWS-SBVFX all DONE (MCP-side refresh code paths). This signal's NEW dimension = VPS service vn-sbv-fetch UNHEALTHY (upstream infra), does NOT fold into a DONE task. Held under dev WIP this tick (architect A-33 + CI-TEST-ISOLATION ahead; this is dispatchable next). AC: B-12 SBV_FX within 30min SLA + vn-sbv-fetch healthy, no signal_queue B-12 row recurring. Priority: high."
+        "status_note": "Created by po triage-S7 from signal sau-c119-b12 (B-12). DEDUP: FIX-MACRO-REFRESH-DEAD / FIX-SBV-REFRESH-SILENT-SWALLOW / FIX-SBV-PUSH-TYPE-COERCE / FIX-SLA-EXEMPT-NEWS-SBVFX all DONE (MCP-side refresh code paths). This signal's NEW dimension = VPS service vn-sbv-fetch UNHEALTHY (upstream infra), does NOT fold into a DONE task. Held under dev WIP this tick (architect A-33 + CI-TEST-ISOLATION ahead; this is dispatchable next). AC: B-12 SBV_FX within 30min SLA + vn-sbv-fetch healthy, no signal_queue B-12 row recurring. Priority: high.",
+        "po_fold_note": "I7 (router 2026-06-14T02:20Z): vn-sbv-fetch crash-looping again (unhealthy, uptime resets) though data still flows via push buffer. CONFIRMED same module/symptom as this task (VPS fetcher infra down) — folded in, NOT a duplicate.",
+        "i7_folded_by": "po",
+        "i7_folded_at": "2026-06-14T02:24:21Z"
       },
       {
         "id": "FIX-AUDITOR-COMMIT-NONEXPLICIT-PATHSPEC",
@@ -6957,13 +6960,17 @@
         "title": "reputationComputeJob cron-miss 2026-06-12 08:30 UTC — node-cron v3.0.3 silent misfire under concurrent 08:30 cluster",
         "type": "FU",
         "owner": "ops",
-        "status": "TODO",
+        "status": "FOLDED",
         "zone": "apps/mcp-server/",
         "priority": "low",
         "size": "XS",
         "created_at": "2026-06-12T11:35:00Z",
         "created_by": "pm",
-        "note": "QA audit 2026-06-12: reputationComputeJob registered in scheduler (line 895 startScheduler.ts) but cron callback did not fire at 08:30 UTC despite container live since 05:23 UTC and 8 sibling 08:30 jobs running successfully. Manual trigger at 08:48 UTC confirmed fix is functional (processed=41, failed=0). Cron miss is separate infra concern from REAUDIT-001 fix correctness. Root cause: node-cron v3.0.3 concurrent-job contention or scheduling behavior under 8+ simultaneous jobs. Mitigation: add startup-catchup probe analogous to morningBriefingJob pattern to resume missed 08:30 window on restart; OR investigate node-cron scheduling behavior empirically across multi-job clusters. Non-blocking for REAUDIT-001 DONE verdict; logged for ops/architect planning."
+        "note": "QA audit 2026-06-12: reputationComputeJob registered in scheduler (line 895 startScheduler.ts) but cron callback did not fire at 08:30 UTC despite container live since 05:23 UTC and 8 sibling 08:30 jobs running successfully. Manual trigger at 08:48 UTC confirmed fix is functional (processed=41, failed=0). Cron miss is separate infra concern from REAUDIT-001 fix correctness. Root cause: node-cron v3.0.3 concurrent-job contention or scheduling behavior under 8+ simultaneous jobs. Mitigation: add startup-catchup probe analogous to morningBriefingJob pattern to resume missed 08:30 window on restart; OR investigate node-cron scheduling behavior empirically across multi-job clusters. Non-blocking for REAUDIT-001 DONE verdict; logged for ops/architect planning.",
+        "folded_into": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "fold_reason": "same node-cron v3.0.3 silent-misfire root class — consolidated under one architect-bound root-cause task to avoid recurring symptom-patching (per feedback_recurring_bug_escalation).",
+        "folded_by": "po",
+        "folded_at": "2026-06-14T02:24:21Z"
       },
       {
         "id": "BA-QUE-TOOLTIP-DRY",
@@ -7201,7 +7208,12 @@
         "depends": [],
         "qa_verdict": "APPROVED",
         "qa_date": "2026-06-14",
-        "merge_commit": "c35db4fc"
+        "merge_commit": "c35db4fc",
+        "po_correction": "FALSE-DONE PARTIAL: data-correctness (vnstock-v4 stdout-banner -> null fetches -> frozen tables, c35db4fc) is GENUINELY fixed + QA-verified via manual trigger (live VCB/ACB writes) — that part stays done_verified. BUT the CRON AUTO-FIRE was never restored: c35db4fc commit msg itself states the Jun-8 'crash' was a container restart mid-run, and QA APPROVED via MANUAL trigger only. The auto-fire failure is a DISTINCT, still-OPEN defect of the node-cron silent-misfire class.",
+        "autofire_status": "STILL-OPEN",
+        "autofire_folded_into": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "corrected_by": "po",
+        "corrected_at": "2026-06-14T02:24:21Z"
       },
       {
         "id": "FIX-BCTC-VPS-PIPELINE-STALE-5D",
@@ -7278,7 +7290,7 @@
       {
         "id": "FIX-OHLCV-DAILY-AGGREGATOR-STALE",
         "type": "FIX",
-        "status": "TODO",
+        "status": "FOLDED",
         "priority": "P1",
         "zone_owner": "apps/mcp-server/",
         "owner": "dev-mcp-server",
@@ -7286,7 +7298,11 @@
         "title": "FIX-OHLCV-DAILY-AGGREGATOR-STALE — get_sector_rotation all 16 sectors N/A/5d; ohlcv-daily-aggregator last_run 2026-06-10 (3+ days stale). ohlcvDailyAggregatorJob not firing since Jun 10.",
         "scope": "Investigate why ohlcvDailyAggregatorJob stopped firing (scheduler registration vs crash). PLAN-ONLY at PO layer.",
         "user_impact": "MEDIUM — sector-rotation signal dark 5 days.",
-        "depends": []
+        "depends": [],
+        "folded_into": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "fold_reason": "same node-cron v3.0.3 silent-misfire root class — consolidated under one architect-bound root-cause task to avoid recurring symptom-patching (per feedback_recurring_bug_escalation).",
+        "folded_by": "po",
+        "folded_at": "2026-06-14T02:24:21Z"
       },
       {
         "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
@@ -7299,19 +7315,6 @@
         "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
         "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
         "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
-        "depends": []
-      },
-      {
-        "id": "FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS",
-        "type": "FIX",
-        "status": "TODO",
-        "priority": "P2",
-        "zone_owner": "cross-service/",
-        "owner": "developer",
-        "source": "health-recheck B3/B6/B7/B8/B9/B11/B12 (team-tool-recheck-2026-06-13-2207.md)",
-        "title": "FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS — bundle 7 confirmed tool-package param-doc drifts where documented arg != server-required arg, causing live agent-call validation failures. Pure docs/agents/*.md tool-package edits (NOT DDL self-heal — distinct from SCHEMA-DRIFT-P5/P8).",
-        "scope": "Fix in docs/agents tool packages: B3 get_bctc_full ticker->code (4 pkgs); B6 get_patterns {stockCode,eventKeyword} required (market-watcher.md); B7 get_sentiment_trend add stock_code required (unified-agent.md); B8 get_kinhdich_reading ticker->code (3 pkgs); B9 get_agent_signals add agent required (news-scout.md); B11 get_market_summary add period required (digest-predict.md); B12 get_financial_summary ticker->actionCode + fix system-map capability_manifest pdf probe. PLAN-ONLY at PO layer.",
-        "user_impact": "MEDIUM — multiple agent bootstrap/tool calls fail validation; cheap high-leverage doc fix.",
         "depends": []
       },
       {
@@ -7339,6 +7342,20 @@
         "scope": "Wire record_signal_outcome into alert-commander feedback loop; auto-resolve price alerts vs 5-day close. PLAN-ONLY at PO layer.",
         "user_impact": "LOW (immediate) / HIGH (compounding) — no signal-quality feedback.",
         "depends": []
+      },
+      {
+        "id": "FIX-NEWS-CB-FALSE-CLOSED",
+        "type": "FIX",
+        "status": "TODO",
+        "priority": "P2",
+        "zone": "apps/news-fetch/",
+        "owner": "dev-news-fetch",
+        "title": "FIX-NEWS-CB-FALSE-CLOSED — Reuters RSS + TradingEconomics x2 at 14 CONSECUTIVE errors since the 2026-06-13T23:18Z restart, yet their circuit-breakers still report [OK] (failure threshold not hit). CB false-closed masks a never-succeeded-since-restart news-source freshness gap from agent monitoring. FIX: (a) lower the CB failure threshold so 14 consecutive errors trips OPEN, and/or (b) add a never-succeeded-since-restart detector (a source with zero successes since process start AND error_count>=N must surface as DEGRADED regardless of the rolling-window CB). Surface the degradation to the BUG/WORK channel + freshness gate so news-source staleness is no longer invisible. PLAN-ONLY at PO layer — dev-team chain implements.",
+        "user_impact": "MED — macro/news context silently stale (Reuters + TradingEconomics) while health reports show green; corrupts news-driven freshness for chef/news-scout consumers.",
+        "depends": [],
+        "source": "router cluster brief 2026-06-14T02:20Z (SECONDARY I2)",
+        "groomed_by": "po",
+        "groomed_at": "2026-06-14T02:24:21Z"
       }
     ],
     "archive": [],
@@ -10843,6 +10860,23 @@
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases.",
         "_updated_at": "2026-06-13T08:48:41Z",
         "_adjudicated_by": "po"
+      },
+      {
+        "id": "FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS",
+        "type": "FIX",
+        "status": "review",
+        "priority": "P2",
+        "zone_owner": "cross-service/",
+        "owner": "developer",
+        "source": "health-recheck B3/B6/B7/B8/B9/B11/B12 (team-tool-recheck-2026-06-13-2207.md)",
+        "title": "FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS — bundle 7 confirmed tool-package param-doc drifts where documented arg != server-required arg, causing live agent-call validation failures. Pure docs/agents/*.md tool-package edits (NOT DDL self-heal — distinct from SCHEMA-DRIFT-P5/P8).",
+        "scope": "Fix in docs/agents tool packages: B3 get_bctc_full ticker->code (4 pkgs); B6 get_patterns {stockCode,eventKeyword} required (market-watcher.md); B7 get_sentiment_trend add stock_code required (unified-agent.md); B8 get_kinhdich_reading ticker->code (3 pkgs); B9 get_agent_signals add agent required (news-scout.md); B11 get_market_summary add period required (digest-predict.md); B12 get_financial_summary ticker->actionCode + fix system-map capability_manifest pdf probe. PLAN-ONLY at PO layer.",
+        "user_impact": "MEDIUM — multiple agent bootstrap/tool calls fail validation; cheap high-leverage doc fix.",
+        "depends": [],
+        "claimed_by": "agent-father",
+        "claimed_at": "2026-06-14",
+        "completed_at": "2026-06-14",
+        "verified_stale_zero": true
       }
     ],
     "closed_sprints": [
@@ -10947,6 +10981,39 @@
           "escalateFn rejection is non-fatal",
           "Orch-state write uses temp-rename",
           "tsc 0 errors"
+        ]
+      },
+      {
+        "id": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "type": "SPRINT-S",
+        "title": "node-cron v3.0.3 scheduler reliability — durable root-cause fix for the silent-misfire cluster (RECURRING, 3rd+ touch -> architect-bound). LIVE EVIDENCE (router 2026-06-14T02:20Z, PO re-verified): (1) ohlcvDailyAggregatorJob — get_pipeline_health 02:22Z confirms 'Aggregator last run: 2026-06-12', missed Fri 06-13 weekday, all 16 sectors N/A rotation. (2) vnstockFundamentalsRefresh — auto-fire never restored: commit c35db4fc fixed ONLY the vnstock-v4 stdout-banner data-correctness bug (fetches returned null -> tables frozen) and explicitly states the Jun-8 'crash' was a container restart mid-run; the cron AUTO-FIRE was never verified to resume (QA APPROVED via MANUAL trigger only). (3) reputationComputeJob — cron-miss 06-12 08:30, the SECOND miss after 06-11 was supposedly fixed by 53d00955. ROOT CLASS (named in 53d00955 commit msg): node-cron drops ticks when the event loop is saturated and recoverMissedExecutions=false; missedExecutions>0 -> autorecover guard skips emission -> tick gone; peer jobs sharing the same minute (08:30 cluster, daily-aggregate cluster) compound it. The per-job recoverMissedExecutions:true patch (53d00955, evidenceAccumulator+reputation only) did NOT durably close the class — it RECURRED on reputation and never covered aggregator/fundamentals. ARCHITECT must design the DEFINITIVE scheduler fix, not another per-job patch: candidate levers (architect rules A/B/C combination) — (A) upgrade or replace node-cron with a scheduler that does not silently drop ticks under loop saturation; (B) apply recoverMissedExecutions:true uniformly to ALL scheduled jobs + add deterministic per-tick dedup (cron_job_runs same-UTC-day guard, mirroring the EVIDENCE-ACCUM precedent) so uniform recovery cannot double-fire; (C) STAGGER the concurrent clusters (add per-job minute jitter so 08:30 / daily-aggregate jobs no longer collide on one tick); (D) add a missed-fire WATCHDOG that detects last_run age > 2x cadence per job and self-heals (force-run) or emits a WORK alert — closing the silent-miss blind spot that let these rot 3-6 days undetected. agent-father / dev-mcp-server implements after architect brief.",
+        "owner": "architect",
+        "route": "architect",
+        "status": "READY",
+        "size": "S",
+        "priority": "P1",
+        "recurring": true,
+        "recurrence_count": 3,
+        "escalation": "recurring-bug escalation per feedback_recurring_bug_escalation — 2+ commits same module (53d00955 + c35db4fc + FU-REPUTATION recurring) -> architect root-cause REQUIRED, no further per-job symptom patches.",
+        "zone": "apps/mcp-server/",
+        "depends": [
+          "FIX-MCP-CRASH-LOOP-WRITEWAL"
+        ],
+        "sequencing": "WIP=2 — dev-mcp-server is SATURATED (FIX-MCP-CRASH-LOOP-WRITEWAL in_progress + BC-1 deploy-verify; A-1/D-1 ready). Architect + design stages may run NOW in parallel (no dev-mcp-server WIP impact). The dev-mcp-server IMPL task is SEQUENCED behind the crash-loop fix landing — a wedged/crash-looping server is itself a source of loop-saturation tick drops, so the scheduler fix must land on a stable server.",
+        "baseline_pass": false,
+        "files": [
+          "apps/mcp-server/src/scheduler/startScheduler.ts",
+          "apps/mcp-server/src/scheduler/startupHelpers.ts",
+          "apps/mcp-server/package.json"
+        ],
+        "verification_gate": "Prove the cluster auto-fires durably, not just that one manual run works: (G1) ohlcvDailyAggregatorJob auto-fires next VN market day — get_pipeline_health 'Aggregator last run' advances to that day with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires on its cadence and repopulates financial tables (live VCB/ACB/CTG rows newer than the run) with NO manual trigger; (G3) reputationComputeJob fires at its 08:30 tick on a market day even with peer jobs on the same minute (cron_job_runs row present, no miss); (G4) inject loop-saturation at a scheduled tick in test and assert the tick is recovered/emitted (regression test for the dropped-tick class, mirroring EVIDENCE-ACCUM-SILENT-CRON.test.ts); (G5) missed-fire watchdog emits a WORK alert + self-heal when a job's last_run age > 2x cadence. QA verifies LIVE raw (pipeline-health payload + cron_job_runs rows), never badges. Ship completion across the whole cluster, not one job.",
+        "source": "router cron-scheduler silent-misfire cluster brief 2026-06-14T02:20Z (LIVE-verified) — subsumes ohlcv + fundamentals-autofire + reputation; recurring class first named in 53d00955",
+        "groomed_by": "po",
+        "groomed_at": "2026-06-14T02:24:21Z",
+        "subsumes": [
+          "FIX-OHLCV-DAILY-AGGREGATOR-STALE",
+          "FU-REPUTATION-CRON-MISS",
+          "FIX-FUNDAMENTALS-REFRESH-CRON-DEAD#autofire"
         ]
       }
     ]

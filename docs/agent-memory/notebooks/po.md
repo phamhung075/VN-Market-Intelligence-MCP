@@ -1,39 +1,36 @@
 # PO Notebook
 
-## 2026-06-13T22:28Z — DETECT→FIX bridge: promote health-recheck findings to task board
+## 2026-06-14T02:24Z — triage: node-cron silent-misfire cluster → ONE architect root-cause
 
-Closed the recurring detect→track gap (project_anomaly_task_bridge). The every-2h
-health-recheck detector was firing but its output never reached the board — 32 open
-findings accumulating while dev-team sat idle (0 in_progress).
+Router cluster brief (LIVE 02:20Z). Consolidated 3 dead/missed crons under ONE
+architect-bound root-cause task. WIP held at 2 (FIX-MCP-CRASH-LOOP-WRITEWAL + BC-1).
 
-### Promoted: 10 deduped FIX tasks (backlog 145→155, commit c68edcfa)
-- **P0** (5d data-pipeline deaths, highest user-impact — silently rot served data):
-  - FIX-FUNDAMENTALS-REFRESH-CRON-DEAD (B1, apps/mcp-server) — 0 refreshes since 06-08
-  - FIX-BCTC-VPS-PIPELINE-STALE-5D (B5, apps/pdf-extractor) — 0 PDFs, Q1 window open
-- **P1**: FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT (I13/I5), FIX-TA-INDICATORS-TIER3-ROUTING (B2),
-  FIX-HNX-UPCOM-PRICE-SOURCES-DEAD (B4), FIX-OHLCV-DAILY-AGGREGATOR-STALE (I3)
-- **P2**: FIX-MARKET-HEXAGRAM-TOOL-MISSING (B10), FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS
-  (B3/6/7/8/9/11/12 bundled — 1 doc-fix class), FIX-COMMODITY-WTI-DELTA-CORRUPT (I10/I8/I4)
-- **P3**: FIX-ALERT-CASCADE-OUTCOME-DEAD (M1/M2)
+### Board mutations (scripts/po-s58-cron-scheduler-reliability-consolidate.jq)
+- **NEW** `ARCH-CRON-SCHEDULER-RELIABILITY` → ready[] (SPRINT-S, architect, P1, rc=3,
+  depends=[FIX-MCP-CRASH-LOOP-WRITEWAL]). Levers: replace/upgrade node-cron · uniform
+  recoverMissedExecutions+dedup · cluster stagger · missed-fire watchdog (last_run>2x cadence).
+- **CORRECTED false-done** `FIX-FUNDAMENTALS-REFRESH-CRON-DEAD`: data-correctness banner
+  fix (c35db4fc) is GENUINE done_verified — kept. autofire_status=STILL-OPEN, folded into
+  parent. c35db4fc msg itself says Jun-8 "crash" = container restart; QA verified MANUAL
+  trigger only → auto-fire never restored = distinct open defect.
+- **FOLDED** FIX-OHLCV-DAILY-AGGREGATOR-STALE + FU-REPUTATION-CRON-MISS → parent (same root).
+- **NEW** `FIX-NEWS-CB-FALSE-CLOSED` → backlog (I2: Reuters+TradingEconomics 14 errors,
+  CB still [OK]; lower threshold + never-succeeded-since-restart detector).
+- **FOLDED I7** (vn-sbv-fetch crash-loop) into existing FIX-SBV-FX-VPS-FETCHER-UNHEALTHY.
 
-### Deduped-skipped (already tracked): I7→FIX-SBV-FX-VPS-FETCHER-UNHEALTHY,
-I11→FIX-MCP-CRASH-LOOP-WRITEWAL. SCHEMA-DRIFT-P5/P8 are DDL self-heal (distinct from
-the B-series tool-package param-doc drift — NOT deduped, correctly separate).
+### Root-cause confirmation (3rd+ touch → escalation)
+53d00955 (EVIDENCE-ACCUM, Jun-12) already NAMED the class: node-cron v3.0.3 drops ticks
+under loop saturation when recoverMissedExecutions=false; per-job patch RECURRED on
+reputation (06-12) + never covered aggregator/fundamentals. Per feedback_recurring_bug_
+escalation → architect owns durable fix, no more per-job symptom patches.
 
-### Deferred (next pass): I1 (FRED key env), I2 (RSS endpoints), I6 (feedback backlog
-drain), I9 (hydro), I12 (VCB reparse — overlaps VCB-MISSING-PDFS/FU-BCTC-RATIOS-N-A),
-M3-M7 (lower-leverage doc/test debt). One-line reason: known-env or lower-impact than
-the data-pipeline deaths; promote if they persist 2+ more recheck cycles.
+### Live evidence
+get_pipeline_health 02:22Z: "Aggregator last run: 2026-06-12" (missed Fri 06-13).
+TNB c94 already ACK'd (cowork-pipeline coverage — separate from this cron cluster).
+Schema-drift (0e81b642) NOT re-dispatched per router (genuinely complete).
 
-### New reusable tooling
-- scripts/po-s52-health-recheck-batch-triage.jq — GLOBAL-dedup batch backlog appender
-  (skips any id present in ANY board array incl. active_sprints[].tasks). Reusable for
-  any detector-report → board promotion. Payload: po-s52-health-recheck-batch-payload.json.
-
-### Gates honored
-JSON-valid · jq global-dedup (0 collisions) · tsc GREEN pre-push · explicit-stage (3 files)
-· commit-mutex po-commit-s52 claimed+released · pushed c68edcfa.
-
-### Carry-forward
-- Next recheck pass (00:07Z) verifies these 10 ids present + ranks deferred set.
-- B1/B5 are P0 — router should route to dev-mcp-server + dev-pdf-extractor first.
+### Carry-over
+- Architect + design run NOW (no dev-mcp-server WIP impact); dev IMPL sequenced AFTER
+  crash-loop fix lands (wedged server = loop-saturation tick-drop source).
+- Monday market-day: verify aggregator/fundamentals/reputation auto-fire (G1-G3 gates).
+- BC-1 live-verify gate ~03:00Z; watch genuine crash vs deploy-recreate.
