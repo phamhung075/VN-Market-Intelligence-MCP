@@ -76,6 +76,7 @@ import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
 import { runRestartCadenceAlertJob } from './system/restartCadenceAlertJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
 import { runVnstockStartupProbe } from './financial-reports/vnstockStartupProbe.js'
+import { runSchedulerWatchdog, WATCHDOG_MANIFEST } from './system/schedulerWatchdogJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
 import { reapZombieJobRuns } from '../infrastructure/db/cronJobRunStore.js'
@@ -1115,5 +1116,71 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + restart-cadence-alert + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + deep-fetch-vps + deep-fetch-main active`)
+  // Every 10 min — Scheduler missed-fire watchdog — T3-ARCH-CRON-WATCHDOG (Lever D)
+  // Queries MAX(started_at) per job_name against WATCHDOG_MANIFEST (16 jobs).
+  // Sends WORK-channel alert when last successful run exceeds cadence × thresholdMultiplier.
+  // Self-heal jobs (ohlcvDailyAggregator, reputationComputeJob, evidenceAccumulatorJob,
+  // taOhlcvBackfill) are injected with selfHealFn here — DDD-clean: job modules are imported
+  // at the composition root, not inside schedulerWatchdogJob.ts.
+  // In-process 2h rate-limit prevents alert spam. No WAL writes from watchdog itself.
+  // recoverMissedExecutions: true (via scheduleCron default) + recordJobRun routing ensures
+  // shouldSkipRecoveryReplay covers the watchdog itself (idempotency T4).
+  // Inject selfHealFn into self-heal manifest entries at the composition root.
+  // DDD-clean: job modules are imported here, not inside schedulerWatchdogJob.ts.
+  // Cadence/threshold values are hardcoded here to match WATCHDOG_MANIFEST constants
+  // (Record<string,…> index is possibly-undefined in strict TS — inline literals avoid
+  // non-null assertions and keep the types clean).
+  const liveManifest: typeof WATCHDOG_MANIFEST = {
+    ...WATCHDOG_MANIFEST,
+    ohlcvDailyAggregatorJob: {
+      cadenceMs: 86_400_000,
+      thresholdMultiplier: 1.5,
+      action: 'self-heal',
+      selfHealFn: async () => {
+        await jobRunRepo.wrapRun('ohlcvDailyAggregatorJob', async () => {
+          await runOhlcvDailyAggregator()
+        })
+      },
+    },
+    reputationComputeJob: {
+      cadenceMs: 86_400_000,
+      thresholdMultiplier: 1.5,
+      action: 'self-heal',
+      selfHealFn: async () => {
+        await jobRunRepo.wrapRun('reputationComputeJob', async () => {
+          await runReputationComputeJob()
+        })
+      },
+    },
+    evidenceAccumulatorJob: {
+      cadenceMs: 86_400_000,
+      thresholdMultiplier: 1.5,
+      action: 'self-heal',
+      selfHealFn: async () => {
+        await runEvidenceAccumulatorWithDb(db)
+      },
+    },
+    taOhlcvBackfill: {
+      cadenceMs: 86_400_000,
+      thresholdMultiplier: 1.5,
+      action: 'self-heal',
+      selfHealFn: async () => {
+        await jobRunRepo.wrapRun('taOhlcvBackfill', async () => {
+          await runTaOhlcvBackfill()
+        })
+      },
+    },
+  }
+
+  scheduleCron(CRONS.schedulerWatchdog, async () => {
+    await jobRunRepo.wrapRun('schedulerWatchdogJob', async () => {
+      const result = await runSchedulerWatchdog({ db, manifest: liveManifest })
+      if (result.alerted > 0 || result.healed > 0) {
+        log(`[scheduler-watchdog] checked=${result.checked} alerted=${result.alerted} healed=${result.healed}`)
+      }
+      return { rowsWritten: result.alerted + result.healed }
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + restart-cadence-alert + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + deep-fetch-vps + deep-fetch-main + scheduler-watchdog active`)
 }

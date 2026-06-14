@@ -208,4 +208,9 @@ export const CRONS = {
    *  Fires at :15 and :45 of every hour — staggered 15 min from WAL checkpoint (:00 and :30).
    *  Sends WORK-channel alert when count ≥ 2. Only meaningful after BC-1 root fix is deployed. */
   restartCadenceAlert:        Bun.env.CRON_RESTART_CADENCE_ALERT                    ?? '15,45 * * * *',
+  /** schedulerWatchdog — Lever D (T3-ARCH-CRON-WATCHDOG): detect missed-fire jobs every 10 min.
+   *  Queries MAX(started_at) per job_name against WATCHDOG_MANIFEST (16 jobs).
+   *  Sends WORK-channel alert when last successful run exceeds cadence × thresholdMultiplier.
+   *  In-process 2h rate-limit prevents alert spam. Alert-only for long jobs; self-heal for quick jobs. */
+  schedulerWatchdog:          Bun.env.CRON_SCHEDULER_WATCHDOG                       ?? '*/10 * * * *',
 }
