@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-14T08:34:22Z",
-  "_updated_by": "dev-frontend",
+  "_updated_at": "2026-06-14T10:40:00Z",
+  "_updated_by": "dev-mcp-server",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T09:10:18Z",
-    "updated_by": "dev-team",
+    "status": "review",
+    "updated_at": "2026-06-14T10:40:00Z",
+    "updated_by": "dev-mcp-server",
     "active_task_id": "FIX-MCP-500-SYMBOL-TO-STRING",
-    "next_agent": "dev-mcp-server",
-    "note": "P0: mcp-server 500s on every MCP request (Cannot convert a symbol to a string), masked by healthy container. Surfaced by cowork tick (refine fan-out aborted). dev-mcp-server in flight (router-spawned). Prime suspect 9088c052 ALLZERO read-guard. Fleet cowork layer DOWN until fixed; frontend dashboard OK."
+    "next_agent": "ops",
+    "note": "FIX-MCP-500-SYMBOL-TO-STRING: code fix committed e69b354f. StreamableHTTPServerTransport → WebStandardStreamableHTTPServerTransport eliminates @hono/node-server Symbol-keyed property access (root cause of Bun 1.3.13 JIT TypeError). tsc 0 errors, bun test 12847 pass 0 new failures. Ops must rebuild --no-cache mcp-server + force-recreate for live proof."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -415,8 +415,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T08:22:13Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-14T10:40:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11860,25 +11860,7 @@
       "active_task_id": null,
       "next_agent": null
     },
-    "in_progress": [
-      {
-        "id": "FIX-MCP-500-SYMBOL-TO-STRING",
-        "title": "mcp-server returns HTTP 500 on every MCP request — \"Cannot convert a symbol to a string\"",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "status": "IN_PROGRESS",
-        "depends_on": null,
-        "next_agent": "dev-mcp-server",
-        "claimed_at": "2026-06-14T09:10:18Z",
-        "claimed_by": "router",
-        "origin": "cowork-team dispatcher tick 2026-06-14T09:05Z (refine-bctc-slot-1 fan-out aborted — downstream MCP 500)",
-        "symptom": "Every MCP request 500s incl SSE handshake. Log: [createBunServer] Unhandled request error: Cannot convert a symbol to a string. Container healthy (passive-health masks dead data). Running since ~08:16Z.",
-        "prime_suspect": "9088c052 ALLZERO-OHLCV-FETCH (read-guard on request hot path); secondary 7cbca67a FIX-ALERT-ORPHAN-CORRELATION",
-        "scope_note": "MCP tool-call surface only (all cowork agents + call_tool). Frontend dashboard UNAFFECTED.",
-        "acceptance": "Root-cause the Symbol->string TypeError; targeted code fix in apps/mcp-server (NOT a blind revert unless RCA points there); mcp-server build + unit/integration green; ops rebuild --no-cache mcp-server + up -d --no-deps --force-recreate; LIVE proof: public /vn-market/mcp returns 200 on a real tool handshake AND call_tool(get_market_snapshot or get_bctc_pending_refine) returns a valid payload (not 500); logs clean of the symbol error for >=2 min. Then -> review (qa).",
-        "dispatch_note": "Dispatched dev-mcp-server 2026-06-14T09:10:18Z by router on P0 cowork-tick escalation. Fix root cause definitif (CLAUDE.md), not a symptom mask. If RCA confirms 9088c052 read-guard, fix the guard's coercion (do not drop the zero-candle purge — that closed the user chart bug DATA half). Run mcp-server tests BEFORE handing to ops for rebuild (RED-PREPUSH strands fleet). Verify LIVE via call_tool through the gateway, not just rows_stored/200."
-      }
-    ],
+    "in_progress": [],
     "ready": [
       {
         "baseline_pass": false,
@@ -11950,6 +11932,26 @@
         "user_impact": "MEDIUM — multiple agent bootstrap/tool calls fail validation; cheap high-leverage doc fix.",
         "verified_stale_zero": true,
         "zone_owner": "cross-service/"
+      },
+      {
+        "id": "FIX-MCP-500-SYMBOL-TO-STRING",
+        "title": "mcp-server returns HTTP 500 on every MCP request — \"Cannot convert a symbol to a string\"",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "status": "REVIEW",
+        "depends_on": null,
+        "next_agent": "ops",
+        "claimed_at": "2026-06-14T09:10:18Z",
+        "claimed_by": "router",
+        "origin": "cowork-team dispatcher tick 2026-06-14T09:05Z (refine-bctc-slot-1 fan-out aborted — downstream MCP 500)",
+        "symptom": "Every MCP request 500s incl SSE handshake. Log: [createBunServer] Unhandled request error: Cannot convert a symbol to a string. Container healthy (passive-health masks dead data). Running since ~08:16Z.",
+        "prime_suspect": "9088c052 ALLZERO-OHLCV-FETCH (read-guard on request hot path); secondary 7cbca67a FIX-ALERT-ORPHAN-CORRELATION",
+        "scope_note": "MCP tool-call surface only (all cowork agents + call_tool). Frontend dashboard UNAFFECTED.",
+        "acceptance": "Root-cause the Symbol->string TypeError; targeted code fix in apps/mcp-server (NOT a blind revert unless RCA points there); mcp-server build + unit/integration green; ops rebuild --no-cache mcp-server + up -d --no-deps --force-recreate; LIVE proof: public /vn-market/mcp returns 200 on a real tool handshake AND call_tool(get_market_snapshot or get_bctc_pending_refine) returns a valid payload (not 500); logs clean of the symbol error for >=2 min. Then -> review (qa).",
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-14T09:10:18Z by router on P0 cowork-tick escalation. Fix root cause definitif (CLAUDE.md), not a symptom mask. If RCA confirms 9088c052 read-guard, fix the guard's coercion (do not drop the zero-candle purge — that closed the user chart bug DATA half). Run mcp-server tests BEFORE handing to ops for rebuild (RED-PREPUSH strands fleet). Verify LIVE via call_tool through the gateway, not just rows_stored/200.",
+        "impl_commit": "e69b354f",
+        "impl_note": "WebStandardStreamableHTTPServerTransport — no hono, no Symbol keys. Ops: rebuild --no-cache mcp-server + force-recreate.",
+        "review_requested_at": "2026-06-14T10:40:00Z"
       }
     ]
   }
