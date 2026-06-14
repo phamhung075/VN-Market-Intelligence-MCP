@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-14T15:39:57Z",
+    "status": "qa",
+    "updated_at": "2026-06-14T15:47:08Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP",
-    "next_agent": "ops",
-    "note": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP dev-impl GREEN (commit ccbe43ec) + router RAW-re-verified INDEPENDENTLY (git show 6 explicit files clean; tsc 0; 35/35 tests; Sun 2026-06-14=W24 via python crosscheck; canonical shared helper + get_week_period tool = GENERIC across ALL weekly slots; period-range key defeats last_fired staleness; no re-post). -> ops: TARGETED rebuild mcp-server for the new isoWeek service + get_week_period tool (flow-doc gates read live, no rebuild), all peers Up, no down; RAW-verify get_week_period returns 2026-W24. -> qa LIVE gate -> done_verified. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 same-zone. Commit explicit path only."
+    "next_agent": "qa",
+    "note": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP ops deploy GREEN + router RAW-re-verified LIVE (independent, not the ops badge): image 8a842a13a51d (was 674f872db96d), 12 peers all healthy (docker ps -a zero Exited -> no peer destroyed), gateway get_week_period -> 2026-W24 periodKey 2026-06-08/2026-06-14 (W25 off-by-one gone, date-range key defeats last_fired staleness). -> qa FINAL LIVE gate + Task Report (re-run 35/35, dual-time periodKey-convergence probe 13:47Z vs 13:52Z, generic marker-key check across weekly slots, no-re-post). qa-APPROVED -> done_verified. Umbrella ARCH-CRON-SCHEDULER-RELIABILITY held Mon 2026-06-15 G1/G2/G3. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 same-zone. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12290,12 +12290,14 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
-      },
+      }
+    ],
+    "qa": [
       {
         "id": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "REVIEW",
+        "status": "QA",
         "size": "S",
         "priority": "high",
         "recurring": true,
@@ -12316,7 +12318,7 @@
         ],
         "created_at": "2026-06-14T14:45:14Z",
         "created_by": "po-S50",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "impl_dispatched_at": "2026-06-14T15:27:09Z",
         "impl_dispatched_by": "dev-team",
         "impl_dispatch_note": "Predecessor FIX-REFINE-LOCK-TTL-RECLAIM done_verified (67cad7ae) -> same-zone slot free, wip_rule condition met. IMPLEMENT per PO spec (root_cause A+B, fix, generic_mandate, verification_gate): (A) ONE canonical ISO-week helper (date +%V / ISO-8601 semantics — Sun 2026-06-14 MUST resolve to W24 not W25) shared by EVERY digest-predict publish-gate path; no path recomputes its own week label. (B) per generic_mandate, key the guaranteed-weekly slot mutex on the calendar period date-RANGE (period start/end), NOT a derived week-label string, so a one-label divergence cannot defeat dedup; ALSO have the RemoteTrigger path write cowork-schedule.json .last_fired on fire if cheap (belt-and-suspenders against the stale-last_fired re-fire). Apply to ALL guaranteed weekly slots, not just digest-sunday. TESTS (verification_gate): unit — both dispatch paths derive the SAME key for Sun 2026-06-14 (=W24) AND adjacent week-boundary Sundays; integration — simulate RemoteTrigger fire then CLI dispatcher tick within the same period -> EXACTLY ONE publish (marker dedup holds). Gates: cd apps/mcp-server && bunx tsc --noEmit exit 0 AND bun test <new test> green. Commit by EXPLICIT PATH only (concurrent agent dirty tree: bctc-analyst.md, coverage-state.json, cowork-schedule.json M + docs/signals + digest-predict session ?? — do NOT git add -A; if you legitimately edit cowork-schedule.json for fix B, stage ONLY that file by explicit path and verify the M-from-other-agent delta is yours). RECURRENCE-PREVENTION ONLY — the 2026-06-14 digest already delivered (twice) to MARKET; do NOT re-post. Flag whether a server rebuild is needed (digest code in mcp-server -> likely yes for the test + runtime helper; the cowork-schedule.json data change reads live).",
@@ -12326,10 +12328,16 @@
         "router_dev_reverified_at": "2026-06-14T15:39:57Z",
         "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show ccbe43ec --stat = exactly 6 explicit files; name-only grep confirms NO concurrent-agent file (bctc-analyst/coverage-state/cowork-schedule/docs-signals) captured. Router re-ran locally: bunx tsc --noEmit TSC_EXIT=0; bun test FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts 35 pass/0 fail/90 expect. W24 root cause: python3 date(2026,6,14).strftime('%G-W%V')=2026-W24 INDEPENDENT crosscheck matches canonical helper (off-by-one Sunday-boundary defeated). GENERIC: shared helper + get_week_period tool applies to ALL guaranteed weekly slots; period-RANGE key makes last_fired staleness irrelevant as a dedup vector. No re-post (recurrence-prevention only).",
         "ops_instructions": "DEPLOY GATE — targeted rebuild, then hand to qa. TARGETED REBUILD (the new isoWeek.ts domain service + get_week_period MCP tool are runtime code agents call at session-init): cd repo root && docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server ; then docker ps -a to confirm all peers Up/healthy (NEVER docker compose down — rebuild-recreate-destroys-peers). Verify: (1) image ID changed (docker inspect); (2) no 'Cannot convert a symbol to a string' Bun-JIT line in startup logs; (3) the new tool is live — call_tool(server='vn-market', tool='get_week_period', arguments={ date:'2026-06-14T13:47:00Z' }) returns weekLabel '2026-W24' (NOT W25) with period start/end — RAW-verify this return. The 3 flow-doc edits (digest-predict, tran-ngoc-bau, spawn-fanout) need NO rebuild (fleet-cron reads them live). Commit nothing except (if needed) your notebook by explicit path — concurrent agent dirty tree must NOT be captured. RETURN: image id, peer health count, raw get_week_period return.",
-        "ops_dispatched_at": "2026-06-14T15:39:57Z"
+        "ops_dispatched_at": "2026-06-14T15:39:57Z",
+        "ops_deployed_at": "2026-06-14T15:47:08Z",
+        "ops_deploy_verdict": "GREEN (ops ac50a7c5): targeted build --no-cache mcp-server + up -d --no-deps --force-recreate; image 674f872db96d->8a842a13a51d; 12 peers Up/healthy (no teardown); Bun-JIT line absent; get_week_period live returns 2026-W24 periodKey 2026-06-08/2026-06-14.",
+        "router_live_verified_at": "2026-06-14T15:47:08Z",
+        "router_live_verified_by": "dev-team",
+        "router_live_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the ops badge). docker inspect mcp-server-1=sha256:8a842a13a51d (was 674f872db96d), Up ~1min healthy. docker ps -a=12 containers ALL Up/healthy, ZERO Exited/Restarting -> no peer destroyed. Router probed GATEWAY get_week_period{date:2026-06-14T13:47:00Z} DIRECTLY -> weekLabel 2026-W24, periodKey 2026-06-08/2026-06-14, weekNumber 24 (W25 off-by-one GONE; date-RANGE key makes last_fired staleness a non-vector; both dispatch paths derive the SAME periodKey). GENERIC across ALL guaranteed weekly slots (shared helper + get_week_period tool). Recurrence-prevention only — no re-post.",
+        "qa_instructions": "FINAL LIVE GATE — gate-keeper, write Task Report, never accept a badge. Re-confirm INDEPENDENTLY: (1) git show ccbe43ec --stat = exactly 6 explicit files (isoWeek.ts new, FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts new, coordinationTools.ts +get_week_period, digest-predict/flow/main.md, tran-ngoc-bau/flow/main.md, cowork-team/spawn-fanout.md) AND no concurrent-agent file (bctc-analyst/coverage-state/cowork-schedule/docs-signals) captured; (2) re-run tests: cd apps/mcp-server && bunx tsc --noEmit (0) + bun test src/__tests__/FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP.test.ts (expect 35/0) — and read the W24 RCA assertion + an adjacent week-boundary Sunday case to confirm not a tautology; (3) LIVE TOOL proof against the rebuilt container: call_tool get_week_period{date:'2026-06-14T13:47:00Z'} returns weekLabel '2026-W24' + periodKey '2026-06-08/2026-06-14' (NOT W25) AND a second probe at the divergent CLI time '2026-06-14T13:52:00Z' returns the SAME periodKey (proves both paths converge -> dedup holds); (4) GENERIC check: read docs/agents/digest-predict/flow/main.md + tran-ngoc-bau/flow/main.md PUBLISHED-MARKER GATE — confirm the marker task_id keys on periodKey (date-range) NOT a derived week label, so the fix covers EVERY weekly slot not just digest-sunday; (5) confirm NO re-post: the 2026-06-14 digest was already delivered twice — verify the fix path performs no Telegram send (recurrence-prevention only). On qa-APPROVED -> router RAW-confirms -> promote done_verified. Commit Task Report by EXPLICIT PATH only (concurrent agent dirty tree: bctc-analyst.md, coverage-state.json, cowork-schedule.json, docs/signals/*.json — must NOT be captured).",
+        "ops_verified": "2026-06-14T15:47:08Z"
       }
     ],
-    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
