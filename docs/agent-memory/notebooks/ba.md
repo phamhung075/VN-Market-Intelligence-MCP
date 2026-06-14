@@ -1,5 +1,13 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-14 | **Sprint:** KINHDICH-HOVER-ENRICH-FE
+
+## KINHDICH-HOVER-ENRICH-FE-BA · 2026-06-14
+
+Spec complete. Task: BA-KINHDICH-HOVER-ENRICH-FE. REQ file: `docs/handoffs/KINHDICH-HOVER-ENRICH-FE-BA-spec.md`. Zero PO blockers. One architect ratification (ARCH-RATIFY-FE-1: confirm DRY-preserving codegen extension — PO already overruled BLOCKER-3 field choice; architect ratifies mechanism only). NEXT: architect.
+
+Key BA findings: Real user hover = Remix :3001 `QueName.tsx` L75 renders `desc.coreMeaning` from `QUE_DESCRIPTIONS` (`que-descriptions.generated.ts`). SSOT groundwork already done (commit 47fe36e8) — `que-reference.js` has `hoverSummary` x64 confirmed. Fix is 3-file change: (A) extend `scripts/gen-que-descriptions.ts` to add `hoverSummary?: string` to `QueDescription` interface + emit `entry.hoverSummary.vi` in BLOCK 1; (B) regen `que-descriptions.generated.ts` via `bun run gen:que`; (C) update `QueName.tsx` L75 to `{desc.hoverSummary ?? desc.coreMeaning}` — fallback preserves terse coreMeaning for any entry lacking hoverSummary. DRY invariant held: same SSOT, same codegen, same component. `que-descriptions-detail.generated.ts` and `QUE_DETAIL` untouched. kinh-dich-service zone untouched. Ops rebuilds frontend :3001 only (NOT full stack — destroy-peers guard). QA verifies LIVE :3001 hover on quẻ 29/47 + favorable/neutral/unfavorable samples.
+
 **Last updated:** 2026-06-14 | **Sprint:** KINHDICH-HOVER-ENRICH
 
 ## KINHDICH-HOVER-ENRICH-BA · 2026-06-14
@@ -179,9 +187,7 @@ Key source findings (BA raw-read, not relayed):
 - **BCTC-TRUST-RED-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-TRUST-RED.md`. REJECTED_SANITY enum + ingest gate + publish guard + 4 DT domain validators. SHIPPED.
 - **BCTC-HUMAN-CONFIRM-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-HUMAN-CONFIRM.md`. bctc_human_corrections table, 3-layer lock, confirm_status column, Option B2 re-anchor key. SHIPPED.
 - **BCTC-AGENTIC-REFINE-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-AGENTIC-REFINE.md`. 3-zone split. SHIPPED.
-- **DATA-PIPELINE-INTEGRITY-BA** ✅ 2026-05-30. REQ `docs/REQ_DATA-PIPELINE-INTEGRITY.md`. DPI-1..4 root causes. SHIPPED.
-- **BCTC-TABLE-BOUNDARY-BA** ✅ 2026-05-29. REQ `docs/REQ_BCTC-TABLE-BOUNDARY.md`. 5 FR decisions. SHIPPED.
-- **VNH-SECTOR-FIX-BA** ✅ 2026-05-29. REQ `docs/REQ_VNH-SECTOR-FIX.md`. VNH domain fix. SHIPPED.
+- **DATA-PIPELINE-INTEGRITY-BA / BCTC-TABLE-BOUNDARY-BA / VNH-SECTOR-FIX-BA** ✅ 2026-05-29–30. SHIPPED.
 - **Pre-2026-05-29 specs** — archived to `docs/archive/notebooks/ba-2026-05-21.md`.
 
 ## Known patterns / preferences
