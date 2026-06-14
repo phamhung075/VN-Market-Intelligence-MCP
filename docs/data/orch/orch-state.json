@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-14T12:24:35Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-14T12:31:26Z",
     "updated_by": "dev-team",
-    "active_task_id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
-    "next_agent": "qa",
-    "note": "T1-ARCH-CRON-T4-DEDUP-GUARDS ops-deployed + router-RAW-verified LIVE (60b48a9b, dedup guard firing, peers intact, call_tool valid) -> qa for G1-G5 LIVE idempotency gate. qa-green promotes done_verified + UNBLOCKS T2. T3 stays depends-gated. WIP=1 (same-zone serialized)."
+    "active_task_id": "T2-ARCH-CRON-RECOVER-JITTER",
+    "next_agent": "dev-mcp-server",
+    "note": "T1-ARCH-CRON-T4-DEDUP-GUARDS DONE_VERIFIED (qa G1-G5 LIVE, router RAW-confirmed; dedup guard live in prod). T2-ARCH-CRON-RECOVER-JITTER dispatched -> dev-mcp-server (IMPL: recoverMissedExecutions:true + 8 jitter shifts; T1 guard makes recovery double-fire-safe). T3 BLOCKED in ready[] by depends[T2]. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11919,6 +11919,39 @@
           "B11": "PASS: get_market_summary period confirmed required enum in summaryTools.ts:61; digest-predict.md fixed",
           "B12": "PASS: get_financial_summary actionCode confirmed in reports.ts:234 Zod schema; market-analyst.md fixed; system-map capability_manifest pdf.probe=get_financial_summary confirmed (commit 078fcc13)"
         }
+      },
+      {
+        "id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
+        "title": "ARCH-CRON Phase 1a: T4 idempotency dedup guards on 26 jobs — precondition for recoverMissedExecutions",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "depends": [],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "All T4 jobs (ohlcvDailyAggregatorJob, vnstockFundamentalsRefresh, reputationComputeJob, baseRateComputation, predictionResolution, calibrationReport, weeklyPortfolioReport, devTeamHeartbeat, verdictResolutionJob, signalOutcomeJob, alertOutcomeJob, dataAuditDaily, dataAuditWeekly, etc.) have a cron_job_runs recency check: if last successful run < 90% of declared cadence, skip recovery replay. JSDoc @idempotency T4 documented on each. bun test PASS on guard logic. Commit per docs/policies/commit-convention.md.",
+        "acceptance": {
+          "AC1": "All 26 T4 jobs modified with shouldRunCatchup()-style guard using jobRunRepo.getLastRuns()",
+          "AC2": "Each job has @idempotency JSDoc tag indicating T1/T2/T3/T4 tier",
+          "AC3": "bun test passes; no new test failures introduced",
+          "AC4": "PR review confirms dedup logic vs declared cadence matches (daily=86.4M, weekly=604.8M, etc.)"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "IMPL complete: shouldSkipRecoveryReplay() helper + 26 job guards applied + @idempotency T4 JSDoc + 13 idempotency tests GREEN. tsc --noEmit GREEN. Awaiting ops rebuild.",
+        "next_agent": null,
+        "claimed_at": "2026-06-14T11:43:22Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "ops deploy RAW-verified by router. qa: LIVE idempotency gate G1-G5 per docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md — confirm cron_job_runs rows show NO double-fire on the recovery/replay path (shouldSkipRecoveryReplay 90%-cadence window), guard is NO-OP on normal scheduled fires, 13 unit tests green. On qa-green -> done_verified UNBLOCKS T2-ARCH-CRON-RECOVER-JITTER (depends [T1]).",
+        "review_at": "2026-06-14T12:12:00Z",
+        "dispatched_at": "2026-06-14T12:24:35Z",
+        "dispatched_by": "dev-team",
+        "ops_verdict": "DEPLOYED+LIVE-VERIFIED 60b48a9b: image 12:19:13Z, 81 cron keys, dedup guard firing (bctcReparseJob skip), peers intact, 0 symbol-err, router call_tool valid",
+        "verified_at": "2026-06-14T12:31:26Z",
+        "verified_by": "qa",
+        "verification": "G1-G5 LIVE idempotency PASSED (qa abb97cfd, router RAW-confirmed): 13/13 bun tests + tsc 0; live cron_job_runs no-double-fire (bctcReparseJob=1 row post-restart despite guard fire); normal fires not suppressed (verdictResolutionJob 60-min gaps); single shared helper x24 jobs; fail-open. Deployed 60b48a9b image 12:19:13Z, dedup guard firing in prod, 11 peers intact."
       }
     ],
     "head": {
@@ -11968,9 +12001,7 @@
         "design_complete_at": "2026-06-14T11:40:00Z",
         "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
         "next_task": "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "T2-ARCH-CRON-RECOVER-JITTER",
         "title": "ARCH-CRON Phase 1b+1c: uniform recoverMissedExecutions + deterministic jitter on 8 high-collision jobs",
@@ -11978,7 +12009,7 @@
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "priority": "P1",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "depends": [
           "T1-ARCH-CRON-T4-DEDUP-GUARDS"
         ],
@@ -11993,8 +12024,14 @@
         },
         "created_at": "2026-06-14T12:00:00Z",
         "created_by": "pm",
-        "note": "MUST follow T1 (dedup guards must be in place before replay). Lever 1 + Lever 3 from architect brief. Touches 2 core files. High-risk merge: 50+ sites touched in startScheduler.ts. Split from T1 to reduce rebase conflict surface."
-      },
+        "note": "MUST follow T1 (dedup guards must be in place before replay). Lever 1 + Lever 3 from architect brief. Touches 2 core files. High-risk merge: 50+ sites touched in startScheduler.ts. Split from T1 to reduce rebase conflict surface.",
+        "next_agent": "dev-mcp-server",
+        "claimed_at": "2026-06-14T12:31:26Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router dispatched T2 IMPL (tick post-T1-done). depends [T1] SATISFIED (T1 done_verified — T4 dedup precondition LIVE). dev-mcp-server: uniform recoverMissedExecutions:true across the 50+ cron.schedule() calls (Lever B) + stagger the 8 high-collision jobs in cronConfig.ts (Lever C), per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5. The T1 shouldSkipRecoveryReplay guard now PROTECTS recovery from double-firing Telegram/DB — recoverMissedExecutions is SAFE to enable. bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify recovery auto-fire (get_pipeline_health + cron_job_runs), never badges. T3 (watchdog) sequences after T2 done."
+      }
+    ],
+    "ready": [
       {
         "id": "T3-ARCH-CRON-WATCHDOG",
         "title": "ARCH-CRON Phase 2: schedulerWatchdogJob.ts + tests — detect & self-heal missed fires",
@@ -12042,36 +12079,6 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
-      },
-      {
-        "id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
-        "title": "ARCH-CRON Phase 1a: T4 idempotency dedup guards on 26 jobs — precondition for recoverMissedExecutions",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "priority": "P1",
-        "status": "REVIEW",
-        "depends": [],
-        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
-        "size": "M",
-        "verification_gate": "All T4 jobs (ohlcvDailyAggregatorJob, vnstockFundamentalsRefresh, reputationComputeJob, baseRateComputation, predictionResolution, calibrationReport, weeklyPortfolioReport, devTeamHeartbeat, verdictResolutionJob, signalOutcomeJob, alertOutcomeJob, dataAuditDaily, dataAuditWeekly, etc.) have a cron_job_runs recency check: if last successful run < 90% of declared cadence, skip recovery replay. JSDoc @idempotency T4 documented on each. bun test PASS on guard logic. Commit per docs/policies/commit-convention.md.",
-        "acceptance": {
-          "AC1": "All 26 T4 jobs modified with shouldRunCatchup()-style guard using jobRunRepo.getLastRuns()",
-          "AC2": "Each job has @idempotency JSDoc tag indicating T1/T2/T3/T4 tier",
-          "AC3": "bun test passes; no new test failures introduced",
-          "AC4": "PR review confirms dedup logic vs declared cadence matches (daily=86.4M, weekly=604.8M, etc.)"
-        },
-        "created_at": "2026-06-14T12:00:00Z",
-        "created_by": "pm",
-        "note": "IMPL complete: shouldSkipRecoveryReplay() helper + 26 job guards applied + @idempotency T4 JSDoc + 13 idempotency tests GREEN. tsc --noEmit GREEN. Awaiting ops rebuild.",
-        "next_agent": "qa",
-        "claimed_at": "2026-06-14T11:43:22Z",
-        "claimed_by": "dev-team",
-        "dispatch_note": "ops deploy RAW-verified by router. qa: LIVE idempotency gate G1-G5 per docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md — confirm cron_job_runs rows show NO double-fire on the recovery/replay path (shouldSkipRecoveryReplay 90%-cadence window), guard is NO-OP on normal scheduled fires, 13 unit tests green. On qa-green -> done_verified UNBLOCKS T2-ARCH-CRON-RECOVER-JITTER (depends [T1]).",
-        "review_at": "2026-06-14T12:12:00Z",
-        "dispatched_at": "2026-06-14T12:24:35Z",
-        "dispatched_by": "dev-team",
-        "ops_verdict": "DEPLOYED+LIVE-VERIFIED 60b48a9b: image 12:19:13Z, 81 cron keys, dedup guard firing (bctcReparseJob skip), peers intact, 0 symbol-err, router call_tool valid"
       }
     ]
   },
