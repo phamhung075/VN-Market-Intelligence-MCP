@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T23:18:05Z",
-    "updated_by": "dev-team",
+    "updated_at": "2026-06-14T23:30:05Z",
+    "updated_by": "po",
     "active_task_id": "VMT-8-MACRO-GRACEFUL-FAILCLOSE",
     "next_agent": "po",
-    "note": "VMT-8-MACRO-GRACEFUL-FAILCLOSE LIVE-VERIFY = PARTIAL (router RAW re-probe, NOT the ops 4/5 badge). Container RAW-fresh (macro-indicators image 7df03ef2c0a1 Up~5m, 7a176a44, 12 peers healthy, no compose down). VMT-8 degrade path LIVE-PROVEN (ops captured real degraded-200 for trade/macro/cpi in fast-fail window + liquidity 200 honest + unit G2 re-run) -> VMT-8 code = done, CORRECT, generic, did NOT regress. BUT router independent gateway re-probe 23:13Z = trade/macro/cpi + bop ALL TIMEOUT (only liquidity 200, local market.db); VPS :3128 RAW-proven alive+fast (curl 200 0.5s) so NOT proxy-down. ROOT = UNBOUNDED upstream fetch (no per-fetch ctx deadline < gateway timeout -> slow NSO/SBV origin -> Fetch HANGS past gateway deadline -> timeout before degrade path emits; corroborates+generalizes ops' bop diagnosis). done_verified WITHHELD. === -> head ops->po: PO TRIAGE (next dev-team tick): (1) MINT F-MACRO-FETCH-DEADLINE (apps/macro-indicators, dev-macro-indicators, GENERIC /goal#2 — bound every upstream fetch http.Client{Timeout}/ctx deadline ~8s < gateway timeout so HANG -> fast ctx.DeadlineExceeded -> VMT-8 degrade path -> 200; ABSORBS the standalone bop-timeout). This is the COMPLETION of /goal#1 'best result' for the 4 fetch tools. (2) STACK ORDER on apps/macro-indicators (serialize same files): VMT-8(done) -> F-MACRO-FETCH-DEADLINE(reliability) -> F-BOP-ENCODING + F-NSO-SELECTOR(accuracy). (3) PO also holds signal dev-team-20260614T225734Z-vps-cluster-reconcile (NEW): reconcile other-3 VPS tasks individually + proxy-ACL security note. === PARALLEL DONE: F1 VPS :3128 RESOLVED (VPS-AVAIL-02-FIX resolved, b1390d66, proxy RAW-proven). === HELD: F3 cronJobCount (dev-mcp-server low); S2 07-06 methodology brief (agent-father greenlit, sequenced-after-incident); context-bloat ops.md prune. VMT-3a-PMI blocked-probe5. Commit explicit path only."
+    "note": "PO TRIAGE 2026-06-14 (post VMT-8 live-verify PARTIAL): MINTED F-MACRO-FETCH-DEADLINE->ready (lead reliability, /goal#1 completion for trade/macro/cpi/bop). PO raw-confirmed root: vpsFetch.go adapter already honors http.Client{Timeout} from opts.TimeoutSec; bug = callers set 30s (cache_vmt_nso.go discoverAndFetch 3x chained 30s for NSO trade/macro/cpi; usecases_vmt_bop.go 30s) >> gateway timeout -> hang past deadline -> gateway timeout before VMT-8 degrade emits. Fix = bound budget ~8s < gateway timeout across all 5 use-cases (generic). SEQUENCED-AFTER (backlog, HELD-sequenced, same files serialize): F-BOP-ENCODING + F-NSO-SELECTOR (accuracy, restore real data). 3 other VPS tasks reconciled individually NOT auto-closed (different roots). tinyproxy ACL note -> ops lane. VMT-8 done_verified GATED on F-MACRO-FETCH-DEADLINE live re-probe (all 5 -> 200 within gateway deadline)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -392,10 +392,10 @@
         "to": "po",
         "type": "infra-incident-reconcile + dev-zone-rootcause(2) + proxy-acl-security-note",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "OPS-VPS-FETCH (a47d92aa) DONE — router RAW-verified. (A) VPS-AVAIL-02-FIX RESOLVED by router this tick: :3128 was NEVER bound (no squid ever existed — d31 'service down' premise CORRECTED); tinyproxy 1.11.1 installed (commit 0608f6aa) + vn-vps-proxy OOM root-fixed (MemoryMax 64M->256M, was OOM-killed 16x/day). RAW-proven HTTP 200 via 125.212.251.27:3128 from router host. (B) CLUSTER RECONCILE — the OTHER 3 open VPS tasks are NOT :3128-root per ops diag, do NOT fold under one root: FIX-SBV-FX-VPS-FETCHER-UNHEALTHY = vn-sbv-fetch uses DIRECT HTTP push (not proxy) -> separate health-poller bug; FIX-NEWS-VPS-CRASH-LOOP = vn-news-fetch cursor/timestamp (c009 fix still holds, verify still-open); OPS-POLLNEWS-NIGHT-ZERO = separate RSS cadence issue. PO: re-scope/verify each individually, don't auto-close on the proxy fix. (C) TWO NEW dev-zone ROOT-CAUSE findings, router LIVE-CORROBORATED (not relayed): [F-NSO-SELECTOR] NSO WordPress HTML changed -> 'bai-top' selector stale -> get_vn_trade_balance + get_vn_macro_indicators + get_cpi_components return opaque 'service unavailable' (Zone-A 500) LIVE-CONFIRMED even with proxy up; [F-BOP-ENCODING] BOP OData filter passed to vpsFetch with raw spaces ('filter=status eq 0 and ...') -> tinyproxy rejects malformed CONNECT -> get_vn_bop TIMEOUT/HANGS live-confirmed (worse than fail-fast). Both zone=apps/macro-indicators/, owner=dev-macro-indicators. COMPLEMENTARY to in-flight VMT-8: VMT-8 makes these HONEST (degrade 200+is_estimate+blocked_reason), selector/encoding fixes make them ACCURATE (serve real data) — /goal#1 'best result' needs BOTH. PO mint 2 tasks, SEQUENCE AFTER VMT-8 done_verified (same files, serialize to avoid concurrent-commit race). (D) SECURITY note: tinyproxy ACL appears more open than ops documented — router IPv6 egress (NOT in the stated allowlist) got 200 through :3128. ops hardening follow-up (lock ACL to known clients).",
         "payload_ref": "commit 0608f6aa; ops notebook docs/agent-memory/notebooks/ops-vps-fetch.md (c011); live re-probe trade_balance=opaque500 / bop=timeout / liquidity_state=200",
-        "disposition": "",
+        "disposition": "(C) MINTED F-BOP-ENCODING + F-NSO-SELECTOR -> backlog as HELD-sequenced (sequence_after F-MACRO-FETCH-DEADLINE; same files -> serialize). (B) 3 other VPS tasks NOT auto-closed (different roots): FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP already in backlog (ops/infra lane, lower urgency, kept open); OPS-POLLNEWS-NIGHT-ZERO = ops RSS-cadence lane. (D) tinyproxy ACL-open security note -> ops maintenance lane (claude-manager-helper / ops hardening), NOT dev-zone.",
         "ts": "2026-06-14T22:57:34Z"
       },
       {
@@ -404,10 +404,10 @@
         "to": "po",
         "type": "live-verify-partial + dev-zone-rootcause(fetch-deadline) — BLOCKING /goal#1",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "VMT-8 LIVE-VERIFY = PARTIAL (router RAW re-probe, NOT the ops 4/5 badge). ops caught a fast-fail window (4/5 degraded-200); router re-probe 8min later = trade/macro/cpi + bop ALL TIMEOUT, only liquidity 200. Container RAW-fresh (7df03ef2c0a1, 7a176a44) + VPS :3128 RAW-alive (curl 200 0.5s) -> NOT proxy-down. NEW ROOT CAUSE [F-MACRO-FETCH-DEADLINE]: macro-indicators upstream fetches (NSO Excel for trade/macro/cpi; SBV Liferay for bop) have NO per-fetch context deadline shorter than the gateway timeout. When the origin is slow, uc.fetcher.Fetch(ctx,...) HANGS past the gateway deadline -> gateway TIMEOUT before VMT-8's degrade path can emit its 200. VMT-8 degrades only on a FAST fetch-ERROR; it cannot rescue a HANG. This is the TRUE completion of /goal#1 'best result' for these endpoints — VMT-8 made them HONEST-on-fast-fail; F-MACRO-FETCH-DEADLINE makes them RELIABLY-graceful-on-hang. PO: mint F-MACRO-FETCH-DEADLINE (zone=apps/macro-indicators, owner=dev-macro-indicators, GENERIC across all 5 use-cases /goal#2 — bound every upstream fetch with an http.Client{Timeout}/context deadline ~8s < gateway timeout so a hang converts to a fast ctx.DeadlineExceeded that VMT-8's existing degrade path catches -> 200). This ABSORBS the standalone bop-timeout from signal dev-team-20260614T225734Z (same root). STACK ORDER on apps/macro-indicators (serialize, same files): VMT-8(done) -> F-MACRO-FETCH-DEADLINE(reliability, this) -> F-BOP-ENCODING + F-NSO-SELECTOR(accuracy, restore real data). VMT-8 itself = done (code correct, merge-gated, degrade path live-proven); done_verified WITHHELD pending F-MACRO-FETCH-DEADLINE.",
         "payload_ref": "ops notebook 13630170; router raw re-probe 23:13Z (3x NSO-tool timeout + bop timeout, liquidity 200); VPS :3128 curl 200 0.5s; container image 7df03ef2c0a1 Up~5m",
-        "disposition": "",
+        "disposition": "MINTED F-MACRO-FETCH-DEADLINE -> ready (lead reliability fix, /goal#1 completion for 4 fetch tools). Root confirmed by PO raw-read: vpsFetch already honors opts.TimeoutSec but callers set 30s (cache_vmt_nso 3x30s chain + bop 30s) >> gateway timeout. Absorbs standalone bop-timeout. VMT-8 done_verified gated on this fix's LIVE gate.",
         "ts": "2026-06-14T23:18:05Z"
       }
     ]
@@ -9200,6 +9200,48 @@
         "live_verify_agent": "ops a3915addef096b8ac + router-raw-reprobe",
         "live_verify_result": "PARTIAL. Container RAW-confirmed fresh (image 7df03ef2c0a1, Up~5m, 7a176a44, 12 peers healthy). VMT-8 degrade path LIVE-PROVEN: ops captured real degraded-200 (status=degraded+is_estimate=true+blocked_reason) for trade/macro/cpi in a fast-fail window + liquidity 200 honest + unit G2 DegradedUpstream->HTTP200 re-run. BUT router independent raw gateway re-probe 23:13Z = trade/macro/cpi + bop ALL TIMEOUT (only liquidity 200, local market.db). VPS :3128 RAW-proven alive+fast (curl 200, 0.5s) -> NOT proxy-down. ROOT = UNBOUNDED upstream fetch: no per-fetch ctx deadline < gateway timeout, so slow NSO/SBV origin -> Fetch HANGS past gateway deadline -> timeout before VMT-8 can emit degraded-200 (corroborates ops' own bop diagnosis, generalized to all 4 fetch tools). VMT-8 code correct+generic, did NOT regress; hang is pre-existing + out-of-scope. done_verified WITHHELD — endpoint live-green BLOCKED on F-MACRO-FETCH-DEADLINE.",
         "live_verify_followup": "F-MACRO-FETCH-DEADLINE"
+      },
+      {
+        "id": "F-BOP-ENCODING",
+        "type": "FIX",
+        "title": "URL-encode the BOP OData $filter (raw spaces -> %20) before vpsFetch so tinyproxy accepts the CONNECT; restores get_vn_bop real data (accuracy, after deadline fix)",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "status": "HELD-sequenced",
+        "sequence_after": "F-MACRO-FETCH-DEADLINE",
+        "priority": "high",
+        "size": "S",
+        "root_cause": "usecases_vmt_bop.go BOP OData filter passed to vpsFetch with raw spaces ('filter=status eq 0 and ...') -> tinyproxy rejects malformed CONNECT -> hang/timeout (worse than fail-fast). LIVE-CONFIRMED by router.",
+        "complementary_to": "VMT-8 (HONEST degrade) + F-MACRO-FETCH-DEADLINE (RELIABLE on hang); this makes get_vn_bop ACCURATE (real data).",
+        "files": [
+          "apps/macro-indicators/pkg/application/usecases_vmt_bop.go"
+        ],
+        "serialize_note": "Same files/zone as the deadline fix -> do NOT dispatch in parallel; release only after F-MACRO-FETCH-DEADLINE merges.",
+        "source_signal": "dev-team-20260614T225734Z-vps-cluster-reconcile",
+        "created_at": "2026-06-14T23:30:05Z",
+        "created_by": "po"
+      },
+      {
+        "id": "F-NSO-SELECTOR",
+        "type": "FIX",
+        "title": "NSO WordPress HTML changed -> 'bai-top' discovery selector stale -> trade/macro/cpi opaque Zone-A 500; update selector to current NSO markup; restores real data (accuracy, after deadline fix)",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "status": "HELD-sequenced",
+        "sequence_after": "F-MACRO-FETCH-DEADLINE",
+        "priority": "high",
+        "size": "S",
+        "root_cause": "NSO WordPress markup changed; the 'bai-top' selector used in NSO Excel discovery is stale -> get_vn_trade_balance + get_vn_macro_indicators + get_cpi_components return opaque 'service unavailable' (Zone-A 500), LIVE-CONFIRMED even with proxy up.",
+        "complementary_to": "VMT-8 (HONEST) + F-MACRO-FETCH-DEADLINE (RELIABLE); this makes the 3 NSO-backed tools ACCURATE (real data).",
+        "files": [
+          "apps/macro-indicators/pkg/infrastructure/cache_vmt_nso.go",
+          "apps/macro-indicators/pkg/infrastructure/parsers_vmt_gso_indicators.go"
+        ],
+        "selector_note": "Selector must be derived from a LIVE fetch of the current NSO index page, not the stale documented markup. Consider failing loud if discovery yields 0 candidates (avoid silent opaque-500).",
+        "serialize_note": "Same files/zone as the deadline fix -> do NOT dispatch in parallel; release only after F-MACRO-FETCH-DEADLINE merges.",
+        "source_signal": "dev-team-20260614T225734Z-vps-cluster-reconcile",
+        "created_at": "2026-06-14T23:30:05Z",
+        "created_by": "po"
       }
     ],
     "closed_sprints": [
@@ -13682,7 +13724,35 @@
         "serialization_guard": "Zone A dev tasks (handlers_vmt.go/usecases_vmt.go/dtos_vmt.go) MUST be serial — one dev-macro-indicators task at a time, merge gate between each. PM enforces (feedback_recurring_bug_escalation)."
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "id": "F-MACRO-FETCH-DEADLINE",
+        "type": "FIX",
+        "title": "Bound every Zone-A upstream fetch with a per-fetch ctx/client deadline (~8s) < gateway timeout so a slow-origin HANG converts to a fast ctx.DeadlineExceeded that VMT-8's existing degrade path catches -> degraded-200",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "status": "READY",
+        "priority": "high",
+        "size": "S",
+        "baseline_pass": "go test ./pkg/... = ALL PASS (cached green) 2026-06-14",
+        "goal_ref": "/goal#1 completion (best-result for the 4 fetch-dependent tools: trade/macro/cpi/bop) + /goal#2 generic",
+        "root_cause": "vpsFetch.go adapter ALREADY honors http.Client{Timeout} from opts.TimeoutSec, BUT callers set it too high: cache_vmt_nso.go discoverAndFetch TimeoutSec:30 across 3 chained fetches (index->press->xlsx, up to 90s) for trade/macro/cpi; usecases_vmt_bop.go Fetch TimeoutSec:30. All 30s >> gateway timeout. Slow NSO/SBV origin -> Fetch hangs ~30-90s past gateway deadline -> gateway TIMEOUT before VMT-8 degrade path can emit. VMT-8 degrades only on a FAST fetch-ERROR; it cannot rescue a HANG.",
+        "fix_spec": "GENERIC across all 5 Zone-A use-cases: introduce a single bounded fetch deadline (~8s, < gateway timeout; ideally a named const so all callers share one SSOT) applied to EVERY uc.fetcher.Fetch call (and as a context.WithTimeout on the ctx passed in, belt-and-suspenders). For the NSO 3-fetch chain the BUDGET (not per-fetch x3) must stay under the gateway deadline. A hang then yields ctx.DeadlineExceeded -> VMT-8 existing degrade path -> degraded-200 (is_estimate + blocked_reason). Do NOT touch the degrade logic (VMT-8 owns it) — only bound the fetch.",
+        "files": [
+          "apps/macro-indicators/pkg/infrastructure/vpsFetch.go",
+          "apps/macro-indicators/pkg/infrastructure/cache_vmt_nso.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_bop.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_macro.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_trade.go",
+          "apps/macro-indicators/pkg/application/usecases_vmt_cpi.go"
+        ],
+        "verification_gate": "Unit: simulate a hanging fetcher -> assert ctx.DeadlineExceeded surfaces within budget AND use-case returns degraded-200 (not gateway-timeout). LIVE: router re-probe all 5 Zone-A tools across timing windows -> each returns 200 (real OR degraded) within gateway deadline; NO raw gateway-timeout. This is the gate that unblocks VMT-8 done_verified.",
+        "source_signal": "dev-team-20260614T231805Z-vmt8-liveverify-fetch-deadline",
+        "absorbs": "standalone bop-timeout from dev-team-20260614T225734Z (same root)",
+        "created_at": "2026-06-14T23:30:05Z",
+        "created_by": "po"
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",
