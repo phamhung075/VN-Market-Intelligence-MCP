@@ -4,11 +4,12 @@
   "_updated_at": "2026-06-14T04:58:48Z",
   "_updated_by": "qa",
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-14T06:00:00Z",
-    "updated_by": "dev-mcp-server",
+    "status": "in_progress",
+    "updated_at": "2026-06-14T05:01:10Z",
+    "updated_by": "router",
     "active_task_id": "A-1",
-    "next_agent": "qa"
+    "next_agent": "ops",
+    "note": "A-1 APPROVED (code-merge) by qa cycle-261. Remaining: ops live-verify gate — force-recreate mcp-server, confirm cron_job_runs mcpServerStartup sentinel persists on named-volume DB + WORK alert fires on 2nd restart/4h. Promote A-1 done->done_verified ONLY after that fires LIVE."
   },
   "dashboard_section_cache": {
     "section_name": "po",
