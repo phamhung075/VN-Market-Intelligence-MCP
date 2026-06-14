@@ -117,6 +117,11 @@ import { registerCompanyProfileTools } from "./market-data/companyProfileTools.j
 import { registerBctcSeriesTools } from "./financial-reports/bctcSeriesTools.js"; // FIX-C: get_bctc_series (#151)
 import { registerAgmPlanTools } from "./financial-reports/agmPlanTools.js"; // FIX-G: get_agm_plan (#162)
 import { registerEmitPressureStateTool } from "./system/emitPressureStateTool.js"; // EMIT-DARK-OPTION-C: emit_pressure_state (#163)
+import { registerTradeBalanceTools } from "./macro/tradeBalanceTools.js"; // VMT-7a: get_vn_trade_balance (#164)
+import { registerBopTools } from "./macro/bopTools.js"; // VMT-7b: get_vn_bop (#165)
+import { registerMacroIndicatorsVnTools } from "./macro/macroIndicatorsVnTools.js"; // VMT-7c: get_vn_macro_indicators (#166)
+import { registerCpiComponentsTools } from "./macro/cpiComponentsTools.js"; // VMT-7d: get_cpi_components (#167)
+import { registerLiquidityStateTools } from "./macro/liquidityStateTools.js"; // VMT-7e: get_vn_liquidity_state (#168)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -238,4 +243,9 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerBctcSeriesTools,               // FIX-C: get_bctc_series (#151)
   registerAgmPlanTools,                  // FIX-G: get_agm_plan (#162)
   registerEmitPressureStateTool,         // EMIT-DARK-OPTION-C: emit_pressure_state (#163)
+  registerTradeBalanceTools,             // VMT-7a: get_vn_trade_balance (#164)
+  registerBopTools,                      // VMT-7b: get_vn_bop (#165)
+  registerMacroIndicatorsVnTools,        // VMT-7c: get_vn_macro_indicators (#166)
+  registerCpiComponentsTools,            // VMT-7d: get_cpi_components (#167)
+  registerLiquidityStateTools,           // VMT-7e: get_vn_liquidity_state (#168)
 ];

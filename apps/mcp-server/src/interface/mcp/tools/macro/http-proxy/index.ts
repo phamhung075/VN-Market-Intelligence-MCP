@@ -15,3 +15,9 @@ export { registerCarryTools } from "../carryTools.js";
 export { registerDinhGiaTools } from "../dinhGiaTools.js";
 export { getMacroBaseUrl } from "../macroHttpClient.js";
 export { isMacroSnapshotValidShape } from "../macroSnapshotGuard.js";
+// VMT-7 Zone-B wave — 5 new VN macro data tools
+export { registerTradeBalanceTools } from "../tradeBalanceTools.js";
+export { registerBopTools } from "../bopTools.js";
+export { registerMacroIndicatorsVnTools } from "../macroIndicatorsVnTools.js";
+export { registerCpiComponentsTools } from "../cpiComponentsTools.js";
+export { registerLiquidityStateTools } from "../liquidityStateTools.js";

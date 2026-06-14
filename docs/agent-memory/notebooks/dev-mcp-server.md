@@ -1,5 +1,25 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-15 · VMT-7 Zone-B wave — 5 VN macro data MCP tools added
+
+**Task:** VMT-7a–e + VMT-7-REGISTER (VN-MACRO-TOOLING Zone-B bundled wave)
+**Commit:** (see below)
+
+5 new MCP proxy tools wired into macro-indicators:5004 Zone-A endpoints:
+- get_vn_trade_balance (POST /trade-balance) — tradeBalanceTools.ts; bloc_split.fdi/domestic.is_estimate=true PERMANENT (ARCH Decision A)
+- get_vn_bop (POST /bop) — bopTools.ts; offshore_parked.is_estimate=true PERMANENT; fx_incidence.is_estimate=false; errors_omissions BPM6 sign
+- get_vn_macro_indicators (POST /macro-indicators) — macroIndicatorsVnTools.ts; 4 IIP sectors; is_estimate=false (primary source)
+- get_cpi_components (POST /cpi-components) — cpiComponentsTools.ts; weight_pct=null ALL baskets + headline; weights_is_estimate=true PERMANENT; do NOT coerce null→0
+- get_vn_liquidity_state (POST /liquidity-state) — liquidityStateTools.ts; irs.is_estimate=true PERMANENT (DD-6); interbank_1w.is_estimate=true PERMANENT + rate_1w_pct=null + blocked_reason (Decision B); omo.is_estimate reflects parse success
+
+VMT-7-REGISTER: wired all 5 into http-proxy/index.ts barrel + registry.ts (imports + toolRegistry array entries #164–#168).
+
+Base URL mechanism: MACRO_INDICATORS_URL env var → http://localhost:5004 (via getMacroBaseUrl() from macroHttpClient.ts — identical to all existing macro HTTP-proxy tools).
+
+**Gate results:** tsc --noEmit exit 0. bun test 13037 tests / 0 failures. Tool registrations +5 = 181 server.tool() calls. Scheduler count unchanged (no scheduler files touched).
+
+Zone health: bun test 0 fail, 181 tool registrations (+5 from VMT-7), scheduler count unchanged | HEALTHY
+
 ## 2026-06-14 · VMT-6-CREDIT-FLOW-EXTEND — survey_distribution stub added (DEGRADED)
 
 **Task:** VMT-6-CREDIT-FLOW-EXTEND (Zone C, VN-MACRO-TOOLING WAVE-1)
