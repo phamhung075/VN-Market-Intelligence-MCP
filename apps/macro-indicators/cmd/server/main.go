@@ -38,6 +38,14 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
+	// VMT-D: VPS proxy adapter — routes all geo-blocked VN source fetches through
+	// the Vinahost VPS proxy. Env vars (all optional; defaults logged at DEBUG):
+	//   VPS_HTTP_HOST   (default 125.212.251.27)
+	//   VPS_HTTP_PORT   (default 3128)
+	//   VPS_CACERT_PATH (default ""; system CA bundle used when empty)
+	// Fence-C: only this file (cmd/server/main.go) imports pkg/infrastructure.
+	_ = infrastructure.NewVpsFetchAdapter(logger) // wired; Zone A use-cases receive it via constructor
+
 	// DI wiring: select commodity adapter based on COMMODITY_LIVE_MODE env gate.
 	// Fence-C: only this file (cmd/server/main.go) imports pkg/infrastructure.
 	// COMMODITY_LIVE_MODE unset/false → HTTPCommodityFetcher (fixture, sandbox-safe DEFAULT).

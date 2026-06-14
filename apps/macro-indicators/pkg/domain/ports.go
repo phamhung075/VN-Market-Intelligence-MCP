@@ -8,6 +8,34 @@ import (
 	"time"
 )
 
+// VpsFetchOptions configures a single outbound HTTP request through the VPS proxy.
+// All fields are optional; zero values select sensible defaults.
+//
+// TimeoutSec: per-request timeout in seconds (0 → caller's context deadline governs).
+// BrowserUA:  when true, sets a browser-like User-Agent header on the request.
+// AcceptHeader: explicit Accept header value; empty string omits the header.
+type VpsFetchOptions struct {
+	TimeoutSec   int
+	BrowserUA    bool
+	AcceptHeader string
+}
+
+// VpsFetchPort is the domain port for outbound HTTP proxy routing through VPS.
+// All geo-blocked Vietnamese sources (GSO, Customs, SBV) must be fetched through
+// this port so that the Vinahost VPS acts as the egress node.
+//
+// Implementing adapter: pkg/infrastructure/vpsFetch.go (VpsFetchAdapter).
+// Only cmd/server/main.go imports pkg/infrastructure (Fence-C preserved).
+//
+// Fail-closed contract: on any transport or TLS error Fetch returns (nil, error).
+// It NEVER fabricates a response body.
+type VpsFetchPort interface {
+	// Fetch retrieves targetURL via the configured VPS HTTP proxy.
+	// opts tunes the per-request timeout, User-Agent and Accept header.
+	// Returns the raw response body on HTTP 2xx, or (nil, error) on any failure.
+	Fetch(ctx context.Context, targetURL string, opts VpsFetchOptions) ([]byte, error)
+}
+
 // CommodityFetcherPort is the port for commodity price retrieval (oil, gold, etc.).
 // Implemented in pkg/infrastructure; never referenced from pkg/domain implementation code.
 type CommodityFetcherPort interface {
