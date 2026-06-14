@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T17:50:35Z",
+    "updated_at": "2026-06-14T17:56:46Z",
     "updated_by": "dev-team",
-    "active_task_id": "KINHDICH-HOVER-ENRICH",
-    "next_agent": "po",
-    "note": "KINHDICH-HOVER-ENRICH RE-SCOPED by PO (router caught WRONG-SURFACE; PO re-probed + confirmed). CLOSED partial-ssot-done-wrong-surface (lane=done, moved to done[]): SSOT groundwork KEPT (hoverSummary x64 in que-reference.js + hexagram_reference.go, commit 47fe36e8); file:// index.html L2501 swap KEPT (sandbox-only). PRODUCT RULING: user 'too short' targets the TOOLTIP itself -> enrich tooltip with hoverSummary (80-220 char); QUE-TOOLTIP-DRY terse-by-design overruled for tooltip TEXT only, DRY mechanism (1 SSOT/1 codegen/1 QueName component) preserved; reference page stays deep-dive. OPENED KINHDICH-HOVER-ENRICH-FE (ready, zone=apps/frontend/, next=ba): real surface = Remix :3001 QueName.tsx -> extend scripts/gen-que-descriptions.ts to emit hoverSummary -> que-descriptions.generated.ts -> render hoverSummary (fallback coreMeaning) -> rebuild frontend :3001. Pipeline po->ba->architect->dev-frontend->ops->qa->po. Wrong-surface lesson -> memory. WIP=1 (ARCH-CRON-SCHEDULER-RELIABILITY). Commit explicit path only."
+    "active_task_id": "KINHDICH-HOVER-ENRICH-FE",
+    "next_agent": "ba",
+    "note": "KINHDICH-HOVER-ENRICH CLOSED by PO (ae636dab, commit 039306f5, router RAW-verified 2 files) -> done[] partial-ssot-done-wrong-surface (hoverSummary x64 SSOT groundwork in que-reference.js + hexagram_reference.go KEPT). Follow-up KINHDICH-HOVER-ENRICH-FE OPENED ready[] (zone apps/frontend/, owner dev-frontend) — corrects the surface to the REAL user hover: Remix :3001 QueName.tsx tooltip <- que-descriptions.generated.ts. Router fixed stale head + dispatched BA. Chain po->BA->architect->dev-frontend->ops->qa->po. Scope: extend scripts/gen-que-descriptions.ts to emit hoverSummary -> QueName.tsx render (coreMeaning fallback) -> regen que-descriptions.generated.ts -> rebuild frontend :3001. DRY constraint: preserve QUE-TOOLTIP-DRY single-SSOT/single-codegen/single-QueName mechanism; only swap which field the one shared tooltip renders. BA reuses docs/handoffs/KINHDICH-HOVER-ENRICH-BA-spec.md (64 pre-authored VI/EN strings). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12500,7 +12500,9 @@
         "verification_gate": "QA-green LIVE trên frontend :3001 (KHÔNG phải file:// sandbox, KHÔNG phải :5005): mở dashboard, hover một quẻ -> hoverSummary giàu/dễ hiểu hiện ngay. Sample favorable/neutral/unfavorable + các quẻ từng cụt (29/47). que-descriptions.generated.ts regen từ codegen (no manual edit). Frontend container rebuilt + Up+healthy + peers intact (rebuild-recreate-destroys-peers guard).",
         "commit_rule": "Commit by EXPLICIT PATH only: scripts/gen-que-descriptions.ts, apps/frontend/app/components/QueName.tsx, apps/frontend/app/lib/que-descriptions.generated.ts + dev notebook. NEVER git add -A/-u — concurrent dirty tree của agent khác (tool-usage-stats.json, *-notebooks, sessions, signals) phải giữ nguyên; git status --short sau để xác nhận.",
         "pipeline": "po -> ba (vet plain-VN hoverSummary fits tooltip width; confirm fallback contract) -> architect (ratify DRY-preserving codegen extension vs QUE-TOOLTIP-DRY BLOCKER-3) -> dev-frontend -> ops (rebuild frontend :3001) -> qa (LIVE hover verify on :3001) -> po signoff",
-        "note": "[po re-scope 2026-06-14T17:53:32Z] Opened after router RAW caught WRONG-SURFACE on parent KINHDICH-HOVER-ENRICH (kinh-dich-service :5005 serves JSON only; real hover = Remix :3001 QueName.tsx). SSOT groundwork (hoverSummary x64) KEPT from commit 47fe36e8 — this task only plumbs it to the real tooltip. Wrong-surface lesson -> memory."
+        "note": "[po re-scope 2026-06-14T17:53:32Z] Opened after router RAW caught WRONG-SURFACE on parent KINHDICH-HOVER-ENRICH (kinh-dich-service :5005 serves JSON only; real hover = Remix :3001 QueName.tsx). SSOT groundwork (hoverSummary x64) KEPT from commit 47fe36e8 — this task only plumbs it to the real tooltip. Wrong-surface lesson -> memory.",
+        "ba_dispatched_at": "2026-06-14T17:56:46Z",
+        "ba_dispatched_by": "dev-team"
       }
     ],
     "review": [
