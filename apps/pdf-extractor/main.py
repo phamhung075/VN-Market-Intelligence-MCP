@@ -46,6 +46,11 @@ from application.usecases import ExtractPDFUseCase
 from application.extract_tables_usecase import ExtractTablesUseCase
 from application.extract_md_tables_usecase import ExtractMdTablesUseCase  # MD-EXTRACT
 from application.extract_layout_first_usecase import ExtractLayoutFirstUseCase  # LF-EXTRACT
+from infrastructure.doclang_serializer import (  # DOCLANG-SERIALIZE
+    DocLangSerializer,
+    FilesystemDocLangWriteAdapter,
+)
+from application.doclang_serialize_usecase import DocLangSerializeUseCase  # DOCLANG-SERIALIZE
 from interface.handlers import register_routes
 
 logger = logging.getLogger(__name__)
@@ -185,6 +190,16 @@ def create_app() -> FastAPI:
         ocr_unit_fn=ocr_unit,
     )
 
+    # --- DOCLANG-SERIALIZE: DocLang XML serializer (additive output only) ---
+    _doclang_serializer = DocLangSerializer(bbox_provider=None)  # Phase 1: no geometry
+    _doclang_write_adapter = FilesystemDocLangWriteAdapter(
+        output_dir=cfg.doclang_output_dir
+    )
+    doclang_serialize_usecase = DocLangSerializeUseCase(
+        serializer=_doclang_serializer,
+        write_port=_doclang_write_adapter,
+    )
+
     # --- PEK-INTEGRATE: PDF-Extract-Kit engine adapter ---
     # Lazy singleton: models load on first extraction call (cold-start RSS ~80MB).
     # Sequential guard: threading.Semaphore(1) inside PekEngineAdapter.
@@ -243,6 +258,7 @@ def create_app() -> FastAPI:
         ocr_text_source=ocr_text_source,    # FU-1: wires /page-text handler
         ocr_source_ok=ocr_source_ok,        # FU-1 RISK-1: startup probe result → /health
         local_extract_usecase=local_extract_usecase,  # FEAT-PDF-EXTRACTOR-LOCAL-INPUT
+        doclang_serialize_usecase=doclang_serialize_usecase,  # DOCLANG-SERIALIZE
     )
     app.include_router(router)
 

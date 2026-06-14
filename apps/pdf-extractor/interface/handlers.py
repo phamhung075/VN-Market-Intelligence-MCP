@@ -294,6 +294,7 @@ def register_routes(
     ocr_source_ok: bool = True,
     pdf_data_dir: str = "data/pdfs",
     local_extract_usecase: Optional[ExtractPDFUseCase] = None,
+    doclang_serialize_usecase: Optional[Any] = None,  # DOCLANG-SERIALIZE (wired, not yet called by handlers)
 ) -> None:
     """Attach all routes to the given APIRouter."""
 

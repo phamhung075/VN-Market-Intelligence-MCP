@@ -1,5 +1,6 @@
 """
-financial_reports — Protocol ports (P1-C, extended P2-C, BT-1, BT-3-A, MD-EXTRACT, LF-EXTRACT).
+financial_reports — Protocol ports (P1-C, extended P2-C, BT-1, BT-3-A, MD-EXTRACT, LF-EXTRACT,
+    DOCLANG-SERIALIZE).
 
 Defines the abstract interfaces (Python Protocols) that the FinancialReportsModule
 depends on. The module NEVER imports concrete primitives directly — it only accepts
@@ -13,8 +14,8 @@ Domain layer rules:
 These protocols satisfy G2 re-verify (P2-C) and enforce the DDD layering rule:
 domain modules compose domain primitives via ports, not direct function calls.
 
-Ports defined here (16 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; MD-EXTRACT-2 adds 1;
-    LF-EXTRACT adds 2):
+Ports defined here (17 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; MD-EXTRACT-2 adds 1;
+    LF-EXTRACT adds 2; DOCLANG-SERIALIZE adds 1):
     - DecimalNormalizerPort         (decimal_normalizer — P1-B2)
     - FinancialValidatorPort        (validate_financial_figures — P1-B1)
     - ConfidenceScorerPort          (confidence_scorer — P2-B1)
@@ -574,5 +575,35 @@ class LayoutFirstPushClientPort(Protocol):
 
         Raises:
             Exception: on HTTP error or network failure (caller handles).
+        """
+        ...
+
+
+class DocLangWritePort(Protocol):
+    """
+    Port for writing a serialized DocLang XML document to storage (DOCLANG-SERIALIZE Phase 1).
+
+    DDD: domain port — zero infrastructure imports. Pure Protocol.
+
+    Concrete adapters:
+        - infrastructure/doclang_serializer.FilesystemDocLangWriteAdapter (production, writes to filesystem)
+        - infrastructure/doclang_serializer.NullDocLangWriteAdapter (test, no-op)
+    """
+
+    def write(self, report_id: str, xml_str: str) -> str:
+        """
+        Persist the XML string and return the output path.
+
+        Args:
+            report_id: UUID string matching financial_reports.id. Used as filename stem.
+            xml_str:   Complete well-formed .dclg.xml string.
+
+        Returns:
+            Absolute path to the written file (e.g. "/app/data/doclang/<report_id>.dclg.xml").
+
+        Contract:
+            - Must NOT raise on I/O failure — catch, log, return empty string.
+            - Must NOT modify bctc_table_rows or any other DB table.
+            - Thread-safe: each call writes to a unique path (report_id stem).
         """
         ...

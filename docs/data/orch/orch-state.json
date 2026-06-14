@@ -10173,7 +10173,7 @@
         "id": "ARCH-DOCLANG-SERIALIZE",
         "title": "Architect: technical design for DocLangSerializer (Phase 1) — infrastructure/doclang_serializer.py, DocLangWritePort, DocLangSerializeUseCase, doclang dep pin, cross-page shape confirmation. Spec: docs/handoffs/BA-DOCLANG-SERIALIZE.md",
         "owner": "architect",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "type": "SPRINT-S",
         "zone": "apps/pdf-extractor/",
         "priority": "medium",
@@ -10193,8 +10193,10 @@
         ],
         "claimed_at": "2026-06-14T07:43:46Z",
         "claimed_by": "router",
-        "next_agent": "architect",
-        "dispatch_note": "Dispatched architect 2026-06-14T07:43:46Z as WIP slot 2 (non-colliding apps/pdf-extractor/ design; ALLZERO holds apps/mcp-server/). SPRINT-S: technical design for DocLangSerializer Phase 1 per spec docs/handoffs/BA-DOCLANG-SERIALIZE.md. Resolve blockers B-1..B-4 (<location> bbox omit+future-hook; cross-page DTO shape 1-merged-vs-2-continuation; doclang PyPI pin + pip check; cross-page golden fixture real-vs-synthetic). Output brief -> docs/architecture-briefs/ + handoff so pm can atomize/unblock DOCLANG-T1..T6 (already on board, sequential, owner dev-pdf-extractor). Promote -> next_agent=pm on design complete. NO code in this pass (design only). Run pnpm check only if any TS touched (none expected)."
+        "next_agent": "pm",
+        "dispatch_note": "Dispatched architect 2026-06-14T07:43:46Z as WIP slot 2 (non-colliding apps/pdf-extractor/ design; ALLZERO holds apps/mcp-server/). SPRINT-S: technical design for DocLangSerializer Phase 1 per spec docs/handoffs/BA-DOCLANG-SERIALIZE.md. Resolve blockers B-1..B-4 (<location> bbox omit+future-hook; cross-page DTO shape 1-merged-vs-2-continuation; doclang PyPI pin + pip check; cross-page golden fixture real-vs-synthetic). Output brief -> docs/architecture-briefs/ + handoff so pm can atomize/unblock DOCLANG-T1..T6 (already on board, sequential, owner dev-pdf-extractor). Promote -> next_agent=pm on design complete. NO code in this pass (design only). Run pnpm check only if any TS touched (none expected). | ARCH-DOCLANG-SERIALIZE DESIGN COMPLETE 2026-06-14T10:00Z. Brief: docs/architecture-briefs/2026-06-14-arch-doclang-serialize.md. All 4 blockers resolved. Next: pm atomizes DOCLANG-T1..T6.",
+        "completed_at": "2026-06-14T10:00:00Z",
+        "design_brief": "docs/architecture-briefs/2026-06-14-arch-doclang-serialize.md"
       }
     ],
     "head": {

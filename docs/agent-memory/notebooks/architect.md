@@ -1,8 +1,28 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 03:10 UTC | **Sprint:** ARCH-CRON-SCHEDULER-RELIABILITY
+**Last updated:** 2026-06-14 09:45 UTC | **Sprint:** DOCLANG-SERIALIZE
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T09:45Z — ARCH-DOCLANG-SERIALIZE Design Brief (DESIGN, REVIEW)
+
+**Task:** ARCH-DOCLANG-SERIALIZE | zone: apps/pdf-extractor/
+**Output:** docs/architecture-briefs/2026-06-14-arch-doclang-serialize.md, docs/handoffs/BA-DOCLANG-SERIALIZE.md (appended)
+
+**All 4 blockers resolved via brownfield inspection:**
+- B-1: ExtractedTableDTO has 4 fields, no geometry. bbox_provider=None hook future-proofs Phase 2.
+- B-2 (LOAD-BEARING): ocr_unit() returns ONE dict per logical unit (all pages stitched). ExtractLayoutFirstUseCase does NOT emit ExtractedTableDTO — that comes from old pdfplumber path. Serializer handles both shapes: single DTO = single table; same table_index DTOs = threaded pair.
+- B-3: doclang==0.6.0, pip check clean, zero numpy dependency. saxonche needs JRE — validate removed from production hot path (test-only). Current install is editable; Dockerfile must install from PyPI/wheel.
+- B-4: Synthetic fixture accepted per BA handoff §4. Two DTOs, table_index=0, page 4 + page 5.
+
+**Key design choices:**
+- Infrastructure: DocLangSerializer (pure), FilesystemDocLangWriteAdapter, NullDocLangWriteAdapter in one file
+- Domain port: DocLangWritePort (17th port in ports.py), Protocol pattern matches existing
+- Thread grouping: by table_index value in input list — no upstream change needed
+- Spike promote: _escape_xml() verbatim; to_doclang_xml() → _serialize_group() with pad/warn/thread
+- Validate call: REMOVED from DocLangSerializeUseCase hot path (RISK-1 JRE); test-only via host venv
+- Config: doclang_output_dir, default /app/data/doclang
+- BUILD-STANDARD: lean
 
 ## 2026-06-14T03:10Z — ARCH-CRON-SCHEDULER-RELIABILITY Design Brief (DESIGN, REVIEW)
 
