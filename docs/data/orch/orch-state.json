@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T20:09:53Z",
+    "updated_at": "2026-06-14T20:27:40Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
     "next_agent": "dev",
-    "note": "VN-MACRO-TOOLING WAVE-2 pm breakdown DONE (ae4d8f2a, commit 6fa59b18, router RAW-verified: pm.md+60 + orch-state+128/-8 ONLY, id-line 20->20 unchanged, .head untouched by pm). Per-parser live_contract attached to each WAVE-2 task; SERIAL order A1=VMT-2 -> [gate] -> A2=VMT-3b+VMT-4 -> [gate] -> A3=VMT-1a+VMT-1b -> [gate] -> A4=VMT-5a -> [gate] -> A5=VMT-5b; excelize added ONCE at A2. -> dev: A1=VMT-2-BOP DISPATCHED to dev-macro-indicators (live_contract: SBV Liferay article JSON API scopeKey=20117, fetch_recipe + probe_sample scripts/probes/vmt-2-sample.json + parse_rules: VN-number period=thousands/comma=decimal, loiVaSaiSot neg=outflow BPM6 no-sign-flip; NO Excel NO PDF). ONE Zone-A task at a time — VMT-3b/4/1a/1b/5a/5b stay TODO behind merge gates. VMT-3a-PMI blocked-probe5 (S&P, dev-local). VMT-5b.interbank+irs permanent is_estimate (no parser). KINHDICH-HOVER-DETAIL separate chain: qa APPROVED (69e7a8b0) -> po final signoff. Commit explicit path only."
+    "note": "VN-MACRO-TOOLING A1=VMT-2-BOP DONE (a6d8f1d1, commit dae7e68d, router RAW-verified: 8 in-zone BOP files + router/main wired, NO excelize, offshore_parked IsEstimate=true always / primary E&O false, go test ./... ALL PASS, A1 merge gate SATISFIED). Hygiene finding logged: commit swept ops.md -96L context-bloat trim via non-explicit git add (non-blocking, git-recoverable). -> A1->A2 GATE OPEN: A2 = VMT-3b-GSO + VMT-4-CPI DISPATCHED as ONE dev-macro-indicators agent (shared router.go/main.go + getOrFetchNSOMonthlyExcel NSO-Excel cache — single agent avoids router conflict + redundant fetch; NSO 3-step discovery, --cacert GlobalSign, parse by sheet NAME 2.IIPthang + 16.CPI). On A2 done + green -> merge gate A2->A3 -> dispatch A3=VMT-1a+VMT-1b. SERIAL Zone-A: one dev-macro-indicators agent at a time. VMT-3a-PMI blocked-probe5 (S&P dev-local). VMT-5b.interbank+irs permanent is_estimate. KINHDICH-HOVER-DETAIL chain CLOSED done_verified (e4e4991b). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5813,7 +5813,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "L",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5854,7 +5854,11 @@
             "merge_gate": "none (first in queue)",
             "dispatched_at": "2026-06-14T20:09:53Z",
             "dispatch_agent": "dev-macro-indicators",
-            "dispatch_note": "A1 first WAVE-2 serial Zone-A. dev consumes live_contract (SBV Liferay JSON, NO Excel/PDF). On dev-done -> merge gate A1->A2 before VMT-3b+VMT-4 dispatched. SERIALIZE (handlers_vmt/usecases_vmt/dtos_vmt shared, MED recurring-bug)."
+            "dispatch_note": "A1 first WAVE-2 serial Zone-A. dev consumes live_contract (SBV Liferay JSON, NO Excel/PDF). On dev-done -> merge gate A1->A2 before VMT-3b+VMT-4 dispatched. SERIALIZE (handlers_vmt/usecases_vmt/dtos_vmt shared, MED recurring-bug).",
+            "done_at": "2026-06-14T20:27:40Z",
+            "done_commit": "dae7e68d",
+            "done_agent": "a6d8f1d1",
+            "router_dev_reverify_verdict": "RAW-VERIFIED (not the dev badge): git show dae7e68d --stat = 8 in-zone BOP files + router.go + main.go + 2 in-zone test fixups + dev notebook; NO board/.head capture. CONTRACT: NO excelize (direct JSON PROBE-2); offshore_parked ALWAYS IsEstimate=true while primary E&O IsEstimate=false (fail-closed correct); E&O BPM6 sign loiVaSaiSot=-12375=outflow no-flip; VN-number 7.654=7654 M USD; go build + go test ./... ALL PASS. HYGIENE FINDING (non-blocking): commit swept ops.md -96L (context-bloat archival trim 211->115, benign+git-recoverable) via non-explicit git add — dev-macro-indicators must use explicit-path add for foreign notebooks. A1 merge gate SATISFIED."
           },
           {
             "id": "VMT-3a-MACRO-INDICATORS-PMI",
@@ -5889,7 +5893,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "M",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5926,7 +5930,10 @@
               "sample_may_2026": "iip_all_industry YoY=103.27%, YTD=108.79%, MoM=109.08%"
             },
             "serial_dispatch_order": "A2 (second in WAVE-2, parallelizable with VMT-4)",
-            "merge_gate": "MERGE GATE A1→A2: VMT-2 (BOP) must complete + merge to main before A2 starts; Zone-A handlers_vmt.go/usecases_vmt.go/dtos_vmt.go shared files—SERIALIZE dev tasks"
+            "merge_gate": "MERGE GATE A1→A2: VMT-2 (BOP) must complete + merge to main before A2 starts; Zone-A handlers_vmt.go/usecases_vmt.go/dtos_vmt.go shared files—SERIALIZE dev tasks",
+            "dispatched_at": "2026-06-14T20:27:40Z",
+            "dispatch_agent": "dev-macro-indicators",
+            "dispatch_unit": "A2 (single agent implements VMT-3b + VMT-4 together — shared router.go/main.go + getOrFetchNSOMonthlyExcel cache). VMT-3b = NSO Excel sheet 2.IIPthang IIP; consume live_contract; --cacert GlobalSign; merge gate A2->A3 after BOTH done."
           },
           {
             "id": "VMT-4-CPI-COMPONENTS",
@@ -5934,7 +5941,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "M",
-            "status": "TODO",
+            "status": "dispatched",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5972,7 +5979,10 @@
               "sample_may_2026": "cpi_total_yoy_pct: 5.60, cpi_total_mom_pct: 0.29, cpi_avg_5m2026_yoy_pct: 4.31"
             },
             "serial_dispatch_order": "A2 (second in WAVE-2, parallel with VMT-3b)",
-            "merge_gate": "MERGE GATE A1→A2: VMT-2 must complete + merge before A2 starts; SHARED CACHE (macro_vmt_cache table): VMT-3b + VMT-4 both call getOrFetchNSOMonthlyExcel() utility—first call fetches+caches, second reads cache (6h TTL)"
+            "merge_gate": "MERGE GATE A1→A2: VMT-2 must complete + merge before A2 starts; SHARED CACHE (macro_vmt_cache table): VMT-3b + VMT-4 both call getOrFetchNSOMonthlyExcel() utility—first call fetches+caches, second reads cache (6h TTL)",
+            "dispatched_at": "2026-06-14T20:27:40Z",
+            "dispatch_agent": "dev-macro-indicators",
+            "dispatch_unit": "A2 (bundled with VMT-3b in ONE agent). VMT-4 = NSO Excel sheet 16.CPI 15 categories; reuse the VMT-3b NSO Excel cache (getOrFetchNSOMonthlyExcel, 6h TTL — first fetch caches, second reads); weights null+is_estimate=true; consume live_contract."
           },
           {
             "id": "VMT-5a-LIQUIDITY-STATE-NO-GATE",
