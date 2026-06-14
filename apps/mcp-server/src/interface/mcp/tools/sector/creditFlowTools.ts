@@ -94,6 +94,24 @@ interface GetCreditFlowSignalInput {
   previousYoyGrowthPct?: number | undefined;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// survey_distribution type (VMT-6)
+// Carries VIRA/VARA bank-survey consensus data.
+// is_estimate=true until a machine-readable source is confirmed (BLOCKER-6 deferred).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SurveyDistribution {
+  source: "VIRA" | "VARA" | null;
+  period: string | null;
+  mean_pct: number | null;
+  dispersion_pct: number | null;
+  hawk_outliers: string[];
+  dove_outliers: string[];
+  survey_topic: string | null;
+  is_estimate: boolean;
+  note: string | null;
+}
+
 /**
  * Core handler logic — separated from MCP registration for testability.
  *
@@ -103,7 +121,7 @@ interface GetCreditFlowSignalInput {
  */
 export async function getCreditFlowSignalHandler(
   input: GetCreditFlowSignalInput,
-): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+): Promise<{ content: Array<{ type: "text"; text: string }>; survey_distribution: SurveyDistribution }> {
   // ── DB fallback for mortgage rates (Task 1254) ───────────────────────────
   let resolvedCurrentMortgage = input.currentMortgageRatePct;
   let resolvedPreviousMortgage = input.previousMortgageRatePct;
@@ -198,8 +216,26 @@ export async function getCreditFlowSignalHandler(
     lines.push(...provenanceLines);
   }
 
+  // VMT-6: survey_distribution stub — DEGRADED mode (BLOCKER-6 deferred).
+  // is_estimate=true: no machine-readable VIRA/VARA source is confirmed yet.
+  // If/when a source is found, a viraSurveyFetcher.ts in infrastructure/fetchers/
+  // will populate these fields (no schema change needed at that point).
+  // const surveyDist = await fetchViraSurvey(); // TODO: implement after source confirmed
+  const survey_distribution: SurveyDistribution = {
+    source: null,
+    period: null,
+    mean_pct: null,
+    dispersion_pct: null,
+    hawk_outliers: [],
+    dove_outliers: [],
+    survey_topic: null,
+    is_estimate: true,
+    note: "VIRA/VARA no machine-readable source confirmed — manual data required",
+  };
+
   return {
     content: [{ type: "text" as const, text: lines.join("\n") }],
+    survey_distribution,
   };
 }
 
