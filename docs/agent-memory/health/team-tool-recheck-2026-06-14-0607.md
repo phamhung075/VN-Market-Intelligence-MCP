@@ -15,6 +15,7 @@
 |--------|-------|
 | WORSENED | 1 (I11 — server crashed AGAIN at ~05:33Z) |
 | IMPROVED | 2 (I7 vn-sbv-fetch healthy; N1 VPS news stale false-positive resolved) |
+| NEW | 1 (B13 — send_telegram param drift `text`→`message`) |
 | UNCHANGED | 11 BUGs + 13 ISSUEs + 7 IMPROVEs |
 
 ---
@@ -23,7 +24,7 @@
 
 | Class | Count | Delta vs 04:07Z |
 |-------|-------|-----------------|
-| BUG   | 11    | unchanged |
+| BUG   | 12    | +1 NEW (B13 send_telegram param drift) |
 | ISSUE | 15    | 1 worsened (I11 crash again), 2 improved (I7, N1 resolved) |
 | IMPROVE | 7  | unchanged |
 
@@ -54,6 +55,7 @@
 | B10 | `get_market_hexagram` missing from server | Not in system-map.json tool list; uncallable. Every Sunday digest-predict cycle broken — **today is Sunday, cycle is actively broken.** Fallback not wired. | Implement tool or replace with `get_kinhdich_reading(code="^VNINDEX")` in `digest-predict.md`. | UNCHANGED |
 | B11 | `get_market_summary` requires `period` param | Tool requires `period: 'daily'|'weekly'|'monthly'|'quarterly'|'yearly'`. `digest-predict.md` documents as no-arg. | Add `period` (required enum) to `digest-predict.md`. | UNCHANGED |
 | B12 | `get_financial_summary` requires `actionCode` param | Tool requires `actionCode: string`. Agent packages document `ticker`. | Document `actionCode` in all tool packages. | UNCHANGED |
+| B13 | `send_telegram` param drift: `text`→`message` | **NEW.** Tool requires `message: string`. Many agent flow docs and tool packages document `text: string`. Probe at 06:07Z: `{channel:"bug", text:"..."}` → validation error; `{channel:"bug", message:"..."}` → ✅ sent (message_id: 2820). All agent Telegram sends using `text` param silently fail. | Audit all agent tool packages and flow files: replace `text` → `message` for `send_telegram`. | **NEW** |
 
 ---
 
@@ -115,6 +117,8 @@
 | `get_agent_signals()` (no args) | ❌ | Schema error: `agent` required — B9 confirmed |
 | `get_market_context` | ✅ | 4ms; returns watchlist+macro+alerts+analysis |
 | `get_cycle_bootstrap(agent_name="news-scout")` | ✅ | 4ms; empty agent_signals (expected: no pending signals for news-scout) |
+| `send_telegram(channel="bug", text=...)` | ❌ | Schema error: `message` required, not `text` — B13 confirmed |
+| `send_telegram(channel="bug", message=...)` | ✅ | Sent (message_id: 2820) |
 
 ---
 
@@ -132,6 +136,7 @@
 | **P2** | `get_bctc_full(code="VCB")` empty despite filed + parsed BCTC | dev-pdf-extractor | OPEN |
 | **P2** | `get_ism_subcomponents` — set FRED_API_KEY | ops | OPEN |
 | **P2** | `wti_crude_usd` stale $95.5 (impossible vs Brent $87.33) | dev-macro-indicators | OPEN |
+| **P1** | `send_telegram` param drift `text`→`message` — all agent Telegram sends using `text` silently fail | dev-mcp-server | **NEW** |
 | **P2** | Drain 45 open_warnings + 54 pending_feedback | system-auditor / po | OPEN |
 
 ---
