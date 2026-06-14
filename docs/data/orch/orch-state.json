@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-14T15:56:33Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-14T16:01:36Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP qa-APPROVED (a06b2c75, report 00b0d614) + router RAW-final-verified INDEPENDENTLY (git: qa report 1 file / impl 6 files / dirty tree untouched; gateway get_week_period dual-time 13:47Z & 13:52Z BOTH -> periodKey 2026-06-08/2026-06-14 W24, convergence proven) -> done_verified. Closes the guaranteed-slot week-key double-post class GENERICALLY (shared ISO-week helper + get_week_period tool + period-range mutex key across ALL weekly slots; both flow gates forbid date +%G-W%V). Recurrence-prevention only; no re-post. apps/mcp-server zone now FREE. Open: ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3 LIVE gate (no active agent). ARCH-SHIP-WAVE-REAUDIT PARKED in review. PO backlog incl. NEW codify-builder-prune-into-ops-rebuild-flow (disk-full 3rd recurrence today), FIX-BASE-RATE-COMPUTATION-CRON-DEAD, ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD. head=idle, WIP free. Commit explicit path only."
+    "active_task_id": "FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY",
+    "next_agent": "developer",
+    "note": "PO promoted FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY (po-s53) + router RAW-re-verified (PO commits explicit-path, dirty tree not swept). Dispatch ready->in_progress (developer): codify `docker builder prune -f` as mandatory final step in docs/agents/ops/flow/docker.md (3 locations, unconditional, generic across all 6 host_runtime_set services) — closes the 3x disk-full recurrence definitively. Doc-only, weekend-safe, no rebuild. -> qa doc-review gate -> done_verified. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3 (G1 still open: aggregator stale 06-12). ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12320,16 +12320,14 @@
         "reverify_gate": "MARKET-DAY-2026-06-15: (G1) ohlcvDailyAggregatorJob auto-fires Mon — get_pipeline_health 'Aggregator last run' advances to 2026-06-15 with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires + VCB/ACB/CTG fundamental rows newer than its run, NO manual trigger; (G3) reputationComputeJob fires at 08:30 tick under peer contention (cron_job_runs row present, no miss). QA verifies LIVE raw (pipeline-health payload + cron_job_runs named-volume rows), never badges. On all-PASS -> umbrella -> done_verified + move to done_verified[]. On any miss -> the watchdog (G5, LIVE) must have self-healed/alerted -> capture evidence + spin the residual into a scoped FIX.",
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY",
         "title": "Codify `docker builder prune -f` as the mandatory final step of the shared ops rebuild flow",
         "type": "FIX",
         "owner": "developer",
         "zone": "cross-service/",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "P2",
         "size": "S",
         "market_independent": true,
@@ -12342,9 +12340,14 @@
         "blocks": [],
         "created_at": "2026-06-14T15:59:19Z",
         "created_by": "po",
-        "source": "router 2026-06-14 ENOSPC recovery; PO weekend triage"
+        "source": "router 2026-06-14 ENOSPC recovery; PO weekend triage",
+        "next_agent": "developer",
+        "impl_dispatched_at": "2026-06-14T16:01:36Z",
+        "impl_dispatched_by": "dev-team",
+        "impl_dispatch_note": "PO-triaged weekend-safe infra fix (market-independent doc-only). IMPLEMENT per po-s53 spec: edit the rebuild-sequence SSOT docs/agents/ops/flow/docker.md — append `docker builder prune -f` as the MANDATORY FINAL step in BOTH (a) the § Docker Commands REBUILD block and (b) the § Post-Rebuild Health Verification procedure (after `up -d --no-deps`, after health passes, BEFORE qa handoff); make it UNCONDITIONAL (drop the fragile >=2-rebuilds/day heuristic — it never held); update the § FORBIDDEN 'Rebuild after code change' one-liner to end with `&& docker builder prune -f`; add a self-justifying WHY note citing the 3 recurrences (2026-05-27, 2026-06-07, 2026-06-14) + that builder cache is host-wide so ONE step covers all 6 host_runtime_set services (generic_mandate — do NOT scope to mcp-server). VERIFY post-edit: re-read docker.md raw to confirm the prune step appears in all THREE locations + WHY note + no service-specific scoping. Doc-only -> NO rebuild, NO market verification. Commit ONLY docs/agents/ops/flow/docker.md (+ your dev notebook if used) by EXPLICIT PATH — the 8-file concurrent dirty tree (bctc-analyst.md, coverage-state.json, cowork-schedule.json M + 4 docs/signals + digest-predict session ??) must NOT be captured; never git add -A. RETURN: the raw before/after of each of the 3 edited locations."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
