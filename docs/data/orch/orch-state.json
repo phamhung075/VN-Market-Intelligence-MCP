@@ -171,8 +171,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-14T07:35:30.318Z",
-    "_updated_by": "mcp-server",
+    "_updated_at": "2026-06-14T22:57:34Z",
+    "_updated_by": "dev-team",
     "archive": [
       {
         "from": "system-auditor",
@@ -385,6 +385,18 @@
         "payload_ref": "",
         "disposition": "TRIAGED -> FIX-REFINE-LOCK-TTL-RECLAIM (P1, dev-mcp-server, ready[], NEXT in-flight)",
         "ts": "2026-06-14T14:09:24Z"
+      },
+      {
+        "id": "dev-team-20260614T225734Z-vps-cluster-reconcile",
+        "from": "dev-team",
+        "to": "po",
+        "type": "infra-incident-reconcile + dev-zone-rootcause(2) + proxy-acl-security-note",
+        "severity": "HIGH",
+        "status": "NEW",
+        "summary": "OPS-VPS-FETCH (a47d92aa) DONE — router RAW-verified. (A) VPS-AVAIL-02-FIX RESOLVED by router this tick: :3128 was NEVER bound (no squid ever existed — d31 'service down' premise CORRECTED); tinyproxy 1.11.1 installed (commit 0608f6aa) + vn-vps-proxy OOM root-fixed (MemoryMax 64M->256M, was OOM-killed 16x/day). RAW-proven HTTP 200 via 125.212.251.27:3128 from router host. (B) CLUSTER RECONCILE — the OTHER 3 open VPS tasks are NOT :3128-root per ops diag, do NOT fold under one root: FIX-SBV-FX-VPS-FETCHER-UNHEALTHY = vn-sbv-fetch uses DIRECT HTTP push (not proxy) -> separate health-poller bug; FIX-NEWS-VPS-CRASH-LOOP = vn-news-fetch cursor/timestamp (c009 fix still holds, verify still-open); OPS-POLLNEWS-NIGHT-ZERO = separate RSS cadence issue. PO: re-scope/verify each individually, don't auto-close on the proxy fix. (C) TWO NEW dev-zone ROOT-CAUSE findings, router LIVE-CORROBORATED (not relayed): [F-NSO-SELECTOR] NSO WordPress HTML changed -> 'bai-top' selector stale -> get_vn_trade_balance + get_vn_macro_indicators + get_cpi_components return opaque 'service unavailable' (Zone-A 500) LIVE-CONFIRMED even with proxy up; [F-BOP-ENCODING] BOP OData filter passed to vpsFetch with raw spaces ('filter=status eq 0 and ...') -> tinyproxy rejects malformed CONNECT -> get_vn_bop TIMEOUT/HANGS live-confirmed (worse than fail-fast). Both zone=apps/macro-indicators/, owner=dev-macro-indicators. COMPLEMENTARY to in-flight VMT-8: VMT-8 makes these HONEST (degrade 200+is_estimate+blocked_reason), selector/encoding fixes make them ACCURATE (serve real data) — /goal#1 'best result' needs BOTH. PO mint 2 tasks, SEQUENCE AFTER VMT-8 done_verified (same files, serialize to avoid concurrent-commit race). (D) SECURITY note: tinyproxy ACL appears more open than ops documented — router IPv6 egress (NOT in the stated allowlist) got 200 through :3128. ops hardening follow-up (lock ACL to known clients).",
+        "payload_ref": "commit 0608f6aa; ops notebook docs/agent-memory/notebooks/ops-vps-fetch.md (c011); live re-probe trade_balance=opaque500 / bop=timeout / liquidity_state=200",
+        "disposition": "",
+        "ts": "2026-06-14T22:57:34Z"
       }
     ]
   },
@@ -482,7 +494,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T22:47:30Z",
+    "_updated_at": "2026-06-14T22:57:34Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -8078,11 +8090,16 @@
         "owner": "ops",
         "priority": "normal",
         "size": "S",
-        "status": "backlog",
+        "status": "resolved",
         "status_note": "AC: VPS-AVAIL-02 re-check returns PASS | signal:qc-VPS-AVAIL-02-4035 | get_vps_proxy_health shows sbv and bctc services stale (not pushing); prices/news/foreign-flow active",
         "title": "Fix VPS-AVAIL-02: Are all declared VPS proxy routes (ssc-iboard, bctc-discover, foreign-flow, sbv, news, agm-plan) responding",
         "type": "fix",
-        "zone": "ops"
+        "zone": "ops",
+        "resolved_at": "2026-06-14T22:57:34Z",
+        "resolved_by": "ops-vps-fetch",
+        "resolve_commit": "0608f6aa",
+        "resolve_evidence": "VPS proxy :3128 was NEVER bound (no squid/forward proxy ever installed — root revision of d31 'service down'). ops-vps-fetch installed tinyproxy 1.11.1 on Vinahost VPS 125.212.251.27 (Port=3128, ACL 127.0.0.1/::1/Docker/private-nets/main-server; backup tinyproxy.conf.bak-20260615) + raised vn-vps-proxy.service MemoryMax 64M->256M (was OOM-killed 16x/day by python3 children). Repo: certs/globalsign-rsa-ov-ssl-ca-2018.pem + Dockerfile update-ca-certificates + compose VPS_HTTP_HOST/PORT env (commit 0608f6aa).",
+        "router_verify": "RAW (not ops badge): curl -x http://125.212.251.27:3128 http://example.com -> HTTP 200 from router France host (IPv6 egress); commit 0608f6aa scope = 4 files (Dockerfile+certs+compose+ops notebook), foreign-capture NONE, orch-state NOT swept; live gateway re-probe confirms proxy up (liquidity_state 200) while trade_balance/bop still fail on SEPARATE upstream defects -> proxy genuinely restored, not a false-green."
       },
       {
         "created_at": "2026-06-10T09:27:20Z",
