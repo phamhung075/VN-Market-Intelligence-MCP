@@ -145,3 +145,31 @@ orch-state committed. Unblocks D-1 (same-zone one-in-flight clears).
 - Combined: root cause fixed (wal_autocheckpoint=1000 + TRUNCATE every 30min), alert fired on restart-cadence, escalation guard fires on anomaly
 - Next: monitor for >4h with WAL <5MB and zero restarts; if holds, close entire sprint
 
+
+---
+## Session: 2026-06-14 (KINHDICH-HOVER-ENRICH-FE-rebuild — frontend rebuild)
+
+**Task:** Rebuild Remix frontend container to ship hoverSummary via que-descriptions.generated.ts into QueName quẻ hover tooltip on :3001.
+
+**Commit:** 067e484d (fe: hoverSummary now flows through que-descriptions.generated.ts into QueName hover)
+
+### Execution Summary
+
+**Rebuild Execution**
+- Command: `docker compose build frontend && docker compose up -d --no-deps frontend`
+- Service: frontend (Remix app bundler, must rebuild for .ts code changes)
+- Build time: 115s (npm ci + Vite SSR bundle)
+- Image transition: `sha256:3a4f33c7...` → `sha256:d349d070...` ✓ (new build deployed, not cached)
+
+**Post-Rebuild Verification**
+1. **All 11 containers healthy:** 6 host_runtime_set + 5 peers remain Up/healthy ✓
+2. **Frontend liveness:** `curl -sI localhost:3001` → 200 OK ✓
+3. **Gateway port stable:** mcp-server port 3000 still bound (0.0.0.0:3000) ✓
+4. **Builder cache prune:** Reclaimed 1.696GB (z807cdx1, 893fk4uv, mxqb1arg, ikktra3k, etc.) ✓
+5. **No collateral damage:** Zero peer restarts, zero port conflicts ✓
+
+**QA Gate:** CLEARED ✓
+- New image SHA confirmed live in container
+- Remix build completed without errors (1750 modules transformed, Vite SSR 1.38s)
+- QueName.tsx and que-descriptions.generated.ts bundled into build/client/assets/
+- Frontend :3001 responsive; ready for QA hover tooltip verification
