@@ -1,0 +1,8 @@
+{
+  "from": "digest-predict",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[digest-predict] 2026-06-14 13:47 UTC digest-sunday cycle BLOCKED: MCP gateway call_tool not reachable in subagent tool surface (only Read/Write/Edit available). send_telegram/log_agent_work/task_claim all failed. Digest NOT sent to MARKET. Carry-over: kinh-dich backtest 501 (4th consecutive cycle). FPT position unverified.",
+  "priority": "high",
+  "createdAt": "2026-06-14T13:47:00Z"
+}

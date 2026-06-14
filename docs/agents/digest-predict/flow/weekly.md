@@ -1,4 +1,4 @@
-# Digest & Predict — Weekly Digest Flow (Sunday 16:00 UTC)
+# Digest & Predict — Weekly Digest Flow (Sunday 13:47 UTC)
 
 **Tools:** `docs/agents/tools/package/digest-predict.md`
 

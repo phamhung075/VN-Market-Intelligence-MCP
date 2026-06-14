@@ -1,10 +1,6 @@
 # Digest Predict — Notebook
 
-**Last updated:** 2026-05-31 13:51 UTC | **Sprint:** weekly
-
-## Current state
-
-Weekly digest sent. VN-Index 1.863 flat. FPT position lỗ 10,83% — khuyến nghị giảm bớt.
+**Last updated:** 2026-06-14 13:47 UTC | **Sprint:** weekly
 
 ## Last session summary
 
@@ -36,7 +32,6 @@ Weekly digest sent. VN-Index 1.863 flat. FPT position lỗ 10,83% — khuyến n
   - log_agent_work id=1180 in progress
 - **next_cycle_hint**: Kiểm tra FPT tuần tới — nếu vẫn yếu hơn ngành + ngoại bán ròng → cắt 50% vị thế. Dầu khí theo dõi địa chính trị. Kinh Dịch backtest 501 — đề nghị PO ưu tiên.
 - **carry_over**: kinh-dich-service backtest 501 (3 chu kỳ liên tiếp) → leo thang PO ngay; TASKS.md corruption → dev-team; BCTC push pipeline blocked
-- **estimated_tokens**: 14000
 
 ## Known patterns / preferences
 
@@ -66,3 +61,27 @@ Weekly digest sent. VN-Index 1.863 flat. FPT position lỗ 10,83% — khuyến n
 - **next_cycle_hint**: Theo dõi FPT (vị thế lỗ 7,97% — xem xét cắt lỗ); dầu khí tiếp tục áp lực nếu Hormuz mở; kinh-dich-service + macro-indicators cần dev-team khôi phục trước chu kỳ Sunday tiếp theo
 - **carry_over**: macro-indicators + kinh-dich-service down → nếu tiếp tục lỗi Sunday sau, leo thang lên PO
 - **estimated_tokens**: 12000
+
+## Cycle — 13:47 UTC
+
+- **cycle_date**: 2026-06-14
+- **slot**: digest-sunday (scheduled, cron 47 13 * * 0)
+- **findings**:
+  - MCP gateway tools NOT callable in this subagent execution context — tool surface limited to Read/Write/Edit file tools only
+  - Publish marker gate: task_claim NOT executable (MCP unavailable) — proceeding per no_self_abort constraint
+  - System state from orch-state.json: head=idle, system healthy as of 2026-06-14T07:45:00Z
+  - BCTC-ANALYTICS-LAYER: BAL-0 DONE+LIVE (publish sanity gate), BAL-1a-BACKFILL-IMPL DONE+LIVE (ratio recompute-on-read VNM ROE 27.3%/ROA 17.7%)
+  - FLEET-HOST-SAFETY: DRAIN-INJECTION-SAFE dispatched (host-side injection kill), A-01-EXPECTED-SET+AUD-ND-1 DONE
+  - Open: AUDITOR-SLA-CADENCE, 1967b architect audit, FB-GATE, CHEF-FLOW-CAP-REFACTOR
+  - FPT carry-over: vị thế lỗ dai dẳng — cần live price check (unavailable this cycle)
+  - kinh-dich backtest 501: carry-over 4th cycle — escalation needed but PO signal cannot be sent (MCP unavailable)
+  - cascade rules 0 evaluated: carry-over unresolved
+- **actions**:
+  - Notebook updated (file write — MCP append_session_record unavailable)
+  - Telegram MARKET/WORK: NOT SENT (MCP gateway unavailable in subagent context)
+  - log_agent_work: NOT LOGGED (MCP unavailable)
+  - T1 trigger fired: tool call (MCP gateway) returned unavailable — self-critique SC-0 pilot gates digest-predict out of C1 scope; skip SC proposal
+- **next_cycle_hint**: Verify MCP gateway binding in subagent context — if still unavailable next cycle, escalate to agent-father. FPT position requires live price check next cycle. kinh-dich backtest 501 now 4th consecutive cycle — needs PO escalation.
+- **carry_over**: MCP gateway unavailable in subagent tool context (T1 — structural); kinh-dich-service backtest 501 (4th cycle, CRITICAL); FPT position unverified; cascade rules 0 evaluated (4th cycle)
+- **doc_self_heal**: fixed weekly.md title "Sunday 16:00 UTC" → "Sunday 13:47 UTC" (stale header vs actual cron 47 13 * * 0)
+- **estimated_tokens**: 4000
