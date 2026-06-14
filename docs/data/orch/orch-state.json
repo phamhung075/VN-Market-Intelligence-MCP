@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T19:09:12Z",
+    "updated_at": "2026-06-14T19:19:17Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
     "next_agent": "dev",
-    "note": "VN-MACRO-TOOLING pm breakdown DONE (a50089da, commit 983af548, router RAW-verified 8 files explicit-path: orch-state + pm notebook + 6 TASK_*.md handoffs; .head untouched; signal_queue clean; KINHDICH done + ARCH-CRON IN_PROGRESS preserved). 20 atomic tasks in active_sprints[VN-MACRO-TOOLING], 5 waves, probe-gate DAG verified vs architect blueprint. CAUGHT+FIXED pm mislabel: probe owner ops-vps-crawls (non-existent) -> ops-vps-fetch at SSOT. -> dev WAVE-1 fan-out (6 zero-dep, dispatched): PROBE-1..4 via ops-vps-fetch (1 agent, all 4 VPS recon probes — VN sources GEO-BLOCKED -> Vinahost VPS, HNX/TLS --cacert) + VMT-D-VPSFETCH via dev-macro-indicators (Zone D vpsFetch.go, VpsFetchPort domain port, FIRST hard prereq) + VMT-6-CREDIT-FLOW-EXTEND via dev-mcp-server (Zone C creditFlowTools.ts, ships degraded is_estimate=true honest, NO is_estimate removal). Constraints: fail-closed never fabricate; contract from LIVE payload not schema comment; per-series is_estimate honest; tsc/pnpm check BEFORE commit; commit explicit path only; do NOT touch .head (router owns) or KINHDICH/ARCH-CRON. WAVE-2/3 gated on Zone D + probe returns. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. KINHDICH-HOVER-ENRICH-FE done_verified. Commit explicit path only."
+    "note": "VN-MACRO-TOOLING Zone D VMT-D-VPSFETCH DONE (a318eb3f, commit 46095c3d, router RAW-verified 4 files explicit-path: vpsFetch.go+test+VpsFetchPort domain port+composition; DDD Fence-A held, TLS --cacert posture InsecureSkipVerify=false, go build/vet/test green G12 18/18+2/2). status=done NOT done_verified — live VPS-proxy path deferred to first Zone A parser (compile+unit green only, no fetch target yet, no false-green). UNBLOCKED WAVE-2 ungated parsers (dep=VMT-D only) -> ready: VMT-1a-TRADE-BALANCE-TOTAL-HS (leverage #1), VMT-3a-MACRO-INDICATORS-PMI (S&P not geo-blocked), VMT-5a-LIQUIDITY-STATE-NO-GATE. HOLDING WAVE-2 DISPATCH for ops-vps-fetch probe returns (a3e5e573 running) — Zone A parsers hit the SAME geo-blocked sources the probes characterize live; contract-from-live-payload is a hard rule, dispatch each parser once its source probe lands. Still running: ops-vps-fetch PROBE-1..4 (a3e5e573), dev-mcp-server VMT-6 Zone C (a3290349). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. KINHDICH-HOVER-ENRICH-FE done_verified. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5645,7 +5645,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "S",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/macro-indicators/pkg/infrastructure/",
             "owner": "dev-macro-indicators",
             "depends": [],
@@ -5665,7 +5665,10 @@
               "apps/macro-indicators/cmd/server/main.go"
             ],
             "note": "Strict dependency: all Zone A parser use-cases import VpsFetchPort. Must land before any parser is written. TLS hardening per memory project_bctc_hnx_ssl_outage: --cacert pattern, not -k.",
-            "dispatched_at": "2026-06-14T19:09:12Z"
+            "dispatched_at": "2026-06-14T19:09:12Z",
+            "done_at": "2026-06-14T19:19:17Z",
+            "dev_commit": "46095c3d",
+            "router_verdict": "RAW-VERIFIED done (NOT done_verified — live VPS path deferred to VMT-1a): 4 files explicit-path, no board in commit, DDD Fence-A held (domain imports context+time only), TLS InsecureSkipVerify=false + VPS_CACERT_PATH->x509 (--cacert), go build/vet exit0 + 12-pkg test pass + G12 18/18+2/2. Compile+unit green; VPS proxy path not exercised live (no fetch target) — first Zone A parser integration proves it. Unblocks all Zone A (VpsFetchPort wired)."
           },
           {
             "id": "VMT-6-CREDIT-FLOW-EXTEND",
@@ -5691,7 +5694,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "L",
-            "status": "TODO",
+            "status": "ready",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5716,7 +5719,9 @@
               "apps/macro-indicators/pkg/interface/http/router.go",
               "apps/macro-indicators/cmd/server/main.go"
             ],
-            "note": "Total + hs_attribution + processing_margin logic. per_country_import. margin_series (multi-year). Cache adapter pattern (SQLite TTL 24h). DDD risk MED: processing_margin div-by-zero guard mandatory + unit test."
+            "note": "Total + hs_attribution + processing_margin logic. per_country_import. margin_series (multi-year). Cache adapter pattern (SQLite TTL 24h). DDD risk MED: processing_margin div-by-zero guard mandatory + unit test.",
+            "unblocked_at": "2026-06-14T19:19:17Z",
+            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)"
           },
           {
             "id": "VMT-1b-TRADE-BALANCE-BLOC-SPLIT",
@@ -5777,7 +5782,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "M",
-            "status": "TODO",
+            "status": "ready",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5790,7 +5795,9 @@
             "files_create": [
               "apps/macro-indicators/pkg/infrastructure/parsers_vmt_pmi.go"
             ],
-            "note": "S&P Global PMI press page (not geo-blocked). Main-server fetch, no VPS needed. MA3 transform pre-computed. Parallelizable with GSO/CPI probing."
+            "note": "S&P Global PMI press page (not geo-blocked). Main-server fetch, no VPS needed. MA3 transform pre-computed. Parallelizable with GSO/CPI probing.",
+            "unblocked_at": "2026-06-14T19:19:17Z",
+            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)"
           },
           {
             "id": "VMT-3b-MACRO-INDICATORS-GSO",
@@ -5860,7 +5867,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "M",
-            "status": "TODO",
+            "status": "ready",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5884,7 +5891,9 @@
               "apps/macro-indicators/pkg/interface/http/router.go",
               "apps/macro-indicators/cmd/server/main.go"
             ],
-            "note": "policy_rates (refi + discount) from existing sbv_rates table. SJC gap = sjc_price - world_price (world gold from commodity_prices table, usd/vnd from sbv_rates). CNY/DXY from main-server FX fetch (existing). No new VPS crawl. IRS field: is_estimate=true (DD-6)."
+            "note": "policy_rates (refi + discount) from existing sbv_rates table. SJC gap = sjc_price - world_price (world gold from commodity_prices table, usd/vnd from sbv_rates). CNY/DXY from main-server FX fetch (existing). No new VPS crawl. IRS field: is_estimate=true (DD-6).",
+            "unblocked_at": "2026-06-14T19:19:17Z",
+            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)"
           },
           {
             "id": "VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO",
