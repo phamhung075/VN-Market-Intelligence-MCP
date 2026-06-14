@@ -4,7 +4,7 @@
 **Date:** 2026-06-14
 **Author:** agents-architect
 **Priority:** P1
-**Status:** FINAL — hand-off to agent-father
+**Status:** IMPLEMENTED — agent-father 2026-06-14 (F1-A: gateway-call-contract.md created; F1-B + F2-A: dev-team/flow/main.md Step 0-PREFLIGHT updated; SF-1 claim/heartbeat/release triad wired at 3 points)
 **Scope:** Two findings from 10-session dev-team cron audit (2026-05-31 → 2026-06-11). No production code changes. Doc and flow file changes only.
 
 ---

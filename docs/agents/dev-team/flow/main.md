@@ -1,4 +1,4 @@
-<!-- size-justification: 336L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). -->
+<!-- size-justification: 375L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0a.5 CI-health probe (sub-flow pointer, +6L) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/0a.5/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). DRAIN-INJECTION-SAFE 2026-06-02: payload strings → structured objects + INVARIANT block (+4L). WF-1 2026-06-06: BLOCKED-task guard in Step 0b (+17L, AC-WF1-5). BGFAN-1 2026-06-07: background spawn mandate inline markers (+6L). FIX-DJ-GATE-DISPATCHER-SELFLIP-LEAK 2026-06-08: DJ-GATE-1 inline in S4 UNBLOCK + S4 CLEAN router self-flip paths (+6L). CI-HEALTH-FIX-BRIDGE 2026-06-08: Step 0a.5 CI probe sub-flow pointer (+6L). DEV-TEAM-TOOL-CONTRACT-CRON-OVERLAP 2026-06-14: SF-1 single-flight guard (task_claim dev-team-cron-singleton TTL=5400s) + GCC-PREFLIGHT read directive in Step 0-PREFLIGHT; SF-1 heartbeat at Step 3 entry; SF-1 release at jump:end (+20L). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 <!-- BGFAN-1: ALL Agent spawns from THIS dispatcher MUST use run_in_background=true. Canonical rule + rationale → docs/protocols/agent-chaining-protocol.md § Background Spawn Mandate. Background ≠ parallel: gated chain (po→ba→…→qa) still serializes on completion notification; independent tier tasks fan out concurrently. Commit-mutex serialization unchanged. -->
@@ -86,6 +86,25 @@ send_telegram(channel="work", message="[dev-team] cron START — actual fire {ts
 # Self-arm detect→plan loop (idempotent — skill Step 1 CronList guard makes this a no-op once armed)
 → skill: .claude/skills/cron-detect-loop/SKILL.md
 # Guarantees system-auditor Tier-1/2/3 + dev-team crons stay live while this always-on session runs.
+
+# SF-1: SINGLE-FLIGHT GUARD — session-level cron overlap prevention (TTL-only, no owner-session binding)
+# Survives mcp-server restart: TTL clock continues; orphaned lock expiry is natural. → memory: lock_orphaned_by_rebuild
+sf_result = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "dev-team-cron-singleton",
+  task_kind:   "sprint-task",
+  owner_agent: "dev-team",
+  ttl_seconds: 5400,          # 90min — 1.5× observed 99th-pct tick duration; TTL-only, no owner-session pin
+  payload:     {"site": "SF-1", "tick": ts}   # structured object — DRAIN-INJECTION-SAFE
+})
+if not sf_result.claimed:
+  log "[dev-team] SF-1 SKIP — session already running (holder: " + sf_result.current_holder.owner_agent + " since " + sf_result.current_holder.claimed_at + ")"
+  call_tool(server="vn-market", tool="send_telegram", arguments={channel: "work", message: "[dev-team] cron SKIP — single-flight held by peer (TTL ~" + sf_result.current_holder.expires_in_s + "s)"})
+  JUMP TO end   # exit immediately — do NOT run any step
+
+# SF-1 claimed — proceed with full cron tick
+
+# GCC-PREFLIGHT: load gateway call contract before any call_tool use
+→ Read docs/standards/gateway-call-contract.md   (one file, ~60L, ~250 tokens — closes 6 recurring tool-call error classes)
 
 if .git/HEAD.lock not exists:
   # T5: worktree prune (always, lock absent branch)
@@ -312,6 +331,12 @@ Architect MUST set `ZONE: apps/<service>/` in RETURN — PM propagates into hand
 <!-- jump:execute -->
 ## Step 3 — Execution
 
+<!-- SF-1 heartbeat: renew singleton session lock at Step 3 entry to cover long sprint ticks beyond initial 5400s TTL -->
+```
+call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "dev-team-cron-singleton" })
+# ok=false → lock stolen (peer recovered after stall) → log BUG + exit cleanly; do NOT fight the steal.
+```
+
 → Run sub-flow: `docs/agents/dev-team/flow/execute-tier.md`
 
 Covers: tier grouping, zone routing (3-tier resolution: explicit → infer → report), parallel spawn rules, conflict check, merge gate.
@@ -334,3 +359,16 @@ Covers: post-execution checks (4.0–4.1), Compact Checkpoint (4.5), doc self-he
 - Branch deleted by QA post-merge
 - Notify WORK at: fix shipped | sprint complete | blocker resolved | idle
 - **DRAIN-INJECTION-SAFE (FLEET-HOST-SAFETY):** NEVER interpolate a signal/payload/DASHBOARD field into a `/bin/sh` command line. Safe patterns only: (a) `jq --arg` bound variables for any bash JSON/SQL step; (b) structured JSON object passed directly to `call_tool` MCP gateway `arguments` (no shell exposure); (c) write SQL to a tmp file then `sqlite3 db < file`. ALL `task_claim` payload fields in this flow and sub-flows MUST use pattern (b) — never a concatenated shell string. Reference: `feedback_signal_payload_shell_injection`. Violation = WORK alert + halt.
+
+---
+
+<!-- jump:end -->
+## Session Exit
+
+All JUMP TO `end` paths converge here.
+
+```
+# SF-1 release — always run on clean exit (TTL expiry is fallback for crash path)
+call_tool(server="vn-market", tool="task_release", arguments={ task_id: "dev-team-cron-singleton" })
+# ok=false is acceptable (TTL already expired after a long tick, or SF-1 was never claimed on SKIP path)
+```
