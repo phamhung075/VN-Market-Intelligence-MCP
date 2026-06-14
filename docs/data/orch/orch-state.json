@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-14T15:25:13Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-14T15:27:09Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "FIX-REFINE-LOCK-TTL-RECLAIM qa-APPROVED (a1289f56, report 04e4d965) + router RAW-final-verified INDEPENDENTLY (git: qa report 1 file / impl 3 files / dirty tree untouched; gateway get_bctc_pending_refine -> 3 claimable PENDING, no orphan lock) -> done_verified. UNBLOCKS refine queue; fix GENERIC across all refine slots + forward-protective (orphan-after-rebuild class CLOSED). apps/mcp-server zone now FREE -> FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (ready, same zone) is next dispatch. ARCH-SHIP-WAVE-REAUDIT PARKED in review. Umbrella ARCH-CRON-SCHEDULER-RELIABILITY already CLOSED by po-S50 (T3-ARCH-CRON-WATCHDOG done_verified). head=idle. WIP free. Commit explicit path only."
+    "active_task_id": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP",
+    "next_agent": "dev-mcp-server",
+    "note": "FIX-REFINE-LOCK-TTL-RECLAIM done_verified (67cad7ae) -> apps/mcp-server zone free. Dispatch FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (ready->in_progress, dev-mcp-server): canonical shared ISO-week helper (Sun 2026-06-14=W24) + date-range-keyed slot mutex across ALL guaranteed weekly slots (generic_mandate) + RemoteTrigger last_fired write; unit+integration dedup tests. Recurrence-prevention only (no re-post). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3 gate (no active agent). ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active same-zone. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12268,14 +12268,12 @@
         "reverify_gate": "MARKET-DAY-2026-06-15: (G1) ohlcvDailyAggregatorJob auto-fires Mon — get_pipeline_health 'Aggregator last run' advances to 2026-06-15 with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires + VCB/ACB/CTG fundamental rows newer than its run, NO manual trigger; (G3) reputationComputeJob fires at 08:30 tick under peer contention (cron_job_runs row present, no miss). QA verifies LIVE raw (pipeline-health payload + cron_job_runs named-volume rows), never badges. On all-PASS -> umbrella -> done_verified + move to done_verified[]. On any miss -> the watchdog (G5, LIVE) must have self-healed/alerted -> capture evidence + spin the residual into a scoped FIX.",
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "TODO",
+        "status": "IN_PROGRESS",
         "size": "S",
         "priority": "high",
         "recurring": true,
@@ -12295,9 +12293,14 @@
           "cowork-schedule.json"
         ],
         "created_at": "2026-06-14T14:45:14Z",
-        "created_by": "po-S50"
+        "created_by": "po-S50",
+        "next_agent": "dev-mcp-server",
+        "impl_dispatched_at": "2026-06-14T15:27:09Z",
+        "impl_dispatched_by": "dev-team",
+        "impl_dispatch_note": "Predecessor FIX-REFINE-LOCK-TTL-RECLAIM done_verified (67cad7ae) -> same-zone slot free, wip_rule condition met. IMPLEMENT per PO spec (root_cause A+B, fix, generic_mandate, verification_gate): (A) ONE canonical ISO-week helper (date +%V / ISO-8601 semantics — Sun 2026-06-14 MUST resolve to W24 not W25) shared by EVERY digest-predict publish-gate path; no path recomputes its own week label. (B) per generic_mandate, key the guaranteed-weekly slot mutex on the calendar period date-RANGE (period start/end), NOT a derived week-label string, so a one-label divergence cannot defeat dedup; ALSO have the RemoteTrigger path write cowork-schedule.json .last_fired on fire if cheap (belt-and-suspenders against the stale-last_fired re-fire). Apply to ALL guaranteed weekly slots, not just digest-sunday. TESTS (verification_gate): unit — both dispatch paths derive the SAME key for Sun 2026-06-14 (=W24) AND adjacent week-boundary Sundays; integration — simulate RemoteTrigger fire then CLI dispatcher tick within the same period -> EXACTLY ONE publish (marker dedup holds). Gates: cd apps/mcp-server && bunx tsc --noEmit exit 0 AND bun test <new test> green. Commit by EXPLICIT PATH only (concurrent agent dirty tree: bctc-analyst.md, coverage-state.json, cowork-schedule.json M + docs/signals + digest-predict session ?? — do NOT git add -A; if you legitimately edit cowork-schedule.json for fix B, stage ONLY that file by explicit path and verify the M-from-other-agent delta is yours). RECURRENCE-PREVENTION ONLY — the 2026-06-14 digest already delivered (twice) to MARKET; do NOT re-post. Flag whether a server rebuild is needed (digest code in mcp-server -> likely yes for the test + runtime helper; the cowork-schedule.json data change reads live)."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
