@@ -16,6 +16,12 @@
 // Route POST /cpi-components added. Shares NSOExcelFetcher instance with VMT-3b.
 // CPI weights=null, is_estimate=true (architect handoff § VMT-4 weights_policy).
 //
+// VMT-1a + VMT-1b (trade balance + bloc_split): TradeBalanceUseCase wired with SHARED
+// NSOExcelFetcher (same instance as VMT-3b + VMT-4 — Entry 11, cache hit within 6h TTL).
+// Route POST /trade-balance added. No new excelize dep (reuses existing from A2).
+// trade totals + HS breakdown: is_estimate=false (VMT-1a, primary NSO source).
+// bloc_split FDI share: is_estimate=true PERMANENT (VMT-1b, ARCH Decision A).
+//
 // Sandbox security (charter §Security Clause macro-specific addition):
 // reads ZERO secrets — only PORT (default 5004) and LOG_LEVEL (default "INFO").
 // No DB credentials, no API keys, no external service credentials in this process env.
@@ -89,11 +95,18 @@ func main() {
 	cpiParser := &cpiParserAdapter{}
 	cpiComponentsUseCase := application.NewCPIComponentsUseCase(nsoExcelFetcher, cpiParser)
 
+	// VMT-1a + VMT-1b: trade-balance use case wiring (shares the SAME nsoExcelFetcher).
+	// Entry 11 (REUSE): getOrFetchNSOMonthlyExcel is a cache HIT within 6h TTL.
+	// No new excelize dep, no new fetcher (reuse A2 infrastructure).
+	tradeParser := &tradeBalanceParserAdapter{}
+	tradeBalanceUseCase := application.NewTradeBalanceUseCase(nsoExcelFetcher, tradeParser)
+
 	router := iface.NewRouter(iface.RouterConfig{
 		Snapshot:           useCase,
 		BOP:                bopUseCase,
 		MacroIndicatorsGSO: macroIndicatorsGSOUseCase,
 		CPIComponents:      cpiComponentsUseCase,
+		TradeBalance:       tradeBalanceUseCase,
 		Logger:             logger,
 	})
 
@@ -200,4 +213,23 @@ type cpiParserAdapter struct{}
 // Returns domain.CPIRecord — satisfies the application.CPIParser interface.
 func (c *cpiParserAdapter) ParseCPI(excelBytes []byte, period string) (domain.CPIRecord, error) {
 	return infrastructure.ParseCPIFromExcel(excelBytes, period)
+}
+
+// ---------------------------------------------------------------------------
+// VMT-1a + VMT-1b composition-root adapter
+//
+// Bridges application.TradeBalanceParser to the concrete infrastructure parser
+// without pkg/infrastructure importing pkg/application (Fence-B violation).
+// Lives here (composition root — Fence-C compliant).
+// ---------------------------------------------------------------------------
+
+// tradeBalanceParserAdapter implements application.TradeBalanceParser
+// using infrastructure.ParseTradeBalanceFromExcel.
+// Composition-root type: lives in cmd/server/main.go (Fence-C compliant).
+type tradeBalanceParserAdapter struct{}
+
+// ParseTradeBalance delegates to infrastructure.ParseTradeBalanceFromExcel.
+// Returns domain.TradeBalanceRecord — satisfies the application.TradeBalanceParser interface.
+func (t *tradeBalanceParserAdapter) ParseTradeBalance(excelBytes []byte, period string) (domain.TradeBalanceRecord, error) {
+	return infrastructure.ParseTradeBalanceFromExcel(excelBytes, period)
 }

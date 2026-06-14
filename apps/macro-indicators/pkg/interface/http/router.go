@@ -21,6 +21,7 @@
 //   POST /bop                  — SBV BOP quarterly data + FX-incidence + offshore_parked (VMT-2)
 //   POST /macro-indicators     — NSO monthly IIP data for 4 sectors (VMT-3b)
 //   POST /cpi-components       — NSO monthly CPI 15-row basket data (VMT-4)
+//   POST /trade-balance        — NSO monthly trade totals + HS breakdown + bloc_split (VMT-1a + VMT-1b)
 package http
 
 import (
@@ -46,12 +47,13 @@ import (
 // BOP is the VMT-2 use case for POST /bop.
 // MacroIndicatorsGSO is the VMT-3b use case for POST /macro-indicators (NSO IIP).
 // CPIComponents is the VMT-4 use case for POST /cpi-components (NSO CPI baskets).
-// Future VMT use cases (TradeBalance, LiquidityState) will be added in A3..A5.
+// TradeBalance is the VMT-1a+1b use case for POST /trade-balance (NSO trade totals + bloc_split).
 type RouterConfig struct {
 	Snapshot           *application.ComputeMacroUseCase
 	BOP                *application.BOPUseCase
 	MacroIndicatorsGSO *application.MacroIndicatorsGSOUseCase
 	CPIComponents      *application.CPIComponentsUseCase
+	TradeBalance       *application.TradeBalanceUseCase
 	Logger             *slog.Logger
 }
 
@@ -85,6 +87,12 @@ func NewRouter(cfg RouterConfig) chi.Router {
 	// VMT-4: CPI components endpoint (PROBE-3 PASS — NSO monthly Excel, sheet "16.CPI").
 	if cfg.CPIComponents != nil {
 		r.Post("/cpi-components", handleCPIComponents(cfg.CPIComponents, cfg.Logger))
+	}
+
+	// VMT-1a + VMT-1b: trade-balance endpoint (NSO monthly Excel, sheets '14.XK'+'15.NK'+'12.FDI').
+	// is_estimate=false for trade totals + HS rows (VMT-1a); bloc_split always is_estimate=true (VMT-1b).
+	if cfg.TradeBalance != nil {
+		r.Post("/trade-balance", handleTradeBalance(cfg.TradeBalance, cfg.Logger))
 	}
 
 	return r

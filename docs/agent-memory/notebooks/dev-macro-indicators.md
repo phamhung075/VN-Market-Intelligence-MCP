@@ -6,6 +6,51 @@ Zone: `apps/macro-indicators/` | Stack: Go 1.22 | DB: reads market.db (read-only
 
 ---
 
+## Session 2026-06-14 (VMT-1a-TRADE-BALANCE + VMT-1b-BLOC-SPLIT — sprint VN-MACRO-TOOLING A3 WAVE-2)
+
+**Task:** Implement VMT-1a (trade balance + HS attribution) + VMT-1b (bloc_split FDI estimate) in ONE pass. Bundled A3 per contract. NSO Excel cache REUSED from A2 (getOrFetchNSOMonthlyExcel, 6h TTL, cache hit — no new excelize/fetcher).
+
+**Contract source:** scripts/probes/vmt-3-sample.json + orch-state.json live_contract (VMT-1a + VMT-1b). NSO monthly Excel sheets '14.XK' (exports), '15.NK' (imports), '12.FDI' (FDI registered). VN number format (period=thousands, comma=decimal). ParseVNNumber reused from BOP domain.
+
+**Files created (9):**
+- `pkg/domain/models_vmt_trade.go` — TradeBalanceRecord, HSSector, BlocSplitEstimate, BlocShareEstimate domain models
+- `pkg/domain/services_vmt_trade.go` — ComputeTradeBalance (export-import), ComputeBlocSplit (always is_estimate=true PERMANENT ARCH Decision A)
+- `pkg/domain/services_vmt_trade_test.go` — 8 table-driven tests (anchor May-2026, is_estimate invariant, fail-closed, note content)
+- `pkg/application/dtos_vmt_trade.go` — TradeBalanceRequest, TradeBalanceResponse, HSSectorDTO, BlocSplitDTO, BlocShareDTO
+- `pkg/application/usecases_vmt_trade.go` — TradeBalanceUseCase (NSOExcelProvider reused + TradeBalanceParser interface)
+- `pkg/application/usecases_vmt_trade_test.go` — 6 tests (nil guards, fetch/parse error fail-closed, anchor May-2026, ARCH Decision A invariant)
+- `pkg/infrastructure/parsers_vmt_trade.go` — ParseTradeBalanceFromExcel (sheets 14.XK+15.NK+12.FDI, total row detection, HS breakdown, FDI "Tổng số" row)
+- `pkg/infrastructure/parsers_vmt_trade_test.go` — 7 parser tests incl. anchor + FDI value + fail-closed FDI miss
+- `pkg/interface/http/handlers_vmt_trade.go` — handleTradeBalance chi handler for POST /trade-balance
+
+**Files modified (2):**
+- `pkg/interface/http/router.go` — RouterConfig extended (TradeBalance field), POST /trade-balance route added
+- `cmd/server/main.go` — tradeBalanceParserAdapter + TradeBalanceUseCase wired (SHARES nsoExcelFetcher with A2)
+
+**Key invariants confirmed:**
+- getOrFetchNSOMonthlyExcel REUSED (same NSOExcelFetcher instance from A2) — no new excelize/fetcher — Entry 11
+- VMT-1b bloc_split.fdi.is_estimate=true AND bloc_split.domestic.is_estimate=true PERMANENT (ARCH Decision A)
+- Fail-closed: is_estimate=true even on FDI parse error AND on overall error paths
+- bloc_split.note = "Cross-join estimate: FDI capital from NSO 12.FDI vs total export; Customs SPA inaccessible"
+- VMT-1a is_estimate=false (trade totals + HS rows — primary NSO source)
+- VN number format: ParseVNNumber (reused from BOP) — "27,4" tỷ USD × 1000 = 27400 M USD
+- Total row detection: blank col0 + valid numeric col2 (first match in sheet)
+- FDI "Tổng số" total row: matched in col1 or col0 (layout variant guard)
+- Fence-A/B/C clean; golangci-lint 0 issues; go vet clean
+
+**Anchor test results (G12 DoD PASS):**
+- VMT-1a May-2026: ExportTotal=27400 M USD PASS, ImportTotal=24100 M USD PASS, TradeBalance=+3300 M USD PASS
+- VMT-1b May-2026: BlocSplit.FDI.IsEstimate=true CONFIRMED (all test cases), FDIRegistered=24810 M USD PASS
+- Sandbox: primitive 18/18 GREEN, module 2/2 GREEN
+
+**Verification:** `go build ./...` GREEN, `go test ./... -count=1` ALL PASS (11 packages), `golangci-lint run` 0 issues.
+
+**NSO Excel cache REUSE confirmed:** No new NSOExcelFetcher created, no new excelize dep added — same `nsoExcelFetcher` instance from VMT-3b/VMT-4 wiring in main.go.
+
+**Commit scope (explicit path):** 11 files — 9 new + 2 modified — ALL in apps/macro-indicators/. Notebook staged separately.
+
+---
+
 ## Session 2026-06-14 (VMT-3b-GSO-IIP + VMT-4-CPI — sprint VN-MACRO-TOOLING A2 WAVE-2)
 
 **Task:** Implement VMT-3b (GSO/IIP, POST /macro-indicators) + VMT-4 (CPI Components, POST /cpi-components) in ONE pass. Shared NSO Excel download cache (Entry 11 decision). A1=VMT-2-BOP merged (dae7e68d); A2 dispatched as single agent to avoid router+cache conflict.
