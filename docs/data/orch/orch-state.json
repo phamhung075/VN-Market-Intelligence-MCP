@@ -7584,29 +7584,6 @@
         "context": "User directive project-doclang-priority-format scope 2. PO recommendation: do NOT bundle into Phase 1 — large blast radius across docs DAG, format mismatch (DocLang = extracted content, not authored prose). Gate behind Phase 1 ship."
       },
       {
-        "id": "ARCH-DOCLANG-SERIALIZE",
-        "title": "Architect: technical design for DocLangSerializer (Phase 1) — infrastructure/doclang_serializer.py, DocLangWritePort, DocLangSerializeUseCase, doclang dep pin, cross-page shape confirmation. Spec: docs/handoffs/BA-DOCLANG-SERIALIZE.md",
-        "owner": "architect",
-        "status": "TODO",
-        "type": "SPRINT-S",
-        "zone": "apps/pdf-extractor/",
-        "priority": "medium",
-        "size": "S",
-        "created_at": "2026-06-14T07:30:00Z",
-        "created_by": "ba",
-        "sprint_id": "DOCLANG-SERIALIZE",
-        "depends_on": [
-          "BA-DOCLANG-SERIALIZE"
-        ],
-        "handoff_spec": "docs/handoffs/BA-DOCLANG-SERIALIZE.md",
-        "blockers_to_resolve": [
-          "B-1: <location> bbox — accept omit in Phase 1, add future hook parameter",
-          "B-2: cross-page DTO shape — one merged DTO vs two continuation DTOs from ExtractLayoutFirstUseCase",
-          "B-3: doclang PyPI pin + pip check in pdf-extractor venv",
-          "B-4: cross-page golden fixture sourcing (real corpus row vs synthetic)"
-        ]
-      },
-      {
         "id": "DOCLANG-T1-DOMAIN",
         "title": "Domain + Config: DocLangWritePort + doclang_output_dir",
         "description": "Add DocLangWritePort (abstract) to domain/modules/financial_reports/ports.py as 17th port. Add doclang_output_dir field to Config with env DOCLANG_OUTPUT_DIR, default /app/data/doclang. Files: domain/modules/financial_reports/ports.py, infrastructure/config.py. ~45 min.",
@@ -10191,6 +10168,33 @@
         "claimed_by": "router",
         "next_agent": "dev-technical-analysis",
         "dispatch_note": "Dispatched dev-technical-analysis 2026-06-14T07:40:49Z. Chart-sliver DATA fix (user bug: price range min/max compressed, BB ±35k fan). AUTHORITATIVE brief = THIS board object's .scope/.acceptance/.regression_note (handoff file BACKLOG_CONTAM_8.md is the STALE pre-rescope sketch — IGNORE its low-priority/dev-mcp-server framing). Root: non-trading-day gap (2026-05-30) written as 0/0/0/0 candle in daily_ohlcv -> a 0 inside the 20-period BB window detonates stdev AND zero-anchors the chart Y-domain. GENERIC across ALL tickers — find the bulk-fetch emitter + guard skip-write on vol=0/open=0 non-trading day; backfill purge/forward-fill existing all-zero rows so get_price_history/get_technical_indicators/chart loader are gap-free. Fold VCB 2026-06-01 close=62.2 unit regression (×1000 normalize) into the same backfill. Accept: probe SHB(~13.8k)/VCB(~61.6k)/FPT(~73.5k) — no close=0 non-trading day, Min in real band, BB width <±15% not ±47%. Verify LIVE via direct market.db COUNT (named volume, NOT host ./data). Run pnpm check BEFORE commit (RED-PREPUSH). Promote -> review (qa) on green + commit. FIX-FE-CHART-PRICE-DOMAIN (dev-frontend) is gated behind this completing."
+      },
+      {
+        "id": "ARCH-DOCLANG-SERIALIZE",
+        "title": "Architect: technical design for DocLangSerializer (Phase 1) — infrastructure/doclang_serializer.py, DocLangWritePort, DocLangSerializeUseCase, doclang dep pin, cross-page shape confirmation. Spec: docs/handoffs/BA-DOCLANG-SERIALIZE.md",
+        "owner": "architect",
+        "status": "IN_PROGRESS",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "priority": "medium",
+        "size": "S",
+        "created_at": "2026-06-14T07:30:00Z",
+        "created_by": "ba",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "depends_on": [
+          "BA-DOCLANG-SERIALIZE"
+        ],
+        "handoff_spec": "docs/handoffs/BA-DOCLANG-SERIALIZE.md",
+        "blockers_to_resolve": [
+          "B-1: <location> bbox — accept omit in Phase 1, add future hook parameter",
+          "B-2: cross-page DTO shape — one merged DTO vs two continuation DTOs from ExtractLayoutFirstUseCase",
+          "B-3: doclang PyPI pin + pip check in pdf-extractor venv",
+          "B-4: cross-page golden fixture sourcing (real corpus row vs synthetic)"
+        ],
+        "claimed_at": "2026-06-14T07:43:46Z",
+        "claimed_by": "router",
+        "next_agent": "architect",
+        "dispatch_note": "Dispatched architect 2026-06-14T07:43:46Z as WIP slot 2 (non-colliding apps/pdf-extractor/ design; ALLZERO holds apps/mcp-server/). SPRINT-S: technical design for DocLangSerializer Phase 1 per spec docs/handoffs/BA-DOCLANG-SERIALIZE.md. Resolve blockers B-1..B-4 (<location> bbox omit+future-hook; cross-page DTO shape 1-merged-vs-2-continuation; doclang PyPI pin + pip check; cross-page golden fixture real-vs-synthetic). Output brief -> docs/architecture-briefs/ + handoff so pm can atomize/unblock DOCLANG-T1..T6 (already on board, sequential, owner dev-pdf-extractor). Promote -> next_agent=pm on design complete. NO code in this pass (design only). Run pnpm check only if any TS touched (none expected)."
       }
     ],
     "head": {
