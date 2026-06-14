@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-14T13:10:26Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-14T13:15:48Z",
     "updated_by": "dev-team",
-    "active_task_id": "T2-ARCH-CRON-RECOVER-JITTER",
-    "next_agent": "qa",
-    "note": "T2-ARCH-CRON-RECOVER-JITTER ops-deployed (image 13:03:09Z, 81 cron keys, peers intact, call_tool valid). ops REPORTED RED (calibration double-fire) -> router RAW-OVERTURNED as FALSE POSITIVE (T1 dedup guard fired on replays, calibration_snapshots=1 row, deepFetch idempotent UPDATE, extra rows = cosmetic double-LOG). -> qa for G1-G5 LIVE idempotency gate (verify SIDE-EFFECT counts, NOT cron_job_runs). qa-green promotes done_verified + UNBLOCKS T3. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
+    "active_task_id": "T3-ARCH-CRON-WATCHDOG",
+    "next_agent": "dev-mcp-server",
+    "note": "T2-ARCH-CRON-RECOVER-JITTER DONE_VERIFIED (qa G1-G5 LIVE, router RAW-confirmed: calibration_snapshots=1, generic recovery-dedup guard, tsc 0 + 18/18; ops RED overturned as cron_job_runs double-LOG false-positive). T3-ARCH-CRON-WATCHDOG dispatched -> dev-mcp-server (IMPL: schedulerWatchdogJob Lever D every 10min, MAX(started_at) freshness not row-count, idempotent alert dedup). T3 done closes umbrella ARCH-CRON-SCHEDULER-RELIABILITY. WIP=1 same-zone serialized. ARCH-SHIP-WAVE-REAUDIT PARKED."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11952,6 +11952,46 @@
         "verified_at": "2026-06-14T12:31:26Z",
         "verified_by": "qa",
         "verification": "G1-G5 LIVE idempotency PASSED (qa abb97cfd, router RAW-confirmed): 13/13 bun tests + tsc 0; live cron_job_runs no-double-fire (bctcReparseJob=1 row post-restart despite guard fire); normal fires not suppressed (verdictResolutionJob 60-min gaps); single shared helper x24 jobs; fail-open. Deployed 60b48a9b image 12:19:13Z, dedup guard firing in prod, 11 peers intact."
+      },
+      {
+        "id": "T2-ARCH-CRON-RECOVER-JITTER",
+        "title": "ARCH-CRON Phase 1b+1c: uniform recoverMissedExecutions + deterministic jitter on 8 high-collision jobs",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "depends": [
+          "T1-ARCH-CRON-T4-DEDUP-GUARDS"
+        ],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "All 50+ cron.schedule() calls in startScheduler.ts have { recoverMissedExecutions: true } (except foreignFlowFetch which is every-minute). cronConfig.ts has 8 schedule shifts: ohlcvDailyAggregatorJob 0→3min, vnstockFundamentalsRefresh 0→5min, reputationComputeJob 30→33min, baseRateComputation 0→7min, predictionResolution 30→35min, calibrationReport 0→4min, cascadeBacktest 30→37min, dailyDashboard 30→38min. Env-override keys still present. bun test passes. tsc 0 errors.",
+        "acceptance": {
+          "AC1": "startScheduler.ts: all non-foreignFlowFetch cron.schedule() calls have recoverMissedExecutions: true",
+          "AC2": "cronConfig.ts: 8 default schedule keys updated with jitter offsets (3/5/33/7/35/4/37/38 minutes per brief §4.3)",
+          "AC3": "Bun.env.CRON_* override pattern verified for at least 3 jobs",
+          "AC4": "bun test passes; git diff startScheduler + cronConfig reviewed for missed sites"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "MUST follow T1 (dedup guards must be in place before replay). Lever 1 + Lever 3 from architect brief. Touches 2 core files. High-risk merge: 50+ sites touched in startScheduler.ts. Split from T1 to reduce rebase conflict surface.",
+        "next_agent": null,
+        "claimed_at": "2026-06-14T12:31:26Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "ops deploy RAW-verified GREEN by router; ops RED adjudicated as false-positive. qa: LIVE idempotency gate per docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §6 — CRITICAL: cron_job_runs row-count is NOT a valid idempotency oracle (FIX-CRON-JOB-RUNS-DOUBLE-LOG double-logs single executions). Verify via SIDE-EFFECT counts ONLY: (G1) calibration_snapshots has exactly 1 row per snapshot_date in the restart window (plain INSERT body => row-count == body-exec-count); (G2) confirm 'recovery dedup' guard logs present for calibrationReportJob duplicate ticks (T4 tier live); (G3) deepFetchMain/Vps writes are idempotent UPDATE-by-id (re-read source, no INSERT/Telegram regression); (G4) the 2 opted-out non-idempotent jobs (monthlySignalQualityAudit, foreignFlowFetch) still have recoverMissedExecutions:false; (G5) bun ARCH-CRON-recover-jitter.test.ts green + tsc 0. On qa-green -> done_verified UNBLOCKS T3-ARCH-CRON-WATCHDOG (depends [T2]). If qa finds a GENUINE duplicate side-effect (2 snapshot rows OR 2 WORK digests for one period) -> CHANGES_REQUESTED back to dev-mcp-server.",
+        "impl_commit": "526e0c255bf8e081e68c4e6ff0de621c03751bf7",
+        "impl_verified_at": "2026-06-14T12:58:09Z",
+        "impl_verified_by": "dev-team",
+        "impl_verdict": "RAW-verified GREEN: commit clean 10 files apps/mcp-server@HEAD; tsc exit 0 (router re-ran); Lever B single-source scheduleCron wrapper (80 sites, opt-out spread); Lever C 8 distinct minutes {3,4,5,7,33,35,37,38}; idempotency invariant holds (monthlySignalQualityAudit+foreignFlowFetch opted out, summaryJobs idempotent period-keyed upsert zero-Telegram, evidenceAccumulator T4-guarded); 12973 tests pass.",
+        "ops_instructions": "TARGETED REBUILD ONLY: docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server. NEVER docker compose down (rebuild-recreate-destroys-peers). docker ps -a after to confirm all peers Up/healthy. Then LIVE auto-fire verification: (1) startup logs show scheduler started + cron keys registered + NO 'Cannot convert a symbol to a string'; (2) recoverMissedExecutions catch-up — if any job's last scheduled fire was missed during the restart window it replays EXACTLY ONCE (no thundering-herd; the 8 jittered jobs fire at distinct minutes); (3) RAW-probe cron_job_runs via keinos/sqlite3 sidecar against named volume (docker run --rm --volumes-from <cid> keinos/sqlite3 sqlite3 /app/data/market.db) — confirm NO duplicate success rows for any recovered job in the restart window (idempotency holds under recovery replay); (4) router-style: own gateway call_tool(get_pipeline_health or get_market_snapshot) returns valid payload, no 500. Report image build timestamp, peer count, the 3 log checks, any recovery replays observed + their cron_job_runs row counts. On ops-green -> qa LIVE idempotency gate -> done_verified UNBLOCKS T3-ARCH-CRON-WATCHDOG.",
+        "dispatched_at": "2026-06-14T13:10:26Z",
+        "dispatched_by": "dev-team",
+        "ops_verdict": "DEPLOYED 2026-06-14T13:03:09Z image (post-526e0c25): 81 cron keys, 12 peers healthy, 0 symbol-err, router call_tool valid. ops REPORTED RED (calibration double-fire) — router RAW-OVERTURNED as FALSE POSITIVE: T1 dedup guard fired on duplicate calibration ticks (recovery-dedup skip logs @13:04), calibration_snapshots=1 row proves body ran once (1 Telegram); deepFetch double-rows are idempotent keyed UPDATE (safe); extra cron_job_runs rows = known FIX-CRON-JOB-RUNS-DOUBLE-LOG cosmetic artifact. Idempotency invariant HOLDS; no code change.",
+        "ops_red_adjudication": "ops a88beacd RED on calibrationReportJob REJECTED by router RAW-verification. Evidence: (1) recordJobRun applies shouldSkipRecoveryReplay -> calibrationReportJob is T4-guarded (safety-gate §6); guard logs 'already ran within cadence window — skipping (recovery dedup)' @13:04:00.221+13:04:01.237. (2) calibration_snapshots=1 row for 2026-06-14 despite plain-INSERT body => executed once. (3) ops proposed opt-out is WRONG: would drop legitimate missed weekly runs. deepFetchMain/Vps idempotent UPDATE-by-id, no Telegram. Cosmetic FIX-CRON-JOB-RUNS-DOUBLE-LOG misled ops.",
+        "verified_at": "2026-06-14T13:15:48Z",
+        "verified_by": "qa",
+        "verification": "G1-G5 LIVE idempotency PASSED (qa a96a29a2, router RAW-confirmed INDEPENDENTLY via keinos sidecar + docker logs + local build): G1 calibration_snapshots=1 row 2026-06-14 (plain-INSERT body => 1 execution despite 4 double-LOGGED cron_job_runs); G2 'recovery dedup' guard fired GENERIC across calibrationReportJob+bctcReparseJob+verdictResolutionJob (T4 tier live); G3 deepFetch idempotent UPDATE-by-id no Telegram; G4 2 opt-outs intact (monthlySignalQualityAudit, foreignFlowFetch); G5 tsc 0 + 18/18 bun tests. ops RED (calibration double-fire) was FALSE POSITIVE — cron_job_runs double-LOG misread as double-FIRE; overturned. Deployed image 13:03:09Z, 81 cron keys, 12 peers healthy, recovery replays observed = Lever-B global default LIVE."
       }
     ],
     "head": {
@@ -12001,9 +12041,7 @@
         "design_complete_at": "2026-06-14T11:40:00Z",
         "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
         "next_task": "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "T3-ARCH-CRON-WATCHDOG",
         "title": "ARCH-CRON Phase 2: schedulerWatchdogJob.ts + tests — detect & self-heal missed fires",
@@ -12011,7 +12049,7 @@
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "priority": "P1",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "depends": [
           "T2-ARCH-CRON-RECOVER-JITTER"
         ],
@@ -12029,9 +12067,14 @@
         },
         "created_at": "2026-06-14T12:00:00Z",
         "created_by": "pm",
-        "note": "Lever 4 from architect brief. Builds on T1+T2. New scheduler/system/ module. 3 test files mirror EVIDENCE-ACCUM-SILENT-CRON test strategy. Rate-limit map in-process (no WAL writes from watchdog). Reads cron_job_runs via jobRunRepo injection (DDD clean)."
+        "note": "Lever 4 from architect brief. Builds on T1+T2. New scheduler/system/ module. 3 test files mirror EVIDENCE-ACCUM-SILENT-CRON test strategy. Rate-limit map in-process (no WAL writes from watchdog). Reads cron_job_runs via jobRunRepo injection (DDD clean).",
+        "next_agent": "dev-mcp-server",
+        "claimed_at": "2026-06-14T13:15:48Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router dispatched T3 IMPL (tick post-T2-done). depends [T2] SATISFIED (T2 done_verified — recoverMissedExecutions global default + jitter LIVE, idempotency invariant holds in prod). Same-zone apps/mcp-server FREE (T2 done). dev-mcp-server: implement schedulerWatchdogJob.ts (Lever D, every 10 min) per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5/§7 — detect jobs whose last successful cron_job_run is older than (cron cadence + grace) and emit a WORK-channel staleness alert (dedup per job per window; do NOT auto-restart). Reuse cron_job_runs as the freshness source BUT account for the double-LOG artifact (FIX-CRON-JOB-RUNS-DOUBLE-LOG) — key on MAX(started_at) per job_name, never row counts. New job must itself be recoverMissedExecutions-safe (idempotent: keyed alert dedup, no unguarded Telegram). bun tests + tsc GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; qa LIVE-verify watchdog fires + dedups, never badges. T3 done CLOSES umbrella ARCH-CRON-SCHEDULER-RELIABILITY."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
@@ -12051,43 +12094,6 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
-      },
-      {
-        "id": "T2-ARCH-CRON-RECOVER-JITTER",
-        "title": "ARCH-CRON Phase 1b+1c: uniform recoverMissedExecutions + deterministic jitter on 8 high-collision jobs",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "priority": "P1",
-        "status": "REVIEW",
-        "depends": [
-          "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-        ],
-        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
-        "size": "M",
-        "verification_gate": "All 50+ cron.schedule() calls in startScheduler.ts have { recoverMissedExecutions: true } (except foreignFlowFetch which is every-minute). cronConfig.ts has 8 schedule shifts: ohlcvDailyAggregatorJob 0→3min, vnstockFundamentalsRefresh 0→5min, reputationComputeJob 30→33min, baseRateComputation 0→7min, predictionResolution 30→35min, calibrationReport 0→4min, cascadeBacktest 30→37min, dailyDashboard 30→38min. Env-override keys still present. bun test passes. tsc 0 errors.",
-        "acceptance": {
-          "AC1": "startScheduler.ts: all non-foreignFlowFetch cron.schedule() calls have recoverMissedExecutions: true",
-          "AC2": "cronConfig.ts: 8 default schedule keys updated with jitter offsets (3/5/33/7/35/4/37/38 minutes per brief §4.3)",
-          "AC3": "Bun.env.CRON_* override pattern verified for at least 3 jobs",
-          "AC4": "bun test passes; git diff startScheduler + cronConfig reviewed for missed sites"
-        },
-        "created_at": "2026-06-14T12:00:00Z",
-        "created_by": "pm",
-        "note": "MUST follow T1 (dedup guards must be in place before replay). Lever 1 + Lever 3 from architect brief. Touches 2 core files. High-risk merge: 50+ sites touched in startScheduler.ts. Split from T1 to reduce rebase conflict surface.",
-        "next_agent": "qa",
-        "claimed_at": "2026-06-14T12:31:26Z",
-        "claimed_by": "dev-team",
-        "dispatch_note": "ops deploy RAW-verified GREEN by router; ops RED adjudicated as false-positive. qa: LIVE idempotency gate per docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §6 — CRITICAL: cron_job_runs row-count is NOT a valid idempotency oracle (FIX-CRON-JOB-RUNS-DOUBLE-LOG double-logs single executions). Verify via SIDE-EFFECT counts ONLY: (G1) calibration_snapshots has exactly 1 row per snapshot_date in the restart window (plain INSERT body => row-count == body-exec-count); (G2) confirm 'recovery dedup' guard logs present for calibrationReportJob duplicate ticks (T4 tier live); (G3) deepFetchMain/Vps writes are idempotent UPDATE-by-id (re-read source, no INSERT/Telegram regression); (G4) the 2 opted-out non-idempotent jobs (monthlySignalQualityAudit, foreignFlowFetch) still have recoverMissedExecutions:false; (G5) bun ARCH-CRON-recover-jitter.test.ts green + tsc 0. On qa-green -> done_verified UNBLOCKS T3-ARCH-CRON-WATCHDOG (depends [T2]). If qa finds a GENUINE duplicate side-effect (2 snapshot rows OR 2 WORK digests for one period) -> CHANGES_REQUESTED back to dev-mcp-server.",
-        "impl_commit": "526e0c255bf8e081e68c4e6ff0de621c03751bf7",
-        "impl_verified_at": "2026-06-14T12:58:09Z",
-        "impl_verified_by": "dev-team",
-        "impl_verdict": "RAW-verified GREEN: commit clean 10 files apps/mcp-server@HEAD; tsc exit 0 (router re-ran); Lever B single-source scheduleCron wrapper (80 sites, opt-out spread); Lever C 8 distinct minutes {3,4,5,7,33,35,37,38}; idempotency invariant holds (monthlySignalQualityAudit+foreignFlowFetch opted out, summaryJobs idempotent period-keyed upsert zero-Telegram, evidenceAccumulator T4-guarded); 12973 tests pass.",
-        "ops_instructions": "TARGETED REBUILD ONLY: docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server. NEVER docker compose down (rebuild-recreate-destroys-peers). docker ps -a after to confirm all peers Up/healthy. Then LIVE auto-fire verification: (1) startup logs show scheduler started + cron keys registered + NO 'Cannot convert a symbol to a string'; (2) recoverMissedExecutions catch-up — if any job's last scheduled fire was missed during the restart window it replays EXACTLY ONCE (no thundering-herd; the 8 jittered jobs fire at distinct minutes); (3) RAW-probe cron_job_runs via keinos/sqlite3 sidecar against named volume (docker run --rm --volumes-from <cid> keinos/sqlite3 sqlite3 /app/data/market.db) — confirm NO duplicate success rows for any recovered job in the restart window (idempotency holds under recovery replay); (4) router-style: own gateway call_tool(get_pipeline_health or get_market_snapshot) returns valid payload, no 500. Report image build timestamp, peer count, the 3 log checks, any recovery replays observed + their cron_job_runs row counts. On ops-green -> qa LIVE idempotency gate -> done_verified UNBLOCKS T3-ARCH-CRON-WATCHDOG.",
-        "dispatched_at": "2026-06-14T13:10:26Z",
-        "dispatched_by": "dev-team",
-        "ops_verdict": "DEPLOYED 2026-06-14T13:03:09Z image (post-526e0c25): 81 cron keys, 12 peers healthy, 0 symbol-err, router call_tool valid. ops REPORTED RED (calibration double-fire) — router RAW-OVERTURNED as FALSE POSITIVE: T1 dedup guard fired on duplicate calibration ticks (recovery-dedup skip logs @13:04), calibration_snapshots=1 row proves body ran once (1 Telegram); deepFetch double-rows are idempotent keyed UPDATE (safe); extra cron_job_runs rows = known FIX-CRON-JOB-RUNS-DOUBLE-LOG cosmetic artifact. Idempotency invariant HOLDS; no code change.",
-        "ops_red_adjudication": "ops a88beacd RED on calibrationReportJob REJECTED by router RAW-verification. Evidence: (1) recordJobRun applies shouldSkipRecoveryReplay -> calibrationReportJob is T4-guarded (safety-gate §6); guard logs 'already ran within cadence window — skipping (recovery dedup)' @13:04:00.221+13:04:01.237. (2) calibration_snapshots=1 row for 2026-06-14 despite plain-INSERT body => executed once. (3) ops proposed opt-out is WRONG: would drop legitimate missed weekly runs. deepFetchMain/Vps idempotent UPDATE-by-id, no Telegram. Cosmetic FIX-CRON-JOB-RUNS-DOUBLE-LOG misled ops."
       }
     ]
   },
