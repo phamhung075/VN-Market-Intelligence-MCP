@@ -1,0 +1,47 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "priority": "p1",
+  "createdAt": "2026-06-14T14:19:52Z",
+  "payload": "docs/architecture-briefs/2026-06-14-workflow-protocol-coherence-audit.md",
+  "summary": "Coherence audit of SF-1 and gateway-call-contract.md: (A) SF-1 is CLEAN at runtime — one doc gap in task-lock-protocol.md needs session-singleton subclass documented; (B) cowork-team already covered by leader-lock (no SF-1 needed), system-auditor exposure LOW (defer); (C) gateway-call-contract.md is DAG orphan — missing from tree-map.md and CLAUDE.md; (D) stale-read ×22 has no structural protocol mandate — fix by adding re-Read invariant to agent-chaining-protocol.md; (E) 6 agent-father tasks enumerated (P1×2, P2×2, P3×2), all doc-only.",
+  "tasks": [
+    {
+      "id": "COHERENCE-GAP-1",
+      "priority": "p1",
+      "file": "docs/references/tree-map.md",
+      "action": "Add gateway-call-contract.md as child node under docs/standards/mcp-tools.md in the Tree section"
+    },
+    {
+      "id": "COHERENCE-GAP-2",
+      "priority": "p1",
+      "file": "docs/protocols/task-lock-protocol.md",
+      "action": "Add session-singleton subclass row to TTL Reference table + TTL-only release semantic paragraph in Claim Grammar"
+    },
+    {
+      "id": "COHERENCE-GAP-3",
+      "priority": "p2",
+      "file": "docs/protocols/agent-chaining-protocol.md",
+      "action": "Add Concurrent Write Safety — re-Read Invariant section for parallel-tier agents"
+    },
+    {
+      "id": "COHERENCE-GAP-4",
+      "priority": "p2",
+      "file": "CLAUDE.md",
+      "action": "Add one pointer sentence to MCP Tools section referencing gateway-call-contract.md as preflight reference"
+    },
+    {
+      "id": "COHERENCE-GAP-5",
+      "priority": "p3",
+      "file": "docs/agents/cowork-team/flow/leader-lock.md",
+      "action": "Add comment identifying leader-lock as session-singleton guard equivalent to dev-team SF-1"
+    },
+    {
+      "id": "COHERENCE-GAP-6",
+      "priority": "p3",
+      "file": "docs/standards/mcp-tools.md",
+      "action": "Add cross-link to gateway-call-contract.md in Quick Start section"
+    }
+  ]
+}
