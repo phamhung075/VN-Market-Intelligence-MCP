@@ -110,12 +110,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-14T16:09:07Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-14T17:16:57Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY qa-APPROVED (ad9d88d4, report 5cbb926b, 4/4 checks) + router RAW-final-verified INDEPENDENTLY (git: qa report 1 file / dirty tree untouched; docker.md re-grep = prune at 8 sites L39/L51/L61/L65/L66/L71/L75/L106, generic mandate references system-map host_runtime_set, WHY note 3 recurrences + safety) -> done_verified. Closes the host disk-full / Docker-build-cache recurrence class DEFINITIVELY (3rd time 2026-06-14): the >=2-rebuilds/day rule is now a codified unconditional ops-flow step, not a memory-only heuristic. apps/mcp-server + cross-service zones now FREE. Open: ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3 LIVE gate (no active agent; G1 still open: aggregator stale 06-12). ARCH-SHIP-WAVE-REAUDIT PARKED in review. Weekend-safe PO backlog: CLEAN-CONTEXT-BLOAT-NOTEBOOKS, ROUTE-BCTC-FPT-Q1. head=idle, WIP free. Commit explicit path only."
+    "active_task_id": "KINHDICH-HOVER-ENRICH",
+    "next_agent": "dev-kinh-dich",
+    "note": "Architect ratified Option C (commits c8ff2287 + f02f927d, router RAW-re-verified explicit-path 3+3 files, dirty tree not swept). Dispatch ready->in_progress (dev-kinh-dich): add HoverSummary localized field + 64 pre-authored VI/EN strings to hexagram_reference.go, regen que-reference.js via emit-reference, swap index.html L2501 hover loc(q.coreMeaning)->loc(q.hoverSummary). REBUILD kinh-dich-service required (Go serves static dashboard). -> qa LIVE-verify hover shows richer text in running container -> po signoff -> done_verified. Single zone apps/kinh-dich-service, weekend-safe. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3 (G1 open: aggregator stale 06-12). ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12430,9 +12430,7 @@
         "reverify_gate": "MARKET-DAY-2026-06-15: (G1) ohlcvDailyAggregatorJob auto-fires Mon — get_pipeline_health 'Aggregator last run' advances to 2026-06-15 with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires + VCB/ACB/CTG fundamental rows newer than its run, NO manual trigger; (G3) reputationComputeJob fires at 08:30 tick under peer contention (cron_job_runs row present, no miss). QA verifies LIVE raw (pipeline-health payload + cron_job_runs named-volume rows), never badges. On all-PASS -> umbrella -> done_verified + move to done_verified[]. On any miss -> the watchdog (G5, LIVE) must have self-healed/alerted -> capture evidence + spin the residual into a scoped FIX.",
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "KINHDICH-HOVER-ENRICH",
         "type": "SPRINT-S",
@@ -12440,7 +12438,7 @@
         "owner": "dev-kinh-dich",
         "next_agent": "dev-kinh-dich",
         "lane": "ready",
-        "status": "ready",
+        "status": "IN_PROGRESS",
         "priority": "medium",
         "size": "S",
         "created_at": "2026-06-14T17:00:40Z",
@@ -12459,9 +12457,13 @@
         "spec": "docs/handoffs/KINHDICH-HOVER-ENRICH-BA-spec.md",
         "updated_at": "2026-06-14T18:15:00Z",
         "updated_by": "architect",
-        "architect_note": "RATIFY-1 CONFIRMED: Option C (new HoverSummary localized field). 3-file change: (1) hexagram_reference.go — add HoverSummary localized field to queReference struct + build() param; populate all 64 from BA spec pre-authored strings. (2) CGO_ENABLED=0 go run ./cmd/sandbox -emit-reference → regenerate que-reference.js (NEVER hand-edit). (3) index.html L2501 — swap loc(q.coreMeaning) → loc(q.hoverSummary) in .qref-meaning span. coreMeaning untouched in struct, JS, and expanded detail panel. Service container rebuild required (Go binary serves dashboard). Done-bar: grep -c hoverSummary que-reference.js == 64 + zero VI strings < 80 chars."
+        "architect_note": "RATIFY-1 CONFIRMED: Option C (new HoverSummary localized field). 3-file change: (1) hexagram_reference.go — add HoverSummary localized field to queReference struct + build() param; populate all 64 from BA spec pre-authored strings. (2) CGO_ENABLED=0 go run ./cmd/sandbox -emit-reference → regenerate que-reference.js (NEVER hand-edit). (3) index.html L2501 — swap loc(q.coreMeaning) → loc(q.hoverSummary) in .qref-meaning span. coreMeaning untouched in struct, JS, and expanded detail panel. Service container rebuild required (Go binary serves dashboard). Done-bar: grep -c hoverSummary que-reference.js == 64 + zero VI strings < 80 chars.",
+        "impl_dispatched_at": "2026-06-14T17:16:57Z",
+        "impl_dispatched_by": "dev-team",
+        "impl_dispatch_note": "Architect-ratified Option C (new dedicated hoverSummary localized field — terse coreMeaning stays intact for QUE-TOOLTIP-DRY + React/MCP consumers). IMPLEMENT 3-file change wholly inside apps/kinh-dich-service: (1) pkg/module/reading_composer/hexagram_reference.go — add `HoverSummary localized` field (JSON tag hoverSummary) to queReference struct (L27-42, mirror CoreMeaning/Warning), add `hoverSummary localized` as 5th positional localized param to the build() closure (L105), thread the new arg through ALL 64 call sites with the pre-authored VI+EN strings from docs/handoffs/KINHDICH-HOVER-ENRICH-BA-spec.md (Quẻ 1->64; transcribe verbatim, do NOT re-author; VI plain non-technical, no unexplained Hán-Việt). (2) regen apps/kinh-dich-service/dashboard/que-reference.js via `CGO_ENABLED=0 go run ./cmd/sandbox -emit-reference` (AUTO-GENERATED — never hand-edit). (3) apps/kinh-dich-service/dashboard/index.html ~L2501 swap hover render `loc(q.coreMeaning)` -> `loc(q.hoverSummary)` ONLY (leave L2504 loc(q.warning) + the expanded-detail coreMeaning at L2508+ untouched). VERIFY post-impl: `grep -c '\"hoverSummary\"' apps/kinh-dich-service/dashboard/que-reference.js` == 64; zero-short-strings python check (every hoverSummary.vi 80-220 chars, none equal to coreMeaning). REBUILD REQUIRED: the Go binary serves the static dashboard — flag in commit message that ops must `docker compose build kinh-dich-service && up -d --no-deps kinh-dich-service && docker builder prune -f` so the new que-reference.js is served (qa LIVE-verifies the running container, not file-inspect). Commit ONLY the 3 impl files + your dev notebook by EXPLICIT PATH — the concurrent dirty tree (tool-usage-stats.json, bctc-analyst/market-watcher/news-scout notebooks, coverage-state.json, cowork-schedule.json, digest-predict session, signals) must NOT be captured; never git add -A; `git status --short` after to confirm preserved. RETURN: raw before/after of the struct field add + ONE sample call site + the index.html swap, the grep count, the commit SHA, and the ops-rebuild flag."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
