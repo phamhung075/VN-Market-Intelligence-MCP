@@ -448,8 +448,8 @@ describe("Task 1122 — Base Rate Computation", () => {
       expect(CRONS).toHaveProperty("baseRateComputation");
     });
 
-    it("baseRateComputation cron defaults to 0 19 * * 0 (Sunday 19:00 UTC)", () => {
-      expect((CRONS as Record<string, string>)["baseRateComputation"]).toBe("0 19 * * 0");
+    it("baseRateComputation cron defaults to 7 19 * * 0 (Sunday 19:07 UTC, T2-ARCH-CRON-RECOVER-JITTER Lever C: +7min offset)", () => {
+      expect((CRONS as Record<string, string>)["baseRateComputation"]).toBe("7 19 * * 0");
     });
   });
 });

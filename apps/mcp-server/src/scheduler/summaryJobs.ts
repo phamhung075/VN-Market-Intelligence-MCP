@@ -16,11 +16,11 @@
  * infrastructure only. Must not import directly from domain/.
  */
 
-import cron from "node-cron";
 import { generatePeriodicSummary, type PeriodType } from "../application/usecases/generatePeriodicSummary.js";
 import { logger } from "../infrastructure/logger.js";
 import { getDb } from "../infrastructure/db/schema.js"
 import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js"
+import { scheduleCron } from "./startupHelpers.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -89,27 +89,27 @@ export function registerSummaryJobs(cronConfig: SummaryCronConfig): void {
   // recoverMissedExecutions: true — if the event loop is stalled at fire time
   // (e.g. startup ohlcv backfill), node-cron replays the missed tick on recovery
   // instead of skipping until the next day (task 1958a).
-  cron.schedule(cronConfig.daily, async () => {
+  scheduleCron(cronConfig.daily, async () => {
     await runSummaryJob("daily");
   }, { timezone: "Asia/Ho_Chi_Minh", recoverMissedExecutions: true });
 
   // Weekly summary — 23:00 every Sunday
-  cron.schedule(cronConfig.weekly, async () => {
+  scheduleCron(cronConfig.weekly, async () => {
     await runSummaryJob("weekly");
   }, { timezone: "Asia/Ho_Chi_Minh" });
 
   // Monthly summary — 00:30 on the 1st of each month
-  cron.schedule(cronConfig.monthly, async () => {
+  scheduleCron(cronConfig.monthly, async () => {
     await runSummaryJob("monthly");
   }, { timezone: "Asia/Ho_Chi_Minh" });
 
   // Quarterly summary — 01:00 on Jan/Apr/Jul/Oct 1st
-  cron.schedule(cronConfig.quarterly, async () => {
+  scheduleCron(cronConfig.quarterly, async () => {
     await runSummaryJob("quarterly");
   }, { timezone: "Asia/Ho_Chi_Minh" });
 
   // Yearly summary — 02:00 on Jan 2nd
-  cron.schedule(cronConfig.yearly, async () => {
+  scheduleCron(cronConfig.yearly, async () => {
     await runSummaryJob("yearly");
   }, { timezone: "Asia/Ho_Chi_Minh" });
 

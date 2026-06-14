@@ -6,10 +6,13 @@
  *   - eveningReportIsValid()          report-quality guard (task 1408)
  *   - shouldRunCatchup()              startup catch-up decision helper (task 1430)
  *   - shouldSkipRecoveryReplay()      T4 idempotency dedup guard (T1-ARCH-CRON-T4-DEDUP-GUARDS)
+ *   - scheduleCron()                  Lever-B single-source wrapper (T2-ARCH-CRON-RECOVER-JITTER)
  *   - scheduleForeignFlowCbReset()    CB startup reset (task 1404)
  *   - run*WithDb()                    six testable cron-callback wrappers (task 1420)
  */
 
+import cron from 'node-cron'
+import type { ScheduledTask } from 'node-cron'
 import { runWeeklyAudit } from './news-analysis/dataAuditJob.js'
 import { runBctcReparseJob } from './financial-reports/bctcReparseJob.js'
 import { runEvidenceAccumulator } from './news-analysis/evidenceAccumulatorJob.js'
@@ -198,6 +201,39 @@ export function shouldSkipRecoveryReplay(
     // Table missing or schema mismatch — fail-open (let the job proceed)
     return false
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// scheduleCron — Lever B single-source wrapper (T2-ARCH-CRON-RECOVER-JITTER)
+//
+// Drop-in replacement for `cron.schedule()` that defaults
+// `recoverMissedExecutions: true` across the entire scheduler fleet.
+//
+// Design rationale (architect brief §4.1):
+//   - Applying the option at every individual call site creates drift (53d00955
+//     pattern: 3 out of 55 calls patched; recurred on reputationComputeJob).
+//   - A single wrapper is the only way to guarantee uniform coverage without
+//     per-site drift.
+//   - Callers that need to OPT OUT pass `recoverMissedExecutions: false` explicitly.
+//     Current opt-outs:
+//       * foreignFlowFetch (*/1 * * * *) — fires every 60s; recovery would
+//         double-fetch within seconds; underlying job has its own freshness guard.
+//       * monthlySignalQualityAudit (0 0 1 * *) — sends Telegram WORK alert;
+//         lacks shouldSkipRecoveryReplay() guard; monthly frequency makes
+//         recovery double-fire extremely low probability but not zero.
+//
+// Safety gate: every job covered by recoverMissedExecutions: true MUST satisfy
+// at least one idempotency tier (T1/T2/T3/T4) — documented in architect brief §6.
+// T1 (T1-ARCH-CRON-T4-DEDUP-GUARDS commit 60b48a9b) validated all fleet jobs
+// before this wrapper was applied (T2 depends on T1 per migration plan §5.1).
+// ─────────────────────────────────────────────────────────────────────────────
+export function scheduleCron(
+  expression: string,
+  func: (now: Date | 'manual' | 'init') => void,
+  options: Parameters<typeof cron.schedule>[2] & { recoverMissedExecutions?: boolean } = {},
+): ScheduledTask {
+  const opts = { recoverMissedExecutions: true, ...options }
+  return cron.schedule(expression, func, opts)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

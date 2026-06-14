@@ -14,7 +14,7 @@ Bun.env["DB_PATH"] = ":memory:";
  *   AC-8: sendCalibrationDigest with total_resolved=0 → WORK called, MARKET not called
  *   AC-9: sendCalibrationDigest with total_resolved=5 → both channels called
  *   AC-obs: runCalibrationReportJob() calls recordJobRun (observability wrapper)
- *   AC-cron: CRONS.calibrationReport = '0 13 * * 0' (or env override)
+ *   AC-cron: CRONS.calibrationReport = '4 13 * * 0' (T2-ARCH-CRON-RECOVER-JITTER Lever C, or env override)
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
@@ -413,14 +413,14 @@ describe("Task 1128 — calibrationReportJob", () => {
   // ─────────────────────────────────────────────────────────────────────────
 
   describe("AC-cron: CRONS.calibrationReport registered in jobs.ts", () => {
-    it("has calibrationReport key with default cron '0 13 * * 0'", () => {
+    it("has calibrationReport key with default cron '4 13 * * 0'", () => {
       expect(CRONS).toHaveProperty("calibrationReport");
-      // Default value is '0 13 * * 0' unless overridden by env
+      // Default value is '4 13 * * 0' (T2-ARCH-CRON-RECOVER-JITTER Lever C: +4min offset)
       const val = CRONS.calibrationReport;
       expect(typeof val).toBe("string");
-      // If env var not set, must be the default
+      // If env var not set, must be the jitter-shifted default
       if (!Bun.env.CRON_CALIBRATION_REPORT) {
-        expect(val).toBe("0 13 * * 0");
+        expect(val).toBe("4 13 * * 0");
       }
     });
   });

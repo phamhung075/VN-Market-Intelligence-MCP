@@ -422,9 +422,9 @@ describe("Task 1125 — predictionResolutionJob", () => {
       expect(CRONS).toHaveProperty("predictionResolution");
     });
 
-    it("predictionResolution cron defaults to 30 16 * * * (after VN market close 16:30 UTC)", () => {
+    it("predictionResolution cron defaults to 35 16 * * * (T2-ARCH-CRON-RECOVER-JITTER Lever C: +5min offset)", () => {
       expect((CRONS as Record<string, string>)["predictionResolution"]).toBe(
-        "30 16 * * *",
+        "35 16 * * *",
       );
     });
   });

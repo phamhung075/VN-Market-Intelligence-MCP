@@ -6,7 +6,6 @@
  * here (they are used exclusively inside startScheduler()).
  */
 
-import cron from 'node-cron'
 import { runSscCheck } from './news-analysis/sscCheckerJob.js'
 import { runMarketScan } from './market-data/marketScanJob.js'
 import { runMorningBriefing } from './briefings/morningBriefingJob.js'
@@ -87,6 +86,7 @@ import {
   log,
   shouldRunCatchup,
   eveningReportIsValid,
+  scheduleCron,
   scheduleForeignFlowCbReset,
   runWeeklyAuditWithDb,
   runBctcReparseWithDb,
@@ -138,7 +138,7 @@ export function startScheduler() {
   scheduleForeignFlowCbReset()
 
   // 08:00 — Morning briefing (weekdays Mon-Fri only) — task 101
-  cron.schedule(CRONS.morningBriefing, async () => {
+  scheduleCron(CRONS.morningBriefing, async () => {
     await jobRunRepo.wrapRun('morningBriefingJob', async () => {
       await runMorningBriefing()
     })
@@ -146,7 +146,7 @@ export function startScheduler() {
 
   // 09:00 — Market open scan (weekdays Mon-Fri only) — task 103
   // recordJobRun called inside runMarketScan() — job visible in cron_job_runs
-  cron.schedule(CRONS.marketOpen, async () => {
+  scheduleCron(CRONS.marketOpen, async () => {
     await runMarketScan('open')
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
@@ -154,7 +154,7 @@ export function startScheduler() {
   // During market hours (09:00-15:30 GMT+7 Mon-Fri): full 5-step cycle
   //   A. pollNews  B. listSscDocs  C. fetchPrices  D. runImpactChain  E. sendAlerts
   // Outside market hours: news poll only (step A)
-  cron.schedule(CRONS.intelligenceCycle, async () => {
+  scheduleCron(CRONS.intelligenceCycle, async () => {
     await jobRunRepo.wrapRun('intelligenceCycleJob', async () => {
       const result = await runIntelligenceCycle()
       return { rowsWritten: (result?.newsFetched ?? 0) + (result?.impactEventsRan ?? 0) }
@@ -163,18 +163,18 @@ export function startScheduler() {
 
   // 15:30 — Market close scan (weekdays Mon-Fri only) — task 103
   // recordJobRun called inside runMarketScan() — job visible in cron_job_runs
-  cron.schedule(CRONS.marketClose, async () => {
+  scheduleCron(CRONS.marketClose, async () => {
     await runMarketScan('close')
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 20:00 — SSC report check (task 104)
   // recordJobRun called inside runSscCheck() — job visible in cron_job_runs
-  cron.schedule(CRONS.sscCheck, async () => {
+  scheduleCron(CRONS.sscCheck, async () => {
     await runSscCheck()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
-  cron.schedule(CRONS.eveningSummary, async () => {
+  scheduleCron(CRONS.eveningSummary, async () => {
     await jobRunRepo.wrapRun('eveningSummaryJob', async () => {
       await runEveningSummary()
     })
@@ -190,7 +190,7 @@ export function startScheduler() {
   // (e.g. startup ohlcv backfill, bctcReparseJob zombies), node-cron replays
   // the missed tick on recovery instead of skipping until tomorrow (task 1958a).
   // Safe because runAlertDigest has an alreadySentToday() DB-backed dedup guard.
-  cron.schedule(CRONS.alertDigest, async () => {
+  scheduleCron(CRONS.alertDigest, async () => {
     await jobRunRepo.wrapRun('alertDigestJob', async () => {
       await runAlertDigest(undefined, db)
     })
@@ -224,7 +224,7 @@ export function startScheduler() {
       'mcp-server',
     );
   };
-  cron.schedule(CRONS.walCheckpoint, async () => {
+  scheduleCron(CRONS.walCheckpoint, async () => {
     await jobRunRepo.wrapRun('walCheckpointJob', async () => {
       const hour = new Date().getUTCHours();
       const isOffHours = hour >= 3 && hour < 5;
@@ -242,7 +242,7 @@ export function startScheduler() {
   // Staggered 15 min from WAL checkpoint (:00 and :30) to avoid simultaneous cron load.
   // Queries cron_job_runs for mcpServerStartup sentinel rows in last 4h.
   // Sends WORK alert when count >= 2 (only meaningful after BC-1 root fix is deployed).
-  cron.schedule(CRONS.restartCadenceAlert, async () => {
+  scheduleCron(CRONS.restartCadenceAlert, async () => {
     await jobRunRepo.wrapRun('restartCadenceAlertJob', async () => {
       const result = await runRestartCadenceAlertJob(db)
       if (result.alertSent) {
@@ -253,7 +253,7 @@ export function startScheduler() {
   }, { timezone: 'UTC' })
 
   // Sunday 22:30 GMT+7 — Weekly pattern watch (task 146)
-  cron.schedule(CRONS.patternWatch, async () => {
+  scheduleCron(CRONS.patternWatch, async () => {
     await jobRunRepo.wrapRun('patternWatchJob', async () => {
       await runPatternWatch()
     })
@@ -270,18 +270,23 @@ export function startScheduler() {
   // 1st of month 00:00 UTC — Monthly signal quality audit — task 1295c
   // Queries signal_rejections from prior month and generates audit report.
   // Alerts to WORK channel if rejection rate exceeds 2%.
-  cron.schedule(CRONS.monthlySignalQualityAudit, async () => {
+  // recoverMissedExecutions: false (OPT-OUT, T2-ARCH-CRON-RECOVER-JITTER):
+  //   sends Telegram WORK alert; lacks a shouldSkipRecoveryReplay() guard;
+  //   monthly cadence makes collision risk low but recovery is opt-out here
+  //   until a T4 dedup guard is added to runMonthlySignalQualityJob() in a
+  //   future sprint.
+  scheduleCron(CRONS.monthlySignalQualityAudit, async () => {
     await jobRunRepo.wrapRun('monthlySignalQualityAuditJob', async () => {
       await runMonthlySignalQualityJob()
     })
-  }, { timezone: 'UTC' })
+  }, { timezone: 'UTC', recoverMissedExecutions: false })
 
   // dataAuditJob:daily — recordJobRun called inside runDailyAudit() — task 157
-  cron.schedule(CRONS.dataAuditDaily, async () => {
+  scheduleCron(CRONS.dataAuditDaily, async () => {
     await runDailyAudit()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  cron.schedule(CRONS.dataAuditWeekly, async () => {
+  scheduleCron(CRONS.dataAuditWeekly, async () => {
     await runWeeklyAuditWithDb(db)
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
@@ -292,14 +297,14 @@ export function startScheduler() {
     if (ran) log("daily audit catch-up ran on startup")
   })
 
-  cron.schedule(CRONS.predictionMarketPoll, async () => {
+  scheduleCron(CRONS.predictionMarketPoll, async () => {
     await jobRunRepo.wrapRun('predictionMarketPollJob', async () => {
       await runPredictionMarketPoll()
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 09:30 GMT+7 daily — BCTC stranded-PDF auto-reparse — task 1019
-  cron.schedule(CRONS.bctcReparseJob, async () => {
+  scheduleCron(CRONS.bctcReparseJob, async () => {
     await runBctcReparseWithDb(db)
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
@@ -320,7 +325,7 @@ export function startScheduler() {
 
   // Every 15 min — BCTC queue enricher background job (task 1287)
   // Dequeues max 20 unenriched BCTC items per run, populates source_url via SSC lookup
-  cron.schedule(CRONS.bctcQueueEnricher, async () => {
+  scheduleCron(CRONS.bctcQueueEnricher, async () => {
     await jobRunRepo.wrapRun('bctcQueueEnricherJob', async () => {
       const result = await runBctcQueueEnricherJob()
       return { rowsWritten: result.urlsPopulated }
@@ -330,7 +335,7 @@ export function startScheduler() {
   // Every 30 min — BCTC PDF pull job (feat/bctc-pull-pdf)
   // Downloads PDFs from VPS cache for bctc_vps_queue items with VPS source_url.
   // Requires VPS_PUSH_API_KEY env var.
-  cron.schedule(CRONS.bctcPdfPull, async () => {
+  scheduleCron(CRONS.bctcPdfPull, async () => {
     await jobRunRepo.wrapRun('bctcPdfPullJob', async () => {
       const result = await runBctcPdfPullJob()
       return { rowsWritten: result.downloaded }
@@ -341,7 +346,7 @@ export function startScheduler() {
   // Triggers during earnings season: fetches BCTC data for all 30 watchlist tickers.
   // isEarningsSeason() gate is evaluated inside runBctcBatchSweepJob() — cron
   // fires monthly but no-ops outside season months.
-  cron.schedule(CRONS.bctcBatchSweep, async () => {
+  scheduleCron(CRONS.bctcBatchSweep, async () => {
     await jobRunRepo.wrapRun('bctcBatchSweepJob', async () => {
       await runBctcBatchSweepJob()
     })
@@ -415,7 +420,7 @@ export function startScheduler() {
   // Every 12 min — /ask queue check (task 1074).
   // Signals 07-qa-responder when pending questions are found in ask_queue.
   // The server never answers the question — the cowork agent does the work.
-  cron.schedule(CRONS.askQueueCheck, () => {
+  scheduleCron(CRONS.askQueueCheck, () => {
     try {
       const result = runAskQueueCheck()
       if (result.signaled) {
@@ -429,14 +434,14 @@ export function startScheduler() {
   registerShutdownHook()
 
   // Sunday 23:00 — Weekly portfolio report — task 218
-  cron.schedule(CRONS.weeklyPortfolioReport, async () => {
+  scheduleCron(CRONS.weeklyPortfolioReport, async () => {
     await jobRunRepo.wrapRun('weeklyPortfolioReportJob', async () => {
       await runWeeklyPortfolioReport()
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Sunday 07:00 UTC (08:00 CET) — Dev Team weekly heartbeat — task 245
-  cron.schedule(CRONS.devTeamHeartbeat, async () => {
+  scheduleCron(CRONS.devTeamHeartbeat, async () => {
     await jobRunRepo.wrapRun("devTeamHeartbeatJob", async () => {
       await runDevTeamHeartbeat()
     })
@@ -444,7 +449,7 @@ export function startScheduler() {
 
   // Sunday 08:00 UTC — Prediction market outcome validation — task 248
   // Validates last 7 days of prediction signals: confirmed / false_positive / neutral
-  cron.schedule(CRONS.predictionOutcome, async () => {
+  scheduleCron(CRONS.predictionOutcome, async () => {
     await jobRunRepo.wrapRun('predictionOutcomeJob', async () => {
       await runPredictionOutcomeCheck()
     })
@@ -452,14 +457,14 @@ export function startScheduler() {
 
   // Every 6h — Weather check + climate signals — task 261
   // Typhoon season (Jun-Nov): every 6h. Off-season: every 12h.
-  cron.schedule(CRONS.weatherCheck, async () => {
+  scheduleCron(CRONS.weatherCheck, async () => {
     await jobRunRepo.wrapRun("weatherCheckJob", async () => {
       await runWeatherCheck()
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 1st of month 06:00 — DAV drug approval check (Sprint 044)
-  cron.schedule(CRONS.davPharmacyCheck, async () => {
+  scheduleCron(CRONS.davPharmacyCheck, async () => {
     await jobRunRepo.wrapRun("davPharmacyCheckJob", async () => {
       await runDavPharmacyCheck()
     })
@@ -469,7 +474,7 @@ export function startScheduler() {
   // Inserted alerts (severity=high) flow through readUnnotifiedAlerts ->
   // existing Alert Commander Telegram dispatch. Deterministic per-day id
   // keeps cooldown/dedup intact.
-  cron.schedule(CRONS.bctcOverdueCheck, async () => {
+  scheduleCron(CRONS.bctcOverdueCheck, async () => {
     await jobRunRepo.wrapRun('bctcOverdueCheckJob', async () => {
       const r = await runBctcOverdueCheck()
       if (r.alertsInserted > 0) {
@@ -484,7 +489,7 @@ export function startScheduler() {
   // Uses `*/10 2-8 * * 1-5` so it only runs inside the window the VPS itself
   // is expected to push during; off-hours runs short-circuit via
   // isVnMarketHoursUtc() anyway, but a tighter cron avoids extra wakeups.
-  cron.schedule(CRONS.vpsProxyWatchdog, async () => {
+  scheduleCron(CRONS.vpsProxyWatchdog, async () => {
     await jobRunRepo.wrapRun('vpsProxyWatchdogJob', async () => {
       const status = await runVpsProxyWatchdog()
       if (status !== "ok" && status !== "off-hours" && status !== "cooldown") {
@@ -496,7 +501,7 @@ export function startScheduler() {
   // Daily 00:00 UTC (07:00 GMT+7) — Cron health alert (task 1103).
   // Sends ONE message to WORK channel if any job has < 80% success rate in last 24h.
   // Silent when all jobs are healthy (no heartbeat on all-green).
-  cron.schedule(CRONS.cronHealthAlert, async () => {
+  scheduleCron(CRONS.cronHealthAlert, async () => {
     await jobRunRepo.wrapRun('cronHealthAlertJob', async () => {
       const r = await runCronHealthAlert()
       if (r.alertsSent > 0) {
@@ -513,26 +518,26 @@ export function startScheduler() {
   // (EVIDENCE-ACCUM-SILENT-CRON root cause: event loop saturation drops tick when
   // recoverMissedExecutions is false). Safe: runEvidenceAccumulatorWithDb has a
   // same-day DB-backed dedup guard that prevents double execution.
-  cron.schedule(CRONS.evidenceAccumulator, async () => {
+  scheduleCron(CRONS.evidenceAccumulator, async () => {
     await runEvidenceAccumulatorWithDb(db)
   }, { timezone: 'UTC', recoverMissedExecutions: true })
 
   // Sunday 19:00 UTC (02:00 VN Monday) — Base rate computation — task 1122, Sprint 059
-  cron.schedule(CRONS.baseRateComputation, async () => {
+  scheduleCron(CRONS.baseRateComputation, async () => {
     await runBaseRateComputationWithDb(db)
   }, { timezone: 'UTC' })
 
   // Daily 16:30 UTC (23:30 VN) — Prediction resolution — task 1125
   // Fires after VN market close (15:30 VN = 08:30 UTC) giving the VPS
   // price-push service time to deliver daily_ohlcv rows before resolution runs.
-  cron.schedule(CRONS.predictionResolution, async () => {
+  scheduleCron(CRONS.predictionResolution, async () => {
     await runPredictionResolutionWithDb(db)
   }, { timezone: 'UTC' })
 
   // Sunday 13:00 UTC (20:00 VN) — Calibration report — task 1128, Sprint 060
   // Weekly materialised Brier score aggregation over 90-day prediction_claims window.
   // Sends digest to WORK (always) and MARKET (when total_resolved >= 1).
-  cron.schedule(CRONS.calibrationReport, async () => {
+  scheduleCron(CRONS.calibrationReport, async () => {
     await runCalibrationReportWithDb(db)
   }, { timezone: 'UTC' })
 
@@ -540,7 +545,7 @@ export function startScheduler() {
   // Moved from 09:30 → 08:13 UTC so EOD chef (08:37 UTC) has the signal in hand (24min window).
   // Scans watchlist for HIGH-severity smart-money foreign flow signals.
   // Inserts alert rows + evidence fragments. Digest sent to WORK only.
-  cron.schedule(CRONS.foreignFlowAlert, async () => {
+  scheduleCron(CRONS.foreignFlowAlert, async () => {
     try {
       await runForeignFlowAlertJobCron()
       log(`[foreign-flow-alert] completed`)
@@ -552,14 +557,14 @@ export function startScheduler() {
   // Daily 01:00 UTC (08:00 VN) — Insider SSC transaction check — task 1143, Sprint 063
   // Mon-Sun: SSC disclosures can be published on weekends.
   // runInsiderCheck() uses insertAlert + insertEvidenceFragment (no direct Telegram).
-  cron.schedule(CRONS.insiderCheck, async () => {
+  scheduleCron(CRONS.insiderCheck, async () => {
     await runInsiderCheck()
   }, { timezone: 'UTC' })
 
   // Every 30 min 24/7 — Pipeline watchdog — task 1190
   // Polls getPipelineHealth() and alerts WORK channel when staleMins > 90.
   // 3-hour cooldown prevents alert floods during sustained outages.
-  cron.schedule(CRONS.pipelineWatchdog, async () => {
+  scheduleCron(CRONS.pipelineWatchdog, async () => {
     await jobRunRepo.wrapRun('pipelineWatchdogJob', async () => {
       const result = await runPipelineWatchdog()
       if (result === 'alert-sent' || result === 'notify-failed') {
@@ -570,7 +575,7 @@ export function startScheduler() {
 
   // Weekdays 07:00 UTC (08:00 CET) — France morning summary — tasks 1316/1317
   // Sends Vietnamese digest to MARKET channel before Paris market open.
-  cron.schedule(CRONS.franceSummary, async () => {
+  scheduleCron(CRONS.franceSummary, async () => {
     await jobRunRepo.wrapRun("franceSummaryJob", async () => {
       const result = await runFranceSummary()
       if (result.sent) {
@@ -587,7 +592,7 @@ export function startScheduler() {
   // Parallel execution reduces cycle time: ~3-5s vs 6-10s sequential.
   // No direct Telegram — Alert Commander dispatches via readUnnotifiedAlerts().
   // Task 1309c: Scheduler Dispatch Refactoring
-  cron.schedule(CRONS.taAlertScan, async () => {
+  scheduleCron(CRONS.taAlertScan, async () => {
     await jobRunRepo.wrapRun('alertScanParallelJob', async () => {
       const result = await runAlertScanParallel()
       if (result.totalFired > 0) {
@@ -600,7 +605,7 @@ export function startScheduler() {
   // Every 15 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — TA alert notifier — task 1314
   // Delivers unnotified TA alert rows (ta_overbought/ta_oversold/ta_bb_breakout_up/down) to
   // Telegram market channel. Batched (max 10/cycle). Marks notified_telegram=1 after send.
-  cron.schedule(CRONS.taAlertNotifier, async () => {
+  scheduleCron(CRONS.taAlertNotifier, async () => {
     const result = await runTaAlertNotifierCron()
     if (result.sent > 0) {
       log(`[ta-alert-notifier] sent=${result.sent}`)
@@ -610,18 +615,18 @@ export function startScheduler() {
   // 08:30 UTC Mon-Fri — Signal outcome resolver — task 1382
   // Resolves agent_signals with outcome='fired' or NULL after VN market close.
   // Compares entry price vs resolution price; marks confirmed or false_positive.
-  cron.schedule(CRONS.signalOutcomeJob, () => { runSignalOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
+  scheduleCron(CRONS.signalOutcomeJob, () => { runSignalOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
 
   // 08:45 UTC Mon-Fri — Alert outcome resolver — task 1847d-C
   // Scores fired alerts WHERE outcome IS NULL using market_prices_history.
   // 15 min after signalOutcomeJob to avoid DB write contention.
   // BLK-3: sends Telegram WORK digest for position-danger HITs.
-  cron.schedule(CRONS.alertOutcomeJob, () => { runAlertOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
+  scheduleCron(CRONS.alertOutcomeJob, () => { runAlertOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
 
   // 15:00 UTC (22:00 VN) Mon-Fri — OHLCV daily aggregator — task 1375, Sprint 130
   // Shifted from 16:00 → 15:00 UTC so aggregation runs 30 min before eveningSummary (15:30 UTC).
   // Aggregates intraday market_prices_history ticks into daily_ohlcv rows for each watchlist ticker.
-  cron.schedule(CRONS.ohlcvDailyAggregator, async () => {
+  scheduleCron(CRONS.ohlcvDailyAggregator, async () => {
     await jobRunRepo.wrapRun('ohlcv-daily-aggregator', async () => {
       await runOhlcvDailyAggregator()
     })
@@ -631,7 +636,7 @@ export function startScheduler() {
   // Fires 5 min after ohlcvDailyAggregator (15:00 UTC). Scans last 7 days of daily_ohlcv
   // for all watchlist tickers. Sends BUG Telegram on any mixed-scale (contaminated) row.
   // Tolerates all-zero rows (BACKLOG_CONTAM_8 known defect) without spamming.
-  cron.schedule(CRONS.ohlcvSanityCheck, async () => {
+  scheduleCron(CRONS.ohlcvSanityCheck, async () => {
     await jobRunRepo.wrapRun('ohlcv-sanity-check', async () => {
       const result = await runOhlcvSanityCheck()
       if (result.hitCount > 0) {
@@ -644,7 +649,7 @@ export function startScheduler() {
   // 08:15 UTC Mon-Fri — OHLCV staleness check — task 1465, Sprint 175
   // Fires after VN market open. Alerts WORK when >50% watchlist tickers have no
   // daily_ohlcv row for today's VN date (UTC+7). Covers mid-day VPS price-push failure.
-  cron.schedule(CRONS.ohlcvStalenessCheck, async () => {
+  scheduleCron(CRONS.ohlcvStalenessCheck, async () => {
     await jobRunRepo.wrapRun('ohlcv-staleness-check', async () => {
       await runOhlcvStalenessCheck()
     })
@@ -654,7 +659,7 @@ export function startScheduler() {
   // Heals daily_ohlcv rows corrupt from 1972-era VNDIRECT null-coercion bug (low=0).
   // Fetches tickers with < 35 clean rows OR any low=0 corrupt rows. Uses INSERT OR REPLACE.
   // Fire-and-forget: non-blocking; errors logged only.
-  cron.schedule(CRONS.taOhlcvBackfill, async () => {
+  scheduleCron(CRONS.taOhlcvBackfill, async () => {
     await jobRunRepo.wrapRun('ta-ohlcv-backfill', async () => {
       const result = await runTaOhlcvBackfill()
       return {
@@ -669,7 +674,7 @@ export function startScheduler() {
   // Every 10 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — Price update watchdog — task 229
   // Early-warning layer for price staleness (6h threshold). Detects when VPS price-push stops
   // and alerts dev team + user before evening summary sends stale data.
-  cron.schedule(CRONS.priceUpdateWatchdog, async () => {
+  scheduleCron(CRONS.priceUpdateWatchdog, async () => {
     await jobRunRepo.wrapRun('price-update-watchdog', async () => {
       const result = await priceUpdateWatchdog()
       if (result !== "ok" && result !== "off-hours" && result !== "cooldown") {
@@ -681,7 +686,7 @@ export function startScheduler() {
   // 20:30 UTC daily — cascade backtest — task 1505, Sprint 192
   // Fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows older than 3 days.
   // Runs after ohlcvDailyAggregator (20:00 UTC) so D+3/D+7 closes are fully aggregated.
-  cron.schedule(CRONS.cascadeBacktest, async () => {
+  scheduleCron(CRONS.cascadeBacktest, async () => {
     await jobRunRepo.wrapRun('cascade-backtest', async () => {
       const { runCascadeBacktest } = await import('./macro/cascadeBacktestJob.js');
       await runCascadeBacktest();
@@ -691,7 +696,7 @@ export function startScheduler() {
   // Every 5 min — VPS service health polling — task 234, Sprint 234
   // Polls all 5 VPS services (price, BCTC, news, SBV, foreign-flow) and records health status.
   // Circuit breaker protects against cascading failures.
-  cron.schedule(CRONS.vpsServiceHealth, async () => {
+  scheduleCron(CRONS.vpsServiceHealth, async () => {
     await jobRunRepo.wrapRun('vpsServiceHealthJob', async () => {
       await runVpsHealthPolling()
     })
@@ -700,7 +705,7 @@ export function startScheduler() {
   // Every 5 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — VN-Index refresh — task 1397
   // Fetches VNINDEX directly from VnDirect vnmarket_prices API (not via VPS).
   // Ensures market_prices.VNINDEX stays fresh regardless of VPS push payload.
-  cron.schedule(CRONS.vnIndexRefresh, async () => {
+  scheduleCron(CRONS.vnIndexRefresh, async () => {
     await jobRunRepo.wrapRun('vnIndexRefreshJob', async () => {
       const result = await runVnIndexRefreshJob()
       return { rowsWritten: result.stored }
@@ -710,7 +715,7 @@ export function startScheduler() {
   // Every 30 min — Data freshness SLA monitor — task 234, Sprint 234
   // Checks signal source data freshness against SLA thresholds.
   // Escalates to Alert Commander when SLA breaches detected with 60-min cooldown.
-  cron.schedule(CRONS.freshnessSlaMonitor, async () => {
+  scheduleCron(CRONS.freshnessSlaMonitor, async () => {
     await jobRunRepo.wrapRun('freshnessSlaMonitorJob', async () => {
       await runFreshnessSlaMonitorJob()
     })
@@ -719,7 +724,7 @@ export function startScheduler() {
   // 19:13 UTC daily — Macro indicator refresh — task 239, Sprint 239 (rescheduled Sprint 1949-T7)
   // Moved from 06:00 GMT+7 → 19:13 UTC so Evening Preview chef (19:37 UTC) has fresh US-session data.
   // Fetches Yahoo/SBV/GSO macro indicators, FRED EFFR/IORB, ISM sub-components.
-  cron.schedule(CRONS.macroIndicatorRefresh, async () => {
+  scheduleCron(CRONS.macroIndicatorRefresh, async () => {
     await jobRunRepo.wrapRun('macroIndicatorRefreshJob', async () => {
       await macroIndicatorRefreshJob()
     })
@@ -795,19 +800,23 @@ export function startScheduler() {
   })()
 
   // Every 1 min — Foreign flow fallback fetcher — task 1290
-  // Resilience loop: if VPS is down, cache/SSE keeps daily_ohlcv updated
-  cron.schedule(CRONS.foreignFlowFetch, async () => {
+  // Resilience loop: if VPS is down, cache/SSE keeps daily_ohlcv updated.
+  // recoverMissedExecutions: false (OPT-OUT, T2-ARCH-CRON-RECOVER-JITTER):
+  //   fires every 60 s by design; recovery replay would double-fetch within
+  //   seconds of restart. The underlying runForeignFlowFetcherJobCron() has
+  //   its own freshness guard and is a pure no-op when data is already fresh.
+  scheduleCron(CRONS.foreignFlowFetch, async () => {
     try {
       await runForeignFlowFetcherJobCron()
     } catch (err) {
       log(`[foreign-flow-fetch] uncaught: ${err instanceof Error ? err.message : String(err)}`)
     }
-  }, { timezone: 'UTC' })
+  }, { timezone: 'UTC', recoverMissedExecutions: false })
 
   // Every 6 hours — IMF economic indicator poller — task 1296b
   // Fetches IMF growth/inflation/oil forecasts, stores in imf_indicators table,
   // classifies macro sentiment for signal enrichment via imfSentiment field.
-  cron.schedule(CRONS.imfIndicatorPoller, async () => {
+  scheduleCron(CRONS.imfIndicatorPoller, async () => {
     await jobRunRepo.wrapRun('imfIndicatorPollerJob', async () => {
       const result = await runImfIndicatorPollerJob()
       return { rowsWritten: result.indicator_count }
@@ -817,7 +826,7 @@ export function startScheduler() {
   // Every 8h — Per-call tool usage tracker — task TSU-DEV-U1
   // Reads perCallCounterStore snapshot (replaces sessionToolCache — dead in gateway model),
   // writes to docs/agent-memory/modules/tool-usage-stats.json (observability).
-  cron.schedule(CRONS.trackSessionToolUsage, async () => {
+  scheduleCron(CRONS.trackSessionToolUsage, async () => {
     await jobRunRepo.wrapRun('trackSessionToolUsageJob', async () => {
       const stats = await trackSessionToolUsageJob()
       return { rowsWritten: stats.uniqueTools }
@@ -828,7 +837,7 @@ export function startScheduler() {
   // Runs PRAGMA integrity_check on market.db weekly.
   // Also fires opportunistically when WAL >= 40 MB (integrityCheckJob handles threshold).
   // Alert sent to WORK channel when corruption detected; silent on clean pass.
-  cron.schedule(CRONS.integrityCheck, async () => {
+  scheduleCron(CRONS.integrityCheck, async () => {
     await jobRunRepo.wrapRun('integrityCheckJob', async () => {
       const result = await runIntegrityCheckJob(Bun.env.DB_PATH ?? 'market.db', true)
       if (result && !result.ok) {
@@ -843,7 +852,7 @@ export function startScheduler() {
   // median PE and earnings yield, writes two rows to tracked_indicators.
   // Fires after market close so intraday prices are fully settled.
   // Coverage guard: skips DB write if < 70% of watchlist tickers have valid PE.
-  cron.schedule(CRONS.marketEarningYield, async () => {
+  scheduleCron(CRONS.marketEarningYield, async () => {
     await jobRunRepo.wrapRun('marketEarningYieldJob', async () => {
       await runMarketEarningYieldJob()
     })
@@ -853,7 +862,7 @@ export function startScheduler() {
   // Reads session logs + orch-state.json .task_board + project-stats.json and writes
   // docs/data/daily-dashboard.json for observability and sprint tracking.
   // Fires after evening summary (22:30) and periodic summary (22:30) are done.
-  cron.schedule(CRONS.dailyDashboard, async () => {
+  scheduleCron(CRONS.dailyDashboard, async () => {
     await jobRunRepo.wrapRun('dailyDashboardJob', async () => {
       const result = await runDailyDashboardJob()
       log(`[daily-dashboard] written — date=${result.date} sessions=${result.sessionCount} tasksDone=${result.tasksDone}`)
@@ -865,7 +874,7 @@ export function startScheduler() {
   // Resolves pending AlertVerdict rows >=24h old by comparing fire-price vs live close.
   // Minute=7 avoids collision with the cluster of minute=0 jobs (cronHealthAlert,
   // weatherCheck, imfIndicatorPoller, etc.).
-  cron.schedule(CRONS.verdictResolutionJob, async () => {
+  scheduleCron(CRONS.verdictResolutionJob, async () => {
     await jobRunRepo.wrapRun('verdictResolutionJob', async () => {
       const result = await runVerdictResolutionJobCron()
       if (result.rowsResolved > 0 || result.errors > 0) {
@@ -878,7 +887,7 @@ export function startScheduler() {
   // Every 30 min — News headlines refresh — task 1899a-cron
   // Sequential: Bloomberg first, Reuters second (RAM constraint: no concurrent Playwright browsers).
   // Pushes normalized articles to /api/push-news. Errors per source logged and skipped.
-  cron.schedule(CRONS.newsHeadlinesRefresh, async () => {
+  scheduleCron(CRONS.newsHeadlinesRefresh, async () => {
     await jobRunRepo.wrapRun('newsHeadlinesRefreshJob', async () => {
       await newsHeadlinesRefreshJob()
     })
@@ -889,7 +898,7 @@ export function startScheduler() {
   // upserts them into bond_maturity via upsertBond() (ON CONFLICT idempotent).
   // Zero-row result triggers WORK alert. Fail-loud on fetch error.
   // AC-0: vnstock bond endpoint / domain seed data — direct from France (no VPS required).
-  cron.schedule(CRONS.bondMaturityPoller, async () => {
+  scheduleCron(CRONS.bondMaturityPoller, async () => {
     await jobRunRepo.wrapRun('bondMaturityPollerJob', async () => {
       const result = await runBondMaturityPollerJob()
       return { rowsWritten: result.rowsWritten }
@@ -901,7 +910,7 @@ export function startScheduler() {
   // cash_flow, events, officers, shareholders via syncVnstockData per ticker.
   // isRunning guard prevents double-stack (7-10 min sweep). Per-ticker isolation.
   // Fail-loud to WORK channel when any tickers fail at sweep completion.
-  cron.schedule(CRONS.vnstockFundamentalsRefresh, async () => {
+  scheduleCron(CRONS.vnstockFundamentalsRefresh, async () => {
     await runVnstockFundamentalsJobCron()
   }, { timezone: 'UTC' })
 
@@ -909,7 +918,7 @@ export function startScheduler() {
   // Iterates 30-ticker watchlist; upserts vnstock_trading_stats via syncVnstockData.
   // UNIQUE(code, date) ensures idempotency — repeated same-day runs are safe.
   // isRunning guard + per-ticker error isolation.
-  cron.schedule(CRONS.vnstockTradingStatsRefresh, async () => {
+  scheduleCron(CRONS.vnstockTradingStatsRefresh, async () => {
     await runVnstockTradingStatsJobCron()
   }, { timezone: 'UTC' })
 
@@ -920,7 +929,7 @@ export function startScheduler() {
   // Fail-loud: each block sends WORK alert on error.
   // Note: same cron expression as macroIndicatorRefresh ('0 6 * * *') — kept as SEPARATE
   // job registration for independent cron_job_runs observability (per TASK_1920c.md spec).
-  cron.schedule(CRONS.commodityTrackerRefresh, async () => {
+  scheduleCron(CRONS.commodityTrackerRefresh, async () => {
     await jobRunRepo.wrapRun('commodityTrackerRefreshJob', async () => {
       const result = await runCommodityTrackerRefreshJob()
       return { rowsWritten: result.rowsWritten }
@@ -931,7 +940,7 @@ export function startScheduler() {
   // Fetches current VCB USD/VND official rate and SBV interest-rate fallbacks.
   // Persists via storeSbvSnapshot() into sbv_rates table (INSERT OR REPLACE).
   // Fail-loud to WORK channel on fetch or store error.
-  cron.schedule(CRONS.sbvRatesRefresh, async () => {
+  scheduleCron(CRONS.sbvRatesRefresh, async () => {
     await jobRunRepo.wrapRun('sbvRatesRefreshJob', async () => {
       const result = await runSbvRatesRefreshJob()
       return { rowsWritten: result.rowsWritten }
@@ -943,7 +952,7 @@ export function startScheduler() {
   // only runs in March / June / September / December. Non-quarter Fridays record
   // status='skipped' in cron_job_runs. Zero-result or fetch error → WORK alert.
   // Requires UNIQUE(broker_name, sanction_start) — migrated in schema-alerts.ts.
-  cron.schedule(CRONS.brokerSanctionsSweep, async () => {
+  scheduleCron(CRONS.brokerSanctionsSweep, async () => {
     await jobRunRepo.wrapRun('brokerSanctionsSweep', async () => {
       const result = await runBrokerSanctionsJob()
       return { rowsWritten: result.rowsWritten }
@@ -958,7 +967,7 @@ export function startScheduler() {
   // (FU-REPUTATION-CRON-MISS 2026-06-11 + EVIDENCE-ACCUM-SILENT-CRON 2026-06-12: same
   // class of miss — node-cron drops tick when event loop is busy and autorecover=false).
   // jobRunRepo.wrapRun dedup: if already ran today, second fire is a no-op write (upsert).
-  cron.schedule(CRONS.reputationCompute, async () => {
+  scheduleCron(CRONS.reputationCompute, async () => {
     await jobRunRepo.wrapRun('reputationComputeJob', async () => {
       const result = await runReputationComputeJob()
       return { rowsWritten: result.tickersProcessed }
@@ -969,7 +978,7 @@ export function startScheduler() {
   // Fetches government procurement award results from muasamcong.mpi.gov.vn.
   // Geo-blocked outside Vietnam: set MUASAMCONG_VPS_PROXY_URL to route via Vinahost VPS.
   // Fail-loud to WORK channel when store errors occur; fetch-empty is silent.
-  cron.schedule(CRONS.publicContractsRefresh, async () => {
+  scheduleCron(CRONS.publicContractsRefresh, async () => {
     await jobRunRepo.wrapRun('publicContractsJob', async () => {
       const result = await runPublicContractsJob()
       if (result.fetched > 0) {
@@ -982,7 +991,7 @@ export function startScheduler() {
   // Every hour at minute=17 UTC — Signal outcome resolution — 2026-05-17 feedback loop
   // Resolves T+24h and T+48h pending rows in signal_outcomes by comparing entry vs resolution price.
   // Minute=17 avoids pile-up with minute=0/7 cluster (cronHealthAlert, imfPoller, verdictResolution).
-  cron.schedule(CRONS.signalOutcomeResolution, () => {
+  scheduleCron(CRONS.signalOutcomeResolution, () => {
     runSignalOutcomeResolutionJobCron().catch(console.error);
   }, { timezone: 'UTC' })
 
@@ -990,7 +999,7 @@ export function startScheduler() {
   // Computes 30-day accuracy stats from signal_outcomes, formats top-3/bottom-3
   // signal type breakdown, sends to WORK channel. DB-backed dedup guard prevents
   // duplicate sends on day boundary (survives server restarts).
-  cron.schedule(CRONS.accuracyDigest, async () => {
+  scheduleCron(CRONS.accuracyDigest, async () => {
     await jobRunRepo.wrapRun('accuracyDigestJob', () => runAccuracyDigest({ db }))
   }, { timezone: 'UTC' })
 
@@ -998,7 +1007,7 @@ export function startScheduler() {
   // Shells out to `du -sh /app/data/lancedb` and sends BUG Telegram when usage
   // exceeds DISK_ALERT_THRESHOLD_GB (default 20 GB). 6 h cooldown prevents spam.
   // Minute=47 avoids pile-up with minute=0/7/17/37 cluster.
-  cron.schedule(CRONS.diskUsageAlert, async () => {
+  scheduleCron(CRONS.diskUsageAlert, async () => {
     await jobRunRepo.wrapRun('diskUsageAlertJob', async () => {
       const result = await runDiskUsageAlertJob()
       if (result === 'alert-sent') {
@@ -1014,7 +1023,7 @@ export function startScheduler() {
   // detects concurrent git commits on docs/data/orch/orch-state.json within 30s (AC-5).
   // Appends signal_queue row for each divergence. Clean day → log only (AC-3).
   // Off-peak: 03:00 UTC (after bctcReparseJob at 02:30 UTC). No new DB schema.
-  cron.schedule(CRONS.tasksMdJanitor, async () => {
+  scheduleCron(CRONS.tasksMdJanitor, async () => {
     await jobRunRepo.wrapRun('tasksMdJanitorJob', async () => {
       await runTasksMdJanitorJob()
     })
@@ -1046,7 +1055,7 @@ export function startScheduler() {
   // Sprint SELF-IMPROVE-GATE Phase 2 — Self-improvement detection (09:02 UTC daily)
   // Shadow mode: all DISPATCH_PATHS default-false; no auto-dispatch fires at ship.
   // HN-1: bctcOverdueCheck is DAILY (0 9 * * *) not weekday-only; 2-min offset is correct.
-  cron.schedule(CRONS.selfImproveOrchestrator, async () => {
+  scheduleCron(CRONS.selfImproveOrchestrator, async () => {
     await jobRunRepo.wrapRun('selfImproveOrchestratorJob', () => runSelfImproveOrchestrator({ db }))
   }, { timezone: 'UTC' })
 
@@ -1054,7 +1063,7 @@ export function startScheduler() {
   // Off-market: 22:02 UTC = 05:02 GMT+7 next day; well outside HOSE hours (02:00-08:59 UTC Mon-Fri).
   // Sweeps stale bctc_eval_results rows (detector_version mismatch) and recomputes stages 4-6.
   // Override via env: CRON_BCTC_EVAL_RECOMPUTE
-  cron.schedule(CRONS.bctcEvalRecompute, async () => {
+  scheduleCron(CRONS.bctcEvalRecompute, async () => {
     await jobRunRepo.wrapRun('bctcEvalRecomputeJob', async () => {
       const result = await runBctcEvalRecomputeJob()
       return { rowsWritten: result.recomputed * 3 } // 3 stages per report
@@ -1064,7 +1073,7 @@ export function startScheduler() {
   // Daily 20:30 UTC (03:30 VN next day) — AGM plan + actuals ingest — RAPID-DATA-LAYER FIX-G
   // Pulls planned targets + actuals for all watchlist tickers from Vinahost VPS proxy.
   // Off-market: 20:30 UTC = after VN market close + ohlcvDailyAggregator (20:00 UTC).
-  cron.schedule(CRONS.agmPlanRefresh, async () => {
+  scheduleCron(CRONS.agmPlanRefresh, async () => {
     await jobRunRepo.wrapRun('agmPlanRefreshJob', async () => {
       const result = await runAgmPlanJob()
       if (result.plan_rows_written > 0 || result.actual_rows_written > 0) {
@@ -1077,7 +1086,7 @@ export function startScheduler() {
   // Daily 21:00 UTC (04:00 VN next day) — Board appointment_year ingest — RAPID-DATA-LAYER FIX-I-B
   // Pulls officer appointment dates for all watchlist tickers from Vinahost VPS proxy.
   // Off-market: 21:00 UTC = after AGM plan refresh (20:30 UTC). UPDATE-only (no INSERT).
-  cron.schedule(CRONS.boardDetailsRefresh, async () => {
+  scheduleCron(CRONS.boardDetailsRefresh, async () => {
     await jobRunRepo.wrapRun('boardDetailsRefreshJob', async () => {
       const result = await runBoardDetailsJob()
       if (result.rows_updated > 0) {
@@ -1090,7 +1099,7 @@ export function startScheduler() {
   // Every 5 min — Deep-fetch VPS executor — DFR-P2-MCP
   // Drains up to deepFetch.maxPerCycle (10) pending queue rows via VPS /proxy/article-body.
   // Independent of the 15-min intelligence cycle — runs 24/7.
-  cron.schedule(CRONS.deepFetchVps, async () => {
+  scheduleCron(CRONS.deepFetchVps, async () => {
     await jobRunRepo.wrapRun('deepFetchVpsJob', async () => {
       const result = await runDeepFetchVpsJob()
       return { rowsWritten: result.done }
@@ -1099,7 +1108,7 @@ export function startScheduler() {
 
   // Every 5 min — Deep-fetch main-server executor (Playwright fallback) — DFR-P2-MCP
   // Drains up to deepFetch.maxPlaywrightPerCycle (5) vps-failed rows via news-fetch POST /fetch-article.
-  cron.schedule(CRONS.deepFetchMain, async () => {
+  scheduleCron(CRONS.deepFetchMain, async () => {
     await jobRunRepo.wrapRun('deepFetchMainJob', async () => {
       const result = await runDeepFetchMainJob()
       return { rowsWritten: result.done }

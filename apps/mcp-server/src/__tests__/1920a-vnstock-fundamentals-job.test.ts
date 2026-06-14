@@ -169,8 +169,8 @@ describe("Task 1920a — vnstockFundamentalsJob", () => {
 // ── cronConfig: expression tests ─────────────────────────────────────────────
 
 describe("Task 1920a — cronConfig expressions", () => {
-  it("AC-1: vnstockFundamentalsRefresh cron expression is Mon 01:00 UTC", () => {
-    expect(CRONS.vnstockFundamentalsRefresh).toBe("0 1 * * 1");
+  it("AC-1: vnstockFundamentalsRefresh cron expression is Mon 01:05 UTC (T2-ARCH-CRON-RECOVER-JITTER Lever C: +5min offset)", () => {
+    expect(CRONS.vnstockFundamentalsRefresh).toBe("5 1 * * 1");
   });
 
   it("AC-1: vnstockTradingStatsRefresh cron expression is weekdays 08:30 UTC", () => {

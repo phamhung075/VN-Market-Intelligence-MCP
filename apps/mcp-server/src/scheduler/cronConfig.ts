@@ -56,12 +56,16 @@ export const CRONS = {
   cronHealthAlert:        Bun.env.CRON_HEALTH_ALERT                ?? '0 0 * * *',
   /** Evidence accumulator: daily 23:00 VN = 16:00 UTC — task 1118, Sprint 057 Phase A */
   evidenceAccumulator:    Bun.env.CRON_EVIDENCE_ACCUMULATOR        ?? '0 16 * * *',
-  /** Base rate recomputation: weekly Sunday 19:00 UTC = 02:00 VN Monday — task 1122, Sprint 059 */
-  baseRateComputation:    Bun.env.CRON_BASE_RATE_COMPUTATION       ?? '0 19 * * 0',
-  /** Prediction resolution: daily 16:30 UTC (after VN market close 15:30 VN) — task 1125, Sprint 059 */
-  predictionResolution:   Bun.env.CRON_PREDICTION_RESOLUTION       ?? '30 16 * * *',
-  /** Calibration report: Sunday 13:00 UTC (20:00 VN) — task 1128, Sprint 060 */
-  calibrationReport:      Bun.env.CRON_CALIBRATION_REPORT          ?? '0 13 * * 0',
+  /** Base rate recomputation: weekly Sunday 19:07 UTC = 02:07 VN Monday — task 1122, Sprint 059
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +7min offset from :00 pile-up cluster.
+   *  Joins minute=7 cluster already used by verdictResolutionJob (architect §4.3). */
+  baseRateComputation:    Bun.env.CRON_BASE_RATE_COMPUTATION       ?? '7 19 * * 0',
+  /** Prediction resolution: daily 16:35 UTC (after VN market close 15:30 VN) — task 1125, Sprint 059
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +5min offset clears :30 pile-up (ohlcvDailyAggregator now at :03). */
+  predictionResolution:   Bun.env.CRON_PREDICTION_RESOLUTION       ?? '35 16 * * *',
+  /** Calibration report: Sunday 13:04 UTC (20:04 VN) — task 1128, Sprint 060
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +4min offset from :00 hour-boundary pile-up. */
+  calibrationReport:      Bun.env.CRON_CALIBRATION_REPORT          ?? '4 13 * * 0',
   /** Foreign flow alert: 08:13 UTC (15:13 VN) weekdays — task 1133, Sprint 061; moved 09:30→08:13 by Sprint 1949-T6 (EOD chef reads at 08:37, 24min window) */
   foreignFlowAlert:       Bun.env.CRON_FOREIGN_FLOW_ALERT          ?? '13 8 * * 1-5',
   /** Insider SSC disclosure check: daily 01:00 UTC (08:00 VN) Mon-Sun — task 1143, Sprint 063 */
@@ -80,10 +84,11 @@ export const CRONS = {
   taAlertNotifier:        Bun.env.CRON_TA_ALERT_NOTIFIER               ?? '*/15 2-8 * * 1-5',
   /** signalOutcomeJob — resolve agent_signals outcomes daily at 08:30 UTC (task 1382) */
   signalOutcomeJob:       Bun.env.CRON_SIGNAL_OUTCOME_JOB               ?? '30 8 * * 1-5',
-  /** ohlcvDailyAggregator — aggregate intraday ticks into daily_ohlcv at 15:00 UTC (22:00 VN) Mon-Fri (task 1375, Sprint 130)
+  /** ohlcvDailyAggregator — aggregate intraday ticks into daily_ohlcv at 15:03 UTC (22:03 VN) Mon-Fri (task 1375, Sprint 130)
    *  Shifted from 16:00 → 15:00 UTC: runs 30 min before eveningSummary (15:30 UTC = 22:30 VN),
-   *  ensuring taSummary is populated in the evening report. */
-  ohlcvDailyAggregator:   Bun.env.CRON_OHLCV_DAILY_AGGREGATOR          ?? '0 15 * * 1-5',
+   *  ensuring taSummary is populated in the evening report.
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +3min offset from :00 hour-boundary pile-up. */
+  ohlcvDailyAggregator:   Bun.env.CRON_OHLCV_DAILY_AGGREGATOR          ?? '3 15 * * 1-5',
   /** ohlcvStalenessCheck — daily OHLCV staleness check at 08:15 UTC Mon-Fri (task 1465, Sprint 175)
    *  Fires after VN market open data push window. Alerts WORK if >50% watchlist tickers
    *  are missing from daily_ohlcv for the current VN date. Covers mid-day VPS outage. */
@@ -93,8 +98,9 @@ export const CRONS = {
    *  Fetches tickers with < TA_MIN_ROWS (35) clean rows or any low=0 corrupt rows.
    *  Uses INSERT OR REPLACE to overwrite corrupt data. Non-blocking (fire-and-forget). */
   taOhlcvBackfill:        Bun.env.CRON_TA_OHLCV_BACKFILL                ?? '30 1 * * 1-5',
-  /** cascadeBacktest — daily backtest: fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows >3d old (task 1505, Sprint 192) */
-  cascadeBacktest:        Bun.env.CRON_CASCADE_BACKTEST                  ?? '30 20 * * *',
+  /** cascadeBacktest — daily backtest: fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows >3d old (task 1505, Sprint 192)
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +7min offset clears :30 pile-up (agmPlanRefresh stays at :30). */
+  cascadeBacktest:        Bun.env.CRON_CASCADE_BACKTEST                  ?? '37 20 * * *',
   /** priceUpdateWatchdog — price staleness detection at 6h threshold (task 229, Sprint 229)
    *  Every 10 min during VN market hours (Mon-Fri 02:00-08:59 UTC). Early-warning layer
    *  (separate from 45-min VPS watchdog) to catch price pipeline failures and alert user. */
@@ -124,8 +130,10 @@ export const CRONS = {
   /** alertOutcomeJob — daily alert outcome resolver at 08:45 UTC weekdays (task 1847d-C)
    *  15 min after signalOutcomeJob (08:30 UTC) to avoid DB write contention. */
   alertOutcomeJob:           Bun.env.CRON_ALERT_OUTCOME_JOB                  ?? '45 8 * * 1-5',
-  /** Daily dashboard aggregation: 23:30 GMT+7 every day (after evening summary + periodic summary) — task 1854a */
-  dailyDashboard:            Bun.env.CRON_DAILY_DASHBOARD                    ?? '30 23 * * *',
+  /** Daily dashboard aggregation: 23:38 GMT+7 every day (after evening summary + periodic summary) — task 1854a
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +8min offset clears :30 pile-up cluster
+   *  (newsHeadlinesRefresh/pipelineWatchdog/franceSummary/walCheckpoint/bctcPdfPull all at :30). */
+  dailyDashboard:            Bun.env.CRON_DAILY_DASHBOARD                    ?? '38 23 * * *',
   /** verdictResolutionJob — hourly alert verdict resolver (task 1863b, Sprint 1867)
    *  Minute=7 (not 0) to avoid pile-up with cronHealthAlert/weatherCheck/imfIndicatorPoller
    *  and other jobs that cluster at minute=0 every hour. Architect amendment 2026-05-10. */
@@ -134,8 +142,10 @@ export const CRONS = {
   newsHeadlinesRefresh:      Bun.env['CRON_NEWS_HEADLINES_REFRESH']           ?? '*/30 * * * *',
   /** bondMaturityPoller — weekly Sunday 02:30 UTC (09:30 VN) — task 1920b */
   bondMaturityPoller:        Bun.env.CRON_BOND_MATURITY_POLLER                 ?? '30 2 * * 0',
-  /** vnstockFundamentalsRefresh — weekly Mon 01:00 UTC batch sweep of 6 fundamental tables (task 1920a) */
-  vnstockFundamentalsRefresh: Bun.env.CRON_VNSTOCK_FUNDAMENTALS               ?? '0 1 * * 1',
+  /** vnstockFundamentalsRefresh — weekly Mon 01:05 UTC batch sweep of 6 fundamental tables (task 1920a)
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +5min offset clears :00 hour-boundary pile-up
+   *  (insiderCheck at 01:00 UTC, dataAuditWeekly at 01:00 UTC Sunday). */
+  vnstockFundamentalsRefresh: Bun.env.CRON_VNSTOCK_FUNDAMENTALS               ?? '5 1 * * 1',
   /** vnstockTradingStatsRefresh — daily weekdays 08:30 UTC (post HOSE close) trading stats sweep (task 1920a) */
   vnstockTradingStatsRefresh: Bun.env.CRON_VNSTOCK_TRADING_STATS              ?? '30 8 * * 1-5',
   /** commodityTrackerRefresh — daily 06:00 UTC commodity prices + shipping indices refresh (task 1920c) */
@@ -144,8 +154,10 @@ export const CRONS = {
   brokerSanctionsSweep:       Bun.env.CRON_BROKER_SANCTIONS                   ?? '0 8 25-31 * 5',
   /** sbvRatesRefresh — every 4 hours, SBV rates + USD/VND FX refresh (task 1920k) */
   sbvRatesRefresh:            Bun.env.CRON_SBV_RATES_REFRESH                   ?? '0 */4 * * *',
-  /** reputationComputeJob — daily 08:30 UTC, compute reputation scores for watchlist tickers (task 1922d) */
-  reputationCompute:          Bun.env.CRON_REPUTATION_COMPUTE                   ?? '30 8 * * *',
+  /** reputationComputeJob — daily 08:33 UTC, compute reputation scores for watchlist tickers (task 1922d)
+   *  T2-ARCH-CRON-RECOVER-JITTER Lever C: +3min offset clears :30 collision with signalOutcomeJob
+   *  (08:30 UTC weekdays, same minute as the old reputationCompute schedule). */
+  reputationCompute:          Bun.env.CRON_REPUTATION_COMPUTE                   ?? '33 8 * * *',
   /** publicContractsJob — weekly Mon 03:00 UTC, scrape muasamcong.mpi.gov.vn procurement results (Task B) */
   publicContractsRefresh:     Bun.env['CRON_PUBLIC_CONTRACTS']                  ?? '0 3 * * 1',
   /** signalOutcomeResolution — hourly T+24h / T+48h outcome resolution (2026-05-17 feedback loop)
@@ -175,9 +187,9 @@ export const CRONS = {
    *  22:02 UTC = 05:02 GMT+7 next day, well outside HOSE market hours (02:00-08:59 UTC Mon-Fri).
    *  Collision check: 22:00 UTC = eveningSummary slot — offset by 2 min to avoid pile-up. */
   bctcEvalRecompute:          Bun.env.CRON_BCTC_EVAL_RECOMPUTE                     ?? '2 22 * * *',
-  /** agmPlanRefresh — AGM plan + actuals ingest: daily 20:00 UTC (03:00 VN next day) — RAPID-DATA-LAYER FIX-G
-   *  Off-market: 20:00 UTC = after VN market close (08:30 UTC) and before US open.
-   *  Collision check: 20:00 UTC = ohlcvDailyAggregator — offset by 30 min to avoid pile-up. */
+  /** agmPlanRefresh — AGM plan + actuals ingest: daily 20:30 UTC (03:30 VN next day) — RAPID-DATA-LAYER FIX-G
+   *  Off-market: 20:30 UTC = after VN market close (08:30 UTC) and before US open.
+   *  Collision check: 20:30 UTC — cascadeBacktest at :37 fires 7min after, safe gap. */
   agmPlanRefresh:             Bun.env.CRON_AGM_PLAN_REFRESH                         ?? '30 20 * * *',
   /** boardDetailsRefresh — board appointment_year ingest: daily 21:00 UTC (04:00 VN next day) — RAPID-DATA-LAYER FIX-I-B
    *  Off-market: 21:00 UTC = after AGM plan refresh (20:30 UTC) and VN market close.
