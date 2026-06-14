@@ -1,5 +1,17 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-14 | **Sprint:** KINHDICH-HOVER-DETAIL
+
+## BA-KINHDICH-HOVER-DETAIL · 2026-06-14
+
+Spec complete. Task: BA-KINHDICH-HOVER-DETAIL. REQ file: `docs/handoffs/KINHDICH-HOVER-DETAIL-BA-spec.md`. Zero PO blockers. Recommended chain: developer (frontend) → ops (frontend-only rebuild) → qa.
+
+Key BA findings: Single-file change — `QueName.tsx` adds import of `QUE_DETAIL` from `~/lib/que-descriptions-detail.generated` (already in bundle, all 64 entries, all 5 required fields: coreMeaning/stateInterpretation/favorable/warning/marketTrendLabel). Renders 4 enriched VN clauses inside existing Radix `TooltipContent` (`max-w-xs text-xs`). Omits `phases[]` (tabular, stays on reference page per PO). Fallback to existing `QUE_DESCRIPTIONS` render if `QUE_DETAIL[hexagram]` absent. DONE BAR = served-chunk RAW-verify on `:3001` (curl grep confirms VN strings in live bundle, not just source). No architect needed for a one-file interface layer change.
+
+Decision journal (task_id: BA-KINHDICH-HOVER-DETAIL):
+- what-considered: "only path: single-file QueName.tsx enrichment using already-bundled QUE_DETAIL; PO decision locks Option (a); zero alternatives"
+- why-change: "no change from plan"
+
 **Last updated:** 2026-06-14 | **Sprint:** VN-MACRO-TOOLING
 
 ## BA-VN-MACRO-TOOLING · 2026-06-14
@@ -118,87 +130,11 @@ Key BA findings (raw-read source files, not relayed):
 
 ---
 
-**Last updated:** 2026-06-04 | **Sprint:** DATA-SERVE-INTEGRITY
-
-## DATA-SERVE-INTEGRITY-BA · 2026-06-04
-
-Spec complete. REQ file: `docs/handoffs/DSI-BA-spec.md`. Zero PO blockers. NEXT: dev-mcp-server (DSI-S1-SLA, XS, do_first).
-
-Key BA findings (raw-read source files, not relayed):
-- `macroIndicatorSla.ts:35,73` both `.get("VN")` — literal string, no constant. Fix = `MACRO_COUNTRY_KEY = "vietnam"` used at both sites.
-- `server.ts:1435,1520` push-gso defaults `"VN"` — normalize to `"vietnam"`; R-1: audit `vps-scripts/` before deploy.
-- `macroIndicatorFetcher.ts:266,296` dead code writes `'VN'` — comment only (`@deprecated DSI`), do NOT remove.
-- `macroTools.ts:245` carry suppress only on `=== 0`, not on `fedFundsRateIsEstimate` — fix gate condition.
-- `sbv.ts:53-70` six rates hardcoded with no `is_estimate` column — FR-MAC-2 adds migration + column.
-- `macroIndicatorRefreshJob.ts:273-276` commodity `?? 0` — zero-write on fetch failure; fix = skip or mark is_estimate.
-- `fetchers.go:183-193` Tier-3 `time.Now()` re-stamp + `Change: 0/ChangePercent: 0` — fix = true DB timestamp + `*float64` nil.
-- `usecases.go:19-33` `FetchPriceResponse` no Staleness field — add `Staleness string` + `IsEstimate bool`, wire from `ResolvedQuote`.
-- `market.ts:152-159` `MacroSnapshot` no dataSource/is_estimate/source_tier — all new fields optional (additive, no regression).
-- `market.ts:~18` `StockQuote.change: number` — must become `number | null` coordinated with DSI-S2-PRICE deploy.
-- `bctcFullTools.ts:226-229` `roe/netMarginPct/debtToEquity ?? 0` — change to `?? null`; suppress delta when null.
-- `finalizeBctcRefineTool.ts:1037` `extractionConfidence ?? 1` — change to `?? 0` (missing = unknown = low, not max).
-- `bondMaturityTracker.ts:42-91` SEED_BONDS — add `static_seed: true` + alert message suffix when DB empty.
-- `creditFlowTools.ts:117-131` mortgage/yoyGrowth fabricated defaults — replace with `null + is_estimate:true`.
-- `energyTools.ts:65-68` grid dispatch hardcoded — derived signal block must carry `is_estimate:true`.
-- DSI-MACRO-INDICATORS-LATENT: Go macro-indicators NOT deployed — backlog only, gate on container entering runtime.
-- ProvenanceFields shared interface: define once in `domain/models/provenance.ts`, extend all response types.
-- R-3: Change/ChangePercent nullable is a BREAKING API change — Go + TS must deploy together.
-
-**Last updated:** 2026-06-01 | **Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD
-
-## VPS-DEPLOY-PLACEHOLDER-GUARD-BA · 2026-06-01
-
-Spec complete. REQ file: `docs/handoffs/TASK_VPS-PLACEHOLDER-GUARD.md`. Zero PO blockers. NEXT: pm (task decomposition).
-
-Key BA findings (raw-read, not relayed):
-- 6 hardcode-no-fallback scripts confirmed by direct grep (fetch-vn-news L7-8, fetch-sbv L7-8, fetch-gso L8-9, fetch-tradingeconomics L7-9, fetch-prices L15-18, enrich-bctc-urls L8-10).
-- article-body-fetcher.py confirmed zero placeholder tokens — only imports (requests, bs4 conditional).
-- deploy-vps-proxy.sh confirmed: `set -e` L17, TMP_NEWS at L107-116, no existing pre-scp assert.
-- GUARD-1 regex: MUST use `[A-Za-z][A-Za-z0-9_]*` not all-caps — architect RISK-GUARD1-REGEX.
-- GUARD-2 TE_API_KEY: empty-string fallback ONLY (`${TRADING_ECONOMICS_API_KEY:-}`). Using `__TE_API_KEY__` as fallback would false-block GUARD-1 (no sed rule for that token in deployer). Existing TE guard L13-17 handles empty correctly.
-- GUARD-1 post-deploy: use glob `/root/fetch-*.sh /root/*.py` not explicit filenames (RISK-POSTDEPLOY-SCOPE).
-- Deliberate-violation test is locally provable without SSH — inject `__GUARD_TEST_TOKEN__` as unknown token; sed does not substitute it; assert fires.
-- No Docker rebuild. No new env vars required on VPS for normal operation. 3 services need systemctl restart after redeploy: vn-news-fetch, vn-sbv-fetch, vn-price-fetch.
-- 3 scripts out of scope for deployer coverage: fetch-tradingeconomics (TRADING_ECONOMICS_API_KEY may not exist in .env), fetch-gso (browser automation disabled), enrich-bctc-urls (separate systemd timer — BCTC sprint).
-
-**Last updated:** 2026-05-31 | **Sprint:** BRIEF-SECTOR-DRIFT (BSD-3)
-
-## BRIEF-SECTOR-DRIFT-BA · 2026-05-31 (BSD-3)
-
-Sprint BSD-3 spec complete. REQ file: `docs/handoffs/TASK_BSD3.md`. Zero PO blockers.
-NEXT: architect not required — design answer is unambiguous (b1 drop, no new abstraction). Route directly to dev-mcp-server (docs change + test only).
-
-Key BA findings (raw-read, not relayed):
-- Brief-creation sites: 3 places stamp `**Sector**:` — `docs/references/analysis-ledger-template.md` (canonical), `docs/agents/digest-predict/flow/monthly.md:49` (inline copy), `docs/agents/unified-agent/flow/market-events-log.md:21` (inline copy). All 3 must be patched.
-- Seam: b1 (DROP the line). All 7 consumers (chef/news-scout/fb-poster/market-watcher/digest-predict/unified-agent/bctc-analyst) confirmed zero parse of `**Sector**:` header — each derives sector from live tools (`get_watchlist()` domain, `SECTOR_NAME_VI`, `get_sector_comparison()`). The line is human-only display.
-- `**Exchange**:` is retained — non-driftable, no live tool alternative without a DB call.
-- Drift-fixture test: `apps/mcp-server/src/__tests__/BSD3-brief-sector-drift.test.ts` — 4 assertions including deliberate-drift injection that proves non-false-green.
-- Rebuild: BSD-3 test is additive (new file), must batch with TSH-1/EI-P2/BANK rebuild — no standalone rebuild.
-- Zone split: docs change commits separately from test file (no mixed `docs/` + `apps/mcp-server/` in one commit).
-
 ---
 
-## TOOL-SURFACE-HYGIENE-BA · 2026-05-31
+## Archive
 
-Sprint TOOL-SURFACE-HYGIENE spec complete. REQ file: `docs/REQ_TOOL-SURFACE-HYGIENE.md`. Zero PO blockers. NEXT: architect (ARCH-TSH).
-
-Key source findings (BA raw-read, not relayed):
-- FR-1 (`get_market_hexagram`): `kinhDichTools.ts:510` — single registration, no duplicate. Delegation chain: `getMarketHexagram()` → `clients.ts:505` → kinh-dich-service GET /market. 501 is downstream. Split into 1a (wire = kinh-dich zone) / 1b (deregister = apps/mcp-server zone).
-- FR-2 (`mark_alert_outcome` vs `write_alert_verdict`): DISTINCT datastores confirmed. `mark_alert_outcome` writes to SQLite `alerts` table (`writeAlertOutcome` from `infrastructure/db/alertStore.ts`). `write_alert_verdict` writes to `docs/data/alert-verdicts.json` (JSON file store via `infrastructure/fileStore/alertVerdictStore.ts`). Different schema, different lifecycle (post-hoc scoring vs fire-time pending write). Diff-before-merge gate required per sprint constraint.
-- FR-3 macro accuracy trio: `get_calibration_report` reads `calibration_snapshots` (weekly Brier), `get_label_accuracy_report` reads `market_messages` (human label accuracy), `get_prediction_accuracy` reads Polymarket outcome computations. Three distinct sources.
-- FR-4 (`get_patterns` vs `get_technical_indicators`): `get_patterns` queries `rag_analyses` (RAG memory, event/keyword match). `get_technical_indicators` calls Go TA microservice (port 5003) for RSI/MACD/MA/BB. Completely distinct.
-- FR-5 (5 trigger tools): all thin SSH-trigger debug tools with same param shape but different VPS scripts. Return schemas slightly diverge (bctc returns `queued`, price returns `service`). Architect-discretion optional.
-- FR-6: `project-stats.json` both `toolCount` fields = 146 (stale). Live = 154. Runs last.
-
----
-
-## Archived sprint specs (condensed)
-
-- **BCTC-TRUST-RED-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-TRUST-RED.md`. REJECTED_SANITY enum + ingest gate + publish guard + 4 DT domain validators. SHIPPED.
-- **BCTC-HUMAN-CONFIRM-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-HUMAN-CONFIRM.md`. bctc_human_corrections table, 3-layer lock, confirm_status column, Option B2 re-anchor key. SHIPPED.
-- **BCTC-AGENTIC-REFINE-BA** ✅ 2026-05-30. REQ `docs/REQ_BCTC-AGENTIC-REFINE.md`. 3-zone split. SHIPPED.
-- **DATA-PIPELINE-INTEGRITY-BA / BCTC-TABLE-BOUNDARY-BA / VNH-SECTOR-FIX-BA** ✅ 2026-05-29–30. SHIPPED.
-- **Pre-2026-05-29 specs** — archived to `docs/archive/notebooks/ba-2026-05-21.md`.
+Pre-2026-06-10 specs: See `docs/archive/notebooks/ba-2026-05-21.md` and git history (commits 4b13a23–9a1e5e8, 2026-05-29 to 2026-06-04).
 
 ## Known patterns / preferences
 

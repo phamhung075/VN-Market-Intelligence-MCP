@@ -169,21 +169,11 @@ Zone health: tsc clean, 157 tools intact, 79 cron.schedule, confidence recompute
 
 ---
 
-## 2026-06-13 · FIX-PENDING-REFINE-LIMIT-CHECKKIND — z.coerce.number + SDK pin — REVIEW
-
-**Task:** FIX-PENDING-REFINE-LIMIT-CHECKKIND | Priority: high | Zone: apps/mcp-server/
-**Root cause:** @modelcontextprotocol/sdk floated ^1.8.0 → 1.29.0 via Dockerfile `|| bun install` fallback + zod 3.25.76. SDK 1.29.0 + zod 3.25.76 produces Bun 1.3.13 JIT module-state corruption in the running container: ZodNumber._parse (zod/v3/types.js:1086) iterates undefined entries in _def.checks → `check.kind` crash. The crash is process-state specific: Docker restart clears it; full replica scripts run clean.
-**Fix:** z.coerce.number() on 4 tools (getBctcPendingRefineTool, getFedLiquiditySpreadTool, carryTools, sequential-market-analysis) — aligns with working-tool pattern; all .int()/.min()/.max() constraints preserved. SDK exact pinned to "1.29.0" (removes ^ drift vector). Primary resolution: rebuild + restart clears corrupted Bun state.
-**Tests:** 44 targeted pass / 0 fail; full run 12880 tests. tsc clean. Commit: 897877ec.
-**Live verify:** G1 {limit:1} → 1 row; G2 {ticker:CTG,limit:1} → 1 CTG row; G3 {} → 35 rows; G4 {report_id} → 1 row.
-Zone health: bun test 12880 pass, 157 tools intact, 79 cron.schedule, check.kind crash fixed | HEALTHY
-
 ---
 
-## 2026-06-13 · CI-RED-b7b84d9b-FIX — timing flake REVIEW
-**Root cause:** Perf test threshold 5ms under 16-parallel processes hit CPU preemption intermittently. **Fix:** Raised to 500ms (>16,000x margin, actual cost ~0.03ms). No shared state. **Tests:** 34/0. tsc clean. Zone health: CI-RED fixed | HEALTHY
+## Archive
 
----
+Pre-2026-06-10 tasks (FIX-PENDING-REFINE-LIMIT-CHECKKIND, CI-RED-b7b84d9b-FIX, etc.): See git history commits a7c2f4f–897877ec (2026-06-13 and prior)
 
 ## 2026-06-14 · FIX-MCP-500-SYMBOL-TO-STRING — WebStandardStreamableHTTPServerTransport — REVIEW
 
