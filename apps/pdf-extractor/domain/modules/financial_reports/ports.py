@@ -32,6 +32,7 @@ Ports defined here (17 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; 
     - OcrTextFetchClientPort        (ocr_text_fetch_client — MD-EXTRACT-2)
     - LayoutFirstPushClientPort     (layout_first_push_client — LF-EXTRACT)
     - OcrPagesFetchClientPort       (ocr_text_fetch_client pages-variant — LF-EXTRACT)
+    - DocLangWritePort              (doclang_write — DOCLANG-SERIALIZE)
 """
 
 from __future__ import annotations
