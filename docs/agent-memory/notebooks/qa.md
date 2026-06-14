@@ -199,5 +199,11 @@ Live DB probe (named volume, keinos sidecar). Check 1: contamination scan = 0 re
 
 Scope miss findings (non-blocking, logged for follow-up): SM-1 VNH 2026-06-12 close=1000.0 exactly (boundary `>1000` strict, 1 row miss); SM-2 460 pre-repair rows with low=0 pattern outside heuristic scope; SM-3 59 today's rows same low=0 pattern (CONTAM-2 guard gap). None introduced by CONTAM-6. Task DoD met. CONTAM-6 REVIEW→DONE. DJ: sprint-OHLCV-UNIT-CONTAM-qa-contam6.md.
 
+## cycle-243 · 2026-06-14 · KINHDICH-HOVER-DETAIL QA gate — APPROVED
+
+Sprint: KINHDICH-HOVER-DETAIL | Task: BA-KINHDICH-HOVER-DETAIL | Verdict: APPROVED | Report: docs/handoffs/TASK_REPORT_KINHDICH-HOVER-DETAIL.md
+
+Served-chunk proof: `QueName-CweIuF2T.js` (67,523 bytes) from container image 3ed501d2 on :3001. stateInterpretation×2 / favorable×2 / warning×2 / Trạng thái×1 / Cảnh báo×1 / Xem chi tiết×1 / que-descriptions-detail×1 — all load-bearing terms confirmed physically present. phases[] occurrences: 0 (correctly absent). Fallback `i.hoverSummary??i.coreMeaning` confirmed in minified output. Deep-link `kinh-dich-reference#que-${n}` confirmed. tsc exit 0. 13 containers all healthy post-rebuild (12 peers intact). Single-file SSOT constraint verified. No blocking issues.
+
 ---
 **Archive:** older cycles in git log + qa-20260606.md
