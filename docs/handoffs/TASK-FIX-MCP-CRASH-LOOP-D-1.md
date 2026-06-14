@@ -214,3 +214,31 @@ jq '.signal_queue[] | select(.type=="WAL_ESCALATION")' docs/data/orch/orch-state
 ## Brief Reference
 
 Full design: `docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md` (§ 3, Fix-Class D).
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/checkpoint.ts` — added 4th optional param `escalateFn?: (walBytes: number) => Promise<void>` to `checkWalFileSize()`; call after Telegram alert when bytes > 10 MB (non-fatal try/catch); return `escalated?: boolean` in response
+  - `apps/mcp-server/src/scheduler/startScheduler.ts` — added `appendSignalQueueRow` + `getOrchStatePath` + `getProjectRoot` imports; defined `walEscalateFn` closure (scheduler layer, DDD-clean) that writes `WAL_ESCALATION` signal to orch-state via `appendSignalQueueRow` (atomic CAS with WF-2 retry); passed as 4th arg to `checkWalFileSize()`
+- **Tests written:** `apps/mcp-server/src/__tests__/FIX-MCP-CRASH-LOOP-D-wal-escalation.test.ts` — 7 assertions across 4 describe blocks, GREEN
+  - escalateFn NOT called when WAL 5 MB (below threshold)
+  - escalated is not true when below threshold
+  - escalateFn called exactly once when WAL 15 MB (above threshold)
+  - escalated is true when above threshold with escalateFn provided
+  - escalateFn receives exact byte count
+  - checkWalFileSize does not throw when escalateFn rejects
+  - escalated is true when escalateFn throws (attempt was made)
+- **Git commits:** [see commit hash below]
+- **Type check:** clean (bun tsc --noEmit — exit 0)
+- **bun test (targeted):** 37 pass / 0 fail (6 checkpoint test files including new D-1 suite)
+- **bun test (full suite):** 12841 pass / 42 skip / 54 fail (54 pre-existing failures in _deprecated/ and unrelated suites; 0 new failures introduced)
+- **Tool count:** 157 tools — matches pre-task baseline
+- **Scheduler count:** 80 cron.schedule entries (baseline 76 as of FIX-PROJECT-STATS-GENERATED + 4 added by prior tasks; D-1 adds 0 new cron registrations)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/testing.md` — added WAL Checkpoint / DB Health table with all 7 checkpoint test files
+- **Graphify:** skipped (no architecture graph nodes changed)
+
+**Design note:** `escalateFn` added as 4th positional param (not deps object) to preserve 100% backwards compat with existing 1329b positional callers. Orch-state write reuses `appendSignalQueueRow` (CAS retry, WF-2 protocol) rather than raw `Bun.sh mv` — avoids subprocess dependency and handles concurrent writer collision.

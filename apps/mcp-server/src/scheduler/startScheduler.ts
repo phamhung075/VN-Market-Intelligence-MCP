@@ -81,6 +81,8 @@ import { getDb } from '../infrastructure/db/schema.js'
 import { SqliteJobRunRepository } from '../infrastructure/db/repositories/SqliteJobRunRepository.js'
 import { reapZombieJobRuns } from '../infrastructure/db/cronJobRunStore.js'
 import { CRONS } from './cronConfig.js'
+import { appendSignalQueueRow, getOrchStatePath } from '../infrastructure/orchStateStore.js'
+import { getProjectRoot } from '../infrastructure/projectRoot.js'
 import {
   log,
   shouldRunCatchup,
@@ -200,11 +202,33 @@ export function startScheduler() {
   // Replaces the FULL(live)/TRUNCATE(off-hours) split that left WAL wedged at 4000 frames.
   // Off-hours backup call preserved for data safety.
   // Overridable via CRON_WAL_CHECKPOINT env var.
+  // D-1 guardrail: escalation closure writes WAL_ESCALATION signal to orch-state when WAL > 10 MB.
+  // Closure defined inline here (scheduler layer) — checkpoint.ts remains agnostic of orch-state.
+  const orchStatePath = getOrchStatePath(getProjectRoot());
+  const walEscalateFn = async (walBytes: number) => {
+    const row = {
+      id: `wal-escalation-${Date.now()}`,
+      ts: new Date().toISOString(),
+      from: 'mcp-server/walCheckpointJob',
+      to: 'ops',
+      type: 'WAL_ESCALATION',
+      summary: `WAL file exceeded 10MB (${(walBytes / 1_048_576).toFixed(1)} MB); investigate checkpoint stall`,
+      severity: 'HIGH' as const,
+      status: 'NEW' as const,
+      payload_ref: null,
+    };
+    appendSignalQueueRow(
+      orchStatePath,
+      row,
+      new Date().toISOString(),
+      'mcp-server',
+    );
+  };
   cron.schedule(CRONS.walCheckpoint, async () => {
     await jobRunRepo.wrapRun('walCheckpointJob', async () => {
       const hour = new Date().getUTCHours();
       const isOffHours = hour >= 3 && hour < 5;
-      await checkWalFileSize(Bun.env.DB_PATH ?? 'market.db');
+      await checkWalFileSize(Bun.env.DB_PATH ?? 'market.db', undefined, undefined, walEscalateFn);
       // BC-1 ROOT FIX: TRUNCATE unconditionally every 30 min
       const walResult = await runForcedTruncateCheckpoint();
       await walCheckpointAlert({ walSize: walResult.walSize, checkpointed: walResult.checkpointed ? walResult.walSize : 0 });

@@ -107,17 +107,21 @@ export async function backupDatabase(dbPath: string, log = logger): Promise<void
  *   > 10 MB (WARNING)  : log error + send alert, then proceed with checkpoint
  *   > 40 MB (CRITICAL) : log critical + send alert with CRITICAL severity
  *
- * Returns { bytes, warningFired } — bytes = 0 when WAL file does not exist.
+ * When bytes > 10 MB and escalateFn is provided, calls escalateFn(bytes) after
+ * the Telegram alert. escalateFn errors are non-fatal (logged but not propagated).
+ *
+ * Returns { bytes, warningFired, escalated? } — bytes = 0 when WAL file does not exist.
  * Called by the cron handler in jobs.ts _before_ runWalCheckpoint so an alert
  * fires even when PRAGMA returns 0 (WAL has grown before any checkpoint ran).
  *
- * Injectable sendWorkFn for unit tests.
+ * Injectable sendWorkFn and escalateFn for unit tests.
  */
 export async function checkWalFileSize(
   dbPath: string,
   sendWorkFn?: (msg: string) => Promise<void>,
   log = logger,
-): Promise<{ bytes: number; warningFired: boolean }> {
+  escalateFn?: (walBytes: number) => Promise<void>,
+): Promise<{ bytes: number; warningFired: boolean; escalated?: boolean }> {
   const walPath = dbPath + "-wal";
   const walFile = Bun.file(walPath);
   const bytes = walFile.size; // 0 when file absent — safe
@@ -153,7 +157,17 @@ export async function checkWalFileSize(
     });
   }
 
-  return { bytes, warningFired: true };
+  // D-1 escalation gate: call escalateFn after alert when WAL > 10 MB.
+  // Non-fatal: escalateFn errors are logged but never propagated.
+  if (escalateFn) {
+    try {
+      await escalateFn(bytes);
+    } catch (err) {
+      console.error('[checkWalFileSize] escalateFn error:', err);
+    }
+  }
+
+  return { bytes, warningFired: true, escalated: !!escalateFn };
 }
 
 /** Injectable deps for runIntegrityCheck (unit testing). */

@@ -12,6 +12,17 @@
 | `155-log-rotation.test.ts` | Log file management |
 | `178-price-history.test.ts` | Price time series queries |
 
+### WAL Checkpoint / DB Health
+| Test File | Coverage |
+|-----------|----------|
+| `1329a-wal-hardening.test.ts` | `runWalCheckpoint()` mode param, `backupDatabase()`, shutdown hook settle delay |
+| `1329b-wal-sentinel.test.ts` | `walCheckpointAlert()` two-tier thresholds (WARNING/CRITICAL/silent); `checkWalFileSize()` disk-size guard (10 MB, 40 MB, absent) |
+| `1447-checkpoint-restart-mode.test.ts` | Restart-mode PRAGMA sequence |
+| `1464-checkpoint-frequency.test.ts` | WAL checkpoint cron frequency config |
+| `1476-wal-stuck-alert.test.ts` | `walCheckpointAlert()` remaining-frame thresholds; Telegram failure non-fatal |
+| `FIX-MCP-CRASH-LOOP-BC-waltruncate.test.ts` | `runForcedTruncateCheckpoint()`: BEGIN IMMEDIATE→TRUNCATE ordering; `:memory:` WAL under 10k-write load; `wal_autocheckpoint`=1000 on fresh connection |
+| `FIX-MCP-CRASH-LOOP-D-wal-escalation.test.ts` | D-1 guardrail: `checkWalFileSize()` 4th-param `escalateFn` injection; NOT called when WAL ≤ 10 MB; called exactly once when WAL > 10 MB; receives byte count; rejection is non-fatal (7 tests) |
+
 ### Market Data
 | Test File | Coverage |
 |-----------|----------|
