@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T19:19:17Z",
+    "updated_at": "2026-06-14T19:34:02Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
     "next_agent": "dev",
-    "note": "VN-MACRO-TOOLING Zone D VMT-D-VPSFETCH DONE (a318eb3f, commit 46095c3d, router RAW-verified 4 files explicit-path: vpsFetch.go+test+VpsFetchPort domain port+composition; DDD Fence-A held, TLS --cacert posture InsecureSkipVerify=false, go build/vet/test green G12 18/18+2/2). status=done NOT done_verified — live VPS-proxy path deferred to first Zone A parser (compile+unit green only, no fetch target yet, no false-green). UNBLOCKED WAVE-2 ungated parsers (dep=VMT-D only) -> ready: VMT-1a-TRADE-BALANCE-TOTAL-HS (leverage #1), VMT-3a-MACRO-INDICATORS-PMI (S&P not geo-blocked), VMT-5a-LIQUIDITY-STATE-NO-GATE. HOLDING WAVE-2 DISPATCH for ops-vps-fetch probe returns (a3e5e573 running) — Zone A parsers hit the SAME geo-blocked sources the probes characterize live; contract-from-live-payload is a hard rule, dispatch each parser once its source probe lands. Still running: ops-vps-fetch PROBE-1..4 (a3e5e573), dev-mcp-server VMT-6 Zone C (a3290349). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. KINHDICH-HOVER-ENRICH-FE done_verified. Commit explicit path only."
+    "note": "VN-MACRO-TOOLING VMT-6-CREDIT-FLOW-EXTEND DONE (Zone C, dev-mcp-server commit 105b07c4, board 75bd3032, QA af6eb5c5 APPROVED, router RAW-verified). bun tsc --noEmit exit0; 6/6 VMT-6 + 25/25 full credit-flow suite + 19/19 pre-existing regression clear; is_estimate purely additive (zero existing flag removed); degraded stub HONEST (all fields null/empty, is_estimate:true, note VIRA/VARA manual-data-required, fail-closed, no fabricated numbers). status=done NOT done_verified — survey_distribution field served live only after mcp-server container rebuild at VMT-7 register/skill-switch-on gate (no false-green). WAVE-1 now: VMT-D-VPSFETCH done (46095c3d) + VMT-6 done (105b07c4); PROBE-1..4 dispatched (ops-vps-fetch a3e5e573 RUNNING); WAVE-2 ungated parsers VMT-1a/3a/5a ready, HELD for probe returns (contract-from-live-payload hard rule — Zone A parsers hit the SAME geo-blocked sources the probes characterize live). On probe return: dispatch each Zone A parser (dev-macro-indicators) against its probe recipe, VMT-1a first (leverage #1, proves vpsFetch live path), SERIALIZE same-service parsers (Zone-A MED recurring-bug guard). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. KINHDICH 1-column FE fix committed (1aa9dc31) — ops a334dc7a frontend rebuild RUNNING (served-bundle verify gate). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -5676,7 +5676,7 @@
             "type": "ENHANCEMENT",
             "priority": "medium",
             "size": "M",
-            "status": "REVIEW",
+            "status": "done",
             "zone": "apps/mcp-server/src/interface/mcp/tools/sector/",
             "owner": "dev-mcp-server",
             "depends": [],
@@ -5689,7 +5689,11 @@
             "note": "Additive field; no gate on BLOCKER-6. Existing is_estimate flags (mortgageIsEstimate, yoyIsEstimate, static_seed) MUST remain unchanged — regression gate on PR diff.",
             "dispatched_at": "2026-06-14T19:09:12Z",
             "dev_commit": "105b07c4",
-            "dev_result": "DONE: survey_distribution stub added (is_estimate=true, all fields null/empty, note VIRA/VARA deferred). SurveyDistribution interface exported. Return type extended. tsc --noEmit exit0. 6/6 VMT-6 tests pass + 19/19 existing credit-flow tests pass. PR diff: pure additive, zero existing is_estimate lines removed. No .head touched, no unrelated task."
+            "dev_result": "DONE: survey_distribution stub added (is_estimate=true, all fields null/empty, note VIRA/VARA deferred). SurveyDistribution interface exported. Return type extended. tsc --noEmit exit0. 6/6 VMT-6 tests pass + 19/19 existing credit-flow tests pass. PR diff: pure additive, zero existing is_estimate lines removed. No .head touched, no unrelated task.",
+            "done_at": "2026-06-14T19:34:02Z",
+            "qa_agent": "af6eb5c5",
+            "qa_verdict": "APPROVED",
+            "router_verdict": "RAW-VERIFIED done (NOT done_verified — runtime not rebuilt; field served only after mcp-server rebuild at VMT-7). Prior router-independent RAW-verify: code 105b07c4 purely additive (is_estimate ONLY added, zero existing flag removed/flipped), board 75bd3032 bounded to VMT-6 task (no .head, 0 foreign id-lines, working tree clean). QA af6eb5c5: bun tsc --noEmit exit0; 6/6 VMT-6 + 25/25 full credit-flow suite + 19/19 pre-existing regression clear; grep-diff zero `-` on mortgageIsEstimate/yoyIsEstimate/static_seed; degradation honest (all fields null/empty, is_estimate:true, note VIRA/VARA manual-data-required, no fabricated numbers, fail-closed intact); mock-guard exit2 CAUTION non-blocking. Compile+unit green; live tool-surface deferred to VMT-7 rebuild — no false-green."
           },
           {
             "id": "VMT-1a-TRADE-BALANCE-TOTAL-HS",
