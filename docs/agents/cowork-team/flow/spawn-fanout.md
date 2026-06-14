@@ -22,7 +22,11 @@
             EXIT (do not call send_telegram)
        4. if publish_claim.claimed == true:
             proceed with send_telegram(...)
-     Weekly slots (digest-sunday, tnb-audit): use work_date = ISO week (YYYY-WW) + ttl_seconds=691200 (8d).
+     Weekly slots (digest-sunday, tnb-audit): FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (2026-06-14):
+       (A) use get_week_period MCP tool to get the canonical week period (not local `date +%G-W%V`)
+       (B) key the mutex on periodKey (date-range "YYYY-MM-DD/YYYY-MM-DD"), NOT weekLabel.
+       e.g. "published:digest-sunday:2026-06-08/2026-06-14" not "published:digest-sunday:2026-W24".
+       ttl_seconds=691200 (8d) per spawn-fanout.md.
      The publisher owns the marker — the dispatcher (this flow) does NOT call publish markers. -->
 
 **Important — Published marker gate (FR-P2-7):** Each spawned agent MUST check and set a

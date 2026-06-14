@@ -14,25 +14,39 @@ If you find yourself about to refuse execution or delegate upward → that is th
 
 ## PUBLISHED MARKER GATE (Layer-A dedup — MANDATORY before Dispatch)
 
-<!-- AC-5 / FIX-COWORK-GUARANTEED-BACKSTOP: Layer-A RemoteTriggers fire independent CLI sessions
-     that bypass the cowork-team dispatcher. This gate prevents double-publish of the tnb-audit
-     WORK report when both Layer-A and Layer-B fire concurrently.
+<!-- FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (2026-06-14):
+     Applies the same generic fix as digest-predict/flow/main.md:
+     (A) obtain week period from ONE canonical server-side tool (get_week_period)
+     (B) key the mutex on PERIOD DATE-RANGE (periodKey), NOT weekLabel
+     This prevents dedup failure when two dispatch paths derive divergent week-label
+     strings for the same Sunday.
+
      Pattern source: docs/agents/cowork-team/flow/spawn-fanout.md § Published marker gate (FR-P2-7)
-     Weekly slot: WORK_DATE = ISO week (YYYY-WW); ttl_seconds ~8d (691200) per spawn-fanout.md -->
+     Weekly slot: ttl_seconds ~8d (691200) per spawn-fanout.md
+
+     IMPORTANT: do NOT call `date +%G-W%V` or any local shell date to compute the week key.
+     Always use get_week_period and key on periodKey. -->
 
 ```
-SLOT_ID   = "tnb-audit"
-WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%G-W%V   # ISO week, e.g. 2026-W25
+SLOT_ID = "tnb-audit"
+
+# Step G-1: obtain canonical week period from the server (single source of truth)
+WEEK_PERIOD = call_tool(server="vn-market", tool="get_week_period", arguments={})
+# WEEK_PERIOD contains: weekLabel (e.g. "2026-W24"), periodKey (e.g. "2026-06-08/2026-06-14"),
+#   periodStart, periodEnd, weekNumber, weekYear
+
+# Step G-2: key the mutex on periodKey (date-range), NOT weekLabel
+PUBLISH_TASK_ID = "published:tnb-audit:" + WEEK_PERIOD.periodKey
 
 PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "published:tnb-audit:" + WORK_DATE,
+  task_id:     PUBLISH_TASK_ID,
   task_kind:   "cowork-slot",
   owner_agent: "tran-ngoc-bau",
   ttl_seconds: 691200    # ~8 days — weekly slot (spawn-fanout.md)
 })
 
 if PUBLISH_CLAIM.claimed != true:
-  log "[tran-ngoc-bau] publish blocked — already published slot=tnb-audit week=" + WORK_DATE
+  log "[tran-ngoc-bau] publish blocked — already published slot=tnb-audit period=" + WEEK_PERIOD.periodKey + " weekLabel=" + WEEK_PERIOD.weekLabel
   EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
 ```
 

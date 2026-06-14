@@ -14,25 +14,48 @@ Universal entry. Picks the right sub-flow based on current time. Crons and ad-ho
 
 ## PUBLISHED MARKER GATE (Layer-A dedup — MANDATORY before Dispatch)
 
-<!-- AC-5 / FIX-COWORK-GUARANTEED-BACKSTOP: Layer-A RemoteTriggers fire independent CLI sessions
-     that bypass the cowork-team dispatcher. This gate prevents double-publish of the weekly
-     digest when both Layer-A and Layer-B fire digest-sunday concurrently.
+<!-- FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP (2026-06-14):
+     Root cause A: divergent ISO-week labels (W24 vs W25) for the same Sunday defeated
+     the marker dedup — two different task_ids → two publishes.
+     Root cause B: RemoteTrigger fires did NOT update last_fired → CLI dispatcher
+     re-fired slots the backstop already ran.
+
+     Fix (A): obtain the week period from ONE canonical server-side tool (get_week_period)
+     instead of computing `date +%G-W%V` locally in each session.  The server always
+     returns the same value for the same instant; per-session shell date divergence is
+     eliminated.
+
+     Fix (B): key the mutex on the PERIOD DATE-RANGE (periodKey = "YYYY-MM-DD/YYYY-MM-DD"),
+     NOT the weekLabel string.  Two dispatch paths that still somehow derive different
+     weekLabel strings for the same Sunday ALWAYS derive the same periodStart/periodEnd →
+     same periodKey → same mutex key → dedup holds.
+
      Pattern source: docs/agents/cowork-team/flow/spawn-fanout.md § Published marker gate (FR-P2-7)
-     Weekly slot: WORK_DATE = ISO week (YYYY-WW); ttl_seconds ~8d (691200) per spawn-fanout.md -->
+     Weekly slot: ttl_seconds ~8d (691200) per spawn-fanout.md
+
+     IMPORTANT: do NOT call `date +%G-W%V` or any local shell date to compute the week key.
+     Always use get_week_period and key on periodKey. -->
 
 ```
-SLOT_ID   = "digest-sunday"
-WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%G-W%V   # ISO week, e.g. 2026-W25
+SLOT_ID = "digest-sunday"
+
+# Step G-1: obtain canonical week period from the server (single source of truth)
+WEEK_PERIOD = call_tool(server="vn-market", tool="get_week_period", arguments={})
+# WEEK_PERIOD contains: weekLabel (e.g. "2026-W24"), periodKey (e.g. "2026-06-08/2026-06-14"),
+#   periodStart, periodEnd, weekNumber, weekYear
+
+# Step G-2: key the mutex on periodKey (date-range), NOT weekLabel
+PUBLISH_TASK_ID = "published:digest-sunday:" + WEEK_PERIOD.periodKey
 
 PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "published:digest-sunday:" + WORK_DATE,
+  task_id:     PUBLISH_TASK_ID,
   task_kind:   "cowork-slot",
   owner_agent: "digest-predict",
   ttl_seconds: 691200    # ~8 days — weekly slot (spawn-fanout.md)
 })
 
 if PUBLISH_CLAIM.claimed != true:
-  log "[digest-predict] publish blocked — already published slot=digest-sunday week=" + WORK_DATE
+  log "[digest-predict] publish blocked — already published slot=digest-sunday period=" + WEEK_PERIOD.periodKey + " weekLabel=" + WEEK_PERIOD.weekLabel
   EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
 ```
 
