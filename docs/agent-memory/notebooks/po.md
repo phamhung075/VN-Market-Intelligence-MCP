@@ -1,56 +1,37 @@
 # PO Notebook
 
-## 2026-06-14T16:10Z — S51: weekend signal-drain triage (Sunday, market CLOSED, board idle)
-Router handoff: 2 ship-wave fixes done_verified (digest ISO-week dedup 295eb364, ops builder-prune
-bd0d7f01). 4 uncommitted signals to triage — all 4 ALREADY groomed to backlog by S50
-(CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 + ROUTE-BCTC-FPT-Q1-2026-ROUTINE, both TODO).
-**Decision: DEFER both, promote NOTHING.** Bloat overage self-attenuated 28L→4L live
-(dev-technical-analysis 207→186 already under cap; dev-mcp-server 203, qa 201 — P3 notebooks
-OVERWRITE-to-cap each cycle). FPT signal ALL_PASS / no escalation / no waiting consumer.
-Neither clears the bar for an off-market Sunday dispatch. Archived all 4 consumed signals to
-`docs/signals/processed/` so the dashboard won't re-fire them NEW. Commit **7e2d924b**
-(EXPLICIT-PATH: 4 processed signal files ONLY; ~6-file concurrent dirty tree —
-notebooks/coverage/schedule of live agents — left untouched). Board: head=idle, ready[] empty,
-no orch-state mutation. ARCH-CRON-SCHEDULER-RELIABILITY untouched (Monday-gated). 2 signal_queue
-NEW rows = RAG-SERVICE dark-by-design WARNs (not actionable).
+## 2026-06-14T18:10Z — S52: open VN-MACRO-TOOLING sprint (07-06 roundtable methodology gap, tools+data lane)
+Initiative from `docs/analysis-briefs/07-06-methodology-gap.md` (## New MCP tools requested, ranked by
+leverage + bonus EXTEND). My lane = tools + data ONLY; the 2 new cowork skills (macro-health-read,
+trade-fx-pressure-decomp) are agents-architect's parallel lane and run DEGRADED (is_estimate=true) off
+existing tools until these land.
 
-## 2026-06-14T14:45Z — S50: ARCH-CRON umbrella decision + backlog drain (Sunday, market CLOSED)
+**Opened sprint VN-MACRO-TOOLING (PLANNING, 7 tasks)** via idempotent
+`scripts/po-vn-macro-tooling-sprint-open.jq` (atomic temp→[ -s ]→jq empty→rename). Routed
+**BA-VN-MACRO-TOOLING** spec gate to ready[]. Sprint_goal entry added (PLANNING).
 
-T3-ARCH-CRON-WATCHDOG reached done_verified (router RAW-confirmed LIVE: watchdog fires,
-3 false "never ran" alerts gone, genuine-stale alerts correct). All 3 children done_verified.
-dev-mcp-server zone now FREE. Commit **2be44824** (explicit-path: orch-state + s50 script only;
-coverage-state.json + cowork-schedule.json left dirty/unstaged — concurrent agent).
+Task breakdown (leverage order = brief order):
+- VMT-1-TRADE-BALANCE (L/high, dev-macro-indicators+dev-vps-crawls) — HIGHEST; HS-group + FDI/domestic
+  bloc split + processing-margin ratio. GSO/Customs → VPS.
+- VMT-2-BOP (L/high, dev-macro-indicators+dev-vps-crawls) — BOP lines + offshore-parked/E&O proxy. SBV/IMF → VPS.
+- VMT-3-MACRO-INDICATORS (L/high, +dev-mainserver-crawls) — pmi/iip/retail(nom+real)/pub-inv/fdi w/ ma3/ma5/yoy/ytd pre-computed. GSO+S&P PMI.
+- VMT-4-CPI-COMPONENTS (M/med) — 11 baskets weight+contribution + cpi_peaked. GSO → VPS.
+- VMT-5-LIQUIDITY-STATE (M/med, +mainserver) — interbank 1w/OMO/refi/IRS/SJC-vs-world gap/CNY-DXY.
+- VMT-6-CREDIT-FLOW-EXTEND (M/med, dev-mcp-server) — EXTEND: real {mean,dispersion,hawk/dove} not static-seed.
+- VMT-7-REGISTER (M/high, dev-mcp-server, depends all 5) — RUN-LAST gate; mirrors TOOL-SURFACE-UPGRADE
+  U2-PARITY. Verify each tool LIVE via call_tool gateway + registry parity.
 
-### DECISION 1 — umbrella HOLD-OPEN (not closed)
-Rationale: mechanism-complete != outcome-proven. G4(dropped-tick test)+G5(watchdog
-self-heal/alert) MET via T1/T2/T3, watchdog LIVE. G1/G2/G3 need LIVE VN-market-day auto-fire
-(ohlcv aggregator advance + 16 sectors leave N/A; fundamentals VCB/ACB/CTG repopulate;
-reputationCompute 08:30 under contention) — 2026-06-14 is Sunday, market CLOSED, evidence
-can't exist yet. Closing on mechanism would repeat the EXACT anti-pattern that spawned this
-umbrella (53d00955 marked done on a MANUAL trigger → RECURRED on reputation). Added
-**MARKET-DAY-2026-06-15 re-verify gate**. Corrected QA cycle-269 (it mis-stated CLOSED).
-Marked 5 stale BLOCKED TASK-ARCH-CRON-1A/1A-TEST/1B/1C/2 as SUPERSEDED by shipped children.
-
-### DECISION 2 — triage (WIP<=2, apps/mcp-server serialized to ONE in-flight)
-- **FIX-REFINE-LOCK-TTL-RECLAIM** (P1, ready, NEXT dev-mcp-server) — generic TTL-steal of any
-  expired refine lock; [Lock orphaned by rebuild] LET-EXPIRE has FAILED (acquire refused 11.5h
-  past expiry). Unblocks refine_bctc_md (bdcfa5e0 VCB Q4 7/26 + VCB Q1/HPG Q4/GVR/HPG/HVN pending).
-- **FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP** (high, ready, sequenced behind refine-lock, same zone) —
-  canonical ISO-week / period-date-range mutex + RemoteTrigger last_fired. Recurrence-prevention
-  ONLY (W24/W25 double-post already delivered to MARKET; do NOT re-send).
-- **FIX-BASE-RATE-COMPUTATION-CRON-DEAD** (P2 backlog) — genuine watchdog-surfaced ~20d-stale job.
-- **ARCH-WATCHDOG-WEEKDAY-AWARE-THRESHOLD** (P2 architect) — weekend false-stale for weekday-only
-  jobs (morning/evening/france briefings).
-- **CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614** (P3 code-janitor, 3 notebooks);
-  **ROUTE-BCTC-FPT-Q1-2026-ROUTINE** (P3 bctc-analyst/cowork, ALL_PASS).
-- CLOSED already-resolved: workflow-protocol-coherence-audit (IMPLEMENTED 85935da3),
-  dev-team-tool-contract-cron-overlap (live SF-1 single-flight). Both NEW signal_queue rows RESOLVED.
+**Global acceptance (load-bearing):** (1) VN geo-blocked via Vinahost VPS only (project_bctc_vps_proxy);
+(2) gateway-only surface (call_tool wrapper, discoverable); (3) SCHEMA-CONTRACT — each tool exposes the
+clean schema the 2 cowork skills switch from DEGRADED→live with no code change; (4) honest per-series
+is_estimate (no static-seed masquerade); (5) direction+delta + server-side transforms.
 
 ### Carry-over
-- Monday 2026-06-15: QA must LIVE-verify G1/G2/G3 (pipeline-health + cron_job_runs named-volume,
-  never badges). All-PASS → umbrella done_verified. Any miss → watchdog (G5, LIVE) should have
-  self-healed/alerted → capture evidence + spin residual FIX.
-- Next dev-mcp-server pull = FIX-REFINE-LOCK-TTL-RECLAIM (architect-route, recurring). digest-dedup
-  sequenced behind it. P2/P3 wait until the HIGH/P1 pair clears the single zone slot.
-- digest-predict 13:47 "gateway not reachable in subagent" = per-session init-miss
-  (False-infra-failure class), NOT a dev bug — do not queue.
+- NEXT: BA decomposes → docs/REQ_VN-MACRO-TOOLING.md (per-tool I/O contract, VPS routing, edge cases,
+  skill-switch-on acceptance) → returns to me for spec review → architect (multi-zone split) → pm → dev.
+- Coordination: each shipped tool must expose stable schema BEFORE the cowork skills flip off DEGRADED;
+  VMT-7 verifies LIVE. Notify agents-architect when VMT-1 schema lands (first switch-on candidate).
+- Sprint is PLANNING until BA spec approved; flip to active on approval.
+- Prior (S50/S51): ARCH-CRON-SCHEDULER-RELIABILITY umbrella HOLD-OPEN, Monday 2026-06-15 G1/G2/G3 LIVE
+  re-verify. FIX-REFINE-LOCK-TTL-RECLAIM = next dev-mcp-server pull (mcp-server zone serialized) — note
+  VMT-6/VMT-7 also dev-mcp-server; sequence behind refine-lock + digest-dedup pair on that single zone slot.
