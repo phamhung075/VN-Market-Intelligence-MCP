@@ -192,4 +192,8 @@ export const CRONS = {
    *  Scans last 7 days × watchlist tickers; sends BUG Telegram on any mixed-scale row.
    *  Tolerates known all-zero rows (BACKLOG_CONTAM_8) without spamming. */
   ohlcvSanityCheck:           Bun.env.CRON_OHLCV_SANITY_CHECK                       ?? '5 15 * * 1-5',
+  /** restartCadenceAlert — FIX-MCP-CRASH-LOOP A-1: detect ≥2 mcp-server restarts in 4h window.
+   *  Fires at :15 and :45 of every hour — staggered 15 min from WAL checkpoint (:00 and :30).
+   *  Sends WORK-channel alert when count ≥ 2. Only meaningful after BC-1 root fix is deployed. */
+  restartCadenceAlert:        Bun.env.CRON_RESTART_CADENCE_ALERT                    ?? '15,45 * * * *',
 }

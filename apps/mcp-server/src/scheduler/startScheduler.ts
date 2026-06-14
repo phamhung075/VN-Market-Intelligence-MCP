@@ -74,6 +74,7 @@ import { runAgmPlanJob } from './financial-reports/agmPlanJob.js'
 import { runBoardDetailsJob } from './financial-reports/boardDetailsJob.js'
 import { runDiskUsageAlertJob } from './diskUsageAlertJob.js'
 import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
+import { runRestartCadenceAlertJob } from './system/restartCadenceAlertJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
 import { runVnstockStartupProbe } from './financial-reports/vnstockStartupProbe.js'
 import { getDb } from '../infrastructure/db/schema.js'
@@ -212,6 +213,20 @@ export function startScheduler() {
       }
     })
   })
+
+  // Every 30 min at :15 and :45 UTC — Restart-cadence alert guardrail — FIX-MCP-CRASH-LOOP A-1
+  // Staggered 15 min from WAL checkpoint (:00 and :30) to avoid simultaneous cron load.
+  // Queries cron_job_runs for mcpServerStartup sentinel rows in last 4h.
+  // Sends WORK alert when count >= 2 (only meaningful after BC-1 root fix is deployed).
+  cron.schedule(CRONS.restartCadenceAlert, async () => {
+    await jobRunRepo.wrapRun('restartCadenceAlertJob', async () => {
+      const result = await runRestartCadenceAlertJob(db)
+      if (result.alertSent) {
+        log(`[restart-cadence-alert] alert sent — restartCount=${result.restartCount}`)
+      }
+      return { rowsWritten: result.alertSent ? 1 : 0 }
+    })
+  }, { timezone: 'UTC' })
 
   // Sunday 22:30 GMT+7 — Weekly pattern watch (task 146)
   cron.schedule(CRONS.patternWatch, async () => {
@@ -1067,5 +1082,5 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + deep-fetch-vps + deep-fetch-main active`)
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + restart-cadence-alert + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details + deep-fetch-vps + deep-fetch-main active`)
 }

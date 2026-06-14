@@ -13,6 +13,7 @@ import { createBunServer } from "./interface/mcp/server.js";
 import { startScheduler } from "./scheduler/jobs.js";
 import { registerWebhook } from "./infrastructure/notifiers/telegramWebhookSetup.js";
 import { runEnvCheck, assertEnvDbConsistency } from "./infrastructure/envCheck.js";
+import { insertCronJobRunStart, updateCronJobRunEnd } from "./infrastructure/db/cronJobRunStore.js";
 
 export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<void> {
   // ── 0. Env self-check ─────────────────────────────────────────────────────
@@ -30,6 +31,19 @@ export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<v
     getDb().exec("PRAGMA wal_checkpoint(TRUNCATE)");
     log.info("[bootstrap] WAL checkpoint (startup replay) complete");
   } catch { /* best-effort */ }
+
+  // ── 1c. Startup sentinel — FIX-MCP-CRASH-LOOP A-1 ────────────────────────
+  // Write a cron_job_runs row so the restart-cadence alert cron can detect
+  // ≥2 restarts in a 4h window.  Best-effort: if the table is missing or the
+  // write fails we continue normally — sentinel absence just means no alert.
+  try {
+    const { getDb } = await import("./infrastructure/db/schema.js");
+    const _db = getDb();
+    const sentinelId = insertCronJobRunStart(_db, "mcpServerStartup");
+    updateCronJobRunEnd(_db, sentinelId, "success", null, null, 0);
+    log.info("[bootstrap] mcpServerStartup sentinel written to cron_job_runs");
+  } catch { /* best-effort — alert guardrail only, do not block startup */ }
+
   log.info("[bootstrap] Database ready");
 
   // ── 1b. Seed trade relationship profiles (first run only) ─────────────────
