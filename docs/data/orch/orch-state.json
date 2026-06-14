@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T17:56:46Z",
+    "updated_at": "2026-06-14T18:02:08Z",
     "updated_by": "dev-team",
     "active_task_id": "KINHDICH-HOVER-ENRICH-FE",
-    "next_agent": "ba",
-    "note": "KINHDICH-HOVER-ENRICH CLOSED by PO (ae636dab, commit 039306f5, router RAW-verified 2 files) -> done[] partial-ssot-done-wrong-surface (hoverSummary x64 SSOT groundwork in que-reference.js + hexagram_reference.go KEPT). Follow-up KINHDICH-HOVER-ENRICH-FE OPENED ready[] (zone apps/frontend/, owner dev-frontend) — corrects the surface to the REAL user hover: Remix :3001 QueName.tsx tooltip <- que-descriptions.generated.ts. Router fixed stale head + dispatched BA. Chain po->BA->architect->dev-frontend->ops->qa->po. Scope: extend scripts/gen-que-descriptions.ts to emit hoverSummary -> QueName.tsx render (coreMeaning fallback) -> regen que-descriptions.generated.ts -> rebuild frontend :3001. DRY constraint: preserve QUE-TOOLTIP-DRY single-SSOT/single-codegen/single-QueName mechanism; only swap which field the one shared tooltip renders. BA reuses docs/handoffs/KINHDICH-HOVER-ENRICH-BA-spec.md (64 pre-authored VI/EN strings). ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
+    "next_agent": "architect",
+    "note": "KINHDICH-HOVER-ENRICH-FE BA spec DONE (a872da8b, commit fda7cb82, router RAW-verified 3 files explicit-path; spec docs/handoffs/KINHDICH-HOVER-ENRICH-FE-BA-spec.md 257L; FR-3 anchor QueName.tsx:75={desc.coreMeaning} confirmed). 4 FR + 4 NFR, 3-file frontend change (scripts/gen-que-descriptions.ts emit hoverSummary -> regen que-descriptions.generated.ts -> QueName.tsx:75 {desc.hoverSummary ?? desc.coreMeaning}) + ops rebuild apps/frontend :3001 only. kinh-dich SSOT untouched (groundwork shipped 47fe36e8). -> architect: brownfield apps/frontend zone + ARCH-RATIFY-FE-1 (ratify DRY-preserving codegen extension mechanism — PO already settled the field choice) + tech design for dev-frontend. Chain -> dev-frontend -> ops(frontend rebuild) -> qa LIVE :3001 hover -> po signoff. DRY: single SSOT/codegen/QueName, coreMeaning fallback, QUE_DETAIL detail page untouched. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12504,7 +12504,9 @@
         "ba_dispatched_at": "2026-06-14T17:56:46Z",
         "ba_dispatched_by": "dev-team",
         "ba_spec": "docs/handoffs/KINHDICH-HOVER-ENRICH-FE-BA-spec.md",
-        "ba_completed_at": "2026-06-14T00:00:00Z"
+        "ba_completed_at": "2026-06-14T00:00:00Z",
+        "architect_dispatched_at": "2026-06-14T18:02:08Z",
+        "architect_dispatched_by": "dev-team"
       }
     ],
     "review": [
