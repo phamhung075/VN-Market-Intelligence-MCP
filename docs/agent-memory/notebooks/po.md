@@ -1,5 +1,19 @@
 # PO Notebook
 
+## 2026-06-14T16:10Z — S51: weekend signal-drain triage (Sunday, market CLOSED, board idle)
+Router handoff: 2 ship-wave fixes done_verified (digest ISO-week dedup 295eb364, ops builder-prune
+bd0d7f01). 4 uncommitted signals to triage — all 4 ALREADY groomed to backlog by S50
+(CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 + ROUTE-BCTC-FPT-Q1-2026-ROUTINE, both TODO).
+**Decision: DEFER both, promote NOTHING.** Bloat overage self-attenuated 28L→4L live
+(dev-technical-analysis 207→186 already under cap; dev-mcp-server 203, qa 201 — P3 notebooks
+OVERWRITE-to-cap each cycle). FPT signal ALL_PASS / no escalation / no waiting consumer.
+Neither clears the bar for an off-market Sunday dispatch. Archived all 4 consumed signals to
+`docs/signals/processed/` so the dashboard won't re-fire them NEW. Commit **7e2d924b**
+(EXPLICIT-PATH: 4 processed signal files ONLY; ~6-file concurrent dirty tree —
+notebooks/coverage/schedule of live agents — left untouched). Board: head=idle, ready[] empty,
+no orch-state mutation. ARCH-CRON-SCHEDULER-RELIABILITY untouched (Monday-gated). 2 signal_queue
+NEW rows = RAG-SERVICE dark-by-design WARNs (not actionable).
+
 ## 2026-06-14T14:45Z — S50: ARCH-CRON umbrella decision + backlog drain (Sunday, market CLOSED)
 
 T3-ARCH-CRON-WATCHDOG reached done_verified (router RAW-confirmed LIVE: watchdog fires,
