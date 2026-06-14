@@ -86,11 +86,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T11:40:00Z",
-    "updated_by": "architect",
+    "updated_at": "2026-06-14T11:43:22Z",
+    "updated_by": "dev-team",
     "active_task_id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
     "next_agent": "dev-mcp-server",
-    "note": "ARCH-CRON-SCHEDULER-RELIABILITY umbrella → T1 (T4 dedup guards, READY, next_agent=dev-mcp-server). T2 and T3 READY but sequenced: T2 depends[T1], T3 depends[T2]. deploy-gate FIX-MCP-CRASH-LOOP-WRITEWAL verified live."
+    "note": "T1-ARCH-CRON-T4-DEDUP-GUARDS dispatched -> dev-mcp-server (IMPL, apps/mcp-server, off-market Sunday safe window). T2/T3 BLOCKED in ready[] by depends[] (same-zone serialized). Parallel non-conflicting: B=FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS -> qa (cross-service docs gate). WIP=2 different zones."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11934,9 +11934,7 @@
         "design_complete_at": "2026-06-14T11:40:00Z",
         "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
         "next_task": "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
         "title": "ARCH-CRON Phase 1a: T4 idempotency dedup guards on 26 jobs — precondition for recoverMissedExecutions",
@@ -11944,7 +11942,7 @@
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "priority": "P1",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "depends": [],
         "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
         "size": "M",
@@ -11957,8 +11955,14 @@
         },
         "created_at": "2026-06-14T12:00:00Z",
         "created_by": "pm",
-        "note": "MANDATORY PRECONDITION before T2. Lever 2 from architect brief. Touches 13 job files per brief §5.2. No infrastructure changes; uses existing jobRunRepo.getLastRuns() method."
-      },
+        "note": "MANDATORY PRECONDITION before T2. Lever 2 from architect brief. Touches 13 job files per brief §5.2. No infrastructure changes; uses existing jobRunRepo.getLastRuns() method.",
+        "next_agent": "dev-mcp-server",
+        "claimed_at": "2026-06-14T11:43:22Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router dispatched T1 IMPL (tick 11:06Z, off-market Sunday = architect-blessed safe mcp-server window). dev-mcp-server adds cron_job_runs recency guards (90% cadence window) to the 26 non-idempotent T4 jobs — MANDATORY PRECONDITION before T2 recoverMissedExecutions (else recovery double-fires Telegram). Per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5.2. bun tests GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; then qa LIVE-verify (cron_job_runs rows, idempotency under replay), never badges. Deploy-gate FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) met."
+      }
+    ],
+    "ready": [
       {
         "id": "T2-ARCH-CRON-RECOVER-JITTER",
         "title": "ARCH-CRON Phase 1b+1c: uniform recoverMissedExecutions + deterministic jitter on 8 high-collision jobs",
