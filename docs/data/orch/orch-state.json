@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T22:47:30Z",
+    "updated_at": "2026-06-14T23:02:35Z",
     "updated_by": "dev-team",
     "active_task_id": "VMT-8-MACRO-GRACEFUL-FAILCLOSE",
-    "next_agent": "dev",
-    "note": "VN-MACRO-TOOLING VMT-8-MACRO-GRACEFUL-FAILCLOSE DISPATCHED -> dev-macro-indicators (router dev-team tick 20260615T0036Z; PO a4c7a9bf triaged F2 /goal#1 best-result gap). /goal#1+#2 resilience fix: 4 dark Zone-A macro endpoints (trade/bop/macro/cpi) + liquidity error-path emit opaque HTTP 500 on upstream-fetch failure instead of degrading honestly (200 + is_estimate=true + per-bloc blocked_reason). PO RAW-verified root cause at code level + CORRECTED premise: errorLiquidityResponse ALSO returns non-nil error (would 500 on error path); /liquidity-state only looks graceful because its providers read LOCAL market.db (happy path) — fix is generic across ALL 5 use-cases, not 4. dev-macro-indicators returns (degradedResp, nil) on upstream-fetch/parse failure, keeps nil-provider/wiring -> 500; preserve permanent is_estimate invariants. G5 verifiable via forced-failure fixture while proxy dark. === PARALLEL IN-FLIGHT: F1 VPS squid :3128 outage -> ops-vps-fetch (a47d92aa) restoring (router dispatched Dockerfile/compose/certs changes are ITS working tree — NOT swept). PO holds VPS-cluster (FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + VPS-AVAIL-02-FIX) reconcile under one INC until ops-vps-fetch reports. === HELD: F3 gen-project-stats cronJobCount reconcile (dev-mcp-server, low); S2 07-06 methodology brief greenlit but SEQUENCED-after-incident (agent-father, not this cycle); context-bloat ops.md 235L>200 deferred until ops-vps-fetch done (claude-manager-helper prune, write-collision risk). VMT-3a-PMI blocked-probe5 (S&P dev-local). TNB c95 ACK'd no-new-tasks. Commit explicit path only."
+    "next_agent": "ops",
+    "note": "VMT-8-MACRO-GRACEFUL-FAILCLOSE DONE (dev-macro-indicators a174dacb, commit 7a176a44, router RAW-verified gates GREEN: on-main; 14 files all apps/macro-indicators/** handlers-unchanged; foreign-capture NONE; independent go build/vet rc=0 + go test ok; fail-close invariants at code level — 5 degraded*Response return (resp,nil) Status=degraded+IsEstimate=true+BlockedReason -> G2 HTTP200; error*Response fmt.Errorf -> G3 nil-provider HTTP500 preserved; PERMANENT is_estimate held on degraded path G4 — never flipped; generic across all 5 use-cases /goal#2; 209 PASS/0 FAIL). CODE merge gate satisfied BUT NOT LIVE — container macro-indicators-1 holds ops 0608f6aa image (Up ~18m), pre-7a176a44. === -> head dev->ops: FORCE-RECREATE macro-indicators single service (memory: rebuild after dev change; NEVER compose down — kills peers ~21min) + LIVE-verify via gateway re-probe (NOT badges): get_vn_trade_balance + get_vn_bop must now return 200 with Status=degraded + is_estimate=true + blocked_reason (was opaque-500 / timeout) while VPS upstream sources stay dark (NSO selector + BOP encoding still unfixed — those are SEPARATE accuracy tasks routed to PO); get_vn_liquidity_state stays 200 honest. On ops live-green -> router RAW re-probes each tool itself (not ops badge) -> VMT-8 done_verified + release task:VMT-8. === PARALLEL: F1 VPS :3128 RESOLVED (VPS-AVAIL-02-FIX resolved, commit b1390d66, proxy RAW-proven 200). PO holds signal dev-team-20260614T225734Z-vps-cluster-reconcile (NEW): reconcile other-3 VPS tasks individually + mint 2 dev-zone accuracy tasks (F-NSO-SELECTOR + F-BOP-ENCODING, COMPLEMENTARY to VMT-8, sequence after) + proxy-ACL security note. HELD: F3 cronJobCount (dev-mcp-server low); S2 07-06 methodology brief (agent-father, greenlit sequenced-after-incident); context-bloat ops.md prune. VMT-3a-PMI blocked-probe5. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -494,7 +494,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T22:57:34Z",
+    "_updated_at": "2026-06-14T23:02:35Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -9144,7 +9144,7 @@
         "desc": "VN-MACRO-TOOLING /goal#1 BEST-RESULT resilience gap (router F2). The 4 Zone-A macro endpoints (POST /trade-balance, /bop, /macro-indicators, /cpi-components) return HTTP 500 with an opaque error whenever the upstream NSO/SBV fetch (VPS-proxied, currently dark per F1) fails, instead of degrading honestly the way /liquidity-state is DOCUMENTED to. This is a resilience defect that persists even after the proxy is restored: any transient upstream failure must degrade gracefully, never opaque-500. GENERIC across all endpoints (/goal#2 — ONE fix pattern, mirror the intended liquidity fail-close).",
         "zone": "apps/macro-indicators/",
         "owner": "dev-macro-indicators",
-        "status": "dispatched",
+        "status": "done",
         "priority": "P1",
         "size": "S",
         "market_independent": true,
@@ -9179,7 +9179,11 @@
         "source": "router dev-team tick 20260615T0036Z finding F2 (/goal#1 best-result gap); PO RAW-verified root cause in handlers_vmt_*.go + usecases_vmt_*.go",
         "dispatched_at": "2026-06-14T22:47:30Z",
         "dispatch_agent": "dev-macro-indicators",
-        "dispatch_note": "Router dev-team dispatch 20260615 (tick 0036Z). Implement per this task's fix_spec + verification_gate G1-G5. GENERIC across all 5 use-cases (usecases_vmt_{trade,bop,macro,cpi,liquidity}.go) — on UPSTREAM-FETCH/parse failure return (populatedDegradedResponse, nil) [Status non-error, every bloc IsEstimate=true, BlockedReason naming the unreachable source per bloc]; KEEP nil-provider/wiring fault -> real error -> 500. Mirror the INTENDED liquidity fail-close. Preserve PERMANENT is_estimate invariants (IRS DD-6, Interbank1W Decision B, VMT-1b bloc_split, VIRA) — NEVER flip permanent true->false. go test ./... GREEN before any rebuild (RED-PREPUSH). Explicit-path commit (apps/macro-indicators/** + your notebook ONLY — NEVER git add -A, NEVER stage orch-state). On done+green router RAW-verifies (independent go build+test, foreign-capture guard, fail-close invariants at cited lines) then dispatches ops to force-recreate macro-indicators + QA LIVE raw verify (200+is_estimate+blocked_reason via forced-failure fixture, NOT badges)."
+        "dispatch_note": "Router dev-team dispatch 20260615 (tick 0036Z). Implement per this task's fix_spec + verification_gate G1-G5. GENERIC across all 5 use-cases (usecases_vmt_{trade,bop,macro,cpi,liquidity}.go) — on UPSTREAM-FETCH/parse failure return (populatedDegradedResponse, nil) [Status non-error, every bloc IsEstimate=true, BlockedReason naming the unreachable source per bloc]; KEEP nil-provider/wiring fault -> real error -> 500. Mirror the INTENDED liquidity fail-close. Preserve PERMANENT is_estimate invariants (IRS DD-6, Interbank1W Decision B, VMT-1b bloc_split, VIRA) — NEVER flip permanent true->false. go test ./... GREEN before any rebuild (RED-PREPUSH). Explicit-path commit (apps/macro-indicators/** + your notebook ONLY — NEVER git add -A, NEVER stage orch-state). On done+green router RAW-verifies (independent go build+test, foreign-capture guard, fail-close invariants at cited lines) then dispatches ops to force-recreate macro-indicators + QA LIVE raw verify (200+is_estimate+blocked_reason via forced-failure fixture, NOT badges).",
+        "done_at": "2026-06-14T23:02:35Z",
+        "done_commit": "7a176a44",
+        "done_agent": "a174dacb",
+        "router_reverify_verdict": "RAW-VERIFIED bundle (not the dev badge) — gates GREEN: 7a176a44 on main; git show --name-only 14 files ALL apps/macro-indicators/** (5 dtos+5 usecases+4 tests), handlers UNCHANGED (fix in use-case layer); foreign-capture NONE, orch-state not staged; independent go build/vet rc=0, go test all ok. FAIL-CLOSE invariants confirmed at code level + uncached tests: 5 degraded*Response return `}, nil` (Status=degraded, IsEstimate=true, BlockedReason set) -> G2 HTTP200 on upstream-fetch failure PASS; error*Response return fmt.Errorf (non-nil) -> G3 nil-provider HTTP500 preserved PASS; PERMANENT is_estimate held on degraded (BlocShare Decision A, CPI Weights, liquidity Rate1WPct=nil+IsEstimate Decision B) never flipped -> G4 PermanentInvariants PASS. Generic across ALL 5 use-cases (/goal#2). 209 PASS/0 FAIL. CODE merge gate satisfied; LIVE-verify pending ops rebuild (container = pre-7a176a44 0608f6aa image)."
       }
     ],
     "closed_sprints": [
