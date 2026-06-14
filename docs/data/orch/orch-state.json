@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-14T11:00:00Z",
-    "_updated_by": "dev-pdf-extractor",
+    "_updated_at": "2026-06-14T12:00:00Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -11327,6 +11327,35 @@
         "verified_at": "2026-06-14T07:53:00Z",
         "verified_by": "router",
         "verify_note": "Design pass COMPLETE & consumed. RAW: brief 2026-06-14-arch-doclang-serialize.md (372L) + additive scaffold commit 5d121989 (zero DB writes, bctc_table_rows regression-clean by design) + pm atomized into DOCLANG-T1..T6 (commit 483d122f, board backlog/TODO). Accepted-by-consumption; no separate QA gate for a design whose output pm already decomposed. Each T1..T6 carries its own per-layer QA gate."
+      },
+      {
+        "id": "DOCLANG-T1-DOMAIN",
+        "title": "Domain + Config: DocLangWritePort + doclang_output_dir",
+        "description": "Add DocLangWritePort (abstract) to domain/modules/financial_reports/ports.py as 17th port. Add doclang_output_dir field to Config with env DOCLANG_OUTPUT_DIR, default /app/data/doclang. Files: domain/modules/financial_reports/ports.py, infrastructure/config.py. ~45 min.",
+        "owner": "dev-pdf-extractor",
+        "status": "done_verified",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "priority": "high",
+        "size": "XS",
+        "created_at": "2026-06-14T08:00:00Z",
+        "created_by": "pm",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "depends_on": [
+          "ARCH-DOCLANG-SERIALIZE"
+        ],
+        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T1.md",
+        "files": [
+          "apps/pdf-extractor/domain/modules/financial_reports/ports.py",
+          "apps/pdf-extractor/infrastructure/config.py"
+        ],
+        "next_agent": "qa",
+        "promoted_at": "2026-06-14T08:30:00Z",
+        "promoted_by": "dev-pdf-extractor",
+        "promote_note": "DOCLANG-T1-DOMAIN complete. DocLangWritePort hardened — bullet list + count=17 correct. Config.doclang_output_dir verified. Imports clean. pytest: 967 passed, 3 pre-existing failures (missing PDF infra, unrelated). Commit 2d79baed. Unblocks DOCLANG-T2-SERIALIZER.",
+        "verified_at": "2026-06-14T12:00:00Z",
+        "verified_by": "qa",
+        "verify_note": "APPROVED. Commit 2d79baed. 7/7 AC pass. pytest: 2 failed / 968 passed — both failures are pre-existing integration env/fixture issues (missing PDF at /app/data/pdfs/ container path), zero relation to T1 ports.py/config.py. DDD clean: no infra imports in domain. Additive-only: 1 line docstring bullet added. Config.doclang_output_dir and DocLangWritePort class already in scaffold 5d121989; T1 commit completes the module-level bullet list. bctc_table_rows untouched. Unblocks DOCLANG-T2-SERIALIZER."
       }
     ],
     "review": [
@@ -11392,32 +11421,6 @@
         "completed_at": "2026-06-14T09:58:00Z",
         "completed_by": "dev-technical-analysis",
         "review_note": "DONE: (1) read guard AND close>0 in get_price_history SQL; (2) allzeroOhlcvBackfill.ts — purgeAllZeroRows+normalizeResidualContam generic across all tickers; (3) live migration: 116 zero rows deleted, 28346 thousand-VND rows normalized; (4) VCB 2026-06-01 close=62200 confirmed; (5) probe SHB BB=0.88% VCB BB=1.92% FPT BB=2.14% all <15%; commit=9088c052"
-      },
-      {
-        "id": "DOCLANG-T1-DOMAIN",
-        "title": "Domain + Config: DocLangWritePort + doclang_output_dir",
-        "description": "Add DocLangWritePort (abstract) to domain/modules/financial_reports/ports.py as 17th port. Add doclang_output_dir field to Config with env DOCLANG_OUTPUT_DIR, default /app/data/doclang. Files: domain/modules/financial_reports/ports.py, infrastructure/config.py. ~45 min.",
-        "owner": "dev-pdf-extractor",
-        "status": "REVIEW",
-        "type": "SPRINT-S",
-        "zone": "apps/pdf-extractor/",
-        "priority": "high",
-        "size": "XS",
-        "created_at": "2026-06-14T08:00:00Z",
-        "created_by": "pm",
-        "sprint_id": "DOCLANG-SERIALIZE",
-        "depends_on": [
-          "ARCH-DOCLANG-SERIALIZE"
-        ],
-        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T1.md",
-        "files": [
-          "apps/pdf-extractor/domain/modules/financial_reports/ports.py",
-          "apps/pdf-extractor/infrastructure/config.py"
-        ],
-        "next_agent": "qa",
-        "promoted_at": "2026-06-14T08:30:00Z",
-        "promoted_by": "dev-pdf-extractor",
-        "promote_note": "DOCLANG-T1-DOMAIN complete. DocLangWritePort hardened — bullet list + count=17 correct. Config.doclang_output_dir verified. Imports clean. pytest: 967 passed, 3 pre-existing failures (missing PDF infra, unrelated). Commit 2d79baed. Unblocks DOCLANG-T2-SERIALIZER."
       }
     ],
     "closed_sprints": [
