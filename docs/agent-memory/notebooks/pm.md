@@ -1,5 +1,22 @@
 # PM — Notebook
 
+## c308 ARCH-CRON-SCHEDULER-RELIABILITY sprint decomposition · 2026-06-14T030000Z
+
+ARCHITECT brief FINAL (ARCH-CRON-SCHEDULER-RELIABILITY) → decomposed into 5 atomic tasks in 2-phase structure. Root cause: node-cron v3.0.3 silent tick drops under event-loop saturation (`recoverMissedExecutions=false` default). Design: 4-lever system (recoverMissedExecutions + T4 dedup guards + jitter + watchdog). Architect established HARD CONSTRAINT: Phase 1a (T4 guards) MUST ship before Phase 1b (recovery enabled) to prevent double execution on replay.
+
+Tasks created in orch-state.json task_board.backlog[]:
+- **TASK-ARCH-CRON-1A** (M, load-bearing) — T4 idempotency dedup guards: 14 job files + cron_job_runs recency check (90% cadence window). Blocked by FIX-MCP-CRASH-LOOP-WRITEWAL; blocks 1B+1C. Handoff: docs/handoffs/TASK-ARCH-CRON-1A.md. AC: all 14 T4 jobs have guard, JSDoc @idempotency T4, logging 'recovery dedup', tsc clean.
+- **TASK-ARCH-CRON-1A-TEST** (M, non-vacuous) — 28 test cases: 14 jobs × (fresh skip + stale execute). Mock jobRunRepo.getLastRuns(), verify guard behavior with breach conditions. Depends on 1A. Handoff: docs/handoffs/TASK-ARCH-CRON-1A-TEST.md. AC: bun test green, tests fail if guard removed (non-vacuous check per fence-false-green policy).
+- **TASK-ARCH-CRON-1B** (S) — Uniform recoverMissedExecutions:true: 50+ cron.schedule() calls in startScheduler.ts + exception foreignFlowFetch (*/1 * * * * design = no recovery). Depends on 1A; blocks 2. Handoff: docs/handoffs/TASK-ARCH-CRON-1B.md. AC: ~50 calls have recovery flag, foreignFlowFetch documented, tsc clean.
+- **TASK-ARCH-CRON-1C** (S) — Deterministic jitter shifts: 8 cronConfig.ts keys (ohlcvDaily 3min, vnstockFundamentals 5min, reputationCompute 3min, baseRateComputation 7min, predictionResolution 5min, calibrationReport 4min, cascadeBacktest 7min, dailyDashboard 8min). Env-overrides intact. Depends on 1A; blocks 2. Handoff: docs/handoffs/TASK-ARCH-CRON-1C.md. AC: 8 shifts applied, no timing conflicts (R-3 architect-validated), tsc clean.
+- **TASK-ARCH-CRON-2** (M) — Scheduler watchdog (Lever 4): new schedulerWatchdogJob.ts + WATCHDOG_MANIFEST (16 jobs), per-job age check vs cron_job_runs, alert-only or self-heal actions (rate limit 2h), registered at */10 * * * *. Creates 3 test files (watchdog unit, idempotency unit, recovery integration). Depends on 1A+1B+1C. Handoff: docs/handoffs/TASK-ARCH-CRON-2.md. AC: watchdog fires, self-heal calls wrapRun, dedup prevents double-exec, 2h cooldown, bun test green.
+
+IMPL GATE (CRITICAL): FIX-MCP-CRASH-LOOP-WRITEWAL must land + ops-verify before dev-mcp-server IMPL starts (crash-looping server drops ticks at process level). Tasks marked BLOCKED=FIX-MCP-CRASH-LOOP-WRITEWAL. Architect design complete, phase ordering strict (1a→1b/1c parallel→2 sequence). WIP constraint: dev-mcp-server at WIP=2 (FIX-CRASH-LOOP-WRITEWAL + BC-1 in_progress); ARCH-CRON tasks sit blocked in backlog until crash-loop ops-verify clears and WIP frees.
+
+Commits: architect outputs (brief + handoff + sprint decision), all 4 handoff files (1A/1A-TEST/1B/1C/2), orch-state task_board.backlog += 5 tasks, PM notebook append. SSOT atomic: [ -s check on orch-state.json, jq -e verify backlog structure ].
+
+---
+
 ## c307 FIX-MCP-CRASH-LOOP-WRITEWAL sprint decomposition · 2026-06-14T003000Z
 
 ARCHITECT brief FINAL (2026-06-14T00:15Z) → decomposed into 3 atomic sequenced tasks. Root cause: `wal_autocheckpoint=4000` + FULL-only cron defeated by 40+ concurrent reader snapshots; WAL wedges every ~2h (3 restarts 2026-06-13). Design split: BC-1 (root fix, load-bearing) → A-1 (guardrail) → D-1 (escalation gate).

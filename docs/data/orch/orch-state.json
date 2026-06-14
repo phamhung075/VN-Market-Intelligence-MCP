@@ -5,10 +5,10 @@
   "_updated_by": "po",
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-13T23:29:43Z",
-    "updated_by": "dev-team",
+    "updated_at": "2026-06-14T02:32:59Z",
+    "updated_by": "architect",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": "pm"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -7356,6 +7356,193 @@
         "source": "router cluster brief 2026-06-14T02:20Z (SECONDARY I2)",
         "groomed_by": "po",
         "groomed_at": "2026-06-14T02:24:21Z"
+      },
+      {
+        "id": "TASK-ARCH-CRON-1A",
+        "title": "ARCH-CRON-1A: T4 idempotency dedup guards (Phase 1a, load-bearing)",
+        "type": "FEATURE",
+        "owner": "dev-mcp-server",
+        "status": "BLOCKED",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-06-14T03:00:00Z",
+        "created_by": "pm",
+        "description": "Add cron_job_runs same-day dedup guards to 14 T4 jobs (those without existing idempotency). Required before Phase 1b (recoverMissedExecutions:true) to prevent double execution on recovery replays.",
+        "acceptance": [
+          "All 14 T4 job files have dedup guard pattern using jobRunRepo.getLastRuns()",
+          "Guard skips if last success < 90% of declared cadence",
+          "JSDoc comment @idempotency T4 on each guard",
+          "Logging: '[job] already ran within cadence window — skipping (recovery dedup)'",
+          "No logic changes to job internals",
+          "tsc 0 errors"
+        ],
+        "depends_on": [
+          "FIX-MCP-CRASH-LOOP-WRITEWAL"
+        ],
+        "blocks": [
+          "TASK-ARCH-CRON-1B",
+          "TASK-ARCH-CRON-1C"
+        ],
+        "handoff": "docs/handoffs/TASK-ARCH-CRON-1A.md",
+        "brief_ref": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
+        "files_modified": [
+          "apps/mcp-server/src/scheduler/market-data/ohlcvDailyAggregatorJob.ts",
+          "apps/mcp-server/src/scheduler/macro/calibrationReportJob.ts",
+          "apps/mcp-server/src/scheduler/macro/baseRateComputationJob.ts",
+          "apps/mcp-server/src/scheduler/macro/predictionResolutionJob.ts",
+          "apps/mcp-server/src/scheduler/news/reputationComputeJob.ts",
+          "apps/mcp-server/src/scheduler/alerts/verdictResolutionJob.ts",
+          "apps/mcp-server/src/scheduler/alerts/signalOutcomeJob.ts",
+          "apps/mcp-server/src/scheduler/alerts/alertOutcomeJob.ts",
+          "apps/mcp-server/src/scheduler/portfolio/weeklyPortfolioReportJob.ts",
+          "apps/mcp-server/src/scheduler/system/devTeamHeartbeatJob.ts",
+          "apps/mcp-server/src/scheduler/news-analysis/dataAuditJob.ts",
+          "apps/mcp-server/src/scheduler/digest/accuracyDigestJob.ts"
+        ],
+        "phase": "1a"
+      },
+      {
+        "id": "TASK-ARCH-CRON-1A-TEST",
+        "title": "ARCH-CRON-1A-TEST: Unit tests for T4 dedup guards (non-vacuous)",
+        "type": "TEST",
+        "owner": "dev-mcp-server",
+        "status": "BLOCKED",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-06-14T03:00:00Z",
+        "created_by": "pm",
+        "description": "Non-vacuous tests for TASK-ARCH-CRON-1A: verify each T4 job's dedup guard actually skips replay when within cadence window and executes when stale.",
+        "acceptance": [
+          "Test file: apps/mcp-server/src/__tests__/ARCH-CRON-idempotency.test.ts",
+          "14 jobs × 2 scenarios = 28 test cases",
+          "Fresh scenario: last run 8h ago (cadence 24h) → guard skips",
+          "Stale scenario: last run 25h ago → guard allows execution",
+          "Mock jobRunRepo.getLastRuns() to control test conditions",
+          "Assert 'recovery dedup' log message on skip",
+          "bun test green (all 28 pass)",
+          "Tests fail if guard code is removed (non-vacuous check)"
+        ],
+        "depends_on": [
+          "TASK-ARCH-CRON-1A"
+        ],
+        "blocks": [],
+        "handoff": "docs/handoffs/TASK-ARCH-CRON-1A-TEST.md",
+        "brief_ref": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
+        "files_created": [
+          "apps/mcp-server/src/__tests__/ARCH-CRON-idempotency.test.ts"
+        ],
+        "phase": "1a"
+      },
+      {
+        "id": "TASK-ARCH-CRON-1B",
+        "title": "ARCH-CRON-1B: Uniform recoverMissedExecutions:true (Phase 1b)",
+        "type": "FEATURE",
+        "owner": "dev-mcp-server",
+        "status": "BLOCKED",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-06-14T03:00:00Z",
+        "created_by": "pm",
+        "description": "Add recoverMissedExecutions: true to all 50+ cron.schedule() calls in startScheduler.ts. Exception: foreignFlowFetch (*/1 * * * *) skips recovery by design.",
+        "acceptance": [
+          "Every cron.schedule() call has { timezone: 'UTC', recoverMissedExecutions: true }",
+          "Exception documented: foreignFlowFetch skips recovery (no-op guard for fresh data)",
+          "No job logic changes",
+          "tsc 0 errors",
+          "Spot-check: grep ~50 occurrences of recoverMissedExecutions: true"
+        ],
+        "depends_on": [
+          "TASK-ARCH-CRON-1A"
+        ],
+        "blocks": [
+          "TASK-ARCH-CRON-2"
+        ],
+        "handoff": "docs/handoffs/TASK-ARCH-CRON-1B.md",
+        "brief_ref": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
+        "files_modified": [
+          "apps/mcp-server/src/scheduler/startScheduler.ts"
+        ],
+        "phase": "1b"
+      },
+      {
+        "id": "TASK-ARCH-CRON-1C",
+        "title": "ARCH-CRON-1C: Deterministic jitter shifts (Phase 1c)",
+        "type": "FEATURE",
+        "owner": "dev-mcp-server",
+        "status": "BLOCKED",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-06-14T03:00:00Z",
+        "created_by": "pm",
+        "description": "Shift 8 high-collision job schedules in cronConfig.ts (deterministic, env-overridable offsets) to reduce event-loop saturation bursts.",
+        "acceptance": [
+          "8 schedule keys shifted: ohlcvDaily, vnstockFundamentals, reputationCompute, baseRateComputation, predictionResolution, calibrationReport, cascadeBacktest, dailyDashboard",
+          "All shifts are deterministic offsets (not random)",
+          "Env-override keys remain in place (CRON_* pattern)",
+          "No job logic changes",
+          "Cross-check: no timing-dependency conflicts (architect validated R-3)",
+          "tsc 0 errors"
+        ],
+        "depends_on": [
+          "TASK-ARCH-CRON-1A"
+        ],
+        "blocks": [
+          "TASK-ARCH-CRON-2"
+        ],
+        "handoff": "docs/handoffs/TASK-ARCH-CRON-1C.md",
+        "brief_ref": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
+        "files_modified": [
+          "apps/mcp-server/src/scheduler/cronConfig.ts"
+        ],
+        "phase": "1c"
+      },
+      {
+        "id": "TASK-ARCH-CRON-2",
+        "title": "ARCH-CRON-2: Scheduler watchdog (Lever 4, Phase 2)",
+        "type": "FEATURE",
+        "owner": "dev-mcp-server",
+        "status": "BLOCKED",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "high",
+        "created_at": "2026-06-14T03:00:00Z",
+        "created_by": "pm",
+        "description": "Implement the missed-fire watchdog: detects last_run age > 2× declared cadence, sends WORK alert or self-heals via runner invocation. 16 monitored jobs, fires every 10 min.",
+        "acceptance": [
+          "File created: apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts",
+          "Exports runSchedulerWatchdog() with deps signature matching brief § 7",
+          "WATCHDOG_MANIFEST defined (16 entries per brief § 4.4)",
+          "Per-job age check via SELECT MAX(started_at) FROM cron_job_runs",
+          "Alert message format: '[scheduler-watchdog] <jobName>: last ran <age>h ago (cadence=<cadence>h, threshold=<mult>×)'",
+          "Self-heal calls job runner via jobRunRepo.wrapRun() (ensures dedup guard fires)",
+          "Rate limit: per-job cooldown 2h (in-process Map)",
+          "cronConfig.ts has schedulerWatchdog key",
+          "startScheduler.ts registers watchdog at */10 * * * *",
+          "tsc 0 errors",
+          "All watchdog tests pass (bun test green)"
+        ],
+        "depends_on": [
+          "TASK-ARCH-CRON-1A",
+          "TASK-ARCH-CRON-1B",
+          "TASK-ARCH-CRON-1C"
+        ],
+        "blocks": [],
+        "handoff": "docs/handoffs/TASK-ARCH-CRON-2.md",
+        "brief_ref": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
+        "files_created": [
+          "apps/mcp-server/src/scheduler/system/schedulerWatchdogJob.ts",
+          "apps/mcp-server/src/__tests__/ARCH-CRON-watchdog.test.ts",
+          "apps/mcp-server/src/__tests__/ARCH-CRON-recovery.test.ts"
+        ],
+        "files_modified": [
+          "apps/mcp-server/src/scheduler/cronConfig.ts",
+          "apps/mcp-server/src/scheduler/startScheduler.ts"
+        ],
+        "phase": "2"
       }
     ],
     "archive": [],
