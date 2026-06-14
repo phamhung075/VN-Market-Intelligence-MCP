@@ -27,6 +27,7 @@
 
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -175,8 +176,12 @@ function classifyOutcome(
  * Accepts an optional `db` for dependency injection in tests.
  * The function NEVER throws — all errors are caught and logged.
  */
+/**
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (6 days 1h12m window)
+ */
 export async function runPredictionOutcomeCheck(
   db?: Database,
+  nowMsFn?: () => number,
 ): Promise<void> {
   let resolvedDb: Database;
   if (db) {
@@ -192,6 +197,9 @@ export async function runPredictionOutcomeCheck(
       return;
     }
   }
+
+  const WEEKLY_CADENCE_MS = 604_800_000;
+  if (shouldSkipRecoveryReplay(resolvedDb, "predictionOutcomeJob", WEEKLY_CADENCE_MS, nowMsFn)) return;
 
   try {
     // ── Step 1: load unvalidated signals from the last 7 days ──────────────

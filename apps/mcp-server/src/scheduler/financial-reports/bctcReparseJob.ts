@@ -27,6 +27,7 @@ import { logger } from "../../infrastructure/logger.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { currentDataEnv } from "../../infrastructure/envCheck.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import { extractPdfText } from "../../infrastructure/fetchers/pdf.js";
 import { getCachedPdfText } from "../../infrastructure/fetchers/pdfOcrWorker.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
@@ -662,6 +663,9 @@ async function reparseSingle(payload: StrandedPayload): Promise<boolean> {
  * to stub the WORK-channel send, and `options.reparseFn` to stub the parse
  * pipeline (so tests do not need real PDFs).
  */
+/**
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
+ */
 export async function runBctcReparseJob(
   options: {
     db?: Database;
@@ -669,9 +673,16 @@ export async function runBctcReparseJob(
     reparseFn?: (payload: StrandedPayload) => Promise<boolean>;
     /** Override PDF directory for disk scan (injectable for tests). */
     pdfDir?: string;
+    /** Injectable nowMs for recovery dedup guard (tests only) */
+    nowMsFn?: () => number;
   } = {},
 ): Promise<ReparseRunResult> {
   const db = options.db ?? getDb();
+
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, "bctcReparseJob", DAILY_CADENCE_MS, options.nowMsFn)) {
+    return { examined: 0, resolved: 0, failed: 0, escalated: 0, alerted: 0 };
+  }
   const notify =
     options.notify ?? ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
   const reparse = options.reparseFn ?? reparseSingle;

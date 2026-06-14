@@ -25,6 +25,7 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -32,6 +33,9 @@ import type { Database } from "bun:sqlite";
 
 /** Injectable Telegram send function (returns true on success). */
 export type SendFn = (text: string) => Promise<boolean>;
+
+/** Injectable nowMs function for recovery dedup guard (tests only) */
+export type NowMsFn = () => number;
 
 /** Status classification of the Dev Team. */
 export type HeartbeatStatus = "HOẠT ĐỘNG" | "CẢNH BÁO" | "NGỪNG";
@@ -197,12 +201,15 @@ export function formatHeartbeatMessage(data: HeartbeatData): string {
  * Gathers stats from the database and sends a Vietnamese summary to Telegram
  * Chat Channel.
  *
- * @param db     - SQLite database instance (defaults to production getDb())
- * @param sendFn - Telegram send function (defaults to sendTelegramWork)
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (6 days 1h12m window)
+ * @param db       - SQLite database instance (defaults to production getDb())
+ * @param sendFn   - Telegram send function (defaults to sendTelegramWork)
+ * @param nowMsFn  - Injectable clock for dedup guard (tests only)
  */
 export async function runDevTeamHeartbeat(
   db?: Database,
   sendFn?: SendFn,
+  nowMsFn?: NowMsFn,
 ): Promise<void> {
   // Lazy-load production dependencies only when not injected (avoids import
   // side-effects in tests that run in the worktree without full infrastructure)
@@ -212,6 +219,12 @@ export async function runDevTeamHeartbeat(
   } else {
     const { getDb } = await import("../../infrastructure/db/schema.js");
     resolvedDb = getDb();
+  }
+
+  // T4 dedup guard: skip if already ran within weekly cadence window
+  const WEEKLY_CADENCE_MS = 604_800_000;
+  if (shouldSkipRecoveryReplay(resolvedDb, "devTeamHeartbeat", WEEKLY_CADENCE_MS, nowMsFn)) {
+    return;
   }
 
   let resolvedSend: SendFn;

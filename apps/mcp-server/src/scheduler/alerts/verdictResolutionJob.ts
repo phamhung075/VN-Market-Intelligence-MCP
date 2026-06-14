@@ -22,6 +22,7 @@ import {
   updateVerdict,
   pruneVerdicts,
 } from "../../infrastructure/fileStore/alertVerdictStore.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import type { AlertVerdict } from "../../infrastructure/fileStore/alertVerdictStore.js";
 import {
   writeAlertOutcome,
@@ -50,6 +51,8 @@ export interface VerdictResolutionJobDeps {
   /** Writes HIT/MISS to alerts.outcome; injectable for tests (E-3: must never throw) */
   writeOutcomeFn?: (alertId: string, outcome: AlertOutcome, detail?: string) => Promise<void>;
   nowFn?: () => Date;
+  /** Injectable nowMs function for recovery dedup guard (tests only) */
+  nowMsFn?: () => number;
 }
 
 export interface VerdictResolutionJobResult {
@@ -174,10 +177,24 @@ async function defaultWriteOutcomeFn(
 /**
  * Resolve pending alert verdicts >=24h old.
  * All external calls are injectable via `deps` for unit tests.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of hourly cadence (54min window)
  */
 export async function runVerdictResolutionJobCron(
   deps?: VerdictResolutionJobDeps
 ): Promise<VerdictResolutionJobResult> {
+  // T4 dedup guard: skip if a successful run exists within the last 54 min (90% of 1h cadence)
+  try {
+    const { getDb } = await import("../../infrastructure/db/schema.js");
+    const _db = getDb();
+    const HOURLY_CADENCE_MS = 3_600_000;
+    if (shouldSkipRecoveryReplay(_db, "verdictResolutionJob", HOURLY_CADENCE_MS, deps?.nowMsFn)) {
+      return { rowsEvaluated: 0, rowsResolved: 0, rowsPruned: 0, errors: 0 };
+    }
+  } catch {
+    // DB unavailable — proceed without dedup (fail-open)
+  }
+
   const store = deps?.store ?? buildDefaultStore();
   const fetchPrice = deps?.fetchPrice ?? defaultFetchPrice;
   const fetchHistory = deps?.fetchHistory ?? defaultFetchHistory;

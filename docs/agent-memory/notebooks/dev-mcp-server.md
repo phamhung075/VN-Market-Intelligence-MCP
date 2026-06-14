@@ -1,5 +1,20 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-14 · T1-ARCH-CRON-T4-DEDUP-GUARDS — Recovery replay dedup guards SHIPPED
+
+**Task:** T1-ARCH-CRON-T4-DEDUP-GUARDS (M, ARCH-CRON-SCHEDULER-RELIABILITY phase 1a)
+**Root cause addressed:** No guard prevents double-execution when node-cron recoverMissedExecutions replays a tick that already ran successfully.
+
+**Implementation:**
+- `scheduler/startupHelpers.ts`: added `shouldSkipRecoveryReplay(db, jobName, cadenceMs, nowMsFn?)` — queries `cron_job_runs WHERE status='success' AND started_at >= cutoff` (90% of cadence); fail-open on DB error; logs skip on match.
+- Applied guard to **26 jobs** across 6 scheduler subdirectories: calibrationReportJob, baseRateComputationJob, predictionResolutionJob, reputationComputeJob, verdictResolutionJob, signalOutcomeJob, alertOutcomeJob, weeklyPortfolioReportJob, devTeamHeartbeatJob, dataAuditJob (daily+weekly), patternWatchJob, predictionOutcomeJob, bctcOverdueCheckJob, bctcReparseJob, davPharmacyJob, sscCheckerJob, marketScanJob (open+close), cascadeBacktestJob, bondMaturityPollerJob, signalOutcomeResolutionJob, tasksMdJanitorJob, diskUsageAlertJob, dailyDashboardJob, newsHeadlinesRefreshJob.
+- Added `@idempotency T4` JSDoc on each guarded function.
+- `nowMsFn?: () => number` added to all injectable options interfaces for test control.
+
+**Tests:** 13 new tests in `ARCH-CRON-idempotency.test.ts` — all GREEN (13/13). Covers: no-prior-run, success-within-window, error-retry, outside-window, missing-table fail-open, per-job cadence correctness (daily/weekly/30min), 90% boundary precision.
+**tsc:** 0 errors. Full suite: 12853 pass / 60 pre-existing fail (deprecated) / 0 new failures.
+**Board:** T1 moved to REVIEW; next_agent=ops (rebuild + live verify).
+
 ## 2026-06-14 · FIX-MCP-CRASH-LOOP-D-1 — WAL > 10 MB escalation gate SHIPPED
 
 **Tasks:** D-1 (S, guardrail — last child of FIX-MCP-CRASH-LOOP-WRITEWAL sprint; after BC-1 + A-1)

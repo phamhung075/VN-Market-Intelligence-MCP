@@ -13,6 +13,7 @@
  */
 
 import { logger } from '../../infrastructure/logger.js';
+import { shouldSkipRecoveryReplay } from '../startupHelpers.js';
 
 const NEWS_FETCH_BASE = Bun.env['NEWS_FETCH_URL'] ?? 'http://news-fetch:5008';
 const MCP_SERVER_BASE = Bun.env['MCP_SERVER_URL'] ?? 'http://localhost:3000';
@@ -96,14 +97,34 @@ async function pushToMcpServer(result: NewsFetchResult): Promise<boolean> {
   }
 }
 
+/** Options bag for newsHeadlinesRefreshJob (injectable for tests). */
+export interface NewsHeadlinesRefreshJobOptions {
+  /** Injectable nowMs for recovery dedup guard (tests only). */
+  nowMsFn?: () => number;
+}
+
 /**
  * Run one news headlines refresh cycle.
  *
  * Fetches Bloomberg headlines, then Reuters headlines. Pushes each
  * successfully-fetched result to /api/push-news. Errors from either
  * source are logged and skipped — the other source continues.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of 30-min cadence (27min window)
  */
-export async function newsHeadlinesRefreshJob(): Promise<void> {
+export async function newsHeadlinesRefreshJob(
+  options?: NewsHeadlinesRefreshJobOptions,
+): Promise<void> {
+  // T4 dedup guard: skip if already ran within 30-min cadence window
+  try {
+    const { getDb } = await import('../../infrastructure/db/schema.js');
+    const _db = getDb();
+    const THIRTY_MIN_CADENCE_MS = 1_800_000;
+    if (shouldSkipRecoveryReplay(_db, 'newsHeadlinesRefreshJob', THIRTY_MIN_CADENCE_MS, options?.nowMsFn)) {
+      return;
+    }
+  } catch { /* fail-open: DB unavailable, proceed with job */ }
+
   logger.debug('[newsHeadlinesRefreshJob] cycle start');
 
   // Bloomberg first, Reuters second (per handoff spec)

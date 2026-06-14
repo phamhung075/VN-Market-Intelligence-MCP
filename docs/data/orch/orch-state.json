@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T11:43:22Z",
-    "updated_by": "dev-team",
+    "status": "review",
+    "updated_at": "2026-06-14T12:12:00Z",
+    "updated_by": "dev-mcp-server",
     "active_task_id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
-    "next_agent": "dev-mcp-server",
-    "note": "T1-ARCH-CRON-T4-DEDUP-GUARDS dispatched -> dev-mcp-server (IMPL, apps/mcp-server, off-market Sunday safe window). T2/T3 BLOCKED in ready[] by depends[] (same-zone serialized). Parallel non-conflicting: B=FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS -> qa (cross-service docs gate). WIP=2 different zones."
+    "next_agent": "ops",
+    "note": "T1-ARCH-CRON-T4-DEDUP-GUARDS IMPL done → REVIEW. ops: rebuild mcp-server + live verify. T2/T3 BLOCKED until ops confirms."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -315,10 +315,10 @@
         "to": "po",
         "type": "infra-outage",
         "severity": "HIGH",
-        "status": "SUPERSEDED",
+        "status": "RESOLVED",
         "summary": "vn-market gateway dial FAILED (Internal Server Error) — corroborated by 2 independent callers (refine_bctc_md agent + router RAW-probe). Connection-level, affects all 146 tools. Blocks ALL cowork agents (refine-bctc-slot-1 fire FAILED 09:08Z; 12:00 gatherer bucket will also fail). Likely mcp-server down/write-wedged or gateway upstream dial broken. Needs ops: docker ps vn-market + mcp-server :3000 + gateway upstream health.",
         "payload_ref": "",
-        "disposition": "recovered via container restart ~09:46Z; root cause open — superseded by cowork-team-20260614T0953-mcp500-recovered-rootcause-open",
+        "disposition": "Gateway recovered — RAW-probe get_market_snapshot live at 2026-06-14T12:08:04Z (VN-Index 1791.65). 12:00 gatherers fired OK.",
         "ts": "2026-06-14T09:09:13Z",
         "superseded_at": "2026-06-14T09:54:55Z"
       },
@@ -417,8 +417,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T12:00:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-14T12:12:00Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11968,32 +11968,6 @@
         "design_complete_at": "2026-06-14T11:40:00Z",
         "design_brief": "docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md",
         "next_task": "T1-ARCH-CRON-T4-DEDUP-GUARDS"
-      },
-      {
-        "id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
-        "title": "ARCH-CRON Phase 1a: T4 idempotency dedup guards on 26 jobs — precondition for recoverMissedExecutions",
-        "type": "FIX",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "depends": [],
-        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
-        "size": "M",
-        "verification_gate": "All T4 jobs (ohlcvDailyAggregatorJob, vnstockFundamentalsRefresh, reputationComputeJob, baseRateComputation, predictionResolution, calibrationReport, weeklyPortfolioReport, devTeamHeartbeat, verdictResolutionJob, signalOutcomeJob, alertOutcomeJob, dataAuditDaily, dataAuditWeekly, etc.) have a cron_job_runs recency check: if last successful run < 90% of declared cadence, skip recovery replay. JSDoc @idempotency T4 documented on each. bun test PASS on guard logic. Commit per docs/policies/commit-convention.md.",
-        "acceptance": {
-          "AC1": "All 26 T4 jobs modified with shouldRunCatchup()-style guard using jobRunRepo.getLastRuns()",
-          "AC2": "Each job has @idempotency JSDoc tag indicating T1/T2/T3/T4 tier",
-          "AC3": "bun test passes; no new test failures introduced",
-          "AC4": "PR review confirms dedup logic vs declared cadence matches (daily=86.4M, weekly=604.8M, etc.)"
-        },
-        "created_at": "2026-06-14T12:00:00Z",
-        "created_by": "pm",
-        "note": "MANDATORY PRECONDITION before T2. Lever 2 from architect brief. Touches 13 job files per brief §5.2. No infrastructure changes; uses existing jobRunRepo.getLastRuns() method.",
-        "next_agent": "dev-mcp-server",
-        "claimed_at": "2026-06-14T11:43:22Z",
-        "claimed_by": "dev-team",
-        "dispatch_note": "Router dispatched T1 IMPL (tick 11:06Z, off-market Sunday = architect-blessed safe mcp-server window). dev-mcp-server adds cron_job_runs recency guards (90% cadence window) to the 26 non-idempotent T4 jobs — MANDATORY PRECONDITION before T2 recoverMissedExecutions (else recovery double-fires Telegram). Per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5.2. bun tests GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; then qa LIVE-verify (cron_job_runs rows, idempotency under replay), never badges. Deploy-gate FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) met."
       }
     ],
     "ready": [
@@ -12068,6 +12042,33 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
+      },
+      {
+        "id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
+        "title": "ARCH-CRON Phase 1a: T4 idempotency dedup guards on 26 jobs — precondition for recoverMissedExecutions",
+        "type": "FIX",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "priority": "P1",
+        "status": "REVIEW",
+        "depends": [],
+        "parent": "ARCH-CRON-SCHEDULER-RELIABILITY",
+        "size": "M",
+        "verification_gate": "All T4 jobs (ohlcvDailyAggregatorJob, vnstockFundamentalsRefresh, reputationComputeJob, baseRateComputation, predictionResolution, calibrationReport, weeklyPortfolioReport, devTeamHeartbeat, verdictResolutionJob, signalOutcomeJob, alertOutcomeJob, dataAuditDaily, dataAuditWeekly, etc.) have a cron_job_runs recency check: if last successful run < 90% of declared cadence, skip recovery replay. JSDoc @idempotency T4 documented on each. bun test PASS on guard logic. Commit per docs/policies/commit-convention.md.",
+        "acceptance": {
+          "AC1": "All 26 T4 jobs modified with shouldRunCatchup()-style guard using jobRunRepo.getLastRuns()",
+          "AC2": "Each job has @idempotency JSDoc tag indicating T1/T2/T3/T4 tier",
+          "AC3": "bun test passes; no new test failures introduced",
+          "AC4": "PR review confirms dedup logic vs declared cadence matches (daily=86.4M, weekly=604.8M, etc.)"
+        },
+        "created_at": "2026-06-14T12:00:00Z",
+        "created_by": "pm",
+        "note": "IMPL complete: shouldSkipRecoveryReplay() helper + 26 job guards applied + @idempotency T4 JSDoc + 13 idempotency tests GREEN. tsc --noEmit GREEN. Awaiting ops rebuild.",
+        "next_agent": "ops",
+        "claimed_at": "2026-06-14T11:43:22Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router dispatched T1 IMPL (tick 11:06Z, off-market Sunday = architect-blessed safe mcp-server window). dev-mcp-server adds cron_job_runs recency guards (90% cadence window) to the 26 non-idempotent T4 jobs — MANDATORY PRECONDITION before T2 recoverMissedExecutions (else recovery double-fires Telegram). Per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5.2. bun tests GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; then qa LIVE-verify (cron_job_runs rows, idempotency under replay), never badges. Deploy-gate FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) met.",
+        "review_at": "2026-06-14T12:12:00Z"
       }
     ]
   },

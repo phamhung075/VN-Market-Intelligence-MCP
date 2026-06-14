@@ -11,18 +11,24 @@
  */
 
 import { logger } from "../../infrastructure/logger.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 /**
  * Run the weekly pattern watch scan.
  *
  * Checks each watchlist stock against historical patterns from market_prices_history.
  * If a current profile matches a past setup that led to a 5%+ move, sends a Telegram alert.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (6 days 1h12m window)
  */
-export async function runPatternWatch(): Promise<void> {
+export async function runPatternWatch(nowMsFn?: () => number): Promise<void> {
   try {
     const { getDb } = await import("../../infrastructure/db/schema.js");
     const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
     const db = getDb();
+
+    const WEEKLY_CADENCE_MS = 604_800_000;
+    if (shouldSkipRecoveryReplay(db, "patternWatchJob", WEEKLY_CADENCE_MS, nowMsFn)) return;
 
     // Get watchlist codes
     const watchlist = db

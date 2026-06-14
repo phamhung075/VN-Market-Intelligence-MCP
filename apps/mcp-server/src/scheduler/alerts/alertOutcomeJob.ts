@@ -20,6 +20,7 @@ import {
   writeAlertOutcome,
 } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import {
   classifyAlertType,
   scoreAlertOutcome,
@@ -33,6 +34,8 @@ export interface AlertOutcomeJobDeps {
   nowFn?: () => Date;
   /** Injectable telegram sender for testability (default: sendTelegramWork) */
   telegramSender?: (message: string) => Promise<void>;
+  /** Injectable nowMs for recovery dedup guard (tests only) */
+  nowMsFn?: () => number;
 }
 
 export interface AlertOutcomeJobResult {
@@ -134,12 +137,19 @@ function toStoreOutcome(outcome: "hit" | "miss" | "unknown"): "HIT" | "MISS" | "
  * Writes all results in a single transaction for atomic consistency.
  *
  * BLK-3: Sends ONE digest to WORK channel if any position-danger alerts scored HIT.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
  */
 export async function runAlertOutcomeJob(
   deps?: AlertOutcomeJobDeps,
 ): Promise<AlertOutcomeJobResult> {
   const db: Database = deps?.db ?? getDb();
   const now = deps?.nowFn?.() ?? new Date();
+
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, "alertOutcomeJob", DAILY_CADENCE_MS, deps?.nowMsFn)) {
+    return { evaluated: 0, hit: 0, miss: 0, unknown: 0, skipped: 0 };
+  }
 
   const results: AlertOutcomeJobResult = {
     evaluated: 0,

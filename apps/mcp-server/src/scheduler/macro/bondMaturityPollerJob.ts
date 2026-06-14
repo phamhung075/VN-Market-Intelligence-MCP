@@ -28,6 +28,7 @@
 
 import { getDb } from "../../infrastructure/db/schema.js";
 import { upsertBond } from "../../infrastructure/db/bondMaturityStore.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { getUpcomingMaturities } from "../../domain/services/bondMaturityTracker.js";
 import type { BondMaturityEvent } from "../../domain/services/bondMaturityTracker.js";
@@ -64,6 +65,8 @@ export interface BondMaturityPollerOptions {
    * Injectable WORK telegram sender — defaults to sendTelegramWork.
    */
   sendWorkFn?: (msg: string) => Promise<unknown>;
+  /** Injectable nowMs for recovery dedup guard (tests only) */
+  nowMsFn?: () => number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,10 +107,19 @@ async function defaultFetchBonds(): Promise<BondMaturityEvent[]> {
  * @param options - Optional DI overrides for fetch/send (test seam)
  * @returns BondMaturityPollerResult with success flag and rows written
  */
+/**
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (6 days 1h12m window)
+ */
 export async function runBondMaturityPollerJob(
   options?: BondMaturityPollerOptions,
 ): Promise<BondMaturityPollerResult> {
   const db = getDb();
+
+  const WEEKLY_CADENCE_MS = 604_800_000;
+  if (shouldSkipRecoveryReplay(db, "bondMaturityPollerJob", WEEKLY_CADENCE_MS, options?.nowMsFn)) {
+    return { success: true, rowsWritten: 0 };
+  }
+
   const fetchFn = options?.fetchFn ?? defaultFetchBonds;
   const sendWorkFn = options?.sendWorkFn ?? sendTelegramWork;
 

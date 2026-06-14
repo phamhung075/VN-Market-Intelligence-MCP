@@ -30,6 +30,7 @@
 
 import { sendTelegramBug } from "../infrastructure/notifiers/telegram.js";
 import { logger } from "../infrastructure/logger.js";
+import { shouldSkipRecoveryReplay } from "./startupHelpers.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -157,13 +158,28 @@ export function parseDuSizeToGb(token: string): number | null {
  *   - state            → cooldown state object (default: production singleton)
  *                        Pass a local object in tests for concurrent-safe isolation.
  */
+/**
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of hourly cadence (54min window)
+ */
 export async function runDiskUsageAlertJob(options?: {
   getDiskUsageGb?: (path: string) => Promise<number | null> | number | null;
   notifyBug?: (message: string) => Promise<number>;
   now?: Date;
   path?: string;
   state?: DiskUsageAlertState;
+  /** Injectable nowMs for recovery dedup guard (tests only) */
+  nowMsFn?: () => number;
 }): Promise<DiskUsageAlertResult> {
+  // T4 dedup guard: skip if already ran within hourly cadence window
+  try {
+    const { getDb } = await import("../infrastructure/db/schema.js");
+    const _db = getDb();
+    const HOURLY_CADENCE_MS = 3_600_000;
+    if (shouldSkipRecoveryReplay(_db, "diskUsageAlertJob", HOURLY_CADENCE_MS, options?.nowMsFn)) {
+      return "ok";
+    }
+  } catch { /* fail-open: DB unavailable, proceed with job */ }
+
   const now = options?.now ?? new Date();
   const path = options?.path ?? LANCEDB_PATH;
   const getDiskUsageGb = options?.getDiskUsageGb

@@ -34,6 +34,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { listHeldTasks, type LockRow } from "../../infrastructure/db/coordinationStore.js";
 import { getProjectRoot } from "../../infrastructure/projectRoot.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import {
   appendSignalQueueRow,
   writeOrchStateAtomic,
@@ -492,8 +493,19 @@ const JOB_FAILURE_DEDUP_KEY = "d4_janitor_internal_failure";
  * Production cron entry point.
  * Wires real dependencies and runs the janitor.
  * Internal failures are caught here and send a single BUG telegram (7d dedup).
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
  */
-export async function runTasksMdJanitorJob(): Promise<void> {
+export async function runTasksMdJanitorJob(nowMsFn?: () => number): Promise<void> {
+  // T4 dedup guard: skip if already ran within daily cadence window
+  try {
+    const { getDb } = await import("../../infrastructure/db/schema.js");
+    const _db = getDb();
+    const DAILY_CADENCE_MS = 86_400_000;
+    if (shouldSkipRecoveryReplay(_db, "tasksMdJanitorJob", DAILY_CADENCE_MS, nowMsFn)) return;
+  } catch {
+    // DB unavailable — proceed without dedup (fail-open)
+  }
   const deps: JanitorDeps = {
     listHeld: () => {
       const result = listHeldTasks({ kind: "sprint-task" });

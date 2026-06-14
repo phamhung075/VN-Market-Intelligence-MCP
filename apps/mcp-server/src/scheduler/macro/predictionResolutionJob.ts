@@ -24,6 +24,7 @@ import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import {
   resolveClaim,
   type PredictionClaimRow,
@@ -262,9 +263,15 @@ export async function runPredictionResolution(
  * Cron wrapper for runPredictionResolution.
  * Wraps with recordJobRun for observability.
  * Called daily at 16:30 UTC (30 16 * * *) from jobs.ts.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
  */
 export async function runPredictionResolutionJob(): Promise<void> {
   const db = getDb();
+
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, "predictionResolutionJob", DAILY_CADENCE_MS)) return;
+
   try {
     await recordJobRun(db, "predictionResolutionJob", async () => {
       const result = await runPredictionResolution(db);

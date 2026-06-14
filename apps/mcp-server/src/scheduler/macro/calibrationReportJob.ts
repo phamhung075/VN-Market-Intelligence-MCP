@@ -36,6 +36,7 @@ import {
   type LabelAccuracyRow,
 } from "../../infrastructure/db/marketMessageStore.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -558,9 +559,14 @@ export async function runCalibrationReport(
  * success/failure tracked in `cron_job_runs`, duration logged.
  *
  * Used by `jobs.ts` cron registration (Sunday 13:00 UTC = 20:00 VN).
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (604.8s window = 6 days 1h12m)
  */
 export async function runCalibrationReportJob(): Promise<void> {
   const database = await defaultGetDb();
+
+  const WEEKLY_CADENCE_MS = 604_800_000;
+  if (shouldSkipRecoveryReplay(database, "calibrationReportJob", WEEKLY_CADENCE_MS)) return;
 
   await recordJobRun(database, "calibrationReportJob", async () => {
     const result = await runCalibrationReport(database);

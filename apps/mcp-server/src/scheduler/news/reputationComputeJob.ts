@@ -37,6 +37,7 @@ import { classifyRiskLevel } from "../../domain/services/reputationScorer.js";
 import type { ReputationScore } from "../../domain/services/reputationScorer.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { logger } from "../../infrastructure/logger.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -166,6 +167,8 @@ export function computeReputationForTicker(
  * caught, reported to the WORK Telegram channel, and rethrown so
  * jobRunRepo.wrapRun() can record status='error'.
  *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
+ *
  * @param options Injectable overrides for testing
  * @returns Counts of tickers processed and failed
  */
@@ -173,6 +176,11 @@ export async function runReputationComputeJob(
   options?: ReputationComputeOptions,
 ): Promise<ReputationComputeResult> {
   const db = options?._db ?? getDb();
+
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, JOB_NAME, DAILY_CADENCE_MS)) {
+    return { tickersProcessed: 0, tickersFailed: 0 };
+  }
   const sendWorkFn = options?._sendWorkFn ?? sendTelegramWork;
   const computeFn = options?._computeFn ?? computeReputationForTicker;
 

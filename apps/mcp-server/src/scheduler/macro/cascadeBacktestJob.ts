@@ -9,12 +9,15 @@
 import { Database } from "bun:sqlite";
 import { updateOutcome } from "../../infrastructure/db/cascadeHitStore.js";
 import type { IBacktestResultRepository } from "../../domain/repositories/IBacktestResultRepository.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 export interface CascadeBacktestDeps {
   db?: Database;
   nowMsFn?: () => number;
   sendWorkFn?: (msg: string) => Promise<boolean>;
   backtestResultRepo?: IBacktestResultRepository;
+  /** Injectable nowMs for recovery dedup guard (tests only — reuses nowMsFn field) */
+  dedupNowMsFn?: () => number;
 }
 
 export interface CascadeBacktestResult {
@@ -52,6 +55,13 @@ export async function runCascadeBacktest(
   } else {
     const { getDb } = await import("../../infrastructure/db/schema.js");
     db = getDb();
+  }
+
+  // T4 dedup guard: skip if already ran within daily cadence window
+  // @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, "cascadeBacktestJob", DAILY_CADENCE_MS, deps?.dedupNowMsFn)) {
+    return { processed: 0, skipped: 0, noData: 0 };
   }
 
   if (deps?.sendWorkFn) {

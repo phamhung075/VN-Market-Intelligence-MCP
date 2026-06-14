@@ -16,6 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import {
   getSignalEffectiveness,
   type SignalEffectiveness,
@@ -546,6 +547,14 @@ export interface DailyDashboardJobResult {
   written: boolean;
 }
 
+/** Options bag for runDailyDashboardJob (injectable for tests). */
+export interface DailyDashboardJobOptions {
+  /** Optional ISO date override (defaults to today in GMT+7). */
+  dateOverride?: string;
+  /** Injectable nowMs for recovery dedup guard (tests only). */
+  nowMsFn?: () => number;
+}
+
 /**
  * Loads signal metrics from the live database.
  *
@@ -598,15 +607,32 @@ async function loadSignalData(days = 7): Promise<DashboardSignalData | null> {
  * Reads project-stats.json, session logs, TASKS.md, and signal metrics
  * then writes docs/data/daily-dashboard.json.
  *
- * @param dateOverride - Optional ISO date override (defaults to today in GMT+7)
+ * @param opts - Optional options bag (dateOverride, nowMsFn for tests)
  * @returns DailyDashboardJobResult
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
  */
 export async function runDailyDashboardJob(
-  dateOverride?: string,
+  opts?: DailyDashboardJobOptions | string,
 ): Promise<DailyDashboardJobResult> {
+  // Back-compat: opts may be a plain string dateOverride (legacy callers)
+  const options: DailyDashboardJobOptions =
+    typeof opts === "string" ? { dateOverride: opts } : (opts ?? {});
+
+  // T4 dedup guard: skip if already ran within daily cadence window
+  const DAILY_CADENCE_MS = 86_400_000;
+  try {
+    const db = getDb();
+    if (shouldSkipRecoveryReplay(db, "dailyDashboardJob", DAILY_CADENCE_MS, options.nowMsFn)) {
+      const today = options.dateOverride ??
+        new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+      return { date: today, sessionCount: 0, tasksDone: 0, written: false };
+    }
+  } catch { /* fail-open: DB unavailable, proceed with job */ }
+
   // Determine today's date in GMT+7 (VN time)
   const date =
-    dateOverride ??
+    options.dateOverride ??
     new Date(Date.now() + 7 * 3600 * 1000)
       .toISOString()
       .slice(0, 10);

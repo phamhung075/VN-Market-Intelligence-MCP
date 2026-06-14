@@ -16,6 +16,7 @@ import { logger } from "../../infrastructure/logger.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { mcpConfig } from "../../infrastructure/config.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -53,6 +54,12 @@ export async function runSscCheck(): Promise<void> {
 
   try {
     const db = getDb();
+
+    // T4 dedup guard: skip if already ran within daily cadence window
+    // @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
+    const DAILY_CADENCE_MS = 86_400_000;
+    if (shouldSkipRecoveryReplay(db, "sscCheckerJob", DAILY_CADENCE_MS)) { isRunning = false; return; }
+
     // recordJobRun never re-throws — errors are captured in cron_job_runs.error_msg
     await recordJobRun(db, "sscCheckerJob", async () => {
       const result = await checkSscReports();

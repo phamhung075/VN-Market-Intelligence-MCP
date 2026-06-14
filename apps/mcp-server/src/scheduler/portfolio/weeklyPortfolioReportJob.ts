@@ -25,6 +25,7 @@ import {
   acquireSchedulerLock,
   ensureSchedulerLocksTable,
 } from "../../infrastructure/db/schedulerLockStore.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -79,6 +80,8 @@ export interface WeeklyReportOptions {
    * exercise the lock path). Defaults to false (lock check enabled).
    */
   skipDbLock?: boolean;
+  /** Injectable nowMs for recovery dedup guard (tests only) */
+  nowMsFn?: () => number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -323,6 +326,7 @@ async function sendTelegram(text: string): Promise<void> {
  * A concurrency guard prevents overlapping executions.
  * Never throws — all errors are caught and logged.
  *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (6 days 1h12m window)
  * @param opts - Injectable dependencies for testability
  */
 export async function runWeeklyPortfolioReport(
@@ -350,6 +354,12 @@ export async function runWeeklyPortfolioReport(
         const { getDb } = await import("../../infrastructure/db/schema.js");
         return getDb();
       })());
+
+    // ── T4 dedup guard: skip if already ran within weekly cadence window ──────
+    const WEEKLY_CADENCE_MS = 604_800_000;
+    if (shouldSkipRecoveryReplay(db, "weeklyPortfolioReport", WEEKLY_CADENCE_MS, opts.nowMsFn)) {
+      return;
+    }
 
     // ── Task 1221: DB-backed lock — prevents duplicate runs across restarts ────
     // The in-memory `_running` flag resets on every launchctl restart. A restart

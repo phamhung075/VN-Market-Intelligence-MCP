@@ -24,6 +24,7 @@ import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import {
   upsertLikelihoodRatio,
   type LikelihoodDirection,
@@ -289,9 +290,15 @@ export async function runBaseRateComputation(
  * Cron wrapper for runBaseRateComputation.
  * Wraps with recordJobRun for observability.
  * Called weekly at Sunday 19:00 UTC (02:00 VN Monday) from jobs.ts.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (604.8s window = 6 days 1h12m)
  */
 export async function runBaseRateComputationJob(): Promise<void> {
   const db = getDb();
+
+  const WEEKLY_CADENCE_MS = 604_800_000;
+  if (shouldSkipRecoveryReplay(db, "baseRateComputationJob", WEEKLY_CADENCE_MS)) return;
+
   try {
     await recordJobRun(db, "baseRateComputationJob", async () => {
       const result = await runBaseRateComputation(db);

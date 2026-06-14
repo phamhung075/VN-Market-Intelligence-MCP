@@ -15,18 +15,24 @@ import { logger } from "../infrastructure/logger.js";
 import { fetchDavPharmacy } from "../infrastructure/fetchers/davPharmacy.js";
 import { getDb, initDatabase } from "../infrastructure/db/schema.js";
 import { insertPharmaEvent } from "../infrastructure/db/pharmaStore.js";
+import { shouldSkipRecoveryReplay } from "./startupHelpers.js";
 
 /**
  * Run the monthly DAV drug approval check.
  * Fetches DAV registry, maps to pharma events, persists to DB.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of monthly cadence (27d window)
  */
-export async function runDavPharmacyCheck(): Promise<void> {
+export async function runDavPharmacyCheck(nowMsFn?: () => number): Promise<void> {
   const startedAt = Date.now();
   logger.info("[davPharmacyJob] starting monthly DAV check");
 
   try {
     await initDatabase();
     const db = getDb();
+
+    const MONTHLY_CADENCE_MS = 2_592_000_000; // 30 days
+    if (shouldSkipRecoveryReplay(db, "davPharmacyCheckJob", MONTHLY_CADENCE_MS, nowMsFn)) return;
 
     const approvals = await fetchDavPharmacy();
 

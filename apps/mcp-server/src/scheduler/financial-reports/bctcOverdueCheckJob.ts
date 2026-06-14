@@ -30,6 +30,7 @@
 import type { Database } from "bun:sqlite";
 
 import { getDb } from "../../infrastructure/db/schema.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 import {
   getCurrentDeadline,
   classifyFilingStatus,
@@ -45,6 +46,8 @@ interface RunOptions {
   now?: Date;
   /** Minimum days past deadline before an alert fires (default: 3). */
   overdueDaysThreshold?: number;
+  /** Injectable nowMs for recovery dedup guard (tests only) */
+  nowMsFn?: () => number;
 }
 
 interface RunResult {
@@ -132,11 +135,18 @@ function patchBrokenSignalsJson(db: Database): void {
 
 /**
  * Run a single pass of the BCTC overdue check.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
  */
 export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunResult> {
   const db = opts.db ?? getDb();
   const now = opts.now ?? new Date();
   const threshold = opts.overdueDaysThreshold ?? DEFAULT_OVERDUE_THRESHOLD_DAYS;
+
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, "bctcOverdueCheckJob", DAILY_CADENCE_MS, opts.nowMsFn)) {
+    return { alertsInserted: 0, stocksChecked: 0, overdueFound: 0 };
+  }
 
   // Migrate any existing broken alerts from the string-array format
   patchBrokenSignalsJson(db);

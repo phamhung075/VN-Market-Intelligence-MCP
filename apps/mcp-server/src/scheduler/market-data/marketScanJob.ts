@@ -17,6 +17,7 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { SqliteWatchlistRepository } from "../../infrastructure/db/repositories/SqliteWatchlistRepository.js";
 import { SqliteMarketPriceRepository } from "../../infrastructure/db/repositories/SqliteMarketPriceRepository.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -53,6 +54,12 @@ export async function runMarketScan(label: "open" | "close"): Promise<void> {
 
   try {
     const db = getDb();
+
+    // T4 dedup guard: skip if already ran within daily cadence window
+    // @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
+    const DAILY_CADENCE_MS = 86_400_000;
+    if (shouldSkipRecoveryReplay(db, `marketScanJob:${label}`, DAILY_CADENCE_MS)) { isRunning = false; return; }
+
     // recordJobRun never re-throws — errors are captured in cron_job_runs.error_msg
     await recordJobRun(db, `marketScanJob:${label}`, async () => {
       const result = await scanMarket({

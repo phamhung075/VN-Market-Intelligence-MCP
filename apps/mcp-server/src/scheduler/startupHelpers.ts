@@ -5,6 +5,7 @@
  *   - log()                           shared scheduler logger
  *   - eveningReportIsValid()          report-quality guard (task 1408)
  *   - shouldRunCatchup()              startup catch-up decision helper (task 1430)
+ *   - shouldSkipRecoveryReplay()      T4 idempotency dedup guard (T1-ARCH-CRON-T4-DEDUP-GUARDS)
  *   - scheduleForeignFlowCbReset()    CB startup reset (task 1404)
  *   - run*WithDb()                    six testable cron-callback wrappers (task 1420)
  */
@@ -150,6 +151,53 @@ export function shouldRunCatchup(
   }
 
   return true
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// shouldSkipRecoveryReplay — T4 idempotency dedup guard (T1-ARCH-CRON-T4-DEDUP-GUARDS)
+//
+// Returns true when a successful (status='success') run for `jobName` exists in
+// cron_job_runs whose started_at is within the last `cadenceMs * 0.9` milliseconds.
+//
+// Design (per architect brief §4.2 Lever 2):
+//   - Uses 90% of declared cadence as the safe-skip window.
+//   - Only a 'success' status blocks replay; an 'error' row lets the job retry.
+//   - On any DB error, returns false (fail-open) — the job proceeds and the
+//     underlying idempotency at the SQL layer (T2 jobs) or business guard (T3)
+//     provides the last line of defence.
+//   - nowMsFn is injectable for deterministic unit tests.
+//
+// @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% cadence
+// ─────────────────────────────────────────────────────────────────────────────
+export function shouldSkipRecoveryReplay(
+  db: Database,
+  jobName: string,
+  cadenceMs: number,
+  nowMsFn: () => number = () => Date.now(),
+): boolean {
+  try {
+    const windowMs = cadenceMs * 0.9
+    const cutoffMs = nowMsFn() - windowMs
+    const cutoffIso = new Date(cutoffMs).toISOString().replace('T', ' ').slice(0, 19)
+
+    const row = db
+      .prepare<{ cnt: number }, [string, string]>(
+        `SELECT COUNT(*) AS cnt FROM cron_job_runs
+         WHERE job_name = ?
+           AND status = 'success'
+           AND started_at >= ?`,
+      )
+      .get(jobName, cutoffIso)
+
+    if ((row?.cnt ?? 0) > 0) {
+      log(`[${jobName}] already ran within cadence window — skipping (recovery dedup)`)
+      return true
+    }
+    return false
+  } catch {
+    // Table missing or schema mismatch — fail-open (let the job proceed)
+    return false
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

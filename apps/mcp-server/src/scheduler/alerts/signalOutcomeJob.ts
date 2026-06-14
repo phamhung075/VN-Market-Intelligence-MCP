@@ -23,12 +23,15 @@
 import type { Database } from "bun:sqlite";
 import { recordOutcome } from "../../infrastructure/db/agentSignalStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface SignalOutcomeJobDeps {
   db?: Database;
   nowFn?: () => Date;
+  /** Injectable nowMs for recovery dedup guard (tests only) */
+  nowMsFn?: () => number;
 }
 
 export interface SignalOutcomeJobResult {
@@ -77,11 +80,18 @@ function inferDirection(signalType: string, payloadJson: string): Direction {
 
 /**
  * Resolves pending signal outcomes by comparing price windows.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
  */
 export async function runSignalOutcomeJob(
   deps?: SignalOutcomeJobDeps,
 ): Promise<SignalOutcomeJobResult> {
   const db: Database = deps?.db ?? getDb();
+
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(db, "signalOutcomeJob", DAILY_CADENCE_MS, deps?.nowMsFn)) {
+    return { evaluated: 0, confirmed: 0, false_positive: 0, skipped: 0 };
+  }
 
   // Pending signals: outcome IS NULL (unresolved) or 'fired' (needs upgrade).
   // No time-window filter — outcome IS NULL / 'fired' is the scope limiter.

@@ -25,6 +25,7 @@ import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
 import { deleteOldReports } from "../../infrastructure/db/telegramReportStore.js";
+import { shouldSkipRecoveryReplay } from "../startupHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -1177,17 +1178,26 @@ async function maybeSendTelegram(
  *
  * @param db          - Optional injected Database (for testing). Defaults to getDb() singleton.
  * @param telegramFn  - Optional injected Telegram send function (for testing).
+ * @param nowMsFn     - Optional injected clock for recovery dedup guard (tests only).
  * @returns Promise<AuditFinding[]>
  *
  * Steps: D-1 (zero_price_rows) through D-11 (row_count_snapshot).
  * D-10 purges telegram_reports older than 48 h.
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of daily cadence (21.6h window)
  */
 export async function runDailyAudit(
   db?: Database,
   telegramFn?: TelegramFn,
+  nowMsFn?: () => number,
 ): Promise<AuditFinding[]> {
   const database = db ?? await defaultGetDb();
   const telegram = telegramFn ?? defaultSendTelegram;
+
+  const DAILY_CADENCE_MS = 86_400_000;
+  if (shouldSkipRecoveryReplay(database, "dataAuditJob:daily", DAILY_CADENCE_MS, nowMsFn)) {
+    return [];
+  }
 
   let findings: AuditFinding[] = [];
 
@@ -1249,16 +1259,25 @@ export async function runDailyAuditIfStale(maxAgeHours = 24): Promise<boolean> {
  * @param db          - Optional injected Database (for testing). Defaults to getDb() singleton.
  * @param telegramFn  - Optional injected Telegram send function (for testing).
  * @param getCountFn  - Optional injected LanceDB count function (for testing).
+ * @param nowMsFn     - Optional injected clock for recovery dedup guard (tests only).
  * @returns Promise<AuditFinding[]>
+ *
+ * @idempotency T4 — cron_job_runs recency guard; replay skipped if last success < 90% of weekly cadence (6 days 1h12m window)
  */
 export async function runWeeklyAudit(
   db?: Database,
   telegramFn?: TelegramFn,
   getCountFn?: GetCountFn,
+  nowMsFn?: () => number,
 ): Promise<AuditFinding[]> {
   const database = db ?? await defaultGetDb();
   const telegram = telegramFn ?? defaultSendTelegram;
   const getCount = getCountFn ?? defaultGetCount;
+
+  const WEEKLY_CADENCE_MS = 604_800_000;
+  if (shouldSkipRecoveryReplay(database, "dataAuditJob:weekly", WEEKLY_CADENCE_MS, nowMsFn)) {
+    return [];
+  }
 
   ensureAuditDependencies(database);
 
