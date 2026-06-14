@@ -242,3 +242,25 @@ Full design: `docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md
 - **Graphify:** skipped (no architecture graph nodes changed)
 
 **Design note:** `escalateFn` added as 4th positional param (not deps object) to preserve 100% backwards compat with existing 1329b positional callers. Orch-state write reuses `appendSignalQueueRow` (CAS retry, WF-2 protocol) rather than raw `Bun.sh mv` — avoids subprocess dependency and handles concurrent writer collision.
+
+---
+
+## [QA] Review Record
+
+- **Reviewer:** qa
+- **Date:** 2026-06-14T07:10Z
+- **Verdict:** APPROVED
+- **Commit reviewed:** e7289070
+
+**Gate results:**
+- TARGETED (D-1 suite): 7 pass / 0 fail — all 4 ACs covered by 7 assertions
+- CHECKPOINT SUITE (9 files): 65 pass / 0 fail — zero regression
+- TSC (pnpm check): exit 0, 0 errors
+- FULL SUITE: 12842 pass / 42 skip / 53 fail — all failures pre-existing (_deprecated/ + TA/MACD integration); 0 introduced by D-1
+- DDD: PASS — checkpoint.ts agnostic of orch-state; walEscalateFn closure in scheduler layer; infra→infra import permitted
+- SECURITY: PASS — no shell-interpolation of walBytes (structured row, not shell command); no process.env; no secrets
+- ATOMIC WRITE (code inspect): PASS — appendSignalQueueRow → writeOrchStateAtomic → writeFileSync(tmp)+renameSync(tmp→target); CAS 3-retry; payload guard validates .head/.task_board/.signal_queue before any fs op
+- GENERIC: PASS — threshold is global WAL file size, no per-ticker/per-table coupling
+- DESIGN CONFORMANCE: PASS — exceeds spec (CAS retry vs raw Bun.sh mv); non-fatal; DDD boundary enforced; no new cron entries; no new domain services
+
+**Live-verify gate (ops):** rebuild mcp-server --no-deps --force-recreate, then exercise/observe the WAL>10MB escalation path writes an atomic orch-state signal on the named-volume DB, peers intact.

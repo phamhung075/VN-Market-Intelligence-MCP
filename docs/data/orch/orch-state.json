@@ -4,12 +4,12 @@
   "_updated_at": "2026-06-14T06:50:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-14T06:50:00Z",
-    "updated_by": "dev-mcp-server",
-    "active_task_id": "D-1",
-    "next_agent": "qa",
-    "note": "D-1 DONE: WAL escalation gate shipped. tsc clean, 7 new tests green. Awaiting QA."
+    "status": "idle",
+    "updated_at": "2026-06-14T07:10:00Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": "ops",
+    "note": "D-1 QA APPROVED. ops: rebuild mcp-server + live-verify WAL escalation gate"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -54,8 +54,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-14T06:00:00Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-14T07:10:00Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -9915,6 +9915,26 @@
           "unit_tests": "4/4 PASS",
           "summary": "A-1 live-verify PASSED: sentinel persists, cron-alert fired at :45 with count=2, all unit tests pass (no false positive on count=1)"
         }
+      },
+      {
+        "id": "D-1",
+        "title": "FIX-MCP-CRASH-LOOP-D-1 — WAL>10MB escalation gate: escalateFn injection + orch-state signal write",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "APPROVED",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "created_at": "2026-06-14T00:30:00Z",
+        "commit": "e7289070",
+        "qa_approved_at": "2026-06-14T07:10:00Z",
+        "qa_approved_by": "qa",
+        "qa_verdict": "APPROVED — 7/7 tests green, tsc 0 errors, DDD PASS, security PASS (no shell injection), atomic CAS write confirmed via code inspect",
+        "live_verify_gate": "PENDING — ops must: rebuild mcp-server --no-deps --force-recreate, then exercise/observe the WAL>10MB escalation path writes an atomic orch-state signal on the named-volume DB, peers intact",
+        "next_agent": "ops",
+        "status_note": "code-merge APPROVED; DO NOT mark done_verified until ops live-verify passes",
+        "report": "reports/TASK_REPORT_FIX-MCP-CRASH-LOOP-D-1.md"
       }
     ],
     "in_progress": [
