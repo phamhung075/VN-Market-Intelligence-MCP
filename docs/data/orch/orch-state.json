@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-14T11:00:00Z",
-  "_updated_by": "dev-pdf-extractor",
+  "_updated_at": "2026-06-14T08:34:22Z",
+  "_updated_by": "dev-frontend",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -85,12 +85,13 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T08:27:52Z",
+    "status": "REVIEW",
+    "updated_at": "2026-06-14T08:34:22Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-FE-CHART-PRICE-DOMAIN",
-    "next_agent": "dev-frontend",
-    "note": "FIX-FE-CHART-PRICE-DOMAIN claimed (2nd half of user chart bug; ALLZERO data fix done_verified). dev-frontend: sanitize series + data-driven non-zero-anchored Y-domain, GENERIC all-ticker. Promote -> review (qa) on green pnpm --filter frontend check + commit. DOCLANG Phase 1 (T1-T6) all done_verified — sprint closed."
+    "next_agent": "qa",
+    "note": "FIX-FE-CHART-PRICE-DOMAIN claimed (2nd half of user chart bug; ALLZERO data fix done_verified). dev-frontend: sanitize series + data-driven non-zero-anchored Y-domain, GENERIC all-ticker. Promote -> review (qa) on green pnpm --filter frontend check + commit. DOCLANG Phase 1 (T1-T6) all done_verified — sprint closed.",
+    "active": "FIX-FE-CHART-PRICE-DOMAIN"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -11812,14 +11813,17 @@
         "sequence_note": "DATA-FIRST: ALLZERO-OHLCV-FETCH must complete first so this fix domains over CORRECT data — a pure frontend clamp alone would only HIDE wrong BB, not correct it. Frontend sanitation here is defense-in-depth, not a substitute for the upstream fix.",
         "size": "S",
         "sprint": "BACKLOG",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "title": "Price-pane Y-domain is zero-anchored + over-wide -> candles render as unreadable slivers (GENERIC all tickers)",
         "type": "FIX",
         "zone": "apps/frontend/",
         "claimed_at": "2026-06-14T08:27:52Z",
         "claimed_by": "router",
-        "next_agent": "dev-frontend",
-        "dispatch_note": "Dispatched dev-frontend 2026-06-14T08:27:52Z. 2nd half of the user chart bug (DATA fixed by ALLZERO done_verified; now fix the FRONTEND render). GENERIC all-ticker, no per-ticker hardcode. TWO parts per handoff docs/handoffs/FIX-FE-CHART-PRICE-DOMAIN.md + board .scope/.acceptance: (1) SANITIZE the series BEFORE setData/computeMA/computeBB — drop/forward-fill close===0 && volume===0 rows + clamp obvious 1000x outliers (defense-in-depth behind ALLZERO). (2) DATA-DRIVEN Y-domain — compute price-pane domain from min/max over (candle high/low ∪ MA20 ∪ MA50 ∪ BB+ ∪ BB-), set [min*(1-pad), max*(1+pad)] pad~0.05-0.08, NEVER forced to 0; apply via priceScale autoscaleInfoProvider/explicit min-max. Files: StockChart.tsx, indicators.ts, api.price-history.$ticker.tsx, dashboard.technical.tsx. Accept on SHB~13.8k/VCB~61.6k/FPT~73.5k: Y not zero-anchored, candles >=~50% pane, BB width <±15%, no plot from close=0/1000x row. Run `pnpm --filter frontend check` + typecheck BEFORE commit (RED-PREPUSH strands fleet). Promote -> review (qa) on green + commit."
+        "next_agent": "qa",
+        "dispatch_note": "Dispatched dev-frontend 2026-06-14T08:27:52Z. 2nd half of the user chart bug (DATA fixed by ALLZERO done_verified; now fix the FRONTEND render). GENERIC all-ticker, no per-ticker hardcode. TWO parts per handoff docs/handoffs/FIX-FE-CHART-PRICE-DOMAIN.md + board .scope/.acceptance: (1) SANITIZE the series BEFORE setData/computeMA/computeBB — drop/forward-fill close===0 && volume===0 rows + clamp obvious 1000x outliers (defense-in-depth behind ALLZERO). (2) DATA-DRIVEN Y-domain — compute price-pane domain from min/max over (candle high/low ∪ MA20 ∪ MA50 ∪ BB+ ∪ BB-), set [min*(1-pad), max*(1+pad)] pad~0.05-0.08, NEVER forced to 0; apply via priceScale autoscaleInfoProvider/explicit min-max. Files: StockChart.tsx, indicators.ts, api.price-history.$ticker.tsx, dashboard.technical.tsx. Accept on SHB~13.8k/VCB~61.6k/FPT~73.5k: Y not zero-anchored, candles >=~50% pane, BB width <±15%, no plot from close=0/1000x row. Run `pnpm --filter frontend check` + typecheck BEFORE commit (RED-PREPUSH strands fleet). Promote -> review (qa) on green + commit.",
+        "completed_at": "2026-06-14T08:34:22Z",
+        "completed_by": "dev-frontend",
+        "impl_note": "sanitizePrices() added to indicators.ts (drop close===0&&volume===0 rows + clamp >10x-median outliers via forward-fill). StockChart.tsx: sanitize before setData/computeMA/computeBB + autoscaleInfoProvider data-driven Y-domain [min*(1-0.06), max*(1+0.06)] over candle H/L union MA20 union MA50 union BB+/-. dashboard.technical.tsx: PriceChartSection + StatsRow both filter poison rows before computing Bien do header min/max. 18 new tests in FIX-FE-CHART-PRICE-DOMAIN-sanitize.test.ts. 65 test files / 1572 tests GREEN. typecheck GREEN. Frontend container REBUILD REQUIRED for live verification (vn-market-intelligence-mcp-frontend-1 running old image)."
       }
     ],
     "ready": [

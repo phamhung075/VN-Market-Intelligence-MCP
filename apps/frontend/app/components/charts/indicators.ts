@@ -4,6 +4,58 @@
  * (insufficient lookback data).
  */
 
+import type { PricePoint } from "~/domain/market";
+
+/**
+ * sanitizePrices — defense-in-depth series cleaner applied BEFORE any setData/computeMA/computeBB.
+ *
+ * Two passes (generic — no per-ticker hardcode):
+ *  1. Drop non-trading-day poison rows: close === 0 && volume === 0.
+ *     These are weekend/holiday placeholders that anchor lightweight-charts autoScale to 0.
+ *  2. Clamp obvious 1000x-scale outliers: if a candle's close deviates by > 10× from the
+ *     median of valid closes, replace it with the previous valid close (forward-fill).
+ *     This handles cases like VCB 2026-06-01 close=62.2 when neighbours are ~61 000.
+ *
+ * Returns a new array — original is not mutated.
+ */
+export function sanitizePrices(prices: PricePoint[]): PricePoint[] {
+  // Pass 1: drop close===0 && volume===0 rows
+  const pass1 = prices.filter(
+    (p) => !(p.close === 0 && (p.volume ?? 0) === 0),
+  );
+
+  if (pass1.length === 0) return pass1;
+
+  // Compute median of valid closes for outlier threshold
+  const sorted = [...pass1.map((p) => p.close)].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const median =
+    sorted.length % 2 === 1
+      ? sorted[mid]!
+      : (sorted[mid - 1]! + sorted[mid]!) / 2;
+
+  if (median === 0) return pass1; // degenerate — no clamp possible
+
+  // Pass 2: clamp 1000x-scale outliers (price off by >10× from median)
+  let prevClose = median;
+  return pass1.map((p) => {
+    const ratio = p.close / median;
+    if (ratio > 10 || ratio < 0.1) {
+      // Outlier — replace close (and derived OHLC) with previous valid close
+      const clamped: PricePoint = {
+        ...p,
+        close: prevClose,
+        open: p.open !== undefined ? prevClose : undefined,
+        high: p.high !== undefined ? prevClose : undefined,
+        low: p.low !== undefined ? prevClose : undefined,
+      };
+      return clamped;
+    }
+    prevClose = p.close;
+    return p;
+  });
+}
+
 /** Simple Moving Average over `period` bars. */
 export function computeMA(closes: number[], period: number): (number | null)[] {
   return closes.map((_, i) => {

@@ -10,7 +10,7 @@
  */
 import { useEffect, useRef } from "react";
 import type { PricePoint } from "~/domain/market";
-import { computeMA, computeBB, computeRSI, computeMACD } from "./indicators";
+import { sanitizePrices, computeMA, computeBB, computeRSI, computeMACD } from "./indicators";
 
 interface Props {
   prices: PricePoint[];
@@ -66,8 +66,14 @@ export function StockChart({ prices, height = 560 }: Props) {
       });
       chartRef.current = chart;
 
-      const closes = prices.map((p) => p.close);
-      const times = prices.map((p) => p.date as `${number}-${number}-${number}`);
+      // ── Part 1: Sanitize series BEFORE any indicator computation ─────────
+      // Drops non-trading-day poison rows (close===0 && volume===0) and
+      // clamps obvious 1000x-scale outliers via forward-fill.
+      // Generic — no per-ticker hardcode. Defense-in-depth behind upstream fix.
+      const clean = sanitizePrices(prices);
+
+      const closes = clean.map((p) => p.close);
+      const times = clean.map((p) => p.date as `${number}-${number}-${number}`);
 
       // ── Pane 0: Candlestick ───────────────────────────────────────────────
       const candle = chart.addSeries(CandlestickSeries, {
@@ -79,15 +85,13 @@ export function StockChart({ prices, height = 560 }: Props) {
         wickDownColor: "#ef4444",
       });
       candle.setData(
-        prices
-          .filter((p) => p.close > 0)
-          .map((p) => ({
-            time: p.date as `${number}-${number}-${number}`,
-            open: (p.open ?? p.close) || p.close,
-            high: (p.high ?? p.close) || p.close,
-            low: (p.low ?? p.close) || p.close,
-            close: p.close,
-          })),
+        clean.map((p) => ({
+          time: p.date as `${number}-${number}-${number}`,
+          open: (p.open ?? p.close) || p.close,
+          high: (p.high ?? p.close) || p.close,
+          low: (p.low ?? p.close) || p.close,
+          close: p.close,
+        })),
       );
 
       // MA20
@@ -149,6 +153,48 @@ export function StockChart({ prices, height = 560 }: Props) {
       bbUpper.setData(bbPoints.map((d) => ({ time: d.time, value: d.upper })));
       bbMid.setData(bbPoints.map((d) => ({ time: d.time, value: d.mid })));
       bbLower.setData(bbPoints.map((d) => ({ time: d.time, value: d.lower })));
+
+      // ── Part 2: Data-driven Y-domain ─────────────────────────────────────
+      // Compute price-pane domain from the ACTUAL visible band:
+      //   min/max over (candle high/low ∪ MA20 ∪ MA50 ∪ BB+ ∪ BB-)
+      // domain = [min*(1-pad), max*(1+pad)], pad=0.06, NEVER forced to 0.
+      // Applied via autoscaleInfoProvider on the candle series.
+      {
+        const DOMAIN_PAD = 0.06;
+        const allValues: number[] = [];
+
+        // Candle highs/lows
+        clean.forEach((p) => {
+          allValues.push(p.high ?? p.close);
+          allValues.push(p.low ?? p.close);
+        });
+
+        // MA20 non-null values
+        ma20.forEach((v) => { if (v !== null) allValues.push(v); });
+
+        // MA50 non-null values
+        ma50.forEach((v) => { if (v !== null) allValues.push(v); });
+
+        // BB upper/lower non-null values
+        bb.forEach((b) => {
+          if (b.upper !== null) allValues.push(b.upper!);
+          if (b.lower !== null) allValues.push(b.lower!);
+        });
+
+        if (allValues.length > 0) {
+          const rawMin = Math.min(...allValues);
+          const rawMax = Math.max(...allValues);
+          const domainMin = rawMin * (1 - DOMAIN_PAD);
+          const domainMax = rawMax * (1 + DOMAIN_PAD);
+
+          candle.applyOptions({
+            autoscaleInfoProvider: () => ({
+              priceRange: { minValue: domainMin, maxValue: domainMax },
+              margins: { above: 0, below: 0 },
+            }),
+          });
+        }
+      }
 
       // ── Pane 1: RSI ───────────────────────────────────────────────────────
       const rsiValues = computeRSI(closes);

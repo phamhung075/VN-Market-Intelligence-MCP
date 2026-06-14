@@ -274,15 +274,16 @@ interface StatsRowProps {
 function StatsRow({ candles, count }: StatsRowProps) {
   if (candles.length === 0) return null;
 
-  const closes = candles.map((c) => c.close);
-  const highs = candles.map((c) => c.high);
-  const lows = candles.map((c) => c.low);
+  // Filter out non-trading-day poison rows before computing stats
+  const trading = candles.filter((c) => !(c.close === 0 && c.volume === 0));
+  const displayCandles = trading.length > 0 ? trading : candles;
+
+  const highs = displayCandles.map((c) => c.high);
+  const lows = displayCandles.map((c) => c.low);
 
   const periodHigh = Math.max(...highs);
   const periodLow = Math.min(...lows);
   const latestVolume = candles[candles.length - 1]?.volume ?? 0;
-
-  void closes; // available for future use
 
   const stats = [
     {
@@ -339,11 +340,15 @@ function PriceChartSection({ pricePoints, candles }: PriceChartSectionProps) {
   const firstDate = candles[0]?.date ?? "";
   const lastDate = candles[candles.length - 1]?.date ?? "";
 
-  const closes = candles.map((c) => c.close);
-  const periodHigh = Math.max(...candles.map((c) => c.high));
-  const periodLow = Math.min(...candles.map((c) => c.low));
+  // Filter out non-trading-day poison rows (close===0 && volume===0) for
+  // the header annotation — same predicate as sanitizePrices() in indicators.ts.
+  const tradingCandles = candles.filter(
+    (c) => !(c.close === 0 && c.volume === 0),
+  );
+  const displayCandles = tradingCandles.length > 0 ? tradingCandles : candles;
 
-  void closes; // referenced in StatsRow above
+  const periodHigh = Math.max(...displayCandles.map((c) => c.high));
+  const periodLow = Math.min(...displayCandles.map((c) => c.low));
 
   return (
     <section className="space-y-2">
