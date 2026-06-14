@@ -1,5 +1,11 @@
 # PM — Notebook
 
+## c310 DOCLANG-SERIALIZE Phase 1 sprint CLOSED · 2026-06-14T140000Z
+
+QA VERDICT APPROVED (TASK_REPORT_DOCLANG-SERIALIZE-PHASE1.md signed off 2026-06-14). All 6 dev tasks (DOCLANG-T1 through T6) verified live on main (commits 5d121989–ccaf937f). No issues found. orch-state.json updated: T1–T6 status=DONE (from done_verified/TODO), SPIKE-DOCLANG-AUTHORED-DOCS gated_behind removed → ready for architect dispatch when prioritized by router. BA-DOCLANG-SERIALIZE marked DONE. Sprint umbrella umbrella lock released. Phase 2 spike (SPIKE-DOCLANG-AUTHORED-DOCS) unblocked: feasibility study is now TODO, can be dispatched by router to architect. Decision journal entry written: APPROVED_PHASE1_READY_PHASE2.
+
+---
+
 ## c309 DOCLANG-SERIALIZE Phase 1 sprint decomposition · 2026-06-14T081500Z
 
 ARCHITECT brief FINAL (ARCH-DOCLANG-SERIALIZE) → decomposed into 6 atomic sequential developer tasks (DDD layer stack + tests). Design: pure serializer + domain port + 2 adapters + thin use case + wiring + comprehensive tests. No schema/DB changes; additive output only (bctc_table_rows byte-for-byte regression-clean by design).
