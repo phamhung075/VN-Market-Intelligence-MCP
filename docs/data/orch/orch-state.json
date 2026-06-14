@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-14T17:43:11Z",
+    "updated_at": "2026-06-14T17:50:35Z",
     "updated_by": "dev-team",
     "active_task_id": "KINHDICH-HOVER-ENRICH",
-    "next_agent": "ops",
-    "note": "KINHDICH-HOVER-ENRICH dev-impl DONE (dev-kinh-dich ad03fd88, commit 47fe36e8) + router RAW-re-verified INDEPENDENTLY (3 impl files, hoverSummary x64 in que-reference.js, index.html L2501 loc(q.hoverSummary), Go SSOT field present, dirty tree not swept). -> ops REBUILD gate: build+up -d --no-deps kinh-dich-service + builder prune (Go serves static dashboard, JS not served till rebuilt); docker ps -a peers-intact + image-id-changed. -> qa LIVE-verify hover shows richer hoverSummary in running container (sample quẻ 47/29/1, EN<->VI toggle, coreMeaning still in expanded-detail). -> po signoff -> done_verified. Single zone apps/kinh-dich-service, weekend-safe. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
+    "next_agent": "po",
+    "note": "KINHDICH-HOVER-ENRICH: ops rebuild GREEN (image ebf5048ffff0, prune 470MB, peers intact) BUT router RAW-re-verify caught WRONG-SURFACE root cause — kinh-dich-service :5005 serves JSON only (GET / //dashboard//que-reference.js//index.html ALL 404; no /app/dashboard in image; Dockerfile copies server+api only). Architect premise 'Go binary serves dashboard -> rebuild ships JS' FALSE; index.html = dev file:// G9 sandbox, not user-facing. REAL user hover = Remix :3001 QueName.tsx -> que-descriptions.generated.ts (coreMeaning, not hoverSummary). Dev enriched SSOT (hoverSummary x64 in que-reference.js = good groundwork) but wrong render surface + missing codegen/QueName delivery. Done-bar NOT met. -> ESCALATE PO re-scope: keep SSOT, decide frontend delivery (gen-que-descriptions.ts emit hoverSummary + QueName render + frontend rebuild) THIS-task-or-follow-up, resolve QUE-TOOLTIP-DRY terse-tooltip-vs-reference-page tension; may re-engage BA/architect. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15. ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12436,9 +12436,9 @@
         "type": "SPRINT-S",
         "zone": "apps/kinh-dich-service/",
         "owner": "dev-kinh-dich",
-        "next_agent": "ops",
+        "next_agent": "po",
         "lane": "ready",
-        "status": "dev-impl-done",
+        "status": "ops-green-wrong-surface",
         "priority": "medium",
         "size": "S",
         "created_at": "2026-06-14T17:00:40Z",
@@ -12466,7 +12466,12 @@
         "dev_impl_verdict": "DONE (dev-kinh-dich ad03fd88, commit 47fe36e8): added HoverSummary localized field to queReference struct + 6th build() param, populated 64 pre-authored VI/EN strings; index.html L2501 hover render coreMeaning->hoverSummary; regen que-reference.js via emit-reference. go build PASS.",
         "router_dev_reverified_at": "2026-06-14T17:43:11Z",
         "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show 47fe36e8 --stat = EXACTLY 3 impl files (index.html, que-reference.js +260, hexagram_reference.go +68); no notebook, no concurrent dirty sweep. grep -c '\"hoverSummary\"' que-reference.js = 64. index.html L2501 = loc(q.hoverSummary) (coreMeaning removed from hover; expanded-detail + warning untouched). HoverSummary in Go SSOT struct+build+tag. Concurrent dirty tree preserved. One VI string 224 chars (spec 80-220) — 4-char overrun = more detail, non-blocking.",
-        "ops_rebuild_instructions": "REBUILD kinh-dich-service (Go binary serves the static dashboard; new que-reference.js NOT served until rebuilt). Targeted, NEVER docker compose down: `docker compose build kinh-dich-service && docker compose up -d --no-deps kinh-dich-service && docker builder prune -f`. Then `docker ps -a` to confirm kinh-dich-service Up + healthy AND no peer container went down (rebuild-recreate-destroys-peers guard). Confirm the served image ID changed (new build). Return: docker ps line for kinh-dich-service + builder-prune reclaimed + peers-intact confirmation. On ops-green -> next_agent=qa LIVE-verify the running dashboard hover."
+        "ops_rebuild_instructions": "REBUILD kinh-dich-service (Go binary serves the static dashboard; new que-reference.js NOT served until rebuilt). Targeted, NEVER docker compose down: `docker compose build kinh-dich-service && docker compose up -d --no-deps kinh-dich-service && docker builder prune -f`. Then `docker ps -a` to confirm kinh-dich-service Up + healthy AND no peer container went down (rebuild-recreate-destroys-peers guard). Confirm the served image ID changed (new build). Return: docker ps line for kinh-dich-service + builder-prune reclaimed + peers-intact confirmation. On ops-green -> next_agent=qa LIVE-verify the running dashboard hover.",
+        "ops_rebuild_done_at": "2026-06-14T17:50:35Z",
+        "ops_rebuild_result": "GREEN (ops a029277a): kinh-dich-service image d0dfa1b5ec86->ebf5048ffff0, Up+healthy, builder prune 470.1MB, all 11 peers Up+healthy (no peer recreate), /health+/market 200. Rebuild action itself clean.",
+        "router_ops_reverified_at": "2026-06-14T17:50:35Z",
+        "router_ops_reverify_verdict": "BLOCK-PROMOTE — ops rebuild clean BUT WRONG-SURFACE root cause confirmed RAW. curl :5005 GET / //dashboard/ //que-reference.js //index.html = ALL 404; docker exec ls /app = {server,api,data}, NO /app/dashboard (Dockerfile copies only server+api; cmd/server has no FileServer route). kinh-dich-service container NEVER serves the dashboard -> architect premise 'Go binary serves static dashboard -> rebuild ships JS' is FALSE; rebuild was a no-op for the user complaint. index.html = dev-only file:// G9 sandbox (pilot-status), not user-facing. REAL user que hover = Remix :3001 QueName.tsx -> Tooltip -> que-descriptions.generated.ts (carries coreMeaning x65, NOT hoverSummary; codegen gen-que-descriptions.ts maps only coreMeaning.vi). Dev enriched SSOT (hoverSummary in hexagram_reference.go + que-reference.js = good groundwork) but swapped the wrong render surface + never touched the codegen/QueName delivery path. Done-bar 'user sees richer hover' NOT met.",
+        "po_rescope_request": "RE-SCOPE: (a) SSOT enrichment (hoverSummary in que-reference.js, 64x) is DONE + reusable — keep. (b) REMAINING user-facing path = extend scripts/gen-que-descriptions.ts to emit hoverSummary into apps/frontend/app/lib/que-descriptions.generated.ts + update apps/frontend/app/components/QueName.tsx to render hoverSummary (fallback coreMeaning) + rebuild frontend container (:3001). (c) TENSION: QUE-TOOLTIP-DRY made the tooltip terse BY DESIGN (coreMeaning) + deep-links to full-detail reference page dashboard.kinh-dich-reference.tsx — does enriching the tooltip to an 80-220 char hoverSummary align with the user's 'too short' complaint, or should the richer text live only on the reference page with the tooltip staying terse? PO RULES the product direction + whether the frontend delivery is THIS task (extend) or a NEW follow-up task; may re-engage BA/architect (their index.html surface ID was wrong). Revert/keep the file:// index.html L2501 swap is PO's call (harmless either way — sandbox only). Recommend: KEEP SSOT groundwork, OPEN follow-up KINHDICH-HOVER-ENRICH-FE for the codegen+QueName+rebuild path, route the wrong-surface lesson to memory."
       }
     ],
     "ready": [],
