@@ -5750,7 +5750,22 @@
             ],
             "note": "Total + hs_attribution + processing_margin logic. per_country_import. margin_series (multi-year). Cache adapter pattern (SQLite TTL 24h). DDD risk MED: processing_margin div-by-zero guard mandatory + unit test.",
             "unblocked_at": "2026-06-14T19:19:17Z",
-            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)"
+            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)",
+            "live_contract": {
+              "source": "NSO monthly Excel, sheets '14.XK' (exports) + '15.NK' (imports)",
+              "fetch_recipe": "3-step NSO discovery (same as VMT-3b/4): (1) GET https://www.nso.gov.vn/bao-cao-tinh-hinh-kinh-te-xa-hoi-hang-thang/ → latest bai-top/{YYYY}/{MM}/; (2) GET press page → .xlsx link; (3) GET Excel → sheets '14.XK'/'15.NK'",
+              "probe_sample": "scripts/probes/vmt-3-sample.json",
+              "format": "Excel (.xlsx), parse by sheet NAME, 19-sheet archive",
+              "parse_rules": [
+                "Sheet '14.XK' (exports): col2=current month absolute (tỷ USD), col3=YTD cumulative, col4=% vs same period prior year",
+                "Sheet '15.NK' (imports): same column structure",
+                "VN number format: period=thousands separator, comma=decimal (7.654 = 7,654 M USD)",
+                "hs_attribution: sector breakdown rows from both sheets (col0=HS code/name, col2=absolute, col4=YoY%)"
+              ],
+              "sample_may_2026": "export_total: 27.4 bn USD, import_total: 24.1 bn USD, trade_balance: +3.3 bn USD"
+            },
+            "serial_dispatch_order": "A3 (third in WAVE-2, after A1→A2 merge gates)",
+            "merge_gate": "MERGE GATE A2→A3: VMT-3b + VMT-4 must complete + merge to main before A3 starts. NOTE: A1→A2 gate ALSO applies (all Zone A tasks serialize). VMT-1a is NOT gated on PROBE-1 (total+hs_attribution proceed immediately)"
           },
           {
             "id": "VMT-1b-TRADE-BALANCE-BLOC-SPLIT",
@@ -5772,7 +5787,25 @@
               "apps/macro-indicators/pkg/domain/services_vmt_trade.go",
               "apps/macro-indicators/pkg/infrastructure/parsers_vmt_trade.go"
             ],
-            "note": "FDI vs domestic-bloc split. PROBE-1 output determines parse strategy (direct table vs cross-join estimate). Blocks until probe payload captured in scripts/probes/vmt-1-sample.json."
+            "note": "FDI vs domestic-bloc split. PROBE-1 output determines parse strategy (direct table vs cross-join estimate). Blocks until probe payload captured in scripts/probes/vmt-1-sample.json.",
+            "live_contract": {
+              "source": "NSO monthly Excel, sheets '12.FDI' (FDI registered capital) + '14.XK' (total exports), SAME Excel as VMT-1a (no new fetch)",
+              "fetch_recipe": "Reuse NSO Excel from VMT-1a—getOrFetchNSOMonthlyExcel() cache hit if called within 6h TTL",
+              "probe_sample": "scripts/probes/vmt-3-sample.json (or vmt-1-sample if PROBE-1 probe output committed)",
+              "format": "Excel (.xlsx), same archive as VMT-1a",
+              "is_estimate_contract": "bloc_split ALWAYS is_estimate=true (PERMANENT per architect Decision A). Customs SPA inaccessible (JS-render 100%, dttktt.customs.gov.vn HTTP400). FDI share = NSO 12.FDI registered capital / NSO 14.XK total exports (cross-join ESTIMATE). Never flip is_estimate=false without direct machine-readable Customs enterprise-type column.",
+              "parse_rules": [
+                "Sheet '12.FDI': row where Col1='Tổng số' → total registered capital M USD",
+                "Sheet '14.XK': total export M USD",
+                "fdi_export_share_pct = fdi_registered_mn_usd / total_export_mn_usd * 100",
+                "bloc_split.fdi.is_estimate: true",
+                "bloc_split.domestic.is_estimate: true",
+                "bloc_split.note: 'Cross-join estimate: FDI capital from NSO 12.FDI vs total export; Customs SPA inaccessible'"
+              ],
+              "decision": "ARCH Decision A (PROBE-FOLD, 2026-06-14): ACCEPT is_estimate=true fallback. NOT blocking VMT-1a; sub-field of VMT-1a response."
+            },
+            "serial_dispatch_order": "A3 (third in WAVE-2, same task as VMT-1a—bundled as single task in dev implementation)",
+            "merge_gate": "MERGE GATE A2→A3: VMT-3b + VMT-4 merge complete before A3 starts"
           },
           {
             "id": "VMT-2-BOP",
@@ -5803,7 +5836,22 @@
               "apps/macro-indicators/pkg/interface/http/router.go",
               "apps/macro-indicators/cmd/server/main.go"
             ],
-            "note": "PROBE-2 determines Excel vs PDF parse path; may add excelize dep if Excel confirmed. E&O sign convention critical. FX-incidence discriminator logic (DD-5). Blocks until probe determines parse path."
+            "note": "PROBE-2 determines Excel vs PDF parse path; may add excelize dep if Excel confirmed. E&O sign convention critical. FX-incidence discriminator logic (DD-5). Blocks until probe determines parse path.",
+            "live_contract": {
+              "source": "SBV Liferay headless article API",
+              "fetch_recipe": "GET https://www.sbv.gov.vn/o/article/v1.0/articles?scopeKey=20117&contentStructureId=10063168&pageSize=100&filter=status eq 0 and Date48362898 gt '' and Date48362898 ge '{quarter_start}' and Date48362898 le '{quarter_end}'",
+              "probe_sample": "scripts/probes/vmt-2-sample.json",
+              "format": "Direct JSON (Liferay, NO Excel, NO PDF)",
+              "parse_rules": [
+                "VN number format: period=thousands separator, comma=decimal",
+                "loiVaSaiSot negative=unexplained outflows (BPM6, NO sign flip)",
+                "Empty string fields → omit or set null",
+                "Quarter Date48362898 format YYYY-MM-DD (last day of quarter)"
+              ],
+              "sample_q4_2025": "loiVaSaiSot: -12.375 (confirms negative=outflow), canCanVangLai: 7.654 (7,654 M USD, not 7.65)"
+            },
+            "serial_dispatch_order": "A1 (first WAVE-2)",
+            "merge_gate": "none (first in queue)"
           },
           {
             "id": "VMT-3a-MACRO-INDICATORS-PMI",
@@ -5828,7 +5876,9 @@
             "unblocked_at": "2026-06-14T19:19:17Z",
             "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)",
             "probe5_gate_at": "2026-06-14T20:00:54Z",
-            "probe5_note": "PMI source = S&P Global (NOT geo-blocked) — needs PROBE-5 characterization before parser; dev-macro-indicators runs the probe LOCALLY (no VPS). Held out of WAVE-2 serial chain per architect probe-fold."
+            "probe5_note": "PMI source = S&P Global (NOT geo-blocked) — needs PROBE-5 characterization before parser; dev-macro-indicators runs the probe LOCALLY (no VPS). Held out of WAVE-2 serial chain per architect probe-fold.",
+            "status_note": "HELD OUT OF WAVE-2 SERIAL CHAIN. S&P Global PMI not geo-blocked (dev-macro-indicators runs PROBE-5 locally before parser). Blocks VMT-3b in original dependency, but PROBE-5 is faster than NSO PROBE-3—dev can pursue PMI fetch in parallel with VPS probing.",
+            "gate_reason": "PROBE-5 pending (dev-local, not VPS)"
           },
           {
             "id": "VMT-3b-MACRO-INDICATORS-GSO",
@@ -5859,7 +5909,21 @@
               "apps/macro-indicators/pkg/interface/http/router.go",
               "apps/macro-indicators/cmd/server/main.go"
             ],
-            "note": "GSO IIP/retail/public-investment/FDI. Tết distortion flag on Jan/Feb. FDI supplemental vs new distinction. Blocks until PROBE-3 confirms table structure."
+            "note": "GSO IIP/retail/public-investment/FDI. Tết distortion flag on Jan/Feb. FDI supplemental vs new distinction. Blocks until PROBE-3 confirms table structure.",
+            "live_contract": {
+              "source": "NSO monthly Excel, sheet '2.IIPthang', '16.CPI' (same Excel as VMT-1a+1b+4)",
+              "fetch_recipe": "3-step NSO discovery: (1) GET https://www.nso.gov.vn/bao-cao-tinh-hinh-kinh-te-xa-hoi-hang-thang/ → regex latest bai-top/{YYYY}/{MM}/ link; (2) GET press release page → regex .xlsx download URL; (3) GET Excel → sheets '2.IIPthang' (IIP)",
+              "probe_sample": "scripts/probes/vmt-3-sample.json",
+              "format": "Excel (.xlsx), parse by sheet NAME (not index), 19-sheet archive",
+              "tls": "GlobalSign intermediate CA (VPS_CACERT_PATH_NSO env var, --cacert not -k)",
+              "parse_rules": [
+                "Sheet '2.IIPthang': col0=sector name, col2=current month YoY, col3=YTD YoY, col4=MoM",
+                "Target rows (stable VN labels): 'Toàn ngành công nghiệp', 'Công nghiệp chế biến, chế tạo', 'Công nghiệp khai khoáng', 'Sản xuất và phân phối điện'"
+              ],
+              "sample_may_2026": "iip_all_industry YoY=103.27%, YTD=108.79%, MoM=109.08%"
+            },
+            "serial_dispatch_order": "A2 (second in WAVE-2, parallelizable with VMT-4)",
+            "merge_gate": "MERGE GATE A1→A2: VMT-2 (BOP) must complete + merge to main before A2 starts; Zone-A handlers_vmt.go/usecases_vmt.go/dtos_vmt.go shared files—SERIALIZE dev tasks"
           },
           {
             "id": "VMT-4-CPI-COMPONENTS",
@@ -5890,7 +5954,22 @@
               "apps/macro-indicators/pkg/interface/http/router.go",
               "apps/macro-indicators/cmd/server/main.go"
             ],
-            "note": "11 CPI baskets (food, transport ~20%, admin-priced edu/health, etc). cpi_peaked momentum logic (3m rolling avg). Base-effect flag. Blocks until PROBE-3 confirms CPI basket table structure."
+            "note": "11 CPI baskets (food, transport ~20%, admin-priced edu/health, etc). cpi_peaked momentum logic (3m rolling avg). Base-effect flag. Blocks until PROBE-3 confirms CPI basket table structure.",
+            "live_contract": {
+              "source": "NSO monthly Excel, sheet '16.CPI' (same Excel download as VMT-3b, single vpsFetch serves all 4 NSO-backed tools)",
+              "fetch_recipe": "3-step NSO (reuse from VMT-3b): same Excel, parse sheet '16.CPI'",
+              "probe_sample": "scripts/probes/vmt-3-sample.json (cpi_11_baskets section)",
+              "format": "Excel (.xlsx), 15 category rows (headline + 11 baskets + 3 subcategories)",
+              "parse_rules": [
+                "Headline 'CHỈ SỐ GIÁ TIÊU DÙNG' (row 0)",
+                "11 baskets: food_dining, beverages_tobacco, clothing_footwear, housing_utilities, household_equipment, health, transport, communication, education, culture_recreation, other",
+                "col4=MoM change (%), col5=YTD avg YoY (%)",
+                "Weights field: null, is_estimate=true (weights from CPI methodology PDF, not in Excel)"
+              ],
+              "sample_may_2026": "cpi_total_yoy_pct: 5.60, cpi_total_mom_pct: 0.29, cpi_avg_5m2026_yoy_pct: 4.31"
+            },
+            "serial_dispatch_order": "A2 (second in WAVE-2, parallel with VMT-3b)",
+            "merge_gate": "MERGE GATE A1→A2: VMT-2 must complete + merge before A2 starts; SHARED CACHE (macro_vmt_cache table): VMT-3b + VMT-4 both call getOrFetchNSOMonthlyExcel() utility—first call fetches+caches, second reads cache (6h TTL)"
           },
           {
             "id": "VMT-5a-LIQUIDITY-STATE-NO-GATE",
@@ -5924,7 +6003,24 @@
             ],
             "note": "policy_rates (refi + discount) from existing sbv_rates table. SJC gap = sjc_price - world_price (world gold from commodity_prices table, usd/vnd from sbv_rates). CNY/DXY from main-server FX fetch (existing). No new VPS crawl. IRS field: is_estimate=true (DD-6).",
             "unblocked_at": "2026-06-14T19:19:17Z",
-            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)"
+            "unblocked_by": "VMT-D-VPSFETCH done (46095c3d)",
+            "live_contract": {
+              "source_policy_rates": "www.sbv.gov.vn (Liferay HTML, same site as BOP—confirmed reachable, NO VPS proxy needed for policy rates)",
+              "source_sjc_gap": "market.db SJC table (existing crawler writes; DD-7 confirmed—no new fetch)",
+              "source_fx_coupling": "market.db sbv_rates + commodity_prices tables (existing)",
+              "source_irs": "null (not available)",
+              "probe_sample": "scripts/probes/vmt-4-sample.json (OMO section; policy_rates confirmed accessible on same SBV domain)",
+              "format": "Mixed: HTML for policy_rates (SBV Liferay), SQLite reads for SJC+FX (market.db adapters)",
+              "parse_rules": [
+                "policy_rates: refi_rate_pct, discount_rate_pct, lombard_rate_pct from SBV HTML",
+                "sjc_gap = sjc_price_mn_vnd - world_price_mn_vnd (from market.db reads)",
+                "fx_coupling = usd_vnd_center +/- band % (from market.db sbv_rates + commodity_prices)",
+                "irs: is_estimate=true (DD-6 permanent; HNX OTC IRS not machine-readable)"
+              ],
+              "bonus": "SBV FX reference rate confirmed at www.sbv.gov.vn/tỷ-giá (PROBE-4 bonus), live June-12: usd_center=25155, buy=23948, sell=26362 (can supplement DB reads if stale)"
+            },
+            "serial_dispatch_order": "A4 (fourth in WAVE-2, after A2→A3 merge gates)",
+            "merge_gate": "MERGE GATE A3→A4: VMT-1a + VMT-1b merge complete before A4 starts"
           },
           {
             "id": "VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO",
@@ -5948,7 +6044,23 @@
               "apps/macro-indicators/pkg/domain/models_vmt_liquidity.go",
               "apps/macro-indicators/pkg/infrastructure/adapters_vmt_sjc_fx.go"
             ],
-            "note": "SBV interbank 1w tenor (primary benchmark) + OMO net outstanding. PROBE-4 confirms explicit 1w tenor vs tenor grid derivation + OMO outstanding calculation. Blocks until probe returns."
+            "note": "SBV interbank 1w tenor (primary benchmark) + OMO net outstanding. PROBE-4 confirms explicit 1w tenor vs tenor grid derivation + OMO outstanding calculation. Blocks until probe returns.",
+            "live_contract": {
+              "source_interbank": "SBV dttktt.sbv.gov.vn (Oracle WebCenter, 202.58.245.101, 100% packet loss from Vinahost VPS—PERMANENTLY BLOCKED, per architect Decision B)",
+              "source_omo": "SBV nghiep-vu-thi-truong-mo Liferay HTML (Mua ky han/Ban ky han/Tin phieu; net outstanding via rolling tally)",
+              "probe_sample": "scripts/probes/vmt-4-sample.json (OMO section; interbank blocked)",
+              "format": "HTML (SBV Liferay), OMO table + math tally (no API)",
+              "is_estimate_contract": "interbank_1w: is_estimate=true PERMANENTLY (Option 2, architect Decision B). No alternative public endpoint found (WiData off-limits, NSO narrative unreliable, no Bloomberg/Refinitiv, no Vietnamese aggregator stable). rate_1w_pct: null, blocked_reason='dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)'",
+              "parse_rules": [
+                "OMO: SBV press release HTML for auction results",
+                "Mua ky han (add/reverse-repo) + Ban ky han (absorb) + Tin phieu math",
+                "net outstanding = sum(add) - sum(absorb), maturity-date aware",
+                "June-12-2026 sample: 408KB HTML, OMO PASS. Confirm each month's release URL pattern stable."
+              ],
+              "irs_note": "irs.is_estimate=true (DD-6, permanent, same pattern as interbank)"
+            },
+            "serial_dispatch_order": "A5 (fifth in WAVE-2, after A3→A4 merge gates)",
+            "merge_gate": "MERGE GATE A4→A5: VMT-5a merge complete before A5 starts. FINAL WAVE-2 task in serial chain."
           },
           {
             "id": "VMT-7a-TRADE-BALANCE-HANDLER",

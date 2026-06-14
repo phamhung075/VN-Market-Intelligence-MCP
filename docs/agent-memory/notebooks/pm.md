@@ -27,6 +27,66 @@ ARCHITECT brief FINAL (ARCH-VN-MACRO-TOOLING, commit 675891163d) + BA spec FINAL
 
 ---
 
+## c313 VN-MACRO-TOOLING WAVE-2 serial dispatch order + live contracts attached · 2026-06-14T190000Z
+
+ARCHITECT PROBE-FOLD (commit 9dbfcbbb) → PM prepares WAVE-2 for serialized dev dispatch. **WAVE-2 CONSTRAINT (architect Entry 12): Zone A (handlers_vmt.go, usecases_vmt.go, dtos_vmt.go shared files) MUST serialize dev tasks to avoid merge conflicts + function-shadowing bugs on 5 new use-cases.**
+
+**WAVE-2 Serial Dispatch Order (explicit A1→A5 chain with merge gates):**
+
+- **A1 = VMT-2-BOP** (READY to dispatch first)
+  - Live contract attached: SBV Liferay headless JSON API (PROBE-2 PASS, no Excel, no PDF, direct JSON)
+  - Fetch: `GET https://www.sbv.gov.vn/o/article/v1.0/articles?scopeKey=20117&contentStructureId=10063168`
+  - Sample file: scripts/probes/vmt-2-sample.json (Q4-2025 payload, loiVaSaiSot=-12.375 confirming BPM6 sign)
+  - Parse rules: VN number format (period=thousands, comma=decimal), loiVaSaiSot negative=outflow, empty fields→null
+  - MERGE GATE: none (first task)
+
+- **A2 = VMT-3b-MACRO-INDICATORS-GSO + VMT-4-CPI-COMPONENTS** (parallelizable, gate on A1 merge)
+  - Live contract attached (both): NSO monthly Excel, sheets '2.IIPthang' + '16.CPI', SAME download
+  - Fetch: 3-step NSO discovery → press release → Excel (19-sheet archive)
+  - Sample file: scripts/probes/vmt-3-sample.json (May-2026 live data, IIP+CPI baskets confirmed)
+  - Shared cache pattern (architect Entry 11): `getOrFetchNSOMonthlyExcel()` utility fetches once, both use-cases read from cache (6h TTL macro_vmt_cache table)
+  - Parse rules: IIP—col2=current YoY%, col4=MoM; CPI—15 categories, col4=MoM%, col5=YTD avg YoY%; weights field=null (is_estimate=true, methodology PDF only)
+  - MERGE GATE: VMT-2 (A1) must complete + merge to main BEFORE A2 starts (Zone-A file conflict rule)
+
+- **A3 = VMT-1a-TRADE-BALANCE-TOTAL-HS + VMT-1b-TRADE-BALANCE-BLOC-SPLIT** (bundled, gate on A2 merge)
+  - Live contract attached (both): NSO monthly Excel, sheets '14.XK' + '15.NK' + '12.FDI' (same Excel as A2)
+  - Fetch: 3-step NSO (reuse cached Excel from A2, no new fetch)
+  - Sample file: scripts/probes/vmt-3-sample.json (same archive)
+  - VMT-1a: export_total, import_total, trade_balance, per_country_import, hs_attribution (NOT gated on PROBE-1; proceeds immediately)
+  - VMT-1b: bloc_split FDI vs domestic (GATED on PROBE-1, but PROBE-1 result is BLOCKED_JS_RENDER → fallback is_estimate=true NSO cross-join per architect Decision A, PERMANENT)
+  - Parse rules: bloc_split.fdi/domestic ALWAYS is_estimate=true; no path to flip is_estimate=false without direct Customs machine-readable column (SPA inaccessible)
+  - MERGE GATE: VMT-3b + VMT-4 (A2) must complete + merge BEFORE A3 starts
+
+- **A4 = VMT-5a-LIQUIDITY-STATE-NO-GATE** (gate on A3 merge)
+  - Live contract attached: Mixed sources—SBV HTML (policy_rates), market.db SQLite (SJC gap, FX coupling), IRS permanent is_estimate=true (DD-6)
+  - Fetch: SBV www.sbv.gov.vn/tỷ-giá HTML + SQLite reads (no new VPS, confirmed reachable on SBV main domain)
+  - Sample file: scripts/probes/vmt-4-sample.json (OMO section confirms SBV reachable; policy_rates accessible same domain)
+  - Parse rules: policy_rates from SBV rate table, SJC gap = sjc_price - world_gold, fx_coupling from existing DB reads, irs.is_estimate=true (permanent)
+  - MERGE GATE: VMT-1a + VMT-1b (A3) must complete + merge BEFORE A4 starts
+
+- **A5 = VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO** (gate on A4 merge)
+  - Live contract attached: SBV OMO HTML table only (interbank_1w permanent is_estimate=true per architect Decision B; dttktt.sbv.gov.vn 100% packet loss from VPS, no alternative found)
+  - Fetch: SBV nghiep-vu-thi-truong-mo Liferay HTML (OMO auction results PASS, June-12 sample 408KB)
+  - Sample file: scripts/probes/vmt-4-sample.json (OMO section)
+  - Parse rules: Mua ky han (add) + Ban ky han (absorb) + Tin phieu tally for net outstanding, maturity-date aware; interbank_1w: rate_1w_pct=null, is_estimate=true, blocked_reason="dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)"
+  - MERGE GATE: VMT-5a (A4) must complete + merge BEFORE A5 starts (FINAL serial task in WAVE-2)
+
+**WAVE-2 Status Summary:**
+- **A1 ready**: VMT-2 marked "ready" in orch-state (PROBE-2 PASS, contract live, dev-macro-indicators can claim immediately post-VMT-D-VPSFETCH merge)
+- **A2–A5 status**: Currently "TODO" (blocked behind A1 merge gate); router advances to "ready" sequentially as each gate clears
+- **VMT-3a-MACRO-INDICATORS-PMI** held at status="blocked-probe5" (S&P Global not geo-blocked, dev runs PROBE-5 locally BEFORE parser; outside WAVE-2 serial chain per architect recon-fold)
+- **VMT-5b.interbank + irs**: both is_estimate=true permanent (interbank blocked network, IRS no machine-readable source)
+
+**Key constraints enforced (architect Entry 12 + DDD risk review):**
+- handlers_vmt.go, usecases_vmt.go, dtos_vmt.go shared across all 5 Zone A tools → serialization prevents concurrent touches
+- Every parser contract derived from live payload (scripts/probes/vmt-{N}-sample.json), never schema comments (GA-7)
+- Shared NSO Excel cache: one vpsFetch serves 4 tools (VMT-1a, VMT-1b, VMT-3b, VMT-4) → cost: 1 fetch per 6h; benefit: no redundant 646KB VPS calls
+- All Zone A use-cases receive VpsFetchPort domain port (Fence-A preserved, DDD clean)
+
+**WIP transition:** After A1 (VMT-2) merge gate clears, A2 (VMT-3b+VMT-4 parallelizable) ready to spawn. Each A→next gate is a serialize point: router must ensure prior task completed + merged before next task leaves "TODO".
+
+---
+
 ## c311 ARCH-CRON-SCHEDULER-RELIABILITY sprint decomposition · 2026-06-14T120000Z
 
 ARCHITECT brief FINAL (ARCH-CRON-SCHEDULER-RELIABILITY, design complete 2026-06-14T11:40Z) → decomposed into 3 atomic sequenced developer tasks. Root cause: node-cron v3.0.3 silent tick drops under event-loop saturation (`recoverMissedExecutions=false` default). Design: 4-lever system (Lever 1/2/3 in Phase 1, Lever 4 in Phase 2). Architect established HARD CONSTRAINT: **Phase 1a (T4 dedup guards) MUST ship BEFORE Phase 1b (recovery enabled)** to prevent double Telegram on replay — this is the critical sequencing gate.
