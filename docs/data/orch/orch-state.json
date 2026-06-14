@@ -5676,17 +5676,20 @@
             "type": "ENHANCEMENT",
             "priority": "medium",
             "size": "M",
-            "status": "dispatched",
+            "status": "REVIEW",
             "zone": "apps/mcp-server/src/interface/mcp/tools/sector/",
             "owner": "dev-mcp-server",
             "depends": [],
             "wave": 1,
             "blocks": [],
             "files_modify": [
-              "apps/mcp-server/src/interface/mcp/tools/sector/creditFlowTools.ts"
+              "apps/mcp-server/src/interface/mcp/tools/sector/creditFlowTools.ts",
+              "apps/mcp-server/src/__tests__/VMT-6-credit-flow-survey-distribution.test.ts"
             ],
             "note": "Additive field; no gate on BLOCKER-6. Existing is_estimate flags (mortgageIsEstimate, yoyIsEstimate, static_seed) MUST remain unchanged — regression gate on PR diff.",
-            "dispatched_at": "2026-06-14T19:09:12Z"
+            "dispatched_at": "2026-06-14T19:09:12Z",
+            "dev_commit": "105b07c4",
+            "dev_result": "DONE: survey_distribution stub added (is_estimate=true, all fields null/empty, note VIRA/VARA deferred). SurveyDistribution interface exported. Return type extended. tsc --noEmit exit0. 6/6 VMT-6 tests pass + 19/19 existing credit-flow tests pass. PR diff: pure additive, zero existing is_estimate lines removed. No .head touched, no unrelated task."
           },
           {
             "id": "VMT-1a-TRADE-BALANCE-TOTAL-HS",

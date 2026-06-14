@@ -1,5 +1,18 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-14 · VMT-6-CREDIT-FLOW-EXTEND — survey_distribution stub added (DEGRADED)
+
+**Task:** VMT-6-CREDIT-FLOW-EXTEND (Zone C, VN-MACRO-TOOLING WAVE-1)
+**Commit:** 105b07c4
+
+Added `survey_distribution` field to `getCreditFlowSignalHandler` in `creditFlowTools.ts`. Ships DEGRADED: `is_estimate=true`, all data fields null/empty arrays, note cites VIRA/VARA deferred (BLOCKER-6). Exported `SurveyDistribution` interface for typed consumers. Return type extended from `{ content }` to `{ content; survey_distribution }`.
+
+DDD boundary held: no fetch logic in handler; comment marks where `viraSurveyFetcher.ts` (infrastructure/fetchers/) wires in when source is confirmed (no schema change needed at that point).
+
+**Gate results:** tsc --noEmit exit0. 6/6 new VMT-6 tests pass. 19/19 existing credit-flow tests (246 + 1254) pass. PR diff: pure additive, zero existing is_estimate/mortgageIsEstimate/yoyIsEstimate/static_seed lines removed or flipped.
+
+Zone health: bun test (credit-flow suite) 0 fail, 157 tools intact, scheduler count unchanged (VMT-6 touches no scheduler files) | HEALTHY
+
 ## 2026-06-14 · T3-ARCH-CRON-WATCHDOG round-2 — manifest key drift fixed + integrity guard added
 
 **Task:** T3-ARCH-CRON-WATCHDOG CHANGES_REQUESTED round 2 (router RAW-verified false-green)
