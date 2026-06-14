@@ -1,14 +1,14 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-14T02:24:21Z",
+  "_updated_at": "2026-06-14T04:24:39Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-14T02:32:59Z",
-    "updated_by": "architect",
-    "active_task_id": null,
-    "next_agent": "pm"
+    "status": "in_progress",
+    "updated_at": "2026-06-14T04:24:39Z",
+    "updated_by": "po",
+    "active_task_id": "A-1",
+    "next_agent": "dev-mcp-server"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -53,7 +53,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-14T02:24:21Z",
+    "_updated_at": "2026-06-14T04:24:39Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -7347,7 +7347,7 @@
         "id": "FIX-NEWS-CB-FALSE-CLOSED",
         "type": "FIX",
         "status": "TODO",
-        "priority": "P2",
+        "priority": "P1",
         "zone": "apps/news-fetch/",
         "owner": "dev-news-fetch",
         "title": "FIX-NEWS-CB-FALSE-CLOSED — Reuters RSS + TradingEconomics x2 at 14 CONSECUTIVE errors since the 2026-06-13T23:18Z restart, yet their circuit-breakers still report [OK] (failure threshold not hit). CB false-closed masks a never-succeeded-since-restart news-source freshness gap from agent monitoring. FIX: (a) lower the CB failure threshold so 14 consecutive errors trips OPEN, and/or (b) add a never-succeeded-since-restart detector (a source with zero successes since process start AND error_count>=N must surface as DEGRADED regardless of the rolling-window CB). Surface the degradation to the BUG/WORK channel + freshness gate so news-source staleness is no longer invisible. PLAN-ONLY at PO layer — dev-team chain implements.",
@@ -7355,7 +7355,10 @@
         "depends": [],
         "source": "router cluster brief 2026-06-14T02:20Z (SECONDARY I2)",
         "groomed_by": "po",
-        "groomed_at": "2026-06-14T02:24:21Z"
+        "groomed_at": "2026-06-14T02:24:21Z",
+        "escalation": "Bumped P2->P1 by PO 2026-06-14 per 0407 WORSENED trend (I2): Reuters RSS + TradingEconomics x2 escalated 14->27 consecutive errors (~6.5 errors/h), still 'never succeeded since 23:18Z restart', circuit breakers STILL [OK]/false-closed masking the degradation. Will hit 50+ by next check. Same task covers the class — NOT duplicated.",
+        "updated_at": "2026-06-14T04:24:39Z",
+        "updated_by": "po"
       },
       {
         "id": "TASK-ARCH-CRON-1A",
@@ -7543,6 +7546,20 @@
           "apps/mcp-server/src/scheduler/startScheduler.ts"
         ],
         "phase": "2"
+      },
+      {
+        "id": "FIX-VPS-NEWS-STALE-FALSEPOS",
+        "type": "FIX",
+        "status": "TODO",
+        "priority": "P3",
+        "zone": "apps/news-fetch/",
+        "owner": "dev-news-fetch",
+        "title": "FIX-VPS-NEWS-STALE-FALSEPOS — get_vps_proxy_health reports news:STALE false-positive: 0407 push log shows recent pushes (03:52, 03:36, 03:20, 03:04, 03:00) contradicting the STALE flag. The VPS staleness threshold is miscalibrated vs actual news push cadence; no real data gap. FIX: align the news stale-detection threshold with the observed push cadence (decouple the STALE flag from data-flow health so a healthy, actively-pushing feed is not flagged stale).",
+        "user_impact": "LOW — risk that ops/alert-commander consume this STALE flag to suppress a healthy news feed (false-negative on news processing). Inverse class of feedback_passive_health_masks_dead_data (false-STALE vs false-healthy).",
+        "depends": [],
+        "source": "health-recheck 0407 NEW finding (N1) — router triage 2026-06-14",
+        "groomed_by": "po",
+        "groomed_at": "2026-06-14T04:24:39Z"
       }
     ],
     "archive": [],
@@ -9784,47 +9801,13 @@
           "G4": "no double-publish: when Layer-B */15 AND Layer-A both fire the same slot/day, the published:<slot>:<date> claim makes exactly one publish (other exits silent).",
           "closer": "TNB c95+ audit confirms morning+EOD present for 2 consecutive market days (Mon 06-15 + Tue 06-16) = recurrence #5 closed -> a future dev-team tick promotes to done_verified."
         }
-      }
-    ],
-    "in_progress": [
-      {
-        "id": "FIX-MCP-CRASH-LOOP-WRITEWAL",
-        "title": "FIX-MCP-CRASH-LOOP-WRITEWAL — MCP server crash-loop root cause (write-wedge, WAL accumulation) + production safeguards",
-        "owner": "dev-mcp-server",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "high",
-        "zone": "apps/mcp-server/",
-        "size": "SPRINT-S",
-        "created_at": "2026-06-13T22:22:00Z",
-        "created_by": "ops",
-        "evidence": "Health-recheck incident I11-R2: 3 restarts in 24h with ~2h cadence on 2026-06-13. WAL pattern: 7.30MB→15.65MB→16MB. No OOM/SIGSEGV in logs, memory 25.68% of cap. Write-wedge signature confirmed. Ops force-recreate (22:21Z) reset WAL to 656KB, service healthy, peers intact, DB operational. No crash trigger in logs; restart clears state. Hypothesis: SQLite WAL checkpoint stalled under disk/memory pressure.",
-        "root_cause": "wal_autocheckpoint=4000 (16 MB threshold) + FULL-only live-hours cron. 40+ cron jobs hold read snapshots that pin WAL frames; passive autocheckpoint is defeated by concurrent readers; FULL mode never resets WAL file size. TRUNCATE + reader-expiry via BEGIN IMMEDIATE is the definitive fix.",
-        "fix_class": [
-          "BC: lower wal_autocheckpoint to 1000 + runForcedTruncateCheckpoint() every 30 min (BEGIN IMMEDIATE; COMMIT + PRAGMA wal_checkpoint(TRUNCATE))",
-          "A: restart-cadence alert via cron_job_runs startup sentinel + 30-min poller (count>=2 in 4h -> WORK alert)",
-          "D: escalateFn injected into checkWalFileSize() -> atomic orch-state signal when WAL>10MB"
-        ],
-        "verification_gate": "Live uptime >4h without restart-loop; WAL stays <5MB during sustained load; orch-state alert triggers if WAL anomaly recurs",
-        "architect_handoff": "docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md",
-        "architect_brief": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
-        "architect_completed_at": "2026-06-14T00:15Z",
-        "note": "BC-1 (root) DEPLOYED LIVE 22:49Z awaiting >4h verify; A-1/D-1 blocked_by BC-1 until live-verified",
-        "depends_on": [],
-        "claimed_at": "2026-06-13T22:31:06Z",
-        "claimed_by": "router",
-        "dispatch_note": "SPRINT-S dispatched architect 2026-06-13T22:31:06Z. RECURRING write-wedge (4 crashes/26h ~2h cadence, re-crashed ~00:20Z 06-14). Design split of 3 fix-classes: (B/C) GENERIC db-connection-layer WAL checkpoint policy (PRAGMA wal_autocheckpoint + periodic PRAGMA optimize + manual wal_checkpoint(TRUNCATE)) = load-bearing root fix ships FIRST; (A) ops restart-cadence alert; (D) orch-state WAL>10MB escalation gate. Scope = apps/mcp-server/ db layer + ops-monitoring + orch-state gate. GENERIC at db/connection layer (NOT per-table/per-ticker). Root-cause-definitive (replaces force-recreate symptom-patch). Live-verify (non-market): uptime>4h no restart-loop + WAL<5MB under load. Output: architecture brief -> docs/architecture-briefs/, signal pm.",
-        "stage": "architect-done->pm",
-        "architect_done_at": "2026-06-13T22:38:47Z",
-        "handoff": "docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md",
-        "brief": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md"
       },
       {
         "id": "BC-1",
         "title": "FIX-MCP-CRASH-LOOP-BC-1 — WAL checkpoint policy: wal_autocheckpoint=1000 + runForcedTruncateCheckpoint() unconditional every 30 min",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "DEPLOYED-AWAITING-LIVE-VERIFY",
+        "status": "done_verified",
         "size": "S",
         "zone": "apps/mcp-server/",
         "priority": "high",
@@ -9875,7 +9858,85 @@
             "uptime_baseline_reset": "2026-06-13T23:18:20Z — promoter MUST key the >4h uptime window off this deliberate-deploy baseline (not the original 22:49Z deploy), and key crash-cadence off RestartCount (auto-restarts), NOT raw container uptime.",
             "promoter_guard": "DO NOT reopen BC-1 on image-hash mismatch alone. Verify via LIVE PRAGMA=1000 + RestartCount==0 + WAL<5MB. Reopen ONLY on RestartCount>0 (auto-crash) or WAL>=5MB."
           }
+        },
+        "done_verified_at": "2026-06-14T04:24:39Z",
+        "done_verified_by": "po",
+        "live_verification_result": {
+          "gate_passed": true,
+          "observed_at": "2026-06-14T04:07Z",
+          "source_report": "docs/agent-memory/health/team-tool-recheck-2026-06-14-0407.md",
+          "uptime": "4h45m14s (stable since 2026-06-13T23:18Z deliberate restart) — >4h gate MET",
+          "restart_count": 0,
+          "restart_count_verdict": "PASS — no auto-restart/crash since BC-1 went live; old ~2h crash cadence shows ZERO recurrence over 4h45m.",
+          "wal_bytes": 3490000,
+          "wal_verdict": "PASS — WAL 3.49MB (DOWN from 3.95MB at 02:02Z) < 5MB threshold. walCheckpointJob ran 04:00Z and flushed WAL — checkpoint policy holding as designed.",
+          "promoter_guard_satisfied": "Reopen-criteria were RestartCount>0 OR WAL>=5MB. Neither met -> legitimate done_verified, NOT a force-promote."
         }
+      }
+    ],
+    "in_progress": [
+      {
+        "id": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "title": "FIX-MCP-CRASH-LOOP-WRITEWAL — MCP server crash-loop root cause (write-wedge, WAL accumulation) + production safeguards",
+        "owner": "dev-mcp-server",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "zone": "apps/mcp-server/",
+        "size": "SPRINT-S",
+        "created_at": "2026-06-13T22:22:00Z",
+        "created_by": "ops",
+        "evidence": "Health-recheck incident I11-R2: 3 restarts in 24h with ~2h cadence on 2026-06-13. WAL pattern: 7.30MB→15.65MB→16MB. No OOM/SIGSEGV in logs, memory 25.68% of cap. Write-wedge signature confirmed. Ops force-recreate (22:21Z) reset WAL to 656KB, service healthy, peers intact, DB operational. No crash trigger in logs; restart clears state. Hypothesis: SQLite WAL checkpoint stalled under disk/memory pressure.",
+        "root_cause": "wal_autocheckpoint=4000 (16 MB threshold) + FULL-only live-hours cron. 40+ cron jobs hold read snapshots that pin WAL frames; passive autocheckpoint is defeated by concurrent readers; FULL mode never resets WAL file size. TRUNCATE + reader-expiry via BEGIN IMMEDIATE is the definitive fix.",
+        "fix_class": [
+          "BC: lower wal_autocheckpoint to 1000 + runForcedTruncateCheckpoint() every 30 min (BEGIN IMMEDIATE; COMMIT + PRAGMA wal_checkpoint(TRUNCATE))",
+          "A: restart-cadence alert via cron_job_runs startup sentinel + 30-min poller (count>=2 in 4h -> WORK alert)",
+          "D: escalateFn injected into checkWalFileSize() -> atomic orch-state signal when WAL>10MB"
+        ],
+        "verification_gate": "Live uptime >4h without restart-loop; WAL stays <5MB during sustained load; orch-state alert triggers if WAL anomaly recurs",
+        "architect_handoff": "docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md",
+        "architect_brief": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
+        "architect_completed_at": "2026-06-14T00:15Z",
+        "note": "BC-1 (root) DEPLOYED LIVE 22:49Z awaiting >4h verify; A-1/D-1 blocked_by BC-1 until live-verified",
+        "depends_on": [],
+        "claimed_at": "2026-06-13T22:31:06Z",
+        "claimed_by": "router",
+        "dispatch_note": "SPRINT-S dispatched architect 2026-06-13T22:31:06Z. RECURRING write-wedge (4 crashes/26h ~2h cadence, re-crashed ~00:20Z 06-14). Design split of 3 fix-classes: (B/C) GENERIC db-connection-layer WAL checkpoint policy (PRAGMA wal_autocheckpoint + periodic PRAGMA optimize + manual wal_checkpoint(TRUNCATE)) = load-bearing root fix ships FIRST; (A) ops restart-cadence alert; (D) orch-state WAL>10MB escalation gate. Scope = apps/mcp-server/ db layer + ops-monitoring + orch-state gate. GENERIC at db/connection layer (NOT per-table/per-ticker). Root-cause-definitive (replaces force-recreate symptom-patch). Live-verify (non-market): uptime>4h no restart-loop + WAL<5MB under load. Output: architecture brief -> docs/architecture-briefs/, signal pm.",
+        "stage": "architect-done->pm",
+        "architect_done_at": "2026-06-13T22:38:47Z",
+        "handoff": "docs/handoffs/FIX-MCP-CRASH-LOOP-WRITEWAL.md",
+        "brief": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md"
+      },
+      {
+        "id": "A-1",
+        "title": "FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert: cron_job_runs sentinel + 30-min poller (>=2 restarts/4h -> WORK alert)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "IN_PROGRESS",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
+        "created_at": "2026-06-14T00:30:00Z",
+        "created_by": "pm",
+        "files_summary": "Modify: composition-root.ts (startup sentinel), cronConfig.ts (cron), startScheduler.ts (register job). Create: restartCadenceAlertJob.ts + test file",
+        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-A-1.md",
+        "depends_on": [
+          "BC-1"
+        ],
+        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
+        "blocked_by": [
+          "BC-1"
+        ],
+        "accepts": [
+          "Alert fires when 2+ startup rows in last 4h",
+          "Alert silent when 1 row",
+          "No false alert after single force-recreate",
+          "tsc 0 errors"
+        ],
+        "in_progress_at": "2026-06-14T04:24:39Z",
+        "in_progress_by": "po",
+        "unblock_note": "BC-1 done_verified at 2026-06-14T04:24:39Z per 0407 live-verify -> depends_on satisfied. Re-established IN_PROGRESS (was actively in-flight before the 0407-reconcile discarded local pm commit 8419d2e6; intent restored). dev-mcp-server WIP=2 (FIX-MCP-CRASH-LOOP-WRITEWAL + A-1) — at limit, OK."
       }
     ],
     "head": {
@@ -11113,34 +11174,6 @@
       }
     ],
     "ready": [
-      {
-        "id": "A-1",
-        "title": "FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert: cron_job_runs sentinel + 30-min poller (>=2 restarts/4h -> WORK alert)",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "READY",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "priority": "medium",
-        "sprint": "FIX-MCP-CRASH-LOOP-WRITEWAL",
-        "created_at": "2026-06-14T00:30:00Z",
-        "created_by": "pm",
-        "files_summary": "Modify: composition-root.ts (startup sentinel), cronConfig.ts (cron), startScheduler.ts (register job). Create: restartCadenceAlertJob.ts + test file",
-        "handoff": "docs/handoffs/TASK-FIX-MCP-CRASH-LOOP-A-1.md",
-        "depends_on": [
-          "BC-1"
-        ],
-        "brief_ref": "docs/architecture-briefs/2026-06-14-fix-mcp-crash-loop-writewal.md",
-        "blocked_by": [
-          "BC-1"
-        ],
-        "accepts": [
-          "Alert fires when 2+ startup rows in last 4h",
-          "Alert silent when 1 row",
-          "No false alert after single force-recreate",
-          "tsc 0 errors"
-        ]
-      },
       {
         "id": "D-1",
         "title": "FIX-MCP-CRASH-LOOP-D-1 — WAL escalation gate: escalateFn injected into checkWalFileSize(), writes atomic orch-state signal when WAL>10MB",
