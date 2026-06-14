@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T16:01:36Z",
+    "status": "qa",
+    "updated_at": "2026-06-14T16:05:30Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY",
-    "next_agent": "developer",
-    "note": "PO promoted FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY (po-s53) + router RAW-re-verified (PO commits explicit-path, dirty tree not swept). Dispatch ready->in_progress (developer): codify `docker builder prune -f` as mandatory final step in docs/agents/ops/flow/docker.md (3 locations, unconditional, generic across all 6 host_runtime_set services) — closes the 3x disk-full recurrence definitively. Doc-only, weekend-safe, no rebuild. -> qa doc-review gate -> done_verified. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3 (G1 still open: aggregator stale 06-12). ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
+    "next_agent": "qa",
+    "note": "FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY dev-impl DONE (developer ad2054d9, commit c26e8972, doc-only) + router RAW-re-verified INDEPENDENTLY (2 files, dirty tree not swept; prune codified at all rebuild paths L39/L51/L106; generic_mandate no mcp-server scoping references system-map host_runtime_set; WHY note 3 recurrences + safety). -> qa DOC-REVIEW gate (no test/rebuild/market — read docker.md raw: prune in every rebuild path unconditional, generic host-wide mandate, safety note, commit hygiene). qa-APPROVED -> done_verified. ARCH-CRON-SCHEDULER-RELIABILITY passive Mon-2026-06-15 G1/G2/G3 (G1 open: aggregator stale 06-12). ARCH-SHIP-WAVE-REAUDIT PARKED. WIP=1 active. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12320,31 +12320,6 @@
         "reverify_gate": "MARKET-DAY-2026-06-15: (G1) ohlcvDailyAggregatorJob auto-fires Mon — get_pipeline_health 'Aggregator last run' advances to 2026-06-15 with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires + VCB/ACB/CTG fundamental rows newer than its run, NO manual trigger; (G3) reputationComputeJob fires at 08:30 tick under peer contention (cron_job_runs row present, no miss). QA verifies LIVE raw (pipeline-health payload + cron_job_runs named-volume rows), never badges. On all-PASS -> umbrella -> done_verified + move to done_verified[]. On any miss -> the watchdog (G5, LIVE) must have self-healed/alerted -> capture evidence + spin the residual into a scoped FIX.",
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate."
-      },
-      {
-        "id": "FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY",
-        "title": "Codify `docker builder prune -f` as the mandatory final step of the shared ops rebuild flow",
-        "type": "FIX",
-        "owner": "developer",
-        "zone": "cross-service/",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "market_independent": true,
-        "weekend_safe": true,
-        "root_cause": "3rd recurrence (2026-05-27, 2026-06-07, 2026-06-14) of host disk-full from Docker build-cache accumulation produced by repeated `docker compose build --no-cache mcp-server`. Today (2026-06-14) it hit 97% / 6.7Gi free and ENOSPC-blocked a qa agent; router reclaimed 18.62GB via `docker builder prune -f`. A documented RULE exists ('>=2 rebuilds/day -> builder prune as final step') but was NEVER codified into the rebuild flow, so it relies on memory and keeps recurring. Memory ref: project_disk_full_lancedb_bloat RECURRENCE 2026-06-14.",
-        "fix_spec": "Edit the rebuild-sequence SSOT in docs/agents/ops/flow/docker.md. In the § Docker Commands REBUILD block and the § Post-Rebuild Health Verification procedure, append `docker builder prune -f` as the MANDATORY FINAL STEP of the rebuild sequence: it runs AFTER `docker compose up -d --no-deps <service>` (force-recreate variants), AFTER post-rebuild health verification passes, and BEFORE handing off to qa. Make it unconditional (every rebuild) rather than the conditional '>=2/day' heuristic so it cannot be forgotten. Also update the § FORBIDDEN/correct-scoped-patterns 'Rebuild after code change' snippet so the canonical one-liner ends with `&& docker builder prune -f`. Add a one-line WHY note citing the 3 recurrences + 18.62GB reclaim so the step is self-justifying.",
-        "generic_mandate": "Apply to the SHARED rebuild sequence so EVERY service rebuild prunes build-cache, not just mcp-server. The prune target is the host-wide builder cache (`docker builder prune -f`), so a single codified step covers all 6 host_runtime_set services. Do NOT scope the new step to mcp-server only.",
-        "verification_gate": "1) docs/agents/ops/flow/docker.md rebuild sequence (both the § Docker Commands block and the § Post-Rebuild procedure) ends with `docker builder prune -f` as an explicit mandatory final step, generically worded for any <service>. 2) The 'Rebuild after code change' scoped one-liner in § FORBIDDEN includes the prune. 3) WHY note present citing the recurrences. 4) No service-specific (mcp-server-only) scoping of the prune step. Reviewer reads the doc raw to confirm. This is a doc-only change (no container action) -> weekend-safe; no LIVE market verification required.",
-        "depends_on": [],
-        "blocks": [],
-        "created_at": "2026-06-14T15:59:19Z",
-        "created_by": "po",
-        "source": "router 2026-06-14 ENOSPC recovery; PO weekend triage",
-        "next_agent": "developer",
-        "impl_dispatched_at": "2026-06-14T16:01:36Z",
-        "impl_dispatched_by": "dev-team",
-        "impl_dispatch_note": "PO-triaged weekend-safe infra fix (market-independent doc-only). IMPLEMENT per po-s53 spec: edit the rebuild-sequence SSOT docs/agents/ops/flow/docker.md — append `docker builder prune -f` as the MANDATORY FINAL step in BOTH (a) the § Docker Commands REBUILD block and (b) the § Post-Rebuild Health Verification procedure (after `up -d --no-deps`, after health passes, BEFORE qa handoff); make it UNCONDITIONAL (drop the fragile >=2-rebuilds/day heuristic — it never held); update the § FORBIDDEN 'Rebuild after code change' one-liner to end with `&& docker builder prune -f`; add a self-justifying WHY note citing the 3 recurrences (2026-05-27, 2026-06-07, 2026-06-14) + that builder cache is host-wide so ONE step covers all 6 host_runtime_set services (generic_mandate — do NOT scope to mcp-server). VERIFY post-edit: re-read docker.md raw to confirm the prune step appears in all THREE locations + WHY note + no service-specific scoping. Doc-only -> NO rebuild, NO market verification. Commit ONLY docs/agents/ops/flow/docker.md (+ your dev notebook if used) by EXPLICIT PATH — the 8-file concurrent dirty tree (bctc-analyst.md, coverage-state.json, cowork-schedule.json M + 4 docs/signals + digest-predict session ??) must NOT be captured; never git add -A. RETURN: the raw before/after of each of the 3 edited locations."
       }
     ],
     "ready": [],
@@ -12369,7 +12344,40 @@
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
       }
     ],
-    "qa": [],
+    "qa": [
+      {
+        "id": "FIX-OPS-REBUILD-BUILDER-PRUNE-CODIFY",
+        "title": "Codify `docker builder prune -f` as the mandatory final step of the shared ops rebuild flow",
+        "type": "FIX",
+        "owner": "developer",
+        "zone": "cross-service/",
+        "status": "QA",
+        "priority": "P2",
+        "size": "S",
+        "market_independent": true,
+        "weekend_safe": true,
+        "root_cause": "3rd recurrence (2026-05-27, 2026-06-07, 2026-06-14) of host disk-full from Docker build-cache accumulation produced by repeated `docker compose build --no-cache mcp-server`. Today (2026-06-14) it hit 97% / 6.7Gi free and ENOSPC-blocked a qa agent; router reclaimed 18.62GB via `docker builder prune -f`. A documented RULE exists ('>=2 rebuilds/day -> builder prune as final step') but was NEVER codified into the rebuild flow, so it relies on memory and keeps recurring. Memory ref: project_disk_full_lancedb_bloat RECURRENCE 2026-06-14.",
+        "fix_spec": "Edit the rebuild-sequence SSOT in docs/agents/ops/flow/docker.md. In the § Docker Commands REBUILD block and the § Post-Rebuild Health Verification procedure, append `docker builder prune -f` as the MANDATORY FINAL STEP of the rebuild sequence: it runs AFTER `docker compose up -d --no-deps <service>` (force-recreate variants), AFTER post-rebuild health verification passes, and BEFORE handing off to qa. Make it unconditional (every rebuild) rather than the conditional '>=2/day' heuristic so it cannot be forgotten. Also update the § FORBIDDEN/correct-scoped-patterns 'Rebuild after code change' snippet so the canonical one-liner ends with `&& docker builder prune -f`. Add a one-line WHY note citing the 3 recurrences + 18.62GB reclaim so the step is self-justifying.",
+        "generic_mandate": "Apply to the SHARED rebuild sequence so EVERY service rebuild prunes build-cache, not just mcp-server. The prune target is the host-wide builder cache (`docker builder prune -f`), so a single codified step covers all 6 host_runtime_set services. Do NOT scope the new step to mcp-server only.",
+        "verification_gate": "1) docs/agents/ops/flow/docker.md rebuild sequence (both the § Docker Commands block and the § Post-Rebuild procedure) ends with `docker builder prune -f` as an explicit mandatory final step, generically worded for any <service>. 2) The 'Rebuild after code change' scoped one-liner in § FORBIDDEN includes the prune. 3) WHY note present citing the recurrences. 4) No service-specific (mcp-server-only) scoping of the prune step. Reviewer reads the doc raw to confirm. This is a doc-only change (no container action) -> weekend-safe; no LIVE market verification required.",
+        "depends_on": [],
+        "blocks": [],
+        "created_at": "2026-06-14T15:59:19Z",
+        "created_by": "po",
+        "source": "router 2026-06-14 ENOSPC recovery; PO weekend triage",
+        "next_agent": "qa",
+        "impl_dispatched_at": "2026-06-14T16:01:36Z",
+        "impl_dispatched_by": "dev-team",
+        "impl_dispatch_note": "PO-triaged weekend-safe infra fix (market-independent doc-only). IMPLEMENT per po-s53 spec: edit the rebuild-sequence SSOT docs/agents/ops/flow/docker.md — append `docker builder prune -f` as the MANDATORY FINAL step in BOTH (a) the § Docker Commands REBUILD block and (b) the § Post-Rebuild Health Verification procedure (after `up -d --no-deps`, after health passes, BEFORE qa handoff); make it UNCONDITIONAL (drop the fragile >=2-rebuilds/day heuristic — it never held); update the § FORBIDDEN 'Rebuild after code change' one-liner to end with `&& docker builder prune -f`; add a self-justifying WHY note citing the 3 recurrences (2026-05-27, 2026-06-07, 2026-06-14) + that builder cache is host-wide so ONE step covers all 6 host_runtime_set services (generic_mandate — do NOT scope to mcp-server). VERIFY post-edit: re-read docker.md raw to confirm the prune step appears in all THREE locations + WHY note + no service-specific scoping. Doc-only -> NO rebuild, NO market verification. Commit ONLY docs/agents/ops/flow/docker.md (+ your dev notebook if used) by EXPLICIT PATH — the 8-file concurrent dirty tree (bctc-analyst.md, coverage-state.json, cowork-schedule.json M + 4 docs/signals + digest-predict session ??) must NOT be captured; never git add -A. RETURN: the raw before/after of each of the 3 edited locations.",
+        "dev_impl_done_at": "2026-06-14T16:05:30Z",
+        "dev_impl_commit": "c26e8972",
+        "dev_impl_verdict": "DONE (developer ad2054d9, commit c26e8972, doc-only): codified `docker builder prune -f` as mandatory unconditional final step in docs/agents/ops/flow/docker.md at all rebuild paths (FORBIDDEN scoped one-liner, REBUILD mcp-server cmd, Post-Rebuild Health final step) + WHY section (3 recurrences, safety props, generic host-wide mandate referencing system-map host_runtime_set). Dropped the fragile >=2/day heuristic. No rebuild (doc read live by ops at rebuild time).",
+        "router_dev_reverified_at": "2026-06-14T16:05:30Z",
+        "router_dev_reverify_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the dev badge). git show c26e8972 --stat = exactly 2 files (docker.md +31, developer notebook +14); dirty tree NOT swept. Router grepped docker.md directly: prune at L39/L51/L106 + unconditional decl L61; generic_mandate L74-75 (no mcp-server scoping, references system-map .host_runtime_set, no hardcoded count); WHY note cites 3 recurrences + safety (never touches containers/volumes/market.db/tagged images). Matches spec exactly.",
+        "qa_instructions": "DOC-REVIEW GATE (doc-only fix — NO test pipeline, NO rebuild, NO market verification). Gate-keeper, write Task Report, do not accept a badge. Re-confirm INDEPENDENTLY by reading docs/agents/ops/flow/docker.md RAW: (1) `docker builder prune -f` appears as a final step in EVERY targeted-rebuild path in the file (the FORBIDDEN-section scoped one-liner, the Docker-Commands REBUILD block, and the Post-Rebuild Health Verification procedure) — grep all occurrences and confirm none is conditional on a rebuild-count heuristic; (2) the generic_mandate is explicit (prune is host-wide, MUST NOT be scoped to mcp-server only, no per-service condition) and references the system-map host_runtime_set SSOT rather than hardcoding the service count; (3) the WHY note documents the 3 recurrences AND the safety property (prune removes only inactive build cache; never touches running containers, named volumes incl market.db, or tagged images) so a future reader does not fear running it; (4) commit c26e8972 captured ONLY docker.md + the developer notebook — confirm no concurrent-agent dirty file (bctc-analyst.md / tool-usage-stats.json / coverage-state.json / cowork-schedule.json / docs/signals / digest-predict session) was swept. On qa-APPROVED -> router RAW-confirms -> promote done_verified. Commit Task Report by EXPLICIT PATH only (docs/agent-memory/sessions/2026-06-14-qa.md); never git add -A.",
+        "ops_verified": null
+      }
+    ],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
