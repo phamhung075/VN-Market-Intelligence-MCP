@@ -117,20 +117,6 @@ Zone health: tsc clean, 157 tools intact, 79 cron.schedule, G1+G2 deployed | HEA
 
 ---
 
-## 2026-06-13 · TSU-DEV-U3 — Deregister 5 / Integrate 7 weak-claim tools — REVIEW
-
-**Task:** TSU-DEV-U3 | Sprint: TOOL-SURFACE-UPGRADE | Priority: P2 | Zone: apps/mcp-server/src/interface/mcp/tools/
-**Status:** Implementation verified complete in HEAD (commit 50772c2a, QA-approved 2e321dec). This cycle re-verified all evidence per task brief requirements.
-**Part A — Deregister (5):** read_bctc_pdf (reports.ts — server.tool block removed, superseded by OCR/PEK pipeline), backfill_bctc_scalars (backfillBctcScalarsTool.ts — no-op, admin-only), compute_accruals (computeAccrualsTool.ts — no-op, domain calc no live store), get_accuracy_context (getAccuracyContextTool.ts — no-op, get_calibration_report covers use case), is_trading_day (isTradingDayTool.ts — no-op, DWF-PHASE1 unshipped worktree).
-**Part B — Integrate (7 description-only):** mark_alert_outcome (post-hoc + write_alert_verdict lifecycle + ops/alert-commander package), get_market_foreign_flow (market-wide SUM vs per-ticker + market-analyst package), diagnose+reset_foreign_flow_circuit_breaker (ops/debug pair), get_label_accuracy_report (label-level vs calibration curve + market-analyst), get_public_contracts (tran-ngoc-bau package confirmed), list_flagged_bctc_cells (bctc-analyst inspect flow), submit_bctc_correction (BCTC-HUMAN-CONFIRM entry point).
-**Tests:** TSU-DEV-U3-weak-claim-tools.test.ts — 12 pass / 0 fail. FENCE proof: T-U3-5 re-added is_trading_day registration → RED (1 fail), restored → GREEN (12 pass). Integration test (123-integration-mcp.test.ts) 27 pass / 0 fail.
-**RAW grep:** server.tool("read_bctc_pdf"|"backfill_bctc_scalars"|"compute_accruals"|"get_accuracy_context"|"is_trading_day") → zero live registration hits across apps/mcp-server/src/.
-**tsc:** exit 0 (clean). **Full suite baseline (pre-existing):** 12798 pass / 50 fail (50 failures are pre-existing deprecated/stale tests in _deprecated/ unrelated to U3).
-**Tool count:** 157 (162−5 deregistered). Scheduler count: 79 cron.schedule (unchanged).
-Zone health: tsc clean, 157 tools (5 deregistered per U3), all 12 U3 tests green, FENCE verified | HEALTHY
-
----
-
 ## 2026-06-13 · TSU-DEV-U5 — Foreign-flow null holding ratio (DSI serve-null) — REVIEW
 
 **Task:** TSU-DEV-U5 | Sprint: TOOL-SURFACE-UPGRADE | Priority: high | Zone: apps/mcp-server/
@@ -145,19 +131,6 @@ Zone health: tsc clean, 157 tools (5 deregistered per U3), all 12 U3 tests green
 **tsc:** clean. **Docs updated:** domain-model.md foreignFlowAnalyzer.ts row.
 **REBUILD REQUIRED:** container must be rebuilt before QA live-verifies get_foreign_flow / get_company_profile. no_rebuild=false. Router dispatches ops.
 Zone health: tsc clean, 157 tools intact (no tool count change), 79 cron.schedule, serve-null DSI fix shipped | HEALTHY
-
----
-
-## 2026-06-13 · TSU-DEV-U2-GEN — Tool-registry generator + parity test — REVIEW
-
-**Task:** TSU-DEV-U2-GEN | Sprint: TOOL-SURFACE-UPGRADE | Priority: high | Zone: scripts/ + apps/mcp-server/__tests__/
-**Root cause:** docs/data/tool-registry.json was hand-edited and decayed (hand-maintained count drifted from live source; no generator existed to enforce SSOT).
-**RECONCILIATION (ARCH-U2-2):** Brief estimated 162 (161 server.tool + 1 server.registerTool). Static scan shows 156 server.tool( + 1 server.registerTool( = 157. Generator says 157. Live /health says 157. ACTUAL = 157. Brief's 162 was pre-sprint estimate, not live reality. No discrepancy between generator and /health.
-**Fix:** scripts/gen-tool-registry.ts (already existed from prior commit a5b34816) — scans both APIs, emits grouped JSON. scripts/gen-project-stats.ts already imports from registry. Regenerated docs/data/tool-registry.json (totalCount=157, 12 groups). docs/data/project-stats.json toolCount=157 confirmed. apps/mcp-server/src/__tests__/tool-registry-parity.test.ts (already existed) — 8 tests GREEN.
-**Deliberate-violation proof:** Injected __test_fake_tool__ → T-U2-5 + T-U2-6 RED. Reverted → 8 GREEN. Fence proven.
-**Idempotency:** Content (totalCount/groups/tools) byte-identical across runs; only lastUpdated timestamp differs.
-**tsc:** clean. No runtime code changed.
-Zone health: tsc clean, 157 tools intact (generator verified), 79 cron.schedule, parity test 8 pass | HEALTHY
 
 ---
 

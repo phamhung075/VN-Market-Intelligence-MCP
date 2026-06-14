@@ -156,11 +156,7 @@ Sprint: FE-CORPEVENTS-TICKER-FILTER | Task: FE-CORPEVENTS-TICKER-FILTER | Verdic
 
 Unit: 84/0 Vitest (task17, QA-reproduced). tsc exit 0. DDD PASS (no infra/application imports). Security PASS (process.env = pre-existing FRONTEND_ORIGIN, not introduced by commit). mock-guard EXIT 0. Browser (Playwright 17/17): select[aria-label="Chọn mã chứng khoán"] rendered. 47 options: 'Tất cả' + 46 codes sorted A-Z (ACB,ACV,BID…). Default 237 rows. ACB → 9 rows. Tất cả restore 237. Cascade: dividend=10, dividend+ACB=1. No /api/ fetch on onChange. Empty state: ACV+Nội bộ → "Không có sự kiện trong danh mục này." no crash. Stale banner unaffected (1 banner throughout). ?days=30 compose: selector still renders. Scope: frontend zone only; orch-state metadata update (ARCH-QUE-REFERENCE-PAGE) in same commit non-violating. REVIEW→DONE. DJ qa-S1.
 
-## cycle-233 · 2026-06-12 · CLOSURE WAVE: REAUDIT-002 / FE-002 / FE-003 / CONTAM-7 / B-02 re-probe
-
-Sprint: SHIP-WAVE-REAUDIT + OHLCV-UNIT-CONTAM | Tasks: REAUDIT-002 + REAUDIT-FE-002 + REAUDIT-FE-003 + CONTAM-7 (APPROVED) / FIX-EVIDENCE-PIPELINE-STARVED B-02 (DEFER 16:00Z) | Reports: reports/TASK_REPORT_REAUDIT-002/FE-002/FE-003/CONTAM-7.md
-
-REAUDIT-002 (stale flags 5 handlers): 24/0 bun tests. tsc exit 0. DDD+security+mock-guard PASS. Live: conviction-history stale=True/70d, corporate-events stale=True/1d, shareholders stale=True/4d, financials stale=True/44d, reputation stale=False/0. All 5 endpoints PASS. Commit 70a33a80. REVIEW→DONE. DJ qa-S8.
+[Archived to git history; retained: latest 15 cycles. Full history in qa-20260606.md archive.]
 
 REAUDIT-FE-002 (foreign-flow stale_fields badges): 15/0 Vitest tests. tsc exit 0. DDD+security+mock-guard PASS. Live: stale_fields=3 from API. SSR HTML: 2 column header badges "Không có dữ liệu" (currentHoldingRatio + marketCapBn). maxHoldingRatio no column in table — badge omission correct. Image e47f66ad6d1e. Commit 11308f1c. REVIEW→DONE. DJ qa-S9.
 
@@ -197,10 +193,5 @@ Live DB probe (named volume, keinos sidecar). Check 1: contamination scan = 0 re
 
 Scope miss findings (non-blocking, logged for follow-up): SM-1 VNH 2026-06-12 close=1000.0 exactly (boundary `>1000` strict, 1 row miss); SM-2 460 pre-repair rows with low=0 pattern outside heuristic scope; SM-3 59 today's rows same low=0 pattern (CONTAM-2 guard gap). None introduced by CONTAM-6. Task DoD met. CONTAM-6 REVIEW→DONE. DJ: sprint-OHLCV-UNIT-CONTAM-qa-contam6.md.
 
-## Baselines (standing notes)
-
-- Agent: QA (unified-append mode, ≤200L notebook)
-- Latest cycle: cycle-241 (2026-06-13)
-
-## Archive
-Older cycles archived to git history / qa-20260606.md. Recent cycles 239–230 retained above.
+## Baselines / Archive
+- QA (unified-append mode, ≤200L notebook). Older cycles: git history / qa-20260606.md.

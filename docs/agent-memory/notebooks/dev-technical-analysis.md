@@ -31,23 +31,6 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ---
 
-### 2026-06-10 — GFD-3 — pre-deploy validation gate PASS
-
-**Task:** GFD-3 (Sprint GO-FLEET-DEPLOY) — pre-deploy validation gate for technical-analysis
-
-**Status:** DONE — commit a8bfd81b
-
-**All 4 DoD gates pass as-built. No code changes required.**
-
-- DoD-1 (health): `GET /health` → HTTP 200 `{"status":"ok","service":"technical-analysis","port":5003}` — confirmed via `go run ./cmd/server/main.go` + curl.
-- DoD-2 (CGO=0+modernc): Dockerfile line 18 `RUN CGO_ENABLED=0 GOOS=linux go build`; go.mod `modernc.org/sqlite v1.29.9`; no mattn/go-sqlite3.
-- DoD-3 (lint): `golangci-lint run ./...` exit 0, "0 issues."; depguard fence-a/b/c in .golangci.yml.
-- DoD-4 (compose healthcheck): `test: [CMD, wget, -qO-, http://localhost:5003/health]`, interval 30s, timeout 10s, retries 3, start_period 10s.
-
-**Unblocks:** GFD-6 (ops deploy + HONOR-PANIC-GUARD soak)
-
----
-
 ### 2026-06-08 — FIX-TA-GOLANGCI-CONFIG-V2 — migrate .golangci.yml to v2 schema
 
 **Task:** FIX-TA-GOLANGCI-CONFIG-V2 (Sprint CI-RED-RECONCILE)
@@ -200,8 +183,4 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 **Files changed (3):** dashboard/build.sh, dashboard/app.ts, dashboard/index.html
 
-**G6:** dashboard renders file:// PASS
-**G8:** honest red/green from sandbox PASS
-**G12:** 30/30 GREEN PASS
-
-**Archive:** P2-B3 (no-op confirmed, 0 TODO:migrate patterns), P2-B0 inventory prep, etc. Full history in git log.
+[Archived to git history; retained: 3 most recent cycles. Full history in git log.]
