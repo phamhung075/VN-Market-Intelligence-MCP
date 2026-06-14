@@ -85,12 +85,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-14T08:22:13Z",
-    "updated_by": "qa",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "ALLZERO-OHLCV-FETCH QA APPROVED → done_verified. FIX-FE-CHART-PRICE-DOMAIN (dev-frontend) is now unblocked. Handoff: docs/handoffs/FIX-FE-CHART-PRICE-DOMAIN.md."
+    "status": "in_progress",
+    "updated_at": "2026-06-14T08:27:52Z",
+    "updated_by": "dev-team",
+    "active_task_id": "FIX-FE-CHART-PRICE-DOMAIN",
+    "next_agent": "dev-frontend",
+    "note": "FIX-FE-CHART-PRICE-DOMAIN claimed (2nd half of user chart bug; ALLZERO data fix done_verified). dev-frontend: sanitize series + data-driven non-zero-anchored Y-domain, GENERIC all-ticker. Promote -> review (qa) on green pnpm --filter frontend check + commit. DOCLANG Phase 1 (T1-T6) all done_verified — sprint closed."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -7917,137 +7917,6 @@
         "title": "SPIKE — Feasibility of converting authored docs/ (policies/protocols/agent-flows/notebooks) to DocLang .dclg.xml: what breaks across the docs DAG, do agent flow-readers/skills/hooks parse non-markdown, is there ANY consumer benefit? Findings doc only.",
         "type": "SPIKE",
         "zone": "docs/agents/"
-      },
-      {
-        "created_at": "2026-06-14T08:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "DOCLANG-T1-DOMAIN"
-        ],
-        "description": "Implement DocLangSerializer class in infrastructure/doclang_serializer.py. Pure, stdlib-only (xml.etree.ElementTree). Promote _escape_xml() + threading logic from spike. Group DTOs by table_index, emit <table> + <thread> + <page_break> for cross-page. Rectangular rule: pad short rows, warn on surplus cells. ~2h.",
-        "files": [
-          "apps/pdf-extractor/infrastructure/doclang_serializer.py"
-        ],
-        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T2.md",
-        "id": "DOCLANG-T2-SERIALIZER",
-        "next_agent": "dev-pdf-extractor",
-        "owner": "dev-pdf-extractor",
-        "priority": "high",
-        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
-        "reverted_at": "2026-06-14T08:07:05Z",
-        "reverted_by": "router",
-        "size": "M",
-        "sprint_id": "DOCLANG-SERIALIZE",
-        "status": "DONE",
-        "title": "Core serializer: DocLangSerializer (pure transform)",
-        "type": "SPRINT-S",
-        "zone": "apps/pdf-extractor/",
-        "completed_at": "2026-06-14T14:00:00Z"
-      },
-      {
-        "created_at": "2026-06-14T08:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "DOCLANG-T2-SERIALIZER"
-        ],
-        "description": "Implement two adapter classes in infrastructure/doclang_serializer.py (same file as T2). FilesystemDocLangWriteAdapter implements DocLangWritePort, writes to output_dir/{report_id}.dclg.xml with error handling. NullDocLangWriteAdapter no-op for tests. ~45 min.",
-        "files": [
-          "apps/pdf-extractor/infrastructure/doclang_serializer.py"
-        ],
-        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T3.md",
-        "id": "DOCLANG-T3-ADAPTERS",
-        "next_agent": "dev-pdf-extractor",
-        "owner": "dev-pdf-extractor",
-        "priority": "high",
-        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
-        "reverted_at": "2026-06-14T08:07:05Z",
-        "reverted_by": "router",
-        "size": "XS",
-        "sprint_id": "DOCLANG-SERIALIZE",
-        "status": "DONE",
-        "title": "Adapters: FilesystemDocLangWriteAdapter + NullDocLangWriteAdapter",
-        "type": "SPRINT-S",
-        "zone": "apps/pdf-extractor/",
-        "completed_at": "2026-06-14T14:00:00Z"
-      },
-      {
-        "created_at": "2026-06-14T08:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "DOCLANG-T3-ADAPTERS"
-        ],
-        "description": "Implement DocLangSerializeUseCase in application/doclang_serialize_usecase.py. __init__(serializer, write_port), execute(response, report_id=None) calls serializer.serialize() then write_port.write(). Validation observability only (log, never gate). ~1h.",
-        "files": [
-          "apps/pdf-extractor/application/doclang_serialize_usecase.py"
-        ],
-        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T4.md",
-        "id": "DOCLANG-T4-USECASE",
-        "next_agent": "dev-pdf-extractor",
-        "owner": "dev-pdf-extractor",
-        "priority": "high",
-        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
-        "reverted_at": "2026-06-14T08:07:05Z",
-        "reverted_by": "router",
-        "size": "S",
-        "sprint_id": "DOCLANG-SERIALIZE",
-        "status": "DONE",
-        "title": "Use case: DocLangSerializeUseCase (application layer)",
-        "type": "SPRINT-S",
-        "zone": "apps/pdf-extractor/",
-        "completed_at": "2026-06-14T14:00:00Z"
-      },
-      {
-        "created_at": "2026-06-14T08:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "DOCLANG-T4-USECASE"
-        ],
-        "description": "Wire DocLangSerializeUseCase into main.py composition root: 3 imports + 4 construction lines (serializer, FilesystemDocLangWriteAdapter, use case). Add doclang==0.6.0 to requirements.txt. Verify pip check clean. ~30 min.",
-        "files": [
-          "apps/pdf-extractor/main.py",
-          "apps/pdf-extractor/requirements.txt"
-        ],
-        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T5.md",
-        "id": "DOCLANG-T5-WIRING",
-        "next_agent": "dev-pdf-extractor",
-        "owner": "dev-pdf-extractor",
-        "priority": "high",
-        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
-        "reverted_at": "2026-06-14T08:07:05Z",
-        "reverted_by": "router",
-        "size": "XS",
-        "sprint_id": "DOCLANG-SERIALIZE",
-        "status": "DONE",
-        "title": "Composition & wiring: main.py + requirements.txt",
-        "type": "SPRINT-S",
-        "zone": "apps/pdf-extractor/",
-        "completed_at": "2026-06-14T14:00:00Z"
-      },
-      {
-        "created_at": "2026-06-14T08:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "DOCLANG-T5-WIRING"
-        ],
-        "description": "Create __tests__/unit/test_doclang_serializer.py. Fixture A (single-page FPT Q4), Fixture B (multi-column Vietnamese), Fixture C (cross-page synthetic). Each asserts: well-formed XML, doclang.validate() passes, known cell present. Edge cases: EC-2 empty table, EC-4 short row, EC-3 long row. Use NullDocLangWriteAdapter for all tests. ~2h.",
-        "files": [
-          "apps/pdf-extractor/__tests__/unit/test_doclang_serializer.py"
-        ],
-        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T6.md",
-        "id": "DOCLANG-T6-TESTS",
-        "next_agent": "dev-pdf-extractor",
-        "owner": "dev-pdf-extractor",
-        "priority": "high",
-        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
-        "reverted_at": "2026-06-14T08:07:05Z",
-        "reverted_by": "router",
-        "size": "M",
-        "sprint_id": "DOCLANG-SERIALIZE",
-        "status": "DONE",
-        "title": "Tests: test_doclang_serializer.py with 3 golden fixtures + edge cases",
-        "type": "SPRINT-S",
-        "zone": "apps/pdf-extractor/",
-        "completed_at": "2026-06-14T14:00:00Z"
       }
     ],
     "closed_sprints": [
@@ -11764,6 +11633,152 @@
         "verified_by": "qa",
         "verified_at": "2026-06-14T08:22:13Z",
         "verify_note": "5/5 AC pass; tsc 0 errors; generic purge predicate (open=0 AND high=0 AND low=0 AND close=0, no ticker hardcode); idempotent guard (close<100 excludes normalized rows on re-run); no shell injection; no bctc regression; live: VCB 06-01 close=62200 confirmed by ops+router, BB SHB=0.88%/VCB=1.92%/FPT=2.14% all <15% acceptance threshold; FIX-FE-CHART-PRICE-DOMAIN unblocked."
+      },
+      {
+        "created_at": "2026-06-14T08:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "DOCLANG-T1-DOMAIN"
+        ],
+        "description": "Implement DocLangSerializer class in infrastructure/doclang_serializer.py. Pure, stdlib-only (xml.etree.ElementTree). Promote _escape_xml() + threading logic from spike. Group DTOs by table_index, emit <table> + <thread> + <page_break> for cross-page. Rectangular rule: pad short rows, warn on surplus cells. ~2h.",
+        "files": [
+          "apps/pdf-extractor/infrastructure/doclang_serializer.py"
+        ],
+        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T2.md",
+        "id": "DOCLANG-T2-SERIALIZER",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "priority": "high",
+        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
+        "reverted_at": "2026-06-14T08:07:05Z",
+        "reverted_by": "router",
+        "size": "M",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "status": "DONE_VERIFIED",
+        "title": "Core serializer: DocLangSerializer (pure transform)",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "completed_at": "2026-06-14T14:00:00Z",
+        "verified_at": "2026-06-14T08:27:52Z",
+        "verified_by": "router",
+        "verify_note": "Bucket reconcile only (was DONE-status stranded in backlog[] after pm full-file rewrite 62cbddce). LEGITIMATELY complete: architect scaffold 5d121989 implemented the serializer/usecase/wiring/tests; qa Phase-1 review 325c3cfc substantive (per-AC table AC1-7+DoD/G12, fence-false-green probe with malformed XML, 964-pass/3-pre-existing-fail confirmed via git-stash HEAD~). Router independently re-ran the doclang suite => 13/13 pass. No status regression, no re-dispatch."
+      },
+      {
+        "created_at": "2026-06-14T08:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "DOCLANG-T2-SERIALIZER"
+        ],
+        "description": "Implement two adapter classes in infrastructure/doclang_serializer.py (same file as T2). FilesystemDocLangWriteAdapter implements DocLangWritePort, writes to output_dir/{report_id}.dclg.xml with error handling. NullDocLangWriteAdapter no-op for tests. ~45 min.",
+        "files": [
+          "apps/pdf-extractor/infrastructure/doclang_serializer.py"
+        ],
+        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T3.md",
+        "id": "DOCLANG-T3-ADAPTERS",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "priority": "high",
+        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
+        "reverted_at": "2026-06-14T08:07:05Z",
+        "reverted_by": "router",
+        "size": "XS",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "status": "DONE_VERIFIED",
+        "title": "Adapters: FilesystemDocLangWriteAdapter + NullDocLangWriteAdapter",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "completed_at": "2026-06-14T14:00:00Z",
+        "verified_at": "2026-06-14T08:27:52Z",
+        "verified_by": "router",
+        "verify_note": "Bucket reconcile only (was DONE-status stranded in backlog[] after pm full-file rewrite 62cbddce). LEGITIMATELY complete: architect scaffold 5d121989 implemented the serializer/usecase/wiring/tests; qa Phase-1 review 325c3cfc substantive (per-AC table AC1-7+DoD/G12, fence-false-green probe with malformed XML, 964-pass/3-pre-existing-fail confirmed via git-stash HEAD~). Router independently re-ran the doclang suite => 13/13 pass. No status regression, no re-dispatch."
+      },
+      {
+        "created_at": "2026-06-14T08:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "DOCLANG-T3-ADAPTERS"
+        ],
+        "description": "Implement DocLangSerializeUseCase in application/doclang_serialize_usecase.py. __init__(serializer, write_port), execute(response, report_id=None) calls serializer.serialize() then write_port.write(). Validation observability only (log, never gate). ~1h.",
+        "files": [
+          "apps/pdf-extractor/application/doclang_serialize_usecase.py"
+        ],
+        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T4.md",
+        "id": "DOCLANG-T4-USECASE",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "priority": "high",
+        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
+        "reverted_at": "2026-06-14T08:07:05Z",
+        "reverted_by": "router",
+        "size": "S",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "status": "DONE_VERIFIED",
+        "title": "Use case: DocLangSerializeUseCase (application layer)",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "completed_at": "2026-06-14T14:00:00Z",
+        "verified_at": "2026-06-14T08:27:52Z",
+        "verified_by": "router",
+        "verify_note": "Bucket reconcile only (was DONE-status stranded in backlog[] after pm full-file rewrite 62cbddce). LEGITIMATELY complete: architect scaffold 5d121989 implemented the serializer/usecase/wiring/tests; qa Phase-1 review 325c3cfc substantive (per-AC table AC1-7+DoD/G12, fence-false-green probe with malformed XML, 964-pass/3-pre-existing-fail confirmed via git-stash HEAD~). Router independently re-ran the doclang suite => 13/13 pass. No status regression, no re-dispatch."
+      },
+      {
+        "created_at": "2026-06-14T08:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "DOCLANG-T4-USECASE"
+        ],
+        "description": "Wire DocLangSerializeUseCase into main.py composition root: 3 imports + 4 construction lines (serializer, FilesystemDocLangWriteAdapter, use case). Add doclang==0.6.0 to requirements.txt. Verify pip check clean. ~30 min.",
+        "files": [
+          "apps/pdf-extractor/main.py",
+          "apps/pdf-extractor/requirements.txt"
+        ],
+        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T5.md",
+        "id": "DOCLANG-T5-WIRING",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "priority": "high",
+        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
+        "reverted_at": "2026-06-14T08:07:05Z",
+        "reverted_by": "router",
+        "size": "XS",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "status": "DONE_VERIFIED",
+        "title": "Composition & wiring: main.py + requirements.txt",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "completed_at": "2026-06-14T14:00:00Z",
+        "verified_at": "2026-06-14T08:27:52Z",
+        "verified_by": "router",
+        "verify_note": "Bucket reconcile only (was DONE-status stranded in backlog[] after pm full-file rewrite 62cbddce). LEGITIMATELY complete: architect scaffold 5d121989 implemented the serializer/usecase/wiring/tests; qa Phase-1 review 325c3cfc substantive (per-AC table AC1-7+DoD/G12, fence-false-green probe with malformed XML, 964-pass/3-pre-existing-fail confirmed via git-stash HEAD~). Router independently re-ran the doclang suite => 13/13 pass. No status regression, no re-dispatch."
+      },
+      {
+        "created_at": "2026-06-14T08:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "DOCLANG-T5-WIRING"
+        ],
+        "description": "Create __tests__/unit/test_doclang_serializer.py. Fixture A (single-page FPT Q4), Fixture B (multi-column Vietnamese), Fixture C (cross-page synthetic). Each asserts: well-formed XML, doclang.validate() passes, known cell present. Edge cases: EC-2 empty table, EC-4 short row, EC-3 long row. Use NullDocLangWriteAdapter for all tests. ~2h.",
+        "files": [
+          "apps/pdf-extractor/__tests__/unit/test_doclang_serializer.py"
+        ],
+        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T6.md",
+        "id": "DOCLANG-T6-TESTS",
+        "next_agent": "dev-pdf-extractor",
+        "owner": "dev-pdf-extractor",
+        "priority": "high",
+        "revert_note": "Reverted from a FALSE review promotion (dev commit ccaf937f bulk-promoted T1-T6 but only implemented T1; no impl commit exists for this task). Architect scaffold (5d121989) remains in repo. Dispatch in dependency order after the prior Tn is done_verified; dev hardens scaffold to this task's AC (docs/handoffs/TASK-<id>.md) then QA-gates.",
+        "reverted_at": "2026-06-14T08:07:05Z",
+        "reverted_by": "router",
+        "size": "M",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "status": "DONE_VERIFIED",
+        "title": "Tests: test_doclang_serializer.py with 3 golden fixtures + edge cases",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "completed_at": "2026-06-14T14:00:00Z",
+        "verified_at": "2026-06-14T08:27:52Z",
+        "verified_by": "router",
+        "verify_note": "Bucket reconcile only (was DONE-status stranded in backlog[] after pm full-file rewrite 62cbddce). LEGITIMATELY complete: architect scaffold 5d121989 implemented the serializer/usecase/wiring/tests; qa Phase-1 review 325c3cfc substantive (per-AC table AC1-7+DoD/G12, fence-false-green probe with malformed XML, 964-pass/3-pre-existing-fail confirmed via git-stash HEAD~). Router independently re-ran the doclang suite => 13/13 pass. No status regression, no re-dispatch."
       }
     ],
     "head": {
@@ -11773,7 +11788,40 @@
       "active_task_id": null,
       "next_agent": null
     },
-    "in_progress": [],
+    "in_progress": [
+      {
+        "acceptance": "On >=3 tickers across the spread (SHB ~13.8k, VCB ~61.6k, FPT ~73.5k): (1) Y-domain is NOT zero-anchored — header 'Biên độ' starts near the data min, not 0; (2) candles fill a reasonable vertical fraction (visible band >= ~50% of pane height, not a sliver); (3) over CLEAN data (post-ALLZERO) BB+/BB-/BBmid sit within a believable σ of price (band width well under ±15% for these low-vol large-caps); (4) no candle/MA/BB plotted from a close=0 or 1000x-scale row.",
+        "baseline_pass": "pnpm --filter frontend check + typecheck green before handoff",
+        "created_at": "2026-06-14T07:20:00Z",
+        "created_by": "po-S52",
+        "depends": [
+          "ALLZERO-OHLCV-FETCH"
+        ],
+        "evidence_source": "User BUG report 2026-06-14 + PO live get_price_history probe FPT/SHB/VCB (all carry 2026-05-30 close=0; VCB also 2026-06-01 close=62.2).",
+        "files": [
+          "apps/frontend/app/components/charts/StockChart.tsx",
+          "apps/frontend/app/components/charts/indicators.ts",
+          "apps/frontend/app/routes/api.price-history.$ticker.tsx",
+          "apps/frontend/app/routes/dashboard.technical.tsx"
+        ],
+        "id": "FIX-FE-CHART-PRICE-DOMAIN",
+        "owner": "dev-frontend",
+        "priority": "high",
+        "root_cause": "apps/frontend/app/components/charts/StockChart.tsx feeds raw `closes` into candle.setData (line ~81) and computeBB(closes) (line ~118) with NO outlier sanitation. lightweight-charts default autoScale then spans the full data incl. the 0-poison row -> domain anchored at 0 (header 'Biên độ: 0 — 77.900', y-grid 0->120000) while the real ~68k-80k band occupies a thin strip (~85% wasted vertical). The same 0 inside computeBB's 20-window also produces the ±~35k BB fan on the right third.",
+        "scope": "GENERIC — no per-ticker hardcode. TWO parts: (a) Sanitize the series BEFORE setData/computeMA/computeBB: drop or forward-fill non-trading-day rows (close===0 && volume===0) and clamp obvious 1000x scale outliers, so the chart never plots poison even if a residual reaches it (defense-in-depth behind the upstream ALLZERO fix). (b) Stop relying on lightweight-charts default autoScale: compute the price-pane domain from the ACTUAL visible band = min/max over (candle high/low ∪ MA20 ∪ MA50 ∪ BB+ ∪ BB-), then domain = [min*(1-pad), max*(1+pad)] with pad ~0.05-0.08, NEVER forced to 0. Apply via priceScale autoscaleInfoProvider (or explicit min/max) on the candle series.",
+        "sequence_note": "DATA-FIRST: ALLZERO-OHLCV-FETCH must complete first so this fix domains over CORRECT data — a pure frontend clamp alone would only HIDE wrong BB, not correct it. Frontend sanitation here is defense-in-depth, not a substitute for the upstream fix.",
+        "size": "S",
+        "sprint": "BACKLOG",
+        "status": "IN_PROGRESS",
+        "title": "Price-pane Y-domain is zero-anchored + over-wide -> candles render as unreadable slivers (GENERIC all tickers)",
+        "type": "FIX",
+        "zone": "apps/frontend/",
+        "claimed_at": "2026-06-14T08:27:52Z",
+        "claimed_by": "router",
+        "next_agent": "dev-frontend",
+        "dispatch_note": "Dispatched dev-frontend 2026-06-14T08:27:52Z. 2nd half of the user chart bug (DATA fixed by ALLZERO done_verified; now fix the FRONTEND render). GENERIC all-ticker, no per-ticker hardcode. TWO parts per handoff docs/handoffs/FIX-FE-CHART-PRICE-DOMAIN.md + board .scope/.acceptance: (1) SANITIZE the series BEFORE setData/computeMA/computeBB — drop/forward-fill close===0 && volume===0 rows + clamp obvious 1000x outliers (defense-in-depth behind ALLZERO). (2) DATA-DRIVEN Y-domain — compute price-pane domain from min/max over (candle high/low ∪ MA20 ∪ MA50 ∪ BB+ ∪ BB-), set [min*(1-pad), max*(1+pad)] pad~0.05-0.08, NEVER forced to 0; apply via priceScale autoscaleInfoProvider/explicit min-max. Files: StockChart.tsx, indicators.ts, api.price-history.$ticker.tsx, dashboard.technical.tsx. Accept on SHB~13.8k/VCB~61.6k/FPT~73.5k: Y not zero-anchored, candles >=~50% pane, BB width <±15%, no plot from close=0/1000x row. Run `pnpm --filter frontend check` + typecheck BEFORE commit (RED-PREPUSH strands fleet). Promote -> review (qa) on green + commit."
+      }
+    ],
     "ready": [
       {
         "baseline_pass": false,
@@ -11807,34 +11855,6 @@
         "type": "SPRINT-S",
         "verification_gate": "Prove the cluster auto-fires durably, not just that one manual run works: (G1) ohlcvDailyAggregatorJob auto-fires next VN market day — get_pipeline_health 'Aggregator last run' advances to that day with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires on its cadence and repopulates financial tables (live VCB/ACB/CTG rows newer than the run) with NO manual trigger; (G3) reputationComputeJob fires at its 08:30 tick on a market day even with peer jobs on the same minute (cron_job_runs row present, no miss); (G4) inject loop-saturation at a scheduled tick in test and assert the tick is recovered/emitted (regression test for the dropped-tick class, mirroring EVIDENCE-ACCUM-SILENT-CRON.test.ts); (G5) missed-fire watchdog emits a WORK alert + self-heal when a job's last_run age > 2x cadence. QA verifies LIVE raw (pipeline-health payload + cron_job_runs rows), never badges. Ship completion across the whole cluster, not one job.",
         "zone": "apps/mcp-server/"
-      },
-      {
-        "acceptance": "On >=3 tickers across the spread (SHB ~13.8k, VCB ~61.6k, FPT ~73.5k): (1) Y-domain is NOT zero-anchored — header 'Biên độ' starts near the data min, not 0; (2) candles fill a reasonable vertical fraction (visible band >= ~50% of pane height, not a sliver); (3) over CLEAN data (post-ALLZERO) BB+/BB-/BBmid sit within a believable σ of price (band width well under ±15% for these low-vol large-caps); (4) no candle/MA/BB plotted from a close=0 or 1000x-scale row.",
-        "baseline_pass": "pnpm --filter frontend check + typecheck green before handoff",
-        "created_at": "2026-06-14T07:20:00Z",
-        "created_by": "po-S52",
-        "depends": [
-          "ALLZERO-OHLCV-FETCH"
-        ],
-        "evidence_source": "User BUG report 2026-06-14 + PO live get_price_history probe FPT/SHB/VCB (all carry 2026-05-30 close=0; VCB also 2026-06-01 close=62.2).",
-        "files": [
-          "apps/frontend/app/components/charts/StockChart.tsx",
-          "apps/frontend/app/components/charts/indicators.ts",
-          "apps/frontend/app/routes/api.price-history.$ticker.tsx",
-          "apps/frontend/app/routes/dashboard.technical.tsx"
-        ],
-        "id": "FIX-FE-CHART-PRICE-DOMAIN",
-        "owner": "dev-frontend",
-        "priority": "high",
-        "root_cause": "apps/frontend/app/components/charts/StockChart.tsx feeds raw `closes` into candle.setData (line ~81) and computeBB(closes) (line ~118) with NO outlier sanitation. lightweight-charts default autoScale then spans the full data incl. the 0-poison row -> domain anchored at 0 (header 'Biên độ: 0 — 77.900', y-grid 0->120000) while the real ~68k-80k band occupies a thin strip (~85% wasted vertical). The same 0 inside computeBB's 20-window also produces the ±~35k BB fan on the right third.",
-        "scope": "GENERIC — no per-ticker hardcode. TWO parts: (a) Sanitize the series BEFORE setData/computeMA/computeBB: drop or forward-fill non-trading-day rows (close===0 && volume===0) and clamp obvious 1000x scale outliers, so the chart never plots poison even if a residual reaches it (defense-in-depth behind the upstream ALLZERO fix). (b) Stop relying on lightweight-charts default autoScale: compute the price-pane domain from the ACTUAL visible band = min/max over (candle high/low ∪ MA20 ∪ MA50 ∪ BB+ ∪ BB-), then domain = [min*(1-pad), max*(1+pad)] with pad ~0.05-0.08, NEVER forced to 0. Apply via priceScale autoscaleInfoProvider (or explicit min/max) on the candle series.",
-        "sequence_note": "DATA-FIRST: ALLZERO-OHLCV-FETCH must complete first so this fix domains over CORRECT data — a pure frontend clamp alone would only HIDE wrong BB, not correct it. Frontend sanitation here is defense-in-depth, not a substitute for the upstream fix.",
-        "size": "S",
-        "sprint": "BACKLOG",
-        "status": "READY",
-        "title": "Price-pane Y-domain is zero-anchored + over-wide -> candles render as unreadable slivers (GENERIC all tickers)",
-        "type": "FIX",
-        "zone": "apps/frontend/"
       }
     ],
     "review": [
