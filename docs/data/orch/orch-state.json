@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T23:33:18Z",
+    "updated_at": "2026-06-14T23:46:23Z",
     "updated_by": "dev-team",
     "active_task_id": "F-MACRO-FETCH-DEADLINE",
-    "next_agent": "dev",
-    "note": "F-MACRO-FETCH-DEADLINE DISPATCHED -> dev-macro-indicators (agent a1df1c0dd70c226a7). LEAD reliability FIX (size S, /goal#1 completion for the 4 fetch tools trade/macro/cpi/bop + /goal#2 generic). ROOT: vpsFetch.go adapter already honors http.Client{Timeout} from opts.TimeoutSec but callers set 30s >> gateway timeout (cache_vmt_nso discoverAndFetch 3-chain up to 90s; usecases_vmt_bop 30s); slow origin -> Fetch HANGS past gateway deadline -> timeout before VMT-8 degrade can emit. FIX (generic, all 5 use-cases): single bounded ~8s budget < gateway timeout (named const SSOT) on every uc.fetcher.Fetch + context.WithTimeout; NSO 3-fetch CHAIN budgeted as a whole (not 3x8s); do NOT touch VMT-8 degrade logic. GATE: unit hanging-fetcher -> ctx.DeadlineExceeded within budget + degraded-200; LIVE router re-probe all 5 Zone-A tools across timing -> 200 within gateway deadline, no raw timeout = UNBLOCKS VMT-8 done_verified. SEQUENCED-AFTER (HELD, same files, serialize): F-BOP-ENCODING + F-NSO-SELECTOR (accuracy). WIP: dev-zone in_progress=1 (this), budget<=2 OK. On dev return -> router RAW-verify gates GREEN -> head dev->ops REBUILD macro-indicators (force-recreate single svc, NEVER compose down) -> live re-probe -> done + release sequenced pair."
+    "next_agent": "ops",
+    "note": "F-MACRO-FETCH-DEADLINE DONE (dev-macro-indicators a1df1c0dd70c226a7, commit 94b49f44, router RAW-verified GREEN: on-main; 10 files all apps/macro-indicators/** + notebook; foreign-capture NONE; independent UNCACHED go build/vet rc=0 + go test ./pkg/... all 11 pkgs PASS; const FetchBudgetSec=8 SSOT domain/ports.go across vpsFetch+NSO-chain-budgeted-whole+all 4 fetch use-cases; VMT-8 degrade UNTOUCHED; 9 hang-fetcher tests -> degraded-200<=8s PASS; generic /goal#2). CODE merge gate satisfied BUT NOT LIVE — container macro-indicators-1 holds pre-94b49f44 image. === -> head dev->ops: FORCE-RECREATE macro-indicators single service (memory: rebuild after dev change; NEVER compose down — kills peers ~21min); verify new image ID + 94b49f44 on HEAD + 12 peers stay healthy. Then LIVE-verify via gateway re-probe (NOT badges) ACROSS >=2 TIMING WINDOWS (fast-fail-window trap): get_vn_trade_balance + get_vn_macro_indicators + get_cpi_components + get_vn_bop must each return 200 (real OR degraded: status=degraded+is_estimate=true+blocked_reason) WITHIN the gateway deadline — NO raw gateway-timeout/HANG (this is the whole point: a slow origin must now yield a fast ctx.DeadlineExceeded->degraded-200, not a hang); get_vn_liquidity_state stays 200 honest. On ops live-result -> ROUTER re-probes each tool ITSELF across timing (not ops badge) + disambiguates proxy-down (curl :3128) vs upstream-slow. If router live-green (no raw timeout): promote F-MACRO-FETCH-DEADLINE done_verified AND VMT-8-MACRO-GRACEFUL-FAILCLOSE done_verified (this is VMT-8's blocking live gate) + release the HELD-sequenced pair F-BOP-ENCODING + F-NSO-SELECTOR (accuracy, same files, serialize) + release SF-1. === SEQUENCED-AFTER (still HELD): F-BOP-ENCODING + F-NSO-SELECTOR (rebase 94b49f44 first — cache_vmt_nso.go + usecases_vmt_bop.go touched). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -506,7 +506,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T23:33:18Z",
+    "_updated_at": "2026-06-14T23:46:23Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13731,7 +13731,7 @@
         "title": "Bound every Zone-A upstream fetch with a per-fetch ctx/client deadline (~8s) < gateway timeout so a slow-origin HANG converts to a fast ctx.DeadlineExceeded that VMT-8's existing degrade path catches -> degraded-200",
         "zone": "apps/macro-indicators/",
         "owner": "dev-macro-indicators",
-        "status": "in_progress",
+        "status": "done",
         "priority": "high",
         "size": "S",
         "baseline_pass": "go test ./pkg/... = ALL PASS (cached green) 2026-06-14",
@@ -13753,7 +13753,11 @@
         "created_by": "po",
         "dispatched_at": "2026-06-14T23:33:18Z",
         "dispatched_to": "dev-macro-indicators",
-        "dispatch_agent_id": "a1df1c0dd70c226a7"
+        "dispatch_agent_id": "a1df1c0dd70c226a7",
+        "done_at": "2026-06-14T23:46:23Z",
+        "done_commit": "94b49f44",
+        "done_agent": "a1df1c0dd70c226a7",
+        "router_reverify_verdict": "RAW-VERIFIED (not dev badge) — gates GREEN: 94b49f44 on main; 10 files all apps/macro-indicators/** + notebook, foreign-capture NONE, orch-state unstaged; independent UNCACHED go build/vet rc=0 + go test ./pkg/... all 11 pkgs PASS. const FetchBudgetSec=8 SSOT in domain/ports.go applied across vpsFetch fallback + cache_vmt_nso chain (budgeted WHOLE via context.WithTimeout, not 3x) + all 4 fetch use-cases; VMT-8 degrade builders UNTOUCHED. 9 new hang-fetcher tests -> degraded-200 within 8s (bop+NSO-chain trade/macro/cpi+expired-ctx+const) PASS. Generic /goal#2. CODE merge gate satisfied; LIVE-verify pending ops rebuild (container pre-94b49f44)."
       }
     ],
     "review": [
