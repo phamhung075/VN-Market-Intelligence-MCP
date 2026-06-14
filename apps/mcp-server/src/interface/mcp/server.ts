@@ -21,8 +21,16 @@
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { Readable } from "node:stream";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+// FIX-MCP-500-SYMBOL-TO-STRING: use WebStandardStreamableHTTPServerTransport directly.
+// StreamableHTTPServerTransport wraps @hono/node-server which uses 13 Symbol-keyed
+// prototype properties on its fake Request object. Under Bun 1.3.13 JIT corruption
+// (triggered after ~80 min heavy processing), accessing those Symbol keys attempts a
+// Symbol→string coercion that throws TypeError "Cannot convert a symbol to a string".
+// WebStandardStreamableHTTPServerTransport uses native Bun Web Standard APIs (no hono),
+// eliminating the Symbol-keyed property access from the /mcp hot path entirely.
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
@@ -134,6 +142,81 @@ import { handleGetFedRatesHttp } from "./routes/fedRatesHandler.js";
 import { handleGetReputationHttp } from "./routes/reputationHandler.js";
 // TASK17-PAGE19: GET /api/news-buzz — News-buzz / mention-velocity leaderboard
 import { handleGetNewsBuzzHttp } from "./routes/newsBuzzHandler.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX-MCP-500-SYMBOL-TO-STRING: Bun-native Node.js ↔ Web Standard conversion
+// ─────────────────────────────────────────────────────────────────────────────
+// These helpers convert between Node.js `IncomingMessage`/`ServerResponse` and
+// the Web Standard `Request`/`Response` used by WebStandardStreamableHTTPServerTransport
+// WITHOUT going through @hono/node-server (which uses Symbol-keyed prototype
+// properties that trigger Bun 1.3.13 JIT corruption after ~80 min heavy use).
+
+/**
+ * Convert a Node.js IncomingMessage to a Web Standard Request.
+ * Uses Bun's native Request API — no hono bridge, no Symbol property access.
+ */
+async function incomingToWebRequest(req: IncomingMessage): Promise<Request> {
+  const host = req.headers.host ?? "localhost";
+  const url = new URL(req.url ?? "/", `http://${host}`);
+
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (typeof value === "string") {
+      headers.set(key, value);
+    } else if (Array.isArray(value)) {
+      for (const v of value) {
+        headers.append(key, v);
+      }
+    }
+  }
+
+  const hasBody = req.method !== "GET" && req.method !== "HEAD";
+  // Cast through unknown to reconcile node:stream/web vs global ReadableStream types.
+  // At runtime under Bun, both refer to the same native implementation.
+  const body = hasBody
+    ? (Readable.toWeb(req as NodeJS.ReadableStream) as unknown as ReadableStream<Uint8Array>)
+    : undefined;
+
+  return new Request(url.href, {
+    method: req.method ?? "GET",
+    headers,
+    body,
+    // duplex is required by some runtimes when body is a stream
+    ...(body ? { duplex: "half" } : {}),
+  } as RequestInit);
+}
+
+/**
+ * Pipe a Web Standard Response into a Node.js ServerResponse.
+ * Streams the body chunk-by-chunk to support SSE and chunked responses.
+ */
+async function pipeWebResponseToNode(webRes: Response, res: ServerResponse): Promise<void> {
+  // Build Node.js-compatible header object
+  const headerObj: Record<string, string | string[]> = {};
+  webRes.headers.forEach((value, key) => {
+    const existing = headerObj[key];
+    if (existing !== undefined) {
+      headerObj[key] = Array.isArray(existing) ? [...existing, value] : [existing, value];
+    } else {
+      headerObj[key] = value;
+    }
+  });
+  res.writeHead(webRes.status, headerObj);
+
+  if (webRes.body) {
+    const reader = webRes.body.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+  res.end();
+}
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -366,13 +449,22 @@ export async function createBunServer(
       res.setHeader("Cache-Control", "no-cache, no-transform");
       res.setHeader("X-Accel-Buffering", "no");
 
-      // Stateless: create fresh server + transport per request
-      // The SDK's handleRequest will read the body itself, so we don't pre-parse
-      const reqTransport = new StreamableHTTPServerTransport({});
+      // FIX-MCP-500-SYMBOL-TO-STRING: use WebStandardStreamableHTTPServerTransport
+      // directly instead of StreamableHTTPServerTransport (which bridges through
+      // @hono/node-server using 13 Symbol-keyed prototype properties that Bun 1.3.13
+      // JIT corrupts after ~80 min heavy processing, causing TypeError
+      // "Cannot convert a symbol to a string" on every /mcp request).
+      //
+      // We convert IncomingMessage → native Web Standard Request using Bun's own
+      // Request/Response APIs (no hono bridge, no Symbol property access), then
+      // pipe the Web Standard Response back to ServerResponse.
+      const reqTransport = new WebStandardStreamableHTTPServerTransport({});
       const reqMcp = createMcpServerInstance();
       await reqMcp.connect(reqTransport as unknown as import("@modelcontextprotocol/sdk/shared/transport.js").Transport);
       try {
-        await reqTransport.handleRequest(req, res);
+        const webRequest = await incomingToWebRequest(req);
+        const webResponse = await reqTransport.handleRequest(webRequest);
+        await pipeWebResponseToNode(webResponse, res);
       } finally {
         // Explicit cleanup prevents memory leak on long-running servers
         await reqTransport.close().catch(() => {});
@@ -2270,8 +2362,11 @@ export async function createBunServer(
   // ── Start node:http server ──────────────────────────────────────────────
   const httpServer = createServer((req, res) => {
     handleRequest(req, res).catch((err) => {
+      // FIX-MCP-500-SYMBOL-TO-STRING: include url + stack to pinpoint throw site
       log.error("[createBunServer] Unhandled request error", {
         error: err instanceof Error ? err.message : String(err),
+        url: req.url,
+        stack: err instanceof Error ? err.stack : undefined,
       });
       if (!res.headersSent) {
         res.writeHead(500, { "Content-Type": "application/json" });
