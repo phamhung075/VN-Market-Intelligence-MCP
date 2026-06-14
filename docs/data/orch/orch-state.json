@@ -4,12 +4,12 @@
   "_updated_at": "2026-06-14T09:58:00Z",
   "_updated_by": "dev-technical-analysis",
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-14T09:58:00Z",
-    "updated_by": "dev-technical-analysis",
-    "active_task_id": null,
-    "next_agent": "qa",
-    "note": "ALLZERO-OHLCV-FETCH promoted to review. Awaiting QA sign-off. FIX-FE-CHART-PRICE-DOMAIN now unblocked."
+    "status": "in_review",
+    "updated_at": "2026-06-14T08:01:54Z",
+    "updated_by": "dev-team",
+    "active_task_id": "ALLZERO-OHLCV-FETCH",
+    "next_agent": "ops",
+    "note": "ALLZERO in review. Runtime mcp-server code change (close>0 read guard in priceHistoryTools.ts) is NOT live until container rebuild. GATE = ops: (1) targeted rebuild mcp-server (--no-deps --force-recreate, docker ps -a after), (2) RAW-verify migration hit the LIVE named-volume /data/market.db (NOT host ./data decoy): COUNT 0/0/0/0 rows==0 + VCB 2026-06-01 close~62200, (3) check normalizeResidualContam idempotency guard (close<100). THEN qa: 5 AC tests green + live get_price_history probe SHB/VCB/FPT BB-width<15% -> done_verified. FIX-FE-CHART-PRICE-DOMAIN (dev-frontend) gated behind ALLZERO done_verified."
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -10122,34 +10122,7 @@
         "done_verified_by": "ops"
       }
     ],
-    "in_progress": [
-      {
-        "id": "DOCLANG-T1-DOMAIN",
-        "title": "Domain + Config: DocLangWritePort + doclang_output_dir",
-        "description": "Add DocLangWritePort (abstract) to domain/modules/financial_reports/ports.py as 17th port. Add doclang_output_dir field to Config with env DOCLANG_OUTPUT_DIR, default /app/data/doclang. Files: domain/modules/financial_reports/ports.py, infrastructure/config.py. ~45 min.",
-        "owner": "dev-pdf-extractor",
-        "status": "IN_PROGRESS",
-        "type": "SPRINT-S",
-        "zone": "apps/pdf-extractor/",
-        "priority": "high",
-        "size": "XS",
-        "created_at": "2026-06-14T08:00:00Z",
-        "created_by": "pm",
-        "sprint_id": "DOCLANG-SERIALIZE",
-        "depends_on": [
-          "ARCH-DOCLANG-SERIALIZE"
-        ],
-        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T1.md",
-        "files": [
-          "apps/pdf-extractor/domain/modules/financial_reports/ports.py",
-          "apps/pdf-extractor/infrastructure/config.py"
-        ],
-        "claimed_at": "2026-06-14T07:53:00Z",
-        "claimed_by": "router",
-        "next_agent": "dev-pdf-extractor",
-        "dispatch_note": "Dispatched dev-pdf-extractor 2026-06-14T07:53:00Z as WIP slot 2 (apps/pdf-extractor/, non-colliding with ALLZERO apps/mcp-server/). DOCLANG-T1-DOMAIN (XS): domain port + config layer — DocLangWritePort in domain/modules/financial_reports/ports.py + doclang_output_dir env in infrastructure/config.py. Authoritative spec = handoff docs/handoffs/TASK-DOCLANG-T1.md + design brief docs/architecture-briefs/2026-06-14-arch-doclang-serialize.md. NOTE: architect scaffold (commit 5d121989) already drafted ports.py/config.py stubs — T1 hardens them to the DDD-clean contract per handoff AC (do NOT duplicate; reconcile against the scaffold). Additive only, zero DB writes, bctc_table_rows byte-for-byte clean. Run existing pdf-extractor test suite BEFORE commit (pytest, not pnpm — Python zone). Promote -> review (qa) on green + commit. Unblocks DOCLANG-T2-SERIALIZER."
-      }
-    ],
+    "in_progress": [],
     "head": {
       "note": "FDA-9 (rag-service _distance fail-open fabricated-similarity) groomed READY; mcp-server zone untouched (frozen behind EVIDENCE-ACCUM gate)"
     },
@@ -11395,6 +11368,32 @@
         "completed_at": "2026-06-14T09:58:00Z",
         "completed_by": "dev-technical-analysis",
         "review_note": "DONE: (1) read guard AND close>0 in get_price_history SQL; (2) allzeroOhlcvBackfill.ts — purgeAllZeroRows+normalizeResidualContam generic across all tickers; (3) live migration: 116 zero rows deleted, 28346 thousand-VND rows normalized; (4) VCB 2026-06-01 close=62200 confirmed; (5) probe SHB BB=0.88% VCB BB=1.92% FPT BB=2.14% all <15%; commit=9088c052"
+      },
+      {
+        "id": "DOCLANG-T1-DOMAIN",
+        "title": "Domain + Config: DocLangWritePort + doclang_output_dir",
+        "description": "Add DocLangWritePort (abstract) to domain/modules/financial_reports/ports.py as 17th port. Add doclang_output_dir field to Config with env DOCLANG_OUTPUT_DIR, default /app/data/doclang. Files: domain/modules/financial_reports/ports.py, infrastructure/config.py. ~45 min.",
+        "owner": "dev-pdf-extractor",
+        "status": "REVIEW",
+        "type": "SPRINT-S",
+        "zone": "apps/pdf-extractor/",
+        "priority": "high",
+        "size": "XS",
+        "created_at": "2026-06-14T08:00:00Z",
+        "created_by": "pm",
+        "sprint_id": "DOCLANG-SERIALIZE",
+        "depends_on": [
+          "ARCH-DOCLANG-SERIALIZE"
+        ],
+        "handoff_spec": "docs/handoffs/TASK-DOCLANG-T1.md",
+        "files": [
+          "apps/pdf-extractor/domain/modules/financial_reports/ports.py",
+          "apps/pdf-extractor/infrastructure/config.py"
+        ],
+        "next_agent": "qa",
+        "promoted_at": "2026-06-14T08:30:00Z",
+        "promoted_by": "dev-pdf-extractor",
+        "promote_note": "DOCLANG-T1-DOMAIN complete. DocLangWritePort hardened — bullet list + count=17 correct. Config.doclang_output_dir verified. Imports clean. pytest: 967 passed, 3 pre-existing failures (missing PDF infra, unrelated). Commit 2d79baed. Unblocks DOCLANG-T2-SERIALIZER."
       }
     ],
     "closed_sprints": [
