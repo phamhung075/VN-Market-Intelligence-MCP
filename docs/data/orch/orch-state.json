@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T20:47:37Z",
+    "updated_at": "2026-06-14T21:01:41Z",
     "updated_by": "dev-team",
     "active_task_id": "BA-VN-MACRO-TOOLING",
     "next_agent": "dev",
-    "note": "VN-MACRO-TOOLING A2=VMT-3b-GSO + VMT-4-CPI DONE (a472d000, commit 5b2d4af1, router RAW-verified: 22 files ALL in-zone + dev notebook, foreign-capture guard passed/hygiene HELD, go build + go test ./... ALL GREEN 11 pkgs, excelize v2.8.1 CGO-free, CPI weights null+is_estimate=true incl error path, single shared NSOExcelFetcher cache, TLS no -k, anchors pass, A2 merge gate SATISFIED). -> A2->A3 GATE OPEN: A3 = VMT-1a-TRADE-BALANCE + VMT-1b-BLOC-SPLIT DISPATCHED as ONE dev-macro-indicators agent (share router.go/main.go + REUSE getOrFetchNSOMonthlyExcel cache, NO new excelize/fetch; VMT-1a sheets 14.XK+15.NK trade balance + hs_attribution; VMT-1b bloc_split FDI share sheets 12.FDI+14.XK, is_estimate=true PERMANENT per ARCH Decision A). On A3 done + green -> merge gate A3->A4 -> dispatch A4=VMT-5b.omo. SERIAL Zone-A: one dev-macro-indicators agent at a time. VMT-3a-PMI blocked-probe5 (S&P dev-local). VMT-5b.interbank+irs permanent is_estimate (no parser). KINHDICH-HOVER-DETAIL chain CLOSED done_verified (e4e4991b). Commit explicit path only."
+    "note": "VN-MACRO-TOOLING A3=VMT-1a-TRADE-BALANCE + VMT-1b-BLOC-SPLIT DONE (aa0aa147, commit a3bbc866, router RAW-verified: 12 files ALL in-zone + dev notebook, foreign-capture guard passed/hygiene HELD, go build + go test ./... ALL GREEN 11 pkgs, excelize STILL single v2.8.1 cache REUSE, bloc_split is_estimate=true PERMANENT incl error path, route /trade-balance wired, anchors pass export27400/import24100/balance+3300/FDI24810, A3 merge gate SATISFIED). -> A3->A4 GATE OPEN (per BOARD serial_dispatch_order SSOT — corrected stale A4=VMT-5b narrative): A4 = VMT-5a-LIQUIDITY-STATE-NO-GATE DISPATCHED to dev-macro-indicators (SINGLE task: policy_rates SBV Liferay HTML + SJC-gold-gap + fx_coupling from EXISTING market.db reads, NO new crawl; IRS is_estimate=true DD-6 permanent). On A4 done+green -> merge gate A4->A5 -> dispatch A5=VMT-5b-INTERBANK-OMO (FINAL: interbank permanent is_estimate Decision B + OMO HTML tally; depends VMT-5a+PROBE-4 both met, serial-gated). SERIAL Zone-A: one dev-macro-indicators agent at a time. VMT-3a-PMI blocked-probe5 (S&P dev-local). VMT-7a-e + VMT-7-REGISTER (handler-registration wave) still TODO. KINHDICH-HOVER-DETAIL chain CLOSED done_verified (e4e4991b). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -482,7 +482,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T20:47:37Z",
+    "_updated_at": "2026-06-14T21:01:41Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -5723,7 +5723,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "L",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5768,7 +5768,11 @@
             "merge_gate": "MERGE GATE A2→A3: VMT-3b + VMT-4 must complete + merge to main before A3 starts. NOTE: A1→A2 gate ALSO applies (all Zone A tasks serialize). VMT-1a is NOT gated on PROBE-1 (total+hs_attribution proceed immediately)",
             "dispatched_at": "2026-06-14T20:47:37Z",
             "dispatch_agent": "dev-macro-indicators",
-            "dispatch_unit": "A3 (single agent implements VMT-1a + VMT-1b together — bundled per contract; share router.go/main.go + REUSE getOrFetchNSOMonthlyExcel cache from A2, NO new excelize). VMT-1a = NSO Excel sheets 14.XK (exports) + 15.NK (imports); trade_balance = export - import; hs_attribution sector rows; anchor May-2026 export 27.4bn/import 24.1bn/balance +3.3bn. merge gate A3->A4 after BOTH done."
+            "dispatch_unit": "A3 (single agent implements VMT-1a + VMT-1b together — bundled per contract; share router.go/main.go + REUSE getOrFetchNSOMonthlyExcel cache from A2, NO new excelize). VMT-1a = NSO Excel sheets 14.XK (exports) + 15.NK (imports); trade_balance = export - import; hs_attribution sector rows; anchor May-2026 export 27.4bn/import 24.1bn/balance +3.3bn. merge gate A3->A4 after BOTH done.",
+            "done_at": "2026-06-14T21:01:41Z",
+            "done_commit": "a3bbc866",
+            "done_agent": "aa0aa147",
+            "router_dev_reverify_verdict": "RAW-VERIFIED (not the dev badge): git show a3bbc866 --stat = EXACTLY 12 files, ALL apps/macro-indicators/** (11) + dev notebook (1); FOREIGN-CAPTURE GUARD passed (no orch-state/ops.md/signal sweep — hygiene HELD). go build ./... PASS + go test ./... -count=1 ALL GREEN (11 pkgs, independent). Anchors: VMT-1a export=27400/import=24100/balance=+3300 M USD; VMT-1b FDIRegistered=24810, bloc_split.is_estimate ALWAYS true (5 cases incl zero-exports + FDI-missing fail-closed) + error-path usecases:155-159 keeps IsEstimate=true (ARCH Decision A). excelize STILL single v2.8.1 (NO new dep) CGO-FREE; single shared NSOExcelFetcher (main.go:88) serves GSO+CPI+TradeBalance = cache REUSE; route POST /trade-balance wired (router.go:95). golangci-lint 0; G12 sandbox 18/18 + 2/2. A3 merge gate SATISFIED."
           },
           {
             "id": "VMT-1b-TRADE-BALANCE-BLOC-SPLIT",
@@ -5776,7 +5780,7 @@
             "type": "FEATURE",
             "priority": "high",
             "size": "M",
-            "status": "dispatched",
+            "status": "done",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -5811,7 +5815,11 @@
             "merge_gate": "MERGE GATE A2→A3: VMT-3b + VMT-4 merge complete before A3 starts",
             "dispatched_at": "2026-06-14T20:47:37Z",
             "dispatch_agent": "dev-macro-indicators",
-            "dispatch_unit": "A3 (bundled with VMT-1a in ONE agent). VMT-1b = bloc_split FDI share: sheets 12.FDI (registered capital) + 14.XK (total exports, SAME Excel as VMT-1a — cache hit). fdi_export_share_pct = fdi_registered / total_export * 100. bloc_split.fdi.is_estimate=true AND bloc_split.domestic.is_estimate=true PERMANENT (ARCH Decision A: Customs SPA inaccessible — NEVER flip false without machine-readable Customs enterprise-type column)."
+            "dispatch_unit": "A3 (bundled with VMT-1a in ONE agent). VMT-1b = bloc_split FDI share: sheets 12.FDI (registered capital) + 14.XK (total exports, SAME Excel as VMT-1a — cache hit). fdi_export_share_pct = fdi_registered / total_export * 100. bloc_split.fdi.is_estimate=true AND bloc_split.domestic.is_estimate=true PERMANENT (ARCH Decision A: Customs SPA inaccessible — NEVER flip false without machine-readable Customs enterprise-type column).",
+            "done_at": "2026-06-14T21:01:41Z",
+            "done_commit": "a3bbc866",
+            "done_agent": "aa0aa147",
+            "router_dev_reverify_verdict": "RAW-VERIFIED (not the dev badge): git show a3bbc866 --stat = EXACTLY 12 files, ALL apps/macro-indicators/** (11) + dev notebook (1); FOREIGN-CAPTURE GUARD passed (no orch-state/ops.md/signal sweep — hygiene HELD). go build ./... PASS + go test ./... -count=1 ALL GREEN (11 pkgs, independent). Anchors: VMT-1a export=27400/import=24100/balance=+3300 M USD; VMT-1b FDIRegistered=24810, bloc_split.is_estimate ALWAYS true (5 cases incl zero-exports + FDI-missing fail-closed) + error-path usecases:155-159 keeps IsEstimate=true (ARCH Decision A). excelize STILL single v2.8.1 (NO new dep) CGO-FREE; single shared NSOExcelFetcher (main.go:88) serves GSO+CPI+TradeBalance = cache REUSE; route POST /trade-balance wired (router.go:95). golangci-lint 0; G12 sandbox 18/18 + 2/2. A3 merge gate SATISFIED."
           },
           {
             "id": "VMT-2-BOP",
@@ -6004,7 +6012,7 @@
             "type": "FEATURE",
             "priority": "medium",
             "size": "M",
-            "status": "ready",
+            "status": "dispatched",
             "zone": "apps/macro-indicators/",
             "owner": "dev-macro-indicators",
             "depends": [
@@ -6047,7 +6055,10 @@
               "bonus": "SBV FX reference rate confirmed at www.sbv.gov.vn/tỷ-giá (PROBE-4 bonus), live June-12: usd_center=25155, buy=23948, sell=26362 (can supplement DB reads if stale)"
             },
             "serial_dispatch_order": "A4 (fourth in WAVE-2, after A2→A3 merge gates)",
-            "merge_gate": "MERGE GATE A3→A4: VMT-1a + VMT-1b merge complete before A4 starts"
+            "merge_gate": "MERGE GATE A3→A4: VMT-1a + VMT-1b merge complete before A4 starts",
+            "dispatched_at": "2026-06-14T21:01:41Z",
+            "dispatch_agent": "dev-macro-indicators",
+            "dispatch_unit": "A4 (SINGLE task — VMT-5a liquidity-state; A3->A4 merge gate SATISFIED). policy_rates (refi/discount/lombard) from www.sbv.gov.vn Liferay HTML (same site as BOP, reachable, --cacert NOT -k, NO VPS proxy). SJC gap = sjc_price - world_price + fx_coupling from EXISTING market.db reads (sbv_rates + commodity_prices tables — DD-7, NO new fetch/crawl). IRS field is_estimate=true PERMANENT (DD-6, HNX OTC IRS not machine-readable — NEVER flip false). probe_sample scripts/probes/vmt-4-sample.json. Files: handlers/usecases/dtos/models/services_vmt_liquidity + adapters_vmt_sjc_fx + 2 tests + router.go/main.go wire. On done+green -> merge gate A4->A5 -> dispatch A5=VMT-5b (interbank permanent-estimate + OMO HTML, FINAL). Explicit-path commit ONLY (apps/macro-indicators/** + your notebook — NEVER git add -A/orch-state/ops.md)."
           },
           {
             "id": "VMT-5b-LIQUIDITY-STATE-INTERBANK-OMO",
