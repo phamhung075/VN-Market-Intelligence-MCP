@@ -1,8 +1,26 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 18:30 UTC | **Sprint:** KINHDICH-HOVER-ENRICH-FE
+**Last updated:** 2026-06-14 20:00 UTC | **Sprint:** VN-MACRO-TOOLING
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T20:00Z — ARCH-VN-MACRO-TOOLING (DONE)
+
+**Task:** ARCH-VN-MACRO-TOOLING | zone: multi (Zone A: apps/macro-indicators/ | Zone B: apps/mcp-server/src/interface/mcp/tools/macro/ | Zone C: apps/mcp-server/src/interface/mcp/tools/sector/ | Zone D: apps/macro-indicators/pkg/infrastructure/)
+**Output:** Blueprint + brownfield findings written to docs/handoffs/ARCH-VN-MACRO-TOOLING.md (sections: zone-split, verified paths, design decisions x7, blocker resolutions x6, DDD risk review, probe dispatch plan, execution order). Decision journal: docs/agent-memory/decisions/sprint-VN-MACRO-TOOLING.md (7 entries).
+
+**Zone-split verdict:** BA A-D split CONFIRMED. Zone D (vpsFetch) is a dependency of all Zone A parsers — PM must schedule it as a blocking prerequisite.
+
+**Blocker resolutions:**
+- BLOCKER-1 (VMT-1 gate): probe-first; FDI-bloc is NOT a direct column — 2-series cross-join from Customs enterprise-type breakdown page.
+- BLOCKER-2 (VMT-2 full gate): probe-first; Excel → use excelize (CGO-free); PDF → delegate to pdf-extractor on VPS. E&O sign convention must be confirmed before discriminator logic is written.
+- BLOCKER-3+4 (VMT-3 GSO + VMT-4 gate): merged into single PROBE-3; PMI is NOT gated.
+- BLOCKER-5 (VMT-5 partial gate): IRS deferred to is_estimate=true by design (HNX TLS history); policy_rates + SJC + fx_coupling NOT gated.
+- BLOCKER-6 (VMT-6): accept is_estimate degraded mode; no PUT endpoint; VMT-6 ships immediately.
+
+**DDD risk:** Zone D LOW / Zone A MED (parser-F1 risk + division-by-zero + partial-series fan-out) / Zone B LOW / Zone C LOW.
+**BUILD-STANDARD:** lean.
+**Key DD:** vpsFetch as domain port (Fence-A preserved); RouterConfig struct (arity footgun avoided); SQLite cache (no in-memory map); IRS permanently is_estimate; SJC gap reuses market.db (no new crawl); retail_sales_real derived in domain not application.
 
 ## 2026-06-14T18:30Z — ARCH-KINHDICH-HOVER-ENRICH-FE RATIFY-1 (RATIFIED, DONE)
 
