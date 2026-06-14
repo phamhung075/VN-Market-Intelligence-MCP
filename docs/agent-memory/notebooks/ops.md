@@ -16,46 +16,10 @@ Detailed history: `git log ops.md` + 2026-05-31–06-12 sessions. All QA gates c
 
 ---
 
-**Current state (2026-06-12 end-of-day):** All 13 services healthy; CONTAM-9 + EVIDENCE-ACCUM-SILENT-CRON live. No contaminated rows; disk 19GB avail (42% used).
-
 ---
 
-## Session: 2026-06-13 05:50Z (BCTC-VPS-STALLED-FETCH diagnosis)
-**Task:** Probe VPS wedge — 10 pending queue rows, last push 2026-06-08. **Diagnosis:** Service healthy (6h cycles OK, GAS found, ACV/BDI zero on source = no PDF). **Root:** Queue data mismatch — 10 tickers have no Q1 2026 filings on HNX/UPCOM/SSC. **Action:** NO restart. **Status:** RESOLVED — enricher queue repop needed.
-
-
-## 2026-06-13 (2 rebuilds: FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE, FIX-PENDING-REFINE-TICKER-TARGETING)
-**CONFIDENCE:** new image `5521a124bb45`, HEAD 0a0b6db4, 13/13 peers healthy, 80 cron keys, BLOCK-5 gate live. **TICKER-TARGETING:** image `6ae35a037021`, smoke `get_bctc_pending_refine(ticker:"CTG",limit:1)`→SUCCESS. Both QA CLEARED.
-
-
-## Session: 2026-06-13 (FIX-PENDING-REFINE-LIMIT-CHECKKIND — mcp-server rebuild)
-
-**Task:** Targeted rebuild of mcp-server to bake SDK exact pin + z.coerce.number() resilience (commit 897877ec).
-
-### Execution Summary
-
-**Step 1-5: Rebuild + Post-rebuild Verification**
-- Rebuild: `docker compose build --no-cache mcp-server && docker compose up -d mcp-server`
-- Image SHA: `09c7e3b3ce42138c2b2210d9dadbcf67adb9b3bc5ccf4aa5733b01a2efd38227`
-- Container image match: YES (no macOS race detected)
-- SDK pin verified IN-CONTAINER:
-  - package.json: `"@modelcontextprotocol/sdk": "1.29.0"` (exact, no caret)
-  - node_modules: `"version": "1.29.0"` ✓
-- Health endpoint: `{"status":"ok","name":"vn-market","version":"1.0.0","toolCount":157}` ✓
-- All 11 peer services UP (healthy): alert-engine, api-gateway, frontend, kinh-dich-service, macro-indicators, news-fetch, pdf-extractor, rag-service, stock-price, technical-analysis ✓
-
-**Smoke Test: get_bctc_pending_refine(limit:1)**
-- Result: 1 row returned (b48f7e6a-f045-4550-91f9-dbe27e67c252)
-- Structure: windows[] with unit_id, page_numbers, page_type, needs_image ✓
-- No check.kind validation error (z.coerce.number() + SDK 1.29.0 handling working) ✓
-
-**QA Gate:** COMPLETE ✓
-- Image freshly built with --no-cache (dependency layer re-resolved)
-- SDK pin hardened into image
-- Peers isolated with --no-deps (no recreation of unrelated containers)
-- Smoke returned proper payload shape, confirms limit param handling resilience
-
-**Commit:** 897877ec FIX-PENDING-REFINE-LIMIT-CHECKKIND
+## 2026-06-13 mini-sessions (VPSQUEUE, CONFIDENCE, TICKER-TARGETING, LIMIT-CHECKKIND)
+**VPS:** 10 pending rows, no Q1 filings on HNX/UPCOM/SSC, NO restart. **CONFIDENCE:** image `5521a124bb45`, BLOCK-5 gate live, 13/13 peers ✓. **TICKER:** smoke `get_bctc_pending_refine(ticker:"CTG")`→OK. **LIMIT:** image SHA `09c7e3b3ce42`, SDK 1.29.0 pinned, all gates CLEARED. All 3 commits live.
 
 ---
 ## Session: 2026-06-13 (FIX-ALERT-ORPHAN-CORRELATION — mcp-server rebuild)

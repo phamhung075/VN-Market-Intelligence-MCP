@@ -154,13 +154,7 @@ Sprint: SHIP-WAVE-REAUDIT | Task: FIX-EVIDENCE-PIPELINE-STARVED | Verdict: CHANG
 
 Re-check at 2026-06-12T16:15Z. C1 PASS: foreignFlowAlertJob 2026-06-12 08:13:00 status=success rows_written=18. C2 PASS: evidence_fragments count=9 latest=2026-06-12T08:13:00.921Z. C3 FAIL: evidenceAccumulatorJob did not fire at 16:00Z — scheduler tick confirmed active (dataAuditJob:daily ran at 16:00:00, other cron jobs at 16:04–16:12), no evidenceAccumulatorJob entry in cron_job_runs for 2026-06-12, no container log entry. cron registered in CRONS map (80 keys at startup) but job absent from tick. CHANGES_REQUESTED. NEXT: pm to open new dev task with evidence.
 
-## cycle-234 · 2026-06-12 · FE-CORPEVENTS-TICKER-FILTER browser + unit QA gate — APPROVED
-
-Sprint: FE-CORPEVENTS-TICKER-FILTER | Task: FE-CORPEVENTS-TICKER-FILTER | Verdict: APPROVED | Commit: 4f0d407a | Report: reports/TASK_REPORT_FE-CORPEVENTS-TICKER-FILTER.md
-
-Unit: 84/0 Vitest (task17, QA-reproduced). tsc exit 0. DDD PASS (no infra/application imports). Security PASS (process.env = pre-existing FRONTEND_ORIGIN, not introduced by commit). mock-guard EXIT 0. Browser (Playwright 17/17): select[aria-label="Chọn mã chứng khoán"] rendered. 47 options: 'Tất cả' + 46 codes sorted A-Z (ACB,ACV,BID…). Default 237 rows. ACB → 9 rows. Tất cả restore 237. Cascade: dividend=10, dividend+ACB=1. No /api/ fetch on onChange. Empty state: ACV+Nội bộ → "Không có sự kiện trong danh mục này." no crash. Stale banner unaffected (1 banner throughout). ?days=30 compose: selector still renders. Scope: frontend zone only; orch-state metadata update (ARCH-QUE-REFERENCE-PAGE) in same commit non-violating. REVIEW→DONE. DJ qa-S1.
-
-[Archived to git history; retained: latest 15 cycles. Full history in qa-20260606.md archive.]
+[Archived: cycle-234–cycle-100. Full history in git log + qa-20260606.md. Retained: cycles 269–235 (latest 35 cycles).]
 
 REAUDIT-FE-002 (foreign-flow stale_fields badges): 15/0 Vitest tests. tsc exit 0. DDD+security+mock-guard PASS. Live: stale_fields=3 from API. SSR HTML: 2 column header badges "Không có dữ liệu" (currentHoldingRatio + marketCapBn). maxHoldingRatio no column in table — badge omission correct. Image e47f66ad6d1e. Commit 11308f1c. REVIEW→DONE. DJ qa-S9.
 
@@ -197,5 +191,5 @@ Live DB probe (named volume, keinos sidecar). Check 1: contamination scan = 0 re
 
 Scope miss findings (non-blocking, logged for follow-up): SM-1 VNH 2026-06-12 close=1000.0 exactly (boundary `>1000` strict, 1 row miss); SM-2 460 pre-repair rows with low=0 pattern outside heuristic scope; SM-3 59 today's rows same low=0 pattern (CONTAM-2 guard gap). None introduced by CONTAM-6. Task DoD met. CONTAM-6 REVIEW→DONE. DJ: sprint-OHLCV-UNIT-CONTAM-qa-contam6.md.
 
-## Baselines / Archive
-Older cycles: git history / qa-20260606.md.
+---
+**Archive:** older cycles in git log + qa-20260606.md
