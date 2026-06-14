@@ -1,5 +1,29 @@
 # Agent Father — Notebook
 
+## c297 · 2026-06-14 — FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS (P2)
+
+- Task: Edit (param schema drift fix) — 7 tool schemas corrected in list/ + package/ + flow docs
+- SSOT: list/<tool>.md fixed first, propagated to all drifted package and flow files
+- B3 get_bctc_full: ticker→code (2 list + 4 pkg + 3 flow sites)
+- B6 get_patterns: ticker+pattern_type→{stockCode,eventKeyword} (list + mw pkg + mw example)
+- B7 get_sentiment_trend: no-arg→stock_code(req) (unified-agent pkg + tran-ngoc-bau hint)
+- B8 get_kinhdich_reading: ticker→code (5 pkg files + tran-ngoc-bau hint)
+- B9 get_agent_signals: omitted agent param→agent(req) (news-scout pkg + tran-ngoc-bau hint)
+- B11 get_market_summary: no-arg→period(req) (digest-predict pkg table + example)
+- get_financial_summary: code→actionCode (market-analyst pkg table; example already correct)
+- Stale-zero grep: 0 hits all 7 tools after fix
+- DRY note: package Key Params columns are intentional short-form refs, not verbatim SSOT copies — structural dedup is a separate follow-up
+- Commit: 0e81b642 · tsc gate passed · pushed main
+
+## c296 · 2026-06-13 — factory hygiene: dashboard-protocol size-justification + signal prune
+
+- Task: Edit (factory hygiene) — two cleanups: dashboard-protocol.md justification reconcile + stale signal prune
+- Decision: UPDATE-JUSTIFICATION (not split) — §WRITE/§READ/§PRUNE always co-loaded; split = 3-file load penalty; protocol body (not skill file) so 120L cap inapplicable
+- Changed: size-justification header from ~80L → 190L (actual 186L after edit = 186L; 190 declared >= 186 actual)
+- Removed signals: context-bloat (resolved by fix), orch-state-read-discipline (0708d1a5 shipped), origin-lag-push-discipline (earlier pass)
+- Retained: bctc_signal_FPT_20260613_routine.json (live cowork signal — untouched)
+- Commit: 0ce17639 · pushed → origin/main..HEAD = 0
+
 ## c295 · 2026-06-13 — agent-md-factory recheck pass-5 (2h cycle)
 
 ### Keep (maintenance) — pass-5 sweep

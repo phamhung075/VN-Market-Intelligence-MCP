@@ -1,8 +1,22 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 00:15 UTC | **Sprint:** FIX-MCP-CRASH-LOOP-WRITEWAL
+**Last updated:** 2026-06-14 03:10 UTC | **Sprint:** ARCH-CRON-SCHEDULER-RELIABILITY
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T03:10Z — ARCH-CRON-SCHEDULER-RELIABILITY Design Brief (DESIGN, REVIEW)
+
+**Task:** ARCH-CRON-SCHEDULER-RELIABILITY | zone: apps/mcp-server/ (scheduler layer, 55 cron jobs)
+**Output:** docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md, docs/handoffs/ARCH-CRON-SCHEDULER-RELIABILITY.md
+
+**Root cause confirmed:** node-cron v3.0.3 drops ticks under event-loop saturation when `recoverMissedExecutions=false`. Per-job patching failed twice (53d00955). 3 jobs confirmed dead (ohlcvDailyAggregator, vnstockFundamentals, reputationCompute). Systemic fix required.
+
+**Key design choices:**
+- KEEP node-cron v3.0.3 (croner + v4 rejected — brownfield risk, 55 call sites)
+- 4-lever system: (1) `recoverMissedExecutions: true` universally, (2) T4 dedup guards in all non-idempotent jobs, (3) deterministic per-job jitter for 8 high-collision jobs, (4) `schedulerWatchdogJob.ts` — missed-fire detection + self-heal
+- Phase ordering HARD: dedup guards (1a) BEFORE recoverMissedExecutions (1b) — otherwise recovery replays double-fire Telegram
+- IMPL gate: FIX-MCP-CRASH-LOOP-WRITEWAL must land first (crash-looping server = tick-drop source)
+- BUILD-STANDARD: lean
 
 ## 2026-06-14T00:15Z — FIX-MCP-CRASH-LOOP-WRITEWAL Design Brief (DESIGN, REVIEW)
 

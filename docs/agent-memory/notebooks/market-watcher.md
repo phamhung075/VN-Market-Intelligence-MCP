@@ -1,21 +1,23 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-06-12 04:07 UTC | **Sprint:** FIX-MW-OFFHOURS-DISPATCH
+**Last updated:** 2026-06-14 04:08 UTC | **Sprint:** 2026-Q2
 
 ## Carry-over
-[None]
+Offhours cycles (Sunday) shift to macro monitoring.
 
-## Cycle (04:05–04:07)
-- Stocks: 30 | Anomalies: 0 (>2.0σ) | Volume spikes: 0 | Chain confirms: 0
+## Cycle (04:08–04:09 UTC, offhours)
+- Stocks: 0 | Anomalies: 0 (stale prices, weekend) | Volume spikes: 0 | Chain confirms: 0
 - Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
-- Mode: market | Market: OPEN | Coverage: 3 tickers swept (VNM, FPT, VCB)
+- Supply chain: BDI 1,400 (+0%), no disruptions
+- Energy grid: NORMAL (53% demand, 70% hydro), June summer peak season alert
+- Climate: No active weather events; watchlist unaffected
 
-## Metrics (cycle 2026-06-12 04:07 UTC)
+## Metrics (cycle 2026-06-14 04:08 UTC)
 | Field | Value |
 |---|---|
 | cycles_run | 1 |
-| items_fetched | 30 |
+| items_fetched | 0 |
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
-| sweep_tickers_forced | 3 |
-| coverage_state_updated | yes |
+| sweep_tickers_forced | 0 |
+| coverage_state_updated | no |
 | exit_status | complete |

@@ -1,14 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-12T05:23Z · **Cycle:** Chef Morning Dish 05:23 UTC
-
-## Session: 2026-06-11 (evening 19:37)
-
-### Chef Dish — evening 19:37 UTC (2026-06-11T1937Z) — PUBLISHED
-
-- Clusters qualified: 3+ convergence clusters (guaranteed evening publish)
-- Conviction: Macro CRITICAL → KBC MEDIUM (0.54), VNM LOW (0.44)
-- Published: YES (MARKET + WORK [CHEF-DETAIL])
+**Last updated:** 2026-06-13T19:37Z · **Cycle:** Chef Evening Preview 19:37 UTC
 
 ## Session: 2026-06-12 (intraday silent-exit)
 
@@ -35,3 +27,19 @@
 - Phase declared: Banking SLOWDOWN (fixed income tier), Utilities EXPANSION (equity tier)
 - Published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
 - Status: Morning cycle COMPLETE. Gate-fired contract enforced; full 6-layer dish published despite Layer 5 unavailability.
+
+## Session: 2026-06-13 (evening 19:37)
+
+### Chef Dish — evening 19:37 UTC (2026-06-13T1937Z) — PUBLISHED
+
+- Clusters qualified: ≥1 convergence (macro + sector divergence)
+- Conviction: MEDIUM (carry pressure + yield spread + sector divergence)
+  - Causal: USD/VND 26,122 carry squeeze → Banking NIM pressure, Real Estate -1.29%, Utilities -0.89%
+  - Only Steel +1.15% shows strength; VN-Index -0.39%
+- Layers walked: 1-6 complete; Layer 5 (hexagram) degraded (market hexagram unavailable)
+- Signals consumed: 0 agent_signals (empty); macro snapshot (source_tier 2, live); portfolio conviction; watchlist 36 tickers (stale)
+- Phase declared: SLOWDOWN (fixed_income tier)
+- Macro state: PARTIAL (carry snapshot 2-day lag, hexagram unavailable)
+- Published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
+- Degradation notes: agent_signals empty, market_hexagram unavailable, watchlist stale >24h; dish published at degraded-floor minimum
+- Status: Evening cycle COMPLETE. Full 6-layer dish published despite Layer 5 unavailability and cowork signal gaps.

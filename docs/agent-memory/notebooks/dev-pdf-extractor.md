@@ -65,3 +65,18 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 ---
 
 **Current state (2026-06-10):** All async-blocking fixes deployed; prose extraction pipeline restored; A-20 architecture escalated (awaiting cpus increase); zone healthy.
+
+## 2026-06-14 — FIX-BCTC-VPS-PIPELINE-STALE-5D
+
+**Incident:** BCTC VPS pipeline stale 5+ days (Jun 8 01:17 → Jun 13 20:45 UTC).
+
+**Finding:** mcp-server was running continuously. bctcPdfPullJob ran 118 times, bctcQueueEnricherJob ran 341 times — 339 runs returned 0 URLs found. Root cause = HSX iboard URL discovery failed for 16 Q1-2026 tickers for 5 days. Not a VPS death, not a pull-job crash, not a pdf-extractor rejection.
+
+**Zone verdict:** OUT_OF_ZONE. Fixes needed in apps/mcp-server/:
+1. `vpsHealthPoller.ts` line 169 — vn-bctc-fetch passive=true → add active freshness query on bctc_vps_queue.
+2. `bctcQueueEnricherJob` — alert when urlsPopulated=0 for N consecutive runs during earnings window.
+3. HNX/UPCOM tickers (ACV, BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA) need non-HSX discovery path.
+
+**Handoff:** Task updated → HANDOFF status, owner dev-mcp-server.
+
+**Pipeline state at close:** 7 new PDFs downloaded Jun 13 21:35-22:17; FRT/SAB/VIX/VND/DGC/VJC/GEX/BSR/DBC/HUT still pending with HSX URLs; 9 tickers with no URL.

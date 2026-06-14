@@ -2,240 +2,240 @@
   "_schema": "v1",
   "_ssot": true,
   "_updated_by": "news-scout",
-  "_updated_at": "2026-06-12T05:07:00Z",
+  "_updated_at": "2026-06-14T04:09:00Z",
   "_eod_completed": "2026-06-04T16:08:37Z",
   "tickers": {
     "VNM": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "FPT": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VCB": {
-      "last_covered_news_scout": "2026-06-12T00:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "ACB": {
-      "last_covered_news_scout": "2026-06-10T16:08:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "HPG": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "BID": {
-      "last_covered_news_scout": "2026-06-12T00:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "SHB": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "EIB": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VHM": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VIC": {
-      "last_covered_news_scout": "2026-06-10T00:22:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "KBC": {
-      "last_covered_news_scout": "2026-06-12T00:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "HUT": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "DIG": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "DXG": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "KDH": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "PDR": {
-      "last_covered_news_scout": "2026-06-10T12:06:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "NVL": {
-      "last_covered_news_scout": "2026-06-10T16:08:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VRE": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "D2D": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "MSN": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "FRT": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "KDC": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "SAB": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "DPM": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "GAS": {
-      "last_covered_news_scout": "2026-06-10T16:08:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "SSI": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VIX": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VND": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VCI": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "DGC": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VJC": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "GEX": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "BSR": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "PLX": {
-      "last_covered_news_scout": "2026-06-10T16:08:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "DAG": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "DBC": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "GVR": {
-      "last_covered_news_scout": "2026-06-10T12:06:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "BDI": {
-      "last_covered_news_scout": "2026-06-10T08:06:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "DLC": {
-      "last_covered_news_scout": "2026-06-10T08:06:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VNH": {
-      "last_covered_news_scout": "2026-06-10T08:06:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "CTG": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VPB": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "DHG": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "TCH": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "ACV": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "HVN": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "MBB": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "HSG": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "NKG": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "SIS": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "POW": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "PPC": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VDC": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "JSH": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "REE": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "MWG": {
-      "last_covered_news_scout": "2026-06-12T00:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "HCM": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     },
     "VEA": {
-      "last_covered_news_scout": "2026-06-10T05:07:00Z",
-      "last_covered_market_watcher": "2026-06-12T04:07:20Z"
+      "last_covered_news_scout": "2026-06-14T04:06:00Z",
+      "last_covered_market_watcher": "2026-06-13T12:08:30Z"
     }
   },
   "sweep_config": {
