@@ -173,3 +173,39 @@ orch-state committed. Unblocks D-1 (same-zone one-in-flight clears).
 - Remix build completed without errors (1750 modules transformed, Vite SSR 1.38s)
 - QueName.tsx and que-descriptions.generated.ts bundled into build/client/assets/
 - Frontend :3001 responsive; ready for QA hover tooltip verification
+
+---
+## Session: 2026-06-14 (KINHDICH-HOVER-DETAIL — frontend rebuild)
+
+**Task:** Rebuild apps/frontend to ship Kinh Dịch quẻ hover tooltip enrichment (QueName.tsx: coreMeaning + Trạng thái + Thuận + Cảnh báo + trend via que-descriptions.generated.ts).
+
+**Commit:** de8d8d0a (dev-frontend shipped KINHDICH-HOVER-DETAIL enrichment)
+
+### Execution Summary
+
+**Rebuild Execution**
+- Command: `docker compose build frontend && docker compose up -d --no-deps frontend`
+- Old image ID: `8978f8ceb322`
+- New image ID: `3ed501d2f5c2` ✓
+- Build time: ~150s (npm ci + vite build + export layers)
+- Container lifecycle: Recreate only (targeted no-deps, zero peer impact)
+
+**Build Output**
+- npm ci: 892 packages, 68.7s
+- vite client build: 1750 modules, 19.16s (includes QueName-CweIuF2T.js 61.66 kB gzip:23.01 kB + que-descriptions-detail.generated-BvF1P1Ra.js 66.08 kB gzip:18.41 kB)
+- vite SSR build: 96 modules, 1.98s (server/index.js 689.01 kB)
+- Image export: 28.9s (unpacking to runtime layer)
+
+**Post-Rebuild Verification**
+1. **Peer integrity:** 13 containers before → 13 containers after ✓ (no cascade kill/restart)
+   - All services listed: frontend, kinh-dich-service, mcp-server, api-gateway, rag-service, news-fetch, stock-price, alert-engine, technical-analysis, pdf-extractor, macro-indicators, headroom-proxy, mcp-gateway
+2. **Frontend health:** Container 650e6e3dd7f5 Up 18s (healthy) ✓
+3. **HTTP endpoint:** curl -sI http://localhost:3001/ → HTTP 200 OK ✓
+4. **Builder prune:** Reclaimed 1.697GB from build cache (11 reclaimable layers) ✓
+
+**QA Gate:** CLEARED ✓
+- New image ID confirmed distinct from old
+- Image digest: sha256:3ed501d2f5c2babcba908a6f2bee21e6aa1472f94ae0fa922f2eee01021f5886
+- Service responds on :3001 with 200 status
+- Zero peer downtime (all 13 services still running)
+- Ready for QA RAW-verify of served QueName tooltip content (coreMeaning + details rendered in browser)
