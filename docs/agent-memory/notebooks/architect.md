@@ -1,8 +1,22 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 09:45 UTC | **Sprint:** DOCLANG-SERIALIZE
+**Last updated:** 2026-06-14 10:45 UTC | **Sprint:** DOCLANG-SERIALIZE
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T10:45Z — SPIKE-DOCLANG-AUTHORED-DOCS (SPIKE, DONE)
+
+**Task:** SPIKE-DOCLANG-AUTHORED-DOCS | zone: docs/ (all authored markdown)
+**Output:** docs/architecture-briefs/2026-06-14-spike-doclang-authored-docs.md
+
+**Verdict: NO-GO — authored docs stay markdown permanently.**
+
+**Key findings:**
+- Consumer Reality: 4 consumer categories found. (A) LLM raw-text via Read tool (dominant — no benefit from XML). (B) Shell grep `^## ` in notebook-write: P0 break if notebooks become .dclg.xml. (C) Claude Code YAML parser for .claude/agents/*.md and SKILL.md frontmatter: structurally incompatible with DocLang XML. (D) Hook wc-c + find *.md globs: monitoring blind if extension changes.
+- Agent-MD constraint confirmed: `.claude/agents/*.md` (42 files) MUST start `---` YAML. DocLang XML header is structurally incompatible. Same for 55 SKILL.md files, 7 CLAUDE.md files.
+- Benefit: zero. No consumer reads doc geometry, bboxes, or cross-page layout from authored docs. LLM reads prose equally well from .md or .dclg.xml but .dclg.xml breaks shell tooling.
+- Blast radius: 585+ files if full conversion; all high-churn for zero gain.
+- Scope narrowed: DocLang = extracted content only (scope 1, Phase 1 DONE). Scope 2 (authored docs) closed.
 
 ## 2026-06-14T09:45Z — ARCH-DOCLANG-SERIALIZE Design Brief (DESIGN, REVIEW)
 
