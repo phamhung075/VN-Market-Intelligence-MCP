@@ -18,6 +18,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { Database } from 'bun:sqlite'
 import {
   runSchedulerWatchdog,
@@ -590,5 +592,197 @@ describe('ARCH-CRON-watchdog — WD-10: manifest integrity — every key matches
       `WATCHDOG_MANIFEST has ${manifestCount} keys but CANONICAL_WATCHDOG_JOB_NAMES has ${canonicalCount} entries. ` +
       `They must stay in sync — add or remove from both together.`,
     ).toBe(canonicalCount)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WD-11: Call-site derived integrity — every WATCHDOG_MANIFEST key must exist
+//         in the set of job_name strings actually recorded by wrapRun / recordJobRun
+//         in the REAL registration source files.
+//
+// WHY THIS MATTERS (and why WD-10 alone is insufficient):
+//   WD-10 compares WATCHDOG_MANIFEST keys against CANONICAL_WATCHDOG_JOB_NAMES,
+//   both of which live in schedulerWatchdogJob.ts. This means:
+//     1. rename wrapRun('reputationComputeJob', ...) → wrapRun('reputation-compute', ...)
+//        in startScheduler.ts
+//     2. forget to update schedulerWatchdogJob.ts
+//     → manifest key 'reputationComputeJob' still == canonical entry → WD-10 GREEN
+//     → live watchdog queries 'reputationComputeJob', job now records 'reputation-compute'
+//     → watchdog always sees null → false "never ran" alert every 2h
+//     WD-10 cannot catch this. WD-11 can, because it reads the call sites directly.
+//
+// HOW WD-11 WORKS:
+//   At test time, reads each registration source file with node:fs readFileSync and
+//   extracts wrapRun / recordJobRun literal arguments with robust regexes. Resolves
+//   two known indirections that a literal-only regex misses:
+//     (i)  vnstockFundamentalsJob.ts records via `JOB_NAME_FUNDAMENTALS` const
+//          → reads the const's assigned string literal from the same file.
+//     (ii) summaryJobs.ts records via `recordJobRun(db, \`summaryJob:${periodType}\`)`
+//          → template literal, not a string; WATCHDOG_MANIFEST only watches
+//          'summaryJob:daily', so we explicitly add that one value when the template
+//          is detected (the test documents why rather than silently skipping).
+//   Then asserts every Object.keys(WATCHDOG_MANIFEST) is in the derived set.
+//   On failure: names the offending key(s) AND lists every file that was scanned.
+//
+// PROOF OF FAIL-LOUD (B3 experiment — executed during round-3 implementation):
+//   Job chosen: 'accuracyDigestJob' (startScheduler.ts L1004).
+//   Note: 'reputationComputeJob' was tried first but it has a SECOND occurrence
+//   in the liveManifest selfHealFn block (L1154), so flipping L972 still left
+//   the name discoverable at L1154 — WD-11 stayed green. This is correct behavior
+//   (selfHealFn also records under the same name), not a test gap. 'accuracyDigestJob'
+//   has only one occurrence in the scanned files — a clean single-site test.
+//   1. Temporarily flip startScheduler.ts wrapRun('accuracyDigestJob', ...)
+//      → wrapRun('accuracy-digest-X', ...)
+//   2. Run: bun test src/__tests__/ARCH-CRON-watchdog.test.ts
+//   3. WD-11 FAILS loudly:
+//      Missing: ["accuracyDigestJob"]
+//      Scanned: startScheduler.ts, startupHelpers.ts, summaryJobs.ts,
+//               foreignFlowAlertJob.ts, insiderCheckJob.ts,
+//               calibrationReportJob.ts, vnstockFundamentalsJob.ts
+//      17 pass, 1 fail
+//   4. Restore the literal → WD-11 GREEN (18 pass, 0 fail)
+//   (WD-10 stayed GREEN throughout — it never reads the call site.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ARCH-CRON-watchdog — WD-11: call-site derived integrity — every manifest key has a matching wrapRun/recordJobRun literal in source', () => {
+  it('derives recorded-name set from actual call-site source files and asserts every WATCHDOG_MANIFEST key is present', () => {
+    // ── 1. Resolve source file paths relative to THIS test file ────────────────
+    //    __dirname equivalent in Bun: import.meta.dir
+    const testsDir = resolve(import.meta.dir)
+
+    // The canonical set of files that register job runs (per CANONICAL annotations
+    // in schedulerWatchdogJob.ts). Every file listed here is scanned at test time.
+    const filesToScan: Array<{ label: string; path: string }> = [
+      {
+        label: 'startScheduler.ts',
+        path: resolve(testsDir, '../scheduler/startScheduler.ts'),
+      },
+      {
+        label: 'startupHelpers.ts',
+        path: resolve(testsDir, '../scheduler/startupHelpers.ts'),
+      },
+      {
+        label: 'summaryJobs.ts',
+        path: resolve(testsDir, '../scheduler/summaryJobs.ts'),
+      },
+      {
+        label: 'foreignFlowAlertJob.ts',
+        path: resolve(testsDir, '../scheduler/market-data/foreignFlowAlertJob.ts'),
+      },
+      {
+        label: 'insiderCheckJob.ts',
+        path: resolve(testsDir, '../scheduler/market-data/insiderCheckJob.ts'),
+      },
+      {
+        label: 'calibrationReportJob.ts',
+        path: resolve(testsDir, '../scheduler/macro/calibrationReportJob.ts'),
+      },
+      {
+        label: 'vnstockFundamentalsJob.ts',
+        path: resolve(testsDir, '../scheduler/financial-reports/vnstockFundamentalsJob.ts'),
+      },
+    ]
+
+    // ── 2. Read each file and extract recorded job_name literals ───────────────
+
+    // Regex 1: wrapRun( 'literalName'  or  wrapRun( "literalName"
+    //   Allows optional whitespace between wrapRun( and the quote.
+    //   Group 1: the literal string.
+    const WRAP_RUN_RE = /wrapRun\(\s*['"]([^'"]+)['"]/g
+
+    // Regex 2: recordJobRun( <anything> , 'literalName'  or  , "literalName"
+    //   The first arg is the db handle (any non-paren expression). We allow
+    //   any non-comma characters up to the comma, then optional whitespace,
+    //   then the quoted string literal.
+    //   Group 1: the literal string.
+    const RECORD_JOB_RUN_LITERAL_RE = /recordJobRun\([^,]+,\s*['"]([^'"]+)['"]/g
+
+    // Regex 3: Detect JOB_NAME_FUNDAMENTALS indirection in vnstockFundamentalsJob.ts.
+    //   Matches:  export const JOB_NAME_FUNDAMENTALS = "vnstockFundamentalsRefresh";
+    //   Group 1: the const's assigned string value.
+    const JOB_NAME_CONST_RE = /\bJOB_NAME_FUNDAMENTALS\s*=\s*['"]([^'"]+)['"]/
+
+    // Regex 4: Detect the summaryJob template indirection.
+    //   Matches: recordJobRun(db, `summaryJob:${periodType}`, ...)
+    //   We detect the template form (backtick with ${...}) so we can handle it explicitly.
+    const SUMMARY_TEMPLATE_RE = /recordJobRun\([^,]+,\s*`summaryJob:\$\{[^}]+\}`/
+
+    const derivedNames = new Set<string>()
+    const scannedFiles: string[] = []
+
+    for (const { label, path } of filesToScan) {
+      let src: string
+      try {
+        src = readFileSync(path, 'utf-8')
+      } catch (err) {
+        throw new Error(
+          `WD-11: cannot read registration source file '${label}' at '${path}'. ` +
+          `Ensure the path is correct and the file exists. Error: ${String(err)}`,
+        )
+      }
+      scannedFiles.push(label)
+
+      // ── Extract wrapRun literals ──────────────────────────────────────────
+      let m: RegExpExecArray | null
+      WRAP_RUN_RE.lastIndex = 0
+      while ((m = WRAP_RUN_RE.exec(src)) !== null) {
+        derivedNames.add(m[1]!)
+      }
+
+      // ── Extract recordJobRun string-literal arguments ─────────────────────
+      RECORD_JOB_RUN_LITERAL_RE.lastIndex = 0
+      while ((m = RECORD_JOB_RUN_LITERAL_RE.exec(src)) !== null) {
+        derivedNames.add(m[1]!)
+      }
+
+      // ── Indirection (i): JOB_NAME_FUNDAMENTALS const ─────────────────────
+      //    vnstockFundamentalsJob.ts calls recordJobRun(db, JOB_NAME_FUNDAMENTALS, ...)
+      //    The const name is not a string literal so the RECORD_JOB_RUN_LITERAL_RE
+      //    above skips it. We resolve it by reading the const's assigned value.
+      if (label === 'vnstockFundamentalsJob.ts') {
+        const constMatch = JOB_NAME_CONST_RE.exec(src)
+        if (constMatch) {
+          derivedNames.add(constMatch[1]!)
+        } else {
+          throw new Error(
+            `WD-11: expected to find JOB_NAME_FUNDAMENTALS = "..." const in '${label}' ` +
+            `but the pattern was not found. If the const was renamed, update WD-11 to match.`,
+          )
+        }
+      }
+
+      // ── Indirection (ii): summaryJob:${periodType} template ──────────────
+      //    summaryJobs.ts calls recordJobRun(db, `summaryJob:${periodType}`, ...)
+      //    This is a template literal — not extractable as a string literal.
+      //    WATCHDOG_MANIFEST only monitors 'summaryJob:daily' (the daily cadence
+      //    variant). We explicitly add that specific string when the template is
+      //    detected, documenting the assumption rather than silently skipping it.
+      //    If WATCHDOG_MANIFEST ever adds 'summaryJob:weekly' etc., update here.
+      if (label === 'summaryJobs.ts' && SUMMARY_TEMPLATE_RE.test(src)) {
+        derivedNames.add('summaryJob:daily')
+      }
+    }
+
+    // ── 3. Assert every WATCHDOG_MANIFEST key is in the source-derived set ──
+    const manifestKeys = Object.keys(WATCHDOG_MANIFEST)
+    const missingFromSource = manifestKeys.filter((k) => !derivedNames.has(k))
+
+    expect(
+      missingFromSource,
+      `WD-11 FAIL: The following WATCHDOG_MANIFEST key(s) have no matching ` +
+      `wrapRun/recordJobRun call-site literal in the scanned source files:\n` +
+      `  Missing: ${JSON.stringify(missingFromSource)}\n` +
+      `  Scanned: ${scannedFiles.join(', ')}\n` +
+      `This means the watchdog is querying cron_job_runs with the WRONG job_name ` +
+      `and will produce false "never ran" alerts. ` +
+      `Fix: update the manifest key to match the wrapRun/recordJobRun literal ` +
+      `at the call site, OR update the call site literal to match the manifest key.`,
+    ).toEqual([])
+
+    // Sanity: we must have extracted at least one name per file
+    expect(
+      derivedNames.size,
+      `WD-11: derived set is unexpectedly empty — regex scanning may have broken`,
+    ).toBeGreaterThan(0)
   })
 })
