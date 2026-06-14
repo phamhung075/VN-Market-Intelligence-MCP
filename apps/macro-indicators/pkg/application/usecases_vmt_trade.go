@@ -63,7 +63,9 @@ func NewTradeBalanceUseCase(
 // Returns TradeBalanceResponse with:
 //   - VMT-1a: trade totals + HS sector breakdown (is_estimate=false, primary NSO source).
 //   - VMT-1b: bloc_split FDI share (is_estimate=true PERMANENT, ARCH Decision A).
-//   - Status="error" + Error field on any fetch/parse failure.
+//   - Status="degraded" + BlockedReason + IsEstimate=true on upstream-fetch/parse failure
+//     (HTTP 200 honest degraded response — not a 500).
+//   - Status="error" + Error field on nil-provider/wiring faults (HTTP 500 genuine fault).
 //
 // Fail-closed for bloc_split: is_estimate=true is set even on partial parse errors
 // (same pattern as VMT-4 CPI WeightsIsEstimate).
@@ -84,13 +86,16 @@ func (uc *TradeBalanceUseCase) Execute(
 	// Within 6h TTL this is a cache HIT — same archive, no new VPS fetch.
 	excelBytes, period, err := uc.excelProvider.GetOrFetchNSOMonthlyExcel(ctx)
 	if err != nil {
-		return errorTradeResponse(fmt.Sprintf("TradeBalance: fetch NSO Excel: %v", err))
+		// Upstream-fetch failure: degrade honestly (HTTP 200 + is_estimate=true).
+		// This is NOT a wiring fault — the provider is wired but the remote is unreachable.
+		return degradedTradeResponse(fmt.Sprintf("NSO customs Excel unreachable via VPS proxy 125.212.251.27:3128: %v", err))
 	}
 
 	// Parse trade-balance from sheets '14.XK', '15.NK', '12.FDI'.
 	record, err := uc.tradeParser.ParseTradeBalance(excelBytes, period)
 	if err != nil {
-		return errorTradeResponse(fmt.Sprintf("TradeBalance: parse Excel: %v", err))
+		// Parse failure: degrade honestly (HTTP 200 + is_estimate=true).
+		return degradedTradeResponse(fmt.Sprintf("NSO customs Excel parse failure: %v", err))
 	}
 
 	// Map domain HS export rows → DTOs.
@@ -145,7 +150,32 @@ func (uc *TradeBalanceUseCase) Execute(
 	}, nil
 }
 
-// errorTradeResponse builds a TradeBalanceResponse with Status="error".
+// degradedTradeResponse builds a TradeBalanceResponse with Status="degraded" for
+// upstream-fetch/parse failures. Returns (resp, nil) so the HTTP handler emits HTTP 200
+// with an honest degraded payload instead of an opaque 500.
+//
+// Fail-closed invariants:
+//   - IsEstimate=true on the whole response (upstream source unreachable).
+//   - BlocSplit.FDI.IsEstimate and BlocSplit.Domestic.IsEstimate always true (ARCH Decision A).
+//   - BlockedReason names the unreachable upstream source.
+func degradedTradeResponse(blockedReason string) (TradeBalanceResponse, error) {
+	return TradeBalanceResponse{
+		Status:        "degraded",
+		IsEstimate:    true, // upstream source unreachable
+		BlockedReason: blockedReason,
+		Source:        nsoTradeSource,
+		BlocSplit: BlocSplitDTO{
+			FDI:      BlocShareDTO{IsEstimate: true}, // fail-closed: always true (ARCH Decision A)
+			Domestic: BlocShareDTO{IsEstimate: true}, // fail-closed: always true (ARCH Decision A)
+			Note:     "Cross-join estimate: FDI capital from NSO 12.FDI vs total export; Customs SPA inaccessible",
+		},
+	}, nil // nil error → HTTP handler emits 200 (not 500)
+}
+
+// errorTradeResponse builds a TradeBalanceResponse with Status="error" for
+// nil-provider/wiring faults. Returns (resp, err) so the HTTP handler emits HTTP 500.
+// This is a GENUINE internal fault — NOT a degrade-able upstream gap.
+//
 // Fail-closed: BlocSplit is still populated with is_estimate=true (ARCH Decision A).
 func errorTradeResponse(msg string) (TradeBalanceResponse, error) {
 	return TradeBalanceResponse{
@@ -153,8 +183,8 @@ func errorTradeResponse(msg string) (TradeBalanceResponse, error) {
 		Error:  msg,
 		Source: nsoTradeSource,
 		BlocSplit: BlocSplitDTO{
-			FDI:      BlocShareDTO{IsEstimate: true},      // fail-closed: always true
-			Domestic: BlocShareDTO{IsEstimate: true},      // fail-closed: always true
+			FDI:      BlocShareDTO{IsEstimate: true}, // fail-closed: always true
+			Domestic: BlocShareDTO{IsEstimate: true}, // fail-closed: always true
 			Note:     "Cross-join estimate: FDI capital from NSO 12.FDI vs total export; Customs SPA inaccessible",
 		},
 	}, fmt.Errorf("%s", msg)

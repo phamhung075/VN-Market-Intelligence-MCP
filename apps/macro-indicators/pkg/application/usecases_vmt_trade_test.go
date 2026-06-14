@@ -56,41 +56,68 @@ func TestTradeBalanceUseCase_NilParser(t *testing.T) {
 	}
 }
 
-// TestTradeBalanceUseCase_FetchError verifies error response on fetch failure.
-// Fail-closed: BlocSplit.FDI.IsEstimate and BlocSplit.Domestic.IsEstimate must be true.
+// TestTradeBalanceUseCase_FetchError verifies graceful degradation on upstream-fetch failure.
+//
+// G1 gate: upstream-fetch failure must return (resp, nil) with Status="degraded",
+// IsEstimate=true, BlockedReason non-empty, and BlocSplit fail-closed invariants.
+// Handler will emit HTTP 200 (not 500) because err=nil.
 func TestTradeBalanceUseCase_FetchError(t *testing.T) {
 	uc := NewTradeBalanceUseCase(
 		&stubNSOProvider{err: errors.New("VPS fetch failed")},
 		&stubTradeParser{},
 	)
 	resp, err := uc.Execute(context.Background(), TradeBalanceRequest{})
-	if err == nil {
-		t.Error("expected error on fetch failure")
+	// G1: upstream-fetch failure MUST return nil error (HTTP 200 degraded, not 500).
+	if err != nil {
+		t.Errorf("upstream fetch failure must return nil error (degraded path, not 500): %v", err)
 	}
-	if resp.Status != "error" {
-		t.Errorf("expected status=error, got %q", resp.Status)
+	// G1: Status must be "degraded" (honest degraded, not "error").
+	if resp.Status != "degraded" {
+		t.Errorf("upstream fetch failure: expected status=degraded, got %q", resp.Status)
 	}
-	// Fail-closed: is_estimate=true even on error path (same as VMT-4 CPI WeightsIsEstimate).
+	// G1: IsEstimate must be true (upstream source unreachable).
+	if !resp.IsEstimate {
+		t.Error("IsEstimate must be true on upstream fetch failure (fail-closed)")
+	}
+	// G1: BlockedReason must be non-empty (names the unreachable source).
+	if resp.BlockedReason == "" {
+		t.Error("BlockedReason must be non-empty on upstream fetch failure (fail-closed)")
+	}
+	// Fail-closed: BlocSplit is_estimate=true even on degraded path (ARCH Decision A).
 	if !resp.BlocSplit.FDI.IsEstimate {
-		t.Error("BlocSplit.FDI.IsEstimate must be true on error path (fail-closed)")
+		t.Error("BlocSplit.FDI.IsEstimate must be true on degraded path (ARCH Decision A)")
 	}
 	if !resp.BlocSplit.Domestic.IsEstimate {
-		t.Error("BlocSplit.Domestic.IsEstimate must be true on error path (fail-closed)")
+		t.Error("BlocSplit.Domestic.IsEstimate must be true on degraded path (ARCH Decision A)")
 	}
 }
 
-// TestTradeBalanceUseCase_ParseError verifies error response on parse failure.
+// TestTradeBalanceUseCase_ParseError verifies graceful degradation on parse failure.
+//
+// G1 gate: parse failure must return (resp, nil) with Status="degraded",
+// IsEstimate=true, BlockedReason non-empty.
+// Handler will emit HTTP 200 (not 500) because err=nil.
 func TestTradeBalanceUseCase_ParseError(t *testing.T) {
 	uc := NewTradeBalanceUseCase(
 		&stubNSOProvider{bytes: []byte("fake-excel"), period: "2026-05"},
 		&stubTradeParser{err: errors.New("sheet not found")},
 	)
 	resp, err := uc.Execute(context.Background(), TradeBalanceRequest{})
-	if err == nil {
-		t.Error("expected error on parse failure")
+	// G1: parse failure MUST return nil error (HTTP 200 degraded, not 500).
+	if err != nil {
+		t.Errorf("parse failure must return nil error (degraded path, not 500): %v", err)
 	}
-	if resp.Status != "error" {
-		t.Errorf("expected status=error, got %q", resp.Status)
+	// G1: Status must be "degraded".
+	if resp.Status != "degraded" {
+		t.Errorf("parse failure: expected status=degraded, got %q", resp.Status)
+	}
+	// G1: IsEstimate must be true.
+	if !resp.IsEstimate {
+		t.Error("IsEstimate must be true on parse failure (fail-closed)")
+	}
+	// G1: BlockedReason must be non-empty.
+	if resp.BlockedReason == "" {
+		t.Error("BlockedReason must be non-empty on parse failure (fail-closed)")
 	}
 	// Fail-closed on parse error too.
 	if !resp.BlocSplit.FDI.IsEstimate {

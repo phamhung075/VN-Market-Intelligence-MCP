@@ -70,6 +70,11 @@ type CPIComponentsResponse struct {
 	// weights_is_estimate is separate and always true.
 	IsEstimate bool `json:"is_estimate"`
 
-	// Error is non-empty when Status="error".
+	// Error is non-empty when Status="error" (nil-provider / wiring fault — genuine 500).
 	Error string `json:"error,omitempty"`
+
+	// BlockedReason is non-empty when Status="degraded" (upstream-fetch/parse failure).
+	// Names the unreachable source (e.g. "NSO monthly Excel unreachable via VPS proxy 125.212.251.27:3128").
+	// HTTP 200 is returned on degraded paths — WeightsIsEstimate=true + all basket IsEstimate=true.
+	BlockedReason string `json:"blocked_reason,omitempty"`
 }

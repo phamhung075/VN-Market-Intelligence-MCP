@@ -136,6 +136,7 @@ func NewLiquidityStateUseCase(
 //   - IRS.IsEstimate=true (DD-6 PERMANENT).
 //   - Interbank1W.IsEstimate=true + Rate1WPct=nil (architect Decision B PERMANENT).
 //   - OMO.IsEstimate=true on parse failure.
+//
 // Partial success is returned (Status="ok") even when only some blocs succeed.
 func (uc *LiquidityStateUseCase) Execute(
 	ctx context.Context,
@@ -265,7 +266,48 @@ func (uc *LiquidityStateUseCase) Execute(
 	}, nil
 }
 
-// errorLiquidityResponse builds a LiquidityStateResponse with Status="error".
+// degradedLiquidityResponse builds a LiquidityStateResponse with Status="degraded" for
+// upstream-fetch/parse failures. Returns (resp, nil) so the HTTP handler emits HTTP 200
+// with an honest degraded payload instead of an opaque 500.
+//
+// Fail-closed invariants (same as errorLiquidityResponse, enforced on ALL paths):
+//   - IRS.IsEstimate=true (DD-6 PERMANENT — NEVER flip to false).
+//   - Interbank1W.IsEstimate=true + Rate1WPct=nil (architect Decision B PERMANENT).
+//   - OMO.IsEstimate=true (fail-closed on degraded path).
+//   - SJCGoldGap.IsEstimate=true (fail-closed on degraded path).
+//   - BlockedReason names the unreachable upstream source.
+func degradedLiquidityResponse(blockedReason string) (LiquidityStateResponse, error) {
+	return LiquidityStateResponse{
+		Status:        "degraded",
+		BlockedReason: blockedReason,
+		Source:        liquiditySource,
+		// Fail-closed: IRS.IsEstimate=true even on degraded path (DD-6 permanent invariant).
+		IRS: LiquidityStateIRSDTO{
+			IsEstimate: true, // PERMANENT — DD-6 — even on degraded paths
+			Note:       "HNX OTC IRS market data not machine-readable (DD-6, permanent)",
+		},
+		// SJCGoldGap fail-closed: is_estimate=true when absent/error.
+		SJCGoldGap: SJCGoldGapDTO{
+			IsEstimate: true, // fail-closed
+		},
+		// OMO fail-closed: is_estimate=true on degraded path.
+		OMO: OMOOutstandingDTO{
+			IsEstimate:    true, // fail-closed
+			BlockedReason: "liquidity-state degraded: " + blockedReason,
+		},
+		// Interbank1W: PERMANENTLY blocked — same on success AND degraded paths.
+		// architect Decision B: dttktt.sbv.gov.vn 100% packet loss from VPS.
+		Interbank1W: InterbankRateDTO{
+			Rate1WPct:     nil,  // PERMANENT — NEVER non-nil
+			IsEstimate:    true, // PERMANENT — architect Decision B — even on degraded paths
+			BlockedReason: "dttktt.sbv.gov.vn unreachable from VPS (100% packet loss)",
+		},
+	}, nil // nil error → HTTP handler emits 200 (not 500)
+}
+
+// errorLiquidityResponse builds a LiquidityStateResponse with Status="error" for
+// nil-provider/wiring faults. Returns (resp, err) so the HTTP handler emits HTTP 500.
+// This is a GENUINE internal fault — NOT a degrade-able upstream gap.
 //
 // Fail-closed invariants enforced even on error paths:
 //   - IRS.IsEstimate=true (DD-6 PERMANENT — NEVER flip to false).

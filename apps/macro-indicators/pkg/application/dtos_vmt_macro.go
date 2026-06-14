@@ -52,6 +52,11 @@ type MacroIndicatorsGSOResponse struct {
 	// IsEstimate is false — all IIP values are primary source (PROBE-3 confirmed).
 	IsEstimate bool `json:"is_estimate"`
 
-	// Error is non-empty when Status="error".
+	// Error is non-empty when Status="error" (nil-provider / wiring fault — genuine 500).
 	Error string `json:"error,omitempty"`
+
+	// BlockedReason is non-empty when Status="degraded" (upstream-fetch/parse failure).
+	// Names the unreachable source (e.g. "NSO monthly Excel unreachable via VPS proxy 125.212.251.27:3128").
+	// HTTP 200 is returned on degraded paths — IsEstimate=true on all IIP sectors.
+	BlockedReason string `json:"blocked_reason,omitempty"`
 }

@@ -101,6 +101,11 @@ type TradeBalanceResponse struct {
 	// FetchedAt is the UTC timestamp of the NSO Excel fetch (RFC3339).
 	FetchedAt string `json:"fetched_at"`
 
-	// Error is non-empty when Status="error".
+	// Error is non-empty when Status="error" (nil-provider / wiring fault — genuine 500).
 	Error string `json:"error,omitempty"`
+
+	// BlockedReason is non-empty when Status="degraded" (upstream-fetch/parse failure).
+	// Names the unreachable source (e.g. "NSO customs Excel unreachable via VPS proxy 125.212.251.27:3128").
+	// HTTP 200 is returned on degraded paths — all bloc IsEstimate fields are true.
+	BlockedReason string `json:"blocked_reason,omitempty"`
 }

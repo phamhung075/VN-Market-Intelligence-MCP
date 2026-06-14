@@ -176,6 +176,12 @@ type LiquidityStateResponse struct {
 	// Source summarises the data origins.
 	Source string `json:"source"`
 
-	// Error is non-empty when Status="error".
+	// Error is non-empty when Status="error" (nil-provider / wiring fault — genuine 500).
 	Error string `json:"error,omitempty"`
+
+	// BlockedReason is non-empty when Status="degraded" (upstream-fetch/parse failure).
+	// HTTP 200 is returned on degraded paths — all bloc IsEstimate fields are true.
+	// Note: the individual bloc DTOs (PolicyRates, OMO, etc.) carry their own BlockedReason
+	// fields; this top-level field covers the whole-response degrade case.
+	BlockedReason string `json:"blocked_reason,omitempty"`
 }

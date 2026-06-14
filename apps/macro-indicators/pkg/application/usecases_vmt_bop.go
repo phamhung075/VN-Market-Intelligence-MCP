@@ -76,9 +76,9 @@ func NewBOPUseCase(
 // Execute fetches the latest BOP data from the SBV Liferay API and computes signals.
 //
 // Quarter selection:
-//   1. If req.QuarterStart and req.QuarterEnd are both set, use them directly.
-//   2. Otherwise, try the current quarter. If no data is returned (SBV ~3-month lag),
-//      fall back to the previous quarter.
+//  1. If req.QuarterStart and req.QuarterEnd are both set, use them directly.
+//  2. Otherwise, try the current quarter. If no data is returned (SBV ~3-month lag),
+//     fall back to the previous quarter.
 //
 // Returns BOPResponse with:
 //   - All BOP sub-components in M USD.
@@ -101,7 +101,9 @@ func (uc *BOPUseCase) Execute(ctx context.Context, req BOPRequest) (BOPResponse,
 
 	record, err := uc.fetchRecord(ctx, req, now)
 	if err != nil {
-		return errorBOPResponse(fmt.Sprintf("BOP use case: fetch/parse failed: %v", err))
+		// Upstream-fetch/parse failure: degrade honestly (HTTP 200 + is_estimate=true).
+		// This is NOT a wiring fault — the fetcher is wired but the remote is unreachable.
+		return degradedBOPResponse(fmt.Sprintf("SBV Liferay BOP API unreachable via VPS proxy 125.212.251.27:3128: %v", err))
 	}
 
 	// Determine E&O known status: the field is "known" when the raw string was non-empty.
@@ -197,8 +199,29 @@ func (uc *BOPUseCase) fetchAndParseQuarter(ctx context.Context, start, end strin
 	return uc.parser.Parse(body)
 }
 
-// errorBOPResponse builds a BOPResponse with Status="error" for the given message.
-// Used to surface use-case-level errors without panicking.
+// degradedBOPResponse builds a BOPResponse with Status="degraded" for
+// upstream-fetch/parse failures. Returns (resp, nil) so the HTTP handler emits HTTP 200
+// with an honest degraded payload instead of an opaque 500.
+//
+// Fail-closed invariants:
+//   - IsEstimate=true on the whole response (upstream source unreachable).
+//   - OffshoreParked.IsEstimate=true always (heuristic — never a primary source).
+//   - BlockedReason names the unreachable upstream source.
+func degradedBOPResponse(blockedReason string) (BOPResponse, error) {
+	return BOPResponse{
+		Status:        "degraded",
+		IsEstimate:    true, // upstream source unreachable
+		BlockedReason: blockedReason,
+		Source:        sbvBOPSource,
+		OffshoreParked: OffshoreParkedDTO{
+			IsEstimate: true, // always true — heuristic
+		},
+	}, nil // nil error → HTTP handler emits 200 (not 500)
+}
+
+// errorBOPResponse builds a BOPResponse with Status="error" for nil-provider/wiring faults.
+// Returns (resp, err) so the HTTP handler emits HTTP 500.
+// This is a GENUINE internal fault — NOT a degrade-able upstream gap.
 func errorBOPResponse(msg string) (BOPResponse, error) {
 	return BOPResponse{
 		Status: "error",

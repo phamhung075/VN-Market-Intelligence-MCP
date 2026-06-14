@@ -255,7 +255,11 @@ func TestBOPUseCase_Q4_2025_LiveAnchor(t *testing.T) {
 	}
 }
 
-// TestBOPUseCase_FetchError surfaces fetch errors correctly.
+// TestBOPUseCase_FetchError verifies graceful degradation on upstream-fetch failure.
+//
+// G1 gate: upstream-fetch failure must return (resp, nil) with Status="degraded",
+// IsEstimate=true, BlockedReason non-empty.
+// Handler will emit HTTP 200 (not 500) because err=nil.
 func TestBOPUseCase_FetchError(t *testing.T) {
 	uc := NewBOPUseCase(
 		&stubVpsFetcher{err: fmt.Errorf("VPS proxy unreachable")},
@@ -264,14 +268,25 @@ func TestBOPUseCase_FetchError(t *testing.T) {
 	)
 
 	resp, err := uc.Execute(context.Background(), BOPRequest{})
-	if err == nil {
-		t.Errorf("expected error when fetch fails, got nil")
+	// G1: upstream-fetch failure MUST return nil error (HTTP 200 degraded, not 500).
+	if err != nil {
+		t.Errorf("upstream fetch failure must return nil error (degraded path, not 500): %v", err)
 	}
-	if resp.Status != "error" {
-		t.Errorf("Status=%q, want 'error'", resp.Status)
+	// G1: Status must be "degraded".
+	if resp.Status != "degraded" {
+		t.Errorf("Status=%q, want 'degraded'", resp.Status)
 	}
-	if resp.Error == "" {
-		t.Errorf("Error field is empty — must surface error message")
+	// G1: IsEstimate must be true (upstream source unreachable).
+	if !resp.IsEstimate {
+		t.Errorf("IsEstimate must be true on upstream fetch failure (fail-closed)")
+	}
+	// G1: BlockedReason must be non-empty (names the unreachable source).
+	if resp.BlockedReason == "" {
+		t.Errorf("BlockedReason must be non-empty on upstream fetch failure")
+	}
+	// OffshoreParked.IsEstimate is always true (heuristic).
+	if !resp.OffshoreParked.IsEstimate {
+		t.Errorf("OffshoreParked.IsEstimate must be true ALWAYS (heuristic)")
 	}
 }
 

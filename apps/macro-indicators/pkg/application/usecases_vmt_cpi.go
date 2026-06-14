@@ -66,7 +66,9 @@ func NewCPIComponentsUseCase(
 //   - Headline "CHỈ SỐ GIÁ TIÊU DÙNG" and all recognized basket rows.
 //   - Anchors May-2026: headline YoYPct=5.60, MoMPct=0.29, AvgYTDYoYPct=4.31.
 //   - weights_is_estimate=true (all weight_pct fields null — never fabricated).
-//   - Status="error" + Error field on any fetch/parse failure.
+//   - Status="degraded" + BlockedReason + IsEstimate=true on upstream-fetch/parse failure
+//     (HTTP 200 honest degraded response — not a 500).
+//   - Status="error" + Error field on nil-provider/wiring faults (HTTP 500 genuine fault).
 func (uc *CPIComponentsUseCase) Execute(
 	ctx context.Context,
 	_ CPIComponentsRequest,
@@ -83,13 +85,15 @@ func (uc *CPIComponentsUseCase) Execute(
 	// Get or fetch the NSO monthly Excel (shared with VMT-3b IIP).
 	excelBytes, period, err := uc.excelProvider.GetOrFetchNSOMonthlyExcel(ctx)
 	if err != nil {
-		return errorCPIResponse(fmt.Sprintf("CPIComponents: fetch NSO Excel: %v", err))
+		// Upstream-fetch failure: degrade honestly (HTTP 200 + is_estimate=true).
+		return degradedCPIResponse(fmt.Sprintf("NSO monthly Excel unreachable via VPS proxy 125.212.251.27:3128: %v", err))
 	}
 
 	// Parse CPI from the Excel sheet "16.CPI".
 	record, err := uc.cpiParser.ParseCPI(excelBytes, period)
 	if err != nil {
-		return errorCPIResponse(fmt.Sprintf("CPIComponents: parse CPI: %v", err))
+		// Parse failure: degrade honestly (HTTP 200 + is_estimate=true).
+		return degradedCPIResponse(fmt.Sprintf("NSO monthly Excel CPI parse failure: %v", err))
 	}
 
 	// Map domain headline → DTO.
@@ -106,7 +110,7 @@ func (uc *CPIComponentsUseCase) Execute(
 		Period:            record.Period,
 		Headline:          headlineDTO,
 		Baskets:           basketDTOs,
-		WeightsIsEstimate: true,     // ALWAYS — weights not in monthly Excel
+		WeightsIsEstimate: true, // ALWAYS — weights not in monthly Excel
 		WeightsNote:       record.WeightsNote,
 		Source:            nsoCPISource,
 		FetchedAt:         fetchedAt,
@@ -128,7 +132,29 @@ func cpiBasketToDTO(b domain.CPIBasket) CPIBasketDTO {
 	}
 }
 
-// errorCPIResponse builds a CPIComponentsResponse with Status="error".
+// degradedCPIResponse builds a CPIComponentsResponse with Status="degraded" for
+// upstream-fetch/parse failures. Returns (resp, nil) so the HTTP handler emits HTTP 200
+// with an honest degraded payload instead of an opaque 500.
+//
+// Fail-closed invariants:
+//   - IsEstimate=true on the whole response (upstream source unreachable).
+//   - WeightsIsEstimate=true always (weights never in monthly Excel).
+//   - BlockedReason names the unreachable upstream source.
+//   - Baskets slice is empty (no data to serve honestly).
+func degradedCPIResponse(blockedReason string) (CPIComponentsResponse, error) {
+	return CPIComponentsResponse{
+		Status:            "degraded",
+		IsEstimate:        true, // upstream source unreachable
+		BlockedReason:     blockedReason,
+		WeightsIsEstimate: true, // always true — weights not in monthly Excel
+		Source:            nsoCPISource,
+		Baskets:           []CPIBasketDTO{}, // empty — no data to serve honestly
+	}, nil // nil error → HTTP handler emits 200 (not 500)
+}
+
+// errorCPIResponse builds a CPIComponentsResponse with Status="error" for
+// nil-provider/wiring faults. Returns (resp, err) so the HTTP handler emits HTTP 500.
+// This is a GENUINE internal fault — NOT a degrade-able upstream gap.
 func errorCPIResponse(msg string) (CPIComponentsResponse, error) {
 	return CPIComponentsResponse{
 		Status:            "error",

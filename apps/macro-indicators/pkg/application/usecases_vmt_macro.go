@@ -70,7 +70,9 @@ func NewMacroIndicatorsGSOUseCase(
 // Returns MacroIndicatorsGSOResponse with:
 //   - 4 IIP sectors (all_industry, manufacturing, mining, electricity).
 //   - is_estimate=false on all IIP fields (primary source, PROBE-3 confirmed).
-//   - Status="error" + Error field on any fetch/parse failure.
+//   - Status="degraded" + BlockedReason + IsEstimate=true on upstream-fetch/parse failure
+//     (HTTP 200 honest degraded response — not a 500).
+//   - Status="error" + Error field on nil-provider/wiring faults (HTTP 500 genuine fault).
 func (uc *MacroIndicatorsGSOUseCase) Execute(
 	ctx context.Context,
 	_ MacroIndicatorsGSORequest,
@@ -87,13 +89,15 @@ func (uc *MacroIndicatorsGSOUseCase) Execute(
 	// Get or fetch the NSO monthly Excel (shared with VMT-4 CPI).
 	excelBytes, period, err := uc.excelProvider.GetOrFetchNSOMonthlyExcel(ctx)
 	if err != nil {
-		return errorMacroGSOResponse(fmt.Sprintf("MacroIndicatorsGSO: fetch NSO Excel: %v", err))
+		// Upstream-fetch failure: degrade honestly (HTTP 200 + is_estimate=true).
+		return degradedMacroGSOResponse(fmt.Sprintf("NSO monthly Excel unreachable via VPS proxy 125.212.251.27:3128: %v", err))
 	}
 
 	// Parse IIP from the Excel sheet "2.IIPthang".
 	record, err := uc.iipParser.ParseIIP(excelBytes, period)
 	if err != nil {
-		return errorMacroGSOResponse(fmt.Sprintf("MacroIndicatorsGSO: parse IIP: %v", err))
+		// Parse failure: degrade honestly (HTTP 200 + is_estimate=true).
+		return degradedMacroGSOResponse(fmt.Sprintf("NSO monthly Excel IIP parse failure: %v", err))
 	}
 
 	// Map domain sectors → DTOs.
@@ -119,7 +123,27 @@ func (uc *MacroIndicatorsGSOUseCase) Execute(
 	}, nil
 }
 
-// errorMacroGSOResponse builds a MacroIndicatorsGSOResponse with Status="error".
+// degradedMacroGSOResponse builds a MacroIndicatorsGSOResponse with Status="degraded" for
+// upstream-fetch/parse failures. Returns (resp, nil) so the HTTP handler emits HTTP 200
+// with an honest degraded payload instead of an opaque 500.
+//
+// Fail-closed invariants:
+//   - IsEstimate=true on the whole response (upstream source unreachable).
+//   - BlockedReason names the unreachable upstream source.
+//   - IIP slice is empty (no data to serve — honest).
+func degradedMacroGSOResponse(blockedReason string) (MacroIndicatorsGSOResponse, error) {
+	return MacroIndicatorsGSOResponse{
+		Status:        "degraded",
+		IsEstimate:    true, // upstream source unreachable
+		BlockedReason: blockedReason,
+		Source:        nsoGSOSource,
+		IIP:           []IIPSectorDTO{}, // empty — no data to serve honestly
+	}, nil // nil error → HTTP handler emits 200 (not 500)
+}
+
+// errorMacroGSOResponse builds a MacroIndicatorsGSOResponse with Status="error" for
+// nil-provider/wiring faults. Returns (resp, err) so the HTTP handler emits HTTP 500.
+// This is a GENUINE internal fault — NOT a degrade-able upstream gap.
 func errorMacroGSOResponse(msg string) (MacroIndicatorsGSOResponse, error) {
 	return MacroIndicatorsGSOResponse{
 		Status: "error",
