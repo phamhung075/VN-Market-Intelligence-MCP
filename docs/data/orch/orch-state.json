@@ -86,11 +86,11 @@
   ],
   "head": {
     "status": "review",
-    "updated_at": "2026-06-14T12:12:00Z",
-    "updated_by": "dev-mcp-server",
+    "updated_at": "2026-06-14T12:24:35Z",
+    "updated_by": "dev-team",
     "active_task_id": "T1-ARCH-CRON-T4-DEDUP-GUARDS",
-    "next_agent": "ops",
-    "note": "T1-ARCH-CRON-T4-DEDUP-GUARDS IMPL done → REVIEW. ops: rebuild mcp-server + live verify. T2/T3 BLOCKED until ops confirms."
+    "next_agent": "qa",
+    "note": "T1-ARCH-CRON-T4-DEDUP-GUARDS ops-deployed + router-RAW-verified LIVE (60b48a9b, dedup guard firing, peers intact, call_tool valid) -> qa for G1-G5 LIVE idempotency gate. qa-green promotes done_verified + UNBLOCKS T2. T3 stays depends-gated. WIP=1 (same-zone serialized)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12064,11 +12064,14 @@
         "created_at": "2026-06-14T12:00:00Z",
         "created_by": "pm",
         "note": "IMPL complete: shouldSkipRecoveryReplay() helper + 26 job guards applied + @idempotency T4 JSDoc + 13 idempotency tests GREEN. tsc --noEmit GREEN. Awaiting ops rebuild.",
-        "next_agent": "ops",
+        "next_agent": "qa",
         "claimed_at": "2026-06-14T11:43:22Z",
         "claimed_by": "dev-team",
-        "dispatch_note": "Router dispatched T1 IMPL (tick 11:06Z, off-market Sunday = architect-blessed safe mcp-server window). dev-mcp-server adds cron_job_runs recency guards (90% cadence window) to the 26 non-idempotent T4 jobs — MANDATORY PRECONDITION before T2 recoverMissedExecutions (else recovery double-fires Telegram). Per architect brief docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md §5.2. bun tests GREEN before ops rebuild (RED-PREPUSH strands fleet); ops targeted build --no-cache mcp-server + up -d --no-deps --force-recreate (NEVER compose down), docker ps -a after; then qa LIVE-verify (cron_job_runs rows, idempotency under replay), never badges. Deploy-gate FIX-MCP-CRASH-LOOP-WRITEWAL done_verified (09e2586b) met.",
-        "review_at": "2026-06-14T12:12:00Z"
+        "dispatch_note": "ops deploy RAW-verified by router. qa: LIVE idempotency gate G1-G5 per docs/architecture-briefs/2026-06-14-arch-cron-scheduler-reliability.md — confirm cron_job_runs rows show NO double-fire on the recovery/replay path (shouldSkipRecoveryReplay 90%-cadence window), guard is NO-OP on normal scheduled fires, 13 unit tests green. On qa-green -> done_verified UNBLOCKS T2-ARCH-CRON-RECOVER-JITTER (depends [T1]).",
+        "review_at": "2026-06-14T12:12:00Z",
+        "dispatched_at": "2026-06-14T12:24:35Z",
+        "dispatched_by": "dev-team",
+        "ops_verdict": "DEPLOYED+LIVE-VERIFIED 60b48a9b: image 12:19:13Z, 81 cron keys, dedup guard firing (bctcReparseJob skip), peers intact, 0 symbol-err, router call_tool valid"
       }
     ]
   },
