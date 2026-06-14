@@ -1,0 +1,32 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture-brief",
+  "payload": "docs/architecture-briefs/2026-06-14-dev-team-tool-contract-cron-overlap.md",
+  "priority": "high",
+  "createdAt": "2026-06-14T12:18:16Z",
+  "summary": "Two-finding brief: F1=create docs/standards/gateway-call-contract.md (60L SSOT closing 6 recurring tool-call error classes) + add GCC-PREFLIGHT read directive to dev-team/flow/main.md; F2=add SF-1 single-flight session lock (task_claim key=dev-team-cron-singleton TTL=5400s) to dev-team/flow/main.md Step 0-PREFLIGHT to prevent concurrent cron sessions. Doc/flow only — no production code. 3 tasks, F1-B and F2-A serialize on same file.",
+  "tasks": [
+    {
+      "id": "F1-A",
+      "action": "CREATE",
+      "file": "docs/standards/gateway-call-contract.md",
+      "depends": []
+    },
+    {
+      "id": "F1-B",
+      "action": "EDIT",
+      "file": "docs/agents/dev-team/flow/main.md",
+      "change": "Add GCC-PREFLIGHT read directive in Step 0-PREFLIGHT after start_epoch",
+      "depends": ["F1-A"]
+    },
+    {
+      "id": "F2-A",
+      "action": "EDIT",
+      "file": "docs/agents/dev-team/flow/main.md",
+      "change": "Add SF-1 single-flight guard (task_claim dev-team-cron-singleton TTL=5400s) + heartbeat at Step 3 + release at exit",
+      "depends": []
+    }
+  ],
+  "serialization_note": "F1-B and F2-A both edit docs/agents/dev-team/flow/main.md — apply sequentially, not concurrently"
+}
