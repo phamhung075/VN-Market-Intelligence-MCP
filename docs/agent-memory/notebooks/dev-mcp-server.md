@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-14 · FIX-MCP-CRASH-LOOP-D-1 — WAL > 10 MB escalation gate SHIPPED
+
+**Tasks:** D-1 (S, guardrail — last child of FIX-MCP-CRASH-LOOP-WRITEWAL sprint; after BC-1 + A-1)
+**Root cause addressed:** No orch-state signal written when WAL grows past 10 MB — ops/triage loop had no visibility before next crash.
+
+**Implementation:**
+- `infrastructure/db/checkpoint.ts`: added 4th optional param `escalateFn?(walBytes): Promise<void>` to `checkWalFileSize()`; called non-fatally after Telegram alert when bytes > 10 MB; return type extended with `escalated?: boolean`.
+- `scheduler/startScheduler.ts`: added imports for `appendSignalQueueRow`, `getOrchStatePath`, `getProjectRoot`; defined `walEscalateFn` closure at scheduler layer (DDD boundary preserved — checkpoint.ts stays orch-state-agnostic); writes `WAL_ESCALATION` signal via `appendSignalQueueRow` (CAS retry, WF-2 protocol); passed as 4th arg to `checkWalFileSize()`.
+
+**Tests:** 7 unit tests in `FIX-MCP-CRASH-LOOP-D-wal-escalation.test.ts` — all GREEN (7/7). 37 pass / 0 fail across all 6 checkpoint test files.
+**tsc:** 0 errors. Full suite: 12841 pass / 54 pre-existing fail / 0 new failures.
+**Tool count:** 157 (unchanged). Scheduler count: 80 cron.schedule (no new registrations).
+**Board:** D-1 moved to REVIEW; QA picks up next.
+
 ## 2026-06-14 · FIX-MCP-CRASH-LOOP-A-1 — Restart-cadence alert guardrail SHIPPED
 
 **Tasks:** A-1 (S, guardrail layer after BC-1 root fix)
