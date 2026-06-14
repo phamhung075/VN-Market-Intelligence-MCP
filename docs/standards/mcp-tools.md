@@ -17,6 +17,7 @@
 | **`docs/agents/tools/list/<tool>.md`** (116 files) | Tool signatures, parameters, examples | Agent needs to call a tool: look up here |
 | **`docs/agents/tools/package/<agent>.md`** (22 files) | Agent's permitted tools by category | Agent starting: load this for quick reference |
 | **`.claude/agents/<agent>.md`** | Agent definition | Agent spawning: always read first |
+| **`docs/standards/gateway-call-contract.md`** | Preflight SSOT: 6 tool-call error classes, `send_telegram` enum spec, stale-read guard | Load at agent preflight — prevents the most common call_tool failure modes |
 
 **Key change:** All cowork agents now use the MCP gateway `call_tool` (server="vn-market") instead of individual tool permissions.
 

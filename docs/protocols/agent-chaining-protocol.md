@@ -156,6 +156,41 @@ SIGNAL_DROP: Write docs/signals/{agent-id}-{ISO-timestamp}.json
   { "from": "{agent-id}", "to": "po", "type": "{audit-handoff|bug-escalation}", "payload": "{handoff file path or one-line desc}", "priority": "{high|normal}", "createdAt": "{ISO}" }
 ```
 
+## Concurrent Write Safety — re-Read Invariant
+
+**Scope:** any agent executing under a parallel-tier fan-out (Step 3 `execute-tier.md`).
+
+**Mandate:** Any agent that will Edit or Write a file MUST re-Read that file immediately before the Edit/Write call when other agents may be writing in the same turn-sequence.
+
+**Why:** A 10-session audit found ×22 stale-read Edit/Write races. Root causes:
+- Class A (majority): parallel sprint tasks both Read the same file, then both attempt to Edit it. The second Edit arrives against a stale view not reflecting the first agent's changes.
+- Class B: sequential agents use a cached Read from an earlier reasoning step, then Edit without re-Reading.
+
+The commit-mutex serializes the `git add → verify → git commit` window but does NOT gate the `Read → Edit` reasoning step. The race is at the agent reasoning layer, not the git-index layer.
+
+**Rule:**
+```
+# WRONG — stale-read race
+Read file.md          ← earlier in session
+... other reasoning ...
+Edit file.md          ← file may have changed since Read
+
+# CORRECT — re-Read immediately before Edit
+Read file.md          ← immediately before Edit
+Edit file.md          ← guaranteed fresh
+```
+
+**When to apply:**
+- Any file written by more than one agent in the same sprint fan-out.
+- Any shared SSOT files: `docs/data/orch/orch-state.json`, `docs/data/project-stats.json`, agent notebooks, signal files, and any flow doc being updated by multiple agents.
+- "Immediately before" means no intervening tool calls that could trigger another agent write on the same file.
+
+**Exception:** files with a single designated sole writer (see `docs/references/tree-map.md` § Write Ownership) are safe to Edit after a single Read within one agent session — no concurrent writer exists.
+
+Cross-reference: `docs/standards/gateway-call-contract.md` § 5 reinforces this invariant for gateway tool-call patterns specifically.
+
+---
+
 ## Absolute Path Rule (MANDATORY)
 
 **All file writes must use absolute paths anchored to the project root.**

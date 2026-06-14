@@ -30,6 +30,7 @@ mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<tool_name>", argume
 - `<tool_name>` is the bare name (e.g. `task_claim`, `send_telegram`, `get_market_snapshot`) — NOT the `mcp__vn-market__` prefix.
 - Discover tools via the gateway: `list_server_tools("vn-market")` or `search_tools("<keyword>")`.
 - NEVER call `mcp__vn-market__*` directly — that connection is off; the call will fail.
+- Preflight reference for all 6 tool-call error classes → `docs/standards/gateway-call-contract.md`
 
 ## Skills (slash commands)
 - **/cron-cowork-team** — re-arm cowork master dispatcher after every session restart → `.claude/skills/cron-cowork-team/SKILL.md`

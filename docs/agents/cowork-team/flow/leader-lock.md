@@ -1,4 +1,9 @@
-<!-- size-justification: 82L — leader-lock claim + own-held/peer-held/orphan-recovery paths. Child of main.md. -->
+<!-- size-justification: 84L — leader-lock claim + own-held/peer-held/orphan-recovery paths. Child of main.md. -->
+<!-- SESSION-SINGLETON GUARD: This leader-lock is the cowork-team equivalent of the dev-team SF-1 session-singleton guard.
+     It ensures exactly one cowork-dispatcher session leads each 15-min tick — same role, different mechanism.
+     Dev-team uses TTL-only (sprint-task kind, no owner_session). This lock uses owner_session + heartbeat rebind
+     + orphan recovery (more sophisticated — handles restart-orphan separately from peer-held).
+     Protocol doc: docs/protocols/task-lock-protocol.md § Session-Singleton Subclass. -->
 
 ## Step 0b — Claim cowork-leader lock (DWF-DEV-CROSS-4 Phase 2 — FR-P2-5)
 

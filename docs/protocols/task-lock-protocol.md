@@ -56,7 +56,7 @@ result = task_claim(
 
 if result.claimed = false:
   log: "SKIP <task_id> — held by " + result.current_holder.owner_agent
-  send_telegram(channel=work, "SKIP <task_id> — held by session " + result.current_holder.owner_session[0:8])
+  send_telegram(channel=work, "SKIP <task_id> — held by agent " + result.current_holder.owner_agent)
   → abort this task, move to next
 
 if result.claimed = true:
@@ -64,6 +64,18 @@ if result.claimed = true:
   → call task_heartbeat every 5 min (see below)
   → call task_release on completion (see below)
 ```
+
+### Session-Singleton Subclass (TTL-only release)
+
+A **session-singleton lock** is a special use of `task_kind: "sprint-task"` that gates an entire cron session — not a single task — against concurrent overlap. Key properties:
+
+- **task_id** is a bare singleton key (e.g. `"dev-team-cron-singleton"`) rather than `"task:<id>"`.
+- **TTL-only release semantic:** no `owner_session` binding. The lock is held purely by TTL clock. This is intentional: a cron session's session-id changes after an mcp-server restart, making owner-session matching unreliable for the full 60–90 min session window.
+- **`task_release` returning `ok:false` after an mcp-server restart is EXPECTED and NOT an error.** The lock was either already expired by TTL or the restart minted a new server session that cannot match the prior owner. Log at DEBUG only; do not alert.
+- **Claim at preflight, SKIP-exit if not claimed, release at session end (`JUMP TO end` path).** Heartbeat mid-cycle (e.g. at Step 3 entry) to extend TTL for long ticks.
+- **Sibling instance:** `docs/agents/cowork-team/flow/leader-lock.md` implements the equivalent pattern for the cowork-team dispatcher, using `task_kind: "cowork-slot"` with `owner_session` heartbeat re-bind (more sophisticated — see that file for the orphan-recovery variant).
+
+Pattern reference: `docs/agents/dev-team/flow/main.md` § Step 0-PREFLIGHT (SF-1 implementation).
 
 ---
 
@@ -116,6 +128,7 @@ Always call `task_release` in the completion path. If the agent crashes, TTL exp
 |--------------|----------------|-----------|
 | cowork-slot (any cowork agent) | 900s | One 15-min scheduler cycle |
 | sprint-task (dev-* agents) | 3600s | 1h per user request |
+| sprint-task / session-singleton (`dev-team-cron-singleton`) | 5400s | 1.5× observed 99th-pct tick duration (90 min); TTL-only, no owner-session pin. `task_release ok:false` after restart is EXPECTED. Heartbeat at Step 3 extends for long ticks. |
 | dashboard-row (dev-team drain) | 1800s | 30 min: drain + PO triage cycle |
 | commit-mutex (fleet-wide singleton) | 60s | Commit window is 2–10s; 60s = 6× headroom; crash recovery via TTL |
 

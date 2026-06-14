@@ -4,7 +4,7 @@
 **Date:** 2026-06-14
 **Author:** agents-architect
 **Priority:** P1
-**Status:** READY — awaiting agent-father (Section E signals)
+**Status:** IMPLEMENTED — agent-father 2026-06-14 (all 6 COHERENCE-GAP items + 3 script-pointer gaps actioned)
 **Scope:** Post-implementation coherence audit of gateway-call-contract.md SSOT and SF-1 single-flight lock. Parallel agent; write-zone docs/architecture-briefs/ only.
 
 ---

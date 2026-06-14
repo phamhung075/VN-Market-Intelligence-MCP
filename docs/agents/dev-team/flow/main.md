@@ -352,6 +352,11 @@ Covers: post-execution checks (4.0–4.1), Compact Checkpoint (4.5), doc self-he
 
 ---
 
+## Reusable Scripts
+
+- `scripts/devteam-session-trace.py` — extract compact workflow trace from a dev-team session `.jsonl` transcript; audits agent spawns, lock contention, Telegram narration, and workflow-smell hits. Usage: `devteam-session-trace.py <session.jsonl>`.
+- `scripts/router-d1-claim.jq` — router board claim: moves a task from `ready[]` to `in_progress[]` with gate-guard; sets `.head` for unambiguous dispatch on resume. Usage: `jq --arg now "$NOW" -f scripts/router-d1-claim.jq docs/data/orch/orch-state.json`.
+
 ## Invariants
 
 - WIP ≤ 2 | `docs/data/orch/orch-state.json` `.task_board.active_sprints[].tasks` count ≤ 80 per sprint | project-stats.json updated each sprint

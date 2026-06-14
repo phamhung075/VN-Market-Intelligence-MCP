@@ -34,6 +34,7 @@ CLAUDE.md (root — always loaded)
 │   └── docs/signals/signals.db (dedup index: signals_processed table — SQLite SSOT, O(log N) fingerprint lookup — sole writer: dev-team Step 0a)
 │
 ├── docs/standards/mcp-tools.md (tool logic: per-agent mapping, signal types, renamed tools, mandatory patterns)
+│   ├── docs/standards/gateway-call-contract.md (preflight SSOT: 6 tool-call error classes, send_telegram enum spec, stale-read guard § 5 — load at agent preflight; sibling of mcp-tools.md)
 │   └── docs/data/project-stats.json (tool count + master stats file — volatile)
 │
 ├── docs/standards/cron-jobs.md (scheduling logic: intelligence cycle steps, timing rules, token economy)
