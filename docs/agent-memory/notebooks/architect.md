@@ -1,8 +1,27 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 18:15 UTC | **Sprint:** KINHDICH-HOVER-ENRICH
+**Last updated:** 2026-06-14 18:30 UTC | **Sprint:** KINHDICH-HOVER-ENRICH-FE
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-14T18:30Z — ARCH-KINHDICH-HOVER-ENRICH-FE RATIFY-1 (RATIFIED, DONE)
+
+**Task:** KINHDICH-HOVER-ENRICH-FE | zone: apps/frontend/ (single zone)
+**Output:** Brownfield findings + implementation blueprint appended to docs/handoffs/KINHDICH-HOVER-ENRICH-FE-BA-spec.md. Board advanced: ready→in_progress, next_agent=dev-frontend.
+
+**ARCH-RATIFY-FE-1 verdict: CONFIRMED — codegen extension mechanism valid, QUE-TOOLTIP-DRY preserved.**
+
+**Brownfield findings (raw-read confirmed):**
+- `scripts/gen-que-descriptions.ts` BLOCK 1 (L95-107): 2-field loop (`coreMeaning.vi`, `marketTrendLabel.vi`) with backtick-escape pattern. Adding `hoverSummary.vi` extraction + escape is a copy of the identical existing pattern — zero structural change to the loop.
+- `QueRefEntry` interface (L57-72): all known fields typed; `hoverSummary` is silently covered by `[key: string]: unknown` index. Making it explicit is a strict improvement.
+- `QueDescription` interface (in generated file header template): 2-field interface. `hoverSummary?: string` is purely additive — no existing caller destructuring `coreMeaning`/`marketTrendLabel` is broken.
+- `QueName.tsx` L75: `{desc.coreMeaning}` → `{desc.hoverSummary ?? desc.coreMeaning}`. TypeScript infers result as `string` (coreMeaning is non-optional). No cast required.
+- BLOCK 2 + detail pipeline: UNTOUCHED. `que-descriptions-detail.generated.ts` and `dashboard.kinh-dich-reference.tsx` unaffected.
+- `que-reference.js` hoverSummary x64: RAW-confirmed. Structure: `"hoverSummary": { "vi": "...", "en": "..." }`. en field excluded from QueDescription (tooltip is VI-only per language-boundary rule).
+
+**Risks found:** All LOW and mitigated (see handoff § Brownfield Risk Review): R1 TypeScript optional field (additive, non-breaking), R2 backtick escape (same pattern as coreMeaning — mandatory in blueprint), R3 marketTrendLabel no regression (confirmed untouched), R4 withDetailLink no regression (conditional on prop, unaffected), R5 header comment preserved (template unchanged), R6 peers-intact rebuild (explicit safe command in blueprint).
+
+**BUILD-STANDARD:** lean (apps/frontend/ zone exists, extending existing codegen pipeline, no new service/port/primitive).
 
 ## 2026-06-14T18:15Z — ARCH-KINHDICH-HOVER-ENRICH RATIFY-1 (RATIFIED, CLOSED)
 

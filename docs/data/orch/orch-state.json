@@ -12473,17 +12473,15 @@
         "reverify_gate": "MARKET-DAY-2026-06-15: (G1) ohlcvDailyAggregatorJob auto-fires Mon — get_pipeline_health 'Aggregator last run' advances to 2026-06-15 with NO manual trigger AND all 16 sectors leave N/A rotation; (G2) vnstockFundamentalsRefresh auto-fires + VCB/ACB/CTG fundamental rows newer than its run, NO manual trigger; (G3) reputationComputeJob fires at 08:30 tick under peer contention (cron_job_runs row present, no miss). QA verifies LIVE raw (pipeline-health payload + cron_job_runs named-volume rows), never badges. On all-PASS -> umbrella -> done_verified + move to done_verified[]. On any miss -> the watchdog (G5, LIVE) must have self-healed/alerted -> capture evidence + spin the residual into a scoped FIX.",
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate."
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "KINHDICH-HOVER-ENRICH-FE",
         "type": "SPRINT-S",
         "zone": "apps/frontend/",
         "owner": "dev-frontend",
-        "next_agent": "architect",
-        "lane": "ready",
-        "status": "spec-done",
+        "next_agent": "dev-frontend",
+        "lane": "in_progress",
+        "status": "in-progress",
         "priority": "medium",
         "size": "S",
         "created_at": "2026-06-14T17:53:32Z",
@@ -12506,9 +12504,13 @@
         "ba_spec": "docs/handoffs/KINHDICH-HOVER-ENRICH-FE-BA-spec.md",
         "ba_completed_at": "2026-06-14T00:00:00Z",
         "architect_dispatched_at": "2026-06-14T18:02:08Z",
-        "architect_dispatched_by": "dev-team"
+        "architect_dispatched_by": "dev-team",
+        "architect_completed_at": "2026-06-14T18:30Z",
+        "design_doc": "docs/handoffs/KINHDICH-HOVER-ENRICH-FE-BA-spec.md",
+        "arch_ratify_fe1": "CONFIRMED"
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",

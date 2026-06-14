@@ -25,3 +25,11 @@
 - Heartbeat + owner_agent (stable across restarts): CHOSEN — heartbeat already exists in coordinationStore.ts with owner_agent path; flow doc simply omits owner_agent on heartbeat/release calls; adding it closes Vector 1 at zero schema cost.
 **why-decision:** Primary defect is flow/main.md calling task_heartbeat and task_release WITHOUT owner_agent, causing zombie locks after server rebuild. Fix is surgical: 3 line changes in the flow doc + ttl_seconds 1000→1800 for headroom. claimTask Step 2 (TTL-steal) is already correct and works once Vector 1 is fixed. Idempotency confirmed (INSERT OR REPLACE on UNIQUE(report_id, unit_id)).
 **why-change:** No change from design direction indicated in task dispatch_note. TTL increase (Fix C) added as bonus (tight 16-min window for 7-window chunk).
+
+### STEP architect-S3 · architect · 2026-06-14T18:30Z
+**task-id:** KINHDICH-HOVER-ENRICH-FE
+**what-done:** Ratified ARCH-RATIFY-FE-1 (codegen extension mechanism), completed brownfield risk review of 3-file change surface, produced implementation blueprint for dev-frontend, advanced board to in_progress next_agent=dev-frontend.
+**what-considered:**
+- only path: extend existing `QueRefEntry` interface + BLOCK 1 loop in `gen-que-descriptions.ts` to extract `entry.hoverSummary.vi` and emit into `QueDescription`; Options A/B (hardcode in generated file / import que-reference.js directly in component) both introduce second data path — ruled out by BA spec § Decision Journal and QUE-TOOLTIP-DRY invariant.
+**why-decision:** Single-codegen extension is additive-only (optional field, same escape pattern, same BLOCK 1 loop); TypeScript non-breaking (optional field, `?? coreMeaning` fallback); BLOCK 2 and detail pipeline untouched; hoverSummary.vi x64 RAW-confirmed in que-reference.js. Mechanism preserves QUE-TOOLTIP-DRY exactly. BLOCKER-3 restriction was on mechanism (single codegen), not on which field — PO's field-choice override is product prerogative.
+**why-change:** No change from BA spec Option C. Implementation blueprint is a direct transcription of FR-1 through FR-4 into explicit code steps.
