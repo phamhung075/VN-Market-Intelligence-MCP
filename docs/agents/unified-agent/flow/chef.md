@@ -1,4 +1,4 @@
-<!-- size-justification: 391L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13; Step 0.5 cadence-derived marker key+TTL FIX-CHEF-INTRADAY-MARKER-CADENCE 2026-06-15 -->
+<!-- size-justification: 430L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13; Step 0.5 cadence-derived marker key+TTL FIX-CHEF-INTRADAY-MARKER-CADENCE 2026-06-15; FIX-CHEF-FABRICATED-TA-NUMBERS: anti-fabrication numeric-indicator rule + Step 6.7 pre-publish self-check gate 2026-06-15 -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -117,7 +117,7 @@ Group signals by ticker, then by sector.
 | Ticker convergence | ≥2 distinct signal types for the same ticker in same 24h window (e.g. price_anomaly + news_impact for ACB) |
 | Sector convergence | ≥3 signals (any type) targeting tickers in the same sector in same 24h window |
 | Macro-micro contradiction | A macro signal contradicts the micro signal for a watchlist ticker (e.g. TIGHTENING regime + active BUY alert on VCB) |
-| Extreme individual signal | Any signal with `severity=CRITICAL` OR any TA reading outside 2-sigma (RSI < 15 or > 85) |
+| Extreme individual signal | Any signal with `severity=CRITICAL` OR any TA reading outside 2-sigma (RSI < 15 or > 85) — **CHEF may only apply the RSI sub-clause when `get_technical_indicators` was called THIS cycle and returned a numeric RSI value; absent that call, apply `severity=CRITICAL` criterion only** |
 
 **Intraday gate:** if `$DISH_TYPE == intraday` AND 0 clusters qualify →
 emit SILENT Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § SILENT Telemetry`
@@ -267,6 +267,58 @@ Rules:
 
 ---
 
+## Step 6.7 — NUMERIC INDICATOR ANTI-FABRICATION GATE (mandatory — run before WRITE DISH)
+
+<!-- FIX-CHEF-FABRICATED-TA-NUMBERS 2026-06-15: root cause was dish id 753 (2026-06-15 06:21:50)
+     containing "VHM RSI 9.8, VIC RSI 7.4" — fabricated single-digit values with no cycle tool
+     source. These contradicted all live sources. This gate closes the fabrication vector. -->
+
+### Rule AF-1 — No numeric indicator without a live cycle source
+
+CHEF MUST NOT emit any numeric value for the following indicator classes in any published message (MARKET or WORK channel) unless that exact number was returned by a tool called **in the current dish cycle**:
+
+- RSI (any variant: RSI(14), RSI(9), etc.)
+- MACD value or histogram
+- Bollinger Band width, position, or σ distance
+- Moving average values (MA5, MA20, MA50, EMA)
+- Any "standard deviation" or σ figure applied to price
+
+**Current cycle tool inventory:** `get_cycle_bootstrap`, `get_market_hexagram`, `get_portfolio_conviction`, `get_macro_snapshot`. NONE of these return a computed numeric RSI, MACD, BB, or σ value for a ticker.
+
+Therefore: **in every dish cycle until `get_technical_indicators` is explicitly added to Step 0 GATHER, CHEF publishes ZERO numeric indicator values.** Qualitative TA language derived from `get_portfolio_conviction`'s conviction level, signal direction, trend arrow (↗/↘/→), and alert count is permitted and preferred.
+
+**`get_portfolio_conviction` plain-text trap:** The tool's dashboard narrative may contain phrases like "RSI 70+ (overbought)" or "Overextended" in its ticker detail section. These are the tool's own editorial labels — they are NOT live RSI readings CHEF may cite as current. CHEF must read conviction score, direction, and alert counts from this output — never extract and relay a numeric RSI token from it as a current indicator value.
+
+### Rule AF-2 — Qualitative-only TA vocabulary (until `get_technical_indicators` is live in cycle)
+
+When discussing technical posture, use ONLY:
+- Conviction level from `get_portfolio_conviction`: CAO / TRUNG BÌNH / THẤP
+- Direction: BUY / HOLD / SELL / NEUTRAL
+- Trend arrow: ↗ tăng / ↘ giảm / → đi ngang
+- Alert count: "N cảnh báo trong 7 ngày"
+- Kinh Dịch state: plain Vietnamese name (no Hán-Việt in MARKET)
+- Qualitative regime: "áp lực bán", "tín hiệu tích lũy", "cẩn trọng" — WITHOUT attaching a fabricated number
+
+**Dependency:** Once `FIX-TA-GOSVC-NA-DESPITE-DEPTH` lands and `get_technical_indicators` returns non-N/A values, add `get_technical_indicators(code)` to the Step 0 GATHER supplementary calls list. At that point, RSI/MACD/BB values sourced from that call in the same cycle MAY be cited verbatim. Until then, this prohibition is absolute.
+
+### Step 6.7 Pre-Publish Self-Check (run before every send_telegram call)
+
+Before constructing the `send_telegram` call for either Block A or Block B, CHEF MUST mentally scan the composed text for the following token patterns:
+
+```
+BLOCKED tokens: RSI \d+\.?\d* | MACD \d+\.?\d* | BB \d+\.?\d* | σ \d+\.?\d* | MA\d+ = \d+
+```
+
+**If any blocked token is found in the text:**
+1. Check: was `get_technical_indicators` called this cycle with a response containing that exact number? If YES → token is permitted.
+2. If NO (no `get_technical_indicators` call, or the number does not match the tool response) → STRIP the numeric token entirely. Replace with the qualitative equivalent (e.g. "RSI 9.8" → "quá bán theo kỹ thuật"; "RSI 72" → "quá mua theo kỹ thuật") OR remove the clause entirely if no qualitative equivalent is meaningful.
+3. Log the strip action in Block B WORK message: `[AF-GATE: stripped fabricated indicator "<original token>"]`.
+4. If more than 2 blocked tokens are found in one dish → escalate: add `[AF-GATE: ESCALATION — >2 indicator tokens stripped; recipe review needed]` to the WORK message.
+
+This self-check is NOT optional. Bypassing it is a flow violation equivalent to bypassing Step 6a Scenario-4 block.
+
+---
+
 ## Step 7 — WRITE DISH (Dual-Output)
 
 Produce **two outputs** from the synthesized analysis: Block A for the user (MARKET channel — plain Vietnamese), Block B for TNB audit (WORK channel — analyst detail).
@@ -292,6 +344,7 @@ Produce **two outputs** from the synthesized analysis: Block A for the user (MAR
 - NO σ / bp / pp notation.
 - NO Hán-Việt hexagram codes (`Lão Âm Hào 6`) — use plain Vietnamese name only.
 - NO bullet-point ticker dumps. Every MARKET message is narrative prose.
+- NO numeric indicator values (RSI, MACD, BB, σ, MA) unless `get_technical_indicators` was called this cycle — see Step 6.7 AF-1. When in doubt: qualitative only.
 - Khi nhắc đến cổ phiếu HCM, lần đầu tiên trong tin phải viết `HCM (cổ phiếu)` hoặc `HCM (mã CK)` để phân biệt với thành phố; khi nhắc đến thành phố luôn dùng `TP. HCM`.
 
 **Send:**
