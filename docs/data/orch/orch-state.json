@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T23:30:28Z",
-  "_updated_by": "po-s68",
+  "_updated_at": "2026-06-16T00:00:00Z",
+  "_updated_by": "po-s69",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T22:28:45Z",
-    "updated_by": "po-s67",
-    "active_task_id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
-    "next_agent": "dev-pdf-extractor",
-    "note": "HEAD RECONCILE (po-s67). FIX-ERRAUDIT-W1-MCP-P0 flipped in_progress->done_verified (QA aaf65b10 GREEN + router RAW-verified at db7ef001, fix_commit 2d07011d) so .head no longer points at it. Advanced to the one genuinely-running coding lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE (dev-pdf-extractor, dispatched po-s64 20:17:53Z, worktree). Promoted FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE backlog->ready for the freed slot (WIP<=2; router dispatches, po-s67 did NOT spawn). ARCH-CRON-SCHEDULER-RELIABILITY architect-design lane untouched. Top-level .head remains the SINGLE canonical dispatch SSOT; .task_board.head stays the po-s66 deprecated non-routing stub. PUSH HELD (PO deferred call). Commit orch-state by EXPLICIT PATH."
+    "updated_at": "2026-06-16T00:00:00Z",
+    "updated_by": "po-s69",
+    "active_task_id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
+    "next_agent": "dev-mcp-server",
+    "note": "Chosen for the one free coding slot (coding WIP 1/2 — RASTERIZE in-flight on dev-pdf-extractor, do NOT touch/route). FIX-ERRAUDIT-W2-MCP-DATALAYER promoted backlog->ready: inner mcp-server data-layer helpers (safeQuery<T>+runSection/withSection+failLoud) kill confidence_score=50/fabricated-default class at source (/goal#1 no-fake + #2). Continues the user's ACTIVE error-audit. dev-mcp-server FREE (cron-scheduler is a QA market-day OBSERVE gate, no dev WIP). No blocking dep. Router dispatches via lock-claim+spawn; po-s69 did NOT spawn dev. PUSH HELD (PO deferred). Commit orch-state by EXPLICIT PATH."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -653,8 +653,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T23:30:28Z",
-    "_updated_by": "po-s68",
+    "_updated_at": "2026-06-16T00:00:00Z",
+    "_updated_by": "po-s69",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12051,37 +12051,6 @@
         "created_by": "po-s64"
       },
       {
-        "id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 2,
-        "priority": "P1",
-        "size": "L",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "route_to": "dev-mcp-server",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "ba",
-        "title": "Wave-2 helpers: safeQuery<T> + runSection/withSection + failLoud — kill the confidence_score=50 / fabricated-default class at source",
-        "desc": "Land safeQuery<T>(db,sql,params,ctx) [{ok,rows}|{ok:false,reason:'db-error'|'no-rows'}], runSection/withSection (composite-brief section runner: fail-loud on error, no-data ONLY on genuine empty), and failLoud(logger,err,ctx) (structured-degrade logger replacing bare catch{return []|null|0}). Migrate: imfConvictionBridge:91 (+line-71 no-rows conflation), scanMarket getAvgVolumeSync:120 (catch->0 collides with legit insufficient-history 0), imfDataFetcher:136 (parseImfApiResponse catch->null no log -> stale-served-as-fresh), assembleBriefing 7 best-effort catches (957/964/983/1026/1036/1057/1067 -> macroSnapshot=[] served as 'no macro'), marketContextBuilder buildMacroSection 216/240/256, scanMarket getThresholds:175. A DB error can no longer collapse to the same number as a real reading — callers DROP the dimension instead of feeding a fake 0/1.0/neutral. ALSO: mcp-infra-06 vnstockBridge.ts:477 pe/pb/roe/roa=0.0 fallback -> Python None-on-miss for the vnstock ratio columns (a bank roe:0 is implausible-but-non-empty).",
-        "replaces_sites": [
-          "imfConvictionBridge:91",
-          "scanMarket getAvgVolumeSync:120",
-          "imfDataFetcher:136",
-          "assembleBriefing:957/964/983/1026/1036/1057/1067",
-          "marketContextBuilder:216/240/256",
-          "scanMarket getThresholds:175",
-          "vnstockBridge:477"
-        ],
-        "recurrence_class": "confidence_score=50 destructuring + silent-swallow-serial-bugs + contract-from-live-payload",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: force a SQL throw on each migrated read -> safeQuery returns {ok:false,reason:'db-error'} (logged) and the caller DROPS the dimension/section (NOT a fabricated 0/1.0/neutral/[]); a genuine 0-row query returns reason:'no-rows' and the legit empty path is preserved. LIVE-verified vs named-volume DB.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-app-01/02/03/06, mcp-infra-06)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65"
-      },
-      {
         "id": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
         "type": "FIX",
         "epic": "ERROR-AUDIT-2026-06-15",
@@ -18015,6 +17984,43 @@
         "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 SPIKE — architect (agents-architect consulted). recurring-bug-escalation umbrella over the 5 child FIX tasks. Design the cross-cutting alerting/fail-loud/brittleness-monitoring contract — do NOT just re-patch leaves. Timebox 120m, output: architecture brief."
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 2,
+        "priority": "P1",
+        "size": "L",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "route_to": "dev-mcp-server",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "dev-mcp-server",
+        "title": "Wave-2 helpers: safeQuery<T> + runSection/withSection + failLoud — kill the confidence_score=50 / fabricated-default class at source",
+        "desc": "Land safeQuery<T>(db,sql,params,ctx) [{ok,rows}|{ok:false,reason:'db-error'|'no-rows'}], runSection/withSection (composite-brief section runner: fail-loud on error, no-data ONLY on genuine empty), and failLoud(logger,err,ctx) (structured-degrade logger replacing bare catch{return []|null|0}). Migrate: imfConvictionBridge:91 (+line-71 no-rows conflation), scanMarket getAvgVolumeSync:120 (catch->0 collides with legit insufficient-history 0), imfDataFetcher:136 (parseImfApiResponse catch->null no log -> stale-served-as-fresh), assembleBriefing 7 best-effort catches (957/964/983/1026/1036/1057/1067 -> macroSnapshot=[] served as 'no macro'), marketContextBuilder buildMacroSection 216/240/256, scanMarket getThresholds:175. A DB error can no longer collapse to the same number as a real reading — callers DROP the dimension instead of feeding a fake 0/1.0/neutral. ALSO: mcp-infra-06 vnstockBridge.ts:477 pe/pb/roe/roa=0.0 fallback -> Python None-on-miss for the vnstock ratio columns (a bank roe:0 is implausible-but-non-empty).",
+        "replaces_sites": [
+          "imfConvictionBridge:91",
+          "scanMarket getAvgVolumeSync:120",
+          "imfDataFetcher:136",
+          "assembleBriefing:957/964/983/1026/1036/1057/1067",
+          "marketContextBuilder:216/240/256",
+          "scanMarket getThresholds:175",
+          "vnstockBridge:477"
+        ],
+        "recurrence_class": "confidence_score=50 destructuring + silent-swallow-serial-bugs + contract-from-live-payload",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: force a SQL throw on each migrated read -> safeQuery returns {ok:false,reason:'db-error'} (logged) and the caller DROPS the dimension/section (NOT a fabricated 0/1.0/neutral/[]); a genuine 0-row query returns reason:'no-rows' and the legit empty path is preserved. LIVE-verified vs named-volume DB.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-app-01/02/03/06, mcp-infra-06)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "groomed_at": "2026-06-16T00:00:00Z",
+        "groomed_by": "po-s69",
+        "promoted_from": "backlog",
+        "promoted_at": "2026-06-16T00:00:00Z",
+        "promoted_by": "po-s69",
+        "promotion_note": "Free coding slot (WIP coding 1/2 — only RASTERIZE running). Inner data layer first: kills confidence_score=50/fabricated-default class at source (/goal#1+#2). dev-mcp-server FREE (cron-scheduler lane is a QA-observe gate, no dev WIP). Dep none. Reuse/extend shared easy-handle helper: safeQuery<T>+runSection/withSection+failLoud — FAIL-LOUD typed degrade, NO fabricated/default served metric, generic across ALL sites (not per-site). Router dispatches via lock-claim+spawn; po did NOT spawn."
       }
     ],
     "review": [
@@ -18208,6 +18214,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-15T23:30:28Z",
-  "updated_by": "po-s68"
+  "updated_at": "2026-06-16T00:00:00Z",
+  "updated_by": "po-s69"
 }
