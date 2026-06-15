@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T05:43:42Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-15T06:26:48Z",
+  "_updated_by": "cowork-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T05:43:42Z",
-    "updated_by": "dev-team",
+    "updated_at": "2026-06-15T06:26:48Z",
+    "updated_by": "cowork-team",
     "active_task_id": null,
     "next_agent": null,
-    "note": "DEV-TEAM TICK 2026-06-15 — FIX-RSI-REPORT-FAILCLOSED DONE_VERIFIED (router LIVE RAW re-probe in rebuilt container 05:37-05:41Z, NOT badge): the MARKET-report RSI path (defaultComputeTa) now emits PLAUSIBLE RSI on real 38-candle depth (VRE 39.52/VIC 35.09/VHM 36.73, NO single-digit) and fail-closes <15 (test-locked); user-flagged 'RSI bad calcul' (VRE 10.3/VIC 7.4/VHM 9.8) FULLY RESOLVED. Root = removed adaptive period, fixed 14 + guard <15 (ed77b9b0); mcp-server force-recreated (ops 'no rebuild' badge was WRONG — corrected). === ALL 3 user-flagged + accuracy fixes now done_verified this arc: FIX-STOCK-PRICE-SCALE-CORRUPT (3035e298) + FIX-NSO-TRADE-VALUE-SCALE (7a3da0df) + FIX-RSI-REPORT-FAILCLOSED (ed77b9b0). === NEW FOLLOW-ON minted READY: FIX-TA-GOSVC-NA-DESPITE-DEPTH — canonical get_technical_indicators (Go TA svc) returns N/A despite 38 candles in the SAME market.db the report path reads (RSI 39.5); separate Go-svc under-read, does NOT affect user report. PO triage next tick. === NEXT: push HEAD (now 3 ahead w/ board commit) — watch CI green on non-RED SHA (flaky-suite aware). SF-1 release at clean tick-end. Harness: scripts/verify-report-rsi-failclose.ts."
+    "note": "COWORK-TEAM TICK 2026-06-15T06:2x — chef-intraday dispatched (unified-agent, bg). RAW-VERIFY caught a LIVE-DATA-INTEGRITY DEFECT: CHEF dish id 753 (06:21:50) republished FABRICATED single-digit RSI 'VHM 9.8 / VIC 7.4' (the user's exact flagged bug) to the LIVE MARKET group — CHEF has NO tool that returns RSI (get_portfolio_conviction = conviction/trend/kinhdich only, shows VHM/VIC MIXED not oversold; fixed report path = VHM 36.73/VIC 35.09). => minted FIX-CHEF-FABRICATED-TA-NUMBERS (READY, high, agent-father via agent-md-factory, recon_first) — pair with FIX-TA-GOSVC-NA-DESPITE-DEPTH. NOTE: the ed77b9b0 RSI fix was correct for the BRIEFING path; CHEF is a separate consumer that invents TA — the user-flagged class is NOT fully closed until CHEF stops fabricating. FLAG PO: 3 coupled RSI-integrity tasks now ready (GOSVC N/A + CHEF fabrication + marker cadence). No MARKET correction spam. Head idle; held for PO triage."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,8 +590,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T05:43:42Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-15T06:26:48Z",
+    "_updated_by": "cowork-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -14118,6 +14118,26 @@
         "created_by": "dev-team",
         "triaged_by": "dev-team",
         "status_note": "Follow-on peeled from FIX-RSI-REPORT-FAILCLOSED LIVE verify. Distinct zone (Go TA svc). Canonical-tool depth under-read; does NOT affect the user MARKET report (which uses the now-fixed mcp-server report path). Next-tick dispatch after PO triage. Confirm Go-svc DB query first."
+      },
+      {
+        "id": "FIX-CHEF-FABRICATED-TA-NUMBERS",
+        "type": "FIX",
+        "title": "FIX-CHEF-FABRICATED-TA-NUMBERS — CHEF (unified-agent) publishes fabricated numeric RSI/TA to LIVE MARKET (id 753 06:21:50: 'VHM RSI 9.8, VIC RSI 7.4') with NO tool that returns RSI; reproduces the user-flagged single-digit corruption and drives a wrong oversold thesis",
+        "zone": "docs/agents/unified-agent/",
+        "owner": "agent-father",
+        "owner_agent": "agent-father",
+        "status": "READY",
+        "priority": "high",
+        "size": "M",
+        "recon_first": true,
+        "root_cause": "CHEF flow (docs/agents/unified-agent/flow/chef.md) sources TA only from get_portfolio_conviction (+ get_market_hexagram, get_macro_snapshot). NONE of those return an RSI/indicator number — get_portfolio_conviction emits conviction score, price, sector, a normalized `trend` array (0.45-0.55, NOT RSI), Kinh Dịch. CHEF nonetheless published precise 'VHM RSI 9.8, VIC RSI 7.4' to LIVE MARKET (id 753, 2026-06-15 06:21:50) — values it had no live source for => fabricated/recited stale (they equal the user's original corrupt single-digit RSI). The numbers contradict the live conviction tool (VHM/VIC = MIXED/caution, not oversold) AND the fixed report path (VHM 36.73/VIC 35.09 mid-band). Likely failure modes: (a) prompt allows quantitative TA citation without a tool gate; (b) `trend` array mis-read as RSI; (c) recited from prior-dish/context memory.",
+        "fix_spec": "Harden the unified-agent flow/prompt (VIA agent-md-factory skill — SSOT/DRY, do NOT hand-edit the .md): FORBID emitting any numeric indicator value (RSI/MACD/BB/σ) unless it came verbatim from a live tool call THIS cycle; CHEF has no RSI tool, so it may only speak QUALITATIVELY from get_portfolio_conviction's real fields (conviction, trend-direction, kinh dich, alert count) — never invent indicator numbers, never restate prior-cycle numbers as current. If a real RSI is required, it must come from get_technical_indicators (currently N/A pending FIX-TA-GOSVC-NA-DESPITE-DEPTH) — until then CHEF omits numeric TA. Add an explicit anti-fabrication rule + a self-check gate in chef.md Step 7 (pre-publish) that strips/blocks any 'RSI <n>' / 'σ' token not traceable to a cycle tool result. GENERIC across all tickers (/goal#2). Cross-ref [[FIX-TA-GOSVC-NA-DESPITE-DEPTH]] (real RSI source) — pairs with this.",
+        "verification_gate": "LIVE: trigger a CHEF intraday dish; RAW-read the MARKET post via get_unreviewed_market_messages — it MUST contain NO numeric RSI/σ/indicator value (qualitative only) OR only numbers that match a concurrent get_technical_indicators call. Re-confirm get_portfolio_conviction shows VHM/VIC MIXED (not oversold) and the dish narrative agrees. No single-digit RSI anywhere.",
+        "source": "router LIVE RAW verify during cowork-team chef-intraday tick 2026-06-15T06:21-06:25Z — CHEF dish id 753 republished user-flagged corrupt single-digit RSI with no live source",
+        "created_at": "2026-06-15T06:26:48Z",
+        "created_by": "cowork-team",
+        "triaged_by": "cowork-team",
+        "status_note": "Peeled from the chef-intraday cowork tick. Distinct from FIX-CHEF-INTRADAY-MARKER-CADENCE (cadence) and FIX-TA-GOSVC-NA-DESPITE-DEPTH (real RSI source). HIGH because it republished the user's exact flagged bug to the LIVE MARKET group. Edit agent .md ONLY via agent-md-factory. PO triage next tick — pair-schedule with FIX-TA-GOSVC-NA-DESPITE-DEPTH so CHEF gets a real RSI source as the anti-fabrication rule lands. Do NOT spam a MARKET correction (compounds noise); fix root so it stops recurring."
       }
     ],
     "review": [
