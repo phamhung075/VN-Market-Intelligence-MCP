@@ -128,3 +128,11 @@ export {
 
 // ── Sprint 1813: BCTC discovery HTTP fetch adapter ────────────────────────────
 export { bctcHttpFetch } from "./bctcHttpFetcher.js";
+
+// ── FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE: shared bounded-fetch utility ──────────
+export {
+  withDeadline,
+  macroFetch,
+  DeadlineError,
+  type DegradeEnvelope,
+} from "./fetchDeadline.js";

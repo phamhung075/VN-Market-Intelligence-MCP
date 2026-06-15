@@ -75,6 +75,7 @@ import { backfillBctcPdfPaths } from "../../application/usecases/backfillBctcPdf
 import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
 import { handleBctcEvalList } from "./routes/bctcEvalListHandler.js";
 import { handleBctcEvalDetail } from "./routes/bctcEvalDetailHandler.js";
+import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
 import { handleBctcEvalRecompute } from "./routes/bctcEvalRecomputeHandler.js";
 import { handleBctcEvalThresholds } from "./routes/bctcEvalThresholdsHandler.js";
 import { handleBctcEvalPushStage } from "./routes/bctcEvalPushStageHandler.js";
@@ -639,11 +640,17 @@ export async function createBunServer(
       // Call pdf-extractor with both report_id and pdf_path (PekExtractRequestSchema requires both)
       try {
         const pekUrl = "http://pdf-extractor:5001/pek-extract";
-        const pekResp = await fetch(pekUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ report_id: reportId, pdf_path: pdfPath }),
-        });
+        const pekResp = await withDeadline(
+          (signal) =>
+            fetch(pekUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ report_id: reportId, pdf_path: pdfPath }),
+              signal,
+            }),
+          30_000,
+          "triggerPekExtract",
+        );
 
         // Propagate 503 (market hours guard) verbatim
         if (pekResp.status === 503) {

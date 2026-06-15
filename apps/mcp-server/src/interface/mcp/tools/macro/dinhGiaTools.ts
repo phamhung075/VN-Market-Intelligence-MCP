@@ -23,6 +23,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import { getMacroBaseUrl } from "./macroHttpClient.js";
+import { macroFetch } from "../../../../infrastructure/fetchers/fetchDeadline.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
@@ -50,56 +51,16 @@ export function registerDinhGiaTools(server: McpServer): void {
       "Source tier: tier:2 when both earningYield and depositRate are live; tier:4 on fixture fallback.",
     {},
     async () => {
-      const url = `${baseUrl}/snapshot`;
+      const result = await macroFetch<{ signals?: { yield?: unknown } }>(
+        baseUrl,
+        "/snapshot",
+        {},
+        { deadlineMs: 15_000 },
+      );
 
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Accept": "application/json", "Content-Type": "application/json" },
-          body: "{}",
-        });
-
-        if (!response.ok) {
-          logger.warn("[get_yield_spread_signal] HTTP error from macro-indicators /snapshot", {
-            status: response.status,
-            url,
-          });
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "macro-indicators service unavailable" }, null, 2),
-              },
-            ],
-          };
-        }
-
-        const snapshot = await response.json() as {
-          signals?: {
-            yield?: unknown;
-          };
-        };
-
-        const yieldSignal = snapshot?.signals?.yield;
-        if (yieldSignal == null) {
-          logger.warn("[get_yield_spread_signal] /snapshot response missing signals.yield", { url });
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "yield signal not available in snapshot" }, null, 2),
-              },
-            ],
-          };
-        }
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(yieldSignal, null, 2) }],
-        };
-      } catch (err) {
-        logger.warn("[get_yield_spread_signal] fetch failed", {
-          error: err instanceof Error ? err.message : String(err),
-          url,
+      if (!result.ok) {
+        logger.warn("[get_yield_spread_signal] macro-indicators unavailable", {
+          degrade: result.degrade,
         });
         return {
           content: [
@@ -110,6 +71,24 @@ export function registerDinhGiaTools(server: McpServer): void {
           ],
         };
       }
+
+      const snapshot = result.data;
+      const yieldSignal = snapshot?.signals?.yield;
+      if (yieldSignal == null) {
+        logger.warn("[get_yield_spread_signal] /snapshot response missing signals.yield");
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ error: "yield signal not available in snapshot" }, null, 2),
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(yieldSignal, null, 2) }],
+      };
     },
   );
 }

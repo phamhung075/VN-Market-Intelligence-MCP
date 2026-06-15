@@ -42,6 +42,7 @@ import { join } from "node:path";
 import type { Database } from "bun:sqlite";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
+import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -162,9 +163,15 @@ async function makeProductionDeps(): Promise<BctcPdfPullDeps> {
 
   return {
     fetchPdf: async (url: string, apiKey: string): Promise<Response> => {
-      return fetch(url, {
-        headers: { "X-API-Key": apiKey },
-      });
+      return withDeadline(
+        (signal) =>
+          fetch(url, {
+            headers: { "X-API-Key": apiKey },
+            signal,
+          }),
+        45_000,
+        "bctcPdfPull",
+      );
     },
 
     savePdf: async (filePath: string, buf: Uint8Array): Promise<void> => {

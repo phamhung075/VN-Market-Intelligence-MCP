@@ -19,6 +19,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { logger } from "../../../../infrastructure/logger.js";
 import { getMacroBaseUrl } from "./macroHttpClient.js";
+import { macroFetch } from "../../../../infrastructure/fetchers/fetchDeadline.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod output schema — mirrors CPIComponentsResponse DTO field-for-field
@@ -88,39 +89,18 @@ export function registerCpiComponentsTools(server: McpServer): void {
     },
     async (args) => {
       const { period } = args as { period?: string };
-      const url = `${baseUrl}/cpi-components`;
-      const body = period ? JSON.stringify({ period }) : "{}";
+      const body = period ? { period } : {};
 
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Accept": "application/json", "Content-Type": "application/json" },
-          body,
-        });
+      const result = await macroFetch<unknown>(
+        baseUrl,
+        "/cpi-components",
+        body,
+        { deadlineMs: 15_000 },
+      );
 
-        if (!response.ok) {
-          logger.warn("[get_cpi_components] HTTP error from macro-indicators /cpi-components", {
-            status: response.status,
-            url,
-          });
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "macro-indicators service unavailable" }, null, 2),
-              },
-            ],
-          };
-        }
-
-        const data: unknown = await response.json();
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
-        };
-      } catch (err) {
-        logger.warn("[get_cpi_components] fetch failed", {
-          error: err instanceof Error ? err.message : String(err),
-          url,
+      if (!result.ok) {
+        logger.warn("[get_cpi_components] macro-indicators unavailable", {
+          degrade: result.degrade,
         });
         return {
           content: [
@@ -131,6 +111,10 @@ export function registerCpiComponentsTools(server: McpServer): void {
           ],
         };
       }
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result.data, null, 2) }],
+      };
     },
   );
 }

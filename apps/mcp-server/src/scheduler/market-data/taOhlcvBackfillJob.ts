@@ -28,6 +28,7 @@
 
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
+import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
 import {
   normalizeOhlcvToVnd,
   validateOhlcvUnit,
@@ -146,29 +147,27 @@ async function defaultFetchFn(
     `&sort=date&size=750&page=1` +
     `&fromDate=${fromDate}&toDate=${toDate}`;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  const response = await withDeadline(
+    (signal) =>
+      fetch(url, {
+        headers: {
+          "User-Agent": BROWSER_UA,
+          Accept: "application/json",
+          "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+        },
+        signal,
+      }),
+    15_000,
+    "taOhlcvBackfill",
+  );
 
-  try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": BROWSER_UA,
-        Accept: "application/json",
-        "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
-      },
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} for ${code}`);
-    }
-
-    const json = (await response.json()) as { data?: OhlcvRecord[] };
-    if (!Array.isArray(json.data)) return [];
-    return json.data;
-  } finally {
-    clearTimeout(timeoutId);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${code}`);
   }
+
+  const json = (await response.json()) as { data?: OhlcvRecord[] };
+  if (!Array.isArray(json.data)) return [];
+  return json.data;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

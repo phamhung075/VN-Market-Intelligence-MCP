@@ -14,6 +14,7 @@
 
 import { parseVnNumber } from "../../domain/services/vnNumberParser.js";
 import { BROWSER_UA } from "./browserHeaders.js";
+import { withDeadline } from "./fetchDeadline.js";
 
 /**
  * VPS proxy URL for the SSC insider portal.
@@ -131,7 +132,11 @@ const defaultHttpClient: HttpClient = {
       headers["X-API-Key"] = apiKey;
     }
 
-    const resp = await fetch(url, { headers });
+    const resp = await withDeadline(
+      (signal) => fetch(url, { headers, signal }),
+      30_000,
+      "sscInsider",
+    );
     if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
     return resp.text();
   },

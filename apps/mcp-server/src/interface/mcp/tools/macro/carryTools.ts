@@ -22,6 +22,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { logger } from "../../../../infrastructure/logger.js";
 import { getMacroBaseUrl } from "./macroHttpClient.js";
+import { macroFetch, withDeadline } from "../../../../infrastructure/fetchers/fetchDeadline.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
@@ -51,56 +52,16 @@ export function registerCarryTools(server: McpServer): void {
       "Source tier: reflects live carry inputs — tier:2 when live, tier:4 when fixture fallback.",
     {},
     async () => {
-      const url = `${baseUrl}/snapshot`;
+      const result = await macroFetch<{ signals?: { carry?: unknown } }>(
+        baseUrl,
+        "/snapshot",
+        {},
+        { deadlineMs: 15_000 },
+      );
 
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Accept": "application/json", "Content-Type": "application/json" },
-          body: "{}",
-        });
-
-        if (!response.ok) {
-          logger.warn("[get_carry_trade_signal] HTTP error from macro-indicators /snapshot", {
-            status: response.status,
-            url,
-          });
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "macro-indicators service unavailable" }, null, 2),
-              },
-            ],
-          };
-        }
-
-        const snapshot = await response.json() as {
-          signals?: {
-            carry?: unknown;
-          };
-        };
-
-        const carrySignal = snapshot?.signals?.carry;
-        if (carrySignal == null) {
-          logger.warn("[get_carry_trade_signal] /snapshot response missing signals.carry", { url });
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "carry signal not available in snapshot" }, null, 2),
-              },
-            ],
-          };
-        }
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(carrySignal, null, 2) }],
-        };
-      } catch (err) {
-        logger.warn("[get_carry_trade_signal] fetch failed", {
-          error: err instanceof Error ? err.message : String(err),
-          url,
+      if (!result.ok) {
+        logger.warn("[get_carry_trade_signal] macro-indicators unavailable", {
+          degrade: result.degrade,
         });
         return {
           content: [
@@ -111,6 +72,24 @@ export function registerCarryTools(server: McpServer): void {
           ],
         };
       }
+
+      const snapshot = result.data;
+      const carrySignal = snapshot?.signals?.carry;
+      if (carrySignal == null) {
+        logger.warn("[get_carry_trade_signal] /snapshot response missing signals.carry");
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ error: "carry signal not available in snapshot" }, null, 2),
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(carrySignal, null, 2) }],
+      };
     },
   );
 
@@ -131,10 +110,16 @@ export function registerCarryTools(server: McpServer): void {
       const url = `${baseUrl}/macro-calendar?days=${daysParam}`;
 
       try {
-        const response = await fetch(url, {
-          method: "GET",
-          headers: { "Accept": "application/json" },
-        });
+        const response = await withDeadline(
+          (signal) =>
+            fetch(url, {
+              method: "GET",
+              headers: { "Accept": "application/json" },
+              signal,
+            }),
+          15_000,
+          "macroFetch/macro-calendar",
+        );
 
         if (!response.ok) {
           logger.warn("[get_macro_calendar] HTTP error from macro-indicators", {

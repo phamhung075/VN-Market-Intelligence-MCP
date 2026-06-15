@@ -23,6 +23,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { logger } from "../../../../infrastructure/logger.js";
 import { getMacroBaseUrl } from "./macroHttpClient.js";
+import { macroFetch } from "../../../../infrastructure/fetchers/fetchDeadline.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types (kept for test compatibility)
@@ -440,68 +441,17 @@ export function registerMacroTools(server: McpServer): void {
     async (args) => {
       const { _params } = args as { _params?: Record<string, unknown> };
 
-      const url = `${baseUrl}/snapshot`;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await macroFetch<Record<string, any>>(
+        baseUrl,
+        "/snapshot",
+        _params ?? {},
+        { deadlineMs: 15_000 },
+      );
 
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(_params ?? {}),
-        });
-
-        if (!response.ok) {
-          logger.warn("[get_macro_snapshot] HTTP error from macro-indicators", {
-            status: response.status,
-            url,
-          });
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({
-                  source_tier: 2 as const,
-                  error: "macro-indicators service unavailable",
-                }, null, 2),
-              },
-            ],
-          };
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = await response.json() as Record<string, any>;
-
-        // DSI-INV-1: derive source_tier honestly from the snapshot's carry signal provenance.
-        // The Go macro-indicators service annotates signals.carry.source_tier per its own data
-        // pipeline (tier=2 when live, tier=4 when estimate/fixture).
-        // We use the carry tier as the primary provenance indicator for the macro snapshot
-        // because carry is the principal signal this tool surfaces; other signals (yield,
-        // investment-clock) are exposed through their own dedicated tools.
-        // Fallback: if the response does not carry a tier annotation (older Go build), default
-        // to 2 (aggregator service tier) rather than fail-loud — the tool is a thin HTTP proxy
-        // and 2 is the correct tier for a live upstream aggregator response.
-        const sourceTier: 1 | 2 | 3 | 4 =
-          (data?.signals?.carry?.source_tier as 1 | 2 | 3 | 4) ?? 2;
-
-        // fetchedAt: use the true source timestamp from the Go service response, not re-stamp now.
-        // If the Go service omits fetchedAt (older build), fall back to new Date().toISOString()
-        // only as a last resort — the test mock provides "2026-06-05T00:00:00Z" at this field.
-        const fetchedAt: string = (data?.fetchedAt as string | undefined)
-          ?? new Date().toISOString();
-
-        // text: human-readable macro intelligence payload (full JSON of the upstream response).
-        const text = JSON.stringify(data, null, 2);
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify({
-            source_tier: sourceTier,
-            text,
-            fetchedAt,
-          }, null, 2) }],
-        };
-      } catch (err) {
-        logger.warn("[get_macro_snapshot] fetch failed", {
-          error: err instanceof Error ? err.message : String(err),
-          url,
+      if (!result.ok) {
+        logger.warn("[get_macro_snapshot] macro-indicators unavailable", {
+          degrade: result.degrade,
         });
         return {
           content: [
@@ -515,6 +465,37 @@ export function registerMacroTools(server: McpServer): void {
           ],
         };
       }
+
+      const data = result.data;
+
+      // DSI-INV-1: derive source_tier honestly from the snapshot's carry signal provenance.
+      // The Go macro-indicators service annotates signals.carry.source_tier per its own data
+      // pipeline (tier=2 when live, tier=4 when estimate/fixture).
+      // We use the carry tier as the primary provenance indicator for the macro snapshot
+      // because carry is the principal signal this tool surfaces; other signals (yield,
+      // investment-clock) are exposed through their own dedicated tools.
+      // Fallback: if the response does not carry a tier annotation (older Go build), default
+      // to 2 (aggregator service tier) rather than fail-loud — the tool is a thin HTTP proxy
+      // and 2 is the correct tier for a live upstream aggregator response.
+      const sourceTier: 1 | 2 | 3 | 4 =
+        (data?.signals?.carry?.source_tier as 1 | 2 | 3 | 4) ?? 2;
+
+      // fetchedAt: use the true source timestamp from the Go service response, not re-stamp now.
+      // If the Go service omits fetchedAt (older build), fall back to new Date().toISOString()
+      // only as a last resort — the test mock provides "2026-06-05T00:00:00Z" at this field.
+      const fetchedAt: string = (data?.fetchedAt as string | undefined)
+        ?? new Date().toISOString();
+
+      // text: human-readable macro intelligence payload (full JSON of the upstream response).
+      const text = JSON.stringify(data, null, 2);
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify({
+          source_tier: sourceTier,
+          text,
+          fetchedAt,
+        }, null, 2) }],
+      };
     },
   );
 }

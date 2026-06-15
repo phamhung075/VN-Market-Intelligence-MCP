@@ -17,6 +17,7 @@
 
 import { parseVnNumber } from "../../domain/services/vnNumberParser.js";
 import { BROWSER_UA } from "./browserHeaders.js";
+import { withDeadline } from "./fetchDeadline.js";
 
 const MUASAMCONG_ORIGIN =
   "https://muasamcong.mpi.gov.vn/web/guest/home-page-new-ver2/-/thauthau/ket-qua-chon-nha-thau";
@@ -213,9 +214,11 @@ export interface HttpClient {
  */
 const defaultHttpClient: HttpClient = {
   async get(url: string): Promise<string> {
-    const resp = await fetch(url, {
-      headers: { "User-Agent": BROWSER_UA },
-    });
+    const resp = await withDeadline(
+      (signal) => fetch(url, { headers: { "User-Agent": BROWSER_UA }, signal }),
+      30_000,
+      "muasamcong",
+    );
     if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
     return resp.text();
   },

@@ -14,6 +14,7 @@
 
 import { logger } from '../../infrastructure/logger.js';
 import { shouldSkipRecoveryReplay } from '../startupHelpers.js';
+import { withDeadline } from '../../infrastructure/fetchers/fetchDeadline.js';
 
 const NEWS_FETCH_BASE = Bun.env['NEWS_FETCH_URL'] ?? 'http://news-fetch:5008';
 const MCP_SERVER_BASE = Bun.env['MCP_SERVER_URL'] ?? 'http://localhost:3000';
@@ -38,11 +39,17 @@ interface NewsFetchResult {
  */
 async function fetchFromNewsFetch(endpoint: string): Promise<NewsFetchResult | null> {
   try {
-    const res = await fetch(`${NEWS_FETCH_BASE}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    });
+    const res = await withDeadline(
+      (signal) =>
+        fetch(`${NEWS_FETCH_BASE}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+          signal,
+        }),
+      20_000,
+      'newsHeadlines',
+    );
     if (!res.ok) {
       logger.warn('[newsHeadlinesRefreshJob] non-ok from news-fetch', {
         endpoint,
@@ -76,14 +83,20 @@ async function pushToMcpServer(result: NewsFetchResult): Promise<boolean> {
   }));
 
   try {
-    const res = await fetch(`${MCP_SERVER_BASE}/api/push-news`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': Bun.env['VPS_PUSH_API_KEY'] ?? '',
-      },
-      body: JSON.stringify(items),
-    });
+    const res = await withDeadline(
+      (signal) =>
+        fetch(`${MCP_SERVER_BASE}/api/push-news`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': Bun.env['VPS_PUSH_API_KEY'] ?? '',
+          },
+          body: JSON.stringify(items),
+          signal,
+        }),
+      10_000,
+      'pushToMcpServer',
+    );
     if (!res.ok) {
       logger.warn('[newsHeadlinesRefreshJob] push-news rejected', { status: res.status });
       return false;

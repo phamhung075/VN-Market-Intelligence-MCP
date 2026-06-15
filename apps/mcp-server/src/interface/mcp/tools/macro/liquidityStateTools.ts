@@ -20,6 +20,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { logger } from "../../../../infrastructure/logger.js";
 import { getMacroBaseUrl } from "./macroHttpClient.js";
+import { macroFetch } from "../../../../infrastructure/fetchers/fetchDeadline.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod output schema — mirrors LiquidityStateResponse DTO field-for-field
@@ -131,38 +132,16 @@ export function registerLiquidityStateTools(server: McpServer): void {
       "No body parameters — always returns the most recent available state.",
     {},
     async () => {
-      const url = `${baseUrl}/liquidity-state`;
+      const result = await macroFetch<unknown>(
+        baseUrl,
+        "/liquidity-state",
+        {},
+        { deadlineMs: 15_000 },
+      );
 
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Accept": "application/json", "Content-Type": "application/json" },
-          body: "{}",
-        });
-
-        if (!response.ok) {
-          logger.warn("[get_vn_liquidity_state] HTTP error from macro-indicators /liquidity-state", {
-            status: response.status,
-            url,
-          });
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "macro-indicators service unavailable" }, null, 2),
-              },
-            ],
-          };
-        }
-
-        const data: unknown = await response.json();
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
-        };
-      } catch (err) {
-        logger.warn("[get_vn_liquidity_state] fetch failed", {
-          error: err instanceof Error ? err.message : String(err),
-          url,
+      if (!result.ok) {
+        logger.warn("[get_vn_liquidity_state] macro-indicators unavailable", {
+          degrade: result.degrade,
         });
         return {
           content: [
@@ -173,6 +152,10 @@ export function registerLiquidityStateTools(server: McpServer): void {
           ],
         };
       }
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result.data, null, 2) }],
+      };
     },
   );
 }

@@ -19,6 +19,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { logger } from "../../../../infrastructure/logger.js";
 import { getMacroBaseUrl } from "./macroHttpClient.js";
+import { macroFetch } from "../../../../infrastructure/fetchers/fetchDeadline.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod output schema — mirrors BOPResponse DTO field-for-field
@@ -109,42 +110,20 @@ export function registerBopTools(server: McpServer): void {
         quarter_start?: string;
         quarter_end?: string;
       };
-      const url = `${baseUrl}/bop`;
       const bodyObj: Record<string, string> = {};
       if (quarter_start) bodyObj.quarter_start = quarter_start;
       if (quarter_end) bodyObj.quarter_end = quarter_end;
-      const body = Object.keys(bodyObj).length > 0 ? JSON.stringify(bodyObj) : "{}";
 
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Accept": "application/json", "Content-Type": "application/json" },
-          body,
-        });
+      const result = await macroFetch<unknown>(
+        baseUrl,
+        "/bop",
+        bodyObj,
+        { deadlineMs: 15_000 },
+      );
 
-        if (!response.ok) {
-          logger.warn("[get_vn_bop] HTTP error from macro-indicators /bop", {
-            status: response.status,
-            url,
-          });
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: JSON.stringify({ error: "macro-indicators service unavailable" }, null, 2),
-              },
-            ],
-          };
-        }
-
-        const data: unknown = await response.json();
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
-        };
-      } catch (err) {
-        logger.warn("[get_vn_bop] fetch failed", {
-          error: err instanceof Error ? err.message : String(err),
-          url,
+      if (!result.ok) {
+        logger.warn("[get_vn_bop] macro-indicators unavailable", {
+          degrade: result.degrade,
         });
         return {
           content: [
@@ -155,6 +134,10 @@ export function registerBopTools(server: McpServer): void {
           ],
         };
       }
+
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result.data, null, 2) }],
+      };
     },
   );
 }

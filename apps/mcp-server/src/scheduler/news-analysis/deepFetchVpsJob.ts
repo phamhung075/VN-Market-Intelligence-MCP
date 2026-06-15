@@ -23,6 +23,7 @@
 import { getDb } from "../../infrastructure/db/schema.js";
 import { loadMcpConfig } from "../../infrastructure/config.js";
 import { logger } from "../../infrastructure/logger.js";
+import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
 import {
   pollPending,
   markDone,
@@ -92,9 +93,11 @@ async function fetchFromVps(
 ): Promise<VpsArticleBodyResponse | null> {
   try {
     const endpoint = `${vpsProxyUrl}/proxy/article-body?url=${encodeURIComponent(url)}`;
-    const response = await fetch(endpoint, {
-      signal: AbortSignal.timeout(15_000),
-    });
+    const response = await withDeadline(
+      (signal) => fetch(endpoint, { signal }),
+      15_000,
+      "deepFetchVps",
+    );
     if (!response.ok) {
       logger.debug("[deepFetchVps] HTTP error", { status: response.status, url });
       return null;
