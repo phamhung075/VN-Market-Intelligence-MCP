@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T11:16:51Z",
+  "_updated_at": "2026-06-15T11:24:20Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,12 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T11:16:51Z",
+    "updated_at": "2026-06-15T11:24:20Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-VNSTOCK-TRADINGSTATS-CRASH",
-    "next_agent": "ops",
-    "rebuild_required": true,
-    "note": "DEV-TEAM TICK 2026-06-15T11:16:51Z — FIX-VNSTOCK-TRADINGSTATS-CRASH dev-mcp-server RETURNED (a8448dee), router RELOCATED in_progress->review (dev flipped status field only). Fix 64f188fc: 30-min retry backoff on all 4 null paths (markFetched missing backoffMinutes stamped fetched_at=now on timeout, silencing retries 2h) + rowsWritten from COUNT(vnstock_trading_stats) DB-delta not ticker count (false-positive killed). DRY mirror of fundamentals-fix family. Router RAW: 3-file zone commit no -A/secret; bun test 10 pass (succeeded=3/rowsWritten=0 proves fix) + adjacent 17 pass; tsc clean; 44 full-suite fails DISJOINT (_deprecated, none touch changed modules); GENERIC no allowlist (/goal#2). REBUILD_REQUIRED=YES mcp-server ONLY (force-recreate, NEVER down) — router dispatches ops. LIVE GATE after rebuild: image .Created>11:09:51Z RestartCount=0 peers up DB parity; no crash on sync path; rowsWritten honesty=actual COUNT delta; then review->done_verified. PUSH held (bundle, PO post-RSI-gate 2026-06-16). PARALLEL: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT review (behavioral gate 2026-06-16). Ready: FIX-FB-POSTER-NOARG-MARKET-TOOLS(P1), FIX-MARKET-HEXAGRAM-TOOL-MISSING(P2), FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (design). Active coding lane=0."
+    "next_agent": null,
+    "note": "ROUTER 2026-06-15T11:24:20Z — FIX-VNSTOCK-TRADINGSTATS-CRASH rebuild LANDED + RAW-verified live (image 11:17:43Z>commit, healthy RestartCount=0, 11 peers, boot probe 11:17:47 success). CAUGHT ops acce77e8 host-decoy read (reported trading_stats=0/Sunday/no-run — all wrong); authoritative named volume shows 3631 rows, today=Monday, vnstockTradingStatsRefresh 08:30:01 CRASHED PRE-fix. KEPT in review[] (NOT promoted): live sweep path unproven on deploy until next run 2026-06-16 08:30 UTC (Tue). One-shot behavioral probe armed 2026-06-16 09:12 UTC: require status=success + rows_written honest COUNT-delta => then review->done_verified. PARALLEL gate: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT review (01:00Z briefing / 02:15Z scan 2026-06-16). PUSH held (PO post-gates). Ready: FIX-FB-POSTER-NOARG-MARKET-TOOLS(P1), FIX-MARKET-HEXAGRAM-TOOL-MISSING(P2), FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2). Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). Active coding lane=0."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -591,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T11:16:51Z",
+    "_updated_at": "2026-06-15T11:24:20Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14444,8 +14443,13 @@
         "generic_verified": "/goal#2 PASS — backoff applied to every ticker's null path, no per-ticker/date allowlist; 30-min matches existing financials backoff constant",
         "rebuild_required": true,
         "rebuild_scope": "mcp-server ONLY — both source files in apps/mcp-server/. Force-recreate only, NEVER down (named-vol market.db). Verify peers + DB rows.",
-        "pending_live_gate": "AFTER rebuild: (1) image .Created > commit 64f188fc 2026-06-15T11:09:51Z UTC, RestartCount=0, healthy, peers up, market.db row parity; (2) NO crash on trading_stats sync path (cron_job_runs last run status!=error and/or manual trigger; container healthy after); (3) rowsWritten honesty live = actual vnstock_trading_stats COUNT delta (no ticker-count inflation). Backoff retry-semantics unit-proven. Plausibility per /goal#1. Then review->done_verified.",
-        "push_disposition": "HOLD — bundle; PO pushes the fast-forward after the FIX-ALERT-ENGINE-RSI-SINGLEDIGIT behavioral gate closes 2026-06-16"
+        "pending_live_gate": "UNMET — code-live + deploy-healthy + 10 unit tests green + green boot probe = FLOOR not bar (/goal#1). The historically-crashing sweep path runs next 2026-06-16 08:30 UTC (Tuesday weekday). GATE (router-d68 one-shot probe ~09:12 UTC): query named-volume cron_job_runs for the newest vnstockTradingStatsRefresh started_at >= 2026-06-16 08:30 — require status='success' (NOT crashed) AND rows_written = honest vnstock_trading_stats COUNT delta (plausibility per /goal#1; a succeeded>0 / 0-new-rows run must report rows_written=0 not ticker count). Freshness col = fetched_at. GREEN => router move review->done_verified + commit. CRASH/FAIL => keep review + dispatch dev-mcp-server fixer.",
+        "push_disposition": "HOLD — bundle; PO pushes the fast-forward after the FIX-ALERT-ENGINE-RSI-SINGLEDIGIT behavioral gate closes 2026-06-16",
+        "rebuild_landed": "router-confirmed LIVE: mcp-server image .Created 2026-06-15T11:17:43Z > commit 64f188fc 11:09:51Z UTC; Health=healthy RestartCount=0 StartedAt 11:17:44Z; 11/11 peers up; /health 200 toolCount 163.",
+        "live_db_correction": "ops acce77e8 read the HOST DECOY data/market.db (reported trading_stats=0 rows, 'today is Sunday', 'no post-fix run'); ALL wrong. Router RAW-queried the authoritative named volume vn-market-intelligence-mcp_market_data (/app/data): trading_stats=3631 rows; today=Monday 2026-06-15; vnstockTradingStatsRefresh ran TODAY 08:30:01 and CRASHED (pre-fix, before rebuild 11:17:43Z).",
+        "live_evidence": "vnstockStartupProbe 11:17:47 success (post-fix boot probe clean — necessary not sufficient, lighter path than sweep); vnstockTradingStatsRefresh 08:30:01 crashed (PRE-fix symptom, not regression); vnstockFundamentalsRefresh 01:05 success rows_written 51 then 0 (sibling honest rowsWritten live).",
+        "next_live_gate_utc": "2026-06-16T08:30:00Z (vnstockTradingStatsRefresh, weekdays 30 8 * * 1-5); router-d68 one-shot probe armed 2026-06-16 09:12 UTC (11:12 CEST).",
+        "gate_sharpened_ts": "2026-06-15T11:24:20Z"
       }
     ],
     "qa": [],
