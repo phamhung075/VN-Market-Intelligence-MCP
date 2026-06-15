@@ -71,11 +71,15 @@ describe("1837a — orch-state.json schema (v3)", () => {
     const state = loadOrchState();
     // Valid orch-state head statuses (snake_case):
     //   idle        — no active task
-    //   in_progress — task being worked on
+    //   in_progress — task being worked on (specific dev task claimed, e.g. router-d1-claim.jq)
     //   blocked     — waiting on external dependency
     //   stale       — state not updated recently
     //   review      — task done, awaiting QA/PO sign-off (added 2026-06-12)
-    const validStatuses = ["in_progress", "idle", "blocked", "stale", "review"];
+    //   active      — work in flight between agents / inter-agent handoff (added 2026-06-13;
+    //                 canonical in 29+ router-d*.jq scripts since router-d13 onwards)
+    //   qa          — task at final QA live-verify gate before done_verified (added 2026-06-13;
+    //                 used by router-d1-refine-lock-ops-to-qa.jq and siblings)
+    const validStatuses = ["in_progress", "idle", "blocked", "stale", "review", "active", "qa"];
     expect(validStatuses).toContain(state.head.status);
   });
 
