@@ -6,6 +6,33 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-06-15 — FIX-RSI-REPORT-FAILCLOSED — report RSI path fail-close fix
+
+**Task:** FIX-RSI-REPORT-FAILCLOSED (zone apps/mcp-server/ — recon confirmed zone, not apps/technical-analysis/)
+
+**Status:** REVIEW — commit ed77b9b0
+
+**Recon findings (zone confirmed):**
+- The canonical tool `get_technical_indicators` in `technicalIndicatorTools.ts` correctly returns "RSI(14): N/A (cần tối thiểu 15 nến)" via `localComputeRSI(prices, 14)` which guards `prices.length < period + 1 = 15`.
+- The MARKET report RSI path is `defaultComputeTa()` in `assembleBriefing.ts:674`, called from: (a) `assembleBriefing` morning briefing Step 17, (b) `assembleEveningSummary` Step 4, (c) `franceSummaryJob` via `fetchTaSignals`. All three consume `defaultComputeTa`.
+- The bug: `Math.min(14, rows.length - 1)` as period. With 6 candles → period=5 → `computeRSILocal(prices, 5)` passes the `prices.length >= 6` guard and computes RSI. Result: VRE RSI 10.3 on 6 candles, VIC 7.4, VHM 9.8 published to MARKET.
+
+**Fix (single-line):**
+- `assembleBriefing.ts:674` — changed `computeRSILocal(prices, Math.min(14, rows.length - 1))` → `computeRSILocal(prices, 14)`.
+- Guard raised from `rows.length < 8` → `rows.length < 15` (same threshold in both primary and fallback paths).
+- DRY: no change to the RSI math (already identical between both paths). Both already use the same `computeRSILocal` guard logic — only the adaptive period bypassed it.
+
+**Tests (TDD RED→GREEN):**
+- `FIX-RSI-REPORT-FAILCLOSED.test.ts` (new) — 9 TCs: A1-A5 = <15 candles → null (VRE/VIC/VHM class + canonical ref), B1-B3 = >=15 candles → report RSI == canonical RSI (exact floating-point match).
+- `1346-ta-adaptive-periods.test.ts` — updated TC-2/TC-3 (adaptive behavior removed; 10/14 rows now → null not TaSignal).
+- `1330-ta-daily-ohlcv.test.ts` — updated TC-2 (14 rows → null, not overbought TaSignal).
+
+**Results:** tsc clean, 12940 pass (7 pre-existing failures unrelated to RSI). No new regressions.
+
+**REBUILD_REQUIRED:** no — only application layer code changed, no service-level build.
+
+---
+
 ### 2026-06-14 — ALLZERO-OHLCV-FETCH — chart-sliver/BB-fan data fix
 
 **Task:** ALLZERO-OHLCV-FETCH (zone apps/mcp-server/) — fix all-zero OHLCV rows poisoning BB window and chart Y-domain
