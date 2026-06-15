@@ -74,19 +74,23 @@ snapshot = call_tool(server="vn-market", tool="get_market_snapshot", arguments={
 # Market context (includes breadth via market_context)
 market_context = call_tool(server="vn-market", tool="get_market_context", arguments={})
 
-# Foreign flow
-foreign_flow = call_tool(server="vn-market", tool="get_foreign_flow", arguments={})
+# Foreign flow — MARKET-WIDE (no code argument)
+foreign_flow = call_tool(server="vn-market", tool="get_market_foreign_flow", arguments={})
 
-# Ticker intelligence for movers and technical signals
-ticker_intel = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={})
+# Ticker intelligence for movers — iterate watchlist tickers (top 5–10 by conviction or price move)
+# ALGORITHM: Query watchlist tickers from system-map.json (jq query: '.watchlist[].ticker')
+# For each ticker in watchlist, call:
+#   ticker_intel_{ticker} = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={"code": ticker})
+# Extract signals from ALL watchlist calls; if a ticker call errors, log and skip that ticker (do not fail cycle).
+# Hold results in working memory keyed by ticker.
 ```
 
 From results, extract and hold in working memory:
 - All indices present in `snapshot`: VN-Index, VN30, HNX-Index, UPCOM — each with `value`, `point_change`, `pct_change`.
 - Breadth from `market_context`: `advancers`, `decliners`, `unchanged`, `ceiling` (tăng trần), `floor` (giảm sàn). If unavailable via this tool, breadth details may be omitted (log data unavailability).
 - Liquidity: `total_matched_value` (tỷ đồng) and `avg_value_recent` if available from snapshot or market_context.
-- Foreign flow: `net_value`, `most_bought` tickers (top 3), `most_sold` tickers (top 3).
-- Top movers: winners and losers with ticker, price, `pct_change`, sector (extract from ticker_intel or snapshot if available; if absent, note in QUALITY field).
+- Foreign flow: `net_value`, `most_bought` tickers (top 3), `most_sold` tickers (top 3) from `get_market_foreign_flow` result.
+- Top movers: from watchlist ticker intelligence calls — winners and losers by price change % (extract from individual `get_ticker_intelligence` results; if insufficient movers available, omit this field and log in QUALITY section).
 
 **Merge rule:** Live tool data is authoritative over notebook data for quantitative fields. If a live tool errors → fall back to notebook value. Log which source was used for each field.
 

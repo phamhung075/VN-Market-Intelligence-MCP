@@ -45,19 +45,24 @@ Called after notebook reads to fill missing quantitative fields. All read-only. 
 |------|---------|-----------|
 | `get_market_snapshot` | All indices (VN-Index, VN30, HNX-Index, UPCOM) with value, point change, pct change | (none required) |
 | `get_market_context` | Market breadth data: advancers/decliners/unchanged/ceiling-hits (tăng trần)/floor-hits (giảm sàn) when available | (none required) |
-| `get_foreign_flow` | Net foreign buy/sell value (tỷ đồng), most-bought tickers, most-sold tickers | (none required) |
-| `get_ticker_intelligence` | Ticker signals including movers (gainers/losers) with price + pct_change + technical signals | (none required) |
+| `get_market_foreign_flow` | Market-wide foreign flow aggregate: net buy/sell value (tỷ đồng), top-N buyers/sellers across watchlist | `days` (1–30, optional, default 1), `top_n` (1–20, optional, default 5) |
+| `get_ticker_intelligence` | Single-ticker intelligence brief: price, evidence score, insider activity, foreign flow, BCTC outlook, prediction calibration | **REQUIRED:** `code` (stock ticker, e.g. 'VCB', 'FPT'). Call per watchlist ticker (iterate) |
 
 **Usage pattern:**
 ```
-snapshot       = call_tool(server="vn-market", tool="get_market_snapshot",    arguments={})
-market_context = call_tool(server="vn-market", tool="get_market_context",     arguments={})
-foreign_flow   = call_tool(server="vn-market", tool="get_foreign_flow",       arguments={})
-ticker_intel   = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={})
-```
-All four are **read-only**. Do NOT call any write tool in this block.
+snapshot       = call_tool(server="vn-market", tool="get_market_snapshot",        arguments={})
+market_context = call_tool(server="vn-market", tool="get_market_context",         arguments={})
+foreign_flow   = call_tool(server="vn-market", tool="get_market_foreign_flow",    arguments={})
 
-**Note (2026-06-07):** `get_market_breadth` and `get_top_movers` were phantom tools (never implemented). Replaced with live-tool equivalents above. If `market_context` or `ticker_intel` do not return breadth/mover data, the flow documents this as a data quality gap.
+# Ticker intelligence: iterate watchlist, call per ticker
+watchlist = [query from system-map.json or stock-classification.json]
+ticker_intel = {}
+for ticker in watchlist:
+  ticker_intel[ticker] = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={"code": ticker})
+```
+All tools are **read-only**. Do NOT call any write tool in this block.
+
+**Note (2026-06-14 FIX-FB-POSTER-NOARG-MARKET-TOOLS):** `get_foreign_flow()` required `code` and is per-ticker; replaced with `get_market_foreign_flow()` for market-wide aggregate (no code needed). `get_ticker_intelligence()` always requires `code`; iterate watchlist and call per ticker. Previous doc claimed no params required — corrected to match live schemas.
 
 ### NOT in scope
 | Tool | Why excluded |
