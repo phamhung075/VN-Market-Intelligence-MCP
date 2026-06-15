@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-15 · FIX-MARKET-HEXAGRAM-TOOL-MISSING
+
+**Task:** FIX-MARKET-HEXAGRAM-TOOL-MISSING | Priority: P2 | Zone: apps/mcp-server/
+
+Root cause class: **(a)** — tool existed in code (helpers: `computeMacroIndicatorScore`, `computeMacroScore`) and HTTP client (`getMarketHexagram` in clients.ts) but was intentionally deregistered (TSH-1, 2026-05-31) because kinh-dich-service `/market` returns 501. digest-predict weekly flow + agentBootstrap.ts still listed it for 3 agent types (digest_predict, market_watcher, qa_responder).
+
+Fix: re-registered `get_market_hexagram` in `registerKinhDichTools` using local compute only (same pattern as `explain_hexagram`). 6 market-wide hào scores: VN-Index price z-score, USD/VND direction (inverted), oil (inverted), gold (inverted), foreign net flow breadth, macro composite. Imports `encodeHaos` + `resolveHexagram` from domain layer. No HTTP call to Go service.
+
+Files changed: `kinhDichTools.ts`, `285-kinhdich-tools.test.ts` (test updated: 5→6 tools assertion), 3 SSOTs (project-stats.json, tool-registry.json, system-map.json) 163→164.
+
+bun test (kinhdich suite): 130 pass / 0 fail. tsc --noEmit: clean. Full-suite exits 0 (Bun JIT crash is pre-existing, unrelated to this change — see memory note).
+
+Zone health: bun test kinhdich 130/0, 164 tools (get_market_hexagram restored), tsc clean | HEALTHY
+
 ## 2026-06-15 · CI-RED-d20468c0-FIX — 8 failing tests fixed across 4 files
 
 **Task:** CI-RED-d20468c0-FIX | Priority: HIGH | Zone: apps/mcp-server/src/__tests__/

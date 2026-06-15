@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T11:38:23Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-15T11:45:00Z",
+  "_updated_by": "dev-mcp-server",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -14345,26 +14345,6 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      },
-      {
-        "depends": [],
-        "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
-        "owner": "dev-kinh-dich",
-        "priority": "P2",
-        "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
-        "source": "health-recheck B10 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "IN_PROGRESS",
-        "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
-        "type": "FIX",
-        "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
-        "zone_owner": "apps/kinh-dich-service/",
-        "route_to": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "lane": "dev-zone",
-        "mode": "recon-first",
-        "dispatched_ts": "2026-06-15T11:29:32Z",
-        "dispatched_by": "dev-team",
-        "dispatch_note": "get_market_hexagram absent from MCP tool list => Sunday digest-predict fails. recon-first: confirm registration gap (apps/mcp-server/src/interface/mcp/tools/kinhdich/) vs missing compute (signal dev-kinh-dich). Register generic for all callers; bump toolCount SSOT (project-stats/tool-registry/system-map) per the tool-count-drift lesson."
       }
     ],
     "ready": [
@@ -14483,6 +14463,26 @@
         "live_evidence": "vnstockStartupProbe 11:17:47 success (post-fix boot probe clean — necessary not sufficient, lighter path than sweep); vnstockTradingStatsRefresh 08:30:01 crashed (PRE-fix symptom, not regression); vnstockFundamentalsRefresh 01:05 success rows_written 51 then 0 (sibling honest rowsWritten live).",
         "next_live_gate_utc": "2026-06-16T08:30:00Z (vnstockTradingStatsRefresh, weekdays 30 8 * * 1-5); router-d68 one-shot probe armed 2026-06-16 09:12 UTC (11:12 CEST).",
         "gate_sharpened_ts": "2026-06-15T11:24:20Z"
+      },
+      {
+        "depends": [],
+        "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
+        "owner": "dev-kinh-dich",
+        "priority": "P2",
+        "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
+        "source": "health-recheck B10 (team-tool-recheck-2026-06-13-2207.md)",
+        "status": "REVIEW",
+        "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
+        "type": "FIX",
+        "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
+        "zone_owner": "apps/kinh-dich-service/",
+        "route_to": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "lane": "dev-zone",
+        "mode": "recon-first",
+        "dispatched_ts": "2026-06-15T11:29:32Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "get_market_hexagram absent from MCP tool list => Sunday digest-predict fails. recon-first: confirm registration gap (apps/mcp-server/src/interface/mcp/tools/kinhdich/) vs missing compute (signal dev-kinh-dich). Register generic for all callers; bump toolCount SSOT (project-stats/tool-registry/system-map) per the tool-count-drift lesson."
       }
     ],
     "qa": [],
