@@ -60,3 +60,13 @@ why-change: minting the requested task would have been duplicate debt against do
 - defer (server healthy, no live incident)
 **why-decision:** Real defect per /goal#1 (monitor cries wolf on every deploy) so not defer; but NON-URGENT (RestartCount=0, healthy) so I do not consume a dev WIP lane myself — queue to ready[], let router dispatch. Dev-mcp-server coding lane is free (ARCH-CRON in_progress = QA-observe gate, BA-VN-MACRO = design stage) so dispatch is unblocked next tick.
 **why-change:** Recon-first retained per router caution — ops's 'SQL row-aging 4->3' sub-mechanism is internally inconsistent; dev must read the live query+source before patching.
+
+### STEP po-S5 · po · 2026-06-15T14:32:04Z
+**task-id:** FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK
+**what-done:** Dev-team tick triage (now 14:21Z): 2 NEW health-recheck reports (3181/3182) since 13:26Z HOLD; deduped BUG-1/BUG-2/ISSUE-3 to existing tasks, RAW-confirmed BUG-NEW live, groomed it HELD-for-BA. No coding lane dispatched.
+**what-considered:**
+- dispatch the auditor schema fix as a coding FIX now — REJECTED: not a drop-in; no live enum maps to auditor health types, needs BA/architect design decision, and both non-coding lanes are occupied (WIP-2).
+- HOLD with no groom — REJECTED: bug is NEW + RAW-confirmed (-32602 live) + high-value (entire auditor→bus path dark, explains 0 signal rows); leaving it untracked loses it.
+- groom PLAN-ONLY HELD-for-BA backlog task (chosen).
+**why-decision:** /goal#1 — RAW-verified the drift live (called post_agent_signal, got -32602 + enum with no health value) before minting; design-gated bug belongs in backlog HELD, not a premature coding lane. Did NOT process/delete the Telegram reports — underlying BCTC + auditor bugs are genuinely unresolved.
+**why-change:** No change from HOLD-default plan except the one new groom — 13:26Z tick had no inbox; this tick's 2 fresh reports forced the auditor-drift mint.

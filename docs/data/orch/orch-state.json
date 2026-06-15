@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T14:20:39Z",
+  "_updated_at": "2026-06-15T14:31:12Z",
   "_updated_by": "po",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -592,8 +592,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T12:06:58Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-15T14:31:12Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -9287,6 +9287,30 @@
         "source": "health-recheck BUG-3/BUG-4 (3177/3178 2026-06-15T04:08-06:08Z).",
         "user_impact": "MEDIUM — false oversold/breakout WARNING alerts spam MARKET-adjacent surface at every open.",
         "created_at": "2026-06-15T10:38:00Z"
+      },
+      {
+        "id": "FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "high",
+        "route_to": "ba",
+        "owner": "ba",
+        "zone": "multi",
+        "size": "S-M",
+        "created_at": "2026-06-15T14:31:12Z",
+        "created_by": "po",
+        "source": "health-recheck report 3182 (2026-06-15T14:11Z) BUG-NEW",
+        "title": "system-auditor post_agent_signal emit-schema drift -> coordination bus dark",
+        "raw_evidence": "PO RAW-confirmed LIVE 2026-06-15T14:30Z: call post_agent_signal({type,ts,tier,summary}) -> MCP -32602; live tool requires {from_agent,to_agent,signal_type(enum),payload}. Flow emit sites: docs/agents/system-auditor/flow/main.md L193,L482,L509.",
+        "root_cause": "system-auditor flow emits the historic {type,ts,summary,checks} shape; live post_agent_signal schema is {from_agent,to_agent,signal_type in enum,payload}. The 4 auditor types (microservice_degraded/data_stale/db_integrity_breach/system_health_report) are NOT in the live enum (urgent_news|price_anomaly|cross_validate|suppress|chain_catalyst|fundamental_validation|price_confirmation|verified_chain|signal_feedback|legal_risk|verified_decision).",
+        "why_not_drop_in": "Not a mechanical arg-rename: no live enum value maps to health/degrade/breach. Needs a design decision — (A) extend the post_agent_signal enum + payload contract on the tool side (dev-mcp-server), OR (B) remap auditor findings onto existing enum + carry detail in payload, OR (C) re-sink auditor health to signal_queue/DASHBOARD only and stop using post_agent_signal. BA decomposes, architect picks the option, then dev impl + agent-father rewrites the 3 emit blocks.",
+        "generic_mandate": "Fix must cover ALL THREE emit sites (L193 data_stale, L482 db_integrity_breach, L509 system_health_report) + the L16 doc note, not just one. /goal#2.",
+        "verification_gate": "LIVE: after fix, a real system-auditor cycle writes >=1 row reachable on the coordination bus (signals.db / signal_queue) with NO -32602; RAW-verify by reading the bus row, not a green log.",
+        "hold_reason": "HELD-for-BA: BA + architect lanes both occupied this tick (BA-VN-MACRO-TOOLING in_progress, ARCH-CRON-SCHEDULER-RELIABILITY in_progress). Unpark to ready once a non-coding decomposition lane frees. Design-gated, NOT a clean coding FIX -> do not dispatch a coding lane.",
+        "related": [
+          "SYS-FUNC-05-FIX",
+          "FU-AUDITOR-D4-SIGNAL-ID"
+        ]
       }
     ],
     "closed_sprints": [
