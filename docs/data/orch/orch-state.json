@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T22:20:27Z",
-  "_updated_by": "po-s66",
+  "_updated_at": "2026-06-15T22:28:45Z",
+  "_updated_by": "po-s67",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T22:20:27Z",
-    "updated_by": "po-s66",
-    "active_task_id": "FIX-ERRAUDIT-W1-MCP-P0",
-    "next_agent": "ba",
-    "note": "HEAD SSOT COLLAPSE + RECONCILE (po-s66, signal head-drift-po-s64-vs-task-board-head). Top-level .head is now the SINGLE canonical dispatch SSOT (all consumers — dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim — read it). RECONCILED to the most-recent real dispatch: FIX-ERRAUDIT-W1-MCP-P0 (next_agent=ba, dispatched 2026-06-15T21:23:56Z by po-s65, which had wrongly written .task_board.head and left top-level .head stale at FIX-BCTC-BANK-PDF-OCR-RASTERIZE/po-s64 20:17:53Z). FIX-BCTC-BANK-PDF-OCR-RASTERIZE stays in_progress (dev-pdf-extractor) tracked via its own in_progress row + router lock — independent of this pointer; not blocked. ARCH-CRON-SCHEDULER-RELIABILITY architect-design lane untouched. WIP<=2 honored (no dispatch change, pointer-only reconcile). DURABLE FIX: .task_board.head DEPRECATED -> non-routing stub; 3 writer scripts (po-s65, po-s54-macro-accuracy-pair-promote, po-s54-vn-macro-ba-dispatch) retargeted to top-level .head; canonical rule documented in orch-state-access.md §4. PUSH HELD (PO deferred call). Commit orch-state by EXPLICIT PATH."
+    "updated_at": "2026-06-15T22:28:45Z",
+    "updated_by": "po-s67",
+    "active_task_id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
+    "next_agent": "dev-pdf-extractor",
+    "note": "HEAD RECONCILE (po-s67). FIX-ERRAUDIT-W1-MCP-P0 flipped in_progress->done_verified (QA aaf65b10 GREEN + router RAW-verified at db7ef001, fix_commit 2d07011d) so .head no longer points at it. Advanced to the one genuinely-running coding lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE (dev-pdf-extractor, dispatched po-s64 20:17:53Z, worktree). Promoted FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE backlog->ready for the freed slot (WIP<=2; router dispatches, po-s67 did NOT spawn). ARCH-CRON-SCHEDULER-RELIABILITY architect-design lane untouched. Top-level .head remains the SINGLE canonical dispatch SSOT; .task_board.head stays the po-s66 deprecated non-routing stub. PUSH HELD (PO deferred call). Commit orch-state by EXPLICIT PATH."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12051,44 +12051,6 @@
         "created_by": "po-s64"
       },
       {
-        "id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 2,
-        "priority": "P1",
-        "size": "L",
-        "status": "BACKLOG",
-        "zone": "apps/mcp-server/",
-        "route_to": "dev-mcp-server",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "ba",
-        "title": "Wave-2 helpers: withDeadline<T> + macroFetch<T> — close the whole bounded-fetch / F-MACRO-FETCH-DEADLINE cluster in one edit",
-        "desc": "Land withDeadline<T>(fn(signal),ms,label) [throws typed DeadlineError] and macroFetch<T>(path,body,{deadlineMs}) [discriminated {ok}|{degrade}]. macroFetch one-edit migrates 8 macro-proxy sites: macroTools:446, tradeBalance:96, bop:119, liquidityState:137, cpiComponents:95, macroIndicatorsVn:80, dinhGia:56, carry:57+134 (carries F-MACRO-FETCH-DEADLINE everywhere; deletes ~25 lines x 8). withDeadline migrates the unbounded-fetch-hang P1s: muasamcong:216, sscInsider:134, newsHeadlinesRefreshJob:41(+pushToMcpServer:79), bctcPdfPullJob:165, server.ts:642 — a HANG (not just a connection ERROR) starves the well-written degrade path; deadline MUST be < gateway 60s budget. Promotes the inline copies already in taOhlcvBackfillJob/deepFetchVpsJob to one util.",
-        "replaces_sites": [
-          "macroTools:446",
-          "tradeBalance:96",
-          "bop:119",
-          "liquidityState:137",
-          "cpiComponents:95",
-          "macroIndicatorsVn:80",
-          "dinhGia:56",
-          "carryTools:57+134",
-          "muasamcong:216",
-          "sscInsider:134",
-          "newsHeadlinesRefreshJob:41",
-          "bctcPdfPullJob:165",
-          "server.ts:642",
-          "mcp-interface-05"
-        ],
-        "recurrence_class": "graceful-degrade-needs-bounded-fetch / F-MACRO-FETCH-DEADLINE",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: a stalled upstream (sleep > deadline) makes the wrapped call THROW DeadlineError within deadlineMs < gateway budget -> structured degrade NOT a gateway-timeout false 'gateway down'; macroFetch degrade envelope distinct from a real 200; LIVE-verified across timing.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-interface-01/05, mcp-infra-01/03, mcp-domain-sched-02/03, mcp-interface-08)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65"
-      },
-      {
         "id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
         "type": "FIX",
         "epic": "ERROR-AUDIT-2026-06-15",
@@ -17317,6 +17279,51 @@
         "rebuild_evidence": "stock-price force-recreated: image .Created 2026-06-15T12:04:35Z > commit 8fde56ef 11:58:49Z (UTC); health=healthy; RestartCount=0; running=true; 13 peers Up (force-recreate, NEVER down — none killed).",
         "live_gate_evidence": "router-run (NOT relayed): /app/data mount resolved = named volume vn-market-intelligence-mcp_market_data (NOT host decoy). market_prices: rows price>1M == 0 (NO poison); MAX 192600 VIC; spot FPT 73600 / VCB 61600 / VNM 59700 sane thousands-VND; VN30 1962.48 / VNINDEX 1799.31 index scale (NOT inflated). call_tool get_ticker_intelligence({code:VCB}) => 61,600 VND fresh ts 12:06:09Z (after ops 12:05:02Z => genuine live recompute). Staleness-honesty code present price_resolution.go:138. Plausibility per /goal#1 PASS.",
         "push_disposition": "HOLD — bundle; PO pushes after 2026-06-16 behavioral gates close."
+      },
+      {
+        "id": "FIX-ERRAUDIT-W1-MCP-P0",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 1,
+        "priority": "P0",
+        "size": "M",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "route_to": "dev-mcp-server",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "ba",
+        "title": "Wave-1 P0 data-masking pair (mcp-server): derive served status from query-success + fail-loud the 6 logless ticker-intelligence catches",
+        "desc": "Two P0 fabricated-value sites on live served paths. (A) marketContextBuilder.ts:417 hardcodes const status=\"ok\" over 3 swallowed DB queries (388/390,401-403,413-415) -> EVERY cowork agent reads a fabricated healthy status at cycle start (consumed by getCycleBootstrap.ts:105 + get_market_*). FIX: status DERIVED from query-success -> 'degraded: DB read failed' when any of the 3 reads throws. (B) tickerIntelligenceTools.ts:119 (+139/171/206/266/298) — get_ticker_intelligence builds 6 sections each a bare LOGLESS catch{} returning its Vietnamese no-data default; a SQL error/missing-column/schema-drift/DB-lock is INDISTINGUISHABLE from 'this stock has no data' served to the user. FIX: each section logs on a THROWN error and emits a tagged-degraded marker (e.g. '(loi truy van)') distinct from the genuine no-data default. SMALLEST CORRECT CHANGE — pure error->marker, NO fetch surface touched, no new helper required for this P0 (helper runSection/failLoud lands in Wave-2).",
+        "files": [
+          "apps/mcp-server/src/domain/services/marketContextBuilder.ts",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/tickerIntelligenceTools.ts"
+        ],
+        "recurrence_class": "passive-health-masks-dead-data + BCTC-silent-0-rows-served-to-user",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: lock the named-volume market.db (or force a query throw) -> marketContextBuilder emits 'degraded: ...' NOT 'ok | 0 alerts'; get_ticker_intelligence(any ticker) under a DB error emits a tagged-degraded marker '(loi truy van)' NOT 'Gia hien tai: (khong co du lieu)'; a genuinely data-less ticker STILL shows the plain no-data default (no false-degraded). RAW-verified LIVE vs named-volume DB, container rebuilt.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P0 mcp-domain-sched-04, mcp-interface-03)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "dispatched_at": "2026-06-15T21:23:56Z",
+        "dispatched_by": "po-s65",
+        "owner_agent": null,
+        "baseline_pass_note": "WIP<=2: this is the 1 free coding lane (pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE active).",
+        "fix_commit": "2d07011d",
+        "verified_sha": "db7ef001",
+        "qa_sha": "aaf65b10",
+        "done_verified_ts": "2026-06-15T22:28:45Z",
+        "done_verified_by": "po-s67",
+        "review_entered_ts": "2026-06-15T22:28:45Z",
+        "rebuild_required": "yes",
+        "rebuild_done": true,
+        "rebuild_evidence": "image .Created 2026-06-15T21:57:10Z > commit 2026-06-15T21:49:08Z (rebuild AFTER code change verified).",
+        "generic_verified": true,
+        "raw_evidence": "Fix markers present at HEAD db7ef001 in both files: marketContextBuilder.ts emits dbError/'degraded: DB read failed'/'? alerts'; tickerIntelligenceTools.ts 6x console.error('[buildSectionN][ticker]') + 6x '(loi truy van)'. Live get_market_context serves 'SYSTEM STATUS: ok | 557 alerts pending'.",
+        "qa_evidence": "QA aaf65b10 GREEN on all 8 TCs: healthy 'ok'+real pending; genuine no-data '(khong co du lieu)'; forced-failure both sites -> console.error fires + degraded markers + no-throw; generic across VCB/VNM/XYZTEST; marker distinctness; rebuild image .Created 21:57:10Z > commit 21:49:08Z; TS gate clean on the 2 changed files (lone TS2367 pre-existing in untouched FIX-SIGNAL-CONFIDENCE test).",
+        "forced_failure_method": "Mock-DB injection into the actual source at 2d07011d (NOT live SQLITE_BUSY sidecar). JUSTIFIED: market.db is WAL mode, external BEGIN EXCLUSIVE cannot block an already-open reader connection. Accepted by PO.",
+        "router_raw_verify": true,
+        "done_verified_note": "Pre-verified evidence recorded by po-s67 board-flip; not re-run."
       }
     ],
     "head": {
@@ -17406,36 +17413,6 @@
         "claimed_by": "dev-team",
         "dispatched_at": "2026-06-15T20:17:53Z",
         "dispatched_by": "po-s64"
-      },
-      {
-        "id": "FIX-ERRAUDIT-W1-MCP-P0",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 1,
-        "priority": "P0",
-        "size": "M",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "route_to": "dev-mcp-server",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "ba",
-        "title": "Wave-1 P0 data-masking pair (mcp-server): derive served status from query-success + fail-loud the 6 logless ticker-intelligence catches",
-        "desc": "Two P0 fabricated-value sites on live served paths. (A) marketContextBuilder.ts:417 hardcodes const status=\"ok\" over 3 swallowed DB queries (388/390,401-403,413-415) -> EVERY cowork agent reads a fabricated healthy status at cycle start (consumed by getCycleBootstrap.ts:105 + get_market_*). FIX: status DERIVED from query-success -> 'degraded: DB read failed' when any of the 3 reads throws. (B) tickerIntelligenceTools.ts:119 (+139/171/206/266/298) — get_ticker_intelligence builds 6 sections each a bare LOGLESS catch{} returning its Vietnamese no-data default; a SQL error/missing-column/schema-drift/DB-lock is INDISTINGUISHABLE from 'this stock has no data' served to the user. FIX: each section logs on a THROWN error and emits a tagged-degraded marker (e.g. '(loi truy van)') distinct from the genuine no-data default. SMALLEST CORRECT CHANGE — pure error->marker, NO fetch surface touched, no new helper required for this P0 (helper runSection/failLoud lands in Wave-2).",
-        "files": [
-          "apps/mcp-server/src/domain/services/marketContextBuilder.ts",
-          "apps/mcp-server/src/interface/mcp/tools/market-data/tickerIntelligenceTools.ts"
-        ],
-        "recurrence_class": "passive-health-masks-dead-data + BCTC-silent-0-rows-served-to-user",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: lock the named-volume market.db (or force a query throw) -> marketContextBuilder emits 'degraded: ...' NOT 'ok | 0 alerts'; get_ticker_intelligence(any ticker) under a DB error emits a tagged-degraded marker '(loi truy van)' NOT 'Gia hien tai: (khong co du lieu)'; a genuinely data-less ticker STILL shows the plain no-data default (no false-degraded). RAW-verified LIVE vs named-volume DB, container rebuilt.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P0 mcp-domain-sched-04, mcp-interface-03)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65",
-        "dispatched_at": "2026-06-15T21:23:56Z",
-        "dispatched_by": "po-s65",
-        "owner_agent": null,
-        "baseline_pass_note": "WIP<=2: this is the 1 free coding lane (pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE active)."
       }
     ],
     "ready": [
@@ -17604,6 +17581,47 @@
         "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P0 pdf-extractor-02, pdf-extractor-03)",
         "created_at": "2026-06-15T21:23:56Z",
         "created_by": "po-s65"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 2,
+        "priority": "P1",
+        "size": "L",
+        "status": "READY",
+        "zone": "apps/mcp-server/",
+        "route_to": "dev-mcp-server",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "ba",
+        "title": "Wave-2 helpers: withDeadline<T> + macroFetch<T> — close the whole bounded-fetch / F-MACRO-FETCH-DEADLINE cluster in one edit",
+        "desc": "Land withDeadline<T>(fn(signal),ms,label) [throws typed DeadlineError] and macroFetch<T>(path,body,{deadlineMs}) [discriminated {ok}|{degrade}]. macroFetch one-edit migrates 8 macro-proxy sites: macroTools:446, tradeBalance:96, bop:119, liquidityState:137, cpiComponents:95, macroIndicatorsVn:80, dinhGia:56, carry:57+134 (carries F-MACRO-FETCH-DEADLINE everywhere; deletes ~25 lines x 8). withDeadline migrates the unbounded-fetch-hang P1s: muasamcong:216, sscInsider:134, newsHeadlinesRefreshJob:41(+pushToMcpServer:79), bctcPdfPullJob:165, server.ts:642 — a HANG (not just a connection ERROR) starves the well-written degrade path; deadline MUST be < gateway 60s budget. Promotes the inline copies already in taOhlcvBackfillJob/deepFetchVpsJob to one util.",
+        "replaces_sites": [
+          "macroTools:446",
+          "tradeBalance:96",
+          "bop:119",
+          "liquidityState:137",
+          "cpiComponents:95",
+          "macroIndicatorsVn:80",
+          "dinhGia:56",
+          "carryTools:57+134",
+          "muasamcong:216",
+          "sscInsider:134",
+          "newsHeadlinesRefreshJob:41",
+          "bctcPdfPullJob:165",
+          "server.ts:642",
+          "mcp-interface-05"
+        ],
+        "recurrence_class": "graceful-degrade-needs-bounded-fetch / F-MACRO-FETCH-DEADLINE",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: a stalled upstream (sleep > deadline) makes the wrapped call THROW DeadlineError within deadlineMs < gateway budget -> structured degrade NOT a gateway-timeout false 'gateway down'; macroFetch degrade envelope distinct from a real 200; LIVE-verified across timing.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-interface-01/05, mcp-infra-01/03, mcp-domain-sched-02/03, mcp-interface-08)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "promoted_at": "2026-06-15T22:28:45Z",
+        "promoted_by": "po-s67",
+        "ready_note": "ERROR-AUDIT-2026-06-15 Wave-2 successor for the freed apps/mcp-server/ coding slot (W1-MCP-P0 now done_verified). WIP<=2: pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE still running -> this is the 1 free slot. Left in ready[] for router to dispatch on its own cadence; NOT spawned by po-s67."
       }
     ],
     "review": [
@@ -17797,6 +17815,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-15T22:20:27Z",
-  "updated_by": "po-s66"
+  "updated_at": "2026-06-15T22:28:45Z",
+  "updated_by": "po-s67"
 }
