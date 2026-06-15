@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-15 01:38 UTC | **Sprint:** F-NSO-SELECTOR (bai-top selector stale recon)
+**Last updated:** 2026-06-15 17:11 UTC | **Sprint:** OPS-BCTC-PIPELINE-RECON (BCTC pipeline dead 34.4h)
 
 ---
 
@@ -22,7 +22,8 @@ Zone: ops-zone (VPS / infra)
 | sbv-rates | 2026-05-13 | healthy | none (Akamai present, not blocking) |
 | hsx-bctc | 2026-05-13 09:17 | FIXED (HNX params corrected) / HSX SPA unchanged | none |
 | hsx-bctc (api.hsx.vn) | 2026-05-15 04:45 | BLOCKER — /n/ JSON REST endpoints unreachable from VPS. Envoy route-level block, not geo-IP. | Envoy route table |
-| ssc-bctc-newsearch | 2026-06-06 16:45 | VIABLE-CURL — full recipe proven | none |
+| ssc-bctc-newsearch | 2026-06-15 17:11 | FIXED — afrLoop rollover resolved; HOSE tickers OK; UPCOM tickers blocked by c111+HNX session | none |
+| hnx-bctc-post-api | 2026-06-15 17:11 | BROKEN — 302 for stateless POST; requires session cookie GET first | ASP.NET session |
 
 ---
 
@@ -38,6 +39,35 @@ Zone: ops-zone (VPS / infra)
 | 2026-06-04 08:10 | vietstock-agm-plan | RECON-AGM-1 | FETCHABLE. POST + CSRF warmup. No CF. Signal dropped. |
 | 2026-06-06 16:45 | ssc-bctc-newsearch | SPIKE-VPS-SSC-CURL-RECIPE | VIABLE-CURL. Full 3-step recipe proven. Signal dropped. |
 | 2026-06-09 03:30 | vn-news-rss | FIX-NEWS-VPS-CRASH-LOOP | Bug A: false-UNHEALTHY from timestamp format mismatch (T vs space) in vpsHealthPoller.ts MAX() — dev-zone fix required. Bug B: cursor jump from future-dated pubDate — VPS cap applied. |
+
+---
+
+## c014 · 2026-06-15T17:11Z · OPS-BCTC-PIPELINE-RECON — BCTC Dead 34.4h: afrLoop Rollover + HNX Session
+
+Trigger: P0 incident — BCTC pipeline dead ~34.3h. Last push HUT Q1/2026 at 2026-06-13T23:45Z. VPS queue stuck at 9 items since.
+
+**ROOT CAUSE A (FIXED): SSC afrLoop counter rollover 26xxx→27xxx**
+
+Between 2026-06-15T11:55Z and 16:54Z the Oracle ADF `_afrLoop` counter value transitioned from `26994xxx` to `27012xxx`. The extraction regex `r"(26\d{14,16})"` matched nothing → fallback hardcoded value `"26000000000000000"` used → step2 GET returned loopback JS (6.8KB) not ADF page (83KB) → ViewState absent → all SSC searches 0 rows.
+
+Fix deployed: regex changed to `r"(\d{15,18})"` (prefix-agnostic). winId extraction moved to positional parse of `runLoopback()` 8th argument. Verified: VCB Q1/2026 (8.5MB) + FPT Q1/2026 (2.7MB) downloaded.
+
+**ROOT CAUSE B (UNFIXED): HNX POST endpoints require session cookie**
+
+Both HNX endpoints (`NextPageTinCPNY_CBTCPH`, `NextPageTCPHUpCoM`) now return HTTP 302 → `/Home/Error` for stateless POSTs. A prior GET to the referrer URL is required to set cookie `616a3745ee32423b8ef6bed543a12282`. The discovery script's `_http_post` makes stateless POSTs. Affects all 9 queued HNX/UPCOM tickers. Fix owner: dev-vps-crawls.
+
+**PRE-EXISTING A (DEPLOYED): exchange_code HOSE-only excluded UPCOM tickers**
+
+`exchange_code = _EXCHANGE_CODES.get("HOSE","1")` → soc3="1" filtered out UPCOM tickers on SSC. Fixed to `exchange_code = ""` (all exchanges). ACV, VEA, VNH now visible on SSC.
+
+**PRE-EXISTING B (UNFIXED): SSC c111 empty for UPCOM/state-entity filers**
+
+ACV Q1/2026 on SSC at idx=15 (filed 06/05/2026) but c111 is empty. Matching logic skips it. Period info in c3: "Báo cáo tài chính quý 1/ 2026". Fix: fallback to c3 when c111 empty. Owner: dev-vps-crawls.
+
+**Queue status:** 9 items remain (ACV, BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA). ACV recoverable with c3 fix + HNX session fix. Others need HNX session fix; most appear to have not filed Q1/2026 on SSC yet.
+
+Signal: `docs/signals/dev-vps-crawls-2026-06-15T17-11-01Z.json`
+Recon: `docs/vps-sources/ssc-bctc-afrloop-incident/recon.md`
 
 ---
 

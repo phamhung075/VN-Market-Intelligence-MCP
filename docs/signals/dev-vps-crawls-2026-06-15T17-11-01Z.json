@@ -1,0 +1,66 @@
+{
+  "signal_type": "recon_complete",
+  "from_agent": "ops-vps-fetch",
+  "to_agent": "dev-vps-crawls",
+  "timestamp": "2026-06-15T17:11:01Z",
+  "task_id": "OPS-BCTC-PIPELINE-RECON",
+  "priority": "P0",
+  "recon_doc": "docs/vps-sources/ssc-bctc-afrloop-incident/recon.md",
+  "source_file": "vps-scripts/discover-bctc-urls-browser.py",
+  "fixes_applied": [
+    {
+      "id": "FIX-BCTC-AFRLOOP-ROLLOVER",
+      "status": "DEPLOYED",
+      "description": "SSC afrLoop regex r'(26\\d{14,16})' → r'(\\d{15,18})' to handle counter prefix rollover 26xxx→27xxx. winId extraction moved to runLoopback() positional arg parser.",
+      "verified": "VCB Q1/2026 8.5MB PDF downloaded; FPT Q1/2026 2.7MB downloaded"
+    },
+    {
+      "id": "FIX-BCTC-EXCHANGE-CODE",
+      "status": "DEPLOYED",
+      "description": "exchange_code changed from hardcoded '1' (HOSE only) to '' (all exchanges). UPCOM tickers (ACV, VEA, VNH) now visible on SSC.",
+      "verified": "ACV shows 15 rows on SSC with soc3=''; VEA 15 rows; VNH 2 rows"
+    }
+  ],
+  "fixes_needed": [
+    {
+      "id": "FIX-HNX-SESSION-COOKIE",
+      "priority": "P1",
+      "description": "HNX POST endpoints now return 302 without prior GET session cookie. Add GET referrer page before POST in _discover_hnx_upcom() using shared CookieJar.",
+      "recipe": "GET https://hnx.vn/vi-vn/thong-tin-cong-bo-up-hnx.html (sets cookie '616a3745ee...') THEN POST NextPageTCPHUpCoM with -b cookie_jar → HTTP 200 with results",
+      "affected_tickers": ["ACV", "BDI", "DAG", "DLC", "JSH", "SIS", "VDC", "VNH", "VEA"],
+      "function": "_discover_hnx_upcom() in vps-scripts/discover-bctc-urls-browser.py"
+    },
+    {
+      "id": "FIX-SSC-C111-EMPTY-FALLBACK",
+      "priority": "P1",
+      "description": "SSC c111 (document summary) is empty for UPCOM/state-entity filers (ACV, etc.). Period info is in c3 (report type: 'Báo cáo tài chính quý 1/ 2026'). _ssc_parse_rows() must fall back to c3 when c111 is empty.",
+      "affected_tickers": ["ACV"],
+      "q1_2026_data_confirmed": "ACV idx=15: c3='Báo cáo tài chính quý 1/ 2026' filed 06/05/2026",
+      "function": "_ssc_parse_rows() in vps-scripts/discover-bctc-urls-browser.py"
+    },
+    {
+      "id": "FIX-BCTC-ZERO-URL-ALERT",
+      "priority": "P2",
+      "description": "bctcQueueEnricher returns 0 URLs silently for all tickers when discovery is broken. Add alert when 0 URLs returned for ALL tickers in 2+ consecutive cycles.",
+      "owner": "dev-mcp-server-enricher"
+    },
+    {
+      "id": "FIX-BCTC-FRESHNESS-GATE",
+      "priority": "P2",
+      "description": "BCTC health check is liveness-only (service running). Add active freshness gate: if no successful push in >12h when queue is non-empty, trigger alert.",
+      "owner": "dev-mcp-server"
+    }
+  ],
+  "incident_summary": {
+    "outage_duration_hours": 34.4,
+    "last_success": "2026-06-13T23:45:12Z",
+    "ticket": "2nd recurrence — first was FIX-BCTC-VPS-PIPELINE-STALE-5D",
+    "root_A": "SSC afrLoop counter rolled 26xxx→27xxx; regex hardcoded to match 26xxx prefix only",
+    "root_B": "HNX POST endpoints now require session cookie (GET first); affects all 9 queued HNX/UPCOM tickers",
+    "root_C_D": "Pre-existing: exchange_code=HOSE filtered out UPCOM tickers; c111 empty fallback to c3 missing",
+    "vps_status": "healthy (disk 25%, memory ok, service running)",
+    "hose_recovery": "HOSE tickers (VCB, FPT confirmed) recoverable via SSC with Root A fix applied",
+    "remaining_queue": 9,
+    "remaining_blocked_reason": "HNX session + no Q1 filing on SSC for most of the 9"
+  }
+}

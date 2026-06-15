@@ -759,8 +759,11 @@ def discover_from_ssc_curl(
     code = code.upper()
     quarter = quarter.upper()
 
-    # Determine exchange code; default to empty (all exchanges) for robustness
-    exchange_code = _EXCHANGE_CODES.get("HOSE", "1")  # HOSE=1 default
+    # FIX-BCTC-EXCHANGE-CODE (2026-06-15): comment said "pass soc3='' for all exchanges"
+    # but the code used _EXCHANGE_CODES.get("HOSE","1") = "1", filtering to HOSE only.
+    # UPCOM tickers (ACV, VEA, VNH, etc.) were invisible because soc3=1 excludes them.
+    # Fix: always use "" (all exchanges) — SSC handles dedup internally.
+    exchange_code = ""  # search all exchanges: HOSE=1, HNX=0, UPCOM=2 are all included
 
     print(f"  [SSC-CURL] start code={code} {year} {quarter}", file=sys.stderr)
 
@@ -781,14 +784,23 @@ def discover_from_ssc_curl(
         print("  [SSC-CURL] no JSESSIONID after step1", file=sys.stderr)
         return None
 
-    m_loop = re.search(r"(26\d{14,16})", body1)
-    if not m_loop:
-        # Fallback: try any 16-digit number starting with 26
-        m_loop = re.search(r"\b(26\d{14})\b", body1)
-    afr_loop = m_loop.group(1) if m_loop else "26000000000000000"
+    # FIX-BCTC-AFRLOOP-ROLLOVER (2026-06-15): SSC afrLoop counter rolled from
+    # 26xxx to 27xxx on ~2026-06-15T12-16Z. Old regex r"(26\d{14,16})" only
+    # matched values starting with "26" → fell through to hardcoded fallback
+    # "26000000000000000" → step2 GET returned the JS loopback again (not ADF page)
+    # → ViewState not found → all SSC searches returned 0 rows.
+    # Fix: match any 15-18 digit decimal number (Oracle ADF counter is epoch-derived,
+    # prefix is not stable). Also fix winId: parse from the runLoopback() positional
+    # args (8th arg) rather than a loose string scan that mismatched other tokens.
+    m_loop = re.search(r"(\d{15,18})", body1)
+    afr_loop = m_loop.group(1) if m_loop else "27000000000000000"
 
-    m_win = re.search(r"['\"]([wW][a-zA-Z0-9]{5,15})['\"]", body1)
-    win_id = m_win.group(1) if m_win else "w0"
+    m_win = re.search(
+        r"runLoopback\(\s+11,\s+'_afrLoop',\s+'(\d+)',\s+'_afrWindowMode',"
+        r"\s+'Adf-Window-Id',\s+'_afrPage',\s+'',\s+'([^']+)'",
+        body1,
+    )
+    win_id = m_win.group(2) if m_win else "w0"
 
     print(
         f"  [SSC-CURL] step1 OK jsessionid=...{jsessionid[-8:]} "
