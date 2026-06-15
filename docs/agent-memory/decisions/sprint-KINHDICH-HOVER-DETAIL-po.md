@@ -111,3 +111,12 @@ why-change: minting the requested task would have been duplicate debt against do
 - (c) mint/repair dev task — already satisfied: FIX-BCTC-ENRICH-SILENT-0ROWS exists, correctly zone-routed (dev-pdf-extractor+dev-mcp-server, multi), #1 READY P0, minted 17:19:55Z from OPS-BCTC-PIPELINE-RECON.
 **why-decision:** Root already tracked + correctly diagnosed (B02-TCTD bank-form silent-0-rows; CTG/VCB are banks). Only gap = symptom not linked to root + WIP=2 full (both occupants live). Single idempotent annotation closes the loop without dup or premature promotion.
 **why-change:** #2776 is the analyst's INTERNAL label, not a fix/report id; "undeployed" premise was wrong (queued-pending-dispatch, not committed-pending-rebuild). Escalation was NOT dropped — picked up today.
+
+### STEP po-S8 · po · 2026-06-15T18:35:18Z
+**task-id:** FIX-BCTC-ENRICH-SILENT-0ROWS
+**what-done:** Promoted the #1 user-facing P0 ready->in_progress (dev-pdf-extractor lead + dev-mcp-server co-owner) and closed BA-VN-MACRO-TOOLING in_progress->done (SPEC-COMPLETE) to free the lane; advanced .head.
+**what-considered:**
+- (a) Hold the P0 again, WIP=2 full — REJECTED: BA-VN-MACRO-TOOLING is a planning-complete SPEC row (owner=ba, type=SPEC; BA->arch->pm->probe->probe-fold all router RAW-reverified; 20-task WAVE plan in active_sprints), its own po_dispatch_note states ZERO dev WIP consumed — it is NOT a coding lane.
+- (b) Promote a review[] item to done_verified to make room — REJECTED: none verifiable this tick (vnstock gate UNMET until 06-16 08:30Z; confidence needs organic non-50 DB spread not on tool surface; RSI gate = next market-open; ARCH-SHIP PARKED).
+**why-decision:** Only 1 actual active coding lane exists (ARCH-CRON = architect-design phase, dev-mcp-server not yet coding). The P0's LEAD dev-pdf-extractor is a DISTINCT free specialist. P0 is TRUE root of get_bctc_full(VCB/CTG) outage + cowork '#2776' release-block (CTG watchlist bank 27 cycles); live-corroborated by SLA-breach signal 6225 (bctc stale 2191min). Closing the parked SPEC shell frees the slot without touching its tracked WAVE work. Coding lanes after = 1 (ARCH-CRON architect-design) + P0 <= WIP cap.
+**why-change:** Corrects po-S7's "WIP=2 full (both occupants live)" — re-RAW-verified BA-MACRO is planning-complete + zero-WIP, so the lane was effectively free; holding the user-facing P0 behind a parked planning shell would be a status-lags-ground-truth error.
