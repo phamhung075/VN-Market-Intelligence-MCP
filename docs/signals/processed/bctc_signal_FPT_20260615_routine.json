@@ -38,5 +38,11 @@
     "brent_usd": 83.91,
     "brent_threshold_crossed": true
   },
-  "emitted_at": "2026-06-15T00:10:00Z"
+  "emitted_at": "2026-06-15T00:10:00Z",
+  "_processed": {
+    "fingerprint": "c3d8a387284e34f64f9d5464fb0ba4d743e6a7489daf808e4b5492fda580d710",
+    "processedAt": "2026-06-15T00:27:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

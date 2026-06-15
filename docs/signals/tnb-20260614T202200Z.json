@@ -1,9 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "audit-handoff",
-  "payload": "docs/handoffs/tnb-audit-latest.md",
-  "priority": "high",
-  "createdAt": "2026-06-14T20:22:00Z",
-  "summary": "c95 NEEDS_ATTENTION IMPROVING — evening 3.5/6 (up from 3/6); FIX-MCP-500-SYMBOL-TO-STRING NEW HIGH (ops rebuild needed); F-EOD-SCHEDULE-STALE MONITORING (gate G1-G4 Mon 2026-06-16); F-BCTC-CTG-CRITICAL cycle 21+ unchanged; 5 QA tasks APPROVED (T1,T2,FIX-REFINE,FIX-ISO-WEEK,FIX-OPS); AC-1 holding 9 cycles"
-}
