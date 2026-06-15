@@ -4,6 +4,36 @@
 
 ---
 
+## c96 · 2026-06-15T20:13Z
+
+**Status:** NEEDS_ATTENTION | Direction: IMPROVING | Chef: PIPELINE PARTIAL (dishes fired, cowork-schedule.json last_fired NOT updated for morning/EOD — G3/G4 FAIL)
+
+**Layer scores (audited dishes):**
+- Morning 05:23Z: 5.5/6 GOOD (L1✓ L2✓ L3-partial-VIRA L4✓ L5-partial-hexagram-501 L6✓) | 9-step: 7.5/9 GOOD
+- EOD 08:45Z: 6/6 GOOD (L1✓ L2✓ L3-partial-VIRA L4✓ L5✓-hexagram-available-Lao-Am L6✓) | 9-step: 7.5/9 GOOD
+- Evening 19:37Z: STATUS UNKNOWN at audit time (20:13Z — 28min post-expected-fire, no notebook entry yet)
+
+**G1-G4 Verification (FIX-COWORK-GUARANTEED-BACKSTOP):**
+- G1 chef-morning fired Mon: PASS (notebook 05:23Z PUBLISHED)
+- G2 chef-eod fired Mon: PASS (notebook 08:45Z PUBLISHED)
+- G3 cowork-schedule last_fired updated for morning: FAIL (still 2026-06-12T05:21:00Z)
+- G4 cowork-schedule last_fired updated for eod: FAIL (still 2026-06-11T08:51:00Z)
+- chef-intraday DID update (02:21:38Z) — morning/eod guaranteed slots have a different (broken) update path
+
+**New findings (HIGH):**
+- **F-G3-G4-COWORK-LASTFIRED-NOT-UPDATED (NEW, HIGH):** FIX-COWORK-GUARANTEED-BACKSTOP (45553a28) restored trigger_status=active and dishes DO fire (G1/G2 PASS). But cowork-schedule.json last_fired is NOT written for chef-morning or chef-eod on 2026-06-15. Intraday DID update. Guaranteed-slot last_fired write path broken — Layer-B dedup/re-arm logic reads stale timestamps and may re-fire erroneously. Requires dev investigation: why does intraday update but morning/eod do not?
+
+**Improving signals:**
+- EOD dish: first 6/6 layer score in recent cycles. Lão Âm correctly cited, hexagram available (not 501). Causal chains verified. AF-1/AF-2 clean.
+- Morning dish: 5.5/6 (only L3/L5 partial — structural gaps, not methodology errors). Highest morning score in 5+ cycles.
+- adversarial_gate: PASS (banking SLOWDOWN vs utilities EXPANSION competing thesis resolved with conviction differential)
+
+**Carry-forward gaps:** F-BCTC-CTG-CRITICAL (CTG cycle 24+, VCB/D2D cycle 21+) | F3=PMI-sub | F4=VIRA | F9=business-context (22nd cycle) | F5=hexagram-501 (morning only; EOD had live hexagram) | F-EVENING-2026-06-15-UNKNOWN (LOW)
+
+**Actions:** Handoff written | Signal file emitted | Notebook committed (MCP unavailable — commit-mutex SKIPPED per C-2 FAIL-CLOSED) | WORK report pending (MCP unavailable)
+
+---
+
 ## c95 · 2026-06-14T20:13Z
 
 **Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: SUNDAY NO-MARKET (weekday slots correctly absent; evening status unknown at audit time)
