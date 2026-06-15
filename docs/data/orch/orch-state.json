@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T06:43:12Z",
+  "_updated_at": "2026-06-15T06:48:00Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T06:43:12Z",
+    "updated_at": "2026-06-15T06:48:00Z",
     "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null,
-    "note": "DEV-TEAM TICK 2026-06-15T06:30Z — RSI-integrity pair dispatched. FIX-CHEF-FABRICATED-TA-NUMBERS -> REVIEW: structural anti-fabrication gate VERIFIED (router RAW git+grep, commit a925e89a, chef.md-only) — Step 6.7 AF-1/AF-2 + pre-publish self-check forbid CHEF emitting numeric RSI with no live tool source (the user-flagged single-digit fabrication path). LIVE behavioral gate PENDING next chef-intraday dish ~07:13 UTC (router RAW-reads MARKET for zero numeric RSI, NOT forcing a dish — double-post risk). FIX-TA-GOSVC-NA-DESPITE-DEPTH still IN_PROGRESS (dev-technical-analysis, recon-first; supplies CHEF's real RSI source). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA observe gate, no dev WIP), BA-VN-MACRO-TOOLING (queued behind RSI pair). KEEP-PARK: ARCH-SHIP-WAVE-REAUDIT (mcp-server lane load-bearing)."
+    "note": "DEV-TEAM TICK 2026-06-15T06:47Z — FIX-TA-GOSVC-NA-DESPITE-DEPTH DONE_VERIFIED (router LIVE RAW gateway re-probe in REBUILT Go TA-svc container image sha256:e83b0dde @06:46:23Z, AFTER commit 33e7a094 @06:43:07Z; ops rebuild verified — all 13 peers survived, named-volume market.db mounted): get_technical_indicators now returns REAL RSI on 38-candle depth (VRE 39.9/VIC 34.7/VHM 35.5, mid-band, NO single-digit, NOT N/A), AGREEING with the report path (39.52/35.09/36.73) within ~1pt; MACD/BB/MA20 also populate. Root = Go GetCandles stub replaced w/ real SQLite query (33e7a094). === USER-FLAGGED SINGLE-DIGIT RSI CLASS NOW FULLY CLOSED on BOTH consumers: briefing path (ed77b9b0, prior arc) + canonical Go svc (33e7a094, this tick). === RESIDUAL peeled READY: FIX-TA-GOSVC-MA5-PRECISION (MEDIUM/S, recon-first) — Go MA5=N/A despite 38 candles + RSI ~1pt off report path; precision/parity only, does NOT reopen the flagged class. === STILL OPEN: FIX-CHEF-FABRICATED-TA-NUMBERS in REVIEW (structural anti-fabrication gate verified a925e89a; LIVE behavioral gate pending next chef-intraday dish ~07:13 UTC — router RAW-reads MARKET for zero numeric RSI, will NOT force a dish). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA observe gate), BA-VN-MACRO-TOOLING (queued). KEEP-PARK: ARCH-SHIP-WAVE-REAUDIT. === NEXT: 6 unpushed commits + this board chore — push is PO's authorized call after CHEF gate closes; CI flaky-suite aware (disjoint-set + green downstream SHA). SF-1 release at clean tick-end."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T06:43:12Z",
+    "_updated_at": "2026-06-15T06:48:00Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13992,6 +13992,37 @@
         "created_by": "po",
         "triaged_by": "po",
         "status_note": "DONE + done_verified (flow-doc, no rebuild)."
+      },
+      {
+        "id": "FIX-TA-GOSVC-NA-DESPITE-DEPTH",
+        "type": "FIX",
+        "title": "FIX-TA-GOSVC-NA-DESPITE-DEPTH — get_technical_indicators (Go TA svc) returns RSI/MA/BB N/A for VRE/VIC/VHM despite 38 real daily_ohlcv candles in the SAME named-volume market.db the mcp-server report path reads fine (RSI 39.5)",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "owner_agent": "dev-technical-analysis",
+        "status": "done_verified",
+        "priority": "high",
+        "size": "M",
+        "recon_first": true,
+        "root_cause": "canonical get_technical_indicators PRIMARY path calls the Go TA svc via computeTAIndicators (HTTP POST /ta/indicators). LIVE 2026-06-15T05:37Z that svc returned RSI(14) N/A '(can toi thieu 15 nen)', MA20/BB20 N/A (needs 20), MACD N/A (needs 34) for VRE/VIC/VHM => the Go svc sees <15 candles. BUT the Go svc container (vn-market-intelligence-mcp-technical-analysis-1, DB_PATH=/app/data/market.db) mounts the SAME named volume vn-market-intelligence-mcp_market_data as mcp-server (identical 290MB file+mtime) whose daily_ohlcv holds 38 real contiguous VRE candles (Apr23..Jun15). The mcp-server report path defaultComputeTa reads those 38 and computes RSI 39.52. Same DB, divergent rowcount => the bug is in apps/technical-analysis SQLitePriceRepository query/logic (wrong table? extra DISTINCT/JOIN? date filter? code/symbol+exchange-suffix mismatch? stale prepared-stmt schema?) OR in the computeTAIndicators HTTP request params (days window, symbol formatting). RECON-FIRST to locate which.",
+        "fix_spec": "RECON: (a) curl the Go svc /ta/indicators for VRE directly and inspect the candle count it loaded; (b) read apps/technical-analysis/pkg/infrastructure/repositories.go SQLitePriceRepository — confirm it SELECTs daily_ohlcv WHERE code=? (matching the report path) and count rows for VRE; identify the filter/JOIN/symbol-format that drops 38-><15. THEN make the Go svc read the same 38 candles the report path reads, so get_technical_indicators(VRE) returns RSI ~39.5 (== report path). GENERIC across all watchlist tickers (/goal#2). Add a Go test: a ticker with 38 daily_ohlcv rows yields a non-null RSI, not N/A.",
+        "verification_gate": "LIVE: get_technical_indicators(VRE/VIC/VHM) returns a plausible RSI (~35-40, matching the mcp-server report path defaultComputeTa) NOT N/A; both paths agree (same value, both on the 38-candle daily_ohlcv). Re-run scripts/verify-report-rsi-failclose.ts + cross-check the canonical tool.",
+        "baseline_pass": "ed77b9b0",
+        "source": "router LIVE RAW re-probe 2026-06-15T05:37-05:41Z during FIX-RSI-REPORT-FAILCLOSED done_verify — report path fixed but canonical (Go svc) diverges on same-DB depth",
+        "created_at": "2026-06-15T05:43:42Z",
+        "created_by": "dev-team",
+        "triaged_by": "dev-team",
+        "status_note": "Follow-on peeled from FIX-RSI-REPORT-FAILCLOSED LIVE verify. Distinct zone (Go TA svc). Canonical-tool depth under-read; does NOT affect the user MARKET report (which uses the now-fixed mcp-server report path). Next-tick dispatch after PO triage. Confirm Go-svc DB query first.",
+        "lane": "in_progress",
+        "dispatched_at": "2026-06-15T06:35:17Z",
+        "dispatch_tick": "2026-06-15T06:30Z",
+        "claimed_by": "dev-technical-analysis",
+        "po_dispatch_note": "Dispatched this tick as the RSI-integrity pair (cowork-flagged, user live-flagged single-digit RSI bug). Distinct zones (apps/technical-analysis vs docs/agents/unified-agent) — no collision; neither touches the held apps/mcp-server lane. recon_first honored. FIX-TA-GOSVC supplies the real RSI source as FIX-CHEF-FABRICATED lands the anti-fabrication rule.",
+        "done_verified_at": "2026-06-15T06:48:00Z",
+        "done_verified_by": "dev-team",
+        "done_commit": "33e7a094",
+        "rebuild_image": "sha256:e83b0dde802c0610ede28506c3c8504f8e89cb7faf01e8255dae9c24b8e37984",
+        "live_verify_verdict": "LIVE-VERIFIED (router independent gateway re-probe get_technical_indicators 2026-06-15T06:47Z in REBUILT technical-analysis container image sha256:e83b0dde @06:46:23Z — AFTER commit 33e7a094 @06:43:07Z; NOT ops/dev badge): the Go TA svc (PRIMARY path of get_technical_indicators) now returns REAL indicators on the 38-candle daily_ohlcv depth it previously under-read to N/A — VRE RSI(14)=39.9, VIC=34.7, VHM=35.5 — all mid-band, NO single-digit, NOT N/A, AGREEING with the report path defaultComputeTa (39.52/35.09/36.73) within 0.4-1.2 pt. MACD/BB(20)/MA20 also populate now (were N/A); MA50 correctly fail-closes (only 38<50 candles). ROOT FIX (33e7a094): replaced the GetCandles stub (`return nil, errors.New(\"not implemented yet\")`) with a real database/sql + modernc.org/sqlite query mirroring the TS path; Go suite green (build/vet/test incl. TestComputeTA_38Rows_RSI_NonNull + TestGetCandles_38Rows). The user-flagged single-digit/N-A RSI class is now CLOSED on its LAST open consumer. RESIDUAL peeled to recon-first follow-on FIX-TA-GOSVC-MA5-PRECISION: (a) MA5=N/A despite 38 candles though MA20 computes; (b) RSI agrees within ~1pt not identical (Go vs TS candle-window/seed). Both paths probed LIVE per feedback_same_db_tools_diverge_rowcount."
       }
     ],
     "head": {
@@ -14099,35 +14130,31 @@
         "serialization_guard": "Zone A dev tasks (handlers_vmt.go/usecases_vmt.go/dtos_vmt.go) MUST be serial — one dev-macro-indicators task at a time, merge gate between each. PM enforces (feedback_recurring_bug_escalation).",
         "po_dispatch_note": "HELD in_progress — mechanism-complete through BA->architect->pm->probe->probe-fold (all router RAW-reverified). next_agent=WAVE-1 dev fan-out (6 zero-dep: PROBE-fold-consumed contracts + Zone D vpsFetch + Zone C VMT-6). DEFERRED this tick: the cowork-flagged RSI-integrity pair is the higher-priority user-live-flagged bug and takes the dispatch focus; WAVE-1 stays queued (touches apps/mcp-server Zone B/C — same lane currently load-bearing for ARCH-CRON gate). Dispatch WAVE-1 next tick once the RSI pair clears. NO dev WIP consumed while held.",
         "po_held_checked_at": "2026-06-15T06:35:17Z"
-      },
+      }
+    ],
+    "ready": [
       {
-        "id": "FIX-TA-GOSVC-NA-DESPITE-DEPTH",
+        "id": "FIX-TA-GOSVC-MA5-PRECISION",
         "type": "FIX",
-        "title": "FIX-TA-GOSVC-NA-DESPITE-DEPTH — get_technical_indicators (Go TA svc) returns RSI/MA/BB N/A for VRE/VIC/VHM despite 38 real daily_ohlcv candles in the SAME named-volume market.db the mcp-server report path reads fine (RSI 39.5)",
+        "title": "FIX-TA-GOSVC-MA5-PRECISION — Go TA svc returns MA5=N/A despite 38 daily_ohlcv candles (MA20 computes), and its RSI agrees with the mcp-server report path only within ~1pt not identically — Go path likely reads a different candle-window/smoothing-seed than defaultComputeTa",
         "zone": "apps/technical-analysis/",
         "owner": "dev-technical-analysis",
         "owner_agent": "dev-technical-analysis",
-        "status": "IN_PROGRESS",
-        "priority": "high",
-        "size": "M",
+        "status": "READY",
+        "priority": "medium",
+        "size": "S",
         "recon_first": true,
-        "root_cause": "canonical get_technical_indicators PRIMARY path calls the Go TA svc via computeTAIndicators (HTTP POST /ta/indicators). LIVE 2026-06-15T05:37Z that svc returned RSI(14) N/A '(can toi thieu 15 nen)', MA20/BB20 N/A (needs 20), MACD N/A (needs 34) for VRE/VIC/VHM => the Go svc sees <15 candles. BUT the Go svc container (vn-market-intelligence-mcp-technical-analysis-1, DB_PATH=/app/data/market.db) mounts the SAME named volume vn-market-intelligence-mcp_market_data as mcp-server (identical 290MB file+mtime) whose daily_ohlcv holds 38 real contiguous VRE candles (Apr23..Jun15). The mcp-server report path defaultComputeTa reads those 38 and computes RSI 39.52. Same DB, divergent rowcount => the bug is in apps/technical-analysis SQLitePriceRepository query/logic (wrong table? extra DISTINCT/JOIN? date filter? code/symbol+exchange-suffix mismatch? stale prepared-stmt schema?) OR in the computeTAIndicators HTTP request params (days window, symbol formatting). RECON-FIRST to locate which.",
-        "fix_spec": "RECON: (a) curl the Go svc /ta/indicators for VRE directly and inspect the candle count it loaded; (b) read apps/technical-analysis/pkg/infrastructure/repositories.go SQLitePriceRepository — confirm it SELECTs daily_ohlcv WHERE code=? (matching the report path) and count rows for VRE; identify the filter/JOIN/symbol-format that drops 38-><15. THEN make the Go svc read the same 38 candles the report path reads, so get_technical_indicators(VRE) returns RSI ~39.5 (== report path). GENERIC across all watchlist tickers (/goal#2). Add a Go test: a ticker with 38 daily_ohlcv rows yields a non-null RSI, not N/A.",
-        "verification_gate": "LIVE: get_technical_indicators(VRE/VIC/VHM) returns a plausible RSI (~35-40, matching the mcp-server report path defaultComputeTa) NOT N/A; both paths agree (same value, both on the 38-candle daily_ohlcv). Re-run scripts/verify-report-rsi-failclose.ts + cross-check the canonical tool.",
-        "baseline_pass": "ed77b9b0",
-        "source": "router LIVE RAW re-probe 2026-06-15T05:37-05:41Z during FIX-RSI-REPORT-FAILCLOSED done_verify — report path fixed but canonical (Go svc) diverges on same-DB depth",
-        "created_at": "2026-06-15T05:43:42Z",
+        "root_cause": "After FIX-TA-GOSVC (33e7a094) the Go svc reads the 38-candle daily_ohlcv depth and computes RSI(14)/MACD/BB(20)/MA20 correctly. Two residuals remain: (a) MA5 reports N/A even though 38>=5 candles exist and MA20 (needs 20) computes — a guard/length-check bug in the Go MA5 path; (b) Go RSI (VRE 39.9/VIC 34.7/VHM 35.5) agrees with the TS report path defaultComputeTa (39.52/35.09/36.73) only within 0.4-1.2 pt, not identically — the two paths likely read a different candle window (Go LIMIT ? default 60 vs report LIMIT 60) or use a different RSI smoothing seed (Wilder EMA vs simple-avg-of-first-14). Same 38-row daily_ohlcv, so identical inputs SHOULD yield identical RSI.",
+        "fix_spec": "RECON FIRST: (a) read apps/technical-analysis/pkg/application calculator MA5 path — find why MA5 returns N/A at depth>=5 while MA20 succeeds; (b) compare the Go RSI(14) smoothing method + candle-window against the TS report path localComputeRSI/defaultComputeTa (LIMIT 60, fixed period-14 post-FIX-RSI-REPORT-FAILCLOSED) — align window+method so both paths return IDENTICAL RSI on the same daily_ohlcv rows. GENERIC across all watchlist tickers (/goal#2). Add a Go test: 38-row ticker yields non-null MA5; and a cross-path parity assertion (Go RSI == report RSI to <=0.1 tolerance on identical candle set).",
+        "verification_gate": "LIVE: get_technical_indicators(VRE/VIC/VHM) returns a non-null MA5; AND Go RSI(14) == report-path defaultComputeTa RSI(14) to within 0.1 pt on the same daily_ohlcv rows (currently 0.4-1.2pt apart). Re-run scripts/verify-report-rsi-failclose.ts + cross-check the canonical tool.",
+        "baseline_pass": "33e7a094",
+        "source": "router LIVE RAW re-probe 2026-06-15T06:47Z during FIX-TA-GOSVC-NA-DESPITE-DEPTH done_verify — Go svc RSI now real & plausible (gate met) but MA5 still N/A + RSI diverges ~1pt from report path",
+        "created_at": "2026-06-15T06:48:00Z",
         "created_by": "dev-team",
         "triaged_by": "dev-team",
-        "status_note": "Follow-on peeled from FIX-RSI-REPORT-FAILCLOSED LIVE verify. Distinct zone (Go TA svc). Canonical-tool depth under-read; does NOT affect the user MARKET report (which uses the now-fixed mcp-server report path). Next-tick dispatch after PO triage. Confirm Go-svc DB query first.",
-        "lane": "in_progress",
-        "dispatched_at": "2026-06-15T06:35:17Z",
-        "dispatch_tick": "2026-06-15T06:30Z",
-        "claimed_by": "dev-technical-analysis",
-        "po_dispatch_note": "Dispatched this tick as the RSI-integrity pair (cowork-flagged, user live-flagged single-digit RSI bug). Distinct zones (apps/technical-analysis vs docs/agents/unified-agent) — no collision; neither touches the held apps/mcp-server lane. recon_first honored. FIX-TA-GOSVC supplies the real RSI source as FIX-CHEF-FABRICATED lands the anti-fabrication rule."
+        "status_note": "Follow-on peeled from FIX-TA-GOSVC-NA-DESPITE-DEPTH LIVE verify. MEDIUM/S — does NOT affect the user MARKET report (report path is the now-fixed defaultComputeTa) and does NOT reopen the single-digit RSI class (Go RSI is plausible mid-band). Precision/parity + MA5 completeness only. PO triage next tick; pairs in the same zone as 33e7a094 so cheap to batch. Confirm Go MA5 length-guard + RSI window/seed first."
       }
     ],
-    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
