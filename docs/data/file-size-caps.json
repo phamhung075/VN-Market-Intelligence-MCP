@@ -7,7 +7,7 @@
       "pattern": "docs/agent-memory/notebooks/*.md",
       "cap": 200,
       "class": "agent-notebook",
-      "_note": "Two-class contract (NB-PRUNE-IMPL 2026-06-02): OVERWRITE class (po ≤50L, market-watcher ≤80L) — template IS the cap, fail-loud post-write wc guard; APPEND class (unified-agent/CHEF, news-scout, bctc-analyst, agents-architect, digest-predict, fb-market-poster) — ≤200L file, ≤60L per section, AC-2b intra-section prune + AC-5 wc gate. SSOT: .claude/skills/notebook-write/SKILL.md § AC-6."
+      "_note": "Two-class contract (NB-PRUNE-IMPL 2026-06-02): OVERWRITE class (po ≤50L, market-watcher ≤80L) — template IS the cap, fail-loud post-write wc guard; APPEND class (unified-agent/CHEF, news-scout, bctc-analyst, agents-architect, digest-predict, fb-market-poster, system-auditor, ops, ops-vps-fetch, ops-mainserver-fetch) — ≤200L file, ≤60L per section, AC-2b intra-section prune + AC-5 wc gate. SSOT: .claude/skills/notebook-write/SKILL.md § AC-6."
     },
     {
       "pattern": "docs/TASKS.md",

@@ -23,6 +23,6 @@ sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 If `integrity_check` returns anything other than `ok` → escalate immediately (data loss risk).
 If WAL > 50MB → trigger Docker restart to force WAL checkpoint before escalating.
 
-**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+**Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ops`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

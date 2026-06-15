@@ -80,7 +80,7 @@ AC-5 is a verification gate, NOT a remediation loop. If it fires, fix Step 1 and
 | Class | Agents | Contract | Cap |
 |---|---|---|---|
 | OVERWRITE | po (≤50L), market-watcher (≤80L) | Full-file replace each cycle; preamble + 1 section only | Template IS cap; post-write wc guard |
-| APPEND | unified-agent/CHEF, news-scout, bctc-analyst, agents-architect, digest-predict, fb-market-poster, system-auditor | AC-2 retention + AC-3 settled-write + AC-2b intra-prune + AC-5 wc gate | ≤200L file; ≤60L/section |
+| APPEND | unified-agent/CHEF, news-scout, bctc-analyst, agents-architect, digest-predict, fb-market-poster, system-auditor, ops, ops-vps-fetch, ops-mainserver-fetch | AC-2 retention + AC-3 settled-write + AC-2b intra-prune + AC-5 wc gate | ≤200L file; ≤60L/section |
 
 `po` uses OVERWRITE (single-session state); CHEF/developer use APPEND (rolling history). Not a contradiction.
 

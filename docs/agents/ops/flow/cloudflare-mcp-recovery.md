@@ -66,14 +66,8 @@ Attempted recovery: [what was tried] | Blocker: [human action needed]
 
 ## Notebook Entry
 
-After successful recovery, append to `docs/agent-memory/notebooks/ops.md`:
-```
-## Cloudflare MCP Tunnel Path — Fixed <date>
-- Layer that failed: [1/2/3]
-- Root cause: [Issue 1/2/3/4]
-- Fix applied: [configuration change]
-- Validation: MCP Inspector OK
-- Time to resolution: [minutes]
-```
+**Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ops`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
+
+Section content to include (≤60L): layer that failed [1/2/3], root cause [Issue 1/2/3/4], fix applied, validation result, time to resolution.
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

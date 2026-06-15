@@ -57,6 +57,6 @@ DONE: Data validation complete — N tickers checked, K issues found (X stale, Y
 NEXT: po (spawned with findings) | user (if clean)
 PIPELINE: continue
 
-**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+**Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ops`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

@@ -108,6 +108,6 @@ docker builder prune -f
 This step is unconditional — see § WHY: Builder Prune Is Mandatory After Every Rebuild above.
 Do NOT skip on the grounds that "only one rebuild was done today" — the heuristic ≥2/day threshold is abolished.
 
-**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+**Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ops`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`

@@ -104,6 +104,6 @@ for r in cur.fetchall(): print(r)
 
 `url=MISSING` rows are from the OLD push-based flow and are irrelevant. Pull-based rows have `source_url LIKE 'http://$VINAHOST_IP:8765/bctc-files/%'` (VPS host → `jq '.project.infrastructure.vps.host' docs/data/system-map.json`). Do not trigger `enrich-bctc-urls.sh` based on this.
 
-**Notebook write** → `docs/agent-memory/notebooks/ops.md`
+**Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `ops`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
