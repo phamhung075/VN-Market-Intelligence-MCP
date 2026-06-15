@@ -15,3 +15,13 @@
 - Option C: update scheduler regex tests to match scheduleCron wrapper (introduced post-test write)
 **why-decision:** Production code (orphan arm, scheduleCron wrapper) represents intentional improvements; tests were written before those changes shipped; updating tests is the correct fix — no production rollback warranted
 **why-change:** no change from plan; root cause confirmed by reading enricher code execution order
+
+### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-06-15T11:50:00Z
+**task-id:** FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE
+**what-done:** Added mcpServerCleanShutdown sentinel on graceful shutdown; restartCadenceAlertJob now classifies each startup as deploy (clean-shutdown exists between prev and current) vs crash (no sentinel), counting only crashes toward ALERT_THRESHOLD
+**what-considered:**
+- Option A: Docker API RestartCount — NOT accessible in-container without Docker socket mount (infrastructure coupling, security risk)
+- Option B: Write mcpServerCleanShutdown sentinel in SIGTERM/SIGINT handler (chosen) — pure in-DB signal, no external dependency, uses existing cron_job_runs infrastructure
+- Option C: Check error_msg field of startup row — would require sentinel semantics change before writing success
+**why-decision:** Option B is the only approach that: (a) works in-container without Docker API, (b) uses existing DB infrastructure, (c) is generic (no per-deploy-id hardcode), (d) naturally models the real distinction: SIGTERM handler ran = deploy; no handler = crash
+**why-change:** fix_spec suggested Docker-native RestartCount as first preference; live recon confirmed in-container access to docker metadata requires socket mount not present — Option B is the definitive in-process alternative

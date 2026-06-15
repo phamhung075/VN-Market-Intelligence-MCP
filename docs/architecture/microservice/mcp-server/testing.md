@@ -22,6 +22,7 @@
 | `1476-wal-stuck-alert.test.ts` | `walCheckpointAlert()` remaining-frame thresholds; Telegram failure non-fatal |
 | `FIX-MCP-CRASH-LOOP-BC-waltruncate.test.ts` | `runForcedTruncateCheckpoint()`: BEGIN IMMEDIATE→TRUNCATE ordering; `:memory:` WAL under 10k-write load; `wal_autocheckpoint`=1000 on fresh connection |
 | `FIX-MCP-CRASH-LOOP-D-wal-escalation.test.ts` | D-1 guardrail: `checkWalFileSize()` 4th-param `escalateFn` injection; NOT called when WAL ≤ 10 MB; called exactly once when WAL > 10 MB; receives byte count; rejection is non-fatal (7 tests) |
+| `FIX-MCP-CRASH-LOOP-A-restart-cadence.test.ts` | `runRestartCadenceAlertJob()`: 8 tests covering deploy-vs-crash discriminator via `mcpServerCleanShutdown` sentinel; 3-deploy false-positive pattern (2026-06-15 exact scenario); 2 crashes + 1 deploy → alert fires; 3 deploys → no alert; no predecessor → conservative no-crash; threshold tests retained (8 tests) |
 
 ### Market Data
 | Test File | Coverage |

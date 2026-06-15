@@ -53,6 +53,29 @@ Zone health: bun test 0 fail, 181 tool registrations (+5 from VMT-7), scheduler 
 
 ---
 
-## Archive: Earlier Sessions (2026-06-13 and prior)
+## 2026-06-15 · FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE — clean-shutdown sentinel discriminator
 
-Pre-2026-06-15 tasks (VMT-6, T3-ARCH-CRON-WATCHDOG, T1-ARCH-CRON-T4-DEDUP-GUARDS, FIX-MCP-CRASH-LOOP tasks, FIX-FUNDAMENTALS-REFRESH-CRON-DEAD, FIX-BCTC-VPS-QUEUE-SYNC, TSU-DEV-U5/U1, FIX-EXTRACTION-CONFIDENCE-NO-RECOMPUTE): See git history commits c35db4fc...829931b3 (2026-06-13 and prior).
+**Task:** FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE | Priority: P3 | Zone: apps/mcp-server/
+
+Root cause confirmed via live recon: restartCadenceAlertJob counted ALL mcpServerStartup
+rows in 4h window (deploy + crash alike). 3 deploys today (05:35, 08:02, 08:42) wrote 3
+sentinels → false-positive WORK page. docker inspect: RestartCount=0, OOMKilled=false,
+Health=healthy → no actual crash loop.
+
+Fix: SIGTERM/SIGINT handler in composition-root.ts now writes mcpServerCleanShutdown
+sentinel (best-effort pre-closeDb). restartCadenceAlertJob classifies each startup:
+- clean-shutdown row found between prev+current startup → deploy → skip
+- no clean-shutdown row → crash restart → count toward ALERT_THRESHOLD(2)
+
+Discriminator: pure in-DB signal, generic, no per-deploy-id hardcode.
+Docker RestartCount approach rejected: not accessible in-container without socket mount.
+
+LESSON: When a monitor can't distinguish deploy from crash at the OS/Docker layer from
+inside the container, model the distinction in the application's own DB lifecycle events
+(graceful-shutdown sentinel = best proxy for "intentional stop by ops").
+
+**Files:** restartCadenceAlertJob.ts, composition-root.ts, test file (+4 new cases)
+**Commit:** 2d494f77 | tsc clean | 8/8 pass (4 original + 4 deploy-discrimination)
+**REBUILD_REQUIRED:** YES
+
+Zone health: tsc clean, 163 tools intact, scheduler count unchanged | HEALTHY

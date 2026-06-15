@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T09:29:56Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-15T11:52:00Z",
+  "_updated_by": "dev-mcp-server",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -14240,7 +14240,7 @@
         "mode": "recon-first",
         "recon_first": true,
         "baseline_pass": false,
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "title": "restart-cadence alert pages on every intentional deploy (false positive) — discriminate force-recreate deploys from genuine in-place crash-restarts",
         "files": [
           "apps/mcp-server/src/scheduler/system/restartCadenceAlertJob.ts"
@@ -14257,7 +14257,12 @@
         "groomed_at": "2026-06-15T09:26:09Z",
         "dispatched_ts": "2026-06-15T09:29:56Z",
         "dispatched_by": "dev-team",
-        "dispatch_note": "router dispatch 2026-06-15 per PO mint+queue (a0f9042b, board mint 26b450c5). Defect: restartCadenceAlertJob.ts counts mcpServerStartup sentinels in 4h window, fires count>=2, no deploy-vs-crash discriminator => pages on every force-recreate deploy (3 healthy-server deploys today). Router RAW docker inspect RestartCount=0/OOMKilled=false/healthy = no crash loop. recon-first: read live query+data source before patching; prefer docker-native RestartCount/ExitCode discriminator; generic no per-deploy-id hardcode (/goal#2). WIP: in_progress=3 but active coding lane=1 (ARCH-CRON=QA-observe, BA-MACRO=design, neither codes)."
+        "dispatch_note": "router dispatch 2026-06-15 per PO mint+queue (a0f9042b, board mint 26b450c5). Defect: restartCadenceAlertJob.ts counts mcpServerStartup sentinels in 4h window, fires count>=2, no deploy-vs-crash discriminator => pages on every force-recreate deploy (3 healthy-server deploys today). Router RAW docker inspect RestartCount=0/OOMKilled=false/healthy = no crash loop. recon-first: read live query+data source before patching; prefer docker-native RestartCount/ExitCode discriminator; generic no per-deploy-id hardcode (/goal#2). WIP: in_progress=3 but active coding lane=1 (ARCH-CRON=QA-observe, BA-MACRO=design, neither codes).",
+        "head": {
+          "next_agent": "qa",
+          "commit": "2d494f77",
+          "rebuild_required": true
+        }
       }
     ],
     "ready": [],
