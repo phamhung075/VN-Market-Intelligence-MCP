@@ -6,6 +6,11 @@
 //   2. BlocSplit is_estimate=true invariant (ARCH Decision A — PERMANENT).
 //   3. Error paths: missing sheets, no total row, empty sheets.
 //   4. FDI parse from sheet '12.FDI' with "Tổng số" total row.
+//   5. TestSelectSheetsByContent: content-based selection with SPACED names "14. XK"/"15. NK".
+//
+// FIX-NSO-TRADE-SHEET: buildTradeTestExcel now uses actual sheet names "14. XK"/"15. NK"
+// (with space after period) to match the live 2026-06 NSO Excel. Sheet selection is
+// content-based via A1 header (selectSheetsByContent) — not by name.
 //
 // Anchors (from orch-state.json live_contract + vmt-3-sample.json):
 //
@@ -25,12 +30,21 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// Actual sheet names from the live 2026-06 NSO monthly Excel (with space after period).
+// Used in buildTradeTestExcel to match real-world conditions for FIX-NSO-TRADE-SHEET.
+const (
+	testExportSheetName = "14. XK" // actual NSO name: space after period
+	testImportSheetName = "15. NK" // actual NSO name: space after period
+	testFDISheetName    = "12.FDI" // unchanged: no space (still matches hardcoded)
+)
+
 // buildTradeTestExcel creates a synthetic NSO monthly Excel with the given data.
-// Builds sheets '14.XK', '15.NK', and '12.FDI' to match the live probe structure.
+// Uses actual 2026-06 sheet names "14. XK", "15. NK", "12.FDI" to match the live NSO Excel.
+// Sheet A1 headers contain Vietnamese keywords so selectSheetsByContent picks them up.
 //
-// exportRows: rows for sheet '14.XK' (each row = [col0_label, "", col2_abs, col3_ytd, col4_yoy])
-// importRows: rows for sheet '15.NK' (same structure)
-// fdiRows: rows for sheet '12.FDI' (each row = [col0, col1_label, col2_registered])
+// exportRows: rows for the export sheet (A1="14. Hàng hóa xuất khẩu"; each data row = [col0_label, "", col2_abs, col3_ytd, col4_yoy])
+// importRows: rows for the import sheet (A1="15. Hàng hóa nhập khẩu"; same structure)
+// fdiRows: rows for the FDI sheet (A1="12. Đầu tư nước ngoài"; each row = [col0, col1_label, col2_registered])
 //
 // The first row in exportRows/importRows with empty col0 is treated as the total row.
 func buildTradeTestExcel(
@@ -38,42 +52,48 @@ func buildTradeTestExcel(
 ) ([]byte, error) {
 	f := excelize.NewFile()
 
-	// Sheet '14.XK' (exports).
-	xkSheet, err := f.NewSheet(nsoExportSheetName)
+	// Export sheet with spaced name "14. XK" and A1 header "14. Hàng hóa xuất khẩu".
+	xkSheet, err := f.NewSheet(testExportSheetName)
 	if err != nil {
 		return nil, err
 	}
 	_ = xkSheet
+	// Set A1 header so selectSheetsByContent can identify this as the export sheet.
+	_ = f.SetCellValue(testExportSheetName, "A1", "14. Hàng hóa xuất khẩu")
 	for i, row := range exportRows {
 		for j, cell := range row {
 			col, _ := excelize.ColumnNumberToName(j + 1)
-			_ = f.SetCellValue(nsoExportSheetName, col+itoa(i+1), cell)
+			_ = f.SetCellValue(testExportSheetName, col+itoa(i+2), cell) // offset by 1 for the A1 header
 		}
 	}
 
-	// Sheet '15.NK' (imports).
-	nkSheet, err := f.NewSheet(nsoImportSheetName)
+	// Import sheet with spaced name "15. NK" and A1 header "15. Hàng hóa nhập khẩu".
+	nkSheet, err := f.NewSheet(testImportSheetName)
 	if err != nil {
 		return nil, err
 	}
 	_ = nkSheet
+	// Set A1 header so selectSheetsByContent can identify this as the import sheet.
+	_ = f.SetCellValue(testImportSheetName, "A1", "15. Hàng hóa nhập khẩu")
 	for i, row := range importRows {
 		for j, cell := range row {
 			col, _ := excelize.ColumnNumberToName(j + 1)
-			_ = f.SetCellValue(nsoImportSheetName, col+itoa(i+1), cell)
+			_ = f.SetCellValue(testImportSheetName, col+itoa(i+2), cell)
 		}
 	}
 
-	// Sheet '12.FDI' (FDI registered capital).
-	fdiSheetIdx, err := f.NewSheet(nsoFDISheetName)
+	// FDI sheet "12.FDI" with A1 header "12. Đầu tư nước ngoài vào Việt Nam".
+	fdiSheetIdx, err := f.NewSheet(testFDISheetName)
 	if err != nil {
 		return nil, err
 	}
 	_ = fdiSheetIdx
+	// Set A1 header so selectSheetsByContent can identify this as the FDI sheet.
+	_ = f.SetCellValue(testFDISheetName, "A1", "12. Đầu tư nước ngoài vào Việt Nam")
 	for i, row := range fdiRows {
 		for j, cell := range row {
 			col, _ := excelize.ColumnNumberToName(j + 1)
-			_ = f.SetCellValue(nsoFDISheetName, col+itoa(i+1), cell)
+			_ = f.SetCellValue(testFDISheetName, col+itoa(i+2), cell)
 		}
 	}
 
@@ -315,10 +335,13 @@ func TestParseTradeBalanceFromExcel_BlocSplitNote(t *testing.T) {
 }
 
 // TestParseTradeBalanceFromExcel_MissingExportSheet verifies fail-loud on missing sheet.
+// FIX-NSO-TRADE-SHEET: missing sheet is now detected via selectSheetsByContent failure
+// (no sheet with A1 "xuất khẩu" found), not by hardcoded name lookup.
 func TestParseTradeBalanceFromExcel_MissingExportSheet(t *testing.T) {
-	// Build Excel WITHOUT the '14.XK' sheet.
+	// Build Excel with only an import sheet (no export sheet A1 "xuất khẩu").
 	f := excelize.NewFile()
-	_, _ = f.NewSheet(nsoImportSheetName)
+	_, _ = f.NewSheet("15. NK")
+	_ = f.SetCellValue("15. NK", "A1", "15. Hàng hóa nhập khẩu")
 	_ = f.DeleteSheet("Sheet1")
 	var buf bytes.Buffer
 	if err := f.Write(&buf); err != nil {
@@ -327,7 +350,7 @@ func TestParseTradeBalanceFromExcel_MissingExportSheet(t *testing.T) {
 
 	_, err := ParseTradeBalanceFromExcel(buf.Bytes(), "2026-05")
 	if err == nil {
-		t.Error("expected error for missing export sheet '14.XK'")
+		t.Error("expected error when no sheet with A1 containing 'xuất khẩu' is found")
 	}
 }
 
@@ -357,7 +380,7 @@ func TestParseTradeBalanceFromExcel_MissingTotalRow(t *testing.T) {
 }
 
 // TestParseTradeBalanceFromExcel_FDIMissingFailClosed verifies fail-closed behavior
-// when the '12.FDI' sheet is present but "Tổng số" row is missing.
+// when the FDI sheet is present but "Tổng số" row is missing.
 // The overall parse should still succeed; BlocSplit.FDI.IsEstimate must be true.
 func TestParseTradeBalanceFromExcel_FDIMissingFailClosed(t *testing.T) {
 	exportRows := [][]string{
@@ -389,5 +412,104 @@ func TestParseTradeBalanceFromExcel_FDIMissingFailClosed(t *testing.T) {
 	}
 	if !record.BlocSplit.Domestic.IsEstimate {
 		t.Error("BlocSplit.Domestic.IsEstimate must be true even when FDI parse fails (fail-closed)")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// FIX-NSO-TRADE-SHEET — content-based sheet selection tests
+// ---------------------------------------------------------------------------
+
+// TestSelectSheetsByContent verifies that selectSheetsByContent correctly identifies
+// export/import/FDI sheets by A1 header content, not by sheet name.
+//
+// This is the primary gate for FIX-NSO-TRADE-SHEET: the actual 2026-06 NSO Excel
+// uses "14. XK" and "15. NK" (SPACE after period) which would NOT match the old
+// hardcoded "14.XK" / "15.NK" constants.
+func TestSelectSheetsByContent(t *testing.T) {
+	f := excelize.NewFile()
+
+	// Build sheets with ACTUAL 2026-06 NSO names (space after period).
+	_, _ = f.NewSheet("14. XK")
+	_ = f.SetCellValue("14. XK", "A1", "14. Hàng hóa xuất khẩu")
+
+	_, _ = f.NewSheet("15. NK")
+	_ = f.SetCellValue("15. NK", "A1", "15. Hàng hóa nhập khẩu")
+
+	_, _ = f.NewSheet("12.FDI")
+	_ = f.SetCellValue("12.FDI", "A1", "12. Đầu tư nước ngoài vào Việt Nam được cấp phép từ 01/01- 31/5/2026")
+
+	// Add noise sheets that should NOT be selected.
+	_, _ = f.NewSheet("1.Nong nghiep")
+	_ = f.SetCellValue("1.Nong nghiep", "A1", "1. Nông nghiệp, lâm nghiệp và thủy sản")
+	_, _ = f.NewSheet("16.CPI")
+	_ = f.SetCellValue("16.CPI", "A1", "16. Chỉ số giá tiêu dùng")
+
+	_ = f.DeleteSheet("Sheet1")
+
+	exportSheet, importSheet, fdiSheet, err := selectSheetsByContent(f)
+	if err != nil {
+		t.Fatalf("selectSheetsByContent: unexpected error: %v", err)
+	}
+
+	if exportSheet != "14. XK" {
+		t.Errorf("exportSheet=%q, want '14. XK' (space after period — actual NSO 2026-06 name)", exportSheet)
+	}
+	if importSheet != "15. NK" {
+		t.Errorf("importSheet=%q, want '15. NK' (space after period — actual NSO 2026-06 name)", importSheet)
+	}
+	if fdiSheet != "12.FDI" {
+		t.Errorf("fdiSheet=%q, want '12.FDI'", fdiSheet)
+	}
+}
+
+// TestSelectSheetsByContent_OldNamesNoSpaceAlsoWork verifies that the OLD sheet names
+// without spaces ("14.XK", "15.NK") still work IF the A1 headers contain the keywords.
+// This ensures forward compatibility when NSO reverts to the old naming convention.
+func TestSelectSheetsByContent_OldNamesNoSpaceAlsoWork(t *testing.T) {
+	f := excelize.NewFile()
+
+	_, _ = f.NewSheet("14.XK")
+	_ = f.SetCellValue("14.XK", "A1", "14. Hàng hóa xuất khẩu")
+
+	_, _ = f.NewSheet("15.NK")
+	_ = f.SetCellValue("15.NK", "A1", "15. Hàng hóa nhập khẩu")
+
+	_, _ = f.NewSheet("12.FDI")
+	_ = f.SetCellValue("12.FDI", "A1", "12. Đầu tư nước ngoài vào Việt Nam")
+
+	_ = f.DeleteSheet("Sheet1")
+
+	exportSheet, importSheet, fdiSheet, err := selectSheetsByContent(f)
+	if err != nil {
+		t.Fatalf("selectSheetsByContent: unexpected error with old names (no space): %v", err)
+	}
+
+	if exportSheet != "14.XK" {
+		t.Errorf("exportSheet=%q, want '14.XK'", exportSheet)
+	}
+	if importSheet != "15.NK" {
+		t.Errorf("importSheet=%q, want '15.NK'", importSheet)
+	}
+	if fdiSheet != "12.FDI" {
+		t.Errorf("fdiSheet=%q, want '12.FDI'", fdiSheet)
+	}
+}
+
+// TestSelectSheetsByContent_FailLoudOnMissingPattern verifies fail-loud behavior
+// when one of the required patterns is not found in any sheet's A1 header.
+func TestSelectSheetsByContent_FailLoudOnMissingPattern(t *testing.T) {
+	f := excelize.NewFile()
+
+	// Export sheet present, import sheet present, FDI sheet MISSING.
+	_, _ = f.NewSheet("14. XK")
+	_ = f.SetCellValue("14. XK", "A1", "14. Hàng hóa xuất khẩu")
+	_, _ = f.NewSheet("15. NK")
+	_ = f.SetCellValue("15. NK", "A1", "15. Hàng hóa nhập khẩu")
+	// No FDI sheet.
+	_ = f.DeleteSheet("Sheet1")
+
+	_, _, _, err := selectSheetsByContent(f)
+	if err == nil {
+		t.Error("expected error when FDI pattern ('đầu tư') is not found — fail-loud required")
 	}
 }

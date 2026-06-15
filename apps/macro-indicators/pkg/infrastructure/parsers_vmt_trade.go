@@ -1,21 +1,25 @@
 // Package infrastructure — NSO Excel parser for VMT-1a (trade balance + HS) + VMT-1b (bloc split).
 //
-// Source: NSO monthly Excel, sheets '14.XK' (exports) + '15.NK' (imports) + '12.FDI' (FDI).
+// Source: NSO monthly Excel, selected by A1 header CONTENT (FIX-NSO-TRADE-SHEET).
+// Sheet name drift: NSO uses "14. XK" / "15. NK" (SPACE after period) in 2026-06,
+// vs the former "14.XK" / "15.NK". Labels drift month-to-month. Sheet selection is
+// now content-based via selectSheetsByContent() — immune to name/spacing changes.
+//
 // Contract derived from LIVE payload in scripts/probes/vmt-3-sample.json and the
 // authoritative live_contract in orch-state.json (VMT-1a-TRADE-BALANCE-TOTAL-HS /
 // VMT-1b-TRADE-BALANCE-BLOC-SPLIT).
 //
 // Sheet layout (live_contract parse_rules):
 //
-//	'14.XK' (exports):
+//	Export sheet (A1 contains "xuất khẩu"):
 //	  col 0: HS code / sector name (Vietnamese string)
 //	  col 2: current-month absolute (tỷ USD, VN thousands-sep format)
 //	  col 3: YTD cumulative (tỷ USD, VN thousands-sep format)
 //	  col 4: YoY% vs same period prior year
 //
-//	'15.NK' (imports): same column structure as '14.XK'
+//	Import sheet (A1 contains "nhập khẩu"): same column structure as export sheet.
 //
-//	'12.FDI' (FDI registered capital):
+//	FDI sheet (A1 contains "đầu tư"):
 //	  col 1: row label ("Tổng số" for national total)
 //	  The total registered capital row is: Col1 == "Tổng số" → registered capital M USD
 //	  (from vmt-3-sample.json: total_registered_5m_2026_mn_usd = 24810)
@@ -60,20 +64,18 @@ import (
 	"github.com/vn-market-intelligence/macro-indicators/pkg/domain"
 )
 
-// Sheet names — matched by NAME, not positional index (resilient to reordering).
-const (
-	nsoExportSheetName = "14.XK"
-	nsoImportSheetName = "15.NK"
-	nsoFDISheetName    = "12.FDI"
-)
+// nsoFDISheetName is the FDI sheet name — matches the current NSO Excel exactly
+// (no space after period). Kept as a fallback constant; primary selection is
+// content-based via selectSheetsByContent (FIX-NSO-TRADE-SHEET).
+const nsoFDISheetName = "12.FDI"
 
 // nsoTradeSource is the provenance label for trade-balance responses.
-const nsoTradeSource = "NSO monthly Excel, sheets '14.XK' (exports) + '15.NK' (imports) + '12.FDI' (FDI) (PROBE-3 PASS)"
+const nsoTradeSource = "NSO monthly Excel, content-selected sheets (xuất khẩu/nhập khẩu/đầu tư) (PROBE-3 PASS + FIX-NSO-TRADE-SHEET)"
 
 // tradeBlockSplitNote is the permanent bloc-split cross-join note (ARCH Decision A).
 const tradeBlockSplitNote = "Cross-join estimate: FDI capital from NSO 12.FDI vs total export; Customs SPA inaccessible"
 
-// fdiTotalLabel is the Vietnamese label identifying the FDI national total row in sheet '12.FDI'.
+// fdiTotalLabel is the Vietnamese label identifying the FDI national total row in the FDI sheet.
 // From vmt-3-sample.json: "Tổng số" in col1 identifies the national total registered capital.
 const fdiTotalLabel = "Tổng số"
 
@@ -81,14 +83,59 @@ const fdiTotalLabel = "Tổng số"
 // We need at least col4 (index 4) to parse YoY%, so minimum is 5 columns.
 const minTradeCols = 5
 
+// selectSheetsByContent scans all sheets in the workbook and returns the sheet names
+// for export, import, and FDI sheets by matching Vietnamese keywords in cell A1.
+//
+// FIX-NSO-TRADE-SHEET: NSO sheet names drift month-to-month (e.g. "14.XK" → "14. XK").
+// Content-based selection via A1 header keywords is immune to name/spacing changes:
+//   - Export sheet: A1 contains "xuất khẩu"
+//   - Import sheet: A1 contains "nhập khẩu"
+//   - FDI sheet:    A1 contains "đầu tư"
+//
+// Matching is case-sensitive on the Vietnamese Unicode text (keywords are lowercase
+// as NSO headers use Title Case but containment check still works). All three patterns
+// must match exactly one sheet each; returns an error (fail-loud) if any is missing.
+func selectSheetsByContent(f *excelize.File) (exportSheet, importSheet, fdiSheet string, err error) {
+	for _, sheetName := range f.GetSheetList() {
+		rows, rowErr := f.GetRows(sheetName)
+		if rowErr != nil || len(rows) == 0 || len(rows[0]) == 0 {
+			continue
+		}
+		header := strings.TrimSpace(rows[0][0])
+		headerLower := strings.ToLower(header)
+
+		if strings.Contains(headerLower, "xuất khẩu") {
+			exportSheet = sheetName
+		}
+		if strings.Contains(headerLower, "nhập khẩu") {
+			importSheet = sheetName
+		}
+		if strings.Contains(headerLower, "đầu tư") {
+			fdiSheet = sheetName
+		}
+	}
+
+	if exportSheet == "" || importSheet == "" || fdiSheet == "" {
+		return "", "", "", fmt.Errorf(
+			"trade_parser: content-based sheet selection failed — exportSheet=%q importSheet=%q fdiSheet=%q; "+
+				"expected A1 headers containing 'xuất khẩu'/'nhập khẩu'/'đầu tư'",
+			exportSheet, importSheet, fdiSheet,
+		)
+	}
+	return exportSheet, importSheet, fdiSheet, nil
+}
+
 // ParseTradeBalanceFromExcel parses the NSO monthly Excel bytes and returns a TradeBalanceRecord.
 //
-// Reads sheets '14.XK' (exports), '15.NK' (imports), and '12.FDI' (FDI registered capital).
+// Sheet selection is content-based via selectSheetsByContent (FIX-NSO-TRADE-SHEET):
+// export (A1 "xuất khẩu"), import (A1 "nhập khẩu"), FDI (A1 "đầu tư").
+// This survives month-to-month NSO sheet name drift (e.g. "14.XK" → "14. XK").
+//
 // Computes trade_balance = export_total - import_total via domain.ComputeTradeBalance.
 // Computes bloc_split via domain.ComputeBlocSplit (always is_estimate=true, ARCH Decision A).
 //
 // Returns (record, nil) on success.
-// Returns an error if any of the three sheets is missing or the total rows cannot be found.
+// Returns an error if any required sheet is not found or the total rows cannot be found.
 // Fail-loud: missing sheets / missing total row = error (not silent empty).
 func ParseTradeBalanceFromExcel(excelBytes []byte, period string) (domain.TradeBalanceRecord, error) {
 	f, err := excelize.OpenReader(bytes.NewReader(excelBytes))
@@ -101,25 +148,31 @@ func ParseTradeBalanceFromExcel(excelBytes []byte, period string) (domain.TradeB
 		period = time.Now().UTC().Format("2006-01")
 	}
 
-	// Parse sheet '14.XK' (exports).
-	exportTotal, exportYTD, exportYoY, hsExports, errXK := parseTradeSheet(f, nsoExportSheetName)
-	if errXK != nil {
-		return domain.TradeBalanceRecord{}, fmt.Errorf("trade_parser: sheet %q: %w", nsoExportSheetName, errXK)
+	// Content-based sheet selection (FIX-NSO-TRADE-SHEET): immune to sheet name drift.
+	exportSheetName, importSheetName, fdiSheetName, err := selectSheetsByContent(f)
+	if err != nil {
+		return domain.TradeBalanceRecord{}, err
 	}
 
-	// Parse sheet '15.NK' (imports).
-	importTotal, importYTD, importYoY, hsImports, errNK := parseTradeSheet(f, nsoImportSheetName)
+	// Parse export sheet (A1 "xuất khẩu").
+	exportTotal, exportYTD, exportYoY, hsExports, errXK := parseTradeSheet(f, exportSheetName)
+	if errXK != nil {
+		return domain.TradeBalanceRecord{}, fmt.Errorf("trade_parser: export sheet %q: %w", exportSheetName, errXK)
+	}
+
+	// Parse import sheet (A1 "nhập khẩu").
+	importTotal, importYTD, importYoY, hsImports, errNK := parseTradeSheet(f, importSheetName)
 	if errNK != nil {
-		return domain.TradeBalanceRecord{}, fmt.Errorf("trade_parser: sheet %q: %w", nsoImportSheetName, errNK)
+		return domain.TradeBalanceRecord{}, fmt.Errorf("trade_parser: import sheet %q: %w", importSheetName, errNK)
 	}
 
 	// Compute trade balance using domain function.
 	// Both exportTotal and importTotal are in M USD (parsed from tỷ USD × 1000).
 	tradeBalance := domain.ComputeTradeBalance(exportTotal, importTotal)
 
-	// Parse sheet '12.FDI' for bloc_split (VMT-1b).
+	// Parse FDI sheet (A1 "đầu tư") for bloc_split (VMT-1b).
 	// Fail-closed: if FDI parse fails, bloc_split still has is_estimate=true.
-	fdiRegistered, errFDI := parseFDITotal(f)
+	fdiRegistered, errFDI := parseFDITotal(f, fdiSheetName)
 	if errFDI != nil {
 		// Non-fatal for the overall record — but bloc_split will have zeroed values + is_estimate=true.
 		// This preserves the fail-closed contract (ARCH Decision A).
@@ -260,7 +313,8 @@ func parseTradeSheet(f *excelize.File, sheetName string) (
 	return totalMnUSD, ytdMnUSD, yoyPct, hsRows, nil
 }
 
-// parseFDITotal reads sheet '12.FDI' and returns the national total registered capital in M USD.
+// parseFDITotal reads the FDI sheet (identified by content via selectSheetsByContent)
+// and returns the national total registered capital in M USD.
 //
 // From vmt-3-sample.json fdi.parse_rules: "row where Col1='Tổng số' → total registered capital M USD"
 // Column layout per probe: col 0 = province/entity, col 1 = row type label, col 2 = registered M USD.
@@ -268,13 +322,13 @@ func parseTradeSheet(f *excelize.File, sheetName string) (
 //
 // Returns (fdiRegisteredMnUSD, nil) on success.
 // Returns (0, error) if the total row cannot be found or the value is unparseable.
-func parseFDITotal(f *excelize.File) (float64, error) {
-	rows, err := f.GetRows(nsoFDISheetName)
+func parseFDITotal(f *excelize.File, sheetName string) (float64, error) {
+	rows, err := f.GetRows(sheetName)
 	if err != nil {
-		return 0, fmt.Errorf("sheet %q not found or unreadable: %w", nsoFDISheetName, err)
+		return 0, fmt.Errorf("sheet %q not found or unreadable: %w", sheetName, err)
 	}
 	if len(rows) == 0 {
-		return 0, fmt.Errorf("sheet %q is empty", nsoFDISheetName)
+		return 0, fmt.Errorf("sheet %q is empty", sheetName)
 	}
 
 	for _, row := range rows {
@@ -297,18 +351,18 @@ func parseFDITotal(f *excelize.File) (float64, error) {
 		// Value is in M USD (confirmed from vmt-3-sample.json: total_registered_5m_2026_mn_usd=24810).
 		regStr := strings.TrimSpace(row[2])
 		if regStr == "" {
-			return 0, fmt.Errorf("sheet %q: 'Tổng số' row has empty registered capital (col2)", nsoFDISheetName)
+			return 0, fmt.Errorf("sheet %q: 'Tổng số' row has empty registered capital (col2)", sheetName)
 		}
 
 		// FDI values: may be plain integer ("24810") or VN format ("24.810").
 		// Use ParseVNNumber which handles both (strips period-separators).
 		regVal, ok := domain.ParseVNNumber(regStr)
 		if !ok {
-			return 0, fmt.Errorf("sheet %q: 'Tổng số' registered capital %q is not parseable", nsoFDISheetName, regStr)
+			return 0, fmt.Errorf("sheet %q: 'Tổng số' registered capital %q is not parseable", sheetName, regStr)
 		}
 
 		return regVal, nil
 	}
 
-	return 0, fmt.Errorf("sheet %q: 'Tổng số' row not found", nsoFDISheetName)
+	return 0, fmt.Errorf("sheet %q: 'Tổng số' row not found", sheetName)
 }
