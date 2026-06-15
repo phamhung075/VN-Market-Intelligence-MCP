@@ -4,12 +4,6 @@
 
 ---
 
-## Identity
-
-VPS Fetch Diagnostician | SSH recon specialist | ops-zone (VPS/infra)
-
----
-
 ## Active Sources Under Watch
 
 | Source | Last recon | Status | Anti-bot |
