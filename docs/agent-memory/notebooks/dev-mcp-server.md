@@ -93,3 +93,12 @@ ids 6216-6219: verified_chain=85, urgent_news=90, chain_catalyst=78, pending_que
 **Tools:** 164 (unchanged) | Sched: 3 (unchanged)
 
 Zone health: bun test 13009 pass (52 pre-existing fails unchanged), tsc clean, 164 tools, real confidence spread live | HEALTHY
+
+## 2026-06-15 · FIX-BCTC-ENRICH-SILENT-0ROWS — 0-rows enrich fails loud
+
+**Task:** FIX-BCTC-ENRICH-SILENT-0ROWS (P0 CO-OWNER surface: enrich orchestration)
+**Pattern learned:** Silent-swallow class — extraction fires, header inserts, rows=0, queue advances to done. Fix: read ACTUAL DB counts post-extraction (JOIN bctc_table_rows via financial_reports on action_code+sort_key); if both 0 → enrich_failed + logger.error + sendTelegramBug + continue.
+**Key:** sort_key = `${period_year}-${period_quarter}` (e.g. "2026-Q1"). bctc_table_rows joins via report_id FK so must go through financial_reports for the action_code filter.
+**Regression pattern:** 3 existing test files expected `done` on happy-path runs but had no extraction rows seeded. Fix: `seedExtractionResult(db, ticker, year, quarter)` in beforeEach or per-test — minimal financial_reports header + 1 bctc_table_rows row.
+**Commit:** d4a0dacc | **Tests:** 9 new ACs + 55/55 across 4 files | No push (PO's call)
+**Ops flag:** container REBUILD required before done_verified (worktree code not yet in live image)
