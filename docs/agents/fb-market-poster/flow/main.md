@@ -78,7 +78,7 @@ market_context = call_tool(server="vn-market", tool="get_market_context", argume
 foreign_flow = call_tool(server="vn-market", tool="get_market_foreign_flow", arguments={})
 
 # Ticker intelligence for movers — iterate watchlist tickers (top 5–10 by conviction or price move)
-# ALGORITHM: Query watchlist tickers from system-map.json (jq query: '.watchlist[].ticker')
+# ALGORITHM: Query watchlist tickers from system-map.json (jq query: '.project.watchlist[] | select(.active==true) | .ticker')
 # For each ticker in watchlist, call:
 #   ticker_intel_{ticker} = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={"code": ticker})
 # Extract signals from ALL watchlist calls; if a ticker call errors, log and skip that ticker (do not fail cycle).
