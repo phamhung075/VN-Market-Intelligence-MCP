@@ -1,8 +1,25 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-14 21:30 UTC | **Sprint:** VN-MACRO-TOOLING (probe-fold)
+**Last updated:** 2026-06-16 00:00 UTC | **Sprint:** FE-PAGE-REORG (cross-sprint: ERROR-AUDIT-2026-06-15 Wave 2)
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-16T00:00Z — FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE (BLUEPRINT DONE)
+
+**Task:** FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE | zone: apps/mcp-server/ | epic: ERROR-AUDIT-2026-06-15 Wave 2
+**Output:** `[Architect] Brownfield Findings` appended to `docs/handoffs/FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE-BA-spec.md`. Decision journal: `docs/agent-memory/decisions/sprint-FE-PAGE-REORG-architect.md` entry S1.
+
+**4 Ratifications:**
+- ARCH-RATIFY-W2-1: `DeadlineError extends Error` — name set in constructor, label+ms fields. Codebase has 4 existing `extends Error` patterns; no tagged-object precedent.
+- ARCH-RATIFY-W2-2: `err.name === 'AbortError'` confirmed for Bun. Two live callers (`foreignFlowFetcher`, `clients.ts`) already use this pattern. `instanceof DOMException` rejected.
+- ARCH-RATIFY-W2-3: T-11 = 7 files / 8 fetch calls. `carryTools.ts` has 2 unbounded fetches (:57 `/snapshot`, :134 `/macro-calendar`). T-11 remains one task; PM annotates the double-call.
+- ARCH-RATIFY-W2-4: `pushToMcpServer:79` folded into T-5. Deadline = 10_000ms (localhost-to-localhost). No split needed.
+
+**Key DDD risk introduced (RISK-1, blocks T-1):** `macroFetch` in `infrastructure/fetchers/` must NOT import `macroHttpClient.ts` from `interface/mcp/tools/macro/` — that is an upward import. Fix: add `baseUrl: string` as first parameter to `macroFetch`. Callers already hold `baseUrl`; they pass it in. Signature: `macroFetch<T>(baseUrl, path, body, opts)`.
+
+**Deadline sanity all-clear:** All 9 values < 60_000. bctcPdfPull 45s is safe — it is a background scheduler, not a synchronous MCP gateway call; 60s ceiling does not apply. pushToMcpServer reduced to 10_000 (localhost).
+
+**BUILD-STANDARD:** lean. **Scan clean:** true (provided RISK-1 signature adopted).
 
 ## 2026-06-14T21:30Z — ARCH-VN-MACRO-TOOLING PROBE-FOLD (DONE)
 

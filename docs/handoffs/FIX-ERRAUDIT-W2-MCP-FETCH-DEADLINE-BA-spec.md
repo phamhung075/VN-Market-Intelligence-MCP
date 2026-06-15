@@ -443,3 +443,264 @@ Zero Python files. Zero frontend files. Zero docs/data files. Implementing speci
 ZONE: `apps/mcp-server/`
 SPEC: this file
 NEXT: architect — produce technical design, confirm ARCH-RATIFY-W2-1 through W2-4, blueprint the `DeadlineError` type, confirm `macroFetch` generic inference pattern, confirm T-11 macro sibling scope count (7 vs 8).
+
+---
+
+## [Architect] Brownfield Findings
+
+**Zone:** `apps/mcp-server/`
+**BUILD-STANDARD:** lean (zone exists; this is a new shared utility + site migrations within the existing zone)
+**BUILD-STANDARD-REF:** `docs/standards/microservice-build-standard.md`
+
+### Layer Go/No-Go — `infrastructure/fetchers/fetchDeadline.ts`
+
+**VERDICT: GO. BA's layer placement is correct and is ratified without modification.**
+
+Justification (brownfield-verified):
+
+- `bctcHttpFetcher.ts` is the canonical precedent: `AbortController` + `setTimeout(timeoutMs)` + `clearTimeout` in `finally`, no domain imports, no business logic. `withDeadline` is a generic extraction of exactly that pattern.
+- `infrastructure/fetchers/` already houses `browserHeaders.ts` (shared fetch constants), `bctcHttpFetcher.ts` (shared fetch adapter) — the convention of domain-free shared fetch utilities in this directory is established.
+- `macroFetch` imports `getMacroBaseUrl()` from `macroHttpClient.ts`, which is co-located in `interface/mcp/tools/macro/`. This is the only non-infrastructure import in `macroFetch`. **DDD RISK:** `macroFetch` must NOT import `macroHttpClient.ts` from `infrastructure/fetchers/`. Instead, `macroFetch` must accept `baseUrl` as a parameter, OR `getMacroBaseUrl()` must be called by the caller and passed in. Placing `macroFetch` in `infrastructure/` while importing from `interface/` would be an upward import — a hard DDD violation. See RISK-1 below.
+- All caller import directions are downward-only: interface → infrastructure, scheduler → infrastructure, infrastructure → infrastructure. Zero upward imports arise from the new file itself, provided RISK-1 is resolved.
+
+### Verified Paths
+
+- `apps/mcp-server/src/infrastructure/fetchers/bctcHttpFetcher.ts:41-71` — reference impl: `AbortController` + `setTimeout` + `clearTimeout` in `finally`. The `withDeadline` body must replicate lines 45-46/62-70 as a generic.
+- `apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts:149-170` — inline AbortController pattern to consolidate (T-9). Pattern confirmed read.
+- `apps/mcp-server/src/scheduler/news-analysis/deepFetchVpsJob.ts:96` — `AbortSignal.timeout(15_000)` inline; no `clearTimeout` (timer leak confirmed). T-10 fixes this.
+- `apps/mcp-server/src/infrastructure/fetchers/foreignFlowFetcher.ts` — uses `err.name === "AbortError"` for discrimination. Working in Bun (confirmed live).
+- `apps/mcp-server/src/infrastructure/microservices/clients.ts:57` — also uses `error.name === 'AbortError'`. Same pattern, same runtime, confirmed working.
+- `apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts:57` — bare `fetch` to `/snapshot`, unbounded. `carryTools.ts:134` — bare `fetch` to `/macro-calendar`, also unbounded. Two separate fetch sites in one file (see ARCH-RATIFY-W2-3).
+- `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts:446` — confirmed bare `fetch` to `/snapshot`, no deadline (T-7 scope).
+- `apps/mcp-server/src/scheduler/news-analysis/newsHeadlinesRefreshJob.ts:41` — `fetchFromNewsFetch` bare `fetch`. Line 79 — `pushToMcpServer` bare `fetch` to `MCP_SERVER_BASE/api/push-news`. Two unbounded fetches (see ARCH-RATIFY-W2-4).
+- `apps/mcp-server/src/infrastructure/fetchers/index.ts` — barrel. No `fetchDeadline` export yet (T-2 target).
+- `apps/mcp-server/src/interface/mcp/tools/macro/macroHttpClient.ts:15` — `getMacroBaseUrl()` reads `Bun.env.MACRO_INDICATORS_URL`. Must NOT be imported by `infrastructure/fetchers/fetchDeadline.ts`.
+
+### Existing Error Subclass Patterns
+
+Codebase has four `extends Error` subclasses: `AppConfigError` (infrastructure/config.ts), `CircuitOpenError` (infrastructure/circuitBreaker.ts), `BacktestStrategyNotFoundError` (domain/backtesting), `InsufficientDataError` (domain/services/macro). Pattern is an `Error` subclass with `name` property set in constructor. No tagged-object pattern exists anywhere in the codebase.
+
+---
+
+### ARCH-RATIFY-W2-1 — `DeadlineError` shape
+
+**VERDICT: Error subclass.**
+
+Rationale: the entire codebase uses `extends Error` for typed errors (4 existing examples; no tagged-object pattern). Callers that already do `catch (err)` and check `err.name === 'AbortError'` will need to discriminate `DeadlineError` — `instanceof DeadlineError` is the only reliable discriminator after `withDeadline` re-wraps the abort. A tagged object `{ name: 'DeadlineError' }` is not assignable to `Error` and would break any `catch (e: unknown)` check that type-narrows with `instanceof Error`.
+
+Implementation contract for dev:
+
+```ts
+export class DeadlineError extends Error {
+  readonly label: string;
+  readonly deadlineMs: number;
+  constructor(label: string, ms: number) {
+    super(`[withDeadline][${label}] fetch aborted after ${ms}ms`);
+    this.name = 'DeadlineError';
+    this.label = label;
+    this.deadlineMs = ms;
+  }
+}
+```
+
+The `message` field carries the attribution text, satisfying the log requirement without a separate `console.error` call at construction time. `withDeadline` still calls `console.error` before throwing so the log fires at abort-time, not at error-catch time.
+
+Callers discriminate with:
+- `err instanceof DeadlineError` — for callers that want to distinguish deadline from network error.
+- `err.name === 'DeadlineError'` — also works; both are equivalent for subclasses with `this.name` set.
+
+`macroFetch` maps a caught `DeadlineError` to `{ ok: false, degrade: { reason: 'deadline', label } }` — no fabrication, honest degrade.
+
+Honest-log note: `DeadlineError.message` already names the label + ms. When a caller's outer `catch` logs `err.message`, the attribution is automatic. The `console.error` in `withDeadline` fires at the moment of abort (before re-throw), so it appears in the log even if the outer catch is silent.
+
+---
+
+### ARCH-RATIFY-W2-2 — AbortError discrimination in Bun
+
+**VERDICT: Use `err.name === 'AbortError'` only. Do NOT use `instanceof DOMException`.**
+
+Brownfield evidence: two live callers in the codebase already use `err.name === "AbortError"` in Bun and are working:
+- `foreignFlowFetcher.ts` (infrastructure layer, VPS-proxied fetch)
+- `clients.ts` (microservice retry loop)
+
+Neither uses `instanceof DOMException`. Bun's `AbortController` abort throw produces an error with `name === 'AbortError'`. Under Bun, `DOMException` is available but the thrown abort error is not guaranteed to be `instanceof DOMException` across Bun versions — `err.name === 'AbortError'` is the stable cross-runtime check and is the established codebase convention.
+
+Implementation contract for `withDeadline`:
+
+```ts
+} catch (err: unknown) {
+  if (err instanceof Error && err.name === 'AbortError') {
+    console.error(`[withDeadline][${label}] fetch aborted after ${ms}ms`);
+    throw new DeadlineError(label, ms);
+  }
+  throw err; // network or other errors propagate unchanged
+} finally {
+  clearTimeout(timerId);
+}
+```
+
+The `instanceof Error` guard prevents `err.name` access on non-Error throws (defensive, not strictly required in Bun but correct TypeScript narrowing).
+
+---
+
+### ARCH-RATIFY-W2-3 — T-11 macro sibling count: 7 vs 8
+
+**VERDICT: 8 fetch sites, but T-11 scope is 7 files / 8 calls. No new task needed — fold second call into same T-11.**
+
+Brownfield read of `carryTools.ts`:
+- Line 57: `get_carry_trade_signal` → `fetch(url)` to `${baseUrl}/snapshot` — unbounded (macroFetch candidate)
+- Line 134: `get_macro_calendar` → `fetch(url)` to `${baseUrl}/macro-calendar?days=...` — also unbounded (second fetch site, same file)
+
+The audit brief lists `carryTools.ts:57+134` — both calls are accounted for in the audit. The BA spec FR-5 file list includes `carryTools.ts` once. The discrepancy is 7 files but 8 fetch calls (carry has two).
+
+Resolution: T-11 remains ONE task covering 7 files, but the task description must explicitly state that `carryTools.ts` has TWO fetch calls to migrate (`:57` = `get_carry_trade_signal` to `/snapshot`; `:134` = `get_macro_calendar` to `/macro-calendar`). Both are covered by `macroFetch`. Total: 8 calls migrated in T-11 across 7 files.
+
+PM must annotate T-11 description: "carryTools.ts has 2 fetch calls — migrate both."
+
+---
+
+### ARCH-RATIFY-W2-4 — `pushToMcpServer:79` in scope of T-5 or separate task?
+
+**VERDICT: Fold into T-5. Same file, same job, same deadline budget.**
+
+Brownfield read of `newsHeadlinesRefreshJob.ts`:
+- Line 41: `fetchFromNewsFetch` — fetch to `NEWS_FETCH_BASE` (external news-fetch service). Bare, no signal.
+- Line 79: `pushToMcpServer` — fetch to `MCP_SERVER_BASE/api/push-news` (local mcp-server itself). Bare, no signal.
+
+The `pushToMcpServer` call has a different risk profile than `fetchFromNewsFetch`: it calls the local server, not an external service. However, "local" does not mean bounded — if the mcp-server's `/api/push-news` handler is backed up (e.g., DB write lock, queue full), this fetch can also hang indefinitely. EC-8 in the BA spec already identified this and scoped it to T-5.
+
+Deadline recommendation for `pushToMcpServer`: **10_000ms** (10s). The call is localhost-to-localhost; 10s is more than enough for an HTTP push that should complete in <1s. A shorter deadline surfaces a hang faster without risk of false abort on healthy paths.
+
+Rationale for not splitting: two fetch calls in one function scope of one job file; T-5 dev reads the file once and migrates both atomically. A separate task would create a false dependency chain without benefit.
+
+**T-5 revised scope (PM must update task description):**
+- `newsHeadlinesRefreshJob.ts:41` → `withDeadline(signal => fetch(...), 20_000, 'newsHeadlines')`
+- `newsHeadlinesRefreshJob.ts:79` → `withDeadline(signal => fetch(...), 10_000, 'pushToMcpServer')`
+
+---
+
+### DDD Risk Notes
+
+**RISK-1 (HIGH — DDD violation, blocks T-1): `macroFetch` must not import `macroHttpClient.ts`.**
+
+`macroHttpClient.ts` lives in `interface/mcp/tools/macro/`. An import from `infrastructure/fetchers/fetchDeadline.ts` to that path would be an upward import: infrastructure → interface. This is a hard DDD violation that NFR-6 explicitly forbids.
+
+Resolution options for dev (architect decides: Option A):
+
+**Option A (RATIFIED): `macroFetch` receives `baseUrl` as a parameter.**
+
+```ts
+macroFetch<T>(
+  baseUrl: string,
+  path: string,
+  body: unknown,
+  opts: { deadlineMs: number; label?: string }
+): Promise<{ ok: true; data: T } | { ok: false; degrade: DegradeEnvelope }>
+```
+
+Each macro caller (macroTools, carryTools, etc.) already calls `getMacroBaseUrl()` at registration time and stores it in `const baseUrl`. They pass `baseUrl` as the first argument. `fetchDeadline.ts` imports nothing from `interface/`.
+
+This is a one-argument addition to the signature BA proposed. The BA spec says `macroFetch(path, body, opts)` — the signature becomes `macroFetch(baseUrl, path, body, opts)`. PM must propagate this change to the dev task description; it is a minor additive change, not a scope change.
+
+Option B (rejected): move `getMacroBaseUrl()` to `infrastructure/`. This would require renaming/moving the file and updating all callers. Over-scope for this wave.
+
+Option C (rejected): keep `macroFetch` in `interface/mcp/tools/macro/` co-located with its callers. This breaks the /goal#2 GENERIC mandate — the helper would not be reachable from `infrastructure/` or `scheduler/` without an upward import.
+
+**RISK-2 (LOW): `bctcPdfPullJob` 45s deadline + VPS proxy latency.**
+
+The BA spec notes bctcPdfPullJob as a background scheduled job (EC-4) — the gateway 60s timeout does NOT apply to it directly. However, the 45s value is still correct as a TCP hang guard. Assessment: 45s is adequate and does NOT need to be lowered. Rationale:
+
+- The PDF download goes through the VPS proxy (Vinahost, ~100-200ms RTT from France, lower from the Docker host itself).
+- The Docker host calls the VPS proxy; the VPS calls the BCTC server. Total round-trip overhead is proxy latency only — the gateway's 60s is a gateway-to-mcp-server budget, not a chain budget.
+- The scheduled job is not time-sensitive; it runs in background. A 45s deadline surfaces a genuine hang before the job runs again (next cron tick).
+- **Recommendation: keep 45s.** If production data shows PDFs downloading in <20s routinely, ops can tune downward without a code change — the deadline is a parameter, not a hardcode.
+
+**RISK-3 (LOW): `server.ts:642` — 503 response body read after `withDeadline`.**
+
+Current code at lines 649-654 reads the response body with `await pekResp.text()` after a `503` status check. After `withDeadline` wraps the `fetch`, the `Response` object is unchanged — body reads are safe as long as `withDeadline` only aborts the connection, not the response. If the deadline fires AFTER the response headers arrive but BEFORE the body is fully read, `pekResp.text()` will throw — this is caught by the existing `catch (fetchErr)` at line 667. No new risk introduced; existing catch covers it.
+
+**RISK-4 (NONE — confirmed negative scope): `bctcHttpFetcher.ts` must NOT be touched.**
+
+Confirmed read: `bctcHttpFetcher.ts` already implements `AbortController` + `clearTimeout` in `finally` correctly. It receives `timeoutMs` as a parameter from its caller. It is the exemplar, not a migration target. Dev must not touch it.
+
+**RISK-5 (LOW): `macroFetch` generic type `T`.**
+
+BA spec EC-9 asks whether `T = unknown` is acceptable as default. Resolution: `T` must be explicit at call sites where the caller uses `result.data` with a typed shape. `T = unknown` as the default bound is acceptable; dev should use `macroFetch<Record<string, unknown>>(...)` at existing `macroTools` call sites (matches current `as Record<string, any>`). Using `any` requires a `// eslint-disable` comment per existing codebase convention (see `macroTools.ts:471`). Prefer `Record<string, unknown>` to avoid the eslint suppress.
+
+---
+
+### Deadline Sanity Check (all values)
+
+| Site | Recommended ms | Gateway ceiling | Assessment |
+|---|---|---|---|
+| muasamcong:216 | 30_000 | 60_000 | Safe — VPS proxy, not in critical path of synchronous MCP call |
+| sscInsider:134 | 30_000 | 60_000 | Safe — same VPS proxy pattern |
+| newsHeadlines:41 | 20_000 | 60_000 | Safe — internal service, 20s is conservative |
+| pushToMcpServer:79 | **10_000** (architect reduced from no-deadline) | 60_000 | Safe — localhost-to-localhost, 10s more than sufficient |
+| bctcPdfPullJob:165 | 45_000 | N/A (background job) | Safe — not gated by gateway timeout; 45s is TCP hang guard only |
+| macroTools + siblings:446 | 15_000 | 60_000 | Safe — internal Docker network call |
+| server.ts:642 | 30_000 | 60_000 | Safe — pdf-extractor:5001 is local Docker network |
+| taOhlcvBackfill:149 | 15_000 | 60_000 | Safe — existing precedent value; DRY consolidation only |
+| deepFetchVps:96 | 15_000 | 60_000 | Safe — existing precedent value; DRY consolidation + timer fix |
+
+All values are strictly < 60_000. The bctcPdfPullJob 45s value is safe: it is a background scheduler, NOT a synchronous MCP gateway call; the 60s gateway ceiling does not apply to it. 45s protects against a hung TCP connection, not against a gateway timeout.
+
+---
+
+### Test Strategy
+
+| Test type | What to verify | Target |
+|---|---|---|
+| Unit | `withDeadline` fires `DeadlineError` on abort, clears timer on success, propagates non-abort errors unchanged | `fetchDeadline.test.ts` (new, alongside file) |
+| Unit | `macroFetch` returns `{ok:false, degrade:{reason:'deadline'}}` on `DeadlineError`, `{ok:false, degrade:{reason:'http-error', status}}` on non-2xx | same file |
+| Integration (forced-failure) | `withDeadline` abort fires before 60s gateway timeout — see AC-1 | QA forced-failure harness |
+| Integration (forced-failure) | `macroFetch` degrade is `{error:'macro-indicators service unavailable'}` — see AC-2, AC-4 | QA |
+| Regression | `bctcHttpFetcher.ts` tests unchanged — see AC-9 | existing test suite |
+| Static | `clearTimeout` in `finally` block — AC-7 | code review, optional unit test |
+
+`bun check` (T-12) is the TypeScript gate. Container rebuild mandatory before QA runs. Named-volume DB only for DB-dependent steps.
+
+---
+
+### Reuse Patterns
+
+- Extend `bctcHttpFetcher.ts` pattern — do NOT duplicate it. `withDeadline` is the abstraction.
+- Extend `infrastructure/fetchers/index.ts` barrel — add `fetchDeadline` exports; follow existing section comment style.
+- `clients.ts` `fetchWithRetry` (infrastructure/microservices) is a distinct pattern (retry + timeout combined) — NOT to be merged or replaced by `withDeadline`. They serve different callers.
+- `AbortSignal.timeout()` (seen in `deepFetchMainJob.ts`, `imfDataFetcher.ts`, `fredEffrIorb.ts`) is NOT migrated in this wave — only the two explicitly named sites (taOhlcvBackfill + deepFetchVps) are DRY targets. Other `AbortSignal.timeout()` callers are out of scope.
+
+---
+
+### Final Scope Confirmation
+
+Files to create (1):
+- `apps/mcp-server/src/infrastructure/fetchers/fetchDeadline.ts`
+
+Files to modify (17, per BA spec):
+- `apps/mcp-server/src/infrastructure/fetchers/index.ts` (T-2)
+- `apps/mcp-server/src/infrastructure/fetchers/muasamcong.ts` (T-3)
+- `apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts` (T-4)
+- `apps/mcp-server/src/scheduler/news-analysis/newsHeadlinesRefreshJob.ts` (T-5 — both :41 and :79)
+- `apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts` (T-6)
+- `apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts` (T-9)
+- `apps/mcp-server/src/scheduler/news-analysis/deepFetchVpsJob.ts` (T-10)
+- `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts` (T-7)
+- `apps/mcp-server/src/interface/mcp/server.ts` (T-8)
+- `apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts` (T-11 — both :57 and :134)
+- `apps/mcp-server/src/interface/mcp/tools/macro/tradeBalanceTools.ts` (T-11)
+- `apps/mcp-server/src/interface/mcp/tools/macro/bopTools.ts` (T-11)
+- `apps/mcp-server/src/interface/mcp/tools/macro/liquidityStateTools.ts` (T-11)
+- `apps/mcp-server/src/interface/mcp/tools/macro/cpiComponentsTools.ts` (T-11)
+- `apps/mcp-server/src/interface/mcp/tools/macro/macroIndicatorsVnTools.ts` (T-11)
+- `apps/mcp-server/src/interface/mcp/tools/macro/dinhGiaTools.ts` (T-11)
+
+Scan clean: true — no DDD violations in the proposed scope provided RISK-1 (macroFetch signature) is adopted.
+
+---
+
+## RETURN
+DONE: Technical design complete. Brownfield findings + 4 ratifications written to `docs/handoffs/FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE-BA-spec.md`
+ZONE: apps/mcp-server/
+NEXT: pm | break into atomic developer tasks using T-1..T-12 from BA spec; propagate RISK-1 (macroFetch signature change), ARCH-RATIFY-W2-4 (T-5 scope expansion + 10s pushToMcpServer deadline), ARCH-RATIFY-W2-3 (T-11 = 7 files / 8 calls)
+HANDOFF: docs/handoffs/FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE-BA-spec.md
+PIPELINE: continue
