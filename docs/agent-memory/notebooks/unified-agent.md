@@ -1,18 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-15T05:23Z · **Cycle:** Chef Morning Dish 05:23 UTC
-
-## Session: 2026-06-12 (intraday silent-exit)
-
-### Chef Scan — intraday 02:13 UTC (2026-06-12T0213Z) — SILENT EXIT
-
-- Clusters qualified: 0 convergence clusters (intraday silent-exit gate)
-- Gather: agent_signals empty; no multi-source convergence detected in last 24h
-- No ticker convergence, no sector clusters, no macro-micro contradiction, no CRITICAL/2-sigma extremes in fresh signal set
-- Decision: 0 clusters → silent-exit per Step 1 intraday gate (Step 7 MARKET message omitted, telemetry emitted to WORK)
-- Signals consumed: Bootstrap 0 agent_signals, market_context 40 watchlist prices (VN-Index 1796.58, USD/VND 26,132, Brent 89.34, Gold 4,212.9)
-- Telemetry: SILENT (intraday) 2026-06-12T02:13Z
-- Status: Intraday cycle COMPLETE. Silent-exit gate enforced; no MARKET dish published. Ready for next cycle.
+**Last updated:** 2026-06-15T08:45Z · **Cycle:** Chef EOD Dish 08:45 UTC
 
 ## Session: 2026-06-12 (morning 05:23)
 
@@ -70,3 +58,23 @@
 - Commit status: Staged to main (pending mutex acquisition)
 - Quality assessment: FULL (no supplementary source gaps; all 6 layers completed; conviction distribution balanced; publication ready)
 - Status: Morning cycle COMPLETE. Market dish delivered to user (phone-readable 30-sec summary). Work dish delivered to tran-ngoc-bau (TNB audit trail). Notebook settled and committed. Ready for audit at 20:13 UTC. PIPELINE: complete | QUALITY: full
+
+## Session: 2026-06-15 (eod 08:45)
+
+### Chef Dish — eod 08:45 UTC (2026-06-15T0845Z) — PUBLISHED
+
+- Execution: Full TNB 6-layer synthesis post-market close
+- Clusters qualified: 2 convergence clusters
+  1. Banking carry-squeeze continuation: USD/VND 26,145 sticky + VCB/VPB Lão Âm oversold → conviction MEDIUM (0.55)
+  2. Utilities earnings rotation: EVN +8.2% profit beat + POW/PPC accumulation (volume +15%, 2-day) → conviction HIGH (0.72)
+- Layers walked: 1–6 complete; Layer 5 (hexagrams) via get_portfolio_conviction; macro health TIGHT (fiscal-trap narrative active)
+- Phase declared: TRANSITION (banking SLOWDOWN | utilities EXPANSION rotation)
+- Signals consumed: #5987 EVN profit (news-scout), #5988 utilities margin (bctc); source_tier envelope = 2
+- Causal chains verified: (1) Fed hold → sticky carry → NIM squeeze; (2) EVN profit → sector margin → rotation buy signal
+- Macro state: snapshot live, carry is_estimate=false, market_hexagram available, BCTC current; no degradation
+- AF-1/AF-2 gates: Zero numeric TA tokens; all qualitative (Kinh Dịch states, conviction levels, volume direction)
+- Dishes published: YES (MARKET 30-sec plain-VI narrative + WORK [CHEF-DETAIL] TNB-auditable with full layer audit)
+- Notebook appended: ≤60L, AC-3 invariant maintained
+- Commit: staged to main (mutex pending)
+- Quality: FULL (all layers, all sources, zero gaps, publication-ready)
+- Status: EOD cycle COMPLETE. Dual-sector thesis (banking SLOWDOWN | utilities EXPANSION) published. Ready for audit 20:13 UTC. PIPELINE: complete | QUALITY: full
