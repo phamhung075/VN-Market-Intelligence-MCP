@@ -60,12 +60,17 @@ export function runAskQueueCheck(db?: Database): AskQueueCheckResult {
     } else {
       const count = pending.length;
       // Post signal to agent_signals so 07-qa-responder can pick it up.
+      // FIX-SIGNAL-CONFIDENCE-DEFAULT-50: derive confidence from queue depth.
+      // 1 pending = 10%, 5 = 50%, 10+ = 100% — honest signal: more pending questions
+      // means higher confidence this job needs attention. Capped at 100.
+      const pendingConfidenceScore = Math.min(100, count * 10);
       postSignal(conn, {
         fromAgent: "askQueueCheckJob",
         toAgent: "07-qa-responder",
         signalType: "pending_questions",
         payload: { count },
         ttlMinutes: 15,
+        confidence_score: pendingConfidenceScore,
       });
       // Also attempt local spawn — fire-and-forget, 0 tokens if already running.
       spawnQaResponder(conn);

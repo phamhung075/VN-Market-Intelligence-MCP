@@ -458,12 +458,18 @@ export async function escalateToCommander(
     timestamp: new Date().toISOString(),
   };
 
+  // FIX-SIGNAL-CONFIDENCE-DEFAULT-50: derive confidence from SLA breach severity.
+  // CRITICAL breach = 90 confidence (definitive outage); HIGH = 70 (significant lag).
+  // This is an honest derivation: severity is already computed from ageMinutes/thresholdMinutes
+  // ratio, so it reflects real staleness — not a placeholder.
+  const slaConfidenceScore = severity === "CRITICAL" ? 90 : 70;
   postSignal(db, {
     fromAgent: "freshness-sla-monitor",
     toAgent: "alert-commander",
     signalType: "urgent_news",
     payload,
     ttlMinutes: 60,
+    confidence_score: slaConfidenceScore,
   });
 }
 

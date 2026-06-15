@@ -293,6 +293,18 @@ export function registerAgentSignalTools(server: McpServer): void {
 
         const cycleId = args.cycle_id ?? computeCycleId();
 
+        // FIX-SIGNAL-CONFIDENCE-DEFAULT-50: wire producer's already-computed
+        // confidence from finding_data (0.0–1.0) into confidence_score (0–100 int).
+        // Producers that supply finding_data.confidence get their real value stored.
+        // When absent, we leave confidence_score undefined so the column DEFAULT 50
+        // is used (honest: no fake value substituted where no signal exists).
+        const rawConfidence = typeof findingDataRecord["confidence"] === "number"
+          ? (findingDataRecord["confidence"] as number)
+          : undefined;
+        const derivedConfidenceScore = rawConfidence !== undefined
+          ? Math.min(100, Math.max(0, Math.round(rawConfidence * 100)))
+          : undefined;
+
         const signalInput: import("../../../../infrastructure/db/agentSignalStore.js").PostSignalInput =
           {
             fromAgent: args.from_agent,
@@ -308,6 +320,9 @@ export function registerAgentSignalTools(server: McpServer): void {
               : {}),
             ...(args.causal_ref !== undefined
               ? { causalRef: args.causal_ref }
+              : {}),
+            ...(derivedConfidenceScore !== undefined
+              ? { confidence_score: derivedConfidenceScore }
               : {}),
           };
 

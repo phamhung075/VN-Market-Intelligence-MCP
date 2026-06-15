@@ -1300,6 +1300,9 @@ export async function runChainSynthesis(deps: ChainSynthesisDeps = {}): Promise<
         cycleId,
         chainDepth: 3,
         ttlMinutes: 60,
+        // FIX-SIGNAL-CONFIDENCE-DEFAULT-50: wire conviction (0.0–1.0) → confidence_score (0–100).
+        // chain.conviction is already in scope (logged 2 lines below); map it directly.
+        confidence_score: Math.min(100, Math.max(0, Math.round(chain.conviction * 100))),
       });
       synthesized++;
 
