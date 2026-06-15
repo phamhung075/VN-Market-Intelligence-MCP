@@ -96,9 +96,14 @@ describe("Task 285 — Kinh Dich MCP Tools", () => {
       expect(tools["explain_hexagram"]).toBeDefined();
     });
 
-    it("registers exactly 5 new tools", () => {
+    it("registers get_market_hexagram", () => {
+      expect(tools["get_market_hexagram"]).toBeDefined();
+    });
+
+    it("registers exactly 6 kinhdich tools", () => {
       const kinhDichToolNames = [
         "get_kinhdich_reading",
+        "get_market_hexagram",
         "get_hexagram_history",
         "get_transition_probabilities",
         "run_hexagram_backtest",
@@ -234,15 +239,24 @@ describe("Task 285 — Kinh Dich MCP Tools", () => {
   });
 
   // ── get_market_hexagram: returns valid text output ────────────────────────
+  // FIX-MARKET-HEXAGRAM-TOOL-MISSING (2026-06-15): tool re-registered with local compute.
 
   describe("get_market_hexagram (no DB state)", () => {
-    it("returns non-empty text output", async () => {
+    it("tool is registered on server", () => {
+      expect(tools["get_market_hexagram"]).toBeDefined();
+    });
+
+    it("returns non-empty text output (degrades gracefully on empty DB)", async () => {
       try {
         const text = await callTool(server, "get_market_hexagram", {});
         expect(typeof text).toBe("string");
         expect(text.length).toBeGreaterThan(0);
+        // Must contain market hexagram header or error message
+        const hasMarketHeader = text.includes("QUẺ THỊ TRƯỜNG") || text.includes("quẻ thị trường");
+        const hasErrorMessage = text.includes("Lỗi");
+        expect(hasMarketHeader || hasErrorMessage).toBe(true);
       } catch (err) {
-        // DB init failure in test env is acceptable
+        // DB init failure in test env is acceptable (tool still registered)
         expect(err).toBeDefined();
       }
     });

@@ -1,17 +1,19 @@
 /**
  * Task 285 — Kinh Dich MCP Tools
  *
- * 5 MCP tools exposing the Kinh Dich engine to Claude agents:
+ * 6 MCP tools exposing the Kinh Dich engine to Claude agents:
  *   - get_kinhdich_reading       — full reading for a watchlist stock
+ *   - get_market_hexagram        — market-wide I Ching state (local compute, no HTTP)
  *   - get_hexagram_history       — timeline of past readings for a stock
  *   - get_transition_probabilities — Markov top-N next hexagrams
  *   - run_hexagram_backtest      — accuracy report for stored readings
  *   - explain_hexagram           — full Vietnamese explanation for hexagram 1-64
  *
- * Note: get_market_hexagram was deregistered (TSH-1, 2026-05-31). The
- * /market endpoint in kinh-dich-service returns 501 (not implemented).
- * Re-wire as a separate feature sprint (KINH-DICH-MARKET) when the
- * kinh-dich-service /market endpoint is fully implemented.
+ * FIX-MARKET-HEXAGRAM-TOOL-MISSING (2026-06-15): get_market_hexagram re-registered
+ * using local compute only. The kinh-dich-service /market endpoint returns 501
+ * (not implemented); this tool derives the market hexagram directly from local
+ * market data (VN-Index change, USD/VND, oil, gold, foreign flow, macro z-scores)
+ * without any HTTP call — same pattern as explain_hexagram.
  *
  * P2-KD-G: All 6 tool handlers rewired to HTTP calls to kinh-dich-service
  * (port 5005). Zero direct domain imports from mcp-server parallel copy.
@@ -37,6 +39,8 @@ import {
   runKinhDichBacktest,
 } from "../../../../infrastructure/microservices/clients.js";
 import { QUE_DATA, QUE_META } from "../../../../domain/services/kinhDich/hexagramLibrary.js";
+import { encodeHaos, haosToSignals } from "../../../../domain/services/kinhDich/haoEncoder.js";
+import { resolveHexagram } from "../../../../domain/services/kinhDich/hexagramResolver.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Score computation helpers (best-effort, all wrapped in try/catch)
@@ -501,6 +505,147 @@ export function registerKinhDichTools(server: McpServer): void {
             {
               type: "text" as const,
               text: `Lỗi khi đọc Kinh Dịch cho ${code}: ${(err as Error).message}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── 2. get_market_hexagram ───────────────────────────────────────────────
+  // FIX-MARKET-HEXAGRAM-TOOL-MISSING (2026-06-15): local-compute path only.
+  // kinh-dich-service /market returns 501; derive hexagram from local DB signals.
+  //
+  // 6 market-wide hào dimensions:
+  //   Hào 1 — VN-Index price momentum (change_pct z-score)
+  //   Hào 2 — USD/VND direction (usd_vnd indicator z-score, inverted)
+  //   Hào 3 — Oil (brent_crude_usd z-score, inverted for stocks)
+  //   Hào 4 — Gold (gold_usd_oz z-score, safe-haven = negative for equity)
+  //   Hào 5 — Foreign net flow breadth (market-wide avg foreign_volume ratio)
+  //   Hào 6 — Macro composite z-score (existing computeMacroScore())
+
+  server.tool(
+    "get_market_hexagram",
+    "Get the market-wide I Ching hexagram derived from VN-Index momentum, USD/VND, oil, gold, foreign flow, and macro signals. Returns overall market state and hexagram interpretation. Uses local compute — no Go service required.",
+    {},
+    async () => {
+      try {
+        await initDatabase();
+        const db = getDb();
+
+        // ── Hào 1: VN-Index price change_pct (z-score vs recent history) ──
+        const vnidxRows = db
+          .query<{ change_pct: number }, []>(
+            `SELECT change_pct FROM market_prices
+             WHERE code = 'VNINDEX' ORDER BY updated_at DESC LIMIT 21`,
+          )
+          .all();
+
+        let hao1 = 0.0;
+        if (vnidxRows.length >= 3) {
+          const latest = vnidxRows[0]!.change_pct;
+          const window = vnidxRows.slice(1).map((r) => r.change_pct);
+          const mean = window.reduce((s, v) => s + v, 0) / window.length;
+          const std = Math.sqrt(
+            window.reduce((s, v) => s + (v - mean) ** 2, 0) / window.length,
+          );
+          hao1 = std === 0 ? 0.0 : Math.max(-1, Math.min(1, (latest - mean) / std / 2.0));
+        } else if (vnidxRows.length >= 1) {
+          // Fallback: use latest change_pct directly (scale ±2% = ±1)
+          hao1 = Math.max(-1, Math.min(1, (vnidxRows[0]?.change_pct ?? 0) / 2.0));
+        }
+
+        // ── Hào 2: USD/VND direction (strong VND = good for equities = positive) ──
+        const hao2Raw = computeMacroIndicatorScore("usd_vnd");
+        const hao2 = -hao2Raw; // Rising USD/VND is bad for equities
+
+        // ── Hào 3: Oil (rising oil = macro stress for VN importers = negative) ──
+        const hao3 = -computeMacroIndicatorScore("brent_crude_usd");
+
+        // ── Hào 4: Gold (rising gold = risk-off = negative for equity) ──
+        const hao4 = -computeMacroIndicatorScore("gold_usd_oz");
+
+        // ── Hào 5: Market-wide foreign net flow (avg across all watchlist stocks) ──
+        const flowRows = db
+          .query<{ foreign_volume: number; avg_volume: number }, []>(
+            `SELECT foreign_volume, avg_volume_2w AS avg_volume
+             FROM vnstock_trading_stats
+             WHERE avg_volume_2w > 0 LIMIT 30`,
+          )
+          .all();
+
+        let hao5 = 0.0;
+        if (flowRows.length > 0) {
+          const ratios = flowRows.map((r) =>
+            Math.max(-1, Math.min(1, r.foreign_volume / r.avg_volume)),
+          );
+          hao5 = ratios.reduce((s, v) => s + v, 0) / ratios.length;
+        }
+
+        // ── Hào 6: Macro composite (existing helper) ──
+        const hao6 = computeMacroScore();
+
+        // ── Encode scores → hexagram ──
+        const scores = [hao1, hao2, hao3, hao4, hao5, hao6];
+        const haos = encodeHaos(scores);
+        const signals = haosToSignals(haos);
+        const hexagramNumber = resolveHexagram(signals);
+
+        const meta = QUE_META.find((q) => q.id === hexagramNumber);
+        const data = QUE_DATA[hexagramNumber];
+
+        // Derive overall market signal from hào states
+        const yangCount = haos.filter((h) => h.binary === 1).length;
+        const changingCount = haos.filter((h) => h.isChanging).length;
+        let marketSignal: string;
+        let trend: string;
+        if (yangCount >= 4) {
+          marketSignal = "TÍCH CỰC";
+          trend = data?.state?.trend ?? "Thuận lợi";
+        } else if (yangCount <= 2) {
+          marketSignal = "TIÊU CỰC";
+          trend = data?.state?.trend ?? "Bất lợi";
+        } else {
+          marketSignal = "TRUNG TÍNH";
+          trend = data?.state?.trend ?? "Trung tính";
+        }
+
+        // Confidence: fewer changing lines = more stable reading
+        const confidence = Math.max(0.3, 1.0 - changingCount * 0.12);
+
+        const lines: string[] = [];
+        lines.push(`=== QUẺ THỊ TRƯỜNG ===`);
+        lines.push(`Quẻ ${hexagramNumber} — ${meta?.name ?? "?"} ${meta?.chinese ?? ""}`);
+        lines.push(`Xu hướng thị trường: ${trend}`);
+        lines.push(`Tín hiệu: ${marketSignal}`);
+        lines.push(`Độ tin cậy: ${Math.round(confidence * 100)}%`);
+        lines.push(`Hào dương/âm: ${yangCount}/6 dương | Hào biến: ${changingCount}`);
+        lines.push("");
+        if (data?.coreMeaning) {
+          lines.push(`Ý nghĩa: ${data.coreMeaning}`);
+        }
+        if (data?.image?.action) {
+          lines.push(`Hành động: ${data.image.action}`);
+        }
+        lines.push("");
+        lines.push(
+          `Điểm Hào thị trường: [${scores.map((s) => s.toFixed(2)).join(", ")}]`,
+        );
+        lines.push(`(VN-Index | USD/VND | Dầu | Vàng | Ngoại tệ | Vĩ mô)`);
+        lines.push(`Cập nhật: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
+
+        return {
+          content: [{ type: "text" as const, text: lines.join("\n") }],
+        };
+      } catch (err) {
+        logger.error("[get_market_hexagram] Error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Lỗi khi tính quẻ thị trường: ${(err as Error).message}`,
             },
           ],
         };
