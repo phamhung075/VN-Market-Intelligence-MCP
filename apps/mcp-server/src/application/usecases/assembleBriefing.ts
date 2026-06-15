@@ -26,6 +26,8 @@ import {
   computePortfolioPnl,
   type PortfolioPnlResult,
 } from "../../domain/services/portfolioPnlCalculator.js";
+import { runSectionAsync } from "../utils/runSection.js";
+import { failLoud } from "../../domain/utils/safeQuery.js";
 // ── Local pure-math helpers (P2-B1 AC-7/AC-8 — SEV-2 fix) ───────────────────
 // computeRSI and computeMA formerly imported from domain/services/technicalIndicators.js.
 // Replaced with self-contained inline implementations so that P2-B2 can safely
@@ -939,13 +941,15 @@ async function _assembleBriefingImpl(
   }));
 
   // ── Step 7: Macro dashboard (σ-based) ──────────────────────────────────────
+  // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch{ /* best-effort */ } → macroSnapshot=[]
+  // served as "no macro". Now uses runSectionAsync → tagged-degraded on error,
+  // no-data ONLY on genuine empty (no macro stats in DB). Never serves [] as real data.
   let macroSnapshot: MacroIndicator[] = [];
-  try {
+  const macroSectionResult = await runSectionAsync(async () => {
     const { getAllMacroStats } = await import("../../infrastructure/db/macroStatsStore.js");
     const { classifyDeviation } = await import("../../domain/services/macroThresholds.js");
-
     const stats = getAllMacroStats();
-    macroSnapshot = stats.map((s) => {
+    return stats.map((s) => {
       const dev = classifyDeviation(s);
       return {
         name: s.name,
@@ -954,20 +958,30 @@ async function _assembleBriefingImpl(
         status: dev.summary,
       };
     });
-  } catch { /* best-effort */ }
+  }, "assembleBriefing.step7.macroSnapshot");
+  if (macroSectionResult.ok) {
+    macroSnapshot = macroSectionResult.value;
+  } else if (macroSectionResult.reason === "error") {
+    logger.warn("[assembleBriefing] step7 macroSnapshot degraded", { ctx: macroSectionResult.ctx });
+    // macroSnapshot stays [] — tagged-degraded in log; consumer sees empty = (lỗi truy vấn)
+  }
+  // reason:'no-data' = genuine empty (no macro stats yet) — stays [] silently
 
   // ── Step 8: Sensitive date warnings ─────────────────────────────────────────
   let sensitiveWarnings: string[] = [];
   try {
     const { detectSensitiveDates } = await import("../../domain/services/financial-reports/priceNewsValidator.js");
     sensitiveWarnings = detectSensitiveDates();
-  } catch { /* best-effort */ }
+  } catch (err) {
+    // Non-data step (pure date math) — failLoud so we don't silently skip warnings
+    failLoud(err, "assembleBriefing.step8.sensitiveWarnings");
+  }
 
   // ── Step 9: Auto-tracked commodities ────────────────────────────────────────
   let trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number }[] = [];
-  try {
+  const commoditySectionResult = await runSectionAsync(async () => {
     const { listTrackedIndicators, getIndicatorHistory } = await import("../../infrastructure/db/commodityTracker.js");
-    trackedCommodities = listTrackedIndicators().map((t) => {
+    return listTrackedIndicators().map((t) => {
       // Fetch last 2 values for this indicator to compute delta direction.
       // history[0] = latest, history[1] = previous (ordered DESC).
       const history = getIndicatorHistory(t.indicator, 2);
@@ -980,7 +994,12 @@ async function _assembleBriefingImpl(
         ...(previousValue !== undefined ? { previousValue } : {}),
       };
     });
-  } catch { /* best-effort */ }
+  }, "assembleBriefing.step9.trackedCommodities");
+  if (commoditySectionResult.ok) {
+    trackedCommodities = commoditySectionResult.value;
+  } else if (commoditySectionResult.reason === "error") {
+    logger.warn("[assembleBriefing] step9 trackedCommodities degraded", { ctx: commoditySectionResult.ctx });
+  }
 
   // ── Step 10: Auto-resolve stale low/medium alerts (72h) ──────────────────
   try {
@@ -991,7 +1010,10 @@ async function _assembleBriefingImpl(
         AND resolved_at IS NULL
         AND triggered_at < datetime('now', '-72 hours')
     `);
-  } catch { /* resolved_at column may not exist */ }
+  } catch (err) {
+    // schema may not have resolved_at column in older DBs — log but don't abort
+    failLoud(err, "assembleBriefing.step10.autoResolveAlerts");
+  }
 
   // ── Step 10b: Unresolved HIGH/CRITICAL alerts ─────────────────────────────
   let unresolvedAlerts: BriefingAlert[] = [];
@@ -1023,7 +1045,10 @@ async function _assembleBriefingImpl(
       }
     }
     unresolvedAlerts = Array.from(seen.values()).slice(0, 5);
-  } catch { /* best-effort */ }
+  } catch (err) {
+    // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch → silently empty alerts
+    failLoud(err, "assembleBriefing.step10b.unresolvedAlerts");
+  }
 
   // ── Step 11: Top conviction signal from watchlist ──────────────────────────
   let topConviction: DailyBriefing["topConviction"] = null;
@@ -1031,9 +1056,9 @@ async function _assembleBriefingImpl(
     const { computeConviction } = await import("../../domain/services/convictionScorer.js");
     const { getImfMacroScoreForConviction } = await import("../services/imfConvictionBridge.js");
 
-    // Dimension 7: IMF macro — hoist outside loop (same value for all stocks in briefing)
-    let briefingImfScore: number | undefined;
-    try { briefingImfScore = getImfMacroScoreForConviction(db); } catch { /* best-effort */ }
+    // Dimension 7: IMF macro — now returns number|undefined (never fabricates 0).
+    // undefined = drop-dimension (DB error or no fresh rows).
+    const briefingImfScore: number | undefined = getImfMacroScoreForConviction(db);
 
     let bestScore = 0;
 
@@ -1054,7 +1079,10 @@ async function _assembleBriefingImpl(
         };
       }
     }
-  } catch { /* best-effort */ }
+  } catch (err) {
+    // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch → silently no topConviction
+    failLoud(err, "assembleBriefing.step11.topConviction");
+  }
 
   // ── Step 12: Prediction market signals (HIGH/CRITICAL only, last 24h) ────────
   let predictionSignals: BriefingPredictionSignal[] = [];
@@ -1064,7 +1092,10 @@ async function _assembleBriefingImpl(
     predictionSignals = allSignals.filter(
       (s) => s.severity === "high" || s.severity === "critical",
     );
-  } catch { /* best-effort */ }
+  } catch (err) {
+    // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch → silently empty prediction signals
+    failLoud(err, "assembleBriefing.step12.predictionSignals");
+  }
 
   // ── Step 13a: Portfolio P&L snapshot ─────────────────────────────────────
   let portfolioPnl: PortfolioPnlResult | null = null;

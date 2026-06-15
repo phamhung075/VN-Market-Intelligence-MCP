@@ -19,6 +19,7 @@
 import type { Database } from "bun:sqlite";
 import { tradingWindowLabel } from "./tradingWindow.js";
 import { sqlInClause } from "../utils/sqlHelpers.js";
+import { failLoud } from "../utils/safeQuery.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -198,6 +199,9 @@ export function buildMacroSection(db: Database): string {
   const lines: string[] = ["=== MACRO ==="];
   const found: string[] = [];
 
+  // FIX-ERRAUDIT-W2-MCP-DATALAYER: bare catch{}→silent-empty replaced with failLoud.
+  // Each sub-query is a separate failLoud call so one missing table doesn't silence
+  // the others. DDD rule: only domain/utils imports allowed (no infrastructure/).
   try {
     const placeholders = sqlInClause(MACRO_CODES.length);
     const rows = db
@@ -213,8 +217,9 @@ export function buildMacroSection(db: Database): string {
       const priceStr = formatPriceChange(row.price ?? null, row.change_pct ?? null);
       found.push(`${row.code.padEnd(12)} ${priceStr}`);
     }
-  } catch {
-    // market_prices may not have these codes
+  } catch (err) {
+    // market_prices table missing or locked — log so it is visible
+    failLoud(err, "marketContextBuilder.buildMacroSection.market_prices");
   }
 
   try {
@@ -237,8 +242,9 @@ export function buildMacroSection(db: Database): string {
         found.push(`${row.code.padEnd(12)} ${priceStr}`);
       }
     }
-  } catch {
-    // tracked_indicators table doesn't exist in this schema version — skip
+  } catch (err) {
+    // tracked_indicators table doesn't exist in this schema version — log
+    failLoud(err, "marketContextBuilder.buildMacroSection.tracked_indicators");
   }
 
   try {
@@ -253,8 +259,9 @@ export function buildMacroSection(db: Database): string {
     if (sbvRow?.rate && sbvRow.rate > 0) {
       found.push(`${"USD_VND".padEnd(12)} ${sbvRow.rate}`);
     }
-  } catch {
-    // sbv_rates table may not exist in older schemas — skip
+  } catch (err) {
+    // sbv_rates table may not exist in older schemas — log
+    failLoud(err, "marketContextBuilder.buildMacroSection.sbv_rates");
   }
 
   if (found.length === 0) {

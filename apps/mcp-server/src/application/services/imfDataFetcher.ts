@@ -23,6 +23,7 @@ import {
   type ImfIndicator,
 } from "../../domain/models/imfIndicators.js";
 import { CircuitBreaker } from "../../infrastructure/circuitBreaker.js";
+import { failLoud } from "../../domain/utils/safeQuery.js";
 
 // ── IMF API breaker (registered at module level) ──────────────────────────────
 
@@ -61,6 +62,9 @@ interface ImfApiResponse {
  * The API returns { values: { INDICATOR: { COUNTRY: { YEAR: VALUE } } } }
  * We extract the most recent year for "APSP" (All Countries) or fall back to
  * a numeric average of all available countries for the most recent year.
+ *
+ * FIX-ERRAUDIT-W2-MCP-DATALAYER: bare catch→null replaced with failLoud.
+ * A parse error is logged as degraded: so stale-served-as-fresh is visible.
  */
 function parseImfApiResponse(
   code: string,
@@ -133,7 +137,11 @@ function parseImfApiResponse(
       source: "imf_api",
       confidence: calculateConfidenceDecay(ageInDays),
     };
-  } catch {
+  } catch (err) {
+    // FIX-ERRAUDIT-W2-MCP-DATALAYER: was bare catch→null with NO log.
+    // A corrupt/unexpected API payload is now logged via failLoud so
+    // stale-cached data served-as-fresh is visible in container logs.
+    failLoud(err, `imfDataFetcher.parseImfApiResponse[${code}]`);
     return null;
   }
 }

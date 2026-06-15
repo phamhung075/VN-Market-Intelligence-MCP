@@ -9,10 +9,14 @@
  *   WHERE ... AND substr(fetched_at, 1, 10) < ?
  * and computes MAX(volume) per calendar day (closed sessions only).
  *
- * T1: avg uses only T-1 data, not today's rows
- * T2: spike ratio reflects true prior-day baseline
+ * FIX-ERRAUDIT-W2-MCP-DATALAYER: getAvgVolumeSync now returns number|null.
+ * Insufficient-history path returns null (not 0) so callers drop the dimension
+ * instead of feeding a fake 0 to detectSignals.
+ *
+ * T1: avg uses only T-1 data, not today's rows (insufficient → null)
+ * T2: spike ratio reflects true prior-day baseline (5 days → number)
  * T3: edge — treating T-1 as "today" excludes T-1 rows too
- * T4: regression — fewer than MIN_HISTORY_ROWS prior days → returns 0
+ * T4: regression — fewer than MIN_HISTORY_ROWS prior days → null (was 0, now discriminated)
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
@@ -66,11 +70,11 @@ describe("Task 1320 — getAvgVolumeSync excludes today's session", () => {
 
     const avg = getAvgVolumeSync(CODE, TODAY);
 
-    // Must equal average of T-1 day max (95) only, since only one prior day
-    // Actually T-1 has 10 rows: max = 95. Only one closed day → need MIN 5 days.
-    // With only 1 prior day → returns 0 (MIN_HISTORY_ROWS guard = 5 closed days).
-    // So this test confirms it does NOT use today's data (returns 0 not 145).
-    expect(avg).toBe(0); // 1 prior day < MIN_HISTORY_ROWS(5) → suppress
+    // Must equal average of T-1 day max (95) only, since only one prior day.
+    // With only 1 prior day → insufficient history (< MIN_HISTORY_ROWS=5) → null.
+    // FIX-ERRAUDIT-W2: returns null (drop-dimension), NOT 0 (fabricated value).
+    // This confirms it does NOT use today's data (real avg would be 145, not null).
+    expect(avg).toBeNull(); // 1 prior day < MIN_HISTORY_ROWS(5) → drop-dimension
   });
 
   it("T2: spike ratio correct when 5+ prior days present", () => {
@@ -109,7 +113,7 @@ describe("Task 1320 — getAvgVolumeSync excludes today's session", () => {
     expect(avg).toBe(80);
   });
 
-  it("T4: fewer than 5 prior closed days returns 0 (suppresses spike)", () => {
+  it("T4: fewer than 5 prior closed days returns null (drop-dimension — was 0, now discriminated)", () => {
     // Only 4 prior days
     const days = ["2026-04-23", "2026-04-24", "2026-04-25", "2026-04-26"];
     for (const day of days) {
@@ -118,6 +122,8 @@ describe("Task 1320 — getAvgVolumeSync excludes today's session", () => {
 
     const avg = getAvgVolumeSync(CODE, TODAY);
 
-    expect(avg).toBe(0);
+    // FIX-ERRAUDIT-W2: null distinguishes insufficient-history from genuine 0-volume.
+    // Callers must drop the dimension (not feed 0 to detectSignals as fake baseline).
+    expect(avg).toBeNull();
   });
 });

@@ -39,6 +39,7 @@ import type {
   IWatchlistRepository,
   IMarketPriceRepository,
 } from "../../domain/repositories/index.js";
+import { failLoud } from "../../domain/utils/safeQuery.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -81,16 +82,43 @@ export interface ScanMarketDeps {
  * Task 1320: excludes today's open session from the rolling average.
  * Backward-compat export for tests that call this function directly.
  *
+ * FIX-ERRAUDIT-W2-MCP-DATALAYER: returns null instead of 0 on DB error or
+ * insufficient history. 0 is a valid db value (genuinely 0 volume) but collides
+ * with the error path. Callers must check for null and DROP the volume dimension
+ * rather than feeding avgVolume=0 to detectSignals (which triggers false volume_spike).
+ *
  * @param code      - Stock ticker code
  * @param todayUtc  - ISO date string "YYYY-MM-DD" to exclude (default: today UTC).
+ * @returns average volume (number), or null if insufficient history or DB error
  */
-export function getAvgVolumeSync(code: string, todayUtc?: string): number {
+export function getAvgVolumeSync(code: string, todayUtc?: string): number | null {
   const MIN_HISTORY_ROWS = 5;
   const HISTORY_LIMIT = 20;
   const today = todayUtc ?? new Date().toISOString().substring(0, 10);
 
+  let db: ReturnType<typeof getDb>;
   try {
-    const db = getDb();
+    db = getDb();
+  } catch (err) {
+    failLoud(err, `scanMarket.getAvgVolumeSync[${code}].getDb`);
+    return null;
+  }
+
+  try {
+    const countRow = db
+      .query<{ cnt: number }, [string, string]>(
+        `SELECT COUNT(DISTINCT substr(fetched_at, 1, 10)) as cnt
+         FROM market_prices_history
+         WHERE code = ? AND substr(fetched_at, 1, 10) < ?`,
+      )
+      .get(code, today);
+
+    if (!countRow || countRow.cnt < MIN_HISTORY_ROWS) {
+      // Legit insufficient-history path: return null (drop-dimension), not 0.
+      // A genuine 0-volume stock cannot be distinguished from missing history at 0.
+      return null;
+    }
+
     const row = db
       .query<{ avg_vol: number | null }, [string, string, number]>(
         `SELECT AVG(day_vol) as avg_vol FROM (
@@ -104,21 +132,11 @@ export function getAvgVolumeSync(code: string, todayUtc?: string): number {
       )
       .get(code, today, HISTORY_LIMIT);
 
-    const countRow = db
-      .query<{ cnt: number }, [string, string]>(
-        `SELECT COUNT(DISTINCT substr(fetched_at, 1, 10)) as cnt
-         FROM market_prices_history
-         WHERE code = ? AND substr(fetched_at, 1, 10) < ?`,
-      )
-      .get(code, today);
-
-    if (!countRow || countRow.cnt < MIN_HISTORY_ROWS) {
-      return 0;
-    }
-
-    return row?.avg_vol ?? 0;
-  } catch {
-    return 0;
+    // avg_vol can be null if the sub-query returns no rows (impossible given cnt check above)
+    return row?.avg_vol ?? null;
+  } catch (err) {
+    failLoud(err, `scanMarket.getAvgVolumeSync[${code}]`);
+    return null;
   }
 }
 
@@ -172,7 +190,9 @@ export async function scanMarket(
   let watchlistThresholds: Map<string, { dropPct: number; risePct: number }>;
   try {
     watchlistThresholds = deps.watchlistRepo.getThresholds();
-  } catch {
+  } catch (err) {
+    // FIX-ERRAUDIT-W2-MCP-DATALAYER: log via failLoud (was bare catch → silently empty Map)
+    failLoud(err, "scanMarket.getThresholds");
     watchlistThresholds = new Map();
   }
 

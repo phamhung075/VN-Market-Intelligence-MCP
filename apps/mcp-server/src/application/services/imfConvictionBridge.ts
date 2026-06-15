@@ -13,9 +13,15 @@
  *   Default: 24h (IMF poller runs every 6h — max 1 missed cycle = 12h old).
  *   Configurable: Bun.env.IMF_STALENESS_HOURS (Architect decision Q-IMF-3).
  *
+ * FIX-ERRAUDIT-W2-MCP-DATALAYER: uses safeQuery to discriminate db-error from
+ * genuine no-rows. DB error → returns { ok:false, reason:'db-error' } logged via
+ * failLoud. Genuine no-rows → returns { ok:false, reason:'no-rows' }. Both return
+ * undefined to callers so the IMF dimension is DROPPED, not faked as neutral (0).
+ *
  * Layer: application/services
  *   - Imports domain/services (pure classifier) — allowed
  *   - Imports domain/models (types) — allowed
+ *   - Imports domain/utils/safeQuery — allowed (domain/utils is domain-layer)
  *   - Does NOT import interface/ — DDD rule
  *   - Does NOT call getDb() — ports pattern: db instance is injected by caller
  *
@@ -26,6 +32,7 @@ import type { Database } from "bun:sqlite";
 import { classifyImfIndicators } from "../../domain/services/imfDataClassifier.js";
 import type { ImfIndicator } from "../../domain/models/imfIndicators.js";
 import { IMF_HISTORICAL_BASELINE } from "../../domain/models/imfIndicators.js";
+import { safeQuery } from "../../domain/utils/safeQuery.js";
 
 /** Default staleness window in hours (configurable via env) */
 const IMF_STALENESS_HOURS = Number(Bun.env.IMF_STALENESS_HOURS ?? 24);
@@ -48,48 +55,50 @@ interface ImfIndicatorRow {
  * Reads all imf_indicators rows fetched within the staleness window,
  * runs classifyImfIndicators(), and returns sentiment in [-1, +1].
  *
- * Returns 0 (neutral) when:
- *   - Table is empty
- *   - All rows are stale (fetched_at > IMF_STALENESS_HOURS ago)
- *   - Any DB error (fail-silent per NFR-IMF-3)
+ * FIX-ERRAUDIT-W2-MCP-DATALAYER: returns undefined (drop-dimension) instead of 0
+ * on DB error or genuine no-rows, so callers can omit the IMF dimension entirely
+ * rather than injecting a fabricated neutral score.
+ *
+ * Returns undefined when:
+ *   - Any DB error (fail-loud via safeQuery/failLoud, then drop-dimension)
+ *   - Table is empty or all rows stale (genuine no-rows — legit-empty path)
+ *
+ * Returns number (sentiment in [-1, +1]) when fresh rows exist and classify successfully.
  *
  * @param db - SQLite Database instance (injectable for tests — ports pattern)
- * @returns sentiment score in [-1, +1]
+ * @returns sentiment score in [-1, +1], or undefined if dimension unavailable
  */
-export function getImfMacroScoreForConviction(db: Database): number {
-  try {
-    const rows = db
-      .query<ImfIndicatorRow, [string]>(
-        `SELECT code, name, value, published_at, age_in_days,
-                prev_value, yoy_change, source, confidence, fetched_at
-           FROM imf_indicators
-          WHERE fetched_at >= datetime('now', ? || ' hours')
-          ORDER BY fetched_at DESC`,
-      )
-      .all(`-${IMF_STALENESS_HOURS}`);
+export function getImfMacroScoreForConviction(db: Database): number | undefined {
+  const result = safeQuery<ImfIndicatorRow>(
+    db,
+    `SELECT code, name, value, published_at, age_in_days,
+            prev_value, yoy_change, source, confidence, fetched_at
+       FROM imf_indicators
+      WHERE fetched_at >= datetime('now', ? || ' hours')
+      ORDER BY fetched_at DESC`,
+    [`-${IMF_STALENESS_HOURS}`],
+    "imfConvictionBridge.getImfMacroScoreForConviction",
+  );
 
-    if (rows.length === 0) return 0;
+  // Both db-error and genuine no-rows → drop dimension (never fabricate 0/neutral)
+  if (!result.ok) return undefined;
 
-    const indicators: ImfIndicator[] = rows.map((row) => ({
-      code:          row.code,
-      name:          row.name,
-      value:         row.value,
-      publishedAt:   row.published_at,
-      ageInDays:     row.age_in_days,
-      previousValue: row.prev_value ?? null,
-      yoyChange:     row.yoy_change ?? null,
-      source:        row.source as "imf_api" | "imf_scrape",
-      confidence:    row.confidence,
-    }));
+  const indicators: ImfIndicator[] = result.rows.map((row) => ({
+    code:          row.code,
+    name:          row.name,
+    value:         row.value,
+    publishedAt:   row.published_at,
+    ageInDays:     row.age_in_days,
+    previousValue: row.prev_value ?? null,
+    yoyChange:     row.yoy_change ?? null,
+    source:        row.source as "imf_api" | "imf_scrape",
+    confidence:    row.confidence,
+  }));
 
-    const result = classifyImfIndicators({
-      indicators,
-      historicalBaseline: IMF_HISTORICAL_BASELINE,
-    });
+  const classification = classifyImfIndicators({
+    indicators,
+    historicalBaseline: IMF_HISTORICAL_BASELINE,
+  });
 
-    return result.sentiment;
-  } catch {
-    // Fail-silent: stale/missing/closed DB → neutral, never throw
-    return 0;
-  }
+  return classification.sentiment;
 }

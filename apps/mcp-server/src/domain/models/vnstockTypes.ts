@@ -21,13 +21,15 @@ export interface VnstockFinancials {
   netProfit: number;         // billion VND
   netProfitYoY: number;      // %
   eps: number;               // VND
-  // Ratios
-  pe: number;
-  pb: number;
-  roe: number;               // %
-  roa: number;               // %
-  debtToEquity: number;
-  netProfitMargin: number;   // %
+  // Ratios — null when the vnstock ratio API returns missing/absent column
+  // (FIX-ERRAUDIT-W2-MCP-DATALAYER: was number → 0.0 fallback; 0 is implausible
+  //  for bank ROE and collides with "no data"; now null = missing, 0 = genuine 0)
+  pe: number | null;
+  pb: number | null;
+  roe: number | null;        // % (null when ratio column absent in vnstock API)
+  roa: number | null;        // % (null when ratio column absent)
+  debtToEquity: number | null;
+  netProfitMargin: number | null; // %
   // Banking specific
   nim: number | null;        // % (null for non-bank)
   npl: number | null;        // % (null for non-bank)
