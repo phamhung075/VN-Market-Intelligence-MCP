@@ -1,0 +1,46 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-15T15:05:04Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": "240"
+    },
+    "last_fired_timestamp": "2026-06-15T15:05:04Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "single-dispatcher (per-work-item token won; leader-lock belt step skipped in single CLI session)",
+    "dev_head": "active",
+    "note": "bctc-analyst-slot-1 fired 15:00 daily cadence (last 06-14T15:07Z, 240min). E2 off-market guard clear (22:05 VN). Published-marker gate is the spawned agent owns."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T15:05:04Z"
+}

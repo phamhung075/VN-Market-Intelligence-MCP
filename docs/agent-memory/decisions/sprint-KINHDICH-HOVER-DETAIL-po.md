@@ -80,3 +80,15 @@ why-change: minting the requested task would have been duplicate debt against do
 - dispatch directly — REJECTED: PO mints+marks ready; next dev-team tick / router dispatches.
 **why-decision:** /goal#1 confirmed root-cause class (computed-but-not-wired default) by reading the actual call sites; /goal#2 generic mandate is achievable — every producer already has a confidence source (cascade/news-sentiment/BCTC/kinh-dich/conviction) → spec mandates wiring ALL, no allowlist. WIP honored: 2 board lanes but both NON-coding (ARCH design + BA spec) = 0 active coding lanes.
 **why-change:** No change from triage plan; priority raised P2→P1 vs router suggestion given blast radius (all sources, all rows).
+
+## STEP — 2026-06-15T16:38:36Z [task_id: OPS-BCTC-PIPELINE-RECON]
+- **what-considered:** (a) mint BCTC outage as a new code-FIX vs (b) recon-first ops task vs (c) fold into existing backlog STALE-5D handoff. Chose (b)+(c): recon-first because layer unknown ({VPS-down|cron|geo/SSL|enricher}); annotated STALE-5D as 2nd recurrence instead of duplicating.
+- **why-change:** RAW-confirmed real (VCB empty, FPT stale 05-24) not a load transient — distinct from BUG-NEW-1/2 which I RAW-DISPROVED (re-probe succeeded under recovered load 11.69). Recon = NOT a coding lane → dispatch now without consuming WIP<=2 budget.
+
+## STEP — 2026-06-15T16:38:36Z [task_id: cowork-team-20260615T1620Z-gatherer-manual-cloud-doublefire]
+- **what-considered:** combined single task vs 3 separate roots. Chose 3 separate: root A owner=architect/agent-father (cowork-schedule.json), roots B+C owner=dev-mcp-server — different lanes/edit-paths. B+C combinable when that lane frees.
+- **why-change:** ACK NEW→READ not RESOLVED — roots not yet shipped. False gateway-down disproven (sibling eod succeeded), no public double-post → MEDIUM not P0.
+
+## STEP — 2026-06-15T16:38:36Z [task_id: orch-state-repair]
+- **what-considered:** only path — surgical comma removal. orch-state.json was committed-invalid at HEAD (trailing comma line 14467 from c34d4740), blocking ALL jq writes incl. concurrent dev-mcp-server agent.
+- **why-change:** no change from plan; verified valid via jq + python before any triage write; FIX-SIGNAL-CONFIDENCE review[] row left untouched.

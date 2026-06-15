@@ -1,21 +1,20 @@
 # PO Notebook
 
-## 2026-06-15T15:52Z — User BUG triage: signal confidence frozen at 50 → minted FIX-SIGNAL-CONFIDENCE-DEFAULT-50 (P1, ready)
+## 2026-06-15T16:32Z — dev-team :07 triage: REPAIRED corrupt orch-state + BCTC outage recon + double-fire roots
 
-**Router-delivered user BUG (RAW-verified by router): dashboard SIGNALS(LAST 10) shows Confidence=50% on EVERY row, every source, every direction/date.** Context said don't re-investigate; I verified the load-bearing claims myself instead of relaying:
-- `agentSignalStore.ts:341` — `_postSignalInner` destructures `confidence_score = 50` (Task 230 default). CONFIRMED.
-- `schema-news.ts:104` — column `DEFAULT 50`; `server.ts:1393` dashboard read `?? 50`. CONFIRMED.
-- Only **1 of 13** producers passes a real confidence: `agentSignalTools.ts:361`. The other ~12 (cascade, news poll, BCTC mapper, verified_decision, kinh-dich, chain-synth) omit it → literal 50 stored.
-- **Smoking gun** `intelligenceCycleJob.ts:1290` — posts `verified_chain` when `chain.conviction>=0.7` but does NOT pass `confidence_score`; conviction is in scope (logged 2 lines down). Class = "computed-but-not-wired default → non-empty but wrong".
+**CRITICAL FIRST: orch-state.json was INVALID JSON at HEAD.** Trailing comma after the last `in_progress[]` element (line 14467 `},` before `]`) — committed by `c34d4740` (dev-mcp-server flipping FIX-SIGNAL-CONFIDENCE→REVIEW). HEAD == worktree (committed corruption, not a mid-write transient; no temp file in flight). jq + python both failed to parse. Surgical fix: removed the one comma → both validate. This was blocking ALL jq writes (mine AND the concurrent dev-mcp-server agent's). FIX-SIGNAL-CONFIDENCE already relocated to review[] (status REVIEW) by that same commit — left EXACTLY as-is per HARD CONSTRAINT.
 
-**Decision: minted `FIX-SIGNAL-CONFIDENCE-DEFAULT-50` → ready[]** (P1 not router's P2 — blast radius = every signal's confidence dead across ALL sources). route_to=dev-mcp-server, zone=apps/mcp-server/, mode=recon-first, size=M. Board: ready 0→1, entries 417→418 (conservation clean). No dup (REVIEW-PPC-Q4-LOW-CONFIDENCE is unrelated BCTC).
+**BUG-2 BCTC pipeline RAW-CONFIRMED real outage (P0):** `get_bctc_full('VCB')`→"Chưa có dữ liệu BCTC" (empty); `get_bctc_full('FPT')`→data but Published 2026-05-24 (stale >22d). 0 VPS pushes/24h since 06-13 23:45Z. = 2ND RECURRENCE of backlog `FIX-BCTC-VPS-PIPELINE-STALE-5D` (prior self-recovered 06-13 22:45, re-stalled 23:45) → recurring-bug class. Minted `OPS-BCTC-PIPELINE-RECON` (P0, ops-vps-fetch, recon-FIRST, NOT a coding lane → dispatch NOW). Recon isolates {VPS-down | push-cron-stopped | geo-block/SSL regression | enricher 0-URL stall} then routes the structural fix (already specced in the STALE-5D handoff: active-freshness vpsHealthPoller + enricher zero-URL alerting + HNX/UPCOM discovery coverage). Annotated STALE-5D recurrence_count=2. BUG-3 bctcReparseJob 79.7% folded as downstream symptom (no separate mint).
 
-**WIP honored:** 2 board lanes (ARCH-CRON-SCHEDULER-RELIABILITY, BA-VN-MACRO-TOOLING) but both NON-coding (architect design + BA spec) = **0 active coding lanes**. FIX-VNSTOCK + FIX-ALERT-RSI in review gated 2026-06-16. Did NOT dispatch — left for next dev-team tick (:07) / router per ASK.
+**BUG-NEW-1/2 (fetch_and_analyze + search_similar_context timed out @16:12Z) = RAW-DISPROVEN false positives.** Re-probed live: `search_similar_context`→5 results, `get_market_snapshot`→fresh VN-Index 1799.31 @16:33Z. Both succeed under recovered load (11.69). 16:1xZ host load-205 spike = overparallel-fanout-host-starvation. **NO task minted.**
 
-**Spec carries** /goal#2 generic mandate (EVERY producer wires its real confidence, normalized 0–100 int, NO allowlist/literal) + /goal#1 plausibility gate (live SIGNALS-last-10 must show a SPREAD by source+strength vs named-volume market.db NOT host decoy, RAW get-signals, post-rebuild). Triage script: `scripts/po-s59-signal-confidence-default50-triage.jq` (atomic temp→[ -s ]→jq empty→all-lane id-guard→conservation→rename; commit orch-state by EXPLICIT PATH). Renumbered s56→s59 (s56/s57/s58 taken).
+**Double-fire signal (B): minted 3 roots to ready[]** + ACK signal_queue row NEW→READ. A=`FIX-GATHERER-DOUBLEFIRE-DISPATCHER` (architect→agent-father, cowork-schedule.json defer-when-lock-unreadable-in-backstop-window — distinct from FIX-CADENCE-COWORK-DUP slot-overlap). B=`FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE` + C=`FIX-MARKETWATCHER-GW-CORROBORATION-GATE` (both dev-mcp-server, BUSY→DEFERRED; combine into one task when lane frees). False gateway-down disproven (sibling market-watcher-eod succeeded; no public MARKET double-post).
+
+**Dedup confirmed (no dups minted):** FIX-VNSTOCK-TRADINGSTATS-CRASH (review, gated 06-16) · FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK (backlog HELD-for-BA, still groomed). 3 signal files archived to processed/. Script: `scripts/po-s60-bctc-outage-doublefire-triage.jq` (atomic temp→[ -s ]→jq empty→conservation(ready+4/backlog=/total+4)→HARD-CONSTRAINT+signal-ack guards→rename).
 
 ### Carry-over
-- `FIX-SIGNAL-CONFIDENCE-DEFAULT-50` ready → dispatch next tick. Recon-first: dev reads all 13 postSignal sites + each producer's confidence source BEFORE editing. done_verified GATED on live SPREAD (not column-of-50) RAW-verified vs named-volume DB + post-rebuild.
-- After 2026-06-16T01:00Z RSI gate clears `FIX-ALERT-ENGINE-RSI-SINGLEDIGIT`: release `FIX-ALERT-OPEN-ZERO-PRICE-RACE` HELD→ready. Then push held bundle AFTER both 06-16 gates (RSI 01:00Z + vnstock 08:30Z) close green.
-- `FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK` (backlog HELD-for-BA): unpark to ready once a BA/architect lane frees. Bus-dark = why signals.db empty.
-- `ARCH-SHIP-WAVE-REAUDIT` correctly PARKED (zone:multi serialized behind mcp-server lane). Unpark only after ARCH-CRON + BA-MACRO close.
+- **OPS-BCTC-PIPELINE-RECON dispatch NOW** (ops-vps-fetch, not a coding lane). done_verified GATED on live VARIED `get_bctc_full` data vs named-vol market.db + >=20/27 Q1 tickers ingested (/goal#1). Recon verdict → route structural fix per STALE-5D handoff items.
+- Double-fire roots B+C wait for dev-mcp-server (BUSY: FIX-SIGNAL-CONFIDENCE active). Root A independent (architect lane). Combine B+C into one dev-mcp-server task.
+- FIX-SIGNAL-CONFIDENCE-DEFAULT-50: router owns review→done_verified gate AFTER agent reports (commit 4f5192c5 shipped). DO NOT touch.
+- 06-16 gates: RSI 01:00Z (`FIX-ALERT-ENGINE-RSI-SINGLEDIGIT`) + vnstock 08:30Z (`FIX-VNSTOCK-TRADINGSTATS-CRASH`). After both green → release held push bundle (HEAD 52 ahead, PO's deferred call).
+- FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK: unpark to ready once a BA/architect lane frees.
