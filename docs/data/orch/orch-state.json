@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T11:52:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-15T10:06:04Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -111,11 +111,12 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T09:29:56Z",
+    "updated_at": "2026-06-15T10:06:04Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE",
-    "next_agent": "dev-mcp-server",
-    "note": "DEV-TEAM DISPATCH 2026-06-15 — FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE ready->in_progress (dev-mcp-server, recon-first, bg) per PO mint+queue (a0f9042b). Root cause: restartCadenceAlertJob.ts has no deploy-vs-crash discriminator (counts mcpServerStartup sentinels, fires count>=2) => false page on a HEALTHY server during the 3 intentional deploys today. Router RAW docker inspect confirms RestartCount=0/healthy (no crash). Gate after fix: rebuild mcp-server + RAW-verify alert does NOT fire on a force-recreate deploy yet DOES on a simulated/real in-place crash-restart; generic all deploys. PUSH held (15-commit bundle, PO's post-RSI-gate call). PARALLEL: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT stays in review[] — behavioral gate fires 2026-06-16 briefing 01:00Z/scan 02:15Z (hourly :07 cron returns router to RAW-verify refilled MARKET queue then promote+push). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (design)."
+    "next_agent": "ops",
+    "rebuild_required": true,
+    "note": "DEV-TEAM TICK 2026-06-15T10:0xZ — FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE dev-mcp-server RETURNED (a1bcfc7e bootstrap guard), moved in_progress->review. Bundle 2d494f77 (core sentinel discriminator) + ff874c82 (bootstrap guard, silent on pre-fix history) + bb6fca2b (docs). Router RAW: ff874c82 = 2 code files no -A/secret; guard code reads firstCleanShutdown=MIN(clean-shutdown), NULL=>silent, skip prev<firstCleanShutdown — generic no hardcode; bun test 10 pass/0 fail (router-run). Migration-boundary defect (would have re-fired the false page on the fix's own rollout) CLOSED by the bootstrap-null guard. REBUILD_REQUIRED=YES mcp-server ONLY (force-recreate, NEVER down) — router dispatches ops. LIVE GATE after rebuild: firstCleanShutdown stays NULL post-deploy => :15/:45 tick SILENT (no CRASH-RESTART page) with pre-fix startups still in window; confirm docker exec sqlite COUNT(mcpServerCleanShutdown)=0 => then review->done_verified. PUSH held (bundle, PO post-RSI-gate 2026-06-16). PARALLEL: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT in review (behavioral gate 2026-06-16 briefing 01:00Z/scan 02:15Z). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (design)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +591,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T09:29:56Z",
+    "_updated_at": "2026-06-15T10:06:04Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14229,40 +14230,6 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      },
-      {
-        "id": "FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE",
-        "type": "FIX",
-        "size": "S",
-        "priority": "P3",
-        "route_to": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "mode": "recon-first",
-        "recon_first": true,
-        "baseline_pass": false,
-        "status": "REVIEW",
-        "title": "restart-cadence alert pages on every intentional deploy (false positive) — discriminate force-recreate deploys from genuine in-place crash-restarts",
-        "files": [
-          "apps/mcp-server/src/scheduler/system/restartCadenceAlertJob.ts"
-        ],
-        "root_cause": "runRestartCadenceAlertJob counts cron_job_runs rows job_name='mcpServerStartup' in a 4h window and fires when count>=2 (ALERT_THRESHOLD), with ZERO discrimination between an intentional ops force-recreate deploy and a genuine in-place crash-restart. Each force-recreate writes a fresh mcpServerStartup sentinel -> 3 deploys today (FIX-RSI-REPORT-FAILCLOSED 05:35, FIX-ALERT-ENGINE-RSI 08:02, FIX-TA-GOSVC-MA5 08:42) = 3 sentinel rows = a 3-restart-in-4h page on a HEALTHY server. Router RAW docker inspect: RestartCount=0, OOMKilled=false, ExitCode=0, Health=healthy -> no crash loop. A monitor that cries wolf on every deploy is a real defect (/goal#1).",
-        "recon_mandate": "dev-mcp-server reads the ACTUAL query + its data source in restartCadenceAlertJob.ts FIRST and verifies the REAL mechanism before patching. Ops's secondary 'SQL row-aging 4->3' sub-mechanism is logically inconsistent (it claims ZERO mcpServerStartup rows dated future yet the alert emitted three precise TODAY timestamps) — do NOT trust it; confirm against live cron_job_runs rows + the running container. Fix root cause, not symptom.",
-        "fix_spec": "Definitive discriminator = docker-native RestartCount/ExitCode (RestartCount stays 0 across force-recreate deploys, increments ONLY on real in-place crash-restarts), OR a container-session/instance discriminator so only the CURRENT instance's startup sentinels count toward the cadence threshold. The alert must fire on genuine in-place crash-restarts and STAY SILENT on intentional deploys.",
-        "generic_mandate": "Must work for ALL future deploys with no per-instance/per-deploy-id hardcode (/goal#2). No allowlist of today's three deploy timestamps.",
-        "verification_gate": "(V1) simulate N intentional force-recreate deploys in 4h -> job returns alertSent=false (RestartCount/session discriminator holds). (V2) simulate a genuine in-place crash-restart (RestartCount increments) -> job still alertSent=true. (V3) regression test mirrors the existing injectable db+sendFn pattern (RestartCadence unit test). (V4) LIVE: next intentional ops rebuild produces NO restart-cadence WORK page. QA verifies LIVE raw, never badges.",
-        "non_urgent": true,
-        "do_not_displace": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (parked review, behavioral gate 2026-06-16 briefing 01:00Z / scan 02:15Z) takes precedence on any lane contention.",
-        "source": "router+ops RAW-verified false-positive restart-cadence page; ops diagnostic committed 8a17798b; recon a338c3a1. FALSE POSITIVE verdict: RestartCount=0 on live container 62b1e615 (FIX-TA-GOSVC-MA5 rebuild 08:42:15Z) proves no crash-restart-in-place; the 3 'restarts' were 3 intentional force-recreate deploys today.",
-        "groomed_by": "po-S55",
-        "groomed_at": "2026-06-15T09:26:09Z",
-        "dispatched_ts": "2026-06-15T09:29:56Z",
-        "dispatched_by": "dev-team",
-        "dispatch_note": "router dispatch 2026-06-15 per PO mint+queue (a0f9042b, board mint 26b450c5). Defect: restartCadenceAlertJob.ts counts mcpServerStartup sentinels in 4h window, fires count>=2, no deploy-vs-crash discriminator => pages on every force-recreate deploy (3 healthy-server deploys today). Router RAW docker inspect RestartCount=0/OOMKilled=false/healthy = no crash loop. recon-first: read live query+data source before patching; prefer docker-native RestartCount/ExitCode discriminator; generic no per-deploy-id hardcode (/goal#2). WIP: in_progress=3 but active coding lane=1 (ARCH-CRON=QA-observe, BA-MACRO=design, neither codes).",
-        "head": {
-          "next_agent": "qa",
-          "commit": "2d494f77",
-          "rebuild_required": true
-        }
       }
     ],
     "ready": [],
@@ -14322,6 +14289,53 @@
         "live_partial_verdict": "LIVE-PARTIAL (router RAW 2026-06-15T08:05Z, NOT a badge): REBUILD LANDED — mcp-server image sha256:5d728ae5 @08:02:40Z (after commit c9892200 @07:52:54Z), MIN_CANDLES=35 guard present in running container, named-volume market.db writable 120 rows, all 13 peers survived, health 200/toolCount 163. CANONICAL BASELINE LIVE (get_technical_indicators): VHM RSI 35.7 / VIC 34.9 / VRE 39.9 — REAL mid-band, NO single-digit, NOT 100.0. WATCH-ITEM (suppression-vs-real) RESOLVED: scan CANDLE_SQL reads daily_ohlcv 60-day window (SAME table as canonical Go svc, majors=38 candles) + calls SAME computeTAIndicators svc => majors 38>=35 PASS guard => RSI identical to canonical by construction (NOT suppressed); only <35-candle thin tickers fail-closed skip (correct). PENDING the BEHAVIORAL half only: rebuild landed 08:02:40Z, ~2min AFTER VN market close 08:00Z, so every TA-Alert/briefing now in the MARKET queue (msg 744 briefing 01:00Z VHM 9.8/VIC 7.4/DAG 100.0; msg 745/746/752 TA-Alerts 02:15-06:15Z) is PRE-rebuild — no post-rebuild scan has run. Next provable cycle = 2026-06-16 session: morning-briefing 01:00Z + first TA scan 02:15Z must show majors at real mid-band RSI (no single-digit, no 100.0), matching canonical within 0.1pt, GENERIC all tickers.",
         "pending_behavioral_gate": "2026-06-16 session: morning-briefing 01:00Z + first TA scan 02:15Z show majors real mid-band RSI (no single-digit/no 100.0), match canonical within 0.1pt, generic all tickers — verifiable on the hourly dev-team :07 tick after the queue refills",
         "push_disposition": "HOLD — 3 unpushed commits (c9892200 fix / 90787cc8 notebook / 66235a64 board); push is PO's call AFTER the behavioral gate closes next session (runtime already carries the fix via the landed rebuild, so origin-sync is non-urgent)"
+      },
+      {
+        "id": "FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE",
+        "type": "FIX",
+        "size": "S",
+        "priority": "P3",
+        "route_to": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "mode": "recon-first",
+        "recon_first": true,
+        "baseline_pass": false,
+        "status": "REVIEW",
+        "title": "restart-cadence alert pages on every intentional deploy (false positive) — discriminate force-recreate deploys from genuine in-place crash-restarts",
+        "files": [
+          "apps/mcp-server/src/scheduler/system/restartCadenceAlertJob.ts"
+        ],
+        "root_cause": "restartCadenceAlertJob counted ALL mcpServerStartup rows in a 4h window and fired at count>=2 with ZERO deploy-vs-crash discriminator => paged on every force-recreate deploy (3 healthy deploys today: 05:35/08:02/08:42, RestartCount=0). Fix = clean-shutdown sentinel (composition-root SIGTERM handler writes mcpServerCleanShutdown before closeDb; crash skips it) + bootstrap guard (firstCleanShutdown NULL => silent; skip gaps whose predecessor pre-dates firstCleanShutdown).",
+        "recon_mandate": "dev-mcp-server reads the ACTUAL query + its data source in restartCadenceAlertJob.ts FIRST and verifies the REAL mechanism before patching. Ops's secondary 'SQL row-aging 4->3' sub-mechanism is logically inconsistent (it claims ZERO mcpServerStartup rows dated future yet the alert emitted three precise TODAY timestamps) — do NOT trust it; confirm against live cron_job_runs rows + the running container. Fix root cause, not symptom.",
+        "fix_spec": "Definitive discriminator = docker-native RestartCount/ExitCode (RestartCount stays 0 across force-recreate deploys, increments ONLY on real in-place crash-restarts), OR a container-session/instance discriminator so only the CURRENT instance's startup sentinels count toward the cadence threshold. The alert must fire on genuine in-place crash-restarts and STAY SILENT on intentional deploys.",
+        "generic_mandate": "Must work for ALL future deploys with no per-instance/per-deploy-id hardcode (/goal#2). No allowlist of today's three deploy timestamps.",
+        "verification_gate": "(V1) simulate N intentional force-recreate deploys in 4h -> job returns alertSent=false (RestartCount/session discriminator holds). (V2) simulate a genuine in-place crash-restart (RestartCount increments) -> job still alertSent=true. (V3) regression test mirrors the existing injectable db+sendFn pattern (RestartCadence unit test). (V4) LIVE: next intentional ops rebuild produces NO restart-cadence WORK page. QA verifies LIVE raw, never badges.",
+        "non_urgent": true,
+        "do_not_displace": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (parked review, behavioral gate 2026-06-16 briefing 01:00Z / scan 02:15Z) takes precedence on any lane contention.",
+        "source": "router+ops RAW-verified false-positive restart-cadence page; ops diagnostic committed 8a17798b; recon a338c3a1. FALSE POSITIVE verdict: RestartCount=0 on live container 62b1e615 (FIX-TA-GOSVC-MA5 rebuild 08:42:15Z) proves no crash-restart-in-place; the 3 'restarts' were 3 intentional force-recreate deploys today.",
+        "groomed_by": "po-S55",
+        "groomed_at": "2026-06-15T09:26:09Z",
+        "dispatched_ts": "2026-06-15T09:29:56Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "router dispatch 2026-06-15 per PO mint+queue (a0f9042b, board mint 26b450c5). Defect: restartCadenceAlertJob.ts counts mcpServerStartup sentinels in 4h window, fires count>=2, no deploy-vs-crash discriminator => pages on every force-recreate deploy (3 healthy-server deploys today). Router RAW docker inspect RestartCount=0/OOMKilled=false/healthy = no crash loop. recon-first: read live query+data source before patching; prefer docker-native RestartCount/ExitCode discriminator; generic no per-deploy-id hardcode (/goal#2). WIP: in_progress=3 but active coding lane=1 (ARCH-CRON=QA-observe, BA-MACRO=design, neither codes).",
+        "head": {
+          "next_agent": "qa",
+          "commit": "2d494f77",
+          "rebuild_required": true
+        },
+        "review_entered_ts": "2026-06-15T10:06:04Z",
+        "fix_commits": [
+          "2d494f77",
+          "ff874c82"
+        ],
+        "docs_commit": "bb6fca2b",
+        "tests_green": "router-run bun test FIX-MCP-CRASH-LOOP-A-restart-cadence.test.ts => 10 pass / 0 fail / 33 expect(); 2 new bootstrap cases L129/L147; tsc --noEmit clean (dev)",
+        "commit_hygiene_verified": "router git show --stat ff874c82 = 2 code files (restartCadenceAlertJob.ts + test), +181/-37, no -A sweep/foreign/secret; 2d494f77 = 3 files incl composition-root.ts; bb6fca2b = docs/orch separate",
+        "migration_boundary_defect": "CLOSED — router caught on prior return that pre-fix historical startups (no clean-shutdown predecessor) would fire CRASH-RESTART on the fix's OWN rollout for ~2.5h; bootstrap-null guard (ff874c82) makes rollout silent until first graceful stop records a sentinel",
+        "rebuild_required": true,
+        "rebuild_scope": "mcp-server ONLY — both changed files (restartCadenceAlertJob.ts + composition-root.ts shutdown handler) live in apps/mcp-server/. Force-recreate only, NEVER down (named-vol market.db). Verify peers + DB rows.",
+        "pending_live_gate": "AFTER rebuild: firstCleanShutdown stays NULL post-deploy (old container SIGTERMed has no handler; new handler writes sentinel only on NEXT graceful stop) => :15/:45 tick MUST be SILENT (no CRASH-RESTART WORK page) with pre-fix startups still in window. Confirm docker exec sqlite COUNT(mcpServerCleanShutdown)=0 => bootstrap-null path active. Then review->done_verified.",
+        "push_disposition": "HOLD — bundles with the held RSI/MA5 commits; PO pushes the fast-forward after the FIX-ALERT-ENGINE-RSI-SINGLEDIGIT behavioral gate closes 2026-06-16"
       }
     ],
     "qa": [],
