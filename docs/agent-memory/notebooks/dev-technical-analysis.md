@@ -6,6 +6,66 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-06-15 — FIX-TA-GOSVC-MA5-PRECISION — MA5 N/A regression + RSI drift fix
+
+**Task:** FIX-TA-GOSVC-MA5-PRECISION (commit d32f0a17)
+
+**Status:** DONE — commit d32f0a17. REBUILD_REQUIRED: YES.
+
+**Root causes (recon-confirmed):**
+
+(a) MA5 N/A at 38 candles while MA20 computed: Go `module.Compute` computed ONE `SMA(MAPeriod)` — default 14. `clients.ts` mapped `last(raw.sma)` to `mapped.ma20` only. MA5 and MA50 were never requested or returned from Go. The MA5=N/A was a protocol gap, not a length-guard bug.
+
+(b) Go RSI ~1pt drift vs TS report path: candle-window divergence. TS report path `defaultComputeTa` uses `ORDER BY date ASC LIMIT 60`; TS fallback in `technicalIndicatorTools.ts` uses `date >= date('now', '-N days')`. When candle counts differ (production with >60 rows), Wilder smoothing diverges. Fix: pre-fetch closes on TS side and pass to Go, forcing identical candle set.
+
+**Wilder RSI algorithm match confirmed:** Both TS and Go use identical seed (mean of first `period` gain/loss deltas) and identical `k=1/period` smoothing. With same closes → RSI matches to floating-point precision.
+
+**Fix:**
+- `pkg/module/technical_analysis.go`: added `MA5/MA20/MA50` fields to `Result`; added fixed-period SMA(5/20/50) compute blocks (non-fatal, independent of `MAPeriod`).
+- `pkg/domain/models.go`: added `MA5/MA20/MA50 []float64` to `TechnicalIndicators`.
+- `pkg/application/dtos.go`: added `MA5/MA20/MA50 []float64` to `ComputeTAResponse` with `json:"ma5/ma20/ma50,omitempty"`.
+- `pkg/application/usecases.go`: mapped `indicators.MA5/MA20/MA50` into response.
+- `pkg/infrastructure/calculator.go`: mapped `res.MA5/MA20/MA50` into domain struct.
+- `pkg/module/technical_analysis_test.go`: added `wantMA5/MA20/MA50` fields; added 38-candle regression case; added `TestComputeMA5FixedPeriodIndependentOfMAPeriod`.
+- `clients.ts` (mcp-server): added `ma5?/ma20?/ma50?` to `TAServiceRawResponse`; mapper reads named fields instead of aliasing `sma→ma20`.
+- `technicalIndicatorTools.ts` (mcp-server): pre-fetches closes from DB (LIMIT 60, close>0, ASC) before Go call; passes as `closes` for RSI/MA alignment.
+
+**Test results:** `go test ./...` — 11 packages GREEN. `go vet` clean. `go build ./cmd/...` OK. `pnpm check` clean.
+
+**REBUILD_REQUIRED:** YES — Go binary changed (module + domain + infrastructure). Ops must `docker compose build technical-analysis && docker compose up -d --no-deps technical-analysis`. Verify peers + named-vol DB intact (no `docker compose down`).
+
+---
+
+### 2026-06-15 — FIX-TA-GOSVC-NA-DESPITE-DEPTH — Go service DB-backed path implemented
+
+**Task:** FIX-TA-GOSVC-NA-DESPITE-DEPTH
+
+**Status:** DONE — commit 33e7a094. REBUILD_REQUIRED: YES.
+
+**Root cause (recon-confirmed):**
+- `SQLitePriceRepository.GetCandles` was a stub returning `errors.New("not implemented yet")`.
+- `ComputeTAUseCase.Execute()` silently returned `ComputeTAResponse{Symbol:...}` (empty) when `closes=[]`.
+- The mcp-server `computeTAIndicators({code:"VRE"})` sends symbol-only (no closes), hitting the dead DB path → `{"symbol":"VRE"}` response → RSI/MA20/BB N/A despite 38 rows in market.db.
+- The report path `defaultComputeTa` reads the SAME DB directly via TS and gets 38 rows correctly.
+
+**Query diff (root cause):**
+- Report path (TS): `SELECT date AS day, close AS close_price FROM daily_ohlcv WHERE code = ? ORDER BY date ASC LIMIT 60`
+- Go service (before fix): no query at all — stub path.
+- Go service (after fix): `SELECT date, close FROM daily_ohlcv WHERE code = ? ORDER BY date ASC LIMIT 60` — identical semantics.
+
+**Fix:**
+- `pkg/infrastructure/repositories.go`: implemented `GetCandles` via `database/sql` + `modernc.org/sqlite`; query mirrors TS path exactly.
+- `pkg/application/usecases.go`: added `PriceRepo` port; DB-backed path fetches candles → extracts closes → delegates to calculator.
+- `cmd/server/main.go`: pass `priceRepo` to `NewComputeTAUseCase`.
+- `cmd/sandbox/main.go`: add `noopPriceRepo` (sandbox credential-free contract preserved; panics if DB path exercised).
+- `pkg/infrastructure/repositories_test.go` (new): 5 tests — 38-row → non-null RSI regression gate, empty ticker, missing DB, limit cap, default-path.
+
+**Results:** `go test ./...` 9 packages GREEN. `go vet` clean. `go build ./cmd/...` OK. All sandbox scenarios green (25 primitive + 5 module).
+
+**REBUILD_REQUIRED:** YES — baked multi-stage image (no src bind-mount verified: volume is `market_data:/app/data` data only). Image created 2026-06-10, predates this fix. Ops must `docker compose build technical-analysis && docker compose up -d technical-analysis`.
+
+---
+
 ### 2026-06-15 — FIX-RSI-REPORT-FAILCLOSED — report RSI path fail-close fix
 
 **Task:** FIX-RSI-REPORT-FAILCLOSED (zone apps/mcp-server/ — recon confirmed zone, not apps/technical-analysis/)
