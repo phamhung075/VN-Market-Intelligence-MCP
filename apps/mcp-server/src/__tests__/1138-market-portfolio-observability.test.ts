@@ -42,8 +42,11 @@ describe("Task 1138 — market/portfolio/prediction jobs observability", () => {
   })
 
   it("patternWatch does not have a bare await runPatternWatch() without wrapRun wrapper", () => {
+    // scheduleCron is a thin wrapper over cron.schedule (T2-ARCH-CRON-RECOVER-JITTER);
+    // the structural check uses scheduleCron since startScheduler.ts was refactored
+    // to use the wrapper exclusively.
     const blockMatch = jobsSource.match(
-      /cron\.schedule\(CRONS\.patternWatch[\s\S]*?\}\s*,\s*\{[^}]*\}\s*\)/,
+      /scheduleCron\(CRONS\.patternWatch[\s\S]*?jobRunRepo\.wrapRun/,
     )
     expect(blockMatch).not.toBeNull()
     const block = blockMatch![0]
@@ -53,7 +56,7 @@ describe("Task 1138 — market/portfolio/prediction jobs observability", () => {
 
   it("weeklyPortfolioReport does not have a bare await without wrapRun wrapper", () => {
     const blockMatch = jobsSource.match(
-      /cron\.schedule\(CRONS\.weeklyPortfolioReport[\s\S]*?\}\s*,\s*\{[^}]*\}\s*\)/,
+      /scheduleCron\(CRONS\.weeklyPortfolioReport[\s\S]*?jobRunRepo\.wrapRun/,
     )
     expect(blockMatch).not.toBeNull()
     const block = blockMatch![0]
@@ -62,7 +65,7 @@ describe("Task 1138 — market/portfolio/prediction jobs observability", () => {
 
   it("predictionMarketPoll does not have a bare await without wrapRun wrapper", () => {
     const blockMatch = jobsSource.match(
-      /cron\.schedule\(CRONS\.predictionMarketPoll[\s\S]*?\}\s*,\s*\{[^}]*\}\s*\)/,
+      /scheduleCron\(CRONS\.predictionMarketPoll[\s\S]*?jobRunRepo\.wrapRun/,
     )
     expect(blockMatch).not.toBeNull()
     const block = blockMatch![0]
@@ -71,7 +74,7 @@ describe("Task 1138 — market/portfolio/prediction jobs observability", () => {
 
   it("predictionOutcome does not have a bare await without wrapRun wrapper", () => {
     const blockMatch = jobsSource.match(
-      /cron\.schedule\(CRONS\.predictionOutcome[\s\S]*?\}\s*,\s*\{[^}]*timezone[^}]*\}\s*\)/,
+      /scheduleCron\(CRONS\.predictionOutcome[\s\S]*?jobRunRepo\.wrapRun/,
     )
     expect(blockMatch).not.toBeNull()
     const block = blockMatch![0]

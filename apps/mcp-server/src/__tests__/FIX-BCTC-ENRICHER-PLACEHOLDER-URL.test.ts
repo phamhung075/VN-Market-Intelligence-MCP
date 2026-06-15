@@ -26,13 +26,13 @@
  *         at source_url = NULL and stay 'pending'. The enricher does NOT force
  *         a placeholder onto them — they wait for real content availability.
  *
- *   TC-4 (regression guard — old placeholder pattern NOT matched by enricher):
- *         A row manually holding the old VPS placeholder URL pattern is NOT
- *         selected by the enricher's ARM1 WHERE clause; the 404-loop row is
- *         left untouched. This confirms the fix is at the backfill layer
- *         (not by widening the enricher WHERE clause), and that any live rows
- *         with old placeholder URLs must be cleared via a one-time migration
- *         (not within this fix scope).
+ *   TC-4 (regression guard — old placeholder pattern reset by orphan arm then re-enriched):
+ *         A row holding the old VPS placeholder URL pattern (no date prefix in
+ *         filename) is detected by the enricher's orphan-re-sync arm (added in
+ *         FIX-BCTC-VPS-QUEUE-SYNC G2) and reset to NULL. ARM1 then enriches it
+ *         with a real discovered URL in a subsequent cycle. This confirms both
+ *         the backfill-layer fix (new rows arrive as NULL) and the enricher-layer
+ *         rescue (legacy placeholder rows are recovered without a separate migration).
  */
 
 Bun.env["DB_PATH"] = ":memory:";
@@ -243,15 +243,46 @@ describe("FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-3 — scope guard: empty discover
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TC-4: regression guard — old placeholder VPS URL is NOT matched by enricher WHERE clause
+// TC-4: regression guard — old VPS placeholder URL reset by orphan arm then re-enriched
+//
+// Contract (updated to match FIX-BCTC-VPS-QUEUE-SYNC G2 orphan-re-sync arm):
+//
+// The enricher has TWO arms that together handle orphan placeholder rows:
+//
+//   Orphan arm (runs first): detects rows with a VPS placeholder source_url
+//     (LIKE 'http://125.212.251.27:8765/bctc-files/%' AND NOT LIKE '%/20%')
+//     and resets source_url = NULL so the normal enrichment arm can process them.
+//     The orphan arm runs BEFORE queueItems is consumed, and queueItems is
+//     fetched (ARM1 query) BEFORE the orphan arm runs.
+//
+//   Normal arm (ARM1): selects rows with source_url IS NULL and calls
+//     discoverHosePdfUrls() to populate a real URL. Since queueItems is fetched
+//     before the orphan reset, a row reset in cycle-N is enriched in cycle-N+1.
+//
+// Two-cycle flow:
+//   Cycle-1: ARM1 query excludes placeholder rows (not NULL) → queueItems may be
+//            empty or contain other NULL rows; orphan arm resets placeholder to NULL.
+//   Cycle-2: ARM1 query now selects the reset row (NULL) → enriches it.
+//
+// The fix is at TWO layers:
+//   - backfill layer: new rows arrive with source_url=NULL (not placeholder)
+//   - enricher layer: the orphan arm rescues legacy rows that still carry the
+//     stale placeholder pattern from before the backfill fix
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4 — regression guard: old placeholder pattern NOT enriched", () => {
-  it("row with old VPS placeholder URL is NOT selected by enricher (confirms fix is at backfill layer)", async () => {
+describe("FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4 — regression guard: old placeholder reset by orphan arm and enriched next cycle", () => {
+  it("row with old VPS placeholder URL is reset to NULL by orphan arm (cycle-1) then enriched (cycle-2)", async () => {
+    // Execution order within a single runBctcQueueEnricherJob call:
+    //   1. ARM1 query fetched: VNM has OLD_PLACEHOLDER → NOT matched by ARM1 WHERE → queueItems=[]
+    //   2. Orphan arm: VNM matches orphan pattern → source_url reset to NULL → orphansResynced=1
+    //   3. queueItems.length === 0 → early return (loop never runs)
+    //
+    // Cycle-2: VNM (now NULL) is picked up by ARM1 and enriched.
     const OLD_PLACEHOLDER = "http://125.212.251.27:8765/bctc-files/VNM/VNM_2026_Q1.pdf";
     insertRow(testDb, "VNM", OLD_PLACEHOLDER);
 
-    const result = await runBctcQueueEnricherJob({
+    // Cycle-1: orphan arm resets VNM; no ARM1 items to process (early return)
+    const result1 = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
         _fetchHsx: async (_ticker, _year, _timeout) => [
@@ -260,21 +291,47 @@ describe("FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4 — regression guard: old place
       },
     });
 
-    // Enricher does NOT select this row — WHERE clause does not match placeholder VPS URL
-    expect(result.itemsProcessed).toBe(0);
-    expect(result.urlsPopulated).toBe(0);
+    expect(result1.orphansResynced).toBe(1);
+    expect(result1.itemsProcessed).toBe(0); // queueItems empty → early return
+    expect(result1.urlsPopulated).toBe(0);
 
-    // source_url stays as the old placeholder (live rows need a one-time migration)
-    const row = getQueueRow(testDb, "VNM");
-    expect(row?.source_url).toBe(OLD_PLACEHOLDER);
+    // VNM reset to NULL — ready for cycle-2 enrichment
+    const rowAfterCycle1 = getQueueRow(testDb, "VNM");
+    expect(rowAfterCycle1?.source_url).toBeNull();
+    expect(rowAfterCycle1?.status).toBe("pending");
+
+    // Cycle-2: VNM (now NULL) selected by ARM1 and enriched
+    const result2 = await runBctcQueueEnricherJob({
+      db: testDb,
+      discoverOptions: {
+        _fetchHsx: async (_ticker, _year, _timeout) => [
+          "https://staticfile.hsx.vn/test/VNM-2026-Q1.pdf",
+        ],
+      },
+    });
+
+    expect(result2.orphansResynced).toBe(0); // already reset in cycle-1
+    expect(result2.itemsProcessed).toBe(1);
+    expect(result2.urlsPopulated).toBe(1);
+
+    // source_url is now a real URL — no longer the stale VPS placeholder
+    const rowAfterCycle2 = getQueueRow(testDb, "VNM");
+    expect(rowAfterCycle2?.source_url).not.toBeNull();
+    expect(rowAfterCycle2?.source_url).not.toBe(OLD_PLACEHOLDER);
+    expect(rowAfterCycle2?.source_url).not.toMatch(/125\.212\.251\.27:8765\/bctc-files/);
+    expect(rowAfterCycle2?.source_url).toContain("VNM");
   });
 
-  it("only NULL-url rows are enriched when mixed with old-placeholder-url rows", async () => {
+  it("old-placeholder-url rows reset in cycle-1; NULL rows enriched in cycle-1; both correct after cycle-2", async () => {
+    // Cycle-1 behavior: VEA has OLD_PLACEHOLDER (orphan) → reset by orphan arm to NULL;
+    //   SHB has NULL → selected by ARM1 and enriched in same cycle.
+    // Cycle-2 behavior: VEA (now NULL) selected by ARM1 and enriched.
     const OLD_PLACEHOLDER = "http://125.212.251.27:8765/bctc-files/VEA/VEA_2026_Q1.pdf";
-    insertRow(testDb, "VEA", OLD_PLACEHOLDER); // old placeholder — NOT enriched
-    insertRow(testDb, "SHB", null);            // NULL — WILL be enriched
+    insertRow(testDb, "VEA", OLD_PLACEHOLDER); // orphan placeholder — reset in cycle-1
+    insertRow(testDb, "SHB", null);            // NULL — enriched in cycle-1
 
-    const result = await runBctcQueueEnricherJob({
+    // Cycle-1
+    const result1 = await runBctcQueueEnricherJob({
       db: testDb,
       discoverOptions: {
         _fetchHsx: async (ticker, _year, _timeout) => [
@@ -283,15 +340,39 @@ describe("FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4 — regression guard: old place
       },
     });
 
-    expect(result.itemsProcessed).toBe(1); // only SHB
-    expect(result.urlsPopulated).toBe(1);
+    expect(result1.orphansResynced).toBe(1); // VEA reset
+    expect(result1.itemsProcessed).toBe(1);  // SHB only
+    expect(result1.urlsPopulated).toBe(1);   // SHB enriched
 
-    // SHB enriched
-    const shb = getQueueRow(testDb, "SHB");
-    expect(shb?.source_url).toContain("SHB");
+    // SHB enriched in cycle-1
+    const shbAfterCycle1 = getQueueRow(testDb, "SHB");
+    expect(shbAfterCycle1?.source_url).toContain("SHB");
+    expect(shbAfterCycle1?.source_url).not.toMatch(/125\.212\.251\.27:8765\/bctc-files/);
 
-    // VEA unchanged
-    const vea = getQueueRow(testDb, "VEA");
-    expect(vea?.source_url).toBe(OLD_PLACEHOLDER);
+    // VEA reset to NULL in cycle-1 (not yet enriched)
+    const veaAfterCycle1 = getQueueRow(testDb, "VEA");
+    expect(veaAfterCycle1?.source_url).toBeNull();
+    expect(veaAfterCycle1?.status).toBe("pending");
+
+    // Cycle-2: VEA (now NULL) enriched
+    const result2 = await runBctcQueueEnricherJob({
+      db: testDb,
+      discoverOptions: {
+        _fetchHsx: async (ticker, _year, _timeout) => [
+          `https://staticfile.hsx.vn/test/${ticker}-2026-Q1.pdf`,
+        ],
+      },
+    });
+
+    expect(result2.orphansResynced).toBe(0); // VEA already reset
+    expect(result2.itemsProcessed).toBe(1);  // VEA
+    expect(result2.urlsPopulated).toBe(1);   // VEA enriched
+
+    // VEA now has a real URL
+    const veaAfterCycle2 = getQueueRow(testDb, "VEA");
+    expect(veaAfterCycle2?.source_url).not.toBeNull();
+    expect(veaAfterCycle2?.source_url).not.toBe(OLD_PLACEHOLDER);
+    expect(veaAfterCycle2?.source_url).toContain("VEA");
+    expect(veaAfterCycle2?.source_url).not.toMatch(/125\.212\.251\.27:8765\/bctc-files/);
   });
 });

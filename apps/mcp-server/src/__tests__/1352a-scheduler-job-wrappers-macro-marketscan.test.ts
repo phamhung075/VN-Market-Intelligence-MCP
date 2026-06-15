@@ -26,7 +26,7 @@ Bun.env["DB_PATH"] = ":memory:";
  */
 
 import { describe, it, expect, mock, beforeEach, afterEach, beforeAll, afterAll } from "bun:test";
-import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
+import { initDatabase, closeDb, getDb } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Real-module captures — imported BEFORE any mock.module() call so they hold
@@ -370,6 +370,15 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
   beforeEach(() => {
     _isTradingSessionImpl = _frozenRealIsTradingSession;
     _scanMarketImpl = _frozenRealScanMarket;
+    // Clear cron_job_runs between tests so shouldSkipRecoveryReplay (T4 cadence
+    // guard in marketScanJob.ts) does not skip scans that ran in a prior test.
+    // Without this, B-1's success record causes B-3's first runMarketScan call
+    // to be short-circuited before reaching scanMarket, giving scanCallCount=0.
+    try {
+      getDb().exec("DELETE FROM cron_job_runs");
+    } catch {
+      // non-fatal — table may not exist in every schema version
+    }
   });
 
   afterEach(() => {
