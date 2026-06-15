@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T00:50:51Z",
+    "updated_at": "2026-06-15T01:35:29Z",
     "updated_by": "dev-team",
-    "active_task_id": "",
-    "next_agent": "po",
-    "note": "F-BOP-ENCODING LIVE-VERIFY = PARTIAL (router independent RAW 2-window re-probe, NOT the ops badge). ops (a1b951eec29057302) force-recreated macro-indicators single svc (image c6793a0222e3->27b2ccd5d2c3, HEAD 0b8a1de6, 400610e5 ancestor, 11/11 peers healthy, NO compose down). RELIABILITY CONFIRMED: pre-fix blocked_reason='context deadline exceeded' (malformed-URL hang on 8s FetchBudgetSec) ELIMINATED across 4 consistent probes (ops T+0, ops T+90s, router w1, router w2) — all degraded-200 within gateway deadline, none hang. Encoding fix (400610e5 url.Values{}.Encode()) made the SBV Liferay OData URL resolve. BUT ACCURACY NOT achieved: get_vn_bop still degraded, 'SBV API returned 0 items (empty response)', all fields 0. ROOT (separate from encoding): URL resolves + SBV responds but OData query SEMANTICS (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range format) match 0 live articles. F-BOP-ENCODING = done (encoding correct, merge-gated 400610e5, LIVE, deadline-symptom gone, tests green); done_verified WITHHELD — real BOP data blocked on OData-query recon. === -> head ops->po: PO TRIAGE (next dev-team tick): (1) MINT F-BOP-QUERY-RECON (apps/macro-indicators; recon-first ops-vps-fetch curls SBV Liferay OData endpoint w/ corrected encoding + varies params until real BOP articles return, THEN dev-macro-indicators fixes parsers_vmt_bop.go query params; generic /goal#2). (2) SEQUENCE the accuracy RECON BATCH on macro-indicators (serialize same files, recon-first each): F-BOP-QUERY-RECON + F-NSO-SELECTOR (both: transport OK, data empty, need live upstream recon). F-NSO-SELECTOR sequence_after cleared (F-BOP code done+merged). === HELD (unchanged): S2 07-06 methodology brief (agent-father); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open hardening (ops/infra lane); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify); release batch CTG/VCB/D2D BLOCKED on undeployed bug #2776 (signal #6120). Commit explicit path only."
+    "active_task_id": "CI-RED-d20468c0-FIX",
+    "next_agent": "dev",
+    "note": "STEP-3 DISPATCH x2 (PO BATCH a0fcdb8a9a4ba5e72, router RAW-verified READY + dev-zone in_progress=[] pre-dispatch). [1] CI-RED-d20468c0-FIX -> dev-mcp-server (agent ad7c357d49c10d38e): GENUINE bug (router isolation-probe: local b47f8846 reproduces all 8 fails / 4 files; origin/main d20468c0 run 27516556457 RED). Visible root = FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4: bctcQueueEnricher orphan-placeholder-reset arm NULLs source_url vs regression-guard expecting placeholder PRESERVED — reconcile rule vs contract + inspect the other 3 files (1138-market-portfolio-observability, 1352a-scheduler-job-wrappers-macro-marketscan, 239c-macro-refresh-integration). DoD: bun test green on 4 files + commit explicit-path; verification_gate=ci_green_on_subsequent_push (SHA != d20468c0). HIGH. [2] F-NSO-SELECTOR -> ops-vps-fetch (agent a98df635c3f76bc53): RECON-FIRST lead of the macro accuracy batch. Transport OK (proxy UP, NSO index ~85867 bytes) but NSO WordPress bai-top selector stale -> 0 article rows. ops curls live NSO/GSO on Vinahost VPS, captures new HTML structure + working selector + recipe -> recon doc; THEN dev-macro-indicators implements in cache_vmt_nso.go + parsers_vmt_gso_indicators.go. F-BOP-QUERY-RECON SEQUENCED AFTER this (sequence_after=F-NSO-SELECTOR; same owner/zone, NEVER parallel). MEDIUM. === Two lanes independent (mcp-server code vs macro-indicators recon) -> WIP<=2 OK. On dev-mcp-server return -> router RAW-verify gates (on-main, files in-zone, foreign-capture none, independent uncached bun test 4-files green) -> head dev->ops REBUILD mcp-server (force-recreate single svc, NEVER compose down) -> live CI re-verify (push SHA != d20468c0 turns origin green) -> done_verified. On ops-vps-fetch recon return -> head -> dev-macro-indicators implements F-NSO-SELECTOR, then F-BOP-QUERY-RECON recon. F-BOP-ENCODING stays done (done_verified WITHHELD pending F-BOP-QUERY-RECON real-data restoration). === HELD (unchanged): S2 07-06 methodology brief (agent-father); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open hardening (ops/infra lane); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify); release batch CTG/VCB/D2D BLOCKED on undeployed bug #2776 (signal #6120); origin-divergence 133-ahead/6-behind DEFERRED (not a code bug). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -518,7 +518,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T00:50:51Z",
+    "_updated_at": "2026-06-15T01:35:29Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13596,11 +13596,11 @@
     ],
     "head": {
       "status": "active",
-      "active_task_id": "F-BOP-ENCODING",
+      "active_task_id": "CI-RED-d20468c0-FIX",
       "next_agent": "dev-team",
-      "updated_at": "2026-06-15T00:31:49Z",
+      "updated_at": "",
       "updated_by": "po",
-      "note": "ACCURACY-PAIR TRIAGE (F-MACRO-FETCH-DEADLINE + VMT-8 done_verified; reliability layer COMPLETE). Promoted backlog->ready, SERIALIZED same owner/zone (dev-macro-indicators, apps/macro-indicators/), WIP<=2: [1] F-BOP-ENCODING (S, no-recon, FIRST) URL-encode SBV OData filter spaces in usecases_vmt_bop.go; [2] F-NSO-SELECTOR (S, RECON-FIRST, sequence_after F-BOP) ops-vps-fetch recons new NSO WordPress HTML -> dev-macro-indicators implements new selector in cache_vmt_nso.go+parsers. Both rebase 94b49f44; no file conflict between them. -> dev-team dispatch F-BOP-ENCODING first; NEVER parallel (file-conflict guard). === SEPARATE LIVE LANE (untouched): BA-VN-MACRO-TOOLING in_progress, status architect-probefold-done, next_agent=pm (pm task-plan PENDING) — do NOT lose. === HELD (unchanged): 07-06 methodology brief (sequenced-after-incident); F3 cronJobCount; VMT-3a-PMI blocked-probe5; ops/infra lane (FIX-SBV-FX-VPS-FETCHER-UNHEALTHY, FIX-NEWS-VPS-CRASH-LOOP, OPS-POLLNEWS-NIGHT-ZERO, tinyproxy ACL); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify) HELD — passive ops/cron live-probe, already owned by ARCH-CRON-SCHEDULER-RELIABILITY reverify_gate + FIX-COWORK-GUARANTEED-BACKSTOP, surfaces on its own gate tick (TNB c95 ACK confirms). Commit explicit path only."
+      "note": "CI-RED + BOP-RECON TRIAGE (b47f8846). MINTED 2 (both dedup-clean, no prior board id): [1] CI-RED-d20468c0-FIX (FIX, S, zone apps/mcp-server, dev-mcp-server, NO recon) — HIGH, GENUINE (router isolation-probe: local b47f8846 reproduces all 8 fails/4 files; root = FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4 orphan-reset arm NULLs source_url vs regression-guard expecting placeholder PRESERVED; last-ship-not-best-result); gate=ci_green_on_subsequent_push (SHA!=d20468c0). DISPATCH FIRST. [2] F-BOP-QUERY-RECON (FIX, S, zone apps/macro-indicators, dev-macro-indicators, RECON-FIRST) — MEDIUM accuracy; SBV OData query SEMANTICS match 0 live articles (encoding done+LIVE, deadline-hang gone); ops-vps-fetch recons SBV Liferay endpoint params THEN dev fixes parsers_vmt_bop.go. SERIALIZED w/ F-NSO-SELECTOR (same owner/zone, NEVER parallel; sequence_after F-NSO-SELECTOR). === LANES INDEPENDENT: CI-FIX=dev-mcp-server code lane; recon batch=ops-vps-fetch macro lane. WIP<=2 respected per-lane. === F-BOP-ENCODING stays done (encoding correct+LIVE; accuracy spun out to F-BOP-QUERY-RECON). === UNTOUCHED: BA-VN-MACRO-TOOLING in_progress next=pm; ARCH-CRON-SCHEDULER-RELIABILITY in_progress. Governance origin-divergence (133 ahead/6 behind) DEFERRED (pre-existing, cloud-health lineage, not minted this tick). Commit explicit path only."
     },
     "in_progress": [
       {
@@ -13781,7 +13781,7 @@
         "title": "NSO WordPress HTML changed -> 'bai-top' discovery selector stale -> trade/macro/cpi opaque Zone-A 500; update selector to current NSO markup; restores real data (accuracy, after deadline fix)",
         "zone": "apps/macro-indicators/",
         "owner": "dev-macro-indicators",
-        "status": "READY",
+        "status": "in_progress",
         "sequence_after": null,
         "priority": "high",
         "size": "S",
@@ -13805,7 +13805,61 @@
         "recon_owner": "ops-vps-fetch",
         "triaged_at": "2026-06-15T00:31:49Z",
         "triaged_by": "po",
-        "po_triage_note": "RECON-FIRST. bai-top selector stale; NSO WordPress index HTML changed (live degrade blocked_reason proves selector no longer matches; index fetches ~85KB so proxy is UP — pure accuracy gap, NOT proxy-down). STEP 1 ops-vps-fetch: recon the NEW NSO WordPress HTML, capture the new selector/structure. STEP 2 dev-macro-indicators: implement new selector in cache_vmt_nso.go + parsers_vmt_gso_indicators.go. Rebase 94b49f44. sequence_after F-BOP-ENCODING (serialize same owner/zone)."
+        "po_triage_note": "RECON-FIRST. bai-top selector stale; NSO WordPress index HTML changed (live degrade blocked_reason proves selector no longer matches; index fetches ~85KB so proxy is UP — pure accuracy gap, NOT proxy-down). STEP 1 ops-vps-fetch: recon the NEW NSO WordPress HTML, capture the new selector/structure. STEP 2 dev-macro-indicators: implement new selector in cache_vmt_nso.go + parsers_vmt_gso_indicators.go. Rebase 94b49f44. sequence_after F-BOP-ENCODING (serialize same owner/zone).",
+        "dispatched_at": "2026-06-15T01:35:29Z",
+        "dispatched_to": "ops-vps-fetch",
+        "dispatch_agent_id": "a98df635c3f76bc53"
+      },
+      {
+        "id": "CI-RED-d20468c0-FIX",
+        "type": "FIX",
+        "title": "CI-RED-d20468c0-FIX — CI RED on origin HEAD d20468c0 (run 27516556457): 8 fail/4 files (1138-market-portfolio-observability, 1352a-scheduler-job-wrappers-macro-marketscan, 239c-macro-refresh-integration, FIX-BCTC-ENRICHER-PLACEHOLDER-URL)",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "status": "in_progress",
+        "priority": "high",
+        "size": "S",
+        "sequence_after": null,
+        "baseline_pass": "b47f8846",
+        "recon_first": false,
+        "root_cause": "ROUTER ISOLATION-PROBE (RAW, uncached): local HEAD b47f8846 REPRODUCES all 8 fails -> GENUINE, not origin-divergence. Visible root in FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4: bctcQueueEnricher orphan-placeholder-URL-reset-for-rediscovery arm NULLs source_url for orphan placeholders, but TC-4 regression-guard expects old placeholder PRESERVED (Expected http://125.212.251.27:8765/...VNM_2026_Q1.pdf, Received null). Classic last-ship-not-best-result: orphan-re-sync arm shipped without updating the TC-4 regression contract. FIX-BCTC-ENRICHER-PLACEHOLDER-URL is status=DONE on board but its test now RED.",
+        "fix_spec": "dev-mcp-server triages all 4 files. For FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4: reconcile the orphan-re-sync arm vs the regression-guard contract — either (a) the orphan-reset is correct behaviour and TC-4 must be updated to assert NULL-on-orphan, or (b) the orphan-reset over-reaches and must preserve placeholder for non-orphan rows. Decide from the enricher business rule (which placeholders should be re-discovered). Inspect the other 3 files specific asserts (not yet inspected by router).",
+        "verification_gate": "ci_green_on_subsequent_push — gh run list --branch main --limit 3 shows conclusion=success for a push AFTER d20468c0 (SHA != d20468c0). Local: bun test on the 4 files green.",
+        "generic_mandate": "Fix the regression-contract reconciliation generically (no per-test hardcode); ensure the enricher rule + its guard agree at the source.",
+        "status_note": "AC: gh run list --branch main --limit 3 shows conclusion=success for a push AFTER d20468c0 (verification_gate=ci_green_on_subsequent_push). Priority: high. GENUINE (local b47f8846 reproduces all 8). Dedup: no prior board entry on d20468c0 (CI-RED-b7b84d9b/8081e584 = stale older SHAs). Files: 1138-market-portfolio-observability.test.ts, 1352a-scheduler-job-wrappers-macro-marketscan.test.ts, 239c-macro-refresh-integration.test.ts, FIX-BCTC-ENRICHER-PLACEHOLDER-URL.test.ts.",
+        "source_signal": "ci-red-d20468c0 (ci-health-probe, HIGH)",
+        "created_at": "",
+        "created_by": "po",
+        "triaged_at": "",
+        "triaged_by": "po",
+        "dispatched_at": "2026-06-15T01:35:29Z",
+        "dispatched_to": "dev-mcp-server",
+        "dispatch_agent_id": "ad7c357d49c10d38e"
+      },
+      {
+        "id": "F-BOP-QUERY-RECON",
+        "type": "FIX",
+        "title": "F-BOP-QUERY-RECON — get_vn_bop accuracy: SBV Liferay OData query SEMANTICS match 0 live articles (encoding fixed+LIVE, but SBV returns 0 items). Recon-first ops-vps-fetch.",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "owner_agent": "dev-macro-indicators",
+        "status": "READY",
+        "priority": "medium",
+        "size": "S",
+        "sequence_after": "F-NSO-SELECTOR",
+        "baseline_pass": "94b49f44",
+        "recon_first": true,
+        "root_cause": "F-BOP-ENCODING (400610e5, done) fixed URL encoding -> deadline-exceeded hang ELIMINATED, SBV now responds, BUT blocked_reason=SBV API returned 0 items (empty response), all fields 0. ROOT (accuracy, SEPARATE from encoding): OData query SEMANTICS — scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range format — match 0 live articles.",
+        "fix_spec": "RECON-FIRST: ops-vps-fetch curls the SBV Liferay OData endpoint (corrected encoding from F-BOP-ENCODING) and VARIES params (scopeKey / contentStructureId / filter field / status / date-range) until real BOP articles return. THEN dev-macro-indicators fixes the query params in parsers_vmt_bop.go / usecases_vmt_bop.go. Generic per /goal#2 (recon-derived params, no hardcoded single-quarter).",
+        "verification_gate": "get_vn_bop returns real (non-zero) BOP fields with a populated quarter/period (LIVE, post-rebuild), not blocked_reason=0 items.",
+        "generic_mandate": "Recon-derive the OData query contract from live SBV payload (not schema comment); parser fails-loud not fails-empty.",
+        "status_note": "Recon-first ops-vps-fetch lane. SERIALIZED with F-NSO-SELECTOR (same owner dev-macro-indicators, same zone apps/macro-indicators/, same files-risk — NEVER parallel). sequence_after F-NSO-SELECTOR. Both: transport OK, data empty, need live upstream recon. Rebase 94b49f44.",
+        "source_signal": "dev-team-20260615T005051Z-fbop-partial-queryrecon",
+        "created_at": "",
+        "created_by": "po",
+        "triaged_at": "",
+        "triaged_by": "po"
       }
     ],
     "review": [
