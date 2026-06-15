@@ -97,6 +97,40 @@ function makeDeps(overrides: Partial<BctcPdfPullDeps> = {}): BctcPdfPullDeps {
   };
 }
 
+/**
+ * FIX-BCTC-ENRICH-SILENT-0ROWS: seed a financial_reports header + at least 1
+ * bctc_table_rows row for a given ticker+period so the 0-row gate passes and the
+ * queue advances to 'done'. Tests that verify the happy-path (download + done)
+ * must call this to simulate a successful extraction.
+ */
+function seedExtractionResult(
+  db: Database,
+  code: string,
+  year: number,
+  quarter: string,
+): void {
+  const q = quarter.startsWith("Q") ? quarter : `Q${quarter}`;
+  const sortKey = `${year}-${q}`;
+  const qNum = parseInt(q.slice(1), 10);
+  const reportId = `aabbccdd-${year}-${qNum}${qNum}${qNum}${qNum}-8000-${code.toLowerCase().padEnd(12, "0").slice(0, 12)}`;
+  db.prepare(`
+    INSERT OR REPLACE INTO financial_reports
+      (id, action_code, company_name, exchange, domain,
+       period_year, period_quarter, period_type, period_start, period_end, sort_key,
+       net_profit, audit_status, extraction_confidence, parsed_at,
+       balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json)
+    VALUES (?, ?, 'Test Corp', 'HOSE', 'other',
+            ?, ?, ?, '${year}-01-01', '${year}-12-31', ?,
+            0.0, 'unaudited', 0.75, datetime('now'),
+            '{}', '{}', '{}', '{}')
+  `).run(reportId, code, year, qNum, q, sortKey);
+  db.prepare(`
+    INSERT OR IGNORE INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, label, period_current, unit)
+    VALUES (?, 1, 'balance_sheet', 1, 'Total Assets', '${sortKey}', 'billion_vnd')
+  `).run(reportId);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
@@ -176,6 +210,8 @@ describe("bctcPdfPullJob", () => {
   it("downloads PDF, saves file, marks status done, triggers extraction", async () => {
     const sourceUrl = `${VPS_BCTC_BASE_URL}VCB/20260130-VCB-BCTC.pdf`;
     insertQueueItem(testDb, "VCB", 2025, "Q4", sourceUrl);
+    // FIX-BCTC-ENRICH-SILENT-0ROWS: seed extraction result so 0-row gate passes
+    seedExtractionResult(testDb, "VCB", 2025, "Q4");
 
     const savedPaths: string[] = [];
     const triggerCalls: Array<{ actionCode: string; year: number; quarter: string }> = [];
@@ -293,13 +329,16 @@ describe("bctcPdfPullJob", () => {
 
   it("processes at most batchSize items per run", async () => {
     for (let i = 1; i <= 15; i++) {
+      const code = `TK${String(i).padStart(2, "0")}`;
       insertQueueItem(
         testDb,
-        `TK${String(i).padStart(2, "0")}`,
+        code,
         2025,
         "Q4",
-        `${VPS_BCTC_BASE_URL}TK${String(i).padStart(2, "0")}/file.pdf`,
+        `${VPS_BCTC_BASE_URL}${code}/file.pdf`,
       );
+      // FIX-BCTC-ENRICH-SILENT-0ROWS: seed extraction result for each item
+      seedExtractionResult(testDb, code, 2025, "Q4");
     }
 
     const result = await runBctcPdfPullJob({
@@ -315,9 +354,11 @@ describe("bctcPdfPullJob", () => {
   // ── TC-9: multiple items — processes all in batch ─────────────────────────
 
   it("processes multiple VPS queue items in one run", async () => {
-    insertQueueItem(testDb, "VCB", 2025, "Q4", `${VPS_BCTC_BASE_URL}VCB/vcb.pdf`);
-    insertQueueItem(testDb, "FPT", 2025, "Q4", `${VPS_BCTC_BASE_URL}FPT/fpt.pdf`);
-    insertQueueItem(testDb, "HPG", 2025, "Q4", `${VPS_BCTC_BASE_URL}HPG/hpg.pdf`);
+    for (const code of ["VCB", "FPT", "HPG"]) {
+      insertQueueItem(testDb, code, 2025, "Q4", `${VPS_BCTC_BASE_URL}${code}/${code.toLowerCase()}.pdf`);
+      // FIX-BCTC-ENRICH-SILENT-0ROWS: seed extraction result for each item
+      seedExtractionResult(testDb, code, 2025, "Q4");
+    }
 
     const result = await runBctcPdfPullJob({ db: testDb, deps: makeDeps() });
 
@@ -331,24 +372,59 @@ describe("bctcPdfPullJob", () => {
     }
   });
 
-  // ── TC-10: extraction failure does NOT revert status ─────────────────────
+  // ── TC-10: extraction failure + 0 rows → enrich_failed (FIX-BCTC-ENRICH-SILENT-0ROWS) ──
+  // Pre-fix: queue was marked 'done' even when triggerExtraction throws and 0 rows landed.
+  // Post-fix: when triggerExtraction throws AND bctc_table_rows == 0 AND bctc_md_tables == 0,
+  //           queue is marked 'enrich_failed' (not 'done') — the 0-row gate applies.
+  // Corollary: if triggerExtraction throws BUT rows WERE seeded (by a prior partial run),
+  //            the queue still advances to done (rows already landed, throw was non-fatal).
 
-  it("marks done even when triggerExtraction throws (fire-and-forget)", async () => {
+  it("TC-10: triggerExtraction throws + 0 rows → enrich_failed (not done)", async () => {
     const sourceUrl = `${VPS_BCTC_BASE_URL}ACB/acb.pdf`;
     insertQueueItem(testDb, "ACB", 2025, "Q4", sourceUrl);
+    // No seedExtractionResult — 0 rows (extraction threw before producing any)
 
+    const bugMessages: string[] = [];
     const deps: BctcPdfPullDeps = {
       fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
       savePdf: async () => {},
       triggerExtraction: async () => { throw new Error("Pipeline unavailable"); },
     };
 
-    const result = await runBctcPdfPullJob({ db: testDb, deps });
+    const result = await runBctcPdfPullJob({
+      db: testDb,
+      deps,
+      sendBugFn: async (msg) => { bugMessages.push(msg); },
+    });
 
-    // Download still counted; extraction error is logged but not fatal
-    expect(result.downloaded).toBe(1);
+    // Extraction threw + 0 rows → enrich_failed
+    expect(result.downloaded).toBe(0); // NOT counted since enrich_failed
+    expect(result.enrichFailed).toBe(1);
     expect(result.failed).toBe(0);
 
+    const row = getQueueRow(testDb, "ACB", 2025, "Q4");
+    expect(row?.status).toBe("enrich_failed");
+    // Bug notification must have fired
+    expect(bugMessages.length).toBeGreaterThan(0);
+  });
+
+  it("TC-10b: triggerExtraction throws but rows WERE seeded → still advances to done", async () => {
+    const sourceUrl = `${VPS_BCTC_BASE_URL}ACB/acb.pdf`;
+    insertQueueItem(testDb, "ACB", 2025, "Q4", sourceUrl);
+    // Rows seeded as if a prior partial run already pushed them
+    seedExtractionResult(testDb, "ACB", 2025, "Q4");
+
+    const deps: BctcPdfPullDeps = {
+      fetchPdf: async () => mockOkResponse(MIN_PDF_BYTES + 1_000),
+      savePdf: async () => {},
+      triggerExtraction: async () => { throw new Error("Retry not needed — rows already in DB"); },
+    };
+
+    const result = await runBctcPdfPullJob({ db: testDb, deps });
+
+    // Rows exist → 0-row gate passes → advance to done despite throw
+    expect(result.downloaded).toBe(1);
+    expect(result.enrichFailed).toBe(0);
     const row = getQueueRow(testDb, "ACB", 2025, "Q4");
     expect(row?.status).toBe("done");
   });

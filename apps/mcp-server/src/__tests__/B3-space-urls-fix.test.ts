@@ -236,12 +236,40 @@ function makeDeps(opts: {
   };
 }
 
+/**
+ * FIX-BCTC-ENRICH-SILENT-0ROWS: seed a minimal financial_reports row + one
+ * bctc_table_rows row so the 0-row gate in bctcPdfPullJob passes and the
+ * queue row advances to 'done'. Tests verifying the download+done path must
+ * call this to simulate successful extraction.
+ */
+function seedExtraction(db: Database, code: string, year: number, quarter: string): void {
+  const q = quarter.startsWith("Q") ? quarter : `Q${quarter}`;
+  const sortKey = `${year}-${q}`;
+  const reportId = `b3-${code.toLowerCase()}-${year}-${q}`;
+  (db as unknown as SqliteDatabase).prepare(`
+    INSERT OR REPLACE INTO financial_reports
+      (id, action_code, company_name, exchange, domain,
+       period_year, period_quarter, period_type, period_start, period_end, sort_key,
+       net_profit, audit_status, extraction_confidence, parsed_at,
+       balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json)
+    VALUES (?, ?, 'Test', 'HOSE', 'other', ?, ?, ?, '2025-01-01', '2025-12-31', ?,
+            0.0, 'unaudited', 0.75, datetime('now'), '{}', '{}', '{}', '{}')
+  `).run(reportId, code, year, parseInt(q.slice(1), 10), q, sortKey);
+  (db as unknown as SqliteDatabase).prepare(`
+    INSERT OR IGNORE INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, label, period_current, unit)
+    VALUES (?, 1, 'balance_sheet', 1, 'Total Assets', ?, 'billion_vnd')
+  `).run(reportId, sortKey);
+}
+
 describe("B3-SPACE-URLS-FIX — bctcPdfPullJob widened filter", () => {
   // TC-PULL-1: VPS URLs still processed (regression guard)
   it("TC-PULL-1: VPS URL is still matched and downloaded", async () => {
     const db = makeDb();
     const vpsUrl = `${VPS_BCTC_BASE_URL}PPC/PPC_2025_Q4.pdf`;
     insertRow(db, 1, "PPC", 2025, "Q4", vpsUrl);
+    // FIX-BCTC-ENRICH-SILENT-0ROWS: seed extraction result so 0-row gate passes
+    seedExtraction(db, "PPC", 2025, "Q4");
 
     const capturedKeys: string[] = [];
     const deps = makeDeps({
@@ -261,6 +289,8 @@ describe("B3-SPACE-URLS-FIX — bctcPdfPullJob widened filter", () => {
     const db = makeDb();
     const hsxUrl = `${HSX_STATICFILE_BASE_URL}Uploads/UploadDocuments/2454932/20260420%20-%20PPC%20-%20BCTC%20Q1%202026.pdf`;
     insertRow(db, 2, "PPC", 2026, "Q1", hsxUrl);
+    // FIX-BCTC-ENRICH-SILENT-0ROWS: seed extraction result so 0-row gate passes
+    seedExtraction(db, "PPC", 2026, "Q1");
 
     const capturedKeys: string[] = [];
     const deps = makeDeps({

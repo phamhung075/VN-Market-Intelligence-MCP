@@ -90,6 +90,32 @@ function makePullDeps(overrides: Partial<BctcPdfPullDeps> = {}): BctcPdfPullDeps
   };
 }
 
+/**
+ * FIX-BCTC-ENRICH-SILENT-0ROWS: seed a minimal financial_reports header + 1
+ * bctc_table_rows row so the 0-row gate in bctcPdfPullJob passes and the
+ * happy-path tests advance to 'done'.
+ */
+function seedExtractionResult(db: Database, code: string, year: number, quarter: string): void {
+  const q = quarter.startsWith("Q") ? quarter : `Q${quarter}`;
+  const sortKey = `${year}-${q}`;
+  const qNum = parseInt(q.slice(1), 10);
+  const reportId = `g1-${code.toLowerCase()}-${year}-${qNum}`;
+  db.prepare(`
+    INSERT OR REPLACE INTO financial_reports
+      (id, action_code, company_name, exchange, domain,
+       period_year, period_quarter, period_type, period_start, period_end, sort_key,
+       net_profit, audit_status, extraction_confidence, parsed_at,
+       balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json)
+    VALUES (?, ?, 'Test', 'HOSE', 'other', ?, ?, ?, '2025-01-01', '2025-12-31', ?,
+            0.0, 'unaudited', 0.75, datetime('now'), '{}', '{}', '{}', '{}')
+  `).run(reportId, code, year, qNum, q, sortKey);
+  db.prepare(`
+    INSERT OR IGNORE INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, label, period_current, unit)
+    VALUES (?, 1, 'balance_sheet', 1, 'Total Assets', ?, 'billion_vnd')
+  `).run(reportId, sortKey);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // G1 — 404 retry cap (bctcPdfPullJob)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -208,6 +234,7 @@ describe("G1 — 404 retry cap → deferred_infra", () => {
     const pdfBytes = new Uint8Array(MIN_PDF_BYTES + 1_000).fill(0x25);
     insertQueueRow(db, "VCB", 2026, "Q1", "pending",
       `${VPS_BCTC_BASE_URL}VCB/20260130-VCB-Q1.pdf`, 5);
+    seedExtractionResult(db, "VCB", 2026, "Q1");
 
     const result = await runBctcPdfPullJob({
       db,
