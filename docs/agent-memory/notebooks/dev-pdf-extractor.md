@@ -130,3 +130,35 @@ Added Layout 6 (`_try_parse_roman_code_row`) and Layout 7 (`_try_parse_single_di
 ### Status
 REVIEW (done_verified pending ops container rebuild + RAW probe of named-volume market.db)
 REBUILD REQUIRED: pdf-extractor container must be rebuilt to deploy Layout 6+7.
+
+---
+
+## Cycle 2026-06-15 — FIX-BCTC-BANK-PDF-OCR-RASTERIZE (P0)
+
+### Problem
+Scanned / image-only bank PDFs (VCB, CTG) yield ~0 text-chars from pdfplumber. BS-marker scan finds no markers → fallback to pages [4,5,6,7] → Tesseract on wrong pages → chars:0 → 0 rows. Layout 6+7 parser (FIX-BCTC-ENRICH-SILENT-0ROWS) never fires because OCR yields empty text.
+
+### Root cause
+Image-only PDFs have no extractable text layer. pdfplumber.extract_text() returns "" → `locate_balance_sheet_pages()` defaults to wrong pages → Tesseract on image-only pages → 0 chars → 0 rows in `bctc_table_rows`.
+
+### Fix
+Two-layer generic rasterize path in `apps/pdf-extractor/infrastructure/ocr_adapter.py`:
+1. `detect_low_text_density(pdf_path)` — generic avg chars/page detector (threshold=50.0, env-configurable, no ticker allowlist)
+2. `locate_balance_sheet_pages()` — wide-scans all pages up to `_MAX_BS_PAGES=8` when low-text-density
+3. `ocr_pages()` — PaddleOCR rasterize fallback when Tesseract < 30 chars/page
+4. `_rasterize_and_ocr_page()` — fitz rasterize at 200 DPI + PaddleOCR (CPU, lazy-init)
+
+### Constants (all env-configurable)
+- `BCTC_LOW_TEXT_DENSITY_THRESHOLD=50.0`
+- `BCTC_LOW_TESSERACT_PAGE_CHARS=30`
+- `BCTC_RASTERIZE_DPI=200`
+
+### Tests
+14 new tests in `__tests__/unit/test_low_text_density_ocr_rasterize.py` (ACs RASTERIZE-1 through RASTERIZE-5). Full suite: 993 passed, 11 pre-existing failures (pre-date this fix, confirmed via git stash).
+
+### Commit
+`fffef229` — feat(pdf-extractor): add low-text-density OCR rasterize path for scanned bank PDFs
+
+### Status
+REVIEW (done_verified pending ops container rebuild + RAW probe VCB/CTG named-volume market.db)
+REBUILD REQUIRED: pdf-extractor container must be rebuilt with force-recreate (never docker compose down).

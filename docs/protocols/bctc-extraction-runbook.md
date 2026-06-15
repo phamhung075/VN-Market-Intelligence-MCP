@@ -104,6 +104,39 @@ console.log(JSON.stringify(r));
 
 ---
 
+## Low-Text-Density OCR Rasterize Path (FIX-BCTC-BANK-PDF-OCR-RASTERIZE, 2026-06-15)
+
+**Symptom:** Scanned / image-only PDFs (VCB, CTG) yield ~0 text-chars from pdfplumber → BS-marker scan finds no markers → fallback to pages [4,5,6,7] → Tesseract on wrong pages → chars:0 → 0 rows.
+
+**Root cause:** Scanned bank PDFs have images only; pdfplumber extracts "" → BS markers never found.
+
+**Fix (generic — no ticker allowlist):**
+1. `detect_low_text_density(pdf_path, max_sample_pages=10)` — averages pdfplumber chars/page across up to 10 pages. Returns True when avg < `BCTC_LOW_TEXT_DENSITY_THRESHOLD` (default 50.0, env-configurable). Falls back False on exception.
+2. `locate_balance_sheet_pages()` — when low-text-density detected, skips BS-marker scan and wide-scans all pages up to `_MAX_BS_PAGES=8` cap (host-safety D6).
+3. `ocr_pages()` — when Tesseract yields < `BCTC_LOW_TESSERACT_PAGE_CHARS` (default 30) chars, tries PaddleOCR rasterize fallback via `_rasterize_and_ocr_page()`.
+4. `_rasterize_and_ocr_page()` — fitz rasterize at `BCTC_RASTERIZE_DPI` (default 200 DPI), RGBA/grayscale→RGB, PaddleOCR (use_gpu=False). PaddleOCR instance lazy-initialized and cached per adapter instance.
+
+**Env knobs (all optional, defaults shown):**
+- `BCTC_LOW_TEXT_DENSITY_THRESHOLD=50.0` — chars/page threshold below which PDF is treated as scanned
+- `BCTC_LOW_TESSERACT_PAGE_CHARS=30` — Tesseract char floor below which PaddleOCR fallback fires
+- `BCTC_RASTERIZE_DPI=200` — DPI for fitz rasterization
+
+**Non-regression:** text-native PDFs (FPT, VNM avg >>50 chars/page) → `detect_low_text_density()` returns False → standard Tesseract-only path unchanged.
+
+**FAIL-LOUD preserved:** if OCR rasterization still yields 0 rows, existing `enrich_failed` gate (989654f2) keeps it visible — status `enrich_failed`, NOT `done`.
+
+**Trigger:** Rebuild `pdf-extractor` container (force-recreate ONLY — never `docker compose down`). Then re-trigger `runBctcReparseJob` for VCB/CTG.
+
+**Verification:**
+```bash
+# RAW check vs named volume after container rebuild + reparse
+docker run --rm -v vn-market-intelligence-mcp_market_data:/db keinos/sqlite3 \
+  sqlite3 /db/market.db "SELECT COUNT(*) FROM bctc_table_rows WHERE report_id IN (SELECT id FROM financial_reports WHERE action_code='VCB');"
+# Expected: > 0 rows (was 0 before this fix)
+```
+
+---
+
 ## B02-TCTD Bank Form Parse Path (FIX-BCTC-ENRICH-SILENT-0ROWS, 2026-06-15)
 
 **Symptom:** Bank tickers (VCB, CTG, etc.) have `bctc_table_rows=0` + `bctc_md_tables=0` while corporate tickers (FPT) parse fine.
