@@ -12184,6 +12184,296 @@
         "created_by": "po-s65",
         "degroomed_at": "2026-06-15T22:39:38Z",
         "degroomed_by": "po-s68"
+      },
+      {
+        "id": "W2-T-1",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Create fetchDeadline.ts with withDeadline + macroFetch + DegradeEnvelope",
+        "type": "FIX",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "blocks": [
+          "W2-T-2",
+          "W2-T-3",
+          "W2-T-4",
+          "W2-T-5",
+          "W2-T-6",
+          "W2-T-7",
+          "W2-T-8",
+          "W2-T-9",
+          "W2-T-10",
+          "W2-T-11"
+        ],
+        "critical_path": true,
+        "estimated_hours": 2,
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/fetchDeadline.ts"
+        ]
+      },
+      {
+        "id": "W2-T-2",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Barrel export in fetchers/index.ts",
+        "type": "FIX",
+        "size": "XS",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [
+          "W2-T-3",
+          "W2-T-4",
+          "W2-T-5",
+          "W2-T-6",
+          "W2-T-8",
+          "W2-T-9",
+          "W2-T-10"
+        ],
+        "critical_path": false,
+        "estimated_hours": 0.25,
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/index.ts"
+        ]
+      },
+      {
+        "id": "W2-T-3",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate muasamcong.ts:216 → withDeadline",
+        "type": "FIX",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/muasamcong.ts"
+        ]
+      },
+      {
+        "id": "W2-T-4",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate sscInsider.ts:134 → withDeadline",
+        "type": "FIX",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts"
+        ]
+      },
+      {
+        "id": "W2-T-5",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate newsHeadlinesRefreshJob.ts — both fetchFromNewsFetch:41 and pushToMcpServer:79",
+        "type": "FIX",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/newsHeadlinesRefreshJob.ts"
+        ]
+      },
+      {
+        "id": "W2-T-6",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate bctcPdfPullJob.ts:165 → withDeadline",
+        "type": "FIX",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts"
+        ]
+      },
+      {
+        "id": "W2-T-7",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate macroTools.ts:446 → macroFetch (pattern setter)",
+        "type": "FIX",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1",
+          "W2-T-2"
+        ],
+        "blocks": [
+          "W2-T-11"
+        ],
+        "critical_path": true,
+        "estimated_hours": 2,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts"
+        ]
+      },
+      {
+        "id": "W2-T-8",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate server.ts:642 → withDeadline",
+        "type": "FIX",
+        "size": "S",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/server.ts"
+        ]
+      },
+      {
+        "id": "W2-T-9",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "DRY consolidate taOhlcvBackfillJob.ts:149-170 → withDeadline",
+        "type": "FIX",
+        "size": "XS",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1,
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts"
+        ]
+      },
+      {
+        "id": "W2-T-10",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "DRY consolidate deepFetchVpsJob.ts:96 → withDeadline",
+        "type": "FIX",
+        "size": "XS",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1,
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/deepFetchVpsJob.ts"
+        ]
+      },
+      {
+        "id": "W2-T-11",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate 7 macro sibling tools → macroFetch (carryTools, tradeBalance, bop, liquidityState, cpiComponents, macroIndicatorsVn, dinhGia)",
+        "type": "FIX",
+        "size": "M",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1",
+          "W2-T-2",
+          "W2-T-7"
+        ],
+        "blocks": [
+          "W2-T-12"
+        ],
+        "critical_path": true,
+        "estimated_hours": 3.5,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/tradeBalanceTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/bopTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/liquidityStateTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/cpiComponentsTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroIndicatorsVnTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/dinhGiaTools.ts"
+        ]
+      },
+      {
+        "id": "W2-T-12",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Full bun check pass + container rebuild",
+        "type": "FIX",
+        "size": "XS",
+        "status": "TODO",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1",
+          "W2-T-2",
+          "W2-T-3",
+          "W2-T-4",
+          "W2-T-5",
+          "W2-T-6",
+          "W2-T-7",
+          "W2-T-8",
+          "W2-T-9",
+          "W2-T-10",
+          "W2-T-11"
+        ],
+        "blocks": [],
+        "critical_path": true,
+        "estimated_hours": 0.5,
+        "files": []
       }
     ],
     "closed_sprints": [
@@ -17591,7 +17881,7 @@
         "wave": 2,
         "priority": "P1",
         "size": "L",
-        "status": "READY",
+        "status": "DECOMPOSED",
         "zone": "apps/mcp-server/",
         "route_to": "dev-mcp-server",
         "route": "ba->architect->pm->dev->qa",
@@ -17623,7 +17913,10 @@
         "created_by": "po-s65",
         "promoted_at": "2026-06-15T22:28:45Z",
         "promoted_by": "po-s67",
-        "ready_note": "ERROR-AUDIT-2026-06-15 Wave-2 successor for the freed apps/mcp-server/ coding slot (W1-MCP-P0 now done_verified). WIP<=2: pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE still running -> this is the 1 free slot. Left in ready[] for router to dispatch on its own cadence; NOT spawned by po-s67."
+        "ready_note": "ERROR-AUDIT-2026-06-15 Wave-2 successor for the freed apps/mcp-server/ coding slot (W1-MCP-P0 now done_verified). WIP<=2: pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE still running -> this is the 1 free slot. Left in ready[] for router to dispatch on its own cadence; NOT spawned by po-s67.",
+        "status_note": "Broken into 12 atomic tasks W2-T-1..W2-T-12; critical path T-1→T-7→T-11→T-12",
+        "decomposed_at": "2026-06-16T00:00:00Z",
+        "decomposed_by": "pm"
       }
     ],
     "review": [

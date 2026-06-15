@@ -1,5 +1,56 @@
 # PM — Notebook
 
+## c316 FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE task atomization · 2026-06-16T000000Z
+
+**PARENT:** FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE (ERROR-AUDIT-2026-06-15 Wave 2, P1, L-size, ready→decomposed)
+
+**INPUT:** BA spec FINAL (`docs/handoffs/FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE-BA-spec.md`), architect ratifications (ARCH-RATIFY-W2-1..4, RISK-1..5), PM init bootstrap (`docs/agents/pm/init.md`)
+
+**OUTPUT:** 12 atomic child tasks (W2-T-1..W2-T-12) added to `docs/data/orch/orch-state.json .task_board.backlog`; 12 handoff files created (`docs/handoffs/FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE-T*.md`); parent task marked DECOMPOSED with critical path annotation.
+
+**Task structure (critical path: T-1→T-7→T-11→T-12):**
+
+1. **T-1 (foundation, ~2h, S):** Create `fetchDeadline.ts` with `withDeadline<T>` + `macroFetch<T>` + `DegradeEnvelope` type. Infrastructure layer utility (bctcHttpFetcher.ts pattern generalized). Zero callers yet — pure definition. BLOCKS all 11 downstream tasks.
+
+2. **T-2 (trivial, ~15min, XS):** Barrel export in `fetchers/index.ts` — one-liner re-export of T-1's exports. BLOCKS T-3..T-10 (they import it).
+
+3. **T-3..T-6, T-8..T-10 (parallel, ~1.5-3h each, S/XS):** Six fetch-site migrations + two DRY consolidations:
+   - **T-3 (muasamcong:216):** VPS-proxied, 30s deadline, `withDeadline` wrap
+   - **T-4 (sscInsider:134):** VPS-proxied, 30s deadline, `withDeadline` wrap
+   - **T-5 (newsHeadlinesRefreshJob:41+79):** Two sites in one task per ARCH-RATIFY-W2-4 expansion (fetchFromNewsFetch 20s + pushToMcpServer 10s)
+   - **T-6 (bctcPdfPullJob:165):** Background job, 45s deadline (no gateway timeout, TCP hang guard), `withDeadline` wrap
+   - **T-8 (server.ts:642):** pdf-extractor call, 30s deadline, wrapped into existing try/catch
+   - **T-9 (taOhlcvBackfillJob:149-170):** DRY: inline AbortController→`withDeadline` consolidation, 15s (no behavior change)
+   - **T-10 (deepFetchVpsJob:96):** DRY: AbortSignal.timeout→`withDeadline`, 15s + timer cleanup fix
+
+4. **T-7 (critical, ~2h, S):** Migrate `macroTools.ts:446` → `macroFetch` (PATTERN SETTER for T-11). Establishes discriminated-result pattern: `const result = await macroFetch<T>(baseUrl, path, body, { deadlineMs: 15_000 }); if (!result.ok) { return degrade; }`. BLOCKS T-11 (pattern precedent).
+
+5. **T-11 (critical, ~3.5h, M):** Replicate T-7 pattern across 7 sibling macro tools (8 total fetch calls: carryTools:57+134, tradeBalance:96, bop:119, liquidityState:137, cpiComponents:95, macroIndicatorsVn:80, dinhGia:56). Per ARCH-RATIFY-W2-3, carryTools has TWO sites (both migrated in one task sweep). Consolidates ~25 lines × 7 files of duplication. BLOCKS T-12.
+
+6. **T-12 (validation, ~30min, XS):** `bun check` full pass (zero TypeScript errors) + container rebuild (mandatory, not restart). FINAL gate before QA.
+
+**Sequencing & parallelization:**
+- **Serial critical path:** T-1 (foundation) → T-2 (barrel) + T-7 (pattern) → T-11 (siblings) → T-12 (validation)
+- **Parallel tier-1 (after T-1):** T-3, T-4, T-5, T-6, T-8, T-9, T-10 all independent (each depends only on T-1; none block each other)
+- **Parallel tier-2 (after T-7):** T-11 only (depends on T-1, T-2, T-7)
+- **Serial gate:** T-12 (all 11 upstream must merge)
+- **Total estimated:** T-1 (2h) + max(T-7, {T-3..6,T-8..10 parallel = 3.5h}) + T-11 (3.5h) + T-12 (0.5h) ≈ **~10–11 developer-hours** (can compress to ~6–7h with 2 dev lanes in parallel)
+
+**Architect scope changes propagated into task descriptions (non-negotiable per DDD review, blueprint commit c5c0dc3d):**
+1. **RISK-1 (DDD upward-import fix):** `macroFetch` signature gains `baseUrl: string` as FIRST param. All macro callers pass `getMacroBaseUrl()` explicitly. Enforced in T-7 and T-11 task descriptions.
+2. **ARCH-RATIFY-W2-4 (T-5 scope expansion):** newsHeadlinesRefreshJob has TWO unbounded fetches (:41 external, :79 local). T-5 migrates both atomically in one task (same file). Deadlines: 20s (external) + 10s (local).
+3. **ARCH-RATIFY-W2-3 (T-11 granularity):** 7 files but 8 fetch calls (carryTools has 2). T-11 covers all 8 calls in one sweep; description explicitly flags carryTools:57 + carryTools:134 as "two sites in one file."
+
+**Handoff files created:** 12 files, each with architecture justification, acceptance criteria, dependency graph, knowledge load, implementation notes. TASK_FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE-T*.md (T-1 through T-12).
+
+**Commit discipline:** Board mutation (orch-state.json backlog + parent status update) via atomic read→modify→rename. Explicit path only. Handoff files created as standalone .md files (no code). PM notebook appended (this entry).
+
+**WIP capacity check:** Current coding: 1 active lane (dev-pdf-extractor on FIX-BCTC-BANK-PDF-OCR-RASTERIZE). WIP limit = 2. dev-mcp-server can spawn T-1 immediately (would be 2/2). After WIP drops below 2 again (or when router decides), full tier-1 fan-out (T-3..T-10 parallel) can dispatch.
+
+**Router dispatch recommendation:** T-1 ready now (zero deps). If dev-mcp-server capacity available, spawn T-1 immediately. After T-1 merges + T-2 trivial, dispatch tier-1 {T-3, T-4, T-5, T-6, T-8, T-9, T-10} in parallel to dev-mcp-server (pipelined 2-at-a-time by WIP enforcer). T-7 should be in-flight or queued by the time tier-1 completes (T-7 doesn't depend on tier-1, only on T-1+T-2). After T-7 ships, T-11 unblocks immediately (pattern established). T-12 is the final QA gate (all upstream must be merged).
+
+---
+
 ## c312 VN-MACRO-TOOLING sprint decomposition · 2026-06-14T180000Z
 
 ARCHITECT brief FINAL (ARCH-VN-MACRO-TOOLING, commit 675891163d) + BA spec FINAL (REQ_VN-MACRO-TOOLING, commit 11d318ea) → decomposed into **20 atomic PM tasks** across 5 execution waves. Key innovation: **explicit probe-gating model** (PROBE-1..4 in WAVE-1 run in parallel, determine parse strategy for WAVE-2 Zone A parsers before code is written). No parser code written before live payload captured in `scripts/probes/vmt-N-sample.json` (GA-7 probe-first methodology honored).
