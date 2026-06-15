@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T04:33:55Z",
+  "_updated_at": "2026-06-15T05:04:44Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -110,12 +110,12 @@
     }
   ],
   "head": {
-    "status": "active",
-    "updated_at": "2026-06-15T04:33:55Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-15T05:04:44Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-NSO-TRADE-VALUE-SCALE",
-    "next_agent": "po",
-    "note": "DEV-TEAM TICK 2026-06-15 COMPLETE — 4 fixes landed + CI restored green. (1) get_vn_bop LIVE-GREEN plausible Q4-2025 (router re-probe 04:07Z, NOT ops badge; macro-indicators force-recreated image sha256:01ae9e0a / 4c2fcb5c / 11 peers healthy) -> F-BOP-QUERY-RECON + F-BOP-ENCODING done_verified; F-NSO-SELECTOR stays done_verified. (2) get_vn_trade_balance sheet-SELECTION fix LIVE-confirmed (data flows, period 2026-06) BUT VALUES IMPLAUSIBLE (June import 212000mn = 59% of YTD 358000mn; export 74000 vs ytd 529000; balance -138000mn/mo) -> FIX-NSO-TRADE-SHEET done, done_verified WITHHELD; minted FIX-NSO-TRADE-VALUE-SCALE (READY, high, recon-first /goal#1 — NEXT-TICK dispatch). (3) FIX-CHEF-INTRADAY-MARKER-CADENCE done_verified (agent-father 7843045c, flow-doc). (4) CI-RED-d20468c0-FIX done_verified — original c79ce6bd fixed 4 test files but its subset-only verify MISSED a 5th red (1837a-pipeline-state.test.ts head.status enum lacked 'active'); dev-mcp-server 728ef563 added 'active'+'qa'; pushed origin 04e1ebb7; router WATCHED CI run 27524085066 -> conclusion=success (full suite green, SHA != d20468c0). === SF-1 dev-team-cron-singleton RELEASED at clean tick-end. === NEXT-TICK QUEUE: FIX-NSO-TRADE-VALUE-SCALE (READY high); ZOMBIE SWEEP (ARCH-CRON-SCHEDULER-RELIABILITY >16h no-heartbeat + BA-VN-MACRO-TOOLING parked). === HELD (unchanged): S2 07-06 methodology brief; F3 cronJobCount; VMT-3a-PMI; ops/infra lane (FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open); 2x context-bloat; FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday market-day gate (ARCH-CRON G1/G2/G3 + F-EOD); release batch CTG/VCB/D2D BLOCKED on bug #2776. Commit explicit path only."
+    "next_agent": "dev-macro-indicators",
+    "note": "DEV-TEAM TICK 2026-06-15 — FIX-STOCK-PRICE-SCALE-CORRUPT DONE_VERIFIED (router LIVE RAW re-probe 05:02Z): user-flagged 'RSI bad calc' ROOT = 2026-06-12 price candle stored 1000x low for high-priced tickers (VIC 195.5->195,500; VHM 138.7->138,700; VJC repaired) crashing RSI to single digits. Fix = ohlcvUnitGuard prevClose ratio-guard (generic) + DB backfill + tests; commit 3035e298; mcp-server force-recreated healthy. LIVE: all closes full-VND, no -99.9%/+98570% artifacts; get_technical_indicators RSI N/A correctly fail-closed. Single-digit RSI in the REPORT is the report path -> FIX-RSI-REPORT-FAILCLOSED (READY, next dispatch). OBS: daily_ohlcv only ~6 candles deep -> indicators N/A until backfill grows (flag PO, not blocking). === STILL RUNNING: FIX-NSO-TRADE-VALUE-SCALE (dev-macro-indicators a758f56258db26a32) — head active here; HOLD board commit of macro outcome until it returns (don't sweep in-flight parsers_vmt_trade.go). === SF-1 held. NEXT: verify macro LIVE (get_vn_trade_balance plausibility), then FIX-RSI-REPORT-FAILCLOSED."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T04:33:55Z",
+    "_updated_at": "2026-06-15T05:04:44Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13715,6 +13715,35 @@
         "router_final_verified_by": "dev-team",
         "router_final_verdict": "RAW-RE-VERIFIED INDEPENDENTLY (not the qa badge, BIDIRECTIONAL). git show 5cbb926b --stat = EXACTLY 1 file (qa Task Report +105) — no dirty sweep; 9-file concurrent dirty tree STILL uncommitted/untouched. Router re-grepped docker.md directly: `docker builder prune -f` = 8 occurrences at L39/L51/L61/L65/L66/L71/L75/L106 (every rebuild path + WHY + safety + generic mandate); no count-heuristic gate remains. generic_mandate L74-75 references system-map .host_runtime_set (no hardcoded count). Closes the host disk-full / Docker-build-cache class DEFINITIVELY (3rd recurrence 2026-06-14) — the >=2-rebuilds/day RULE that lived only in memory since 2026-06-07 is now a codified unconditional flow step, automatic across all host_runtime_set services, not a remembered heuristic. Matches [project-disk-full-lancedb-bloat] DURABLE FIX.",
         "done_verified_at": "2026-06-14T16:09:07Z"
+      },
+      {
+        "id": "FIX-STOCK-PRICE-SCALE-CORRUPT",
+        "type": "FIX",
+        "title": "FIX-STOCK-PRICE-SCALE-CORRUPT — daily candle stored 1000x low for high-priced tickers (VIC 06-12 close=195.5 vs ~195,500; VHM 138.7 vs ~138,700) -> fake -99.9% crash craters RSI to single digits -> poisons MARKET report",
+        "zone": "apps/stock-price/",
+        "owner": "dev-stock-price",
+        "owner_agent": "dev-stock-price",
+        "status": "done_verified",
+        "priority": "urgent",
+        "size": "M",
+        "recon_first": true,
+        "dispatched_to": "dev-stock-price",
+        "dispatched_at": "2026-06-15T04:47:45Z",
+        "root_cause": "On 2026-06-12 the ingested close for high-priced tickers (price > ~100k VND) was stored 1000x too low: VIC close=195.5 (raw JSON close:195.5) instead of ~195,500; VHM 138.7 instead of ~138,700. VRE(28,600) + FPT(73,500) on the same date are CLEAN. Pattern = the 06-12 source returned price in THOUSANDS-of-VND (nghin dong) for some tickers and pkg/primitive/price-quote-normalizer/normalizer.go did NOT rescale to VND. No outlier/plausibility guard exists at ingestion (grep: none). Downstream get_price_history shows -99.90% on 06-12 then +98570% on 06-15; RSI computed on that fake crash collapses to 7.4/9.8 and was published to MARKET.",
+        "fix_spec": "RECON-FIRST: (a) enumerate ALL watchlist tickers' price rows around 2026-06-12 (and scan full history) for any close that is >=~50x off the adjacent valid close = unit-corrupt set; (b) find the 06-12 ingestion path/source that returned thousands-scale (fetchers.go + which source tier) and why normalizer.go missed it. THEN: (1) add an ingestion-time plausibility/normalization guard in price-quote-normalizer: a daily close that deviates >=~50x (configurable threshold, NOT hardcoded per-ticker) from the prior valid close is a unit error -> rescale by the detected factor (x1000) or reject+refetch, fail-loud log. Generic across ALL tickers (/goal#2). (2) BACKFILL-CORRECT the already-corrupted candles in the live DB (named volume /app/data/market.db, NOT host ./data) — rescale the bad 06-12 closes to VND. (3) add a regression test: a thousands-scale input candle is normalized/rejected, never stored 1000x low. SECONDARY (note, not blocking): get_technical_indicators correctly returns RSI N/A on <15 candles, but the MARKET-report RSI path produced numbers anyway -> see follow-on FIX-RSI-REPORT-FAILCLOSED.",
+        "verification_gate": "LIVE post-rebuild: get_price_history VIC/VHM show NO 1000x-off candle on 06-12 (all closes ~140k-196k band, day-over-day change within sane circuit-breaker band, NO -99.9%/+98570% artifacts); get_technical_indicators RSI for a ticker WITH >=15 clean candles returns a plausible 0-100 value (not single-digit from corruption). Plausibility guard test green in CI.",
+        "baseline_pass": "04e1ebb7",
+        "source": "router RAW-probe 2026-06-15T04:43Z (user flagged MARKET report RSI bad-calc; root = price scale corruption, NOT RSI math)",
+        "created_at": "2026-06-15T04:47:45Z",
+        "created_by": "dev-team",
+        "triaged_by": "dev-team",
+        "user_flagged": true,
+        "status_note": "User-facing live bug — wrong RSI + absurd % changes already published to MARKET. URGENT. dev-stock-price zone; recon then guard+backfill+test. Rebuild stock-price via force-recreate single service (NEVER compose down).",
+        "done_verified_at": "2026-06-15T05:04:44Z",
+        "done_verified_by": "dev-team",
+        "done_commit": "3035e298",
+        "rebuild_image": "ae7b3389b595",
+        "live_verify_verdict": "LIVE-VERIFIED (router independent gateway call_tool re-probe 2026-06-15T05:02Z, NOT dev badge): get_price_history VIC 06-12 close=195,500 (was 195.5), VHM 138,700 (was 138.7), VJC 180,800 — all full-VND (137k-196k band), every day-over-day move within sane band, NO -99.90%/+98570% artifacts (the fake crash/rebound that cratered RSI is GONE). 39/45 corrupt rows repaired, 6 penny-stock rows correctly skipped, 0 suspect remaining. get_technical_indicators VIC+FPT RSI(14)=N/A correctly fail-closed (daily_ohlcv ~6 candles). Root fix = detectAndNormalizeScaleFromPrevClose() in ohlcvUnitGuard.ts (ratio>=50 vs prevClose -> x1000 whole-row, generic /goal#2) + repair-ohlcv-scale-corruption.ts backfill; integrated in taOhlcvBackfillJob.ts; 28 unit + 45 CONTAM tests green; tsc clean. Commit 3035e298; mcp-server force-recreated (image ae7b3389b595, Up healthy). ZONE NOTE: applied in apps/mcp-server (ingestion) not apps/stock-price (Go svc only READS daily_ohlcv) — root-correct. RSI single-digit in MARKET report is the report path -> FIX-RSI-REPORT-FAILCLOSED (queued). OBS (not blocking): daily_ohlcv depth ~6 candles -> all indicators N/A until backfill deepens; flag to PO."
       }
     ],
     "head": {
@@ -13818,6 +13847,30 @@
         "arch_decisions": "E8 VMT-1b=NSO-FDI-cross-join is_estimate=true PERMANENT (customs SPA unblockable); E9 VMT-5b.interbank=Option2 permanent is_estimate=true+blocked_reason (no public API, IP-whitelist out-of-scope, IRS-DD-6 precedent); E10 VMT-2=direct-JSON Liferay article API NO excelize/PDF (PROBE-2 live); E11 NSO-Excel single cache serves VMT-1a/1b/3b/4; E12 Zone-A SERIALIZE A1..A5 merge-gated (MED recurring-bug).",
         "wave2_order": "A1=VMT-2(SBV-JSON) -> A2=VMT-3b+VMT-4(NSO-Excel IIP+CPI) -> A3=VMT-1a+VMT-1b(NSO-Excel XK/NK/FDI) -> A4=VMT-5b.omo(SBV-OMO-HTML) -> A5=VMT-5a(market.db+sbv.gov.vn). excelize added to go.mod ONCE at A2. VMT-3a PMI HELD on PROBE-5 (S&P, dev-local). VMT-5b.interbank+irs permanent estimate (no parser).",
         "serialization_guard": "Zone A dev tasks (handlers_vmt.go/usecases_vmt.go/dtos_vmt.go) MUST be serial — one dev-macro-indicators task at a time, merge gate between each. PM enforces (feedback_recurring_bug_escalation)."
+      },
+      {
+        "id": "FIX-NSO-TRADE-VALUE-SCALE",
+        "type": "FIX",
+        "title": "FIX-NSO-TRADE-VALUE-SCALE — get_vn_trade_balance VALUES implausible after sheet-selection fix (June import 212000mn = 59% of YTD 358000mn; -138000mn/mo balance): column/row/unit misparse on selected NSO sheets",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "owner_agent": "dev-macro-indicators",
+        "status": "in_progress",
+        "priority": "high",
+        "size": "M",
+        "recon_first": true,
+        "root_cause": "FIX-NSO-TRADE-SHEET (4c2fcb5c) correctly SELECTS export/import/FDI sheets by A1-header content -> data flows. But the VALUE parse (row/column/unit mapping in parsers_vmt_trade.go) yields impossible magnitudes: June import 212000mn ($212bn) vs full-half-year-YTD 358000mn; June export 74000mn vs YTD 529000mn (529bn YTD > VN full-year-2025 ~405bn); balance -138000mn/month (VN ~near-balance). Likely reads a cumulative/total-of-totals row, wrong column (luy ke vs thang), or a unit-scale error (nghin/trieu/ty).",
+        "fix_spec": "RECON-FIRST: inspect the SELECTED sheets' actual cell grid — locate the correct CURRENT-MONTH export/import cells (vs YTD/cumulative columns) + the unit row; cross-check parsed monthly figure against plausible band (VN monthly export/import ~30-40bn USD). THEN fix row/column/unit mapping in parsers_vmt_trade.go. Add a relationship/plausibility guard test (monthly<=YTD; |balance| within sane band), fail-loud on out-of-band. Generic /goal#2.",
+        "verification_gate": "get_vn_trade_balance returns plausible monthly export/import (each ~tens of bn USD, monthly<=YTD, balance within sane band) LIVE post-rebuild.",
+        "baseline_pass": "4c2fcb5c",
+        "source": "router LIVE re-probe 04:07:26Z (FIX-NSO-TRADE-SHEET done_verified WITHHELD on value implausibility)",
+        "created_at": "2026-06-15T04:33:55Z",
+        "created_by": "dev-team",
+        "triaged_by": "dev-team",
+        "status_note": "Continuation of FIX-NSO-TRADE-SHEET (sheet-selection done_verified-withheld; this peels the value-accuracy layer). dev-macro-indicators zone; SERIALIZE with other macro tasks (parsers_vmt_trade.go files-risk). Next-tick PO/dev-team dispatch.",
+        "dispatched_to": "dev-macro-indicators",
+        "dispatched_at": "2026-06-15T04:47:45Z",
+        "dispatch_note": "recon-first value/unit misparse on selected NSO trade sheets; SERIALIZE on parsers_vmt_trade.go"
       }
     ],
     "ready": [
@@ -14023,25 +14076,25 @@
         "status_note": "DONE + done_verified (flow-doc, no rebuild)."
       },
       {
-        "id": "FIX-NSO-TRADE-VALUE-SCALE",
+        "id": "FIX-RSI-REPORT-FAILCLOSED",
         "type": "FIX",
-        "title": "FIX-NSO-TRADE-VALUE-SCALE — get_vn_trade_balance VALUES implausible after sheet-selection fix (June import 212000mn = 59% of YTD 358000mn; -138000mn/mo balance): column/row/unit misparse on selected NSO sheets",
-        "zone": "apps/macro-indicators/",
-        "owner": "dev-macro-indicators",
-        "owner_agent": "dev-macro-indicators",
+        "title": "FIX-RSI-REPORT-FAILCLOSED — MARKET-report RSI path emits values on <15 candles (VRE RSI 10.3 on ~6-candle downtrend) while canonical get_technical_indicators correctly returns N/A",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "owner_agent": "dev-technical-analysis",
         "status": "READY",
         "priority": "high",
-        "size": "M",
+        "size": "S",
         "recon_first": true,
-        "root_cause": "FIX-NSO-TRADE-SHEET (4c2fcb5c) correctly SELECTS export/import/FDI sheets by A1-header content -> data flows. But the VALUE parse (row/column/unit mapping in parsers_vmt_trade.go) yields impossible magnitudes: June import 212000mn ($212bn) vs full-half-year-YTD 358000mn; June export 74000mn vs YTD 529000mn (529bn YTD > VN full-year-2025 ~405bn); balance -138000mn/month (VN ~near-balance). Likely reads a cumulative/total-of-totals row, wrong column (luy ke vs thang), or a unit-scale error (nghin/trieu/ty).",
-        "fix_spec": "RECON-FIRST: inspect the SELECTED sheets' actual cell grid — locate the correct CURRENT-MONTH export/import cells (vs YTD/cumulative columns) + the unit row; cross-check parsed monthly figure against plausible band (VN monthly export/import ~30-40bn USD). THEN fix row/column/unit mapping in parsers_vmt_trade.go. Add a relationship/plausibility guard test (monthly<=YTD; |balance| within sane band), fail-loud on out-of-band. Generic /goal#2.",
-        "verification_gate": "get_vn_trade_balance returns plausible monthly export/import (each ~tens of bn USD, monthly<=YTD, balance within sane band) LIVE post-rebuild.",
-        "baseline_pass": "4c2fcb5c",
-        "source": "router LIVE re-probe 04:07:26Z (FIX-NSO-TRADE-SHEET done_verified WITHHELD on value implausibility)",
-        "created_at": "2026-06-15T04:33:55Z",
+        "root_cause": "The report/summary RSI source (candidate: generate_market_summary or a market-watcher/CHEF internal calc — RECON to confirm) computed RSI for VRE = 10.3 even though VRE has only ~6 candles; the canonical get_technical_indicators returns 'RSI(14): N/A (can toi thieu 15 nen)' for the same ticker. Two RSI code paths diverge: one fail-closed, one not. The non-fail-closed path also inherited the price corruption for VIC/VHM (single-digit). Even after FIX-STOCK-PRICE-SCALE-CORRUPT, the report would still emit under-determined RSI on shallow history.",
+        "fix_spec": "RECON: identify which tool/agent produced the MARKET report's RSI numbers (grep report generators + generate_market_summary RSI path). THEN make that path fail-closed identically to get_technical_indicators: RSI requires >=15 candles else emit N/A (and the report must render 'RSI: N/A' or omit, never a number). Single SSOT RSI calc shared by both paths is the DRY target (/goal#2). Add test: <15 candles -> N/A from BOTH paths.",
+        "verification_gate": "LIVE: the report RSI path and get_technical_indicators agree for the same ticker (both N/A when <15 candles; both same plausible value when >=15). No single-digit RSI emitted to MARKET from corrupted/shallow data.",
+        "baseline_pass": "04e1ebb7",
+        "source": "router RAW-probe 2026-06-15T04:43Z (VRE clean price yet RSI 10.3 reported = non-fail-closed report RSI path)",
+        "created_at": "2026-06-15T04:47:45Z",
         "created_by": "dev-team",
         "triaged_by": "dev-team",
-        "status_note": "Continuation of FIX-NSO-TRADE-SHEET (sheet-selection done_verified-withheld; this peels the value-accuracy layer). dev-macro-indicators zone; SERIALIZE with other macro tasks (parsers_vmt_trade.go files-risk). Next-tick PO/dev-team dispatch."
+        "status_note": "Follow-on to FIX-STOCK-PRICE-SCALE-CORRUPT. Distinct zone (technical-analysis/report). Next-tick dispatch after stock-price root fix lands. Confirm RSI source first."
       }
     ],
     "review": [
