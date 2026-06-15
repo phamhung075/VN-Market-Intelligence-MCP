@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T00:42:17Z",
+    "updated_at": "2026-06-15T00:50:51Z",
     "updated_by": "dev-team",
-    "active_task_id": "F-BOP-ENCODING",
-    "next_agent": "ops",
-    "note": "F-BOP-ENCODING DONE (dev-macro-indicators a32657d545b6eb455, commit 400610e5, router RAW-verified GREEN: on-main ancestor-of-HEAD; 3 files all apps/macro-indicators/** parsers_vmt_bop.go + 2 tests; foreign-capture NONE; orch-state NOT captured; independent UNCACHED go build/vet rc=0 + go test -count=1 ./pkg/... all 11 pkgs PASS; fix url.Values{}.Encode() in BuildBOPFetchURL = generic percent-encode every OData param; VMT-8 degrade + FetchBudgetSec UNTOUCHED; tests table-driven no-literal-space + end-to-end encoded-URL capture; generic /goal#2). CODE merge gate satisfied BUT NOT LIVE — container macro-indicators-1 holds pre-400610e5 image c6793a0222e3. === -> head dev->ops: FORCE-RECREATE macro-indicators single service (memory: rebuild after dev change; NEVER compose down — kills peers ~21min); verify NEW image ID != c6793a0222e3 + 400610e5 on HEAD + 11 peers stay healthy. Then LIVE-verify via gateway re-probe (NOT badges) ACROSS >=2 TIMING WINDOWS (fast-fail-window trap): get_vn_bop must now return REAL balance-of-payments data WITHIN the gateway deadline — is_estimate=false (real) OR honest-degraded ONLY IF SBV is genuinely down (NO MORE blocked_reason='context deadline exceeded' from a malformed URL — that exact symptom must be GONE). On ops live-result -> ROUTER re-probes get_vn_bop ITSELF across timing (not ops badge) + disambiguates (curl SBV/:3128 if still degraded). If router live-green (real bop data, no deadline-exceeded): promote F-BOP-ENCODING done_verified + RELEASE F-NSO-SELECTOR (sequence_after F-BOP-ENCODING satisfied -> dispatch recon-first to ops-vps-fetch). === SEQUENCED-AFTER (still HELD): F-NSO-SELECTOR (recon-first ops-vps-fetch on NEW NSO WordPress HTML, then dev-macro-indicators; rebase 400610e5). Commit explicit path only."
+    "active_task_id": "",
+    "next_agent": "po",
+    "note": "F-BOP-ENCODING LIVE-VERIFY = PARTIAL (router independent RAW 2-window re-probe, NOT the ops badge). ops (a1b951eec29057302) force-recreated macro-indicators single svc (image c6793a0222e3->27b2ccd5d2c3, HEAD 0b8a1de6, 400610e5 ancestor, 11/11 peers healthy, NO compose down). RELIABILITY CONFIRMED: pre-fix blocked_reason='context deadline exceeded' (malformed-URL hang on 8s FetchBudgetSec) ELIMINATED across 4 consistent probes (ops T+0, ops T+90s, router w1, router w2) — all degraded-200 within gateway deadline, none hang. Encoding fix (400610e5 url.Values{}.Encode()) made the SBV Liferay OData URL resolve. BUT ACCURACY NOT achieved: get_vn_bop still degraded, 'SBV API returned 0 items (empty response)', all fields 0. ROOT (separate from encoding): URL resolves + SBV responds but OData query SEMANTICS (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range format) match 0 live articles. F-BOP-ENCODING = done (encoding correct, merge-gated 400610e5, LIVE, deadline-symptom gone, tests green); done_verified WITHHELD — real BOP data blocked on OData-query recon. === -> head ops->po: PO TRIAGE (next dev-team tick): (1) MINT F-BOP-QUERY-RECON (apps/macro-indicators; recon-first ops-vps-fetch curls SBV Liferay OData endpoint w/ corrected encoding + varies params until real BOP articles return, THEN dev-macro-indicators fixes parsers_vmt_bop.go query params; generic /goal#2). (2) SEQUENCE the accuracy RECON BATCH on macro-indicators (serialize same files, recon-first each): F-BOP-QUERY-RECON + F-NSO-SELECTOR (both: transport OK, data empty, need live upstream recon). F-NSO-SELECTOR sequence_after cleared (F-BOP code done+merged). === HELD (unchanged): S2 07-06 methodology brief (agent-father); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open hardening (ops/infra lane); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify); release batch CTG/VCB/D2D BLOCKED on undeployed bug #2776 (signal #6120). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -171,7 +171,7 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-14T23:18:05Z",
+    "_updated_at": "2026-06-15T00:50:51Z",
     "_updated_by": "dev-team",
     "archive": [
       {
@@ -409,6 +409,18 @@
         "payload_ref": "ops notebook 13630170; router raw re-probe 23:13Z (3x NSO-tool timeout + bop timeout, liquidity 200); VPS :3128 curl 200 0.5s; container image 7df03ef2c0a1 Up~5m",
         "disposition": "MINTED F-MACRO-FETCH-DEADLINE -> ready (lead reliability fix, /goal#1 completion for 4 fetch tools). Root confirmed by PO raw-read: vpsFetch already honors opts.TimeoutSec but callers set 30s (cache_vmt_nso 3x30s chain + bop 30s) >> gateway timeout. Absorbs standalone bop-timeout. VMT-8 done_verified gated on this fix's LIVE gate.",
         "ts": "2026-06-14T23:18:05Z"
+      },
+      {
+        "id": "dev-team-20260615T005051Z-fbop-partial-queryrecon",
+        "from": "dev-team",
+        "to": "po",
+        "type": "live-verify-partial + accuracy-recon-batch — /goal#1 accuracy layer",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "F-BOP-ENCODING LIVE-VERIFY = PARTIAL (router RAW 2-window re-probe, NOT the ops badge). RELIABILITY DONE: encoding fix (400610e5, url.Values{}.Encode()) is LIVE (image 27b2ccd5d2c3) + eliminated the 'context deadline exceeded' malformed-URL hang across 4 consistent probes. BUT ACCURACY NOT achieved: get_vn_bop still degraded — 'SBV API returned 0 items (empty response)', all fields 0. The URL now resolves but the OData query semantics (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range) match 0 live SBV articles. PO ACTION: mint F-BOP-QUERY-RECON (zone apps/macro-indicators; recon-first ops-vps-fetch to curl the SBV Liferay OData endpoint with corrected encoding + vary params until real BOP articles return, THEN dev-macro-indicators fixes parsers_vmt_bop.go query params; /goal#2 generic). This is the SAME SHAPE as F-NSO-SELECTOR (transport OK, data empty, needs recon of live upstream). SEQUENCE both as an accuracy RECON BATCH on macro-indicators (serialize, same files, recon-first each): F-BOP-QUERY-RECON + F-NSO-SELECTOR. F-BOP-ENCODING itself = done (encoding correct, merge-gated, live, deadline-symptom gone); done_verified WITHHELD pending F-BOP-QUERY-RECON real-data restoration.",
+        "payload_ref": "ops report a1b951eec29057302 (image 27b2ccd5d2c3, 11/11 peers, 2-window 0-items); router raw re-probe 2 windows (get_vn_bop{} + {quarter:Q3-2025}) both degraded-200 '0 items', no deadline-exceeded; commit 400610e5 / HEAD 0b8a1de6",
+        "disposition": "",
+        "ts": "2026-06-15T00:50:51Z"
       }
     ]
   },
@@ -506,7 +518,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T00:42:17Z",
+    "_updated_at": "2026-06-15T00:50:51Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13757,7 +13769,11 @@
         "done_at": "2026-06-15T00:42:17Z",
         "done_commit": "400610e5",
         "done_agent": "a32657d545b6eb455",
-        "router_reverify_verdict": "RAW-VERIFIED (not dev badge) — gates GREEN: 400610e5 on main, ancestor of HEAD; 3 files all apps/macro-indicators/** (parsers_vmt_bop.go + 2 tests), foreign-capture NONE, orch-state NOT captured; independent UNCACHED go build/vet rc=0 + go test -count=1 ./pkg/... all 11 pkgs PASS. Fix: url.Values{}.Encode() in BuildBOPFetchURL -> generic percent-encode of every OData param (spaces/single-quotes/operators); VMT-8 degrade + FetchBudgetSec UNTOUCHED. Tests: parsers_vmt_bop_test (table-driven no-literal-space + ParseQuery round-trip) + usecases end-to-end encoded-URL capture. CODE merge gate satisfied; LIVE-verify pending ops rebuild (container pre-400610e5 image c6793a0222e3)."
+        "router_reverify_verdict": "RAW-VERIFIED (not dev badge) — gates GREEN: 400610e5 on main, ancestor of HEAD; 3 files all apps/macro-indicators/** (parsers_vmt_bop.go + 2 tests), foreign-capture NONE, orch-state NOT captured; independent UNCACHED go build/vet rc=0 + go test -count=1 ./pkg/... all 11 pkgs PASS. Fix: url.Values{}.Encode() in BuildBOPFetchURL -> generic percent-encode of every OData param (spaces/single-quotes/operators); VMT-8 degrade + FetchBudgetSec UNTOUCHED. Tests: parsers_vmt_bop_test (table-driven no-literal-space + ParseQuery round-trip) + usecases end-to-end encoded-URL capture. CODE merge gate satisfied; LIVE-verify pending ops rebuild (container pre-400610e5 image c6793a0222e3).",
+        "live_verify_at": "2026-06-15T00:50:51Z",
+        "live_verify_agent": "ops a1b951eec29057302 + router-raw-reprobe(2 windows)",
+        "live_verify_result": "PARTIAL. Container RAW-confirmed fresh (image c6793a0222e3->27b2ccd5d2c3, HEAD 0b8a1de6, 400610e5 ancestor, 11/11 peers healthy, NO compose down). RELIABILITY CONFIRMED: pre-fix blocked_reason='context deadline exceeded' (malformed-URL hang tripping FetchBudgetSec=8s) is ELIMINATED across 4 consistent probes (ops T+0, ops T+90s, router w1 get_vn_bop{}, router w2 get_vn_bop{quarter:Q3-2025}) — all degraded-200 within gateway deadline, none hang. The encoding fix (url.Values{}.Encode()) made the SBV Liferay OData URL resolve. BUT real BOP data NOT returned: blocked_reason='SBV API returned 0 items (empty response)', all numeric fields 0, quarter/period empty. ROOT (accuracy gap, SEPARATE from encoding): URL now resolves + SBV responds, but the OData query SEMANTICS (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range format) match 0 live articles. Needs ops-vps-fetch LIVE recon of the SBV Liferay OData endpoint (recon-first, same shape as F-NSO-SELECTOR). done_verified WITHHELD — encoding fix correct+live (reliability) but real data blocked on query-semantics recon.",
+        "live_verify_followup": "F-BOP-QUERY-RECON (PO to mint; recon-first ops-vps-fetch)"
       },
       {
         "id": "F-NSO-SELECTOR",
@@ -13766,7 +13782,7 @@
         "zone": "apps/macro-indicators/",
         "owner": "dev-macro-indicators",
         "status": "READY",
-        "sequence_after": "F-BOP-ENCODING",
+        "sequence_after": null,
         "priority": "high",
         "size": "S",
         "root_cause": "NSO WordPress markup changed; the 'bai-top' selector used in NSO Excel discovery is stale -> get_vn_trade_balance + get_vn_macro_indicators + get_cpi_components return opaque 'service unavailable' (Zone-A 500), LIVE-CONFIRMED even with proxy up.",
@@ -13780,8 +13796,8 @@
         "source_signal": "dev-team-20260614T225734Z-vps-cluster-reconcile",
         "created_at": "2026-06-14T23:30:05Z",
         "created_by": "po",
-        "unblocked_at": "2026-06-14T23:53:30Z",
-        "unblocked_note": "F-MACRO-FETCH-DEADLINE done_verified -> sequence satisfied. Rebase 94b49f44 before touching cache_vmt_nso.go/usecases_vmt_bop.go. F-NSO-SELECTOR likely needs ops-vps-fetch recon of the NEW NSO WordPress HTML (bai-top selector changed) first.",
+        "unblocked_at": "2026-06-15T00:50:51Z",
+        "unblocked_note": "F-BOP-ENCODING code done+merged (400610e5) -> same-files (macro-indicators parsers) serialization concern resolved. Now part of the accuracy RECON BATCH (both recon-first ops-vps-fetch): F-BOP-QUERY-RECON + F-NSO-SELECTOR. PO to triage/sequence next tick.",
         "owner_agent": "dev-macro-indicators",
         "baseline_pass": "94b49f44",
         "dispatch_order": 2,
