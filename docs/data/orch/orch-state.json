@@ -606,8 +606,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T19:16:36Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-15T20:10:36Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -17310,6 +17310,26 @@
         "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 SPIKE — architect (agents-architect consulted). recurring-bug-escalation umbrella over the 5 child FIX tasks. Design the cross-cutting alerting/fail-loud/brittleness-monitoring contract — do NOT just re-patch leaves. Timebox 120m, output: architecture brief."
+      },
+      {
+        "id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "READY",
+        "route_to": "dev-pdf-extractor",
+        "zone": "apps/pdf-extractor/",
+        "mode": "code",
+        "size": "M",
+        "title": "Scanned/image-only B02-TCTD bank PDFs yield 0 text-chars -> Layout-6/7 parser never fires -> 0 table_rows: add OCR rasterization leg before text-table parse",
+        "desc": "LIVE-VERIFIED by PO 2026-06-15 done_verified gate probe of FIX-BCTC-ENRICH-SILENT-0ROWS: after rebuilding BOTH images and re-enriching VCB 2026Q1+2025Q1 through the fixed runBctcPdfPullJob, both STILL produced 0 bctc_table_rows. fitz raw: VCB_2026_Q1.pdf = 53 pages, 110 text-chars across first 8 pages, embedded images = SCANNED/image-only. pushBctcExtraction's 3 text-tiers (pdf_path / remote-URL / pdf-parse) all returned chars:0 confidence:0. The Layout-6/7 fix (68d54c7b) parses TEXT lines into code-rows and is correct, but it never receives text for scanned bank PDFs. MISSING LEG: rasterize image-only/low-text PDF pages and OCR them (PaddleOCR is already in the pdf-extractor image — pek-import-chain ALL OK) BEFORE handing text to _try_parse_code_row. This is the actual remaining root of get_bctc_full(VCB/CTG)='Chua co du lieu BCTC'.",
+        "generic_mandate": "GENERIC across ALL scanned/image-only PDFs (any ticker, any form). Detect low-text-density (e.g. chars-per-page below a threshold) and route to the OCR-rasterize path — NO per-ticker allowlist, NO VCB/CTG date-literal.",
+        "fail_loud_requirement": "If OCR rasterization still yields 0 rows, the existing 989654f2 enrich_failed gate keeps it visible (NOT done) — do not regress that fail-loud path.",
+        "baseline_pass": "done_verified = get_bctc_full(VCB) AND get_bctc_full(CTG) return REAL VARIED rows raw-verified vs named-volume market.db; AND FPT 2026Q1 (145) + VCB 2025Q4 (112) remain non-regressed; AND a genuinely-unparseable PDF still lands enrich_failed not done.",
+        "recurrence_class": "BCTC-VPS-PIPELINE-STALE (enrich-0-rows leg) — the scanned-PDF remainder after the silent-swallow + text-layout legs shipped.",
+        "depends_on": "FIX-BCTC-ENRICH-SILENT-0ROWS (merged; this completes its check-a leg)",
+        "source": "PO done_verified gate probe 2026-06-15 (FIX-BCTC-ENRICH-SILENT-0ROWS check-a FAIL)",
+        "created_at": "2026-06-15T20:10:36Z",
+        "dispatch_note": "P0 — TRUE remaining root of the VCB/CTG user-facing P0. dev-pdf-extractor leads (OCR rasterization + low-text-density routing). PaddleOCR already in-image. Generic, no allowlist. done_verified = real VARIED rows for VCB AND CTG vs named-volume DB."
       }
     ],
     "review": [
@@ -17473,7 +17493,16 @@
         "commit": "68d54c7b 989654f2",
         "done_verified": "PENDING",
         "done_verified_reason": "ops must REBUILD BOTH pdf-extractor + mcp-server containers, then re-trigger runBctcReparseJob for VCB/CTG bank tickers, then RAW-verify: (a) get_bctc_full(VCB) returns real VARIED rows vs the NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data — NEVER host ./data decoy); (b) a 0-row extraction's queue row shows status=enrich_failed not done; (c) non-regression — VCB 2025Q4 (112 rows) + FPT 2026Q1 (145 rows) still parse. done_verified is a LIVE RAW probe, NEVER a badge.",
-        "rebuild_required": "BOTH pdf-extractor AND mcp-server"
+        "rebuild_required": "BOTH pdf-extractor AND mcp-server",
+        "done_verified_gate_probe": {
+          "probed_at": "2026-06-15T20:10:36Z",
+          "by": "po",
+          "method": "rebuilt BOTH images (pdf-extractor .Created 2026-06-15T19:29:13Z, mcp-server 19:37:04Z — both > commit 19:12Z), force-recreate per-container (no peer killed, all 13 healthy), re-drove VCB 2026Q1(id 292117)+2025Q1(id 224) queue rows through the FIXED runBctcPdfPullJob; raw-read named-volume market.db (vn-market-intelligence-mcp_market_data) via keinos/sqlite3 sidecar.",
+          "check_a_real_varied_rows": "FAIL — VCB 2026Q1 + 2025Q1 STILL 0 bctc_table_rows after re-enrich. pushBctcExtraction all-3-tiers exhausted chars:0 confidence:0. ROOT: VCB bank PDFs are SCANNED/image-only (fitz: 110 text-chars across first 8 of 53 pages, images present). The Layout-6/7 text-table parser (68d54c7b, _try_parse_code_row) cannot fire on 0-char input — OCR rasterization is the missing leg, NOT a parse-layout gap.",
+          "check_b_fail_loud": "PASS — both VCB rows flipped status=enrich_failed (NOT done); logger.error '[bctcPdfPull] ENRICH 0-rows — FAIL LOUD'; pull result enrichFailed:2. 989654f2 silent-advance fix CONFIRMED working live.",
+          "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
+          "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
+        }
       }
     ],
     "qa": [],
