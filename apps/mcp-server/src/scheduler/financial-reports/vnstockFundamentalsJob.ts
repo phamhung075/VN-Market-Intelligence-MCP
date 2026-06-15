@@ -349,14 +349,51 @@ export async function runVnstockTradingStatsJob(
     const tickers = options?.tickers ?? readWatchlistTickers();
     const syncFn = options?.syncFn ?? defaultSyncFn;
 
+    // FIX-VNSTOCK-TRADINGSTATS-CRASH: measure actual rows written via DB row-count
+    // delta before/after the sweep — same pattern as runVnstockFundamentalsJob Fix 2/6.
+    // Without this, rowsWritten = result.succeeded (ticker count) which reports
+    // success even when all tickers return null and 0 rows land in the table.
+    const _getDb = options?.getDbFn ?? getDb;
+    let rowsBefore = -1;
+    try {
+      const db = _getDb();
+      const row = db
+        .prepare<{ total: number }, []>(
+          `SELECT COUNT(*) AS total FROM vnstock_trading_stats`,
+        )
+        .get();
+      rowsBefore = row?.total ?? 0;
+    } catch {
+      // DB unavailable at sweep start — proceed without measurement
+    }
+
     logger.info(`[${JOB_NAME_TRADING_STATS}] starting sweep`, { tickerCount: tickers.length });
 
     result = await runSweep(JOB_NAME_TRADING_STATS, tickers, syncFn);
+
+    // Compute accurate rowsWritten from DB delta
+    let rowsWritten = 0;
+    if (rowsBefore >= 0) {
+      try {
+        const db = _getDb();
+        const row = db
+          .prepare<{ total: number }, []>(
+            `SELECT COUNT(*) AS total FROM vnstock_trading_stats`,
+          )
+          .get();
+        const rowsAfter = row?.total ?? 0;
+        rowsWritten = Math.max(0, rowsAfter - rowsBefore);
+      } catch {
+        // DB unavailable at sweep end — rowsWritten stays 0 (conservative)
+      }
+    }
+    result = { ...result, rowsWritten };
 
     logger.info(`[${JOB_NAME_TRADING_STATS}] sweep complete`, {
       succeeded: result.succeeded,
       failedCount: result.failed.length,
       failed: result.failed,
+      rowsWritten,
     });
 
     // FR-5: fail-loud on WORK channel when any tickers failed
@@ -382,11 +419,14 @@ export async function runVnstockTradingStatsJob(
  * Entry point for the cron scheduler — vnstockTradingStatsRefresh.
  * Called by startScheduler on CRONS.vnstockTradingStatsRefresh (weekdays 08:30 UTC).
  * Wraps runVnstockTradingStatsJob in recordJobRun for cron_job_runs observability.
+ *
+ * FIX-VNSTOCK-TRADINGSTATS-CRASH: pass getDbFn so rowsWritten reflects actual DB
+ * row delta (not result.succeeded which counted tickers, not rows).
  */
 export async function runVnstockTradingStatsJobCron(): Promise<void> {
   const db = getDb();
   await recordJobRun(db, JOB_NAME_TRADING_STATS, async () => {
-    const result = await runVnstockTradingStatsJob();
-    return { rowsWritten: result.succeeded };
+    const result = await runVnstockTradingStatsJob({ getDbFn: () => db });
+    return { rowsWritten: result.rowsWritten };
   });
 }

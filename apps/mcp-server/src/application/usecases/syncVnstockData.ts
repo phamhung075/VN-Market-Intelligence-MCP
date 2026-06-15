@@ -304,7 +304,7 @@ async function syncStock(code: string): Promise<number> {
         storeTradingStats(stats);
         recordSuccess(_globalCbState, code, "trading_stats");
       } else {
-        markFetched(code, "trading_stats");
+        markFetched(code, "trading_stats", 30); // timeout/null: retry in 30min (same as financials)
         recordFailure(_globalCbState, code, "trading_stats");
       }
       calls++;
@@ -381,7 +381,7 @@ export async function syncStockLight(code: string): Promise<number> {
   if (isStale(code, "trading_stats", 360)) {
     const stats = await fetchVnstockTradingStats(code);
     if (stats) storeTradingStats(stats);
-    else markFetched(code, "trading_stats");
+    else markFetched(code, "trading_stats", 30); // timeout/null: retry in 30min (FIX-VNSTOCK-TRADINGSTATS-CRASH)
     calls++;
     await sleep(SYNC_DELAY_MS);
   }
@@ -389,7 +389,7 @@ export async function syncStockLight(code: string): Promise<number> {
   if (isStale(code, "financials", 1440)) {
     const fin = await fetchVnstockFinancials(code);
     if (fin) storeFinancials(fin);
-    else markFetched(code, "financials");
+    else markFetched(code, "financials", 30); // timeout/null: retry in 30min
     calls++;
     await sleep(SYNC_DELAY_MS);
   }
@@ -397,7 +397,7 @@ export async function syncStockLight(code: string): Promise<number> {
   if (isStale(code, "balance_sheet", 1440)) {
     const bs = await fetchVnstockBalanceSheet(code);
     if (bs) storeBalanceSheet(bs);
-    else markFetched(code, "balance_sheet");
+    else markFetched(code, "balance_sheet", 30); // timeout/null: retry in 30min
     calls++;
     await sleep(SYNC_DELAY_MS);
   }
