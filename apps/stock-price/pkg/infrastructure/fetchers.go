@@ -15,9 +15,12 @@ import (
 	"github.com/vn-market-intelligence/stock-price/pkg/domain"
 )
 
-// ── Tier 1: VnDirect api-finfo ───────────────────────────────────────────────
+// ── Tier 1: VnDirect api-finfo stock_prices ──────────────────────────────────
 
-// Tier1VnDirectFetcher calls https://api-finfo.vndirect.com.vn/v4/stocks
+// Tier1VnDirectFetcher calls https://api-finfo.vndirect.com.vn/v4/stock_prices
+// This endpoint returns OHLCV data for HOSE, HNX, and UPCOM exchanges.
+// FIX-HNX-UPCOM-PRICE-SOURCES-DEAD: Changed from /v4/stocks (company info, no prices)
+// to /v4/stock_prices (OHLCV data with close, volume, change, pctChange).
 type Tier1VnDirectFetcher struct {
 	client *http.Client
 }
@@ -31,7 +34,10 @@ func NewTier1Fetcher() *Tier1VnDirectFetcher {
 
 func (f *Tier1VnDirectFetcher) FetchPrice(code string) (*domain.PriceQuote, error) {
 	start := time.Now()
-	url := fmt.Sprintf("https://api-finfo.vndirect.com.vn/v4/stocks?q=code:%s&size=1", code)
+	// Use stock_prices endpoint with date filter for today's data.
+	// The endpoint requires date filtering to return current prices.
+	today := time.Now().Format("2006-01-02")
+	url := fmt.Sprintf("https://api-finfo.vndirect.com.vn/v4/stock_prices?sort=date&q=code:%s~date:gte:%s&size=1", code, today)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -40,6 +46,10 @@ func (f *Tier1VnDirectFetcher) FetchPrice(code string) (*domain.PriceQuote, erro
 	if err != nil {
 		return nil, nil //nolint:nilerr
 	}
+	// Set browser User-Agent to avoid 503 from Vietnamese sites.
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "application/json")
+
 	resp, err := f.client.Do(req)
 	if err != nil {
 		return nil, nil //nolint:nilerr
@@ -55,13 +65,18 @@ func (f *Tier1VnDirectFetcher) FetchPrice(code string) (*domain.PriceQuote, erro
 		return nil, nil //nolint:nilerr
 	}
 
+	// stock_prices endpoint returns OHLCV data with these fields:
+	// code, date, time, floor, close, open, high, low, nmVolume, change, pctChange
 	var payload struct {
 		Data []struct {
 			Code      string  `json:"code"`
+			Floor     string  `json:"floor"`
 			Close     float64 `json:"close"`
-			Volume    float64 `json:"volume"`
+			NmVolume  float64 `json:"nmVolume"`
 			Change    float64 `json:"change"`
 			PctChange float64 `json:"pctChange"`
+			Date      string  `json:"date"`
+			Time      string  `json:"time"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(body, &payload); err != nil || len(payload.Data) == 0 {
@@ -71,21 +86,37 @@ func (f *Tier1VnDirectFetcher) FetchPrice(code string) (*domain.PriceQuote, erro
 	// DSI-INV-1: use pointers so 0 is distinguishable from nil (unavailable)
 	change := item.Change
 	pctChange := item.PctChange
+
+	// Determine source from floor field (HOSE, HNX, UPCOM)
+	source := domain.SourceHOSE
+	switch item.Floor {
+	case "HNX":
+		source = domain.SourceHNX
+	case "UPCOM":
+		source = domain.SourceUPCOM
+	}
+
+	// Price is in thousands VND (e.g., 17.7 = 17,700 VND), multiply by 1000
 	return &domain.PriceQuote{
 		Code:          item.Code,
-		Price:         item.Close,
-		Volume:        item.Volume,
+		Price:         item.Close * 1000,
+		Volume:        item.NmVolume,
 		Change:        &change,
 		ChangePercent: &pctChange,
-		Source:        domain.SourceHOSE,
+		Source:        source,
 		LatencyMs:     time.Since(start).Milliseconds(),
 		FetchedAt:     time.Now().UTC().Format(time.RFC3339),
 	}, nil
 }
 
-// ── Tier 2: VnDirect finfo-api legacy ───────────────────────────────────────
+// ── Tier 2: VnDirect api-finfo stock_prices (historical fallback) ───────────
 
-// Tier2VnDirectLegacyFetcher calls https://finfo-api.vndirect.com.vn/v4/stocks
+// Tier2VnDirectLegacyFetcher calls https://api-finfo.vndirect.com.vn/v4/stock_prices
+// without date filter to get the most recent available data (for after-hours or
+// when today's data is not yet available).
+// FIX-HNX-UPCOM-PRICE-SOURCES-DEAD: Changed from finfo-api.vndirect.com.vn/v4/stocks
+// (which returns company info, not prices) to api-finfo.vndirect.com.vn/v4/stock_prices
+// (which returns OHLCV data). This tier omits date filter to get latest available data.
 type Tier2VnDirectLegacyFetcher struct {
 	client *http.Client
 }
@@ -99,7 +130,9 @@ func NewTier2Fetcher() *Tier2VnDirectLegacyFetcher {
 
 func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote, error) {
 	start := time.Now()
-	url := fmt.Sprintf("https://finfo-api.vndirect.com.vn/v4/stocks?q=code:%s&size=1", code)
+	// Use stock_prices endpoint WITHOUT date filter to get most recent data.
+	// This is the fallback when Tier 1 (today's data) returns empty.
+	url := fmt.Sprintf("https://api-finfo.vndirect.com.vn/v4/stock_prices?sort=date&q=code:%s&size=1", code)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -108,6 +141,10 @@ func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote
 	if err != nil {
 		return nil, nil //nolint:nilerr
 	}
+	// Set browser User-Agent to avoid 503 from Vietnamese sites.
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+	req.Header.Set("Accept", "application/json")
+
 	resp, err := f.client.Do(req)
 	if err != nil {
 		return nil, nil //nolint:nilerr
@@ -123,13 +160,18 @@ func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote
 		return nil, nil //nolint:nilerr
 	}
 
+	// stock_prices endpoint returns OHLCV data with these fields:
+	// code, date, time, floor, close, open, high, low, nmVolume, change, pctChange
 	var payload struct {
 		Data []struct {
-			Code          string  `json:"code"`
-			MatchPrice    float64 `json:"matchPrice"`
-			TotalVolume   float64 `json:"totalVolume"`
-			PriceChange   float64 `json:"priceChange"`
-			PctPriceChange float64 `json:"pctPriceChange"`
+			Code      string  `json:"code"`
+			Floor     string  `json:"floor"`
+			Close     float64 `json:"close"`
+			NmVolume  float64 `json:"nmVolume"`
+			Change    float64 `json:"change"`
+			PctChange float64 `json:"pctChange"`
+			Date      string  `json:"date"`
+			Time      string  `json:"time"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(body, &payload); err != nil || len(payload.Data) == 0 {
@@ -137,15 +179,26 @@ func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote
 	}
 	item := payload.Data[0]
 	// DSI-INV-1: use pointers so 0 is distinguishable from nil (unavailable)
-	change := item.PriceChange
-	pctChange := item.PctPriceChange
+	change := item.Change
+	pctChange := item.PctChange
+
+	// Determine source from floor field (HOSE, HNX, UPCOM)
+	source := domain.SourceHOSE
+	switch item.Floor {
+	case "HNX":
+		source = domain.SourceHNX
+	case "UPCOM":
+		source = domain.SourceUPCOM
+	}
+
+	// Price is in thousands VND (e.g., 17.7 = 17,700 VND), multiply by 1000
 	return &domain.PriceQuote{
 		Code:          item.Code,
-		Price:         item.MatchPrice,
-		Volume:        item.TotalVolume,
+		Price:         item.Close * 1000,
+		Volume:        item.NmVolume,
 		Change:        &change,
 		ChangePercent: &pctChange,
-		Source:        domain.SourceHNX,
+		Source:        source,
 		LatencyMs:     time.Since(start).Milliseconds(),
 		FetchedAt:     time.Now().UTC().Format(time.RFC3339),
 	}, nil
@@ -175,12 +228,14 @@ func (f *Tier3CacheFetcher) FetchPrice(code string) (*domain.PriceQuote, error) 
 	defer db.Close()
 
 	var price, volume float64
-	var fetchedAt string
-	// DSI-INV-1 FR-PRICE-2: read actual fetched_at from DB, never re-stamp with time.Now()
+	var updatedAt string
+	var changeAmt, changePct sql.NullFloat64
+	// FIX-HNX-UPCOM-PRICE-SOURCES-DEAD: market_prices schema uses updated_at (not fetched_at)
+	// and has change_amt, change_pct columns. Query matches actual schema.
 	err = db.QueryRow(
-		`SELECT price, volume, fetched_at FROM market_prices WHERE code = ? ORDER BY fetched_at DESC LIMIT 1`,
+		`SELECT price, volume, updated_at, change_amt, change_pct FROM market_prices WHERE code = ?`,
 		code,
-	).Scan(&price, &volume, &fetchedAt)
+	).Scan(&price, &volume, &updatedAt, &changeAmt, &changePct)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -188,17 +243,26 @@ func (f *Tier3CacheFetcher) FetchPrice(code string) (*domain.PriceQuote, error) 
 		slog.Warn("tier3: query failed", "error", err)
 		return nil, nil //nolint:nilerr
 	}
-	// DSI-INV-1 FR-PRICE-3: Change/ChangePercent are nil (unavailable) for cached data,
-	// not 0 which is ambiguous with a genuine flat day. Nil serializes as JSON null.
+
+	// DSI-INV-1 FR-PRICE-3: Change/ChangePercent are pointers.
+	// Use actual values from DB if available, otherwise nil.
+	var change, pctChange *float64
+	if changeAmt.Valid {
+		change = &changeAmt.Float64
+	}
+	if changePct.Valid {
+		pctChange = &changePct.Float64
+	}
+
 	return &domain.PriceQuote{
 		Code:          code,
 		Price:         price,
 		Volume:        volume,
-		Change:        nil, // unavailable — cache does not store change data
-		ChangePercent: nil, // unavailable — cache does not store change data
+		Change:        change,
+		ChangePercent: pctChange,
 		Source:        domain.SourceCache,
 		LatencyMs:     time.Since(start).Milliseconds(),
-		FetchedAt:     fetchedAt, // true source timestamp from DB, not time.Now()
+		FetchedAt:     updatedAt, // true source timestamp from DB, not time.Now()
 	}, nil
 }
 

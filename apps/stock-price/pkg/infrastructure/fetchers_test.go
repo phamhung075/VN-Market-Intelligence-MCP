@@ -19,6 +19,8 @@ import (
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 // createTempDB creates a temp SQLite file with market_prices and daily_ohlcv tables seeded.
+// FIX-HNX-UPCOM-PRICE-SOURCES-DEAD: Updated schema to match production market.db
+// (updated_at instead of fetched_at, added change_amt, change_pct, exchange columns).
 func createTempMarketDB(t *testing.T) (path string, cleanup func()) {
 	t.Helper()
 	dir := t.TempDir()
@@ -28,11 +30,15 @@ func createTempMarketDB(t *testing.T) (path string, cleanup func()) {
 	if err != nil {
 		t.Fatalf("open temp market.db: %v", err)
 	}
+	// Match production schema: code is PRIMARY KEY, uses updated_at, has change columns
 	_, err = db.Exec(`CREATE TABLE market_prices (
-		code       TEXT,
-		price      REAL,
-		volume     REAL,
-		fetched_at TEXT
+		code        TEXT PRIMARY KEY,
+		price       REAL,
+		change_amt  REAL,
+		change_pct  REAL,
+		volume      REAL,
+		updated_at  TEXT,
+		exchange    TEXT DEFAULT 'HOSE'
 	)`)
 	if err != nil {
 		db.Close()
@@ -54,9 +60,10 @@ func createTempMarketDB(t *testing.T) (path string, cleanup func()) {
 		t.Fatalf("create daily_ohlcv table: %v", err)
 	}
 	// Seed VCB current price in market_prices (for Tier3 cache fetcher tests)
+	// Includes change_amt and change_pct to test full schema.
 	_, err = db.Exec(
-		`INSERT INTO market_prices (code, price, volume, fetched_at) VALUES (?, ?, ?, ?)`,
-		"VCB", 88000.0, 2000000.0, time.Now().UTC().Format(time.RFC3339),
+		`INSERT INTO market_prices (code, price, volume, updated_at, change_amt, change_pct, exchange) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		"VCB", 88000.0, 2000000.0, time.Now().UTC().Format(time.RFC3339), 1200.0, 1.38, "HOSE",
 	)
 	if err != nil {
 		db.Close()
@@ -97,6 +104,17 @@ func TestTier3Fetcher_CacheHit(t *testing.T) {
 	}
 	if quote.Source != domain.SourceCache {
 		t.Errorf("source: want cache, got %s", quote.Source)
+	}
+	// FIX-HNX-UPCOM-PRICE-SOURCES-DEAD: verify change data is populated from DB
+	if quote.Change == nil {
+		t.Error("expected Change to be non-nil for cached data")
+	} else if *quote.Change != 1200.0 {
+		t.Errorf("change: want 1200, got %f", *quote.Change)
+	}
+	if quote.ChangePercent == nil {
+		t.Error("expected ChangePercent to be non-nil for cached data")
+	} else if *quote.ChangePercent != 1.38 {
+		t.Errorf("changePercent: want 1.38, got %f", *quote.ChangePercent)
 	}
 }
 

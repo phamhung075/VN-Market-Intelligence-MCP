@@ -2,22 +2,24 @@
 
 **Package:** `pkg/infrastructure/fetchers.go`
 
-## Tier 1: VnDirect api-finfo (Tier1Fetcher)
+## Tier 1: VnDirect stock_prices (Tier1Fetcher)
 - **Constructor:** `NewTier1Fetcher() *Tier1Fetcher`
-- **Endpoint:** `https://api-finfo.vndirect.com.vn/v4/stocks?q=code:{code}&size=1`
+- **Endpoint:** `https://api-finfo.vndirect.com.vn/v4/stock_prices?sort=date&q=code:{code}~date:gte:{today}&size=1`
 - **Timeout:** 3000ms (`context.WithTimeout`)
-- **HTTP client:** `net/http` with 3s timeout
-- **Response mapping:** `close→Price`, `volume→Volume`, `change→Change`, `pctChange→ChangePercent`
-- **Source:** `"hose"`
-- Returns `nil, nil` on HTTP error or JSON parse failure (tier miss, not error)
+- **HTTP client:** `net/http` with 3s timeout, browser User-Agent header
+- **Response mapping:** `close*1000→Price`, `nmVolume→Volume`, `change→Change`, `pctChange→ChangePercent`, `floor→Source`
+- **Source:** Dynamic from `floor` field: `"hose"`, `"hnx"`, or `"upcom"`
+- Returns `nil, nil` on HTTP error, JSON parse failure, or empty data (tier miss, not error)
+- **Note:** FIX-HNX-UPCOM-PRICE-SOURCES-DEAD: Changed from `/v4/stocks` (company info only, no prices) to `/v4/stock_prices` (OHLCV data)
 
-## Tier 2: VnDirect Legacy (Tier2Fetcher)
+## Tier 2: VnDirect stock_prices Historical (Tier2Fetcher)
 - **Constructor:** `NewTier2Fetcher() *Tier2Fetcher`
-- **Endpoint:** `https://finfo-api.vndirect.com.vn/v4/stocks?q=code:{code}&size=1`
+- **Endpoint:** `https://api-finfo.vndirect.com.vn/v4/stock_prices?sort=date&q=code:{code}&size=1`
 - **Timeout:** 3000ms
-- **Response mapping:** `matchPrice→Price`, `totalVolume→Volume`, `priceChange→Change`, `pctPriceChange→ChangePercent`
-- **Source:** `"hnx"`
+- **Response mapping:** Same as Tier1 (`close*1000→Price`, `nmVolume→Volume`, etc.)
+- **Source:** Dynamic from `floor` field
 - Returns `nil, nil` on any error
+- **Note:** Omits date filter to return most recent available data (fallback for after-hours or when today's data unavailable)
 
 ## Tier 3: SQLite Cache (Tier3Fetcher)
 - **Constructor:** `NewTier3Fetcher(marketDBPath string) *Tier3Fetcher`
@@ -25,12 +27,12 @@
 - **DSN:** `file:{marketDBPath}?mode=ro&_journal_mode=WAL&_busy_timeout=5000`
 - **SQL:**
   ```sql
-  SELECT price, volume FROM market_prices
-  WHERE code = ? ORDER BY fetched_at DESC LIMIT 1
+  SELECT price, volume, updated_at, change_amt, change_pct FROM market_prices WHERE code = ?
   ```
-- `Change: 0`, `ChangePercent: 0` (not tracked in cache)
+- `Change`, `ChangePercent` populated from `change_amt`, `change_pct` if available
 - **Source:** `"cache"`
 - Returns `nil, nil` if row not found (`sql.ErrNoRows`)
+- **Note:** FIX-HNX-UPCOM-PRICE-SOURCES-DEAD: Column name corrected from `fetched_at` to `updated_at` to match production schema
 
 ## SQLitePriceHistoryRepository
 - **Constructor:** `NewSQLitePriceHistoryRepository(marketDBPath, ownDBPath string) *SQLitePriceHistoryRepository`
