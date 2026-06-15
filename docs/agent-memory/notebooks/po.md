@@ -1,44 +1,43 @@
 # PO Notebook
 
-## 2026-06-14T22:42Z — S56: TRIAGE tick (dev-team 20260615T0036Z) — VMT-8 minted + TNB c95 ACK
-Router handed 3 findings + 2 signals off the VN-MACRO-TOOLING close (VMT-7 Zone-B LIVE-verified,
-toolCount=163==SSOT; 4/5 macro tools live-dark from F1 VPS-proxy incident, NOT a code defect).
+## 2026-06-15T00:31Z — TRIAGE tick — ACCURACY-PAIR promoted (serialized)
+Reliability layer DONE (F-MACRO-FETCH-DEADLINE + VMT-8 done_verified, ce4b46f0). Accuracy
+follow-ons unblocked. Promoted both backlog→ready, SERIALIZED (same owner dev-macro-indicators /
+zone apps/macro-indicators/, WIP≤2, no file conflict):
+- **[1] F-BOP-ENCODING** (S, no-recon, FIRST, seq=null) — URL-encode SBV Liferay OData filter
+  spaces in usecases_vmt_bop.go. bop degrade "context deadline exceeded" = FetchBudgetSec=8s
+  bound firing on a malformed un-encoded filter. Quick accuracy win — dispatch first.
+- **[2] F-NSO-SELECTOR** (S, RECON-FIRST, seq=F-BOP-ENCODING) — STEP1 ops-vps-fetch recons NEW
+  NSO WordPress HTML (index fetches ~85KB → proxy UP, pure accuracy gap, NOT proxy-down);
+  STEP2 dev-macro-indicators implements new selector in cache_vmt_nso.go + parsers. Recon-first
+  so dev isn't idle while structure is scoped.
+Both rebase 94b49f44. head → next_agent=dev-team (active=F-BOP-ENCODING). Idempotent promote via
+`scripts/po-s54-macro-accuracy-pair-promote.jq` (atomic temp→[ -s ]→jq empty→rename; ready 1→3,
+backlog 172→170). Committed orch-state + script by EXPLICIT PATH (c75398a3) — other dirty files
+(fb-poster/unified-agent notebooks, tool-usage-stats, 07-06 brief) NOT swept.
 
-**F2 → minted VMT-8-MACRO-GRACEFUL-FAILCLOSE (FIX, P1, S, zone apps/macro-indicators/, owner
-dev-macro-indicators).** RAW-verified the root cause at code level (not the router badge): the 4 dark
-endpoints' handlers (handlers_vmt_{trade,bop,macro,cpi}.go) do `resp,err:=uc.Execute(); if err!=nil
-{WriteHeader(500)}`, and the use-case error builders (errorTradeResponse/errorBOPResponse/errorMacroResponse/
-errorCPIResponse) ALL return `..., fmt.Errorf(...)` — non-nil err → opaque-500. **errorLiquidityResponse has
-the SAME non-nil-error shape** — /liquidity-state only looks graceful because its providers read local
-market.db (not geo-blocked) and hit the happy path. So the fix is GENERIC across all 5 (/goal#2): on
-upstream-fetch/parse failure return (degradedResp, NIL err) + is_estimate=true + per-bloc blocked_reason
-naming the source → 200; KEEP nil-provider/wiring faults → real err → 500. Independent of F1 (resilience,
-must hold even after proxy restored). Appended to backlog via idempotent
-`scripts/po-s54-vmt8-graceful-failclose-triage.jq` (atomic temp→[ -s ]→jq empty→rename; id-count 364→365;
-.head + VN-MACRO-TOOLING UNTOUCHED). orch-state NOT staged — router dispatches.
+**RECONCILE TRAP hit:** spawn-context said next_agent=po/awaiting-triage, but LIVE committed head
+= BA-VN-MACRO-TOOLING/next_agent=ba @ stale 2026-06-14T18:36:18Z. ce4b46f0's diff SHOWED head→po
+but its committed net REVERTED (SSOT last-write-wins clobber by a parallel BA dispatch on .head).
+git-log note in ce4b46f0 = authoritative intent → trusted spawn context. Confirmed
+BA-VN-MACRO-TOOLING is a SEPARATE live lane (architect-probefold-done, next_agent=pm, PM plan
+PENDING) — left UNTOUCHED.
 
-**S1 → TNB c95 ACK'd** (docs/handoffs/tnb-audit-latest.md). NEEDS_ATTENTION/IMPROVING. No new tasks — all
-findings covered: blocker#1 FIX-MCP-500-SYMBOL-TO-STRING now **done_verified** (resolved); F-EOD pending
-Monday gate (owned by FIX-COWORK-GUARANTEED-BACKSTOP, convergent w/ ARCH-CRON G1/G2/G3 Mon re-verify);
-F-BCTC-CTG covered by active BCTC-FETCH-CORRECTNESS; F3/F4/F9 structural → VN-MACRO-TOOLING (VMT-3a PMI
-probe5, VMT-6 VIRA degraded); F5 hexagram-501 LOW watch-only.
+**jq guard bug (caught pre-rename):** first `already_present()` counted backlog (the source array)
+→ never promoted; 2nd attempt `.key != "backlog"` precedence broke under `and`. Fixed: chained
+`select(.key!="backlog") | select(.value|type=="array")`. Lesson: when moving FROM an array,
+the dedup guard must EXCLUDE the source array.
 
-**HELD (not actioned this tick):**
-- F1 VPS squid :3128 DOWN — ops-vps-fetch (a47d92aa) ALREADY IN FLIGHT (WIP=1, cap 2). DO NOT re-dispatch.
-  My job = TRACK as one INC; reconcile the 4-task VPS cluster (FIX-SBV-FX-VPS-FETCHER-UNHEALTHY +
-  FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + VPS-AVAIL-02-FIX, all in backlog) under one root
-  ONCE ops-vps-fetch reports. No new VPS tasks now.
-- F3 gen-project-stats.ts cronJobCount=81 vs note ~69 + transient corrupt-2 — LOW, dev-mcp-server reconcile
-  + harden against partial writes. Sequence after F1/F2; note only.
-- S2 agents-architect brief (07-06 macro upgrade: 2 skills + 5 tools + 6 agent upgrades) → agent-father.
-  GREENLIGHT but SEQUENCE AFTER F1 incident closes (incident dominates priority; agent-father is a large
-  multi-agent change, not urgent). Note in batch, do not dispatch this tick.
-- DEFERRED: ops.md notebook 235L>200 — claude-manager-helper prune AFTER ops-vps-fetch reports (write-
-  collision risk with in-flight ops lane). Note only.
+**HELD (unchanged):** Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE
+re-verify) — passive ops/cron live-probe, already owned by ARCH-CRON-SCHEDULER-RELIABILITY
+reverify_gate + FIX-COWORK-GUARANTEED-BACKSTOP (TNB c95 ACK confirms); surfaces on its own gate
+tick, NOT raised this tick. Also held: 07-06 brief (seq-after-incident), F3 cronJobCount,
+VMT-3a-PMI, ops/infra lane, FIX-FB-POSTER-NOARG-MARKET-TOOLS. TNB already ACK'd this cycle.
+4 drained signals all informational (no new code bugs).
 
-### Carry-over
-- NEXT (router): dispatch VMT-8 to dev-macro-indicators (Zone-A serial chain A1-A5 CLOSED → no concurrent
-  Zone-A writer; go test ./... GREEN before ops rebuild; QA verifies LIVE 200+is_estimate+blocked_reason).
-- WAITING on ops-vps-fetch report → then PO reconciles 4-task VPS cluster under one INC.
-- Monday 2026-06-15 market-day: ARCH-CRON G1/G2/G3 + F-EOD gate LIVE re-verify (held-open umbrella).
-- Backpressure: VMT-3a-PMI still blocked-probe5 (S&P dev-local).
+### Carry-over (next tick)
+- dev-team dispatches F-BOP-ENCODING first; F-NSO-SELECTOR only after BOP done (serialize guard).
+- F-NSO needs ops-vps-fetch recon leg BEFORE dev-macro-indicators — verify recon handoff lands.
+- BA-VN-MACRO-TOOLING: route to PM (task-plan) — separate lane, head pointer was wrong (said ba).
+- Monday market-day gate goes live — ARCH-CRON G1/G2/G3 + F-EOD re-verify on its own gate tick.
+- Watch .head SSOT clobber: parallel dispatches last-write-win on .head — re-read git-log intent.
