@@ -19,9 +19,11 @@ import { describe, expect, it } from "bun:test";
 import {
   validateOhlcvUnit,
   normalizeOhlcvToVnd,
+  detectAndNormalizeScaleFromPrevClose,
   STOCK_MIN_VND,
   STOCK_MAX_VND,
   HILO_RATIO_MAX,
+  SCALE_DETECTION_RATIO,
 } from "../../domain/services/market-data/ohlcvUnitGuard";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,4 +198,92 @@ describe("OHLCV unit guard constants", () => {
   it("STOCK_MIN_VND = 100", () => expect(STOCK_MIN_VND).toBe(100));
   it("STOCK_MAX_VND = 10_000_000", () => expect(STOCK_MAX_VND).toBe(10_000_000));
   it("HILO_RATIO_MAX = 5", () => expect(HILO_RATIO_MAX).toBe(5));
+  it("SCALE_DETECTION_RATIO = 50", () => expect(SCALE_DETECTION_RATIO).toBe(50));
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// detectAndNormalizeScaleFromPrevClose (FIX-STOCK-PRICE-SCALE-CORRUPT)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("detectAndNormalizeScaleFromPrevClose", () => {
+  // TC-14: VIC pattern — prevClose=196000, current close=195.5 → ratio=1002x → correct
+  it("VIC pattern: prevClose=196000, close=195.5 → detects thousand-scale and corrects", () => {
+    const result = detectAndNormalizeScaleFromPrevClose(
+      "stock",
+      { open: 198.5, high: 198.7, low: 192.9, close: 195.5 },
+      196000,
+    );
+    expect(result.corrected).toBe(true);
+    expect(result.ohlcv.open).toBe(198500);
+    expect(result.ohlcv.high).toBe(198700);
+    expect(result.ohlcv.low).toBe(192900);
+    expect(result.ohlcv.close).toBe(195500);
+    expect(result.reason).toContain("scale_correction");
+  });
+
+  // TC-15: Normal day-to-day change — prevClose=196000, close=192900 → ratio=1.016x → no correction
+  it("normal change: prevClose=196000, close=192900 → no correction (ratio < 50)", () => {
+    const result = detectAndNormalizeScaleFromPrevClose(
+      "stock",
+      { open: 196000, high: 197500, low: 192000, close: 192900 },
+      196000,
+    );
+    expect(result.corrected).toBe(false);
+    expect(result.ohlcv.close).toBe(192900);
+  });
+
+  // TC-16: Index exempt — even with 1000x ratio, indices are not corrected
+  it("index exempt: no correction even with large ratio", () => {
+    const result = detectAndNormalizeScaleFromPrevClose(
+      "index",
+      { open: 1.2, high: 1.3, low: 1.1, close: 1.2 },
+      1200,
+    );
+    expect(result.corrected).toBe(false);
+    expect(result.ohlcv.close).toBe(1.2);
+  });
+
+  // TC-17: No prevClose — cannot detect, returns unchanged
+  it("no prevClose: returns unchanged", () => {
+    const result = detectAndNormalizeScaleFromPrevClose(
+      "stock",
+      { open: 195.5, high: 198.7, low: 192.9, close: 195.5 },
+      undefined,
+    );
+    expect(result.corrected).toBe(false);
+  });
+
+  // TC-18: Penny stock — prevClose=900, close=850 → ratio=1.06x → no correction
+  it("penny stock: prevClose=900, close=850 → no correction", () => {
+    const result = detectAndNormalizeScaleFromPrevClose(
+      "stock",
+      { open: 900, high: 950, low: 850, close: 850 },
+      900,
+    );
+    expect(result.corrected).toBe(false);
+    expect(result.ohlcv.close).toBe(850);
+  });
+
+  // TC-19: Borderline ratio = 50 — triggers correction
+  it("borderline ratio=50: triggers correction", () => {
+    // prevClose=10000, close=200 → ratio=50 exactly
+    const result = detectAndNormalizeScaleFromPrevClose(
+      "stock",
+      { open: 195, high: 205, low: 190, close: 200 },
+      10000,
+    );
+    expect(result.corrected).toBe(true);
+    expect(result.ohlcv.close).toBe(200000);
+  });
+
+  // TC-20: Borderline ratio = 49.9 — no correction
+  it("borderline ratio=49.9: no correction", () => {
+    // prevClose=9980, close=200 → ratio=49.9
+    const result = detectAndNormalizeScaleFromPrevClose(
+      "stock",
+      { open: 195, high: 205, low: 190, close: 200 },
+      9980,
+    );
+    expect(result.corrected).toBe(false);
+  });
 });

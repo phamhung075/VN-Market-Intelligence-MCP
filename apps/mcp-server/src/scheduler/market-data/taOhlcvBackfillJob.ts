@@ -31,6 +31,7 @@ import { logger } from "../../infrastructure/logger.js";
 import {
   normalizeOhlcvToVnd,
   validateOhlcvUnit,
+  detectAndNormalizeScaleFromPrevClose,
 } from "../../domain/services/market-data/ohlcvUnitGuard.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -242,8 +243,20 @@ export async function runTaOhlcvBackfill(
   const upsertStmt = db.prepare(UPSERT_SQL);
 
   // Batch upsert inside a transaction for performance
+  // FIX-STOCK-PRICE-SCALE-CORRUPT: Sort by date ascending so we can track prevClose
+  // for detecting thousand-scale corruption in the 100-999 range.
   const insertMany = db.transaction((records: OhlcvRecord[]) => {
-    for (const r of records) {
+    // Sort by date ascending to enable sequential prevClose tracking
+    const sorted = [...records].sort((a, b) => {
+      const da = a.date ?? "";
+      const db = b.date ?? "";
+      return da.localeCompare(db);
+    });
+
+    // Track the last valid close for this ticker (in full-VND after normalization)
+    let prevClose = 0;
+
+    for (const r of sorted) {
       // Skip any record with missing OHLC fields to avoid re-introducing corrupt data
       if (
         !r.code ||
@@ -275,6 +288,20 @@ export async function runTaOhlcvBackfill(
         continue;
       }
 
+      // FIX-STOCK-PRICE-SCALE-CORRUPT: Additional detection for values in 100-999 range.
+      // normalizeOhlcvToVnd only catches values < 100. For expensive stocks like VIC/VHM,
+      // thousand-scale values can be 100-500 (e.g., VIC=195.5 should be 195,500).
+      // Use prevClose comparison to detect and correct.
+      if (prevClose > 0) {
+        const scaleResult = detectAndNormalizeScaleFromPrevClose("stock", norm, prevClose);
+        if (scaleResult.corrected) {
+          logger.info(
+            `[taOhlcvBackfill] ${r.code} ${r.date}: ${scaleResult.reason}`,
+          );
+          norm = scaleResult.ohlcv;
+        }
+      }
+
       // Guard post-normalize values — a still-out-of-range row after normalization
       // indicates genuinely corrupt data (e.g. all-zero row); log + skip, never throw.
       try {
@@ -298,6 +325,9 @@ export async function runTaOhlcvBackfill(
         );
         continue;
       }
+
+      // Update prevClose for next iteration (after successful normalization)
+      prevClose = norm.close;
 
       // Upsert normalized full-VND values — self-heals any contaminated seed rows.
       upsertStmt.run(
