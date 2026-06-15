@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T12:06:58Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-15T14:20:39Z",
+  "_updated_by": "po",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -172,8 +172,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-15T03:00:01.154Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-15T14:20:39Z",
+    "_updated_by": "po",
     "archive": [
       {
         "from": "system-auditor",
@@ -443,12 +443,13 @@
         "to": "po",
         "type": "live-verify-partial + accuracy-recon-batch — /goal#1 accuracy layer",
         "severity": "MEDIUM",
-        "status": "READ",
+        "status": "RESOLVED",
         "summary": "F-BOP-ENCODING LIVE-VERIFY = PARTIAL (router RAW 2-window re-probe, NOT the ops badge). RELIABILITY DONE: encoding fix (400610e5, url.Values{}.Encode()) is LIVE (image 27b2ccd5d2c3) + eliminated the 'context deadline exceeded' malformed-URL hang across 4 consistent probes. BUT ACCURACY NOT achieved: get_vn_bop still degraded — 'SBV API returned 0 items (empty response)', all fields 0. The URL now resolves but the OData query semantics (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range) match 0 live SBV articles. PO ACTION: mint F-BOP-QUERY-RECON (zone apps/macro-indicators; recon-first ops-vps-fetch to curl the SBV Liferay OData endpoint with corrected encoding + vary params until real BOP articles return, THEN dev-macro-indicators fixes parsers_vmt_bop.go query params; /goal#2 generic). This is the SAME SHAPE as F-NSO-SELECTOR (transport OK, data empty, needs recon of live upstream). SEQUENCE both as an accuracy RECON BATCH on macro-indicators (serialize, same files, recon-first each): F-BOP-QUERY-RECON + F-NSO-SELECTOR. F-BOP-ENCODING itself = done (encoding correct, merge-gated, live, deadline-symptom gone); done_verified WITHHELD pending F-BOP-QUERY-RECON real-data restoration.",
         "payload_ref": "ops report a1b951eec29057302 (image 27b2ccd5d2c3, 11/11 peers, 2-window 0-items); router raw re-probe 2 windows (get_vn_bop{} + {quarter:Q3-2025}) both degraded-200 '0 items', no deadline-exceeded; commit 400610e5 / HEAD 0b8a1de6",
-        "disposition": "RESOLVED — PO (a0fcdb8a9a4ba5e72) triaged + minted F-BOP-QUERY-RECON (board READY, sequence_after=F-NSO-SELECTOR, dispatch-batch b50d89e9). Recon-first ops-vps-fetch. F-BOP-ENCODING stays done; done_verified withheld pending real-data restoration. Marked READ by cowork-tick to prevent redundant re-triage.",
+        "disposition": "RESOLVED — PO (a0fcdb8a9a4ba5e72) triaged + minted F-BOP-QUERY-RECON (board READY, sequence_after=F-NSO-SELECTOR, dispatch-batch b50d89e9). Recon-first ops-vps-fetch. F-BOP-ENCODING stays done; done_verified withheld pending real-data restoration. Marked READ by cowork-tick to prevent redundant re-triage. | RESOLVED-CLOSE (po 2026-06-15T14:20:39Z): F-BOP-QUERY-RECON full lifecycle complete in git (mint 3ad28a18 -> recon 9edb1f84 -> fix 4c2fcb5c -> rebuild 2093e11e -> done_verified 7dee6af8). LIVE RAW-verify get_vn_bop{}: status=ok quyIV REAL data (goods_exports 126318, fdi_net 6850, overall_balance 2355, source=SBV Liferay PROBE-2 PASS, is_estimate=false). Accuracy restored. Both F-BOP-QUERY-RECON + F-NSO-SELECTOR in done_verified. Row status READ->RESOLVED to stop re-park.",
         "ts": "2026-06-15T00:50:51Z",
-        "read_at": "2026-06-15T01:37:29Z"
+        "read_at": "2026-06-15T01:37:29Z",
+        "resolved_at": "2026-06-15T14:20:39Z"
       },
       {
         "id": "dev-team-20260615T020049Z-nso-trade-sheet-followon",
@@ -471,10 +472,10 @@
         "to": "po",
         "type": "code-done + ci-green-gate push-blocked — /goal#1 verified-withheld on origin divergence",
         "severity": "MEDIUM",
-        "status": "in_progress",
+        "status": "RESOLVED",
         "summary": "CI-RED-d20468c0-FIX CODE-DONE + LOCAL-GREEN (router RAW-verified, NOT dev badge): dev-mcp-server ad7c357d49c10d38e reconciled 8 stale-contract tests / 4 files (commit c79ce6bd); independent UNCACHED bun test 31 pass/0 fail; 4 files all apps/mcp-server/src/__tests__, foreign-capture NONE, toolCount 163 unchanged (no production code). LOCAL MERGE GATE GREEN. BUT verification_gate ci_green_on_subsequent_push is PUSH-BLOCKED: origin/main=d20468c0 (the RED run 27516556457 SHA) is NOT an ancestor of HEAD; local diverged 143-ahead/6-behind (merge-base 59082d6d). The 6-behind are ALL benign cloud-generated chore commits (5x chore(health) MCP rechecks + 1x chore(audit/tnb) c95 NEEDS_ATTENTION) pushed to origin by cloud RemoteTriggers; local never pulls them. PO DECISION NEEDED: reconcile + push to turn origin CI green — proposed LOW-RISK path = git pull --rebase origin main (replay 143 work commits atop the 6 chores) then push; this is the standing DEFERRED origin-divergence (PO's call), NOT an autonomous router force-push. On push, GitHub Actions re-runs on SHA != d20468c0 -> green -> THEN promote CI-RED done_verified. NO rebuild (test-only, runtime container unchanged). Until then CI-RED = done (local-green), done_verified WITHHELD. ALSO PENDING PO (carry): FIX-NSO-TRADE-SHEET mint (sig nso-trade-sheet-followon NEW) + F-BOP-QUERY-RECON dispatch (UNBLOCKED, recon-first ops-vps-fetch). WIP now clear (CI-RED resolved) — both can proceed next tick.",
         "payload_ref": "router raw: git log c79ce6bd/765518d1; bun test 31/0; git rev-list origin/main..HEAD=143, HEAD..origin/main=6; merge-base 59082d6d; 6-behind=d20468c0,d78fe061,504aa635,6d49d425,e3df5758,93e7f66a (all cloud chores); origin/main=d20468c0",
-        "disposition": "",
+        "disposition": "RESOLVED (po triage 2026-06-15T14:20:39Z) — VERIFIED ALREADY-ACTIONED. Reconcile DID happen: d20468c0 now at/below merge-base 8b55a2c2, c79ce6bd (CI-RED fix) in HEAD history. origin/main=ce0bbfa7 CI run 27552296836 GREEN incl bun test:success (the exact mcp-server test job RED at d20468c0) + all go/py lint success. ci_green_on_subsequent_push gate SATISFIED. CI-RED-d20468c0-FIX correctly in done_verified. No further push needed — signal closed to stop re-park.",
         "ts": "2026-06-15T02:35:09Z",
         "acked_at": "2026-06-15T03:58:15Z",
         "acked_by": "dev-team",
