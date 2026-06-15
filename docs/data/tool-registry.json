@@ -1,7 +1,7 @@
 {
   "_maintained_by": "generator (do not hand-edit)",
-  "lastUpdated": "2026-06-14T22:26:20.503Z",
-  "totalCount": 163,
+  "lastUpdated": "2026-06-15T00:00:00.000Z",
+  "totalCount": 164,
   "groups": [
     {
       "name": "alerts",
@@ -86,11 +86,12 @@
     },
     {
       "name": "kinhdich",
-      "count": 5,
+      "count": 6,
       "tools": [
         "explain_hexagram",
         "get_hexagram_history",
         "get_kinhdich_reading",
+        "get_market_hexagram",
         "get_transition_probabilities",
         "run_hexagram_backtest"
       ]

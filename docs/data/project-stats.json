@@ -31,7 +31,7 @@
   "smoke_window_1912a_planned_end": "2026-05-15T14:00:00Z",
   "smoke_window_1912a_status": "USER-OVERRIDE-CLOSED-EARLY c105 (~22h short, cutover executed cleanly)",
   "smoke_window_1912a_ac6_verdict": "PARITY PASS (Go 9277/9277 = TS 9277/9277)",
-  "toolCount": 163,
+  "toolCount": 164,
   "schedulerFileCount": 64,
   "cronJobCount": 81,
   "_cronJobCountNote": "RECONCILED 2026-06-15 (dev-mcp-server, SSOT-reconcile). Architecture changed (T2-ARCH-CRON-RECOVER-JITTER) from cron.schedule() to scheduleCron() wrapper. Live count = scheduleCron() call-sites: startScheduler.ts (76) + summaryJobs.ts (5) = 81. Old probe (grep -c cron.schedule startScheduler.ts) is stale. cronConfig.ts named CRON keys=82.",
@@ -52,7 +52,7 @@
     "mcpServerHealth": "healthy",
     "mcpEndpoint": "localhost:3000",
     "connectionStatus": "OK",
-    "toolCount": 163,
+    "toolCount": 164,
     "lastSuccessfulCycle": "2026-05-18T07:22:00Z"
   },
   "_generated_by": "bun scripts/gen-project-stats.ts",

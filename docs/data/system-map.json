@@ -714,7 +714,7 @@
               "capability": "n/a",
               "probe_type": "health_endpoint",
               "probe": "/health",
-              "live_evidence": "toolCount:156 ok"
+              "live_evidence": "toolCount:164 ok (FIX-MARKET-HEXAGRAM-TOOL-MISSING 2026-06-15)"
             },
             "macro": {
               "capability": "live",
