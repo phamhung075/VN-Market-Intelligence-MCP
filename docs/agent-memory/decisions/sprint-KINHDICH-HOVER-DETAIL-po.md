@@ -92,3 +92,22 @@ why-change: minting the requested task would have been duplicate debt against do
 ## STEP — 2026-06-15T16:38:36Z [task_id: orch-state-repair]
 - **what-considered:** only path — surgical comma removal. orch-state.json was committed-invalid at HEAD (trailing comma line 14467 from c34d4740), blocking ALL jq writes incl. concurrent dev-mcp-server agent.
 - **why-change:** no change from plan; verified valid via jq + python before any triage write; FIX-SIGNAL-CONFIDENCE review[] row left untouched.
+
+## STEP po-S7 · po · 2026-06-15T17:19:55Z [task_id: OPS-BCTC-PIPELINE-RECON]
+**what-done:** Closed RECON in_progress→done (done_verified:false, deferred to next 6h VPS cycle); minted 6 follow-ons to ready[]; annotated STALE-5D recurrence anchor (count held 2); briefed architect.
+**what-considered:**
+- Mark recon done_verified:true now — REJECTED: router RAW-confirmed the deployed discovery fixes do NOT resolve the user-facing P0 (get_bctc_full(VCB) STILL empty); 27 url_not_found not yet re-resolved. done_verified withheld per /goal#1 (real served data, not a deploy badge) — gate = next 6h cycle re-probe.
+- Fold enrich-silent-0 into the discovery fix — REJECTED: orthogonal layer. PDF reaches DB (financial_reports header inserted) but enrich yields 0 table_rows — a DIFFERENT root from discovery. Minted as its own P0 (the actual user-facing root), dual-owner dev-pdf-extractor (B02-TCTD bank-form parse) + dev-mcp-server (enrich must fail-loud not silent-advance).
+- Patch the 4 leaf bugs only (no architect) — REJECTED: 2nd recurrence + first "fix" was a one-time flush, not hardening → recurring-bug-escalation. Shared root across discovery-brittleness + enrich-silent-0 + no-freshness-gate = "no active zero-result/freshness alerting" → ARCH-BCTC-PIPELINE-DURABILITY umbrella over the 5 children.
+**why-decision:** TRUE user-facing root (enrich-silent-0) ≠ deployed fix (discovery) — separated cleanly; weighed enrich at P0. /goal#2 generic enforced on every mint (no allowlist/date-literal; B02-TCTD generic, c111→c3 generic, freshness keyed on last_success_age). recurring-bug-escalation policy triggered → architect briefed not just leaf-patched.
+**why-change:** Followed router's RAW-verified facts; raised enrich-silent-0 to P0 (router said weigh P0) over the suggested P1 since it IS the user-facing P0 root. Held STALE-5D recurrence_count at 2 (same incident, no new outage event).
+
+### STEP po-S1 · po · 2026-06-15T18:17:08Z
+**task-id:** FIX-BCTC-ENRICH-SILENT-0ROWS
+**what-done:** Linked cowork bctc-analyst "bug #2776" RELEASE-block (CTG/VCB/D2D) onto existing READY P0 via cowork_release_block annotation; no new row, no promotion.
+**what-considered:**
+- (a) flip stale row→RESOLVED + tell analyst flag stale — REJECTED: get_bctc_full(CTG) LIVE = 'Chua co du lieu BCTC', block is REAL not stale.
+- (b) route ops REBUILD/redeploy — REJECTED: no committed fix exists (get_recent_fixes(50) has no #2776 / enrich-silent fix); nothing built to redeploy.
+- (c) mint/repair dev task — already satisfied: FIX-BCTC-ENRICH-SILENT-0ROWS exists, correctly zone-routed (dev-pdf-extractor+dev-mcp-server, multi), #1 READY P0, minted 17:19:55Z from OPS-BCTC-PIPELINE-RECON.
+**why-decision:** Root already tracked + correctly diagnosed (B02-TCTD bank-form silent-0-rows; CTG/VCB are banks). Only gap = symptom not linked to root + WIP=2 full (both occupants live). Single idempotent annotation closes the loop without dup or premature promotion.
+**why-change:** #2776 is the analyst's INTERNAL label, not a fix/report id; "undeployed" premise was wrong (queued-pending-dispatch, not committed-pending-rebuild). Escalation was NOT dropped — picked up today.
