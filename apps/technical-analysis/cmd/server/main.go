@@ -35,8 +35,8 @@ func main() {
 
 	calculator := infrastructure.NewTACalculator()
 	priceRepo := infrastructure.NewSQLitePriceRepository()
-	_ = domain.NewCalculateTAService(priceRepo, calculator) // DB-backed path (future)
-	useCase := application.NewComputeTAUseCase(calculator)
+	_ = domain.NewCalculateTAService(priceRepo, calculator) // domain service wired (unused HTTP path)
+	useCase := application.NewComputeTAUseCase(calculator, priceRepo)
 	router := httpinterface.NewRouter(useCase, logger)
 
 	addr := fmt.Sprintf(":%s", port)

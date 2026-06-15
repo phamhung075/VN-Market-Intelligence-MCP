@@ -401,9 +401,19 @@ func (s *sandboxCalculator) Calculate(closes []float64, period int) (*domain.Tec
 	}, nil
 }
 
+// noopPriceRepo satisfies the application.PriceRepo port for the sandbox.
+// The sandbox is credential-free and never exercises the DB-backed path
+// (service-tier scenarios always supply closes). If somehow called, it
+// panics loudly rather than silently returning wrong data.
+type noopPriceRepo struct{}
+
+func (noopPriceRepo) GetCandles(symbol string, _ int) ([]domain.CandleStick, error) {
+	panic("sandbox: DB-backed path must not be called (scenario must supply closes) for symbol: " + symbol)
+}
+
 func newTestServer() (*httptest.Server, func()) {
 	calc := &sandboxCalculator{}
-	useCase := application.NewComputeTAUseCase(calc)
+	useCase := application.NewComputeTAUseCase(calc, noopPriceRepo{})
 	router := httpinterface.NewRouter(useCase, slog.Default())
 	srv := httptest.NewServer(router)
 	return srv, srv.Close
