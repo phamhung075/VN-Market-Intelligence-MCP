@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T23:28:41Z",
+  "_updated_at": "2026-06-15T23:30:28Z",
   "_updated_by": "po-s68",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -653,7 +653,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T23:28:41Z",
+    "_updated_at": "2026-06-15T23:30:28Z",
     "_updated_by": "po-s68",
     "active_sprints": [
       {
@@ -12208,6 +12208,28 @@
         "blocks": [],
         "created_at": "2026-06-15T23:28:41Z",
         "created_by": "po-s68"
+      },
+      {
+        "id": "FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367",
+        "type": "FIX",
+        "priority": "P3",
+        "size": "XS",
+        "status": "backlog",
+        "zone": "apps/mcp-server/",
+        "route_to": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "blocking": false,
+        "related_to": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
+        "title": "tsc-red: FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270 TS2367 (HIGH vs CRITICAL no-overlap)",
+        "desc": "apps/mcp-server/src/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270 declares `const severity: \"HIGH\" | \"CRITICAL\" = \"HIGH\"` then compares `severity === \"CRITICAL\"`; TS narrows to the \"HIGH\" literal -> TS2367 no-overlap -> tsc RED on main. Widen the annotation (drop the literal init, e.g. `const severity = (\"HIGH\" as \"HIGH\" | \"CRITICAL\")`) or restructure so the ternary keeps both branches reachable. Lines 264/285 are fine (as-const array widening); only line 270 errors. Orthogonal to W2.",
+        "rationale": "Real tsc-red on main; a red pre-push hook strands the whole fleet (red-prepush-strands-fleet lesson). Owning task FIX-SIGNAL-CONFIDENCE-DEFAULT-50 is in review[] -> fix this before it reaches done / before next push.",
+        "files": [
+          "apps/mcp-server/src/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts"
+        ],
+        "depends_on": [],
+        "blocks": [],
+        "created_at": "2026-06-15T23:30:28Z",
+        "created_by": "po-s68"
       }
     ],
     "closed_sprints": [
@@ -18186,6 +18208,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-15T23:28:41Z",
+  "updated_at": "2026-06-15T23:30:28Z",
   "updated_by": "po-s68"
 }
