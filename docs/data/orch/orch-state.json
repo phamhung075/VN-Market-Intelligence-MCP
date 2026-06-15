@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T12:57:00Z",
-  "_updated_by": "dev-stock-price",
+  "_updated_at": "2026-06-15T11:00:54Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -111,11 +111,12 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T10:43:38Z",
+    "updated_at": "2026-06-15T11:00:54Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
-    "next_agent": null,
-    "note": "DEV-TEAM TICK 2026-06-15T10:4xZ — dispatched TWO P1s ready->in_progress per PO triage (ad17266f, mint 68fe98ff drained 36 stale reports): FIX-HNX-UPCOM-PRICE-SOURCES-DEAD->dev-stock-price (router RAW-corroborated DLC no-row vs SHS/VND live), FIX-VNSTOCK-TRADINGSTATS-CRASH->dev-mcp-server (~50% crash, syncVnstockData timeout guard). Both recon-first, disjoint zones, bg. WIP=2 active coding lanes (ARCH-CRON=observe, BA-MACRO=design consume none). HELD ready: FIX-FB-POSTER-NOARG-MARKET-TOOLS (P1 cowork-refactory-expert), FIX-MARKET-HEXAGRAM-TOOL-MISSING (P2 dev-kinh-dich) — next tick. FIX-ALERT-ENGINE-RSI-SINGLEDIGIT stays review (06-16 gate, NOT displaced). PUSH held (PO post-RSI-gate). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (design)."
+    "active_task_id": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD",
+    "next_agent": "ops",
+    "rebuild_required": true,
+    "note": "DEV-TEAM TICK 2026-06-15T11:00:54Z — FIX-HNX-UPCOM-PRICE-SOURCES-DEAD dev-stock-price RETURNED (a410f1cd), router RELOCATED in_progress->review (dev d5131030 only flipped status field, left object stranded in in_progress[]). Fix af481e12: Tier1/2 endpoint /v4/stocks->/v4/stock_prices, Tier3 col fetched_at->updated_at, source from .floor, price*1000. Router RAW: 3-file zone commit no -A/secret; go test ./... green (infra 0.671s recompiled); GENERIC no allowlist (/goal#2). Dead tickers BDI/DLC/JSH/SIS/VDC reclassified NOT-recoverable (index/delisted/unknown, none in watchlist) — corroborated. REBUILD_REQUIRED=YES stock-price ONLY (force-recreate, NEVER down) — router dispatches ops. LIVE GATE after rebuild: service price path for watchlist HNX/UPCOM => plausible non-zero + correct source; dead ticker => honest empty; then review->done_verified. PUSH held (bundle, PO post-RSI-gate 2026-06-16). PARALLEL: FIX-VNSTOCK-TRADINGSTATS-CRASH in_progress (dev-mcp-server a8448dee running); FIX-ALERT-ENGINE-RSI-SINGLEDIGIT review (behavioral gate 2026-06-16). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (design)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +591,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T10:43:38Z",
+    "_updated_at": "2026-06-15T11:00:54Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14262,31 +14263,6 @@
       },
       {
         "depends": [],
-        "id": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD",
-        "owner": "dev-stock-price",
-        "priority": "P1",
-        "scope": "Diagnose HNX scraper + add UPCOM fallback. Distinct from ALLZERO-OHLCV-FETCH (zero-write guard for HOSE tickers). PLAN-ONLY at PO layer.",
-        "source": "health-recheck B4 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "REVIEW",
-        "title": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD — '[hnx] all HNX price sources failed' + '[hnx] all UPCOM price sources failed' recurring; 5 watchlist tickers (BDI, DLC, JSH, SIS, VDC) have 0 OHLCV rows / N/A prices. Circuit-breaker shows [OK] (threshold not tripping at fetch layer).",
-        "type": "FIX",
-        "user_impact": "MEDIUM — 5 watchlist tickers have no price coverage.",
-        "zone_owner": "apps/stock-price/",
-        "route_to": "dev-stock-price",
-        "mode": "recon-first",
-        "zone": "apps/stock-price/",
-        "dispatched_ts": "2026-06-15T10:43:38Z",
-        "dispatched_by": "dev-team",
-        "dispatch_note": "router RAW-corroborated 10:41Z: get_market_snapshot(codes=[DLC,SHS,VND]) => DLC no price row while SHS/VND live. dead small-cap HNX/UPCOM source class. recon-first: read live tier-fallback + source before patch; generic across all dead tickers (/goal#2), no per-ticker allowlist.",
-        "rebuild_required": true,
-        "rebuild_scope": "force-recreate stock-price container",
-        "review_ts": "2026-06-15T12:57:00Z",
-        "review_by": "dev-stock-price",
-        "review_summary": "Root cause: Tier1/2 fetchers used /v4/stocks (company info, NO price data) instead of /v4/stock_prices. Fixed endpoint + response parsing. Tier3 column mismatch (fetched_at->updated_at) also fixed. Dead tickers (BDI/DLC/JSH/SIS/VDC) are NOT recoverable: DLC delisted 2016, BDI is Bloomberg index (not VN stock), JSH/SIS/VDC unknown in VnDirect. GENERIC fix: no hardcode, derives source from floor field. Commit: af481e12.",
-        "commit_sha": "af481e12"
-      },
-      {
-        "depends": [],
         "id": "FIX-VNSTOCK-TRADINGSTATS-CRASH",
         "type": "FIX",
         "owner": "dev-mcp-server",
@@ -14396,6 +14372,41 @@
         "live_partial_verdict": "LIVE-PARTIAL (router RAW 2026-06-15T08:05Z, NOT a badge): REBUILD LANDED — mcp-server image sha256:5d728ae5 @08:02:40Z (after commit c9892200 @07:52:54Z), MIN_CANDLES=35 guard present in running container, named-volume market.db writable 120 rows, all 13 peers survived, health 200/toolCount 163. CANONICAL BASELINE LIVE (get_technical_indicators): VHM RSI 35.7 / VIC 34.9 / VRE 39.9 — REAL mid-band, NO single-digit, NOT 100.0. WATCH-ITEM (suppression-vs-real) RESOLVED: scan CANDLE_SQL reads daily_ohlcv 60-day window (SAME table as canonical Go svc, majors=38 candles) + calls SAME computeTAIndicators svc => majors 38>=35 PASS guard => RSI identical to canonical by construction (NOT suppressed); only <35-candle thin tickers fail-closed skip (correct). PENDING the BEHAVIORAL half only: rebuild landed 08:02:40Z, ~2min AFTER VN market close 08:00Z, so every TA-Alert/briefing now in the MARKET queue (msg 744 briefing 01:00Z VHM 9.8/VIC 7.4/DAG 100.0; msg 745/746/752 TA-Alerts 02:15-06:15Z) is PRE-rebuild — no post-rebuild scan has run. Next provable cycle = 2026-06-16 session: morning-briefing 01:00Z + first TA scan 02:15Z must show majors at real mid-band RSI (no single-digit, no 100.0), matching canonical within 0.1pt, GENERIC all tickers.",
         "pending_behavioral_gate": "2026-06-16 session: morning-briefing 01:00Z + first TA scan 02:15Z show majors real mid-band RSI (no single-digit/no 100.0), match canonical within 0.1pt, generic all tickers — verifiable on the hourly dev-team :07 tick after the queue refills",
         "push_disposition": "HOLD — 3 unpushed commits (c9892200 fix / 90787cc8 notebook / 66235a64 board); push is PO's call AFTER the behavioral gate closes next session (runtime already carries the fix via the landed rebuild, so origin-sync is non-urgent)"
+      },
+      {
+        "depends": [],
+        "id": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD",
+        "owner": "dev-stock-price",
+        "priority": "P1",
+        "scope": "Diagnose HNX scraper + add UPCOM fallback. Distinct from ALLZERO-OHLCV-FETCH (zero-write guard for HOSE tickers). PLAN-ONLY at PO layer.",
+        "source": "health-recheck B4 (team-tool-recheck-2026-06-13-2207.md)",
+        "status": "REVIEW",
+        "title": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD — '[hnx] all HNX price sources failed' + '[hnx] all UPCOM price sources failed' recurring; 5 watchlist tickers (BDI, DLC, JSH, SIS, VDC) have 0 OHLCV rows / N/A prices. Circuit-breaker shows [OK] (threshold not tripping at fetch layer).",
+        "type": "FIX",
+        "user_impact": "MEDIUM — 5 watchlist tickers have no price coverage.",
+        "zone_owner": "apps/stock-price/",
+        "route_to": "dev-stock-price",
+        "mode": "recon-first",
+        "zone": "apps/stock-price/",
+        "dispatched_ts": "2026-06-15T10:43:38Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "router RAW-corroborated 10:41Z: get_market_snapshot(codes=[DLC,SHS,VND]) => DLC no price row while SHS/VND live. dead small-cap HNX/UPCOM source class. recon-first: read live tier-fallback + source before patch; generic across all dead tickers (/goal#2), no per-ticker allowlist.",
+        "rebuild_required": true,
+        "rebuild_scope": "stock-price ONLY — fetchers.go is runtime code in apps/stock-price/. Force-recreate only, NEVER down (named-vol market.db). Verify peers + DB rows.",
+        "review_ts": "2026-06-15T12:57:00Z",
+        "review_by": "dev-stock-price",
+        "review_summary": "Root cause: Tier1/2 fetchers used /v4/stocks (company info, NO price data) instead of /v4/stock_prices. Fixed endpoint + response parsing. Tier3 column mismatch (fetched_at->updated_at) also fixed. Dead tickers (BDI/DLC/JSH/SIS/VDC) are NOT recoverable: DLC delisted 2016, BDI is Bloomberg index (not VN stock), JSH/SIS/VDC unknown in VnDirect. GENERIC fix: no hardcode, derives source from floor field. Commit: af481e12.",
+        "commit_sha": "af481e12",
+        "review_entered_ts": "2026-06-15T11:00:54Z",
+        "fix_commit": "af481e12",
+        "board_commit_by_dev": "d5131030 (flipped status field only — router relocated object)",
+        "root_cause": "stock-price 3-tier price fallback broken: Tier1/2 hit VnDirect /v4/stocks (company INFO, no OHLCV) instead of /v4/stock_prices; Tier3 queried non-existent column fetched_at instead of updated_at. Endpoint+schema bug affected ALL tickers via the 3-tier path; active tickers were masked by other data paths. The 5 named 'dead' tickers (BDI/DLC/JSH/SIS/VDC) were a FALSE premise — delisted/index/unknown, none in watchlist.",
+        "tests_green": "router-run go test ./... (apps/stock-price) — infrastructure 0.671s OK, all suites green (infra recompiled, not cached-only)",
+        "commit_hygiene_verified": "router git show --stat af481e12 = 3 files (fetchers.go +122, fetchers_test.go +30, infrastructure.md doc), zone-only, no -A sweep/foreign/secret",
+        "generic_verified": "/goal#2 PASS — source derived from .floor (HOSE/HNX/UPCOM) not hardcoded; price *1000 thousands->VND; no per-ticker allowlist/date-literal",
+        "dead_ticker_reclassification": "router-corroborated: BDI=Bloomberg Baltic Dry INDEX, DLC delisted 2016-11-11, JSH/SIS/VDC unknown to VnDirect; NONE in 30-ticker watchlist => rows=0 is correct behavior not a defect",
+        "pending_live_gate": "AFTER rebuild: probe stock-price SERVICE price path (not get_market_snapshot) for watchlist HNX/UPCOM ticker (SHB/HUT) => plausible non-zero VND + correct source(floor); dead ticker (BDI) => honest empty (no fabricated zero/crash). Plausibility per /goal#1. Then review->done_verified.",
+        "push_disposition": "HOLD — bundles with held RSI/MA5/restart commits; PO pushes the fast-forward after the FIX-ALERT-ENGINE-RSI-SINGLEDIGIT behavioral gate closes 2026-06-16"
       }
     ],
     "qa": [],
