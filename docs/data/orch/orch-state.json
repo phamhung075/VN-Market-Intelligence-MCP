@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T00:00:00Z",
-  "_updated_by": "po-s69",
+  "_updated_at": "2026-06-15T23:44:05Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -126,12 +126,12 @@
     }
   ],
   "head": {
-    "status": "active",
-    "updated_at": "2026-06-16T00:00:00Z",
-    "updated_by": "po-s69",
+    "status": "in_progress",
+    "updated_at": "2026-06-15T23:44:05Z",
+    "updated_by": "dev-team",
     "active_task_id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
     "next_agent": "dev-mcp-server",
-    "note": "Chosen for the one free coding slot (coding WIP 1/2 — RASTERIZE in-flight on dev-pdf-extractor, do NOT touch/route). FIX-ERRAUDIT-W2-MCP-DATALAYER promoted backlog->ready: inner mcp-server data-layer helpers (safeQuery<T>+runSection/withSection+failLoud) kill confidence_score=50/fabricated-default class at source (/goal#1 no-fake + #2). Continues the user's ACTIVE error-audit. dev-mcp-server FREE (cron-scheduler is a QA market-day OBSERVE gate, no dev WIP). No blocking dep. Router dispatches via lock-claim+spawn; po-s69 did NOT spawn dev. PUSH HELD (PO deferred). Commit orch-state by EXPLICIT PATH."
+    "note": "Dispatched dev-mcp-server 2026-06-15T23:44:05Z (worktree, backgrounded) by router. FIX-ERRAUDIT-W2-MCP-DATALAYER: safeQuery<T>+runSection/withSection+failLoud kill confidence_score=50/fabricated-default class at source; migrate imfConvictionBridge/scanMarket/imfDataFetcher/assembleBriefing/marketContextBuilder/vnstockBridge. Dev-dispatch lock held (task_claim sprint-task owner dev-team ttl 3600). FAIL-LOUD DoD, generic, no-push. Promote->review(qa) on green check + worktree commit; router merge-gates."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17846,6 +17846,47 @@
         "review_at": "2026-06-16T01:40:00Z",
         "review_by": "dev-pdf-extractor",
         "review_note": "ocr_worker.py subprocess fix shipped (734ab5d5). VCB 2026Q1=55 rows PARTIAL, CTG 2026Q1=55 rows PARTIAL. FPT 2026Q1=145 DONE, VCB 2025Q4=112 PARTIAL (non-regressed). Publishability PUB-1..5 PASS for VCB+CTG."
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 2,
+        "priority": "P1",
+        "size": "L",
+        "status": "IN_PROGRESS",
+        "zone": "apps/mcp-server/",
+        "route_to": "dev-mcp-server",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "dev-mcp-server",
+        "title": "Wave-2 helpers: safeQuery<T> + runSection/withSection + failLoud — kill the confidence_score=50 / fabricated-default class at source",
+        "desc": "Land safeQuery<T>(db,sql,params,ctx) [{ok,rows}|{ok:false,reason:'db-error'|'no-rows'}], runSection/withSection (composite-brief section runner: fail-loud on error, no-data ONLY on genuine empty), and failLoud(logger,err,ctx) (structured-degrade logger replacing bare catch{return []|null|0}). Migrate: imfConvictionBridge:91 (+line-71 no-rows conflation), scanMarket getAvgVolumeSync:120 (catch->0 collides with legit insufficient-history 0), imfDataFetcher:136 (parseImfApiResponse catch->null no log -> stale-served-as-fresh), assembleBriefing 7 best-effort catches (957/964/983/1026/1036/1057/1067 -> macroSnapshot=[] served as 'no macro'), marketContextBuilder buildMacroSection 216/240/256, scanMarket getThresholds:175. A DB error can no longer collapse to the same number as a real reading — callers DROP the dimension instead of feeding a fake 0/1.0/neutral. ALSO: mcp-infra-06 vnstockBridge.ts:477 pe/pb/roe/roa=0.0 fallback -> Python None-on-miss for the vnstock ratio columns (a bank roe:0 is implausible-but-non-empty).",
+        "replaces_sites": [
+          "imfConvictionBridge:91",
+          "scanMarket getAvgVolumeSync:120",
+          "imfDataFetcher:136",
+          "assembleBriefing:957/964/983/1026/1036/1057/1067",
+          "marketContextBuilder:216/240/256",
+          "scanMarket getThresholds:175",
+          "vnstockBridge:477"
+        ],
+        "recurrence_class": "confidence_score=50 destructuring + silent-swallow-serial-bugs + contract-from-live-payload",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: force a SQL throw on each migrated read -> safeQuery returns {ok:false,reason:'db-error'} (logged) and the caller DROPS the dimension/section (NOT a fabricated 0/1.0/neutral/[]); a genuine 0-row query returns reason:'no-rows' and the legit empty path is preserved. LIVE-verified vs named-volume DB.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-app-01/02/03/06, mcp-infra-06)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "groomed_at": "2026-06-16T00:00:00Z",
+        "groomed_by": "po-s69",
+        "promoted_from": "backlog",
+        "promoted_at": "2026-06-16T00:00:00Z",
+        "promoted_by": "po-s69",
+        "promotion_note": "Free coding slot (WIP coding 1/2 — only RASTERIZE running). Inner data layer first: kills confidence_score=50/fabricated-default class at source (/goal#1+#2). dev-mcp-server FREE (cron-scheduler lane is a QA-observe gate, no dev WIP). Dep none. Reuse/extend shared easy-handle helper: safeQuery<T>+runSection/withSection+failLoud — FAIL-LOUD typed degrade, NO fabricated/default served metric, generic across ALL sites (not per-site). Router dispatches via lock-claim+spawn; po did NOT spawn.",
+        "owner": "dev-mcp-server",
+        "claimed_at": "2026-06-15T23:44:05Z",
+        "claimed_by": "router",
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-15T23:44:05Z (worktree, backgrounded) by router. FIX-ERRAUDIT-W2-MCP-DATALAYER: safeQuery<T>+runSection/withSection+failLoud kill confidence_score=50/fabricated-default class at source; migrate imfConvictionBridge/scanMarket/imfDataFetcher/assembleBriefing/marketContextBuilder/vnstockBridge. Dev-dispatch lock held (task_claim sprint-task owner dev-team ttl 3600). FAIL-LOUD DoD, generic, no-push. Promote->review(qa) on green check + worktree commit; router merge-gates."
       }
     ],
     "ready": [
@@ -17987,43 +18028,6 @@
         "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 SPIKE — architect (agents-architect consulted). recurring-bug-escalation umbrella over the 5 child FIX tasks. Design the cross-cutting alerting/fail-loud/brittleness-monitoring contract — do NOT just re-patch leaves. Timebox 120m, output: architecture brief."
-      },
-      {
-        "id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 2,
-        "priority": "P1",
-        "size": "L",
-        "status": "READY",
-        "zone": "apps/mcp-server/",
-        "route_to": "dev-mcp-server",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "dev-mcp-server",
-        "title": "Wave-2 helpers: safeQuery<T> + runSection/withSection + failLoud — kill the confidence_score=50 / fabricated-default class at source",
-        "desc": "Land safeQuery<T>(db,sql,params,ctx) [{ok,rows}|{ok:false,reason:'db-error'|'no-rows'}], runSection/withSection (composite-brief section runner: fail-loud on error, no-data ONLY on genuine empty), and failLoud(logger,err,ctx) (structured-degrade logger replacing bare catch{return []|null|0}). Migrate: imfConvictionBridge:91 (+line-71 no-rows conflation), scanMarket getAvgVolumeSync:120 (catch->0 collides with legit insufficient-history 0), imfDataFetcher:136 (parseImfApiResponse catch->null no log -> stale-served-as-fresh), assembleBriefing 7 best-effort catches (957/964/983/1026/1036/1057/1067 -> macroSnapshot=[] served as 'no macro'), marketContextBuilder buildMacroSection 216/240/256, scanMarket getThresholds:175. A DB error can no longer collapse to the same number as a real reading — callers DROP the dimension instead of feeding a fake 0/1.0/neutral. ALSO: mcp-infra-06 vnstockBridge.ts:477 pe/pb/roe/roa=0.0 fallback -> Python None-on-miss for the vnstock ratio columns (a bank roe:0 is implausible-but-non-empty).",
-        "replaces_sites": [
-          "imfConvictionBridge:91",
-          "scanMarket getAvgVolumeSync:120",
-          "imfDataFetcher:136",
-          "assembleBriefing:957/964/983/1026/1036/1057/1067",
-          "marketContextBuilder:216/240/256",
-          "scanMarket getThresholds:175",
-          "vnstockBridge:477"
-        ],
-        "recurrence_class": "confidence_score=50 destructuring + silent-swallow-serial-bugs + contract-from-live-payload",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: force a SQL throw on each migrated read -> safeQuery returns {ok:false,reason:'db-error'} (logged) and the caller DROPS the dimension/section (NOT a fabricated 0/1.0/neutral/[]); a genuine 0-row query returns reason:'no-rows' and the legit empty path is preserved. LIVE-verified vs named-volume DB.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-app-01/02/03/06, mcp-infra-06)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65",
-        "groomed_at": "2026-06-16T00:00:00Z",
-        "groomed_by": "po-s69",
-        "promoted_from": "backlog",
-        "promoted_at": "2026-06-16T00:00:00Z",
-        "promoted_by": "po-s69",
-        "promotion_note": "Free coding slot (WIP coding 1/2 — only RASTERIZE running). Inner data layer first: kills confidence_score=50/fabricated-default class at source (/goal#1+#2). dev-mcp-server FREE (cron-scheduler lane is a QA-observe gate, no dev WIP). Dep none. Reuse/extend shared easy-handle helper: safeQuery<T>+runSection/withSection+failLoud — FAIL-LOUD typed degrade, NO fabricated/default served metric, generic across ALL sites (not per-site). Router dispatches via lock-claim+spawn; po did NOT spawn."
       }
     ],
     "review": [
