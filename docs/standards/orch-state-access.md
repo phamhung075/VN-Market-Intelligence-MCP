@@ -29,6 +29,14 @@ Exception: `CURRENT=$(cat docs/data/orch/orch-state.json)` inside a **bash-only 
 
 ---
 
+## §4 — Head SSOT (single canonical field — mandatory)
+
+**The dispatch head has ONE canonical field: TOP-LEVEL `.head`.** Every consumer reads it — `docs/agents/dev-team/flow/main.md` Step 0b (`HEAD=$(jq -c '.head' ...)`), this doc §2 (`.head` routing fields), and `scripts/router-d1-claim.jq`.
+
+- **READ** `.head` (top-level) for `active_task_id` / `next_agent` / `status`. Never read `.task_board.head`.
+- **WRITE** `.head` (top-level) ONLY. Any po-s* / router script that dispatches a task sets `.head.{status,active_task_id,next_agent,updated_at,updated_by,note}`.
+- **`.task_board.head` is DEPRECATED** — a non-routing stub (`status:"deprecated"`, `canonical_moved_to:".head"`). Writing it is a BUG: it drifts from top-level `.head` because the flow reads top-level. A script that writes `.task_board.head` leaves the real head stale and any flow-resume mis-tracks (root of signal `head-drift-po-s64-vs-task-board-head`, 2026-06-15; collapsed by `scripts/po-s66-head-ssot-collapse-reconcile.jq`).
+
 ## §3 — Cross-References
 
 - Write protocol (atomic temp-file-then-rename): `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3`

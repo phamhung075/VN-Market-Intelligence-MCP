@@ -227,11 +227,14 @@ def rows_wave3($now):
 | .task_board.backlog     += $mint_backlog
 | .task_board._updated_at  = $now
 | .task_board._updated_by  = "po-s65"
-| .task_board.head.active_task_id = (if ($mint_ip|length) > 0 then "FIX-ERRAUDIT-W1-MCP-P0" else .task_board.head.active_task_id end)
-| .task_board.head.next_agent = (if ($mint_ip|length) > 0 then "dev-team" else .task_board.head.next_agent end)
-| .task_board.head.updated_at = $now
-| .task_board.head.updated_by = "po-s65"
-| .task_board.head.note = (if $n_minted > 0 then
+# CANONICAL HEAD = TOP-LEVEL .head (NEVER .task_board.head — deprecated, see
+# orch-state-access.md §4). dev-team flow Step 0b + router-d1-claim read .head.
+| .head.status = "active"
+| .head.active_task_id = (if ($mint_ip|length) > 0 then "FIX-ERRAUDIT-W1-MCP-P0" else .head.active_task_id end)
+| .head.next_agent = (if ($mint_ip|length) > 0 then "dev-team" else .head.next_agent end)
+| .head.updated_at = $now
+| .head.updated_by = "po-s65"
+| .head.note = (if $n_minted > 0 then
     ("ERROR-HANDLING AUDIT 3-WAVE MINT (po-s65, brief 2026-06-15-error-handling-audit.md). "
      + "MINTED \($n_minted) under epic ERROR-AUDIT-2026-06-15 (all id-guarded, dedup-clean). "
      + "DISPATCHED \($mint_ip|length): FIX-ERRAUDIT-W1-MCP-P0 (P0 pair, dev-mcp-server, the 1 free coding lane; pure error->marker, no fetch surface) -> in_progress. "
@@ -239,4 +242,4 @@ def rows_wave3($now):
      + "BACKLOG \($mint_backlog|length): Wave-2 (withDeadline+macroFetch | safeQuery+runSection+failLoud | frontend safeFetch) + Wave-3 (mcp P2 | pek P2) — NOT promoted, ba->architect chain grooms later. "
      + "WIP<=2 RESPECTED: pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE active + ARCH-CRON-SCHEDULER-RELIABILITY (architect-design, not coding WIP); 1 free coding lane consumed by W1-MCP-P0. "
      + "UNTOUCHED: both pre-existing in_progress rows (dev-pdf-extractor race-safe). PUSH HELD (origin 72-ahead cloud-chore divergence; PO deferred call).")
-   else .task_board.head.note end)
+   else .head.note end)

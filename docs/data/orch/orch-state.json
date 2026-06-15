@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T17:19:55Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-15T22:20:27Z",
+  "_updated_by": "po-s66",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T20:17:53Z",
-    "updated_by": "po-s64",
-    "active_task_id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
-    "next_agent": "dev-team",
-    "note": "PO TRIAGE 2026-06-15T20:17:53Z (dev-team :07 tick). HEAD RECONCILED: prior head stale-pointed at FIX-BCTC-ENRICH-SILENT-0ROWS (REVIEW/done_verified=PENDING in review[]) -- never advanced after that task's done_verified HOLD (check-a FAIL: scanned bank PDFs = 0 text-chars, text-table parser never fires). HEAD now -> FIX-BCTC-BANK-PDF-OCR-RASTERIZE (P0, dev-pdf-extractor) -- the TRUE remaining root of get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' (add OCR-rasterize leg via PaddleOCR before text-table parse; GENERIC low-text-density routing, no allowlist). DISPATCHED ready->in_progress this tick = 1 dev coding lane. ARCH-CRON-SCHEDULER-RELIABILITY (in_progress) is architect-design + QA-LIVE-OUTCOME-OBSERVE gate -- consumes NO dev coding WIP. WIP<=2 honored. ITEM 2 scoped: minted sprint_goal[FE-PAGE-REORG] + BA-FE-PAGE-REORG (TODO, ba) for the frontend page-resemblance consolidation -- PLANNING deliverable (ba->architect->pm), zero dev coding WIP; dev-frontend IMPL lane enters only after spec lands (2nd lane within WIP<=2, low-risk internal refactor). PUSH HELD (PO deferred call; origin diverged via benign cloud-chore). Commit orch-state by EXPLICIT PATH. Script: scripts/po-s64-head-reconcile-bctc-ocr-dispatch-fe-reorg-scope.jq."
+    "updated_at": "2026-06-15T22:20:27Z",
+    "updated_by": "po-s66",
+    "active_task_id": "FIX-ERRAUDIT-W1-MCP-P0",
+    "next_agent": "ba",
+    "note": "HEAD SSOT COLLAPSE + RECONCILE (po-s66, signal head-drift-po-s64-vs-task-board-head). Top-level .head is now the SINGLE canonical dispatch SSOT (all consumers — dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim — read it). RECONCILED to the most-recent real dispatch: FIX-ERRAUDIT-W1-MCP-P0 (next_agent=ba, dispatched 2026-06-15T21:23:56Z by po-s65, which had wrongly written .task_board.head and left top-level .head stale at FIX-BCTC-BANK-PDF-OCR-RASTERIZE/po-s64 20:17:53Z). FIX-BCTC-BANK-PDF-OCR-RASTERIZE stays in_progress (dev-pdf-extractor) tracked via its own in_progress row + router lock — independent of this pointer; not blocked. ARCH-CRON-SCHEDULER-RELIABILITY architect-design lane untouched. WIP<=2 honored (no dispatch change, pointer-only reconcile). DURABLE FIX: .task_board.head DEPRECATED -> non-routing stub; 3 writer scripts (po-s65, po-s54-macro-accuracy-pair-promote, po-s54-vn-macro-ba-dispatch) retargeted to top-level .head; canonical rule documented in orch-state-access.md §4. PUSH HELD (PO deferred call). Commit orch-state by EXPLICIT PATH."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -187,8 +187,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-15T16:36:18Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-15T21:35:34Z",
+    "_updated_by": "dev-team",
     "archive": [
       {
         "from": "system-auditor",
@@ -525,6 +525,21 @@
         "resolved_at": "",
         "resolved_by": "po",
         "resolution": ""
+      },
+      {
+        "id": "dev-team-20260615T2128Z-head-drift-po-s64-vs-task-board-head",
+        "from": "dev-team",
+        "to": "po",
+        "type": "head-write inconsistency — top-level .head (po-s64) vs .task_board.head (po-s65) diverge; dev-team flow Step 0b reads top-level .head",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "summary": "RECURRING ROOT (not a one-off): po-s64 (head-reconcile script) wrote TOP-LEVEL .head; po-s65 (po-s65-error-audit-3wave-mint-dispatch.jq) wrote .task_board.head INSTEAD, leaving top-level .head stale. Evidence: .head.active_task_id=FIX-BCTC-BANK-PDF-OCR-RASTERIZE updated_by=po-s64 20:17:53Z, while .task_board.head.active_task_id=FIX-ERRAUDIT-W1-MCP-P0 updated_by=po-s65 21:23:56Z. The dev-team flow (docs/agents/dev-team/flow/main.md Step 0b) + orch-state-access.md §2 both read TOP-LEVEL .head as the dispatch SSOT — so po-s65's dispatch was invisible to the flow's pipeline-resume. NO BREAKAGE THIS TICK: router dispatched ba for FIX-ERRAUDIT-W1-MCP-P0 directly off its in_progress row (next_agent=ba, dispatched 21:23:56Z) and is holding task:FIX-ERRAUDIT-W1-MCP-P0 lock; BCTC-OCR running agent left untouched (no re-dispatch). The chain advances via router completion-notifications independent of .head. SELF-CORRECTS next dev-team tick (stale .head status='active' is neither in_progress nor idle -> falls to Step 1 PO triage -> you reconcile). ASK: canonicalize the head SSOT — either (a) po-sNN scripts always write TOP-LEVEL .head (matches flow + po-s64), or (b) make .task_board.head canonical and update dev-team/main.md Step 0b + orch-state-access.md §2 + all consumers. Pick one; the dual-pointer drift will recur on every po-s65-style mint-dispatch script otherwise.",
+        "payload_ref": "TOP-LEVEL .head: jq -c '.head' -> active_task_id=FIX-BCTC-BANK-PDF-OCR-RASTERIZE updated_by=po-s64 20:17:53Z status=active. .task_board.head: active_task_id=FIX-ERRAUDIT-W1-MCP-P0 updated_by=po-s65 21:23:56Z. Flow read site: docs/agents/dev-team/flow/main.md Step 0b 'HEAD=$(jq -c .head ...)'. SSOT doc: docs/standards/orch-state-access.md §2 (.head routing fields). po-s65 script: scripts/po-s65-error-audit-3wave-mint-dispatch.jq.",
+        "disposition": "DURABLE — single-head SSOT collapsed",
+        "ts": "2026-06-15T21:35:34Z",
+        "resolved_at": "2026-06-15T22:20:27Z",
+        "resolved_by": "po-s66",
+        "resolution": "Canonical head SSOT = TOP-LEVEL .head (option a; matches dev-team flow Step 0b + orch-state-access.md §2 + router-d1-claim, the existing read sites). LIVE DIVERGENCE RECONCILED: top-level .head set to the most-recent real dispatch FIX-ERRAUDIT-W1-MCP-P0 (next_agent=ba, po-s65 intent at 21:23:56Z); the stale FIX-BCTC-BANK-PDF-OCR-RASTERIZE pointer (po-s64) is superseded (that task stays in_progress, tracked by its own row+lock). DURABLE FIX (recurring-root, not one-off): (1) .task_board.head collapsed to a non-routing DEPRECATED stub redirecting to .head; (2) the 3 scripts that wrote .task_board.head retargeted to top-level .head (po-s65-error-audit-3wave-mint-dispatch.jq, po-s54-macro-accuracy-pair-promote.jq, po-s54-vn-macro-ba-dispatch.jq — the last already mirrored, now single-write); (3) canonical-head rule + 'never write .task_board.head' guard documented in docs/standards/orch-state-access.md §4. No architect schema decision needed — the read SSOT already existed; this aligns the writers to it. Reconcile script: scripts/po-s66-head-ssot-collapse-reconcile.jq."
       }
     ]
   },
@@ -17305,12 +17320,13 @@
       }
     ],
     "head": {
-      "status": "active",
-      "active_task_id": "FIX-ERRAUDIT-W1-MCP-P0",
-      "next_agent": "dev-team",
-      "updated_at": "2026-06-15T21:23:56Z",
-      "updated_by": "po-s65",
-      "note": "ERROR-HANDLING AUDIT 3-WAVE MINT (po-s65, brief 2026-06-15-error-handling-audit.md). MINTED 7 under epic ERROR-AUDIT-2026-06-15 (all id-guarded, dedup-clean). DISPATCHED 1: FIX-ERRAUDIT-W1-MCP-P0 (P0 pair, dev-mcp-server, the 1 free coding lane; pure error->marker, no fetch surface) -> in_progress. QUEUED 1: FIX-ERRAUDIT-W1-PEK-P0 (P0 pair, dev-pdf-extractor) -> ready BLOCKED_BY FIX-BCTC-BANK-PDF-OCR-RASTERIZE (SAME-ZONE-SERIALIZED; verified DISTINCT from active OCR-rasterize fix which touched ocr_adapter.py only). BACKLOG 5: Wave-2 (withDeadline+macroFetch | safeQuery+runSection+failLoud | frontend safeFetch) + Wave-3 (mcp P2 | pek P2) — NOT promoted, ba->architect chain grooms later. WIP<=2 RESPECTED: pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE active + ARCH-CRON-SCHEDULER-RELIABILITY (architect-design, not coding WIP); 1 free coding lane consumed by W1-MCP-P0. UNTOUCHED: both pre-existing in_progress rows (dev-pdf-extractor race-safe). PUSH HELD (origin 72-ahead cloud-chore divergence; PO deferred call)."
+      "status": "deprecated",
+      "canonical_moved_to": ".head",
+      "deprecated_at": "2026-06-15T22:20:27Z",
+      "deprecated_by": "po-s66",
+      "active_task_id": null,
+      "next_agent": null,
+      "note": "DEPRECATED — do NOT read or write this field. The canonical head SSOT is TOP-LEVEL .head (read by dev-team flow Step 0b, orch-state-access.md §2, router-d1-claim). This field formerly drifted from top-level .head because po-s65/po-s54 scripts wrote here while the flow read top-level .head (signal head-drift-po-s64-vs-task-board-head). Any new script writing .task_board.head is a BUG — write .head instead. Kept as a stub (not removed) so a legacy reader sees the redirect rather than a phantom active_task_id."
     },
     "in_progress": [
       {
@@ -17781,6 +17797,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-15T20:17:53Z",
-  "updated_by": "po-s64"
+  "updated_at": "2026-06-15T22:20:27Z",
+  "updated_by": "po-s66"
 }

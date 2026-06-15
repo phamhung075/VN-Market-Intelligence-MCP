@@ -38,16 +38,8 @@ def id_present($id):
     end )
 
 # --- edit 3: head dispatch ---
-| .task_board.head = {
-    "status": "active",
-    "active_task_id": "BA-VN-MACRO-TOOLING",
-    "next_agent": "ba",
-    "updated_at": $now,
-    "updated_by": "po",
-    "note": "POST-SPRINT TRIAGE (KINHDICH-HOVER-ENRICH-FE done_verified ff2ed4b4): dispatch BA-VN-MACRO-TOOLING -> decompose VN-MACRO-TOOLING 07-06 macro-tooling sprint (5 new VN macro MCP tools + credit-flow EXTEND) to docs/REQ_VN-MACRO-TOOLING.md, then PO spec review. WIP=2 (ARCH-CRON-SCHEDULER-RELIABILITY held passive for Mon 2026-06-15 market-day G1/G2/G3 re-verify). All 11 recurring health-stream P0s already on backlog (dedup, no double-create). 1 new fb-poster no-arg-tool fix appended to backlog."
-  }
-
-# --- mirror top-level head so dev-team Step-0 sees the dispatch ---
+# CANONICAL HEAD = TOP-LEVEL .head ONLY (NEVER .task_board.head — deprecated, see
+# orch-state-access.md §4). dev-team flow Step 0b reads top-level .head.
 | .head = {
     "status": "active",
     "updated_at": $now,

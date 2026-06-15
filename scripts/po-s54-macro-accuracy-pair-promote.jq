@@ -63,7 +63,8 @@ def promote_nso:
 promote_bop
 | promote_nso
 # --- head: route the accuracy-pair batch to dev-team; leave BA-VN-MACRO-TOOLING/pm lane untouched ---
-| .task_board.head = {
+# CANONICAL HEAD = TOP-LEVEL .head (NEVER .task_board.head — deprecated, see orch-state-access.md §4).
+| .head = {
     status: "active",
     active_task_id: "F-BOP-ENCODING",
     next_agent: "dev-team",
