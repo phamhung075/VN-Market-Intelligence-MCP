@@ -1,0 +1,41 @@
+%% VN Market Intelligence MCP — Request & Intelligence Data Flow
+%% Two entry paths: (1) live data ingest -> signal synthesis -> Telegram;
+%% (2) agent/user query -> gateway -> mcp-server -> downstream -> response.
+sequenceDiagram
+    autonumber
+    participant VPS as Vinahost VPS (VN)
+    participant EXT as External sources
+    participant MCP as mcp-server :3000
+    participant SVC as Go/Python services
+    participant DB as market.db / LanceDB
+    participant ALERT as alert-engine :5006
+    participant TG as Telegram (MARKET)
+    participant GW as claude.ai gateway
+    participant AGENT as Cowork / Dev agent
+    participant FE as Remix frontend
+
+    Note over VPS,TG: PATH 1 — Autonomous 15-min intelligence cycle (intelligenceCycleJob)
+    VPS->>EXT: fetch geo-blocked VN news/prices/BCTC/SBV
+    VPS->>MCP: POST /api/push-news | push-prices | push-bctc-pdf (VPS_PUSH_API_KEY)
+    MCP->>SVC: compute TA / macro / kinh-dich / RAG context (HTTP)
+    SVC->>DB: read OHLCV / write vectors
+    MCP->>MCP: normalizeNews -> cascadeEngine -> TNB critic gate -> postSignal (agent_signals)
+    MCP->>MCP: Step G chainSynthesizer (2+ agents corroborate, cycle_id window)
+    MCP->>ALERT: RSI scan POST /evaluate (dedup/cooldown/cap)
+    ALERT->>TG: route HIGH/CRITICAL to MARKET channel (Vietnamese)
+    MCP->>TG: verified_chain / digest -> send_telegram(channel=market)
+
+    Note over GW,FE: PATH 2 — Agent / user query
+    AGENT->>GW: call_tool(server=vn-market, tool=get_market_snapshot, ...)
+    GW->>MCP: MCP over HTTP/SSE (fresh connection per call)
+    MCP->>SVC: fan-out (price/TA/macro/kinh-dich/RAG)
+    SVC->>DB: read
+    SVC-->>MCP: typed DTO (with is_estimate / source_tier provenance)
+    MCP-->>GW: tool result
+    GW-->>AGENT: response
+    AGENT->>MCP: post_agent_signal / task_claim (writes bus + locks)
+
+    Note over FE,MCP: PATH 3 — Human dashboard read
+    FE->>SVC: api-gateway :4000 -> /stock/price, /macro, /ta, /kinh-dich
+    FE->>MCP: api.*.tsx proxy -> /mcp/api/signals, /api/market-digest, BCTC eval
+    MCP-->>FE: read-only JSON (computeDecision BUY/HOLD/SELL on client)

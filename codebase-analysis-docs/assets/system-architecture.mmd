@@ -1,0 +1,103 @@
+%% VN Market Intelligence MCP — System Architecture
+%% All services from docker-compose.yml + claude.ai gateway + Vinahost VPS + Telegram.
+%% Ports are container ports; host-mapped ports in parentheses where they differ.
+graph TB
+    subgraph clients["Clients / Control Plane"]
+        USER["User (investor in France)<br/>Telegram + Claude Desktop"]
+        COWORK["Cowork Team agents<br/>(Claude Cowork cloud, cron)<br/>CHEF / news-scout / market-watcher /<br/>alert-commander / digest-predict / ..."]
+        DEVTEAM["Dev Team agents<br/>(Claude Code CLI, hourly cron)<br/>PO -> BA -> Architect -> PM -> Dev -> QA -> Fixer"]
+    end
+
+    GATEWAY["claude.ai MCP gateway<br/>call_tool wrapper<br/>(vn-market NOT in .mcp.json)"]
+
+    subgraph edge["Public Edge (zenmidi.com)"]
+        CF["Cloudflare tunnel<br/>/vn-market/* + /webhook"]
+        NGINX["nginx + self-signed TLS<br/>(not a compose service)"]
+    end
+
+    subgraph docker["Docker Fleet (11 services, 8GB cap, France host)"]
+        MCP["mcp-server :3000<br/>TS/Bun — MCP core + ~164 tools<br/>scheduler, signal bus, VPS ingest"]
+        APIGW["api-gateway :4000<br/>Go — reverse proxy + health"]
+        FE["frontend :3001<br/>Remix — read-only dashboard"]
+        STOCK["stock-price :5000 (5010)<br/>Go CGO — 3-tier price waterfall"]
+        TA["technical-analysis :5003<br/>Go — RSI/MACD/BB/MA"]
+        MACRO["macro-indicators :5004<br/>Go — macro regime + VN series"]
+        KD["kinh-dich-service :5005<br/>Go — 64-hexagram readings"]
+        ALERT["alert-engine :5006<br/>Go CGO — dedup/cooldown/route"]
+        PDF["pdf-extractor :5001<br/>Python — BCTC OCR/layout"]
+        RAG["rag-service :5002<br/>Python — embeddings + LanceDB"]
+        NEWS["news-fetch :5008<br/>TS/Bun — Reuters/Bloomberg scrape"]
+        FLARE["flaresolverr :8191<br/>Cloudflare JS-challenge solver"]
+    end
+
+    subgraph storage["Shared Data Plane (named volume market_data -> /app/data)"]
+        MARKETDB[("market.db<br/>SQLite WAL — OHLCV, signals,<br/>watchlist, alerts, BCTC, macro")]
+        COORDDB[("coordination.db<br/>task_locks cross-session")]
+        LANCE[("LanceDB rag_entries<br/>384-dim vectors")]
+        OTHERDB[("alert_engine.db / stock_price.db /<br/>pdf_extractor.db / rag_service.db")]
+        ORCH[("docs/data/orch/orch-state.json<br/>kanban + signal_queue + .head")]
+    end
+
+    VPS["Vinahost VPS (Vietnam) 125.212.251.27<br/>:8765 app proxy (X-API-Key)<br/>:3128 tinyproxy CONNECT<br/>9 systemd fetchers"]
+    TG["Telegram Bot API<br/>MARKET / WORK / BUG channels"]
+    EXT["External sources<br/>VnDirect, Yahoo, FRED, SSC,<br/>HOSE/HNX, RSS, Polymarket, SBV"]
+
+    USER --> CF
+    USER -->|asks| GATEWAY
+    COWORK --> GATEWAY
+    DEVTEAM --> GATEWAY
+    GATEWAY --> MCP
+
+    CF --> NGINX
+    NGINX -->|/vn-market/*| MCP
+    NGINX -->|/gateway/*| APIGW
+    CF -->|/webhook| MCP
+
+    FE -->|all backend calls| APIGW
+    FE -->|BCTC eval direct| MCP
+    APIGW -->|reverse proxy + health| MCP
+    APIGW --> STOCK
+    APIGW --> TA
+    APIGW --> MACRO
+    APIGW --> KD
+    APIGW --> ALERT
+    APIGW --> PDF
+    APIGW --> RAG
+    APIGW --> NEWS
+
+    MCP -->|HTTP| STOCK
+    MCP -->|HTTP| TA
+    MCP -->|HTTP| MACRO
+    MCP -->|HTTP| KD
+    MCP -->|HTTP| ALERT
+    MCP -->|HTTP| PDF
+    MCP -->|HTTP| RAG
+    MCP -->|HTTP /fetch-article| NEWS
+    KD -->|price history via gateway| APIGW
+    MCP -->|RSI scan POST /evaluate| ALERT
+
+    MCP --> MARKETDB
+    MCP --> COORDDB
+    MCP --> ORCH
+    STOCK -->|RO read / write cache| MARKETDB
+    TA -->|RO read| MARKETDB
+    MACRO -->|RO read| MARKETDB
+    KD -->|RO read| MARKETDB
+    ALERT --> OTHERDB
+    PDF -->|RO read| MARKETDB
+    PDF --> OTHERDB
+    RAG --> LANCE
+    RAG --> OTHERDB
+    NEWS -->|RO read| MARKETDB
+
+    VPS -->|POST /api/push-*| MCP
+    MCP -->|pull queue :8765| VPS
+    MACRO -->|geo-block proxy :3128| VPS
+    VPS --> EXT
+    MCP -->|live commodity/FX/FRED| EXT
+    STOCK -->|VnDirect finfo| EXT
+
+    MCP -->|send_telegram| TG
+    ALERT -->|sendMessage| TG
+    TG -->|webhook replies| MCP
+    NEWS --> FLARE

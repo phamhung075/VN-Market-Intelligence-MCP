@@ -1,0 +1,72 @@
+%% VN Market Intelligence MCP — Feature Interaction Map
+%% How raw inputs combine through features into user-facing market intelligence.
+graph LR
+    subgraph inputs["Raw Inputs (real fetched data — no-fake-data goal)"]
+        NEWS_IN["VN + global news (RSS / Reuters / Bloomberg)"]
+        PRICE_IN["Prices / OHLCV (VnDirect, VPS push)"]
+        BCTC_IN["BCTC financial-statement PDFs (SSC, geo-blocked)"]
+        MACRO_IN["Macro: oil/gold/USDVND/SBV/NSO/FRED"]
+    end
+
+    subgraph ingest["Ingestion & Extraction"]
+        NORM["News normalize + sentiment + VN relevance"]
+        OCR["BCTC layout-first OCR + VAS identity gates"]
+        TAF["TA indicators (RSI/MACD/BB/MA)"]
+        MACROF["Macro snapshot + 6 regime signals"]
+        KDF["Kinh Dich hexagram reading"]
+        EMB["RAG embed (384-dim) + temporal-decay search"]
+    end
+
+    subgraph reason["Reasoning & Corroboration"]
+        CASCADE["Causal cascade / impact chain<br/>(event -> sector -> ticker)"]
+        BUS["Agent signal bus (agent_signals)<br/>+ TNB critic gate"]
+        CHAIN["Verified-chain synthesis<br/>(2+ agents, conviction >= 0.7)"]
+        CONV["Conviction scoring (7-dim cross-validate)"]
+        LEGAL["Legal-risk / crisis detection"]
+    end
+
+    subgraph deliver["Delivery"]
+        ALERTD["Alert dedup/cooldown/route (alert-engine)"]
+        DIGEST["CHEF Vietnamese digest (3x daily)"]
+        TGOUT["Telegram MARKET / WORK / BUG"]
+        DASH["Remix dashboard<br/>BUY/HOLD/SELL + accuracy badges"]
+        FB["Facebook post"]
+    end
+
+    NEWS_IN --> NORM
+    PRICE_IN --> TAF
+    BCTC_IN --> OCR
+    MACRO_IN --> MACROF
+    PRICE_IN --> KDF
+
+    NORM --> CASCADE
+    MACROF --> CASCADE
+    NORM --> EMB
+    OCR --> EMB
+    NORM --> LEGAL
+
+    CASCADE --> BUS
+    TAF --> BUS
+    KDF --> BUS
+    MACROF --> BUS
+    LEGAL --> BUS
+    OCR --> BUS
+    EMB --> BUS
+
+    BUS --> CHAIN
+    CHAIN --> CONV
+    CONV --> ALERTD
+    CHAIN --> ALERTD
+
+    ALERTD --> TGOUT
+    BUS --> DIGEST
+    MACROF --> DIGEST
+    EMB --> DIGEST
+    DIGEST --> TGOUT
+    DIGEST --> FB
+
+    BUS --> DASH
+    TAF --> DASH
+    KDF --> DASH
+    MACROF --> DASH
+    OCR --> DASH
