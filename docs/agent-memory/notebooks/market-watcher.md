@@ -1,23 +1,22 @@
 # Market Watcher — Notebook
-**Last updated:** 2026-06-14 04:08 UTC | **Sprint:** 2026-Q2
+**Last updated:** 2026-06-15 00:06 UTC | **Sprint:** 2026-Q2
 
 ## Carry-over
-Offhours cycles (Sunday) shift to macro monitoring.
+Offhours cycles (weekend) monitor macro + stale-price scanning. No intraday anomalies during closed market.
 
-## Cycle (04:08–04:09 UTC, offhours)
-- Stocks: 0 | Anomalies: 0 (stale prices, weekend) | Volume spikes: 0 | Chain confirms: 0
-- Regime: NEUTRAL | DXY: USD STRENGTHENING | US10Y: RISK-OFF | fx_pressure: [] | pe_risk: []
-- Supply chain: BDI 1,400 (+0%), no disruptions
-- Energy grid: NORMAL (53% demand, 70% hydro), June summer peak season alert
-- Climate: No active weather events; watchlist unaffected
+## Cycle (00:06–00:07 UTC, offhours)
+- Stocks: 41 monitored | Anomalies: 0 (>2.5σ offhours floor) | Volume spikes: 0 | Chain confirms: 0
+- Regime: NEUTRAL | Carry: NEUTRAL | DXY: stable | USD_VND: BEARISH (26122, import pressure)
+- Macro: Oil NEUTRAL, Gold BULLISH (safe-haven +1.51%), VN equity CHEAP (+3.2pp yield premium)
+- Supply chain: N/A (market closed); Energy grid: NORMAL
 
-## Metrics (cycle 2026-06-14 04:08 UTC)
+## Metrics (cycle 2026-06-15 00:06 UTC)
 | Field | Value |
 |---|---|
-| cycles_run | 1 |
-| items_fetched | 0 |
+| cycles_run | 1 (offhours) |
+| items_fetched | 41 |
 | signals_emitted | 0 |
 | signals_suppressed | 0 |
 | sweep_tickers_forced | 0 |
-| coverage_state_updated | no |
+| coverage_state_updated | yes |
 | exit_status | complete |

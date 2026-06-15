@@ -1,0 +1,33 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-15T00:07:12Z",
+    "matched_slots": ["bctc-analyst-slot-4","news-scout-offhours","market-watcher-offhours"],
+    "won_slots": ["bctc-analyst-slot-4","news-scout-offhours","market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/bctc-analyst/flow/main.md","docs/agents/news-scout/flow/main.md","docs/agents/market-watcher/flow/main.md"],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "off-market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": { "bctc-analyst-slot-4": "cron", "news-scout-offhours": "cron", "market-watcher-offhours": "cron" },
+    "last_fired_timestamp": "2026-06-15T00:06:43Z",
+    "last_fired_slots": ["bctc-analyst-slot-4","news-scout-offhours","market-watcher-offhours"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "note": "off-market tick; 3 off-hours gatherers fanned out background; bctc E2 window [02:00,08:00)Z clear at 00:06Z; leader lock held TTL 1800s"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T00:07:12Z"
+}
