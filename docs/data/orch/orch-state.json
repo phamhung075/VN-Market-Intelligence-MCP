@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T11:24:20Z",
+  "_updated_at": "2026-06-15T11:29:32Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T11:24:20Z",
+    "updated_at": "2026-06-15T11:29:32Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-VNSTOCK-TRADINGSTATS-CRASH",
+    "active_task_id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
     "next_agent": null,
-    "note": "ROUTER 2026-06-15T11:24:20Z — FIX-VNSTOCK-TRADINGSTATS-CRASH rebuild LANDED + RAW-verified live (image 11:17:43Z>commit, healthy RestartCount=0, 11 peers, boot probe 11:17:47 success). CAUGHT ops acce77e8 host-decoy read (reported trading_stats=0/Sunday/no-run — all wrong); authoritative named volume shows 3631 rows, today=Monday, vnstockTradingStatsRefresh 08:30:01 CRASHED PRE-fix. KEPT in review[] (NOT promoted): live sweep path unproven on deploy until next run 2026-06-16 08:30 UTC (Tue). One-shot behavioral probe armed 2026-06-16 09:12 UTC: require status=success + rows_written honest COUNT-delta => then review->done_verified. PARALLEL gate: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT review (01:00Z briefing / 02:15Z scan 2026-06-16). PUSH held (PO post-gates). Ready: FIX-FB-POSTER-NOARG-MARKET-TOOLS(P1), FIX-MARKET-HEXAGRAM-TOOL-MISSING(P2), FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2). Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). Active coding lane=0."
+    "note": "DEV-TEAM TICK 2026-06-15T11:29:32Z — dispatched TWO ready->in_progress (active coding lane was 0, WIP<=2): FIX-FB-POSTER-NOARG-MARKET-TOOLS(P1)->cowork-refactory-expert (cowork-lane, mutex-wrapped; poster calls get_foreign_flow({})/get_ticker_intelligence({}) no code= => schema fail), FIX-MARKET-HEXAGRAM-TOOL-MISSING(P2)->dev-mcp-server (get_market_hexagram not in tool list, Sunday digest-predict fails; recon-first registration-gap probe). Both recon-first, disjoint zones, background. HELD ready: FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2 dev-stock-price). review[] gates 2026-06-16: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (01:00Z/02:15Z), FIX-VNSTOCK-TRADINGSTATS-CRASH (08:30Z sweep) — one-shot probes armed. ARCH-SHIP-WAVE-REAUDIT PARKED. Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). PUSH held (PO post-gates)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T11:24:20Z",
+    "_updated_at": "2026-06-15T11:29:32Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14300,21 +14300,6 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      }
-    ],
-    "ready": [
-      {
-        "depends": [],
-        "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
-        "owner": "dev-kinh-dich",
-        "priority": "P2",
-        "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
-        "source": "health-recheck B10 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "READY",
-        "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
-        "type": "FIX",
-        "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
-        "zone_owner": "apps/kinh-dich-service/"
       },
       {
         "id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
@@ -14322,7 +14307,7 @@
         "title": "fb-market-poster calls get_foreign_flow({}) + get_ticker_intelligence({}) with no code= arg -> both fail schema (code:string required) -> silent notebook fallback every cycle. Generic fix: swap to no-arg market-aggregate tools (get_market_foreign_flow for flow; pick/confirm a no-arg market-movers tool for ticker-intel, or pass watchlist iteration) — NO per-ticker hardcode.",
         "priority": "P1",
         "size": "S",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "zone": "cross-service/",
         "source": "health-recheck BUG-NEW-01/02 (3170..3179); report 3180 'RESOLVED' is FALSE-POSITIVE (flow file still no-arg at HEAD).",
         "generic_mandate": "Fix the tool-selection in the fb-market-poster flow generically — no-arg market-level call, applies to all tickers, no instance hardcode.",
@@ -14333,8 +14318,35 @@
         "scope": "fb-market-poster calls get_foreign_flow({}) (flow/main.md:78) + get_ticker_intelligence({}) (flow/main.md:81) with no `code` arg -> live schema requires code:string -> silent crash to notebook fallback every cycle. FIX: switch both to the no-arg market-wide variant get_market_foreign_flow({}) (LIVE-verified no-arg, returns real watchlist foreign flow) for flow + agent-doc package; correct package/fb-market-poster.md '(none required)' rows. Agent-doc + flow edit, NOT mcp-server code.",
         "user_impact": "MEDIUM — daily FB post foreign-flow + movers section data-blind every cycle.",
         "route_to": "cowork-refactory-expert",
-        "note": "agent-doc+flow edit to a cowork agent -> routes via cowork-refactory-expert, not a dev-* zone"
+        "note": "agent-doc+flow edit to a cowork agent -> routes via cowork-refactory-expert, not a dev-* zone",
+        "lane": "cowork",
+        "mode": "recon-first",
+        "dispatched_ts": "2026-06-15T11:29:32Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "fb-market-poster calls get_foreign_flow({})+get_ticker_intelligence({}) with no code= => schema fail. cowork-refactory-expert reads live MCP tool surface + rewrites the poster .md to use the market-wide variant or pass watchlist codes. recon-first. COWORK-LANE => spawned under dev-team mutex-wrap (task:on-demand:cowork-refactory-expert:<date>)."
       },
+      {
+        "depends": [],
+        "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
+        "owner": "dev-kinh-dich",
+        "priority": "P2",
+        "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
+        "source": "health-recheck B10 (team-tool-recheck-2026-06-13-2207.md)",
+        "status": "IN_PROGRESS",
+        "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
+        "type": "FIX",
+        "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
+        "zone_owner": "apps/kinh-dich-service/",
+        "route_to": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "lane": "dev-zone",
+        "mode": "recon-first",
+        "dispatched_ts": "2026-06-15T11:29:32Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "get_market_hexagram absent from MCP tool list => Sunday digest-predict fails. recon-first: confirm registration gap (apps/mcp-server/src/interface/mcp/tools/kinhdich/) vs missing compute (signal dev-kinh-dich). Register generic for all callers; bump toolCount SSOT (project-stats/tool-registry/system-map) per the tool-count-drift lesson."
+      }
+    ],
+    "ready": [
       {
         "id": "FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL",
         "title": "Tier-3 price cache fallback labels stale rows staleness:FRESH + applies *1000 to non-stock-unit cached values (BDI=>2,729,000 FRESH)",
