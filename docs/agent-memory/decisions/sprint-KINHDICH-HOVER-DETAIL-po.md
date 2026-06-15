@@ -41,3 +41,22 @@ why-change: minting the requested task would have been duplicate debt against do
 - A (harden AC-5 to exit 1 + commit headless hook into repo): closes the gap at write-time for compliant tooling; headless path needs repo-tracked hook or truncate fallback.
 **why-decision:** Two retrofits (1c8a5ea7, 5f61bbea) ALREADY tried "point agent at prose gate" and ops.md STILL re-breached to 237L with NO signal minted — empirical proof prose-pointing doesn't enforce. Founding principle (memory line 13) demands a HARD bash gate; current AC-5 violates it. Janitor-only = permanent reactive-churn tax. Root cause = advisory-not-blocking, so fix the gate.
 **why-change:** Scoped to S (gate exit-1 + hook-into-repo), NOT a full arch sprint; semantic-prune stays agent-judgment (hard gate can only FAIL the write) — that tradeoff is the architect's brief, not pre-decided here.
+
+### STEP po-S3 · po · 2026-06-15T08:28:52Z
+**task-id:** FIX-TA-GOSVC-MA5-PRECISION
+**what-done:** Deferral condition met (dev-technical-analysis coding lane FREE, WIP=0); RAW-confirmed MA5=N/A live on VHM/VIC/VRE (38 candles, MA20 computes same depth) → returned BATCH to dispatch ready→in_progress.
+**what-considered:**
+- Dispatch now (slot free, bug live+generic, hits /goal#1+#2)
+- Hold slot to reserve for RSI-gate follow-on next session (2026-06-16)
+**why-decision:** RSI task is gate-PARKED not coding (consumes no coding lane); the gate fires 2026-06-16 01:00Z briefing — no coding work can land before then, so reserving the lane idles it ~16h for zero benefit. MA5 bug is reproducing NOW, generic across all tickers, latent in last-ship 33e7a094. recon-first absorbs the RSI smoothing-seed sub-divergence in same zone.
+**why-change:** no change from plan — executes the prior deferral as written.
+
+### STEP po-S4 · po · 2026-06-15T09:27:13Z
+**task-id:** FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE
+**what-done:** Minted the false-positive restart-cadence defect as P3 FIX -> ready[] (route dev-mcp-server, recon-first), no push.
+**what-considered:**
+- mint+dispatch now (coding lane free)
+- mint+queue to ready[] (router dispatches next tick)
+- defer (server healthy, no live incident)
+**why-decision:** Real defect per /goal#1 (monitor cries wolf on every deploy) so not defer; but NON-URGENT (RestartCount=0, healthy) so I do not consume a dev WIP lane myself — queue to ready[], let router dispatch. Dev-mcp-server coding lane is free (ARCH-CRON in_progress = QA-observe gate, BA-VN-MACRO = design stage) so dispatch is unblocked next tick.
+**why-change:** Recon-first retained per router caution — ops's 'SQL row-aging 4->3' sub-mechanism is internally inconsistent; dev must read the live query+source before patching.

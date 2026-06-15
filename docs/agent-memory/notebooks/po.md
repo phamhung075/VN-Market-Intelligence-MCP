@@ -1,5 +1,27 @@
 # PO Notebook
 
+## 2026-06-15T09:26Z — INTAKE: false-positive restart-cadence alert → mint+queue (S55)
+
+**DECISION = mint+queue (not dispatch, not defer).** Minted `FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE`
+(FIX/S/P3, zone apps/mcp-server, route dev-mcp-server, recon-first) → `ready[]`. Committed 26b450c5
+by explicit path, NOT pushed (held bundle stays held per 2026-06-16 RSI gate policy).
+
+**Defect confirmed by reading the file (not just router's word):** `restartCadenceAlertJob.ts` counts
+`cron_job_runs` rows `job_name='mcpServerStartup'` in a 4h window, fires at `count>=2` with ZERO
+discriminator. Each ops force-recreate writes a fresh startup sentinel → 3 intentional deploys today
+(05:35 RSI-REPORT, 08:02 ALERT-ENGINE-RSI, 08:42 TA-GOSVC-MA5) = 3-restart page on a healthy server
+(router RAW: RestartCount=0, OOMKilled=false, Health=healthy). Real /goal#1 defect → not defer.
+
+**Why queue not self-dispatch:** NON-URGENT (no live incident). Dev-mcp-server *coding* lane IS free
+(ARCH-CRON-SCHEDULER-RELIABILITY in_progress = QA-LIVE-OUTCOME-OBSERVE gate, 0 dev WIP; BA-VN-MACRO =
+design stage), so router can dispatch next tick — but PO doesn't burn a lane on a healthy-server fix.
+WIP<=2 respected. Must NOT displace parked FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (behavioral gate 06-16).
+
+**Recon-first retained:** ops's secondary 'SQL row-aging 4→3' sub-mechanism is internally inconsistent
+(claims 0 future-dated startup rows yet alert emitted 3 precise TODAY timestamps) — dev reads live
+query+source FIRST. Fix = docker-native RestartCount/ExitCode or container-session discriminator; generic
+(no per-deploy-id hardcode, /goal#2). No board dup (A-1 done_verified = the job's origin, not this defect).
+
 ## 2026-06-15T08:22Z — Context-bloat layer-1 gate: HARDEN-vs-ACCEPT triage (router pass #11)
 
 **DECISION = HARDEN (A).** Minted `HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING` (FIX/S/plan_only,
