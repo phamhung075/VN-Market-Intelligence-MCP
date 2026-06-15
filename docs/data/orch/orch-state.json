@@ -590,8 +590,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T10:14:27Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-15T10:38:00Z",
+    "_updated_by": "po-s55-health-recheck-wave2-triage",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -8761,19 +8761,6 @@
       },
       {
         "depends": [],
-        "id": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD",
-        "owner": "dev-stock-price",
-        "priority": "P1",
-        "scope": "Diagnose HNX scraper + add UPCOM fallback. Distinct from ALLZERO-OHLCV-FETCH (zero-write guard for HOSE tickers). PLAN-ONLY at PO layer.",
-        "source": "health-recheck B4 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "TODO",
-        "title": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD — '[hnx] all HNX price sources failed' + '[hnx] all UPCOM price sources failed' recurring; 5 watchlist tickers (BDI, DLC, JSH, SIS, VDC) have 0 OHLCV rows / N/A prices. Circuit-breaker shows [OK] (threshold not tripping at fetch layer).",
-        "type": "FIX",
-        "user_impact": "MEDIUM — 5 watchlist tickers have no price coverage.",
-        "zone_owner": "apps/stock-price/"
-      },
-      {
-        "depends": [],
         "fold_reason": "same node-cron v3.0.3 silent-misfire root class — consolidated under one architect-bound root-cause task to avoid recurring symptom-patching (per feedback_recurring_bug_escalation).",
         "folded_at": "2026-06-14T02:24:21Z",
         "folded_by": "po",
@@ -8788,19 +8775,6 @@
         "type": "FIX",
         "user_impact": "MEDIUM — sector-rotation signal dark 5 days.",
         "zone_owner": "apps/mcp-server/"
-      },
-      {
-        "depends": [],
-        "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
-        "owner": "dev-kinh-dich",
-        "priority": "P2",
-        "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
-        "source": "health-recheck B10 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "TODO",
-        "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
-        "type": "FIX",
-        "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
-        "zone_owner": "apps/kinh-dich-service/"
       },
       {
         "depends": [],
@@ -9187,19 +9161,6 @@
         "status_note": "Distinct from KD-OBS-01-FIX (that = explain_hexagram NaN validation). This = run_hexagram_backtest 501 carried over 4 cycles, surfaced in digest-predict bug-escalation 2026-06-14T13:47Z. AC: run_hexagram_backtest(days=7) returns 200 with backtest payload; if endpoint intentionally unimplemented, weekly.md must degrade gracefully (skip backtest evidence) not 501-block. Tracked here; not previously on board."
       },
       {
-        "id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
-        "type": "FIX",
-        "title": "fb-market-poster calls get_foreign_flow({}) + get_ticker_intelligence({}) with no code= arg -> both fail schema (code:string required) -> silent notebook fallback every cycle. Generic fix: swap to no-arg market-aggregate tools (get_market_foreign_flow for flow; pick/confirm a no-arg market-movers tool for ticker-intel, or pass watchlist iteration) — NO per-ticker hardcode.",
-        "priority": "low",
-        "size": "S",
-        "status": "NEW",
-        "zone": "cross-service/",
-        "source": "health-recheck 2026-06-14T18:07Z (BUG-NEW-01/02)",
-        "generic_mandate": "Fix the tool-selection in the fb-market-poster flow generically — no-arg market-level call, applies to all tickers, no instance hardcode.",
-        "created_at": "2026-06-14T18:36:18Z",
-        "created_by": "po"
-      },
-      {
         "id": "BA-KINHDICH-HOVER-DETAIL",
         "title": "Requirement Spec — KINHDICH-HOVER-DETAIL (enrich quẻ hover tooltip with Tra cứu Kinh Dịch detail)",
         "owner": "ba",
@@ -9307,6 +9268,23 @@
           "docs/data/file-size-caps.json"
         ],
         "created_at": "2026-06-15T08:22:52Z"
+      },
+      {
+        "depends": [
+          "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT"
+        ],
+        "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "zone_owner": "apps/mcp-server/",
+        "priority": "P1",
+        "status": "HELD",
+        "hold_reason": "Overlaps FIX-ALERT-ENGINE-RSI-SINGLEDIGIT behavioral gate at 2026-06-16T01:00Z briefing (review[]). Same market-open zero-data window. Do NOT dispatch until after that gate observes the 02:00Z open — avoid double-touching the alert-engine open path.",
+        "title": "FIX-ALERT-OPEN-ZERO-PRICE-RACE — bbAlertScanJob/taAlertScanJob fire giá=0 BB-breakout + single-digit RSI (3.7-11.9) at 02:00-02:15Z market open, self-normalizing to RSI 35-48 by 06:08Z.",
+        "scope": "Zero-data race: at 02:00Z open the alert-scan jobs read candles whose intraday price is not yet populated (giá=0 / partial-window RSI) -> emit false ta_oversold/ta_bb_breakout WARNINGs that vanish once prices fill. Guard: skip/defer alert emission when latest candle price<=0 or window incomplete for the session. Distinct mechanism from FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (scale corruption) but same symptom surface -> sequence AFTER the 06-16 RSI gate.",
+        "source": "health-recheck BUG-3/BUG-4 (3177/3178 2026-06-15T04:08-06:08Z).",
+        "user_impact": "MEDIUM — false oversold/breakout WARNING alerts spam MARKET-adjacent surface at every open.",
+        "created_at": "2026-06-15T10:38:00Z"
       }
     ],
     "closed_sprints": [
@@ -14283,7 +14261,67 @@
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
       }
     ],
-    "ready": [],
+    "ready": [
+      {
+        "depends": [],
+        "id": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD",
+        "owner": "dev-stock-price",
+        "priority": "P1",
+        "scope": "Diagnose HNX scraper + add UPCOM fallback. Distinct from ALLZERO-OHLCV-FETCH (zero-write guard for HOSE tickers). PLAN-ONLY at PO layer.",
+        "source": "health-recheck B4 (team-tool-recheck-2026-06-13-2207.md)",
+        "status": "READY",
+        "title": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD — '[hnx] all HNX price sources failed' + '[hnx] all UPCOM price sources failed' recurring; 5 watchlist tickers (BDI, DLC, JSH, SIS, VDC) have 0 OHLCV rows / N/A prices. Circuit-breaker shows [OK] (threshold not tripping at fetch layer).",
+        "type": "FIX",
+        "user_impact": "MEDIUM — 5 watchlist tickers have no price coverage.",
+        "zone_owner": "apps/stock-price/"
+      },
+      {
+        "depends": [],
+        "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
+        "owner": "dev-kinh-dich",
+        "priority": "P2",
+        "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
+        "source": "health-recheck B10 (team-tool-recheck-2026-06-13-2207.md)",
+        "status": "READY",
+        "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
+        "type": "FIX",
+        "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
+        "zone_owner": "apps/kinh-dich-service/"
+      },
+      {
+        "id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
+        "type": "FIX",
+        "title": "fb-market-poster calls get_foreign_flow({}) + get_ticker_intelligence({}) with no code= arg -> both fail schema (code:string required) -> silent notebook fallback every cycle. Generic fix: swap to no-arg market-aggregate tools (get_market_foreign_flow for flow; pick/confirm a no-arg market-movers tool for ticker-intel, or pass watchlist iteration) — NO per-ticker hardcode.",
+        "priority": "P1",
+        "size": "S",
+        "status": "READY",
+        "zone": "cross-service/",
+        "source": "health-recheck BUG-NEW-01/02 (3170..3179); report 3180 'RESOLVED' is FALSE-POSITIVE (flow file still no-arg at HEAD).",
+        "generic_mandate": "Fix the tool-selection in the fb-market-poster flow generically — no-arg market-level call, applies to all tickers, no instance hardcode.",
+        "created_at": "2026-06-14T18:36:18Z",
+        "created_by": "po",
+        "owner": "cowork-refactory-expert",
+        "zone_owner": "cross-service/",
+        "scope": "fb-market-poster calls get_foreign_flow({}) (flow/main.md:78) + get_ticker_intelligence({}) (flow/main.md:81) with no `code` arg -> live schema requires code:string -> silent crash to notebook fallback every cycle. FIX: switch both to the no-arg market-wide variant get_market_foreign_flow({}) (LIVE-verified no-arg, returns real watchlist foreign flow) for flow + agent-doc package; correct package/fb-market-poster.md '(none required)' rows. Agent-doc + flow edit, NOT mcp-server code.",
+        "user_impact": "MEDIUM — daily FB post foreign-flow + movers section data-blind every cycle.",
+        "route_to": "cowork-refactory-expert",
+        "note": "agent-doc+flow edit to a cowork agent -> routes via cowork-refactory-expert, not a dev-* zone"
+      },
+      {
+        "depends": [],
+        "id": "FIX-VNSTOCK-TRADINGSTATS-CRASH",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "zone_owner": "apps/mcp-server/",
+        "priority": "P1",
+        "status": "READY",
+        "title": "FIX-VNSTOCK-TRADINGSTATS-CRASH — vnstockTradingStatsRefresh CRASHED (50% success rate, 45min avg run) -> sector/market-cap data unreliable.",
+        "scope": "Same crash family as the now-fixed FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: syncVnstockData.ts subprocess has no per-ticker timeout/back-off guard, so a slow/rate-limited ticker blows the 45min run and the job exits ~50%. Add subprocess timeout guard + per-ticker back-off in the tradingStats path (mirror the fundamentals fix). PLAN-ONLY at PO layer.",
+        "source": "health-recheck BUG-1 2026-06-15T10:07Z (3180); M6 monitor (3149) escalated to crash.",
+        "user_impact": "MEDIUM — sector rotation + market-cap weighting stale/unreliable.",
+        "created_at": "2026-06-15T10:38:00Z"
+      }
+    ],
     "review": [
       {
         "_adjudicated_by": "po",

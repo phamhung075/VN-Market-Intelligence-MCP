@@ -1,66 +1,30 @@
 # PO Notebook
 
-## 2026-06-15T09:26Z — INTAKE: false-positive restart-cadence alert → mint+queue (S55)
+## 2026-06-15T10:3xZ — Step-1 triage: drain 36 stale health-recheck reports → BATCH(4 ready + 1 held)
 
-**DECISION = mint+queue (not dispatch, not defer).** Minted `FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE`
-(FIX/S/P3, zone apps/mcp-server, route dev-mcp-server, recon-first) → `ready[]`. Committed 26b450c5
-by explicit path, NOT pushed (held bundle stays held per 2026-06-16 RSI gate policy).
+**Stale backlog was 36 reports (3142..3180, 06-13 00:09Z → 06-15 10:07Z), never drained.** Almost
+all dedup to THIS session's shipped work or self-recovered live state. RAW-verified live before any
+mint (get_pipeline_health / get_macro_snapshot / get_vps_proxy_health / get_alerts / get_market_foreign_flow).
 
-**Defect confirmed by reading the file (not just router's word):** `restartCadenceAlertJob.ts` counts
-`cron_job_runs` rows `job_name='mcpServerStartup'` in a 4h window, fires at `count>=2` with ZERO
-discriminator. Each ops force-recreate writes a fresh startup sentinel → 3 intentional deploys today
-(05:35 RSI-REPORT, 08:02 ALERT-ENGINE-RSI, 08:42 TA-GOSVC-MA5) = 3-restart page on a healthy server
-(router RAW: RestartCount=0, OOMKilled=false, Health=healthy). Real /goal#1 defect → not defer.
+**DEDUP → resolved (false-positive / already-done), NOT re-minted:**
+- I11/R2/R3 mcp-server "~2h crash cadence" = intentional force-recreate deploys. `FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE` done_verified. RestartCount=0.
+- TA all-N/A + single-digit RSI = `FIX-TA-GOSVC-*` + `FIX-ALERT-ENGINE-RSI-SINGLEDIGIT` (review[]). Live RSI now mid-band (25-48), DAG=100 real.
+- 8-tool schema-drift cluster (get_patterns/sentiment_trend/kinhdich/bctc_full/agent_signals/foreign_flow/market_summary/financial_summary) = `FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS` done_verified (commit 0e81b642, 11 docs). Spot-verified foreign_flow(code)/market_summary(period) live OK.
+- vnstock fundamentals crash + rate-limit storms (B1/N1/N2/N3) = `FIX-FUNDAMENTALS-REFRESH-CRON-DEAD` + `FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT` done_verified.
+- I10 WTI>$95.5 oil corrupt = RECOVERED (oilUsd $82.81, tier-1 live). I7 sbv-fetch + I2/news = RECOVERED (sbv 21 pushes/24h 0 err; news 93 pushes/24h). pollNews-0-items transient.
+- D4 orch/head divergence (3176) = stale claim; head.active_task_id is already FIX-ALERT-ENGINE-RSI, not CI-RED. False-positive.
+- OHLCV-aggregator stale = FOLDED into in_progress ARCH-CRON-SCHEDULER-RELIABILITY (aggregator now last-run 06-15). BCTC-VPS stale = HANDOFF (tracked).
 
-**Why queue not self-dispatch:** NON-URGENT (no live incident). Dev-mcp-server *coding* lane IS free
-(ARCH-CRON-SCHEDULER-RELIABILITY in_progress = QA-LIVE-OUTCOME-OBSERVE gate, 0 dev WIP; BA-VN-MACRO =
-design stage), so router can dispatch next tick — but PO doesn't burn a lane on a healthy-server fix.
-WIP<=2 respected. Must NOT displace parked FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (behavioral gate 06-16).
+**BATCH → router (4 promoted ready, 1 held):** all were already-minted backlog IDs (06-13 detect→fix bridge c68edcfa) — enriched/promoted, NOT duplicated.
+1. `FIX-HNX-UPCOM-PRICE-SOURCES-DEAD` P1 → dev-stock-price [apps/stock-price/] — LIVE-CONFIRMED real: BDI/DLC/JSH/SIS/VDC rows=0 day-9.
+2. `FIX-FB-POSTER-NOARG-MARKET-TOOLS` P1 → cowork-refactory-expert [cross-service/] — flow/main.md:78/81 still no-arg at HEAD (report 3180 "RESOLVED" = FALSE-POSITIVE); fix = switch to get_market_foreign_flow({}) (no-arg, live-OK).
+3. `FIX-VNSTOCK-TRADINGSTATS-CRASH` P1 → dev-mcp-server [apps/mcp-server/] — NEW mint; 50% crash, syncVnstockData.ts timeout guard (fundamentals-fix family).
+4. `FIX-MARKET-HEXAGRAM-TOOL-MISSING` P2 → dev-kinh-dich [apps/kinh-dich-service/] — LIVE-CONFIRMED get_market_hexagram absent; Sunday digest-predict broken.
+HELD (backlog, depends FIX-ALERT-ENGINE-RSI-SINGLEDIGIT): `FIX-ALERT-OPEN-ZERO-PRICE-RACE` — NEW; bb/taAlertScanJob giá=0 + single-digit RSI at 02:00Z open, self-normalize by 06:08Z. Same open-window as the RSI gate → sequence AFTER 06-16T01:00Z, do not double-touch.
 
-**Recon-first retained:** ops's secondary 'SQL row-aging 4→3' sub-mechanism is internally inconsistent
-(claims 0 future-dated startup rows yet alert emitted 3 precise TODAY timestamps) — dev reads live
-query+source FIRST. Fix = docker-native RestartCount/ExitCode or container-session discriminator; generic
-(no per-deploy-id hardcode, /goal#2). No board dup (A-1 done_verified = the job's origin, not this defect).
-
-## 2026-06-15T08:22Z — Context-bloat layer-1 gate: HARDEN-vs-ACCEPT triage (router pass #11)
-
-**DECISION = HARDEN (A).** Minted `HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING` (FIX/S/plan_only,
-zone cross-service/) → backlog (170→171), routed agents-architect → agent-father/dev.
-
-**Finding raw-verified BEFORE deciding (all confirmed):**
-- AC-5 is advisory PROSE — SKILL line 76 literally "a verification gate, NOT a remediation loop",
-  only `echo`s, never `exit 1`. Contradicts founding principle (memory line 13 "Hard bash gate,
-  not prose"). Replicated prose in bctc-analyst/flow/stage-log-notify.md:38.
-- ops.md = 237L working-tree vs 151L HEAD → transient over-cap window real; that 237L write minted
-  NO `context-bloat-*.json` signal (`ls` = no matches) — proves layer-2 hook gap.
-- Layer-2 hook IS wired in `.claude/settings.local.json` BUT that file is gitignored (confirmed
-  `git check-ignore`) + the script is record-only (`exit 0` always, line 21 "NEVER blocks").
-  → headless/cron/cloud spawns don't carry it.
-- Layer-3 janitor = only HARD remediation, reactive. Board PROVES the churn tax: standing
-  CLEAN-NB-TRIM-BATCH (5 notebooks 297/223/223/218/228L) + CLEAN-CONTEXT-BLOAT-...-20260614 +
-  CLEAN-NB-TRIM-PDFX-2 + FU-NB-PRUNE-DEV-VPS.
-
-**Why A not B:** two retrofits (1c8a5ea7 ops, 5f61bbea dev-zone) ALREADY tried "point agent at
-prose gate" → ops STILL re-breached. Prose-pointing ≠ enforcement. Accepting janitor = permanent
-reactive churn + every pass re-discovers + agent-father keeps minting retrofits. Fix the gate.
-
-**Scope (cheap-correct slice, architect's brief resolves tradeoffs):**
-1. AC-5 → BLOCKING `exit 1` (in-session/compliant path; hard gate can only FAIL the write, NOT
-   auto-pick sections — semantic prune stays agent judgment = accepted tradeoff).
-2. Headless gap → commit PostToolUse hook into REPO-TRACKED `.claude/settings.json` (not `.local`)
-   OR documented dumb-tail-truncate fallback (architect: truncate-vs-fail-vs-signal-only; tail-cut
-   drops newest/current-cycle section → may be unacceptable).
-
-**Artifacts:** triage script `scripts/po-s55-notebook-gate-harden-triage.jq` (idempotent, atomic
-temp→[ -s ]→jq empty→count==1→rename). Decision-journal STEP po-S-AMB appended. Memory
-`project_context_bloat_governance` updated with the resolved PO decision (future passes: DECIDED,
-don't re-triage). Did NOT prune the 237L ops.md (janitor Pass-5b owns it; pruning+committing now
-risks capturing the broader dirty working-tree — per router's explicit DO-NOT).
+**Did NOT push** (held bundle per 2026-06-16 RSI gate). WIP<=2 respected — router dispatches at most 2 of the 4 ready.
 
 ### Carry-over
-- `HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING` sits in backlog plan_only → next dev-team triage pass
-  should pull it to agents-architect for the design brief (NOT yet dispatched — it's PLAN-ONLY).
-- Future recon passes: this finding is OPEN-but-DECIDED. Check task status; do NOT re-mint
-  harden-vs-accept findings or new flow-wiring retrofits expecting zero breaches.
-- The 2 loose `cowork-team-2026-06-15T*` signals = routine cowork-fire telemetry (noise) → cowork/
-  janitor sweep, NOT a task.
+- After 2026-06-16T01:00Z RSI gate clears FIX-ALERT-ENGINE-RSI-SINGLEDIGIT: release `FIX-ALERT-OPEN-ZERO-PRICE-RACE` from HELD → ready (route dev-mcp-server).
+- Triage script: `scripts/po-s55-health-recheck-wave2-triage.jq` (atomic temp→[ -s ]→jq empty→conservation→rename; commit orch-state by EXPLICIT PATH).
+- All 36 reports drained (read_telegram_reports(new) = empty). Next cron tick starts clean.

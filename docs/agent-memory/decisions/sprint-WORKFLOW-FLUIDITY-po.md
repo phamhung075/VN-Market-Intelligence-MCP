@@ -63,3 +63,13 @@
 - Re-verify WF-2 rebuild gate raw vs trust ops notebook claim
 **why-decision:** Dispatcher mandate said flip-to-done; emptied tasks[] into done[] so no duplicate rows — tombstone keeps closure visible without double-counting. Rebuild gate raw-verified (docker inspect Created vs git %cI) per verify-raw-not-badges; mcp-server healthy. DEFERRED rows WF-DEFER-THROUGHPUT + SPIKE-C44-PARALLEL-PROOF untouched in backlog per scope_out.
 **why-change:** umbrella lock task:WORKFLOW-FLUIDITY release skipped — INV-GATEWAY-1: this PO session has no gateway binding; dispatcher session holds the lock and releases + notifies WORK.
+
+### STEP po-S7 · po · 2026-06-15T10:39:50Z
+**task-id:** FIX-HNX-UPCOM-PRICE-SOURCES-DEAD (+ wave-2 health-recheck Step-1 triage batch)
+**what-done:** Drained 36 never-drained health-recheck reports (3142..3180). RAW-verified live (get_pipeline_health/get_macro_snapshot/get_vps_proxy_health/get_alerts/get_market_foreign_flow) before any mint. Resolved all 36 via process_telegram_report (fixed | duplicate); queue now empty. BATCH to router: promoted 4 already-minted backlog IDs → ready[] (HNX P1→dev-stock-price, FB-POSTER P1→cowork-refactory-expert, VNSTOCK-TRADINGSTATS P1→dev-mcp-server [NEW mint], MARKET-HEXAGRAM P2→dev-kinh-dich); minted FIX-ALERT-OPEN-ZERO-PRICE-RACE HELD in backlog (depends FIX-ALERT-ENGINE-RSI-SINGLEDIGIT). Atomic jq -f scripts/po-s55-health-recheck-wave2-triage.jq, conservation-gated, committed orch-state by explicit path. NOT pushed.
+**what-considered:**
+- Re-mint the schema-drift cluster (8 tools) vs trust done_verified FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS → spot-verified 2 tools live OK, dedup'd (no re-mint).
+- Dispatch FIX-ALERT-OPEN-ZERO-PRICE-RACE now vs hold → HELD: same 02:00Z market-open window as the FIX-ALERT-ENGINE-RSI gate (06-16T01:00Z); dispatching now risks double-touching the alert-engine open path.
+- Trust report-3180 "fb-poster RESOLVED" vs read the file → read HEAD: flow/main.md:78/81 still no-arg → report is FALSE-POSITIVE → kept task real.
+**why-decision:** /goal#1 — only the still-broken-NOW items minted; live-recovered (oil/sbv/news) + already-shipped (TA/restart/fundamentals/schema-drift) dedup'd to resolve, never re-minted. WIP<=2 respected: 4 ready but router dispatches ≤2; FIX-ALERT-ENGINE-RSI (review[]) not displaced. Held-bundle push policy honored.
+**why-change:** no change from plan — pure Step-1 triage; all real candidates were pre-minted backlog IDs (06-13 detect→fix bridge c68edcfa), so enrich+promote not duplicate.
