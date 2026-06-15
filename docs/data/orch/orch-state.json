@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T16:30:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-15T16:45:34Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T15:59:56Z",
+    "updated_at": "2026-06-15T16:45:34Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
-    "next_agent": "dev-mcp-server",
-    "note": "DEV-TEAM DISPATCH 2026-06-15T15:59:56Z — FIX-SIGNAL-CONFIDENCE-DEFAULT-50(P1) ready->in_progress -> dev-mcp-server (coding lane free; in_progress holds = ARCH-CRON-SCHEDULER-RELIABILITY[design] + BA-VN-MACRO-TOOLING[spec], 0 coding). Wire real confidence into postSignal for ALL 13 producers (seed agentSignalStore.ts:341 default 50; smoking gun intelligenceCycleJob.ts:1290). GENERIC /goal#2 no allowlist. DoD /goal#1 live SIGNALS-last-10 SPREAD not constant-50 vs named-vol DB post-rebuild. Part of standing no-fake-data/real-fetch directive — 2 read-only audits running to map the rest (numeric metric defaults wf + hardcoded/stub/dead-source wf). review[] gates 2026-06-16: FIX-VNSTOCK-TRADINGSTATS-CRASH (08:30Z), FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (01:00Z/02:15Z). PUSH held (PO post-gates)."
+    "active_task_id": "OPS-BCTC-PIPELINE-RECON",
+    "next_agent": "ops-vps-fetch",
+    "note": "DEV-TEAM DISPATCH 2026-06-15T16:45:34Z — OPS-BCTC-PIPELINE-RECON(P0) ready->in_progress -> ops-vps-fetch (ops lane, NOT coding, bypasses WIP<=2). BCTC pipeline DEAD 34.3h RAW-confirmed (get_bctc_full VCB empty / FPT stale 05-24 / VPS 0 pushes since 06-13 23:45 / enricher 0 URLs). 2nd recurrence STALE-5D. 3 MEDIUM double-fire fixes (root A agents-architect, B+C dev-mcp-server) DEFERRED to next :07 tick (load mgmt — codebase-analysis workflow wf_5b4cdead running). FIX-SIGNAL-CONFIDENCE-DEFAULT-50 in review[] — router gate pending ORGANIC non-50 proof (monitor b2y31ggun armed; rebuild+code RAW-verified, only verify-* test-inserts non-50 so far). PUSH held (PO post-06-16-gates, 53 ahead)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -606,7 +606,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T15:59:56Z",
+    "_updated_at": "2026-06-15T16:45:34Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14466,14 +14466,12 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "OPS-BCTC-PIPELINE-RECON",
         "type": "FIX",
         "priority": "P0",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "route_to": "ops-vps-fetch",
         "zone": "apps/pdf-extractor/",
         "mode": "recon-first",
@@ -14489,8 +14487,14 @@
         ],
         "source": "health-recheck B2 (analysis-agent 2h cloud trigger) + PO RAW-confirm 2026-06-15T16:31Z",
         "created_at": "2026-06-15T16:36:18Z",
-        "dispatch_note": "DISPATCH NOW — ops-vps-fetch recon is NOT a coding lane; does not consume the WIP<=2 CODING budget (1 active: FIX-SIGNAL-CONFIDENCE). HIGHEST priority this tick."
-      },
+        "dispatch_note": "P0 BCTC pipeline DEAD 34.3h — ops-vps-fetch SSH recon FIRST to isolate {VPS-down | bctc-push-cron-stopped | geo-block/SSL regression (cf prior 13-day HNX TLS outage) | enricher 0-URL discovery stall}. RAW-confirmed: get_bctc_full(VCB)=empty, FPT stale 2026-05-24, VPS 0 pushes/24h since 06-13 23:45Z, 27 tickers filed-not-in-DB, enricher 0 URLs. 2nd recurrence of FIX-BCTC-VPS-PIPELINE-STALE-5D (recurring-bug-escalation class). Recon -> report root isolation -> PO routes structural fix to owning dev zone. Violates no-fake-data/real-fetch standing goal.",
+        "lane": "ops",
+        "dispatched_ts": "2026-06-15T16:45:34Z",
+        "dispatched_by": "dev-team",
+        "next_agent": "ops-vps-fetch"
+      }
+    ],
+    "ready": [
       {
         "id": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
         "type": "FIX",
