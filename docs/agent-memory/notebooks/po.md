@@ -1,43 +1,36 @@
 # PO Notebook
 
-## 2026-06-15T00:31Z — TRIAGE tick — ACCURACY-PAIR promoted (serialized)
-Reliability layer DONE (F-MACRO-FETCH-DEADLINE + VMT-8 done_verified, ce4b46f0). Accuracy
-follow-ons unblocked. Promoted both backlog→ready, SERIALIZED (same owner dev-macro-indicators /
-zone apps/macro-indicators/, WIP≤2, no file conflict):
-- **[1] F-BOP-ENCODING** (S, no-recon, FIRST, seq=null) — URL-encode SBV Liferay OData filter
-  spaces in usecases_vmt_bop.go. bop degrade "context deadline exceeded" = FetchBudgetSec=8s
-  bound firing on a malformed un-encoded filter. Quick accuracy win — dispatch first.
-- **[2] F-NSO-SELECTOR** (S, RECON-FIRST, seq=F-BOP-ENCODING) — STEP1 ops-vps-fetch recons NEW
-  NSO WordPress HTML (index fetches ~85KB → proxy UP, pure accuracy gap, NOT proxy-down);
-  STEP2 dev-macro-indicators implements new selector in cache_vmt_nso.go + parsers. Recon-first
-  so dev isn't idle while structure is scoped.
-Both rebase 94b49f44. head → next_agent=dev-team (active=F-BOP-ENCODING). Idempotent promote via
-`scripts/po-s54-macro-accuracy-pair-promote.jq` (atomic temp→[ -s ]→jq empty→rename; ready 1→3,
-backlog 172→170). Committed orch-state + script by EXPLICIT PATH (c75398a3) — other dirty files
-(fb-poster/unified-agent notebooks, tool-usage-stats, 07-06 brief) NOT swept.
+## 2026-06-15T03:29Z — TRIAGE tick (5 signals + F-BOP-QUERY-RECON ready)
+Raw-verified orch-state: in_progress=2 (both zombie/parked, dispatched_to=null — ARCH-CRON
+stale >16h no-heartbeat; BA-VN-MACRO architect-probefold-done parked). Neither holds an
+active DEV lane → recon/ops tasks don't consume dev WIP. ready=4, backlog=170.
+HEAD b930b7dd, origin/main d20468c0 (6-behind = ALL benign cloud chores, verified git log).
 
-**RECONCILE TRAP hit:** spawn-context said next_agent=po/awaiting-triage, but LIVE committed head
-= BA-VN-MACRO-TOOLING/next_agent=ba @ stale 2026-06-14T18:36:18Z. ce4b46f0's diff SHOWED head→po
-but its committed net REVERTED (SSOT last-write-wins clobber by a parallel BA dispatch on .head).
-git-log note in ce4b46f0 = authoritative intent → trusted spawn context. Confirmed
-BA-VN-MACRO-TOOLING is a SEPARATE live lane (architect-probefold-done, next_agent=pm, PM plan
-PENDING) — left UNTOUCHED.
+DECISIONS (3 decision-only + 2 mint + 1 dispatch):
+- **CI-RED-d20468c0-FIX → AUTHORIZE rebase+push** (standing DEFERRED divergence call). 6-behind
+  all benign health/audit chores; 143 local commits replay clean; LOCAL-GREEN proven (bun 31/0,
+  toolCount 163). Router runs `git pull --rebase origin main` + push → CI re-runs SHA≠d20468c0 →
+  green → THEN promote done_verified. NOT a force-push. (feedback_ci_green_gate_blocked…)
+- **sau-d4 → DISMISS** (benign transient): active_task_id=CI-RED is correct; task_list_held
+  empty is expected once router withheld done_verified + cleared WIP. Self-resolves post-push.
+- **chef-intraday churn → MINT FIX-CHEF-INTRADAY-MARKER-CADENCE** (agent-father zone, chef.md
+  Step 0.5). Root: marker key published:SLOT:VN-DATE + ttl 100800(28h) correct for 3 daily
+  single-fire chef slots but WRONG for chef-intraday (cron 13 2-8 = 7 fires/day) → first tick
+  blocks rest of day. GENERIC /goal#2: marker granularity MUST match fire cadence (multi-fire →
+  hour-window key + TTL≤cadence; single-fire keep per-DATE). Only chef-intraday multi-fire.
+- **nso-trade-sheet → MINT FIX-NSO-TRADE-SHEET** (RECON-FIRST ops then dev-macro-indicators).
+  'sheet 14.XK not found' = NSO monthly Excel sheet names drift month-to-month. STEP1 ops lists
+  ACTUAL xlsx sheet names in-container; STEP2 dev derives export/import sheet by CONTENT/PATTERN
+  (NOT hardcode 14.XK/15.NK) in trade_parser. zone apps/macro-indicators. /goal#2.
+- **F-BOP-QUERY-RECON → DISPATCH this tick** (READY, seq cleared, unblocked). ops-vps-fetch curls
+  SBV Liferay OData until real BOP rows return → dev fixes parsers_vmt_bop.go query params.
+  F-BOP-ENCODING stays done/withheld pending this real-data restore. /goal#2.
 
-**jq guard bug (caught pre-rename):** first `already_present()` counted backlog (the source array)
-→ never promoted; 2nd attempt `.key != "backlog"` precedence broke under `and`. Fixed: chained
-`select(.key!="backlog") | select(.value|type=="array")`. Lesson: when moving FROM an array,
-the dedup guard must EXCLUDE the source array.
+WIP: dev-lane budget honored — recon/ops (F-BOP-QUERY-RECON, FIX-NSO STEP1) + agent-father
+config fix don't burn dev WIP; the two in_progress zombies hold no active lane.
 
-**HELD (unchanged):** Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE
-re-verify) — passive ops/cron live-probe, already owned by ARCH-CRON-SCHEDULER-RELIABILITY
-reverify_gate + FIX-COWORK-GUARANTEED-BACKSTOP (TNB c95 ACK confirms); surfaces on its own gate
-tick, NOT raised this tick. Also held: 07-06 brief (seq-after-incident), F3 cronJobCount,
-VMT-3a-PMI, ops/infra lane, FIX-FB-POSTER-NOARG-MARKET-TOOLS. TNB already ACK'd this cycle.
-4 drained signals all informational (no new code bugs).
-
-### Carry-over (next tick)
-- dev-team dispatches F-BOP-ENCODING first; F-NSO-SELECTOR only after BOP done (serialize guard).
-- F-NSO needs ops-vps-fetch recon leg BEFORE dev-macro-indicators — verify recon handoff lands.
-- BA-VN-MACRO-TOOLING: route to PM (task-plan) — separate lane, head pointer was wrong (said ba).
-- Monday market-day gate goes live — ARCH-CRON G1/G2/G3 + F-EOD re-verify on its own gate tick.
-- Watch .head SSOT clobber: parallel dispatches last-write-win on .head — re-read git-log intent.
+### Carry-over
+- After push lands: router promotes CI-RED done_verified; F-BOP-ENCODING done_verified gated on
+  F-BOP-QUERY-RECON real-data restore; F-NSO-SELECTOR done_verified gated on trade-sheet fix.
+- Watch the two in_progress zombies (ARCH-CRON-SCHEDULER >16h stale, BA-VN-MACRO parked) — sweep
+  next tick if still non-dispatched (false WIP occupancy).
