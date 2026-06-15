@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T18:33:38Z",
-    "updated_by": "po",
-    "active_task_id": "FIX-BCTC-ENRICH-SILENT-0ROWS",
+    "updated_at": "2026-06-15T20:17:53Z",
+    "updated_by": "po-s64",
+    "active_task_id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
     "next_agent": "dev-team",
-    "note": "PO TRIAGE 2026-06-15T18:30Z (dev-team :07 tick, off-market VN 01:26). PROMOTED the #1 user-facing P0 FIX-BCTC-ENRICH-SILENT-0ROWS ready->in_progress (now DISPATCHED) -> dev-pdf-extractor leads (B02-TCTD bank-form parse/OCR) + dev-mcp-server pairs (enrich fail-loud). This is the TRUE root of get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' AND the cowork bctc-analyst '#2776' release-block (CTG watchlist bank 27 cycles). FREED the lane by closing BA-VN-MACRO-TOOLING in_progress->done (SPEC-COMPLETE): its whole planning pipeline (BA->arch->pm->probe->probe-fold, all router RAW-reverified) is done + the 20-task WAVE plan lives in active_sprints[VN-MACRO-TOOLING]; that row consumed ZERO dev WIP (planning deliverable, not a coding lane). Coding lanes now: ARCH-CRON-SCHEDULER-RELIABILITY (architect-design phase, NOT coding) + this P0 = 1 active coding lane, within WIP<=2. review[] (4): NONE done_verifiable this tick — FIX-VNSTOCK-TRADINGSTATS-CRASH gate UNMET until 2026-06-16 08:30Z sweep (host-decoy caught ea4d4e74); FIX-SIGNAL-CONFIDENCE-DEFAULT-50 needs organic non-50 confidence_score DB spread (not exposed on tool surface, NO green-badge promote); FIX-ALERT-ENGINE-RSI-SINGLEDIGIT gate = next market-open MARKET echo (off-market now, no new alert-commander alerts); ARCH-SHIP-WAVE-REAUDIT PARKED. Context-bloat signals (claude-manager-helper 108L / ops 90L / ops-vps-fetch 196L) RESOLVED by Pass-5b (1e6b4e2d/3c9751fb/f35d605c) — all under cap, NO janitor. PUSH HELD (PO post-2026-06-16-gates; origin ~57 behind benign cloud-chore). Script: scripts/po-s63-bctc-p0-promote-macro-spec-close-triage.jq."
+    "note": "PO TRIAGE 2026-06-15T20:17:53Z (dev-team :07 tick). HEAD RECONCILED: prior head stale-pointed at FIX-BCTC-ENRICH-SILENT-0ROWS (REVIEW/done_verified=PENDING in review[]) -- never advanced after that task's done_verified HOLD (check-a FAIL: scanned bank PDFs = 0 text-chars, text-table parser never fires). HEAD now -> FIX-BCTC-BANK-PDF-OCR-RASTERIZE (P0, dev-pdf-extractor) -- the TRUE remaining root of get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' (add OCR-rasterize leg via PaddleOCR before text-table parse; GENERIC low-text-density routing, no allowlist). DISPATCHED ready->in_progress this tick = 1 dev coding lane. ARCH-CRON-SCHEDULER-RELIABILITY (in_progress) is architect-design + QA-LIVE-OUTCOME-OBSERVE gate -- consumes NO dev coding WIP. WIP<=2 honored. ITEM 2 scoped: minted sprint_goal[FE-PAGE-REORG] + BA-FE-PAGE-REORG (TODO, ba) for the frontend page-resemblance consolidation -- PLANNING deliverable (ba->architect->pm), zero dev coding WIP; dev-frontend IMPL lane enters only after spec lands (2nd lane within WIP<=2, low-risk internal refactor). PUSH HELD (PO deferred call; origin diverged via benign cloud-chore). Commit orch-state by EXPLICIT PATH. Script: scripts/po-s64-head-reconcile-bctc-ocr-dispatch-fe-reorg-scope.jq."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -514,8 +514,8 @@
   },
   "sprint_goal": {
     "_note": "Structured projection of active sprint entries. Migrated from plain-string drift (schema drift fix, CI-RED CLUSTER-A).",
-    "_updated_at": "2026-06-14T07:30:00Z",
-    "_updated_by": "ba",
+    "_updated_at": "2026-06-15T20:17:53Z",
+    "_updated_by": "po-s64",
     "entries": [
       {
         "created_at": "2026-06-08T00:00:00Z",
@@ -602,12 +602,28 @@
         "success_metric": "tsc/pnpm check xanh + qa pass + frontend container rebuild đúng cách (build frontend && up -d --no-deps frontend && builder prune; docker ps -a peer-survival; image ID đổi) + RAW-verify chunk phục vụ trên :3001 thực sự chứa chuỗi tiếng Việt mới (vd stateInterpretation/favorable/warning của một quẻ). Người dùng hard-refresh thấy tooltip phong phú khi hover. (Part 1 1-cột: chỉ cần hard-refresh — đã live.)",
         "product_decision": "Option (a) richer-tooltip chosen by PO: coreMeaning + Trạng thái + Thuận + Cảnh báo + trend label, omit 6-hào table, keep Xem chi tiết deep-link. Tooltip holds ~4 short VN clauses comfortably; 6-hào table is tabular → reference page. SSOT = QueName.tsx (QUE-TOOLTIP-DRY preserved).",
         "created_at": "2026-06-14T19:43:26Z"
+      },
+      {
+        "sprint_id": "FE-PAGE-REORG",
+        "status": "active",
+        "vision": "Frontend pages that resemble each other collapse into shared generic components + a 6-category taxonomy, so the same UI fix lands on ALL pages at once (no per-page special-casing) with zero API/route/behavior change.",
+        "scope_in": "apps/frontend internal consolidation (Remix+TS+Tailwind+shadcn/ui, 33 dashboard routes, ~17.8K LOC). Wave-1 (P0+P1): merge dashboard.intel->_index; extract generic <ScreenerTable> (x5 pages); extract <SummaryGrid>+<LeaderboardCard>+<DirectionBadge> (x8 pages); lib/api/loader-utils.ts safeFetch<T> (x33 loaders). Wave-2 (P2+P3): <CodeSelector>+<DetailPanel>, <ContentCard>+badge components, <CollapsibleSection>, Remix route-group folders + unit tests on extracted components.",
+        "scope_out": "NO API-contract change, NO route-URL change, NO behavior change. Cluster #6 (analysis/orchestration/market-summaries large domain pages) NOT merged (logic orthogonal). Existing tests stay green untouched.",
+        "success_metric": "~5.1K LOC removable consolidated across waves; ONE <ScreenerTable> serves ALL entity tables (/goal#2 — same fix across all pages); EVERY migrated cell renders REAL loader data verified vs live payload — NO destructuring-default / placeholder masking a real metric (/goal#1 + standing no-fake-data directive); full existing frontend test suite stays green.",
+        "owner": "dev-frontend",
+        "audit_brief": "docs/analysis-briefs/2026-06-15-frontend-page-reorg-audit.md",
+        "waves": [
+          "Wave-1: P0+P1 (merge+3 extracts)",
+          "Wave-2: P2+P3 (3 extracts + route-group folders + unit tests)"
+        ],
+        "chain": "ba -> architect -> pm -> dev-frontend -> qa",
+        "created_at": "2026-06-15T20:17:53Z"
       }
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T20:10:36Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-15T20:17:53Z",
+    "_updated_by": "po-s64",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11984,6 +12000,24 @@
         "dispatch_note": "P1 (real served-metric accuracy per /goal#1 plausibility — a 43T VND balance imbalance is wrong data, not just empty data). dev-pdf-extractor leads (B01-DN corporate-form parse/OCR accuracy). Generic, no allowlist. done_verified = balance gate passes (assets = liabilities+equity, delta < 1%)",
         "lane": "backlog",
         "depends": []
+      },
+      {
+        "id": "BA-FE-PAGE-REORG",
+        "type": "SPRINT-M",
+        "title": "Requirement spec for FE-PAGE-REORG: frontend page-resemblance consolidation (6-category taxonomy + shared generic components), Wave-1 (P0+P1) then Wave-2 (P2+P3)",
+        "owner": "ba",
+        "status": "TODO",
+        "priority": "P2",
+        "zone": "docs/agents/",
+        "sprint": "FE-PAGE-REORG",
+        "route_to": "ba",
+        "audit_brief": "docs/analysis-briefs/2026-06-15-frontend-page-reorg-audit.md",
+        "desc": "Decompose the read-only frontend reorg audit into a wave-sequenced spec. Wave-1 (P0+P1): FR-1 merge dashboard.intel->dashboard._index (exact dup, same /api/market-digest, view toggle, ~225L); FR-2 extract a SINGLE generic <ScreenerTable> with configurable columns/renderers serving financials/officers/shareholders/reputation/services/quality-audit (x5-6, ~800L); FR-3 extract <SummaryGrid>+<LeaderboardCard>+<DirectionBadge> across the x8 card-grid Top-N ranking pages (~1.2K L); FR-4 lib/api/loader-utils.ts safeFetch<T>(url,parser) killing loader boilerplate across all 33 loaders (~2K L). Wave-2 (P2+P3): <CodeSelector>+<DetailPanel>, <ContentCard>+sentiment/type/agent badge components, <CollapsibleSection>, Remix route-group folder refactor (org only, no URL change) + unit tests on every extracted component. Architect splits any multi-zone item (component lib vs per-route migration). HARD /goal constraints in every FR's acceptance: (1) generic component is ONE implementation serving ALL entities -- no per-page special-case fork (/goal#2); (2) every migrated cell MUST render REAL loader data verified vs the live payload -- a destructuring-default or '?? placeholder' that masks a real metric is a FAIL (/goal#1 + no-fake-data); (3) NO API-contract / route-URL / behavior change -- existing frontend tests stay green untouched (regression gate).",
+        "generic_mandate": "One <ScreenerTable> (and one of each extracted component) serving ALL pages -- NO per-page special-cased fork. /goal#2.",
+        "no_fake_data_requirement": "Every migrated cell renders REAL loader data verified vs live payload; no destructuring-default / '?? placeholder' may mask a real served metric. /goal#1 + standing no-fake-data directive.",
+        "verification_gate": "Existing frontend test suite green untouched (no API/route/behavior change); each extracted component used by >=2 pages with real props; QA spot-verifies migrated cells render live values not placeholders.",
+        "created_at": "2026-06-15T20:17:53Z",
+        "created_by": "po-s64"
       }
     ],
     "closed_sprints": [
@@ -17169,6 +17203,33 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
+      },
+      {
+        "id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "IN_PROGRESS",
+        "route_to": "dev-pdf-extractor",
+        "zone": "apps/pdf-extractor/",
+        "mode": "code",
+        "size": "M",
+        "title": "Scanned/image-only B02-TCTD bank PDFs yield 0 text-chars -> Layout-6/7 parser never fires -> 0 table_rows: add OCR rasterization leg before text-table parse",
+        "desc": "LIVE-VERIFIED by PO 2026-06-15 done_verified gate probe of FIX-BCTC-ENRICH-SILENT-0ROWS: after rebuilding BOTH images and re-enriching VCB 2026Q1+2025Q1 through the fixed runBctcPdfPullJob, both STILL produced 0 bctc_table_rows. fitz raw: VCB_2026_Q1.pdf = 53 pages, 110 text-chars across first 8 pages, embedded images = SCANNED/image-only. pushBctcExtraction's 3 text-tiers (pdf_path / remote-URL / pdf-parse) all returned chars:0 confidence:0. The Layout-6/7 fix (68d54c7b) parses TEXT lines into code-rows and is correct, but it never receives text for scanned bank PDFs. MISSING LEG: rasterize image-only/low-text PDF pages and OCR them (PaddleOCR is already in the pdf-extractor image — pek-import-chain ALL OK) BEFORE handing text to _try_parse_code_row. This is the actual remaining root of get_bctc_full(VCB/CTG)='Chua co du lieu BCTC'.",
+        "generic_mandate": "GENERIC across ALL scanned/image-only PDFs (any ticker, any form). Detect low-text-density (e.g. chars-per-page below a threshold) and route to the OCR-rasterize path — NO per-ticker allowlist, NO VCB/CTG date-literal.",
+        "fail_loud_requirement": "If OCR rasterization still yields 0 rows, the existing 989654f2 enrich_failed gate keeps it visible (NOT done) — do not regress that fail-loud path.",
+        "baseline_pass": "done_verified = get_bctc_full(VCB) AND get_bctc_full(CTG) return REAL VARIED rows raw-verified vs named-volume market.db; AND FPT 2026Q1 (145) + VCB 2025Q4 (112) remain non-regressed; AND a genuinely-unparseable PDF still lands enrich_failed not done.",
+        "recurrence_class": "BCTC-VPS-PIPELINE-STALE (enrich-0-rows leg) — the scanned-PDF remainder after the silent-swallow + text-layout legs shipped.",
+        "depends_on": "FIX-BCTC-ENRICH-SILENT-0ROWS (merged; this completes its check-a leg)",
+        "source": "PO done_verified gate probe 2026-06-15 (FIX-BCTC-ENRICH-SILENT-0ROWS check-a FAIL)",
+        "created_at": "2026-06-15T20:10:36Z",
+        "dispatch_note": " [PO-s64 2026-06-15T20:17:53Z] HEAD RECONCILED + DISPATCHED ready->in_progress. #1 user-facing P0 coding lane (get_bctc_full VCB/CTG='Chua co du lieu BCTC' true remaining root = scanned bank PDF OCR-rasterize leg). dev-pdf-extractor leads; PaddleOCR in-image; GENERIC low-text-density routing, no allowlist; preserve 989654f2 enrich_failed fail-loud; done_verified = REAL VARIED rows VCB AND CTG vs named-volume market.db + FPT/VCB non-regressed.",
+        "owner": "dev-pdf-extractor",
+        "route": "dev-pdf-extractor",
+        "next_agent": "dev-pdf-extractor",
+        "claimed_at": "2026-06-15T20:17:53Z",
+        "claimed_by": "dev-team",
+        "dispatched_at": "2026-06-15T20:17:53Z",
+        "dispatched_by": "po-s64"
       }
     ],
     "ready": [
@@ -17310,26 +17371,6 @@
         "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 SPIKE — architect (agents-architect consulted). recurring-bug-escalation umbrella over the 5 child FIX tasks. Design the cross-cutting alerting/fail-loud/brittleness-monitoring contract — do NOT just re-patch leaves. Timebox 120m, output: architecture brief."
-      },
-      {
-        "id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "READY",
-        "route_to": "dev-pdf-extractor",
-        "zone": "apps/pdf-extractor/",
-        "mode": "code",
-        "size": "M",
-        "title": "Scanned/image-only B02-TCTD bank PDFs yield 0 text-chars -> Layout-6/7 parser never fires -> 0 table_rows: add OCR rasterization leg before text-table parse",
-        "desc": "LIVE-VERIFIED by PO 2026-06-15 done_verified gate probe of FIX-BCTC-ENRICH-SILENT-0ROWS: after rebuilding BOTH images and re-enriching VCB 2026Q1+2025Q1 through the fixed runBctcPdfPullJob, both STILL produced 0 bctc_table_rows. fitz raw: VCB_2026_Q1.pdf = 53 pages, 110 text-chars across first 8 pages, embedded images = SCANNED/image-only. pushBctcExtraction's 3 text-tiers (pdf_path / remote-URL / pdf-parse) all returned chars:0 confidence:0. The Layout-6/7 fix (68d54c7b) parses TEXT lines into code-rows and is correct, but it never receives text for scanned bank PDFs. MISSING LEG: rasterize image-only/low-text PDF pages and OCR them (PaddleOCR is already in the pdf-extractor image — pek-import-chain ALL OK) BEFORE handing text to _try_parse_code_row. This is the actual remaining root of get_bctc_full(VCB/CTG)='Chua co du lieu BCTC'.",
-        "generic_mandate": "GENERIC across ALL scanned/image-only PDFs (any ticker, any form). Detect low-text-density (e.g. chars-per-page below a threshold) and route to the OCR-rasterize path — NO per-ticker allowlist, NO VCB/CTG date-literal.",
-        "fail_loud_requirement": "If OCR rasterization still yields 0 rows, the existing 989654f2 enrich_failed gate keeps it visible (NOT done) — do not regress that fail-loud path.",
-        "baseline_pass": "done_verified = get_bctc_full(VCB) AND get_bctc_full(CTG) return REAL VARIED rows raw-verified vs named-volume market.db; AND FPT 2026Q1 (145) + VCB 2025Q4 (112) remain non-regressed; AND a genuinely-unparseable PDF still lands enrich_failed not done.",
-        "recurrence_class": "BCTC-VPS-PIPELINE-STALE (enrich-0-rows leg) — the scanned-PDF remainder after the silent-swallow + text-layout legs shipped.",
-        "depends_on": "FIX-BCTC-ENRICH-SILENT-0ROWS (merged; this completes its check-a leg)",
-        "source": "PO done_verified gate probe 2026-06-15 (FIX-BCTC-ENRICH-SILENT-0ROWS check-a FAIL)",
-        "created_at": "2026-06-15T20:10:36Z",
-        "dispatch_note": "P0 — TRUE remaining root of the VCB/CTG user-facing P0. dev-pdf-extractor leads (OCR rasterization + low-text-density routing). PaddleOCR already in-image. Generic, no allowlist. done_verified = real VARIED rows for VCB AND CTG vs named-volume DB."
       }
     ],
     "review": [
@@ -17523,6 +17564,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-15T07:10:00Z",
-  "updated_by": "dev-macro-indicators"
+  "updated_at": "2026-06-15T20:17:53Z",
+  "updated_by": "po-s64"
 }
