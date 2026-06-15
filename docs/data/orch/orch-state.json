@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T01:53:03Z",
+  "_updated_at": "2026-06-15T02:35:09Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T02:00:49Z",
+    "updated_at": "2026-06-15T02:35:09Z",
     "updated_by": "dev-team",
-    "active_task_id": "",
+    "active_task_id": "CI-RED-d20468c0-FIX",
     "next_agent": "po",
-    "note": "F-NSO-SELECTOR DONE_VERIFIED (router independent 3rd-timepoint raw re-probe 01:58:19-20Z, NOT ops badge). ops (ae38b62f2b59e8633) force-recreated + REBUILT macro-indicators single svc (image 27b2ccd5d2c3->45ba10db1717 NEW, CA cert globalsign-rsa-ov-ssl-ca-2018.crt in-image 1554B + merged, 13 peers healthy, NO compose down). SELECTOR ROOT LIVE-FIXED: get_vn_macro_indicators (IIP 103.3/108.8/109.1 sheet 2.IIPthang) + get_cpi_components (CPI 105.6/103.61 sheet 16.CPI) BOTH status=ok is_estimate=false REAL across 3 consistent timepoints — restored through the exact bai-top discovery->download->parse path 74dfdb0a repaired (absolute-URL regex + CA intermediate). /goal#1 RELIABILITY+ACCURACY achieved for the 2 discovery-only NSO tools; /goal#2 generic (regex captures any YYYY/MM). === REMAINING (distinct root, NOT a selector regression): get_vn_trade_balance still degraded — blocked_reason='trade_parser: sheet 14.XK not found ... does not exist'. Customs sheets '14.XK'(exports)/'15.NK'(imports) absent from current NSO monthly Excel (downstream parse bug, MASKED by the prior opaque-500, exposed now that discovery works). -> head ops->po: PO MINT FIX-NSO-TRADE-SHEET (apps/macro-indicators; trade_parser sheet-name mismatch; GENERIC /goal#2 derive sheet by content/pattern NOT hardcode 14.XK/15.NK; recon-cheap — xlsx reachable in-container, list actual sheet names first). === ALSO UNBLOCKED: F-BOP-QUERY-RECON (sequence_after=F-NSO-SELECTOR cleared) — recon-first ops-vps-fetch SBV Liferay OData; PO triage next tick. === OTHER LANE STILL IN FLIGHT (untouched): CI-RED-d20468c0-FIX in_progress/dev-mcp-server (agent ad7c357d49c10d38e) — on return router RAW-verify gates -> ops REBUILD mcp-server (force-recreate single svc, NEVER compose down) -> CI-green-on-push (SHA != d20468c0) -> done_verified. SF-1 dev-team-cron-singleton HELD until CI-RED resolves (tick still active). === F-BOP-ENCODING stays done (done_verified WITHHELD pending F-BOP-QUERY-RECON real-data). HELD (unchanged): S2 07-06 methodology brief (agent-father); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open hardening (ops/infra lane); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify); release batch CTG/VCB/D2D BLOCKED on undeployed bug #2776 (signal #6120). Commit explicit path only."
+    "note": "CI-RED-d20468c0-FIX CODE-DONE (dev-mcp-server ad7c357d49c10d38e, commit c79ce6bd, router RAW-verified GREEN: on-main HEAD chain; 4 files ALL apps/mcp-server/src/__tests__; foreign-capture NONE; toolCount 163 unchanged=no production code; independent UNCACHED bun test 31 pass/0 fail/127 expect; fix generic — 4 stale-contract reconciliations to current production, no hardcode). LOCAL MERGE GATE GREEN. === done_verified WITHHELD: verification_gate ci_green_on_subsequent_push is PUSH-BLOCKED — origin/main=d20468c0 (RED SHA) NOT ancestor of HEAD, diverged 143-ahead/6-behind (merge-base 59082d6d); 6-behind = ALL benign cloud chore commits (5x health-recheck + 1x tnb-audit). NO rebuild (test-only, runtime unchanged). === -> head dev->po: PO triages (sig dev-team-20260615T0235Z-cired-done-ci-push-blocked NEW) the origin-push decision (proposed LOW-RISK: git pull --rebase origin main + push -> GitHub Actions re-runs SHA != d20468c0 -> green -> promote CI-RED done_verified); this IS the standing DEFERRED origin-divergence (PO's call), NOT autonomous router force-push. PO also carries (now WIP-clear): FIX-NSO-TRADE-SHEET mint (sig nso-trade-sheet-followon NEW; trade_parser sheet 14.XK/15.NK absent — derive by content/pattern, /goal#2 generic) + F-BOP-QUERY-RECON dispatch (UNBLOCKED, recon-first ops-vps-fetch SBV Liferay OData). === SF-1 dev-team-cron-singleton: this in-flight tick complete -> release at clean tick-end (next cron 03:07Z). === F-NSO-SELECTOR done_verified (55c1dd3c, RESOLVED). F-BOP-ENCODING stays done (done_verified WITHHELD pending F-BOP-QUERY-RECON real-data). HELD (unchanged): S2 07-06 methodology brief (agent-father); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open (ops/infra lane); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify); release batch CTG/VCB/D2D BLOCKED on undeployed bug #2776 (signal #6120). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -434,6 +434,18 @@
         "payload_ref": "ops ae38b62f (image 45ba10db1717, CA cert in-image, 13 peers, 2-window macro+cpi REAL / trade degraded); router raw 3rd-timepoint 01:58:19-20Z concurs (macro ok/real, cpi ok/real, trade degraded 'sheet 14.XK not found'); F-NSO commit 74dfdb0a",
         "disposition": "",
         "ts": "2026-06-15T02:00:49Z"
+      },
+      {
+        "id": "dev-team-20260615T0235Z-cired-done-ci-push-blocked",
+        "from": "dev-team",
+        "to": "po",
+        "type": "code-done + ci-green-gate push-blocked — /goal#1 verified-withheld on origin divergence",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "CI-RED-d20468c0-FIX CODE-DONE + LOCAL-GREEN (router RAW-verified, NOT dev badge): dev-mcp-server ad7c357d49c10d38e reconciled 8 stale-contract tests / 4 files (commit c79ce6bd); independent UNCACHED bun test 31 pass/0 fail; 4 files all apps/mcp-server/src/__tests__, foreign-capture NONE, toolCount 163 unchanged (no production code). LOCAL MERGE GATE GREEN. BUT verification_gate ci_green_on_subsequent_push is PUSH-BLOCKED: origin/main=d20468c0 (the RED run 27516556457 SHA) is NOT an ancestor of HEAD; local diverged 143-ahead/6-behind (merge-base 59082d6d). The 6-behind are ALL benign cloud-generated chore commits (5x chore(health) MCP rechecks + 1x chore(audit/tnb) c95 NEEDS_ATTENTION) pushed to origin by cloud RemoteTriggers; local never pulls them. PO DECISION NEEDED: reconcile + push to turn origin CI green — proposed LOW-RISK path = git pull --rebase origin main (replay 143 work commits atop the 6 chores) then push; this is the standing DEFERRED origin-divergence (PO's call), NOT an autonomous router force-push. On push, GitHub Actions re-runs on SHA != d20468c0 -> green -> THEN promote CI-RED done_verified. NO rebuild (test-only, runtime container unchanged). Until then CI-RED = done (local-green), done_verified WITHHELD. ALSO PENDING PO (carry): FIX-NSO-TRADE-SHEET mint (sig nso-trade-sheet-followon NEW) + F-BOP-QUERY-RECON dispatch (UNBLOCKED, recon-first ops-vps-fetch). WIP now clear (CI-RED resolved) — both can proceed next tick.",
+        "payload_ref": "router raw: git log c79ce6bd/765518d1; bun test 31/0; git rev-list origin/main..HEAD=143, HEAD..origin/main=6; merge-base 59082d6d; 6-behind=d20468c0,d78fe061,504aa635,6d49d425,e3df5758,93e7f66a (all cloud chores); origin/main=d20468c0",
+        "disposition": "",
+        "ts": "2026-06-15T02:35:09Z"
       }
     ]
   },
@@ -531,7 +543,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T02:00:49Z",
+    "_updated_at": "2026-06-15T02:35:09Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13846,7 +13858,7 @@
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "owner_agent": "dev-mcp-server",
-        "status": "in_progress",
+        "status": "done",
         "priority": "high",
         "size": "S",
         "sequence_after": null,
@@ -13864,7 +13876,11 @@
         "triaged_by": "po",
         "dispatched_at": "2026-06-15T01:35:29Z",
         "dispatched_to": "dev-mcp-server",
-        "dispatch_agent_id": "ad7c357d49c10d38e"
+        "dispatch_agent_id": "ad7c357d49c10d38e",
+        "done_at": "2026-06-15T02:35:09Z",
+        "done_commit": "c79ce6bd",
+        "done_agent": "ad7c357d49c10d38e",
+        "router_reverify_verdict": "RAW-VERIFIED (router independent re-verify, NOT dev badge): G1 c79ce6bd on main HEAD chain; G2 commit = 4 files ALL apps/mcp-server/src/__tests__/*.test.ts, foreign-capture NONE, orch-state NOT in commit; G3 working tree clean (only dev review-flip), toolCount 163 unchanged = no production code; G4 independent UNCACHED bun test 31 pass/0 fail/127 expect; G5 fix generic — 4 stale-contract reconciliations to current production (scheduleCron regex, orphan two-cycle, cron_job_runs DELETE beforeEach, cron-expr loosened), no hardcode. LOCAL MERGE GATE GREEN. CI-GREEN-ON-PUSH = PUSH-BLOCKED: origin/main=d20468c0 (RED SHA) NOT ancestor of HEAD, diverged 143-ahead/6-behind; 6-behind = benign cloud chore commits (5x health-recheck + 1x tnb-audit); push/reconcile is PO DEFERRED call. done_verified WITHHELD pending PO origin-push decision. No rebuild (test-only)."
       },
       {
         "id": "F-BOP-QUERY-RECON",
