@@ -2,22 +2,31 @@
 //
 // Tests use synthetic Excel bytes built via excelize to avoid live network dependencies.
 // The test matrix covers:
-//   1. ParseTradeBalanceFromExcel with May-2026 anchor values (MUST pass per G12 DoD).
-//   2. BlocSplit is_estimate=true invariant (ARCH Decision A — PERMANENT).
-//   3. Error paths: missing sheets, no total row, empty sheets.
-//   4. FDI parse from sheet '12.FDI' with "Tổng số" total row.
-//   5. TestSelectSheetsByContent: content-based selection with SPACED names "14. XK"/"15. NK".
+//  1. ParseTradeBalanceFromExcel with May-2026 anchor values (MUST pass per G12 DoD).
+//  2. BlocSplit is_estimate=true invariant (ARCH Decision A — PERMANENT).
+//  3. Error paths: missing sheets, no total row, empty sheets.
+//  4. FDI parse from sheet '12.FDI' with "Tổng số" total row.
+//  5. TestSelectSheetsByContent: content-based selection with SPACED names "14. XK"/"15. NK".
+//  6. Plausibility guard: monthly > YTD, value out of band → parser error (FIX-NSO-TRADE-VALUE-SCALE).
 //
-// FIX-NSO-TRADE-SHEET: buildTradeTestExcel now uses actual sheet names "14. XK"/"15. NK"
-// (with space after period) to match the live 2026-06 NSO Excel. Sheet selection is
-// content-based via A1 header (selectSheetsByContent) — not by name.
+// FIX-NSO-TRADE-VALUE-SCALE (2026-06-15): tests updated to match the LIVE 2026-06 NSO Excel
+// column layout, verified via excelize.GetRows probe on the cached 646KB NSO Excel:
+//   - Total row: col0="TỔNG TRỊ GIÁ", col3=monthly M USD, col6=YTD M USD, col9=YoY% (std float)
+//   - HS rows: col0="", col1=sectorName, col3=monthly M USD, col9=YoY%
+//   - HS section header: col0="MẶT HÀNG CHỦ YẾU" (arms HS collection)
+//   - Unit: Triệu USD (M USD) — NO ×1000 conversion needed
+//   - YoY%: standard float "118.0" (NOT VN format — strconv.ParseFloat, NOT ParseVNNumber)
 //
-// Anchors (from orch-state.json live_contract + vmt-3-sample.json):
+// FIX-NSO-TRADE-SHEET (prior, 4c2fcb5c): uses actual sheet names "14. XK"/"15. NK"
+// (with space after period). Sheet selection is content-based via A1 header — immune to
+// month-to-month name drift.
 //
-//	export_total May-2026: ~27400 M USD
-//	import_total May-2026: ~24100 M USD
-//	trade_balance May-2026: ~+3300 M USD
-//	fdi_registered: 24810 M USD
+// Corrected anchors for May-2026 (from live NSO Excel 2026-06 excelize probe):
+//
+//	export_total:  ~46929 M USD (corrected from wrong 27400 due to col2/col3 misparse)
+//	import_total:  ~52141 M USD (corrected from wrong 24100)
+//	trade_balance: ~-5212 M USD (deficit; corrected from wrong +3300)
+//	fdi_registered: 24810 M USD (unchanged)
 //
 // Fence-C: this test file is in pkg/infrastructure.
 package infrastructure
@@ -38,15 +47,46 @@ const (
 	testFDISheetName    = "12.FDI" // unchanged: no space (still matches hardcoded)
 )
 
-// buildTradeTestExcel creates a synthetic NSO monthly Excel with the given data.
-// Uses actual 2026-06 sheet names "14. XK", "15. NK", "12.FDI" to match the live NSO Excel.
-// Sheet A1 headers contain Vietnamese keywords so selectSheetsByContent picks them up.
+// makeTradeRow builds a 13-element row slice matching the live NSO Excel column layout.
 //
-// exportRows: rows for the export sheet (A1="14. Hàng hóa xuất khẩu"; each data row = [col0_label, "", col2_abs, col3_ytd, col4_yoy])
-// importRows: rows for the import sheet (A1="15. Hàng hóa nhập khẩu"; same structure)
-// fdiRows: rows for the FDI sheet (A1="12. Đầu tư nước ngoài"; each row = [col0, col1_label, col2_registered])
+// FIX-NSO-TRADE-VALUE-SCALE: column layout verified via excelize.GetRows probe 2026-06:
 //
-// The first row in exportRows/importRows with empty col0 is treated as the total row.
+//	col 0 (colLabel):    row label ("TỔNG TRỊ GIÁ", "MẶT HÀNG CHỦ YẾU", or "" for HS rows)
+//	col 1 (colSubLabel): commodity/sector name for HS rows (blank for total/header rows)
+//	col 2:               Lượng (quantity, nghìn tấn — blank for most rows, causes old col2 bug)
+//	col 3 (colMonthly):  monthly Trị giá M USD (integer string, e.g. "46929")
+//	col 4-5:             blank (Lượng YTD, etc.)
+//	col 6 (colYTD):      YTD Trị giá M USD (integer string, e.g. "215656")
+//	col 7-8:             blank
+//	col 9 (colYoYPct):   YoY% Trị giá monthly (standard decimal float, e.g. "118.0")
+//	col 10-12:           blank (additional YoY% columns)
+func makeTradeRow(label, subLabel, monthlyMnUSD, ytdMnUSD, yoyPct string) []string {
+	row := make([]string, 13)
+	row[colLabel] = label          // col 0: main label
+	row[colSubLabel] = subLabel    // col 1: sub-label / commodity name
+	// col 2: Lượng (blank — most rows have no quantity; the old parser wrongly used this)
+	row[colMonthly] = monthlyMnUSD // col 3: monthly Trị giá M USD
+	// col 4: blank
+	// col 5: Lượng YTD (blank)
+	row[colYTD] = ytdMnUSD        // col 6: YTD Trị giá M USD
+	// col 7, 8: blank
+	row[colYoYPct] = yoyPct       // col 9: YoY% standard float (NOT VN format)
+	// col 10, 11, 12: blank (additional YoY columns)
+	return row
+}
+
+// buildTradeTestExcel creates a synthetic NSO monthly Excel matching the LIVE 2026-06 layout.
+//
+// FIX-NSO-TRADE-VALUE-SCALE: structure verified against live excelize.GetRows probe.
+//
+// Row layout per sheet:
+//
+//	Row 1 (A1): Vietnamese header keyword (for selectSheetsByContent — not a data row)
+//	Rows 2+: caller-supplied data rows (exportRows/importRows — use makeTradeRow)
+//
+// exportRows: rows for "14. XK" sheet (A1 = "14. Hàng hóa xuất khẩu")
+// importRows: rows for "15. NK" sheet (A1 = "15. Hàng hóa nhập khẩu")
+// fdiRows: rows for "12.FDI" sheet (A1 = "12. Đầu tư nước ngoài vào Việt Nam")
 func buildTradeTestExcel(
 	exportRows, importRows, fdiRows [][]string,
 ) ([]byte, error) {
@@ -123,78 +163,70 @@ func itoa(n int) string {
 	return s
 }
 
-// TestParseTradeBalanceFromExcel_AnchorMay2026 is the MANDATORY anchor test.
-// May-2026: export ~27.4 bn USD, import ~24.1 bn USD, balance ~+3.3 bn USD.
-// Values stored as tỷ USD in col2 (VN format "27.400" → ParseVNNumber → 27400 M USD).
-// Total row = blank col0.
+// ---------------------------------------------------------------------------
+// Minimal valid trade rows for tests that just need parse to succeed.
+// ---------------------------------------------------------------------------
+
+// minExportRows is a minimal valid export sheet: total row only.
+// Values within plausibility band: 46929 M USD monthly < 215656 M USD YTD.
+var minExportRows = [][]string{
+	makeTradeRow("TỔNG TRỊ GIÁ", "", "46929", "215656", "118.0"),
+}
+
+// minImportRows is a minimal valid import sheet: total row only.
+// Values within plausibility band: 52141 M USD monthly < 229464 M USD YTD.
+var minImportRows = [][]string{
+	makeTradeRow("TỔNG TRỊ GIÁ", "", "52141", "229464", "133.8"),
+}
+
+// minFDIRows is a minimal valid FDI sheet: total row only.
+var minFDIRows = [][]string{
+	{"Cả nước", "Tổng số", "24810", "14500"},
+}
+
+// ---------------------------------------------------------------------------
+// TestParseTradeBalanceFromExcel_AnchorMay2026 — MANDATORY anchor (G12 DoD gate)
+// ---------------------------------------------------------------------------
+
+// TestParseTradeBalanceFromExcel_AnchorMay2026 is the MANDATORY anchor test (G12 DoD).
+//
+// FIX-NSO-TRADE-VALUE-SCALE: corrected anchor values from live NSO Excel 2026-06:
+//
+//	export_total: 46929 M USD (col3 of "TỔNG TRỊ GIÁ" row in XK sheet)
+//	import_total: 52141 M USD (col3 of "TỔNG TRỊ GIÁ" row in NK sheet)
+//	trade_balance: -5212 M USD (46929 - 52141 = -5212, VN ran a deficit in May-2026)
+//
+// The test also verifies:
+//   - YTD values parsed from col6
+//   - YoY% parsed as standard float from col9 (NOT VN format)
+//   - HS sector rows collected after "MẶT HÀNG CHỦ YẾU" section header
+//   - HS label comes from col1 (sub-label), not col0
+//   - HSSector.AbsoluteBnUSD = monthly M USD / 1000
 func TestParseTradeBalanceFromExcel_AnchorMay2026(t *testing.T) {
-	// Export sheet: total row (blank col0) + 2 HS rows.
-	// "27.400" in col2 (VN format: 27.400 tỷ USD = 27400 M USD → ParseVNNumber = 27400, *1000 = 27400000? NO)
-	// CRITICAL: values in col2 are in tỷ USD (billion USD).
-	// "27.400" in VN format → ParseVNNumber removes periods → 27400 → that's 27400 tỷ USD?
-	// NO — re-read the contract: "col2=current month absolute (tỷ USD), VN number format: period=thousands sep"
-	// So "27.4" in the Excel = 27.4 tỷ USD (27.4 billion USD = 27400 M USD).
-	// But if VN format: "27.4" with period as thousands sep → ParseVNNumber removes periods → "274" → 274? That's wrong.
-	// The key insight: "27.4" = 27.4 billion (the Excel value IS 27.4, not "27.400").
-	// VN format applies when the Excel cell has something like "27.400,50" (thousands.decimal).
-	// For simple values like "27.4" (no comma), ParseVNNumber still works: removes no periods-that-aren't-separators.
-	// Actually ParseVNNumber("27.4") → remove periods → "274" → 274? That breaks.
-	// Wait: ParseVNNumber removes ALL periods. "27.4" → "274" → 274.0. That's wrong (should be 27.4).
-	// BUT "27.400" (VN thousands format meaning 27400) → "27400" → 27400.0. Correct.
-	// So: the contract says period IS the thousands separator. "27.400" = 27400 M USD (NOT 27.4 bn).
-	// Then *1000 conversion in parser is wrong — the value IS already in M USD if "27.400"=27400.
-	// Re-read: "col2=current month absolute (tỷ USD)". So unit is tỷ USD (billion USD).
-	// "27.4" bn = 27400 M USD. VN format "27,400" would be 27.400 tỷ. OR "27.400" (period sep) = 27400?
-	// The anchor says 27.4 bn USD. Let's use plain "27.4" in the test (no VN thousands sep since < 1000).
-	// ParseVNNumber("27.4") removes periods → "274" → 274 ≠ 27.4. BUG.
-	// FIX: For values < 1000 tỷ USD, no thousands separator exists. "27.4" = 27.4 (no period).
-	// ParseVNNumber step 1: remove periods → "274". That's wrong for "27.4".
-	// Actually: re-read ParseVNNumber: removes ALL periods first, then replaces comma→dot.
-	// "27.4" → remove periods → "274" → 274. That's wrong.
-	// BUT the Excel is in Vietnamese VN format where period IS the thousands sep.
-	// So "27.4" in an Excel cell means 27.4 (no thousands component, period is decimal here? No.)
-	// This is the core ambiguity. The BOP probe used "7.654" = 7654 (period=thousands, no decimal).
-	// For "27.4": is this 27.4 (decimal point) or 27 thousands + 4 = 274? Neither makes sense.
-	//
-	// RE-READING THE CONTRACT CAREFULLY:
-	// "col2=current month absolute (tỷ USD)" + "period=thousands sep, comma=decimal (7.654 = 7,654 M USD)"
-	// The BOP example is M USD: "7.654" = 7654 M USD (period=thousands sep, no decimal comma present).
-	// For trade: col2 is in tỷ USD. "27.400" in VN format = 27400 (period=thousands) tỷ? No, that's absurd.
-	// More likely: the Excel stores "27.4" meaning 27.4 tỷ USD AND the VN format note means:
-	//   the NUMBER FORMAT of the cell uses period as thousands, comma as decimal.
-	//   So 27.400,50 would be 27400.50 tỷ USD. But the May anchor is 27.4 tỷ USD = a value
-	//   that in VN format might appear as "27,4" (comma=decimal).
-	//
-	// SAFEST APPROACH: look at what ParseVNNumber actually does:
-	//   1. Remove all periods  → "27.4" → "274"  (wrong for 27.4)
-	//   2. Replace comma → "."  → "27,4" → "27.4" (correct for 27.4)
-	// So the Excel cell for 27.4 tỷ would be "27,4" in VN format (comma=decimal).
-	// And "27.400" (VN format) = 27400 M USD (BOP M USD), already in M USD, no *1000.
-	//
-	// CONCLUSION: For tỷ USD values in XK/NK sheets, the cell stores the value in tỷ USD
-	// using VN format: "27,4" = 27.4 tỷ USD. ParseVNNumber("27,4") = 27.4. Then *1000 = 27400 M USD.
-	// The test should use "27,4" for 27.4 tỷ and "24,1" for 24.1 tỷ.
-	//
-	// For the total row in the ACTUAL NSO Excel, the cell value may be formatted differently.
-	// The parser already uses *1000 conversion. Tests use comma-decimal VN format.
+	// Export sheet structure (matches live NSO Excel 2026-06):
+	// - Total row: col0="TỔNG TRỊ GIÁ", col3=46929 M USD, col6=215656 M USD YTD, col9=118.0 YoY%
+	// - Bloc sub-total rows (col0="", col1=zone label) — present in live Excel after total
+	// - HS section header: col0="MẶT HÀNG CHỦ YẾU" (arms HS row collection)
+	// - HS commodity rows: col0="", col1=commodity name, col3=monthly M USD, col9=YoY%
 	exportRows := [][]string{
-		// Header row — skipped (only 1 col, < minTradeCols).
-		{"Chỉ tiêu"},
-		// Total row: blank col0, col2="27,4" (tỷ USD VN format), col3="137,0" (YTD), col4="15,5" (YoY%).
-		{"", "", "27,4", "137,0", "15,5"},
-		// HS breakdown rows.
-		{"Điện tử máy tính", "", "8,5", "42,0", "18,0"},
-		{"Dệt may", "", "3,2", "15,5", "10,0"},
+		makeTradeRow("TỔNG TRỊ GIÁ", "", "46929", "215656", "118.0"),
+		// Bloc sub-totals (after total; before HS section — NOT the national total)
+		makeTradeRow("", "Khu vực kinh tế trong nước", "9051", "43498", "103.5"),
+		makeTradeRow("", "Khu vực có vốn đầu tư NN", "37878", "172158", "122.0"),
+		// HS section header — arms hsSectionStarted flag
+		makeTradeRow("MẶT HÀNG CHỦ YẾU", "", "", "", ""),
+		// HS commodity breakdown rows
+		makeTradeRow("", "Điện tử, máy tính", "13394", "60000", "146.3"),
+		makeTradeRow("", "Dệt may", "3188", "15000", "96.6"),
 	}
 
 	importRows := [][]string{
-		{"Chỉ tiêu"},
-		// Total row: 24.1 tỷ USD.
-		{"", "", "24,1", "120,0", "12,3"},
-		{"Máy móc thiết bị", "", "5,1", "25,0", "8,0"},
+		makeTradeRow("TỔNG TRỊ GIÁ", "", "52141", "229464", "133.8"),
+		makeTradeRow("", "Khu vực kinh tế trong nước", "13175", "64261", "122.2"),
+		makeTradeRow("MẶT HÀNG CHỦ YẾU", "", "", "", ""),
+		makeTradeRow("", "Máy móc thiết bị", "5100", "25000", "110.0"),
 	}
 
-	// FDI sheet: header + total row ("Tổng số" in col1) + a province row.
 	fdiRows := [][]string{
 		{"Tỉnh/Thành phố", "Loại", "Vốn đăng ký (Triệu USD)", "Vốn thực hiện"},
 		{"Cả nước", "Tổng số", "24810", "14500"},
@@ -211,22 +243,39 @@ func TestParseTradeBalanceFromExcel_AnchorMay2026(t *testing.T) {
 		t.Fatalf("ParseTradeBalanceFromExcel: %v", err)
 	}
 
-	// VMT-1a anchor: export_total ~27400 M USD (27.4 tỷ × 1000).
-	wantExport := 27400.0
+	// FIX-NSO-TRADE-VALUE-SCALE anchor: export_total ~46929 M USD (live NSO May-2026).
+	wantExport := 46929.0
 	if math.Abs(record.ExportTotalMnUSD-wantExport) > 1.0 {
 		t.Errorf("ExportTotalMnUSD: got %.2f, want ~%.2f", record.ExportTotalMnUSD, wantExport)
 	}
 
-	// VMT-1a anchor: import_total ~24100 M USD.
-	wantImport := 24100.0
+	// FIX-NSO-TRADE-VALUE-SCALE anchor: import_total ~52141 M USD.
+	wantImport := 52141.0
 	if math.Abs(record.ImportTotalMnUSD-wantImport) > 1.0 {
 		t.Errorf("ImportTotalMnUSD: got %.2f, want ~%.2f", record.ImportTotalMnUSD, wantImport)
 	}
 
-	// VMT-1a anchor: trade_balance ~+3300 M USD.
-	wantBalance := 3300.0
+	// FIX-NSO-TRADE-VALUE-SCALE anchor: trade_balance ~-5212 M USD (deficit).
+	wantBalance := -5212.0
 	if math.Abs(record.TradeBalanceMnUSD-wantBalance) > 1.0 {
 		t.Errorf("TradeBalanceMnUSD: got %.2f, want ~%.2f", record.TradeBalanceMnUSD, wantBalance)
+	}
+
+	// YTD values from col6.
+	wantExportYTD := 215656.0
+	if math.Abs(record.ExportYTDMnUSD-wantExportYTD) > 1.0 {
+		t.Errorf("ExportYTDMnUSD: got %.2f, want ~%.2f", record.ExportYTDMnUSD, wantExportYTD)
+	}
+	wantImportYTD := 229464.0
+	if math.Abs(record.ImportYTDMnUSD-wantImportYTD) > 1.0 {
+		t.Errorf("ImportYTDMnUSD: got %.2f, want ~%.2f", record.ImportYTDMnUSD, wantImportYTD)
+	}
+
+	// YoY% from col9 (standard decimal float, strconv.ParseFloat NOT ParseVNNumber).
+	// "118.0" stored as-is — represents 118% index (= 18% growth vs prior year).
+	wantExportYoY := 118.0
+	if math.Abs(record.ExportYoYPct-wantExportYoY) > 0.1 {
+		t.Errorf("ExportYoYPct: got %.2f, want ~%.2f", record.ExportYoYPct, wantExportYoY)
 	}
 
 	// Period pass-through.
@@ -234,9 +283,25 @@ func TestParseTradeBalanceFromExcel_AnchorMay2026(t *testing.T) {
 		t.Errorf("Period: got %q, want 2026-05", record.Period)
 	}
 
-	// HS breakdown rows populated.
+	// HS breakdown rows from col1 (sub-label), after "MẶT HÀNG CHỦ YẾU" section header.
 	if len(record.HSExports) == 0 {
-		t.Error("HSExports: expected at least 1 HS row")
+		t.Error("HSExports: expected at least 1 HS row (after MẶT HÀNG CHỦ YẾU section header)")
+	}
+	// Verify HS sector label comes from col1 (not col0) and AbsoluteBnUSD = M USD / 1000.
+	found := false
+	for _, s := range record.HSExports {
+		if s.NameVI == "Điện tử, máy tính" {
+			found = true
+			// 13394 M USD / 1000 = 13.394 bn USD
+			wantBnUSD := 13.394
+			if math.Abs(s.AbsoluteBnUSD-wantBnUSD) > 0.01 {
+				t.Errorf("HSExport 'Điện tử, máy tính' AbsoluteBnUSD: got %.4f, want ~%.4f",
+					s.AbsoluteBnUSD, wantBnUSD)
+			}
+		}
+	}
+	if !found {
+		t.Errorf("HSExports: expected sector 'Điện tử, máy tính' (col1 sub-label) — got %v", record.HSExports)
 	}
 
 	// VMT-1a is_estimate=false (primary source).
@@ -250,21 +315,14 @@ func TestParseTradeBalanceFromExcel_AnchorMay2026(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// BlocSplit invariants (ARCH Decision A — PERMANENT)
+// ---------------------------------------------------------------------------
+
 // TestParseTradeBalanceFromExcel_BlocSplitIsEstimateAlwaysTrue verifies ARCH Decision A invariant.
 // BlocSplit.FDI.IsEstimate and BlocSplit.Domestic.IsEstimate must ALWAYS be true.
 func TestParseTradeBalanceFromExcel_BlocSplitIsEstimateAlwaysTrue(t *testing.T) {
-	exportRows := [][]string{
-		{"", "", "27,4", "137,0", "15,5"},
-		{"Điện tử", "", "8,5", "42,0", "18,0"},
-	}
-	importRows := [][]string{
-		{"", "", "24,1", "120,0", "12,3"},
-	}
-	fdiRows := [][]string{
-		{"Cả nước", "Tổng số", "24810", "14500"},
-	}
-
-	excelBytes, err := buildTradeTestExcel(exportRows, importRows, fdiRows)
+	excelBytes, err := buildTradeTestExcel(minExportRows, minImportRows, minFDIRows)
 	if err != nil {
 		t.Fatalf("buildTradeTestExcel: %v", err)
 	}
@@ -286,18 +344,7 @@ func TestParseTradeBalanceFromExcel_BlocSplitIsEstimateAlwaysTrue(t *testing.T) 
 // TestParseTradeBalanceFromExcel_BlocSplitFDIValue verifies FDI registered capital parse.
 // 24810 M USD from the '12.FDI' sheet "Tổng số" row.
 func TestParseTradeBalanceFromExcel_BlocSplitFDIValue(t *testing.T) {
-	exportRows := [][]string{
-		{"", "", "27,4", "137,0", "15,5"},
-	}
-	importRows := [][]string{
-		{"", "", "24,1", "120,0", "12,3"},
-	}
-	// FDI "Tổng số" row with 24810 M USD.
-	fdiRows := [][]string{
-		{"Cả nước", "Tổng số", "24810", "14500"},
-	}
-
-	excelBytes, err := buildTradeTestExcel(exportRows, importRows, fdiRows)
+	excelBytes, err := buildTradeTestExcel(minExportRows, minImportRows, minFDIRows)
 	if err != nil {
 		t.Fatalf("buildTradeTestExcel: %v", err)
 	}
@@ -314,11 +361,7 @@ func TestParseTradeBalanceFromExcel_BlocSplitFDIValue(t *testing.T) {
 
 // TestParseTradeBalanceFromExcel_BlocSplitNote verifies the permanent cross-join note.
 func TestParseTradeBalanceFromExcel_BlocSplitNote(t *testing.T) {
-	exportRows := [][]string{{"", "", "27,4", "137,0", "15,5"}}
-	importRows := [][]string{{"", "", "24,1", "120,0", "12,3"}}
-	fdiRows := [][]string{{"Cả nước", "Tổng số", "24810", "14500"}}
-
-	excelBytes, err := buildTradeTestExcel(exportRows, importRows, fdiRows)
+	excelBytes, err := buildTradeTestExcel(minExportRows, minImportRows, minFDIRows)
 	if err != nil {
 		t.Fatalf("buildTradeTestExcel: %v", err)
 	}
@@ -334,8 +377,12 @@ func TestParseTradeBalanceFromExcel_BlocSplitNote(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// Error paths
+// ---------------------------------------------------------------------------
+
 // TestParseTradeBalanceFromExcel_MissingExportSheet verifies fail-loud on missing sheet.
-// FIX-NSO-TRADE-SHEET: missing sheet is now detected via selectSheetsByContent failure
+// FIX-NSO-TRADE-SHEET: missing sheet is detected via selectSheetsByContent failure
 // (no sheet with A1 "xuất khẩu" found), not by hardcoded name lookup.
 func TestParseTradeBalanceFromExcel_MissingExportSheet(t *testing.T) {
 	// Build Excel with only an import sheet (no export sheet A1 "xuất khẩu").
@@ -355,27 +402,23 @@ func TestParseTradeBalanceFromExcel_MissingExportSheet(t *testing.T) {
 }
 
 // TestParseTradeBalanceFromExcel_MissingTotalRow verifies fail-loud when no total row found.
+// FIX-NSO-TRADE-VALUE-SCALE: total row must have col0 == "TỔNG TRỊ GIÁ".
+// A sheet with no such row returns an error.
 func TestParseTradeBalanceFromExcel_MissingTotalRow(t *testing.T) {
-	// Export sheet with only labeled rows (no blank col0 total row).
+	// Export sheet with NO "TỔNG TRỊ GIÁ" row — only HS sub-rows.
 	exportRows := [][]string{
-		{"Điện tử", "", "8,5", "42,0", "18,0"},
-		{"Dệt may", "", "3,2", "15,5", "10,0"},
+		makeTradeRow("MẶT HÀNG CHỦ YẾU", "", "", "", ""),
+		makeTradeRow("", "Điện tử, máy tính", "13394", "60000", "146.3"),
+		makeTradeRow("", "Dệt may", "3188", "15000", "96.6"),
 	}
-	importRows := [][]string{
-		{"", "", "24,1", "120,0", "12,3"},
-	}
-	fdiRows := [][]string{
-		{"Cả nước", "Tổng số", "24810", "14500"},
-	}
-
-	excelBytes, err := buildTradeTestExcel(exportRows, importRows, fdiRows)
+	excelBytes, err := buildTradeTestExcel(exportRows, minImportRows, minFDIRows)
 	if err != nil {
 		t.Fatalf("buildTradeTestExcel: %v", err)
 	}
 
 	_, err = ParseTradeBalanceFromExcel(excelBytes, "2026-05")
 	if err == nil {
-		t.Error("expected error when export total row is missing")
+		t.Error("expected error when export 'TỔNG TRỊ GIÁ' total row is missing")
 	}
 }
 
@@ -383,19 +426,13 @@ func TestParseTradeBalanceFromExcel_MissingTotalRow(t *testing.T) {
 // when the FDI sheet is present but "Tổng số" row is missing.
 // The overall parse should still succeed; BlocSplit.FDI.IsEstimate must be true.
 func TestParseTradeBalanceFromExcel_FDIMissingFailClosed(t *testing.T) {
-	exportRows := [][]string{
-		{"", "", "27,4", "137,0", "15,5"},
-	}
-	importRows := [][]string{
-		{"", "", "24,1", "120,0", "12,3"},
-	}
 	// FDI sheet exists but has NO "Tổng số" row.
-	fdiRows := [][]string{
+	fdiRowsMissing := [][]string{
 		{"Hà Nội", "Tỉnh", "3200", "2100"},
 		{"TP.HCM", "Tỉnh", "5000", "3500"},
 	}
 
-	excelBytes, err := buildTradeTestExcel(exportRows, importRows, fdiRows)
+	excelBytes, err := buildTradeTestExcel(minExportRows, minImportRows, fdiRowsMissing)
 	if err != nil {
 		t.Fatalf("buildTradeTestExcel: %v", err)
 	}
@@ -416,7 +453,100 @@ func TestParseTradeBalanceFromExcel_FDIMissingFailClosed(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// FIX-NSO-TRADE-SHEET — content-based sheet selection tests
+// FIX-NSO-TRADE-VALUE-SCALE — plausibility guard tests
+// ---------------------------------------------------------------------------
+
+// TestParseTradeBalanceFromExcel_PlausibilityGuard_MonthlyExceedsYTD verifies that
+// the parser fails loudly when monthly > YTD (impossible — single month cannot exceed cumulative).
+// This is the primary FIX-NSO-TRADE-VALUE-SCALE guard condition that would have caught
+// the original implausible values (June import 212000mn = 59% of YTD 358000mn).
+func TestParseTradeBalanceFromExcel_PlausibilityGuard_MonthlyExceedsYTD(t *testing.T) {
+	// Export monthly (80000) > YTD (50000) — impossible.
+	exportBadRows := [][]string{
+		makeTradeRow("TỔNG TRỊ GIÁ", "", "80000", "50000", "110.0"),
+	}
+	excelBytes, err := buildTradeTestExcel(exportBadRows, minImportRows, minFDIRows)
+	if err != nil {
+		t.Fatalf("buildTradeTestExcel: %v", err)
+	}
+
+	_, err = ParseTradeBalanceFromExcel(excelBytes, "2026-06")
+	if err == nil {
+		t.Error("expected plausibility error when export_total > export_ytd (monthly > cumulative)")
+	}
+}
+
+// TestParseTradeBalanceFromExcel_PlausibilityGuard_ValueOutOfBand verifies that
+// the parser fails loudly when a monthly value is implausibly large (> 200000 M USD = $200bn).
+// The original bug produced 212000 M USD import (=$212bn) — this guard catches it.
+func TestParseTradeBalanceFromExcel_PlausibilityGuard_ValueOutOfBand(t *testing.T) {
+	// Import = 212000 M USD ($212bn) — implausibly large (the old bug value).
+	importBadRows := [][]string{
+		makeTradeRow("TỔNG TRỊ GIÁ", "", "212000", "358000", "130.0"),
+	}
+	excelBytes, err := buildTradeTestExcel(minExportRows, importBadRows, minFDIRows)
+	if err != nil {
+		t.Fatalf("buildTradeTestExcel: %v", err)
+	}
+
+	_, err = ParseTradeBalanceFromExcel(excelBytes, "2026-06")
+	if err == nil {
+		t.Error("expected plausibility error when import_total=212000 M USD (> 200000 M USD upper bound)")
+	}
+}
+
+// TestParseTradeBalanceFromExcel_PlausibilityGuard_BalanceOutOfBand verifies that
+// the parser fails loudly when |balance| > 50000 M USD ($50bn).
+func TestParseTradeBalanceFromExcel_PlausibilityGuard_BalanceOutOfBand(t *testing.T) {
+	// Export=8000, Import=70000 -> balance=-62000 M USD (|$62bn| > $50bn limit).
+	exportSmall := [][]string{makeTradeRow("TỔNG TRỊ GIÁ", "", "8000", "40000", "110.0")}
+	importLarge := [][]string{makeTradeRow("TỔNG TRỊ GIÁ", "", "70000", "200000", "130.0")}
+	excelBytes, err := buildTradeTestExcel(exportSmall, importLarge, minFDIRows)
+	if err != nil {
+		t.Fatalf("buildTradeTestExcel: %v", err)
+	}
+
+	_, err = ParseTradeBalanceFromExcel(excelBytes, "2026-06")
+	if err == nil {
+		t.Error("expected plausibility error when |trade_balance|=62000 M USD > 50000 M USD sane band")
+	}
+}
+
+// TestParseTradeBalanceFromExcel_PlausibilityGuard_ValidValues verifies that
+// plausible monthly values pass the guard without error.
+// VN monthly trade ~$25-60bn (25000-60000 M USD): both must be within [5000, 200000].
+func TestParseTradeBalanceFromExcel_PlausibilityGuard_ValidValues(t *testing.T) {
+	excelBytes, err := buildTradeTestExcel(minExportRows, minImportRows, minFDIRows)
+	if err != nil {
+		t.Fatalf("buildTradeTestExcel: %v", err)
+	}
+
+	record, err := ParseTradeBalanceFromExcel(excelBytes, "2026-05")
+	if err != nil {
+		t.Fatalf("plausibility guard rejected valid values: %v", err)
+	}
+
+	// Verify values are within plausible band.
+	if record.ExportTotalMnUSD < plausibilityMinMnUSD || record.ExportTotalMnUSD > plausibilityMaxMnUSD {
+		t.Errorf("ExportTotalMnUSD %.0f outside [%.0f, %.0f]",
+			record.ExportTotalMnUSD, plausibilityMinMnUSD, plausibilityMaxMnUSD)
+	}
+	if record.ImportTotalMnUSD < plausibilityMinMnUSD || record.ImportTotalMnUSD > plausibilityMaxMnUSD {
+		t.Errorf("ImportTotalMnUSD %.0f outside [%.0f, %.0f]",
+			record.ImportTotalMnUSD, plausibilityMinMnUSD, plausibilityMaxMnUSD)
+	}
+	if record.ExportTotalMnUSD > record.ExportYTDMnUSD {
+		t.Errorf("ExportTotalMnUSD %.0f > ExportYTDMnUSD %.0f (impossible)",
+			record.ExportTotalMnUSD, record.ExportYTDMnUSD)
+	}
+	if record.ImportTotalMnUSD > record.ImportYTDMnUSD {
+		t.Errorf("ImportTotalMnUSD %.0f > ImportYTDMnUSD %.0f (impossible)",
+			record.ImportTotalMnUSD, record.ImportYTDMnUSD)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// FIX-NSO-TRADE-SHEET — content-based sheet selection tests (unchanged from prior fix)
 // ---------------------------------------------------------------------------
 
 // TestSelectSheetsByContent verifies that selectSheetsByContent correctly identifies

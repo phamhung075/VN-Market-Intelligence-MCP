@@ -5,50 +5,64 @@
 // vs the former "14.XK" / "15.NK". Labels drift month-to-month. Sheet selection is
 // now content-based via selectSheetsByContent() — immune to name/spacing changes.
 //
-// Contract derived from LIVE payload in scripts/probes/vmt-3-sample.json and the
-// authoritative live_contract in orch-state.json (VMT-1a-TRADE-BALANCE-TOTAL-HS /
-// VMT-1b-TRADE-BALANCE-BLOC-SPLIT).
+// Contract derived from LIVE RECON of the cached NSO Excel (2026-06, 646KB,
+// FIX-NSO-TRADE-VALUE-SCALE — verified via excelize.GetRows probe):
 //
-// Sheet layout (live_contract parse_rules):
+// Sheet layout (XK/NK sheets — verified live 2026-06):
 //
-//	Export sheet (A1 contains "xuất khẩu"):
-//	  col 0: HS code / sector name (Vietnamese string)
-//	  col 2: current-month absolute (tỷ USD, VN thousands-sep format)
-//	  col 3: YTD cumulative (tỷ USD, VN thousands-sep format)
-//	  col 4: YoY% vs same period prior year
+//	Row 1: A1 header ("14. Hàng hóa xuất khẩu" / "15. Hàng hóa nhập khẩu")
+//	Rows 2-8: multi-row header (blank, unit note, column header rows)
+//	Row 9: "TỔNG TRỊ GIÁ" — national total row (col0 label)
+//	  col3: current-month Trị giá (Triệu USD = M USD, integer string "46929")
+//	  col6: YTD Trị giá 5 months (Triệu USD, integer string "215656")
+//	  col9: YoY% Trị giá monthly (standard float "118.0" = 18% growth vs prior year)
+//	Rows 10+: economic zone sub-totals (Khu vực kinh tế, Khu vực FDI, Dầu thô, Hàng hoá khác)
+//	  — same column structure; parsed as HS-like rows but skipped for total detection
+//	Row with col0 "MẶT HÀNG CHỦ YẾU": HS section header (no numeric data)
+//	Rows after "MẶT HÀNG CHỦ YẾU": HS commodity breakdown rows
+//	  col1: commodity/sector name (e.g., "Thủy sản ", "Điện tử, máy tính")
+//	  col3: monthly value M USD
+//	  col9: YoY% monthly
 //
-//	Import sheet (A1 contains "nhập khẩu"): same column structure as export sheet.
+// Unit: Triệu USD (M USD) — col3/col6 values are ALREADY in M USD (no ×1000 needed).
+// Unit note appears in row 3: "Nghìn tấn; Triệu USD" (col12 of header region).
 //
-//	FDI sheet (A1 contains "đầu tư"):
-//	  col 1: row label ("Tổng số" for national total)
-//	  The total registered capital row is: Col1 == "Tổng số" → registered capital M USD
-//	  (from vmt-3-sample.json: total_registered_5m_2026_mn_usd = 24810)
+// Column index constants (0-indexed, from live excelize.GetRows probe):
 //
-// VN number format (tỷ USD cells in XK/NK): period=thousands sep, comma=decimal.
-// Examples: "27.400" → 27400 M USD (then / 1000 for bn USD if needed).
-// Absolute column stores tỷ USD (billion USD), so "27.4" → 27.4 bn USD = 27400 M USD.
-// ParseVNNumber handles this: removes period-separators, replaces comma→point.
-// For YoY% column: standard float ("15.5" = 15.5%) — ParseVNNumber also works.
+//	colLabel     = 0   // main row label ("TỔNG TRỊ GIÁ", "MẶT HÀNG CHỦ YẾU", blank for HS)
+//	colSubLabel  = 1   // sub-label / commodity name for HS rows
+//	colMonthly   = 3   // current-month Trị giá (M USD, integer string)
+//	colYTD       = 6   // YTD Trị giá 5 months (M USD, integer string)
+//	colYoYPct    = 9   // YoY% Trị giá monthly (standard decimal float, e.g. "118.0")
 //
-// Total rows: first data row after the sheet header (row 0 is usually the total row
-// for the whole economy). The parser uses label matching:
-//   - XK/NK total: row where col0 matches total patterns (e.g., "Tổng số", blank col0
-//     on first numeric-content row, or a row with bold total indicator — we use
-//     positional: first row with valid col2+col3+col4 AND no label → treated as total).
-//   - FDI total: row where col1 (0-indexed) == "Tổng số".
+// Total row detection: col0 == "TỔNG TRỊ GIÁ" (case-insensitive).
+// HS rows: col1 non-blank AND col3 numeric AND past the "MẶT HÀNG CHỦ YẾU" section header.
 //
-// HS breakdown: ALL rows with a non-empty col0 label AND valid col2+col4 numeric data.
-// Skip: header rows, subtotal rows with blank numeric cells, note rows.
+// YoY% parsing: col9 uses standard decimal float format ("118.0" = 18% growth index).
+//   strconv.ParseFloat is used directly (NOT ParseVNNumber — which strips periods and
+//   would incorrectly convert "118.0" → "1180" → 1180.0).
 //
-// Anchor (must pass in tests): May-2026
+// ParseVNNumber is used only for col3/col6 (integer strings with no decimal period).
 //
-//	export_total: ~27.4 bn USD (~27400 M USD)
-//	import_total: ~24.1 bn USD (~24100 M USD)
-//	trade_balance: ~+3.3 bn USD (~+3300 M USD)
+// FDI sheet (A1 contains "đầu tư"):
+//
+//	col 1: row label ("Tổng số" for national total)
+//	The total registered capital row is: Col1 == "Tổng số" → registered capital M USD
+//	(from vmt-3-sample.json: total_registered_5m_2026_mn_usd = 24810)
+//
+// Anchor (must pass in tests): May-2026 (period "2026-05")
+//
+//	export_total: ~46929 M USD
+//	import_total: ~52141 M USD
+//	trade_balance: ~-5212 M USD
 //	fdi_registered: 24810 M USD
 //
 // VMT-1b bloc_split ALWAYS is_estimate=true (ARCH Decision A — PERMANENT).
 // Fail-closed: if FDI parse fails, BlocSplitEstimate still has is_estimate=true.
+//
+// Plausibility guard: ParseTradeBalanceFromExcel returns an error if parsed values
+// fail sanity checks: monthly > YTD (impossible), or monthly value outside 5000–200000 M USD
+// (VN monthly trade is typically ~$25–60bn), or |balance| > 50000 M USD ($50bn).
 //
 // Fence-C: only cmd/server/main.go imports pkg/infrastructure.
 package infrastructure
@@ -56,6 +70,7 @@ package infrastructure
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -79,9 +94,40 @@ const tradeBlockSplitNote = "Cross-join estimate: FDI capital from NSO 12.FDI vs
 // From vmt-3-sample.json: "Tổng số" in col1 identifies the national total registered capital.
 const fdiTotalLabel = "Tổng số"
 
-// minCols is the minimum number of columns required in a trade sheet data row.
-// We need at least col4 (index 4) to parse YoY%, so minimum is 5 columns.
-const minTradeCols = 5
+// Column indices for XK/NK trade sheets (0-indexed, from live excelize.GetRows probe 2026-06).
+// Verified via FIX-NSO-TRADE-VALUE-SCALE recon on cached NSO Excel (646KB, 2026-06).
+const (
+	colLabel    = 0  // main row label: "TỔNG TRỊ GIÁ", "MẶT HÀNG CHỦ YẾU", blank for HS rows
+	colSubLabel = 1  // commodity name for HS rows (e.g. "Thủy sản", "Điện tử, máy tính")
+	colMonthly  = 3  // current-month Trị giá (Triệu USD = M USD)
+	colYTD      = 6  // YTD cumulative Trị giá 5 months (M USD)
+	colYoYPct   = 9  // YoY% Trị giá monthly vs same period prior year (standard decimal float)
+)
+
+// nsoTotalRowLabel is the Vietnamese label for the national total row in XK/NK sheets.
+// Identified via live excelize.GetRows probe: col0 == "TỔNG TRỊ GIÁ" in row 9.
+const nsoTotalRowLabel = "TỔNG TRỊ GIÁ"
+
+// nsoHSSectionLabel is the Vietnamese label for the HS commodity section header.
+// HS breakdown rows appear AFTER this row in XK/NK sheets.
+const nsoHSSectionLabel = "MẶT HÀNG CHỦ YẾU"
+
+// minTradeCols is the minimum number of columns required in a trade sheet data row.
+// We need at least colYoYPct (index 9) + 1 = 10 columns.
+// Using 10 as the minimum guard; rows with fewer columns are header/blank rows.
+const minTradeCols = 10
+
+// plausibilityMinMnUSD is the minimum plausible monthly export/import value (M USD).
+// VN monthly trade is typically $25–60bn, so 5000 M USD ($5bn) is a conservative lower bound.
+const plausibilityMinMnUSD = 5_000.0
+
+// plausibilityMaxMnUSD is the maximum plausible monthly export/import value (M USD).
+// Using 200000 M USD ($200bn) as an upper bound for any single month.
+const plausibilityMaxMnUSD = 200_000.0
+
+// plausibilityMaxBalanceMnUSD is the maximum plausible absolute trade balance (M USD).
+// VN's monthly balance has historically been within ±$10bn. Using $50bn as a conservative guard.
+const plausibilityMaxBalanceMnUSD = 50_000.0
 
 // selectSheetsByContent scans all sheets in the workbook and returns the sheet names
 // for export, import, and FDI sheets by matching Vietnamese keywords in cell A1.
@@ -183,6 +229,44 @@ func ParseTradeBalanceFromExcel(excelBytes []byte, period string) (domain.TradeB
 	// exportTotal is in M USD — matches fdiRegistered units (M USD from probe).
 	blocSplit := domain.ComputeBlocSplit(fdiRegistered, exportTotal)
 
+	// Plausibility guard (FIX-NSO-TRADE-VALUE-SCALE DoD §3):
+	// monthly must be within sane band; monthly must not exceed YTD; |balance| within sane band.
+	// Fail-loud: returns error so caller can degrade (not silently serve implausible data).
+	if exportTotal < plausibilityMinMnUSD || exportTotal > plausibilityMaxMnUSD {
+		return domain.TradeBalanceRecord{}, fmt.Errorf(
+			"trade_parser: export_total %.0f M USD outside plausible band [%.0f, %.0f] M USD — column/unit misparse",
+			exportTotal, plausibilityMinMnUSD, plausibilityMaxMnUSD,
+		)
+	}
+	if importTotal < plausibilityMinMnUSD || importTotal > plausibilityMaxMnUSD {
+		return domain.TradeBalanceRecord{}, fmt.Errorf(
+			"trade_parser: import_total %.0f M USD outside plausible band [%.0f, %.0f] M USD — column/unit misparse",
+			importTotal, plausibilityMinMnUSD, plausibilityMaxMnUSD,
+		)
+	}
+	if exportTotal > exportYTD && exportYTD > 0 {
+		return domain.TradeBalanceRecord{}, fmt.Errorf(
+			"trade_parser: export_total %.0f M USD > export_ytd %.0f M USD — impossible (monthly > cumulative)",
+			exportTotal, exportYTD,
+		)
+	}
+	if importTotal > importYTD && importYTD > 0 {
+		return domain.TradeBalanceRecord{}, fmt.Errorf(
+			"trade_parser: import_total %.0f M USD > import_ytd %.0f M USD — impossible (monthly > cumulative)",
+			importTotal, importYTD,
+		)
+	}
+	absBalance := tradeBalance
+	if absBalance < 0 {
+		absBalance = -absBalance
+	}
+	if absBalance > plausibilityMaxBalanceMnUSD {
+		return domain.TradeBalanceRecord{}, fmt.Errorf(
+			"trade_parser: |trade_balance| %.0f M USD > %.0f M USD sane band — column/unit misparse",
+			absBalance, plausibilityMaxBalanceMnUSD,
+		)
+	}
+
 	return domain.TradeBalanceRecord{
 		Period:            period,
 		ExportTotalMnUSD:  exportTotal,
@@ -205,18 +289,24 @@ func ParseTradeBalanceFromExcel(excelBytes []byte, period string) (domain.TradeB
 //
 //	(total_mn_usd, ytd_mn_usd, yoy_pct, hs_rows, error)
 //
-// Sheet structure (live_contract parse_rules):
+// Sheet structure (verified via live excelize.GetRows probe on 2026-06 NSO Excel,
+// FIX-NSO-TRADE-VALUE-SCALE recon):
 //
-//	col 0: HS code / sector name
-//	col 2: current-month absolute value (tỷ USD, VN format)
-//	col 3: YTD cumulative (tỷ USD, VN format)
-//	col 4: YoY% vs same period prior year
+//	col 0 (colLabel):    main row label ("TỔNG TRỊ GIÁ" for total, "MẶT HÀNG CHỦ YẾU"
+//	                     for HS section header, blank for HS rows and sub-totals)
+//	col 1 (colSubLabel): commodity/sector name for HS rows (blank for total row)
+//	col 3 (colMonthly):  current-month Trị giá (Triệu USD = M USD, integer string e.g. "46929")
+//	col 6 (colYTD):      YTD Trị giá cumulative (M USD, integer string e.g. "215656")
+//	col 9 (colYoYPct):   YoY% Trị giá monthly (standard decimal float e.g. "118.0" = 18% growth)
 //
-// Total row detection: first row with blank or absent col0 AND valid numeric col2+col4.
-// HS breakdown rows: non-empty col0 + valid numeric col2 + valid col4.
+// Total row detection: col0 == "TỔNG TRỊ GIÁ" (nsoTotalRowLabel, case-insensitive).
+// HS rows: col1 non-blank AND col3 numeric, only after the "MẶT HÀNG CHỦ YẾU" section header.
 //
-// Values in col2/col3 are in tỷ USD (billion USD); we convert to M USD (* 1000)
-// for internal representation (consistent with BOP/FDI which use M USD).
+// Unit: Triệu USD (M USD) — NO ×1000 conversion needed. Values are already in M USD.
+//
+// YoY% parsing: col9 values are standard decimal floats ("118.0", "91.3") — strconv.ParseFloat
+// is used directly. ParseVNNumber is NOT used for col9 because it strips periods, which would
+// incorrectly convert "118.0" → "1180" (treating decimal point as thousands separator).
 func parseTradeSheet(f *excelize.File, sheetName string) (
 	totalMnUSD, ytdMnUSD, yoyPct float64,
 	hsRows []domain.HSSector,
@@ -231,83 +321,117 @@ func parseTradeSheet(f *excelize.File, sheetName string) (
 	}
 
 	totalFound := false
+	hsSectionStarted := false // set to true after "MẶT HÀNG CHỦ YẾU" section header row
 
 	for _, row := range rows {
+		// Check col0 for the HS section header BEFORE the minTradeCols guard:
+		// the "MẶT HÀNG CHỦ YẾU" row often has only 1 column in excelize GetRows output
+		// (trailing empty cells are trimmed), so it would be skipped by the column count check.
+		if len(row) >= 1 {
+			col0candidate := strings.TrimSpace(row[0])
+			if strings.Contains(col0candidate, nsoHSSectionLabel) {
+				hsSectionStarted = true
+				continue
+			}
+		}
+
+		// Rows shorter than minTradeCols lack the value/YoY% columns — skip (header/blank rows).
 		if len(row) < minTradeCols {
 			continue
 		}
 
-		col0 := strings.TrimSpace(row[0])
-		col2Str := strings.TrimSpace(row[2])
-		col3Str := ""
-		if len(row) > 3 {
-			col3Str = strings.TrimSpace(row[3])
-		}
-		col4Str := strings.TrimSpace(row[4])
+		col0 := strings.TrimSpace(row[colLabel])
+		col1 := strings.TrimSpace(row[colSubLabel])
 
-		// Skip rows with no numeric data in col2.
-		if col2Str == "" {
-			continue
-		}
-
-		// Try to parse col2 as VN number (absolute value, tỷ USD).
-		col2Val, col2Ok := domain.ParseVNNumber(col2Str)
-		if !col2Ok {
-			// Not a numeric row (header, note, label row) — skip.
-			continue
-		}
-
-		// Convert tỷ USD → M USD (* 1000).
-		col2MnUSD := col2Val * 1000
-
-		// Try to parse col4 as YoY%.
-		// YoY% may use VN format (comma as decimal) or plain float.
-		col4Val, col4Ok := domain.ParseVNNumber(col4Str)
-		if !col4Ok {
-			// Some data rows may have missing YoY% — skip them for HS breakdown.
-			// But if this is the total row, we still need it; fail-loud if total row is broken.
-			col4Val = 0
-		}
-
-		// YTD (col3).
-		ytdVal := 0.0
-		if col3Str != "" {
-			if v, ok := domain.ParseVNNumber(col3Str); ok {
-				ytdVal = v * 1000 // tỷ USD → M USD
+		// Total row detection: col0 == "TỔNG TRỊ GIÁ" (nsoTotalRowLabel).
+		if strings.EqualFold(col0, nsoTotalRowLabel) && !totalFound {
+			col3Str := ""
+			if len(row) > colMonthly {
+				col3Str = strings.TrimSpace(row[colMonthly])
 			}
-		}
+			col6Str := ""
+			if len(row) > colYTD {
+				col6Str = strings.TrimSpace(row[colYTD])
+			}
+			col9Str := ""
+			if len(row) > colYoYPct {
+				col9Str = strings.TrimSpace(row[colYoYPct])
+			}
 
-		// Total row detection: col0 is blank/empty for the national total row.
-		// The total row is the first numeric row with no label in col0.
-		if col0 == "" && !totalFound {
-			totalMnUSD = col2MnUSD
-			ytdMnUSD = ytdVal
-			yoyPct = col4Val
+			// Parse col3 (monthly value, M USD): integer string, use ParseVNNumber.
+			totalVal, totalOK := domain.ParseVNNumber(col3Str)
+			if !totalOK {
+				return 0, 0, 0, nil, fmt.Errorf(
+					"sheet %q: 'TỔNG TRỊ GIÁ' row col3 (monthly value) %q is not numeric",
+					sheetName, col3Str,
+				)
+			}
+
+			// Parse col6 (YTD value, M USD): integer string, use ParseVNNumber.
+			ytdVal := 0.0
+			if col6Str != "" {
+				if v, ok := domain.ParseVNNumber(col6Str); ok {
+					ytdVal = v
+				}
+			}
+
+			// Parse col9 (YoY%): standard decimal float ("118.0"), use strconv.ParseFloat.
+			// Do NOT use ParseVNNumber — it strips periods, turning "118.0" → "1180".
+			yoyVal := 0.0
+			if col9Str != "" {
+				if v, parseErr := strconv.ParseFloat(col9Str, 64); parseErr == nil {
+					yoyVal = v
+				}
+			}
+
+			totalMnUSD = totalVal  // already in M USD (Triệu USD) — no ×1000
+			ytdMnUSD = ytdVal      // already in M USD
+			yoyPct = yoyVal
 			totalFound = true
 			continue
 		}
 
-		// HS breakdown row: has a label in col0 + valid numeric col2.
-		if col0 != "" && col2Ok {
-			// Skip rows that are clearly structural labels (Vietnamese patterns that indicate
-			// headers or category groupings without actual data — keep any row with valid numbers).
-			// Filter: skip rows where col2 equals the total (would be double-counted),
-			// and skip rows with only whitespace/dash values.
-			if col2Str == "-" || col2Str == "–" || col2Str == "—" {
+		// HS breakdown rows: col1 non-blank AND we are past the HS section header.
+		// HS rows have blank col0 and the sector name in col1.
+		if hsSectionStarted && col0 == "" && col1 != "" {
+			col3Str := ""
+			if len(row) > colMonthly {
+				col3Str = strings.TrimSpace(row[colMonthly])
+			}
+			col9Str := ""
+			if len(row) > colYoYPct {
+				col9Str = strings.TrimSpace(row[colYoYPct])
+			}
+
+			// Parse col3 (monthly value M USD).
+			hsVal, hsOK := domain.ParseVNNumber(col3Str)
+			if !hsOK {
+				// Row has no numeric value — skip (dash, blank, structural row).
 				continue
 			}
 
+			// Parse col9 (YoY% — standard float).
+			hsYoY := 0.0
+			if col9Str != "" {
+				if v, parseErr := strconv.ParseFloat(col9Str, 64); parseErr == nil {
+					hsYoY = v
+				}
+			}
+
 			hsRows = append(hsRows, domain.HSSector{
-				NameVI:        col0,
-				AbsoluteBnUSD: col2Val, // tỷ USD (already in bn USD, no further conversion)
-				YoYPct:        col4Val,
+				NameVI:        strings.TrimSpace(col1),
+				AbsoluteBnUSD: hsVal / 1000, // M USD → bn USD for HSSector.AbsoluteBnUSD
+				YoYPct:        hsYoY,
 				IsEstimate:    false, // primary NSO source (VMT-1a)
 			})
 		}
 	}
 
 	if !totalFound {
-		return 0, 0, 0, nil, fmt.Errorf("sheet %q: national total row (empty col0, numeric col2) not found", sheetName)
+		return 0, 0, 0, nil, fmt.Errorf(
+			"sheet %q: national total row (col0 == %q) not found — sheet may have wrong structure",
+			sheetName, nsoTotalRowLabel,
+		)
 	}
 
 	return totalMnUSD, ytdMnUSD, yoyPct, hsRows, nil
