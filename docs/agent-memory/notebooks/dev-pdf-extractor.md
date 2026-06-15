@@ -110,3 +110,23 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 - Commits: scaffold `5d121989` + T1 harden `2d79baed` + type-ignore fix `01ce9431`
 
 **Status:** DOCLANG-T1..T6 → REVIEW, next_agent=qa
+
+---
+
+## Cycle 2026-06-15 — FIX-BCTC-ENRICH-SILENT-0ROWS
+
+### Problem
+Bank tickers VCB 2026Q1 and VCB 2025Q1: `financial_reports` header row inserted but `bctc_table_rows=0`, `bctc_md_tables=0`. VCB uses B02-TCTD (Mẫu B02/TCTD-HN) with Roman numeral section codes (I–XIII) and single-digit sub-codes (1-9), NOT 3-digit corporate codes (100, 270...).
+
+### Root cause
+`_try_parse_code_row()` — Layouts 1-5 all match `\d{2,3}` only. B02-TCTD codes never match any layout → every line returns None → 0 rows assembled. Header silently inserted.
+
+### Fix
+Added Layout 6 (`_try_parse_roman_code_row`) and Layout 7 (`_try_parse_single_digit_code_row`) to `_try_parse_code_row()`. Guards: period after code = section header (reject), no VN number in rest = label-only row (reject). Layouts 1-5 take priority — non-regression confirmed.
+
+### Tests
+22 new tests in `__tests__/unit/test_b02_tctd_parser.py`. Full unit suite: 856/856 pass.
+
+### Status
+REVIEW (done_verified pending ops container rebuild + RAW probe of named-volume market.db)
+REBUILD REQUIRED: pdf-extractor container must be rebuilt to deploy Layout 6+7.

@@ -104,6 +104,30 @@ console.log(JSON.stringify(r));
 
 ---
 
+## B02-TCTD Bank Form Parse Path (FIX-BCTC-ENRICH-SILENT-0ROWS, 2026-06-15)
+
+**Symptom:** Bank tickers (VCB, CTG, etc.) have `bctc_table_rows=0` + `bctc_md_tables=0` while corporate tickers (FPT) parse fine.
+
+**Root cause:** `_try_parse_code_row()` in `apps/pdf-extractor/infrastructure/text_table_extractor.py` — Layouts 1-5 all require 2-3 digit numeric codes. B02-TCTD bank form uses Roman numeral section codes (I–XIII) and single-digit sub-codes (1-9). Every line returns `None` from the code parser → 0 rows assembled; header row still inserted silently.
+
+**Fix:** Layouts 6 and 7 added to `_try_parse_code_row()`:
+- Layout 6: `_try_parse_roman_code_row()` — anchored Roman regex (longest-first: XIII…I), requires Vietnamese number in line, rejects section headers (period after code)
+- Layout 7: `_try_parse_single_digit_code_row()` — single digit 1-9 at line start, same guards
+
+**Non-regression:** Layouts 1-5 take priority; Layout 6+7 only reached when all prior layouts return `None`. Corporate codes (100, 270, 440) are handled by Layout 1 before reaching Layout 6.
+
+**Trigger:** Rebuild `pdf-extractor` container to deploy. Then re-trigger `runBctcReparseJob` (see Diagnostic #5) for VCB/bank tickers.
+
+**Verification:**
+```bash
+# RAW check vs named volume after container rebuild + reparse
+docker run --rm -v vn-market-intelligence-mcp_market_data:/db keinos/sqlite3 \
+  sqlite3 /db/market.db "SELECT COUNT(*) FROM bctc_table_rows WHERE report_id IN (SELECT id FROM financial_reports WHERE action_code='VCB');"
+```
+Expected: > 0 rows per report.
+
+---
+
 ## Key Files
 
 | File | Role |

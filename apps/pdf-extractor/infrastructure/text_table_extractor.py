@@ -1,5 +1,5 @@
 """
-infrastructure/text_table_extractor.py — BT-3-A + BT3-FIX-2 + BT3-FIX4 + BT3-FIX5
+infrastructure/text_table_extractor.py — BT-3-A + BT3-FIX-2 + BT3-FIX4 + BT3-FIX5 + FIX-BCTC-ENRICH-SILENT-0ROWS
 
 TEXT-path table assembler adapter.
 
@@ -23,11 +23,18 @@ Algorithm per page:
           and isolated code-only lines after it. Handle with _parse_three_block_layout().
           Example: FPT pages 4 and 6 — current-assets and liabilities sections.
        b) Inline layout: code + label + values on the same line (or 2-column layout).
-          Handled by _parse_lines_to_rows() using 4-pattern _try_parse_code_row().
+          Handled by _parse_lines_to_rows() using 5-pattern _try_parse_code_row().
           Example: FPT pages 5 and 7.
+       c) B02-TCTD inline layout (FIX-BCTC-ENRICH-SILENT-0ROWS):
+          Bank forms (Mẫu B02-TCTD) use Roman-numeral section codes (I, II, III, ...)
+          and single-digit sub-codes (1, 2, 3, ...) instead of 3-digit numeric codes.
+          Layout 6: Roman code at line start + label + values (e.g. "I Tiền mặt 12.930.996")
+          Layout 7: single-digit code at line start + label + values (e.g. "1 Tiền gửi 100.000")
+          No per-ticker/bank allowlist — purely structural detection.
     4. Stitch multi-page sections (p4-7 pattern): list concatenation with global row_order.
     5. Positional cutoff (BT3-FIX5 Ruling B): drop all rows after the last sentinel
-       code row (270/440 for balance sheets). Eliminates signature-block noise.
+       code row (270/440 for balance sheets). B02-TCTD has no numeric sentinel → cutoff
+       not applied (logs WARNING, rows returned unchanged — correct behaviour).
 
 BCTC summary codes (is_summary_row=1): {100, 200, 270, 300, 400, 440}.
 
@@ -57,6 +64,25 @@ BT3-FIX5: Root-cause fix — substrate-mismatch (2026-05-26)
     C. DIACRITIC-INSENSITIVE: _norm() (NFD + strip Mn) applied to ALL string comparisons.
     D. EMBEDDED-CODE recovery: _find_code_in_line() as Layout 5 fallback in
        _try_parse_code_row() — scan-and-extract for 222/223/226/131/319/421b.
+
+FIX-BCTC-ENRICH-SILENT-0ROWS (2026-06-15):
+    Root cause: B02-TCTD (banking) BCTCs use Roman-numeral section codes (I, II, III,
+    IV, V, VI, VII, VIII, IX, X, XI, XII, XIII) and single-digit sub-codes (1, 2, 3 ...)
+    instead of 3-digit corporate codes (100, 270, 300, 400). ALL existing Layouts 1-5
+    only match 2-3 digit numeric codes → every B02-TCTD line returned None → 0 rows.
+
+    Two new layouts added (generic — no per-ticker allowlist):
+    Layout 6: Roman-numeral code at line start + 1+ space + label + values.
+              Pattern: anchored Roman code (XIII|XII|...|I) + whitespace + rest.
+              Guard: line must contain at least one VN-format number.
+              Non-regression: "I. xxx" (with period) is a section header already
+              handled by _is_recognized_section_header(); Layout 6 only matches
+              "I xxx" (no period after code).
+    Layout 7: single-digit code (1-9) at line start + 1+ space + label + values.
+              Pattern: anchored single digit (1-9) + whitespace + rest.
+              Guard: line must contain at least one VN-format number.
+              False-positive protection: requires numeric value present in the rest of
+              the line — prevents treating "1 January" or note-ref lines as data rows.
 """
 
 from __future__ import annotations
@@ -127,6 +153,37 @@ _JUNK_SKIP_KEYS: List[str] = [
     "phó tổng",         # signature: "Phó Tổng giám đốc"
 ]
 
+
+# ---------------------------------------------------------------------------
+# FIX-BCTC-ENRICH-SILENT-0ROWS — Layout 6: Roman-numeral codes (B02-TCTD)
+# ---------------------------------------------------------------------------
+
+# Regex: B02-TCTD Roman-numeral section code at start of line.
+# Matches: I, II, III, IV, V, VI, VII, VIII, IX, X, XI, XII, XIII
+# Guards:
+#   - Code MUST be at the START of the line (anchored with ^).
+#   - Code MUST be followed by 1 or more whitespace characters then additional content.
+#   - Ordered longest-first to avoid matching "I" inside "III" etc.
+#   - Does NOT match "I." or "II." (section-header pattern with trailing period)
+#     because whitespace is required after the code, and the dot is checked
+#     in the negative-lookbehind filter in _try_parse_roman_code_row().
+_ROMAN_CODE_RE = re.compile(
+    r"^(XIII|XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)\s+(.+)$"
+)
+
+# VN-format number pattern (positive or parenthetical-negative) for guard check.
+# Used to reject lines that have a Roman/digit code but no numeric value.
+_VN_NUMBER_GUARD_RE = re.compile(r"\(?\d[\d.,]+\d\)?")
+
+# ---------------------------------------------------------------------------
+# FIX-BCTC-ENRICH-SILENT-0ROWS — Layout 7: single-digit sub-codes (B02-TCTD)
+# ---------------------------------------------------------------------------
+
+# Regex: single-digit sub-code (1-9) at start of line.
+# B02-TCTD sub-items use codes 1, 2, 3, ... under each Roman-numeral section.
+# E.g. "1 Tiền gửi tại các tổ chức tín dụng khác 574.752.661 515.588.640"
+# Guard: code followed by 1+ whitespace then additional content.
+_SINGLE_DIGIT_CODE_RE = re.compile(r"^([1-9])\s+(.+)$")
 
 # ---------------------------------------------------------------------------
 # BT3-FIX5 Ruling D — Embedded-code scanner (Layout 5)
@@ -215,6 +272,143 @@ def _find_code_in_line(stripped: str) -> Optional[tuple]:
         return (code_str, label, values_rest)
 
     return None
+
+
+# ---------------------------------------------------------------------------
+# FIX-BCTC-ENRICH-SILENT-0ROWS — Layout 6 helper (Roman-numeral codes)
+# ---------------------------------------------------------------------------
+
+def _try_parse_roman_code_row(stripped: str) -> Optional[tuple]:
+    """
+    FIX-BCTC-ENRICH-SILENT-0ROWS Layout 6 — Roman-numeral code rows (B02-TCTD).
+
+    Parses lines of the form:
+        "I Tiền mặt, vàng bạc, đá quý 12.930.996 15.542.769"
+        "II Tiền gửi tại Ngân hàng Nhà nước 17.957.497 37.445.504"
+        "VIII Lợi nhuận trước thuế 10.000.000 9.000.000"
+
+    Returns (code, label, values_rest) or None.
+
+    Non-regression guard:
+      Lines with a trailing period after the code ("I. xxx") are section headers
+      handled by _is_recognized_section_header(). Layout 6 explicitly rejects
+      them by checking for a period immediately after the code token.
+      The _ROMAN_CODE_RE already anchors code at line start, and the section-header
+      detection happens BEFORE _try_parse_code_row is called in _parse_lines_to_rows(),
+      so period-suffix lines never reach this function in the first place. The guard
+      here is defense-in-depth.
+
+    False-positive protection:
+      Line must contain at least one VN-format number (guard via _VN_NUMBER_GUARD_RE).
+      This prevents treating pure-text lines that happen to start with a Roman
+      numeral word ("V. Tài sản dài hạn") from matching. Since we reject lines
+      with a trailing period, the main risk is a label-only line starting with
+      a Roman letter (unlikely in Vietnamese financial text).
+    """
+    m = _ROMAN_CODE_RE.match(stripped)
+    if m is None:
+        return None
+
+    code = m.group(1)
+    rest = m.group(2).strip()
+
+    # False-positive guard: period after code → section header, not data row
+    # E.g. "I." parsed as code="I" with rest=". Tiền..." → reject
+    if rest.startswith("."):
+        return None
+
+    # False-positive guard: must have at least one VN-format number
+    if not _VN_NUMBER_GUARD_RE.search(rest):
+        return None
+
+    # Split rest into label + values using 2+ spaces as separator (standard layout)
+    parts = re.split(r"\s{2,}", rest, maxsplit=1)
+    if len(parts) >= 2:
+        label = parts[0].strip()
+        values_rest = parts[1].strip()
+    else:
+        # Single space separation (layout 4 style) — label ends before first number
+        # Strategy: walk backwards from the end to find label/value boundary.
+        # The value portion starts with a digit or '(' (parenthetical negative).
+        # Split on the LAST single space before a numeric token.
+        num_match = _VN_NUMBER_GUARD_RE.search(rest)
+        if num_match:
+            # Label is everything before the number block
+            split_pos = num_match.start()
+            # Walk back to find the space
+            while split_pos > 0 and rest[split_pos - 1] == " ":
+                split_pos -= 1
+            label = rest[:split_pos].rstrip()
+            values_rest = rest[num_match.start():].strip()
+        else:
+            label = rest
+            values_rest = ""
+
+    return (code, label, values_rest)
+
+
+# ---------------------------------------------------------------------------
+# FIX-BCTC-ENRICH-SILENT-0ROWS — Layout 7 helper (single-digit sub-codes)
+# ---------------------------------------------------------------------------
+
+def _try_parse_single_digit_code_row(stripped: str) -> Optional[tuple]:
+    """
+    FIX-BCTC-ENRICH-SILENT-0ROWS Layout 7 — single-digit sub-code rows (B02-TCTD).
+
+    Parses lines of the form:
+        "1 Tiền gửi tại các tổ chức tín dụng khác 574.752.661 515.588.640"
+        "2 Cho vay các tổ chức tín dụng khác 6.769.531 6.885.722"
+        "3 Dự phòng rủi ro (585) -"
+
+    Returns (code, label, values_rest) or None.
+
+    False-positive protection:
+      Line must contain at least one VN-format number (guard via _VN_NUMBER_GUARD_RE).
+      This prevents treating date-like lines ("1 January 2026") or section-title
+      lines ("1. Vốn chủ sở hữu") from matching.
+      Note: "1." (with trailing period) lines are caught by the period guard below.
+
+    Overlap with existing Layouts 1-4:
+      Corporate B01-DN sub-items use patterns like "1. Tiền  111  value"
+      (label-first with 2+ spaces before 3-digit code). Those lines already
+      match Layouts 1 or 4 and are handled before Layout 7 is reached.
+      Layout 7 is only reached when Layouts 1-5 return None.
+    """
+    m = _SINGLE_DIGIT_CODE_RE.match(stripped)
+    if m is None:
+        return None
+
+    code = m.group(1)
+    rest = m.group(2).strip()
+
+    # False-positive guard: period after code → numbered section label, not data row
+    # E.g. "1. Tiền" with period after the digit
+    if rest.startswith("."):
+        return None
+
+    # False-positive guard: must have at least one VN-format number
+    if not _VN_NUMBER_GUARD_RE.search(rest):
+        return None
+
+    # Split rest into label + values using 2+ spaces as separator
+    parts = re.split(r"\s{2,}", rest, maxsplit=1)
+    if len(parts) >= 2:
+        label = parts[0].strip()
+        values_rest = parts[1].strip()
+    else:
+        # Single-space separation — find where values start
+        num_match = _VN_NUMBER_GUARD_RE.search(rest)
+        if num_match:
+            split_pos = num_match.start()
+            while split_pos > 0 and rest[split_pos - 1] == " ":
+                split_pos -= 1
+            label = rest[:split_pos].rstrip()
+            values_rest = rest[num_match.start():].strip()
+        else:
+            label = rest
+            values_rest = ""
+
+    return (code, label, values_rest)
 
 
 # ---------------------------------------------------------------------------
@@ -620,6 +814,25 @@ def _try_parse_code_row(stripped: str) -> Optional[tuple[str, str, str]]:
     m5 = _find_code_in_line(stripped)
     if m5 is not None:
         return m5
+
+    # Layout 6: Roman-numeral code at line start (FIX-BCTC-ENRICH-SILENT-0ROWS).
+    # B02-TCTD banking BCTCs use Roman codes I, II, III, IV, V, VI, VII, VIII, IX, X,
+    # XI, XII, XIII instead of 3-digit numeric codes. Only reached when Layouts 1-5
+    # all fail (i.e. no 2-3 digit numeric code found in the line).
+    # Non-regression: "I. xxx" (period after code) is rejected by _try_parse_roman_code_row
+    # false-positive guard; those lines are handled by _is_recognized_section_header().
+    m6 = _try_parse_roman_code_row(stripped)
+    if m6 is not None:
+        return m6
+
+    # Layout 7: single-digit sub-code at line start (FIX-BCTC-ENRICH-SILENT-0ROWS).
+    # B02-TCTD sub-items use codes 1, 2, 3, ... under each Roman section.
+    # Only reached when Layouts 1-6 all fail.
+    # Non-regression: "1. xxx" (period after digit) is rejected; corporate B01-DN
+    # sub-items like "1. Tiền  111  value" already match Layouts 1-4 before reaching here.
+    m7 = _try_parse_single_digit_code_row(stripped)
+    if m7 is not None:
+        return m7
 
     return None
 
