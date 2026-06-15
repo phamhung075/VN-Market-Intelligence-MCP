@@ -113,3 +113,29 @@ Sessions VMT-5a, VMT-1a/1b, VMT-3b/VMT-4, VMT-2 (WAVE-2 A1-A5), TSU-DEV-U4, FIX-
 **Current state (2026-06-08):** FIX-MACRO-GO-DIRECTIVE REVIEW (CI verification pending); FIX-MACRO-REFRESH-DEAD SHIPPED (macro freshness restored); U4 direction+delta REVIEW (ops REBUILD required); all provisioning gates functional (staleness, fixture fallback, per-field provenance).
 
 **Zone health:** HEALTHY — all critical data pipeline fixes shipped; macro refresh cycle active; FRED EFFR stale (known, tier-2 fallback active until data-ingest refreshes).
+
+---
+
+## Session 2026-06-15 (FIX-NSO-TRADE-VALUE-SCALE — column/unit/total-row misparse fix)
+
+**Task:** Fix implausible `get_vn_trade_balance` values: import 212000mn, export 74000mn, balance -138000mn.
+
+**RECON findings (excelize.GetRows probe on cached NSO Excel 646KB 2026-06):**
+- Old parser read `col2` (Lượng/quantity in nghìn tấn) as the monetary value. For "Hạt điều" row (col0 blank, col2=74 nghìn tấn cashews), excelize formatted as "74" → ParseVNNumber → 74 → ×1000 = 74000 M USD (the wrong export value).
+- Actual column layout: col3=monthly Trị giá (M USD), col6=YTD Trị giá (M USD), col9=YoY% (std float)
+- Total row label = "TỔNG TRỊ GIÁ" in col0 (NOT blank col0 as assumed)
+- Unit = Triệu USD (already M USD) — the ×1000 multiplication was wrong
+- YoY% column uses standard decimal float "118.0" (NOT VN format) — ParseVNNumber("118.0") strips period → "1180" (wrong); fix uses strconv.ParseFloat
+- HS rows: label in col1 (sub-label), after "MẶT HÀNG CHỦ YẾU" section header
+- "MẶT HÀNG CHỦ YẾU" header row has only 1 col in GetRows → must check BEFORE minTradeCols guard
+
+**Files modified (2):**
+- `pkg/infrastructure/parsers_vmt_trade.go` — New column constants (colLabel=0, colSubLabel=1, colMonthly=3, colYTD=6, colYoYPct=9), total row by "TỔNG TRỊ GIÁ" label, HS section flag after "MẶT HÀNG CHỦ YẾU", strconv.ParseFloat for YoY%, no ×1000, plausibility guard (monthly≤YTD, [5000,200000] M USD band, |balance|≤50000 M USD)
+- `pkg/infrastructure/parsers_vmt_trade_test.go` — Corrected anchors (export~46929, import~52141, balance~-5212 M USD), makeTradeRow helper, 3 plausibility guard tests added (14 tests total GREEN)
+
+**Commit:** 7a3da0df
+**Build/test:** go test ./... all 12 packages PASS; go vet clean; go build clean; Fence-A/B/C clean
+**Rebuild:** image sha256:da5e59bce8229d363d30a38a9592bcbd985f5ccbc4b6ad416b7e6cda7a8beeff
+**Live probe:** export=46929 M USD, import=52141 M USD, balance=-5212 M USD, hs_exports populated ✓
+
+Zone health: trade parser fully operational with live values; all 12 packages green; plausibility guard prevents future column-drift silent failures | HEALTHY

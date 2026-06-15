@@ -13847,30 +13847,6 @@
         "arch_decisions": "E8 VMT-1b=NSO-FDI-cross-join is_estimate=true PERMANENT (customs SPA unblockable); E9 VMT-5b.interbank=Option2 permanent is_estimate=true+blocked_reason (no public API, IP-whitelist out-of-scope, IRS-DD-6 precedent); E10 VMT-2=direct-JSON Liferay article API NO excelize/PDF (PROBE-2 live); E11 NSO-Excel single cache serves VMT-1a/1b/3b/4; E12 Zone-A SERIALIZE A1..A5 merge-gated (MED recurring-bug).",
         "wave2_order": "A1=VMT-2(SBV-JSON) -> A2=VMT-3b+VMT-4(NSO-Excel IIP+CPI) -> A3=VMT-1a+VMT-1b(NSO-Excel XK/NK/FDI) -> A4=VMT-5b.omo(SBV-OMO-HTML) -> A5=VMT-5a(market.db+sbv.gov.vn). excelize added to go.mod ONCE at A2. VMT-3a PMI HELD on PROBE-5 (S&P, dev-local). VMT-5b.interbank+irs permanent estimate (no parser).",
         "serialization_guard": "Zone A dev tasks (handlers_vmt.go/usecases_vmt.go/dtos_vmt.go) MUST be serial — one dev-macro-indicators task at a time, merge gate between each. PM enforces (feedback_recurring_bug_escalation)."
-      },
-      {
-        "id": "FIX-NSO-TRADE-VALUE-SCALE",
-        "type": "FIX",
-        "title": "FIX-NSO-TRADE-VALUE-SCALE — get_vn_trade_balance VALUES implausible after sheet-selection fix (June import 212000mn = 59% of YTD 358000mn; -138000mn/mo balance): column/row/unit misparse on selected NSO sheets",
-        "zone": "apps/macro-indicators/",
-        "owner": "dev-macro-indicators",
-        "owner_agent": "dev-macro-indicators",
-        "status": "in_progress",
-        "priority": "high",
-        "size": "M",
-        "recon_first": true,
-        "root_cause": "FIX-NSO-TRADE-SHEET (4c2fcb5c) correctly SELECTS export/import/FDI sheets by A1-header content -> data flows. But the VALUE parse (row/column/unit mapping in parsers_vmt_trade.go) yields impossible magnitudes: June import 212000mn ($212bn) vs full-half-year-YTD 358000mn; June export 74000mn vs YTD 529000mn (529bn YTD > VN full-year-2025 ~405bn); balance -138000mn/month (VN ~near-balance). Likely reads a cumulative/total-of-totals row, wrong column (luy ke vs thang), or a unit-scale error (nghin/trieu/ty).",
-        "fix_spec": "RECON-FIRST: inspect the SELECTED sheets' actual cell grid — locate the correct CURRENT-MONTH export/import cells (vs YTD/cumulative columns) + the unit row; cross-check parsed monthly figure against plausible band (VN monthly export/import ~30-40bn USD). THEN fix row/column/unit mapping in parsers_vmt_trade.go. Add a relationship/plausibility guard test (monthly<=YTD; |balance| within sane band), fail-loud on out-of-band. Generic /goal#2.",
-        "verification_gate": "get_vn_trade_balance returns plausible monthly export/import (each ~tens of bn USD, monthly<=YTD, balance within sane band) LIVE post-rebuild.",
-        "baseline_pass": "4c2fcb5c",
-        "source": "router LIVE re-probe 04:07:26Z (FIX-NSO-TRADE-SHEET done_verified WITHHELD on value implausibility)",
-        "created_at": "2026-06-15T04:33:55Z",
-        "created_by": "dev-team",
-        "triaged_by": "dev-team",
-        "status_note": "Continuation of FIX-NSO-TRADE-SHEET (sheet-selection done_verified-withheld; this peels the value-accuracy layer). dev-macro-indicators zone; SERIALIZE with other macro tasks (parsers_vmt_trade.go files-risk). Next-tick PO/dev-team dispatch.",
-        "dispatched_to": "dev-macro-indicators",
-        "dispatched_at": "2026-06-15T04:47:45Z",
-        "dispatch_note": "recon-first value/unit misparse on selected NSO trade sheets; SERIALIZE on parsers_vmt_trade.go"
       }
     ],
     "ready": [
@@ -14099,6 +14075,32 @@
     ],
     "review": [
       {
+        "id": "FIX-NSO-TRADE-VALUE-SCALE",
+        "type": "FIX",
+        "title": "FIX-NSO-TRADE-VALUE-SCALE — get_vn_trade_balance VALUES implausible after sheet-selection fix (June import 212000mn = 59% of YTD 358000mn; -138000mn/mo balance): column/row/unit misparse on selected NSO sheets",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "owner_agent": "dev-macro-indicators",
+        "status": "review",
+        "priority": "high",
+        "size": "M",
+        "recon_first": true,
+        "root_cause": "FIX-NSO-TRADE-SHEET (4c2fcb5c) correctly SELECTS export/import/FDI sheets by A1-header content -> data flows. But the VALUE parse (row/column/unit mapping in parsers_vmt_trade.go) yields impossible magnitudes: June import 212000mn ($212bn) vs full-half-year-YTD 358000mn; June export 74000mn vs YTD 529000mn (529bn YTD > VN full-year-2025 ~405bn); balance -138000mn/month (VN ~near-balance). Likely reads a cumulative/total-of-totals row, wrong column (luy ke vs thang), or a unit-scale error (nghin/trieu/ty).",
+        "fix_spec": "RECON-FIRST: inspect the SELECTED sheets' actual cell grid — locate the correct CURRENT-MONTH export/import cells (vs YTD/cumulative columns) + the unit row; cross-check parsed monthly figure against plausible band (VN monthly export/import ~30-40bn USD). THEN fix row/column/unit mapping in parsers_vmt_trade.go. Add a relationship/plausibility guard test (monthly<=YTD; |balance| within sane band), fail-loud on out-of-band. Generic /goal#2.",
+        "verification_gate": "get_vn_trade_balance returns plausible monthly export/import (each ~tens of bn USD, monthly<=YTD, balance within sane band) LIVE post-rebuild.",
+        "baseline_pass": "4c2fcb5c",
+        "source": "router LIVE re-probe 04:07:26Z (FIX-NSO-TRADE-SHEET done_verified WITHHELD on value implausibility)",
+        "created_at": "2026-06-15T04:33:55Z",
+        "created_by": "dev-team",
+        "triaged_by": "dev-team",
+        "status_note": "IMPL DONE: col3/col6/col9 column fix + TỔNG TRỊ GIÁ total-row detection + strconv.ParseFloat for YoY% + no-x1000 unit + plausibility guard. Commit 7a3da0df. Live probe: export=46929, import=52141, balance=-5212 M USD. REBUILD_REQUIRED: done (image sha256:da5e59b...). Awaiting router live RAW re-probe.",
+        "dispatched_to": "dev-macro-indicators",
+        "dispatched_at": "2026-06-15T04:47:45Z",
+        "dispatch_note": "recon-first value/unit misparse on selected NSO trade sheets; SERIALIZE on parsers_vmt_trade.go",
+        "impl_commit": "7a3da0df",
+        "image_sha": "sha256:da5e59bce8229d363d30a38a9592bcbd985f5ccbc4b6ad416b7e6cda7a8beeff"
+      },
+      {
         "_adjudicated_by": "po",
         "_updated_at": "2026-06-13T08:48:41Z",
         "brief_file": "docs/handoffs/SHIP-WAVE-REAUDIT-architect-brief.md",
@@ -14136,6 +14138,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-14T18:36:18Z",
-  "updated_by": "po"
+  "updated_at": "2026-06-15T07:10:00Z",
+  "updated_by": "dev-macro-indicators"
 }
