@@ -4,7 +4,7 @@ Bun.env["DB_PATH"] = ":memory:";
  * Task 1331 — TDD tests for fix(ta): defaultComputeTa reads daily_ohlcv
  *
  * TC-1: returns null when daily_ohlcv has 0 rows for ticker
- * TC-2: returns null when daily_ohlcv has 14 rows for ticker (< 15)
+ * TC-2: 14 rows → null (FIX-RSI-REPORT-FAILCLOSED: minimum is 15 for RSI(14))
  * TC-3: returns TaSignal with rsi + maFast + maSlow when daily_ohlcv has 20+ rows
  *        (FAILS before fix because function reads market_prices_history which is empty)
  * TC-4: returns correct priceVsMa20 direction based on close prices
@@ -191,9 +191,9 @@ describe("1330 — defaultComputeTa reads daily_ohlcv", () => {
     expect(vcbSignal).toBeUndefined();
   });
 
-  it("TC-2: returns TaSignal when daily_ohlcv has 14 rows (>= 8 after fix — adaptive periods)", async () => {
+  it("TC-2: 14 rows → null (FIX-RSI-REPORT-FAILCLOSED: need 15 candles for RSI(14))", async () => {
     addWatchlistEntry(db, "VCB");
-    seedOhlcv(db, "VCB", 14); // 14 rows — now sufficient with adaptive guard (>= 8)
+    seedOhlcv(db, "VCB", 14); // 14 rows — one below RSI(14)+1 minimum
 
     const result = await assembleBriefing({
       db,
@@ -203,12 +203,9 @@ describe("1330 — defaultComputeTa reads daily_ohlcv", () => {
       briefingsDir: tmpDir,
     });
 
-    // After fix: 14 >= 8 → returns TaSignal with adaptive RSI period 13, MA period 14
-    // Strictly increasing prices → RSI near 100 (overbought) → appears in taSummary
+    // FIX-RSI-REPORT-FAILCLOSED: 14 < 15 → defaultComputeTa returns null → not in taSummary
     const vcbSignal = result.taSummary?.find((s) => s.code === "VCB");
-    expect(vcbSignal).toBeDefined();
-    expect(vcbSignal?.rsi14).not.toBeNull();
-    expect(vcbSignal?.ma20).not.toBeNull();
+    expect(vcbSignal).toBeUndefined();
   });
 
   it("TC-3: returns TaSignal with rsi + maFast + maSlow when daily_ohlcv has 20+ rows (FAILS before fix)", async () => {

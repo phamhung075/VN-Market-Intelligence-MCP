@@ -642,8 +642,17 @@ async function isPriceFresh(db: Database): Promise<boolean> {
 
 /**
  * Default TA computation for one ticker: queries daily_ohlcv for the last 60
- * candles, computes RSI and MA with adaptive periods, and classifies signals.
- * Returns null when fewer than 8 candles are available (RSI minimum).
+ * candles, computes RSI(14) and MA20, and classifies signals.
+ *
+ * RSI fail-close rule (FIX-RSI-REPORT-FAILCLOSED): RSI(14) requires at least
+ * 15 candles (period + 1). When fewer are available, rsi14 is null and
+ * rsiStatus is "neutral" — identical to the get_technical_indicators canonical
+ * tool. The adaptive-period trick (Math.min(14, rows.length-1)) is intentionally
+ * removed: it produced under-determined single-digit RSI values on shallow history
+ * (VRE RSI 10.3 on 6 candles; VIC 7.4 / VHM 9.8 on similarly shallow data).
+ *
+ * Returns null when fewer than 15 candles are available in both daily_ohlcv
+ * and the market_prices_history fallback.
  */
 export function defaultComputeTa(code: string, db: Database): TaSignal | null {
   let rows = db.query<CandleRow, [string]>(
@@ -654,7 +663,7 @@ export function defaultComputeTa(code: string, db: Database): TaSignal | null {
       LIMIT 60`,
   ).all(code);
 
-  if (rows.length < 8) {
+  if (rows.length < 15) {
     // Fall back to intraday ticks aggregated into synthetic daily closes
     const fallbackRows = db.prepare<CandleRow, [string]>(
       `SELECT DATE(fetched_at) AS day, MAX(price) AS close_price
@@ -664,14 +673,15 @@ export function defaultComputeTa(code: string, db: Database): TaSignal | null {
        ORDER BY day ASC
        LIMIT 60`
     ).all(code);
-    if (fallbackRows.length < 8) return null;
+    if (fallbackRows.length < 15) return null;
     rows = fallbackRows;
   }
 
   const prices = rows.map((r) => r.close_price);
   const currentPrice = prices.at(-1) ?? null;
 
-  const rsi14 = computeRSILocal(prices, Math.min(14, rows.length - 1));
+  // RSI: fixed period 14, requires >=15 candles — fail-closed (no adaptive period).
+  const rsi14 = computeRSILocal(prices, 14);
   const ma20 = computeMALocal(prices, Math.min(20, rows.length));
 
   const rsiStatus: TaSignal["rsiStatus"] =
