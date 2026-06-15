@@ -6,9 +6,7 @@
 
 ## Identity
 
-Agent: VPS Fetch Diagnostician
-Role: SSH recon specialist for VN geo-blocked data sources
-Zone: ops-zone (VPS / infra)
+VPS Fetch Diagnostician | SSH recon specialist | ops-zone (VPS/infra)
 
 ---
 
@@ -195,20 +193,10 @@ Recon: `docs/vps-sources/nso-monthly-excel/recon.md`
 
 ---
 
-## c010 · 2026-06-14 · VN-MACRO-TOOLING WAVE-1 — PROBE-1..4 (Archived)
-Four recon probes: Customs FDI (blocked JS render), SBV BOP (pass, Liferay API), NSO monthly Excel (pass, TLS fixed), SBV OMO+Interbank (partial, Oracle WebCenter hangs). Reference: `git show 3e5f8daf:docs/agent-memory/notebooks/ops-vps-fetch.md` for detailed PROBE logs. Scripts: scripts/probes/vmt-probe-{1,2,3,4}.sh
+## Archive: c004–c010 (2026-06-04 through 2026-06-14)
 
----
+**c004–c009:** FIX-CTG-2b-DEPLOY, RECON-AGM-1, UNBLOCK-VPS-FETCH-RESUME, SPIKE-VPS-SSC-CURL-RECIPE, FIX-NEWS-VPS-PROBE, FIX-NEWS-VPS-CRASH-LOOP
+**c010:** VN-MACRO-TOOLING WAVE-1 (PROBE-1..4)
 
-## Older Cycles (c004-c009) — Archived
-
-| Session | Date | Outcome |
-|---------|------|---------|
-| c004 FIX-CTG-2b-DEPLOY | 2026-06-04 | Rank>=2 guard deployed; backup .bak-20260604 |
-| c005 RECON-AGM-1 | 2026-06-04 | vietstock.vn fetchable (POST+CSRF) |
-| c006 UNBLOCK-VPS-FETCH-RESUME | 2026-06-06 | SSC bctc-fetch Chromium thread issue identified |
-| c007 SPIKE-VPS-SSC-CURL-RECIPE | 2026-06-06 | VIABLE-CURL recipe proven; 3-step Oracle ADF JSF workaround (no Chromium); 2 PDFs downloaded |
-| c008 FIX-NEWS-VPS-PROBE | 2026-06-07 | HEALTHY; no restart required; Saturday low-activity RSS, no Chromium issue |
-| c009 FIX-NEWS-VPS-CRASH-LOOP | 2026-06-09 | Bug A (dev-zone): vpsHealthPoller.ts timestamp MAX() lexicographic error; Bug B (VPS): cursor jump fixed (NOW+1800s cap). Dev-zone fix queued. |
-
-Full detail: `git log --oneline -15 -- docs/agent-memory/notebooks/ops-vps-fetch.md` | Recon docs: `docs/vps-sources/*/recon.md`
+Full git history: `git log --oneline -20 -- docs/agent-memory/notebooks/ops-vps-fetch.md`
+Recon docs: `docs/vps-sources/*/recon.md`
