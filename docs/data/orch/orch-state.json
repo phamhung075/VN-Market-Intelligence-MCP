@@ -171,8 +171,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-15T00:50:51Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-15T01:37:29Z",
+    "_updated_by": "cowork-team",
     "archive": [
       {
         "from": "system-auditor",
@@ -416,11 +416,12 @@
         "to": "po",
         "type": "live-verify-partial + accuracy-recon-batch — /goal#1 accuracy layer",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "summary": "F-BOP-ENCODING LIVE-VERIFY = PARTIAL (router RAW 2-window re-probe, NOT the ops badge). RELIABILITY DONE: encoding fix (400610e5, url.Values{}.Encode()) is LIVE (image 27b2ccd5d2c3) + eliminated the 'context deadline exceeded' malformed-URL hang across 4 consistent probes. BUT ACCURACY NOT achieved: get_vn_bop still degraded — 'SBV API returned 0 items (empty response)', all fields 0. The URL now resolves but the OData query semantics (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range) match 0 live SBV articles. PO ACTION: mint F-BOP-QUERY-RECON (zone apps/macro-indicators; recon-first ops-vps-fetch to curl the SBV Liferay OData endpoint with corrected encoding + vary params until real BOP articles return, THEN dev-macro-indicators fixes parsers_vmt_bop.go query params; /goal#2 generic). This is the SAME SHAPE as F-NSO-SELECTOR (transport OK, data empty, needs recon of live upstream). SEQUENCE both as an accuracy RECON BATCH on macro-indicators (serialize, same files, recon-first each): F-BOP-QUERY-RECON + F-NSO-SELECTOR. F-BOP-ENCODING itself = done (encoding correct, merge-gated, live, deadline-symptom gone); done_verified WITHHELD pending F-BOP-QUERY-RECON real-data restoration.",
         "payload_ref": "ops report a1b951eec29057302 (image 27b2ccd5d2c3, 11/11 peers, 2-window 0-items); router raw re-probe 2 windows (get_vn_bop{} + {quarter:Q3-2025}) both degraded-200 '0 items', no deadline-exceeded; commit 400610e5 / HEAD 0b8a1de6",
-        "disposition": "",
-        "ts": "2026-06-15T00:50:51Z"
+        "disposition": "RESOLVED — PO (a0fcdb8a9a4ba5e72) triaged + minted F-BOP-QUERY-RECON (board READY, sequence_after=F-NSO-SELECTOR, dispatch-batch b50d89e9). Recon-first ops-vps-fetch. F-BOP-ENCODING stays done; done_verified withheld pending real-data restoration. Marked READ by cowork-tick to prevent redundant re-triage.",
+        "ts": "2026-06-15T00:50:51Z",
+        "read_at": "2026-06-15T01:37:29Z"
       }
     ]
   },
