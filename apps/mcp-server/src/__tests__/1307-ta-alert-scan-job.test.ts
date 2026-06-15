@@ -62,6 +62,31 @@ function buildTestDb(): Database {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Helper: seed MIN_CANDLES (35) rows so the candle-depth guard passes
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Insert 35 recent candle rows for a ticker so that the MIN_CANDLES guard
+ * in taAlertScanJob lets execution reach the injected computeFn.
+ * The CANDLE_SQL window is `date >= date('now', '-60 days')`, so all rows
+ * are placed within the last 35 days (well within the 60-day window).
+ */
+function seedMinCandles(db: Database, code: string): void {
+  const stmt = db.prepare(
+    `INSERT OR IGNORE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+     VALUES (?, ?, 100000, 101000, 99000, ?, 1000000, ?)`
+  );
+  const nowMs = Date.now();
+  for (let i = 0; i < 35; i++) {
+    const daysAgo = 35 - i; // oldest first, newest last
+    const d = new Date(nowMs - daysAgo * 86_400_000);
+    const dateStr = d.toISOString().slice(0, 10);
+    const close = 100_000 + (i % 2 === 0 ? 500 : -500); // alternating mid-band
+    stmt.run(code, dateStr, close, d.toISOString());
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helper: controlled computeFn factories
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -114,6 +139,7 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
   // AC-1: Alert fires for overbought RSI
   it("AC-1: fires ta_overbought alert when RSI > 70", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard
 
     const result = await runTaAlertScan({
       db,
@@ -143,6 +169,7 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
   // AC-2: Alert fires for oversold RSI
   it("AC-2: fires ta_oversold alert when RSI < 30", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard
 
     const result = await runTaAlertScan({
       db,
@@ -166,6 +193,7 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
   // AC-3: No alert for neutral RSI (30–70 range)
   it("AC-3: no alert when RSI is neutral (55.0)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard
 
     const result = await runTaAlertScan({
       db,
@@ -180,6 +208,7 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
   // AC-4: No alert when RSI is null (insufficient history)
   it("AC-4: no alert when RSI is null (insufficient candle history)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard; computeFn still returns null RSI
 
     const result = await runTaAlertScan({
       db,
@@ -194,6 +223,7 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
   // AC-5: Cooldown suppresses second fire within 4 hours
   it("AC-5: cooldown suppresses second alert within 4 hours (T+30min)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard
 
     const t0 = new Date("2026-04-15T03:00:00Z");
 
@@ -221,6 +251,7 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
   // AC-6: Cooldown lifts after 4 hours
   it("AC-6: cooldown does not suppress alert after 4 hours (T+5h)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard
 
     const t0 = new Date("2026-04-15T03:00:00Z");
 
@@ -264,6 +295,9 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
     db.run("INSERT INTO watchlist (code) VALUES ('TCB')");
     db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
+    seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard
+    seedMinCandles(db, "TCB");
+    seedMinCandles(db, "HPG");
 
     // We need per-ticker RSI control. The computeFn receives code + closes array.
     // Since computeFn is injected and replaces real computation, we use a stateful approach.
@@ -305,6 +339,9 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
     db.run("INSERT INTO watchlist (code) VALUES ('TCB')");
     db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
+    seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard
+    seedMinCandles(db, "TCB");
+    seedMinCandles(db, "HPG");
 
     // VCB=overbought (fires), TCB=throws, HPG=overbought (fires)
     const callOrder = [

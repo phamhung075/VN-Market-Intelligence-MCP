@@ -72,11 +72,33 @@ interface CooldownRow {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Minimum candle depth required before calling the Go TA service for RSI.
+ *
+ * RSI(14) is mathematically computable with 15 closes, but Wilder smoothing
+ * needs a warm-up window to converge to reliable values. With only 15–30
+ * candles, short all-gain or all-loss windows produce degenerate saturated RSI
+ * (DAG RSI=100.0) or near-zero RSI (VHM RSI=9.8, VIC RSI=7.4) that do NOT
+ * reflect real market conditions — they are artefacts of the short window.
+ *
+ * 35 candles ≈ 2.5 × period (14) provides sufficient warm-up and matches
+ * the "TA pending" threshold used by the canonical get_technical_indicators
+ * tool. Below this depth the job must fail-closed (skip, never emit an alert).
+ *
+ * This guard is the root-cause fix for FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.
+ */
+const MIN_CANDLES = 35;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SQL constants
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Uses daily_ohlcv (OHLCV table) for closing prices — provides 30–60 days of
-// daily candle data required for RSI(14) computation (≥15 rows needed).
+// daily candle data required for RSI(14) computation (≥35 rows required per
+// MIN_CANDLES guard; fewer than 35 produce degenerate single-digit / clamped RSI).
 // market_prices_history only has intraday ticks and is insufficient for TA.
 const CANDLE_SQL = `
   SELECT date AS day, close AS close_price
@@ -152,6 +174,15 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
       // a. Fetch close prices from local DB (needed for pure-compute TA service path)
       const candleRows = database.query<CandleRow, [string]>(CANDLE_SQL).all(code);
       const closes = candleRows.map(r => r.close_price);
+
+      // a2. Candle depth guard (FIX-ALERT-ENGINE-RSI-SINGLEDIGIT).
+      // Wilder RSI requires MIN_CANDLES (35) to avoid degenerate saturation (100.0)
+      // or near-zero single-digit values caused by short all-gain/all-loss windows.
+      // Tickers below this threshold are silently skipped — fail-closed, no alert.
+      if (closes.length < MIN_CANDLES) {
+        logger.info(`[taAlertScan] TA pending for ${code}: ${closes.length}/${MIN_CANDLES} candles — skip (fail-closed)`);
+        continue;
+      }
 
       // b. Call TA Service to compute indicators via HTTP, passing closes array
       const taResponse = await computeFn(code, closes);
