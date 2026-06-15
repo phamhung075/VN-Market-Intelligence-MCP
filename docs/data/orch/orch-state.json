@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T00:31:49Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-15T01:53:03Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T01:42:22Z",
+    "updated_at": "2026-06-15T01:53:03Z",
     "updated_by": "dev-team",
-    "active_task_id": "CI-RED-d20468c0-FIX",
-    "next_agent": "dev",
-    "note": "F-NSO-SELECTOR RECON->IMPL handoff. ops-vps-fetch (a98df635c3f76bc53) recon DONE (LIVE VPS 01:36Z, router RAW-verified the stale regex at cache_vmt_nso.go:56). -> dev-macro-indicators (agent aee85909d3cb4954b) implements: [1] reBaiTop absolute-URL regex (capture groups for YYYY/MM, drop rePeriod) generic; [2] durable in-container GlobalSign RSA OV SSL CA 2018 intermediate bundle (NOT /tmp; survives restart) for NSO TLS. DoD: go build/vet/test pkg PASS + new abs-URL regex test + rebase main; commit explicit path. On return -> router RAW-verify gates -> head dev->ops REBUILD macro-indicators (force-recreate single svc, NEVER compose down) -> LIVE re-probe get_vn_macro_indicators/get_vn_trade_balance/get_cpi_components return REAL data (not degraded) across timing -> done_verified. THEN F-BOP-QUERY-RECON unblocks (sequence_after=F-NSO-SELECTOR) -> ops-vps-fetch recon. === PARALLEL LANE: CI-RED-d20468c0-FIX in_progress -> dev-mcp-server (ad7c357d49c10d38e, actively editing 4 test files in-zone). WIP=2 (CI-fix + NSO-impl). === F-BOP-ENCODING stays done (done_verified withheld pending F-BOP-QUERY-RECON). HELD unchanged: S2 methodology brief; F3 cronJobCount; VMT-3a-PMI; ops/infra lane (SBV-FX/NEWS-VPS/POLLNEWS/tinyproxy); 2x context-bloat; FIX-FB-POSTER-NOARG; Monday market-day gate; release batch CTG/VCB/D2D blocked bug#2776; origin-divergence DEFERRED. Commit explicit path only."
+    "active_task_id": "F-NSO-SELECTOR",
+    "next_agent": "ops",
+    "note": "F-NSO-SELECTOR CODE DONE (dev-macro-indicators aee85909d3cb4954b, commit 74dfdb0a, router RAW-verified GREEN: on-main; 2 files all apps/macro-indicators/pkg/infrastructure; foreign-capture NONE; independent UNCACHED go build/vet rc=0 + go test -count=1 ./pkg/infrastructure PASS; reBaiTop absolute-URL regex generic [1]=URL/[2]=YYYY/[3]=MM, rePeriod + relative-fallback removed; CA GlobalSign intermediate baked in-image 0608f6aa durable no-/tmp; /goal#2 generic). CODE merge gate satisfied BUT NOT LIVE — container macro-indicators-1 holds pre-74dfdb0a image (regex + CA cert both need new image). === -> head dev->ops: FORCE-RECREATE macro-indicators single service (memory: rebuild after dev change; NEVER compose down — kills peers ~21min); verify new image ID + 74dfdb0a on HEAD + peers stay healthy. Then LIVE-verify via gateway re-probe (NOT badges) ACROSS >=2 TIMING WINDOWS (fast-fail-window trap): get_vn_trade_balance + get_vn_macro_indicators + get_cpi_components must each return REAL data (status NOT degraded, is_estimate=false, real numeric fields) — this is the ACCURACY gate (the whole point: NSO selector now matches absolute URLs + CA cert lets the HTTPS fetch complete). On ops live-result -> ROUTER re-probes each tool ITSELF across timing (not ops badge) + disambiguates proxy-down (curl :3128) vs upstream-empty. If router live-green (REAL data, not degraded): promote F-NSO-SELECTOR done_verified + UNBLOCK F-BOP-QUERY-RECON (sequence_after=F-NSO-SELECTOR -> ops-vps-fetch recon next) + release SF-1. If still degraded/empty after rebuild: keep done, WITHHOLD done_verified, route accuracy root to ops-vps-fetch LIVE recon (NOT a dev guess) — same symptom-peel discipline as F-BOP-ENCODING. === OTHER LANE (in flight, untouched): CI-RED-d20468c0-FIX in_progress/dev-mcp-server (agent ad7c357d49c10d38e) — on its return router RAW-verify gates (on-main, files in-zone apps/mcp-server, foreign-capture none, independent uncached bun test 4-files green) -> head dev->ops REBUILD mcp-server (force-recreate single svc, NEVER compose down) -> live CI re-verify (push SHA != d20468c0 turns origin GitHub Actions green) -> done_verified. === F-BOP-ENCODING stays done (done_verified WITHHELD pending F-BOP-QUERY-RECON real-data restoration). HELD (unchanged): S2 07-06 methodology brief (agent-father); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open hardening (ops/infra lane); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify); release batch CTG/VCB/D2D BLOCKED on undeployed bug #2776 (signal #6120). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -519,7 +519,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T01:42:22Z",
+    "_updated_at": "2026-06-15T01:53:03Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -11816,6 +11816,53 @@
         "done_bar": "MET — user feedback 'hover too short/complicated/not comprehensible' addressed on the CORRECT surface. Wrong-surface error from parent KINHDICH-HOVER-ENRICH definitively corrected + LIVE-verified (router RAW-re-verified served bundle: curl :3001/assets/QueName-C7QiQvgn.js -> hoverSummary x65, quẻ1/quẻ47 substring hits, fallback x1, 66763 bytes).",
         "chain_verified": "po->ba->architect(c5ee21ae ARCH-RATIFY-FE-1 CONFIRMED, QUE-TOOLTIP-DRY preserved)->dev-frontend(067e484d codegen emits hoverSummary x64 all>=80chars -> QueName.tsx:75 hoverSummary??coreMeaning, tsc-green)->ops(d349d070 targeted apps/frontend rebuild only, new img deployed, :3001 200, 13 peers up)->qa(a68d5d3f APPROVED, served-bundle load-bearing proof). Every stage RAW-re-verified independently by router.",
         "ssot_residual_note": "SSOT groundwork from the first (wrong-surface) attempt — hoverSummary x64 in apps/kinh-dich-service/dashboard/que-reference.js + hexagram_reference.go (commit 47fe36e8) — is the reusable source the codegen (scripts/gen-que-descriptions.ts) now reads. Nothing to revert; the prior partial is consumed groundwork, not waste."
+      },
+      {
+        "id": "F-NSO-SELECTOR",
+        "type": "FIX",
+        "title": "NSO WordPress HTML changed -> 'bai-top' discovery selector stale -> trade/macro/cpi opaque Zone-A 500; update selector to current NSO markup; restores real data (accuracy, after deadline fix)",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "status": "done",
+        "sequence_after": null,
+        "priority": "high",
+        "size": "S",
+        "root_cause": "NSO WordPress markup changed; the 'bai-top' selector used in NSO Excel discovery is stale -> get_vn_trade_balance + get_vn_macro_indicators + get_cpi_components return opaque 'service unavailable' (Zone-A 500), LIVE-CONFIRMED even with proxy up.",
+        "complementary_to": "VMT-8 (HONEST) + F-MACRO-FETCH-DEADLINE (RELIABLE); this makes the 3 NSO-backed tools ACCURATE (real data).",
+        "files": [
+          "apps/macro-indicators/pkg/infrastructure/cache_vmt_nso.go",
+          "apps/macro-indicators/pkg/infrastructure/parsers_vmt_gso_indicators.go"
+        ],
+        "selector_note": "Selector must be derived from a LIVE fetch of the current NSO index page, not the stale documented markup. Consider failing loud if discovery yields 0 candidates (avoid silent opaque-500).",
+        "serialize_note": "Same files/zone as the deadline fix -> do NOT dispatch in parallel; release only after F-MACRO-FETCH-DEADLINE merges.",
+        "source_signal": "dev-team-20260614T225734Z-vps-cluster-reconcile",
+        "created_at": "2026-06-14T23:30:05Z",
+        "created_by": "po",
+        "unblocked_at": "2026-06-15T00:50:51Z",
+        "unblocked_note": "F-BOP-ENCODING code done+merged (400610e5) -> same-files (macro-indicators parsers) serialization concern resolved. Now part of the accuracy RECON BATCH (both recon-first ops-vps-fetch): F-BOP-QUERY-RECON + F-NSO-SELECTOR. PO to triage/sequence next tick.",
+        "owner_agent": "dev-macro-indicators",
+        "baseline_pass": "94b49f44",
+        "dispatch_order": 2,
+        "recon_first": true,
+        "recon_owner": "ops-vps-fetch",
+        "triaged_at": "2026-06-15T00:31:49Z",
+        "triaged_by": "po",
+        "po_triage_note": "RECON-FIRST. bai-top selector stale; NSO WordPress index HTML changed (live degrade blocked_reason proves selector no longer matches; index fetches ~85KB so proxy is UP — pure accuracy gap, NOT proxy-down). STEP 1 ops-vps-fetch: recon the NEW NSO WordPress HTML, capture the new selector/structure. STEP 2 dev-macro-indicators: implement new selector in cache_vmt_nso.go + parsers_vmt_gso_indicators.go. Rebase 94b49f44. sequence_after F-BOP-ENCODING (serialize same owner/zone).",
+        "dispatched_at": "2026-06-15T01:35:29Z",
+        "dispatched_to": "dev-macro-indicators",
+        "dispatch_agent_id": "aee85909d3cb4954b",
+        "recon_done_at": "2026-06-15T01:42:22Z",
+        "recon_doc": "docs/vps-sources/nso-monthly-excel/recon.md",
+        "recon_agent": "ops-vps-fetch a98df635c3f76bc53",
+        "recon_findings": "2 roots LIVE-confirmed: (1) reBaiTop regex matches RELATIVE /bai-top/ but NSO now emits ABSOLUTE https://www.nso.gov.vn/bai-top/YYYY/MM/ -> 0 matches; (2) GlobalSign RSA OV SSL CA 2018 intermediate missing from VPS CA bundle (curl exit 60). dev-macro-indicators fixes regex in cache_vmt_nso.go + durable in-container CA-intermediate bundle (NOT /tmp). Live proof: index 85868B, press 114711B, xlsx 02.-Bieu-T5.2026-final.xlsx 200.",
+        "closed_at": "2026-06-15T03:48:00Z",
+        "closed_by": "dev-macro-indicators",
+        "commit_sha": "74dfdb0a",
+        "impl_note": "reBaiTop absolute-URL regex + simplify extractLatestPressURL (m[1]/m[2]/m[3], no rePeriod). CA-intermediate already in container via Dockerfile COPY certs/globalsign-rsa-ov-ssl-ca-2018.pem + update-ca-certificates (0608f6aa). go build+vet+test PASS (11 pkgs). Sandbox G12: primitive=18/18, module=2/2. Files: cache_vmt_nso.go + cache_vmt_nso_selector_test.go (new).",
+        "done_at": "2026-06-15T01:53:03Z",
+        "done_commit": "74dfdb0a",
+        "done_agent": "aee85909d3cb4954b",
+        "router_reverify_verdict": "RAW-VERIFIED (router independent re-verify, NOT dev badge): G1 74dfdb0a on main HEAD; G2 commit = 2 files apps/macro-indicators/pkg/infrastructure/{cache_vmt_nso.go,cache_vmt_nso_selector_test.go} ONLY, foreign-capture NONE, orch-state NOT in commit; G3 working tree clean of dangling macro .go; G4 independent UNCACHED go build rc=0 + go vet ./pkg/... rc=0 + go test -count=1 ./pkg/infrastructure PASS 8.9s; G5 fix correct+generic — reBaiTop absolute-URL regex captures [1]=URL [2]=YYYY [3]=MM for ANY month (no hardcode), extractLatestPressURL FindSubmatch with rePeriod + relative-fallback REMOVED. CA: GlobalSign RSA OV SSL CA 2018 intermediate baked in-image via Dockerfile COPY certs/globalsign-rsa-ov-ssl-ca-2018.pem + update-ca-certificates (0608f6aa) — durable, no /tmp. CODE merge gate satisfied; LIVE-verify pending ops rebuild (container holds pre-74dfdb0a image; both regex + CA cert need the new image)."
       }
     ],
     "done_verified": [
@@ -13775,45 +13822,6 @@
         "live_verify_agent": "ops a1b951eec29057302 + router-raw-reprobe(2 windows)",
         "live_verify_result": "PARTIAL. Container RAW-confirmed fresh (image c6793a0222e3->27b2ccd5d2c3, HEAD 0b8a1de6, 400610e5 ancestor, 11/11 peers healthy, NO compose down). RELIABILITY CONFIRMED: pre-fix blocked_reason='context deadline exceeded' (malformed-URL hang tripping FetchBudgetSec=8s) is ELIMINATED across 4 consistent probes (ops T+0, ops T+90s, router w1 get_vn_bop{}, router w2 get_vn_bop{quarter:Q3-2025}) — all degraded-200 within gateway deadline, none hang. The encoding fix (url.Values{}.Encode()) made the SBV Liferay OData URL resolve. BUT real BOP data NOT returned: blocked_reason='SBV API returned 0 items (empty response)', all numeric fields 0, quarter/period empty. ROOT (accuracy gap, SEPARATE from encoding): URL now resolves + SBV responds, but the OData query SEMANTICS (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range format) match 0 live articles. Needs ops-vps-fetch LIVE recon of the SBV Liferay OData endpoint (recon-first, same shape as F-NSO-SELECTOR). done_verified WITHHELD — encoding fix correct+live (reliability) but real data blocked on query-semantics recon.",
         "live_verify_followup": "F-BOP-QUERY-RECON (PO to mint; recon-first ops-vps-fetch)"
-      },
-      {
-        "id": "F-NSO-SELECTOR",
-        "type": "FIX",
-        "title": "NSO WordPress HTML changed -> 'bai-top' discovery selector stale -> trade/macro/cpi opaque Zone-A 500; update selector to current NSO markup; restores real data (accuracy, after deadline fix)",
-        "zone": "apps/macro-indicators/",
-        "owner": "dev-macro-indicators",
-        "status": "in_progress",
-        "sequence_after": null,
-        "priority": "high",
-        "size": "S",
-        "root_cause": "NSO WordPress markup changed; the 'bai-top' selector used in NSO Excel discovery is stale -> get_vn_trade_balance + get_vn_macro_indicators + get_cpi_components return opaque 'service unavailable' (Zone-A 500), LIVE-CONFIRMED even with proxy up.",
-        "complementary_to": "VMT-8 (HONEST) + F-MACRO-FETCH-DEADLINE (RELIABLE); this makes the 3 NSO-backed tools ACCURATE (real data).",
-        "files": [
-          "apps/macro-indicators/pkg/infrastructure/cache_vmt_nso.go",
-          "apps/macro-indicators/pkg/infrastructure/parsers_vmt_gso_indicators.go"
-        ],
-        "selector_note": "Selector must be derived from a LIVE fetch of the current NSO index page, not the stale documented markup. Consider failing loud if discovery yields 0 candidates (avoid silent opaque-500).",
-        "serialize_note": "Same files/zone as the deadline fix -> do NOT dispatch in parallel; release only after F-MACRO-FETCH-DEADLINE merges.",
-        "source_signal": "dev-team-20260614T225734Z-vps-cluster-reconcile",
-        "created_at": "2026-06-14T23:30:05Z",
-        "created_by": "po",
-        "unblocked_at": "2026-06-15T00:50:51Z",
-        "unblocked_note": "F-BOP-ENCODING code done+merged (400610e5) -> same-files (macro-indicators parsers) serialization concern resolved. Now part of the accuracy RECON BATCH (both recon-first ops-vps-fetch): F-BOP-QUERY-RECON + F-NSO-SELECTOR. PO to triage/sequence next tick.",
-        "owner_agent": "dev-macro-indicators",
-        "baseline_pass": "94b49f44",
-        "dispatch_order": 2,
-        "recon_first": true,
-        "recon_owner": "ops-vps-fetch",
-        "triaged_at": "2026-06-15T00:31:49Z",
-        "triaged_by": "po",
-        "po_triage_note": "RECON-FIRST. bai-top selector stale; NSO WordPress index HTML changed (live degrade blocked_reason proves selector no longer matches; index fetches ~85KB so proxy is UP — pure accuracy gap, NOT proxy-down). STEP 1 ops-vps-fetch: recon the NEW NSO WordPress HTML, capture the new selector/structure. STEP 2 dev-macro-indicators: implement new selector in cache_vmt_nso.go + parsers_vmt_gso_indicators.go. Rebase 94b49f44. sequence_after F-BOP-ENCODING (serialize same owner/zone).",
-        "dispatched_at": "2026-06-15T01:35:29Z",
-        "dispatched_to": "dev-macro-indicators",
-        "dispatch_agent_id": "aee85909d3cb4954b",
-        "recon_done_at": "2026-06-15T01:42:22Z",
-        "recon_doc": "docs/vps-sources/nso-monthly-excel/recon.md",
-        "recon_agent": "ops-vps-fetch a98df635c3f76bc53",
-        "recon_findings": "2 roots LIVE-confirmed: (1) reBaiTop regex matches RELATIVE /bai-top/ but NSO now emits ABSOLUTE https://www.nso.gov.vn/bai-top/YYYY/MM/ -> 0 matches; (2) GlobalSign RSA OV SSL CA 2018 intermediate missing from VPS CA bundle (curl exit 60). dev-macro-indicators fixes regex in cache_vmt_nso.go + durable in-container CA-intermediate bundle (NOT /tmp). Live proof: index 85868B, press 114711B, xlsx 02.-Bieu-T5.2026-final.xlsx 200."
       },
       {
         "id": "CI-RED-d20468c0-FIX",
