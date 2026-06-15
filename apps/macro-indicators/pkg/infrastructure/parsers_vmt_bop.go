@@ -30,27 +30,35 @@ package infrastructure
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/vn-market-intelligence/macro-indicators/pkg/domain"
 )
 
-// sbvBOPAPIURL is the SBV Liferay headless article endpoint for BOP data.
-// Quarter window is injected by BuildBOPFetchURL at call time.
-const sbvBOPAPIURL = "https://www.sbv.gov.vn/o/article/v1.0/articles" +
-	"?scopeKey=20117" +
-	"&contentStructureId=10063168" +
-	"&pageSize=100"
+// sbvBOPAPIBase is the SBV Liferay headless article endpoint for BOP data (no query string).
+// All query parameters are assembled via url.Values in BuildBOPFetchURL.
+const sbvBOPAPIBase = "https://www.sbv.gov.vn/o/article/v1.0/articles"
 
 // BuildBOPFetchURL constructs the SBV BOP API URL for a given quarter window.
 // quarterStart and quarterEnd are ISO date strings (YYYY-MM-DD).
-// Caller computes the quarter window; this function assembles the OData filter.
+//
+// All OData query parameters ($filter, scopeKey, contentStructureId, pageSize) are
+// assembled via url.Values so every value — including spaces and reserved OData chars
+// such as single-quotes, parentheses, and operators — is percent-encoded uniformly.
+// This prevents "context deadline exceeded" from an un-encoded request that SBV Liferay
+// never resolves (F-BOP-ENCODING root-cause fix).
 func BuildBOPFetchURL(quarterStart, quarterEnd string) string {
 	filter := fmt.Sprintf(
 		"status eq 0 and Date48362898 gt '' and Date48362898 ge '%s' and Date48362898 le '%s'",
 		quarterStart, quarterEnd,
 	)
-	return sbvBOPAPIURL + "&filter=" + filter
+	q := url.Values{}
+	q.Set("scopeKey", "20117")
+	q.Set("contentStructureId", "10063168")
+	q.Set("pageSize", "100")
+	q.Set("filter", filter)
+	return sbvBOPAPIBase + "?" + q.Encode()
 }
 
 // CurrentQuarterWindow returns the quarter-start and quarter-end ISO dates

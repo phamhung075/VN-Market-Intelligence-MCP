@@ -21,6 +21,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -328,6 +330,58 @@ func TestBOPUseCase_ExplicitQuarterWindow(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// F-BOP-ENCODING: URL encoding stubs and tests
+//
+// These tests assert that the URL produced by BOPURLBuilder.BuildURL has its
+// OData filter properly percent-encoded so the SBV Liferay request is well-formed.
+//
+// Strategy: use an urlCapturingFetcher that records the URL passed to Fetch,
+// combined with an encodingBOPURLBuilder that builds a real percent-encoded URL
+// using net/url (mirroring the fix in infrastructure.BuildBOPFetchURL).
+// This tests the encoding contract without importing pkg/infrastructure (Fence-B).
+// ---------------------------------------------------------------------------
+
+// urlCapturingFetcher records every URL passed to Fetch so tests can assert
+// on the raw query string (percent-encoding correctness).
+type urlCapturingFetcher struct {
+	payload []byte
+	urls    []string
+}
+
+func (f *urlCapturingFetcher) Fetch(_ context.Context, rawURL string, _ domain.VpsFetchOptions) ([]byte, error) {
+	f.urls = append(f.urls, rawURL)
+	return f.payload, nil
+}
+
+// encodingBOPURLBuilder builds a real SBV-style URL using net/url.Values so
+// all OData filter chars (spaces, single-quotes, parentheses, operators) are
+// percent-encoded. This is the application-layer mirror of the fix in
+// infrastructure.BuildBOPFetchURL and is used to verify the use-case passes
+// the fully-encoded URL to the fetcher unchanged.
+type encodingBOPURLBuilder struct{}
+
+func (b *encodingBOPURLBuilder) BuildURL(start, end string) string {
+	filter := fmt.Sprintf(
+		"status eq 0 and Date48362898 gt '' and Date48362898 ge '%s' and Date48362898 le '%s'",
+		start, end,
+	)
+	q := url.Values{}
+	q.Set("scopeKey", "20117")
+	q.Set("contentStructureId", "10063168")
+	q.Set("pageSize", "100")
+	q.Set("filter", filter)
+	return "https://www.sbv.gov.vn/o/article/v1.0/articles?" + q.Encode()
+}
+
+func (b *encodingBOPURLBuilder) QuarterWindow(_ time.Time) (string, string) {
+	return "2025-10-01", "2025-12-31"
+}
+
+func (b *encodingBOPURLBuilder) PrevQuarterWindow(_ time.Time) (string, string) {
+	return "2025-07-01", "2025-09-30"
+}
+
 // TestBOPUseCase_OffshoreParked_AlwaysEstimate verifies the is_estimate rule
 // holds across multiple scenarios (not just the Q4-2025 anchor).
 func TestBOPUseCase_OffshoreParked_AlwaysEstimate(t *testing.T) {
@@ -385,5 +439,128 @@ func TestBOPUseCase_OffshoreParked_AlwaysEstimate(t *testing.T) {
 	// FX incidence for positive E&O=500 → NEUTRAL (within ±1000 band).
 	if resp.FXIncidence.Label != string(domain.FXIncidenceNeutral) {
 		t.Errorf("fx_incidence.label=%q, want NEUTRAL for E&O=500", resp.FXIncidence.Label)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// F-BOP-ENCODING gate tests (table-driven)
+//
+// Assert that any URL produced by a correctly-wired BOPURLBuilder:
+//  1. Contains NO literal space (%20 or + in query, but never a raw " ").
+//  2. Contains NO literal single-quote (must be %27).
+//  3. url.ParseQuery round-trips the intended filter value losslessly.
+//
+// These tests use encodingBOPURLBuilder (application-layer mirror of the fixed
+// infrastructure.BuildBOPFetchURL) to verify the contract without importing
+// pkg/infrastructure (Fence-B compliant).
+// ---------------------------------------------------------------------------
+
+// TestBOPURLEncoding_NoLiteralSpace asserts that the built SBV URL's raw query
+// string contains no literal ASCII space character.
+// A literal space in the query string is the confirmed root cause of the
+// "context deadline exceeded" degrade: SBV Liferay never resolves un-encoded requests.
+func TestBOPURLEncoding_NoLiteralSpace(t *testing.T) {
+	cases := []struct {
+		name        string
+		start, end  string
+	}{
+		{"Q4-2025", "2025-10-01", "2025-12-31"},
+		{"Q1-2026", "2026-01-01", "2026-03-31"},
+		{"Q2-2025", "2025-04-01", "2025-06-30"},
+	}
+
+	builder := &encodingBOPURLBuilder{}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rawURL := builder.BuildURL(tc.start, tc.end)
+
+			// Extract query string portion.
+			idx := strings.IndexByte(rawURL, '?')
+			if idx < 0 {
+				t.Fatalf("BuildURL returned URL with no query string: %q", rawURL)
+			}
+			query := rawURL[idx+1:]
+
+			// GATE 1: no literal space anywhere in the query string.
+			if strings.Contains(query, " ") {
+				t.Errorf("query string contains literal space (un-encoded) for %s: %q", tc.name, query)
+			}
+
+			// GATE 2: no literal single-quote in the query string.
+			// OData filter uses '' (two singles) which must be encoded as %27%27.
+			if strings.Contains(query, "'") {
+				t.Errorf("query string contains literal single-quote (un-encoded) for %s: %q", tc.name, query)
+			}
+
+			// GATE 3: url.ParseQuery must succeed (well-formed query string).
+			parsed, err := url.ParseQuery(query)
+			if err != nil {
+				t.Fatalf("url.ParseQuery failed for %s: %v (query=%q)", tc.name, err, query)
+			}
+
+			// GATE 4: round-trip — the decoded filter must contain the quarter dates.
+			filterVal := parsed.Get("filter")
+			if !strings.Contains(filterVal, tc.start) {
+				t.Errorf("decoded filter does not contain quarterStart=%q for %s: %q", tc.start, tc.name, filterVal)
+			}
+			if !strings.Contains(filterVal, tc.end) {
+				t.Errorf("decoded filter does not contain quarterEnd=%q for %s: %q", tc.end, tc.name, filterVal)
+			}
+
+			// GATE 5: decoded filter must contain the OData operator keywords.
+			for _, kw := range []string{"status eq 0", "Date48362898 ge", "Date48362898 le"} {
+				if !strings.Contains(filterVal, kw) {
+					t.Errorf("decoded filter missing OData keyword %q for %s: %q", kw, tc.name, filterVal)
+				}
+			}
+		})
+	}
+}
+
+// TestBOPUseCase_FetchReceivesEncodedURL verifies that when the use case calls
+// urlBuilder.BuildURL, the resulting URL is passed unchanged to the fetcher and
+// is well-formed (no literal spaces in the query string portion).
+//
+// This is an end-to-end encoding gate through the use-case orchestration path:
+// encodingBOPURLBuilder.BuildURL → BOPUseCase.fetchAndParseQuarter → urlCapturingFetcher.Fetch.
+func TestBOPUseCase_FetchReceivesEncodedURL(t *testing.T) {
+	capturer := &urlCapturingFetcher{payload: []byte(q4_2025_fixture_json)}
+
+	uc := NewBOPUseCase(
+		capturer,
+		&stubBOPParser{},
+		&encodingBOPURLBuilder{},
+	)
+
+	resp, err := uc.Execute(context.Background(), BOPRequest{})
+	if err != nil {
+		t.Fatalf("BOPUseCase.Execute: unexpected error: %v", err)
+	}
+	if resp.Status != "ok" {
+		t.Errorf("Status=%q, want 'ok'", resp.Status)
+	}
+
+	if len(capturer.urls) == 0 {
+		t.Fatal("urlCapturingFetcher: no URL was passed to Fetch — wiring problem")
+	}
+
+	for _, rawURL := range capturer.urls {
+		idx := strings.IndexByte(rawURL, '?')
+		if idx < 0 {
+			t.Errorf("fetcher received URL with no query string: %q", rawURL)
+			continue
+		}
+		query := rawURL[idx+1:]
+
+		if strings.Contains(query, " ") {
+			t.Errorf("fetcher received URL with literal space in query: %q", rawURL)
+		}
+		if strings.Contains(query, "'") {
+			t.Errorf("fetcher received URL with literal single-quote in query: %q", rawURL)
+		}
+
+		if _, err := url.ParseQuery(query); err != nil {
+			t.Errorf("fetcher received malformed URL query: %v (url=%q)", err, rawURL)
+		}
 	}
 }
