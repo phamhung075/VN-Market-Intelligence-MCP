@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T22:28:45Z",
-  "_updated_by": "po-s67",
+  "_updated_at": "2026-06-15T23:28:41Z",
+  "_updated_by": "po-s68",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -653,7 +653,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T22:39:38Z",
+    "_updated_at": "2026-06-15T23:28:41Z",
     "_updated_by": "po-s68",
     "active_sprints": [
       {
@@ -12186,294 +12186,28 @@
         "degroomed_by": "po-s68"
       },
       {
-        "id": "W2-T-1",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Create fetchDeadline.ts with withDeadline + macroFetch + DegradeEnvelope",
+        "id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
         "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 2,
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "priority": "P3",
         "size": "S",
-        "status": "TODO",
+        "status": "backlog",
         "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [],
-        "blocks": [
-          "W2-T-2",
-          "W2-T-3",
-          "W2-T-4",
-          "W2-T-5",
-          "W2-T-6",
-          "W2-T-7",
-          "W2-T-8",
-          "W2-T-9",
-          "W2-T-10",
-          "W2-T-11"
-        ],
-        "critical_path": true,
-        "estimated_hours": 2,
+        "route_to": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "blocking": false,
+        "title": "Unit test fetchDeadline.ts (withDeadline + macroFetch)",
+        "desc": "Add unit test for apps/mcp-server/src/infrastructure/fetchers/fetchDeadline.ts covering (a) deadline fires->DeadlineError thrown, (b) fast response->clearTimeout cleanup, (c) non-abort network error->rethrow unchanged, (d) macroFetch ok:false on http-error/deadline/network, (e) macroFetch ok:true only on response.ok.",
+        "rationale": "qa flagged this coverage gap at W2 sign-off; helper logic already code-verified (qa 6-check audit) so this is test hygiene, NOT a regression block.",
         "files": [
           "apps/mcp-server/src/infrastructure/fetchers/fetchDeadline.ts"
-        ]
-      },
-      {
-        "id": "W2-T-2",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Barrel export in fetchers/index.ts",
-        "type": "FIX",
-        "size": "XS",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1"
         ],
-        "blocks": [
-          "W2-T-3",
-          "W2-T-4",
-          "W2-T-5",
-          "W2-T-6",
-          "W2-T-8",
-          "W2-T-9",
-          "W2-T-10"
-        ],
-        "critical_path": false,
-        "estimated_hours": 0.25,
-        "files": [
-          "apps/mcp-server/src/infrastructure/fetchers/index.ts"
-        ]
-      },
-      {
-        "id": "W2-T-3",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Migrate muasamcong.ts:216 → withDeadline",
-        "type": "FIX",
-        "size": "S",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1"
-        ],
+        "depends_on": [],
         "blocks": [],
-        "critical_path": false,
-        "estimated_hours": 1.5,
-        "files": [
-          "apps/mcp-server/src/infrastructure/fetchers/muasamcong.ts"
-        ]
-      },
-      {
-        "id": "W2-T-4",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Migrate sscInsider.ts:134 → withDeadline",
-        "type": "FIX",
-        "size": "S",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1"
-        ],
-        "blocks": [],
-        "critical_path": false,
-        "estimated_hours": 1.5,
-        "files": [
-          "apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts"
-        ]
-      },
-      {
-        "id": "W2-T-5",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Migrate newsHeadlinesRefreshJob.ts — both fetchFromNewsFetch:41 and pushToMcpServer:79",
-        "type": "FIX",
-        "size": "S",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1"
-        ],
-        "blocks": [],
-        "critical_path": false,
-        "estimated_hours": 1.5,
-        "files": [
-          "apps/mcp-server/src/scheduler/news-analysis/newsHeadlinesRefreshJob.ts"
-        ]
-      },
-      {
-        "id": "W2-T-6",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Migrate bctcPdfPullJob.ts:165 → withDeadline",
-        "type": "FIX",
-        "size": "S",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1"
-        ],
-        "blocks": [],
-        "critical_path": false,
-        "estimated_hours": 1.5,
-        "files": [
-          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts"
-        ]
-      },
-      {
-        "id": "W2-T-7",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Migrate macroTools.ts:446 → macroFetch (pattern setter)",
-        "type": "FIX",
-        "size": "S",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1",
-          "W2-T-2"
-        ],
-        "blocks": [
-          "W2-T-11"
-        ],
-        "critical_path": true,
-        "estimated_hours": 2,
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts"
-        ]
-      },
-      {
-        "id": "W2-T-8",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Migrate server.ts:642 → withDeadline",
-        "type": "FIX",
-        "size": "S",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1"
-        ],
-        "blocks": [],
-        "critical_path": false,
-        "estimated_hours": 1.5,
-        "files": [
-          "apps/mcp-server/src/interface/mcp/server.ts"
-        ]
-      },
-      {
-        "id": "W2-T-9",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "DRY consolidate taOhlcvBackfillJob.ts:149-170 → withDeadline",
-        "type": "FIX",
-        "size": "XS",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1"
-        ],
-        "blocks": [],
-        "critical_path": false,
-        "estimated_hours": 1,
-        "files": [
-          "apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts"
-        ]
-      },
-      {
-        "id": "W2-T-10",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "DRY consolidate deepFetchVpsJob.ts:96 → withDeadline",
-        "type": "FIX",
-        "size": "XS",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1"
-        ],
-        "blocks": [],
-        "critical_path": false,
-        "estimated_hours": 1,
-        "files": [
-          "apps/mcp-server/src/scheduler/news-analysis/deepFetchVpsJob.ts"
-        ]
-      },
-      {
-        "id": "W2-T-11",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Migrate 7 macro sibling tools → macroFetch (carryTools, tradeBalance, bop, liquidityState, cpiComponents, macroIndicatorsVn, dinhGia)",
-        "type": "FIX",
-        "size": "M",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1",
-          "W2-T-2",
-          "W2-T-7"
-        ],
-        "blocks": [
-          "W2-T-12"
-        ],
-        "critical_path": true,
-        "estimated_hours": 3.5,
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/macro/tradeBalanceTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/macro/bopTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/macro/liquidityStateTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/macro/cpiComponentsTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/macro/macroIndicatorsVnTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/macro/dinhGiaTools.ts"
-        ]
-      },
-      {
-        "id": "W2-T-12",
-        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Full bun check pass + container rebuild",
-        "type": "FIX",
-        "size": "XS",
-        "status": "TODO",
-        "zone": "apps/mcp-server/",
-        "priority": "P1",
-        "created_at": "2026-06-16T00:00:00Z",
-        "created_by": "pm",
-        "depends_on": [
-          "W2-T-1",
-          "W2-T-2",
-          "W2-T-3",
-          "W2-T-4",
-          "W2-T-5",
-          "W2-T-6",
-          "W2-T-7",
-          "W2-T-8",
-          "W2-T-9",
-          "W2-T-10",
-          "W2-T-11"
-        ],
-        "blocks": [],
-        "critical_path": true,
-        "estimated_hours": 0.5,
-        "files": []
+        "created_at": "2026-06-15T23:28:41Z",
+        "created_by": "po-s68"
       }
     ],
     "closed_sprints": [
@@ -17643,6 +17377,392 @@
         "forced_failure_method": "Mock-DB injection into the actual source at 2d07011d (NOT live SQLITE_BUSY sidecar). JUSTIFIED: market.db is WAL mode, external BEGIN EXCLUSIVE cannot block an already-open reader connection. Accepted by PO.",
         "router_raw_verify": true,
         "done_verified_note": "Pre-verified evidence recorded by po-s67 board-flip; not re-run."
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 2,
+        "priority": "P1",
+        "size": "L",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "route_to": "dev-mcp-server",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "ba",
+        "title": "Wave-2 helpers: withDeadline<T> + macroFetch<T> — close the whole bounded-fetch / F-MACRO-FETCH-DEADLINE cluster in one edit",
+        "desc": "Land withDeadline<T>(fn(signal),ms,label) [throws typed DeadlineError] and macroFetch<T>(path,body,{deadlineMs}) [discriminated {ok}|{degrade}]. macroFetch one-edit migrates 8 macro-proxy sites: macroTools:446, tradeBalance:96, bop:119, liquidityState:137, cpiComponents:95, macroIndicatorsVn:80, dinhGia:56, carry:57+134 (carries F-MACRO-FETCH-DEADLINE everywhere; deletes ~25 lines x 8). withDeadline migrates the unbounded-fetch-hang P1s: muasamcong:216, sscInsider:134, newsHeadlinesRefreshJob:41(+pushToMcpServer:79), bctcPdfPullJob:165, server.ts:642 — a HANG (not just a connection ERROR) starves the well-written degrade path; deadline MUST be < gateway 60s budget. Promotes the inline copies already in taOhlcvBackfillJob/deepFetchVpsJob to one util.",
+        "replaces_sites": [
+          "macroTools:446",
+          "tradeBalance:96",
+          "bop:119",
+          "liquidityState:137",
+          "cpiComponents:95",
+          "macroIndicatorsVn:80",
+          "dinhGia:56",
+          "carryTools:57+134",
+          "muasamcong:216",
+          "sscInsider:134",
+          "newsHeadlinesRefreshJob:41",
+          "bctcPdfPullJob:165",
+          "server.ts:642",
+          "mcp-interface-05"
+        ],
+        "recurrence_class": "graceful-degrade-needs-bounded-fetch / F-MACRO-FETCH-DEADLINE",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: a stalled upstream (sleep > deadline) makes the wrapped call THROW DeadlineError within deadlineMs < gateway budget -> structured degrade NOT a gateway-timeout false 'gateway down'; macroFetch degrade envelope distinct from a real 200; LIVE-verified across timing.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-interface-01/05, mcp-infra-01/03, mcp-domain-sched-02/03, mcp-interface-08)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "promoted_at": "2026-06-15T22:28:45Z",
+        "promoted_by": "po-s67",
+        "ready_note": "ERROR-AUDIT-2026-06-15 Wave-2 successor for the freed apps/mcp-server/ coding slot (W1-MCP-P0 now done_verified). WIP<=2: pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE still running -> this is the 1 free slot. Left in ready[] for router to dispatch on its own cadence; NOT spawned by po-s67.",
+        "status_note": "Broken into 12 atomic tasks W2-T-1..W2-T-12; critical path T-1→T-7→T-11→T-12",
+        "decomposed_at": "2026-06-16T00:00:00Z",
+        "decomposed_by": "pm",
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-1",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Create fetchDeadline.ts with withDeadline + macroFetch + DegradeEnvelope",
+        "type": "FIX",
+        "size": "S",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [],
+        "blocks": [
+          "W2-T-2",
+          "W2-T-3",
+          "W2-T-4",
+          "W2-T-5",
+          "W2-T-6",
+          "W2-T-7",
+          "W2-T-8",
+          "W2-T-9",
+          "W2-T-10",
+          "W2-T-11"
+        ],
+        "critical_path": true,
+        "estimated_hours": 2,
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/fetchDeadline.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-2",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Barrel export in fetchers/index.ts",
+        "type": "FIX",
+        "size": "XS",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [
+          "W2-T-3",
+          "W2-T-4",
+          "W2-T-5",
+          "W2-T-6",
+          "W2-T-8",
+          "W2-T-9",
+          "W2-T-10"
+        ],
+        "critical_path": false,
+        "estimated_hours": 0.25,
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/index.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-3",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate muasamcong.ts:216 → withDeadline",
+        "type": "FIX",
+        "size": "S",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/muasamcong.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-4",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate sscInsider.ts:134 → withDeadline",
+        "type": "FIX",
+        "size": "S",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-5",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate newsHeadlinesRefreshJob.ts — both fetchFromNewsFetch:41 and pushToMcpServer:79",
+        "type": "FIX",
+        "size": "S",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/newsHeadlinesRefreshJob.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-6",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate bctcPdfPullJob.ts:165 → withDeadline",
+        "type": "FIX",
+        "size": "S",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-7",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate macroTools.ts:446 → macroFetch (pattern setter)",
+        "type": "FIX",
+        "size": "S",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1",
+          "W2-T-2"
+        ],
+        "blocks": [
+          "W2-T-11"
+        ],
+        "critical_path": true,
+        "estimated_hours": 2,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-8",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate server.ts:642 → withDeadline",
+        "type": "FIX",
+        "size": "S",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1.5,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/server.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-9",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "DRY consolidate taOhlcvBackfillJob.ts:149-170 → withDeadline",
+        "type": "FIX",
+        "size": "XS",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1,
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/taOhlcvBackfillJob.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-10",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "DRY consolidate deepFetchVpsJob.ts:96 → withDeadline",
+        "type": "FIX",
+        "size": "XS",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1"
+        ],
+        "blocks": [],
+        "critical_path": false,
+        "estimated_hours": 1,
+        "files": [
+          "apps/mcp-server/src/scheduler/news-analysis/deepFetchVpsJob.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-11",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Migrate 7 macro sibling tools → macroFetch (carryTools, tradeBalance, bop, liquidityState, cpiComponents, macroIndicatorsVn, dinhGia)",
+        "type": "FIX",
+        "size": "M",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1",
+          "W2-T-2",
+          "W2-T-7"
+        ],
+        "blocks": [
+          "W2-T-12"
+        ],
+        "critical_path": true,
+        "estimated_hours": 3.5,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/tradeBalanceTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/bopTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/liquidityStateTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/cpiComponentsTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroIndicatorsVnTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/dinhGiaTools.ts"
+        ],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "W2-T-12",
+        "parent_id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Full bun check pass + container rebuild",
+        "type": "FIX",
+        "size": "XS",
+        "status": "done_verified",
+        "zone": "apps/mcp-server/",
+        "priority": "P1",
+        "created_at": "2026-06-16T00:00:00Z",
+        "created_by": "pm",
+        "depends_on": [
+          "W2-T-1",
+          "W2-T-2",
+          "W2-T-3",
+          "W2-T-4",
+          "W2-T-5",
+          "W2-T-6",
+          "W2-T-7",
+          "W2-T-8",
+          "W2-T-9",
+          "W2-T-10",
+          "W2-T-11"
+        ],
+        "blocks": [],
+        "critical_path": true,
+        "estimated_hours": 0.5,
+        "files": [],
+        "done_verified_at": "2026-06-15T23:28:41Z",
+        "verified_by": "po-s68",
+        "done_commit": "c76a9776",
+        "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
       }
     ],
     "head": {
@@ -17873,50 +17993,6 @@
         "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 SPIKE — architect (agents-architect consulted). recurring-bug-escalation umbrella over the 5 child FIX tasks. Design the cross-cutting alerting/fail-loud/brittleness-monitoring contract — do NOT just re-patch leaves. Timebox 120m, output: architecture brief."
-      },
-      {
-        "id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 2,
-        "priority": "P1",
-        "size": "L",
-        "status": "DECOMPOSED",
-        "zone": "apps/mcp-server/",
-        "route_to": "dev-mcp-server",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "ba",
-        "title": "Wave-2 helpers: withDeadline<T> + macroFetch<T> — close the whole bounded-fetch / F-MACRO-FETCH-DEADLINE cluster in one edit",
-        "desc": "Land withDeadline<T>(fn(signal),ms,label) [throws typed DeadlineError] and macroFetch<T>(path,body,{deadlineMs}) [discriminated {ok}|{degrade}]. macroFetch one-edit migrates 8 macro-proxy sites: macroTools:446, tradeBalance:96, bop:119, liquidityState:137, cpiComponents:95, macroIndicatorsVn:80, dinhGia:56, carry:57+134 (carries F-MACRO-FETCH-DEADLINE everywhere; deletes ~25 lines x 8). withDeadline migrates the unbounded-fetch-hang P1s: muasamcong:216, sscInsider:134, newsHeadlinesRefreshJob:41(+pushToMcpServer:79), bctcPdfPullJob:165, server.ts:642 — a HANG (not just a connection ERROR) starves the well-written degrade path; deadline MUST be < gateway 60s budget. Promotes the inline copies already in taOhlcvBackfillJob/deepFetchVpsJob to one util.",
-        "replaces_sites": [
-          "macroTools:446",
-          "tradeBalance:96",
-          "bop:119",
-          "liquidityState:137",
-          "cpiComponents:95",
-          "macroIndicatorsVn:80",
-          "dinhGia:56",
-          "carryTools:57+134",
-          "muasamcong:216",
-          "sscInsider:134",
-          "newsHeadlinesRefreshJob:41",
-          "bctcPdfPullJob:165",
-          "server.ts:642",
-          "mcp-interface-05"
-        ],
-        "recurrence_class": "graceful-degrade-needs-bounded-fetch / F-MACRO-FETCH-DEADLINE",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: a stalled upstream (sleep > deadline) makes the wrapped call THROW DeadlineError within deadlineMs < gateway budget -> structured degrade NOT a gateway-timeout false 'gateway down'; macroFetch degrade envelope distinct from a real 200; LIVE-verified across timing.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-interface-01/05, mcp-infra-01/03, mcp-domain-sched-02/03, mcp-interface-08)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65",
-        "promoted_at": "2026-06-15T22:28:45Z",
-        "promoted_by": "po-s67",
-        "ready_note": "ERROR-AUDIT-2026-06-15 Wave-2 successor for the freed apps/mcp-server/ coding slot (W1-MCP-P0 now done_verified). WIP<=2: pdf-extractor lane FIX-BCTC-BANK-PDF-OCR-RASTERIZE still running -> this is the 1 free slot. Left in ready[] for router to dispatch on its own cadence; NOT spawned by po-s67.",
-        "status_note": "Broken into 12 atomic tasks W2-T-1..W2-T-12; critical path T-1→T-7→T-11→T-12",
-        "decomposed_at": "2026-06-16T00:00:00Z",
-        "decomposed_by": "pm"
       }
     ],
     "review": [
@@ -18110,6 +18186,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-15T22:28:45Z",
-  "updated_by": "po-s67"
+  "updated_at": "2026-06-15T23:28:41Z",
+  "updated_by": "po-s68"
 }
