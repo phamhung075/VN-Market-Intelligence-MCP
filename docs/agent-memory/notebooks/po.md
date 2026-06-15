@@ -1,41 +1,43 @@
 # PO Notebook
 
-## 2026-06-15T20:10Z — FIX-BCTC-ENRICH-SILENT-0ROWS done_verified gate → HOLD (check-a FAIL)
+## 2026-06-15T20:18Z — head reconcile + dispatch BCTC-OCR P0; scope FE-PAGE-REORG sprint
 
-Drove rebuild→verify for the merged enrich-silent-0rows fix (68d54c7b pdf-extractor
-Layout-6/7 + 989654f2 mcp-server 0-row gate; pm flipped in_progress→review ad4c1537).
-Host SAFE (load 7.45/12, headroom 3077MB, off-market). Rebuilt BOTH images per-container
-(force-recreate `up -d --no-deps`, NEVER compose down; one transient zombie-PID on
-pdf-extractor cleared by SIGKILL, all 13 peers stayed healthy; builder prune both).
-New images: pdf-extractor .Created 19:29Z (sha ef0acd92), mcp-server 19:37Z (4e0206fe)
-— both > commit 19:12Z. pek-import-chain ALL OK (no native-lib crash).
+Dev-team :07 tick. Two items, sequenced against WIP≤2 + host headroom (load ~6.8/13
+containers — healthy, NOT the 205-starvation scenario).
 
-**Gate pivot:** board gate named `runBctcReparseJob` but RAW inspection showed that's a
-TEXT-stranded recovery path (pdf-parse tiers) — the merged FIX lives in `runBctcPdfPullJob`.
-Re-drove VCB 2026Q1(id 292117)+2025Q1(id 224) through the REAL fixed pull job vs
-named-volume market.db (sidecar read; in-container Bun reset for WAL-locked DB):
-- (a) real VARIED rows: **FAIL** — still 0 bctc_table_rows. fitz: VCB_2026_Q1.pdf =
-  53pp, 110 text-chars/first 8pp + images = SCANNED/image-only; Layout-6/7 text-table
-  parser can't fire on 0-char input. OCR rasterization is the missing leg.
-- (b) fail-loud: **PASS** — both rows → enrich_failed (NOT done), logger.error
-  "ENRICH 0-rows — FAIL LOUD", enrichFailed:2. Silent-advance genuinely fixed.
-- (c) non-regression: **PASS** — FPT 2026Q1=145, VCB 2025Q4=112 intact + untouched.
+**ITEM 1 — board reconcile (done first).** `.head.active_task_id` was STALE-pointing at
+FIX-BCTC-ENRICH-SILENT-0ROWS (in review[], done_verified=PENDING after its check-a HOLD)
+— never advanced past last cycle's HOLD, so the :07 tick keying off `.head` would miss the
+READY P0. Verified orch-state board itself already committed (4763dee7/5773ee7b; CLEAN tree,
+no dirty board → no false-promotion sweep risk). Reconciled `.head` →
+FIX-BCTC-BANK-PDF-OCR-RASTERIZE + DISPATCHED it ready→in_progress (P0, dev-pdf-extractor;
+add OCR-rasterize leg via in-image PaddleOCR before text-table parse; GENERIC low-text-density
+routing, no allowlist; preserve 989654f2 enrich_failed fail-loud). = 1 dev coding lane.
+ARCH-CRON in_progress = QA-LIVE-OUTCOME-OBSERVE gate (no dev WIP). WIP≤2 honored.
 
-**Verdict:** HOLD FIX-BCTC at review (done_verified WITHHELD — check-a fails /goal#1).
-Merged code CORRECT but INCOMPLETE. Minted FIX-BCTC-BANK-PDF-OCR-RASTERIZE → ready
-(P0, dev-pdf-extractor, generic no-allowlist, PaddleOCR already in-image). Board committed
-4763dee7 (explicit path; dirty tree NOT swept — only orch-state + 2 scripts staged).
-DJ-GATE written. PUSH held.
+**ITEM 2 — NEW user sprint scoped.** "Frontend pages resemble each other, merge to
+categories." Read-only audit already persisted (2026-06-15-frontend-page-reorg-audit.md).
+Minted sprint_goal[FE-PAGE-REORG] (Wave-1 P0+P1 / Wave-2 P2+P3, owner dev-frontend) +
+BA-FE-PAGE-REORG TODO → ba→architect→pm→dev-frontend→qa. Spec mandate: ONE generic
+<ScreenerTable>/component per cluster for ALL entities (/goal#2, no per-page fork) + every
+migrated cell renders REAL loader data, no destructuring-default/placeholder mask (/goal#1 +
+no-fake-data); NO API/route/behavior change (tests stay green). Planning = ZERO dev coding
+WIP; dev-frontend IMPL becomes the natural 2nd lane only AFTER spec lands → no over-parallel
+fan-out now.
+
+Committed b2ae5134 (orch-state + script, explicit path; 83-file dirty tree NOT swept) +
+8f2b7119 (2 DJ entries, task_board byte-unchanged). Script:
+scripts/po-s64-head-reconcile-bctc-ocr-dispatch-fe-reorg-scope.jq. PUSH HELD (PO deferred;
+origin diverged via benign cloud-chore).
 
 ### Carry-over
-- **FIX-BCTC-BANK-PDF-OCR-RASTERIZE (ready, P0)** = remaining TRUE root of
-  get_bctc_full(VCB/CTG)='Chưa có dữ liệu BCTC'. NEXT dispatch → dev-pdf-extractor.
-  done_verified = real VARIED rows for VCB AND CTG vs named-volume DB; FPT145/VCB112
-  non-regress; genuinely-unparseable PDF still enrich_failed.
+- **FIX-BCTC-BANK-PDF-OCR-RASTERIZE (in_progress, P0)** → dev-pdf-extractor leads NOW.
+  done_verified = REAL VARIED rows VCB AND CTG vs named-volume DB; FPT145/VCB112 non-regress;
+  genuinely-unparseable PDF still enrich_failed. On land → flip FIX-BCTC-ENRICH-SILENT-0ROWS
+  review→done_verified (its (b)+(c) legs already PASS; check-a completes via this OCR leg).
+- **BA-FE-PAGE-REORG (backlog, TODO)** → ba writes spec next; dev-frontend IMPL = 2nd lane
+  after spec (low-risk internal refactor, no behavior change).
 - cowork bctc-analyst CTG/VCB/D2D RELEASE block stays JUSTIFIED-blocked (real, not stale).
-- FIX-BCTC-ENRICH-SILENT-0ROWS stays review until OCR leg lands ((b)+(c) legs done).
-- Reusable: scripts/ops-bctc-enrich-reverify-pulljob.sh (reset queue→pending + run pull
-  job, in-container Bun for WAL DB); scripts/po-s64-…-ocr-triage.jq (HOLD+mint).
-- Prior carry: 06-16 GATES (vnstock-tradingstats 08:30Z sweep, RSI market-open echo) →
-  then release held push (PO deferred; origin ~57 behind benign cloud-chore). PUSH HELD.
+- 06-16 gates pending: vnstock-tradingstats 08:30Z sweep, RSI market-open echo. PUSH HELD.
+- Reusable: scripts/ops-bctc-enrich-reverify-pulljob.sh; scripts/po-s64-…-fe-reorg-scope.jq.
 - FIX-HNX-SESSION-COOKIE + FIX-SSC-C111-EMPTY-FALLBACK batch one dev-vps-crawls pass.
