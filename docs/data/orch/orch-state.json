@@ -653,8 +653,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T21:23:56Z",
-    "_updated_by": "po-s65",
+    "_updated_at": "2026-06-15T22:39:38Z",
+    "_updated_by": "po-s68",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12155,6 +12155,35 @@
         "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P2 pdf-extractor-01, pdf-extractor-04)",
         "created_at": "2026-06-15T21:23:56Z",
         "created_by": "po-s65"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W1-PEK-P0",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 1,
+        "priority": "P0",
+        "size": "M",
+        "status": "BLOCKED",
+        "zone": "apps/pdf-extractor/",
+        "route_to": "dev-pdf-extractor",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "ba",
+        "blocked_by": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
+        "hold_reason": "SAME-ZONE-SERIALIZED: apps/pdf-extractor/ is actively edited by dev-pdf-extractor on FIX-BCTC-BANK-PDF-OCR-RASTERIZE (same FIX-BCTC-ENRICH-SILENT-0ROWS class). NO concurrent same-zone agent — dispatch only after the active lane reports done. VERIFIED DISTINCT: active commits fffef229/56129626 touched ocr_adapter.py + test + docs ONLY; pek_engine_adapter.py:668/:342/:717 are unmodified on disk — NOT a duplicate.",
+        "title": "Wave-1 P0 PEK data-masking pair: layout-crash + PaddleOCR-load failure served as a successful 0-row extraction",
+        "desc": "Two P0 sites in pek_engine_adapter.py where a CRASHED model is served as a clean 0-row 'pass' (FIX-BCTC-ENRICH-SILENT-0ROWS class). (A) :668 — DocLayout-YOLO layout-detection crash (OOM/native-lib fault on 8GB host) is logged at 668-673 then CONTINUES with empty pages_bboxes -> total_pages=0 (687), units_in_map=[] (700); caller pushes a fully-formed result dict as a SUCCESSFUL extraction. A model crash is indistinguishable from a PDF with no tables. (B) :342 (+ guard :717) — PaddleOCR PP-StructureV2 load fail -> warning only, paddle_table stays None; the 'if paddle_table is not None' guard at 717 silently skips table extraction -> units assemble row_count=0 with quarantined=False = clean-looking 0-row pass (units_passing==units_total). Contrast extract_layout_first_usecase.py:450 which correctly quarantines. FIX: re-raise OR tag extraction_status='degraded'/quarantined=True (ship the Python helper fail_loud_or_tag_degraded here as a by-product) so a crashed model is NEVER served as a successful 0-row extraction.",
+        "files": [
+          "apps/pdf-extractor/infrastructure/pek_engine_adapter.py"
+        ],
+        "recurrence_class": "BCTC-silent-0-rows (FIX-BCTC-ENRICH-SILENT-0ROWS)",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: force a layout-detection crash (drop/break DocLayout-YOLO) AND force a PaddleOCR load failure -> the extraction result is tagged degraded/quarantined (extraction_status reflects the crash), NOT a 0-row success with quarantined=False; a genuinely table-less PDF STILL lands a clean 0-row pass (no false-quarantine). RAW-verified LIVE on named-volume DB; container rebuilt.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P0 pdf-extractor-02, pdf-extractor-03)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "degroomed_at": "2026-06-15T22:39:38Z",
+        "degroomed_by": "po-s68"
       }
     ],
     "closed_sprints": [
@@ -17554,33 +17583,6 @@
         "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 SPIKE — architect (agents-architect consulted). recurring-bug-escalation umbrella over the 5 child FIX tasks. Design the cross-cutting alerting/fail-loud/brittleness-monitoring contract — do NOT just re-patch leaves. Timebox 120m, output: architecture brief."
-      },
-      {
-        "id": "FIX-ERRAUDIT-W1-PEK-P0",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 1,
-        "priority": "P0",
-        "size": "M",
-        "status": "READY",
-        "zone": "apps/pdf-extractor/",
-        "route_to": "dev-pdf-extractor",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "ba",
-        "blocked_by": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
-        "hold_reason": "SAME-ZONE-SERIALIZED: apps/pdf-extractor/ is actively edited by dev-pdf-extractor on FIX-BCTC-BANK-PDF-OCR-RASTERIZE (same FIX-BCTC-ENRICH-SILENT-0ROWS class). NO concurrent same-zone agent — dispatch only after the active lane reports done. VERIFIED DISTINCT: active commits fffef229/56129626 touched ocr_adapter.py + test + docs ONLY; pek_engine_adapter.py:668/:342/:717 are unmodified on disk — NOT a duplicate.",
-        "title": "Wave-1 P0 PEK data-masking pair: layout-crash + PaddleOCR-load failure served as a successful 0-row extraction",
-        "desc": "Two P0 sites in pek_engine_adapter.py where a CRASHED model is served as a clean 0-row 'pass' (FIX-BCTC-ENRICH-SILENT-0ROWS class). (A) :668 — DocLayout-YOLO layout-detection crash (OOM/native-lib fault on 8GB host) is logged at 668-673 then CONTINUES with empty pages_bboxes -> total_pages=0 (687), units_in_map=[] (700); caller pushes a fully-formed result dict as a SUCCESSFUL extraction. A model crash is indistinguishable from a PDF with no tables. (B) :342 (+ guard :717) — PaddleOCR PP-StructureV2 load fail -> warning only, paddle_table stays None; the 'if paddle_table is not None' guard at 717 silently skips table extraction -> units assemble row_count=0 with quarantined=False = clean-looking 0-row pass (units_passing==units_total). Contrast extract_layout_first_usecase.py:450 which correctly quarantines. FIX: re-raise OR tag extraction_status='degraded'/quarantined=True (ship the Python helper fail_loud_or_tag_degraded here as a by-product) so a crashed model is NEVER served as a successful 0-row extraction.",
-        "files": [
-          "apps/pdf-extractor/infrastructure/pek_engine_adapter.py"
-        ],
-        "recurrence_class": "BCTC-silent-0-rows (FIX-BCTC-ENRICH-SILENT-0ROWS)",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: force a layout-detection crash (drop/break DocLayout-YOLO) AND force a PaddleOCR load failure -> the extraction result is tagged degraded/quarantined (extraction_status reflects the crash), NOT a 0-row success with quarantined=False; a genuinely table-less PDF STILL lands a clean 0-row pass (no false-quarantine). RAW-verified LIVE on named-volume DB; container rebuilt.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P0 pdf-extractor-02, pdf-extractor-03)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65"
       },
       {
         "id": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
