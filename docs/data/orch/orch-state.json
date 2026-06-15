@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T14:31:12Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-15T15:59:56Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -111,12 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T12:06:58Z",
+    "updated_at": "2026-06-15T15:59:56Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL",
-    "next_agent": null,
-    "rebuild_required": false,
-    "note": "ROUTER 2026-06-15T12:06:58Z — FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL PROMOTED review->done_verified. Ops (a0fe27f8) force-recreated stock-price + gated PASS; router RAW RE-VERIFIED (not relayed): own docker inspect (image 12:04:35Z>commit 11:58:49Z, healthy, restarts=0, 13 peers), own named-vol market_prices query (0 rows>1M, VCB 61600/FPT 73600 sane, VN30 1962/VNINDEX 1799 index scale), own call_tool get_ticker_intelligence(VCB)=>61,600 VND fresh recompute 12:06:09Z, staleness code present price_resolution.go:138. STALENESS: tier-3 win downgrades FRESH->STALE. SCALE: *1000 guarded by type==STOCK && VN floor. GENERIC /goal#2. Commit 8fde56ef. REBUILD DONE. Remaining review[] gates 2026-06-16: FIX-VNSTOCK-TRADINGSTATS-CRASH (08:30Z sweep, probe 3b57017e), FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (01:00Z/02:15Z, probe 09b8693f). ARCH-SHIP-WAVE-REAUDIT PARKED. FIX-MARKET-HEXAGRAM + FIX-FB-POSTER done_verified. Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). PUSH held (PO post-gates). Active coding lane=0."
+    "active_task_id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
+    "next_agent": "dev-mcp-server",
+    "note": "DEV-TEAM DISPATCH 2026-06-15T15:59:56Z — FIX-SIGNAL-CONFIDENCE-DEFAULT-50(P1) ready->in_progress -> dev-mcp-server (coding lane free; in_progress holds = ARCH-CRON-SCHEDULER-RELIABILITY[design] + BA-VN-MACRO-TOOLING[spec], 0 coding). Wire real confidence into postSignal for ALL 13 producers (seed agentSignalStore.ts:341 default 50; smoking gun intelligenceCycleJob.ts:1290). GENERIC /goal#2 no allowlist. DoD /goal#1 live SIGNALS-last-10 SPREAD not constant-50 vs named-vol DB post-rebuild. Part of standing no-fake-data/real-fetch directive — 2 read-only audits running to map the rest (numeric metric defaults wf + hardcoded/stub/dead-source wf). review[] gates 2026-06-16: FIX-VNSTOCK-TRADINGSTATS-CRASH (08:30Z), FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (01:00Z/02:15Z). PUSH held (PO post-gates)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -592,8 +591,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T14:31:12Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-15T15:59:56Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -14450,14 +14449,12 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
         "type": "FIX",
         "priority": "P1",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "route_to": "dev-mcp-server",
         "zone": "apps/mcp-server/",
         "mode": "recon-first",
@@ -14484,9 +14481,14 @@
         "source": "user BUG report 2026-06-15 via router RAW-verify",
         "size": "M",
         "minted_by": "po",
-        "minted_at": "2026-06-15T15:52:27Z"
+        "minted_at": "2026-06-15T15:52:27Z",
+        "lane": "dev-zone",
+        "dispatched_ts": "2026-06-15T15:59:56Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "Wire EVERY signal producer's already-computed confidence into postSignal confidence_score (0-100 int), generic across ALL 13 call sites — no per-source/per-ticker literal. Seed: agentSignalStore.ts:341 destructuring default 50; column schema-news.ts:104 DEFAULT 50; dashboard server.ts:1393 ?? 50; only agentSignalTools.ts:361 passes a real value. Smoking gun intelligenceCycleJob.ts:1290 posts verified_chain with chain.conviction in scope but omits confidence_score. recon-first: read all 13 postSignal call sites + each producer's existing confidence source (cascade.confidence / news sentiment.confidence / BCTC extraction_confidence / kinh-dich confidence / conviction) before editing. DoD /goal#1: live SIGNALS-last-10 shows a real SPREAD by source+strength (NOT a column of 50), RAW-verified vs named-volume market.db (NOT host ./data decoy) + a live get-signals call AFTER rebuild. /goal#2: generic, no allowlist."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
