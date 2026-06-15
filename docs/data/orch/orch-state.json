@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T00:35:36Z",
+    "updated_at": "2026-06-15T00:42:17Z",
     "updated_by": "dev-team",
     "active_task_id": "F-BOP-ENCODING",
-    "next_agent": "dev",
-    "note": "F-BOP-ENCODING DISPATCHED -> dev-macro-indicators (agent a32657d545b6eb455). FIRST of serialized ACCURACY pair (size S, /goal#1 'best result' real-data layer for bop, after RELIABILITY layer F-MACRO-FETCH-DEADLINE+VMT-8 done_verified). ROOT: get_vn_bop degrades blocked_reason='context deadline exceeded' = FetchBudgetSec=8s bound firing on a MALFORMED (un-URL-encoded) SBV Liferay OData filter — spaces in the $filter query reach SBV un-encoded -> request never resolves -> 8s ctx deadline. FIX (generic): URL-encode the OData filter (url.Values/url.QueryEscape) in usecases_vmt_bop.go so the SBV request is well-formed -> real bop data returns within budget. No recon (proxy UP, NSO index 85867 bytes; this is pure encoding). Rebase 94b49f44 BEFORE editing usecases_vmt_bop.go. GATE: unit test asserting filter spaces are %20/+-encoded in the built URL; build/vet/test green; do NOT touch VMT-8 degrade builders or FetchBudgetSec const. SEQUENCED-AFTER (HELD, same owner/zone, serialize): F-NSO-SELECTOR (recon-first via ops-vps-fetch on new NSO WordPress HTML, then dev-macro-indicators). WIP: dev-macro in_progress=1 (this), budget<=2 OK. On dev return -> router RAW-verify gates GREEN (on-main; files all apps/macro-indicators/**; foreign-capture NONE; independent uncached go build/vet/test) -> head dev->ops REBUILD macro-indicators (force-recreate single svc, NEVER compose down) -> LIVE re-probe get_vn_bop across >=2 timing windows: must return REAL bop data (is_estimate=false OR honest degraded if SBV genuinely down) within gateway deadline -> done_verified -> release F-NSO-SELECTOR. Commit explicit path only."
+    "next_agent": "ops",
+    "note": "F-BOP-ENCODING DONE (dev-macro-indicators a32657d545b6eb455, commit 400610e5, router RAW-verified GREEN: on-main ancestor-of-HEAD; 3 files all apps/macro-indicators/** parsers_vmt_bop.go + 2 tests; foreign-capture NONE; orch-state NOT captured; independent UNCACHED go build/vet rc=0 + go test -count=1 ./pkg/... all 11 pkgs PASS; fix url.Values{}.Encode() in BuildBOPFetchURL = generic percent-encode every OData param; VMT-8 degrade + FetchBudgetSec UNTOUCHED; tests table-driven no-literal-space + end-to-end encoded-URL capture; generic /goal#2). CODE merge gate satisfied BUT NOT LIVE — container macro-indicators-1 holds pre-400610e5 image c6793a0222e3. === -> head dev->ops: FORCE-RECREATE macro-indicators single service (memory: rebuild after dev change; NEVER compose down — kills peers ~21min); verify NEW image ID != c6793a0222e3 + 400610e5 on HEAD + 11 peers stay healthy. Then LIVE-verify via gateway re-probe (NOT badges) ACROSS >=2 TIMING WINDOWS (fast-fail-window trap): get_vn_bop must now return REAL balance-of-payments data WITHIN the gateway deadline — is_estimate=false (real) OR honest-degraded ONLY IF SBV is genuinely down (NO MORE blocked_reason='context deadline exceeded' from a malformed URL — that exact symptom must be GONE). On ops live-result -> ROUTER re-probes get_vn_bop ITSELF across timing (not ops badge) + disambiguates (curl SBV/:3128 if still degraded). If router live-green (real bop data, no deadline-exceeded): promote F-BOP-ENCODING done_verified + RELEASE F-NSO-SELECTOR (sequence_after F-BOP-ENCODING satisfied -> dispatch recon-first to ops-vps-fetch). === SEQUENCED-AFTER (still HELD): F-NSO-SELECTOR (recon-first ops-vps-fetch on NEW NSO WordPress HTML, then dev-macro-indicators; rebase 400610e5). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -506,7 +506,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T00:35:36Z",
+    "_updated_at": "2026-06-15T00:42:17Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13729,7 +13729,7 @@
         "title": "URL-encode the BOP OData $filter (raw spaces -> %20) before vpsFetch so tinyproxy accepts the CONNECT; restores get_vn_bop real data (accuracy, after deadline fix)",
         "zone": "apps/macro-indicators/",
         "owner": "dev-macro-indicators",
-        "status": "in_progress",
+        "status": "done",
         "sequence_after": null,
         "priority": "high",
         "size": "S",
@@ -13753,7 +13753,11 @@
         "po_triage_note": "S no-recon accuracy win: URL-encode SBV Liferay OData filter spaces in usecases_vmt_bop.go. bop degrade 'context deadline exceeded' = FetchBudgetSec=8s firing on a malformed (un-encoded) OData filter reaching SBV. Rebase 94b49f44 FIRST. Serialize w/ F-NSO-SELECTOR (same owner/zone) — dispatched first, no file conflict (bop=usecases_vmt_bop.go, nso=cache_vmt_nso.go+parsers).",
         "dispatched_at": "2026-06-15T00:35:36Z",
         "dispatched_to": "dev-macro-indicators",
-        "dispatch_agent_id": "a32657d545b6eb455"
+        "dispatch_agent_id": "a32657d545b6eb455",
+        "done_at": "2026-06-15T00:42:17Z",
+        "done_commit": "400610e5",
+        "done_agent": "a32657d545b6eb455",
+        "router_reverify_verdict": "RAW-VERIFIED (not dev badge) — gates GREEN: 400610e5 on main, ancestor of HEAD; 3 files all apps/macro-indicators/** (parsers_vmt_bop.go + 2 tests), foreign-capture NONE, orch-state NOT captured; independent UNCACHED go build/vet rc=0 + go test -count=1 ./pkg/... all 11 pkgs PASS. Fix: url.Values{}.Encode() in BuildBOPFetchURL -> generic percent-encode of every OData param (spaces/single-quotes/operators); VMT-8 degrade + FetchBudgetSec UNTOUCHED. Tests: parsers_vmt_bop_test (table-driven no-literal-space + ParseQuery round-trip) + usecases end-to-end encoded-URL capture. CODE merge gate satisfied; LIVE-verify pending ops rebuild (container pre-400610e5 image c6793a0222e3)."
       },
       {
         "id": "F-NSO-SELECTOR",
