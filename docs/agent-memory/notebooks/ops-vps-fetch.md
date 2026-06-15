@@ -91,6 +91,45 @@ Remaining blockers (NOT proxy, need dev agent):
 
 ---
 
+## c013 · 2026-06-15 · F-BOP-QUERY-RECON STEP1 — SBV BOP OData query semantics
+
+Trigger: `get_vn_bop` returns 0 items even though SBV responds (F-BOP-ENCODING fixed URL-encoding). Root cause investigation: OData query SEMANTICS match 0 live articles.
+
+**ROOT CAUSE: TWO independent bugs**
+
+**Bug 1 (structural — blocks ALL parsing): Wrong JSON root key**
+`sbvArticleResponse` uses `json:"items"` but SBV Liferay returns `"articles"` as the root array key. `"items"` key is absent. Go's `json.Unmarshal` silently skips it → `Items` nil → `len(apiResp.Items) == 0` → `bop_parser: SBV API returned 0 items`. This breaks ALL filter paths including the broad `Date48362898 gt ''` filter (which does return totalCount=15 from the API, but Go parses 0 because the key is wrong).
+
+Evidence from VPS probe:
+```
+items key present? False
+articles key present? True
+ALL keys: ['articles', 'lastPage', 'page', 'pageSize', 'totalCount', 'xClassName']
+```
+
+**Bug 2 (semantic — blocks date-range path): Date48362898 is a mid-quarter reference date, not quarter-end**
+Current quarter window (Q2 2026): 2026-04-01..2026-06-30 → 0 results
+Prev quarter window (Q1 2026): 2026-01-01..2026-03-31 → 0 results
+Q4 2025 data has `Date48362898=2025-12-25` which is inside Q4 2025 (Oct-Dec) but OUTSIDE Q1 2026 and Q2 2026 windows.
+
+All 4 quarters in live DB: quyI→2025-03-26 / quyII→2025-05-05 / quyIII→2025-08-12 / quyIV→2025-12-25
+
+**Working recipe:**
+```
+GET https://www.sbv.gov.vn/o/article/v1.0/articles
+  ?scopeKey=20117&contentStructureId=10063168&pageSize=100
+  &filter=status%20eq%200%20and%20Date48362898%20gt%20%27%27
+  &sort=datePublished%3Adesc
+Parse: response.articles[0] (deduplicate by articleId first — 15 rows, 4 unique IDs due to Liferay locales)
+```
+
+**Generic contract: no date-range filter. The broad `status eq 0 and Date48362898 gt ''` + `sort=datePublished:desc` + `articles[0]` is quarter-agnostic and will always return the latest published quarter.**
+
+Recon: `docs/vps-sources/vmt-sbv-bop-probe/recon.md`
+Script: `scripts/probes/vmt-bop-step1-recon.sh`
+
+---
+
 ## c012 · 2026-06-15T01:38Z · F-NSO-SELECTOR — NSO bai-top Selector Stale Recon
 
 Trigger: Task F-NSO-SELECTOR from orch-state board (READY, owner dev-macro-indicators). Tools `get_vn_macro_indicators` / `get_vn_trade_balance` / `get_cpi_components` returning `is_estimate=true` / `blocked_reason="NSO bai-top selector stale"`. Transport confirmed healthy (VPS proxy up; ~85867B page returned by router).
