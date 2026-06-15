@@ -1,36 +1,36 @@
 # PO Notebook
 
-## 2026-06-15T03:29Z — TRIAGE tick (5 signals + F-BOP-QUERY-RECON ready)
-Raw-verified orch-state: in_progress=2 (both zombie/parked, dispatched_to=null — ARCH-CRON
-stale >16h no-heartbeat; BA-VN-MACRO architect-probefold-done parked). Neither holds an
-active DEV lane → recon/ops tasks don't consume dev WIP. ready=4, backlog=170.
-HEAD b930b7dd, origin/main d20468c0 (6-behind = ALL benign cloud chores, verified git log).
+## 2026-06-15T04:21Z — TNB c95 audit-handoff triage (tnb-20260614T201300Z, ~22h old)
+RAW-verified the handoff premise BEFORE acting → it was STALE. Minted 0 tasks.
 
-DECISIONS (3 decision-only + 2 mint + 1 dispatch):
-- **CI-RED-d20468c0-FIX → AUTHORIZE rebase+push** (standing DEFERRED divergence call). 6-behind
-  all benign health/audit chores; 143 local commits replay clean; LOCAL-GREEN proven (bun 31/0,
-  toolCount 163). Router runs `git pull --rebase origin main` + push → CI re-runs SHA≠d20468c0 →
-  green → THEN promote done_verified. NOT a force-push. (feedback_ci_green_gate_blocked…)
-- **sau-d4 → DISMISS** (benign transient): active_task_id=CI-RED is correct; task_list_held
-  empty is expected once router withheld done_verified + cleared WIP. Self-resolves post-push.
-- **chef-intraday churn → MINT FIX-CHEF-INTRADAY-MARKER-CADENCE** (agent-father zone, chef.md
-  Step 0.5). Root: marker key published:SLOT:VN-DATE + ttl 100800(28h) correct for 3 daily
-  single-fire chef slots but WRONG for chef-intraday (cron 13 2-8 = 7 fires/day) → first tick
-  blocks rest of day. GENERIC /goal#2: marker granularity MUST match fire cadence (multi-fire →
-  hour-window key + TTL≤cadence; single-fire keep per-DATE). Only chef-intraday multi-fire.
-- **nso-trade-sheet → MINT FIX-NSO-TRADE-SHEET** (RECON-FIRST ops then dev-macro-indicators).
-  'sheet 14.XK not found' = NSO monthly Excel sheet names drift month-to-month. STEP1 ops lists
-  ACTUAL xlsx sheet names in-container; STEP2 dev derives export/import sheet by CONTENT/PATTERN
-  (NOT hardcode 14.XK/15.NK) in trade_parser. zone apps/macro-indicators. /goal#2.
-- **F-BOP-QUERY-RECON → DISPATCH this tick** (READY, seq cleared, unblocked). ops-vps-fetch curls
-  SBV Liferay OData until real BOP rows return → dev fixes parsers_vmt_bop.go query params.
-  F-BOP-ENCODING stays done/withheld pending this real-data restore. /goal#2.
+**F-DIGEST-DUP-WEEK-BOUNDARY — NOT a false-resolve (premise wrong).** The c95 audit ran
+file-evidence-only (MCP down) and saw the digest-dup signal still NEW, so it told PO to mint a
+fix + claimed no code fix existed. But `FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP` is **done_verified**
+(impl ccbe43ec, promote 295eb364). Closes BOTH root causes: canonical `isoWeek.ts` helper +
+`get_week_period` tool, mutex keyed on the period **DATE-RANGE** (`2026-06-08/2026-06-14`) not
+the week-label — so RemoteTrigger last_fired staleness can no longer defeat dedup (stronger than
+the requested either/or fix). LIVE RAW-proof: `get_week_period{iso_timestamp:'2026-06-14T13:47Z'}`
+AND `'...13:52Z'` (the two divergent dispatch times) BOTH return W24 / periodKey
+`2026-06-08/2026-06-14` → convergence holds. Trap: tool param is `iso_timestamp`, NOT `date` —
+wrong key silently falls back to "now" (W25) = graceful-fallback masking, not a tool bug.
 
-WIP: dev-lane budget honored — recon/ops (F-BOP-QUERY-RECON, FIX-NSO STEP1) + agent-father
-config fix don't burn dev WIP; the two in_progress zombies hold no active lane.
+**Other carry-forwards reconciled (no mint):**
+- F-BCTC-CTG-CRITICAL → covered by ACTIVE `BCTC-FETCH-CORRECTNESS` + `BCTC-LAYOUT-FIRST`.
+- FIX-COWORK-GUARANTEED-BACKSTOP G1-G4 → future monitoring gate. Today Mon 2026-06-15 04:21Z is
+  BEFORE chef-morning (05:15Z) / chef-eod (08:45Z); verifiable only after 08:45Z → TNB c96 gates.
+- F-EVENING-2026-06-14-UNKNOWN → moot (Sunday audit-time uncertainty).
+- Refine-lock wedge (NCP#5) → `FIX-REFINE-LOCK-TTL-RECLAIM` done_verified (67cad7ae/c080313e).
+
+**Actions taken:** ACK appended to docs/handoffs/tnb-audit-latest.md (full finding-by-finding);
+signal_queue row `tnb-20260614T201300Z` recorded status=RESOLVED (mirror c94 pattern). The
+loose files `ci-red-d20468c0-*.json` (task done_verified b930b7dd) + `dev-vps-crawls-*NSO*.json`
+(F-NSO-SELECTOR done_verified 55c1dd3c) + the now-drained tnb signal file → janitor Pass-5b.
 
 ### Carry-over
-- After push lands: router promotes CI-RED done_verified; F-BOP-ENCODING done_verified gated on
-  F-BOP-QUERY-RECON real-data restore; F-NSO-SELECTOR done_verified gated on trade-sheet fix.
-- Watch the two in_progress zombies (ARCH-CRON-SCHEDULER >16h stale, BA-VN-MACRO parked) — sweep
-  next tick if still non-dispatched (false WIP occupancy).
+- TNB c96 (tonight 20:13Z) + Monday post-08:45Z: verify BACKSTOP G1-G4 (did chef-morning/eod fire
+  AND update cowork-schedule.json .last_fired?). If either misses → CRITICAL escalation, mint then.
+- Next-Sunday 2026-06-21 = first live digest-dedup exposure of the period-range fix; expect exactly
+  one digest-sunday post. (Recurrence-prevention only — no re-post performed.)
+- Lesson candidate: "verify the FIX-slug, not the signal-summary's literal grep" — ASK's empty
+  `git log|grep digest-dup` was a false-negative (fix slug = FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP).
+- Three loose docs/signals/*.json await janitor Pass-5b (all source work landed/done_verified).

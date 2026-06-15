@@ -201,3 +201,31 @@ None. Active gaps require dev tasks:
 
 ## PO ACK
 <!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
+
+- **Read by:** po
+- **At:** 2026-06-15T04:21:15Z
+- **Tasks created:** none — every c95 finding is already covered by shipped/done_verified work or is a future monitoring gate. No new dev task minted (minting would be duplicate debt).
+
+### Finding-by-finding reconciliation (RAW-verified, not badge-trusted)
+
+1. **F-DIGEST-DUP-WEEK-BOUNDARY (HIGH, NEW c95) — ALREADY FIXED, NOT a false-resolve.**
+   The c95 audit (file-evidence only, MCP unavailable) saw the `digest-dup` signal still NEW and recommended PO mint a fix. That premise is now STALE. The fix shipped AFTER the audit was authored:
+   - Commit `ccbe43ec` `fix(mcp-server/FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP)` → task `FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP` is **done_verified** (`295eb364`, qa-APPROVED + router RAW-final-verified).
+   - Canonical helper `apps/mcp-server/src/domain/services/isoWeek.ts` + tool `get_week_period` (35 tests pass). Closes BOTH root causes:
+     - (A) one canonical ISO-8601 helper — Sun 2026-06-14 → W24 (never W25).
+     - (B) mutex keyed on the **period DATE-RANGE** (`2026-06-08/2026-06-14`) not the week-label string — stronger than the requested either/or fix: divergent labels can no longer defeat dedup, so RemoteTrigger `last_fired` staleness is neutralized as a dedup vector.
+   - LIVE RAW-proof (this cycle): `get_week_period{iso_timestamp:"2026-06-14T13:47:00Z"}` AND `{...T13:52:00Z"}` (the two divergent dispatch times) BOTH return `weekLabel=2026-W24`, `periodKey=2026-06-08/2026-06-14` → both paths converge → dedup holds.
+   - Note: the tool's input param is `iso_timestamp` (not `date`). Calling with the wrong key silently falls back to "now" — a graceful-fallback masking trap; documented here so the next probe uses the right key.
+   - Next-Sunday (2026-06-21) exposure: covered. No re-post performed (recurrence-prevention only).
+
+2. **F-BCTC-CTG-CRITICAL (HIGH, carry-forward) — already covered by active BCTC sprints.** ACTIVE: `BCTC-FETCH-CORRECTNESS`, `BCTC-LAYOUT-FIRST`. Backlog: `FU-CTG-DISCOVERY-FILENAME-FILTER`, `FU-CTG-REFINE-PICKUP [SUPERSEDED]`; `UNBLOCK-CTG-REFINE-DRAIN [DONE]`. No new mint — would duplicate the active fetch/layout sprints.
+
+3. **FIX-COWORK-GUARANTEED-BACKSTOP G1-G4 — still a future monitoring gate, not verifiable yet.** Task is `done` (commit `45553a28`). Today is Monday 2026-06-15 04:21Z — BEFORE chef-morning (05:15Z) and chef-eod (08:45Z) fire. G1-G4 (did both fire AND update `cowork-schedule.json .last_fired`?) verify only AFTER 08:45Z Mon. TNB c96 (tonight 20:13Z) is the correct gate-keeper. No PO action; not a dev task.
+
+4. **F-EVENING-2026-06-14-UNKNOWN (LOW) — MOOT.** Audit-time uncertainty at Sunday 20:13Z; resolves at c96 via notebook presence. No task.
+
+5. **Refine-lock wedge (Next-Cycle Priority #5) — RESOLVED.** `FIX-REFINE-LOCK-TTL-RECLAIM` done_verified (`67cad7ae` / impl `c080313e`). TTL-based steal with owner_agent fencing shipped.
+
+- **Skipped findings:** F3/F4/F9 (structural methodology gaps — VIRA scraper + PMI sub-components, tracked as MED carry-forwards, not this-cycle mint), F5 (B10 hexagram dark, LOW infra). Carried forward per existing backlog, no new task.
+
+- **Signal resolved:** `tnb-20260614T201300Z` audit-handoff ACK'd; `cowork-team-20260614T135826-digest-dup` confirmed correctly RESOLVED (not false).

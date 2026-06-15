@@ -349,6 +349,18 @@
         "type": "audit-handoff"
       },
       {
+        "disposition": "ACK 2026-06-15T04:21:15Z (mirror c94). NO new task minted — all c95 findings covered by shipped/done_verified work or future monitoring gates. F-DIGEST-DUP-WEEK-BOUNDARY: NOT a false-resolve — FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP done_verified (ccbe43ec/295eb364); both root-causes A+B closed via canonical isoWeek.ts + period-DATE-RANGE mutex key (last_fired staleness neutralized as dedup vector); LIVE RAW-proof get_week_period{iso_timestamp:'2026-06-14T13:47:00Z'} AND '...13:52:00Z' both return W24/periodKey 2026-06-08/2026-06-14 -> convergence holds (the c95 audit recommended a mint on stale file-evidence pre-fix; premise now stale). F-BCTC-CTG-CRITICAL: covered by ACTIVE BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST (no dup mint). FIX-COWORK-GUARANTEED-BACKSTOP G1-G4: future monitoring gate (today Mon 2026-06-15 04:21Z, BEFORE chef-morning 05:15Z / chef-eod 08:45Z) -> TNB c96 verifies, not a dev task. F-EVENING-2026-06-14-UNKNOWN: moot. Refine-lock wedge (NCP#5): FIX-REFINE-LOCK-TTL-RECLAIM done_verified (67cad7ae/c080313e).",
+        "from": "tran-ngoc-bau",
+        "id": "tnb-20260614T201300Z",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
+        "severity": "HIGH",
+        "status": "RESOLVED",
+        "summary": "c95 audit NEEDS_ATTENTION (Sunday no-market, file-evidence only): F-DIGEST-DUP-WEEK-BOUNDARY(NEW/HIGH) + CTG cycle-19 CRITICAL carry-forward + BACKSTOP G1-G4 deferred to Mon. All reconciled, 0 new tasks.",
+        "to": "po",
+        "ts": "2026-06-14T20:13:00Z",
+        "type": "audit-handoff"
+      },
+      {
         "id": "cowork-team-20260614T090913-gw-outage",
         "from": "cowork-team",
         "to": "po",
