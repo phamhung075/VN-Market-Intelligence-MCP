@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-14T23:53:30Z",
+    "updated_at": "2026-06-15T00:35:36Z",
     "updated_by": "dev-team",
-    "active_task_id": "",
-    "next_agent": "po",
-    "note": "DONE_VERIFIED x2 (router independent raw re-probe, NOT ops badge): F-MACRO-FETCH-DEADLINE + VMT-8-MACRO-GRACEFUL-FAILCLOSE. ops (a7e2bcef58e1b043c) rebuilt macro-indicators (image 7df03ef2c0a1->c6793a0222e3, HEAD 94b49f44, 11 peers healthy, NO compose down) + 2-window 5/5 PASS; router 3rd-window raw re-probe CONCURS: trade/macro/cpi/bop + liquidity ALL HTTP 200 within gateway deadline, NONE hang (d35 PARTIAL had these 4 raw-timeout). bop blocked_reason='context deadline exceeded' = FetchBudgetSec=8s bound firing. Proxy UP (NSO index 85867 bytes fetched) -> NOT proxy-down; degrade=honest upstream-unavailability, bounded. Fail-closed honesty preserved (is_estimate never flipped). /goal#1 'best result' RELIABILITY layer COMPLETE for the 4 fetch tools (HONEST-on-fast-fail [VMT-8] + RELIABLY-graceful-on-hang [F-MACRO-FETCH-DEADLINE]); /goal#2 generic (single FetchBudgetSec=8 const, all use-cases). === -> head ops->po: ACCURACY pair now UNBLOCKED (READY): F-NSO-SELECTOR (restore real NSO data — bai-top selector stale, index page changed; LIKELY needs ops-vps-fetch recon of new NSO WordPress HTML FIRST, then dev-macro-indicators) + F-BOP-ENCODING (URL-encode SBV Liferay OData filter spaces; usecases_vmt_bop.go). Both rebase 94b49f44; same owner/zone -> SERIALIZE (no parallel dispatch). PO triage next dev-team tick: size + sequence + decide recon-first for NSO. === HELD (unchanged): S2 07-06 methodology brief (agent-father greenlit, sequenced-after-incident); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO (ops/infra lane); tinyproxy ACL-open hardening (ops); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday 2026-06-15 market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify). Commit explicit path only."
+    "active_task_id": "F-BOP-ENCODING",
+    "next_agent": "dev",
+    "note": "F-BOP-ENCODING DISPATCHED -> dev-macro-indicators (agent a32657d545b6eb455). FIRST of serialized ACCURACY pair (size S, /goal#1 'best result' real-data layer for bop, after RELIABILITY layer F-MACRO-FETCH-DEADLINE+VMT-8 done_verified). ROOT: get_vn_bop degrades blocked_reason='context deadline exceeded' = FetchBudgetSec=8s bound firing on a MALFORMED (un-URL-encoded) SBV Liferay OData filter — spaces in the $filter query reach SBV un-encoded -> request never resolves -> 8s ctx deadline. FIX (generic): URL-encode the OData filter (url.Values/url.QueryEscape) in usecases_vmt_bop.go so the SBV request is well-formed -> real bop data returns within budget. No recon (proxy UP, NSO index 85867 bytes; this is pure encoding). Rebase 94b49f44 BEFORE editing usecases_vmt_bop.go. GATE: unit test asserting filter spaces are %20/+-encoded in the built URL; build/vet/test green; do NOT touch VMT-8 degrade builders or FetchBudgetSec const. SEQUENCED-AFTER (HELD, same owner/zone, serialize): F-NSO-SELECTOR (recon-first via ops-vps-fetch on new NSO WordPress HTML, then dev-macro-indicators). WIP: dev-macro in_progress=1 (this), budget<=2 OK. On dev return -> router RAW-verify gates GREEN (on-main; files all apps/macro-indicators/**; foreign-capture NONE; independent uncached go build/vet/test) -> head dev->ops REBUILD macro-indicators (force-recreate single svc, NEVER compose down) -> LIVE re-probe get_vn_bop across >=2 timing windows: must return REAL bop data (is_estimate=false OR honest degraded if SBV genuinely down) within gateway deadline -> done_verified -> release F-NSO-SELECTOR. Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -506,7 +506,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-14T23:53:30Z",
+    "_updated_at": "2026-06-15T00:35:36Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13729,7 +13729,7 @@
         "title": "URL-encode the BOP OData $filter (raw spaces -> %20) before vpsFetch so tinyproxy accepts the CONNECT; restores get_vn_bop real data (accuracy, after deadline fix)",
         "zone": "apps/macro-indicators/",
         "owner": "dev-macro-indicators",
-        "status": "READY",
+        "status": "in_progress",
         "sequence_after": null,
         "priority": "high",
         "size": "S",
@@ -13750,7 +13750,10 @@
         "recon_first": false,
         "triaged_at": "2026-06-15T00:31:49Z",
         "triaged_by": "po",
-        "po_triage_note": "S no-recon accuracy win: URL-encode SBV Liferay OData filter spaces in usecases_vmt_bop.go. bop degrade 'context deadline exceeded' = FetchBudgetSec=8s firing on a malformed (un-encoded) OData filter reaching SBV. Rebase 94b49f44 FIRST. Serialize w/ F-NSO-SELECTOR (same owner/zone) — dispatched first, no file conflict (bop=usecases_vmt_bop.go, nso=cache_vmt_nso.go+parsers)."
+        "po_triage_note": "S no-recon accuracy win: URL-encode SBV Liferay OData filter spaces in usecases_vmt_bop.go. bop degrade 'context deadline exceeded' = FetchBudgetSec=8s firing on a malformed (un-encoded) OData filter reaching SBV. Rebase 94b49f44 FIRST. Serialize w/ F-NSO-SELECTOR (same owner/zone) — dispatched first, no file conflict (bop=usecases_vmt_bop.go, nso=cache_vmt_nso.go+parsers).",
+        "dispatched_at": "2026-06-15T00:35:36Z",
+        "dispatched_to": "dev-macro-indicators",
+        "dispatch_agent_id": "a32657d545b6eb455"
       },
       {
         "id": "F-NSO-SELECTOR",
