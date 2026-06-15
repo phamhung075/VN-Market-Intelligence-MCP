@@ -1,66 +1,5 @@
 # dev-mcp-server -- Notebook
 
-## 2026-06-15 · FIX-MARKET-HEXAGRAM-TOOL-MISSING
-
-**Task:** FIX-MARKET-HEXAGRAM-TOOL-MISSING | Priority: P2 | Zone: apps/mcp-server/
-
-Root cause class: **(a)** — tool existed in code (helpers: `computeMacroIndicatorScore`, `computeMacroScore`) and HTTP client (`getMarketHexagram` in clients.ts) but was intentionally deregistered (TSH-1, 2026-05-31) because kinh-dich-service `/market` returns 501. digest-predict weekly flow + agentBootstrap.ts still listed it for 3 agent types (digest_predict, market_watcher, qa_responder).
-
-Fix: re-registered `get_market_hexagram` in `registerKinhDichTools` using local compute only (same pattern as `explain_hexagram`). 6 market-wide hào scores: VN-Index price z-score, USD/VND direction (inverted), oil (inverted), gold (inverted), foreign net flow breadth, macro composite. Imports `encodeHaos` + `resolveHexagram` from domain layer. No HTTP call to Go service.
-
-Files changed: `kinhDichTools.ts`, `285-kinhdich-tools.test.ts` (test updated: 5→6 tools assertion), 3 SSOTs (project-stats.json, tool-registry.json, system-map.json) 163→164.
-
-bun test (kinhdich suite): 130 pass / 0 fail. tsc --noEmit: clean. Full-suite exits 0 (Bun JIT crash is pre-existing, unrelated to this change — see memory note).
-
-Zone health: bun test kinhdich 130/0, 164 tools (get_market_hexagram restored), tsc clean | HEALTHY
-
-## 2026-06-15 · SSOT-RECONCILE-TOOLCOUNT-TRIAD-HEXAGRAM
-
-**Task:** SSOT-RECONCILE-TOOLCOUNT-TRIAD-HEXAGRAM | Priority: hygiene | Zone: docs/data/ SSOTs
-
-**Methodology:** Live count = grep -rn 'server\.tool(' apps/mcp-server/src/interface/mcp/tools/ --include='*.ts' (no .bak, no _server deregistered pattern found) = 163 + grep -rn 'server\.registerTool(' = 1 (sequential_market_analysis) → **164 total**. get_market_hexagram confirmed registered at kinhDichTools.ts:528.
-
-**Root cause:** Commit 89a3aaad that reconciled 156→164 only updated `live_evidence` probe string in system-map.json, did NOT append `get_market_hexagram` to the actual `tools[]` array. system-map tools[] was at 163 while project-stats + tool-registry were both at 164.
-
-**Fix:** Appended `"get_market_hexagram"` to system-map.json tools[] array (alphabetically between `get_market_foreign_flow` and `get_market_message_digest`). Bumped system-map lastUpdated to 2026-06-15. No changes to project-stats.json or tool-registry.json (both already correct at 164).
-
-**3-way proof:** system-map tools[].length=164 ✓ | tool-registry.totalCount=164 ✓ | project-stats.toolCount=164 ✓ | get_market_hexagram in system-map tools[]: 1 ✓
-
-Zone health: system-map tools[]=164, all 3 SSOTs agree, get_market_hexagram consistent | HEALTHY
-
-## 2026-06-15 · CI-RED-d20468c0-FIX — 8 failing tests fixed across 4 files
-
-**Task:** CI-RED-d20468c0-FIX | Priority: HIGH | Zone: apps/mcp-server/src/__tests__/
-
-4 root causes, all test-only (no production code changed):
-
-1. FIX-BCTC-ENRICHER-PLACEHOLDER-URL TC-4 (×2): TC-4 was written before
-   FIX-BCTC-VPS-QUEUE-SYNC G2 added the orphan-re-sync arm. Orphan arm resets
-   VPS placeholder URLs to NULL in cycle-1; ARM1 enriches in cycle-2. Updated
-   TC-4 to assert two-cycle contract (orphansResynced=1 in C1, enriched in C2).
-
-2. 1138-market-portfolio-observability (×4): Block-shape regex asserted
-   `cron.schedule(CRONS.X…)` but startScheduler.ts was refactored to use
-   `scheduleCron()` (T2-ARCH-CRON-RECOVER-JITTER wrapper). Updated 4 regexes
-   from `cron.schedule` to `scheduleCron`.
-
-3. 1352a B-3 (×1): B-1 writes cron_job_runs success for marketScanJob:open;
-   shouldSkipRecoveryReplay fires in B-3, scanCallCount stays 0. Fix: clear
-   cron_job_runs in beforeEach (Group B) via getDb().exec("DELETE FROM cron_job_runs").
-
-4. 239c AC-6 (×1): `expect(schedulerContent).toContain("cron.schedule")` false
-   because startScheduler.ts uses scheduleCron exclusively. Updated to check
-   "scheduleCron" and loosened cron expression check.
-
-**Commit:** c79ce6bd | tsc clean | 31/31 pass across 4 files
-**LESSON:** When schedulers refactor call-shape (cron.schedule → scheduleCron),
-  structural regex tests that match the OLD call form become stale — update to
-  match wrapper name. Same for test expectations on enricher cycle ordering.
-
-Zone health: tsc clean, 163 tools intact, scheduler count unchanged | HEALTHY
-
----
-
 ## 2026-06-15 · VMT-7 Zone-B wave — 5 VN macro data MCP tools added
 
 **Task:** VMT-7a–e + VMT-7-REGISTER (VN-MACRO-TOOLING Zone-B bundled wave)
@@ -126,3 +65,31 @@ Zone health: tsc clean, 163 tools intact, scheduler count unchanged | HEALTHY
 **REBUILD_REQUIRED:** YES (mcp-server ONLY, force-recreate)
 
 Zone health: tsc clean, 163 tools intact, 78 scheduleCron unchanged | HEALTHY
+
+## 2026-06-15 · FIX-SIGNAL-CONFIDENCE-DEFAULT-50
+
+**Task:** FIX-SIGNAL-CONFIDENCE-DEFAULT-50 | Priority: P1 | Zone: apps/mcp-server/
+
+**Root cause confirmed (recon-first):** 4 external postSignal call sites omitted confidence_score; `_postSignalInner` destructures with default 50 and all callers used the placeholder.
+
+**Call site audit (4 external + 3 internal pass-through via ...input):**
+1. `agentSignalTools.ts:317` — MCP tool post_agent_signal; finding_data.confidence (0-1) available but NOT wired into signalInput.
+2. `intelligenceCycleJob.ts:1290` — `verified_chain` with `chain.conviction >= 0.7` in scope but confidence_score absent.
+3. `askQueueCheckJob.ts:63` — `pending_questions`; no confidence signal at all.
+4. `freshnessSlaMonitorJob.ts:461` — SLA breach `urgent_news`; severity known but confidence_score absent.
+
+**Fix (generic, no allowlist, no hardcode):**
+- `agentSignalTools.ts`: rawConfidence = findingDataRecord["confidence"] if number → Math.round(*100), spread into signalInput when present; omit when absent (column DEFAULT 50 = honest for genuinely absent).
+- `intelligenceCycleJob.ts`: `confidence_score: Math.min(100, Math.max(0, Math.round(chain.conviction * 100)))` on verified_chain post.
+- `askQueueCheckJob.ts`: `confidence_score: Math.min(100, count * 10)` — pending count derivation.
+- `freshnessSlaMonitorJob.ts`: `confidence_score: severity === "CRITICAL" ? 90 : 70`.
+- `postSignalWithCriticGate` (3 internal calls): passes `...input` through — inherits from callers, no change needed.
+
+**Live verify (named-volume market.db, keinos/sqlite3 sidecar):**
+ids 6216-6219: verified_chain=85, urgent_news=90, chain_catalyst=78, pending_questions=30 — SPREAD, none 50.
+
+**Commit:** 4f5192c5 | **Image:** 2f080303023e (built 2026-06-15 18:23:48 CEST)
+**Tests:** 22 new / 0 fail | Full suite: 13009 pass / 52 fail (52 = pre-existing timeouts) | tsc clean
+**Tools:** 164 (unchanged) | Sched: 3 (unchanged)
+
+Zone health: bun test 13009 pass (52 pre-existing fails unchanged), tsc clean, 164 tools, real confidence spread live | HEALTHY

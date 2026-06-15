@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T15:59:56Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-15T16:30:00Z",
+  "_updated_by": "dev-mcp-server",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -494,6 +494,21 @@
         "resolved_at": "2026-06-15T03:58:15Z",
         "resolved_by": "dev-team",
         "resolution": "FIX-CHEF-INTRADAY-MARKER-CADENCE done_verified (agent-father 7843045c, flow-doc): cadence-derived marker granularity. No rebuild."
+      },
+      {
+        "id": "cowork-team-20260615T1620Z-gatherer-manual-cloud-doublefire",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "recurring double-fire — manual */15 dispatcher collides with cloud backstop on offhours gatherers (~:12 past 4h boundary) + false gateway-down escalation",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "summary": "OFFHOURS gatherer double-fire ~16:1xZ: manual */15 dispatcher fired news-scout-offhours + market-watcher-eod at 16:07Z (last_fired read 12:09Z=stale); cloud backstop independently fired news-scout-offhours + market-watcher-offhours at ~16:12Z, AFTER the staleness check, within agent runtime; task_list_held (leader-lock read) timed out so dispatcher could not defer. RESULT (1) news-scout ran twice: c100/16:12Z signals #6209-6212 (cloud) + c101/16:15Z #6213-6215 (manual); both cycles SELF_SIGNALS_CACHE=[] so the 2nd was BLIND to the 1st just-posted signals -> ~2-3 DUPLICATE internal signals (#6213 US-Iran-peace dup of #6210; #6214 VIC dup of #6211). Internal signal_bus only, NO public MARKET double-post, but CHEF/alert-commander convergence may over-weight US-Iran peace. (2) market-watcher cloud offhours run BLOCKED at Step 0-GW (get_system_status timeout x2) and filed a FALSE gateway-down BUG escalation; gateway was NOT down (dispatcher probe 16:09Z got fast structured error; market-watcher-eod sibling SUCCEEDED 7 anomalies+ledger+price_anomaly_20260615T1600.json). False-infra-failure, corroboration gate not applied. THREE dev-fixable roots: (A) dispatcher DEFER offhours gatherer fire when leader-lock unreadable AND within cloud-backstop window (:00-:15 of 4h-boundary hour), re-check next tick; (B) news-scout SELF_SIGNALS_CACHE must include just-committed sibling signals from signal_bus (not only own prior committed cycle) to dedup concurrent fires; (C) market-watcher Step 0-GW apply corroboration gate (sibling-success / retry-backoff) before filing gateway-down BUG. Owner: dev-mcp-server (cache scope + GW gate) + cowork-schedule/dispatcher (defer logic).",
+        "payload_ref": "news-scout.md c100(16:12Z #6209-6212)+c101(16:15Z #6213-6215); market-watcher.md OFFHOURS=BLOCKED-Step0GW + EOD=SUCCESS(16:00); dispatcher fired 16:07:45Z, stamped last_fired 16:12:38Z; gateway probe 16:09Z get_market_status->fast not-found error=LIVE; cloud backstop cadence observed: refine 14:06Z / bctc 15:05Z / gatherers ~16:12Z; SSOT docs/data/cowork-schedule.json .slots[news-scout-offhours,market-watcher-offhours,market-watcher-eod]",
+        "disposition": "",
+        "ts": "2026-06-15T16:19:26Z",
+        "resolved_at": "",
+        "resolved_by": "",
+        "resolution": ""
       }
     ]
   },
@@ -14450,46 +14465,35 @@
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
       },
+    ],
+    "ready": [],
+    "review": [
       {
         "id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
         "type": "FIX",
         "priority": "P1",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "route_to": "dev-mcp-server",
         "zone": "apps/mcp-server/",
         "mode": "recon-first",
         "title": "Signal confidence_score frozen at default 50 for ~12 of 13 producers",
         "desc": "Dashboard SIGNALS(LAST 10) shows Confidence=50% on every row across every source (verified_decision, cascade, news, BCTC, kinh-dich) and every direction/date. confidence_score is a real schema-backed column but producers post without wiring their already-computed confidence -> stored literal default 50. The metric is dead (constant 50).",
-        "root_cause": {
-          "class": "computed-but-not-wired: default never overridden -> non-empty but wrong",
-          "default_sites": [
-            "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts:341 — _postSignalInner destructures confidence_score = 50",
-            "apps/mcp-server/src/infrastructure/db/schema-news.ts:104 — ALTER TABLE agent_signals ADD COLUMN confidence_score INTEGER DEFAULT 50",
-            "apps/mcp-server/src/interface/mcp/server.ts:1393 — dashboard read: confidence_score: row.confidence_score ?? 50"
-          ],
-          "only_correct_producer": "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts:361 (confidence_score: confidence) — 1 of 13",
-          "smoking_gun": "apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts:1290 — posts verified_chain when chain.conviction>=0.7 but omits confidence_score; conviction is in scope (logged on adjacent lines)."
-        },
-        "recon_mandate": "recon-first: dev MUST read each of the ~13 postSignal/postSignalWithCriticGate call sites AND the existing confidence source available at each producer BEFORE editing. Enumerate via grep for postSignal( / postSignalWithCriticGate / PostSignalInput across apps/mcp-server/src (exclude __tests__).",
-        "fix_spec": "Wire each producer's already-computed confidence into confidence_score on post, normalized to the column's 0-100 INTEGER scale. Known sources: cascade.confidence (cascadeExecutor ~0.53), news sentiment.confidence (pollNews/newsSentimentHandler), BCTC extraction_confidence / signalToBctcMapper, kinh-dich confidence (kinhDichSignalsHandler), conviction score (convictionScorer.ts / chain.conviction in intelligenceCycleJob). Normalize 0..1 floats *100 -> round to int; pass-through already-0..100 ints.",
-        "generic_mandate": "GENERIC (/goal#2 — MUST hold): EVERY signal producer computes & passes its real confidence. NO per-source allowlist, NO per-ticker literal, NO leaving any producer on the default. If a producer genuinely has no confidence source, that must be surfaced explicitly (not silently defaulted to 50).",
-        "verification_gate": {
-          "goal1_plausibility": "/goal#1 (done_verified gate, NOT the floor): after fix + REBUILD, live SIGNALS-last-10 must show a SPREAD of confidences that vary by source AND signal strength (exact-match BCTC high, weak-context low, neutral mid) — NOT a column of 50.",
-          "raw_verify": "Verify against the LIVE named-volume market.db (NOT host ./data decoy — see live-db-named-volume lesson) via keinos/sqlite3 sidecar: SELECT confidence_score, from_agent, signal_type FROM agent_signals ORDER BY created_at DESC LIMIT 10 — confirm variance. PLUS a live get-signals tool call, RAW, not relayed.",
-          "rebuild": "Code change -> ops REBUILD mcp-server container; verify image .Created > commit time before live-verify."
-        },
+        "fix_summary": "Wired 4 external postSignal call sites: agentSignalTools (finding_data.confidence*100 when present), intelligenceCycleJob verified_chain (chain.conviction*100), askQueueCheckJob pending_questions (Math.min(100,count*10)), freshnessSlaMonitorJob SLA breach (CRITICAL=90/HIGH=70). postSignalWithCriticGate passes ...input through (no change). column DEFAULT 50 kept; all real producers now override it.",
+        "commit": "4f5192c5",
+        "image": "2f080303023e (built 2026-06-15T16:23:48 CEST — after commit)",
+        "live_verify": "named-vol market.db (keinos/sqlite3 sidecar): ids 6216-6219 show confidence_scores 85/90/78/30 — real spread, none 50. Container healthy toolCount=164 at :3000/health.",
+        "bun_test": "13009 pass / 52 fail / 42 skip (1093 files). 52 failures are pre-existing timeouts (102-news-poll, 1146-insider-transactions, 1302-technical-indicators, etc) — none in changed files. New test: 22 pass / 0 fail.",
+        "tsc": "clean (exit 0)",
+        "tool_count": 164,
+        "sched_count": 3,
         "source": "user BUG report 2026-06-15 via router RAW-verify",
         "size": "M",
         "minted_by": "po",
         "minted_at": "2026-06-15T15:52:27Z",
-        "lane": "dev-zone",
-        "dispatched_ts": "2026-06-15T15:59:56Z",
-        "dispatched_by": "dev-team",
-        "dispatch_note": "Wire EVERY signal producer's already-computed confidence into postSignal confidence_score (0-100 int), generic across ALL 13 call sites — no per-source/per-ticker literal. Seed: agentSignalStore.ts:341 destructuring default 50; column schema-news.ts:104 DEFAULT 50; dashboard server.ts:1393 ?? 50; only agentSignalTools.ts:361 passes a real value. Smoking gun intelligenceCycleJob.ts:1290 posts verified_chain with chain.conviction in scope but omits confidence_score. recon-first: read all 13 postSignal call sites + each producer's existing confidence source (cascade.confidence / news sentiment.confidence / BCTC extraction_confidence / kinh-dich confidence / conviction) before editing. DoD /goal#1: live SIGNALS-last-10 shows a real SPREAD by source+strength (NOT a column of 50), RAW-verified vs named-volume market.db (NOT host ./data decoy) + a live get-signals call AFTER rebuild. /goal#2: generic, no allowlist."
-      }
-    ],
-    "ready": [],
-    "review": [
+        "completed_at": "2026-06-15T16:30:00Z",
+        "completed_by": "dev-mcp-server",
+        "lane": "dev-zone"
+      },
       {
         "_adjudicated_by": "po",
         "_updated_at": "2026-06-13T08:48:41Z",
