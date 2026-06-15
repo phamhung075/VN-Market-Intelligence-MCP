@@ -79,3 +79,22 @@ inside the container, model the distinction in the application's own DB lifecycl
 **REBUILD_REQUIRED:** YES
 
 Zone health: tsc clean, 163 tools intact, scheduler count unchanged | HEALTHY
+
+## 2026-06-15 · FIX-VNSTOCK-TRADINGSTATS-CRASH
+
+**Task:** FIX-VNSTOCK-TRADINGSTATS-CRASH | Priority: P1 | Zone: apps/mcp-server/
+
+**Root cause (recon-first):** Three missing `backoffMinutes=30` args on the trading_stats null/timeout path:
+1. `syncStock()` in `syncVnstockData.ts` called `markFetched(code, "trading_stats")` with no backoff — stamped `fetched_at=now`, silencing retries for the full 2h staleness window when the Python subprocess timed out and returned null.
+2. `syncStockLight()` had the same bug on all three of its null paths (trading_stats + financials + balance_sheet).
+3. `runVnstockTradingStatsJobCron()` reported `rowsWritten: result.succeeded` (ticker count) instead of actual DB row delta — false-positive success when all fetches return null.
+
+**Fix (DRY — same pattern as FIX-FUNDAMENTALS-REFRESH-CRON-DEAD + FIX-VNSTOCK-FUNDAMENTAL-RATELIMIT):**
+- `syncVnstockData.ts`: `markFetched(code, "trading_stats", 30)` in `syncStock` null path; `markFetched(code, x, 30)` on all three null paths in `syncStockLight`
+- `vnstockFundamentalsJob.ts`: Added `getDbFn` DI; compute `rowsWritten` from `COUNT(vnstock_trading_stats)` delta; cron returns `rowsWritten: result.rowsWritten`
+
+**Tests:** 10 new assertions in `fix-vnstock-tradingstats-crash.test.ts` | Gate 1: 10 new + 69 related = 0 fail
+**Gate 2a:** tsc clean | **Gate 2c:** 163 tools | **Gate 2d:** 78 scheduleCron calls (unchanged)
+**REBUILD_REQUIRED:** YES (mcp-server ONLY, force-recreate)
+
+Zone health: tsc clean, 163 tools intact, 78 scheduleCron unchanged | HEALTHY
