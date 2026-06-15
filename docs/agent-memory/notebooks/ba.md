@@ -1,5 +1,29 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-16 | **Sprint:** ERROR-AUDIT-2026-06-15 Wave-2
+
+## FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE · 2026-06-16
+
+Spec complete. Task: FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE. REQ file: `docs/handoffs/FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE-BA-spec.md`. Zero PO blockers. Four architect ratification items (ARCH-RATIFY-W2-1 through W2-4). NEXT: architect.
+
+Key BA findings: ONE new file `infrastructure/fetchers/fetchDeadline.ts` exports `withDeadline<T>` + `macroFetch<T>`. DDD layer = infrastructure (owns AbortController+setTimeout lifecycle, no domain/business logic). Six unbounded-fetch sites migrated: muasamcong:216, sscInsider:134, newsHeadlinesRefreshJob:41, bctcPdfPullJob:165, macroTools:446, server.ts:642. Two inline DRY copies consolidated: taOhlcvBackfillJob:149, deepFetchVpsJob:96. Seven macro sibling tools migrated to macroFetch. Deadline per site < 60s gateway ceiling. console.error Bun global — no import. bctcHttpFetcher.ts negative scope (already correct). Fail-loud mandate: timeout is a real error; no fabricated default permitted. Forced-failure DoD: hang-simulation on target port, gateway receives error before 60s.
+
+Decision journal (task_id: FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE):
+- what-considered: "DDD layer for withDeadline: (A) infrastructure/fetchers — chosen; (B) application/utils — rejected (I/O lifecycle is not a use-case); (C) new src/shared/ dir — rejected (no precedent, architect approval overhead); bctcHttpFetcher.ts precedent confirms infrastructure/fetchers is correct home for fetch lifecycle utilities"
+- why-change: "no change from plan — scope matches PO board row exactly; macroFetch generalizes existing F-MACRO-FETCH-DEADLINE pattern; 12 atomic tasks, critical path T-1→T-7→T-11→T-12"
+
+**Last updated:** 2026-06-15 | **Sprint:** ERROR-AUDIT-2026-06-15 Wave-1
+
+## FIX-ERRAUDIT-W1-MCP-P0 · 2026-06-15
+
+Spec complete. Task: FIX-ERRAUDIT-W1-MCP-P0. REQ file: `docs/handoffs/FIX-ERRAUDIT-W1-MCP-P0-BA-spec.md`. Zero PO blockers. One architect ratification (ARCH-RATIFY-1: confirm console.error in domain layer is acceptable). NEXT: architect.
+
+Key BA findings: Two files, two distinct fix shapes. (A) `marketContextBuilder.ts:417` — domain layer, sync function, zero imports needed; fix is 3 boolean flags + `status` derivation + `pendingCount` sentinel `"?"` on catch; caller contract unchanged. (B) `tickerIntelligenceTools.ts` — interface layer; 6 inline catch blocks each get one `console.error` + `return "(lỗi truy vấn)"`. S5 inner catch (JSON.parse, line 263) correctly already tagged — must NOT touch. Forced-failure DoD: DB-lock probe on named-volume `vn-market-intelligence-mcp_market_data`, container rebuild mandatory before QA. Generic-mandate: single constant `(lỗi truy vấn)` string, no per-ticker logic.
+
+Decision journal (task_id: FIX-ERRAUDIT-W1-MCP-P0):
+- what-considered: "two shapes for two sites: (A) inline boolean tracking for domain sync function with no import change; (B) inline console.error + tagged return for 6 interface catches; rejected: early Wave-2 helper (runSection/failLoud) — PO scope boundary is firm; rejected: caller contract change (buildSystemStatusText signature) — NFR-A2 forbids"
+- why-change: "no change from plan — P0 spec follows PO board row exactly; smallest correct change constraint honored"
+
 **Last updated:** 2026-06-14 | **Sprint:** KINHDICH-HOVER-DETAIL
 
 ## BA-KINHDICH-HOVER-DETAIL · 2026-06-14
