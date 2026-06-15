@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T11:52:45Z",
+  "_updated_at": "2026-06-15T12:02:48Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,12 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T11:52:45Z",
+    "updated_at": "2026-06-15T12:02:48Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL",
-    "next_agent": "dev-stock-price",
-    "note": "DEV-TEAM TICK 2026-06-15T11:52:45Z — dispatched FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2) ready->in_progress -> dev-stock-price (coding lane freed after HEXAGRAM+FB-POSTER done_verified; active coding lane was 0, WIP<=2). Two defects: (1) stale row labeled FRESH (honesty) — derive staleness from updated_at age vs window + require live-tier success; (2) blind Close*1000 garbles non-VND-stock units (BDI 2729->2,729,000) — scale conditionally on entity unit/asset-class via single unit-truth source. GENERIC /goal#2: no per-ticker literal / no BDI special-case. recon-first, background. review[] gates 2026-06-16: FIX-VNSTOCK-TRADINGSTATS-CRASH (08:30Z sweep, probe 3b57017e), FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (01:00Z/02:15Z, probe 09b8693f). ARCH-SHIP-WAVE-REAUDIT PARKED. Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). FIX-MARKET-HEXAGRAM + FIX-FB-POSTER done_verified. PUSH held (PO post-gates)."
+    "next_agent": "ops",
+    "rebuild_required": true,
+    "note": "ROUTER 2026-06-15T12:02:48Z — FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL dev-stock-price RETURNED (ab9b160e, commit 8fde56ef), router RAW-VERIFIED -> review[]. STALENESS: tier-3 cache win downgrades FRESH->STALE (winningTierIndex==2 == both live tiers failed). SCALE: *1000 guarded by type==STOCK && VN floor; indices read as-is; Tier3 reads as-is. Router RAW: zone-clean 3 files, go build EXIT0, 3 new tests PASS, LIVE market_prices NO poison (max 192600, 0>1M, VNINDEX 1799 correct). GENERIC /goal#2. REBUILD_REQUIRED=YES stock-price ONLY (force-recreate, NEVER down) — router DISPATCHING ops; baseline image 11:03:31Z. LIVE GATE post-rebuild: image .Created>11:58:49Z + healthy + peers + spot VCB sane thousands-VND + 0 rows>1M; then review->done_verified. Other review[] gates 2026-06-16: FIX-VNSTOCK-TRADINGSTATS-CRASH (08:30Z), FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (01:00Z/02:15Z). ARCH-SHIP-WAVE-REAUDIT PARKED. FIX-MARKET-HEXAGRAM + FIX-FB-POSTER done_verified (61). Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). PUSH held (PO post-gates). Active coding lane=0."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +591,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T11:52:45Z",
+    "_updated_at": "2026-06-15T12:02:48Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14386,27 +14387,6 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      },
-      {
-        "id": "FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL",
-        "title": "Tier-3 price cache fallback labels stale rows staleness:FRESH + applies *1000 to non-stock-unit cached values (BDI=>2,729,000 FRESH)",
-        "priority": "P2",
-        "status": "IN_PROGRESS",
-        "route_to": "dev-stock-price",
-        "zone": "apps/stock-price/",
-        "created_ts": "2026-06-15T11:08:54Z",
-        "created_by": "dev-team",
-        "source": "router-d66 — surfaced by FIX-HNX-UPCOM-PRICE-SOURCES-DEAD live gate (ops aaf7c500). BDI dead-ticker probe returned price 2,729,000 source hose vol 0 staleness FRESH instead of honest-empty.",
-        "raw_evidence": "service /price/fetch {code:BDI} => {price:2729000, volume:0, change:0, changePercent:0, source:\"hose\", latencyMs:243, fetchedAt:2026-06-15T11:04:26Z, staleness:\"FRESH\"}",
-        "defect": "Tier-3 market_prices cache fallback (1) labels a STALE cached row staleness:FRESH (honesty bug — should mark STALE/CACHED when the row's updated_at age exceeds the freshness window AND/OR when no live tier succeeded), and (2) blindly multiplies Close*1000 (thousands-VND assumption) for cached entities that are not thousands-VND VN stocks (an index level 2729 -> 2,729,000 garbage 'price').",
-        "generic_requirement": "/goal#2 — fix GENERIC across ALL tickers/entities: staleness must reflect the served row's true age + tier provenance (no hardcoded ticker/date); implausible-magnitude or non-stock cached rows must fail honest (empty/flagged), never served as a FRESH tradeable price. /goal#1 — the real risk is a watchlist ticker whose live source dies being served a stale cache price labeled FRESH; poison-downstream.",
-        "depends_on": "none (independent of FIX-HNX-UPCOM endpoint fix, now done_verified)",
-        "recon_first": true,
-        "lane": "dev-zone",
-        "mode": "recon-first",
-        "dispatched_ts": "2026-06-15T11:52:45Z",
-        "dispatched_by": "dev-team",
-        "dispatch_note": "Tier-3 market_prices cache fallback: (1) HONESTY — stop labeling stale cached rows FRESH; derive staleness from row updated_at age vs freshness window AND require a live tier success for FRESH. (2) UNIT — stop blind Close*1000; scale conditionally on the entity's real unit/asset-class (stock-thousands-VND vs index/commodity/fx) using the existing single unit-truth source. GENERIC: no per-ticker literal, no BDI special-case. recon-first: read tier-1/2 freshness labeling + unit/scale decision points before editing."
       }
     ],
     "ready": [],
@@ -14508,6 +14488,38 @@
         "live_evidence": "vnstockStartupProbe 11:17:47 success (post-fix boot probe clean — necessary not sufficient, lighter path than sweep); vnstockTradingStatsRefresh 08:30:01 crashed (PRE-fix symptom, not regression); vnstockFundamentalsRefresh 01:05 success rows_written 51 then 0 (sibling honest rowsWritten live).",
         "next_live_gate_utc": "2026-06-16T08:30:00Z (vnstockTradingStatsRefresh, weekdays 30 8 * * 1-5); router-d68 one-shot probe armed 2026-06-16 09:12 UTC (11:12 CEST).",
         "gate_sharpened_ts": "2026-06-15T11:24:20Z"
+      },
+      {
+        "id": "FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL",
+        "title": "Tier-3 price cache fallback labels stale rows staleness:FRESH + applies *1000 to non-stock-unit cached values (BDI=>2,729,000 FRESH)",
+        "priority": "P2",
+        "status": "REVIEW",
+        "route_to": "dev-stock-price",
+        "zone": "apps/stock-price/",
+        "created_ts": "2026-06-15T11:08:54Z",
+        "created_by": "dev-team",
+        "source": "router-d66 — surfaced by FIX-HNX-UPCOM-PRICE-SOURCES-DEAD live gate (ops aaf7c500). BDI dead-ticker probe returned price 2,729,000 source hose vol 0 staleness FRESH instead of honest-empty.",
+        "raw_evidence": "service /price/fetch {code:BDI} => {price:2729000, volume:0, change:0, changePercent:0, source:\"hose\", latencyMs:243, fetchedAt:2026-06-15T11:04:26Z, staleness:\"FRESH\"}",
+        "defect": "Tier-3 market_prices cache fallback (1) labels a STALE cached row staleness:FRESH (honesty bug — should mark STALE/CACHED when the row's updated_at age exceeds the freshness window AND/OR when no live tier succeeded), and (2) blindly multiplies Close*1000 (thousands-VND assumption) for cached entities that are not thousands-VND VN stocks (an index level 2729 -> 2,729,000 garbage 'price').",
+        "generic_requirement": "/goal#2 — fix GENERIC across ALL tickers/entities: staleness must reflect the served row's true age + tier provenance (no hardcoded ticker/date); implausible-magnitude or non-stock cached rows must fail honest (empty/flagged), never served as a FRESH tradeable price. /goal#1 — the real risk is a watchlist ticker whose live source dies being served a stale cache price labeled FRESH; poison-downstream.",
+        "depends_on": "none (independent of FIX-HNX-UPCOM endpoint fix, now done_verified)",
+        "recon_first": true,
+        "lane": "dev-zone",
+        "mode": "recon-first",
+        "dispatched_ts": "2026-06-15T11:52:45Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "Tier-3 market_prices cache fallback: (1) HONESTY — stop labeling stale cached rows FRESH; derive staleness from row updated_at age vs freshness window AND require a live tier success for FRESH. (2) UNIT — stop blind Close*1000; scale conditionally on the entity's real unit/asset-class (stock-thousands-VND vs index/commodity/fx) using the existing single unit-truth source. GENERIC: no per-ticker literal, no BDI special-case. recon-first: read tier-1/2 freshness labeling + unit/scale decision points before editing.",
+        "review_entered_ts": "2026-06-15T12:02:48Z",
+        "fix_commit": "8fde56ef",
+        "root_cause": "(1) price_resolution.Resolve labeled a tier-3 cache hit FRESH by timestamp without tracking which tier won (dishonest). (2) Tier1/Tier2 VnDirect fetchers blindly did Close*1000 (thousands-VND assumption) for ALL responses, garbling indices/non-VN-floor assets.",
+        "fix_summary": "track winningTierIndex over {tier1,tier2,tier3}; tier-3 win (both live tiers failed) downgrades FRESH->STALE. Guard *1000 on item.Type==STOCK && Floor in {HOSE,HNX,UPCOM}; indices/non-VN read as-is. Tier3CacheFetcher already reads price as-is. Single unit-truth = VnDirect API type+floor.",
+        "router_raw_verify": "commit zone-clean (3 files apps/stock-price/, no -A); staleness diff = winningTierIndex==2 && Fresh -> Stale (tier order {t1,t2,t3}, idx2=cache=both-live-failed=spec OR); scale guard type+floor; Tier3 reads as-is (fetchers.go:248-256); router-run go build EXIT0; go test price_resolution 3 new tests PASS + infrastructure ok; LIVE named-vol market_prices NO poison (max 192600 VIC, 0 rows>1M, VNINDEX 1799 correct).",
+        "generic_verified": "/goal#2 PASS — staleness from tier index, scale from API type+floor; no per-ticker/BDI literal.",
+        "rebuild_required": true,
+        "rebuild_scope": "stock-price container ONLY (runtime Go; live fetch scale + resolution staleness). Force-recreate, NEVER down.",
+        "rebuild_baseline": "pre-rebuild stock-price image .Created 2026-06-15T11:03:31Z (BEFORE commit 11:58:49Z).",
+        "pending_live_gate": "AFTER rebuild: (1) stock-price image .Created > 8fde56ef 11:58:49Z, RestartCount=0, healthy, peers up; (2) spot VN stock (VCB) sane thousands-VND ~55-70k NOT inflated, market_prices 0 rows>1M; (3) tier-3/cache quote labeled STALE not FRESH (unit-proven). Then review->done_verified.",
+        "ops_dispatched_ts": "2026-06-15T12:02:48Z"
       }
     ],
     "qa": [],
