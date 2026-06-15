@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T07:29:45Z",
-  "_updated_by": "cowork-team",
+  "_updated_at": "2026-06-15T07:36:49Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T07:29:45Z",
-    "updated_by": "cowork-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "COWORK-TEAM TICK 2026-06-15T07:2xZ — FIX-CHEF-FABRICATED-TA-NUMBERS DONE_VERIFIED (router LIVE RAW get_unreviewed_market_messages, NOT CHEF badge): the chef-intraday dish (CHEF a2bee2f4 on new chef.md a925e89a) published id 757 to LIVE MARKET with ZERO numeric RSI — qualitative only, numerals are real price-%/FX. Step 6.7 anti-fabrication gate holds LIVE. CHEF fabrication consumer CLOSED. === HOWEVER the SAME RAW read surfaced a 4TH open consumer of the user-flagged single-digit RSI class: the ALERT-ENGINE (TA Alert id 745/746: VRE 10.3 / VHM 9.8 / VIC 7.4 / MBB 3.7 / MWG 6.0 / DAG 100.0) + morning-briefing (id 744 echoes the same) STILL publish corrupt single-digit RSI to LIVE MARKET daily at open, CONTRADICTING the now-fixed get_technical_indicators (VRE 39.9 / VIC 34.7 / VHM 35.5). => minted FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (READY, HIGH, dev-alert-engine, recon-first) — the user-flagged RSI class is NOT closed until the alert-engine RSI is corrected (prefer delegating to the canonical Go svc for a single RSI SSOT). No MARKET correction spam. === Board: review 2->1 (ARCH-SHIP-WAVE-REAUDIT remains, KEEP-PARK), done_verified 55->56, ready 1->2 (FIX-TA-GOSVC-MA5-PRECISION + FIX-ALERT-ENGINE-RSI). Holds: ARCH-CRON-SCHEDULER-RELIABILITY, BA-VN-MACRO-TOOLING. === Unpushed commits + this chore — push is PO's authorized call (CI flaky-aware). FLAG PO: the RSI class has one more open consumer; triage FIX-ALERT-ENGINE-RSI next tick."
+    "updated_at": "2026-06-15T07:36:49Z",
+    "updated_by": "dev-team",
+    "active_task_id": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
+    "next_agent": "dev-alert-engine",
+    "note": "DEV-TEAM TICK 2026-06-15T07:31Z — FIX-ALERT-ENGINE-RSI-SINGLEDIGIT DISPATCHED ready->in_progress (dev-alert-engine, recon-first, bg) per PO BATCH (afc7f746). THE LAST OPEN consumer of the user-flagged single-digit RSI class: PO RAW-confirmed this tick it still publishes daily at market-open (msg 753 morning-briefing echo 'VHM RSI 9.8/VIC RSI 7.4', msg 752 TA-Alert 'DAG RSI=100.0') contradicting the now-fixed canonical get_technical_indicators (VHM ~35.5/VIC ~34.7). /goal#1 highest-value. Recon-first: trace alert-engine + morning-briefing RSI source, confirm it reads the corrupt pre-fix path (not the canonical tool), wire BOTH consumers to get_technical_indicators. Verification gate = next TA-Alert + morning-briefing show NO single-digit/clamped RSI, match canonical within 0.1pt, GENERIC all tickers. WIP: board in_progress=3 but active dev-zone coding=1 (PO-authorized — ARCH-CRON=QA-observe, BA-MACRO=queued, neither codes). DEFERRED ready: FIX-TA-GOSVC-MA5-PRECISION (medium/S) — no user-MARKET surface, holds for next free dev-zone slot. PUSH: PO-authorized (origin 0-behind/9-ahead, clean linear fast-forward, all report-analyzer-authored, no cloud-chore divergence) — router pushes this tick. SF-1 release at tick end."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,8 +590,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T07:29:45Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-06-15T07:36:49Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -14116,7 +14116,9 @@
         "po_rationale": "Mechanism-complete != outcome-proven. The umbrella success_metric is explicitly 'Prove the cluster auto-fires DURABLY, not just that one manual run works; ship completion across the whole cluster, not one job.' Closing on mechanism today would repeat the EXACT anti-pattern that spawned this umbrella: the prior per-job recoverMissedExecutions patch (53d00955) was marked done on a MANUAL trigger and RECURRED on reputationComputeJob. Standing /goal = 'ship the outcome not the mechanism'. G4+G5 are MET and LIVE; G1/G2/G3 physically cannot produce evidence on a closed-market Sunday. Rigorous path = hold open one calendar day for the Monday market-day LIVE re-verification. Mechanisms (T2 recover-jitter + T3 watchdog self-heal/alert) are all LIVE NOW, so the risk window is monitored by the watchdog itself.",
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate.",
         "po_gate_day_status": "GATE-DAY-ARRIVED 2026-06-15 (Monday, VN market OPEN — tick at 13:32 ICT). Residual is a QA LIVE OUTCOME-OBSERVE gate (G1 aggregator auto-fire + 16 sectors leave N/A / G2 fundamentals refresh / G3 reputationCompute 08:30 under contention), evidence accrues across TODAY's trading session — NOT a dev dispatch and consumes NO dev WIP lane. IMPL dep (FIX-MCP-CRASH-LOOP-WRITEWAL) is in done[]. KEEP HELD until end-of-market-day QA reads cron_job_runs + pipeline-health raw; on all-PASS -> umbrella done_verified, on any miss the LIVE watchdog (G5) self-heal/alert evidence -> scoped residual FIX.",
-        "po_gate_day_checked_at": "2026-06-15T06:35:17Z"
+        "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
+        "po_gate_day_rechecked_at": "2026-06-15T07:36:49Z",
+        "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
       },
       {
         "id": "BA-VN-MACRO-TOOLING",
@@ -14164,7 +14166,33 @@
         "wave2_order": "A1=VMT-2(SBV-JSON) -> A2=VMT-3b+VMT-4(NSO-Excel IIP+CPI) -> A3=VMT-1a+VMT-1b(NSO-Excel XK/NK/FDI) -> A4=VMT-5b.omo(SBV-OMO-HTML) -> A5=VMT-5a(market.db+sbv.gov.vn). excelize added to go.mod ONCE at A2. VMT-3a PMI HELD on PROBE-5 (S&P, dev-local). VMT-5b.interbank+irs permanent estimate (no parser).",
         "serialization_guard": "Zone A dev tasks (handlers_vmt.go/usecases_vmt.go/dtos_vmt.go) MUST be serial — one dev-macro-indicators task at a time, merge gate between each. PM enforces (feedback_recurring_bug_escalation).",
         "po_dispatch_note": "HELD in_progress — mechanism-complete through BA->architect->pm->probe->probe-fold (all router RAW-reverified). next_agent=WAVE-1 dev fan-out (6 zero-dep: PROBE-fold-consumed contracts + Zone D vpsFetch + Zone C VMT-6). DEFERRED this tick: the cowork-flagged RSI-integrity pair is the higher-priority user-live-flagged bug and takes the dispatch focus; WAVE-1 stays queued (touches apps/mcp-server Zone B/C — same lane currently load-bearing for ARCH-CRON gate). Dispatch WAVE-1 next tick once the RSI pair clears. NO dev WIP consumed while held.",
-        "po_held_checked_at": "2026-06-15T06:35:17Z"
+        "po_held_checked_at": "2026-06-15T06:35:17Z",
+        "po_held_rechecked_at": "2026-06-15T07:36:49Z",
+        "po_recheck_disposition": "WAVE-1 queued behind RSI pair, no dev WIP consumed while held — verified parked this tick"
+      },
+      {
+        "id": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
+        "type": "FIX",
+        "title": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT — alert-engine (+ morning-briefing echo) publishes corrupt single-digit RSI to LIVE MARKET (TA Alert id 746: VRE 10.3/MBB 3.7/MWG 6.0; id 745: VHM 9.8/VIC 7.4/DAG 100.0), contradicting the now-fixed get_technical_indicators (VRE 39.9/VIC 34.7/VHM 35.5) — the user's exact originally-flagged values, recurring daily at market open",
+        "zone": "apps/alert-engine/",
+        "owner": "dev-alert-engine",
+        "owner_agent": "dev-alert-engine",
+        "status": "IN_PROGRESS",
+        "priority": "high",
+        "size": "M",
+        "recon_first": true,
+        "root_cause": "The alert-engine computes its OWN RSI for the TA Alert stream (from_agent=unknown, 'TA Alert [HH:MM VN]') and the morning-briefing 'TA Tín hiệu' section READS/echoes those same alert values (id 744 shows VHM 9.8 / VIC 7.4 / DAG 100.0 IDENTICAL to TA Alert id 745) — so ONE source: the alert-engine RSI calc. It returns single-digit RSI (VRE 10.3, VHM 9.8, VIC 7.4, MBB 3.7, MWG 6.0, GAS 11.9) and saturated DAG 100.0 for large caps simultaneously — statistically impossible and CONTRADICTED by the now-fixed canonical get_technical_indicators (Go svc 33e7a094: VRE 39.9 / VIC 34.7 / VHM 35.5, same names same day, mid-band). This alert-engine RSI path NEVER went through the Go-svc GetCandles fix; it likely under-reads the candle window (too few candles -> degenerate RSI) or uses a wrong price column / descending order / non-Wilder seed. Same defect CLASS as FIX-TA-GOSVC (Go GetCandles under-read) but a SEPARATE service.",
+        "fix_spec": "RECON FIRST: locate the alert-engine RSI computation (apps/alert-engine — the producer of 'TA Alert [HH:MM VN]' MARKET messages and the RSI values morning-briefing echoes). Confirm the candle source + window + ordering + smoothing it uses vs the now-correct Go technical-analysis svc / report-path defaultComputeTa. FIX so the alert-engine RSI matches the canonical get_technical_indicators within 0.1pt on the same daily_ohlcv rows. GENERIC across ALL watchlist tickers (/goal#2) — not per-ticker. If the alert-engine SHOULD delegate to the canonical Go svc rather than re-compute, prefer that (single RSI SSOT, kills the divergence class permanently). Also fail-close DAG RSI=100.0 saturation (degenerate <N-candle series). Verify the morning-briefing TA section then shows the corrected values automatically (it echoes the alert source).",
+        "verification_gate": "LIVE: next alert-engine TA Alert cycle + next morning-briefing post (RAW-read via get_unreviewed_market_messages) show NO single-digit RSI and NO RSI=100.0 saturation; the RSI values match get_technical_indicators(VRE/VIC/VHM/MBB/MWG) within 0.1pt. Cross-check: get_technical_indicators(VRE)=~39.9 and the TA Alert RSI for VRE agree. No single-digit RSI anywhere on MARKET.",
+        "source": "router LIVE RAW verify during the chef-intraday cowork tick 2026-06-15T07:2xZ — while closing the FIX-CHEF gate, get_unreviewed_market_messages showed the alert-engine (id 745/746) + morning-briefing (id 744) STILL emitting the user's flagged single-digit RSI, contradicting the now-fixed canonical tool",
+        "created_at": "2026-06-15T07:29:45Z",
+        "created_by": "cowork-team",
+        "triaged_by": "cowork-team",
+        "status_note": "4TH consumer of the user-flagged single-digit RSI class — distinct from the 3 now-closed: FIX-RSI-REPORT-FAILCLOSED (on-demand briefing/report path, ed77b9b0), FIX-TA-GOSVC-NA-DESPITE-DEPTH (canonical Go svc get_technical_indicators, 33e7a094), FIX-CHEF-FABRICATED-TA-NUMBERS (CHEF fabrication, a925e89a). HIGH because it republishes the user's EXACT flagged values (VRE 10.3 / VHM 9.8 / VIC 7.4) to the LIVE MARKET group EVERY market-open. The class is NOT closed until the alert-engine RSI is corrected. PO triage next dev-team tick — pairs with [[FIX-TA-GOSVC-MA5-PRECISION]] (same RSI-parity zone of concern); prefer delegating to the canonical Go svc for a single RSI SSOT. recon_first: confirm producer + candle window before patching. Do NOT spam a MARKET correction.",
+        "route_to": "dev-alert-engine",
+        "dispatched_ts": "2026-06-15T07:36:49Z",
+        "dispatched_by": "po",
+        "dispatch_note": "dev-team tick 2026-06-15T07:31Z — last-open single-digit-RSI consumer, LIVE-confirmed msg 752/753 this tick; /goal#1 highest-value. PO-authorized WIP exception: board in_progress=3 but active dev-zone coding lane=1 (ARCH-CRON=QA-observe, BA-MACRO=queued, neither codes)."
       }
     ],
     "ready": [
@@ -14188,26 +14216,6 @@
         "created_by": "dev-team",
         "triaged_by": "dev-team",
         "status_note": "Follow-on peeled from FIX-TA-GOSVC-NA-DESPITE-DEPTH LIVE verify. MEDIUM/S — does NOT affect the user MARKET report (report path is the now-fixed defaultComputeTa) and does NOT reopen the single-digit RSI class (Go RSI is plausible mid-band). Precision/parity + MA5 completeness only. PO triage next tick; pairs in the same zone as 33e7a094 so cheap to batch. Confirm Go MA5 length-guard + RSI window/seed first."
-      },
-      {
-        "id": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
-        "type": "FIX",
-        "title": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT — alert-engine (+ morning-briefing echo) publishes corrupt single-digit RSI to LIVE MARKET (TA Alert id 746: VRE 10.3/MBB 3.7/MWG 6.0; id 745: VHM 9.8/VIC 7.4/DAG 100.0), contradicting the now-fixed get_technical_indicators (VRE 39.9/VIC 34.7/VHM 35.5) — the user's exact originally-flagged values, recurring daily at market open",
-        "zone": "apps/alert-engine/",
-        "owner": "dev-alert-engine",
-        "owner_agent": "dev-alert-engine",
-        "status": "READY",
-        "priority": "high",
-        "size": "M",
-        "recon_first": true,
-        "root_cause": "The alert-engine computes its OWN RSI for the TA Alert stream (from_agent=unknown, 'TA Alert [HH:MM VN]') and the morning-briefing 'TA Tín hiệu' section READS/echoes those same alert values (id 744 shows VHM 9.8 / VIC 7.4 / DAG 100.0 IDENTICAL to TA Alert id 745) — so ONE source: the alert-engine RSI calc. It returns single-digit RSI (VRE 10.3, VHM 9.8, VIC 7.4, MBB 3.7, MWG 6.0, GAS 11.9) and saturated DAG 100.0 for large caps simultaneously — statistically impossible and CONTRADICTED by the now-fixed canonical get_technical_indicators (Go svc 33e7a094: VRE 39.9 / VIC 34.7 / VHM 35.5, same names same day, mid-band). This alert-engine RSI path NEVER went through the Go-svc GetCandles fix; it likely under-reads the candle window (too few candles -> degenerate RSI) or uses a wrong price column / descending order / non-Wilder seed. Same defect CLASS as FIX-TA-GOSVC (Go GetCandles under-read) but a SEPARATE service.",
-        "fix_spec": "RECON FIRST: locate the alert-engine RSI computation (apps/alert-engine — the producer of 'TA Alert [HH:MM VN]' MARKET messages and the RSI values morning-briefing echoes). Confirm the candle source + window + ordering + smoothing it uses vs the now-correct Go technical-analysis svc / report-path defaultComputeTa. FIX so the alert-engine RSI matches the canonical get_technical_indicators within 0.1pt on the same daily_ohlcv rows. GENERIC across ALL watchlist tickers (/goal#2) — not per-ticker. If the alert-engine SHOULD delegate to the canonical Go svc rather than re-compute, prefer that (single RSI SSOT, kills the divergence class permanently). Also fail-close DAG RSI=100.0 saturation (degenerate <N-candle series). Verify the morning-briefing TA section then shows the corrected values automatically (it echoes the alert source).",
-        "verification_gate": "LIVE: next alert-engine TA Alert cycle + next morning-briefing post (RAW-read via get_unreviewed_market_messages) show NO single-digit RSI and NO RSI=100.0 saturation; the RSI values match get_technical_indicators(VRE/VIC/VHM/MBB/MWG) within 0.1pt. Cross-check: get_technical_indicators(VRE)=~39.9 and the TA Alert RSI for VRE agree. No single-digit RSI anywhere on MARKET.",
-        "source": "router LIVE RAW verify during the chef-intraday cowork tick 2026-06-15T07:2xZ — while closing the FIX-CHEF gate, get_unreviewed_market_messages showed the alert-engine (id 745/746) + morning-briefing (id 744) STILL emitting the user's flagged single-digit RSI, contradicting the now-fixed canonical tool",
-        "created_at": "2026-06-15T07:29:45Z",
-        "created_by": "cowork-team",
-        "triaged_by": "cowork-team",
-        "status_note": "4TH consumer of the user-flagged single-digit RSI class — distinct from the 3 now-closed: FIX-RSI-REPORT-FAILCLOSED (on-demand briefing/report path, ed77b9b0), FIX-TA-GOSVC-NA-DESPITE-DEPTH (canonical Go svc get_technical_indicators, 33e7a094), FIX-CHEF-FABRICATED-TA-NUMBERS (CHEF fabrication, a925e89a). HIGH because it republishes the user's EXACT flagged values (VRE 10.3 / VHM 9.8 / VIC 7.4) to the LIVE MARKET group EVERY market-open. The class is NOT closed until the alert-engine RSI is corrected. PO triage next dev-team tick — pairs with [[FIX-TA-GOSVC-MA5-PRECISION]] (same RSI-parity zone of concern); prefer delegating to the canonical Go svc for a single RSI SSOT. recon_first: confirm producer + candle window before patching. Do NOT spam a MARKET correction."
       }
     ],
     "review": [
