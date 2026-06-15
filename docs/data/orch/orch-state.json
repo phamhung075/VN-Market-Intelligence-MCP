@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T05:10:56Z",
+  "_updated_at": "2026-06-15T05:26:16Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -115,7 +115,12 @@
     "updated_by": "dev-team",
     "active_task_id": "FIX-RSI-REPORT-FAILCLOSED",
     "next_agent": "dev-technical-analysis",
-    "note": "DEV-TEAM TICK 2026-06-15 — FIX-NSO-TRADE-VALUE-SCALE DONE_VERIFIED (router LIVE RAW re-probe 05:09:25Z, NOT badge): get_vn_trade_balance now PLAUSIBLE — June export 46929mn/import 52141mn/balance -5212mn, monthly<=YTD both sides, HS mix matches real VN structure, is_estimate=false. Prior 212000mn corruption GONE. Root = col3-not-col2 + TỔNG-TRỊ-GIÁ-total-row + Triệu-USD-no-x1000 (commit 7a3da0df) + plausibility guard test. macro-indicators force-recreated healthy. === BOTH user-flagged + value-accuracy fixes now done_verified this tick: FIX-STOCK-PRICE-SCALE-CORRUPT (3035e298) + FIX-NSO-TRADE-VALUE-SCALE (7a3da0df). === NEXT: (1) batch-push HEAD (5 ahead of origin: 3035e298 + 16a7d8d4 + 7a3da0df + 2dc437d8 + d49/d50 board) — PO-authorized CI push; WATCH GitHub Actions run to conclusion=success on SHA != RED before fully closing the CI gate. (2) dispatch FIX-RSI-REPORT-FAILCLOSED (READY, dev-technical-analysis) — report RSI path not fail-closed on <15 candles; confirm RSI source first. === KNOWN-DEGRADED (flagged, not blocking): trade bloc_split FDI 0% is_estimate=true (Customs SPA inaccessible). OBS: daily_ohlcv ~6 candles -> indicators N/A until backfill deepens (flag PO). SF-1 held until clean tick-end."
+    "note": "DEV-TEAM TICK 2026-06-15 — FIX-NSO-TRADE-VALUE-SCALE DONE_VERIFIED (router LIVE RAW re-probe 05:09:25Z, NOT badge): get_vn_trade_balance now PLAUSIBLE — June export 46929mn/import 52141mn/balance -5212mn, monthly<=YTD both sides, HS mix matches real VN structure, is_estimate=false. Prior 212000mn corruption GONE. Root = col3-not-col2 + TỔNG-TRỊ-GIÁ-total-row + Triệu-USD-no-x1000 (commit 7a3da0df) + plausibility guard test. macro-indicators force-recreated healthy. === BOTH user-flagged + value-accuracy fixes now done_verified this tick: FIX-STOCK-PRICE-SCALE-CORRUPT (3035e298) + FIX-NSO-TRADE-VALUE-SCALE (7a3da0df). === NEXT: (1) batch-push HEAD (5 ahead of origin: 3035e298 + 16a7d8d4 + 7a3da0df + 2dc437d8 + d49/d50 board) — PO-authorized CI push; WATCH GitHub Actions run to conclusion=success on SHA != RED before fully closing the CI gate. (2) dispatch FIX-RSI-REPORT-FAILCLOSED (READY, dev-technical-analysis) — report RSI path not fail-closed on <15 candles; confirm RSI source first. === KNOWN-DEGRADED (flagged, not blocking): trade bloc_split FDI 0% is_estimate=true (Customs SPA inaccessible). OBS: daily_ohlcv ~6 candles -> indicators N/A until backfill deepens (flag PO). SF-1 held until clean tick-end.",
+    "ci_green_confirm": {
+      "sha": "982323cc",
+      "run": "27525824355",
+      "note": "full CI suite SUCCESS downstream of FIX-STOCK-PRICE(3035e298)+FIX-NSO(7a3da0df); earlier 25d20eec/89aaa639 reds were flaky (disjoint failure sets, none on changed files)"
+    }
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +595,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T05:10:56Z",
+    "_updated_at": "2026-06-15T05:26:16Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13878,6 +13883,30 @@
         "arch_decisions": "E8 VMT-1b=NSO-FDI-cross-join is_estimate=true PERMANENT (customs SPA unblockable); E9 VMT-5b.interbank=Option2 permanent is_estimate=true+blocked_reason (no public API, IP-whitelist out-of-scope, IRS-DD-6 precedent); E10 VMT-2=direct-JSON Liferay article API NO excelize/PDF (PROBE-2 live); E11 NSO-Excel single cache serves VMT-1a/1b/3b/4; E12 Zone-A SERIALIZE A1..A5 merge-gated (MED recurring-bug).",
         "wave2_order": "A1=VMT-2(SBV-JSON) -> A2=VMT-3b+VMT-4(NSO-Excel IIP+CPI) -> A3=VMT-1a+VMT-1b(NSO-Excel XK/NK/FDI) -> A4=VMT-5b.omo(SBV-OMO-HTML) -> A5=VMT-5a(market.db+sbv.gov.vn). excelize added to go.mod ONCE at A2. VMT-3a PMI HELD on PROBE-5 (S&P, dev-local). VMT-5b.interbank+irs permanent estimate (no parser).",
         "serialization_guard": "Zone A dev tasks (handlers_vmt.go/usecases_vmt.go/dtos_vmt.go) MUST be serial — one dev-macro-indicators task at a time, merge gate between each. PM enforces (feedback_recurring_bug_escalation)."
+      },
+      {
+        "id": "FIX-RSI-REPORT-FAILCLOSED",
+        "type": "FIX",
+        "title": "FIX-RSI-REPORT-FAILCLOSED — MARKET-report RSI path emits values on <15 candles (VRE RSI 10.3 on ~6-candle downtrend) while canonical get_technical_indicators correctly returns N/A",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "owner_agent": "dev-technical-analysis",
+        "status": "in_progress",
+        "priority": "high",
+        "size": "S",
+        "recon_first": true,
+        "root_cause": "The report/summary RSI source (candidate: generate_market_summary or a market-watcher/CHEF internal calc — RECON to confirm) computed RSI for VRE = 10.3 even though VRE has only ~6 candles; the canonical get_technical_indicators returns 'RSI(14): N/A (can toi thieu 15 nen)' for the same ticker. Two RSI code paths diverge: one fail-closed, one not. The non-fail-closed path also inherited the price corruption for VIC/VHM (single-digit). Even after FIX-STOCK-PRICE-SCALE-CORRUPT, the report would still emit under-determined RSI on shallow history.",
+        "fix_spec": "RECON: identify which tool/agent produced the MARKET report's RSI numbers (grep report generators + generate_market_summary RSI path). THEN make that path fail-closed identically to get_technical_indicators: RSI requires >=15 candles else emit N/A (and the report must render 'RSI: N/A' or omit, never a number). Single SSOT RSI calc shared by both paths is the DRY target (/goal#2). Add test: <15 candles -> N/A from BOTH paths.",
+        "verification_gate": "LIVE: the report RSI path and get_technical_indicators agree for the same ticker (both N/A when <15 candles; both same plausible value when >=15). No single-digit RSI emitted to MARKET from corrupted/shallow data.",
+        "baseline_pass": "04e1ebb7",
+        "source": "router RAW-probe 2026-06-15T04:43Z (VRE clean price yet RSI 10.3 reported = non-fail-closed report RSI path)",
+        "created_at": "2026-06-15T04:47:45Z",
+        "created_by": "dev-team",
+        "triaged_by": "dev-team",
+        "status_note": "Follow-on to FIX-STOCK-PRICE-SCALE-CORRUPT. Distinct zone (technical-analysis/report). Next-tick dispatch after stock-price root fix lands. Confirm RSI source first.",
+        "dispatched_to": "dev-technical-analysis",
+        "dispatched_at": "2026-06-15T05:26:16Z",
+        "dispatch_note": "recon-first: confirm MARKET-report RSI source then fail-close to N/A on <15 candles; single SSOT RSI calc (DRY /goal#2); test <15->N/A both paths. DoD full-CI green + tsc clean; force-recreate single service on rebuild."
       }
     ],
     "ready": [
@@ -14081,27 +14110,6 @@
         "created_by": "po",
         "triaged_by": "po",
         "status_note": "DONE + done_verified (flow-doc, no rebuild)."
-      },
-      {
-        "id": "FIX-RSI-REPORT-FAILCLOSED",
-        "type": "FIX",
-        "title": "FIX-RSI-REPORT-FAILCLOSED — MARKET-report RSI path emits values on <15 candles (VRE RSI 10.3 on ~6-candle downtrend) while canonical get_technical_indicators correctly returns N/A",
-        "zone": "apps/technical-analysis/",
-        "owner": "dev-technical-analysis",
-        "owner_agent": "dev-technical-analysis",
-        "status": "READY",
-        "priority": "high",
-        "size": "S",
-        "recon_first": true,
-        "root_cause": "The report/summary RSI source (candidate: generate_market_summary or a market-watcher/CHEF internal calc — RECON to confirm) computed RSI for VRE = 10.3 even though VRE has only ~6 candles; the canonical get_technical_indicators returns 'RSI(14): N/A (can toi thieu 15 nen)' for the same ticker. Two RSI code paths diverge: one fail-closed, one not. The non-fail-closed path also inherited the price corruption for VIC/VHM (single-digit). Even after FIX-STOCK-PRICE-SCALE-CORRUPT, the report would still emit under-determined RSI on shallow history.",
-        "fix_spec": "RECON: identify which tool/agent produced the MARKET report's RSI numbers (grep report generators + generate_market_summary RSI path). THEN make that path fail-closed identically to get_technical_indicators: RSI requires >=15 candles else emit N/A (and the report must render 'RSI: N/A' or omit, never a number). Single SSOT RSI calc shared by both paths is the DRY target (/goal#2). Add test: <15 candles -> N/A from BOTH paths.",
-        "verification_gate": "LIVE: the report RSI path and get_technical_indicators agree for the same ticker (both N/A when <15 candles; both same plausible value when >=15). No single-digit RSI emitted to MARKET from corrupted/shallow data.",
-        "baseline_pass": "04e1ebb7",
-        "source": "router RAW-probe 2026-06-15T04:43Z (VRE clean price yet RSI 10.3 reported = non-fail-closed report RSI path)",
-        "created_at": "2026-06-15T04:47:45Z",
-        "created_by": "dev-team",
-        "triaged_by": "dev-team",
-        "status_note": "Follow-on to FIX-STOCK-PRICE-SCALE-CORRUPT. Distinct zone (technical-analysis/report). Next-tick dispatch after stock-price root fix lands. Confirm RSI source first."
       }
     ],
     "review": [
