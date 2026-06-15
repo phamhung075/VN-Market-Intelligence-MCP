@@ -70,3 +70,13 @@ why-change: minting the requested task would have been duplicate debt against do
 - groom PLAN-ONLY HELD-for-BA backlog task (chosen).
 **why-decision:** /goal#1 — RAW-verified the drift live (called post_agent_signal, got -32602 + enum with no health value) before minting; design-gated bug belongs in backlog HELD, not a premature coding lane. Did NOT process/delete the Telegram reports — underlying BCTC + auditor bugs are genuinely unresolved.
 **why-change:** No change from HOLD-default plan except the one new groom — 13:26Z tick had no inbox; this tick's 2 fresh reports forced the auditor-drift mint.
+
+### STEP po-S6 · po · 2026-06-15T15:53:22Z
+**task-id:** FIX-SIGNAL-CONFIDENCE-DEFAULT-50
+**what-done:** Minted FIX-SIGNAL-CONFIDENCE-DEFAULT-50 (P1, READY, route=dev-mcp-server, zone=apps/mcp-server/, mode=recon-first) for user BUG: dashboard SIGNALS shows Confidence=50% on every row.
+**what-considered:**
+- P2 — REJECTED: silently neuters EVERY signal's confidence (decision-input metric dead across all sources) → P1.
+- re-investigate from scratch — REJECTED: router already RAW-verified; I verified the load-bearing claims (default-50 destructure L341, only 1/13 producer passes confidence, smoking gun intelligenceCycleJob.ts:1290 has chain.conviction in scope but omits it) — confirmed, not redone.
+- dispatch directly — REJECTED: PO mints+marks ready; next dev-team tick / router dispatches.
+**why-decision:** /goal#1 confirmed root-cause class (computed-but-not-wired default) by reading the actual call sites; /goal#2 generic mandate is achievable — every producer already has a confidence source (cascade/news-sentiment/BCTC/kinh-dich/conviction) → spec mandates wiring ALL, no allowlist. WIP honored: 2 board lanes but both NON-coding (ARCH design + BA spec) = 0 active coding lanes.
+**why-change:** No change from triage plan; priority raised P2→P1 vs router suggestion given blast radius (all sources, all rows).
