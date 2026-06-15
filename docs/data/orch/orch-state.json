@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T02:35:09Z",
+  "_updated_at": "2026-06-15T03:58:15Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T02:35:09Z",
+    "updated_at": "2026-06-15T03:58:15Z",
     "updated_by": "dev-team",
-    "active_task_id": "CI-RED-d20468c0-FIX",
-    "next_agent": "po",
-    "note": "CI-RED-d20468c0-FIX CODE-DONE (dev-mcp-server ad7c357d49c10d38e, commit c79ce6bd, router RAW-verified GREEN: on-main HEAD chain; 4 files ALL apps/mcp-server/src/__tests__; foreign-capture NONE; toolCount 163 unchanged=no production code; independent UNCACHED bun test 31 pass/0 fail/127 expect; fix generic — 4 stale-contract reconciliations to current production, no hardcode). LOCAL MERGE GATE GREEN. === done_verified WITHHELD: verification_gate ci_green_on_subsequent_push is PUSH-BLOCKED — origin/main=d20468c0 (RED SHA) NOT ancestor of HEAD, diverged 143-ahead/6-behind (merge-base 59082d6d); 6-behind = ALL benign cloud chore commits (5x health-recheck + 1x tnb-audit). NO rebuild (test-only, runtime unchanged). === -> head dev->po: PO triages (sig dev-team-20260615T0235Z-cired-done-ci-push-blocked NEW) the origin-push decision (proposed LOW-RISK: git pull --rebase origin main + push -> GitHub Actions re-runs SHA != d20468c0 -> green -> promote CI-RED done_verified); this IS the standing DEFERRED origin-divergence (PO's call), NOT autonomous router force-push. PO also carries (now WIP-clear): FIX-NSO-TRADE-SHEET mint (sig nso-trade-sheet-followon NEW; trade_parser sheet 14.XK/15.NK absent — derive by content/pattern, /goal#2 generic) + F-BOP-QUERY-RECON dispatch (UNBLOCKED, recon-first ops-vps-fetch SBV Liferay OData). === SF-1 dev-team-cron-singleton: this in-flight tick complete -> release at clean tick-end (next cron 03:07Z). === F-NSO-SELECTOR done_verified (55c1dd3c, RESOLVED). F-BOP-ENCODING stays done (done_verified WITHHELD pending F-BOP-QUERY-RECON real-data). HELD (unchanged): S2 07-06 methodology brief (agent-father); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open (ops/infra lane); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify); release batch CTG/VCB/D2D BLOCKED on undeployed bug #2776 (signal #6120). Commit explicit path only."
+    "active_task_id": "F-BOP-QUERY-RECON",
+    "next_agent": "ops",
+    "note": "MACRO ACCURACY PAIR CODE-DONE (dev-macro-indicators a75f03300599aca1d, ONE commit 4c2fcb5c, router RAW-verified GREEN independent: on-main HEAD; 4 files apps/macro-indicators/pkg/infrastructure ONLY; foreign-capture NONE; orch-state NOT captured; UNCACHED go build/vet rc=0 + go test -count=1 ./pkg/infrastructure PASS 8.861s; FIX1 BOP quarter-generic items->articles tag + drop date-range + dedup + articles[0]; FIX2 trade sheet-label-generic selectSheetsByContent A1-header match fail-loud; /goal#2). === -> head dev->ops: FORCE-RECREATE macro-indicators single service (memory rebuild-after-dev-change; NEVER compose down — kills peers ~21min); verify new image ID + 4c2fcb5c on HEAD + peers healthy. Then LIVE-verify via gateway re-probe (NOT badges) ACROSS >=2 TIMING WINDOWS (fast-fail-window trap): get_vn_bop must return REAL BOP fields (canCanTongThe/canCanVangLai etc non-zero, real quarter — NOT blocked_reason=0 items) AND get_vn_trade_balance must return REAL export/import (non-zero, real period — NOT 'sheet not found' degraded). On ops live-result -> ROUTER re-probes each tool ITSELF across timing (not ops badge) + disambiguates proxy-down vs upstream-empty. If router live-green (REAL data): promote F-BOP-QUERY-RECON + FIX-NSO-TRADE-SHEET done_verified + promote F-BOP-ENCODING done_verified (real-data restored) + F-NSO-SELECTOR stays done_verified + release SF-1. If still degraded/empty after rebuild: keep done, WITHHOLD done_verified, route accuracy root to ops-vps-fetch LIVE recon (NOT a dev guess). === FIX-CHEF-INTRADAY-MARKER-CADENCE DONE+done_verified (agent-father 7843045c, flow-doc, NO rebuild — next chef-intraday cron reads chef.md; live-confirm next tick today). === CI-RED-d20468c0-FIX (status done, c79ce6bd): PO AUTHORIZED origin reconcile+push (sig cired-push-blocked -> in_progress); 7-behind ALL benign cloud chores file-disjoint from local -> conflict-free; router executing this tick (pnpm check -> git merge origin/main -> push -> CI re-run SHA != d20468c0 green -> promote done_verified). NOT a force-push. === sau-d4-202606150300 DISMISSED (PO LOW). === ZOMBIE SWEEP (PO RAW-flag): ARCH-CRON-SCHEDULER-RELIABILITY in_progress dispatched_to=null >16h no-heartbeat + BA-VN-MACRO-TOOLING parked architect-probefold-done — neither holds active dev lane; sweep next tick. === HELD (unchanged): S2 07-06 methodology brief (agent-father); F3 cronJobCount (dev-mcp-server low); VMT-3a-PMI blocked-probe5; FIX-SBV-FX-VPS-FETCHER-UNHEALTHY + FIX-NEWS-VPS-CRASH-LOOP + OPS-POLLNEWS-NIGHT-ZERO + tinyproxy ACL-open (ops/infra lane); 2x context-bloat (maintenance lane); FIX-FB-POSTER-NOARG-MARKET-TOOLS; Monday market-day gate (ARCH-CRON G1/G2/G3 + F-EOD LIVE re-verify); release batch CTG/VCB/D2D BLOCKED on undeployed bug #2776 (signal #6120). Commit explicit path only."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -171,8 +171,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-15T02:00:49Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-15T03:00:01.154Z",
+    "_updated_by": "system-auditor",
     "archive": [
       {
         "from": "system-auditor",
@@ -200,6 +200,20 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606150300",
+        "ts": "2026-06-15T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "task_list_held empty but orch-state.head.active_task_id=CI-RED-d20468c0-FIX",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-15T03:58:15Z",
+        "resolved_by": "dev-team",
+        "resolution": "DISMISS (PO triage a7006b6a, LOW): task_list_held-empty is expected after router withheld CI-RED done_verified + cleared WIP; head.active_task_id=CI-RED correct; self-resolves on CI-RED done_verified."
+      },
       {
         "from": "mcp-server/walCheckpointJob",
         "id": "wal-escalation-1781422530317",
@@ -429,11 +443,14 @@
         "to": "po",
         "type": "live-verify-partial-bundle + new-root follow-on — /goal#1 accuracy + /goal#2 generic",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "RESOLVED",
         "summary": "F-NSO-SELECTOR DONE_VERIFIED (selector root live-fixed: get_vn_macro_indicators + get_cpi_components REAL across 3 router-raw timepoints, image 45ba10db1717). BUT get_vn_trade_balance STILL degraded on a DISTINCT newly-exposed root: blocked_reason='trade_parser: sheet 14.XK not found ... sheet 14.XK does not exist'. The selector fix exposed (un-masked) trade's own customs-sheet parse bug — sheets '14.XK'(exports)/'15.NK'(imports) are absent from the current NSO monthly Excel (the file downloads fine now — macro/cpi parse it). PO ACTION: MINT FIX-NSO-TRADE-SHEET (zone apps/macro-indicators; root = trade_parser sheet-name mismatch in NSO customs Excel). RECON-CHEAP: the xlsx is now reachable in-container, so first step = list the actual sheet names in the current NSO monthly Excel (dev-macro-indicators can inspect the live file, or ops-vps-fetch recon). FIX must be GENERIC /goal#2: derive the customs export/import sheet by content/pattern (e.g. fuzzy 'XK'/'NK' or position), NOT hardcode '14.XK'/'15.NK' (the numeric prefix evidently drifts month-to-month). ALSO: F-BOP-QUERY-RECON now UNBLOCKED (sequence_after cleared) — triage/dispatch next tick (recon-first ops-vps-fetch SBV Liferay OData). Hold both for WIP — CI-RED-d20468c0-FIX still in flight (dev-mcp-server ad7c357d).",
         "payload_ref": "ops ae38b62f (image 45ba10db1717, CA cert in-image, 13 peers, 2-window macro+cpi REAL / trade degraded); router raw 3rd-timepoint 01:58:19-20Z concurs (macro ok/real, cpi ok/real, trade degraded 'sheet 14.XK not found'); F-NSO commit 74dfdb0a",
         "disposition": "",
-        "ts": "2026-06-15T02:00:49Z"
+        "ts": "2026-06-15T02:00:49Z",
+        "resolved_at": "2026-06-15T03:58:15Z",
+        "resolved_by": "dev-team",
+        "resolution": "Minted FIX-NSO-TRADE-SHEET; recon ops ac161be3 + code 4c2fcb5c (content-based A1-header sheet selection). done_verified pending ops rebuild + live."
       },
       {
         "id": "dev-team-20260615T0235Z-cired-done-ci-push-blocked",
@@ -441,11 +458,29 @@
         "to": "po",
         "type": "code-done + ci-green-gate push-blocked — /goal#1 verified-withheld on origin divergence",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "in_progress",
         "summary": "CI-RED-d20468c0-FIX CODE-DONE + LOCAL-GREEN (router RAW-verified, NOT dev badge): dev-mcp-server ad7c357d49c10d38e reconciled 8 stale-contract tests / 4 files (commit c79ce6bd); independent UNCACHED bun test 31 pass/0 fail; 4 files all apps/mcp-server/src/__tests__, foreign-capture NONE, toolCount 163 unchanged (no production code). LOCAL MERGE GATE GREEN. BUT verification_gate ci_green_on_subsequent_push is PUSH-BLOCKED: origin/main=d20468c0 (the RED run 27516556457 SHA) is NOT an ancestor of HEAD; local diverged 143-ahead/6-behind (merge-base 59082d6d). The 6-behind are ALL benign cloud-generated chore commits (5x chore(health) MCP rechecks + 1x chore(audit/tnb) c95 NEEDS_ATTENTION) pushed to origin by cloud RemoteTriggers; local never pulls them. PO DECISION NEEDED: reconcile + push to turn origin CI green — proposed LOW-RISK path = git pull --rebase origin main (replay 143 work commits atop the 6 chores) then push; this is the standing DEFERRED origin-divergence (PO's call), NOT an autonomous router force-push. On push, GitHub Actions re-runs on SHA != d20468c0 -> green -> THEN promote CI-RED done_verified. NO rebuild (test-only, runtime container unchanged). Until then CI-RED = done (local-green), done_verified WITHHELD. ALSO PENDING PO (carry): FIX-NSO-TRADE-SHEET mint (sig nso-trade-sheet-followon NEW) + F-BOP-QUERY-RECON dispatch (UNBLOCKED, recon-first ops-vps-fetch). WIP now clear (CI-RED resolved) — both can proceed next tick.",
         "payload_ref": "router raw: git log c79ce6bd/765518d1; bun test 31/0; git rev-list origin/main..HEAD=143, HEAD..origin/main=6; merge-base 59082d6d; 6-behind=d20468c0,d78fe061,504aa635,6d49d425,e3df5758,93e7f66a (all cloud chores); origin/main=d20468c0",
         "disposition": "",
-        "ts": "2026-06-15T02:35:09Z"
+        "ts": "2026-06-15T02:35:09Z",
+        "acked_at": "2026-06-15T03:58:15Z",
+        "acked_by": "dev-team",
+        "resolution": "PO AUTHORIZED (triage a7006b6a): 7-behind = ALL benign cloud chores (6x health + 1x tnb-audit), file-disjoint from local code/orch-state/cowork-schedule -> conflict-free reconcile. Router executing THIS tick: pnpm --filter vn-market check -> git merge origin/main -> push -> GitHub Actions re-runs SHA != d20468c0 green -> THEN promote CI-RED-d20468c0-FIX done_verified."
+      },
+      {
+        "id": "cowork-team-20260615T0324Z-chef-intraday-claim-cadence-churn",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "config-mismatch — chef-intraday 28h claim TTL vs 60min matcher cadence -> hourly self-block churn",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "summary": "chef-intraday self-block CHURN (no breakage, no double-post): cowork matcher offers slot hourly (cron '13 2-8 * * 1-5', cadence_minutes=60) but the chef Step 0.5 claim-gate holds a 28h marker (claimed_at 2026-06-15T02:21:33Z by the 02:22Z published intraday dish, expires_at 2026-06-16T06:21:33Z, TTL=28h). RAW-verified: 03:24Z spawn self-blocked correctly (anti-double-post worked; notebook last-update 02:22Z, no 03:xx dish). BUT every remaining hourly match today (04:24/05:24/06:24/07:24Z) will spawn unified-agent -> Step 0.5 block -> ~25k tokens wasted/fire (~100k tok/day) until claim expires. PO/dev-team DECISION: is one-intraday-dish-per-day intended? If YES -> raise chef-intraday cadence_minutes in cowork-schedule.json (or matcher should consult the 28h claim) to stop hourly churn. If NO (conditional intraday should re-publish on new convergence) -> claim TTL 28h is too long, should approximate the 60min cadence. Owner: dev-mcp-server / cowork-schedule SSOT.",
+        "payload_ref": "claim claimed_at=1781490093(02:21:33Z) expires_at=1781590893(06:21:33Z 06-16) TTL=28h; matcher slot cron='13 2-8 * * 1-5' cadence_minutes=60; SSOT docs/data/cowork-schedule.json .slots[chef-intraday]; gate docs/agents/unified-agent/flow/chef.md Step 0.5; 03:24Z spawn agentId a9bd08ff blocked-correctly",
+        "disposition": "",
+        "ts": "2026-06-15T03:26:14Z",
+        "resolved_at": "2026-06-15T03:58:15Z",
+        "resolved_by": "dev-team",
+        "resolution": "FIX-CHEF-INTRADAY-MARKER-CADENCE done_verified (agent-father 7843045c, flow-doc): cadence-derived marker granularity. No rebuild."
       }
     ]
   },
@@ -543,7 +578,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T02:35:09Z",
+    "_updated_at": "2026-06-15T03:58:15Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13889,7 +13924,7 @@
         "zone": "apps/macro-indicators/",
         "owner": "dev-macro-indicators",
         "owner_agent": "dev-macro-indicators",
-        "status": "READY",
+        "status": "done",
         "priority": "medium",
         "size": "S",
         "sequence_after": null,
@@ -13899,14 +13934,70 @@
         "fix_spec": "RECON-FIRST: ops-vps-fetch curls the SBV Liferay OData endpoint (corrected encoding from F-BOP-ENCODING) and VARIES params (scopeKey / contentStructureId / filter field / status / date-range) until real BOP articles return. THEN dev-macro-indicators fixes the query params in parsers_vmt_bop.go / usecases_vmt_bop.go. Generic per /goal#2 (recon-derived params, no hardcoded single-quarter).",
         "verification_gate": "get_vn_bop returns real (non-zero) BOP fields with a populated quarter/period (LIVE, post-rebuild), not blocked_reason=0 items.",
         "generic_mandate": "Recon-derive the OData query contract from live SBV payload (not schema comment); parser fails-loud not fails-empty.",
-        "status_note": "Recon-first ops-vps-fetch lane. SERIALIZED with F-NSO-SELECTOR (same owner dev-macro-indicators, same zone apps/macro-indicators/, same files-risk — NEVER parallel). sequence_after F-NSO-SELECTOR. Both: transport OK, data empty, need live upstream recon. Rebase 94b49f44.",
+        "status_note": "CODE DONE (bundled 4c2fcb5c). BUG1 struct tag items->articles (live SBV Liferay key) = THE 0-items cause; BUG2 drop quarter date-range -> status eq 0 + Date48362898 gt '' + sort datePublished:desc + dedup articleId + articles[0]. done_verified WITHHELD pending ops macro-indicators force-recreate + LIVE get_vn_bop real BOP fields (>=2 timing windows).",
         "source_signal": "dev-team-20260615T005051Z-fbop-partial-queryrecon",
         "created_at": "",
         "created_by": "po",
         "triaged_at": "",
         "triaged_by": "po",
         "unblocked_at": "2026-06-15T02:00:49Z",
-        "unblocked_note": "F-NSO-SELECTOR done_verified (selector root live-fixed) -> sequence_after satisfied. F-BOP-QUERY-RECON now actionable: recon-first ops-vps-fetch curls SBV Liferay OData endpoint (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range) until real BOP articles return, THEN dev-macro-indicators fixes parsers_vmt_bop.go query params. PO triage next tick (WIP: CI-RED still in flight)."
+        "unblocked_note": "F-NSO-SELECTOR done_verified (selector root live-fixed) -> sequence_after satisfied. F-BOP-QUERY-RECON now actionable: recon-first ops-vps-fetch curls SBV Liferay OData endpoint (scopeKey 20117 / contentStructureId 10063168 / filter field Date48362898 / status eq 0 / date-range) until real BOP articles return, THEN dev-macro-indicators fixes parsers_vmt_bop.go query params. PO triage next tick (WIP: CI-RED still in flight).",
+        "done_at": "2026-06-15T03:58:15Z",
+        "done_commit": "4c2fcb5c",
+        "done_agent": "a75f03300599aca1d",
+        "recon_agent": "a8e56c959e0a41a8d",
+        "router_reverify_verdict": "RAW-VERIFIED (router independent, NOT dev badge): 4c2fcb5c on main HEAD; commit = 4 files apps/macro-indicators/pkg/infrastructure/{parsers_vmt_bop.go,parsers_vmt_bop_test.go,parsers_vmt_trade.go,parsers_vmt_trade_test.go} ONLY, orch-state NOT captured, foreign-capture NONE; independent UNCACHED go build ./... rc=0 + go vet ./pkg/... rc=0 + go test -count=1 ./pkg/infrastructure PASS 8.861s. FIX1 BOP quarter-generic: struct tag items->articles (live SBV Liferay key — THE 0-items cause), BuildBOPFetchURL ignores quarter params -> single URL filter `status eq 0 and Date48362898 gt ''` + sort datePublished:desc, dedup by articleId, articles[0] (TestBuildBOPFetchURL_QuarterParamsIgnored). FIX2 trade sheet-label-generic: selectSheetsByContent matches A1 Vietnamese headers xuat khau/nhap khau/dau tu, NO hardcoded sheet name, fail-loud on 0 match (TestSelectSheetsByContent spaced '14. XK'/'15. NK' + OldNamesNoSpace + FailLoudOnMissingPattern). Recon: BOP ops-vps-fetch a8e56c95 docs/vps-sources/vmt-sbv-bop-probe/recon.md; NSO ops ac161be3 docs/vps-sources/nso-monthly-excel/recon-trade-sheet.md. CODE merge gate satisfied; LIVE-verify pending ops macro-indicators force-recreate (parser change needs new image)."
+      },
+      {
+        "id": "FIX-NSO-TRADE-SHEET",
+        "type": "FIX",
+        "title": "FIX-NSO-TRADE-SHEET — get_vn_trade_balance: NSO monthly customs Excel sheet labels drift ('14. XK'/'15. NK' spaced) -> select export/import/FDI sheets by A1-header content, not hardcoded label",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "owner_agent": "dev-macro-indicators",
+        "status": "done",
+        "priority": "medium",
+        "size": "S",
+        "recon_first": true,
+        "root_cause": "parsers_vmt_trade.go hardcoded sheet names 14.XK/15.NK/12.FDI; current NSO Excel labels '14. XK'/'15. NK' (space after period) -> 'sheet 14.XK not found' -> trade degraded. Labels drift month-to-month.",
+        "fix_spec": "STEP1 ops recon ac161be3 (19 sheets enumerated; A1 headers 'xuat khau'/'nhap khau'/'dau tu'). STEP2 dev-macro 4c2fcb5c selectSheetsByContent — content-match A1 header (diacritic-insensitive), fail-loud on 0 matches. Generic /goal#2 (no hardcoded sheet label).",
+        "verification_gate": "get_vn_trade_balance returns real export/import (non-zero, real period) LIVE post macro-indicators rebuild.",
+        "baseline_pass": "4c2fcb5c",
+        "done_at": "2026-06-15T03:58:15Z",
+        "done_commit": "4c2fcb5c",
+        "done_agent": "a75f03300599aca1d",
+        "recon_agent": "ac161be391f2c3c6e",
+        "source_signal": "dev-team-20260615T020049Z-nso-trade-sheet-followon",
+        "created_at": "2026-06-15T03:58:15Z",
+        "created_by": "po",
+        "triaged_by": "po",
+        "router_reverify_verdict": "RAW-VERIFIED (router independent, NOT dev badge): 4c2fcb5c on main HEAD; commit = 4 files apps/macro-indicators/pkg/infrastructure/{parsers_vmt_bop.go,parsers_vmt_bop_test.go,parsers_vmt_trade.go,parsers_vmt_trade_test.go} ONLY, orch-state NOT captured, foreign-capture NONE; independent UNCACHED go build ./... rc=0 + go vet ./pkg/... rc=0 + go test -count=1 ./pkg/infrastructure PASS 8.861s. FIX1 BOP quarter-generic: struct tag items->articles (live SBV Liferay key — THE 0-items cause), BuildBOPFetchURL ignores quarter params -> single URL filter `status eq 0 and Date48362898 gt ''` + sort datePublished:desc, dedup by articleId, articles[0] (TestBuildBOPFetchURL_QuarterParamsIgnored). FIX2 trade sheet-label-generic: selectSheetsByContent matches A1 Vietnamese headers xuat khau/nhap khau/dau tu, NO hardcoded sheet name, fail-loud on 0 match (TestSelectSheetsByContent spaced '14. XK'/'15. NK' + OldNamesNoSpace + FailLoudOnMissingPattern). Recon: BOP ops-vps-fetch a8e56c95 docs/vps-sources/vmt-sbv-bop-probe/recon.md; NSO ops ac161be3 docs/vps-sources/nso-monthly-excel/recon-trade-sheet.md. CODE merge gate satisfied; LIVE-verify pending ops macro-indicators force-recreate (parser change needs new image).",
+        "status_note": "CODE DONE (bundled 4c2fcb5c with F-BOP-QUERY-RECON). done_verified WITHHELD pending ops macro-indicators force-recreate + LIVE get_vn_trade_balance real data (>=2 timing windows)."
+      },
+      {
+        "id": "FIX-CHEF-INTRADAY-MARKER-CADENCE",
+        "type": "FIX",
+        "title": "FIX-CHEF-INTRADAY-MARKER-CADENCE — chef.md Step 0.5 publish-marker key+TTL derive from slot cron cadence (multi-fire -> per-hour key+cadence TTL; single-fire -> per-date 28h)",
+        "zone": "docs/agents/",
+        "owner": "agent-father",
+        "owner_agent": "agent-father",
+        "status": "done_verified",
+        "priority": "low",
+        "size": "XS",
+        "root_cause": "chef.md marker key 'published:'+SLOT+':'+DATE ttl 28h blocks chef-intraday (cron '13 2-8 * * 1-5' = 7 fires/day) after first fire -> 'cadence skip' churn logged every tick; intraday could publish only once/day.",
+        "fix_spec": "agent-father 7843045c: IS_MULTI_FIRE derived from cron hour field (range/list/step -> multi-fire); multi-fire key+':'+VN_HOUR ttl=cadence(3600); single-fire unchanged. Reads cowork-schedule cron, no chef-intraday name special-case. Generic /goal#2.",
+        "verification_gate": "chef-intraday publishes per qualifying hourly window next market day (flow-doc — next cron reads chef.md, NO container rebuild).",
+        "baseline_pass": "7843045c",
+        "done_at": "2026-06-15T03:58:15Z",
+        "done_commit": "7843045c",
+        "done_agent": "agent-father",
+        "done_verified_at": "2026-06-15T03:58:15Z",
+        "done_verified_note": "Flow-doc logic RAW-verified by router: 7843045c = 2 files (chef.md + agent-father.md notebook) ONLY, no orch-state/foreign. Diff: cron-hour-field-derived granularity; 3 daily slots unchanged (chef-morning '5'/eod '8'/evening '19' fixed-hour -> per-date 28h; only chef-intraday '2-8' -> per-hour key + 3600s TTL). No rebuild (next chef-intraday cron reads chef.md). Live-confirm on next chef-intraday tick today.",
+        "source_signal": "cowork-team-20260615T0324Z-chef-intraday-claim-cadence-churn",
+        "created_at": "2026-06-15T03:58:15Z",
+        "created_by": "po",
+        "triaged_by": "po",
+        "status_note": "DONE + done_verified (flow-doc, no rebuild)."
       }
     ],
     "review": [

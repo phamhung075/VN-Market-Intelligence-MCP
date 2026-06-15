@@ -216,3 +216,83 @@ From Step 3 HEAD check — xlsx HTTP 200, Content-Type: `application/vnd.openxml
 2. **Fix CA bundle** — `VpsFetchAdapter` or the NSO fetch path must ensure the GlobalSign RSA OV SSL CA 2018 intermediate is in the PEM bundle. The VPS env var `VPS_CACERT_PATH_NSO` should point to `/tmp/nso_ca_bundle.pem` (built as above). The intermediate DER download from `http://secure.globalsign.com/cacert/gsrsaovsslca2018.crt` is stable (GlobalSign AIA URL). Add a one-time bootstrap step (or Dockerfile RUN layer) to build this bundle; `/tmp` is wiped on VPS restart.
 
 3. **No other changes needed** — Step 2 regex, Step 3 GET, Excel parser (`parsers_vmt_gso_indicators.go`) are all unaffected.
+
+---
+
+## ADDENDUM: Trade Sheet Naming (FIX-NSO-TRADE-SHEET)
+
+**DIAGNOSED 2026-06-15** — Separate from F-NSO-SELECTOR URL issue above.
+
+### Root Cause — Trade Sheet Name Drift
+
+The trade_parser in `apps/macro-indicators/pkg/infrastructure/parsers_vmt_trade.go` hardcodes three sheet names:
+- `14.XK` (exports) — expected but **NOT found**
+- `15.NK` (imports) — expected but **NOT found**
+- `12.FDI` (FDI) — **matches**
+
+**Actual sheet names in 2026-06 NSO Excel:**
+```
+12.FDI    ✓ MATCHES hardcoded
+14. XK    ✗ hardcoded expects "14.XK" (no space)
+15. NK    ✗ hardcoded expects "15.NK" (no space)
+```
+
+NSO uses a format `"14. "` (number + period + space) as a category prefix. This drifts month-to-month and is not a stable identifier.
+
+### Solution — Content-Based Sheet Selection
+
+Instead of matching sheet **names**, select sheets by **header content** (cell A1):
+
+```python
+Export sheet: A1 contains "xuất khẩu"     → "14. Hàng hóa xuất khẩu"
+Import sheet: A1 contains "nhập khẩu"     → "15. Hàng hóa nhập khẩu"
+FDI sheet:    A1 contains "đầu tư"        → "12. Đầu tư nước ngoài vào..."
+```
+
+This approach **survives month-to-month sheet-name drift** because:
+- NSO always includes export/import/FDI sections with consistent Vietnamese labels.
+- Label text is independent of spacing/numbering changes.
+
+### Implementation for dev-macro-indicators
+
+1. Add function `selectSheetsByContent(f *excelize.File) (exportSheet, importSheet, fdiSheet string, error)`:
+   - Iterate through all sheets.
+   - Check A1 header for Vietnamese keywords.
+   - Return dynamic sheet names.
+
+2. Update `ParseTradeBalanceFromExcel()`:
+   - Call `selectSheetsByContent()` instead of using hardcoded constants.
+   - Pass returned sheet names to `parseTradeSheet()`.
+
+3. Update tests:
+   - Build test Excel with actual sheet names `"14. XK"` / `"15. NK"`.
+   - Add test case `TestSelectSheetsByContent()`.
+
+### Full Recon Document
+
+A comprehensive implementation guide is in: `docs/vps-sources/nso-monthly-excel/recon-trade-sheet.md`
+
+This includes:
+- Complete sheet roster (all 19 sheets).
+- Content-pattern identification rules with live evidence.
+- Pseudocode algorithm.
+- Go implementation sketch.
+- Test strategy + risk mitigation.
+
+### Probe Script
+
+Use `scripts/probe-nso-sheet-names.py` to diagnose sheet-name drift in future NSO releases:
+
+```bash
+# Fetch and analyze current NSO Excel
+./scripts/probe-nso-sheet-names.py
+
+# Analyze local file
+./scripts/probe-nso-sheet-names.py --file /tmp/nso-2026-07.xlsx --verbose
+
+# Output as JSON
+./scripts/probe-nso-sheet-names.py --json
+```
+
+Output shows all sheet names, headers (A1), detected keywords (export/import/fdi), and structure.
+
