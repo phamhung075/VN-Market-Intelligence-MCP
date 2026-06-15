@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T11:35:51Z",
+  "_updated_at": "2026-06-15T11:38:23Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T11:35:51Z",
+    "updated_at": "2026-06-15T11:38:23Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
-    "next_agent": "cowork-refactory-expert",
-    "note": "ROUTER 2026-06-15T11:35:51Z — FIX-FB-POSTER-NOARG-MARKET-TOOLS attempt1 (1219fa0f) CHANGES_REQUESTED (router RAW caught). GOOD: get_market_foreign_flow({}) + get_ticker_intelligence({code}) both LIVE-VALID; commit hygiene clean. DEFECT: flow's watchlist jq '.watchlist[].ticker' => NULL; correct = '.project.watchlist[].ticker' (33 active). KEPT in_progress, re-dispatched cowork-refactory-expert for the 1-line path fix (lock held). No rebuild (agent .md). Parallel: FIX-MARKET-HEXAGRAM-TOOL-MISSING in_progress (dev-mcp-server a385cdd3 running). review[]: FIX-VNSTOCK-TRADINGSTATS-CRASH + FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (2026-06-16 gates), ARCH-SHIP-WAVE-REAUDIT parked. Ready: FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2). Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). PUSH held (PO post-gates). Active coding lane=1 (FB-POSTER md) + HEXAGRAM dev."
+    "next_agent": null,
+    "note": "ROUTER 2026-06-15T11:38:23Z — FIX-FB-POSTER-NOARG-MARKET-TOOLS PROMOTED in_progress->done_verified (2 rounds, commits 1219fa0f+3889ff51). Pure agent-.md contract fix, fully LIVE-verified (router-run): get_market_foreign_flow({}) net +1.01M schema-valid, get_ticker_intelligence({code:VCB}) 61,600 VND schema-valid, watchlist jq '.project.watchlist[]|select(.active==true)|.ticker' => 33 tickers. Round-1 (1219fa0f) introduced a broken .watchlist path — router CAUGHT (router-d70), round-2 (3889ff51) closed it. NO rebuild (agent .md). GENERIC /goal#2. cowork lock released. Parallel: FIX-MARKET-HEXAGRAM-TOOL-MISSING in_progress (dev-mcp-server a385cdd3 running). review[]: FIX-VNSTOCK-TRADINGSTATS-CRASH + FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (2026-06-16 gates), ARCH-SHIP-WAVE-REAUDIT parked. Ready: FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2). Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). PUSH held (PO post-gates). Active coding lane=1 (HEXAGRAM)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T11:35:51Z",
+    "_updated_at": "2026-06-15T11:38:23Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14189,6 +14189,51 @@
         "live_gate_evidence": "router-judged ops aaf7c500 raw service /price/fetch (NOT get_market_snapshot): SHB(watchlist,HOSE)=>price 13900 source hose vol 48,683,600 latency 857ms staleness FRESH (plausible+correct+live PASS); HUT(watchlist,HNX)=>price 15500 source hnx vol 2,125,100 latency 241ms FRESH (plausible+correct+live PASS). Endpoint+schema fix serves correct price+source for real watchlist HNX/UPCOM tickers.",
         "bdi_subgate_carveout": "BDI dead-ticker honest-empty sub-gate FAILED AS SPECIFIED (router caught agent false-PASS): BDI=>price 2,729,000 source hose vol 0 staleness FRESH = Baltic Dry INDEX level *1000 served as FRESH VND price, NOT honest-empty. SEPARABLE generic defect (BDI non-watchlist index, false premise); does NOT block watchlist done_verified. Carved into minted FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL with raw evidence.",
         "goal_alignment": "/goal#1 watchlist HNX/UPCOM dead-source fix LIVE plausibility-verified + /goal#2 generic (source from .floor, price*1000 thousands->VND, no per-ticker allowlist)"
+      },
+      {
+        "id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
+        "type": "FIX",
+        "title": "fb-market-poster calls get_foreign_flow({}) + get_ticker_intelligence({}) with no code= arg -> both fail schema (code:string required) -> silent notebook fallback every cycle. Generic fix: swap to no-arg market-aggregate tools (get_market_foreign_flow for flow; pick/confirm a no-arg market-movers tool for ticker-intel, or pass watchlist iteration) — NO per-ticker hardcode.",
+        "priority": "P1",
+        "size": "S",
+        "status": "DONE_VERIFIED",
+        "zone": "cross-service/",
+        "source": "health-recheck BUG-NEW-01/02 (3170..3179); report 3180 'RESOLVED' is FALSE-POSITIVE (flow file still no-arg at HEAD).",
+        "generic_mandate": "Fix the tool-selection in the fb-market-poster flow generically — no-arg market-level call, applies to all tickers, no instance hardcode.",
+        "created_at": "2026-06-14T18:36:18Z",
+        "created_by": "po",
+        "owner": "cowork-refactory-expert",
+        "zone_owner": "cross-service/",
+        "scope": "fb-market-poster calls get_foreign_flow({}) (flow/main.md:78) + get_ticker_intelligence({}) (flow/main.md:81) with no `code` arg -> live schema requires code:string -> silent crash to notebook fallback every cycle. FIX: switch both to the no-arg market-wide variant get_market_foreign_flow({}) (LIVE-verified no-arg, returns real watchlist foreign flow) for flow + agent-doc package; correct package/fb-market-poster.md '(none required)' rows. Agent-doc + flow edit, NOT mcp-server code.",
+        "user_impact": "MEDIUM — daily FB post foreign-flow + movers section data-blind every cycle.",
+        "route_to": "cowork-refactory-expert",
+        "note": "agent-doc+flow edit to a cowork agent -> routes via cowork-refactory-expert, not a dev-* zone",
+        "lane": "cowork",
+        "mode": "recon-first",
+        "dispatched_ts": "2026-06-15T11:29:32Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "fb-market-poster calls get_foreign_flow({})+get_ticker_intelligence({}) with no code= => schema fail. cowork-refactory-expert reads live MCP tool surface + rewrites the poster .md to use the market-wide variant or pass watchlist codes. recon-first. COWORK-LANE => spawned under dev-team mutex-wrap (task:on-demand:cowork-refactory-expert:<date>).",
+        "review_round": 1,
+        "changes_requested_ts": "2026-06-15T11:35:51Z",
+        "attempt1_commit": "1219fa0f",
+        "attempt1_verified_good": "commit hygiene clean (2 files docs/agents/ zone, no -A/secret, orch-state untouched). get_market_foreign_flow({}) LIVE-VALID (net +1.01M, watchlist coverage, real buyers/sellers — correct no-arg market-wide variant). get_ticker_intelligence({code:VCB}) LIVE-VALID (61,600 VND + evidence + foreign flow — per-ticker iteration correct).",
+        "attempt1_defect": "flow queries watchlist via jq '.watchlist[].ticker' on system-map.json => resolves NULL. Correct path = '.project.watchlist[].ticker' (33 tickers; add select(.active==true) for the active subset). Runtime: mover-extraction loop iterates ZERO tickers => silently empty movers (wrong output, /goal#1 not-best-result).",
+        "changes_requested": "correct the SSOT watchlist jq path in docs/agents/fb-market-poster/flow/main.md from '.watchlist[].ticker' to '.project.watchlist[].ticker' (use select(.active==true) to match the 33 active tickers). Keep both already-correct tool calls. Prove the path live: jq -r '.project.watchlist[]|select(.active==true)|.ticker' docs/data/system-map.json returns >0 tickers. Commit by explicit path. No rebuild (agent .md only).",
+        "done_verified_ts": "2026-06-15T11:38:23Z",
+        "done_verified_by": "dev-team",
+        "fix_commits": [
+          "1219fa0f",
+          "3889ff51"
+        ],
+        "review_rounds": 2,
+        "root_cause": "fb-market-poster flow called get_foreign_flow({}) + get_ticker_intelligence({}) with no code= arg => both fail schema (code required). Plus (round-1 regression) watchlist queried via '.watchlist[].ticker' => NULL.",
+        "fix_summary": "get_foreign_flow -> get_market_foreign_flow (correct no-arg market-wide variant); single get_ticker_intelligence({}) -> per-watchlist-ticker iteration with code=; watchlist jq path corrected to '.project.watchlist[]|select(.active==true)|.ticker'.",
+        "live_gate_evidence": "router-run LIVE: get_market_foreign_flow({}) => net +1.01M + real top buyers/sellers (schema-valid); get_ticker_intelligence({code:VCB}) => 61,600 VND + evidence + foreign flow (schema-valid); jq '.project.watchlist[]|select(.active==true)|.ticker' => 33 real tickers. All three flow contract components live-verified — no deferred behavioral gate (pure .md contract fix).",
+        "commit_hygiene_verified": "router git show --stat: 1219fa0f (2 files) + 3889ff51 (1 file) all docs/agents/ zone, no -A/secret; orch-state untouched by agent; linear history.",
+        "generic_verified": "/goal#2 PASS — SSOT-driven watchlist (any size), select(active==true) auto-skips inactive, no hardcoded ticker; market-wide foreign-flow tool needs no per-ticker arg.",
+        "rebuild_required": false,
+        "rebuild_note": "agent .md only — no container rebuild.",
+        "push_disposition": "HOLD — bundle; PO pushes after 2026-06-16 behavioral gates close."
       }
     ],
     "head": {
@@ -14300,36 +14345,6 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      },
-      {
-        "id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
-        "type": "FIX",
-        "title": "fb-market-poster calls get_foreign_flow({}) + get_ticker_intelligence({}) with no code= arg -> both fail schema (code:string required) -> silent notebook fallback every cycle. Generic fix: swap to no-arg market-aggregate tools (get_market_foreign_flow for flow; pick/confirm a no-arg market-movers tool for ticker-intel, or pass watchlist iteration) — NO per-ticker hardcode.",
-        "priority": "P1",
-        "size": "S",
-        "status": "IN_PROGRESS",
-        "zone": "cross-service/",
-        "source": "health-recheck BUG-NEW-01/02 (3170..3179); report 3180 'RESOLVED' is FALSE-POSITIVE (flow file still no-arg at HEAD).",
-        "generic_mandate": "Fix the tool-selection in the fb-market-poster flow generically — no-arg market-level call, applies to all tickers, no instance hardcode.",
-        "created_at": "2026-06-14T18:36:18Z",
-        "created_by": "po",
-        "owner": "cowork-refactory-expert",
-        "zone_owner": "cross-service/",
-        "scope": "fb-market-poster calls get_foreign_flow({}) (flow/main.md:78) + get_ticker_intelligence({}) (flow/main.md:81) with no `code` arg -> live schema requires code:string -> silent crash to notebook fallback every cycle. FIX: switch both to the no-arg market-wide variant get_market_foreign_flow({}) (LIVE-verified no-arg, returns real watchlist foreign flow) for flow + agent-doc package; correct package/fb-market-poster.md '(none required)' rows. Agent-doc + flow edit, NOT mcp-server code.",
-        "user_impact": "MEDIUM — daily FB post foreign-flow + movers section data-blind every cycle.",
-        "route_to": "cowork-refactory-expert",
-        "note": "agent-doc+flow edit to a cowork agent -> routes via cowork-refactory-expert, not a dev-* zone",
-        "lane": "cowork",
-        "mode": "recon-first",
-        "dispatched_ts": "2026-06-15T11:29:32Z",
-        "dispatched_by": "dev-team",
-        "dispatch_note": "fb-market-poster calls get_foreign_flow({})+get_ticker_intelligence({}) with no code= => schema fail. cowork-refactory-expert reads live MCP tool surface + rewrites the poster .md to use the market-wide variant or pass watchlist codes. recon-first. COWORK-LANE => spawned under dev-team mutex-wrap (task:on-demand:cowork-refactory-expert:<date>).",
-        "review_round": 1,
-        "changes_requested_ts": "2026-06-15T11:35:51Z",
-        "attempt1_commit": "1219fa0f",
-        "attempt1_verified_good": "commit hygiene clean (2 files docs/agents/ zone, no -A/secret, orch-state untouched). get_market_foreign_flow({}) LIVE-VALID (net +1.01M, watchlist coverage, real buyers/sellers — correct no-arg market-wide variant). get_ticker_intelligence({code:VCB}) LIVE-VALID (61,600 VND + evidence + foreign flow — per-ticker iteration correct).",
-        "attempt1_defect": "flow queries watchlist via jq '.watchlist[].ticker' on system-map.json => resolves NULL. Correct path = '.project.watchlist[].ticker' (33 tickers; add select(.active==true) for the active subset). Runtime: mover-extraction loop iterates ZERO tickers => silently empty movers (wrong output, /goal#1 not-best-result).",
-        "changes_requested": "correct the SSOT watchlist jq path in docs/agents/fb-market-poster/flow/main.md from '.watchlist[].ticker' to '.project.watchlist[].ticker' (use select(.active==true) to match the 33 active tickers). Keep both already-correct tool calls. Prove the path live: jq -r '.project.watchlist[]|select(.active==true)|.ticker' docs/data/system-map.json returns >0 tickers. Commit by explicit path. No rebuild (agent .md only)."
       },
       {
         "depends": [],
