@@ -17821,7 +17821,7 @@
         "id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
         "type": "FIX",
         "priority": "P0",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "route_to": "dev-pdf-extractor",
         "zone": "apps/pdf-extractor/",
         "mode": "code",
@@ -17838,11 +17838,14 @@
         "dispatch_note": " [PO-s64 2026-06-15T20:17:53Z] HEAD RECONCILED + DISPATCHED ready->in_progress. #1 user-facing P0 coding lane (get_bctc_full VCB/CTG='Chua co du lieu BCTC' true remaining root = scanned bank PDF OCR-rasterize leg). dev-pdf-extractor leads; PaddleOCR in-image; GENERIC low-text-density routing, no allowlist; preserve 989654f2 enrich_failed fail-loud; done_verified = REAL VARIED rows VCB AND CTG vs named-volume market.db + FPT/VCB non-regressed.",
         "owner": "dev-pdf-extractor",
         "route": "dev-pdf-extractor",
-        "next_agent": "dev-pdf-extractor",
+        "next_agent": "qa",
         "claimed_at": "2026-06-15T20:17:53Z",
         "claimed_by": "dev-team",
         "dispatched_at": "2026-06-15T20:17:53Z",
-        "dispatched_by": "po-s64"
+        "dispatched_by": "po-s64",
+        "review_at": "2026-06-16T01:40:00Z",
+        "review_by": "dev-pdf-extractor",
+        "review_note": "ocr_worker.py subprocess fix shipped (734ab5d5). VCB 2026Q1=55 rows PARTIAL, CTG 2026Q1=55 rows PARTIAL. FPT 2026Q1=145 DONE, VCB 2025Q4=112 PARTIAL (non-regressed). Publishability PUB-1..5 PASS for VCB+CTG."
       }
     ],
     "ready": [

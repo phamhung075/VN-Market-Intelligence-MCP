@@ -160,5 +160,36 @@ Two-layer generic rasterize path in `apps/pdf-extractor/infrastructure/ocr_adapt
 `fffef229` — feat(pdf-extractor): add low-text-density OCR rasterize path for scanned bank PDFs
 
 ### Status
-REVIEW (done_verified pending ops container rebuild + RAW probe VCB/CTG named-volume market.db)
-REBUILD REQUIRED: pdf-extractor container must be rebuilt with force-recreate (never docker compose down).
+REVIEW — container rebuilt, rows verified.
+
+---
+
+## Cycle: 2026-06-16 — FIX-BCTC-BANK-PDF-OCR-RASTERIZE (complete)
+
+### Bug discovered post-rebuild
+`ocr_worker.py` is the picklable subprocess used by `ProcessPoolExecutor` in production. It was a STALE MIRROR of `PdfOcrAdapter` — `locate_balance_sheet_pages_worker` did NOT have the `detect_low_text_density` wide-scan logic. So production always hit fallback `[4,5,6,7]` regardless of the `ocr_adapter.py` fix.
+
+### Fix
+`apps/pdf-extractor/infrastructure/ocr_worker.py` updated with mirrored logic:
+- `detect_low_text_density_worker(pdf_path)` — picklable density check
+- `_rasterize_and_ocr_page_worker(pdf_path, page_num)` — picklable PyMuPDF+PaddleOCR
+- `locate_balance_sheet_pages_worker()` — wide-scan when low-density
+- `ocr_pages_worker()` — PaddleOCR fallback when Tesseract < 30 chars
+
+### Tests
+7 new: `TestOcrWorkerLocateWideScan` + `TestOcrWorkerRasterizeFallback`. 21 total in `test_low_text_density_ocr_rasterize.py`, all pass.
+
+### SYNC RULE added
+Both `ocr_adapter.py` and `ocr_worker.py` must be updated together when constants change — the subprocess does NOT import ocr_adapter.
+
+### Verified (named-volume market.db)
+- VCB 2026Q1: 55 rows, refine_status=PARTIAL, confidence=0.75 — PUB-1..5 PASS
+- CTG 2026Q1: 55 rows (35 with value_current), refine_status=PARTIAL, confidence=0.5625 — PUB-1..5 PASS
+- FPT 2026Q1: 145 rows DONE (non-regressed)
+- VCB 2025Q4: 112 rows PARTIAL (non-regressed)
+
+### Commits
+`cf287f76` (worktree) → cherry-picked as `734ab5d5` (main) — fix(pdf-extractor/FIX-BCTC-BANK-PDF-OCR-RASTERIZE): ocr_worker wide-scan + PaddleOCR fallback
+
+### Status
+REVIEW → next_agent=qa
