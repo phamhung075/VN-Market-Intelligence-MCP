@@ -171,8 +171,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-15T03:00:01.154Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-15T20:13:00Z",
+    "_updated_by": "tran-ngoc-bau",
     "archive": [
       {
         "from": "system-auditor",
@@ -200,6 +200,17 @@
       }
     ],
     "rows": [
+      {
+        "id": "tnb-20260615T201300",
+        "ts": "2026-06-15T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c96 NEEDS_ATTENTION IMPROVING — EOD 6/6 GOOD (best), G1/G2 PASS, G3/G4 FAIL (last_fired not written)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
       {
         "id": "sau-d4-202606150300",
         "ts": "2026-06-15T03:00Z",
