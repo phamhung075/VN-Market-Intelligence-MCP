@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T11:29:32Z",
+  "_updated_at": "2026-06-15T11:35:51Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T11:29:32Z",
+    "updated_at": "2026-06-15T11:35:51Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-FB-POSTER-NOARG-MARKET-TOOLS",
-    "next_agent": null,
-    "note": "DEV-TEAM TICK 2026-06-15T11:29:32Z — dispatched TWO ready->in_progress (active coding lane was 0, WIP<=2): FIX-FB-POSTER-NOARG-MARKET-TOOLS(P1)->cowork-refactory-expert (cowork-lane, mutex-wrapped; poster calls get_foreign_flow({})/get_ticker_intelligence({}) no code= => schema fail), FIX-MARKET-HEXAGRAM-TOOL-MISSING(P2)->dev-mcp-server (get_market_hexagram not in tool list, Sunday digest-predict fails; recon-first registration-gap probe). Both recon-first, disjoint zones, background. HELD ready: FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2 dev-stock-price). review[] gates 2026-06-16: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (01:00Z/02:15Z), FIX-VNSTOCK-TRADINGSTATS-CRASH (08:30Z sweep) — one-shot probes armed. ARCH-SHIP-WAVE-REAUDIT PARKED. Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). PUSH held (PO post-gates)."
+    "next_agent": "cowork-refactory-expert",
+    "note": "ROUTER 2026-06-15T11:35:51Z — FIX-FB-POSTER-NOARG-MARKET-TOOLS attempt1 (1219fa0f) CHANGES_REQUESTED (router RAW caught). GOOD: get_market_foreign_flow({}) + get_ticker_intelligence({code}) both LIVE-VALID; commit hygiene clean. DEFECT: flow's watchlist jq '.watchlist[].ticker' => NULL; correct = '.project.watchlist[].ticker' (33 active). KEPT in_progress, re-dispatched cowork-refactory-expert for the 1-line path fix (lock held). No rebuild (agent .md). Parallel: FIX-MARKET-HEXAGRAM-TOOL-MISSING in_progress (dev-mcp-server a385cdd3 running). review[]: FIX-VNSTOCK-TRADINGSTATS-CRASH + FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (2026-06-16 gates), ARCH-SHIP-WAVE-REAUDIT parked. Ready: FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2). Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). PUSH held (PO post-gates). Active coding lane=1 (FB-POSTER md) + HEXAGRAM dev."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T11:29:32Z",
+    "_updated_at": "2026-06-15T11:35:51Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14323,7 +14323,13 @@
         "mode": "recon-first",
         "dispatched_ts": "2026-06-15T11:29:32Z",
         "dispatched_by": "dev-team",
-        "dispatch_note": "fb-market-poster calls get_foreign_flow({})+get_ticker_intelligence({}) with no code= => schema fail. cowork-refactory-expert reads live MCP tool surface + rewrites the poster .md to use the market-wide variant or pass watchlist codes. recon-first. COWORK-LANE => spawned under dev-team mutex-wrap (task:on-demand:cowork-refactory-expert:<date>)."
+        "dispatch_note": "fb-market-poster calls get_foreign_flow({})+get_ticker_intelligence({}) with no code= => schema fail. cowork-refactory-expert reads live MCP tool surface + rewrites the poster .md to use the market-wide variant or pass watchlist codes. recon-first. COWORK-LANE => spawned under dev-team mutex-wrap (task:on-demand:cowork-refactory-expert:<date>).",
+        "review_round": 1,
+        "changes_requested_ts": "2026-06-15T11:35:51Z",
+        "attempt1_commit": "1219fa0f",
+        "attempt1_verified_good": "commit hygiene clean (2 files docs/agents/ zone, no -A/secret, orch-state untouched). get_market_foreign_flow({}) LIVE-VALID (net +1.01M, watchlist coverage, real buyers/sellers — correct no-arg market-wide variant). get_ticker_intelligence({code:VCB}) LIVE-VALID (61,600 VND + evidence + foreign flow — per-ticker iteration correct).",
+        "attempt1_defect": "flow queries watchlist via jq '.watchlist[].ticker' on system-map.json => resolves NULL. Correct path = '.project.watchlist[].ticker' (33 tickers; add select(.active==true) for the active subset). Runtime: mover-extraction loop iterates ZERO tickers => silently empty movers (wrong output, /goal#1 not-best-result).",
+        "changes_requested": "correct the SSOT watchlist jq path in docs/agents/fb-market-poster/flow/main.md from '.watchlist[].ticker' to '.project.watchlist[].ticker' (use select(.active==true) to match the 33 active tickers). Keep both already-correct tool calls. Prove the path live: jq -r '.project.watchlist[]|select(.active==true)|.ticker' docs/data/system-map.json returns >0 tickers. Commit by explicit path. No rebuild (agent .md only)."
       },
       {
         "depends": [],
