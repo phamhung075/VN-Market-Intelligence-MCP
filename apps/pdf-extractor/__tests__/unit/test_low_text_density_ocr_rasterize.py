@@ -415,5 +415,166 @@ class TestEnrichFailedGuard(unittest.TestCase):
         self.assertLess(LOW_TEXT_DENSITY_THRESHOLD, 1000)
 
 
+# ---------------------------------------------------------------------------
+# AC-RASTERIZE-WORKER: ocr_worker.py process-pool worker functions
+# These are the picklable functions dispatched via ProcessPoolExecutor in prod.
+# They must mirror ocr_adapter.py — tested separately to catch split-brain drift.
+# ---------------------------------------------------------------------------
+
+
+class TestOcrWorkerLocateWideScan(unittest.TestCase):
+    """
+    AC-RASTERIZE-WORKER-1: locate_balance_sheet_pages_worker() applies wide-scan
+    for low-text-density PDFs (mirrors PdfOcrAdapter.locate_balance_sheet_pages).
+    """
+
+    def test_worker_wide_scan_for_empty_pages(self) -> None:
+        """
+        locate_balance_sheet_pages_worker: scanned PDF (0 chars/page) → returns
+        all pages [1..N] up to _MAX_BS_PAGES, NOT the fallback [4,5,6,7].
+        """
+        from infrastructure.ocr_worker import locate_balance_sheet_pages_worker
+
+        num_pages = 6
+        fake_page = MagicMock()
+        fake_page.extract_text.return_value = ""
+        fake_pdf = MagicMock()
+        fake_pdf.pages = [fake_page] * num_pages
+        fake_ctx = MagicMock()
+        fake_ctx.__enter__ = MagicMock(return_value=fake_pdf)
+        fake_ctx.__exit__ = MagicMock(return_value=False)
+
+        with patch("pdfplumber.open", return_value=fake_ctx):
+            result = locate_balance_sheet_pages_worker("/fake/vcb.pdf")
+
+        # Must return all pages (not just [4,5,6,7] fallback)
+        self.assertEqual(result, list(range(1, num_pages + 1)),
+                         "Worker wide-scan must return [1..6] for 6-page scanned PDF")
+
+    def test_worker_wide_scan_caps_at_max_bs_pages(self) -> None:
+        """
+        locate_balance_sheet_pages_worker: large scanned PDF → capped at _MAX_BS_PAGES.
+        """
+        from infrastructure.ocr_worker import locate_balance_sheet_pages_worker, _MAX_BS_PAGES
+
+        num_pages = 53  # VCB has 53 pages
+        fake_page = MagicMock()
+        fake_page.extract_text.return_value = ""
+        fake_pdf = MagicMock()
+        fake_pdf.pages = [fake_page] * num_pages
+        fake_ctx = MagicMock()
+        fake_ctx.__enter__ = MagicMock(return_value=fake_pdf)
+        fake_ctx.__exit__ = MagicMock(return_value=False)
+
+        with patch("pdfplumber.open", return_value=fake_ctx):
+            result = locate_balance_sheet_pages_worker("/fake/vcb_large.pdf")
+
+        self.assertEqual(result, list(range(1, _MAX_BS_PAGES + 1)),
+                         f"Worker must cap wide-scan at _MAX_BS_PAGES={_MAX_BS_PAGES}")
+
+    def test_worker_standard_path_for_text_native_pdf(self) -> None:
+        """
+        locate_balance_sheet_pages_worker: text-native PDF → standard marker scan
+        (same as before — non-regression).
+        """
+        from infrastructure.ocr_worker import locate_balance_sheet_pages_worker
+
+        p1 = MagicMock()
+        p1.extract_text.return_value = "tổng cộng tài sản " + "A" * 200
+        p2 = MagicMock()
+        p2.extract_text.return_value = "something unrelated " + "B" * 200
+        fake_pdf = MagicMock()
+        fake_pdf.pages = [p1, p2]
+        fake_ctx = MagicMock()
+        fake_ctx.__enter__ = MagicMock(return_value=fake_pdf)
+        fake_ctx.__exit__ = MagicMock(return_value=False)
+
+        with patch("pdfplumber.open", return_value=fake_ctx):
+            result = locate_balance_sheet_pages_worker("/fake/fpt.pdf")
+
+        # Page 1 (with BS marker) must be in the result
+        self.assertIn(1, result)
+        # Must NOT return fallback [4,5,6,7] when marker is found
+        self.assertNotEqual(result, [4, 5, 6, 7])
+
+
+class TestOcrWorkerRasterizeFallback(unittest.TestCase):
+    """
+    AC-RASTERIZE-WORKER-2: ocr_pages_worker() triggers PaddleOCR fallback
+    when Tesseract yields < LOW_TESSERACT_PAGE_CHARS (mirrors PdfOcrAdapter.ocr_pages).
+    """
+
+    def test_worker_low_tesseract_triggers_paddle_fallback(self) -> None:
+        """
+        ocr_pages_worker: Tesseract returns 2 chars → _rasterize_and_ocr_page_worker
+        called and its result used when it has more chars.
+        """
+        from infrastructure import ocr_worker
+
+        fake_image = MagicMock()
+        tess_text = "AB"  # below LOW_TESSERACT_PAGE_CHARS
+        paddle_text = "I Tiền mặt vàng bạc đá quý 12.930.996 15.542.769"
+
+        with patch("pdf2image.convert_from_path", return_value=[fake_image], create=True), \
+             patch("pytesseract.image_to_string", return_value=tess_text, create=True), \
+             patch.object(ocr_worker, "_rasterize_and_ocr_page_worker",
+                          return_value=paddle_text) as mock_paddle:
+            result = ocr_worker.ocr_pages_worker("/fake/vcb.pdf", [1])
+
+        mock_paddle.assert_called_once_with("/fake/vcb.pdf", 1)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["text"], paddle_text)
+
+    def test_worker_high_tesseract_no_paddle_fallback(self) -> None:
+        """
+        ocr_pages_worker: Tesseract returns many chars → PaddleOCR NOT triggered.
+        """
+        from infrastructure import ocr_worker
+
+        fake_image = MagicMock()
+        good_text = "100 TÀI SẢN NGẮN HẠN 58.102.970.741.619\n" * 10
+
+        with patch("pdf2image.convert_from_path", return_value=[fake_image], create=True), \
+             patch("pytesseract.image_to_string", return_value=good_text, create=True), \
+             patch.object(ocr_worker, "_rasterize_and_ocr_page_worker") as mock_paddle:
+            result = ocr_worker.ocr_pages_worker("/fake/fpt.pdf", [4])
+
+        mock_paddle.assert_not_called()
+        self.assertEqual(result[0]["text"], good_text)
+
+    def test_worker_no_per_ticker_hardcode(self) -> None:
+        """
+        AC-RASTERIZE-WORKER: ocr_worker.py must NOT contain ticker literals
+        ('VCB', 'CTG') or allowlist variable — generic mandate mirrors ocr_adapter check.
+        """
+        import inspect
+        import re
+        import infrastructure.ocr_worker as mod
+        source = inspect.getsource(mod)
+        for forbidden_literal in ("'VCB'", '"VCB"', "'CTG'", '"CTG"'):
+            self.assertNotIn(
+                forbidden_literal,
+                source,
+                f"ocr_worker.py must NOT contain hardcoded ticker {forbidden_literal!r}",
+            )
+        allowlist_var = re.search(r"\ballowlist\s*=\s*[\[{(]", source, re.IGNORECASE)
+        self.assertIsNone(
+            allowlist_var,
+            "ocr_worker.py must NOT define an allowlist variable for routing",
+        )
+
+    def test_detect_low_text_density_worker_exists(self) -> None:
+        """
+        ocr_worker must export detect_low_text_density_worker as a picklable function.
+        """
+        from infrastructure.ocr_worker import detect_low_text_density_worker
+        import inspect
+        sig = inspect.signature(detect_low_text_density_worker)
+        params = list(sig.parameters.keys())
+        self.assertIn("pdf_path", params)
+        for forbidden in ("ticker", "allowlist", "vcb", "ctg"):
+            self.assertNotIn(forbidden, params)
+
+
 if __name__ == "__main__":
     unittest.main()
