@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T11:47:36Z",
+  "_updated_at": "2026-06-15T11:51:35Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,12 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T11:47:36Z",
+    "updated_at": "2026-06-15T11:51:35Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
-    "next_agent": "ops",
-    "rebuild_required": true,
-    "note": "ROUTER 2026-06-15T11:47:36Z — FIX-MARKET-HEXAGRAM-TOOL-MISSING dev-mcp-server RETURNED (a385cdd3), router RAW-VERIFIED in review[]. Root-cause (a): tool deregistered 2026-05-31 (TSH-1 Go /market 501), re-registered with LOCAL COMPUTE (a8711e35) — NO HTTP, no 501 reintro. Router RAW: zone-clean commits, NO-501-PATH confirmed, bun test 29 pass/0 fail, tsc exit0 0-err, SSOT 163->164 coherent across 3 files. REBUILD_REQUIRED=YES mcp-server ONLY (force-recreate, NEVER down) — router DISPATCHING ops. LIVE GATE post-rebuild: /health toolCount==164 + get_market_hexagram present + plausible hexagram (Que 1..64, 6 hao in [-1,1]); then review->done_verified. Parallel review gates 2026-06-16: FIX-VNSTOCK-TRADINGSTATS-CRASH (08:30Z sweep), FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (01:00Z/02:15Z). FIX-FB-POSTER done_verified (60). ARCH-SHIP-WAVE-REAUDIT parked. Ready: FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2). Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). PUSH held (PO post-gates). Active coding lane=0."
+    "next_agent": null,
+    "note": "ROUTER 2026-06-15T11:51:35Z — FIX-MARKET-HEXAGRAM-TOOL-MISSING PROMOTED review->done_verified. Ops (a463639e) rebuilt+gated PASS; router RAW RE-VERIFIED (not relayed): own docker inspect (image 11:48:24Z>commit 11:43:11Z, healthy, restarts=0, 13 peers), own toolCount=164, own call_tool get_market_hexagram({}) => Que 63 Ky Te / TRUNG TINH / 52% / 6 hao all in [-1,1] non-degenerate, FRESH recompute (ts 11:48->11:50 live). Root-cause (a) registration gap; fix = local-compute re-register (a8711e35), NO HTTP, no 501 reintro. GENERIC /goal#2. Remaining review[]: FIX-VNSTOCK-TRADINGSTATS-CRASH (2026-06-16 08:30Z sweep gate, probe 3b57017e), FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (2026-06-16 01:00Z/02:15Z gate, probe 09b8693f), ARCH-SHIP-WAVE-REAUDIT (PARKED). Ready: FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL(P2 dev-stock-price). Holds: ARCH-CRON-SCHEDULER-RELIABILITY(QA-observe), BA-VN-MACRO-TOOLING(design). FIX-FB-POSTER done_verified. Active coding lane=0. PUSH held (PO post-gates)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -591,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T11:47:36Z",
+    "_updated_at": "2026-06-15T11:51:35Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14235,6 +14234,47 @@
         "rebuild_required": false,
         "rebuild_note": "agent .md only — no container rebuild.",
         "push_disposition": "HOLD — bundle; PO pushes after 2026-06-16 behavioral gates close."
+      },
+      {
+        "depends": [],
+        "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
+        "owner": "dev-kinh-dich",
+        "priority": "P2",
+        "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
+        "source": "health-recheck B10 (team-tool-recheck-2026-06-13-2207.md)",
+        "status": "DONE_VERIFIED",
+        "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
+        "type": "FIX",
+        "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
+        "zone_owner": "apps/kinh-dich-service/",
+        "route_to": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "lane": "dev-zone",
+        "mode": "recon-first",
+        "dispatched_ts": "2026-06-15T11:29:32Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "get_market_hexagram absent from MCP tool list => Sunday digest-predict fails. recon-first: confirm registration gap (apps/mcp-server/src/interface/mcp/tools/kinhdich/) vs missing compute (signal dev-kinh-dich). Register generic for all callers; bump toolCount SSOT (project-stats/tool-registry/system-map) per the tool-count-drift lesson.",
+        "root_cause_class": "(a) registration gap — get_market_hexagram DEREGISTERED 2026-05-31 (TSH-1, kinh-dich-service /market 501) but still referenced by 3 agent bootstraps + digest-predict flow.",
+        "fix_commits": [
+          "a8711e35",
+          "89a3aaad",
+          "5f79b5f0"
+        ],
+        "fix_summary": "re-register get_market_hexagram with LOCAL COMPUTE only (encodeHaos+resolveHexagram+computeMacroIndicatorScore/computeMacroScore); NO HTTP => does not re-introduce the 501. SSOT 163->164 across project-stats/tool-registry(+kinhdich 5->6)/system-map.",
+        "router_raw_verify": "commits zone-clean no -A/secret; board diff scope = only hexagram status flip; NO-501-PATH confirmed (zero getMarketHexagram/http/fetch in + diff); router-run bun test 285-kinhdich 29 pass/0 fail/49 expect; tsc --noEmit exit 0 0-error; SSOT 163->164 coherent across project-stats/tool-registry(+kinhdich 5->6)/system-map(156->164 reconciled).",
+        "generic_verified": "/goal#2 PASS — 6 market-wide hao dims from local SQLite (VN-Index z, USD/VND, brent, gold, foreign-flow breadth, macro composite); NO HTTP (sidesteps the Go /market 501); no hardcoded date/ticker; works every Sunday for all callers.",
+        "rebuild_required": true,
+        "rebuild_scope": "mcp-server ONLY (runtime tool registration). Force-recreate only, NEVER down (named-vol market.db + peers).",
+        "pending_live_gate": "AFTER rebuild: (1) image .Created > commit a8711e35, RestartCount=0, healthy, peers up; (2) /health toolCount==164 AND get_market_hexagram in live tool list; (3) call_tool get_market_hexagram({}) => plausible (header QUE THI TRUONG, Que N 1..64, Tin hieu TICH/TIEU/TRUNG, Do tin cay N%, 6 hao floats in [-1,1], NOT 'Loi khi tinh que'). Plausibility per /goal#1. Then review->done_verified.",
+        "ops_dispatched_ts": "2026-06-15T11:47:36Z",
+        "rawverified_ts": "2026-06-15T11:47:36Z",
+        "done_verified_ts": "2026-06-15T11:51:35Z",
+        "done_verified_by": "dev-team",
+        "rebuild_done": true,
+        "rebuild_evidence": "mcp-server force-recreated: image .Created 2026-06-15T11:48:24Z > commit a8711e35 11:43:11Z; health=healthy; RestartCount=0; 13 peers Up (force-recreate, NEVER down). toolCount=164.",
+        "live_gate_evidence": "router-run (NOT relayed): call_tool get_market_hexagram({}) => Que 63 Ky Te, TRUNG TINH, do tin cay 52%, 6 hao [0.21,0.00,1.00,-1.00,1.00,-1.00] all in [-1,1] non-degenerate, 3/6 duong coherent with hao signs, NOT 'Loi khi tinh que'. FRESH recompute (ts 11:48->11:50 UTC across ops/router calls => genuine live compute, no cached relay). Plausibility per /goal#1 PASS.",
+        "root_cause": "(a) registration gap — get_market_hexagram DEREGISTERED 2026-05-31 (TSH-1, kinh-dich-service /market returns 501) but still referenced by 3 agent bootstraps + the Sunday digest-predict flow.",
+        "push_disposition": "HOLD — bundle; PO pushes after 2026-06-16 behavioral gates close."
       }
     ],
     "head": {
@@ -14464,40 +14504,6 @@
         "live_evidence": "vnstockStartupProbe 11:17:47 success (post-fix boot probe clean — necessary not sufficient, lighter path than sweep); vnstockTradingStatsRefresh 08:30:01 crashed (PRE-fix symptom, not regression); vnstockFundamentalsRefresh 01:05 success rows_written 51 then 0 (sibling honest rowsWritten live).",
         "next_live_gate_utc": "2026-06-16T08:30:00Z (vnstockTradingStatsRefresh, weekdays 30 8 * * 1-5); router-d68 one-shot probe armed 2026-06-16 09:12 UTC (11:12 CEST).",
         "gate_sharpened_ts": "2026-06-15T11:24:20Z"
-      },
-      {
-        "depends": [],
-        "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
-        "owner": "dev-kinh-dich",
-        "priority": "P2",
-        "scope": "Implement get_market_hexagram OR remove from digest-predict.md with fallback get_kinhdich_reading(code='^VNINDEX'). PLAN-ONLY at PO layer; architect decides build-vs-fallback.",
-        "source": "health-recheck B10 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "REVIEW",
-        "title": "FIX-MARKET-HEXAGRAM-TOOL-MISSING — get_market_hexagram not in tool list; every Sunday digest-predict cycle fails. Distinct from KD-FRESH-01-FIX (freshness test).",
-        "type": "FIX",
-        "user_impact": "LOW-MEDIUM — weekly digest-predict broken.",
-        "zone_owner": "apps/kinh-dich-service/",
-        "route_to": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "lane": "dev-zone",
-        "mode": "recon-first",
-        "dispatched_ts": "2026-06-15T11:29:32Z",
-        "dispatched_by": "dev-team",
-        "dispatch_note": "get_market_hexagram absent from MCP tool list => Sunday digest-predict fails. recon-first: confirm registration gap (apps/mcp-server/src/interface/mcp/tools/kinhdich/) vs missing compute (signal dev-kinh-dich). Register generic for all callers; bump toolCount SSOT (project-stats/tool-registry/system-map) per the tool-count-drift lesson.",
-        "root_cause_class": "(a) registration gap — get_market_hexagram DEREGISTERED 2026-05-31 (TSH-1, kinh-dich-service /market 501) but still referenced by 3 agent bootstraps + digest-predict flow.",
-        "fix_commits": [
-          "a8711e35",
-          "89a3aaad",
-          "5f79b5f0"
-        ],
-        "fix_summary": "re-register get_market_hexagram with LOCAL COMPUTE only (encodeHaos+resolveHexagram+computeMacroIndicatorScore/computeMacroScore); 6 market-wide hao dims from local SQLite; NO HTTP => sidesteps the 501. Same pattern as explain_hexagram.",
-        "router_raw_verify": "commits zone-clean no -A/secret; board diff scope = only hexagram status flip; NO-501-PATH confirmed (zero getMarketHexagram/http/fetch in + diff); router-run bun test 285-kinhdich 29 pass/0 fail/49 expect; tsc --noEmit exit 0 0-error; SSOT 163->164 coherent across project-stats/tool-registry(+kinhdich 5->6)/system-map(156->164 reconciled).",
-        "generic_verified": "/goal#2 PASS — 6 local hao dims, no hardcoded date/ticker, works every Sunday.",
-        "rebuild_required": true,
-        "rebuild_scope": "mcp-server ONLY (runtime tool registration). Force-recreate only, NEVER down (named-vol market.db + peers).",
-        "pending_live_gate": "AFTER rebuild: (1) image .Created > commit a8711e35, RestartCount=0, healthy, peers up; (2) /health toolCount==164 AND get_market_hexagram in live tool list; (3) call_tool get_market_hexagram({}) => plausible (header QUE THI TRUONG, Que N 1..64, Tin hieu TICH/TIEU/TRUNG, Do tin cay N%, 6 hao floats in [-1,1], NOT 'Loi khi tinh que'). Plausibility per /goal#1. Then review->done_verified.",
-        "ops_dispatched_ts": "2026-06-15T11:47:36Z",
-        "rawverified_ts": "2026-06-15T11:47:36Z"
       }
     ],
     "qa": [],
