@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T08:31:05Z",
+  "_updated_at": "2026-06-15T08:41:16Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T08:31:05Z",
+    "updated_at": "2026-06-15T08:41:16Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-TA-GOSVC-MA5-PRECISION",
-    "next_agent": "dev-technical-analysis",
-    "note": "DEV-TEAM TICK 2026-06-15T08:30Z — FIX-TA-GOSVC-MA5-PRECISION DISPATCHED ready->in_progress (dev-technical-analysis, recon-first, bg) per PO BATCH (a6db2780). Deferral condition satisfied: FIX-ALERT-ENGINE-RSI parked in review (behavioral gate next session), dev-technical-analysis coding lane FREE. ROUTER RAW get_technical_indicators 08:28Z: VHM/VIC/VRE all MA5=N/A on 38-candle depth while MA20 computes on SAME depth (VHM 148,079/VIC 201,129/VRE 30,354) — a 5-window cannot fail when the 20-window succeeds on identical data => latent MA5 length-guard regression in Go TA svc after FIX-TA-GOSVC (33e7a094); also Go RSI(14) ~1pt off TS report path (smoothing-seed divergence). recon-first one-zone pass reads MA/RSI window-guard + smoothing-seed together. Gate: MA5 numeric for all watchlist tickers >=5 candles AND Go RSI matches TS report path <0.1pt on a shared ticker — GENERIC all tickers (/goal#2). WIP: board in_progress=3 but active dev-zone coding=1 (PO-authorized — ARCH-CRON=QA-observe, BA-MACRO=queued, neither codes). FIX-ALERT-ENGINE-RSI behavioral gate still fires 2026-06-16 briefing 01:00Z + first TA scan 02:15Z (separate). PUSH of 4 commits held for PO post-RSI-gate."
+    "next_agent": "ops",
+    "note": "DEV-TEAM TICK 2026-06-15T08:38Z — FIX-TA-GOSVC-MA5-PRECISION dev-technical-analysis RETURNED, moved in_progress->review (code DoD met, tests green, commit d32f0a17 RAW-verified clean: 8 files 6 Go+2 TS, no -A sweep/secret). ROOT CAUSE = protocol gap (Go computed ONE SMA(14) mis-aliased ma20; ma5/ma50 never requested) — definitive, not symptom. RSI ~1pt drift fixed by same-closes alignment. REBUILD_REQUIRED=YES BOTH services (technical-analysis Go binary + mcp-server TS mapper) — router dispatches ops force-recreate (NEVER down). LIVE GATE after rebuild: get_technical_indicators NUMERIC MA5 for VHM/VIC/VRE (was N/A), MA50 stays N/A, Go RSI matches TS report path <0.1pt, generic all tickers -> then review->done_verified. PUSH held for PO. PARALLEL gate unchanged: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT behavioral gate fires 2026-06-16 briefing 01:00Z/scan 02:15Z. Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (queued)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T08:31:05Z",
+    "_updated_at": "2026-06-15T08:41:16Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14189,32 +14189,6 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      },
-      {
-        "id": "FIX-TA-GOSVC-MA5-PRECISION",
-        "type": "FIX",
-        "title": "FIX-TA-GOSVC-MA5-PRECISION — Go TA svc returns MA5=N/A despite 38 daily_ohlcv candles (MA20 computes), and its RSI agrees with the mcp-server report path only within ~1pt not identically — Go path likely reads a different candle-window/smoothing-seed than defaultComputeTa",
-        "zone": "apps/technical-analysis/",
-        "owner": "dev-technical-analysis",
-        "owner_agent": "dev-technical-analysis",
-        "status": "IN_PROGRESS",
-        "priority": "medium",
-        "size": "S",
-        "recon_first": true,
-        "root_cause": "After FIX-TA-GOSVC (33e7a094) the Go svc reads the 38-candle daily_ohlcv depth and computes RSI(14)/MACD/BB(20)/MA20 correctly. Two residuals remain: (a) MA5 reports N/A even though 38>=5 candles exist and MA20 (needs 20) computes — a guard/length-check bug in the Go MA5 path; (b) Go RSI (VRE 39.9/VIC 34.7/VHM 35.5) agrees with the TS report path defaultComputeTa (39.52/35.09/36.73) only within 0.4-1.2 pt, not identically — the two paths likely read a different candle window (Go LIMIT ? default 60 vs report LIMIT 60) or use a different RSI smoothing seed (Wilder EMA vs simple-avg-of-first-14). Same 38-row daily_ohlcv, so identical inputs SHOULD yield identical RSI.",
-        "fix_spec": "RECON FIRST: (a) read apps/technical-analysis/pkg/application calculator MA5 path — find why MA5 returns N/A at depth>=5 while MA20 succeeds; (b) compare the Go RSI(14) smoothing method + candle-window against the TS report path localComputeRSI/defaultComputeTa (LIMIT 60, fixed period-14 post-FIX-RSI-REPORT-FAILCLOSED) — align window+method so both paths return IDENTICAL RSI on the same daily_ohlcv rows. GENERIC across all watchlist tickers (/goal#2). Add a Go test: 38-row ticker yields non-null MA5; and a cross-path parity assertion (Go RSI == report RSI to <=0.1 tolerance on identical candle set).",
-        "verification_gate": "LIVE: get_technical_indicators(VRE/VIC/VHM) returns a non-null MA5; AND Go RSI(14) == report-path defaultComputeTa RSI(14) to within 0.1 pt on the same daily_ohlcv rows (currently 0.4-1.2pt apart). Re-run scripts/verify-report-rsi-failclose.ts + cross-check the canonical tool.",
-        "baseline_pass": "33e7a094",
-        "source": "router LIVE RAW re-probe 2026-06-15T06:47Z during FIX-TA-GOSVC-NA-DESPITE-DEPTH done_verify — Go svc RSI now real & plausible (gate met) but MA5 still N/A + RSI diverges ~1pt from report path",
-        "created_at": "2026-06-15T06:48:00Z",
-        "created_by": "dev-team",
-        "triaged_by": "dev-team",
-        "status_note": "Follow-on peeled from FIX-TA-GOSVC-NA-DESPITE-DEPTH LIVE verify. MEDIUM/S — does NOT affect the user MARKET report (report path is the now-fixed defaultComputeTa) and does NOT reopen the single-digit RSI class (Go RSI is plausible mid-band). Precision/parity + MA5 completeness only. PO triage next tick; pairs in the same zone as 33e7a094 so cheap to batch. Confirm Go MA5 length-guard + RSI window/seed first.",
-        "route_to": "dev-technical-analysis",
-        "mode": "recon-first",
-        "dispatched_ts": "2026-06-15T08:31:05Z",
-        "dispatched_by": "po",
-        "dispatch_note": "dev-team tick 2026-06-15T08:30Z per PO BATCH (a6db2780). Deferral cond met (RSI parked review, TA coding lane free). ROUTER RAW get_technical_indicators 08:28Z: VHM/VIC/VRE MA5=N/A on 38-candle depth while MA20 computes same depth — latent MA5 length-guard regression after 33e7a094 + Go RSI ~1pt drift vs TS report path. recon-first: read Go MA/RSI window-guard + smoothing-seed before patching. Generic across all tickers (/goal#2). Gate: MA5 numeric for all watchlist tickers >=5 candles AND Go RSI matches TS report path <0.1pt on a shared ticker. PO-authorized WIP exception: board in_progress=3 but active dev-zone coding lane=1 (ARCH-CRON=QA-observe, BA-MACRO=queued, neither codes)."
       }
     ],
     "ready": [],
@@ -14274,6 +14248,41 @@
         "live_partial_verdict": "LIVE-PARTIAL (router RAW 2026-06-15T08:05Z, NOT a badge): REBUILD LANDED — mcp-server image sha256:5d728ae5 @08:02:40Z (after commit c9892200 @07:52:54Z), MIN_CANDLES=35 guard present in running container, named-volume market.db writable 120 rows, all 13 peers survived, health 200/toolCount 163. CANONICAL BASELINE LIVE (get_technical_indicators): VHM RSI 35.7 / VIC 34.9 / VRE 39.9 — REAL mid-band, NO single-digit, NOT 100.0. WATCH-ITEM (suppression-vs-real) RESOLVED: scan CANDLE_SQL reads daily_ohlcv 60-day window (SAME table as canonical Go svc, majors=38 candles) + calls SAME computeTAIndicators svc => majors 38>=35 PASS guard => RSI identical to canonical by construction (NOT suppressed); only <35-candle thin tickers fail-closed skip (correct). PENDING the BEHAVIORAL half only: rebuild landed 08:02:40Z, ~2min AFTER VN market close 08:00Z, so every TA-Alert/briefing now in the MARKET queue (msg 744 briefing 01:00Z VHM 9.8/VIC 7.4/DAG 100.0; msg 745/746/752 TA-Alerts 02:15-06:15Z) is PRE-rebuild — no post-rebuild scan has run. Next provable cycle = 2026-06-16 session: morning-briefing 01:00Z + first TA scan 02:15Z must show majors at real mid-band RSI (no single-digit, no 100.0), matching canonical within 0.1pt, GENERIC all tickers.",
         "pending_behavioral_gate": "2026-06-16 session: morning-briefing 01:00Z + first TA scan 02:15Z show majors real mid-band RSI (no single-digit/no 100.0), match canonical within 0.1pt, generic all tickers — verifiable on the hourly dev-team :07 tick after the queue refills",
         "push_disposition": "HOLD — 3 unpushed commits (c9892200 fix / 90787cc8 notebook / 66235a64 board); push is PO's call AFTER the behavioral gate closes next session (runtime already carries the fix via the landed rebuild, so origin-sync is non-urgent)"
+      },
+      {
+        "id": "FIX-TA-GOSVC-MA5-PRECISION",
+        "type": "FIX",
+        "title": "FIX-TA-GOSVC-MA5-PRECISION — Go TA svc returns MA5=N/A despite 38 daily_ohlcv candles (MA20 computes), and its RSI agrees with the mcp-server report path only within ~1pt not identically — Go path likely reads a different candle-window/smoothing-seed than defaultComputeTa",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "owner_agent": "dev-technical-analysis",
+        "status": "REVIEW",
+        "priority": "medium",
+        "size": "S",
+        "recon_first": true,
+        "root_cause": "protocol gap: Go module.Compute computed ONE SMA(MAPeriod=14) mis-aliased as ma20; ma5/ma50 never requested/returned/mapped. MA20-computes-while-MA5-N/A was the symptom. Fix adds fixed-period SMA(5/20/50) end-to-end + RSI closes alignment (same ORDER BY date ASC LIMIT 60 closes both paths).",
+        "fix_spec": "RECON FIRST: (a) read apps/technical-analysis/pkg/application calculator MA5 path — find why MA5 returns N/A at depth>=5 while MA20 succeeds; (b) compare the Go RSI(14) smoothing method + candle-window against the TS report path localComputeRSI/defaultComputeTa (LIMIT 60, fixed period-14 post-FIX-RSI-REPORT-FAILCLOSED) — align window+method so both paths return IDENTICAL RSI on the same daily_ohlcv rows. GENERIC across all watchlist tickers (/goal#2). Add a Go test: 38-row ticker yields non-null MA5; and a cross-path parity assertion (Go RSI == report RSI to <=0.1 tolerance on identical candle set).",
+        "verification_gate": "LIVE: get_technical_indicators(VRE/VIC/VHM) returns a non-null MA5; AND Go RSI(14) == report-path defaultComputeTa RSI(14) to within 0.1 pt on the same daily_ohlcv rows (currently 0.4-1.2pt apart). Re-run scripts/verify-report-rsi-failclose.ts + cross-check the canonical tool.",
+        "baseline_pass": "33e7a094",
+        "source": "router LIVE RAW re-probe 2026-06-15T06:47Z during FIX-TA-GOSVC-NA-DESPITE-DEPTH done_verify — Go svc RSI now real & plausible (gate met) but MA5 still N/A + RSI diverges ~1pt from report path",
+        "created_at": "2026-06-15T06:48:00Z",
+        "created_by": "dev-team",
+        "triaged_by": "dev-team",
+        "status_note": "Follow-on peeled from FIX-TA-GOSVC-NA-DESPITE-DEPTH LIVE verify. MEDIUM/S — does NOT affect the user MARKET report (report path is the now-fixed defaultComputeTa) and does NOT reopen the single-digit RSI class (Go RSI is plausible mid-band). Precision/parity + MA5 completeness only. PO triage next tick; pairs in the same zone as 33e7a094 so cheap to batch. Confirm Go MA5 length-guard + RSI window/seed first.",
+        "route_to": "dev-technical-analysis",
+        "mode": "recon-first",
+        "dispatched_ts": "2026-06-15T08:31:05Z",
+        "dispatched_by": "po",
+        "dispatch_note": "dev-team tick 2026-06-15T08:30Z per PO BATCH (a6db2780). Deferral cond met (RSI parked review, TA coding lane free). ROUTER RAW get_technical_indicators 08:28Z: VHM/VIC/VRE MA5=N/A on 38-candle depth while MA20 computes same depth — latent MA5 length-guard regression after 33e7a094 + Go RSI ~1pt drift vs TS report path. recon-first: read Go MA/RSI window-guard + smoothing-seed before patching. Generic across all tickers (/goal#2). Gate: MA5 numeric for all watchlist tickers >=5 candles AND Go RSI matches TS report path <0.1pt on a shared ticker. PO-authorized WIP exception: board in_progress=3 but active dev-zone coding lane=1 (ARCH-CRON=QA-observe, BA-MACRO=queued, neither codes).",
+        "review_entered_ts": "2026-06-15T08:41:16Z",
+        "fix_commit": "d32f0a17",
+        "notebook_commit": "c5fb163c",
+        "tests_green": "go test ./... 11 pkgs incl regression_ma5_on_38_candles_ma50_na; go vet clean; pnpm check clean",
+        "commit_hygiene_verified": "router git show --stat: d32f0a17 = 8 files (6 Go + 2 TS), no -A sweep, no foreign/secret; both zones clean in tree",
+        "rebuild_required": true,
+        "rebuild_scope": "BOTH technical-analysis (Go binary) AND mcp-server (clients.ts named-field mapper + technicalIndicatorTools.ts closes prefetch) — dev under-scoped to technical-analysis only; mcp-server old mapper would not serve ma5/ma20/ma50 end-to-end. Force-recreate only, NEVER down.",
+        "pending_live_gate": "AFTER rebuild router RAW get_technical_indicators: NUMERIC MA5 for majors (VHM/VIC/VRE, was N/A this tick), MA50 stays N/A (correct), Go RSI(14) matches TS report path <0.1pt shared ticker, GENERIC all tickers — then review->done_verified",
+        "push_disposition": "HOLD — push is PO's call after live gate; bundles with the held RSI-fix commits"
       }
     ],
     "qa": [],
