@@ -98,3 +98,37 @@ SCOPE: Sequence 6 unsequenced VMT-7 tasks (serial_dispatch_order=null, merge_gat
 Cycles c313 (WAVE-2 contracts), c311 (ARCH-CRON decomposition), c310 (DOCLANG Phase 1 closure), c309 (DOCLANG decomposition), c308 (ARCH-CRON initial), c307 (FIX-MCP-CRASH-LOOP decomposition), c306 (QUE-REFERENCE-PAGE), c305 (OHLCV-CONTAM closure), c304 (FE-CORPEVENTS), c303 (CONTAM-8 approved), c301 (REAUDIT-001), c300 (SHIP-WAVE-REAUDIT). See git history commits 675891163d...5d121989 (2026-06-14 and prior).
 
 Older cycles (c299–c189) archived to [pm-20260611.md](../../archive/notebooks/pm-20260611.md).
+
+---
+
+## c315 MERGE-GATE board update — FIX-BCTC-ENRICH-SILENT-0ROWS · 2026-06-15T185000Z
+
+MERGE-GATE BOARD UPDATE (user directive): **FIX-BCTC-ENRICH-SILENT-0ROWS** (P0, multi-zone BCTC enrich silent-0-rows) merges to main via dev-team :07 merge-gate (2026-06-15T18:30Z).
+
+**Merged commits verified:**
+- **68d54c7b** (dev-pdf-extractor LEAD): Layout 6+7 for B02-TCTD Roman-numeral section codes + single-digit sub-codes in apps/pdf-extractor/infrastructure/text_table_extractor.py. Root cause: Layouts 1–5 only matched \d{2,}, so every VCB/CTG bank-form line parsed None → silent 0-rows. 856/856 unit tests pass. Generic, no allowlist. DJ journal: docs/agent-memory/decisions/sprint-KINHDICH-HOVER-DETAIL-dev-pdf-extractor.md
+- **989654f2** (dev-mcp-server co-owner): 0-row gate in apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts — reads ACTUAL bctc_table_rows + bctc_md_tables counts; if both 0 marks the bctc_vps_queue row enrich_failed (NOT done) + logger.error + sendTelegramBug. Generic, no per-ticker case. 55/55 tests pass. DJ journal: docs/agent-memory/decisions/sprint-2026-06-15-dev-mcp-server.md
+
+**Board mutation (atomic temp→rename):**
+1. Move FIX-BCTC-ENRICH-SILENT-0ROWS: in_progress → review lane
+2. Record commit SHAs: 68d54c7b 989654f2
+3. Set done_verified: PENDING + reason: "ops must REBUILD BOTH pdf-extractor + mcp-server containers, then re-trigger runBctcReparseJob for VCB/CTG bank tickers, then RAW-verify: (a) get_bctc_full(VCB) returns real VARIED rows vs the NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data — NEVER host ./data decoy); (b) a 0-row extraction's queue row shows status=enrich_failed not done; (c) non-regression — VCB 2025Q4 (112 rows) + FPT 2026Q1 (145 rows) still parse. done_verified is a LIVE RAW probe, NEVER a badge."
+4. Set rebuild_required: BOTH pdf-extractor AND mcp-server
+
+**Follow-on task minted (PREEXISTING defect surfaced during live-verify):**
+- **FIX-BCTC-FPT-BT5-BALANCE-GATE** (P1, backlog, dev-pdf-extractor lead): FPT corporate-form (B01-DN, 3-digit codes) real-OCR extraction fails the BT-5 balance gate with delta = 43 TRILLION VND. Test: apps/pdf-extractor/__tests__/.../test_extract_tables_bt3d_real_ocr.py::test_extract_tables_usecase_real_ocr_path. Last touched 9a5527bd (2026-06-13), predates Layout 6+7. Suggested: id FIX-BCTC-FPT-BT5-BALANCE-GATE, route_to dev-pdf-extractor, priority P1 (real served-metric accuracy per /goal#1 plausibility — a 43T VND balance imbalance is wrong data, not just empty data), generic mandate, lane = backlog (NOT in_progress — respect WIP≤2). NOT blocked by FIX-BCTC-ENRICH (different root: B01-DN 3-digit parsing vs B02-TCTD bank-form silent-0). Minted as async follow-on; architect may spike later if BCTC area >2 fix cycles.
+
+**Decision Journal Gate (DJ-GATE-1):**
+- ✅ Appended docs/agent-memory/decisions/sprint-2026-06-15-pm.md: pm-S1 (FIX-BCTC move + rationale), pm-S2 (FIX-BCTC-FPT-BT5 follow-on + rationale). Each STEP ≤12L; required before board flip valid.
+
+**WIP impact:**
+- FIX-BCTC-ENRICH now: review lane (rebuild-required, WIP-gated → ops job not PM)
+- ARCH-CRON-SCHEDULER-RELIABILITY: stays in_progress (architect design, not coding)
+- Active coding lanes: 1 (within cap)
+
+**Commit discipline (explicit-stage + RULE 1-3):**
+- Staged: docs/data/orch/orch-state.json (task board: move lane + set rebuild_required + new backlog task)
+- Staged: docs/agent-memory/decisions/sprint-2026-06-15-pm.md (journal entries)
+- Staged: docs/agent-memory/notebooks/pm.md (this notebook entry)
+
+**NEXT:** Router dispatches ops (REBUILD containers) + QA (live-probe after rebuild).

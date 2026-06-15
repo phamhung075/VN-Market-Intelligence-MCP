@@ -606,8 +606,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T17:19:55Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-15T19:16:36Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -11963,6 +11963,27 @@
         "brief_ref": "docs/architecture-briefs/2026-06-15-maintainability-factory-audit.md",
         "created_at": "2026-06-15T18:03:20Z",
         "created_by": "po"
+      },
+      {
+        "id": "FIX-BCTC-FPT-BT5-BALANCE-GATE",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "TODO",
+        "route_to": "dev-pdf-extractor",
+        "zone": "apps/pdf-extractor/",
+        "mode": "code",
+        "size": "M",
+        "title": "FPT corporate-form (B01-DN, 3-digit codes) real-OCR extraction fails the BT-5 balance gate with delta = 43 TRILLION VND",
+        "desc": "Real-OCR extraction of FPT corporate-form (B01-DN form type, 3-digit section codes) produces balance sheet with 43 TRILLION VND imbalance (balance_sheet_equation: assets ≠ liabilities+equity). Detected by balance-gate test apps/pdf-extractor/__tests__/.../test_extract_tables_bt3d_real_ocr.py::test_extract_tables_usecase_real_ocr_path. Not a regression from FIX-BCTC-ENRICH-SILENT-0ROWS (Layout 6+7 predates this discovery, last touched 9a5527bd 2026-06-13). Generic mandate: no per-ticker allowlist, no hardcoded B01-DN skips. This is wrong data in the user-facing metric, not empty data.",
+        "generic_mandate": "GENERIC across ALL corporate forms (B01-DN) with 3-digit codes — NO per-ticker allowlist, NO date-literal, NO special-case (/goal#2). Fix the corporate-form (B01-DN) parse path to respect balance gate semantics.",
+        "fail_loud_requirement": "A B01-DN extraction that produces imbalance > 1% fails the balance-gate test and is NOT marked done; analyst must investigate root cause (likely OCR/parsing of balance-sheet sub-section region or line-item mapping).",
+        "baseline_pass": "done_verified (/goal#1 plausibility) = FPT B01-DN corporate-form balance_sheet_equation: assets = liabilities + equity (or delta < 1% tolerance); balance-gate test passes; non-regression on existing passing corporate-forms.",
+        "recurrence_class": "BCTC-EXTRACT-QUALITY (pre-existing data accuracy, not a regression)",
+        "source": "dev-pdf-extractor during FIX-BCTC-ENRICH-SILENT-0ROWS live-verify 2026-06-15",
+        "created_at": "\"2026-06-15T19:16:03Z\"",
+        "dispatch_note": "P1 (real served-metric accuracy per /goal#1 plausibility — a 43T VND balance imbalance is wrong data, not just empty data). dev-pdf-extractor leads (B01-DN corporate-form parse/OCR accuracy). Generic, no allowlist. done_verified = balance gate passes (assets = liabilities+equity, delta < 1%)",
+        "lane": "backlog",
+        "depends": []
       }
     ],
     "closed_sprints": [
@@ -17148,40 +17169,6 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
-      },
-      {
-        "id": "FIX-BCTC-ENRICH-SILENT-0ROWS",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "IN_PROGRESS",
-        "route_to": "dev-pdf-extractor",
-        "co_owner": "dev-mcp-server",
-        "zone": "multi",
-        "mode": "code",
-        "size": "M",
-        "title": "BCTC enrich SILENT 0-table-rows: financial_reports header inserted but bctc_table_rows=0 AND bctc_md_tables=0 (VCB 2026Q1 + 2025Q1 reproduce; VCB 2025Q4 112 rows + FPT 2026Q1 145 rows do NOT) — the ACTUAL user-facing P0 root behind get_bctc_full(VCB)='Chua co du lieu BCTC'",
-        "desc": "ROUTER RAW-VERIFIED vs named-volume DB (NOT host ./data): financial_reports HAS VCB 2026Q1 (id b1ea447a-6d41-4646-abcd-af0af5b6b347, parsed 2026-06-13T17:29:12, extraction_confidence 0.75) but bctc_table_rows=0 AND bctc_md_tables=0. VCB 2025Q1 also 0 rows. VCB is a BANK -> B02-TCTD form -> likely a bank-form parse/OCR regression that silently yields 0 rows while STILL inserting the financial_reports header. The discovery fixes (afrLoop rollover + exchange_code) deployed by ops do NOT resolve the user-facing P0 — the PDF reaches the DB but enrichment produces 0 rows. Cross-check memory project_bank_aware_bctc (B02-TCTD 1 SSOT across 7 consumers; Roman+no-3digit discriminator). Two surfaces: dev-pdf-extractor (OCR/parse of B02-TCTD bank form) + dev-mcp-server (enrich orchestration: a 0-rows enrich MUST fail loud, NOT mark the queue row done).",
-        "generic_mandate": "GENERIC across ALL tickers/banks — NO per-ticker allowlist, NO date-literal, NO special-case (/goal#2). Fix the bank-form (B02-TCTD) parse path + the silent-success swallow generically.",
-        "fail_loud_requirement": "A silent-0-rows enrich MUST fail loud / NOT mark the bctc_vps_queue row done — currently it inserts the header, yields 0 rows, and the queue advances (silent-swallow class).",
-        "baseline_pass": "done_verified (/goal#1) = get_bctc_full(VCB) returns REAL VARIED rows RAW-verified vs named-volume market.db (NEVER host ./data, NEVER a badge); AND a B02-TCTD parse that yields 0 table_rows fails loud and does NOT advance the queue; AND VCB 2025Q4 (112 rows) + FPT 2026Q1 (145 rows) remain non-regressed.",
-        "recurrence_class": "BCTC-VPS-PIPELINE-STALE (2nd recurrence) — this is the enrich-silent-0 leg of the durable hardening sprint.",
-        "source": "OPS-BCTC-PIPELINE-RECON recon + PO RAW-verify 2026-06-15",
-        "created_at": "2026-06-15T17:19:55Z",
-        "dispatch_note": "P0/weigh-P0 — TRUE root of the VCB user-facing P0. Discovery fixes deployed but PDF->DB header inserts with 0 table_rows. dev-pdf-extractor leads (B02-TCTD bank-form parse/OCR), dev-mcp-server pairs (enrich orchestration must fail-loud not silent-advance). Generic, no allowlist. done_verified = real VARIED rows vs named-volume DB.",
-        "cowork_release_block": {
-          "source": "cowork bctc-analyst (analysis-agent) — internal label 'bug #2776'",
-          "symptom": "RELEASE tickers BLOCKED ~25+ consecutive cycles, silent-suppressed (no re-escalation after c046): CTG (cycle 27, CRITICAL, watchlist bank), VCB (cycle 24, bank), D2D (cycle 24, real-estate). All show get_bctc_full = 'Chua co du lieu BCTC' / composite confidence 0.00-0.10.",
-          "raw_verified": "PO 2026-06-15: get_bctc_full(CTG) LIVE = 'Chua co du lieu BCTC' (block is REAL, not a stale flag). CTG+VCB are banks (B02-TCTD form) = the exact silent-0-rows root this task targets; D2D covered by generic_mandate (no per-ticker/per-form allowlist).",
-          "stale_premise_corrected": "Analyst keyed 'undeployed' off get_recent_fixes(10) absence of '#2776'. RAW: no #2776 fix at limit=50 either — because no committed fix EXISTS yet. This is NOT a deploy/rebuild-stall (nothing built to redeploy); it is this READY P0 awaiting dispatch behind live WIP=2. Escalation was NOT dropped: this task was minted 2026-06-15T17:19:55Z from OPS-BCTC-PIPELINE-RECON.",
-          "unblocks_on_done": "Clearing this P0 (done_verified = get_bctc_full returns REAL VARIED rows for CTG/VCB) releases the bctc-analyst CTG/VCB/D2D RELEASE gate; the analyst's silent-suppress policy is JUSTIFIED, not a dropped signal.",
-          "wip_disposition": "NOT promoted past live WIP=2 (ARCH-CRON-SCHEDULER-RELIABILITY + BA-VN-MACRO-TOOLING, both live as of board _updated_at). Remains #1 READY P0 — next dispatch slot.",
-          "linked_at": "2026-06-15T18:16:49Z"
-        },
-        "lane": "in_progress",
-        "dispatched_at": "2026-06-15T18:33:38Z",
-        "dispatched_by": "po",
-        "dispatch_tick": "dev-team :07 2026-06-15T18:30Z",
-        "po_promote_rationale": "#1 READY P0, TRUE root of user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' + cowork bctc-analyst '#2776' release-block (CTG watchlist bank, 27 cycles BLOCKED). LEAD dev-pdf-extractor (B02-TCTD bank-form parse/OCR) is a DISTINCT specialist lane NOT occupied by the only live coding task (ARCH-CRON-SCHEDULER-RELIABILITY = architect-design phase). BA-VN-MACRO-TOOLING freed (planning-complete SPEC, zero dev WIP). Coding lanes after this promote: ARCH-CRON (architect-design, not coding) + this P0 = 1 active coding lane <= WIP cap. Live corroboration: get_agent_signals 6225 'bctc source stale 2191min vs 360 threshold'. GENERIC mandate (no per-ticker allowlist), fail-loud on 0-rows enrich, done_verified = real VARIED rows vs named-volume market.db (never host ./data, never a badge)."
       }
     ],
     "ready": [
@@ -17449,6 +17436,44 @@
         "live_evidence": "vnstockStartupProbe 11:17:47 success (post-fix boot probe clean — necessary not sufficient, lighter path than sweep); vnstockTradingStatsRefresh 08:30:01 crashed (PRE-fix symptom, not regression); vnstockFundamentalsRefresh 01:05 success rows_written 51 then 0 (sibling honest rowsWritten live).",
         "next_live_gate_utc": "2026-06-16T08:30:00Z (vnstockTradingStatsRefresh, weekdays 30 8 * * 1-5); router-d68 one-shot probe armed 2026-06-16 09:12 UTC (11:12 CEST).",
         "gate_sharpened_ts": "2026-06-15T11:24:20Z"
+      },
+      {
+        "id": "FIX-BCTC-ENRICH-SILENT-0ROWS",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "REVIEW",
+        "route_to": "dev-pdf-extractor",
+        "co_owner": "dev-mcp-server",
+        "zone": "multi",
+        "mode": "code",
+        "size": "M",
+        "title": "BCTC enrich SILENT 0-table-rows: financial_reports header inserted but bctc_table_rows=0 AND bctc_md_tables=0 (VCB 2026Q1 + 2025Q1 reproduce; VCB 2025Q4 112 rows + FPT 2026Q1 145 rows do NOT) — the ACTUAL user-facing P0 root behind get_bctc_full(VCB)='Chua co du lieu BCTC'",
+        "desc": "ROUTER RAW-VERIFIED vs named-volume DB (NOT host ./data): financial_reports HAS VCB 2026Q1 (id b1ea447a-6d41-4646-abcd-af0af5b6b347, parsed 2026-06-13T17:29:12, extraction_confidence 0.75) but bctc_table_rows=0 AND bctc_md_tables=0. VCB 2025Q1 also 0 rows. VCB is a BANK -> B02-TCTD form -> likely a bank-form parse/OCR regression that silently yields 0 rows while STILL inserting the financial_reports header. The discovery fixes (afrLoop rollover + exchange_code) deployed by ops do NOT resolve the user-facing P0 — the PDF reaches the DB but enrichment produces 0 rows. Cross-check memory project_bank_aware_bctc (B02-TCTD 1 SSOT across 7 consumers; Roman+no-3digit discriminator). Two surfaces: dev-pdf-extractor (OCR/parse of B02-TCTD bank form) + dev-mcp-server (enrich orchestration: a 0-rows enrich MUST fail loud, NOT mark the queue row done).",
+        "generic_mandate": "GENERIC across ALL tickers/banks — NO per-ticker allowlist, NO date-literal, NO special-case (/goal#2). Fix the bank-form (B02-TCTD) parse path + the silent-success swallow generically.",
+        "fail_loud_requirement": "A silent-0-rows enrich MUST fail loud / NOT mark the bctc_vps_queue row done — currently it inserts the header, yields 0 rows, and the queue advances (silent-swallow class).",
+        "baseline_pass": "done_verified (/goal#1) = get_bctc_full(VCB) returns REAL VARIED rows RAW-verified vs named-volume market.db (NEVER host ./data, NEVER a badge); AND a B02-TCTD parse that yields 0 table_rows fails loud and does NOT advance the queue; AND VCB 2025Q4 (112 rows) + FPT 2026Q1 (145 rows) remain non-regressed.",
+        "recurrence_class": "BCTC-VPS-PIPELINE-STALE (2nd recurrence) — this is the enrich-silent-0 leg of the durable hardening sprint.",
+        "source": "OPS-BCTC-PIPELINE-RECON recon + PO RAW-verify 2026-06-15",
+        "created_at": "2026-06-15T17:19:55Z",
+        "dispatch_note": "P0/weigh-P0 — TRUE root of the VCB user-facing P0. Discovery fixes deployed but PDF->DB header inserts with 0 table_rows. dev-pdf-extractor leads (B02-TCTD bank-form parse/OCR), dev-mcp-server pairs (enrich orchestration must fail-loud not silent-advance). Generic, no allowlist. done_verified = real VARIED rows vs named-volume DB.",
+        "cowork_release_block": {
+          "source": "cowork bctc-analyst (analysis-agent) — internal label 'bug #2776'",
+          "symptom": "RELEASE tickers BLOCKED ~25+ consecutive cycles, silent-suppressed (no re-escalation after c046): CTG (cycle 27, CRITICAL, watchlist bank), VCB (cycle 24, bank), D2D (cycle 24, real-estate). All show get_bctc_full = 'Chua co du lieu BCTC' / composite confidence 0.00-0.10.",
+          "raw_verified": "PO 2026-06-15: get_bctc_full(CTG) LIVE = 'Chua co du lieu BCTC' (block is REAL, not a stale flag). CTG+VCB are banks (B02-TCTD form) = the exact silent-0-rows root this task targets; D2D covered by generic_mandate (no per-ticker/per-form allowlist).",
+          "stale_premise_corrected": "Analyst keyed 'undeployed' off get_recent_fixes(10) absence of '#2776'. RAW: no #2776 fix at limit=50 either — because no committed fix EXISTS yet. This is NOT a deploy/rebuild-stall (nothing built to redeploy); it is this READY P0 awaiting dispatch behind live WIP=2. Escalation was NOT dropped: this task was minted 2026-06-15T17:19:55Z from OPS-BCTC-PIPELINE-RECON.",
+          "unblocks_on_done": "Clearing this P0 (done_verified = get_bctc_full returns REAL VARIED rows for CTG/VCB) releases the bctc-analyst CTG/VCB/D2D RELEASE gate; the analyst's silent-suppress policy is JUSTIFIED, not a dropped signal.",
+          "wip_disposition": "NOT promoted past live WIP=2 (ARCH-CRON-SCHEDULER-RELIABILITY + BA-VN-MACRO-TOOLING, both live as of board _updated_at). Remains #1 READY P0 — next dispatch slot.",
+          "linked_at": "2026-06-15T18:16:49Z"
+        },
+        "lane": "review",
+        "dispatched_at": "2026-06-15T18:33:38Z",
+        "dispatched_by": "po",
+        "dispatch_tick": "dev-team :07 2026-06-15T18:30Z",
+        "po_promote_rationale": "#1 READY P0, TRUE root of user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' + cowork bctc-analyst '#2776' release-block (CTG watchlist bank, 27 cycles BLOCKED). LEAD dev-pdf-extractor (B02-TCTD bank-form parse/OCR) is a DISTINCT specialist lane NOT occupied by the only live coding task (ARCH-CRON-SCHEDULER-RELIABILITY = architect-design phase). BA-VN-MACRO-TOOLING freed (planning-complete SPEC, zero dev WIP). Coding lanes after this promote: ARCH-CRON (architect-design, not coding) + this P0 = 1 active coding lane <= WIP cap. Live corroboration: get_agent_signals 6225 'bctc source stale 2191min vs 360 threshold'. GENERIC mandate (no per-ticker allowlist), fail-loud on 0-rows enrich, done_verified = real VARIED rows vs named-volume market.db (never host ./data, never a badge).",
+        "commit": "68d54c7b 989654f2",
+        "done_verified": "PENDING",
+        "done_verified_reason": "ops must REBUILD BOTH pdf-extractor + mcp-server containers, then re-trigger runBctcReparseJob for VCB/CTG bank tickers, then RAW-verify: (a) get_bctc_full(VCB) returns real VARIED rows vs the NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data — NEVER host ./data decoy); (b) a 0-row extraction's queue row shows status=enrich_failed not done; (c) non-regression — VCB 2025Q4 (112 rows) + FPT 2026Q1 (145 rows) still parse. done_verified is a LIVE RAW probe, NEVER a badge.",
+        "rebuild_required": "BOTH pdf-extractor AND mcp-server"
       }
     ],
     "qa": [],
