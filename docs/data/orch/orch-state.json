@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T08:07:40Z",
+  "_updated_at": "2026-06-15T08:31:05Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T08:07:40Z",
+    "updated_at": "2026-06-15T08:31:05Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
-    "next_agent": null,
-    "note": "DEV-TEAM TICK 2026-06-15T08:05Z — FIX-ALERT-ENGINE-RSI-SINGLEDIGIT stays REVIEW (rebuild+canonical GREEN, behavioral half pending next session). ROUTER RAW: ops rebuild LANDED c9892200 (mcp-server image sha256:5d728ae5 @08:02:40Z>commit @07:52:54Z, MIN_CANDLES=35 guard in container, named-vol DB writable 120 rows, 13 peers survived, health 200). CANONICAL LIVE get_technical_indicators VHM 35.7/VIC 34.9/VRE 39.9 — REAL mid-band. WATCH-ITEM RESOLVED: scan reads SAME daily_ohlcv 60-day window + SAME computeTAIndicators svc => majors 38>=35 pass guard => real RSI not suppressed (identical to canonical by construction); <35-candle thin tickers correctly fail-closed. BEHAVIORAL gate UNMET ONLY because rebuild landed 08:02:40Z ~2min after market close 08:00Z — ALL queued TA-Alerts/briefing (msg 744/745/746/752) are PRE-rebuild; no post-rebuild scan has run. NEXT: 2026-06-16 morning-briefing 01:00Z + first TA scan 02:15Z must show majors real mid-band RSI (no single-digit/no 100.0) — hourly dev-team :07 cron returns router to RAW-verify the refilled queue, then promote review->done_verified. PUSH HELD (PO's call after behavioral gate; runtime already has fix via landed rebuild). Holds unchanged: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (queued). Deferred ready: FIX-TA-GOSVC-MA5-PRECISION (MA5=N/A confirmed again this probe — separate precision task, not this gate)."
+    "active_task_id": "FIX-TA-GOSVC-MA5-PRECISION",
+    "next_agent": "dev-technical-analysis",
+    "note": "DEV-TEAM TICK 2026-06-15T08:30Z — FIX-TA-GOSVC-MA5-PRECISION DISPATCHED ready->in_progress (dev-technical-analysis, recon-first, bg) per PO BATCH (a6db2780). Deferral condition satisfied: FIX-ALERT-ENGINE-RSI parked in review (behavioral gate next session), dev-technical-analysis coding lane FREE. ROUTER RAW get_technical_indicators 08:28Z: VHM/VIC/VRE all MA5=N/A on 38-candle depth while MA20 computes on SAME depth (VHM 148,079/VIC 201,129/VRE 30,354) — a 5-window cannot fail when the 20-window succeeds on identical data => latent MA5 length-guard regression in Go TA svc after FIX-TA-GOSVC (33e7a094); also Go RSI(14) ~1pt off TS report path (smoothing-seed divergence). recon-first one-zone pass reads MA/RSI window-guard + smoothing-seed together. Gate: MA5 numeric for all watchlist tickers >=5 candles AND Go RSI matches TS report path <0.1pt on a shared ticker — GENERIC all tickers (/goal#2). WIP: board in_progress=3 but active dev-zone coding=1 (PO-authorized — ARCH-CRON=QA-observe, BA-MACRO=queued, neither codes). FIX-ALERT-ENGINE-RSI behavioral gate still fires 2026-06-16 briefing 01:00Z + first TA scan 02:15Z (separate). PUSH of 4 commits held for PO post-RSI-gate."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T08:07:40Z",
+    "_updated_at": "2026-06-15T08:31:05Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -14137,7 +14137,7 @@
         "qa_record_correction": "QA cycle-269 report mis-stated this umbrella as CLOSED. Record corrected: umbrella is IN_PROGRESS, held open on the Monday 2026-06-15 G1/G2/G3 market-day re-verification gate.",
         "po_gate_day_status": "GATE-DAY-ARRIVED 2026-06-15 (Monday, VN market OPEN — tick at 13:32 ICT). Residual is a QA LIVE OUTCOME-OBSERVE gate (G1 aggregator auto-fire + 16 sectors leave N/A / G2 fundamentals refresh / G3 reputationCompute 08:30 under contention), evidence accrues across TODAY's trading session — NOT a dev dispatch and consumes NO dev WIP lane. IMPL dep (FIX-MCP-CRASH-LOOP-WRITEWAL) is in done[]. KEEP HELD until end-of-market-day QA reads cron_job_runs + pipeline-health raw; on all-PASS -> umbrella done_verified, on any miss the LIVE watchdog (G5) self-heal/alert evidence -> scoped residual FIX.",
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
-        "po_gate_day_rechecked_at": "2026-06-15T07:36:49Z",
+        "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
       },
       {
@@ -14187,11 +14187,9 @@
         "serialization_guard": "Zone A dev tasks (handlers_vmt.go/usecases_vmt.go/dtos_vmt.go) MUST be serial — one dev-macro-indicators task at a time, merge gate between each. PM enforces (feedback_recurring_bug_escalation).",
         "po_dispatch_note": "HELD in_progress — mechanism-complete through BA->architect->pm->probe->probe-fold (all router RAW-reverified). next_agent=WAVE-1 dev fan-out (6 zero-dep: PROBE-fold-consumed contracts + Zone D vpsFetch + Zone C VMT-6). DEFERRED this tick: the cowork-flagged RSI-integrity pair is the higher-priority user-live-flagged bug and takes the dispatch focus; WAVE-1 stays queued (touches apps/mcp-server Zone B/C — same lane currently load-bearing for ARCH-CRON gate). Dispatch WAVE-1 next tick once the RSI pair clears. NO dev WIP consumed while held.",
         "po_held_checked_at": "2026-06-15T06:35:17Z",
-        "po_held_rechecked_at": "2026-06-15T07:36:49Z",
-        "po_recheck_disposition": "WAVE-1 queued behind RSI pair, no dev WIP consumed while held — verified parked this tick"
-      }
-    ],
-    "ready": [
+        "po_held_rechecked_at": "2026-06-15T08:31:05Z",
+        "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
+      },
       {
         "id": "FIX-TA-GOSVC-MA5-PRECISION",
         "type": "FIX",
@@ -14199,7 +14197,7 @@
         "zone": "apps/technical-analysis/",
         "owner": "dev-technical-analysis",
         "owner_agent": "dev-technical-analysis",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "medium",
         "size": "S",
         "recon_first": true,
@@ -14211,9 +14209,15 @@
         "created_at": "2026-06-15T06:48:00Z",
         "created_by": "dev-team",
         "triaged_by": "dev-team",
-        "status_note": "Follow-on peeled from FIX-TA-GOSVC-NA-DESPITE-DEPTH LIVE verify. MEDIUM/S — does NOT affect the user MARKET report (report path is the now-fixed defaultComputeTa) and does NOT reopen the single-digit RSI class (Go RSI is plausible mid-band). Precision/parity + MA5 completeness only. PO triage next tick; pairs in the same zone as 33e7a094 so cheap to batch. Confirm Go MA5 length-guard + RSI window/seed first."
+        "status_note": "Follow-on peeled from FIX-TA-GOSVC-NA-DESPITE-DEPTH LIVE verify. MEDIUM/S — does NOT affect the user MARKET report (report path is the now-fixed defaultComputeTa) and does NOT reopen the single-digit RSI class (Go RSI is plausible mid-band). Precision/parity + MA5 completeness only. PO triage next tick; pairs in the same zone as 33e7a094 so cheap to batch. Confirm Go MA5 length-guard + RSI window/seed first.",
+        "route_to": "dev-technical-analysis",
+        "mode": "recon-first",
+        "dispatched_ts": "2026-06-15T08:31:05Z",
+        "dispatched_by": "po",
+        "dispatch_note": "dev-team tick 2026-06-15T08:30Z per PO BATCH (a6db2780). Deferral cond met (RSI parked review, TA coding lane free). ROUTER RAW get_technical_indicators 08:28Z: VHM/VIC/VRE MA5=N/A on 38-candle depth while MA20 computes same depth — latent MA5 length-guard regression after 33e7a094 + Go RSI ~1pt drift vs TS report path. recon-first: read Go MA/RSI window-guard + smoothing-seed before patching. Generic across all tickers (/goal#2). Gate: MA5 numeric for all watchlist tickers >=5 candles AND Go RSI matches TS report path <0.1pt on a shared ticker. PO-authorized WIP exception: board in_progress=3 but active dev-zone coding lane=1 (ARCH-CRON=QA-observe, BA-MACRO=queued, neither codes)."
       }
     ],
+    "ready": [],
     "review": [
       {
         "_adjudicated_by": "po",
