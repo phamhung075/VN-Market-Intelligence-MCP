@@ -66,11 +66,13 @@ func (f *Tier1VnDirectFetcher) FetchPrice(code string) (*domain.PriceQuote, erro
 	}
 
 	// stock_prices endpoint returns OHLCV data with these fields:
-	// code, date, time, floor, close, open, high, low, nmVolume, change, pctChange
+	// code, date, time, floor, type, close, open, high, low, nmVolume, change, pctChange
+	// type: "STOCK" for VN stocks (price in thousands VND), "INDEX" for indices (actual value)
 	var payload struct {
 		Data []struct {
 			Code      string  `json:"code"`
 			Floor     string  `json:"floor"`
+			Type      string  `json:"type"`
 			Close     float64 `json:"close"`
 			NmVolume  float64 `json:"nmVolume"`
 			Change    float64 `json:"change"`
@@ -96,10 +98,17 @@ func (f *Tier1VnDirectFetcher) FetchPrice(code string) (*domain.PriceQuote, erro
 		source = domain.SourceUPCOM
 	}
 
-	// Price is in thousands VND (e.g., 17.7 = 17,700 VND), multiply by 1000
+	// FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL: Scale price based on asset type.
+	// VN stocks (type="STOCK", floor in HOSE/HNX/UPCOM) return prices in thousands VND.
+	// Indices and other assets (type="INDEX", non-VN floors like BLOOMBERG) return actual values.
+	price := item.Close
+	if item.Type == "STOCK" && (item.Floor == "HOSE" || item.Floor == "HNX" || item.Floor == "UPCOM") {
+		price = item.Close * 1000
+	}
+
 	return &domain.PriceQuote{
 		Code:          item.Code,
-		Price:         item.Close * 1000,
+		Price:         price,
 		Volume:        item.NmVolume,
 		Change:        &change,
 		ChangePercent: &pctChange,
@@ -161,11 +170,13 @@ func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote
 	}
 
 	// stock_prices endpoint returns OHLCV data with these fields:
-	// code, date, time, floor, close, open, high, low, nmVolume, change, pctChange
+	// code, date, time, floor, type, close, open, high, low, nmVolume, change, pctChange
+	// type: "STOCK" for VN stocks (price in thousands VND), "INDEX" for indices (actual value)
 	var payload struct {
 		Data []struct {
 			Code      string  `json:"code"`
 			Floor     string  `json:"floor"`
+			Type      string  `json:"type"`
 			Close     float64 `json:"close"`
 			NmVolume  float64 `json:"nmVolume"`
 			Change    float64 `json:"change"`
@@ -191,10 +202,17 @@ func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote
 		source = domain.SourceUPCOM
 	}
 
-	// Price is in thousands VND (e.g., 17.7 = 17,700 VND), multiply by 1000
+	// FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL: Scale price based on asset type.
+	// VN stocks (type="STOCK", floor in HOSE/HNX/UPCOM) return prices in thousands VND.
+	// Indices and other assets (type="INDEX", non-VN floors like BLOOMBERG) return actual values.
+	price := item.Close
+	if item.Type == "STOCK" && (item.Floor == "HOSE" || item.Floor == "HNX" || item.Floor == "UPCOM") {
+		price = item.Close * 1000
+	}
+
 	return &domain.PriceQuote{
 		Code:          item.Code,
-		Price:         item.Close * 1000,
+		Price:         price,
 		Volume:        item.NmVolume,
 		Change:        &change,
 		ChangePercent: &pctChange,

@@ -220,3 +220,121 @@ func TestNewWithThresholds(t *testing.T) {
 		t.Errorf("Staleness: got=%q want=STALE", got.Staleness)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL Tests
+// ---------------------------------------------------------------------------
+
+// TestCacheFallbackNotFresh verifies that when tier-3 (cache) wins because
+// tier-1 and tier-2 both failed, the staleness is at minimum STALE, even if
+// the cached row's updated_at timestamp would normally classify as FRESH.
+// FRESH requires an actual live-tier success, not a cache hit.
+func TestCacheFallbackNotFresh(t *testing.T) {
+	// Create a cache quote with a VERY recent timestamp (5 seconds ago).
+	// Under normal timestamp-based classification, this would be FRESH (≤ 60s).
+	// But since it's a tier-3 cache fallback (tier-1 and tier-2 failed),
+	// it must be labeled STALE, not FRESH.
+	recentTimestamp := time.Now().UTC().Add(-5 * time.Second).Format(time.RFC3339)
+	cacheQuote := &domain.PriceQuote{
+		Code:      "VCB",
+		Price:     85000,
+		Volume:    1_000_000,
+		Source:    domain.SourceCache,
+		FetchedAt: recentTimestamp,
+		LatencyMs: 2,
+	}
+
+	mod := priceresolution.New(
+		&nilFetcher{}, // T1 fails (nil)
+		&nilFetcher{}, // T2 fails (nil)
+		&mockFetcher{quote: cacheQuote}, // T3 wins with recent timestamp
+	)
+
+	got, err := mod.Resolve("VCB")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got == nil {
+		t.Fatal("got nil ResolvedQuote, want non-nil")
+	}
+
+	// Verify it's from cache (tier-3)
+	if got.Source != domain.SourceCache {
+		t.Errorf("Source: got=%q want=%q", got.Source, domain.SourceCache)
+	}
+
+	// Key assertion: even though timestamp is recent, cache fallback must NOT be FRESH
+	if got.Staleness == "FRESH" {
+		t.Errorf("Staleness: got=%q, but cache fallback must NOT be FRESH (must be STALE or EXPIRED)", got.Staleness)
+	}
+
+	// It should be STALE (not FRESH, not EXPIRED since timestamp is recent)
+	if got.Staleness != "STALE" {
+		t.Errorf("Staleness: got=%q want=STALE (cache fallback with recent timestamp)", got.Staleness)
+	}
+}
+
+// TestLiveTierFreshAllowed verifies that tier-1 or tier-2 (live tiers) CAN
+// be labeled FRESH when the timestamp is within the freshness window.
+func TestLiveTierFreshAllowed(t *testing.T) {
+	recentTimestamp := time.Now().UTC().Add(-5 * time.Second).Format(time.RFC3339)
+	liveQuote := &domain.PriceQuote{
+		Code:      "VCB",
+		Price:     85000,
+		Volume:    1_000_000,
+		Source:    domain.SourceHOSE, // Live tier source
+		FetchedAt: recentTimestamp,
+		LatencyMs: 50,
+	}
+
+	mod := priceresolution.New(
+		&mockFetcher{quote: liveQuote}, // T1 succeeds
+		&nilFetcher{},
+		&nilFetcher{},
+	)
+
+	got, err := mod.Resolve("VCB")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Live tier with recent timestamp SHOULD be FRESH
+	if got.Staleness != "FRESH" {
+		t.Errorf("Staleness: got=%q want=FRESH (live tier with recent timestamp)", got.Staleness)
+	}
+}
+
+// TestTier2LiveFreshAllowed verifies that tier-2 (live tier fallback) CAN
+// be labeled FRESH when the timestamp is within the freshness window.
+func TestTier2LiveFreshAllowed(t *testing.T) {
+	recentTimestamp := time.Now().UTC().Add(-5 * time.Second).Format(time.RFC3339)
+	liveQuote := &domain.PriceQuote{
+		Code:      "VCB",
+		Price:     85000,
+		Volume:    1_000_000,
+		Source:    domain.SourceHNX, // Tier-2 live source
+		FetchedAt: recentTimestamp,
+		LatencyMs: 80,
+	}
+
+	mod := priceresolution.New(
+		&nilFetcher{},                  // T1 fails
+		&mockFetcher{quote: liveQuote}, // T2 succeeds (live)
+		&nilFetcher{},
+	)
+
+	got, err := mod.Resolve("VCB")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify it's from T2 (HNX)
+	if got.Source != domain.SourceHNX {
+		t.Errorf("Source: got=%q want=%q", got.Source, domain.SourceHNX)
+	}
+
+	// T2 live tier with recent timestamp SHOULD be FRESH
+	if got.Staleness != "FRESH" {
+		t.Errorf("Staleness: got=%q want=FRESH (tier-2 live with recent timestamp)", got.Staleness)
+	}
+}

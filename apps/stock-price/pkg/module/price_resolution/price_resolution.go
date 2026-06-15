@@ -82,6 +82,12 @@ type ResolvedQuote struct {
 // selects the winning tier via tier-fallback-selector, and annotates the winning
 // quote with a staleness label via price-staleness-classifier.
 //
+// FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL: Staleness labeling rules:
+// - If tier-1 or tier-2 succeeds (live fetch), use timestamp-based classification.
+// - If tier-3 (cache) wins because tier-1 and tier-2 both failed, the staleness
+//   is at minimum STALE, regardless of the cached row's updated_at timestamp.
+//   FRESH requires an actual live-tier success, not a cache hit.
+//
 // Staleness annotation is best-effort: if the winning quote's FetchedAt is
 // unparseable, Staleness is set to "" and the quote is still returned (no error).
 func (m *PriceResolutionModule) Resolve(code string) (*ResolvedQuote, error) {
@@ -107,6 +113,15 @@ func (m *PriceResolutionModule) Resolve(code string) (*ResolvedQuote, error) {
 		return nil, err
 	}
 
+	// Determine which tier actually won (0=T1, 1=T2, 2=T3)
+	winningTierIndex := -1
+	for i, r := range fetched {
+		if r.Quote != nil {
+			winningTierIndex = i
+			break
+		}
+	}
+
 	// Make a copy of the winner so we don't mutate the pointer returned by infra.
 	rq := &ResolvedQuote{PriceQuote: *winner}
 
@@ -118,7 +133,14 @@ func (m *PriceResolutionModule) Resolve(code string) (*ResolvedQuote, error) {
 		m.staleThresholdSeconds,
 	)
 	if classifyErr == nil {
-		rq.Staleness = string(label)
+		// FIX-STOCK-PRICE-TIER3-CACHE-FRESH-MISLABEL: If tier-3 (cache) won,
+		// ensure staleness is at minimum STALE. FRESH requires a live-tier success.
+		if winningTierIndex == 2 && label == pricestalenessclassifier.Fresh {
+			// Cache fallback cannot be FRESH — downgrade to STALE
+			rq.Staleness = string(pricestalenessclassifier.Stale)
+		} else {
+			rq.Staleness = string(label)
+		}
 	}
 	// classifyErr ignored: unparseable FetchedAt → Staleness stays "" (not a fatal error).
 
