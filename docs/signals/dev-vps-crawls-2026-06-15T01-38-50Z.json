@@ -1,0 +1,14 @@
+{
+  "signal": "recon_complete",
+  "source_name": "nso-monthly-excel",
+  "task_id": "F-NSO-SELECTOR",
+  "recon_doc": "docs/vps-sources/nso-monthly-excel/recon.md",
+  "target_file": "apps/macro-indicators/pkg/infrastructure/cache_vmt_nso.go",
+  "timestamp": "2026-06-15T01:38:50Z",
+  "from_agent": "ops-vps-fetch",
+  "to_agent": "dev-macro-indicators",
+  "priority": "P1",
+  "anti_bot": "none",
+  "technique": "plain_curl_with_browser_ua",
+  "summary": "NSO bai-top selector stale: old regex matched relative paths, site now emits absolute URLs. New regex: href=\"(https://www\\.nso\\.gov\\.vn/bai-top/(\\d{4})/(\\d{2})/[^\"]+)\". Also: GlobalSign RSA OV SSL CA 2018 intermediate missing from VPS CA bundle — recipe in recon doc. Full 3-step chain verified live: index 200/85868B, press-release 200/114711B, xlsx HTTP 200 application/vnd.openxmlformats-officedocument.spreadsheetml.sheet."
+}

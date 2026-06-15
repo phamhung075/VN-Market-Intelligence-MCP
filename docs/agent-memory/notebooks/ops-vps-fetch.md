@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-15 05:50 UTC | **Sprint:** VPS-AVAIL-02-FIX (proxy :3128 outage)
+**Last updated:** 2026-06-15 01:38 UTC | **Sprint:** F-NSO-SELECTOR (bai-top selector stale recon)
 
 ---
 
@@ -88,6 +88,41 @@ NSO cert (`nso.gov.vn`) is issued by GlobalSign RSA OV SSL CA 2018, absent from 
 Remaining blockers (NOT proxy, need dev agent):
 1. NSO HTML scraper: `bai-top` link selector stale — HTML layout changed
 2. BOP OData filter: URL with spaces not encoded before passing to vpsFetch
+
+---
+
+## c012 · 2026-06-15T01:38Z · F-NSO-SELECTOR — NSO bai-top Selector Stale Recon
+
+Trigger: Task F-NSO-SELECTOR from orch-state board (READY, owner dev-macro-indicators). Tools `get_vn_macro_indicators` / `get_vn_trade_balance` / `get_cpi_components` returning `is_estimate=true` / `blocked_reason="NSO bai-top selector stale"`. Transport confirmed healthy (VPS proxy up; ~85867B page returned by router).
+
+**ROOT CAUSE: Absolute vs relative URL in bai-top links.**
+
+The old Go regex `href="(/bai-top/\d{4}/\d{2}/[^"]+)"` captures a relative path capture group. The live NSO site (WordPress) now emits fully absolute URLs: `href="https://www.nso.gov.vn/bai-top/2026/06/..."`. The regex matches 0 times → `extractLatestPressURL` errors → 3-step chain aborts → degraded-200.
+
+**SECONDARY ISSUE: VPS CA bundle missing GlobalSign intermediate.**
+
+`/tmp/combined_ca.pem` does not contain the GlobalSign RSA OV SSL CA 2018 intermediate. NSO server sends leaf cert only (no chain). curl exits 60. Fixed by downloading the intermediate from the AIA URL in the cert and building `/tmp/nso_ca_bundle.pem`.
+
+**LIVE PROBE RESULTS (2026-06-15T01:36:28Z via VPS SSH):**
+- Step 1 (index): `https://www.nso.gov.vn/bao-cao-tinh-hinh-kinh-te-xa-hoi-hang-thang/` → HTTP 200, 85868B
+- Step 2 (press release): `https://www.nso.gov.vn/bai-top/2026/06/bao-cao-tinh-hinh-kinh-te-xa-hoi-thang-nam-va-5-thang-dau-nam-2025-2/` → HTTP 200, 114711B
+- Step 3 (xlsx HEAD): `https://www.nso.gov.vn/wp-content/uploads/2026/06/02.-Bieu-T5.2026-final.xlsx` → HTTP 200, content-type application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+**FIX for dev-macro-indicators:**
+```go
+// Replace reBaiTop in cache_vmt_nso.go:
+var reBaiTop = regexp.MustCompile(
+    `href="(https://www\.nso\.gov\.vn/bai-top/(\d{4})/(\d{2})/[^"]+)"`)
+// extractLatestPressURL: pressURL = m[1], period = m[2]+"-"+m[3]
+// Remove secondary rePeriod regex (period now from capture groups directly).
+```
+
+CA bundle recipe: `curl http://secure.globalsign.com/cacert/gsrsaovsslca2018.crt → DER→PEM → cat ca-certificates.crt + intermediate > /tmp/nso_ca_bundle.pem`. `VPS_CACERT_PATH_NSO` must point to this file (persists only until VPS restart — add bootstrap script or Dockerfile RUN).
+
+Anti-bot: NONE. No CF, no captcha, no JS challenge. Apache + WordPress.
+
+Signal: `docs/signals/dev-vps-crawls-2026-06-15T01-38-50Z.json` → dev-macro-indicators queued.
+Recon: `docs/vps-sources/nso-monthly-excel/recon.md`
 
 ---
 
