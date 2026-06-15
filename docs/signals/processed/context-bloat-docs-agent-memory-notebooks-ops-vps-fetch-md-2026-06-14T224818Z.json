@@ -1,0 +1,15 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-14T22:48:18Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/ops-vps-fetch.md",
+    "line_count": 246,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 46,
+    "action_required": "prune_or_split"
+  }
+}
