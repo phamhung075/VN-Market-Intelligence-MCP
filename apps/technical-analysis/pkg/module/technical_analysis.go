@@ -26,6 +26,9 @@ type ComputeParams struct {
 
 // Result bundles all outputs. Any field is nil/empty when the corresponding
 // primitive errors (e.g. insufficient data) — non-fatal by design.
+//
+// MA5, MA20, MA50 are always computed at their fixed standard periods regardless
+// of MAPeriod. SMA/EMA are the parameterised single-period outputs (MAPeriod).
 type Result struct {
 	RSI          []float64
 	MACDLine     []float64
@@ -37,6 +40,10 @@ type Result struct {
 	SMA          []float64
 	EMA          []float64
 	CrossSignals []dc.CrossEvent // MACD line vs signal line crossovers
+	// Fixed-period moving averages — always computed, independent of MAPeriod.
+	MA5  []float64 // SMA(5)
+	MA20 []float64 // SMA(20)
+	MA50 []float64 // SMA(50)
 }
 
 func defaults(p ComputeParams) ComputeParams {
@@ -104,6 +111,18 @@ func Compute(closes []float64, p ComputeParams) (Result, error) {
 	}
 	if emaVals, err := ma.CalculateEMA(closes, p.MAPeriod); err == nil {
 		res.EMA = emaVals
+	}
+
+	// Fixed-period MAs — always computed independent of MAPeriod.
+	// Non-fatal: N/A when insufficient candles (e.g. MA50 needs 50 closes).
+	if ma5, err := ma.CalculateSMA(closes, 5); err == nil {
+		res.MA5 = ma5
+	}
+	if ma20, err := ma.CalculateSMA(closes, 20); err == nil {
+		res.MA20 = ma20
+	}
+	if ma50, err := ma.CalculateSMA(closes, 50); err == nil {
+		res.MA50 = ma50
 	}
 
 	// DetectCross: MACD line vs signal line. Non-nil empty slice when no cross found.

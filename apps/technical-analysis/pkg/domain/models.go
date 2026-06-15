@@ -33,4 +33,8 @@ type TechnicalIndicators struct {
 	SMA             []float64
 	EMA             []float64
 	CrossSignals    []CrossSignal // MACD line vs signal line crossovers (P1-B5g)
+	// Fixed-period standard MAs — always computed independent of the request Period.
+	MA5  []float64 // SMA(5)
+	MA20 []float64 // SMA(20)
+	MA50 []float64 // SMA(50)
 }

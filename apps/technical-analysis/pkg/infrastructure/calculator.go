@@ -46,5 +46,8 @@ func (c *TACalculator) Calculate(closes []float64, period int) (*domain.Technica
 		SMA:             res.SMA,
 		EMA:             res.EMA,
 		CrossSignals:    crossSignals,
+		MA5:             res.MA5,
+		MA20:            res.MA20,
+		MA50:            res.MA50,
 	}, nil
 }

@@ -23,4 +23,8 @@ type ComputeTAResponse struct {
 	BollingerLower  []float64 `json:"bollingerLower,omitempty"`
 	SMA             []float64 `json:"sma,omitempty"`
 	EMA             []float64 `json:"ema,omitempty"`
+	// Fixed-period standard MAs — present when sufficient data; absent (omitempty) otherwise.
+	MA5  []float64 `json:"ma5,omitempty"`
+	MA20 []float64 `json:"ma20,omitempty"`
+	MA50 []float64 `json:"ma50,omitempty"`
 }

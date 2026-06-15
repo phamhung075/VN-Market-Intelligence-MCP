@@ -57,6 +57,11 @@ func TestCompute(t *testing.T) {
 		wantSMAPopulated bool
 		wantEMAPopulated bool
 		wantCrossSlice   bool // true = CrossSignals field non-nil (possibly empty but present)
+		wantMA5          bool // true = MA5 must be populated
+		wantMA20         bool // true = MA20 must be populated
+		wantMA50         bool // true = MA50 must be populated
+		wantMA5Nil       bool // true = MA5 must be absent (< 5 closes)
+		wantMA50Nil      bool // true = MA50 must be absent (< 50 closes)
 	}{
 		{
 			name:             "happy_path_100_prices_all_fields_populated",
@@ -68,6 +73,9 @@ func TestCompute(t *testing.T) {
 			wantSMAPopulated: true,
 			wantEMAPopulated: true,
 			wantCrossSlice:   true,
+			wantMA5:          true,
+			wantMA20:         true,
+			wantMA50:         true,
 		},
 		{
 			name:   "insufficient_for_bb_but_rsi_populated",
@@ -77,11 +85,35 @@ func TestCompute(t *testing.T) {
 			// MACD(12/26/9) needs 35 — insufficient.
 			// BB(20) needs 20 — insufficient.
 			// SMA(14) needs 14 — just enough.
+			// MA5 needs 5 — present; MA20 needs 20 — absent; MA50 needs 50 — absent.
 			wantRSIPopulated: true,
 			wantMACDNil:      true,
 			wantBBNil:        true,
 			wantSMAPopulated: true,
 			wantEMAPopulated: true,
+			wantMA5:          true,
+			wantMA50Nil:      true,
+		},
+		{
+			// Regression gate: MA5 must compute on 38 candles even when MA50 cannot.
+			// Introduced for FIX-TA-GOSVC-MA5-PRECISION: MA5=N/A on 38-candle depth.
+			name: "regression_ma5_on_38_candles_ma50_na",
+			closes: func() []float64 {
+				p := make([]float64, 38)
+				for i := range p {
+					p[i] = 100.0 + float64(i)*0.5
+				}
+				return p
+			}(),
+			params:           defaultParams,
+			wantRSIPopulated: true,
+			wantMACDNil:      false,
+			wantBBNil:        false,
+			wantSMAPopulated: true,
+			wantEMAPopulated: true,
+			wantMA5:          true,  // 38 >= 5: MUST compute
+			wantMA20:         true,  // 38 >= 20: MUST compute
+			wantMA50Nil:      true,  // 38 < 50: MUST be absent
 		},
 		{
 			name:             "insufficient_for_everything_no_error",
@@ -92,6 +124,8 @@ func TestCompute(t *testing.T) {
 			wantBBNil:        true,
 			wantSMAPopulated: false,
 			wantEMAPopulated: false,
+			wantMA5:          true, // 5 closes >= 5: MA5 computes
+			wantMA50Nil:      true,
 		},
 		{
 			name:    "invalid_rsi_period_returns_error",
@@ -194,7 +228,65 @@ func TestCompute(t *testing.T) {
 				// when MACD is populated; nil = field never set.
 				t.Errorf("CrossSignals: want non-nil slice, got nil")
 			}
+			// Fixed-period MA assertions.
+			if tc.wantMA5 && len(got.MA5) == 0 {
+				t.Errorf("MA5: want populated (closes=%d >= 5), got empty", len(tc.closes))
+			}
+			if tc.wantMA5Nil && len(got.MA5) > 0 {
+				t.Errorf("MA5: want absent (closes=%d < 5), got %d elements", len(tc.closes), len(got.MA5))
+			}
+			if tc.wantMA20 && len(got.MA20) == 0 {
+				t.Errorf("MA20: want populated (closes=%d >= 20), got empty", len(tc.closes))
+			}
+			if tc.wantMA50 && len(got.MA50) == 0 {
+				t.Errorf("MA50: want populated (closes=%d >= 50), got empty", len(tc.closes))
+			}
+			if tc.wantMA50Nil && len(got.MA50) > 0 {
+				t.Errorf("MA50: want absent (closes=%d < 50), got %d elements", len(tc.closes), len(got.MA50))
+			}
 		})
+	}
+}
+
+// TestComputeMA5FixedPeriodIndependentOfMAPeriod verifies that MA5/MA20/MA50
+// are always computed from their fixed periods, regardless of MAPeriod param.
+// Regression gate for FIX-TA-GOSVC-MA5-PRECISION.
+func TestComputeMA5FixedPeriodIndependentOfMAPeriod(t *testing.T) {
+	t.Parallel()
+
+	// 38 closes: enough for MA5 (5) and MA20 (20), not enough for MA50 (50).
+	closes := make([]float64, 38)
+	for i := range closes {
+		closes[i] = 100.0 + float64(i)*0.5
+	}
+
+	// Use MAPeriod=14 (the default) — should NOT affect MA5/MA20/MA50 output.
+	res, err := module.Compute(closes, module.ComputeParams{MAPeriod: 14})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(res.MA5) == 0 {
+		t.Errorf("MA5: want populated on 38 closes (period=5), got empty — MA5 regression")
+	}
+	if len(res.MA20) == 0 {
+		t.Errorf("MA20: want populated on 38 closes (period=20), got empty")
+	}
+	if len(res.MA50) > 0 {
+		t.Errorf("MA50: want absent on 38 closes (period=50), got %d elements", len(res.MA50))
+	}
+
+	// Verify MA5 value is the SMA of the last 5 closes.
+	expectedMA5 := 0.0
+	for i := len(closes) - 5; i < len(closes); i++ {
+		expectedMA5 += closes[i]
+	}
+	expectedMA5 /= 5
+	if len(res.MA5) > 0 {
+		lastMA5 := res.MA5[len(res.MA5)-1]
+		if diff := lastMA5 - expectedMA5; diff > 1e-6 || diff < -1e-6 {
+			t.Errorf("MA5 last value: want %.6f, got %.6f", expectedMA5, lastMA5)
+		}
 	}
 }
 

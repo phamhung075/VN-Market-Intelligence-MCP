@@ -78,5 +78,8 @@ func (uc *ComputeTAUseCase) Execute(_ context.Context, req ComputeTARequest) (Co
 		BollingerLower:  indicators.BollingerLower,
 		SMA:             indicators.SMA,
 		EMA:             indicators.EMA,
+		MA5:             indicators.MA5,
+		MA20:            indicators.MA20,
+		MA50:            indicators.MA50,
 	}, nil
 }

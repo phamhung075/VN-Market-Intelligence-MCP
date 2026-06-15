@@ -104,6 +104,9 @@ export interface ComputeTAResponse {
  * Raw response shape from the Go TA service (POST /ta/indicators).
  * All indicator fields are arrays (time-series), not scalars.
  * The last element of each array is the most-recent value.
+ *
+ * ma5 / ma20 / ma50 are fixed-period SMA arrays always computed by the Go service
+ * regardless of the request `period` field.
  */
 interface TAServiceRawResponse {
   symbol?: string;
@@ -116,6 +119,10 @@ interface TAServiceRawResponse {
   bollingerLower?: number[];
   sma?: number[];
   ema?: number[];
+  // Fixed-period standard MAs — present when >=N candles available.
+  ma5?: number[];
+  ma20?: number[];
+  ma50?: number[];
 }
 
 /** Return last element of an array, or undefined if empty/absent. */
@@ -148,10 +155,13 @@ export async function computeTAIndicators(req: ComputeTARequest): Promise<Comput
   const macdValue = last(raw.macdLine);
   const macdSignal = last(raw.signalLine);
   const macdHist = last(raw.histogram);
-  const sma = last(raw.sma);
   const bbUpper = last(raw.bollingerUpper);
   const bbMiddle = last(raw.bollingerMiddle);
   const bbLower = last(raw.bollingerLower);
+  // Fixed-period MAs — read from named fields (ma5/ma20/ma50) computed by Go service.
+  const ma5 = last(raw.ma5);
+  const ma20 = last(raw.ma20);
+  const ma50 = last(raw.ma50);
 
   const mapped: ComputeTAResponse = {
     code: req.code,
@@ -162,10 +172,9 @@ export async function computeTAIndicators(req: ComputeTARequest): Promise<Comput
   }
 
   if (rsi !== undefined) mapped.rsi = rsi;
-  if (sma !== undefined) {
-    // sma array — use last for ma20 (TA service uses period 20 by default)
-    mapped.ma20 = sma;
-  }
+  if (ma5 !== undefined) mapped.ma5 = ma5;
+  if (ma20 !== undefined) mapped.ma20 = ma20;
+  if (ma50 !== undefined) mapped.ma50 = ma50;
   if (macdValue !== undefined && macdSignal !== undefined && macdHist !== undefined) {
     mapped.macd = { value: macdValue, signal: macdSignal, histogram: macdHist };
   }

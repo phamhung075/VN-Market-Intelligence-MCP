@@ -555,12 +555,42 @@ export function registerTechnicalIndicatorTools(
       }
 
       try {
-        // ── Primary: call Go TA service via HTTP (AC-2, AC-4: POST /ta/indicators) ──
-        const taResult = await computeTAIndicators({ code, days: lookbackDays });
-
-        // ── Get last close price from DB for BB position % (best-effort) ───────
+        // ── Pre-fetch closes from DB for RSI/MA candle-window alignment ─────────
+        // Passing closes to Go service ensures BOTH paths operate on identical data,
+        // eliminating the ~1pt RSI drift from calendar-window vs row-count divergence.
+        // Query mirrors Go GetCandles + TS report defaultComputeTa: ORDER BY date ASC LIMIT 60.
+        let prefetchedCloses: number[] | undefined;
         let lastPrice: number | null = null;
         if (resolvedDb) {
+          try {
+            const candleRows = resolvedDb.query<CandleRow, [string]>(
+              `SELECT date AS day, close AS close_price
+                 FROM daily_ohlcv
+                WHERE code = ?
+                  AND close > 0
+                ORDER BY date ASC
+                LIMIT 60`,
+            ).all(code);
+            if (candleRows.length > 0) {
+              prefetchedCloses = candleRows.map((r) => r.close_price);
+              lastPrice = candleRows[candleRows.length - 1]!.close_price;
+            }
+          } catch {
+            // DB unavailable — Go service will use its own DB fetch
+          }
+        }
+
+        // ── Primary: call Go TA service via HTTP (AC-2, AC-4: POST /ta/indicators) ──
+        const taResult = await computeTAIndicators(
+          prefetchedCloses !== undefined
+            ? { code, days: lookbackDays, closes: prefetchedCloses }
+            : { code, days: lookbackDays },
+        );
+
+        // ── Get last close price from DB for BB position % (best-effort) ───────
+        // Already fetched above via prefetchedCloses; do a single-row fallback only
+        // if prefetch missed (DB was unavailable during prefetch).
+        if (lastPrice === null && resolvedDb) {
           try {
             const row = resolvedDb.query<{ close_price: number }, [string]>(
               `SELECT close AS close_price FROM daily_ohlcv
