@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T05:31:17Z",
+  "_updated_at": "2026-06-15T05:43:42Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,16 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T05:10:56Z",
+    "updated_at": "2026-06-15T05:43:42Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-RSI-REPORT-FAILCLOSED",
-    "next_agent": "dev-technical-analysis",
-    "note": "DEV-TEAM TICK 2026-06-15 — FIX-NSO-TRADE-VALUE-SCALE DONE_VERIFIED (router LIVE RAW re-probe 05:09:25Z, NOT badge): get_vn_trade_balance now PLAUSIBLE — June export 46929mn/import 52141mn/balance -5212mn, monthly<=YTD both sides, HS mix matches real VN structure, is_estimate=false. Prior 212000mn corruption GONE. Root = col3-not-col2 + TỔNG-TRỊ-GIÁ-total-row + Triệu-USD-no-x1000 (commit 7a3da0df) + plausibility guard test. macro-indicators force-recreated healthy. === BOTH user-flagged + value-accuracy fixes now done_verified this tick: FIX-STOCK-PRICE-SCALE-CORRUPT (3035e298) + FIX-NSO-TRADE-VALUE-SCALE (7a3da0df). === NEXT: (1) batch-push HEAD (5 ahead of origin: 3035e298 + 16a7d8d4 + 7a3da0df + 2dc437d8 + d49/d50 board) — PO-authorized CI push; WATCH GitHub Actions run to conclusion=success on SHA != RED before fully closing the CI gate. (2) dispatch FIX-RSI-REPORT-FAILCLOSED (READY, dev-technical-analysis) — report RSI path not fail-closed on <15 candles; confirm RSI source first. === KNOWN-DEGRADED (flagged, not blocking): trade bloc_split FDI 0% is_estimate=true (Customs SPA inaccessible). OBS: daily_ohlcv ~6 candles -> indicators N/A until backfill deepens (flag PO). SF-1 held until clean tick-end.",
-    "ci_green_confirm": {
-      "sha": "982323cc",
-      "run": "27525824355",
-      "note": "full CI suite SUCCESS downstream of FIX-STOCK-PRICE(3035e298)+FIX-NSO(7a3da0df); earlier 25d20eec/89aaa639 reds were flaky (disjoint failure sets, none on changed files)"
-    }
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "DEV-TEAM TICK 2026-06-15 — FIX-RSI-REPORT-FAILCLOSED DONE_VERIFIED (router LIVE RAW re-probe in rebuilt container 05:37-05:41Z, NOT badge): the MARKET-report RSI path (defaultComputeTa) now emits PLAUSIBLE RSI on real 38-candle depth (VRE 39.52/VIC 35.09/VHM 36.73, NO single-digit) and fail-closes <15 (test-locked); user-flagged 'RSI bad calcul' (VRE 10.3/VIC 7.4/VHM 9.8) FULLY RESOLVED. Root = removed adaptive period, fixed 14 + guard <15 (ed77b9b0); mcp-server force-recreated (ops 'no rebuild' badge was WRONG — corrected). === ALL 3 user-flagged + accuracy fixes now done_verified this arc: FIX-STOCK-PRICE-SCALE-CORRUPT (3035e298) + FIX-NSO-TRADE-VALUE-SCALE (7a3da0df) + FIX-RSI-REPORT-FAILCLOSED (ed77b9b0). === NEW FOLLOW-ON minted READY: FIX-TA-GOSVC-NA-DESPITE-DEPTH — canonical get_technical_indicators (Go TA svc) returns N/A despite 38 candles in the SAME market.db the report path reads (RSI 39.5); separate Go-svc under-read, does NOT affect user report. PO triage next tick. === NEXT: push HEAD (now 3 ahead w/ board commit) — watch CI green on non-RED SHA (flaky-suite aware). SF-1 release at clean tick-end. Harness: scripts/verify-report-rsi-failclose.ts."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -595,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T05:31:17Z",
+    "_updated_at": "2026-06-15T05:43:42Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13780,6 +13775,22 @@
         "done_commit": "7a3da0df",
         "rebuild_image": "sha256:da5e59bce8229d363d30a38a9592bcbd985f5ccbc4b6ad416b7e6cda7a8beeff",
         "live_verify_verdict": "LIVE-VERIFIED (router independent gateway call_tool re-probe get_vn_trade_balance fetched_at 2026-06-15T05:09:25Z, NOT dev badge): status=ok period 2026-06; export_total 46929mn ($46.9bn), import_total 52141mn ($52.1bn), trade_balance -5212mn (-$5.2bn, sane near-balance deficit); export_ytd 215656mn, import_ytd 229464mn — monthly<=YTD holds BOTH sides; export_yoy 118%, import_yoy 133.8% (import surge internally explains the deficit). HS structure matches real VN export mix (Điện tử 13.394bn, Điện thoại 5.089bn, Máy móc 6.040bn, Dệt may 3.189bn, Giày dép 2.142bn); core is_estimate=false; source NSO Excel 14.XK+15.NK+12.FDI. PLAUSIBILITY PASS — the prior corruption (June import 212000mn = 59% of YTD 358000mn; -138000mn/mo balance) is GONE. ROOT FIX (7a3da0df): col3(Trị giá) not col2(Lượng); 'TỔNG TRỊ GIÁ' total row not blank-col0 sub-item; Triệu-USD direct (no x1000); col9 strconv.ParseFloat; + plausibility guard test (monthly<=YTD, [5000,200000]mn, |balance|<=50000). 14 new trade tests GREEN, G12 primitive 18/18 + module 2/2, go vet/build clean. macro-indicators force-recreated (image sha256:da5e59bc, Up healthy). KNOWN-DEGRADED (out of scope, flagged): bloc_split FDI share 0% is_estimate=true — Customs SPA inaccessible; core XK/NK figures unaffected. Lock release ok:false (rebuild-orphaned owner_session, LET-EXPIRE)."
+      },
+      {
+        "id": "FIX-RSI-REPORT-FAILCLOSED",
+        "type": "FIX",
+        "title": "FIX-RSI-REPORT-FAILCLOSED — MARKET-report RSI path emits values on <15 candles",
+        "zone": "apps/mcp-server/src/application/usecases/",
+        "owner": "dev-technical-analysis",
+        "status": "done_verified",
+        "commit": "ed77b9b0",
+        "completed_at": "2026-06-15T05:31:17Z",
+        "status_note": "Implementation complete. Root: assembleBriefing.ts:defaultComputeTa used Math.min(14,rows.length-1) adaptive period → RSI on 8+ candles with reduced period (VRE RSI 10.3 / VIC 7.4 / VHM 9.8 bug class). Fix: period fixed at 14, guard raised <8→<15. Matches canonical get_technical_indicators. 9 TCs in FIX-RSI-REPORT-FAILCLOSED.test.ts green. tsc clean, 12940 pass. REBUILD_REQUIRED: no. Router re-probe needed.",
+        "done_verified_at": "2026-06-15T05:43:42Z",
+        "done_verified_by": "dev-team",
+        "done_commit": "ed77b9b0",
+        "rebuild_image": "sha256:d53c41f897a5f30247706475713e73f3732a9801f0cb2a6e2509ef61acbc8912",
+        "live_verify_verdict": "LIVE-VERIFIED (router independent re-probe 2026-06-15T05:37-05:41Z in REBUILT container image sha256:d53c41f8 @05:35:36Z, NOT dev badge; ops 'REBUILD_REQUIRED:no' was WRONG — baked image, force-recreated): REPORT PATH defaultComputeTa (the MARKET-report RSI source feeding morning/evening/France briefings) now yields PLAUSIBLE RSI on real depth — VRE 39.52, VIC 35.09, VHM 36.73, FPT 48.72, VCB 46.51, HPG 38.62, VNM 48.15 — all mid-band, NO single-digit, on 38 real contiguous daily_ohlcv candles. Root fix (ed77b9b0): removed adaptive Math.min(14,rows.length-1) period, fixed at 14, guard <8-><15 (fail-close), identical period-14 math to canonical localComputeRSI (report==canonical for >=15 test-locked). 18/18 affected tests green, tsc EXIT=0. USER-FLAGGED single-digit RSI (VRE 10.3/VIC 7.4/VHM 9.8) RESOLVED. HONEST GATE NOTE: the 'report agrees with canonical' sub-clause is currently DIVERGENT — canonical get_technical_indicators (Go TA svc) returns N/A for these same tickers despite the SAME named-volume market.db holding 38 candles; this is a SEPARATE Go-svc under-read defect, not a flaw in this report-path fix -> follow-on FIX-TA-GOSVC-NA-DESPITE-DEPTH minted. LIVE-verify harness persisted: scripts/verify-report-rsi-failclose.ts."
       }
     ],
     "head": {
@@ -14086,6 +14097,27 @@
         "created_by": "po",
         "triaged_by": "po",
         "status_note": "DONE + done_verified (flow-doc, no rebuild)."
+      },
+      {
+        "id": "FIX-TA-GOSVC-NA-DESPITE-DEPTH",
+        "type": "FIX",
+        "title": "FIX-TA-GOSVC-NA-DESPITE-DEPTH — get_technical_indicators (Go TA svc) returns RSI/MA/BB N/A for VRE/VIC/VHM despite 38 real daily_ohlcv candles in the SAME named-volume market.db the mcp-server report path reads fine (RSI 39.5)",
+        "zone": "apps/technical-analysis/",
+        "owner": "dev-technical-analysis",
+        "owner_agent": "dev-technical-analysis",
+        "status": "READY",
+        "priority": "high",
+        "size": "M",
+        "recon_first": true,
+        "root_cause": "canonical get_technical_indicators PRIMARY path calls the Go TA svc via computeTAIndicators (HTTP POST /ta/indicators). LIVE 2026-06-15T05:37Z that svc returned RSI(14) N/A '(can toi thieu 15 nen)', MA20/BB20 N/A (needs 20), MACD N/A (needs 34) for VRE/VIC/VHM => the Go svc sees <15 candles. BUT the Go svc container (vn-market-intelligence-mcp-technical-analysis-1, DB_PATH=/app/data/market.db) mounts the SAME named volume vn-market-intelligence-mcp_market_data as mcp-server (identical 290MB file+mtime) whose daily_ohlcv holds 38 real contiguous VRE candles (Apr23..Jun15). The mcp-server report path defaultComputeTa reads those 38 and computes RSI 39.52. Same DB, divergent rowcount => the bug is in apps/technical-analysis SQLitePriceRepository query/logic (wrong table? extra DISTINCT/JOIN? date filter? code/symbol+exchange-suffix mismatch? stale prepared-stmt schema?) OR in the computeTAIndicators HTTP request params (days window, symbol formatting). RECON-FIRST to locate which.",
+        "fix_spec": "RECON: (a) curl the Go svc /ta/indicators for VRE directly and inspect the candle count it loaded; (b) read apps/technical-analysis/pkg/infrastructure/repositories.go SQLitePriceRepository — confirm it SELECTs daily_ohlcv WHERE code=? (matching the report path) and count rows for VRE; identify the filter/JOIN/symbol-format that drops 38-><15. THEN make the Go svc read the same 38 candles the report path reads, so get_technical_indicators(VRE) returns RSI ~39.5 (== report path). GENERIC across all watchlist tickers (/goal#2). Add a Go test: a ticker with 38 daily_ohlcv rows yields a non-null RSI, not N/A.",
+        "verification_gate": "LIVE: get_technical_indicators(VRE/VIC/VHM) returns a plausible RSI (~35-40, matching the mcp-server report path defaultComputeTa) NOT N/A; both paths agree (same value, both on the 38-candle daily_ohlcv). Re-run scripts/verify-report-rsi-failclose.ts + cross-check the canonical tool.",
+        "baseline_pass": "ed77b9b0",
+        "source": "router LIVE RAW re-probe 2026-06-15T05:37-05:41Z during FIX-RSI-REPORT-FAILCLOSED done_verify — report path fixed but canonical (Go svc) diverges on same-DB depth",
+        "created_at": "2026-06-15T05:43:42Z",
+        "created_by": "dev-team",
+        "triaged_by": "dev-team",
+        "status_note": "Follow-on peeled from FIX-RSI-REPORT-FAILCLOSED LIVE verify. Distinct zone (Go TA svc). Canonical-tool depth under-read; does NOT affect the user MARKET report (which uses the now-fixed mcp-server report path). Next-tick dispatch after PO triage. Confirm Go-svc DB query first."
       }
     ],
     "review": [
@@ -14107,17 +14139,6 @@
         "updated_by": "architect",
         "zone": "multi",
         "zone_block_reason": "zone:multi touches apps/mcp-server/, which is serialized + HELD by EVIDENCE-ACCUM-SILENT-CRON until ~2026-06-13T16:00Z. Re-adjudicate for pm-handoff after the 16:00 evidenceAccumulatorJob gate lands + zone releases."
-      },
-      {
-        "id": "FIX-RSI-REPORT-FAILCLOSED",
-        "type": "FIX",
-        "title": "FIX-RSI-REPORT-FAILCLOSED — MARKET-report RSI path emits values on <15 candles",
-        "zone": "apps/mcp-server/src/application/usecases/",
-        "owner": "dev-technical-analysis",
-        "status": "REVIEW",
-        "commit": "ed77b9b0",
-        "completed_at": "2026-06-15T05:31:17Z",
-        "status_note": "Implementation complete. Root: assembleBriefing.ts:defaultComputeTa used Math.min(14,rows.length-1) adaptive period → RSI on 8+ candles with reduced period (VRE RSI 10.3 / VIC 7.4 / VHM 9.8 bug class). Fix: period fixed at 14, guard raised <8→<15. Matches canonical get_technical_indicators. 9 TCs in FIX-RSI-REPORT-FAILCLOSED.test.ts green. tsc clean, 12940 pass. REBUILD_REQUIRED: no. Router re-probe needed."
       }
     ],
     "qa": [],
