@@ -187,13 +187,12 @@ Checker script must use `head -3` not `head -1` for size-justification presence 
 - .claude/skills/{dispatch-claim,task-lock,token-economy}/SKILL.md use `# Skill:` header not `---` → STYLE-SKILL-FRONTMATTER-ALIGN (deferred category, long-standing)
 - Lesson: SKILL.md files split into two styles (frontmatter vs `# Skill:` header); both categories long-established pre-pass-1; not new drift
 
-## c298 · 2026-06-13T09:10Z — FU-ORPHAN-AUDIT-JOIN-FIX
+## c300 · 2026-06-15 — FIX-CHEF-INTRADAY-MARKER-CADENCE
 
-- Task: Fix C-08 orphan-audit query JOIN in system-auditor flow (docs/agents/system-auditor/flow/main.md line 463).
-- Root cause: `ON a.id = s.id` joined alerts.id (TEXT/UUID) to agent_signals.id (INTEGER autoincrement) — SQLite never coerces TEXT↔INT, so every alert reported as orphaned permanently.
-- Fix: Changed to `ON a.id = s.alert_id` — both TEXT, correct correlation column (shipped by FIX-ALERT-ORPHAN-CORRELATION commit 7cbca67a).
-- AC2 gate: agent-md-factory skill invoked pre-edit (P-1 thru P-6 all clear — unique occurrence, no YAML frontmatter, no circular dep, no duplication).
-- AC3 live probe: OLD broken query → 105 orphans; NEW corrected query → 104. Diff of 1 = qa-gate3 probe signal that genuinely matches via alert_id, proving join now works. 104 real unmatched alerts (alert_id population only started post-7cbca67a — expected).
-- AC4: blocks_metric tier3-orphan-delta-long-watch cleared on board row.
-- AC5: no container rebuild — flow .md only, zone docs/agents/system-auditor/ isolated from apps/mcp-server/.
-- Board: FU-ORPHAN-AUDIT-JOIN-FIX READY→REVIEW.
+- Task: Edit chef.md Step 0.5 — cadence-derived publish marker key + TTL (surgical flow-doc fix).
+- Root cause: single marker key `published:SLOT:DATE` with 28h TTL blocked every intraday tick after the first; chef-intraday (cron 13 2-8 * * 1-5, 7 fires/day) could only publish once/day.
+- Fix: generic cadence detection from cowork-schedule.json cron field. Multi-fire (hour field is range/list/step) → per-window key `published:SLOT:DATE:HOUR`, TTL=3600. Single-fire → per-date key, TTL=100800 (unchanged, ARCH-DECIDE-D).
+- No slot name hardcoded — any future multi-fire slot is automatically correct.
+- Verified: chef-morning/eod/evening single-fire (fixed hour field) → unchanged behavior. chef-intraday multi-fire (hour field "2-8") → hourly window marker.
+- Files modified: 1 (docs/agents/unified-agent/flow/chef.md; size-justification updated 350L→391L).
+- No container rebuild required (flow-doc only).

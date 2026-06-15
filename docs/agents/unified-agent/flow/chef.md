@@ -1,4 +1,4 @@
-<!-- size-justification: 350L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13 -->
+<!-- size-justification: 391L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5; Step 0.5 published-marker gate added FIX-COWORK-GUARANTEED-BACKSTOP AC-5 2026-06-13; Step 0.5 cadence-derived marker key+TTL FIX-CHEF-INTRADAY-MARKER-CADENCE 2026-06-15 -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -35,22 +35,50 @@ Input: `$DISH_TYPE` = `morning` | `intraday` | `eod` | `evening`
      that bypass the cowork-team dispatcher. This gate is the ONLY dedup defence when both
      Layer-A and Layer-B fire the same slot concurrently.
      Pattern source: docs/agents/cowork-team/flow/spawn-fanout.md § Published marker gate (FR-P2-7) -->
+<!-- FIX-CHEF-INTRADAY-MARKER-CADENCE: marker key + TTL derive from slot cadence so that any
+     multi-fire slot (fires >1x/day) gets a per-window marker instead of a per-date one.
+     Detection: read the slot's cron from docs/data/cowork-schedule.json; if the hour field
+     is a range or list (e.g. "2-8") the slot is multi-fire; a single fixed hour is single-fire.
+     Rule is generic — no slot name is hardcoded. -->
 
 Determine the slot being executed from the invocation prompt (`slot=<slot_id>`).
 
 ```
-SLOT_ID  = <slot_id from prompt>   # e.g. chef-morning | chef-eod | chef-evening
+SLOT_ID   = <slot_id from prompt>   # e.g. chef-morning | chef-eod | chef-evening | chef-intraday
 WORK_DATE = TZ="Asia/Ho_Chi_Minh" date +%Y-%m-%d   # VN date GMT+7
+VN_HOUR   = TZ="Asia/Ho_Chi_Minh" date +%H          # VN hour (00-23) of the current tick
+
+# Derive cadence from cowork-schedule.json
+SLOT_RECORD   = jq --arg s "$SLOT_ID" '.slots[] | select(.slot_id == $s)' docs/data/cowork-schedule.json
+CRON_EXPR     = SLOT_RECORD.cron                     # e.g. "13 2-8 * * 1-5" or "15 5 * * 1-5"
+CRON_HOUR_FLD = CRON_EXPR.split(" ")[1]              # second cron field = hour
+
+# A single fixed integer → single-fire (one window/day)
+# A range (contains "-"), a list (contains ","), or a step (contains "/") → multi-fire
+IS_MULTI_FIRE = CRON_HOUR_FLD contains "-" OR contains "," OR contains "/"
+
+if IS_MULTI_FIRE:
+  # Per-window key: each hourly (or sub-hourly) window owns its own marker
+  # TTL = cadence of the slot in seconds (hourly slot → 3600s, so next window is free)
+  # Cadence = 3600 for any range-hour slot; adjust if a future slot has a different step
+  CRON_MIN_FLD  = CRON_EXPR.split(" ")[0]            # first field = minute (or step)
+  CADENCE_SEC   = 3600   # default: hourly (range-hour slots); override here if step differs
+  MARKER_KEY    = "published:" + SLOT_ID + ":" + WORK_DATE + ":" + VN_HOUR
+  MARKER_TTL    = CADENCE_SEC
+else:
+  # Single-fire: per-date key with 28h TTL covers the full day (ARCH-DECIDE-D)
+  MARKER_KEY    = "published:" + SLOT_ID + ":" + WORK_DATE
+  MARKER_TTL    = 100800   # 28h
 
 PUBLISH_CLAIM = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "published:" + SLOT_ID + ":" + WORK_DATE,
+  task_id:     MARKER_KEY,
   task_kind:   "cowork-slot",
   owner_agent: "unified-agent",
-  ttl_seconds: 100800    # 28h — daily slot (ARCH-DECIDE-D)
+  ttl_seconds: MARKER_TTL
 })
 
 if PUBLISH_CLAIM.claimed != true:
-  log "[chef] publish blocked — already published slot=" + SLOT_ID + " date=" + WORK_DATE
+  log "[chef] publish blocked — already published slot=" + SLOT_ID + " key=" + MARKER_KEY
   EXIT with: "DONE: duplicate-publish blocked | PIPELINE: complete | QUALITY: full"
 ```
 
