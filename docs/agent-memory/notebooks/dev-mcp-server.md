@@ -14,6 +14,20 @@ bun test (kinhdich suite): 130 pass / 0 fail. tsc --noEmit: clean. Full-suite ex
 
 Zone health: bun test kinhdich 130/0, 164 tools (get_market_hexagram restored), tsc clean | HEALTHY
 
+## 2026-06-15 · SSOT-RECONCILE-TOOLCOUNT-TRIAD-HEXAGRAM
+
+**Task:** SSOT-RECONCILE-TOOLCOUNT-TRIAD-HEXAGRAM | Priority: hygiene | Zone: docs/data/ SSOTs
+
+**Methodology:** Live count = grep -rn 'server\.tool(' apps/mcp-server/src/interface/mcp/tools/ --include='*.ts' (no .bak, no _server deregistered pattern found) = 163 + grep -rn 'server\.registerTool(' = 1 (sequential_market_analysis) → **164 total**. get_market_hexagram confirmed registered at kinhDichTools.ts:528.
+
+**Root cause:** Commit 89a3aaad that reconciled 156→164 only updated `live_evidence` probe string in system-map.json, did NOT append `get_market_hexagram` to the actual `tools[]` array. system-map tools[] was at 163 while project-stats + tool-registry were both at 164.
+
+**Fix:** Appended `"get_market_hexagram"` to system-map.json tools[] array (alphabetically between `get_market_foreign_flow` and `get_market_message_digest`). Bumped system-map lastUpdated to 2026-06-15. No changes to project-stats.json or tool-registry.json (both already correct at 164).
+
+**3-way proof:** system-map tools[].length=164 ✓ | tool-registry.totalCount=164 ✓ | project-stats.toolCount=164 ✓ | get_market_hexagram in system-map tools[]: 1 ✓
+
+Zone health: system-map tools[]=164, all 3 SSOTs agree, get_market_hexagram consistent | HEALTHY
+
 ## 2026-06-15 · CI-RED-d20468c0-FIX — 8 failing tests fixed across 4 files
 
 **Task:** CI-RED-d20468c0-FIX | Priority: HIGH | Zone: apps/mcp-server/src/__tests__/

@@ -10,7 +10,7 @@
     ".claude/skills/telegram-channel-routing/SKILL.md",
     "docs/data/stock-classification.json#watchlist"
   ],
-  "lastUpdated": "2026-06-09",
+  "lastUpdated": "2026-06-15",
   "project": {
     "name": "vn-market-intelligence",
     "microservices": [
@@ -94,6 +94,7 @@
           "get_market_cap",
           "get_market_context",
           "get_market_foreign_flow",
+          "get_market_hexagram",
           "get_market_message_digest",
           "get_market_snapshot",
           "get_market_summary",
