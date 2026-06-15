@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T05:04:44Z",
+  "_updated_at": "2026-06-15T05:10:56Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -110,12 +110,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-15T05:04:44Z",
+    "status": "active",
+    "updated_at": "2026-06-15T05:10:56Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-NSO-TRADE-VALUE-SCALE",
-    "next_agent": "dev-macro-indicators",
-    "note": "DEV-TEAM TICK 2026-06-15 — FIX-STOCK-PRICE-SCALE-CORRUPT DONE_VERIFIED (router LIVE RAW re-probe 05:02Z): user-flagged 'RSI bad calc' ROOT = 2026-06-12 price candle stored 1000x low for high-priced tickers (VIC 195.5->195,500; VHM 138.7->138,700; VJC repaired) crashing RSI to single digits. Fix = ohlcvUnitGuard prevClose ratio-guard (generic) + DB backfill + tests; commit 3035e298; mcp-server force-recreated healthy. LIVE: all closes full-VND, no -99.9%/+98570% artifacts; get_technical_indicators RSI N/A correctly fail-closed. Single-digit RSI in the REPORT is the report path -> FIX-RSI-REPORT-FAILCLOSED (READY, next dispatch). OBS: daily_ohlcv only ~6 candles deep -> indicators N/A until backfill grows (flag PO, not blocking). === STILL RUNNING: FIX-NSO-TRADE-VALUE-SCALE (dev-macro-indicators a758f56258db26a32) — head active here; HOLD board commit of macro outcome until it returns (don't sweep in-flight parsers_vmt_trade.go). === SF-1 held. NEXT: verify macro LIVE (get_vn_trade_balance plausibility), then FIX-RSI-REPORT-FAILCLOSED."
+    "active_task_id": "FIX-RSI-REPORT-FAILCLOSED",
+    "next_agent": "dev-technical-analysis",
+    "note": "DEV-TEAM TICK 2026-06-15 — FIX-NSO-TRADE-VALUE-SCALE DONE_VERIFIED (router LIVE RAW re-probe 05:09:25Z, NOT badge): get_vn_trade_balance now PLAUSIBLE — June export 46929mn/import 52141mn/balance -5212mn, monthly<=YTD both sides, HS mix matches real VN structure, is_estimate=false. Prior 212000mn corruption GONE. Root = col3-not-col2 + TỔNG-TRỊ-GIÁ-total-row + Triệu-USD-no-x1000 (commit 7a3da0df) + plausibility guard test. macro-indicators force-recreated healthy. === BOTH user-flagged + value-accuracy fixes now done_verified this tick: FIX-STOCK-PRICE-SCALE-CORRUPT (3035e298) + FIX-NSO-TRADE-VALUE-SCALE (7a3da0df). === NEXT: (1) batch-push HEAD (5 ahead of origin: 3035e298 + 16a7d8d4 + 7a3da0df + 2dc437d8 + d49/d50 board) — PO-authorized CI push; WATCH GitHub Actions run to conclusion=success on SHA != RED before fully closing the CI gate. (2) dispatch FIX-RSI-REPORT-FAILCLOSED (READY, dev-technical-analysis) — report RSI path not fail-closed on <15 candles; confirm RSI source first. === KNOWN-DEGRADED (flagged, not blocking): trade bloc_split FDI 0% is_estimate=true (Customs SPA inaccessible). OBS: daily_ohlcv ~6 candles -> indicators N/A until backfill deepens (flag PO). SF-1 held until clean tick-end."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,7 +590,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T05:04:44Z",
+    "_updated_at": "2026-06-15T05:10:56Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -13744,6 +13744,37 @@
         "done_commit": "3035e298",
         "rebuild_image": "ae7b3389b595",
         "live_verify_verdict": "LIVE-VERIFIED (router independent gateway call_tool re-probe 2026-06-15T05:02Z, NOT dev badge): get_price_history VIC 06-12 close=195,500 (was 195.5), VHM 138,700 (was 138.7), VJC 180,800 — all full-VND (137k-196k band), every day-over-day move within sane band, NO -99.90%/+98570% artifacts (the fake crash/rebound that cratered RSI is GONE). 39/45 corrupt rows repaired, 6 penny-stock rows correctly skipped, 0 suspect remaining. get_technical_indicators VIC+FPT RSI(14)=N/A correctly fail-closed (daily_ohlcv ~6 candles). Root fix = detectAndNormalizeScaleFromPrevClose() in ohlcvUnitGuard.ts (ratio>=50 vs prevClose -> x1000 whole-row, generic /goal#2) + repair-ohlcv-scale-corruption.ts backfill; integrated in taOhlcvBackfillJob.ts; 28 unit + 45 CONTAM tests green; tsc clean. Commit 3035e298; mcp-server force-recreated (image ae7b3389b595, Up healthy). ZONE NOTE: applied in apps/mcp-server (ingestion) not apps/stock-price (Go svc only READS daily_ohlcv) — root-correct. RSI single-digit in MARKET report is the report path -> FIX-RSI-REPORT-FAILCLOSED (queued). OBS (not blocking): daily_ohlcv depth ~6 candles -> all indicators N/A until backfill deepens; flag to PO."
+      },
+      {
+        "id": "FIX-NSO-TRADE-VALUE-SCALE",
+        "type": "FIX",
+        "title": "FIX-NSO-TRADE-VALUE-SCALE — get_vn_trade_balance VALUES implausible after sheet-selection fix (June import 212000mn = 59% of YTD 358000mn; -138000mn/mo balance): column/row/unit misparse on selected NSO sheets",
+        "zone": "apps/macro-indicators/",
+        "owner": "dev-macro-indicators",
+        "owner_agent": "dev-macro-indicators",
+        "status": "done_verified",
+        "priority": "high",
+        "size": "M",
+        "recon_first": true,
+        "root_cause": "FIX-NSO-TRADE-SHEET (4c2fcb5c) correctly SELECTS export/import/FDI sheets by A1-header content -> data flows. But the VALUE parse (row/column/unit mapping in parsers_vmt_trade.go) yields impossible magnitudes: June import 212000mn ($212bn) vs full-half-year-YTD 358000mn; June export 74000mn vs YTD 529000mn (529bn YTD > VN full-year-2025 ~405bn); balance -138000mn/month (VN ~near-balance). Likely reads a cumulative/total-of-totals row, wrong column (luy ke vs thang), or a unit-scale error (nghin/trieu/ty).",
+        "fix_spec": "RECON-FIRST: inspect the SELECTED sheets' actual cell grid — locate the correct CURRENT-MONTH export/import cells (vs YTD/cumulative columns) + the unit row; cross-check parsed monthly figure against plausible band (VN monthly export/import ~30-40bn USD). THEN fix row/column/unit mapping in parsers_vmt_trade.go. Add a relationship/plausibility guard test (monthly<=YTD; |balance| within sane band), fail-loud on out-of-band. Generic /goal#2.",
+        "verification_gate": "get_vn_trade_balance returns plausible monthly export/import (each ~tens of bn USD, monthly<=YTD, balance within sane band) LIVE post-rebuild.",
+        "baseline_pass": "4c2fcb5c",
+        "source": "router LIVE re-probe 04:07:26Z (FIX-NSO-TRADE-SHEET done_verified WITHHELD on value implausibility)",
+        "created_at": "2026-06-15T04:33:55Z",
+        "created_by": "dev-team",
+        "triaged_by": "dev-team",
+        "status_note": "IMPL DONE: col3/col6/col9 column fix + TỔNG TRỊ GIÁ total-row detection + strconv.ParseFloat for YoY% + no-x1000 unit + plausibility guard. Commit 7a3da0df. Live probe: export=46929, import=52141, balance=-5212 M USD. REBUILD_REQUIRED: done (image sha256:da5e59b...). Awaiting router live RAW re-probe.",
+        "dispatched_to": "dev-macro-indicators",
+        "dispatched_at": "2026-06-15T04:47:45Z",
+        "dispatch_note": "recon-first value/unit misparse on selected NSO trade sheets; SERIALIZE on parsers_vmt_trade.go",
+        "impl_commit": "7a3da0df",
+        "image_sha": "sha256:da5e59bce8229d363d30a38a9592bcbd985f5ccbc4b6ad416b7e6cda7a8beeff",
+        "done_verified_at": "2026-06-15T05:10:56Z",
+        "done_verified_by": "dev-team",
+        "done_commit": "7a3da0df",
+        "rebuild_image": "sha256:da5e59bce8229d363d30a38a9592bcbd985f5ccbc4b6ad416b7e6cda7a8beeff",
+        "live_verify_verdict": "LIVE-VERIFIED (router independent gateway call_tool re-probe get_vn_trade_balance fetched_at 2026-06-15T05:09:25Z, NOT dev badge): status=ok period 2026-06; export_total 46929mn ($46.9bn), import_total 52141mn ($52.1bn), trade_balance -5212mn (-$5.2bn, sane near-balance deficit); export_ytd 215656mn, import_ytd 229464mn — monthly<=YTD holds BOTH sides; export_yoy 118%, import_yoy 133.8% (import surge internally explains the deficit). HS structure matches real VN export mix (Điện tử 13.394bn, Điện thoại 5.089bn, Máy móc 6.040bn, Dệt may 3.189bn, Giày dép 2.142bn); core is_estimate=false; source NSO Excel 14.XK+15.NK+12.FDI. PLAUSIBILITY PASS — the prior corruption (June import 212000mn = 59% of YTD 358000mn; -138000mn/mo balance) is GONE. ROOT FIX (7a3da0df): col3(Trị giá) not col2(Lượng); 'TỔNG TRỊ GIÁ' total row not blank-col0 sub-item; Triệu-USD direct (no x1000); col9 strconv.ParseFloat; + plausibility guard test (monthly<=YTD, [5000,200000]mn, |balance|<=50000). 14 new trade tests GREEN, G12 primitive 18/18 + module 2/2, go vet/build clean. macro-indicators force-recreated (image sha256:da5e59bc, Up healthy). KNOWN-DEGRADED (out of scope, flagged): bloc_split FDI share 0% is_estimate=true — Customs SPA inaccessible; core XK/NK figures unaffected. Lock release ok:false (rebuild-orphaned owner_session, LET-EXPIRE)."
       }
     ],
     "head": {
@@ -14074,32 +14105,6 @@
       }
     ],
     "review": [
-      {
-        "id": "FIX-NSO-TRADE-VALUE-SCALE",
-        "type": "FIX",
-        "title": "FIX-NSO-TRADE-VALUE-SCALE — get_vn_trade_balance VALUES implausible after sheet-selection fix (June import 212000mn = 59% of YTD 358000mn; -138000mn/mo balance): column/row/unit misparse on selected NSO sheets",
-        "zone": "apps/macro-indicators/",
-        "owner": "dev-macro-indicators",
-        "owner_agent": "dev-macro-indicators",
-        "status": "review",
-        "priority": "high",
-        "size": "M",
-        "recon_first": true,
-        "root_cause": "FIX-NSO-TRADE-SHEET (4c2fcb5c) correctly SELECTS export/import/FDI sheets by A1-header content -> data flows. But the VALUE parse (row/column/unit mapping in parsers_vmt_trade.go) yields impossible magnitudes: June import 212000mn ($212bn) vs full-half-year-YTD 358000mn; June export 74000mn vs YTD 529000mn (529bn YTD > VN full-year-2025 ~405bn); balance -138000mn/month (VN ~near-balance). Likely reads a cumulative/total-of-totals row, wrong column (luy ke vs thang), or a unit-scale error (nghin/trieu/ty).",
-        "fix_spec": "RECON-FIRST: inspect the SELECTED sheets' actual cell grid — locate the correct CURRENT-MONTH export/import cells (vs YTD/cumulative columns) + the unit row; cross-check parsed monthly figure against plausible band (VN monthly export/import ~30-40bn USD). THEN fix row/column/unit mapping in parsers_vmt_trade.go. Add a relationship/plausibility guard test (monthly<=YTD; |balance| within sane band), fail-loud on out-of-band. Generic /goal#2.",
-        "verification_gate": "get_vn_trade_balance returns plausible monthly export/import (each ~tens of bn USD, monthly<=YTD, balance within sane band) LIVE post-rebuild.",
-        "baseline_pass": "4c2fcb5c",
-        "source": "router LIVE re-probe 04:07:26Z (FIX-NSO-TRADE-SHEET done_verified WITHHELD on value implausibility)",
-        "created_at": "2026-06-15T04:33:55Z",
-        "created_by": "dev-team",
-        "triaged_by": "dev-team",
-        "status_note": "IMPL DONE: col3/col6/col9 column fix + TỔNG TRỊ GIÁ total-row detection + strconv.ParseFloat for YoY% + no-x1000 unit + plausibility guard. Commit 7a3da0df. Live probe: export=46929, import=52141, balance=-5212 M USD. REBUILD_REQUIRED: done (image sha256:da5e59b...). Awaiting router live RAW re-probe.",
-        "dispatched_to": "dev-macro-indicators",
-        "dispatched_at": "2026-06-15T04:47:45Z",
-        "dispatch_note": "recon-first value/unit misparse on selected NSO trade sheets; SERIALIZE on parsers_vmt_trade.go",
-        "impl_commit": "7a3da0df",
-        "image_sha": "sha256:da5e59bce8229d363d30a38a9592bcbd985f5ccbc4b6ad416b7e6cda7a8beeff"
-      },
       {
         "_adjudicated_by": "po",
         "_updated_at": "2026-06-13T08:48:41Z",
