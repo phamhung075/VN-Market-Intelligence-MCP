@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T10:14:27Z",
+  "_updated_at": "2026-06-15T10:43:38Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -111,11 +111,11 @@
   ],
   "head": {
     "status": "active",
-    "updated_at": "2026-06-15T10:14:27Z",
+    "updated_at": "2026-06-15T10:43:38Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
     "next_agent": null,
-    "note": "DEV-TEAM TICK 2026-06-15T10:1xZ — FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE PROMOTED review->done_verified. Rebuild LANDED (ops a4c676de: mcp-server image d63fd379 built 10:12:05Z, running healthy RestartCount=0; health 200 toolCount 163; daily_ohlcv 34,568; 12/12 peers up). LIVE GATE GREEN (router RAW docker inspect + named-vol sidecar): mcpServerCleanShutdown COUNT=0 => firstCleanShutdown NULL => bootstrap-null guard => restart-cadence tick SILENT despite 3 pre-fix deploy startups in the 4h window (the exact false page killed); pre-fix code fired >=2. Fire-path (>=2 crashes after bootstrap) proven by router-run bun test 10 pass. Self-healing: next graceful stop writes first clean-shutdown sentinel => full discrimination live once pre-fix rows age out. Bundle 2d494f77+ff874c82+bb6fca2b+routers(075be6d3/17d6b7cd). PUSH held (PO post-RSI-gate 2026-06-16). ACTIVE FOCUS returns to FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (review, behavioral gate fires 2026-06-16 briefing 01:00Z/scan 02:15Z). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (design). Ready lane EMPTY; active coding lane=0."
+    "note": "DEV-TEAM TICK 2026-06-15T10:4xZ — dispatched TWO P1s ready->in_progress per PO triage (ad17266f, mint 68fe98ff drained 36 stale reports): FIX-HNX-UPCOM-PRICE-SOURCES-DEAD->dev-stock-price (router RAW-corroborated DLC no-row vs SHS/VND live), FIX-VNSTOCK-TRADINGSTATS-CRASH->dev-mcp-server (~50% crash, syncVnstockData timeout guard). Both recon-first, disjoint zones, bg. WIP=2 active coding lanes (ARCH-CRON=observe, BA-MACRO=design consume none). HELD ready: FIX-FB-POSTER-NOARG-MARKET-TOOLS (P1 cowork-refactory-expert), FIX-MARKET-HEXAGRAM-TOOL-MISSING (P2 dev-kinh-dich) — next tick. FIX-ALERT-ENGINE-RSI-SINGLEDIGIT stays review (06-16 gate, NOT displaced). PUSH held (PO post-RSI-gate). Holds: ARCH-CRON-SCHEDULER-RELIABILITY (QA-observe), BA-VN-MACRO-TOOLING (design)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -590,8 +590,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-15T10:38:00Z",
-    "_updated_by": "po-s55-health-recheck-wave2-triage",
+    "_updated_at": "2026-06-15T10:43:38Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -14259,9 +14259,7 @@
         "po_held_checked_at": "2026-06-15T06:35:17Z",
         "po_held_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "WAVE-1 queued, no dev WIP consumed while held — verified parked this tick"
-      }
-    ],
-    "ready": [
+      },
       {
         "depends": [],
         "id": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD",
@@ -14269,12 +14267,40 @@
         "priority": "P1",
         "scope": "Diagnose HNX scraper + add UPCOM fallback. Distinct from ALLZERO-OHLCV-FETCH (zero-write guard for HOSE tickers). PLAN-ONLY at PO layer.",
         "source": "health-recheck B4 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "title": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD — '[hnx] all HNX price sources failed' + '[hnx] all UPCOM price sources failed' recurring; 5 watchlist tickers (BDI, DLC, JSH, SIS, VDC) have 0 OHLCV rows / N/A prices. Circuit-breaker shows [OK] (threshold not tripping at fetch layer).",
         "type": "FIX",
         "user_impact": "MEDIUM — 5 watchlist tickers have no price coverage.",
-        "zone_owner": "apps/stock-price/"
+        "zone_owner": "apps/stock-price/",
+        "route_to": "dev-stock-price",
+        "mode": "recon-first",
+        "zone": "apps/stock-price/",
+        "dispatched_ts": "2026-06-15T10:43:38Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "router RAW-corroborated 10:41Z: get_market_snapshot(codes=[DLC,SHS,VND]) => DLC no price row while SHS/VND live. dead small-cap HNX/UPCOM source class. recon-first: read live tier-fallback + source before patch; generic across all dead tickers (/goal#2), no per-ticker allowlist."
       },
+      {
+        "depends": [],
+        "id": "FIX-VNSTOCK-TRADINGSTATS-CRASH",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "zone_owner": "apps/mcp-server/",
+        "priority": "P1",
+        "status": "IN_PROGRESS",
+        "title": "FIX-VNSTOCK-TRADINGSTATS-CRASH — vnstockTradingStatsRefresh CRASHED (50% success rate, 45min avg run) -> sector/market-cap data unreliable.",
+        "scope": "Same crash family as the now-fixed FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: syncVnstockData.ts subprocess has no per-ticker timeout/back-off guard, so a slow/rate-limited ticker blows the 45min run and the job exits ~50%. Add subprocess timeout guard + per-ticker back-off in the tradingStats path (mirror the fundamentals fix). PLAN-ONLY at PO layer.",
+        "source": "health-recheck BUG-1 2026-06-15T10:07Z (3180); M6 monitor (3149) escalated to crash.",
+        "user_impact": "MEDIUM — sector rotation + market-cap weighting stale/unreliable.",
+        "created_at": "2026-06-15T10:38:00Z",
+        "route_to": "dev-mcp-server",
+        "mode": "recon-first",
+        "zone": "apps/mcp-server/",
+        "dispatched_ts": "2026-06-15T10:43:38Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "PO NEW mint; ~50% crash vnstock trading-stats sync; syncVnstockData.ts timeout guard (fundamentals-fix family). recon-first: reproduce crash + read live job before patch."
+      }
+    ],
+    "ready": [
       {
         "depends": [],
         "id": "FIX-MARKET-HEXAGRAM-TOOL-MISSING",
@@ -14306,20 +14332,6 @@
         "user_impact": "MEDIUM — daily FB post foreign-flow + movers section data-blind every cycle.",
         "route_to": "cowork-refactory-expert",
         "note": "agent-doc+flow edit to a cowork agent -> routes via cowork-refactory-expert, not a dev-* zone"
-      },
-      {
-        "depends": [],
-        "id": "FIX-VNSTOCK-TRADINGSTATS-CRASH",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "zone_owner": "apps/mcp-server/",
-        "priority": "P1",
-        "status": "READY",
-        "title": "FIX-VNSTOCK-TRADINGSTATS-CRASH — vnstockTradingStatsRefresh CRASHED (50% success rate, 45min avg run) -> sector/market-cap data unreliable.",
-        "scope": "Same crash family as the now-fixed FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: syncVnstockData.ts subprocess has no per-ticker timeout/back-off guard, so a slow/rate-limited ticker blows the 45min run and the job exits ~50%. Add subprocess timeout guard + per-ticker back-off in the tradingStats path (mirror the fundamentals fix). PLAN-ONLY at PO layer.",
-        "source": "health-recheck BUG-1 2026-06-15T10:07Z (3180); M6 monitor (3149) escalated to crash.",
-        "user_impact": "MEDIUM — sector rotation + market-cap weighting stale/unreliable.",
-        "created_at": "2026-06-15T10:38:00Z"
       }
     ],
     "review": [
