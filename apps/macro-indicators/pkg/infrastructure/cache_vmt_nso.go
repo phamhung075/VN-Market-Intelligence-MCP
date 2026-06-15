@@ -52,8 +52,10 @@ const nsoExcelCacheTTL = 6 * time.Hour
 const nsoIndexURL = "https://www.nso.gov.vn/bao-cao-tinh-hinh-kinh-te-xa-hoi-hang-thang/"
 
 // reBaiTop matches the latest bai-top/{YYYY}/{MM}/ press release link on the NSO index page.
-// Example match: "/bai-top/2026/06/bao-cao-tinh-hinh-kinh-te-xa-hoi-thang-nam..."
-var reBaiTop = regexp.MustCompile(`href="(/bai-top/\d{4}/\d{2}/[^"]+)"`)
+// NSO WordPress theme emits absolute URLs since mid-2026.
+// Capture groups: [1]=full absolute URL, [2]=YYYY, [3]=MM.
+// Example match: href="https://www.nso.gov.vn/bai-top/2026/06/bao-cao-tinh-hinh-kinh-te-xa-hoi-thang-nam..."
+var reBaiTop = regexp.MustCompile(`href="(https://www\.nso\.gov\.vn/bai-top/(\d{4})/(\d{2})/[^"]+)"`)
 
 // reXlsxLink matches the .xlsx download link on the NSO press release page.
 // Example: href="https://www.nso.gov.vn/wp-content/uploads/2026/06/02.-Bieu-T5.2026-final.xlsx"
@@ -252,31 +254,20 @@ func (n *NSOExcelFetcher) discoverAndFetch(ctx context.Context) ([]byte, string,
 }
 
 // extractLatestPressURL finds the most recent bai-top press release URL from the NSO index page.
-// Also extracts the period (YYYY-MM) from the URL path for cache key use.
+// Returns the absolute pressURL and the period (YYYY-MM) derived from the URL path.
+//
+// Uses reBaiTop which captures: [1]=full absolute URL, [2]=YYYY, [3]=MM.
+// NSO page lists newest article first — first match is the most recent release.
 func extractLatestPressURL(body []byte) (pressURL, period string, err error) {
-	matches := reBaiTop.FindAllSubmatch(body, -1)
-	if len(matches) == 0 {
+	m := reBaiTop.FindSubmatch(body)
+	if m == nil {
 		return "", "", fmt.Errorf("no bai-top link found in NSO index page (%d bytes)", len(body))
 	}
 
-	// The first match is the most recent (NSO lists newest first).
-	path := string(matches[0][1])
-
-	// Extract period from path: /bai-top/YYYY/MM/...
-	rePeriod := regexp.MustCompile(`/bai-top/(\d{4})/(\d{2})/`)
-	pm := rePeriod.FindStringSubmatch(path)
-	if len(pm) < 3 {
-		return "", "", fmt.Errorf("cannot extract YYYY/MM from bai-top path %q", path)
-	}
-	period = pm[1] + "-" + pm[2]
-
-	// Build absolute URL if the path is relative.
-	if len(path) > 0 && path[0] == '/' {
-		pressURL = "https://www.nso.gov.vn" + path
-	} else {
-		pressURL = path
-	}
-
+	// m[1] = full absolute URL (use directly — no string-building needed).
+	// m[2] = YYYY, m[3] = MM — extracted directly from regex capture groups.
+	pressURL = string(m[1])
+	period = string(m[2]) + "-" + string(m[3])
 	return pressURL, period, nil
 }
 
