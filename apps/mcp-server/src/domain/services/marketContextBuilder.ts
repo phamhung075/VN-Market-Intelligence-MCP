@@ -380,14 +380,17 @@ export function buildMarketContextText(db: Database, hoursBack: number): string 
 export function buildSystemStatusText(db: Database): string {
   const lines: string[] = ["=== SYSTEM STATUS ==="];
 
+  let dbError = false;
+
   let pendingCount = 0;
   try {
     const row = db
       .prepare("SELECT COUNT(*) AS cnt FROM alerts WHERE read = 0")
       .get() as AlertCountRow;
     pendingCount = row?.cnt ?? 0;
-  } catch {
-    pendingCount = 0;
+  } catch (err) {
+    console.error("[buildSystemStatusText] alerts count query failed", err);
+    dbError = true;
   }
 
   let lastCycleStr = "unknown";
@@ -398,8 +401,9 @@ export function buildSystemStatusText(db: Database): string {
     if (row?.triggered_at) {
       lastCycleStr = row.triggered_at.slice(0, 16).replace("T", " ");
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error("[buildSystemStatusText] last cycle query failed", err);
+    dbError = true;
   }
 
   let lastAnalysisStr = "unknown";
@@ -410,12 +414,19 @@ export function buildSystemStatusText(db: Database): string {
     if (row?.created_at) {
       lastAnalysisStr = row.created_at.slice(0, 16).replace("T", " ");
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error("[buildSystemStatusText] last analysis query failed", err);
+    dbError = true;
   }
 
-  const status = "ok";
-  lines.push(`${status} | ${pendingCount} alert${pendingCount !== 1 ? "s" : ""} pending | last alert: ${lastCycleStr} | last analysis: ${lastAnalysisStr}`);
+  const status = dbError ? "degraded: DB read failed" : "ok";
+  const pendingDisplay: string = dbError
+    ? "? alerts"
+    : `${pendingCount} alert${pendingCount !== 1 ? "s" : ""}`;
+
+  lines.push(
+    `${status} | ${pendingDisplay} pending | last alert: ${lastCycleStr} | last analysis: ${lastAnalysisStr}`,
+  );
 
   return lines.join("\n");
 }

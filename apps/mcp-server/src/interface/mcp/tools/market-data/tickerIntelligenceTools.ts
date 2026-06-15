@@ -116,8 +116,9 @@ function buildSection1(db: Database, ticker: string): string {
 
     const date = row.fetched_at.slice(0, 10);
     result = `Giá hiện tại: ${formatPrice(row.price)} VND | KL: ${formatVolume(row.volume)} | Ngày: ${date}`;
-  } catch {
-    // section stays as no-data default
+  } catch (err) {
+    console.error("[buildSection1][ticker]", err);
+    return "(lỗi truy vấn)";
   }
   return result;
 }
@@ -135,8 +136,9 @@ function buildSection2(db: Database, ticker: string): string {
       `Bearish ${score.bearish.toFixed(4)} | ` +
       `Neutral ${score.neutral.toFixed(4)} | ` +
       `${score.fragmentCount} fragments`;
-  } catch {
-    // section stays as no-data default
+  } catch (err) {
+    console.error("[buildSection2][ticker]", err);
+    return "(lỗi truy vấn)";
   }
   return result;
 }
@@ -167,8 +169,9 @@ function buildSection3(db: Database, ticker: string): string {
     }
 
     result = lines.join("\n");
-  } catch {
-    // section stays as no-data default
+  } catch (err) {
+    console.error("[buildSection3][ticker]", err);
+    return "(lỗi truy vấn)";
   }
   return result;
 }
@@ -202,8 +205,9 @@ function buildSection4(db: Database, ticker: string): string {
       `KL ${formatVolume(row.foreign_volume)} | ` +
       `Room còn lại: ${formatVolume(row.foreign_room)} | ` +
       `Tỷ lệ sở hữu: ${holdingRatio}%`;
-  } catch {
-    // section stays as no-data default
+  } catch (err) {
+    console.error("[buildSection4][ticker]", err);
+    return "(lỗi truy vấn)";
   }
   return result;
 }
@@ -263,8 +267,9 @@ function buildSection5(db: Database, ticker: string): string {
     } catch {
       result = "(lỗi phân tích BCTC)";
     }
-  } catch {
-    // outer catch: SQL error (e.g. table missing) → no-data default stays
+  } catch (err) {
+    console.error("[buildSection5][ticker]", err);
+    return "(lỗi truy vấn)";
   }
   return result;
 }
@@ -295,8 +300,9 @@ function buildSection6(db: Database, ticker: string): string {
     }
 
     result = `Dự đoán (${N} resolved): Chính xác ${correct}/${N} (${pct}%) | Brier TB: ${avgBrier}`;
-  } catch {
-    // section stays as no-data default
+  } catch (err) {
+    console.error("[buildSection6][ticker]", err);
+    return "(lỗi truy vấn)";
   }
   return result;
 }
