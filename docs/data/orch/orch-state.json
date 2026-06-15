@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T10:43:38Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-15T12:57:00Z",
+  "_updated_by": "dev-stock-price",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -14267,7 +14267,7 @@
         "priority": "P1",
         "scope": "Diagnose HNX scraper + add UPCOM fallback. Distinct from ALLZERO-OHLCV-FETCH (zero-write guard for HOSE tickers). PLAN-ONLY at PO layer.",
         "source": "health-recheck B4 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "title": "FIX-HNX-UPCOM-PRICE-SOURCES-DEAD — '[hnx] all HNX price sources failed' + '[hnx] all UPCOM price sources failed' recurring; 5 watchlist tickers (BDI, DLC, JSH, SIS, VDC) have 0 OHLCV rows / N/A prices. Circuit-breaker shows [OK] (threshold not tripping at fetch layer).",
         "type": "FIX",
         "user_impact": "MEDIUM — 5 watchlist tickers have no price coverage.",
@@ -14277,7 +14277,13 @@
         "zone": "apps/stock-price/",
         "dispatched_ts": "2026-06-15T10:43:38Z",
         "dispatched_by": "dev-team",
-        "dispatch_note": "router RAW-corroborated 10:41Z: get_market_snapshot(codes=[DLC,SHS,VND]) => DLC no price row while SHS/VND live. dead small-cap HNX/UPCOM source class. recon-first: read live tier-fallback + source before patch; generic across all dead tickers (/goal#2), no per-ticker allowlist."
+        "dispatch_note": "router RAW-corroborated 10:41Z: get_market_snapshot(codes=[DLC,SHS,VND]) => DLC no price row while SHS/VND live. dead small-cap HNX/UPCOM source class. recon-first: read live tier-fallback + source before patch; generic across all dead tickers (/goal#2), no per-ticker allowlist.",
+        "rebuild_required": true,
+        "rebuild_scope": "force-recreate stock-price container",
+        "review_ts": "2026-06-15T12:57:00Z",
+        "review_by": "dev-stock-price",
+        "review_summary": "Root cause: Tier1/2 fetchers used /v4/stocks (company info, NO price data) instead of /v4/stock_prices. Fixed endpoint + response parsing. Tier3 column mismatch (fetched_at->updated_at) also fixed. Dead tickers (BDI/DLC/JSH/SIS/VDC) are NOT recoverable: DLC delisted 2016, BDI is Bloomberg index (not VN stock), JSH/SIS/VDC unknown in VnDirect. GENERIC fix: no hardcode, derives source from floor field. Commit: af481e12.",
+        "commit_sha": "af481e12"
       },
       {
         "depends": [],
