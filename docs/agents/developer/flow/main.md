@@ -134,7 +134,7 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 
 **Lock handoff to QA** — same session, no release needed; QA will heartbeat + release.
 
-**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (section-overwrite — append new c<NNN> section; skill handles prune + blank-state init).
+**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `developer`; APPEND class — AC-3 settled-write + AC-5 wc gate apply).
 
 **Commit notebook** (direct — INV-GATEWAY-1):
 ```bash

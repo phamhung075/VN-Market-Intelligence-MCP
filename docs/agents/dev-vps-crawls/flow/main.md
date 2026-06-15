@@ -182,7 +182,7 @@ Next: qa validation
 
 ---
 
-**End of cycle** → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `dev-vps-crawls`)
+**End of cycle** → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `dev-vps-crawls`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash

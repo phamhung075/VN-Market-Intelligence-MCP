@@ -140,7 +140,7 @@ Reference: `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G4;
 - **Graphify:** updated | skipped (no docs impacted)
 ```
 
-**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `dev-mcp-server`)
+**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `dev-mcp-server`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Zone health observation (mandatory — 1 line):**
 ```

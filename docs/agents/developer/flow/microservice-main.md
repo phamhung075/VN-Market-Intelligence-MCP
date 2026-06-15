@@ -139,7 +139,7 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 **Lock handoff to QA** — same session, no release needed; QA will heartbeat + release.
 
 **End-of-cycle notebook write**
-→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with agent id)
+→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with agent id; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Zone health observation (mandatory — 1 line):**
 Before calling notebook-write, compose one "Zone health:" line summarising the zone state observed this cycle. Append it to the notebook entry:

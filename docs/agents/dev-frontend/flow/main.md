@@ -165,7 +165,7 @@ Reference: `docs/architecture-briefs/2026-05-22-refactor/scale/frontend-phase-1-
 - **Graphify:** updated | skipped (no docs impacted)
 ```
 
-**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `dev-frontend`)
+**Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `dev-frontend`; APPEND class — AC-3 settled-write + AC-5 wc gate apply)
 
 **Zone health observation (mandatory — 1 line):**
 Before calling notebook-write, compose one "Zone health:" line:
