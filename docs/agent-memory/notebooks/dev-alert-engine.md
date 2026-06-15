@@ -6,6 +6,28 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ---
 
+## Session: 2026-06-15 (FIX-ALERT-ENGINE-RSI-SINGLEDIGIT)
+
+**Task:** FIX-ALERT-ENGINE-RSI-SINGLEDIGIT — candle-depth guard for taAlertScanJob.
+
+**Root cause confirmed via recon:** taAlertScanJob (mcp-server/src/scheduler/market-data/taAlertScanJob.ts) passed ALL available closes (as few as 15–30) to the Go TA service. Wilder RSI with a short window produces degenerate values: all-gain windows → RSI=100.0 (DAG, live MARKET msg 752); mostly-loss windows → RSI=7.4/9.8 (VIC/VHM, live MARKET msg 753). The Go alert-engine (apps/alert-engine/) has no RSI computation — it only handles eval/dedup/cooldown.
+
+**Fix:** Added `MIN_CANDLES=35` guard in taAlertScanJob before calling computeFn. Tickers with <35 candles in daily_ohlcv are fail-closed (skip, no alert). 35 = 2.5×period(14), matching the canonical `get_technical_indicators` pending threshold.
+
+**Both consumers fixed:**
+- TA-Alert stream (taAlertScanJob): adds MIN_CANDLES guard — no more degenerate alerts
+- Morning-briefing echo: already fixed via FIX-RSI-REPORT-FAILCLOSED in assembleBriefing.ts (defaultComputeTa); echoes clean values from taSummary + no longer gets corrupt TA alerts from the table
+
+**Tests:** 8 new ACs (FIX-ALERT-ENGINE-RSI-SINGLEDIGIT.test.ts, all GREEN) + 1307 tests updated with seedMinCandles (22 total GREEN).
+
+**Commit:** c9892200 — fix(alert-engine/rsi): candle-depth guard MIN_CANDLES=35 in taAlertScanJob
+
+**Rebuild required:** mcp-server container (RUNTIME code change in scheduler layer). Named-volume market.db preserved; force-recreate only.
+
+Zone health: taAlertScanJob properly guarded; 22/22 TA tests GREEN; no drift detected.
+
+---
+
 ## Session: 2026-06-10 (GFD-4 — Pre-deploy validation gate)
 
 **Task:** GFD-4 sprint GO-FLEET-DEPLOY — pre-deploy production-readiness validation (no feature build).
