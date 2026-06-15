@@ -14,6 +14,7 @@ import { startScheduler } from "./scheduler/jobs.js";
 import { registerWebhook } from "./infrastructure/notifiers/telegramWebhookSetup.js";
 import { runEnvCheck, assertEnvDbConsistency } from "./infrastructure/envCheck.js";
 import { insertCronJobRunStart, updateCronJobRunEnd } from "./infrastructure/db/cronJobRunStore.js";
+import { CLEAN_SHUTDOWN_JOB_NAME } from "./scheduler/system/restartCadenceAlertJob.js";
 
 export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<void> {
   // ── 0. Env self-check ─────────────────────────────────────────────────────
@@ -220,6 +221,18 @@ export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<v
   // ── 5. Graceful shutdown + signal handlers ────────────────────────────────
   async function shutdown(signal: string) {
     log.info(`[bootstrap] Received ${signal} — shutting down...`);
+    // FIX-MCP-RESTART-ALERT-DEPLOY-DISCRIMINATE: write a clean-shutdown sentinel
+    // before closing the DB so restartCadenceAlertJob can distinguish a graceful
+    // deploy (SIGTERM → this handler runs → sentinel written) from a genuine crash
+    // (handler never runs → no sentinel → next boot counts as crash-restart).
+    // Best-effort: failure must never block the shutdown path.
+    try {
+      const { getDb } = await import("./infrastructure/db/schema.js");
+      const _db = getDb();
+      const shutdownId = insertCronJobRunStart(_db, CLEAN_SHUTDOWN_JOB_NAME);
+      updateCronJobRunEnd(_db, shutdownId, "success", null, null, 0);
+      log.info("[bootstrap] mcpServerCleanShutdown sentinel written");
+    } catch { /* best-effort — must not block shutdown */ }
     // G5b (P2-F): rag-service owns LanceDB lifecycle. No vector store to close here.
     const { closeDb } = await import("./infrastructure/db/schema.js");
     closeDb();
