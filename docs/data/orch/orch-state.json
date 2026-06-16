@@ -9250,7 +9250,7 @@
         "size": "S",
         "priority": "P3",
         "zone": "cross-service/",
-        "title": "context-bloat: trim 4 RAW-verified over-cap agent notebooks to SSOT cap=200",
+        "title": "context-bloat: trim 6 RAW-verified over-cap agent notebooks to SSOT cap=200",
         "fix": "Trim each over-cap notebook to its SSOT line cap via the notebook-write OVERWRITE discipline (preserve Carry-over). Generic janitor pass, not per-file hardcode.",
         "source_signals": [
           "docs/signals/context-bloat-docs-agent-memory-notebooks-dev-mcp-server-md-2026-06-14T140400Z.json",
@@ -9284,7 +9284,39 @@
         ],
         "refreshed_at": "2026-06-16T09:54:32Z",
         "refreshed_by": "po-2026-06-16-triage",
-        "refresh_note": "Folded 4 context-bloat signals (architect/dev-frontend/ops-vps-fetch/qa) drained 2026-06-16 into this standing janitor CLEAN row instead of minting a dated dup. ba.md signal was a FALSE BREACH (197L < cap, already trimmed by sibling) -> excluded. Non-blocking; janitor zone, WIP<=2 unaffected."
+        "refresh_note": "Folded 4 context-bloat signals (architect/dev-frontend/ops-vps-fetch/qa) drained 2026-06-16 into this standing janitor CLEAN row instead of minting a dated dup. ba.md signal was a FALSE BREACH (197L < cap, already trimmed by sibling) -> excluded. Non-blocking; janitor zone, WIP<=2 unaffected.",
+        "targets": [
+          {
+            "file": "docs/agent-memory/notebooks/tran-ngoc-bau.md",
+            "lines": 480
+          },
+          {
+            "file": "docs/agent-memory/notebooks/ops-vps-fetch.md",
+            "lines": 286
+          },
+          {
+            "file": "docs/agent-memory/notebooks/dev-frontend.md",
+            "lines": 264
+          },
+          {
+            "file": "docs/agent-memory/notebooks/ops.md",
+            "lines": 255
+          },
+          {
+            "file": "docs/agent-memory/notebooks/qa.md",
+            "lines": 232
+          },
+          {
+            "file": "docs/agent-memory/notebooks/agent-father.md",
+            "lines": 219
+          }
+        ],
+        "status_note": "Live over-cap set RAW-scanned 2026-06-16T22:30:27Z: 6 notebooks. Janitor (owner=code-janitor) trims each to SSOT cap=200 via OVERWRITE-to-≤50L per notebook-write skill, preserving Carry-over block. Folded from per-notebook context_bloat_breach signals (agent-father 219L this tick) — do NOT mint per-notebook dups, do NOT dispatch claude-manager-helper per item.",
+        "fold_marker": {
+          "folded_at": "2026-06-16T22:30:27Z",
+          "source_signal": "context-bloat-agent-father-md-219L",
+          "live_target_count": 6
+        }
       },
       {
         "id": "ROUTE-BCTC-FPT-Q1-2026-ROUTINE",

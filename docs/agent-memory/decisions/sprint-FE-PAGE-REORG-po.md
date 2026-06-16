@@ -102,3 +102,13 @@
 - Promote chef double-post fix this tick — DEFERRED: ARCH-HEADLESS-GATEWAY-COWORK-NOPOST already on board (agents zone, AC-FAILCLOSED spec po-s90); agents-architect→agent-father lane, flagged for c98.
 **why-decision:** AF-1 is the only immediately-dispatchable non-colliding lane (maintenance/agent-father, no coding WIP slot); zone-collision constraint forces DMS to sequence behind cron work; TNB HIGH finding had no board task so it had to be minted.
 **why-change:** no change from plan — followed brief routing + TNB handler + zone-collision constraint verbatim.
+
+### STEP po-S92 · po · 2026-06-16T22:30:27Z
+**task-id:** CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614
+**what-done:** Folded the agent-father.md 219L>200 context_bloat_breach signal into the EXISTING open CLEAN task in-place (po-s92 script): RAW-scanned 6 live over-cap notebooks, set .targets (was null) + refreshed title count 4→6, no lane move. ARCH-CRON-SCHEDULER assessed NOT stalled.
+**what-considered:**
+- Dispatch claude-manager-helper for the prune — REJECTED: existing open CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 (owner=code-janitor, TODO) already tracks the class; per-notebook dispatch = dup work + maintenance-mutex churn.
+- Mint a new agent-father-specific prune task — REJECTED: dedup guard (triage-signals pattern) — fold into existing umbrella, never mint a dup.
+- Flag ARCH-CRON-SCHEDULER-RELIABILITY (updated_at:null) as stalled → re-dispatch — REJECTED: brief FINAL (2026-06-14, 29KB), pm sub-tasks 1A/1B/1C/2 all SUPERSEDED, IMPL-GATE FIX-MCP-CRASH-LOOP-WRITEWAL done_verified; it's a deliberate zone-lock held open for a market-day live re-verify gate, not churn. DMS stays HELD.
+**why-decision:** the breach is an INSTANCE of an already-tracked CLEAN task, not new work; folding the live target set is the lowest-debt move (signal not lost, janitor gets ground-truth, zero lane churn, conservation 562 held).
+**why-change:** no change from plan — applied the existing-entry dedup discipline.
