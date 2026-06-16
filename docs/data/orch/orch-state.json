@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T14:39:46Z",
+  "_updated_at": "2026-06-16T15:43:48Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -126,14 +126,14 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-16T14:39:46Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-16T15:43:48Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
+    "active_task_id": "FIX-CI-RED-STANDING-1837A-1352A",
+    "next_agent": "dev-mcp-server",
     "rebuild_required": false,
-    "next_action": "IDLE. FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS parked in review[] with qa_verdict=APPROVE-CODE (router RAW-verified QA first-hand: schema TEXT UNIQUE->plain TEXT + partial UNIQUE INDEX outside try/catch; AC-7 non-self-confirming migration regression L323-418; tsc 0; per-file tests green). done_verified WITHHELD — FINAL gate is the LIVE market-open dedup-drain (>=1 REAL scan ~02:00 UTC: <=1 row per (ticker,kind,fingerprint) per dedup window + pending backlog drains); cannot force (no-fake-data). MONITORED by the dev-team :07 cron at next market open, THEN review->done_verified. Next idle tick -> Step 1 PO triage (review backlog=5; deferred signal_queue + docs/signals PO-bound rows still on disk; ARCH-CRON-SCHEDULER-RELIABILITY architect-owned in_progress). PUSH held (PO out-of-band).",
-    "note": "ROUTER 2026-06-16T14:39:46Z — dev-team tick CLOSE: QA verdict APPROVE-CODE on FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS recorded after router RAW-verified first-hand (NOT relayed). Code+test quality GREEN; structural live-verify already GREEN (d87, named-volume market.db column+partial index PRESENT, 1283 legacy rows survived, 0 dup). done_verified WITHHELD pending the LIVE market-open dedup-drain (no-fake-data — cannot force a scan). Head -> idle: no in-flight pipeline work; task parked in review awaiting the external live gate. PUSH held (30 commits, PO out-of-band)."
+    "next_action": "PARALLEL DISPATCH (WIP=2 coding lanes): LEAD FIX-CI-RED-STANDING-1837A-1352A -> dev-mcp-server (make 1837a head.status enum + 1352a async-extraction-race GREEN; blocking — unblocks fleet push + 4 ci_green tasks) + SIBLING FIX-BCTC-SSC-503-RETRY -> dev-vps-crawls (1-retry+60s backoff in _ssc_curl_search step1; vps-scripts python, outside CI path). Both on main, commit-mutex serialized. On dev return: router RAW-verifies code+tests first-hand -> review -> qa. AUDITOR-EMIT in review awaits qa live-emit probe. FIX-ALERT-FINGERPRINT review-monitored for market-open dedup-drain (do NOT flip). PUSH held (PO out-of-band, gated on CI-RED green).",
+    "note": "ROUTER 2026-06-16T15:43:48Z — dev-team Step 3: claimed FIX-CI-RED-STANDING-1837A-1352A (lead, dev-mcp-server) + FIX-BCTC-SSC-503-RETRY (sibling, dev-vps-crawls) ready->in_progress for parallel background dispatch. Disjoint zones/files; commit-mutex per task. WIP=2 coding lanes (ARCH-CRON-SCHEDULER-RELIABILITY is architect blueprint, not a coding lane). AUDITOR-EMIT -> qa (verification, separate). PUSH held."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -711,7 +711,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T14:39:46Z",
+    "_updated_at": "2026-06-16T15:43:48Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -19012,15 +19012,13 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
-      }
-    ],
-    "ready": [
+      },
       {
         "id": "FIX-CI-RED-STANDING-1837A-1352A",
         "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
         "type": "FIX",
         "owner": "po",
-        "status": "READY",
+        "status": "IN_PROGRESS",
         "priority": "P2",
         "zone": "apps/mcp-server/",
         "next_agent": "dev-mcp-server",
@@ -19041,8 +19039,38 @@
         "size": "S",
         "promoted_at": "2026-06-16T15:37:15Z",
         "promoted_by": "po",
-        "promotion_reason": "Router RAW-verified origin HEAD 207658f3 `bun test` RED = EXACTLY 1352a-async-extraction-race + 1837a-pipeline-state (13064 pass/53 skip/5 fail). Per /goal#1 recheck-shipped-code both reds are REAL (deterministic, reproduced local+rerun), not flaky. blocking:true: gates 4 ci_green_on_subsequent_push tasks (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) from done_verified. Coding-WIP has a free slot (only architect ARCH-CRON in_progress). Leads ready[]."
+        "promotion_reason": "Router RAW-verified origin HEAD 207658f3 `bun test` RED = EXACTLY 1352a-async-extraction-race + 1837a-pipeline-state (13064 pass/53 skip/5 fail). Per /goal#1 recheck-shipped-code both reds are REAL (deterministic, reproduced local+rerun), not flaky. blocking:true: gates 4 ci_green_on_subsequent_push tasks (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) from done_verified. Coding-WIP has a free slot (only architect ARCH-CRON in_progress). Leads ready[].",
+        "dispatched_at": "2026-06-16T15:43:48Z",
+        "dispatched_by": "dev-team",
+        "dispatched_to": "dev-mcp-server"
       },
+      {
+        "id": "FIX-BCTC-SSC-503-RETRY",
+        "title": "FIX-BCTC-SSC-503-RETRY — add 1-retry+60s backoff in _ssc_curl_search() step1 before returning None on a transient SSC HTTP 503",
+        "type": "FIX",
+        "owner": "po",
+        "status": "IN_PROGRESS",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps",
+        "next_agent": "dev-vps-crawls",
+        "created_at": "2026-06-16T15:37:15Z",
+        "created_by": "po",
+        "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #1 (2026-06-16). SSC returns HTTP 503 on ALL tickers at ~12:00Z UTC (19:00 ICT, scheduled maintenance window); self-recovers by ~12:36Z. Current _ssc_curl_search() has NO 503 retry -> returns None -> SKIP -> an entire 6h cycle burned for a 6-min transient.",
+        "root_cause": "_ssc_curl_search() step1 returns None on the first HTTPError 503 with no retry; the ~daily ~12:00Z SSC maintenance restart therefore drops a full 6h discovery cycle.",
+        "fix_spec": "In _ssc_curl_search() step1: on HTTPError 503, retry ONCE after a 60s backoff before returning None. Keep fail-loud-per-ticker on the 2nd 503 (return None -> SKIP, do NOT fabricate). Bound the retry so total step1 time stays well under the cycle budget. No change to the afrLoop/ViewState happy path.",
+        "generic_mandate": "/goal#2 GENERIC — retry keys on HTTP status 503 only, applies to ANY ticker/exchange; no per-ticker/date literal.",
+        "verification_gate": "LIVE: next ~12:00Z UTC cycle that hits an SSC 503 recovers within the same cycle (retry succeeds at 200) instead of SKIP-all; OR a forced 503 replay shows the retry path. NOT covered by the shipped C1-C4 durability fixes.",
+        "files": [
+          "vps-scripts/discover-bctc-urls-browser.py"
+        ],
+        "baseline_pass": false,
+        "dispatched_at": "2026-06-16T15:43:48Z",
+        "dispatched_by": "dev-team",
+        "dispatched_to": "dev-vps-crawls"
+      }
+    ],
+    "ready": [
       {
         "id": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
         "type": "FIX",
@@ -19096,28 +19124,6 @@
         "held_on": "2026-06-16T10:31:48Z",
         "held_by": "po",
         "hold_reason": "shared-root HOLD (Root C): Step-0-GW sibling-success corroboration gate — pairs with Root B's concurrency model; needs design/BA pass. Not dispatched (no dev-ready spec)."
-      },
-      {
-        "id": "FIX-BCTC-SSC-503-RETRY",
-        "title": "FIX-BCTC-SSC-503-RETRY — add 1-retry+60s backoff in _ssc_curl_search() step1 before returning None on a transient SSC HTTP 503",
-        "type": "FIX",
-        "owner": "po",
-        "status": "READY",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps",
-        "next_agent": "dev-vps-crawls",
-        "created_at": "2026-06-16T15:37:15Z",
-        "created_by": "po",
-        "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #1 (2026-06-16). SSC returns HTTP 503 on ALL tickers at ~12:00Z UTC (19:00 ICT, scheduled maintenance window); self-recovers by ~12:36Z. Current _ssc_curl_search() has NO 503 retry -> returns None -> SKIP -> an entire 6h cycle burned for a 6-min transient.",
-        "root_cause": "_ssc_curl_search() step1 returns None on the first HTTPError 503 with no retry; the ~daily ~12:00Z SSC maintenance restart therefore drops a full 6h discovery cycle.",
-        "fix_spec": "In _ssc_curl_search() step1: on HTTPError 503, retry ONCE after a 60s backoff before returning None. Keep fail-loud-per-ticker on the 2nd 503 (return None -> SKIP, do NOT fabricate). Bound the retry so total step1 time stays well under the cycle budget. No change to the afrLoop/ViewState happy path.",
-        "generic_mandate": "/goal#2 GENERIC — retry keys on HTTP status 503 only, applies to ANY ticker/exchange; no per-ticker/date literal.",
-        "verification_gate": "LIVE: next ~12:00Z UTC cycle that hits an SSC 503 recovers within the same cycle (retry succeeds at 200) instead of SKIP-all; OR a forced 503 replay shows the retry path. NOT covered by the shipped C1-C4 durability fixes.",
-        "files": [
-          "vps-scripts/discover-bctc-urls-browser.py"
-        ],
-        "baseline_pass": false
       }
     ],
     "review": [
