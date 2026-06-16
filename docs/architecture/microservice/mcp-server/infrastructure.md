@@ -41,6 +41,19 @@ broker_sanctions (id INTEGER PK, broker_name, sanction_start, sanction_end, seve
 |---------|--------|---------|----------|
 | `hose.ts` | VnDirect api-finfo v4 | exponential backoff (1m→30m cap) | legacy finfo-api |
 | `foreignFlowFetcher.ts` | VPS :5005 | 5s + circuit breaker (5 fail→open, 30s reset) | cache→SSE→none |
+| `ohlcvBackfill.ts` | VNDirect api-finfo v4/stock_prices | 15s abort per ticker; 200ms inter-ticker delay | none |
+
+**ohlcvBackfill flat-seed-bar guard (FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0):**
+VNDirect returns `open=high=low=close=reference_price, volume=0` for non-traded/illiquid tickers on
+the current trading day. Writing these rows creates fake seed bars that poison TA consumers (RSI/BB/MACD).
+
+Guard in `runOhlcvBackfill` transaction loop (`apps/mcp-server/src/infrastructure/fetchers/ohlcvBackfill.ts:236-248`):
+- Applied AFTER `normalizeOhlcvToVnd` (catches thousand-scale flat bars: 5.9→5900, still flat)
+- Skip predicate: `vol===0 AND norm.open===norm.high===norm.low===norm.close` — same shape as `purgeStrandedSeedRows()`
+- Halt-day candles (O=H=L=C but vol>0) are NOT skipped — vol>0 discriminates halt candles from placeholders
+- Leaves gap — real traded data filled by VPS price push or `taOhlcvBackfillJob`
+
+Injectable `fetchFn` option for testability: `runOhlcvBackfill(db, { fetchFn: mockFn })` bypasses network.
 
 ### News & Events
 | Fetcher | Source |

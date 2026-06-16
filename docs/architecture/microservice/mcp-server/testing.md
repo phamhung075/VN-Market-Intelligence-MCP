@@ -32,6 +32,7 @@
 | `1289c-fetcher-validator-integration.test.ts` | Fetcher output schema compliance |
 | `FIX-1274-price-push-startup.test.ts` | VPS push handling at startup |
 | `1397c-vn-index-refresh.test.ts` | VN-Index polling |
+| `FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0.test.ts` | 8 tests: flat vol=0 O=H=L=C seed bars rejected (TC-1 primary regression, TC-2 thousand-scale, TC-3 full-VND, TC-4 all-zero); real candle written (TC-5 safety); historical real candle written (TC-6); mixed batch — flat seeds rejected, real + halt-day candles written (TC-7); boot-sequence combined purge+backfill (TC-8). Uses injectable `fetchFn` — zero network calls. |
 
 ### Signal & Alert
 | Test File | Coverage |

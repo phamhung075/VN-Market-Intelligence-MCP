@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T08:28:27Z",
-  "_updated_by": "po-s83",
+  "_updated_at": "2026-06-16T08:35:00Z",
+  "_updated_by": "dev-mcp-server",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -18763,16 +18763,18 @@
         ],
         "created_at": "2026-06-16T07:00:00Z",
         "created_by": "pm"
-      },
+      }
+    ],
+    "review": [
       {
         "id": "FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0",
         "title": "Kill the startup seeder that re-writes 636 flat zero-vol O=H=L=C placeholder bars AFTER purgeStrandedSeedRows() in the same boot — un-migrated, bypasses FR-S1",
         "type": "FIX",
-        "status": "READY",
+        "status": "REVIEW",
         "priority": "P0",
         "zone": "apps/mcp-server/",
         "dev_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
+        "next_agent": "qa",
         "blocking": true,
         "leads": true,
         "parent": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0",
@@ -18791,10 +18793,28 @@
         "rebuild_required": true,
         "sequence_note": "Sequenced AHEAD of lower-pri ready[] items (data-integrity P0, live fake data on 636 served tickers, user-reported). po does NOT spawn and does NOT repoint .head (head is on the active FIX-ERRAUDIT-W2 frontend coding wave); the router/dispatcher claims+spawns when a coding slot frees (WIP<=2; in_progress = ARCH-CRON-SCHEDULER-RELIABILITY).",
         "created_at": "2026-06-16T08:28:08Z",
-        "created_by": "po-s83"
-      }
-    ],
-    "review": [
+        "created_by": "po-s83",
+        "review_at": "2026-06-16T08:35:00Z",
+        "review_by": "dev-mcp-server",
+        "implementation_record": {
+          "service": "mcp-server",
+          "zone": "apps/mcp-server/",
+          "files_modified": [
+            "apps/mcp-server/src/infrastructure/fetchers/ohlcvBackfill.ts — flat-seed-bar guard (FR-S1) after normalizeOhlcvToVnd; injectable fetchFn option"
+          ],
+          "tests_written": "apps/mcp-server/src/__tests__/FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0.test.ts — 8 tests, 0 fail",
+          "git_commit": "448ce71c fix(mcp-server/FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0): skip flat zero-vol seed bars in ohlcvBackfill + regression test",
+          "type_check": "clean (bun tsc --noEmit)",
+          "bun_test": "13184 tests / 0 failures (exit 0)",
+          "tool_count": "164 (unchanged)",
+          "scheduler_count": "3 cron.schedule in startupHelpers.ts (unchanged)",
+          "rebuild_required": true,
+          "docs_updated": [
+            "docs/architecture/microservice/mcp-server/infrastructure.md — ohlcvBackfill fetcher + flat-seed-bar guard section",
+            "docs/architecture/microservice/mcp-server/testing.md — FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0.test.ts entry"
+          ]
+        }
+      },
       {
         "id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
         "type": "FIX",

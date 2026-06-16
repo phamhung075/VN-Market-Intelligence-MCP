@@ -47,3 +47,30 @@ Covers Class 1 (DCR close=5900, H11 close=25700 — wrong-scale seeds) and Class
 **Commit:** d4dcb5c4 | **REBUILD_REQUIRED:** YES — repair executes at container startup against named-volume DB
 
 Zone health: tsc clean, 164 tools intact, scheduler 81 (cron.schedule+scheduleCron), purgeStrandedSeedRows wired at startup | HEALTHY
+
+## 2026-06-16 · FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 — kill startup backfill's flat seed-bar emission
+
+**Task:** FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 | Priority: P0 | Zone: apps/mcp-server/
+
+**Root confirmed:** `runOhlcvBackfill()` (called async fire-and-forget from `runOhlcvStartupProbe()` ~127s after boot) uses `INSERT OR IGNORE` directly — bypasses `writeOhlcvBatch` / FR-S1. VNDirect returns `O=H=L=C=reference_price, vol=0` for non-traded tickers → 636 flat bars re-seeded 2.5min post-boot (08:19Z), undoing the 08:16Z purge. `data_env='production'` (space-format `datetime('now')`) confirms the writer.
+
+**Fix: generic shape guard in the transaction loop (after normalizeOhlcvToVnd, before upsert):**
+`vol===0 AND norm.open===norm.high===norm.high===norm.low===norm.close` → skip, log at DEBUG.
+Applied AFTER normalize: thousand-scale flat bars (5.9→5900, still flat) also caught. Vol>0 discriminates halt-day candles (O=H=L=C) from placeholders — preserved correctly.
+
+**Injectable fetchFn:** Added `options.fetchFn` to `runOhlcvBackfill` signature for zero-network unit tests.
+
+**Tests (8 cases in FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0.test.ts):**
+- TC-1 (PRIMARY REGRESSION): 5 illiquid tickers + VNINDEX with flat vol=0 rows → ZERO rows written for today
+- TC-2: Thousand-VND flat seed (DCR 5.9→5900 normalized) not written
+- TC-3: Full-VND flat seed (H11 25700) not written
+- TC-4: All-zero flat seed (DAG 0=0=0=0) not written
+- TC-5: Real candle (vol>0, varied OHLC) IS written
+- TC-6: Historical real candle (past date) IS written
+- TC-7: Mixed batch — flat seeds rejected, real + halt-day candle written
+- TC-8: Boot sequence combined test — purgeStrandedSeedRows + runOhlcvBackfill → zero flat bars
+
+**Gate results:** tsc clean (0 errors) | 8/8 new pass | 13184 total / 0 fail | tools=164 | sched=3
+**Commit:** 448ce71c | **REBUILD_REQUIRED:** YES (ops must rebuild to activate the guard in the running container)
+
+Zone health: tsc clean, 164 tools intact, scheduler 3 cron.schedule (startupHelpers.ts wrapper) | HEALTHY

@@ -15,6 +15,15 @@
 **why-decision:** Option B is the only fix that covers ALL tickers including future ones without hardcode. C=0 guard added to writeOhlcvBatch step 0 as belt-and-suspenders (fires before FR-S1 and validateOhlcvUnit Rule 1).
 **why-change:** Class 3 cold-start gap (PDN/NHD) documented as follow-on — cannot be fixed without an exchange reference-price source; not in scope of this task.
 
+### STEP dev-mcp-server-S3 · dev-mcp-server · 2026-06-16T08:35:00Z
+**task-id:** FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0
+**what-done:** Added generic flat-seed-bar guard in runOhlcvBackfill transaction loop (after normalizeOhlcvToVnd, before upsert); added injectable fetchFn for testability; 8-test regression suite.
+**what-considered:**
+- Option A: Route backfill through writeOhlcvBatch so FR-S1 rejects flat seeds — rejected: writeOhlcvBatch has a date>=vnToday guard, historical flat bars (e.g. delisted tickers) would still pass
+- Option B: STOP writing when vol=0 AND O=H=L=C (generic shape predicate, same as purgeStrandedSeedRows) — CHOSEN: leaves gap (real data fills on next VPS push); no fake data ever written; halt-day candles (O=H=L=C but vol>0) correctly preserved by vol>0 discriminator
+**why-decision:** Option B satisfies /goal#1 (no fake data) and /goal#2 (generic: no date/ticker literals, catches thousand-scale AND full-VND AND all-zero flat bars). Applying AFTER normalizeOhlcvToVnd ensures thousand-scale flat bars (5.9→5900, still flat) are caught too.
+**why-change:** No change from task spec; architect pre-selected option (b) as preferred.
+
 ### STEP dev-mcp-server-S2 · dev-mcp-server · 2026-06-16T07:55:00Z
 **task-id:** FIX-OHLCV-STRANDED-ROWS-REPAIR-P1
 **what-done:** Added purgeStrandedSeedRows() to allzeroOhlcvBackfill.ts; wired as synchronous startup call in startScheduler.ts; TDD regression suite (7 tests) covering DCR/H11/DAG incident rows + generic + safety + idempotency.
