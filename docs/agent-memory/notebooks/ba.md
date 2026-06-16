@@ -1,5 +1,33 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-16 | **Sprint:** FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367
+
+## FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 · 2026-06-16
+
+FAST-TRACK tsc-green fix (fleet-push blocker, P2). Single TS2367 error in `apps/mcp-server/src/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts` line 269. Root cause: `const severity: "HIGH" | "CRITICAL" = "HIGH"` — TypeScript const-narrows the literal `"HIGH"` making the branch `severity === "CRITICAL"` have no type overlap. Sibling blocks in same describe (lines 263, 284) assign `"CRITICAL"` — those comparisons do not trigger TS2367 because TS narrows them to `"CRITICAL"` and the conditional is trivially-true, not a non-overlap error. Fix applied: `const severity = "HIGH" as "HIGH" | "CRITICAL"` — cast widens the type to the full union without losing the runtime value. Test intent preserved: HIGH→70, CRITICAL→90, neither→50. tsc --noEmit = 0 errors. 22/22 tests pass. Commit: `fix(test/TS2367): widen severity literal to union type to unblock fleet push`. No architect/PM needed — trivial 1-line test-only change.
+
+Decision journal (task_id: FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367):
+- what-considered: "(A) `let severity` instead of `const` — TS still narrows let-with-one-assignment to literal in strict mode; failed on first attempt. (B) `as 'HIGH' | 'CRITICAL'` cast — prevents const-narrowing, retains runtime value, preserves union type for conditional; preferred. (C) delete/rewrite test — weakens coverage; rejected per scope constraint."
+- why-change: "cast is minimal; no behavioral change to test assertions; mirrors the as-const tuple pattern already used in the sibling `neither severity is 50` block"
+
+**Last updated:** 2026-06-16 | **Sprint:** FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0
+
+## FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 · 2026-06-16
+
+Spec complete. Task: FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0. REQ file: `docs/handoffs/FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0-BA-spec.md`. 3 PO blockers (all confirmation items, none block architect start). Recurring class (3rd+ touch: FIX-STOCK-PRICE-SCALE-CORRUPT / OHLCV-UNIT-CONTAM / CONTAM-5 / CONTAM-7).
+
+Key BA findings: Primary writer suspect = `taOhlcvBackfillJob` (01:30 UTC, VNDIRECT toDate=today returns flat seed bar). Guard gap = `validateOhlcvUnit` is intra-row only; 77 corrupt rows pass all 5 rules (flat O=H=L=C not zero, in range 100–10M). `detectAndNormalizeScaleFromPrevClose` fails when prevClose=0 (first row in transaction, or no prior real close available). Decision 3 = STOP-EMITTING (skip VNDIRECT rows with date=today AND vol=0 AND flat OHLC). Decision 4 = DELETE synthetic fingerprint (vol=0 AND flat AND data_env=NULL) for 2026-06-16, TA self-heals on next read. New guard FR-G2 adds cross-day scale check to sanity job. New test AC-T1 through AC-T5. Unblocks FIX-ALERT-ENGINE-RSI-SINGLEDIGIT done_verified + FIX-ALERT-OPEN-ZERO-PRICE-RACE on LIVE gate green.
+
+## FIX-ERRAUDIT-W1-PEK-P0 · 2026-06-16
+
+Spec complete. Task: FIX-ERRAUDIT-W1-PEK-P0. REQ file: `docs/handoffs/FIX-ERRAUDIT-W1-PEK-P0-BA-spec.md`. Zero PO blockers. Four architect ratification items (ARCH-RATIFY-PEK-1 through PEK-4).
+
+Key BA findings: Single file `pek_engine_adapter.py`, two adjacent crash-swallow sites + one new helper. (A) Line 668 outer catch in `_run_extraction`: DocLayout-YOLO crash swallowed → `pages_bboxes={}` → `total_pages=0` → clean 0-row result dict. Fix: re-raise OR tag-degraded via `fail_loud_or_tag_degraded`. (B) Lines 342+717+729: PaddleOCR load failure → `paddle_table=None` cached as singleton → `if paddle_table is not None:` guard silently skips table extraction → table units assembled with `row_count=0`, `quarantined=False`. Fix mirrors `extract_layout_first_usecase.py:450` quarantine pattern. Helper `fail_loud_or_tag_degraded` ships as generic by-product (no ticker/date/entity). Critical false-positive guard: genuinely table-less PDF (layout succeeds, no table bboxes) MUST NOT be quarantined. Key DDD concern: ARCH-RATIFY-PEK-3 — HTTP contract between refine orchestrator and pdf-extractor determines Option A (re-raise→500) vs Option B (tag→200+degraded). EC-2 (layout_task=None config path) is NOT a crash and must not be touched.
+
+Decision journal (task_id: FIX-ERRAUDIT-W1-PEK-P0):
+- what-considered: "Site A: (A) re-raise — mirrors existing _load_pek_models behavior, cleaner; (B) tag-degraded via helper — preserves 200 contract for caller; BA recommends A, architect decides based on orchestrator HTTP error handling. Site B: same Option A/B choice; re-raise aligns with layout_task load-failure precedent. Helper location: (A) new pek_helpers.py — keeps adapter focused; (B) inline — simpler; architect decides. Scope boundary: parse_or_raise/validate_or_unknown held for Wave-3 (audit brief §Wave-3 pdf-extractor-01/04). EC-2 (config-absent layout_task=None path) explicitly excluded — intentional design."
+- why-change: "no change from plan — P0 spec follows PO board row exactly; smallest correct change constraint honored; false-positive guard (table-less PDF) is the critical DoD gate per task brief"
+
 **Last updated:** 2026-06-16 | **Sprint:** ERROR-AUDIT-2026-06-15 Wave-2
 
 ## FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE · 2026-06-16
