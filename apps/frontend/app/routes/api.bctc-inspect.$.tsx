@@ -27,6 +27,7 @@
  * Upstream URL = ${MCP_SERVER_BASE_URL}/api/bctc-inspect/${params["*"]}.
  */
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { proxyUpstream } from "~/lib/api/fetchUtils";
 
 const MCP_SERVER_BASE_URL =
   typeof process !== "undefined" && process.env["MCP_SERVER_BASE_URL"]
@@ -53,27 +54,7 @@ async function proxyRequest(request: Request, params: Record<string, string | un
     upstreamInit.body = await request.arrayBuffer();
   }
 
-  let upstreamResponse: Response;
-  try {
-    upstreamResponse = await fetch(upstream, upstreamInit);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return new Response(
-      JSON.stringify({ error: `Proxy fetch error: ${message}` }),
-      { status: 502, headers: { "Content-Type": "application/json" } },
-    );
-  }
-
-  // Relay Content-Type verbatim; pipe body as arrayBuffer (binary-safe for pdf + png).
-  const upstreamContentType =
-    upstreamResponse.headers.get("Content-Type") ?? "application/octet-stream";
-
-  const body = await upstreamResponse.arrayBuffer();
-
-  return new Response(body, {
-    status: upstreamResponse.status,
-    headers: { "Content-Type": upstreamContentType },
-  });
+  return proxyUpstream(upstream, upstreamInit, { label: "api.bctc-inspect" });
 }
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
