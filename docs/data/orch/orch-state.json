@@ -189,8 +189,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-16T03:00:01.091Z",
-    "_updated_by": "qa-cycle277",
+    "_updated_at": "2026-06-16T20:13:00Z",
+    "_updated_by": "tran-ngoc-bau-c97",
     "archive": [
       {
         "from": "system-auditor",
@@ -253,6 +253,17 @@
         "to": "po",
         "type": "audit-handoff",
         "summary": "c96 NEEDS_ATTENTION IMPROVING — EOD 6/6 GOOD (best), G1/G2 PASS, G3/G4 FAIL (last_fired not written)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
+        "id": "tnb-20260616T201300",
+        "ts": "2026-06-16T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c97 NEEDS_ATTENTION STABLE — morning FAILED 502, EOD+Evening 5.5/6 GOOD, F-G3-G4 confirmed day2 (all 3 guaranteed slots), F-MORNING-SEND-FAILED NEW",
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md"
