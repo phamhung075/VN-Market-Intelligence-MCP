@@ -63,3 +63,14 @@
 - Dedup class3 vs existing FIX-OHLCV-SCALE-X1000-AUTO-REPAIR + FIX-OHLCV-CORP-ACTION-CONTINUITY — distinct (prevClose=0 cold-start no-op, not write-path normalize nor corp-action boundary).
 **why-decision:** Both INDEPENDENT of the ~08:00 writer behavioral-gate proof (residue + distinct cold-start gap); WIP=0 active coding so both valid now; stranded-rows leads (live poison source).
 **why-change:** no change from router triage brief; signal rows TRIAGED not RESOLVED (done_verified gated on RAW live-repair verify, router holds the 08:00 probe).
+
+### STEP po-S7 · po · 2026-06-16T09:57:26Z
+**task-id:** po-triage-2026-06-16T0948Z
+**what-done:** Drained 10 signals, reconciled 5 W2-FE closed-epic orphans ready[]->done_verified[], folded 4 over-cap notebooks into janitor row; verdict NOTHING.
+**what-considered:**
+- Re-mint ci_red task — REJECTED: origin red = tracked standing baseline FIX-CI-RED-STANDING-1837A-1352A.
+- Mint gateway-outage FIX from market-watcher/news-scout escalations — REJECTED: RAW-probed gateway LIVE (false infra), durable fix already in ready[].
+- Mint new dated context-bloat task — REJECTED: folded into existing CLEAN row (SSOT-dup guard); excluded ba.md (197<cap, false breach).
+- Dispatch any new coding lane — REJECTED: WIP=0 but no new work warranted; ready[] backlog is router's to dispatch.
+**why-decision:** Every signal resolved to informational / already-tracked / false-positive; the only real defect was board drift (closed-epic orphans + false T4 lane) which is reconcile-not-new-work.
+**why-change:** Router pre-gather mislabeled market-watcher/news-scout as telemetry and ARCH-CRON as unconfirmed-stale; RAW-verified both before acting (gateway live; ARCH-CRON is held QA-observe umbrella, not phantom).
