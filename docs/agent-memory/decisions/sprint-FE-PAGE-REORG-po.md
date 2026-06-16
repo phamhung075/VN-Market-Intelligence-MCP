@@ -112,3 +112,13 @@
 - Flag ARCH-CRON-SCHEDULER-RELIABILITY (updated_at:null) as stalled → re-dispatch — REJECTED: brief FINAL (2026-06-14, 29KB), pm sub-tasks 1A/1B/1C/2 all SUPERSEDED, IMPL-GATE FIX-MCP-CRASH-LOOP-WRITEWAL done_verified; it's a deliberate zone-lock held open for a market-day live re-verify gate, not churn. DMS stays HELD.
 **why-decision:** the breach is an INSTANCE of an already-tracked CLEAN task, not new work; folding the live target set is the lowest-debt move (signal not lost, janitor gets ground-truth, zero lane churn, conservation 562 held).
 **why-change:** no change from plan — applied the existing-entry dedup discipline.
+
+### STEP po-S93 · po · 2026-06-16T23:30:53Z
+**task-id:** FIX-CI-RED-STANDING-1837A-1352A
+**what-done:** Triaged dev-team tick 20260616T232622Z: 1 `ci_red` signal (CI-RED-fbcc2cda / `bun test` / head_sha fbcc2cda = frozen origin/main HEAD, 81 behind local). DEDUP'd per triage-signals Layer-1+2 against the live standing-red FIX in `done`; returned NOTHING. NO board mutation (conservation 562 held). No new user reports; TNB handoff already ACK'd po-s91.
+**what-considered:**
+- Mint CI-RED-fbcc2cda-FIX per the ci_red row — REJECTED: Layer-1 title-match + Layer-2 head_sha-match both hit FIX-CI-RED-STANDING-1837A-1352A (done, QA-APPROVED 18:35, done_verified WITHHELD); its verification_gate=ci_green_on_subsequent_push is verbatim the signal's gate.
+- Treat as a NEW/different failing job → mint — REJECTED: RAW-verified the fix IS in the 81 unpushed commits (impl 1c8467f9: 1352a bctcPdfPullJob try/catch guard + 1837a enum 'ready'+'active'+'qa' on HEAD test file + orch-state-access.md §5 SSOT). origin is frozen pre-fix because PUSH is HELD → CI red is the EXPECTED frozen-HEAD state, not new work.
+- Act on the 27 health-recheck/BCTC telegram reports — REJECTED: cowork detect-loop domain (not PO dev-team triage); every distinct item maps to already-tracked board work (BCTC-VPS-STALE-5D done, AUDITOR-EMIT-SCHEMA-DRIFT done_verified, FB-POSTER-NOARG done_verified, VNSTOCK crashes done_verified, ALERT-FINGERPRINT-WIRE + FOREIGN-FLOW-INTEGRITY + BCTC-ENRICH-SILENT-0ROWS in review).
+**why-decision:** the ci_red is a duplicate of an already-done, QA-approved, push-gated FIX on the exact frozen origin HEAD — minting would create a board dup and a redundant dev lane; the honest disposition is dedup→NOTHING, leave the existing FIX to flip done_verified when the held PO push greens Linux CI.
+**why-change:** no change from plan — applied two-layer ci_red dedup verbatim; PUSH stays HELD (PO out-of-band).
