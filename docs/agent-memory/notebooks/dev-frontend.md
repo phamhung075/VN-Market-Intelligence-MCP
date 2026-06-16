@@ -1,6 +1,29 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-16 | **Sprint:** FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH
+**Last updated:** 2026-06-16 | **Sprint:** INFOCARD-EXPAND-FETCH
+
+---
+
+## Session: 2026-06-16 (FIX-CASCADE-CARD-INVALID-DATE — REVIEW)
+
+**FIX-CASCADE-CARD-INVALID-DATE DONE — 1 shared helper, 4 brittle sites replaced**
+
+Created `apps/frontend/app/lib/formatDate.ts` — 4 exports:
+- `parseDate(raw)`: normalises bare SQLite/ISO/millis/offset → Date|null (null on NaN/empty/garbage)
+- `formatDateVi(raw)`: full vi-VN locale date+time or "—"
+- `formatDateOnlyVi(raw)`: date-only vi-VN or "—"
+- `formatSignalTimestamp(raw)`: compact HH:mm (today) or MM-DD HH:mm (other day) or "—"
+
+Brittle sites replaced (BEFORE=4, AFTER=0):
+1. dashboard.analysis.tsx:780 — `new Date(sig.createdAt.replace(" ","T")+"Z").toLocaleDateString("vi-VN")` → `formatDateOnlyVi(sig.createdAt)`
+2. dashboard.analysis.tsx:1279–1292 — `formatSignalTime()` body (blind +Z, no NaN guard) → delegates to `formatSignalTimestamp()`
+3. dashboard.sector-cascade.tsx:218–227 — `formatHitAt()` body (try/catch, no NaN guard) → delegates to `formatDateVi()`
+4. dashboard.kinh-dich-signals.tsx:223–231 — `formatTimestamp()` body (same pattern) → delegates to `formatDateVi()`
+
+Test: 33 new tests in `app/__tests__/FIX-CASCADE-CARD-INVALID-DATE-formatDate.test.ts` — all GREEN.
+Vitest total: 1670/1672 pass (2 pre-existing QUE_DESCRIPTIONS failures unrelated). tsc: EXIT 0.
+
+Zone health: All timestamp renders now use shared formatDate helper; "Invalid Date" impossible in any cascade/signal card; helper is pre-backend-ISO-normalisation safe | HEALTHY
 
 ---
 

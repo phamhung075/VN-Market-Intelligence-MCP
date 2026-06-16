@@ -19172,7 +19172,7 @@
         "epic": "INFOCARD-EXPAND-FETCH",
         "title": "Fix \"Invalid Date\" on the cascade-macro info card — definitif date-parse guard, not a symptom patch",
         "type": "FIX",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "priority": "P2",
         "fast_track": true,
         "zone": "apps/frontend/",
@@ -19192,7 +19192,9 @@
         "next_agent": "dev-frontend",
         "dispatched_at": "2026-06-16T16:32:09Z",
         "dispatched_by": "dev-team",
-        "dispatched_to": "dev-frontend"
+        "dispatched_to": "dev-frontend",
+        "reviewed_at": "2026-06-16T18:45:00Z",
+        "reviewed_by": "dev-frontend"
       }
     ],
     "ready": [
