@@ -251,6 +251,22 @@ export async function writeOhlcvBatch(
     for (const row of rows) {
       const type = row.type ?? "stock";
 
+      // ── Pipeline step 0: C=0 fail-closed guard ────────────────────────────
+      // A zero close must NEVER persist in daily_ohlcv — it would poison all
+      // TA indicators (RSI/MACD/BB) and generate false "giá 0 dưới BB" alerts.
+      // Fail-closed: reject any row where close=0, regardless of other fields.
+      // Belt-and-suspenders: FR-S1 (below) and validateOhlcvUnit (Rule 1) also
+      // catch zero-price rows, but this explicit guard fires first with a clear
+      // diagnostic reason for the caller log.
+      if (row.close === 0) {
+        console.error(
+          `[ohlcvWriteService] C=0 reject: ${row.code} ${row.date} close=0 — ` +
+            `zero close must never persist (all-zero bar or missing data)`,
+        );
+        result.rejected.push(`${row.code} ${row.date}: zero_close C=0 guard`);
+        continue;
+      }
+
       // ── Pipeline step 1: FR-S1 seed-bar rejection ──────────────────────────
       // Skip synthetic seed bars: date >= vnToday AND volume=0 AND O=H=L=C
       // These are VNDIRECT reference-price rows with no real trading activity.

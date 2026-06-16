@@ -1,12 +1,21 @@
 // src/scheduler/ohlcvDailyAggregatorJob.ts
 // Task 1359 — implementation (Sprint 122)
+// FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0 — migrated to writeOhlcvBatch (2026-06-16)
 // Aggregates intraday market_prices_history ticks into daily_ohlcv rows.
 // VN timezone (UTC+7): window = [VN midnight UTC, now).
+//
+// All writes now route through writeOhlcvBatch so FR-S1 seed-rejection,
+// C=0 guard, detectAndNormalizeScaleFromPrevClose, and validateOhlcvUnit
+// apply to ALL tickers generically (no per-ticker allowlist).
 
 import { Database } from "bun:sqlite";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
+import {
+  writeOhlcvBatch,
+  type OhlcvWriteRow,
+} from "../../application/usecases/ohlcvWriteService.js";
 
 export interface OhlcvAggregatorDeps {
   db?: () => Database;
@@ -68,8 +77,11 @@ export async function runOhlcvDailyAggregator(
   let rowsWritten = 0;
   let tickersSkipped = 0;
 
-  // Per-ticker row counts in daily_ohlcv (for taReady + top-3 computation)
-  const tickerOhlcvRows: Map<string, number> = new Map();
+  // Collect all eligible rows into a batch — writeOhlcvBatch owns the write pipeline
+  // (FR-S1 seed-rejection, C=0 guard, scale normalization, unit validation).
+  const writeRows: OhlcvWriteRow[] = [];
+  // Track which tickers produced an eligible row (before writeOhlcvBatch filtering)
+  const eligibleCodes: string[] = [];
 
   for (const { code } of tickers) {
     tickersProcessed++;
@@ -120,26 +132,57 @@ export async function runOhlcvDailyAggregator(
     ).get(code, windowStart, windowEnd) as { max_vol: number | null } | undefined;
     const volume = volRow?.max_vol ?? 0;
 
-    // Upsert into daily_ohlcv
-    db.prepare(
-      `INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(code, date) DO UPDATE SET
-         open       = excluded.open,
-         high       = excluded.high,
-         low        = excluded.low,
-         close      = excluded.close,
-         volume     = excluded.volume,
-         updated_at = excluded.updated_at`
-    ).run(code, dateStr, open, high, low, close, volume, new Date(nowMs).toISOString());
+    // Collect into batch — do NOT write directly.
+    // writeOhlcvBatch applies FR-S1 seed-rejection, C=0 guard,
+    // detectAndNormalizeScaleFromPrevClose (÷1000 correction), and validateOhlcvUnit.
+    writeRows.push({
+      code,
+      date: dateStr,
+      open,
+      high,
+      low,
+      close,
+      volume,
+      type: "stock",
+    });
+    eligibleCodes.push(code);
+  }
 
-    rowsWritten++;
+  // Batch write through the SSOT choke-point.
+  // conflictStrategy='backfill': unconditional overwrite (aggregator is intraday authority).
+  // vnToday=dateStr: FR-S1 fires when date >= dateStr (same-day flat vol=0 bars are seeds).
+  const writeResult = await writeOhlcvBatch(writeRows, db, {
+    conflictStrategy: "backfill",
+    vnToday: dateStr,
+  });
 
-    // Count total OHLCV rows for this ticker (across all dates) for taReady check
-    const totalRowsRow = db.prepare(
-      "SELECT COUNT(*) as cnt FROM daily_ohlcv WHERE code = ?"
-    ).get(code) as { cnt: number } | undefined;
-    tickerOhlcvRows.set(code, totalRowsRow?.cnt ?? 1);
+  // Translate writeOhlcvBatch result back to aggregator counters.
+  // skipped = FR-S1 seed-bar rejections (flat vol=0 bars on today's date).
+  // rejected = C=0 guard + validateOhlcvUnit failures (zero-price, out-of-range).
+  rowsWritten = writeResult.written;
+  // Both FR-S1 skips and unit-guard rejects count as "skipped" in the aggregator summary.
+  tickersSkipped += writeResult.skipped + writeResult.rejected.length;
+
+  // Log any unit-guard rejections for ops visibility.
+  if (writeResult.rejected.length > 0) {
+    console.error(
+      `[ohlcv-aggregator] ${writeResult.rejected.length} rows rejected by write pipeline:`,
+      writeResult.rejected.slice(0, 5),
+    );
+  }
+
+  // taReady / top-3: query row counts after batch write (only for tickers that got written).
+  // Per-ticker row counts in daily_ohlcv (for taReady + top-3 computation)
+  const tickerOhlcvRows: Map<string, number> = new Map();
+
+  if (eligibleCodes.length > 0) {
+    const placeholders = eligibleCodes.map(() => "?").join(",");
+    const countRows = db.prepare(
+      `SELECT code, COUNT(*) as cnt FROM daily_ohlcv WHERE code IN (${placeholders}) GROUP BY code`
+    ).all(...eligibleCodes) as Array<{ code: string; cnt: number }>;
+    for (const { code, cnt } of countRows) {
+      tickerOhlcvRows.set(code, cnt);
+    }
   }
 
   // taReady: tickers with >= 8 OHLCV rows (enough for TA computation)
