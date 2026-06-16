@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T09:39:47Z",
-  "_updated_by": "po-s85",
+  "_updated_at": "2026-06-16T09:45:14Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -127,33 +127,12 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-16T09:39:47Z",
-    "updated_by": "po-s85",
+    "updated_at": "2026-06-16T09:45:14Z",
+    "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null,
-    "note": "RESET to idle from stale FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (status:ready, next_agent:dev-frontend) — that task is long done_verified (in done[]), so the stale head was at risk of a dispatcher re-spawning it. No active dispatch this tick (OHLCV-seeder chain closed out to done_verified; alert-gate dependents annotated + held for their own behavioral gates).",
-    "prev_head_archived": {
-      "status": "ready",
-      "updated_at": "2026-06-16T07:15:00Z",
-      "updated_by": "pm",
-      "active_task_id": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
-      "next_agent": "dev-frontend",
-      "note": "PM PLANNING COMPLETE: Tasks T-1 through T-5 broken down atomically (5 READY tasks + 1 Wave-3 backlog follow-on). BA-FE-PAGE-REORG FR-4 redirected to reuse fetchUtils.ts. 28 Cluster A loaders + 29 Cluster B proxies + 4 Cluster C client wrappers scoped. NEXT: dev-frontend claims T-1, executes T-1→(T-2||T-3||T-4 parallel)→T-5. Critical path: T-1 must complete first; T-2/T-3/T-4 can run in parallel (disjoint files).",
-      "push_note": "PO green-lit the fleet push this tick. 13-behind origin/main classified ALL benign cloud-chore/docs (8x chore(health) recheck, 2x chore(memory) notebook, 1x chore(tasks) signal_queue append, 1x docs(reports) TNB audit handoff, 1x chore(memory/tran-ngoc-bau)) — zero code, zero mcp-server conflict. tsc GREEN so the red pre-push hook no longer strands. Plan: git pull --rebase origin main (replay 123 work commits atop 13 chores) -> re-verify bunx tsc --noEmit=0 -> git push. The push is executed by po out-of-band and is NOT part of this orch-state commit.",
-      "reconciled_from": ".head was on FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (po-s76 reconcile_note); that task is now signed off.",
-      "push_executed": {
-        "at": "2026-06-16T08:32:04Z",
-        "by": "po-s84",
-        "method": "isolated git worktree (/tmp/fleet-push-wt) — main dirty tree never touched, bg agents undisturbed",
-        "origin_range": "42290a40 -> 0c826511",
-        "result": "ahead 149 -> 0-behind; merged 18 benign cloud-chore commits; pre-push tsc GREEN; push EXIT=0",
-        "merge_conflict_resolved": "docs/data/orch/orch-state.json — kept HEAD _updated_at + preserved BOTH the 2 po-s76 sau-d4 reconcile rows AND origin's NEW tnb-20260615T201300 audit-handoff signal row",
-        "ci_result": "origin CI bun test RED on a STANDING pre-existing failure (1837a + 1352a) — independent of the push; follow-on FIX-CI-RED-STANDING-1837A-1352A minted; push-gated done_verified WITHHELD until green",
-        "main_tree_note": "main working-tree branch ref deliberately LEFT at 10797e26 (not fast-forwarded) — 3 dirty files overlap the FF delta; ref-move risks stranding a bg agent mid-write for zero benefit since the work is already on origin. Router reconciles the ref on its next fetch pass."
-      },
-      "archived_reason": "stale — pointed at already-done_verified FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
-      "archived_at": "2026-06-16T09:39:47Z"
-    }
+    "rebuild_required": false,
+    "note": "ROUTER 2026-06-16T09:45:14Z — FIX-VNSTOCK-TRADINGSTATS-CRASH PROMOTED review->done_verified on live behavioral gate GREEN. RAW-verified (NOT relayed) named-vol cron_job_runs: vnstockTradingStatsRefresh 2026-06-16 08:30:01 success rows_written=0 (honest 0, not ticker count; prior 06-15 crash was PRE-deploy 11:17:43Z). Plausibility /goal#1: COUNT=3735, MAX(fetched_at)=08:04:35 predates the 08:30 run => 0-new genuine. Fix 64f188fc. REBUILD done. Head kept idle (non-dispatching) -> next tick falls to Step 1. Remaining review[] gate: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (data_source_fixed, alert-engine-vs-canonical RSI residual). PUSH held (PO post-gates; branch ahead 19/behind 8). Active coding lane=0."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -731,8 +710,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T06:50:46Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-16T09:45:14Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -18538,6 +18517,53 @@
         "done_verified_at": "2026-06-16T09:39:47Z",
         "done_verified_by": "po-s85",
         "done_verified_note": "Was SUPERSEDED_PARTIAL + behavioral_gate:RED. Its superseder FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 is now live-GREEN, so this task's own verification_gate (RAW: 0 flat seeds, plausible candles, real-band RSI) is satisfied via the chain. Partial code d4b532be (daily aggregator migration) is CORRECT and KEPT — NOT reverted. Relocated out of done[]/RED into done_verified[] as completed-by-chain so it no longer falsely reads RED / signals unresolved work."
+      },
+      {
+        "depends": [],
+        "id": "FIX-VNSTOCK-TRADINGSTATS-CRASH",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "zone_owner": "apps/mcp-server/",
+        "priority": "P1",
+        "status": "DONE_VERIFIED",
+        "title": "FIX-VNSTOCK-TRADINGSTATS-CRASH — vnstockTradingStatsRefresh CRASHED (50% success rate, 45min avg run) -> sector/market-cap data unreliable.",
+        "scope": "Same crash family as the now-fixed FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: syncVnstockData.ts subprocess has no per-ticker timeout/back-off guard, so a slow/rate-limited ticker blows the 45min run and the job exits ~50%. Add subprocess timeout guard + per-ticker back-off in the tradingStats path (mirror the fundamentals fix). PLAN-ONLY at PO layer.",
+        "source": "health-recheck BUG-1 2026-06-15T10:07Z (3180); M6 monitor (3149) escalated to crash.",
+        "user_impact": "MEDIUM — sector rotation + market-cap weighting stale/unreliable.",
+        "created_at": "2026-06-15T10:38:00Z",
+        "route_to": "dev-mcp-server",
+        "mode": "recon-first",
+        "zone": "apps/mcp-server/",
+        "dispatched_ts": "2026-06-15T10:43:38Z",
+        "dispatched_by": "dev-team",
+        "dispatch_note": "PO NEW mint; ~50% crash vnstock trading-stats sync; syncVnstockData.ts timeout guard (fundamentals-fix family). recon-first: reproduce crash + read live job before patch.",
+        "review_entered_ts": "2026-06-15T11:16:51Z",
+        "fix_commit": "64f188fc",
+        "memory_commits": [
+          "09fd9d93",
+          "a14a49c8"
+        ],
+        "board_note": "dev flipped status field only — router relocated object in_progress->review",
+        "root_cause": "runVnstockTradingStatsJob: markFetched(code,'trading_stats') called with NO backoffMinutes on null/timeout => stamped fetched_at=now on a FAILED fetch, silencing retries for the full 2h staleness window (data never landed, job believed 'freshly fetched'). Plus runVnstockTradingStatsJobCron reported rowsWritten=result.succeeded (ticker count) => false-positive success when all fetches null.",
+        "fix_summary": "30-min retry backoff on all 4 null paths (syncStock trading_stats + syncStockLight trading_stats/financials/balance_sheet) — DRY mirror of FIX-FUNDAMENTALS-REFRESH-CRON-DEAD family; rowsWritten computed from COUNT(vnstock_trading_stats) DB-delta via DI getDbFn (not ticker count). 45s Python subprocess SIGTERM timeout was already correct.",
+        "tests_green": "router-run bun test: fix-vnstock-tradingstats-crash.test.ts 10 pass/0 fail/21 expect (output proves fix: succeeded=3 rowsWritten=0 false-positive killed, succeeded=1 rowsWritten=1 honest); adjacent 1920a + fundamentals-crash-spike 17 pass/0 fail (no regression); tsc --noEmit clean",
+        "commit_hygiene_verified": "router git show --stat 64f188fc = 3 files all apps/mcp-server/ zone, no -A/foreign/secret; memory commits separate; orch-state not dirty; linear history on router 661a5a9d",
+        "disjoint_failure_set": "full suite 12982 pass/44 fail; router confirmed NO _deprecated test references the changed modules => 44 pre-existing failures disjoint from this fix (not a regression)",
+        "generic_verified": "/goal#2 PASS — 30-min retry backoff applied to every ticker null path (syncStock trading_stats + syncStockLight trading_stats/financials/balance_sheet); rowsWritten = COUNT(vnstock_trading_stats) DB-delta via DI getDbFn for ALL tickers; no per-ticker/date allowlist; 30-min matches existing financials backoff constant.",
+        "rebuild_required": true,
+        "rebuild_scope": "mcp-server ONLY — both source files in apps/mcp-server/. Force-recreate only, NEVER down (named-vol market.db). Verify peers + DB rows.",
+        "pending_live_gate": "UNMET — code-live + deploy-healthy + 10 unit tests green + green boot probe = FLOOR not bar (/goal#1). The historically-crashing sweep path runs next 2026-06-16 08:30 UTC (Tuesday weekday). GATE (router-d68 one-shot probe ~09:12 UTC): query named-volume cron_job_runs for the newest vnstockTradingStatsRefresh started_at >= 2026-06-16 08:30 — require status='success' (NOT crashed) AND rows_written = honest vnstock_trading_stats COUNT delta (plausibility per /goal#1; a succeeded>0 / 0-new-rows run must report rows_written=0 not ticker count). Freshness col = fetched_at. GREEN => router move review->done_verified + commit. CRASH/FAIL => keep review + dispatch dev-mcp-server fixer.",
+        "push_disposition": "HOLD — bundle; PO pushes the fast-forward after the remaining 2026-06-16 behavioral gates close.",
+        "rebuild_landed": "router-confirmed LIVE: mcp-server image .Created 2026-06-15T11:17:43Z > commit 64f188fc 11:09:51Z UTC; Health=healthy RestartCount=0 StartedAt 11:17:44Z; 11/11 peers up; /health 200 toolCount 163.",
+        "live_db_correction": "ops acce77e8 read the HOST DECOY data/market.db (reported trading_stats=0 rows, 'today is Sunday', 'no post-fix run'); ALL wrong. Router RAW-queried the authoritative named volume vn-market-intelligence-mcp_market_data (/app/data): trading_stats=3631 rows; today=Monday 2026-06-15; vnstockTradingStatsRefresh ran TODAY 08:30:01 and CRASHED (pre-fix, before rebuild 11:17:43Z).",
+        "live_evidence": "vnstockStartupProbe 11:17:47 success (post-fix boot probe clean — necessary not sufficient, lighter path than sweep); vnstockTradingStatsRefresh 08:30:01 crashed (PRE-fix symptom, not regression); vnstockFundamentalsRefresh 01:05 success rows_written 51 then 0 (sibling honest rowsWritten live).",
+        "next_live_gate_utc": "2026-06-16T08:30:00Z (vnstockTradingStatsRefresh, weekdays 30 8 * * 1-5); router-d68 one-shot probe armed 2026-06-16 09:12 UTC (11:12 CEST).",
+        "gate_sharpened_ts": "2026-06-15T11:24:20Z",
+        "done_verified_ts": "2026-06-16T09:45:14Z",
+        "done_verified_by": "dev-team",
+        "rebuild_done": true,
+        "rebuild_evidence": "mcp-server force-recreated: image .Created 2026-06-15T11:17:43Z > commit 64f188fc 11:09:51Z (UTC); Health=healthy; RestartCount=0; 11/11 peers Up (force-recreate, NEVER down).",
+        "live_gate_evidence": "router-run RAW (NOT relayed), named volume vn-market-intelligence-mcp_market_data /data/market.db: cron_job_runs newest vnstockTradingStatsRefresh started_at 2026-06-16 08:30:01 status=success error='' rows_written=0 (prior 2026-06-15 08:30:01 crashed = PRE-deploy; deploy 11:17:43Z). rows_written=0 HONEST not ticker count. Plausibility /goal#1: vnstock_trading_stats COUNT=3735, MAX(fetched_at)=2026-06-16T08:04:35 predates the 08:30 run => 0 new rows genuine; +104 over 3631 baseline from earlier runs. First live exercise of the historically-crashing sweep path post-deploy = SUCCESS."
       }
     ],
     "head": {
@@ -18956,48 +18982,6 @@
         "data_source_fixed_at": "2026-06-16T09:39:47Z",
         "data_source_fixed_by": "po-s85",
         "data_source_fixed_note": "The giá=0 / single-digit-RSI DATA SOURCE is now eliminated live (router RAW probe 2026-06-16T09:36Z: flat-seed=0 stable, DAG honest-gap, majors intact). This entry can now move toward verification ON ITS OWN MERITS — re-gate for the RESIDUAL alert-engine-vs-canonical RSI divergence ONLY (e.g. NVL dual-RSI 26.5/23.9 same-DB-tools-diverge-on-rowcount). NOT auto-flipped to done_verified — its behavioral gate (next post-fix market open: alert-engine TA-Alert RSI matches canonical get_technical_indicators within 0.1pt, no single-digit / no 100.0, generic all tickers) still owes a clean-open observation."
-      },
-      {
-        "depends": [],
-        "id": "FIX-VNSTOCK-TRADINGSTATS-CRASH",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "zone_owner": "apps/mcp-server/",
-        "priority": "P1",
-        "status": "REVIEW",
-        "title": "FIX-VNSTOCK-TRADINGSTATS-CRASH — vnstockTradingStatsRefresh CRASHED (50% success rate, 45min avg run) -> sector/market-cap data unreliable.",
-        "scope": "Same crash family as the now-fixed FIX-FUNDAMENTALS-REFRESH-CRON-DEAD: syncVnstockData.ts subprocess has no per-ticker timeout/back-off guard, so a slow/rate-limited ticker blows the 45min run and the job exits ~50%. Add subprocess timeout guard + per-ticker back-off in the tradingStats path (mirror the fundamentals fix). PLAN-ONLY at PO layer.",
-        "source": "health-recheck BUG-1 2026-06-15T10:07Z (3180); M6 monitor (3149) escalated to crash.",
-        "user_impact": "MEDIUM — sector rotation + market-cap weighting stale/unreliable.",
-        "created_at": "2026-06-15T10:38:00Z",
-        "route_to": "dev-mcp-server",
-        "mode": "recon-first",
-        "zone": "apps/mcp-server/",
-        "dispatched_ts": "2026-06-15T10:43:38Z",
-        "dispatched_by": "dev-team",
-        "dispatch_note": "PO NEW mint; ~50% crash vnstock trading-stats sync; syncVnstockData.ts timeout guard (fundamentals-fix family). recon-first: reproduce crash + read live job before patch.",
-        "review_entered_ts": "2026-06-15T11:16:51Z",
-        "fix_commit": "64f188fc",
-        "memory_commits": [
-          "09fd9d93",
-          "a14a49c8"
-        ],
-        "board_note": "dev flipped status field only — router relocated object in_progress->review",
-        "root_cause": "runVnstockTradingStatsJob path: markFetched(code,'trading_stats') called with NO backoffMinutes on the null/timeout result => stamped fetched_at=now on a failed fetch, silencing retries for the full 2h staleness window (data never landed, job believed 'freshly fetched'). Plus runVnstockTradingStatsJobCron reported rowsWritten=result.succeeded (ticker count) => false-positive success when all fetches null.",
-        "fix_summary": "30-min retry backoff on all 4 null paths (syncStock trading_stats + syncStockLight trading_stats/financials/balance_sheet) — DRY mirror of FIX-FUNDAMENTALS-REFRESH-CRON-DEAD family; rowsWritten computed from COUNT(vnstock_trading_stats) DB-delta via DI getDbFn (not ticker count). The 45s Python subprocess SIGTERM timeout was already correct — issue was retry-backoff after timeout.",
-        "tests_green": "router-run bun test: fix-vnstock-tradingstats-crash.test.ts 10 pass/0 fail/21 expect (output proves fix: succeeded=3 rowsWritten=0 false-positive killed, succeeded=1 rowsWritten=1 honest); adjacent 1920a + fundamentals-crash-spike 17 pass/0 fail (no regression); tsc --noEmit clean",
-        "commit_hygiene_verified": "router git show --stat 64f188fc = 3 files all apps/mcp-server/ zone, no -A/foreign/secret; memory commits separate; orch-state not dirty; linear history on router 661a5a9d",
-        "disjoint_failure_set": "full suite 12982 pass/44 fail; router confirmed NO _deprecated test references the changed modules => 44 pre-existing failures disjoint from this fix (not a regression)",
-        "generic_verified": "/goal#2 PASS — backoff applied to every ticker's null path, no per-ticker/date allowlist; 30-min matches existing financials backoff constant",
-        "rebuild_required": true,
-        "rebuild_scope": "mcp-server ONLY — both source files in apps/mcp-server/. Force-recreate only, NEVER down (named-vol market.db). Verify peers + DB rows.",
-        "pending_live_gate": "UNMET — code-live + deploy-healthy + 10 unit tests green + green boot probe = FLOOR not bar (/goal#1). The historically-crashing sweep path runs next 2026-06-16 08:30 UTC (Tuesday weekday). GATE (router-d68 one-shot probe ~09:12 UTC): query named-volume cron_job_runs for the newest vnstockTradingStatsRefresh started_at >= 2026-06-16 08:30 — require status='success' (NOT crashed) AND rows_written = honest vnstock_trading_stats COUNT delta (plausibility per /goal#1; a succeeded>0 / 0-new-rows run must report rows_written=0 not ticker count). Freshness col = fetched_at. GREEN => router move review->done_verified + commit. CRASH/FAIL => keep review + dispatch dev-mcp-server fixer.",
-        "push_disposition": "HOLD — bundle; PO pushes the fast-forward after the FIX-ALERT-ENGINE-RSI-SINGLEDIGIT behavioral gate closes 2026-06-16",
-        "rebuild_landed": "router-confirmed LIVE: mcp-server image .Created 2026-06-15T11:17:43Z > commit 64f188fc 11:09:51Z UTC; Health=healthy RestartCount=0 StartedAt 11:17:44Z; 11/11 peers up; /health 200 toolCount 163.",
-        "live_db_correction": "ops acce77e8 read the HOST DECOY data/market.db (reported trading_stats=0 rows, 'today is Sunday', 'no post-fix run'); ALL wrong. Router RAW-queried the authoritative named volume vn-market-intelligence-mcp_market_data (/app/data): trading_stats=3631 rows; today=Monday 2026-06-15; vnstockTradingStatsRefresh ran TODAY 08:30:01 and CRASHED (pre-fix, before rebuild 11:17:43Z).",
-        "live_evidence": "vnstockStartupProbe 11:17:47 success (post-fix boot probe clean — necessary not sufficient, lighter path than sweep); vnstockTradingStatsRefresh 08:30:01 crashed (PRE-fix symptom, not regression); vnstockFundamentalsRefresh 01:05 success rows_written 51 then 0 (sibling honest rowsWritten live).",
-        "next_live_gate_utc": "2026-06-16T08:30:00Z (vnstockTradingStatsRefresh, weekdays 30 8 * * 1-5); router-d68 one-shot probe armed 2026-06-16 09:12 UTC (11:12 CEST).",
-        "gate_sharpened_ts": "2026-06-15T11:24:20Z"
       },
       {
         "id": "FIX-BCTC-ENRICH-SILENT-0ROWS",
