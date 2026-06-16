@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-15T23:44:05Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-16T00:04:25Z",
+  "_updated_by": "po-s70",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -126,12 +126,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-15T23:44:05Z",
-    "updated_by": "dev-team",
+    "status": "review",
+    "updated_at": "2026-06-16T00:04:25Z",
+    "updated_by": "po-s70",
     "active_task_id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
-    "next_agent": "dev-mcp-server",
-    "note": "Dispatched dev-mcp-server 2026-06-15T23:44:05Z (worktree, backgrounded) by router. FIX-ERRAUDIT-W2-MCP-DATALAYER: safeQuery<T>+runSection/withSection+failLoud kill confidence_score=50/fabricated-default class at source; migrate imfConvictionBridge/scanMarket/imfDataFetcher/assembleBriefing/marketContextBuilder/vnstockBridge. Dev-dispatch lock held (task_claim sprint-task owner dev-team ttl 3600). FAIL-LOUD DoD, generic, no-push. Promote->review(qa) on green check + worktree commit; router merge-gates."
+    "next_agent": "qa",
+    "note": "FIX-ERRAUDIT-W2-MCP-DATALAYER promoted in_progress->review by po-s70. Code merged to main 9f4a8eef (31/31 tests, tsc clean); ops rebuilding mcp-server + qa LIVE-verify (FORCED-FAILURE DoD, named-volume market.db) PENDING. CODING IS DONE — next dev-team :07 tick MUST NOT re-dispatch dev-mcp-server; this task is in the qa GATE. Also this turn: FIX-BCTC-BANK-PDF-OCR-RASTERIZE -> done_verified (extraction leg DoD met, qa+router RAW-verified); FIX-ERRAUDIT-W1-PEK-P0 unblocked (RASTERIZE dep cleared); FIX-BCTC-BANK-SUMMARY-MAPPING minted (P1 bank scalar-summary value-accuracy follow-on, BCTC-ANALYTICS-LAYER)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -653,8 +653,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T00:00:00Z",
-    "_updated_by": "po-s69",
+    "_updated_at": "2026-06-16T00:04:25Z",
+    "_updated_by": "po-s70",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12132,13 +12132,11 @@
         "wave": 1,
         "priority": "P0",
         "size": "M",
-        "status": "BLOCKED",
+        "status": "READY-FOR-GROOMING",
         "zone": "apps/pdf-extractor/",
         "route_to": "dev-pdf-extractor",
         "route": "ba->architect->pm->dev->qa",
         "next_agent": "ba",
-        "blocked_by": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
-        "hold_reason": "SAME-ZONE-SERIALIZED: apps/pdf-extractor/ is actively edited by dev-pdf-extractor on FIX-BCTC-BANK-PDF-OCR-RASTERIZE (same FIX-BCTC-ENRICH-SILENT-0ROWS class). NO concurrent same-zone agent — dispatch only after the active lane reports done. VERIFIED DISTINCT: active commits fffef229/56129626 touched ocr_adapter.py + test + docs ONLY; pek_engine_adapter.py:668/:342/:717 are unmodified on disk — NOT a duplicate.",
         "title": "Wave-1 P0 PEK data-masking pair: layout-crash + PaddleOCR-load failure served as a successful 0-row extraction",
         "desc": "Two P0 sites in pek_engine_adapter.py where a CRASHED model is served as a clean 0-row 'pass' (FIX-BCTC-ENRICH-SILENT-0ROWS class). (A) :668 — DocLayout-YOLO layout-detection crash (OOM/native-lib fault on 8GB host) is logged at 668-673 then CONTINUES with empty pages_bboxes -> total_pages=0 (687), units_in_map=[] (700); caller pushes a fully-formed result dict as a SUCCESSFUL extraction. A model crash is indistinguishable from a PDF with no tables. (B) :342 (+ guard :717) — PaddleOCR PP-StructureV2 load fail -> warning only, paddle_table stays None; the 'if paddle_table is not None' guard at 717 silently skips table extraction -> units assemble row_count=0 with quarantined=False = clean-looking 0-row pass (units_passing==units_total). Contrast extract_layout_first_usecase.py:450 which correctly quarantines. FIX: re-raise OR tag extraction_status='degraded'/quarantined=True (ship the Python helper fail_loud_or_tag_degraded here as a by-product) so a crashed model is NEVER served as a successful 0-row extraction.",
         "files": [
@@ -12152,7 +12150,10 @@
         "created_at": "2026-06-15T21:23:56Z",
         "created_by": "po-s65",
         "degroomed_at": "2026-06-15T22:39:38Z",
-        "degroomed_by": "po-s68"
+        "degroomed_by": "po-s68",
+        "unblocked_at": "2026-06-16T00:04:25Z",
+        "unblocked_by": "po-s70",
+        "unblock_note": "Dependency FIX-BCTC-BANK-PDF-OCR-RASTERIZE reached done_verified (po-s70). SAME-ZONE-SERIALIZED hold lifted: apps/pdf-extractor/ is no longer held by the active RASTERIZE lane. Now UNBLOCKED + ready for grooming/promotion to a free coding slot."
       },
       {
         "id": "FIX-ERRAUDIT-W2-DEADLINE-UNITTEST",
@@ -12199,6 +12200,37 @@
         "blocks": [],
         "created_at": "2026-06-15T23:30:28Z",
         "created_by": "po-s68"
+      },
+      {
+        "id": "FIX-BCTC-BANK-SUMMARY-MAPPING",
+        "type": "FIX",
+        "priority": "P1",
+        "status": "BACKLOG",
+        "epic": "BCTC-ANALYTICS-LAYER",
+        "sprint": "BCTC-ANALYTICS-LAYER",
+        "route_to": "dev-pdf-extractor",
+        "route": "po->ba->architect->pm->dev->qa",
+        "next_agent": "ba",
+        "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+        "mode": "code",
+        "size": "M",
+        "title": "BANK financial_reports SCALAR summary columns are garbage: B02-TCTD balance-sheet rows squeezed into income-statement scalar columns -> net_margin_pct=229157%, total_assets=0, accounting-identity violated (CTG 2026Q1) -> validation_status=low_confidence on every bank ticker",
+        "desc": "qa follow_on_required from FIX-BCTC-BANK-PDF-OCR-RASTERIZE done_verified gate. The RAW extraction layer (bctc_table_rows) is now CORRECT for banks (CTG/VCB 2026Q1 = 55 real varied plausible rows, raw-verified vs named-volume market.db) — this defect is PURELY the downstream scalar SUMMARIZER. RAW EVIDENCE (CTG 2026Q1): net_revenue=3910, ebitda=3.6e14, net_margin_pct=229157%, total_assets=0 while total_liabilities=24.7B -> 'Accounting identity violated — mismatch 100%' -> validation_status=low_confidence. The bank-aware B02-TCTD summary-mapping layer is squeezing bank balance-sheet rows into income-statement scalar columns (net_revenue / ebitda / net_margin_pct) and dropping total_assets. SCOPE = ALL bank tickers in the financial_reports scalar columns (B02-TCTD form), generically. This is a served-metric integrity defect (/goal#1 no-fake-data: a 229157% margin / total_assets=0 with non-zero liabilities is implausible-but-non-empty fabricated-shaped data). Cross-link: kin to the BAL-1b bank-B02-TCTD-serving cluster of BCTC-ANALYTICS-LAYER (BAL-1b fixed the SERVE gate; this fixes the SCALAR-MAPPING upstream of serve) and to memory project_bank_aware_bctc (B02-TCTD 1 SSOT across 7 consumers, Roman+no-3digit discriminator). NOT covered by FIX-BCTC-ENRICH-SILENT-0ROWS (that is 0-rows raw extraction) nor FIX-BCTC-BANK-PDF-OCR-RASTERIZE (OCR-rasterize leg, now done) nor the FIX-DE-* chain (interest-bearing-debt decomposition only).",
+        "generic_mandate": "GENERIC across ALL bank tickers / B02-TCTD forms — NO per-ticker allowlist, NO date-literal, NO special-case. Detect bank-form structurally (reuse the existing isBankFormFromRows / Roman+no-3digit B02-TCTD discriminator SSOT) and map bank balance-sheet rows into the correct scalar columns (or honestly NULL income-statement scalars that have no bank-form equivalent) — never squeeze balance-sheet rows into income-statement columns.",
+        "fail_loud_requirement": "A bank summary that violates the accounting identity (assets != liabilities + equity within tolerance) or yields an implausible margin band MUST surface as honest NULL / validation_status=low_confidence WITH the dimension dropped — NOT a fabricated 229157% / total_assets=0 served as a real reading. Verify LIVE on the NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = qa-green LIVE RAW.",
+        "baseline_pass": "done_verified (/goal#1) = get_bctc_full(CTG) AND get_bctc_full(VCB) serve PLAUSIBLE bank scalar summaries RAW-verified vs named-volume market.db: total_assets > 0 and consistent with total_liabilities+equity (accounting identity holds within tolerance), net_margin_pct within a plausible bank band (NOT 229157%), ebitda not an absurd 1e14 magnitude; validation_status no longer low_confidence solely from the identity violation; AND a non-bank ticker (FPT/VNM) summary is NON-REGRESSED.",
+        "recurrence_class": "BCTC-ANALYTICS-LAYER bank-B02-TCTD cluster (scalar-summary-mapping leg) — kin BAL-1b bank-serving + project_bank_aware_bctc; also nonzero-values-need-plausibility-check class (implausible-but-non-empty served metric).",
+        "owner_decision": "BA + architect to confirm whether the bank summary-mapping lives in the dev-pdf-extractor scalar-summarizer (bctcScalarAggregator / B02-TCTD row->scalar mapping) or in the dev-mcp-server serve/finalize path; route to dev-pdf-extractor by default (scalar-mapping is upstream of serve), reassign to dev-mcp-server if the architect SPIKE pins the defect in the mcp-server mapping layer.",
+        "source": "qa follow_on_required @ FIX-BCTC-BANK-PDF-OCR-RASTERIZE done_verified gate (PO-s70 2026-06-16)",
+        "created_at": "2026-06-16T00:04:25Z",
+        "created_by": "po-s70",
+        "cross_link": [
+          "BCTC-ANALYTICS-LAYER",
+          "BAL-1b-DEV",
+          "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
+          "project_bank_aware_bctc"
+        ],
+        "dispatch_note": "[PO-s70 2026-06-16T00:04:25Z] MINTED value-accuracy follow-on. RAW extraction leg (RASTERIZE) done_verified; this owns the bank SCALAR summary-mapping defect (income-statement columns garbage for banks). Searched board first — no existing BANK-AWARE/ENRICH-SILENT/BAL-* task owns this scalar-mapping scope; cross-linked into BCTC-ANALYTICS-LAYER as the scalar-summary leg of the bank-B02-TCTD cluster. Route po->ba->architect (SPIKE to pin module owner) ->pm->dev-pdf-extractor(or dev-mcp-server)->qa. Generic, no allowlist, done_verified = plausible bank scalars + accounting-identity holds vs named-volume DB."
       }
     ],
     "closed_sprints": [
@@ -17754,6 +17786,41 @@
         "verified_by": "po-s68",
         "done_commit": "c76a9776",
         "signoff_note": "3 gates green (ops rebuild / live-smoke real data / qa FAIL-LOUD audit); merged @ c76a9776"
+      },
+      {
+        "id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
+        "type": "FIX",
+        "priority": "P0",
+        "status": "done_verified",
+        "route_to": "dev-pdf-extractor",
+        "zone": "apps/pdf-extractor/",
+        "mode": "code",
+        "size": "M",
+        "title": "Scanned/image-only B02-TCTD bank PDFs yield 0 text-chars -> Layout-6/7 parser never fires -> 0 table_rows: add OCR rasterization leg before text-table parse",
+        "desc": "LIVE-VERIFIED by PO 2026-06-15 done_verified gate probe of FIX-BCTC-ENRICH-SILENT-0ROWS: after rebuilding BOTH images and re-enriching VCB 2026Q1+2025Q1 through the fixed runBctcPdfPullJob, both STILL produced 0 bctc_table_rows. fitz raw: VCB_2026_Q1.pdf = 53 pages, 110 text-chars across first 8 pages, embedded images = SCANNED/image-only. pushBctcExtraction's 3 text-tiers (pdf_path / remote-URL / pdf-parse) all returned chars:0 confidence:0. The Layout-6/7 fix (68d54c7b) parses TEXT lines into code-rows and is correct, but it never receives text for scanned bank PDFs. MISSING LEG: rasterize image-only/low-text PDF pages and OCR them (PaddleOCR is already in the pdf-extractor image — pek-import-chain ALL OK) BEFORE handing text to _try_parse_code_row. This is the actual remaining root of get_bctc_full(VCB/CTG)='Chua co du lieu BCTC'.",
+        "generic_mandate": "GENERIC across ALL scanned/image-only PDFs (any ticker, any form). Detect low-text-density (e.g. chars-per-page below a threshold) and route to the OCR-rasterize path — NO per-ticker allowlist, NO VCB/CTG date-literal.",
+        "fail_loud_requirement": "If OCR rasterization still yields 0 rows, the existing 989654f2 enrich_failed gate keeps it visible (NOT done) — do not regress that fail-loud path.",
+        "baseline_pass": "done_verified = get_bctc_full(VCB) AND get_bctc_full(CTG) return REAL VARIED rows raw-verified vs named-volume market.db; AND FPT 2026Q1 (145) + VCB 2025Q4 (112) remain non-regressed; AND a genuinely-unparseable PDF still lands enrich_failed not done.",
+        "recurrence_class": "BCTC-VPS-PIPELINE-STALE (enrich-0-rows leg) — the scanned-PDF remainder after the silent-swallow + text-layout legs shipped.",
+        "depends_on": "FIX-BCTC-ENRICH-SILENT-0ROWS (merged; this completes its check-a leg)",
+        "source": "PO done_verified gate probe 2026-06-15 (FIX-BCTC-ENRICH-SILENT-0ROWS check-a FAIL)",
+        "created_at": "2026-06-15T20:10:36Z",
+        "dispatch_note": " [PO-s64 2026-06-15T20:17:53Z] HEAD RECONCILED + DISPATCHED ready->in_progress. #1 user-facing P0 coding lane (get_bctc_full VCB/CTG='Chua co du lieu BCTC' true remaining root = scanned bank PDF OCR-rasterize leg). dev-pdf-extractor leads; PaddleOCR in-image; GENERIC low-text-density routing, no allowlist; preserve 989654f2 enrich_failed fail-loud; done_verified = REAL VARIED rows VCB AND CTG vs named-volume market.db + FPT/VCB non-regressed.",
+        "owner": "dev-pdf-extractor",
+        "route": "dev-pdf-extractor",
+        "next_agent": null,
+        "claimed_at": "2026-06-15T20:17:53Z",
+        "claimed_by": "dev-team",
+        "dispatched_at": "2026-06-15T20:17:53Z",
+        "dispatched_by": "po-s64",
+        "review_at": "2026-06-16T01:40:00Z",
+        "review_by": "dev-pdf-extractor",
+        "review_note": "ocr_worker.py subprocess fix shipped (734ab5d5). VCB 2026Q1=55 rows PARTIAL, CTG 2026Q1=55 rows PARTIAL. FPT 2026Q1=145 DONE, VCB 2025Q4=112 PARTIAL (non-regressed). Publishability PUB-1..5 PASS for VCB+CTG.",
+        "lane": "done_verified",
+        "done_verified": "YES",
+        "done_verified_at": "2026-06-16T00:04:25Z",
+        "done_verified_by": "po-s70",
+        "done_verified_note": "DoD MET for the scanned-bank-PDF OCR-rasterize extraction leg. qa APPROVED (21/21 tests in the deployed pdf-extractor container; 989654f2 enrich_failed fail-loud guard intact; generic low-text-density routing, no per-ticker allowlist). Router RAW-verified LIVE on named volume vn-market-intelligence-mcp_market_data: deployed ocr_worker.py byte-identical to main (734ab5d5); CTG 2026Q1 = 55 real varied plausible bank rows, VCB 2026Q1 = 55 real varied plausible bank rows; non-regression FPT 2026Q1=145 DONE, VCB 2025Q4=112 PARTIAL. Code on main 734ab5d5, container already rebuilt + LIVE, worktree removed. NOTE: this closes the RAW-EXTRACTION (bctc_table_rows) leg only — the downstream financial_reports SCALAR summary columns are garbage for bank tickers (CTG 2026Q1 net_margin_pct=229157%, total_assets=0, accounting-identity violated -> validation_status=low_confidence); that distinct value-accuracy defect is tracked separately as FIX-BCTC-BANK-SUMMARY-MAPPING (minted this turn under BCTC-ANALYTICS-LAYER), NOT a regression of this task."
       }
     ],
     "head": {
@@ -17816,77 +17883,6 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
-      },
-      {
-        "id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
-        "type": "FIX",
-        "priority": "P0",
-        "status": "REVIEW",
-        "route_to": "dev-pdf-extractor",
-        "zone": "apps/pdf-extractor/",
-        "mode": "code",
-        "size": "M",
-        "title": "Scanned/image-only B02-TCTD bank PDFs yield 0 text-chars -> Layout-6/7 parser never fires -> 0 table_rows: add OCR rasterization leg before text-table parse",
-        "desc": "LIVE-VERIFIED by PO 2026-06-15 done_verified gate probe of FIX-BCTC-ENRICH-SILENT-0ROWS: after rebuilding BOTH images and re-enriching VCB 2026Q1+2025Q1 through the fixed runBctcPdfPullJob, both STILL produced 0 bctc_table_rows. fitz raw: VCB_2026_Q1.pdf = 53 pages, 110 text-chars across first 8 pages, embedded images = SCANNED/image-only. pushBctcExtraction's 3 text-tiers (pdf_path / remote-URL / pdf-parse) all returned chars:0 confidence:0. The Layout-6/7 fix (68d54c7b) parses TEXT lines into code-rows and is correct, but it never receives text for scanned bank PDFs. MISSING LEG: rasterize image-only/low-text PDF pages and OCR them (PaddleOCR is already in the pdf-extractor image — pek-import-chain ALL OK) BEFORE handing text to _try_parse_code_row. This is the actual remaining root of get_bctc_full(VCB/CTG)='Chua co du lieu BCTC'.",
-        "generic_mandate": "GENERIC across ALL scanned/image-only PDFs (any ticker, any form). Detect low-text-density (e.g. chars-per-page below a threshold) and route to the OCR-rasterize path — NO per-ticker allowlist, NO VCB/CTG date-literal.",
-        "fail_loud_requirement": "If OCR rasterization still yields 0 rows, the existing 989654f2 enrich_failed gate keeps it visible (NOT done) — do not regress that fail-loud path.",
-        "baseline_pass": "done_verified = get_bctc_full(VCB) AND get_bctc_full(CTG) return REAL VARIED rows raw-verified vs named-volume market.db; AND FPT 2026Q1 (145) + VCB 2025Q4 (112) remain non-regressed; AND a genuinely-unparseable PDF still lands enrich_failed not done.",
-        "recurrence_class": "BCTC-VPS-PIPELINE-STALE (enrich-0-rows leg) — the scanned-PDF remainder after the silent-swallow + text-layout legs shipped.",
-        "depends_on": "FIX-BCTC-ENRICH-SILENT-0ROWS (merged; this completes its check-a leg)",
-        "source": "PO done_verified gate probe 2026-06-15 (FIX-BCTC-ENRICH-SILENT-0ROWS check-a FAIL)",
-        "created_at": "2026-06-15T20:10:36Z",
-        "dispatch_note": " [PO-s64 2026-06-15T20:17:53Z] HEAD RECONCILED + DISPATCHED ready->in_progress. #1 user-facing P0 coding lane (get_bctc_full VCB/CTG='Chua co du lieu BCTC' true remaining root = scanned bank PDF OCR-rasterize leg). dev-pdf-extractor leads; PaddleOCR in-image; GENERIC low-text-density routing, no allowlist; preserve 989654f2 enrich_failed fail-loud; done_verified = REAL VARIED rows VCB AND CTG vs named-volume market.db + FPT/VCB non-regressed.",
-        "owner": "dev-pdf-extractor",
-        "route": "dev-pdf-extractor",
-        "next_agent": "qa",
-        "claimed_at": "2026-06-15T20:17:53Z",
-        "claimed_by": "dev-team",
-        "dispatched_at": "2026-06-15T20:17:53Z",
-        "dispatched_by": "po-s64",
-        "review_at": "2026-06-16T01:40:00Z",
-        "review_by": "dev-pdf-extractor",
-        "review_note": "ocr_worker.py subprocess fix shipped (734ab5d5). VCB 2026Q1=55 rows PARTIAL, CTG 2026Q1=55 rows PARTIAL. FPT 2026Q1=145 DONE, VCB 2025Q4=112 PARTIAL (non-regressed). Publishability PUB-1..5 PASS for VCB+CTG."
-      },
-      {
-        "id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 2,
-        "priority": "P1",
-        "size": "L",
-        "status": "IN_PROGRESS",
-        "zone": "apps/mcp-server/",
-        "route_to": "dev-mcp-server",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "dev-mcp-server",
-        "title": "Wave-2 helpers: safeQuery<T> + runSection/withSection + failLoud — kill the confidence_score=50 / fabricated-default class at source",
-        "desc": "Land safeQuery<T>(db,sql,params,ctx) [{ok,rows}|{ok:false,reason:'db-error'|'no-rows'}], runSection/withSection (composite-brief section runner: fail-loud on error, no-data ONLY on genuine empty), and failLoud(logger,err,ctx) (structured-degrade logger replacing bare catch{return []|null|0}). Migrate: imfConvictionBridge:91 (+line-71 no-rows conflation), scanMarket getAvgVolumeSync:120 (catch->0 collides with legit insufficient-history 0), imfDataFetcher:136 (parseImfApiResponse catch->null no log -> stale-served-as-fresh), assembleBriefing 7 best-effort catches (957/964/983/1026/1036/1057/1067 -> macroSnapshot=[] served as 'no macro'), marketContextBuilder buildMacroSection 216/240/256, scanMarket getThresholds:175. A DB error can no longer collapse to the same number as a real reading — callers DROP the dimension instead of feeding a fake 0/1.0/neutral. ALSO: mcp-infra-06 vnstockBridge.ts:477 pe/pb/roe/roa=0.0 fallback -> Python None-on-miss for the vnstock ratio columns (a bank roe:0 is implausible-but-non-empty).",
-        "replaces_sites": [
-          "imfConvictionBridge:91",
-          "scanMarket getAvgVolumeSync:120",
-          "imfDataFetcher:136",
-          "assembleBriefing:957/964/983/1026/1036/1057/1067",
-          "marketContextBuilder:216/240/256",
-          "scanMarket getThresholds:175",
-          "vnstockBridge:477"
-        ],
-        "recurrence_class": "confidence_score=50 destructuring + silent-swallow-serial-bugs + contract-from-live-payload",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: force a SQL throw on each migrated read -> safeQuery returns {ok:false,reason:'db-error'} (logged) and the caller DROPS the dimension/section (NOT a fabricated 0/1.0/neutral/[]); a genuine 0-row query returns reason:'no-rows' and the legit empty path is preserved. LIVE-verified vs named-volume DB.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-app-01/02/03/06, mcp-infra-06)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65",
-        "groomed_at": "2026-06-16T00:00:00Z",
-        "groomed_by": "po-s69",
-        "promoted_from": "backlog",
-        "promoted_at": "2026-06-16T00:00:00Z",
-        "promoted_by": "po-s69",
-        "promotion_note": "Free coding slot (WIP coding 1/2 — only RASTERIZE running). Inner data layer first: kills confidence_score=50/fabricated-default class at source (/goal#1+#2). dev-mcp-server FREE (cron-scheduler lane is a QA-observe gate, no dev WIP). Dep none. Reuse/extend shared easy-handle helper: safeQuery<T>+runSection/withSection+failLoud — FAIL-LOUD typed degrade, NO fabricated/default served metric, generic across ALL sites (not per-site). Router dispatches via lock-claim+spawn; po did NOT spawn.",
-        "owner": "dev-mcp-server",
-        "claimed_at": "2026-06-15T23:44:05Z",
-        "claimed_by": "router",
-        "dispatch_note": "Dispatched dev-mcp-server 2026-06-15T23:44:05Z (worktree, backgrounded) by router. FIX-ERRAUDIT-W2-MCP-DATALAYER: safeQuery<T>+runSection/withSection+failLoud kill confidence_score=50/fabricated-default class at source; migrate imfConvictionBridge/scanMarket/imfDataFetcher/assembleBriefing/marketContextBuilder/vnstockBridge. Dev-dispatch lock held (task_claim sprint-task owner dev-team ttl 3600). FAIL-LOUD DoD, generic, no-push. Promote->review(qa) on green check + worktree commit; router merge-gates."
       }
     ],
     "ready": [
@@ -18201,6 +18197,52 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 2,
+        "priority": "P1",
+        "size": "L",
+        "status": "REVIEW",
+        "zone": "apps/mcp-server/",
+        "route_to": "dev-mcp-server",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "qa",
+        "title": "Wave-2 helpers: safeQuery<T> + runSection/withSection + failLoud — kill the confidence_score=50 / fabricated-default class at source",
+        "desc": "Land safeQuery<T>(db,sql,params,ctx) [{ok,rows}|{ok:false,reason:'db-error'|'no-rows'}], runSection/withSection (composite-brief section runner: fail-loud on error, no-data ONLY on genuine empty), and failLoud(logger,err,ctx) (structured-degrade logger replacing bare catch{return []|null|0}). Migrate: imfConvictionBridge:91 (+line-71 no-rows conflation), scanMarket getAvgVolumeSync:120 (catch->0 collides with legit insufficient-history 0), imfDataFetcher:136 (parseImfApiResponse catch->null no log -> stale-served-as-fresh), assembleBriefing 7 best-effort catches (957/964/983/1026/1036/1057/1067 -> macroSnapshot=[] served as 'no macro'), marketContextBuilder buildMacroSection 216/240/256, scanMarket getThresholds:175. A DB error can no longer collapse to the same number as a real reading — callers DROP the dimension instead of feeding a fake 0/1.0/neutral. ALSO: mcp-infra-06 vnstockBridge.ts:477 pe/pb/roe/roa=0.0 fallback -> Python None-on-miss for the vnstock ratio columns (a bank roe:0 is implausible-but-non-empty).",
+        "replaces_sites": [
+          "imfConvictionBridge:91",
+          "scanMarket getAvgVolumeSync:120",
+          "imfDataFetcher:136",
+          "assembleBriefing:957/964/983/1026/1036/1057/1067",
+          "marketContextBuilder:216/240/256",
+          "scanMarket getThresholds:175",
+          "vnstockBridge:477"
+        ],
+        "recurrence_class": "confidence_score=50 destructuring + silent-swallow-serial-bugs + contract-from-live-payload",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: force a SQL throw on each migrated read -> safeQuery returns {ok:false,reason:'db-error'} (logged) and the caller DROPS the dimension/section (NOT a fabricated 0/1.0/neutral/[]); a genuine 0-row query returns reason:'no-rows' and the legit empty path is preserved. LIVE-verified vs named-volume DB.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P1 mcp-app-01/02/03/06, mcp-infra-06)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "groomed_at": "2026-06-16T00:00:00Z",
+        "groomed_by": "po-s69",
+        "promoted_from": "backlog",
+        "promoted_at": "2026-06-16T00:00:00Z",
+        "promoted_by": "po-s69",
+        "promotion_note": "Free coding slot (WIP coding 1/2 — only RASTERIZE running). Inner data layer first: kills confidence_score=50/fabricated-default class at source (/goal#1+#2). dev-mcp-server FREE (cron-scheduler lane is a QA-observe gate, no dev WIP). Dep none. Reuse/extend shared easy-handle helper: safeQuery<T>+runSection/withSection+failLoud — FAIL-LOUD typed degrade, NO fabricated/default served metric, generic across ALL sites (not per-site). Router dispatches via lock-claim+spawn; po did NOT spawn.",
+        "owner": "dev-mcp-server",
+        "claimed_at": "2026-06-15T23:44:05Z",
+        "claimed_by": "router",
+        "dispatch_note": "Dispatched dev-mcp-server 2026-06-15T23:44:05Z (worktree, backgrounded) by router. FIX-ERRAUDIT-W2-MCP-DATALAYER: safeQuery<T>+runSection/withSection+failLoud kill confidence_score=50/fabricated-default class at source; migrate imfConvictionBridge/scanMarket/imfDataFetcher/assembleBriefing/marketContextBuilder/vnstockBridge. Dev-dispatch lock held (task_claim sprint-task owner dev-team ttl 3600). FAIL-LOUD DoD, generic, no-push. Promote->review(qa) on green check + worktree commit; router merge-gates.",
+        "lane": "review",
+        "review_at": "2026-06-16T00:04:25Z",
+        "review_by": "po-s70",
+        "merged_to_main": "9f4a8eef",
+        "review_note": "Code merged to main 9f4a8eef (router cherry-picked from worktree commit 1ba5c7f0). 31/31 unit tests pass; tsc clean (1 pre-existing unrelated error only). safeQuery/runSection/failLoud helpers + 9 FAIL-LOUD migrations (imfConvictionBridge / scanMarket getAvgVolumeSync+getThresholds / imfDataFetcher / assembleBriefing 7 catches / marketContextBuilder / vnstockBridge). Worktree removed, dispatch lock released. ops is rebuilding mcp-server NOW + qa LIVE-verify (FORCED-FAILURE DoD on named-volume market.db) is PENDING. NOT done_verified — awaits the rebuild + qa live-RAW gate. CODING IS DONE: do NOT re-dispatch dev-mcp-server on the next dev-team :07 tick."
       }
     ],
     "qa": [],
@@ -18221,6 +18263,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-16T00:00:00Z",
-  "updated_by": "po-s69"
+  "updated_at": "2026-06-16T00:04:25Z",
+  "updated_by": "po-s70"
 }
