@@ -131,7 +131,10 @@
     "updated_by": "po-s74",
     "active_task_id": "FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367",
     "next_agent": "ba",
-    "note": "PUSH-UNBLOCKER (P2, escalated po-s74): FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 is the SOLE tsc-red on main and the pre-push hook strands the whole fleet's push (incl. the W1-PEK-P0 done_verified sign-off commit). Dispatch this FIRST so the fleet can push. After it reaches done + tsc green, router pushes ALL accumulated local commits; THEN the previously-set Wave-2 ba hop (FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH) proceeds. po did NOT write the one-line test fix. The W1-PEK-P0 sign-off (done_verified) is already committed and stands regardless of push timing."
+    "note": "PUSH-UNBLOCKER (P2, escalated po-s74): FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 is the SOLE tsc-red on main and the pre-push hook strands the whole fleet's push (incl. the W1-PEK-P0 done_verified sign-off commit). Dispatch this FIRST so the fleet can push. After it reaches done + tsc green, router pushes ALL accumulated local commits; THEN the previously-set Wave-2 ba hop (FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH) proceeds. po did NOT write the one-line test fix. The W1-PEK-P0 sign-off (done_verified) is already committed and stands regardless of push timing.",
+    "reconcile_note": "po-s76 (2026-06-16): OHLCV-P0 head-drift resolved — its 7-SUBTASK impl shipped to HEAD + 29/0 green, relocated ready->review (qa rebuild+live gate). Head deliberately STAYS on FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367: RAW-confirmed SOLE tsc-red this run (bun tsc --noEmit -> 1 error, TS2367 @ FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270); a red pre-push hook strands the 118-ahead fleet push incl. the OHLCV commits, so dispatch-this-to-ba FIRST. po-s76 does NOT move the head; router spawns ba.",
+    "reconciled_at": "2026-06-16T04:23:35Z",
+    "reconciled_by": "po-s76"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -187,8 +190,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-15T21:35:34Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-16T03:00:01.091Z",
+    "_updated_by": "system-auditor",
     "archive": [
       {
         "from": "system-auditor",
@@ -216,6 +219,34 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606160300",
+        "ts": "2026-06-16T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-16T04:23:35Z",
+        "resolved_by": "po-s76",
+        "resolution": "STALE/false-positive: the task FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 IS in the board (was ready[], relocated to review[] this run). The auditor held-lock check fired against an ALREADY-EXPIRED lock (expired 04:03:05Z, dev-team owner) whose task is fully boarded. No orphan lock; no action needed beyond the lane promotion."
+      },
+      {
+        "id": "sau-d4-202606160300",
+        "ts": "2026-06-16T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "orch-state/lock mismatch: active=FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 held=FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-16T04:23:35Z",
+        "resolved_by": "po-s76",
+        "resolution": "RECONCILED (not a real mismatch): head.active=FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (push-unblocker, set po-s74 01:31Z) and the held lock task:FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 (dev-team, expired 04:03:05Z) were BOTH legitimate concurrent states — the head was repointed to the push-unblocker while a dev-team worker still held the OHLCV lock mid-implementation. OHLCV impl now complete + promoted to review[]; head deliberately stays on TS2367 to clear the fleet push-block. Drift converged."
+      },
       {
         "id": "sau-d4-202606150300",
         "ts": "2026-06-15T03:00Z",
@@ -18128,40 +18159,6 @@
         "promoted_from": "backlog",
         "promoted_at": "2026-06-16T01:31:25Z",
         "promoted_by": "po-s74"
-      },
-      {
-        "id": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
-        "type": "FIX",
-        "title": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 — the whole-universe synthetic 2026-06-16 daily_ohlcv seed candle (1203 rows, flat O=H=L=C, vol=0, data_env=NULL) is unit-mis-scaled on 77 tickers by a clean x1000/div1000 factor (VHM/VIC/VJC div1000 -> single-digit RSI; AAA/ADS/+74 x1000 -> RSI 100.0); this poisons canonical get_technical_indicators RSI/MA/BB daily across 77 tickers incl. 3 watchlist majors and emits 'giá 0 dưới BB' false breakouts to LIVE MARKET",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "status": "READY",
-        "priority": "P0",
-        "size": "M",
-        "recon_first": true,
-        "recurring_class": true,
-        "root_cause": "RECURRING CLASS (3rd+ touch — escalate per feedback_recurring_bug_escalation). The daily-seed candle writer apps/mcp-server/src/scheduler/market-data/ohlcvDailyAggregatorJob.ts writes a synthetic 2026-06-16 row for ALL 1203 tickers (flat O=H=L=C from current/intraday price, volume=0, data_env=NULL). On 77 of them the seeded close is unit-mis-scaled by a clean x1000/div1000 factor vs the prior REAL close: VHM 136.1 (prior 136,100), VIC 192.6 (prior 192,600), VJC 141.3 (prior 183,700) -> div1000 -> 6-figure majors collapse to single-digit RSI; AAA 7.3M (prior 7,260), ADS 9.22M, +72 more -> x1000 -> RSI pegs 100.0. The existing guard apps/mcp-server/src/scheduler/market-data/ohlcvSanityCheckJob.ts (which ALREADY carries CONTAM-5/CONTAM-7 ohlcv-unit-contam tests) is either not run before the aggregator's upsert lands, or its unit check does not cover this synthetic-seed write path — so the bad bar reaches daily_ohlcv. This is the SAME defect class as the closed FIX-STOCK-PRICE-SCALE-CORRUPT (apps/stock-price normalizer) / OHLCV-UNIT-CONTAM / CONTAM-5 / CONTAM-7 — a shipped guard is NOT catching the live synthetic rows.",
-        "related_prior": [
-          "FIX-STOCK-PRICE-SCALE-CORRUPT(done_verified)",
-          "OHLCV-UNIT-CONTAM(closed)",
-          "CONTAM-5(done)",
-          "CONTAM-7(done)"
-        ],
-        "fix_spec": "RECON FIRST (named-volume DB, not host ./data — sqlite3 sidecar per feedback_live_db_is_named_volume_not_host_data): confirm the 06-16 seed-write path in ohlcvDailyAggregatorJob.ts and why ohlcvSanityCheckJob.ts let the 77 x1000/div1000 rows land. THEN: (1) WRITER — the daily-seed candle writer must normalize ALL tickers to raw VND generically (/goal#2), not per-ticker; the unit must be derived/validated against the prior real close, never trusted raw from the intraday source. (2) GUARD — ohlcvSanityCheckJob.ts must REJECT-OR-REPAIR before-it-lands any candle whose close diverges ~x1000 or ~div1000 from the prior real close (extend CONTAM-5/CONTAM-7 coverage to the synthetic-seed path; fail-loud, no silent swallow). (3) SYNTHETIC-SEED DECISION — a flat zero-volume O=H=L=C seed bar is itself a synthetic placeholder and violates the standing 'no fake/synthetic/placeholder data' goal: EITHER stop seeding today's flat candle, OR mark it (data_env / synthetic flag) and EXCLUDE it from RSI/MA/BB computation so indicators use only real candles. BA/architect to choose stop-vs-mark+exclude in the spec. (4) REPAIR — recompute/repair the 77 already-corrupt 2026-06-16 rows in daily_ohlcv (prefer recompute-on-read or corpus re-flow per feedback_derived_column_fix_needs_reflow; if backfilled, recompute from the real prior close, not the corrupt value).",
-        "verification_gate": "LIVE post-rebuild RAW (named-volume DB + gateway tools, NOT badges): (a) daily_ohlcv has NO 06-16 (and no future-day) candle whose close is ~x1000/div1000 off the prior real close — for ALL 1203 tickers, generic; (b) get_technical_indicators VHM/VIC/VJC return REAL mid-band RSI (no single-digit), and AAA/ADS/the other x1000 tickers are NOT pegged at RSI=100.0; (c) BB 'Price=' field for VHM/VIC shows the full 6-figure price, not div1000-truncated; (d) the next morning-briefing 01:00Z + first TA scan 02:15Z show NO single-digit RSI and NO RSI=100.0 saturation and NO 'giá 0 dưới BB' false breakouts on MARKET; (e) the seed-bar decision (stop or mark+exclude) is reflected in the indicator inputs; (f) the new reject/repair guard test is GREEN in CI. This gate, GREEN, also unblocks FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (review[]) for done_verified re-evaluation and FIX-ALERT-OPEN-ZERO-PRICE-RACE (backlog HELD).",
-        "unblocks": [
-          "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
-          "FIX-ALERT-OPEN-ZERO-PRICE-RACE"
-        ],
-        "rebuild_required": "mcp-server",
-        "first_agent": "ba",
-        "first_hop_reason": "P0 but multi-decision (stop-vs-mark+exclude the synthetic seed bar; writer-normalize vs guard-reject-or-repair split; 77-row repair strategy) AND a recurring class touching a shipped guard — needs a BA spec + architect sign-off before a dev-mcp-server fixer, per feedback_recurring_bug_escalation. Not well-specified enough for a direct fixer.",
-        "source": "router RAW LIVE 2026-06-16T01:35Z — get_unreviewed_market_messages (msg 744/745/746/759/760/761), get_technical_indicators (10 tickers via gateway call_tool), named-volume DB vn-market-intelligence-mcp_market_data /data/market.db daily_ohlcv (sqlite3 sidecar). Evidence handoff: docs/handoffs/FIX-ALERT-ENGINE-RSI-SINGLEDIGIT-gate-probe-2026-06-16.md",
-        "user_impact": "P0 — corrupts live MARKET RSI/BB daily across 77 tickers incl. 3 watchlist majors (VHM/VIC/VJC); drives false single-digit-RSI and RSI=100.0 alerts and 'giá 0 dưới BB' false breakouts into the LIVE MARKET channel every market open; violates standing no-fake-data goal and /goal#2.",
-        "created_at": "2026-06-16T01:45:00Z",
-        "created_by": "po-s75",
-        "triaged_by": "po-s75"
       }
     ],
     "review": [
@@ -18341,6 +18338,58 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
+      },
+      {
+        "id": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+        "type": "FIX",
+        "title": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 — the whole-universe synthetic 2026-06-16 daily_ohlcv seed candle (1203 rows, flat O=H=L=C, vol=0, data_env=NULL) is unit-mis-scaled on 77 tickers by a clean x1000/div1000 factor (VHM/VIC/VJC div1000 -> single-digit RSI; AAA/ADS/+74 x1000 -> RSI 100.0); this poisons canonical get_technical_indicators RSI/MA/BB daily across 77 tickers incl. 3 watchlist majors and emits 'giá 0 dưới BB' false breakouts to LIVE MARKET",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "status": "REVIEW",
+        "priority": "P0",
+        "size": "M",
+        "recon_first": true,
+        "recurring_class": true,
+        "root_cause": "RECURRING CLASS (3rd+ touch — escalate per feedback_recurring_bug_escalation). The daily-seed candle writer apps/mcp-server/src/scheduler/market-data/ohlcvDailyAggregatorJob.ts writes a synthetic 2026-06-16 row for ALL 1203 tickers (flat O=H=L=C from current/intraday price, volume=0, data_env=NULL). On 77 of them the seeded close is unit-mis-scaled by a clean x1000/div1000 factor vs the prior REAL close: VHM 136.1 (prior 136,100), VIC 192.6 (prior 192,600), VJC 141.3 (prior 183,700) -> div1000 -> 6-figure majors collapse to single-digit RSI; AAA 7.3M (prior 7,260), ADS 9.22M, +72 more -> x1000 -> RSI pegs 100.0. The existing guard apps/mcp-server/src/scheduler/market-data/ohlcvSanityCheckJob.ts (which ALREADY carries CONTAM-5/CONTAM-7 ohlcv-unit-contam tests) is either not run before the aggregator's upsert lands, or its unit check does not cover this synthetic-seed write path — so the bad bar reaches daily_ohlcv. This is the SAME defect class as the closed FIX-STOCK-PRICE-SCALE-CORRUPT (apps/stock-price normalizer) / OHLCV-UNIT-CONTAM / CONTAM-5 / CONTAM-7 — a shipped guard is NOT catching the live synthetic rows.",
+        "related_prior": [
+          "FIX-STOCK-PRICE-SCALE-CORRUPT(done_verified)",
+          "OHLCV-UNIT-CONTAM(closed)",
+          "CONTAM-5(done)",
+          "CONTAM-7(done)"
+        ],
+        "fix_spec": "RECON FIRST (named-volume DB, not host ./data — sqlite3 sidecar per feedback_live_db_is_named_volume_not_host_data): confirm the 06-16 seed-write path in ohlcvDailyAggregatorJob.ts and why ohlcvSanityCheckJob.ts let the 77 x1000/div1000 rows land. THEN: (1) WRITER — the daily-seed candle writer must normalize ALL tickers to raw VND generically (/goal#2), not per-ticker; the unit must be derived/validated against the prior real close, never trusted raw from the intraday source. (2) GUARD — ohlcvSanityCheckJob.ts must REJECT-OR-REPAIR before-it-lands any candle whose close diverges ~x1000 or ~div1000 from the prior real close (extend CONTAM-5/CONTAM-7 coverage to the synthetic-seed path; fail-loud, no silent swallow). (3) SYNTHETIC-SEED DECISION — a flat zero-volume O=H=L=C seed bar is itself a synthetic placeholder and violates the standing 'no fake/synthetic/placeholder data' goal: EITHER stop seeding today's flat candle, OR mark it (data_env / synthetic flag) and EXCLUDE it from RSI/MA/BB computation so indicators use only real candles. BA/architect to choose stop-vs-mark+exclude in the spec. (4) REPAIR — recompute/repair the 77 already-corrupt 2026-06-16 rows in daily_ohlcv (prefer recompute-on-read or corpus re-flow per feedback_derived_column_fix_needs_reflow; if backfilled, recompute from the real prior close, not the corrupt value).",
+        "verification_gate": "LIVE post-rebuild RAW (named-volume DB + gateway tools, NOT badges): (a) daily_ohlcv has NO 06-16 (and no future-day) candle whose close is ~x1000/div1000 off the prior real close — for ALL 1203 tickers, generic; (b) get_technical_indicators VHM/VIC/VJC return REAL mid-band RSI (no single-digit), and AAA/ADS/the other x1000 tickers are NOT pegged at RSI=100.0; (c) BB 'Price=' field for VHM/VIC shows the full 6-figure price, not div1000-truncated; (d) the next morning-briefing 01:00Z + first TA scan 02:15Z show NO single-digit RSI and NO RSI=100.0 saturation and NO 'giá 0 dưới BB' false breakouts on MARKET; (e) the seed-bar decision (stop or mark+exclude) is reflected in the indicator inputs; (f) the new reject/repair guard test is GREEN in CI. This gate, GREEN, also unblocks FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (review[]) for done_verified re-evaluation and FIX-ALERT-OPEN-ZERO-PRICE-RACE (backlog HELD).",
+        "unblocks": [
+          "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
+          "FIX-ALERT-OPEN-ZERO-PRICE-RACE"
+        ],
+        "rebuild_required": "mcp-server",
+        "first_agent": "ba",
+        "first_hop_reason": "P0 but multi-decision (stop-vs-mark+exclude the synthetic seed bar; writer-normalize vs guard-reject-or-repair split; 77-row repair strategy) AND a recurring class touching a shipped guard — needs a BA spec + architect sign-off before a dev-mcp-server fixer, per feedback_recurring_bug_escalation. Not well-specified enough for a direct fixer.",
+        "source": "router RAW LIVE 2026-06-16T01:35Z — get_unreviewed_market_messages (msg 744/745/746/759/760/761), get_technical_indicators (10 tickers via gateway call_tool), named-volume DB vn-market-intelligence-mcp_market_data /data/market.db daily_ohlcv (sqlite3 sidecar). Evidence handoff: docs/handoffs/FIX-ALERT-ENGINE-RSI-SINGLEDIGIT-gate-probe-2026-06-16.md",
+        "user_impact": "P0 — corrupts live MARKET RSI/BB daily across 77 tickers incl. 3 watchlist majors (VHM/VIC/VJC); drives false single-digit-RSI and RSI=100.0 alerts and 'giá 0 dưới BB' false breakouts into the LIVE MARKET channel every market open; violates standing no-fake-data goal and /goal#2.",
+        "created_at": "2026-06-16T01:45:00Z",
+        "created_by": "po-s75",
+        "triaged_by": "po-s75",
+        "next_agent": "qa",
+        "lane_moved_at": "2026-06-16T04:23:35Z",
+        "lane_moved_by": "po-s76",
+        "code_complete": true,
+        "code_complete_evidence": {
+          "commits": [
+            "a719c138 SUBTASK-1 ohlcvWriteService SSOT skeleton",
+            "31306d76 SUBTASK-2 Writer D -> writeOhlcvBatch SSOT",
+            "ac8e28a6 SUBTASK-3 UPSERT_INTRADAY + pushPricesHandler",
+            "866dc899 SUBTASK-4 FR-G2/G3 sanity detectors",
+            "647e773e SUBTASK-5 ohlcvSanityCheckEarly cron 00:45 UTC",
+            "e4801dcc SUBTASK-6 fast-track repair script",
+            "8f087043 SUBTASK-7 regression suite AC-T1..T8"
+          ],
+          "regression_suite": "apps/mcp-server/src/__tests__/FIX-OHLCV-SEED-CANDLE-UNIT-SCALE.test.ts — RAW-verified 29 pass / 0 fail (po-s76, bun test, 2026-06-16)",
+          "note": "All 7 SUBTASKs committed to main HEAD. dev-team worker held the task lock through implementation then went quiet WITHOUT advancing the board lane; lock then expired 04:03:05Z. po-s76 RAW-re-ran the suite (29/0) before promoting ready->review."
+        },
+        "qa_gate": "NOT done_verified — code complete only. qa MUST run the LIVE post-rebuild RAW verification_gate before sign-off: (1) REBUILD mcp-server (rebuild_required); (2) RUN the SUBTASK-6 repair script against the NAMED-VOLUME DB (not host ./data) to repair the 77 already-corrupt 2026-06-16 rows; (3) RAW get_technical_indicators VHM/VIC/VJC (real mid-band RSI, no single-digit) + AAA/ADS/x1000 tickers (not pegged RSI=100.0) via gateway call_tool; (4) BB Price= shows full 6-figure price; (5) named-volume daily_ohlcv has NO 06-16/future candle ~x1000/div1000 off prior real close for ALL 1203 tickers; (6) next 01:00Z briefing + 02:15Z TA scan show NO single-digit RSI / NO RSI=100.0 / NO 'giá 0 dưới BB' false breakouts on MARKET. GREEN gate also unblocks FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (review) + FIX-ALERT-OPEN-ZERO-PRICE-RACE (backlog HELD)."
       }
     ],
     "qa": [],

@@ -1,54 +1,41 @@
 # PO Notebook
 
-## 2026-06-16T01:30Z — W1-PEK-P0 done_verified (Wave-1 COMPLETE) + dispatch Wave-2 + PUSH-NOW
+## po-s76 — 2026-06-16T04:25Z — RECOVERY TRIAGE (loop quiet ~83 min)
 
-**PRIMARY: FIX-ERRAUDIT-W1-PEK-P0 in_progress→done_verified (final sign-off).**
-Did NOT trust badges — confirmed router's RAW LIVE re-verify (router-verify-raw-not-badges):
-- Named-volume DB bctc_layout_units: 161 healthy + 14 quarantined table units with REAL
-  computed orphan_rows reasons (varied per row, NOT constants); pytest 42/0 via docker exec
-  in the REBUILT container; image .Created 01:15:49Z > commit b52f5593 01:12:10Z.
-- AC-1..AC-7 + EC-1 all met. The new paddle-load-failure/table-extraction-failure strings
-  are absent from prod DB ONLY because PaddleOCR loads fine in prod — those paths fire only
-  under FORCED failure, verified via pytest `_PADDLE_LOAD_FAILED` sentinel injection per the
-  architect test matrix. That IS the contracted DoD (mock injection, not live model breakage),
-  NOT a coverage gap. Fake-clean-0-row mask removed: MANDATORY layout failure re-raises;
-  OPTIONAL PaddleOCR failure quarantines with explicit reason. → BCTC-silent-0-rows class /goal#1.
+orch-state mtime 83 min stale, no live writer (CAS-guarded my write). Reconciled 3 board drifts;
+flagged loop re-arm to router (did NOT re-arm — double-fire risk).
 
-**Wave-1 of ERROR-AUDIT-2026-06-15 NOW COMPLETE** (W1-MCP-P0 + W1-PEK-P0 both done_verified).
+- **FINDING 1 — OHLCV-P0 code-complete-but-stranded → review[]:**
+  `FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0` sat in `ready[]` but the full ba→architect→pm→dev chain
+  RAN (handoffs present) and ALL 7 SUBTASKs are committed to HEAD (a719c138 S1 .. 8f087043 S7).
+  The dev-team worker held the task lock through impl then went quiet WITHOUT advancing the lane;
+  lock **expired 04:03:05Z** = root of the 83-min quiet. RAW-re-ran the regression suite:
+  **29 pass / 0 fail** (bun test FIX-OHLCV...test.ts). → relocated `ready→review`, `next_agent=qa`.
+  **NOT done_verified** — verification_gate is LIVE post-rebuild RAW: rebuild mcp-server + RUN
+  SUBTASK-6 repair vs NAMED-VOLUME DB (77 corrupt 06-16 rows) + RAW get_technical_indicators
+  VHM/VIC/VJC real-RSI + no RSI=100.0 + no 'giá 0 dưới BB' on MARKET. qa owns that gate; green
+  also unblocks RSI-SINGLEDIGIT (review) + ZERO-PRICE-RACE (backlog HELD).
 
-**SECOND: dispatched Wave-2 first hop.** Promoted FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH
-backlog→ready (next_agent=ba) + set head=ba. Inner-first sequence gate SATISFIED:
-sequence_after dep W2-MCP-FETCH-DEADLINE is done_verified. Distinct zone apps/frontend/ —
-no zone-serialize conflict with mcp-server; WIP≤2 honored. Router lock-claims + spawns ba;
-po did NOT spawn. W3-MCP-P2 (15 folded sites) + W3-PEK-P2 stay backlog for after W2-FRONTEND.
+- **FINDING 2 — head STAYS on TS2367 (push-unblocker), dispatch to ba:**
+  RAW-confirmed `bun tsc --noEmit` = **1 error**, the SOLE TS2367 @ FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270.
+  Red pre-push hook strands the 118-ahead fleet push (incl. OHLCV commits). Kept `.head` on
+  `FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367` (po-s74) + stamped reconcile note. **PUSH HELD** until
+  tsc green. OHLCV→qa runs in parallel (different agent/lane), so both head AND push unstall.
 
-**THIRD: PUSH — tried push-now, BLOCKED by a REAL red pre-push hook → now HELD.**
-Push-now attempt hit `pnpm --filter vn-market check` (tsc) RED — exactly ONE error:
-FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270 TS2367 (HIGH-vs-CRITICAL no-overlap). CRITICAL
-correction to my earlier assumption: this is NOT benign cloud-chore weather — it is
-SELF-INTRODUCED by my own unpushed chain (commit 4f5192c5 last touched that test file) and it
-strands the WHOLE fleet's push (red-prepush-strands-fleet). I did NOT push around it and did NOT
-write the one-line fix myself (PO never writes code). Instead escalated the already-tracked task
-FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 P3→P2 + blocking:true + promote ready + head=ba (po-s74) so
-the router dispatches the XS fix FIRST; once tsc is green the router pushes ALL accumulated local
-commits, THEN the W2-FRONTEND ba hop proceeds. The W1-PEK-P0 done_verified sign-off is already
-COMMITTED locally and stands regardless of push timing. (rebase-retry also refused: dirty tree
-from concurrent bg agents — another reason not to force.)
+- **FINDING 3 — sau-d4-202606160300 both rows RESOLVED:**
+  Row A "no task_board row" = STALE false-positive (task IS boarded; auditor fired on the expired
+  lock). Row B "active=TS2367 vs held=OHLCV" = RECONCILED (both legit concurrent states, converged).
 
-Scripts: po-s73 (sign-off+promote+head), po-s74 (push-unblock escalate+promote) — both atomic
-+conservation+invariant guarded; flow-doc pointers added. Locks task:FIX-ERRAUDIT-W1-PEK-P0 +
-commit-mutex:main released ok:true. All orch-state committed by EXPLICIT PATH (no git add -A).
+- **FINDING 4 — loop re-arm NEEDED = YES (flagged to router, did NOT re-arm):**
+  Dispatcher crons not armed this session; loop quiet because the OHLCV worker exited silently
+  mid-lane + lock expired (not a cron crash per se, but nothing re-picked the board). Live
+  `gatherer-manual-cloud-doublefire` contention → router weighs double-fire before re-arming.
 
-### Carry-over
-- **FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (ready, P2, BLOCKING, ba)** → router dispatch FIRST;
-  it gates the fleet push. One-line fix at test:270 (widen `severity` annotation so both ternary
-  branches stay reachable). After green → router pushes ALL local commits → THEN W2-FRONTEND.
-- **PUSH HELD until tsc green** — not a deferred call now; a hard red-hook blocker. Router pushes
-  once SLA-TEST-TS2367 lands done + `bun tsc --noEmit` = 0 errors.
-- **FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (ready, ba)** → router dispatch AFTER the push lands;
-  done_verified = stalled upstream → loader/proxy 504/502 within DEADLINE_MS + 1 structured log,
-  non-fatal wrappers still return null/[]/{} on genuine empty. LIVE-verified.
-- **FIX-ERRAUDIT-W3-MCP-P2 (backlog, 15 sites folded) + W3-PEK-P2 (backlog)** → after W2-FE.
-- **review[] ×5 NOT yet triaged this cycle** (CONFIDENCE-DEFAULT-50, ARCH-SHIP-WAVE-REAUDIT,
-  RSI-SINGLEDIGIT, VNSTOCK-TRADINGSTATS-CRASH, BCTC-ENRICH-SILENT-0ROWS) → next sign-off batch.
-- **STANDING:** FIX-BCTC-BANK-SUMMARY-MAPPING P1, 8 infra fixes, FE-REORG sprint.
+- **WRITE:** atomic jq→temp→`[-s]`+`jq empty`+CONSERVATION(ready−1/review+1/total=,NEW−2)+CAS-mtime→mv.
+  Committed by EXPLICIT PATH (dirty bg tree). Script `scripts/po-s76-*.jq` reusable + flow-doc pointer.
+
+### Carry-over for router / next cycle
+1. Spawn **ba** → FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (push-unblocker P2). After done+tsc-green → push 118-ahead fleet.
+2. Spawn **qa** → FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 review gate (rebuild+repair+live RSI). GREEN → done_verified + re-eval RSI-SINGLEDIGIT + unhold ZERO-PRICE-RACE.
+3. Router call pending: re-arm dispatcher crons weighing gatherer-doublefire contention.
+4. review[] backlog: CONFIDENCE-DEFAULT-50, ARCH-SHIP-WAVE-REAUDIT(parked), VNSTOCK-TRADINGSTATS-CRASH, BCTC-ENRICH-SILENT-0ROWS → next sign-off batch.
