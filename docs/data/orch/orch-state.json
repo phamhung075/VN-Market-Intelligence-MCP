@@ -8822,45 +8822,6 @@
         "zone_owner": "apps/mcp-server/"
       },
       {
-        "depends": [],
-        "diagnosis": "ROOT CAUSE IDENTIFIED (dev-pdf-extractor 2026-06-14): The 5-day stall (Jun 8 01:17 UTC → Jun 13 20:45 UTC) was caused by bctcQueueEnricherJob (apps/mcp-server/) failing to discover HSX iboard URLs for 16 pending Q1-2026 tickers over 341 consecutive enricher runs. bctcPdfPullJob ran 118 times Jun 8-12 but found 0 pending rows with valid source_url — not a pull-job crash, VPS death, or pdf-extractor rejection. The 'healthy' mask: vn-bctc-fetch is passive=true in vpsHealthPoller.ts (apps/mcp-server/src/domain/services/vpsHealthPoller.ts:169) — always returns healthy regardless of data push age. Pipeline self-recovered Jun 13 20:45 UTC when iboard discovery returned 11 URLs; 7 PDFs downloaded Jun 13 21:35-22:17. Pipeline is LIVE as of Jun 13 22:21 UTC. HANDOFF ITEMS for dev-mcp-server: (1) vpsHealthPoller.ts: replace vn-bctc-fetch passive=true with an active freshness query on bctc_vps_queue (e.g. max(last_attempt) WHERE status=done, stale if >24h during earnings window). (2) bctcQueueEnricherJob: add alerting when urlsPopulated=0 for N consecutive runs during active earnings window (detect discovery stall before it reaches 5 days). (3) 9 remaining pending rows still have no source_url: ACV/BDI/DAG/DLC/JSH/SIS/VDC (created Apr 30), VNH (May 12), VEA (May 19) — these are HNX/UPCOM tickers not covered by discoverHosePdfUrls (HSX-only discovery). pdf-extractor zone is clean — no code changes needed in apps/pdf-extractor/.",
-        "handoff_to": "dev-mcp-server",
-        "id": "FIX-BCTC-VPS-PIPELINE-STALE-5D",
-        "live_evidence": {
-          "bctcPdfPullJob_runs_jun8_12": 118,
-          "bctcQueueEnricher_runs_jun8_12": 341,
-          "container_start_jun13": "2026-06-13T22:21:35Z",
-          "enricher_zero_url_runs": 339,
-          "last_download_utc": "2026-06-13 22:17:09",
-          "pdfs_downloaded_jun13": 7,
-          "pending_no_url": 9,
-          "pending_with_url": 10,
-          "pipeline_active": true,
-          "vn_bctc_fetch_health_type": "passive=always-healthy (vpsHealthPoller.ts:169)"
-        },
-        "owner": "dev-pdf-extractor",
-        "priority": "P0",
-        "scope": "SSH VPS; inspect vn-bctc-fetch process + cron. Fix health check to validate data-push freshness not just TCP ping (root cause = liveness vs data-freshness conflation). PLAN-ONLY at PO layer — dev-team + ops chain implements. Distinct from FIX-SBV-FX-VPS-FETCHER-UNHEALTHY (I7) and FIX-NEWS-VPS-CRASH-LOOP.",
-        "source": "health-recheck B5 (team-tool-recheck-2026-06-13-2207.md)",
-        "status": "HANDOFF",
-        "title": "FIX-BCTC-VPS-PIPELINE-STALE-5D — BCTC VPS pipeline stale: bctc last push 2026-06-08 00:30 (5+ days), 0 new PDFs while Q1-2026 earnings window active (24h SLA, highly overdue). vn-bctc-fetch reports 'healthy' on TCP ping only — masks dead data push.",
-        "type": "FIX",
-        "user_impact": "HIGH — Q1 earnings PDFs silently not ingested; analyst layer serves stale financials.",
-        "zone_owner": "apps/pdf-extractor/",
-        "zone_verdict": "OUT_OF_ZONE",
-        "recurrence_note": "2ND RECURRENCE confirmed 2026-06-15T16:36:18Z: prior self-recovered Jun13 22:45Z, re-stalled since 23:45Z. get_bctc_full('VCB') empty, FPT stale (Published 2026-05-24). OPS-BCTC-PIPELINE-RECON minted to ready[] to re-isolate layer + route the structural items (1) active-freshness vpsHealthPoller + (2) enricher zero-URL alerting + (3) HNX/UPCOM discovery coverage. recurring-bug-escalation class. | 2026-06-15T17:19Z PO TRIAGE (OPS-BCTC-PIPELINE-RECON closed done): recon complete, 2 discovery fixes DEPLOYED (afrLoop rollover + exchange_code) but the user-facing P0 (get_bctc_full(VCB) empty) is NOT discovery — TRUE root = enrich-silent-0-rows (header inserted, 0 table_rows). Minted 6 follow-ons to ready[]: FIX-BCTC-ENRICH-SILENT-0ROWS(P0/weigh-P0, dev-pdf-extractor+dev-mcp-server), FIX-HNX-SESSION-COOKIE(P1, dev-vps-crawls), FIX-SSC-C111-EMPTY-FALLBACK(P1, dev-vps-crawls), FIX-BCTC-ZERO-URL-ALERT(P2, dev-mcp-server), FIX-BCTC-FRESHNESS-GATE(P2, dev-mcp-server), ARCH-BCTC-PIPELINE-DURABILITY(P1 architect umbrella). recurring-bug-escalation: architect BRIEFED (2nd recurrence; first fix was a one-time flush not hardening). recurrence_count held at 2 (no new outage event — same incident triaged).",
-        "recurrence_count": 2,
-        "followon_children": [
-          "FIX-BCTC-ENRICH-SILENT-0ROWS",
-          "FIX-HNX-SESSION-COOKIE",
-          "FIX-SSC-C111-EMPTY-FALLBACK",
-          "FIX-BCTC-ZERO-URL-ALERT",
-          "FIX-BCTC-FRESHNESS-GATE",
-          "ARCH-BCTC-PIPELINE-DURABILITY"
-        ],
-        "architect_briefed": true
-      },
-      {
         "depends": [
           "FIX-FUNDAMENTALS-REFRESH-CRON-DEAD"
         ],
@@ -9462,30 +9423,6 @@
         "giá0_source_eliminated_by": "po-s85",
         "ohlcv_dep_satisfied": true,
         "ohlcv_dep_satisfied_note": "Dependency on the OHLCV seeder gate is SATISFIED — FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 is now done_verified (router RAW 2026-06-16T09:36Z: flat-seed=0 stable). The flat zero-vol O=H=L=C seed bar this task's giá=0 BB-breakout fires on is eliminated at source. Kept HELD this pass (NOT promoted): the ONLY remaining release condition is the next clean VN market-open observation, and RE-SCOPE-FIRST per the po_s78 note — the seed-bar kill may have already subsumed this task's open-window race surface, so verify the giá=0 path still reproduces before dispatch (possibly fold/close as subsumed). PO judgment: hold for next-open verify rather than blind-promote a possibly-subsumed task."
-      },
-      {
-        "id": "FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "high",
-        "route_to": "ba",
-        "owner": "ba",
-        "zone": "multi",
-        "size": "S-M",
-        "created_at": "2026-06-15T14:31:12Z",
-        "created_by": "po",
-        "source": "health-recheck report 3182 (2026-06-15T14:11Z) BUG-NEW",
-        "title": "system-auditor post_agent_signal emit-schema drift -> coordination bus dark",
-        "raw_evidence": "PO RAW-confirmed LIVE 2026-06-15T14:30Z: call post_agent_signal({type,ts,tier,summary}) -> MCP -32602; live tool requires {from_agent,to_agent,signal_type(enum),payload}. Flow emit sites: docs/agents/system-auditor/flow/main.md L193,L482,L509.",
-        "root_cause": "system-auditor flow emits the historic {type,ts,summary,checks} shape; live post_agent_signal schema is {from_agent,to_agent,signal_type in enum,payload}. The 4 auditor types (microservice_degraded/data_stale/db_integrity_breach/system_health_report) are NOT in the live enum (urgent_news|price_anomaly|cross_validate|suppress|chain_catalyst|fundamental_validation|price_confirmation|verified_chain|signal_feedback|legal_risk|verified_decision).",
-        "why_not_drop_in": "Not a mechanical arg-rename: no live enum value maps to health/degrade/breach. Needs a design decision — (A) extend the post_agent_signal enum + payload contract on the tool side (dev-mcp-server), OR (B) remap auditor findings onto existing enum + carry detail in payload, OR (C) re-sink auditor health to signal_queue/DASHBOARD only and stop using post_agent_signal. BA decomposes, architect picks the option, then dev impl + agent-father rewrites the 3 emit blocks.",
-        "generic_mandate": "Fix must cover ALL THREE emit sites (L193 data_stale, L482 db_integrity_breach, L509 system_health_report) + the L16 doc note, not just one. /goal#2.",
-        "verification_gate": "LIVE: after fix, a real system-auditor cycle writes >=1 row reachable on the coordination bus (signals.db / signal_queue) with NO -32602; RAW-verify by reading the bus row, not a green log.",
-        "hold_reason": "HELD-for-BA: BA + architect lanes both occupied this tick (BA-VN-MACRO-TOOLING in_progress, ARCH-CRON-SCHEDULER-RELIABILITY in_progress). Unpark to ready once a non-coding decomposition lane frees. Design-gated, NOT a clean coding FIX -> do not dispatch a coding lane.",
-        "related": [
-          "SYS-FUNC-05-FIX",
-          "FU-AUDITOR-D4-SIGNAL-ID"
-        ]
       },
       {
         "task_id": "FACTORY-INTERFACE-confidence-score-50-mask",
@@ -12484,29 +12421,44 @@
         "size": "M"
       },
       {
-        "id": "FIX-CI-RED-STANDING-1837A-1352A",
-        "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
+        "id": "FIX-BCTC-QUEUE-MAXAGE-GATE",
+        "title": "FIX-BCTC-QUEUE-MAXAGE-GATE — mark tickers with 0 results on ALL sources >30d as 'no-filing-detected' + drop from the active SLA queue",
         "type": "FIX",
         "owner": "po",
         "status": "BACKLOG",
         "priority": "P2",
-        "zone": "apps/mcp-server/",
+        "size": "S",
+        "zone": "apps/mcp-server",
         "next_agent": "dev-mcp-server",
-        "created_at": "2026-06-16T08:32:04Z",
-        "source": "2026-06-16 fleet-push (origin 0c826511) — CI `bun test` per-file-isolation RED, reproduced LOCALLY + on re-run (deterministic, same 2 files). Pre-existing: NOT in push delta, push added zero .ts.",
-        "blocking": true,
-        "blocking_reason": "origin CI cannot go green while these 2 fail → the 4 tasks gated on ci_green_on_subsequent_push (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) stay blocked from done_verified.",
-        "root_cause": "TWO independent standing failures: (1) 1837a-pipeline-state.test.ts AC-2 asserts head.status ∈ a fixed list that is MISSING 'ready' — but the live orch-state head.status IS 'ready' (a legitimate board value), so the test is a STALE assertion (same class as commit 728ef563 which previously added 'active'+'qa' to this same enum). (2) 1352a-async-extraction-race.test.ts: 4 fail / 1 error in the BCTC async extraction-race suite — needs a genuine triage of the race/fixture.",
-        "fix_spec": "(1) 1837a: add 'ready' to the valid head.status enum the test asserts against — verify against the orch-state-access.md canonical-status SSOT, NOT hardcoded (extend the SSOT list if 'ready' is genuinely valid, which it is per the current live head). (2) 1352a: triage the 4 failing assertions + 1 error in the async-extraction-race suite — determine whether it is a stale assertion, a fixture/mock-restore leak (per-file-isolation), or a genuine race regression; fix root cause, fail-loud, no test-skip.",
-        "generic_mandate": "1837a fix must source the valid-status set from the orch-state schema SSOT (docs/standards/orch-state-access.md) so future legitimate statuses don't re-break it — do NOT just append one literal. 1352a fix must address the actual race/fixture cause, not delete/skip the assertion.",
-        "verification_gate": "CI `bun test` (the EXACT per-file-isolation command, full suite) GREEN on origin AFTER this push — `gh run list --branch main --workflow CI` shows conclusion=success for a SHA containing this fix. Local: `bun test src/__tests__/1837a-pipeline-state.test.ts` AND `bun test src/__tests__/1352a-async-extraction-race.test.ts` both green. THIS unblocks the 4 ci_green_on_subsequent_push-gated tasks → promote them to done_verified once green.",
+        "created_at": "2026-06-16T15:37:15Z",
+        "created_by": "po",
+        "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #2 (2026-06-16). A 10-item queue of GENUINE non-filers (BDI/DAG/DLC/JSH/SIS/VDC/VNH/VEA) keeps the 'SLA CRITICAL' alarm perpetually alive (health-rechecks every 2h report BCTC-DEAD off these), masking real outages.",
+        "root_cause": "bctc_vps_queue rows for tickers that have not filed on ANY monitored source never age out -> perpetual 'pending'/'url_not_found' rows trip the SLA-CRITICAL freshness alarm even when the pipeline is functional (source-side non-filing).",
+        "fix_spec": "Add a max-age gate: when a queue row has 0 discovered URLs on ALL sources for >30d (track via a first_seen/last_zero timestamp), transition its status to 'no-filing-detected' and EXCLUDE it from the active SLA/freshness queue count. Re-arm: if a later cycle discovers a URL for that ticker, clear the marker and re-activate. AGGREGATE-safe: a partial success on any ticker must not mask another's staleness.",
+        "generic_mandate": "/goal#2 GENERIC — keyed on per-row age + zero-result-on-all-sources, no ticker allowlist/date literal.",
+        "verification_gate": "LIVE: a >30d-zero non-filer (e.g. VEA) transitions to 'no-filing-detected' and DROPS out of the SLA-CRITICAL count, while the health-recheck still surfaces a REAL stall (>=1 actionable pending row stale). DISTINCT from the shipped FIX-BCTC-FRESHNESS-GATE (which only changes the health-status return idle-vs-unhealthy, NOT the queue-row lifecycle).",
         "files": [
-          "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
-          "apps/mcp-server/src/__tests__/1352a-async-extraction-race.test.ts",
-          "docs/standards/orch-state-access.md"
+          "apps/mcp-server/src/interface/scheduler/bctcQueueEnricherJob.ts"
         ],
         "baseline_pass": false,
-        "size": "S"
+        "hold_reason": "WIP-deferred to backlog: P2 queue-lifecycle hardening, not on the critical path (pipeline already functional). Promote to ready when a coding lane frees."
+      },
+      {
+        "id": "SPIKE-BCTC-VEA-Q4-2025-SOURCE-PROBE",
+        "title": "SPIKE-BCTC-VEA-Q4-2025-SOURCE-PROBE — probe cafef.vn / hsx.vn direct disclosure for VEA Q4/2025 (not found on SSC or HNX UPCOM)",
+        "type": "SPIKE",
+        "owner": "po",
+        "status": "BACKLOG",
+        "question": "Is VEA Q4/2025 BCTC filed on cafef.vn or hsx.vn direct disclosure (filed-elsewhere), or genuinely not filed? If discoverable elsewhere, what is the working request recipe to add that source?",
+        "mode": "spike",
+        "timebox": 120,
+        "zone": "apps",
+        "next_agent": "dev-vps-crawls",
+        "created_at": "2026-06-16T15:37:15Z",
+        "created_by": "po",
+        "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #3 (2026-06-16). VEA Q4/2025 queue item returns 0 results on SSC AND HNX UPCOM; possibly filed on cafef/hsx.vn direct, or not filed at all.",
+        "deliverable": "Findings doc: filed-elsewhere vs not-filed verdict + (if found) the source URL + working request recipe to wire that source into discovery.",
+        "baseline_pass": true
       }
     ],
     "closed_sprints": [
@@ -15382,6 +15334,58 @@
         "done_by": "po",
         "done_evidence": "SPIKE delivered its design artifact: docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md (268L) enumerating 4 contracts C1 zero-result/freshness alerting, C2 freshness health gate, C3 enrich fail-loud, C4 ADF-brittleness monitoring + the child->contract map. A SPIKE is a design artifact (no rebuild, no QA-green) — the spun-out child FIXES are the verified work. baseline_pass satisfied.",
         "done_verified_deferred_note": "SPIKE DoD = brief delivered; done_verified:false because the durable hardening is realized only when the child FIXES (C1/C2/C4 mcp+vps, C3 already review) ship + RAW-verify the recurrence class closed. Tracked via the children, not this design row."
+      },
+      {
+        "depends": [],
+        "diagnosis": "ROOT CAUSE IDENTIFIED (dev-pdf-extractor 2026-06-14): The 5-day stall (Jun 8 01:17 UTC → Jun 13 20:45 UTC) was caused by bctcQueueEnricherJob (apps/mcp-server/) failing to discover HSX iboard URLs for 16 pending Q1-2026 tickers over 341 consecutive enricher runs. bctcPdfPullJob ran 118 times Jun 8-12 but found 0 pending rows with valid source_url — not a pull-job crash, VPS death, or pdf-extractor rejection. The 'healthy' mask: vn-bctc-fetch is passive=true in vpsHealthPoller.ts (apps/mcp-server/src/domain/services/vpsHealthPoller.ts:169) — always returns healthy regardless of data push age. Pipeline self-recovered Jun 13 20:45 UTC when iboard discovery returned 11 URLs; 7 PDFs downloaded Jun 13 21:35-22:17. Pipeline is LIVE as of Jun 13 22:21 UTC. HANDOFF ITEMS for dev-mcp-server: (1) vpsHealthPoller.ts: replace vn-bctc-fetch passive=true with an active freshness query on bctc_vps_queue (e.g. max(last_attempt) WHERE status=done, stale if >24h during earnings window). (2) bctcQueueEnricherJob: add alerting when urlsPopulated=0 for N consecutive runs during active earnings window (detect discovery stall before it reaches 5 days). (3) 9 remaining pending rows still have no source_url: ACV/BDI/DAG/DLC/JSH/SIS/VDC (created Apr 30), VNH (May 12), VEA (May 19) — these are HNX/UPCOM tickers not covered by discoverHosePdfUrls (HSX-only discovery). pdf-extractor zone is clean — no code changes needed in apps/pdf-extractor/.",
+        "handoff_to": "dev-mcp-server",
+        "id": "FIX-BCTC-VPS-PIPELINE-STALE-5D",
+        "live_evidence": {
+          "bctcPdfPullJob_runs_jun8_12": 118,
+          "bctcQueueEnricher_runs_jun8_12": 341,
+          "container_start_jun13": "2026-06-13T22:21:35Z",
+          "enricher_zero_url_runs": 339,
+          "last_download_utc": "2026-06-13 22:17:09",
+          "pdfs_downloaded_jun13": 7,
+          "pending_no_url": 9,
+          "pending_with_url": 10,
+          "pipeline_active": true,
+          "vn_bctc_fetch_health_type": "passive=always-healthy (vpsHealthPoller.ts:169)"
+        },
+        "owner": "dev-pdf-extractor",
+        "priority": "P0",
+        "scope": "SSH VPS; inspect vn-bctc-fetch process + cron. Fix health check to validate data-push freshness not just TCP ping (root cause = liveness vs data-freshness conflation). PLAN-ONLY at PO layer — dev-team + ops chain implements. Distinct from FIX-SBV-FX-VPS-FETCHER-UNHEALTHY (I7) and FIX-NEWS-VPS-CRASH-LOOP.",
+        "source": "health-recheck B5 (team-tool-recheck-2026-06-13-2207.md)",
+        "status": "DONE",
+        "title": "FIX-BCTC-VPS-PIPELINE-STALE-5D — BCTC VPS pipeline stale: bctc last push 2026-06-08 00:30 (5+ days), 0 new PDFs while Q1-2026 earnings window active (24h SLA, highly overdue). vn-bctc-fetch reports 'healthy' on TCP ping only — masks dead data push.",
+        "type": "FIX",
+        "user_impact": "HIGH — Q1 earnings PDFs silently not ingested; analyst layer serves stale financials.",
+        "zone_owner": "apps/pdf-extractor/",
+        "zone_verdict": "OUT_OF_ZONE",
+        "recurrence_note": "2ND RECURRENCE confirmed 2026-06-15T16:36:18Z: prior self-recovered Jun13 22:45Z, re-stalled since 23:45Z. get_bctc_full('VCB') empty, FPT stale (Published 2026-05-24). OPS-BCTC-PIPELINE-RECON minted to ready[] to re-isolate layer + route the structural items (1) active-freshness vpsHealthPoller + (2) enricher zero-URL alerting + (3) HNX/UPCOM discovery coverage. recurring-bug-escalation class. | 2026-06-15T17:19Z PO TRIAGE (OPS-BCTC-PIPELINE-RECON closed done): recon complete, 2 discovery fixes DEPLOYED (afrLoop rollover + exchange_code) but the user-facing P0 (get_bctc_full(VCB) empty) is NOT discovery — TRUE root = enrich-silent-0-rows (header inserted, 0 table_rows). Minted 6 follow-ons to ready[]: FIX-BCTC-ENRICH-SILENT-0ROWS(P0/weigh-P0, dev-pdf-extractor+dev-mcp-server), FIX-HNX-SESSION-COOKIE(P1, dev-vps-crawls), FIX-SSC-C111-EMPTY-FALLBACK(P1, dev-vps-crawls), FIX-BCTC-ZERO-URL-ALERT(P2, dev-mcp-server), FIX-BCTC-FRESHNESS-GATE(P2, dev-mcp-server), ARCH-BCTC-PIPELINE-DURABILITY(P1 architect umbrella). recurring-bug-escalation: architect BRIEFED (2nd recurrence; first fix was a one-time flush not hardening). recurrence_count held at 2 (no new outage event — same incident triaged).",
+        "recurrence_count": 2,
+        "followon_children": [
+          "FIX-BCTC-ENRICH-SILENT-0ROWS",
+          "FIX-HNX-SESSION-COOKIE",
+          "FIX-SSC-C111-EMPTY-FALLBACK",
+          "FIX-BCTC-ZERO-URL-ALERT",
+          "FIX-BCTC-FRESHNESS-GATE",
+          "ARCH-BCTC-PIPELINE-DURABILITY"
+        ],
+        "architect_briefed": true,
+        "done_verified": true,
+        "resolution": "non-bug — pipeline_functional_source_non_filing",
+        "done_at": "2026-06-16T15:37:15Z",
+        "done_by": "po",
+        "verified_at": "2026-06-16T15:37:15Z",
+        "verified_by": "po (recon RAW-verified)",
+        "done_evidence": "ops-vps-fetch recon (docs/vps-sources/bctc-pipeline-stale-5d/recon.md, 2026-06-16T12:40Z) RAW-verified LIVE: SSC HTTP 200 from VPS @12:36Z (afrLoop 27084144395994383, clean Oracle ADF, no CF/captcha/403); HNX+UPCOM session warmup 200. The actual breakage (afrLoop 26->27 rollover + HNX 302 no-session) was fixed at c014 2026-06-15T17:05Z — pipeline resumed then. The whole durability program is done_verified (HNX-SESSION-COOKIE, SSC-C111-EMPTY-FALLBACK, BCTC-ZERO-URL-ALERT, BCTC-FRESHNESS-GATE). The 'DEAD>72h' SLA framing is STALE: the 0-URL cycles since 17:05Z reflect SOURCE-SIDE NON-FILING (BDI/DAG/DLC/JSH/SIS/VDC have 0 SSC rows; VNH=annual-2025-only; VEA=latest-Q4/2025 — none filed Q1/2026 on monitored sources), NOT pipeline failure. ACV Q1/2026 IS discoverable (12.9MB cached, pushes next 18:00Z). NON-BUG.",
+        "recon_doc": "docs/vps-sources/bctc-pipeline-stale-5d/recon.md",
+        "residual_risks_spun_out": [
+          "FIX-BCTC-SSC-503-RETRY",
+          "FIX-BCTC-QUEUE-MAXAGE-GATE",
+          "SPIKE-BCTC-VEA-Q4-2025-SOURCE-PROBE"
+        ]
       }
     ],
     "done_verified": [
@@ -19012,6 +19016,34 @@
     ],
     "ready": [
       {
+        "id": "FIX-CI-RED-STANDING-1837A-1352A",
+        "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "READY",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-06-16T08:32:04Z",
+        "source": "2026-06-16 fleet-push (origin 0c826511) — CI `bun test` per-file-isolation RED, reproduced LOCALLY + on re-run (deterministic, same 2 files). Pre-existing: NOT in push delta, push added zero .ts.",
+        "blocking": true,
+        "blocking_reason": "origin CI cannot go green while these 2 fail → the 4 tasks gated on ci_green_on_subsequent_push (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) stay blocked from done_verified.",
+        "root_cause": "TWO independent standing failures: (1) 1837a-pipeline-state.test.ts AC-2 asserts head.status ∈ a fixed list that is MISSING 'ready' — but the live orch-state head.status IS 'ready' (a legitimate board value), so the test is a STALE assertion (same class as commit 728ef563 which previously added 'active'+'qa' to this same enum). (2) 1352a-async-extraction-race.test.ts: 4 fail / 1 error in the BCTC async extraction-race suite — needs a genuine triage of the race/fixture.",
+        "fix_spec": "(1) 1837a: add 'ready' to the valid head.status enum the test asserts against — verify against the orch-state-access.md canonical-status SSOT, NOT hardcoded (extend the SSOT list if 'ready' is genuinely valid, which it is per the current live head). (2) 1352a: triage the 4 failing assertions + 1 error in the async-extraction-race suite — determine whether it is a stale assertion, a fixture/mock-restore leak (per-file-isolation), or a genuine race regression; fix root cause, fail-loud, no test-skip.",
+        "generic_mandate": "1837a fix must source the valid-status set from the orch-state schema SSOT (docs/standards/orch-state-access.md) so future legitimate statuses don't re-break it — do NOT just append one literal. 1352a fix must address the actual race/fixture cause, not delete/skip the assertion.",
+        "verification_gate": "CI `bun test` (the EXACT per-file-isolation command, full suite) GREEN on origin AFTER this push — `gh run list --branch main --workflow CI` shows conclusion=success for a SHA containing this fix. Local: `bun test src/__tests__/1837a-pipeline-state.test.ts` AND `bun test src/__tests__/1352a-async-extraction-race.test.ts` both green. THIS unblocks the 4 ci_green_on_subsequent_push-gated tasks → promote them to done_verified once green.",
+        "files": [
+          "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
+          "apps/mcp-server/src/__tests__/1352a-async-extraction-race.test.ts",
+          "docs/standards/orch-state-access.md"
+        ],
+        "baseline_pass": false,
+        "size": "S",
+        "promoted_at": "2026-06-16T15:37:15Z",
+        "promoted_by": "po",
+        "promotion_reason": "Router RAW-verified origin HEAD 207658f3 `bun test` RED = EXACTLY 1352a-async-extraction-race + 1837a-pipeline-state (13064 pass/53 skip/5 fail). Per /goal#1 recheck-shipped-code both reds are REAL (deterministic, reproduced local+rerun), not flaky. blocking:true: gates 4 ci_green_on_subsequent_push tasks (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) from done_verified. Coding-WIP has a free slot (only architect ARCH-CRON in_progress). Leads ready[]."
+      },
+      {
         "id": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
         "type": "FIX",
         "priority": "MEDIUM",
@@ -19064,6 +19096,28 @@
         "held_on": "2026-06-16T10:31:48Z",
         "held_by": "po",
         "hold_reason": "shared-root HOLD (Root C): Step-0-GW sibling-success corroboration gate — pairs with Root B's concurrency model; needs design/BA pass. Not dispatched (no dev-ready spec)."
+      },
+      {
+        "id": "FIX-BCTC-SSC-503-RETRY",
+        "title": "FIX-BCTC-SSC-503-RETRY — add 1-retry+60s backoff in _ssc_curl_search() step1 before returning None on a transient SSC HTTP 503",
+        "type": "FIX",
+        "owner": "po",
+        "status": "READY",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps",
+        "next_agent": "dev-vps-crawls",
+        "created_at": "2026-06-16T15:37:15Z",
+        "created_by": "po",
+        "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #1 (2026-06-16). SSC returns HTTP 503 on ALL tickers at ~12:00Z UTC (19:00 ICT, scheduled maintenance window); self-recovers by ~12:36Z. Current _ssc_curl_search() has NO 503 retry -> returns None -> SKIP -> an entire 6h cycle burned for a 6-min transient.",
+        "root_cause": "_ssc_curl_search() step1 returns None on the first HTTPError 503 with no retry; the ~daily ~12:00Z SSC maintenance restart therefore drops a full 6h discovery cycle.",
+        "fix_spec": "In _ssc_curl_search() step1: on HTTPError 503, retry ONCE after a 60s backoff before returning None. Keep fail-loud-per-ticker on the 2nd 503 (return None -> SKIP, do NOT fabricate). Bound the retry so total step1 time stays well under the cycle budget. No change to the afrLoop/ViewState happy path.",
+        "generic_mandate": "/goal#2 GENERIC — retry keys on HTTP status 503 only, applies to ANY ticker/exchange; no per-ticker/date literal.",
+        "verification_gate": "LIVE: next ~12:00Z UTC cycle that hits an SSC 503 recovers within the same cycle (retry succeeds at 200) instead of SKIP-all; OR a forced 503 replay shows the retry path. NOT covered by the shipped C1-C4 durability fixes.",
+        "files": [
+          "vps-scripts/discover-bctc-urls-browser.py"
+        ],
+        "baseline_pass": false
       }
     ],
     "review": [
@@ -19269,6 +19323,36 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
+      },
+      {
+        "id": "FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "high",
+        "route_to": "ba",
+        "owner": "ba",
+        "zone": "multi",
+        "size": "S-M",
+        "created_at": "2026-06-15T14:31:12Z",
+        "created_by": "po",
+        "source": "health-recheck report 3182 (2026-06-15T14:11Z) BUG-NEW",
+        "title": "system-auditor post_agent_signal emit-schema drift -> coordination bus dark",
+        "raw_evidence": "PO RAW-confirmed LIVE 2026-06-15T14:30Z: call post_agent_signal({type,ts,tier,summary}) -> MCP -32602; live tool requires {from_agent,to_agent,signal_type(enum),payload}. Flow emit sites: docs/agents/system-auditor/flow/main.md L193,L482,L509.",
+        "root_cause": "system-auditor flow emits the historic {type,ts,summary,checks} shape; live post_agent_signal schema is {from_agent,to_agent,signal_type in enum,payload}. The 4 auditor types (microservice_degraded/data_stale/db_integrity_breach/system_health_report) are NOT in the live enum (urgent_news|price_anomaly|cross_validate|suppress|chain_catalyst|fundamental_validation|price_confirmation|verified_chain|signal_feedback|legal_risk|verified_decision).",
+        "why_not_drop_in": "Not a mechanical arg-rename: no live enum value maps to health/degrade/breach. Needs a design decision — (A) extend the post_agent_signal enum + payload contract on the tool side (dev-mcp-server), OR (B) remap auditor findings onto existing enum + carry detail in payload, OR (C) re-sink auditor health to signal_queue/DASHBOARD only and stop using post_agent_signal. BA decomposes, architect picks the option, then dev impl + agent-father rewrites the 3 emit blocks.",
+        "generic_mandate": "Fix must cover ALL THREE emit sites (L193 data_stale, L482 db_integrity_breach, L509 system_health_report) + the L16 doc note, not just one. /goal#2.",
+        "verification_gate": "LIVE: after fix, a real system-auditor cycle writes >=1 row reachable on the coordination bus (signals.db / signal_queue) with NO -32602; RAW-verify by reading the bus row, not a green log.",
+        "hold_reason": "HELD-for-BA: BA + architect lanes both occupied this tick (BA-VN-MACRO-TOOLING in_progress, ARCH-CRON-SCHEDULER-RELIABILITY in_progress). Unpark to ready once a non-coding decomposition lane frees. Design-gated, NOT a clean coding FIX -> do not dispatch a coding lane.",
+        "related": [
+          "SYS-FUNC-05-FIX",
+          "FU-AUDITOR-D4-SIGNAL-ID"
+        ],
+        "next_agent": "qa",
+        "code_landed_commit": "220b48c5",
+        "moved_to_review_at": "2026-06-16T15:37:15Z",
+        "moved_by": "po",
+        "qa_gate": "LIVE emit-success probe — confirm >=1 system-auditor anomaly signal reaches the coordination bus via post_agent_signal with the live {from_agent,to_agent,signal_type(in enum),payload} schema (the 3 emit sites system-auditor/flow/main.md L193/L482/L509 rewritten at 220b48c5). PASS = a real anomaly signal lands (no MCP -32602), get_agent_signals returns it. Stale health-rechecks 3182..3198 still report BUG-3 because they predate/don't re-probe the committed fix — qa RAW-verifies the live emit path, not the stale report.",
+        "reconcile_note": "Code fix committed locally at 220b48c5; reconciled backlog->review (was BACKLOG, never QA-gated). done_verified withheld until live emit verified."
       }
     ],
     "qa": [],
@@ -19288,7 +19372,7 @@
         }
       ]
     },
-    "updated_at": "2026-06-16T10:45:36Z",
+    "updated_at": "2026-06-16T15:37:15Z",
     "updated_by": "po"
   },
   "updated_at": "2026-06-16T07:15:00Z",
