@@ -1,0 +1,82 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-06-16T16:26:00Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "HVN",
+      "price": 24.15,
+      "daily_change_pct": 6.86,
+      "yoy_change_pct": 13.65,
+      "volume": 4220600,
+      "vs_avg_pct": 1400,
+      "rsi": 77.1,
+      "sentiment": "Bullish news: Vietnam Airlines +6.86% on positive news flow",
+      "insider_activity": "no activity",
+      "brief_action": "Watch overbought levels",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "Price surge +6.86% with RSI 77.1 (overbought) and volume spike 1400% avg — strong upside momentum on aviation sector recovery news"
+    },
+    {
+      "code": "VIC",
+      "price": 194.0,
+      "daily_change_pct": 0.73,
+      "yoy_change_pct": -13.78,
+      "volume": 2893300,
+      "vs_avg_pct": 115,
+      "rsi": 36.9,
+      "sentiment": "Mixed: Real estate sector under pressure despite VIC minor gains",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, watch sector sentiment",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "ACB",
+      "price": 22.3,
+      "daily_change_pct": -1.98,
+      "yoy_change_pct": -3.04,
+      "volume": 13315500,
+      "vs_avg_pct": 88,
+      "rsi": 34.5,
+      "sentiment": "Banking sector weakness: ACB down -1.98% on sector rotation",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, watch oversold bounce",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "BID",
+      "price": 41.9,
+      "daily_change_pct": 0.72,
+      "yoy_change_pct": 0,
+      "volume": 3050500,
+      "vs_avg_pct": 95,
+      "rsi": 0,
+      "sentiment": "Banking: Stable performance amid sector headwinds",
+      "insider_activity": "no activity",
+      "brief_action": "Hold",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "FPT",
+      "price": 73.2,
+      "daily_change_pct": -0.54,
+      "yoy_change_pct": 0,
+      "volume": 5819800,
+      "vs_avg_pct": 110,
+      "rsi": 47.0,
+      "sentiment": "Tech sector neutral consolidation",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, neutral technicals",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    }
+  ]
+}
