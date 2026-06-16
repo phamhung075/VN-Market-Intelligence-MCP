@@ -18299,39 +18299,6 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
-      },
-      {
-        "id": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0",
-        "title": "Migrate remaining OHLCV writer(s) — esp. the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 + scale-norm + a fail-closed C=0 reject apply to ALL tickers",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "dev_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "blocking": true,
-        "parent": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
-        "behavioral_gate_doc": "docs/handoffs/FIX-OHLCV-SEED-CANDLE-behavioral-gate-2026-06-16-RED.md",
-        "root_cause": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 healed watchlist majors (VHM/VIC/VJC RSI) but is NOT generic — residual OHLCV writers bypass writeOhlcvBatch (FR-S1 seed-rejection + scale-norm), corrupting non-major tickers. Behavioral gate RED on first post-rebuild prod cycle (1569 rows, flat_seed=775, null_env=117; 46 tickers >15% move vs prior real close).",
-        "classes": [
-          "Class 1 (PRIMARY): aggregator/seeder (suspect ohlcvDailyAggregatorJob.ts) writes flat vol=0 bars at WRONG prices, env=production, ~773 rows incl DCR +64% (5900 vs 3600), H11 +47% (25700 vs 17500) — UNMIGRATED to writeOhlcvBatch -> bypasses FR-S1.",
-          "Class 2: zero-price all-zero bars (env=NULL, vol=0): DAG/DFF/DMC/POM — FR-S1 should skip 0=0=0=0 today but they landed -> un-migrated env=NULL writer OR FR-S1 not on path. Source of 'giá 0 dưới BB' alerts.",
-          "Class 3: ÷1000 leak on a production writer: PDN (105.2 vs prior 99,800), NHD (118.6 vs 92,500) — prevClose-miss in the batch JOIN OR un-migrated production writer. The exact VHM/VIC bug on non-major tickers -> proves non-generic."
-        ],
-        "fix_spec": "Migrate the remaining OHLCV writer(s) — especially the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose + a NEW fail-closed C=0 reject apply to ALL tickers (generic /goal#2). Trace the PDN/NHD prevClose-miss (Class 3). Add a fail-closed reject for C=0 (Class 2).",
-        "files": [
-          "apps/mcp-server/src/.../ohlcvDailyAggregatorJob.ts (suspect — confirm)",
-          "apps/mcp-server writeOhlcvBatch path",
-          "FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose"
-        ],
-        "generic_mandate": "Fix must be GENERIC across the full ticker universe, not the watchlist majors. No served bar may carry a ÷1000-scaled, wrong-price-seeded, or all-zero close (/goal#1 + /goal#2).",
-        "verification_gate": "RAW post-rebuild LIVE: re-run the 5 sidecar queries on daily_ohlcv date=latest — 0 flat vol=0 wrong-price seeds (Class 1), 0 all-zero 0|0|0|0 bars (Class 2), 0 ÷1000 leaks vs prior real close (Class 3); DCR/H11/DAG/DFF/DMC/POM/PDN/NHD all plausible (<=board limit move). get_technical_indicators on the repaired tickers returns real-band RSI.",
-        "rebuild_required": true,
-        "sequence_note": "Sequenced AHEAD of lower-pri ready[] items (data-integrity P0). Fills the 2nd coding slot (WIP<=2; in_progress currently = ARCH-CRON-SCHEDULER-RELIABILITY).",
-        "created_at": "2026-06-16T05:05:37Z",
-        "created_by": "po-s81",
-        "claimed_at": "2026-06-16T05:30:00Z",
-        "claimed_by": "dev-mcp-server"
       }
     ],
     "ready": [
@@ -18795,6 +18762,39 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
+      },
+      {
+        "id": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0",
+        "title": "Migrate remaining OHLCV writer(s) — esp. the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 + scale-norm + a fail-closed C=0 reject apply to ALL tickers",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "blocking": true,
+        "parent": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+        "behavioral_gate_doc": "docs/handoffs/FIX-OHLCV-SEED-CANDLE-behavioral-gate-2026-06-16-RED.md",
+        "root_cause": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 healed watchlist majors (VHM/VIC/VJC RSI) but is NOT generic — residual OHLCV writers bypass writeOhlcvBatch (FR-S1 seed-rejection + scale-norm), corrupting non-major tickers. Behavioral gate RED on first post-rebuild prod cycle (1569 rows, flat_seed=775, null_env=117; 46 tickers >15% move vs prior real close).",
+        "classes": [
+          "Class 1 (PRIMARY): aggregator/seeder (suspect ohlcvDailyAggregatorJob.ts) writes flat vol=0 bars at WRONG prices, env=production, ~773 rows incl DCR +64% (5900 vs 3600), H11 +47% (25700 vs 17500) — UNMIGRATED to writeOhlcvBatch -> bypasses FR-S1.",
+          "Class 2: zero-price all-zero bars (env=NULL, vol=0): DAG/DFF/DMC/POM — FR-S1 should skip 0=0=0=0 today but they landed -> un-migrated env=NULL writer OR FR-S1 not on path. Source of 'giá 0 dưới BB' alerts.",
+          "Class 3: ÷1000 leak on a production writer: PDN (105.2 vs prior 99,800), NHD (118.6 vs 92,500) — prevClose-miss in the batch JOIN OR un-migrated production writer. The exact VHM/VIC bug on non-major tickers -> proves non-generic."
+        ],
+        "fix_spec": "Migrate the remaining OHLCV writer(s) — especially the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose + a NEW fail-closed C=0 reject apply to ALL tickers (generic /goal#2). Trace the PDN/NHD prevClose-miss (Class 3). Add a fail-closed reject for C=0 (Class 2).",
+        "files": [
+          "apps/mcp-server/src/.../ohlcvDailyAggregatorJob.ts (suspect — confirm)",
+          "apps/mcp-server writeOhlcvBatch path",
+          "FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose"
+        ],
+        "generic_mandate": "Fix must be GENERIC across the full ticker universe, not the watchlist majors. No served bar may carry a ÷1000-scaled, wrong-price-seeded, or all-zero close (/goal#1 + /goal#2).",
+        "verification_gate": "RAW post-rebuild LIVE: re-run the 5 sidecar queries on daily_ohlcv date=latest — 0 flat vol=0 wrong-price seeds (Class 1), 0 all-zero 0|0|0|0 bars (Class 2), 0 ÷1000 leaks vs prior real close (Class 3); DCR/H11/DAG/DFF/DMC/POM/PDN/NHD all plausible (<=board limit move). get_technical_indicators on the repaired tickers returns real-band RSI.",
+        "rebuild_required": true,
+        "sequence_note": "Sequenced AHEAD of lower-pri ready[] items (data-integrity P0). Fills the 2nd coding slot (WIP<=2; in_progress currently = ARCH-CRON-SCHEDULER-RELIABILITY).",
+        "created_at": "2026-06-16T05:05:37Z",
+        "created_by": "po-s81",
+        "claimed_at": "2026-06-16T05:30:00Z",
+        "claimed_by": "dev-mcp-server"
       }
     ],
     "qa": [],
