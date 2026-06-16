@@ -703,8 +703,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T07:15:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-16T06:50:46Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12467,6 +12467,48 @@
     ],
     "done": [
       {
+        "id": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 2,
+        "priority": "P1",
+        "size": "L",
+        "status": "done_verified",
+        "zone": "apps/frontend/",
+        "route_to": "dev-frontend",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "pm",
+        "sequence_after": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
+        "title": "Wave-2 frontend helpers: safeFetch/proxyUpstream/safeFetchOrNull + one DEADLINE_MS — fix timeout+duplication+logging in 3 places not 55",
+        "desc": "Land safeFetch<T>(url,{parse,deadlineMs}) [26 dashboard loaders], proxyUpstream(upstreamUrl,init) [29 api.*.tsx proxies -> 504 on abort / 502 on net error], safeFetchOrNull<T>(url) [4 non-fatal client wrappers, preserve null/[]/{} contract], one shared DEADLINE_MS < gateway, one structured console.error per degrade. Closes frontend-01/02/03 (NOT one of ~60 fetch sites has a timeout; loaders fetch the also-unbounded proxies = two unbounded hops), frontend-04 (same ~40-line block x 55), frontend-06 (ZERO server-side logging), frontend-07 (4 bare-catch-to-null wrappers). SEQUENCE AFTER FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE so the two unbounded hops are closed inner-first.",
+        "replaces_sites": [
+          "client.ts:40",
+          "~26 dashboard loaders",
+          "~29 api.*.tsx proxies",
+          "4 non-fatal client wrappers"
+        ],
+        "recurrence_class": "graceful-degrade-needs-bounded-fetch / inconsistent-adhoc / no-server-side-logging",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: a stalled upstream makes a loader/proxy return 504/502 within DEADLINE_MS (NOT an indefinite hang) with one structured console.error; non-fatal wrappers still return null/[]/{} on a genuine empty. LIVE-verified after mcp-server deadlines land.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P2 frontend-cluster -> Wave-2 helper)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "lane": "qa",
+        "groomed_at": "2026-06-16T01:27:01Z",
+        "groomed_by": "po-s73",
+        "promoted_from": "backlog",
+        "promoted_at": "2026-06-16T01:27:01Z",
+        "promoted_by": "po-s73",
+        "promotion_note": "Wave-2 frontend hop. Inner-first sequence gate SATISFIED: sequence_after dep FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE is done_verified (the two unbounded mcp-server hops mcp-interface-01/05 are closed). Wave-1 fully complete (W1-MCP-P0 + W1-PEK-P0 both done_verified). Distinct zone apps/frontend/ — no zone-serialization conflict with the mcp-server lane; WIP<=2 honored (over-parallel-fanout host-starvation lesson). Land safeFetch/proxyUpstream/safeFetchOrNull + one DEADLINE_MS < gateway: fix timeout+duplication+logging in 3 helpers not 55 sites. Route ba->architect->pm->dev-frontend->qa; router dispatches via lock-claim+spawn -- po did NOT spawn. No-push.",
+        "impl_commit": "75a89a3b",
+        "impl_note": "T4 complete: all 28 Cluster A dashboard loaders migrated to safeFetch. tsc: 0 errors. vitest: 1637/1639 pass (2 pre-existing QUE failures, unrelated). Bounded fetch at FETCH_DEADLINE_MS=55s applied. NO push. Awaiting QA hop.",
+        "moved_to_qa_at": "2026-06-16T06:42:37Z",
+        "moved_to_qa_by": "dev-frontend",
+        "qa_approved_at": "2026-06-16T06:50:46Z",
+        "qa_report": "reports/TASK_REPORT_FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH.md"
+      },
+      {
         "closed_at": "2026-06-09T03:50:20Z",
         "created_at": "2026-06-09T03:34:12Z",
         "depends": [
@@ -18796,48 +18838,7 @@
         }
       }
     ],
-    "qa": [
-      {
-        "id": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 2,
-        "priority": "P1",
-        "size": "L",
-        "status": "REVIEW",
-        "zone": "apps/frontend/",
-        "route_to": "dev-frontend",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "pm",
-        "sequence_after": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
-        "title": "Wave-2 frontend helpers: safeFetch/proxyUpstream/safeFetchOrNull + one DEADLINE_MS — fix timeout+duplication+logging in 3 places not 55",
-        "desc": "Land safeFetch<T>(url,{parse,deadlineMs}) [26 dashboard loaders], proxyUpstream(upstreamUrl,init) [29 api.*.tsx proxies -> 504 on abort / 502 on net error], safeFetchOrNull<T>(url) [4 non-fatal client wrappers, preserve null/[]/{} contract], one shared DEADLINE_MS < gateway, one structured console.error per degrade. Closes frontend-01/02/03 (NOT one of ~60 fetch sites has a timeout; loaders fetch the also-unbounded proxies = two unbounded hops), frontend-04 (same ~40-line block x 55), frontend-06 (ZERO server-side logging), frontend-07 (4 bare-catch-to-null wrappers). SEQUENCE AFTER FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE so the two unbounded hops are closed inner-first.",
-        "replaces_sites": [
-          "client.ts:40",
-          "~26 dashboard loaders",
-          "~29 api.*.tsx proxies",
-          "4 non-fatal client wrappers"
-        ],
-        "recurrence_class": "graceful-degrade-needs-bounded-fetch / inconsistent-adhoc / no-server-side-logging",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: a stalled upstream makes a loader/proxy return 504/502 within DEADLINE_MS (NOT an indefinite hang) with one structured console.error; non-fatal wrappers still return null/[]/{} on a genuine empty. LIVE-verified after mcp-server deadlines land.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P2 frontend-cluster -> Wave-2 helper)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65",
-        "lane": "qa",
-        "groomed_at": "2026-06-16T01:27:01Z",
-        "groomed_by": "po-s73",
-        "promoted_from": "backlog",
-        "promoted_at": "2026-06-16T01:27:01Z",
-        "promoted_by": "po-s73",
-        "promotion_note": "Wave-2 frontend hop. Inner-first sequence gate SATISFIED: sequence_after dep FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE is done_verified (the two unbounded mcp-server hops mcp-interface-01/05 are closed). Wave-1 fully complete (W1-MCP-P0 + W1-PEK-P0 both done_verified). Distinct zone apps/frontend/ — no zone-serialization conflict with the mcp-server lane; WIP<=2 honored (over-parallel-fanout host-starvation lesson). Land safeFetch/proxyUpstream/safeFetchOrNull + one DEADLINE_MS < gateway: fix timeout+duplication+logging in 3 helpers not 55 sites. Route ba->architect->pm->dev-frontend->qa; router dispatches via lock-claim+spawn -- po did NOT spawn. No-push.",
-        "impl_commit": "75a89a3b",
-        "impl_note": "T4 complete: all 28 Cluster A dashboard loaders migrated to safeFetch. tsc: 0 errors. vitest: 1637/1639 pass (2 pre-existing QUE failures, unrelated). Bounded fetch at FETCH_DEADLINE_MS=55s applied. NO push. Awaiting QA hop.",
-        "moved_to_qa_at": "2026-06-16T06:42:37Z",
-        "moved_to_qa_by": "dev-frontend"
-      }
-    ],
+    "qa": [],
     "_closed_signals_20260614": {
       "_by": "po-S50",
       "_at": "2026-06-14T14:45:14Z",
