@@ -53,3 +53,13 @@
 - HOLD rebase — dirty tree (git pull --rebase refuses; stash would sweep other agents' in-flight work)
 **why-decision:** git pull --rebase requires a clean tree; force-stashing 120+ other-agent dirty entries risks corrupting their uncommitted work (router-commit-captures-dirty-board class). Committed only my 2 scoped files; left the rebase+push as the next clean-tree opportunity.
 **why-change:** Router said push is mine to execute if green-lit — code-green but tree-not-clean blocks the mechanism; recorded WHY held rather than forcing it.
+
+### STEP po-S6 · po · 2026-06-16T07:32:41Z
+**task-id:** FIX-OHLCV-STRANDED-ROWS-REPAIR-P1 / FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2
+**what-done:** Minted 2 cycle-277 OHLCV aggregator follow-ons (qa→po PENDING) — stranded-rows repair→ready[] P1 (leads), class3 cold-start seed→backlog[] P2; flipped both signal rows PENDING→TRIAGED.
+**what-considered:**
+- Stranded-rows lane: ready[] vs backlog[] — chose ready[] (live MARKET "giá 0 dưới BB" poison, leads per WIP same-zone serialize).
+- Class3 lane: ready[] vs backlog[] — chose backlog[]+ba (needs exchange ref-price SOURCE contract, larger than a writer tweak; serialize behind stranded-rows in apps/mcp-server zone).
+- Dedup class3 vs existing FIX-OHLCV-SCALE-X1000-AUTO-REPAIR + FIX-OHLCV-CORP-ACTION-CONTINUITY — distinct (prevClose=0 cold-start no-op, not write-path normalize nor corp-action boundary).
+**why-decision:** Both INDEPENDENT of the ~08:00 writer behavioral-gate proof (residue + distinct cold-start gap); WIP=0 active coding so both valid now; stranded-rows leads (live poison source).
+**why-change:** no change from router triage brief; signal rows TRIAGED not RESOLVED (done_verified gated on RAW live-repair verify, router holds the 08:00 probe).
