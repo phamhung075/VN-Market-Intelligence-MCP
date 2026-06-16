@@ -4,6 +4,33 @@
 
 ---
 
+## c97 · 2026-06-16T20:13Z
+
+**Status:** NEEDS_ATTENTION | Direction: STABLE | Chef: PIPELINE PARTIAL (morning send_telegram 502; EOD+Evening PUBLISHED; G3-G4-G6 FAIL — all guaranteed slots last_fired stale 2nd day; F-EVENING-2026-06-15-CONFIRMED-ABSENT)
+
+**Layer scores (audited dishes):**
+- Morning 05:15Z: 5.5/6 GOOD (L1✓ L2✓ L3-partial-VIRA L4-partial-502-degraded L5✓-Quẻ63-KýTế L6✓) | 9-step: 7/9 GOOD | PUBLICATION FAILED (502)
+- EOD 09:00Z: 5.5/6 GOOD (L1✓ L2✓ L3-partial-VIRA L4✓-floor-LOW-conviction L5✓-Quẻ63 L6✓) | 9-step: 7/9 GOOD | PUBLISHED
+- Evening 19:45Z: 5.5/6 GOOD (L1✓ L2✓ L3-partial-VIRA L4✓-3-signal-convergence L5✓-Quẻ63+per-ticker L6✓) | 9-step: 7.5/9 GOOD | PUBLISHED
+
+**New findings (HIGH/MED):**
+- **F-MORNING-SEND-FAILED-20260616 (NEW, HIGH):** chef-morning 05:15Z synthesized valid 5.5/6 content (Quẻ 63 Ký Tế, 3 clusters, phase recovery, yield 7.05%>5.00%) but send_telegram FAILED 502 Bad Gateway (ray_id: a0c763243e66eaf4, ≥5 attempts). MARKET/WORK did not receive morning dish. Gateway-layer failure at publication, not synthesis. Dev task required.
+- **F-EVENING-2026-06-15-CONFIRMED-ABSENT (NEW, MED):** Unified-agent notebook confirms no 2026-06-15 evening session entry. Monday guaranteed-slot miss confirmed. Tuesday (2026-06-16) evening recovered (PUBLISHED 19:45Z).
+- **F-G3-G4-WORSENED (carry-forward, HIGH):** last_fired stale for ALL 3 guaranteed slots on 2nd consecutive day. Morning=2026-06-15, EOD=2026-06-15, Evening=2026-06-14. Pattern extends beyond morning/eod to chef-evening.
+
+**Positive signals:**
+- Quẻ 63 Ký Tế market hexagram LIVE in all 3 sessions — no 501 dark-hexagram in any dish this cycle (first time in recent history)
+- Evening per-ticker KD coverage: Quẻ Tỉnh MUA (HVN), Quẻ Khiêm MUA (VIC/TCH)
+- EOD explicit LOW conviction disclosure [uncertain-source baseline] — L6 gap-catalogue correctly applied
+- adversarial_gate: PASS (EOD LOW→Evening MODERATE HVN upgrade with KD evidence)
+- cowork-schedule.json last_fired advancing (morning: 2026-06-12→2026-06-15, eod: 2026-06-11→2026-06-15) vs c96 — partial improvement
+
+**Carry-forward gaps:** F-MORNING-SEND-FAILED (NEW) | F-EVENING-2026-06-15-ABSENT (NEW) | F-G3-G4-WORSENED (3 guaranteed slots) | F-BCTC-CTG-CRITICAL (CTG cycle 25+) | F3=PMI-sub | F4=VIRA | F9=business-context (23rd cycle)
+
+**Actions:** Handoff written | Signal file to emit | Notebook appended (MCP unavailable — commit-mutex SKIPPED per C-2 FAIL-CLOSED) | WORK report pending (MCP unavailable)
+
+---
+
 ## c96 · 2026-06-15T20:13Z
 
 **Status:** NEEDS_ATTENTION | Direction: IMPROVING | Chef: PIPELINE PARTIAL (dishes fired, cowork-schedule.json last_fired NOT updated for morning/EOD — G3/G4 FAIL)
