@@ -39,6 +39,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Khối Ngoại — VN Market Intelligence" },
@@ -104,77 +105,67 @@ const EMPTY_SUMMARY: ForeignFlowSummary = {
   topSells: [],
 };
 
+function parseForeignFlowDto(raw: unknown): ForeignFlowDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      tradingDate: "",
+      items: [],
+      summary: { ...EMPTY_SUMMARY },
+      count: 0,
+      fetchedAt: now,
+      stale_fields: [],
+    };
+  }
+  if (typeof raw !== "object" || !("items" in raw)) {
+    throw new Error("Unexpected response shape from /api/foreign-flow");
+  }
+  const dto = raw as ForeignFlowDto;
+  const items = Array.isArray(dto.items) ? dto.items : [];
+  const summary =
+    dto.summary !== null &&
+    typeof dto.summary === "object" &&
+    "netBuyCount" in dto.summary
+      ? {
+          netBuyCount: typeof dto.summary.netBuyCount === "number" ? dto.summary.netBuyCount : 0,
+          netSellCount: typeof dto.summary.netSellCount === "number" ? dto.summary.netSellCount : 0,
+          topBuys: Array.isArray(dto.summary.topBuys) ? dto.summary.topBuys : [],
+          topSells: Array.isArray(dto.summary.topSells) ? dto.summary.topSells : [],
+        }
+      : { ...EMPTY_SUMMARY };
+  return {
+    tradingDate: typeof dto.tradingDate === "string" ? dto.tradingDate : "",
+    items,
+    summary,
+    count: typeof dto.count === "number" ? dto.count : items.length,
+    fetchedAt: typeof dto.fetchedAt === "string" ? dto.fetchedAt : now,
+    stale_fields: Array.isArray(dto.stale_fields) ? dto.stale_fields : [],
+  };
+}
+
 export async function fetchForeignFlowData(
   origin: string,
   params?: { limit?: number }
 ): Promise<LoaderData> {
-  let tradingDate = "";
-  let items: ForeignFlowItem[] = [];
-  let summary: ForeignFlowSummary = { ...EMPTY_SUMMARY };
-  let count = 0;
-  let fetchedAt = new Date().toISOString();
-  let error: string | null = null;
-  let stale_fields: string[] = [];
-
-  try {
-    const qs = new URLSearchParams();
-    if (params?.limit !== undefined) {
-      qs.set("limit", String(params.limit));
-    }
-    const qsStr = qs.toString();
-    const url = `${origin}/api/foreign-flow${qsStr ? `?${qsStr}` : ""}`;
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "items" in raw) {
-        const dto = raw as ForeignFlowDto;
-        tradingDate =
-          typeof dto.tradingDate === "string" ? dto.tradingDate : "";
-        items = Array.isArray(dto.items) ? dto.items : [];
-        count = typeof dto.count === "number" ? dto.count : items.length;
-        fetchedAt =
-          typeof dto.fetchedAt === "string" ? dto.fetchedAt : fetchedAt;
-        // NFR-C-5: parse stale_fields — default to [] when absent (backward compat)
-        stale_fields = Array.isArray(dto.stale_fields) ? dto.stale_fields : [];
-        summary =
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "netBuyCount" in dto.summary
-            ? {
-                netBuyCount:
-                  typeof dto.summary.netBuyCount === "number"
-                    ? dto.summary.netBuyCount
-                    : 0,
-                netSellCount:
-                  typeof dto.summary.netSellCount === "number"
-                    ? dto.summary.netSellCount
-                    : 0,
-                topBuys: Array.isArray(dto.summary.topBuys)
-                  ? dto.summary.topBuys
-                  : [],
-                topSells: Array.isArray(dto.summary.topSells)
-                  ? dto.summary.topSells
-                  : [],
-              }
-            : { ...EMPTY_SUMMARY };
-      } else {
-        error = "Unexpected response shape from /api/foreign-flow";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu khối ngoại";
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) {
+    qs.set("limit", String(params.limit));
   }
+  const qsStr = qs.toString();
+  const url = `${origin}/api/foreign-flow${qsStr ? `?${qsStr}` : ""}`;
 
-  return { tradingDate, items, summary, count, fetchedAt, error, stale_fields };
+  const { data, error } = await safeFetch<ForeignFlowDto>(url, parseForeignFlowDto, {
+    label: "dashboard.foreign-flow",
+  });
+  return {
+    tradingDate: data.tradingDate,
+    items: data.items,
+    summary: data.summary,
+    count: data.count,
+    fetchedAt: data.fetchedAt,
+    error,
+    stale_fields: data.stale_fields ?? [],
+  };
 }
 
 // ---------------------------------------------------------------------------

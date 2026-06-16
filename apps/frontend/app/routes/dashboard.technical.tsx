@@ -29,6 +29,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 import { StockChart } from "~/components/charts/StockChart";
@@ -90,6 +91,32 @@ export interface LoaderData {
 // Pure fetch helper — exported for unit testing
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// parsePriceHistoryDto — named parse function for safeFetch
+// ---------------------------------------------------------------------------
+
+function parsePriceHistoryDto(raw: unknown): PriceHistoryDto {
+  if (raw === null) {
+    return {
+      ticker: "",
+      generated_at: new Date().toISOString(),
+      data_source: "unavailable",
+      stale_served: false,
+      count: 0,
+      latest: null,
+      candles: [],
+    };
+  }
+  if (
+    typeof raw !== "object" ||
+    !("candles" in raw) ||
+    !("count" in raw)
+  ) {
+    throw new Error("Unexpected response shape from /api/price-history");
+  }
+  return raw as PriceHistoryDto;
+}
+
 /**
  * Core fetch-and-parse logic — exported for unit tests.
  * Pure async function, no Remix dependency.
@@ -99,60 +126,29 @@ export async function fetchPriceHistory(
   ticker: string,
   days = 90,
 ): Promise<Omit<LoaderData, "ticker" | "generated_at">> {
-  let data_source: string | null = null;
-  let stale_served = false;
-  let count = 0;
-  let latest: PriceLatest | null = null;
-  let candles: PriceCandle[] = [];
-  let pricePoints: PricePoint[] = [];
-  let error: string | null = null;
+  const url = `${origin}/api/price-history/${encodeURIComponent(ticker)}?days=${days}`;
 
-  try {
-    const response = await fetch(
-      `${origin}/api/price-history/${encodeURIComponent(ticker)}?days=${days}`,
-      { headers: { Accept: "application/json" } },
-    );
+  const { data, error } = await safeFetch<PriceHistoryDto>(url, parsePriceHistoryDto, {
+    label: "dashboard.technical",
+  });
 
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (
-        raw !== null &&
-        typeof raw === "object" &&
-        "candles" in raw &&
-        "count" in raw
-      ) {
-        const dto = raw as PriceHistoryDto;
-        data_source =
-          typeof dto.data_source === "string" ? dto.data_source : null;
-        stale_served = dto.stale_served === true;
-        count = typeof dto.count === "number" ? dto.count : 0;
-        latest =
-          dto.latest !== null && typeof dto.latest === "object"
-            ? dto.latest
-            : null;
-        candles = Array.isArray(dto.candles) ? dto.candles : [];
-        // Convert candles → PricePoint[] for StockChart reuse
-        pricePoints = candles.map((c) => ({
-          date: c.date,
-          code: ticker,
-          open: c.open,
-          high: c.high,
-          low: c.low,
-          close: c.close,
-          volume: c.volume,
-        }));
-      } else {
-        error = "Unexpected response shape from /api/price-history";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ giá";
-  }
+  const dto = data ?? parsePriceHistoryDto(null);
+  const data_source = typeof dto.data_source === "string" ? dto.data_source : null;
+  const stale_served = dto.stale_served === true;
+  const count = typeof dto.count === "number" ? dto.count : 0;
+  const latest =
+    dto.latest !== null && typeof dto.latest === "object" ? dto.latest : null;
+  const candles = Array.isArray(dto.candles) ? dto.candles : [];
+  // Convert candles → PricePoint[] for StockChart reuse
+  const pricePoints: PricePoint[] = candles.map((c) => ({
+    date: c.date,
+    code: ticker,
+    open: c.open,
+    high: c.high,
+    low: c.low,
+    close: c.close,
+    volume: c.volume,
+  }));
 
   return { data_source, stale_served, count, latest, candles, pricePoints, error };
 }

@@ -48,6 +48,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Bối cảnh thị trường toàn cầu — VN Market Intelligence" },
@@ -299,83 +300,71 @@ const EMPTY_SUMMARY: GlobalSummary = {
   topMovers: [],
 };
 
+function parseGlobalMarketsDto(raw: unknown): GlobalMarketsDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      currentAt: now,
+      source: "",
+      window: 7,
+      indicators: [],
+      series: {},
+      summary: { ...EMPTY_SUMMARY },
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("indicators" in raw)) {
+    throw new Error("Unexpected response shape from /api/global-markets");
+  }
+  const dto = raw as GlobalMarketsDto;
+  const indicators = Array.isArray(dto.indicators) ? dto.indicators : [];
+  const summary =
+    dto.summary !== null &&
+    typeof dto.summary === "object" &&
+    "riskTone" in dto.summary
+      ? {
+          vix: typeof dto.summary.vix === "number" ? dto.summary.vix : null,
+          vixBand: dto.summary.vixBand ?? null,
+          riskTone: dto.summary.riskTone ?? null,
+          topMovers: Array.isArray(dto.summary.topMovers) ? dto.summary.topMovers : [],
+        }
+      : { ...EMPTY_SUMMARY };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    currentAt: typeof dto.currentAt === "string" ? dto.currentAt : now,
+    source: typeof dto.source === "string" ? dto.source : "",
+    window: typeof dto.window === "number" ? dto.window : 7,
+    indicators,
+    series: dto.series !== null && typeof dto.series === "object"
+      ? (dto.series as Record<string, SeriesPoint[]>)
+      : {},
+    summary,
+    count: typeof dto.count === "number" ? dto.count : indicators.length,
+  };
+}
+
 export async function fetchGlobalMarketsData(
   origin: string,
   windowDays?: number,
 ): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let currentAt = generatedAt;
-  let source = "";
-  let windowVal = windowDays ?? 7;
-  let indicators: GlobalIndicator[] = [];
-  let series: Record<string, SeriesPoint[]> = {};
-  let summary: GlobalSummary = { ...EMPTY_SUMMARY };
-  let count = 0;
-  let error: string | null = null;
+  const windowVal = windowDays ?? 7;
+  const urlObj = new URL(`${origin}/api/global-markets`);
+  urlObj.searchParams.set("window", String(windowVal));
+  const url = urlObj.toString();
 
-  try {
-    const urlObj = new URL(`${origin}/api/global-markets`);
-    urlObj.searchParams.set("window", String(windowVal));
-    const url = urlObj.toString();
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "indicators" in raw) {
-        const dto = raw as GlobalMarketsDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        currentAt =
-          typeof dto.currentAt === "string" ? dto.currentAt : currentAt;
-        source =
-          typeof dto.source === "string" ? dto.source : source;
-        windowVal =
-          typeof dto.window === "number" ? dto.window : windowVal;
-        indicators = Array.isArray(dto.indicators) ? dto.indicators : [];
-        series =
-          dto.series !== null && typeof dto.series === "object"
-            ? (dto.series as Record<string, SeriesPoint[]>)
-            : {};
-        count = typeof dto.count === "number" ? dto.count : indicators.length;
-
-        if (
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "riskTone" in dto.summary
-        ) {
-          const s = dto.summary;
-          summary = {
-            vix: typeof s.vix === "number" ? s.vix : null,
-            vixBand: s.vixBand ?? null,
-            riskTone: s.riskTone ?? null,
-            topMovers: Array.isArray(s.topMovers) ? s.topMovers : [],
-          };
-        }
-      } else {
-        error = "Unexpected response shape from /api/global-markets";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu thị trường toàn cầu";
-  }
-
+  const { data, error } = await safeFetch<GlobalMarketsDto>(url, parseGlobalMarketsDto, {
+    label: "dashboard.global-markets",
+  });
   return {
-    generatedAt,
-    currentAt,
-    source,
-    window: windowVal,
-    indicators,
-    series,
-    summary,
-    count,
+    generatedAt: data.generatedAt,
+    currentAt: data.currentAt,
+    source: data.source,
+    window: data.window,
+    indicators: data.indicators,
+    series: data.series,
+    summary: data.summary,
+    count: data.count,
     error,
   };
 }

@@ -25,6 +25,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { useState } from "react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 
@@ -64,6 +65,30 @@ export interface LoaderData {
   error: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// parseAnalysisBriefsDto — named parse function for safeFetch
+// ---------------------------------------------------------------------------
+
+function parseAnalysisBriefsDto(raw: unknown): AnalysisBriefsDto {
+  if (raw === null) {
+    return {
+      generated_at: new Date().toISOString(),
+      count: 0,
+      items: [],
+    };
+  }
+  if (typeof raw !== "object" || !("items" in raw)) {
+    throw new Error("Unexpected response shape from /api/analysis-briefs");
+  }
+  const dto = raw as AnalysisBriefsDto;
+  const items = Array.isArray(dto.items) ? dto.items : [];
+  return {
+    generated_at: typeof dto.generated_at === "string" ? dto.generated_at : new Date().toISOString(),
+    count: typeof dto.count === "number" ? dto.count : items.length,
+    items,
+  };
+}
+
 /**
  * Core fetch-and-parse logic — exported for unit testing.
  * Pure async function, no Remix dependency, no JSON wrapping.
@@ -72,35 +97,14 @@ export interface LoaderData {
 export async function fetchAnalysisBriefs(
   origin: string,
 ): Promise<Omit<LoaderData, "generated_at">> {
-  let count = 0;
-  let items: AnalysisBriefItem[] = [];
-  let error: string | null = null;
+  const url = `${origin}/api/analysis-briefs`;
 
-  try {
-    const response = await fetch(`${origin}/api/analysis-briefs`, {
-      headers: { Accept: "application/json" },
-    });
+  const { data, error } = await safeFetch<AnalysisBriefsDto>(url, parseAnalysisBriefsDto, {
+    label: "dashboard.bctc",
+  });
 
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "items" in raw) {
-        const dto = raw as AnalysisBriefsDto;
-        items = Array.isArray(dto.items) ? dto.items : [];
-        count = typeof dto.count === "number" ? dto.count : items.length;
-      } else {
-        error = "Unexpected response shape from /api/analysis-briefs";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ báo cáo";
-  }
-
-  return { count, items, error };
+  const dto = data ?? parseAnalysisBriefsDto(null);
+  return { count: dto.count, items: dto.items, error };
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {

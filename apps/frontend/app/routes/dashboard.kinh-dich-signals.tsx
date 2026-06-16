@@ -53,6 +53,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
 import { QueName } from "~/components/QueName";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Tín hiệu Kinh Dịch — VN Market Intelligence" },
@@ -250,86 +251,76 @@ const EMPTY_SUMMARY: KinhDichSummary = {
   topSell: [],
 };
 
+function parseKinhDichSignalsDto(raw: unknown): KinhDichSignalsDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      tradingDate: "",
+      source: "cycle",
+      snapshot: [],
+      flips: [],
+      summary: { ...EMPTY_SUMMARY },
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("snapshot" in raw)) {
+    throw new Error("Unexpected response shape from /api/kinh-dich-signals");
+  }
+  const dto = raw as KinhDichSignalsDto;
+  const snapshot = Array.isArray(dto.snapshot) ? dto.snapshot : [];
+  const summary =
+    dto.summary !== null &&
+    typeof dto.summary === "object" &&
+    "symbols" in dto.summary
+      ? {
+          symbols: typeof dto.summary.symbols === "number" ? dto.summary.symbols : 0,
+          mua: typeof dto.summary.mua === "number" ? dto.summary.mua : 0,
+          ban: typeof dto.summary.ban === "number" ? dto.summary.ban : 0,
+          giu: typeof dto.summary.giu === "number" ? dto.summary.giu : 0,
+          thanTrong: typeof dto.summary.thanTrong === "number" ? dto.summary.thanTrong : 0,
+          cho: typeof dto.summary.cho === "number" ? dto.summary.cho : 0,
+          unknown: typeof dto.summary.unknown === "number" ? dto.summary.unknown : 0,
+          positive: typeof dto.summary.positive === "number" ? dto.summary.positive : 0,
+          negative: typeof dto.summary.negative === "number" ? dto.summary.negative : 0,
+          neutral: typeof dto.summary.neutral === "number" ? dto.summary.neutral : 0,
+          avgConfidence:
+            typeof dto.summary.avgConfidence === "number" ? dto.summary.avgConfidence : null,
+          topBuy: Array.isArray(dto.summary.topBuy) ? dto.summary.topBuy : [],
+          topSell: Array.isArray(dto.summary.topSell) ? dto.summary.topSell : [],
+        }
+      : { ...EMPTY_SUMMARY };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    tradingDate: typeof dto.tradingDate === "string" ? dto.tradingDate : "",
+    source: typeof dto.source === "string" ? dto.source : "cycle",
+    snapshot,
+    flips: Array.isArray(dto.flips) ? dto.flips : [],
+    summary,
+    count: typeof dto.count === "number" ? dto.count : snapshot.length,
+  };
+}
+
 export async function fetchKinhDichSignalsData(
   origin: string,
   source?: string
 ): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let tradingDate = "";
-  let src = source ?? "cycle";
-  let snapshot: KinhDichSnapshotItem[] = [];
-  let flips: KinhDichFlip[] = [];
-  let summary: KinhDichSummary = { ...EMPTY_SUMMARY };
-  let count = 0;
-  let error: string | null = null;
+  const src = source ?? "cycle";
+  const urlObj = new URL(`${origin}/api/kinh-dich-signals`);
+  urlObj.searchParams.set("source", src);
+  const url = urlObj.toString();
 
-  try {
-    const urlObj = new URL(`${origin}/api/kinh-dich-signals`);
-    urlObj.searchParams.set("source", src);
-    const url = urlObj.toString();
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "snapshot" in raw) {
-        const dto = raw as KinhDichSignalsDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        tradingDate =
-          typeof dto.tradingDate === "string" ? dto.tradingDate : "";
-        src =
-          typeof dto.source === "string" ? dto.source : src;
-        snapshot = Array.isArray(dto.snapshot) ? dto.snapshot : [];
-        flips = Array.isArray(dto.flips) ? dto.flips : [];
-        count = typeof dto.count === "number" ? dto.count : snapshot.length;
-
-        if (
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "symbols" in dto.summary
-        ) {
-          const s = dto.summary;
-          summary = {
-            symbols: typeof s.symbols === "number" ? s.symbols : 0,
-            mua: typeof s.mua === "number" ? s.mua : 0,
-            ban: typeof s.ban === "number" ? s.ban : 0,
-            giu: typeof s.giu === "number" ? s.giu : 0,
-            thanTrong: typeof s.thanTrong === "number" ? s.thanTrong : 0,
-            cho: typeof s.cho === "number" ? s.cho : 0,
-            unknown: typeof s.unknown === "number" ? s.unknown : 0,
-            positive: typeof s.positive === "number" ? s.positive : 0,
-            negative: typeof s.negative === "number" ? s.negative : 0,
-            neutral: typeof s.neutral === "number" ? s.neutral : 0,
-            avgConfidence:
-              typeof s.avgConfidence === "number" ? s.avgConfidence : null,
-            topBuy: Array.isArray(s.topBuy) ? s.topBuy : [],
-            topSell: Array.isArray(s.topSell) ? s.topSell : [],
-          };
-        }
-      } else {
-        error = "Unexpected response shape from /api/kinh-dich-signals";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu Kinh Dịch";
-  }
-
+  const { data, error } = await safeFetch<KinhDichSignalsDto>(url, parseKinhDichSignalsDto, {
+    label: "dashboard.kinh-dich-signals",
+  });
   return {
-    generatedAt,
-    tradingDate,
-    source: src,
-    snapshot,
-    flips,
-    summary,
-    count,
+    generatedAt: data.generatedAt,
+    tradingDate: data.tradingDate,
+    source: data.source,
+    snapshot: data.snapshot,
+    flips: data.flips,
+    summary: data.summary,
+    count: data.count,
     error,
   };
 }

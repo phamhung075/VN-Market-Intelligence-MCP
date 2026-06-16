@@ -27,6 +27,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useRevalidator } from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 
@@ -156,45 +157,46 @@ interface LoaderData {
   isStale: boolean;
 }
 
+function parseOrchStateDto(raw: unknown): OrchState {
+  if (raw === null) {
+    return {
+      head: { status: "unknown" },
+      task_board: { counts: { done: 0, in_progress: 0, backlog: 0 }, tasks: [] },
+    };
+  }
+  if (typeof raw !== "object") {
+    throw new Error("Unexpected response shape from /api/orchestration");
+  }
+  return raw as OrchState;
+}
+
 export async function loader({ request: _request }: LoaderFunctionArgs) {
   const fetchedAt = new Date().toISOString();
 
-  let state: OrchState | null = null;
-  let error: string | null = null;
+  // Call the server-side proxy rather than mcp-server directly.
+  // In SSR context the absolute URL is required; derive origin from process.env
+  // (same pattern as other loaders that call internal proxy routes).
+  const origin =
+    typeof process !== "undefined" && process.env["FRONTEND_ORIGIN"]
+      ? process.env["FRONTEND_ORIGIN"]
+      : "http://localhost:3001";
+
+  const { data, error } = await safeFetch<OrchState>(
+    `${origin}/api/orchestration`,
+    parseOrchStateDto,
+    { label: "dashboard.orchestration" },
+  );
+
+  const state = data ?? null;
   let isStale = false;
 
-  try {
-    // Call the server-side proxy rather than mcp-server directly.
-    // In SSR context the absolute URL is required; derive origin from process.env
-    // (same pattern as other loaders that call internal proxy routes).
-    const origin =
-      typeof process !== "undefined" && process.env["FRONTEND_ORIGIN"]
-        ? process.env["FRONTEND_ORIGIN"]
-        : "http://localhost:3001";
-
-    const response = await fetch(`${origin}/api/orchestration`, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object") {
-        state = raw as OrchState;
-
-        // Staleness check — DTO uses last_updated_iso or head.updated_at.
-        const tsField = state.head?.updated_at ?? state.last_updated_iso;
-        if (tsField) {
-          const age = Date.now() - new Date(tsField).getTime();
-          isStale = age > STALE_THRESHOLD_MS;
-        }
-      } else {
-        error = "Unexpected response shape from /api/orchestration";
-      }
+  if (state !== null) {
+    // Staleness check — DTO uses last_updated_iso or head.updated_at.
+    const tsField = state.head?.updated_at ?? state.last_updated_iso;
+    if (tsField) {
+      const age = Date.now() - new Date(tsField).getTime();
+      isStale = age > STALE_THRESHOLD_MS;
     }
-  } catch (err) {
-    error = err instanceof Error ? err.message : "Failed to reach orchestration endpoint";
   }
 
   return json<LoaderData>({ state, error, fetchedAt, isStale });

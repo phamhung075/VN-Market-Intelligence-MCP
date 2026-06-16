@@ -20,6 +20,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 
@@ -67,6 +68,30 @@ interface LoaderData {
   error: string | null;
 }
 
+function parseNewsSentimentDto(raw: unknown): NewsSentimentDto {
+  if (raw === null) {
+    return {
+      generated_at: new Date().toISOString(),
+      stale_served: false,
+      oldest_item_ts: "",
+      count: 0,
+      items: [],
+    };
+  }
+  if (typeof raw !== "object" || !("items" in raw)) {
+    throw new Error("Unexpected response shape from /api/news-sentiment");
+  }
+  const dto = raw as NewsSentimentDto;
+  const items = Array.isArray(dto.items) ? dto.items : [];
+  return {
+    generated_at: typeof dto.generated_at === "string" ? dto.generated_at : new Date().toISOString(),
+    stale_served: dto.stale_served === true,
+    oldest_item_ts: typeof dto.oldest_item_ts === "string" ? dto.oldest_item_ts : "",
+    count: typeof dto.count === "number" ? dto.count : items.length,
+    items,
+  };
+}
+
 export async function loader({ request: _request }: LoaderFunctionArgs) {
   const generated_at = new Date().toISOString();
 
@@ -75,37 +100,14 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
       ? process.env["FRONTEND_ORIGIN"]
       : "http://localhost:3001";
 
-  let items: NewsSentimentItem[] = [];
-  let count = 0;
-  let stale_served = false;
-  let error: string | null = null;
+  const { data, error } = await safeFetch<NewsSentimentDto>(
+    `${origin}/api/news-sentiment`,
+    parseNewsSentimentDto,
+    { label: "dashboard.news" },
+  );
 
-  try {
-    const response = await fetch(`${origin}/api/news-sentiment`, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "items" in raw) {
-        const dto = raw as NewsSentimentDto;
-        items = Array.isArray(dto.items) ? dto.items : [];
-        count = typeof dto.count === "number" ? dto.count : items.length;
-        stale_served = dto.stale_served === true;
-      } else {
-        error = "Unexpected response shape from /api/news-sentiment";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ tin tức";
-  }
-
-  return json<LoaderData>({ items, count, generated_at, stale_served, error });
+  const dto = data ?? parseNewsSentimentDto(null);
+  return json<LoaderData>({ items: dto.items, count: dto.count, generated_at, stale_served: dto.stale_served, error });
 }
 
 // ---------------------------------------------------------------------------

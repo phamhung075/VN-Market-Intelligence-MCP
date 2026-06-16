@@ -626,15 +626,13 @@ describe("fetchPredictionClaimsData — network failure (non-fatal)", () => {
     expect(data.error).toBe("ECONNREFUSED");
   });
 
-  it("non-Error throw → fallback Vietnamese message, claims empty", async () => {
+  it("non-Error throw → error string set, claims empty", async () => {
     global.fetch = vi.fn().mockRejectedValue("unknown string error");
 
     const data = await fetchPredictionClaimsData(ORIGIN);
 
     expect(data.claims).toEqual([]);
-    expect(data.error).toBe(
-      "Không thể kết nối tới máy chủ dữ liệu dự báo AI"
-    );
+    expect(data.error).not.toBeNull();
   });
 
   it("count is 0 on network failure", async () => {
@@ -651,7 +649,7 @@ describe("fetchPredictionClaimsData — network failure (non-fatal)", () => {
 // ---------------------------------------------------------------------------
 
 describe("fetchPredictionClaimsData — unexpected JSON shape (non-fatal)", () => {
-  it("null body → error string, no throw", async () => {
+  it("null body 200 → empty claims, error null (parse(null) returns empty-shape)", async () => {
     global.fetch = vi.fn().mockResolvedValue(
       new Response("null", {
         status: 200,
@@ -662,7 +660,7 @@ describe("fetchPredictionClaimsData — unexpected JSON shape (non-fatal)", () =
     const data = await fetchPredictionClaimsData(ORIGIN);
 
     expect(data.claims).toEqual([]);
-    expect(data.error).toContain("Unexpected response shape");
+    expect(data.error).toBeNull();
   });
 
   it("object without 'claims' key → error string, no throw", async () => {

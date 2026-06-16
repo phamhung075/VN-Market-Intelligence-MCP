@@ -31,6 +31,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Tin tức nhắc đến (Cảnh báo sớm) — VN Market Intelligence" },
@@ -132,79 +133,54 @@ export function getNegativityLabel(tier: NegativityTier): string {
  * fetchNewsBuzzData — exported named helper for unit tests.
  * (Remix strips loader in jsdom; named helper bypasses that.)
  */
-export async function fetchNewsBuzzData(origin: string): Promise<LoaderData> {
-  const emptySummary: NewsBuzzSummary = {
-    distinctCodes: 0,
-    totalMentions: 0,
-    totalNegative: 0,
-    totalSources: 0,
-  };
-  let generatedAt = new Date().toISOString();
-  let windowStart: string | null = null;
-  let windowEnd: string | null = null;
-  let summary: NewsBuzzSummary = { ...emptySummary };
-  let leaderboard: NewsBuzzEntry[] = [];
-  let error: string | null = null;
+const EMPTY_NEWS_BUZZ_SUMMARY: NewsBuzzSummary = {
+  distinctCodes: 0,
+  totalMentions: 0,
+  totalNegative: 0,
+  totalSources: 0,
+};
 
-  try {
-    const url = `${origin}/api/news-buzz`;
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (
-        raw !== null &&
-        typeof raw === "object" &&
-        "summary" in raw &&
-        "leaderboard" in raw
-      ) {
-        const dto = raw as NewsBuzzDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        windowStart =
-          typeof dto.windowStart === "string" ? dto.windowStart : null;
-        windowEnd = typeof dto.windowEnd === "string" ? dto.windowEnd : null;
-        summary = {
-          distinctCodes:
-            typeof dto.summary?.distinctCodes === "number"
-              ? dto.summary.distinctCodes
-              : 0,
-          totalMentions:
-            typeof dto.summary?.totalMentions === "number"
-              ? dto.summary.totalMentions
-              : 0,
-          totalNegative:
-            typeof dto.summary?.totalNegative === "number"
-              ? dto.summary.totalNegative
-              : 0,
-          totalSources:
-            typeof dto.summary?.totalSources === "number"
-              ? dto.summary.totalSources
-              : 0,
-        };
-        leaderboard = Array.isArray(dto.leaderboard) ? dto.leaderboard : [];
-      } else {
-        error = "Unexpected response shape from /api/news-buzz";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu tin tức";
+function parseNewsBuzzDto(raw: unknown): NewsBuzzDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      windowStart: null,
+      windowEnd: null,
+      summary: { ...EMPTY_NEWS_BUZZ_SUMMARY },
+      leaderboard: [],
+    };
   }
-
+  if (typeof raw !== "object" || !("summary" in raw) || !("leaderboard" in raw)) {
+    throw new Error("Unexpected response shape from /api/news-buzz");
+  }
+  const dto = raw as NewsBuzzDto;
   return {
-    generatedAt,
-    windowStart,
-    windowEnd,
-    summary,
-    leaderboard,
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    windowStart: typeof dto.windowStart === "string" ? dto.windowStart : null,
+    windowEnd: typeof dto.windowEnd === "string" ? dto.windowEnd : null,
+    summary: {
+      distinctCodes: typeof dto.summary?.distinctCodes === "number" ? dto.summary.distinctCodes : 0,
+      totalMentions: typeof dto.summary?.totalMentions === "number" ? dto.summary.totalMentions : 0,
+      totalNegative: typeof dto.summary?.totalNegative === "number" ? dto.summary.totalNegative : 0,
+      totalSources: typeof dto.summary?.totalSources === "number" ? dto.summary.totalSources : 0,
+    },
+    leaderboard: Array.isArray(dto.leaderboard) ? dto.leaderboard : [],
+  };
+}
+
+export async function fetchNewsBuzzData(origin: string): Promise<LoaderData> {
+  const { data, error } = await safeFetch<NewsBuzzDto>(
+    `${origin}/api/news-buzz`,
+    parseNewsBuzzDto,
+    { label: "dashboard.news-buzz" },
+  );
+  return {
+    generatedAt: data.generatedAt,
+    windowStart: data.windowStart,
+    windowEnd: data.windowEnd,
+    summary: data.summary,
+    leaderboard: data.leaderboard,
     error,
   };
 }

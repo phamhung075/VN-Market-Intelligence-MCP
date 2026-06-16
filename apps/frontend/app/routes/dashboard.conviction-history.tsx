@@ -36,6 +36,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Niềm tin AI theo cổ phiếu — VN Market Intelligence" },
@@ -202,98 +203,86 @@ const EMPTY_SUMMARY: ConvictionSummary = {
   topBearish: [],
 };
 
+function parseConvictionHistoryDto(raw: unknown): ConvictionHistoryDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      tradingDate: "",
+      stale: false,
+      staleByDays: 0,
+      snapshot: [],
+      series: {},
+      summary: { ...EMPTY_SUMMARY },
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("snapshot" in raw)) {
+    throw new Error("Unexpected response shape from /api/conviction-history");
+  }
+  const dto = raw as ConvictionHistoryDto;
+  const snapshot = Array.isArray(dto.snapshot) ? dto.snapshot : [];
+  const summary =
+    dto.summary !== null &&
+    typeof dto.summary === "object" &&
+    "symbols" in dto.summary
+      ? {
+          symbols: typeof dto.summary.symbols === "number" ? dto.summary.symbols : 0,
+          bullish: typeof dto.summary.bullish === "number" ? dto.summary.bullish : 0,
+          bearish: typeof dto.summary.bearish === "number" ? dto.summary.bearish : 0,
+          neutral: typeof dto.summary.neutral === "number" ? dto.summary.neutral : 0,
+          unknown: typeof dto.summary.unknown === "number" ? dto.summary.unknown : 0,
+          avgPeakScore:
+            dto.summary.avgPeakScore !== null &&
+            dto.summary.avgPeakScore !== undefined &&
+            typeof dto.summary.avgPeakScore === "number"
+              ? dto.summary.avgPeakScore
+              : null,
+          topBullish: Array.isArray(dto.summary.topBullish) ? dto.summary.topBullish : [],
+          topBearish: Array.isArray(dto.summary.topBearish) ? dto.summary.topBearish : [],
+        }
+      : { ...EMPTY_SUMMARY };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    tradingDate: typeof dto.tradingDate === "string" ? dto.tradingDate : "",
+    stale: typeof dto.stale === "boolean" ? dto.stale : false,
+    staleByDays: typeof dto.staleByDays === "number" ? dto.staleByDays : 0,
+    snapshot,
+    series:
+      dto.series !== null && typeof dto.series === "object" && !Array.isArray(dto.series)
+        ? (dto.series as Record<string, ConvictionRow[]>)
+        : {},
+    summary,
+    count: typeof dto.count === "number" ? dto.count : snapshot.length,
+  };
+}
+
 export async function fetchConvictionData(
   origin: string,
   params?: { limit?: number; symbol?: string }
 ): Promise<ConvictionLoaderData> {
-  let generatedAt = new Date().toISOString();
-  let tradingDate = "";
-  let stale = false;
-  let staleByDays = 0;
-  let snapshot: ConvictionRow[] = [];
-  let series: Record<string, ConvictionRow[]> = {};
-  let summary: ConvictionSummary = { ...EMPTY_SUMMARY };
-  let count = 0;
-  let error: string | null = null;
-
-  try {
-    const qs = new URLSearchParams();
-    if (params?.limit !== undefined) {
-      qs.set("limit", String(params.limit));
-    }
-    if (params?.symbol !== undefined) {
-      qs.set("symbol", params.symbol);
-    }
-    const qsStr = qs.toString();
-    const url = `${origin}/api/conviction-history${qsStr ? `?${qsStr}` : ""}`;
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "snapshot" in raw) {
-        const dto = raw as ConvictionHistoryDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        tradingDate =
-          typeof dto.tradingDate === "string" ? dto.tradingDate : "";
-        stale = typeof dto.stale === "boolean" ? dto.stale : false;
-        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
-        snapshot = Array.isArray(dto.snapshot) ? dto.snapshot : [];
-        series =
-          dto.series !== null &&
-          typeof dto.series === "object" &&
-          !Array.isArray(dto.series)
-            ? (dto.series as Record<string, ConvictionRow[]>)
-            : {};
-        count = typeof dto.count === "number" ? dto.count : snapshot.length;
-        if (
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "symbols" in dto.summary
-        ) {
-          const s = dto.summary;
-          summary = {
-            symbols: typeof s.symbols === "number" ? s.symbols : 0,
-            bullish: typeof s.bullish === "number" ? s.bullish : 0,
-            bearish: typeof s.bearish === "number" ? s.bearish : 0,
-            neutral: typeof s.neutral === "number" ? s.neutral : 0,
-            unknown: typeof s.unknown === "number" ? s.unknown : 0,
-            // Preserve null — NEVER coerce to 0
-            avgPeakScore:
-              s.avgPeakScore !== null &&
-              s.avgPeakScore !== undefined &&
-              typeof s.avgPeakScore === "number"
-                ? s.avgPeakScore
-                : null,
-            topBullish: Array.isArray(s.topBullish) ? s.topBullish : [],
-            topBearish: Array.isArray(s.topBearish) ? s.topBearish : [],
-          };
-        }
-      } else {
-        error = "Unexpected response shape from /api/conviction-history";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu niềm tin AI";
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) {
+    qs.set("limit", String(params.limit));
   }
+  if (params?.symbol !== undefined) {
+    qs.set("symbol", params.symbol);
+  }
+  const qsStr = qs.toString();
+  const url = `${origin}/api/conviction-history${qsStr ? `?${qsStr}` : ""}`;
 
+  const { data, error } = await safeFetch<ConvictionHistoryDto>(url, parseConvictionHistoryDto, {
+    label: "dashboard.conviction-history",
+  });
   return {
-    generatedAt,
-    tradingDate,
-    stale,
-    staleByDays,
-    snapshot,
-    series,
-    summary,
-    count,
+    generatedAt: data.generatedAt,
+    tradingDate: data.tradingDate,
+    stale: data.stale ?? false,
+    staleByDays: data.staleByDays ?? 0,
+    snapshot: data.snapshot,
+    series: data.series,
+    summary: data.summary,
+    count: data.count,
     error,
   };
 }

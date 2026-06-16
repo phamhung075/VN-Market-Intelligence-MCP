@@ -40,6 +40,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Cơ cấu cổ đông — VN Market Intelligence" },
@@ -154,78 +155,70 @@ export function formatPct(p: number | null): string {
 // (Remix strips loader in jsdom; named helper bypasses that)
 // ---------------------------------------------------------------------------
 
+function parseShareholdersDto(raw: unknown): ShareholdersDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      asOf: "",
+      stale: false,
+      staleByDays: 0,
+      codes: [],
+      selectedCode: "",
+      holders: [],
+      selectedSummary: null,
+      ranking: [],
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("holders" in raw)) {
+    throw new Error("Unexpected response shape from /api/shareholders");
+  }
+  const dto = raw as ShareholdersDto;
+  const holders = Array.isArray(dto.holders) ? dto.holders : [];
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    asOf: typeof dto.asOf === "string" ? dto.asOf : "",
+    stale: typeof dto.stale === "boolean" ? dto.stale : false,
+    staleByDays: typeof dto.staleByDays === "number" ? dto.staleByDays : 0,
+    codes: Array.isArray(dto.codes) ? dto.codes : [],
+    selectedCode: typeof dto.selectedCode === "string" ? dto.selectedCode : "",
+    holders,
+    selectedSummary:
+      dto.selectedSummary !== null &&
+      typeof dto.selectedSummary === "object" &&
+      "code" in dto.selectedSummary
+        ? dto.selectedSummary
+        : null,
+    ranking: Array.isArray(dto.ranking) ? dto.ranking : [],
+    count: typeof dto.count === "number" ? dto.count : holders.length,
+  };
+}
+
 export async function fetchShareholdersData(
   origin: string,
   code?: string,
 ): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let asOf = "";
-  let stale = false;
-  let staleByDays = 0;
-  let codes: string[] = [];
-  let selectedCode = "";
-  let holders: HolderRow[] = [];
-  let selectedSummary: SelectedSummary | null = null;
-  let ranking: RankingRow[] = [];
-  let count = 0;
-  let error: string | null = null;
-
-  try {
-    const urlObj = new URL(`${origin}/api/shareholders`);
-    if (code !== undefined && code !== "") {
-      urlObj.searchParams.set("code", code);
-    }
-    const url = urlObj.toString();
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "holders" in raw) {
-        const dto = raw as ShareholdersDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        asOf = typeof dto.asOf === "string" ? dto.asOf : "";
-        stale = typeof dto.stale === "boolean" ? dto.stale : false;
-        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
-        codes = Array.isArray(dto.codes) ? dto.codes : [];
-        selectedCode =
-          typeof dto.selectedCode === "string" ? dto.selectedCode : "";
-        holders = Array.isArray(dto.holders) ? dto.holders : [];
-        selectedSummary =
-          dto.selectedSummary !== null &&
-          typeof dto.selectedSummary === "object" &&
-          "code" in dto.selectedSummary
-            ? dto.selectedSummary
-            : null;
-        ranking = Array.isArray(dto.ranking) ? dto.ranking : [];
-        count = typeof dto.count === "number" ? dto.count : holders.length;
-      } else {
-        error = "Unexpected response shape from /api/shareholders";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu cổ đông";
+  const urlObj = new URL(`${origin}/api/shareholders`);
+  if (code !== undefined && code !== "") {
+    urlObj.searchParams.set("code", code);
   }
+  const url = urlObj.toString();
 
+  const { data, error } = await safeFetch<ShareholdersDto>(url, parseShareholdersDto, {
+    label: "dashboard.shareholders",
+  });
   return {
-    generatedAt,
-    asOf,
-    stale,
-    staleByDays,
-    codes,
-    selectedCode,
-    holders,
-    selectedSummary,
-    ranking,
-    count,
+    generatedAt: data.generatedAt,
+    asOf: data.asOf,
+    stale: data.stale ?? false,
+    staleByDays: data.staleByDays ?? 0,
+    codes: data.codes,
+    selectedCode: data.selectedCode,
+    holders: data.holders,
+    selectedSummary: data.selectedSummary,
+    ranking: data.ranking,
+    count: data.count,
     error,
   };
 }

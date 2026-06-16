@@ -42,6 +42,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Dòng tiền theo ngành — VN Market Intelligence" },
@@ -110,81 +111,63 @@ const EMPTY_SUMMARY: SectorSummary = {
   topOutflow: [],
 };
 
+function parseSectorRotationDto(raw: unknown): SectorRotationDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      tradingDate: "",
+      priceSource: "stored",
+      only1dAvailable: false,
+      sectors: [],
+      summary: { ...EMPTY_SUMMARY },
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("sectors" in raw)) {
+    throw new Error("Unexpected response shape from /api/sector-rotation");
+  }
+  const dto = raw as SectorRotationDto;
+  const sectors = Array.isArray(dto.sectors) ? dto.sectors : [];
+  const summary =
+    dto.summary !== null &&
+    typeof dto.summary === "object" &&
+    "inflow" in dto.summary
+      ? {
+          inflow: typeof dto.summary.inflow === "number" ? dto.summary.inflow : 0,
+          outflow: typeof dto.summary.outflow === "number" ? dto.summary.outflow : 0,
+          neutral: typeof dto.summary.neutral === "number" ? dto.summary.neutral : 0,
+          topInflow: Array.isArray(dto.summary.topInflow) ? dto.summary.topInflow : [],
+          topOutflow: Array.isArray(dto.summary.topOutflow) ? dto.summary.topOutflow : [],
+        }
+      : { ...EMPTY_SUMMARY };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    tradingDate: typeof dto.tradingDate === "string" ? dto.tradingDate : "",
+    priceSource: typeof dto.priceSource === "string" ? dto.priceSource : "stored",
+    only1dAvailable: typeof dto.only1dAvailable === "boolean" ? dto.only1dAvailable : false,
+    sectors,
+    summary,
+    count: typeof dto.count === "number" ? dto.count : sectors.length,
+  };
+}
+
 export async function fetchSectorRotationData(
   origin: string
 ): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let tradingDate = "";
-  let priceSource = "stored";
-  let only1dAvailable = false;
-  let sectors: SectorEntry[] = [];
-  let summary: SectorSummary = { ...EMPTY_SUMMARY };
-  let count = 0;
-  let error: string | null = null;
-
-  try {
-    const url = `${origin}/api/sector-rotation`;
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "sectors" in raw) {
-        const dto = raw as SectorRotationDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        tradingDate =
-          typeof dto.tradingDate === "string" ? dto.tradingDate : "";
-        priceSource =
-          typeof dto.priceSource === "string" ? dto.priceSource : "stored";
-        only1dAvailable =
-          typeof dto.only1dAvailable === "boolean" ? dto.only1dAvailable : false;
-        sectors = Array.isArray(dto.sectors) ? dto.sectors : [];
-        count = typeof dto.count === "number" ? dto.count : sectors.length;
-
-        if (
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "inflow" in dto.summary
-        ) {
-          summary = {
-            inflow:
-              typeof dto.summary.inflow === "number" ? dto.summary.inflow : 0,
-            outflow:
-              typeof dto.summary.outflow === "number" ? dto.summary.outflow : 0,
-            neutral:
-              typeof dto.summary.neutral === "number" ? dto.summary.neutral : 0,
-            topInflow: Array.isArray(dto.summary.topInflow)
-              ? dto.summary.topInflow
-              : [],
-            topOutflow: Array.isArray(dto.summary.topOutflow)
-              ? dto.summary.topOutflow
-              : [],
-          };
-        }
-      } else {
-        error = "Unexpected response shape from /api/sector-rotation";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu ngành";
-  }
-
+  const { data, error } = await safeFetch<SectorRotationDto>(
+    `${origin}/api/sector-rotation`,
+    parseSectorRotationDto,
+    { label: "dashboard.sector-rotation" },
+  );
   return {
-    generatedAt,
-    tradingDate,
-    priceSource,
-    only1dAvailable,
-    sectors,
-    summary,
-    count,
+    generatedAt: data.generatedAt,
+    tradingDate: data.tradingDate,
+    priceSource: data.priceSource,
+    only1dAvailable: data.only1dAvailable,
+    sectors: data.sectors,
+    summary: data.summary,
+    count: data.count,
     error,
   };
 }

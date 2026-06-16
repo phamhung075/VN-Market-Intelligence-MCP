@@ -28,6 +28,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction = () => [
@@ -131,74 +132,69 @@ export function formatDate(iso: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// parseFedRatesDto — named parse function for safeFetch
+// ---------------------------------------------------------------------------
+
+function parseFedRatesDto(raw: unknown): FedRatesDto {
+  if (raw === null) {
+    return {
+      generatedAt: new Date().toISOString(),
+      asOf: null,
+      effr: null,
+      iorb: null,
+      spread: null,
+      trend30d: null,
+      sampleCount: 0,
+      series: [],
+    };
+  }
+  if (
+    typeof raw !== "object" ||
+    !("sampleCount" in raw) ||
+    !("series" in raw)
+  ) {
+    throw new Error("Unexpected response shape from /api/fed-rates");
+  }
+  const dto = raw as FedRatesDto;
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : new Date().toISOString(),
+    asOf: typeof dto.asOf === "string" ? dto.asOf : null,
+    effr: typeof dto.effr === "number" ? dto.effr : null,
+    iorb: typeof dto.iorb === "number" ? dto.iorb : null,
+    spread: typeof dto.spread === "number" ? dto.spread : null,
+    trend30d:
+      dto.trend30d === "widening" ||
+      dto.trend30d === "narrowing" ||
+      dto.trend30d === "stable"
+        ? dto.trend30d
+        : null,
+    sampleCount: typeof dto.sampleCount === "number" ? dto.sampleCount : 0,
+    series: Array.isArray(dto.series) ? dto.series : [],
+  };
+}
+
+// ---------------------------------------------------------------------------
 // fetchFedRatesData — exported named helper for unit tests
 // (Remix strips loader in jsdom; named helper bypasses that)
 // ---------------------------------------------------------------------------
 
 export async function fetchFedRatesData(origin: string): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let asOf: string | null = null;
-  let effr: number | null = null;
-  let iorb: number | null = null;
-  let spread: number | null = null;
-  let trend30d: Trend30d = null;
-  let sampleCount = 0;
-  let series: FedRatesRow[] = [];
-  let error: string | null = null;
+  const url = `${origin}/api/fed-rates`;
 
-  try {
-    const url = `${origin}/api/fed-rates`;
+  const { data, error } = await safeFetch<FedRatesDto>(url, parseFedRatesDto, {
+    label: "dashboard.fed-rates",
+  });
 
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (
-        raw !== null &&
-        typeof raw === "object" &&
-        "sampleCount" in raw &&
-        "series" in raw
-      ) {
-        const dto = raw as FedRatesDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        asOf = typeof dto.asOf === "string" ? dto.asOf : null;
-        effr = typeof dto.effr === "number" ? dto.effr : null;
-        iorb = typeof dto.iorb === "number" ? dto.iorb : null;
-        spread = typeof dto.spread === "number" ? dto.spread : null;
-        trend30d =
-          dto.trend30d === "widening" ||
-          dto.trend30d === "narrowing" ||
-          dto.trend30d === "stable"
-            ? dto.trend30d
-            : null;
-        sampleCount =
-          typeof dto.sampleCount === "number" ? dto.sampleCount : 0;
-        series = Array.isArray(dto.series) ? dto.series : [];
-      } else {
-        error = "Unexpected response shape from /api/fed-rates";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu lãi suất Fed";
-  }
-
+  const dto = data ?? parseFedRatesDto(null);
   return {
-    generatedAt,
-    asOf,
-    effr,
-    iorb,
-    spread,
-    trend30d,
-    sampleCount,
-    series,
+    generatedAt: dto.generatedAt,
+    asOf: dto.asOf,
+    effr: dto.effr,
+    iorb: dto.iorb,
+    spread: dto.spread,
+    trend30d: dto.trend30d,
+    sampleCount: dto.sampleCount,
+    series: dto.series,
     error,
   };
 }

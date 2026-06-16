@@ -39,6 +39,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { NavLink, useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Dự báo AI & Kết quả — VN Market Intelligence" },
@@ -114,97 +115,70 @@ const EMPTY_CALIBRATION: PredictionCalibration = {
   avgBrier: null,
 };
 
+function parsePredictionClaimsDto(raw: unknown): PredictionClaimsDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return { generatedAt: now, calibration: { ...EMPTY_CALIBRATION }, claims: [], count: 0 };
+  }
+  if (typeof raw !== "object" || !("claims" in raw)) {
+    throw new Error("Unexpected response shape from /api/prediction-claims");
+  }
+  const dto = raw as PredictionClaimsDto;
+  const claims = Array.isArray(dto.claims) ? dto.claims : [];
+  const calibration =
+    dto.calibration !== null &&
+    typeof dto.calibration === "object" &&
+    "total" in dto.calibration
+      ? {
+          total: typeof dto.calibration.total === "number" ? dto.calibration.total : 0,
+          resolved: typeof dto.calibration.resolved === "number" ? dto.calibration.resolved : 0,
+          correct: typeof dto.calibration.correct === "number" ? dto.calibration.correct : 0,
+          wrong: typeof dto.calibration.wrong === "number" ? dto.calibration.wrong : 0,
+          pending: typeof dto.calibration.pending === "number" ? dto.calibration.pending : 0,
+          hitRate:
+            dto.calibration.hitRate !== null &&
+            dto.calibration.hitRate !== undefined &&
+            typeof dto.calibration.hitRate === "number"
+              ? dto.calibration.hitRate
+              : null,
+          avgBrier:
+            dto.calibration.avgBrier !== null &&
+            dto.calibration.avgBrier !== undefined &&
+            typeof dto.calibration.avgBrier === "number"
+              ? dto.calibration.avgBrier
+              : null,
+        }
+      : { ...EMPTY_CALIBRATION };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    calibration,
+    claims,
+    count: typeof dto.count === "number" ? dto.count : claims.length,
+  };
+}
+
 export async function fetchPredictionClaimsData(
   origin: string,
   params?: { limit?: number; outcome?: string }
 ): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let calibration: PredictionCalibration = { ...EMPTY_CALIBRATION };
-  let claims: PredictionClaim[] = [];
-  let count = 0;
-  let error: string | null = null;
-
-  try {
-    const qs = new URLSearchParams();
-    if (params?.limit !== undefined) {
-      qs.set("limit", String(params.limit));
-    }
-    if (params?.outcome !== undefined) {
-      qs.set("outcome", params.outcome);
-    }
-    const qsStr = qs.toString();
-    const url = `${origin}/api/prediction-claims${qsStr ? `?${qsStr}` : ""}`;
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "claims" in raw) {
-        const dto = raw as PredictionClaimsDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        claims = Array.isArray(dto.claims) ? dto.claims : [];
-        count = typeof dto.count === "number" ? dto.count : claims.length;
-        calibration =
-          dto.calibration !== null &&
-          typeof dto.calibration === "object" &&
-          "total" in dto.calibration
-            ? {
-                total:
-                  typeof dto.calibration.total === "number"
-                    ? dto.calibration.total
-                    : 0,
-                resolved:
-                  typeof dto.calibration.resolved === "number"
-                    ? dto.calibration.resolved
-                    : 0,
-                correct:
-                  typeof dto.calibration.correct === "number"
-                    ? dto.calibration.correct
-                    : 0,
-                wrong:
-                  typeof dto.calibration.wrong === "number"
-                    ? dto.calibration.wrong
-                    : 0,
-                pending:
-                  typeof dto.calibration.pending === "number"
-                    ? dto.calibration.pending
-                    : 0,
-                // Preserve null — NEVER coerce to 0 (divide-by-zero display guard)
-                hitRate:
-                  dto.calibration.hitRate !== null &&
-                  dto.calibration.hitRate !== undefined &&
-                  typeof dto.calibration.hitRate === "number"
-                    ? dto.calibration.hitRate
-                    : null,
-                avgBrier:
-                  dto.calibration.avgBrier !== null &&
-                  dto.calibration.avgBrier !== undefined &&
-                  typeof dto.calibration.avgBrier === "number"
-                    ? dto.calibration.avgBrier
-                    : null,
-              }
-            : { ...EMPTY_CALIBRATION };
-      } else {
-        error = "Unexpected response shape from /api/prediction-claims";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu dự báo AI";
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) {
+    qs.set("limit", String(params.limit));
   }
+  if (params?.outcome !== undefined) {
+    qs.set("outcome", params.outcome);
+  }
+  const qsStr = qs.toString();
+  const url = `${origin}/api/prediction-claims${qsStr ? `?${qsStr}` : ""}`;
 
+  const { data, error } = await safeFetch<PredictionClaimsDto>(url, parsePredictionClaimsDto, {
+    label: "dashboard.prediction-claims",
+  });
   return {
-    generatedAt,
-    calibration,
-    claims,
-    count,
+    generatedAt: data.generatedAt,
+    calibration: data.calibration,
+    claims: data.claims,
+    count: data.count,
     outcomeFilter: params?.outcome ?? null,
     error,
   };

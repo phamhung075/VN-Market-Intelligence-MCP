@@ -39,6 +39,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction = () => [
@@ -125,6 +126,44 @@ export function formatPct(p: number | null): string {
 }
 
 // ---------------------------------------------------------------------------
+// parseOfficersDto — named parse function for safeFetch
+// ---------------------------------------------------------------------------
+
+function parseOfficersDto(raw: unknown): OfficersDto {
+  if (raw === null) {
+    return {
+      generatedAt: new Date().toISOString(),
+      asOf: "",
+      codes: [],
+      selectedCode: "",
+      officers: [],
+      selectedSummary: null,
+      ranking: [],
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("officers" in raw)) {
+    throw new Error("Unexpected response shape from /api/officers");
+  }
+  const dto = raw as OfficersDto;
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : new Date().toISOString(),
+    asOf: typeof dto.asOf === "string" ? dto.asOf : "",
+    codes: Array.isArray(dto.codes) ? dto.codes : [],
+    selectedCode: typeof dto.selectedCode === "string" ? dto.selectedCode : "",
+    officers: Array.isArray(dto.officers) ? dto.officers : [],
+    selectedSummary:
+      dto.selectedSummary !== null &&
+      typeof dto.selectedSummary === "object" &&
+      "code" in dto.selectedSummary
+        ? dto.selectedSummary
+        : null,
+    ranking: Array.isArray(dto.ranking) ? dto.ranking : [],
+    count: typeof dto.count === "number" ? dto.count : 0,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // fetchOfficersData — exported named helper for unit tests
 // (Remix strips loader in jsdom; named helper bypasses that)
 // ---------------------------------------------------------------------------
@@ -133,68 +172,26 @@ export async function fetchOfficersData(
   origin: string,
   code?: string,
 ): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let asOf = "";
-  let codes: string[] = [];
-  let selectedCode = "";
-  let officers: OfficerRow[] = [];
-  let selectedSummary: SelectedSummary | null = null;
-  let ranking: RankingRow[] = [];
-  let count = 0;
-  let error: string | null = null;
-
-  try {
-    const urlObj = new URL(`${origin}/api/officers`);
-    if (code !== undefined && code !== "") {
-      urlObj.searchParams.set("code", code);
-    }
-    const url = urlObj.toString();
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "officers" in raw) {
-        const dto = raw as OfficersDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        asOf = typeof dto.asOf === "string" ? dto.asOf : "";
-        codes = Array.isArray(dto.codes) ? dto.codes : [];
-        selectedCode =
-          typeof dto.selectedCode === "string" ? dto.selectedCode : "";
-        officers = Array.isArray(dto.officers) ? dto.officers : [];
-        selectedSummary =
-          dto.selectedSummary !== null &&
-          typeof dto.selectedSummary === "object" &&
-          "code" in dto.selectedSummary
-            ? dto.selectedSummary
-            : null;
-        ranking = Array.isArray(dto.ranking) ? dto.ranking : [];
-        count = typeof dto.count === "number" ? dto.count : officers.length;
-      } else {
-        error = "Unexpected response shape from /api/officers";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu ban lãnh đạo";
+  const urlObj = new URL(`${origin}/api/officers`);
+  if (code !== undefined && code !== "") {
+    urlObj.searchParams.set("code", code);
   }
+  const url = urlObj.toString();
 
+  const { data, error } = await safeFetch<OfficersDto>(url, parseOfficersDto, {
+    label: "dashboard.officers",
+  });
+
+  const dto = data ?? parseOfficersDto(null);
   return {
-    generatedAt,
-    asOf,
-    codes,
-    selectedCode,
-    officers,
-    selectedSummary,
-    ranking,
-    count,
+    generatedAt: dto.generatedAt,
+    asOf: dto.asOf,
+    codes: dto.codes,
+    selectedCode: dto.selectedCode,
+    officers: dto.officers,
+    selectedSummary: dto.selectedSummary,
+    ranking: dto.ranking,
+    count: dto.count,
     error,
   };
 }

@@ -53,6 +53,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Tín hiệu dây chuyền theo ngành — VN Market Intelligence" },
@@ -238,95 +239,71 @@ const EMPTY_SUMMARY: CascadeSummary = {
   topBearish: [],
 };
 
+function parseSectorCascadeDto(raw: unknown): SectorCascadeDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      windowDays: 7,
+      windowStart: "",
+      source: "cascade_rules",
+      sectors: [],
+      summary: { ...EMPTY_SUMMARY },
+      recentHits: [],
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("sectors" in raw)) {
+    throw new Error("Unexpected response shape from /api/sector-cascade");
+  }
+  const dto = raw as SectorCascadeDto;
+  const sectors = Array.isArray(dto.sectors) ? dto.sectors : [];
+  const summary =
+    dto.summary !== null &&
+    typeof dto.summary === "object" &&
+    "bullishSectors" in dto.summary
+      ? {
+          bullishSectors: typeof dto.summary.bullishSectors === "number" ? dto.summary.bullishSectors : 0,
+          bearishSectors: typeof dto.summary.bearishSectors === "number" ? dto.summary.bearishSectors : 0,
+          neutralSectors: typeof dto.summary.neutralSectors === "number" ? dto.summary.neutralSectors : 0,
+          topBullish: Array.isArray(dto.summary.topBullish) ? dto.summary.topBullish : [],
+          topBearish: Array.isArray(dto.summary.topBearish) ? dto.summary.topBearish : [],
+        }
+      : { ...EMPTY_SUMMARY };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    windowDays: typeof dto.windowDays === "number" ? dto.windowDays : 7,
+    windowStart: typeof dto.windowStart === "string" ? dto.windowStart : "",
+    source: typeof dto.source === "string" ? dto.source : "cascade_rules",
+    sectors,
+    summary,
+    recentHits: Array.isArray(dto.recentHits) ? dto.recentHits : [],
+    count: typeof dto.count === "number" ? dto.count : sectors.length,
+  };
+}
+
 export async function fetchSectorCascadeData(
   origin: string,
   days?: number
 ): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let windowDays = days ?? 7;
-  let windowStart = "";
-  let source = "cascade_rules";
-  let sectors: SectorCascadeEntry[] = [];
-  let summary: CascadeSummary = { ...EMPTY_SUMMARY };
-  let recentHits: RecentHit[] = [];
-  let count = 0;
-  let error: string | null = null;
-
-  try {
-    const urlObj = new URL(`${origin}/api/sector-cascade`);
-    if (days !== undefined) {
-      urlObj.searchParams.set("days", String(days));
-    }
-    const url = urlObj.toString();
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "sectors" in raw) {
-        const dto = raw as SectorCascadeDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        windowDays =
-          typeof dto.windowDays === "number" ? dto.windowDays : windowDays;
-        windowStart =
-          typeof dto.windowStart === "string" ? dto.windowStart : "";
-        source =
-          typeof dto.source === "string" ? dto.source : "cascade_rules";
-        sectors = Array.isArray(dto.sectors) ? dto.sectors : [];
-        recentHits = Array.isArray(dto.recentHits) ? dto.recentHits : [];
-        count = typeof dto.count === "number" ? dto.count : sectors.length;
-
-        if (
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "bullishSectors" in dto.summary
-        ) {
-          summary = {
-            bullishSectors:
-              typeof dto.summary.bullishSectors === "number"
-                ? dto.summary.bullishSectors
-                : 0,
-            bearishSectors:
-              typeof dto.summary.bearishSectors === "number"
-                ? dto.summary.bearishSectors
-                : 0,
-            neutralSectors:
-              typeof dto.summary.neutralSectors === "number"
-                ? dto.summary.neutralSectors
-                : 0,
-            topBullish: Array.isArray(dto.summary.topBullish)
-              ? dto.summary.topBullish
-              : [],
-            topBearish: Array.isArray(dto.summary.topBearish)
-              ? dto.summary.topBearish
-              : [],
-          };
-        }
-      } else {
-        error = "Unexpected response shape from /api/sector-cascade";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu ngành";
+  const urlObj = new URL(`${origin}/api/sector-cascade`);
+  if (days !== undefined) {
+    urlObj.searchParams.set("days", String(days));
   }
+  const url = urlObj.toString();
 
+  const { data, error } = await safeFetch<SectorCascadeDto>(url, parseSectorCascadeDto, {
+    label: "dashboard.sector-cascade",
+  });
   return {
-    generatedAt,
-    windowDays,
-    windowStart,
-    source,
-    sectors,
-    summary,
-    recentHits,
-    count,
+    generatedAt: data.generatedAt,
+    windowDays: data.windowDays,
+    windowStart: data.windowStart,
+    source: data.source,
+    sectors: data.sectors,
+    summary: data.summary,
+    recentHits: data.recentHits,
+    count: data.count,
     error,
   };
 }

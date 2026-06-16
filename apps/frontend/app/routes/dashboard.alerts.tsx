@@ -34,6 +34,7 @@ import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Cảnh Báo — VN Market Intelligence" },
@@ -98,52 +99,40 @@ export interface LoaderData {
 //  as fetchIntelData in dashboard.intel.tsx)
 // ---------------------------------------------------------------------------
 
+function parseAlertsDto(raw: unknown): AlertsDto {
+  if (raw === null) {
+    return { items: [], count: 0, fetchedAt: new Date().toISOString() };
+  }
+  if (typeof raw !== "object" || !("items" in raw)) {
+    throw new Error("Unexpected response shape from /api/alerts");
+  }
+  const dto = raw as AlertsDto;
+  const items = Array.isArray(dto.items) ? dto.items : [];
+  return {
+    items,
+    count: typeof dto.count === "number" ? dto.count : items.length,
+    fetchedAt: typeof dto.fetchedAt === "string" ? dto.fetchedAt : new Date().toISOString(),
+  };
+}
+
 export async function fetchAlertsData(
   origin: string,
   params?: { limit?: number; severity?: AlertSeverity }
 ): Promise<LoaderData> {
-  let items: AlertItem[] = [];
-  let count = 0;
-  let fetchedAt = new Date().toISOString();
-  let error: string | null = null;
-
-  try {
-    const qs = new URLSearchParams();
-    if (params?.limit !== undefined) {
-      qs.set("limit", String(params.limit));
-    }
-    if (params?.severity !== undefined) {
-      qs.set("severity", params.severity);
-    }
-    const qsStr = qs.toString();
-    const url = `${origin}/api/alerts${qsStr ? `?${qsStr}` : ""}`;
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "items" in raw) {
-        const dto = raw as AlertsDto;
-        items = Array.isArray(dto.items) ? dto.items : [];
-        count = typeof dto.count === "number" ? dto.count : items.length;
-        fetchedAt =
-          typeof dto.fetchedAt === "string" ? dto.fetchedAt : fetchedAt;
-      } else {
-        error = "Unexpected response shape from /api/alerts";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ cảnh báo";
+  const qs = new URLSearchParams();
+  if (params?.limit !== undefined) {
+    qs.set("limit", String(params.limit));
   }
+  if (params?.severity !== undefined) {
+    qs.set("severity", params.severity);
+  }
+  const qsStr = qs.toString();
+  const url = `${origin}/api/alerts${qsStr ? `?${qsStr}` : ""}`;
 
-  return { items, count, fetchedAt, error };
+  const { data, error } = await safeFetch<AlertsDto>(url, parseAlertsDto, {
+    label: "dashboard.alerts",
+  });
+  return { items: data.items, count: data.count, fetchedAt: data.fetchedAt, error };
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {

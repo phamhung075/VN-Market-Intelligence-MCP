@@ -29,6 +29,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Vĩ Mô — VN Market Intelligence" },
@@ -106,56 +107,59 @@ export interface LoaderData {
  * Pure async function, no Remix dependency, no JSON wrapping.
  * The loader calls this and wraps it with json().
  */
-export async function fetchMacroData(origin: string): Promise<Omit<LoaderData, "generated_at">> {
-  let stale_served = false;
-  let data_source: string | null = null;
-  let indicators: MacroIndicators | null = null;
-  let signals: MacroSignals | null = null;
-  let calendar: MacroCalendar | null = null;
-  let error: string | null = null;
-
-  try {
-    const response = await fetch(`${origin}/api/macro-regime`, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (
-        raw !== null &&
-        typeof raw === "object" &&
-        "signals" in raw &&
-        "indicators" in raw
-      ) {
-        const dto = raw as MacroRegimeDto;
-        stale_served = dto.stale_served === true;
-        data_source = typeof dto.data_source === "string" ? dto.data_source : null;
-        indicators =
-          dto.indicators !== null && typeof dto.indicators === "object"
-            ? dto.indicators
-            : null;
-        signals =
-          dto.signals !== null && typeof dto.signals === "object"
-            ? dto.signals
-            : null;
-        calendar =
-          dto.calendar !== null && typeof dto.calendar === "object"
-            ? dto.calendar
-            : null;
-      } else {
-        error = "Unexpected response shape from /api/macro-regime";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ vĩ mô";
+function parseMacroRegimeDto(raw: unknown): MacroRegimeDto {
+  if (raw === null) {
+    return {
+      generated_at: "",
+      data_source: "unavailable",
+      stale_served: false,
+      indicators: { vnIndex: null, oilUsd: null, goldUsd: null, usdVnd: null },
+      signals: null as unknown as MacroSignals,
+      calendar: { available: false, events: [], note: "" },
+    };
   }
+  if (typeof raw !== "object" || !("signals" in raw) || !("indicators" in raw)) {
+    throw new Error("Unexpected response shape from /api/macro-regime");
+  }
+  return raw as MacroRegimeDto;
+}
 
-  return { stale_served, data_source, indicators, signals, calendar, error };
+export async function fetchMacroData(origin: string): Promise<Omit<LoaderData, "generated_at">> {
+  const { data, error } = await safeFetch<MacroRegimeDto>(
+    `${origin}/api/macro-regime`,
+    parseMacroRegimeDto,
+    { label: "dashboard.macro" },
+  );
+  // On any error path, indicators/signals/calendar collapse to null
+  // (parseMacroRegimeDto(null) stubs them; we override with null so callers
+  // see the contracted null shape on error).
+  if (error !== null) {
+    return {
+      stale_served: false,
+      data_source: null,
+      indicators: null,
+      signals: null,
+      calendar: null,
+      error,
+    };
+  }
+  return {
+    stale_served: data.stale_served === true,
+    data_source: typeof data.data_source === "string" ? data.data_source : null,
+    indicators:
+      data.indicators !== null && typeof data.indicators === "object"
+        ? data.indicators
+        : null,
+    signals:
+      data.signals !== null && typeof data.signals === "object"
+        ? data.signals
+        : null,
+    calendar:
+      data.calendar !== null && typeof data.calendar === "object"
+        ? data.calendar
+        : null,
+    error: null,
+  };
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {

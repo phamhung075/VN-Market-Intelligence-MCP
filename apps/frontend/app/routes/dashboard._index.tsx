@@ -19,6 +19,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 
@@ -55,6 +56,22 @@ interface LoaderData {
   error: string | null;
 }
 
+function parseMarketDigestDto(raw: unknown): MarketDigestDto {
+  if (raw === null) {
+    return { items: [], count: 0, fetchedAt: new Date().toISOString() };
+  }
+  if (typeof raw !== "object" || !("items" in raw)) {
+    throw new Error("Unexpected response shape from /api/market-digest");
+  }
+  const dto = raw as MarketDigestDto;
+  const items = Array.isArray(dto.items) ? dto.items : [];
+  return {
+    items,
+    count: typeof dto.count === "number" ? dto.count : items.length,
+    fetchedAt: typeof dto.fetchedAt === "string" ? dto.fetchedAt : new Date().toISOString(),
+  };
+}
+
 export async function loader({ request: _request }: LoaderFunctionArgs) {
   const fetchedAt = new Date().toISOString();
 
@@ -64,32 +81,14 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
       ? process.env["FRONTEND_ORIGIN"]
       : "http://localhost:3001";
 
-  let items: DigestItem[] = [];
-  let count = 0;
-  let error: string | null = null;
+  const { data, error } = await safeFetch<MarketDigestDto>(
+    `${origin}/api/market-digest`,
+    parseMarketDigestDto,
+    { label: "dashboard._index" },
+  );
 
-  try {
-    const response = await fetch(`${origin}/api/market-digest`, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "items" in raw) {
-        const dto = raw as MarketDigestDto;
-        items = Array.isArray(dto.items) ? dto.items : [];
-        count = typeof dto.count === "number" ? dto.count : items.length;
-      } else {
-        error = "Unexpected response shape from /api/market-digest";
-      }
-    }
-  } catch (err) {
-    error = err instanceof Error ? err.message : "Failed to reach market-digest endpoint";
-  }
-
-  return json<LoaderData>({ items, count, fetchedAt, error });
+  const dto = data ?? parseMarketDigestDto(null);
+  return json<LoaderData>({ items: dto.items, count: dto.count, fetchedAt, error });
 }
 
 // ---------------------------------------------------------------------------

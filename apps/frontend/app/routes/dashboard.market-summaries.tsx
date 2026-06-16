@@ -47,6 +47,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Link, NavLink, useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Lưu trữ Thị trường — VN Market Intelligence" },
@@ -192,6 +193,51 @@ const EMPTY_PERIODS: PeriodCounts = {
 // fetchSummaries — exported named helper (tested directly, bypasses Remix loader strip)
 // ---------------------------------------------------------------------------
 
+function parseSummaryDetailDto(raw: unknown): SummaryDetailDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return { generatedAt: now, item: null };
+  }
+  if (typeof raw !== "object" || !("item" in raw)) {
+    throw new Error("Unexpected response shape from /api/market-summaries (detail)");
+  }
+  const dto = raw as SummaryDetailDto;
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    item: dto.item ?? null,
+  };
+}
+
+function parseSummaryListDto(raw: unknown): SummaryListDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return { generatedAt: now, periods: { ...EMPTY_PERIODS }, items: [], count: 0 };
+  }
+  if (typeof raw !== "object" || !("items" in raw)) {
+    throw new Error("Unexpected response shape from /api/market-summaries (list)");
+  }
+  const dto = raw as SummaryListDto;
+  const items = Array.isArray(dto.items) ? dto.items : [];
+  const periods =
+    dto.periods !== null &&
+    typeof dto.periods === "object" &&
+    "daily" in dto.periods
+      ? {
+          daily: typeof dto.periods.daily === "number" ? dto.periods.daily : 0,
+          weekly: typeof dto.periods.weekly === "number" ? dto.periods.weekly : 0,
+          monthly: typeof dto.periods.monthly === "number" ? dto.periods.monthly : 0,
+          quarterly: typeof dto.periods.quarterly === "number" ? dto.periods.quarterly : 0,
+          yearly: typeof dto.periods.yearly === "number" ? dto.periods.yearly : 0,
+        }
+      : { ...EMPTY_PERIODS };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    periods,
+    items,
+    count: typeof dto.count === "number" ? dto.count : items.length,
+  };
+}
+
 export async function fetchSummaries(
   origin: string,
   params:
@@ -203,120 +249,28 @@ export async function fetchSummaries(
   if (isDetail) {
     // DETAIL mode
     const selectedId = params.id;
-    let generatedAt = new Date().toISOString();
-    let item: SummaryDetailItem | null = null;
-    let error: string | null = null;
-
-    try {
-      const url = `${origin}/api/market-summaries?id=${encodeURIComponent(selectedId)}`;
-      const response = await fetch(url, {
-        headers: { Accept: "application/json" },
-      });
-
-      if (!response.ok) {
-        error = `Upstream returned ${response.status} ${response.statusText}`;
-      } else {
-        const raw = (await response.json()) as unknown;
-        if (
-          raw !== null &&
-          typeof raw === "object" &&
-          "item" in raw
-        ) {
-          const dto = raw as SummaryDetailDto;
-          generatedAt =
-            typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-          // item may be null (id not found) — preserve null, never fabricate
-          item = dto.item ?? null;
-        } else {
-          error = "Unexpected response shape from /api/market-summaries (detail)";
-        }
-      }
-    } catch (err) {
-      error =
-        err instanceof Error
-          ? err.message
-          : "Không thể kết nối tới máy chủ dữ liệu thị trường";
-    }
-
-    return { mode: "detail", generatedAt, item, selectedId, error };
+    const url = `${origin}/api/market-summaries?id=${encodeURIComponent(selectedId)}`;
+    const { data, error } = await safeFetch<SummaryDetailDto>(url, parseSummaryDetailDto, {
+      label: "dashboard.market-summaries.detail",
+    });
+    return { mode: "detail", generatedAt: data.generatedAt, item: data.item, selectedId, error };
   } else {
     // LIST mode
     const period = (params as { period?: PeriodType; limit?: number }).period ?? "daily";
     const limit = (params as { period?: PeriodType; limit?: number }).limit;
+    const qs = new URLSearchParams({ period });
+    if (limit !== undefined) qs.set("limit", String(limit));
+    const url = `${origin}/api/market-summaries?${qs.toString()}`;
 
-    let generatedAt = new Date().toISOString();
-    let periods: PeriodCounts = { ...EMPTY_PERIODS };
-    let items: SummaryListItem[] = [];
-    let count = 0;
-    let error: string | null = null;
-
-    try {
-      const qs = new URLSearchParams({ period });
-      if (limit !== undefined) qs.set("limit", String(limit));
-      const url = `${origin}/api/market-summaries?${qs.toString()}`;
-
-      const response = await fetch(url, {
-        headers: { Accept: "application/json" },
-      });
-
-      if (!response.ok) {
-        error = `Upstream returned ${response.status} ${response.statusText}`;
-      } else {
-        const raw = (await response.json()) as unknown;
-        if (
-          raw !== null &&
-          typeof raw === "object" &&
-          "items" in raw
-        ) {
-          const dto = raw as SummaryListDto;
-          generatedAt =
-            typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-          items = Array.isArray(dto.items) ? dto.items : [];
-          count = typeof dto.count === "number" ? dto.count : items.length;
-          periods =
-            dto.periods !== null &&
-            typeof dto.periods === "object" &&
-            "daily" in dto.periods
-              ? {
-                  daily:
-                    typeof dto.periods.daily === "number"
-                      ? dto.periods.daily
-                      : 0,
-                  weekly:
-                    typeof dto.periods.weekly === "number"
-                      ? dto.periods.weekly
-                      : 0,
-                  monthly:
-                    typeof dto.periods.monthly === "number"
-                      ? dto.periods.monthly
-                      : 0,
-                  quarterly:
-                    typeof dto.periods.quarterly === "number"
-                      ? dto.periods.quarterly
-                      : 0,
-                  yearly:
-                    typeof dto.periods.yearly === "number"
-                      ? dto.periods.yearly
-                      : 0,
-                }
-              : { ...EMPTY_PERIODS };
-        } else {
-          error = "Unexpected response shape from /api/market-summaries (list)";
-        }
-      }
-    } catch (err) {
-      error =
-        err instanceof Error
-          ? err.message
-          : "Không thể kết nối tới máy chủ dữ liệu thị trường";
-    }
-
+    const { data, error } = await safeFetch<SummaryListDto>(url, parseSummaryListDto, {
+      label: "dashboard.market-summaries.list",
+    });
     return {
       mode: "list",
-      generatedAt,
-      periods,
-      items,
-      count,
+      generatedAt: data.generatedAt,
+      periods: data.periods,
+      items: data.items,
+      count: data.count,
       selectedPeriod: period,
       error,
     };

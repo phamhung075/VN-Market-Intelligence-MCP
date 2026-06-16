@@ -29,6 +29,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction = () => [
@@ -145,98 +146,79 @@ export function getRiskBadgeClass(riskLevel: string): string {
   return "inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold bg-slate-700 text-slate-300";
 }
 
+// ---------------------------------------------------------------------------
+// parseReputationDto — named parse function for safeFetch
+// ---------------------------------------------------------------------------
+
+const EMPTY_REPUTATION_SUMMARY: ReputationSummary = {
+  total: 0,
+  avgScore: null,
+  byRisk: { safe: 0, watch: 0, warning: 0, danger: 0 },
+};
+
+function parseReputationDto(raw: unknown): ReputationDto {
+  if (raw === null) {
+    return {
+      generatedAt: new Date().toISOString(),
+      asOf: null,
+      stale: false,
+      staleByDays: 0,
+      summary: EMPTY_REPUTATION_SUMMARY,
+      leaderboard: [],
+      history: {},
+    };
+  }
+  if (
+    typeof raw !== "object" ||
+    !("summary" in raw) ||
+    !("leaderboard" in raw)
+  ) {
+    throw new Error("Unexpected response shape from /api/reputation");
+  }
+  const dto = raw as ReputationDto;
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : new Date().toISOString(),
+    asOf: typeof dto.asOf === "string" ? dto.asOf : null,
+    stale: typeof dto.stale === "boolean" ? dto.stale : false,
+    staleByDays: typeof dto.staleByDays === "number" ? dto.staleByDays : 0,
+    summary: {
+      total: typeof dto.summary?.total === "number" ? dto.summary.total : 0,
+      avgScore: typeof dto.summary?.avgScore === "number" ? dto.summary.avgScore : null,
+      byRisk: {
+        safe: typeof dto.summary?.byRisk?.safe === "number" ? dto.summary.byRisk.safe : 0,
+        watch: typeof dto.summary?.byRisk?.watch === "number" ? dto.summary.byRisk.watch : 0,
+        warning: typeof dto.summary?.byRisk?.warning === "number" ? dto.summary.byRisk.warning : 0,
+        danger: typeof dto.summary?.byRisk?.danger === "number" ? dto.summary.byRisk.danger : 0,
+      },
+    },
+    leaderboard: Array.isArray(dto.leaderboard) ? dto.leaderboard : [],
+    history:
+      dto.history !== null && typeof dto.history === "object"
+        ? (dto.history as Record<string, HistoryPoint[]>)
+        : {},
+  };
+}
+
 /**
  * fetchReputationData — exported named helper for unit tests.
  * (Remix strips loader in jsdom; named helper bypasses that.)
  */
 export async function fetchReputationData(origin: string): Promise<LoaderData> {
-  const emptyByRisk: ByRisk = { safe: 0, watch: 0, warning: 0, danger: 0 };
-  let generatedAt = new Date().toISOString();
-  let asOf: string | null = null;
-  let stale = false;
-  let staleByDays = 0;
-  let summary: ReputationSummary = {
-    total: 0,
-    avgScore: null,
-    byRisk: emptyByRisk,
-  };
-  let leaderboard: ReputationEntry[] = [];
-  let history: Record<string, HistoryPoint[]> = {};
-  let error: string | null = null;
+  const url = `${origin}/api/reputation`;
 
-  try {
-    const url = `${origin}/api/reputation`;
+  const { data, error } = await safeFetch<ReputationDto>(url, parseReputationDto, {
+    label: "dashboard.reputation",
+  });
 
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (
-        raw !== null &&
-        typeof raw === "object" &&
-        "summary" in raw &&
-        "leaderboard" in raw
-      ) {
-        const dto = raw as ReputationDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        asOf = typeof dto.asOf === "string" ? dto.asOf : null;
-        stale = typeof dto.stale === "boolean" ? dto.stale : false;
-        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
-        summary = {
-          total:
-            typeof dto.summary?.total === "number" ? dto.summary.total : 0,
-          avgScore:
-            typeof dto.summary?.avgScore === "number"
-              ? dto.summary.avgScore
-              : null,
-          byRisk: {
-            safe:
-              typeof dto.summary?.byRisk?.safe === "number"
-                ? dto.summary.byRisk.safe
-                : 0,
-            watch:
-              typeof dto.summary?.byRisk?.watch === "number"
-                ? dto.summary.byRisk.watch
-                : 0,
-            warning:
-              typeof dto.summary?.byRisk?.warning === "number"
-                ? dto.summary.byRisk.warning
-                : 0,
-            danger:
-              typeof dto.summary?.byRisk?.danger === "number"
-                ? dto.summary.byRisk.danger
-                : 0,
-          },
-        };
-        leaderboard = Array.isArray(dto.leaderboard) ? dto.leaderboard : [];
-        history =
-          dto.history !== null && typeof dto.history === "object"
-            ? (dto.history as Record<string, HistoryPoint[]>)
-            : {};
-      } else {
-        error = "Unexpected response shape from /api/reputation";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu uy tín doanh nghiệp";
-  }
-
+  const dto = data ?? parseReputationDto(null);
   return {
-    generatedAt,
-    asOf,
-    stale,
-    staleByDays,
-    summary,
-    leaderboard,
-    history,
+    generatedAt: dto.generatedAt,
+    asOf: dto.asOf,
+    stale: dto.stale ?? false,
+    staleByDays: dto.staleByDays ?? 0,
+    summary: dto.summary,
+    leaderboard: dto.leaderboard,
+    history: dto.history,
     error,
   };
 }

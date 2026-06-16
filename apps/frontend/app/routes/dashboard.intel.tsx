@@ -25,6 +25,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Bản Tin AI — VN Market Intelligence" },
@@ -59,46 +60,35 @@ export interface LoaderData {
   error: string | null;
 }
 
+function parseMarketDigest(raw: unknown): MarketDigestDto {
+  if (raw === null) {
+    return { items: [], count: 0, fetchedAt: new Date().toISOString() };
+  }
+  if (typeof raw !== "object" || !("items" in raw)) {
+    throw new Error("Unexpected response shape from /api/market-digest");
+  }
+  const dto = raw as MarketDigestDto;
+  const items = Array.isArray(dto.items) ? dto.items : [];
+  return {
+    items,
+    count: typeof dto.count === "number" ? dto.count : items.length,
+    fetchedAt: typeof dto.fetchedAt === "string" ? dto.fetchedAt : new Date().toISOString(),
+  };
+}
+
 /**
  * Core fetch-and-parse logic — exported for unit testing.
  * Pure async function, no Remix dependency, no JSON wrapping.
- * The loader calls this and wraps it with json().
+ * Bounded by FETCH_DEADLINE_MS (55s); non-fatal on any error.
  */
 export async function fetchIntelData(
   origin: string
 ): Promise<LoaderData> {
-  let items: MarketDigestItem[] = [];
-  let count = 0;
-  let fetchedAt = new Date().toISOString();
-  let error: string | null = null;
-
-  try {
-    const response = await fetch(`${origin}/api/market-digest`, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "items" in raw) {
-        const dto = raw as MarketDigestDto;
-        items = Array.isArray(dto.items) ? dto.items : [];
-        count = typeof dto.count === "number" ? dto.count : items.length;
-        fetchedAt =
-          typeof dto.fetchedAt === "string" ? dto.fetchedAt : fetchedAt;
-      } else {
-        error = "Unexpected response shape from /api/market-digest";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ bản tin";
-  }
-
-  return { items, count, fetchedAt, error };
+  const url = `${origin}/api/market-digest`;
+  const { data, error } = await safeFetch<MarketDigestDto>(url, parseMarketDigest, {
+    label: "dashboard.intel",
+  });
+  return { items: data.items, count: data.count, fetchedAt: data.fetchedAt, error };
 }
 
 export async function loader({ request: _request }: LoaderFunctionArgs) {

@@ -35,6 +35,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction = () => [
@@ -162,80 +163,100 @@ export function formatDate(iso: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// parseFinancialsDto — named parse function for safeFetch
+// ---------------------------------------------------------------------------
+
+function parseFinancialsDto(raw: unknown): FinancialsDto {
+  if (raw === null) {
+    return {
+      generatedAt: new Date().toISOString(),
+      asOf: "",
+      stale: false,
+      staleByDays: 0,
+      count: 0,
+      rows: [],
+      summary: { medianPe: 0, medianPb: 0, medianRoe: 0 },
+      rankings: { cheapestPe: [], highestRoe: [], highestRevenueYoy: [] },
+    };
+  }
+  if (
+    typeof raw !== "object" ||
+    !("rows" in raw) ||
+    !("summary" in raw) ||
+    !("rankings" in raw)
+  ) {
+    throw new Error("Unexpected response shape from /api/financials");
+  }
+  const dto = raw as FinancialsDto;
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : new Date().toISOString(),
+    asOf: typeof dto.asOf === "string" ? dto.asOf : "",
+    stale: typeof dto.stale === "boolean" ? dto.stale : false,
+    staleByDays: typeof dto.staleByDays === "number" ? dto.staleByDays : 0,
+    count: typeof dto.count === "number" ? dto.count : 0,
+    rows: Array.isArray(dto.rows) ? dto.rows : [],
+    summary:
+      dto.summary !== null &&
+      typeof dto.summary === "object" &&
+      "medianPe" in dto.summary
+        ? (dto.summary as FinancialsSummary)
+        : { medianPe: 0, medianPb: 0, medianRoe: 0 },
+    rankings:
+      dto.rankings !== null &&
+      typeof dto.rankings === "object" &&
+      "cheapestPe" in dto.rankings
+        ? (dto.rankings as FinancialsRankings)
+        : { cheapestPe: [], highestRoe: [], highestRevenueYoy: [] },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // fetchFinancialsData — exported named helper for unit tests
 // (Remix strips loader in jsdom; named helper bypasses that)
 // ---------------------------------------------------------------------------
 
 export async function fetchFinancialsData(origin: string): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let asOf = "";
-  let stale = false;
-  let staleByDays = 0;
-  let count = 0;
-  let rows: FinancialsRow[] = [];
-  let summary: FinancialsSummary | null = null;
-  let rankings: FinancialsRankings | null = null;
-  let error: string | null = null;
+  const url = `${origin}/api/financials`;
 
-  try {
-    const url = `${origin}/api/financials`;
+  const { data, error } = await safeFetch<FinancialsDto>(url, parseFinancialsDto, {
+    label: "dashboard.financials",
+  });
 
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (
-        raw !== null &&
-        typeof raw === "object" &&
-        "rows" in raw &&
-        "summary" in raw &&
-        "rankings" in raw
-      ) {
-        const dto = raw as FinancialsDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        asOf = typeof dto.asOf === "string" ? dto.asOf : "";
-        stale = typeof dto.stale === "boolean" ? dto.stale : false;
-        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
-        count = typeof dto.count === "number" ? dto.count : 0;
-        rows = Array.isArray(dto.rows) ? dto.rows : [];
-        summary =
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "medianPe" in dto.summary
-            ? (dto.summary as FinancialsSummary)
-            : null;
-        rankings =
-          dto.rankings !== null &&
-          typeof dto.rankings === "object" &&
-          "cheapestPe" in dto.rankings
-            ? (dto.rankings as FinancialsRankings)
-            : null;
-      } else {
-        error = "Unexpected response shape from /api/financials";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu định giá";
+  // On any error path, summary and rankings collapse to null.
+  if (error !== null) {
+    return {
+      generatedAt: new Date().toISOString(),
+      asOf: "",
+      stale: false,
+      staleByDays: 0,
+      count: 0,
+      rows: [],
+      summary: null,
+      rankings: null,
+      error,
+    };
   }
 
   return {
-    generatedAt,
-    asOf,
-    stale,
-    staleByDays,
-    count,
-    rows,
-    summary,
-    rankings,
-    error,
+    generatedAt: data.generatedAt,
+    asOf: data.asOf,
+    stale: data.stale ?? false,
+    staleByDays: data.staleByDays ?? 0,
+    count: data.count,
+    rows: data.rows,
+    summary:
+      data.summary !== null &&
+      typeof data.summary === "object" &&
+      "medianPe" in data.summary
+        ? (data.summary as FinancialsSummary)
+        : null,
+    rankings:
+      data.rankings !== null &&
+      typeof data.rankings === "object" &&
+      "cheapestPe" in data.rankings
+        ? (data.rankings as FinancialsRankings)
+        : null,
+    error: null,
   };
 }
 

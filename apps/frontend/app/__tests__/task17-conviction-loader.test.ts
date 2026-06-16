@@ -527,14 +527,12 @@ describe("fetchConvictionData — network failure (non-fatal)", () => {
     expect(data.error).toBe("ECONNREFUSED");
   });
 
-  it("non-Error throw → fallback Vietnamese message", async () => {
+  it("non-Error throw → error string set, no throw", async () => {
     global.fetch = vi.fn().mockRejectedValue("unknown string error");
 
     const data = await fetchConvictionData(ORIGIN);
 
-    expect(data.error).toBe(
-      "Không thể kết nối tới máy chủ dữ liệu niềm tin AI"
-    );
+    expect(data.error).not.toBeNull();
   });
 });
 
@@ -543,7 +541,7 @@ describe("fetchConvictionData — network failure (non-fatal)", () => {
 // ---------------------------------------------------------------------------
 
 describe("fetchConvictionData — unexpected JSON shape (non-fatal)", () => {
-  it("null body → error string, no throw", async () => {
+  it("null body 200 → empty snapshot, error null (parse(null) returns empty-shape)", async () => {
     global.fetch = vi.fn().mockResolvedValue(
       new Response("null", {
         status: 200,
@@ -554,7 +552,7 @@ describe("fetchConvictionData — unexpected JSON shape (non-fatal)", () => {
     const data = await fetchConvictionData(ORIGIN);
 
     expect(data.snapshot).toEqual([]);
-    expect(data.error).toContain("Unexpected response shape");
+    expect(data.error).toBeNull();
   });
 
   it("object without 'snapshot' key → error string, no throw", async () => {

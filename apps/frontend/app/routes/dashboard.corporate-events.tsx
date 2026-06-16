@@ -47,6 +47,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link, useLocation } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Sự kiện doanh nghiệp gần đây — VN Market Intelligence" },
@@ -222,98 +223,83 @@ const EMPTY_SUMMARY: CorporateEventsSummary = {
   topActiveCodes: [],
 };
 
+function parseCorporateEventsDto(raw: unknown): CorporateEventsDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      windowDays: 90,
+      since: "",
+      asOf: "",
+      stale: false,
+      staleByDays: 0,
+      typeFilter: null,
+      events: [],
+      byType: [],
+      summary: { ...EMPTY_SUMMARY },
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("events" in raw)) {
+    throw new Error("Unexpected response shape from /api/corporate-events");
+  }
+  const dto = raw as CorporateEventsDto;
+  const events = Array.isArray(dto.events) ? dto.events : [];
+  const summary =
+    dto.summary !== null &&
+    typeof dto.summary === "object" &&
+    "totalEvents" in dto.summary
+      ? {
+          totalEvents: typeof dto.summary.totalEvents === "number" ? dto.summary.totalEvents : 0,
+          distinctCodes: typeof dto.summary.distinctCodes === "number" ? dto.summary.distinctCodes : 0,
+          dividend: typeof dto.summary.dividend === "number" ? dto.summary.dividend : 0,
+          issuance: typeof dto.summary.issuance === "number" ? dto.summary.issuance : 0,
+          insider: typeof dto.summary.insider === "number" ? dto.summary.insider : 0,
+          meeting: typeof dto.summary.meeting === "number" ? dto.summary.meeting : 0,
+          other: typeof dto.summary.other === "number" ? dto.summary.other : 0,
+          topActiveCodes: Array.isArray(dto.summary.topActiveCodes) ? dto.summary.topActiveCodes : [],
+        }
+      : { ...EMPTY_SUMMARY };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    windowDays: typeof dto.windowDays === "number" ? dto.windowDays : 90,
+    since: typeof dto.since === "string" ? dto.since : "",
+    asOf: typeof dto.asOf === "string" ? dto.asOf : "",
+    stale: typeof dto.stale === "boolean" ? dto.stale : false,
+    staleByDays: typeof dto.staleByDays === "number" ? dto.staleByDays : 0,
+    typeFilter: typeof dto.typeFilter === "string" ? dto.typeFilter : null,
+    events,
+    byType: Array.isArray(dto.byType) ? dto.byType : [],
+    summary,
+    count: typeof dto.count === "number" ? dto.count : events.length,
+  };
+}
+
 export async function fetchCorporateEventsData(
   origin: string,
   days?: number,
 ): Promise<LoaderData> {
-  let generatedAt = new Date().toISOString();
-  let windowDays = days ?? 90;
-  let since = "";
-  let asOf = "";
-  let stale = false;
-  let staleByDays = 0;
-  let typeFilter: string | null = null;
-  let events: CorporateEvent[] = [];
-  let byType: ByTypeEntry[] = [];
-  let summary: CorporateEventsSummary = { ...EMPTY_SUMMARY };
-  let count = 0;
-  let error: string | null = null;
-
-  try {
-    const urlObj = new URL(`${origin}/api/corporate-events`);
-    if (days !== undefined) {
-      urlObj.searchParams.set("days", String(days));
-    }
-    const url = urlObj.toString();
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "events" in raw) {
-        const dto = raw as CorporateEventsDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        windowDays =
-          typeof dto.windowDays === "number" ? dto.windowDays : windowDays;
-        since = typeof dto.since === "string" ? dto.since : "";
-        asOf = typeof dto.asOf === "string" ? dto.asOf : "";
-        stale = typeof dto.stale === "boolean" ? dto.stale : false;
-        staleByDays = typeof dto.staleByDays === "number" ? dto.staleByDays : 0;
-        typeFilter =
-          typeof dto.typeFilter === "string" ? dto.typeFilter : null;
-        events = Array.isArray(dto.events) ? dto.events : [];
-        byType = Array.isArray(dto.byType) ? dto.byType : [];
-        count = typeof dto.count === "number" ? dto.count : events.length;
-
-        if (
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "totalEvents" in dto.summary
-        ) {
-          const s = dto.summary;
-          summary = {
-            totalEvents:
-              typeof s.totalEvents === "number" ? s.totalEvents : 0,
-            distinctCodes:
-              typeof s.distinctCodes === "number" ? s.distinctCodes : 0,
-            dividend: typeof s.dividend === "number" ? s.dividend : 0,
-            issuance: typeof s.issuance === "number" ? s.issuance : 0,
-            insider: typeof s.insider === "number" ? s.insider : 0,
-            meeting: typeof s.meeting === "number" ? s.meeting : 0,
-            other: typeof s.other === "number" ? s.other : 0,
-            topActiveCodes: Array.isArray(s.topActiveCodes)
-              ? s.topActiveCodes
-              : [],
-          };
-        }
-      } else {
-        error = "Unexpected response shape from /api/corporate-events";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu sự kiện doanh nghiệp";
+  const urlObj = new URL(`${origin}/api/corporate-events`);
+  if (days !== undefined) {
+    urlObj.searchParams.set("days", String(days));
   }
+  const url = urlObj.toString();
 
+  const { data, error } = await safeFetch<CorporateEventsDto>(url, parseCorporateEventsDto, {
+    label: "dashboard.corporate-events",
+  });
   return {
-    generatedAt,
-    windowDays,
-    since,
-    asOf,
-    stale,
-    staleByDays,
-    typeFilter,
-    events,
-    byType,
-    summary,
-    count,
+    generatedAt: data.generatedAt,
+    windowDays: data.windowDays,
+    since: data.since,
+    asOf: data.asOf,
+    stale: data.stale ?? false,
+    staleByDays: data.staleByDays ?? 0,
+    typeFilter: data.typeFilter,
+    events: data.events,
+    byType: data.byType,
+    summary: data.summary,
+    count: data.count,
     error,
   };
 }

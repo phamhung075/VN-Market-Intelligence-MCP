@@ -24,6 +24,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
+import { safeFetch } from "~/lib/api/fetchUtils";
 import { PageHeader } from "~/components/PageHeader";
 import {
   Collapsible,
@@ -92,40 +93,34 @@ interface LoaderData {
   fetchedAt: string;
 }
 
+function parseQualityChecklistDto(raw: unknown): QualityChecklist {
+  if (raw === null) {
+    return {
+      summary: { pass: 0, warn: 0, fail: 0, info: 0, needs_review: 0, total: 0 },
+      capabilities: [],
+    };
+  }
+  if (typeof raw !== "object") {
+    throw new Error("Unexpected response shape from /api/quality-checklist");
+  }
+  return raw as QualityChecklist;
+}
+
 export async function loader({ request: _request }: LoaderFunctionArgs) {
   const fetchedAt = new Date().toISOString();
 
-  let checklist: QualityChecklist | null = null;
-  let error: string | null = null;
+  const origin =
+    typeof process !== "undefined" && process.env["FRONTEND_ORIGIN"]
+      ? process.env["FRONTEND_ORIGIN"]
+      : "http://localhost:3001";
 
-  try {
-    const origin =
-      typeof process !== "undefined" && process.env["FRONTEND_ORIGIN"]
-        ? process.env["FRONTEND_ORIGIN"]
-        : "http://localhost:3001";
+  const { data, error } = await safeFetch<QualityChecklist>(
+    `${origin}/api/quality-checklist`,
+    parseQualityChecklistDto,
+    { label: "dashboard.quality-audit" },
+  );
 
-    const response = await fetch(`${origin}/api/quality-checklist`, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object") {
-        checklist = raw as QualityChecklist;
-      } else {
-        error = "Unexpected response shape from /api/quality-checklist";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Failed to reach quality-checklist endpoint";
-  }
-
-  return json<LoaderData>({ checklist, error, fetchedAt });
+  return json<LoaderData>({ checklist: data ?? null, error, fetchedAt });
 }
 
 // ---------------------------------------------------------------------------

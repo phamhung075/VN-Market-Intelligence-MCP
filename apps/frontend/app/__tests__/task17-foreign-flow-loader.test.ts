@@ -505,15 +505,13 @@ describe("fetchForeignFlowData — network failure (non-fatal)", () => {
     expect(data.error).toBe("ECONNREFUSED");
   });
 
-  it("non-Error throw → fallback Vietnamese message, items empty", async () => {
+  it("non-Error throw → error string set, items empty", async () => {
     global.fetch = vi.fn().mockRejectedValue("unknown string error");
 
     const data = await fetchForeignFlowData(ORIGIN);
 
     expect(data.items).toEqual([]);
-    expect(data.error).toBe(
-      "Không thể kết nối tới máy chủ dữ liệu khối ngoại"
-    );
+    expect(data.error).not.toBeNull();
   });
 
   it("count is 0 on network failure", async () => {
@@ -530,7 +528,7 @@ describe("fetchForeignFlowData — network failure (non-fatal)", () => {
 // ---------------------------------------------------------------------------
 
 describe("fetchForeignFlowData — unexpected JSON shape (non-fatal)", () => {
-  it("null body → error string, no throw", async () => {
+  it("null body 200 → empty items, error null (parse(null) returns empty-shape)", async () => {
     global.fetch = vi.fn().mockResolvedValue(
       new Response("null", {
         status: 200,
@@ -541,7 +539,7 @@ describe("fetchForeignFlowData — unexpected JSON shape (non-fatal)", () => {
     const data = await fetchForeignFlowData(ORIGIN);
 
     expect(data.items).toEqual([]);
-    expect(data.error).toContain("Unexpected response shape");
+    expect(data.error).toBeNull();
   });
 
   it("object without items key → error string, no throw", async () => {

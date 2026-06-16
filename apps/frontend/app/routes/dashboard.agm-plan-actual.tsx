@@ -38,6 +38,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useLoaderData, useSearchParams } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
+import { safeFetch } from "~/lib/api/fetchUtils";
 
 export const meta: MetaFunction = () => [
   { title: "Kế hoạch vs Thực hiện — VN Market Intelligence" },
@@ -108,91 +109,66 @@ const EMPTY_SUMMARY: AgmSummary = {
   total: 0,
 };
 
+function parseAgmPlanActualDto(raw: unknown): AgmPlanActualDto {
+  const now = new Date().toISOString();
+  if (raw === null) {
+    return {
+      generatedAt: now,
+      defaultYear: 2025,
+      availableYears: [],
+      items: [],
+      summary: { ...EMPTY_SUMMARY },
+      count: 0,
+    };
+  }
+  if (typeof raw !== "object" || !("items" in raw)) {
+    throw new Error("Unexpected response shape from /api/agm-plan-actual");
+  }
+  const dto = raw as AgmPlanActualDto;
+  const items = Array.isArray(dto.items) ? dto.items : [];
+  const summary =
+    dto.summary !== null &&
+    typeof dto.summary === "object" &&
+    "exceeded" in dto.summary
+      ? {
+          year: typeof dto.summary.year === "number" ? dto.summary.year : 0,
+          exceeded: typeof dto.summary.exceeded === "number" ? dto.summary.exceeded : 0,
+          onTrack: typeof dto.summary.onTrack === "number" ? dto.summary.onTrack : 0,
+          behind: typeof dto.summary.behind === "number" ? dto.summary.behind : 0,
+          inProgress: typeof dto.summary.inProgress === "number" ? dto.summary.inProgress : 0,
+          total: typeof dto.summary.total === "number" ? dto.summary.total : 0,
+        }
+      : { ...EMPTY_SUMMARY };
+  return {
+    generatedAt: typeof dto.generatedAt === "string" ? dto.generatedAt : now,
+    defaultYear: typeof dto.defaultYear === "number" ? dto.defaultYear : 2025,
+    availableYears: Array.isArray(dto.availableYears) ? dto.availableYears : [],
+    items,
+    summary,
+    count: typeof dto.count === "number" ? dto.count : items.length,
+  };
+}
+
 export async function fetchAgmPlanActualData(
   origin: string,
   params?: { year?: number; limit?: number }
 ): Promise<Omit<LoaderData, "selectedYear">> {
-  let generatedAt = new Date().toISOString();
-  let defaultYear = 2025;
-  let availableYears: number[] = [];
-  let items: AgmItem[] = [];
-  let summary: AgmSummary = { ...EMPTY_SUMMARY };
-  let count = 0;
-  let error: string | null = null;
+  const qs = new URLSearchParams();
+  if (params?.year !== undefined) qs.set("year", String(params.year));
+  if (params?.limit !== undefined) qs.set("limit", String(params.limit));
+  const qsStr = qs.toString();
+  const url = `${origin}/api/agm-plan-actual${qsStr ? `?${qsStr}` : ""}`;
 
-  try {
-    const qs = new URLSearchParams();
-    if (params?.year !== undefined) qs.set("year", String(params.year));
-    if (params?.limit !== undefined) qs.set("limit", String(params.limit));
-    const qsStr = qs.toString();
-    const url = `${origin}/api/agm-plan-actual${qsStr ? `?${qsStr}` : ""}`;
-
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-    });
-
-    if (!response.ok) {
-      error = `Upstream returned ${response.status} ${response.statusText}`;
-    } else {
-      const raw = (await response.json()) as unknown;
-      if (raw !== null && typeof raw === "object" && "items" in raw) {
-        const dto = raw as AgmPlanActualDto;
-        generatedAt =
-          typeof dto.generatedAt === "string" ? dto.generatedAt : generatedAt;
-        defaultYear =
-          typeof dto.defaultYear === "number" ? dto.defaultYear : defaultYear;
-        availableYears = Array.isArray(dto.availableYears)
-          ? dto.availableYears
-          : [];
-        items = Array.isArray(dto.items) ? dto.items : [];
-        count = typeof dto.count === "number" ? dto.count : items.length;
-        summary =
-          dto.summary !== null &&
-          typeof dto.summary === "object" &&
-          "exceeded" in dto.summary
-            ? {
-                year:
-                  typeof dto.summary.year === "number" ? dto.summary.year : 0,
-                exceeded:
-                  typeof dto.summary.exceeded === "number"
-                    ? dto.summary.exceeded
-                    : 0,
-                onTrack:
-                  typeof dto.summary.onTrack === "number"
-                    ? dto.summary.onTrack
-                    : 0,
-                behind:
-                  typeof dto.summary.behind === "number"
-                    ? dto.summary.behind
-                    : 0,
-                inProgress:
-                  typeof dto.summary.inProgress === "number"
-                    ? dto.summary.inProgress
-                    : 0,
-                total:
-                  typeof dto.summary.total === "number"
-                    ? dto.summary.total
-                    : 0,
-              }
-            : { ...EMPTY_SUMMARY };
-      } else {
-        error = "Unexpected response shape from /api/agm-plan-actual";
-      }
-    }
-  } catch (err) {
-    error =
-      err instanceof Error
-        ? err.message
-        : "Không thể kết nối tới máy chủ dữ liệu kế hoạch AGM";
-  }
-
+  const { data, error } = await safeFetch<AgmPlanActualDto>(url, parseAgmPlanActualDto, {
+    label: "dashboard.agm-plan-actual",
+  });
   return {
-    generatedAt,
-    defaultYear,
-    availableYears,
-    items,
-    summary,
-    count,
+    generatedAt: data.generatedAt,
+    defaultYear: data.defaultYear,
+    availableYears: data.availableYears,
+    items: data.items,
+    summary: data.summary,
+    count: data.count,
     error,
   };
 }
