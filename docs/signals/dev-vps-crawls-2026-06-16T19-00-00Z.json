@@ -1,0 +1,40 @@
+{
+  "signal": "recon_complete",
+  "agent": "ops-vps-fetch",
+  "timestamp": "2026-06-16T19:00:00Z",
+  "tasks": [
+    {
+      "id": "FIX-FOREIGN-FLOW-INTEGRITY-BREAK",
+      "priority": "P0",
+      "status": "recon_complete",
+      "next_agent": "dev-mcp-server",
+      "recon_doc": "docs/handoffs/FIX-FOREIGN-FLOW-INTEGRITY-BREAK-recon.md",
+      "summary": "ROOT CAUSE IDENTIFIED: two writers (VPS bgapidatafeed + vnstock Python VCI) write incompatible semantics into vnstock_trading_stats.foreign_volume. storeTradingStats() uses INSERT OR REPLACE and overwrites daily-net (VPS) with cumulative-holding (VCI). Fix: change storeTradingStats() to ON CONFLICT DO UPDATE SET excluding foreign_volume and foreign_room. fBValue/fSValue confirmed present in bgapidatafeed but not extracted.",
+      "endpoint": "https://bgapidatafeed.vps.com.vn/getliststockdata/<CODES>",
+      "holding_ratio_source": "vnstock Python bridge (VCI) via fetchVnstockTradingStats() — foreigner_percentage field",
+      "holding_ratio_from_bgapidatafeed": false
+    },
+    {
+      "id": "FIX-MARKET-BREADTH-MISSING",
+      "priority": "P1",
+      "status": "recon_complete",
+      "next_agent": "dev-mcp-server",
+      "recon_doc": "docs/handoffs/FIX-MARKET-BREADTH-MISSING-recon.md",
+      "summary": "FOUND: VnDirect api-finfo.vndirect.com.vn/v4/vnmarket_prices already used by fetchVnIndex() carries advances/declines/noChange/noTrade/ceilingStocks/floorStocks. Live probe: VNINDEX 2026-06-16 15:06 VN time = advances:179 declines:109 noChange:74 noTrade:31. Zero extra network call needed — just parse more fields from existing fetchVnIndex() response.",
+      "endpoint": "https://api-finfo.vndirect.com.vn/v4/vnmarket_prices?sort=date&q=code:VNINDEX&size=1&page=1",
+      "anti_bot": "none",
+      "breadth_fields": ["advances", "declines", "noChange", "noTrade", "ceilingStocks", "floorStocks"]
+    },
+    {
+      "id": "FIX-MARKET-LIQUIDITY-MISSING-TOOL",
+      "priority": "P1",
+      "status": "recon_complete",
+      "next_agent": "dev-mcp-server",
+      "recon_doc": "docs/handoffs/FIX-MARKET-LIQUIDITY-MISSING-TOOL-recon.md",
+      "summary": "FOUND: Same vnmarket_prices endpoint carries accumulatedVal (total turnover VND), nmValue (ordermatch), ptValue (put-through). Co-discovered with breadth recon — single endpoint delivers both. Live: VNINDEX 2026-06-16 accumulatedVal=16,650,836,352,800 (~16,651 ty dong mid-session). Convert: /1e9. Prior-session delta via size=2 query.",
+      "endpoint": "https://api-finfo.vndirect.com.vn/v4/vnmarket_prices?sort=date&q=code:VNINDEX&size=2&page=1",
+      "anti_bot": "none",
+      "turnover_fields": ["accumulatedVal", "nmValue", "ptValue", "accumulatedVol", "nmVolume", "ptVolume", "valChgPctCr1d"]
+    }
+  ]
+}

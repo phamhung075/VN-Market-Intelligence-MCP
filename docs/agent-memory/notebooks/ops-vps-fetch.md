@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-16 12:40 UTC | **Sprint:** FIX-BCTC-VPS-PIPELINE-STALE-5D (root isolation probe)
+**Last updated:** 2026-06-16 19:00 UTC | **Sprint:** FIX-FOREIGN-FLOW-INTEGRITY-BREAK + FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL (triple recon)
 
 ---
 
@@ -58,6 +58,41 @@ VPS fetches 111 codes from live watchlist → API returns 105 → jq filter (buy
 **Fix-2 (dead code):** Remove `fetchPrimaryVpsEndpoint` — push model is the only live path.
 
 Recon: `docs/handoffs/AUDIT-FC-FOREIGN-FLOW-recon.md`
+
+---
+
+## c017 · 2026-06-16T19:00Z · TRIPLE RECON — FIX-FOREIGN-FLOW-INTEGRITY-BREAK + FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL
+
+Trigger: Three orch-state READY tasks (same VnDirect/bgapidatafeed upstream family). Probed in one session via SSH root@125.212.251.27.
+
+**TASK 1 — FIX-FOREIGN-FLOW-INTEGRITY-BREAK (P0)**
+
+Root cause confirmed via live DB + code trace. TWO WRITERS into `vnstock_trading_stats` with incompatible semantics:
+- Writer A (VPS bgapidatafeed push): writes daily-delta `foreign_volume` (buy−sell net) and `foreign_room` (remaining buy room in shares ~210M for HPG). Does NOT write `current_holding_ratio`.
+- Writer B (vnstock Python VCI via `syncVnstockData` → `storeTradingStats`): uses `INSERT OR REPLACE` (full-row overwrite) writing `foreignVolume = foreigner_pct × total_shares` (CUMULATIVE ~1.81B for HPG) and `foreignRoom = free_float` (CUMULATIVE ~4.64B). Also writes `current_holding_ratio = 0.2146` (21.46% foreigner_percentage from VCI).
+- Regime break ~06-13: Writer B first fired on that date and overwrote Writer A's daily-delta rows. `storeTradingStats` wins as last-writer due to INSERT OR REPLACE timing.
+- Daily_ohlcv (Writer A only) shows correct values: HPG buy=635560 sell=120570 net=514990 for 06-16. The column mislabeled "Net Vol (daily)" in vnstock_trading_stats is actually cumulative holding.
+- bgapidatafeed probe: fBVol=635560, fSVolume=120570, fRoom=210082728.80 (confirmed current; NOT 4643M). holding_ratio absent from bgapidatafeed payload.
+- fBValue + fSValue confirmed present in bgapidatafeed but not currently extracted.
+
+Fix owner: dev-mcp-server — `storeTradingStats()` must use ON CONFLICT DO UPDATE SET excluding foreign_volume and foreign_room from Writer B's update clause.
+
+Recon: `docs/handoffs/FIX-FOREIGN-FLOW-INTEGRITY-BREAK-recon.md`
+
+**TASK 2 — FIX-MARKET-BREADTH-MISSING (HIGH)**
+
+FOUND: `https://api-finfo.vndirect.com.vn/v4/vnmarket_prices?sort=date&q=code:VNINDEX&size=1&page=1` (same endpoint as `fetchVnIndex()` in hose.ts) already carries `advances`, `declines`, `noChange`, `noTrade`, `ceilingStocks`, `floorStocks`. Live probe: advances=179, declines=109, noChange=74, noTrade=31 (2026-06-16 15:06 VN time). Zero extra network cost — extend existing fetchVnIndex() parse to include breadth fields.
+
+Recon: `docs/handoffs/FIX-MARKET-BREADTH-MISSING-recon.md`
+
+**TASK 3 — FIX-MARKET-LIQUIDITY-MISSING-TOOL (P1)**
+
+FOUND: Same vnmarket_prices endpoint also carries `accumulatedVal` (total turnover, VND), `nmValue` (ordermatch), `ptValue` (put-through). Live: accumulatedVal=16,650,836,352,800 VND (~16,651 tỷ đồng mid-session 06-16). Query size=2 for prior-session delta. Both breadth and turnover are co-implementable in one fetchVnIndex() extension pass.
+
+Recon: `docs/handoffs/FIX-MARKET-LIQUIDITY-MISSING-TOOL-recon.md`
+
+Signal: `docs/signals/dev-vps-crawls-2026-06-16T19-00-00Z.json`
+Next: dev-mcp-server for all three (Tasks 2+3 co-implement; Task 1 separate writer-isolation fix).
 
 ---
 
