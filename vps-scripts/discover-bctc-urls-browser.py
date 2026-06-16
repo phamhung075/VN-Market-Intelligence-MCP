@@ -113,6 +113,48 @@ def _http_post(url: str, data: Dict[str, str], referer: str, timeout: int = 15) 
         return resp.read().decode("utf-8", errors="replace")
 
 
+def _hnx_make_opener() -> urllib.request.OpenerDirector:
+    """
+    Build a urllib opener with a shared CookieJar for HNX session warmup.
+
+    FIX-HNX-SESSION-COOKIE: HNX POST endpoints (NextPageTinCPNY_CBTCPH,
+    NextPageTCPHUpCoM) return HTTP 302 → /Home/Error on stateless POSTs
+    (no prior GET).  A GET to the referrer URL plants the session cookie
+    (e.g. 616a3745ee…) which is then carried automatically by this opener
+    into the subsequent POST, returning HTTP 200 + results.
+    The CookieJar is shared across the GET → POST sequence for the lifetime
+    of one discovery call — no cross-call state leaks.
+    """
+    jar = http.cookiejar.CookieJar()
+    return urllib.request.build_opener(
+        urllib.request.HTTPCookieProcessor(jar),
+        urllib.request.HTTPSHandler(context=_SSL_CTX),
+    )
+
+
+def _hnx_opener_get(opener: urllib.request.OpenerDirector,
+                    url: str, timeout: int = 15) -> str:
+    """GET via HNX opener (carries cookie jar)."""
+    req = urllib.request.Request(url, headers=_BROWSER_HEADERS)
+    with opener.open(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", errors="replace")
+
+
+def _hnx_opener_post(opener: urllib.request.OpenerDirector,
+                     url: str, data: Dict[str, str],
+                     referer: str, timeout: int = 15) -> str:
+    """POST via HNX opener (carries cookie jar populated by prior GET)."""
+    encoded = urllib.parse.urlencode(data).encode("utf-8")
+    req = urllib.request.Request(url, data=encoded, headers={
+        **_BROWSER_HEADERS,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": referer,
+    })
+    with opener.open(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", errors="replace")
+
+
 # ---------------------------------------------------------------------------
 # Cover-letter / full-statement content discrimination
 # ---------------------------------------------------------------------------
@@ -421,20 +463,42 @@ def _discover_hnx_upcom(
     """
     Common HNX/UPCOM discovery using pAction=1 POST API.
 
+    FIX-HNX-SESSION-COOKIE: HNX POST endpoints return HTTP 302 → /Home/Error
+    when called without a prior session GET (Root B).  This function now
+    issues a session-warmup GET to the referrer URL first, using a shared
+    CookieJar opener, so the server's session cookie is planted before the
+    first POST.  All subsequent POSTs in this call carry that cookie via the
+    same opener.  No cross-call state — opener + jar are created fresh for
+    every discovery call.  No per-ticker, per-exchange, or per-date condition:
+    the warmup GET + opener reuse applies uniformly to all HNX and UPCOM calls.
+
     STRATEGY:
-    1. First attempt: Use server-side filtering with pFromDate/pToDate
-    2. If no results: Fall back to unfiltered query, client-side filter
+    1. Session warmup: GET referrer to plant session cookie (FIX-HNX-SESSION-COOKIE)
+    2. First attempt: Use server-side filtering with pFromDate/pToDate
+    3. If no results: Fall back to unfiltered query, client-side filter
     """
     from_date, to_date = _date_window(quarter, year)
-    code_lower = code.lower()
-    
+
+    # --- Session warmup (FIX-HNX-SESSION-COOKIE) ---
+    # Build a per-call opener with a shared CookieJar.  GET the referrer page
+    # so the server sets its session cookie, then reuse the same opener for
+    # all subsequent POSTs.  This is the same CookieJar pattern already used
+    # by the SSC discovery flow (_ssc_make_opener).
+    opener = _hnx_make_opener()
+    try:
+        _hnx_opener_get(opener, referer)
+        print(f"  [{source_label}] session warmup GET OK (referrer={referer})", file=sys.stderr)
+    except Exception as e:
+        print(f"  [{source_label}] session warmup GET failed: {e} — aborting", file=sys.stderr)
+        return None
+
     # ATTEMPT 1: Server-side filtering
     print(f"  [{source_label}] code={code} window={from_date}–{to_date}", file=sys.stderr)
 
     for page in range(1, max_pages + 1):
         print(f"  [{source_label}] page {page} (filtered)", file=sys.stderr)
         try:
-            html = _http_post(endpoint, {
+            html = _hnx_opener_post(opener, endpoint, {
                 "pNumPage": str(page),
                 "pAction": "1",              # Activates server-side filtering
                 "pNhomTin": "",              # 2026-05-13: empty string — FIN_REPORT wrapper no longer required
@@ -479,7 +543,7 @@ def _discover_hnx_upcom(
     # ATTEMPT 2: Unfiltered search with client-side filtering
     print(f"  [{source_label}] Fallback: unfiltered search for {code}", file=sys.stderr)
     try:
-        html = _http_post(endpoint, {
+        html = _hnx_opener_post(opener, endpoint, {
             "pNumPage": "1",
             "pAction": "1",
             "pNhomTin": "",  # 2026-05-13: empty
@@ -490,7 +554,7 @@ def _discover_hnx_upcom(
             "pOrderBy": "",
             "pNumRecord": "20",
         }, referer=referer)
-        
+
         if "funcShowFileAttach" in html:
             article_id = _parse_article_ids_and_titles(html, code, year, quarter)
             if article_id is not None:
@@ -694,7 +758,9 @@ def _ssc_parse_rows(body: str, code: str, year: int, quarter: str) -> List[tuple
             re.sub(r"<[^>]+>", "", m_c111.group(1) if m_c111 else "")
         ).strip()
 
-        # Extract report type (c3 — contains "Hợp nhất" for consolidated)
+        # Extract report type (c3 — contains "Hợp nhất" for consolidated,
+        # and for UPCOM/state filers carries the period info when c111 is empty,
+        # e.g. "Bao cao tai chinh quy 1/ 2026" for ACV-class filers).
         m_c3 = re.search(
             rf'id="pt9:t1:{idx}:c3"[^>]*>(.*?)</td>',
             decoded, re.DOTALL
@@ -702,6 +768,19 @@ def _ssc_parse_rows(body: str, code: str, year: int, quarter: str) -> List[tuple
         report_type = html_lib.unescape(
             re.sub(r"<[^>]+>", "", m_c3.group(1) if m_c3 else "")
         ).strip()
+
+        # FIX-SSC-C111-EMPTY-FALLBACK: for UPCOM/state-owned filers (e.g. ACV)
+        # the c111 document-summary cell is always empty — the period lives in c3
+        # instead (e.g. "Bao cao tai chinh quy 1/ 2026").  When c111 is empty,
+        # fall back to c3 for period matching so the row is not silently skipped.
+        # This is /goal#2 GENERIC: applies uniformly to any filer where c111 is
+        # empty regardless of ticker, exchange, or date — no per-ticker allowlist.
+        if not title and report_type:
+            title = report_type
+            print(
+                f"    idx={idx} c111 empty → c3 fallback title={title[:60]!r}",
+                file=sys.stderr,
+            )
 
         if not title:
             continue
@@ -792,8 +871,23 @@ def discover_from_ssc_curl(
     # Fix: match any 15-18 digit decimal number (Oracle ADF counter is epoch-derived,
     # prefix is not stable). Also fix winId: parse from the runLoopback() positional
     # args (8th arg) rather than a loose string scan that mismatched other tokens.
+    #
+    # CO-LOCATED HARDENING (Contract 4 sub-risk A — FIX-HNX-SESSION-COOKIE scope):
+    # The old fallback "27000000000000000" fabricated a fake loop counter when the
+    # regex failed, silently causing step2 to return the JS loopback page again
+    # instead of the ADF page.  /goal#1: honest empty beats a fabricated fallback.
+    # On regex miss → FAIL-LOUD (log + return None), do NOT substitute a magic
+    # constant.  The "ViewState not found" guard below is preserved and handles
+    # any step2 failure if a stale afr_loop somehow passes through.
     m_loop = re.search(r"(\d{15,18})", body1)
-    afr_loop = m_loop.group(1) if m_loop else "27000000000000000"
+    if not m_loop:
+        print(
+            "  [SSC-CURL] step1: afrLoop not found in loopback response "
+            "(regex r'\\d{15,18}' matched nothing) — failing loud, not using stale default",
+            file=sys.stderr,
+        )
+        return None
+    afr_loop = m_loop.group(1)
 
     m_win = re.search(
         r"runLoopback\(\s+11,\s+'_afrLoop',\s+'(\d+)',\s+'_afrWindowMode',"
