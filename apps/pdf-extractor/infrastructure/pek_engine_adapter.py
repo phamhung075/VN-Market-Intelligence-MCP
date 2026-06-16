@@ -210,6 +210,42 @@ class _PekLayoutModel:
 
 
 # ---------------------------------------------------------------------------
+# Fail-loud sentinel + helper (FIX-ERRAUDIT-W1-PEK-P0)
+# ---------------------------------------------------------------------------
+
+# Sentinel for PaddleOCR load failure — distinct from None (not wired).
+# Cached in _pek_models_cache["paddle_table"] when paddleocr fails to import/init.
+# Guards in _run_extraction check `is _PADDLE_LOAD_FAILED` to quarantine table units.
+_PADDLE_LOAD_FAILED: object = object()
+
+
+def fail_loud_or_tag_degraded(result: dict, status: str) -> dict:
+    """
+    Stamp a partial result dict as degraded.
+
+    Sets result["extraction_status"] = status
+         result["degraded"] = True
+         result["degraded_reason"] = status
+         for each unit in result.get("units", []):
+             unit["quarantined"] = True
+             unit["quarantine_reason"] = status
+
+    Returns the mutated result dict.
+
+    GENERIC: zero ticker / entity / date / allowlist hardcode.
+    The `status` label is chosen by the call site
+    (e.g. "layout-crash", "paddle-load-failure", "table-extraction-failure").
+    """
+    result["extraction_status"] = status
+    result["degraded"] = True
+    result["degraded_reason"] = status
+    for unit in result.get("units", []):
+        unit["quarantined"] = True
+        unit["quarantine_reason"] = status
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Model loading (called once, lazily)
 # ---------------------------------------------------------------------------
 
@@ -328,7 +364,7 @@ def _load_pek_models() -> Dict[str, Any]:
 
     # PaddleOCR PP-StructureV2 table mode (direct, NOT via PEK TableParsingTask).
     # This is the table extraction path per architect brief §2.1(a) R-CRIT-2.
-    paddle_table = None
+    paddle_table: Any = None  # None = not wired; _PADDLE_LOAD_FAILED = load failure
     try:
         from paddleocr import PaddleOCR  # type: ignore
         paddle_table = PaddleOCR(
@@ -341,10 +377,11 @@ def _load_pek_models() -> Dict[str, Any]:
         logger.info("PekEngineAdapter: PaddleOCR PP-StructureV2 table mode loaded (CPU)")
     except Exception as exc:
         logger.warning(
-            "PekEngineAdapter: PaddleOCR table mode load failed: %s — "
-            "table structure extraction disabled",
+            "PekEngineAdapter: PaddleOCR table mode load FAILED: %s — "
+            "table units will be quarantined (paddle_table=_PADDLE_LOAD_FAILED sentinel)",
             exc,
         )
+        paddle_table = _PADDLE_LOAD_FAILED  # sentinel — guards in _run_extraction check this
 
     # Final GPU-absence assertion
     assert "paddlepaddle_gpu" not in sys.modules, (
@@ -639,7 +676,7 @@ class PekEngineAdapter:
         # OCR backend (PaddleOcrBackend / AutoFallbackOcrBackend) if it has a
         # set_paddle_table() method. This deferred wiring is necessary because
         # the backend is constructed at composition-root time (before models load).
-        if self._ocr_backend is not None and paddle_table is not None:
+        if self._ocr_backend is not None and paddle_table is not None and paddle_table is not _PADDLE_LOAD_FAILED:
             if hasattr(self._ocr_backend, "set_paddle_table"):
                 self._ocr_backend.set_paddle_table(paddle_table)
 
@@ -667,10 +704,14 @@ class PekEngineAdapter:
                 )
             except Exception as exc:
                 logger.error(
-                    "PekEngineAdapter: layout detection failed: %s — "
-                    "using empty bbox fallback",
+                    "PekEngineAdapter: layout detection FAILED (layout_task is not None) — "
+                    "raising to prevent silent 0-row extraction: %s",
                     exc,
                 )
+                raise RuntimeError(
+                    f"PekEngineAdapter: DocLayout-YOLO layout detection failed for "
+                    f"report_id={report_id} pdf_path={pdf_path}: {exc}"
+                ) from exc
         else:
             logger.warning(
                 "PekEngineAdapter: layout_task unavailable — "
@@ -714,7 +755,18 @@ class PekEngineAdapter:
         # Step 3: Table extraction via PaddleOCR PP-StructureV2
         # ------------------------------------------------------------------
         table_cells_by_page: Dict[int, Dict[int, List[Dict]]] = {}
-        if paddle_table is not None:
+        _table_units_degraded: bool = False  # flag propagated into Step 5 unit assembly
+        _table_degraded_reason: str = ""
+
+        if paddle_table is _PADDLE_LOAD_FAILED:
+            # FR-B2: load-failure path — quarantine all table units in Step 5
+            logger.warning(
+                "PekEngineAdapter: paddle_table is _PADDLE_LOAD_FAILED sentinel — "
+                "table structure extraction unavailable; table units will be quarantined"
+            )
+            _table_units_degraded = True
+            _table_degraded_reason = "paddle-load-failure"
+        elif paddle_table is not None:
             try:
                 table_cells_by_page = self._run_table_extraction(
                     paddle_table=paddle_table,
@@ -727,9 +779,16 @@ class PekEngineAdapter:
                     len(table_cells_by_page),
                 )
             except Exception as exc:
+                # FR-B3: runtime table extraction failure — quarantine all table units in Step 5
                 logger.warning(
-                    "PekEngineAdapter: table extraction failed: %s", exc
+                    "PekEngineAdapter: table extraction FAILED at runtime: %s — "
+                    "table units will be quarantined",
+                    exc,
                 )
+                _table_units_degraded = True
+                _table_degraded_reason = "table-extraction-failure"
+        # else: paddle_table is None — not wired (no PaddleOCR configured), not a crash.
+        # No quarantine on the None path (EC-2 analogue for the table side).
 
         # ------------------------------------------------------------------
         # Step 4: Map bboxes → LF-OVERLAY page_zones contract
@@ -804,23 +863,39 @@ class PekEngineAdapter:
                 continue
 
             # Table unit — assemble stitched markdown from PaddleOCR table cells.
-            stitched_md = self._assemble_unit_markdown(
-                pages_in_unit=pages_in_unit,
-                table_cells_by_page=table_cells_by_page,
-                page_zones_output=page_zones_output,
-            )
-            row_count = sum(1 for line in stitched_md.split("\n") if line.strip().startswith("|") and "---" not in line)
-            units_output.append({
-                "unit_id": unit_id,
-                "stitched_markdown": stitched_md,
-                "row_count": row_count,
-                "quarantined": False,
-                "quarantine_reason": None,
-                "page_row_spans": [
-                    {"page": p, "row_start": 0, "row_end": 0}
-                    for p in pages_in_unit
-                ],
-            })
+            if _table_units_degraded:
+                # FR-B2/B3: paddle load failure or runtime crash — quarantine this table unit.
+                # Do NOT assemble stitched_markdown from empty table_cells_by_page — that would
+                # produce a clean 0-row pass (the exact masking bug we are fixing).
+                units_output.append({
+                    "unit_id": unit_id,
+                    "stitched_markdown": "",
+                    "row_count": 0,
+                    "quarantined": True,
+                    "quarantine_reason": _table_degraded_reason,
+                    "page_row_spans": [
+                        {"page": p, "row_start": 0, "row_end": 0}
+                        for p in pages_in_unit
+                    ],
+                })
+            else:
+                stitched_md = self._assemble_unit_markdown(
+                    pages_in_unit=pages_in_unit,
+                    table_cells_by_page=table_cells_by_page,
+                    page_zones_output=page_zones_output,
+                )
+                row_count = sum(1 for line in stitched_md.split("\n") if line.strip().startswith("|") and "---" not in line)
+                units_output.append({
+                    "unit_id": unit_id,
+                    "stitched_markdown": stitched_md,
+                    "row_count": row_count,
+                    "quarantined": False,
+                    "quarantine_reason": None,
+                    "page_row_spans": [
+                        {"page": p, "row_start": 0, "row_end": 0}
+                        for p in pages_in_unit
+                    ],
+                })
 
         pass_rate_report = {
             "units_total": len(units_output),

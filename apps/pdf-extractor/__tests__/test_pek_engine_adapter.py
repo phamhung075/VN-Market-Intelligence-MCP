@@ -1172,3 +1172,368 @@ class TestFailLoudAndTimeout:
             "A 46-page CPU PaddleOCR run takes ~20 minutes; "
             "shorter timeout kills normal runs (cycle2 regression)."
         )
+
+
+# ---------------------------------------------------------------------------
+# FIX-ERRAUDIT-W1-PEK-P0 — fail-loud / quarantine tests (AC-1 through AC-5)
+# ---------------------------------------------------------------------------
+
+
+def _make_layout_result_with_table() -> list:
+    """
+    Return a fake layout result: 1 page with 1 table bbox (label=5).
+    Used by AC-2, AC-2b, AC-4.
+    """
+    from infrastructure.pek_engine_adapter import _LAYOUT_CLASS_TABLE
+    return [[
+        {
+            "page": 1,
+            "bboxes": [{"label": _LAYOUT_CLASS_TABLE, "bbox": [50, 100, 500, 800], "score": 0.9}],
+            "width": 595,
+            "height": 842,
+        }
+    ]]
+
+
+def _make_layout_result_prose_only() -> list:
+    """
+    Return a fake layout result: 2 pages with ONLY prose bboxes (no table).
+    Used by AC-3.
+    """
+    from infrastructure.pek_engine_adapter import _LAYOUT_CLASS_PLAIN_TEXT
+    return [[
+        {
+            "page": 1,
+            "bboxes": [{"label": _LAYOUT_CLASS_PLAIN_TEXT, "bbox": [50, 100, 500, 400], "score": 0.92}],
+            "width": 595,
+            "height": 842,
+        },
+        {
+            "page": 2,
+            "bboxes": [{"label": _LAYOUT_CLASS_PLAIN_TEXT, "bbox": [50, 100, 500, 400], "score": 0.88}],
+            "width": 595,
+            "height": 842,
+        },
+    ]]
+
+
+def _run_extraction_directly(adapter_instance, fake_models: dict, **kwargs) -> Any:
+    """
+    Call _run_extraction directly (without the ThreadPoolExecutor wrapper)
+    after injecting fake_models into _pek_models_cache.
+
+    This avoids cross-test contamination from other tests that reset
+    _pek_models_cache = None in their own setup/teardown, which can race
+    with the executor thread under random test ordering.
+
+    Uses the function's __globals__ dict (not sys.modules) to set the cache.
+    This is critical because test_extraction_timeout_reads_from_env pops and
+    reimports the module — creating two module namespaces simultaneously. The
+    _run_extraction method always reads from its own __globals__ (the original
+    module namespace), regardless of what sys.modules["infrastructure.pek_engine_adapter"]
+    currently points to.
+    """
+    # Get the globals dict that _run_extraction actually uses at runtime.
+    # This is the module namespace the function was compiled against.
+    # type()._run_extraction is an unbound function in Python 3 — use __globals__ directly.
+    func_globals = type(adapter_instance)._run_extraction.__globals__
+
+    original_cache = func_globals.get("_pek_models_cache")
+    func_globals["_pek_models_cache"] = fake_models
+    try:
+        return adapter_instance._run_extraction(**kwargs)
+    finally:
+        func_globals["_pek_models_cache"] = original_cache
+
+
+class TestFailLoudAndQuarantine:
+    """
+    FIX-ERRAUDIT-W1-PEK-P0 — crash→tagged-marker tests.
+
+    AC-1: Site A layout-detection crash → exception propagates, no silent 0-row.
+    AC-2: Site B paddle load failure (sentinel) → table units quarantined.
+    AC-2b: Site B runtime table extraction failure → table units quarantined.
+    AC-3: False-positive guard — table-less PDF with healthy models → quarantined=False.
+    AC-4: Happy path table PDF + healthy models → quarantined=False, no regression.
+    AC-5: Helper generic — no ticker/entity/date/allowlist hardcode.
+
+    All tests call _run_extraction directly (single-threaded) to avoid race
+    conditions with cross-test _pek_models_cache manipulation under random ordering.
+    """
+
+    def test_ac1_layout_crash_propagates_exception(self):
+        """
+        AC-1: When _run_layout_detection raises, _run_extraction must propagate
+        the exception — NOT return silently with 0-row result.
+        EC-1 is preserved: raise fires only on a thrown exception.
+        """
+        from infrastructure.pek_engine_adapter import PekEngineAdapter
+
+        adapter = PekEngineAdapter()
+
+        mock_layout = MagicMock()
+        mock_layout.predict_pdfs.side_effect = RuntimeError("forced OOM")
+
+        fake_models = {"layout_task": mock_layout, "paddle_table": None}
+
+        with pytest.raises(RuntimeError):
+            _run_extraction_directly(
+                adapter, fake_models,
+                pdf_path="/fake/test.pdf",
+                report_id="ac1-test-report",
+            )
+
+    def test_ac2_paddle_load_failure_quarantines_table_units(self):
+        """
+        AC-2: When paddle_table is _PADDLE_LOAD_FAILED sentinel, all table units
+        must be quarantined with quarantine_reason="paddle-load-failure".
+        The result returns normally (no exception).
+        EC-1 is preserved: quarantine fires only because sentinel came from load exception.
+        """
+        from infrastructure.pek_engine_adapter import PekEngineAdapter, _PADDLE_LOAD_FAILED
+
+        adapter = PekEngineAdapter()
+
+        mock_layout = MagicMock()
+        mock_layout.predict_pdfs.return_value = _make_layout_result_with_table()
+
+        # paddle_table is the sentinel (simulating a load failure)
+        fake_models = {"layout_task": mock_layout, "paddle_table": _PADDLE_LOAD_FAILED}
+
+        result = _run_extraction_directly(
+            adapter, fake_models,
+            pdf_path="/fake/test.pdf",
+            report_id="ac2-test-report",
+        )
+
+        units = result["units"]
+        table_units = [u for u in units if u.get("quarantined")]
+        assert len(table_units) > 0, (
+            "Expected at least one quarantined table unit when paddle_table=_PADDLE_LOAD_FAILED"
+        )
+        for u in table_units:
+            assert u["quarantined"] is True
+            assert u["quarantine_reason"] == "paddle-load-failure", (
+                f"Expected quarantine_reason='paddle-load-failure', got {u['quarantine_reason']!r}"
+            )
+
+        pass_rate = result["pass_rate_report"]
+        assert pass_rate["units_quarantined"] > 0, (
+            "pass_rate_report.units_quarantined must be > 0 when paddle load failed"
+        )
+        assert pass_rate["units_passing"] < pass_rate["units_total"], (
+            "units_passing must be < units_total when table units are quarantined"
+        )
+
+    def test_ac2b_runtime_table_extraction_failure_quarantines_units(self):
+        """
+        AC-2b: When _run_table_extraction raises at runtime (paddle loaded OK but
+        crashes during extraction), all table units must be quarantined with
+        quarantine_reason="table-extraction-failure".
+        """
+        from infrastructure.pek_engine_adapter import PekEngineAdapter
+
+        adapter = PekEngineAdapter()
+
+        mock_layout = MagicMock()
+        mock_layout.predict_pdfs.return_value = _make_layout_result_with_table()
+
+        # paddle is a real (mock) model — NOT the sentinel
+        mock_paddle = MagicMock()
+        fake_models = {"layout_task": mock_layout, "paddle_table": mock_paddle}
+
+        with patch.object(adapter, "_run_table_extraction",
+                          side_effect=RuntimeError("CUDA OOM")):
+            result = _run_extraction_directly(
+                adapter, fake_models,
+                pdf_path="/fake/test.pdf",
+                report_id="ac2b-test-report",
+            )
+
+        units = result["units"]
+        quarantined = [u for u in units if u.get("quarantined")]
+        assert len(quarantined) > 0, (
+            "Expected at least one quarantined unit after runtime _run_table_extraction failure"
+        )
+        for u in quarantined:
+            assert u["quarantine_reason"] == "table-extraction-failure", (
+                f"Expected quarantine_reason='table-extraction-failure', got {u['quarantine_reason']!r}"
+            )
+
+        pass_rate = result["pass_rate_report"]
+        assert pass_rate["units_quarantined"] > 0
+
+    def test_ac3_table_less_pdf_not_quarantined(self):
+        """
+        AC-3 (false-positive guard): A PDF with only prose bboxes (no table class)
+        must NOT be quarantined. EC-1 invariant — quarantine fires only on exception,
+        never on a successful return of empty results.
+        """
+        from infrastructure.pek_engine_adapter import PekEngineAdapter
+
+        adapter = PekEngineAdapter()
+
+        mock_layout = MagicMock()
+        mock_layout.predict_pdfs.return_value = _make_layout_result_prose_only()
+
+        mock_paddle = MagicMock()
+        fake_models = {"layout_task": mock_layout, "paddle_table": mock_paddle}
+
+        result = _run_extraction_directly(
+            adapter, fake_models,
+            pdf_path="/fake/prose.pdf",
+            report_id="ac3-test-report",
+        )
+
+        units = result["units"]
+        assert len(units) > 0, "Expected at least one unit for a 2-page prose PDF"
+
+        for u in units:
+            assert u["quarantined"] is False, (
+                f"False-positive quarantine on prose unit: {u}"
+            )
+
+        pass_rate = result["pass_rate_report"]
+        assert pass_rate["units_quarantined"] == 0, (
+            "units_quarantined must be 0 for a table-less PDF with healthy models"
+        )
+        # Verify page_zones confirm prose pages (units_output doesn't carry page_type)
+        page_zones = result["page_zones"]
+        for zone in page_zones:
+            assert zone.get("page_type") in ("prose", "blank"), (
+                f"Unexpected page_type on table-less PDF: {zone.get('page_type')}"
+            )
+
+    def test_ac4_happy_path_table_pdf_no_quarantine(self):
+        """
+        AC-4 (regression guard): With healthy models and a table PDF, table units
+        must have quarantined=False and row_count >= 0. No exception raised.
+        """
+        from infrastructure.pek_engine_adapter import PekEngineAdapter
+
+        adapter = PekEngineAdapter()
+
+        mock_layout = MagicMock()
+        mock_layout.predict_pdfs.return_value = _make_layout_result_with_table()
+
+        # Mock _run_table_extraction to return some fake cells
+        fake_table_cells: Dict[int, Dict[int, List[Dict]]] = {
+            1: {
+                0: [
+                    {"text": "Revenue", "bbox": [50, 100, 200, 150], "confidence": 0.95},
+                    {"text": "1,000", "bbox": [210, 100, 350, 150], "confidence": 0.92},
+                ]
+            }
+        }
+
+        mock_paddle = MagicMock()
+        fake_models = {"layout_task": mock_layout, "paddle_table": mock_paddle}
+
+        with patch.object(adapter, "_run_table_extraction", return_value=fake_table_cells):
+            result = _run_extraction_directly(
+                adapter, fake_models,
+                pdf_path="/fake/table.pdf",
+                report_id="ac4-test-report",
+            )
+
+        units = result["units"]
+        assert len(units) > 0
+
+        for u in units:
+            assert u["quarantined"] is False, (
+                f"Regression: healthy extraction produced quarantined=True: {u}"
+            )
+            assert u["row_count"] >= 0
+
+        pass_rate = result["pass_rate_report"]
+        assert pass_rate["units_quarantined"] == 0, (
+            "Happy-path regression: units_quarantined must be 0 with healthy models"
+        )
+
+
+class TestAc5HelperGenericContract:
+    """
+    AC-5: fail_loud_or_tag_degraded helper — stamps correctly, zero hardcode.
+    """
+
+    def test_helper_stamps_degraded_fields(self):
+        """
+        AC-5a: Helper sets extraction_status, degraded, degraded_reason, and
+        quarantines all units in result["units"].
+        """
+        from infrastructure.pek_engine_adapter import fail_loud_or_tag_degraded
+
+        result = {
+            "units": [
+                {"quarantined": False, "quarantine_reason": None},
+                {"quarantined": False, "quarantine_reason": None},
+            ]
+        }
+        out = fail_loud_or_tag_degraded(result, "test-status")
+        assert out["degraded"] is True
+        assert out["degraded_reason"] == "test-status"
+        assert out["extraction_status"] == "test-status"
+        assert out["units"][0]["quarantined"] is True
+        assert out["units"][0]["quarantine_reason"] == "test-status"
+        assert out["units"][1]["quarantined"] is True
+        assert out["units"][1]["quarantine_reason"] == "test-status"
+
+    def test_helper_empty_units_list(self):
+        """AC-5: Helper works when result has no units (empty list)."""
+        from infrastructure.pek_engine_adapter import fail_loud_or_tag_degraded
+
+        result: dict = {}
+        out = fail_loud_or_tag_degraded(result, "layout-crash")
+        assert out["degraded"] is True
+        assert out["extraction_status"] == "layout-crash"
+
+    def test_helper_mutates_and_returns_same_dict(self):
+        """AC-5: Helper mutates in-place and returns the same object."""
+        from infrastructure.pek_engine_adapter import fail_loud_or_tag_degraded
+
+        result = {"units": []}
+        out = fail_loud_or_tag_degraded(result, "x")
+        assert out is result, "Helper must return the same dict object (mutate in-place)"
+
+    def test_helper_no_hardcode(self):
+        """
+        AC-5 (generic mandate): helper body must have ZERO ticker / entity / date /
+        allowlist hardcode in its executable code (docstrings are documentation, not code).
+        Grep the non-docstring executable lines for forbidden literals.
+        """
+        import inspect
+        import ast
+        from infrastructure.pek_engine_adapter import fail_loud_or_tag_degraded
+
+        src = inspect.getsource(fail_loud_or_tag_degraded)
+        # Strip docstring: parse AST and extract only lines that are not the docstring.
+        # The docstring may legitimately mention "allowlist" as a documentation term
+        # (e.g. "GENERIC: zero ticker / entity / date / allowlist hardcode").
+        # We check executable code lines only — not comments/docstrings.
+        tree = ast.parse(src)
+        func_def = tree.body[0]
+        # Collect line ranges of docstring nodes
+        docstring_lines: set = set()
+        if (func_def.body and isinstance(func_def.body[0], ast.Expr)
+                and isinstance(func_def.body[0].value, ast.Constant)
+                and isinstance(func_def.body[0].value.value, str)):
+            ds_node = func_def.body[0]
+            for ln in range(ds_node.lineno, ds_node.end_lineno + 1):
+                docstring_lines.add(ln)
+        # Build source with docstring lines removed (relative line numbers from parse)
+        src_lines = src.splitlines()
+        # func_def starts at line 1 in parsed src; adjust offsets
+        func_start = func_def.lineno  # always 1 for a standalone parse
+        executable_lines = [
+            line for i, line in enumerate(src_lines, start=func_start)
+            if i not in docstring_lines
+        ]
+        executable_src = "\n".join(executable_lines)
+
+        forbidden = ["VNM", "bctc", "BCTC", "2025", "2026", "allowlist", "ticker"]
+        for literal in forbidden:
+            assert literal not in executable_src, (
+                f"Forbidden literal {literal!r} found in fail_loud_or_tag_degraded "
+                f"executable code (non-docstring). "
+                "Helper must be GENERIC — zero ticker/entity/date/allowlist hardcode."
+            )
