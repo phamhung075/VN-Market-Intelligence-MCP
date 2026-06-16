@@ -27,7 +27,8 @@ export function initAlertsTables(db: Database): void {
       notified_telegram     INTEGER NOT NULL DEFAULT 0,
       resolved_at           TEXT,
       resolution_notes      TEXT,
-      sent_by               TEXT NOT NULL DEFAULT 'server'
+      sent_by               TEXT NOT NULL DEFAULT 'server',
+      fingerprint           TEXT
     );
 
     CREATE INDEX IF NOT EXISTS idx_alerts_triggered ON alerts(triggered_at);
@@ -49,14 +50,30 @@ export function initAlertsTables(db: Database): void {
     ["outcome_at",        "TEXT"],
     ["outcome_detail",    "TEXT"],
     // FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS: composite dedup key for scan jobs.
-    // UNIQUE enforced at DB level — INSERT OR IGNORE on duplicate fingerprint is
-    // a silent no-op, making the gate structurally unbypassable across parallel jobs.
-    ["fingerprint",       "TEXT UNIQUE"],
+    // SQLite forbids ALTER TABLE ADD COLUMN with UNIQUE — the statement throws
+    // and the bare catch{} swallows it, leaving the column absent on any real DB
+    // (PRAGMA table_info showed 18 cols, no fingerprint on the named-volume DB).
+    // Fix: ADD COLUMN with plain TEXT (legal on all SQLite versions), then enforce
+    // uniqueness via a partial index below (precedent: broker_sanctions block,
+    // lines 124-168, uses recreate-and-rename for a similar SQLite ADD CONSTRAINT
+    // limitation; partial index is simpler here because the column is brand-new
+    // and nullable, so no duplicate NULL collision risk with legacy rows).
+    ["fingerprint",       "TEXT"],
   ] as const) {
     try {
       db.exec(`ALTER TABLE alerts ADD COLUMN ${col} ${ddl}`);
     } catch {}
   }
+
+  // FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS: enforce uniqueness with a partial index.
+  // WHERE fingerprint IS NOT NULL ensures legacy rows with NULL fingerprint do not
+  // collide with each other. INSERT OR IGNORE in taAlertScanJob / bbAlertScanJob
+  // always binds a non-null fingerprint, so the dedup gate is structurally intact.
+  db.exec(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_alerts_fingerprint
+       ON alerts(fingerprint)
+      WHERE fingerprint IS NOT NULL`,
+  );
 
   // ── Custom Alert Rules (Task 219) ─────────────────────────────────────────
   db.exec(`

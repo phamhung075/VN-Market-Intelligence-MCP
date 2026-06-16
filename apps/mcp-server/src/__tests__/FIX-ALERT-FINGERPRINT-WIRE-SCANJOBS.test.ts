@@ -30,6 +30,7 @@ import type { ComputeTAResponse } from "../infrastructure/microservices/clients.
 import { computeScanAlertFingerprint } from "../domain/services/alertDedup.js";
 import { runTaAlertScan } from "../scheduler/market-data/taAlertScanJob.js";
 import { runBbAlertScan } from "../scheduler/alerts/bbAlertScanJob.js";
+import { initAlertsTables } from "../infrastructure/db/schema-alerts.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test DB DDL — must include fingerprint TEXT UNIQUE to match production schema
@@ -300,5 +301,118 @@ describe("FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS — dedup gate across scan jobs", 
     const fps = getFingerprintsFromDb(db).sort();
     expect(fps).toContain("scan:HVN:ta_overbought:2026-06-15");
     expect(fps).toContain("scan:HVN:ta_overbought:2026-06-16");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AC-7: FAULT-PATH — initAlertsTables migration on a legacy production-shaped DB
+//
+// This test catches the class of self-confirming gap that let 125 tests stay
+// green while the fingerprint column was absent on the live named-volume DB:
+// the test suite built the alerts table WITH fingerprint TEXT UNIQUE directly,
+// so initAlertsTables was never exercised on a DB missing the column.
+//
+// The test simulates a real production DB: CREATE TABLE without fingerprint +
+// some NULL-fingerprint legacy rows already in place. It then calls
+// initAlertsTables (the actual migration path), and verifies all four assertions:
+//   (a) fingerprint column exists post-migration
+//   (b) idx_alerts_fingerprint partial unique index exists
+//   (c) two INSERT OR IGNORE with the same fingerprint yield exactly 1 row
+//   (d) pre-existing NULL-fingerprint legacy rows survive without collision
+// ─────────────────────────────────────────────────────────────────────────────
+describe("FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS — AC-7: legacy-DB migration fault path", () => {
+  it("AC-7: initAlertsTables migrates a legacy alerts table (no fingerprint column) correctly", () => {
+    // Build a DB that mirrors the production-shaped alerts table BEFORE the fix:
+    // 18 columns, no fingerprint, no fingerprint index. Do NOT pre-create the column.
+    const legacyDb = new Database(":memory:");
+    legacyDb.exec(`
+      CREATE TABLE alerts (
+        id                    TEXT PRIMARY KEY,
+        triggered_at          TEXT NOT NULL,
+        severity              TEXT NOT NULL,
+        signals_json          TEXT,
+        affected_actions_json TEXT,
+        analysis_ids_json     TEXT,
+        message               TEXT,
+        read                  INTEGER NOT NULL DEFAULT 0,
+        user_note             TEXT,
+        notified_telegram     INTEGER NOT NULL DEFAULT 0,
+        resolved_at           TEXT,
+        resolution_notes      TEXT,
+        sent_by               TEXT NOT NULL DEFAULT 'server',
+        confidence_score      REAL,
+        validated_at          TEXT,
+        outcome               TEXT,
+        outcome_at            TEXT,
+        outcome_detail        TEXT
+      )
+    `);
+
+    // Seed two legacy rows with NULL fingerprint (simulates pre-fix production rows).
+    legacyDb.exec(`
+      INSERT INTO alerts (id, triggered_at, severity, message, read, notified_telegram, sent_by)
+      VALUES
+        ('legacy-row-1', '2026-06-10T02:00:00Z', 'warning', 'legacy alert 1', 0, 0, 'server'),
+        ('legacy-row-2', '2026-06-11T02:00:00Z', 'warning', 'legacy alert 2', 0, 0, 'server')
+    `);
+
+    // Verify pre-migration state: no fingerprint column present
+    const preColNames = (legacyDb.query(`PRAGMA table_info(alerts)`).all() as { name: string }[])
+      .map((r) => r.name);
+    expect(preColNames).not.toContain("fingerprint");
+
+    // Run the actual migration
+    initAlertsTables(legacyDb);
+
+    // (a) fingerprint column now exists
+    const postColNames = (legacyDb.query(`PRAGMA table_info(alerts)`).all() as { name: string }[])
+      .map((r) => r.name);
+    expect(postColNames).toContain("fingerprint");
+
+    // (b) idx_alerts_fingerprint partial unique index exists
+    const idx = legacyDb
+      .query<{ name: string }, []>(
+        `SELECT name FROM sqlite_master
+          WHERE type='index' AND name='idx_alerts_fingerprint'`,
+      )
+      .get();
+    expect(idx).not.toBeNull();
+    expect(idx?.name).toBe("idx_alerts_fingerprint");
+
+    // (c) two INSERT OR IGNORE with the same fingerprint → exactly 1 new row
+    const fp = "scan:VCB:ta_overbought:2026-06-16";
+    legacyDb.exec(
+      `INSERT OR IGNORE INTO alerts
+         (id, triggered_at, severity, message, read, notified_telegram, sent_by, fingerprint)
+       VALUES
+         ('new-row-1', '2026-06-16T02:00:00Z', 'warning', 'RSI alert', 0, 0, 'server', '${fp}')`,
+    );
+    legacyDb.exec(
+      `INSERT OR IGNORE INTO alerts
+         (id, triggered_at, severity, message, read, notified_telegram, sent_by, fingerprint)
+       VALUES
+         ('new-row-2', '2026-06-16T02:05:00Z', 'warning', 'RSI alert dup', 0, 0, 'server', '${fp}')`,
+    );
+    const dedupCount = (
+      legacyDb
+        .query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM alerts WHERE fingerprint = '${fp}'`)
+        .get()
+    )?.cnt ?? 0;
+    expect(dedupCount).toBe(1);
+
+    // (d) pre-existing NULL-fingerprint legacy rows survive — no collision
+    const totalCount = (
+      legacyDb.query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM alerts`).get()
+    )?.cnt ?? 0;
+    // 2 legacy rows + 1 deduped new row = 3
+    expect(totalCount).toBe(3);
+    const nullFpCount = (
+      legacyDb
+        .query<{ cnt: number }, []>(`SELECT COUNT(*) AS cnt FROM alerts WHERE fingerprint IS NULL`)
+        .get()
+    )?.cnt ?? 0;
+    expect(nullFpCount).toBe(2);
+
+    legacyDb.close();
   });
 });
