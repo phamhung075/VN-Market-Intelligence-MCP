@@ -69,6 +69,7 @@ import urllib.parse
 import urllib.error
 import ssl
 import http.cookiejar
+import time
 from typing import Optional, Dict, Any, List
 
 # ---------------------------------------------------------------------------
@@ -93,6 +94,40 @@ _BOT_HEADERS = {
     "User-Agent": "VN-Market-Intelligence/1.0",
     "Accept": "text/html,application/xhtml+xml",
 }
+
+
+def _is_transient_error(exc: Exception) -> bool:
+    """
+    Return True when exc is a transient network/server fault worth retrying.
+
+    Transient class (retry):
+      - urllib.error.HTTPError with HTTP 5xx status (server-side fault, e.g. 503)
+      - urllib.error.URLError whose .reason indicates a connection reset or timeout
+        (e.g. ConnectionResetError, TimeoutError, socket.timeout)
+
+    Terminal class (do NOT retry):
+      - urllib.error.HTTPError with any 4xx status (404 = endpoint absent, 403 = blocked)
+      - Clean 200 response — not an exception at all; caller handles via parse result
+      - Any non-HTTP exception type not listed above (unknown, fail-loud)
+
+    Design goal /goal#2: generic — no per-ticker or per-exchange branching.
+    """
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code >= 500
+    if isinstance(exc, urllib.error.URLError):
+        # reason is often another exception (ConnectionResetError, TimeoutError, etc.)
+        reason = exc.reason
+        if isinstance(reason, (TimeoutError, ConnectionResetError, ConnectionRefusedError)):
+            return True
+        # socket.timeout arrives as an OSError sub-class; match by name for robustness
+        if hasattr(reason, "__class__") and reason.__class__.__name__ in (
+            "timeout", "socket.timeout"
+        ):
+            return True
+        # urllib wraps socket.timeout as URLError with string reason "timed out"
+        if isinstance(reason, str) and "timed out" in reason.lower():
+            return True
+    return False
 
 
 def _http_get(url: str, headers: Dict[str, str], timeout: int = 15) -> str:
@@ -850,13 +885,49 @@ def discover_from_ssc_curl(
 
     # ------------------------------------------------------------------
     # Step 1 — GET loopback → JSESSIONID + _afrLoop + Adf-Window-Id
+    #
+    # FIX-BCTC-SSC-503-RETRY: SSC has a ~12:00Z UTC scheduled maintenance
+    # window (identified by ops-vps-fetch recon 2026-06-16).  A single 503
+    # during this window previously caused the ENTIRE 6h cycle to skip ALL
+    # tickers.  Fix: retry once with a 60s backoff on any transient error
+    # (5xx, connection-reset, timeout — see _is_transient_error).
+    #
+    # Terminal errors (4xx, unknown) bypass the retry and return None
+    # immediately — same behaviour as before.  A clean 200 is not an error,
+    # so it never enters this retry path; the "0-results / non-filing" branch
+    # is downstream in _ssc_parse_rows and is unchanged.
+    #
+    # Constraints: 1 retry × 60s backoff only (bounded; does NOT itself blow
+    # the 6h cycle budget). Generic: applies to every ticker and every
+    # exchange — no per-ticker/per-exchange special casing.
     # ------------------------------------------------------------------
-    try:
-        body1_bytes = _ssc_get(opener, SSC_SEARCH_URL)
-        body1 = body1_bytes.decode("utf-8", errors="replace")
-    except Exception as exc:
-        print(f"  [SSC-CURL] step1 GET error: {exc}", file=sys.stderr)
+    _SSC_STEP1_RETRY_WAIT = 60  # seconds; 1 retry only
+    body1_bytes: bytes = b""
+    for _attempt in range(2):  # attempt 0 = first try, attempt 1 = single retry
+        try:
+            body1_bytes = _ssc_get(opener, SSC_SEARCH_URL)
+            break  # success — exit retry loop
+        except Exception as exc:
+            if _attempt == 0 and _is_transient_error(exc):
+                print(
+                    f"  [SSC-CURL] step1 GET transient error (attempt {_attempt}): {exc} "
+                    f"— retrying in {_SSC_STEP1_RETRY_WAIT}s",
+                    file=sys.stderr,
+                )
+                time.sleep(_SSC_STEP1_RETRY_WAIT)
+                # Rebuild opener so cookies from the failed attempt don't poison retry
+                opener = _ssc_make_opener()
+                continue
+            # Terminal error (4xx, unknown) OR second attempt failed → fail loud
+            print(
+                f"  [SSC-CURL] step1 GET error (attempt {_attempt}, terminal or retry exhausted): {exc}",
+                file=sys.stderr,
+            )
+            return None
+    if not body1_bytes:
+        print("  [SSC-CURL] step1: empty response after retry", file=sys.stderr)
         return None
+    body1 = body1_bytes.decode("utf-8", errors="replace")
 
     jsessionid = _ssc_get_jsessionid(opener)
     if not jsessionid:
