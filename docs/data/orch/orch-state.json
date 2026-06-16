@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T11:03:11Z",
+  "_updated_at": "2026-06-16T11:39:23Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -126,13 +126,14 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-16T11:03:11Z",
+    "status": "in_progress",
+    "updated_at": "2026-06-16T11:39:23Z",
     "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
+    "active_task_id": "FIX-BCTC-ZERO-URL-ALERT",
+    "next_agent": "dev-mcp-server",
     "rebuild_required": false,
-    "note": "ROUTER 2026-06-16T11:03:11Z — BCTC C4 paired P1 PROMOTED review->done_verified on live VPS gate GREEN. Router-run RAW (NOT relayed): shasum local==VPS==7f2d30cd; Gate A SHB '[HNX] session warmup GET OK' + real HNX PDF; Gate C ACV 15x c111->c3 fallback + real PDF; Gate D magic '27000000000000000' count=0 both runs. Surgical single-file VPS deploy (no peer disruption). Head idle (non-dispatching) -> next tick Step 1 triage. Remaining review[]: FIX-BCTC-ENRICH-SILENT-0ROWS (C3 prod-wiring gate), FIX-ALERT-ENGINE-RSI-SINGLEDIGIT, FIX-ALERT-ORPHAN-CORRELATION. PUSH held (PO out-of-band; branch ahead/behind divergence). Active coding lane=0."
+    "next_action": "Implement BOTH BCTC pipeline-durability FIXes in apps/mcp-server/ per docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md: (1) FIX-BCTC-ZERO-URL-ALERT Contract 1 consecutive-zero-URL counter + earnings-guarded BUG alert in bctcQueueEnricherJob; (2) FIX-BCTC-FRESHNESS-GATE Contract 2 active last_success_age freshness in vpsHealthPoller DEFAULT_FRESHNESS_CONFIGS. RAW-verify the ALERT path and the STALE path, not steady-state green. Generic across all tickers (/goal#2). Then -> review with rebuild_required.",
+    "note": "ROUTER 2026-06-16T11:39:23Z — dev-team tick: PO BATCH dispatched. FIX-BCTC-ZERO-URL-ALERT (Contract 1) + FIX-BCTC-FRESHNESS-GATE (Contract 2) -> dev-mcp-server (zone apps/mcp-server/, both S, brief 2026-06-16-bctc-pipeline-durability.md). One agent, both sequential (no same-zone concurrent race). WIP=2/2 coding lanes. rebuild pending post-fix. C4 paired P1 (HNX+SSC) NOT re-triaged (owes live re-probe). PUSH held (PO out-of-band)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -710,7 +711,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T11:03:11Z",
+    "_updated_at": "2026-06-16T11:39:23Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -18920,6 +18921,70 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
+      },
+      {
+        "id": "FIX-BCTC-ZERO-URL-ALERT",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "route_to": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "mode": "code",
+        "size": "S",
+        "title": "Zero-URL alerting gate: alert when discovery returns 0 URLs for ALL tickers for 2+ consecutive cycles — would have caught this 34h earlier",
+        "desc": "Router-added durable gate. bctcQueueEnricherJob silently returns 0 URLs for ALL tickers when discovery is broken (afrLoop rollover did exactly this for 339 consecutive enricher runs in the prior recurrence). Add an alert when urlsPopulated=0 for ALL tickers for 2+ consecutive cycles during an active earnings window. Owner dev-mcp-server. Ties to the durable root: 'no active zero-result alerting' is the shared cause across discovery-brittleness + enrich-silent-0 + no-freshness-gate.",
+        "generic_mandate": "/goal#2: GENERIC — aggregate counter / MAX(last_attempt) keyed, no ticker/date/exchange literal (brief Contract 1/2 invariant).",
+        "baseline_pass": "Inject a forced 0-URL-all-tickers condition for 2 cycles -> an alert fires (RAW-verify the alert path, not a green steady-state test); normal partial-result cycles do NOT alert.",
+        "source": "OPS-BCTC-PIPELINE-RECON router-added; recon.md Durable Fix Owners; memory passive_health_masks_dead_data",
+        "created_at": "2026-06-15T17:19:55Z",
+        "dispatch_note": "P2 — dev-mcp-server. Detection gate (would have caught the 34h outage early). Pairs with FIX-BCTC-FRESHNESS-GATE under the ARCH-BCTC-PIPELINE-DURABILITY umbrella (shared 'no active zero-result/freshness alerting' root).",
+        "held_on": "2026-06-16T10:45:36Z",
+        "held_by": "po",
+        "hold_reason": "queued behind WIP — P1s dispatched first. Design-ungated (brief landed, contract+spec+files stamped) but held to honor WIP<=2 coding lanes: the dev-vps-crawls P1 pair is the active BCTC coding lane this tick. Promote to the router on the next dispatch tick once a coding lane frees (route_to=dev-mcp-server, both apps/mcp-server/).",
+        "design_ungated_at": "2026-06-16T10:45:36Z",
+        "design_ungated_by": "po",
+        "gated_brief": "docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md",
+        "contract": "C1 (durable zero-result / freshness alerting)",
+        "brief_files": [
+          "apps/mcp-server/src/interface/scheduler/bctcQueueEnricherJob.ts"
+        ],
+        "fix_spec": "Persist a consecutive-zero-URL cycle counter in SQLite (bctc_health_state OR existing KV table — dev decides). Increment when urlsPopulated=0 AND itemsProcessed>0; reset to 0 on any urlsPopulated>0; do NOT count itemsProcessed=0 (empty queue = legit idle). When counter>=2 during an active earnings window (>=1 queue row status IN ('pending','url_not_found')) fire ONE send_telegram(channel='bug'); dedup at most once/6h via last_alerted_at; re-arm only after urlsPopulated>0 then zero again. AGGREGATE across all tickers (partial success resets).",
+        "wip_deferred": true,
+        "owner_agent": "dev-mcp-server",
+        "dispatched_ts": "2026-06-16T11:39:23Z",
+        "dispatched_by": "dev-team"
+      },
+      {
+        "id": "FIX-BCTC-FRESHNESS-GATE",
+        "type": "FIX",
+        "priority": "P2",
+        "status": "IN_PROGRESS",
+        "route_to": "dev-mcp-server",
+        "zone": "apps/mcp-server/",
+        "mode": "code",
+        "size": "S",
+        "title": "Active freshness health gate: gate BCTC health on max(last_success_age), NOT service liveness (liveness != freshness hid this for 34h)",
+        "desc": "Router-added durable gate. vpsHealthPoller.ts marks vn-bctc-fetch passive=true (always healthy on TCP ping) regardless of data-push age (vpsHealthPoller.ts:169). This liveness!=freshness conflation hid BOTH the 5-day prior stall AND this 34h recurrence. Replace the passive health for vn-bctc-fetch with an ACTIVE freshness query on bctc_vps_queue (max(last_attempt) WHERE status=done; stale if >24h during earnings window). Owner dev-mcp-server. Ties to memory passive_health_masks_dead_data.",
+        "generic_mandate": "/goal#2: GENERIC — aggregate counter / MAX(last_attempt) keyed, no ticker/date/exchange literal (brief Contract 1/2 invariant).",
+        "baseline_pass": "Force last_success_age > threshold with a non-empty queue -> health reports UNHEALTHY/stale (RAW-verify the stale path, NOT just a fresh-state green); a fresh push -> healthy.",
+        "source": "OPS-BCTC-PIPELINE-RECON router-added; FIX-BCTC-VPS-PIPELINE-STALE-5D handoff item (1); memory passive_health_masks_dead_data",
+        "created_at": "2026-06-15T17:19:55Z",
+        "dispatch_note": "P2 — dev-mcp-server. vpsHealthPoller.ts vn-bctc-fetch passive=true -> active max(last_success_age) gate. Pairs with FIX-BCTC-ZERO-URL-ALERT under ARCH-BCTC-PIPELINE-DURABILITY.",
+        "held_on": "2026-06-16T10:45:36Z",
+        "held_by": "po",
+        "hold_reason": "queued behind WIP — P1s dispatched first. Design-ungated (brief landed, contract+spec+files stamped) but held to honor WIP<=2 coding lanes: the dev-vps-crawls P1 pair is the active BCTC coding lane this tick. Promote to the router on the next dispatch tick once a coding lane frees (route_to=dev-mcp-server, both apps/mcp-server/).",
+        "design_ungated_at": "2026-06-16T10:45:36Z",
+        "design_ungated_by": "po",
+        "gated_brief": "docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md",
+        "contract": "C2 (freshness health gate — last_success_age not passive liveness)",
+        "brief_files": [
+          "apps/mcp-server/src/domain/services/vpsHealthPoller.ts"
+        ],
+        "fix_spec": "Replace passive:true for vn-bctc-fetch in DEFAULT_FRESHNESS_CONFIGS with active latestTimestampSql = SELECT MAX(last_attempt) FROM bctc_vps_queue WHERE status='done', maxAgeMs=24h. Add additive non-breaking earnings-window guard (earningsWindowOnly?/queueGuardSql? on FreshnessConfig): if queue COUNT(*) WHERE status IN ('pending','url_not_found','enrich_failed')=0 AND no 'done' rows in last 7d -> return 'idle' not 'unhealthy'. RF-1: guard must read BOTH done (freshness) AND pending/url_not_found (active queue) to tell off-season from wiped-queue.",
+        "wip_deferred": true,
+        "owner_agent": "dev-mcp-server",
+        "dispatched_ts": "2026-06-16T11:39:23Z",
+        "dispatched_by": "dev-team"
       }
     ],
     "ready": [
@@ -18976,64 +19041,6 @@
         "held_on": "2026-06-16T10:31:48Z",
         "held_by": "po",
         "hold_reason": "shared-root HOLD (Root C): Step-0-GW sibling-success corroboration gate — pairs with Root B's concurrency model; needs design/BA pass. Not dispatched (no dev-ready spec)."
-      },
-      {
-        "id": "FIX-BCTC-ZERO-URL-ALERT",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "READY",
-        "route_to": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "mode": "code",
-        "size": "S",
-        "title": "Zero-URL alerting gate: alert when discovery returns 0 URLs for ALL tickers for 2+ consecutive cycles — would have caught this 34h earlier",
-        "desc": "Router-added durable gate. bctcQueueEnricherJob silently returns 0 URLs for ALL tickers when discovery is broken (afrLoop rollover did exactly this for 339 consecutive enricher runs in the prior recurrence). Add an alert when urlsPopulated=0 for ALL tickers for 2+ consecutive cycles during an active earnings window. Owner dev-mcp-server. Ties to the durable root: 'no active zero-result alerting' is the shared cause across discovery-brittleness + enrich-silent-0 + no-freshness-gate.",
-        "generic_mandate": "/goal#2: GENERIC — aggregate counter / MAX(last_attempt) keyed, no ticker/date/exchange literal (brief Contract 1/2 invariant).",
-        "baseline_pass": "Inject a forced 0-URL-all-tickers condition for 2 cycles -> an alert fires (RAW-verify the alert path, not a green steady-state test); normal partial-result cycles do NOT alert.",
-        "source": "OPS-BCTC-PIPELINE-RECON router-added; recon.md Durable Fix Owners; memory passive_health_masks_dead_data",
-        "created_at": "2026-06-15T17:19:55Z",
-        "dispatch_note": "P2 — dev-mcp-server. Detection gate (would have caught the 34h outage early). Pairs with FIX-BCTC-FRESHNESS-GATE under the ARCH-BCTC-PIPELINE-DURABILITY umbrella (shared 'no active zero-result/freshness alerting' root).",
-        "held_on": "2026-06-16T10:45:36Z",
-        "held_by": "po",
-        "hold_reason": "queued behind WIP — P1s dispatched first. Design-ungated (brief landed, contract+spec+files stamped) but held to honor WIP<=2 coding lanes: the dev-vps-crawls P1 pair is the active BCTC coding lane this tick. Promote to the router on the next dispatch tick once a coding lane frees (route_to=dev-mcp-server, both apps/mcp-server/).",
-        "design_ungated_at": "2026-06-16T10:45:36Z",
-        "design_ungated_by": "po",
-        "gated_brief": "docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md",
-        "contract": "C1 (durable zero-result / freshness alerting)",
-        "brief_files": [
-          "apps/mcp-server/src/interface/scheduler/bctcQueueEnricherJob.ts"
-        ],
-        "fix_spec": "Persist a consecutive-zero-URL cycle counter in SQLite (bctc_health_state OR existing KV table — dev decides). Increment when urlsPopulated=0 AND itemsProcessed>0; reset to 0 on any urlsPopulated>0; do NOT count itemsProcessed=0 (empty queue = legit idle). When counter>=2 during an active earnings window (>=1 queue row status IN ('pending','url_not_found')) fire ONE send_telegram(channel='bug'); dedup at most once/6h via last_alerted_at; re-arm only after urlsPopulated>0 then zero again. AGGREGATE across all tickers (partial success resets).",
-        "wip_deferred": true
-      },
-      {
-        "id": "FIX-BCTC-FRESHNESS-GATE",
-        "type": "FIX",
-        "priority": "P2",
-        "status": "READY",
-        "route_to": "dev-mcp-server",
-        "zone": "apps/mcp-server/",
-        "mode": "code",
-        "size": "S",
-        "title": "Active freshness health gate: gate BCTC health on max(last_success_age), NOT service liveness (liveness != freshness hid this for 34h)",
-        "desc": "Router-added durable gate. vpsHealthPoller.ts marks vn-bctc-fetch passive=true (always healthy on TCP ping) regardless of data-push age (vpsHealthPoller.ts:169). This liveness!=freshness conflation hid BOTH the 5-day prior stall AND this 34h recurrence. Replace the passive health for vn-bctc-fetch with an ACTIVE freshness query on bctc_vps_queue (max(last_attempt) WHERE status=done; stale if >24h during earnings window). Owner dev-mcp-server. Ties to memory passive_health_masks_dead_data.",
-        "generic_mandate": "/goal#2: GENERIC — aggregate counter / MAX(last_attempt) keyed, no ticker/date/exchange literal (brief Contract 1/2 invariant).",
-        "baseline_pass": "Force last_success_age > threshold with a non-empty queue -> health reports UNHEALTHY/stale (RAW-verify the stale path, NOT just a fresh-state green); a fresh push -> healthy.",
-        "source": "OPS-BCTC-PIPELINE-RECON router-added; FIX-BCTC-VPS-PIPELINE-STALE-5D handoff item (1); memory passive_health_masks_dead_data",
-        "created_at": "2026-06-15T17:19:55Z",
-        "dispatch_note": "P2 — dev-mcp-server. vpsHealthPoller.ts vn-bctc-fetch passive=true -> active max(last_success_age) gate. Pairs with FIX-BCTC-ZERO-URL-ALERT under ARCH-BCTC-PIPELINE-DURABILITY.",
-        "held_on": "2026-06-16T10:45:36Z",
-        "held_by": "po",
-        "hold_reason": "queued behind WIP — P1s dispatched first. Design-ungated (brief landed, contract+spec+files stamped) but held to honor WIP<=2 coding lanes: the dev-vps-crawls P1 pair is the active BCTC coding lane this tick. Promote to the router on the next dispatch tick once a coding lane frees (route_to=dev-mcp-server, both apps/mcp-server/).",
-        "design_ungated_at": "2026-06-16T10:45:36Z",
-        "design_ungated_by": "po",
-        "gated_brief": "docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md",
-        "contract": "C2 (freshness health gate — last_success_age not passive liveness)",
-        "brief_files": [
-          "apps/mcp-server/src/domain/services/vpsHealthPoller.ts"
-        ],
-        "fix_spec": "Replace passive:true for vn-bctc-fetch in DEFAULT_FRESHNESS_CONFIGS with active latestTimestampSql = SELECT MAX(last_attempt) FROM bctc_vps_queue WHERE status='done', maxAgeMs=24h. Add additive non-breaking earnings-window guard (earningsWindowOnly?/queueGuardSql? on FreshnessConfig): if queue COUNT(*) WHERE status IN ('pending','url_not_found','enrich_failed')=0 AND no 'done' rows in last 7d -> return 'idle' not 'unhealthy'. RF-1: guard must read BOTH done (freshness) AND pending/url_not_found (active queue) to tell off-season from wiped-queue.",
-        "wip_deferred": true
       }
     ],
     "review": [
