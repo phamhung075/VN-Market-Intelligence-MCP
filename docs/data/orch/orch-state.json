@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T16:32:09Z",
+  "_updated_at": "2026-06-16T16:52:04Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -127,13 +127,13 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-16T16:32:09Z",
+    "updated_at": "2026-06-16T16:52:04Z",
     "updated_by": "dev-team",
-    "active_task_id": "FIX-SIGNALS-STOCK-FULL-DETAIL",
-    "next_agent": "dev-mcp-server",
+    "active_task_id": "FIX-INFOCARD-DROPDOWN-EXPAND",
+    "next_agent": "dev-frontend",
     "rebuild_required": true,
-    "next_action": "INFOCARD-EXPAND-FETCH epic dispatched INLINE to ship the user standing-goal (source-link + click-to-expand full-detail for re-check). PARALLEL (WIP=2): FIX-SIGNALS-STOCK-FULL-DETAIL -> dev-mcp-server (backend: expose full finding_data for ALL signal types + ISO-normalize created_at; rebuild mcp-server after) ; FIX-CASCADE-CARD-INVALID-DATE -> dev-frontend (reusable ISO-aware date helper, never 'Invalid Date'). FIX-INFOCARD-DROPDOWN-EXPAND held in backlog blocked_by #1. On dev return: router RAW-verifies code+tests first-hand -> review -> qa -> live RAW verify (real fetched detail renders + source link + valid date). PUSH held (PO out-of-band).",
-    "note": "ROUTER 2026-06-16T16:32:09Z — dev-team execute-tier INLINE: claimed FIX-SIGNALS-STOCK-FULL-DETAIL (dev-mcp-server, blocking) + FIX-CASCADE-CARD-INVALID-DATE (dev-frontend) backlog->in_progress for parallel bg dispatch. Disjoint zones; commit-mutex per task; commit by pathspec form (git commit -m -- <paths>). #3 dropdown blocked_by #1."
+    "next_action": "INFOCARD epic: #1 FIX-CASCADE-CARD-INVALID-DATE + #2 FIX-SIGNALS-STOCK-FULL-DETAIL -> review (both router RAW-verified GREEN first-hand: FE date helper 33/33; backend full finding_data+source+ISO 22/22). #2 needs mcp-server REBUILD (ops, force-recreate --no-deps --build) then router LIVE RAW-verify endpoint. #3 FIX-INFOCARD-DROPDOWN-EXPAND dispatched -> dev-frontend (reusable expand-on-click dropdown + clickable source link against verified StockSignalItem contract) = the task that makes the served-info-verifiable standing-goal STATE exist. On #3 return: RAW-verify -> FE rebuild (batch #1+#3) -> LIVE RAW-verify card (valid date + source link + dropdown full REAL detail). PUSH held (PO out-of-band).",
+    "note": "ROUTER 2026-06-16T16:52:04Z — dev-team: #2 backend GREEN (6abf4d19) -> review + mcp-server rebuild pending (ops); #1 FE lane reconciled -> review; #3 dropdown unblocked + dispatched dev-frontend. WIP coding=1 (#3); ARCH-CRON architect-track separate. Commit by pathspec."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -733,7 +733,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T16:32:09Z",
+    "_updated_at": "2026-06-16T16:52:04Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -12481,35 +12481,6 @@
         "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #3 (2026-06-16). VEA Q4/2025 queue item returns 0 results on SSC AND HNX UPCOM; possibly filed on cafef/hsx.vn direct, or not filed at all.",
         "deliverable": "Findings doc: filed-elsewhere vs not-filed verdict + (if found) the source URL + working request recipe to wire that source into discovery.",
         "baseline_pass": true
-      },
-      {
-        "id": "FIX-INFOCARD-DROPDOWN-EXPAND",
-        "epic": "INFOCARD-EXPAND-FETCH",
-        "title": "Generic click-to-expand dropdown for ALL dashboard info cards revealing full FETCHED detail",
-        "type": "FIX",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "zone": "apps/frontend/",
-        "dev_agent": "dev-frontend",
-        "depends": [
-          "FIX-SIGNALS-STOCK-FULL-DETAIL"
-        ],
-        "user_request": "Every info card must be click-to-expand (a dropdown) that reveals the FULL detail on click — the current summary (NEUTRAL / 50% tin cậy / date only) is too generic to understand.",
-        "root_cause": "Info cards (MacroImpactPanel cascade rows, and peer cards across dashboard.analysis.tsx / dashboard.*.tsx) render ONLY a one-line summary with no affordance to see the full detail. The user cannot follow what a NEUTRAL/50% cascade event actually means.",
-        "fix_spec": "Build a single reusable expand-on-click (dropdown/disclosure) primitive — collapsed summary row, click toggles an expanded panel rendering the full fetched detail (for the cascade card: event_type, headline, affected_sectors[], affected_stocks[], source, imfSentiment.reasoning, magnitude/confidence, normalized timestamp — sourced from FIX-SIGNALS-STOCK-FULL-DETAIL's enriched payload). Accessible (keyboard + aria-expanded). GENERIC: the primitive is card-agnostic and adopted by ALL such info cards, NOT a one-off for the macro/FPT card. Vietnamese labels for all user-facing text.",
-        "files": [
-          "apps/frontend/app/routes/dashboard.analysis.tsx (MacroImpactPanel + peer cards)",
-          "apps/frontend/app/components/ (new reusable ExpandableCard/Disclosure primitive)"
-        ],
-        "generic_mandate": "ONE reusable expand-on-click primitive adopted by ALL info cards (/goal#2 — no per-ticker/per-card hardcode). Expanded panel shows REAL fetched detail only (/goal#1) — never placeholder/stub; if a field is genuinely absent, show an honest empty-state, not a fabricated value. Vietnamese-only user-facing strings.",
-        "verification_gate": "Live dashboard: the cascade-macro card (and ≥1 peer info card) collapses to a summary and expands on click to show REAL fetched full detail (affected sectors/stocks, headline, source, reasoning) pulled from the live endpoint; keyboard-toggle + aria-expanded work; no placeholder text in any expanded panel.",
-        "rebuild_required": true,
-        "created_at": "2026-06-16T16:23:31Z",
-        "created_by": "po-s90",
-        "blocked_by": [
-          "FIX-SIGNALS-STOCK-FULL-DETAIL"
-        ],
-        "blocked_note": "dropdown REAL detail needs FIX-SIGNALS-STOCK-FULL-DETAIL exposed first; dispatch after #1 done_verified"
       }
     ],
     "closed_sprints": [
@@ -19141,60 +19112,37 @@
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
       },
       {
-        "id": "FIX-SIGNALS-STOCK-FULL-DETAIL",
+        "id": "FIX-INFOCARD-DROPDOWN-EXPAND",
         "epic": "INFOCARD-EXPAND-FETCH",
-        "title": "Expose full cascade detail on GET /api/signals/stock/:code — stop flattening finding_data into one `detail` string",
+        "title": "Generic click-to-expand dropdown for ALL dashboard info cards revealing full FETCHED detail",
         "type": "FIX",
         "status": "IN_PROGRESS",
         "priority": "P2",
-        "blocking": true,
-        "zone": "apps/mcp-server/",
-        "dev_agent": "dev-mcp-server",
-        "user_request": "Cascade-macro info card must show FULL FETCHED detail on expand (drivers, chain, affected tickers/sectors, magnitude, source, timestamp) — real data only, never placeholder.",
-        "root_cause": "apps/mcp-server/src/interface/mcp/server.ts:1389-1404 projects each agent_signals row into ONLY {id, stock_code, signal_type, direction, confidence_score, detail, created_at} — collapsing the rich finding_data+payload JSON into a single `detail` string and discarding affected_stocks[], affected_sectors[], headline, source, event_type, imfSentiment.reasoning, newsSentiment, kinhDichConfidence, agentSignalsMajority, catalyst_stock_code, time_to_price_move. The data IS stored (ChainCatalystFindingDataSchema, signalTypes.ts:90) — only the endpoint hides it.",
-        "fix_spec": "Pass the structured finding_data fields through the /api/signals/stock/:code response (e.g. add a `finding` object or named columns per row) sourced from the existing finding_data JSON (already parsed at server.ts:1379-1381). Keep `detail` for back-compat. GENERIC: shape must serve ANY signal_type's finding_data (chain_catalyst here, but price_confirmation/verified_chain/urgent_news rows flow through the same route) — do not special-case chain_catalyst. created_at MUST be normalised to a single canonical ISO-8601 UTC string server-side (fixes the Invalid Date class at the source — see FIX-CASCADE-CARD-INVALID-DATE for the FE guard).",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/server.ts (signals/stock route ~1327-1432)"
-        ],
-        "generic_mandate": "Surface the full stored finding_data for ALL signal types via this endpoint, not a chain_catalyst/FPT one-off (/goal#2). REAL fetched data only — no placeholder/stub fields (/goal#1).",
-        "verification_gate": "RAW: curl GET /mcp/api/signals/stock/FPT?type=chain_catalyst on the live named-volume DB returns affected_sectors[], affected_stocks[], headline, source (non-empty, REAL) for a real chain_catalyst row + a canonical-ISO created_at; spot-check a 2nd ticker + a non-cascade signal_type row also carries its finding_data.",
-        "depends_consult": "dev-macro-indicators — ONLY if live finding_data.imfSentiment / macro driver fields are empty on real rows (driver provenance is macro-service-owned); otherwise no macro change needed (cascade engine already populates finding_data in mcp-server).",
-        "rebuild_required": true,
-        "created_at": "2026-06-16T16:23:31Z",
-        "created_by": "po-s90",
-        "next_agent": "dev-mcp-server",
-        "dispatched_at": "2026-06-16T16:32:09Z",
-        "dispatched_by": "dev-team",
-        "dispatched_to": "dev-mcp-server"
-      },
-      {
-        "id": "FIX-CASCADE-CARD-INVALID-DATE",
-        "epic": "INFOCARD-EXPAND-FETCH",
-        "title": "Fix \"Invalid Date\" on the cascade-macro info card — definitif date-parse guard, not a symptom patch",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P2",
-        "fast_track": true,
         "zone": "apps/frontend/",
         "dev_agent": "dev-frontend",
-        "user_request": "The card shows 'Invalid Date' instead of a readable timestamp.",
-        "root_cause": "apps/frontend/app/routes/dashboard.analysis.tsx:780 — new Date(sig.createdAt.replace(\" \",\"T\")+\"Z\").toLocaleDateString(\"vi-VN\"). The single-space .replace + blind +\"Z\" only works for a bare \"YYYY-MM-DD HH:MM:SS\" SQLite string; an already-ISO (has T), millisecond/offset, or non-standard created_at -> NaN -> 'Invalid Date'. The empty-string case falls to '—' but a PRESENT-but-non-bare value yields the live 'Invalid Date'.",
-        "fix_spec": "Replace the ad-hoc string surgery with a single robust ISO-aware parse helper (accepts bare-SQLite, ISO-with-T, with/without ms/offset; returns null on unparseable) and render the localized date OR a graceful '—' fallback — NEVER 'Invalid Date'. Prefer the FE consuming the canonical-ISO created_at once FIX-SIGNALS-STOCK-FULL-DETAIL normalises it server-side; the FE helper is the defence-in-depth guard so any future non-ISO source still degrades gracefully. GENERIC: factor the helper so every card that renders a created_at/timestamp uses it (search for new Date(...).toLocale* across dashboard.* — sector-cascade.tsx:223/549 etc. share the class).",
-        "files": [
-          "apps/frontend/app/routes/dashboard.analysis.tsx (MacroImpactPanel ~780)",
-          "apps/frontend/app/lib/ (shared date-parse helper — new or existing date util)"
+        "depends": [
+          "FIX-SIGNALS-STOCK-FULL-DETAIL"
         ],
-        "generic_mandate": "One reusable date-parse helper used by ALL timestamp renders (/goal#2) — never per-card .replace surgery; output is localized-or-'—', never 'Invalid Date'.",
-        "verification_gate": "Live dashboard: the 'Tác động Macro' card renders a real readable vi-VN date for a real chain_catalyst row; a deliberately-ISO and a deliberately-malformed created_at both render gracefully (date or '—'), zero 'Invalid Date' in the rendered DOM.",
+        "user_request": "Every info card must be click-to-expand (a dropdown) that reveals the FULL detail on click — the current summary (NEUTRAL / 50% tin cậy / date only) is too generic to understand.",
+        "root_cause": "Info cards (MacroImpactPanel cascade rows, and peer cards across dashboard.analysis.tsx / dashboard.*.tsx) render ONLY a one-line summary with no affordance to see the full detail. The user cannot follow what a NEUTRAL/50% cascade event actually means.",
+        "fix_spec": "Build a single reusable expand-on-click (dropdown/disclosure) primitive — collapsed summary row, click toggles an expanded panel rendering the full fetched detail (for the cascade card: event_type, headline, affected_sectors[], affected_stocks[], source, imfSentiment.reasoning, magnitude/confidence, normalized timestamp — sourced from FIX-SIGNALS-STOCK-FULL-DETAIL's enriched payload). Accessible (keyboard + aria-expanded). GENERIC: the primitive is card-agnostic and adopted by ALL such info cards, NOT a one-off for the macro/FPT card. Vietnamese labels for all user-facing text.",
+        "files": [
+          "apps/frontend/app/routes/dashboard.analysis.tsx (MacroImpactPanel + peer cards)",
+          "apps/frontend/app/components/ (new reusable ExpandableCard/Disclosure primitive)"
+        ],
+        "generic_mandate": "ONE reusable expand-on-click primitive adopted by ALL info cards (/goal#2 — no per-ticker/per-card hardcode). Expanded panel shows REAL fetched detail only (/goal#1) — never placeholder/stub; if a field is genuinely absent, show an honest empty-state, not a fabricated value. Vietnamese-only user-facing strings.",
+        "verification_gate": "Live dashboard: the cascade-macro card (and ≥1 peer info card) collapses to a summary and expands on click to show REAL fetched full detail (affected sectors/stocks, headline, source, reasoning) pulled from the live endpoint; keyboard-toggle + aria-expanded work; no placeholder text in any expanded panel.",
         "rebuild_required": true,
         "created_at": "2026-06-16T16:23:31Z",
         "created_by": "po-s90",
+        "blocked_by": [],
+        "blocked_note": "dropdown REAL detail needs FIX-SIGNALS-STOCK-FULL-DETAIL exposed first; dispatch after #1 done_verified",
         "next_agent": "dev-frontend",
-        "dispatched_at": "2026-06-16T16:32:09Z",
+        "dispatched_at": "2026-06-16T16:52:04Z",
         "dispatched_by": "dev-team",
         "dispatched_to": "dev-frontend",
-        "reviewed_at": "2026-06-16T18:45:00Z",
-        "reviewed_by": "dev-frontend"
+        "unblocked_note": "FIX-SIGNALS-STOCK-FULL-DETAIL code GREEN (commit 6abf4d19, in review) — endpoint contract now exposes full finding_data + source + ISO created_at. Build reusable expand-on-click dropdown + clickable source link against this contract; honest empty-state where a field is genuinely null (no fabrication).",
+        "contract_ref": "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts StockSignalItem {finding_data:object|null, payload:object, source:string|null, created_at:ISO, direction, confidence_score, detail}; endpoint GET /mcp/api/signals/stock/:code?type=..."
       }
     ],
     "ready": [
@@ -19254,6 +19202,73 @@
       }
     ],
     "review": [
+      {
+        "id": "FIX-SIGNALS-STOCK-FULL-DETAIL",
+        "epic": "INFOCARD-EXPAND-FETCH",
+        "title": "Expose full cascade detail on GET /api/signals/stock/:code — stop flattening finding_data into one `detail` string",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "blocking": true,
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "user_request": "Cascade-macro info card must show FULL FETCHED detail on expand (drivers, chain, affected tickers/sectors, magnitude, source, timestamp) — real data only, never placeholder.",
+        "root_cause": "apps/mcp-server/src/interface/mcp/server.ts:1389-1404 projects each agent_signals row into ONLY {id, stock_code, signal_type, direction, confidence_score, detail, created_at} — collapsing the rich finding_data+payload JSON into a single `detail` string and discarding affected_stocks[], affected_sectors[], headline, source, event_type, imfSentiment.reasoning, newsSentiment, kinhDichConfidence, agentSignalsMajority, catalyst_stock_code, time_to_price_move. The data IS stored (ChainCatalystFindingDataSchema, signalTypes.ts:90) — only the endpoint hides it.",
+        "fix_spec": "Pass the structured finding_data fields through the /api/signals/stock/:code response (e.g. add a `finding` object or named columns per row) sourced from the existing finding_data JSON (already parsed at server.ts:1379-1381). Keep `detail` for back-compat. GENERIC: shape must serve ANY signal_type's finding_data (chain_catalyst here, but price_confirmation/verified_chain/urgent_news rows flow through the same route) — do not special-case chain_catalyst. created_at MUST be normalised to a single canonical ISO-8601 UTC string server-side (fixes the Invalid Date class at the source — see FIX-CASCADE-CARD-INVALID-DATE for the FE guard).",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/server.ts (signals/stock route ~1327-1432)"
+        ],
+        "generic_mandate": "Surface the full stored finding_data for ALL signal types via this endpoint, not a chain_catalyst/FPT one-off (/goal#2). REAL fetched data only — no placeholder/stub fields (/goal#1).",
+        "verification_gate": "RAW: curl GET /mcp/api/signals/stock/FPT?type=chain_catalyst on the live named-volume DB returns affected_sectors[], affected_stocks[], headline, source (non-empty, REAL) for a real chain_catalyst row + a canonical-ISO created_at; spot-check a 2nd ticker + a non-cascade signal_type row also carries its finding_data.",
+        "depends_consult": "dev-macro-indicators — ONLY if live finding_data.imfSentiment / macro driver fields are empty on real rows (driver provenance is macro-service-owned); otherwise no macro change needed (cascade engine already populates finding_data in mcp-server).",
+        "rebuild_required": true,
+        "created_at": "2026-06-16T16:23:31Z",
+        "created_by": "po-s90",
+        "next_agent": "qa",
+        "dispatched_at": "2026-06-16T16:32:09Z",
+        "dispatched_by": "dev-team",
+        "dispatched_to": "dev-mcp-server",
+        "impl_commit": "6abf4d19",
+        "code_verify": "GREEN (router RAW first-hand): stockSignalsHandler.ts querySignalsForStock exposes full finding_data (object, never flattened) + source (finding_data.source->payload.source->null) + ISO created_at via normalizeCreatedAt (NaN-guarded honest-null); schema-evolution guarded (probes optional cols); GENERIC across all signal_types (no special-case, /goal#2); bun test 22/22 green isolation; tsc exit0; commit 6abf4d19 scoped 5 files, no race-sweep of FE WIP.",
+        "rebuild_note": "REBUILD mcp-server (ops: force-recreate --no-deps --build, NEVER down; verify image .Created > 1781628457). Then router LIVE RAW-verify GET /mcp/api/signals/stock/:code serves full finding_data + source + ISO created_at before done_verified.",
+        "push_gate": "HELD (PO out-of-band).",
+        "promoted_to_review_ts": "2026-06-16T16:52:04Z",
+        "promoted_by": "dev-team"
+      },
+      {
+        "id": "FIX-CASCADE-CARD-INVALID-DATE",
+        "epic": "INFOCARD-EXPAND-FETCH",
+        "title": "Fix \"Invalid Date\" on the cascade-macro info card — definitif date-parse guard, not a symptom patch",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "fast_track": true,
+        "zone": "apps/frontend/",
+        "dev_agent": "dev-frontend",
+        "user_request": "The card shows 'Invalid Date' instead of a readable timestamp.",
+        "root_cause": "apps/frontend/app/routes/dashboard.analysis.tsx:780 — new Date(sig.createdAt.replace(\" \",\"T\")+\"Z\").toLocaleDateString(\"vi-VN\"). The single-space .replace + blind +\"Z\" only works for a bare \"YYYY-MM-DD HH:MM:SS\" SQLite string; an already-ISO (has T), millisecond/offset, or non-standard created_at -> NaN -> 'Invalid Date'. The empty-string case falls to '—' but a PRESENT-but-non-bare value yields the live 'Invalid Date'.",
+        "fix_spec": "Replace the ad-hoc string surgery with a single robust ISO-aware parse helper (accepts bare-SQLite, ISO-with-T, with/without ms/offset; returns null on unparseable) and render the localized date OR a graceful '—' fallback — NEVER 'Invalid Date'. Prefer the FE consuming the canonical-ISO created_at once FIX-SIGNALS-STOCK-FULL-DETAIL normalises it server-side; the FE helper is the defence-in-depth guard so any future non-ISO source still degrades gracefully. GENERIC: factor the helper so every card that renders a created_at/timestamp uses it (search for new Date(...).toLocale* across dashboard.* — sector-cascade.tsx:223/549 etc. share the class).",
+        "files": [
+          "apps/frontend/app/routes/dashboard.analysis.tsx (MacroImpactPanel ~780)",
+          "apps/frontend/app/lib/ (shared date-parse helper — new or existing date util)"
+        ],
+        "generic_mandate": "One reusable date-parse helper used by ALL timestamp renders (/goal#2) — never per-card .replace surgery; output is localized-or-'—', never 'Invalid Date'.",
+        "verification_gate": "Live dashboard: the 'Tác động Macro' card renders a real readable vi-VN date for a real chain_catalyst row; a deliberately-ISO and a deliberately-malformed created_at both render gracefully (date or '—'), zero 'Invalid Date' in the rendered DOM.",
+        "rebuild_required": true,
+        "created_at": "2026-06-16T16:23:31Z",
+        "created_by": "po-s90",
+        "next_agent": "qa",
+        "dispatched_at": "2026-06-16T16:32:09Z",
+        "dispatched_by": "dev-team",
+        "dispatched_to": "dev-frontend",
+        "reviewed_at": "2026-06-16T18:45:00Z",
+        "reviewed_by": "dev-frontend",
+        "code_verify": "GREEN (router RAW first-hand): app/lib/formatDate.ts robust+generic (parseDate NaN-guard->null->'—'; includes('T') check kills double-Z 'Invalid Date' root at old dashboard.analysis.tsx:780; vi-VN/Asia-HCM; no per-card/ticker/date-literal hardcode /goal#2); 0 brittle inline parses remain; 33/33 vitest green isolation; commit 60652af3 scoped 5 FE files no race-sweep.",
+        "lane_reconcile": "in_progress->review — agent set .status=REVIEW but left element in in_progress[] (lane lagged status); router reconciled.",
+        "rebuild_note": "FE rebuild batched with FIX-INFOCARD-DROPDOWN-EXPAND (#3) — single frontend rebuild + one live-verify of the card.",
+        "promoted_to_review_ts": "2026-06-16T16:52:04Z",
+        "promoted_by": "dev-team"
+      },
       {
         "id": "FIX-CI-RED-STANDING-1837A-1352A",
         "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
