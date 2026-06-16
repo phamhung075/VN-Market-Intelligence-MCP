@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T12:55:46Z",
+  "_updated_at": "2026-06-16T13:03:36Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -127,13 +127,13 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-16T12:55:46Z",
+    "updated_at": "2026-06-16T13:03:36Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
-    "next_agent": "ops",
-    "rebuild_required": true,
-    "next_action": "Code for FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS landed at 75e7a80f. COPY-baked /app/src => ops MUST run real `docker compose build mcp-server` THEN force-recreate --no-deps (force-recreate alone ships nothing). Then ROUTER RAW-verifies LIVE on named-volume market.db: (a) image .Created epoch > commit 75e7a80f epoch, (b) container /app/src markers computeScanAlertFingerprint + INSERT OR IGNORE + fingerprint, (c) alerts table has fingerprint TEXT UNIQUE column, (d) no duplicate scan:% fingerprints. Dedup-under-parallel-load proof is MONITORED until next market-open scan (market currently closed; no-fake-data — cannot force a scan). Then in_progress -> review.",
-    "note": "ROUTER 2026-06-16T12:55:46Z — dev-team tick: all 3 workers done+RAW-verified. dev-mcp-server FIX-ALERT-FINGERPRINT code landed 75e7a80f (125 tests, tsc clean, GENERIC key, no HVN special-case) -> AWAIT-REBUILD (ops dispatched). agent-father Fix1 system-auditor emit-schema rewrite 220b48c5 VERIFIED sound (post_agent_signal full contract: from_agent/to_agent/signal_type=signal_feedback/payload.passthrough; finding_data null->{} validates) + Fix2 fb-poster STALE-no-edit confirmed correct; mutex released. ops-vps-fetch BCTC-VPS verdict RAW-corroborated: NOT dead — pipeline functional since 5947f3f9 (afrLoop regex), vn-bctc-fetch healthy live, last-done 2026-06-15 22:40:49Z; current 0-URLs = source-side non-filing (9/10 not filed); 2 hardening follow-ups (SSC-503-retry, queue-maxage-gate) -> PO triage next tick via signal file. PUSH held (PO out-of-band)."
+    "next_agent": "dev-mcp-server",
+    "rebuild_required": false,
+    "next_action": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS live gate RED: ops ran a REAL build (image .Created 12:56:23Z > commit 75e7a80f, /app/src markers live) but router RAW-verify on the named-volume market.db found the fingerprint column ABSENT. ROOT: schema-alerts.ts:54 `ALTER TABLE alerts ADD COLUMN fingerprint TEXT UNIQUE` is illegal SQLite (no UNIQUE via ADD COLUMN) -> throws -> bare catch{} swallows -> column never created; INSERT OR IGNORE ... fingerprint then crashes every scan-alert write at next market-open scan. dev-mcp-server: change ddl TEXT UNIQUE -> TEXT + add partial UNIQUE INDEX (fingerprint) WHERE fingerprint IS NOT NULL (mirror broker_sanctions recreate precedent in same file) + add a non-self-confirming fault-path test. Then ops REAL rebuild, then ROUTER RAW re-verify column+index PRESENT on named-volume DB + no dup scan:% fingerprints. Then -> review. DEADLINE: land before next market-open scan ~02:00 UTC (latent alert-write crash until then).",
+    "note": "ROUTER 2026-06-16T13:03:36Z — FIX-ALERT-FINGERPRINT live gate RED. ops afd9a3bc rebuild was REAL (image 9d2f4113 .Created 12:56:23Z POSTDATES commit 75e7a80f 12:51:15Z; /app/src markers present — code live) — but router RAW PRAGMA on named-volume market.db: alerts.fingerprint column ABSENT (has_fp=0). Root = schema-alerts.ts:54 ALTER ADD COLUMN ... TEXT UNIQUE illegal in SQLite, swallowed by catch{} -> column never created -> INSERT OR IGNORE ... fingerprint will crash every scan-alert write at next market-open scan (~02:00 UTC; ~13h window). 125 green = self-confirming tests build their own schema; real rebuild ships source not runtime schema-state. Routed back to dev-mcp-server (same lane, WIP=1): TEXT UNIQUE->TEXT + partial UNIQUE INDEX (mirror in-file broker_sanctions) + non-self-confirming fault-path test. ops afd9a3bc image-epoch FAIL claim was a FALSE alarm (botched conversion) — router corrected first-hand. PUSH held (PO out-of-band)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -711,7 +711,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T12:55:46Z",
+    "_updated_at": "2026-06-16T13:03:36Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -19035,7 +19035,13 @@
         ],
         "fix_commit": "75e7a80f",
         "code_landed_ts": "2026-06-16T12:55:46Z",
-        "tests": "125 pass / tsc clean"
+        "tests": "125 pass / tsc clean",
+        "rebuild_done_ts": "2026-06-16T13:03:36Z",
+        "live_verify": "RED — router RAW on named-volume market.db (PRAGMA table_info(alerts)) found fingerprint column ABSENT (has_fp=0, no fp index). Build WAS real (image sha256:9d2f4113 .Created 12:56:23Z > commit 75e7a80f 12:51:15Z; /app/src markers live) — defect is a schema-migration silent-no-op, not a stale image.",
+        "live_verify_root_cause": "schema-alerts.ts:54-58 runs `ALTER TABLE alerts ADD COLUMN fingerprint TEXT UNIQUE` in try{}catch{}; SQLite forbids ADD COLUMN with UNIQUE on an existing table -> throws -> swallowed -> column never created. CREATE TABLE omits it too. taAlertScanJob/bbAlertScanJob INSERT references fingerprint -> 'no such column' on every scan-alert write at next market-open scan.",
+        "prescribed_fix": "schema-alerts.ts: fingerprint ALTER ddl TEXT UNIQUE -> plain TEXT; add CREATE UNIQUE INDEX IF NOT EXISTS idx_alerts_fingerprint ON alerts(fingerprint) WHERE fingerprint IS NOT NULL. Mirror the in-file broker_sanctions precedent. Add a fault-path test that initAlertsTables on the OLD (no-fingerprint) schema then asserts column+index exist.",
+        "reopened_by": "dev-team",
+        "reopened_ts": "2026-06-16T13:03:36Z"
       }
     ],
     "ready": [
