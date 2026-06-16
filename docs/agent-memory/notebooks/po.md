@@ -1,37 +1,41 @@
 # PO Notebook
 
-## 2026-06-16T00:26Z — W2-DATALAYER sign-off (RAW LIVE) + W3 fold + W1-PEK-P0 promote
+## 2026-06-16T01:30Z — W1-PEK-P0 done_verified (Wave-1 COMPLETE) + dispatch Wave-2 + PUSH-NOW
 
-**PRIMARY: FIX-ERRAUDIT-W2-MCP-DATALAYER review→done_verified.** Did my OWN RAW
-re-verify before flipping (router-verify-raw-not-badges, NOT badge trust):
-- Container vn-market-intelligence-mcp-mcp-server-1: image .Created 00:10:01Z
-  POST-DATES commit 9f4a8eef (23:59:27Z); StartedAt 00:12:04Z → running img carries new code.
-- In-container: safeQuery.ts(5415B @ /app/src/domain/utils) typed {ok:false,reason:'no-rows'|'db-error'}
-  contract, db-error always LOGGED via failLoud `[degraded:<ctx>]`; runSection.ts(6520B).
-- scanMarket.ts imports failLoud; getAvgVolumeSync L103-104 failLoud+return null on db-error,
-  L117-119 legit insufficient-history → return null (drop-dimension, NOT fabricated 0).
-- qa APPROVE = current HEAD b8f9e31e; CI 31/31 pass, 1 PRE-EXISTING unrelated tsc only.
-→ Kills a chunk of fabricated-default-masks-real-metric (avgVolume=0 / neutral-0 → conf=50).
+**PRIMARY: FIX-ERRAUDIT-W1-PEK-P0 in_progress→done_verified (final sign-off).**
+Did NOT trust badges — confirmed router's RAW LIVE re-verify (router-verify-raw-not-badges):
+- Named-volume DB bctc_layout_units: 161 healthy + 14 quarantined table units with REAL
+  computed orphan_rows reasons (varied per row, NOT constants); pytest 42/0 via docker exec
+  in the REBUILT container; image .Created 01:15:49Z > commit b52f5593 01:12:10Z.
+- AC-1..AC-7 + EC-1 all met. The new paddle-load-failure/table-extraction-failure strings
+  are absent from prod DB ONLY because PaddleOCR loads fine in prod — those paths fire only
+  under FORCED failure, verified via pytest `_PADDLE_LOAD_FAILED` sentinel injection per the
+  architect test matrix. That IS the contracted DoD (mock injection, not live model breakage),
+  NOT a coverage gap. Fake-clean-0-row mask removed: MANDATORY layout failure re-raises;
+  OPTIONAL PaddleOCR failure quarantines with explicit reason. → BCTC-silent-0-rows class /goal#1.
 
-**SECOND: W3 fold (NO dup).** FIX-ERRAUDIT-W3-MCP-P2 ALREADY existed (sequence_after=W2) →
-folded qa's 15 out-of-scope surviving-bare-catch sites in-place via `.folded_sites` marker
-(idempotent), NOT a new task (ssot_duplicate_key avoided). Generic-across-sites per /goal#2.
+**Wave-1 of ERROR-AUDIT-2026-06-15 NOW COMPLETE** (W1-MCP-P0 + W1-PEK-P0 both done_verified).
 
-**THIRD: W1-PEK-P0 promoted backlog→ready (next_agent=ba).** Dep RASTERIZE=done_verified
-(po-s70) → SAME-ZONE hold lifted; pdf-extractor zone FREE; coding WIP 0/2. Router will
-lock-claim+spawn ba→architect→dev-pdf-extractor→qa; po did NOT spawn.
+**SECOND: dispatched Wave-2 first hop.** Promoted FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH
+backlog→ready (next_agent=ba) + set head=ba. Inner-first sequence gate SATISFIED:
+sequence_after dep W2-MCP-FETCH-DEADLINE is done_verified. Distinct zone apps/frontend/ —
+no zone-serialize conflict with mcp-server; WIP≤2 honored. Router lock-claims + spawns ba;
+po did NOT spawn. W3-MCP-P2 (15 folded sites) + W3-PEK-P2 stay backlog for after W2-FRONTEND.
 
-Scripts: po-s71 (dual-mutation sign-off+fold), po-s72 (groom+promote) — both atomic
-+conservation-guarded, flow-doc pointer added. Commit 8534f509 = orch-state + 2 scripts +
-journal by EXPLICIT PATH (no git add -A; 9 bg artifacts left dirty). PUSH HELD (deferred call;
-origin 11 ahead / 96 behind via benign cloud-chore).
+**THIRD: PUSH — decided PUSH-NOW (my deferred call, cleared).** 13 local commits all benign
+chore / RAW-verified fix; the 106-behind divergence is 100% cloud-chore (health-recheck/TNB/
+memory). No CI-red gate, no conflict surface on touched files → publishing a completed wave +
+unblocking the router's ba lock-claim beats holding. Router executes the actual git push.
+
+Script: po-s73 (atomic dual-mutation sign-off+promote+head; conservation+invariant guarded;
+flow-doc pointer pending). Lock task:FIX-ERRAUDIT-W1-PEK-P0 released ok:true. orch-state
+committed by EXPLICIT PATH (no git add -A).
 
 ### Carry-over
-- **FIX-ERRAUDIT-W1-PEK-P0 (ready, P0)** → router dispatch; done_verified = crash DocLayout-YOLO
-  /PaddleOCR → extraction tagged degraded/quarantined, NOT clean 0-row pass.
-- **FIX-ERRAUDIT-W3-MCP-P2 (backlog, 15 sites folded)** → ba grooms when a slot frees.
-- **review[] ×5** still open (CONFIDENCE-DEFAULT-50, ARCH-SHIP-WAVE-REAUDIT, RSI-SINGLEDIGIT,
-  VNSTOCK-TRADINGSTATS-CRASH, BCTC-ENRICH-SILENT-0ROWS) → next sign-off candidates.
-- **STANDING:** FIX-BCTC-BANK-SUMMARY-MAPPING P1 (bctc c058 CTG corroboration), 8 infra fixes,
-  FE-REORG sprint, 2 pre-existing active_sprints dup-ids (low-pri cleanup).
-- PUSH remains PO's deferred call — separate from this flip.
+- **FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (ready, ba)** → router dispatch; done_verified = stalled
+  upstream → loader/proxy 504/502 within DEADLINE_MS + 1 structured log, non-fatal wrappers
+  still return null/[]/{} on genuine empty. LIVE-verified.
+- **FIX-ERRAUDIT-W3-MCP-P2 (backlog, 15 sites folded) + W3-PEK-P2 (backlog)** → after W2-FE.
+- **review[] ×5 NOT yet triaged this cycle** (CONFIDENCE-DEFAULT-50, ARCH-SHIP-WAVE-REAUDIT,
+  RSI-SINGLEDIGIT, VNSTOCK-TRADINGSTATS-CRASH, BCTC-ENRICH-SILENT-0ROWS) → next sign-off batch.
+- **STANDING:** FIX-BCTC-BANK-SUMMARY-MAPPING P1, 8 infra fixes, FE-REORG sprint.
