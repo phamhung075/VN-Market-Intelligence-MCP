@@ -1,23 +1,19 @@
 # PO Notebook
-_overwritten 2026-06-16T16:25Z_
+_overwritten 2026-06-16T18:21Z_
 
-## Last cycle (2026-06-16T16:25Z user-request triage) — Macro Impact info-card defect+enhancement → INFOCARD-EXPAND-FETCH epic
-Self-initiated triage of a router-relayed USER report on the "Tác động Macro — FPT" cascade-macro card (showed only NEUTRAL / 50% tin cậy / **Invalid Date**). Recon FIRST-HAND (not relayed badges), then minted 3 backlog FIX tasks. Commit folded into d8db496a by a concurrent dev-team commit-mutex holder (CONCURRENT-COMMIT RACE — my staged orch-state+script were swept into THEIR commit; verified HEAD orch-state carries all 3 po-s90 tasks + script tracked, work landed intact, only the msg is theirs). Script po-s90 idempotent (re-run mints 0).
+## Last cycle (2026-06-16T18:21Z idle-loop triage) — drained 3 NEW signals + set head
+Loop idle 28min (head idle since 17:50Z after INFOCARD-EXPAND-FETCH epic done_verified). 3 untriaged NEW signal_queue rows, one USER-REPORTED. RAW-verified board (head=idle, mtime 17:50Z, no live writer) — safe to write. Script `po-s91` (s90 already taken by infocard-mint), CAS-mtime + conservation + idempotent.
 
-RECON (router first-hand):
-- FE component: `apps/frontend/app/routes/dashboard.analysis.tsx:731` MacroImpactPanel (rendered :1518), maps AgentSignal rows.
-- Data source: `fetchCascadeSignals()` (client.ts:565) → `GET /mcp/api/signals/stock/:code?type=chain_catalyst` → backend route `apps/mcp-server/src/interface/mcp/server.ts:1327-1432`.
-- Invalid Date ROOT: `dashboard.analysis.tsx:780` `new Date(sig.createdAt.replace(" ","T")+"Z")` — single-space replace + blind +"Z" corrupts an already-ISO/offset/empty created_at; backend serves RAW SQLite created_at (server.ts:1402), format varies → NaN.
-- **DATA-GAP CONFIRMED:** endpoint FLATTENS finding_data+payload into ONE `detail` string (server.ts:1389-1404) and DISCARDS the rest. Full cascade detail IS STORED in agent_signals.finding_data (ChainCatalystFindingDataSchema signalTypes.ts:90 — event_type/direction/confidence/affected_stocks[]/affected_sectors[]/headline/source/+imfSentiment.reasoning/etc). → dropdown REAL detail is NOT fetchable today, needs a backend change.
+DISPOSITIONS (all 3 RESOLVED):
+1. **router-market-breadth-missing** (USER-REPORTED, data-gap) → MINTED **FIX-MARKET-BREADTH-MISSING** (HIGH) → ready[], next_agent=**ops-vps-fetch** (RECON-FIRST), zone apps/mcp-server/. get_market_snapshot never aggregates HOSE/HNX/UPCOM constituents → breadth UNIMPLEMENTED (root marketTools.ts ~L147-364, fetchVnIndex discards advances/declines). Recon RAW-probes VnDirect finfo-api breadth fields BEFORE code (no-fake-data); code hop waits — apps/mcp-server/ zone busy (ARCH-CRON-SCHEDULER-RELIABILITY in_progress). Closes empty FE "Độ rộng thị trường" card. Highest user-facing pri this tick.
+2. **router-ci-suite-weather** (INFORMATIONAL) → RESOLVED as the JUSTIFICATION unblocking CI-RED-STANDING. Broader 20-file/49-fail red = HOST-WEATHER (3× SIGILL Bun-JIT sdk1.29.0+zod3.25.76 P=8 mem-constrained host, local-only NOT Linux-CI + ~17 live-data flaps), disjoint from change, NOT a regression. NO new P3 minted (would dup pinned bun-jit debt; flaky-quarantine note already on CI-RED-STANDING.broader_red_note).
+3. **router-docresidual** (LOW tech_debt) → MINTED **CLEAN-AUDITOR-DOC-SIGNAL-TYPES** (LOW) → ready[], route_to=**agent-father**. One scoped cleanup: init.md:24 stale post_agent_signal types + audit-dimensions.md:18/28/38 scoping; free-form flow 'type' LEFT. No longer re-reads as untriaged.
 
-VERDICT: BATCH of 3 FIX (epic INFOCARD-EXPAND-FETCH, all backlog P2, idempotent po-s90):
-- **FIX-SIGNALS-STOCK-FULL-DETAIL** (dev-mcp-server, blocking) — pass finding_data fields through the endpoint + normalise created_at to canonical ISO server-side. GENERIC across all signal_types, not chain_catalyst-only. dev-macro-indicators = consult ONLY if live imfSentiment/driver fields empty.
-- **FIX-CASCADE-CARD-INVALID-DATE** (dev-frontend, fast_track) — one reusable ISO-aware date-parse helper, render localized-or-"—", NEVER "Invalid Date"; defence-in-depth FE guard adopted by ALL timestamp renders.
-- **FIX-INFOCARD-DROPDOWN-EXPAND** (dev-frontend, depends FIX-SIGNALS-STOCK-FULL-DETAIL) — ONE reusable expand-on-click primitive for ALL info cards (/goal#2 generic, no per-card hardcode), expanded panel shows REAL fetched detail only (/goal#1), Vietnamese labels, a11y (aria-expanded+keyboard).
-Conservation PASS (backlog 288→291, total +3); idempotency PASS.
+HEAD set → dispatch **qa for FIX-CI-RED-STANDING-1837A-1352A** (review[], deterministic fix GREEN). qa verifies local 1837a+1352a green + WATCHES Linux Actions run green on the deferred push → done_verified → unblocks 4 ci_green_on_subsequent_push-gated tasks + lets held 61-ahead/28-behind push land on green baseline.
+
+Conservation PASS (ready 3→5, all other lanes byte-stable, NEW signals 3→0). CAS-mtime PASS. Commit: orch-state.json + scripts/po-s91-*.jq + this notebook ONLY (worktree has live churn incl 3 over-cap notebooks — janitor's lane, left alone).
 
 ## Carry-over (next tick)
-- INFOCARD-EXPAND-FETCH (3 tasks) sit in backlog[] P2 — NOT promoted to ready[]. Next dev-team :07 tick: promote FIX-SIGNALS-STOCK-FULL-DETAIL FIRST (blocking the dropdown), then the 2 FE tasks once a coding lane frees (current WIP=2: FIX-CI-RED-STANDING in review, SSC-503 done_verified). FIX-CASCADE-CARD-INVALID-DATE (fast_track) can run FE-parallel — independent of the fetch gap.
-- FIX-CI-RED-STANDING-1837A-1352A now in review (router RAW: 1837a+1352a GREEN per-file). PUSH STILL HELD until full CI/tsc green (red pre-push hook strands fleet) — MY deferred out-of-band call from clean checkout; origin diverged ~26 benign cloud-chore commits.
-- FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS review — done_verified WITHHELD on LIVE market-open dedup-drain gate. DO NOT flip.
-- in_progress ARCH-CRON-SCHEDULER-RELIABILITY = architect track, leave undisturbed.
+- **FIX-MARKET-BREADTH-MISSING** ready[] — dispatch ops-vps-fetch recon NOW (parallel-safe, ops lane). Code hop (dev-mcp-server) waits for apps/mcp-server/ slot (frees when ARCH-CRON-SCHEDULER-RELIABILITY done). Plausibility-gate the result: advances+declines+nochange ≈ total constituents, magnitudes sane vs index direction (non-empty ≠ correct).
+- After qa signs off CI-RED-STANDING green on Linux → promote the 4 push-gated tasks done_verified + release the held push onto green.
+- **CLEAN-AUDITOR-DOC-SIGNAL-TYPES** ready[] → agent-father when a slot frees (LOW, no live-path block).

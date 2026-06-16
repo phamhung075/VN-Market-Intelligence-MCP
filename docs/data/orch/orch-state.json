@@ -134,12 +134,12 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-16T17:50:27Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
-    "note": "ROUTER 2026-06-16T17:50:27Z — INFOCARD-EXPAND-FETCH epic DONE_VERIFIED (live RAW first-hand): #1 FIX-CASCADE-CARD-INVALID-DATE + #2 FIX-SIGNALS-STOCK-FULL-DETAIL + #3 FIX-INFOCARD-DROPDOWN-EXPAND -> done_verified. Live /dashboard/analysis?stock=FPT: valid date '14/6/2026' (was Invalid Date) + 15x 'Xem thêm' Radix disclosure + backend full finding_data+source+ISO. Standing goal (every served info element links source + expands to fetched detail for re-check) STATE now LIVE in production. FE img dc2c5d36, mcp-server a2ef510b. PUSH held (PO out-of-band)."
+    "status": "in_progress",
+    "updated_at": "2026-06-16T18:21:20Z",
+    "updated_by": "po",
+    "active_task_id": "FIX-CI-RED-STANDING-1837A-1352A",
+    "next_agent": "qa",
+    "note": "PO triage tick 2026-06-16T18:21:20Z — drained 3 NEW signals. HEAD: dispatch qa for FIX-CI-RED-STANDING-1837A-1352A (review[], deterministic 1837a+1352a fix GREEN). Per signal router-ci-suite-weather (RESOLVED) the broader 20-file/49-fail red is HOST-WEATHER not a regression -> qa verifies (local 1837a+1352a green; watch Linux Actions run green on the deferred push) -> done_verified -> unblocks the 4 ci_green_on_subsequent_push-gated tasks + lets the held 61-ahead/28-behind push land on a green baseline. Also minted this tick: FIX-MARKET-BREADTH-MISSING (HIGH, user-reported -> ops-vps-fetch recon-first; highest user-facing pri, queued in ready[]) + CLEAN-AUDITOR-DOC-SIGNAL-TYPES (LOW -> agent-father)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -613,8 +613,11 @@
         "type": "tech_debt",
         "summary": "AUDITOR-EMIT doc-coherence residual: system-auditor docs still cite OLD post_agent_signal types after the signal_feedback migration (220b48c5). init.md:24 UNAMBIGUOUSLY stale (old types 'via post_agent_signal' which now rejects them). audit-dimensions.md:18/28/38 'Signal type: <old>' AMBIGUOUS (signal_type vs dedup-namespace category) — needs scoping. flow/ dedup_key/title/signal_queue-row 'type' are intentional (free-form, not enum) — leave. Scope ONE coherent doc cleanup (route to agent-father/fixer for system-auditor flow docs). Low priority — fail-loud debt, functional emit path already done_verified + live-proven (signal_id 6342).",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-16T18:21:20Z",
+        "resolved_by": "po-s91",
+        "resolution": "TRIAGED + DISPATCHED: minted CLEAN-AUDITOR-DOC-SIGNAL-TYPES (LOW, route_to=agent-father) into ready[] — one scoped doc cleanup of system-auditor docs (init.md:24 stale + audit-dimensions.md:18/28/38 scoping; free-form flow 'type' left). No longer untriaged."
       },
       {
         "id": "router-ci-suite-weather-20260616T162343Z",
@@ -624,8 +627,11 @@
         "type": "tech_debt",
         "summary": "CI per-file isolation (bj83h3qdj) on the local macOS host shows 49 fail / 20 files BEYOND the now-fixed 1837a+1352a: 3x SIGILL Bun-JIT corruption (sdk1.29.0+zod3.25.76 under P=8 on memory-constrained host — local-only, does NOT reproduce on Linux CI) + ~17 live-data/integration flaps (news-poll/RSS/reuters/source-health/pollnews/TA-candle/mcp-tools/e2e). These are host-weather + flaky, disjoint from any recent change, NOT regressions. ACTIONS for PO triage: (1) on the deferred push, WATCH the GitHub Actions Linux run to confirm true CI-green (real gate, unobservable locally); (2) consider a flaky-test quarantine / live-data-mock review so the suite is deterministic; (3) the SIGILL is the pinned restart-masks-bun-jit-corruption issue — local-run hygiene (lower P / restart bun) not a code fix. Low priority — does NOT block the 1837a+1352a done_verified, but blocks any honest 'fleet CI is green' claim until Linux-confirmed.",
         "severity": "LOW",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-16T18:21:20Z",
+        "resolved_by": "po-s91",
+        "resolution": "INFORMATIONAL — accepted as the justification UNBLOCKING FIX-CI-RED-STANDING-1837A-1352A. The 20-file/49-fail full-suite red BEYOND the fixed 1837a+1352a is LOCAL macOS host-weather (3x SIGILL Bun-JIT corruption sdk1.29.0+zod3.25.76 under P=8 on memory-constrained host — local-only, does NOT repro on Linux CI; the known restart-masks-bun-jit-corruption class) + ~17 live-data/integration flaps. Disjoint from change, NOT a regression. No new P3 minted — would duplicate the existing pinned bun-jit debt + the flaky-quarantine note is already carried on CI-RED-STANDING.broader_red_note. SIGILL recurrence = local-run hygiene (lower P / restart bun), not a code fix. Action (1) WATCH-Linux-CI-green-on-push is carried into CI-RED-STANDING's verification_gate."
       },
       {
         "id": "router-market-breadth-missing-20260616T175600Z",
@@ -635,11 +641,11 @@
         "type": "data-gap",
         "summary": "Market breadth MISSING (user-reported 2026-06-16): get_market_snapshot returns NO advancers/decliners/unchanged (so ma tang/giam/dung gia). ROOT CAUSE: apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts get_market_snapshot (~L147-364) fetches VN-Index as a SINGLE value (fetchVnIndex VNINDEX -> price+change% only) + individual prices ONLY for explicitly-requested codes; NEVER aggregates HOSE/HNX/UPCOM constituents -> breadth UNIMPLEMENTED, not a fetch failure (live probe confirms: returns only vn_index+text). FIX (REAL DATA ONLY / no-fake-data): (A) RAW-probe VnDirect finfo-api/vnmarket_prices upstream for advances/declines/nochange fields that fetchVnIndex DISCARDS -> expose (cheapest+real; dispatch ops-vps-fetch/ops-mainserver-fetch recon FIRST); or (B) aggregate full constituent lists + count up/down/flat; NEVER a watchlist-only proxy as market-wide breadth. CONSUMER: frontend \"Do rong thi truong\" card empty because backend gives nothing -> close producer->consumer; per /goal#3 the card must link source + expand to fetched advancers/decliners detail. Mint FIX-MARKET-BREADTH-MISSING -> dev-mcp-server (+ ops-*-fetch recon). Ties /goal#1 + no-fake-data + /goal#3. [Router captured after 2x po-spawn API-500 deaths a68a534/af08bce6.]",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "RESOLVED",
         "payload_ref": null,
-        "resolved_at": null,
-        "resolved_by": null,
-        "resolution": null
+        "resolved_at": "2026-06-16T18:21:20Z",
+        "resolved_by": "po-s91",
+        "resolution": "TRIAGED + DISPATCHED: minted FIX-MARKET-BREADTH-MISSING (HIGH, user-reported) into ready[] -> ops-vps-fetch RECON-FIRST (RAW-probe VnDirect breadth fields) then dev-mcp-server code once the apps/mcp-server/ zone frees (busy w/ ARCH-CRON-SCHEDULER-RELIABILITY). Producer->consumer close for the empty frontend 'Do rong thi truong' card."
       }
     ]
   },
@@ -19307,6 +19313,40 @@
         "held_on": "2026-06-16T10:31:48Z",
         "held_by": "po",
         "hold_reason": "shared-root HOLD (Root C): Step-0-GW sibling-success corroboration gate — pairs with Root B's concurrency model; needs design/BA pass. Not dispatched (no dev-ready spec)."
+      },
+      {
+        "id": "FIX-MARKET-BREADTH-MISSING",
+        "type": "FIX",
+        "priority": "HIGH",
+        "status": "READY",
+        "blocking": false,
+        "route_to": "ops-vps-fetch",
+        "next_agent": "ops-vps-fetch",
+        "zone": "apps/mcp-server/",
+        "title": "get_market_snapshot returns NO breadth (advancers/decliners/unchanged) — user-reported market-wide do-rong-thi-truong gap",
+        "desc": "USER-REPORTED 2026-06-16: get_market_snapshot exposes no so-ma-tang/giam/dung-gia. ROOT (live-confirmed, NOT a fetch failure): apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts get_market_snapshot (~L147-364) fetches VN-Index as a SINGLE value (fetchVnIndex VNINDEX -> price+change% only) + individual prices only for explicitly-requested codes; NEVER aggregates HOSE/HNX/UPCOM constituents -> breadth UNIMPLEMENTED. FIX (REAL DATA ONLY, no-fake-data): RECON FIRST (ops-vps-fetch) RAW-probe VnDirect finfo-api/vnmarket_prices upstream for advances/declines/nochange fields that fetchVnIndex DISCARDS -> expose (cheapest+real); else (B) aggregate full constituent lists + count up/down/flat. NEVER a watchlist-only proxy as market-wide breadth. CONSUMER: frontend 'Do rong thi truong' card empty -> close producer->consumer; per /goal#3 card must link source + expand to fetched advancers/decliners detail.",
+        "size": "M",
+        "baseline_pass": "Live get_market_snapshot returns non-null advancers+decliners+unchanged counts sourced from REAL upstream (advances+declines+nochange ~= total constituents; magnitudes plausible vs index direction). Frontend breadth card populates + links source.",
+        "source": "signal_queue router-market-breadth-missing-20260616T175600Z (user-reported data-gap)",
+        "created_at": "2026-06-16T18:21:20Z",
+        "dispatch_note": "RECON-FIRST: dispatch ops-vps-fetch to RAW-probe VnDirect breadth fields before any code. Coding zone apps/mcp-server/ currently busy (ARCH-CRON-SCHEDULER-RELIABILITY in_progress) — recon runs parallel in ops lane; code hop waits for the mcp-server slot. Ties /goal#1 (recheck-shipped) + no-fake-data + /goal#3 (source-link+expand). Highest user-facing priority of this triage tick."
+      },
+      {
+        "id": "CLEAN-AUDITOR-DOC-SIGNAL-TYPES",
+        "type": "CLEAN",
+        "priority": "LOW",
+        "status": "READY",
+        "blocking": false,
+        "route_to": "agent-father",
+        "next_agent": "agent-father",
+        "zone": "docs/agents/system-auditor/",
+        "title": "system-auditor docs cite OLD post_agent_signal types after signal_feedback migration (220b48c5)",
+        "desc": "Doc-coherence residual: signal_feedback migration (220b48c5) changed accepted signal types but system-auditor docs still reference the old post_agent_signal enum. SCOPE (one coherent cleanup): (1) init.md:24 UNAMBIGUOUSLY stale — old types 'via post_agent_signal' which the tool now rejects -> rewrite to the current signal_feedback contract. (2) audit-dimensions.md:18/28/38 'Signal type: <old>' is AMBIGUOUS (signal_type vs dedup-namespace category) -> scope each: rename to the dedup-namespace category if that's the intent, else update to the new enum. (3) flow/ free-form dedup_key/title/signal_queue-row 'type' fields are INTENTIONAL (not enum) -> LEAVE untouched. agent-father owns system-auditor agent docs (per agent-md-factory rule).",
+        "size": "S",
+        "baseline_pass": "init.md:24 + audit-dimensions.md:18/28/38 reflect the current signal_feedback contract; no remaining stale post_agent_signal type references in system-auditor docs; free-form flow 'type' fields untouched. grep confirms.",
+        "source": "signal_queue router-docresidual-20260616T160246Z (LOW tech_debt — fail-loud debt, functional emit path already done_verified live signal_id 6342)",
+        "created_at": "2026-06-16T18:21:20Z",
+        "dispatch_note": "Low priority — route via agent-father (system-auditor agent-doc owner). Does NOT block any live path; emit already done_verified. Minted to ready[] so it stops re-reading as untriaged."
       }
     ],
     "review": [
@@ -19571,6 +19611,6 @@
     "updated_at": "2026-06-16T15:37:15Z",
     "updated_by": "po"
   },
-  "updated_at": "2026-06-16T07:15:00Z",
+  "updated_at": "2026-06-16T18:21:20Z",
   "updated_by": "pm"
 }
