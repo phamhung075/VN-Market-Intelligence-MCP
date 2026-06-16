@@ -11,6 +11,10 @@
  *   4. Only then wire into a Remix loader
  */
 
+// Cluster C bounded-fetch helpers — safeFetch / safeFetchOrNull with 10s deadline.
+// ESM .js extension required per dev-standards coding rule.
+import { safeFetch, safeFetchOrNull } from "./fetchUtils.js";
+
 // Server-side: use Docker service name via env (API_GATEWAY_URL=http://api-gateway:4000 in Docker)
 // Client-side: never — all API calls must go through Remix loaders (SSR).
 // Guard against `process` being undefined when Vite bundles this module into the browser
@@ -280,14 +284,16 @@ export async function fetchKinhDichReading(code: string): Promise<KinhDichReadin
 export async function fetchKinhDichReadingNonFatal(
   code: string,
 ): Promise<KinhDichReading | null> {
-  try {
-    const url = `${API_GATEWAY_URL}/kinh-dich/reading/${encodeURIComponent(code)}`;
-    const response = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!response.ok) return null;
-    return (await response.json()) as KinhDichReading;
-  } catch {
-    return null;
-  }
+  const url = `${API_GATEWAY_URL}/kinh-dich/reading/${encodeURIComponent(code)}`;
+  return safeFetchOrNull<KinhDichReading>(
+    url,
+    (raw) => {
+      if (raw === null || typeof raw !== "object") return null;
+      return raw as KinhDichReading;
+    },
+    { deadlineMs: 10_000, label: "kdReadingNonFatal" },
+    // 10s: best-effort watchlist tile enrichment; faster degrade preserves tile render
+  );
 }
 
 // --------------------------------------------------------------------------
@@ -479,33 +485,17 @@ function toWatchlistTileData(ticker: string, raw: unknown): WatchlistTileData | 
 }
 
 /**
- * Batch lightweight price + signal-count fetch for the watchlist overview grid.
- * Endpoint: GET /stock/price/batch?tickers=VNM,FPT,...
- * Response: { quotes: Record<ticker, { close, changePct, direction }> }
- *   OR flat array of quote objects.
- *
- * Non-fatal: returns {} on any error so the overview degrades gracefully.
+ * Parse a raw GET /stock/price/batch response into WatchlistTileData map.
+ * Handles two shapes: { quotes: Record<ticker, obj> } and flat array.
+ * Returns {} on null input or unrecognised shape (parse-null contract for safeFetch).
  */
-export async function fetchWatchlistPrices(
-  tickers: string[],
-): Promise<Record<string, WatchlistTileData>> {
-  if (tickers.length === 0) return {};
-  const url = `${API_GATEWAY_URL}/stock/price/batch?tickers=${encodeURIComponent(tickers.join(","))}`;
-  let raw: unknown;
-  try {
-    const response = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!response.ok) {
-      throw new ApiError(response.status, `GET /stock/price/batch failed: ${response.status}`);
-    }
-    raw = await response.json();
-  } catch {
-    return {};
-  }
-
+function parseWatchlistPrices(raw: unknown): Record<string, WatchlistTileData> {
   const result: Record<string, WatchlistTileData> = {};
 
+  if (raw === null) return result;
+
   // Shape 1: { quotes: Record<ticker, obj> }
-  if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) {
+  if (typeof raw === "object" && !Array.isArray(raw)) {
     const obj = raw as Record<string, unknown>;
     const quotesMap = obj["quotes"];
     if (quotesMap !== null && typeof quotesMap === "object" && !Array.isArray(quotesMap)) {
@@ -532,7 +522,30 @@ export async function fetchWatchlistPrices(
     return result;
   }
 
-  return {};
+  return result;
+}
+
+/**
+ * Batch lightweight price + signal-count fetch for the watchlist overview grid.
+ * Endpoint: GET /stock/price/batch?tickers=VNM,FPT,...
+ * Response: { quotes: Record<ticker, { close, changePct, direction }> }
+ *   OR flat array of quote objects.
+ *
+ * Non-fatal: returns {} on any error so the overview degrades gracefully.
+ * Bounded by 10s deadline (best-effort enrichment; shorter degrade < tile render block).
+ */
+export async function fetchWatchlistPrices(
+  tickers: string[],
+): Promise<Record<string, WatchlistTileData>> {
+  if (tickers.length === 0) return {};
+  const url = `${API_GATEWAY_URL}/stock/price/batch?tickers=${encodeURIComponent(tickers.join(","))}`;
+  const { data } = await safeFetch<Record<string, WatchlistTileData>>(
+    url,
+    parseWatchlistPrices,
+    { deadlineMs: 10_000, label: "watchlistPrices" },
+    // 10s: best-effort enrichment; shorter deadline degrades faster without blocking primary page render
+  );
+  return data;
 }
 
 // --------------------------------------------------------------------------
@@ -546,22 +559,25 @@ export async function fetchWatchlistPrices(
  *
  * Reuses the same toAgentSignal mapper as fetchStockSignals.
  * Non-fatal: returns [] on any error.
+ * Bounded by 10s deadline (best-effort; shorter degrade < tile render block).
+ * NOTE: apiGet call REPLACED by direct safeFetchOrNull to avoid double-deadline.
  */
 export async function fetchCascadeSignals(code: string, limit = 5): Promise<AgentSignal[]> {
-  try {
-    const raw = await apiGet<unknown>(
-      `/mcp/api/signals/stock/${encodeURIComponent(code)}?limit=${limit}&type=chain_catalyst`,
-    );
-    const items: unknown[] =
-      raw !== null &&
-      typeof raw === "object" &&
-      Array.isArray((raw as Record<string, unknown>)["signals"])
-        ? ((raw as Record<string, unknown>)["signals"] as unknown[])
-        : [];
-    return items.map(toAgentSignal).filter((s): s is AgentSignal => s !== null);
-  } catch {
-    return [];
-  }
+  const url = `${API_GATEWAY_URL}/mcp/api/signals/stock/${encodeURIComponent(code)}?limit=${limit}&type=chain_catalyst`;
+  const result = await safeFetchOrNull<AgentSignal[]>(
+    url,
+    (raw) => {
+      const items: unknown[] =
+        raw !== null &&
+        typeof raw === "object" &&
+        Array.isArray((raw as Record<string, unknown>)["signals"])
+          ? ((raw as Record<string, unknown>)["signals"] as unknown[])
+          : [];
+      return items.map(toAgentSignal).filter((s): s is AgentSignal => s !== null);
+    },
+    { deadlineMs: 10_000, label: "cascadeSignals" },
+  );
+  return result ?? [];
 }
 
 // --------------------------------------------------------------------------
@@ -574,15 +590,19 @@ import type { AccuracyDigestStats } from "~/domain/market";
  * System-level accuracy digest.
  * Endpoint: GET /mcp/api/accuracy/digest?days=30
  * Non-fatal — callers should catch and treat as null on failure.
+ * Bounded by 10s deadline.
+ * NOTE: apiGet call REPLACED by direct safeFetchOrNull to avoid double-deadline.
  */
 export async function fetchAccuracyDigest(days = 30): Promise<AccuracyDigestStats | null> {
-  try {
-    const raw = await apiGet<unknown>(`/mcp/api/accuracy/digest?days=${days}`);
-    if (raw === null || typeof raw !== "object") return null;
-    return raw as AccuracyDigestStats;
-  } catch {
-    return null;
-  }
+  const url = `${API_GATEWAY_URL}/mcp/api/accuracy/digest?days=${days}`;
+  return safeFetchOrNull<AccuracyDigestStats>(
+    url,
+    (raw) => {
+      if (raw === null || typeof raw !== "object") return null;
+      return raw as AccuracyDigestStats;
+    },
+    { deadlineMs: 10_000, label: "accuracyDigest" },
+  );
 }
 
 /**
