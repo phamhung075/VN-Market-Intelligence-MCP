@@ -49,3 +49,12 @@
 - Guard prepare with try/catch (null=skip gate) — CHOSEN: generic for any DB missing schema; production migration still runs gate; test gets correct behaviour.
 **why-decision:** Production code added an unconditional db.prepare() for tables only present after migrateFinancialReports(); test DBs are queue-only by design. Guard is the correct layer boundary.
 **why-change:** 1837a was already green (status='in_progress' in valid set); doc sync added §5 enum to orch-state-access.md.
+
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-16T20:05Z
+**task-id:** FIX-FOREIGN-FLOW-INTEGRITY-BREAK / FIX-FOREIGN-FLOW-COVERAGE / FIX-MARKET-BREADTH-MISSING / FIX-MARKET-LIQUIDITY-MISSING-TOOL
+**what-done:** Isolated Writer B (VCI) from Writer A (VPS) in storeTradingStats(); added VND money-value extraction to foreign flow pipeline; added fetchVnIndexBreadthAndLiquidity() + get_market_breadth tool.
+**what-considered:**
+- Writer B fix: separate vnstock_ownership table vs ON CONFLICT exclusion — CHOSEN exclusion: zero migration risk, single table, no schema churn.
+- Breadth+liquidity: extend get_market_snapshot vs separate tool — CHOSEN both: get_market_snapshot co-fetches breadth in parallel + new get_market_breadth for dedicated queries.
+**why-decision:** ON CONFLICT exclusion is atomic and safe for existing rows. Co-fetch costs zero extra network (same URL). Separate tool needed for agent direct-call without requesting stock codes.
+**why-change:** All 4 tasks in one session per task context (breadth+liquidity co-implementable in same file).
