@@ -18,6 +18,7 @@ Run:
 import sys
 import os
 import types
+import urllib.error
 
 # ---------------------------------------------------------------------------
 # Import the classifier functions from the production script without executing
@@ -35,6 +36,7 @@ is_full_statement_title = _mod.is_full_statement_title
 is_consolidated_title = _mod.is_consolidated_title
 _title_rank = _mod._title_rank
 _parse_article_ids_and_titles = _mod._parse_article_ids_and_titles
+_is_transient_error = _mod._is_transient_error
 
 
 # ---------------------------------------------------------------------------
@@ -274,6 +276,84 @@ def test_parse_rank1_non_consolidated_still_resolves():
 
 
 # ---------------------------------------------------------------------------
+# _is_transient_error — transient vs terminal exception classification
+# ---------------------------------------------------------------------------
+
+def test_transient_http_503_service_unavailable():
+    """HTTP 503 is a transient server fault worth retrying."""
+    exc = urllib.error.HTTPError(
+        url="https://hnx.vn/api",
+        code=503,
+        msg="Service Unavailable",
+        hdrs={},
+        fp=None
+    )
+    assert _is_transient_error(exc) is True
+
+
+def test_transient_http_500_internal_server_error():
+    """HTTP 500 is a transient server fault worth retrying."""
+    exc = urllib.error.HTTPError(
+        url="https://hnx.vn/api",
+        code=500,
+        msg="Internal Server Error",
+        hdrs={},
+        fp=None
+    )
+    assert _is_transient_error(exc) is True
+
+
+def test_terminal_http_404_not_found():
+    """HTTP 404 is terminal; endpoint does not exist."""
+    exc = urllib.error.HTTPError(
+        url="https://hsx.vn/old-endpoint",
+        code=404,
+        msg="Not Found",
+        hdrs={},
+        fp=None
+    )
+    assert _is_transient_error(exc) is False
+
+
+def test_terminal_http_403_forbidden():
+    """HTTP 403 is terminal; request is blocked."""
+    exc = urllib.error.HTTPError(
+        url="https://hnx.vn/restricted",
+        code=403,
+        msg="Forbidden",
+        hdrs={},
+        fp=None
+    )
+    assert _is_transient_error(exc) is False
+
+
+def test_transient_urlerror_connection_reset():
+    """URLError with ConnectionResetError reason is transient."""
+    reason = ConnectionResetError("Connection reset by peer")
+    exc = urllib.error.URLError(reason)
+    assert _is_transient_error(exc) is True
+
+
+def test_transient_urlerror_timeout_error():
+    """URLError with TimeoutError reason is transient."""
+    reason = TimeoutError("Operation timed out")
+    exc = urllib.error.URLError(reason)
+    assert _is_transient_error(exc) is True
+
+
+def test_transient_urlerror_string_timed_out():
+    """URLError with string reason 'timed out' is transient."""
+    exc = urllib.error.URLError("timed out")
+    assert _is_transient_error(exc) is True
+
+
+def test_terminal_non_http_exception():
+    """Non-HTTP exception (e.g. ValueError) is terminal and should fail-loud."""
+    exc = ValueError("unexpected parsing error")
+    assert _is_transient_error(exc) is False
+
+
+# ---------------------------------------------------------------------------
 # Self-runner (no pytest dependency required on VPS)
 # ---------------------------------------------------------------------------
 
@@ -308,6 +388,14 @@ if __name__ == "__main__":
         test_parse_wrong_quarter_ignored,
         test_parse_rank2_only_returns_none,
         test_parse_rank1_non_consolidated_still_resolves,
+        test_transient_http_503_service_unavailable,
+        test_transient_http_500_internal_server_error,
+        test_terminal_http_404_not_found,
+        test_terminal_http_403_forbidden,
+        test_transient_urlerror_connection_reset,
+        test_transient_urlerror_timeout_error,
+        test_transient_urlerror_string_timed_out,
+        test_terminal_non_http_exception,
     ]
 
     passed = 0
