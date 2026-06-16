@@ -126,13 +126,13 @@
     }
   ],
   "head": {
-    "status": "idle",
-    "updated_at": "2026-06-16T09:45:14Z",
-    "updated_by": "dev-team",
-    "active_task_id": null,
-    "next_agent": null,
+    "status": "dispatch",
+    "updated_at": "2026-06-16T10:45:36Z",
+    "updated_by": "po-s87",
+    "active_task_id": "FIX-HNX-SESSION-COOKIE",
+    "next_agent": "dev-vps-crawls",
     "rebuild_required": false,
-    "note": "ROUTER 2026-06-16T09:45:14Z — FIX-VNSTOCK-TRADINGSTATS-CRASH PROMOTED review->done_verified on live behavioral gate GREEN. RAW-verified (NOT relayed) named-vol cron_job_runs: vnstockTradingStatsRefresh 2026-06-16 08:30:01 success rows_written=0 (honest 0, not ticker count; prior 06-15 crash was PRE-deploy 11:17:43Z). Plausibility /goal#1: COUNT=3735, MAX(fetched_at)=08:04:35 predates the 08:30 run => 0-new genuine. Fix 64f188fc. REBUILD done. Head kept idle (non-dispatching) -> next tick falls to Step 1. Remaining review[] gate: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (data_source_fixed, alert-engine-vs-canonical RSI residual). PUSH held (PO post-gates; branch ahead 19/behind 8). Active coding lane=0."
+    "note": "PO 2026-06-16 SPIKE-RECONCILE + DESIGN-UNGATE: ARCH-BCTC-PIPELINE-DURABILITY done (brief landed, 4 contracts). Dispatching the P1 dev-vps-crawls coding lane = FIX-HNX-SESSION-COOKIE + FIX-SSC-C111-EMPTY-FALLBACK (paired, same file vps-scripts/discover-bctc-urls-browser.py, C4, 1 WIP lane). Brief: docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md. P2s (ZERO-URL-ALERT C1 + FRESHNESS-GATE C2, dev-mcp-server) re-held wip_deferred behind WIP<=2. ENRICH-SILENT-0ROWS stays review (C3 own gate). PUSH held — PO out-of-band; branch ahead12/behind24 benign cloud divergence."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -15347,6 +15347,40 @@
         "recon_verdict": "real-count-no-truncation — 102 is the correct filtered output of a 111-code watchlist+ref fetch; bgapidatafeed NOT page-capped. Two real gaps spun out as FIX-FOREIGN-FLOW-COVERAGE + FIX-FOREIGN-FLOW-DEAD-ENDPOINT.",
         "resolved_at": "2026-06-16T05:05:37Z",
         "resolved_by": "po-s81"
+      },
+      {
+        "id": "ARCH-BCTC-PIPELINE-DURABILITY",
+        "type": "SPIKE",
+        "priority": "P1",
+        "status": "DONE",
+        "route_to": "architect",
+        "co_owner": "agents-architect",
+        "zone": "multi",
+        "mode": "spike",
+        "timebox": 120,
+        "size": "S",
+        "title": "Architect brief — durable cross-cutting hardening for the BCTC VPS pipeline (2nd recurrence; first 'fix' was a one-time flush, not hardening)",
+        "question": "What is the durable cross-cutting design that removes the BCTC-VPS-PIPELINE-STALE recurrence class as a whole? The shared root across discovery-brittleness (afrLoop regex rollover), enrich-silent-0-rows, and no-freshness-gate is 'NO active zero-result/freshness alerting' — the pipeline cannot distinguish 'ticker has not filed' from 'discovery/enrich is broken' and fails silently into a healthy mask. Design: (a) an active zero-result + freshness alerting layer (generalizing FIX-BCTC-ZERO-URL-ALERT + FIX-BCTC-FRESHNESS-GATE into one cross-cutting health contract); (b) a fail-loud contract for the enrich path (a 0-rows enrich must never advance the queue silently — generalizes FIX-BCTC-ENRICH-SILENT-0ROWS); (c) reduce the regex-based ADF session impersonation brittleness (prefix-agnostic extraction is deployed but the class recurs on any source-side counter/token/session change — define the monitoring contract that catches it within 1 cycle not 34h). Output: a design brief that the 5 child FIX tasks slot under, plus any new generic mechanism. Per recurring-bug-escalation policy (2nd recurrence, same module): architect designs the durable cross-cutting fix; agents-architect consulted if any inter-agent/health-contract comms change is implied.",
+        "escalation_reason": "recurring-bug-escalation: 2nd recurrence of BCTC-VPS-PIPELINE-STALE; the first 'fix' self-recovered/one-time-flushed rather than hardening. Policy: 2+ recurrences same module -> brief the architect for a durable cross-cutting design instead of only patching the leaf symptoms.",
+        "children": [
+          "FIX-BCTC-ENRICH-SILENT-0ROWS",
+          "FIX-HNX-SESSION-COOKIE",
+          "FIX-SSC-C111-EMPTY-FALLBACK",
+          "FIX-BCTC-ZERO-URL-ALERT",
+          "FIX-BCTC-FRESHNESS-GATE"
+        ],
+        "baseline_pass": "Design brief delivered (docs/architecture-briefs/) enumerating the durable zero-result/freshness alerting contract + enrich fail-loud contract + ADF-brittleness monitoring contract; the 5 child FIX tasks map cleanly under it.",
+        "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
+        "created_at": "2026-06-15T17:19:55Z",
+        "dispatch_note": "DISPATCHED architect SPIKE 2026-06-16 dev-team tick — durable BCTC pipeline hardening brief (2nd-recurrence BCTC-VPS-PIPELINE-STALE escalation). NOT a dev coding lane (0 coding-WIP). Unblocks 5 children: HNX-SESSION-COOKIE, SSC-C111-EMPTY-FALLBACK, BCTC-ZERO-URL-ALERT, BCTC-FRESHNESS-GATE, + ENRICH-SILENT-0ROWS (already review). Output: docs/architecture-briefs/ contract enumeration.",
+        "next_agent": "architect",
+        "dispatch_at": "2026-06-16T10:31:48Z",
+        "dispatch_by": "po",
+        "done_verified": false,
+        "done_at": "2026-06-16T10:45:36Z",
+        "done_by": "po",
+        "done_evidence": "SPIKE delivered its design artifact: docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md (268L) enumerating 4 contracts C1 zero-result/freshness alerting, C2 freshness health gate, C3 enrich fail-loud, C4 ADF-brittleness monitoring + the child->contract map. A SPIKE is a design artifact (no rebuild, no QA-green) — the spun-out child FIXES are the verified work. baseline_pass satisfied.",
+        "done_verified_deferred_note": "SPIKE DoD = brief delivered; done_verified:false because the durable hardening is realized only when the child FIXES (C1/C2/C4 mcp+vps, C3 already review) ship + RAW-verify the recurrence class closed. Tracked via the children, not this design row."
       }
     ],
     "done_verified": [
@@ -18792,35 +18826,6 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
-      },
-      {
-        "id": "ARCH-BCTC-PIPELINE-DURABILITY",
-        "type": "SPIKE",
-        "priority": "P1",
-        "status": "IN_PROGRESS",
-        "route_to": "architect",
-        "co_owner": "agents-architect",
-        "zone": "multi",
-        "mode": "spike",
-        "timebox": 120,
-        "size": "S",
-        "title": "Architect brief — durable cross-cutting hardening for the BCTC VPS pipeline (2nd recurrence; first 'fix' was a one-time flush, not hardening)",
-        "question": "What is the durable cross-cutting design that removes the BCTC-VPS-PIPELINE-STALE recurrence class as a whole? The shared root across discovery-brittleness (afrLoop regex rollover), enrich-silent-0-rows, and no-freshness-gate is 'NO active zero-result/freshness alerting' — the pipeline cannot distinguish 'ticker has not filed' from 'discovery/enrich is broken' and fails silently into a healthy mask. Design: (a) an active zero-result + freshness alerting layer (generalizing FIX-BCTC-ZERO-URL-ALERT + FIX-BCTC-FRESHNESS-GATE into one cross-cutting health contract); (b) a fail-loud contract for the enrich path (a 0-rows enrich must never advance the queue silently — generalizes FIX-BCTC-ENRICH-SILENT-0ROWS); (c) reduce the regex-based ADF session impersonation brittleness (prefix-agnostic extraction is deployed but the class recurs on any source-side counter/token/session change — define the monitoring contract that catches it within 1 cycle not 34h). Output: a design brief that the 5 child FIX tasks slot under, plus any new generic mechanism. Per recurring-bug-escalation policy (2nd recurrence, same module): architect designs the durable cross-cutting fix; agents-architect consulted if any inter-agent/health-contract comms change is implied.",
-        "escalation_reason": "recurring-bug-escalation: 2nd recurrence of BCTC-VPS-PIPELINE-STALE; the first 'fix' self-recovered/one-time-flushed rather than hardening. Policy: 2+ recurrences same module -> brief the architect for a durable cross-cutting design instead of only patching the leaf symptoms.",
-        "children": [
-          "FIX-BCTC-ENRICH-SILENT-0ROWS",
-          "FIX-HNX-SESSION-COOKIE",
-          "FIX-SSC-C111-EMPTY-FALLBACK",
-          "FIX-BCTC-ZERO-URL-ALERT",
-          "FIX-BCTC-FRESHNESS-GATE"
-        ],
-        "baseline_pass": "Design brief delivered (docs/architecture-briefs/) enumerating the durable zero-result/freshness alerting contract + enrich fail-loud contract + ADF-brittleness monitoring contract; the 5 child FIX tasks map cleanly under it.",
-        "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
-        "created_at": "2026-06-15T17:19:55Z",
-        "dispatch_note": "DISPATCHED architect SPIKE 2026-06-16 dev-team tick — durable BCTC pipeline hardening brief (2nd-recurrence BCTC-VPS-PIPELINE-STALE escalation). NOT a dev coding lane (0 coding-WIP). Unblocks 5 children: HNX-SESSION-COOKIE, SSC-C111-EMPTY-FALLBACK, BCTC-ZERO-URL-ALERT, BCTC-FRESHNESS-GATE, + ENRICH-SILENT-0ROWS (already review). Output: docs/architecture-briefs/ contract enumeration.",
-        "next_agent": "architect",
-        "dispatch_at": "2026-06-16T10:31:48Z",
-        "dispatch_by": "po"
       }
     ],
     "ready": [
@@ -18889,14 +18894,26 @@
         "size": "S",
         "title": "HNX POST endpoints now require a session cookie (stateless POST -> 302 /Home/Error) — add a prior GET to the referrer to establish the cookie, shared CookieJar",
         "desc": "Root B (ops recon, UNFIXED). HNX endpoints NextPageTinCPNY_CBTCPH + NextPageTCPHUpCoM return HTTP 302 -> /Home/Error for stateless POSTs (no prior GET). A prior GET to the referrer (https://hnx.vn/vi-vn/thong-tin-cong-bo-up-hnx.html) sets cookie 616a3745ee... -> POST returns 200 with results (30KB, contains funcShowFileAttach). Fix _discover_hnx_upcom() in vps-scripts/discover-bctc-urls-browser.py: GET referrer first, share a http.cookiejar.CookieJar() + urllib opener (same pattern as the SSC flow). Affects the 9 pending HNX/UPCOM tickers: ACV BDI DAG DLC JSH SIS VDC VNH VEA.",
-        "generic_mandate": "GENERIC session-establishment for the HNX path — no per-ticker code, share one CookieJar across all HNX POSTs (/goal#2).",
+        "generic_mandate": "/goal#2: GENERIC — no per-ticker allowlist, no date literal, no exchange discriminator. The brief enforces row-level conditions only; the c3/cookie fallbacks apply to ANY filer/exchange.",
         "baseline_pass": "_discover_hnx_upcom() returns 200+results for an HNX/UPCOM ticker with a Q1/2026 filing (RAW-verify on VPS); the 9 pending queue rows re-resolve (those that have actually filed Q1/2026).",
         "source": "OPS-BCTC-PIPELINE-RECON Root B; signal docs/signals/dev-vps-crawls-2026-06-15T17-11-01Z.json",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 — dev-vps-crawls. vps-scripts/discover-bctc-urls-browser.py _discover_hnx_upcom(): prior-GET referrer + shared CookieJar. Recipe in recon.md Working Recipe (HNX, with session).",
-        "held_on": "2026-06-16T10:31:48Z",
-        "held_by": "po",
-        "hold_reason": "design-gated: child of ARCH-BCTC-PIPELINE-DURABILITY (dispatched architect 2026-06-16) — implements the durable HNX-session / discovery contract; dispatch as coding lane only AFTER brief lands."
+        "held_on": null,
+        "held_by": null,
+        "hold_reason": null,
+        "design_ungated_at": "2026-06-16T10:45:36Z",
+        "design_ungated_by": "po",
+        "gated_brief": "docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md",
+        "contract": "C4 (ADF-brittleness monitoring) + co-located afrLoop hardening",
+        "brief_files": [
+          "vps-scripts/discover-bctc-urls-browser.py"
+        ],
+        "fix_spec": "Add a prior session GET to the referrer URL before the stateless POST in _discover_hnx_upcom() (shared CookieJar) so HNX POST no longer 302->/Home/Error. CO-LOCATE (brief sub-risk A, RF-4): remove the hardcoded afrLoop fallback default \"27000000000000000\" from the prefix-agnostic regex fix — on regex-extract failure return [] (fail-loud-per-ticker), NOT a silent retry on a stale counter; verify the 'ViewState not found' guard stays intact so step2 never searches with a null loop value.",
+        "coding_lane": "dev-vps-crawls#1 (paired: HNX-SESSION + SSC-C111 share vps-scripts/discover-bctc-urls-browser.py — ONE lane, 1 WIP)",
+        "next_agent": "dev-vps-crawls",
+        "promoted_at": "2026-06-16T10:45:36Z",
+        "promoted_by": "po"
       },
       {
         "id": "FIX-SSC-C111-EMPTY-FALLBACK",
@@ -18909,14 +18926,26 @@
         "size": "S",
         "title": "SSC c111 (doc summary) empty for UPCOM/state filers (e.g. ACV) -> period lives in c3; _ssc_parse_rows must fall back to c3 when c111 empty",
         "desc": "Pre-existing B (ops recon, UNFIXED). _ssc_parse_rows() in vps-scripts/discover-bctc-urls-browser.py matches title via c111 (document summary), which is ALWAYS empty for ACV-class UPCOM/state-owned filers. The 'not title' guard exits early so the matcher never fires. Period+filing info lives in c3 ('Bao cao tai chinh quy 1/ 2026'). Fix: when c111 is empty, fall back to c3 for title matching (same 'quy N/ YYYY' / 'nam YYYY' keywords). ACV Q1/2026 confirmed on SSC at idx=15 (filed 06/05/2026). Pairs with FIX-HNX-SESSION-COOKIE to fully recover ACV.",
-        "generic_mandate": "GENERIC c111->c3 fallback for ALL filers where c111 is empty — no ACV allowlist (/goal#2).",
+        "generic_mandate": "/goal#2: GENERIC — no per-ticker allowlist, no date literal, no exchange discriminator. The brief enforces row-level conditions only; the c3/cookie fallbacks apply to ANY filer/exchange.",
         "baseline_pass": "_ssc_parse_rows() matches ACV Q1/2026 (and any c111-empty filer) via c3 fallback (RAW-verify on VPS); ACV's queue row resolves once paired with the HNX-session fix.",
         "source": "OPS-BCTC-PIPELINE-RECON Root D; signal docs/signals/dev-vps-crawls-2026-06-15T17-11-01Z.json",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 — dev-vps-crawls. _ssc_parse_rows() c111-empty -> c3 fallback. Same SSOT file as FIX-HNX-SESSION-COOKIE (sequence/batch with it on the same dev-vps-crawls pass).",
-        "held_on": "2026-06-16T10:31:48Z",
-        "held_by": "po",
-        "hold_reason": "design-gated: child of ARCH-BCTC-PIPELINE-DURABILITY — c3-fallback parse rule must conform to the brief's enrich fail-loud contract; paired-resolve with HNX-session fix. Hold until brief."
+        "held_on": null,
+        "held_by": null,
+        "hold_reason": null,
+        "design_ungated_at": "2026-06-16T10:45:36Z",
+        "design_ungated_by": "po",
+        "gated_brief": "docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md",
+        "contract": "C4 (ADF-brittleness monitoring)",
+        "brief_files": [
+          "vps-scripts/discover-bctc-urls-browser.py"
+        ],
+        "fix_spec": "In _ssc_parse_rows(): when c111 (doc summary, used for title matching) is empty for UPCOM/state filers (e.g. ACV), fall back to c3 for the period. Same file & dev cycle as FIX-HNX-SESSION-COOKIE — paired-resolve in ONE coding lane.",
+        "coding_lane": "dev-vps-crawls#1 (paired: HNX-SESSION + SSC-C111 share vps-scripts/discover-bctc-urls-browser.py — ONE lane, 1 WIP)",
+        "next_agent": "dev-vps-crawls",
+        "promoted_at": "2026-06-16T10:45:36Z",
+        "promoted_by": "po"
       },
       {
         "id": "FIX-BCTC-ZERO-URL-ALERT",
@@ -18929,14 +18958,23 @@
         "size": "S",
         "title": "Zero-URL alerting gate: alert when discovery returns 0 URLs for ALL tickers for 2+ consecutive cycles — would have caught this 34h earlier",
         "desc": "Router-added durable gate. bctcQueueEnricherJob silently returns 0 URLs for ALL tickers when discovery is broken (afrLoop rollover did exactly this for 339 consecutive enricher runs in the prior recurrence). Add an alert when urlsPopulated=0 for ALL tickers for 2+ consecutive cycles during an active earnings window. Owner dev-mcp-server. Ties to the durable root: 'no active zero-result alerting' is the shared cause across discovery-brittleness + enrich-silent-0 + no-freshness-gate.",
-        "generic_mandate": "GENERIC — alert on the aggregate zero-result condition, not per-ticker, no date-literal (/goal#2).",
+        "generic_mandate": "/goal#2: GENERIC — aggregate counter / MAX(last_attempt) keyed, no ticker/date/exchange literal (brief Contract 1/2 invariant).",
         "baseline_pass": "Inject a forced 0-URL-all-tickers condition for 2 cycles -> an alert fires (RAW-verify the alert path, not a green steady-state test); normal partial-result cycles do NOT alert.",
         "source": "OPS-BCTC-PIPELINE-RECON router-added; recon.md Durable Fix Owners; memory passive_health_masks_dead_data",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P2 — dev-mcp-server. Detection gate (would have caught the 34h outage early). Pairs with FIX-BCTC-FRESHNESS-GATE under the ARCH-BCTC-PIPELINE-DURABILITY umbrella (shared 'no active zero-result/freshness alerting' root).",
-        "held_on": "2026-06-16T10:31:48Z",
+        "held_on": "2026-06-16T10:45:36Z",
         "held_by": "po",
-        "hold_reason": "design-gated: child of ARCH-BCTC-PIPELINE-DURABILITY — implements the durable zero-result alerting contract the brief defines; do NOT hand-roll an alert path before the contract. Hold until brief."
+        "hold_reason": "queued behind WIP — P1s dispatched first. Design-ungated (brief landed, contract+spec+files stamped) but held to honor WIP<=2 coding lanes: the dev-vps-crawls P1 pair is the active BCTC coding lane this tick. Promote to the router on the next dispatch tick once a coding lane frees (route_to=dev-mcp-server, both apps/mcp-server/).",
+        "design_ungated_at": "2026-06-16T10:45:36Z",
+        "design_ungated_by": "po",
+        "gated_brief": "docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md",
+        "contract": "C1 (durable zero-result / freshness alerting)",
+        "brief_files": [
+          "apps/mcp-server/src/interface/scheduler/bctcQueueEnricherJob.ts"
+        ],
+        "fix_spec": "Persist a consecutive-zero-URL cycle counter in SQLite (bctc_health_state OR existing KV table — dev decides). Increment when urlsPopulated=0 AND itemsProcessed>0; reset to 0 on any urlsPopulated>0; do NOT count itemsProcessed=0 (empty queue = legit idle). When counter>=2 during an active earnings window (>=1 queue row status IN ('pending','url_not_found')) fire ONE send_telegram(channel='bug'); dedup at most once/6h via last_alerted_at; re-arm only after urlsPopulated>0 then zero again. AGGREGATE across all tickers (partial success resets).",
+        "wip_deferred": true
       },
       {
         "id": "FIX-BCTC-FRESHNESS-GATE",
@@ -18949,14 +18987,23 @@
         "size": "S",
         "title": "Active freshness health gate: gate BCTC health on max(last_success_age), NOT service liveness (liveness != freshness hid this for 34h)",
         "desc": "Router-added durable gate. vpsHealthPoller.ts marks vn-bctc-fetch passive=true (always healthy on TCP ping) regardless of data-push age (vpsHealthPoller.ts:169). This liveness!=freshness conflation hid BOTH the 5-day prior stall AND this 34h recurrence. Replace the passive health for vn-bctc-fetch with an ACTIVE freshness query on bctc_vps_queue (max(last_attempt) WHERE status=done; stale if >24h during earnings window). Owner dev-mcp-server. Ties to memory passive_health_masks_dead_data.",
-        "generic_mandate": "GENERIC active-freshness gate keyed on last_success_age — no date-literal, no per-source special-case beyond the freshness threshold (/goal#2).",
+        "generic_mandate": "/goal#2: GENERIC — aggregate counter / MAX(last_attempt) keyed, no ticker/date/exchange literal (brief Contract 1/2 invariant).",
         "baseline_pass": "Force last_success_age > threshold with a non-empty queue -> health reports UNHEALTHY/stale (RAW-verify the stale path, NOT just a fresh-state green); a fresh push -> healthy.",
         "source": "OPS-BCTC-PIPELINE-RECON router-added; FIX-BCTC-VPS-PIPELINE-STALE-5D handoff item (1); memory passive_health_masks_dead_data",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P2 — dev-mcp-server. vpsHealthPoller.ts vn-bctc-fetch passive=true -> active max(last_success_age) gate. Pairs with FIX-BCTC-ZERO-URL-ALERT under ARCH-BCTC-PIPELINE-DURABILITY.",
-        "held_on": "2026-06-16T10:31:48Z",
+        "held_on": "2026-06-16T10:45:36Z",
         "held_by": "po",
-        "hold_reason": "design-gated: child of ARCH-BCTC-PIPELINE-DURABILITY — implements the active last_success_age freshness gate per the brief's monitoring contract. Hold until brief."
+        "hold_reason": "queued behind WIP — P1s dispatched first. Design-ungated (brief landed, contract+spec+files stamped) but held to honor WIP<=2 coding lanes: the dev-vps-crawls P1 pair is the active BCTC coding lane this tick. Promote to the router on the next dispatch tick once a coding lane frees (route_to=dev-mcp-server, both apps/mcp-server/).",
+        "design_ungated_at": "2026-06-16T10:45:36Z",
+        "design_ungated_by": "po",
+        "gated_brief": "docs/architecture-briefs/2026-06-16-bctc-pipeline-durability.md",
+        "contract": "C2 (freshness health gate — last_success_age not passive liveness)",
+        "brief_files": [
+          "apps/mcp-server/src/domain/services/vpsHealthPoller.ts"
+        ],
+        "fix_spec": "Replace passive:true for vn-bctc-fetch in DEFAULT_FRESHNESS_CONFIGS with active latestTimestampSql = SELECT MAX(last_attempt) FROM bctc_vps_queue WHERE status='done', maxAgeMs=24h. Add additive non-breaking earnings-window guard (earningsWindowOnly?/queueGuardSql? on FreshnessConfig): if queue COUNT(*) WHERE status IN ('pending','url_not_found','enrich_failed')=0 AND no 'done' rows in last 7d -> return 'idle' not 'unhealthy'. RF-1: guard must read BOTH done (freshness) AND pending/url_not_found (active queue) to tell off-season from wiped-queue.",
+        "wip_deferred": true
       }
     ],
     "review": [
@@ -19132,7 +19179,7 @@
         }
       ]
     },
-    "updated_at": "2026-06-16T10:31:48Z",
+    "updated_at": "2026-06-16T10:45:36Z",
     "updated_by": "po"
   },
   "updated_at": "2026-06-16T07:15:00Z",
