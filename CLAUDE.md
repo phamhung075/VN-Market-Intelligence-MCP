@@ -22,10 +22,10 @@ Main terminal = router only. Never implement directly. Always delegate.
 - Reusable scripts → `scripts/` NEVER `/tmp`; then add pointer in owning flow doc → `docs/policies/dev-standards.md` § Script Persistence
 
 ## MCP Tools — call_tool wrapper ONLY
-The `vn-market` server is intentionally NOT registered in `.mcp.json` (cleaned out) to keep the tool surface small — its 146 tools are NOT loaded directly. The server still exists as a downstream of the `claude.ai gateway`.
-Reach EVERY vn-market tool through the `claude.ai gateway` wrapper:
+The `vn-market` server is intentionally NOT registered in `.mcp.json` (cleaned out) to keep the tool surface small — its 146 tools are NOT loaded directly. The server still exists as a downstream of the `gateway` MCP server.
+Reach EVERY vn-market tool through the `gateway` wrapper:
 ```
-mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<tool_name>", arguments={...})
+mcp__gateway__call_tool(server="vn-market", tool="<tool_name>", arguments={...})
 ```
 - `<tool_name>` is the bare name (e.g. `task_claim`, `send_telegram`, `get_market_snapshot`) — NOT the `mcp__vn-market__` prefix.
 - Discover tools via the gateway: `list_server_tools("vn-market")` or `search_tools("<keyword>")`.
