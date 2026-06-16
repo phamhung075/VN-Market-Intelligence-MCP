@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-15 17:11 UTC | **Sprint:** OPS-BCTC-PIPELINE-RECON (BCTC pipeline dead 34.4h)
+**Last updated:** 2026-06-16 05:10 UTC | **Sprint:** AUDIT-FC-FOREIGN-FLOW (foreign flow page-cap audit)
 
 ---
 
@@ -31,6 +31,33 @@
 | 2026-06-04 08:10 | vietstock-agm-plan | RECON-AGM-1 | FETCHABLE. POST + CSRF warmup. No CF. Signal dropped. |
 | 2026-06-06 16:45 | ssc-bctc-newsearch | SPIKE-VPS-SSC-CURL-RECIPE | VIABLE-CURL. Full 3-step recipe proven. Signal dropped. |
 | 2026-06-09 03:30 | vn-news-rss | FIX-NEWS-VPS-CRASH-LOOP | Bug A: false-UNHEALTHY from timestamp format mismatch (T vs space) in vpsHealthPoller.ts MAX() — dev-zone fix required. Bug B: cursor jump from future-dated pubDate — VPS cap applied. |
+
+---
+
+## c015 · 2026-06-16T05:10Z · AUDIT-FC-FOREIGN-FLOW — Page-Cap Audit (RECON ONLY)
+
+Trigger: User directive — verify whether foreign_flow source fetch is complete or page-capped. DB shows 102 of 1569 daily_ohlcv rows have foreign_net_vol nonnull.
+
+**VERDICT: real-count-no-truncation.** No page cap at source or fetcher.
+
+**Source:** `https://bgapidatafeed.vps.com.vn/getliststockdata/<CODES>`  
+No pagination. Single GET with comma-joined codes. Returns all matching tickers in one JSON array.
+
+**Fetcher:** `vps-scripts/fetch-foreign-flow.sh` (VPS push model, 60s interval market hours).  
+VPS fetches 111 codes from live watchlist → API returns 105 → jq filter (buy OR sell OR room > 0) → 102 items → POST /api/push-foreign-flow → upserted 102.
+
+**Root of 102:** 6 codes not recognized by bgapidatafeed (BDI, DLC, JSH, PME, SIS, VDC — confirmed empty response individually), 3 more have zero buy+sell+room. 102 is structurally stable per VPS log (same every cycle).
+
+**Root of 102/1569 gap:** daily_ohlcv accumulates ALL ~1569 traded tickers from OHLCV price data. Foreign flow only covers the 111-code watchlist+ref subset. Non-watchlist tickers (1457 codes) have foreign_net_vol=NULL permanently.
+
+**Field completeness:** fBVol, fSVolume, fRoom all present. fBValue + fSValue available but NOT extracted. holding_ratio not in source.
+
+**Dead code found:** `foreignFlowFetcher.ts` GETs `http://${VINAHOST_IP}/foreign-flow` — this endpoint does NOT exist on vps-proxy-server.js. 404 every minute market hours. Silent fallback. Needs removal.
+
+**Fix-1 (structural):** Expand CODES to full daily_ohlcv code universe — bgapidatafeed supports arbitrary code lists.  
+**Fix-2 (dead code):** Remove `fetchPrimaryVpsEndpoint` — push model is the only live path.
+
+Recon: `docs/handoffs/AUDIT-FC-FOREIGN-FLOW-recon.md`
 
 ---
 
