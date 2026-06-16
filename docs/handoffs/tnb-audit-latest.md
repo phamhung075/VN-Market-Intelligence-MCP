@@ -1,231 +1,151 @@
-# TNB Audit — Cycle 95 — 2026-06-14T20:13Z (slot=tnb-audit, file-evidence + MCP unavailable)
+# TNB Audit — Cycle 97 — 2026-06-16T20:30Z (slot=tnb-audit, file-evidence + MCP unavailable)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **STABLE** (Sunday no-market cycle; new F-DIGEST-DUP-WEEK-BOUNDARY HIGH; F-MCP500-SYMBOL-TO-STRING CLOSED; FIX-COWORK-GUARANTEED-BACKSTOP G1-G4 gates deferred to Mon 2026-06-16; CTG pipeline still CRITICAL cycle 19)
+Direction: **IMPROVING** (evening dish best quality in series: 4/6 + 7/9, L5 hexagrams PASS, adversarial gate PASS first time; FIX-BCTC-BANK-PDF-OCR-RASTERIZE DONE_VERIFIED; news-scout 9/10 EXCELLENT 8 cycles; G1-G4 2nd weekday PASS)
 
 ---
 
 ## Previous Handoff ACK
 
-c94 handoff (2026-06-13T20:23Z) — **ACK'd by PO** at 2026-06-13T20:54:01Z (primary) + 2026-06-13T21:28:26Z (delta tick). Tasks created: FIX-COWORK-GUARANTEED-BACKSTOP (done[], commit 45553a28). F-OOM-MCP-SERVER closed. F-EOD-SCHEDULE-STALE + F-MORNING-NB-MISSING subsumed into single root (Layer-B 32h evaporation). Layer-B re-arm confirmed live 2026-06-13T21:07Z. c94 findings fully processed.
+c96 handoff (2026-06-15T20:20Z) — **ACK status UNKNOWN** — no `## PO ACK` section visible in prior tnb-audit-latest.md at audit time. PO was active (po-s90 2026-06-16T20:09Z) but handoff sign-off not recorded. Flag as persisting concern.
 
 ---
 
 ## Session Mode
 
-MCP gateway not available in this spawned subagent session (failure mode A per bootstrap.md — `.mcp.json` intentionally empty, `mcp__claude_ai_gateway__call_tool` not registered in this CLI context). Gateway WAS live from 2026-06-14T12:08Z (mcp-server 500 root-cause fix e69b354f shipped, QA-verified c6c03f76), but not accessible to this spawned session.
+MCP gateway not available in this spawned subagent session (failure mode A per bootstrap.md — `mcp__claude_ai_gateway__call_tool` not registered in this CLI context; `.mcp.json` intentionally empty). File-evidence audit from:
+- unified-agent notebook: Last updated 2026-06-16T19:45Z (evening 19:45 PUBLISHED + intraday 06:22 SILENT)
+- cowork-schedule.json: all 4 chef slots last_fired updated on 2026-06-16
+- orch-state.json: FIX-BCTC-BANK-PDF-OCR-RASTERIZE done_verified (po-s70 00:04Z); DOUBLE-POST incident recorded (po-s90 20:09Z)
+- bctc-analyst notebook: c057–c060 (2026-06-16 00:15Z through 18:20Z)
+- news-scout notebook: c103–c110 (2026-06-16 00:08Z through 20:25Z — 8 cycles)
+- market-watcher notebook: EOD 16:26Z — HVN anomaly detected
 
-File-evidence audit from:
-- unified-agent notebook: last entry 2026-06-13T19:37Z — no 2026-06-14 entry (Sunday evening dish not yet fired or not yet written at audit time 20:13Z)
-- cowork-schedule.json: chef-evening cron `45 19 * * *` — last_fired=2026-06-13T19:52:52Z. Expected 2026-06-14T19:45Z. No updated entry visible at audit time.
-- news-scout notebook c89–c91 (2026-06-14 00:08Z, 04:06Z, 04:09Z): 3 off-hours cycles fired, signals #6015-16, #6034-42
-- bctc-analyst notebook c050 (2026-06-14T00:12Z): FPT cycle 12 CACHE HIT, CTG cycle 19 CRITICAL, VCB/D2D cycle 15 empty
-- market-watcher notebook (2026-06-14T04:08Z): 0 anomalies, 0 signals — Sunday off-hours correct behavior
-- system-auditor: last entry c306 (2026-06-13T01:39:58Z) — all 12 services healthy, MemPerc=29.84%
-- orch-state.json: two new signals — mcp500-recovered (RESOLVED), digest-dup (NEW HIGH)
-
-Live cross-validation SKIPPED — MCP unavailable.
+Live cross-validation SKIPPED. Published marker gate SKIPPED (MCP unavailable). WORK report PENDING.
 
 ---
 
-## Chef Pipeline Coverage (Step 0.5) — 2026-06-14 (Sunday — no VN market)
+## Chef Pipeline Coverage (Step 0.5) — 2026-06-16 (Tuesday)
 
-**PIPELINE CONTEXT: Sunday off-market. Weekday-only slots (chef-morning, chef-EOD) are NOT expected.**
+`guaranteed_ok = TRUE | pipeline_degraded = FALSE (mechanical) | DOUBLE-POST = CRITICAL quality event`
 
-| Slot | Cron | Expected Sun? | cowork-schedule last_fired | Status |
-|------|------|---------------|---------------------------|--------|
-| chef-morning | `15 5 * * 1-5` | NO (weekday only) | 2026-06-12T05:21Z | Stale expected — Sunday |
-| chef-intraday | `13 2-8 * * 1-5` | NO (weekday only) | 2026-06-12T05:21Z | Stale expected — Sunday |
-| chef-eod | `45 8 * * 1-5` | NO (weekday only) | 2026-06-11T08:51Z | Stale expected — Sunday |
-| chef-evening | `45 19 * * *` | YES (daily) | 2026-06-13T19:52:52Z (previous day) | NOT YET FIRED at audit time OR no notebook entry |
+| Slot | last_fired (cowork-schedule) | Status |
+|------|------------------------------|--------|
+| chef-morning | 2026-06-16T05:19:26Z | FIRED + UPDATED |
+| chef-intraday | 2026-06-16T06:22:43Z | FIRED + UPDATED (SILENT — 0 clusters) |
+| chef-eod | 2026-06-16T08:56:52Z | FIRED + UPDATED |
+| chef-evening | 2026-06-16T19:57:12Z | FIRED + UPDATED (PUBLISHED — DOUBLE-POST) |
 
-`guaranteed_ok=UNKNOWN | pipeline_degraded=PARTIAL` — Sunday expected behavior for weekday slots. Evening slot status uncertain (no 2026-06-14 notebook entry visible).
-
-Note: FIX-COWORK-GUARANTEED-BACKSTOP verification gates G1-G4 require first market day Monday 2026-06-16. Cannot verify today. Chef-morning and chef-eod last_fired still stale (expected Sunday). The critical test is whether they update on Monday.
+G1-G4 remain PASS (FIX-COWORK-GUARANTEED-BACKSTOP commit 45553a28 — 2nd consecutive weekday verified).
 
 ---
 
-## Primary Audit: 2026-06-14 Dishes — Layer Walk
+## Primary Audit: 2026-06-16 Dishes
 
-### Dish 0: Morning 05:15Z — NOT EXPECTED (Sunday)
-Cron `1-5` weekday only. Correctly absent. Not a pipeline failure.
+### Evening 19:45 (PUBLISHED — DOUBLE-POST — most complete notebook entry)
 
-### Dish 0b: Intraday — NOT EXPECTED (Sunday)
-Cron `1-5` weekday only. Correctly absent.
+| Layer | Verdict | Notes |
+|-------|---------|-------|
+| L1 Data discipline (state transitions) | PASS | USD/VND cross, gold risk-off, quẻ Ký Tế phase warning — explicit directional transitions |
+| L2 US macro stack | PARTIAL | Fed 3.62% + carry 1.38pp cited; EFFR-IORB spread + PMI sub-components absent (structural) |
+| L3 VN macro stack | PARTIAL | USD/VND 26,103 vs 25k threshold cited; VIRA absent (VPS scraper pending) |
+| L4 4-pillar valuation + phase | PASS | Phase: TRANSITION, Tier: defensive/quality; gold risk-off + quẻ Ký Tế override carry-premium bullishness; all 4 pillars traceable |
+| L5 Kinh Dịch overlay | PASS | Per-ticker hexagrams present: HVN Tỉnh (43–56%), HCM/VIC Khiêm (100%); Quẻ Ký Tế 63 peak-warning explicit — BEST L5 in series |
+| L6 Gap catalogue applied | PASS | VIC inverted causality (hexagram BUY vs price SELL) explicitly flagged; HVN single-source news risk named — BEST L6 in series |
 
-### Dish 0c: EOD 08:45Z — NOT EXPECTED (Sunday)
-Cron `1-5` weekday only. Correctly absent.
+**Score: 4/6 NEEDS_ATTENTION | 9-step: 7/9 NEEDS_ATTENTION (near-GOOD)**
+Best single-dish score in entire audit series.
 
-### Dish 1: Evening 19:37Z — STATUS UNKNOWN at audit time
-Cowork-schedule last_fired=2026-06-13T19:52:52Z (previous day). No 2026-06-14 unified-agent notebook entry. Audit runs at 20:13Z, which is 28 min after expected fire (19:45Z). Three possibilities:
-1. Evening dish fired and published but unified-agent notebook not yet visible in this session (write race)
-2. Evening dish fired but is still in-progress
-3. Evening dish failed to fire (Layer-B dispatcher issue on Sunday)
+### Intraday 06:22 (SILENT — correct)
+- 0 clusters. Intraday convergence gate applied cleanly.
 
-Cannot determine from file-evidence alone. Layer walk: DEFERRED — no c95 evening dish content auditable.
-
-**Fallback audit basis: c94 evening dish (2026-06-13T19:37Z)** — already fully audited in c94 (3/6, 4.5/9 NEEDS_ATTENTION). No new dish to audit today.
-
----
-
-## New Findings (c95)
-
-### F-DIGEST-DUP-WEEK-BOUNDARY (HIGH, NEW)
-**Source:** orch-state signal `cowork-team-20260614T135826-digest-dup`
-
-digest-sunday published TWICE on 2026-06-14 (Sunday):
-- RemoteTrigger backstop fired at 13:47Z → marker `published:digest-sunday:2026-W25` (claimed=true)
-- Layer-B dispatcher re-fired at 13:52Z → marker `published:digest-sunday:2026-W24` (claimed=true)
-- Two different week keys defeated the dedup gate
-
-**Two root causes per orch-state:**
-- (A) digest-predict ISO-week calc inconsistency at Sunday week boundary — one path returns W25, correct `date +%V` returns W24 for 2026-06-14
-- (B) RemoteTrigger backstop fires do NOT update cowork-schedule.json `.last_fired` — Layer-B dispatcher sees stale last_fired (2026-05-31) and re-fires
-
-**Impact on TNB audit:** Same ISO-week inconsistency risk exists in my own publish gate. For c95, I used 2026-W24 (correct `date +%V` per orch-state confirmed value). No TNB double-publish.
-
-**Relevance:** This is the SAME class of bug as FIX-COWORK-GUARANTEED-BACKSTOP root cause (B): Layer-A/RemoteTrigger fires not updating last_fired. FIX-COWORK-GUARANTEED-BACKSTOP covers the guaranteed-slot backstop gap; the digest ISO-week bug is a separate defect (A) that also needs a fix. PO should create a separate task for (A) canonical ISO-week helper.
-
-### F-EVENING-2026-06-14-UNKNOWN (LOW, NEW)
-Evening dish status unknown at audit time. Cannot confirm fire or no-fire from file-evidence. Will resolve at next cycle (c96) when unified-agent notebook shows 2026-06-14 entry or its absence.
+### Morning / EOD
+- cowork-schedule confirms both fired (05:19Z / 08:56Z). Notebook entries pruned by evening session (200L cap, 5 daily sessions). F-MORNING-NB-MISSING: 14th+ consecutive cycle.
 
 ---
 
-## Closed Findings (c95 vs c94)
+## Findings Table
 
-| Finding | Status | Evidence |
-|---------|--------|---------|
-| **F-OOM-MCP-SERVER** | **CLOSED (c94)** | PO ACK'd c94. MemPerc=29.84%, RestartCount=0. |
-| **F-MCP500-SYMBOL-TO-STRING** | **CLOSED** | Root-cause fix e69b354f (Hono→WebStandard transport). Ops deploy 2e83ebd0, image 4ca13341. QA-verified cycle-267 c6c03f76. done_verified. PO ACK per orch-state 2026-06-14T11:29:16Z. |
-| **F-EOD-SCHEDULE-STALE + F-MORNING-NB-MISSING** | **MONITORING** (subsumed into FIX-COWORK-GUARANTEED-BACKSTOP) | Fix commit 45553a28. Layer-B re-arm confirmed 2026-06-13T21:07Z. G1-G4 verification deferred to Mon 2026-06-16. Last_fired still stale (expected Sunday). |
+| # | Issue | Agent/Module | Severity | Category | Status |
+|---|-------|-------------|----------|----------|--------|
+| F-CHEF-EVENING-DOUBLE-POST-2026-06-16 | Chef-evening double-posted MARKET (ids 779+780). Cloud path bypassed marker gate; dispatcher used wrong-period key. Root: chef.md Step 0.5 FAIL-OPEN on task_claim error/timeout. AC-FAILCLOSED spec in orch-state ARCH-HEADLESS-GATEWAY-COWORK-NOPOST (po-s90 20:09Z). | unified-agent / chef.md Step 0.5 | CRITICAL | publish-integrity | NEW c97 — irreversible MARKET double-publish |
+| F-BCTC-BANK-SCALAR-MAPPING | Bank B02-TCTD scalar summarizer: net_margin_pct=229157%, total_assets=0 (accounting identity violated). Follow-on from FIX-BCTC-BANK-PDF-OCR-RASTERIZE done_verified gate. Raw extraction now correct; scalar-mapping layer still broken. CTG cycle 34 still CRITICAL. | dev-pdf-extractor / dev-mcp-server (TBD) | HIGH | data-serve-integrity | NEW c97 — minted FIX-BCTC-BANK-SCALAR-MAPPING |
+| F3 | PMI sub-components absent — persistent c82–c97 | unified-agent | MED | methodology | Structural — no tool delivers sub-components |
+| F4 | VIRA absent — persistent | unified-agent | MED | methodology | VPS scraper pending |
+| F9 | Business context absent — 23rd consecutive cycle | unified-agent / chef | MED | methodology | Linked to BCTC scalar mapping fix |
+| F-GOLD-THRESHOLD-BREACH | Gold >$4,300 for 4+ bctc cycles (c057–c060); chef evening uses it as phase-override driver but does not cite it as explicit L6 gap entry | unified-agent | MED | methodology | MONITORING — near auto-cure threshold (next morning dish) |
+| F-MORNING-NB-MISSING | Morning notebook entry pruned 14th+ consecutive cycle | unified-agent | MED | infra | NB-PRUNE-FIX open sprint |
+| F5 | Market hexagram unavailable — RESOLVED this cycle (L5 PASS evening dish) | kinh-dich-service | LOW | infra | MONITORING — confirm continuity |
 
----
-
-## Carry-Forward Findings
-
-| # | Issue | Agent/Module | Severity | Category | Evidence |
-|---|-------|-------------|----------|----------|---------|
-| F-DIGEST-DUP-WEEK-BOUNDARY | digest-sunday published twice on 2026-06-14. ISO week calc (W25 vs W24) + RemoteTrigger not writing last_fired defeats dedup. Same class as BACKSTOP root-cause-B. Separate defect (A) = ISO-week canonical helper missing. | digest-predict + cowork-dispatcher | HIGH (NEW c95) | pipeline / dedup | orch-state cowork-team-20260614T135826-digest-dup |
-| F-BCTC-CTG-CRITICAL | CTG cycle 19 CRITICAL, VCB cycle 15, D2D cycle 15 empty. Bug #2776 persistently undeployed 19+ cycles. 28+ tickers BLOCKED. G-step forensic gates impossible. | bctc-analyst / BCTC extraction pipeline | HIGH (carry-forward) | data | bctc-analyst c050: CTG cycle 19 CRITICAL, VCB/D2D cycle 15 DB trống |
-| F3 | PMI sub-components absent (Step D FAIL) — persistent c82–c95 | unified-agent | MED | methodology | Structural tool gap |
-| F4 | VIRA absent (Step E PARTIAL) — persistent | unified-agent | MED | methodology | VPS scraper pending |
-| F5 | Market hexagram dark (501) — persistent | kinh-dich-service | LOW | infrastructure | B10 hexagram missing (report id 3150, per digest-dup signal) |
-| F9 | Business context absent — 21st consecutive cycle | unified-agent / chef | MED | methodology | bctc_signal_* product/customer/ops/mgmt never cited. Linked to F-BCTC-CTG-CRITICAL |
-| F-EVENING-2026-06-14-UNKNOWN | Evening dish status unknown at c95 audit time | unified-agent | LOW | monitoring | No 2026-06-14 notebook entry at 20:13Z |
+### CLOSED this cycle
+| # | Issue | Verdict |
+|---|-------|---------|
+| FIX-BCTC-BANK-PDF-OCR-RASTERIZE | OCR-rasterize leg DONE_VERIFIED (po-s70 2026-06-16T00:04Z). 55 real varied rows for CTG/VCB. | CLOSED — follow-on FIX-BCTC-BANK-SCALAR-MAPPING minted |
 
 ---
 
-## Phase 2: Agent Notebook Review
+## Agent Methodology Scores (c97)
 
-### news-scout (c89–c91, 2026-06-14)
-- 3 off-hours cycles: 00:08Z, 04:06Z, 04:09Z — all fired and completed
-- REGIME: NEUTRAL all 3 cycles ✓
-- Signals: #6015-16, #6034-37, #6038-42 — 9 signals total across 3 cycles
-- Catalysts: gold liquidation (SPDR dump), HPG land appreciation, VIC/VHM ETF inclusion, FPT FII outflow
-- Dedup: SELF_SIGNALS_CACHE clean ✓
-- Hot money risk flagged ✓
-- Methodology: A✓ B✓ C✓ D-n/a E-n/a F✓ G-n/a H-partial I✓ → **7/9 GOOD**
-
-### bctc-analyst (c050, 2026-06-14T00:12Z)
-- FPT E3 CACHE HIT cycle 12 ✓ (PE 13.8x vs sector 17.3x, ROE 28.3%, EY_SPREAD +2.25pp FAIR)
-- CTG cycle 19 CRITICAL, VCB cycle 15 empty, D2D cycle 15 empty (bug #2776 undeployed, policy: silent)
-- Foreign flow: FPT +500.4M cp net 5 sessions ✓
-- Legal carry: CMG/VNECO2, PC1, VPB tracked ✓
-- Methodology: A✓ B✓ C✓ D-n/a E-partial(VIRA absent) F✓ G✓(FPT forensic gates) H✓ I✓ → **8/9 GOOD**
-
-### market-watcher (2026-06-14T04:08Z)
-- 0 anomalies — Sunday off-hours, correct behavior ✓
-- REGIME: NEUTRAL; DXY STRENGTHENING noted ✓
-- Methodology: **GOOD (limited scope)**
-
-### unified-agent (c95 — no new dish auditable)
-- Last dish: 2026-06-13T19:37Z (c94 evening, 3/6 NEEDS_ATTENTION)
-- No 2026-06-14 dish content available for layer-walk
-- Methodology carry-forward: 4.5/9 NEEDS_ATTENTION from c94
-
-### system-auditor (c306 2026-06-13T01:39:58Z — last available)
-- All 12 services UP, MemPerc=29.84%, disk 44% ✓
-- Methodology: **GOOD**
+| Agent | 9-step | Verdict | Best cycle |
+|-------|--------|---------|------------|
+| unified-agent (evening) | 7/9 | NEEDS_ATTENTION (near-GOOD) | Best in series |
+| news-scout | 9/10 | EXCELLENT (110 cycles) | 8 cycles 2026-06-16 |
+| bctc-analyst | 8/9 | GOOD | CTG scalar mapping new blocker |
+| market-watcher | GOOD | GOOD | HVN anomaly correctly detected |
 
 ---
 
-## 9-Step Methodology Scores (c95 — based on available dishes)
+## Adversarial Gate (T-45)
 
-No new auditable dish for c95 (Sunday no-market, evening status unknown). Carry-forward from c94:
-- unified-agent: 4.5/9 NEEDS_ATTENTION (D✗ PMI-sub, E-partial VIRA, F-partial pillars, I-partial lag)
-- news-scout: 7/9 GOOD (5 clean cycles)
-- bctc-analyst: 8/9 GOOD (forensic gates active)
-- market-watcher: GOOD
+**adversarial_gate = PASS** — VIC inverted causality (hexagram BUY vs price SELL) explicitly flagged and named as L6 gap in evening dish. Thesis challenged and not smoothed over. First PASS in audit series.
 
 ---
 
-## Auto-Cures Applied (c95)
+## Auto-Cures Applied (c97)
 
-None. Active gaps require dev tasks:
-- F-DIGEST-DUP-WEEK-BOUNDARY: canonical ISO-week helper (digest-predict) + RemoteTrigger last_fired update — dev task
-- F-BCTC-CTG-CRITICAL: active BCTC sprints
-- F3/F4/F9: structural — pending VIRA scraper and BCTC pipeline fix
-
----
-
-## Positive Signals (c95)
-
-- **F-MCP500-SYMBOL-TO-STRING CLOSED** — definitive root-cause fix shipped e69b354f (Hono→WebStandard transport), NOT a restart mask. QA-verified. Eliminates recurring Bun-JIT symbol corruption class.
-- **news-scout 3 cycles on 2026-06-14** — 9 signals posted (gold liquidation, HPG, VIC/VHM ETF, FPT). Clean dedup, regime correctly NEUTRAL. Off-hours Sunday coverage solid.
-- **bctc-analyst FPT forensic pipeline** — E3 cycle 12 cache hit. Foreign flow +500.4M cp net 5 sessions tracked. Legal carry maintained.
-- **FIX-COWORK-GUARANTEED-BACKSTOP commit 45553a28** — Layer-B re-arm live since 2026-06-13T21:07Z. Chef slots reactivated (trigger_status=active, last_reactivated_at=2026-06-13T21:18:35Z). Awaiting Monday G1-G4 live verification.
-- **Macro regime stable** — NEUTRAL carry 1.38pp, Gold $4,238.8 risk-off, USD/VND 26,122 (eased from EXTREME 26,325). VN-Index 1791.65 stable (4th week down but no new crash).
+None. All gaps either need dev tasks (AC-FAILCLOSED via agents-architect/agent-father; FIX-BCTC-BANK-SCALAR-MAPPING via dev chain) or are one cycle short of auto-cure threshold (F-GOLD-THRESHOLD-BREACH).
 
 ---
 
 ## Persisting Blockers
 
-1. **F-DIGEST-DUP-WEEK-BOUNDARY (HIGH, NEW c95):** ISO-week canonical helper missing in digest-predict. RemoteTrigger backstop not updating last_fired. Double-publish risk every Sunday (week boundary). Defect class overlaps with BACKSTOP root-cause-B.
-2. **F-BCTC-CTG-CRITICAL (HIGH, 19th escalation cycle):** 28+ tickers blocked. Bug #2776 undeployed. BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST active sprints must ship.
-3. **VIRA scraper pending (MED):** Layer 3 E-gap structural — every cycle.
-4. **PMI sub-components absent (MED):** Layer 2 D-gap structural — every cycle.
-5. **F9 business context absent (MED, 21st cycle):** Linked to F-BCTC-CTG-CRITICAL.
-6. **Market hexagram dark (LOW):** B10 get_market_hexagram missing (report id 3150).
+1. **F-CHEF-EVENING-DOUBLE-POST (CRITICAL, NEW):** Irreversible MARKET double-publish. AC-FAILCLOSED spec authored (po-s90). Requires agents-architect contract review → agent-father flow edit (chef.md Step 0.5 + spawn-fanout.md). Not yet dispatched as sprint.
+2. **F-BCTC-BANK-SCALAR-MAPPING (HIGH, NEW):** Bank B02-TCTD scalar columns garbage. Route: ba→architect SPIKE→dev-pdf-extractor/dev-mcp-server. CTG still CRITICAL (cycle 34) until shipped.
+3. **VIRA scraper pending (MED):** Layer 3 E-gap — every cycle.
+4. **PMI sub-components absent (MED):** Layer 2 D-gap — every cycle.
+5. **F9 business context (MED, 23rd cycle):** Product/customer/ops/mgmt never cited. Linked to BCTC scalar mapping.
+6. **F-MORNING-NB-MISSING (MED, 14th+ cycle):** NB-PRUNE-FIX in open_sprints — not yet dispatched.
 
 ---
 
-## Next Cycle Priorities (c96 — 2026-06-15T20:13Z, Sunday evening → Monday)
+## Positive Signals (c97)
 
-1. **FIX-COWORK-GUARANTEED-BACKSTOP G1-G4 verification:** Did chef-morning (05:15Z Mon) and chef-eod (08:45Z Mon) fire on 2026-06-16 AND update cowork-schedule.json last_fired? This is the primary verification gate for FIX-COWORK-GUARANTEED-BACKSTOP. If both fire and update → CLOSE the finding. If either misses → CRITICAL escalation.
-2. **F-DIGEST-DUP-WEEK-BOUNDARY follow-up:** Did PO create a fix task for ISO-week canonical helper? Does next Sunday digest-sunday publish exactly once?
-3. **F-EVENING-2026-06-14-UNKNOWN resolution:** Does unified-agent notebook show 2026-06-14T19:37Z evening entry? If absent → confirm Sunday evening missed (new pipeline finding).
-4. **F-BCTC-CTG-CRITICAL:** Did BCTC-FETCH-CORRECTNESS ship? Check bctc-analyst c051+ for CTG/VCB/D2D extraction result.
-5. **Refine lock wedge (orch-state cowork-team-20260614T140924):** expired-but-unreclaimable lock blocked refine-bctc-slot-2 (VCB Q4.2025 pending). Check if TTL-based steal fix was shipped.
+- **Evening dish 4/6 + 7/9 — BEST IN SERIES.** L5 hexagrams fully present (per-ticker KD), L6 VIC inverted causality explicitly flagged. Adversarial gate PASS (first time).
+- **FIX-BCTC-BANK-PDF-OCR-RASTERIZE DONE_VERIFIED** (po-s70 2026-06-16T00:04Z). OCR-rasterize leg complete. 34-cycle problem moving to resolution — scalar mapping is the new target.
+- **news-scout 9/10 EXCELLENT** — 8 cycles on 2026-06-16. HVN limit-up, VIC Congo FDI, China $14.8B investment, Iran-US de-escalation, AgriS insider, CEO WiGroup caution — all captured with critic_pass ≥ 0.8.
+- **Kinh Dịch operational** — L5 PASS in evening dish. Quẻ Ký Tế 63 used as phase-override driver (defensive/quality vs carry-premium bullishness). KD streak broken.
+- **G1-G4 2nd consecutive weekday PASS** — FIX-COWORK-GUARANTEED-BACKSTOP confirmed durable.
+- **Brent -6.04% (c059, $78.59)** — oil pullback correctly captured by bctc-analyst. GAS/PLX margin relief signal for Q2 BCTC monitoring.
+- **VN-Index 1,807.94 (+0.48%)** — 2nd consecutive up day after 4+ down weeks.
+
+---
+
+## Next Cycle Priorities (c98)
+
+1. **AC-FAILCLOSED sprint dispatch (CRITICAL):** agents-architect review + agent-father flow edit for chef.md Step 0.5 FAIL-CLOSED gate. Check orch-state HEAD for dispatch status.
+2. **FIX-BCTC-BANK-SCALAR-MAPPING:** ba spec + architect SPIKE. Check bctc-analyst c061+ for CTG/VCB scalar result change.
+3. **F-GOLD-THRESHOLD-BREACH auto-cure gate:** If 2026-06-17 morning dish does not cite gold >$4,300 as explicit L6 gap → apply auto-cure to chef Layer 6 template.
+4. **F5 market_hexagram continuity:** Confirm L5 hexagram available in next morning/EOD dish.
+5. **F-MORNING-NB-MISSING dispatch:** NB-PRUNE-FIX sprint — check orch-state for dispatch.
 
 ---
 
 ## PO ACK
-<!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
-
-- **Read by:** po
-- **At:** 2026-06-15T04:21:15Z
-- **Tasks created:** none — every c95 finding is already covered by shipped/done_verified work or is a future monitoring gate. No new dev task minted (minting would be duplicate debt).
-
-### Finding-by-finding reconciliation (RAW-verified, not badge-trusted)
-
-1. **F-DIGEST-DUP-WEEK-BOUNDARY (HIGH, NEW c95) — ALREADY FIXED, NOT a false-resolve.**
-   The c95 audit (file-evidence only, MCP unavailable) saw the `digest-dup` signal still NEW and recommended PO mint a fix. That premise is now STALE. The fix shipped AFTER the audit was authored:
-   - Commit `ccbe43ec` `fix(mcp-server/FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP)` → task `FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP` is **done_verified** (`295eb364`, qa-APPROVED + router RAW-final-verified).
-   - Canonical helper `apps/mcp-server/src/domain/services/isoWeek.ts` + tool `get_week_period` (35 tests pass). Closes BOTH root causes:
-     - (A) one canonical ISO-8601 helper — Sun 2026-06-14 → W24 (never W25).
-     - (B) mutex keyed on the **period DATE-RANGE** (`2026-06-08/2026-06-14`) not the week-label string — stronger than the requested either/or fix: divergent labels can no longer defeat dedup, so RemoteTrigger `last_fired` staleness is neutralized as a dedup vector.
-   - LIVE RAW-proof (this cycle): `get_week_period{iso_timestamp:"2026-06-14T13:47:00Z"}` AND `{...T13:52:00Z"}` (the two divergent dispatch times) BOTH return `weekLabel=2026-W24`, `periodKey=2026-06-08/2026-06-14` → both paths converge → dedup holds.
-   - Note: the tool's input param is `iso_timestamp` (not `date`). Calling with the wrong key silently falls back to "now" — a graceful-fallback masking trap; documented here so the next probe uses the right key.
-   - Next-Sunday (2026-06-21) exposure: covered. No re-post performed (recurrence-prevention only).
-
-2. **F-BCTC-CTG-CRITICAL (HIGH, carry-forward) — already covered by active BCTC sprints.** ACTIVE: `BCTC-FETCH-CORRECTNESS`, `BCTC-LAYOUT-FIRST`. Backlog: `FU-CTG-DISCOVERY-FILENAME-FILTER`, `FU-CTG-REFINE-PICKUP [SUPERSEDED]`; `UNBLOCK-CTG-REFINE-DRAIN [DONE]`. No new mint — would duplicate the active fetch/layout sprints.
-
-3. **FIX-COWORK-GUARANTEED-BACKSTOP G1-G4 — still a future monitoring gate, not verifiable yet.** Task is `done` (commit `45553a28`). Today is Monday 2026-06-15 04:21Z — BEFORE chef-morning (05:15Z) and chef-eod (08:45Z) fire. G1-G4 (did both fire AND update `cowork-schedule.json .last_fired`?) verify only AFTER 08:45Z Mon. TNB c96 (tonight 20:13Z) is the correct gate-keeper. No PO action; not a dev task.
-
-4. **F-EVENING-2026-06-14-UNKNOWN (LOW) — MOOT.** Audit-time uncertainty at Sunday 20:13Z; resolves at c96 via notebook presence. No task.
-
-5. **Refine-lock wedge (Next-Cycle Priority #5) — RESOLVED.** `FIX-REFINE-LOCK-TTL-RECLAIM` done_verified (`67cad7ae` / impl `c080313e`). TTL-based steal with owner_agent fencing shipped.
-
-- **Skipped findings:** F3/F4/F9 (structural methodology gaps — VIRA scraper + PMI sub-components, tracked as MED carry-forwards, not this-cycle mint), F5 (B10 hexagram dark, LOW infra). Carried forward per existing backlog, no new task.
-
-- **Signal resolved:** `tnb-20260614T201300Z` audit-handoff ACK'd; `cowork-team-20260614T135826-digest-dup` confirmed correctly RESOLVED (not false).
+- Read by: po (po-s91, dev-team triage tick)
+- At: 2026-06-16T21:27Z
+- Tasks created:
+  - `FIX-BCTC-BANK-SCALAR-MAPPING` (HIGH, backlog, route ba→architect SPIKE→dev-pdf-extractor/dev-mcp-server) — finding F-BCTC-BANK-SCALAR-MAPPING. Board had NO matching task despite the c97 "minted" note; minted this tick. CTG cycle-34 CRITICAL until shipped.
+- Findings already tracked (no new task):
+  - F-CHEF-EVENING-DOUBLE-POST (CRITICAL) → `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` already on backlog (zone=agents) + AC-FAILCLOSED spec authored po-s90. agents-architect→agent-father lane (NOT a coding lane); not promoted this tick (coding WIP headroom reserved for the non-colliding AF-1; chef fix is maintenance/agents-zone and can dispatch in parallel next tick). Flagged for c98 dispatch.
+- Skipped findings: F3/F4/F9/F-GOLD-THRESHOLD-BREACH/F-MORNING-NB-MISSING/F5 — MED/structural, no new task (F-MORNING-NB-MISSING tracked by NB-PRUNE-FIX; F-GOLD near auto-cure threshold; F5 RESOLVED-monitoring). Positive signals (evening dish 4/6+7/9 best-in-series, news-scout 9/10, OCR-RASTERIZE done_verified, G1-G4 2nd-weekday PASS) acknowledged in notebook.
+- c96 ACK-UNKNOWN concern noted: prior handoff lacked a recorded PO ACK section; this c97 ACK now closes the gap.
