@@ -1,0 +1,33 @@
+{
+  "from": "ops-vps-fetch",
+  "to": "dev-vps-crawls",
+  "type": "recon-complete",
+  "payload": {
+    "source_name": "bctc-pipeline-stale-5d",
+    "recon_doc": "docs/vps-sources/bctc-pipeline-stale-5d/recon.md",
+    "anti_bot_type": "none",
+    "suggested_technique": null,
+    "trigger": "fetch_broken",
+    "task": "FIX-BCTC-VPS-PIPELINE-STALE-5D",
+    "root_verdict": "pipeline_functional_source_non_filing",
+    "fixes_deployed": [
+      "afrLoop regex rollover fix (c014, 2026-06-15T17:05Z)",
+      "HNX session cookie warmup (c014, 2026-06-15T17:05Z)",
+      "SSC exchange_code all-exchanges (c014)"
+    ],
+    "actionable_now": {
+      "ACV": "discoverable — 12.9MB PDF in /root/bctc-cache/ACV/ — will push at next 18:00Z cycle OR run fetch-bctc.sh manually",
+      "BDI_DAG_DLC_JSH_SIS_VDC": "genuine non-filing — 0 rows on SSC and HNX — no action possible until they file",
+      "VNH": "only annual 2025 on SSC — no Q1/2026 filed",
+      "VEA_Q1": "no Q1/2026 on SSC or HNX UPCOM — not filed",
+      "VEA_Q4_2025": "not found on monitored sources — may need cafef/hsx direct probe"
+    },
+    "dev_fix_needed": [
+      "SSC 503 retry: add 1-retry with 60s backoff in _ssc_curl_search() step1 before returning None — transient 503 at ~12:00Z UTC burns an entire 6h cycle",
+      "Queue max-age gate: tickers with 0 results for >30d should be marked no-filing-detected and dropped from active SLA queue",
+      "VEA Q4/2025 source probe: check cafef.vn or hsx.vn direct disclosure page"
+    ]
+  },
+  "priority": "high",
+  "createdAt": "2026-06-16T12:40:00Z"
+}

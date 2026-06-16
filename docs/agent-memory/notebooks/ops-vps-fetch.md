@@ -1,6 +1,6 @@
 # ops-vps-fetch — Notebook
 
-**Last updated:** 2026-06-16 05:10 UTC | **Sprint:** AUDIT-FC-FOREIGN-FLOW (foreign flow page-cap audit)
+**Last updated:** 2026-06-16 12:40 UTC | **Sprint:** FIX-BCTC-VPS-PIPELINE-STALE-5D (root isolation probe)
 
 ---
 
@@ -14,8 +14,8 @@
 | sbv-rates | 2026-05-13 | healthy | none (Akamai present, not blocking) |
 | hsx-bctc | 2026-05-13 09:17 | FIXED (HNX params corrected) / HSX SPA unchanged | none |
 | hsx-bctc (api.hsx.vn) | 2026-05-15 04:45 | BLOCKER — /n/ JSON REST endpoints unreachable from VPS. Envoy route-level block, not geo-IP. | Envoy route table |
-| ssc-bctc-newsearch | 2026-06-15 17:11 | FIXED — afrLoop rollover resolved; HOSE tickers OK; UPCOM tickers blocked by c111+HNX session | none |
-| hnx-bctc-post-api | 2026-06-15 17:11 | BROKEN — 302 for stateless POST; requires session cookie GET first | ASP.NET session |
+| ssc-bctc-newsearch | 2026-06-16 12:40 | FUNCTIONAL — afrLoop+HNX session fixed; remaining queue = genuine non-filers. Transient 503 at ~12:00Z UTC daily. | none |
+| hnx-bctc-post-api | 2026-06-16 12:40 | FIXED — session warmup GET deployed; both NY+UPCOM warmup OK in live probes | ASP.NET session |
 
 ---
 
@@ -58,6 +58,34 @@ VPS fetches 111 codes from live watchlist → API returns 105 → jq filter (buy
 **Fix-2 (dead code):** Remove `fetchPrimaryVpsEndpoint` — push model is the only live path.
 
 Recon: `docs/handoffs/AUDIT-FC-FOREIGN-FLOW-recon.md`
+
+---
+
+## c016 · 2026-06-16T12:40Z · FIX-BCTC-VPS-PIPELINE-STALE-5D — Root Isolation Probe
+
+Trigger: P0 root-isolation — BCTC VPS push dead claimed >72h. Last push HUT 2026-06-13T23:45Z. bctcQueueEnricher 0 URLs all cycles. 10 tickers in queue.
+
+**VERDICT: PIPELINE IS FUNCTIONAL. No infrastructure failure. No geo-block. No format change.**
+
+**Decisive evidence:**
+- SSC: HTTP 200, afrLoop=27084xxx (fix regex working), step1/step2/step3 all OK in live probes
+- HNX: session warmup GET OK on both NY and UPCOM referrers
+- ACV: SSC finds Q1/2026 at c3-fallback idx=16 → 12.9MB PDF downloaded to /root/bctc-cache/ACV/ — will auto-push at next 18:00Z cycle
+- BDI/DAG/DLC/JSH/SIS/VDC: SSC returns 51KB empty PPR (0 row indices) — NOT filed Q1/2026 on any monitored source
+- VNH: 2 SSC rows — annual 2025 only; VEA: 15 rows — latest Q4/2025
+- One transient SSC 503 hit the 12:00Z UTC cycle (all 10 tickers, ~6min window). SSC restored 200 by 12:36Z. Likely scheduled daily maintenance window.
+
+**c014 fixes confirmed deployed and live:**
+- afrLoop regex r"(\d{15,18})" working (afrLoop=27084xxx in probes)
+- HNX session warmup logging "[HNX] session warmup GET OK" in 12:00Z cycle
+- exchange_code="" (all exchanges) confirmed
+
+**New risk identified:** SSC 503 at ~12:00Z UTC appears to be a regular maintenance window. Current script has NO retry → burns entire 6h cycle. Dev fix needed: 1-retry + 60s backoff.
+
+**Queue health:** 1 of 10 items (ACV) is now resolvable. 7 items are genuine non-filers. 2 items (VEA Q1/Q4) not found on monitored sources.
+
+Recon: `docs/vps-sources/bctc-pipeline-stale-5d/recon.md`
+Signal: `docs/signals/dev-vps-crawls-2026-06-16T12-40-00Z.json`
 
 ---
 
