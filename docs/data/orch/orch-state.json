@@ -195,8 +195,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-16T03:00:01.091Z",
-    "_updated_by": "qa-cycle277",
+    "_updated_at": "2026-06-16T17:57:35Z",
+    "_updated_by": "dev-team",
     "archive": [
       {
         "from": "system-auditor",
@@ -626,6 +626,20 @@
         "severity": "LOW",
         "status": "NEW",
         "payload_ref": null
+      },
+      {
+        "id": "router-market-breadth-missing-20260616T175600Z",
+        "ts": "2026-06-16T17:57:35Z",
+        "from": "dev-team",
+        "to": "po",
+        "type": "data-gap",
+        "summary": "Market breadth MISSING (user-reported 2026-06-16): get_market_snapshot returns NO advancers/decliners/unchanged (so ma tang/giam/dung gia). ROOT CAUSE: apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts get_market_snapshot (~L147-364) fetches VN-Index as a SINGLE value (fetchVnIndex VNINDEX -> price+change% only) + individual prices ONLY for explicitly-requested codes; NEVER aggregates HOSE/HNX/UPCOM constituents -> breadth UNIMPLEMENTED, not a fetch failure (live probe confirms: returns only vn_index+text). FIX (REAL DATA ONLY / no-fake-data): (A) RAW-probe VnDirect finfo-api/vnmarket_prices upstream for advances/declines/nochange fields that fetchVnIndex DISCARDS -> expose (cheapest+real; dispatch ops-vps-fetch/ops-mainserver-fetch recon FIRST); or (B) aggregate full constituent lists + count up/down/flat; NEVER a watchlist-only proxy as market-wide breadth. CONSUMER: frontend \"Do rong thi truong\" card empty because backend gives nothing -> close producer->consumer; per /goal#3 the card must link source + expand to fetched advancers/decliners detail. Mint FIX-MARKET-BREADTH-MISSING -> dev-mcp-server (+ ops-*-fetch recon). Ties /goal#1 + no-fake-data + /goal#3. [Router captured after 2x po-spawn API-500 deaths a68a534/af08bce6.]",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": null,
+        "resolved_at": null,
+        "resolved_by": null,
+        "resolution": null
       }
     ]
   },
