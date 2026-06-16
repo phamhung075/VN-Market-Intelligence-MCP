@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T00:04:25Z",
-  "_updated_by": "po-s70",
+  "_updated_at": "2026-06-16T00:33:42Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -126,12 +126,12 @@
     }
   ],
   "head": {
-    "status": "review",
-    "updated_at": "2026-06-16T00:04:25Z",
-    "updated_by": "po-s70",
-    "active_task_id": "FIX-ERRAUDIT-W2-MCP-DATALAYER",
-    "next_agent": "qa",
-    "note": "FIX-ERRAUDIT-W2-MCP-DATALAYER promoted in_progress->review by po-s70. Code merged to main 9f4a8eef (31/31 tests, tsc clean); ops rebuilding mcp-server + qa LIVE-verify (FORCED-FAILURE DoD, named-volume market.db) PENDING. CODING IS DONE — next dev-team :07 tick MUST NOT re-dispatch dev-mcp-server; this task is in the qa GATE. Also this turn: FIX-BCTC-BANK-PDF-OCR-RASTERIZE -> done_verified (extraction leg DoD met, qa+router RAW-verified); FIX-ERRAUDIT-W1-PEK-P0 unblocked (RASTERIZE dep cleared); FIX-BCTC-BANK-SUMMARY-MAPPING minted (P1 bank scalar-summary value-accuracy follow-on, BCTC-ANALYTICS-LAYER)."
+    "status": "in_progress",
+    "updated_at": "2026-06-16T00:33:42Z",
+    "updated_by": "dev-team",
+    "active_task_id": "FIX-ERRAUDIT-W1-PEK-P0",
+    "next_agent": "ba",
+    "note": "Router dispatch (po-s72 teed up): W1-PEK-P0 PEK data-masking pair (pek_engine_adapter.py:668 layout-crash + :342/:717 PaddleOCR-load served as clean 0-row success) -> ba decomposition. Unblocked by RASTERIZE done_verified; zone apps/pdf-extractor/ free; WIP 0/2."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17922,6 +17922,47 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W1-PEK-P0",
+        "type": "FIX",
+        "epic": "ERROR-AUDIT-2026-06-15",
+        "wave": 1,
+        "priority": "P0",
+        "size": "M",
+        "status": "IN_PROGRESS",
+        "zone": "apps/pdf-extractor/",
+        "route_to": "dev-pdf-extractor",
+        "route": "ba->architect->pm->dev->qa",
+        "next_agent": "ba",
+        "title": "Wave-1 P0 PEK data-masking pair: layout-crash + PaddleOCR-load failure served as a successful 0-row extraction",
+        "desc": "Two P0 sites in pek_engine_adapter.py where a CRASHED model is served as a clean 0-row 'pass' (FIX-BCTC-ENRICH-SILENT-0ROWS class). (A) :668 — DocLayout-YOLO layout-detection crash (OOM/native-lib fault on 8GB host) is logged at 668-673 then CONTINUES with empty pages_bboxes -> total_pages=0 (687), units_in_map=[] (700); caller pushes a fully-formed result dict as a SUCCESSFUL extraction. A model crash is indistinguishable from a PDF with no tables. (B) :342 (+ guard :717) — PaddleOCR PP-StructureV2 load fail -> warning only, paddle_table stays None; the 'if paddle_table is not None' guard at 717 silently skips table extraction -> units assemble row_count=0 with quarantined=False = clean-looking 0-row pass (units_passing==units_total). Contrast extract_layout_first_usecase.py:450 which correctly quarantines. FIX: re-raise OR tag extraction_status='degraded'/quarantined=True (ship the Python helper fail_loud_or_tag_degraded here as a by-product) so a crashed model is NEVER served as a successful 0-row extraction.",
+        "files": [
+          "apps/pdf-extractor/infrastructure/pek_engine_adapter.py"
+        ],
+        "recurrence_class": "BCTC-silent-0-rows (FIX-BCTC-ENRICH-SILENT-0ROWS)",
+        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
+        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
+        "baseline_pass": "done_verified: force a layout-detection crash (drop/break DocLayout-YOLO) AND force a PaddleOCR load failure -> the extraction result is tagged degraded/quarantined (extraction_status reflects the crash), NOT a 0-row success with quarantined=False; a genuinely table-less PDF STILL lands a clean 0-row pass (no false-quarantine). RAW-verified LIVE on named-volume DB; container rebuilt.",
+        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P0 pdf-extractor-02, pdf-extractor-03)",
+        "created_at": "2026-06-15T21:23:56Z",
+        "created_by": "po-s65",
+        "degroomed_at": "2026-06-15T22:39:38Z",
+        "degroomed_by": "po-s68",
+        "unblocked_at": "2026-06-16T00:04:25Z",
+        "unblocked_by": "po-s70",
+        "unblock_note": "Dependency FIX-BCTC-BANK-PDF-OCR-RASTERIZE reached done_verified (po-s70). SAME-ZONE-SERIALIZED hold lifted: apps/pdf-extractor/ is no longer held by the active RASTERIZE lane. Now UNBLOCKED + ready for grooming/promotion to a free coding slot.",
+        "lane": "ready",
+        "groomed_at": "2026-06-16T00:27:24Z",
+        "groomed_by": "po-s72",
+        "promoted_from": "backlog",
+        "promoted_at": "2026-06-16T00:27:24Z",
+        "promoted_by": "po-s72",
+        "promotion_note": "Free coding slot (dev coding WIP 0/2 — only the ARCH-CRON-SCHEDULER-RELIABILITY QA-observe gate occupies in_progress; not a dev coding lane). Dependency FIX-BCTC-BANK-PDF-OCR-RASTERIZE reached done_verified (po-s70) — SAME-ZONE-SERIALIZED hold on apps/pdf-extractor/ lifted; zone confirmed FREE. W1 P0 PEK data-masking pair (pek_engine_adapter.py:668 layout-crash + :342/:717 PaddleOCR-load-fail served as clean 0-row pass) = BCTC-silent-0-rows class (/goal#1). FAIL-LOUD DoD: a crashed model NEVER served as a successful 0-row extraction -> re-raise OR tag extraction_status='degraded'/quarantined=True; ship the Python fail_loud_or_tag_degraded helper as by-product; generic across all sources. Route ba->architect->pm->dev(dev-pdf-extractor)->qa; router dispatches via lock-claim+spawn — po did NOT spawn. No-push.",
+        "owner": "ba",
+        "claimed_at": "2026-06-16T00:33:42Z",
+        "claimed_by": "router",
+        "dispatch_note": "Router dispatch (po-s72 teed up): W1-PEK-P0 PEK data-masking pair (pek_engine_adapter.py:668 layout-crash + :342/:717 PaddleOCR-load served as clean 0-row success) -> ba decomposition. Unblocked by RASTERIZE done_verified; zone apps/pdf-extractor/ free; WIP 0/2."
       }
     ],
     "ready": [
@@ -18063,43 +18104,6 @@
         "source": "OPS-BCTC-PIPELINE-RECON + FIX-BCTC-VPS-PIPELINE-STALE-5D recurrence_count=2",
         "created_at": "2026-06-15T17:19:55Z",
         "dispatch_note": "P1 SPIKE — architect (agents-architect consulted). recurring-bug-escalation umbrella over the 5 child FIX tasks. Design the cross-cutting alerting/fail-loud/brittleness-monitoring contract — do NOT just re-patch leaves. Timebox 120m, output: architecture brief."
-      },
-      {
-        "id": "FIX-ERRAUDIT-W1-PEK-P0",
-        "type": "FIX",
-        "epic": "ERROR-AUDIT-2026-06-15",
-        "wave": 1,
-        "priority": "P0",
-        "size": "M",
-        "status": "READY",
-        "zone": "apps/pdf-extractor/",
-        "route_to": "dev-pdf-extractor",
-        "route": "ba->architect->pm->dev->qa",
-        "next_agent": "ba",
-        "title": "Wave-1 P0 PEK data-masking pair: layout-crash + PaddleOCR-load failure served as a successful 0-row extraction",
-        "desc": "Two P0 sites in pek_engine_adapter.py where a CRASHED model is served as a clean 0-row 'pass' (FIX-BCTC-ENRICH-SILENT-0ROWS class). (A) :668 — DocLayout-YOLO layout-detection crash (OOM/native-lib fault on 8GB host) is logged at 668-673 then CONTINUES with empty pages_bboxes -> total_pages=0 (687), units_in_map=[] (700); caller pushes a fully-formed result dict as a SUCCESSFUL extraction. A model crash is indistinguishable from a PDF with no tables. (B) :342 (+ guard :717) — PaddleOCR PP-StructureV2 load fail -> warning only, paddle_table stays None; the 'if paddle_table is not None' guard at 717 silently skips table extraction -> units assemble row_count=0 with quarantined=False = clean-looking 0-row pass (units_passing==units_total). Contrast extract_layout_first_usecase.py:450 which correctly quarantines. FIX: re-raise OR tag extraction_status='degraded'/quarantined=True (ship the Python helper fail_loud_or_tag_degraded here as a by-product) so a crashed model is NEVER served as a successful 0-row extraction.",
-        "files": [
-          "apps/pdf-extractor/infrastructure/pek_engine_adapter.py"
-        ],
-        "recurrence_class": "BCTC-silent-0-rows (FIX-BCTC-ENRICH-SILENT-0ROWS)",
-        "fail_loud_requirement": "FORCED-FAILURE DoD: drop the model / lock the DB / corrupt the payload -> output MUST be tagged-degraded / \"(loi truy van)\" / \"degraded:\" / quarantined, NOT an empty success. Verify LIVE on NAMED-VOLUME market.db (vn-market-intelligence-mcp_market_data), NOT host ./data decoy. Rebuild container after code change. done_verified = QA-green LIVE RAW.",
-        "generic_mandate": "GENERIC across ALL tickers/entities/sources — NO per-instance hardcode / allowlist / date-literal / special-case. Helpers are inherently generic; keep migrations generic.",
-        "baseline_pass": "done_verified: force a layout-detection crash (drop/break DocLayout-YOLO) AND force a PaddleOCR load failure -> the extraction result is tagged degraded/quarantined (extraction_status reflects the crash), NOT a 0-row success with quarantined=False; a genuinely table-less PDF STILL lands a clean 0-row pass (no false-quarantine). RAW-verified LIVE on named-volume DB; container rebuilt.",
-        "source": "docs/analysis-briefs/2026-06-15-error-handling-audit.md (P0 pdf-extractor-02, pdf-extractor-03)",
-        "created_at": "2026-06-15T21:23:56Z",
-        "created_by": "po-s65",
-        "degroomed_at": "2026-06-15T22:39:38Z",
-        "degroomed_by": "po-s68",
-        "unblocked_at": "2026-06-16T00:04:25Z",
-        "unblocked_by": "po-s70",
-        "unblock_note": "Dependency FIX-BCTC-BANK-PDF-OCR-RASTERIZE reached done_verified (po-s70). SAME-ZONE-SERIALIZED hold lifted: apps/pdf-extractor/ is no longer held by the active RASTERIZE lane. Now UNBLOCKED + ready for grooming/promotion to a free coding slot.",
-        "lane": "ready",
-        "groomed_at": "2026-06-16T00:27:24Z",
-        "groomed_by": "po-s72",
-        "promoted_from": "backlog",
-        "promoted_at": "2026-06-16T00:27:24Z",
-        "promoted_by": "po-s72",
-        "promotion_note": "Free coding slot (dev coding WIP 0/2 — only the ARCH-CRON-SCHEDULER-RELIABILITY QA-observe gate occupies in_progress; not a dev coding lane). Dependency FIX-BCTC-BANK-PDF-OCR-RASTERIZE reached done_verified (po-s70) — SAME-ZONE-SERIALIZED hold on apps/pdf-extractor/ lifted; zone confirmed FREE. W1 P0 PEK data-masking pair (pek_engine_adapter.py:668 layout-crash + :342/:717 PaddleOCR-load-fail served as clean 0-row pass) = BCTC-silent-0-rows class (/goal#1). FAIL-LOUD DoD: a crashed model NEVER served as a successful 0-row extraction -> re-raise OR tag extraction_status='degraded'/quarantined=True; ship the Python fail_loud_or_tag_degraded helper as by-product; generic across all sources. Route ba->architect->pm->dev(dev-pdf-extractor)->qa; router dispatches via lock-claim+spawn — po did NOT spawn. No-push."
       }
     ],
     "review": [
