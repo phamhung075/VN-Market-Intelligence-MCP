@@ -1,45 +1,37 @@
 # PO Notebook
 
-## 2026-06-15T22:20Z — collapse dual-head SSOT (signal head-drift), reconcile live divergence
+## 2026-06-16T00:26Z — W2-DATALAYER sign-off (RAW LIVE) + W3 fold + W1-PEK-P0 promote
 
-Priority-triage signal `head-drift-po-s64-vs-task-board-head` (NEW ~45min, autonomous
-tick missed it). RECURRING ROOT: two head pointers with divergent writers —
-TOP-LEVEL `.head` (po-s64, 20:17:53Z → FIX-BCTC-BANK-PDF-OCR-RASTERIZE) vs
-`.task_board.head` (po-s65, 21:23:56Z → FIX-ERRAUDIT-W1-MCP-P0). Every consumer reads
-TOP-LEVEL `.head` (dev-team flow Step 0b `jq -c '.head'`, orch-state-access.md §2,
-router-d1-claim) → po-s65's dispatch was invisible to flow-resume.
+**PRIMARY: FIX-ERRAUDIT-W2-MCP-DATALAYER review→done_verified.** Did my OWN RAW
+re-verify before flipping (router-verify-raw-not-badges, NOT badge trust):
+- Container vn-market-intelligence-mcp-mcp-server-1: image .Created 00:10:01Z
+  POST-DATES commit 9f4a8eef (23:59:27Z); StartedAt 00:12:04Z → running img carries new code.
+- In-container: safeQuery.ts(5415B @ /app/src/domain/utils) typed {ok:false,reason:'no-rows'|'db-error'}
+  contract, db-error always LOGGED via failLoud `[degraded:<ctx>]`; runSection.ts(6520B).
+- scanMarket.ts imports failLoud; getAvgVolumeSync L103-104 failLoud+return null on db-error,
+  L117-119 legit insufficient-history → return null (drop-dimension, NOT fabricated 0).
+- qa APPROVE = current HEAD b8f9e31e; CI 31/31 pass, 1 PRE-EXISTING unrelated tsc only.
+→ Kills a chunk of fabricated-default-masks-real-metric (avgVolume=0 / neutral-0 → conf=50).
 
-CONCURRENCY GUARD: orch-state mtime 23:35:34 (= signal-emit write, ~45min stale) → no
-live writer. Re-verified mtime unchanged immediately before the atomic write (CAS).
+**SECOND: W3 fold (NO dup).** FIX-ERRAUDIT-W3-MCP-P2 ALREADY existed (sequence_after=W2) →
+folded qa's 15 out-of-scope surviving-bare-catch sites in-place via `.folded_sites` marker
+(idempotent), NOT a new task (ssot_duplicate_key avoided). Generic-across-sites per /goal#2.
 
-**DECISION: TOP-LEVEL `.head` = single canonical head SSOT** (option a — matches the
-existing read sites, lowest blast radius; no architect schema decision needed, the read
-SSOT already existed, just align writers). Canonical head value reconciled to the
-most-recent real dispatch **FIX-ERRAUDIT-W1-MCP-P0 (next_agent=ba)** — po-s65's intent.
-FIX-BCTC-BANK-PDF-OCR-RASTERIZE stays in_progress (dev-pdf-extractor), tracked via its
-own in_progress row + router lock, independent of the pointer — not blocked.
+**THIRD: W1-PEK-P0 promoted backlog→ready (next_agent=ba).** Dep RASTERIZE=done_verified
+(po-s70) → SAME-ZONE hold lifted; pdf-extractor zone FREE; coding WIP 0/2. Router will
+lock-claim+spawn ba→architect→dev-pdf-extractor→qa; po did NOT spawn.
 
-**DURABLE FIX (recurring-root, not one-off):**
-- `.task_board.head` → non-routing DEPRECATED stub (`canonical_moved_to:".head"`).
-- 3 writer scripts retargeted to top-level `.head`: po-s65-error-audit-3wave-mint-dispatch,
-  po-s54-macro-accuracy-pair-promote (was task_board.head-only), po-s54-vn-macro-ba-dispatch
-  (was dual-write → now single).
-- Canonical-head rule + "never write .task_board.head" guard documented in
-  orch-state-access.md §4.
-- Reconcile script: scripts/po-s66-head-ssot-collapse-reconcile.jq (atomic, idempotent,
-  CAS mtime-guard). Signal flipped NEW→RESOLVED (disposition: DURABLE single-head collapse).
-
-Commit scope: orch-state.json (explicit path) + 3 patched po-s* scripts + new s66 script +
-orch-state-access.md §4 + po flow-doc pointer + this notebook. NO git add -A (live in-flight
-work in tree). PUSH HELD (PO deferred call; origin diverged via benign cloud-chore).
+Scripts: po-s71 (dual-mutation sign-off+fold), po-s72 (groom+promote) — both atomic
++conservation-guarded, flow-doc pointer added. Commit 8534f509 = orch-state + 2 scripts +
+journal by EXPLICIT PATH (no git add -A; 9 bg artifacts left dirty). PUSH HELD (deferred call;
+origin 11 ahead / 96 behind via benign cloud-chore).
 
 ### Carry-over
-- **FIX-ERRAUDIT-W1-MCP-P0 (in_progress, P0, canonical head)** → ba writes spec NOW →
-  architect→pm→dev-mcp-server→qa. done_verified = lock named-vol DB → 'degraded:' not 'ok'.
-- **FIX-ERRAUDIT-W1-PEK-P0 (ready, BLOCKED)** → dispatch ONLY after FIX-BCTC-BANK-PDF-OCR-
-  RASTERIZE reports done (same-zone serialize). Then 2nd coding lane.
-- **FIX-BCTC-BANK-PDF-OCR-RASTERIZE (in_progress, dev-pdf-extractor)** — let finish; on land
-  flip FIX-BCTC-ENRICH-SILENT-0ROWS review→done_verified (check-a leg).
-- **Wave-2/3 (backlog ×5)** + **BA-FE-PAGE-REORG (backlog)** → ba→architect grooms later.
-- HEAD-DRIFT GUARD now durable: any future script writing `.task_board.head` is a BUG —
-  orch-state-access.md §4 is the SSOT; if drift recurs, a writer skipped the retarget.
+- **FIX-ERRAUDIT-W1-PEK-P0 (ready, P0)** → router dispatch; done_verified = crash DocLayout-YOLO
+  /PaddleOCR → extraction tagged degraded/quarantined, NOT clean 0-row pass.
+- **FIX-ERRAUDIT-W3-MCP-P2 (backlog, 15 sites folded)** → ba grooms when a slot frees.
+- **review[] ×5** still open (CONFIDENCE-DEFAULT-50, ARCH-SHIP-WAVE-REAUDIT, RSI-SINGLEDIGIT,
+  VNSTOCK-TRADINGSTATS-CRASH, BCTC-ENRICH-SILENT-0ROWS) → next sign-off candidates.
+- **STANDING:** FIX-BCTC-BANK-SUMMARY-MAPPING P1 (bctc c058 CTG corroboration), 8 infra fixes,
+  FE-REORG sprint, 2 pre-existing active_sprints dup-ids (low-pri cleanup).
+- PUSH remains PO's deferred call — separate from this flip.
