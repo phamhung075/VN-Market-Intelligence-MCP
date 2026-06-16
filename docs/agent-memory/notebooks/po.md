@@ -1,19 +1,24 @@
 # PO Notebook
-_overwritten 2026-06-16T18:21Z_
+_overwritten 2026-06-16T21:27Z_
 
-## Last cycle (2026-06-16T18:21Z idle-loop triage) — drained 3 NEW signals + set head
-Loop idle 28min (head idle since 17:50Z after INFOCARD-EXPAND-FETCH epic done_verified). 3 untriaged NEW signal_queue rows, one USER-REPORTED. RAW-verified board (head=idle, mtime 17:50Z, no live writer) — safe to write. Script `po-s91` (s90 already taken by infocard-mint), CAS-mtime + conservation + idempotent.
+## Last cycle (2026-06-16T21:27Z dev-team triage tick) — 5 drained signals, doublefire impl-handoff
+Drain handed 5 signals (2 actionable, 3 informational). Script `po-s91-doublefire-handoff-supersede-mint.jq` (atomic temp→guard→conservation→placement→idempotency→rename). Commit f2b16239. PUSH HELD (PO out-of-band; 74 unpushed; CI frozen).
 
-DISPOSITIONS (all 3 RESOLVED):
-1. **router-market-breadth-missing** (USER-REPORTED, data-gap) → MINTED **FIX-MARKET-BREADTH-MISSING** (HIGH) → ready[], next_agent=**ops-vps-fetch** (RECON-FIRST), zone apps/mcp-server/. get_market_snapshot never aggregates HOSE/HNX/UPCOM constituents → breadth UNIMPLEMENTED (root marketTools.ts ~L147-364, fetchVnIndex discards advances/declines). Recon RAW-probes VnDirect finfo-api breadth fields BEFORE code (no-fake-data); code hop waits — apps/mcp-server/ zone busy (ARCH-CRON-SCHEDULER-RELIABILITY in_progress). Closes empty FE "Độ rộng thị trường" card. Highest user-facing pri this tick.
-2. **router-ci-suite-weather** (INFORMATIONAL) → RESOLVED as the JUSTIFICATION unblocking CI-RED-STANDING. Broader 20-file/49-fail red = HOST-WEATHER (3× SIGILL Bun-JIT sdk1.29.0+zod3.25.76 P=8 mem-constrained host, local-only NOT Linux-CI + ~17 live-data flaps), disjoint from change, NOT a regression. NO new P3 minted (would dup pinned bun-jit debt; flaky-quarantine note already on CI-RED-STANDING.broader_red_note).
-3. **router-docresidual** (LOW tech_debt) → MINTED **CLEAN-AUDITOR-DOC-SIGNAL-TYPES** (LOW) → ready[], route_to=**agent-father**. One scoped cleanup: init.md:24 stale post_agent_signal types + audit-dimensions.md:18/28/38 scoping; free-form flow 'type' LEFT. No longer re-reads as untriaged.
+DISPOSITIONS:
+1. **gatherer-doublefire brief** (architecture_brief 5bced686, architect→agent-father+dev-mcp-server) = IMPLEMENTATION HANDOFF of DESIGN umbrella (architect_done). Materialised AF-1/DMS-1/DMS-2.
+   - **AF-1-LEADER-LOCK-BACKSTOP-DEFER** → ready[], **agent-father** maintenance lane (leader-lock.md §Primitive-1 defer gate), NO coding WIP slot. head→this.
+   - **DMS-DOUBLEFIRE-SIBLING-DEDUP-CORROBORATION** (DMS-1+DMS-2 combined) → backlog[] **HELD** behind ARCH-CRON-SCHEDULER-RELIABILITY (apps/mcp-server/ ZONE COLLISION — in_progress=1, no 2nd mcp-server lane). next_agent=dev-mcp-server.
+   - 3 Root A/B/C stubs (FIX-GATHERER-DOUBLEFIRE-DISPATCHER / -NEWSSCOUT-SIBLING-DEDUP-CACHE / -MARKETWATCHER-GW-CORROBORATION-GATE) FOLDED → done[] SUPERSEDED (done_verified:false, superseded_by umbrella). Not independently done.
+2. **tnb-20260616 audit-handoff (c97)** → ACK'd in tnb-audit-latest.md. **FIX-BCTC-BANK-SCALAR-MAPPING** (HIGH) MINTED → backlog[] (board had NO matching task despite "minted" note); bank B02-TCTD scalar garbage net_margin_pct=229157%/total_assets=0, CTG cycle-34 CRITICAL; route ba→architect SPIKE. F-CHEF-EVENING-DOUBLE-POST (CRITICAL) already = ARCH-HEADLESS-GATEWAY-COWORK-NOPOST on board (agents zone) — flagged c98, not re-minted.
+3-5. **Informational** (cowork-fire telemetry / FPT bctc routine→alert-commander / context-bloat→claude-manager-helper): no-op, not dev-team's.
 
-HEAD set → dispatch **qa for FIX-CI-RED-STANDING-1837A-1352A** (review[], deterministic fix GREEN). qa verifies local 1837a+1352a green + WATCHES Linux Actions run green on the deferred push → done_verified → unblocks 4 ci_green_on_subsequent_push-gated tasks + lets held 61-ahead/28-behind push land on green baseline.
+Drain db_count=0-for-5-inserted: NOTED not minted — signals dedup via fingerprints (working); db_count looks like a display quirk, low pri, NOT worth a 2nd colliding mcp-server lane. Watch for recurrence.
 
-Conservation PASS (ready 3→5, all other lanes byte-stable, NEW signals 3→0). CAS-mtime PASS. Commit: orch-state.json + scripts/po-s91-*.jq + this notebook ONLY (worktree has live churn incl 3 over-cap notebooks — janitor's lane, left alone).
+Conservation PASS (ready 5→3 [−3 fold,+1 AF-1]; done 157→160; backlog 290→292; inprog/review/dv byte-stable; total 559→562 = +3 net mints). 3 stubs moved once, 3 mints each appear once. Idempotency re-run delta 0.
 
 ## Carry-over (next tick)
-- **FIX-MARKET-BREADTH-MISSING** ready[] — dispatch ops-vps-fetch recon NOW (parallel-safe, ops lane). Code hop (dev-mcp-server) waits for apps/mcp-server/ slot (frees when ARCH-CRON-SCHEDULER-RELIABILITY done). Plausibility-gate the result: advances+declines+nochange ≈ total constituents, magnitudes sane vs index direction (non-empty ≠ correct).
-- After qa signs off CI-RED-STANDING green on Linux → promote the 4 push-gated tasks done_verified + release the held push onto green.
-- **CLEAN-AUDITOR-DOC-SIGNAL-TYPES** ready[] → agent-father when a slot frees (LOW, no live-path block).
+- **AF-1-LEADER-LOCK-BACKSTOP-DEFER** ready[] — dispatch agent-father NOW (maintenance lane, parallel-safe; agent-md-factory before flow-doc edit). head already points here.
+- **DMS-DOUBLEFIRE-...-CORROBORATION** backlog HELD → promote to ready[] when ARCH-CRON-SCHEDULER-RELIABILITY hits review/done and apps/mcp-server/ frees. Live-gate: 2 concurrent sibling fires → 0 dup signal_bus rows (RAW-probe named-volume, not self-built test schema); timeout+sibling-success → no BUG.
+- **FIX-BCTC-BANK-SCALAR-MAPPING** backlog → ba spec → architect SPIKE (split pdf-extractor vs mcp-server scalar layer). Plausibility-gate (total_assets>0, accounting identity, net_margin plausible band — non-zero ≠ correct). CTG flips off DATA_CORRUPT when shipped.
+- F-CHEF-EVENING-DOUBLE-POST (CRITICAL): dispatch ARCH-HEADLESS-GATEWAY-COWORK-NOPOST via agents-architect→agent-father (AC-FAILCLOSED, chef.md Step 0.5) next tick — agents zone, parallel-safe with cron lane.
+- Prior-cycle carry still open: FIX-MARKET-BREADTH-MISSING (ops-vps-fetch recon), CLEAN-AUDITOR-DOC-SIGNAL-TYPES (agent-father), CI-RED-STANDING qa-signoff→push-on-green.

@@ -92,3 +92,13 @@
 - frontend-only vs +backend: DATA-GAP confirmed (endpoint flattens finding_data→one detail string) → backend subtask REQUIRED + made blocking for dropdown
 **why-decision:** dropdown's REAL detail (/goal#1) is impossible without exposing finding_data; Invalid Date split out (fast-track, FE-only) since it's a parse bug independent of the fetch gap.
 **why-change:** no change from plan.
+
+### STEP po-S91 · po · 2026-06-16T21:36:12Z
+**task-id:** DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER / AF-1 / FIX-BCTC-BANK-SCALAR-MAPPING
+**what-done:** Triaged 5 drained signals; folded 3 Root A/B/C ready stubs → done[] SUPERSEDED, minted AF-1 (ready, agent-father), DMS-1+DMS-2 (backlog HELD), FIX-BCTC-BANK-SCALAR-MAPPING (backlog); ACK'd TNB c97; head→AF-1.
+**what-considered:**
+- Dispatch DMS-1/DMS-2 to ready now — REJECTED: apps/mcp-server/ collides with active ARCH-CRON-SCHEDULER-RELIABILITY; WIP headroom (in_progress=1) is for a NON-colliding lane only.
+- Mark 3 stubs done_verified — REJECTED: they are folded into the umbrella's brief children, not independently verified; done[] SUPERSEDED + done_verified:false is honest.
+- Promote chef double-post fix this tick — DEFERRED: ARCH-HEADLESS-GATEWAY-COWORK-NOPOST already on board (agents zone, AC-FAILCLOSED spec po-s90); agents-architect→agent-father lane, flagged for c98.
+**why-decision:** AF-1 is the only immediately-dispatchable non-colliding lane (maintenance/agent-father, no coding WIP slot); zone-collision constraint forces DMS to sequence behind cron work; TNB HIGH finding had no board task so it had to be minted.
+**why-change:** no change from plan — followed brief routing + TNB handler + zone-collision constraint verbatim.
