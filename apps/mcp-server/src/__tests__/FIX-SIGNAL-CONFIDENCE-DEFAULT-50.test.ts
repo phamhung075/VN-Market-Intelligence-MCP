@@ -266,7 +266,7 @@ describe("FIX-SIGNAL-CONFIDENCE-DEFAULT-50 — freshnessSlaMonitorJob severity d
   });
 
   it("severity=HIGH → slaConfidenceScore=70", () => {
-    const severity: "HIGH" | "CRITICAL" = "HIGH";
+    const severity = "HIGH" as "HIGH" | "CRITICAL";
     const slaConfidenceScore = severity === "CRITICAL" ? 90 : 70;
     expect(slaConfidenceScore).toBe(70);
   });
