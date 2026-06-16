@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-16T00:49:59Z",
+    "updated_at": "2026-06-16T00:53:54Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-ERRAUDIT-W1-PEK-P0",
-    "next_agent": "pm",
-    "note": "architect design complete (docs/handoffs/FIX-ERRAUDIT-W1-PEK-P0-architect-design.md); 4 ratifications resolved, HTTP fire-and-forget verified; dispatching pm for atomic task breakdown + WIP/DoD gate"
+    "next_agent": "dev-pdf-extractor",
+    "note": "pm atomic-task breakdown complete (docs/handoffs/FIX-ERRAUDIT-W1-PEK-P0-pm-brief.md); single indivisible task (6 interdependent edits + AC-1..AC-5/AC-2b tests); WIP 1/2 compliant; dispatching dev-pdf-extractor for implementation in worktree isolation + container rebuild"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
