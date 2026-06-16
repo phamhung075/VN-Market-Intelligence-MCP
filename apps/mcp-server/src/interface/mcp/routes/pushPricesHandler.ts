@@ -19,7 +19,10 @@ import {
   _setStaleTickers_lastNotifiedDate,
   isVnTradingWindowUtc,
 } from "../server-startup.js";
-import { validateOhlcvUnit } from "../../../domain/services/market-data/ohlcvUnitGuard.js";
+import {
+  writeOhlcvBatch,
+  type OhlcvWriteRow,
+} from "../../../application/usecases/ohlcvWriteService.js";
 
 export async function handlePushPrices(
   req: IncomingMessage,
@@ -160,59 +163,69 @@ export async function handlePushPrices(
       histInsert.run(p.code, pv, p.volume ?? 0, p.fetched_at ?? now);
     }
 
-    // Update daily OHLCV (kept 2+ years for volatility analysis)
-    // CONTAM-2: ON CONFLICT clause includes open self-heal via CASE — if the existing
-    // open is contaminated (< 100, i.e. thousand-VND leakage), the next valid push
-    // overwrites it. Guard below ensures only full-VND rows reach this statement.
-    // CONTAM-9 (low-zero boundary fix): MIN(daily_ohlcv.low, excluded.low) permanently
-    // propagates legacy low=0 contamination (MIN(0, n) = 0 for any positive n).
-    // Fix: if existing low is 0 (sentinel / legacy contaminated), use excluded.low;
-    // otherwise take the true minimum. This allows valid pushes to self-heal low=0 rows.
-    const ohlcvUpsert = db.prepare(`
-      INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(code, date) DO UPDATE SET
-        open = CASE WHEN daily_ohlcv.open < 100 THEN excluded.open ELSE daily_ohlcv.open END,
-        high = MAX(daily_ohlcv.high, excluded.high),
-        low  = CASE WHEN daily_ohlcv.low = 0 THEN excluded.low
-                    ELSE MIN(daily_ohlcv.low, excluded.low)
-               END,
-        close = excluded.close,
-        volume = excluded.volume,
-        updated_at = excluded.updated_at
-    `);
+    // Update daily OHLCV via the SSOT choke-point (SUBTASK-3 migration).
+    //
+    // DOUBLE-SCALE FIX (×1000 root cause — FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 §1.4):
+    //   Previously: handler applied `p.price * 1000` then wrote to DB directly.
+    //   When VPS sends a pre-open reference price already in full-VND (e.g. 7,260),
+    //   the handler ×1000 produced 7,260,000 — corrupting the row.
+    //   Fix: pass RAW VPS prices to writeOhlcvBatch. The service's normalizeOhlcvToVnd
+    //   applies ×1000 only when max(OHLC) < 100 (thousand-VND scale detection), and
+    //   detectAndNormalizeScaleFromPrevClose catches the ÷1000 class (VHM/VIC/VJC).
+    //   Price is normalized EXACTLY ONCE — in the service pipeline.
+    //
+    // CONTAM-2 / CONTAM-9 semantics preserved via conflictStrategy='intraday':
+    //   open  = CASE WHEN daily_ohlcv.open < 100 THEN excluded.open ELSE daily_ohlcv.open END
+    //   high  = MAX(daily_ohlcv.high, excluded.high)
+    //   low   = CASE WHEN daily_ohlcv.low = 0 THEN excluded.low ELSE MIN(daily_ohlcv.low, excluded.low) END
+    //   close = excluded.close  /  volume = excluded.volume
+    //
+    // RF-1 preserved: writeOhlcvBatch's validateOhlcvUnit is fail-closed (log.error + skip),
+    //   never throws to the HTTP layer — VPS always receives HTTP 200.
+    const ohlcvRows: OhlcvWriteRow[] = [];
     for (const p of prices) {
       if (!p.code || p.price == null) continue;
       const isStock = !p.type || p.type === "stock";
-      const pv = isStock ? p.price * 1000 : p.price;
-      const high = p.high ? parseFloat(p.high) * (isStock ? 1000 : 1) : pv;
-      const low = p.low ? parseFloat(p.low) * (isStock ? 1000 : 1) : pv;
+      // Pass RAW prices — no ×1000 here. The service normalizes via normalizeOhlcvToVnd
+      // and detectAndNormalizeScaleFromPrevClose (DB-seeded prevClose).
+      const rawClose = p.price;
+      const rawHigh  = p.high  ? parseFloat(p.high)  : rawClose;
+      const rawLow   = p.low   ? parseFloat(p.low)   : rawClose;
+      ohlcvRows.push({
+        code:   p.code,
+        date:   vnDate,
+        open:   rawClose,   // first push = open; subsequent conflict rules protect existing open
+        high:   rawHigh,
+        low:    rawLow,
+        close:  rawClose,
+        volume: p.volume ?? 0,
+        type:   isStock ? "stock" : "index",
+      });
+    }
 
-      // CONTAM-2: Unit guard — reject rows where OHLCV values are not in full-VND range.
-      // Fail-loud (log.error + skip row). RF-1: guard is wrapped in try/catch so any
-      // unexpected error here never throws to the HTTP layer (VPS gets HTTP 200 always).
-      try {
-        const guardResult = validateOhlcvUnit(
-          p.code,
-          isStock ? "stock" : "index",
-          pv,   // open (first push value)
-          high,
-          low,
-          pv,   // close (same as open on push; updated by subsequent pushes)
-        );
-        if (!guardResult.valid) {
-          log.error(`[pushPrices] unit guard rejected ${p.code}: ${guardResult.reason}`);
-          continue; // Skip upsert; HTTP 200 still returned to VPS (RF-1)
-        }
-      } catch (guardErr) {
-        // Guard must never propagate — log and skip to prevent VPS backoff (RF-1)
-        log.error(`[pushPrices] unit guard threw for ${p.code} — skipping row`, {
-          error: guardErr instanceof Error ? guardErr.message : String(guardErr),
+    // Errors inside writeOhlcvBatch are logged by the service; rejected[] is informational.
+    // RF-1: writeOhlcvBatch never throws to the caller — all per-row failures are caught
+    // and logged internally (validateOhlcvUnit fail-closed pattern).
+    try {
+      const ohlcvResult = await writeOhlcvBatch(ohlcvRows, db, {
+        conflictStrategy: "intraday",
+        vnToday: vnDate,
+      });
+      if (ohlcvResult.rejected.length > 0) {
+        log.error("[push-prices] ohlcv rows rejected by unit guard", {
+          count: ohlcvResult.rejected.length,
+          samples: ohlcvResult.rejected.slice(0, 3),
         });
-        continue;
       }
-
-      ohlcvUpsert.run(p.code, vnDate, pv, high, low, pv, p.volume ?? 0, now);
+      if (ohlcvResult.skipped > 0) {
+        log.info("[push-prices] ohlcv seed-bars skipped (FR-S1)", { skipped: ohlcvResult.skipped });
+      }
+    } catch (ohlcvErr) {
+      // Belt-and-suspenders: writeOhlcvBatch should not throw, but guard against it
+      // so VPS always receives HTTP 200 (RF-1).
+      log.error("[push-prices] writeOhlcvBatch unexpected error (RF-1 guard)", {
+        error: ohlcvErr instanceof Error ? ohlcvErr.message : String(ohlcvErr),
+      });
     }
 
     // Consolidate: keep only the last 24 h of ticks, delete older ones.

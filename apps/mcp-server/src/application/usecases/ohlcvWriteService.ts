@@ -72,7 +72,7 @@ export interface OhlcvWriteOptions {
   /**
    * 'backfill' (default): unconditionally overwrite all OHLCV fields (Writer D semantics).
    * 'intraday': accumulate-high / self-heal-open / protected-low (Writer A semantics).
-   *             EXTENSION POINT — SUBTASK-3 must fill the intraday SQL branch.
+   *             Implemented in SUBTASK-3 — UPSERT_INTRADAY_SQL is now filled.
    */
   conflictStrategy?: OhlcvConflictStrategy;
   /**
@@ -107,32 +107,44 @@ const UPSERT_BACKFILL_SQL = `
 `;
 
 /**
- * EXTENSION POINT — SUBTASK-3 (pushPricesHandler migration, Writer A).
+ * Intraday strategy: Writer A (pushPricesHandler) conflict semantics.
  *
- * Intraday strategy must preserve these three conflict-special-cases from
- * pushPricesHandler.ts (CONTAM-2, CONTAM-9 fix):
+ * SUBTASK-3 — filled from live pushPricesHandler ON CONFLICT clause (verified
+ * against apps/mcp-server/src/interface/mcp/routes/pushPricesHandler.ts lines 171-183).
+ *
+ * Three conflict rules preserved EXACTLY:
  *
  *   open  = CASE WHEN daily_ohlcv.open < 100 THEN excluded.open
  *                ELSE daily_ohlcv.open END
- *           (self-heal: overwrite if existing open is corrupted thousand-VND leakage)
+ *           (CONTAM-2 self-heal: overwrite if existing open is contaminated thousand-VND leakage)
  *
  *   high  = MAX(daily_ohlcv.high, excluded.high)
- *           (accumulate intraday high)
+ *           (intraday accumulate-high: never lose an intraday peak)
  *
  *   low   = CASE WHEN daily_ohlcv.low = 0 THEN excluded.low
  *                ELSE MIN(daily_ohlcv.low, excluded.low) END
- *           (protected-low: if existing low is 0/sentinel, replace; else take true min)
+ *           (CONTAM-9 protected-low: if existing low is 0/sentinel, replace; else true min)
  *
- *   close = excluded.close       (latest VPS push wins)
- *   volume = excluded.volume     (latest VPS volume)
- *
- * SUBTASK-3 must replace this sentinel SQL with the real intraday ON CONFLICT clause.
- * Do NOT guess or partially fill — leave as null here so callers get a clear runtime
- * error until SUBTASK-3 lands.
+ *   close  = excluded.close    (latest VPS push wins)
+ *   volume = excluded.volume   (latest cumulative VPS volume)
  *
  * Architect ref: §4.2 R-2 (HIGH risk — semantics must be preserved exactly).
  */
-const UPSERT_INTRADAY_SQL: string | null = null; // SUBTASK-3 fills this
+const UPSERT_INTRADAY_SQL: string = `
+  INSERT INTO daily_ohlcv
+    (code, date, open, high, low, close, volume, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+  ON CONFLICT(code, date) DO UPDATE SET
+    open = CASE WHEN daily_ohlcv.open < 100 THEN excluded.open
+                ELSE daily_ohlcv.open END,
+    high = MAX(daily_ohlcv.high, excluded.high),
+    low  = CASE WHEN daily_ohlcv.low = 0 THEN excluded.low
+                ELSE MIN(daily_ohlcv.low, excluded.low)
+           END,
+    close      = excluded.close,
+    volume     = excluded.volume,
+    updated_at = excluded.updated_at
+`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Batched prevClose query
@@ -193,9 +205,9 @@ function fetchPrevCloseMap(
  * writeOhlcvBatch — single authoritative OHLCV upsert entry point.
  *
  * All writers (A, C, D, E) must funnel through this service.
- * Currently wired by: [SUBTASK-1 skeleton — no callers yet]
- *   SUBTASK-2 wires Writer D (taOhlcvBackfillJob)
- *   SUBTASK-3 wires Writer A (pushPricesHandler) — fills intraday SQL branch
+ * Currently wired by:
+ *   SUBTASK-2: Writer D (taOhlcvBackfillJob) — conflictStrategy='backfill'
+ *   SUBTASK-3: Writer A (pushPricesHandler)  — conflictStrategy='intraday' (DONE)
  *
  * @param rows             Batch of raw OHLCV rows (pre-normalization)
  * @param db               bun:sqlite Database instance (injected by caller)
@@ -214,16 +226,8 @@ export async function writeOhlcvBatch(
     options?.vnToday ??
     new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
 
-  // Guard: intraday SQL extension must be filled before using this strategy
-  if (strategy === "intraday" && UPSERT_INTRADAY_SQL === null) {
-    throw new Error(
-      "[ohlcvWriteService] conflictStrategy='intraday' is not yet implemented. " +
-        "SUBTASK-3 (pushPricesHandler migration) must fill UPSERT_INTRADAY_SQL before use.",
-    );
-  }
-
   const upsertSql =
-    strategy === "backfill" ? UPSERT_BACKFILL_SQL : (UPSERT_INTRADAY_SQL as string);
+    strategy === "backfill" ? UPSERT_BACKFILL_SQL : UPSERT_INTRADAY_SQL;
 
   // ── Stage 0: Collect unique codes for the batched prevClose fetch ──────────
   const uniqueCodes = [...new Set(rows.map((r) => r.code))];

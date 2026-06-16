@@ -236,8 +236,11 @@ describe("CONTAM-2 — pushPricesHandler unit guard + open self-heal", () => {
     expect(rejections.length).toBe(0);
   });
 
-  // TC-4: guard rejects stock row where pv=0 (zero guard)
-  test("TC-4: guard rejects zero-price stock row — log.error called, table stays empty", async () => {
+  // TC-4: zero-price stock row — table stays empty (FR-S1 seed-bar filter fires first)
+  //   Post-SUBTASK-3: zero-OHLCV + zero-volume rows for today hit the FR-S1 seed-bar
+  //   filter (O=H=L=C, vol=0, date>=vnToday) in writeOhlcvBatch BEFORE validateOhlcvUnit.
+  //   End result is the same — row absent from DB — but logged as skipped not rejected.
+  test("TC-4: zero-price stock row — table stays empty (FR-S1 seed-bar filter)", async () => {
     const log = makeLog();
     const req = makeRequest([
       { code: "ACB", price: 0, type: "stock", high: "0", low: "0" },
@@ -246,10 +249,8 @@ describe("CONTAM-2 — pushPricesHandler unit guard + open self-heal", () => {
     await handlePushPrices(req, res as unknown as ServerResponse, db, log as unknown as ReturnType<typeof import("../infrastructure/logger.js").createLogger>);
 
     const row = db.prepare("SELECT * FROM daily_ohlcv WHERE code='ACB'").get();
-    // price=0 → pv=0 → guard zero-check fires (open=0 invalid)
+    // Row absent regardless of filter path (FR-S1 catches O=H=L=C=0, vol=0 rows)
     expect(row).toBeNull();
-    const rejectionLogs = log._errors.filter(e => e.includes("unit guard rejected ACB"));
-    expect(rejectionLogs.length).toBeGreaterThan(0);
   });
 
   // TC-5: open self-heal does NOT overwrite a valid existing open (open >= 100)

@@ -349,14 +349,16 @@ describe("T2: Writer A (pushPricesHandler) — contamination + self-heal (CONTAM
     expect(log._errors.filter(e => e.includes("unit guard rejected FPT"))).toHaveLength(0);
   });
 
-  it("TC-A4: zero-price stock (price=0) → guard rejects → table empty, log.error called", async () => {
+  // TC-A4: zero-price stock (price=0) → table empty.
+  // Post-SUBTASK-3: O=H=L=C=0, vol=0 today rows are caught by FR-S1 seed-bar filter
+  // in writeOhlcvBatch BEFORE validateOhlcvUnit. Row stays absent from DB (correct).
+  it("TC-A4: zero-price stock (price=0) → table stays empty (FR-S1 seed-bar filter)", async () => {
     const log = makeLog();
     const req = makeRequest([{ code: "ACB", price: 0, type: "stock", high: "0", low: "0" }]);
     await handlePushPrices(req as never, makeResponse() as never, db, log as never);
 
     const row = db.prepare("SELECT * FROM daily_ohlcv WHERE code='ACB'").get();
     expect(row).toBeNull();
-    expect(log._errors.filter(e => e.includes("unit guard rejected ACB"))).not.toHaveLength(0);
   });
 
   it("TC-A5: HTTP 200 always returned even when all rows guard-rejected (RF-1)", async () => {
