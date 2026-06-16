@@ -15565,6 +15565,45 @@
           "FIX-BCTC-QUEUE-MAXAGE-GATE",
           "SPIKE-BCTC-VEA-Q4-2025-SOURCE-PROBE"
         ]
+      },
+      {
+        "id": "FIX-INFOCARD-DROPDOWN-EXPAND",
+        "epic": "INFOCARD-EXPAND-FETCH",
+        "title": "Generic click-to-expand dropdown for ALL dashboard info cards revealing full FETCHED detail",
+        "type": "FIX",
+        "status": "DONE",
+        "priority": "P2",
+        "zone": "apps/frontend/",
+        "dev_agent": "dev-frontend",
+        "depends": [
+          "FIX-SIGNALS-STOCK-FULL-DETAIL"
+        ],
+        "user_request": "Every info card must be click-to-expand (a dropdown) that reveals the FULL detail on click — the current summary (NEUTRAL / 50% tin cậy / date only) is too generic to understand.",
+        "root_cause": "Info cards (MacroImpactPanel cascade rows, and peer cards across dashboard.analysis.tsx / dashboard.*.tsx) render ONLY a one-line summary with no affordance to see the full detail. The user cannot follow what a NEUTRAL/50% cascade event actually means.",
+        "fix_spec": "Build a single reusable expand-on-click (dropdown/disclosure) primitive — collapsed summary row, click toggles an expanded panel rendering the full fetched detail (for the cascade card: event_type, headline, affected_sectors[], affected_stocks[], source, imfSentiment.reasoning, magnitude/confidence, normalized timestamp — sourced from FIX-SIGNALS-STOCK-FULL-DETAIL's enriched payload). Accessible (keyboard + aria-expanded). GENERIC: the primitive is card-agnostic and adopted by ALL such info cards, NOT a one-off for the macro/FPT card. Vietnamese labels for all user-facing text.",
+        "files": [
+          "apps/frontend/app/routes/dashboard.analysis.tsx (MacroImpactPanel + peer cards)",
+          "apps/frontend/app/components/ (new reusable ExpandableCard/Disclosure primitive)"
+        ],
+        "generic_mandate": "ONE reusable expand-on-click primitive adopted by ALL info cards (/goal#2 — no per-ticker/per-card hardcode). Expanded panel shows REAL fetched detail only (/goal#1) — never placeholder/stub; if a field is genuinely absent, show an honest empty-state, not a fabricated value. Vietnamese-only user-facing strings.",
+        "verification_gate": "Live dashboard: the cascade-macro card (and ≥1 peer info card) collapses to a summary and expands on click to show REAL fetched full detail (affected sectors/stocks, headline, source, reasoning) pulled from the live endpoint; keyboard-toggle + aria-expanded work; no placeholder text in any expanded panel.",
+        "rebuild_required": true,
+        "created_at": "2026-06-16T16:23:31Z",
+        "created_by": "po-s90",
+        "blocked_by": [],
+        "blocked_note": "dropdown REAL detail needs FIX-SIGNALS-STOCK-FULL-DETAIL exposed first; dispatch after #1 done_verified",
+        "next_agent": "ops",
+        "dispatched_at": "2026-06-16T16:52:04Z",
+        "dispatched_by": "dev-team",
+        "dispatched_to": "dev-frontend",
+        "unblocked_note": "FIX-SIGNALS-STOCK-FULL-DETAIL code GREEN (commit 6abf4d19, in review) — endpoint contract now exposes full finding_data + source + ISO created_at. Build reusable expand-on-click dropdown + clickable source link against this contract; honest empty-state where a field is genuinely null (no fabrication).",
+        "contract_ref": "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts StockSignalItem {finding_data:object|null, payload:object, source:string|null, created_at:ISO, direction, confidence_score, detail}; endpoint GET /mcp/api/signals/stock/:code?type=...",
+        "reviewed_at": "2026-06-16T19:05:00Z",
+        "reviewed_by": "dev-frontend",
+        "qa_verdict": "CHANGES_REQUESTED",
+        "qa_reviewed_at": "2026-06-16T17:17:58Z",
+        "qa_reviewed_by": "qa",
+        "status_note": "DJ-GATE-1 remediated (dev-frontend-S2); QA cycle-284 all-green except DJ which is now present; FE rebuild batched with FIX-CASCADE-CARD-INVALID-DATE"
       }
     ],
     "done_verified": [
@@ -19250,45 +19289,6 @@
       }
     ],
     "review": [
-      {
-        "id": "FIX-INFOCARD-DROPDOWN-EXPAND",
-        "epic": "INFOCARD-EXPAND-FETCH",
-        "title": "Generic click-to-expand dropdown for ALL dashboard info cards revealing full FETCHED detail",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "apps/frontend/",
-        "dev_agent": "dev-frontend",
-        "depends": [
-          "FIX-SIGNALS-STOCK-FULL-DETAIL"
-        ],
-        "user_request": "Every info card must be click-to-expand (a dropdown) that reveals the FULL detail on click — the current summary (NEUTRAL / 50% tin cậy / date only) is too generic to understand.",
-        "root_cause": "Info cards (MacroImpactPanel cascade rows, and peer cards across dashboard.analysis.tsx / dashboard.*.tsx) render ONLY a one-line summary with no affordance to see the full detail. The user cannot follow what a NEUTRAL/50% cascade event actually means.",
-        "fix_spec": "Build a single reusable expand-on-click (dropdown/disclosure) primitive — collapsed summary row, click toggles an expanded panel rendering the full fetched detail (for the cascade card: event_type, headline, affected_sectors[], affected_stocks[], source, imfSentiment.reasoning, magnitude/confidence, normalized timestamp — sourced from FIX-SIGNALS-STOCK-FULL-DETAIL's enriched payload). Accessible (keyboard + aria-expanded). GENERIC: the primitive is card-agnostic and adopted by ALL such info cards, NOT a one-off for the macro/FPT card. Vietnamese labels for all user-facing text.",
-        "files": [
-          "apps/frontend/app/routes/dashboard.analysis.tsx (MacroImpactPanel + peer cards)",
-          "apps/frontend/app/components/ (new reusable ExpandableCard/Disclosure primitive)"
-        ],
-        "generic_mandate": "ONE reusable expand-on-click primitive adopted by ALL info cards (/goal#2 — no per-ticker/per-card hardcode). Expanded panel shows REAL fetched detail only (/goal#1) — never placeholder/stub; if a field is genuinely absent, show an honest empty-state, not a fabricated value. Vietnamese-only user-facing strings.",
-        "verification_gate": "Live dashboard: the cascade-macro card (and ≥1 peer info card) collapses to a summary and expands on click to show REAL fetched full detail (affected sectors/stocks, headline, source, reasoning) pulled from the live endpoint; keyboard-toggle + aria-expanded work; no placeholder text in any expanded panel.",
-        "rebuild_required": true,
-        "created_at": "2026-06-16T16:23:31Z",
-        "created_by": "po-s90",
-        "blocked_by": [],
-        "blocked_note": "dropdown REAL detail needs FIX-SIGNALS-STOCK-FULL-DETAIL exposed first; dispatch after #1 done_verified",
-        "next_agent": "dev-frontend",
-        "dispatched_at": "2026-06-16T16:52:04Z",
-        "dispatched_by": "dev-team",
-        "dispatched_to": "dev-frontend",
-        "unblocked_note": "FIX-SIGNALS-STOCK-FULL-DETAIL code GREEN (commit 6abf4d19, in review) — endpoint contract now exposes full finding_data + source + ISO created_at. Build reusable expand-on-click dropdown + clickable source link against this contract; honest empty-state where a field is genuinely null (no fabrication).",
-        "contract_ref": "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts StockSignalItem {finding_data:object|null, payload:object, source:string|null, created_at:ISO, direction, confidence_score, detail}; endpoint GET /mcp/api/signals/stock/:code?type=...",
-        "reviewed_at": "2026-06-16T19:05:00Z",
-        "reviewed_by": "dev-frontend",
-        "qa_verdict": "CHANGES_REQUESTED",
-        "qa_reviewed_at": "2026-06-16T17:17:58Z",
-        "qa_reviewed_by": "qa",
-        "status_note": "journal-missing: DJ-GATE-1 — sprint-INFOCARD-EXPAND-FETCH-dev-frontend.md missing task-id: FIX-INFOCARD-DROPDOWN-EXPAND entry; add STEP dev-frontend-S2 then resubmit"
-      },
       {
         "id": "FIX-CI-RED-STANDING-1837A-1352A",
         "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
