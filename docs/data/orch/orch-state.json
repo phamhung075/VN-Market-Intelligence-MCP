@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T20:00:40Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-16T21:44:15Z",
+  "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -134,12 +134,12 @@
     }
   ],
   "head": {
-    "status": "dispatch",
-    "updated_at": "2026-06-16T21:34:06Z",
-    "updated_by": "po-s91",
-    "active_task_id": "AF-1-LEADER-LOCK-BACKSTOP-DEFER",
-    "next_agent": "agent-father",
-    "note": "po-s91 triage 2026-06-16T21:27Z: dispatch AF-1 (leader-lock.md Backstop-Window Defer Gate, agent-father maintenance lane, no coding WIP slot). DMS-1+DMS-2 HELD in backlog behind ARCH-CRON-SCHEDULER-RELIABILITY (apps/mcp-server zone collision). 3 Root A/B/C stubs folded into the doublefire umbrella's brief children. FIX-BCTC-BANK-SCALAR-MAPPING minted (TNB c97 HIGH). PUSH HELD."
+    "status": "idle",
+    "updated_at": "2026-06-16T21:44:15Z",
+    "updated_by": "dev-team",
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "ROUTER 2026-06-16T21:44:15Z — AF-1-LEADER-LOCK-BACKSTOP-DEFER DONE (router RAW-verified, commit 69babf46): leader-lock.md backstop-window defer gate ships gatherer-doublefire Root A. done_verified withheld (live unreadable-lock-in-window observation pending). DMS-1+DMS-2 still HELD behind ARCH-CRON-SCHEDULER-RELIABILITY. PUSH held (PO out-of-band)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -759,8 +759,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T20:09:40Z",
-    "_updated_by": "po-s90",
+    "_updated_at": "2026-06-16T21:44:15Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12678,6 +12678,35 @@
     ],
     "done": [
       {
+        "id": "AF-1-LEADER-LOCK-BACKSTOP-DEFER",
+        "type": "FIX",
+        "lane": "maintenance",
+        "consumes_coding_wip": false,
+        "priority": "p2",
+        "status": "DONE",
+        "owner": "agent-father",
+        "next_agent": null,
+        "route_to": "agent-father",
+        "zone": "docs/agents/cowork-team/flow/leader-lock.md",
+        "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
+        "brief_task_id": "AF-1",
+        "subsumes_hold": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
+        "title": "AF-1: Backstop-Window Defer Gate in leader-lock.md (Root A of gatherer double-fire)",
+        "desc": "Per brief §Primitive 1: add an error-branch at the top of the task_claim block in docs/agents/cowork-team/flow/leader-lock.md — when LEADER_CLAIM call errors/times-out AND UTC.hour ∈ {0,4,8,12,16,20} AND UTC.minute < 15 → EXIT (defer one tick); outside that window → PROCEED. Doc-only flow-file edit (agent-father zone, mutex-wrapped on dispatch). Does NOT consume a coding WIP slot.",
+        "ac": "Simulate leader-lock tool error within :00-:15 backstop window of a 4h-boundary hour → dispatcher defers (EXIT); same error outside window → dispatcher proceeds. No double-fire across manual+cloud paths.",
+        "verification_gate": "Branch present with the exact BOUNDARY_HOURS guard; agent-md-factory invoked before edit (flow-doc, not agent .md); no regression to the existing ORPHAN-RECOVERY path.",
+        "size": "S",
+        "source": "po-s91 dev-team tick 2026-06-16T21:27Z — implementation handoff of brief 5bced686 (agents-architect→agent-father)",
+        "created_at": "2026-06-16T21:34:06Z",
+        "created_by": "po",
+        "promoted_at": "2026-06-16T21:34:06Z",
+        "promoted_by": "po",
+        "done_at": "2026-06-16T21:44:15Z",
+        "done_by": "router",
+        "done_verified": false,
+        "live_verify": "LIVE RAW (router, flow executor): leader-lock.md commit 69babf46 — error/timeout-keyed defer branch before claimed-check; BOUNDARY_HOURS={0,4,8,12,16,20} AND minute<15 → DEFER one tick (generic, no slot literals); rebind-steal WIN/OWN-HELD/ORPHAN-RECOVERY/PEER-HELD chain byte-stable; 113L==size-justif; DJ-GATE-1 ok. done_verified WITHHELD — defer gate only confirmable on a live unreadable-lock-in-backstop-window tick."
+      },
+      {
         "id": "FIX-CI-RED-STANDING-1837A-1352A",
         "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
         "type": "FIX",
@@ -19571,31 +19600,6 @@
         "created_at": "2026-06-16T20:31:21Z",
         "created_by": "po",
         "promoted_at": "2026-06-16T20:31:21Z",
-        "promoted_by": "po"
-      },
-      {
-        "id": "AF-1-LEADER-LOCK-BACKSTOP-DEFER",
-        "type": "FIX",
-        "lane": "maintenance",
-        "consumes_coding_wip": false,
-        "priority": "p2",
-        "status": "READY",
-        "owner": "agent-father",
-        "next_agent": "agent-father",
-        "route_to": "agent-father",
-        "zone": "docs/agents/cowork-team/flow/leader-lock.md",
-        "brief_path": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
-        "brief_task_id": "AF-1",
-        "subsumes_hold": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
-        "title": "AF-1: Backstop-Window Defer Gate in leader-lock.md (Root A of gatherer double-fire)",
-        "desc": "Per brief §Primitive 1: add an error-branch at the top of the task_claim block in docs/agents/cowork-team/flow/leader-lock.md — when LEADER_CLAIM call errors/times-out AND UTC.hour ∈ {0,4,8,12,16,20} AND UTC.minute < 15 → EXIT (defer one tick); outside that window → PROCEED. Doc-only flow-file edit (agent-father zone, mutex-wrapped on dispatch). Does NOT consume a coding WIP slot.",
-        "ac": "Simulate leader-lock tool error within :00-:15 backstop window of a 4h-boundary hour → dispatcher defers (EXIT); same error outside window → dispatcher proceeds. No double-fire across manual+cloud paths.",
-        "verification_gate": "Branch present with the exact BOUNDARY_HOURS guard; agent-md-factory invoked before edit (flow-doc, not agent .md); no regression to the existing ORPHAN-RECOVERY path.",
-        "size": "S",
-        "source": "po-s91 dev-team tick 2026-06-16T21:27Z — implementation handoff of brief 5bced686 (agents-architect→agent-father)",
-        "created_at": "2026-06-16T21:34:06Z",
-        "created_by": "po",
-        "promoted_at": "2026-06-16T21:34:06Z",
         "promoted_by": "po"
       }
     ],
