@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-16T00:53:54Z",
+    "updated_at": "2026-06-16T01:14:37Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-ERRAUDIT-W1-PEK-P0",
-    "next_agent": "dev-pdf-extractor",
-    "note": "pm atomic-task breakdown complete (docs/handoffs/FIX-ERRAUDIT-W1-PEK-P0-pm-brief.md); single indivisible task (6 interdependent edits + AC-1..AC-5/AC-2b tests); WIP 1/2 compliant; dispatching dev-pdf-extractor for implementation in worktree isolation + container rebuild"
+    "next_agent": "ops",
+    "note": "dev impl committed b52f5593 (6 edits + AC-1..AC-5/AC-2b tests, 42 passed), RAW-verified PASS: PEK subtree clean, mandatory-layout re-raise + optional-paddle sentinel/quarantine, no hardcode, flaky test_..._raises_on_timeout pre-existing+disjoint (not a regression). NEXT: ops rebuild pdf-extractor (force-recreate --no-deps, image .Created must be > 2026-06-16T01:12:10Z) THEN qa forced-failure DoD on named-volume DB"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
