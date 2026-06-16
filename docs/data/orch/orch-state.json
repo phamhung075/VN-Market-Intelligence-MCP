@@ -18676,31 +18676,6 @@
         ],
         "created_at": "2026-06-16T07:00:00Z",
         "created_by": "pm"
-      },
-      {
-        "id": "FIX-OHLCV-STRANDED-ROWS-REPAIR-P1",
-        "title": "FIX-OHLCV-STRANDED-ROWS-REPAIR-P1 — repair corrupt 2026-06-16 daily_ohlcv rows written by pre-fix aggregator image (DCR/H11/DAG + ~773 flat-seed)",
-        "type": "FIX",
-        "owner": "po",
-        "status": "READY",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "created_at": "2026-06-16T07:31:03Z",
-        "source_signal": "qa-cycle277-ohlcv-aggregator-followon-stranded-rows-1781589850",
-        "root_cause": "Stranded rows already in daily_ohlcv from the PRE-FIX image (before the 06:59Z rebuild): DCR close=5900 flat vol0, H11 close=25700 flat vol0, DAG close=0, plus ~773 flat zero-vol O=H=L=C seed bars. The APPROVED writer fix (FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0) only blocks NEW poison — it does NOT touch residue already persisted. These rows serve LIVE and are the 'giá 0 dưới BB' MARKET-post poison source.",
-        "fix_spec": "Repair the residue GENERICALLY (no per-ticker allowlist, no date literal): EITHER recompute-on-read in the daily_ohlcv read path, OR delete-the-synthetic-bar (flat zero-vol O=H=L=C and close=0 rows) then re-flow the affected corpus through writeOhlcvBatch so the normalized re-seed is authoritative. A flat zero-vol seed bar is itself FAKE data — it MUST be removed/recomputed, NEVER masked (/goal#1 no fake/synthetic served value).",
-        "generic_mandate": "Repair predicate keys on row SHAPE (flat zero-vol O=H=L=C, close=0, or unit-scale outlier vs prevClose), NOT on a hardcoded ticker set or the 2026-06-16 date — so it catches any past/future stranded synthetic bar. /goal#2.",
-        "verification_gate": "RAW-probe daily_ohlcv after repair: DCR/H11/DAG and the ~773 flat-seed rows are gone or recomputed to real candles; get_market_snapshot + the BB/RSI read path no longer serve giá 0; live MARKET 'giá 0 dưới BB' poison cleared. done_verified withheld until RAW-verified live.",
-        "scope": "data-repair (residue), SEPARATE from the writer code fix which is APPROVED+DEPLOYED.",
-        "files": [
-          "apps/mcp-server/src/scheduler/market-data/ohlcvSanityCheckJob.ts",
-          "apps/mcp-server/src/scheduler/market-data/allzeroOhlcvBackfill.ts",
-          "apps/mcp-server/src/application/usecases/ohlcvWriteService.ts"
-        ],
-        "baseline_pass": true,
-        "size": "S",
-        "wip_note": "LEADS the class3 follow-on — same apps/mcp-server zone owner; serialize, stranded-rows first (live MARKET poison)."
       }
     ],
     "review": [
@@ -18891,6 +18866,43 @@
           "check_b_fail_loud": "PASS — both VCB rows flipped status=enrich_failed (NOT done); logger.error '[bctcPdfPull] ENRICH 0-rows — FAIL LOUD'; pull result enrichFailed:2. 989654f2 silent-advance fix CONFIRMED working live.",
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
+        }
+      },
+      {
+        "id": "FIX-OHLCV-STRANDED-ROWS-REPAIR-P1",
+        "title": "FIX-OHLCV-STRANDED-ROWS-REPAIR-P1 — repair corrupt 2026-06-16 daily_ohlcv rows written by pre-fix aggregator image (DCR/H11/DAG + ~773 flat-seed)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "REVIEW",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-06-16T07:31:03Z",
+        "source_signal": "qa-cycle277-ohlcv-aggregator-followon-stranded-rows-1781589850",
+        "root_cause": "Stranded rows already in daily_ohlcv from the PRE-FIX image (before the 06:59Z rebuild): DCR close=5900 flat vol0, H11 close=25700 flat vol0, DAG close=0, plus ~773 flat zero-vol O=H=L=C seed bars. The APPROVED writer fix (FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0) only blocks NEW poison — it does NOT touch residue already persisted. These rows serve LIVE and are the 'giá 0 dưới BB' MARKET-post poison source.",
+        "fix_spec": "Repair the residue GENERICALLY (no per-ticker allowlist, no date literal): EITHER recompute-on-read in the daily_ohlcv read path, OR delete-the-synthetic-bar (flat zero-vol O=H=L=C and close=0 rows) then re-flow the affected corpus through writeOhlcvBatch so the normalized re-seed is authoritative. A flat zero-vol seed bar is itself FAKE data — it MUST be removed/recomputed, NEVER masked (/goal#1 no fake/synthetic served value).",
+        "generic_mandate": "Repair predicate keys on row SHAPE (flat zero-vol O=H=L=C, close=0, or unit-scale outlier vs prevClose), NOT on a hardcoded ticker set or the 2026-06-16 date — so it catches any past/future stranded synthetic bar. /goal#2.",
+        "verification_gate": "RAW-probe daily_ohlcv after repair: DCR/H11/DAG and the ~773 flat-seed rows are gone or recomputed to real candles; get_market_snapshot + the BB/RSI read path no longer serve giá 0; live MARKET 'giá 0 dưới BB' poison cleared. done_verified withheld until RAW-verified live.",
+        "scope": "data-repair (residue), SEPARATE from the writer code fix which is APPROVED+DEPLOYED.",
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/ohlcvSanityCheckJob.ts",
+          "apps/mcp-server/src/scheduler/market-data/allzeroOhlcvBackfill.ts",
+          "apps/mcp-server/src/application/usecases/ohlcvWriteService.ts"
+        ],
+        "baseline_pass": true,
+        "size": "S",
+        "wip_note": "LEADS the class3 follow-on — same apps/mcp-server zone owner; serialize, stranded-rows first (live MARKET poison).",
+        "claimed_at": "2026-06-16T07:45:00Z",
+        "claimed_by": "dev-mcp-server",
+        "completed_at": "2026-06-16T08:05:00Z",
+        "implementation": {
+          "commit": "d4dcb5c4",
+          "files": [
+            "apps/mcp-server/src/scheduler/market-data/allzeroOhlcvBackfill.ts (+purgeStrandedSeedRows)",
+            "apps/mcp-server/src/scheduler/startScheduler.ts (+startup call)",
+            "apps/mcp-server/src/__tests__/FIX-OHLCV-STRANDED-ROWS-REPAIR-P1.test.ts (7 tests)"
+          ],
+          "rebuild_required": true
         }
       }
     ],
