@@ -647,6 +647,19 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
+  // 00:45 UTC Mon-Fri — OHLCV pre-briefing sanity check — FR-G4 / FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0
+  // Catches synthetic seed bars and scale contamination BEFORE morning briefing (01:00 UTC)
+  // and before taOhlcvBackfill (01:30 UTC). Reuses runOhlcvSanityCheck; distinct job id.
+  scheduleCron(CRONS.ohlcvSanityCheckEarly, async () => {
+    await jobRunRepo.wrapRun('ohlcv-sanity-check-early', async () => {
+      const result = await runOhlcvSanityCheck()
+      if (result.hitCount > 0) {
+        log(`[ohlcv-sanity-early] contamination detected: ${result.hitCount} row(s), sentBug=${result.sentBug}`)
+      }
+      return { rowsWritten: result.hitCount }
+    })
+  }, { timezone: 'UTC' })
+
   // 08:15 UTC Mon-Fri — OHLCV staleness check — task 1465, Sprint 175
   // Fires after VN market open. Alerts WORK when >50% watchlist tickers have no
   // daily_ohlcv row for today's VN date (UTC+7). Covers mid-day VPS price-push failure.

@@ -204,6 +204,11 @@ export const CRONS = {
    *  Scans last 7 days × watchlist tickers; sends BUG Telegram on any mixed-scale row.
    *  Tolerates known all-zero rows (BACKLOG_CONTAM_8) without spamming. */
   ohlcvSanityCheck:           Bun.env.CRON_OHLCV_SANITY_CHECK                       ?? '5 15 * * 1-5',
+  /** ohlcvSanityCheckEarly — pre-briefing OHLCV sanity scan: Mon-Fri 00:45 UTC (FR-G4, FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0)
+   *  Catches synthetic seed bars and scale contamination BEFORE morning briefing (01:00 UTC)
+   *  and before taOhlcvBackfill (01:30 UTC). Slot verified free: nearest neighbour is insiderCheck (01:00 UTC).
+   *  Collision check (R-5): no existing job occupies 00:45 Mon-Fri. */
+  ohlcvSanityCheckEarly:      Bun.env.CRON_OHLCV_SANITY_CHECK_EARLY                 ?? '45 0 * * 1-5',
   /** restartCadenceAlert — FIX-MCP-CRASH-LOOP A-1: detect ≥2 mcp-server restarts in 4h window.
    *  Fires at :15 and :45 of every hour — staggered 15 min from WAL checkpoint (:00 and :30).
    *  Sends WORK-channel alert when count ≥ 2. Only meaningful after BC-1 root fix is deployed. */
