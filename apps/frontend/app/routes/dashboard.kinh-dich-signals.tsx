@@ -54,6 +54,7 @@ import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
 import { QueName } from "~/components/QueName";
 import { safeFetch } from "~/lib/api/fetchUtils";
+import { formatDateVi } from "~/lib/formatDate";
 
 export const meta: MetaFunction = () => [
   { title: "Tín hiệu Kinh Dịch — VN Market Intelligence" },
@@ -221,13 +222,9 @@ export function confidencePercent(confidence: number | null | undefined): string
  * Empty string → "—"
  */
 export function formatTimestamp(ts: string): string {
-  if (!ts) return "—";
-  try {
-    const normalized = ts.includes("T") ? ts : ts.replace(" ", "T");
-    return new Date(normalized).toLocaleString("vi-VN");
-  } catch {
-    return ts;
-  }
+  // Delegates to shared helper — handles bare SQLite, ISO with T/millis/offset,
+  // null/empty/garbage; never returns "Invalid Date".
+  return formatDateVi(ts);
 }
 
 // ---------------------------------------------------------------------------

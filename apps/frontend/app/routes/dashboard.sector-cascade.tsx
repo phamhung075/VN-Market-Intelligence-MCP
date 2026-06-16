@@ -54,6 +54,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageHeader } from "~/components/PageHeader";
 import { safeFetch } from "~/lib/api/fetchUtils";
+import { formatDateVi } from "~/lib/formatDate";
 
 export const meta: MetaFunction = () => [
   { title: "Tín hiệu dây chuyền theo ngành — VN Market Intelligence" },
@@ -216,14 +217,9 @@ export function directionBadgeClass(direction: "up" | "down" | "neutral" | strin
  * Empty string → "—"
  */
 export function formatHitAt(hitAt: string): string {
-  if (!hitAt) return "—";
-  try {
-    // Handle both ISO and "YYYY-MM-DD HH:MM:SS" formats
-    const normalized = hitAt.includes("T") ? hitAt : hitAt.replace(" ", "T");
-    return new Date(normalized).toLocaleString("vi-VN");
-  } catch {
-    return hitAt;
-  }
+  // Delegates to shared helper — handles bare SQLite, ISO with T/millis/offset,
+  // null/empty/garbage; never returns "Invalid Date".
+  return formatDateVi(hitAt);
 }
 
 // ---------------------------------------------------------------------------

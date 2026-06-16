@@ -51,6 +51,7 @@ import { StockChart } from "~/components/charts/StockChart";
 import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
 import { formatChangePct } from "~/domain/formatters/change-pct.js";
 import { formatSignalTypeLabel } from "~/domain/formatters/signal-type-label.js";
+import { formatDateOnlyVi, formatSignalTimestamp } from "~/lib/formatDate";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -777,7 +778,7 @@ function MacroImpactPanel({
                 <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
                   <span>{Math.round(sig.confidence * 100)}% tin cậy</span>
                   <span suppressHydrationWarning>
-                    {sig.createdAt ? new Date(sig.createdAt.replace(" ", "T") + "Z").toLocaleDateString("vi-VN") : "—"}
+                    {formatDateOnlyVi(sig.createdAt)}
                   </span>
                 </div>
               </div>
@@ -1273,22 +1274,12 @@ function InfoSourcePanel({
 
 /**
  * Format a SQLite/ISO datetime string for compact display.
- * If the date portion equals today, show only HH:mm.
+ * If the date portion equals today (Asia/Ho_Chi_Minh), show only HH:mm.
  * Otherwise show MM-DD HH:mm.
+ * Delegates to the shared formatSignalTimestamp helper — never returns "Invalid Date".
  */
 function formatSignalTime(createdAt: string): string {
-  // SQLite stores "YYYY-MM-DD HH:MM:SS"; convert to a valid ISO string
-  const iso = createdAt.includes("T") ? createdAt : createdAt.replace(" ", "T") + "Z";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return createdAt;
-
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const signalDateStr = iso.slice(0, 10);
-  const hhmm = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" });
-
-  if (signalDateStr === todayStr) return hhmm;
-  const mmdd = iso.slice(5, 10); // "MM-DD"
-  return `${mmdd} ${hhmm}`;
+  return formatSignalTimestamp(createdAt);
 }
 
 function directionLabel(direction: string): { text: string; cls: string } {
