@@ -1,0 +1,46 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-06-16-fb-poster-tnb-upgrade.md",
+  "priority": "high",
+  "createdAt": "2026-06-16T16:50:57Z",
+  "summary": "Insert STEP 2b (TNB 6-layer top-down walk) and STEP 2c (T-45 adversarial gate) into docs/agents/fb-market-poster/flow/main.md. 4 tasks: A=extend STEP 1b tool list, B=insert STEP 2b, C=insert STEP 2c, D=update STEP 3 compose wiring. Tasks A+B parallel; C after B; D after C. Target file size ~647L. Existing jargon gate, 3-section structure, 16 validation checks, STEP 0 and STEP 5-8 unchanged.",
+  "tasks": [
+    {
+      "id": "A",
+      "description": "Extend STEP 1b: add get_technical_indicators (>=15 tickers), get_legal_risk_signals, get_sentiment_trend, get_earnings_calendar. Change 'top 5-10' ticker_intel to 'ALL watchlist active tickers'.",
+      "file": "docs/agents/fb-market-poster/flow/main.md",
+      "estimate_lines": "+15"
+    },
+    {
+      "id": "B",
+      "description": "Insert STEP 2b (TNB 6-layer walk): Layers 1-6 with CHEF shortcut branch, $tnb_synthesis schema, is_estimate discipline, per-ticker conviction schema with data_quality flag.",
+      "file": "docs/agents/fb-market-poster/flow/main.md",
+      "estimate_lines": "+80",
+      "depends_on": []
+    },
+    {
+      "id": "C",
+      "description": "Insert STEP 2c (T-45 adversarial gate): 5 hard-fail rules (cross-ticker contamination, false-precision levels, is_estimate cited as fact, noise-scale flow, internal contradiction). Gate drops claims before compose.",
+      "file": "docs/agents/fb-market-poster/flow/main.md",
+      "estimate_lines": "+50",
+      "depends_on": ["B"]
+    },
+    {
+      "id": "D",
+      "description": "Update STEP 3 compose wiring: read $tnb_synthesis.conviction.calls[] instead of raw data; thread known_gaps from Layer 6 to prevent fabrication of null fields.",
+      "file": "docs/agents/fb-market-poster/flow/main.md",
+      "estimate_lines": "+10 -5",
+      "depends_on": ["C"]
+    }
+  ],
+  "do_not_change": [
+    "STEP 4a jargon gate (scripts/fb-jargon-gate.sh hard-fail)",
+    "3-section output structure",
+    "Post template, disclaimer block, hashtag composition rule",
+    "16 STEP 4 validation checks",
+    "STEP 0 bootstrap, STEP 5-8 write/notify/log",
+    "SELF-IDENTITY GUARD"
+  ]
+}

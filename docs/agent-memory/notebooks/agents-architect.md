@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-14T12:18:16Z
-
-**Brief:** `docs/architecture-briefs/2026-06-14-dev-team-tool-contract-cron-overlap.md`
-
-DEV-TEAM-TOOL-CONTRACT-CRON-OVERLAP: two-finding brief from 10-session cron audit. F1: six recurring tool-call error classes (server string, meta-tool misrouting, name guessing, task_id type, send_telegram enum/field, stale-read) burning turns every session — fix by creating `docs/standards/gateway-call-contract.md` (~60L canonical contract) and adding a GCC-PREFLIGHT read directive at top of dev-team/flow/main.md Step 0-PREFLIGHT. F2: cron fires every 60min but ticks run up to 3h28m → concurrent sessions; TTL-scoped orphaned locks cause SKIP failures on restart — fix by adding SF-1 single-flight session lock (task_claim key="dev-team-cron-singleton" TTL=5400s) at PREFLIGHT entry with heartbeat at Step 3 and release at session exit. Cron schedule unchanged. Doc/flow only — no production code. 3 agent-father tasks; F1-B + F2-A serialize on same file.
-
-**Signal dropped:** `docs/signals/dev-team-tool-contract-cron-overlap-20260614T121816Z.json` → agent-father
-
----
-
 ## 2026-06-14T14:19:52Z
 
 **Brief:** `docs/architecture-briefs/2026-06-14-workflow-protocol-coherence-audit.md`
@@ -27,3 +17,13 @@ WORKFLOW-PROTOCOL-COHERENCE-AUDIT: post-implementation coherence check on SF-1 +
 07-06-METHODOLOGY-UPGRADE: full macro/top-down layer implementation from 07-06 expert roundtable (T-15..T-45). Created 2 new cowork skills: macro-health-read (Báu "two trucks → six tracks" — 6-track JSON, degraded→live upgrade path) and trade-fx-pressure-decomp (Thành BOP anatomy — FX-incidence verdict, NEGATIVE-MARGIN-TRAP flag, duration prior). Extended 2 existing skills: regime-extraction (PMI MA3 T-16) and four-factor-synthesis (decompose-before-conclude 3-question gate T-44). Upgraded 6 agent flows: market-watcher (T-20/21/27/28/32/41/43), unified-agent/CHEF (T-31 fiscal-trap, T-39 BOP walk, macro-health-read as Layer-1 source), digest-predict (T-23 bank-survey, T-42 duration prior), bctc-analyst (T-19 price_driven, T-37 intercompany-loss), news-scout (T-41 fake-FDI), tran-ngoc-bau (T-45 adversarial gate). Tree-map updated with both new skills + TNB skill backfill. All files implemented directly. PO owns the 5 new MCP tools in parallel lane.
 
 **Signal dropped:** `docs/signals/07-06-methodology-upgrade-20260614T180657Z.json` → agent-father
+
+---
+
+## 2026-06-16T16:50:57Z
+
+**Brief:** `docs/architecture-briefs/2026-06-16-fb-poster-tnb-upgrade.md`
+
+FB-POSTER-TNB-UPGRADE: fb-market-poster degrades to generic recap when CHEF is silent (confirmed 2026-06-16 intraday, 0 clusters). Root cause is a synthesis gap not a data gap — all live tools returned real data. Fix: insert STEP 2b (TNB 6-layer top-down walk with CHEF-shortcut branch and $tnb_synthesis schema) and STEP 2c (T-45 adversarial gate with 5 hard-fail rules: cross-ticker contamination, false-precision levels, is_estimate-cited-as-fact, noise-scale flow, internal contradiction) between STEP 1b and STEP 3 in fb-market-poster flow. Widen STEP 1b to pull all watchlist tickers + TA + legal/earnings tools. Revise STEP 3 to read from $tnb_synthesis. 4 tasks for agent-father (A+B parallel, C after B, D after C). Jargon gate, 3-section structure, 16 validation checks, STEP 0/5-8 untouched.
+
+**Signal dropped:** `docs/signals/fb-poster-tnb-upgrade-20260616T165057Z.json` → agent-father
