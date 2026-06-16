@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T09:58:00Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-16T08:28:27Z",
+  "_updated_by": "po-s83",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -9404,7 +9404,8 @@
       {
         "depends": [
           "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
-          "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0"
+          "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+          "FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0"
         ],
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
         "type": "FIX",
@@ -9427,7 +9428,10 @@
           "dep_state": "depends[] = [FIX-ALERT-ENGINE-RSI-SINGLEDIGIT, FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0]. OHLCV-P0 = done_verified NOW (one dep CLEARED). RSI-SINGLEDIGIT = review, pending the shared next-session behavioral gate. The seed-bar that was this task's actual gia=0 / partial-window source is now KILLED + deployed by the P0 (stop/mark+exclude the synthetic flat zero-vol O=H=L=C seed bar), so part of this task's mechanism may already be subsumed.",
           "remaining_release_condition": "release backlog->ready ONLY after the NEXT VN session's market open (01:00Z briefing + 02:15Z + 02:00Z open scans) is RAW-observed CLEAN — i.e. the shared behavioral gate GREEN: NO gia=0 BB-breakout, NO single-digit open-window RSI self-normalizing later, NO new synthetic seed bar. If that open is clean, RE-SCOPE FIRST (the P0 seed-bar kill may have already eliminated this task's race surface — verify the open-window gia=0 path still reproduces before dispatching; possibly fold/close as subsumed rather than dispatch).",
           "hold_holds": "Do NOT promote to ready[] this pass. The behavioral gate has not run post-rebuild."
-        }
+        },
+        "live_source_note": "Stay HELD — the flat zero-vol O=H=L=C seed bar this task's giá=0 BB-breakout fires on is STILL LIVE: router RAW-found 636 such bars (2026-06-16 ~08:19Z) re-seeded AFTER the 08:16 purge by an un-migrated startup seeder. Real root = FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 (minted po-s83), added to depends[]. Do NOT dispatch until that seeder is killed AND the RSI gate observes a clean post-fix open.",
+        "live_source_note_at": "2026-06-16T08:28:08Z",
+        "live_source_note_by": "po-s83"
       },
       {
         "id": "FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK",
@@ -15294,7 +15298,7 @@
         "id": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0",
         "title": "Migrate remaining OHLCV writer(s) — esp. the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 + scale-norm + a fail-closed C=0 reject apply to ALL tickers",
         "type": "FIX",
-        "status": "DONE",
+        "status": "SUPERSEDED_PARTIAL",
         "priority": "P0",
         "zone": "apps/mcp-server/",
         "dev_agent": "dev-mcp-server",
@@ -15325,7 +15329,13 @@
         "qa_verdict": "APPROVED",
         "qa_agent": "qa",
         "qa_at": "2026-06-16T05:56:00Z",
-        "report": "reports/TASK_REPORT_FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0.md"
+        "report": "reports/TASK_REPORT_FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0.md",
+        "done_verified": false,
+        "behavioral_gate": "RED",
+        "behavioral_gate_at": "2026-06-16T08:28:08Z",
+        "superseded_by": "FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0",
+        "overturn_note": "QA-APPROVED code (d4b532be) is CORRECT-but-INCOMPLETE: it migrated the daily aggregator through writeOhlcvBatch but NOT the STARTUP SEEDER (ISO-Z ~08:19 writer, suspect runOhlcvStartupProbe). Router LIVE-probed the named-volume DB 2026-06-16 ~08:22Z: 636 NEW flat zero-vol O=H=L=C bars (production=619, NULL=4) written AFTER purgeStrandedSeedRows() in the SAME boot -> the behavioral gate is RED, the giá=0 / single-digit-RSI source is STILL LIVE on ~636 illiquid tickers. NOT done_verified. Partial work shipped — do NOT revert d4b532be (aggregator migration is good); the new P0 finishes the migration (the seeder path). The prior purge repair d4dcb5c4 is also correct, just undone live by the seeder.",
+        "overturn_by": "po-s83"
       },
       {
         "id": "FIX-OHLCV-STRANDED-ROWS-REPAIR-P1",
@@ -18718,6 +18728,35 @@
         ],
         "created_at": "2026-06-16T07:00:00Z",
         "created_by": "pm"
+      },
+      {
+        "id": "FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0",
+        "title": "Kill the startup seeder that re-writes 636 flat zero-vol O=H=L=C placeholder bars AFTER purgeStrandedSeedRows() in the same boot — un-migrated, bypasses FR-S1",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "blocking": true,
+        "leads": true,
+        "parent": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0",
+        "supersedes_gate": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0 (its behavioral gate is RED — aggregator migrated, startup seeder NOT)",
+        "root_cause": "A STARTUP SEEDER (the ISO-Z updated_at writer at ~08:19:13Z, suspect runOhlcvStartupProbe() or a 'seed today's candle' path in startScheduler.ts that runs ~2.5 min AFTER purgeStrandedSeedRows() in the SAME boot) is STILL un-migrated. It emits 636 flat O=H=L=C vol=0 placeholder bars for date=today for tickers without real data (production=619, NULL=4 = DAG-class 0|0|0|0), bypassing FR-S1. The 08:22Z real-candle writer overwrites only the ~TRADED tickers (MWG/MBB/VRE/NVL/VCI/HSG correct), so the ~636 illiquid/unfetched tickers KEEP the flat seed -> poisoned single-digit RSI + 'giá 0 dưới BB' false-breakout alerts served LIVE on alert engine + MARKET posts + dashboard. This is the RED-handoff PRIMARY GAP: d4b532be (FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0) migrated the daily aggregator but NOT this seeder path.",
+        "raw_evidence": "Router LIVE-probed named-volume DB 2026-06-16 ~08:22Z: 636 NEW flat bars date=2026-06-16 updated_at ISO-Z format 2026-06-16T08:19:13.183Z (production=619, NULL=4); a 08:22:13Z non-Z writer overwrote traded tickers with real vol>0; ~636 illiquid keep the flat seed. Purge-damage check CLEAN (FPT/MBB/MWG/VHM/VIC/VRE 38-39 rows all vol>0, none deleted; the 23,707 was legit ~636/day x ~37 days). NO real data lost.",
+        "fix_spec": "1) Find the writer with the ISO-Z updated_at (e.g. 2026-06-16T08:19:13.183Z) that emits the 636 flat zero-vol O=H=L=C bars at startup; trace from startScheduler.ts -> runOhlcvStartupProbe() and any seed-today path. 2) Fix GENERICALLY (/goal#2, no ticker/date allowlist): PREFERRED (per /goal#1 no fake data) option (b) — STOP seeding placeholder bars: if no real data for a ticker, write NO row (leave the gap; real fetch / taOhlcvBackfill fills it). Fallback option (a) — route the seeder through writeOhlcvBatch so FR-S1 rejects the flat seed. Architect adjudicates (a)-vs-(b) ONLY if a consumer hard-requires a row-per-ticker-per-day. 3) Defense-in-depth boot ORDERING: purgeStrandedSeedRows() must run AFTER any seeder, OR the seeder must never emit. KEEP the prior repair d4dcb5c4 (purgeStrandedSeedRows) — it is correct code, just undone live by this seeder; do NOT revert it.",
+        "files": [
+          "apps/mcp-server/.../startScheduler.ts",
+          "apps/mcp-server/.../runOhlcvStartupProbe() (suspect ISO-Z seeder)",
+          "apps/mcp-server writeOhlcvBatch path / FR-S1 seed-rejection",
+          "apps/mcp-server purgeStrandedSeedRows() (d4dcb5c4 — keep, re-order)"
+        ],
+        "generic_mandate": "Generic across the full ticker universe + every boot — no ticker/date allowlist. No served bar may carry a flat zero-vol O=H=L=C placeholder close (/goal#1 no fake data + /goal#2 generic). Option (b) write-no-row preferred over option (a) seed-then-reject.",
+        "verification_gate": "REGRESSION TEST that BOOTS the scheduler (or simulates the seed path) and asserts ZERO flat zero-vol O=H=L=C rows exist for today AFTER full startup. PLUS RAW post-rebuild LIVE: query named-volume daily_ohlcv date=latest -> 0 flat vol=0 O=H=L=C seeds (Class 1), 0 all-zero 0|0|0|0 bars (Class 2, incl DAG), across the FULL universe (not just traded tickers); get_technical_indicators on previously-poisoned illiquid tickers returns real-band RSI or honest N/A (never single-digit from a flat seed).",
+        "rebuild_required": true,
+        "sequence_note": "Sequenced AHEAD of lower-pri ready[] items (data-integrity P0, live fake data on 636 served tickers, user-reported). po does NOT spawn and does NOT repoint .head (head is on the active FIX-ERRAUDIT-W2 frontend coding wave); the router/dispatcher claims+spawns when a coding slot frees (WIP<=2; in_progress = ARCH-CRON-SCHEDULER-RELIABILITY).",
+        "created_at": "2026-06-16T08:28:08Z",
+        "created_by": "po-s83"
       }
     ],
     "review": [
@@ -18819,7 +18858,10 @@
           "behavioral_half_pending": "SAME next-session gate as the P0 (shared): the next morning-briefing (01:00Z) + first TA scan (02:15Z) of the NEXT VN session must show the alert-engine TA-Alert RSI for majors at real mid-band (no single-digit, no 100.0), matching canonical get_technical_indicators within 0.1pt, GENERIC all tickers, with NO 'gia 0 duoi BB' false breakouts on MARKET. Provable only next session on the dev-team :07 tick after the queue refills post-rebuild.",
           "done_verified_release_condition": "flip review->done_verified on the NEXT dev-team tick that RAW-observes the behavioral gate GREEN (clean post-fix market open). Until then HOLD in review — done_verified withheld per non-zero-values plausibility + behavioral-gate discipline. NOT a re-dispatch (code complete + rebuilt + live); a sign-off-on-observation only.",
           "gate_red_superseded": "the 2026-06-16 RED verdict (canonical itself poisoned) is now SUPERSEDED — its named superseding task (OHLCV-P0) closed; the RED cause is gone."
-        }
+        },
+        "live_source_note": "HOLD in review — do NOT advance to done_verified. The single-digit RSI / giá=0 source is STILL LIVE: router RAW-found 636 flat zero-vol O=H=L=C seed bars (2026-06-16 ~08:19Z) re-poison illiquid-ticker RSI after the 08:16 purge. Root = FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0 (minted po-s83). Gate stays RED until that seeder is killed AND a clean post-fix market open is observed. Secondary: the user's alert showed NVL with TWO RSI values (26.5 AND 23.9) in one report = likely alert-engine-vs-canonical candle-count divergence (same-DB tools diverge on rowcount) — captured HERE, not a new task.",
+        "live_source_note_at": "2026-06-16T08:28:08Z",
+        "live_source_note_by": "po-s83"
       },
       {
         "depends": [],
