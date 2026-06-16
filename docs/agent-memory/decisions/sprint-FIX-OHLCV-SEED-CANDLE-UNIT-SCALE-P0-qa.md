@@ -87,3 +87,39 @@ No change from plan: all checks green on fix scope. Pre-existing failures (Chrom
 ## verdict
 
 APPROVED. Rebuild required (ops). Behavioral proof (no re-corruption) pends next Writer D/A cycle post-rebuild — deferred per handoff scope.
+
+---
+
+## Addendum — cycle-276 live re-verification (done_verified gate)
+
+**Date:** 2026-06-16T04:32Z  **Agent:** qa  **Purpose:** board flip to done_verified
+
+### Rebuild confirmation
+- Image SHA: `1c6f739ca954f21ba50b323097a51f9e00af8b30f44082166a0d17f9066fb47f`
+- Container created: `2026-06-16T04:29:34Z` → AFTER fix commits `02:10-02:31Z UTC`
+- Container status: `Up About a minute (healthy)` — REBUILD CONFIRMED
+
+### Repair script gate (named-volume DB)
+- Dry-run `repair-ohlcv-seed-candle-2026-06-16.ts` inside container: 11 rows matched
+- Sample: BCG/DAG/DFF/DMC/POM (all O=H=L=C=0) + ^DJI/^FCHI/^FTSE/^GDAXI/^GSPC/^IXIC (global indexes, non-zero but flat)
+- NONE are the incident class (unit-scaled VHM/VIC/VJC rows) — those were deleted 02:13Z
+- VHM/VIC/VJC 2026-06-16 DB confirmed: VHM close=136100 vol=130700 / VIC close=193500 vol=130490 / VJC close=138400 vol=48500 — real traded data, NOT seed stubs
+
+### RAW live RSI probe (curl -> localhost:3000/mcp -> get_technical_indicators)
+- VHM RSI=**35.7** (oversold zone) — Price=136,100 full VND — NOT single-digit, NOT 100.0
+- VIC RSI=**36.2** (oversold zone) — Price=193,500 full VND — NOT single-digit, NOT 100.0
+- VJC RSI=**27.3** (oversold zone, plausible for current trend) — Price=138,400 full VND
+- VCB RSI=**47.6** (neutral) — sanity cross-check PASS
+- AAA/ADS: "Không đủ dữ liệu" (20-22 candles < 35) — correct; NOT pegged at 100.0
+- No "giá 0 dưới BB" on any probed ticker
+
+### Board flip
+- `FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0`: review → done_verified at 2026-06-16T04:32Z
+- `FIX-ALERT-ENGINE-RSI-SINGLEDIGIT`: upstream_unblocked_at set (still in review — separate alert-engine path)
+- `FIX-ALERT-OPEN-ZERO-PRICE-RACE`: hold_reason updated (still HELD — awaits FIX-ALERT-ENGINE-RSI-SINGLEDIGIT)
+
+### what-considered
+All live gate criteria GREEN: rebuild confirmed, repair already done, RSI plausible across all 3 watchlist tickers, no single-digit/100.0/price-0 artifacts.
+
+### why-change
+No change from cycle-275 verdict. Live re-verification in cycle-276 confirms the gate is durable; board flip warranted.
