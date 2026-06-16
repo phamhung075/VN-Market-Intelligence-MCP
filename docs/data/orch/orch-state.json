@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-16T01:14:37Z",
+    "updated_at": "2026-06-16T01:17:30Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-ERRAUDIT-W1-PEK-P0",
-    "next_agent": "ops",
-    "note": "dev impl committed b52f5593 (6 edits + AC-1..AC-5/AC-2b tests, 42 passed), RAW-verified PASS: PEK subtree clean, mandatory-layout re-raise + optional-paddle sentinel/quarantine, no hardcode, flaky test_..._raises_on_timeout pre-existing+disjoint (not a regression). NEXT: ops rebuild pdf-extractor (force-recreate --no-deps, image .Created must be > 2026-06-16T01:12:10Z) THEN qa forced-failure DoD on named-volume DB"
+    "next_agent": "qa",
+    "note": "ops rebuild VERIFIED PASS: pdf-extractor image .Created 2026-06-16T01:15:49Z > commit 01:12:10Z (CREATED_GATE PASS), container Up+healthy, all 13 peers intact, host load 2.64 stable. NEXT: qa forced-failure DoD — force layout crash (exception in logs, NO clean-0-row), force paddle load fail (table units quarantined reason paddle-load-failure), force runtime table fail (reason table-extraction-failure), table-less PDF EC-1 (quarantined=False), happy-path regression; ALL verified via named-volume vn-market-intelligence-mcp_market_data sidecar NEVER host ./data"
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
