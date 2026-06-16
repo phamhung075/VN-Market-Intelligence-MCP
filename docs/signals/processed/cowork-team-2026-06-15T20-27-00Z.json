@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "board-hygiene-divergent-head",
+  "payload": {
+    "observed_at": "2026-06-15T20:27:00Z",
+    "severity": "low",
+    "blocking": false,
+    "summary": "Two divergent head pointers in orch-state.json — .head (canonical, dispatch-authoritative) and legacy .task_board.head disagree.",
+    "detail": {
+      "head_top_level": {
+        "active_task_id": "FIX-BCTC-BANK-PDF-OCR-RASTERIZE",
+        "updated_by": "po-s64",
+        "verdict": "CORRECT / current — this is what the dev-team :07 tick reads (docs/agents/dev-team/flow/main.md:189 jq -c '.head')"
+      },
+      "task_board_head": {
+        "active_task_id": "CI-RED-d20468c0-FIX",
+        "updated_by": "po",
+        "verdict": "STALE — that task is status=done_verified (RESOLVED); pointer never advanced after CI-RED closed"
+      }
+    },
+    "why_not_blocking": "Dispatch path (dev-team) reads top-level .head which is correct; FIX-BCTC-BANK-PDF-OCR-RASTERIZE is already IN_PROGRESS claimed_by=dev-team. .task_board.head is read only by PO grooming scripts (po-fda9-groom-ready.jq, po-vn-macro-tooling-sprint-open.jq, po-s54-*.jq) where a resolved-task head is benign context.",
+    "root_cause": "Different PO script generations write DIFFERENT head fields: newer po-s64 family writes top-level .head; older po-s54 / po-fda9 family writes .task_board.head. Two head SSOTs => guaranteed drift each time the two families interleave. This is the SSOT-duplicate-key class (see docs/architecture-briefs/2026-06-13-orch-state-read-discipline.md).",
+    "recommended_fix": "Board-hygiene pass (PO single-writer): pick ONE canonical head field (top-level .head per orch-state-access.md §1, which dev-team already reads), make .task_board.head either mirror it or be removed, and converge ALL PO grooming scripts onto the canonical field so the two families stop diverging. Fix is the script-family unification (root), not a one-off head rewrite (symptom).",
+    "do_not": "Router did NOT write either head field (PO is single board writer). No spawn issued for this — non-blocking, folds into next PO grooming/triage cycle.",
+    "board_context": {
+      "FIX-BCTC-BANK-PDF-OCR-RASTERIZE": "IN_PROGRESS (P0, dev-pdf-extractor, dispatched)",
+      "BA-FE-PAGE-REORG": "TODO (ba — user FE-reorg sprint scoped)",
+      "FIX-BCTC-ENRICH-SILENT-0ROWS": "REVIEW/PENDING (held until OCR leg lands)"
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T20:27:00Z",
+  "_processed": {
+    "fingerprint": "9596d1937a51356d092df25090434b4ca7846c39310ec3940b40bf07697ea04f",
+    "processedAt": "2026-06-15T20:32:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

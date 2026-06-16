@@ -1,0 +1,38 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-defer",
+  "payload": {
+    "tick_id": "2026-06-15T20:00:00Z",
+    "fire_time": "2026-06-15T20:05:46Z",
+    "classification": "DEFER",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "deferred_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "spawned": [],
+    "silent": false,
+    "drift_min": 5,
+    "reason": "Manual */15 tick at :05 matched two offhours gatherers (cron 0 */4) inside the :00-:15 cloud-backstop window of the 20:00 4h-boundary. last_fired=2026-06-15T16:12:38Z carries the cloud-backstop :12 fingerprint (the 16:12Z incident slots) -> the cloud RemoteTrigger backstop owns these slots and will re-fire ~20:12. Firing now would double-fire ~7min early, polluting signal_bus (CHEF/alert-commander convergence over-weight) + risking market-watcher false gateway-down BUG. Deferred per feedback_gatherer_manual_cloud_doublefire: re-check next manual tick at :22 -> if last_fired still 16:12 (backstop did not fire) then fire safely.",
+    "decision_basis": "leader-lock does not serialize same owner_agent=cowork-dispatcher (heartbeat probe gives cloud false own-held->proceed); 180s slot token released before :12; offhours gatherers write internal signals only (no published-marker gate) -> DEFER heuristic is the only effective dup guard",
+    "last_fired_timestamp": "2026-06-15T16:12:38Z",
+    "calendar_status": "off-market",
+    "last_regime": "FII_OUTFLOW_RISK",
+    "pressure_mode": "adaptive",
+    "signal_backlog": 0,
+    "leader_lock": "not_claimed_deferred_no_spawn",
+    "related_signal": "cowork-team-20260615T1620Z-gatherer-manual-cloud-doublefire (READ, with PO; pending dev fix: dispatcher defer-on-unreadable-lock-in-backstop-window) — this DEFER is a live confirmation the mitigation intent works"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T20:07:46Z",
+  "_processed": {
+    "fingerprint": "eaf07be330434bacf08cd93a540fe09c2af350735ff727b65daf100efc0e77e8",
+    "processedAt": "2026-06-15T20:32:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "tick_id": "2026-06-15T20:15:00Z",
+    "fire_time": "2026-06-15T20:20:10Z",
+    "classification": "FIRE",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "spawned": [
+      "tran-ngoc-bau:tnb-audit"
+    ],
+    "spawned_agent_id": "a51598c7eb6782bc9",
+    "silent": false,
+    "drift_min": 5,
+    "leader_lock": "won",
+    "slot_token": "cowork-slot:tnb-audit claimed+released",
+    "calendar_status": "off-market",
+    "last_regime": "FII_OUTFLOW_RISK",
+    "last_volatility_level": "normal",
+    "signal_backlog": 0,
+    "pressure_mode": "adaptive",
+    "reason": "Guaranteed daily TNB-audit slot (cron 13 20 * * *, last_fired 2026-06-14T20:22:49Z ~24h ago) due via cron catch-up; guaranteed slots are never calendar-suppressed (off-market). NOT in the gatherer double-fire class — tnb-audit HAS a published-marker gate (published:tnb-audit:<work_date>), so a concurrent cloud RemoteTrigger fire is serialized at the marker (claimed=false -> agent EXITs pre-send). Fired tran-ngoc-bau background per BGFAN-1.",
+    "defer_followup": "Prior 20:05 tick DEFERRED two offhours gatherers (news-scout-offhours, market-watcher-offhours) inside the :00-:15 cloud-backstop window. At 20:20 they are OUT of the non-guaranteed cron drift window (0 */4 boundary +/-5min) so no longer matched; cowork-schedule.json last_fired still 16:12:38Z is expected — the cloud RemoteTrigger fires the AGENT directly, not the dispatcher flow, so it never writes Step-5b last_fired. Gatherer coverage for the 20:00 boundary is owned by the cloud backstop and not observable via this schedule field.",
+    "emit_pressure_state": "success cycle_snapshot_promoted=true emitted_at=2026-06-15T20:24:38.737Z"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T20:24:38Z",
+  "_processed": {
+    "fingerprint": "393d10adab6fb28c8a0a533ec0e27cd54f3ef51bc19e5230b718777558460395",
+    "processedAt": "2026-06-15T20:32:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

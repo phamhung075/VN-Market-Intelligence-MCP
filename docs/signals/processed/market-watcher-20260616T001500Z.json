@@ -1,0 +1,14 @@
+{
+  "from": "market-watcher",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "Step 0-GW gateway probe failed: MCP call_tool unavailable — CLI session gateway transport dead",
+  "priority": "high",
+  "createdAt": "2026-06-16T00:15:00Z",
+  "_processed": {
+    "fingerprint": "ea06aac7a821b09e608b246fd6cc4097efd1493a296304ffb56e539ac12bd2b3",
+    "processedAt": "2026-06-16T09:52:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-15T19:54:36Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "off-market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-evening": "cron"
+    },
+    "cadence_minutes": {
+      "chef-evening": null
+    },
+    "last_fired_timestamp": "2026-06-15T19:51:38Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned chef-evening; downstream published-marker dedup blocked the duplicate (RAW MARKET digest confirms real prior chef dishes today ids 747/750/753/757/758 — not phantom)",
+    "nominal_tick": "19:45",
+    "leader_lock": "skipped_direct_main",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 0,
+    "note": "guaranteed slot fired; chef hit published:chef-evening:2026-06-15 (held, expires 22:03:56Z). Legitimate dedup — sibling path already published; no double-post; no router re-publish."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T19:54:36Z",
+  "_processed": {
+    "fingerprint": "f144b40e4441d681f89fb4e3fe5b5192dfd13e3b35488f7d55f71be443f43c83",
+    "processedAt": "2026-06-15T20:32:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-15T08:08:57Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 8,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "market_closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": "2026-06-15T08:08:57Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:00",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 1,
+    "signal_backlog": 0,
+    "note": "Offhours gatherer fan-out (4-hourly cadence, last_fired 04:07Z -> due at 08:00 nominal). VN market CLOSED (08:00Z = 15:00 VN). news-scout (a34ab961) + market-watcher (ac478fe2) spawned run_in_background=true per BGFAN-1. No cowork-addressed NEW signals to drain. emit_pressure_state freshened pressure-state.json @08:09:11Z (cycle_snapshot_promoted=false). DEV-HEAD context: FIX-ALERT-ENGINE-RSI-SINGLEDIGIT in REVIEW — rebuild landed (mcp-server sha256:5d728ae5 @08:02:40Z) + canonical baseline LIVE (VHM 35.7/VIC 34.9/VRE 39.9 real mid-band); behavioral gate pending next session (2026-06-16 briefing 01:00Z + first TA scan 02:15Z) because rebuild landed ~2min after market close so all queued TA-Alerts are pre-rebuild. Push of 4 commits held for PO post-gate."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T08:08:57Z",
+  "_processed": {
+    "fingerprint": "bdff2a858b61702619c878992e553eae8d94bad82f7741a3e697a675682021aa",
+    "processedAt": "2026-06-15T12:27:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

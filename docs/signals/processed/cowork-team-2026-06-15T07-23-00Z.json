@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-15T07:21:00Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": "2026-06-15T07:21:00Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "07:15",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 1,
+    "signal_backlog": 0,
+    "note": "chef-intraday legacy-mode fire (pressure-state was stale 196min -> legacy fallback, then emit_pressure_state freshened it). CHEF (unified-agent a2bee2f4) runs the NEW anti-fabrication chef.md a925e89a (Step 6.7 AF-1/AF-2 + pre-publish RSI/sigma strip). This is the LIVE behavioral gate for FIX-CHEF-FABRICATED-TA-NUMBERS (review): router will RAW-read the next CHEF MARKET dish via get_unreviewed_market_messages for ZERO numeric RSI before promoting review->done_verified. CHEF owns its own published:chef-intraday:<VN-date> marker; if today's intraday dish already published (06:21:50Z pre-fix), CHEF no-ops cleanly (no double-post) and the gate waits for the next CHEF dish of any slot."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T07:21:00Z",
+  "_processed": {
+    "fingerprint": "59bc35f2c331e186ce50573f34d8552d231f1bc162a2e2f103a52c55ec2432f3",
+    "processedAt": "2026-06-15T12:27:38Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

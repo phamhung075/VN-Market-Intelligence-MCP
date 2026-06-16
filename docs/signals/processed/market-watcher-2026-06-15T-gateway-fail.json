@@ -1,0 +1,10 @@
+{
+  "from": "market-watcher",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[market-watcher] Step 0-GW FAILED: get_system_status timeout (2 retries) — MCP gateway unreachable at 2026-06-15T[HH:MM:SS]Z. Cycle blocked.",
+  "priority": "high",
+  "createdAt": "2026-06-15T[CURRENT_UTC]Z",
+  "cycle_mode": "offhours",
+  "carry_over_from_prior": "3 major anomalies detected (HVN +6.86%, ACV +3.89%, HPG +4.96%) at market close 08:59 UTC — off-hours duplicate-guard suppressed re-emission; no new signals expected. Gateway failure not due to market data availability."
+}

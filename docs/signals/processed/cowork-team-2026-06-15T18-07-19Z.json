@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-15T18:07:19Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "off-market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-2": 240
+    },
+    "last_fired_timestamp": "2026-06-15T18:06:55Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "18:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "daily off-market bctc-analyst 18:00 cycle (E2-safe, now 18:07Z outside [02,08) VN window); single slot due via cadence; published-marker gate owns telegram dedup"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-15T18:07:19Z",
+  "_processed": {
+    "fingerprint": "cac09f4dff7b81d99d28ee4169a137ea50b2b99c8722984d37b65a01bf88890f",
+    "processedAt": "2026-06-15T18:28:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

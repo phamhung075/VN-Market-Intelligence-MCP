@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-06-15T20:20:00Z",
+  "summary": "c96 NEEDS_ATTENTION IMPROVING — G1-G4 PASS (FIX-COWORK-GUARANTEED-BACKSTOP LIVE-VERIFIED), chef EOD 6.5/9 best since c88, new F-GOLD-THRESHOLD-BREACH MED, F-BCTC-CTG-CRITICAL cycle 28 (active fix dispatched)",
+  "_processed": {
+    "fingerprint": "dc41e0f1700f803e8ed39f6bfbd47d3e6dad90bbf441e4eb4e37cf048446cd08",
+    "processedAt": "2026-06-15T20:32:17Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

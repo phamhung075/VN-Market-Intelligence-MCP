@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-16T06:23:30Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 120
+    },
+    "last_fired_timestamp": "2026-06-16T06:22:43Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:15",
+    "leader_lock": "slot_token_won_inline",
+    "dev_head": "active",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "cadence catch-up: chef-intraday last_fired 23h stale (2026-06-15T07:21Z); market open afternoon session; majors OHLCV healed"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-16T06:23:30Z",
+  "_processed": {
+    "fingerprint": "28908af4b31f03115979c6e82410e0f25ed60d43062bc9f73ad46703420f323e",
+    "processedAt": "2026-06-16T09:52:54Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
