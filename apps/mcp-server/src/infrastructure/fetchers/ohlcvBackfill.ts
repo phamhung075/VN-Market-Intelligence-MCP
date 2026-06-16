@@ -95,7 +95,7 @@ export interface OhlcvBackfillResult {
  * Run the OHLCV historical backfill for all tickers in daily_ohlcv + VNINDEX.
  *
  * @param db       - Injected Database instance (no getDb() calls)
- * @param options  - Optional overrides for date range and delay
+ * @param options  - Optional overrides for date range, delay, and fetch function
  * @returns Summary of fetched, skipped, and error counts
  */
 export async function runOhlcvBackfill(
@@ -104,11 +104,14 @@ export async function runOhlcvBackfill(
     fromDate?: string;  // default "2024-01-01"
     toDate?: string;    // default today YYYY-MM-DD
     delayMs?: number;   // default 200
+    /** Injectable fetch function — for tests only; defaults to fetchOhlcvForTicker */
+    fetchFn?: (code: string, fromDate: string, toDate: string) => Promise<VnDirectOhlcvRecord[]>;
   },
 ): Promise<OhlcvBackfillResult> {
   const fromDate = options?.fromDate ?? "2024-01-01";
   const toDate = options?.toDate ?? new Date().toISOString().slice(0, 10);
   const delayMs = options?.delayMs ?? 200;
+  const fetchFn = options?.fetchFn ?? fetchOhlcvForTicker;
 
   // Collect tickers from daily_ohlcv. On a fresh deployment the table is empty,
   // so fall back to the watchlist table as the authoritative ticker source.
@@ -174,7 +177,7 @@ export async function runOhlcvBackfill(
     }
 
     try {
-      const records = await fetchOhlcvForTicker(ticker, fromDate, toDate);
+      const records = await fetchFn(ticker, fromDate, toDate);
 
       if (records.length === 0) {
         // Not an error — ticker may not have data in VNDirect (e.g. newly listed)
@@ -211,6 +214,35 @@ export async function runOhlcvBackfill(
           } catch (normErr) {
             console.error(
               `[ohlcvBackfill] normalize error ${r.code} ${r.date}: ${normErr instanceof Error ? normErr.message : String(normErr)}`,
+            );
+            continue;
+          }
+
+          // FIX-OHLCV-STARTUP-SEEDER-FLAT-BARS-P0: skip flat zero-vol placeholder bars.
+          //
+          // VNDirect returns O=H=L=C=reference_price with vol=0 for non-traded / illiquid
+          // tickers on the current trading day (and sometimes for delisted/suspended tickers
+          // on historical dates). Writing these rows creates fake seed bars that poison all
+          // TA consumers (RSI/BB/MACD) with single-digit RSI and "giá 0 dưới BB" alerts.
+          //
+          // Fix: leave the gap — write NO row when vol=0 AND O=H=L=C (shape-based predicate).
+          // The real fetch (VPS price push via pushPricesHandler) or taOhlcvBackfillJob fills
+          // the row when REAL traded data exists.
+          //
+          // Generic predicate (/goal#2): no date literal, no ticker allowlist.
+          // Same shape as purgeStrandedSeedRows() — vol=0 AND open=high=low=close.
+          // Applied AFTER normalizeOhlcvToVnd so scale-corrected values are checked
+          // (e.g. O=H=L=C=5.9 thousand-scale → 5900 full-VND → still flat → skip).
+          const vol = r.nmVolume ?? 0;
+          if (
+            vol === 0 &&
+            norm.open === norm.high &&
+            norm.high === norm.low &&
+            norm.low === norm.close
+          ) {
+            console.debug(
+              `[ohlcvBackfill] FR-S1 skip flat seed-bar: ${r.code} ${r.date} ` +
+                `O=H=L=C=${norm.close} vol=0`,
             );
             continue;
           }
