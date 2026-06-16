@@ -14,6 +14,32 @@ Zone: dev-zone (VPS scraper code)
 
 ---
 
+## Cycle Record — 2026-06-16T11:05Z FIX-HNX-SESSION-COOKIE + FIX-SSC-C111-EMPTY-FALLBACK DONE
+
+Tasks: FIX-HNX-SESSION-COOKIE (P1, C4) + FIX-SSC-C111-EMPTY-FALLBACK (P1, C4) — paired lane, one file.
+Commit: 4d93f767. Outcome: DONE-CODE. Both rows → review[].
+
+DJ-GATE-1:
+- what-considered: "session-GET warmup before HNX POST (same CookieJar pattern as SSC flow); c111→c3 fallback for state filers; afrLoop fallback removal"
+- why-change: "Root B (HNX 302→/Home/Error on stateless POST) + Root D (ACV-class c111 always empty); brief Contract 4 sub-risks A+B"
+- technique: "stdlib urllib + http.cookiejar, no new deps, no Chromium; _hnx_make_opener() pattern mirrors _ssc_make_opener(); generic — no per-ticker allowlist"
+- deploy-status: DONE-CODE only; LIVE VPS run required for done_verified (router gate below)
+
+Changes to vps-scripts/discover-bctc-urls-browser.py:
+- ADDED: _hnx_make_opener(), _hnx_opener_get(), _hnx_opener_post() — per-call CookieJar opener helpers
+- CHANGED: _discover_hnx_upcom() — session warmup GET before first POST; all POSTs use opener; code_lower unused var removed
+- CHANGED: afrLoop fallback "27000000000000000" removed → fail-loud return None on regex miss (co-located hardening, sub-risk A)
+- CHANGED: _ssc_parse_rows() — c111 empty → c3 fallback for title/period matching (generic; no per-ticker condition)
+
+LIVE-VPS behavioral gate (router must run before done_verified):
+1. scp vps-scripts/discover-bctc-urls-browser.py root@125.212.251.27:/root/ (or git pull on VPS)
+2. HNX gate: ssh root@125.212.251.27 "python3 /root/discover-bctc-urls-browser.py SHB 2026 Q1 2>&1" → results[] non-empty AND source=HNX AND stderr shows "session warmup GET OK"
+3. UPCOM gate: same for VEA or ACV → source=UPCOM
+4. SSC/c111 gate: ssh root@125.212.251.27 "python3 /root/discover-bctc-urls-browser.py ACV 2026 Q1 2>&1" → results[] non-empty AND stderr shows "c111 empty → c3 fallback"
+5. afrLoop gate: verify no "27000000000000000" appears in stderr; on regex miss → "failing loud" message appears and returns early
+
+---
+
 ## Active Scrapers
 
 | Source | Script | Technique | Status | Last verified |
