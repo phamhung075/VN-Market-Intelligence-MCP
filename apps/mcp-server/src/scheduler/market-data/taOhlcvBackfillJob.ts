@@ -7,7 +7,9 @@
  *   1. Detecting tickers with < TA_MIN_ROWS clean rows (insufficient for MACD/RSI/BB)
  *   2. Detecting tickers with any low=0 rows (corrupt 1972-era data)
  *   3. Fetching 18 months of OHLCV history from VNDIRECT
- *   4. Upserting via INSERT OR REPLACE — overwrites corrupt rows with clean data
+ *   4. Upserting via writeOhlcvBatch (conflictStrategy='backfill') — overwrites corrupt
+ *      rows with clean data, seeds prevClose from DB for detectAndNormalizeScaleFromPrevClose,
+ *      and rejects synthetic seed bars (FR-S1).
  *
  * TA minimum threshold (TA_MIN_ROWS = 35):
  *   MACD(26,9): requires 26 + 9 - 1 = 34 prices → 35 rows is the safe minimum
@@ -15,12 +17,13 @@
  *   BB(20): requires 20 prices — lower bound than MACD
  *   TA_MIN_ROWS = 35 covers all three indicators.
  *
- * INSERT OR REPLACE vs INSERT OR IGNORE:
- *   ohlcvBackfill.ts uses INSERT OR IGNORE (never overwrites). This job uses
- *   INSERT OR REPLACE so corrupt rows (low=0 from 1972 bug) are healed.
+ * FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 (SUBTASK-2):
+ *   The local insertMany transaction with prevClose=0 initialization has been replaced
+ *   by writeOhlcvBatch. The service owns: seed-bar rejection (FR-S1), batched prevClose
+ *   from DB, normalizeOhlcvToVnd, detectAndNormalizeScaleFromPrevClose, validateOhlcvUnit,
+ *   and the SQL upsert. prevClose is no longer a no-op for the ÷1000 group (VHM/VIC/VJC).
  *
- * DDD layer: scheduler — may import from domain/ and infrastructure/.
- * MUST NOT import from application/ or interface/.
+ * DDD layer: scheduler — may import from domain/, infrastructure/, and application/usecases/.
  * MUST NOT import sendTelegram or any Telegram client directly.
  *
  * @module scheduler/market-data/taOhlcvBackfillJob
@@ -29,11 +32,7 @@
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
 import { withDeadline } from "../../infrastructure/fetchers/fetchDeadline.js";
-import {
-  normalizeOhlcvToVnd,
-  validateOhlcvUnit,
-  detectAndNormalizeScaleFromPrevClose,
-} from "../../domain/services/market-data/ohlcvUnitGuard.js";
+import { writeOhlcvBatch } from "../../application/usecases/ohlcvWriteService.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -108,24 +107,6 @@ const TICKER_COVERAGE_SQL = `
     SUM(CASE WHEN low = 0 THEN 1 ELSE 0 END) AS corrupt_cnt
   FROM daily_ohlcv
   WHERE code = ?
-`;
-
-// DPI-4 R-5 audit fix: replaced INSERT OR REPLACE (row-destructive DELETE+INSERT)
-// with ON CONFLICT DO UPDATE SET to preserve foreign flow columns.
-// Matches the same pattern as pushPricesHandler and server.ts (DPI-4 scope).
-// CONTAM-9: this job's purpose is to HEAL corrupt rows (low=0 from 1972 bug).
-// Always unconditionally overwrite with fetched values — backfill is the source of truth.
-const UPSERT_SQL = `
-  INSERT INTO daily_ohlcv
-    (code, date, open, high, low, close, volume, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-  ON CONFLICT(code, date) DO UPDATE SET
-    open       = excluded.open,
-    high       = excluded.high,
-    low        = excluded.low,
-    close      = excluded.close,
-    volume     = excluded.volume,
-    updated_at = excluded.updated_at
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -239,107 +220,9 @@ export async function runTaOhlcvBackfill(
     [string]
   >(TICKER_COVERAGE_SQL);
 
-  const upsertStmt = db.prepare(UPSERT_SQL);
-
-  // Batch upsert inside a transaction for performance
-  // FIX-STOCK-PRICE-SCALE-CORRUPT: Sort by date ascending so we can track prevClose
-  // for detecting thousand-scale corruption in the 100-999 range.
-  const insertMany = db.transaction((records: OhlcvRecord[]) => {
-    // Sort by date ascending to enable sequential prevClose tracking
-    const sorted = [...records].sort((a, b) => {
-      const da = a.date ?? "";
-      const db = b.date ?? "";
-      return da.localeCompare(db);
-    });
-
-    // Track the last valid close for this ticker (in full-VND after normalization)
-    let prevClose = 0;
-
-    for (const r of sorted) {
-      // Skip any record with missing OHLC fields to avoid re-introducing corrupt data
-      if (
-        !r.code ||
-        !r.date ||
-        r.open == null ||
-        r.high == null ||
-        r.low == null ||
-        r.close == null
-      ) {
-        continue;
-      }
-
-      // CONTAM-4: VNDIRECT api-finfo v4/stock_prices returns THOUSAND-VND (live-verified:
-      // VCB=62.3, VNH=0.9, DAG=1.4 — all < 100 floor). Normalize WHOLE row ×1000 before
-      // upsert. normalizeOhlcvToVnd is a no-op when the row is already full-VND.
-      // NEVER skip a sub-100 row here — it is a valid thousand-scale record, not garbage.
-      let norm: { open: number; high: number; low: number; close: number };
-      try {
-        norm = normalizeOhlcvToVnd("stock", {
-          open: r.open,
-          high: r.high,
-          low: r.low,
-          close: r.close,
-        });
-      } catch (normErr) {
-        logger.error(
-          `[taOhlcvBackfill] normalize error ${r.code} ${r.date}: ${normErr instanceof Error ? normErr.message : String(normErr)}`,
-        );
-        continue;
-      }
-
-      // FIX-STOCK-PRICE-SCALE-CORRUPT: Additional detection for values in 100-999 range.
-      // normalizeOhlcvToVnd only catches values < 100. For expensive stocks like VIC/VHM,
-      // thousand-scale values can be 100-500 (e.g., VIC=195.5 should be 195,500).
-      // Use prevClose comparison to detect and correct.
-      if (prevClose > 0) {
-        const scaleResult = detectAndNormalizeScaleFromPrevClose("stock", norm, prevClose);
-        if (scaleResult.corrected) {
-          logger.info(
-            `[taOhlcvBackfill] ${r.code} ${r.date}: ${scaleResult.reason}`,
-          );
-          norm = scaleResult.ohlcv;
-        }
-      }
-
-      // Guard post-normalize values — a still-out-of-range row after normalization
-      // indicates genuinely corrupt data (e.g. all-zero row); log + skip, never throw.
-      try {
-        const guardResult = validateOhlcvUnit(
-          r.code,
-          "stock",
-          norm.open,
-          norm.high,
-          norm.low,
-          norm.close,
-        );
-        if (!guardResult.valid) {
-          logger.error(
-            `[taOhlcvBackfill] post-normalize guard rejected ${r.code} ${r.date}: ${guardResult.reason}`,
-          );
-          continue;
-        }
-      } catch (guardErr) {
-        logger.error(
-          `[taOhlcvBackfill] guard threw ${r.code} ${r.date}: ${guardErr instanceof Error ? guardErr.message : String(guardErr)}`,
-        );
-        continue;
-      }
-
-      // Update prevClose for next iteration (after successful normalization)
-      prevClose = norm.close;
-
-      // Upsert normalized full-VND values — self-heals any contaminated seed rows.
-      upsertStmt.run(
-        r.code,
-        r.date,
-        norm.open,
-        norm.high,
-        norm.low,
-        norm.close,
-        r.nmVolume ?? 0,
-      );
-    }
-  });
+  // VN today (UTC+7) — used for FR-S1 seed-bar rejection inside writeOhlcvBatch.
+  // Architect R-4: must use VN local date, not UTC, to avoid false positive near midnight.
+  const vnToday = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
 
   // ─── Per-ticker loop ──────────────────────────────────────────────────────
   let covered = 0;
@@ -367,19 +250,48 @@ export async function runTaOhlcvBackfill(
     try {
       const records = await fetchFn(code, fromDate, toDate);
 
-      // Upsert all valid records (INSERT OR REPLACE → heals corrupt rows)
-      insertMany(records);
+      // Build OhlcvWriteRow array — filter rows with missing OHLC fields upfront
+      // so that validCount (for sparse classification) matches what the service writes.
+      const writeRows = records
+        .filter(
+          (r): r is OhlcvRecord & { code: string; date: string; open: number; high: number; low: number; close: number } =>
+            !!r.code &&
+            !!r.date &&
+            r.open != null &&
+            r.high != null &&
+            r.low != null &&
+            r.close != null,
+        )
+        .map((r) => ({
+          code: r.code,
+          date: r.date,
+          open: r.open,
+          high: r.high,
+          low: r.low,
+          close: r.close,
+          volume: r.nmVolume ?? 0,
+        }));
 
-      // Classify result: sparse if fetched records are below TA minimum
-      const validCount = records.filter(
-        (r) =>
-          r.code &&
-          r.date &&
-          r.open != null &&
-          r.high != null &&
-          r.low != null &&
-          r.close != null,
-      ).length;
+      // Upsert via SSOT choke-point:
+      //   - FR-S1 seed-bar rejection (date >= vnToday AND vol=0 AND O=H=L=C)
+      //   - batched prevClose from DB → detectAndNormalizeScaleFromPrevClose no longer a no-op
+      //   - normalizeOhlcvToVnd + validateOhlcvUnit (fail-closed)
+      //   - UPSERT_BACKFILL_SQL (unconditional overwrite → heals corrupt rows)
+      const writeResult = await writeOhlcvBatch(writeRows, db, {
+        conflictStrategy: "backfill",
+        vnToday,
+      });
+
+      if (writeResult.rejected.length > 0) {
+        logger.warn(
+          `[taOhlcvBackfill] ${code}: ${writeResult.rejected.length} row(s) rejected by unit guard`,
+        );
+      }
+
+      // Classify result: sparse if valid pre-service rows are below TA minimum.
+      // writeResult.skipped (seed bars) are excluded from the coverage count — they
+      // are synthetic placeholders, not real trading rows.
+      const validCount = writeRows.length;
 
       if (validCount < TA_MIN_ROWS) {
         sparse++;
