@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-16T01:17:30Z",
+    "updated_at": "2026-06-16T01:24:28Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-ERRAUDIT-W1-PEK-P0",
-    "next_agent": "qa",
-    "note": "ops rebuild VERIFIED PASS: pdf-extractor image .Created 2026-06-16T01:15:49Z > commit 01:12:10Z (CREATED_GATE PASS), container Up+healthy, all 13 peers intact, host load 2.64 stable. NEXT: qa forced-failure DoD — force layout crash (exception in logs, NO clean-0-row), force paddle load fail (table units quarantined reason paddle-load-failure), force runtime table fail (reason table-extraction-failure), table-less PDF EC-1 (quarantined=False), happy-path regression; ALL verified via named-volume vn-market-intelligence-mcp_market_data sidecar NEVER host ./data"
+    "next_agent": "po",
+    "note": "qa APPROVED + RAW-verified PASS by router: live named-volume DB shows 161 healthy + 14 quarantined table units each with REAL computed orphan_rows reasons (varied, not constants); pytest 42 passed/0 failed in the rebuilt container (docker exec, flaky test green this run). paddle-load-failure/table-extraction-failure reasons absent from prod DB because PaddleOCR loads fine in prod — new failure paths fire only under forced failure, verified via pytest _PADDLE_LOAD_FAILED sentinel injection per architect matrix. Fake-clean-0-row mask removed. NEXT: po final sign-off / done_verified; PUSH remains PO deferred call (origin diverged via benign cloud-chore)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
