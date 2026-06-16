@@ -12314,6 +12314,70 @@
         "note_dedup": "Strictly completeness-of-feed only; sibling-dedup + false-closed + availability are already tracked — do NOT re-open those.",
         "created_at": "2026-06-16T04:46:58Z",
         "created_by": "po-s80"
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-COVERAGE",
+        "epic": "AUDIT-FETCH-COMPLETE",
+        "title": "Expand foreign-flow fetch from the 111-code watchlist+ref subset to the full daily_ohlcv traded universe",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "parent_recon": "AUDIT-FC-FOREIGN-FLOW",
+        "root_cause": "CODES list submitted to bgapidatafeed.vps.com.vn/getliststockdata/<CODES> is built only from watchlist DB + mcp.config.json referenceStocks (live 111 codes) -> ~1457 of the 1569 daily_ohlcv traded tickers carry foreign_net_vol=NULL permanently, even on days foreigners trade them.",
+        "fix_spec": "Source the CODES list from the full daily_ohlcv traded-code universe (recon confirms the API accepts arbitrary code lists in a single call, no pagination). Touch apps/mcp-server config layer + vps-scripts/fetch-foreign-flow.sh. Optionally extract fBValue/fSValue (VND trade value) present-but-dropped in the response; holding_ratio is NOT available from this source (leave NULL).",
+        "files": [
+          "apps/mcp-server/ (config layer)",
+          "vps-scripts/fetch-foreign-flow.sh"
+        ],
+        "generic_mandate": "Coverage must track the traded universe, not a fixed 111-code list (/goal#1 no-permanent-NULL on a served metric).",
+        "verification_gate": "RAW: distinct codes with foreign_net_vol NOT NULL for date=latest >> 102 and tracks daily_ohlcv traded count; spot-check a non-watchlist active code now has non-NULL foreign_net_vol.",
+        "rebuild_required": true,
+        "created_at": "2026-06-16T05:05:37Z",
+        "created_by": "po-s81"
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-DEAD-ENDPOINT",
+        "epic": "AUDIT-FETCH-COMPLETE",
+        "title": "Remove/stub dead fetchPrimaryVpsEndpoint() — GETs a nonexistent VPS /foreign-flow route, silent 404 every minute",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "parent_recon": "AUDIT-FC-FOREIGN-FLOW",
+        "root_cause": "fetchPrimaryVpsEndpoint() in apps/mcp-server/src/infrastructure/fetchers/foreignFlowFetcher.ts GETs http://${VINAHOST_IP}/foreign-flow which does not exist on the VPS proxy (vps-proxy-server.js) -> silent 404 every market-minute; the push model (VPS -> POST /api/push-foreign-flow) is the only live path.",
+        "fix_spec": "Remove fetchPrimaryVpsEndpoint (dead GET fallback) or stub it to no-op so it stops the per-minute 404. Confirm pushForeignFlowHandler.ts remains the sole write path; no behavior change to served data.",
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/foreignFlowFetcher.ts"
+        ],
+        "generic_mandate": "Dead-code removal — no fallback to a 404 route (reduce debt per project default).",
+        "verification_gate": "Grep confirms fetchPrimaryVpsEndpoint removed/stubbed; no /foreign-flow GET in fetcher; foreign flow still writes via push path (RAW: latest-date rows unchanged in count).",
+        "rebuild_required": true,
+        "created_at": "2026-06-16T05:05:37Z",
+        "created_by": "po-s81"
+      },
+      {
+        "id": "FIX-OHLCV-CORP-ACTION-CONTINUITY",
+        "title": "Detect adjusted-vs-unadjusted price discontinuity at a corp-action boundary (|move| beyond board limit) -> reconcile/flag, never serve a false bar",
+        "type": "FIX",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "parent": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+        "behavioral_gate_doc": "docs/handoffs/FIX-OHLCV-SEED-CANDLE-behavioral-gate-2026-06-16-RED.md",
+        "root_cause": "Class 4: VJC real-shaped candle (proper O/H/L/C spread, 48,640 vol, env=NULL/VNDIRECT) is ~-25% vs unadjusted prior 183,700 — beyond any VN limit = an ex-div/ex-rights ADJUSTED close stitched onto unadjusted history. Poisons RSI/MACD/BB across the adjustment boundary. The pipeline has NO adjusted-vs-unadjusted continuity handling. Generic across any ex-date ticker.",
+        "fix_spec": "Detect |single-day move| beyond the listing-board limit (HOSE ±7%, UPCoM ±15%) -> reconcile against an adjusted-history source OR flag+exclude the boundary bar from TA. Do NOT silently serve a false -25% bar for VJC (a watchlist major) per /goal#1.",
+        "files": [
+          "apps/mcp-server OHLCV continuity/adjustment layer (new)"
+        ],
+        "generic_mandate": "Generic across any ex-date ticker, not VJC-specific.",
+        "verification_gate": "RAW: VJC (and any ex-date ticker) no longer serves a >board-limit discontinuity bar into TA; boundary bar reconciled or flagged+excluded; RSI/MACD/BB no longer poisoned across the adjustment boundary.",
+        "rebuild_required": true,
+        "created_at": "2026-06-16T05:05:37Z",
+        "created_by": "po-s81"
       }
     ],
     "closed_sprints": [
@@ -15090,6 +15154,29 @@
         "done_verified": false,
         "done_verified_deferred_note": "SPEC planning pipeline COMPLETE + router RAW-reverified (BA 11d318ea -> arch 675891163d/9dbfcbbb -> pm 983af548 [20 tasks] -> probes f70d1b5a -> probe-fold 9dbfcbbb). The 20-task WAVE plan is tracked in active_sprints[VN-MACRO-TOOLING]; WAVE-1 dev fan-out (6 zero-dep) is the next-phase CODING work, dispatched a later tick once a coding lane is free. This row consumed ZERO dev WIP while parked (po_dispatch_note). Closed here to free the in_progress slot; sprint-level done_verified gates on the macro skill switch-on (is_estimate=false) at VMT-7-REGISTER, NOT on this SPEC row.",
         "po_spec_close_note": "Closed by po-s63 dev-team :07 triage 2026-06-15T18:30Z to free the in_progress slot for the #1 user-facing P0 FIX-BCTC-ENRICH-SILENT-0ROWS. BA-VN-MACRO-TOOLING was a planning-complete SPEC tracking row (owner=ba, type=SPEC), not an active coding lane."
+      },
+      {
+        "id": "AUDIT-FC-FOREIGN-FLOW",
+        "epic": "AUDIT-FETCH-COMPLETE",
+        "title": "Foreign-flow fetch-completeness recon: does each tick pull ALL tradable codes (not a truncated page)?",
+        "type": "SPIKE",
+        "mode": "recon",
+        "status": "DONE",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "next_agent": "ops-vps-fetch",
+        "importance": "HIGH — feeds served foreign net buy/sell direction+delta (user-facing decision); market_hours_only; VPS-proxied (truncated-list/single-page risk).",
+        "complete_detail_def": "A complete tick writes one vnstock_trading_stats row PER tradable code present in the source response for date=latest, each row carrying the full live contract {code, foreign_volume (signed), foreign_room, current_holding_ratio, max_holding_ratio, market_cap_bn, date, fetched_at} — NO row written with a null/zero placeholder where the source had a real value, and the row-count must track the full universe (≈ exchange-listed set), not a fixed first-N page.",
+        "probe": "RAW: count distinct codes written this tick vs codes in source payload; assert no fixed cap (e.g. always exactly 50/100); assert fetched_at fresh; sample a known-active code has non-placeholder foreign_room+holding_ratio; verify across >1 tick that the set VARIES with the market (not a constant snapshot).",
+        "note_dedup": "TASK17-FOREIGN-FLOW is a UI serve-path build (page), NOT a completeness invariant — it even cites a one-day 91-row snapshot. This recon guards the FETCH count/field completeness upstream of that page.",
+        "created_at": "2026-06-16T04:46:58Z",
+        "created_by": "po-s80",
+        "done_verified": false,
+        "done_verified_deferred_note": "Recon SPIKE = findings captured (verdict real-count-no-truncation, doc docs/handoffs/AUDIT-FC-FOREIGN-FLOW-recon.md); verified-work = the two minted follow-on FIXES (COVERAGE P2 + DEAD-ENDPOINT P3). Recon itself carries no LIVE regression gate.",
+        "recon_verdict": "real-count-no-truncation — 102 is the correct filtered output of a 111-code watchlist+ref fetch; bgapidatafeed NOT page-capped. Two real gaps spun out as FIX-FOREIGN-FLOW-COVERAGE + FIX-FOREIGN-FLOW-DEAD-ENDPOINT.",
+        "resolved_at": "2026-06-16T05:05:37Z",
+        "resolved_by": "po-s81"
       }
     ],
     "done_verified": [
@@ -18372,22 +18459,35 @@
         "promotion_note": "Wave-2 frontend hop. Inner-first sequence gate SATISFIED: sequence_after dep FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE is done_verified (the two unbounded mcp-server hops mcp-interface-01/05 are closed). Wave-1 fully complete (W1-MCP-P0 + W1-PEK-P0 both done_verified). Distinct zone apps/frontend/ — no zone-serialization conflict with the mcp-server lane; WIP<=2 honored (over-parallel-fanout host-starvation lesson). Land safeFetch/proxyUpstream/safeFetchOrNull + one DEADLINE_MS < gateway: fix timeout+duplication+logging in 3 helpers not 55 sites. Route ba->architect->pm->dev-frontend->qa; router dispatches via lock-claim+spawn -- po did NOT spawn. No-push."
       },
       {
-        "id": "AUDIT-FC-FOREIGN-FLOW",
-        "epic": "AUDIT-FETCH-COMPLETE",
-        "title": "Foreign-flow fetch-completeness recon: does each tick pull ALL tradable codes (not a truncated page)?",
-        "type": "SPIKE",
-        "mode": "recon",
+        "id": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0",
+        "title": "Migrate remaining OHLCV writer(s) — esp. the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 + scale-norm + a fail-closed C=0 reject apply to ALL tickers",
+        "type": "FIX",
         "status": "READY",
-        "priority": "P1",
+        "priority": "P0",
         "zone": "apps/mcp-server/",
         "dev_agent": "dev-mcp-server",
-        "next_agent": "ops-vps-fetch",
-        "importance": "HIGH — feeds served foreign net buy/sell direction+delta (user-facing decision); market_hours_only; VPS-proxied (truncated-list/single-page risk).",
-        "complete_detail_def": "A complete tick writes one vnstock_trading_stats row PER tradable code present in the source response for date=latest, each row carrying the full live contract {code, foreign_volume (signed), foreign_room, current_holding_ratio, max_holding_ratio, market_cap_bn, date, fetched_at} — NO row written with a null/zero placeholder where the source had a real value, and the row-count must track the full universe (≈ exchange-listed set), not a fixed first-N page.",
-        "probe": "RAW: count distinct codes written this tick vs codes in source payload; assert no fixed cap (e.g. always exactly 50/100); assert fetched_at fresh; sample a known-active code has non-placeholder foreign_room+holding_ratio; verify across >1 tick that the set VARIES with the market (not a constant snapshot).",
-        "note_dedup": "TASK17-FOREIGN-FLOW is a UI serve-path build (page), NOT a completeness invariant — it even cites a one-day 91-row snapshot. This recon guards the FETCH count/field completeness upstream of that page.",
-        "created_at": "2026-06-16T04:46:58Z",
-        "created_by": "po-s80"
+        "next_agent": "dev-mcp-server",
+        "blocking": true,
+        "parent": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+        "behavioral_gate_doc": "docs/handoffs/FIX-OHLCV-SEED-CANDLE-behavioral-gate-2026-06-16-RED.md",
+        "root_cause": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 healed watchlist majors (VHM/VIC/VJC RSI) but is NOT generic — residual OHLCV writers bypass writeOhlcvBatch (FR-S1 seed-rejection + scale-norm), corrupting non-major tickers. Behavioral gate RED on first post-rebuild prod cycle (1569 rows, flat_seed=775, null_env=117; 46 tickers >15% move vs prior real close).",
+        "classes": [
+          "Class 1 (PRIMARY): aggregator/seeder (suspect ohlcvDailyAggregatorJob.ts) writes flat vol=0 bars at WRONG prices, env=production, ~773 rows incl DCR +64% (5900 vs 3600), H11 +47% (25700 vs 17500) — UNMIGRATED to writeOhlcvBatch -> bypasses FR-S1.",
+          "Class 2: zero-price all-zero bars (env=NULL, vol=0): DAG/DFF/DMC/POM — FR-S1 should skip 0=0=0=0 today but they landed -> un-migrated env=NULL writer OR FR-S1 not on path. Source of 'giá 0 dưới BB' alerts.",
+          "Class 3: ÷1000 leak on a production writer: PDN (105.2 vs prior 99,800), NHD (118.6 vs 92,500) — prevClose-miss in the batch JOIN OR un-migrated production writer. The exact VHM/VIC bug on non-major tickers -> proves non-generic."
+        ],
+        "fix_spec": "Migrate the remaining OHLCV writer(s) — especially the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose + a NEW fail-closed C=0 reject apply to ALL tickers (generic /goal#2). Trace the PDN/NHD prevClose-miss (Class 3). Add a fail-closed reject for C=0 (Class 2).",
+        "files": [
+          "apps/mcp-server/src/.../ohlcvDailyAggregatorJob.ts (suspect — confirm)",
+          "apps/mcp-server writeOhlcvBatch path",
+          "FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose"
+        ],
+        "generic_mandate": "Fix must be GENERIC across the full ticker universe, not the watchlist majors. No served bar may carry a ÷1000-scaled, wrong-price-seeded, or all-zero close (/goal#1 + /goal#2).",
+        "verification_gate": "RAW post-rebuild LIVE: re-run the 5 sidecar queries on daily_ohlcv date=latest — 0 flat vol=0 wrong-price seeds (Class 1), 0 all-zero 0|0|0|0 bars (Class 2), 0 ÷1000 leaks vs prior real close (Class 3); DCR/H11/DAG/DFF/DMC/POM/PDN/NHD all plausible (<=board limit move). get_technical_indicators on the repaired tickers returns real-band RSI.",
+        "rebuild_required": true,
+        "sequence_note": "Sequenced AHEAD of lower-pri ready[] items (data-integrity P0). Fills the 2nd coding slot (WIP<=2; in_progress currently = ARCH-CRON-SCHEDULER-RELIABILITY).",
+        "created_at": "2026-06-16T05:05:37Z",
+        "created_by": "po-s81"
       }
     ],
     "review": [
