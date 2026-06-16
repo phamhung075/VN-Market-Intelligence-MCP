@@ -1,5 +1,26 @@
 # Agent Father — Notebook
 
+## 2026-06-16 — AF-1-LEADER-LOCK-BACKSTOP-DEFER (Root A gatherer double-fire fix)
+
+- Task: Edit leader-lock.md — insert Backstop-Window Defer Gate (new error/timeout branch)
+- File: docs/agents/cowork-team/flow/leader-lock.md (84L → 113L, +29L)
+- Change: added separate code fence between LEADER_CLAIM call and claimed==true branch; keys on LEADER_CLAIM error/timeout path; defers (EXIT) when UTC.hour ∈ {0,4,8,12,16,20} AND UTC.minute < 15; proceeds outside that window
+- Constraint satisfied: BOUNDARY_HOURS expressed as generic rule ("0 */4" cadence), no date literals, no slot hardcoding; existing claimed:false + orphan-recovery paths untouched
+- Decision journal: sprint-FE-PAGE-REORG-agent-father.md STEP agent-father-S1
+- commit-boundary: RULE 1 explicit stage ✓, RULE 2 zone check (docs/agents/ + docs/agent-memory/) ✓, RULE 3 git show --name-only after commit
+
+## 2026-06-16 — FB-POSTER-TNB-UPGRADE (Tasks A–D implemented)
+
+- Task: Edit — insert STEP 2b (TNB 6-layer synthesis gate) + STEP 2c (T-45 adversarial gate) + extend STEP 1b + rewire STEP 3
+- File: docs/agents/fb-market-poster/flow/main.md (489L → 718L, +229L)
+- Task A: STEP 1b widened — get_technical_indicators (≥15 tickers), get_legal_risk_signals, get_sentiment_trend, get_earnings_calendar added; ticker_intel to ALL watchlist active (33 tickers, jq from system-map.json)
+- Task B: STEP 2b inserted — 6 mandatory layers, CHEF shortcut branch (layers_walked+clusters>0), $tnb_synthesis schema with per-ticker conviction schema (verdict/watch_zone/condition/reason/risk/conviction/data_quality)
+- Task C: STEP 2c inserted — T-45 adversarial gate, 5 hard-fail rules (T1 cross-ticker, T2 false-precision, T3 is_estimate-as-fact, T4 noise-scale flow <5%, T5 internal contradiction); severity=drop removes claims; no manufacture of buy calls
+- Task D: STEP 3 rewired — Phân tích reads $tnb_synthesis.regime + Layer-4 rotation; Dự đoán reads $tnb_synthesis.conviction.calls[] (T-45 survivors); known_gaps pass-through blocks fabrication of null breadth/liquidity/foreign_net
+- Must-not-change verified byte-intact: STEP 4a jargon gate, 3-section structure, 16 validation checks, STEP 0, STEP 5–8, SELF-IDENTITY GUARD
+- Commit: 4bcf50b2 · tsc gate PASS · push attempted — BLOCKED by cowork dirty-tree (perpetual churn from bg agents); commit preserved locally; push deferred to PO/clean-checkout per feedback_push_blocked_by_perpetual_dirty_tree
+- commit-boundary: RULE 1 explicit stage ✓, RULE 2 zone check (docs/agents/ only) ✓, RULE 3 git show --name-only ✓
+
 ## c297 · 2026-06-14 — FIX-MCP-TOOL-PARAM-SCHEMA-DRIFT-DOCS (P2)
 
 - Task: Edit (param schema drift fix) — 7 tool schemas corrected in list/ + package/ + flow docs

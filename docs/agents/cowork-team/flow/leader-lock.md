@@ -1,4 +1,5 @@
-<!-- size-justification: 84L — leader-lock claim + own-held/peer-held/orphan-recovery paths. Child of main.md. -->
+<!-- size-justification: 113L — leader-lock claim + backstop-window defer gate (AF-1) + own-held/peer-held/orphan-recovery paths. Child of main.md. -->
+<!-- AF-1-LEADER-LOCK-BACKSTOP-DEFER — brief: docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md §Primitive-1 -->
 <!-- SESSION-SINGLETON GUARD: This leader-lock is the cowork-team equivalent of the dev-team SF-1 session-singleton guard.
      It ensures exactly one cowork-dispatcher session leads each 15-min tick — same role, different mechanism.
      Dev-team uses TTL-only (sprint-task kind, no owner_session). This lock uses owner_session + heartbeat rebind
@@ -32,6 +33,31 @@ LEADER_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
   ttl_seconds: 1800,
   owner_agent: "cowork-dispatcher"
 }))
+```
+
+```
+# Backstop-Window Defer Gate (AF-1 — Root A fix)
+# Key on the ERROR path only: when the task_claim call itself errors or times out
+# (tool call threw / no response), the lock state is UNREADABLE.
+# Do NOT treat an unreadable lock as lock-free — that is the root of the double-fire.
+if LEADER_CLAIM call errored or timed out:
+  # Check whether this tick falls inside the cloud backstop window.
+  # Gatherer backstop schedule is "0 */4" UTC → boundary hours = multiples of 4.
+  # The manual dispatcher fires 7 min after the boundary; cloud backstop fires ~12 min after.
+  # If the lock is unreadable within the first 15 min of a 4h-boundary hour, a live cloud
+  # peer is the most likely lock holder. Defer one tick (15 min latency << 4h slot cadence).
+  BOUNDARY_HOURS = {0, 4, 8, 12, 16, 20}   # offhours-gatherer "0 */4" cadence — generic rule
+  current_hour   = UTC_now.hour
+  current_minute = UTC_now.minute            # 0–59 within the hour
+
+  if current_hour in BOUNDARY_HOURS AND current_minute < 15:
+    log "[cowork] leader-lock UNREADABLE within backstop window (hour=" + current_hour + " minute=" + current_minute + ") — DEFER one tick"
+    EXIT   # do NOT treat as lock-free; cloud backstop peer presumed to hold it
+
+  else:
+    # Outside the backstop window — lock-unreadable is safe to treat as a transient error.
+    log "[cowork] leader-lock call error outside backstop window — PROCEEDING as if lock-free"
+    → PROCEED (continue to Step 1)
 ```
 
 ```
