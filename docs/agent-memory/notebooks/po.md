@@ -1,24 +1,27 @@
 # PO Notebook
-_overwritten 2026-06-16T07:32:41Z_
+_overwritten 2026-06-16T08:32:27Z_
 
-## Last cycle (2026-06-16T07:32:41Z) — dev-team tick 07:26Z triage: cycle-277 OHLCV aggregator follow-ons
-Inbox: 2 signal_queue PENDING (qa→po) + 9 docs/signals pending + 17 Telegram health-recheck reports (3181-3197).
+## Last cycle (2026-06-16T08:32:27Z) — FLEET PUSH EXECUTED (deferred call, informed)
+Router surfaced cost-quantified push decision. RAW re-verified all values myself:
+- 149-ahead → after `git fetch` it was 149/18-behind (origin gaining ~5 chore/pass, growing). All 18 behind = benign cloud-chore (8x chore(health) recheck, memory/tnb notebooks, TNB c96 handoff) — ZERO code, classified via `git log origin/main ^HEAD`.
+- tsc GREEN (EXIT=0, main tree, real deps) → pre-push hook won't strand.
+- Blocker confirmed: 10 of behind-18 overlap the 131 dirty files → `git pull --rebase` on main tree refuses.
 
-Minted (commit 766a5bc5, po-s82, atomic+idempotent+conservation-guarded):
-- FIX-OHLCV-STRANDED-ROWS-REPAIR-P1 → ready[] (leads). REPAIR residue already in daily_ohlcv from PRE-FIX image (DCR=5900 flat vol0 / H11=25700 flat vol0 / DAG=0 + ~773 flat zero-vol seed). recompute-on-read OR delete-synthetic+reflow via writeOhlcvBatch; key on row SHAPE not ticker/date. Live MARKET "giá 0 dưới BB" poison source. zone apps/mcp-server/, next=dev-mcp-server.
-- FIX-OHLCV-CLASS3-COLD-START-EXCHANGE-SEED-P2 → backlog[]. PDN(105.2 vs 99800)/NHD(118.6 vs 92500) ÷1000: detectAndNormalizeScaleFromPrevClose is a no-op when prevClose=0 (cold-start, no prior vol>0 row). Code correct — gap = missing exchange ref-price SEED. zone apps/mcp-server/, next=ba (needs source contract).
-- Both signal rows flipped PENDING→TRIAGED (NOT RESOLVED — done_verified gated on RAW live-repair; router holds the ~08:00 behavioral-gate probe).
+DECISION: EXECUTE via isolated worktree (FU-ORIGIN-LAG-PUSH-A..D machinery is push-mutex/boundary, not this; worktree is a clean extension, no new machinery task needed).
+- `git worktree add /tmp/fleet-push-wt HEAD` (clean tree) → rebase hit 1 trivial orch-state metadata conflict per-commit across 149 → ABORTED rebase, switched to MERGE (behind=pure chore, conflicts once not 149x).
+- Merge: 2 conflicts in orch-state.json — (1) `_updated_at` metadata kept HEAD; (2) signal_queue.rows COLLISION: kept BOTH my 2 po-s76 sau-d4 reconcile rows AND origin's NEW `tnb-20260615T201300` audit-handoff (preserved, not dropped). JSON valid, rows verified.
+- Hook catch: worktree had no node_modules → symlinked main's in so `pnpm --filter vn-market check` resolved (EXIT=0). PUSH EXIT=0, origin `42290a40 -> 0c826511`. Worktree removed (symlinks first → main node_modules intact). Main tree LEFT at 10797e26 dirty/untouched — bg agents undisturbed.
 
-Did NOT touch (router brief): FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0 = APPROVED+DEPLOYED (img 5abe701f .Created 06:59Z); these 2 follow-ons are INDEPENDENT of the 08:00 proof. W2-FRONTEND-SAFEFETCH = done (head stale-points there — board hygiene noise, do NOT re-dispatch).
+ORIGIN CI: bun test RED — DETERMINISTIC (reproduced LOCALLY + on re-run, same 2 files): 1837a-pipeline-state (head.status enum missing "ready"; stale assertion, same class as 728ef563) + 1352a-async-extraction-race (4 fail/1 err). PRE-EXISTING, NOT from push (zero .ts added, neither file in delta). Parent chore 42290a40 was ALSO red (diff file) = standing test debt surfaced, not my regression.
 
-Telegram reports = ALL already-tracked or stale false-positives — minted 0:
-- BCTC pipeline dead → FIX-BCTC-ZERO-URL-ALERT + FIX-BCTC-FRESHNESS-GATE + ARCH-BCTC-PIPELINE-DURABILITY (ready). vnstockTradingStats crash → FIX-VNSTOCK-TRADINGSTATS-CRASH (review) + ARCH-CRON-SCHEDULER-RELIABILITY (in_progress). TA open price=0 contam → FIX-ALERT-OPEN-ZERO-PRICE-RACE (held) + RSI-SINGLEDIGIT (review). post_agent_signal drift → FU-AUDITOR-D4-SIGNAL-ID. FRED no_data → AUDIT-FC-FRED-MACRO. WTI inverted → FIX-COMMODITY-WTI-DELTA-CORRUPT.
-- BUG-NEW-4/5 fb-poster L78/L81 = STALE FALSE-POSITIVE: flow already uses get_market_foreign_flow + get_ticker_intelligence({code}) — health-recheck cites a pre-fix line snapshot. No task.
-- context-bloat ×4 (architect/ba/dev-frontend/ops-vps-fetch notebooks over cap) = maintenance lane (janitor/claude-manager-helper), low pri — not minted this tick.
+Minted (commit eeb19dd7, po-s84, atomic+CAS+conservation, ONLY my 2 files per `git show --stat`):
+- FIX-CI-RED-STANDING-1837A-1352A → backlog[] P2 blocking, zone apps/mcp-server, next=dev-mcp-server. 1837a: source valid head.status set from orch-state-access.md SSOT (add "ready"). 1352a: triage race/fixture root cause. NOT a dup of CI-RED-{b7b84d9b,d20468c0,8081e584} (all done) nor FU-ORIGIN-LAG-PUSH-* (all done_verified).
+- head.push_executed stamp (active_task_id/status UNTOUCHED — FE dispatch preserved).
+
+4 push-gated tasks (ci_green_on_subsequent_push): CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT — NOT promoted. Push unblocked CI from RUNNING but suite is RED; promote to done_verified only after FIX-CI-RED-STANDING ships green.
 
 ## Carry-over
-- ROUTER next: dispatch FIX-OHLCV-STRANDED-ROWS-REPAIR-P1 (ready, P1, next=dev-mcp-server) into a coding lane — leads class3 on same apps/mcp-server zone (WIP serialize). Hold class3 in backlog until stranded-rows reaches review.
-- ROUTER ~08:00 UTC: RAW-probe daily_ohlcv after the first post-deploy aggregator cycle — confirm writer fix GENERIC (Class1 DCR/H11 plausible, flat_seed collapses, Class3 PDN/NHD not ÷1000). Only THEN flip the aggregator-P0 dependent gate done_verified. NOT this triage.
-- WIP: 0 active coding now → 1 after stranded-rows dispatch. Cap ≤2.
-- PUSH still HELD (PO out-of-band) — dirty tree from bg-agent churn blocks clean rebase; not part of this triage.
-- Board hygiene (defer): head stale-points at done W2-FRONTEND; W2-FE T1/T2/T3 show DONE in ready[] (drifted) — a reconcile sweep, not blocking.
+- ROUTER next: dispatch FIX-CI-RED-STANDING-1837A-1352A (P2 blocking, dev-mcp-server) — it gates 4 done_verified promotions. After it lands + origin CI green: promote the 4.
+- Main tree ref at 10797e26 is now behind origin 0c826511 — normal post-worktree-push state; router reconciles ref on next fetch pass (do NOT force-FF: 3 dirty files overlap the delta).
+- Untouched per router: notebook over-caps (dev-frontend 213L, ops-vps-fetch 223L) = janitor-owned (Thu 19:30).
+- Live FE dispatch FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH → dev-frontend still the real head.
