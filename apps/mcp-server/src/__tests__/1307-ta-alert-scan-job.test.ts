@@ -54,7 +54,8 @@ function buildTestDb(): Database {
       analysis_ids_json TEXT,
       message TEXT NOT NULL,
       read INTEGER NOT NULL DEFAULT 0,
-      user_note TEXT
+      user_note TEXT,
+      fingerprint TEXT UNIQUE
     )
   `);
 
@@ -248,45 +249,42 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
     expect(countAlerts(db)).toBe(1);
   });
 
-  // AC-6: Cooldown lifts after 4 hours
-  it("AC-6: cooldown does not suppress alert after 4 hours (T+5h)", async () => {
+  // AC-6: Cooldown AND fingerprint lift after crossing a UTC day boundary
+  //
+  // FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS update: the fingerprint gate is per UTC
+  // day ("scan:{ticker}:{alertType}:{YYYY-MM-DD}").  A second alert for the same
+  // (ticker, alertType) is allowed only on a DIFFERENT UTC day.  Within the same
+  // calendar day the fingerprint UNIQUE constraint is authoritative — even if the
+  // 4h SQL cooldown window has passed.
+  //
+  // This test simulates the "next-day rescan" scenario: the first alert fires on
+  // 2026-04-14 and is backdated to clear the 4h SQL cooldown; the second scan
+  // uses nowFn = 2026-04-15, producing a different fingerprint → new row allowed.
+  it("AC-6: alert fires again on the next UTC day (fingerprint + cooldown both clear)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
     seedMinCandles(db, "VCB"); // satisfy MIN_CANDLES guard
 
-    const t0 = new Date("2026-04-15T03:00:00Z");
-
-    // First scan fires
+    // Day-1 scan fires
     await runTaAlertScan({
       db,
       computeFn: makeComputeFn(74.2),
-      nowFn: () => t0,
+      nowFn: () => new Date("2026-04-14T03:00:00Z"),
     });
     expect(countAlerts(db)).toBe(1);
 
-    // Insert the first alert manually with a triggered_at 5h in the past
-    // (we simulate the prior alert being old by manipulating the DB directly)
-    // Actually the first alert was inserted with triggered_at = t0.toISOString()
-    // We call the second scan with nowFn = T+5h, so the cooldown query checks:
-    //   triggered_at >= datetime('now', '-4 hours')
-    // The first alert's triggered_at = t0 = "2026-04-15T03:00:00Z"
-    // nowFn = T+5h = "2026-04-15T08:00:00Z"
-    // But the cooldown SQL uses datetime('now', '-4 hours') where 'now' is the SQLite clock.
-    // The cooldown SQL is time-based using SQLite's 'now', not nowFn.
-    // To properly test this, we need the implementation to use nowFn for the cooldown boundary.
-    // Per TECH-094 the cooldown uses triggered_at >= datetime('now', '-4 hours') which is SQLite 'now'.
-    // To make the test work, we manipulate the first alert's triggered_at to be 5h ago.
-
-    // Update the first alert's triggered_at to be definitely outside the 4h window
+    // Move the first alert's triggered_at outside the 4h SQL cooldown window
+    // (fingerprint is "scan:VCB:ta_overbought:2026-04-14" for this row).
     db.run("UPDATE alerts SET triggered_at = '2026-04-14T22:00:00Z'");
 
-    const t5h = new Date("2026-04-15T03:00:00Z"); // nowFn is irrelevant here since cooldown uses SQLite 'now'
+    // Day-2 scan — nowFn produces "2026-04-15T03:00:00Z" → fingerprint
+    // "scan:VCB:ta_overbought:2026-04-15" (different day) → new row allowed.
     const second = await runTaAlertScan({
       db,
       computeFn: makeComputeFn(74.2),
-      nowFn: () => t5h,
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
     });
     expect(second).toEqual({ scanned: 1, fired: 1 });
-    // Now 2 alerts in DB
+    // Now 2 alerts in DB — one per UTC day
     expect(countAlerts(db)).toBe(2);
   });
 

@@ -55,7 +55,8 @@ function buildTestDb(): Database {
       analysis_ids_json TEXT,
       message TEXT NOT NULL,
       read INTEGER NOT NULL DEFAULT 0,
-      user_note TEXT
+      user_note TEXT,
+      fingerprint TEXT UNIQUE
     )
   `);
 
@@ -269,33 +270,42 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
     expect(countAlerts(db)).toBe(1);
   });
 
-  // AC-7: Cooldown lifts after 4 hours
-  it("AC-7: cooldown does not suppress alert after 4 hours (triggered_at manipulated to >4h ago)", async () => {
+  // AC-7: Cooldown AND fingerprint lift after crossing a UTC day boundary
+  //
+  // FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS update: the fingerprint gate is per UTC
+  // day ("scan:{ticker}:{alertType}:{YYYY-MM-DD}"). A second alert for the same
+  // (ticker, alertType) is allowed only on a DIFFERENT UTC day.  Within the same
+  // calendar day the fingerprint UNIQUE constraint is authoritative — even if the
+  // 4h SQL cooldown window has passed.
+  //
+  // This test simulates the "next-day rescan" scenario: the first alert fires on
+  // 2026-04-14 and is backdated to clear the 4h SQL cooldown; the second scan
+  // uses nowFn = 2026-04-15, producing a different fingerprint → new row allowed.
+  it("AC-7: alert fires again on the next UTC day (fingerprint + cooldown both clear)", async () => {
     db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
     insertTodayCandle(db, "VCB", 88000);
 
-    const t0 = new Date("2026-04-15T03:00:00Z");
-
-    // First scan fires
+    // Day-1 scan fires
     await runBbAlertScan({
       db,
       computeFn: makeComputeFn({ upper: 86500, mid: 84000, lower: 82000 }),
-      nowFn: () => t0,
+      nowFn: () => new Date("2026-04-14T03:00:00Z"),
     });
     expect(countAlerts(db)).toBe(1);
 
-    // Manipulate the first alert's triggered_at to be definitely outside the 4h window
-    // The cooldown uses SQLite's datetime('now', '-4 hours') which uses real wall clock.
+    // Backdate the first alert's triggered_at outside the 4h cooldown window
+    // (fingerprint for this row = "scan:VCB:ta_bb_breakout_up:2026-04-14").
     db.run("UPDATE alerts SET triggered_at = '2026-04-14T22:00:00Z'");
 
-    // Second scan — cooldown should have lifted
+    // Day-2 scan — nowFn produces 2026-04-15 → fingerprint
+    // "scan:VCB:ta_bb_breakout_up:2026-04-15" (different day) → new row allowed.
     const second = await runBbAlertScan({
       db,
       computeFn: makeComputeFn({ upper: 86500, mid: 84000, lower: 82000 }),
-      nowFn: () => t0,
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
     });
     expect(second).toEqual({ scanned: 1, fired: 1 });
-    // Now 2 alerts in DB
+    // Now 2 alerts in DB — one per UTC day
     expect(countAlerts(db)).toBe(2);
   });
 

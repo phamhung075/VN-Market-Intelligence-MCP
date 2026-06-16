@@ -48,6 +48,10 @@ export function initAlertsTables(db: Database): void {
     ["outcome",           "TEXT"],
     ["outcome_at",        "TEXT"],
     ["outcome_detail",    "TEXT"],
+    // FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS: composite dedup key for scan jobs.
+    // UNIQUE enforced at DB level — INSERT OR IGNORE on duplicate fingerprint is
+    // a silent no-op, making the gate structurally unbypassable across parallel jobs.
+    ["fingerprint",       "TEXT UNIQUE"],
   ] as const) {
     try {
       db.exec(`ALTER TABLE alerts ADD COLUMN ${col} ${ddl}`);

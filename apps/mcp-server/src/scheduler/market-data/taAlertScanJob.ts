@@ -35,6 +35,7 @@ import { logger } from "../../infrastructure/logger.js";
 import { computeTAIndicators } from "../../infrastructure/microservices/clients.js";
 import type { ComputeTAResponse } from "../../infrastructure/microservices/clients.js";
 import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.js";
+import { computeScanAlertFingerprint } from "../../domain/services/alertDedup.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -116,12 +117,17 @@ const COOLDOWN_SQL = `
      AND triggered_at >= ?
 `;
 
+// FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS: INSERT OR IGNORE with fingerprint column.
+// The UNIQUE(fingerprint) constraint is the authoritative dedup gate — any
+// concurrent parallel scan that tries to insert the same (ticker, alertType, day)
+// will be silently rejected by SQLite regardless of timing.  The 4h cooldown
+// SQL check above is kept as a first-pass filter to avoid unnecessary TA calls.
 const INSERT_ALERT_SQL = `
-  INSERT INTO alerts
+  INSERT OR IGNORE INTO alerts
     (id, triggered_at, severity, signals_json, affected_actions_json,
-     analysis_ids_json, message, read, user_note)
+     analysis_ids_json, message, read, user_note, fingerprint)
   VALUES
-    (?, ?, ?, ?, ?, NULL, ?, 0, NULL)
+    (?, ?, ?, ?, ?, NULL, ?, 0, NULL, ?)
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -235,8 +241,15 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
       const affectedActionsJson = JSON.stringify([{ code }]);
       const id = crypto.randomUUID();
 
-      // i. Insert alert (no INSERT OR IGNORE — cooldown enforced above)
-      insertStmt.run(id, triggeredAt, "warning", signalsJson, affectedActionsJson, message);
+      // FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS: compute composite fingerprint so
+      // the DB-level UNIQUE constraint collapses any concurrent duplicate inserts
+      // (parallel job race, multi-cycle repeat within the same UTC day).
+      const daySlot = triggeredAt.slice(0, 10); // "YYYY-MM-DD"
+      const fingerprint = computeScanAlertFingerprint(code, alertType, daySlot);
+
+      // i. Insert alert — INSERT OR IGNORE; fingerprint UNIQUE constraint is the
+      //    authoritative dedup gate (cooldown check above is a cost-saving pre-filter).
+      insertStmt.run(id, triggeredAt, "warning", signalsJson, affectedActionsJson, message, fingerprint);
 
       // j. Count the fired alert
       fired++;
