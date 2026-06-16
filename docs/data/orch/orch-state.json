@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T21:44:15Z",
+  "_updated_at": "2026-06-16T22:40:40Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -135,11 +135,11 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-16T21:44:15Z",
+    "updated_at": "2026-06-16T22:40:40Z",
     "updated_by": "dev-team",
     "active_task_id": null,
     "next_agent": null,
-    "note": "ROUTER 2026-06-16T21:44:15Z — AF-1-LEADER-LOCK-BACKSTOP-DEFER DONE (router RAW-verified, commit 69babf46): leader-lock.md backstop-window defer gate ships gatherer-doublefire Root A. done_verified withheld (live unreadable-lock-in-window observation pending). DMS-1+DMS-2 still HELD behind ARCH-CRON-SCHEDULER-RELIABILITY. PUSH held (PO out-of-band)."
+    "note": "ROUTER 2026-06-16T22:40:40Z — CLEAN-AUDITOR-DOC-SIGNAL-TYPES DONE_VERIFIED (router RAW-verified first-hand, commit bab66a03): system-auditor docs now cite signal_type:signal_feedback (live enum agentSignalStore.ts) — D1/D2/D3 post_agent_signal disambiguated, D4/D5 signal_queue-row system_issue correctly preserved. DESIGN-GATHERER umbrella (ready, design-complete tracker) + DMS-1+DMS-2 (backlog) still HELD behind ARCH-CRON-SCHEDULER-RELIABILITY. PUSH held (PO out-of-band)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -759,7 +759,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T21:44:15Z",
+    "_updated_at": "2026-06-16T22:40:40Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -15821,6 +15821,28 @@
     ],
     "done_verified": [
       {
+        "id": "CLEAN-AUDITOR-DOC-SIGNAL-TYPES",
+        "type": "CLEAN",
+        "priority": "LOW",
+        "status": "DONE_VERIFIED",
+        "blocking": false,
+        "route_to": "agent-father",
+        "next_agent": null,
+        "zone": "docs/agents/system-auditor/",
+        "title": "system-auditor docs cite OLD post_agent_signal types after signal_feedback migration (220b48c5)",
+        "desc": "Doc-coherence residual: signal_feedback migration (220b48c5) changed accepted signal types but system-auditor docs still reference the old post_agent_signal enum. SCOPE (one coherent cleanup): (1) init.md:24 UNAMBIGUOUSLY stale — old types 'via post_agent_signal' which the tool now rejects -> rewrite to the current signal_feedback contract. (2) audit-dimensions.md:18/28/38 'Signal type: <old>' is AMBIGUOUS (signal_type vs dedup-namespace category) -> scope each: rename to the dedup-namespace category if that's the intent, else update to the new enum. (3) flow/ free-form dedup_key/title/signal_queue-row 'type' fields are INTENTIONAL (not enum) -> LEAVE untouched. agent-father owns system-auditor agent docs (per agent-md-factory rule).",
+        "size": "S",
+        "baseline_pass": "init.md:24 + audit-dimensions.md:18/28/38 reflect the current signal_feedback contract; no remaining stale post_agent_signal type references in system-auditor docs; free-form flow 'type' fields untouched. grep confirms.",
+        "source": "signal_queue router-docresidual-20260616T160246Z (LOW tech_debt — fail-loud debt, functional emit path already done_verified live signal_id 6342)",
+        "created_at": "2026-06-16T18:21:20Z",
+        "dispatch_note": "Low priority — route via agent-father (system-auditor agent-doc owner). Does NOT block any live path; emit already done_verified. Minted to ready[] so it stops re-reading as untriaged.",
+        "done_at": "2026-06-16T22:40:40Z",
+        "done_by": "agent-father",
+        "done_verified_at": "2026-06-16T22:40:40Z",
+        "done_verified_by": "router",
+        "live_verify": "LIVE RAW (router, first-hand): commit bab66a03 (3 owned paths, no churn). New enum verified vs apps/mcp-server/src/infrastructure/db/agentSignalStore.ts:39-51 SignalTypeSchema — signal_feedback in enum (L48), old labels microservice_degraded|data_stale|db_integrity_breach|system_health_report NOT in enum (= payload/dedup categories). init.md:24/47/81/137 -> signal_type:signal_feedback. audit-dimensions.md:18/28/38 (D1/D2/D3 post_agent_signal) -> 'Finding category (dedup namespace)'+signal_feedback. D4/D5 76/144 system_issue = free-form signal_queue-row type, live-confirmed tasksMdJanitorJob.ts:234, correctly untouched (scope rule #3). grep gate: zero stale post_agent_signal type refs (remaining = tool name + signal_feedback). DJ-GATE-1 ok. Doc-only: no runtime obs pending."
+      },
+      {
         "id": "FIX-CASCADE-CARD-INVALID-DATE",
         "epic": "INFOCARD-EXPAND-FETCH",
         "title": "Fix \"Invalid Date\" on the cascade-macro info card — definitif date-parse guard, not a symptom patch",
@@ -19567,23 +19589,6 @@
       }
     ],
     "ready": [
-      {
-        "id": "CLEAN-AUDITOR-DOC-SIGNAL-TYPES",
-        "type": "CLEAN",
-        "priority": "LOW",
-        "status": "READY",
-        "blocking": false,
-        "route_to": "agent-father",
-        "next_agent": "agent-father",
-        "zone": "docs/agents/system-auditor/",
-        "title": "system-auditor docs cite OLD post_agent_signal types after signal_feedback migration (220b48c5)",
-        "desc": "Doc-coherence residual: signal_feedback migration (220b48c5) changed accepted signal types but system-auditor docs still reference the old post_agent_signal enum. SCOPE (one coherent cleanup): (1) init.md:24 UNAMBIGUOUSLY stale — old types 'via post_agent_signal' which the tool now rejects -> rewrite to the current signal_feedback contract. (2) audit-dimensions.md:18/28/38 'Signal type: <old>' is AMBIGUOUS (signal_type vs dedup-namespace category) -> scope each: rename to the dedup-namespace category if that's the intent, else update to the new enum. (3) flow/ free-form dedup_key/title/signal_queue-row 'type' fields are INTENTIONAL (not enum) -> LEAVE untouched. agent-father owns system-auditor agent docs (per agent-md-factory rule).",
-        "size": "S",
-        "baseline_pass": "init.md:24 + audit-dimensions.md:18/28/38 reflect the current signal_feedback contract; no remaining stale post_agent_signal type references in system-auditor docs; free-form flow 'type' fields untouched. grep confirms.",
-        "source": "signal_queue router-docresidual-20260616T160246Z (LOW tech_debt — fail-loud debt, functional emit path already done_verified live signal_id 6342)",
-        "created_at": "2026-06-16T18:21:20Z",
-        "dispatch_note": "Low priority — route via agent-father (system-auditor agent-doc owner). Does NOT block any live path; emit already done_verified. Minted to ready[] so it stops re-reading as untriaged."
-      },
       {
         "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
         "type": "SPRINT-S",
