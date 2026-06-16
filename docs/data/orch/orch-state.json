@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T13:03:36Z",
+  "_updated_at": "2026-06-16T13:26:15Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -127,13 +127,13 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-16T13:03:36Z",
+    "updated_at": "2026-06-16T13:26:15Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
-    "next_agent": "dev-mcp-server",
+    "next_agent": "qa",
     "rebuild_required": false,
-    "next_action": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS live gate RED: ops ran a REAL build (image .Created 12:56:23Z > commit 75e7a80f, /app/src markers live) but router RAW-verify on the named-volume market.db found the fingerprint column ABSENT. ROOT: schema-alerts.ts:54 `ALTER TABLE alerts ADD COLUMN fingerprint TEXT UNIQUE` is illegal SQLite (no UNIQUE via ADD COLUMN) -> throws -> bare catch{} swallows -> column never created; INSERT OR IGNORE ... fingerprint then crashes every scan-alert write at next market-open scan. dev-mcp-server: change ddl TEXT UNIQUE -> TEXT + add partial UNIQUE INDEX (fingerprint) WHERE fingerprint IS NOT NULL (mirror broker_sanctions recreate precedent in same file) + add a non-self-confirming fault-path test. Then ops REAL rebuild, then ROUTER RAW re-verify column+index PRESENT on named-volume DB + no dup scan:% fingerprints. Then -> review. DEADLINE: land before next market-open scan ~02:00 UTC (latent alert-write crash until then).",
-    "note": "ROUTER 2026-06-16T13:03:36Z — FIX-ALERT-FINGERPRINT live gate RED. ops afd9a3bc rebuild was REAL (image 9d2f4113 .Created 12:56:23Z POSTDATES commit 75e7a80f 12:51:15Z; /app/src markers present — code live) — but router RAW PRAGMA on named-volume market.db: alerts.fingerprint column ABSENT (has_fp=0). Root = schema-alerts.ts:54 ALTER ADD COLUMN ... TEXT UNIQUE illegal in SQLite, swallowed by catch{} -> column never created -> INSERT OR IGNORE ... fingerprint will crash every scan-alert write at next market-open scan (~02:00 UTC; ~13h window). 125 green = self-confirming tests build their own schema; real rebuild ships source not runtime schema-state. Routed back to dev-mcp-server (same lane, WIP=1): TEXT UNIQUE->TEXT + partial UNIQUE INDEX (mirror in-file broker_sanctions) + non-self-confirming fault-path test. ops afd9a3bc image-epoch FAIL claim was a FALSE alarm (botched conversion) — router corrected first-hand. PUSH held (PO out-of-band)."
+    "next_action": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS promoted in_progress -> review after STRUCTURAL live-verify PASS (router RAW first-hand on named-volume market.db: alerts.fingerprint column PRESENT, idx_alerts_fingerprint partial unique index PRESENT WHERE fingerprint IS NOT NULL, 1283 legacy rows survived, 0 dup non-null fp; image 7bdbd867 .Created 13:20:52Z > commit ec03b6ee 13:17:43Z; health 200, 11 Up). done_verified WITHHELD: the dedup-under-real-load proof needs a LIVE market-open scan (~02:00 UTC) — cannot force (no-fake-data). QA may validate test quality + code in review; the FINAL done_verified gate is the market-open dedup-drain observation (<=1 row per (ticker,kind,fingerprint) per dedup window + pending backlog drains), MONITORED at next market open by the dev-team cron. PUSH held (PO out-of-band).",
+    "note": "ROUTER 2026-06-16T13:26:15Z — dev-team tick CLOSE: FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS lane resolved to REVIEW. Full chain: code 75e7a80f -> rebuild (silent-no-op caught: ALTER ADD COLUMN TEXT UNIQUE illegal, swallowed) -> migration fix ec03b6ee (TEXT UNIQUE->plain TEXT + partial UNIQUE INDEX, mirror in-file broker_sanctions, + non-self-confirming AC-7 fault-path test; 105 core tests, tsc clean) -> ops REAL rebuild 7bdbd867 -> router RAW live-verify on named-volume market.db: column+index PRESENT, 1283 legacy rows survived, 0 dup, health 200, 11 Up. Structural gate GREEN; done_verified WITHHELD pending market-open dedup-drain (no-fake-data — cannot force a scan). Coding mutex task:FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS to be released (owner_agent dev-mcp-server). PUSH held (PO out-of-band)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -711,7 +711,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T13:03:36Z",
+    "_updated_at": "2026-06-16T13:26:15Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -19008,40 +19008,6 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
-      },
-      {
-        "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
-        "type": "FIX",
-        "size": "M",
-        "title": "Wire computeAlertFingerprint into taAlertScanJob/alertScanParallelJob — HVN dedup regression (14-26 identical HIGH alerts/min, 665 pending)",
-        "desc": "REGRESSION of the 2026-04-28 alertGenerator.ts dedup fix. computeAlertFingerprint exists but is NOT invoked in the parallel scan write path (taAlertScanJob/alertScanParallelJob), so identical alerts bypass the dedup/cooldown gate (HVN fired 14-26x 08:37-08:59Z, unique IDs) and 665 alerts sit pending. GENERIC (/goal#2): the fingerprint+dedup gate must cover EVERY alert-write scan job, keyed on (ticker,signal_type,day) composite, not an HVN special-case. DoD (/goal#1 LIVE): RAW-verify against the named-volume market.db (NOT host decoy) — alerts table shows <=1 row per (ticker,kind,fingerprint) per dedup window after a market-open scan; pending backlog drains; no per-ticker literal.",
-        "zone": "apps/mcp-server/",
-        "files": [
-          "apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts",
-          "apps/mcp-server/src/scheduler/alerts/alertScanParallelJob.ts",
-          "apps/mcp-server/src/alerts/computeAlertFingerprint.ts",
-          "apps/mcp-server/src/alerts/storeAlerts.ts"
-        ],
-        "baseline_pass": true,
-        "route_to": "dev-mcp-server",
-        "owner_agent": "dev-mcp-server",
-        "status": "IN_PROGRESS",
-        "dispatched_ts": "2026-06-16T12:37:40Z",
-        "dispatched_by": "dev-team",
-        "source": "po-batch-20260616 (agent a2eadaea)",
-        "origin_reports": [
-          "3199",
-          "3200"
-        ],
-        "fix_commit": "75e7a80f",
-        "code_landed_ts": "2026-06-16T12:55:46Z",
-        "tests": "125 pass / tsc clean",
-        "rebuild_done_ts": "2026-06-16T13:03:36Z",
-        "live_verify": "RED — router RAW on named-volume market.db (PRAGMA table_info(alerts)) found fingerprint column ABSENT (has_fp=0, no fp index). Build WAS real (image sha256:9d2f4113 .Created 12:56:23Z > commit 75e7a80f 12:51:15Z; /app/src markers live) — defect is a schema-migration silent-no-op, not a stale image.",
-        "live_verify_root_cause": "schema-alerts.ts:54-58 runs `ALTER TABLE alerts ADD COLUMN fingerprint TEXT UNIQUE` in try{}catch{}; SQLite forbids ADD COLUMN with UNIQUE on an existing table -> throws -> swallowed -> column never created. CREATE TABLE omits it too. taAlertScanJob/bbAlertScanJob INSERT references fingerprint -> 'no such column' on every scan-alert write at next market-open scan.",
-        "prescribed_fix": "schema-alerts.ts: fingerprint ALTER ddl TEXT UNIQUE -> plain TEXT; add CREATE UNIQUE INDEX IF NOT EXISTS idx_alerts_fingerprint ON alerts(fingerprint) WHERE fingerprint IS NOT NULL. Mirror the in-file broker_sanctions precedent. Add a fault-path test that initAlertsTables on the OLD (no-fingerprint) schema then asserts column+index exist.",
-        "reopened_by": "dev-team",
-        "reopened_ts": "2026-06-16T13:03:36Z"
       }
     ],
     "ready": [
@@ -19101,6 +19067,51 @@
       }
     ],
     "review": [
+      {
+        "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
+        "type": "FIX",
+        "size": "M",
+        "title": "Wire computeAlertFingerprint into taAlertScanJob/alertScanParallelJob — HVN dedup regression (14-26 identical HIGH alerts/min, 665 pending)",
+        "desc": "REGRESSION of the 2026-04-28 alertGenerator.ts dedup fix. computeAlertFingerprint exists but is NOT invoked in the parallel scan write path (taAlertScanJob/alertScanParallelJob), so identical alerts bypass the dedup/cooldown gate (HVN fired 14-26x 08:37-08:59Z, unique IDs) and 665 alerts sit pending. GENERIC (/goal#2): the fingerprint+dedup gate must cover EVERY alert-write scan job, keyed on (ticker,signal_type,day) composite, not an HVN special-case. DoD (/goal#1 LIVE): RAW-verify against the named-volume market.db (NOT host decoy) — alerts table shows <=1 row per (ticker,kind,fingerprint) per dedup window after a market-open scan; pending backlog drains; no per-ticker literal.",
+        "zone": "apps/mcp-server/",
+        "files": [
+          "apps/mcp-server/src/scheduler/market-data/taAlertScanJob.ts",
+          "apps/mcp-server/src/scheduler/alerts/alertScanParallelJob.ts",
+          "apps/mcp-server/src/alerts/computeAlertFingerprint.ts",
+          "apps/mcp-server/src/alerts/storeAlerts.ts"
+        ],
+        "baseline_pass": true,
+        "route_to": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "status": "REVIEW",
+        "dispatched_ts": "2026-06-16T12:37:40Z",
+        "dispatched_by": "dev-team",
+        "source": "po-batch-20260616 (agent a2eadaea)",
+        "origin_reports": [
+          "3199",
+          "3200"
+        ],
+        "fix_commit": "75e7a80f",
+        "code_landed_ts": "2026-06-16T12:55:46Z",
+        "tests": "125 pass / tsc clean",
+        "rebuild_done_ts": "2026-06-16T13:03:36Z",
+        "live_verify": "RED — router RAW on named-volume market.db (PRAGMA table_info(alerts)) found fingerprint column ABSENT (has_fp=0, no fp index). Build WAS real (image sha256:9d2f4113 .Created 12:56:23Z > commit 75e7a80f 12:51:15Z; /app/src markers live) — defect is a schema-migration silent-no-op, not a stale image.",
+        "live_verify_root_cause": "schema-alerts.ts:54-58 runs `ALTER TABLE alerts ADD COLUMN fingerprint TEXT UNIQUE` in try{}catch{}; SQLite forbids ADD COLUMN with UNIQUE on an existing table -> throws -> swallowed -> column never created. CREATE TABLE omits it too. taAlertScanJob/bbAlertScanJob INSERT references fingerprint -> 'no such column' on every scan-alert write at next market-open scan.",
+        "prescribed_fix": "schema-alerts.ts: fingerprint ALTER ddl TEXT UNIQUE -> plain TEXT; add CREATE UNIQUE INDEX IF NOT EXISTS idx_alerts_fingerprint ON alerts(fingerprint) WHERE fingerprint IS NOT NULL. Mirror the in-file broker_sanctions precedent. Add a fault-path test that initAlertsTables on the OLD (no-fingerprint) schema then asserts column+index exist.",
+        "reopened_by": "dev-team",
+        "reopened_ts": "2026-06-16T13:03:36Z",
+        "migration_fix_commit": "ec03b6ee",
+        "migration_code_landed_ts": "2026-06-16T13:19:37Z",
+        "migration_tests": "7 pass in fingerprint file / 105 pass across 8 core alert+schema test files / tsc clean",
+        "migration_diff_verified": "router RAW first-hand: ec03b6ee ancestor of HEAD on main; 2 files only (schema-alerts.ts + test); ddl TEXT UNIQUE->TEXT + partial UNIQUE INDEX (fingerprint) WHERE fingerprint IS NOT NULL; AC-7 fault-path test seeds OLD no-fingerprint schema then asserts column+index PRESENT (non-self-confirming).",
+        "rebuild_commit": "ec03b6ee",
+        "rebuild_image": "sha256:7bdbd867 .Created 2026-06-16T13:20:52Z (epoch 1781616052 > commit ct 1781615863 by 189s)",
+        "live_verify_2": "GREEN (structural) — router RAW on named-volume market.db after rebuild: alerts.fingerprint TEXT column PRESENT (col count 18->19); idx_alerts_fingerprint PARTIAL unique index PRESENT (WHERE fingerprint IS NOT NULL); 1283 legacy rows survived (all NULL-fp, none purged); ZERO duplicate non-null fingerprints; /app/src markers live; health 200; 11 containers Up restarts=0.",
+        "done_verified_withheld": "Dedup-under-real-load proof PENDING — INSERT OR IGNORE dropping duplicate scan:% fingerprints needs a LIVE market-open scan (~02:00 UTC). Market closed now; cannot force (no-fake-data /goal). MONITOR next market-open scan: assert <=1 row per (ticker,kind,fingerprint) per dedup window + pending backlog drains, THEN -> done_verified.",
+        "monitor_deadline": "2026-06-16T02:00:00Z-class next market-open scan (next session ~2026-06-17 02:00 UTC)",
+        "promoted_to_review_ts": "2026-06-16T13:26:15Z",
+        "promoted_by": "dev-team"
+      },
       {
         "id": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
         "type": "FIX",
