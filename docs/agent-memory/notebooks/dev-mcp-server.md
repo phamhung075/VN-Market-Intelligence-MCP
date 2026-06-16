@@ -1,5 +1,15 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-16 · FIX-SIGNALS-STOCK-FULL-DETAIL — full finding_data + ISO created_at exposed on /api/signals/stock/:code
+
+**Task:** FIX-SIGNALS-STOCK-FULL-DETAIL (INFOCARD-EXPAND-FETCH epic)
+**Root cause:** GET /api/signals/stock/:code flattened the rich finding_data JSON into a single `detail` string and discarded finding_data, payload, source, and raw created_at (SQLite format 'YYYY-MM-DD HH:MM:SS' → Invalid Date on client).
+**Fix:** Extracted routes/stockSignalsHandler.ts — querySignalsForStock() (generic across all signal types: chain_catalyst, urgent_news, price_anomaly, price_confirmation, cross_validate, and any future type) + normalizeCreatedAt() (SQLite→ISO-8601 UTC). server.ts endpoint now delegates to handler; `detail` kept for back-compat; `finding_data`, `payload`, `source` added to every response item.
+**Tests:** 22 new ACs in FIX-SIGNALS-STOCK-FULL-DETAIL.test.ts (normalizeCreatedAt unit tests AC-9 + per-type finding_data shape AC-1/2/3/4/5/6/7/8 + shape invariants). tsc clean.
+**Commit:** pending | **rebuild_required:** yes (server.ts changed)
+
+Zone health: tsc clean, 164 tools intact, scheduler 3 cron.schedule, signals endpoint now returns full structured finding_data+source+ISO dates | HEALTHY
+
 ## 2026-06-16 · FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS — fingerprint dedup gate wired into parallel scan jobs
 
 **Task:** FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS (M — REGRESSION, 14-26 duplicate HVN alerts/cycle)

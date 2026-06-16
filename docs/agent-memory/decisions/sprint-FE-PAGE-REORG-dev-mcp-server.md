@@ -32,6 +32,15 @@
 - Option B: Delete-synthetic-bar (shape predicate) — purge rows with vol=0 AND O=H=L=C. Selected: no fake data stays in DB, idempotent, safe (vol>0 real candles immune), runs at startup so live DB repaired on next container restart.
 **why-decision:** Option B satisfies /goal#1 (no fake data served) and /goal#2 (generic shape predicate, no date/ticker literals). Running at startup ensures the live named-volume DB is repaired immediately on the ops rebuild+deploy.
 **why-change:** No change from design; FR-S1 in writeOhlcvBatch already blocks NEW synthetic bars — this repair only handles pre-fix residue.
+### STEP dev-mcp-server-S5 · dev-mcp-server · 2026-06-16T10:00:00Z
+**task-id:** FIX-SIGNALS-STOCK-FULL-DETAIL
+**what-done:** Extracted stockSignalsHandler.ts with querySignalsForStock + normalizeCreatedAt; replaced inline map in server.ts endpoint; 22-test suite across 5 signal types.
+**what-considered:**
+- Option A: Inline edits to server.ts map() — rejected: no isolation seam for tests, too large context block
+- Option B: Extract to routes/stockSignalsHandler.ts (handler module pattern, matches alertsHandler/cascadeSignalHandler) — CHOSEN: testable, DRY, zero boilerplate in server.ts
+**why-decision:** Handler module is the established pattern; all finding_data is passed through generically (no signal_type switch); normalizeCreatedAt handles both SQLite 'YYYY-MM-DD HH:MM:SS' and already-ISO inputs.
+**why-change:** No change from spec; /goal#1 (no fabrication) enforced — null finding_data returns null, not empty object.
+
 ### STEP dev-mcp-server-S1 · dev-mcp-server · 2026-06-16T16:05:00Z
 **task-id:** FIX-CI-RED-STANDING-1837A-1352A
 **what-done:** Fixed 1352a (4 fail/1 error) by guarding bctc_table_rows/bctc_md_tables db.prepare() in bctcPdfPullJob.ts with try/catch so missing-schema DB (test) skips gate.

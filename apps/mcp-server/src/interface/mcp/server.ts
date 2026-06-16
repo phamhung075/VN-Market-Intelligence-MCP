@@ -143,6 +143,8 @@ import { handleGetFedRatesHttp } from "./routes/fedRatesHandler.js";
 import { handleGetReputationHttp } from "./routes/reputationHandler.js";
 // TASK17-PAGE19: GET /api/news-buzz — News-buzz / mention-velocity leaderboard
 import { handleGetNewsBuzzHttp } from "./routes/newsBuzzHandler.js";
+// FIX-SIGNALS-STOCK-FULL-DETAIL: full finding_data + ISO created_at for GET /api/signals/stock/:code
+import { querySignalsForStock } from "./routes/stockSignalsHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX-MCP-500-SYMBOL-TO-STRING: Bun-native Node.js ↔ Web Standard conversion
@@ -1336,72 +1338,10 @@ export async function createBunServer(
       }
 
       try {
-        // Check which optional columns exist (schema evolution guard)
-        let hasConfidenceScore = false;
-        let hasFindingData = false;
-        try {
-          db.prepare("SELECT confidence_score FROM agent_signals LIMIT 0").all();
-          hasConfidenceScore = true;
-        } catch { /* column absent — older schema */ }
-        try {
-          db.prepare("SELECT finding_data FROM agent_signals LIMIT 0").all();
-          hasFindingData = true;
-        } catch { /* column absent */ }
-
-        const confidenceCol = hasConfidenceScore ? ", confidence_score" : "";
-        const findingCol = hasFindingData ? ", finding_data" : "";
-
-        type SignalRow = {
-          id: number;
-          stock_code: string | null;
-          signal_type: string;
-          payload: string;
-          created_at: string;
-          confidence_score?: number;
-          finding_data?: string | null;
-        };
-
-        const rows = db
-          .prepare<SignalRow, [string, number]>(
-            `SELECT id, stock_code, signal_type, payload, created_at${confidenceCol}${findingCol}
-             FROM agent_signals
-             WHERE stock_code = ?
-             ORDER BY created_at DESC
-             LIMIT ?`,
-          )
-          .all(code, limit) as SignalRow[];
-
-        // Shape each row for the frontend: extract direction + detail from payload/finding_data
-        const signals = rows.map((row) => {
-          let payload: Record<string, unknown> = {};
-          let findingData: Record<string, unknown> = {};
-          try { payload = JSON.parse(row.payload) as Record<string, unknown>; } catch {}
-          if (row.finding_data) {
-            try { findingData = JSON.parse(row.finding_data) as Record<string, unknown>; } catch {}
-          }
-
-          const direction =
-            typeof findingData["direction"] === "string" ? findingData["direction"] :
-            typeof findingData["catalyst_direction"] === "string" ? findingData["catalyst_direction"] :
-            typeof payload["direction"] === "string" ? payload["direction"] :
-            "NEUTRAL";
-
-          const detail =
-            typeof payload["detail"] === "string" ? payload["detail"] :
-            typeof findingData["summary"] === "string" ? findingData["summary"] :
-            typeof payload["title"] === "string" ? payload["title"] :
-            "";
-
-          return {
-            id: row.id,
-            stock_code: row.stock_code,
-            signal_type: row.signal_type,
-            direction,
-            confidence_score: row.confidence_score ?? 50,
-            detail,
-            created_at: row.created_at,
-          };
-        });
+        // FIX-SIGNALS-STOCK-FULL-DETAIL: delegate to stockSignalsHandler.
+        // Returns full structured finding_data + payload + source + ISO created_at.
+        // Generic across all signal types — no special-casing.
+        const signals = querySignalsForStock(db, code, limit);
 
         // Build accuracy map: one entry per distinct signal_type in returned signals.
         // Guard: if signal_outcomes table does not exist yet, skip accuracy key.
