@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T12:37:40Z",
+  "_updated_at": "2026-06-16T12:55:46Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -127,13 +127,13 @@
   ],
   "head": {
     "status": "in_progress",
-    "updated_at": "2026-06-16T12:37:40Z",
+    "updated_at": "2026-06-16T12:55:46Z",
     "updated_by": "dev-team",
     "active_task_id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
-    "next_agent": "dev-mcp-server",
-    "rebuild_required": false,
-    "next_action": "Implement FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS in apps/mcp-server/: wire computeAlertFingerprint into the parallel scan write path (taAlertScanJob + alertScanParallelJob) so identical alerts hit the dedup/cooldown gate. GENERIC composite key (ticker,signal_type,day) — no HVN special-case. RAW-verify on named-volume market.db: <=1 row per (ticker,kind,fingerprint) per window post-scan + 665 backlog drains. Then -> review with rebuild_required=true.",
-    "note": "ROUTER 2026-06-16T12:37:40Z — dev-team tick: PO BATCH dispatched ONE coding FIX. FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS (HVN dedup regression, 665 pending) -> dev-mcp-server (zone apps/mcp-server/, M). WIP=1/2 coding lanes (2nd reserved). PARALLEL (no coding slot): ops-vps-fetch BCTC-VPS root-isolation probe under FIX-BCTC-VPS-PIPELINE-STALE-5D; agent-father 2 agent-.md fixes (system-auditor post_agent_signal emit-schema + fb-poster L78/L81 noarg). PO caught item#2 vnstockTradingStats as STALE (already done_verified FIX-VNSTOCK-TRADINGSTATS-CRASH; trigger read pre-deploy crash row). All other reports dedup'd/held/note-only. PUSH held (PO out-of-band)."
+    "next_agent": "ops",
+    "rebuild_required": true,
+    "next_action": "Code for FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS landed at 75e7a80f. COPY-baked /app/src => ops MUST run real `docker compose build mcp-server` THEN force-recreate --no-deps (force-recreate alone ships nothing). Then ROUTER RAW-verifies LIVE on named-volume market.db: (a) image .Created epoch > commit 75e7a80f epoch, (b) container /app/src markers computeScanAlertFingerprint + INSERT OR IGNORE + fingerprint, (c) alerts table has fingerprint TEXT UNIQUE column, (d) no duplicate scan:% fingerprints. Dedup-under-parallel-load proof is MONITORED until next market-open scan (market currently closed; no-fake-data — cannot force a scan). Then in_progress -> review.",
+    "note": "ROUTER 2026-06-16T12:55:46Z — dev-team tick: all 3 workers done+RAW-verified. dev-mcp-server FIX-ALERT-FINGERPRINT code landed 75e7a80f (125 tests, tsc clean, GENERIC key, no HVN special-case) -> AWAIT-REBUILD (ops dispatched). agent-father Fix1 system-auditor emit-schema rewrite 220b48c5 VERIFIED sound (post_agent_signal full contract: from_agent/to_agent/signal_type=signal_feedback/payload.passthrough; finding_data null->{} validates) + Fix2 fb-poster STALE-no-edit confirmed correct; mutex released. ops-vps-fetch BCTC-VPS verdict RAW-corroborated: NOT dead — pipeline functional since 5947f3f9 (afrLoop regex), vn-bctc-fetch healthy live, last-done 2026-06-15 22:40:49Z; current 0-URLs = source-side non-filing (9/10 not filed); 2 hardening follow-ups (SSC-503-retry, queue-maxage-gate) -> PO triage next tick via signal file. PUSH held (PO out-of-band)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -711,7 +711,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T12:37:40Z",
+    "_updated_at": "2026-06-16T12:55:46Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -19032,7 +19032,10 @@
         "origin_reports": [
           "3199",
           "3200"
-        ]
+        ],
+        "fix_commit": "75e7a80f",
+        "code_landed_ts": "2026-06-16T12:55:46Z",
+        "tests": "125 pass / tsc clean"
       }
     ],
     "ready": [
