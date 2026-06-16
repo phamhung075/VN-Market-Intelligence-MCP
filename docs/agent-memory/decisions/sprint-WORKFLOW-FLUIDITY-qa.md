@@ -6,6 +6,21 @@
 
 ---
 
+### STEP qa-S4 · qa · 2026-06-16T15:52:00Z
+**task-id:** FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK
+**what-done:** VERIFICATION-ONLY gate. Probed live schema, grepped all emit blocks in auditor flow files, ran live emit in mcp-server container with exact rewritten payload shape.
+**what-considered:**
+- Live schema from source (agentSignalStore.ts L39-51): SignalTypeSchema = z.enum([..., "signal_feedback", ...]). signal_feedback IS in the live enum. Old auditor types (microservice_degraded, data_stale, db_integrity_breach, system_health_report) are NOT.
+- All 5 actual call_tool post_agent_signal invocation blocks in auditor flow files (tier1-probe.md L75, L127; main.md L195, L488, L516) use {from_agent, to_agent, signal_type:"signal_feedback", payload:{...}} — new live schema.
+- Old schema {type, ts, summary, checks} fully absent from all actual call blocks (confirmed by diff of 220b48c5).
+- Prose references (main.md L335 doc-audit-git-err, L454 null-guard) correctly say signal_type: signal_feedback.
+- orch-state signal_queue rows still use {type: "data_stale", type: "db_integrity_breach"} — intentionally left intact per commit message (these are queue routing fields, not tool args).
+- Tier-3 Roll-Up payload (main.md L523-525): tier/summary/checks are inside payload:{...} — valid as auditor-specific payload fields.
+- Live emit probe: bun in container wrote signal_id=6342 from_agent=system-auditor, signal_type=signal_feedback to agent_signals DB. DB row confirmed landed. Old type microservice_degraded was REJECTED by live enum (Zod invalid_enum_value).
+- tools/package/system-auditor.md line 41 has stale example {type: "microservice_degraded"} in grammar comment — NOT an executed emit block; the flow files are the only executed code paths.
+**why-decision:** All 3 gates pass: (1) live schema matches — all blocks use {from_agent, to_agent, signal_type:"signal_feedback", payload}; (2) live emit accepted — signal_id=6342, no -32602, no schema rejection; (3) all 5 emit blocks migrated, no stale block remaining in flow files. PASS.
+**why-change:** no change from plan.
+
 ### STEP qa-S3 · qa · 2026-06-16T14:35:00Z
 **task-id:** FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS
 **what-done:** Code + test quality review only (no live rebuild, no lane flip). Reviewed schema-alerts.ts fingerprint migration block and AC-7 fault-path test from commit ec03b6ee.
