@@ -133,7 +133,17 @@
     "next_agent": "dev-frontend",
     "note": "PM PLANNING COMPLETE: Tasks T-1 through T-5 broken down atomically (5 READY tasks + 1 Wave-3 backlog follow-on). BA-FE-PAGE-REORG FR-4 redirected to reuse fetchUtils.ts. 28 Cluster A loaders + 29 Cluster B proxies + 4 Cluster C client wrappers scoped. NEXT: dev-frontend claims T-1, executes T-1→(T-2||T-3||T-4 parallel)→T-5. Critical path: T-1 must complete first; T-2/T-3/T-4 can run in parallel (disjoint files).",
     "push_note": "PO green-lit the fleet push this tick. 13-behind origin/main classified ALL benign cloud-chore/docs (8x chore(health) recheck, 2x chore(memory) notebook, 1x chore(tasks) signal_queue append, 1x docs(reports) TNB audit handoff, 1x chore(memory/tran-ngoc-bau)) — zero code, zero mcp-server conflict. tsc GREEN so the red pre-push hook no longer strands. Plan: git pull --rebase origin main (replay 123 work commits atop 13 chores) -> re-verify bunx tsc --noEmit=0 -> git push. The push is executed by po out-of-band and is NOT part of this orch-state commit.",
-    "reconciled_from": ".head was on FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (po-s76 reconcile_note); that task is now signed off."
+    "reconciled_from": ".head was on FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (po-s76 reconcile_note); that task is now signed off.",
+    "push_executed": {
+      "at": "2026-06-16T08:32:04Z",
+      "by": "po-s84",
+      "method": "isolated git worktree (/tmp/fleet-push-wt) — main dirty tree never touched, bg agents undisturbed",
+      "origin_range": "42290a40 -> 0c826511",
+      "result": "ahead 149 -> 0-behind; merged 18 benign cloud-chore commits; pre-push tsc GREEN; push EXIT=0",
+      "merge_conflict_resolved": "docs/data/orch/orch-state.json — kept HEAD _updated_at + preserved BOTH the 2 po-s76 sau-d4 reconcile rows AND origin's NEW tnb-20260615T201300 audit-handoff signal row",
+      "ci_result": "origin CI bun test RED on a STANDING pre-existing failure (1837a + 1352a) — independent of the push; follow-on FIX-CI-RED-STANDING-1837A-1352A minted; push-gated done_verified WITHHELD until green",
+      "main_tree_note": "main working-tree branch ref deliberately LEFT at 10797e26 (not fast-forwarded) — 3 dirty files overlap the FF delta; ref-move risks stranding a bg agent mid-write for zero benefit since the work is already on origin. Router reconciles the ref on its next fetch pass."
+    }
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12452,6 +12462,31 @@
         ],
         "baseline_pass": true,
         "size": "M"
+      },
+      {
+        "id": "FIX-CI-RED-STANDING-1837A-1352A",
+        "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-06-16T08:32:04Z",
+        "source": "2026-06-16 fleet-push (origin 0c826511) — CI `bun test` per-file-isolation RED, reproduced LOCALLY + on re-run (deterministic, same 2 files). Pre-existing: NOT in push delta, push added zero .ts.",
+        "blocking": true,
+        "blocking_reason": "origin CI cannot go green while these 2 fail → the 4 tasks gated on ci_green_on_subsequent_push (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) stay blocked from done_verified.",
+        "root_cause": "TWO independent standing failures: (1) 1837a-pipeline-state.test.ts AC-2 asserts head.status ∈ a fixed list that is MISSING 'ready' — but the live orch-state head.status IS 'ready' (a legitimate board value), so the test is a STALE assertion (same class as commit 728ef563 which previously added 'active'+'qa' to this same enum). (2) 1352a-async-extraction-race.test.ts: 4 fail / 1 error in the BCTC async extraction-race suite — needs a genuine triage of the race/fixture.",
+        "fix_spec": "(1) 1837a: add 'ready' to the valid head.status enum the test asserts against — verify against the orch-state-access.md canonical-status SSOT, NOT hardcoded (extend the SSOT list if 'ready' is genuinely valid, which it is per the current live head). (2) 1352a: triage the 4 failing assertions + 1 error in the async-extraction-race suite — determine whether it is a stale assertion, a fixture/mock-restore leak (per-file-isolation), or a genuine race regression; fix root cause, fail-loud, no test-skip.",
+        "generic_mandate": "1837a fix must source the valid-status set from the orch-state schema SSOT (docs/standards/orch-state-access.md) so future legitimate statuses don't re-break it — do NOT just append one literal. 1352a fix must address the actual race/fixture cause, not delete/skip the assertion.",
+        "verification_gate": "CI `bun test` (the EXACT per-file-isolation command, full suite) GREEN on origin AFTER this push — `gh run list --branch main --workflow CI` shows conclusion=success for a SHA containing this fix. Local: `bun test src/__tests__/1837a-pipeline-state.test.ts` AND `bun test src/__tests__/1352a-async-extraction-race.test.ts` both green. THIS unblocks the 4 ci_green_on_subsequent_push-gated tasks → promote them to done_verified once green.",
+        "files": [
+          "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
+          "apps/mcp-server/src/__tests__/1352a-async-extraction-race.test.ts",
+          "docs/standards/orch-state-access.md"
+        ],
+        "baseline_pass": false,
+        "size": "S"
       }
     ],
     "closed_sprints": [
