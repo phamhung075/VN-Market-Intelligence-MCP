@@ -1,5 +1,9 @@
 # QA — Notebook
 
+## cycle-285 · 2026-06-16 · FIX-CI-RED-STANDING-1837A-1352A QA gate — APPROVED (done_verified WITHHELD)
+
+Task: FIX-CI-RED-STANDING-1837A-1352A | impl_commit: 1c8467f9 | Verdict: APPROVED | Board: review→done, done_verified WITHHELD | head: in_progress→idle | DoD-1: 1837a-pipeline-state.test.ts GREEN (5/0) — fix sources valid-status set from orch-state-access.md §5 SSOT (7 values: active/idle/in_progress/done/done_verified/review/ready), generic mandate met, no bare literal append | DoD-2: 1352a-async-extraction-race.test.ts GREEN (8/0) — race/fixture root cause addressed, no test-skip, fail-loud preserved | DoD-3: bctcPdfPullJob no-regression CONFIRMED — additive try/catch guard is noop under full-schema production DB; OCR-worker-crash logs non-fatal, tests green | DoD-4: Genericness PASS — zero per-ticker/per-date hardcode in fix; status set sourced from SSOT not inline literal | Router RAW re-verify (independent, first-hand): 13 pass / 0 fail / 43 expect() / 381ms across both files simultaneously | done_verified WITHHELD: requires GitHub Actions Linux CI green AFTER PO out-of-band push (push-gate HELD); broader 20-file/49-fail local = HOST WEATHER (Bun-JIT SIGILL sdk1.29.0+zod3.25.76 + live-data flaps) — disjoint from change, NOT Linux-CI fails, NOT regressions | Downstream-gates: CI-RED-b7b84d9b-FIX + CI-RED-d20468c0-FIX + VMT-8-MACRO-GRACEFUL-FAILCLOSE + FIX-FOREIGN-FLOW-DEAD-ENDPOINT stay BLOCKED until done_verified post-push | Finalize-only cycle: prior run died on ENOSPC disk-full deadlock (now resolved 19–23GiB free), verification already established pre-death | DJ: sprint-CI-RED-STANDING-1837A-1352A-qa.md §qa-S1
+
 ## cycle-284 · 2026-06-16 · INFOCARD-EXPAND-FETCH epic QA gate — #1 APPROVED, #2 APPROVED, #3 CHANGES_REQUESTED
 
 Epic: INFOCARD-EXPAND-FETCH | Tasks: FIX-SIGNALS-STOCK-FULL-DETAIL (#2, backend), FIX-CASCADE-CARD-INVALID-DATE (#1, frontend), FIX-INFOCARD-DROPDOWN-EXPAND (#3, frontend)

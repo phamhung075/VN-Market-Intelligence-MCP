@@ -134,12 +134,12 @@
     }
   ],
   "head": {
-    "status": "in_progress",
-    "updated_at": "2026-06-16T18:21:20Z",
-    "updated_by": "po",
-    "active_task_id": "FIX-CI-RED-STANDING-1837A-1352A",
-    "next_agent": "qa",
-    "note": "PO triage tick 2026-06-16T18:21:20Z — drained 3 NEW signals. HEAD: dispatch qa for FIX-CI-RED-STANDING-1837A-1352A (review[], deterministic 1837a+1352a fix GREEN). Per signal router-ci-suite-weather (RESOLVED) the broader 20-file/49-fail red is HOST-WEATHER not a regression -> qa verifies (local 1837a+1352a green; watch Linux Actions run green on the deferred push) -> done_verified -> unblocks the 4 ci_green_on_subsequent_push-gated tasks + lets the held 61-ahead/28-behind push land on a green baseline. Also minted this tick: FIX-MARKET-BREADTH-MISSING (HIGH, user-reported -> ops-vps-fetch recon-first; highest user-facing pri, queued in ready[]) + CLEAN-AUDITOR-DOC-SIGNAL-TYPES (LOW -> agent-father)."
+    "status": "idle",
+    "updated_at": "2026-06-16T18:35:00Z",
+    "updated_by": "qa",
+    "active_task_id": null,
+    "next_agent": null,
+    "note": "qa cycle-285 FIX-CI-RED-STANDING-1837A-1352A APPROVED → done (done_verified WITHHELD pending Linux CI post-push). Head idle."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -12599,6 +12599,47 @@
     ],
     "done": [
       {
+        "id": "FIX-CI-RED-STANDING-1837A-1352A",
+        "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
+        "type": "FIX",
+        "owner": "po",
+        "status": "done",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "next_agent": null,
+        "created_at": "2026-06-16T08:32:04Z",
+        "source": "2026-06-16 fleet-push (origin 0c826511) — CI `bun test` per-file-isolation RED, reproduced LOCALLY + on re-run (deterministic, same 2 files). Pre-existing: NOT in push delta, push added zero .ts.",
+        "blocking": true,
+        "blocking_reason": "origin CI cannot go green while these 2 fail → the 4 tasks gated on ci_green_on_subsequent_push (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) stay blocked from done_verified.",
+        "root_cause": "TWO independent standing failures: (1) 1837a-pipeline-state.test.ts AC-2 asserts head.status ∈ a fixed list that is MISSING 'ready' — but the live orch-state head.status IS 'ready' (a legitimate board value), so the test is a STALE assertion (same class as commit 728ef563 which previously added 'active'+'qa' to this same enum). (2) 1352a-async-extraction-race.test.ts: 4 fail / 1 error in the BCTC async extraction-race suite — needs a genuine triage of the race/fixture.",
+        "fix_spec": "(1) 1837a: add 'ready' to the valid head.status enum the test asserts against — verify against the orch-state-access.md canonical-status SSOT, NOT hardcoded (extend the SSOT list if 'ready' is genuinely valid, which it is per the current live head). (2) 1352a: triage the 4 failing assertions + 1 error in the async-extraction-race suite — determine whether it is a stale assertion, a fixture/mock-restore leak (per-file-isolation), or a genuine race regression; fix root cause, fail-loud, no test-skip.",
+        "generic_mandate": "1837a fix must source the valid-status set from the orch-state schema SSOT (docs/standards/orch-state-access.md) so future legitimate statuses don't re-break it — do NOT just append one literal. 1352a fix must address the actual race/fixture cause, not delete/skip the assertion.",
+        "verification_gate": "CI `bun test` (the EXACT per-file-isolation command, full suite) GREEN on origin AFTER this push — `gh run list --branch main --workflow CI` shows conclusion=success for a SHA containing this fix. Local: `bun test src/__tests__/1837a-pipeline-state.test.ts` AND `bun test src/__tests__/1352a-async-extraction-race.test.ts` both green. THIS unblocks the 4 ci_green_on_subsequent_push-gated tasks → promote them to done_verified once green.",
+        "files": [
+          "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
+          "apps/mcp-server/src/__tests__/1352a-async-extraction-race.test.ts",
+          "docs/standards/orch-state-access.md"
+        ],
+        "baseline_pass": false,
+        "size": "S",
+        "promoted_at": "2026-06-16T15:37:15Z",
+        "promoted_by": "dev-team",
+        "promotion_reason": "Router RAW-verified origin HEAD 207658f3 `bun test` RED = EXACTLY 1352a-async-extraction-race + 1837a-pipeline-state (13064 pass/53 skip/5 fail). Per /goal#1 recheck-shipped-code both reds are REAL (deterministic, reproduced local+rerun), not flaky. blocking:true: gates 4 ci_green_on_subsequent_push tasks (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) from done_verified. Coding-WIP has a free slot (only architect ARCH-CRON in_progress). Leads ready[].",
+        "dispatched_at": "2026-06-16T15:43:48Z",
+        "dispatched_by": "dev-team",
+        "dispatched_to": "dev-mcp-server",
+        "impl_commit": "1c8467f9",
+        "code_verify": "GREEN (router RAW first-hand via scripts/ci-per-file-isolation.sh 8 — bj83h3qdj): 13040 pass / 49 fail / 20 files; NEITHER 1837a NOR 1352a in the fail set (both named reds GREEN); bctcPdfPullJob.ts has 0 failing test (1352a 0-regression); the lone BCTC-domain fail bctc-eval-integration RE-RAN isolated by router = 9 pass / 0 fail (parallel-contention weather, not a regression). 1352a guard is additive-noop under full migration.",
+        "broader_red_note": "20-file / 49-fail full-suite set = HOST WEATHER (3x SIGILL Bun-JIT corruption sdk1.29.0+zod3.25.76 under P=8 on memory-constrained host — local-only, NOT Linux-CI; + ~17 live-data/integration flaps). Disjoint from change. NOT this task scope, NOT a regression. The 2 DETERMINISTIC standing reds (1837a+1352a) are fixed.",
+        "push_gate": "HELD — 'CI green' NOT provable on this host (weather masks it); real gate = GitHub Actions Linux post-push (unobservable without push). PO out-of-band call. Router watches Actions run to success before done_verified.",
+        "qa_dod_note": "DoD = 1837a+1352a green (met) + bctcPdfPullJob no-regression (met). Re-running FULL isolation on this host re-hits the same SIGILL+live-data weather — do NOT chase host weather; honest gate = 2 named tests + no-regression.",
+        "promoted_to_review_ts": "2026-06-16T16:23:43Z",
+        "qa_approved_at": "2026-06-16T18:35:00Z",
+        "qa_approved_by": "qa",
+        "qa_verdict": "APPROVED — 4 DoD met; done_verified WITHHELD pending GitHub Actions Linux CI green post-push (PO deferred call). Blocks: CI-RED-b7b84d9b-FIX / CI-RED-d20468c0-FIX / VMT-8-MACRO-GRACEFUL-FAILCLOSE / FIX-FOREIGN-FLOW-DEAD-ENDPOINT stay BLOCKED until done_verified.",
+        "done_verified_withheld_reason": "requires GitHub Actions Linux CI green AFTER PO out-of-band push; push-gate HELD; broader 20-file/49-fail local = HOST WEATHER (Bun-JIT SIGILL), NOT Linux-CI fails"
+      },
+      {
         "id": "FIX-BCTC-SSC-503-RETRY",
         "title": "FIX-BCTC-SSC-503-RETRY — add 1-retry+60s backoff in _ssc_curl_search() step1 before returning None on a transient SSC HTTP 503",
         "type": "FIX",
@@ -19437,43 +19478,6 @@
     ],
     "review": [
       {
-        "id": "FIX-CI-RED-STANDING-1837A-1352A",
-        "title": "FIX-CI-RED-STANDING-1837A-1352A — origin `bun test` RED on 2 standing-pre-existing files (1837a head.status enum missing 'ready' + 1352a async-extraction-race 4-fail/1-error)",
-        "type": "FIX",
-        "owner": "po",
-        "status": "REVIEW",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "next_agent": "qa",
-        "created_at": "2026-06-16T08:32:04Z",
-        "source": "2026-06-16 fleet-push (origin 0c826511) — CI `bun test` per-file-isolation RED, reproduced LOCALLY + on re-run (deterministic, same 2 files). Pre-existing: NOT in push delta, push added zero .ts.",
-        "blocking": true,
-        "blocking_reason": "origin CI cannot go green while these 2 fail → the 4 tasks gated on ci_green_on_subsequent_push (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) stay blocked from done_verified.",
-        "root_cause": "TWO independent standing failures: (1) 1837a-pipeline-state.test.ts AC-2 asserts head.status ∈ a fixed list that is MISSING 'ready' — but the live orch-state head.status IS 'ready' (a legitimate board value), so the test is a STALE assertion (same class as commit 728ef563 which previously added 'active'+'qa' to this same enum). (2) 1352a-async-extraction-race.test.ts: 4 fail / 1 error in the BCTC async extraction-race suite — needs a genuine triage of the race/fixture.",
-        "fix_spec": "(1) 1837a: add 'ready' to the valid head.status enum the test asserts against — verify against the orch-state-access.md canonical-status SSOT, NOT hardcoded (extend the SSOT list if 'ready' is genuinely valid, which it is per the current live head). (2) 1352a: triage the 4 failing assertions + 1 error in the async-extraction-race suite — determine whether it is a stale assertion, a fixture/mock-restore leak (per-file-isolation), or a genuine race regression; fix root cause, fail-loud, no test-skip.",
-        "generic_mandate": "1837a fix must source the valid-status set from the orch-state schema SSOT (docs/standards/orch-state-access.md) so future legitimate statuses don't re-break it — do NOT just append one literal. 1352a fix must address the actual race/fixture cause, not delete/skip the assertion.",
-        "verification_gate": "CI `bun test` (the EXACT per-file-isolation command, full suite) GREEN on origin AFTER this push — `gh run list --branch main --workflow CI` shows conclusion=success for a SHA containing this fix. Local: `bun test src/__tests__/1837a-pipeline-state.test.ts` AND `bun test src/__tests__/1352a-async-extraction-race.test.ts` both green. THIS unblocks the 4 ci_green_on_subsequent_push-gated tasks → promote them to done_verified once green.",
-        "files": [
-          "apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts",
-          "apps/mcp-server/src/__tests__/1352a-async-extraction-race.test.ts",
-          "docs/standards/orch-state-access.md"
-        ],
-        "baseline_pass": false,
-        "size": "S",
-        "promoted_at": "2026-06-16T15:37:15Z",
-        "promoted_by": "dev-team",
-        "promotion_reason": "Router RAW-verified origin HEAD 207658f3 `bun test` RED = EXACTLY 1352a-async-extraction-race + 1837a-pipeline-state (13064 pass/53 skip/5 fail). Per /goal#1 recheck-shipped-code both reds are REAL (deterministic, reproduced local+rerun), not flaky. blocking:true: gates 4 ci_green_on_subsequent_push tasks (CI-RED-b7b84d9b-FIX, CI-RED-d20468c0-FIX, VMT-8-MACRO-GRACEFUL-FAILCLOSE, FIX-FOREIGN-FLOW-DEAD-ENDPOINT) from done_verified. Coding-WIP has a free slot (only architect ARCH-CRON in_progress). Leads ready[].",
-        "dispatched_at": "2026-06-16T15:43:48Z",
-        "dispatched_by": "dev-team",
-        "dispatched_to": "dev-mcp-server",
-        "impl_commit": "1c8467f9",
-        "code_verify": "GREEN (router RAW first-hand via scripts/ci-per-file-isolation.sh 8 — bj83h3qdj): 13040 pass / 49 fail / 20 files; NEITHER 1837a NOR 1352a in the fail set (both named reds GREEN); bctcPdfPullJob.ts has 0 failing test (1352a 0-regression); the lone BCTC-domain fail bctc-eval-integration RE-RAN isolated by router = 9 pass / 0 fail (parallel-contention weather, not a regression). 1352a guard is additive-noop under full migration.",
-        "broader_red_note": "20-file / 49-fail full-suite set = HOST WEATHER (3x SIGILL Bun-JIT corruption sdk1.29.0+zod3.25.76 under P=8 on memory-constrained host — local-only, NOT Linux-CI; + ~17 live-data/integration flaps). Disjoint from change. NOT this task scope, NOT a regression. The 2 DETERMINISTIC standing reds (1837a+1352a) are fixed.",
-        "push_gate": "HELD — 'CI green' NOT provable on this host (weather masks it); real gate = GitHub Actions Linux post-push (unobservable without push). PO out-of-band call. Router watches Actions run to success before done_verified.",
-        "qa_dod_note": "DoD = 1837a+1352a green (met) + bctcPdfPullJob no-regression (met). Re-running FULL isolation on this host re-hits the same SIGILL+live-data weather — do NOT chase host weather; honest gate = 2 named tests + no-regression.",
-        "promoted_to_review_ts": "2026-06-16T16:23:43Z"
-      },
-      {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
         "type": "FIX",
         "size": "M",
@@ -19697,6 +19701,6 @@
     "updated_at": "2026-06-16T15:37:15Z",
     "updated_by": "po"
   },
-  "updated_at": "2026-06-16T18:21:20Z",
-  "updated_by": "pm"
+  "updated_at": "2026-06-16T18:35:00Z",
+  "updated_by": "qa"
 }
