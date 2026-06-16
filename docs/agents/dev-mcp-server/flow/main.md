@@ -163,6 +163,26 @@ git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"
 
 **DJ-GATE-1** (mandatory before REVIEW flip): run skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: <TASK_ID>] — gate rule: `docs/protocols/agent-chaining-protocol.md` § Journal-before-DONE Gate.
 
+## Script Persistence — Canonical Pointers
+
+**CANONICAL: OHLCV synthetic seed-candle repair (FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 SUBTASK-6)**
+```bash
+# Dry-run (default — prints count + sample, no writes):
+bun scripts/migrations/repair-ohlcv-seed-candle-2026-06-16.ts --dry-run
+
+# Apply (performs DELETE of synthetic seed rows for 2026-06-16):
+docker cp scripts/migrations/repair-ohlcv-seed-candle-2026-06-16.ts \
+  vn-market-intelligence-mcp-mcp-server-1:/app/repair-seed-candle.ts
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/repair-seed-candle.ts --dry-run
+docker exec vn-market-intelligence-mcp-mcp-server-1 \
+  bun /app/repair-seed-candle.ts --apply
+```
+Deletes WHERE date='2026-06-16' AND volume=0 AND open=high AND high=low AND low=close AND data_env IS NULL.
+Idempotent — second run deletes 0 rows, exits 0. DB path from Bun.env["DB_PATH"] (named volume inside docker).
+
+---
+
 ## Low-Confidence Reparse Runbook
 
 When `extraction_confidence < 0.5` for a batch of tickers after a parser fix ships:
