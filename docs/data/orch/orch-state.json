@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "ready",
-    "updated_at": "2026-06-16T06:30:00Z",
-    "updated_by": "ba",
+    "updated_at": "2026-06-16T07:15:00Z",
+    "updated_by": "pm",
     "active_task_id": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
-    "next_agent": "architect",
-    "note": "BA spec complete for FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH. Spec: docs/handoffs/FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH-BA-spec.md. Zero PO blockers. 4 architect ratification items (ARCH-RATIFY-FE-1 through FE-4). NEXT: architect — brownfield read apps/frontend; confirm EC-6/EC-5/EC-8/NFR-7 ratifications; blueprint fetchUtils.ts + T-4 exact file list + FE-PAGE-REORG scope absorption.",
+    "next_agent": "dev-frontend",
+    "note": "PM PLANNING COMPLETE: Tasks T-1 through T-5 broken down atomically (5 READY tasks + 1 Wave-3 backlog follow-on). BA-FE-PAGE-REORG FR-4 redirected to reuse fetchUtils.ts. 28 Cluster A loaders + 29 Cluster B proxies + 4 Cluster C client wrappers scoped. NEXT: dev-frontend claims T-1, executes T-1→(T-2||T-3||T-4 parallel)→T-5. Critical path: T-1 must complete first; T-2/T-3/T-4 can run in parallel (disjoint files).",
     "push_note": "PO green-lit the fleet push this tick. 13-behind origin/main classified ALL benign cloud-chore/docs (8x chore(health) recheck, 2x chore(memory) notebook, 1x chore(tasks) signal_queue append, 1x docs(reports) TNB audit handoff, 1x chore(memory/tran-ngoc-bau)) — zero code, zero mcp-server conflict. tsc GREEN so the red pre-push hook no longer strands. Plan: git pull --rebase origin main (replay 123 work commits atop 13 chores) -> re-verify bunx tsc --noEmit=0 -> git push. The push is executed by po out-of-band and is NOT part of this orch-state commit.",
     "reconciled_from": ".head was on FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (po-s76 reconcile_note); that task is now signed off."
   },
@@ -683,8 +683,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T04:32:00Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-16T07:15:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12084,12 +12084,13 @@
         "sprint": "FE-PAGE-REORG",
         "route_to": "ba",
         "audit_brief": "docs/analysis-briefs/2026-06-15-frontend-page-reorg-audit.md",
-        "desc": "Decompose the read-only frontend reorg audit into a wave-sequenced spec. Wave-1 (P0+P1): FR-1 merge dashboard.intel->dashboard._index (exact dup, same /api/market-digest, view toggle, ~225L); FR-2 extract a SINGLE generic <ScreenerTable> with configurable columns/renderers serving financials/officers/shareholders/reputation/services/quality-audit (x5-6, ~800L); FR-3 extract <SummaryGrid>+<LeaderboardCard>+<DirectionBadge> across the x8 card-grid Top-N ranking pages (~1.2K L); FR-4 lib/api/loader-utils.ts safeFetch<T>(url,parser) killing loader boilerplate across all 33 loaders (~2K L). Wave-2 (P2+P3): <CodeSelector>+<DetailPanel>, <ContentCard>+sentiment/type/agent badge components, <CollapsibleSection>, Remix route-group folder refactor (org only, no URL change) + unit tests on every extracted component. Architect splits any multi-zone item (component lib vs per-route migration). HARD /goal constraints in every FR's acceptance: (1) generic component is ONE implementation serving ALL entities -- no per-page special-case fork (/goal#2); (2) every migrated cell MUST render REAL loader data verified vs the live payload -- a destructuring-default or '?? placeholder' that masks a real metric is a FAIL (/goal#1 + no-fake-data); (3) NO API-contract / route-URL / behavior change -- existing frontend tests stay green untouched (regression gate).",
+        "desc": "Decompose the read-only frontend reorg audit into a wave-sequenced spec. Wave-1 (P0+P1): FR-1 merge dashboard.intel->dashboard._index (exact dup, same /api/market-digest, view toggle, ~225L); FR-2 extract a SINGLE generic <ScreenerTable> with configurable columns/renderers serving financials/officers/shareholders/reputation/services/quality-audit (x5-6, ~800L); FR-3 extract <SummaryGrid>+<LeaderboardCard>+<DirectionBadge> across the x8 card-grid Top-N ranking pages (~1.2K L); FR-4 REDIRECTED: reuse lib/api/fetchUtils.ts safeFetch<T> (created by FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH Wave-2, includes deadline + logging) instead of creating new loader-utils.ts — killing loader boilerplate across all 33 loaders (~2K L). Wave-2 (P2+P3): <CodeSelector>+<DetailPanel>, <ContentCard>+sentiment/type/agent badge components, <CollapsibleSection>, Remix route-group folder refactor (org only, no URL change) + unit tests on every extracted component. Architect splits any multi-zone item (component lib vs per-route migration). HARD /goal constraints in every FR's acceptance: (1) generic component is ONE implementation serving ALL entities -- no per-page special-case fork (/goal#2); (2) every migrated cell MUST render REAL loader data verified vs the live payload -- a destructuring-default or '?? placeholder' that masks a real metric is a FAIL (/goal#1 + no-fake-data); (3) NO API-contract / route-URL / behavior change -- existing frontend tests stay green untouched (regression gate).",
         "generic_mandate": "One <ScreenerTable> (and one of each extracted component) serving ALL pages -- NO per-page special-cased fork. /goal#2.",
         "no_fake_data_requirement": "Every migrated cell renders REAL loader data verified vs live payload; no destructuring-default / '?? placeholder' may mask a real served metric. /goal#1 + standing no-fake-data directive.",
         "verification_gate": "Existing frontend test suite green untouched (no API/route/behavior change); each extracted component used by >=2 pages with real props; QA spot-verifies migrated cells render live values not placeholders.",
         "created_at": "2026-06-15T20:17:53Z",
-        "created_by": "po-s64"
+        "created_by": "po-s64",
+        "note": "UPDATED 2026-06-16: FR-4 redirected — FE-PAGE-REORG will REUSE fetchUtils.ts from FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (Wave-2) instead of creating loader-utils.ts. Architect confirmed this scope absorption. BA must update FE-PAGE-REORG spec reference accordingly."
       },
       {
         "id": "FIX-ERRAUDIT-W3-MCP-P2",
@@ -12378,6 +12379,24 @@
         "rebuild_required": true,
         "created_at": "2026-06-16T05:05:37Z",
         "created_by": "po-s81"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W3-FE-LOADERS-CLIENT-CALLS",
+        "type": "sprint-task",
+        "title": "Wave-3: Bound dashboard loaders calling client.ts typed functions (EC-8)",
+        "owner": "ba",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "apps/frontend/",
+        "sprint": "FIX-ERRAUDIT-WAVE-3",
+        "route_to": "ba",
+        "parent_epic": "ERROR-AUDIT-2026-06-15",
+        "handoff": "docs/handoffs/TASK_FIX-ERRAUDIT-W3-FE-LOADERS-CLIENT-CALLS.md",
+        "size": "M",
+        "depends_on": [],
+        "created_at": "2026-06-16T07:00:00Z",
+        "created_by": "pm",
+        "note": "Out-of-scope for Wave-2. Dashboard loaders that call client.ts typed functions (dashboard.db.tsx, dashboard.services.tsx, dashboard.fetch.tsx, dashboard.analysis.tsx client.ts calls) remain unbounded for this wave. Wave-3 task to scope design for bounding these via outer safeFetch or apiGet-internal deadline with signal-merge logic."
       }
     ],
     "closed_sprints": [
@@ -18280,6 +18299,39 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
+      },
+      {
+        "id": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0",
+        "title": "Migrate remaining OHLCV writer(s) — esp. the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 + scale-norm + a fail-closed C=0 reject apply to ALL tickers",
+        "type": "FIX",
+        "status": "IN_PROGRESS",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "blocking": true,
+        "parent": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+        "behavioral_gate_doc": "docs/handoffs/FIX-OHLCV-SEED-CANDLE-behavioral-gate-2026-06-16-RED.md",
+        "root_cause": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 healed watchlist majors (VHM/VIC/VJC RSI) but is NOT generic — residual OHLCV writers bypass writeOhlcvBatch (FR-S1 seed-rejection + scale-norm), corrupting non-major tickers. Behavioral gate RED on first post-rebuild prod cycle (1569 rows, flat_seed=775, null_env=117; 46 tickers >15% move vs prior real close).",
+        "classes": [
+          "Class 1 (PRIMARY): aggregator/seeder (suspect ohlcvDailyAggregatorJob.ts) writes flat vol=0 bars at WRONG prices, env=production, ~773 rows incl DCR +64% (5900 vs 3600), H11 +47% (25700 vs 17500) — UNMIGRATED to writeOhlcvBatch -> bypasses FR-S1.",
+          "Class 2: zero-price all-zero bars (env=NULL, vol=0): DAG/DFF/DMC/POM — FR-S1 should skip 0=0=0=0 today but they landed -> un-migrated env=NULL writer OR FR-S1 not on path. Source of 'giá 0 dưới BB' alerts.",
+          "Class 3: ÷1000 leak on a production writer: PDN (105.2 vs prior 99,800), NHD (118.6 vs 92,500) — prevClose-miss in the batch JOIN OR un-migrated production writer. The exact VHM/VIC bug on non-major tickers -> proves non-generic."
+        ],
+        "fix_spec": "Migrate the remaining OHLCV writer(s) — especially the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose + a NEW fail-closed C=0 reject apply to ALL tickers (generic /goal#2). Trace the PDN/NHD prevClose-miss (Class 3). Add a fail-closed reject for C=0 (Class 2).",
+        "files": [
+          "apps/mcp-server/src/.../ohlcvDailyAggregatorJob.ts (suspect — confirm)",
+          "apps/mcp-server writeOhlcvBatch path",
+          "FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose"
+        ],
+        "generic_mandate": "Fix must be GENERIC across the full ticker universe, not the watchlist majors. No served bar may carry a ÷1000-scaled, wrong-price-seeded, or all-zero close (/goal#1 + /goal#2).",
+        "verification_gate": "RAW post-rebuild LIVE: re-run the 5 sidecar queries on daily_ohlcv date=latest — 0 flat vol=0 wrong-price seeds (Class 1), 0 all-zero 0|0|0|0 bars (Class 2), 0 ÷1000 leaks vs prior real close (Class 3); DCR/H11/DAG/DFF/DMC/POM/PDN/NHD all plausible (<=board limit move). get_technical_indicators on the repaired tickers returns real-band RSI.",
+        "rebuild_required": true,
+        "sequence_note": "Sequenced AHEAD of lower-pri ready[] items (data-integrity P0). Fills the 2nd coding slot (WIP<=2; in_progress currently = ARCH-CRON-SCHEDULER-RELIABILITY).",
+        "created_at": "2026-06-16T05:05:37Z",
+        "created_by": "po-s81",
+        "claimed_at": "2026-06-16T05:30:00Z",
+        "claimed_by": "dev-mcp-server"
       }
     ],
     "ready": [
@@ -18429,11 +18481,11 @@
         "wave": 2,
         "priority": "P1",
         "size": "L",
-        "status": "READY",
+        "status": "REVIEW",
         "zone": "apps/frontend/",
         "route_to": "dev-frontend",
         "route": "ba->architect->pm->dev->qa",
-        "next_agent": "ba",
+        "next_agent": "pm",
         "sequence_after": "FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE",
         "title": "Wave-2 frontend helpers: safeFetch/proxyUpstream/safeFetchOrNull + one DEADLINE_MS — fix timeout+duplication+logging in 3 places not 55",
         "desc": "Land safeFetch<T>(url,{parse,deadlineMs}) [26 dashboard loaders], proxyUpstream(upstreamUrl,init) [29 api.*.tsx proxies -> 504 on abort / 502 on net error], safeFetchOrNull<T>(url) [4 non-fatal client wrappers, preserve null/[]/{} contract], one shared DEADLINE_MS < gateway, one structured console.error per degrade. Closes frontend-01/02/03 (NOT one of ~60 fetch sites has a timeout; loaders fetch the also-unbounded proxies = two unbounded hops), frontend-04 (same ~40-line block x 55), frontend-06 (ZERO server-side logging), frontend-07 (4 bare-catch-to-null wrappers). SEQUENCE AFTER FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE so the two unbounded hops are closed inner-first.",
@@ -18459,35 +18511,99 @@
         "promotion_note": "Wave-2 frontend hop. Inner-first sequence gate SATISFIED: sequence_after dep FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE is done_verified (the two unbounded mcp-server hops mcp-interface-01/05 are closed). Wave-1 fully complete (W1-MCP-P0 + W1-PEK-P0 both done_verified). Distinct zone apps/frontend/ — no zone-serialization conflict with the mcp-server lane; WIP<=2 honored (over-parallel-fanout host-starvation lesson). Land safeFetch/proxyUpstream/safeFetchOrNull + one DEADLINE_MS < gateway: fix timeout+duplication+logging in 3 helpers not 55 sites. Route ba->architect->pm->dev-frontend->qa; router dispatches via lock-claim+spawn -- po did NOT spawn. No-push."
       },
       {
-        "id": "FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0",
-        "title": "Migrate remaining OHLCV writer(s) — esp. the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 + scale-norm + a fail-closed C=0 reject apply to ALL tickers",
-        "type": "FIX",
+        "id": "FIX-ERRAUDIT-W2-FE-T1-FETCHUTILS-CREATE",
+        "type": "sprint-task",
+        "title": "T-1: Create fetchUtils.ts with safeFetch, proxyUpstream, safeFetchOrNull",
+        "owner": "dev-frontend",
         "status": "READY",
         "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "dev_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "blocking": true,
-        "parent": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
-        "behavioral_gate_doc": "docs/handoffs/FIX-OHLCV-SEED-CANDLE-behavioral-gate-2026-06-16-RED.md",
-        "root_cause": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 healed watchlist majors (VHM/VIC/VJC RSI) but is NOT generic — residual OHLCV writers bypass writeOhlcvBatch (FR-S1 seed-rejection + scale-norm), corrupting non-major tickers. Behavioral gate RED on first post-rebuild prod cycle (1569 rows, flat_seed=775, null_env=117; 46 tickers >15% move vs prior real close).",
-        "classes": [
-          "Class 1 (PRIMARY): aggregator/seeder (suspect ohlcvDailyAggregatorJob.ts) writes flat vol=0 bars at WRONG prices, env=production, ~773 rows incl DCR +64% (5900 vs 3600), H11 +47% (25700 vs 17500) — UNMIGRATED to writeOhlcvBatch -> bypasses FR-S1.",
-          "Class 2: zero-price all-zero bars (env=NULL, vol=0): DAG/DFF/DMC/POM — FR-S1 should skip 0=0=0=0 today but they landed -> un-migrated env=NULL writer OR FR-S1 not on path. Source of 'giá 0 dưới BB' alerts.",
-          "Class 3: ÷1000 leak on a production writer: PDN (105.2 vs prior 99,800), NHD (118.6 vs 92,500) — prevClose-miss in the batch JOIN OR un-migrated production writer. The exact VHM/VIC bug on non-major tickers -> proves non-generic."
+        "zone": "apps/frontend/",
+        "sprint": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "route_to": "dev-frontend",
+        "parent_epic": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "handoff": "docs/handoffs/TASK_FIX-ERRAUDIT-W2-FE-T1-FETCHUTILS-CREATE.md",
+        "size": "S",
+        "depends_on": [],
+        "created_at": "2026-06-16T07:00:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-FE-T2-CLIENT-CLUSTER-C",
+        "type": "sprint-task",
+        "title": "T-2: Migrate Cluster C (4 non-fatal client wrappers in client.ts)",
+        "owner": "dev-frontend",
+        "status": "READY",
+        "priority": "P0",
+        "zone": "apps/frontend/",
+        "sprint": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "route_to": "dev-frontend",
+        "parent_epic": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "handoff": "docs/handoffs/TASK_FIX-ERRAUDIT-W2-FE-T2-CLIENT-CLUSTER-C.md",
+        "size": "S",
+        "depends_on": [
+          "FIX-ERRAUDIT-W2-FE-T1-FETCHUTILS-CREATE"
         ],
-        "fix_spec": "Migrate the remaining OHLCV writer(s) — especially the daily aggregator/seeder — through writeOhlcvBatch so FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose + a NEW fail-closed C=0 reject apply to ALL tickers (generic /goal#2). Trace the PDN/NHD prevClose-miss (Class 3). Add a fail-closed reject for C=0 (Class 2).",
-        "files": [
-          "apps/mcp-server/src/.../ohlcvDailyAggregatorJob.ts (suspect — confirm)",
-          "apps/mcp-server writeOhlcvBatch path",
-          "FR-S1 seed-rejection + detectAndNormalizeScaleFromPrevClose"
+        "created_at": "2026-06-16T07:00:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-FE-T3-PROXY-CLUSTER-B",
+        "type": "sprint-task",
+        "title": "T-3: Migrate Cluster B (29 api.*.tsx proxy routes)",
+        "owner": "dev-frontend",
+        "status": "READY",
+        "priority": "P0",
+        "zone": "apps/frontend/",
+        "sprint": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "route_to": "dev-frontend",
+        "parent_epic": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "handoff": "docs/handoffs/TASK_FIX-ERRAUDIT-W2-FE-T3-PROXY-CLUSTER-B.md",
+        "size": "M",
+        "depends_on": [
+          "FIX-ERRAUDIT-W2-FE-T1-FETCHUTILS-CREATE"
         ],
-        "generic_mandate": "Fix must be GENERIC across the full ticker universe, not the watchlist majors. No served bar may carry a ÷1000-scaled, wrong-price-seeded, or all-zero close (/goal#1 + /goal#2).",
-        "verification_gate": "RAW post-rebuild LIVE: re-run the 5 sidecar queries on daily_ohlcv date=latest — 0 flat vol=0 wrong-price seeds (Class 1), 0 all-zero 0|0|0|0 bars (Class 2), 0 ÷1000 leaks vs prior real close (Class 3); DCR/H11/DAG/DFF/DMC/POM/PDN/NHD all plausible (<=board limit move). get_technical_indicators on the repaired tickers returns real-band RSI.",
-        "rebuild_required": true,
-        "sequence_note": "Sequenced AHEAD of lower-pri ready[] items (data-integrity P0). Fills the 2nd coding slot (WIP<=2; in_progress currently = ARCH-CRON-SCHEDULER-RELIABILITY).",
-        "created_at": "2026-06-16T05:05:37Z",
-        "created_by": "po-s81"
+        "created_at": "2026-06-16T07:00:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-FE-T4-LOADERS-CLUSTER-A",
+        "type": "sprint-task",
+        "title": "T-4: Migrate Cluster A (28 dashboard.*.tsx loaders)",
+        "owner": "dev-frontend",
+        "status": "READY",
+        "priority": "P0",
+        "zone": "apps/frontend/",
+        "sprint": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "route_to": "dev-frontend",
+        "parent_epic": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "handoff": "docs/handoffs/TASK_FIX-ERRAUDIT-W2-FE-T4-LOADERS-CLUSTER-A.md",
+        "size": "L",
+        "depends_on": [
+          "FIX-ERRAUDIT-W2-FE-T1-FETCHUTILS-CREATE"
+        ],
+        "created_at": "2026-06-16T07:00:00Z",
+        "created_by": "pm"
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-FE-T5-VALIDATION-REBUILD",
+        "type": "sprint-task",
+        "title": "T-5: Validation gate - pnpm check + container rebuild",
+        "owner": "dev-frontend",
+        "status": "READY",
+        "priority": "P0",
+        "zone": "apps/frontend/",
+        "sprint": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "route_to": "dev-frontend",
+        "parent_epic": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
+        "handoff": "docs/handoffs/TASK_FIX-ERRAUDIT-W2-FE-T5-VALIDATION-REBUILD.md",
+        "size": "XS",
+        "depends_on": [
+          "FIX-ERRAUDIT-W2-FE-T2-CLIENT-CLUSTER-C",
+          "FIX-ERRAUDIT-W2-FE-T3-PROXY-CLUSTER-B",
+          "FIX-ERRAUDIT-W2-FE-T4-LOADERS-CLUSTER-A"
+        ],
+        "created_at": "2026-06-16T07:00:00Z",
+        "created_by": "pm"
       }
     ],
     "review": [
@@ -18699,6 +18815,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-16T01:45:00Z",
-  "updated_by": "po-s75"
+  "updated_at": "2026-06-16T07:15:00Z",
+  "updated_by": "pm"
 }
