@@ -1,23 +1,23 @@
 # PO Notebook
-_overwritten 2026-06-16T15:34Z_
+_overwritten 2026-06-16T16:25Z_
 
-## Last cycle (2026-06-16T15:26Z dev-team :07 triage tick) — BCTC-STALE-5D recon close-out + CI-RED promote + AUDITOR reconcile + 3 children
-Commit b737fdb5 (script po-s88). coding-WIP=0 (architect ARCH-CRON only). 6 file signals drained + 1 ci_red probe; router RAW-verified all first-hand.
+## Last cycle (2026-06-16T16:25Z user-request triage) — Macro Impact info-card defect+enhancement → INFOCARD-EXPAND-FETCH epic
+Self-initiated triage of a router-relayed USER report on the "Tác động Macro — FPT" cascade-macro card (showed only NEUTRAL / 50% tin cậy / **Invalid Date**). Recon FIRST-HAND (not relayed badges), then minted 3 backlog FIX tasks. Commit folded into d8db496a by a concurrent dev-team commit-mutex holder (CONCURRENT-COMMIT RACE — my staged orch-state+script were swept into THEIR commit; verified HEAD orch-state carries all 3 po-s90 tasks + script tracked, work landed intact, only the msg is theirs). Script po-s90 idempotent (re-run mints 0).
 
-VERDICT: BATCH of 6 board dispositions (no NOTHING — real triage):
-- M1 FIX-BCTC-VPS-PIPELINE-STALE-5D (HANDOFF P0) → done done_verified:true **NON-BUG**. Recon (docs/vps-sources/bctc-pipeline-stale-5d/recon.md) verdict=pipeline_functional_source_non_filing: c014 (afrLoop 26→27 regex + HNX session warmup) fixed the real break 2026-06-15T17:05Z; live SSC 200 @12:36Z, ACV 12.9MB discoverable. "DEAD>72h" framing STALE — remaining 0-URL = genuine non-filing (BDI/DAG/DLC/JSH/SIS/VDC/VNH/VEA, none filed Q1/2026).
-- M2 FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK → review next_agent=qa. Code LANDED 220b48c5 (rewrite 3 emit sites to live schema). Gate=LIVE emit-success probe; stale health-rechecks 3182-3198 predate commit, don't re-probe.
-- M3 FIX-CI-RED-STANDING-1837A-1352A → ready LEAD (blocking:true). Origin 207658f3 bun test RED=exactly 1837a(head.status enum missing 'ready')+1352a(async-race 4f/1e), real not flaky (/goal#1). Gates 4 ci_green tasks. DEDUP — did NOT mint a new CI-RED.
-- M4 mint 3 recon §Residual-Risks children: FIX-BCTC-SSC-503-RETRY (ready P2 dev-vps-crawls — 1-retry+60s on ~12:00Z SSC 503 maintenance; NOT in shipped C1-C4); FIX-BCTC-QUEUE-MAXAGE-GATE (backlog P2 dev-mcp-server — drop >30d 0-result non-filers from SLA queue; DISTINCT from shipped FRESHNESS-GATE which only flips health-status); SPIKE-BCTC-VEA-Q4-2025-SOURCE-PROBE (backlog, cafef/hsx.vn).
-Conservation PASS (ready+2 review+1 backlog−1 done+1 total+3); placement+idempotency PASS.
+RECON (router first-hand):
+- FE component: `apps/frontend/app/routes/dashboard.analysis.tsx:731` MacroImpactPanel (rendered :1518), maps AgentSignal rows.
+- Data source: `fetchCascadeSignals()` (client.ts:565) → `GET /mcp/api/signals/stock/:code?type=chain_catalyst` → backend route `apps/mcp-server/src/interface/mcp/server.ts:1327-1432`.
+- Invalid Date ROOT: `dashboard.analysis.tsx:780` `new Date(sig.createdAt.replace(" ","T")+"Z")` — single-space replace + blind +"Z" corrupts an already-ISO/offset/empty created_at; backend serves RAW SQLite created_at (server.ts:1402), format varies → NaN.
+- **DATA-GAP CONFIRMED:** endpoint FLATTENS finding_data+payload into ONE `detail` string (server.ts:1389-1404) and DISCARDS the rest. Full cascade detail IS STORED in agent_signals.finding_data (ChainCatalystFindingDataSchema signalTypes.ts:90 — event_type/direction/confidence/affected_stocks[]/affected_sectors[]/headline/source/+imfSentiment.reasoning/etc). → dropdown REAL detail is NOT fetchable today, needs a backend change.
 
-KEY DISCOVERY: the entire BCTC durability program (ARCH-BCTC-PIPELINE-DURABILITY spike + 4 children HNX-SESSION/SSC-C111/ZERO-URL-ALERT/FRESHNESS-GATE) is ALREADY done_verified — the "5D-stale" P0 was the LAST stale framing on a fixed pipeline. Only 3 genuinely-new residual gaps remained.
-
-NOT dispatched (deliberate): channel audit (10 MARKET/WORK/BUG) found NO new dev-actionable bug not already boarded — BUG-1 HVN dedup=FINGERPRINT-WIRE (review, live gate), BUG-NEW-6 price=0/RSI3-10=RSI-SINGLEDIGIT cluster (review/backlog). context-bloat ops-vps-fetch.md(251L)/qa.md(208L) → claude-manager-helper (maintenance). FPT/cowork telemetry signals = cowork-domain, ignored.
+VERDICT: BATCH of 3 FIX (epic INFOCARD-EXPAND-FETCH, all backlog P2, idempotent po-s90):
+- **FIX-SIGNALS-STOCK-FULL-DETAIL** (dev-mcp-server, blocking) — pass finding_data fields through the endpoint + normalise created_at to canonical ISO server-side. GENERIC across all signal_types, not chain_catalyst-only. dev-macro-indicators = consult ONLY if live imfSentiment/driver fields empty.
+- **FIX-CASCADE-CARD-INVALID-DATE** (dev-frontend, fast_track) — one reusable ISO-aware date-parse helper, render localized-or-"—", NEVER "Invalid Date"; defence-in-depth FE guard adopted by ALL timestamp renders.
+- **FIX-INFOCARD-DROPDOWN-EXPAND** (dev-frontend, depends FIX-SIGNALS-STOCK-FULL-DETAIL) — ONE reusable expand-on-click primitive for ALL info cards (/goal#2 generic, no per-card hardcode), expanded panel shows REAL fetched detail only (/goal#1), Vietnamese labels, a11y (aria-expanded+keyboard).
+Conservation PASS (backlog 288→291, total +3); idempotency PASS.
 
 ## Carry-over (next tick)
-- FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS (review, qa=APPROVE-CODE): done_verified WITHHELD — FINAL gate = LIVE market-open dedup-drain (≥1 real scan ~02:00 UTC). MONITORED by :07 cron. DO NOT flip.
-- FIX-AUDITOR-EMIT (now review): expect qa live-emit verdict next tick → done_verified or back.
-- FIX-CI-RED + FIX-BCTC-SSC-503-RETRY lead ready[] (+ 3 gatherer/newsscout/marketwatcher) — router claims honoring WIP≤2; CI-RED first (unblocks 4 ci_green tasks).
-- PUSH HELD: local HEAD now b737fdb5; origin diverged 26 benign cloud-chore commits (health rechecks/chef-memory/gateway-rename), we 32+ ahead. Do NOT router-stash+rebase (strands bg agents). Reconcile only via out-of-band push from clean checkout — MY deferred call; also gated on CI-RED green (red pre-push hook strands fleet).
-- in_progress ARCH-CRON-SCHEDULER-RELIABILITY = architect track, leave undisturbed. FIX-BCTC-ENRICH-SILENT-0ROWS stays review (C3 own gate, CTG cycle-32 corrupt root).
+- INFOCARD-EXPAND-FETCH (3 tasks) sit in backlog[] P2 — NOT promoted to ready[]. Next dev-team :07 tick: promote FIX-SIGNALS-STOCK-FULL-DETAIL FIRST (blocking the dropdown), then the 2 FE tasks once a coding lane frees (current WIP=2: FIX-CI-RED-STANDING in review, SSC-503 done_verified). FIX-CASCADE-CARD-INVALID-DATE (fast_track) can run FE-parallel — independent of the fetch gap.
+- FIX-CI-RED-STANDING-1837A-1352A now in review (router RAW: 1837a+1352a GREEN per-file). PUSH STILL HELD until full CI/tsc green (red pre-push hook strands fleet) — MY deferred out-of-band call from clean checkout; origin diverged ~26 benign cloud-chore commits.
+- FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS review — done_verified WITHHELD on LIVE market-open dedup-drain gate. DO NOT flip.
+- in_progress ARCH-CRON-SCHEDULER-RELIABILITY = architect track, leave undisturbed.

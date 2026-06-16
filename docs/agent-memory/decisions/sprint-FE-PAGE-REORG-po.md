@@ -83,3 +83,12 @@
 - rejected (a/b): all 8 ready rows are thin stubs (no root_cause/fix_spec/files). 3 cowork FIXes (Root A/B/C) label ONE phenomenon w/ shared dedup root — need a single design/BA pass, not 3 independent dispatches. Handing half-specced FIXes to dev violates no-thin-stubs.
 - WIP: coding lanes stay 0 (ARCH-CRON in_progress is held QA-umbrella, also 0 coding-WIP). Did NOT promote a 2nd lane — nothing dispatch-ready.
 - board: po-s86 atomic (ready 8→7, in_prog 1→2, total 256 conserved); 7 held rows carry explicit per-task hold_reason. PUSH held.
+
+### STEP po-S90 · po · 2026-06-16T16:25:09Z
+**task-id:** INFOCARD-EXPAND-FETCH (epic: po-s90)
+**what-done:** Recon'd the "Tác động Macro — FPT" cascade card + data source first-hand, minted 3 backlog FIX tasks (idempotent po-s90 jq), committed orch-state+script.
+**what-considered:**
+- one-off FPT/macro fix vs generic ALL-info-card dropdown → chose generic (/goal#2 user said "ALL info display must be dropdown")
+- frontend-only vs +backend: DATA-GAP confirmed (endpoint flattens finding_data→one detail string) → backend subtask REQUIRED + made blocking for dropdown
+**why-decision:** dropdown's REAL detail (/goal#1) is impossible without exposing finding_data; Invalid Date split out (fast-track, FE-only) since it's a parse bug independent of the fetch gap.
+**why-change:** no change from plan.
