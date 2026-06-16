@@ -1,0 +1,39 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "priority": "p2",
+  "createdAt": "2026-06-16T20:39:40Z",
+  "payload": "docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md",
+  "summary": "Single concurrency model (3 primitives) covering the offhours-gatherer manual×cloud double-fire cluster. Primitive 1 (Backstop-Window Defer Gate) fixes Root A via a new error-branch in leader-lock.md when leader-lock times out within the :00-:15 backstop window of a 4h-boundary hour. Primitive 2 (Cross-Sibling Signal Visibility Window) fixes Root B — news-scout SELF_SIGNALS_CACHE reads a 15-min shared signal-bus window query instead of empty-set. Primitive 3 (Sibling-Success Corroboration Gate) fixes Root C — market-watcher requires both 2x probe failure AND no sibling signals in 15-min window before filing gateway-down BUG. Primitives 2+3 share one get_recent_signals(window_seconds=900) helper.",
+  "tasks": [
+    {
+      "id": "AF-1",
+      "priority": "p2",
+      "route_to": "agent-father",
+      "file": "docs/agents/cowork-team/flow/leader-lock.md",
+      "action": "Add Backstop-Window Defer Gate error-branch at top of task_claim block: when LEADER_CLAIM call errors/times-out AND UTC.hour ∈ {0,4,8,12,16,20} AND UTC.minute < 15 → EXIT (defer one tick). Outside that window → PROCEED. See brief §Primitive 1 for verbatim pseudocode.",
+      "subsumes_hold": "FIX-GATHERER-DOUBLEFIRE-DISPATCHER",
+      "ac": "Simulate leader-lock tool error within backstop window → dispatcher defers (EXIT); same error outside window → dispatcher proceeds. No double-fire across manual+cloud paths."
+    },
+    {
+      "id": "DMS-1",
+      "priority": "p2",
+      "route_to": "dev-mcp-server",
+      "zone": "apps/mcp-server/",
+      "action": "Replace SELF_SIGNALS_CACHE=[] with get_recent_signals(window_seconds=900) query against signal_bus (named-volume market.db). Content-hash dedup key: (signal_type, ticker_normalised, title_normalised). GENERIC — no allowlist by signal_type.",
+      "subsumes_hold": "FIX-NEWSSCOUT-SIBLING-DEDUP-CACHE",
+      "ac": "Two concurrent news-scout fires within the same minute produce 0 duplicate internal signals."
+    },
+    {
+      "id": "DMS-2",
+      "priority": "p2",
+      "route_to": "dev-mcp-server",
+      "zone": "apps/mcp-server/",
+      "action": "Replace market-watcher Step 0-GW immediate-BUG-on-2x-failure path with Primitive 3 corroboration gate: after 2x probe failure, query get_recent_signals(window_seconds=900); if sibling signals present → EXIT gracefully (no BUG); if none → file gateway-down BUG. Reuse DMS-1 helper.",
+      "subsumes_hold": "FIX-MARKETWATCHER-GW-CORROBORATION-GATE",
+      "ac": "Timeout with sibling success in window → no BUG filed. Timeout with no sibling success → BUG filed."
+    }
+  ],
+  "note": "DMS-1 and DMS-2 share get_recent_signals helper and may ship as one combined dev-mcp-server sprint. AF-1 is doc-only (flow file edit, agent-father zone)."
+}

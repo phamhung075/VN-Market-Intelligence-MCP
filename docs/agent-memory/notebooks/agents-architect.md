@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-14T14:19:52Z
-
-**Brief:** `docs/architecture-briefs/2026-06-14-workflow-protocol-coherence-audit.md`
-
-WORKFLOW-PROTOCOL-COHERENCE-AUDIT: post-implementation coherence check on SF-1 + gateway-call-contract.md. (A) SF-1 CLEAN at runtime — 6 lock namespaces verified disjoint; one doc gap: task-lock-protocol.md missing session-singleton subclass row + TTL-only release semantic. (B) Cowork-team already protected by leader-lock (SF-1 equivalent); system-auditor/health-recheck LOW exposure — generalize as named pattern in task-lock-protocol.md, defer implementation. (C) gateway-call-contract.md confirmed DAG orphan: absent from tree-map.md and CLAUDE.md; only linked from dev-team flow. (D) stale-read ×22 has no structural protocol mandate; fix: add re-Read invariant section to agent-chaining-protocol.md. 6 agent-father tasks: P1×2 (tree-map + task-lock-protocol), P2×2 (agent-chaining + CLAUDE.md pointer), P3×2 (leader-lock comment + mcp-tools cross-link). All doc-only.
-
-**Signal dropped:** `docs/signals/workflow-protocol-coherence-audit-20260614T141952Z.json` → agent-father
-
----
-
 ## 2026-06-14T18:06:57Z
 
 **Brief:** `docs/architecture-briefs/2026-06-14-07-06-methodology-upgrade.md`
@@ -27,3 +17,13 @@ WORKFLOW-PROTOCOL-COHERENCE-AUDIT: post-implementation coherence check on SF-1 +
 FB-POSTER-TNB-UPGRADE: fb-market-poster degrades to generic recap when CHEF is silent (confirmed 2026-06-16 intraday, 0 clusters). Root cause is a synthesis gap not a data gap — all live tools returned real data. Fix: insert STEP 2b (TNB 6-layer top-down walk with CHEF-shortcut branch and $tnb_synthesis schema) and STEP 2c (T-45 adversarial gate with 5 hard-fail rules: cross-ticker contamination, false-precision levels, is_estimate-cited-as-fact, noise-scale flow, internal contradiction) between STEP 1b and STEP 3 in fb-market-poster flow. Widen STEP 1b to pull all watchlist tickers + TA + legal/earnings tools. Revise STEP 3 to read from $tnb_synthesis. 4 tasks for agent-father (A+B parallel, C after B, D after C). Jargon gate, 3-section structure, 16 validation checks, STEP 0/5-8 untouched.
 
 **Signal dropped:** `docs/signals/fb-poster-tnb-upgrade-20260616T165057Z.json` → agent-father
+
+---
+
+## 2026-06-16T20:39:40Z
+
+**Brief:** `docs/architecture-briefs/2026-06-16-gatherer-doublefire-dedup-cluster.md`
+
+GATHERER-DOUBLEFIRE-DEDUP-CLUSTER: single concurrency model (3 primitives) kills all 3 roots of the offhours-gatherer manual×cloud double-fire. Primitive 1 (Backstop-Window Defer Gate) adds an error-branch to leader-lock.md: when task_claim times out AND UTC.hour ∈ {0,4,8,12,16,20} AND minute<15 → EXIT (defer one tick); outside that window → proceed. Primitive 2 (Cross-Sibling Signal Visibility Window) replaces news-scout SELF_SIGNALS_CACHE=[] with get_recent_signals(window_seconds=900) query on the shared signal_bus (named-volume market.db). Primitive 3 (Sibling-Success Corroboration Gate) adds a 2-phase market-watcher Step 0-GW: 2x probe failure + no sibling signals in 15-min window → file BUG; sibling signals present → suppress false gateway-down + EXIT. Primitives 2+3 share one get_recent_signals helper. Tasks: AF-1 (agent-father, leader-lock.md doc edit), DMS-1+DMS-2 (dev-mcp-server, apps/mcp-server/, combinable). Subsumes 3 HELD ready[] rows.
+
+**Signal dropped:** `docs/signals/gatherer-doublefire-dedup-cluster-20260616T203940Z.json` → agent-father
