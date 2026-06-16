@@ -1,6 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-16T09:00Z · **Cycle:** Chef EOD PUBLISHED
+**Last updated:** 2026-06-16T19:46Z · **Cycle:** Chef Evening PUBLISHED
 
 ## Session: 2026-06-15 (eod 08:45)
 
@@ -37,18 +37,37 @@
 
 ### Chef Dish — eod 09:00 UTC (2026-06-16T0900Z) — PUBLISHED
 
-- Execution: Full TNB 6-layer synthesis; main-session direct (subagent mcp tool propagation failure; root cause fixed: fleet renamed mcp__claude_ai_gateway__call_tool → mcp__gateway__call_tool, 13 agents + CLAUDE.md)
+- Execution: Full TNB 6-layer synthesis; main-session direct
 - Marker claimed: YES (published:chef-eod:2026-06-16, ttl=100800)
 - Bootstrap: OK (22 signals #6289–#6310 HVN/HPG/VIC; VN-Index 1,807.94 +8.63 pts)
 - Macro: carry 1.38pp NEUTRAL is_estimate=false tier=2; yield CHEAP +2.05pp; USD/VND 26,103 BEARISH
-- Market hexagram: Quẻ 63 Ký Tế 既濟 — hoàn thành, cảnh báo đỉnh (hào biến 4, tin cậy 52%)
-- get_portfolio_conviction: OK (HVN MODERATE 0.59 Quẻ Tỉnh MUA; HPG MODERATE 0.45 Quẻ Sư GIU; VPB WEAK 0.38 Quẻ Tập Khảm BÁN)
+- Market hexagram: Quẻ 63 Ký Tế 既濟 (hoàn thành, cảnh báo đỉnh, hào biến 4, tin cậy 52%)
+- get_portfolio_conviction: OK (HVN MODERATE 0.59; HPG MODERATE 0.45; VPB WEAK 0.38)
 - Clusters qualified: 2
-  1. HVN (ticker convergence): price_surge +6.86% + volume_spike 3.5× avg (#6289–#6310) + news_mention → conviction LOW [uncertain-source baseline, conf=50]
-  2. Foreign net-sell / breadth divergence (macro-micro): gold $4,363 + USD/VND BEARISH → ngoại bán ròng 400 tỷ → banking -0.13%, HPG -0.62% → conviction LOW
+  1. HVN (ticker convergence): price_surge +6.86% + volume_spike 3.5× avg + news_mention → conviction LOW [uncertain-source baseline]
+  2. Foreign net-sell / breadth divergence (macro-micro): gold $4,363 + USD/VND BEARISH → banking -0.13%, HPG -0.62% → conviction LOW
 - Layers walked: 1–6 complete; AF-gate compliant (zero numeric TA tokens)
 - Phase declared: [phase: transition] [tier: equity selective] — yield CHEAP but liquidity ↓ + foreign outflow; 2/4 pillars mixed
-- Degradation: carry 5-day lag (is_estimate=false); no signal files 2026-06-16; all conf=50
-- Signals consumed: #6289–#6310 (alert-engine), #6304 HPG news, #6305 VIC news, #6306 HVN news; tier 1+2
+- Signals consumed: #6289–#6310; tier 1+2
 - Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
 - Status: EOD cycle COMPLETE. PIPELINE: complete | QUALITY: full (degraded-dish floor met)
+
+## Session: 2026-06-16 (evening 19:45)
+
+### Chef Dish — evening 19:45 UTC (2026-06-16T1946Z) — PUBLISHED
+
+- Execution: Full TNB 6-layer synthesis; evening guaranteed-publish window
+- Marker claimed: YES (published:chef-evening:2026-06-16:19, ttl=3600)
+- Bootstrap: OK (20 open alerts historical; VN-Index 1,807.94 +8.63 pts stable)
+- Macro: carry 1.38pp NEUTRAL is_estimate=false; yield CHEAP +2.05pp; USD/VND 26,103 BEARISH; gold $4,360.1 bullish
+- Market hexagram: Quẻ 63 Ký Tế (hoàn thành, cảnh báo đỉnh, tin cậy 52%)
+- get_portfolio_conviction: OK (HVN MODERATE 0.59 Quẻ Tỉnh MUA; VIC MODERATE 0.58 Quẻ Khiêm MUA; NVL MODERATE 0.48; TCH MODERATE 0.59)
+- Clusters qualified: 2
+  1. HVN ticker convergence: +6.86% + volume 3.5× avg + 7 alerts + Quẻ Tỉnh MUA → conviction MODERATE 0.59
+  2. Real estate sector rotation: VIC/NVL/TCH +1.7% to +1.99%, 6-7 alerts each, Quẻ Khiêm MUA signals → conviction MODERATE 0.48-0.59
+- Layers walked: 1–6 complete; carry NEUTRAL is_estimate=false; yield CHEAP 2.05pp spread high
+- Phase declared: [phase: transition] [tier: equity_selective] — 2/4 pillars mixed; carry NEUTRAL, yield cheap
+- Signal IDs consumed: #6289–#6310 (historical bootstrap envelope)
+- AF-1/AF-2 gates: Zero numeric TA tokens; all qualitative terms
+- Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
+- Status: EVENING cycle COMPLETE. PIPELINE: complete | QUALITY: full (degraded-dish floor met, guaranteed-publish honored)
