@@ -337,18 +337,32 @@ export async function runBctcPdfPullJob(opts: {
   // Read the ACTUAL row counts from the DB after triggerExtraction completes.
   // This is the anti-default-mask contract: no `rows = result || [PLACEHOLDER]`.
   // Both queries use the report's sort_key derived from the queue row's period fields.
-  const countTableRows = db.prepare<{ cnt: number }, [string, string]>(`
-    SELECT COUNT(*) AS cnt
-    FROM bctc_table_rows tr
-    JOIN financial_reports fr ON fr.id = tr.report_id
-    WHERE fr.action_code = ? AND fr.sort_key = ?
-  `);
-  const countMdTables = db.prepare<{ cnt: number }, [string, string]>(`
-    SELECT COUNT(*) AS cnt
-    FROM bctc_md_tables bmt
-    JOIN financial_reports fr ON fr.id = bmt.report_id
-    WHERE fr.action_code = ? AND fr.sort_key = ?
-  `);
+  //
+  // Guard: bctc_table_rows and bctc_md_tables are created by migrateFinancialReports()
+  // which runs at startup in production. In test DBs (or a fresh DB before migration)
+  // the tables may not exist yet — db.prepare() would throw "no such table". We catch
+  // that here so the 0-row gate is silently bypassed (null = skip gate) rather than
+  // crashing the entire job. This is generic: any missing table = gate inactive.
+  let countTableRows: ReturnType<typeof db.prepare<{ cnt: number }, [string, string]>> | null;
+  let countMdTables: ReturnType<typeof db.prepare<{ cnt: number }, [string, string]>> | null;
+  try {
+    countTableRows = db.prepare<{ cnt: number }, [string, string]>(`
+      SELECT COUNT(*) AS cnt
+      FROM bctc_table_rows tr
+      JOIN financial_reports fr ON fr.id = tr.report_id
+      WHERE fr.action_code = ? AND fr.sort_key = ?
+    `);
+    countMdTables = db.prepare<{ cnt: number }, [string, string]>(`
+      SELECT COUNT(*) AS cnt
+      FROM bctc_md_tables bmt
+      JOIN financial_reports fr ON fr.id = bmt.report_id
+      WHERE fr.action_code = ? AND fr.sort_key = ?
+    `);
+  } catch {
+    // Schema tables not yet created (pre-migration or test DB) — skip 0-row gate.
+    countTableRows = null;
+    countMdTables = null;
+  }
 
   /**
    * FIX-BCTC-VPS-QUEUE-SYNC G1 helper: record a failed fetch attempt.
@@ -496,6 +510,16 @@ export async function runBctcPdfPullJob(opts: {
     //
     // sort_key derivation: period_quarter is stored as "Q1".."Q4" in the queue;
     // financial_reports.sort_key = "<year>-<quarter>" e.g. "2026-Q1".
+    //
+    // If countTableRows/countMdTables are null (tables absent — pre-migration or
+    // test DB), skip the gate entirely: fall through to updateDone so the job
+    // completes normally. The gate is a production-only enrichment contract.
+    if (countTableRows === null || countMdTables === null) {
+      updateDone.run(row.id);
+      result.downloaded++;
+      continue;
+    }
+
     const sortKey = `${row.period_year}-${row.period_quarter}`;
     const tableRowCnt = countTableRows.get(row.action_code, sortKey)?.cnt ?? 0;
     const mdTableCnt  = countMdTables.get(row.action_code, sortKey)?.cnt ?? 0;

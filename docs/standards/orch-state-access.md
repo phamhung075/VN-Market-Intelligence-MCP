@@ -37,6 +37,24 @@ Exception: `CURRENT=$(cat docs/data/orch/orch-state.json)` inside a **bash-only 
 - **WRITE** `.head` (top-level) ONLY. Any po-s* / router script that dispatches a task sets `.head.{status,active_task_id,next_agent,updated_at,updated_by,note}`.
 - **`.task_board.head` is DEPRECATED** — a non-routing stub (`status:"deprecated"`, `canonical_moved_to:".head"`). Writing it is a BUG: it drifts from top-level `.head` because the flow reads top-level. A script that writes `.task_board.head` leaves the real head stale and any flow-resume mis-tracks (root of signal `head-drift-po-s64-vs-task-board-head`, 2026-06-15; collapsed by `scripts/po-s66-head-ssot-collapse-reconcile.jq`).
 
+## §5 — head.status Enum (valid values)
+
+All `head.status` values used across router scripts and inter-agent flows — the validated set as of 2026-06-13:
+
+| Value | Meaning |
+|---|---|
+| `idle` | No active task |
+| `in_progress` | Task claimed by a dev agent |
+| `blocked` | Waiting on external dependency |
+| `stale` | head not updated recently |
+| `review` | Task done, awaiting QA/PO sign-off |
+| `active` | Work in flight between agents / inter-agent handoff |
+| `qa` | Task at final QA live-verify gate before done_verified |
+
+Source of truth: `apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts` AC-2 assertion (test validates the live `orch-state.json` value is always within this set). Any new status value added to router jq scripts must be added here simultaneously.
+
+---
+
 ## §3 — Cross-References
 
 - Write protocol (atomic temp-file-then-rename): `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3`

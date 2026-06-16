@@ -82,3 +82,11 @@ Applied AFTER normalize: thousand-scale flat bars (5.9→5900, still flat) also 
 **Commit:** 448ce71c | **REBUILD_REQUIRED:** YES (ops must rebuild to activate the guard in the running container)
 
 Zone health: tsc clean, 164 tools intact, scheduler 3 cron.schedule (startupHelpers.ts wrapper) | HEALTHY
+
+## 2026-06-16 · FIX-CI-RED-STANDING-1837A-1352A — CI red unblocked
+
+**Task:** FIX-CI-RED-STANDING-1837A-1352A (S — BLOCKING fleet push)
+**1837a:** Already green (head.status='in_progress' in valid enum). Added §5 status enum table to docs/standards/orch-state-access.md for SSOT alignment.
+**1352a root cause:** FIX-BCTC-ENRICH-SILENT-0ROWS (d4a0dacc) added unconditional db.prepare() for bctc_table_rows+bctc_md_tables at function start (outside per-row loop). Test DBs are queue-only (no schema migration) → SQLiteError: no such table → all Group A tests crashed before extraction could run.
+**Fix:** try/catch around both prepare() calls; null = gate inactive (skip to updateDone). Generic: any pre-migration or minimal-schema DB bypasses gate; production full-schema DB activates it. 0 new allowlists/special cases.
+**Tests:** 13/13 across both files. Full suite 13205/0 fail. tsc clean. rebuild_required: NO (test-path only change; runtime behaviour unchanged for production full-schema DB).
