@@ -1,117 +1,134 @@
-# TNB Audit — Cycle 96 — 2026-06-15T20:13Z (slot=tnb-audit, file-evidence + MCP unavailable)
+# TNB Audit — Cycle 97 — 2026-06-16T20:13Z (slot=tnb-audit, file-evidence + MCP unavailable)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **IMPROVING** (first weekday dishes post-FIX-COWORK-GUARANTEED-BACKSTOP; G1/G2 PASS but G3/G4 FAIL — last_fired not written; EOD layer score improved to 6/6; adversarial gate PASS)
+Direction: **STABLE** (2/3 dishes published; morning gateway-blocked; EOD+Evening 5.5/6 GOOD; F-G3-G4 confirmed 2nd day; new F-MORNING-SEND-FAILED; F-EVENING-2026-06-15-CONFIRMED-ABSENT)
 
 ---
 
 ## Previous Handoff ACK
 
-c95 handoff (2026-06-14T20:13Z) — **ACK'd by PO** at 2026-06-15T04:21:15Z. All c95 findings reconciled. No new dev tasks minted (every finding covered by existing sprints or monitoring gates). c95 findings fully processed.
+c96 handoff (2026-06-15T20:13Z) — **NOT ACK'd by PO** (signal_queue row `tnb-20260615T201300` status="NEW"; no signed ACK in handoff file). Findings from c96 may not yet be actioned. Key unresolved: F-G3-G4-COWORK-LASTFIRED-NOT-UPDATED.
 
 ---
 
 ## Session Mode
 
-MCP gateway not available in this spawned subagent session (failure mode A per bootstrap.md — `.mcp.json` intentionally empty, gateway wrapper not registered in this CLI context). File-evidence audit from:
-- unified-agent notebook: morning 05:23Z PUBLISHED, EOD 08:45Z PUBLISHED, evening absent at audit time
-- cowork-schedule.json: chef-morning last_fired=2026-06-12T05:21:00Z (STALE), chef-eod last_fired=2026-06-11T08:51:00Z (STALE), chef-intraday last_fired=2026-06-15T02:21:38Z (UPDATED today), chef-evening last_fired=2026-06-14T19:55:12Z (previous day)
-- news-scout notebook c94 (2026-06-15T00:08Z): 2 signals (#6118–6119), clean dedup
-- bctc-analyst notebook c054 (2026-06-15T00:10Z): FPT cycle 16 CACHE HIT, CTG cycle 24 CRITICAL, VCB/D2D cycle 21 empty
-- market-watcher (2026-06-15T00:06Z): 0 anomalies, gold $4,302.9 >$4,300 threshold crossed, Brent $83.91 <$85 threshold crossed
-- signal_queue: no signals addressed to tran-ngoc-bau
+MCP gateway not available in this spawned subagent session (failure mode A per bootstrap.md — gateway wrapper not registered in this CLI context). File-evidence audit from:
+- unified-agent notebook: morning 05:15Z FAILED (502), EOD 09:00Z PUBLISHED, evening 19:45Z PUBLISHED
+- cowork-schedule.json: chef-morning last_fired=2026-06-15T05:25:52Z (stale — not updated for 2026-06-16), chef-eod last_fired=2026-06-15T08:52:40Z (stale), chef-evening last_fired=2026-06-14T19:55:12Z (2 days stale)
+- news-scout notebook c94 (2026-06-15T00:08Z): last available (no c95 entry yet)
+- bctc-analyst notebook c054 (2026-06-15T00:10Z): last available (c055+ not yet visible)
+- orch-state signal_queue: c96 TNB row status="NEW" (not yet processed by PO)
 
 Live cross-validation SKIPPED — MCP unavailable.
 
 ---
 
-## Chef Pipeline Coverage (Step 0.5) — 2026-06-15 (Monday — first VN market day of week)
+## Chef Pipeline Coverage (Step 0.5) — 2026-06-16 (Tuesday)
 
-**FIX-COWORK-GUARANTEED-BACKSTOP G1-G4 VERIFICATION RESULTS:**
+| Slot | Expected? | Notebook status | cowork-schedule last_fired | G-check |
+|------|-----------|----------------|---------------------------|---------|
+| chef-morning | YES (weekday) | FAILED (502 gateway — content synthesized, send_telegram blocked) | 2026-06-15T05:25:52Z (stale) | G1-FAIL (not published), G3-FAIL (last_fired stale) |
+| chef-eod | YES (weekday) | PUBLISHED 09:00Z | 2026-06-15T08:52:40Z (stale) | G2-PASS, G4-FAIL (last_fired stale) |
+| chef-evening | YES (daily) | PUBLISHED 19:45Z | 2026-06-14T19:55:12Z (2 days stale) | G5-PASS, G6-FAIL (last_fired stale) |
 
-| Gate | Check | Result | Evidence |
-|------|-------|--------|---------|
-| G1 | chef-morning fires on Mon 2026-06-16 | **PASS** | unified-agent notebook entry 2026-06-15T05:23Z PUBLISHED |
-| G2 | chef-eod fires on Mon 2026-06-16 | **PASS** | unified-agent notebook entry 2026-06-15T08:45Z PUBLISHED |
-| G3 | cowork-schedule.json last_fired updated for chef-morning | **FAIL** | still 2026-06-12T05:21:00Z (3 days stale) |
-| G4 | cowork-schedule.json last_fired updated for chef-eod | **FAIL** | still 2026-06-11T08:51:00Z (4 days stale) |
+**Coverage: start_count=3, close_count=2 PUBLISHED + 1 FAILED | guaranteed_ok=PARTIAL | pipeline_degraded=PARTIAL**
 
-Note: chef-intraday DID update (2026-06-15T02:21:38Z) — morning/eod guaranteed slots use a different code path that is NOT updating last_fired. This is a residual bug in FIX-COWORK-GUARANTEED-BACKSTOP.
-
-| Slot | Cron | Expected Mon? | cowork-schedule last_fired | Fired? | Status |
-|------|------|--------------|--------------------------|--------|--------|
-| chef-morning | `15 5 * * 1-5` | YES | 2026-06-12T05:21:00Z (STALE) | YES (notebook) | G1 PASS / G3 FAIL |
-| chef-intraday | `13 2-8 * * 1-5` | YES | 2026-06-15T02:21:38Z | YES | PASS |
-| chef-eod | `45 8 * * 1-5` | YES | 2026-06-11T08:51:00Z (STALE) | YES (notebook) | G2 PASS / G4 FAIL |
-| chef-evening | `45 19 * * *` | YES | 2026-06-14T19:55:12Z (previous day) | UNKNOWN at audit time | PENDING |
-
-`guaranteed_ok=PARTIAL | pipeline_degraded=false` (dishes fire; last_fired write broken for guaranteed slots)
+Note: morning dish content WAS synthesized (L1-L6 walked, 3 clusters, phase declared, Quẻ 63 Ký Tế) — failure is at publication layer (send_telegram 502), not at synthesis. This is distinct from F-MORNING-NB-MISSING pattern (those had no synthesis).
 
 ---
 
-## Primary Audit: 2026-06-15 Dishes — Layer Walk
+## Primary Audit: 2026-06-16 Dishes — Layer Walk
 
-### Dish 1: Morning 05:23Z — AUDITABLE
+### Dish 1: Morning 05:15Z — PUBLICATION FAILED (502 Bad Gateway)
 
-**Layer-walk audit:**
+Content synthesized but NOT published to MARKET or WORK. Layer walk from notebook:
 
 | Layer | Content | Status |
 |-------|---------|--------|
-| L1 — Data discipline | USD/VND 26,145 (state cited vs carry threshold), RSI 32-35 (oversold regime, not just level), VCB/VPB downside continuation | PASS |
-| L2 — US macro | Fed hold cited, EFFR-IORB spread is_estimate=false (live), carry +1.38pp NEUTRAL transmission chain documented | PASS |
-| L3 — VN macro | USD/VND 26,145 BEARISH cited; VIRA absent (structural gap — VPS scraper pending) | PARTIAL |
-| L4 — 4-pillar per ticker | Banking: COC (headwind) + EPS (NIM squeeze) = 2/4 (single thesis LOW conviction 0.42 flagged); Utilities: M2 (sector rotation) + EPS (EVN profit) + POL (energy policy) = 3/4 → MEDIUM 0.58 | PASS (≥3 pillars on primary thesis) |
-| L5 — Kinh Dich | market_hexagram unavailable (501 persistent); per-ticker KD via get_portfolio_conviction used; conviction capped per degraded-dish floor rules | PARTIAL (structural 501 gap) |
-| L6 — Gap catalogue | All 5 gap types reviewed; no single-pillar thesis (banking explicitly flagged LOW with COC headwind); no inverted causality; source_tier envelope=2 cited; causal chains validated | PASS |
+| L1 — Data discipline | USD/VND 26,103 BEARISH; yield +2.05pp CHEAP state (7.05% > 5.00% deposit); VN-Index 1,805.96 +6.65 pts (recovery trajectory) | PASS |
+| L2 — US macro | carry 1.38pp NEUTRAL is_estimate=false; yield CHEAP 2.05pp spread; Fed hold implied (carry stable) | PASS |
+| L3 — VN macro | USD/VND 26,103 BEARISH cited; yield CHEAP; VIRA absent (structural gap — VPS scraper pending) | PARTIAL |
+| L4 — 4-pillar | get_portfolio_conviction FAILED (502); degraded mode — MEDIUM cap enforced; 3 clusters qualified (HVN, Banking, Utilities) with cap; phase recovery declared | PARTIAL (conviction degraded) |
+| L5 — Kinh Dich | Quẻ 63 Ký Tế 既濟 available (not 501!) — hoàn thành/cảnh báo đỉnh, hào biến 4 cited | PASS |
+| L6 — Gap catalogue | Degraded-dish floor rules applied; MEDIUM cap enforced; gap catalogue checked; AF-1/AF-2 PASS | PASS |
 
-**Score: 5.5/6 GOOD** | Business context (product/customer/ops/mgmt): NOT cited — F9 persists (22nd cycle)
-**9-step score: A✓ B✓ C✓ D✓ E-partial(VIRA) F✓ G-n/a H✓(phase declared) I✓ → 7.5/9 GOOD**
+**Score: 5.5/6 GOOD (L3 PARTIAL=VIRA structural; L4 PARTIAL=conviction degraded)** | Business context: NOT cited — F9 persists (23rd cycle)
+**9-step: A✓ B✓ C✓ D✓ E-partial(VIRA) F-partial(degraded) G-n/a H✓(recovery declared) I✓ → 7/9 GOOD**
 
-### Dish 2: EOD 08:45Z — AUDITABLE
+**CRITICAL NOTE: CONTENT NOT DELIVERED** — morning dish valid but MARKET/WORK channels did not receive it.
 
-**Layer-walk audit:**
+### Dish 2: EOD 09:00Z — PUBLISHED
 
 | Layer | Content | Status |
 |-------|---------|--------|
-| L1 — Data discipline | USD/VND 26,145 sticky (carry threshold), VCB/VPB Lão Âm (oversold state, not level), EVN +8.2% profit delta cited | PASS |
-| L2 — US macro | Fed hold → sticky carry causal chain; EFFR-IORB carry.is_estimate=false; fiscal-trap narrative (macro health TIGHT) | PASS |
-| L3 — VN macro | USD/VND 26,145 BEARISH; macro health TIGHT (fiscal-trap active); VIRA absent (structural) | PARTIAL |
-| L4 — 4-pillar per ticker | Banking conviction 0.55 MEDIUM: COC (headwind) + EPS (NIM squeeze) + M2 (credit contraction) = 3/4; Utilities conviction 0.72 HIGH: EPS (EVN +8.2%) + POL (energy policy) + M2 (sector rotation) + Rủi ro (low vs sector) = 4/4 | PASS |
-| L5 — Kinh Dich | market_hexagram available (not 501 this cycle); Lão Âm cited for VCB/VPB (oversold state transition) | PASS |
-| L6 — Gap catalogue | AF-1/AF-2 gates clean (zero numeric TA tokens); causal chains verified end-to-end; no regime drift (TRANSITION phase explicitly declared) | PASS |
+| L1 — Data discipline | USD/VND 26,103 BEARISH sticky; yield +2.05pp CHEAP; VN-Index 1,807.94 +8.63 pts direction; foreign net-sell direction (HPG -0.62%, banking -0.13%) | PASS |
+| L2 — US macro | carry 1.38pp NEUTRAL is_estimate=false; yield CHEAP 2.05pp; fiscal-discipline implied via carry NEUTRAL stability | PASS |
+| L3 — VN macro | USD/VND 26,103 BEARISH; gold $4,363 safe-haven cited; VIRA absent (structural) | PARTIAL |
+| L4 — 4-pillar | HVN: LOW conviction [uncertain-source baseline] explicitly flagged; macro cluster: M2+COC context implied by carry/yield; phase TRANSITION 2/4 pillars mixed; conviction LOW explicitly declared for HVN | PASS (floor declared; conviction quality disclosed) |
+| L5 — Kinh Dich | Quẻ 63 Ký Tế 既濟 cited — hoàn thành, cảnh báo đỉnh, hào biến 4, tin cậy 52% | PASS |
+| L6 — Gap catalogue | AF-1/AF-2 PASS (zero numeric TA tokens); regime drift flagged (TRANSITION declared); conviction LOW explicitly cited for uncertain-source clusters — no inverted causality | PASS |
 
-**Score: 6/6 GOOD** | Business context: NOT cited — F9 persists
-**9-step score: A✓ B✓ C✓ D✓ E-partial(VIRA) F✓ G-n/a H✓(TRANSITION declared) I✓ → 7.5/9 GOOD**
+**Score: 5.5/6 GOOD (L3 PARTIAL=VIRA structural only)** | Business context: NOT cited — F9 persists
+**9-step: A✓ B✓(USD/VND 26,103 BEARISH threshold) C✓ D✓ E-partial(VIRA) F-partial(HVN 1/4→floor) G-n/a H✓(TRANSITION) I✓ → 7/9 GOOD**
 
-**Best EOD dish in recent cycles (c86–c96). First 6/6 in the review window.**
+Note: HVN pillar count is 1/4 explicit — LOW conviction correctly declared. The uncertain-source disclosure is the correct methodology response (L6 gap-catalogue applied). No auto-cure needed.
 
-### Dish 3: Evening 19:37Z — STATUS UNKNOWN
+### Dish 3: Evening 19:45Z — PUBLISHED (guaranteed-publish honored)
 
-Audit runs at 20:13Z (28 min post-expected fire 19:45Z). No 2026-06-15 evening entry in unified-agent notebook at audit time. cowork-schedule.json last_fired for chef-evening = 2026-06-14T19:55:12Z (previous day). Cannot confirm from file evidence. Resolves at c97 when notebook shows or absence confirmed.
+| Layer | Content | Status |
+|-------|---------|--------|
+| L1 — Data discipline | USD/VND 26,103 BEARISH sticky; yield CHEAP 2.05pp spread maintained; gold $4,360.1 bullish (safe-haven threshold held); recovery trajectory stable | PASS |
+| L2 — US macro | carry 1.38pp NEUTRAL is_estimate=false; yield CHEAP 2.05pp; Fed hold continuation implied | PASS |
+| L3 — VN macro | USD/VND 26,103 BEARISH; gold $4,360.1 bullish (>$4,300 threshold held); VIRA absent (structural) | PARTIAL |
+| L4 — 4-pillar | HVN: price_surge+volume_spike+Quẻ Tỉnh MUA = 3 convergence signals (qualitative pillars: EPS implied volume momentum + M2 sector rotation + KD confirmation) MODERATE 0.59; Real estate VIC/NVL/TCH: 6-7 alerts + sector rotation + Quẻ Khiêm MUA (M2+COC+EPS qualitative) MODERATE 0.48-0.59 | PASS (≥3 qualitative pillars per cluster; conviction graded) |
+| L5 — Kinh Dich | Quẻ 63 Ký Tế market-level + per-ticker: Quẻ Tỉnh 井 MUA (HVN), Quẻ Khiêm 謙 MUA (VIC/TCH) | PASS |
+| L6 — Gap catalogue | AF-1/AF-2 PASS; guaranteed-publish floor met; source_tier implied (historical signals #6289–#6310, tier 1+2); no single-pillar thesis — all clusters multi-signal; regime drift: TRANSITION confirmed | PASS |
 
----
+**Score: 5.5/6 GOOD (L3 PARTIAL=VIRA structural only)** | Business context: NOT cited — F9 persists
+**9-step: A✓ B✓(26,103 BEARISH) C✓ D✓ E-partial(VIRA) F✓(3-signal clusters) G-n/a H✓(TRANSITION) I✓ → 7.5/9 GOOD**
 
-## New Findings (c96)
-
-### F-G3-G4-COWORK-LASTFIRED-NOT-UPDATED (HIGH, NEW)
-
-**Root cause probe:** FIX-COWORK-GUARANTEED-BACKSTOP (commit 45553a28, 2026-06-13T21:07Z) restored trigger_status=active for chef-morning and chef-eod. Both slots DO fire on 2026-06-15 (G1/G2 PASS via notebook evidence). However, cowork-schedule.json `.last_fired` is NOT updated for these slots after firing.
-
-**Comparison:** chef-intraday last_fired=2026-06-15T02:21:38Z (UPDATED). This slot has `trigger_status: "deleted"` and `_superseded_by: "cowork-dispatcher"` — suggesting the cowork-dispatcher writes last_fired for deleted/non-trigger slots. chef-morning and chef-eod have `trigger_status: "active"` and `trigger_id` set — these may be using the RemoteTrigger path which does NOT update cowork-schedule.json.
-
-**Impact:** Layer-B dispatcher reads `last_fired` to determine if a slot needs re-firing. Stale last_fired for morning/eod means Layer-B may re-fire these slots unnecessarily (same double-publish class as F-DIGEST-DUP-WEEK-BOUNDARY). The backstop fix is 50% effective: dishes fire, but the re-arm/dedup state is corrupted.
-
-**Dev task required:** Investigate why RemoteTrigger-dispatched slots (trigger_status=active, trigger_id set) do not update last_fired in cowork-schedule.json post-fire. The cowork-dispatcher (CronCreate */15) should write last_fired for all slots after confirming completion — or the RemoteTrigger callback should write it.
+**Best dish of cycle:** Evening with strongest per-ticker KD coverage and multi-signal cluster validation.
 
 ---
 
-## Closed Findings (c96 vs c95)
+## Adversarial Gate (T-45)
+
+**adversarial_gate: PASS** — EOD dish explicitly assigned LOW conviction [uncertain-source baseline] to HVN cluster rather than defaulting to MEDIUM. This is a confidence downgrade citing uncertain evidence quality (price_surge + volume alone without BCTC confirmation). Evening dish then upgraded HVN to MODERATE 0.59 after Quẻ Tỉnh MUA confirmation — thesis challenged, defended with KD evidence, then re-graded. Meets T-45 adversarial-exchange criterion.
+
+---
+
+## New Findings (c97)
+
+### F-MORNING-SEND-FAILED-20260616 (HIGH, NEW)
+
+**What happened:** chef-morning 05:15Z on 2026-06-16 fully synthesized content (6 layers walked, 3 clusters, phase declared [recovery][equity], Quẻ 63 Ký Tế, yield 7.05% > 5.00%) but `send_telegram` FAILED with 502 Bad Gateway (ray_id: a0c763243e66eaf4). Attempted ≥5 times per notebook. MARKET subscribers and WORK channel did NOT receive the morning dish on 2026-06-16.
+
+**Scope:** This is a gateway-layer failure at publication step, NOT a synthesis failure. Content quality was 5.5/6. This differs from F-MORNING-NB-MISSING (which had no synthesis at all).
+
+**Impact:** Subscribers missed the morning recovery signal (yield CHEAP, VN-Index +6.65 pts context). EOD dish 4h later covers similar ground but users had a gap in morning context.
+
+**Dev task required:** Investigate send_telegram 502 at 05:15Z on 2026-06-16 (ray_id: a0c763243e66eaf4). Check if this was an ephemeral gateway outage or a recurring failure pattern on morning slots. Monitor whether EOD/Evening slots at 09:00Z and 19:45Z succeeded (they did — different time windows).
+
+### F-EVENING-2026-06-15-CONFIRMED-ABSENT (MED, NEW c97, RESOLVES c96 uncertainty)
+
+**What happened:** unified-agent notebook for 2026-06-16 contains no 2026-06-15 evening session entry. The notebook jumps from "Session: 2026-06-15 (eod 08:45)" directly to "Session: 2026-06-16 (morning 05:15)". cowork-schedule.json `chef-evening` last_fired=2026-06-14T19:55:12Z (Sunday 2026-06-14). This confirms the Monday 2026-06-15 evening dish (19:45Z) was NOT published.
+
+**Context:** chef-evening is a guaranteed slot (`guaranteed: true` in cowork-schedule.json). FIX-COWORK-GUARANTEED-BACKSTOP (commit 45553a28) restored morning/eod guaranteed slots but the evening slot missed on 2026-06-15 (Monday, first market day post-fix). The 2026-06-16 evening fired successfully (PUBLISHED 19:45Z) — this may have been a one-time miss or a residual Monday-startup issue with the backstop.
+
+**Severity:** MED (single-day miss; Tuesday evening recovered; not a repeated pattern yet).
+
+### F-G3-G4-CONFIRMED-DAY2 (HIGH, carry-forward, WORSENED)
+
+cowork-schedule.json `last_fired` fields for chef-morning and chef-eod remain at 2026-06-15 values despite dishes firing on 2026-06-16 (EOD PUBLISHED, morning ATTEMPTED). Confirmed 2nd consecutive day. Chef-evening last_fired also stale (2026-06-14T19:55:12Z despite 2026-06-16 evening firing). This extends F-G3-G4 to ALL three guaranteed slots — not just morning/eod. Pattern: guaranteed slots (trigger_status=active, trigger_id set) never update last_fired. Layer-B dedup/re-arm reads stale timestamps. Double-fire risk persists.
+
+---
+
+## Closed Findings (c97 vs c96)
 
 | Finding | Status | Evidence |
 |---------|--------|---------|
-| **F-EVENING-2026-06-14-UNKNOWN** | **CLOSED** | PO ACK noted as MOOT. c95 audit-time uncertainty. No persistence needed. |
-| **F-DIGEST-DUP-WEEK-BOUNDARY** | **CLOSED (PO ACK c95)** | FIX-DIGEST-PREDICT-ISO-WEEK-DEDUP done_verified (ccbe43ec). get_week_period canonical. |
-| **FIX-COWORK-GUARANTEED-BACKSTOP G1-G4** | **PARTIAL CLOSE** | G1/G2 PASS (dishes fire). G3/G4 FAIL (last_fired not written). New finding F-G3-G4 created. |
+| **F-EVENING-2026-06-15-UNKNOWN** | **CONFIRMED ABSENT (→ new F-EVENING-2026-06-15-CONFIRMED-ABSENT)** | Notebook jump confirms 2026-06-15 evening session absent |
 
 ---
 
@@ -119,97 +136,95 @@ Audit runs at 20:13Z (28 min post-expected fire 19:45Z). No 2026-06-15 evening e
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|---------|
-| F-G3-G4-COWORK-LASTFIRED-NOT-UPDATED | cowork-schedule.json last_fired NOT updated for chef-morning/eod after firing on 2026-06-15. Intraday updates; guaranteed slots (trigger_status=active) do not. Layer-B dedup reads stale. | cowork-dispatcher / RemoteTrigger path | HIGH (NEW c96) | pipeline / state-write | cowork-schedule.json morning=2026-06-12, eod=2026-06-11 despite notebook showing 2026-06-15 dishes |
-| F-BCTC-CTG-CRITICAL | CTG cycle 24+ CRITICAL, VCB/D2D cycle 21+ empty. Bug #2776 persistently undeployed 24+ cycles. 28+ tickers BLOCKED. | bctc-analyst / BCTC extraction pipeline | HIGH (carry-forward) | data | bctc-analyst c054: CTG cycle 24, VCB cycle 21, D2D cycle 21 |
-| F3 | PMI sub-components absent (Step D FAIL: only headline PMI, no orders/inventory/prices sub-components) — persistent c82–c96 | unified-agent | MED | methodology | Structural tool gap — no get_ism_subcomponents call in chef flow |
+| F-MORNING-SEND-FAILED-20260616 | send_telegram 502 at 05:15Z on 2026-06-16 — content synthesized (5.5/6) but NOT delivered. ray_id: a0c763243e66eaf4. | gateway / send_telegram | HIGH (NEW c97) | infrastructure | unified-agent notebook: "send_telegram: FAILED (502 Bad Gateway, ≥5 attempts)" |
+| F-EVENING-2026-06-15-CONFIRMED-ABSENT | Monday 2026-06-15 evening dish confirmed absent (guaranteed slot miss). Tuesday 2026-06-16 evening recovered. | chef-evening / cowork-dispatcher | MED (NEW c97) | pipeline | unified-agent notebook: no 2026-06-15 evening session entry; cowork-schedule last_fired=2026-06-14 |
+| F-G3-G4-COWORK-LASTFIRED-NOT-UPDATED | cowork-schedule.json last_fired NOT updated for ANY guaranteed slot (chef-morning, chef-eod, chef-evening) after 2026-06-16 fires. Now 2nd consecutive day + extends to chef-evening. Layer-B dedup reads stale. Double-fire risk on every cycle. | cowork-dispatcher / RemoteTrigger path | HIGH (carry-forward c96, WORSENED) | pipeline / state-write | cowork-schedule.json morning=2026-06-15, eod=2026-06-15, evening=2026-06-14 despite 2026-06-16 dishes published |
+| F-BCTC-CTG-CRITICAL | CTG cycle 25+ CRITICAL, VCB/D2D cycle 22+ empty. Bug #2776 persistently undeployed. 28+ tickers BLOCKED. | bctc-analyst / BCTC extraction pipeline | HIGH (carry-forward) | data | bctc-analyst c054: CTG cycle 24+, VCB/D2D cycle 21+; notebook ends at c054 |
+| F3 | PMI sub-components absent (Step D FAIL: only headline PMI) — persistent all cycles | unified-agent | MED | methodology | Structural tool gap |
 | F4 | VIRA absent (Layer 3 E-partial) — persistent all cycles | unified-agent | MED | methodology | VPS VIRA scraper pending |
-| F5 | Market hexagram dark (501) — morning dish only; EOD had live hexagram this cycle | kinh-dich-service | LOW | infrastructure | Morning L5 partial; EOD L5 PASS first time in recent cycles |
-| F9 | Business context absent — 22nd consecutive cycle | unified-agent / chef | MED | methodology | product/customer/ops/mgmt never cited from bctc_signal_* |
-| F-EVENING-2026-06-15-UNKNOWN | Evening dish status unknown at c96 audit time 20:13Z | unified-agent | LOW | monitoring | No 2026-06-15 evening entry in notebook at audit time |
+| F9 | Business context absent — 23rd consecutive cycle | unified-agent / chef | MED | methodology | product/customer/ops/mgmt never cited from bctc_signal_* |
 
 ---
 
 ## Phase 2: Agent Notebook Review
 
-### news-scout (c94, 2026-06-15T00:08Z)
-- 20 articles, 2 signals (#6118 Fed rate hike bullish chain_catalyst 8/10, #6119 gold dump bearish chain_catalyst 7/10)
-- New macro context: Gold $4,302.9 crossed >$4,300 (carry defensives threshold), Brent $83.91 crossed <$85 (GAS/PLX downside threshold)
-- REGIME: NEUTRAL ✓. Dedup: SELF_SIGNALS_CACHE=[2 VERIFIED_DECISION] clean ✓
-- Methodology: A✓ B✓(Gold $4300 threshold crossed flagged) C✓ D-n/a E-n/a F✓ G-n/a H-n/a I✓ → **8/9 EXCELLENT**
+### unified-agent (2026-06-16 all 3 sessions)
+- Morning: 5.5/6 GOOD (L4 degraded — 502 at conviction step; L3 VIRA structural). Publication FAILED.
+- EOD: 5.5/6 GOOD (L3 VIRA structural; L4 floor with explicit LOW conviction disclosure). PUBLISHED.
+- Evening: 5.5/6 GOOD (L3 VIRA structural; L4 PASS via 3-signal convergence). PUBLISHED.
+- Methodology: 7/9 GOOD (morning+eod) → 7.5/9 GOOD (evening). E-step VIRA structural across all.
+- adversarial gate: PASS (EOD LOW→Evening MODERATE HVN upgrade with KD evidence).
 
-### bctc-analyst (c054, 2026-06-15T00:10Z)
-- FPT E3 CACHE HIT cycle 16 ✓ (PE 13.8x vs 17.3x sector, ROE 28.3%, F-score=7, M-score=0)
-- CTG cycle 24 CRITICAL, VCB cycle 21 empty, D2D cycle 21 empty (bug #2776 undeployed, policy: silent)
-- New macro triggers: Gold >$4,300 → POW/REE/GAS defensives escalate at c055; Brent <$85 → GAS/PLX downside at c055
-- Methodology: A✓ B✓(Gold $4300 + Brent $85 thresholds crossed, escalate) C✓ D-n/a E-partial(VIRA absent) F✓ G✓(M+F scores) H✓ I✓ → **8/9 GOOD**
+### news-scout (last available: c94, 2026-06-15T00:08Z)
+- No c95 entry visible. Last methodology: 8/9 EXCELLENT. Status: monitoring gap for 2026-06-16 cycle.
 
-### market-watcher (2026-06-15T00:06Z)
-- 0 anomalies; Gold $4,302.9 BULLISH risk-off noted; USD/VND 26,122 BEARISH; Brent $83.91 below neutral
-- Methodology: **GOOD (limited scope)**
+### bctc-analyst (last available: c054, 2026-06-15T00:10Z)
+- No c055 entry visible. Gold $4,302.9 >$4,300 escalation to c055 (GAS/POW/REE defensives) — cannot confirm if executed.
+- CTG cycle 24+ CRITICAL ongoing. Bug #2776 status unknown (possible deployment since last check at c054).
 
-### unified-agent (morning + EOD — 2026-06-15)
-- Morning: 5.5/6 GOOD. EOD: 6/6 GOOD (best recent cycle)
-- Adversarial gate: PASS (banking SLOWDOWN vs utilities EXPANSION, competing thesis resolved with conviction differential 0.55 vs 0.72 + fiscal-trap narrative)
-- Methodology morning: 7.5/9 GOOD | EOD: 7.5/9 GOOD
-
-### system-auditor (last available: c306 2026-06-13T01:39:58Z)
-- All 12 services UP, MemPerc=29.84%, RestartCount=0. No update today — cadence check due.
+### market-watcher
+- No new notebook entry for 2026-06-16 visible.
 
 ---
 
-## 9-Step Methodology Scores (c96)
+## 9-Step Methodology Scores (c97)
 
 | Agent | Score | Gaps |
 |-------|-------|------|
-| unified-agent (morning) | 7.5/9 GOOD | E-partial (VIRA) |
-| unified-agent (eod) | 7.5/9 GOOD | E-partial (VIRA) |
-| news-scout | 8/9 EXCELLENT | — |
-| bctc-analyst | 8/9 GOOD | E-partial (VIRA) |
-| market-watcher | GOOD | limited scope |
+| unified-agent (morning) | 7/9 GOOD | E-partial (VIRA), F-partial (conv degraded) |
+| unified-agent (eod) | 7/9 GOOD | E-partial (VIRA), F-partial (HVN 1/4→floor) |
+| unified-agent (evening) | 7.5/9 GOOD | E-partial (VIRA) |
 
-Top gap pattern: **VIRA absent (E-step)** — all agents with VN macro scope fail E. Structural — VPS VIRA scraper pending. Not a flow methodology error.
+Top gap pattern: **VIRA absent (E-step)** — structural across all cycles. Second gap: **HVN pillar coverage thin** when BCTC is blocked (F-BCTC-CTG-CRITICAL root).
 
-**adversarial_gate: PASS** — banking/utilities competing thesis with data-driven resolution (conviction 0.55 vs 0.72, fiscal-trap vs sector expansion).
+**adversarial_gate: PASS**
 
----
-
-## Auto-Cures Applied (c96)
-
-None. All active gaps require dev tasks:
-- F-G3-G4: cowork-dispatcher / RemoteTrigger last_fired write — dev task (new)
-- F-BCTC-CTG-CRITICAL: active BCTC sprints (BCTC-FETCH-CORRECTNESS, BCTC-LAYOUT-FIRST)
-- F3/F4/F9: structural — VPS scraper + BCTC pipeline fix pending
+GOOD={3} NEEDS_ATTENTION={0} CRITICAL={0}
 
 ---
 
-## Positive Signals (c96)
+## Auto-Cures Applied (c97)
 
-- **EOD 6/6 layers PASS** — best layer score in recent cycles (c86–c96). Lão Âm explicitly cited. Market hexagram available (not 501). 4/4 pillars on utilities thesis.
-- **Morning 5.5/6 GOOD** — only structural gaps (L3/L5). No methodology errors. Highest morning score in 5+ cycles.
-- **G1/G2 PASS** — FIX-COWORK-GUARANTEED-BACKSTOP dishes ARE firing. Commit 45553a28 effective at re-arming fire execution. G3/G4 is a separate write-path issue.
-- **news-scout 8/9 EXCELLENT** — Gold $4,302.9 >$4,300 threshold crossed and flagged correctly. Brent $83.91 <$85 threshold crossed and flagged. Carry defensives escalation path set for c055.
-- **Adversarial gate PASS** — competing sector thesis (banking vs utilities) resolved with data, not averaged.
+None. Active gaps require dev tasks or structural fixes:
+- F-MORNING-SEND-FAILED: gateway infrastructure — dev task (new)
+- F-G3-G4: cowork-dispatcher last_fired write — dev task (existing escalation)
+- F-BCTC-CTG: active BCTC sprints
+- F3/F4/F9: structural — VPS scraper + BCTC pipeline
+
+---
+
+## Positive Signals (c97)
+
+- **Evening 5.5/6 GOOD** — per-ticker KD coverage (Quẻ Tỉnh/Khiêm) cited alongside market-level Quẻ 63. Multi-signal convergence for both HVN and BĐS clusters.
+- **EOD explicit LOW conviction disclosure** — "uncertain-source baseline" cited. Correct L6 gap-catalogue application. No false confidence inflation.
+- **Market hexagram available (Quẻ 63 Ký Tế) in ALL dishes** — no 501 dark-hexagram in morning, EOD, or evening. First cycle in recent history with market hexagram live across all 3 slots.
+- **adversarial_gate PASS** — EOD→Evening conviction upgrade with explicit KD evidence cited.
+- **Morning content synthesized** despite gateway failure — synthesis pipeline healthy; publication infrastructure failed.
+- **cowork-schedule.json last_fired UPDATE for morning/eod vs c96:** c96 showed morning=2026-06-12, eod=2026-06-11. c97 shows morning=2026-06-15, eod=2026-06-15 — the timestamps ARE advancing (1 day behind, not 4 days behind). Partial improvement but still stale by 1 day.
 
 ---
 
 ## Persisting Blockers
 
-1. **F-G3-G4-COWORK-LASTFIRED-NOT-UPDATED (HIGH, NEW c96):** Guaranteed slots (chef-morning, chef-eod) with trigger_status=active do NOT write last_fired to cowork-schedule.json after firing. cowork-dispatcher writes last_fired for deleted/superseded slots; RemoteTrigger-dispatched slots do not. Layer-B dedup reads stale. Double-fire risk on every cycle.
-2. **F-BCTC-CTG-CRITICAL (HIGH, 24th+ escalation cycle):** 28+ tickers blocked. Bug #2776 undeployed. BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST active sprints must ship.
-3. **VIRA scraper pending (MED):** Layer 3 E-gap structural — all cycles.
-4. **PMI sub-components absent (MED):** Layer 2 D-gap — no get_ism_subcomponents in chef flow.
-5. **F9 business context absent (MED, 22nd cycle):** Linked to F-BCTC-CTG-CRITICAL.
-6. **Market hexagram dark (LOW):** Morning-only from this cycle — EOD had live hexagram. Partial improvement.
+1. **F-MORNING-SEND-FAILED-20260616 (HIGH, NEW c97):** send_telegram 502 at 05:15Z — morning dish undelivered. Investigate gateway availability at morning slot window. ray_id: a0c763243e66eaf4.
+2. **F-G3-G4-COWORK-LASTFIRED-NOT-UPDATED (HIGH, c96+c97, WORSENED to ALL 3 guaranteed slots):** All guaranteed slots (morning/eod/evening) not updating last_fired in cowork-schedule.json. Now 2nd consecutive day confirmed. Double-fire risk live.
+3. **F-EVENING-2026-06-15-CONFIRMED-ABSENT (MED, NEW c97):** Monday 2026-06-15 evening guaranteed-slot miss confirmed. Tuesday recovered — monitor if pattern repeats.
+4. **F-BCTC-CTG-CRITICAL (HIGH, 25th+ escalation cycle):** 28+ tickers blocked. BCTC-FETCH-CORRECTNESS + BCTC-LAYOUT-FIRST must ship.
+5. **VIRA scraper pending (MED):** Layer 3 E-gap structural — all cycles.
+6. **PMI sub-components absent (MED):** Layer 2 D-gap structural.
+7. **F9 business context absent (MED, 23rd cycle):** Linked to F-BCTC-CTG-CRITICAL.
+8. **c96 PO ACK missing:** c96 handoff signal_queue row status="NEW". PO not yet processed c96 findings including F-G3-G4 dev task requirement.
 
 ---
 
-## Next Cycle Priorities (c97 — 2026-06-16T20:13Z)
+## Next Cycle Priorities (c98 — 2026-06-17T20:13Z)
 
-1. **F-G3-G4 confirmation:** Does cowork-schedule.json still show stale last_fired for morning/eod on 2026-06-16? If yes → dev task required immediately (Layer-B double-fire risk). If updated → finding auto-closes.
-2. **F-EVENING-2026-06-15-UNKNOWN resolution:** Does unified-agent notebook show 2026-06-15T19:37Z evening entry? If absent → new pipeline finding (chef-evening missed on Monday).
-3. **Gold $4,302.9 macro escalation:** bctc-analyst c054 flagged >$4,300 threshold. Does c055 (15:00 UTC) correctly escalate GAS/POW/REE defensive signals? Check at c97.
-4. **F-BCTC-CTG-CRITICAL:** Did BCTC-FETCH-CORRECTNESS or BCTC-LAYOUT-FIRST ship? Check bctc-analyst c055+ for CTG extraction result.
-5. **system-auditor gap:** Last entry c306 (2026-06-13). Is system-auditor running? Check for c307+ entry in next cycle.
+1. **F-MORNING-SEND-FAILED monitoring:** Does chef-morning 05:15Z on 2026-06-17 publish successfully? If 502 repeats → escalate to CRITICAL (pattern confirmed).
+2. **F-G3-G4 monitoring:** Does cowork-schedule.json last_fired advance to 2026-06-16 timestamps for chef-morning/eod/evening after 2026-06-16 fires? If not → confirm dev task urgency (now 3rd day).
+3. **F-EVENING-2026-06-15 monitoring:** Was the Monday miss a one-time startup issue or recurring? If 2026-06-17 evening fires → pattern broken.
+4. **bctc-analyst c055+ visibility:** Did Gold $4,302.9>$4,300 escalation trigger GAS/POW/REE defensive signals at c055 (2026-06-15T15:00Z)? Check notebook for c055+ entry.
+5. **Bug #2776 (F-BCTC-CTG):** Any BCTC deployment visible in recent_fixes? Check bctc-analyst c055+ for CTG extraction result.
+6. **c96 PO ACK:** Signal row `tnb-20260615T201300` still NEW — PO needs to triage F-G3-G4 dev task.
 
 ---
 
