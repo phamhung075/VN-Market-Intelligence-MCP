@@ -1,24 +1,23 @@
 # PO Notebook
-_overwritten 2026-06-16T10:32Z_
+_overwritten 2026-06-16T15:34Z_
 
-## Last cycle (2026-06-16T10:21Z dev-team dispatch tick) — backlog dispatch decision, 0 signals
-Focused mandate: 8 ready[] FIX/ARCH tasks stalled with 0 coding WIP — decide DISPATCH vs HOLD. NOT a re-drain (pendingSignals empty, both files+queue already 0 since 09:48Z drain 062173ee). Verdict = BATCH([1 architect SPIKE]) + 7 explicit holds.
+## Last cycle (2026-06-16T15:26Z dev-team :07 triage tick) — BCTC-STALE-5D recon close-out + CI-RED promote + AUDITOR reconcile + 3 children
+Commit b737fdb5 (script po-s88). coding-WIP=0 (architect ARCH-CRON only). 6 file signals drained + 1 ci_red probe; router RAW-verified all first-hand.
 
-VERDICT: DISPATCH ARCH-BCTC-PIPELINE-DURABILITY → architect (po-s86, atomic+conservation+placement+idempotency).
-- This SPIKE is NOT a dev coding lane → consumes 0 of WIP≤2 coding budget.
-- Single highest-leverage move: its `children[]` explicitly gate 4 of the 8 ready FIXes (HNX-SESSION-COOKIE, SSC-C111-EMPTY-FALLBACK, BCTC-ZERO-URL-ALERT, BCTC-FRESHNESS-GATE). 5th child ENRICH-SILENT-0ROWS already in review.
-- WHY brief-first: brief must define the durable zero-result/freshness/enrich contracts BEFORE those 4 ship as code — else "fix residue not contract" (recurring-bug-escalation: 2nd recurrence BCTC-VPS-PIPELINE-STALE). No brief file existed (latest BCTC brief = 06-12).
+VERDICT: BATCH of 6 board dispositions (no NOTHING — real triage):
+- M1 FIX-BCTC-VPS-PIPELINE-STALE-5D (HANDOFF P0) → done done_verified:true **NON-BUG**. Recon (docs/vps-sources/bctc-pipeline-stale-5d/recon.md) verdict=pipeline_functional_source_non_filing: c014 (afrLoop 26→27 regex + HNX session warmup) fixed the real break 2026-06-15T17:05Z; live SSC 200 @12:36Z, ACV 12.9MB discoverable. "DEAD>72h" framing STALE — remaining 0-URL = genuine non-filing (BDI/DAG/DLC/JSH/SIS/VDC/VNH/VEA, none filed Q1/2026).
+- M2 FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK → review next_agent=qa. Code LANDED 220b48c5 (rewrite 3 emit sites to live schema). Gate=LIVE emit-success probe; stale health-rechecks 3182-3198 predate commit, don't re-probe.
+- M3 FIX-CI-RED-STANDING-1837A-1352A → ready LEAD (blocking:true). Origin 207658f3 bun test RED=exactly 1837a(head.status enum missing 'ready')+1352a(async-race 4f/1e), real not flaky (/goal#1). Gates 4 ci_green tasks. DEDUP — did NOT mint a new CI-RED.
+- M4 mint 3 recon §Residual-Risks children: FIX-BCTC-SSC-503-RETRY (ready P2 dev-vps-crawls — 1-retry+60s on ~12:00Z SSC 503 maintenance; NOT in shipped C1-C4); FIX-BCTC-QUEUE-MAXAGE-GATE (backlog P2 dev-mcp-server — drop >30d 0-result non-filers from SLA queue; DISTINCT from shipped FRESHNESS-GATE which only flips health-status); SPIKE-BCTC-VEA-Q4-2025-SOURCE-PROBE (backlog, cafef/hsx.vn).
+Conservation PASS (ready+2 review+1 backlog−1 done+1 total+3); placement+idempotency PASS.
 
-HELD 7 ready[] rows IN-PLACE with per-task hold_reason (backlog NOT silently stalled):
-- 4 BCTC FIX children → "design-gated on ARCH brief now dispatched".
-- 3 cowork double-fire (Root A gatherer-dispatcher / Root B newsscout-dedup-cache / Root C marketwatcher-corroboration) → "shared-root HOLD: thin stubs, no fix_spec/files; need ONE design/BA pass so dedup+defer solved one way not three". Not dispatched (no dev-ready spec).
+KEY DISCOVERY: the entire BCTC durability program (ARCH-BCTC-PIPELINE-DURABILITY spike + 4 children HNX-SESSION/SSC-C111/ZERO-URL-ALERT/FRESHNESS-GATE) is ALREADY done_verified — the "5D-stale" P0 was the LAST stale framing on a fixed pipeline. Only 3 genuinely-new residual gaps remained.
 
-NO 2nd coding lane promoted: every remaining task is design-gated OR lacks a dev-ready spec. Refused to hand half-specced FIXes to dev (no-thin-stubs). Board: ready 8→7, in_progress 1→2, total 256 conserved. CI standing-red baseline unchanged (not re-minted). PUSH HELD.
+NOT dispatched (deliberate): channel audit (10 MARKET/WORK/BUG) found NO new dev-actionable bug not already boarded — BUG-1 HVN dedup=FINGERPRINT-WIRE (review, live gate), BUG-NEW-6 price=0/RSI3-10=RSI-SINGLEDIGIT cluster (review/backlog). context-bloat ops-vps-fetch.md(251L)/qa.md(208L) → claude-manager-helper (maintenance). FPT/cowork telemetry signals = cowork-domain, ignored.
 
-## Carry-over
-- ARCHITECT now owns ARCH-BCTC-PIPELINE-DURABILITY (next_agent=architect, in_progress). Output: docs/architecture-briefs/ enumerating zero-result/freshness/enrich + ADF-brittleness contracts; the 5 children map under it. On brief-land → PO promotes the 4 design-gated children ready→dispatch (WIP≤2).
-- 3 cowork double-fire FIXes (Root A/B/C) need a design/BA decomposition pass before any dispatch — consider one umbrella brief (shared dedup/defer concurrency model). Held until then.
-- ARCH-CRON-SCHEDULER-RELIABILITY in_progress = held QA-LIVE-OUTCOME umbrella (G4/G5 MET; G1/G2/G3 gate-day 06-15 ELAPSED) → QA owes a live cron_job_runs read on its own tick. 0 coding-WIP.
-- FIX-ALERT-ENGINE-RSI-SINGLEDIGIT + FIX-SIGNAL-CONFIDENCE-DEFAULT-50 sit in review[] (qa gate). FIX-CI-RED-STANDING-1837A-1352A backlog P2 standing.
-- PUSH held: branch ahead 19 / behind 8 (behind = benign cloud RemoteTrigger chore). Out-of-band PO call when tree stable — NOT this tick.
-- Reusable: scripts/po-s86-bctc-durability-arch-dispatch-backlog-hold.jq (dispatch 1 + hold-annotate N pattern).
+## Carry-over (next tick)
+- FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS (review, qa=APPROVE-CODE): done_verified WITHHELD — FINAL gate = LIVE market-open dedup-drain (≥1 real scan ~02:00 UTC). MONITORED by :07 cron. DO NOT flip.
+- FIX-AUDITOR-EMIT (now review): expect qa live-emit verdict next tick → done_verified or back.
+- FIX-CI-RED + FIX-BCTC-SSC-503-RETRY lead ready[] (+ 3 gatherer/newsscout/marketwatcher) — router claims honoring WIP≤2; CI-RED first (unblocks 4 ci_green tasks).
+- PUSH HELD: local HEAD now b737fdb5; origin diverged 26 benign cloud-chore commits (health rechecks/chef-memory/gateway-rename), we 32+ ahead. Do NOT router-stash+rebase (strands bg agents). Reconcile only via out-of-band push from clean checkout — MY deferred call; also gated on CI-RED green (red pre-push hook strands fleet).
+- in_progress ARCH-CRON-SCHEDULER-RELIABILITY = architect track, leave undisturbed. FIX-BCTC-ENRICH-SILENT-0ROWS stays review (C3 own gate, CTG cycle-32 corrupt root).
