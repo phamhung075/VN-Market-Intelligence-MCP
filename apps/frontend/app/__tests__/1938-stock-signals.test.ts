@@ -34,6 +34,9 @@ const SAMPLE_SIGNAL: AgentSignal = {
   confidence: 0.78,
   reasoning: "Oil price surge → steel sector upside",
   createdAt: "2026-05-17 08:30:00",
+  // FIX-INFOCARD-DROPDOWN-EXPAND: new fields from StockSignalItem contract
+  findingData: null,
+  source: null,
 };
 
 describe("fetchStockSignals", () => {

@@ -204,6 +204,10 @@ export interface SignalAccuracy {
  *
  * accuracy is optional — present only when the endpoint has been upgraded to
  * Sprint B (outcome feedback loop). Treat absence as "no history yet".
+ *
+ * findingData + source added by FIX-SIGNALS-STOCK-FULL-DETAIL (commit 6abf4d19):
+ * the backend now exposes the full structured finding_data object and a
+ * clickable provenance URL so the user can independently verify each signal.
  */
 export interface AgentSignal {
   id: number;
@@ -215,6 +219,20 @@ export interface AgentSignal {
   createdAt: string;        // ISO/SQLite datetime string
   /** Present when the endpoint returns Sprint B accuracy data. Absence = no history. */
   accuracy?: SignalAccuracy;
+  /**
+   * Full structured finding_data from the backend StockSignalItem.
+   * Contains event_type, headline, affected_stocks[], affected_sectors[],
+   * source, reasoning, magnitude, kinhDichConfidence, etc.
+   * null when absent (older rows / signal types that don't populate it).
+   * NEVER fabricate — show honest empty-state if null.
+   */
+  findingData: Record<string, unknown> | null;
+  /**
+   * Clickable provenance URL/identifier.
+   * Extracted from finding_data.source or payload.source by the backend.
+   * null when no source is recorded for this signal.
+   */
+  source: string | null;
 }
 
 // --------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T16:52:04Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-16T19:05:00Z",
+  "_updated_by": "dev-frontend",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -15,6 +15,14 @@
     "start_line": 8
   },
   "decision_journal": [
+    {
+      "agent": "dev-frontend",
+      "task_id": "FIX-INFOCARD-DROPDOWN-EXPAND",
+      "timestamp": "2026-06-16T19:05:00Z",
+      "decision": "Built InfoCardExpand reusable Radix Collapsible primitive (InfoCardExpand.tsx). Extended AgentSignal domain type with findingData+source. Updated toAgentSignal mapper to carry full finding_data object + provenance source through. Wired into MacroImpactPanel and StockSignalsPanel on dashboard.analysis.tsx. 25 new unit tests GREEN.",
+      "what_considered": "only path: Radix Collapsible already wired in project (ui/collapsible.tsx) — use it as the toggle primitive; generic field render via FIELD_LABELS map + humanLabel fallback for unknown keys; honest empty-state (Không có dữ liệu chi tiết.) when all values null/empty; source rendered as <a target=_blank> not a field row",
+      "why_change": "no change from plan"
+    },
     {
       "by": "po",
       "task_id": "KINHDICH-HOVER-ENRICH",
@@ -19110,39 +19118,6 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
-      },
-      {
-        "id": "FIX-INFOCARD-DROPDOWN-EXPAND",
-        "epic": "INFOCARD-EXPAND-FETCH",
-        "title": "Generic click-to-expand dropdown for ALL dashboard info cards revealing full FETCHED detail",
-        "type": "FIX",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "zone": "apps/frontend/",
-        "dev_agent": "dev-frontend",
-        "depends": [
-          "FIX-SIGNALS-STOCK-FULL-DETAIL"
-        ],
-        "user_request": "Every info card must be click-to-expand (a dropdown) that reveals the FULL detail on click — the current summary (NEUTRAL / 50% tin cậy / date only) is too generic to understand.",
-        "root_cause": "Info cards (MacroImpactPanel cascade rows, and peer cards across dashboard.analysis.tsx / dashboard.*.tsx) render ONLY a one-line summary with no affordance to see the full detail. The user cannot follow what a NEUTRAL/50% cascade event actually means.",
-        "fix_spec": "Build a single reusable expand-on-click (dropdown/disclosure) primitive — collapsed summary row, click toggles an expanded panel rendering the full fetched detail (for the cascade card: event_type, headline, affected_sectors[], affected_stocks[], source, imfSentiment.reasoning, magnitude/confidence, normalized timestamp — sourced from FIX-SIGNALS-STOCK-FULL-DETAIL's enriched payload). Accessible (keyboard + aria-expanded). GENERIC: the primitive is card-agnostic and adopted by ALL such info cards, NOT a one-off for the macro/FPT card. Vietnamese labels for all user-facing text.",
-        "files": [
-          "apps/frontend/app/routes/dashboard.analysis.tsx (MacroImpactPanel + peer cards)",
-          "apps/frontend/app/components/ (new reusable ExpandableCard/Disclosure primitive)"
-        ],
-        "generic_mandate": "ONE reusable expand-on-click primitive adopted by ALL info cards (/goal#2 — no per-ticker/per-card hardcode). Expanded panel shows REAL fetched detail only (/goal#1) — never placeholder/stub; if a field is genuinely absent, show an honest empty-state, not a fabricated value. Vietnamese-only user-facing strings.",
-        "verification_gate": "Live dashboard: the cascade-macro card (and ≥1 peer info card) collapses to a summary and expands on click to show REAL fetched full detail (affected sectors/stocks, headline, source, reasoning) pulled from the live endpoint; keyboard-toggle + aria-expanded work; no placeholder text in any expanded panel.",
-        "rebuild_required": true,
-        "created_at": "2026-06-16T16:23:31Z",
-        "created_by": "po-s90",
-        "blocked_by": [],
-        "blocked_note": "dropdown REAL detail needs FIX-SIGNALS-STOCK-FULL-DETAIL exposed first; dispatch after #1 done_verified",
-        "next_agent": "dev-frontend",
-        "dispatched_at": "2026-06-16T16:52:04Z",
-        "dispatched_by": "dev-team",
-        "dispatched_to": "dev-frontend",
-        "unblocked_note": "FIX-SIGNALS-STOCK-FULL-DETAIL code GREEN (commit 6abf4d19, in review) — endpoint contract now exposes full finding_data + source + ISO created_at. Build reusable expand-on-click dropdown + clickable source link against this contract; honest empty-state where a field is genuinely null (no fabrication).",
-        "contract_ref": "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts StockSignalItem {finding_data:object|null, payload:object, source:string|null, created_at:ISO, direction, confidence_score, detail}; endpoint GET /mcp/api/signals/stock/:code?type=..."
       }
     ],
     "ready": [
@@ -19202,6 +19177,41 @@
       }
     ],
     "review": [
+      {
+        "id": "FIX-INFOCARD-DROPDOWN-EXPAND",
+        "epic": "INFOCARD-EXPAND-FETCH",
+        "title": "Generic click-to-expand dropdown for ALL dashboard info cards revealing full FETCHED detail",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P2",
+        "zone": "apps/frontend/",
+        "dev_agent": "dev-frontend",
+        "depends": [
+          "FIX-SIGNALS-STOCK-FULL-DETAIL"
+        ],
+        "user_request": "Every info card must be click-to-expand (a dropdown) that reveals the FULL detail on click — the current summary (NEUTRAL / 50% tin cậy / date only) is too generic to understand.",
+        "root_cause": "Info cards (MacroImpactPanel cascade rows, and peer cards across dashboard.analysis.tsx / dashboard.*.tsx) render ONLY a one-line summary with no affordance to see the full detail. The user cannot follow what a NEUTRAL/50% cascade event actually means.",
+        "fix_spec": "Build a single reusable expand-on-click (dropdown/disclosure) primitive — collapsed summary row, click toggles an expanded panel rendering the full fetched detail (for the cascade card: event_type, headline, affected_sectors[], affected_stocks[], source, imfSentiment.reasoning, magnitude/confidence, normalized timestamp — sourced from FIX-SIGNALS-STOCK-FULL-DETAIL's enriched payload). Accessible (keyboard + aria-expanded). GENERIC: the primitive is card-agnostic and adopted by ALL such info cards, NOT a one-off for the macro/FPT card. Vietnamese labels for all user-facing text.",
+        "files": [
+          "apps/frontend/app/routes/dashboard.analysis.tsx (MacroImpactPanel + peer cards)",
+          "apps/frontend/app/components/ (new reusable ExpandableCard/Disclosure primitive)"
+        ],
+        "generic_mandate": "ONE reusable expand-on-click primitive adopted by ALL info cards (/goal#2 — no per-ticker/per-card hardcode). Expanded panel shows REAL fetched detail only (/goal#1) — never placeholder/stub; if a field is genuinely absent, show an honest empty-state, not a fabricated value. Vietnamese-only user-facing strings.",
+        "verification_gate": "Live dashboard: the cascade-macro card (and ≥1 peer info card) collapses to a summary and expands on click to show REAL fetched full detail (affected sectors/stocks, headline, source, reasoning) pulled from the live endpoint; keyboard-toggle + aria-expanded work; no placeholder text in any expanded panel.",
+        "rebuild_required": true,
+        "created_at": "2026-06-16T16:23:31Z",
+        "created_by": "po-s90",
+        "blocked_by": [],
+        "blocked_note": "dropdown REAL detail needs FIX-SIGNALS-STOCK-FULL-DETAIL exposed first; dispatch after #1 done_verified",
+        "next_agent": "dev-frontend",
+        "dispatched_at": "2026-06-16T16:52:04Z",
+        "dispatched_by": "dev-team",
+        "dispatched_to": "dev-frontend",
+        "unblocked_note": "FIX-SIGNALS-STOCK-FULL-DETAIL code GREEN (commit 6abf4d19, in review) — endpoint contract now exposes full finding_data + source + ISO created_at. Build reusable expand-on-click dropdown + clickable source link against this contract; honest empty-state where a field is genuinely null (no fabrication).",
+        "contract_ref": "apps/mcp-server/src/interface/mcp/routes/stockSignalsHandler.ts StockSignalItem {finding_data:object|null, payload:object, source:string|null, created_at:ISO, direction, confidence_score, detail}; endpoint GET /mcp/api/signals/stock/:code?type=...",
+        "reviewed_at": "2026-06-16T19:05:00Z",
+        "reviewed_by": "dev-frontend"
+      },
       {
         "id": "FIX-SIGNALS-STOCK-FULL-DETAIL",
         "epic": "INFOCARD-EXPAND-FETCH",

@@ -330,6 +330,10 @@ import type { AgentSignal, SignalAccuracy } from "~/domain/market";
 /**
  * Map one raw DB row (snake_case) to an AgentSignal domain object.
  * Handles both the direct `detail` column and the JSON `payload.detail` fallback.
+ *
+ * FIX-SIGNALS-STOCK-FULL-DETAIL (commit 6abf4d19): backend now returns
+ * finding_data (full structured object) and source (provenance URL).
+ * toAgentSignal carries both through so the UI can render full detail on expand.
  */
 function toAgentSignal(row: unknown): AgentSignal | null {
   if (row === null || typeof row !== "object") return null;
@@ -360,7 +364,31 @@ function toAgentSignal(row: unknown): AgentSignal | null {
 
   const createdAt = typeof obj["created_at"] === "string" ? obj["created_at"] : "";
 
-  return { id, stockCode, signalType, direction, confidence, reasoning, createdAt };
+  // finding_data: parse JSON if it arrives as a string (older serialisations),
+  // or accept it as an object already (new backend serialises to object).
+  let findingData: Record<string, unknown> | null = null;
+  if (obj["finding_data"] !== null && obj["finding_data"] !== undefined) {
+    if (typeof obj["finding_data"] === "object" && !Array.isArray(obj["finding_data"])) {
+      findingData = obj["finding_data"] as Record<string, unknown>;
+    } else if (typeof obj["finding_data"] === "string") {
+      try {
+        const parsed = JSON.parse(obj["finding_data"]);
+        if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+          findingData = parsed as Record<string, unknown>;
+        }
+      } catch { /* leave null */ }
+    }
+  }
+
+  // source: prefer top-level source field, fallback to finding_data.source
+  let source: string | null = null;
+  if (typeof obj["source"] === "string" && obj["source"].length > 0) {
+    source = obj["source"];
+  } else if (findingData !== null && typeof findingData["source"] === "string" && findingData["source"].length > 0) {
+    source = findingData["source"] as string;
+  }
+
+  return { id, stockCode, signalType, direction, confidence, reasoning, createdAt, findingData, source };
 }
 
 /**

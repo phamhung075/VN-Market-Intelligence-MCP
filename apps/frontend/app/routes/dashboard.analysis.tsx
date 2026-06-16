@@ -42,6 +42,7 @@ import {
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
 import { QueName } from "~/components/QueName";
+import { InfoCardExpand } from "~/components/InfoCardExpand";
 import {
   Collapsible,
   CollapsibleContent,
@@ -762,11 +763,8 @@ function MacroImpactPanel({
                 ? "border-red-800"
                 : "border-slate-700";
 
-            return (
-              <div
-                key={sig.id}
-                className={`rounded border bg-slate-800/60 px-3 py-2 ${borderCls}`}
-              >
+            const summary = (
+              <>
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-xs text-slate-300 leading-relaxed flex-1">
                     {sig.reasoning || "Cascade macro event"}
@@ -781,7 +779,17 @@ function MacroImpactPanel({
                     {formatDateOnlyVi(sig.createdAt)}
                   </span>
                 </div>
-              </div>
+              </>
+            );
+
+            return (
+              <InfoCardExpand
+                key={sig.id}
+                summary={summary}
+                findingData={sig.findingData}
+                source={sig.source}
+                className={`rounded border bg-slate-800/60 px-3 py-2 ${borderCls}`}
+              />
             );
           })}
         </div>
@@ -1372,8 +1380,16 @@ function StockSignalsPanel({ signals }: { signals: AgentSignal[] | null }) {
                     <td className="py-1.5 pr-4">
                       <AccuracyBadge accuracy={sig.accuracy} />
                     </td>
-                    <td className="py-1.5 text-slate-300 max-w-xs truncate" title={sig.reasoning}>
-                      {sig.reasoning || <span className="text-slate-600 italic">—</span>}
+                    <td className="py-1.5 text-slate-300 max-w-xs align-top">
+                      <InfoCardExpand
+                        summary={
+                          <span className="text-xs text-slate-300 line-clamp-2" title={sig.reasoning}>
+                            {sig.reasoning || <span className="text-slate-600 italic">—</span>}
+                          </span>
+                        }
+                        findingData={sig.findingData}
+                        source={sig.source}
+                      />
                     </td>
                   </tr>
                 );

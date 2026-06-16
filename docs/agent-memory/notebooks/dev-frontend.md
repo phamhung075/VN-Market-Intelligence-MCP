@@ -4,6 +4,24 @@
 
 ---
 
+## Session: 2026-06-16 (FIX-INFOCARD-DROPDOWN-EXPAND — REVIEW)
+
+**FIX-INFOCARD-DROPDOWN-EXPAND DONE — reusable expand-on-click primitive + full finding_data path**
+
+New/changed files:
+- `apps/frontend/app/components/InfoCardExpand.tsx` (NEW) — reusable `InfoCardExpand` + `FindingDataPanel` using Radix Collapsible; keyboard + aria-expanded; Vietnamese labels; honest empty-state; generic field render via FIELD_LABELS map
+- `apps/frontend/app/domain/market.ts` — `AgentSignal` extended with `findingData: Record<string,unknown>|null` + `source: string|null`
+- `apps/frontend/app/lib/api/client.ts` — `toAgentSignal` mapper updated to extract `finding_data` (object or JSON string) + `source` (top-level → findingData fallback)
+- `apps/frontend/app/routes/dashboard.analysis.tsx` — `MacroImpactPanel` and `StockSignalsPanel` both wired to `InfoCardExpand`; import added
+- `apps/frontend/app/__tests__/1938-stock-signals.test.ts` — `SAMPLE_SIGNAL` const updated with `findingData: null, source: null`
+- `apps/frontend/app/__tests__/FIX-INFOCARD-DROPDOWN-EXPAND.test.tsx` (NEW) — 25 tests: 8 mapping, 9 FindingDataPanel, 8 InfoCardExpand — all GREEN
+
+Test results: 1695 pass / 2 fail (2 pre-existing QUE_DESCRIPTIONS failures unrelated). tsc: EXIT 0.
+
+Zone health: expand-on-click wired to MacroImpactPanel + StockSignalsPanel; full finding_data path end-to-end; REBUILD_REQUIRED (FE container, batched by ops) | HEALTHY
+
+---
+
 ## Session: 2026-06-16 (FIX-CASCADE-CARD-INVALID-DATE — REVIEW)
 
 **FIX-CASCADE-CARD-INVALID-DATE DONE — 1 shared helper, 4 brittle sites replaced**
