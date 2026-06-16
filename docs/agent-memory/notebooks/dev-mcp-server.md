@@ -1,5 +1,13 @@
 # dev-mcp-server -- Notebook
 
+## 2026-06-16 · FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS — fingerprint dedup gate wired into parallel scan jobs
+
+**Task:** FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS (M — REGRESSION, 14-26 duplicate HVN alerts/cycle)
+**Root cause:** taAlertScanJob + bbAlertScanJob used crypto.randomUUID() for IDs + plain INSERT (not OR IGNORE), so dedup on `id` was ineffective. The 4h SQL cooldown check is a TOCTOU race when both scans run concurrently via alertScanParallelJob. computeAlertFingerprint existed in alertDedup.ts but was never wired into either scan job.
+**Fix:** DB-level UNIQUE(fingerprint) constraint as authoritative single choke-point. Added computeScanAlertFingerprint(ticker, alertType, daySlot) → "scan:{t}:{a}:{YYYY-MM-DD}". Schema-alerts.ts: idempotent fingerprint TEXT UNIQUE migration. Both scan jobs: INSERT OR IGNORE + fingerprint in payload. Cooldown SQL kept as first-pass cost filter only.
+**Tests:** 6 new ACs in FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS.test.ts (parallel race AC-4 is critical); AC-6/AC-7 in 1307/1309 updated for correct per-day semantics. 125/125 across 13 alert-domain files. tsc clean.
+**Commit:** 75e7a80f | **rebuild_required:** true
+
 ## 2026-06-15 · FIX-BCTC-ENRICH-SILENT-0ROWS — 0-rows enrich fails loud
 
 **Task:** FIX-BCTC-ENRICH-SILENT-0ROWS (P0 CO-OWNER surface: enrich orchestration)
