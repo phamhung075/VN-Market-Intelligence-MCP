@@ -47,6 +47,7 @@ import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.j
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
 import { runOhlcvSanityCheck } from './market-data/ohlcvSanityCheckJob.js'
 import { runTaOhlcvBackfill } from './market-data/taOhlcvBackfillJob.js'
+import { purgeStrandedSeedRows } from './market-data/allzeroOhlcvBackfill.js'
 import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
@@ -122,6 +123,23 @@ export function startScheduler() {
   const { reaped } = reapZombieJobRuns(db)
   if (reaped > 0) {
     log(`[startup] reaped ${reaped} zombie cron_job_runs row(s) → status=crashed`)
+  }
+
+  // FIX-OHLCV-STRANDED-ROWS-REPAIR-P1 — startup repair of synthetic seed bars
+  // Purges daily_ohlcv rows that are flat O=H=L=C with volume=0.  These rows
+  // were written by the PRE-FIX aggregator image (before d4b532be) and serve as
+  // live poison for BB/RSI indicators ("giá 0 dưới BB" false breakout).
+  // Generic predicate: volume=0 AND open=high=low=close — no date/ticker literals.
+  // Safe: vol>0 real candles (including halt-day ATC rows) are never matched.
+  // Idempotent: subsequent restarts delete 0 rows (no-op).
+  try {
+    const strandedResult = purgeStrandedSeedRows(db)
+    if (strandedResult.deleted > 0) {
+      log(`[startup] purgeStrandedSeedRows: deleted ${strandedResult.deleted} synthetic flat seed bar(s) from daily_ohlcv`)
+    }
+  } catch (err) {
+    // Non-fatal: log the error, continue startup. Repair will re-run on next restart.
+    log(`[startup] purgeStrandedSeedRows error (non-fatal): ${err instanceof Error ? err.message : String(err)}`)
   }
 
   // Startup probe — ohlcv data completeness check (task 1353, Sprint 119).

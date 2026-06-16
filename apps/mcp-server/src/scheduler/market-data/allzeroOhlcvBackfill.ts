@@ -40,6 +40,11 @@ export interface NormalizeResult {
   fixed: number;
 }
 
+export interface PurgeStrandedResult {
+  /** Number of synthetic flat zero-vol seed rows deleted from daily_ohlcv */
+  deleted: number;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // purgeAllZeroRows
 // ─────────────────────────────────────────────────────────────────────────────
@@ -145,4 +150,59 @@ export function normalizeResidualContam(db: Database): NormalizeResult {
   fixAll(contamRows);
 
   return { fixed: contamRows.length };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// purgeStrandedSeedRows
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * FIX-OHLCV-STRANDED-ROWS-REPAIR-P1
+ *
+ * Deletes all synthetic flat zero-vol seed bars from daily_ohlcv using a
+ * GENERIC shape predicate — no date literal, no per-ticker allowlist.
+ *
+ * Shape predicate:
+ *   volume = 0 AND open = high AND high = low AND low = close
+ *
+ * This matches every row where:
+ *   - volume is zero (no real trading activity), AND
+ *   - all four OHLC fields are identical (reference/seed price, not a candle)
+ *
+ * Two classes of stranded residue from FIX-OHLCV-AGGREGATOR-SEED-UNMIGRATED-P0:
+ *
+ *   Class 1 — wrong-scale seed bars: DCR O=H=L=C=5900 vol=0, H11 O=H=L=C=25700 vol=0.
+ *     The pre-fix aggregator wrote the VNDIRECT reference price directly without
+ *     scale-normalization (detectAndNormalizeScaleFromPrevClose was bypassed).
+ *
+ *   Class 2 — all-zero seed bars: DAG/DFF/DMC/POM O=H=L=C=0 vol=0.
+ *     The pre-fix aggregator produced close=0 for tickers whose sole tick had price=0.
+ *     These also satisfy the shape predicate (0=0 AND vol=0).
+ *     NOTE: purgeAllZeroRows() already catches O=H=L=C=0 rows. purgeStrandedSeedRows
+ *     catching them too is harmless (idempotent — second DELETE matches 0 rows).
+ *
+ * Safety invariant: the predicate keys on vol=0. A real halt day (ATC price match,
+ * full circuit-breaker halt) may produce O=H=L=C but will always have vol > 0 from
+ * the auction. This function NEVER deletes vol > 0 candles.
+ *
+ * Idempotent: a second run deletes 0 rows (WHERE matches nothing after first run).
+ *
+ * Generic: fires for ANY ticker on ANY date — matches /goal#2. No per-ticker logic,
+ * no date comparison, no data_env filter (don't need it — the shape is sufficient).
+ *
+ * @param db - SQLite Database instance (named-volume mcp-server DB)
+ * @returns PurgeStrandedResult with count of deleted rows
+ */
+export function purgeStrandedSeedRows(db: Database): PurgeStrandedResult {
+  const result = db
+    .prepare(
+      `DELETE FROM daily_ohlcv
+       WHERE volume = 0
+         AND open = high
+         AND high = low
+         AND low = close`,
+    )
+    .run();
+
+  return { deleted: result.changes };
 }
