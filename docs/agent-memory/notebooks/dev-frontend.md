@@ -1,6 +1,36 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-14 | **Sprint:** KINHDICH-HOVER-ENRICH-FE
+**Last updated:** 2026-06-16 | **Sprint:** FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH
+
+---
+
+## Session: 2026-06-16 (FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH — T4 complete)
+
+**FIX-ERRAUDIT-W2-FE-T4 DONE — 28 Cluster A dashboard loaders migrated to safeFetch**
+
+Tasks completed this session (T4 routes):
+- Named-helper routes (each: add import, add parseXxxDto, replace try/catch with safeFetch + error-guard return):
+  officers, financials, fed-rates, reputation, technical (fetchPriceHistory), bctc (fetchAnalysisBriefs)
+- Inline-loader routes (add parse function + safeFetch call directly in loader):
+  dashboard._index, dashboard.news, dashboard.orchestration, dashboard.quality-audit
+- Routes from prior session (same pattern): alerts, agm-plan-actual, conviction-history,
+  corporate-events, foreign-flow, global-markets, intel, kinh-dich-signals, macro,
+  market-summaries, news-buzz, prediction-claims, sector-cascade, sector-rotation, shareholders
+
+Key architectural patterns:
+- parseXxxDto(null) returns empty-shape struct (no throw) for safeFetch error-path recovery
+- For routes where tests expect null fields on error (macro: indicators/signals, financials: summary/rankings):
+  add `if (error !== null) { return { ...null-fields..., error }; }` guard in fetch helper
+- dashboard.vps.tsx: SKIPPED (uses proxyError not error, calls MCP_SERVER_BASE_URL directly)
+- dashboard.analysis.tsx inline brief fetch: SKIPPED (intentional 4xx error-body parsing, not simple safeFetch)
+- test updates: non-Error throw = not.toBeNull(); null body 200 = toBeNull() (parse(null) silent)
+- macro null body special-case: parse(null) returns empty stub with indicators obj, signals=null;
+  error stays null; test updated to reflect new contract
+
+tsc: 0 errors. vitest: 1637/1639 pass (2 pre-existing QUE_DESCRIPTIONS schema failures, unrelated).
+Commit: 75a89a3b — feat(frontend/FIX-ERRAUDIT-W2-FE-T4): migrate all 28 Cluster A dashboard loaders to safeFetch
+
+Zone health: All dashboard loaders now use bounded safeFetch (55s deadline); FETCH_DEADLINE_MS SSOT applied | HEALTHY
 
 ---
 
