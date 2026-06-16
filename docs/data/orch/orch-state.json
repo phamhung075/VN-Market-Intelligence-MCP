@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T16:02:46Z",
+  "_updated_at": "2026-06-16T16:08:49Z",
   "_updated_by": "dev-team",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -722,7 +722,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T16:02:46Z",
+    "_updated_at": "2026-06-16T16:08:49Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -12520,6 +12520,44 @@
     ],
     "done": [
       {
+        "id": "FIX-BCTC-SSC-503-RETRY",
+        "title": "FIX-BCTC-SSC-503-RETRY — add 1-retry+60s backoff in _ssc_curl_search() step1 before returning None on a transient SSC HTTP 503",
+        "type": "FIX",
+        "owner": "po",
+        "status": "done_verified",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps",
+        "next_agent": "fixer",
+        "created_at": "2026-06-16T15:37:15Z",
+        "created_by": "po",
+        "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #1 (2026-06-16). SSC returns HTTP 503 on ALL tickers at ~12:00Z UTC (19:00 ICT, scheduled maintenance window); self-recovers by ~12:36Z. Current _ssc_curl_search() has NO 503 retry -> returns None -> SKIP -> an entire 6h cycle burned for a 6-min transient.",
+        "root_cause": "_ssc_curl_search() step1 returns None on the first HTTPError 503 with no retry; the ~daily ~12:00Z SSC maintenance restart therefore drops a full 6h discovery cycle.",
+        "fix_spec": "In _ssc_curl_search() step1: on HTTPError 503, retry ONCE after a 60s backoff before returning None. Keep fail-loud-per-ticker on the 2nd 503 (return None -> SKIP, do NOT fabricate). Bound the retry so total step1 time stays well under the cycle budget. No change to the afrLoop/ViewState happy path.",
+        "generic_mandate": "/goal#2 GENERIC — retry keys on HTTP status 503 only, applies to ANY ticker/exchange; no per-ticker/date literal.",
+        "verification_gate": "LIVE: next ~12:00Z UTC cycle that hits an SSC 503 recovers within the same cycle (retry succeeds at 200) instead of SKIP-all; OR a forced 503 replay shows the retry path. NOT covered by the shipped C1-C4 durability fixes.",
+        "files": [
+          "vps-scripts/discover-bctc-urls-browser.py"
+        ],
+        "baseline_pass": false,
+        "dispatched_at": "2026-06-16T15:43:48Z",
+        "dispatched_by": "dev-team",
+        "dispatched_to": "dev-vps-crawls",
+        "impl_commit": "6da9b030",
+        "code_verify": "GREEN (router RAW first-hand on 6da9b030): on main, 2 files only; step1 retry loop range(2) — clean-200 breaks before retry, transient(5xx/ConnReset/Timeout/Refused/'timed out') -> 1x60s backoff + opener rebuild (_ssc_make_opener L683), terminal(4xx/unknown) -> return None, retry-exhausted -> return None (no fabrication); generic error-class only (no per-ticker/exchange); py_compile OK (VPS script outside CI path).",
+        "qa_flag": "23 simulation tests run by agent but NOT committed (diff = script + decision-journal). qa: decide if a persisted vps-scripts test is required; router already confirmed branch logic + py_compile first-hand (test-PERSISTENCE gap, not a correctness gap).",
+        "promoted_to_review_ts": "2026-06-16T15:50:26Z",
+        "promoted_by": "dev-team",
+        "qa_verdict": "CHANGES_REQUESTED",
+        "qa_reviewed_by": "qa (agent a7f50720; router RAW-verified the verdict first-hand)",
+        "changes_required": "Persist _is_transient_error unit tests to vps-scripts/test_discover_bctc_title_classifier.py (or sibling test_discover_bctc_retry.py): HTTPError 5xx->True, HTTPError 4xx->False, URLError(ConnectionResetError)->True, URLError(TimeoutError)->True, URLError('timed out')->True, unknown exception->False. Commit the 23 sim cases. Pure classifier, no I/O — trivially unit-testable. Production logic already PASS (G1/G2/G4) — tests-only round, NO code change to discover-bctc-urls-browser.py.",
+        "changes_req_ts": "2026-06-16T16:02:46Z",
+        "test_commit": "b238e33b",
+        "done_verified_by": "dev-team (router RAW first-hand: ran vps-scripts test harness 35/35 pass; production discover-bctc-urls-browser.py UNTOUCHED by b238e33b; logic verified on 6da9b030; qa a7f50720 G1/G2/G4 PASS via live importlib load)",
+        "done_verified_ts": "2026-06-16T16:08:49Z",
+        "optional_monitor": "NON-BLOCKING: next real SSC ~12:00Z maintenance-window 503 -> confirm retry-then-success in VPS logs. NOT a correctness gate (deterministic control-flow, unforceable, no-fake-data)."
+      },
+      {
         "id": "FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK",
         "type": "FIX",
         "status": "done_verified",
@@ -19092,40 +19130,6 @@
         "dispatched_at": "2026-06-16T15:43:48Z",
         "dispatched_by": "dev-team",
         "dispatched_to": "dev-mcp-server"
-      },
-      {
-        "id": "FIX-BCTC-SSC-503-RETRY",
-        "title": "FIX-BCTC-SSC-503-RETRY — add 1-retry+60s backoff in _ssc_curl_search() step1 before returning None on a transient SSC HTTP 503",
-        "type": "FIX",
-        "owner": "po",
-        "status": "IN_PROGRESS",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps",
-        "next_agent": "fixer",
-        "created_at": "2026-06-16T15:37:15Z",
-        "created_by": "po",
-        "source": "recon docs/vps-sources/bctc-pipeline-stale-5d/recon.md §Residual Risks #1 (2026-06-16). SSC returns HTTP 503 on ALL tickers at ~12:00Z UTC (19:00 ICT, scheduled maintenance window); self-recovers by ~12:36Z. Current _ssc_curl_search() has NO 503 retry -> returns None -> SKIP -> an entire 6h cycle burned for a 6-min transient.",
-        "root_cause": "_ssc_curl_search() step1 returns None on the first HTTPError 503 with no retry; the ~daily ~12:00Z SSC maintenance restart therefore drops a full 6h discovery cycle.",
-        "fix_spec": "In _ssc_curl_search() step1: on HTTPError 503, retry ONCE after a 60s backoff before returning None. Keep fail-loud-per-ticker on the 2nd 503 (return None -> SKIP, do NOT fabricate). Bound the retry so total step1 time stays well under the cycle budget. No change to the afrLoop/ViewState happy path.",
-        "generic_mandate": "/goal#2 GENERIC — retry keys on HTTP status 503 only, applies to ANY ticker/exchange; no per-ticker/date literal.",
-        "verification_gate": "LIVE: next ~12:00Z UTC cycle that hits an SSC 503 recovers within the same cycle (retry succeeds at 200) instead of SKIP-all; OR a forced 503 replay shows the retry path. NOT covered by the shipped C1-C4 durability fixes.",
-        "files": [
-          "vps-scripts/discover-bctc-urls-browser.py"
-        ],
-        "baseline_pass": false,
-        "dispatched_at": "2026-06-16T15:43:48Z",
-        "dispatched_by": "dev-team",
-        "dispatched_to": "dev-vps-crawls",
-        "impl_commit": "6da9b030",
-        "code_verify": "GREEN (router RAW first-hand on 6da9b030): on main, 2 files only; step1 retry loop range(2) — clean-200 breaks before retry, transient(5xx/ConnReset/Timeout/Refused/'timed out') -> 1x60s backoff + opener rebuild (_ssc_make_opener L683), terminal(4xx/unknown) -> return None, retry-exhausted -> return None (no fabrication); generic error-class only (no per-ticker/exchange); py_compile OK (VPS script outside CI path).",
-        "qa_flag": "23 simulation tests run by agent but NOT committed (diff = script + decision-journal). qa: decide if a persisted vps-scripts test is required; router already confirmed branch logic + py_compile first-hand (test-PERSISTENCE gap, not a correctness gap).",
-        "promoted_to_review_ts": "2026-06-16T15:50:26Z",
-        "promoted_by": "dev-team",
-        "qa_verdict": "CHANGES_REQUESTED",
-        "qa_reviewed_by": "qa (agent a7f50720; router RAW-verified the verdict first-hand)",
-        "changes_required": "Persist _is_transient_error unit tests to vps-scripts/test_discover_bctc_title_classifier.py (or sibling test_discover_bctc_retry.py): HTTPError 5xx->True, HTTPError 4xx->False, URLError(ConnectionResetError)->True, URLError(TimeoutError)->True, URLError('timed out')->True, unknown exception->False. Commit the 23 sim cases. Pure classifier, no I/O — trivially unit-testable. Production logic already PASS (G1/G2/G4) — tests-only round, NO code change to discover-bctc-urls-browser.py.",
-        "changes_req_ts": "2026-06-16T16:02:46Z"
       }
     ],
     "ready": [
