@@ -22,19 +22,32 @@ sequence_after dep W2-MCP-FETCH-DEADLINE is done_verified. Distinct zone apps/fr
 no zone-serialize conflict with mcp-server; WIP≤2 honored. Router lock-claims + spawns ba;
 po did NOT spawn. W3-MCP-P2 (15 folded sites) + W3-PEK-P2 stay backlog for after W2-FRONTEND.
 
-**THIRD: PUSH — decided PUSH-NOW (my deferred call, cleared).** 13 local commits all benign
-chore / RAW-verified fix; the 106-behind divergence is 100% cloud-chore (health-recheck/TNB/
-memory). No CI-red gate, no conflict surface on touched files → publishing a completed wave +
-unblocking the router's ba lock-claim beats holding. Router executes the actual git push.
+**THIRD: PUSH — tried push-now, BLOCKED by a REAL red pre-push hook → now HELD.**
+Push-now attempt hit `pnpm --filter vn-market check` (tsc) RED — exactly ONE error:
+FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270 TS2367 (HIGH-vs-CRITICAL no-overlap). CRITICAL
+correction to my earlier assumption: this is NOT benign cloud-chore weather — it is
+SELF-INTRODUCED by my own unpushed chain (commit 4f5192c5 last touched that test file) and it
+strands the WHOLE fleet's push (red-prepush-strands-fleet). I did NOT push around it and did NOT
+write the one-line fix myself (PO never writes code). Instead escalated the already-tracked task
+FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 P3→P2 + blocking:true + promote ready + head=ba (po-s74) so
+the router dispatches the XS fix FIRST; once tsc is green the router pushes ALL accumulated local
+commits, THEN the W2-FRONTEND ba hop proceeds. The W1-PEK-P0 done_verified sign-off is already
+COMMITTED locally and stands regardless of push timing. (rebase-retry also refused: dirty tree
+from concurrent bg agents — another reason not to force.)
 
-Script: po-s73 (atomic dual-mutation sign-off+promote+head; conservation+invariant guarded;
-flow-doc pointer pending). Lock task:FIX-ERRAUDIT-W1-PEK-P0 released ok:true. orch-state
-committed by EXPLICIT PATH (no git add -A).
+Scripts: po-s73 (sign-off+promote+head), po-s74 (push-unblock escalate+promote) — both atomic
++conservation+invariant guarded; flow-doc pointers added. Locks task:FIX-ERRAUDIT-W1-PEK-P0 +
+commit-mutex:main released ok:true. All orch-state committed by EXPLICIT PATH (no git add -A).
 
 ### Carry-over
-- **FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (ready, ba)** → router dispatch; done_verified = stalled
-  upstream → loader/proxy 504/502 within DEADLINE_MS + 1 structured log, non-fatal wrappers
-  still return null/[]/{} on genuine empty. LIVE-verified.
+- **FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (ready, P2, BLOCKING, ba)** → router dispatch FIRST;
+  it gates the fleet push. One-line fix at test:270 (widen `severity` annotation so both ternary
+  branches stay reachable). After green → router pushes ALL local commits → THEN W2-FRONTEND.
+- **PUSH HELD until tsc green** — not a deferred call now; a hard red-hook blocker. Router pushes
+  once SLA-TEST-TS2367 lands done + `bun tsc --noEmit` = 0 errors.
+- **FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (ready, ba)** → router dispatch AFTER the push lands;
+  done_verified = stalled upstream → loader/proxy 504/502 within DEADLINE_MS + 1 structured log,
+  non-fatal wrappers still return null/[]/{} on genuine empty. LIVE-verified.
 - **FIX-ERRAUDIT-W3-MCP-P2 (backlog, 15 sites folded) + W3-PEK-P2 (backlog)** → after W2-FE.
 - **review[] ×5 NOT yet triaged this cycle** (CONFIDENCE-DEFAULT-50, ARCH-SHIP-WAVE-REAUDIT,
   RSI-SINGLEDIGIT, VNSTOCK-TRADINGSTATS-CRASH, BCTC-ENRICH-SILENT-0ROWS) → next sign-off batch.

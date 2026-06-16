@@ -25,3 +25,13 @@
 - PUSH-now vs hold — 13 local commits all benign chore/RAW-verified fix; the 106-behind divergence is 100% cloud-chore (health-recheck/TNB/memory); a deferred sign-off is honest-done; no CI-red gate, no conflict surface on touched files → push-now.
 **why-decision:** Whole W1-PEK chain RAW-verified green; the only reason push was held was the deferred-call policy, not a real blocker — clearing it now publishes a completed wave + unblocks the router's lock-claim for the ba hop.
 **why-change:** no change from plan — W2-FRONTEND was the pre-specced next wave hop (sequence_after gate now satisfied by the done_verified mcp-server deadlines).
+
+### STEP po-S3 · po · 2026-06-16T01:45:00Z
+**task-id:** FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367
+**what-done:** Push-now BLOCKED by red pre-push tsc hook; escalated this already-tracked task P3→P2+blocking, promoted ready, repointed head=ba (po-s74) so the fleet push can land; held PUSH.
+**what-considered:**
+- Push around the red (--no-verify) vs hold+fix — NEVER bypass the gate; a red main strands the whole fleet invisibly (red-prepush-strands-fleet) and would push a known-broken tree.
+- Is it weather or self-introduced? RAW-checked: `bun tsc --noEmit` = exactly 1 error; the file was last modified by unpushed commit 4f5192c5 (in my chain) → self-introduced, NOT benign cloud-chore. My earlier "push-now, divergence is all cloud-chore" assumption was WRONG.
+- Fix it myself vs dispatch — PO never writes code; the one-line type-narrowing fix is dev-mcp-server's; a fully-specced P3 task already existed → escalate+promote, router spawns.
+**why-decision:** The push blocker is a real self-introduced red, not policy; clearing it by dispatch (not bypass, not PO-authored code) is the only honest path to publish the RAW-verified W1-PEK-P0 sign-off + the rest of the chain.
+**why-change:** PUSH flipped push-now → HELD-until-green; the W1-PEK-P0 done_verified flip itself is unaffected (already committed locally; correctness independent of push timing).
