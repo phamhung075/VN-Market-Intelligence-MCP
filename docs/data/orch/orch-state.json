@@ -127,11 +127,11 @@
   ],
   "head": {
     "status": "ready",
-    "updated_at": "2026-06-16T04:39:17Z",
-    "updated_by": "po-s79",
+    "updated_at": "2026-06-16T06:30:00Z",
+    "updated_by": "ba",
     "active_task_id": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
-    "next_agent": "ba",
-    "note": "Head advanced off the TS2367 push-unblocker (now done_verified, tsc GREEN). Next real priority is the previously-planned Wave-2 frontend hop FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (P1, ba) — its dep FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE is already done_verified, so the inner-first gate is satisfied. The 3 cowork-doublefire roots (GATHERER/NEWSSCOUT/MARKETWATCHER, all MEDIUM) and the P1 BCTC/HNX/SSC cluster remain in ready[] for subsequent picks. router spawns ba; po does NOT spawn.",
+    "next_agent": "architect",
+    "note": "BA spec complete for FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH. Spec: docs/handoffs/FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH-BA-spec.md. Zero PO blockers. 4 architect ratification items (ARCH-RATIFY-FE-1 through FE-4). NEXT: architect — brownfield read apps/frontend; confirm EC-6/EC-5/EC-8/NFR-7 ratifications; blueprint fetchUtils.ts + T-4 exact file list + FE-PAGE-REORG scope absorption.",
     "push_note": "PO green-lit the fleet push this tick. 13-behind origin/main classified ALL benign cloud-chore/docs (8x chore(health) recheck, 2x chore(memory) notebook, 1x chore(tasks) signal_queue append, 1x docs(reports) TNB audit handoff, 1x chore(memory/tran-ngoc-bau)) — zero code, zero mcp-server conflict. tsc GREEN so the red pre-push hook no longer strands. Plan: git pull --rebase origin main (replay 123 work commits atop 13 chores) -> re-verify bunx tsc --noEmit=0 -> git push. The push is executed by po out-of-band and is NOT part of this orch-state commit.",
     "reconciled_from": ".head was on FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (po-s76 reconcile_note); that task is now signed off."
   },
@@ -18121,6 +18121,16 @@
           "verified_at": "2026-06-16T04:39:17Z",
           "note": "ba fixed the code in 6f9b3eba but did not advance the board (task stayed ready[]/next=ba). po-s79 close-out relocates it done_verified after RAW tsc-green reconfirm. Fleet push now unblocked."
         }
+      },
+      {
+        "id": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH-BA",
+        "title": "BA spec — FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH: safeFetch+proxyUpstream+safeFetchOrNull, 3 clusters (26 loaders, 29 proxies, 4 non-fatal), FETCH_DEADLINE_MS=55s, zero PO blockers, 4 ARCH-RATIFY-FE items",
+        "owner": "ba",
+        "status": "done_verified",
+        "zone": "docs/handoffs/",
+        "created_at": "2026-06-16T06:00:00Z",
+        "priority": "high",
+        "handoff": "docs/handoffs/FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH-BA-spec.md"
       }
     ],
     "head": {

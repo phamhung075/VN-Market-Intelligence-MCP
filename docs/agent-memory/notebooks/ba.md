@@ -1,5 +1,17 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-16 | **Sprint:** FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH
+
+## FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH · 2026-06-16
+
+Spec complete. Task: FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH. REQ file: `docs/handoffs/FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH-BA-spec.md`. Zero PO blockers. Four architect ratification items (ARCH-RATIFY-FE-1 through FE-4). NEXT: architect.
+
+Key BA findings: Three helpers in ONE new file `apps/frontend/app/lib/api/fetchUtils.ts`: (A) `safeFetch<T>` for ~26 dashboard loader helpers — replaces ~40-line inline try/fetch/parse with 4-line call + attribution `console.error`; (B) `proxyUpstream` for ~29 `api.*.tsx` proxy routes — 504 on deadline, 502 on network error; (C) `safeFetchOrNull<T>` for 4 non-fatal `client.ts` wrappers — preserved null/[]/`{}` degrade contract + attribution log + deadline. `FETCH_DEADLINE_MS = 55_000` is the single SSOT (55s < 60s gateway ceiling; > 45s mcp-server inner deadline). Cluster C callers use 10s override (best-effort enrichment). Key boundary: `FE-PAGE-REORG` Wave-1 `loader-utils.ts safeFetch` plan is ABSORBED into `fetchUtils.ts` — no second helper allowed. `apiGet<T>` NOT bounded internally (outer safeFetch covers it). Sequence constraint: AFTER W2-MCP-FETCH-DEADLINE (done_verified), which bounds the inner mcp-server hops first.
+
+Decision journal (task_id: FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH):
+- what-considered: "Helper location: (A) `lib/api/fetchUtils.ts` — chosen, mirrors existing `client.ts` location in lib/api/, no upward imports; (B) inline helpers in each route — rejected (same duplication bug at 55 sites); (C) `lib/utils/` top-level — rejected (no precedent in frontend). `safeFetch` vs `proxyUpstream` split: single helper with a mode flag vs two separate exports — separate exports chosen (clear semantic boundary: loader=data-fetch, proxy=relay; prevents misuse). FETCH_DEADLINE_MS=55s: chosen as 55s not 50s to give full clearance above 45s bctcPdfPullJob; below 60s gateway. FE-PAGE-REORG absorption: reuse-fetchUtils vs let FE-PAGE-REORG add its own loader-utils — reuse chosen (eliminates duplicate pattern at root)."
+- why-change: "no change from plan — scope matches audit brief frontend-cluster exactly; smallest correct change that closes all 4 sub-findings (01/02/04/06/07) in one shared file"
+
 **Last updated:** 2026-06-16 | **Sprint:** FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367
 
 ## FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 · 2026-06-16
@@ -167,20 +179,7 @@ Key BA findings (raw-read, not relayed):
 
 ## ORCH-DASH-DECISION-DRILLDOWN-BA · 2026-06-05
 
-Spec complete. REQ file: `docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-BA-spec.md`. Three architect-level blockers (not PO blockers). NEXT: architect.
-
-Key BA findings (raw-read source files, not relayed):
-- Serving layer: `apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts` — confirmed live via `api.orchestration.tsx` proxy chain (`:3001 → :3000/api/orchestration`). NOT the undeployed Go api-gateway.
-- `buildOrchestrationDto` is a pure function (injectable, testable) — F2 extension goes here + a new `journalStore.ts` infra module for file discovery + markdown parse.
-- `OrchTaskDto` currently has `id/title/status/owner/zone` only — no `task_id` field separate from `id`. F2 DTO extension adds `decisions: DecisionsDto` at top level; `OrchTaskDto` itself is unchanged.
-- Dashboard route `TaskBoardPanel` → `DoneTaskGroup` already has `expanded` state and a show-all toggle — F3 accordion is additive inside `DoneTaskGroup` rows, not a new panel.
-- F1 format change is purely additive (one optional line in STEP block); backward-compat guaranteed if parser uses `null` fallback on missing field.
-- Dependency chain: F1 SKILL.md format finalize → F2 parser fixtures → F3 TypeScript types. F1+F2 can deploy independently of F3 (F3 reads `decisions?` optional field).
-- BLOCKER-1: architect must formally confirm BOTH join-key strategies before F1 dispatch.
-- BLOCKER-2: architect must specify sprint-id discovery scope for F2 journal file loader.
-- BLOCKER-3: architect must decide EC-6 latency risk (per-sprint mtime cache vs synchronous parse).
-
----
+Spec complete. REQ file: `docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-BA-spec.md`. Three architect blockers. NEXT: architect. (Full findings archived in git history.)
 
 ---
 
