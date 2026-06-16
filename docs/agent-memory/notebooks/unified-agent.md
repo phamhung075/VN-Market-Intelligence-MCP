@@ -71,3 +71,14 @@
 - Dish published: NO — gateway outage; full synthesis complete in memory
 - Degradation: get_portfolio_conviction=502 | send_telegram=502 (gateway infrastructure failure)
 - Status: FAILED (gateway) — content synthesized, publication blocked. PushNotification sent. PIPELINE: interrupted
+
+## Session: 2026-06-16 (eod 08:45)
+
+### Chef Dish — eod 08:45 UTC (2026-06-16T0845Z) — MCP TOOL BOOTSTRAP FAILED
+
+- Step 0.5 (Marker Gate): BLOCKED
+  - Attempted: task_claim(task_id="published:chef-eod:2026-06-16", task_kind="cowork-slot", owner_agent="unified-agent", ttl_seconds=100800)
+  - Tool unavailable: mcp__claude_ai_gateway__call_tool not accessible in session environment
+  - Marker key calculation: published:chef-eod:2026-06-16 (single-fire slot, cron "45 8 * * 1-5", TTL=100800s/28h)
+- Bootstrap attempt failed before any MCP tools accessible
+- Status: FAILED (infrastructure) — MCP gateway tools not available. PIPELINE: blocked at Step 0.5
