@@ -165,6 +165,12 @@ git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"
 
 ## Script Persistence — Canonical Pointers
 
+**CANONICAL: Generic stranded seed-bar repair (FIX-OHLCV-STRANDED-ROWS-REPAIR-P1)**
+purgeStrandedSeedRows() in `apps/mcp-server/src/scheduler/market-data/allzeroOhlcvBackfill.ts`.
+Runs automatically at container startup (startScheduler.ts). Deletes rows with
+`volume=0 AND open=high=low=close` — generic, no date/ticker literals, idempotent.
+No manual script needed: ops rebuild+restart triggers the repair against the live named-volume DB.
+
 **CANONICAL: OHLCV synthetic seed-candle repair (FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 SUBTASK-6)**
 ```bash
 # Dry-run (default — prints count + sample, no writes):
