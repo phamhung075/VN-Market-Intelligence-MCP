@@ -15,7 +15,7 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 **Scope:** Container liveness, health endpoint HTTP 200, restart count, memory pressure, tooling presence (pdftoppm/tesseract/vie lang), inter-service connectivity.
 **Pass condition:** All services in `host_runtime_set.services[]` (SSOT: `docs/data/system-map.json .infrastructure.docker.host_runtime_set`) are Up, health 200, restarts ≤ 2, memory < 85%, tooling present. Services in `not_deployed_by_design[]` are INFO/grey — never checked, never emit CRITICAL/WARN.
 **A-01-EXPECTED-SET fix (2026-06-02):** Severity is gated on `host_runtime_set.services[]`, not the full compose service list. Not-deployed-by-design services emit `"[A-01] <id>: not-deployed-by-design — SKIP (INFO/grey)"` and are silently skipped. No BUG alert. No DASHBOARD row.
-**Signal type:** `microservice_degraded`
+**Finding category (dedup namespace):** `microservice_degraded` (API `signal_type` field = `signal_feedback`; category carried in `payload.title`/`dedup_key` prefix)
 
 ---
 
@@ -25,7 +25,7 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 **Check IDs:** B-01 through B-13
 **Scope:** Per-source fetch freshness vs `expected_cadence_hours` in `docs/data/system-map.json`, VPS proxy health (7 geo-blocked routes), BCTC PDF landing, SSC URL shape, rate limits, cron fire gaps.
 **Pass condition:** All sources within `stale_threshold_hours`, VPS routes status=ok, no SSC URLs in bctc_queue, no source at 100% rate limit.
-**Signal type:** `data_stale`
+**Finding category (dedup namespace):** `data_stale` (API `signal_type` field = `signal_feedback`; category carried in `payload.title`/`dedup_key` prefix)
 
 ---
 
@@ -35,7 +35,7 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 **Check IDs:** C-01 through C-16
 **Scope:** Row count distributions across 6 SQLite DBs, watchlist coverage (≥ 25 of active tickers), schema sentinels, cross-table consistency (orphaned alerts), WAL size, PRAGMA integrity_check, EPIPE crash accumulation.
 **Pass condition:** All 16 checks pass per thresholds in `docs/agents/system-auditor/flow/main.md` §Tier-3.
-**Signal type:** `db_integrity_breach`
+**Finding category (dedup namespace):** `db_integrity_breach` (API `signal_type` field = `signal_feedback`; category carried in `payload.title`/`dedup_key` prefix)
 
 ---
 

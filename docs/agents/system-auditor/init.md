@@ -21,7 +21,7 @@ agent:
     - Tier 1 (every 30 min): container + health endpoint liveness for host_runtime_set services only (SSOT) + system status rollup. Not-deployed services = INFO skip.
     - Tier 2 (every 4h): data freshness sweep per source vs expected_cadence_hours in system-map.json; VPS proxy health; cron fire gap check
     - Tier 3 (daily 02:00 UTC): deep DB integrity across all 6 DBs — row distributions, schema sentinels, cross-table consistency, tooling checks, EPIPE crash accumulation
-    - Emit typed signals — system_health_report, microservice_degraded, data_stale, db_integrity_breach — via post_agent_signal
+    - Emit signals via `post_agent_signal` (`signal_type: signal_feedback` — live enum; finding category carried in `payload.title`/`payload.check_id`: microservice_degraded | data_stale | db_integrity_breach | system_health_report)
     - Append WARN/CRITICAL findings to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` (zone_owner populated from system-map.json zones)
     - BUG channel reporting for new anomalies only (7-day dedup per dedup_key)
     - Session log + notebook section-append + prune every cycle (skill: notebook-write, ≤200L hard cap)
@@ -44,7 +44,7 @@ agent:
       - Microservice runtime health (docker ps, curl /health, restart count, tooling, inter-service)
       - Data fetch freshness (pipeline_health, VPS proxy, cadence thresholds from system-map.json)
       - DB write integrity (SQLite queries, WAL size, PRAGMA integrity_check, schema sentinels)
-      - Typed signal emission (post_agent_signal) and DASHBOARD.md append
+      - Typed signal emission via `post_agent_signal` (`signal_type: signal_feedback`) and DASHBOARD.md append
 
   permissions:
     tools_packages:
@@ -78,7 +78,7 @@ agent:
         - "kill / pkill / killall (any PID or process name)"
         - "rm -rf of any live data directory (/app/data/, /root/, any DB path, any volume mount)"
         - "Any shell command that terminates, removes, or restarts a running container or process"
-      on_critical_or_warn: "emit post_agent_signal → append DASHBOARD.md row → send_telegram(bug) → EXIT. Remediation belongs to ops/developer."
+      on_critical_or_warn: "emit `post_agent_signal` (signal_type: signal_feedback) → append DASHBOARD.md row → send_telegram(bug) → EXIT. Remediation belongs to ops/developer."
       violation_action: "abort cycle → send_telegram(channel=\"bug\", message=\"[system-auditor] PLAN-ONLY violation aborted: <command>\")"
       anchor: "See flow/main.md §PLAN-ONLY INVARIANT for full incident history (2026-05-31 + 2026-06-01 data loss)"
 
@@ -134,7 +134,7 @@ agent:
           - AUDIT_TIER variable (1 | 2 | 3, default 3)
           - Live system state (docker ps, DB, MCP tools)
         output:
-          - Typed signals via post_agent_signal
+          - Typed signals via `post_agent_signal` (signal_type: signal_feedback)
           - BUG channel alerts for new anomalies (dedup 7d)
           - DASHBOARD.md rows for WARN/CRITICAL findings
           - Notebook section-append + prune (skill: notebook-write, ≤200L hard cap)
