@@ -71,19 +71,24 @@ From `PROBE_OUT` `--- health endpoints ---` section:
 3. **HTTP 000 significance:** in-container HTTP 000 means the event loop is wedged (uvicorn not accepting connections from within the network namespace). This was THE discriminating signal in the A-20 saga — host-side proxies/ports can return 200 while the container event loop is stalled. `000` counts as a fail probe.
 
 4. **Emit on A-20 FAIL:**
-   ```json
-   {
-     "type": "microservice_degraded",
-     "service_id": "pdf-extractor",
-     "check_id": "A-20",
-     "detail": "pdf-extractor multi-probe failed: {pass_count}/3 probes passed — event-loop stall suspected",
-     "severity": "WARN",
-     "dedup_key": "microservice_degraded:pdf-extractor:A-20"
-   }
+   ```
+   call_tool(server="vn-market", tool="post_agent_signal", arguments={
+     "from_agent": "system-auditor",
+     "to_agent": "po",
+     "signal_type": "signal_feedback",
+     "payload": {
+       "title": "A-20 FAIL: pdf-extractor event-loop stall",
+       "detail": "pdf-extractor multi-probe failed: {pass_count}/3 probes passed — event-loop stall suspected",
+       "check_id": "A-20",
+       "service_id": "pdf-extractor",
+       "severity": "WARN",
+       "dedup_key": "microservice_degraded:pdf-extractor:A-20"
+     }
+   })
    ```
    Signal row in orch-state.json `.signal_queue.rows[]`:
    ```json
-   {"id": "sau-{ts}", "from": "system-auditor", "to": "po", "type": "microservice_degraded",
+   {"id": "sau-{ts}", "from": "system-auditor", "to": "po", "type": "signal_feedback",
     "summary": "pdf-extractor A-20 multi-probe {pass_count}/3 — event-loop stall suspected",
     "severity": "HIGH", "status": "NEW"}
    ```
@@ -118,18 +123,21 @@ call_tool(server="vn-market", tool="get_cron_health", arguments={})
 Cross-reference any service reported DOWN with the `--- docker ps -a ---` lines in `PROBE_OUT`.
 
 ## Emit per failure
-```json
-{
-  "type": "microservice_degraded",
-  "ts": "<UTC ISO-8601>",
-  "service_id": "<id>",
-  "zone": "<zone from system-map>",
-  "zone_owner": "<specialist from zones>",
-  "check_id": "<A-xx>",
-  "detail": "<what failed — cite RAW-PROBE line>",
-  "severity": "CRITICAL|WARN|INFO",
-  "channel": "bug",
-  "dedup_key": "microservice_degraded:<service_id>:<check_id>"
-}
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
+  "from_agent": "system-auditor",
+  "to_agent": "po",
+  "signal_type": "signal_feedback",
+  "payload": {
+    "title": "<A-xx> FAIL: <service_id>",
+    "detail": "<what failed — cite RAW-PROBE line>",
+    "check_id": "<A-xx>",
+    "service_id": "<id>",
+    "zone": "<zone from system-map>",
+    "zone_owner": "<specialist from zones>",
+    "severity": "CRITICAL|WARN|INFO",
+    "dedup_key": "microservice_degraded:<service_id>:<check_id>"
+  }
+})
 ```
 Routing: severity ≥ WARN AND dedup_key not seen last 7d → `send_telegram(channel="bug", message="[system-auditor] {severity}: {summary} — see DASHBOARD.md")`. Always append DASHBOARD.md row for WARN/CRITICAL.

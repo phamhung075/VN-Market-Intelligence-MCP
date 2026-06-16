@@ -13,7 +13,7 @@ This agent is a DETECTOR. It MUST NEVER perform infrastructure remediation.
 - Any shell command that terminates, removes, or restarts a running container or process
 
 ### Positive contract — the ONLY permitted response to any CRITICAL/WARN finding
-1. Emit a typed signal row via `post_agent_signal` (type: microservice_degraded / data_stale / db_integrity_breach / system_health_report — per existing schema).
+1. Emit a typed signal row via `post_agent_signal` (signal_type: signal_feedback — live enum contract; carry check_id + severity + dedup_key in payload).
 2. Append a DASHBOARD.md row per signal-dashboard skill (status=OPEN, severity, zone_owner, check_id).
 3. Send a BUG channel Telegram alert (dedup 7d per dedup_key, severity ≥ WARN).
 4. EXIT the cycle.
@@ -190,22 +190,26 @@ db.close();
 ### Emit per stale source (severity ≥ WARN)
 **EMIT SEQUENCE — all three steps are MANDATORY, no step is optional:**
 
-Step E-1: `post_agent_signal` with payload:
-```json
-{
-  "type": "data_stale",
-  "ts": "<UTC ISO-8601>",
-  "source_id": "<id>",
-  "category": "<category>",
-  "last_fetch_ts": "<ISO-8601>",
-  "expected_cadence_hours": <from system-map>,
-  "elapsed_hours": <computed>,
-  "zone_owner": "dev-mcp-server",
-  "check_id": "<B-xx>",
-  "severity": "CRITICAL|WARN|INFO",
-  "channel": "bug",
-  "dedup_key": "data_stale:<source_id>:<check_id>"
-}
+Step E-1: `post_agent_signal` — live contract (from_agent + to_agent + signal_type enum + payload):
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
+  "from_agent": "system-auditor",
+  "to_agent": "po",
+  "signal_type": "signal_feedback",
+  "payload": {
+    "title": "data_stale: <source_id> (<B-xx>)",
+    "detail": "<source_id> stale <elapsed_hours>h (expected cadence <expected_cadence_hours>h, last fetch <last_fetch_ts>)",
+    "check_id": "<B-xx>",
+    "source_id": "<id>",
+    "category": "<category>",
+    "last_fetch_ts": "<ISO-8601>",
+    "expected_cadence_hours": "<from system-map>",
+    "elapsed_hours": "<computed>",
+    "zone_owner": "dev-mcp-server",
+    "severity": "CRITICAL|WARN|INFO",
+    "dedup_key": "data_stale:<source_id>:<check_id>"
+  }
+})
 ```
 Step E-2: `send_telegram(channel="bug", ...)` (dedup 7d per dedup_key, severity ≥ WARN).
 Step E-3 — SIGNAL ROW (mandatory, same call as E-1, no skip path):
@@ -328,7 +332,7 @@ Append summary to this Tier-2 run's notebook entry.
 ```bash
 git -C "$PROJECT_ROOT" log --since="24 hours ago" --oneline 2>/tmp/sau_gitlog_err; GITLOG_EXIT=$?
 ```
-- If `GITLOG_EXIT != 0`: read `/tmp/sau_gitlog_err`; fail-loud — log `"[DOC-AUDIT] git log FAILED (exit $GITLOG_EXIT): $(cat /tmp/sau_gitlog_err)"`, emit WARN signal (type: system_health_report, check_id: DOC-AUDIT-GIT-ERR), send BUG-channel Telegram, **do NOT early-exit** — continue with doc audit as if commits exist (safe-side).
+- If `GITLOG_EXIT != 0`: read `/tmp/sau_gitlog_err`; fail-loud — log `"[DOC-AUDIT] git log FAILED (exit $GITLOG_EXIT): $(cat /tmp/sau_gitlog_err)"`, emit WARN signal via `post_agent_signal` (signal_type: signal_feedback, payload.check_id: DOC-AUDIT-GIT-ERR), send BUG-channel Telegram, **do NOT early-exit** — continue with doc audit as if commits exist (safe-side).
 - If `GITLOG_EXIT == 0` and output is empty: no commits in last 24h → check last-audit timestamp from notebook. Last audit < 12h AND no new commits → skip steps 1–6 (not the new DB checks below).
 - If `GITLOG_EXIT == 0` and output is non-empty: commits exist → run steps 1–6 (no early exit).
 
@@ -447,7 +451,7 @@ If the check fires within 2h after market open (before new data lands), accept t
 **NULL-guard (FIX-AUDITOR-SQL-MODIFIERS — MANDATORY before any datetime-windowed check):**
 Before evaluating a check, verify its modifier parses: `sqlite3 :memory: "SELECT datetime('now','<modifier>') IS NULL"`.
 If result = 1 → the modifier is invalid. Do NOT run the check. Do NOT report count=0 as PASS or CRITICAL.
-Instead: emit WARN signal (type: system_health_report, check_id: `<C-xx>-INVALID-SQL`, detail: "datetime modifier returned NULL"),
+Instead: emit WARN signal via `post_agent_signal` (signal_type: signal_feedback, payload.check_id: `<C-xx>-INVALID-SQL`, payload.detail: "datetime modifier returned NULL"),
 send BUG-channel Telegram, mark check as INVALID-SQL in notebook, and continue to next check.
 Long-form modifiers are REQUIRED: `'-N hours'` / `'-N days'` — NEVER `'-Nh'` or `'-Nd'` (short form returns NULL in SQLite).
 
@@ -479,22 +483,25 @@ Cross-reference results with C-08 (orphaned alerts). BCTC coverage (C-03/C-04) v
 ### Emit per failing check (severity ≥ WARN)
 **EMIT SEQUENCE — all three steps are MANDATORY, no step is optional:**
 
-Step E-1: `post_agent_signal` with payload:
-```json
-{
-  "type": "db_integrity_breach",
-  "ts": "<UTC ISO-8601>",
-  "db_id": "<db from system-map>",
-  "table": "<table>",
-  "check_id": "<C-xx>",
-  "detail": "<description>",
-  "actual_value": <n>,
-  "expected_value": <n>,
-  "severity": "CRITICAL|WARN",
-  "channel": "bug",
-  "zone_owner": "<specialist from zones>",
-  "dedup_key": "db_integrity_breach:<table>:<check_id>"
-}
+Step E-1: `post_agent_signal` — live contract (from_agent + to_agent + signal_type enum + payload):
+```
+call_tool(server="vn-market", tool="post_agent_signal", arguments={
+  "from_agent": "system-auditor",
+  "to_agent": "po",
+  "signal_type": "signal_feedback",
+  "payload": {
+    "title": "db_integrity_breach: <table> (<C-xx>)",
+    "detail": "<description> — actual=<n>, expected=<n>",
+    "check_id": "<C-xx>",
+    "db_id": "<db from system-map>",
+    "table": "<table>",
+    "actual_value": "<n>",
+    "expected_value": "<n>",
+    "zone_owner": "<specialist from zones>",
+    "severity": "CRITICAL|WARN",
+    "dedup_key": "db_integrity_breach:<table>:<check_id>"
+  }
+})
 ```
 Step E-2: `send_telegram(channel="bug", ...)` (dedup 7d per dedup_key).
 Step E-3 — SIGNAL ROW (mandatory, runs immediately after E-1, no skip path):
@@ -507,14 +514,19 @@ Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-d
 ### Tier-3 Roll-Up Signal
 ```
 call_tool(server="vn-market", tool="post_agent_signal", arguments={
-  type: "system_health_report",
-  ts: "<UTC>",
-  tier: 3,
-  summary: { services_up: N, services_down: N, cron_gaps: [...], sources_stale: [...], db_breaches: [...] },
-  checks: { A_runtime: {pass, warn, critical}, B_fetch: {pass, warn, critical}, C_db: {pass, warn, critical} },
-  overall: "HEALTHY|DEGRADED|CRITICAL",
-  new_anomalies: [...],
-  dedup_skipped: N
+  "from_agent": "system-auditor",
+  "to_agent": "po",
+  "signal_type": "signal_feedback",
+  "payload": {
+    "title": "Tier-3 audit complete",
+    "detail": "system_health_report tier-3: overall=<HEALTHY|DEGRADED|CRITICAL> — <N> anomalies",
+    "tier": 3,
+    "summary": { "services_up": "N", "services_down": "N", "cron_gaps": [], "sources_stale": [], "db_breaches": [] },
+    "checks": { "A_runtime": {"pass": "N", "warn": "N", "critical": "N"}, "B_fetch": {"pass": "N", "warn": "N", "critical": "N"}, "C_db": {"pass": "N", "warn": "N", "critical": "N"} },
+    "overall": "HEALTHY|DEGRADED|CRITICAL",
+    "new_anomalies": [],
+    "dedup_skipped": "N"
+  }
 })
 ```
 
