@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T00:49:59Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-16T01:45:00Z",
+  "_updated_by": "po-s75",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -653,8 +653,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-16T00:04:25Z",
-    "_updated_by": "po-s70",
+    "_updated_at": "2026-06-16T01:45:00Z",
+    "_updated_by": "po-s75",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -9345,7 +9345,8 @@
       },
       {
         "depends": [
-          "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT"
+          "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
+          "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0"
         ],
         "id": "FIX-ALERT-OPEN-ZERO-PRICE-RACE",
         "type": "FIX",
@@ -9353,12 +9354,14 @@
         "zone_owner": "apps/mcp-server/",
         "priority": "P1",
         "status": "HELD",
-        "hold_reason": "Overlaps FIX-ALERT-ENGINE-RSI-SINGLEDIGIT behavioral gate at 2026-06-16T01:00Z briefing (review[]). Same market-open zero-data window. Do NOT dispatch until after that gate observes the 02:00Z open — avoid double-touching the alert-engine open path.",
+        "hold_reason": "Still HELD by po-s75. depends[] FIX-ALERT-ENGINE-RSI-SINGLEDIGIT gate is RED (2026-06-16). The real open-window root cause is the upstream synthetic seed candle (FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0) — same data-corruption surface. Do NOT dispatch until FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 closes AND the 2026-06-16-style RSI gate observes a clean post-fix market open. The flat zero-volume O=H=L=C seed bar is itself the giá=0 / partial-window source this task targets — folding/sequencing under the P0 avoids double-touching the alert open path.",
         "title": "FIX-ALERT-OPEN-ZERO-PRICE-RACE — bbAlertScanJob/taAlertScanJob fire giá=0 BB-breakout + single-digit RSI (3.7-11.9) at 02:00-02:15Z market open, self-normalizing to RSI 35-48 by 06:08Z.",
         "scope": "Zero-data race: at 02:00Z open the alert-scan jobs read candles whose intraday price is not yet populated (giá=0 / partial-window RSI) -> emit false ta_oversold/ta_bb_breakout WARNINGs that vanish once prices fill. Guard: skip/defer alert emission when latest candle price<=0 or window incomplete for the session. Distinct mechanism from FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (scale corruption) but same symptom surface -> sequence AFTER the 06-16 RSI gate.",
         "source": "health-recheck BUG-3/BUG-4 (3177/3178 2026-06-15T04:08-06:08Z).",
         "user_impact": "MEDIUM — false oversold/breakout WARNING alerts spam MARKET-adjacent surface at every open.",
-        "created_at": "2026-06-15T10:38:00Z"
+        "created_at": "2026-06-15T10:38:00Z",
+        "hold_updated_by": "po-s75",
+        "hold_updated_at": "2026-06-16T01:45:00Z"
       },
       {
         "id": "FIX-AUDITOR-EMIT-SCHEMA-DRIFT-BUSDARK",
@@ -18125,6 +18128,40 @@
         "promoted_from": "backlog",
         "promoted_at": "2026-06-16T01:31:25Z",
         "promoted_by": "po-s74"
+      },
+      {
+        "id": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0",
+        "type": "FIX",
+        "title": "FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 — the whole-universe synthetic 2026-06-16 daily_ohlcv seed candle (1203 rows, flat O=H=L=C, vol=0, data_env=NULL) is unit-mis-scaled on 77 tickers by a clean x1000/div1000 factor (VHM/VIC/VJC div1000 -> single-digit RSI; AAA/ADS/+74 x1000 -> RSI 100.0); this poisons canonical get_technical_indicators RSI/MA/BB daily across 77 tickers incl. 3 watchlist majors and emits 'giá 0 dưới BB' false breakouts to LIVE MARKET",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "owner_agent": "dev-mcp-server",
+        "status": "READY",
+        "priority": "P0",
+        "size": "M",
+        "recon_first": true,
+        "recurring_class": true,
+        "root_cause": "RECURRING CLASS (3rd+ touch — escalate per feedback_recurring_bug_escalation). The daily-seed candle writer apps/mcp-server/src/scheduler/market-data/ohlcvDailyAggregatorJob.ts writes a synthetic 2026-06-16 row for ALL 1203 tickers (flat O=H=L=C from current/intraday price, volume=0, data_env=NULL). On 77 of them the seeded close is unit-mis-scaled by a clean x1000/div1000 factor vs the prior REAL close: VHM 136.1 (prior 136,100), VIC 192.6 (prior 192,600), VJC 141.3 (prior 183,700) -> div1000 -> 6-figure majors collapse to single-digit RSI; AAA 7.3M (prior 7,260), ADS 9.22M, +72 more -> x1000 -> RSI pegs 100.0. The existing guard apps/mcp-server/src/scheduler/market-data/ohlcvSanityCheckJob.ts (which ALREADY carries CONTAM-5/CONTAM-7 ohlcv-unit-contam tests) is either not run before the aggregator's upsert lands, or its unit check does not cover this synthetic-seed write path — so the bad bar reaches daily_ohlcv. This is the SAME defect class as the closed FIX-STOCK-PRICE-SCALE-CORRUPT (apps/stock-price normalizer) / OHLCV-UNIT-CONTAM / CONTAM-5 / CONTAM-7 — a shipped guard is NOT catching the live synthetic rows.",
+        "related_prior": [
+          "FIX-STOCK-PRICE-SCALE-CORRUPT(done_verified)",
+          "OHLCV-UNIT-CONTAM(closed)",
+          "CONTAM-5(done)",
+          "CONTAM-7(done)"
+        ],
+        "fix_spec": "RECON FIRST (named-volume DB, not host ./data — sqlite3 sidecar per feedback_live_db_is_named_volume_not_host_data): confirm the 06-16 seed-write path in ohlcvDailyAggregatorJob.ts and why ohlcvSanityCheckJob.ts let the 77 x1000/div1000 rows land. THEN: (1) WRITER — the daily-seed candle writer must normalize ALL tickers to raw VND generically (/goal#2), not per-ticker; the unit must be derived/validated against the prior real close, never trusted raw from the intraday source. (2) GUARD — ohlcvSanityCheckJob.ts must REJECT-OR-REPAIR before-it-lands any candle whose close diverges ~x1000 or ~div1000 from the prior real close (extend CONTAM-5/CONTAM-7 coverage to the synthetic-seed path; fail-loud, no silent swallow). (3) SYNTHETIC-SEED DECISION — a flat zero-volume O=H=L=C seed bar is itself a synthetic placeholder and violates the standing 'no fake/synthetic/placeholder data' goal: EITHER stop seeding today's flat candle, OR mark it (data_env / synthetic flag) and EXCLUDE it from RSI/MA/BB computation so indicators use only real candles. BA/architect to choose stop-vs-mark+exclude in the spec. (4) REPAIR — recompute/repair the 77 already-corrupt 2026-06-16 rows in daily_ohlcv (prefer recompute-on-read or corpus re-flow per feedback_derived_column_fix_needs_reflow; if backfilled, recompute from the real prior close, not the corrupt value).",
+        "verification_gate": "LIVE post-rebuild RAW (named-volume DB + gateway tools, NOT badges): (a) daily_ohlcv has NO 06-16 (and no future-day) candle whose close is ~x1000/div1000 off the prior real close — for ALL 1203 tickers, generic; (b) get_technical_indicators VHM/VIC/VJC return REAL mid-band RSI (no single-digit), and AAA/ADS/the other x1000 tickers are NOT pegged at RSI=100.0; (c) BB 'Price=' field for VHM/VIC shows the full 6-figure price, not div1000-truncated; (d) the next morning-briefing 01:00Z + first TA scan 02:15Z show NO single-digit RSI and NO RSI=100.0 saturation and NO 'giá 0 dưới BB' false breakouts on MARKET; (e) the seed-bar decision (stop or mark+exclude) is reflected in the indicator inputs; (f) the new reject/repair guard test is GREEN in CI. This gate, GREEN, also unblocks FIX-ALERT-ENGINE-RSI-SINGLEDIGIT (review[]) for done_verified re-evaluation and FIX-ALERT-OPEN-ZERO-PRICE-RACE (backlog HELD).",
+        "unblocks": [
+          "FIX-ALERT-ENGINE-RSI-SINGLEDIGIT",
+          "FIX-ALERT-OPEN-ZERO-PRICE-RACE"
+        ],
+        "rebuild_required": "mcp-server",
+        "first_agent": "ba",
+        "first_hop_reason": "P0 but multi-decision (stop-vs-mark+exclude the synthetic seed bar; writer-normalize vs guard-reject-or-repair split; 77-row repair strategy) AND a recurring class touching a shipped guard — needs a BA spec + architect sign-off before a dev-mcp-server fixer, per feedback_recurring_bug_escalation. Not well-specified enough for a direct fixer.",
+        "source": "router RAW LIVE 2026-06-16T01:35Z — get_unreviewed_market_messages (msg 744/745/746/759/760/761), get_technical_indicators (10 tickers via gateway call_tool), named-volume DB vn-market-intelligence-mcp_market_data /data/market.db daily_ohlcv (sqlite3 sidecar). Evidence handoff: docs/handoffs/FIX-ALERT-ENGINE-RSI-SINGLEDIGIT-gate-probe-2026-06-16.md",
+        "user_impact": "P0 — corrupts live MARKET RSI/BB daily across 77 tickers incl. 3 watchlist majors (VHM/VIC/VJC); drives false single-digit-RSI and RSI=100.0 alerts and 'giá 0 dưới BB' false breakouts into the LIVE MARKET channel every market open; violates standing no-fake-data goal and /goal#2.",
+        "created_at": "2026-06-16T01:45:00Z",
+        "created_by": "po-s75",
+        "triaged_by": "po-s75"
       }
     ],
     "review": [
@@ -18208,7 +18245,13 @@
         "watch_item_resolution": "RESOLVED: scan reads daily_ohlcv 60-day window (same table as canonical, majors=38 candles) + same computeTAIndicators svc => majors 38>=35 pass guard => RSI identical to canonical by construction, NOT suppressed; <35-candle thin tickers fail-closed skip (correct)",
         "live_partial_verdict": "LIVE-PARTIAL (router RAW 2026-06-15T08:05Z, NOT a badge): REBUILD LANDED — mcp-server image sha256:5d728ae5 @08:02:40Z (after commit c9892200 @07:52:54Z), MIN_CANDLES=35 guard present in running container, named-volume market.db writable 120 rows, all 13 peers survived, health 200/toolCount 163. CANONICAL BASELINE LIVE (get_technical_indicators): VHM RSI 35.7 / VIC 34.9 / VRE 39.9 — REAL mid-band, NO single-digit, NOT 100.0. WATCH-ITEM (suppression-vs-real) RESOLVED: scan CANDLE_SQL reads daily_ohlcv 60-day window (SAME table as canonical Go svc, majors=38 candles) + calls SAME computeTAIndicators svc => majors 38>=35 PASS guard => RSI identical to canonical by construction (NOT suppressed); only <35-candle thin tickers fail-closed skip (correct). PENDING the BEHAVIORAL half only: rebuild landed 08:02:40Z, ~2min AFTER VN market close 08:00Z, so every TA-Alert/briefing now in the MARKET queue (msg 744 briefing 01:00Z VHM 9.8/VIC 7.4/DAG 100.0; msg 745/746/752 TA-Alerts 02:15-06:15Z) is PRE-rebuild — no post-rebuild scan has run. Next provable cycle = 2026-06-16 session: morning-briefing 01:00Z + first TA scan 02:15Z must show majors at real mid-band RSI (no single-digit, no 100.0), matching canonical within 0.1pt, GENERIC all tickers.",
         "pending_behavioral_gate": "2026-06-16 session: morning-briefing 01:00Z + first TA scan 02:15Z show majors real mid-band RSI (no single-digit/no 100.0), match canonical within 0.1pt, generic all tickers — verifiable on the hourly dev-team :07 tick after the queue refills",
-        "push_disposition": "HOLD — 3 unpushed commits (c9892200 fix / 90787cc8 notebook / 66235a64 board); push is PO's call AFTER the behavioral gate closes next session (runtime already carries the fix via the landed rebuild, so origin-sync is non-urgent)"
+        "push_disposition": "HOLD (PO deferred call; unrelated to this gate — separate tsc-red head chain unblocker FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 governs push).",
+        "gate_disposition": "HOLD-SYMPTOM-MITIGATED-SUPERSEDED",
+        "gate_verdict_2026_06_16": "RED",
+        "gate_red_reason": "Router RAW-verified LIVE 2026-06-16T01:35Z (NOT a badge): canonical get_technical_indicators is ITSELF poisoned — VHM RSI 8.8 (price 136,100, close truncated div1000 -> 136), VIC RSI 6.5 (192,600 -> 193). DB named-volume daily_ohlcv shows the cause: a whole-universe synthetic 2026-06-16 seed candle (1203 rows, flat O=H=L=C, vol=0, data_env=NULL); 77 of them unit-mis-scaled by a clean x1000/div1000 factor (VHM/VIC/VJC div1000 -> single-digit RSI; AAA/ADS/+74 x1000 -> RSI 100.0). Root cause is UPSTREAM of the alert-engine, in apps/mcp-server (writer ohlcvDailyAggregatorJob.ts; guard miss ohlcvSanityCheckJob.ts). This task's MIN_CANDLES=35 guard (commit c9892200) is REAL and stays as symptom mitigation but does NOT fix the live failure — 'make alert-engine match canonical' is moot while canonical is poisoned by the same bad bar.",
+        "gate_red_disposition_note": "Kept in review[] (NOT done_verified). Superseded by FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0. Re-evaluate this entry for done_verified ONLY after that P0 closes and the same 2026-06-16-style gate (morning-briefing 01:00Z + first TA scan 02:15Z show majors mid-band RSI, no single-digit / no 100.0, match canonical within 0.1pt, generic all tickers) is RAW-verified GREEN. Owner zone apps/alert-engine/ was the WRONG zone for the root cause; this entry is now a downstream consumer of the data fix.",
+        "gate_disposition_by": "po-s75",
+        "gate_disposition_at": "2026-06-16T01:45:00Z"
       },
       {
         "depends": [],
@@ -18318,6 +18361,6 @@
       ]
     }
   },
-  "updated_at": "2026-06-16T00:04:25Z",
-  "updated_by": "po-s70"
+  "updated_at": "2026-06-16T01:45:00Z",
+  "updated_by": "po-s75"
 }
