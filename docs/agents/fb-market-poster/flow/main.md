@@ -1,4 +1,4 @@
-<!-- size-justification: 489L — single-flow cowork agent with no sub-flows; carries SELF-IDENTITY GUARD (L3 durable fix NSCOUT-FRAMING-RECUR) + full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 5 calls + carry provenance guard, 3-section composition spec with full detail floor + hashtag block composition rule + diacritics strip rule, 16-check pre-write validation with executable hard-fail jargon gate call + mapping table + hashtag block check, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching; DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule added -->
+<!-- size-justification: 718L — +229L from 489L: Task A added get_technical_indicators (≥15 tickers), get_legal_risk_signals, get_sentiment_trend, get_earnings_calendar to STEP 1b and widened ticker_intel to ALL watchlist active tickers; Task B inserted STEP 2b (TNB 6-layer mandatory synthesis gate with CHEF shortcut branch and $tnb_synthesis schema, Layers 1–6 each fully specified); Task C inserted STEP 2c (T-45 adversarial gate, 5 hard-fail rules T1–T5, severity drop/soften outcome handling); Task D rewired STEP 3 compose to read from $tnb_synthesis.conviction.calls[] and Layer-6 known_gaps preventing fabrication of null fields; RETURN and notebook entry extended with synthesis/T-45 fields; must-not-change items (STEP 4a jargon gate, 3-section structure, 16 validation checks, STEP 0, STEP 5–8, SELF-IDENTITY GUARD) are byte-intact -->
 # FB Market Poster — Main Flow
 
 ## SELF-IDENTITY GUARD (read first — non-negotiable)
@@ -77,12 +77,31 @@ market_context = call_tool(server="vn-market", tool="get_market_context", argume
 # Foreign flow — MARKET-WIDE (no code argument)
 foreign_flow = call_tool(server="vn-market", tool="get_market_foreign_flow", arguments={})
 
-# Ticker intelligence for movers — iterate watchlist tickers (top 5–10 by conviction or price move)
-# ALGORITHM: Query watchlist tickers from system-map.json (jq query: '.project.watchlist[] | select(.active==true) | .ticker')
-# For each ticker in watchlist, call:
+# Ticker intelligence — ALL active watchlist tickers (NOT just top 5-10)
+# ALGORITHM: Query ALL active watchlist tickers from system-map.json:
+#   jq '[.project.watchlist[] | select(.active==true) | .ticker]' docs/data/system-map.json
+# For EACH ticker in the full active watchlist, call:
 #   ticker_intel_{ticker} = call_tool(server="vn-market", tool="get_ticker_intelligence", arguments={"code": ticker})
 # Extract signals from ALL watchlist calls; if a ticker call errors, log and skip that ticker (do not fail cycle).
 # Hold results in working memory keyed by ticker.
+# If >50% of ticker_intel calls error, set data_quality_flag = "PARTIAL" in working memory.
+
+# Technical indicators — pull for tickers flagged as potential post subjects (≥15 tickers)
+# Prioritise: top movers from ticker_intel results + any ticker with unusual foreign flow.
+# For each selected ticker, call:
+#   tech_indicators_{ticker} = call_tool(server="vn-market", tool="get_technical_indicators", arguments={"code": ticker})
+# If a call errors, log and mark that ticker data_quality = NO_TA.
+# IMPORTANT: Flag any returned field that looks corrupted (e.g. MA20 = 3.68M for a stock priced at thousands)
+# as is_estimate=true; do NOT use corrupted indicator values in Layer-5 conviction calls.
+
+# Legal risk signals — required for T-45 adversarial governance checks
+legal_risk = call_tool(server="vn-market", tool="get_legal_risk_signals", arguments={})
+
+# Sentiment trend — 7-day slope; is_estimate varies per ticker
+sentiment = call_tool(server="vn-market", tool="get_sentiment_trend", arguments={})
+
+# Earnings calendar — filing deadlines only; do NOT use as beat/miss signal
+earnings = call_tool(server="vn-market", tool="get_earnings_calendar", arguments={})
 ```
 
 From results, extract and hold in working memory:
@@ -91,6 +110,10 @@ From results, extract and hold in working memory:
 - Liquidity: `total_matched_value` (tỷ đồng) and `avg_value_recent` if available from snapshot or market_context.
 - Foreign flow: `net_value`, `most_bought` tickers (top 3), `most_sold` tickers (top 3) from `get_market_foreign_flow` result.
 - Top movers: from watchlist ticker intelligence calls — winners and losers by price change % (extract from individual `get_ticker_intelligence` results; if insufficient movers available, omit this field and log in QUALITY section).
+- Technical indicators: per-ticker RSI, MACD, Bollinger Band positions held in working memory keyed by ticker. Flag corrupted fields (e.g. MA20 implausibly large/small) as is_estimate=true.
+- Legal risk: dated legal signals from `legal_risk` — relevant watchlist tickers, governance flags. Required for T-45 adversarial check (STEP 2c hard-fail rule 1).
+- Sentiment trend: 7-day slope from `sentiment` — note is_estimate flag per ticker.
+- Earnings calendar: BCTC overdue tickers from `earnings` — use only as "filing overdue" flag; NOT as earnings beat/miss signal.
 
 **Merge rule:** Live tool data is authoritative over notebook data for quantitative fields. If a live tool errors → fall back to notebook value. Log which source was used for each field.
 
@@ -119,6 +142,176 @@ These feeds the **Dự đoán** section. Read ALL that exist — guard each: if 
 6. Read up to 2 relevant `docs/analysis-briefs/*.md` — only tickers explicitly flagged in CHEF as key movers. Extract any forward call or price target.
 
 Hold all extracted forward signals in working memory under the label `$prediction_inputs`.
+
+---
+
+## STEP 2b — TNB 6-Layer Top-Down Walk (mandatory synthesis gate)
+
+**Purpose:** Produce a structured intermediate object `$tnb_synthesis` that STEP 3 compose reads instead of raw data. Every future run must walk all 6 layers — the flow may NOT skip this step or degrade to a raw-data recap.
+
+**CHEF shortcut — evaluate first:**
+```
+$chef_dish_available = (
+  unified-agent.md[LATEST].date == TODAY (VN date)
+  AND unified-agent.md[LATEST].layers_walked == true
+  AND unified-agent.md[LATEST].clusters > 0
+)
+```
+- If `$chef_dish_available = true`: seed Layer 1 clock_phase and Layer 3 regime from CHEF's published phase declarations; use CHEF's cluster map as the starting Layer-4 sector records, then update each with fresh STEP 1b flow data. Each CHEF-seeded input still carries its is_estimate provenance.
+- If `$chef_dish_available = false` (CHEF silent or thin): walk ALL 6 layers from STEP 1b live data. No reduced path. Fewer high-conviction outputs from this walk is correct and expected — do NOT pad.
+
+Store the completed walk as `$tnb_synthesis` in working memory.
+
+---
+
+### Layer 1 — Macro momentum (investment clock)
+
+Inputs (from STEP 1b `macro` + `market_context`): CPI YTD % with is_estimate flag, IIP manufacturing YTD % with is_estimate flag, VND/USD, DXY, Brent, gold, trade balance.
+
+Output field: `clock_phase` — one of: Recovery / Overheat / Stagflation / Slowdown.
+Derivation: Growth direction (IIP) × Inflation direction (CPI). Attach is_estimate flag to each input used.
+
+**Rule:** NEVER use a figure marked is_estimate=true as a hard clock classifier. If the decisive input is estimated, record clock_phase as "unconfirmed / lean {X}" not "{X}".
+
+**CPI source discipline:** Use only the NSO YTD figure from `get_macro_snapshot` as delivered in this run. Do NOT carry forward a CPI number from a prior session or notebook. Re-read each cycle.
+
+---
+
+### Layer 2 — FX / capital flow pressure
+
+Inputs: usdvnd, DXY, carry spread from `$carry_usable` (STEP 1b already computed).
+
+Output fields:
+- `FX_regime`: Appreciation / Depreciation / Neutral
+- `carry_verdict`: Tight / Neutral / Loose — if `$carry_usable = false`, set carry_verdict = "unavailable"
+
+**Coherence check:** If foreign flow direction and FX direction conflict (e.g. VND weaker but foreigners net-buying VND-denominated equities), flag as: "FX thesis weakened — flow data contradicts blanket FX exit narrative." Do NOT assert FX depreciation as the cause of foreign selling when same-session foreign buys are present on the same VND-denominated assets.
+
+---
+
+### Layer 3 — Regime label
+
+Combine Layer 1 + Layer 2 + foreign flow net direction + liquidity signal.
+
+Output field: `regime` — a descriptive string naming the market phase (e.g. "SELECTIVE / LATE-CYCLE — cheap equities, money not tight, inflation above threshold, foreign net sell concentrated in banks").
+Output field: `regime_confidence` — HIGH (all inputs is_estimate=false) / MEDIUM / LOW.
+
+---
+
+### Layer 4 — Sector rotation map
+
+For EACH sector with watchlist coverage, produce one record:
+```
+{
+  sector: string,
+  phase: Recovery | Expansion | Slowdown | Contraction,
+  direction: up | flat | down,
+  thesis: "2-3 sentences naming specific tickers + flow evidence + macro linkage",
+  where_money_rotates: "INTO {sector} — {reason}" | "OUT OF {sector} — {reason}" | "NEUTRAL",
+  is_estimate_flags: [list of estimated inputs used in thesis]
+}
+```
+**Rule:** A thesis may NOT assert a directional rotation claim if the only supporting flow figure is is_estimate=true AND net_bn=null. Downgrade assertion to "suggestive" in that case.
+
+Store as `$tnb_synthesis.sectors[]`.
+
+---
+
+### Layer 5 — Per-ticker conviction
+
+For EACH ticker to be named in the post, produce one record:
+```
+{
+  ticker: string,
+  verdict: MUA_TICH_LUY | GIU | GIAM_TY_TRONG | TRANH | QUAN_SAT,
+  watch_zone: string (price range or condition — OMIT if no verified TA data from this run),
+  condition: string ("nếu X thì Y — ngược lại nếu Z thì W"),
+  reason: [
+    { point: string, is_estimate: true | false }
+    // 3-5 bullet points of evidence, each tagged
+  ],
+  risk: string (single most important thesis-breaker),
+  conviction: cao | trung_binh | thap,
+  data_quality: FULL | PARTIAL | NO_TA
+}
+```
+
+**Rules:**
+- If `data_quality = NO_TA`, verdict MUST be QUAN_SAT or GIU. NEVER assign MUA_TICH_LUY or GIAM_TY_TRONG when TA data was not fetched this run.
+- If TA was fetched but a specific field (support/resistance level) has no traceable source in the tool output from this session, OMIT that field. Do NOT synthesize or carry-forward support/resistance levels.
+- Attribution discipline: before using a score, news item, or flow figure for a ticker, verify it belongs to THAT ticker. Cross-ticker contamination (e.g. citing VNM's reputation score as GAS's) is a hard-fail in STEP 2c.
+
+Store as `$tnb_synthesis.conviction.calls[]`.
+
+---
+
+### Layer 6 — Valuation + uncertainty caveats
+
+Inputs:
+- EY spread: from `get_macro_snapshot` — cite is_estimate flag and the value verbatim.
+- Carry spread: from `$carry_usable` — if false, record carry as "unavailable" and omit from all post claims.
+- Named estimation gaps: record each null/missing field explicitly so STEP 3 compose never fabricates them.
+
+**Standard known_gaps entries (record even if not null — state actual value or "null"):**
+```
+{
+  known_gaps: [
+    { field: "breadth_counts",       value: null | <number>, source: "market_context" },
+    { field: "liquidity_tybillion",  value: null | <number>, source: "snapshot or market_context" },
+    { field: "foreign_net_tybillion",value: null | <number>, source: "get_market_foreign_flow net_bn" }
+  ]
+}
+```
+
+Store as `$tnb_synthesis.layer6` including EY spread, carry verdict, and `known_gaps[]`.
+
+**Generalised is-estimate provenance rule (DSI-CONSUMER-HONORS-ISESTIMATE — extended to all numbers):**
+Any number used in the post body must carry an is_estimate flag from its source tool.
+- is_estimate=true → frame as directional/estimated, not as fact.
+- net_bn=null → may state direction (buy/sell) but NOT a VND amount.
+- breadth=null → explicitly acknowledge unavailability; never silently omit.
+
+---
+
+## STEP 2c — T-45 Adversarial Gate (mandatory pre-compose)
+
+**Purpose:** Attempt independent refutation of each high-conviction claim in `$tnb_synthesis` before it reaches the compose step. Claims that fail must be softened or dropped. This gate mirrors the T-45 adversarial phase of the expert roundtable methodology.
+
+**Scope:**
+- Run on EVERY ticker verdict where `conviction = cao`.
+- Run on the top-level regime call.
+- For `conviction = trung_binh` or `thap`: run if evidence is sparse; log skip if time budget exhausted.
+
+**For each checked claim, produce a check record:**
+```
+{
+  claim: string,
+  holds: true | false,
+  severity: confirm | soften | drop,
+  refutation: string ("specific counter-evidence found" or "none found — claim survives"),
+  corrected_note: string (what to say instead if holds=false),
+  estimate_flag: bool (true if ANY input to the claim was is_estimate=true)
+}
+```
+
+**Hard-fail rules — severity=drop triggers immediate claim removal:**
+
+**Rule T1 — Cross-ticker contamination:** If a piece of evidence (score, news item, flow figure) is attributed to the wrong ticker, severity=drop that claim. Re-verify: does this evidence explicitly name THIS ticker in the tool output? Example class: a reputation score belonging to VNM cited as GAS's evidence.
+
+**Rule T2 — False-precision levels:** If a support/resistance level is cited to sub-VND precision (e.g. 22.918, 79.597) and CANNOT be traced to a specific field in `get_technical_indicators` or `get_ticker_intelligence` output from THIS run, severity=drop the level. Replace with a round-number approximation or omit entirely. No carry-forward from prior sessions.
+
+**Rule T3 — is_estimate=true cited as fact:** If a claim makes a hard assertion (e.g. "+515k net buy = cleanest flow signal") when the underlying figure is is_estimate=true OR net_bn=null, severity=soften at minimum. If the ENTIRE conviction call rests on a single estimated figure with no corroboration, severity=drop.
+
+**Rule T4 — Noise-scale foreign flow:** If a per-ticker foreign flow figure (in shares) is less than 5% of the ticker's own daily volume as returned by `get_ticker_intelligence`, it is noise-scale. Do NOT present noise-scale flow as directional conviction. Downgrade to "đáng theo dõi" or omit from verdict reasoning.
+
+**Rule T5 — Internal contradiction:** If the claim simultaneously cites a news headline AND a tool data point that contradict each other on the same ticker (e.g. flow tool shows net-buy, headline says net-sell for same name in same session), severity=soften minimum. The post must surface the contradiction explicitly rather than silently picking one side.
+
+**Gate outcome:**
+- Claims with severity=drop are REMOVED from `$tnb_synthesis.conviction.calls[]` before STEP 3.
+- Claims with severity=soften have their `conviction` downgraded one step (cao→trung_binh, trung_binh→thap) and `corrected_note` appended to the reason field.
+- The gate does NOT block the cycle — only individual claims are affected.
+- If ALL MUA_TICH_LUY verdicts are dropped by T-45: the post has no buy calls for this session. This is **correct behavior**. Do NOT manufacture buy calls to fill the Dự đoán section.
+- Log all dropped/softened claims in working memory under `$t45_audit[]` for STEP 8 notebook entry.
 
 ---
 
@@ -198,12 +391,14 @@ The **Dự đoán** section is THE point of the post. It must be the most promin
 
 **Purpose:** Interpret the day causally. Connect the data from the recap to meaning. This is the bridge between facts and prediction.
 
+**Source for this section: `$tnb_synthesis` (from STEP 2b).**
+
 **Required content:**
-- WHY did the market move today? Name the causal driver(s) — policy, earnings, foreign selling, macro shift, sector rotation. Link to named events from Section 1.
-- What do the breadth and liquidity signals imply? (e.g., broad advance = healthy risk-on vs. narrow rally = concentration risk; high volume confirms vs. low volume warns)
-- What does the foreign flow signal? (accumulation, distribution, carry-trade pressure, FII rotation)
-- What macro regime does today reinforce? (risk-on / risk-off, USD pressure on importers, rate sensitivity, etc.)
-- What sector narrative is playing out? (bank-led = rate expectations; real estate = FDI/land law; materials = commodity cycle)
+- **Regime narrative** — state `$tnb_synthesis.regime` in plain Vietnamese. Example: "Thị trường đang ở chế độ chọn lọc giai đoạn cuối chu kỳ — cổ phiếu rẻ, tiền không quá chặt, nhưng lạm phát trên ngưỡng." Do NOT paraphrase regime in generic terms.
+- **WHY did the market move today?** Name the causal driver(s) — policy, earnings, foreign selling, macro shift, sector rotation. Link to named events from Section 1 AND to the Layer-4 sector rotation thesis in `$tnb_synthesis.sectors[]`.
+- **Breadth and liquidity signals** — if `known_gaps.breadth_counts = null`, explicitly state "hôm nay công cụ không trả số mã tăng/giảm, nên xin phép không nêu để tránh đoán." Never fabricate a breadth count.
+- **Foreign flow interpretation** — apply Layer-2 coherence check result. If FX and flow directions conflict, surface the conflict; do NOT assert a single directional FX narrative.
+- **Sector rotation** — use Layer-4 `where_money_rotates` records; name specific sectors and tickers.
 
 **Style:** 3–5 sentences of plain causal reasoning. Every claim must name something specific. No generic filler.
 
@@ -213,17 +408,38 @@ The **Dự đoán** section is THE point of the post. It must be the most promin
 
 **Purpose:** Deliver the forward value. This is what readers come for. Must be EARNED — every prediction claim must follow from something stated in Section 2 (Phân tích). No bare assertions.
 
-**Prediction inputs (pull from $prediction_inputs assembled in STEP 2):**
-- digest-predict signals: predicted direction, key levels, scenarios for next session/week.
-- CHEF (unified-agent) outlook / conviction section (if present).
-- Regime call from macro extraction (risk-on/off, carry/FII pressure).
-- If NO fleet prediction exists for today → derive your own from the Phân tích section, but you MUST reason through it (show the logic). Do not assert without reasoning.
+**Primary source for this section: `$tnb_synthesis.conviction.calls[]` (T-45 survivors from STEP 2c).**
+Secondary source: `$prediction_inputs` from STEP 2 (digest-predict signals, CHEF outlook).
+
+**Per-ticker verdict rendering (map from Layer-5 schema):**
+- `verdict` → action label (use Vietnamese: MUA TÍCH LŨY / GIỮ / GIẢM TỶ TRỌNG / TRÁNH / QUAN SÁT)
+- `watch_zone` → "canh vùng {range}" — ONLY if field is present (not synthesized)
+- `condition` → render as the "nếu ... thì ..." sentence verbatim
+- `risk` → render as explicit caveat ("Rủi ro: ...")
+- `conviction` level governs phrasing:
+  - cao = firm recommendation ("nên MUA TÍCH LŨY")
+  - trung_binh = suggest/watch ("có thể cân nhắc")
+  - thap = observe only ("theo dõi, chưa hành động")
+- `data_quality = NO_TA` → append "(không có dữ liệu kỹ thuật phiên này)" after the ticker call. NEVER omit this caveat silently.
+
+**Known-gaps pass-through (from `$tnb_synthesis.layer6.known_gaps`):**
+- If `liquidity_tybillion = null`: do NOT state a tỷ đồng liquidity figure. Say "thanh khoản không có con số cụ thể" or cite only qualitative signals.
+- If `foreign_net_tybillion = null` (net_bn=null): state direction only ("nghiêng bán ra" / "nghiêng mua vào"), NOT a tỷ đồng amount.
+- If `breadth_counts = null`: acknowledge explicitly ("độ rộng hôm nay công cụ không trả về"). Never fabricate.
+
+**If ALL MUA_TICH_LUY verdicts were dropped by T-45:** the Dự đoán section contains only QUAN_SAT / GIU / TRANH calls. State honestly: "Phiên này chưa có tín hiệu mua tích lũy rõ ràng — đây là phiên quan sát và giữ." Do NOT manufacture buy calls.
+
+**Additional prediction inputs (supplement, not replace):**
+- digest-predict signals: predicted direction, key levels, scenarios for next session/week (from `$prediction_inputs`).
+- CHEF outlook conviction section if present.
+- Regime call from `$tnb_synthesis.regime`.
+- If NO fleet prediction AND no surviving conviction calls → derive from Phân tích section, but reason through it explicitly. Do not assert without reasoning.
 
 **Required content:**
-- **Direction call** — likely direction for next session and/or week (tăng / giảm / tích lũy / đi ngang), and why (must trace to Phân tích).
-- **Key levels or zones to watch** — at least 1 specific VN-Index support/resistance level or range. Example: "nếu VN-Index giữ được 1.270 điểm thì..."
-- **Specific tickers or sectors to watch** — name at least 1–2 tickers or sectors with a conditional ("nếu ... thì ..." or "khi ... mới ..."). Example: "Nhóm ngân hàng sẽ dẫn đầu nếu khối ngoại đảo chiều mua ròng."
-- **Scenario framing (if-then)** — at least 1 "nếu ... thì ..." scenario showing bull and/or bear condition. Grounded in today's analysis.
+- **Direction call** — likely direction for next session and/or week (tăng / giảm / tích lũy / đi ngang), traced to Phân tích.
+- **Key levels or zones to watch** — at least 1 specific VN-Index level or range. Only cite levels traceable to `get_technical_indicators` or `get_market_context` output from this run.
+- **Per-ticker calls** — from `$tnb_synthesis.conviction.calls[]` (T-45 survivors only); each with verdict + condition + risk caveat.
+- **Scenario framing (if-then)** — at least 1 bull and/or bear "nếu ... thì ..." scenario grounded in today's analysis.
 
 **Tone:** Calm and reasoned. Not overconfident. Use hedged language naturally: "có khả năng", "nếu", "theo quan sát", "tuy nhiên cần theo dõi". No exaggerated certainty.
 
@@ -460,6 +676,10 @@ Notebook entry format:
 - Post file: docs/social/fb-post-{DATE}.md
 - VN-Index: {level} ({+/-delta}%)
 - Sources read: unified-agent={yes/no}, news-scout={yes/no}, market-watcher={yes/no}
+- chef_dish_available: {true/false} — CHEF shortcut used: {yes/no}
+- TNB synthesis: clock_phase={value}, regime={value}, regime_confidence={HIGH/MEDIUM/LOW}
+- Conviction calls: {N} total; dropped by T-45: {N} (list tickers); softened: {N} (list tickers)
+- known_gaps: breadth={null/value}, liquidity_tybillion={null/value}, foreign_net_tybillion={null/value}
 - Validation: passed {N}/16 checks (section-order: {pass/fail}, earned-prediction: {pass/fail}, recap-not-dominant: {pass/fail}, hashtag-block: {pass/fail}, detail-floor fields available: {list})
 - Jargon gate: PASS (0 violations) | BLOCKED (N violations, post not written)
 - Status: {published/failed}
@@ -484,6 +704,8 @@ DONE: FB post written for {DATE} → docs/social/fb-post-{DATE}.md
 NEXT: idle (user copy-pastes to Facebook Page manually)
 PIPELINE: complete
 QUALITY: full | partial
+SYNTHESIS: clock_phase={value} / regime={value} / regime_confidence={HIGH/MEDIUM/LOW} / chef_shortcut={yes/no}
+T45_AUDIT: {N} claims checked; {N} dropped; {N} softened
 JARGON GATE: [paste full stdout of fb-jargon-gate.sh here — zero-violations line required]
 ```
 
