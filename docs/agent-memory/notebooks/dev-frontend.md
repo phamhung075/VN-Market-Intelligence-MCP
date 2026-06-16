@@ -4,6 +4,16 @@
 
 ---
 
+## Session: 2026-06-16 (FIX-INFOCARD-DROPDOWN-EXPAND — DJ-GATE-1 remediation)
+
+**DJ-GATE-1 REMEDIATED — added STEP dev-frontend-S2 to sprint-INFOCARD-EXPAND-FETCH-dev-frontend.md**
+
+Added decision journal entry for task-id FIX-INFOCARD-DROPDOWN-EXPAND documenting: Radix Collapsible chosen (keyboard + aria-expanded; existing dep); FIELD_LABELS is a UX label map not a data branch (humanLabel fallback = generic render of any Record<string,unknown>); honest empty-state when findingData+source both null; source rendered as clickable provenance link. Board flipped review → done (next_agent=ops). QA cycle-284 all-green on code/tests/tsc/genericity/empty-state; DJ was the sole blocker.
+
+Zone health: FIX-INFOCARD-DROPDOWN-EXPAND done (doc remediation only, no code change); DJ-GATE-1 cleared; ops rebuild batched with FIX-CASCADE-CARD-INVALID-DATE | HEALTHY
+
+---
+
 ## Session: 2026-06-16 (FIX-INFOCARD-DROPDOWN-EXPAND — REVIEW)
 
 **FIX-INFOCARD-DROPDOWN-EXPAND DONE — reusable expand-on-click primitive + full finding_data path**
