@@ -127,14 +127,13 @@
   ],
   "head": {
     "status": "ready",
-    "updated_at": "2026-06-16T01:31:25Z",
-    "updated_by": "po-s74",
-    "active_task_id": "FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367",
+    "updated_at": "2026-06-16T04:39:17Z",
+    "updated_by": "po-s79",
+    "active_task_id": "FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH",
     "next_agent": "ba",
-    "note": "PUSH-UNBLOCKER (P2, escalated po-s74): FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 is the SOLE tsc-red on main and the pre-push hook strands the whole fleet's push (incl. the W1-PEK-P0 done_verified sign-off commit). Dispatch this FIRST so the fleet can push. After it reaches done + tsc green, router pushes ALL accumulated local commits; THEN the previously-set Wave-2 ba hop (FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH) proceeds. po did NOT write the one-line test fix. The W1-PEK-P0 sign-off (done_verified) is already committed and stands regardless of push timing.",
-    "reconcile_note": "po-s76 (2026-06-16): OHLCV-P0 head-drift resolved — its 7-SUBTASK impl shipped to HEAD + 29/0 green, relocated ready->review (qa rebuild+live gate). Head deliberately STAYS on FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367: RAW-confirmed SOLE tsc-red this run (bun tsc --noEmit -> 1 error, TS2367 @ FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270); a red pre-push hook strands the 118-ahead fleet push incl. the OHLCV commits, so dispatch-this-to-ba FIRST. po-s76 does NOT move the head; router spawns ba.",
-    "reconciled_at": "2026-06-16T04:23:35Z",
-    "reconciled_by": "po-s76"
+    "note": "Head advanced off the TS2367 push-unblocker (now done_verified, tsc GREEN). Next real priority is the previously-planned Wave-2 frontend hop FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (P1, ba) — its dep FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE is already done_verified, so the inner-first gate is satisfied. The 3 cowork-doublefire roots (GATHERER/NEWSSCOUT/MARKETWATCHER, all MEDIUM) and the P1 BCTC/HNX/SSC cluster remain in ready[] for subsequent picks. router spawns ba; po does NOT spawn.",
+    "push_note": "PO green-lit the fleet push this tick. 13-behind origin/main classified ALL benign cloud-chore/docs (8x chore(health) recheck, 2x chore(memory) notebook, 1x chore(tasks) signal_queue append, 1x docs(reports) TNB audit handoff, 1x chore(memory/tran-ngoc-bau)) — zero code, zero mcp-server conflict. tsc GREEN so the red pre-push hook no longer strands. Plan: git pull --rebase origin main (replay 123 work commits atop 13 chores) -> re-verify bunx tsc --noEmit=0 -> git push. The push is executed by po out-of-band and is NOT part of this orch-state commit.",
+    "reconciled_from": ".head was on FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (po-s76 reconcile_note); that task is now signed off."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -17999,6 +17998,50 @@
         "signed_off_at": "2026-06-16T01:27:01Z",
         "signed_off_by": "po-s73",
         "done_verified_evidence": "RAW-verified LIVE by router (not relayed badges): named-volume DB bctc_layout_units shows 161 healthy + 14 quarantined table units with REAL computed orphan_rows reasons (varied per row, NOT constants); pytest 42 passed/0 failed via docker exec in the rebuilt container; image .Created 2026-06-16T01:15:49Z > commit b52f5593 01:12:10Z. AC-1..AC-7 + EC-1 met (forced-failure paths verified via pytest _PADDLE_LOAD_FAILED sentinel injection per architect matrix; paddle-load-failure/table-extraction-failure strings absent from prod DB only because PaddleOCR loads fine in prod). Fake-clean-0-row mask removed: MANDATORY layout-model failure re-raises; OPTIONAL PaddleOCR failure quarantines with explicit reason. QA cycle-274 APPROVED."
+      },
+      {
+        "id": "FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367",
+        "type": "FIX",
+        "priority": "P2",
+        "size": "XS",
+        "status": "DONE_VERIFIED",
+        "zone": "apps/mcp-server/",
+        "route_to": "dev-mcp-server",
+        "owner": "dev-mcp-server",
+        "blocking": false,
+        "related_to": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
+        "title": "tsc-red: FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270 TS2367 (HIGH vs CRITICAL no-overlap)",
+        "desc": "apps/mcp-server/src/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270 declares `const severity: \"HIGH\" | \"CRITICAL\" = \"HIGH\"` then compares `severity === \"CRITICAL\"`; TS narrows to the \"HIGH\" literal -> TS2367 no-overlap -> tsc RED on main. Widen the annotation (drop the literal init, e.g. `const severity = (\"HIGH\" as \"HIGH\" | \"CRITICAL\")`) or restructure so the ternary keeps both branches reachable. Lines 264/285 are fine (as-const array widening); only line 270 errors. Orthogonal to W2.",
+        "rationale": "Real tsc-red on main; a red pre-push hook strands the whole fleet (red-prepush-strands-fleet lesson). Owning task FIX-SIGNAL-CONFIDENCE-DEFAULT-50 is in review[] -> fix this before it reaches done / before next push.",
+        "files": [
+          "apps/mcp-server/src/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts"
+        ],
+        "depends_on": [],
+        "blocks": [],
+        "created_at": "2026-06-15T23:30:28Z",
+        "created_by": "po-s68",
+        "lane": "done_verified",
+        "next_agent": null,
+        "escalated_at": "2026-06-16T01:31:25Z",
+        "escalated_by": "po-s74",
+        "escalation_note": "ESCALATED P3->P2: this is the SOLE tsc-red on main (verified: bun tsc --noEmit = 1 error, this line only) and the pre-push hook BLOCKS every push on a red tree -> it now strands the whole fleet including the RAW-verified FIX-ERRAUDIT-W1-PEK-P0 done_verified sign-off commit + 12 prior local commits (red-prepush-strands-fleet lesson). The red is SELF-INTRODUCED by the unpushed chain (commit 4f5192c5), NOT pre-existing weather, NOT benign cloud-chore. One-line fix per the row desc (widen the `severity` annotation so both ternary branches stay reachable). Route ba->architect->pm->dev-mcp-server->qa (or fast-track XS direct FIX per dev-team Step 3 if router opts); router dispatches via lock-claim+spawn -- po did NOT spawn and did NOT write the test fix. PUSH stays HELD until tsc is green.",
+        "groomed_at": "2026-06-16T01:31:25Z",
+        "groomed_by": "po-s74",
+        "promoted_from": "backlog",
+        "promoted_at": "2026-06-16T01:31:25Z",
+        "promoted_by": "po-s74",
+        "signed_off_by": "po-s79",
+        "signed_off_at": "2026-06-16T04:39:17Z",
+        "done_verified_evidence": {
+          "kind": "make-tsc-green",
+          "ba_fix_commit": "6f9b3eba",
+          "fix_desc": "widen severity to \"HIGH\"|\"CRITICAL\" union to defeat const-narrowing (FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270)",
+          "tsc_check": "bunx tsc --noEmit in apps/mcp-server = EXIT 0 (router + po both re-ran)",
+          "tsc_was": "SOLE tsc-red on main — its red pre-push hook stranded the whole fleet push",
+          "tests": "22/0",
+          "verified_at": "2026-06-16T04:39:17Z",
+          "note": "ba fixed the code in 6f9b3eba but did not advance the board (task stayed ready[]/next=ba). po-s79 close-out relocates it done_verified after RAW tsc-green reconfirm. Fleet push now unblocked."
+        }
       }
     ],
     "head": {
@@ -18238,38 +18281,6 @@
         "promoted_at": "2026-06-16T01:27:01Z",
         "promoted_by": "po-s73",
         "promotion_note": "Wave-2 frontend hop. Inner-first sequence gate SATISFIED: sequence_after dep FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE is done_verified (the two unbounded mcp-server hops mcp-interface-01/05 are closed). Wave-1 fully complete (W1-MCP-P0 + W1-PEK-P0 both done_verified). Distinct zone apps/frontend/ — no zone-serialization conflict with the mcp-server lane; WIP<=2 honored (over-parallel-fanout host-starvation lesson). Land safeFetch/proxyUpstream/safeFetchOrNull + one DEADLINE_MS < gateway: fix timeout+duplication+logging in 3 helpers not 55 sites. Route ba->architect->pm->dev-frontend->qa; router dispatches via lock-claim+spawn -- po did NOT spawn. No-push."
-      },
-      {
-        "id": "FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367",
-        "type": "FIX",
-        "priority": "P2",
-        "size": "XS",
-        "status": "READY",
-        "zone": "apps/mcp-server/",
-        "route_to": "dev-mcp-server",
-        "owner": "dev-mcp-server",
-        "blocking": true,
-        "related_to": "FIX-SIGNAL-CONFIDENCE-DEFAULT-50",
-        "title": "tsc-red: FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270 TS2367 (HIGH vs CRITICAL no-overlap)",
-        "desc": "apps/mcp-server/src/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts:270 declares `const severity: \"HIGH\" | \"CRITICAL\" = \"HIGH\"` then compares `severity === \"CRITICAL\"`; TS narrows to the \"HIGH\" literal -> TS2367 no-overlap -> tsc RED on main. Widen the annotation (drop the literal init, e.g. `const severity = (\"HIGH\" as \"HIGH\" | \"CRITICAL\")`) or restructure so the ternary keeps both branches reachable. Lines 264/285 are fine (as-const array widening); only line 270 errors. Orthogonal to W2.",
-        "rationale": "Real tsc-red on main; a red pre-push hook strands the whole fleet (red-prepush-strands-fleet lesson). Owning task FIX-SIGNAL-CONFIDENCE-DEFAULT-50 is in review[] -> fix this before it reaches done / before next push.",
-        "files": [
-          "apps/mcp-server/src/__tests__/FIX-SIGNAL-CONFIDENCE-DEFAULT-50.test.ts"
-        ],
-        "depends_on": [],
-        "blocks": [],
-        "created_at": "2026-06-15T23:30:28Z",
-        "created_by": "po-s68",
-        "lane": "ready",
-        "next_agent": "ba",
-        "escalated_at": "2026-06-16T01:31:25Z",
-        "escalated_by": "po-s74",
-        "escalation_note": "ESCALATED P3->P2: this is the SOLE tsc-red on main (verified: bun tsc --noEmit = 1 error, this line only) and the pre-push hook BLOCKS every push on a red tree -> it now strands the whole fleet including the RAW-verified FIX-ERRAUDIT-W1-PEK-P0 done_verified sign-off commit + 12 prior local commits (red-prepush-strands-fleet lesson). The red is SELF-INTRODUCED by the unpushed chain (commit 4f5192c5), NOT pre-existing weather, NOT benign cloud-chore. One-line fix per the row desc (widen the `severity` annotation so both ternary branches stay reachable). Route ba->architect->pm->dev-mcp-server->qa (or fast-track XS direct FIX per dev-team Step 3 if router opts); router dispatches via lock-claim+spawn -- po did NOT spawn and did NOT write the test fix. PUSH stays HELD until tsc is green.",
-        "groomed_at": "2026-06-16T01:31:25Z",
-        "groomed_by": "po-s74",
-        "promoted_from": "backlog",
-        "promoted_at": "2026-06-16T01:31:25Z",
-        "promoted_by": "po-s74"
       }
     ],
     "review": [

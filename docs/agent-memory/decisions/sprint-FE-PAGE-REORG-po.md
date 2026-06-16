@@ -35,3 +35,21 @@
 - Fix it myself vs dispatch — PO never writes code; the one-line type-narrowing fix is dev-mcp-server's; a fully-specced P3 task already existed → escalate+promote, router spawns.
 **why-decision:** The push blocker is a real self-introduced red, not policy; clearing it by dispatch (not bypass, not PO-authored code) is the only honest path to publish the RAW-verified W1-PEK-P0 sign-off + the rest of the chain.
 **why-change:** PUSH flipped push-now → HELD-until-green; the W1-PEK-P0 done_verified flip itself is unaffected (already committed locally; correctness independent of push timing).
+
+### STEP po-S79 · po · 2026-06-16T04:41:29Z
+**task-id:** FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367
+**what-done:** Relocated TS2367 ready[]→done_verified[] (ba fix 6f9b3eba, po+router both re-ran bunx tsc --noEmit=EXIT 0, tests 22/0) and advanced top-level .head off it to the planned Wave-2 hop FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH (P1, ba).
+**what-considered:**
+- New head = W2-FRONTEND-SAFEFETCH (prior head note's planned next, dep already done_verified)
+- New head = cowork-doublefire trio (MEDIUM, ~12h stale) or P1 BCTC/HNX/SSC cluster
+**why-decision:** W2-FRONTEND was the explicitly-recorded next dispatch in the po-s74/po-s76 head note; its dep is cleared and next_agent already=ba — respects the planning chain over a priority reshuffle; the MEDIUM trio + P1 cluster stay in ready for later picks.
+**why-change:** Renamed script po-s78→po-s79 (po-s78 prefix already taken by committed rsi-singledigit reconcile); po-s77 OHLCV signoff was already-run idempotent no-op (conservation harness correctly aborted redundant write).
+
+### STEP po-S80 · po · 2026-06-16T04:41:29Z
+**task-id:** FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367
+**what-done:** PUSH decision: 13-behind classified ALL benign cloud-chore/docs; tsc GREEN so pre-push hook no longer strands — but HELD the rebase because the working tree carries 120+ uncommitted entries from concurrent bg agents.
+**what-considered:**
+- Rebase+push now (tsc green, divergence benign)
+- HOLD rebase — dirty tree (git pull --rebase refuses; stash would sweep other agents' in-flight work)
+**why-decision:** git pull --rebase requires a clean tree; force-stashing 120+ other-agent dirty entries risks corrupting their uncommitted work (router-commit-captures-dirty-board class). Committed only my 2 scoped files; left the rebase+push as the next clean-tree opportunity.
+**why-change:** Router said push is mine to execute if green-lit — code-green but tree-not-clean blocks the mechanism; recorded WHY held rather than forcing it.
