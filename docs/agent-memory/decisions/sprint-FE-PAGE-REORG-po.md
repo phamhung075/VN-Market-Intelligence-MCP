@@ -74,3 +74,12 @@
 - Dispatch any new coding lane — REJECTED: WIP=0 but no new work warranted; ready[] backlog is router's to dispatch.
 **why-decision:** Every signal resolved to informational / already-tracked / false-positive; the only real defect was board drift (closed-epic orphans + false T4 lane) which is reconcile-not-new-work.
 **why-change:** Router pre-gather mislabeled market-watcher/news-scout as telemetry and ARCH-CRON as unconfirmed-stale; RAW-verified both before acting (gateway live; ARCH-CRON is held QA-observe umbrella, not phantom).
+
+## STEP — ARCH-BCTC-PIPELINE-DURABILITY dispatch + 7-task backlog hold (2026-06-16T10:32:32Z)
+[task_id: ARCH-BCTC-PIPELINE-DURABILITY]
+- considered: (a) dispatch 1-2 BCTC FIX coding lanes now; (b) dispatch the 3 cowork double-fire FIXes; (c) dispatch the architect brief; (d) NOTHING.
+- chose: (c) — dispatch ARCH-BCTC-PIPELINE-DURABILITY → architect (SPIKE, 0 coding-WIP). Single move unblocks 5 children.
+- why: its children[] explicitly gate FIX-HNX-SESSION-COOKIE / SSC-C111 / ZERO-URL-ALERT / FRESHNESS-GATE; brief must define the durable zero-result/freshness/enrich contracts FIRST. Dispatching those 4 as code now = "fix residue not contract" anti-pattern (recurring-bug-escalation: 2nd recurrence BCTC-VPS-PIPELINE-STALE). ENRICH-SILENT-0ROWS (5th child) already in review.
+- rejected (a/b): all 8 ready rows are thin stubs (no root_cause/fix_spec/files). 3 cowork FIXes (Root A/B/C) label ONE phenomenon w/ shared dedup root — need a single design/BA pass, not 3 independent dispatches. Handing half-specced FIXes to dev violates no-thin-stubs.
+- WIP: coding lanes stay 0 (ARCH-CRON in_progress is held QA-umbrella, also 0 coding-WIP). Did NOT promote a 2nd lane — nothing dispatch-ready.
+- board: po-s86 atomic (ready 8→7, in_prog 1→2, total 256 conserved); 7 held rows carry explicit per-task hold_reason. PUSH held.
