@@ -100,3 +100,19 @@ Zone health: tsc clean, 164 tools intact, scheduler 3 cron.schedule (startupHelp
 **1352a root cause:** FIX-BCTC-ENRICH-SILENT-0ROWS (d4a0dacc) added unconditional db.prepare() for bctc_table_rows+bctc_md_tables at function start (outside per-row loop). Test DBs are queue-only (no schema migration) → SQLiteError: no such table → all Group A tests crashed before extraction could run.
 **Fix:** try/catch around both prepare() calls; null = gate inactive (skip to updateDone). Generic: any pre-migration or minimal-schema DB bypasses gate; production full-schema DB activates it. 0 new allowlists/special cases.
 **Tests:** 13/13 across both files. Full suite 13205/0 fail. tsc clean. rebuild_required: NO (test-path only change; runtime behaviour unchanged for production full-schema DB).
+
+## 2026-06-16 · FIX-FOREIGN-FLOW-INTEGRITY-BREAK + FIX-FOREIGN-FLOW-COVERAGE + FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL
+
+**Tasks:** 4 tasks in one session. All implemented.
+
+**FIX-FOREIGN-FLOW-INTEGRITY-BREAK (P0):** storeTradingStats() changed from INSERT OR REPLACE → ON CONFLICT DO UPDATE SET that EXCLUDES foreign_volume + foreign_room. Writer B (VCI/vnstock cumulative) no longer clobbers Writer A (VPS daily net). Same fix on both code paths (with-date and legacy). Root: phantom 1.81B shares "net vol" from foreigner_pct × total_shares overwriting daily buy-sell delta.
+
+**FIX-FOREIGN-FLOW-COVERAGE (P1):** VPS script now extracts fBValue/fSValue (VND money-value of foreign buy/sell). Two new columns in daily_ohlcv (foreign_buy_value, foreign_sell_value). Push handler parses camelCase and scientific notation strings. get_foreign_flow output now shows "Mua ròng (VND)" tỷ đồng line + value column when present.
+
+**FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL (HIGH/P1, co-implemented):** New function fetchVnIndexBreadthAndLiquidity() in hose.ts — same vnmarket_prices endpoint, size=2 for delta. New type MarketBreadthAndLiquidity exported. get_market_snapshot now fetches breadth concurrently (5th Promise.all slot) + appends VN prose + breadth struct in JSON. New dedicated tool get_market_breadth (tool #165) serves both breadth + liquidity with machine-readable fields.
+
+**Gate results:** tsc clean | new tests: 4+21=25 pass / 0 fail | full suite 13252/63 fail (pre-task: 13227/64 — net improvement +25 tests, -1 existing failure) | tools=165 (was 164) | sched=3
+
+**REBUILD_REQUIRED:** YES — storeTradingStats SQL + new hose.ts function + get_market_breadth tool + new DB columns.
+
+Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
