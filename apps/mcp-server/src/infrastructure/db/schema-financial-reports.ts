@@ -263,6 +263,19 @@ export function initFinancialReportsTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bvq_status ON bctc_vps_queue(status)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bvq_code   ON bctc_vps_queue(action_code)`);
 
+  // ── BCTC Health State (FIX-BCTC-ZERO-URL-ALERT) ──────────────────────────
+  // Single-row persistent state for the consecutive-zero-URL counter and the
+  // 6h dedup guard.  CREATE TABLE IF NOT EXISTS → safe to call on existing DBs.
+  // Row with key='zero_url_counter' is upserted on first enricher run.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_health_state (
+      key              TEXT PRIMARY KEY,
+      int_value        INTEGER NOT NULL DEFAULT 0,
+      text_value       TEXT,
+      updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   // ── vnstock tables (Task 1042) ────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS vnstock_financials (

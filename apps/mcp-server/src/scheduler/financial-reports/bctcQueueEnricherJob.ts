@@ -12,6 +12,9 @@
  * - fix/bctc-url-enrichment (2026-04-27): Extended WHERE clause to also capture
  *   items with source_url = 'MISSING' or source_url LIKE '/test-%' (placeholder
  *   values left in DB by earlier bad runs). Added SSC_IBOARD_BASE_URL env comment.
+ * - FIX-BCTC-ZERO-URL-ALERT (2026-06-16): Added consecutive-zero-URL cycle counter
+ *   persisted in bctc_health_state (SQLite). Fires a BUG Telegram alert when
+ *   counter >= 2 during an active earnings window, deduped to <=1 alert / 6h.
  *
  * Design:
  * - Dequeues max 20 items with source_url = NULL or a placeholder value per run.
@@ -83,6 +86,121 @@ const VPS_BCTC_ENRICH_BASE_URL = "http://125.212.251.27:8765/bctc-files/";
 const VPS_PLACEHOLDER_NOT_LIKE = "%/20%";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FIX-BCTC-ZERO-URL-ALERT constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Number of consecutive zero-URL cycles required before firing a BUG alert.
+ * Must be >= 2 (single cycle with 0 URLs may be a transient miss during
+ * non-earnings season when the queue is partially populated).
+ */
+const ZERO_URL_ALERT_THRESHOLD = 2;
+
+/**
+ * Minimum gap between consecutive BUG alerts for this condition (ms).
+ * 6 hours: the VPS cron runs every 6h, so at most one alert per VPS cycle.
+ */
+const ZERO_URL_ALERT_DEDUP_MS = 6 * 60 * 60_000;
+
+/**
+ * bctc_health_state row key for the consecutive-zero counter.
+ * text_value stores last_alerted_at (ISO string) for the 6h dedup guard.
+ */
+const BHS_KEY_ZERO_COUNTER = "zero_url_consecutive_cycles";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX-BCTC-ZERO-URL-ALERT helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Ensure the bctc_health_state table exists (idempotent — tolerates
+ * older DBs that pre-date the FIX-BCTC-ZERO-URL-ALERT migration).
+ */
+function ensureBctcHealthStateTable(db: Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_health_state (
+      key         TEXT PRIMARY KEY,
+      int_value   INTEGER NOT NULL DEFAULT 0,
+      text_value  TEXT,
+      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+}
+
+/**
+ * Read the current consecutive-zero counter and last_alerted_at from DB.
+ * Returns { count: 0, lastAlertedAt: null } when the row is absent.
+ */
+function readZeroCounter(db: Database): { count: number; lastAlertedAt: string | null } {
+  try {
+    ensureBctcHealthStateTable(db);
+    const row = db
+      .query<{ int_value: number; text_value: string | null }, [string]>(
+        `SELECT int_value, text_value FROM bctc_health_state WHERE key = ?`,
+      )
+      .get(BHS_KEY_ZERO_COUNTER);
+    if (!row) return { count: 0, lastAlertedAt: null };
+    return { count: row.int_value, lastAlertedAt: row.text_value };
+  } catch {
+    return { count: 0, lastAlertedAt: null };
+  }
+}
+
+/**
+ * Upsert the zero counter row.  lastAlertedAt = null leaves text_value unchanged.
+ */
+function writeZeroCounter(
+  db: Database,
+  count: number,
+  lastAlertedAt?: string | null,
+): void {
+  try {
+    ensureBctcHealthStateTable(db);
+    if (lastAlertedAt !== undefined) {
+      db.exec(
+        `INSERT INTO bctc_health_state (key, int_value, text_value, updated_at)
+         VALUES ('${BHS_KEY_ZERO_COUNTER}', ${count}, ${lastAlertedAt === null ? "NULL" : `'${lastAlertedAt}'`}, datetime('now'))
+         ON CONFLICT(key) DO UPDATE SET
+           int_value  = excluded.int_value,
+           text_value = excluded.text_value,
+           updated_at = excluded.updated_at`,
+      );
+    } else {
+      db.exec(
+        `INSERT INTO bctc_health_state (key, int_value, updated_at)
+         VALUES ('${BHS_KEY_ZERO_COUNTER}', ${count}, datetime('now'))
+         ON CONFLICT(key) DO UPDATE SET
+           int_value  = excluded.int_value,
+           updated_at = excluded.updated_at`,
+      );
+    }
+  } catch (err) {
+    logger.warn("[bctcQueueEnricher] writeZeroCounter failed (non-fatal)", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
+ * Returns true when there is at least one active queue row (pending or
+ * url_not_found) — i.e. we are inside an active earnings window.
+ * Generic: keyed on row status only, no ticker/exchange filter.
+ */
+function isEarningsWindowActive(db: Database): boolean {
+  try {
+    const row = db
+      .query<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt FROM bctc_vps_queue
+         WHERE status IN ('pending', 'url_not_found')`,
+      )
+      .get();
+    return (row?.cnt ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -119,6 +237,12 @@ export async function runBctcQueueEnricherJob(opts: {
   batchSize?: number;
   /** Injectable fetch overrides — used in tests to avoid real HTTP calls. */
   discoverOptions?: DiscoverOptions;
+  /**
+   * FIX-BCTC-ZERO-URL-ALERT: injectable BUG sender.
+   * Defaults to sendTelegramBug (lazy import) in production.
+   * Inject a no-op or capture function in tests.
+   */
+  sendBugFn?: (msg: string) => Promise<unknown>;
 } = {}): Promise<BctcQueueEnricherRunResult> {
   const db = opts.db ?? getDb();
   const batchSize = opts.batchSize ?? DEFAULT_BATCH_SIZE;
@@ -411,8 +535,88 @@ export async function runBctcQueueEnricherJob(opts: {
     }
   }
 
-  if (result.itemsProcessed > 0 && result.urlsPopulated === 0) {
+  // ── FIX-BCTC-ZERO-URL-ALERT: consecutive-zero counter + earnings-guarded alert ─
+  //
+  // Rules (from Contract 1):
+  //   • itemsProcessed == 0  → SKIP (empty queue = legit idle, not a fault)
+  //   • urlsPopulated >  0   → RESET counter to 0  (any success resets)
+  //   • urlsPopulated == 0 AND itemsProcessed > 0 → INCREMENT counter
+  //   • counter >= THRESHOLD AND earnings window active AND dedup ok → ALERT
+  //
+  // Generic invariant: counter is aggregate across ALL tickers — no per-ticker
+  // allowlist, no date literal.  Partial success (some tickers found, some not)
+  // counts as urlsPopulated > 0 and resets the counter.
+  //
+  if (result.itemsProcessed === 0) {
+    // Empty queue — legit idle, do not touch the counter.
+    logger.debug("[bctcQueueEnricher] zero-url-alert: itemsProcessed=0, skipping counter update (idle)");
+  } else if (result.urlsPopulated > 0) {
+    // Any URL found → reset counter.
+    writeZeroCounter(db, 0);
+    logger.debug("[bctcQueueEnricher] zero-url-alert: urlsPopulated>0, counter reset to 0");
+  } else {
+    // urlsPopulated === 0 AND itemsProcessed > 0 → genuine zero-URL cycle.
     logger.warn(`[bctcQueueEnricher] 0 URLs populated across all ${result.itemsProcessed} item(s) — all sources may be unavailable or geo-blocked`);
+
+    const { count: prevCount, lastAlertedAt } = readZeroCounter(db);
+    const newCount = prevCount + 1;
+    writeZeroCounter(db, newCount);
+
+    logger.warn(`[bctcQueueEnricher] zero-url-alert: consecutive_zero_cycles=${newCount}`, {
+      threshold: ZERO_URL_ALERT_THRESHOLD,
+    });
+
+    // Fire alert when threshold reached during active earnings window.
+    if (newCount >= ZERO_URL_ALERT_THRESHOLD) {
+      const earningsActive = isEarningsWindowActive(db);
+      if (!earningsActive) {
+        logger.info("[bctcQueueEnricher] zero-url-alert: threshold reached but no active earnings window — suppressing");
+      } else {
+        // Dedup: at most 1 alert per 6h.
+        const nowMs = Date.now();
+        const lastAlertMs = lastAlertedAt ? new Date(lastAlertedAt).getTime() : 0;
+        const msSinceLastAlert = nowMs - lastAlertMs;
+
+        if (msSinceLastAlert < ZERO_URL_ALERT_DEDUP_MS) {
+          const waitMinutes = Math.round((ZERO_URL_ALERT_DEDUP_MS - msSinceLastAlert) / 60_000);
+          logger.info(`[bctcQueueEnricher] zero-url-alert: dedup active — last alert ${Math.round(msSinceLastAlert / 60_000)} min ago, next in ~${waitMinutes} min`);
+        } else {
+          // Build message: aggregate, not per-ticker.
+          const alertMsg =
+            `[BCTC-ZERO-URL-ALERT] ${newCount} consecutive enricher cycles returned 0 URLs for ALL tickers.\n` +
+            `itemsProcessed=${result.itemsProcessed} urlsPopulated=0\n` +
+            `Active earnings window confirmed (pending/url_not_found rows exist).\n` +
+            `Possible cause: discovery source down, VPS unavailable, or URL-regex change.\n` +
+            `Check bctcQueueEnricherJob logs and discoverHosePdfUrls() sources.`;
+
+          logger.error("[bctcQueueEnricher] zero-url-alert: FIRING BUG alert", {
+            consecutive_zero_cycles: newCount,
+          });
+
+          // Record the alert timestamp BEFORE sending (so a send error doesn't cause
+          // dedup to fire again immediately on the next cycle).
+          const nowIso = new Date(nowMs).toISOString();
+          writeZeroCounter(db, newCount, nowIso);
+
+          try {
+            const effectiveSendBug =
+              opts.sendBugFn ??
+              (async (msg: string) => {
+                const { sendTelegramBug } = await import(
+                  "../../infrastructure/notifiers/telegram.js"
+                );
+                await sendTelegramBug(msg);
+              });
+            await effectiveSendBug(alertMsg);
+            logger.info("[bctcQueueEnricher] zero-url-alert: BUG alert sent successfully");
+          } catch (sendErr) {
+            logger.warn("[bctcQueueEnricher] zero-url-alert: sendBugFn threw (non-fatal)", {
+              error: sendErr instanceof Error ? sendErr.message : String(sendErr),
+            });
+          }
+        }
+      }
+    }
   }
 
   return result;

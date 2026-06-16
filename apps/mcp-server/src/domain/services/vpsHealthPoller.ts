@@ -55,13 +55,20 @@ export interface HealthPollResult {
 /**
  * Configuration for a single VPS service freshness check.
  *
- * "passive" services (vn-bctc-fetch) have no reliable DB table to query;
+ * "passive" services have no reliable DB table to query;
  * they always return healthy.
  *
  * "marketHoursOnly" services (vn-price-fetch, vn-foreign-flow) only push
  * data during VN market hours (Mon-Fri 09:00-15:30 ICT = 02:00-08:30 UTC).
  * Outside that window the service is expected to be silent — staleness is not
  * a fault, so we return "idle" instead of "unhealthy"/"unreachable".
+ *
+ * FIX-BCTC-FRESHNESS-GATE (2026-06-16): "queueGuardSql" is an additive,
+ * non-breaking field.  When present, the SQL must return { active_count: number }.
+ * If active_count == 0 AND there are no recent "done" rows in the last 7 days
+ * (which latestTimestampSql will surface as null or very stale), the check
+ * returns "idle" rather than "unhealthy" — an honest quiet period (off-season
+ * or empty queue) is not a false alarm.
  */
 export interface FreshnessConfig {
   serviceName: ServiceName;
@@ -77,6 +84,29 @@ export interface FreshnessConfig {
    * (Mon-Fri 02:00-08:30 UTC).  Outside that window the check returns "idle".
    */
   marketHoursOnly?: boolean;
+  /**
+   * FIX-BCTC-FRESHNESS-GATE: optional earnings-window guard SQL.
+   * Must return { active_count: number } — count of "actionable" queue rows
+   * (e.g. status IN ('pending','url_not_found','enrich_failed')).
+   *
+   * Semantics: if active_count == 0 AND latestTimestampSql returns null or a
+   * timestamp older than 7 days (no recent "done" row), the check returns "idle"
+   * rather than "unhealthy".  This lets a genuinely empty queue (off-season)
+   * report honest quiet state without a false-alarm.
+   *
+   * If active_count > 0 (queue has work), the normal freshness check applies
+   * regardless of this field.
+   *
+   * Generic invariant: the SQL uses only status predicates — no ticker/date/exchange
+   * literal.  Works for any ticker fleet.
+   */
+  queueGuardSql?: string;
+  /**
+   * FIX-BCTC-FRESHNESS-GATE: time window for "recent done rows" used in
+   * conjunction with queueGuardSql to distinguish off-season from wiped-queue.
+   * Defaults to 7 days (in ms) when queueGuardSql is set.
+   */
+  queueGuardRecentMs?: number;
 }
 
 // ─── default freshness configs ────────────────────────────────────────────────
@@ -88,7 +118,8 @@ export interface FreshnessConfig {
  *  vn-news-fetch    — market_messages.sent_at                             stale > 20 min
  *  vn-foreign-flow  — daily_ohlcv WHERE foreign_buy_vol IS NOT NULL       stale > 5 min  (market hours only)
  *  vn-sbv-fetch     — sbv_rates.fetched_at                                stale > 35 min
- *  vn-bctc-fetch    — passive (6 h cadence, no realtime table)
+ *  vn-bctc-fetch    — MAX(last_attempt) WHERE status='done' in bctc_vps_queue  stale > 24h
+ *                     (FIX-BCTC-FRESHNESS-GATE: was passive:true — now active freshness)
  *
  * BUG FIX (Bug 1): vn-foreign-flow was incorrectly querying
  *   vnstock_trading_stats.fetched_at.  Foreign-flow VPS push writes to
@@ -164,9 +195,34 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
     maxAgeMs: 35 * 60_000, // 35 minutes
   },
   {
+    // FIX-BCTC-FRESHNESS-GATE (2026-06-16): replaced passive: true with an
+    // active freshness check.  The old passive config caused the health gate
+    // to always report "healthy" even during 34h+ data-push outages.
+    //
+    // Active check: MAX(last_attempt) WHERE status='done' in bctc_vps_queue.
+    // Threshold: 24h (4 missed VPS push cycles of 6h each = definitively broken).
+    //
+    // Earnings-window guard (queueGuardSql): if the queue has NO active rows
+    // (pending / url_not_found / enrich_failed) AND no recent done rows in the
+    // last 7 days, return "idle" (off-season honest quiet state, not a false alarm).
+    // If active rows exist, the normal 24h freshness check applies.
+    //
+    // Generic invariant: all SQL uses only status predicates — no ticker/date/
+    // exchange literal.  Works for any ticker fleet size.
     serviceName: "vn-bctc-fetch",
-    description: "BCTC financial reports (passive — 6 h cadence)",
-    passive: true,
+    description: "BCTC financial reports — active freshness (last_success_age on bctc_vps_queue)",
+    latestTimestampSql: `
+      SELECT MAX(last_attempt) AS latest_at
+      FROM bctc_vps_queue
+      WHERE status = 'done'
+    `,
+    maxAgeMs: 24 * 60 * 60_000, // 24 hours
+    queueGuardSql: `
+      SELECT COUNT(*) AS active_count
+      FROM bctc_vps_queue
+      WHERE status IN ('pending', 'url_not_found', 'enrich_failed')
+    `,
+    queueGuardRecentMs: 7 * 24 * 60 * 60_000, // 7 days
   },
 ];
 
@@ -244,7 +300,59 @@ export function checkServiceFreshness(
       .query<{ latest_at: string | null }, []>(config.latestTimestampSql!)
       .get();
 
-    if (!row || row.latest_at === null) {
+    const latestAt = row?.latest_at ?? null;
+    const nowMs = new Date(nowIso).getTime();
+
+    // FIX-BCTC-FRESHNESS-GATE: earnings-window guard.
+    //
+    // When queueGuardSql is configured, check whether there are active queue
+    // rows (pending / url_not_found / enrich_failed).  If there are NONE, and
+    // there is also no recent "done" row within queueGuardRecentMs, return
+    // "idle" — the queue is genuinely empty (off-season or all tickers resolved)
+    // and an "unhealthy" verdict would be a false alarm.
+    //
+    // Guard reads BOTH:
+    //   - active_count (pending/url_not_found/enrich_failed rows) — tells us
+    //     whether there is ongoing work that should produce fresh data.
+    //   - latestTimestampSql result (done rows, which latestAt captures above) —
+    //     distinguishes "queue empty = off-season" from "queue wiped mid-season".
+    //
+    // If active_count == 0 AND no recent done row → "idle" (off-season).
+    // If active_count == 0 AND recent done row exists → normal freshness check
+    //   (all tickers resolved, but last done is fresh — healthy).
+    // If active_count > 0 → normal freshness check (work in progress).
+    //
+    // RF-1 guard: we read BOTH status planes to prevent the "wiped queue"
+    // scenario from silently returning idle.
+    if (config.queueGuardSql) {
+      const guardRow = db
+        .query<{ active_count: number }, []>(config.queueGuardSql)
+        .get();
+      const activeCount = guardRow?.active_count ?? 0;
+
+      if (activeCount === 0) {
+        // No active queue rows.  Check whether there is a recent done row.
+        const recentWindowMs = config.queueGuardRecentMs ?? 7 * 24 * 60 * 60_000;
+        const hasRecentDone =
+          latestAt !== null && nowMs - new Date(latestAt).getTime() <= recentWindowMs;
+
+        if (!hasRecentDone) {
+          // Neither active rows nor recent done rows → genuine off-season idle.
+          return {
+            serviceName: config.serviceName,
+            healthStatus: "idle",
+            responseTimeMs: 0,
+            polledAt,
+            errorMessage: "Queue empty and no recent done rows — off-season idle (not a fault)",
+          };
+        }
+        // activeCount == 0 but a recent done row exists → fall through to
+        // normal freshness check (will likely be "healthy").
+      }
+      // activeCount > 0 → fall through to normal freshness check.
+    }
+
+    if (latestAt === null) {
       return {
         serviceName: config.serviceName,
         healthStatus: "unreachable",
@@ -254,8 +362,7 @@ export function checkServiceFreshness(
       };
     }
 
-    const latestMs = new Date(row.latest_at).getTime();
-    const nowMs = new Date(nowIso).getTime();
+    const latestMs = new Date(latestAt).getTime();
     const ageMs = nowMs - latestMs;
 
     if (ageMs > config.maxAgeMs!) {
@@ -266,7 +373,7 @@ export function checkServiceFreshness(
         healthStatus: "unhealthy",
         responseTimeMs: 0,
         polledAt,
-        lastSuccessfulRun: row.latest_at,
+        lastSuccessfulRun: latestAt,
         uptimeSeconds: ageSec,
         errorMessage: `Data stale: last push ${ageSec}s ago (threshold ${thresholdSec}s)`,
       };
@@ -277,7 +384,7 @@ export function checkServiceFreshness(
       healthStatus: "healthy",
       responseTimeMs: 0,
       polledAt,
-      lastSuccessfulRun: row.latest_at,
+      lastSuccessfulRun: latestAt,
     };
   } catch (err) {
     return {
