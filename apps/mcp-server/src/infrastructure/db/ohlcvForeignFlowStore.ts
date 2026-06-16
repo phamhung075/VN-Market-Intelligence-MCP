@@ -49,24 +49,29 @@ export async function writeForeignFlowToOhlcv(
   // otherwise update only foreign flow columns (preserves existing OHLCV data).
   const now = new Date().toISOString();
   
-  // Column order: code, date, open, high, low, close, volume, updated_at, 
-  //              foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol
+  // FIX-FOREIGN-FLOW-COVERAGE: also persist VND money-value columns
+  // (foreign_buy_value, foreign_sell_value) from bgapidatafeed fBValue/fSValue.
+  // Column order: code, date, open, high, low, close, volume, updated_at,
+  //              foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol,
+  //              foreign_buy_value, foreign_sell_value
   const stmt = database.prepare(
     `INSERT INTO daily_ohlcv
-        (code, date, open, high, low, close, volume, updated_at, foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol)
-      VALUES (?, ?, 0, 0, 0, 0, 0, ?, ?, ?, ?, ?)
+        (code, date, open, high, low, close, volume, updated_at,
+         foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol,
+         foreign_buy_value, foreign_sell_value)
+      VALUES (?, ?, 0, 0, 0, 0, 0, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(code, date) DO UPDATE SET
-        foreign_buy_vol  = excluded.foreign_buy_vol,
-        foreign_sell_vol = excluded.foreign_sell_vol,
-        foreign_net_vol  = excluded.foreign_net_vol,
-        put_through_vol  = excluded.put_through_vol`,
+        foreign_buy_vol   = excluded.foreign_buy_vol,
+        foreign_sell_vol  = excluded.foreign_sell_vol,
+        foreign_net_vol   = excluded.foreign_net_vol,
+        put_through_vol   = excluded.put_through_vol,
+        foreign_buy_value = COALESCE(excluded.foreign_buy_value, foreign_buy_value),
+        foreign_sell_value = COALESCE(excluded.foreign_sell_value, foreign_sell_value)`,
   );
 
   let totalChanges = 0;
   for (const row of rows) {
     const netVol = row.foreignBuyVol - row.foreignSellVol;
-    // Binding order: code(1), date(2), updated_at(8), foreign_buy_vol(9), 
-    //                foreign_sell_vol(10), foreign_net_vol(11), put_through_vol(12)
     const result = stmt.run(
       row.code,
       row.date,
@@ -75,6 +80,8 @@ export async function writeForeignFlowToOhlcv(
       row.foreignSellVol,
       netVol,
       row.putThroughVol,
+      row.foreignBuyValue ?? null,
+      row.foreignSellValue ?? null,
     );
     totalChanges += result.changes;
   }

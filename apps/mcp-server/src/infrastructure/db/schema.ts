@@ -282,10 +282,14 @@ export async function migrateForeignFlowColumns(db: import("bun:sqlite").Databas
     .map((r) => r.name);
 
   const toAdd: Array<[string, string]> = [
-    ["foreign_buy_vol",  "REAL"],
-    ["foreign_sell_vol", "REAL"],
-    ["foreign_net_vol",  "REAL"],
-    ["put_through_vol",  "REAL"],
+    ["foreign_buy_vol",   "REAL"],
+    ["foreign_sell_vol",  "REAL"],
+    ["foreign_net_vol",   "REAL"],
+    ["put_through_vol",   "REAL"],
+    // FIX-FOREIGN-FLOW-COVERAGE: VND money-value of foreign buy/sell from bgapidatafeed
+    // fBValue / fSValue. Optional — null when upstream API omits the field.
+    ["foreign_buy_value",  "REAL"],
+    ["foreign_sell_value", "REAL"],
   ];
 
   for (const [col, type] of toAdd) {

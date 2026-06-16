@@ -139,3 +139,26 @@ Range is plausible (10k–22k tỷ for HOSE); confirms data is real and varied a
 ## VERIFICATION GATE
 
 RAW: new tool returns daily HOSE market turnover in tỷ đồng (10,000–25,000 range on normal days), plus prior-session delta % + direction; sourced from VnDirect `api-finfo.vndirect.com.vn`; FB post agent can quote a specific number ("thanh khoản 16,651 tỷ, tăng 8% so hôm qua") instead of generic prose.
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/fetchers/hose.ts` — co-implemented with FIX-MARKET-BREADTH-MISSING; same function fetchVnIndexBreadthAndLiquidity() returns both. size=2 for delta vs prior session. Turnover fields: accumulatedVal/nmValue/ptValue ÷ 1e9 = tỷ đồng. valChgPctCr1d unreliable intraday → compute delta from [0].accumulatedVal vs [1].accumulatedVal
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts` — get_market_breadth tool exposes totalTurnoverBn, nmTurnoverBn, ptTurnoverBn, turnoverDeltaPct, turnoverDirection; get_market_snapshot also carries these via breadth struct
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/FIX-MARKET-BREADTH-LIQUIDITY.test.ts` — 21 assertions, GREEN (liquidity + breadth co-tested)
+- **Git commits:** (see combined commit)
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 21 pass / 0 fail (targeted)
+- **Tool count:** 165 (pre-task: 164 — new get_market_breadth tool serves both breadth+liquidity)
+- **Scheduler count:** 3 (unchanged)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/market-data.md` — invariant #7
+- **Graphify:** skipped
+
+**REBUILD_REQUIRED:** YES — same rebuild as FIX-MARKET-BREADTH-MISSING.
+
+**done_verified gate:** call get_market_breadth via gateway; totalTurnoverBn ∈ [5000, 30000] on trading day; turnoverDeltaPct not null if data available; nmTurnoverBn + ptTurnoverBn ≈ totalTurnoverBn within 10 tỷ rounding.

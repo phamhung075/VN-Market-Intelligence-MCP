@@ -146,3 +146,27 @@ Add extraction in `fetch-foreign-flow.sh` and `pushForeignFlowHandler.ts`. VND v
 
 Entry point: `apps/mcp-server/src/infrastructure/db/vnstockStore.ts` function `storeTradingStats()`.
 Verification gate (from task): HPG + 2 more tickers show no overnight regime discontinuity in `foreign_room`; `foreign_volume` in `vnstock_trading_stats` matches `foreign_net_vol` in `daily_ohlcv` for the same date; `current_holding_ratio` either has a real VCI source (flagged) or is NULL.
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/vnstockStore.ts:390-440` — storeTradingStats(): INSERT OR REPLACE → ON CONFLICT DO UPDATE SET EXCLUDING foreign_volume + foreign_room (both paths: with-date and legacy)
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/FIX-FOREIGN-FLOW-INTEGRITY-BREAK.test.ts` — 4 assertions, GREEN
+    - Writer A inserts foreign_volume + foreign_room correctly
+    - Writer B ON CONFLICT does NOT overwrite foreign_volume / foreign_room
+    - Writer B fires FIRST (cold start): sets NULL for foreign columns
+    - upsertForeignFlow preserves Writer B's stat columns on conflict
+- **Git commits:** (see combined commit)
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 4 pass / 0 fail (targeted) | full suite same fail count as pre-task
+- **Tool count:** 165 tools (pre-task: 164 — 1 new tool get_market_breadth added for co-task)
+- **Scheduler count:** 3 cron.schedule entries (unchanged)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/market-data.md` — added invariant #5 re writer isolation
+- **Graphify:** skipped (invariant note only, no structural graph change)
+
+**REBUILD_REQUIRED:** YES — storeTradingStats() SQL changed in mcp-server container. After rebuild, pre-existing rows with phantom VCI values (foreign_volume=1.8B) in vnstock_trading_stats will NOT be retroactively corrected. Ops must verify: new Writer B fires → row does NOT update foreign_volume/foreign_room. Historical phantom rows can be left in place (Writer A will overwrite them on next push).

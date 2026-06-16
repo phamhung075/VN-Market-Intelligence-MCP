@@ -127,3 +127,26 @@ Separate MCP tool calling the same URL, returns advances/declines/noChange + pri
 ## VERIFICATION GATE
 
 RAW: `get_market_snapshot` returns non-null `advances` + `declines` + `noChange` values; magnitudes consistent with HOSE constituent count (~400-420); direction consistent with VN-Index pctChange sign.
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/fetchers/hose.ts` — extended VnMarketPriceRecord interface + new MarketBreadthAndLiquidity export type + new fetchVnIndexBreadthAndLiquidity() function (size=2 query for delta)
+  - `apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts` — get_market_snapshot now fetches breadth concurrently (breadthResult in Promise.all); appends Vietnamese prose summary; breadth struct in JSON response; new get_market_breadth tool added
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/FIX-MARKET-BREADTH-LIQUIDITY.test.ts` — 21 assertions, GREEN (breadth parsing tests co-located with liquidity)
+- **Git commits:** (see combined commit)
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test:** 21 pass / 0 fail (targeted)
+- **Tool count:** 165 (pre-task: 164 — new get_market_breadth tool)
+- **Scheduler count:** 3 (unchanged)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/market-data.md` — added get_market_breadth row, invariant #7
+- **Graphify:** skipped
+
+**REBUILD_REQUIRED:** YES — new fetchVnIndexBreadthAndLiquidity() function in mcp-server; get_market_snapshot now fetches breadth in parallel.
+
+**done_verified gate:** call get_market_breadth via gateway; advances integer in [100, 500]; declines integer in [100, 500]; totalTurnoverBn in [5000, 30000] tỷ on trading days.

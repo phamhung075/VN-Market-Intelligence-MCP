@@ -1,7 +1,7 @@
 {
   "_maintained_by": "generator (do not hand-edit)",
-  "lastUpdated": "2026-06-15T00:00:00.000Z",
-  "totalCount": 164,
+  "lastUpdated": "2026-06-16T19:54:45.491Z",
+  "totalCount": 165,
   "groups": [
     {
       "name": "alerts",
@@ -127,13 +127,14 @@
     },
     {
       "name": "market-data",
-      "count": 15,
+      "count": 16,
       "tools": [
         "delete_price_alert",
         "diagnose_foreign_flow_circuit_breaker",
         "get_company_profile",
         "get_foreign_flow",
         "get_insider_transactions",
+        "get_market_breadth",
         "get_market_cap",
         "get_market_context",
         "get_market_foreign_flow",

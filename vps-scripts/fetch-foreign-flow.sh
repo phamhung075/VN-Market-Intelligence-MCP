@@ -43,9 +43,14 @@ PAYLOAD_SIZE_THRESHOLD="${PAYLOAD_SIZE_THRESHOLD:-50000}"  # bytes — warn if l
 # (NOT fBuyVol/fSellVol — those names do NOT exist in the API; the script was using
 # wrong defaults, producing foreignBuyVol=0/foreignSellVol=0 fleet-wide, causing
 # get_foreign_flow to return "never collected" for all tickers. Fix: correct defaults.)
+# FIX-FOREIGN-FLOW-COVERAGE (2026-06-16): also extract fBValue/fSValue (VND money-value
+# of foreign buy/sell in scientific notation, e.g. "1.54033825E8"). Confirmed present
+# in live bgapidatafeed payload. Enables "NNN tỷ mua ròng" FB post language.
 FBUY_FIELD="${FOREIGN_FLOW_FBUY_FIELD:-fBVol}"
 FSELL_FIELD="${FOREIGN_FLOW_FSELL_FIELD:-fSVolume}"
 FROOM_FIELD="${FOREIGN_FLOW_ROOM_FIELD:-fRoom}"
+FBUY_VALUE_FIELD="${FOREIGN_FLOW_FBUY_VALUE_FIELD:-fBValue}"
+FSELL_VALUE_FIELD="${FOREIGN_FLOW_FSELL_VALUE_FIELD:-fSValue}"
 
 # Helper: diagnostic log function
 log_diagnostic() {
@@ -97,7 +102,7 @@ if [ -z "$CODES" ] || [ "$CODES" = "null" ]; then
 fi
 
 COUNT=$(echo "$CONFIG" | jq '.codes | length' 2>/dev/null || echo 0)
-log_diagnostic "INFO" "Watchlist loaded: $COUNT codes. Fields: $FBUY_FIELD/$FSELL_FIELD/$FROOM_FIELD"
+log_diagnostic "INFO" "Watchlist loaded: $COUNT codes. Fields: $FBUY_FIELD/$FSELL_FIELD/$FROOM_FIELD/$FBUY_VALUE_FIELD/$FSELL_VALUE_FIELD"
 
 # Step 2: Fetch VN stock data from VPS batch API
 # HARDENED: increased timeout from 20s to 60s to allow large payloads to complete (Task 1566_c)
@@ -132,15 +137,22 @@ log_diagnostic "INFO" "VPS_API_FETCH_SUCCESS: $RAW_COUNT raw items, ${VN_DATA_SI
 # Step 3: Extract foreign flow fields and filter out all-zero rows
 # jq hardening: use (// 0) instead of tonumber to handle both string and numeric API responses
 JQ_START=$(date +%s%N)
+# FIX-FOREIGN-FLOW-COVERAGE: include fBValue/fSValue (VND money-value).
+# tonumber handles scientific notation strings (e.g. "1.54033825E8").
+# null guard: emit null (not 0) when field absent — MCP handler skips null values.
 FF_JSON=$(echo "$VN_DATA" | jq \
-  --arg fbuy  "$FBUY_FIELD" \
-  --arg fsell "$FSELL_FIELD" \
-  --arg froom "$FROOM_FIELD" \
+  --arg fbuy       "$FBUY_FIELD" \
+  --arg fsell      "$FSELL_FIELD" \
+  --arg froom      "$FROOM_FIELD" \
+  --arg fbuyval    "$FBUY_VALUE_FIELD" \
+  --arg fsellval   "$FSELL_VALUE_FIELD" \
   '[.[] | select(.sym != null) | {
-    code:           .sym,
-    foreignBuyVol:  ((.[$fbuy]  // 0) | if type == "string" then tonumber else . end),
-    foreignSellVol: ((.[$fsell] // 0) | if type == "string" then tonumber else . end),
-    foreignRoom:    ((.[$froom] // 0) | if type == "string" then tonumber else . end)
+    code:             .sym,
+    foreignBuyVol:    ((.[$fbuy]     // 0) | if type == "string" then tonumber else . end),
+    foreignSellVol:   ((.[$fsell]    // 0) | if type == "string" then tonumber else . end),
+    foreignRoom:      ((.[$froom]    // 0) | if type == "string" then tonumber else . end),
+    foreignBuyValue:  (if .[$fbuyval]  != null then ((.[$fbuyval]  | if type == "string" then tonumber else . end)) else null end),
+    foreignSellValue: (if .[$fsellval] != null then ((.[$fsellval] | if type == "string" then tonumber else . end)) else null end)
   } | select(.foreignBuyVol > 0 or .foreignSellVol > 0 or .foreignRoom > 0)]' 2>&1)
 JQ_END=$(date +%s%N)
 JQ_TIME_MS=$(( (JQ_END - JQ_START) / 1000000 ))

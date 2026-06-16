@@ -29,6 +29,55 @@ import { getDb } from "../../../../infrastructure/db/schema.js";
 import { breakers } from "../../../../infrastructure/circuitBreakerRegistry.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FIX-FOREIGN-FLOW-COVERAGE: VND money-value row from daily_ohlcv
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface DailyForeignFlowValue {
+  date: string;
+  foreignBuyValue: number | null;
+  foreignSellValue: number | null;
+  foreignNetValue: number | null;
+}
+
+/**
+ * Query daily_ohlcv for VND money-value columns (foreign_buy_value, foreign_sell_value).
+ * Returns rows sorted DESC by date. Returns empty array when columns do not exist yet
+ * (pre-migration DB) — graceful degrade, does not block existing functionality.
+ */
+function getForeignFlowValues(
+  code: string,
+  days: number,
+  db: Database,
+): DailyForeignFlowValue[] {
+  try {
+    const rows = db
+      .prepare<any, [string, number]>(
+        `SELECT date,
+                foreign_buy_value  AS foreignBuyValue,
+                foreign_sell_value AS foreignSellValue
+         FROM daily_ohlcv
+         WHERE code = ?
+           AND (foreign_buy_value IS NOT NULL OR foreign_sell_value IS NOT NULL)
+         ORDER BY date DESC
+         LIMIT ?`,
+      )
+      .all(code, days);
+    return rows.map((r: any) => ({
+      date: r.date as string,
+      foreignBuyValue: r.foreignBuyValue != null ? Number(r.foreignBuyValue) : null,
+      foreignSellValue: r.foreignSellValue != null ? Number(r.foreignSellValue) : null,
+      foreignNetValue:
+        r.foreignBuyValue != null && r.foreignSellValue != null
+          ? Number(r.foreignBuyValue) - Number(r.foreignSellValue)
+          : null,
+    }));
+  } catch {
+    // Columns not yet migrated — degrade gracefully
+    return [];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -51,16 +100,26 @@ function fmtRatio(ratio: number): string {
 }
 
 /**
+ * Format VND value as tỷ đồng string (e.g. 154033825 → "0.15 tỷ").
+ */
+function fmtTyDong(vnd: number): string {
+  const ty = vnd / 1_000_000_000;
+  return `${ty.toFixed(2)} tỷ`;
+}
+
+/**
  * Format the full foreign flow analysis output text block.
  *
  * @param code    - Stock ticker
  * @param signal  - Result from analyzeForeignFlow
  * @param history - Raw daily history rows (sorted DESC)
+ * @param values  - Optional VND money-value rows from daily_ohlcv (FIX-FOREIGN-FLOW-COVERAGE)
  */
 export function formatForeignFlowOutput(
   code: string,
   signal: ForeignFlowSignal,
   history: DailyForeignFlow[],
+  values?: DailyForeignFlowValue[],
 ): string {
   const lines: string[] = [];
 
@@ -86,6 +145,15 @@ export function formatForeignFlowOutput(
     const ratioSign = ratioChange >= 0 ? "+" : "";
     lines.push(`  Holding ratio change (5d): ${ratioSign}${(ratioChange * 100).toFixed(3)}%`);
   }
+
+  // FIX-FOREIGN-FLOW-COVERAGE: net VND money-value summary (from most recent day with data)
+  const valueRows = values ?? [];
+  const latestValue = valueRows[0];
+  if (latestValue?.foreignNetValue != null) {
+    const sign = latestValue.foreignNetValue >= 0 ? "+" : "";
+    lines.push(`  Mua ròng (VND, ${latestValue.date}): ${sign}${fmtTyDong(latestValue.foreignNetValue)}`);
+  }
+
   lines.push("");
 
   // Reasoning
@@ -93,9 +161,36 @@ export function formatForeignFlowOutput(
   lines.push(`  ${signal.reasoning}`);
   lines.push("");
 
-  // Daily history table — conditionally include Holding Ratio column
+  // Daily history table — conditionally include Holding Ratio and VND value columns
+  const hasValueData = valueRows.length > 0 && valueRows.some((v) => v.foreignNetValue != null);
+  // Build value lookup by date for the history table
+  const valueByDate = new Map(valueRows.map((v) => [v.date, v]));
+
   lines.push("Daily history");
-  if (hasRealHoldingData) {
+  if (hasRealHoldingData && hasValueData) {
+    lines.push("  Date        | Net Vol (daily) | Foreign Room  | Holding Ratio | Mua ròng (tỷ)");
+    lines.push("  ------------|-----------------|---------------|---------------|---------------");
+    for (const row of history) {
+      const date = row.date.slice(0, 10).padEnd(12);
+      const vol = fmtVol(row.foreignVolume).padStart(14);
+      const room = fmtVol(row.foreignRoom).padStart(13);
+      const ratio = fmtRatio(row.holdingRatio ?? 0).padStart(15);
+      const vRow = valueByDate.get(row.date.slice(0, 10));
+      const netVal = vRow?.foreignNetValue != null ? fmtTyDong(vRow.foreignNetValue).padStart(15) : "           N/A";
+      lines.push(`  ${date}|${vol} |${room} |${ratio}|${netVal}`);
+    }
+  } else if (hasValueData) {
+    lines.push("  Date        | Net Vol (daily) | Foreign Room  | Mua ròng (tỷ)");
+    lines.push("  ------------|-----------------|---------------|---------------");
+    for (const row of history) {
+      const date = row.date.slice(0, 10).padEnd(12);
+      const vol = fmtVol(row.foreignVolume).padStart(14);
+      const room = fmtVol(row.foreignRoom).padStart(13);
+      const vRow = valueByDate.get(row.date.slice(0, 10));
+      const netVal = vRow?.foreignNetValue != null ? fmtTyDong(vRow.foreignNetValue).padStart(15) : "           N/A";
+      lines.push(`  ${date}|${vol} |${room} |${netVal}`);
+    }
+  } else if (hasRealHoldingData) {
     lines.push("  Date        | Net Vol (daily) | Foreign Room  | Holding Ratio");
     lines.push("  ------------|-----------------|---------------|---------------");
     for (const row of history) {
@@ -261,7 +356,9 @@ export function registerForeignFlowTools(
         }
 
         // ── Format and return ─────────────────────────────────────────────────
-        const text = formatForeignFlowOutput(code, signal, history);
+        // FIX-FOREIGN-FLOW-COVERAGE: fetch VND money-value rows for display
+        const values = getForeignFlowValues(code, days ?? 10, resolvedDb);
+        const text = formatForeignFlowOutput(code, signal, history, values);
         const envelope: Record<string, unknown> = {
           source_tier: 2 as const,
           text,

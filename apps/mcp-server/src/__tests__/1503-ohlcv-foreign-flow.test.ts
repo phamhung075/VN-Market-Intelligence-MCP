@@ -84,10 +84,13 @@ function buildBaseDb(): Database {
 
 /** Add foreign flow columns to daily_ohlcv (simulates migration already run). */
 function addForeignFlowCols(db: Database): void {
-  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_buy_vol  REAL`);
-  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_sell_vol REAL`);
-  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_net_vol  REAL`);
-  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN put_through_vol  REAL`);
+  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_buy_vol   REAL`);
+  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_sell_vol  REAL`);
+  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_net_vol   REAL`);
+  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN put_through_vol   REAL`);
+  // FIX-FOREIGN-FLOW-COVERAGE: VND money-value columns (added 2026-06-16)
+  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_buy_value  REAL`);
+  db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN foreign_sell_value REAL`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

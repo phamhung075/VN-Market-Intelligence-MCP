@@ -13,7 +13,8 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 | Tool | Purpose | Key inputs | Downstream |
 |------|---------|-----------|-----------|
 | `get_price_history` | OHLCV + price history for a ticker | ticker, days | market.db ohlcv_daily |
-| `get_market_snapshot` | Current prices for entire watchlist | — | market.db market_prices |
+| `get_market_snapshot` | Current prices for entire watchlist + breadth + liquidity summary | — | market.db market_prices + vnmarket_prices API |
+| `get_market_breadth` | HOSE market breadth (advances/declines/ceiling/floor) + liquidity (tỷ đồng, delta vs prior session) | — | VnDirect api-finfo.vndirect.com.vn/v4/vnmarket_prices |
 | `get_market_context` | Market context: prices + sentiment + macro summary | — | market.db + macro-indicators |
 | `get_technical_indicators` | RSI, MACD, BB, MA for a ticker | ticker, indicators[] | technical-analysis svc (HTTP) |
 | `get_ticker_intelligence` | Combined TA + price + context for one ticker | ticker | technical-analysis svc + market.db |
@@ -46,3 +47,6 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 2. `validate_signal_price` ±5% tolerance — mandatory before any trade signal is confirmed.
 3. Foreign flow data pushed by VPS at 60s intervals during market hours.
 4. taAlertScanJob calls technical-analysis microservice via HTTP (not direct domain import — Phase 3b).
+5. Writer B (storeTradingStats / VCI) must NOT overwrite foreign_volume / foreign_room — those belong to Writer A (upsertForeignFlow / VPS). ON CONFLICT DO UPDATE excludes those columns (FIX-FOREIGN-FLOW-INTEGRITY-BREAK).
+6. daily_ohlcv.foreign_buy_value / foreign_sell_value store VND money-value from bgapidatafeed fBValue/fSValue — optional columns (null until VPS script updated, FIX-FOREIGN-FLOW-COVERAGE).
+7. `get_market_snapshot` + `get_market_breadth` both read from the same VnDirect vnmarket_prices endpoint (zero extra network cost). Breadth counts reflect HOSE composite (VNINDEX). Turnover in tỷ đồng.

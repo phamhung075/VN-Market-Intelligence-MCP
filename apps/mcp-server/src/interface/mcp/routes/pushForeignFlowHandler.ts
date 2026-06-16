@@ -286,12 +286,32 @@ export async function handlePushForeignFlow(
           continue;
         }
 
+        // FIX-FOREIGN-FLOW-COVERAGE: extract VND value fields from bgapidatafeed.
+        // fBValue / fSValue are returned as scientific-notation strings (e.g. "1.54033825E8").
+        // Parse via parseFloat — handles both string and numeric forms; null when absent.
+        const buyValueRaw = raw.foreignBuyValue ?? raw.fBValue;
+        const sellValueRaw = raw.foreignSellValue ?? raw.fSValue;
+        const foreignBuyValue =
+          typeof buyValueRaw === "number"
+            ? buyValueRaw
+            : typeof buyValueRaw === "string"
+              ? parseFloat(buyValueRaw)
+              : null;
+        const foreignSellValue =
+          typeof sellValueRaw === "number"
+            ? sellValueRaw
+            : typeof sellValueRaw === "string"
+              ? parseFloat(sellValueRaw)
+              : null;
+
         ohlcvItems.push({
           code: typeof raw.code === "string" ? raw.code : String(raw.code ?? ""),
           date: typeof raw.date === "string" && raw.date ? raw.date : todayUtc,
           foreignBuyVol: raw.foreignBuyVol,
           foreignSellVol: raw.foreignSellVol,
           putThroughVol: typeof raw.putThroughVol === "number" ? raw.putThroughVol : 0,
+          foreignBuyValue: foreignBuyValue !== null && !isNaN(foreignBuyValue) ? foreignBuyValue : null,
+          foreignSellValue: foreignSellValue !== null && !isNaN(foreignSellValue) ? foreignSellValue : null,
         });
       }
 

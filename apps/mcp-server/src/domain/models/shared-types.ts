@@ -152,6 +152,11 @@ export interface ForeignFlowUpsertItem {
  * Data transfer item for writing foreign flow columns to daily_ohlcv.
  * Structured to match WriteForeignFlowItem in ohlcvForeignFlowStore (Task 1503, 1289).
  * These fields correspond to daily_ohlcv table columns.
+ *
+ * FIX-FOREIGN-FLOW-COVERAGE: foreignBuyValue / foreignSellValue are the VND
+ * money-value equivalents of foreignBuyVol / foreignSellVol (from bgapidatafeed
+ * fBValue / fSValue fields, in VND). Optional — absent when the upstream API
+ * returns null / scientific-notation parse fails.
  */
 export interface WriteForeignFlowItem {
   code: string;
@@ -159,4 +164,8 @@ export interface WriteForeignFlowItem {
   foreignBuyVol: number;
   foreignSellVol: number;
   putThroughVol: number;
+  /** VND buy value from bgapidatafeed fBValue (e.g. 154,033,825 VND). Optional. */
+  foreignBuyValue?: number | null;
+  /** VND sell value from bgapidatafeed fSValue (e.g. 29,197,224 VND). Optional. */
+  foreignSellValue?: number | null;
 }

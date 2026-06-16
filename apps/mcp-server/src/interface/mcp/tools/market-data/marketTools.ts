@@ -18,7 +18,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
-import { fetchHosePrices, fetchVnIndex, type MarketPrice } from "../../../../infrastructure/fetchers/hose.js";
+import { fetchHosePrices, fetchVnIndex, fetchVnIndexBreadthAndLiquidity, type MarketPrice, type MarketBreadthAndLiquidity } from "../../../../infrastructure/fetchers/hose.js";
 import { fetchHnxPrices, fetchUpcomPrices } from "../../../../infrastructure/fetchers/hnx.js";
 import { getPatternSummary } from "../../../../application/usecases/getPatternSummary.js";
 import { logger } from "../../../../infrastructure/logger.js";
@@ -217,7 +217,7 @@ export function registerMarketTools(server: McpServer): void {
         // trading-session guards — the user expects data even after hours.
         const forceOpts = { force: true };
 
-        const [vnIndexResult, hoseResult, hnxResult, upcomResult] =
+        const [vnIndexResult, hoseResult, hnxResult, upcomResult, breadthResult] =
           await Promise.all([
             // Fetch VN-Index: use test client if injected, otherwise dedicated
             // vnmarket_prices endpoint (more reliable than the stock endpoint).
@@ -257,6 +257,16 @@ export function registerMarketTools(server: McpServer): void {
                   return [] as MarketPrice[];
                 })
               : Promise.resolve([] as MarketPrice[]),
+            // FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL:
+            // Fetch breadth + liquidity (same endpoint, zero extra cost in test mode skip)
+            _testHoseClient
+              ? Promise.resolve(null as MarketBreadthAndLiquidity | null)
+              : fetchVnIndexBreadthAndLiquidity("VNINDEX").catch((err) => {
+                  logger.warn("[get_market_snapshot] breadth/liquidity fetch failed", {
+                    error: err instanceof Error ? err.message : String(err),
+                  });
+                  return null as MarketBreadthAndLiquidity | null;
+                }),
           ]);
 
         // ── Build output ──────────────────────────────────────────────────────
@@ -336,12 +346,51 @@ export function registerMarketTools(server: McpServer): void {
             }
           : null;
 
+        // FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL:
+        // Attach machine-readable breadth + liquidity struct to the snapshot response.
+        const breadthStruct = breadthResult
+          ? {
+              date: breadthResult.date,
+              sessionTime: breadthResult.sessionTime,
+              // Breadth
+              advances: breadthResult.advances,
+              declines: breadthResult.declines,
+              noChange: breadthResult.noChange,
+              noTrade: breadthResult.noTrade,
+              ceilingStocks: breadthResult.ceilingStocks,
+              floorStocks: breadthResult.floorStocks,
+              // Liquidity (tỷ đồng)
+              totalTurnoverBn: breadthResult.totalTurnoverBn,
+              nmTurnoverBn: breadthResult.nmTurnoverBn,
+              ptTurnoverBn: breadthResult.ptTurnoverBn,
+              turnoverDeltaPct: breadthResult.turnoverDeltaPct,
+              turnoverDirection: breadthResult.turnoverDirection,
+              accumulatedVol: breadthResult.accumulatedVol,
+              source: "vndirect:api-finfo.vndirect.com.vn/v4/vnmarket_prices",
+            }
+          : null;
+
+        // Append breadth + liquidity summary to prose text
+        if (breadthResult) {
+          const b = breadthResult;
+          const turnoverLine = `Thanh khoản HOSE: ${b.totalTurnoverBn.toFixed(0)} tỷ đồng` +
+            (b.turnoverDeltaPct != null
+              ? ` (${b.turnoverDeltaPct >= 0 ? "+" : ""}${b.turnoverDeltaPct.toFixed(1)}% so hôm qua)`
+              : "");
+          const breadthLine = `Độ rộng: ${b.advances} tăng / ${b.declines} giảm / ${b.noChange} đứng` +
+            (b.ceilingStocks > 0 || b.floorStocks > 0
+              ? ` | Trần: ${b.ceilingStocks} / Sàn: ${b.floorStocks}`
+              : "");
+          text = text + "\n\n" + turnoverLine + "\n" + breadthLine;
+        }
+
         return {
           content: [{ type: "text" as const, text: JSON.stringify({
             source_tier: 2 as const,
             text,
             fetchedAt: generatedAt,
             vn_index: vnIndexStruct,
+            breadth: breadthStruct,
           }, null, 2) }],
         };
       } catch (err) {
@@ -442,6 +491,107 @@ export function registerMarketTools(server: McpServer): void {
             {
               type: "text" as const,
               text: `Error retrieving patterns: ${(err as Error).message}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── 3. get_market_breadth ──────────────────────────────────────────────────
+  // FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL
+  // Dedicated tool: returns HOSE market breadth (advances/declines/noChange/ceiling/floor)
+  // and liquidity (total turnover in tỷ đồng, ordermatch vs put-through split,
+  // delta vs prior session). Zero extra network cost — same vnmarket_prices endpoint
+  // already polled by get_market_snapshot.
+  server.tool(
+    "get_market_breadth",
+    "Fetch HOSE market breadth and liquidity for the latest session. " +
+      "Returns: advances (mã tăng), declines (mã giảm), noChange (mã đứng), " +
+      "noTrade (mã không khớp), ceilingStocks (mã trần), floorStocks (mã sàn). " +
+      "Liquidity: totalTurnoverBn (tổng thanh khoản tỷ đồng), nmTurnoverBn (khớp lệnh), " +
+      "ptTurnoverBn (thoả thuận), turnoverDeltaPct (% thay đổi so hôm qua), turnoverDirection. " +
+      "Source: VnDirect api-finfo.vndirect.com.vn/v4/vnmarket_prices (HOSE VNINDEX composite). " +
+      "Source tier: 2 (aggregator — VnDirect re-aggregates HOSE exchange data). " +
+      "Use this tool when the FB market post needs specific breadth counts or tỷ đồng liquidity figures.",
+    {},
+    async () => {
+      try {
+        const data = await fetchVnIndexBreadthAndLiquidity("VNINDEX");
+
+        if (!data) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({
+                  source_tier: 2 as const,
+                  error: "Breadth/liquidity data unavailable — VnDirect vnmarket_prices returned no data.",
+                }, null, 2),
+              },
+            ],
+          };
+        }
+
+        const turnoverDeltaStr = data.turnoverDeltaPct != null
+          ? `${data.turnoverDeltaPct >= 0 ? "+" : ""}${data.turnoverDeltaPct.toFixed(1)}%`
+          : "N/A";
+
+        const lines = [
+          `=== HOSE Market Breadth & Liquidity — ${data.date} ${data.sessionTime} ===`,
+          "",
+          "Độ rộng thị trường (Market Breadth):",
+          `  Mã tăng (advances):      ${data.advances}`,
+          `  Mã giảm (declines):      ${data.declines}`,
+          `  Mã đứng (noChange):      ${data.noChange}`,
+          `  Mã không khớp (noTrade): ${data.noTrade}`,
+          `  Mã trần (ceiling):       ${data.ceilingStocks}`,
+          `  Mã sàn (floor):          ${data.floorStocks}`,
+          "",
+          "Thanh khoản (Liquidity):",
+          `  Tổng:       ${data.totalTurnoverBn.toFixed(0)} tỷ đồng (${turnoverDeltaStr} so hôm qua)`,
+          `  Khớp lệnh: ${data.nmTurnoverBn.toFixed(0)} tỷ đồng`,
+          `  Thoả thuận: ${data.ptTurnoverBn.toFixed(0)} tỷ đồng`,
+          `  Volume:     ${data.accumulatedVol.toLocaleString("en-US")} cổ phiếu`,
+          "",
+          `Source: api-finfo.vndirect.com.vn/v4/vnmarket_prices (VNINDEX)`,
+          `FetchedAt: ${data.fetchedAt}`,
+        ];
+
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({
+            source_tier: 2 as const,
+            text: lines.join("\n"),
+            date: data.date,
+            sessionTime: data.sessionTime,
+            advances: data.advances,
+            declines: data.declines,
+            noChange: data.noChange,
+            noTrade: data.noTrade,
+            ceilingStocks: data.ceilingStocks,
+            floorStocks: data.floorStocks,
+            totalTurnoverBn: data.totalTurnoverBn,
+            nmTurnoverBn: data.nmTurnoverBn,
+            ptTurnoverBn: data.ptTurnoverBn,
+            turnoverDeltaPct: data.turnoverDeltaPct,
+            turnoverDirection: data.turnoverDirection,
+            accumulatedVol: data.accumulatedVol,
+            fetchedAt: data.fetchedAt,
+            source: "vndirect:api-finfo.vndirect.com.vn/v4/vnmarket_prices",
+          }, null, 2) }],
+        };
+      } catch (err) {
+        logger.error("[get_market_breadth] Error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                source_tier: 2 as const,
+                error: `Error fetching market breadth: ${(err as Error).message}`,
+              }, null, 2),
             },
           ],
         };

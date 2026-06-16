@@ -391,24 +391,52 @@ export function storeTradingStats(s: VnstockTradingStats, date?: string): void {
   const db = getDb();
   if (tradingStatsHasDate(db)) {
     const today = date ?? new Date().toISOString().slice(0, 10);
+    // FIX-FOREIGN-FLOW-INTEGRITY-BREAK: Writer B (VCI/vnstock) must NOT overwrite
+    // foreign_volume / foreign_room — those belong to Writer A (VPS push / upsertForeignFlow).
+    // VCI writes cumulative holding (foreigner_pct × total_shares) which is semantically
+    // incompatible with Writer A's daily buy−sell net. Use ON CONFLICT DO UPDATE SET that
+    // EXCLUDES foreign_volume and foreign_room from the update clause.
+    // On INSERT (new row) we write foreign_volume/foreign_room as NULL to avoid fabricated
+    // values appearing before Writer A has run; on CONFLICT (existing row) we skip them.
     db.prepare(
-      `INSERT OR REPLACE INTO vnstock_trading_stats
+      `INSERT INTO vnstock_trading_stats
        (code, date, foreign_room, foreign_volume, current_holding_ratio, max_holding_ratio,
         avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, market_cap_bn, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(code, date) DO UPDATE SET
+         current_holding_ratio = excluded.current_holding_ratio,
+         max_holding_ratio     = excluded.max_holding_ratio,
+         avg_volume_2w         = excluded.avg_volume_2w,
+         high_52w              = excluded.high_52w,
+         low_52w               = excluded.low_52w,
+         pct_from_high_52w     = excluded.pct_from_high_52w,
+         pct_from_low_52w      = excluded.pct_from_low_52w,
+         market_cap_bn         = excluded.market_cap_bn,
+         fetched_at            = excluded.fetched_at`,
     ).run(
-      s.code, today, s.foreignRoom, s.foreignVolume, s.currentHoldingRatio, s.maxHoldingRatio,
+      s.code, today, s.currentHoldingRatio, s.maxHoldingRatio,
       s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.marketCapBn ?? null, s.fetchedAt,
     );
   } else {
-    // Production schema without `date` column — UNIQUE(code) replaces UNIQUE(code, date)
+    // Production schema without `date` column — UNIQUE(code) replaces UNIQUE(code, date).
+    // Same write-isolation rule applies: do NOT overwrite foreign_volume / foreign_room.
     db.prepare(
-      `INSERT OR REPLACE INTO vnstock_trading_stats
+      `INSERT INTO vnstock_trading_stats
        (code, foreign_room, foreign_volume, current_holding_ratio, max_holding_ratio,
         avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, market_cap_bn, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(code) DO UPDATE SET
+         current_holding_ratio = excluded.current_holding_ratio,
+         max_holding_ratio     = excluded.max_holding_ratio,
+         avg_volume_2w         = excluded.avg_volume_2w,
+         high_52w              = excluded.high_52w,
+         low_52w               = excluded.low_52w,
+         pct_from_high_52w     = excluded.pct_from_high_52w,
+         pct_from_low_52w      = excluded.pct_from_low_52w,
+         market_cap_bn         = excluded.market_cap_bn,
+         fetched_at            = excluded.fetched_at`,
     ).run(
-      s.code, s.foreignRoom, s.foreignVolume, s.currentHoldingRatio, s.maxHoldingRatio,
+      s.code, s.currentHoldingRatio, s.maxHoldingRatio,
       s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.marketCapBn ?? null, s.fetchedAt,
     );
   }

@@ -133,6 +133,45 @@ export interface MarketPrice {
   fetchedAt: string;
 }
 
+/**
+ * FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL:
+ * Market breadth and liquidity data from VnDirect vnmarket_prices endpoint.
+ * All breadth fields are from HOSE (VNINDEX composite).
+ * Turnover values are in tỷ đồng (divided by 1e9 at parse time).
+ */
+export interface MarketBreadthAndLiquidity {
+  date: string;
+  /** Session time string (HH:MM:SS) from API */
+  sessionTime: string;
+  // Breadth (FIX-MARKET-BREADTH-MISSING)
+  /** Number of HOSE stocks with price increase (mã tăng) */
+  advances: number;
+  /** Number of HOSE stocks with price decrease (mã giảm) */
+  declines: number;
+  /** Number of HOSE stocks unchanged (mã đứng) */
+  noChange: number;
+  /** Number of HOSE stocks with no trades (mã không khớp) */
+  noTrade: number;
+  /** Number of HOSE stocks at ceiling price (mã trần) */
+  ceilingStocks: number;
+  /** Number of HOSE stocks at floor price (mã sàn) */
+  floorStocks: number;
+  // Liquidity / turnover (FIX-MARKET-LIQUIDITY-MISSING-TOOL)
+  /** Total HOSE turnover in tỷ đồng (nmValue + ptValue) */
+  totalTurnoverBn: number;
+  /** Order-match turnover only in tỷ đồng */
+  nmTurnoverBn: number;
+  /** Put-through turnover in tỷ đồng */
+  ptTurnoverBn: number;
+  /** Pct change of total turnover vs prior session (computed from size=2 query, or null) */
+  turnoverDeltaPct: number | null;
+  /** Direction of turnover change vs prior session */
+  turnoverDirection: "up" | "down" | "flat" | null;
+  /** Total accumulated volume (shares) */
+  accumulatedVol: number;
+  fetchedAt: string;
+}
+
 // ---------------------------------------------------------------------------
 // VnDirect API response types (internal)
 // ---------------------------------------------------------------------------
@@ -361,6 +400,21 @@ interface VnMarketPriceRecord {
   change?: number;
   pctChange?: number;
   accumulatedVol?: number;
+  // FIX-MARKET-BREADTH-MISSING: breadth fields
+  advances?: number;
+  declines?: number;
+  noChange?: number;
+  noTrade?: number;
+  ceilingStocks?: number;
+  floorStocks?: number;
+  // FIX-MARKET-LIQUIDITY-MISSING-TOOL: turnover fields (raw VND)
+  accumulatedVal?: number;
+  nmVolume?: number;
+  nmValue?: number;
+  ptVolume?: number;
+  ptValue?: number;
+  valChgPctCr1d?: number;
+  date?: string;
 }
 
 /**
@@ -416,6 +470,97 @@ export async function fetchVnIndex(
     };
   } catch (err) {
     logger.debug("[hose] vnmarket_prices fetch failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL
+// Fetch market breadth + liquidity from the same vnmarket_prices endpoint.
+// Uses size=2 so we can compute delta vs prior session from two rows.
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetches HOSE market breadth (advances/declines/etc.) and liquidity (turnover in tỷ đồng)
+ * from the VnDirect vnmarket_prices endpoint.
+ *
+ * The same URL already polled by fetchVnIndex() — zero extra network cost.
+ * size=2 returns today + yesterday for delta computation.
+ *
+ * @param indexCode - Index code (default: "VNINDEX" = HOSE composite)
+ * @returns MarketBreadthAndLiquidity or null if unavailable
+ */
+export async function fetchVnIndexBreadthAndLiquidity(
+  indexCode = "VNINDEX",
+): Promise<MarketBreadthAndLiquidity | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const url = `${VNDIRECT_VNMARKET_URL}?sort=date&q=code:${encodeURIComponent(indexCode)}&size=2&page=1`;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": BROWSER_UA,
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`vnmarket_prices breadth HTTP ${response.status}`);
+    }
+
+    const json = (await response.json()) as {
+      data?: VnMarketPriceRecord[];
+    };
+
+    const today = json.data?.[0];
+    const yesterday = json.data?.[1];
+
+    if (!today?.code) return null;
+
+    // Turnover in tỷ đồng
+    const totalTurnoverBn = today.accumulatedVal != null ? today.accumulatedVal / 1e9 : 0;
+    const nmTurnoverBn = today.nmValue != null ? today.nmValue / 1e9 : 0;
+    const ptTurnoverBn = today.ptValue != null ? today.ptValue / 1e9 : 0;
+
+    // Delta vs prior session
+    let turnoverDeltaPct: number | null = null;
+    let turnoverDirection: "up" | "down" | "flat" | null = null;
+
+    if (yesterday?.accumulatedVal != null && yesterday.accumulatedVal > 0 && today.accumulatedVal != null) {
+      const delta = ((today.accumulatedVal - yesterday.accumulatedVal) / yesterday.accumulatedVal) * 100;
+      turnoverDeltaPct = Math.round(delta * 100) / 100;
+      turnoverDirection = delta > 0.5 ? "up" : delta < -0.5 ? "down" : "flat";
+    }
+
+    const fetchedAt = new Date().toISOString();
+
+    return {
+      date: today.date ?? fetchedAt.slice(0, 10),
+      sessionTime: fetchedAt.slice(11, 19),
+      // Breadth — cast float→int (API returns floats like 179.0)
+      advances: Math.round(today.advances ?? 0),
+      declines: Math.round(today.declines ?? 0),
+      noChange: Math.round(today.noChange ?? 0),
+      noTrade: Math.round(today.noTrade ?? 0),
+      ceilingStocks: Math.round(today.ceilingStocks ?? 0),
+      floorStocks: Math.round(today.floorStocks ?? 0),
+      // Liquidity
+      totalTurnoverBn: Math.round(totalTurnoverBn * 100) / 100,
+      nmTurnoverBn: Math.round(nmTurnoverBn * 100) / 100,
+      ptTurnoverBn: Math.round(ptTurnoverBn * 100) / 100,
+      turnoverDeltaPct,
+      turnoverDirection,
+      accumulatedVol: today.accumulatedVol ?? 0,
+      fetchedAt,
+    };
+  } catch (err) {
+    logger.debug("[hose] vnmarket_prices breadth/liquidity fetch failed", {
       error: err instanceof Error ? err.message : String(err),
     });
     return null;
