@@ -185,15 +185,16 @@ Sprint: CI-RED-8081e584 | Task: CI-RED-8081e584-FIX | Verdict: APPROVED | Report
 
 Two dev rounds (b4eeaf49 + 8a2ef725) fixed 6 failing tests. Round 1: UrgentNewsFindingDataSchema restored strict + UrgentNewsLooseSchema extracted for post_agent_signal SIGNAL_TYPE_VALIDATORS; getVpsProxyHealth now:Date injectable. Round 2: intelligenceCycleJob macroFetchFn/vnstockSyncFn deps injectable (no prod behavior change); 1837a "review" added to validStatuses; CONTAM-7 + 1987 afterAll mock.restore guards added. Local: 169 pass / 0 fail (6 fixed + 2 neighbor suites). tsc exit 0. DDD PASS. Security PASS. mock-guard EXIT 0. toolCount=157, schedulerCount=79. CI GREEN: run 27440565189 on 8a2ef725 = 12767 pass / 53 skip / 0 fail. b7b84d9b notebook-chore CI failure (160-stock-aliases network-flake) is pre-existing/unrelated — passes locally 34/0. Board CI-RED-8081e584-FIX REVIEW→DONE. DJ sprint-CI-RED-8081e584-qa.md § qa-S1.
 
-## cycle-237 · 2026-06-12 · CONTAM-9 low=0/open=0 repair QA gate — APPROVED
+## cycle-287 · 2026-06-17 · ARCH-OHLCV-WRITER-SSOT-DURABLE (P0-A) + FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 (P0-B) — APPROVE (both)
 
-Sprint: OHLCV-UNIT-CONTAM | Task: CONTAM-9 | Verdict: APPROVED | Report: reports/TASK_REPORT_CONTAM-9.md
+P0-A: ARCH-OHLCV-WRITER-SSOT-DURABLE (SUBTASK-1/2/3) | commits: 41b4344c+e5461ad7+e96571ac | Files: ohlcvForeignFlowStore.ts (rewrite UPDATE-only, no stub INSERT) + ohlcvWriteService.ts (writer-inventory annotation) + 3 test files (2026-ohlcv-foreign-flow-merge.test.ts NEW + DPI-4 + 1503 updated) | Verdict: APPROVE-CODE | tsc 0 err | P0-A touched-file isolation 17 pass / 0 fail | Full suite (QA first-hand): 13181 pass / 52 fail / 42 skip — 52 failures ALL DISJOINT (git log confirmed no overlap with P0-A commits) | T-4 REGRESSION PROOF verified: SELECT returns rows.length===0 (zero rows, not close=0 stub) at 2026-ohlcv-foreign-flow-merge.test.ts:281-318 | DDD PASS (infrastructure/db correct layer) | Security: process.env["NODE_ENV"] in logger shim = test-noise guard only, non-blocking; mock-guard EXIT 0 | REBUILD_REQUIRED: YES | done_verified HELD: 2026-06-18 02:15Z gate (live daily_ohlcv zero close=0 rows on latest bar + no MARKET spam)
 
-Migration TCs (12/0): AC-1..AC-12 all GREEN. Guard TCs (20/0): TC-14/15/16 (Rule 3 mixed_unit) GREEN. pushPricesHandler TC-7 (low self-heal) GREEN. Total targeted: 39/0. tsc exit 0. DDD PASS (ohlcvUnitGuard.ts domain/services: zero infra imports). Security PASS (no process.env, no secrets). mock-guard EXIT 0. LIVE DB (keinos sidecar named volume): Class A=0, Class B=0, Class C=0 rows. FPT 2026-06-12: open=73100 high=74300 low=72369 close=73500. FPT 2026-06-11: open=73100 low=72369 (both were 0 before repair). FPT day change: +0.547% (was +100447.2% — user bug CLOSED). Spot-checks VCB/HPG/ACB: full-VND, low>0, sane ranges, 0 contamination remaining. Rule 3 mixed_unit guard confirmed in running container (grep=1). toolCount=157, schedulerCount=79 unchanged. Dev commit 6657fc3e. CONTAM-9 REVIEW→DONE. DJ qa-S7 appended to sprint-OHLCV-UNIT-CONTAM-qa.md.
+P0-B: FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 | commit: d79314bb | Files: taAlertScanJob.ts + bbAlertScanJob.ts (stub-bar guard close<=0||vol<=0 fail-closed) + 6 test files (SB-1..SB-5 × 2 jobs) | Verdict: APPROVE-CODE | tsc 0 err | P0-B touched-file isolation 52 pass / 0 fail | Full suite shared (same QA run) | 52 failures ALL DISJOINT from P0-B commit set | CANDLE_SQL SELECT volume added both jobs | DDD PASS (scheduler→infrastructure permitted) | Security PASS | mock-guard EXIT 0 | REBUILD_REQUIRED: YES | done_verified HELD: same 2026-06-18 02:15Z gate | Board: FIX-ALERT-SCAN-REJECT-STUB-BAR-P0 review→done-code | Report: reports/TASK_REPORT_ARCH-OHLCV-WRITER-SSOT-DURABLE-P0AB.md | DJ: sprint-ARCH-OHLCV-WRITER-SSOT-DURABLE-qa.md
 
 ---
 
 ## Archive
 
-Pre-2026-06-13 cycles (c259–c240): See git history commits f1c66801...4b30adbc (2026-06-13 and prior) and qa-20260606.md
-Pre-2026-06-10 cycles (c230–c236): See git history commits 4b13a23–53d00955 (2026-06-06 to 2026-06-12) and qa-20260606.md
+Pre-2026-06-17 cycles (c237–c286): See git history and prior notebook entries
+Pre-2026-06-13 cycles (c259–c240): See git history commits f1c66801...4b30adbc and qa-20260606.md
+Pre-2026-06-10 cycles (c230–c236): See git history commits 4b13a23–53d00955 and qa-20260606.md
