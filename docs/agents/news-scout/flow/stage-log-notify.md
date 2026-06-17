@@ -2,6 +2,22 @@
 
 # News Scout — Stage 4–5: Session Log, WORK Notify, Batch 2
 
+**Step 3e — Exec-proof gate** → skill: `.claude/skills/exec-proof-gate/SKILL.md`
+
+```
+Inputs:
+  CYCLE_START_UTC    = <captured at bootstrap Step 0 via cycle-bootstrap skill>
+  NOTEBOOK_PATH      = docs/agent-memory/notebooks/news-scout.md
+  FETCH_RESULT_COUNT = fetched_articles.length (from stage-fetch.md Step 1 result)
+  FETCH_MACRO_TS     = macro_snapshot.fetchedAt (from stage-bootstrap.md Step 0b)
+  AGENT_ID           = "news-scout"
+```
+
+On PASS → continue to log_agent_work(completed) below.
+On FAIL → skill exits; do not continue to Step 4.
+
+---
+
 **4. Session log**
 
 > Invariant: timestamp = current UTC, never future, never speculative. NEVER write entries for cycles that have not fired yet. If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing log.

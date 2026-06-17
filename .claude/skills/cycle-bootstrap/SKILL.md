@@ -60,6 +60,20 @@ SNAPSHOT_PATH = docs/data/cycle-snapshot-<HH:MM>.json
 get_cycle_bootstrap(agent_name="<agent-id>")
 ```
 
+### Execution Proof Bootstrap
+
+After a successful bootstrap, capture the cycle anchor immediately:
+
+```
+CYCLE_START_UTC = current UTC timestamp (from bootstrap response .timestamp field,
+                  or fall back to `date -u +"%Y-%m-%dT%H:%M:%SZ"` if field absent)
+```
+
+This value is passed downstream to the exec-proof gate. Every flow using this skill MUST:
+1. Record `CYCLE_START_UTC` at bootstrap time (this step).
+2. At completion, check the EXEC-PROOF invariant before calling `log_agent_work(completed)`.
+   See → skill: `.claude/skills/exec-proof-gate/SKILL.md`
+
 ### Error handling (fail-loud)
 
 <!-- SSE-handshake race: fresh cron sessions may not complete MCP gateway registration before Step 0 executes; 1 retry + 5s gap converts the race into a tolerable startup delay. -->

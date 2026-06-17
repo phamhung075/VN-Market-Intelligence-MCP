@@ -198,6 +198,20 @@ fi
 > Notebook written to disk every cycle. Git commit deferred to eod.md (market close batch). Off-hours cycles retain per-cycle commit.
 > If EOD flow fails before commit → recovery: `docs/protocols/head-lock-self-cure.md`.
 
+**Step 4e — Exec-proof gate** → skill: `.claude/skills/exec-proof-gate/SKILL.md`
+
+```
+Inputs:
+  CYCLE_START_UTC    = <captured at bootstrap Step 0 via cycle-bootstrap skill>
+  NOTEBOOK_PATH      = docs/agent-memory/notebooks/market-watcher.md
+  FETCH_RESULT_COUNT = count of tickers priced in Step 1 (items_fetched)
+  FETCH_MACRO_TS     = MACRO_HEALTH.fetchedAt (from macro-health-read skill Step 2)
+  AGENT_ID           = "market-watcher"
+```
+
+On PASS → continue to WORK ping + log_agent_work below.
+On FAIL → skill exits; do not continue to Step 5b.
+
 **5b. WORK** — ULTRA tier per `.claude/skills/caveman/SKILL.md` (cycle-status ping = inter-agent state change):
 ```
 [mw] HH:MM — N stocks | anom:X vol:Y chain:Z | next:TIME
