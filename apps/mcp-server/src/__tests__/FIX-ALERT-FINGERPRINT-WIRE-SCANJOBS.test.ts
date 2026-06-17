@@ -95,12 +95,16 @@ function seedMinCandles(db: Database, code: string): void {
   }
 }
 
-/** Seed a single today-candle for BB scan jobs (need close price + today's date). */
-function seedTodayCandle(db: Database, code: string, close: number): void {
+/**
+ * Seed a single today-candle for BB scan jobs (need close price + today's date).
+ * volume=1_000_000 (non-zero) so the stub-bar guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0)
+ * does not reject the candle. Pass volume=0 only when testing the reject path.
+ */
+function seedTodayCandle(db: Database, code: string, close: number, volume = 1_000_000): void {
   const today = new Date().toISOString().slice(0, 10);
   db.run(
-    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, 0, '')",
-    [code, today, close, close, close, close]
+    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, '')",
+    [code, today, close, close, close, close, volume]
   );
 }
 

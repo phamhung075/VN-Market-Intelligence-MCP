@@ -46,7 +46,8 @@ function buildTestDb(): Database {
       analysis_ids_json TEXT,
       message TEXT NOT NULL,
       read INTEGER NOT NULL DEFAULT 0,
-      user_note TEXT
+      user_note TEXT,
+      fingerprint TEXT UNIQUE
     )
   `);
   return db;
@@ -66,11 +67,17 @@ function makeBbFn(
   });
 }
 
-/** Insert a daily_ohlcv row with the given date (YYYY-MM-DD) and close price. */
-function insertCandle(db: Database, code: string, date: string, close: number): void {
+/**
+ * Insert a daily_ohlcv row with the given date (YYYY-MM-DD) and close price.
+ * volume defaults to 1_000_000 (non-zero) so the stub-bar guard
+ * (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0) does not reject valid test candles.
+ * Stale-candle (date != today) tests are unaffected by the stub-bar guard
+ * because the stale-date check fires first.
+ */
+function insertCandle(db: Database, code: string, date: string, close: number, volume = 1_000_000): void {
   db.run(
-    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, 0, '')",
-    [code, date, close, close, close, close]
+    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, '')",
+    [code, date, close, close, close, close, volume]
   );
 }
 

@@ -66,6 +66,7 @@ interface WatchlistRow {
 interface CandleRow {
   day: string;
   close_price: number;
+  volume: number;
 }
 
 interface CooldownRow {
@@ -101,8 +102,10 @@ const MIN_CANDLES = 35;
 // daily candle data required for RSI(14) computation (≥35 rows required per
 // MIN_CANDLES guard; fewer than 35 produce degenerate single-digit / clamped RSI).
 // market_prices_history only has intraday ticks and is insufficient for TA.
+// volume is selected so the stub-bar guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0) can
+// reject a latest bar with close<=0 OR volume<=0 before feeding closes[] to Wilder RSI.
 const CANDLE_SQL = `
-  SELECT date AS day, close AS close_price
+  SELECT date AS day, close AS close_price, volume
     FROM daily_ohlcv
    WHERE code = ?
      AND date >= date('now', '-60 days')
@@ -187,6 +190,21 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
       // Tickers below this threshold are silently skipped — fail-closed, no alert.
       if (closes.length < MIN_CANDLES) {
         logger.info(`[taAlertScan] TA pending for ${code}: ${closes.length}/${MIN_CANDLES} candles — skip (fail-closed)`);
+        continue;
+      }
+
+      // a3. Stub-bar guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0).
+      // Consumer defense-in-depth: reject the LATEST bar (the bar that would be used
+      // as "today's price") if it is a stub/invalid row: close<=0 OR volume<=0.
+      // A foreign-flow writer can insert an all-zero stub bar before the real OHLCV
+      // bar arrives at market open; that 0-close at the tail of closes[] collapses
+      // Wilder RSI to single-digit universe-wide. Fail-closed = skip this cycle, no
+      // alert emitted, no substitute value fabricated. An illiquid/not-yet-arrived bar
+      // is an honest gap (/goal#1), never a 0-valued RSI alert (/goal#2 generic).
+      // NOTE: only the LATEST bar is inspected; interior bars are fed to Wilder RSI as-is.
+      const latestCandle = candleRows[candleRows.length - 1];
+      if (latestCandle !== undefined && (latestCandle.close_price <= 0 || latestCandle.volume <= 0)) {
+        logger.info(`[taAlertScan] stub-bar skip for ${code}: latest bar close=${latestCandle.close_price} volume=${latestCandle.volume} — fail-closed (no alert)`);
         continue;
       }
 

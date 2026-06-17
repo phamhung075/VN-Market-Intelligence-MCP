@@ -63,12 +63,17 @@ function buildTestDb(): Database {
   return db;
 }
 
-/** Insert a daily_ohlcv row for today's UTC date with the given close price. */
-function insertTodayCandle(db: Database, code: string, close: number): void {
+/**
+ * Insert a daily_ohlcv row for today's UTC date with the given close price.
+ * volume defaults to 1_000_000 (non-zero) so the stub-bar guard
+ * (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0) does not reject valid test candles.
+ * Pass volume=0 explicitly only when testing the stub-bar reject path.
+ */
+function insertTodayCandle(db: Database, code: string, close: number, volume = 1_000_000): void {
   const today = new Date().toISOString().slice(0, 10);
   db.run(
-    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, 0, '')",
-    [code, today, close, close, close, close]
+    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, '')",
+    [code, today, close, close, close, close, volume]
   );
 }
 
@@ -400,5 +405,122 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
     expect(result.scanned).toBe(3);
     expect(result.fired).toBe(2);
     expect(countAlerts(db)).toBe(2);
+  });
+
+  // ── FIX-ALERT-SCAN-REJECT-STUB-BAR-P0: stub-bar guard ──────────────────────
+
+  // SB-1: latest bar close=0, volume=0 → skip (no "giá 0 dưới BB" alert)
+  it("SB-1: no alert when latest bar has close=0 volume=0 (all-zero stub, even with BB breakout signal)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    // Stub bar: close=0, volume=0 — simulates foreign-flow writer all-zero seed
+    insertTodayCandle(db, "VCB", 0, 0);
+
+    const result = await runBbAlertScan({
+      db,
+      computeFn: makeComputeFn({ upper: 86500, mid: 84000, lower: 82000 }),
+      nowFn: () => new Date(),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.fired).toBe(0);
+    expect(countAlerts(db)).toBe(0);
+  });
+
+  // SB-2: latest bar close=0 (any volume) → skip
+  it("SB-2: no alert when latest bar has close=0 regardless of volume", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    // close=0, volume non-zero — partial stub (price column written as 0)
+    insertTodayCandle(db, "VCB", 0, 500000);
+
+    const result = await runBbAlertScan({
+      db,
+      computeFn: makeComputeFn({ upper: 1, mid: 0, lower: -1 }),
+      nowFn: () => new Date(),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.fired).toBe(0);
+    expect(countAlerts(db)).toBe(0);
+  });
+
+  // SB-3: latest bar volume=0 (positive close) → skip
+  it("SB-3: no alert when latest bar has volume=0 even if close is positive", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    // close=88000 (above upper), but volume=0 → stub/not-yet-arrived bar
+    insertTodayCandle(db, "VCB", 88000, 0);
+
+    const result = await runBbAlertScan({
+      db,
+      computeFn: makeComputeFn({ upper: 86500, mid: 84000, lower: 82000 }),
+      nowFn: () => new Date(),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.fired).toBe(0);
+    expect(countAlerts(db)).toBe(0);
+  });
+
+  // SB-4: valid bar (close > 0, volume > 0) still fires (regression guard)
+  it("SB-4: alert fires normally when latest bar has valid close and volume (stub guard does not block valid bar)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    // Realistic bar: close=88000 above upper=86500, volume=1_000_000
+    insertTodayCandle(db, "VCB", 88000, 1_000_000);
+
+    const result = await runBbAlertScan({
+      db,
+      computeFn: makeComputeFn({ upper: 86500, mid: 84000, lower: 82000 }),
+      nowFn: () => new Date(),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.fired).toBe(1);
+    expect(countAlerts(db)).toBe(1);
+
+    const alerts = getAlerts(db);
+    const signals = JSON.parse(alerts[0]!.signals_json) as Array<{ type: string }>;
+    expect(signals[0]!.type).toBe("ta_bb_breakout_up");
+    // Message must NOT contain "giá 0"
+    expect(alerts[0]!.message).not.toContain("giá 0");
+  });
+
+  // SB-5: stub ticker skipped; sibling with valid bar still fires (generic all-ticker)
+  it("SB-5: stub ticker skipped; sibling valid ticker still fires (generic guard, no inter-ticker contamination)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    db.run("INSERT INTO watchlist (code) VALUES ('HPG')");
+
+    // VCB: stub bar → skip
+    insertTodayCandle(db, "VCB", 0, 0);
+    // HPG: valid bar → fires (close=88000 above upper)
+    insertTodayCandle(db, "HPG", 88000, 1_000_000);
+
+    // Both VCB and HPG scanned alphabetically: HPG first (alpha), then VCB
+    const bbByCallOrder = [
+      { upper: 86500, mid: 84000, lower: 82000 }, // HPG → fires
+      { upper: 86500, mid: 84000, lower: 82000 }, // VCB → stub-skipped before computeFn
+    ];
+    let callIndex = 0;
+    const perTickerComputeFn = async (code: string, _closes: number[]): Promise<ComputeTAResponse> => {
+      const bb20 = bbByCallOrder[callIndex++] ?? null;
+      return {
+        code,
+        trend: "TREN_DUNG" as const,
+        ...(bb20 != null ? { bb: { upper: bb20.upper, middle: bb20.mid, lower: bb20.lower } } : {}),
+      };
+    };
+
+    const result = await runBbAlertScan({
+      db,
+      computeFn: perTickerComputeFn,
+      nowFn: () => new Date(),
+    });
+
+    expect(result.scanned).toBe(2);
+    expect(result.fired).toBe(1);
+    expect(countAlerts(db)).toBe(1);
+
+    // Only HPG alert — no VCB "giá 0" alert
+    const alerts = getAlerts(db);
+    const actions = JSON.parse(alerts[0]!.affected_actions_json) as Array<{ code: string }>;
+    expect(actions[0]!.code).toBe("HPG");
   });
 });

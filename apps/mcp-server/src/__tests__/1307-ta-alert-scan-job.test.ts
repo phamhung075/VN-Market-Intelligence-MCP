@@ -372,4 +372,138 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
     // VCB and HPG alerts fired; TCB error was caught silently
     expect(countAlerts(db)).toBe(2);
   });
+
+  // ── FIX-ALERT-SCAN-REJECT-STUB-BAR-P0: stub-bar guard ──────────────────────
+
+  /**
+   * Seed N-1 valid historical candles (volume=1_000_000) then append a stub
+   * latest bar (close=stubClose, volume=stubVolume) as the most recent row.
+   * This simulates a foreign-flow writer inserting an all-zero bar for today
+   * AFTER the historical series is already populated.
+   */
+  function seedCandlesWithStubLatest(
+    db: Database,
+    code: string,
+    stubClose: number,
+    stubVolume: number,
+  ): void {
+    const nowMs = Date.now();
+    const stmt = db.prepare(
+      `INSERT OR IGNORE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+       VALUES (?, ?, 100000, 101000, 99000, ?, ?, ?)`
+    );
+    // Insert 35 historical candles with valid data (oldest → newest but NOT today)
+    for (let i = 0; i < 35; i++) {
+      const daysAgo = 36 - i; // 36 days ago → 2 days ago (avoids today slot)
+      const d = new Date(nowMs - daysAgo * 86_400_000);
+      const dateStr = d.toISOString().slice(0, 10);
+      const close = 100_000 + (i % 2 === 0 ? 500 : -500);
+      stmt.run(code, dateStr, close, 1_000_000, d.toISOString());
+    }
+    // Insert stub bar as the latest (today or recent)
+    const todayStr = new Date(nowMs - 86_400_000).toISOString().slice(0, 10); // yesterday (still ≥35 candles total)
+    db.run(
+      `INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+       VALUES (?, ?, 0, 0, 0, ?, ?, '')`,
+      [code, todayStr, stubClose, stubVolume]
+    );
+  }
+
+  // SB-1: latest bar close=0, volume=0 → skip (no single-digit RSI alert)
+  it("SB-1: no alert when latest bar has close=0 volume=0 (all-zero stub, even with overbought RSI signal)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedCandlesWithStubLatest(db, "VCB", 0, 0);
+
+    const result = await runTaAlertScan({
+      db,
+      computeFn: makeComputeFn(74.2), // would normally fire ta_overbought
+      nowFn: () => new Date(),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.fired).toBe(0);
+    expect(countAlerts(db)).toBe(0);
+  });
+
+  // SB-2: latest bar close=0 with any volume → skip
+  it("SB-2: no alert when latest bar has close=0 regardless of volume", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedCandlesWithStubLatest(db, "VCB", 0, 500_000);
+
+    const result = await runTaAlertScan({
+      db,
+      computeFn: makeComputeFn(25.0), // would normally fire ta_oversold
+      nowFn: () => new Date(),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.fired).toBe(0);
+    expect(countAlerts(db)).toBe(0);
+  });
+
+  // SB-3: latest bar volume=0 with positive close → skip
+  it("SB-3: no alert when latest bar has volume=0 even if close is positive", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedCandlesWithStubLatest(db, "VCB", 100_000, 0);
+
+    const result = await runTaAlertScan({
+      db,
+      computeFn: makeComputeFn(74.2),
+      nowFn: () => new Date(),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.fired).toBe(0);
+    expect(countAlerts(db)).toBe(0);
+  });
+
+  // SB-4: valid bar (close > 0, volume > 0) still fires (regression guard)
+  it("SB-4: alert fires normally when latest bar has valid close and volume (stub guard does not block valid bar)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+    seedMinCandles(db, "VCB"); // all candles valid (close>0, volume=1_000_000)
+
+    const result = await runTaAlertScan({
+      db,
+      computeFn: makeComputeFn(74.2),
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.fired).toBe(1);
+    expect(countAlerts(db)).toBe(1);
+  });
+
+  // SB-5: stub ticker skipped; sibling with valid bar still fires (generic all-ticker)
+  it("SB-5: stub ticker skipped; sibling valid ticker still fires (generic guard, no inter-ticker contamination)", async () => {
+    db.run("INSERT INTO watchlist (code) VALUES ('TCB')");
+    db.run("INSERT INTO watchlist (code) VALUES ('VCB')");
+
+    // TCB: stub latest bar → skip
+    seedCandlesWithStubLatest(db, "TCB", 0, 0);
+    // VCB: valid bars → fires
+    seedMinCandles(db, "VCB");
+
+    // TCB and VCB iterated in insertion order; computeFn only called for VCB (TCB stub-skipped)
+    const rsiByTicker: Record<string, number> = { TCB: 74.2, VCB: 74.2 };
+    const perTickerComputeFn = async (code: string, _closes: number[]): Promise<ComputeTAResponse> => ({
+      code,
+      trend: "TREN_DUNG" as const,
+      rsi: rsiByTicker[code] ?? 50,
+    });
+
+    const result = await runTaAlertScan({
+      db,
+      computeFn: perTickerComputeFn,
+      nowFn: () => new Date("2026-04-15T03:00:00Z"),
+    });
+
+    expect(result.scanned).toBe(2);
+    expect(result.fired).toBe(1);
+    expect(countAlerts(db)).toBe(1);
+
+    // Only VCB alert — no TCB RSI alert
+    const alerts = getAlerts(db);
+    const actions = JSON.parse(alerts[0]!.affected_actions_json) as Array<{ code: string }>;
+    expect(actions[0]!.code).toBe("VCB");
+  });
 });

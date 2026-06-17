@@ -67,6 +67,7 @@ interface WatchlistRow {
 interface CandleRow {
   day: string;
   close_price: number;
+  volume: number;
 }
 
 interface CooldownRow {
@@ -80,8 +81,11 @@ interface CooldownRow {
 // Uses daily_ohlcv (OHLCV table) for closing prices — provides 30–60 days of
 // daily candle data required for BB20 computation (≥20 rows needed).
 // market_prices_history only has intraday ticks and is insufficient for TA.
+// volume is selected so the stub-bar guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0) can
+// reject a latest bar with close<=0 OR volume<=0 before computing BB bands / emitting
+// a "giá 0 dưới BB" breakout alert.
 const CANDLE_SQL = `
-  SELECT date AS day, close AS close_price
+  SELECT date AS day, close AS close_price, volume
     FROM daily_ohlcv
    WHERE code = ?
      AND date >= date('now', '-60 days')
@@ -179,6 +183,20 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
         // Candle is from a previous session — skip to avoid stale price in message
         continue;
       }
+
+      // c2. Stub-bar guard (FIX-ALERT-SCAN-REJECT-STUB-BAR-P0).
+      // Consumer defense-in-depth: reject the latest bar if it is a stub/invalid row:
+      // close<=0 OR volume<=0. A foreign-flow writer can insert an all-zero stub bar
+      // before the real OHLCV bar arrives at market open; close=Math.round(0)=0 would
+      // produce "giá 0 dưới BB dưới <band>" breakout spam (msg 783-790, 2026-06-17).
+      // Fail-closed = skip this cycle, no alert emitted, no substitute value fabricated.
+      // An illiquid/not-yet-arrived bar is an honest gap (/goal#1), never a "giá 0" alert
+      // (/goal#2 generic — applies to all tickers uniformly).
+      if (lastCandle.close_price <= 0 || lastCandle.volume <= 0) {
+        logger.info(`[bbAlertScan] stub-bar skip for ${code}: latest bar close=${lastCandle.close_price} volume=${lastCandle.volume} — fail-closed (no alert)`);
+        continue;
+      }
+
       const close = Math.round(lastCandle.close_price);
 
       // d. Call TA microservice to compute indicators (async, via HTTP), passing closes array

@@ -55,7 +55,8 @@ function buildTestDb(): Database {
       analysis_ids_json TEXT,
       message TEXT NOT NULL,
       read INTEGER NOT NULL DEFAULT 0,
-      user_note TEXT
+      user_note TEXT,
+      fingerprint TEXT UNIQUE
     )
   `);
   return db;
