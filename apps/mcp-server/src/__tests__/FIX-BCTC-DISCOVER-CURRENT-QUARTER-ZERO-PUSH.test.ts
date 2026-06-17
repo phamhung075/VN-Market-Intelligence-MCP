@@ -298,4 +298,39 @@ describe("FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — terminalization regres
     expect(row!.status).toBe("url_not_found");
     expect(row!.attempts).toBe(MAX_ENRICH_ATTEMPTS + 1);
   });
+
+  // ---------------------------------------------------------------------------
+  // TERM-8: initFinancialReportsTables does NOT reset url_not_found rows
+  //
+  // Regression guard for FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH:
+  // resetQ1UrlNotFound() must NOT be called from initFinancialReportsTables().
+  // Previously this function was called on every init (including from MCP tool
+  // handlers during cowork cycles), perpetually undoing terminalization.
+  //
+  // This test seeds a url_not_found row BEFORE calling initDatabase (which
+  // calls initFinancialReportsTables) and asserts the row remains terminal.
+  // ---------------------------------------------------------------------------
+  it("TERM-8: initFinancialReportsTables does NOT reset url_not_found rows (startup-reset conflict closed)", async () => {
+    // Insert terminal rows BEFORE re-running initDatabase (simulates the conflict scenario)
+    const tickers = ["BDI", "DAG", "DLC", "JSH"];
+    for (const code of tickers) {
+      testDb.prepare(
+        `INSERT OR REPLACE INTO bctc_vps_queue
+           (action_code, period_year, period_quarter, status, attempts)
+         VALUES (?, 2026, 'Q1', 'url_not_found', 6)`,
+      ).run(code);
+    }
+
+    // Re-run initDatabase (mirrors what happens when an MCP tool calls initDatabase()
+    // mid-cycle — the root cause of the tug-of-war).
+    await initDatabase(testDb);
+
+    // All 4 rows must remain url_not_found / attempts=6 (NOT reset to pending/0)
+    for (const code of tickers) {
+      const row = getQueueRow(testDb, code, 2026, "Q1");
+      expect(row).toBeDefined();
+      expect(row!.status).toBe("url_not_found");
+      expect(row!.attempts).toBe(6);
+    }
+  });
 });

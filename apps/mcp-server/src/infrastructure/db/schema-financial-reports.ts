@@ -692,11 +692,18 @@ export function initFinancialReportsTables(db: Database): void {
   // vnstock_cash_flow. Idempotent. Safe on startup: EC-6 handled internally.
   backfillOCFForWatchlist(db);
 
-  // ── TASK-1943a: reset Q1-2026 url_not_found rows to pending ───────────────
-  // 31 bctc_vps_queue rows exhausted MAX_ENRICH_ATTEMPTS=5 without finding PDF
-  // URLs. Resetting to pending/attempts=0 allows the enricher to retry.
-  // Idempotent: no-op after first run (rows already pending). Safe on startup.
-  resetQ1UrlNotFound(db);
+  // ── TASK-1943a: startup reset REMOVED (FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH) ─
+  // resetQ1UrlNotFound(db) was removed from here because:
+  //   1. It fired on EVERY initFinancialReportsTables() call — including from
+  //      many MCP tool handlers (via initDatabase()) during normal cowork cycles.
+  //   2. Each call reset all Q1-2026 url_not_found rows back to pending/attempts=0,
+  //      perpetually undoing the terminalization done by the enricher.
+  //   3. The Arm 2 grace-period query in bctcQueueEnricherJob.ts COMBINED_SQL
+  //      (status='url_not_found' AND last_attempt < now-7d AND attempts < 6)
+  //      already provides the correct bounded grace-period retry — no startup
+  //      reset needed.  Truly terminal rows (attempts>=6) stay terminal forever.
+  // resetQ1UrlNotFound() is kept as an exported function for test coverage and
+  // potential future manual recovery use, but is NO LONGER called at init time.
 
   // ── FIX-CTG-3 STEP-A: purge cover-letter + wrong-period source_url for CTG ─
   // CTG queue rows were poisoned by two defects (see arch-brief 2026-06-03):
@@ -902,16 +909,24 @@ export function backfillOCFForWatchlist(db: Database): void {
 /**
  * resetQ1UrlNotFound — reset Q1-2026 url_not_found rows to pending.
  *
- * All 31 bctc_vps_queue rows with status='url_not_found' for Q1-2026 hit
- * MAX_ENRICH_ATTEMPTS=5 without finding a PDF URL. This function resets them
- * to pending/attempts=0 so the enricher picks them up on next cycle.
+ * @deprecated No longer called from initFinancialReportsTables().
  *
- * Called automatically from initFinancialReportsTables() after each startup.
+ * Removed from init by FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH because
+ * this function was being called on EVERY initFinancialReportsTables() call
+ * (including from MCP tool handlers during cowork cycles), perpetually
+ * resetting the 8 genuinely-absent Q1-2026 rows back to pending/attempts=0
+ * and undoing the enricher's terminalization in an infinite tug-of-war.
  *
- * Idempotent: rows already in 'pending' state are unaffected (WHERE status=
- * 'url_not_found' matches nothing on repeat calls). Safe to run multiple times.
+ * The Arm 2 grace-period query in bctcQueueEnricherJob.ts already provides
+ * correct bounded retry (7-day grace, attempts < 6 cap). No startup reset
+ * is needed.
  *
- * Scope: Q1-2026 only. Other periods (Q4-2025, Q2-2026, etc.) are untouched.
+ * Kept exported for test coverage and emergency manual recovery only.
+ * DO NOT re-add to initFinancialReportsTables.
+ *
+ * Original scope: Q1-2026 only. Hardcoded period literal — this is a
+ * known limitation (/goal#2: generalize). Kept as-is since the function
+ * is no longer called automatically; the enricher Arm 2 is the generic path.
  *
  * @param db Database instance
  * @returns Number of rows changed (0 on repeat calls = idempotent)

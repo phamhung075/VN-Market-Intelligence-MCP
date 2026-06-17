@@ -3,6 +3,9 @@
  *
  * Tests:
  *   AC-1: resetQ1UrlNotFound() resets url_not_found rows to pending (idempotent)
+ *         NOTE: function is kept exported but NO LONGER called from initFinancialReportsTables().
+ *         See FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH for the removal rationale.
+ *         AC-1 tests remain valid — they test the function's own contract in isolation.
  *   AC-2: enricher picks up reset rows and either populates source_url or marks url_not_found
  *   AC-3: bctcBatchSweepJob entry log present (diagnostic)
  *   AC-4: grace-period auto-retry — rows with last_attempt > 7 days selected,
