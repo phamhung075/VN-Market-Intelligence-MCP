@@ -68,3 +68,12 @@
 - Option C: Per-section `Promise.race(work, deadline(3000ms))` applied to EVERY section — CHOSEN.
 **why-decision:** Option C is generic (no source allowlist), gives per-section budget diagnostic (timeout message labels section), and worst-case 4×3s=12s stays well under the 60s gateway limit.
 **why-change:** No change from PO triage — budget=3000ms as suggested; `withSectionDeadline` exported for testability (TDD requirement).
+
+### STEP dev-mcp-server-S8 · dev-mcp-server · 2026-06-17T07:00:00Z
+**task-id:** SUBTASK-OHLCV-WRITER-1-FOREIGN-FLOW-MERGE / SUBTASK-OHLCV-WRITER-2-SSOT-ANNOTATION / SUBTASK-OHLCV-WRITER-3-UNIT-TESTS
+**what-done:** Replaced INSERT...ON CONFLICT stub injection in writeForeignFlowToOhlcv with UPDATE-only (Option G); added writer inventory annotation to ohlcvWriteService.ts; wrote 7 new tests T-1..T-4+INT+GEN+COALESCE; updated 4 legacy DPI-4/1503 tests to match merge-only behavior.
+**what-considered:**
+- Only Option G (UPDATE-only merge, no INSERT on absent row) — no other option considered; architect design was final.
+- JSDoc vs inline comments for SSOT annotation — chose inline `//` to avoid TSC parse issues with `*/` and backticks inside `/** */` blocks.
+**why-decision:** Option G is correct (honest gap beats fake close=0 per /goal#1); inline comments sidestep TSC parser edge-cases with complex block content.
+**why-change:** Legacy tests (DPI-4 AC-1, AC-7, 1503 AC3) expected old stub-insert behavior — updated to match new merge-only semantics (not a regression, expected delta).
