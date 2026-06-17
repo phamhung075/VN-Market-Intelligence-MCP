@@ -16,6 +16,14 @@
   },
   "decision_journal": [
     {
+      "agent": "dev-vps-crawls",
+      "task_id": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
+      "timestamp": "2026-06-17T18:55:00Z",
+      "decision": "STOP after diagnosis — root is in apps/mcp-server/ not apps/vps-client/. Signaled PO to re-route to dev-mcp-server. VPS discover endpoint is healthy (VCB/HPG return cached URLs). 9 pending tickers are genuinely absent from SSC/HNX. enricher bug: attempts===0 guard prevents increment → infinite zero-url cycle. Signal written to docs/signals/po-2026-06-17T18-55-00Z-bctc-discover-reroute.json.",
+      "what_considered": "only path: zone boundary mandate (dev-vps-crawls scope = apps/vps-client/ only; root proven to be apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts). Disproved SSC endpoint-structure drift via 5 live VPS probes (VCB/HPG return cached URLs; BDI/VEA/etc empty = genuine absence, not endpoint failure). bctcQueueEnricherJob.ts attempts===0 guard is the sole cause of the 210 zero-url cycles.",
+      "why_change": "no change from flow mandate: 'if root is OUTSIDE apps/vps-client/ → STOP after diagnosis + signal PO'"
+    },
+    {
       "agent": "dev-mcp-server",
       "task_id": "FIX-ALERT-SCAN-REJECT-STUB-BAR-P0",
       "timestamp": "2026-06-17T05:30:00Z",

@@ -14,6 +14,26 @@ Zone: dev-zone (VPS scraper code)
 
 ---
 
+## Cycle Record — 2026-06-17T18:55Z FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH DIAGNOSIS ONLY
+
+Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (CRITICAL, P0)
+Outcome: STOP — zone boundary enforced. Root is in apps/mcp-server/ not apps/vps-client/.
+Signal: docs/signals/po-2026-06-17T18-55-00Z-bctc-discover-reroute.json
+
+DJ-GATE-1:
+- what-considered: "only path: zone boundary — root proven in apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"
+- why-change: "no change from flow mandate (stop if root outside apps/vps-client/)"
+
+Diagnosis findings:
+- VPS discover endpoint: HEALTHY. VCB Q1 2026 returns cached URL http://125.212.251.27:8765/bctc-files/VCB/20260429-VCB-BCTC-hop-nhat-Q1.2026.pdf. HPG Q1 2026 returns cached URL. No endpoint-structure drift.
+- 9 pending tickers (BDI, DAG, DLC, JSH, SIS, VDC, VNH, VEA x2) return empty — genuine absence (SSC row_indices=[], VEA latest = Q4 2025, no Q1 2026 filing published).
+- 65 Q1 2026 tickers already done. 210 zero-url counter in bctc_health_state.
+- Root: bctcQueueEnricherJob.ts line 509 — when attempts===0 and discovery returns 0 URLs, code intentionally skips increment ("don't penalise new rows"). Effect: rows stuck at attempts=0 forever, never reach MAX_ENRICH_ATTEMPTS=5, never marked url_not_found. Infinite cycle.
+- Fix target: apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts — remove attempts===0 special-case OR gate on last_attempt IS NULL instead.
+- Dispatch: dev-mcp-server.
+
+---
+
 ## Cycle Record — 2026-06-16T11:05Z FIX-HNX-SESSION-COOKIE + FIX-SSC-C111-EMPTY-FALLBACK DONE
 
 Tasks: FIX-HNX-SESSION-COOKIE (P1, C4) + FIX-SSC-C111-EMPTY-FALLBACK (P1, C4) — paired lane, one file.
