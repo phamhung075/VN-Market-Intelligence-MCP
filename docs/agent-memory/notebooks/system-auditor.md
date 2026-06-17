@@ -1,3 +1,11 @@
+## c335 · 2026-06-17T18:34:48Z
+### Audit Run Tier-2 (18:34–18:35 UTC 2026-06-17)
+- Tier: 2 | Cron health: checked | Sources: 28 scanned | VPS proxy: checked
+- DB freshness: C-06 ⚠ (0 msg 3h STALE), C-07 ✓ (152 signals 24h)
+- BCTC checks: B-09 ✓ (0 SSC URLs), B-13 ⚠ (8 stale pending, 72h+ old)
+- Anomalies: 1 new WARN (C-06 no market messages) | 1 recurring (B-13) dedup-skipped
+- Status: DEGRADED (1 new WARN on market message staleness)
+
 ## c334 · 2026-06-17T18:15:02Z
 ### Audit Run Tier-1 (18:14–18:15 UTC 2026-06-17)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
@@ -69,15 +77,3 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 - A-21 restart count: 0 ✓
 - A-30 memory: 30.81% < 85% ✓
 - A-32 disk: 42% < 85% ✓
-
-## c332 · 2026-06-17T17:15:10Z
-### Audit Run Tier-1 (17:14–17:15 UTC 2026-06-17)
-- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
-- Anomalies: 0 new (all PASS) | Dedup: 0 skipped
-- Status: HEALTHY
-- A-01..A-11 container UP: all 12 PASS ✓
-- A-12..A-19 health endpoints: 5/5 OK ✓
-- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
-- A-21 restart count: 0 ✓
-- A-30 memory: 29.95% < 85% ✓
-- A-32 disk: 39% < 85% ✓

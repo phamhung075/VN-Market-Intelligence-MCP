@@ -242,6 +242,28 @@
     ],
     "rows": [
       {
+        "id": "sau-c06-202606171834",
+        "ts": "2026-06-17T18:34:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "market_messages check C-06 failed (0 messages in 3h window)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-b13-202606171834",
+        "ts": "2026-06-17T18:34:48Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "db_integrity_breach",
+        "summary": "bctc_vps_queue check B-13 failed (8 stale pending >72h)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
         "id": "sau-d4-202606170300",
         "ts": "2026-06-17T03:00Z",
         "from": "system-auditor",
