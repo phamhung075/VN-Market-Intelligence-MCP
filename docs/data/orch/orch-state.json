@@ -134,11 +134,11 @@
     }
   ],
   "head": {
-    "status": "in_progress",
+    "status": "review",
     "active_task_id": "FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD",
-    "next_agent": "dev-mcp-server",
-    "updated_at": "2026-06-17T01:34:10Z",
-    "updated_by": "po-s94",
+    "next_agent": "qa",
+    "updated_at": "2026-06-17T02:03:17Z",
+    "updated_by": "dev-mcp-server",
     "note": "ROUTER 2026-06-17T01:34:10Z — health-recheck W3 triage: dispatch TIME-SENSITIVE P1 FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD (getSystemStatus TE/Chromium no per-source deadline -> market-watcher smoke probe aborts at 02:00Z open) to dev-mcp-server. Minted alongside P2 FIX-AGENTSIGNALS-FROMAGENT-SCHEMA + P3 CLEAN-TI-DOC-PARAM-CODE-DRIFT (both backlog, WIP<=2 coding respected). 28 health-recheck reports 3181..3208 triaged; rest DEDUP to tracked/done_verified. DESIGN-GATHERER + DMS still HELD behind ARCH-CRON-SCHEDULER-RELIABILITY. PUSH held (PO out-of-band)."
   },
   "narrative": {
@@ -19645,11 +19645,12 @@
         "id": "FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD",
         "title": "get_system_status 60s timeout — TE/Chromium source-health probe has no per-source deadline -> market-watcher smoke probe (main.md:36) aborts every cycle at market open",
         "type": "FIX",
-        "status": "READY",
+        "status": "REVIEW",
         "priority": "P1",
         "blocking": true,
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
+        "review_note": "REVIEW 2026-06-17 dev-mcp-server — withSectionDeadline 3000ms wraps all 4 async sections generically, tsc clean, 6/6 new ACs pass, 15 existing pass. REBUILD_REQUIRED: YES. Commit: 09302e45",
         "next_agent": "dev-mcp-server",
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/system/systemTools.ts",
