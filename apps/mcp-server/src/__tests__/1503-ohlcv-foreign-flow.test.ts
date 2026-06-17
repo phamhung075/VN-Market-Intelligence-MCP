@@ -203,8 +203,11 @@ describe("Task 1503 AC2 — writeForeignFlowToOhlcv updates OHLCV row", () => {
 // AC3: writeForeignFlowToOhlcv returns 0 when no matching OHLCV row
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1503 AC3 — writeForeignFlowToOhlcv UPSERT inserts stub row (DPI-4)", () => {
-  it("returns 1 change when no matching OHLCV row exists (DPI-4 UPSERT inserts stub row)", async () => {
+describe("Task 1503 AC3 (UPDATED) — writeForeignFlowToOhlcv merge-only: deferred on absent row", () => {
+  it("FIX-OHLCV-WRITER-SSOT-DURABLE: returns changes=0 and inserts NO row when OHLCV row absent", async () => {
+    // FIX-OHLCV-WRITER-SSOT-DURABLE: The old DPI-4 UPSERT stub-insert behavior
+    // (changes=1 + stub row with close=0) is replaced by merge-only UPDATE.
+    // When no OHLCV row exists: changes=0, no row created (honest gap beats fake close=0).
     const db = buildBaseDb();
     addForeignFlowCols(db);
 
@@ -225,19 +228,16 @@ describe("Task 1503 AC3 — writeForeignFlowToOhlcv UPSERT inserts stub row (DPI
       db,
     );
 
-    // DPI-4 UPSERT: when no OHLCV row exists, a stub row is INSERTed (changes=1).
-    // This is the prod behavior after task 1503 DPI-4 — update-only semantics
-    // were replaced by UPSERT to avoid silently dropping foreign flow data.
-    expect(result.changes).toBe(1);
+    // Merge-only: no OHLCV row to update => changes=0, deferred (not an error)
+    expect(result.changes).toBe(0);
 
-    // Confirm stub row was inserted with correct foreign flow values
+    // No stub row created: COUNT = 0
     const row = db
-      .prepare<{ cnt: number; foreign_buy_vol: number }, []>(
-        `SELECT COUNT(*) AS cnt, MAX(foreign_buy_vol) AS foreign_buy_vol FROM daily_ohlcv WHERE code = 'HPG'`,
+      .prepare<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-04-19'`,
       )
       .get();
-    expect(row!.cnt).toBe(1);
-    expect(row!.foreign_buy_vol).toBe(500);
+    expect(row!.cnt).toBe(0); // No stub row
 
     db.close();
   });

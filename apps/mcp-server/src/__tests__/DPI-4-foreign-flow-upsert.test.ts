@@ -1,12 +1,15 @@
 // src/__tests__/DPI-4-foreign-flow-upsert.test.ts
 // Sprint DATA-PIPELINE-INTEGRITY — DPI-4
-// Unit tests for writeForeignFlowToOhlcv() UPSERT and R-1 race preservation.
+// Unit tests for writeForeignFlowToOhlcv() merge-only UPDATE behavior.
 //
-// AC-1: UPSERT creates stub row (close=0) when no (code, date) row exists
-// AC-1: ON CONFLICT updates four foreign flow columns when row exists
-// AC-5: close=0 satisfies NOT NULL constraint on stub rows
-// AC-7: stub-row race — foreign flow values survive a subsequent OHLCV push
-//       (server.ts secondary path fixed from INSERT OR REPLACE → ON CONFLICT)
+// FIX-OHLCV-WRITER-SSOT-DURABLE (2026-06-17): The original DPI-4 UPSERT strategy
+// (INSERT stub row with close=0 when no OHLCV row exists) has been replaced with
+// a merge-only UPDATE. This file is updated to test the new behavior:
+//
+// AC-1 (UPDATED): no stub row created when OHLCV row absent -- changes=0, no insert
+// AC-1: UPDATE updates four foreign flow columns when row exists (unchanged)
+// AC-7 (UPDATED): foreign-flow is deferred (not in stub) until real OHLCV arrives;
+//                 subsequent UPDATE populates columns correctly
 
 Bun.env["DB_PATH"] = ":memory:";
 
@@ -42,40 +45,32 @@ function insertOhlcv(
 // AC-1: INSERT stub row when no (code, date) exists
 // ---------------------------------------------------------------------------
 
-describe("DPI-4 AC-1: UPSERT creates stub row when absent", () => {
+describe("DPI-4 AC-1 (UPDATED): merge-only -- no stub row on absent OHLCV", () => {
   beforeEach(async () => {
     closeDb();
     await initDatabase();
   });
   afterEach(() => { closeDb(); });
 
-  it("creates stub row with close=0 and foreign flow values", async () => {
+  it("FIX-OHLCV-WRITER-SSOT-DURABLE: returns changes=0 and creates NO row when OHLCV absent", async () => {
+    // Verify empty before test
     const db = getDb();
+    db.prepare("DELETE FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-05-29'").run();
 
     const result = await writeForeignFlowToOhlcv(
       [{ code: "HPG", date: "2026-05-29", foreignBuyVol: 1000, foreignSellVol: 500, putThroughVol: 0 }],
       db,
     );
 
-    expect(result.changes).toBe(1);
+    // MERGE-ONLY: changes=0 (no OHLCV row to update), no stub created
+    expect(result.changes).toBe(0);
 
+    // No stub row: SELECT returns null (0 rows)
     const row = db.prepare(
-      `SELECT close, foreign_buy_vol, foreign_sell_vol, foreign_net_vol, put_through_vol
-       FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-05-29'`,
-    ).get() as {
-      close: number;
-      foreign_buy_vol: number;
-      foreign_sell_vol: number;
-      foreign_net_vol: number;
-      put_through_vol: number;
-    } | null;
+      `SELECT close FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-05-29'`,
+    ).get() as { close: number } | null;
 
-    expect(row).not.toBeNull();
-    expect(row!.close).toBe(0);
-    expect(row!.foreign_buy_vol).toBe(1000);
-    expect(row!.foreign_sell_vol).toBe(500);
-    expect(row!.foreign_net_vol).toBe(500);   // 1000 - 500
-    expect(row!.put_through_vol).toBe(0);
+    expect(row).toBeNull(); // No stub row
   });
 
   it("updates foreign flow columns on existing row without overwriting OHLCV", async () => {
@@ -120,34 +115,41 @@ describe("DPI-4 AC-1: UPSERT creates stub row when absent", () => {
 // AC-7: R-1 race — stub-row foreign flow values survive a subsequent OHLCV push
 // ---------------------------------------------------------------------------
 
-describe("DPI-4 AC-7: stub-row race — foreign flow survives OHLCV push", () => {
+describe("DPI-4 AC-7 (UPDATED): merge-only deferred flow + real OHLCV insert => subsequent UPDATE works", () => {
   beforeEach(async () => {
     closeDb();
     await initDatabase();
   });
   afterEach(() => { closeDb(); });
 
-  it("foreign flow values remain after real OHLCV push to same (code, date)", async () => {
+  it("FIX-OHLCV-WRITER-SSOT-DURABLE: deferred (changes=0), then real OHLCV, then flow populates correctly", async () => {
     const db = getDb();
+    db.prepare("DELETE FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-05-29'").run();
 
-    // Step 1: storeForeignFlow creates stub row (close=0, foreign flow populated)
-    await writeForeignFlowToOhlcv(
+    // Step 1: foreignFlow deferred -- no OHLCV row yet (merge-only: changes=0, no stub)
+    const deferred = await writeForeignFlowToOhlcv(
       [{ code: "HPG", date: "2026-05-29", foreignBuyVol: 5000000, foreignSellVol: 2000000, putThroughVol: 0 }],
       db,
     );
+    expect(deferred.changes).toBe(0); // Deferred, not an error
 
-    // Verify stub row has foreign flow
-    const stub = db.prepare(
-      `SELECT close, foreign_buy_vol FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-05-29'`,
-    ).get() as { close: number; foreign_buy_vol: number } | null;
-    expect(stub).not.toBeNull();
-    expect(stub!.close).toBe(0);
-    expect(stub!.foreign_buy_vol).toBe(5000000);
+    // No stub row
+    const noRow = db.prepare(
+      `SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-05-29'`,
+    ).get() as { cnt: number };
+    expect(noRow.cnt).toBe(0);
 
-    // Step 2: Real OHLCV push via server.ts fixed path (ON CONFLICT DO UPDATE SET)
+    // Step 2: Real OHLCV row arrives (simulate pushPricesHandler)
     insertOhlcv(db, "HPG", "2026-05-29", 62.5);
 
-    // Step 3: Verify OHLCV updated AND foreign flow preserved
+    // Step 3: Next 60s foreign-flow re-fetch -- now finds the row and UPDATEs it
+    const updated = await writeForeignFlowToOhlcv(
+      [{ code: "HPG", date: "2026-05-29", foreignBuyVol: 5000000, foreignSellVol: 2000000, putThroughVol: 0 }],
+      db,
+    );
+    expect(updated.changes).toBe(1); // Now updated successfully
+
+    // Step 4: Final state: real OHLCV + populated foreign flow
     const after = db.prepare(
       `SELECT close, foreign_buy_vol, foreign_sell_vol, foreign_net_vol
        FROM daily_ohlcv WHERE code = 'HPG' AND date = '2026-05-29'`,
@@ -159,14 +161,15 @@ describe("DPI-4 AC-7: stub-row race — foreign flow survives OHLCV push", () =>
     } | null;
 
     expect(after).not.toBeNull();
-    expect(after!.close).toBe(62.5);            // OHLCV updated
-    expect(after!.foreign_buy_vol).toBe(5000000);  // foreign flow preserved
+    expect(after!.close).toBe(62.5);              // Real OHLCV
+    expect(after!.foreign_buy_vol).toBe(5000000); // Populated
     expect(after!.foreign_sell_vol).toBe(2000000);
     expect(after!.foreign_net_vol).toBe(3000000);
   });
 
-  it("DB COUNT(*) WHERE foreign_buy_vol > 0 returns > 0 after stub inserts", async () => {
+  it("FIX-OHLCV-WRITER-SSOT-DURABLE: COUNT(*) = 0 after deferred write on empty DB (no stubs)", async () => {
     const db = getDb();
+    db.prepare("DELETE FROM daily_ohlcv WHERE code IN ('HPG', 'VHM') AND date = '2026-05-29'").run();
 
     await writeForeignFlowToOhlcv(
       [
@@ -176,13 +179,13 @@ describe("DPI-4 AC-7: stub-row race — foreign flow survives OHLCV push", () =>
       db,
     );
 
+    // Merge-only: no stubs created, COUNT = 0
     const count = db.prepare(
-      `SELECT COUNT(*) AS cnt FROM daily_ohlcv
-       WHERE foreign_buy_vol > 0 OR foreign_sell_vol > 0 OR foreign_net_vol > 0 OR put_through_vol > 0`,
+      `SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code IN ('HPG', 'VHM') AND date = '2026-05-29'`,
     ).get() as { cnt: number } | null;
 
     expect(count).not.toBeNull();
-    expect(count!.cnt).toBeGreaterThan(0);
+    expect(count!.cnt).toBe(0); // No stub rows
   });
 });
 
