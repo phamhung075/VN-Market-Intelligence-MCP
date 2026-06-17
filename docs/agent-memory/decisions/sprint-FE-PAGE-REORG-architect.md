@@ -6,6 +6,31 @@
 
 ---
 
+### STEP architect-S2 · architect · 2026-06-16T06:30:00Z
+**task-id:** FIX-ERRAUDIT-W2-FRONTEND-SAFEFETCH
+**what-done:** Brownfield scan of apps/frontend/; issued blueprint for fetchUtils.ts (3 helpers); confirmed 28 Cluster A files (not 26); resolved 4 ARCH-RATIFY items; excluded dashboard.bctc-inspect.tsx; confirmed FE-PAGE-REORG FR-4 absorption.
+**what-considered:**
+- Cluster A exact count: BA spec said "~26". Brownfield found 28 inline-fetch loaders. `dashboard.bctc.tsx` and `dashboard.vps.tsx` were not in BA's list. Both confirmed as inline-fetch pattern (Cluster A). `dashboard.bctc-inspect.tsx` was in neither Cluster A nor B in the BA spec; brownfield confirmed it is a raw-HTML relay with a different error contract — excluded cleanly.
+- ARCH-RATIFY-FE-1 (`apiGet` internal deadline): Considered bounding `apiGet` internally. Rejected: (a) no `signal` merging logic; (b) 3 caller categories — 2 are already covered by the Cluster C migration (body replacement removes the `apiGet` call); (c) the 3rd category (EC-8 loaders: db/services/fetch) is out of scope and needs follow-on anyway. Outer-deadline-sufficient verdict matches BA recommendation.
+- ARCH-RATIFY-FE-2 (`fetchWatchlistPrices`): Considered allowing `null` return (simpler). Rejected: requires caller change in watchlist tile loop — out of scope. `safeFetch` with `parseWatchlistPrices` returning `{}` is the zero-caller-change path. Confirmed correct.
+- ARCH-RATIFY-FE-3 (EC-8 scope): Considered expanding scope to include EC-8 loaders now. Rejected: `apiGet` signal-merge is a separate concern requiring its own spec. Follow-on task is the clean path.
+- ARCH-RATIFY-FE-4 (FE-PAGE-REORG absorption): Only option — `fetchUtils.ts` is strictly richer than planned `loader-utils.ts safeFetch`; creating `loader-utils.ts` would violate NFR-5 (circular risk) and duplicate the SSOT. Absorption is unambiguous.
+- `parse(null)` vs `emptyT` parameter: `emptyT` parameter considered (avoids the re-invoke risk). Rejected: forces all 28 callers to supply an extra argument; the parse function already owns the empty-shape logic. `parse(null)` is the DRY choice; RISK-1 documented for PM to propagate.
+- Timer type: `let timer: ReturnType<typeof setTimeout>` vs `let timer: number`. Under `@remix-run/node` types + ES2022 lib, `setTimeout` return resolves to `NodeJS.Timeout` in Node context. `ReturnType<typeof setTimeout>` is environment-agnostic. Confirmed as the correct pattern (same reasoning as W2-MCP-FETCH-DEADLINE `withDeadline`).
+**why-decision:** All ratifications follow existing codebase conventions confirmed by brownfield read. The one deviation from BA spec is the Cluster A count (28 not 26) — two files missed in the BA audit. The design blueprint gives dev-frontend exact file lists and code-level guidance to avoid the RISK-4 double-migration trap and RISK-1 parse-null contract gap.
+
+### STEP architect-S3 · architect · 2026-06-17T05:00:00Z
+**task-id:** ARCH-OHLCV-WRITER-SSOT-DURABLE
+**what-done:** Brownfield recon of all daily_ohlcv writers; confirmed Writer G (writeForeignFlowToOhlcv) as the sole remaining bypassing writer; designed merge-only UPDATE-only replacement; issued blueprint + architecture brief.
+**what-considered:**
+- Route through writeOhlcvBatch: REJECTED — writeOhlcvBatch writes OHLCV columns; the foreign-flow writer has no OHLCV values to pass; forcing it through the SSOT would require fabricating OHLCV values, which is the exact problem being solved.
+- Separate `daily_foreign_flow` table (option F): CORRECT long-term design; REJECTED for P0 — schema migration on live named-volume DB with 1200+ ticker-years of data; needs its own ARCH task + dev sprint.
+- NULL close via schema ALTER: BLOCKED — SQLite does not support DROP NOT NULL without table rebuild.
+- UPDATE-only (merge-only): CHOSEN — aligns with the writer's semantic contract (enrich existing row); deferred gap (no OHLCV row yet) is honest (/goal#1); 2–3h window accepted; follow-on F eliminates it.
+- Sentinel close value (-1 etc.): REJECTED — still corrupts RSI if sentinel leaks into TA window.
+**why-decision:** Merge-only is the only P0-safe approach given the schema NOT NULL constraint and live-DB rebuild risk. It closes the stub-INSERT path permanently. /goal#2 generic: no per-ticker logic. Follow-on table design queued as ARCH-DAILY-FOREIGN-FLOW-TABLE.
+**why-change:** Cluster A count adjusted from ~26 to 28 (two files added). `dashboard.bctc-inspect.tsx` added as explicit exclusion. Follow-on Wave-3 task minted for EC-8 loaders. FE-PAGE-REORG FR-4 redirect confirmed.
+
 ### STEP architect-S1 · architect · 2026-06-16T00:00:00Z
 **task-id:** FIX-ERRAUDIT-W2-MCP-FETCH-DEADLINE
 **what-done:** Ratified 4 open items, confirmed layer placement, issued blueprint with DDD risk notes for `withDeadline` + `macroFetch` shared helper.

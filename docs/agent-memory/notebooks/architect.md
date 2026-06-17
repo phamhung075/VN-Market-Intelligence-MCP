@@ -1,8 +1,19 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-16 11:00 UTC | **Sprint:** ARCH-BCTC-PIPELINE-DURABILITY
+**Last updated:** 2026-06-17 05:00 UTC | **Sprint:** FE-PAGE-REORG (cross-sprint: ARCH-OHLCV-WRITER-SSOT-DURABLE)
 
 [3 most recent cycles retained. Older cycles archived to git history.]
+
+## 2026-06-17T05:00Z — ARCH-OHLCV-WRITER-SSOT-DURABLE (DESIGN DONE)
+
+**Task:** ARCH-OHLCV-WRITER-SSOT-DURABLE | mode: RECURRING-BUG-ESCALATION (4th recurrence) | zone: apps/mcp-server/
+**Output:** `docs/handoffs/ARCH-OHLCV-WRITER-SSOT-DURABLE-architect-design.md` + `docs/architecture-briefs/2026-06-17-ohlcv-writer-ssot-durable.md`
+**Root confirmed:** `writeForeignFlowToOhlcv` (ohlcvForeignFlowStore.ts L57-69) — last bypassing writer; INSERTs `close=0` stub to satisfy `REAL NOT NULL` constraint when no OHLCV row exists at foreign-flow fetch time (02:00Z).
+**Design:** Merge-only UPDATE — replace INSERT…ON CONFLICT with plain UPDATE; `changes=0` when no OHLCV row yet (deferred, no stub created). Schema constraint (`close REAL NOT NULL`, no DEFAULT) blocks NULL-close INSERT; table rebuild rejected for P0.
+**Writer inventory:** All 8 writers now accounted for. After this fix: zero writers insert `close=0` stubs. Sentinel pattern (OHLCV-WRITE-BYPASS-ALLOWED) + ESLint rule (follow-on LINT-OHLCV-WRITE-BYPASS) close the bypass class generically.
+**Follow-on queued:** ARCH-DAILY-FOREIGN-FLOW-TABLE (dedicated table eliminates the 2–3h deferred-gap window for new-day rows).
+**BUILD-STANDARD:** not-applicable (bug-fix, in-zone). **Scan clean:** true.
+**NEXT:** pm
 
 ## 2026-06-16T11:00Z — ARCH-BCTC-PIPELINE-DURABILITY (SPIKE DONE)
 
