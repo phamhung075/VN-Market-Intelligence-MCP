@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-16T15:08:22Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": 240
+    },
+    "last_fired_timestamp": "2026-06-16T15:07:14Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "self_held",
+    "dev_head": "idle",
+    "devq": 2,
+    "signal_backlog": 3,
+    "note": "bctc-analyst-slot-1 cadence-due (last_fired 24h prior 2026-06-15T15:05:04Z); spawned background; off-market closed, no calendar/cadence suppression; E2 window [02:00,08:00) VN not active at 15:07 UTC. Published-marker gate enforced inside agent flow before any MARKET post."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-16T15:08:22Z",
+  "_processed": {
+    "fingerprint": "f0883f0d614b537d6ccfab7ee3563615ade76f405e1923a0af6f6cb45a770d69",
+    "processedAt": "2026-06-16T15:29:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

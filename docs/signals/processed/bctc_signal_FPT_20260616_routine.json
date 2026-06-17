@@ -5,39 +5,83 @@
   "mode": "routine",
   "beat_miss": null,
   "net_profit_delta_pct": null,
-  "product": "Dịch vụ CNTT, xuất khẩu phần mềm, viễn thông (FPT Telecom), giáo dục (FPT Edu), phân phối thiết bị công nghệ",
-  "customer": "Doanh nghiệp IT trong nước và offshore, thuê bao viễn thông SME/cá nhân, sinh viên đại học FPT",
-  "ops": "Biên lợi nhuận hoạt động 22%; doanh thu 12,480ty; ROE 28.3% (2.7x trung vị ngành); OCF âm Q1 theo mùa vụ — Q4-2025 OCF +4,108ty xác nhận mô hình phục hồi; D/E 0.40x",
-  "mgmt": "M-score=0 không có dấu hiệu thao túng kế toán; F-score=7 tài chính lành mạnh; hướng dẫn EPS 3 quý liên tiếp đạt mục tiêu; mua lại cổ phiếu thực hiện đúng lịch",
-  "ey_spread_pp": 2.25,
-  "ey_classification": "CHEAP",
-  "pe_ratio": 13.8,
-  "pe_sector_median": 17.3,
-  "pe_discount_pct": -20,
-  "roe_pct": 28.3,
-  "net_profit_ty_vnd": 2476.8,
-  "d_e_ratio": 0.4,
-  "cash_ty_vnd": 7993.6,
-  "ocf_ty_vnd": -2847.8,
-  "ocf_ni_ratio_q1": -1.15,
-  "m_score": 0,
-  "f_score": 7,
-  "confidence_score": 0.81,
-  "foreign_flow_5d": "+500M cp net (mạnh hơn ngành)",
-  "legal_risk": "clean",
-  "insider_risk": "clean",
-  "kinhdich": "Que 54 Qui Muoi BAT LOI/GIU (63%)",
-  "esc3_status": "DATA-COVERAGE-LIMITED",
-  "coverage_guard_key": "esc-datacov:FPT:Q1-2026:ESC-3",
-  "coverage_guard_held": true,
-  "escalation_status": null,
-  "trick_summary": "Không phát hiện dấu hiệu bất thường trong kỳ này.",
-  "trick_confidence": "none",
-  "trick_pass_versions": [],
+  "product": "Dịch vụ CNTT và xuất khẩu phần mềm (FPT Software), viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp CNTT trong nước và quốc tế, thuê bao viễn thông SME/cá nhân, sinh viên FPT Edu",
+  "ops": "Biên lợi nhuận gộp 34.0%; biên vận hành 22.0%; OCF Q1 âm theo mùa (-2,847.8ty); D/E thấp 0.40x",
+  "mgmt": "EPS tăng trưởng ổn định qua 3 năm; hướng dẫn FY2025 đạt đủ 3 quý liên tiếp; không có insider giao dịch bất thường",
+  "signal_id": 6366,
+  "cycle": 23,
+  "cycle_id": "20260616-2100",
+  "slot": "bctc-analyst-slot-3",
+  "emitted_at": "2026-06-16T21:10:00Z",
   "e3_cache_hit": true,
-  "e3_cache_cycle": 22,
-  "signal_id": 6354,
-  "cycle": "c060",
-  "slot": "bctc-analyst-slot-2",
-  "ts": "2026-06-16T18:15:00Z"
+  "esc_gate": {
+    "esc1": "PASS",
+    "esc2": "PASS",
+    "esc3": "DATA-COVERAGE-LIMITED GUARD-HELD",
+    "esc4": "PASS",
+    "esc5": "EMPTY-SKIP",
+    "escalation": "none"
+  },
+  "valuation": {
+    "pe": 13.8,
+    "ey_pct": 7.25,
+    "ey_spread_pp": 2.25,
+    "verdict": "CHEAP",
+    "roe_annual_pct": 28.3,
+    "d_e": 0.4,
+    "cash_ty": 7993.6,
+    "net_profit_ty": 2476.8,
+    "m_score": 0,
+    "f_score": 7
+  },
+  "kinhdich": "Que 54 Qui Muoi BAT LOI/GIU 63% — canh bao ngan han",
+  "insider": "clean",
+  "legal": "clean",
+  "chain_findings": 0,
+  "regime": "NEUTRAL",
+  "investment_clock": "Overheat/CORE_VN",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [
+    "balance-sheet-v1",
+    "pl-v1",
+    "cashflow-v1",
+    "rpt-v1",
+    "footnote-v1",
+    "segment-v1"
+  ],
+  "blocked_tickers": {
+    "ACV": {
+      "status": "DB_EMPTY",
+      "cycle": 1,
+      "reason": "moi nop 2026-06-16"
+    },
+    "CTG": {
+      "status": "DATA_CORRUPT",
+      "cycle": 34,
+      "reason": "bug #2776 assets=0"
+    },
+    "VCB": {
+      "status": "PARTIAL",
+      "cycle": 31,
+      "reason": "single period only"
+    },
+    "D2D": {
+      "status": "DB_EMPTY",
+      "cycle": 31,
+      "reason": "bug #2776"
+    },
+    "VNM": {
+      "status": "DB_EMPTY",
+      "cycle": 6,
+      "reason": "bug #2776"
+    }
+  },
+  "_processed": {
+    "fingerprint": "33ec4aa927434ce050d5fbc7b877c67488415848c7cf91a9a6bac8ac39df610c",
+    "processedAt": "2026-06-16T21:29:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

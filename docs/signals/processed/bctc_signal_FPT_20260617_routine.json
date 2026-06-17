@@ -1,0 +1,79 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Dịch vụ CNTT xuất khẩu phần mềm, viễn thông (FPT Telecom), giáo dục (FPT Edu), tích hợp hệ thống",
+  "customer": "Doanh nghiệp CNTT (VN + nước ngoài), thuê bao viễn thông SME và hộ gia đình đô thị",
+  "ops": "Biên lợi nhuận hoạt động 22%; xuất khẩu phần mềm là động lực tăng trưởng chính; OCF -2,847.8 tỷ mang tính mùa vụ Q1",
+  "mgmt": "Lợi nhuận ròng Q1-2026 +19.8% YoY liên tiếp 3 quý đạt hướng dẫn; mua lại cổ phiếu thực hiện đúng tiến độ",
+  "cycle": "c062",
+  "slot": "bctc-analyst-slot-4",
+  "generated_at": "2026-06-17T00:00:00Z",
+  "e3_cache": "HIT cycle 24",
+  "valuation": {
+    "pe": 13.8,
+    "pe_sector_median": 17.3,
+    "pe_vs_sector": "DISCOUNT -20%",
+    "pb": 3.6,
+    "roe_pct": 28.3,
+    "roe_sector_median_pct": 10.6,
+    "earning_yield_pct": 7.25,
+    "max_deposit_rate_pct": 5,
+    "ey_spread_pp": 2.25,
+    "valuation_verdict": "CHEAP"
+  },
+  "financials": {
+    "net_revenue_vnd_bn": 12480,
+    "net_profit_vnd_bn": 2476.8,
+    "net_profit_yoy_pct": 19.8,
+    "total_assets_vnd_bn": 68586.1,
+    "equity_vnd_bn": 40122,
+    "cash_vnd_bn": 7993.6,
+    "d_e": 0.4,
+    "ocf_vnd_bn": -2847.8,
+    "ocf_note": "mua theo mùa vụ Q1 - bình thường"
+  },
+  "quality": {
+    "m_score": 0,
+    "f_score": 7,
+    "confidence_pct": 81,
+    "validation": "passed"
+  },
+  "signals": {
+    "insider": "clean",
+    "legal": "clean",
+    "kinhdich": "Que 54 Qui Muoi BAT LOI/GIU 63% (UNCHANGED)",
+    "foreign_flow_5d": "+500M cp net (mạnh hơn ngành)",
+    "chain_findings": 0
+  },
+  "regime": {
+    "regime": "NEUTRAL",
+    "carry_spread_pp": 1.38,
+    "investment_clock": "Overheat/CORE_VN",
+    "gold_usd": 4353,
+    "brent_usd": 79.49
+  },
+  "escalation": {
+    "esc1": "PASS",
+    "esc2": "PASS",
+    "esc3": "DATA-COV-LIM GUARD-HELD ~8d remaining",
+    "esc4": "PASS",
+    "esc5": "EMPTY-SKIP"
+  },
+  "blocked_tickers": {
+    "CTG": "corrupt assets=0 bug#2776 cycle 35 CRITICAL",
+    "VCB": "single-period partial cycle 32",
+    "D2D": "db-empty cycle 32",
+    "VNM": "db-empty cycle 7",
+    "ACV": "new-filing data-lag cycle 2 (filed 2026-06-16)"
+  },
+  "_processed": {
+    "fingerprint": "55611501b5e68177ad8a079492ebb0ea19092b2b6150ff23d2f3a208aa843266",
+    "processedAt": "2026-06-17T00:28:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

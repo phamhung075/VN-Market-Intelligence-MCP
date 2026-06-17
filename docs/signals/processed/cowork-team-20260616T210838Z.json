@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-16T21:08:38Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": 240
+    },
+    "last_fired_timestamp": "2026-06-16T21:08:38Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 2,
+    "signal_backlog": 3,
+    "note": "bctc-analyst-slot-3 due (cadence, off-market 04:00 ICT); trigger_id=null so */15 dispatcher is sole firer — no cloud double-fire risk; spawned background per BGFAN-1; tick-snapshot 4.7 skipped (zero-blocker, agent self-bootstraps)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-16T21:08:38Z",
+  "_processed": {
+    "fingerprint": "e4082e7e56de5f324bc90d8e616353b51ca002223c9f4f719cf37c9f35458333",
+    "processedAt": "2026-06-16T21:29:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

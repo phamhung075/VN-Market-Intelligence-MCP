@@ -35,5 +35,11 @@
       "ac": "Timeout with sibling success in window → no BUG filed. Timeout with no sibling success → BUG filed."
     }
   ],
-  "note": "DMS-1 and DMS-2 share get_recent_signals helper and may ship as one combined dev-mcp-server sprint. AF-1 is doc-only (flow file edit, agent-father zone)."
+  "note": "DMS-1 and DMS-2 share get_recent_signals helper and may ship as one combined dev-mcp-server sprint. AF-1 is doc-only (flow file edit, agent-father zone).",
+  "_processed": {
+    "fingerprint": "0c886490b1afdbbfd1994205bfa1a88d6a4a658ac2f4836efdc8c5159add596e",
+    "processedAt": "2026-06-16T21:29:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

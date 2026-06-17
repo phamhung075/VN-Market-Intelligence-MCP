@@ -29,5 +29,11 @@
     ]
   },
   "priority": "high",
-  "createdAt": "2026-06-16T12:40:00Z"
+  "createdAt": "2026-06-16T12:40:00Z",
+  "_processed": {
+    "fingerprint": "e9540af0ae1925d88134d159ce5d36d2e8d686ebfa989f9d44f1afa9f70e4a9f",
+    "processedAt": "2026-06-16T15:29:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

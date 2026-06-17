@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-16T14:08:18Z",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "refine-bctc-slot-2": "cadence"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": 240
+    },
+    "last_fired_timestamp": "2026-06-16T14:07:30Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "14:00",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 2,
+    "note": "refine-bctc-slot-2 fired (daily bctc-offmarket cadence, last_fired ~24h prior). Spawned refine_bctc_md bg; agent finalized report 65a9c724 (VCB Q1-2025) PARTIAL 20/21 windows, unit-0000 page_type_mismatch:cover_letter_not_table (pre-existing OCR classifier flag, nothing new pushed this fire). Step 4.7 tick-snapshot skipped (refine agent consumes no market_context). last_fired write: BSD date %3N produced malformed .3NZ, router RAW-caught + rewrote to valid ISO 14:07:30Z (parses_valid). Leader lock acquired+heartbeat; per-work-item token released ok."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-16T14:08:18Z",
+  "_processed": {
+    "fingerprint": "a0cfae91c8c9804f84ffe4bca923832d69482225e746b5e3efebe9ad7b10e60b",
+    "processedAt": "2026-06-16T15:29:21Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

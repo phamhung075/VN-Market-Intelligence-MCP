@@ -1,0 +1,66 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T00:09:10Z",
+    "matched_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "closed",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-4": "cadence",
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-4": 240,
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": "2026-06-17T00:08:50Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-4",
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "00:00",
+    "leader_lock": "acquired",
+    "dev_head": "idle",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "Manual */15 dispatcher led 00:00Z boundary tick (fire 00:08:50Z, drift 5m). 3 offhours slots fired: bctc-analyst-slot-4 (24h cadence), news-scout-offhours + market-watcher-offhours (0 */4). Cloud backstop (~00:12Z) deduped by published-marker gate (agent-side, 28h TTL). No calendar/cadence/freshness suppression (regime=FII_OUTFLOW_RISK, calendar=closed weekday pre-market). tick-snapshot skipped via documented zero-blocker fallback (agents use direct get_cycle_bootstrap)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T00:09:10Z",
+  "_processed": {
+    "fingerprint": "34a022cb92e807cdf962b4869e96dfb63c18daabd83c0dcc842069213ab94d16",
+    "processedAt": "2026-06-17T00:28:29Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

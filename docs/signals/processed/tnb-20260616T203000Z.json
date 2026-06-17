@@ -1,0 +1,15 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-06-16T20:30:00Z",
+  "summary": "c97 NEEDS_ATTENTION IMPROVING — CRITICAL: chef-evening DOUBLE-POST (ids 779+780, marker gate FAIL-OPEN, AC-FAILCLOSED spec authored by po-s90); FIX-BCTC-BANK-PDF-OCR-RASTERIZE DONE_VERIFIED; follow-on FIX-BCTC-BANK-SCALAR-MAPPING minted; evening dish 4/6+7/9 best in series; adversarial gate PASS first time; news-scout 9/10 EXCELLENT",
+  "_processed": {
+    "fingerprint": "1d1ffd39b9db28b3ce6d6781786f3045f9d7d9c29fb862f441c86185e84f0ca5",
+    "processedAt": "2026-06-16T21:29:42Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
