@@ -236,11 +236,11 @@
       "type": "audit-handoff",
       "summary": "c98 NEEDS_ATTENTION IMPROVING — G3/G4/G6 PASS (all last_fired updated today). EOD MCP blocked. F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 NEW HIGH.",
       "severity": "HIGH",
-      "status": "NEW",
+      "status": "READ",
       "payload_ref": "docs/handoffs/tnb-audit-latest.md"
     },
-    "_updated_at": "2026-06-17T20:25:00Z",
-    "_updated_by": "tran-ngoc-bau",
+    "_updated_at": "2026-06-17T21:35:54Z",
+    "_updated_by": "cowork-dispatcher-drain",
     "archive": [
       {
         "from": "system-auditor",
@@ -20399,11 +20399,11 @@
         "id": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
         "type": "FIX",
         "severity": "HIGH",
-        "status": "REVIEW",
+        "status": "CHANGES_REQUESTED",
         "title": "BCTC enricher: attempts===0 guard never terminalizes genuinely-absent tickers → zero-url counter unbounded → bctc SLA FALSE-CRITICAL",
         "description": "REROUTED 2026-06-17 (zone correction). dev-vps-crawls DISPROVED the discovery-outage hypothesis via RAW VPS probes: bctc-discover returns Q1-2026 URLs for VCB/HPG <1s; 65 Q1-2026 tickers already in done[] with real URLs. The 9 pending tickers (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA + VEA-Q4-2025) are GENUINELY ABSENT (no Q1-2026 filing exists yet on SSC — honest gap per /goal#1), NOT an outage. REAL ROOT (apps/mcp-server, dev-mcp-server zone): bctcQueueEnricherJob.ts lines 497-513 — when discovery returns 0 URLs and attempts===0, the else branch leaves the row pending at 0 and NEVER increments. Genuinely-absent rows are forever stuck at attempts=0, never reach MAX_ENRICH_ATTEMPTS(5), never marked url_not_found, cycle forever (210+ zero-url cycles). The zero-url counter climbs every cron tick → bctc SLA reads 1332/360min breached CRITICAL and STILL CLIMBING — a metric/accounting ARTIFACT of the stuck-9, NOT real staleness (current-quarter data is healthy). RECLASSIFIED CRITICAL→HIGH: not a data-loss CRITICAL (data healthy), but the permanently-stuck false-CRITICAL SLA masks ALL FUTURE real bctc breaches — a real observability fix.",
         "owner": "dev-mcp-server",
-        "next_agent": "router",
+        "next_agent": "dev-mcp-server",
         "priority": "P1",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -20420,7 +20420,7 @@
         "claimed_at": "2026-06-17T19:00:00Z",
         "claimed_by": "dev-mcp-server",
         "verification_gate": "DONE_VERIFIED gate (/goal#1): (1) live get_sla_status shows bctc age FALLING (not climbing) after the 9 absent rows terminalize; (2) the 9 absent tickers in url_not_found terminal state (attempts reached 5 via real-discovery increments); (3) the 65 done[] Q1-2026 rows UNTOUCHED (no real data lost); (4) zero-url counter no longer climbing every tick. NOT just green tests — RAW live SLA probe required (a SQL flush of attempts is a graceful workaround, the CODE fix is the durable terminal).",
-        "done_verified_blocked_reason": "Rebuild SHIPPED & verified first-hand (running image .Created 2026-06-17T20:29:25Z > commit 3eebf3bc 19:17:22Z; fix markers attempts+=1 ×2 & MAX_ENRICH_ATTEMPTS ×6 present in running /app/src; container healthy). done_verified DEFERRED (lagging): bctc SLA baseline at ship = 1441/360 CRITICAL still climbing; the 8 genuinely-absent rows must accrue ~5 enricher cycles (~75min) to reach MAX→url_not_found and unblock fresh discovery. Router one-shot re-probe scheduled ~22:10Z to run the 4-criteria live gate.",
+        "done_verified_blocked_reason": "ROUTER LIVE GATE re-probe#2 @2026-06-17T22:46Z DISPROVES convergence -> CHANGES_REQUESTED. Fix code is CORRECT (enricher terminalize branch executes: 22:45 cycle logged 'no URL after max attempts - marking url_not_found' for all 8 rows at attempts=6). BUT a CONFLICTING WRITER perpetually undoes it: '[TASK-1943a] Reset N Q1-2026 url_not_found rows to pending' fires repeatedly (observed 21:30:51, 22:45:34, 22:46:07Z) resetting the exact 8 rows (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA) back to status=pending attempts=0. Live DB confirms full oscillation post-22:45: 6 -> url_not_found -> 0/pending. Net: infinite tug-of-war; consecutive_zero_cycles UNBOUNDED at 235 (the EXACT symptom FIX-BCTC targeted). ROOT = design conflict between TASK-1943a grace-period auto-retry (bctcQueueEnricherJob.ts Arm2 :270/:426 + schema-financial-reports.ts:695 'reset Q1-2026 url_not_found rows to pending') and FIX-BCTC terminalization — mutually contradictory by design. SECONDARY: enricher DOUBLE-FIRE (each ticker logged 2x/cycle) = ARCH-CRON node-cron silent-misfire. confirm-before-blame SATISFIED: enricher cron fired first-hand @22:45; running image .Created 20:29Z = fix image; terminalize branch verified executing. DEV-MCP-SERVER must reconcile: bound the grace-period (finite retries/days) OR respect terminal url_not_found at MAX attempts so genuinely-absent rows stay terminal; de-conflict double-fire. May need PO/architect policy call (grace-retry vs terminalize). /goal#2 note: TASK-1943a hardcodes 'Q1-2026' (date-literal) — generalize.",
         "fix_spec": "Remove the attempts===0 special-case (else branch, lines 509-513) that prevents increment. GENERIC (no per-ticker allowlist, no date-literal — /goal#2): when discovery REACHES the source and returns 0 URLs (real network-level discovery, NOT a pre-network error — keep the existing error-path no-increment at lines 526+), ALWAYS increment attempts regardless of current value. Optionally distinguish 'first real attempt' via last_attempt IS NULL rather than attempts===0. Any genuinely-absent row then accumulates attempts → reaches MAX_ENRICH_ATTEMPTS(5) → marked url_not_found (honest terminal) → drops out of the pending cycle → zero-url counter resets → bctc SLA stops growing.",
         "generic_mandate": "Fix MUST be ticker-agnostic and date-agnostic: any ticker whose filing is genuinely absent terminalizes after N real-discovery attempts. No allowlist of the current 9, no Q1-2026 literal.",
         "rebuild_required": false,
@@ -20430,12 +20430,13 @@
         "impl_at": "2026-06-17T19:22:00Z",
         "impl_by": "dev-mcp-server",
         "qa_reviewed_at": "2026-06-17T20:24:19Z",
-        "qa_verdict": "APPROVED",
+        "qa_verdict": "CHANGES_REQUESTED",
         "qa_blocking_issues": [],
         "qa_reviewed_by": "qa (cycle-293)",
         "qa_notes": "APPROVED cycle-293. Test fix only (97546591). Production 3eebf3bc UNTOUCHED. 2 fixed test files 24/0 pass. Full suite 13204 pass / 45 fail — 17 failing files ALL disjoint (0 overlap with commit). tsc 0 errors. DDD PASS (test-only). Security PASS. Discrimination verified: reached-source-empty toBe(1) correct; TERM-4 catch-path no-increment untouched. rebuild_required:true preserved — ops must rebuild mcp-server.",
         "rebuild_verified_at": "2026-06-17T20:41:25Z",
-        "rebuild_image_created": "2026-06-17T20:29:25Z"
+        "rebuild_image_created": "2026-06-17T20:29:25Z",
+        "done_verified": null
       }
     ],
     "ready": [
