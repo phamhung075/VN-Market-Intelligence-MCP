@@ -1,0 +1,46 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "slug": "gatherer-exec-proof-failloud",
+  "brief": "docs/architecture-briefs/2026-06-17-gatherer-exec-proof-failloud.md",
+  "priority": "high",
+  "createdAt": "2026-06-17T12:39:55Z",
+  "summary": "Generic EXEC-PROOF gate for offhours gatherers: a cycle is only 'complete' if notebook timestamp is within the current tick AND primary fetch returned >0 items with a fresh macro timestamp. Fail-loud on violation (BUG + signal + EXIT). 4 tasks: EP-1 author exec-proof-gate skill, EP-2 patch cycle-bootstrap, EP-3 hook news-scout stage-log-notify, EP-4 hook market-watcher cycle. EP-1 first; EP-2/3/4 parallel.",
+  "tasks": [
+    {
+      "id": "EP-1",
+      "action": "author new skill",
+      "file": ".claude/skills/exec-proof-gate/SKILL.md",
+      "depends_on": []
+    },
+    {
+      "id": "EP-2",
+      "action": "patch cycle-bootstrap — add CYCLE_START_UTC anchor capture + exec-proof-gate reference",
+      "file": ".claude/skills/cycle-bootstrap/SKILL.md",
+      "depends_on": ["EP-1"]
+    },
+    {
+      "id": "EP-3",
+      "action": "insert Step 3e exec-proof gate before log_agent_work(completed)",
+      "file": "docs/agents/news-scout/flow/stage-log-notify.md",
+      "depends_on": ["EP-1"]
+    },
+    {
+      "id": "EP-4",
+      "action": "insert Step 4e exec-proof gate before WORK ping in Step 5b",
+      "file": "docs/agents/market-watcher/flow/cycle.md",
+      "depends_on": ["EP-1"]
+    }
+  ],
+  "cross_ref": {
+    "sibling_do_not_merge": [
+      "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
+      "AF-1-LEADER-LOCK-BACKSTOP-DEFER"
+    ],
+    "adjacent_distinct": [
+      "SPIKE-UNIFIED-NB-GAP",
+      "HARDEN-NOTEBOOK-WRITE-GATE-AC5-BLOCKING"
+    ]
+  }
+}
