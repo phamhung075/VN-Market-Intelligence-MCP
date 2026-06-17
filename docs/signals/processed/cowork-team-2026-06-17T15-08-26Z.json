@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T15:08:26Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": "null"
+    },
+    "last_fired_timestamp": "2026-06-17T15:08:04Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": "null",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "15:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 0,
+    "note": "bctc-analyst daily off-market BCTC run (cron 0 15), background spawn aa0d05c1; tick-snapshot skipped (no cycle-bootstrap consumer)"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T15:08:26Z",
+  "_processed": {
+    "fingerprint": "05b981ceb4c3b15885595af18742b985cddc7c3199c2c784d3a9de2a28012aed",
+    "processedAt": "2026-06-17T15:29:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

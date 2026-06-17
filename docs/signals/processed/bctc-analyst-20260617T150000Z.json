@@ -1,0 +1,14 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[bctc-analyst] c063 Step 0 failed: MCP gateway tool (call_tool) not available in agent session — no downstream vn-market tools reachable. Cycle cannot proceed.",
+  "priority": "high",
+  "createdAt": "2026-06-17T15:00:00Z",
+  "_processed": {
+    "fingerprint": "2539761c28fef58cd7383f0ed93faca0fbe1fb9d69410c959f1300a8db52d4e2",
+    "processedAt": "2026-06-17T15:29:09Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
