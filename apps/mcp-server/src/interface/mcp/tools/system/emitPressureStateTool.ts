@@ -40,6 +40,13 @@ import { execSync } from "node:child_process";
 import { getProjectRoot } from "../../../../infrastructure/projectRoot.js";
 import type { OrchState } from "../../../../infrastructure/orchStateStore.js";
 
+/**
+ * Maximum age (ms) a cycle-snapshot may have before it is considered stale.
+ * Set to 4 hours — generous enough for off-hours ticks, tight enough to block
+ * 15-day-old residues from being promoted.  NO date literals.
+ */
+export const SNAPSHOT_MAX_STALENESS_MS = 4 * 60 * 60 * 1000; // 4 h
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Pressure-state schema
 // ─────────────────────────────────────────────────────────────────────────────
@@ -47,6 +54,9 @@ import type { OrchState } from "../../../../infrastructure/orchStateStore.js";
 /**
  * 9-key schema that cadence-policy readers expect.
  * Matches the PS_EOF heredoc in telemetry.md lines ~48-58.
+ *
+ * `stale_warning` is set to `true` when the cycle-snapshot promotion was
+ * REFUSED because the source snapshot was beyond SNAPSHOT_MAX_STALENESS_MS.
  */
 export interface PressureState {
   emitted_at: string;
@@ -57,7 +67,7 @@ export interface PressureState {
   calendar_status: string;
   dev_queue_depth: number | null;
   host_headroom_mb: number | null;
-  stale_warning: false;
+  stale_warning: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -175,28 +185,91 @@ export function writePressureStateAtomic(
 }
 
 /**
+ * Result of a promoteCycleSnapshot attempt.
+ */
+export interface PromoteCycleSnapshotResult {
+  /** true when the snapshot was copied to cycle-snapshot-latest.json */
+  promoted: boolean;
+  /**
+   * true when a source snapshot was found but REFUSED because its
+   * fetchedAt/created_at was beyond SNAPSHOT_MAX_STALENESS_MS.
+   * false in all other cases (no file, promotion succeeded, read error).
+   */
+  stale: boolean;
+}
+
+/**
  * Promote cycle-snapshot-<HH:MM>.json to cycle-snapshot-latest.json atomically.
  *
- * @param dataDir   Absolute path to docs/data/
- * @param tickHHMM  "HH:MM" extracted from tick_id
- * @returns true if promoted, false if no per-tick snapshot found
+ * FAIL-SAFE (FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE):
+ *   Before copying, parse the source snapshot and read its `fetchedAt` or
+ *   `created_at` timestamp.  If the snapshot is older than
+ *   SNAPSHOT_MAX_STALENESS_MS (relative to `nowIsoFn()`), the promotion is
+ *   REFUSED: `{ promoted: false, stale: true }` is returned and the
+ *   existing cycle-snapshot-latest.json is left untouched.
+ *
+ *   This prevents a stale HH:MM residue (e.g. from 15 days ago) whose tick
+ *   collides with today's HH:MM from being stamped with a fresh fs-mtime
+ *   and consumed by downstream agents as current macro data.
+ *
+ * @param dataDir      Absolute path to docs/data/
+ * @param tickHHMM     "HH:MM" extracted from tick_id
+ * @param copyFileFn   Injectable copyFileSync (for tests)
+ * @param renameFn     Injectable renameSync (for tests)
+ * @param readFileFn   Injectable readFileSync (for tests)
+ * @param nowIsoFn     Injectable () => ISO string for "now" (for tests)
+ * @returns PromoteCycleSnapshotResult
  */
 export function promoteCycleSnapshot(
   dataDir: string,
   tickHHMM: string,
   copyFileFn: (src: string, dst: string) => void = copyFileSync,
   renameFn: (from: string, to: string) => void = renameSync,
-): boolean {
+  readFileFn: (path: string, enc: "utf8") => string = (p) => readFileSync(p, "utf8"),
+  nowIsoFn: () => string = () => new Date().toISOString(),
+): PromoteCycleSnapshotResult {
   try {
     const snapPath = join(dataDir, `cycle-snapshot-${tickHHMM}.json`);
-    if (!existsSync(snapPath)) return false;
+    if (!existsSync(snapPath)) return { promoted: false, stale: false };
+
+    // ── FAIL-SAFE freshness gate ────────────────────────────────────────────
+    // Parse the source snapshot to read its age.  Use fetchedAt if present,
+    // fall back to created_at.  A missing or unparseable timestamp is treated
+    // as infinitely stale to avoid promoting corrupted data.
+    let snapshotAgeMs: number = Infinity;
+    try {
+      const raw = readFileFn(snapPath, "utf8");
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const tsStr =
+        (typeof parsed["fetchedAt"] === "string" ? parsed["fetchedAt"] : null) ??
+        (typeof parsed["created_at"] === "string" ? parsed["created_at"] : null) ??
+        (typeof (parsed["macro_snapshot"] as Record<string, unknown> | undefined)?.["fetchedAt"] === "string"
+          ? (parsed["macro_snapshot"] as Record<string, unknown>)["fetchedAt"] as string
+          : null);
+      if (tsStr) {
+        const snapshotMs = new Date(tsStr).getTime();
+        const nowMs = new Date(nowIsoFn()).getTime();
+        if (!isNaN(snapshotMs)) {
+          snapshotAgeMs = nowMs - snapshotMs;
+        }
+      }
+    } catch {
+      // JSON parse error → treat as stale; do NOT promote
+    }
+
+    if (snapshotAgeMs > SNAPSHOT_MAX_STALENESS_MS) {
+      // REFUSED — stale content; leave cycle-snapshot-latest.json untouched
+      return { promoted: false, stale: true };
+    }
+    // ── end freshness gate ──────────────────────────────────────────────────
+
     const latestTmp = join(dataDir, "cycle-snapshot-latest.json.tmp." + Date.now());
     const latestPath = join(dataDir, "cycle-snapshot-latest.json");
     copyFileFn(snapPath, latestTmp);
     renameFn(latestTmp, latestPath);
-    return true;
+    return { promoted: true, stale: false };
   } catch {
-    return false;
+    return { promoted: false, stale: false };
   }
 }
 
@@ -210,7 +283,8 @@ export interface EmitPressureStateDeps {
   computeDevQueueDepthFn: (orchStatePath: string) => number | null;
   computeHostHeadroomMbFn: () => number | null;
   writePressureStateAtomicFn: (path: string, state: PressureState) => string | null;
-  promoteCycleSnapshotFn: (dataDir: string, tickHHMM: string) => boolean;
+  /** Returns { promoted, stale } — stale=true means REFUSED due to freshness gate */
+  promoteCycleSnapshotFn: (dataDir: string, tickHHMM: string) => PromoteCycleSnapshotResult;
   nowIso: () => string;
 }
 
@@ -220,7 +294,8 @@ const defaultDeps: EmitPressureStateDeps = {
   computeDevQueueDepthFn: computeDevQueueDepth,
   computeHostHeadroomMbFn: computeHostHeadroomMb,
   writePressureStateAtomicFn: writePressureStateAtomic,
-  promoteCycleSnapshotFn: promoteCycleSnapshot,
+  // Production wrapper: passes through to promoteCycleSnapshot with defaults
+  promoteCycleSnapshotFn: (dataDir, tickHHMM) => promoteCycleSnapshot(dataDir, tickHHMM),
   nowIso: () => new Date().toISOString(),
 };
 
@@ -243,6 +318,8 @@ export type EmitPressureStateResult =
       emitted_at: string;
       pressure_state_path: string;
       cycle_snapshot_promoted: boolean;
+      /** Present and true when a cycle-snapshot was REFUSED by the freshness gate */
+      stale_warning?: true;
     }
   | {
       success: false;
@@ -294,7 +371,13 @@ export async function runEmitPressureState(
     const host_headroom_mb = deps.computeHostHeadroomMbFn();
     fieldsWritten.push("host_headroom_mb");
 
+    // Promote cycle snapshot if present (FAIL-SAFE: freshness gate inside)
+    const promoteResult: PromoteCycleSnapshotResult = tickHHMM
+      ? deps.promoteCycleSnapshotFn(dataDir, tickHHMM)
+      : { promoted: false, stale: false };
+
     // Build pressure state — 9-key schema (matches telemetry.md PS_EOF lines ~48-58)
+    // stale_warning is set when the freshness gate REFUSED a promotion
     const pressureState: PressureState = {
       emitted_at: emittedAt,
       tick_id: tickId,
@@ -304,7 +387,7 @@ export async function runEmitPressureState(
       calendar_status: args.calendar_status ?? "unknown",
       dev_queue_depth: dev_queue_depth,
       host_headroom_mb: host_headroom_mb,
-      stale_warning: false,
+      stale_warning: promoteResult.stale,
     };
 
     // Atomic write
@@ -319,23 +402,23 @@ export async function runEmitPressureState(
     }
     fieldsWritten.push("pressure_state_written");
 
-    // Promote cycle snapshot if present
-    const promoted = tickHHMM
-      ? deps.promoteCycleSnapshotFn(dataDir, tickHHMM)
-      : false;
-
     console.log(
       `[emit_pressure_state] ok emitted_at=${emittedAt} tick_id=${tickId} ` +
         `signal_backlog=${signal_backlog} dev_queue_depth=${dev_queue_depth} ` +
-        `host_headroom_mb=${host_headroom_mb} cycle_snapshot_promoted=${promoted}`,
+        `host_headroom_mb=${host_headroom_mb} ` +
+        `cycle_snapshot_promoted=${promoteResult.promoted} stale_warning=${promoteResult.stale}`,
     );
 
-    return {
+    const result: EmitPressureStateResult = {
       success: true,
       emitted_at: emittedAt,
       pressure_state_path: pressureStatePath,
-      cycle_snapshot_promoted: promoted,
+      cycle_snapshot_promoted: promoteResult.promoted,
     };
+    if (promoteResult.stale) {
+      (result as { stale_warning?: true }).stale_warning = true;
+    }
+    return result;
   } catch (err) {
     const reason = (err as Error).message ?? String(err);
     console.error(`[emit_pressure_state] unexpected error: ${reason}`);

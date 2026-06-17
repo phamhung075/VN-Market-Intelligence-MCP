@@ -93,3 +93,20 @@ Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
 **REBUILD_REQUIRED:** NO (test-only changes)
 
 Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
+
+## 2026-06-17 · FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE — freshness gate on promoteCycleSnapshot
+
+**Task:** FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE (P1, S, /goal#1 violation)
+**Root:** `promoteCycleSnapshot()` only checked `existsSync(snapPath)` — ZERO freshness validation. A stale `cycle-snapshot-<HH:MM>.json` from 2026-06-02 with a colliding tick was `copyFileSync→rename`'d onto `cycle-snapshot-latest.json`, stamping fresh mtime onto 15-day-old content (oilUsd 93.95 vs live 79.49, goldUsd 4560 vs live 4344.9). Consumers (cycle-bootstrap → market-watcher/digest-predict/unified-agent) served June-2 macro.
+
+**Fix:** FAIL-SAFE freshness gate at promote-time (no date literals, no per-instance hardcode). Added `SNAPSHOT_MAX_STALENESS_MS = 4 * 60 * 60 * 1000` (4 h constant). `promoteCycleSnapshot()` now reads `fetchedAt`/`created_at`/`macro_snapshot.fetchedAt` from source JSON; if age > threshold → `{ promoted: false, stale: true }`, latest file UNTOUCHED. Missing/broken timestamp → treated as infinitely stale → refused. Also changed `PressureState.stale_warning: false` literal to `boolean`; `runEmitPressureState` propagates `stale_warning:true` into both pressure-state.json and the tool result when gate refuses.
+
+**Files changed:**
+- `apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts` — SNAPSHOT_MAX_STALENESS_MS constant, PromoteCycleSnapshotResult type, promoteCycleSnapshot freshness gate, PressureState.stale_warning boolean, deps interface updated, runEmitPressureState uses promoteResult.{promoted,stale}
+- `apps/mcp-server/src/__tests__/emit-pressure-state.test.ts` — updated existing AC-3 tests for new return type; added AC-5 group (8 new tests: stale refused + latest untouched, no-timestamp refused, broken JSON refused, boundary fresh, macro_snapshot.fetchedAt fallback, runEmitPressureState stale/fresh/no-file integration)
+
+**Gate results:** tsc clean (0 errors) | 26/26 pass (was 18) | full suite pre-existing 46 fail (all in _deprecated/ + unrelated files, not in my files) | tools=165 (unchanged) | sched=3 (unchanged)
+
+**REBUILD_REQUIRED:** YES — promoteCycleSnapshot logic changed; ops must rebuild mcp-server container to activate freshness gate at live promote-time.
+
+Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY

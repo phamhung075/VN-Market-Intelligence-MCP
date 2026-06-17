@@ -1,5 +1,6 @@
 /**
- * emit-pressure-state.test.ts — EMIT-DARK-OPTION-C
+ * emit-pressure-state.test.ts — EMIT-DARK-OPTION-C +
+ *                               FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE
  *
  * Tests for emit_pressure_state MCP tool (runEmitPressureState core logic).
  *
@@ -8,6 +9,10 @@
  *   (2) Atomic write produces valid 9-key JSON
  *   (3) Cycle-snapshot promotion when present / no-op when absent
  *   (4) Never-throws on missing paths (returns success:false or null fields)
+ *   (5) [FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE]
+ *       Fresh snapshot → promoted:true, stale:false
+ *       Stale snapshot REFUSED → promoted:false, stale:true, latest UNTOUCHED
+ *       Missing/broken timestamp → treated as stale → REFUSED
  *
  * Sink strategy — ALL writes go to tmp; no production state touched:
  *   - signalsDir    → tmpDir/signals/
@@ -26,7 +31,7 @@ import {
   readFileSync,
   writeFileSync,
 } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 
 import {
   runEmitPressureState,
@@ -34,8 +39,10 @@ import {
   computeDevQueueDepth,
   writePressureStateAtomic,
   promoteCycleSnapshot,
+  SNAPSHOT_MAX_STALENESS_MS,
   type EmitPressureStateDeps,
   type PressureState,
+  type PromoteCycleSnapshotResult,
 } from "../interface/mcp/tools/system/emitPressureStateTool.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,6 +111,24 @@ function makeOrchState(dir: string, tasks: Array<{ status: string }>): string {
   writeFileSync(orchStatePath, JSON.stringify(state, null, 2), "utf8");
   return orchStatePath;
 }
+
+/** ISO string that is `offsetMs` ms before `nowIso` */
+function tsAgo(nowIso: string, offsetMs: number): string {
+  return new Date(new Date(nowIso).getTime() - offsetMs).toISOString();
+}
+
+/** Build a minimal valid cycle-snapshot JSON string */
+function makeSnapJson(createdAt: string): string {
+  return JSON.stringify({
+    tick: "12:00",
+    created_at: createdAt,
+    macro_snapshot: { fetchedAt: createdAt, oilUsd: 79.49, goldUsd: 4344.9 },
+  });
+}
+
+const NOW_ISO = "2026-06-17T12:00:00.000Z";
+const FRESH_AGE_MS = SNAPSHOT_MAX_STALENESS_MS - 60_000; // 1 min inside window
+const STALE_AGE_MS = 15 * 24 * 60 * 60 * 1000; // 15 days — well beyond threshold
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AC-1: computeSignalBacklog
@@ -250,50 +275,188 @@ describe("writePressureStateAtomic", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AC-3: promoteCycleSnapshot
+// AC-3: promoteCycleSnapshot (existing behavior — no-file / happy path)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("promoteCycleSnapshot", () => {
-  test("promotes cycle-snapshot-HH:MM.json to cycle-snapshot-latest.json when present", () => {
-    const dataDir = join(tmpDir, "data");
-    mkdirSync(dataDir, { recursive: true });
-
-    const snapContent = JSON.stringify({ tick: "18:00", regime_status: "bull" });
-    writeFileSync(join(dataDir, "cycle-snapshot-18:00.json"), snapContent, "utf8");
-
-    const promoted = promoteCycleSnapshot(dataDir, "18:00");
-    expect(promoted).toBe(true);
-
-    const latestPath = join(dataDir, "cycle-snapshot-latest.json");
-    expect(existsSync(latestPath)).toBe(true);
-    const parsed = JSON.parse(readFileSync(latestPath, "utf8"));
-    expect(parsed.tick).toBe("18:00");
-    expect(parsed.regime_status).toBe("bull");
-  });
-
+describe("promoteCycleSnapshot — base behavior", () => {
   test("returns false (no-op) when per-tick snapshot is absent", () => {
     const dataDir = join(tmpDir, "data-no-snap");
     mkdirSync(dataDir, { recursive: true });
 
-    const promoted = promoteCycleSnapshot(dataDir, "12:00");
-    expect(promoted).toBe(false);
+    const result = promoteCycleSnapshot(dataDir, "12:00");
+    expect(result.promoted).toBe(false);
+    expect(result.stale).toBe(false);
     expect(existsSync(join(dataDir, "cycle-snapshot-latest.json"))).toBe(false);
+  });
+
+  test("promotes a FRESH cycle-snapshot to cycle-snapshot-latest.json", () => {
+    const dataDir = join(tmpDir, "data");
+    mkdirSync(dataDir, { recursive: true });
+
+    // Write fresh snapshot (age = 1 min — inside SNAPSHOT_MAX_STALENESS_MS window)
+    const freshTs = tsAgo(NOW_ISO, FRESH_AGE_MS);
+    const snapContent = makeSnapJson(freshTs);
+    writeFileSync(join(dataDir, "cycle-snapshot-18:00.json"), snapContent, "utf8");
+
+    const result = promoteCycleSnapshot(
+      dataDir,
+      "18:00",
+      undefined,
+      undefined,
+      undefined,
+      () => NOW_ISO,
+    );
+
+    expect(result.promoted).toBe(true);
+    expect(result.stale).toBe(false);
+
+    const latestPath = join(dataDir, "cycle-snapshot-latest.json");
+    expect(existsSync(latestPath)).toBe(true);
+    const parsed = JSON.parse(readFileSync(latestPath, "utf8"));
+    expect(parsed.macro_snapshot.oilUsd).toBe(79.49);
   });
 
   test("no .tmp file remains after promotion", () => {
     const dataDir = join(tmpDir, "data-clean");
     mkdirSync(dataDir, { recursive: true });
+    const freshTs = tsAgo(NOW_ISO, FRESH_AGE_MS);
     writeFileSync(
       join(dataDir, "cycle-snapshot-09:00.json"),
-      JSON.stringify({ tick: "09:00" }),
+      makeSnapJson(freshTs),
       "utf8",
     );
 
-    promoteCycleSnapshot(dataDir, "09:00");
+    promoteCycleSnapshot(dataDir, "09:00", undefined, undefined, undefined, () => NOW_ISO);
 
     const files = require("node:fs").readdirSync(dataDir) as string[];
     const tmpFiles = files.filter((f: string) => f.includes(".tmp."));
     expect(tmpFiles).toHaveLength(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AC-5: FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE — freshness gate
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("promoteCycleSnapshot — FAIL-SAFE freshness gate", () => {
+  test("REFUSES stale snapshot (15 days old) → promoted:false, stale:true, latest UNTOUCHED", () => {
+    const dataDir = join(tmpDir, "data-stale");
+    mkdirSync(dataDir, { recursive: true });
+    const snapPath = join(dataDir, "cycle-snapshot-12:00.json");
+    const latestPath = join(dataDir, "cycle-snapshot-latest.json");
+
+    const staleTs = tsAgo(NOW_ISO, STALE_AGE_MS);
+    writeFileSync(snapPath, makeSnapJson(staleTs), "utf8");
+    // Plant a sentinel in latest to prove it stays untouched
+    writeFileSync(latestPath, JSON.stringify({ _sentinel: "untouched" }), "utf8");
+
+    const result = promoteCycleSnapshot(
+      dataDir,
+      "12:00",
+      undefined,
+      undefined,
+      undefined,
+      () => NOW_ISO,
+    );
+
+    expect(result.promoted).toBe(false);
+    expect(result.stale).toBe(true);
+
+    // cycle-snapshot-latest.json MUST be byte-for-byte untouched
+    const latestContent = JSON.parse(readFileSync(latestPath, "utf8"));
+    expect(latestContent._sentinel).toBe("untouched");
+  });
+
+  test("REFUSES snapshot with no timestamp → promoted:false, stale:true", () => {
+    const dataDir = join(tmpDir, "data-no-ts");
+    mkdirSync(dataDir, { recursive: true });
+    // Snapshot without fetchedAt or created_at
+    writeFileSync(
+      join(dataDir, "cycle-snapshot-09:00.json"),
+      JSON.stringify({ tick: "09:00", oilUsd: 79 }),
+      "utf8",
+    );
+
+    const result = promoteCycleSnapshot(
+      dataDir,
+      "09:00",
+      undefined,
+      undefined,
+      undefined,
+      () => NOW_ISO,
+    );
+
+    expect(result.promoted).toBe(false);
+    expect(result.stale).toBe(true);
+  });
+
+  test("REFUSES snapshot with broken JSON → promoted:false, stale:true", () => {
+    const dataDir = join(tmpDir, "data-broken");
+    mkdirSync(dataDir, { recursive: true });
+    writeFileSync(
+      join(dataDir, "cycle-snapshot-09:15.json"),
+      "{ THIS IS NOT VALID JSON }",
+      "utf8",
+    );
+
+    const result = promoteCycleSnapshot(
+      dataDir,
+      "09:15",
+      undefined,
+      undefined,
+      undefined,
+      () => NOW_ISO,
+    );
+
+    expect(result.promoted).toBe(false);
+    expect(result.stale).toBe(true);
+  });
+
+  test("accepts snapshot exactly at the freshness boundary (age = threshold - 1 min)", () => {
+    const dataDir = join(tmpDir, "data-boundary");
+    mkdirSync(dataDir, { recursive: true });
+    const freshTs = tsAgo(NOW_ISO, FRESH_AGE_MS);
+    writeFileSync(
+      join(dataDir, "cycle-snapshot-12:00.json"),
+      makeSnapJson(freshTs),
+      "utf8",
+    );
+
+    const result = promoteCycleSnapshot(
+      dataDir,
+      "12:00",
+      undefined,
+      undefined,
+      undefined,
+      () => NOW_ISO,
+    );
+
+    expect(result.promoted).toBe(true);
+    expect(result.stale).toBe(false);
+  });
+
+  test("reads fetchedAt inside macro_snapshot as fallback when top-level created_at absent", () => {
+    const dataDir = join(tmpDir, "data-macro-fetch");
+    mkdirSync(dataDir, { recursive: true });
+    const freshTs = tsAgo(NOW_ISO, FRESH_AGE_MS);
+    // Only macro_snapshot.fetchedAt — no top-level created_at
+    writeFileSync(
+      join(dataDir, "cycle-snapshot-12:00.json"),
+      JSON.stringify({ tick: "12:00", macro_snapshot: { fetchedAt: freshTs, oilUsd: 79 } }),
+      "utf8",
+    );
+
+    const result = promoteCycleSnapshot(
+      dataDir,
+      "12:00",
+      undefined,
+      undefined,
+      undefined,
+      () => NOW_ISO,
+    );
+
+    expect(result.promoted).toBe(true);
+    expect(result.stale).toBe(false);
   });
 });
 
@@ -313,8 +476,8 @@ describe("runEmitPressureState — never throws", () => {
       computeDevQueueDepthFn: () => null,
       computeHostHeadroomMbFn: () => null,
       writePressureStateAtomicFn: (path, state) =>
-        writePressureStateAtomic(path, state),
-      promoteCycleSnapshotFn: () => false,
+        writePressureStateAtomic(pressureStatePath, state),
+      promoteCycleSnapshotFn: (): PromoteCycleSnapshotResult => ({ promoted: false, stale: false }),
       nowIso: () => "2026-06-05T18:01:31.000Z",
       ...overrides,
     };
@@ -375,6 +538,90 @@ describe("runEmitPressureState — never throws", () => {
     if (!result!.success) {
       expect(result!.reason).toContain("NO_GIT");
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AC-5 Integration: runEmitPressureState stale/fresh snapshot via deps
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("runEmitPressureState — stale/fresh snapshot integration", () => {
+  function makeRunDeps(promoteResult: PromoteCycleSnapshotResult): {
+    deps: EmitPressureStateDeps;
+    capturedState: { value: PressureState | null };
+  } {
+    const capturedState: { value: PressureState | null } = { value: null };
+
+    const deps: EmitPressureStateDeps = {
+      getRoot: () => "/fake/root",
+      computeSignalBacklogFn: () => 0,
+      computeDevQueueDepthFn: () => 0,
+      computeHostHeadroomMbFn: () => 512,
+      writePressureStateAtomicFn: (_path, state) => {
+        capturedState.value = state;
+        return null; // success
+      },
+      promoteCycleSnapshotFn: () => promoteResult,
+      nowIso: () => NOW_ISO,
+    };
+
+    return { deps, capturedState };
+  }
+
+  test("stale snapshot → cycle_snapshot_promoted:false, stale_warning:true in result AND pressure-state", async () => {
+    const { deps, capturedState } = makeRunDeps({ promoted: false, stale: true });
+
+    const result = await runEmitPressureState(
+      { tick_id: "2026-06-17T12:00:00Z" },
+      deps,
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error("expected success");
+
+    expect(result.cycle_snapshot_promoted).toBe(false);
+    expect(result.stale_warning).toBe(true);
+
+    // pressure-state.json must also carry stale_warning:true
+    expect(capturedState.value).not.toBeNull();
+    expect(capturedState.value!.stale_warning).toBe(true);
+  });
+
+  test("fresh snapshot → cycle_snapshot_promoted:true, stale_warning absent/falsy in result AND pressure-state stale_warning:false", async () => {
+    const { deps, capturedState } = makeRunDeps({ promoted: true, stale: false });
+
+    const result = await runEmitPressureState(
+      { tick_id: "2026-06-17T12:00:00Z" },
+      deps,
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error("expected success");
+
+    expect(result.cycle_snapshot_promoted).toBe(true);
+    // stale_warning must not be present (or be falsy)
+    expect((result as Record<string, unknown>)["stale_warning"]).toBeFalsy();
+
+    // pressure-state stale_warning:false
+    expect(capturedState.value).not.toBeNull();
+    expect(capturedState.value!.stale_warning).toBe(false);
+  });
+
+  test("no snapshot file → cycle_snapshot_promoted:false, no stale_warning", async () => {
+    const { deps, capturedState } = makeRunDeps({ promoted: false, stale: false });
+
+    const result = await runEmitPressureState(
+      { tick_id: "2026-06-17T12:00:00Z" },
+      deps,
+    );
+
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error("expected success");
+
+    expect(result.cycle_snapshot_promoted).toBe(false);
+    expect((result as Record<string, unknown>)["stale_warning"]).toBeFalsy();
+
+    expect(capturedState.value!.stale_warning).toBe(false);
   });
 });
 
@@ -440,7 +687,7 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
       computeHostHeadroomMbFn: () => 8192, // fixed for test determinism
       writePressureStateAtomicFn: (path, state) =>
         writePressureStateAtomic(path, state),
-      promoteCycleSnapshotFn: () => false,
+      promoteCycleSnapshotFn: (): PromoteCycleSnapshotResult => ({ promoted: false, stale: false }),
       nowIso: () => "2026-06-05T18:01:31.000Z",
     };
 
@@ -481,16 +728,22 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
     expect(parsed.stale_warning).toBe(false);
   });
 
-  test("cycle-snapshot promoted when tick-id snapshot exists", async () => {
+  test("cycle-snapshot promoted when tick-id snapshot exists and is fresh", async () => {
     const dataDir = join(tmpDir, "data2");
     mkdirSync(dataDir, { recursive: true });
     const orchDir = join(dataDir, "orch");
     mkdirSync(orchDir, { recursive: true });
 
-    // Create a per-tick cycle-snapshot
+    // Create a FRESH per-tick cycle-snapshot
+    const freshTs = tsAgo(NOW_ISO, FRESH_AGE_MS);
     writeFileSync(
       join(dataDir, "cycle-snapshot-18:00.json"),
-      JSON.stringify({ tick: "18:00", regime_status: "sideways", volatility_level: "normal" }),
+      JSON.stringify({
+        tick: "18:00",
+        created_at: freshTs,
+        regime_status: "sideways",
+        volatility_level: "normal",
+      }),
       "utf8",
     );
 
@@ -499,17 +752,18 @@ describe("runEmitPressureState — end-to-end with fixtures", () => {
       computeSignalBacklogFn: () => 0,
       computeDevQueueDepthFn: () => 0,
       computeHostHeadroomMbFn: () => null,
-      writePressureStateAtomicFn: (path, state) => {
+      writePressureStateAtomicFn: (_path, state) => {
         // Write to dataDir directly for this test
         const adjustedPath = join(dataDir, "pressure-state.json");
         return writePressureStateAtomic(adjustedPath, state);
       },
-      promoteCycleSnapshotFn: (dir, hhmm) => promoteCycleSnapshot(dataDir, hhmm),
-      nowIso: () => "2026-06-05T18:01:31.000Z",
+      promoteCycleSnapshotFn: (_dir, hhmm) =>
+        promoteCycleSnapshot(dataDir, hhmm, undefined, undefined, undefined, () => NOW_ISO),
+      nowIso: () => NOW_ISO,
     };
 
     const result = await runEmitPressureState(
-      { tick_id: "2026-06-05T18:00:00Z" },
+      { tick_id: "2026-06-17T18:00:00Z" },
       deps,
     );
 

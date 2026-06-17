@@ -20233,13 +20233,15 @@
         "size": "S",
         "priority": "P1",
         "baseline_pass": "n/a (off-hours, VN market closed; producer-side data-integrity)",
-        "status": "IN_PROGRESS",
+        "status": "REVIEW",
         "source": "DEFECT-B from agent_fabrication_defect signal agent-fabrication-gatherers-offhours-2026-06-17T1212Z.json (cowork-dispatcher), router RAW-verified; /goal#1 live no-fake-data violation",
         "created_at": "2026-06-17T12:35Z",
         "created_by": "po-batch",
         "claimed_at": "2026-06-17T12:35Z",
         "claimed_by": "dev-team",
-        "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). FIX coding lane -> dev-mcp-server (coding WIP 0->1, under WIP<=2). FAIL-SAFE freshness gate at promote-time. bun tests BEFORE ops rebuild (RED-PREPUSH); targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down); QA LIVE-verify raw (cycle_snapshot_promoted=false + stale_warning=true on stale, latest untouched), never badges."
+        "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). FIX coding lane -> dev-mcp-server (coding WIP 0->1, under WIP<=2). FAIL-SAFE freshness gate at promote-time. bun tests BEFORE ops rebuild (RED-PREPUSH); targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down); QA LIVE-verify raw (cycle_snapshot_promoted=false + stale_warning=true on stale, latest untouched), never badges.",
+        "review_at": "2026-06-17T13:08:41Z",
+        "reviewed_by": "dev-mcp-server"
       }
     ],
     "ready": [
