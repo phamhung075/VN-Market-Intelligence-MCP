@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T13:08:01Z",
-  "_updated_by": "router",
+  "_updated_at": "2026-06-17T13:20:00Z",
+  "_updated_by": "qa",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -11221,29 +11221,6 @@
         "dedup_note": "EXTENDS FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified, shipped option-1 in-mutex push) — does NOT duplicate it. This is the deferred option-2 backstop the DISCIPLINE task explicitly named. Reuses the proven worktree-push recipe, does not invent a new mechanism.",
         "size": "S",
         "origin": "po-s98 fleet-push 2026-06-17 — 2nd ~100-commit manual-nudge recurrence this session"
-      },
-      {
-        "id": "FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616",
-        "title": "Backfill/recompute contaminated foreign-flow rows 06-14..16 (residue not covered by writer-root fix)",
-        "status": "HELD",
-        "type": "FIX",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "next_agent": "dev-mcp-server",
-        "size": "S",
-        "blocking": false,
-        "depends": [
-          "FIX-FOREIGN-FLOW-INTEGRITY-BREAK"
-        ],
-        "hold_reason": "Recompute must read a FIXED writer — held until FIX-FOREIGN-FLOW-INTEGRITY-BREAK is QA-signed (done_verified), else backfill re-contaminates.",
-        "origin": "router-handoff 2026-06-17 — the P0 foreign-flow integrity fix (ddc36452/570ebedb/b24a0b6a/eff492d7) stops NEW clobbering but did NOT backfill already-contaminated rows. Live get_foreign_flow(VIC) still shows 06-14..16 at cumulative scale (217-239M net vol, holding 2.82-3.11%) while 06-17 is correct (-1.15M, room 347M).",
-        "fix_spec": "Backfill/recompute the contaminated 06-14..16 foreign-flow window (Net-Vol-daily, Holding Ratio, Room) for affected codes to the corrected daily-not-cumulative semantics, or NULL/is_estimate-flag where no real source exists. Recompute-on-read preferred over destructive backfill where feasible (see feedback_derived_column_fix_needs_reflow).",
-        "generic_mandate": "All codes in the contaminated window, not just VIC; verify the regime boundary (~06-12/06-13) is the only break and 06-17 stays correct.",
-        "verification_gate": "RAW: get_foreign_flow(VIC) + 2 more codes show 06-14..16 at plausible DAILY scale (continuous with 06-17 -1.15M, not 217-239M cumulative), holding ratio either real-sourced or NULL/is_estimate-flagged; no overnight regime discontinuity remains.",
-        "memory_ref": "feedback_derived_column_fix_needs_reflow, feedback_nonzero_values_need_plausibility_check",
-        "created": "2026-06-17T11:21:05Z",
-        "created_by": "po",
-        "source": "router-handoff-2026-06-17-fb-session"
       }
     ],
     "closed_sprints": [
@@ -14487,33 +14464,6 @@
         "done_code_note": "P0-B consumer defense-in-depth — taAlertScanJob L196-209 + bbAlertScanJob L195-198 reject latest bar close<=0||vol<=0 fail-closed; CANDLE_SQL SELECT volume added. Commit d79314bb. QA cycle-287 APPROVE-CODE (full suite 13181 pass / 52 fail ALL disjoint / tsc 0; SB-1..SB-5 behavioral each job). Router RAW-verified ops rebuild LIVE. Relocated review->done as CODE-COMPLETE; done_verified HELD to the shared 2026-06-18 ~02:15Z market-open gate."
       },
       {
-        "id": "FIX-FOREIGN-FLOW-INTEGRITY-BREAK",
-        "epic": "AUDIT-FETCH-COMPLETE",
-        "type": "FIX",
-        "status": "done",
-        "priority": "P0",
-        "blocking": false,
-        "zone": "apps/mcp-server/",
-        "route_to": "ops-vps-fetch",
-        "next_agent": "ops",
-        "dev_agent": "dev-mcp-server",
-        "parent_recon": "AUDIT-FC-FOREIGN-FLOW",
-        "title": "get_foreign_flow data-integrity break: overnight regime jump (Room 211M->4643M, Holding 0%->21.46%) + Net-Vol-daily column mislabeled cumulative + implausible 1.8B magnitudes",
-        "desc": "ROUTER-RAW-VERIFIED 2026-06-16 (HPG): get_foreign_flow(code) returns corrupt/regime-broken history. (1) Foreign Room jumps 211.22M (06-12)->4643.63M (06-13) overnight; (2) Holding Ratio jumps 0.00%->21.46% overnight — BUT recon AUDIT-FC-FOREIGN-FLOW confirms the bgapidatafeed source carries NO holding_ratio field (persisted NULL) so a 21.46% served value means a SECOND writer/source or a display computing it wrongly; (3) Net Vol (daily) column shows 1818.99M/1812.03M identical 3 days running (cumulative, not daily) yet the summary says Net 3d +6.96M shares — column appears cumulative/mislabeled; (4) 1.8B net shares for HPG is implausible. Likely a SOURCE-SWITCH or UNITS regime-break ~06-12/06-13. RECON FIRST (ops-vps-fetch): RAW-probe the writer path(s) into vnstock/daily_ohlcv foreign columns — identify what wrote the 06-13 regime break + where holding_ratio 21.46% comes from + whether Net-Vol-daily is daily or cumulative. THEN dev-mcp-server fixes the writer/labeling at root (NOT residue). Blocks FB decision-grade foreign-flow quoting.",
-        "size": "M",
-        "root_cause": "UNKNOWN-pending-recon: candidate = source-switch/units regime-break ~06-12/06-13 OR a non-bgapidatafeed writer injecting holding_ratio + cumulative-as-daily column mislabel.",
-        "generic_mandate": "No fake/implausible/regime-broken values on a served metric (/goal#1 no-fake-data); fix the WRITER not the residue; trace ALL writers into the foreign columns.",
-        "verification_gate": "RAW: HPG (+2 more) foreign Room/Holding/Net-Vol-daily history shows NO overnight regime discontinuity; Net-Vol-daily is genuinely daily (matches buy-sell of that day) not cumulative; Holding Ratio either has a real fresh source or is NULL/is_estimate-flagged (NOT a phantom 21.46%); magnitudes plausible for HPG float.",
-        "rebuild_required": true,
-        "source": "router raw-probe 2026-06-16 FB decision-grade production; dedup folds into AUDIT-FC-FOREIGN-FLOW epic",
-        "created_at": "2026-06-16T19:24:58Z",
-        "created_by": "po-triage-fb-2026-06-16",
-        "_moved_to_review_at": "2026-06-16T20:00:40Z",
-        "_review_by": "dev-mcp-server",
-        "qa_reroute_note": "ROUTER-HANDOFF 2026-06-17: rerouted next_agent ops-vps-fetch->qa (carryover QA hop). QA: verify LIVE vs named-volume market.db (real varied data, not constant); confirm the standing CI-RED set (~63 fails) is DISJOINT from this fix's changed files (regression-vs-weather, see feedback_ci_red_can_be_flaky); flag residual foreign-flow contamination 06-14..16 -> tracked in FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616.",
-        "updated_at": "2026-06-17T11:46:39Z"
-      },
-      {
         "id": "FIX-FB-POSTER-FABRICATES-STALE-EOD",
         "title": "fb-market-poster fabricates per-ticker data when CHEF EOD is stale",
         "status": "done",
@@ -14626,6 +14576,32 @@
         "done_verified_held": true,
         "live_gate_at": "2026-06-17T16:00Z",
         "live_gate_criteria": "real off-hours gatherer cycle PASSES exec-proof gate (non-null anchor, fresh notebook+macro); a thin/no-exec cycle FAILS LOUD (BUG telegram + signal file, NO log_agent_work(completed), NO WORK ping). Both behaviours observed live -> done_verified."
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616",
+        "title": "Backfill/recompute contaminated foreign-flow rows 06-14..16 (residue not covered by writer-root fix)",
+        "status": "done",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "size": "S",
+        "blocking": false,
+        "depends": [
+          "FIX-FOREIGN-FLOW-INTEGRITY-BREAK"
+        ],
+        "hold_reason": "Recompute must read a FIXED writer — held until FIX-FOREIGN-FLOW-INTEGRITY-BREAK is QA-signed (done_verified), else backfill re-contaminates.",
+        "origin": "router-handoff 2026-06-17 — the P0 foreign-flow integrity fix (ddc36452/570ebedb/b24a0b6a/eff492d7) stops NEW clobbering but did NOT backfill already-contaminated rows. Live get_foreign_flow(VIC) still shows 06-14..16 at cumulative scale (217-239M net vol, holding 2.82-3.11%) while 06-17 is correct (-1.15M, room 347M).",
+        "fix_spec": "Backfill/recompute the contaminated 06-14..16 foreign-flow window (Net-Vol-daily, Holding Ratio, Room) for affected codes to the corrected daily-not-cumulative semantics, or NULL/is_estimate-flag where no real source exists. Recompute-on-read preferred over destructive backfill where feasible (see feedback_derived_column_fix_needs_reflow).",
+        "generic_mandate": "All codes in the contaminated window, not just VIC; verify the regime boundary (~06-12/06-13) is the only break and 06-17 stays correct.",
+        "verification_gate": "RAW: get_foreign_flow(VIC) + 2 more codes show 06-14..16 at plausible DAILY scale (continuous with 06-17 -1.15M, not 217-239M cumulative), holding ratio either real-sourced or NULL/is_estimate-flagged; no overnight regime discontinuity remains.",
+        "memory_ref": "feedback_derived_column_fix_needs_reflow, feedback_nonzero_values_need_plausibility_check",
+        "created": "2026-06-17T11:21:05Z",
+        "created_by": "po",
+        "source": "router-handoff-2026-06-17-fb-session",
+        "qa_verdict": "APPROVED",
+        "qa_note": "[QA] 2026-06-17T13:20Z — ops applied NULL cleanup (not recompute) to 127 rows across 36 tickers in the 2026-06-13..16 window. Live named-volume keinos/sqlite3 confirmed: HPG+VIC 06-13..16 foreign_volume=null foreign_room=null. 06-17 intact (HPG=227,463 VIC=-1,154,805). Spot-check FPT/VCB/GAS/ACB clean. 136 non-null rows in window verified as non-watchlist tickers with NULL holding_ratio — plausible daily-net scale (max 351k), not cumulative-holding-scale phantom. No phantom cumulative values remain for any of the 36 contaminated tickers. Done_verified withheld on INTEGRITY-BREAK is now RELEASED.",
+        "qa_closed_at": "2026-06-17T13:20Z"
       }
     ],
     "done_verified": [
@@ -20156,6 +20132,36 @@
         "_review_by": "dev-mcp-server",
         "qa_reroute_note": "ROUTER-HANDOFF 2026-06-17: rerouted next_agent ops-vps-fetch->qa (carryover QA hop). QA: verify LIVE vs named-volume market.db (real varied data, not constant); confirm the standing CI-RED set (~63 fails) is DISJOINT from this fix's changed files (regression-vs-weather, see feedback_ci_red_can_be_flaky); flag residual foreign-flow contamination 06-14..16 -> tracked in FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616.",
         "updated_at": "2026-06-17T11:46:39Z"
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-INTEGRITY-BREAK",
+        "epic": "AUDIT-FETCH-COMPLETE",
+        "type": "FIX",
+        "status": "done_verified",
+        "priority": "P0",
+        "blocking": false,
+        "zone": "apps/mcp-server/",
+        "route_to": "ops-vps-fetch",
+        "next_agent": "ops",
+        "dev_agent": "dev-mcp-server",
+        "parent_recon": "AUDIT-FC-FOREIGN-FLOW",
+        "title": "get_foreign_flow data-integrity break: overnight regime jump (Room 211M->4643M, Holding 0%->21.46%) + Net-Vol-daily column mislabeled cumulative + implausible 1.8B magnitudes",
+        "desc": "ROUTER-RAW-VERIFIED 2026-06-16 (HPG): get_foreign_flow(code) returns corrupt/regime-broken history. (1) Foreign Room jumps 211.22M (06-12)->4643.63M (06-13) overnight; (2) Holding Ratio jumps 0.00%->21.46% overnight — BUT recon AUDIT-FC-FOREIGN-FLOW confirms the bgapidatafeed source carries NO holding_ratio field (persisted NULL) so a 21.46% served value means a SECOND writer/source or a display computing it wrongly; (3) Net Vol (daily) column shows 1818.99M/1812.03M identical 3 days running (cumulative, not daily) yet the summary says Net 3d +6.96M shares — column appears cumulative/mislabeled; (4) 1.8B net shares for HPG is implausible. Likely a SOURCE-SWITCH or UNITS regime-break ~06-12/06-13. RECON FIRST (ops-vps-fetch): RAW-probe the writer path(s) into vnstock/daily_ohlcv foreign columns — identify what wrote the 06-13 regime break + where holding_ratio 21.46% comes from + whether Net-Vol-daily is daily or cumulative. THEN dev-mcp-server fixes the writer/labeling at root (NOT residue). Blocks FB decision-grade foreign-flow quoting.",
+        "size": "M",
+        "root_cause": "UNKNOWN-pending-recon: candidate = source-switch/units regime-break ~06-12/06-13 OR a non-bgapidatafeed writer injecting holding_ratio + cumulative-as-daily column mislabel.",
+        "generic_mandate": "No fake/implausible/regime-broken values on a served metric (/goal#1 no-fake-data); fix the WRITER not the residue; trace ALL writers into the foreign columns.",
+        "verification_gate": "RAW: HPG (+2 more) foreign Room/Holding/Net-Vol-daily history shows NO overnight regime discontinuity; Net-Vol-daily is genuinely daily (matches buy-sell of that day) not cumulative; Holding Ratio either has a real fresh source or is NULL/is_estimate-flagged (NOT a phantom 21.46%); magnitudes plausible for HPG float.",
+        "rebuild_required": true,
+        "source": "router raw-probe 2026-06-16 FB decision-grade production; dedup folds into AUDIT-FC-FOREIGN-FLOW epic",
+        "created_at": "2026-06-16T19:24:58Z",
+        "created_by": "po-triage-fb-2026-06-16",
+        "_moved_to_review_at": "2026-06-16T20:00:40Z",
+        "_review_by": "dev-mcp-server",
+        "qa_reroute_note": "ROUTER-HANDOFF 2026-06-17: rerouted next_agent ops-vps-fetch->qa (carryover QA hop). QA: verify LIVE vs named-volume market.db (real varied data, not constant); confirm the standing CI-RED set (~63 fails) is DISJOINT from this fix's changed files (regression-vs-weather, see feedback_ci_red_can_be_flaky); flag residual foreign-flow contamination 06-14..16 -> tracked in FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616.",
+        "updated_at": "2026-06-17T11:46:39Z",
+        "done_verified_at": "2026-06-17T13:20Z",
+        "done_verified_by": "qa",
+        "done_verified_note": "[QA] done_verified RELEASED 2026-06-17T13:20Z — final blocker (FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616 cleanup) confirmed live. Named-volume market.db: all 36-ticker contamination window NULLed. 06-17 real values intact. No phantom cumulative values in served get_foreign_flow output."
       }
     ],
     "head": {
