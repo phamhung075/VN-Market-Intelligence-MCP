@@ -77,3 +77,36 @@ The post must NEVER emit a per-ticker move exceeding ±7% HOSE on HOSE-listed st
 ## Next agent
 
 **QA** — smoke-check the flow edits for guide compliance and size-justification accuracy. No container rebuild required (flow doc + init.md only).
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-17
+**Cycle:** 288
+**Verdict:** APPROVED
+**DJ:** sprint-FE-PAGE-REORG-qa.md §qa-S3
+
+### Checks run (flow-doc gate — no runtime required)
+
+| DoD | Requirement | Result |
+|---|---|---|
+| 1 | STEP 1b HARD-REQUIRED header + ANTI-FABRICATION RULE for live get_market_snapshot spine | PASS — L66 + L71 confirmed |
+| 2 | FAIL-LOUD honest gap path when tool fails | PASS — L73 "công cụ chưa trả số cho [TICKER] phiên này" |
+| 3 | CHEF data restricted to narrative-only, never numeric spine | PASS — L70-71 explicit FORBIDDEN clause |
+| 4 | STEP 4b DATA-INTEGRITY PLAUSIBILITY GATE wired to scripts/fb-data-integrity-gate.sh | PASS — L572-598, non-zero exit = BLOCK, gate-not-found = SKIP log |
+| 5 | memory_ref feedback_fb_poster_fabricates_when_data_thin referenced | PASS — L70 + size-justification L1 |
+
+### Additional checks
+
+| Check | Result |
+|---|---|
+| RETURN block LIVE_DATA_SPINE + INTEGRITY GATE fields | PASS (L747, L749) |
+| STEP 8 notebook template entries | PASS (L720-721) |
+| init.md version=2026-06-17, anti-fabrication rules | PASS |
+| Size-justification 758L updated (file ~759L) | PASS (within rounding) |
+| ±7% HOSE sentinel in STEP 1b | PASS (L73) |
+| tsc | N/A (flow .md document) |
+| Container rebuild | NOT required |
+
+**Board update:** REVIEW → DONE

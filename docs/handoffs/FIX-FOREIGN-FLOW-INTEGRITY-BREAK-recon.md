@@ -170,3 +170,35 @@ Verification gate (from task): HPG + 2 more tickers show no overnight regime dis
 - **Graphify:** skipped (invariant note only, no structural graph change)
 
 **REBUILD_REQUIRED:** YES — storeTradingStats() SQL changed in mcp-server container. After rebuild, pre-existing rows with phantom VCI values (foreign_volume=1.8B) in vnstock_trading_stats will NOT be retroactively corrected. Ops must verify: new Writer B fires → row does NOT update foreign_volume/foreign_room. Historical phantom rows can be left in place (Writer A will overwrite them on next push).
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-17
+**Cycle:** 288
+**Verdict:** APPROVED (done_verified WITHHELD — backfill contamination window 2026-06-13..16 is KNOWN RESIDUAL, separately tracked)
+**Impl commit:** ddc36452
+**DJ:** sprint-FE-PAGE-REORG-qa.md §qa-S4
+
+### Test results
+- Targeted: `FIX-FOREIGN-FLOW-INTEGRITY-BREAK.test.ts` — **4 pass / 0 fail** (own uncached run)
+- CI per-file-isolation (P=8): 13151 pass / 42 skip / 28 fail — **10 failing files, ALL DISJOINT from commit-touched files** (confirmed zero-overlap by set comparison)
+- TSC: **0 errors**
+- DDD: **PASS** — interface→infrastructure pre-existing permitted; no domain→infra violations
+- Security: **PASS** — 0 process.env, no secrets, SQL parameterized
+- mock-guard: **EXIT 0**
+
+### Live DB probe (named-volume, docker exec bun)
+```
+HPG 2026-06-17: foreign_volume=227,463  foreign_room=209,934,684  current_holding_ratio=0.216  ← Writer A daily net CORRECT
+HPG 2026-06-16: foreign_volume=1,818,985,372  foreign_room=4,643,630,486  ← KNOWN RESIDUAL (pre-fix phantom VCI, backfill task FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616)
+VIC 2026-06-17: foreign_volume=-1,154,805  foreign_room=347,276,984  ← Writer A daily net CORRECT
+```
+
+### Confirmed:
+- New-day writer isolation WORKS: Writer B fires will NOT overwrite foreign_volume/foreign_room going forward
+- Backfill contamination (2026-06-13..16): confirmed, flagged, routed to FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616 — NOT blocking this fix per task scope
+- Image created 2026-06-17T07:13:16Z > commit 2026-06-16T19:59:56Z — rebuild captured fix
+
+**Board update:** REVIEW → DONE (done_verified withheld pending backfill cleanup)

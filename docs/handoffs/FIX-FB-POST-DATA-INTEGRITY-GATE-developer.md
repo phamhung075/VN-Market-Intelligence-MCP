@@ -133,3 +133,52 @@ See commit record below.
 ## Next agent
 
 **QA** — verify the gate script: run the three self-verify checks above + confirm dev-standards pointer. No container rebuild required (shell script only).
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-17
+**Cycle:** 288
+**Verdict:** APPROVED
+**DJ:** sprint-FE-PAGE-REORG-qa.md §qa-S2
+
+### Checks run
+
+| Check | Result |
+|---|---|
+| Self-verify 1: clean post `docs/social/fb-post-2026-06-17.md` → `[PASS]` exit 0 | PASS (live confirmed) |
+| Self-verify 2: VRE −9.4% injected → `[BLOCK] Check-A HOSE-price-limit` + `[BLOCK] Check-B live-delta` exit 1 | PASS (both checks fired, exit 1 confirmed) |
+| Self-verify 3: VIC −3.5% live-delta violation → `[BLOCK] Check-B` exit 1 | PASS (exit 1 confirmed) |
+| Exit non-zero on BLOCK | CONFIRMED — `exit 1` for violations, `exit 0` only on `$VIOLATIONS -eq 0` |
+| dev-standards.md § Script Persistence pointer | CONFIRMED — lines 49–56 |
+| tsc | N/A (pure bash script) |
+| DDD / security | N/A (shell, no TypeScript) |
+| mock-guard | N/A (shell) |
+| Container rebuild required | NO |
+
+### Live stdout (Test 1 — clean post)
+```
+[INFO] fb-data-integrity-gate: live snapshot fetched from http://localhost:3000/mcp/api/prices/batch
+[PASS] fb-data-integrity-gate: 0 violations
+EXIT: 0
+```
+
+### Live stdout (Test 2 — VRE −9.4% injected)
+```
+[INFO] fb-data-integrity-gate: live snapshot fetched from http://localhost:3000/mcp/api/prices/batch
+[BLOCK] Check-A HOSE-price-limit: VRE post=-9.4% exceeds ±7.0% daily limit — FABRICATION SIGNAL
+[BLOCK] Check-B live-delta: VRE post=-9.4% live=-1.75% delta=7.65pp > 1.0pp tolerance
+[BLOCK] fb-data-integrity-gate: 2 violation(s) — fix ALL before STEP 5 write
+EXIT: 1
+```
+
+### Live stdout (Test 3 — VIC −3.5% live-delta)
+```
+[INFO] fb-data-integrity-gate: live snapshot fetched from http://localhost:3000/mcp/api/prices/batch
+[BLOCK] Check-B live-delta: VIC post=-3.5% live=-1.03% delta=2.47pp > 1.0pp tolerance
+[BLOCK] fb-data-integrity-gate: 1 violation(s) — fix ALL before STEP 5 write
+EXIT: 1
+```
+
+**Board update:** REVIEW → DONE

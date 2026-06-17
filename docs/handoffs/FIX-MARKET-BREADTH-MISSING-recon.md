@@ -150,3 +150,40 @@ RAW: `get_market_snapshot` returns non-null `advances` + `declines` + `noChange`
 **REBUILD_REQUIRED:** YES — new fetchVnIndexBreadthAndLiquidity() function in mcp-server; get_market_snapshot now fetches breadth in parallel.
 
 **done_verified gate:** call get_market_breadth via gateway; advances integer in [100, 500]; declines integer in [100, 500]; totalTurnoverBn in [5000, 30000] tỷ on trading days.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-17
+**Cycle:** 288
+**Verdict:** APPROVED + done_verified
+**Impl commit:** ddc36452
+**DJ:** sprint-FE-PAGE-REORG-qa.md §qa-S5
+
+### Test results
+- Targeted: `FIX-MARKET-BREADTH-LIQUIDITY.test.ts` — **21 pass / 0 fail** (own uncached run)
+- CI per-file-isolation: **10 failing files, ALL DISJOINT** from commit-touched files (same disjoint set as FIX-FOREIGN-FLOW-INTEGRITY-BREAK)
+- TSC: **0 errors**
+- DDD: **PASS**
+- Security: **PASS**
+- mock-guard: **EXIT 0**
+
+### Live GATE probe (get_market_breadth via MCP HTTP)
+```
+advances: 168     ✓ ∈ [100, 500]
+declines: 129     ✓ ∈ [100, 500]
+noChange:  65
+noTrade:   41
+ceilingStocks: 6
+floorStocks:   0
+totalTurnoverBn: 24185  ✓ ∈ [5000, 30000]
+date: 2026-06-17
+source: api-finfo.vndirect.com.vn/v4/vnmarket_prices
+```
+
+- Total = 168+129+65+41 = 403 (consistent with HOSE ~400-420 listed stocks) ✓
+- VN-Index direction positive correlates with advances > declines ✓
+- Data is VARIED (not constant) — live real-time session data ✓
+
+**Board update:** REVIEW → DONE (done_verified = YES)

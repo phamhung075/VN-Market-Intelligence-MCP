@@ -162,3 +162,33 @@ RAW: new tool returns daily HOSE market turnover in tỷ đồng (10,000–25,00
 **REBUILD_REQUIRED:** YES — same rebuild as FIX-MARKET-BREADTH-MISSING.
 
 **done_verified gate:** call get_market_breadth via gateway; totalTurnoverBn ∈ [5000, 30000] on trading day; turnoverDeltaPct not null if data available; nmTurnoverBn + ptTurnoverBn ≈ totalTurnoverBn within 10 tỷ rounding.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-06-17
+**Cycle:** 288
+**Verdict:** APPROVED + done_verified
+**Impl commit:** ddc36452 (co-implemented with FIX-MARKET-BREADTH-MISSING)
+**DJ:** sprint-FE-PAGE-REORG-qa.md §qa-S6
+
+### Test results
+- Targeted: `FIX-MARKET-BREADTH-LIQUIDITY.test.ts` — **21 pass / 0 fail** (same file covers breadth+liquidity; co-tested)
+- CI per-file-isolation: **10 failing files, ALL DISJOINT** (same disjoint set)
+- TSC: **0 errors** | DDD: **PASS** | Security: **PASS** | mock-guard: **EXIT 0**
+
+### Live GATE probe (get_market_breadth returns both breadth + liquidity)
+```
+totalTurnoverBn:    24184.56  ✓ ∈ [5000, 30000]
+nmTurnoverBn:       17109.20
+ptTurnoverBn:        7075.37
+turnoverDeltaPct:     +45.25% (not null) ✓
+turnoverDirection:    "up"
+nmTurnoverBn + ptTurnoverBn = 24184.57 ≈ 24184.56  delta=0.01 tỷ < 10 tỷ ✓
+```
+
+- Plausibility: 24,185 tỷ is consistent with a full trading day on HOSE (historical 10-session range: 9,983–22,156 tỷ; today's higher volume confirmed real-session activity). ✓
+- Prior session delta computed correctly from size=2 query vs single-session `valChgPctCr1d` (which is unreliable intraday per recon) ✓
+
+**Board update:** REVIEW → DONE (done_verified = YES)
