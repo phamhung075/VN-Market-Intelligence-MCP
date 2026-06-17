@@ -880,8 +880,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T12:35:36Z",
-    "_updated_by": "dev-team-dispatch-tick-1235Z",
+    "_updated_at": "2026-06-17T12:44:31Z",
+    "_updated_by": "dev-team-pipeline-cont",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -20192,7 +20192,15 @@
         "created_by": "po-batch",
         "claimed_at": "2026-06-17T12:35Z",
         "claimed_by": "dev-team",
-        "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). DESIGN lane -> agents-architect (design brief; WIP-exempt, no coding lane). ONE generic execution-proof gate both off-hours gatherer flows inherit: cycle 'complete' ONLY on fresh-tick-stamped notebook entry + freshly-fetched macro (fetchedAt in tick window); else FAIL LOUD. No per-agent hardcode (/goal#2). architect brief -> agent-father impl into docs/agents/{news-scout,market-watcher}/flow + cycle-bootstrap skill."
+        "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). DESIGN lane -> agents-architect (design brief; WIP-exempt, no coding lane). ONE generic execution-proof gate both off-hours gatherer flows inherit: cycle 'complete' ONLY on fresh-tick-stamped notebook entry + freshly-fetched macro (fetchedAt in tick window); else FAIL LOUD. No per-agent hardcode (/goal#2). architect brief -> agent-father impl into docs/agents/{news-scout,market-watcher}/flow + cycle-bootstrap skill.",
+        "design_complete_at": "2026-06-17T12:44Z",
+        "design_brief": "docs/architecture-briefs/2026-06-17-gatherer-exec-proof-failloud.md",
+        "design_commit": "6eb16082",
+        "next_task": "EP-1-EXEC-PROOF-GATE-SKILL",
+        "next_agent": "agent-father",
+        "impl_dispatched_at": "2026-06-17T12:44Z",
+        "impl_dispatched_by": "dev-team",
+        "impl_dispatch_note": "Router continued pipeline (architect DONE 6eb16082). agent-father implements brief: EP-1 exec-proof-gate skill (prereq) -> EP-2 cycle-bootstrap CYCLE_START_UTC anchor + EP-3 news-scout stage-log-notify Step 3e + EP-4 market-watcher cycle Step 4e (parallel). Generic gate (no per-agent hardcode /goal#2): cycle complete ONLY if notebook ts>=cycle_start AND primary fetch>0 + macro fetchedAt>=cycle_start; else BUG telegram + signal + EXIT (completion ping never sent). agent-father WIP-exempt maintenance lane."
       }
     ],
     "ready": [
@@ -20469,8 +20477,8 @@
         }
       ]
     },
-    "updated_at": "2026-06-17T12:35:36Z",
-    "updated_by": "dev-team-dispatch-tick-1235Z"
+    "updated_at": "2026-06-17T12:44:31Z",
+    "updated_by": "dev-team-pipeline-cont"
   },
   "updated_at": "2026-06-17T10:21:08Z",
   "updated_by": "dev-mcp-server",
