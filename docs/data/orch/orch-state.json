@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T20:10:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-17T20:24:19Z",
+  "_updated_by": "qa",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -20382,7 +20382,7 @@
         "title": "BCTC enricher: attempts===0 guard never terminalizes genuinely-absent tickers → zero-url counter unbounded → bctc SLA FALSE-CRITICAL",
         "description": "REROUTED 2026-06-17 (zone correction). dev-vps-crawls DISPROVED the discovery-outage hypothesis via RAW VPS probes: bctc-discover returns Q1-2026 URLs for VCB/HPG <1s; 65 Q1-2026 tickers already in done[] with real URLs. The 9 pending tickers (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA + VEA-Q4-2025) are GENUINELY ABSENT (no Q1-2026 filing exists yet on SSC — honest gap per /goal#1), NOT an outage. REAL ROOT (apps/mcp-server, dev-mcp-server zone): bctcQueueEnricherJob.ts lines 497-513 — when discovery returns 0 URLs and attempts===0, the else branch leaves the row pending at 0 and NEVER increments. Genuinely-absent rows are forever stuck at attempts=0, never reach MAX_ENRICH_ATTEMPTS(5), never marked url_not_found, cycle forever (210+ zero-url cycles). The zero-url counter climbs every cron tick → bctc SLA reads 1332/360min breached CRITICAL and STILL CLIMBING — a metric/accounting ARTIFACT of the stuck-9, NOT real staleness (current-quarter data is healthy). RECLASSIFIED CRITICAL→HIGH: not a data-loss CRITICAL (data healthy), but the permanently-stuck false-CRITICAL SLA masks ALL FUTURE real bctc breaches — a real observability fix.",
         "owner": "dev-mcp-server",
-        "next_agent": "qa",
+        "next_agent": "ops",
         "priority": "P1",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -20408,9 +20408,11 @@
         "impl_commit": "3eebf3bc",
         "impl_at": "2026-06-17T19:22:00Z",
         "impl_by": "dev-mcp-server",
-        "qa_reviewed_at": "2026-06-17T19:28:55Z",
-        "qa_verdict": null,
-        "qa_blocking_issues": []
+        "qa_reviewed_at": "2026-06-17T20:24:19Z",
+        "qa_verdict": "APPROVED",
+        "qa_blocking_issues": [],
+        "qa_reviewed_by": "qa (cycle-293)",
+        "qa_notes": "APPROVED cycle-293. Test fix only (97546591). Production 3eebf3bc UNTOUCHED. 2 fixed test files 24/0 pass. Full suite 13204 pass / 45 fail — 17 failing files ALL disjoint (0 overlap with commit). tsc 0 errors. DDD PASS (test-only). Security PASS. Discrimination verified: reached-source-empty toBe(1) correct; TERM-4 catch-path no-increment untouched. rebuild_required:true preserved — ops must rebuild mcp-server."
       }
     ],
     "ready": [

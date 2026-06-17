@@ -86,3 +86,13 @@
 - Tool is co-implemented with get_market_breadth in same get_market_breadth tool #165 — zero extra network call.
 **why-decision:** APPROVED + done_verified. Liquidity figures are real, varied, correctly split into nm+pt components. Breadth and liquidity co-tested in same 21-test file. No separate rebuild needed (same ddc36452 image).
 **why-change:** No change from plan — co-implementation in same tool eliminates extra network cost as recon recommended.
+
+### STEP qa-S8 · qa · 2026-06-17T20:30:00Z
+**task-id:** FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH
+**what-done:** Re-validation of test-fix commit 97546591 (2 stale test assertions); production fix 3eebf3bc confirmed UNTOUCHED; both fixed test files 24/0 pass; full suite 13204/45 disjoint; tsc 0 errors; verdict APPROVED.
+**what-considered:**
+- Verify production file last commit = 3eebf3bc (confirmed — git log -1 shows 3eebf3bc for bctcQueueEnricherJob.ts).
+- Validate toBe(1) assertions match reached-source-empty discrimination (not blanket increment).
+- Disjoint-failure-set: 17 failing files, 0 overlap with commit's 4 files (2 test + notebook + orch-state).
+**why-decision:** APPROVED. toBe(1) correct for reached-source 0-URL path; TERM-4 catch-path no-increment left untouched; all 17 failing files are pre-existing environmental (network timeouts, a42d0835 revert schema drift, deprecated test). rebuild_required:true preserved for ops.
+**why-change:** No change from plan — prior CHANGES_REQUESTED was solely for stale test assertions; those are now fixed.

@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-293 · 2026-06-17 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — APPROVED (re-validation)
+
+Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH | Test-fix commit: 97546591 | Production commit: 3eebf3bc (UNTOUCHED) | Verdict: APPROVED | Board: in_progress[REVIEW]/next_agent=qa → in_progress[REVIEW]/next_agent=ops | rebuild_required:true preserved.
+
+Re-validation scope: 2 stale test files only. Production bctcQueueEnricherJob.ts confirmed at 3eebf3bc (git log -1). Commit 97546591 = 2 test files + dev notebook + orch-state only. 2-file targeted run: 24 pass / 0 fail. New assertions: toBe(1) on reached-source-empty path — CORRECT. Discrimination: TERM-4 catch-path (ECONNREFUSED = pre-network throw, no increment) LEFT UNTOUCHED. Full suite: 13204 pass / 42 skip / 45 fail. 17 failing files, ALL disjoint — 0 overlap with commit. Environmental classification: 9 network-timeout (Chromium-absent/VPS-geo), 7 schema pre-existing (a42d0835 revert 2026-06-08), 1 deprecated. tsc: 0 errors. DDD: PASS (test-only change). Security: PASS. Board: qa_verdict=APPROVED, next_agent=ops. Ops must rebuild mcp-server container for production fix 3eebf3bc to run. DJ: sprint-FE-PAGE-REORG-qa.md §qa-S8.
+
 ## cycle-292 · 2026-06-17 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — CHANGES_REQUESTED
 
 Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH | Impl commit: 3eebf3bc | Verdict: CHANGES_REQUESTED | Route: dev-mcp-server.
