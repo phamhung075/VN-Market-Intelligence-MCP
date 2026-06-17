@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T02:07:21Z",
+  "_updated_at": "2026-06-17T02:53:38Z",
   "_updated_by": "router",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -135,10 +135,11 @@
   ],
   "head": {
     "status": "idle",
-    "updated_at": "2026-06-17T02:50:00Z",
-    "updated_by": "qa",
+    "updated_at": "2026-06-17T02:53:38Z",
+    "updated_by": "dev-team",
     "active_task_id": null,
-    "next_agent": null
+    "next_agent": null,
+    "note": "ROUTER 2026-06-17T02:53:38Z — FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD REBUILT+LIVE-PROBED (image .Created 02:47:55Z > commit 09302e45; marker live; 11/11 peers healthy; get_system_status serves 4 bounded sections, honest degradation, no 500). done_verified WITHHELD (false) — active >3000ms stall arm not steady-state observable (sources fail-fast), proven by unit tests not live; same class as AF-1. next_agent cleared (ops satisfied). PUSH held (PO out-of-band)."
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -758,7 +759,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T02:07:21Z",
+    "_updated_at": "2026-06-17T02:53:38Z",
     "_updated_by": "router",
     "active_sprints": [
       {
@@ -12770,7 +12771,7 @@
         "zone": "apps/mcp-server/",
         "owner": "dev-mcp-server",
         "review_note": "REVIEW 2026-06-17 dev-mcp-server — withSectionDeadline 3000ms wraps all 4 async sections generically, tsc clean, 6/6 new ACs pass, 15 existing pass. REBUILD_REQUIRED: YES. Commit: 09302e45 | QA 2026-06-17 APPROVED (code gate): 6 AC pass / 15 regression pass / tsc 0 / DDD PASS / security PASS / mock-guard PASS. 7 CI failures disjoint pre-existing. done_verified WITHHELD: REBUILD_REQUIRED:YES — ops rebuild + router live-probe required. Report: reports/TASK_REPORT_FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD.md",
-        "next_agent": "ops",
+        "next_agent": null,
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/system/systemTools.ts",
           "apps/mcp-server/src/interface/mcp/tools/news-analysis/sourceHealthTools.ts",
@@ -12780,7 +12781,7 @@
         "fix_spec": "GENERIC, no per-source allowlist. Option A: wrap each source-health probe (esp. TE/Chromium) in Promise.race(fetch, timeout(3000)) so one hung source degrades to a 'Ngung/timeout' row instead of blocking the whole tool. Option B (preferred for the smoke-probe consumers): repoint the market-watcher/po smoke probes to get_cycle_bootstrap which returns system_status in ~1ms without the live source-health fan-out. Ship whichever the architect/dev judges durable; the deadline must be < the gateway/agent smoke-probe timeout.",
         "generic_mandate": "Per-source deadline applies to ALL source-health probes, not a TE-only special-case. No date/source allowlist.",
         "verification_gate": "LIVE: get_system_status returns < 5s even with TE breaker open (force TE hang or probe during a TE-Ngung window); market-watcher smoke probe at the next 02:00Z open does NOT abort. RAW-verify via the gateway, not a green test only.",
-        "rebuild_required": true,
+        "rebuild_required": false,
         "time_sensitive": "before ~02:00Z market open",
         "source_reports": [
           3203,
@@ -12789,8 +12790,12 @@
         "dedup_note": "untracked — no prior getSystemStatus/TE-Chromium/smoke-probe task on the board (router RAW-confirmed). report 3204 'BUG-4 RESOLVED via restart' is a false-clear: restart only frees the hung Chromium, the no-guard root recurs (report 3206 RECURRED 20:09Z).",
         "minted_by": "po-s94",
         "minted_at": "2026-06-17T01:34:10Z",
-        "route_to": "qa",
-        "router_recovery": "ROUTER 2026-06-17T02:07:21Z — relocated ready[]->review[] to match dev-mcp-server-set status REVIEW (commit 656c419a updated .head + row.status but left the row physically in ready[] with next_agent=dev-mcp-server). Lane/status now consistent; row-based re-dispatch hazard removed. .head untouched (already status=review/next_agent=qa). done_verified WITHHELD — REBUILD_REQUIRED:YES, live verify pending ops rebuild."
+        "route_to": null,
+        "router_recovery": "ROUTER 2026-06-17T02:07:21Z — relocated ready[]->review[] to match dev-mcp-server-set status REVIEW (commit 656c419a updated .head + row.status but left the row physically in ready[] with next_agent=dev-mcp-server). Lane/status now consistent; row-based re-dispatch hazard removed. .head untouched (already status=review/next_agent=qa). done_verified WITHHELD — REBUILD_REQUIRED:YES, live verify pending ops rebuild.",
+        "rebuild": false,
+        "done_verified": false,
+        "ops_rebuild_verified_at": "2026-06-17T02:53:38Z",
+        "live_verify": "LIVE RAW (router, first-hand) 2026-06-17T02:53:38Z — REBUILT+PROBED, done_verified WITHHELD. ops force-recreate --no-deps --build mcp-server. Image .Created 02:47:55Z > commit 09302e45 02:02:15Z UTC (~45min newer); marker withSectionDeadline/SECTION_DEADLINE_MS present (17 hits) in RUNNING /app/src/.../systemTools.ts (docker exec); container healthy StartedAt 02:48:01Z, no Bun-JIT 500; 11/11 peers Up+healthy. LIVE get_system_status (gateway, rebuilt image): all 4 guarded sections (DB/SOURCE-HEALTH/DATA-FRESHNESS/RECENT-ERRORS) returned bounded, no hang, no 500, HONEST degradation (Reuters & Trading Economics Suy-giam, BCTC Cu 6.2h, foreign-flow fallbacks exhausted) — happy-path + no-regression CONFIRMED. done_verified:false — active timeout arm (section >3000ms -> partial serve + timeout text) NOT live-observable: no source currently STALLING (degraded sources fail-fast, never crossing 3000ms), real-stall induction declined on live market-hours container. Arm proven by qa 6 AC unit tests + code-marker + deployed-image (NOT live). Per feedback_graceful_premise_verify_error_path: happy 200 != error path. PUSH held (PO out-of-band)."
       },
       {
         "id": "AF-1-LEADER-LOCK-BACKSTOP-DEFER",
