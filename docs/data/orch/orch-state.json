@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T13:14:52Z",
-  "_updated_by": "router-reconcile",
+  "_updated_at": "2026-06-17T13:31:09Z",
+  "_updated_by": "router-done-verify",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -880,8 +880,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T14:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-17T13:31:09Z",
+    "_updated_by": "router-done-verify",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -14576,6 +14576,47 @@
         "done_verified_held": true,
         "live_gate_at": "2026-06-17T16:00Z",
         "live_gate_criteria": "real off-hours gatherer cycle PASSES exec-proof gate (non-null anchor, fresh notebook+macro); a thin/no-exec cycle FAILS LOUD (BUG telegram + signal file, NO log_agent_work(completed), NO WORK ping). Both behaviours observed live -> done_verified."
+      },
+      {
+        "id": "FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE",
+        "type": "FIX",
+        "title": "emit_pressure_state promotes 15-day-stale cycle-snapshot as 'latest' with fresh mtime — add FAIL-SAFE freshness gate before promotion",
+        "desc": "DEFECT-B (router RAW-verified, HIGHER severity, live no-fake-data /goal#1 violation). ROOT CONFIRMED at apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts promoteCycleSnapshot(): only guard is existsSync(snapPath) — ZERO freshness validation. A stale cycle-snapshot-<HH:MM>.json from 2026-06-02 whose HH:MM collides with the current tick gets copyFileSync->rename'd to cycle-snapshot-latest.json, stamping a FRESH mtime (observed 12:09:11Z) onto 15-day-old content (created_at 2026-06-02, oilUsd 93.95 vs live 79.49, goldUsd 4560 vs live 4344.9). ANY consumer (cycle-bootstrap Step -1 -> market-watcher/digest-predict/unified-agent) would serve June-2 macro. FIX (FAIL-SAFE): before promoting, parse the source snapshot fetchedAt/created_at and require it within an acceptable window (<= tick window or a bounded staleness threshold); if stale -> DO NOT promote, return cycle_snapshot_promoted:false + set stale_warning:true (field already exists). Never stamp a fresh mtime onto stale content. Unit test (emit-pressure-state.test.ts): fresh snapshot promotes; stale snapshot REFUSED (returns false, stale_warning true, latest file untouched). Gate at promote-time NOT residue-clean (do NOT rely on cleaning stale on-disk <HH:MM> files).",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
+          "apps/mcp-server/src/__tests__/emit-pressure-state.test.ts"
+        ],
+        "zone": "apps/mcp-server/",
+        "route": "dev-mcp-server",
+        "size": "S",
+        "priority": "P1",
+        "baseline_pass": "n/a (off-hours, VN market closed; producer-side data-integrity)",
+        "status": "DONE",
+        "source": "DEFECT-B from agent_fabrication_defect signal agent-fabrication-gatherers-offhours-2026-06-17T1212Z.json (cowork-dispatcher), router RAW-verified; /goal#1 live no-fake-data violation",
+        "created_at": "2026-06-17T12:35Z",
+        "created_by": "po-batch",
+        "claimed_at": "2026-06-17T12:35Z",
+        "claimed_by": "dev-team",
+        "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). FIX coding lane -> dev-mcp-server (coding WIP 0->1, under WIP<=2). FAIL-SAFE freshness gate at promote-time. bun tests BEFORE ops rebuild (RED-PREPUSH); targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down); QA LIVE-verify raw (cycle_snapshot_promoted=false + stale_warning=true on stale, latest untouched), never badges.",
+        "review_at": "2026-06-17T13:08:41Z",
+        "reviewed_by": "dev-mcp-server",
+        "qa_verdict": "APPROVED",
+        "done_verified": true,
+        "done_verified_held": false,
+        "verified_by": "router",
+        "verified_at": "2026-06-17T13:31:09Z",
+        "verification": {
+          "image_created": "2026-06-17T13:19:15Z",
+          "image_epoch_gt_commit": true,
+          "running_image_sha": "fc69bed53057",
+          "code_marker": "SNAPSHOT_MAX_STALENESS_MS=4h baked in running container src",
+          "live_gate_real_artifact_02_15": "{promoted:false,stale:true} latest-untouched",
+          "live_gate_fresh": "{promoted:true,stale:false} latest==source",
+          "real_latest_sha_unchanged": "0337898305",
+          "qa_verdict": "APPROVED",
+          "qa_report": "docs/agent-memory/sessions/2026-06-13-qa.md",
+          "peers_up": "13/13"
+        }
       }
     ],
     "done_verified": [
@@ -20483,30 +20524,6 @@
           "check_c_non_regression": "PASS — FPT 2026Q1 = 145 rows (done), VCB 2025Q4 = 112 rows (done); both anchors intact + untouched.",
           "verdict": "HOLD at review. done_verified WITHHELD: check (a) FAILS — the user-facing get_bctc_full(VCB/CTG)='Chua co du lieu BCTC' is NOT resolved (still 0 rows). The merged code is CORRECT but INCOMPLETE: it fixes the silent-swallow (b) + the text-table layout (c-safe) but the scanned-bank-PDF leg needs OCR. cowork bctc-analyst CTG/VCB/D2D RELEASE gate stays JUSTIFIED-blocked (block is real). Follow-on minted: FIX-BCTC-BANK-PDF-OCR-RASTERIZE."
         }
-      },
-      {
-        "id": "FIX-CYCLE-SNAPSHOT-STALE-PROMOTE-FAILSAFE",
-        "type": "FIX",
-        "title": "emit_pressure_state promotes 15-day-stale cycle-snapshot as 'latest' with fresh mtime — add FAIL-SAFE freshness gate before promotion",
-        "desc": "DEFECT-B (router RAW-verified, HIGHER severity, live no-fake-data /goal#1 violation). ROOT CONFIRMED at apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts promoteCycleSnapshot(): only guard is existsSync(snapPath) — ZERO freshness validation. A stale cycle-snapshot-<HH:MM>.json from 2026-06-02 whose HH:MM collides with the current tick gets copyFileSync->rename'd to cycle-snapshot-latest.json, stamping a FRESH mtime (observed 12:09:11Z) onto 15-day-old content (created_at 2026-06-02, oilUsd 93.95 vs live 79.49, goldUsd 4560 vs live 4344.9). ANY consumer (cycle-bootstrap Step -1 -> market-watcher/digest-predict/unified-agent) would serve June-2 macro. FIX (FAIL-SAFE): before promoting, parse the source snapshot fetchedAt/created_at and require it within an acceptable window (<= tick window or a bounded staleness threshold); if stale -> DO NOT promote, return cycle_snapshot_promoted:false + set stale_warning:true (field already exists). Never stamp a fresh mtime onto stale content. Unit test (emit-pressure-state.test.ts): fresh snapshot promotes; stale snapshot REFUSED (returns false, stale_warning true, latest file untouched). Gate at promote-time NOT residue-clean (do NOT rely on cleaning stale on-disk <HH:MM> files).",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/system/emitPressureStateTool.ts",
-          "apps/mcp-server/src/__tests__/emit-pressure-state.test.ts"
-        ],
-        "zone": "apps/mcp-server/",
-        "route": "dev-mcp-server",
-        "size": "S",
-        "priority": "P1",
-        "baseline_pass": "n/a (off-hours, VN market closed; producer-side data-integrity)",
-        "status": "REVIEW",
-        "source": "DEFECT-B from agent_fabrication_defect signal agent-fabrication-gatherers-offhours-2026-06-17T1212Z.json (cowork-dispatcher), router RAW-verified; /goal#1 live no-fake-data violation",
-        "created_at": "2026-06-17T12:35Z",
-        "created_by": "po-batch",
-        "claimed_at": "2026-06-17T12:35Z",
-        "claimed_by": "dev-team",
-        "dispatch_note": "Router routed PO BATCH (dev-team tick 2026-06-17T12:35Z). FIX coding lane -> dev-mcp-server (coding WIP 0->1, under WIP<=2). FAIL-SAFE freshness gate at promote-time. bun tests BEFORE ops rebuild (RED-PREPUSH); targeted build --no-cache + up -d --no-deps --force-recreate (NEVER compose down); QA LIVE-verify raw (cycle_snapshot_promoted=false + stale_warning=true on stale, latest untouched), never badges.",
-        "review_at": "2026-06-17T13:08:41Z",
-        "reviewed_by": "dev-mcp-server"
       }
     ],
     "qa": [],
