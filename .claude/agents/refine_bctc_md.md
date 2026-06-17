@@ -7,7 +7,7 @@ description: >
   Authored by Opus (one-time). Processes one CHUNK (≤7 windows) per invocation, resumable
   across fires via get_bctc_refined skip-set. Pushes results via push_bctc_refined_unit +
   finalize_bctc_refine (DB pathway). NEVER writes docs/refine-output/ files. NEVER nested-spawn.
-tools: Read, Write, mcp__claude_ai_gateway__call_tool
+tools: Read, Write, mcp__gateway__call_tool
 model: haiku
 ---
 

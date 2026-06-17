@@ -284,6 +284,28 @@
         "resolution": "RECONCILED (not a real mismatch): head.active=FIX-SIGNAL-CONFIDENCE-SLA-TEST-TS2367 (push-unblocker, set po-s74 01:31Z) and the held lock task:FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 (dev-team, expired 04:03:05Z) were BOTH legitimate concurrent states — the head was repointed to the push-unblocker while a dev-team worker still held the OHLCV lock mid-implementation. OHLCV impl now complete + promoted to review[]; head deliberately stays on TS2367 to clear the fleet push-block. Drift converged."
       },
       {
+        "id": "tnb-20260615T201300",
+        "ts": "2026-06-15T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c96 NEEDS_ATTENTION IMPROVING — EOD 6/6 GOOD (best), G1/G2 PASS, G3/G4 FAIL (last_fired not written)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
+        "id": "tnb-20260616T201300",
+        "ts": "2026-06-16T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c97 NEEDS_ATTENTION STABLE — morning FAILED 502, EOD+Evening 5.5/6 GOOD, F-G3-G4 confirmed day2 (all 3 guaranteed slots), F-MORNING-SEND-FAILED NEW",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
         "id": "sau-d4-202606150300",
         "ts": "2026-06-15T03:00Z",
         "from": "system-auditor",

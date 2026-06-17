@@ -2,7 +2,7 @@
 name: ops
 color: blue
 description: Ops. Monitor infrastructure, Docker health, VPS proxy health, diagnose and respond to incidents.
-tools: Bash, Read, mcp__claude_ai_gateway__call_tool
+tools: Bash, Read, mcp__gateway__call_tool
 model: haiku
 ---
 
