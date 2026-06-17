@@ -1,9 +1,30 @@
 ---
 agent_id: system-auditor
 session_date: 2026-06-17
-audit_tier: 1
-last_clean: 2026-06-17T06:15:01Z
+audit_tier: 2
+last_clean: 2026-06-17T06:39:01Z
 ---
+
+## c308 · 2026-06-17T06:39:01Z
+### Audit Run Tier-2 (06:30–06:41 UTC 2026-06-17)
+- Tier: 2 | Sources: 31 checked | Cron jobs: 141 verified | VPS routes: 4/4 probed
+- Anomalies: 3 new (0 critical, 3 warn, 0 info) | Dedup: 0 skipped
+- Status: DEGRADED
+- Cron checks A-29: all pass (no >2× gaps detected) ✓
+- Per-source freshness B-01..B-07, B-11..B-12: 28 pass, 3 fail (WARN)
+  - B-06 FAIL: bctc-push VPS proxy stale 12.6h (last push 2026-06-16 18:02:24)
+  - B-07 FAIL: vn-foreign-flow service unhealthy (uptime 3h 46m)
+  - B-13 FAIL: bctc_vps_queue 8 pending rows >72h old (actionable backlog)
+- DB spot checks C-06, C-07: both pass (market_messages=4, agent_signals=135)
+- BCTC URL shape B-09: pass (0 SSC portal URLs in non-skipped queue)
+- Rate limits B-12: all sources <100% ✓
+- VPS proxy B-06/B-07: 3 ok (prices/news/sbv), 1 STALE (bctc) ⚠
+
+### Signals Emitted:
+- signal_id=6411: B-06 bctc-push proxy stale
+- signal_id=6412: B-13 bctc pending backlog 8 rows
+- signal_id=6413: B-07 foreign-flow service unhealthy
+- Telegram: 3 messages sent to BUG channel
 
 ## c307 · 2026-06-17T06:15:01Z
 ### Audit Run Tier-1 (06:14–06:15 UTC 2026-06-17)

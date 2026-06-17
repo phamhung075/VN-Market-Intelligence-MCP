@@ -699,6 +699,39 @@
         "resolved_at": "2026-06-16T18:21:20Z",
         "resolved_by": "po-s91",
         "resolution": "TRIAGED + DISPATCHED: minted FIX-MARKET-BREADTH-MISSING (HIGH, user-reported) into ready[] -> ops-vps-fetch RECON-FIRST (RAW-probe VnDirect breadth fields) then dev-mcp-server code once the apps/mcp-server/ zone frees (busy w/ ARCH-CRON-SCHEDULER-RELIABILITY). Producer->consumer close for the empty frontend 'Do rong thi truong' card."
+      },
+      {
+        "id": "sau-b06-202606170630",
+        "ts": "2026-06-17T06:39:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "bctc-push VPS proxy stale 12.6h (check B-06)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-b13-202606170630",
+        "ts": "2026-06-17T06:39:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "8 pending BCTC rows >72h old (check B-13)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "sau-b07-202606170630",
+        "ts": "2026-06-17T06:39:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "vn-foreign-flow service unhealthy (check B-07)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },
