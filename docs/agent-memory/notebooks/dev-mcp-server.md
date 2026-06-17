@@ -55,3 +55,25 @@ Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule (startupHelp
 **REBUILD_REQUIRED:** YES — scheduler job logic changed; ops must rebuild mcp-server container.
 
 Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
+
+## 2026-06-17 · ARCH-OHLCV-WRITER-SSOT-DURABLE (SUBTASK-1+2+3) — producer-root fix for 4th-recurrence close=0 stub class
+
+**Tasks:** 3 P0 subtasks from WORKORDER-dev-mcp-server-OHLCV-WRITER-SSOT-DURABLE.
+
+**SUBTASK-1:** Rewrote writeForeignFlowToOhlcv in ohlcvForeignFlowStore.ts. Replaced INSERT...ON CONFLICT stub injection with UPDATE-only. SQL: UPDATE daily_ohlcv SET foreign_buy_vol=?,... WHERE code=? AND date=?. changes=0 on absent row => debug log, NO stub, honest gap. Callers verified non-error on 0: foreignFlowFetcher.ts L137+L220, pushForeignFlowHandler.ts L319.
+
+**SUBTASK-2:** Added exhaustive writer inventory comment block to ohlcvWriteService.ts documenting all 7 writers (A,C,D,E,F,G,H), bypass sentinel pattern (OHLCV-WRITE-BYPASS-ALLOWED), and LINT-OHLCV-WRITE-BYPASS follow-on.
+
+**SUBTASK-3:** New test file 2026-ohlcv-foreign-flow-merge.test.ts with 7 tests (T-1..T-4, T-INT, T-GEN, T-COALESCE). Updated legacy DPI-4-foreign-flow-upsert.test.ts (AC-1+AC-7) and 1503-ohlcv-foreign-flow.test.ts (AC3) to match merge-only behavior.
+
+**Files changed:** ohlcvForeignFlowStore.ts (rewritten), ohlcvWriteService.ts (annotation), 2026-ohlcv-foreign-flow-merge.test.ts (new, 7 tests), DPI-4-foreign-flow-upsert.test.ts (3 updated), 1503-ohlcv-foreign-flow.test.ts (1 updated)
+
+**Gate results:** tsc clean (0 errors) | 17 new/updated tests pass | full suite 13275/13185 pass / 48 fail (baseline 51 — net -3) | tools=165 (unchanged) | sched=3 (unchanged)
+
+**Commits:** 41b4344c (SUBTASK-1+2), e5461ad7 (SUBTASK-3), e96571ac (legacy test updates), 42ec0620 (board move)
+
+**REBUILD_REQUIRED:** YES — ohlcvForeignFlowStore.ts logic changed; ops must rebuild mcp-server container before live gate at 2026-06-18 02:15Z.
+
+**done_verified:** HELD — verify at next VN market open 2026-06-18 02:15Z (RSI canonical match, no BB spam, zero close=0 rows in live DB 02:00-03:30Z window).
+
+Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
