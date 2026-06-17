@@ -12,7 +12,17 @@
     "root_detail": "bctcQueueEnricherJob has a logic bug: when discovery returns 0 URLs and item.attempts === 0, the code intentionally does NOT increment attempts (line 509: 'leave pending at 0'). Design intent was 'don't penalise new rows on first pass'. Effect: ALL rows that return 0 URLs on first attempt stay at attempts=0 FOREVER, never reach MAX_ENRICH_ATTEMPTS=5, never get marked url_not_found. They cycle infinitely causing the zero-url counter to increment every cron tick.",
     "live_evidence": {
       "pending_rows": 9,
-      "pending_tickers": ["BDI", "DAG", "DLC", "JSH", "SIS", "VDC", "VNH", "VEA", "VEA-Q4-2025"],
+      "pending_tickers": [
+        "BDI",
+        "DAG",
+        "DLC",
+        "JSH",
+        "SIS",
+        "VDC",
+        "VNH",
+        "VEA",
+        "VEA-Q4-2025"
+      ],
       "all_pending_attempts": 0,
       "vps_probe_results": {
         "VCB_Q1_2026": "URL RETURNED: http://125.212.251.27:8765/bctc-files/VCB/20260429-VCB-BCTC-hop-nhat-Q1.2026.pdf",
@@ -32,5 +42,10 @@
     "scope_boundary_respected": "dev-vps-crawls stops here. Root is apps/mcp-server/ not apps/vps-client/. No zone-crossing.",
     "vps_script_status": "HEALTHY — discover-bctc-urls-browser.py correctly returns empty for genuinely-absent tickers (honest gap per /goal#1). No script changes needed.",
     "recommended_dispatch": "dev-mcp-server to fix bctcQueueEnricherJob.ts attempts increment logic. Single-file change, no rebuild needed (wait, bctcQueueEnricherJob IS TypeScript in the mcp-server container — rebuild IS needed). Alternatively: a one-time SQL UPDATE to set attempts=5 for all current pending rows with attempts=0 where last_attempt IS NOT NULL (graceful workaround to flush the queue now, structural fix in code separately)."
+  },
+  "po_triage": {
+    "status": "PROCESSED",
+    "processed_at": "2026-06-17T18:59:11Z",
+    "decision": "REROUTED to dev-mcp-server (zone correction); RECLASSIFIED CRITICAL->HIGH; minted FIX-BCTC-SLA-FRESHNESS-EXCLUDE-TERMINAL (deferred backlog). orch-state via po-s101."
   }
 }
