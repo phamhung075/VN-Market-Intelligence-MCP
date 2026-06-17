@@ -741,6 +741,17 @@
         "triaged_at": "2026-06-17T07:37:24Z",
         "triaged_by": "po-s100",
         "triage": "liveness≠freshness FALSE-NEGATIVE for served data: get_foreign_flow(VHM) RAW-verified 10 days of real varied net-vol/holding-ratio history; circuit-breaker foreignFlow [OK] failures:0. The recurring foreign-flow-job fallback-exhausted is TODAY intraday incomplete fetch (graceful degrade, served data real). ORTHOGONAL to OHLCV P0s. Problem space already tracked: FIX-FOREIGN-FLOW-INTEGRITY-BREAK (review), FIX-FOREIGN-FLOW-COVERAGE + FIX-FOREIGN-FLOW-DEAD-ENDPOINT + ARCH-DAILY-FOREIGN-FLOW-TABLE (backlog). NO new mint — gate on freshness-age not the health endpoint."
+      },
+      {
+        "id": "sau-2026-06-17T10-32-50Z-B13",
+        "ts": "2026-06-17T10:32:50Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "data_stale",
+        "summary": "BCTC Q1-2026 stale pending 8 rows (47d, check B-13)",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null
       }
     ]
   },

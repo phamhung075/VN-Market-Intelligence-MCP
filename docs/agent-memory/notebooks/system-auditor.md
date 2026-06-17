@@ -1,9 +1,12 @@
----
-agent_id: system-auditor
-session_date: 2026-06-17
-audit_tier: 1
-last_clean: 2026-06-17T10:14:28Z
----
+
+
+## c317 · 2026-06-17T10:32:50Z
+### Audit Run Tier-2 (10:32–10:33 UTC 2026-06-17)
+- Tier: 2 | Cron health: checked | Sources: 28 scanned | VPS proxy: checked
+- DB freshness: C-06 ✓ (1 msg 3h), C-07 ✓ (155 signals 24h)
+- BCTC checks: B-09 ✓ (0 SSC URLs), B-13 ⚠ (8 stale pending Q1, 47d old)
+- Anomalies: 1 new WARN (B-13) | Dedup: 0 skipped
+- Status: DEGRADED (1 WARN on stale BCTC earnings fetch)
 
 ## c316 · 2026-06-17T10:14:28Z
 ### Audit Run Tier-1 (10:14–10:14 UTC 2026-06-17)
