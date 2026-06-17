@@ -20303,6 +20303,34 @@
         "po_gate_day_checked_at": "2026-06-15T06:35:17Z",
         "po_gate_day_rechecked_at": "2026-06-15T08:31:05Z",
         "po_recheck_disposition": "QA-LIVE-OUTCOME-OBSERVE gate, no dev-zone coding lane — verified parked this tick"
+      },
+      {
+        "id": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
+        "type": "FIX",
+        "severity": "CRITICAL",
+        "status": "IN_PROGRESS",
+        "title": "BCTC discover pipeline: VPS healthy but 0 pushes/24h — 204 consecutive zero-URL enricher cycles, current-quarter (Q1-2026) SSC/HOSE discover endpoint structure changed",
+        "description": "bctcQueueEnricher 204 consecutive zero-URL cycles; BCTC SLA LIVE-breached 1316/360min (~21.9h, worsening all day). VPS bctc-fetch service health=OK but 0 pushes/24h via /proxy/bctc-discover — SSC/HOSE discover endpoint URL structure likely changed. Blocks bctc-analyst + refine_bctc_md downstream (serving empty/stale BCTC = no-fake-data goal violation). NOT a dup of BCTC-ENRICHER-OLD-QUARTERS (pre-Q4-2025 historical-backfill fallback) NOR FIX-BCTC-VPS-QUEUE-STALE-TRIAGE (DONE, classify seeded stale rows). This is a LIVE current-quarter discovery OUTAGE: healthy proxy returning 0 URLs for valid current tickers (VCB/HPG/GVR/HVN) = endpoint-structure recon needed on the VPS scraper.",
+        "owner": "dev-vps-crawls",
+        "next_agent": "dev-vps-crawls",
+        "priority": "P0",
+        "size": "M",
+        "zone": "apps/vps-client/",
+        "files": [
+          "apps/vps-client/src/bctc-discover.ts",
+          "apps/vps-client/src/bctc-fetch-handler.ts"
+        ],
+        "baseline_pass": false,
+        "depends": [],
+        "sequencing": "WIP=2 (1 ARCH-CRON IN_PROGRESS); this FIX consumes 1 dev coding lane immediately. ARCH-CRON is designer lane (exempt). Ready-dispatch now.",
+        "route": "dev-vps-crawls",
+        "source": "router batch-mint PO-verified CRITICAL (2026-06-17T11:30Z): live get_sla_status confirms bctc breached 1316/360min; VPS health OK but 0 discover-pushes/24h; endpoint-structure changed",
+        "groomed_at": "2026-06-17T11:32:00Z",
+        "groomed_by": "pm",
+        "claimed_at": null,
+        "claimed_by": null,
+        "verification_gate": "live get_bctc_full(VCB/HPG/GVR/HVN) returns >0 Q1-2026 rows + SLA age falling + discover-push log shows >0 pushed URLs/24h. Non-zero fixture count across current quarter.",
+        "done_verified_blocked_reason": null
       }
     ],
     "ready": [
@@ -20355,6 +20383,33 @@
         "created_by": "po",
         "promoted_at": "2026-06-16T20:31:21Z",
         "promoted_by": "po"
+      },
+      {
+        "id": "CLEAN-FOREIGN-FLOW-DOC-PARAM-CODE-DRIFT",
+        "type": "CLEAN",
+        "severity": "LOW",
+        "status": "READY",
+        "title": "Extend CLEAN-TI-DOC-PARAM-CODE-DRIFT: add get_foreign_flow.md to doc param scope (code vs ticker)",
+        "description": "docs/agents/tools/list/get_foreign_flow.md:8,15 declares param `ticker` but live foreignFlowTools.ts:244 schema requires `code`. Agents reading SSOT (market-watcher/news-scout) hit schema error. Folding into existing CLEAN-TI-DOC-PARAM-CODE-DRIFT row scope (currently covers get_technical_indicators + get_price_history only). Doc-only, no coding lane.",
+        "owner": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "priority": "P3",
+        "size": "XS",
+        "zone": "docs/agents/tools/",
+        "files": [
+          "docs/agents/tools/list/get_foreign_flow.md"
+        ],
+        "baseline_pass": false,
+        "depends": [],
+        "sequencing": "doc-only, no coding-lane impact. Can run in parallel.",
+        "route": "dev-mcp-server",
+        "source": "PO recommendation: fold into CLEAN-TI-DOC-PARAM-CODE-DRIFT row scope rather than separate task (2026-06-17)",
+        "groomed_at": "2026-06-17T11:32:00Z",
+        "groomed_by": "pm",
+        "claimed_at": null,
+        "claimed_by": null,
+        "verification_gate": "get_foreign_flow.md param renamed from ticker→code; agents no longer see schema error on market-watcher/news-scout fetch.",
+        "done_verified_blocked_reason": null
       }
     ],
     "review": [
@@ -20579,8 +20634,8 @@
         }
       ]
     },
-    "updated_at": "2026-06-17T12:44:31Z",
-    "updated_by": "dev-team-pipeline-cont"
+    "updated_at": "2026-06-17T11:32:30Z",
+    "updated_by": "pm"
   },
   "updated_at": "2026-06-17T15:35:28Z",
   "updated_by": "po-triage-1531z",
