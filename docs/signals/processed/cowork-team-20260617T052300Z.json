@@ -1,0 +1,58 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T05:23:00Z",
+    "nominal_tick": "05:15",
+    "matched_slots": [
+      "chef-morning",
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-morning"
+    ],
+    "deferred_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-morning": "cron",
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-morning": null,
+      "chef-intraday": 120
+    },
+    "last_fired_timestamp": "2026-06-17T05:23:00Z",
+    "last_fired_slots": [
+      "chef-morning"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "leader_lock": "own-held-renewed",
+    "defer_reason": "SAME-AGENT-COLLISION-GUARD: chef-morning and chef-intraday both resolve to unified-agent/chef.md; concurrent spawn would race the full-overwrite notebook and risk a redundant concurrent MARKET dish. Fired guaranteed chef-morning only; chef-intraday (cadence-overdue, last_fired 02:22Z) deferred un-claimed so it re-matches next tick (~05:35) with the morning dish visible, where chef.md conditional-intraday logic self-evaluates correctly. Not a drop — re-fires next tick.",
+    "note": "chef-morning fired (guaranteed cron 15 5 1-5, drift 5min); slot WON no backstop collision; leader OWN-HELD renewed (exp 1781675560); pressure emit ok (05:22:56Z); token released. RSI/BB fix pipeline: scan-guard acaab COMPLETED this tick (writer-fix dispatch handled separately by router)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T05:23:00Z",
+  "_processed": {
+    "fingerprint": "d4f85f4a74c9760fd3783ce78c602d1b3c8412be83b069b8d0766c40d00afaff",
+    "processedAt": "2026-06-17T05:34:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

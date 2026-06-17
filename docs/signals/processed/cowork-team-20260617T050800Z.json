@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T05:08:00Z",
+    "matched_slots": [
+      "news-scout-sentiment"
+    ],
+    "won_slots": [
+      "news-scout-sentiment"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-sentiment": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-sentiment": null
+    },
+    "last_fired_timestamp": "2026-06-17T05:08:00Z",
+    "last_fired_slots": [
+      "news-scout-sentiment"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "05:00",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 5,
+    "signal_backlog": 1,
+    "note": "news-scout-sentiment fired (cron 0 5 1-5, drift 5min); slot WON no backstop collision; leader OWN-HELD renewed (exp 1781674667); pressure emit ok cycle-snapshot promoted; token released; RSI/BB fix pipeline (dev-mcp-server scan-guard acaab + writer-fix workorder staged) unaffected."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T05:08:00Z",
+  "_processed": {
+    "fingerprint": "2d7ec043833a49758b40b2da2899ea871541fd2bc2cd9a7d680a486ebd37c675",
+    "processedAt": "2026-06-17T05:34:49Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

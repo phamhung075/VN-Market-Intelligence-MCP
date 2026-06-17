@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T02:23:19Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": 120
+    },
+    "last_fired_timestamp": "2026-06-17T02:22:32Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:15",
+    "leader_lock": "acquired",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 0,
+    "note": "chef-intraday cadence-due fire (last_fired 2026-06-16T06:22:43Z ~20h > 120min cadence); leader+per-slot token both won fresh (no peer/cloud hold); CHEF spawned background a65ef91e; published-marker gate inside chef flow is dup-POST defense; router RAW-verifies MARKET by content+id on completion per chef attribution/fabrication cautions."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T02:23:19Z",
+  "_processed": {
+    "fingerprint": "06988cf662e34c92f589e5a95c2a74e222483145ddb450c74a9e6682523150d3",
+    "processedAt": "2026-06-17T02:34:13Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
