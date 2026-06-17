@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-16T22:40:40Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-17T02:07:21Z",
+  "_updated_by": "router",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -759,8 +759,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T01:34:10Z",
-    "_updated_by": "po-s94",
+    "_updated_at": "2026-06-17T02:07:21Z",
+    "_updated_by": "router",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -19642,36 +19642,6 @@
     ],
     "ready": [
       {
-        "id": "FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD",
-        "title": "get_system_status 60s timeout — TE/Chromium source-health probe has no per-source deadline -> market-watcher smoke probe (main.md:36) aborts every cycle at market open",
-        "type": "FIX",
-        "status": "REVIEW",
-        "priority": "P1",
-        "blocking": true,
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "review_note": "REVIEW 2026-06-17 dev-mcp-server — withSectionDeadline 3000ms wraps all 4 async sections generically, tsc clean, 6/6 new ACs pass, 15 existing pass. REBUILD_REQUIRED: YES. Commit: 09302e45",
-        "next_agent": "dev-mcp-server",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/system/systemTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/news-analysis/sourceHealthTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/system/cycleBootstrapTool.ts"
-        ],
-        "root_cause": "getSystemStatus composes the source-health probe which awaits the TradingEconomics Chromium fetch with NO per-source timeout. When TE Chromium hangs (live: TE source Ngung, 55-56 consecutive errors) the entire get_system_status call blocks ~60s. market-watcher main.md:36 smoke-probes get_system_status step-0 and aborts-on-fail -> BUG telegram + EXIT every fire. Affects 6 flow files (market-watcher, system-auditor/tier1-probe, tran-ngoc-bau/bootstrap, unified-agent/market-bootstrap, po/channel-audit, po/market-group).",
-        "fix_spec": "GENERIC, no per-source allowlist. Option A: wrap each source-health probe (esp. TE/Chromium) in Promise.race(fetch, timeout(3000)) so one hung source degrades to a 'Ngung/timeout' row instead of blocking the whole tool. Option B (preferred for the smoke-probe consumers): repoint the market-watcher/po smoke probes to get_cycle_bootstrap which returns system_status in ~1ms without the live source-health fan-out. Ship whichever the architect/dev judges durable; the deadline must be < the gateway/agent smoke-probe timeout.",
-        "generic_mandate": "Per-source deadline applies to ALL source-health probes, not a TE-only special-case. No date/source allowlist.",
-        "verification_gate": "LIVE: get_system_status returns < 5s even with TE breaker open (force TE hang or probe during a TE-Ngung window); market-watcher smoke probe at the next 02:00Z open does NOT abort. RAW-verify via the gateway, not a green test only.",
-        "rebuild_required": true,
-        "time_sensitive": "before ~02:00Z market open",
-        "source_reports": [
-          3203,
-          3206
-        ],
-        "dedup_note": "untracked — no prior getSystemStatus/TE-Chromium/smoke-probe task on the board (router RAW-confirmed). report 3204 'BUG-4 RESOLVED via restart' is a false-clear: restart only frees the hung Chromium, the no-guard root recurs (report 3206 RECURRED 20:09Z).",
-        "minted_by": "po-s94",
-        "minted_at": "2026-06-17T01:34:10Z"
-      },
-      {
         "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
         "type": "SPRINT-S",
         "priority": "MEDIUM",
@@ -19723,6 +19693,38 @@
       }
     ],
     "review": [
+      {
+        "id": "FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD",
+        "title": "get_system_status 60s timeout — TE/Chromium source-health probe has no per-source deadline -> market-watcher smoke probe (main.md:36) aborts every cycle at market open",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "blocking": true,
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "review_note": "REVIEW 2026-06-17 dev-mcp-server — withSectionDeadline 3000ms wraps all 4 async sections generically, tsc clean, 6/6 new ACs pass, 15 existing pass. REBUILD_REQUIRED: YES. Commit: 09302e45",
+        "next_agent": "qa",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/system/systemTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/news-analysis/sourceHealthTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/system/cycleBootstrapTool.ts"
+        ],
+        "root_cause": "getSystemStatus composes the source-health probe which awaits the TradingEconomics Chromium fetch with NO per-source timeout. When TE Chromium hangs (live: TE source Ngung, 55-56 consecutive errors) the entire get_system_status call blocks ~60s. market-watcher main.md:36 smoke-probes get_system_status step-0 and aborts-on-fail -> BUG telegram + EXIT every fire. Affects 6 flow files (market-watcher, system-auditor/tier1-probe, tran-ngoc-bau/bootstrap, unified-agent/market-bootstrap, po/channel-audit, po/market-group).",
+        "fix_spec": "GENERIC, no per-source allowlist. Option A: wrap each source-health probe (esp. TE/Chromium) in Promise.race(fetch, timeout(3000)) so one hung source degrades to a 'Ngung/timeout' row instead of blocking the whole tool. Option B (preferred for the smoke-probe consumers): repoint the market-watcher/po smoke probes to get_cycle_bootstrap which returns system_status in ~1ms without the live source-health fan-out. Ship whichever the architect/dev judges durable; the deadline must be < the gateway/agent smoke-probe timeout.",
+        "generic_mandate": "Per-source deadline applies to ALL source-health probes, not a TE-only special-case. No date/source allowlist.",
+        "verification_gate": "LIVE: get_system_status returns < 5s even with TE breaker open (force TE hang or probe during a TE-Ngung window); market-watcher smoke probe at the next 02:00Z open does NOT abort. RAW-verify via the gateway, not a green test only.",
+        "rebuild_required": true,
+        "time_sensitive": "before ~02:00Z market open",
+        "source_reports": [
+          3203,
+          3206
+        ],
+        "dedup_note": "untracked — no prior getSystemStatus/TE-Chromium/smoke-probe task on the board (router RAW-confirmed). report 3204 'BUG-4 RESOLVED via restart' is a false-clear: restart only frees the hung Chromium, the no-guard root recurs (report 3206 RECURRED 20:09Z).",
+        "minted_by": "po-s94",
+        "minted_at": "2026-06-17T01:34:10Z",
+        "route_to": "qa",
+        "router_recovery": "ROUTER 2026-06-17T02:07:21Z — relocated ready[]->review[] to match dev-mcp-server-set status REVIEW (commit 656c419a updated .head + row.status but left the row physically in ready[] with next_agent=dev-mcp-server). Lane/status now consistent; row-based re-dispatch hazard removed. .head untouched (already status=review/next_agent=qa). done_verified WITHHELD — REBUILD_REQUIRED:YES, live verify pending ops rebuild."
+      },
       {
         "id": "FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS",
         "type": "FIX",
