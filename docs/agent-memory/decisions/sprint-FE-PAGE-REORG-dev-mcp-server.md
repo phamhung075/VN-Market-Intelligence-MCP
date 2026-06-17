@@ -77,3 +77,12 @@
 - JSDoc vs inline comments for SSOT annotation — chose inline `//` to avoid TSC parse issues with `*/` and backticks inside `/** */` blocks.
 **why-decision:** Option G is correct (honest gap beats fake close=0 per /goal#1); inline comments sidestep TSC parser edge-cases with complex block content.
 **why-change:** Legacy tests (DPI-4 AC-1, AC-7, 1503 AC3) expected old stub-insert behavior — updated to match new merge-only semantics (not a regression, expected delta).
+
+### STEP dev-mcp-server-S9 · dev-mcp-server · 2026-06-17T08:41:00Z
+**task-id:** FIX-CI-RED-2RED-084-VPS-FRESHN
+**what-done:** Updated 2 stale test assertions; both per-file CI suites went 0 fail; CI Actions run 27676607447 = success.
+**what-considered:**
+- RED 1: Bump number only vs add toContain for 3rd tool — CHOSEN: add toContain("get_market_breadth") so count is meaningful not a magic number.
+- RED 2: Fix vpsHealthPoller.ts code vs fix test — RAW-verified: initDatabase BACKFILL_079 seeds 7 pending rows → active_count=7 → falls through to latestAt=null → "unreachable" is correct active-freshness behavior. Test was testing old passive:true contract.
+**why-decision:** Both stale tests; code is correct. RED 2 fix preserves active-freshness guard per passive-health-masks-dead-data lesson.
+**why-change:** No code changes needed; test-only fix is correct scope per task spec.
