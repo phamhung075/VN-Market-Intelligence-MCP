@@ -1,0 +1,14 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-06-16T20:13:00Z",
+  "_processed": {
+    "fingerprint": "ed4e55df1fa45df9b4679ddbd8367b7b5a3d5065067769bbee5d5afb92116168",
+    "processedAt": "2026-06-17T09:29:48Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

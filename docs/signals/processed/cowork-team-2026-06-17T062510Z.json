@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T06:25:10Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cadence"
+    },
+    "cadence_minutes": {
+      "chef-intraday": "120"
+    },
+    "last_fired_timestamp": "2026-06-17T06:24:49.515Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "06:15",
+    "leader_lock": "acquired_own_held_renewed",
+    "dev_head": "active",
+    "devq": 2,
+    "signal_backlog": 2,
+    "note": "chef-intraday own-held leader-lock renew (hb_age 991s, no peer touched since 06:03 claim); bg spawn unified-agent; writer-fix bg agent still running, no file overlap"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T06:25:10Z",
+  "_processed": {
+    "fingerprint": "68b98bff9b76d69f9d4028908fd5c1ac6aa08fdc1bbdbb7775e8459dd94ff7a4",
+    "processedAt": "2026-06-17T06:30:24Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
