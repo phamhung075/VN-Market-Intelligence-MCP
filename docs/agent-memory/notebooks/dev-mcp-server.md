@@ -77,3 +77,19 @@ Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
 **done_verified:** HELD — verify at next VN market open 2026-06-18 02:15Z (RSI canonical match, no BB spam, zero close=0 rows in live DB 02:00-03:30Z window).
 
 Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY
+
+## 2026-06-17 · FIX-CI-RED-2RED-084-VPS-FRESHN — 2 stale test assertions fixed
+
+**Task:** FIX-CI-RED-2RED-084-VPS-FRESHN (P1, S, BLOCKING — sole CI red gate)
+
+**RED 1 — 084-tool-market.test.ts:391 (STALE TEST):** `registerMarketTools` assertion expected 2 tools (get_market_snapshot + get_patterns). Commit ddc36452 (FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL) added a 3rd tool `get_market_breadth`. Test title + `toBe(2)` were stale. Fix: updated test title to "registers exactly 3", added `expect(toolNames).toContain("get_market_breadth")`, bumped `toBe(3)`.
+
+**RED 2 — FIX-VPS-HEALTH-FRESHN.test.ts:224 (STALE TEST):** Test "vn-bctc-fetch: passive check always returns healthy" tested old `passive: true` contract. Commit b560ab68 (FIX-BCTC-FRESHNESS-GATE 2026-06-16) replaced passive with active latestTimestampSql + queueGuardSql. The `initDatabase()` call seeds 7 pending rows in `bctc_vps_queue` (BACKFILL_079), so `active_count=7 > 0` → guard skips idle branch → no done rows → `latestAt=null` → correct result is "unreachable". Fix: updated test to assert the new active-freshness contract.
+
+**Code changes:** NONE — both were stale test expectations; vpsHealthPoller.ts + marketTools.ts are correct.
+
+**Per-file CI results:** 084-tool-market: 15 pass / 0 fail | FIX-VPS-HEALTH-FRESHN: 16 pass / 0 fail
+**tsc:** clean (0 errors) | tools=165 (unchanged) | sched=3 (unchanged)
+**REBUILD_REQUIRED:** NO (test-only changes)
+
+Zone health: tsc clean, 165 tools intact, scheduler 3 cron.schedule | HEALTHY

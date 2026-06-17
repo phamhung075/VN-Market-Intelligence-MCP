@@ -378,7 +378,7 @@ describe("Task 084 — Market MCP Tools", () => {
       expect(typeof registerMarketTools).toBe("function");
     });
 
-    it("registerMarketTools registers exactly 2 new tools on a fresh McpServer", () => {
+    it("registerMarketTools registers exactly 3 new tools on a fresh McpServer", () => {
       const freshServer = new McpServer(
         { name: "test-market-count", version: "0.0.0" },
         { capabilities: { tools: {} } },
@@ -388,7 +388,9 @@ describe("Task 084 — Market MCP Tools", () => {
       const toolNames = Object.keys(tools);
       expect(toolNames).toContain("get_market_snapshot");
       expect(toolNames).toContain("get_patterns");
-      expect(toolNames.length).toBe(2);
+      // 3rd tool added by FIX-MARKET-BREADTH-MISSING + FIX-MARKET-LIQUIDITY-MISSING-TOOL (ddc36452)
+      expect(toolNames).toContain("get_market_breadth");
+      expect(toolNames.length).toBe(3);
     });
 
     it("all 5 groups register a non-zero tool total on a combined McpServer", () => {

@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T08:32:22Z",
-  "_updated_by": "po-s101",
+  "_updated_at": "2026-06-17T08:30:00Z",
+  "_updated_by": "dev-mcp-server",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -19923,44 +19923,6 @@
     ],
     "ready": [
       {
-        "id": "FIX-CI-RED-2RED-084-VPS-FRESHN",
-        "title": "Standing CI RED: 2 genuine non-host-weather test fails block the full-suite push gate (unblocks 5 done tasks)",
-        "type": "FIX",
-        "status": "READY",
-        "priority": "P1",
-        "blocking": true,
-        "zone": "apps/mcp-server/",
-        "dev_agent": "dev-mcp-server",
-        "next_agent": "dev-mcp-server",
-        "created_at": "2026-06-17T06:28:25Z",
-        "created_by": "po-s98",
-        "root_cause": "Full per-file-isolation CI suite (bun test) RED with 2 fails DISJOINT from FIX-CI-RED-STANDING-1837A-1352A (which is now GREEN on origin, RAW 13 pass/0 fail). Both fail LOCALLY too (NOT host-weather): (1) src/__tests__/084-tool-market.test.ts:391 expects registerMarketTools to register exactly 2 tools (toBe(2)) but marketTools.ts now registers 3 server.tool() calls (3rd added by ddc36452 'market breadth + liquidity') — STALE count assertion, code is correct. (2) src/__tests__/FIX-VPS-HEALTH-FRESHN.test.ts:224 'vn-bctc-fetch: passive check always returns healthy (no active freshness check)' — behavioral regression in the data-freshness health check.",
-        "fix_spec": "(1) 084-tool-market.test.ts:391 — bump toBe(2) -> toBe(3) AND assert the new tool name is in toolNames (do NOT just bump the number blindly — verify the 3rd registered tool's name and add a toContain for it so the count stays meaningful). (2) FIX-VPS-HEALTH-FRESHN.test.ts:224 — RAW-read the test intent: it asserts vn-bctc-fetch should NOT always return healthy under passive check (must do an active freshness check); determine whether the regression is in the health-check IMPL (active-freshness path dropped) or the test expectation; fix the IMPL if the active freshness gate was lost (passive-health-masks-dead-data lesson), else correct the test. Do NOT mask a real freshness regression by relaxing the test.",
-        "generic_mandate": "Fix is generic — no sentinel/date cutoff. After fix, the EXACT CI command (per-file isolation full suite) must be 0 fail.",
-        "verification_gate": "Local: `bun test src/__tests__/084-tool-market.test.ts` AND `bun test src/__tests__/FIX-VPS-HEALTH-FRESHN.test.ts` both 0 fail, AND the full per-file-isolation suite 0 fail. THEN push -> `gh run list --branch main --workflow CI` conclusion=success for the SHA containing this fix. ON GREEN: promote FIX-CI-RED-STANDING-1837A-1352A + the 4 ci_green_on_subsequent_push-gated tasks (CI-RED-RECONCILE, CI-RED-b7b84d9b-FIX, FIX-TA-SANDBOX-DEPGUARD, CI-RED-8081e584-FIX) to done_verified.",
-        "unblocks": [
-          "FIX-CI-RED-STANDING-1837A-1352A",
-          "CI-RED-RECONCILE",
-          "CI-RED-b7b84d9b-FIX",
-          "FIX-TA-SANDBOX-DEPGUARD",
-          "CI-RED-8081e584-FIX"
-        ],
-        "rebuild_required": false,
-        "size": "S",
-        "origin": "po-s98 fleet-push 2026-06-17 — CI red on pushed SHA 701923bc, 2 genuine reds disjoint from CI-RED-STANDING",
-        "ci_red_refires": [
-          {
-            "check_id": "CI-RED-701923bc",
-            "head_sha": "701923bc79df8c72d06392889844c667112b79b4",
-            "run_id": 27670009188,
-            "signal_file": "docs/signals/ci-red-701923bc-20260617082919.json",
-            "folded_at": "2026-06-17T08:32:22Z",
-            "folded_by": "po-s101",
-            "note": "ci-health-probe re-fired ci_red on the SAME SHA/run this task already tracks (2 fail: 084-tool-market.test.ts + FIX-VPS-HEALTH-FRESHN.test.ts, 13166 pass/53 skip/2 fail). DEDUP — no new fixer. CONFIRM-BEFORE-BLAME case (a): same root, already groomed to ready[] blocking P1."
-          }
-        ]
-      },
-      {
         "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
         "type": "SPRINT-S",
         "priority": "MEDIUM",
@@ -20281,6 +20243,47 @@
         "created_by": "po-triage-fb-2026-06-16",
         "_moved_to_review_at": "2026-06-16T20:00:40Z",
         "_review_by": "dev-mcp-server"
+      },
+      {
+        "id": "FIX-CI-RED-2RED-084-VPS-FRESHN",
+        "title": "Standing CI RED: 2 genuine non-host-weather test fails block the full-suite push gate (unblocks 5 done tasks)",
+        "type": "FIX",
+        "status": "REVIEW",
+        "priority": "P1",
+        "blocking": true,
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "next_agent": "qa",
+        "created_at": "2026-06-17T06:28:25Z",
+        "created_by": "po-s98",
+        "root_cause": "Full per-file-isolation CI suite (bun test) RED with 2 fails DISJOINT from FIX-CI-RED-STANDING-1837A-1352A (which is now GREEN on origin, RAW 13 pass/0 fail). Both fail LOCALLY too (NOT host-weather): (1) src/__tests__/084-tool-market.test.ts:391 expects registerMarketTools to register exactly 2 tools (toBe(2)) but marketTools.ts now registers 3 server.tool() calls (3rd added by ddc36452 'market breadth + liquidity') — STALE count assertion, code is correct. (2) src/__tests__/FIX-VPS-HEALTH-FRESHN.test.ts:224 'vn-bctc-fetch: passive check always returns healthy (no active freshness check)' — behavioral regression in the data-freshness health check.",
+        "fix_spec": "(1) 084-tool-market.test.ts:391 — bump toBe(2) -> toBe(3) AND assert the new tool name is in toolNames (do NOT just bump the number blindly — verify the 3rd registered tool's name and add a toContain for it so the count stays meaningful). (2) FIX-VPS-HEALTH-FRESHN.test.ts:224 — RAW-read the test intent: it asserts vn-bctc-fetch should NOT always return healthy under passive check (must do an active freshness check); determine whether the regression is in the health-check IMPL (active-freshness path dropped) or the test expectation; fix the IMPL if the active freshness gate was lost (passive-health-masks-dead-data lesson), else correct the test. Do NOT mask a real freshness regression by relaxing the test.",
+        "generic_mandate": "Fix is generic — no sentinel/date cutoff. After fix, the EXACT CI command (per-file isolation full suite) must be 0 fail.",
+        "verification_gate": "Local: `bun test src/__tests__/084-tool-market.test.ts` AND `bun test src/__tests__/FIX-VPS-HEALTH-FRESHN.test.ts` both 0 fail, AND the full per-file-isolation suite 0 fail. THEN push -> `gh run list --branch main --workflow CI` conclusion=success for the SHA containing this fix. ON GREEN: promote FIX-CI-RED-STANDING-1837A-1352A + the 4 ci_green_on_subsequent_push-gated tasks (CI-RED-RECONCILE, CI-RED-b7b84d9b-FIX, FIX-TA-SANDBOX-DEPGUARD, CI-RED-8081e584-FIX) to done_verified.",
+        "unblocks": [
+          "FIX-CI-RED-STANDING-1837A-1352A",
+          "CI-RED-RECONCILE",
+          "CI-RED-b7b84d9b-FIX",
+          "FIX-TA-SANDBOX-DEPGUARD",
+          "CI-RED-8081e584-FIX"
+        ],
+        "rebuild_required": false,
+        "size": "S",
+        "origin": "po-s98 fleet-push 2026-06-17 — CI red on pushed SHA 701923bc, 2 genuine reds disjoint from CI-RED-STANDING",
+        "ci_red_refires": [
+          {
+            "check_id": "CI-RED-701923bc",
+            "head_sha": "701923bc79df8c72d06392889844c667112b79b4",
+            "run_id": 27670009188,
+            "signal_file": "docs/signals/ci-red-701923bc-20260617082919.json",
+            "folded_at": "2026-06-17T08:32:22Z",
+            "folded_by": "po-s101",
+            "note": "ci-health-probe re-fired ci_red on the SAME SHA/run this task already tracks (2 fail: 084-tool-market.test.ts + FIX-VPS-HEALTH-FRESHN.test.ts, 13166 pass/53 skip/2 fail). DEDUP — no new fixer. CONFIRM-BEFORE-BLAME case (a): same root, already groomed to ready[] blocking P1."
+          }
+        ],
+        "started_at": "2026-06-17T08:25:00Z",
+        "claimed_by": "dev-mcp-server",
+        "completed_at": "2026-06-17T08:30:00Z"
       }
     ],
     "qa": [],

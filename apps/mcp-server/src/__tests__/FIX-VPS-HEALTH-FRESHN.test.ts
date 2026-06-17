@@ -212,17 +212,28 @@ describe("FIX-VPS-HEALTH-FRESHN — data-freshness health checks", () => {
     expect(result.healthStatus).toBe("unhealthy");
   });
 
-  // ── vn-bctc-fetch: passive — always returns "healthy" (no reliable table) ───
+  // ── vn-bctc-fetch: active freshness check (FIX-BCTC-FRESHNESS-GATE 2026-06-16) ──
+  // The config was changed from passive:true to an active latestTimestampSql check.
+  // initDatabase() seeds bctc_vps_queue with pending rows (BACKFILL_079: 7 rows).
+  // With active_count > 0 (pending work) AND no done rows, the correct status is
+  // "unreachable" — the VPS queue has work but has not yet pushed any results.
+  // This is the honest active-freshness contract; passive-health-masks-dead-data lesson applies.
 
-  it("vn-bctc-fetch: passive check always returns healthy (no active freshness check)", () => {
+  it("vn-bctc-fetch: active freshness check returns unreachable when queue has pending rows but no done rows", () => {
+    // initDatabase() seeds bctc_vps_queue with pending rows (BACKFILL_079).
+    // The queueGuardSql active_count > 0, so the idle branch is skipped.
+    // No 'done' rows exist yet → latestAt = null → "unreachable".
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-bctc-fetch",
     )!;
+    // Confirm this is now an active (not passive) config
+    expect(config.passive).toBeUndefined();
+    expect(config.latestTimestampSql).toBeDefined();
+
     const result = checkServiceFreshness(db, config, nowIso());
 
-    // Passive service: no rows needed, returns healthy with passive note
-    expect(result.healthStatus).toBe("healthy");
-    expect(result.errorMessage).toBeUndefined();
+    // Active check with pending queue rows but no done rows → unreachable (not healthy)
+    expect(result.healthStatus).toBe("unreachable");
   });
 
   // ── FreshnessResult shape ────────────────────────────────────────────────────
