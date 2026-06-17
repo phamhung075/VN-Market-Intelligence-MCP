@@ -1,29 +1,21 @@
 # PO Notebook
-_overwritten 2026-06-17T01:36Z_
+_overwritten 2026-06-17T03:32Z_
 
-## Last cycle (2026-06-17T01:26Z dev-team triage tick, po-s94) — drained 28 health-recheck reports, minted 2 untracked FIX + 1 CLEAN, dispatched P1
-Inputs: 28 UNCLAIMED reports 3181–3208 (analysis-agent health-recheck, since 06-15), pendingSignals EMPTY, board head=idle, in_progress:1/review:8/ready:1. RAW-verified every cluster vs live board + live gateway tools (NOT the summary). NOTE: prev tick po-s93 punted these as "cowork domain" — but this tick explicitly tasked to DRAIN them, and 2 were genuinely-untracked CODE bugs, so the drain + mint was correct.
+## Last cycle (2026-06-17T03:31Z dev-team :07 tick, po-s95) — 2 pendingSignals + 2 queue rows → NOTHING + reconcile-only
+Inputs: pendingSignals[2] (ci_red CI-RED-a410875d, context_bloat qa.md 236L→claude-manager-helper) + signal_queue[2 to=po] (sau-d4 NEW, gatherer-doublefire READ). Board {ready:1,in_prog:1,review:8,done:162,dv:99,backlog:294}. WIP=1 active coding lane. RAW-reconciled git + live board before deciding. RETURN = **NOTHING** (no BATCH). Board lane total 565 byte-stable; only signal NEW 1→0.
 
-DISPATCHED (1, WIP<=2 coding honored — 0 active coding lanes pre-tick):
-- **FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD** (P1, ready LEAD, head→dev-mcp-server) — UNTRACKED. getSystemStatus (systemTools.ts) awaits TE/Chromium source-health probe (sourceHealthTools.ts) with NO per-source deadline → 60s block → market-watcher smoke probe (main.md:36) aborts at 02:00Z open. LIVE 01:31Z: call returned fast (TE breaker recovered) but latent no-guard root persists → recurs on next TE hang. TIME-SENSITIVE. fix: Promise.race(3s)/source OR swap smoke probe→get_cycle_bootstrap. rebuild req.
+DISPOSITION:
+- **CI-RED-a410875d / `bun test`** → DEDUP→NOTHING. head_sha a410875d is a REAL commit but NOT ancestor of local HEAD 26815cb4 — it's origin/main HEAD (origin 34 ahead, ALL chore()/docs() cloud-churn except 1 benign agent-md rename 775e2d8e + a merge; NO production code; a410875d itself touches only a health-recheck .md). Layer-1+2 dedup → FIX-CI-RED-STANDING-1837A-1352A (done, gate=ci_green_on_subsequent_push verbatim). Origin RED = EXPECTED frozen-pre-fix state (same class as po-s93 head_sha fbcc2cda). Did NOT mint a fixer on a stale/superseded run. Signal file → docs/signals/processed/.
+- **context_bloat qa.md 236L** → FOLD, no dispatch. qa.md ALREADY a target in CLEAN-CONTEXT-BLOAT-NOTEBOOKS-20260614 (listed 232L, now 236L drifted +4). code-janitor/claude-manager-helper owns it; per-notebook mint = dup. Signal addressed to=claude-manager-helper (not po) → left in place for its owner; no board write.
+- **sau-d4-202606170300** (D4 held-lock esc-datacov:FPT:Q1-2026:ESC-3 no board row) → RESOLVED **STALE**. RECURRING daily auditor false-positive (D4 fires on expired/ephemeral mutex keys, not real dropped work). Dismissed before: po-s76×2, 5a807e65, 44853141. Considered minting a real D4-check fix — DEFERRED (auditor-blind-spot is durable owner, already moot; not this tick's WIP).
+- **gatherer-doublefire** (READ, 2d) → tracked by DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER. No action.
 
-MINTED→BACKLOG (WIP-deferred):
-- **FIX-AGENTSIGNALS-FROMAGENT-SCHEMA** (P2) — UNTRACKED. LIVE RAW-confirmed get_agent_signals({from_agent:'news-scout'})→-32602 `agent` Required → news-scout SELF_SIGNALS_CACHE empty every cycle. fix: agent optional when from_agent present (agentSignalTools.ts). Distinct from FACTORY-INFRA-agentsignal-* refactors.
-- **CLEAN-TI-DOC-PARAM-CODE-DRIFT** (P3, doc-only) — get_technical_indicators.md/get_price_history.md param ticker→code; flow already uses code, 0 runtime broken (report 3204).
-
-DEDUP (no new task — RAW-verified each):
-- HVN dedup → FIX-ALERT-FINGERPRINT-WIRE-SCANJOBS (REVIEW; code 75e7a80f + partial-unique-index ec03b6ee + QA approve-code eff47bca; done_verified WITHHELD for market-open dedup-drain). Reports' "expired 13:38Z no log_fix" = FALSE-NEGATIVE (in review, not expired).
-- fb-poster get_foreign_flow/ticker_intelligence {} → FIX-FB-POSTER-NOARG-MARKET-TOOLS DONE_VERIFIED (reports predate).
-- BCTC 0-URL/low-conf/enrich-0rows (LIVE consecutive_zero_cycles=92) → FIX-BCTC-ENRICH-SILENT-0ROWS(review)+BCTC-ENRICHER-OLD-QUARTERS(deferred)+FIX-BCTC-ZERO-URL-ALERT(done_verified). Tracked, do NOT re-triage.
-- TA price=0/RSI 3-10 → FIX-OHLCV-SEED-CANDLE-UNIT-SCALE-P0 DONE_VERIFIED (LIVE pipeline RSI now clean) + FIX-ALERT-ENGINE-RSI-SINGLEDIGIT(review).
-- auditor post_agent_signal schema → CLEAN-AUDITOR-DOC-SIGNAL-TYPES DONE_VERIFIED (bab66a03, predates 3182–3204).
-- vnstockTradingStats 50% crash → FIX-VNSTOCK-TRADINGSTATS-CRASH DONE_VERIFIED (0e281fd1, 06-16 11:45; reports predate, next fire Mon 08:30).
-- D4 lock divergence (3195): both FIX-OHLCV-SEED…P0 + FIX-SIGNAL-CONFIDENCE-SLA-TS2367 now done_verified → STALE, resolved=duplicate.
-
-RESOLVED: all 28 via process_telegram_report (resolution enum-only: monitoring; 3190/3195=duplicate). list_unresolved_reports now []. Board: ready 1→2, backlog 292→294, in_progress/review/done/done_verified byte-stable. Committed orch-state + scripts/po-s94 by explicit path (2 files, no churn swept).
+NOT-CHANGED (held, correctly):
+- ARCH-CRON-SCHEDULER-RELIABILITY (in_progress): NOT stranded — deliberate zone-lock held open for market-day live re-verify gate G1-G5; design brief FINAL, IMPL-GATE done_verified; no dev-mcp-server commits since claim 06-14 is EXPECTED (sequenced + gate-held). LEAVE. DMS-1/DMS-2 stay HELD behind it.
+- review[8]: every row gated on QA/live-probe/push (FIX-CI-RED-STANDING done_verified WITHHELD pending Linux-CI; FIX-SYSTEM-STATUS done_verified WITHHELD by design). None promotable.
 
 ## Carry-over
-- **PUSH still HELD** (83 unpushed; origin frozen fbcc2cda). FIX-CI-RED-STANDING-1837A-1352A flips done_verified once held push lands + Linux CI greens ≥ fix SHA. Recurring ci_red on fbcc2cda = dup → NOTHING. PO out-of-band push decision pending.
-- HELD untouched: ARCH-CRON-SCHEDULER-RELIABILITY (in_progress, architect umbrella, market-day live-verify gate) + DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER (ready→agent-father, router spawns) + DMS-1/DMS-2 (backlog, zone collision behind ARCH-CRON).
-- Next tick: verify FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD shipped+rebuilt before relying on market-watcher 02:00Z smoke probe; verify FIX-ALERT-FINGERPRINT live-drains HVN dups at next open (rebuild NOT yet confirmed — last rebuild ea8667cd was FF/breadth/liquidity batch, not fingerprint).
-- FIX-BCTC-BANK-SCALAR-MAPPING (backlog, HIGH, multi) still queued — needs ba→architect SPIKE. CLEAN-CONTEXT-BLOAT-NOTEBOOKS owes 6 over-cap notebooks. Not advanced.
+- **PUSH still HELD** (origin frozen behind FIX-CI-RED-STANDING). Recurring ci_red on the frozen origin HEAD (fbcc2cda→now a410875d) = dup → NOTHING every tick; do NOT re-mint. Flips done_verified once held push lands + Linux CI greens ≥ fix SHA. PO out-of-band push decision pending.
+- FIX-SYSTEM-STATUS-TE-TIMEOUT-GUARD = DONE, done_verified WITHHELD BY DESIGN (>3000ms stall arm not steady-state observable). Do NOT re-open.
+- HELD: ARCH-CRON umbrella (market-day live gate) + DESIGN-GATHERER (router/agent-father) + DMS-1/DMS-2 (zone collision). FIX-BCTC-BANK-SCALAR-MAPPING (backlog HIGH, needs ba→architect SPIKE) + CLEAN-CONTEXT-BLOAT-NOTEBOOKS (now 6 targets incl qa.md@236) not advanced.
+- Next D4 sau false-positive: resolve STALE again OR finally mint the auditor D4-check fix (held lock w/ expired/ephemeral key + no live task → suppress) to stop the daily re-fire.

@@ -195,8 +195,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-16T17:57:35Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-17T03:00:00.708Z",
+    "_updated_by": "system-auditor",
     "archive": [
       {
         "from": "system-auditor",
@@ -224,6 +224,20 @@
       }
     ],
     "rows": [
+      {
+        "id": "sau-d4-202606170300",
+        "ts": "2026-06-17T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "held lock esc-datacov:FPT:Q1-2026:ESC-3 has no orch-state task_board row",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "resolved_at": "2026-06-17T03:32:24Z",
+        "resolved_by": "po",
+        "resolution": "STALE — RECURRING D4 false-positive (po-s95). Held-lock esc-datacov:FPT:Q1-2026:ESC-3 references no orch-state task_board row because D4 fires on EXPIRED/concurrent lock keys (ephemeral dispatcher-mutex / expired esc lock), not real dropped work. Dismissed STALE before: po-s76(x2), 5a807e65, 44853141, 44853141. Durable owner = system-auditor D4-check blind-spot (auditor must NOT flag a held lock whose key is an expired/ephemeral mutex with no live task) — already noted moot; no new board task this tick (not the tick WIP budget; ≤1 coding lane spent on nothing-new)."
+      },
       {
         "id": "sau-d4-202606160300",
         "ts": "2026-06-16T03:00Z",
