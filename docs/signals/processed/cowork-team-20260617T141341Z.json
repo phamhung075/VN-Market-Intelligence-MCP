@@ -1,0 +1,59 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-17T14:13:41Z",
+    "matched_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "won_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/refine_bctc_md/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [
+      {
+        "slot_id": "refine-bctc-slot-2",
+        "error": "subagent reported no MCP gateway tool access (Read/Write only) and exited without attempting calls; gateway VERIFIED UP via router live task_claim/emit/release this same tick — false infra-failure / agent per-session init-miss class per corroboration gate; dispatch degraded; last_fired kept to avoid retry-storm of broken local-subagent path"
+      }
+    ],
+    "pressure_mode": "adaptive",
+    "calendar_status": "unknown",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "refine-bctc-slot-2": "cron"
+    },
+    "cadence_minutes": {
+      "refine-bctc-slot-2": null
+    },
+    "last_fired_timestamp": "2026-06-17T14:10:38Z",
+    "last_fired_slots": [
+      "refine-bctc-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned_degraded_subagent_no_gateway_false_infra",
+    "nominal_tick": "14:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 2,
+    "signal_backlog": 1,
+    "note": "refine-bctc-slot-2 spawned OK but subagent failed claiming no gateway access. Gateway VERIFIED UP (router live calls this tick). Known false-infra/init-miss class; NOT an outage. last_fired kept; BCTC refine resumable next cycle/cloud-trigger."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-17T14:13:41Z",
+  "_processed": {
+    "fingerprint": "c907148e4a9fe65a2c658e4da6e6c0a1c39798cea0e1520cb428bcd4b152c759",
+    "processedAt": "2026-06-17T14:27:43Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
