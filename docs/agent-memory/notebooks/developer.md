@@ -1,6 +1,29 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-31 | **Cycle:** NB-PRUNE-1 | **Sprint:** NB-PRUNE-FIX
+**Last updated:** 2026-06-17 | **Cycle:** FIX-FB-POST-DATA-INTEGRITY-GATE
+
+## Session 2026-06-17 — FIX-FB-POST-DATA-INTEGRITY-GATE (cross-service scripts task)
+
+**Task:** Build reusable plausibility gate at `scripts/fb-data-integrity-gate.sh`.
+**Zone:** cross-service (scripts/) — no dev-* specialist match → developer handles directly.
+
+**Root cause context:** `fb-jargon-gate.sh` checks jargon tokens only; it passed both fabricated FB drafts (VRE −9.4%, VHM −8.5%) on 2026-06-17. These values exceed the HOSE ±7% daily price limit — physically impossible. Root: no numeric sanity check existed.
+
+**What was built:**
+- `scripts/fb-data-integrity-gate.sh` — 175L bash gate, 4 check groups (A=HOSE-limit, B=live-delta, C=selloff-contradiction, D=VN-Index), exits non-zero on BLOCK.
+- Live data from `http://localhost:3000/mcp/api/prices/batch?tickers=VNINDEX,...` — established REST endpoint used by the frontend watchlist, no new transport.
+- Optional `$3` pre-fetched snapshot JSON for headless/offline contexts.
+
+**Key design choices:**
+- Check-C (selloff narrative) uses negation filtering to avoid false-positive on "không phải bán tháo" denial phrases.
+- Soft-skip if API unavailable (curl 8s timeout) — gate degrades gracefully, does not block on infra error.
+- Exit discipline: `exit 0` ONLY when `$VIOLATIONS -eq 0`; `exit 1` on block (avoids the fb-jargon-gate-false-green trap).
+
+**Self-verify:**
+- Clean post `fb-post-2026-06-17.md` → `[PASS]` exit 0.
+- VRE −9.4% injected → `[BLOCK] Check-A HOSE-price-limit + Check-B live-delta` exit 1.
+
+**Docs updated:** `docs/policies/dev-standards.md` § Script Persistence — CANONICAL pointer added.
 
 ## Session 2026-06-02 — SIG-FOLLOWUP-DRYRUN X-1 (sprint SELF-IMPROVE-GATE)
 

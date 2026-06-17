@@ -880,8 +880,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T07:10:00Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-17T11:32:41Z",
+    "_updated_by": "developer",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -20094,46 +20094,6 @@
         "created_by": "po",
         "promoted_at": "2026-06-16T20:31:21Z",
         "promoted_by": "po"
-      },
-      {
-        "id": "FIX-FB-POSTER-FABRICATES-STALE-EOD",
-        "title": "fb-market-poster fabricates per-ticker data when CHEF EOD is stale",
-        "status": "READY",
-        "type": "FIX",
-        "priority": "P1",
-        "zone": "agent",
-        "next_agent": "agent-father",
-        "size": "S",
-        "blocking": false,
-        "origin": "router-handoff 2026-06-17 — two rejected FB drafts invented a real-estate selloff (VIC -6.6/VHM -8.5/VRE -9.4%); VRE/VHM exceed HOSE +/-7% daily limit = physically impossible = pure hallucination. Live truth: VIC -1.03/VHM -1.10/VRE -1.75%, balanced breadth 168up/129dn 0-floor.",
-        "root_cause": "When CHEF EOD synthesis is blocked/stale, fb-market-poster flow falls back to stale CHEF morning (05:16Z) data and FILLS GAPS WITH FABRICATION instead of fetching live or writing honest gaps — even though get_market_snapshot/get_market_breadth/get_foreign_flow are live & clean.",
-        "fix_spec": "fb-market-poster flow (via agent-father, agent-md-factory) MUST HARD-REQUIRE a live get_market_snapshot(codes=[watchlist movers]) per-ticker fetch for the recap spine — NOT the CHEF shortcut — and FAIL-LOUD to an honest gap when a number cannot be fetched live. Never synthesize a per-ticker move from stale CHEF synthesis.",
-        "generic_mandate": "Applies to EVERY per-ticker number in the recap spine, not just real-estate; honest-gap path must be exercised, not prose-filled.",
-        "verification_gate": "RAW: with CHEF EOD deliberately stale, the next fb-poster draft either quotes live get_market_snapshot per-ticker numbers (matching the tool) OR writes an explicit honest gap — and NEVER emits a fabricated/out-of-band per-ticker move.",
-        "memory_ref": "feedback_fb_poster_fabricates_when_data_thin",
-        "created": "2026-06-17T11:21:05Z",
-        "created_by": "po",
-        "source": "router-handoff-2026-06-17-fb-session"
-      },
-      {
-        "id": "FIX-FB-POST-DATA-INTEGRITY-GATE",
-        "title": "FB-post data-integrity / plausibility gate (jargon-gate is necessary-not-sufficient)",
-        "status": "READY",
-        "type": "FIX",
-        "priority": "P1",
-        "zone": "cross-service",
-        "next_agent": "developer",
-        "size": "S",
-        "blocking": false,
-        "sequence_after": "FIX-FB-POSTER-FABRICATES-STALE-EOD",
-        "origin": "router-handoff 2026-06-17 — fb-jargon-gate PASSed both fabricated drafts; it checks jargon only, never data integrity/hallucination.",
-        "fix_spec": "Add a router/agent-side plausibility gate (reusable script in scripts/, pointer in fb-market-poster flow + dev-standards Script Persistence): REJECT any per-ticker move beyond +/-7% on HOSE (above the daily price limit = impossible); REJECT any mover claim contradicting same-session breadth (e.g. 'selloff' narrative vs 0-floor / net-positive advancers). Gate runs BEFORE relay; exits non-zero on violation.",
-        "generic_mandate": "Gate is generic across ALL tickers and ALL FB drafts, not a one-off VIC/VHM/VRE patch. Must FAIL-LOUD (non-zero exit on BLOCK — avoid the known fb-jargon-gate exit-0-on-block trap, see feedback_fb_poster_gate_false_green).",
-        "verification_gate": "RAW: feed the gate the two rejected 06-17 drafts -> BLOCK (non-zero); feed the live-verified clean draft -> PASS. Inject a +8% HOSE move and a selloff-vs-net-positive-breadth claim -> both BLOCK.",
-        "memory_ref": "feedback_fb_poster_fabricates_when_data_thin, feedback_fb_poster_gate_false_green",
-        "created": "2026-06-17T11:21:05Z",
-        "created_by": "po",
-        "source": "router-handoff-2026-06-17-fb-session"
       }
     ],
     "review": [
@@ -20412,6 +20372,48 @@
         "_review_by": "dev-mcp-server",
         "qa_reroute_note": "ROUTER-HANDOFF 2026-06-17: rerouted next_agent ops-vps-fetch->qa (carryover QA hop). QA: verify LIVE vs named-volume market.db (real varied data, not constant); confirm the standing CI-RED set (~63 fails) is DISJOINT from this fix's changed files (regression-vs-weather, see feedback_ci_red_can_be_flaky); flag residual foreign-flow contamination 06-14..16 -> tracked in FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616.",
         "updated_at": "2026-06-17T11:21:05Z"
+      },
+      {
+        "id": "FIX-FB-POSTER-FABRICATES-STALE-EOD",
+        "title": "fb-market-poster fabricates per-ticker data when CHEF EOD is stale",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "agent",
+        "next_agent": "agent-father",
+        "size": "S",
+        "blocking": false,
+        "origin": "router-handoff 2026-06-17 — two rejected FB drafts invented a real-estate selloff (VIC -6.6/VHM -8.5/VRE -9.4%); VRE/VHM exceed HOSE +/-7% daily limit = physically impossible = pure hallucination. Live truth: VIC -1.03/VHM -1.10/VRE -1.75%, balanced breadth 168up/129dn 0-floor.",
+        "root_cause": "When CHEF EOD synthesis is blocked/stale, fb-market-poster flow falls back to stale CHEF morning (05:16Z) data and FILLS GAPS WITH FABRICATION instead of fetching live or writing honest gaps — even though get_market_snapshot/get_market_breadth/get_foreign_flow are live & clean.",
+        "fix_spec": "fb-market-poster flow (via agent-father, agent-md-factory) MUST HARD-REQUIRE a live get_market_snapshot(codes=[watchlist movers]) per-ticker fetch for the recap spine — NOT the CHEF shortcut — and FAIL-LOUD to an honest gap when a number cannot be fetched live. Never synthesize a per-ticker move from stale CHEF synthesis.",
+        "generic_mandate": "Applies to EVERY per-ticker number in the recap spine, not just real-estate; honest-gap path must be exercised, not prose-filled.",
+        "verification_gate": "RAW: with CHEF EOD deliberately stale, the next fb-poster draft either quotes live get_market_snapshot per-ticker numbers (matching the tool) OR writes an explicit honest gap — and NEVER emits a fabricated/out-of-band per-ticker move.",
+        "memory_ref": "feedback_fb_poster_fabricates_when_data_thin",
+        "created": "2026-06-17T11:21:05Z",
+        "created_by": "po",
+        "source": "router-handoff-2026-06-17-fb-session",
+        "lane": "review",
+        "reviewed_at": "2026-06-17T00:00Z",
+        "reviewed_by": "agent-father",
+        "review_commit": "25dc5829",
+        "review_files": [
+          "docs/agents/fb-market-poster/flow/main.md",
+          "docs/agents/fb-market-poster/init.md",
+          "docs/handoffs/FIX-FB-POSTER-FABRICATES-STALE-EOD-developer.md"
+        ]
+      },
+      {
+        "id": "FIX-FB-POST-DATA-INTEGRITY-GATE",
+        "title": "FB-post data-integrity / plausibility gate (jargon-gate is necessary-not-sufficient)",
+        "status": "REVIEW",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "cross-service",
+        "next_agent": "qa",
+        "size": "S",
+        "promoted_at": "2026-06-17T11:32:41Z",
+        "promoted_by": "developer",
+        "handoff": "docs/handoffs/FIX-FB-POST-DATA-INTEGRITY-GATE-developer.md"
       }
     ],
     "qa": [],

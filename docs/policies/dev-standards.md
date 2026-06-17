@@ -46,6 +46,15 @@ Three-pass repair: A=mixed-unit open (open<100 AND open>0 AND low=0): open*1000 
 B=partial-zero open (open=0, not all-zero): open=close; C=remaining low=0 (close>=1000): low=ROUND(close*0.99).
 Excludes all-zero rows (separate defect). data_env preserved (RF-5).
 
+**CANONICAL: FB data-integrity plausibility gate (FIX-FB-POST-DATA-INTEGRITY-GATE)**
+```bash
+# Check a post file before publish (run from repo root):
+bash scripts/fb-data-integrity-gate.sh <post-file> [YYYY-MM-DD] [snapshot-json-file]
+# Exit 0 = PASS; Exit 1 = BLOCK (violations printed); Exit 2 = usage error
+# Fetches live data from http://localhost:3000/mcp/api/prices/batch automatically.
+# Owning flow: docs/agents/fb-market-poster/flow/main.md STEP 4b
+```
+
 `/tmp` is allowed ONLY for throwaway run-scoped DATA (payload json, stderr capture, session-id cache) — never for executable logic.
 
 **Maintenance (user directive 2026-06-07):** agents MAY update/upgrade an existing `scripts/` script to work better or optimize (fix bugs, harden, speed up, extend) — improving the shared script beats writing a parallel one-off. Rules: (1) if the script implements a flow spec, edit the spec first, then the script — they MUST stay in sync; (2) smoke-test after the change (clean no-op run at minimum); (3) keep the usage contract (CLI args/env/stdout) backward-compatible or update every caller + flow pointer in the same commit; (4) commit under commit-mutex.
