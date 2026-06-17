@@ -96,3 +96,13 @@
 - Option C: Gate at PROMOTE-TIME in promoteCycleSnapshot (writer is the authority) — CHOSEN: single-point fix, generic, no per-instance date literals.
 **why-decision:** Option C is the only fix that can never be bypassed by a new consumer. SNAPSHOT_MAX_STALENESS_MS=4h is generous for real off-hours ticks (fetched ≤15min ago) but tight vs 15-day residue.
 **why-change:** stale_warning on PressureState was typed as literal `false` — widened to `boolean` as part of the fix (previously the type was lying about the field's possible values).
+
+### STEP dev-mcp-server-S11 · dev-mcp-server · 2026-06-18T00:00:00Z
+**task-id:** FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH (CHANGES_REQUESTED: conflicting writer)
+**what-done:** Removed `resetQ1UrlNotFound(db)` call from `initFinancialReportsTables()` — the function was firing on every `initDatabase()` call from ~15 MCP tool handlers, perpetually undoing enricher terminalization (tug-of-war).
+**what-considered:**
+- Option A: Bound resetQ1UrlNotFound to run only once (singleton/flag) — rejected: complex state management; Arm 2 already provides the correct bounded grace-period retry, making resetQ1UrlNotFound redundant.
+- Option B: Remove the call entirely; keep function exported for tests and manual recovery — CHOSEN: Arm 2 (COMBINED_SQL) already handles late-publish retry correctly (7-day grace, attempts<6 cap). No code duplication, zero regression.
+- Option C: Escalate to PO as "retry-forever vs terminalize" product decision — assessed unnecessary: DoD explicitly says "bound the grace-period (finite retries OR finite days)"; Arm 2 already does this; the ONLY problem was the startup reset undoing it.
+**why-decision:** The startup reset was the sole source of infinite retry — removing it lets the already-correct Arm 2 + terminalization work as designed. Function kept for backward compat + emergency use. Policy question resolved from code (bounded Arm 2 exists).
+**why-change:** Prior CHANGES_REQUESTED was for test-only fix (stale tests); this cycle found the deeper live conflict — conflicting writer observed first-hand in docker logs (TASK-1943a reset at 21:30:51, 22:45:34, 22:46:07Z).
