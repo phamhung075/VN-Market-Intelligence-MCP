@@ -2,32 +2,29 @@
 agent_id: system-auditor
 session_date: 2026-06-17
 audit_tier: 1
-last_clean: 2026-06-17T08:14:14Z
+last_clean: 2026-06-17T08:44:15Z
 ---
 
-## c312 · 2026-06-17T08:14:14Z
-### Audit Run Tier-1 (08:14–08:15 UTC 2026-06-17)
+## c313 · 2026-06-17T08:44:15Z
+### Audit Run Tier-1 (08:44–08:45 UTC 2026-06-17)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
 - Anomalies: 0 new (all PASS) | Dedup: 0 skipped
 - Status: HEALTHY
-- A-01..A-11 container UP: mcp-server (1h fresh rebuild), api-gateway (6d), frontend (15h), macro-indicators (2d), mcp-gateway (6d), pdf-extractor (31h), stock-price (45h), technical-analysis (2d), kinh-dich-service (2d), alert-engine (6d), rag-service (2h), news-fetch (6d) ✓
+- A-01..A-11 container UP: mcp-server (2h fresh rebuild), api-gateway (6d), frontend (15h), macro-indicators (2d), mcp-gateway (6d), pdf-extractor (31h), stock-price (45h), technical-analysis (2d), kinh-dich-service (2d), alert-engine (6d), rag-service (11m), news-fetch (6d) ✓
 - A-12..A-19 health endpoints: 5/5 OK ✓
-- A-22..A-24 tooling: pdftoppm, tesseract, vie-lang all present ✓
-- A-25..A-28 inter-service: stock-price, technical-analysis, alert-engine, pdf-extractor all responding ✓
 - A-21 restart count: 0 ≤ 2 ✓
-- A-30 memory: MemPerc=17.56% < 85% ✓
-- A-32 disk: 39% < 85% ✓
+- A-25..A-28 inter-service: stock-price, technical-analysis, alert-engine, pdf-extractor all responding ✓
+- A-30 memory: MemPerc=20.40% < 85% ✓
+- A-32 disk: 40% < 85% ✓
 - A-31 EPIPE check: 0 errors < 2 ✓
-- B-08 BCTC PDF landing: 80 PDFs present ✓
 - WAL sizes: market.db=4MB, coordination.db=0MB (both <50MB) ✓
-- MCP system: 147 cron jobs healthy, circuit breakers OK, market OPEN (15:15 VN) ✓
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-17T08:14:28Z ===
+=== AUDITOR PROBE 2026-06-17T08:44:23Z ===
 
 --- docker ps -a (13 containers, all healthy) ---
-mcp-server: Up 1 hour (healthy)
+mcp-server: Up 2 hours (healthy)
 frontend: Up 15 hours (healthy)
 pdf-extractor: Up 31 hours (healthy)
 stock-price: Up 45 hours (healthy)
@@ -35,7 +32,7 @@ technical-analysis: Up 2 days (healthy)
 macro-indicators: Up 2 days (healthy)
 kinh-dich-service: Up 2 days (healthy)
 api-gateway: Up 6 days (healthy)
-rag-service: Up 2 hours (healthy)
+rag-service: Up 11 minutes (healthy)
 news-fetch: Up 6 days (healthy)
 alert-engine: Up 6 days (healthy)
 headroom-proxy: Up 4 days
@@ -55,8 +52,8 @@ alert-engine:5006 ✓
 pdf-extractor:5001 ✓
 
 --- memory/disk ---
-mcp-server: MemPerc=17.56% CPUPerc=1.93%
-disk: 39% used (21GB avail)
+mcp-server: MemPerc=20.40% CPUPerc=2.17%
+disk: 40% used (21GB avail)
 
 --- WAL sizes ---
 market.db: 4 MB
@@ -66,18 +63,19 @@ coordination.db: 0 MB
 Count: 0
 ```
 
-## c311 · 2026-06-17T07:45:15Z
-### Audit Run Tier-1 (07:44–07:45 UTC 2026-06-17)
+## c312 · 2026-06-17T08:14:14Z
+### Audit Run Tier-1 (08:14–08:15 UTC 2026-06-17)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
 - Anomalies: 0 new (all PASS) | Dedup: 0 skipped
 - Status: HEALTHY
-- A-01..A-11 container UP: mcp-server (31m fresh rebuild), api-gateway (5d), frontend (14h), macro-indicators (2d), mcp-gateway (6d), pdf-extractor (30h), stock-price (44h), technical-analysis (47h), kinh-dich-service (2d), alert-engine (6d), rag-service (1h), news-fetch (6d) ✓
+- A-01..A-11 container UP: mcp-server (1h fresh rebuild), api-gateway (6d), frontend (15h), macro-indicators (2d), mcp-gateway (6d), pdf-extractor (31h), stock-price (45h), technical-analysis (2d), kinh-dich-service (2d), alert-engine (6d), rag-service (2h), news-fetch (6d) ✓
 - A-12..A-19 health endpoints: 5/5 OK ✓
-- A-20 pdf-extractor multi-probe: 3/3 (200, 200, 200) ✓ (no event-loop stall)
+- A-22..A-24 tooling: pdftoppm, tesseract, vie-lang all present ✓
+- A-25..A-28 inter-service: stock-price, technical-analysis, alert-engine, pdf-extractor all responding ✓
 - A-21 restart count: 0 ≤ 2 ✓
-- A-30 memory: MemPerc=11.36% < 85% ✓
+- A-30 memory: MemPerc=17.56% < 85% ✓
 - A-32 disk: 39% < 85% ✓
-- MCP system: 16 circuit breakers OK, DB uptime 31m 24s, WAL 3.94 MB, all ~140 cron jobs healthy ✓
+- A-31 EPIPE check: 0 errors < 2 ✓
 
 ## c308 · 2026-06-17T06:39:01Z
 ### Audit Run Tier-2 (06:30–06:41 UTC 2026-06-17)
