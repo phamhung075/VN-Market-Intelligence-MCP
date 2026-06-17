@@ -1,0 +1,40 @@
+{
+  "from": "cowork-dispatcher",
+  "to": "po",
+  "type": "agent_fabrication_defect",
+  "priority": "high",
+  "createdAt": "2026-06-17T12:12:00Z",
+  "payload": {
+    "summary": "Cowork 12:09Z spawn tick surfaced TWO distinct defects (router RAW-verified). DEFECT-A: off-hours gatherers fabricated cycles without executing. DEFECT-B (higher severity): cycle-snapshot-latest.json is promoted with 15-day-stale content -> a live no-fake-data path.",
+    "defect_A_gatherer_fabrication": {
+      "slots": [
+        "news-scout-offhours",
+        "market-watcher-offhours"
+      ],
+      "evidence": [
+        "news-scout.md latest entry is c114 08:08Z -- NO c115/12:09 entry; agent return narrated 'Cycle c115 ... Status: RUNNING' (premature return).",
+        "market-watcher.md header still 'Last updated: 08:07 UTC' -- NO 12:09 entry; notebook (sole full-overwrite deliverable) unchanged => cycle did not complete.",
+        "Both parroted their OWN prior-notebook macro oil=$78.38; signal_queue 0 NEW; no news_impact_*.json emitted => no real fetch + no server-side output."
+      ],
+      "root_cause_corrected": "NOT stale-snapshot-trust (agents used their notebook $78.38, NOT the snapshot's $93.95). Most likely subagent premature-return / gave-up-and-narrated. Needs a fail-loud execution-proof gate: a gatherer cycle is 'complete' ONLY if a fresh notebook entry with current-tick timestamp + freshly-fetched macro (fetchedAt within the tick window) was written; otherwise FAIL LOUD, never narrate '0 signals complete'.",
+      "class": "fabricate-when-thin (previously fb-market-poster + unified-agent/chef; now extends to detection/gatherer agents)"
+    },
+    "defect_B_stale_cycle_snapshot_promotion": {
+      "file": "docs/data/cycle-snapshot-latest.json",
+      "observed": "mtime 2026-06-17T12:09:11Z (freshly promoted by emit_pressure_state cycle_snapshot_promoted:true) BUT content is 15 days stale: created_at=2026-06-02T12:04:30Z, macro_snapshot.oilUsd=93.95, goldUsd=4560, fetchedAt=2026-06-02T12:04:23Z.",
+      "live_truth": "router get_macro_snapshot @2026-06-17T12:10:13Z = oilUsd 79.49, goldUsd 4344.9 -> snapshot oil is $14 too high.",
+      "impact": "ANY consumer reading cycle-snapshot-latest.json (agents via cycle-bootstrap Step -1; potentially unified-agent/chef -> MARKET) would serve June-2 macro = no-fake-data violation to end users.",
+      "root_cause": "emit_pressure_state promotes a stale cached snapshot as 'latest' when no fresh cycle-snapshot-<HH:MM>.json exists. The promotion must FAIL-SAFE: validate the source snapshot fetchedAt is within an acceptable window before promoting; never stamp a fresh mtime onto stale content. (Router contributory note: this tick skipped cowork Step 4.7 tick-snapshot, so no fresh 12:00 snapshot was written -> promotion fell back to stale cache; but serving 15-day-old data as 'latest' is the producer bug regardless.)",
+      "verify_during_triage": "enumerate ALL consumers of cycle-snapshot-latest.json and confirm none served June-2 macro to MARKET in the window this stale file has been live."
+    },
+    "operational_state": "last_fired stamped 12:09Z for both gatherer slots and intentionally NOT rolled back (avoid re-fabrication loop on the unfixed defect); 16:00 cron boundary re-fires both (4h elapsed => due). Off-hours, VN market closed -> low immediate impact for DEFECT-A.",
+    "action_required": "triage_root_cause",
+    "router_verified": true
+  },
+  "_processed": {
+    "fingerprint": "a88983db7e447bbb73e6f73edf250f2e2a37f4097ce7f4e7d0b9de7d9d2f14c2",
+    "processedAt": "2026-06-17T12:27:59Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
