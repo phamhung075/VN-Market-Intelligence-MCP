@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T05:30:00Z",
+  "_updated_at": "2026-06-17T05:41:44Z",
   "_updated_by": "dev-mcp-server",
   "dashboard_section_cache": {
     "last_linecount": 2,
@@ -790,7 +790,7 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T05:30:00Z",
+    "_updated_at": "2026-06-17T05:41:44Z",
     "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
@@ -19823,93 +19823,6 @@
         "created_by": "po",
         "promoted_at": "2026-06-16T20:31:21Z",
         "promoted_by": "po"
-      },
-      {
-        "id": "SUBTASK-OHLCV-WRITER-1-FOREIGN-FLOW-MERGE",
-        "type": "FIX",
-        "title": "SUBTASK-1: Rewrite writeForeignFlowToOhlcv — merge-only UPDATE (no stub INSERT)",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "parent_task": "ARCH-OHLCV-WRITER-SSOT-DURABLE",
-        "blocking": true,
-        "depends_on": [],
-        "blocked_by": [],
-        "acceptance_criteria": [
-          "apps/mcp-server/src/infrastructure/db/ohlcvForeignFlowStore.ts L57-69 replaced: INSERT … ON CONFLICT removed entirely",
-          "writeForeignFlowToOhlcv now contains ONLY UPDATE statement (SQL contract in brief §2)",
-          "UPDATE returns { changes: number } where changes=0 means no OHLCV row yet (deferred write, debug log emitted)",
-          "Verified BOTH callers treat changes=0 as non-error: foreignFlowFetcher.ts L136-137 + L219-220, pushForeignFlowHandler.ts L319 — none throw or reject on 0",
-          "No stub row inserted when OHLCV row absent for (code, date) — test SUBTASK-3 T-4 verifies this",
-          "Merge-only semantic: if pushPricesHandler inserts row after foreign-flow fetch, the next fetch's UPDATE populates foreign-flow columns immediately",
-          "Rebuild image required post-merge (flag set)"
-        ],
-        "handoff": "docs/handoffs/SUBTASK-OHLCV-WRITER-1-FOREIGN-FLOW-MERGE.md",
-        "zone_check": "apps/mcp-server/",
-        "no_file_conflict": true,
-        "rebuild_required": true,
-        "created_at": "2026-06-17T05:30:00Z",
-        "created_by": "pm"
-      },
-      {
-        "id": "SUBTASK-OHLCV-WRITER-2-SSOT-ANNOTATION",
-        "type": "ENHANCEMENT",
-        "title": "SUBTASK-2: Add SSOT writer-bypass annotation to ohlcvWriteService.ts",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "status": "READY",
-        "priority": "P0",
-        "size": "XS",
-        "parent_task": "ARCH-OHLCV-WRITER-SSOT-DURABLE",
-        "blocking": false,
-        "depends_on": [],
-        "blocked_by": [],
-        "acceptance_criteria": [
-          "apps/mcp-server/src/application/usecases/ohlcvWriteService.ts: add exhaustive JSDoc annotation documenting ALL 8 writers (A–H from brief §Writer Inventory) + their status (Migrated / Fixed / In-scope bypass)",
-          "Add /* OHLCV-WRITE-BYPASS-ALLOWED */ sentinel pattern documentation in JSDoc — explains intent + scope rules",
-          "Sentinel pattern is NOT enforced yet (ESLint rule is a follow-on LINT-OHLCV-WRITE-BYPASS, queued backlog)",
-          "Documentation is the P0 scope: future devs CANNOT claim 'I didn't know' about the writer inventory",
-          "No code logic changes — purely documentation / annotation"
-        ],
-        "handoff": "docs/handoffs/SUBTASK-OHLCV-WRITER-2-SSOT-ANNOTATION.md",
-        "zone_check": "apps/mcp-server/",
-        "no_file_conflict": true,
-        "parallel_with": "SUBTASK-OHLCV-WRITER-1-FOREIGN-FLOW-MERGE",
-        "created_at": "2026-06-17T05:30:00Z",
-        "created_by": "pm"
-      },
-      {
-        "id": "SUBTASK-OHLCV-WRITER-3-UNIT-TESTS",
-        "type": "TEST",
-        "title": "SUBTASK-3: Unit + integration tests T-1 through T-4 (regression + behavioral gate)",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "status": "READY",
-        "priority": "P0",
-        "size": "S",
-        "parent_task": "ARCH-OHLCV-WRITER-SSOT-DURABLE",
-        "blocking": true,
-        "depends_on": [
-          "SUBTASK-OHLCV-WRITER-1-FOREIGN-FLOW-MERGE"
-        ],
-        "blocked_by": [],
-        "acceptance_criteria": [
-          "Unit test T-1: writeForeignFlowToOhlcv with no existing row → { changes: 0 }, zero new rows inserted, debug log emitted",
-          "Unit test T-2: writeForeignFlowToOhlcv with existing row → { changes: 1 }, foreign-flow cols updated, OHLCV cols UNTOUCHED",
-          "Unit test T-3: After T-1 (no row) + insert real OHLCV row + call writeForeignFlowToOhlcv again → foreign-flow columns populated, OHLCV columns have real values",
-          "Unit test T-4 (REGRESSION PROOF): After T-1, SELECT close FROM daily_ohlcv WHERE code=X AND date=Y → ZERO rows (NOT a row with close=0). This is the direct regression proof — the fix is verified.",
-          "Integration behavioral gate: seed DB empty, call writeForeignFlowToOhlcv, assert COUNT=0; insert real OHLCV; call again; assert foreign_buy_vol populated; assert close=real value (not 0)",
-          "All tests in ohlcvForeignFlowStore.test.ts or dedicated test file, green before merge",
-          "REBUILD_REQUIRED:YES flag set on this task"
-        ],
-        "handoff": "docs/handoffs/SUBTASK-OHLCV-WRITER-3-UNIT-TESTS.md",
-        "zone_check": "apps/mcp-server/",
-        "no_file_conflict": true,
-        "rebuild_required": true,
-        "created_at": "2026-06-17T05:30:00Z",
-        "created_by": "pm"
       }
     ],
     "review": [
@@ -20210,7 +20123,10 @@
         "dispatch_note": "dev-team :07 tick 2026-06-17T04:36Z — consumer defense-in-depth, paired with the architect producer root; runtime scheduler change -> mcp-server rebuild required.",
         "reviewed_at": "2026-06-17T05:30:00Z",
         "reviewed_by": "dev-mcp-server"
-      }
+      },
+      "SUBTASK-OHLCV-WRITER-1-FOREIGN-FLOW-MERGE",
+      "SUBTASK-OHLCV-WRITER-2-SSOT-ANNOTATION",
+      "SUBTASK-OHLCV-WRITER-3-UNIT-TESTS"
     ],
     "qa": [],
     "_closed_signals_20260614": {
@@ -20232,6 +20148,6 @@
     "updated_at": "2026-06-17T05:30:00Z",
     "updated_by": "pm"
   },
-  "updated_at": "2026-06-16T21:34:06Z",
-  "updated_by": "qa"
+  "updated_at": "2026-06-17T05:41:44Z",
+  "updated_by": "dev-mcp-server"
 }
