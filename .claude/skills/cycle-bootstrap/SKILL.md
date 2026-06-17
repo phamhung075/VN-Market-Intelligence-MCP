@@ -33,6 +33,20 @@ Blocked = one-line `send_telegram(channel="bug")` + drop signal `docs/signals/{a
 Read `.claude/skills/telegram-channel-routing/SKILL.md` before any `send_telegram` call.
 Every call MUST include `channel=` explicitly: `"market"` | `"work"` | `"bug"`.
 
+## Step -0 — Unconditional Cycle Anchor Capture
+
+Before any branch (tick-snapshot hit OR direct MCP call), capture the cycle start anchor:
+
+```
+CYCLE_START_UTC = date -u +"%Y-%m-%dT%H:%M:%SZ"
+```
+
+This value is set ONCE here and is never overwritten by later steps. It is path-independent:
+it is set regardless of whether Step -1 hits a snapshot or falls through to Step 0.
+The exec-proof gate (`exec-proof-gate/SKILL.md` EP-0) requires this value to be non-null.
+
+---
+
 ## Step -1 — Tick Snapshot Check (L-6, 1968b2)
 
 Before calling `get_cycle_bootstrap`, check for a shared tick snapshot file:
@@ -62,15 +76,14 @@ get_cycle_bootstrap(agent_name="<agent-id>")
 
 ### Execution Proof Bootstrap
 
-After a successful bootstrap, capture the cycle anchor immediately:
+`CYCLE_START_UTC` was already captured unconditionally in Step -0. No capture needed here.
 
-```
-CYCLE_START_UTC = current UTC timestamp (from bootstrap response .timestamp field,
-                  or fall back to `date -u +"%Y-%m-%dT%H:%M:%SZ"` if field absent)
-```
+Optionally, if the bootstrap response contains a `.timestamp` field that is more precise,
+you MAY refine: `CYCLE_START_UTC = response.timestamp` — but only if the field is non-null.
+Never overwrite with null.
 
-This value is passed downstream to the exec-proof gate. Every flow using this skill MUST:
-1. Record `CYCLE_START_UTC` at bootstrap time (this step).
+Every flow using this skill MUST:
+1. Treat `CYCLE_START_UTC` (set in Step -0) as the cycle anchor — it is available on ALL paths.
 2. At completion, check the EXEC-PROOF invariant before calling `log_agent_work(completed)`.
    See → skill: `.claude/skills/exec-proof-gate/SKILL.md`
 

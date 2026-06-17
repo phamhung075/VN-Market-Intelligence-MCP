@@ -4,7 +4,7 @@ description: >
   Terminal gate for gatherer cycles. Call before log_agent_work(completed) and the WORK
   ping. Fails loud (BUG telegram + signal file + EXIT) if no execution occurred this cycle.
   Generic — used by both news-scout and market-watcher (and any future gatherer).
-version: "2026-06-17"
+version: "2026-06-17b"
 incident: "FABRICATE-WHEN-THIN 2026-06-17T12:09Z — off-hours gatherers returned cycle-complete with 0 new rows"
 ---
 <!-- Sprint: DESIGN-GATHERER-EXEC-PROOF-FAILLOUD | Author: agent-father -->
@@ -29,6 +29,48 @@ If either proof condition fails, the cycle MUST exit without the completion ping
 ---
 
 ## Gate Logic
+
+### Step EP-0 — Anchor guard (run FIRST, before any other step)
+
+Before evaluating any proof condition, verify the cycle anchor is present:
+
+```
+IF CYCLE_START_UTC is null OR empty OR absent:
+  PROOF_ANCHOR_FAIL = "cycle_start_utc_missing(bootstrap not captured)"
+```
+
+If `PROOF_ANCHOR_FAIL` is set, execute ALL of the following in order, then EXIT:
+
+**a) BUG telegram**
+```
+send_telegram(channel="bug",
+  message="[<AGENT_ID>] EXEC-PROOF FAIL: <PROOF_ANCHOR_FAIL>")
+```
+
+**b) Drop signal file** at `docs/signals/<AGENT_ID>-<ISO>.json`:
+```json
+{
+  "from": "<AGENT_ID>",
+  "to": "po",
+  "type": "bug-escalation",
+  "priority": "high",
+  "payload": "EXEC-PROOF FAIL: <PROOF_ANCHOR_FAIL>",
+  "createdAt": "<current UTC ISO-8601>"
+}
+```
+
+**c) Write notebook failure entry** (append to `NOTEBOOK_PATH`):
+```
+## <current ISO>
+- EXEC-PROOF FAIL — cycle_start_utc missing (bootstrap anchor not captured). Skipping completion ping.
+  proof_anchor=FAIL reason=<PROOF_ANCHOR_FAIL>
+```
+
+**d) EXIT** — do NOT call `log_agent_work(completed)`, do NOT send WORK ping.
+
+Only if `CYCLE_START_UTC` is non-null and non-empty: continue to EP-1.
+
+---
 
 ### Step EP-1 — Read notebook header timestamp
 
