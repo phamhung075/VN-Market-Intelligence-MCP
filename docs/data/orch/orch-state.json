@@ -750,8 +750,10 @@
         "type": "data_stale",
         "summary": "BCTC Q1-2026 stale pending 8 rows (47d, check B-13)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "po_disposition": "out-of-scope of FB-session handoff: B-13 BCTC staleness already tracked; A-30 host-mem transient WARN (no action).",
+        "read_at": "2026-06-17T11:21:05Z"
       },
       {
         "id": "sau-a30-202606171045",
@@ -761,8 +763,10 @@
         "type": "system_issue",
         "summary": "A-30 WARN: host memory 99.6% used (threshold < 85%)",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "po_disposition": "out-of-scope of FB-session handoff: B-13 BCTC staleness already tracked; A-30 host-mem transient WARN (no action).",
+        "read_at": "2026-06-17T11:21:05Z"
       }
     ]
   },
@@ -11228,6 +11232,29 @@
         "dedup_note": "EXTENDS FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified, shipped option-1 in-mutex push) — does NOT duplicate it. This is the deferred option-2 backstop the DISCIPLINE task explicitly named. Reuses the proven worktree-push recipe, does not invent a new mechanism.",
         "size": "S",
         "origin": "po-s98 fleet-push 2026-06-17 — 2nd ~100-commit manual-nudge recurrence this session"
+      },
+      {
+        "id": "FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616",
+        "title": "Backfill/recompute contaminated foreign-flow rows 06-14..16 (residue not covered by writer-root fix)",
+        "status": "HELD",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "next_agent": "dev-mcp-server",
+        "size": "S",
+        "blocking": false,
+        "depends": [
+          "FIX-FOREIGN-FLOW-INTEGRITY-BREAK"
+        ],
+        "hold_reason": "Recompute must read a FIXED writer — held until FIX-FOREIGN-FLOW-INTEGRITY-BREAK is QA-signed (done_verified), else backfill re-contaminates.",
+        "origin": "router-handoff 2026-06-17 — the P0 foreign-flow integrity fix (ddc36452/570ebedb/b24a0b6a/eff492d7) stops NEW clobbering but did NOT backfill already-contaminated rows. Live get_foreign_flow(VIC) still shows 06-14..16 at cumulative scale (217-239M net vol, holding 2.82-3.11%) while 06-17 is correct (-1.15M, room 347M).",
+        "fix_spec": "Backfill/recompute the contaminated 06-14..16 foreign-flow window (Net-Vol-daily, Holding Ratio, Room) for affected codes to the corrected daily-not-cumulative semantics, or NULL/is_estimate-flag where no real source exists. Recompute-on-read preferred over destructive backfill where feasible (see feedback_derived_column_fix_needs_reflow).",
+        "generic_mandate": "All codes in the contaminated window, not just VIC; verify the regime boundary (~06-12/06-13) is the only break and 06-17 stays correct.",
+        "verification_gate": "RAW: get_foreign_flow(VIC) + 2 more codes show 06-14..16 at plausible DAILY scale (continuous with 06-17 -1.15M, not 217-239M cumulative), holding ratio either real-sourced or NULL/is_estimate-flagged; no overnight regime discontinuity remains.",
+        "memory_ref": "feedback_derived_column_fix_needs_reflow, feedback_nonzero_values_need_plausibility_check",
+        "created": "2026-06-17T11:21:05Z",
+        "created_by": "po",
+        "source": "router-handoff-2026-06-17-fb-session"
       }
     ],
     "closed_sprints": [
@@ -20067,6 +20094,46 @@
         "created_by": "po",
         "promoted_at": "2026-06-16T20:31:21Z",
         "promoted_by": "po"
+      },
+      {
+        "id": "FIX-FB-POSTER-FABRICATES-STALE-EOD",
+        "title": "fb-market-poster fabricates per-ticker data when CHEF EOD is stale",
+        "status": "READY",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "agent",
+        "next_agent": "agent-father",
+        "size": "S",
+        "blocking": false,
+        "origin": "router-handoff 2026-06-17 — two rejected FB drafts invented a real-estate selloff (VIC -6.6/VHM -8.5/VRE -9.4%); VRE/VHM exceed HOSE +/-7% daily limit = physically impossible = pure hallucination. Live truth: VIC -1.03/VHM -1.10/VRE -1.75%, balanced breadth 168up/129dn 0-floor.",
+        "root_cause": "When CHEF EOD synthesis is blocked/stale, fb-market-poster flow falls back to stale CHEF morning (05:16Z) data and FILLS GAPS WITH FABRICATION instead of fetching live or writing honest gaps — even though get_market_snapshot/get_market_breadth/get_foreign_flow are live & clean.",
+        "fix_spec": "fb-market-poster flow (via agent-father, agent-md-factory) MUST HARD-REQUIRE a live get_market_snapshot(codes=[watchlist movers]) per-ticker fetch for the recap spine — NOT the CHEF shortcut — and FAIL-LOUD to an honest gap when a number cannot be fetched live. Never synthesize a per-ticker move from stale CHEF synthesis.",
+        "generic_mandate": "Applies to EVERY per-ticker number in the recap spine, not just real-estate; honest-gap path must be exercised, not prose-filled.",
+        "verification_gate": "RAW: with CHEF EOD deliberately stale, the next fb-poster draft either quotes live get_market_snapshot per-ticker numbers (matching the tool) OR writes an explicit honest gap — and NEVER emits a fabricated/out-of-band per-ticker move.",
+        "memory_ref": "feedback_fb_poster_fabricates_when_data_thin",
+        "created": "2026-06-17T11:21:05Z",
+        "created_by": "po",
+        "source": "router-handoff-2026-06-17-fb-session"
+      },
+      {
+        "id": "FIX-FB-POST-DATA-INTEGRITY-GATE",
+        "title": "FB-post data-integrity / plausibility gate (jargon-gate is necessary-not-sufficient)",
+        "status": "READY",
+        "type": "FIX",
+        "priority": "P1",
+        "zone": "cross-service",
+        "next_agent": "developer",
+        "size": "S",
+        "blocking": false,
+        "sequence_after": "FIX-FB-POSTER-FABRICATES-STALE-EOD",
+        "origin": "router-handoff 2026-06-17 — fb-jargon-gate PASSed both fabricated drafts; it checks jargon only, never data integrity/hallucination.",
+        "fix_spec": "Add a router/agent-side plausibility gate (reusable script in scripts/, pointer in fb-market-poster flow + dev-standards Script Persistence): REJECT any per-ticker move beyond +/-7% on HOSE (above the daily price limit = impossible); REJECT any mover claim contradicting same-session breadth (e.g. 'selloff' narrative vs 0-floor / net-positive advancers). Gate runs BEFORE relay; exits non-zero on violation.",
+        "generic_mandate": "Gate is generic across ALL tickers and ALL FB drafts, not a one-off VIC/VHM/VRE patch. Must FAIL-LOUD (non-zero exit on BLOCK — avoid the known fb-jargon-gate exit-0-on-block trap, see feedback_fb_poster_gate_false_green).",
+        "verification_gate": "RAW: feed the gate the two rejected 06-17 drafts -> BLOCK (non-zero); feed the live-verified clean draft -> PASS. Inject a +8% HOSE move and a selloff-vs-net-positive-breadth claim -> both BLOCK.",
+        "memory_ref": "feedback_fb_poster_fabricates_when_data_thin, feedback_fb_poster_gate_false_green",
+        "created": "2026-06-17T11:21:05Z",
+        "created_by": "po",
+        "source": "router-handoff-2026-06-17-fb-session"
       }
     ],
     "review": [
@@ -20280,7 +20347,7 @@
         "status": "REVIEW",
         "blocking": false,
         "route_to": "ops-vps-fetch",
-        "next_agent": "ops-vps-fetch",
+        "next_agent": "qa",
         "zone": "apps/mcp-server/",
         "title": "get_market_snapshot returns NO breadth (advancers/decliners/unchanged) — user-reported market-wide do-rong-thi-truong gap",
         "desc": "USER-REPORTED 2026-06-16: get_market_snapshot exposes no so-ma-tang/giam/dung-gia. ROOT (live-confirmed, NOT a fetch failure): apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts get_market_snapshot (~L147-364) fetches VN-Index as a SINGLE value (fetchVnIndex VNINDEX -> price+change% only) + individual prices only for explicitly-requested codes; NEVER aggregates HOSE/HNX/UPCOM constituents -> breadth UNIMPLEMENTED. FIX (REAL DATA ONLY, no-fake-data): RECON FIRST (ops-vps-fetch) RAW-probe VnDirect finfo-api/vnmarket_prices upstream for advances/declines/nochange fields that fetchVnIndex DISCARDS -> expose (cheapest+real); else (B) aggregate full constituent lists + count up/down/flat. NEVER a watchlist-only proxy as market-wide breadth. CONSUMER: frontend 'Do rong thi truong' card empty -> close producer->consumer; per /goal#3 card must link source + expand to fetched advancers/decliners detail.",
@@ -20290,7 +20357,9 @@
         "created_at": "2026-06-16T18:21:20Z",
         "dispatch_note": "RECON-FIRST: dispatch ops-vps-fetch to RAW-probe VnDirect breadth fields before any code. Coding zone apps/mcp-server/ currently busy (ARCH-CRON-SCHEDULER-RELIABILITY in_progress) — recon runs parallel in ops lane; code hop waits for the mcp-server slot. Ties /goal#1 (recheck-shipped) + no-fake-data + /goal#3 (source-link+expand). Highest user-facing priority of this triage tick.",
         "_moved_to_review_at": "2026-06-16T20:00:40Z",
-        "_review_by": "dev-mcp-server"
+        "_review_by": "dev-mcp-server",
+        "qa_reroute_note": "ROUTER-HANDOFF 2026-06-17: rerouted next_agent ops-vps-fetch->qa (carryover QA hop). QA: verify LIVE vs named-volume market.db (real varied data, not constant); confirm the standing CI-RED set (~63 fails) is DISJOINT from this fix's changed files (regression-vs-weather, see feedback_ci_red_can_be_flaky); flag residual foreign-flow contamination 06-14..16 -> tracked in FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616.",
+        "updated_at": "2026-06-17T11:21:05Z"
       },
       {
         "id": "FIX-FOREIGN-FLOW-INTEGRITY-BREAK",
@@ -20301,7 +20370,7 @@
         "blocking": false,
         "zone": "apps/mcp-server/",
         "route_to": "ops-vps-fetch",
-        "next_agent": "ops-vps-fetch",
+        "next_agent": "qa",
         "dev_agent": "dev-mcp-server",
         "parent_recon": "AUDIT-FC-FOREIGN-FLOW",
         "title": "get_foreign_flow data-integrity break: overnight regime jump (Room 211M->4643M, Holding 0%->21.46%) + Net-Vol-daily column mislabeled cumulative + implausible 1.8B magnitudes",
@@ -20315,7 +20384,9 @@
         "created_at": "2026-06-16T19:24:58Z",
         "created_by": "po-triage-fb-2026-06-16",
         "_moved_to_review_at": "2026-06-16T20:00:40Z",
-        "_review_by": "dev-mcp-server"
+        "_review_by": "dev-mcp-server",
+        "qa_reroute_note": "ROUTER-HANDOFF 2026-06-17: rerouted next_agent ops-vps-fetch->qa (carryover QA hop). QA: verify LIVE vs named-volume market.db (real varied data, not constant); confirm the standing CI-RED set (~63 fails) is DISJOINT from this fix's changed files (regression-vs-weather, see feedback_ci_red_can_be_flaky); flag residual foreign-flow contamination 06-14..16 -> tracked in FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616.",
+        "updated_at": "2026-06-17T11:21:05Z"
       },
       {
         "id": "FIX-MARKET-LIQUIDITY-MISSING-TOOL",
@@ -20325,7 +20396,7 @@
         "blocking": false,
         "zone": "apps/mcp-server/",
         "route_to": "ops-vps-fetch",
-        "next_agent": "ops-vps-fetch",
+        "next_agent": "qa",
         "dev_agent": "dev-mcp-server",
         "title": "No market-wide liquidity/turnover tool: get_market_liquidity does NOT exist; no tool serves daily market turnover in tỷ đồng",
         "desc": "ROUTER-RAW-VERIFIED 2026-06-16: get_market_liquidity returns Tool-not-found; no other tool serves daily market-wide turnover (giá-trị giao-dịch) in tỷ đồng — FB post had to fall back to news prose (thanh-khoản mất hút) instead of a real number. FIX (REAL DATA ONLY): RECON FIRST (ops-vps-fetch) RAW-probe VnDirect/VPS upstream for market-wide total trade value (HOSE/HNX/UPCOM turnover) — same upstream family as the breadth recon (FIX-MARKET-BREADTH-MISSING), likely co-discoverable in one probe. THEN dev-mcp-server adds get_market_liquidity (or extends get_market_snapshot) serving daily turnover in tỷ đồng with direction+delta vs prior session. Pairs with breadth as the market-wide context layer the FB post needs.",
@@ -20338,7 +20409,9 @@
         "created_at": "2026-06-16T19:24:58Z",
         "created_by": "po-triage-fb-2026-06-16",
         "_moved_to_review_at": "2026-06-16T20:00:40Z",
-        "_review_by": "dev-mcp-server"
+        "_review_by": "dev-mcp-server",
+        "qa_reroute_note": "ROUTER-HANDOFF 2026-06-17: rerouted next_agent ops-vps-fetch->qa (carryover QA hop). QA: verify LIVE vs named-volume market.db (real varied data, not constant); confirm the standing CI-RED set (~63 fails) is DISJOINT from this fix's changed files (regression-vs-weather, see feedback_ci_red_can_be_flaky); flag residual foreign-flow contamination 06-14..16 -> tracked in FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616.",
+        "updated_at": "2026-06-17T11:21:05Z"
       }
     ],
     "qa": [],
@@ -20362,5 +20435,9 @@
     "updated_by": "pm"
   },
   "updated_at": "2026-06-17T10:21:08Z",
-  "updated_by": "dev-mcp-server"
+  "updated_by": "dev-mcp-server",
+  "meta": {
+    "updated_at": "2026-06-17T11:21:05Z",
+    "updated_by": "po"
+  }
 }
