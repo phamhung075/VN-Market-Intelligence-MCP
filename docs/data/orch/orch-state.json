@@ -20336,7 +20336,7 @@
         "id": "FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH",
         "type": "FIX",
         "severity": "HIGH",
-        "status": "REVIEW",
+        "status": "CHANGES_REQUESTED",
         "title": "BCTC enricher: attempts===0 guard never terminalizes genuinely-absent tickers → zero-url counter unbounded → bctc SLA FALSE-CRITICAL",
         "description": "REROUTED 2026-06-17 (zone correction). dev-vps-crawls DISPROVED the discovery-outage hypothesis via RAW VPS probes: bctc-discover returns Q1-2026 URLs for VCB/HPG <1s; 65 Q1-2026 tickers already in done[] with real URLs. The 9 pending tickers (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA + VEA-Q4-2025) are GENUINELY ABSENT (no Q1-2026 filing exists yet on SSC — honest gap per /goal#1), NOT an outage. REAL ROOT (apps/mcp-server, dev-mcp-server zone): bctcQueueEnricherJob.ts lines 497-513 — when discovery returns 0 URLs and attempts===0, the else branch leaves the row pending at 0 and NEVER increments. Genuinely-absent rows are forever stuck at attempts=0, never reach MAX_ENRICH_ATTEMPTS(5), never marked url_not_found, cycle forever (210+ zero-url cycles). The zero-url counter climbs every cron tick → bctc SLA reads 1332/360min breached CRITICAL and STILL CLIMBING — a metric/accounting ARTIFACT of the stuck-9, NOT real staleness (current-quarter data is healthy). RECLASSIFIED CRITICAL→HIGH: not a data-loss CRITICAL (data healthy), but the permanently-stuck false-CRITICAL SLA masks ALL FUTURE real bctc breaches — a real observability fix.",
         "owner": "dev-mcp-server",
@@ -20365,7 +20365,13 @@
         "rerouted_from": "dev-vps-crawls (hypothesis disproven, zone correction)",
         "impl_commit": "3eebf3bc",
         "impl_at": "2026-06-17T19:22:00Z",
-        "impl_by": "dev-mcp-server"
+        "impl_by": "dev-mcp-server",
+        "qa_reviewed_at": "2026-06-17T19:28:55Z",
+        "qa_verdict": "CHANGES_REQUESTED",
+        "qa_blocking_issues": [
+          "apps/mcp-server/src/__tests__/FIX-BCTC-PIPELINE.test.ts:184 — test \"does not increment attempts field\" expects row.attempts==0 on 0-URL first-pass; now encodes root-cause bug — update to .toBe(1) or remove stale assertion",
+          "apps/mcp-server/src/__tests__/BCTC-1943-queue-reset-and-retry.test.ts:257 — test \"leaves reset rows pending if attempts=0 and no URL found (first pass)\" expects row.attempts==0; stale spec — update to reflect new correct contract"
+        ]
       }
     ],
     "ready": [

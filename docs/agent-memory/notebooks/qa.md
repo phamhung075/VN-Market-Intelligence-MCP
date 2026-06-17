@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-292 · 2026-06-17 · FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH — CHANGES_REQUESTED
+
+Task: FIX-BCTC-DISCOVER-CURRENT-QUARTER-ZERO-PUSH | Impl commit: 3eebf3bc | Verdict: CHANGES_REQUESTED | Route: dev-mcp-server.
+
+New test file (8/8 pass), 1287-enricher (7/7), 1358b-enricher-gaps (8/8), tsc clean. Generic confirmed (no ticker/date literal in FIX path). Catch-path no-increment confirmed (TERM-4 pass + lines 519-538 read). BLOCKING: 2 stale tests encode the root-cause bug — FIX-BCTC-PIPELINE.test.ts:184 and BCTC-1943-queue-reset-and-retry.test.ts:257 both assert `attempts==0` on 0-URL first-pass; after fix the correct value is 1. Dev must update these stale assertions. Chromium-absent failures (9 other files) are pre-existing env issues, unrelated.
+
 ## cycle-291 · 2026-06-17T13:20Z · FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616 — APPROVED + INTEGRITY-BREAK done_verified RELEASED
 
 Task: FIX-FOREIGN-FLOW-BACKFILL-CONTAM-0614-0616 (ops cleanup record commit b31e4732) | Verdict: APPROVED | Board: backlog(HELD)→done. FIX-FOREIGN-FLOW-INTEGRITY-BREAK done_verified WITHHELD → RELEASED.
