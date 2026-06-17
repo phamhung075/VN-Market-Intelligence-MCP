@@ -228,8 +228,19 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-17T19:36:00Z",
-    "_updated_by": "po-s96",
+    "2": {
+      "id": "tnb-20260617T202500Z",
+      "ts": "2026-06-17T20:25:00Z",
+      "from": "tran-ngoc-bau",
+      "to": "po",
+      "type": "audit-handoff",
+      "summary": "c98 NEEDS_ATTENTION IMPROVING — G3/G4/G6 PASS (all last_fired updated today). EOD MCP blocked. F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 NEW HIGH.",
+      "severity": "HIGH",
+      "status": "NEW",
+      "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+    },
+    "_updated_at": "2026-06-17T20:25:00Z",
+    "_updated_by": "tran-ngoc-bau",
     "archive": [
       {
         "from": "system-auditor",
@@ -7873,8 +7884,8 @@
           }
         ],
         "fail_closed_ac": "AC-FAILCLOSED (GENERIC, all publishing cowork slots — chef.md Step 0.5 + spawn-fanout.md marker contract): the published-marker claim is a SAFETY GATE on an irreversible MARKET publish, so it MUST FAIL CLOSED. (1) Bound the task_claim call with a deadline < gateway timeout and a single retry. (2) Treat ANY of {tool throws, timeout/deadline exceeded, result missing a boolean `.claimed`, transport/gateway error} EXACTLY like claimed=false -> BLOCK the publish: do NOT call send_telegram(market); emit a distinct telemetry reason (e.g. reason=marker-unreadable-failclosed) so a genuinely-blocked publish is observable on WORK; record BLOCKED_DUP/BLOCKED_UNREADABLE in the notebook. (3) The chef 'degraded-dish floor / no third path between SENT and FAILED' mandate MUST carve out an explicit exception: a marker that cannot be confirmed-free is NOT a degradable supplementary source — it is a hard publish-block. NO per-slot allowlist, NO date-literal, NO hardcode; generic across morning/eod/evening/intraday + digest-sunday + tnb-audit + any future publishing slot. Verification: simulate task_claim timeout/error on the cloud path -> chef does NOT post + emits the fail-closed telemetry; non-regression: clean {claimed:true} still posts, clean {claimed:false} still silent-blocks.",
-        "updated_at": "2026-06-17T15:35:18Z",
-        "updated_by": "po-s90",
+        "updated_at": "2026-06-17T21:28:33Z",
+        "updated_by": "po-triage-signals",
         "data_points": [
           {
             "at": "2026-06-17T15:00:00Z",
@@ -7885,10 +7896,20 @@
             "router_verdict": "FALSE — gateway RAW-probed UP THIS tick (task_claim + send_telegram + get_macro_snapshot all returned LIVE data). Known headless/cloud per-session MCP-registration miss of THIS epic, NOT a real outage.",
             "disposition": "DEDUP into this epic (data-point only). No new task. No ops spawn. No bctc-analyst re-dispatch (next legit cron 18:00Z; last_fired already 15:08:04Z). 15:00 off-market BCTC slot produced no analysis — benign for a fundamental batch (fail-loud working, no fabrication).",
             "corroborating": "po triage agent in THIS SAME tick also hit `mcp__gateway__call_tool` not-available in its own background-spawned session (could not run read_telegram_reports / list_unresolved_reports) — SAME headless per-session-miss class, while the router's LIVE probe confirms the gateway is up. Two background agents, one missing registration each; gateway itself healthy. Reinforces the architect design ask: probe call_tool + RE-QUEUE the slot rather than claim-and-drop."
+          },
+          {
+            "at": "2026-06-17T21:00:00Z",
+            "from": "bctc-analyst",
+            "recorded_by": "po-triage-signals",
+            "recorded_at": "2026-06-17T21:28:33Z",
+            "symptom": "c065 BLOCKED (3rd consecutive: c063 15:00Z, c064 18:06Z, c065 21:00Z). mcp__gateway__call_tool not available in spawned sub-agent context. No analysis/signals/task_claim. Last good c062 00:20Z.",
+            "router_verdict": "FALSE infra-down (corroboration-gated). Gateway RAW-proven UP first-hand: router emit_pressure_state round-trip succeeded @21:06:31Z (server rewrote pressure-state.json) within the same minute as the block. Local-spawn connector artifact: bctc-analyst toolset = `gateway` connector NOT wired in local CLI session; cloud RemoteTrigger path HAS it (c062 succeeded).",
+            "disposition": "DEDUP into this epic (data-point only). No new task, no gateway-fix dispatch, no ops spawn, no bctc re-dispatch. No double-post risk (published-marker gate intact). Same class as F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 (tnb c98).",
+            "tnb_corroboration": "tran-ngoc-bau c98 (20:25Z) hit the same block — F-MCP-SUBAGENT-SYSTEMIC-2026-06-17 HIGH. Afternoon/evening local sub-agent sessions affected; morning + cloud paths worked."
           }
         ],
-        "recurrence_count": 1,
-        "last_recurrence_at": "2026-06-17T15:00:00Z"
+        "recurrence_count": 3,
+        "last_recurrence_at": "2026-06-17T21:00:00Z"
       },
       {
         "id": "KD-BACKTEST-501-4X",
@@ -20382,7 +20403,7 @@
         "title": "BCTC enricher: attempts===0 guard never terminalizes genuinely-absent tickers → zero-url counter unbounded → bctc SLA FALSE-CRITICAL",
         "description": "REROUTED 2026-06-17 (zone correction). dev-vps-crawls DISPROVED the discovery-outage hypothesis via RAW VPS probes: bctc-discover returns Q1-2026 URLs for VCB/HPG <1s; 65 Q1-2026 tickers already in done[] with real URLs. The 9 pending tickers (BDI,DAG,DLC,JSH,SIS,VDC,VNH,VEA + VEA-Q4-2025) are GENUINELY ABSENT (no Q1-2026 filing exists yet on SSC — honest gap per /goal#1), NOT an outage. REAL ROOT (apps/mcp-server, dev-mcp-server zone): bctcQueueEnricherJob.ts lines 497-513 — when discovery returns 0 URLs and attempts===0, the else branch leaves the row pending at 0 and NEVER increments. Genuinely-absent rows are forever stuck at attempts=0, never reach MAX_ENRICH_ATTEMPTS(5), never marked url_not_found, cycle forever (210+ zero-url cycles). The zero-url counter climbs every cron tick → bctc SLA reads 1332/360min breached CRITICAL and STILL CLIMBING — a metric/accounting ARTIFACT of the stuck-9, NOT real staleness (current-quarter data is healthy). RECLASSIFIED CRITICAL→HIGH: not a data-loss CRITICAL (data healthy), but the permanently-stuck false-CRITICAL SLA masks ALL FUTURE real bctc breaches — a real observability fix.",
         "owner": "dev-mcp-server",
-        "next_agent": "ops",
+        "next_agent": "router",
         "priority": "P1",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -20399,10 +20420,10 @@
         "claimed_at": "2026-06-17T19:00:00Z",
         "claimed_by": "dev-mcp-server",
         "verification_gate": "DONE_VERIFIED gate (/goal#1): (1) live get_sla_status shows bctc age FALLING (not climbing) after the 9 absent rows terminalize; (2) the 9 absent tickers in url_not_found terminal state (attempts reached 5 via real-discovery increments); (3) the 65 done[] Q1-2026 rows UNTOUCHED (no real data lost); (4) zero-url counter no longer climbing every tick. NOT just green tests — RAW live SLA probe required (a SQL flush of attempts is a graceful workaround, the CODE fix is the durable terminal).",
-        "done_verified_blocked_reason": null,
+        "done_verified_blocked_reason": "Rebuild SHIPPED & verified first-hand (running image .Created 2026-06-17T20:29:25Z > commit 3eebf3bc 19:17:22Z; fix markers attempts+=1 ×2 & MAX_ENRICH_ATTEMPTS ×6 present in running /app/src; container healthy). done_verified DEFERRED (lagging): bctc SLA baseline at ship = 1441/360 CRITICAL still climbing; the 8 genuinely-absent rows must accrue ~5 enricher cycles (~75min) to reach MAX→url_not_found and unblock fresh discovery. Router one-shot re-probe scheduled ~22:10Z to run the 4-criteria live gate.",
         "fix_spec": "Remove the attempts===0 special-case (else branch, lines 509-513) that prevents increment. GENERIC (no per-ticker allowlist, no date-literal — /goal#2): when discovery REACHES the source and returns 0 URLs (real network-level discovery, NOT a pre-network error — keep the existing error-path no-increment at lines 526+), ALWAYS increment attempts regardless of current value. Optionally distinguish 'first real attempt' via last_attempt IS NULL rather than attempts===0. Any genuinely-absent row then accumulates attempts → reaches MAX_ENRICH_ATTEMPTS(5) → marked url_not_found (honest terminal) → drops out of the pending cycle → zero-url counter resets → bctc SLA stops growing.",
         "generic_mandate": "Fix MUST be ticker-agnostic and date-agnostic: any ticker whose filing is genuinely absent terminalizes after N real-discovery attempts. No allowlist of the current 9, no Q1-2026 literal.",
-        "rebuild_required": true,
+        "rebuild_required": false,
         "rerouted_at": "2026-06-17T18:58:32Z",
         "rerouted_from": "dev-vps-crawls (hypothesis disproven, zone correction)",
         "impl_commit": "3eebf3bc",
@@ -20412,7 +20433,9 @@
         "qa_verdict": "APPROVED",
         "qa_blocking_issues": [],
         "qa_reviewed_by": "qa (cycle-293)",
-        "qa_notes": "APPROVED cycle-293. Test fix only (97546591). Production 3eebf3bc UNTOUCHED. 2 fixed test files 24/0 pass. Full suite 13204 pass / 45 fail — 17 failing files ALL disjoint (0 overlap with commit). tsc 0 errors. DDD PASS (test-only). Security PASS. Discrimination verified: reached-source-empty toBe(1) correct; TERM-4 catch-path no-increment untouched. rebuild_required:true preserved — ops must rebuild mcp-server."
+        "qa_notes": "APPROVED cycle-293. Test fix only (97546591). Production 3eebf3bc UNTOUCHED. 2 fixed test files 24/0 pass. Full suite 13204 pass / 45 fail — 17 failing files ALL disjoint (0 overlap with commit). tsc 0 errors. DDD PASS (test-only). Security PASS. Discrimination verified: reached-source-empty toBe(1) correct; TERM-4 catch-path no-increment untouched. rebuild_required:true preserved — ops must rebuild mcp-server.",
+        "rebuild_verified_at": "2026-06-17T20:41:25Z",
+        "rebuild_image_created": "2026-06-17T20:29:25Z"
       }
     ],
     "ready": [
