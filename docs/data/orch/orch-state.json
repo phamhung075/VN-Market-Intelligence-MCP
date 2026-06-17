@@ -212,8 +212,8 @@
       "signal_id": "audit-rag-service-obs-01-warn",
       "type": "audit_probe"
     },
-    "_updated_at": "2026-06-17T03:00:00.708Z",
-    "_updated_by": "system-auditor",
+    "_updated_at": "2026-06-17T20:13:00Z",
+    "_updated_by": "tran-ngoc-bau",
     "archive": [
       {
         "from": "system-auditor",
@@ -291,7 +291,7 @@
         "type": "audit-handoff",
         "summary": "c96 NEEDS_ATTENTION IMPROVING — EOD 6/6 GOOD (best), G1/G2 PASS, G3/G4 FAIL (last_fired not written)",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md"
       },
       {
@@ -301,6 +301,17 @@
         "to": "po",
         "type": "audit-handoff",
         "summary": "c97 NEEDS_ATTENTION STABLE — morning FAILED 502, EOD+Evening 5.5/6 GOOD, F-G3-G4 confirmed day2 (all 3 guaranteed slots), F-MORNING-SEND-FAILED NEW",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
+        "id": "tnb-20260617T201300",
+        "ts": "2026-06-17T20:13:00Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c98 NEEDS_ATTENTION STABLE — morning 5/6+7/9 GOOD, EOD 5.5/6+7.5/9 GOOD, G3/G4/G6 FAIL day3, AC-GOLD-L6 applied, evening PENDING",
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md"
