@@ -1,5 +1,5 @@
-## c340 · 2026-06-17T20:48:24Z
-### Audit Run Tier-1 (20:47–20:48 UTC 2026-06-17)
+## c341 · 2026-06-17T21:14:35Z
+### Audit Run Tier-1 (21:14–21:16 UTC 2026-06-17)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
 - Anomalies: 0 new (all PASS) | Dedup: 0 skipped
 - Status: HEALTHY
@@ -7,28 +7,28 @@
 - A-12..A-19 health endpoints: 5/5 OK ✓
 - A-20 in-container multi-probe: 3/3 PASS ✓
 - A-21 restart count: 0 ✓
-- A-30 memory: 23.05% < 85% ✓
-- A-32 disk: 44% < 85% ✓
+- A-30 memory: 12.72% < 85% ✓
+- A-32 disk: 41% < 85% ✓
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-17T20:47:57Z ===
+=== AUDITOR PROBE 2026-06-17T21:14:12Z ===
 
 --- docker ps -a ---
-NAMES                                             STATUS                    IMAGE                                           CREATED
-vn-market-intelligence-mcp-mcp-server-1           Up 6 minutes (healthy)    vn-market-intelligence-mcp-mcp-server           6 minutes ago
-vn-market-intelligence-mcp-frontend-1             Up 27 hours (healthy)     vn-market-intelligence-mcp-frontend             27 hours ago
-vn-market-intelligence-mcp-pdf-extractor-1        Up 44 hours (healthy)     vn-market-intelligence-mcp-pdf-extractor        44 hours ago
-vn-market-intelligence-mcp-stock-price-1          Up 2 days (healthy)       vn-market-intelligence-mcp-stock-price          2 days ago
-vn-market-intelligence-mcp-technical-analysis-1   Up 2 days (healthy)       vn-market-intelligence-mcp-technical-analysis   2 days ago
-vn-market-intelligence-mcp-macro-indicators-1     Up 2 days (healthy)       vn-market-intelligence-mcp-macro-indicators     2 days ago
-vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 days (healthy)       vn-market-intelligence-mcp-kinh-dich-service    3 days ago
-vn-market-intelligence-mcp-api-gateway-1          Up 6 days (healthy)       vn-market-intelligence-mcp-api-gateway          6 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 41 minutes (healthy)   vn-market-intelligence-mcp-rag-service          6 days ago
-vn-market-intelligence-mcp-news-fetch-1           Up 6 days (healthy)       vn-market-intelligence-mcp-news-fetch           6 days ago
-vn-market-intelligence-mcp-alert-engine-1         Up 6 days (healthy)       vn-market-intelligence-mcp-alert-engine         6 days ago
-headroom-proxy                                    Up 4 days                 headroom-proxy:local                            11 days ago
-mcp-gateway                                       Up 6 days (healthy)       mcpservergatway-gateway                         4 weeks ago
+NAMES                                             STATUS                       IMAGE                                           CREATED
+vn-market-intelligence-mcp-mcp-server-1           Up 32 minutes (healthy)      vn-market-intelligence-mcp-mcp-server           32 minutes ago
+vn-market-intelligence-mcp-frontend-1             Up 28 hours (healthy)        vn-market-intelligence-mcp-frontend             28 hours ago
+vn-market-intelligence-mcp-pdf-extractor-1        Up 44 hours (healthy)        vn-market-intelligence-mcp-pdf-extractor        44 hours ago
+vn-market-intelligence-mcp-stock-price-1          Up 2 days (healthy)          vn-market-intelligence-mcp-stock-price          2 days ago
+vn-market-intelligence-mcp-technical-analysis-1   Up 2 days (healthy)          vn-market-intelligence-mcp-technical-analysis   2 days ago
+vn-market-intelligence-mcp-macro-indicators-1     Up 2 days (healthy)          vn-market-intelligence-mcp-macro-indicators     2 days ago
+vn-market-intelligence-mcp-kinh-dich-service-1    Up 3 days (healthy)          vn-market-intelligence-mcp-kinh-dich-service    3 days ago
+vn-market-intelligence-mcp-api-gateway-1          Up 6 days (healthy)          vn-market-intelligence-mcp-api-gateway          6 days ago
+vn-market-intelligence-mcp-rag-service-1          Up About an hour (healthy)   vn-market-intelligence-mcp-rag-service          6 days ago
+vn-market-intelligence-mcp-news-fetch-1           Up 6 days (healthy)          vn-market-intelligence-mcp-news-fetch           6 days ago
+vn-market-intelligence-mcp-alert-engine-1         Up 6 days (healthy)          vn-market-intelligence-mcp-alert-engine         7 days ago
+headroom-proxy                                    Up 5 days                    headroom-proxy:local                            11 days ago
+mcp-gateway                                       Up 6 days (healthy)          mcpservergatway-gateway                         4 weeks ago
 
 --- health endpoints ---
 [health] mcp-server:3000/health OK (HTTP 200)
@@ -41,11 +41,11 @@ mcp-gateway                                       Up 6 days (healthy)       mcps
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=23.05% MemUsage=472MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=12.51% MemUsage=256.3MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    18Gi    44%    393k  184M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    20Gi    41%    393k  205M    0%   /
 
 === PROBE DONE ===
 ```
@@ -57,6 +57,18 @@ Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
 [A-20-PROBE-3] pdf-extractor:5001/health HTTP 200 ✓
 [A-20] pass_count=3 / 3 — PASS (event-loop healthy)
 ```
+
+## c340 · 2026-06-17T20:48:24Z
+### Audit Run Tier-1 (20:47–20:48 UTC 2026-06-17)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 0 new (all PASS) | Dedup: 0 skipped
+- Status: HEALTHY
+- A-01..A-11 container UP: all 12 PASS ✓
+- A-12..A-19 health endpoints: 5/5 OK ✓
+- A-20 in-container multi-probe: 3/3 PASS ✓
+- A-21 restart count: 0 ✓
+- A-30 memory: 23.05% < 85% ✓
+- A-32 disk: 44% < 85% ✓
 
 ## c339 · 2026-06-17T20:15:45Z
 ### Audit Run Tier-1 (20:15–20:16 UTC 2026-06-17)
