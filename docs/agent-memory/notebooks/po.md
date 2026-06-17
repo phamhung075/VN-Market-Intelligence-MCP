@@ -1,22 +1,29 @@
 # PO Notebook
-_overwritten 2026-06-17T09:36Z_
+_overwritten 2026-06-17T10:22:05Z_
 
-## Last cycle (2026-06-17T09:36Z, po-s102) — dev-team triage tick (7am off-cadence) → NOTHING (idle).
+## Last cycle (2026-06-17T10:22:05Z, po-s103) — CI-RED CLUSTER PROMOTION → done_verified 99→105.
 
-**Inputs:** 2 drained TNB c97 audit-handoffs (tnb-20260615T201300 + tnb-20260616T201300) + spawn-flagged OHLCV-P0 06-18 rebuild precondition. pendingSignals=0, signal_queue NEW=0, dashboard empty, head idle, CI GREEN.
+**Trigger:** Router RAW+gh confirmed the `ci_green_on_subsequent_push` gate (froze done_verified at 99 for ~6 ticks) is objectively satisfied. Re-verified myself before promoting — did NOT trust the badge.
 
-**VERDICT: NOTHING — nothing actionable this tick.**
-- **TNB c97 already ACK'd po-s91 (21:27Z):** CRITICAL double-post → `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` (backlog, agents zone, Monday-gated, agent-father lane); HIGH scalar-mapping → `FIX-BCTC-BANK-SCALAR-MAPPING` minted. No re-triage.
-- **F-MORNING-SEND-FAILED 502 (NEW c97):** same publish-transport-error CLASS already covered by `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` AC-FAILCLOSED (any unreadable/errored claim → fail closed, generic all publishing slots). chef-morning fired CLEAN today (commit 026ff5d3) → transient one-off, NOT a persisting outage. NO new task.
-- **OHLCV-P0 rebuild precondition = ALREADY SATISFIED (no ops dispatch):** both `ARCH-OHLCV-WRITER-SSOT-DURABLE` + `FIX-ALERT-SCAN-REJECT-STUB-BAR-P0` carry `rebuild_shipped:true` with router RAW-verify of the RUNNING container (docker exec grep: MERGE-ONLY + both scan-guards live; image .Created>commit; 12/12 UP; mcp-server 200; named vol untouched) at po-s100. The "suspected stale image" concern is CLEARED. done_verified correctly HELD to 2026-06-18 02:15Z VN open — a market-day WAIT, not work.
-- `FIX-CI-RED-2RED-084-VPS-FRESHN` (po-s101 carry) is now FIXED+CI-green (commit 87995fb1, run 27676607447) → board DONE next=qa. The 5 ci_green-gated promotions are now ripe but that's QA/router sign-off path, not a dev-team-triage BATCH.
+**Gate evidence (my own re-verify):**
+- origin/main CI conclusion=**success** (latest 3 CI runs + rag-lint all success on abd06f54).
+- Fix commit `87995fb1` (FIX-CI-RED-2RED-084 — 2 stale test assertions, TEST-ONLY diff, no prod code) is **ancestor-of-origin**; CI run `27676607447` on that exact SHA = **conclusion=success** (full per-file-isolation suite green).
+- All 5 cluster fix commits confirmed ancestor-of-origin: 87995fb1 / b556afbb / b4eeaf49 / c2faac2d / 44c94fd3.
 
-**Session note:** gateway MCP unavailable in this spawned subagent (false-infra mode A — same as tran-ngoc-bau c97, refine_bctc_md). Dispatcher made many successful gateway calls → gateway is UP; this is the per-session provisioning gap that `ARCH-HEADLESS-GATEWAY-COWORK-NOPOST` itself tracks. Did NOT escalate (one observation, confirm-before-blame). Triaged on file+git ground-truth — complete for this tick.
+**Promoted (all 6 — genuinely code-done + qa-approved, NOT speculatively parked):**
+1. FIX-CI-RED-2RED-084-VPS-FRESHN — fix 87995fb1, run 27676607447 success (its own gate = full-suite green on fix SHA = MET).
+2. FIX-CI-RED-STANDING-1837A-1352A — qa_verdict APPROVED (4 DoD), done_verified WAS withheld only on CI-green (now met).
+3. CI-RED-RECONCILE — closure native fail=0 @44c94fd3 run 27236671718, all 8 jobs green (campaign complete 06-09).
+4. CI-RED-b7b84d9b-FIX — qa cycle-244 APPROVED, run 27461707296 12782 pass/0 fail.
+5. FIX-TA-SANDBOX-DEPGUARD — commit c2faac2d, go-lint run 27159569677 SUCCESS (its scope green on subsequent push).
+6. CI-RED-8081e584-FIX (was DONE-GATE-SUPERSEDED) — qa APPROVED, commit b4eeaf49, run 27440565189 0-fail; its gate-holder successor b7b84d9b now green + full suite green → genuinely complete.
+
+**Held:** NONE — all 6 had recorded code-done evidence. (8081e584's "SUPERSEDED" label was a gate-relabel, not incomplete work.)
+
+**Mechanism:** `scripts/po-s103-ci-red-cluster-done-verified-promote.jq` (idempotent, re-run promotes 0). Harness: conservation (total 602→602 pure relocation) + done_verified Δ+6 + CAS-mtime + all-6-stamped + 0-leftover guards all GREEN. Source lanes drained: done 165→163, backlog 297→294, active_sprints 31→30.
 
 ## Carry-over
-- **NEXT:** dev loop idle (NOTHING). No BATCH. Router releases triage lock.
-- **OHLCV P0s:** flip done[]→done_verified ONLY after clean 2026-06-18 02:15Z VN open (RSI canonical within 0.1pt, no single-digit/no 100.0, no 'giá 0 dưới BB', live daily_ohlcv 0 close=0 stubs incl DAG≠0). Container ALREADY rebuilt+RAW-verified — do NOT re-dispatch ops.
-- **5 ci_green-gated tasks** (CI-RED-STANDING-1837A-1352A + CI-RED-RECONCILE + CI-RED-b7b84d9b-FIX + FIX-TA-SANDBOX-DEPGUARD + CI-RED-8081e584-FIX): FIX-CI-RED-2RED-084-VPS-FRESHN is now CI-green (87995fb1) — promote to done_verified once QA closes it / router confirms full-suite green on origin.
-- **ARCH-HEADLESS-GATEWAY-COWORK-NOPOST:** Monday dispatch gate (agents-architect→agent-father). Today=Wed → not due. Covers BOTH double-post + morning-502 polarity. Dispatch next Monday tick.
-- **PUSH HELD** (PO out-of-band): local HEAD 3-ahead of origin (signal-drain + 2 auditor notebooks, all chore). Do not push from triage.
-- **ENOSPC seen** on /private/tmp/claude-501 during this tick (project_enospc_blocker class) — used dangerouslyDisableSandbox for read-only lookups; if it recurs for writes, rm temp or restart.
+- **done_verified now 105** — the 6-tick gate freeze is UNFROZEN. Board reflects ground truth.
+- **OHLCV P0s:** still flip done[]→done_verified ONLY after clean 2026-06-18 02:15Z VN open (RSI canonical, no single-digit/100.0, no 'giá 0', live daily_ohlcv 0 close=0 stubs incl DAG≠0). Container ALREADY rebuilt+RAW-verified — do NOT re-dispatch ops.
+- **ARCH-HEADLESS-GATEWAY-COWORK-NOPOST:** Monday dispatch gate (agents-architect→agent-father). Covers double-post + morning-502. Dispatch next Monday tick.
+- **COMMIT SCOPE this cycle:** orch-state.json (explicit path) + po-s103 script + po notebook/journal ONLY. Loop churn live (auditor notebooks, briefs, sessions) — NEVER `git add -A`/`.`. PUSH HELD (PO out-of-band).
