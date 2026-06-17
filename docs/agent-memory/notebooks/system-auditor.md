@@ -1,5 +1,5 @@
-## c328 · 2026-06-17T15:15:21Z
-### Audit Run Tier-1 (15:15–15:15 UTC 2026-06-17)
+## c329 · 2026-06-17T15:45:24Z
+### Audit Run Tier-1 (15:44–15:45 UTC 2026-06-17)
 - Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
 - Anomalies: 0 new (all PASS) | Dedup: 0 skipped
 - Status: HEALTHY
@@ -7,12 +7,12 @@
 - A-12..A-19 health endpoints: 5/5 OK ✓
 - A-20 pdf-extractor multi-probe: 3/3 PASS ✓
 - A-21 restart count: 0 ✓
-- A-30 memory: 17.98% < 85% ✓
+- A-30 memory: 18.36% < 85% ✓
 - A-32 disk: 43% < 85% ✓
 
 ### RAW-PROBE:
 ```
-=== AUDITOR PROBE 2026-06-17T15:15:14Z ===
+=== AUDITOR PROBE 2026-06-17T15:44:36Z ===
 
 --- docker ps -a ---
 NAMES                                             STATUS                  IMAGE                                           CREATED
@@ -24,7 +24,7 @@ vn-market-intelligence-mcp-technical-analysis-1   Up 2 days (healthy)     vn-mar
 vn-market-intelligence-mcp-macro-indicators-1     Up 2 days (healthy)     vn-market-intelligence-mcp-macro-indicators     2 days ago
 vn-market-intelligence-mcp-kinh-dich-service-1    Up 2 days (healthy)     vn-market-intelligence-mcp-kinh-dich-service    2 days ago
 vn-market-intelligence-mcp-api-gateway-1          Up 6 days (healthy)     vn-market-intelligence-mcp-api-gateway          6 days ago
-vn-market-intelligence-mcp-rag-service-1          Up 2 hours (healthy)    vn-market-intelligence-mcp-rag-service          6 days ago
+vn-market-intelligence-mcp-rag-service-1          Up 3 hours (healthy)    vn-market-intelligence-mcp-rag-service          6 days ago
 vn-market-intelligence-mcp-news-fetch-1           Up 6 days (healthy)     vn-market-intelligence-mcp-news-fetch           6 days ago
 vn-market-intelligence-mcp-alert-engine-1         Up 6 days (healthy)     vn-market-intelligence-mcp-alert-engine         6 days ago
 headroom-proxy                                    Up 4 days               headroom-proxy:local                            10 days ago
@@ -41,14 +41,34 @@ mcp-gateway                                       Up 6 days (healthy)     mcpser
 Container=/vn-market-intelligence-mcp-mcp-server-1 RestartCount=0
 
 --- memory pressure ---
-Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=17.98% MemUsage=368.2MiB / 2GiB
+Container=vn-market-intelligence-mcp-mcp-server-1 MemPerc=18.36% MemUsage=375.9MiB / 2GiB
 
 --- disk df -h / ---
 Filesystem        Size    Used   Avail Capacity iused ifree %iused  Mounted on
-/dev/disk1s4s1   233Gi    13Gi    18Gi    43%    393k  192M    0%   /
+/dev/disk1s4s1   233Gi    13Gi    18Gi    43%    393k  191M    0%   /
 
 === PROBE DONE ===
 ```
+
+### A-20 In-Container Multi-Probe Results:
+```
+[A-20-PROBE-1] in-container HTTP 200
+[A-20-PROBE-2] in-container HTTP 200
+[A-20-PROBE-3] in-container HTTP 200
+[A-20] pass_count=3 / 3 — PASS (majority-vote)
+```
+
+## c328 · 2026-06-17T15:15:21Z
+### Audit Run Tier-1 (15:15–15:15 UTC 2026-06-17)
+- Tier: 1 | Services: 12 checked | Health endpoints: 5 probed
+- Anomalies: 0 new (all PASS) | Dedup: 0 skipped
+- Status: HEALTHY
+- A-01..A-11 container UP: all 12 PASS ✓
+- A-12..A-19 health endpoints: 5/5 OK ✓
+- A-20 pdf-extractor multi-probe: 3/3 PASS ✓
+- A-21 restart count: 0 ✓
+- A-30 memory: 17.98% < 85% ✓
+- A-32 disk: 43% < 85% ✓
 
 ## c327 · 2026-06-17T14:44:26Z
 ### Audit Run Tier-1 (14:44–14:45 UTC 2026-06-17)
