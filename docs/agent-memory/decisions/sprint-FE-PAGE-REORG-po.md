@@ -135,3 +135,13 @@
 - review[8] scan: every row gated on QA/live-probe or push (FIX-CI-RED-STANDING done_verified WITHHELD pending Linux-CI-green post-push; FIX-SYSTEM-STATUS done_verified WITHHELD by design). None promotable this tick.
 **why-decision:** all 4 signals fold into already-tracked work — the ci_red is a frozen-HEAD dup of a done push-gated FIX, the bloat is a known CLEAN target, the D4 is the recurring auditor FP, the gatherer is umbrella-tracked. No executable NEW dev-team work + WIP budget (≤1 coding lane) leaves no headroom anyway. Honest disposition = NOTHING + minimal reconcile (resolve the recurring FP so it stops re-firing the queue).
 **why-change:** no change from plan — applied ci_red two-layer dedup + context-bloat fold-dedup + recurring-FP STALE-resolve discipline verbatim; PUSH stays HELD (PO out-of-band).
+
+### STEP po-S13 · po · 2026-06-17T06:29:03Z
+**task-id:** FIX-CI-RED-2RED-084-VPS-FRESHN
+**what-done:** Executed worktree fleet push (origin 882ab789→701923bc, 104-ahead→0; CI-RED-STANDING fix landed), then triaged the resulting CI-RED + minted the durable auto-push backstop.
+**what-considered:**
+- promote the 5 ci_green-gated tasks now (push landed) vs withhold
+- treat the 2 CI reds as host-weather/flaky vs genuine
+- durable fix: extend FU-ORIGIN-LAG-PUSH-DISCIPLINE (option-2 backstop) vs new mechanism vs leave as manual nudge
+**why-decision:** Ran the 2 reds LOCALLY — both fail (084 stale toBe(2)→3 tool-count; VPS-HEALTH-FRESHN behavioral) = GENUINE, DISJOINT from the CI-RED fix (which is 13 pass/0 fail). Gate is "full-suite CI green on origin" → still RED → WITHHELD all 5; reassigned gate-blocker to new P1 FIX. Durable: the recurrence (2nd ~100-commit manual nudge this session) proves in-mutex push (option-1, shipped) is insufficient under a perpetually-dirty tree; minted ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP = the option-2 the DISCIPLINE task explicitly deferred, reusing the proven worktree-push recipe.
+**why-change:** no change from plan — push executed, gate honestly withheld, root tracked not nudged.

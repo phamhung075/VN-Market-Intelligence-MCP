@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-17T05:41:44Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-17T06:28:25Z",
+  "_updated_by": "po-s98",
   "dashboard_section_cache": {
     "last_linecount": 2,
     "last_mtime": "2026-06-06T16:22:41Z",
@@ -812,8 +812,8 @@
     ]
   },
   "task_board": {
-    "_updated_at": "2026-06-17T05:41:44Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-17T06:28:25Z",
+    "_updated_by": "po-s98",
     "active_sprints": [
       {
         "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
@@ -12800,6 +12800,26 @@
         "blocked_by": [],
         "created_at": "2026-06-17T05:30:00Z",
         "created_by": "pm"
+      },
+      {
+        "id": "ARCH-AUTO-PUSH-THRESHOLD-BACKSTOP",
+        "title": "DURABLE: threshold-triggered worktree-push backstop so origin-lag stops recurring as manual router nudges",
+        "type": "SPRINT-S",
+        "mode": "design",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "zone": "cross-service/",
+        "next_agent": "architect",
+        "recon_first": true,
+        "created_at": "2026-06-17T06:28:25Z",
+        "created_by": "po-s98",
+        "extends": "FU-ORIGIN-LAG-PUSH-DISCIPLINE",
+        "problem": "FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified) shipped option-1: a rebase-retry push step INSIDE the commit-mutex window so each committing agent pushes its own work. RECURRENCE EVIDENCE: this is the 2nd time THIS session the push backlog grew to ~100+ commits (1st: 0c826511 worktree push; now: 701923bc, 103-ahead/36-behind) and needed a manual router-nudge worktree push. ROOT of the recurrence: the working tree is PERPETUALLY dirty (cowork churn) so the in-mutex `git pull --rebase` can never get a clean window — option-1's push silently fails its rebase-retry and commits pile up local-only again. The DISCIPLINE task itself named option-2 (periodic auto-push, decoupled from commit, single race-free pusher) as the deferred alternative. The recurrence shows option-1 needs option-2 as a BACKSTOP. Also: 103 unpushed commits = ~2 days of work with NO off-machine backup.",
+        "design_mandate": "Design the LOWEST-RISK threshold-triggered worktree-push backstop that fits the flow. The proven recipe (router notebook + feedback_push_blocked_by_perpetual_dirty_tree) already WORKS precisely because it is tree-INDEPENDENT: `git worktree add <wt> HEAD` -> integrate origin (MERGE if behind-set is cloud-chore; preserve both signal_queue rows on conflict) -> symlink main node_modules so the pre-push tsc hook passes -> `pnpm --filter vn-market check`=0 -> `git push origin HEAD:main` -> remove symlinks -> `git worktree remove`. Codify THIS recipe into a single reusable script (scripts/fleet-worktree-push.sh) and TRIGGER it when `git rev-list --count origin/main..HEAD` exceeds a threshold (evaluate N=20). Evaluate the trigger options and pick one: (a) a scheduled cron/RemoteTrigger that runs the script every N hours WHEN ahead>threshold (reconcile against existing cron inventory in docs/data/system-map.json — do NOT add an unmanaged always-on component); (b) a po-flow / dev-team-flow step that fires the script when the ahead-count exceeds threshold during a triage tick (no new daemon — rides the existing loop cadence). PREFER (b) on first read: it adds no always-on component, rides the loop that's already running, and the worktree isolation means it never touches the dirty main tree the loop uses. CONSTRAINTS: must be CONCURRENCY-SAFE under the active dev-team commit loop (claim a commit-mutex/task_claim before the push; the worktree is isolated so it never blocks the loop's main-tree work); MUST run the tsc pre-push gate (never --no-verify); MUST classify the behind-set (MERGE for cloud-chore, never silently rebase over real fixes); MUST NOT push around a RED pre-push hook (red-prepush-strands-fleet lesson).",
+        "deliverable": "architecture-brief in docs/architecture-briefs/ choosing trigger (a vs b), naming the single SSOT script (scripts/fleet-worktree-push.sh), the threshold N, the mutex/claim integration, and the exact flow-step or cron wiring. Then pm decomposes + the right zone implements (cross-service/ for the script + flow-doc; dev-mcp-server only if a scheduler job is chosen). Acceptance: after ship, `git rev-list --count origin/main..HEAD` stays bounded (<= N) across a full maintenance cycle WITHOUT any manual router-nudge worktree push, and NO push-storm / non-fast-forward error spam.",
+        "dedup_note": "EXTENDS FU-ORIGIN-LAG-PUSH-DISCIPLINE (done_verified, shipped option-1 in-mutex push) — does NOT duplicate it. This is the deferred option-2 backstop the DISCIPLINE task explicitly named. Reuses the proven worktree-push recipe, does not invent a new mechanism.",
+        "size": "S",
+        "origin": "po-s98 fleet-push 2026-06-17 — 2nd ~100-commit manual-nudge recurrence this session"
       }
     ],
     "closed_sprints": [
@@ -12953,7 +12973,13 @@
         "qa_approved_at": "2026-06-16T18:35:00Z",
         "qa_approved_by": "qa",
         "qa_verdict": "APPROVED — 4 DoD met; done_verified WITHHELD pending GitHub Actions Linux CI green post-push (PO deferred call). Blocks: CI-RED-b7b84d9b-FIX / CI-RED-d20468c0-FIX / VMT-8-MACRO-GRACEFUL-FAILCLOSE / FIX-FOREIGN-FLOW-DEAD-ENDPOINT stay BLOCKED until done_verified.",
-        "done_verified_withheld_reason": "requires GitHub Actions Linux CI green AFTER PO out-of-band push; push-gate HELD; broader 20-file/49-fail local = HOST WEATHER (Bun-JIT SIGILL), NOT Linux-CI fails"
+        "done_verified_withheld_reason": "requires GitHub Actions Linux CI green AFTER PO out-of-band push; push-gate HELD; broader 20-file/49-fail local = HOST WEATHER (Bun-JIT SIGILL), NOT Linux-CI fails",
+        "push_landed": "origin 882ab789 -> 701923bc (worktree merge-push 2026-06-17, po-s98); this fix IS on origin",
+        "own_tests_green": "RAW-verified local 13 pass/0 fail: 1837a-pipeline-state.test.ts + 1352a-async-extraction-race.test.ts",
+        "gate_status": "WITHHELD — full-suite CI RED on pushed SHA, but the 2 reds are DISJOINT from this fix (084-tool-market stale count + FIX-VPS-HEALTH-FRESHN behavioral); this fix's own gate is satisfied",
+        "gate_reassigned_to": "FIX-CI-RED-2RED-084-VPS-FRESHN",
+        "gate_reassigned_at": "2026-06-17T06:28:25Z",
+        "gate_reassigned_by": "po-s98"
       },
       {
         "id": "FIX-BCTC-SSC-503-RETRY",
@@ -19796,6 +19822,33 @@
       }
     ],
     "ready": [
+      {
+        "id": "FIX-CI-RED-2RED-084-VPS-FRESHN",
+        "title": "Standing CI RED: 2 genuine non-host-weather test fails block the full-suite push gate (unblocks 5 done tasks)",
+        "type": "FIX",
+        "status": "READY",
+        "priority": "P1",
+        "blocking": true,
+        "zone": "apps/mcp-server/",
+        "dev_agent": "dev-mcp-server",
+        "next_agent": "dev-mcp-server",
+        "created_at": "2026-06-17T06:28:25Z",
+        "created_by": "po-s98",
+        "root_cause": "Full per-file-isolation CI suite (bun test) RED with 2 fails DISJOINT from FIX-CI-RED-STANDING-1837A-1352A (which is now GREEN on origin, RAW 13 pass/0 fail). Both fail LOCALLY too (NOT host-weather): (1) src/__tests__/084-tool-market.test.ts:391 expects registerMarketTools to register exactly 2 tools (toBe(2)) but marketTools.ts now registers 3 server.tool() calls (3rd added by ddc36452 'market breadth + liquidity') — STALE count assertion, code is correct. (2) src/__tests__/FIX-VPS-HEALTH-FRESHN.test.ts:224 'vn-bctc-fetch: passive check always returns healthy (no active freshness check)' — behavioral regression in the data-freshness health check.",
+        "fix_spec": "(1) 084-tool-market.test.ts:391 — bump toBe(2) -> toBe(3) AND assert the new tool name is in toolNames (do NOT just bump the number blindly — verify the 3rd registered tool's name and add a toContain for it so the count stays meaningful). (2) FIX-VPS-HEALTH-FRESHN.test.ts:224 — RAW-read the test intent: it asserts vn-bctc-fetch should NOT always return healthy under passive check (must do an active freshness check); determine whether the regression is in the health-check IMPL (active-freshness path dropped) or the test expectation; fix the IMPL if the active freshness gate was lost (passive-health-masks-dead-data lesson), else correct the test. Do NOT mask a real freshness regression by relaxing the test.",
+        "generic_mandate": "Fix is generic — no sentinel/date cutoff. After fix, the EXACT CI command (per-file isolation full suite) must be 0 fail.",
+        "verification_gate": "Local: `bun test src/__tests__/084-tool-market.test.ts` AND `bun test src/__tests__/FIX-VPS-HEALTH-FRESHN.test.ts` both 0 fail, AND the full per-file-isolation suite 0 fail. THEN push -> `gh run list --branch main --workflow CI` conclusion=success for the SHA containing this fix. ON GREEN: promote FIX-CI-RED-STANDING-1837A-1352A + the 4 ci_green_on_subsequent_push-gated tasks (CI-RED-RECONCILE, CI-RED-b7b84d9b-FIX, FIX-TA-SANDBOX-DEPGUARD, CI-RED-8081e584-FIX) to done_verified.",
+        "unblocks": [
+          "FIX-CI-RED-STANDING-1837A-1352A",
+          "CI-RED-RECONCILE",
+          "CI-RED-b7b84d9b-FIX",
+          "FIX-TA-SANDBOX-DEPGUARD",
+          "CI-RED-8081e584-FIX"
+        ],
+        "rebuild_required": false,
+        "size": "S",
+        "origin": "po-s98 fleet-push 2026-06-17 — CI red on pushed SHA 701923bc, 2 genuine reds disjoint from CI-RED-STANDING"
+      },
       {
         "id": "DESIGN-GATHERER-DOUBLEFIRE-DEDUP-CLUSTER",
         "type": "SPRINT-S",
