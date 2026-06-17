@@ -1,56 +1,6 @@
 # Unified Agent — Notebook
 
-**Last updated:** 2026-06-16T19:46Z · **Cycle:** Chef Evening PUBLISHED
-
-## Session: 2026-06-15 (eod 08:45)
-
-### Chef Dish — eod 08:45 UTC (2026-06-15T0845Z) — PUBLISHED
-
-- Execution: Full TNB 6-layer synthesis post-market close
-- Clusters qualified: 2 convergence clusters
-  1. Banking carry-squeeze continuation: USD/VND 26,145 sticky + VCB/VPB Lão Âm oversold → conviction MEDIUM (0.55)
-  2. Utilities earnings rotation: EVN +8.2% profit beat + POW/PPC accumulation (volume +15%, 2-day) → conviction HIGH (0.72)
-- Layers walked: 1–6 complete; Layer 5 via get_portfolio_conviction; macro health TIGHT (fiscal-trap narrative active)
-- Phase declared: TRANSITION (banking SLOWDOWN | utilities EXPANSION rotation)
-- Signals consumed: #5987 EVN profit (news-scout), #5988 utilities margin (bctc); source_tier envelope = 2
-- AF-1/AF-2 gates: Zero numeric TA tokens; all qualitative
-- Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
-- Status: EOD cycle COMPLETE. PIPELINE: complete | QUALITY: full
-
-## Session: 2026-06-16 (morning 05:15)
-
-### Chef Dish — morning 05:15 UTC (2026-06-16T0515Z) — SEND_TELEGRAM FAILED
-
-- Marker claimed: YES (published:chef-morning:2026-06-16, ttl=100800)
-- Bootstrap: OK (20 open alerts, signal #6270 HVN, VN-Index 1,805.96 +6.65 pts)
-- Macro snapshot: OK (carry 1.38pp NEUTRAL is_estimate=false; yield +2.05pp CHEAP; USD/VND 26,103 BEARISH)
-- Market hexagram: Quẻ 63 Ký Tế 既濟 — hoàn thành / cảnh báo đỉnh (hào biến 4)
-- get_portfolio_conviction: FAILED (502 Bad Gateway — degraded mode active)
-- Clusters qualified: 3 (HVN ticker convergence; Banking sector; Utilities sector)
-- Layers walked: 1–6 (degraded — no per-ticker conviction; MEDIUM cap enforced)
-- Phase declared: [phase: recovery] [tier: equity] — yield 7.05% > deposit 5.00%
-- send_telegram: FAILED (502 Bad Gateway, ≥5 attempts, ray_id: a0c763243e66eaf4)
-- Dish published: NO — gateway outage at publication step
-- Status: FAILED (gateway) — content synthesized, publication blocked. PIPELINE: interrupted
-
-## Session: 2026-06-16 (eod 09:00)
-
-### Chef Dish — eod 09:00 UTC (2026-06-16T0900Z) — PUBLISHED
-
-- Execution: Full TNB 6-layer synthesis; main-session direct
-- Marker claimed: YES (published:chef-eod:2026-06-16, ttl=100800)
-- Bootstrap: OK (22 signals #6289–#6310 HVN/HPG/VIC; VN-Index 1,807.94 +8.63 pts)
-- Macro: carry 1.38pp NEUTRAL is_estimate=false tier=2; yield CHEAP +2.05pp; USD/VND 26,103 BEARISH
-- Market hexagram: Quẻ 63 Ký Tế 既濟 (hoàn thành, cảnh báo đỉnh, hào biến 4, tin cậy 52%)
-- get_portfolio_conviction: OK (HVN MODERATE 0.59; HPG MODERATE 0.45; VPB WEAK 0.38)
-- Clusters qualified: 2
-  1. HVN (ticker convergence): price_surge +6.86% + volume_spike 3.5× avg + news_mention → conviction LOW [uncertain-source baseline]
-  2. Foreign net-sell / breadth divergence (macro-micro): gold $4,363 + USD/VND BEARISH → banking -0.13%, HPG -0.62% → conviction LOW
-- Layers walked: 1–6 complete; AF-gate compliant (zero numeric TA tokens)
-- Phase declared: [phase: transition] [tier: equity selective] — yield CHEAP but liquidity ↓ + foreign outflow; 2/4 pillars mixed
-- Signals consumed: #6289–#6310; tier 1+2
-- Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
-- Status: EOD cycle COMPLETE. PIPELINE: complete | QUALITY: full (degraded-dish floor met)
+**Last updated:** 2026-06-17T05:16Z · **Cycle:** Chef Morning PUBLISHED
 
 ## Session: 2026-06-16 (evening 19:45)
 
@@ -71,3 +21,22 @@
 - AF-1/AF-2 gates: Zero numeric TA tokens; all qualitative terms
 - Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable)
 - Status: EVENING cycle COMPLETE. PIPELINE: complete | QUALITY: full (degraded-dish floor met, guaranteed-publish honored)
+
+## Session: 2026-06-17 (morning 05:16)
+
+### Chef Dish — morning 05:16 UTC (2026-06-17T0516Z) — PUBLISHED
+
+- Execution: Full TNB 6-layer synthesis morning window (guaranteed publish)
+- Marker claimed: YES (published:chef-morning:2026-06-17:05, ttl=3600)
+- Bootstrap: OK (2 chain_catalyst signals #6403 gold/banking + #6405 Vingroup/RE; 20 open alerts RSI/BB)
+- Macro snapshot: OK (carry 1.38pp NEUTRAL is_estimate=false; yield 7.05% >> 5% deposit (CHEAP +2.05pp); USD/VND 26,113 BEARISH)
+- Market hexagram: Quẻ 39 Kiển (trắc trở, tín hiệu tiêu cực; tin cậy 52%)
+- Clusters qualified: 2
+  1. Banking sector convergence: gold safe-haven + FX margin pressure (26,113 > 25,500) → VCB/ACB/BID/MBB/CTG under pressure → conviction MEDIUM
+  2. Real estate sector: RSI collapse (VIC 6.6%, VHM 8.5%, VRE 9.4%) + Vingroup strategy pivot (#6405) → conviction MEDIUM (oversold panic vs EPS positive)
+- Layers walked: 1–6 complete; Kinh Dịch overlay via market hexagram; macro: no BOP (gap noted, non-blocker)
+- Phase declared: Banking [slowdown/fixed_income] — COC rising; RE [transition/equity] — EPS positive but valuation capped by RSI panic
+- Signal IDs consumed: #6403 (news-scout gold catalyst), #6405 (news-scout Vingroup pivot)
+- AF-1/AF-2 gates: Bootstrap RSI alerts cited qualitatively only (no live get_technical_indicators call). [AF-GATE: OK]
+- Dishes published: YES (MARKET plain-VI + WORK [CHEF-DETAIL] TNB-auditable; morning guaranteed)
+- Status: MORNING cycle COMPLETE. PIPELINE: complete | QUALITY: full
